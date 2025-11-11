@@ -1,0 +1,7 @@
+{
+  "name": "SnapEyes — Epic Iris Photos",
+  "description": "A mobile app that captures close-up eye photos and uses an AI image-enhancement pipeline to reveal and stylize iris detail.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
