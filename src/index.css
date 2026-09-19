@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --gold-primary: #f5c542;
+    --gold-secondary: #d4af37;
+    --gold-dark: #b8860b;
+    --bg-main: #07090e;
+    --card-dark: rgba(15, 18, 28, 0.75);
+    --border-gold: rgba(245, 197, 66, 0.25);
+  }
+
+  body {
+    background-color: #07090e;
+    color: #f0f3fa;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  h1, h2, h3, .font-luxury {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+/* Custom Luxury Gradients & Utilities */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #ffffff 30%, #f5c542 80%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-glow-box {
+  box-shadow: 0 0 35px rgba(245, 197, 66, 0.22);
+}
+
+.gold-glow-text {
+  text-shadow: 0 0 25px rgba(245, 197, 66, 0.4);
+}
+
+.glass-card {
+  background: rgba(14, 17, 27, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
