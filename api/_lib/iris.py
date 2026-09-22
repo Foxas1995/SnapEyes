@@ -23,6 +23,15 @@ POLISH_RIM = 0.45            # accent rim light on the limbus, so the iris sits 
 POLISH_LIMBAL_START = 0.66   # radius (0-1 of the iris) where the outer ring starts falling to black
 POLISH_EDGE_FEATHER = 0.16   # how softly the disk dissolves into the background instead of ending on a circle
 
+# studio grade: the fine-art iris look - the iris fills the frame, pure black outside the limbus,
+# sculpted local contrast. This is what a macro studio does in post, and none of it needs a model.
+STUDIO_FILL = 0.94           # how much of the frame the iris disk occupies
+STUDIO_LOCAL = 1.20          # local contrast (large-radius unsharp): sculpts the fibre relief
+STUDIO_MICRO = 0.75          # micro contrast (small-radius unsharp): separates individual fibres
+STUDIO_SAT = 0.42            # colour depth
+STUDIO_SCLERA = 0.85         # how hard the pale sclera / eyelid is pushed out of the outer rim
+STUDIO_TRIM = 0.92           # cut just inside the detected limbus: that last sliver is where lids and lashes live
+
 STYLES = {
     "celestial_gold": {"bg": "bg_celestial_gold.jpg", "accent": (245, 197, 66), "title": "THE UNIVERSE WITHIN"},
     "deep_nebula": {"bg": "bg_deep_nebula.jpg", "accent": (129, 140, 248), "title": "DEEP NEBULA"},
@@ -459,47 +468,108 @@ def _font(name, size, weight=None):
         except Exception: pass
     return f
 
+def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=None, sclera=None, trim=None):
+    """Turn a masked iris square into the fine-art frame: limbus-tight, pure black outside, sculpted fibres.
+
+    A phone crop carries a slice of sclera or eyelid at the bottom of the disk and sits small inside its frame.
+    A studio print does neither: the iris is the whole picture. Everything here is arithmetic on the pixels the
+    camera captured, so it deepens what is real instead of inventing what is not."""
+    fill = STUDIO_FILL if fill is None else fill
+    trim = STUDIO_TRIM if trim is None else trim
+    local = STUDIO_LOCAL if local is None else local
+    micro = STUDIO_MICRO if micro is None else micro
+    sat = STUDIO_SAT if sat is None else sat
+    sclera = STUDIO_SCLERA if sclera is None else sclera
+
+    S = im.size[0]
+    R = max(1.0, r_frac * S)
+    yy, xx = np.mgrid[0:S, 0:S]
+    rr = np.sqrt((xx - S / 2 + 0.5) ** 2 + (yy - S / 2 + 0.5) ** 2) / R
+    arr = np.asarray(im.convert("RGB")).astype(np.float32)
+
+    # 1. push the pale intruders out of the outer rim: sclera and eyelid are brighter and far less saturated
+    #    than iris, so they can be identified without touching the iris itself
+    if sclera > 0:
+        mx, mn = arr.max(axis=2), arr.min(axis=2)
+        satmap = (mx - mn) / np.maximum(mx, 1.0)
+        lum = arr.mean(axis=2)
+        ring = (rr > 0.72) & (rr < 1.12)
+        if ring.any():
+            iris_lum = float(np.median(lum[(rr > 0.35) & (rr < 0.70)])) if ((rr > 0.35) & (rr < 0.70)).any() else 90.0
+            pale = ring & (lum > iris_lum * 1.18) & (satmap < 0.28)
+            k = np.clip((lum - iris_lum * 1.10) / max(iris_lum * 0.5, 1.0), 0, 1) * sclera
+            arr = arr * (1 - (pale * k)[..., None])
+
+    # 2. sculpt: large-radius unsharp gives the fibres relief, small-radius separates them
+    base = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+    big = np.asarray(base.filter(ImageFilter.GaussianBlur(max(2.0, S * 0.045)))).astype(np.float32)
+    sml = np.asarray(base.filter(ImageFilter.GaussianBlur(max(1.0, S * 0.004)))).astype(np.float32)
+    arr = arr + (arr - big) * local + (arr - sml) * micro
+
+    # 3. colour depth, without shifting hue
+    grey = arr.mean(axis=2, keepdims=True)
+    arr = grey + (arr - grey) * (1.0 + sat)
+
+    # 4. limbus-tight framing: scale the disk so it fills the requested share of the frame
+    arr = np.clip(arr, 0, 255).astype(np.uint8)
+    Rt = R * trim
+    side = int(round(2 * Rt))
+    x0, y0 = int(round(S / 2 - Rt)), int(round(S / 2 - Rt))
+    tight = Image.new("RGB", (side, side), (0, 0, 0))
+    tight.paste(Image.fromarray(arr), (-x0, -y0))
+    target = max(8, int(round(out * fill)))
+    tight = tight.resize((target, target), Image.LANCZOS)
+
+    # 5. pure black outside the limbus, with only a hairline of softness so the circle stays crisp
+    a = disk_alpha(target, target / 2.0, 0.012)
+    disk = (np.asarray(tight).astype(np.float32) * a[..., None])
+    canvas = np.zeros((out, out, 3), dtype=np.float32)
+    off = (out - target) // 2
+    canvas[off:off + target, off:off + target] = disk
+    return Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
+
 def compose(iris, style="celestial_gold", title=None, names="", watermark=True, r_frac=None, size=1024):
     st = STYLES.get(style, STYLES["celestial_gold"])
     bg = Image.open(os.path.join(ASSETS, "bg", st["bg"])).convert("RGB").resize((size, size), Image.LANCZOS)
     canvas = np.asarray(bg).astype(np.float32)
     r_frac = r_frac or iris_radius_frac()
     # iris disk with feathered edge; the iris square is assumed centred with radius r_frac*side
-    Sd = int(size * 0.56); ir = iris.resize((Sd, Sd), Image.LANCZOS)
     acc = np.array(st["accent"], dtype=np.float32)
-    R = max(1.0, r_frac * Sd)
+    # Studio Black is the bare fine-art print the reference galleries sell: the iris fills the frame on
+    # pure black, with nothing else in the picture. The other styles keep the iris large but leave room
+    # for the scene and the typography.
+    bare = style == "studio_black"
+    Sd = int(size * (0.96 if bare else 0.80))
+    graded = studio_grade(iris, r_frac, out=Sd)
+    arr = np.asarray(graded).astype(np.float32)
+    Rg = max(1.0, Sd * STUDIO_FILL / 2.0)
     jy, jx = np.mgrid[0:Sd, 0:Sd]
-    rr = np.sqrt((jx - Sd / 2 + 0.5) ** 2 + (jy - Sd / 2 + 0.5) ** 2) / R
-    arr = np.asarray(ir).astype(np.float32)
-    # 1. micro-contrast: an unsharp pass deepens the shadow in the gaps between the fibres, so the iris
-    #    reads as a three-dimensional relief instead of a flat texture
-    soft = np.asarray(ir.filter(ImageFilter.GaussianBlur(max(1.0, Sd * 0.005)))).astype(np.float32)
-    arr = arr + (arr - soft) * POLISH_DETAIL
-    # 2. limbal ring: the outer fifth falls away towards black, which removes the pale haze the crop
-    #    carries at the limbus and gives the deep rim a studio macro has
-    arr *= (1.0 - POLISH_LIMBAL * np.clip((rr - POLISH_LIMBAL_START) / (1.0 - POLISH_LIMBAL_START), 0, 1) ** 1.8)[..., None]
-    # 3. rim light: a thin accent highlight on the limbus, strongest towards the upper left, so the iris
-    #    sits inside the scene instead of being pasted on top of it
-    ang = np.arctan2(jy - Sd / 2, jx - Sd / 2)
-    rim = np.exp(-((rr - 0.93) / 0.06) ** 2) * (0.55 + 0.45 * np.cos(ang + 2.4))
-    arr = np.clip(arr + acc * rim[..., None] * POLISH_RIM, 0, 255)
-    alpha = disk_alpha(Sd, R * 1.02, POLISH_EDGE_FEATHER)
-    cx, cy = size // 2, int(size * 0.455)
-    # soft accent glow behind the iris
-    yy, xx = np.mgrid[0:size, 0:size]
-    dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / R
-    glow = np.clip(1.6 - dist, 0, 1) ** 2 * 0.45
-    canvas = canvas * (1 - glow[..., None] * 0.55) + acc * glow[..., None] * 0.55
+    rr = np.sqrt((jx - Sd / 2 + 0.5) ** 2 + (jy - Sd / 2 + 0.5) ** 2) / Rg
+    cx, cy = size // 2, int(size * (0.5 if bare else 0.44))
+    if not bare:
+        # a thin accent highlight on the limbus, strongest towards the upper left, so the iris sits inside
+        # the scene instead of being pasted on top of it
+        ang = np.arctan2(jy - Sd / 2, jx - Sd / 2)
+        rim = np.exp(-((rr - 0.985) / 0.045) ** 2) * (0.55 + 0.45 * np.cos(ang + 2.4))
+        arr = np.clip(arr + acc * rim[..., None] * POLISH_RIM, 0, 255)
+        # soft accent glow behind the iris
+        yy, xx = np.mgrid[0:size, 0:size]
+        dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / Rg
+        glow = np.clip(1.6 - dist, 0, 1) ** 2 * 0.45
+        canvas = canvas * (1 - glow[..., None] * 0.55) + acc * glow[..., None] * 0.55
+    alpha = disk_alpha(Sd, Rg, 0.015 if bare else 0.05)
     x0, y0 = cx - Sd // 2, cy - Sd // 2
+    x0, y0 = max(0, min(x0, size - Sd)), max(0, min(y0, size - Sd))
     region = canvas[y0:y0 + Sd, x0:x0 + Sd]
     canvas[y0:y0 + Sd, x0:x0 + Sd] = region * (1 - alpha[..., None]) + arr * alpha[..., None]
     out = Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
     d = ImageDraw.Draw(out)
-    t = (title or st["title"]).upper()
-    ft = _font("Cinzel.ttf", int(size * 0.042), "Bold"); fn = _font("PlusJakartaSans.ttf", int(size * 0.026), "Regular"); fs = _font("PlusJakartaSans.ttf", int(size * 0.014), "Medium")
-    d.text((size / 2, size * 0.80), t, font=ft, fill=st["accent"], anchor="mm")
-    if names: d.text((size / 2, size * 0.845), names, font=fn, fill=(240, 243, 250), anchor="mm")
-    d.text((size / 2, size * 0.885), "SNAPEYES MASTER ART  ·  300 DPI ARCHIVAL EDITION", font=fs, fill=(150, 155, 170), anchor="mm")
+    if not bare:
+        t = (title or st["title"]).upper()
+        ft = _font("Cinzel.ttf", int(size * 0.042), "Bold"); fn = _font("PlusJakartaSans.ttf", int(size * 0.026), "Regular"); fs = _font("PlusJakartaSans.ttf", int(size * 0.014), "Medium")
+        d.text((size / 2, size * 0.86), t, font=ft, fill=st["accent"], anchor="mm")
+        if names: d.text((size / 2, size * 0.905), names, font=fn, fill=(240, 243, 250), anchor="mm")
+        d.text((size / 2, size * 0.945), "SNAPEYES MASTER ART  ·  300 DPI ARCHIVAL EDITION", font=fs, fill=(150, 155, 170), anchor="mm")
     if watermark:
         layer = Image.new("RGBA", (size * 2, size * 2), (0, 0, 0, 0)); ld = ImageDraw.Draw(layer)
         fw = _font("PlusJakartaSans.ttf", int(size * 0.036), "Bold")
