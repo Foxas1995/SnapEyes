@@ -584,6 +584,130 @@ def chroma_lock(ai, src, blur=1.6, amount=1.0):
         cr = Image.blend(cr_ai, cr, amount)
     return Image.merge("YCbCr", (y, cb, cr)).convert("RGB")
 
+DARK_BLEND = 24.0        # below this luminance a colour ratio is noise, so the lift is applied as an offset
+PUPIL_EDGE_FRAC = 0.25
+PUPIL_DARK = (10.0, 30.0)
+PUPIL_FLAT = (0.50, 0.85)   # reflections in the pupil below the first share of the iris brightness are flattened fully, above the second not at all  # full neutral below the first, none above the second
+
+
+SCLERA_RAMP = (0.70, 0.84)    # the intruder test fades in across this band of the iris radius
+LID_SECTORS = 48              # 7.5 degree arcs of the outer band, each judged as lid or iris
+LID_BRIGHT = (1.30, 1.55)     # an arc's median brightness vs its radius: iris arcs stay below the first
+
+
+def pale_intruders(arr, rr):
+    """How much of each pixel is eyelid skin or sclera reaching into the frame, 0..1.
+
+    The earlier test compared everything beyond 0.72 of the radius with the INNER iris and switched on with a
+    hard edge. A light eye whose outer fibres are cream then had its whole outer ring darkened, with a visible
+    circle where the test began - the first thing a customer would notice. Brightness alone cannot separate a
+    lid from a cream patch: measured on real irises, the brightest patches reach 1.4-1.5x the median of their own
+    radius, and a lid is about 1.7x. What does separate them is shape. A lid comes in from outside and covers a
+    broad arc right up to the edge of the frame; a patch of pale fibres is local. So a sector of the outer band
+    has to read as lid first, and only inside such sectors are the brighter pixels pushed out, fading in over a
+    band of radius instead of starting at a line."""
+    S = arr.shape[0]
+    mx, mn = arr.max(axis=2), arr.min(axis=2)
+    sat = (mx - mn) / np.maximum(mx, 1.0)
+    lum = arr.mean(axis=2)
+    rad = max(1.0, S * 0.025)
+    lum_b, sat_b = _blur_f(lum, rad), _blur_f(sat, rad)
+
+    centres, ml, ms = [], [], []
+    for a in np.arange(0.40, 1.00, 0.04):
+        sel = (rr >= a) & (rr < a + 0.04)
+        if sel.sum() > 40:
+            centres.append(a + 0.02); ml.append(float(np.median(lum_b[sel]))); ms.append(float(np.median(sat_b[sel])))
+    if len(centres) < 3:
+        return np.zeros_like(lum)
+    # A heavy lid can own a whole radius, so the reference may not climb above the iris because of it. The iris
+    # reference is the BRIGHTEST inner radius: the innermost bins can still be pupil on a dilated eye, which is
+    # exactly how the old test mistook a light outer ring for sclera. Outer radii of a real iris are no brighter
+    # than its brightest inner one, since the limbal ring darkens towards the edge.
+    inner = max(m for c, m in zip(centres, ml) if c < 0.80)
+    ml = np.minimum(np.array(ml), inner * 1.10)
+    ref_l = np.interp(rr, centres, ml).astype(np.float32)
+    ref_s = np.interp(rr, centres, ms).astype(np.float32)
+    ratio = lum_b / np.maximum(ref_l, 1.0)
+    sratio = sat_b / np.maximum(ref_s, 1e-3)
+
+    # which arcs of the outer band read as lid: broad, bright, and no more colourful than the iris there
+    yy, xx = np.mgrid[0:S, 0:S]
+    ang = (np.degrees(np.arctan2(yy - S / 2 + 0.5, xx - S / 2 + 0.5)) + 360.0) % 360.0
+    step = 360.0 / LID_SECTORS
+    band = (rr > 0.82) & (rr < 0.94)
+    gate = np.zeros(LID_SECTORS, np.float32)
+    for i in range(LID_SECTORS):
+        sel = band & (ang >= i * step) & (ang < (i + 1) * step)
+        if sel.sum() > 20:
+            r_ = float(np.median(ratio[sel])); s_ = float(np.median(sratio[sel]))
+            gate[i] = np.clip((r_ - LID_BRIGHT[0]) / (LID_BRIGHT[1] - LID_BRIGHT[0]), 0, 1) * np.clip((1.05 - s_) / 0.25, 0, 1)
+    gate = np.maximum(gate, 0.5 * (np.roll(gate, 1) + np.roll(gate, -1)) * (gate > 0))   # close pinholes inside a lid
+    g = np.interp(ang, np.arange(LID_SECTORS) * step + step / 2, gate, period=360.0)
+
+    brighter = np.clip((ratio - 1.12) / 0.30, 0.0, 1.0)
+    lo, hi = SCLERA_RAMP
+    ramp = np.clip((rr - lo) / (hi - lo), 0.0, 1.0)
+    return (brighter * g * ramp).astype(np.float32)
+
+
+def pupil_radius(lum, rr):
+    """Where the pupil ends, in units of the iris radius, read from the image: the first radius at which the
+    median brightness climbs halfway from the centre to the iris. None if the centre is not dark."""
+    edges = np.arange(0.0, 0.86, 0.02)
+    meds = []
+    for a, b in zip(edges[:-1], edges[1:]):
+        sel = (rr >= a) & (rr < b)
+        meds.append(float(np.median(lum[sel])) if sel.sum() > 12 else np.nan)
+    meds = np.array(meds)
+    core = np.nanmedian(meds[:4])
+    iris = np.nanmedian(meds[(edges[:-1] >= 0.6) & (edges[:-1] < 0.84)])
+    if not np.isfinite(core) or not np.isfinite(iris) or core > 45.0 or iris - core < 25.0:
+        return None
+    # a quarter of the way up, not half: on a brown eye with a darker collarette, halfway counted that iris
+    # tissue as pupil and greyed it. Erring small only leaves a sliver of rim untouched, which is harmless.
+    half = core + PUPIL_EDGE_FRAC * (iris - core)
+    above = np.where(meds > half)[0]
+    if not len(above):
+        return None
+    return float(np.clip(edges[above[0]], 0.10, 0.72))
+
+
+def neutral_pupil(arr, rr, tone):
+    """The pupil is a hole, not a surface. Take its colour out, and flatten whatever it reflected.
+
+    `tone` is the neutral luminance the pupil should sit at. Two jobs:
+    1. colour: what a phone records in a pupil is sensor noise, and every professional print measured is neutral
+       there; gated on darkness so the pigmented ruff keeps its colour.
+    2. reflections: a pupil mirrors the room - a window, furniture, the person holding the phone - and the image
+       model renders that faithfully. None of it belongs to the eye, so inside the pupil anything brighter than
+       its own dark floor is pulled down to it. Gated on brightness relative to the iris, so if the edge estimate
+       ever overshoots into iris tissue that tissue is left alone, and the very brightest speck survives as a
+       natural catchlight."""
+    lum = tone
+    rho = pupil_radius(lum, rr)
+    if rho is None:
+        return arr
+    inside = np.clip((rho * 1.04 - rr) / max(rho * 0.10, 1e-3), 0.0, 1.0)      # soft edge at the pupil rim
+    lo, hi = PUPIL_DARK
+    dark = np.clip((hi - lum) / (hi - lo), 0.0, 1.0)
+    w = inside * dark
+
+    core = rr < 0.8 * rho
+    ring = (rr > 0.60) & (rr < 0.84)
+    if core.sum() > 20 and ring.any():
+        floor = float(np.percentile(lum[core], 15))
+        iris_med = float(np.median(lum[ring]))
+        rim = np.clip((rho - rr) / max(rho * 0.10, 1e-3), 0.0, 1.0)             # full inside 0.9 rho, none at the rim
+        not_iris = np.clip((PUPIL_FLAT[1] * iris_med - lum) / ((PUPIL_FLAT[1] - PUPIL_FLAT[0]) * iris_med), 0.0, 1.0)
+        flat = rim * not_iris
+        lum = lum - flat * np.maximum(lum - floor, 0.0)
+        w = np.maximum(w, flat)
+
+    w = w[..., None]
+    return arr * (1.0 - w) + lum[..., None] * w
+
+
 def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=None, sclera=None, trim=None):
     """Turn a masked iris square into the fine-art frame: limbus-tight, pure black outside, sculpted fibres.
 
@@ -612,15 +736,7 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     # 1. push the pale intruders out of the outer rim: sclera and eyelid are brighter and far less saturated
     #    than iris, so they can be identified without touching the iris itself
     if sclera > 0:
-        mx, mn = arr.max(axis=2), arr.min(axis=2)
-        satmap = (mx - mn) / np.maximum(mx, 1.0)
-        lum = arr.mean(axis=2)
-        ring = (rr > 0.72) & (rr < 1.12)
-        if ring.any():
-            iris_lum = float(np.median(lum[(rr > 0.35) & (rr < 0.70)])) if ((rr > 0.35) & (rr < 0.70)).any() else 90.0
-            pale = ring & (lum > iris_lum * 1.18) & (satmap < 0.28)
-            k = np.clip((lum - iris_lum * 1.10) / max(iris_lum * 0.5, 1.0), 0, 1) * sclera
-            arr = arr * (1 - (pale * k)[..., None])
+        arr = arr * (1.0 - pale_intruders(arr, rr) * sclera)[..., None]
 
     # 2. sculpt: large-radius unsharp gives the fibres relief, small-radius separates them. This runs on
     #    luminance alone - applied per channel it would pull the channels apart and quietly saturate the
@@ -631,12 +747,24 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     big = (np.asarray(base.filter(ImageFilter.GaussianBlur(max(2.0, S * 0.045)))).astype(np.float32) * W_LUM).sum(axis=2, keepdims=True)
     sml = (np.asarray(base.filter(ImageFilter.GaussianBlur(max(1.0, S * 0.004)))).astype(np.float32) * W_LUM).sum(axis=2, keepdims=True)
     sculpted = soft_shoulders(lum + (lum - big) * local + (lum - sml) * micro)
-    ratio = sculpted / np.maximum(lum, 1.0)          # keep the colour ratios of every pixel intact
-    arr = soft_shoulders(arr * ratio)
+    # Midtones take the new luminance as a ratio, which keeps every pixel's colour proportions intact. Near
+    # black that ratio stops meaning anything: the toe lifts a pupil of luminance 0.9 to 7.5, and a ratio of
+    # 8 multiplies whatever faint tint the sensor left there into a navy disc. So dark pixels take the same
+    # luminance change as a neutral offset instead, and the two blend smoothly across the shadows.
+    ratio = sculpted / np.maximum(lum, 1.0)
+    t = np.clip(lum / DARK_BLEND, 0.0, 1.0)
+    arr = t * (arr * ratio) + (1.0 - t) * (arr + (sculpted - lum))
+    arr = soft_shoulders(arr)      # per channel: keeps a saturated dark fibre off zero once saturation is added
 
     # 3. colour depth, on its own knob, so the number means what it says
     grey = (arr * W_LUM).sum(axis=2, keepdims=True)
     arr = grey + (arr - grey) * (1.0 + sat)
+
+    # 3b. the pupil is a hole, not a surface: the colour a phone records there is sensor noise and a reflection
+    #     of the room, and every professional print measured is neutral there. Found from the image itself and
+    #     gated on darkness, so the pigmented ruff and any iris crypt keep their colour. Its tone is taken from
+    #     the luminance before the per-channel guard, which would otherwise lift a black hole to dark grey.
+    arr = neutral_pupil(arr, rr, sculpted[..., 0])
 
     # 4. limbus-tight framing: scale the disk so it fills the requested share of the frame
     arr = np.clip(arr, 0, 255).astype(np.uint8)
