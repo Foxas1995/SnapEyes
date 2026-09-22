@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """SnapEyes iris engine: detection, crop, glare removal, faithful enhancement, composition, storage.
 Runs on Vercel Python functions (CPU) and locally. All Gemini calls go through generateContent REST."""
-import os, io, json, base64, time, math, re, uuid
+import os, io, json, base64, time, math, re, uuid, hmac, hashlib, threading
 import numpy as np
 import requests
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
@@ -15,6 +15,13 @@ GLARE_MIN_PCT = 0.4          # below this share of the iris we do not call the d
 SR_MAX_SIDE = 600            # crops smaller than this get Real-ESRGAN x4 before the enhance step
 FIDELITY_FLOOR = 0.75        # low-frequency SSIM below this = model drifted, fall back to the faithful upscale
 WORK = 1024                  # working resolution of the iris square
+
+# fine-art finishing applied when the iris is placed on a background (free, deterministic, no model call)
+POLISH_DETAIL = 0.70         # unsharp amount: deepens the shadows between the fibres (3-D relief)
+POLISH_LIMBAL = 0.95         # how far the outer ring falls towards black (kills the grey crop haze)
+POLISH_RIM = 0.45            # accent rim light on the limbus, so the iris sits inside the scene
+POLISH_LIMBAL_START = 0.66   # radius (0-1 of the iris) where the outer ring starts falling to black
+POLISH_EDGE_FEATHER = 0.16   # how softly the disk dissolves into the background instead of ending on a circle
 
 STYLES = {
     "celestial_gold": {"bg": "bg_celestial_gold.jpg", "accent": (245, 197, 66), "title": "THE UNIVERSE WITHIN"},
@@ -75,21 +82,103 @@ def send_json(req, status, obj):
     req.end_headers()
     if data: req.wfile.write(data)
 
-def run(req, fn):
-    """Wrap a handler body: parse JSON, run, serialise, catch errors."""
-    t0 = time.time()
+BUDGET = 52.0    # seconds of work we allow inside the 60 s Vercel function (leaves room to encode the reply)
+_LOCAL = threading.local()   # per-invocation deadline: one warm container can serve several requests at once
+
+def deadline():
+    return getattr(_LOCAL, "deadline", 0.0)
+
+def time_left(default=BUDGET):
+    d = deadline()
+    return default if d <= 0 else d - time.time()
+
+# ----------------------------------------------------------------------------- access control
+ALLOWED_HOSTS = ("snapeyes.com", "www.snapeyes.com", "localhost", "127.0.0.1")
+TICKET_TTL = 900             # a ticket minted by /api/analyze is good for 15 minutes
+
+def _ticket_secret():
+    """Server-only secret; never leaves the process and never appears in a response."""
+    raw = os.environ.get("SNAPEYES_TICKET_SECRET", "").strip() or _key()
+    return hashlib.sha256(("snapeyes-ticket-v1:" + raw).encode("utf-8")).digest()
+
+def mint_ticket(kind="work", ttl=TICKET_TTL):
+    exp = int(time.time()) + int(ttl)
+    msg = kind + "." + str(exp)
+    return msg + "." + hmac.new(_ticket_secret(), msg.encode(), hashlib.sha256).hexdigest()[:32]
+
+def check_ticket(tok, kind="work"):
     try:
+        k, exp_s, sig = str(tok or "").split(".", 2)
+        if k != kind or int(exp_s) < time.time(): return False
+        want = hmac.new(_ticket_secret(), (k + "." + exp_s).encode(), hashlib.sha256).hexdigest()[:32]
+        return hmac.compare_digest(sig, want)
+    except Exception:
+        return False
+
+def _host_of(value):
+    m = re.match(r"^[a-z]+://([^/:]+)", str(value or "").strip(), re.I)
+    return (m.group(1).lower() if m else "")
+
+def origin_ok(req):
+    """Block cross-origin drive-by billing. A browser always sends Origin on a cross-site POST, so an
+    unknown Origin is rejected. An absent Origin (curl, server-to-server) is allowed here and stopped by
+    the ticket check instead."""
+    h = _host_of(req.headers.get("origin")) or _host_of(req.headers.get("referer"))
+    return (not h) or h in ALLOWED_HOSTS or h.endswith(".vercel.app")
+
+def json_content_type(req):
+    """Requiring application/json forces a CORS preflight for cross-origin browser callers, and that
+    preflight fails because we send no Access-Control-Allow-Origin header."""
+    ct = str(req.headers.get("content-type") or "").split(";")[0].strip().lower()
+    return ct == "application/json"
+
+def _scrub(s):
+    """No secret and no full request URL may ever reach the client or the logs."""
+    s = re.sub(r"(key=|AIza)[A-Za-z0-9_\-]{10,}", r"\1***", s)
+    for name in ("GEMINI_API_KEY", "BLOB_READ_WRITE_TOKEN"):
+        v = os.environ.get(name, "").strip()
+        if v: s = s.replace(v, "***")
+    return s
+
+def run(req, fn, gate=True):
+    """Wrap a handler body: gate, parse JSON, run, serialise, catch errors."""
+    t0 = time.time()
+    _LOCAL.deadline = t0 + BUDGET
+    try:
+        if gate and not json_content_type(req):
+            return send_json(req, 415, {"ok": False, "error": "Send application/json."})
+        if gate and not origin_ok(req):
+            return send_json(req, 403, {"ok": False, "error": "This API only serves snapeyes.com."})
         body = read_json(req)
         out = fn(body)
         out["ms"] = int((time.time() - t0) * 1000)
         send_json(req, 200, out)
+    except PermissionError as e:
+        print("snapeyes refused:", _scrub(repr(e))[:200], flush=True)
+        send_json(req, 403, {"ok": False, "error": "This session expired. Please take the photo again.",
+                             "ms": int((time.time() - t0) * 1000)})
+    except ValueError as e:
+        print("snapeyes bad input:", _scrub(repr(e))[:200], flush=True)
+        send_json(req, 400, {"ok": False, "error": "We could not read that image. Try another photo.",
+                             "ms": int((time.time() - t0) * 1000)})
     except Exception as e:  # noqa
-        send_json(req, 500, {"ok": False, "error": str(e)[:400], "ms": int((time.time() - t0) * 1000)})
+        # detail goes to the Vercel log only; the caller gets a sentence, never internals
+        print("snapeyes handler error:", _scrub(repr(e))[:600], flush=True)
+        send_json(req, 500, {"ok": False, "error": "Something went wrong on our side. Please try again.",
+                             "ms": int((time.time() - t0) * 1000)})
 
 # ----------------------------------------------------------------------------- image helpers
+MAX_PIXELS = 40_000_000      # ~40 MP: larger than any phone photo, so anything bigger is a memory attack
+MAX_B64_CHARS = 9_000_000    # ~6.7 MB of image bytes; Vercel rejects the request body above ~4.5 MB anyway
+Image.MAX_IMAGE_PIXELS = MAX_PIXELS
+
 def b64_to_pil(s):
+    if not isinstance(s, str) or not s: raise ValueError("no image supplied")
+    if len(s) > MAX_B64_CHARS: raise ValueError("image too large")
     if "," in s[:64] and s.strip().startswith("data:"): s = s.split(",", 1)[1]
     im = Image.open(io.BytesIO(base64.b64decode(s)))
+    w, h = im.size
+    if w * h > MAX_PIXELS: raise ValueError("image too large")
     try: im = ImageOps.exif_transpose(im)
     except Exception: pass
     return im.convert("RGB")
@@ -124,21 +213,30 @@ def _key():
 def gemini(model, parts, gen_cfg, timeout=55, retries=1):
     body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": gen_cfg}
     last = ""
-    for attempt in range(retries + 1):
-        r = requests.post(f"{BASE}/models/{model}:generateContent?key={_key()}", json=body, timeout=timeout)
+    left = retries  # transient-error budget; dropping an unsupported config key does not consume it
+    while True:
+        # never wait past the invocation deadline: a killed function cannot run the handler's own fallback
+        t = min(timeout, time_left(timeout))
+        if t < 3: raise RuntimeError(last or f"{model}: out of time budget before the model call")
+        # the key goes in a header, never in the URL: a requests exception stringifies the URL
+        r = requests.post(f"{BASE}/models/{model}:generateContent", json=body, timeout=t,
+                          headers={"x-goog-api-key": _key()})
         if r.status_code == 200: return r.json()
         last = f"{model} HTTP {r.status_code}: {r.text[:200]}"
+        # each key is removed from gen_cfg, so each repair can happen at most once -> the loop always terminates
         if r.status_code == 400 and "imageConfig" in gen_cfg:
             gen_cfg = {k: v for k, v in gen_cfg.items() if k != "imageConfig"}; body["generationConfig"] = gen_cfg; continue
         if r.status_code == 400 and "thinkingConfig" in gen_cfg:
             gen_cfg = {k: v for k, v in gen_cfg.items() if k != "thinkingConfig"}; body["generationConfig"] = gen_cfg; continue
-        if r.status_code in (429, 500, 503) and attempt < retries: time.sleep(4); continue
+        # only retry when the sleep plus a real second attempt still fit in the budget
+        if r.status_code in (429, 500, 503) and left > 0 and time_left(99) > 12:
+            left -= 1; time.sleep(4); continue
         break
     raise RuntimeError(last)
 
 def gemini_json(model, prompt, im):
     j = gemini(model, [{"text": prompt}, {"inlineData": {"mimeType": "image/jpeg", "data": pil_to_b64(im, "JPEG", 90)}}],
-               {"responseMimeType": "application/json", "temperature": 0}, timeout=60)
+               {"responseMimeType": "application/json", "temperature": 0})
     txt = "".join(p.get("text", "") for p in j["candidates"][0]["content"]["parts"])
     try: return json.loads(txt)
     except Exception:
@@ -234,9 +332,8 @@ def glare_mask(crop, r_px, extra_boxes=None):
     halo = near & (dist < r_px * 0.97) & (v > halo_thr) & (s < 120)
     m = core_np | halo
     if m.sum() / area > 0.25:           # a real reflection never covers a quarter of the iris: halo grew into bright fibres
-        m = core_np
-    if m.sum() / area > 0.25:
-        m = np.zeros_like(m)
+        m = core_np                     # fall back to the eroded core, never to an empty mask: discarding it
+                                        # would leave the very worst glare untouched in the artwork
     mi = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(9))
     hard = np.asarray(mi)
     feather = np.asarray(mi.filter(ImageFilter.GaussianBlur(5))).astype(np.float32) / 255.0
@@ -283,14 +380,19 @@ def ssim_lowfreq(a_im, b_im, r_frac, sigma=2.0, k=7):
 
 # ----------------------------------------------------------------------------- super-resolution (Real-ESRGAN general x4v3, ONNX, CPU)
 _SR = None
+_SR_LOCK = threading.Lock()        # the lazy build is not atomic: two racing invocations keep two arenas alive
+_SR_GATE = threading.Semaphore(1)  # one x4 pass at a time: three concurrent runs exceed the 1024 MB function
+
 def sr_x4(im):
     global _SR
     import onnxruntime as ort
-    if _SR is None:
-        so = ort.SessionOptions(); so.intra_op_num_threads = 2
-        _SR = ort.InferenceSession(os.path.join(ASSETS, "models", "realesr_general_x4v3.onnx"), so, providers=["CPUExecutionProvider"])
+    with _SR_LOCK:
+        if _SR is None:
+            so = ort.SessionOptions(); so.intra_op_num_threads = 2
+            _SR = ort.InferenceSession(os.path.join(ASSETS, "models", "realesr_general_x4v3.onnx"), so, providers=["CPUExecutionProvider"])
     a = (np.asarray(im.convert("RGB")).astype(np.float32) / 255.0).transpose(2, 0, 1)[None]
-    y = _SR.run(None, {"input": a})[0][0]
+    with _SR_GATE:
+        y = _SR.run(None, {"input": a})[0][0]
     return Image.fromarray((np.clip(y, 0, 1).transpose(1, 2, 0) * 255).astype(np.uint8))
 
 # ----------------------------------------------------------------------------- composition
@@ -308,17 +410,33 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     r_frac = r_frac or iris_radius_frac()
     # iris disk with feathered edge; the iris square is assumed centred with radius r_frac*side
     Sd = int(size * 0.56); ir = iris.resize((Sd, Sd), Image.LANCZOS)
-    alpha = disk_alpha(Sd, r_frac * Sd * 0.985, 0.05)
+    acc = np.array(st["accent"], dtype=np.float32)
+    R = max(1.0, r_frac * Sd)
+    jy, jx = np.mgrid[0:Sd, 0:Sd]
+    rr = np.sqrt((jx - Sd / 2 + 0.5) ** 2 + (jy - Sd / 2 + 0.5) ** 2) / R
+    arr = np.asarray(ir).astype(np.float32)
+    # 1. micro-contrast: an unsharp pass deepens the shadow in the gaps between the fibres, so the iris
+    #    reads as a three-dimensional relief instead of a flat texture
+    soft = np.asarray(ir.filter(ImageFilter.GaussianBlur(max(1.0, Sd * 0.005)))).astype(np.float32)
+    arr = arr + (arr - soft) * POLISH_DETAIL
+    # 2. limbal ring: the outer fifth falls away towards black, which removes the pale haze the crop
+    #    carries at the limbus and gives the deep rim a studio macro has
+    arr *= (1.0 - POLISH_LIMBAL * np.clip((rr - POLISH_LIMBAL_START) / (1.0 - POLISH_LIMBAL_START), 0, 1) ** 1.8)[..., None]
+    # 3. rim light: a thin accent highlight on the limbus, strongest towards the upper left, so the iris
+    #    sits inside the scene instead of being pasted on top of it
+    ang = np.arctan2(jy - Sd / 2, jx - Sd / 2)
+    rim = np.exp(-((rr - 0.93) / 0.06) ** 2) * (0.55 + 0.45 * np.cos(ang + 2.4))
+    arr = np.clip(arr + acc * rim[..., None] * POLISH_RIM, 0, 255)
+    alpha = disk_alpha(Sd, R * 1.02, POLISH_EDGE_FEATHER)
     cx, cy = size // 2, int(size * 0.455)
     # soft accent glow behind the iris
     yy, xx = np.mgrid[0:size, 0:size]
-    dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / (r_frac * Sd)
+    dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / R
     glow = np.clip(1.6 - dist, 0, 1) ** 2 * 0.45
-    acc = np.array(st["accent"], dtype=np.float32)
     canvas = canvas * (1 - glow[..., None] * 0.55) + acc * glow[..., None] * 0.55
     x0, y0 = cx - Sd // 2, cy - Sd // 2
     region = canvas[y0:y0 + Sd, x0:x0 + Sd]
-    canvas[y0:y0 + Sd, x0:x0 + Sd] = region * (1 - alpha[..., None]) + np.asarray(ir).astype(np.float32) * alpha[..., None]
+    canvas[y0:y0 + Sd, x0:x0 + Sd] = region * (1 - alpha[..., None]) + arr * alpha[..., None]
     out = Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
     d = ImageDraw.Draw(out)
     t = (title or st["title"]).upper()
@@ -340,11 +458,16 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     return out
 
 # ----------------------------------------------------------------------------- storage (Vercel Blob REST; silently skipped when not configured)
+def safe_segment(v, n=40):
+    """A caller-controlled string never reaches a storage path unfiltered."""
+    return re.sub(r"[^A-Za-z0-9_-]", "", str(v or ""))[:n] or "anon"
+
 def store(pathname, data, content_type):
     token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
     if not token: return None
+    if time_left(99) < 6: return None   # a slow blob write must never kill a function that already paid for a generation
     try:
-        r = requests.put(f"https://blob.vercel-storage.com/{pathname}", data=data, timeout=30,
+        r = requests.put(f"https://blob.vercel-storage.com/{pathname}", data=data, timeout=6,
                          headers={"authorization": f"Bearer {token}", "x-api-version": "7", "x-content-type": content_type,
                                   "x-add-random-suffix": "0", "x-cache-control-max-age": "31536000"})
         if r.status_code in (200, 201): return r.json().get("url")

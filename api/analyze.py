@@ -16,7 +16,14 @@ def analyze(body):
     v = L.gemini_json(L.VISION_MODEL, L.PROMPT_VISION, im)
     if not v or v.get("found") is False or "iris_box" not in v:
         return {"ok": False, "reason": "no_eye", "message": "We could not find an eye in this photo. Fill the frame with one open eye and try again."}
-    x1, y1, x2, y2 = v["iris_box"]
+    box = v.get("iris_box")
+    ok_box = (isinstance(box, (list, tuple)) and len(box) == 4
+              and all(isinstance(c, (int, float)) and c == c and abs(c) < 1e6 for c in box)
+              and box[2] > box[0] and box[3] > box[1])
+    if not ok_box:
+        return {"ok": False, "reason": "no_eye",
+                "message": "We could not find an eye in this photo. Fill the frame with one open eye and try again."}
+    x1, y1, x2, y2 = box
     bx = [x1 * W / 1000, y1 * H / 1000, x2 * W / 1000, y2 * H / 1000]
     cx, cy = (bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2
     r0 = ((bx[2] - bx[0]) + (bx[3] - bx[1])) / 4
@@ -49,7 +56,10 @@ def analyze(body):
             boxes.append([(gx1 * W / 1000 - ox) / Sc, (gy1 * H / 1000 - oy) / Sc, (gx2 * W / 1000 - ox) / Sc, (gy2 * H / 1000 - oy) / Sc])
         except Exception:
             pass
-    return {"ok": True, "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
+    # a short-lived signed ticket: the paid endpoints refuse work without one, so a bare scripted loop
+    # has to come through this (cheap) endpoint first instead of hitting the image model directly
+    return {"ok": True, "ticket": L.mint_ticket("work"),
+            "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "sharpness_label": label, "occlusion_pct": occl,
                         "glare": bool(v.get("glare_boxes")), "verdict": verdict, "message": msg, "tips": tips},
             "preview": L.pil_to_b64(crop.resize((320, 320), Image.LANCZOS), "JPEG", 85)}

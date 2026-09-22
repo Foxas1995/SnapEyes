@@ -8,6 +8,8 @@ from PIL import Image
 from _lib import iris as L
 
 def deglare(body):
+    if not L.check_ticket(body.get("ticket")):
+        raise PermissionError("expired_or_missing_ticket")
     crop = L.b64_to_pil(body["crop"])
     if crop.size[0] != crop.size[1]:
         s = min(crop.size); crop = crop.crop((0, 0, s, s))

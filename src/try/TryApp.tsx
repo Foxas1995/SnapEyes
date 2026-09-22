@@ -9,6 +9,7 @@ interface Analysis {
   ok: boolean;
   reason?: string;
   message?: string;
+  ticket?: string;
   iris?: { cx: number; cy: number; r: number };
   pad?: number;
   glare_boxes_crop?: number[][];
@@ -30,8 +31,21 @@ const STYLES: Array<{ id: string; name: string; thumb: string }> = [
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 async function post<T>(path: string, body: unknown): Promise<T> {
-  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const j = await r.json();
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  });
+  // Vercel answers a timeout or an oversized body with text/plain, so read text first and never let
+  // JSON.parse throw the real status away
+  const raw = await r.text();
+  let j: any = null;
+  try { j = JSON.parse(raw); } catch { /* platform error, not ours */ }
+  if (!j) {
+    if (r.status === 413) throw new Error('That photo is too large. Try again with a normal camera photo.');
+    if (r.status === 504 || /TIMEOUT/i.test(raw)) throw new Error('That took too long on our side. Please try again.');
+    throw new Error('The studio is not responding right now. Please try again in a moment.');
+  }
   if (!r.ok || j.ok === false) throw new Error(j.error || j.message || `Request failed (${r.status})`);
   return j as T;
 }
@@ -59,7 +73,8 @@ function stripDataUrl(s: string) { return s.includes(',') ? s.split(',')[1] : s;
 export const TryApp: React.FC = () => {
   const [step, setStep] = useState<Step>('capture');
   const [error, setError] = useState<string | null>(null);
-  const [consent, setConsent] = useState(true);
+  const [consent, setConsent] = useState(false);
+  const [storageOn, setStorageOn] = useState(false);
   const [session] = useState(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
   const [origUrl, setOrigUrl] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -78,6 +93,16 @@ export const TryApp: React.FC = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+
+  // only offer the training-memory checkbox when this deployment can really store something
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/health')
+      .then((r) => r.json())
+      .then((h) => { if (alive) setStorageOn(!!h.blob_store); })
+      .catch(() => { /* health is optional */ });
+    return () => { alive = false; };
+  }, []);
 
   // elapsed timer while the engine works
   useEffect(() => {
@@ -125,17 +150,22 @@ export const TryApp: React.FC = () => {
     setClientCrop(crop);
     try {
       setProgress((p) => [...p, 'Removing reflections']);
-      const d = await post<{ crop: string; glare_pct: number; changed: boolean; used_sr: boolean }>('/api/deglare', { crop: stripDataUrl(crop), pad, glare_boxes: a.glare_boxes_crop || [] });
+      const d = await post<{ crop: string; glare_pct: number; changed: boolean; used_sr: boolean }>('/api/deglare', { crop: stripDataUrl(crop), pad, ticket: a.ticket, glare_boxes: a.glare_boxes_crop || [] });
       const clean = `data:image/jpeg;base64,${d.crop}`; setCleanCrop(clean); setGlarePct(d.glare_pct);
       setProgress((p) => [...p, 'Restoring fibres faithfully (about 30 s)']);
-      const e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'faithful', pad, session, consent, used_sr: d.used_sr, meta: a.quality });
+      const e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'faithful', pad, ticket: a.ticket, session, consent, used_sr: d.used_sr, meta: a.quality });
       setResults({ faithful: e });
       setProgress((p) => [...p, 'Composing your artwork']);
-      const c = await post<{ image: string }>('/api/compose', { iris: e.image, style, names, watermark: true, pad });
-      setArtCache({ [`faithful:${style}:${names}`]: `data:image/jpeg;base64,${c.image}` });
+      // the restoration is paid for by this point: a free composition failure must never send the user
+      // back to a screen whose only button buys it again
+      try {
+        const c = await post<{ image: string }>('/api/compose', { iris: e.image, style, names, pad });
+        setArtCache({ [`faithful:${style}:${names}`]: `data:image/jpeg;base64,${c.image}` });
+      } catch { /* the effect below retries as soon as the user touches a style or a name */ }
       setStep('result');
     } catch (err) {
-      setError((err as Error).message); setStep('quality');
+      setError((err as Error).message);
+      setStep(results.faithful ? 'result' : 'quality');
     }
   };
 
@@ -143,9 +173,9 @@ export const TryApp: React.FC = () => {
     if (results.artistic || !cleanCrop || !analysis) return;
     setComposing(true);
     try {
-      const e = await post<Enhanced>('/api/enhance', { crop: stripDataUrl(cleanCrop), mode: 'artistic', pad: analysis.pad, session, consent, meta: analysis.quality });
+      const e = await post<Enhanced>('/api/enhance', { crop: stripDataUrl(cleanCrop), mode: 'artistic', pad: analysis.pad, ticket: analysis.ticket, session, consent, used_sr: true, meta: analysis.quality });
       setResults((r) => ({ ...r, artistic: e }));
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) { setError((err as Error).message); setMode('faithful'); }
     setComposing(false);
   };
 
@@ -160,7 +190,7 @@ export const TryApp: React.FC = () => {
     const t = setTimeout(async () => {
       setComposing(true);
       try {
-        const c = await post<{ image: string }>('/api/compose', { iris: res.image, style, names, watermark: true, pad: analysis?.pad });
+        const c = await post<{ image: string }>('/api/compose', { iris: res.image, style, names, pad: analysis?.pad });
         if (!cancelled) setArtCache((a) => ({ ...a, [key]: `data:image/jpeg;base64,${c.image}` }));
       } catch (err) { if (!cancelled) setError((err as Error).message); }
       if (!cancelled) setComposing(false);
@@ -169,6 +199,9 @@ export const TryApp: React.FC = () => {
   }, [step, mode, style, names, results, artCache, analysis]);
 
   const current = results[mode];
+  // while the artistic version is still generating (or if it failed) keep showing the faithful one,
+  // so the toggle, the style picker and the reset button never disappear from under the user
+  const shown = current ?? results.faithful ?? results.artistic!;
   const artKey = `${mode}:${style}:${names}`;
   const artwork = artCache[artKey];
 
@@ -226,10 +259,12 @@ export const TryApp: React.FC = () => {
               </button>
             )}
 
+            {storageOn && (
             <label className="flex items-start gap-3 text-xs text-zinc-400 bg-white/5 border border-white/5 rounded-xl p-3 cursor-pointer">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 w-4 h-4" />
               <span>Save my eye photo and result to SnapEyes' training memory so restorations get better over time. Anonymous, no name or face. You can ask us to delete it any time.</span>
             </label>
+            )}
           </section>
         )}
 
@@ -263,15 +298,15 @@ export const TryApp: React.FC = () => {
           <Working title="Restoring your iris…" lines={progress} elapsed={elapsed} image={clientCrop} />
         )}
 
-        {step === 'result' && current && (
+        {step === 'result' && (results.faithful || results.artistic) && (
           <section className="flex flex-col gap-6">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-luxury text-xl font-bold">Before / after</h2>
-                <FidelityBadge res={current} mode={mode} />
+                <FidelityBadge res={shown} mode={results[mode] ? mode : 'faithful'} />
               </div>
-              <CompareSlider before={clientCrop || cleanCrop || ''} after={`data:image/jpeg;base64,${current.image}`} beforeLabel="Your photo" afterLabel={mode === 'faithful' ? 'Restored' : 'Artistic'} />
-              <p className="text-[11px] text-zinc-500 mt-2">Drag the handle. {analysis?.quality ? `Iris in your photo: ${analysis.quality.diameter_px}px.` : ''} {glarePct >= 0.4 ? 'Reflection removed.' : ''} {current.used_sr ? 'Small photo: faithful upscale applied before restoration.' : ''}</p>
+              <CompareSlider before={clientCrop || cleanCrop || ''} after={`data:image/jpeg;base64,${shown.image}`} beforeLabel="Your photo" afterLabel={results[mode] ? (mode === 'faithful' ? 'Restored' : 'Artistic') : 'Restored'} />
+              <p className="text-[11px] text-zinc-500 mt-2">Drag the handle. {analysis?.quality ? `Iris in your photo: ${analysis.quality.diameter_px}px.` : ''} {glarePct >= 0.4 ? 'Reflection removed.' : ''} {shown.used_sr ? 'Small photo: faithful upscale applied before restoration.' : ''}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-2 bg-white/5 border border-white/10 rounded-xl p-1">
@@ -282,7 +317,7 @@ export const TryApp: React.FC = () => {
               <p className="text-xs text-zinc-400 flex items-center gap-2"><span className="w-3 h-3 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" /> Generating the artistic version (about 15 s)…</p>
             )}
 
-            {current && (
+            {shown && (
               <div>
                 <h2 className="font-luxury text-xl font-bold mb-2">Your artwork</h2>
                 <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-white/10 bg-black">
@@ -302,7 +337,7 @@ export const TryApp: React.FC = () => {
                   <a href={artwork || '#'} download={`snapeyes-${style}.jpg`} className={`py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 ${artwork ? 'bg-[#f5c542] text-black' : 'bg-white/5 text-zinc-500 pointer-events-none'}`}><Download className="w-4 h-4" /> Save preview</a>
                   <button onClick={reset} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2"><RefreshCcw className="w-4 h-4" /> Another photo</button>
                 </div>
-                {current.stored && <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1"><Check className="w-3 h-3" /> Saved to training memory</p>}
+                {shown.stored && <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1"><Check className="w-3 h-3" /> Saved to training memory</p>}
               </div>
             )}
           </section>

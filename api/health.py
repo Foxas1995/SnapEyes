@@ -6,7 +6,8 @@ from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 
 def handle(req):
-    info = {"ok": True, "gemini_key": bool(os.environ.get("GEMINI_API_KEY", "").strip()),
+    info = {"ok": True, "commit": os.environ.get("VERCEL_GIT_COMMIT_SHA", "")[:7],
+            "gemini_key": bool(os.environ.get("GEMINI_API_KEY", "").strip()),
             "blob_store": bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()),
             "vision_model": L.VISION_MODEL, "image_model": L.IMAGE_MODEL,
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx")),

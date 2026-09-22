@@ -10,9 +10,15 @@ from _lib import iris as L
 
 def enhance(body):
     t0 = time.time()
+    if not L.check_ticket(body.get("ticket")):
+        raise PermissionError("expired_or_missing_ticket")
     crop = L.b64_to_pil(body["crop"])
     s = min(crop.size); crop = crop.crop((0, 0, s, s))
-    mode = body.get("mode") or "faithful"
+    if s < 48: raise ValueError("crop too small")
+    if s > L.WORK:                      # mask and model both work at WORK; do not allocate more than that
+        crop = crop.resize((L.WORK, L.WORK), Image.LANCZOS); s = L.WORK
+    mode = body.get("mode")
+    if mode not in ("faithful", "artistic"): mode = "faithful"
     pad = float(body.get("pad") or 1.12)
     r_frac = L.iris_radius_frac(pad)
     crop = L.mask_disk(crop, pad)
@@ -34,7 +40,7 @@ def enhance(body):
            "fallback": fallback, "seconds": round(time.time() - t0, 1)}
     # optional training memory (only with consent and when storage is configured)
     if body.get("consent") and body.get("session"):
-        sid = str(body["session"])[:40]
+        sid = L.safe_segment(body["session"])
         meta = {"session": sid, "mode": mode, "fidelity": res["fidelity"], "used_sr": used_sr, "fallback": fallback,
                 "input_px": s, "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "meta": body.get("meta") or {}}
         u1 = L.store(f"eyes/{sid}/crop_{s}px.jpg", L.pil_bytes(L.b64_to_pil(body["crop"]), "JPEG", 95), "image/jpeg")

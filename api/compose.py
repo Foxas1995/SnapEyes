@@ -11,8 +11,11 @@ def compose(body):
     s = min(im.size); im = im.crop((0, 0, s, s))
     style = body.get("style") or "celestial_gold"
     if style not in L.STYLES: style = "celestial_gold"
+    # the watermark is the only thing separating a preview from the product, so the caller does not get to
+    # turn it off: only a server-signed unlock ticket can, and nothing mints one yet
+    clean = L.check_ticket(body.get("unlock"), kind="unlock")
     out = L.compose(im, style=style, title=(body.get("title") or "")[:40] or None, names=(body.get("names") or "")[:60],
-                    watermark=bool(body.get("watermark", True)), r_frac=L.iris_radius_frac(float(body.get("pad") or 1.12)))
+                    watermark=not clean, r_frac=L.iris_radius_frac(float(body.get("pad") or 1.12)))
     return {"ok": True, "style": style, "image": L.pil_to_b64(out, "JPEG", 90), "styles": list(L.STYLES.keys())}
 
 def handle(req): L.run(req, compose)
