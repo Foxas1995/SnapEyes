@@ -29,7 +29,10 @@ const STYLES: Array<{ id: string; name: string; thumb: string }> = [
   { id: 'studio_black', name: 'Studio Black', thumb: '/assets/style_thumb_studio_black.jpg' },
 ];
 
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// A user-agent test was hiding the live camera from every iPhone. WebKit has shipped zoom and torch for a
+// while and ImageCapture landed in Safari 18.4, so ask the device instead of guessing from its name.
+const hasCameraApi = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+const hasStillCapture = typeof window !== 'undefined' && 'ImageCapture' in window;
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const r = await fetch(path, {
@@ -244,7 +247,7 @@ export const TryApp: React.FC = () => {
                 <Upload className="w-4 h-4 text-[#f5c542]" /> From gallery
               </button>
               <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-              {!isIOS && 'mediaDevices' in navigator ? (
+              {hasCameraApi ? (
                 <button onClick={() => setLiveOpen(true)} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                   <Video className="w-4 h-4 text-emerald-400" /> Live camera + zoom
                 </button>
@@ -254,7 +257,7 @@ export const TryApp: React.FC = () => {
                 </button>
               )}
             </div>
-            {!isIOS && 'mediaDevices' in navigator && (
+            {hasCameraApi && (
               <button onClick={async () => { const r = await fetch('/assets/sample_eye_blue_1789706902835.jpg'); onFile(await r.blob()); }} className="text-xs text-zinc-400 underline underline-offset-4 self-center">
                 or try with a sample eye
               </button>
@@ -437,8 +440,8 @@ const LiveCamera: React.FC<{ onClose: () => void; onCapture: (b: Blob) => void }
       <div className="relative flex-1 overflow-hidden">
         <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div className="w-[46%] aspect-square rounded-full border-2 border-[#f5c542]/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)] flex items-end justify-center pb-2">
-            <span className="text-[10px] font-mono bg-black/70 px-2 py-0.5 rounded text-white/80">fit your iris here</span>
+          <div className="w-[17%] aspect-square rounded-full border-2 border-[#f5c542] shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] flex items-end justify-center">
+            <span className="absolute top-[58%] text-[10px] font-mono bg-black/75 px-2 py-0.5 rounded text-white/90 whitespace-nowrap">iris fills this circle · 12-15 cm · 2x</span>
           </div>
         </div>
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-xs">
@@ -454,6 +457,11 @@ const LiveCamera: React.FC<{ onClose: () => void; onCapture: (b: Blob) => void }
           </label>
         ) : (
           <p className="text-[11px] text-zinc-500">This browser does not expose camera zoom. Use "Take a photo" and pinch to 2x in your camera app instead.</p>
+        )}
+        {!hasStillCapture && (
+          // without ImageCapture we can only grab a video frame, and a video frame of this framing is about
+          // 250px of iris: below our own 300px floor, so it would fail the quality gate anyway
+          <p className="text-[11px] text-amber-300/80">This browser can only grab a low-resolution frame here. For a sharp result use "Take a photo" instead, which opens the real camera.</p>
         )}
         <button onClick={capture} className="w-full py-4 rounded-2xl bg-[#f5c542] text-black font-luxury font-bold uppercase tracking-widest text-sm">Capture</button>
       </div>

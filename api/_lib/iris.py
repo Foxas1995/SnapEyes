@@ -26,7 +26,9 @@ POLISH_EDGE_FEATHER = 0.16   # how softly the disk dissolves into the background
 # studio grade: the fine-art iris look - the iris fills the frame, pure black outside the limbus,
 # sculpted local contrast. This is what a macro studio does in post, and none of it needs a model.
 STUDIO_FILL = 0.94           # how much of the frame the iris disk occupies
-STUDIO_LOCAL = 1.20          # local contrast (large-radius unsharp): sculpts the fibre relief
+STUDIO_LOCAL = 0.30          # local contrast (large-radius unsharp): sculpts the fibre relief.
+                             # Measured against eleven professional prints, 1.20 ran 2.0-2.6x their
+                             # angular contrast and burned 7% of the iris to the rails.
 STUDIO_MICRO = 0.75          # micro contrast (small-radius unsharp): separates individual fibres
 STUDIO_SAT = 0.18            # colour depth. The sculpting runs on luminance, so this number is the only
                              # thing that moves colour: 0.18 lands about 7% above the source, which reads
@@ -471,6 +473,24 @@ def _font(name, size, weight=None):
         except Exception: pass
     return f
 
+def soft_shoulders(arr, toe=18.0, shoulder=208.0, lo=2.0, hi=253.0):
+    """Roll the tails off instead of clipping them.
+
+    Sculpting pushes some fibres past the rails, and a clipped fibre is not contrast, it is destroyed detail.
+    Measured in the true iris ring, the shipping grade clipped 7.1% of it; eleven professional prints clip
+    0.00-0.03%. This maps everything above the shoulder and below the toe asymptotically towards the limits,
+    so nothing ever lands on them and the midtones are untouched."""
+    out = arr.copy()
+    hiM = arr > shoulder
+    if hiM.any():
+        span = max(hi - shoulder, 1e-3)
+        out[hiM] = shoulder + span * (1.0 - np.exp(-(arr[hiM] - shoulder) / span))
+    loM = arr < toe
+    if loM.any():
+        span = max(toe - lo, 1e-3)
+        out[loM] = toe - span * (1.0 - np.exp(-(toe - arr[loM]) / span))
+    return out
+
 def chroma_lock(ai, src, blur=1.6, amount=1.0):
     """Keep the structure the model restored, put the client's real colour back.
 
@@ -530,9 +550,9 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     lum = (arr * W_LUM).sum(axis=2, keepdims=True)
     big = (np.asarray(base.filter(ImageFilter.GaussianBlur(max(2.0, S * 0.045)))).astype(np.float32) * W_LUM).sum(axis=2, keepdims=True)
     sml = (np.asarray(base.filter(ImageFilter.GaussianBlur(max(1.0, S * 0.004)))).astype(np.float32) * W_LUM).sum(axis=2, keepdims=True)
-    sculpted = lum + (lum - big) * local + (lum - sml) * micro
+    sculpted = soft_shoulders(lum + (lum - big) * local + (lum - sml) * micro)
     ratio = sculpted / np.maximum(lum, 1.0)          # keep the colour ratios of every pixel intact
-    arr = arr * ratio
+    arr = soft_shoulders(arr * ratio)
 
     # 3. colour depth, on its own knob, so the number means what it says
     grey = (arr * W_LUM).sum(axis=2, keepdims=True)
@@ -597,7 +617,7 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
         ft = _font("Cinzel.ttf", int(size * 0.042), "Bold"); fn = _font("PlusJakartaSans.ttf", int(size * 0.026), "Regular"); fs = _font("PlusJakartaSans.ttf", int(size * 0.014), "Medium")
         d.text((size / 2, size * 0.86), t, font=ft, fill=st["accent"], anchor="mm")
         if names: d.text((size / 2, size * 0.905), names, font=fn, fill=(240, 243, 250), anchor="mm")
-        d.text((size / 2, size * 0.945), "SNAPEYES MASTER ART  ·  300 DPI ARCHIVAL EDITION", font=fs, fill=(150, 155, 170), anchor="mm")
+        d.text((size / 2, size * 0.945), "SNAPEYES  ·  FINE ART IRIS PRINT", font=fs, fill=(150, 155, 170), anchor="mm")
     if watermark:
         layer = Image.new("RGBA", (size * 2, size * 2), (0, 0, 0, 0)); ld = ImageDraw.Draw(layer)
         fw = _font("PlusJakartaSans.ttf", int(size * 0.036), "Bold")
@@ -608,7 +628,7 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
         out = Image.alpha_composite(out.convert("RGBA"), layer).convert("RGB")
         d = ImageDraw.Draw(out); fp = _font("PlusJakartaSans.ttf", int(size * 0.016), "Bold")
         d.rounded_rectangle((size * 0.36, size * 0.03, size * 0.64, size * 0.07), radius=int(size * 0.02), fill=(0, 0, 0, 200), outline=st["accent"])
-        d.text((size / 2, size * 0.05), "WATERMARKED PREVIEW  ·  UNLOCK 4K", font=fp, fill=st["accent"], anchor="mm")
+        d.text((size / 2, size * 0.05), "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE", font=fp, fill=st["accent"], anchor="mm")
     return out
 
 # ----------------------------------------------------------------------------- storage (Vercel Blob REST; silently skipped when not configured)
