@@ -8,4 +8,18 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        try: 'try.html',
+      },
+    },
+  },
+  server: {
+    proxy: {
+      // local Python stand-in for the Vercel functions: python scripts/dev_api.py
+      '/api': 'http://localhost:5050',
+    },
+  },
 })

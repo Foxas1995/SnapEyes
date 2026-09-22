@@ -46,15 +46,15 @@ export const Header: React.FC = () => {
           <a href="#how-it-works" className="hover:text-[#f5c542] transition-colors">Photo Guide</a>
           <a href="#wall-gallery" className="hover:text-[#f5c542] transition-colors">Wall Gallery</a>
           <a href="#comparison" className="hover:text-[#f5c542] transition-colors">Why Us</a>
-          <a href="#studio" className="hover:text-amber-300 flex items-center gap-1 transition-colors text-amber-400">
-            <span>🐾 Pet Edition</span>
+          <a href="/try" className="hover:text-amber-300 flex items-center gap-1 transition-colors text-amber-400">
+            <span>Real Studio · Beta</span>
           </a>
         </nav>
 
         {/* Right Action */}
         <div className="flex items-center gap-3">
           <a
-            href="#studio"
+            href="/try"
             className="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-[#f5c542] via-[#e5b73b] to-[#c99a2e] text-black font-extrabold text-xs uppercase tracking-wider px-5 py-2.5 rounded-full shadow-[0_0_20px_rgba(245,197,66,0.25)] hover:shadow-[0_0_30px_rgba(245,197,66,0.5)] hover:scale-105 active:scale-95 transition-all"
           >
             <Sparkles className="w-3.5 h-3.5 fill-current" />
@@ -110,7 +110,7 @@ export const Header: React.FC = () => {
             SnapEyes vs Competitors
           </a>
           <a
-            href="#studio"
+            href="/try"
             onClick={() => setMobileMenuOpen(false)}
             className="mt-2 bg-[#f5c542] text-black text-center py-3 rounded-xl font-bold uppercase tracking-wider text-xs"
           >
