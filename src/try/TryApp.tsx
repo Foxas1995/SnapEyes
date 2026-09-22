@@ -3,7 +3,7 @@ import { Camera, Upload, Sparkles, RefreshCcw, Download, Video, Check, AlertTria
 import { CompareSlider } from './CompareSlider';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
-type Mode = 'faithful' | 'artistic';
+type Mode = 'artistic';   // the conservative restoration was dropped; studio macro is the product
 
 interface Analysis {
   ok: boolean;
@@ -229,8 +229,6 @@ export const TryApp: React.FC = () => {
   }, [step, mode, style, names, results, artCache, analysis]);
 
   const current = results[mode];
-  // while the artistic version is still generating (or if it failed) keep showing the faithful one,
-  // so the toggle, the style picker and the reset button never disappear from under the user
   const shown = current ?? results.artistic!;
   const artKey = `${mode}:${style}:${names}`;
   const artwork = artCache[artKey];
@@ -343,7 +341,7 @@ export const TryApp: React.FC = () => {
                 <FidelityBadge res={shown} mode={mode} />
               </div>
               <CompareSlider before={clientCrop || cleanCrop || ''} after={`data:image/jpeg;base64,${shown.image}`} beforeLabel="Your photo" afterLabel="Studio macro" />
-              <p className="text-[11px] text-zinc-500 mt-2">Drag the handle. {analysis?.quality ? `Iris in your photo: ${analysis.quality.diameter_px}px.` : ''} {glarePct >= 0.4 ? 'Reflection removed.' : ''} {shown.used_sr ? 'Small photo: faithful upscale applied before restoration.' : ''}</p>
+              <p className="text-[11px] text-zinc-500 mt-2">Drag the handle. {analysis?.quality ? `Iris in your photo: ${analysis.quality.diameter_px}px.` : ''} {glarePct >= 0.4 ? 'Reflection removed.' : ''} {shown.used_sr ? 'Small photo: upscaled before restoration.' : ''}</p>
             </div>
 
             {shown && (

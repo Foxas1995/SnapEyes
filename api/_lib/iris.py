@@ -391,16 +391,73 @@ def glare_mask(crop, r_px, extra_boxes=None):
     pct = 100.0 * float((hard > 0).sum()) / area
     return hard, feather, pct
 
+ROTATION_DONORS = (24, -24, 48, -48, 78, -78, 110, -110)
+
+def _box1(a, r, ax):
+    """Running mean of width 2r+1 along one axis, reflect-padded, via a cumulative sum."""
+    n = a.shape[ax]
+    r = int(min(r, max(n - 1, 1)))
+    lo = np.take(a, np.arange(r - 1, -1, -1), axis=ax)
+    hi = np.take(a, np.arange(n - 1, n - r - 1, -1), axis=ax)
+    b = np.concatenate([lo, a, hi], axis=ax)
+    cs = np.cumsum(b, axis=ax, dtype=np.float64)
+    cs = np.concatenate([np.zeros_like(np.take(cs, [0], axis=ax)), cs], axis=ax)
+    top = np.take(cs, np.arange(2 * r + 1, 2 * r + 1 + n), axis=ax)
+    bot = np.take(cs, np.arange(0, n), axis=ax)
+    return ((top - bot) / (2 * r + 1)).astype(np.float32)
+
+
+def _blur_f(plane, rad):
+    """Gaussian-equivalent blur that stays in floating point. PIL cannot blur a float plane, and a weight map
+    quantised to 256 steps divides badly, so three box passes stand in for the Gaussian."""
+    a = plane.astype(np.float32)
+    r = max(1, int(round(rad)))
+    for _ in range(3):
+        a = _box1(_box1(a, r, 0), r, 1)
+    return a
+
+
 def mirror_prefill(crop, feather):
-    """Replace the masked area with the point-mirrored iris (through the pupil centre) so the reflection is already
-    gone before the image model refines the seam. Radial iris texture is roughly point-symmetric at low frequencies."""
+    """Fill the reflection from the same radius at a nearby angle.
+
+    An iris is organised radially: brightness, colour and pigment change with distance from the pupil and stay
+    comparatively steady around it. The earlier version donated from the point-mirrored side - same radius, opposite
+    angle - so an eye with a darker sector across from the highlight got that darkness stamped exactly where the
+    highlight had been. Rotating about the pupil centre keeps the radius exact while staying near in angle, and
+    several offsets are averaged so a donor that is itself under glare simply does not vote."""
     arr = np.asarray(crop).astype(np.float32)
-    mirror = arr[::-1, ::-1]
-    a = feather[..., None]
-    a_m = feather[::-1, ::-1][..., None]
-    # where the mirrored source is itself masked, fall back to a heavily blurred version of the iris
-    blur = np.asarray(crop.filter(ImageFilter.GaussianBlur(crop.size[0] * 0.03))).astype(np.float32)
-    src = mirror * (1 - a_m) + blur * a_m
+    S = crop.size[0]
+    a = np.clip(feather, 0.0, 1.0)[..., None]
+    m_img = Image.fromarray((np.clip(feather, 0, 1) * 255).astype(np.uint8))
+    ones = Image.fromarray(np.full((S, S), 255, np.uint8))
+
+    cands, weights = [], []
+    for deg in ROTATION_DONORS:
+        rot = np.asarray(crop.rotate(deg, resample=Image.BICUBIC)).astype(np.float32)
+        rot_m = np.asarray(m_img.rotate(deg, resample=Image.BICUBIC)).astype(np.float32) / 255.0
+        # rotation swings the frame corners in; those pixels are not iris and must not donate
+        inside = np.asarray(ones.rotate(deg, resample=Image.BICUBIC)).astype(np.float32) / 255.0
+        cands.append(rot)
+        weights.append(np.clip(inside, 0, 1) * (1.0 - np.clip(rot_m, 0, 1)))
+    C = np.stack(cands, 0)
+    W = np.stack(weights, 0)[..., None]
+
+    tot = W.sum(0)
+    src = (C * W).sum(0) / np.maximum(tot, 1e-3)
+    blur = np.asarray(crop.filter(ImageFilter.GaussianBlur(S * 0.03))).astype(np.float32)
+    src = np.where(tot < 0.35, blur, src)          # nowhere clean to borrow from
+
+    # Match the donor to the local tone of the ring it lands in. The reference has to be measured from the
+    # glare-free pixels only: blurring the original would fold the reflection's own brightness into the target
+    # and pull the fill towards the very highlight being removed.
+    rad = S * 0.05
+    w = np.clip(1.0 - np.clip(feather, 0, 1), 0.0, 1.0)
+    wb = _blur_f(w, rad)
+    ok = wb > 0.02
+    base_lo = np.stack([np.where(ok, _blur_f(arr[..., c] * w, rad) / np.maximum(wb, 1e-3),
+                                 _blur_f(src[..., c], rad)) for c in range(3)], -1)
+    src_lo = np.stack([_blur_f(src[..., c], rad) for c in range(3)], -1)
+    src = src + (base_lo - src_lo)
     return Image.fromarray(np.clip(arr * (1 - a) + src * a, 0, 255).astype(np.uint8))
 
 def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22):
@@ -534,9 +591,15 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     A studio print does neither: the iris is the whole picture. Everything here is arithmetic on the pixels the
     camera captured, so it deepens what is real instead of inventing what is not."""
     fill = STUDIO_FILL if fill is None else fill
+    # the studio macro render already arrives razor sharp. Sharpening it again is what produced the
+    # speckled dark pixels the owner spotted, so the sculpting is scaled down by how much fibre detail
+    # the input already carries: none of it at professional levels, all of it on a soft crop.
+    if local is None or micro is None:
+        have = fibre_detail(im, r_frac)
+        ease = float(np.clip((9.0 - have) / 6.0, 0.0, 1.0))
+        local = STUDIO_LOCAL * ease if local is None else local
+        micro = STUDIO_MICRO * ease if micro is None else micro
     trim = STUDIO_TRIM if trim is None else trim
-    local = STUDIO_LOCAL if local is None else local
-    micro = STUDIO_MICRO if micro is None else micro
     sat = STUDIO_SAT if sat is None else sat
     sclera = STUDIO_SCLERA if sclera is None else sclera
 

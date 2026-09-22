@@ -97,9 +97,11 @@ def analyze(body):
     if not locked:
         tips.insert(0, "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
                        "little space around it, and keep the eyelid out of the way.")
-    msg = {"good": "Great capture. Real fibres are visible, we can restore them faithfully.",
-           "ok": "Usable, but a closer or sharper shot would keep more of your real fibres.",
-           "weak": "Too small or blurry for a faithful restoration. We can still make it beautiful, but the fibres will be interpreted."}[verdict]
+    # There is one mode now, so these say how much of the print will be the customer's own fibre detail
+    # rather than which of two modes to pick. Still honest, without the word "interpreted" doing the scaring.
+    msg = {"good": "Great capture. Your own fibres are sharp enough to carry the print at full size.",
+           "ok": "This will make a beautiful print. A closer or steadier shot would keep more of your own fibre detail.",
+           "weak": "Small or soft, so more of the fine detail gets rebuilt. Closer and steadier gives a truer print."}[verdict]
     if not locked:
         msg = "We found an eye but could not lock onto the iris edge, so the crop would be off. Please take another photo."
     boxes = []
