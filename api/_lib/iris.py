@@ -28,7 +28,9 @@ POLISH_EDGE_FEATHER = 0.16   # how softly the disk dissolves into the background
 STUDIO_FILL = 0.94           # how much of the frame the iris disk occupies
 STUDIO_LOCAL = 1.20          # local contrast (large-radius unsharp): sculpts the fibre relief
 STUDIO_MICRO = 0.75          # micro contrast (small-radius unsharp): separates individual fibres
-STUDIO_SAT = 0.42            # colour depth
+STUDIO_SAT = 0.18            # colour depth. The sculpting runs on luminance, so this number is the only
+                             # thing that moves colour: 0.18 lands about 7% above the source, which reads
+                             # as depth rather than as a filter.
 STUDIO_SCLERA = 0.85         # how hard the pale sclera / eyelid is pushed out of the outer rim
 STUDIO_TRIM = 0.92           # cut just inside the detected limbus: that last sliver is where lids and lashes live
 
@@ -500,14 +502,20 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
             k = np.clip((lum - iris_lum * 1.10) / max(iris_lum * 0.5, 1.0), 0, 1) * sclera
             arr = arr * (1 - (pale * k)[..., None])
 
-    # 2. sculpt: large-radius unsharp gives the fibres relief, small-radius separates them
+    # 2. sculpt: large-radius unsharp gives the fibres relief, small-radius separates them. This runs on
+    #    luminance alone - applied per channel it would pull the channels apart and quietly saturate the
+    #    whole iris, which is not enhancement, it is a colour cast.
     base = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
-    big = np.asarray(base.filter(ImageFilter.GaussianBlur(max(2.0, S * 0.045)))).astype(np.float32)
-    sml = np.asarray(base.filter(ImageFilter.GaussianBlur(max(1.0, S * 0.004)))).astype(np.float32)
-    arr = arr + (arr - big) * local + (arr - sml) * micro
+    W_LUM = np.array([0.299, 0.587, 0.114], dtype=np.float32)
+    lum = (arr * W_LUM).sum(axis=2, keepdims=True)
+    big = (np.asarray(base.filter(ImageFilter.GaussianBlur(max(2.0, S * 0.045)))).astype(np.float32) * W_LUM).sum(axis=2, keepdims=True)
+    sml = (np.asarray(base.filter(ImageFilter.GaussianBlur(max(1.0, S * 0.004)))).astype(np.float32) * W_LUM).sum(axis=2, keepdims=True)
+    sculpted = lum + (lum - big) * local + (lum - sml) * micro
+    ratio = sculpted / np.maximum(lum, 1.0)          # keep the colour ratios of every pixel intact
+    arr = arr * ratio
 
-    # 3. colour depth, without shifting hue
-    grey = arr.mean(axis=2, keepdims=True)
+    # 3. colour depth, on its own knob, so the number means what it says
+    grey = (arr * W_LUM).sum(axis=2, keepdims=True)
     arr = grey + (arr - grey) * (1.0 + sat)
 
     # 4. limbus-tight framing: scale the disk so it fills the requested share of the frame
