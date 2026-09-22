@@ -10,6 +10,7 @@ interface Analysis {
   reason?: string;
   message?: string;
   ticket?: string;
+  pupil_r?: number | null;
   iris?: { cx: number; cy: number; r: number };
   pad?: number;
   glare_boxes_crop?: number[][];
@@ -150,7 +151,7 @@ export const TryApp: React.FC = () => {
     setClientCrop(crop);
     try {
       setProgress((p) => [...p, 'Removing reflections']);
-      const d = await post<{ crop: string; glare_pct: number; changed: boolean; used_sr: boolean }>('/api/deglare', { crop: stripDataUrl(crop), pad, ticket: a.ticket, glare_boxes: a.glare_boxes_crop || [] });
+      const d = await post<{ crop: string; glare_pct: number; changed: boolean; used_sr: boolean }>('/api/deglare', { crop: stripDataUrl(crop), pad, ticket: a.ticket, pupil_r: a.pupil_r, glare_boxes: a.glare_boxes_crop || [] });
       const clean = `data:image/jpeg;base64,${d.crop}`; setCleanCrop(clean); setGlarePct(d.glare_pct);
       setProgress((p) => [...p, 'Restoring fibres faithfully (about 30 s)']);
       const e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'faithful', pad, ticket: a.ticket, session, consent, used_sr: d.used_sr, meta: a.quality });

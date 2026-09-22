@@ -45,7 +45,9 @@ PROMPT_DEGLARE = (
     "glare) and any eyelash shadows, reconstructing the underlying iris fibres so they match the surrounding texture. "
     "Match the sharpness and softness of the surrounding iris exactly: if the surrounding iris is soft or blurry, keep "
     "the rebuilt area equally soft, never sharper or more detailed than its neighbours. Keep everything else exactly as "
-    "it is: same framing, same size, same pupil, same colours, same fibres, same black background. Photorealistic, no stylisation."
+    "it is: same framing, same size, same pupil, same colours, same fibres, same black background. The pupil is a "
+    "black hole: leave it smooth and deep black, and never draw texture, window frames or shapes inside it. "
+    "Photorealistic, no stylisation."
 )
 PROMPT_ENHANCE = (
     "Use the uploaded image as the sole reference. Perform a true high-resolution upscale and restoration of this "
@@ -54,7 +56,9 @@ PROMPT_ENHANCE = (
     "image detail: remove blur, noise, grain, compression artifacts and pixelation while remaining completely "
     "faithful to the source. Do not alter, regenerate, repaint, beautify, stylize, relight, recolor, reshape, "
     "add, remove or reinterpret any element. No generative fill, no hallucinated fibres or texture that is not "
-    "visible in the source. Bring out every fibre, crypt, furrow and pigment spot that is genuinely present in the "
+    "visible in the source. The pupil is a black hole: keep it a smooth, even, deep black and never draw texture, "
+    "reflections or shapes inside it. "
+    "Bring out every fibre, crypt, furrow and pigment spot that is genuinely present in the "
     "source, even if only faintly visible, so the restored iris looks crisp rather than blurry. Do not add or "
     "reconstruct any specular highlights, reflections, glossy spots or bubbles: the source contains none. Output a "
     "visually identical photograph, only sharper, cleaner and more detailed."
@@ -351,6 +355,42 @@ def mirror_prefill(crop, feather):
     blur = np.asarray(crop.filter(ImageFilter.GaussianBlur(crop.size[0] * 0.03))).astype(np.float32)
     src = mirror * (1 - a_m) + blur * a_m
     return Image.fromarray(np.clip(arr * (1 - a) + src * a, 0, 255).astype(np.uint8))
+
+def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22):
+    """Rebuild the pupil as smooth darkness. A pupil reflects the room, so whatever a reflection covers there is
+    not iris detail waiting to be restored - it is a hole, and the honest reconstruction is the dark it hid.
+    Returns (image, how much of the pupil the reflection covered)."""
+    S = crop.size[0]
+    yy, xx = np.mgrid[0:S, 0:S]
+    d = np.sqrt((xx - S / 2 + 0.5) ** 2 + (yy - S / 2 + 0.5) ** 2)
+    inside = d < pr_px
+    if pr_px < 4 or not inside.any(): return crop, 0.0
+    g = (glare_hard > 0) if glare_hard is not None else np.zeros_like(inside)
+    overlap = float(g[inside].mean())
+    if overlap < 0.04: return crop, overlap
+    arr = np.asarray(crop).astype(np.float32)
+    # the true pupil colour is the darkest thing still visible inside it; the rim is only a fallback, and both
+    # get clamped because a pupil is never bright and never coloured
+    dark = inside & (~g)
+    if int(dark.sum()) > 60:
+        base = np.percentile(arr[dark], 12, axis=0)
+    else:
+        rim = inside & (d > pr_px * 0.7) & (~g)
+        base = (np.percentile(arr[rim], 12, axis=0) if int(rim.sum()) > 60
+                else np.array([10.0, 10.0, 14.0], dtype=np.float32))
+    base = base * 0.45 + float(base.mean()) * 0.55      # a pupil is neutral, not tinted
+    base = np.minimum(base, 30.0)                       # and never bright
+    t = np.clip(d / max(pr_px, 1.0), 0, 1)
+    fill = base[None, None, :] * (0.40 + 0.60 * t[..., None] ** 2)   # deepest in the centre, lifting towards the rim
+    a = np.clip((pr_px - d) / max(pr_px * feather, 1.0), 0, 1)[..., None]
+    return Image.fromarray(np.clip(arr * (1 - a) + fill * a, 0, 255).astype(np.uint8)), overlap
+
+def drop_pupil(mask_hard, mask_soft, pr_px):
+    """Take the pupil disk out of a glare mask, so the image model is only ever asked to rebuild iris."""
+    S = mask_hard.shape[0]
+    yy, xx = np.mgrid[0:S, 0:S]
+    keep = np.sqrt((xx - S / 2 + 0.5) ** 2 + (yy - S / 2 + 0.5) ** 2) > pr_px * 1.04
+    return (mask_hard * keep).astype(np.uint8), mask_soft * keep
 
 def composite(base, patch, alpha):
     a = alpha[..., None]

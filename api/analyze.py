@@ -40,15 +40,38 @@ def analyze(body):
     if diam_orig >= 500 and label != "blurry" and sharp >= 120 and occl <= 25: verdict = "good"
     elif diam_orig >= 300 and sharp >= 40 and occl <= 40: verdict = "ok"
     else: verdict = "weak"
+    pad = 1.12; Sc = 2 * r * pad; ox, oy = cx - Sc / 2, cy - Sc / 2
+    # the pupil, as a fraction of the square crop: a reflection landing here is rebuilt as darkness,
+    # never handed to the image model
+    pupil_r = None
+    pb = v.get("pupil_box")
+    if (isinstance(pb, (list, tuple)) and len(pb) == 4
+            and all(isinstance(c, (int, float)) and c == c for c in pb) and pb[2] > pb[0] and pb[3] > pb[1]):
+        pr = ((pb[2] - pb[0]) * W / 1000 + (pb[3] - pb[1]) * H / 1000) / 4
+        pupil_r = max(0.04, min(0.34, pr / Sc))
     tips = []
     if diam_orig < 500: tips.append(f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want 500 px or more.")
     if label == "blurry" or sharp < 120: tips.append("Hold still and tap the iris on screen to focus before shooting.")
     if occl > 25: tips.append("Open the eye wide (lift the eyelid with a finger) so the whole iris is visible.")
-    if v.get("glare_boxes"): tips.append("A reflection was found; we will remove it automatically.")
+    # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
+    on_pupil = False
+    if pupil_r and v.get("glare_boxes"):
+        pcx, pcy = (pb[0] + pb[2]) / 2, (pb[1] + pb[3]) / 2
+        prad = max(pb[2] - pb[0], pb[3] - pb[1]) / 2
+        for gb in v["glare_boxes"]:
+            try:
+                gcx, gcy = (gb[0] + gb[2]) / 2, (gb[1] + gb[3]) / 2
+                if ((gcx - pcx) ** 2 + (gcy - pcy) ** 2) ** 0.5 < prad: on_pupil = True
+            except Exception: pass
+    if on_pupil:
+        tips.append("The reflection sits on your pupil. Tilt your head or move the light to the side, or we will "
+                    "have to rebuild the pupil as plain darkness.")
+    elif v.get("glare_boxes"): tips.append("A reflection was found; we will remove it automatically.")
+    if label != "sharp" or sharp < 120:
+        tips.append("The selfie camera cannot focus this close. Use the back camera at 2x and tap the iris to focus.")
     msg = {"good": "Great capture. Real fibres are visible, we can restore them faithfully.",
            "ok": "Usable, but a closer or sharper shot would keep more of your real fibres.",
            "weak": "Too small or blurry for a faithful restoration. We can still make it beautiful, but the fibres will be interpreted."}[verdict]
-    pad = 1.12; Sc = 2 * r * pad; ox, oy = cx - Sc / 2, cy - Sc / 2
     boxes = []
     for b in (v.get("glare_boxes") or []):
         try:
@@ -58,7 +81,7 @@ def analyze(body):
             pass
     # a short-lived signed ticket: the paid endpoints refuse work without one, so a bare scripted loop
     # has to come through this (cheap) endpoint first instead of hitting the image model directly
-    return {"ok": True, "ticket": L.mint_ticket("work"),
+    return {"ok": True, "ticket": L.mint_ticket("work"), "pupil_r": pupil_r,
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "sharpness_label": label, "occlusion_pct": occl,
                         "glare": bool(v.get("glare_boxes")), "verdict": verdict, "message": msg, "tips": tips},
