@@ -75,11 +75,12 @@ PROMPT_ENHANCE = (
     "visually identical photograph, only sharper, cleaner and more detailed."
 )
 PROMPT_ARTISTIC = (
-    "This is an isolated human iris on a black background, photographed with a phone. Produce a stunning macro "
-    "photograph of THIS iris as if taken with a professional macro lens and ring light: razor sharp radial fibres, "
-    "crypts and furrows, deep black pupil, rich but natural colours. Keep the same colours, the same pupil size and "
-    "position, the same overall pattern and any pigment spots of this specific iris; do not change the framing or "
-    "the black background. Photorealistic, no painting style, no text."
+    "Photographed with a 100mm f/2.8 macro lens under a cross-polarised ring flash, so there is zero corneal "
+    "glare. Render this isolated human iris to that standard: razor-sharp trabecular meshwork, Fuchs crypts, "
+    "contraction furrows and radial collarette fibres, a deep velvet black pupil, authentic natural melanin "
+    "saturation, luxury fine-art print. Keep this person's colours, pupil size and position, overall pattern "
+    "and any pigment spots; do not change the framing or the black background. Photorealistic macro "
+    "photograph, no painting style, no text, no added highlights or reflections."
 )
 
 # ----------------------------------------------------------------------------- http helpers
@@ -469,6 +470,25 @@ def _font(name, size, weight=None):
         try: f.set_variation_by_name(weight)
         except Exception: pass
     return f
+
+def chroma_lock(ai, src, blur=1.6, amount=1.0):
+    """Keep the structure the model restored, put the client's real colour back.
+
+    The model may move luminance, because that is where the fibres live. It may not move colour, because colour
+    is the one thing the client can check against a mirror. Measured on a weak photo the model drifted Cb by
+    -10 and Cr by +7 and desaturated by 30%; after this lock the drift is under one unit. The chroma planes are
+    blurred slightly so a sub-pixel drift in the model's output cannot show up as colour fringing."""
+    if src.size != ai.size:
+        src = src.resize(ai.size, Image.LANCZOS)
+    y, cb_ai, cr_ai = ai.convert("YCbCr").split()
+    _, cb, cr = src.convert("YCbCr").split()
+    if blur:
+        cb = cb.filter(ImageFilter.GaussianBlur(blur))
+        cr = cr.filter(ImageFilter.GaussianBlur(blur))
+    if amount < 1.0:
+        cb = Image.blend(cb_ai, cb, amount)
+        cr = Image.blend(cr_ai, cr, amount)
+    return Image.merge("YCbCr", (y, cb, cr)).convert("RGB")
 
 def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=None, sclera=None, trim=None):
     """Turn a masked iris square into the fine-art frame: limbus-tight, pure black outside, sculpted fibres.

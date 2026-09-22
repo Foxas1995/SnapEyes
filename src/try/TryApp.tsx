@@ -306,16 +306,16 @@ export const TryApp: React.FC = () => {
                 <h2 className="font-luxury text-xl font-bold">Before / after</h2>
                 <FidelityBadge res={shown} mode={results[mode] ? mode : 'faithful'} />
               </div>
-              <CompareSlider before={clientCrop || cleanCrop || ''} after={`data:image/jpeg;base64,${shown.image}`} beforeLabel="Your photo" afterLabel={results[mode] ? (mode === 'faithful' ? 'Restored' : 'Artistic') : 'Restored'} />
+              <CompareSlider before={clientCrop || cleanCrop || ''} after={`data:image/jpeg;base64,${shown.image}`} beforeLabel="Your photo" afterLabel={results[mode] ? (mode === 'faithful' ? 'Restored' : 'Studio macro') : 'Restored'} />
               <p className="text-[11px] text-zinc-500 mt-2">Drag the handle. {analysis?.quality ? `Iris in your photo: ${analysis.quality.diameter_px}px.` : ''} {glarePct >= 0.4 ? 'Reflection removed.' : ''} {shown.used_sr ? 'Small photo: faithful upscale applied before restoration.' : ''}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-2 bg-white/5 border border-white/10 rounded-xl p-1">
               <button onClick={() => setMode('faithful')} className={`py-2 rounded-lg text-xs font-bold ${mode === 'faithful' ? 'bg-[#f5c542] text-black' : 'text-zinc-300'}`}>Faithful (your fibres)</button>
-              <button onClick={() => { setMode('artistic'); ensureArtistic(); }} className={`py-2 rounded-lg text-xs font-bold ${mode === 'artistic' ? 'bg-[#f5c542] text-black' : 'text-zinc-300'}`}>Artistic (AI macro)</button>
+              <button onClick={() => { setMode('artistic'); ensureArtistic(); }} className={`py-2 rounded-lg text-xs font-bold ${mode === 'artistic' ? 'bg-[#f5c542] text-black' : 'text-zinc-300'}`}>Studio macro (AI)</button>
             </div>
             {mode === 'artistic' && !results.artistic && (
-              <p className="text-xs text-zinc-400 flex items-center gap-2"><span className="w-3 h-3 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" /> Generating the artistic version (about 15 s)…</p>
+              <p className="text-xs text-zinc-400 flex items-center gap-2"><span className="w-3 h-3 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" /> Rendering the studio macro version (about 20 s)…</p>
             )}
 
             {shown && (
@@ -357,7 +357,7 @@ const Verdict: React.FC<{ v: 'good' | 'ok' | 'weak' }> = ({ v }) => {
 };
 
 const FidelityBadge: React.FC<{ res: Enhanced; mode: Mode }> = ({ res, mode }) => {
-  if (mode === 'artistic') return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-purple-400/40 text-purple-200 bg-purple-500/10">AI interpretation</span>;
+  if (mode === 'artistic') return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-purple-400/40 text-purple-200 bg-purple-500/10">AI rendered · fibres interpreted</span>;
   if (res.fallback) return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-amber-400/40 text-amber-200 bg-amber-500/10">Faithful upscale only</span>;
   const pct = Math.round(res.fidelity * 100);
   return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-emerald-400/40 text-emerald-200 bg-emerald-500/10">Fidelity {pct}%</span>;
