@@ -27,17 +27,34 @@ def analyze(body):
     bx = [x1 * W / 1000, y1 * H / 1000, x2 * W / 1000, y2 * H / 1000]
     cx, cy = (bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2
     r0 = ((bx[2] - bx[0]) + (bx[3] - bx[1])) / 4
+    # the pupil is the one landmark a model gets right in a tight close-up: the iris is concentric with it,
+    # so centring on the pupil survives an iris box that drifted onto the eyelid or the sclera
+    pbox = v.get("pupil_box")
+    pupil_px = None
+    if (isinstance(pbox, (list, tuple)) and len(pbox) == 4
+            and all(isinstance(c, (int, float)) and c == c for c in pbox)
+            and pbox[2] > pbox[0] and pbox[3] > pbox[1]):
+        px = ((pbox[0] + pbox[2]) / 2) * W / 1000
+        py = ((pbox[1] + pbox[3]) / 2) * H / 1000
+        prr = ((pbox[2] - pbox[0]) * W / 1000 + (pbox[3] - pbox[1]) * H / 1000) / 4
+        # only trust it when it is plausibly a pupil inside this iris
+        if prr < r0 * 0.75 and ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5 < r0 * 1.1:
+            cx, cy, pupil_px = px, py, prr
     # refine on a working copy where the iris radius is ~120px
     f = min(1.0, 120.0 / max(r0, 1))
     g = L.to_gray(im.resize((max(8, int(W * f)), max(8, int(H * f))), Image.LANCZOS))
     rcx, rcy, rr = L.refine_circle(g, cx * f, cy * f, r0 * f)
     cx, cy, r = rcx / f, rcy / f, rr / f
+    # sanity: a real iris is darker in the middle (pupil) than in its own ring. If it is not, the circle
+    # landed on skin, sclera or an eyelid, and everything downstream would be built on a wrong crop.
+    locked = L.iris_lock_ok(g, rcx, rcy, rr)
     crop = L.circular_crop(im, cx, cy, r)
     sharp = L.laplacian_var(crop)
     diam_orig = 2 * r * scale
     occl = float(v.get("iris_occluded_by_eyelids_percent") or 0)
     label = str(v.get("sharpness") or "")
-    if diam_orig >= 500 and label != "blurry" and sharp >= 120 and occl <= 25: verdict = "good"
+    if not locked: verdict = "weak"
+    elif diam_orig >= 500 and label != "blurry" and sharp >= 120 and occl <= 25: verdict = "good"
     elif diam_orig >= 300 and sharp >= 40 and occl <= 40: verdict = "ok"
     else: verdict = "weak"
     pad = 1.12; Sc = 2 * r * pad; ox, oy = cx - Sc / 2, cy - Sc / 2
@@ -68,10 +85,16 @@ def analyze(body):
                     "have to rebuild the pupil as plain darkness.")
     elif v.get("glare_boxes"): tips.append("A reflection was found; we will remove it automatically.")
     if label != "sharp" or sharp < 120:
-        tips.append("The selfie camera cannot focus this close. Use the back camera at 2x and tap the iris to focus.")
+        tips.append("This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
+                    "steady; front cameras cannot focus at this distance at all.")
+    if not locked:
+        tips.insert(0, "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
+                       "little space around it, and keep the eyelid out of the way.")
     msg = {"good": "Great capture. Real fibres are visible, we can restore them faithfully.",
            "ok": "Usable, but a closer or sharper shot would keep more of your real fibres.",
            "weak": "Too small or blurry for a faithful restoration. We can still make it beautiful, but the fibres will be interpreted."}[verdict]
+    if not locked:
+        msg = "We found an eye but could not lock onto the iris edge, so the crop would be off. Please take another photo."
     boxes = []
     for b in (v.get("glare_boxes") or []):
         try:
@@ -84,7 +107,8 @@ def analyze(body):
     return {"ok": True, "ticket": L.mint_ticket("work"), "pupil_r": pupil_r,
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "sharpness_label": label, "occlusion_pct": occl,
-                        "glare": bool(v.get("glare_boxes")), "verdict": verdict, "message": msg, "tips": tips},
+                        "glare": bool(v.get("glare_boxes")), "locked": bool(locked),
+                        "verdict": verdict, "message": msg, "tips": tips},
             "preview": L.pil_to_b64(crop.resize((320, 320), Image.LANCZOS), "JPEG", 85)}
 
 def handle(req): L.run(req, analyze)

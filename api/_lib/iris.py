@@ -281,6 +281,22 @@ def refine_circle(gray, cx, cy, r0):
             if d[k] > best[3]: best = (cx + dx, cy + dy, float(radii[k]), float(d[k]))
     return best[0], best[1], best[2]
 
+def iris_lock_ok(gray, cx, cy, r, margin=8.0):
+    """Is this circle really centred on an iris? An iris holds a dark pupil in the middle and is itself darker
+    than the sclera around it. Skin, an eyelid or a mis-detected box fails both tests, and every later stage
+    would then be built on the wrong crop."""
+    H, W = gray.shape
+    yy, xx = np.mgrid[0:H, 0:W]
+    d = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+    core = d < r * 0.30                      # the pupil lives here
+    ring = (d > r * 0.55) & (d < r * 0.90)   # the coloured iris
+    out = (d > r * 1.15) & (d < r * 1.55)    # sclera and lid
+    if core.sum() < 20 or ring.sum() < 40: return False
+    c, g_ring = float(gray[core].mean()), float(gray[ring].mean())
+    if c > g_ring - margin: return False     # no dark pupil in the middle
+    if out.sum() > 40 and g_ring > float(gray[out].mean()) + margin: return False  # iris brighter than the sclera
+    return True
+
 def disk_alpha(S, r, feather=0.035):
     yy, xx = np.mgrid[0:S, 0:S]
     d = np.sqrt((xx - S / 2 + 0.5) ** 2 + (yy - S / 2 + 0.5) ** 2) / r
