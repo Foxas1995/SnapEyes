@@ -50,12 +50,18 @@ def analyze(body):
     locked = L.iris_lock_ok(g, rcx, rcy, rr)
     crop = L.circular_crop(im, cx, cy, r)
     sharp = L.laplacian_var(crop)
+    # how much real fibre texture this photo carries, measured where the fibres are. Calibrated:
+    # professional prints 11-17, a good phone shot 10.8, the owner's four real frames 1.1-4.1,
+    # his old selfie 0.77. This is the number that decides which of several photos is worth using.
+    fibre = L.fibre_detail(crop)
     diam_orig = 2 * r * scale
     occl = float(v.get("iris_occluded_by_eyelids_percent") or 0)
     label = str(v.get("sharpness") or "")
+    # size alone is a trap: of four real photos of the same eye, the largest iris (596px) carried the
+    # LEAST fibre detail and the smallest usable one (305px) the most. Detail decides, size is a floor.
     if not locked: verdict = "weak"
-    elif diam_orig >= 500 and label != "blurry" and sharp >= 120 and occl <= 25: verdict = "good"
-    elif diam_orig >= 300 and sharp >= 40 and occl <= 40: verdict = "ok"
+    elif diam_orig >= 420 and fibre >= 6.0 and occl <= 25: verdict = "good"
+    elif diam_orig >= 280 and fibre >= 2.2 and occl <= 40: verdict = "ok"
     else: verdict = "weak"
     pad = 1.12; Sc = 2 * r * pad; ox, oy = cx - Sc / 2, cy - Sc / 2
     # the pupil, as a fraction of the square crop: a reflection landing here is rebuilt as darkness,
@@ -68,7 +74,8 @@ def analyze(body):
         pupil_r = max(0.04, min(0.34, pr / Sc))
     tips = []
     if diam_orig < 500: tips.append(f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want 500 px or more.")
-    if label == "blurry" or sharp < 120: tips.append("Hold still and tap the iris on screen to focus before shooting.")
+    if fibre < 6.0: tips.append("The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
+                                "hold the phone against something steady, and shoot again.")
     if occl > 25: tips.append("Open the eye wide (lift the eyelid with a finger) so the whole iris is visible.")
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False
@@ -84,7 +91,7 @@ def analyze(body):
         tips.append("The reflection sits on your pupil. Tilt your head or move the light to the side, or we will "
                     "have to rebuild the pupil as plain darkness.")
     elif v.get("glare_boxes"): tips.append("A reflection was found; we will remove it automatically.")
-    if label != "sharp" or sharp < 120:
+    if label != "sharp" or fibre < 6.0:
         tips.append("This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
                     "steady; front cameras cannot focus at this distance at all.")
     if not locked:
@@ -104,9 +111,9 @@ def analyze(body):
             pass
     # a short-lived signed ticket: the paid endpoints refuse work without one, so a bare scripted loop
     # has to come through this (cheap) endpoint first instead of hitting the image model directly
-    return {"ok": True, "ticket": L.mint_ticket("work"), "pupil_r": pupil_r,
+    return {"ok": True, "ticket": L.mint_ticket("work"), "pupil_r": pupil_r, "fibre": round(fibre, 2),
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
-            "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "sharpness_label": label, "occlusion_pct": occl,
+            "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,
                         "glare": bool(v.get("glare_boxes")), "locked": bool(locked),
                         "verdict": verdict, "message": msg, "tips": tips},
             "preview": L.pil_to_b64(crop.resize((320, 320), Image.LANCZOS), "JPEG", 85)}

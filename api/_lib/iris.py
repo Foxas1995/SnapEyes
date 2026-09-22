@@ -219,6 +219,23 @@ def laplacian_var(im, size=256):
     lap = -4 * g[1:-1, 1:-1] + g[:-2, 1:-1] + g[2:, 1:-1] + g[1:-1, :-2] + g[1:-1, 2:]
     return float(lap.var())
 
+def fibre_detail(im, r_frac=None, size=768):
+    """How much real fibre texture this crop carries, measured where the fibres actually are.
+
+    laplacian_var() judges a 256px copy of the whole square, so it cannot tell a sharp iris from a soft one
+    and it counts eyelashes and skin at the edge. Measured on four real photos of the same eye, it ranked the
+    softest frame highest purely because that frame was the largest. This measures the energy in the fibre
+    band inside the iris ring only, at a fixed working size, so two photos taken at different distances are
+    directly comparable."""
+    r_frac = r_frac or iris_radius_frac()
+    g = to_gray(im.resize((size, size), Image.LANCZOS))
+    blur = np.asarray(Image.fromarray(g.astype(np.uint8)).filter(ImageFilter.GaussianBlur(2.0))).astype(np.float32)
+    hi = g - blur
+    yy, xx = np.mgrid[0:size, 0:size]
+    d = np.sqrt((xx - size / 2) ** 2 + (yy - size / 2) ** 2) / (r_frac * size)
+    ring = (d > 0.30) & (d < 0.92)
+    return float(hi[ring].std()) if ring.any() else 0.0
+
 # ----------------------------------------------------------------------------- gemini
 def _key():
     k = os.environ.get("GEMINI_API_KEY", "").strip()

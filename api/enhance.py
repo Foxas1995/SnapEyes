@@ -29,7 +29,9 @@ def enhance(body):
     fallback = False
     if mode == "artistic":
         out = L.gemini_image(L.PROMPT_ARTISTIC, base)
-        out = L.chroma_lock(out, base, amount=0.75)   # a re-interpretation may relight, not recolour the eye
+        # this is the product now, so the colour is locked all the way to the client's own photo:
+        # the model may sculpt structure and light, it may not decide what colour their eye is
+        out = L.chroma_lock(out, base)
         fid = L.ssim_lowfreq(base, out, r_frac)
     else:
         out = L.gemini_image(L.PROMPT_ENHANCE, base, thinking="high")

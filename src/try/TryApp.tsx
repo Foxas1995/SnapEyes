@@ -14,7 +14,8 @@ interface Analysis {
   iris?: { cx: number; cy: number; r: number };
   pad?: number;
   glare_boxes_crop?: number[][];
-  quality?: { diameter_px: number; sharpness: number; sharpness_label: string; occlusion_pct: number; glare: boolean; verdict: 'good' | 'ok' | 'weak'; message: string; tips: string[] };
+  picked?: { used: number; of: number; fibre: number; worst: number };
+  quality?: { diameter_px: number; sharpness: number; fibre?: number; sharpness_label: string; occlusion_pct: number; glare: boolean; verdict: 'good' | 'ok' | 'weak'; message: string; tips: string[] };
   preview?: string;
 }
 
@@ -86,7 +87,9 @@ export const TryApp: React.FC = () => {
   const [cleanCrop, setCleanCrop] = useState<string | null>(null);
   const [glarePct, setGlarePct] = useState<number>(0);
   const [results, setResults] = useState<Partial<Record<Mode, Enhanced>>>({});
-  const [mode, setMode] = useState<Mode>('faithful');
+  // Studio macro is the product. The conservative restoration stayed truer to the pixels but looked
+  // like the soft phone photo it came from, and nobody frames that.
+  const [mode, setMode] = useState<Mode>('artistic');
   const [style, setStyle] = useState('celestial_gold');
   const [names, setNames] = useState('');
   const [artCache, setArtCache] = useState<Record<string, string>>({});
@@ -118,7 +121,7 @@ export const TryApp: React.FC = () => {
 
   const reset = () => {
     setStep('capture'); setError(null); setAnalysis(null); setClientCrop(null); setCleanCrop(null); setResults({}); setArtCache({});
-    setMode('faithful'); setProgress([]); setOrigUrl(null); imgRef.current = null;
+    setMode('artistic'); setProgress([]); setOrigUrl(null); imgRef.current = null;
   };
 
   const onFile = async (file: File | Blob) => {
@@ -133,12 +136,44 @@ export const TryApp: React.FC = () => {
     }
   };
 
-  const analyze = async (img: HTMLImageElement) => {
-    setStep('analyzing');
+  /** Several shots of the same eye are never equally good. On four real photos of one eye the sharpest
+   *  carried 3.7x the fibre detail of the softest, and the largest iris of the four was the softest - so
+   *  the customer cannot pick by eye and neither can a size rule. Measure each and use the best. */
+  const onFiles = async (files: File[]) => {
+    if (files.length === 1) return onFile(files[0]);
+    setError(null); setStep('analyzing'); setProgress([]);
+    const scored: Array<{ img: HTMLImageElement; a: Analysis; fibre: number }> = [];
+    for (let i = 0; i < files.length; i++) {
+      setProgress([`Checking photo ${i + 1} of ${files.length}`]);
+      try {
+        const img = await loadImage(URL.createObjectURL(files[i]));
+        const a = await measure(img);
+        if (a.ok && a.iris) scored.push({ img, a, fibre: a.quality?.fibre ?? 0 });
+      } catch { /* an unreadable file just does not compete */ }
+    }
+    if (!scored.length) {
+      setError('We could not find an eye in any of those photos.'); setStep('capture'); return;
+    }
+    scored.sort((x, y) => y.fibre - x.fibre);
+    const win = scored[0];
+    const chosen: Analysis = {
+      ...win.a,
+      picked: { used: scored.indexOf(win) + 1, of: files.length, fibre: win.fibre, worst: scored[scored.length - 1].fibre },
+    };
+    imgRef.current = win.img; setAnalysis(chosen); setProgress([]);
+    if (chosen.quality?.verdict === 'good') { await process(win.img, chosen); } else { setStep('quality'); }
+  };
+
+  const measure = async (img: HTMLImageElement) => {
     const W = img.naturalWidth, H = img.naturalHeight;
     const f = Math.min(1, 1600 / Math.max(W, H));
     const small = drawToDataUrl(img, 0, 0, W, H, Math.round(W * f), Math.round(H * f), 0.9);
-    const a = await post<Analysis>('/api/analyze', { image: stripDataUrl(small), origWidth: W, origHeight: H });
+    return post<Analysis>('/api/analyze', { image: stripDataUrl(small), origWidth: W, origHeight: H });
+  };
+
+  const analyze = async (img: HTMLImageElement) => {
+    setStep('analyzing');
+    const a = await measure(img);
     setAnalysis(a);
     if (!a.ok || !a.iris) { setError(a.message || 'No eye found'); setStep('capture'); return; }
     if (a.quality?.verdict === 'good') { await process(img, a); } else { setStep('quality'); }
@@ -156,32 +191,23 @@ export const TryApp: React.FC = () => {
       setProgress((p) => [...p, 'Removing reflections']);
       const d = await post<{ crop: string; glare_pct: number; changed: boolean; used_sr: boolean }>('/api/deglare', { crop: stripDataUrl(crop), pad, ticket: a.ticket, pupil_r: a.pupil_r, glare_boxes: a.glare_boxes_crop || [] });
       const clean = `data:image/jpeg;base64,${d.crop}`; setCleanCrop(clean); setGlarePct(d.glare_pct);
-      setProgress((p) => [...p, 'Restoring fibres faithfully (about 30 s)']);
-      const e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'faithful', pad, ticket: a.ticket, session, consent, used_sr: d.used_sr, meta: a.quality });
-      setResults({ faithful: e });
+      setProgress((p) => [...p, 'Studio macro restoration (about 30 s)']);
+      const e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'artistic', pad, ticket: a.ticket, session, consent, used_sr: d.used_sr, meta: a.quality });
+      setResults({ artistic: e });
       setProgress((p) => [...p, 'Composing your artwork']);
       // the restoration is paid for by this point: a free composition failure must never send the user
       // back to a screen whose only button buys it again
       try {
         const c = await post<{ image: string }>('/api/compose', { iris: e.image, style, names, pad });
-        setArtCache({ [`faithful:${style}:${names}`]: `data:image/jpeg;base64,${c.image}` });
+        setArtCache({ [`artistic:${style}:${names}`]: `data:image/jpeg;base64,${c.image}` });
       } catch { /* the effect below retries as soon as the user touches a style or a name */ }
       setStep('result');
     } catch (err) {
       setError((err as Error).message);
-      setStep(results.faithful ? 'result' : 'quality');
+      setStep(results.artistic ? 'result' : 'quality');
     }
   };
 
-  const ensureArtistic = async () => {
-    if (results.artistic || !cleanCrop || !analysis) return;
-    setComposing(true);
-    try {
-      const e = await post<Enhanced>('/api/enhance', { crop: stripDataUrl(cleanCrop), mode: 'artistic', pad: analysis.pad, ticket: analysis.ticket, session, consent, used_sr: true, meta: analysis.quality });
-      setResults((r) => ({ ...r, artistic: e }));
-    } catch (err) { setError((err as Error).message); setMode('faithful'); }
-    setComposing(false);
-  };
 
   // re-compose whenever mode / style / names change on the result screen
   useEffect(() => {
@@ -205,7 +231,7 @@ export const TryApp: React.FC = () => {
   const current = results[mode];
   // while the artistic version is still generating (or if it failed) keep showing the faithful one,
   // so the toggle, the style picker and the reset button never disappear from under the user
-  const shown = current ?? results.faithful ?? results.artistic!;
+  const shown = current ?? results.artistic!;
   const artKey = `${mode}:${style}:${names}`;
   const artwork = artCache[artKey];
 
@@ -235,18 +261,19 @@ export const TryApp: React.FC = () => {
               <div><span className="text-[#f5c542] font-bold block">2. 10 cm away</span>The iris should fill a third of the frame.</div>
               <div><span className="text-[#f5c542] font-bold block">3. Light from the side</span>Window or lamp at 45°, never straight in.</div>
               <div><span className="text-[#f5c542] font-bold block">4. Tap to focus</span>Tap the iris on screen, hold still, shoot.</div>
+              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">Take 3-5 shots and send them all.</span> Move the light a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.</div>
             </div>
 
             <button onClick={() => fileRef.current?.click()} className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#f5c542] to-[#d4af37] text-black font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#f5c542]/20 active:scale-[0.98]">
               <Camera className="w-5 h-5" /> Take a photo
             </button>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+            <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.length && onFiles(Array.from(e.target.files))} />
 
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
-                <Upload className="w-4 h-4 text-[#f5c542]" /> From gallery
+                <Upload className="w-4 h-4 text-[#f5c542]" /> Pick 3-5 shots
               </button>
-              <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+              <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files?.length && onFiles(Array.from(e.target.files))} />
               {hasCameraApi ? (
                 <button onClick={() => setLiveOpen(true)} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                   <Video className="w-4 h-4 text-emerald-400" /> Live camera + zoom
@@ -286,6 +313,12 @@ export const TryApp: React.FC = () => {
                 <p className="text-[11px] text-zinc-500 mt-1 font-mono">iris {analysis.quality.diameter_px}px · sharpness {analysis.quality.sharpness}{analysis.quality.glare ? ' · reflection detected' : ''}</p>
               </div>
             </div>
+            {analysis.picked && (
+              <p className="text-xs text-emerald-300/90 bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-3">
+                We compared {analysis.picked.of} photos and used the sharpest one. It carries{' '}
+                {(analysis.picked.fibre / Math.max(analysis.picked.worst, 0.01)).toFixed(1)}x the fibre detail of the softest.
+              </p>
+            )}
             {analysis.quality.tips.length > 0 && (
               <ul className="text-xs text-zinc-300 bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5">
                 {analysis.quality.tips.map((t) => <li key={t}>• {t}</li>)}
@@ -302,24 +335,16 @@ export const TryApp: React.FC = () => {
           <Working title="Restoring your iris…" lines={progress} elapsed={elapsed} image={clientCrop} />
         )}
 
-        {step === 'result' && (results.faithful || results.artistic) && (
+        {step === 'result' && results.artistic && (
           <section className="flex flex-col gap-6">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-luxury text-xl font-bold">Before / after</h2>
-                <FidelityBadge res={shown} mode={results[mode] ? mode : 'faithful'} />
+                <FidelityBadge res={shown} mode={mode} />
               </div>
-              <CompareSlider before={clientCrop || cleanCrop || ''} after={`data:image/jpeg;base64,${shown.image}`} beforeLabel="Your photo" afterLabel={results[mode] ? (mode === 'faithful' ? 'Restored' : 'Studio macro') : 'Restored'} />
+              <CompareSlider before={clientCrop || cleanCrop || ''} after={`data:image/jpeg;base64,${shown.image}`} beforeLabel="Your photo" afterLabel="Studio macro" />
               <p className="text-[11px] text-zinc-500 mt-2">Drag the handle. {analysis?.quality ? `Iris in your photo: ${analysis.quality.diameter_px}px.` : ''} {glarePct >= 0.4 ? 'Reflection removed.' : ''} {shown.used_sr ? 'Small photo: faithful upscale applied before restoration.' : ''}</p>
             </div>
-
-            <div className="grid grid-cols-2 gap-2 bg-white/5 border border-white/10 rounded-xl p-1">
-              <button onClick={() => setMode('faithful')} className={`py-2 rounded-lg text-xs font-bold ${mode === 'faithful' ? 'bg-[#f5c542] text-black' : 'text-zinc-300'}`}>Faithful (your fibres)</button>
-              <button onClick={() => { setMode('artistic'); ensureArtistic(); }} className={`py-2 rounded-lg text-xs font-bold ${mode === 'artistic' ? 'bg-[#f5c542] text-black' : 'text-zinc-300'}`}>Studio macro (AI)</button>
-            </div>
-            {mode === 'artistic' && !results.artistic && (
-              <p className="text-xs text-zinc-400 flex items-center gap-2"><span className="w-3 h-3 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" /> Rendering the studio macro version (about 20 s)…</p>
-            )}
 
             {shown && (
               <div>
@@ -359,11 +384,11 @@ const Verdict: React.FC<{ v: 'good' | 'ok' | 'weak' }> = ({ v }) => {
   return <span className={`inline-block text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${map[v][1]}`}>{map[v][0]}</span>;
 };
 
-const FidelityBadge: React.FC<{ res: Enhanced; mode: Mode }> = ({ res, mode }) => {
-  if (mode === 'artistic') return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-purple-400/40 text-purple-200 bg-purple-500/10">AI rendered · fibres interpreted</span>;
+const FidelityBadge: React.FC<{ res: Enhanced; mode: Mode }> = ({ res }) => {
+  // The colour in the result is taken straight from the customer's own photo (chroma_lock on the server),
+  // so this badge states a fact rather than a promise.
   if (res.fallback) return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-amber-400/40 text-amber-200 bg-amber-500/10">Faithful upscale only</span>;
-  const pct = Math.round(res.fidelity * 100);
-  return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-emerald-400/40 text-emerald-200 bg-emerald-500/10">Fidelity {pct}%</span>;
+  return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#f5c542]/50 text-[#f5c542] bg-[#f5c542]/10">Studio macro · true colour DNA</span>;
 };
 
 const Working: React.FC<{ title: string; lines: string[]; elapsed: number; image?: string | null }> = ({ title, lines, elapsed, image }) => (
