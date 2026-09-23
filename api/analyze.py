@@ -41,6 +41,12 @@ LAMP_WARM_B = 24.0           # b* above this: a warm lamp
 LAMP_COOL_AB = -15.0         # a* + b* below this: a cold or cyan light (a sclera is never blue-green by itself)
 LAMP_MESSAGE = "Lamp light is tinting your eye colour. Daylight from a window gives truer colour."
 MAX_SHOTS = 5                # how many frames the capture screen collects before it picks the best
+# Dark irises show their fibres faintly, and on the 30-photo brown test set the fix for a weak dark photo was more
+# light, not focus: 8 of 24 weak brown photos had an iris ring median luma below this. Detail itself stays on the
+# absolute measure (normalising it by brightness predicted the render's own-pattern survival worse: 0.46 vs 0.61).
+DARK_IRIS_LUMA = 50
+DARK_IRIS_TIP = ("Your iris is dark, so its fibres show faintly. Face a bright window in daylight (not direct sun) "
+                 "and shoot again: more light brings them out. A desk lamp or a torch changes your eye colour.")
 TARGETS = {"detail_good": DETAIL_GOOD, "detail_ok": DETAIL_OK, "min_diameter_px": MIN_DIAMETER_PX,
            "good_diameter_px": GOOD_DIAMETER_PX, "max_shots": MAX_SHOTS}
 
@@ -142,31 +148,43 @@ def analyze(body):
     if not ok_box:
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": "We could not find an eye in this photo. Fill the frame with one open eye and try again."}
-    x1, y1, x2, y2 = box
-    bx = [x1 * W / 1000, y1 * H / 1000, x2 * W / 1000, y2 * H / 1000]
-    cx, cy = (bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2
-    r0 = ((bx[2] - bx[0]) + (bx[3] - bx[1])) / 4
-    # the pupil is the one landmark a model gets right in a tight close-up: the iris is concentric with it,
-    # so centring on the pupil survives an iris box that drifted onto the eyelid or the sclera
+    # The model is asked for [x1,y1,x2,y2] but sometimes answers in its native [y1,x1,y2,x2] order. On a
+    # non-square photo that lands the circle on the eyelid or the skin: 10_Mybrownyes10 and 20_Auge (test set,
+    # 2 of 30) and the owner's 215106 eyelid crop were all this, and a re-run of 20 swapped again. So both
+    # readings are fitted and locked, which costs ~40 ms and no model call, and the locked one with the
+    # stronger limbus wins (on 12 of 12 wrong circles the lock let through, the true circle had the larger step).
     pbox = v.get("pupil_box")
-    pupil_px = None
-    if (isinstance(pbox, (list, tuple)) and len(pbox) == 4
-            and all(isinstance(c, (int, float)) and c == c for c in pbox)
-            and pbox[2] > pbox[0] and pbox[3] > pbox[1]):
-        px = ((pbox[0] + pbox[2]) / 2) * W / 1000
-        py = ((pbox[1] + pbox[3]) / 2) * H / 1000
-        prr = ((pbox[2] - pbox[0]) * W / 1000 + (pbox[3] - pbox[1]) * H / 1000) / 4
-        # only trust it when it is plausibly a pupil inside this iris
-        if prr < r0 * 0.75 and ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5 < r0 * 1.1:
-            cx, cy, pupil_px = px, py, prr
-    # refine on a working copy where the iris radius is ~120px
-    f = min(1.0, 120.0 / max(r0, 1))
-    g = L.to_gray(im.resize((max(8, int(W * f)), max(8, int(H * f))), Image.LANCZOS))
-    rcx, rcy, rr = L.refine_circle(g, cx * f, cy * f, r0 * f)
-    cx, cy, r = rcx / f, rcy / f, rr / f
-    # sanity: a real iris is darker in the middle (pupil) than in its own ring. If it is not, the circle
-    # landed on skin, sclera or an eyelid, and everything downstream would be built on a wrong crop.
-    locked = L.iris_lock_ok(g, rcx, rcy, rr)
+    pbox_ok = (isinstance(pbox, (list, tuple)) and len(pbox) == 4
+               and all(isinstance(c, (int, float)) and c == c for c in pbox)
+               and pbox[2] > pbox[0] and pbox[3] > pbox[1])
+    best = None
+    for swap in (False, True):
+        sw = (lambda b: (b[1], b[0], b[3], b[2])) if swap else (lambda b: tuple(b))
+        x1, y1, x2, y2 = sw(box)
+        bx = [x1 * W / 1000, y1 * H / 1000, x2 * W / 1000, y2 * H / 1000]
+        ccx, ccy = (bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2
+        r0 = ((bx[2] - bx[0]) + (bx[3] - bx[1])) / 4
+        # the pupil is the one landmark a model gets right in a tight close-up: the iris is concentric with it,
+        # so centring on the pupil survives an iris box that drifted onto the eyelid or the sclera
+        if pbox_ok:
+            p = sw(pbox)
+            px, py = ((p[0] + p[2]) / 2) * W / 1000, ((p[1] + p[3]) / 2) * H / 1000
+            prr = ((p[2] - p[0]) * W / 1000 + (p[3] - p[1]) * H / 1000) / 4
+            # only trust it when it is plausibly a pupil inside this iris
+            if prr < r0 * 0.75 and ((px - ccx) ** 2 + (py - ccy) ** 2) ** 0.5 < r0 * 1.1:
+                ccx, ccy = px, py
+        # refine on a working copy where the iris radius is ~120px
+        f = min(1.0, 120.0 / max(r0, 1))
+        g = L.to_gray(im.resize((max(8, int(W * f)), max(8, int(H * f))), Image.LANCZOS))
+        rcx, rcy, rr = L.refine_circle(g, ccx * f, ccy * f, r0 * f)
+        ok, step = L.iris_lock_score(g, rcx, rcy, rr)
+        cand = (ok, step, swap, rcx / f, rcy / f, rr / f)
+        if best is None or (ok and (not best[0] or step > best[1])): best = cand
+    locked, _, swapped_boxes, cx, cy, r = best
+    if swapped_boxes:   # everything below reads the vision boxes too; give it the reading that locked
+        v = dict(v); v["glare_boxes"] = [[b[1], b[0], b[3], b[2]] for b in (v.get("glare_boxes") or [])
+                                         if isinstance(b, (list, tuple)) and len(b) == 4]
+        if pbox_ok: v["pupil_box"] = [pbox[1], pbox[0], pbox[3], pbox[2]]
     crop = L.circular_crop(im, cx, cy, r)
     sharp = L.laplacian_var(crop)
     pad = 1.12; Sc = 2 * r * pad; ox, oy = cx - Sc / 2, cy - Sc / 2
@@ -203,11 +221,19 @@ def analyze(body):
             and all(isinstance(c, (int, float)) and c == c for c in pb) and pb[2] > pb[0] and pb[3] > pb[1]):
         pr = ((pb[2] - pb[0]) * W / 1000 + (pb[3] - pb[1]) * H / 1000) / 4
         pupil_r = max(0.04, min(0.34, pr / Sc))
+    # how dark the iris itself is (median of the fibre ring), to give a dark eye the advice that actually helps
+    gs = L.to_gray(crop.resize((256, 256), Image.LANCZOS))
+    gy, gx = np.ogrid[0:256, 0:256]
+    gd = np.sqrt((gx - 127.5) ** 2 + (gy - 127.5) ** 2) / (L.iris_radius_frac() * 256)
+    ring_luma = float(np.median(gs[(gd > 0.45) & (gd < 0.90)]))
+    dark_iris = locked and ring_luma < DARK_IRIS_LUMA
     tips = []
     if diam_orig < GOOD_DIAMETER_PX:
         tips.append(f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want {GOOD_DIAMETER_PX} px or more.")
-    if basis < FIBRE_GOOD: tips.append("The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
-                                       "hold the phone against something steady, and shoot again.")
+    if basis < FIBRE_GOOD:
+        tips.append(DARK_IRIS_TIP if dark_iris else
+                    "The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
+                    "hold the phone against something steady, and shoot again.")
     if occl > OCCL_GOOD_PCT: tips.append("Open the eye wide (lift the eyelid with a finger) so the whole iris is visible.")
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False
@@ -226,7 +252,8 @@ def analyze(body):
     if glare_fib > GLARE_OK_PCT:
         tips.append("A reflection covers part of the iris fibres, and what it hides has to be rebuilt. Turn so the "
                     "window or lamp is off to one side rather than straight in front of you.")
-    if label != "sharp" or basis < FIBRE_GOOD:
+    # a dark iris that the vision model still calls sharp needs light, not focus: its tip is already above
+    if label != "sharp" or (basis < FIBRE_GOOD and not dark_iris):
         tips.append("This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
                     "steady; front cameras cannot focus at this distance at all.")
     if not locked:

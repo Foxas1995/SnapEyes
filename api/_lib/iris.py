@@ -431,21 +431,46 @@ def refine_circle(gray, cx, cy, r0):
             if d[k] > best[3]: best = (cx + dx, cy + dy, float(radii[k]), float(d[k]))
     return best[0], best[1], best[2]
 
-def iris_lock_ok(gray, cx, cy, r, margin=8.0):
-    """Is this circle really centred on an iris? An iris holds a dark pupil in the middle and is itself darker
-    than the sclera around it. Skin, an eyelid or a mis-detected box fails both tests, and every later stage
-    would then be built on the wrong crop."""
+LOCK_PUPIL_GAP = 8.0         # ring median minus the pupil core's darker quarter, grey levels
+LOCK_SIDE_STEP = 40.0        # sclera band minus iris band, on the brighter of the two side sectors (medians)
+LOCK_SIDES = ((-40, 40), (140, 220))   # the side sectors, degrees: eyelids never sit there
+
+def _sector_median(gray, d, ang, r, a0, a1, lo, hi):
+    sec = ((ang >= a0 + 360) | (ang < a1)) if a0 < 0 else ((ang >= a0) & (ang < a1))
+    m = sec & (d >= lo * r) & (d < hi * r)
+    return float(np.median(gray[m])) if m.sum() > 15 else None
+
+def iris_lock_score(gray, cx, cy, r):
+    """(locked, side step). Is this circle really centred on an iris?
+
+    Two things only an iris circle has. A dark pupil in the middle: the ring's median against the darker quarter
+    of the core, so a catchlight in the pupil cannot lift the core (the old mean read a near-black iris's pupil
+    as 24.8 against a ring of 26.2 and refused a perfect circle) and a reflection over half the pupil cannot
+    either. And a limbus: just outside the circle, on the left or the right side (lids never sit there), the
+    sclera is clearly brighter than the iris just inside. A lash line or a lid crease also has a dark core, and
+    the old whole-annulus sclera rule let it through (a circle on the owner's upper lid crease passed); what it
+    lacks is that side step. Measured offline on 34 real iris circles, 9 real eyelid/skin circles and 398
+    circles moved 1.5-2 radii off the iris (scratchpad wave-c/diag/lock_final.py): old 33/34, 1/9, 83/398;
+    this 34/34, 0/9, 12/398. Real iris side steps 54-188, real wrong circles at most 15."""
     H, W = gray.shape
     yy, xx = np.mgrid[0:H, 0:W]
     d = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
     core = d < r * 0.30                      # the pupil lives here
     ring = (d > r * 0.55) & (d < r * 0.90)   # the coloured iris
-    out = (d > r * 1.15) & (d < r * 1.55)    # sclera and lid
-    if core.sum() < 20 or ring.sum() < 40: return False
-    c, g_ring = float(gray[core].mean()), float(gray[ring].mean())
-    if c > g_ring - margin: return False     # no dark pupil in the middle
-    if out.sum() > 40 and g_ring > float(gray[out].mean()) + margin: return False  # iris brighter than the sclera
-    return True
+    if core.sum() < 20 or ring.sum() < 40: return False, 0.0
+    if float(np.median(gray[ring])) - float(np.percentile(gray[core], 25)) < LOCK_PUPIL_GAP:
+        return False, 0.0                    # no dark pupil in the middle
+    ang = (np.degrees(np.arctan2(yy - cy, xx - cx)) + 360.0) % 360.0
+    steps = []
+    for a0, a1 in LOCK_SIDES:
+        o = _sector_median(gray, d, ang, r, a0, a1, 1.06, 1.30)
+        i = _sector_median(gray, d, ang, r, a0, a1, 0.70, 0.94)
+        if o is not None and i is not None: steps.append(o - i)
+    step = max(steps) if steps else 0.0
+    return step >= LOCK_SIDE_STEP, step
+
+def iris_lock_ok(gray, cx, cy, r):
+    return iris_lock_score(gray, cx, cy, r)[0]
 
 CHUNK_PX = 1 << 20           # pixels per row band in the full-frame loops (~12 MB per float32 RGB temporary)
 
