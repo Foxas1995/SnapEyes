@@ -799,20 +799,122 @@ def soft_shoulders(arr, toe=18.0, shoulder=208.0, lo=2.0, hi=253.0):
         out[loM] = toe - span * (1.0 - np.exp(-(toe - arr[loM]) / span))
     return out
 
-def chroma_lock(ai, src, blur=1.6, amount=1.0):
+CHROMA_LIFT_CAP = 2.5        # the photo's chroma is scaled by the model's local brightness lift, at most this much
+CHROMA_LIFT_SIGMA = 6 / 1024  # low-pass for that lift, as a share of the side (6 px on a 1024 render)
+CHROMA_DARK = (50.0, 90.0)    # photo luma (low-passed) where the scaling applies fully / not at all: darkness
+                              # compresses a photo's chroma, a normally lit photo already has its true colour
+REFL_BLUE = (4.0, 10.0)       # Cb/Cr units towards blue-cyan beyond the radial median: none below, full above
+REFL_LIFT = (6.0, 20.0)       # luma above the radial median: a reflection always adds light
+REFL_IRIS_BLUE = (-2.0, 4.0)  # the iris's own blue-cyan lean: full correction at or below the first, none above the second
+
+
+def _radial_median(plane, rr, mask, edges):
+    """Median of `plane` in each radial band (under `mask`), interpolated back onto every pixel."""
+    cs, ms = [], []
+    for a, b in zip(edges[:-1], edges[1:]):
+        sel = mask & (rr >= a) & (rr < b)
+        if sel.sum() > 30:
+            cs.append((a + b) / 2); ms.append(float(np.median(plane[sel])))
+    if len(cs) < 2:
+        return np.full(plane.shape, float(np.median(plane[mask])) if mask.any() else 0.0, np.float32)
+    return np.interp(rr, cs, ms).astype(np.float32)
+
+
+def reflection_chroma(y, cb, cr, r_frac=None):
+    """How much of each pixel's colour is a reflection of the room rather than the iris, 0..1.
+
+    A window or the sky mirrored on the cornea adds light and pulls the colour towards blue-cyan (or towards
+    neutral, which on a brown or green iris is the same direction). chroma_lock copied that colour into the
+    artwork as blue and violet fibres (6 of 27 licensed test photos). Pigment is the opposite case: the yellow
+    and amber patches of a light eye are also brighter than their surroundings, but they sit on the yellow-red
+    side, so they are never touched. Judged against the median of the same radius, so an iris whose colour
+    changes from the pupil outwards (a brown ring around a green iris) is not mistaken for a reflection."""
+    S = y.shape[0]
+    r_frac = r_frac or iris_radius_frac()
+    yy, xx = np.ogrid[0:S, 0:S]
+    rr = (np.sqrt((xx - S / 2 + 0.5) ** 2 + (yy - S / 2 + 0.5) ** 2) / (r_frac * S)).astype(np.float32)
+    iris = (rr > 0.30) & (rr < 0.98)
+    edges = np.arange(0.30, 1.00, 0.05)
+    dcb = cb - _radial_median(cb, rr, iris, edges)
+    dcr = cr - _radial_median(cr, rr, iris, edges)
+    lift = y - _radial_median(y, rr, iris, edges)
+    blue = (dcb - dcr) / np.sqrt(2.0)                 # projection on the blue-cyan direction (Cb up, Cr down)
+    b0, b1 = REFL_BLUE; l0, l1 = REFL_LIFT
+    # judged only inside 0.90 of the radius: beyond it lie the pale limbus and sclera, which the artwork trims
+    w = np.clip((blue - b0) / (b1 - b0), 0, 1) * np.clip((lift - l0) / (l1 - l0), 0, 1) * ((rr > 0.30) & (rr < 0.90))
+    # On a blue or grey-blue iris a bluer, brighter patch is as likely its own light fibres as a reflection, and a
+    # blue reflection does no harm there anyway. Measured along the same blue-cyan axis: 27 brown test eyes read
+    # -47 to -2, the owner's blue-green eye in daylight +18, the site's sample eye +11. Full correction at -2 and
+    # below, none from +4 up.
+    core = (rr > 0.35) & (rr < 0.88)
+    if core.any():
+        iris_blue = float((np.median(cb[core]) - np.median(cr[core])) / np.sqrt(2.0))
+        w = w * float(np.clip((REFL_IRIS_BLUE[1] - iris_blue) / (REFL_IRIS_BLUE[1] - REFL_IRIS_BLUE[0]), 0.0, 1.0))
+    # a reflection is a soft patch, not a pixel: smooth the weight so fibres inside it are treated alike
+    return np.clip(_blur_f(w.astype(np.float32), max(1.0, S * 0.006)) * 1.3, 0, 1), rr, iris, edges
+
+
+CHROMA_STATS_SIDE = 1024     # the colour correction maps are computed at most at this size, then stretched
+
+
+def _chroma_maps(Y, Ys, CB, CR, r_frac=None):
+    """(reflection weight or None, iris Cb and Cr of each radius or None, chroma gain), all at the planes' size."""
+    w, rr, iris, edges = reflection_chroma(Ys, CB, CR, r_frac)
+    if float(w.max()) > 0.01:
+        keep = iris & (w < 0.05)
+        mcb, mcr = _radial_median(CB, rr, keep, edges), _radial_median(CR, rr, keep, edges)
+    else:
+        w = mcb = mcr = None
+    sig = max(1.0, Y.shape[0] * CHROMA_LIFT_SIGMA)
+    Ys_lo = _blur_f(Ys, sig)
+    k = np.clip((_blur_f(Y, sig) + 4.0) / (Ys_lo + 4.0), 1.0, CHROMA_LIFT_CAP)
+    # only where the photo itself is dark: a well-lit photo already carries its true colour, and scaling it by the
+    # model's brightening over-saturated the owner's own eye (ring C 13.6 -> 21.8 against about 17 in his sharp shot)
+    d0, d1 = CHROMA_DARK
+    k = 1.0 + (k - 1.0) * np.clip((d1 - Ys_lo) / max(d1 - d0, 1e-3), 0.0, 1.0)
+    return w, mcb, mcr, k.astype(np.float32)
+
+
+def chroma_lock(ai, src, blur=1.6, amount=1.0, r_frac=None):
     """Keep the structure the model restored, put the client's real colour back.
 
     The model may move luminance, because that is where the fibres live. It may not move colour, because colour
     is the one thing the client can check against a mirror. Measured on a weak photo the model drifted Cb by
     -10 and Cr by +7 and desaturated by 30%; after this lock the drift is under one unit. The chroma planes are
-    blurred slightly so a sub-pixel drift in the model's output cannot show up as colour fringing."""
+    blurred slightly so a sub-pixel drift in the model's output cannot show up as colour fringing.
+
+    Two corrections on top (owner decision 2026-09-23, after the 30-photo licensed test set):
+    - where the model lifted the brightness, the photo's chroma is scaled by the same local lift (only up, capped),
+      because a dark brown iris kept at its dim photo's absolute chroma but rendered brighter reads grey
+      (a test eye went from 1.3% to 48.7% colourless ring; with the scaling 9.7%, lightness unchanged);
+    - colour that a reflection of the room put on the cornea is replaced by the iris colour of the same radius."""
     if src.size != ai.size:
         src = src.resize(ai.size, Image.LANCZOS)
     y, cb_ai, cr_ai = ai.convert("YCbCr").split()
-    _, cb, cr = src.convert("YCbCr").split()
+    ys, cb, cr = src.convert("YCbCr").split()
     if blur:
         cb = cb.filter(ImageFilter.GaussianBlur(blur))
         cr = cr.filter(ImageFilter.GaussianBlur(blur))
+    # The correction maps are smooth by construction (blurred weights, radial medians, a low-passed lift), so on a
+    # 4096 master they are worked out on a 1024 copy and stretched back: 8.5 s and 1.1 GB became a fraction of that,
+    # and a 1024 preview is computed exactly as before.
+    f32 = lambda im: np.asarray(im).astype(np.float32)
+    if ai.size[0] > CHROMA_STATS_SIDE:
+        n = (CHROMA_STATS_SIDE, CHROMA_STATS_SIDE)
+        sm = lambda im: f32(im.resize(n, Image.BILINEAR))
+        maps = _chroma_maps(sm(y), sm(ys), sm(cb), sm(cr), r_frac)
+        up = lambda a: None if a is None else np.asarray(Image.fromarray(a.astype(np.float32), mode="F").resize(ai.size, Image.BILINEAR), dtype=np.float32)
+        w, mcb, mcr, k = (up(a) for a in maps)
+    else:
+        w, mcb, mcr, k = _chroma_maps(f32(y), f32(ys), f32(cb), f32(cr), r_frac)
+    CB, CR = f32(cb), f32(cr)
+    if w is not None:          # 1. reflections: the photo's colour there is the room's, so take the iris colour of that radius
+        CB += (mcb - CB) * w
+        CR += (mcr - CR) * w
+    CB = 128.0 + (CB - 128.0) * k   # 2. the photo's colourfulness, kept where the model lifted a dark photo
+    CR = 128.0 + (CR - 128.0) * k
+    cb = Image.fromarray(np.clip(CB, 0, 255).astype(np.uint8))
+    cr = Image.fromarray(np.clip(CR, 0, 255).astype(np.uint8))
     if amount < 1.0:
         cb = Image.blend(cb_ai, cb, amount)
         cr = Image.blend(cr_ai, cr, amount)
