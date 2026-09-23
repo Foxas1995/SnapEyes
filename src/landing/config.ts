@@ -1,9 +1,9 @@
 // Facts the landing page prints. Keep every value here true; the copy dictionary only words them.
 
-// snapeyes.com has no working mailbox yet (no MX records). Every email address on the page and the
-// curator's "send me your photos" offer come from this one constant and stay hidden while it is empty.
-// Never put an address here that cannot receive mail.
-export const CONTACT_EMAIL = '';
+// Every email address on the page and the curator's "send me your photos" offer come from this one constant
+// and stay hidden while it is empty. Owner decision 2026-09-23: info@snapeyes.com, created at Hostinger while
+// the domain moves there. Until its MX records exist, mail to it bounces: check that it receives before ads run.
+export const CONTACT_EMAIL = 'info@snapeyes.com';
 
 // Every primary call to action goes straight to the capture tool: people should see their own result.
 export const TRY_URL = '/try';
