@@ -6,11 +6,15 @@ import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
+from _lib import store
 
 def handle(req):
     info = {"ok": True, "commit": os.environ.get("VERCEL_GIT_COMMIT_SHA", "")[:7],
             "gemini_key": bool(os.environ.get("GEMINI_API_KEY", "").strip()),
             "blob_store": bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()),
+            # the private Supabase store for paid 4K files (env only, no network call). Separate from blob_store,
+            # which /try reads to decide whether to offer the training-memory opt-in: that must stay off.
+            "master_store": store.configured(),
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx"))}
     L.send_json(req, 200, info)
 
