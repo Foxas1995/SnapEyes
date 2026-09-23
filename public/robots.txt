@@ -1,0 +1,9 @@
+# SnapEyes - the landing page is public; the API endpoints are not pages.
+# /try (the capture tool) stays crawlable but carries <meta name="robots" content="noindex">,
+# which only works if crawlers are allowed to fetch it, so it is not disallowed here.
+# No "Allow: /" line: allow-all is the default, and an Allow placed before the Disallow
+# would let first-match parsers (e.g. Python's urllib.robotparser) into /api/.
+User-agent: *
+Disallow: /api/
+
+Sitemap: https://snapeyes.com/sitemap.xml

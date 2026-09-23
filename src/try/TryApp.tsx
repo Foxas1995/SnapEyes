@@ -1,23 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Upload, Sparkles, RefreshCcw, Download, Video, Check, AlertTriangle, ZoomIn } from 'lucide-react';
+import { Camera, Upload, Sparkles, RefreshCcw, Download, Video, Check, AlertTriangle, ZoomIn, Info, Lightbulb } from 'lucide-react';
 import { CompareSlider } from './CompareSlider';
+import {
+  type Analysis, type Quality, type Targets, targetsOf, detailOf, rawFibre, bestIndex, visibleTips, topTip, mapPool,
+  autoContinue, fibreRatio, meterBand, PUPIL_NOTE, LAMP_FALLBACK,
+} from './shots';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
 type Mode = 'artistic';   // the conservative restoration was dropped; studio macro is the product
+type ShotSource = 'input' | 'live';
 
-interface Analysis {
-  ok: boolean;
-  reason?: string;
-  message?: string;
-  ticket?: string;
-  pupil_r?: number | null;
-  iris?: { cx: number; cy: number; r: number };
-  pad?: number;
-  glare_boxes_crop?: number[][];
-  picked?: { used: number; of: number; fibre: number; worst: number };
-  quality?: { diameter_px: number; sharpness: number; fibre?: number; sharpness_label: string; occlusion_pct: number; glare: boolean; verdict: 'good' | 'ok' | 'weak'; message: string; tips: string[] };
-  preview?: string;
-}
+// Several photos are measured at once: each /api/analyze call is mostly waiting on the vision model, so
+// three in flight cut the wait roughly threefold without piling a whole gallery onto the server at once.
+const ANALYZE_CONCURRENCY = 3;
 
 interface Enhanced { image: string; fidelity: number; used_sr: boolean; fallback: boolean; seconds: number; stored?: boolean }
 
@@ -97,9 +92,19 @@ export const TryApp: React.FC = () => {
   const [progress, setProgress] = useState<string[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [liveOpen, setLiveOpen] = useState(false);
+  // Camera shot collector: one analysis per camera shot (up to targets.max_shots). Only the best shot keeps
+  // its full-size image; five 12 MP photos held at once is how a phone tab gets killed.
+  const [shots, setShots] = useState<Analysis[]>([]);
+  const [shotSource, setShotSource] = useState<ShotSource>('input');
+  const [shotNote, setShotNote] = useState<string | null>(null);
+  const shotsRef = useRef<Analysis[]>([]);
+  const bestShotRef = useRef<{ img: HTMLImageElement; url: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  // The site's own demo eye is a studio photo whose ring light covers part of the fibres, so on the glare
+  // cap it reads 'ok', not 'good'. We know it restores well, so it is not parked on the quality screen.
+  const sampleRef = useRef(false);
 
   // only offer the training-memory checkbox when this deployment can really store something
   useEffect(() => {
@@ -119,13 +124,20 @@ export const TryApp: React.FC = () => {
     return () => clearInterval(id);
   }, [step]);
 
-  const reset = () => {
-    setStep('capture'); setError(null); setAnalysis(null); setClientCrop(null); setCleanCrop(null); setResults({}); setArtCache({});
-    setMode('artistic'); setProgress([]); setOrigUrl(null); imgRef.current = null;
+  const clearShots = () => {
+    if (bestShotRef.current) URL.revokeObjectURL(bestShotRef.current.url);
+    bestShotRef.current = null; shotsRef.current = []; setShots([]); setShotNote(null);
   };
 
-  const onFile = async (file: File | Blob) => {
-    setError(null);
+  const reset = () => {
+    setStep('capture'); setError(null); setAnalysis(null); setClientCrop(null); setCleanCrop(null); setResults({}); setArtCache({});
+    setMode('artistic'); setProgress([]); setOrigUrl(null); imgRef.current = null; clearShots();
+    sampleRef.current = false;
+  };
+
+  const onFile = async (file: File | Blob, isSample = false) => {
+    sampleRef.current = isSample;
+    setError(null); setProgress([]); clearShots();
     const url = URL.createObjectURL(file);
     try {
       const img = await loadImage(url);
@@ -141,27 +153,81 @@ export const TryApp: React.FC = () => {
    *  the customer cannot pick by eye and neither can a size rule. Measure each and use the best. */
   const onFiles = async (files: File[]) => {
     if (files.length === 1) return onFile(files[0]);
-    setError(null); setStep('analyzing'); setProgress([]);
-    const scored: Array<{ img: HTMLImageElement; a: Analysis; fibre: number }> = [];
-    for (let i = 0; i < files.length; i++) {
-      setProgress([`Checking photo ${i + 1} of ${files.length}`]);
+    sampleRef.current = false;
+    setError(null); setStep('analyzing'); clearShots();
+    // several run at once, so "photo 3 of 5" would be a lie: count the ones that are finished
+    let done = 0;
+    const tick = () => setProgress([`Checking ${files.length} photos: ${done} of ${files.length} done`]);
+    tick();
+    const measured = await mapPool(files, ANALYZE_CONCURRENCY, async (file) => {
+      const url = URL.createObjectURL(file);
       try {
-        const img = await loadImage(URL.createObjectURL(files[i]));
+        const img = await loadImage(url);
         const a = await measure(img);
-        if (a.ok && a.iris) scored.push({ img, a, fibre: a.quality?.fibre ?? 0 });
+        if (a.ok && a.iris) return { img, url, a };
       } catch { /* an unreadable file just does not compete */ }
-    }
+      finally { done++; tick(); }
+      URL.revokeObjectURL(url);
+      return null;
+    });
+    // mapPool keeps input order, so i is the photo's position in the customer's own selection
+    const scored = measured.flatMap((m, i) => (m ? [{ ...m, i }] : []));
     if (!scored.length) {
       setError('We could not find an eye in any of those photos.'); setStep('capture'); return;
     }
-    scored.sort((x, y) => y.fibre - x.fibre);
-    const win = scored[0];
+    const win = scored[bestIndex(scored.map((s) => s.a))];
+    scored.forEach((s) => { if (s !== win) URL.revokeObjectURL(s.url); });
     const chosen: Analysis = {
       ...win.a,
-      picked: { used: scored.indexOf(win) + 1, of: files.length, fibre: win.fibre, worst: scored[scored.length - 1].fibre },
+      picked: { used: win.i + 1, of: files.length, fibre: rawFibre(win.a), worst: Math.min(...scored.map((s) => rawFibre(s.a))) },
     };
-    imgRef.current = win.img; setAnalysis(chosen); setProgress([]);
-    if (chosen.quality?.verdict === 'good') { await process(win.img, chosen); } else { setStep('quality'); }
+    imgRef.current = win.img; setOrigUrl(win.url); setAnalysis(chosen); setProgress([]);
+    if (autoContinue(chosen)) { await process(win.img, chosen); } else { setStep('quality'); }
+  };
+
+  /** One photo from the camera (the capture input or the live camera). Measured at once and kept if it is
+   *  the best so far, so the customer can shoot, see the score, and shoot again until one is good. */
+  const onCameraShot = async (file: Blob, source: ShotSource) => {
+    sampleRef.current = false;
+    setError(null); setShotNote(null); setShotSource(source);
+    const t = targetsOf(analysis);
+    const prev = shotsRef.current;
+    // a shot that fails keeps the collection alive when there is one, and falls back to the old error otherwise
+    const fail = (msg: string) => {
+      if (!prev.length) { setError(msg); setStep('capture'); return; }
+      setShotNote(msg); setStep('quality');
+    };
+    if (prev.length >= t.max_shots) { setStep('quality'); return; }
+    setStep('analyzing'); setProgress([`Measuring shot ${prev.length + 1} of ${t.max_shots}`]);
+    const url = URL.createObjectURL(file);
+    let img: HTMLImageElement; let a: Analysis;
+    try {
+      img = await loadImage(url);
+      a = await measure(img);
+    } catch (e) { URL.revokeObjectURL(url); fail((e as Error).message); return; }
+    if (!a.ok || !a.iris) { URL.revokeObjectURL(url); fail(a.message || 'We could not find an eye in that shot.'); return; }
+    const next = [...prev, a];
+    const bi = bestIndex(next);
+    if (bi === next.length - 1) {
+      if (bestShotRef.current) URL.revokeObjectURL(bestShotRef.current.url);
+      bestShotRef.current = { img, url };
+    } else {
+      URL.revokeObjectURL(url);
+    }
+    const best = bestShotRef.current;
+    if (!best) { fail('Something went wrong keeping your shots. Please take the photo again.'); return; }
+    shotsRef.current = next; setShots(next); setProgress([]);
+    const chosen = next[bi];
+    imgRef.current = best.img; setOrigUrl(best.url); setAnalysis(chosen);
+    // go on by itself only when the shot that will be processed is good and lamp-free. Asking this of the
+    // latest shot instead once sent an earlier 'weak' shot (sharp, but glared) to the studio unseen.
+    if (autoContinue(chosen)) { await process(best.img, chosen); return; }
+    setStep('quality');
+  };
+
+  const takeAnother = () => {
+    setError(null);
+    if (shotSource === 'live' && hasCameraApi) setLiveOpen(true); else fileRef.current?.click();
   };
 
   const measure = async (img: HTMLImageElement) => {
@@ -176,10 +242,18 @@ export const TryApp: React.FC = () => {
     const a = await measure(img);
     setAnalysis(a);
     if (!a.ok || !a.iris) { setError(a.message || 'No eye found'); setStep('capture'); return; }
-    if (a.quality?.verdict === 'good') { await process(img, a); } else { setStep('quality'); }
+    const sampleOk = sampleRef.current && a.quality?.verdict !== 'weak' && a.quality?.locked !== false;
+    if (autoContinue(a) || sampleOk) { await process(img, a); } else { setStep('quality'); }
   };
 
   const process = async (img: HTMLImageElement, a: Analysis) => {
+    // A crop that is not centred on an iris must never reach the studio: from a crop of eyelid skin the image
+    // model invented a complete brown iris, and nothing downstream can tell. The server issues no work
+    // ticket for it either; this stops the button before the customer waits for an error.
+    if (a.quality?.locked === false) {
+      setError('This photo is not centred on an iris, so it cannot be restored. Please retake it with one eye filling the frame.');
+      setStep('quality'); return;
+    }
     setStep('processing'); setProgress(['Cutting out your iris']);
     const W = img.naturalWidth, H = img.naturalHeight;
     const { cx, cy, r } = a.iris!; const pad = a.pad || 1.12;
@@ -247,6 +321,13 @@ export const TryApp: React.FC = () => {
           </div>
         )}
 
+        {/* Both pickers live outside the capture screen so "Take another" can reopen the camera from the
+            shot collector. The value is cleared after every pick so the same file can be chosen again. */}
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onCameraShot(f, 'input'); }} />
+        <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden"
+          onChange={(e) => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) onFiles(fs); }} />
+
         {step === 'capture' && (
           <section className="flex flex-col gap-5">
             <div className="text-center mt-2">
@@ -262,28 +343,27 @@ export const TryApp: React.FC = () => {
               <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">Take 3-5 shots and send them all.</span> Move the light a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.</div>
             </div>
 
-            <button onClick={() => fileRef.current?.click()} className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#f5c542] to-[#d4af37] text-black font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#f5c542]/20 active:scale-[0.98]">
+            {/* the first camera shot starts a fresh collection */}
+            <button onClick={() => { clearShots(); fileRef.current?.click(); }} className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#f5c542] to-[#d4af37] text-black font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#f5c542]/20 active:scale-[0.98]">
               <Camera className="w-5 h-5" /> Take a photo
             </button>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.length && onFiles(Array.from(e.target.files))} />
 
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                 <Upload className="w-4 h-4 text-[#f5c542]" /> Pick 3-5 shots
               </button>
-              <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files?.length && onFiles(Array.from(e.target.files))} />
               {hasCameraApi ? (
-                <button onClick={() => setLiveOpen(true)} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                <button onClick={() => { clearShots(); setLiveOpen(true); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                   <Video className="w-4 h-4 text-emerald-400" /> Live camera + zoom
                 </button>
               ) : (
-                <button onClick={async () => { const r = await fetch('/assets/sample_eye_blue_1789706902835.jpg'); onFile(await r.blob()); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                <button onClick={async () => { const r = await fetch('/assets/sample_eye_blue_1789706902835.jpg'); onFile(await r.blob(), true); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                   <Sparkles className="w-4 h-4 text-[#f5c542]" /> Try a sample eye
                 </button>
               )}
             </div>
             {hasCameraApi && (
-              <button onClick={async () => { const r = await fetch('/assets/sample_eye_blue_1789706902835.jpg'); onFile(await r.blob()); }} className="text-xs text-zinc-400 underline underline-offset-4 self-center">
+              <button onClick={async () => { const r = await fetch('/assets/sample_eye_blue_1789706902835.jpg'); onFile(await r.blob(), true); }} className="text-xs text-zinc-400 underline underline-offset-4 self-center">
                 or try with a sample eye
               </button>
             )}
@@ -298,39 +378,52 @@ export const TryApp: React.FC = () => {
         )}
 
         {step === 'analyzing' && (
-          <Working title="Finding your iris…" lines={['Locating the iris and pupil', 'Measuring size and sharpness']} elapsed={elapsed} />
+          <Working title="Finding your iris…" lines={progress.length ? progress : ['Locating the iris and pupil', 'Measuring size and sharpness']} elapsed={elapsed} />
         )}
 
-        {step === 'quality' && analysis?.quality && (
+        {step === 'quality' && analysis?.quality && shots.length > 0 && (
+          <ShotCollector shots={shots} t={targetsOf(analysis)} note={shotNote} onTakeAnother={takeAnother}
+            canUse={analysis.quality.locked !== false}
+            onContinue={() => imgRef.current && process(imgRef.current, analysis)} onStartOver={reset} />
+        )}
+
+        {step === 'quality' && analysis?.quality && shots.length === 0 && (
           <section className="flex flex-col gap-4">
             <div className="grid grid-cols-[120px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
               {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt="Detected iris" className="w-[120px] h-[120px] rounded-full border border-[#f5c542]/40 object-cover" />}
-              <div>
+              <div className="min-w-0">
                 <Verdict v={analysis.quality.verdict} />
                 <p className="text-sm text-zinc-200 mt-2">{analysis.quality.message}</p>
-                <p className="text-[11px] text-zinc-500 mt-1 font-mono">iris {analysis.quality.diameter_px}px · sharpness {analysis.quality.sharpness}{analysis.quality.glare ? ' · reflection detected' : ''}</p>
+                <DetailMeter a={analysis} t={targetsOf(analysis)} />
               </div>
             </div>
             {analysis.picked && (
               <p className="text-xs text-emerald-300/90 bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-3">
-                We compared {analysis.picked.of} photos and used the sharpest one. It carries{' '}
-                {(analysis.picked.fibre / Math.max(analysis.picked.worst, 0.01)).toFixed(1)}x the fibre detail of the softest.
+                {/* "best", not "sharpest": the verdict ranks first, so a glared photo can be sharper and still lose */}
+                We compared {analysis.picked.of} photos and used the best one (photo {analysis.picked.used}).
+                {fibreRatio(analysis.picked) !== null &&
+                  ` It carries ${fibreRatio(analysis.picked)!.toFixed(1)}x the fibre detail of the softest.`}
               </p>
             )}
-            {analysis.quality.tips.length > 0 && (
+            <ShotNotes q={analysis.quality} onRetake={reset} />
+            {visibleTips(analysis.quality).length > 0 && (
               <ul className="text-xs text-zinc-300 bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5">
-                {analysis.quality.tips.map((t) => <li key={t}>• {t}</li>)}
+                {visibleTips(analysis.quality).map((t) => <li key={t}>• {t}</li>)}
               </ul>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid gap-3 ${analysis.quality.locked !== false ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <button onClick={reset} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2"><RefreshCcw className="w-4 h-4" /> Retake</button>
-              <button onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> Continue anyway</button>
+              {/* no way forward from a crop that is not an iris: the studio would invent one */}
+              {analysis.quality.locked !== false && (
+                <button onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> Continue anyway</button>
+              )}
             </div>
           </section>
         )}
 
         {step === 'processing' && (
-          <Working title="Restoring your iris…" lines={progress} elapsed={elapsed} image={clientCrop} />
+          <Working title="Restoring your iris…" lines={progress} elapsed={elapsed} image={clientCrop}
+            note={analysis?.quality?.pupil_reflection ? PUPIL_NOTE : undefined} />
         )}
 
         {step === 'result' && results.artistic && (
@@ -371,7 +464,7 @@ export const TryApp: React.FC = () => {
         )}
       </main>
 
-      {liveOpen && <LiveCamera onClose={() => setLiveOpen(false)} onCapture={(b) => { setLiveOpen(false); onFile(b); }} />}
+      {liveOpen && <LiveCamera onClose={() => setLiveOpen(false)} onCapture={(b) => { setLiveOpen(false); onCameraShot(b, 'live'); }} />}
       {origUrl && step === 'result' && <span className="hidden">{origUrl}</span>}
     </div>
   );
@@ -389,7 +482,140 @@ const FidelityBadge: React.FC<{ res: Enhanced; mode: Mode }> = ({ res }) => {
   return <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#f5c542]/50 text-[#f5c542] bg-[#f5c542]/10">Studio macro · true colour DNA</span>;
 };
 
-const Working: React.FC<{ title: string; lines: string[]; elapsed: number; image?: string | null }> = ({ title, lines, elapsed, image }) => (
+/** Detail N/100 with the ok and good targets marked, so the customer sees how far a retake has to go.
+ *  Renders nothing against an older server that sends no score: the verdict badge still speaks there. */
+const DetailMeter: React.FC<{ a: Analysis; t: Targets; label?: boolean }> = ({ a, t, label = true }) => {
+  const d = detailOf(a);
+  if (d === undefined) return null;
+  const { band, caption } = meterBand(d, a.quality, t);
+  const [text, bar] = { good: ['text-emerald-300', 'bg-emerald-400'], ok: ['text-amber-300', 'bg-amber-400'], low: ['text-rose-300', 'bg-rose-400'] }[band];
+  return (
+    <div className="mt-3" role="meter" aria-label="Detail" aria-valuemin={0} aria-valuemax={100} aria-valuenow={d}>
+      <div className="flex items-baseline justify-between gap-2 text-xs">
+        {label ? <span className="font-bold text-zinc-200">Detail <span className={text}>{d}</span><span className="text-zinc-500">/100</span></span> : <span />}
+        {caption && <span className="text-[10px] text-zinc-500">{caption}</span>}
+      </div>
+      <div className="relative h-2 mt-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.max(d, 2)}%` }} />
+        <span className="absolute inset-y-0 w-px bg-white/35" style={{ left: `${t.detail_ok}%` }} />
+        <span className="absolute inset-y-0 w-px bg-white/70" style={{ left: `${t.detail_good}%` }} />
+      </div>
+    </div>
+  );
+};
+
+/** Notes that come from the light in the photo rather than its sharpness. The pupil one reassures (the
+ *  engine rebuilds the pupil anyway); the lamp one warns gently and offers a retake. */
+const ShotNotes: React.FC<{ q: Quality; onRetake?: () => void }> = ({ q, onRetake }) => (
+  <>
+    {q.pupil_reflection && (
+      <p className="text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl p-3 flex gap-2">
+        <Info className="w-4 h-4 shrink-0 mt-px text-sky-300" /> <span>{PUPIL_NOTE}</span>
+      </p>
+    )}
+    {q.lamp_cast && (
+      <div className="text-xs text-amber-200/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
+        <Lightbulb className="w-4 h-4 shrink-0 mt-px text-amber-300" />
+        <span>
+          {q.lamp_message || LAMP_FALLBACK}
+          {onRetake && <> <button onClick={onRetake} className="underline underline-offset-2 font-semibold text-amber-100">Try a retake</button></>}
+        </span>
+      </div>
+    )}
+  </>
+);
+
+/** The camera shot collector: the latest shot's score and the one tip for the next shot, every shot so far
+ *  with the best one ringed, and a way to shoot again or go on with the best at any point. */
+const ShotCollector: React.FC<{
+  shots: Analysis[]; t: Targets; note: string | null;
+  onTakeAnother: () => void; onContinue: () => void; onStartOver: () => void; canUse?: boolean;
+}> = ({ shots, t, note, onTakeAnother, onContinue, onStartOver, canUse = true }) => {
+  const n = shots.length;
+  const latest = shots[n - 1];
+  const q = latest.quality;
+  const d = detailOf(latest);
+  const bi = bestIndex(shots);
+  const best = shots[bi];
+  const bestD = detailOf(best);
+  const full = n >= t.max_shots;
+  // Prompting ends when the shot we would process is good and lamp-free (the page then goes on by itself).
+  // Judged on the best shot, not the latest: a good but lamp-tinted latest shot must still leave room for
+  // the daylight retake its own warning asks for.
+  const canTakeMore = !full && !autoContinue(best);
+  const tip = q && canTakeMore ? topTip(q, t) : null;
+  const bestLabel = `shot ${bi + 1}${bestD !== undefined ? ` (Detail ${bestD})` : ''}`;
+  // the one case where the latest shot reads "Great photo" and is still not used: say why
+  const skippedForLamp = bi !== n - 1 && !!q?.lamp_cast && !best.quality?.lamp_cast;
+  const summary = full ? `That is ${t.max_shots} shots. We will use your best one, ${bestLabel}.`
+    : n === 1 ? (canTakeMore ? `Take up to ${t.max_shots - 1} more. We measure every shot and keep the best one.` : 'This one is sharp enough to use.')
+    : bi === n - 1 ? 'This is your best shot so far.'
+    : skippedForLamp ? `Lamp light tinted shot ${n}, so we will use ${bestLabel}, your best shot in true colour.`
+    : `Your best so far is ${bestLabel}. That is the one we will use.`;
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="grid grid-cols-[96px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
+        {latest.preview
+          ? <img src={`data:image/jpeg;base64,${latest.preview}`} alt={`Shot ${n}`} className="w-24 h-24 rounded-full border border-[#f5c542]/40 object-cover" />
+          : <span className="w-24 h-24 rounded-full bg-white/5" />}
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-zinc-100">Shot {n} of {t.max_shots}{d !== undefined && ` · Detail ${d}`}</p>
+          {q && <div className="mt-1.5"><Verdict v={q.verdict} /></div>}
+          <DetailMeter a={latest} t={t} label={false} />
+        </div>
+      </div>
+
+      {note && (
+        <p className="text-xs text-amber-200/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">
+          That last shot could not be used: {note} Your best shot so far is kept.
+        </p>
+      )}
+      {tip && (
+        <p className="text-sm text-zinc-200 bg-white/5 border border-white/10 rounded-xl p-3 flex gap-2">
+          <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-[#f5c542]" /> <span>{tip}</span>
+        </p>
+      )}
+      {/* the notes follow the shot that will be processed, so a lamp warning never disappears while its
+          shot is still the one we use. No retake link here: "Take another" below already covers it. */}
+      {best.quality && <ShotNotes q={best.quality} />}
+
+      <div>
+        <div className="flex items-start gap-3">
+          {shots.map((s, i) => {
+            const sd = detailOf(s);
+            return (
+              <div key={i} className="flex flex-col items-center gap-1">
+                {s.preview
+                  ? <img src={`data:image/jpeg;base64,${s.preview}`} alt={`Shot ${i + 1}`} className={`w-11 h-11 rounded-full object-cover border-2 ${i === bi ? 'border-[#f5c542]' : 'border-white/10 opacity-60'}`} />
+                  : <span className={`w-11 h-11 rounded-full bg-white/5 border-2 ${i === bi ? 'border-[#f5c542]' : 'border-white/10'}`} />}
+                <span className={`text-[10px] font-mono ${i === bi ? 'text-[#f5c542]' : 'text-zinc-500'}`}>{sd ?? `#${i + 1}`}</span>
+              </div>
+            );
+          })}
+          {canTakeMore && Array.from({ length: t.max_shots - n }, (_, i) => (
+            <span key={`slot-${i}`} className="w-11 h-11 rounded-full border-2 border-dashed border-white/10" aria-hidden />
+          ))}
+        </div>
+        <p className="text-[11px] text-zinc-500 mt-2">{summary}</p>
+      </div>
+
+      <div className={`grid gap-3 ${canTakeMore && canUse ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        {canTakeMore && (
+          <button onClick={onTakeAnother} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Camera className="w-4 h-4" /> Take another</button>
+        )}
+        {/* the best shot is not centred on an iris: offer only another shot, never the studio */}
+        {canUse && (
+          <button onClick={onContinue} className={`py-3 rounded-xl text-sm flex items-center justify-center gap-2 ${canTakeMore ? 'bg-white/5 border border-white/10 font-semibold' : 'bg-[#f5c542] text-black font-bold'}`}>
+            <Sparkles className="w-4 h-4" /> {n > 1 ? 'Use best shot' : 'Use this shot'}
+          </button>
+        )}
+      </div>
+      <button onClick={onStartOver} className="text-xs text-zinc-400 underline underline-offset-4 self-center">Start over</button>
+    </section>
+  );
+};
+
+const Working: React.FC<{ title: string; lines: string[]; elapsed: number; image?: string | null; note?: string }> = ({ title, lines, elapsed, image, note }) => (
   <section className="flex flex-col items-center gap-5 py-6 text-center">
     {image ? <img src={image} alt="Your iris" className="w-40 h-40 rounded-full object-cover border-2 border-[#f5c542]/40 shadow-[0_0_40px_rgba(245,197,66,0.25)] animate-pulse" /> : <div className="w-16 h-16 border-4 border-[#f5c542]/20 border-t-[#f5c542] rounded-full animate-spin" />}
     <h2 className="font-luxury text-xl font-bold">{title}</h2>
@@ -401,6 +627,7 @@ const Working: React.FC<{ title: string; lines: string[]; elapsed: number; image
         </li>
       ))}
     </ul>
+    {note && <p className="text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl px-3 py-2 max-w-sm">{note}</p>}
     <span className="text-[11px] font-mono text-zinc-500">{elapsed}s</span>
   </section>
 );
@@ -452,8 +679,25 @@ const LiveCamera: React.FC<{ onClose: () => void; onCapture: (b: Blob) => void }
 
   const capture = async () => {
     const track = streamRef.current?.getVideoTracks()[0]; const v = videoRef.current; if (!track || !v) return;
-    const IC = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => { takePhoto: () => Promise<Blob> } }).ImageCapture;
-    if (IC) { try { const blob = await new IC(track).takePhoto(); onCapture(blob); return; } catch { /* fall through */ } }
+    // typed as optional on purpose: the DOM lib declares ImageCapture, but iOS Safari before 18.4 has none
+    const IC = (window as unknown as { ImageCapture?: typeof ImageCapture }).ImageCapture;
+    if (IC) {
+      try {
+        const ic = new IC(track);
+        // Ask for the sensor's largest still. Without settings some Chrome builds return the photo at the
+        // preview stream's size, which throws away the iris pixels the 2x zoom was there to gain.
+        let settings: PhotoSettings | undefined;
+        try {
+          const caps = await ic.getPhotoCapabilities?.();
+          const w = caps?.imageWidth?.max, h = caps?.imageHeight?.max;
+          if (w && h) settings = { imageWidth: w, imageHeight: h };
+        } catch { /* capabilities are optional: take the default photo */ }
+        let blob: Blob;
+        try { blob = await ic.takePhoto(settings); }
+        catch (e) { if (!settings) throw e; blob = await ic.takePhoto(); }   // a camera that refuses the size still shoots
+        onCapture(blob); return;
+      } catch { /* fall through to a video frame */ }
+    }
     const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d')!.drawImage(v, 0, 0);
     c.toBlob((b) => b && onCapture(b), 'image/jpeg', 0.95);
   };

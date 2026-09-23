@@ -22,6 +22,7 @@ def enhance(body):
     pad = float(body.get("pad") or 1.12)
     r_frac = L.iris_radius_frac(pad)
     crop = L.mask_disk(crop, pad)
+    source = crop                       # the deglared crop as it arrived: the colour reference for the QA below
     used_sr = bool(body.get("used_sr"))
     if s < L.SR_MAX_SIDE:
         crop = L.sr_x4(crop); used_sr = True
@@ -40,8 +41,11 @@ def enhance(body):
         if fid < L.FIDELITY_FLOOR:
             out, fallback = base, True
     out = out.resize((L.WORK, L.WORK), Image.LANCZOS)
+    # colour QA: how far the render moved the iris colour from the deglared crop it was made from. The pupil
+    # is only made neutral later, by the grade in /api/compose, so it is checked there. Logged, never blocking.
+    qa = L.colour_qa("enhance", result=out, source=source, r_frac=r_frac)
     res = {"ok": True, "mode": mode, "image": L.pil_to_b64(out, "JPEG", 93), "fidelity": round(fid, 3), "used_sr": used_sr,
-           "fallback": fallback, "seconds": round(time.time() - t0, 1)}
+           "fallback": fallback, "seconds": round(time.time() - t0, 1), "qa": qa}
     # optional training memory (only with consent and when storage is configured)
     if body.get("consent") and body.get("session"):
         sid = L.safe_segment(body["session"])

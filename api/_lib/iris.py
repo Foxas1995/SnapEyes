@@ -137,12 +137,25 @@ def _host_of(value):
     m = re.match(r"^[a-z]+://([^/:]+)", str(value or "").strip(), re.I)
     return (m.group(1).lower() if m else "")
 
+# This project's own Vercel hosts, as exact names only. "Anything on .vercel.app" used to pass, and anyone
+# can deploy there. No pattern is safe either: a .vercel.app name goes to whoever creates a project of that
+# name first, so "snap-eyes-<anything>-foxas1995s-projects" can be registered by a stranger. These two are
+# this project's production aliases (snap-eyes.vercel.app serves the same /api/health commit as
+# snapeyes.com). A preview or branch page calls its own deployment's API, and that host comes from
+# VERCEL_URL / VERCEL_BRANCH_URL in _deployment_hosts().
+OWN_VERCEL_HOSTS = ("snap-eyes.vercel.app", "snap-eyes-foxas1995s-projects.vercel.app")
+
+def _deployment_hosts():
+    """The hosts Vercel says this very deployment answers on (empty locally)."""
+    return {_host_of("https://" + os.environ.get(k, "").strip())
+            for k in ("VERCEL_URL", "VERCEL_BRANCH_URL", "VERCEL_PROJECT_PRODUCTION_URL")} - {""}
+
 def origin_ok(req):
     """Block cross-origin drive-by billing. A browser always sends Origin on a cross-site POST, so an
     unknown Origin is rejected. An absent Origin (curl, server-to-server) is allowed here and stopped by
     the ticket check instead."""
     h = _host_of(req.headers.get("origin")) or _host_of(req.headers.get("referer"))
-    return (not h) or h in ALLOWED_HOSTS or h.endswith(".vercel.app")
+    return (not h) or h in ALLOWED_HOSTS or h in OWN_VERCEL_HOSTS or h in _deployment_hosts()
 
 def json_content_type(req):
     """Requiring application/json forces a CORS preflight for cross-origin browser callers, and that
@@ -236,6 +249,89 @@ def fibre_detail(im, r_frac=None, size=768):
     ring = (d > 0.30) & (d < 0.92)
     return float(hi[ring].std()) if ring.any() else 0.0
 
+FIBRE_RING = (0.30, 0.92)    # the fibre ring, as a share of the iris radius: inside is pupil, outside limbus and lids
+FIBRE_BAND = (1.2, 3.5)      # difference-of-Gaussians sigmas at the 768 working size
+FIBRE_GLARE_GROW = 15        # MaxFilter window at 768 around the glare mask: the rim of a reflection is a band-pass edge too
+FIBRE_SECTOR_MIN = 0.15      # a 45-degree sector only votes if this share of its ring survives the glare mask
+
+def _grow_mask(m, k):
+    """Square dilation of a boolean mask with a k x k window (k odd). Same result as PIL MaxFilter(k) on a
+    0/255 mask, done as two 1-D passes because PIL's rank filter costs ~0.3 s at 768."""
+    r = k // 2
+    out = m
+    for ax in (0, 1):
+        p = np.pad(out, [(r, r) if a == ax else (0, 0) for a in (0, 1)])
+        n = out.shape[ax]
+        acc = np.zeros_like(out)
+        for s in range(k):
+            acc |= np.take(p, np.arange(s, s + n), axis=ax)
+        out = acc
+    return out
+
+def reflection_core(crop, r_px, boxes):
+    """The reflection itself, for measuring how much of the iris it hides: bright, unsaturated pixels inside the
+    vision model's glare boxes (the in-box rule of glare_mask, eroded the same way), with none of glare_mask's
+    halo or dilation. glare_mask() is built generous for inpainting, and on a pale or brightly exposed iris it
+    grows over bright fibres: +1/3 EV took the site's sharp sample eye from 15% to 28% of the ring with the same
+    single reflection. Tied to the boxes, the reading follows the reflection, not the exposure. No box, no reflection."""
+    S = crop.size[0]
+    boxed = _box_mask(S, boxes)
+    if not boxed.any(): return boxed
+    hsv = np.asarray(crop.convert("HSV")).astype(np.int16)
+    v, s = hsv[..., 2], hsv[..., 1]
+    yy, xx = np.mgrid[0:S, 0:S]
+    dist = np.sqrt((xx - S / 2) ** 2 + (yy - S / 2) ** 2)
+    _, thr = _glare_v_threshold(v, dist, r_px)
+    core = boxed & (dist < r_px * 0.93) & (v > thr - 15) & (s < 110)
+    return np.asarray(Image.fromarray((core * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3))) > 0
+
+def fibre_measure(crop, r_frac=None, size=768, boxes=None):
+    """Glare-robust fibre detail of a square iris crop: (fibre_score, glare_on_fibres_pct).
+
+    fibre_detail() can be fooled. A crisp reflection is the sharpest thing in a soft photo: a painted 12%
+    window glint lifted a soft frame from 4.57 to 6.04, past the old 'good' line. One bright sector (lashes,
+    a glint) also moves a whole-ring number. So the glare mask is cut out first (grown, because its rim is
+    an edge too), only the fibre band survives (a DoG: finer than 1.2 px is sensor noise and JPEG, coarser
+    than 3.5 px is shading and the pupil), and the score is the median over eight 45-degree sectors, so no
+    single sector carries it. This band alone is blind to the finest fibres: a x4 digital zoom or a blurred
+    frame run through an unsharp mask keeps most of its energy here, so the caller also checks fibre_detail()
+    (see analyze.py) before calling a photo good.
+    Everything runs on one working copy of `size` px, so the reading does not depend on how large the iris
+    was in the photo: the glare mask's filters are fixed pixel windows, and on the crop's own grid the same
+    reflection read 10.5% of the ring on a 187 px crop and 18.5% on a 1249 px one. It also keeps the cost
+    flat, 0.3-0.4 s for any crop from 320 to 1792 px, instead of growing with the crop.
+    boxes: vision glare boxes in crop pixels. glare_on_fibres_pct: share of the fibre ring hidden by the
+    reflections the vision model reported (reflection_core), so no box means 0."""
+    r_frac = r_frac or iris_radius_frac()
+    S = crop.size[0]
+    work = crop if S == size else crop.resize((size, size), Image.LANCZOS)
+    wboxes = [[c * size / float(S) for c in b] for b in (boxes or [])]
+    # the generous inpainting mask only decides which pixels the score ignores: it also catches a reflection
+    # the vision model missed, and throwing away a few bright fibres only ever lowers the score
+    hard, _, _ = glare_mask(work, r_frac * size, wboxes)
+    grown = _grow_mask(hard > 0, FIBRE_GLARE_GROW)
+    reflection = reflection_core(work, r_frac * size, wboxes)
+    g = Image.fromarray(to_gray(work).astype(np.uint8))
+    band = (np.asarray(g.filter(ImageFilter.GaussianBlur(FIBRE_BAND[0]))).astype(np.float32)
+            - np.asarray(g.filter(ImageFilter.GaussianBlur(FIBRE_BAND[1]))).astype(np.float32))
+    yy, xx = np.mgrid[0:size, 0:size]
+    d = np.sqrt((xx - size / 2) ** 2 + (yy - size / 2) ** 2) / (r_frac * size)
+    ang = (np.degrees(np.arctan2(yy - size / 2, xx - size / 2)) + 360.0) % 360.0
+    ring = (d > FIBRE_RING[0]) & (d < FIBRE_RING[1])
+    glare_pct = 100.0 * float(reflection[ring].mean()) if ring.any() else 0.0
+    keep = ring & ~grown
+    sectors = []
+    for a0 in range(0, 360, 45):
+        sec = ring & (ang >= a0) & (ang < a0 + 45)
+        k = keep & sec
+        if k.sum() >= max(500, FIBRE_SECTOR_MIN * sec.sum()):
+            sectors.append(float(band[k].std()))
+    return (float(np.median(sectors)) if sectors else 0.0), glare_pct
+
+def fibre_score(crop, r_frac=None, size=768, boxes=None):
+    """The glare-robust fibre detail alone; see fibre_measure()."""
+    return fibre_measure(crop, r_frac, size, boxes)[0]
+
 # ----------------------------------------------------------------------------- gemini
 def _key():
     k = os.environ.get("GEMINI_API_KEY", "").strip()
@@ -258,8 +354,11 @@ def gemini(model, parts, gen_cfg, timeout=55, retries=1):
                           headers={"x-goog-api-key": _key()})
         if r.status_code == 200: return r.json()
         last = f"{model} HTTP {r.status_code}: {r.text[:200]}"
-        # each key is removed from gen_cfg, so each repair can happen at most once -> the loop always terminates
-        if r.status_code == 400 and "imageConfig" in gen_cfg:
+        # each key is removed from gen_cfg, so each repair can happen at most once -> the loop always terminates.
+        # An explicit imageSize is never dropped: without imageConfig the model answers at its 1K default, so a
+        # 4K order would quietly come back at 1K. That case falls through and raises instead.
+        sized = "imageSize" in (gen_cfg.get("imageConfig") or {})
+        if r.status_code == 400 and "imageConfig" in gen_cfg and not sized:
             gen_cfg = {k: v for k, v in gen_cfg.items() if k != "imageConfig"}; body["generationConfig"] = gen_cfg; continue
         if r.status_code == 400 and "thinkingConfig" in gen_cfg:
             gen_cfg = {k: v for k, v in gen_cfg.items() if k != "thinkingConfig"}; body["generationConfig"] = gen_cfg; continue
@@ -352,6 +451,28 @@ def mask_disk(square, pad=1.12, feather=0.035):
     return Image.fromarray(arr.astype(np.uint8))
 
 # ----------------------------------------------------------------------------- glare
+def _box_mask(S, boxes):
+    """Union of the vision glare boxes (crop pixels) on an S x S grid, each grown a little because the model
+    usually marks only the brightest core. Clamped to the grid BEFORE slicing: a box above or left of the crop
+    (a glint on the sclera, the skin or the other eye) would otherwise give a negative slice stop, which Python
+    counts from the far end, and mark most of the iris. Boxes that miss the grid, or are not finite, add nothing."""
+    m = np.zeros((S, S), bool)
+    for b in (boxes or []):
+        try:
+            x1, y1, x2, y2 = [int(round(float(c))) for c in b]
+        except (TypeError, ValueError, OverflowError):
+            continue
+        g = max(4, int(0.25 * max(x2 - x1, y2 - y1)))
+        xa, xb, ya, yb = max(0, x1 - g), min(S, x2 + g), max(0, y1 - g), min(S, y2 + g)
+        if xb > xa and yb > ya: m[ya:yb, xa:xb] = True
+    return m
+
+def _glare_v_threshold(v, dist, r_px):
+    """Brightness a specular core must pass: well above this iris's own median (pupil left out), never below 200."""
+    ring = (dist < r_px * 0.93) & (dist > r_px * 0.42)
+    med_v = float(np.median(v[ring])) if ring.any() else 128.0
+    return med_v, max(200.0, med_v + 45.0)
+
 def glare_mask(crop, r_px, extra_boxes=None):
     """Specular highlights inside the iris: a bright unsaturated core (relative to the iris itself, plus any boxes the
     vision model reported) grown into the soft halo around it. Returns (hard uint8 mask, feathered float mask, pct)."""
@@ -362,14 +483,9 @@ def glare_mask(crop, r_px, extra_boxes=None):
     dist = np.sqrt((xx - S / 2) ** 2 + (yy - S / 2) ** 2)
     inside = dist < r_px * 0.93
     ring = inside & (dist > r_px * 0.42)                      # iris statistics without the dark pupil
-    med_v = float(np.median(v[ring])) if ring.any() else 128.0
-    thr = max(200.0, med_v + 45.0)
+    med_v, thr = _glare_v_threshold(v, dist, r_px)
     core = ((v > thr) & (s < 100)) & inside
-    for b in (extra_boxes or []):
-        x1, y1, x2, y2 = [int(round(c)) for c in b]
-        g = max(4, int(0.25 * max(x2 - x1, y2 - y1)))         # grow the reported box a little, it usually marks only the brightest core
-        sub = np.zeros_like(core); sub[max(0, y1 - g):min(S, y2 + g), max(0, x1 - g):min(S, x2 + g)] = True
-        core |= sub & inside & (v > thr - 15) & (s < 110)
+    core |= _box_mask(S, extra_boxes) & inside & (v > thr - 15) & (s < 110)
     core_img = Image.fromarray((core * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3))
     core_np = np.asarray(core_img) > 0
     area = max(1.0, float(inside.sum()))
@@ -379,13 +495,15 @@ def glare_mask(crop, r_px, extra_boxes=None):
     sd = float(v[rest].std()) if rest.any() else 30.0
     halo_thr = med_v + float(np.clip(0.5 * sd, 10.0, 28.0))
     near_px = int(S * (0.05 if sd < 40 else 0.03)) | 1
-    near = np.asarray(core_img.filter(ImageFilter.MaxFilter(near_px))) > 0
+    # _grow_mask is pixel-identical to PIL MaxFilter on a mask (checked on 84 random masks, borders included),
+    # and a 39 px window at 768 costs 0.1 s instead of 1.4 s
+    near = _grow_mask(core_np, near_px)
     halo = near & (dist < r_px * 0.97) & (v > halo_thr) & (s < 120)
     m = core_np | halo
     if m.sum() / area > 0.25:           # a real reflection never covers a quarter of the iris: halo grew into bright fibres
         m = core_np                     # fall back to the eroded core, never to an empty mask: discarding it
                                         # would leave the very worst glare untouched in the artwork
-    mi = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(9))
+    mi = Image.fromarray((_grow_mask(m, 9) * 255).astype(np.uint8))
     hard = np.asarray(mi)
     feather = np.asarray(mi.filter(ImageFilter.GaussianBlur(5))).astype(np.float32) / 255.0
     pct = 100.0 * float((hard > 0).sum()) / area
@@ -586,8 +704,8 @@ def chroma_lock(ai, src, blur=1.6, amount=1.0):
 
 DARK_BLEND = 24.0        # below this luminance a colour ratio is noise, so the lift is applied as an offset
 PUPIL_EDGE_FRAC = 0.25
-PUPIL_DARK = (10.0, 30.0)
-PUPIL_FLAT = (0.50, 0.85)   # reflections in the pupil below the first share of the iris brightness are flattened fully, above the second not at all  # full neutral below the first, none above the second
+PUPIL_DARK = (10.0, 30.0)   # pupil colour: full neutral below the first luminance, none above the second
+PUPIL_FLAT = (0.50, 0.85)   # reflections in the pupil below the first share of the iris brightness are flattened fully, above the second not at all
 
 
 SCLERA_RAMP = (0.70, 0.84)    # the intruder test fades in across this band of the iris radius
@@ -784,7 +902,167 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     canvas[off:off + target, off:off + target] = disk
     return Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
 
-def compose(iris, style="celestial_gold", title=None, names="", watermark=True, r_frac=None, size=1024):
+# ----------------------------------------------------------------------------- colour QA
+QA_RING = (0.45, 0.90)       # iris ring for the colour check: clear of most pupils and of the limbal shadow
+QA_SIZE = 256                # both images are compared at this size...
+QA_BLUR = 2.0                # ...after a light blur: the model redraws fibres, and a fibre moved by a pixel is not a colour change
+QA_RING_DE00_MAX = 10.0      # median ring dE00 above this = the render no longer looks like the photo's eye colour.
+                             # Measured 2026-09-23 on ten real renders: with lightness held equal, every render
+                             # after chroma_lock is within 0.6-1.3 of its source (3.2-5.9 before the lock), so
+                             # what is left is the model relighting the iris: 215120 moved L* -1.6 (2.8, reads
+                             # true), 215102 +13.9 (13.2) and 215208 +18.0 (16.0) came back visibly paler
+PUPIL_NEUTRAL_MAX = 1.5      # |Cb| and |Cr| of the pupil core: every professional print measured sits inside this
+
+def srgb_to_lab(rgb):
+    """sRGB (0-255, any shape ending in 3) to CIELAB, D65 / 2 degree: the same conversion as skimage.color.rgb2lab."""
+    c = np.asarray(rgb, dtype=np.float64) / 255.0
+    lin = np.where(c > 0.04045, ((c + 0.055) / 1.055) ** 2.4, c / 12.92)
+    xyz = lin @ np.array([[0.412453, 0.357580, 0.180423],
+                          [0.212671, 0.715160, 0.072169],
+                          [0.019334, 0.119193, 0.950227]]).T
+    xyz = xyz / np.array([0.95047, 1.0, 1.08883])
+    f = np.where(xyz > 0.008856, np.cbrt(xyz), 7.787 * xyz + 16.0 / 116.0)
+    return np.stack([116.0 * f[..., 1] - 16.0, 500.0 * (f[..., 0] - f[..., 1]), 200.0 * (f[..., 1] - f[..., 2])], -1)
+
+def ciede2000(lab1, lab2):
+    """CIEDE2000 colour difference (kL = kC = kH = 1; Sharma, Wu and Dalal 2005), vectorised over any shape
+    ending in 3. numpy only, so the deployed function does not need scikit-image."""
+    L1, a1, b1 = np.moveaxis(np.asarray(lab1, np.float64), -1, 0)
+    L2, a2, b2 = np.moveaxis(np.asarray(lab2, np.float64), -1, 0)
+    p7 = 25.0 ** 7
+    c7 = ((np.hypot(a1, b1) + np.hypot(a2, b2)) / 2.0) ** 7
+    G = 0.5 * (1.0 - np.sqrt(c7 / (c7 + p7)))
+    a1p, a2p = (1.0 + G) * a1, (1.0 + G) * a2
+    C1p, C2p = np.hypot(a1p, b1), np.hypot(a2p, b2)
+    h1p, h2p = np.arctan2(b1, a1p) % (2 * np.pi), np.arctan2(b2, a2p) % (2 * np.pi)
+    grey = (C1p * C2p) == 0                              # a hue difference means nothing for a neutral colour
+    dLp, dCp = L2 - L1, C2p - C1p
+    dhp = h2p - h1p
+    dhp = np.where(dhp > np.pi, dhp - 2 * np.pi, np.where(dhp < -np.pi, dhp + 2 * np.pi, dhp))
+    dhp = np.where(grey, 0.0, dhp)
+    dHp = 2.0 * np.sqrt(C1p * C2p) * np.sin(dhp / 2.0)
+    Lbp, Cbp, hs = (L1 + L2) / 2.0, (C1p + C2p) / 2.0, h1p + h2p
+    hbp = np.where(np.abs(h1p - h2p) <= np.pi, hs / 2.0, np.where(hs < 2 * np.pi, (hs + 2 * np.pi) / 2.0, (hs - 2 * np.pi) / 2.0))
+    hbp = np.where(grey, hs, hbp)
+    T = (1.0 - 0.17 * np.cos(hbp - np.radians(30.0)) + 0.24 * np.cos(2.0 * hbp)
+         + 0.32 * np.cos(3.0 * hbp + np.radians(6.0)) - 0.20 * np.cos(4.0 * hbp - np.radians(63.0)))
+    dtheta = np.radians(30.0) * np.exp(-(((np.degrees(hbp) - 275.0) / 25.0) ** 2))
+    cb7 = Cbp ** 7
+    RT = -np.sin(2.0 * dtheta) * 2.0 * np.sqrt(cb7 / (cb7 + p7))
+    SL = 1.0 + 0.015 * (Lbp - 50.0) ** 2 / np.sqrt(20.0 + (Lbp - 50.0) ** 2)
+    SC = 1.0 + 0.045 * Cbp
+    SH = 1.0 + 0.015 * Cbp * T
+    return np.sqrt((dLp / SL) ** 2 + (dCp / SC) ** 2 + (dHp / SH) ** 2 + RT * (dCp / SC) * (dHp / SH))
+
+def qa_colour(result, source, r_frac=None, parts=False):
+    """Median CIEDE2000 over the iris ring between a result and the source crop it was made from (both
+    square iris crops with the same framing). chroma_lock keeps the hue, so what this mostly sees is the
+    model moving the tone of the whole iris - a change a customer can check in a mirror.
+    parts=True also returns (median dE00 with lightness held equal, median L* shift), which say why."""
+    r_frac = r_frac or iris_radius_frac()
+    n = QA_SIZE
+    def prep(im):
+        return np.asarray(im.convert("RGB").resize((n, n), Image.LANCZOS).filter(ImageFilter.GaussianBlur(QA_BLUR)))
+    yy, xx = np.mgrid[0:n, 0:n]
+    rr = np.sqrt((xx - n / 2 + 0.5) ** 2 + (yy - n / 2 + 0.5) ** 2) / (r_frac * n)
+    ring = (rr > QA_RING[0]) & (rr < QA_RING[1])
+    a, b = srgb_to_lab(prep(result)[ring]), srgb_to_lab(prep(source)[ring])
+    de = float(np.median(ciede2000(a, b)))
+    if not parts:
+        return de
+    same_l = a.copy(); same_l[:, 0] = b[:, 0]
+    return de, float(np.median(ciede2000(same_l, b))), float(np.median(a[:, 0] - b[:, 0]))
+
+def pupil_core_chroma(graded, fill=None, trim=None):
+    """(Y, Cb, Cr) of the pupil core of a studio_grade() disk, or None when no dark pupil is found. The core
+    and the pupil edge are found exactly as neutral_pupil() finds them, with the radius mapped back from the
+    graded frame (disk = fill of the frame, cut at trim of the iris radius) to the source iris."""
+    fill = STUDIO_FILL if fill is None else fill
+    trim = STUDIO_TRIM if trim is None else trim
+    im = graded.convert("RGB")
+    if im.size[0] > 512:
+        im = im.resize((512, 512), Image.BOX)             # area average: the core mean is unchanged, the test is faster
+    n = im.size[0]
+    yy, xx = np.mgrid[0:n, 0:n]
+    rr = np.sqrt((xx - n / 2 + 0.5) ** 2 + (yy - n / 2 + 0.5) ** 2) / (n * fill / 2.0) * trim
+    ycc = np.asarray(im.convert("YCbCr")).astype(np.float32)
+    rho = pupil_radius(ycc[..., 0], rr)
+    if rho is None:
+        return None
+    core = rr < 0.8 * rho
+    if core.sum() < 12:
+        return None
+    return float(ycc[..., 0][core].mean()), float(ycc[..., 1][core].mean()) - 128.0, float(ycc[..., 2][core].mean()) - 128.0
+
+def pupil_neutral(graded, fill=None, trim=None):
+    """Is the pupil core of a graded disk colour-neutral (|Cb|, |Cr| <= 1.5)? None when no pupil is found."""
+    c = pupil_core_chroma(graded, fill, trim)
+    return None if c is None else bool(abs(c[1]) <= PUPIL_NEUTRAL_MAX and abs(c[2]) <= PUPIL_NEUTRAL_MAX)
+
+def colour_qa(stage, result=None, source=None, r_frac=None, graded=None):
+    """Colour QA for one stage of the chain: logged and returned, never raised and never blocking, because
+    there are no orders to hold yet. ok is true only when something was measured and nothing measured failed."""
+    try:
+        de, note = None, ""
+        if result is not None and source is not None:
+            de, hue_only, dl = qa_colour(result, source, r_frac, parts=True)
+            note += f" colour-only dE00 {hue_only:.2f} lightness shift {dl:+.1f}"
+        core = None if graded is None else pupil_core_chroma(graded)
+        pn = None if core is None else bool(abs(core[1]) <= PUPIL_NEUTRAL_MAX and abs(core[2]) <= PUPIL_NEUTRAL_MAX)
+        ok = (de is not None or pn is not None) and (de is None or de <= QA_RING_DE00_MAX) and pn is not False
+        qa = {"ring_de00": None if de is None else round(de, 2), "pupil_neutral": pn, "ok": bool(ok)}
+        if core is not None:
+            note += f" pupil core Y {core[0]:.1f} Cb {core[1]:+.2f} Cr {core[2]:+.2f}"
+    except Exception as e:  # noqa: a QA fault must never cost the customer their picture
+        qa = {"ring_de00": None, "pupil_neutral": None, "ok": False}
+        note = " qa error " + _scrub(repr(e))[:160]
+    print("snapeyes qa", stage, json.dumps(qa) + note, flush=True)
+    return qa
+
+# ----------------------------------------------------------------------------- lamp cast at capture
+SCLERA_RING = (1.15, 1.55)   # just outside the limbus, in iris radii: sclera to the sides, lids above and below
+SCLERA_SIDES = 0.60          # only |sin(angle)| below this: the left and right wedges, where the sclera is
+SCLERA_TOP = 70              # of those, the pixels at or above this luminance percentile...
+SCLERA_BLOWN = 245           # ...that are not blown to white (a glint on the tear film has no colour left)...
+SCLERA_MAX_SAT = 0.75        # ...and, of those, the less saturated half: the white of the eye, not skin or lashes
+
+def sclera_pixels(im, cx, cy, r):
+    """RGB of the white of the eye beside the iris (N x 3 float), or None when too little is visible.
+    cx, cy, r in pixels of im. The saturation gate is relative on purpose: under a strong lamp the sclera
+    itself is saturated and its red channel clips, and a fixed 'low saturation, unclipped' rule then throws
+    away exactly the pixels that show the cast. A clipped channel only understates the cast."""
+    W, H = im.size
+    R = SCLERA_RING[1] * r
+    x0, y0, x1, y1 = max(0, int(cx - R)), max(0, int(cy - R)), min(W, int(cx + R) + 1), min(H, int(cy + R) + 1)
+    if x1 - x0 < 8 or y1 - y0 < 8:
+        return None
+    a = np.asarray(im.crop((x0, y0, x1, y1)).convert("RGB")).astype(np.float32)
+    yy, xx = np.mgrid[y0:y1, x0:x1]
+    dx, dy = xx - cx, yy - cy
+    d = np.sqrt(dx ** 2 + dy ** 2) / max(r, 1.0)
+    band = (d >= SCLERA_RING[0]) & (d <= SCLERA_RING[1]) & (np.abs(dy) < SCLERA_SIDES * np.maximum(d * r, 1.0))
+    px = a[band]
+    if len(px) < 200:
+        return None
+    mx, mn = px.max(1), px.min(1)
+    lum = px @ np.array([0.299, 0.587, 0.114], np.float32)
+    sat = (mx - mn) / np.maximum(mx, 1.0)
+    bright = (lum >= np.percentile(lum, SCLERA_TOP)) & (mn < SCLERA_BLOWN) & (sat < SCLERA_MAX_SAT)
+    if bright.sum() < max(60, 0.03 * len(px)):
+        return None
+    sel = bright & (sat <= np.median(sat[bright]))
+    return px[sel]
+
+def sclera_tint(im, cx, cy, r):
+    """CIELAB of the white of the eye beside the iris: {"L", "a", "b", "n"}, or None when too little is visible.
+    A healthy sclera is a slightly warm white, so a strong b* either way is the light, not the eye."""
+    px = sclera_pixels(im, cx, cy, r)
+    if px is None:
+        return None
+    L_, a_, b_ = srgb_to_lab(np.median(px, axis=0))
+    return {"L": float(L_), "a": float(a_), "b": float(b_), "n": int(len(px))}
+
+def compose(iris, style="celestial_gold", title=None, names="", watermark=True, r_frac=None, size=1024, keep=None):
     st = STYLES.get(style, STYLES["celestial_gold"])
     bg = Image.open(os.path.join(ASSETS, "bg", st["bg"])).convert("RGB").resize((size, size), Image.LANCZOS)
     canvas = np.asarray(bg).astype(np.float32)
@@ -797,6 +1075,8 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     bare = style == "studio_black"
     Sd = int(size * (0.96 if bare else 0.80))
     graded = studio_grade(iris, r_frac, out=Sd)
+    if keep is not None:
+        keep["graded"] = graded   # handed back for the colour QA; changes nothing in the picture
     arr = np.asarray(graded).astype(np.float32)
     Rg = max(1.0, Sd * STUDIO_FILL / 2.0)
     jy, jx = np.mgrid[0:Sd, 0:Sd]
