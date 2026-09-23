@@ -1,0 +1,24 @@
+/* Landing page only (imported by src/App.tsx; the /try page does not load it). */
+
+html {
+  background-color: #030408;
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+.font-body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* the FAQ uses native <details>; its own marker is replaced by the plus icon */
+details.faq > summary {
+  list-style: none;
+}
+details.faq > summary::-webkit-details-marker {
+  display: none;
+}

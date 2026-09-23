@@ -4,7 +4,6 @@
   "functions": {
     "api/**/*.py": {
       "maxDuration": 60,
-      "memory": 1024,
       "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,.git/**,*.html,*.json,*.ts,*.md}"
     }
   }

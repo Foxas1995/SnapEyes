@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* Self-hosted fonts: no request to Google Fonts, so no visitor IP goes to a third party for typography
+   (LG Muenchen I, 3 O 17493/20). Both are variable OFL fonts, subset to Latin from the engine's own copies
+   in api/_assets/fonts (copyright and licence kept in the font name table). */
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/assets/atelier/fonts/cinzel-var.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/assets/atelier/fonts/plus-jakarta-sans-var.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --gold-primary: #f5c542;

@@ -86,7 +86,7 @@ const verdictRank = (a: Analysis): number => VERDICT_RANK[a.quality?.verdict as 
  *  1. locked: a crop that never locked onto the iris edge loses, its "detail" may be eyelash or skin texture.
  *  2. usable: any 'ok' or 'good' shot beats a 'weak' one. Detail is glare-masked on purpose, so it cannot see
  *     the glare cap, the iris-size floor or the eyelid floor that the engine's verdict applies.
- *  3. lamp-free: a usable shot without a lamp colour cast beats a tinted one. The colour in the print comes
+ *  3. lamp-free: a usable shot without a lamp colour cast beats a tinted one. The colour in the artwork comes
  *     straight from the photo, and "Try a retake" asks for exactly this daylight shot, so it must win.
  *  4. verdict: good beats ok.
  *  5. Detail, then the raw score (Detail is a capped integer, so two sharp shots can both read 100). */
@@ -105,7 +105,7 @@ export function compareShots(x: Analysis, y: Analysis): number {
 }
 
 /** A good shot goes straight to the studio, unless lamp light tinted it: then the customer sees the warning
- *  and decides, instead of learning about it from a yellow print. Always asked of the shot that will
+ *  and decides, instead of learning about it from a yellow artwork. Always asked of the shot that will
  *  actually be processed, never of the latest one. */
 export const autoContinue = (a: Analysis): boolean => a.quality?.verdict === 'good' && !a.quality?.lamp_cast;
 

@@ -3,25 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <!-- no maximum-scale / user-scalable=no: blocking pinch zoom is an accessibility failure -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SnapEyes - Turn Your Iris Photo Into Fine Art</title>
-    <!-- Search and share copy must stay strictly true: no review, customer-count, guarantee, resolution or print-size claims. -->
-    <meta name="description" content="Photograph your own iris at home with your phone and see it restored as fine art before you pay." />
-    <link rel="canonical" href="https://snapeyes.com/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#030408" />
+    <title>SnapEyes Private Atelier - Precision Iris Art from Your Smartphone</title>
+    <!-- Search and share copy must stay strictly true: same rules as src/landing/copy.ts. -->
+    <meta name="description" content="Photograph one eye with your phone's back camera and see your own iris as fine art in six styles. The watermarked preview is free; ordering opens soon." />
+    <!-- rel=canonical is injected once by src/landing/lang.tsx (self-referencing: / for English, /?lang=de for
+         German), so the German URL is not canonicalised to the English one. Do not add a static canonical here. -->
+    <link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
+    <link rel="alternate" hreflang="de" href="https://snapeyes.com/?lang=de" />
+    <link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="SnapEyes" />
+    <meta property="og:site_name" content="SnapEyes Private Atelier" />
     <meta property="og:url" content="https://snapeyes.com/" />
-    <meta property="og:title" content="SnapEyes - Turn Your Iris Photo Into Fine Art" />
-    <meta property="og:description" content="Photograph your own iris at home with your phone and see it restored as fine art before you pay." />
-    <!-- No og:image / twitter:image yet: there is no consented real customer artwork to show. -->
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="SnapEyes - Turn Your Iris Photo Into Fine Art" />
-    <meta name="twitter:description" content="Photograph your own iris at home with your phone and see it restored as fine art before you pay." />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:locale:alternate" content="de_DE" />
+    <meta property="og:title" content="SnapEyes Private Atelier - Precision Iris Art from Your Smartphone" />
+    <meta property="og:description" content="Photograph one eye with your phone and see your own iris as fine art in six styles. The watermarked preview is free." />
+    <!-- The share image is the founder's own eye (phone photo rendered in Studio Black), labelled on the card. -->
+    <meta property="og:image" content="https://snapeyes.com/assets/atelier/og-founder-eye.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mantas, founder: his own iris, photographed at home with a phone and rendered in Studio Black" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SnapEyes Private Atelier - Precision Iris Art from Your Smartphone" />
+    <meta name="twitter:description" content="Photograph one eye with your phone and see your own iris as fine art in six styles. The watermarked preview is free." />
+    <meta name="twitter:image" content="https://snapeyes.com/assets/atelier/og-founder-eye.jpg" />
+    <link rel="preload" as="image" type="image/webp" href="/assets/atelier/style-celestial-gold-800.webp"
+      imagesrcset="/assets/atelier/style-celestial-gold-480.webp 480w, /assets/atelier/style-celestial-gold-800.webp 800w"
+      imagesizes="(min-width: 640px) 520px, calc(100vw - 32px)" fetchpriority="high" />
+    <!-- fonts are self-hosted (@font-face in src/index.css): nothing is loaded from Google Fonts -->
+    <link rel="preload" as="font" type="font/woff2" href="/assets/atelier/fonts/cinzel-var.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/assets/atelier/fonts/plus-jakarta-sans-var.woff2" crossorigin />
   </head>
-  <body class="bg-[#07090e] text-[#f0f3fa] selection:bg-[#f5c542] selection:text-black antialiased overflow-x-hidden">
+  <body class="bg-[#030408] text-[#f0f3fa] selection:bg-[#f5c542] selection:text-black antialiased overflow-x-hidden">
+    <noscript>
+      <p style="padding:24px;font-family:sans-serif;color:#f0f3fa">SnapEyes Private Atelier: precision iris art from your smartphone. Please enable JavaScript to see this page.</p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

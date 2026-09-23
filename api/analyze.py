@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""POST /api/analyze  {image: b64 (<=1600px), origWidth, origHeight}
-Finds the iris, refines the limbus circle, measures size and sharpness, returns the crop geometry for the client."""
-import os, sys, math, json
+"""POST /api/analyze  {image: b64 (<=1600px), origWidth, origHeight, device: {...} (optional), study: {...} (optional)}
+Finds the iris, refines the limbus circle, measures size and sharpness, returns the crop geometry for the client.
+device / study: capture telemetry, cut down by telemetry() and written to the "snapeyes capture" log line only."""
+import os, sys, re, math, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 import numpy as np
@@ -82,7 +83,50 @@ def lamp_cast(tint):
     """True when the sclera shows a strong warm, cold or cyan cast. No sclera visible = no claim."""
     return bool(tint) and (tint["b"] > LAMP_WARM_B or tint["a"] + tint["b"] < LAMP_COOL_AB)
 
+# ---- optional capture telemetry: the "device" (camera facts) and "study" (capture-study arm) objects the capture
+# screen sends. They are only written to the "snapeyes capture" log line: never stored, never sent back. Whatever
+# arrives is cut down to plain values first, because a log line is no place for a stranger's payload.
+TELEMETRY_KEYS = 24          # fields kept per object (and per nested object)
+TELEMETRY_TEXT = 80          # characters kept per text value (an EXIF lens name is ~50)...
+TELEMETRY_UA = 300           # ...except device.ua, which the capture screen already cuts to 300: the browser
+                             # name (Safari, CriOS, Chrome) sits near the end of a user agent
+TELEMETRY_LIST = 8           # items kept per list (zoom range, resolutions)
+TELEMETRY_JSON = 1500        # an object still longer than this once cut down is replaced by {"dropped": "too_large"}
+TELEMETRY_KEY = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
+
+def _tvalue(v, depth, text=TELEMETRY_TEXT):
+    if v is None or isinstance(v, bool):
+        return v
+    if isinstance(v, int):
+        return v if abs(v) <= 10 ** 9 else None
+    if isinstance(v, float):
+        return round(v, 4) if math.isfinite(v) and abs(v) <= 1e9 else None
+    if isinstance(v, str):
+        return "".join(c for c in v[:text * 2] if c.isprintable())[:text]
+    if isinstance(v, list):   # plain values only; an object or list inside a list is dropped
+        return [_tvalue(x, depth + 1) for x in v[:TELEMETRY_LIST] if x is None or isinstance(x, (bool, int, float, str))]
+    if isinstance(v, dict) and depth < 1:
+        return telemetry(v, depth + 1)
+    return None
+
+def telemetry(v, depth=0):
+    """A plain, bounded copy of a telemetry object (one level of nesting), or None when it is not an object.
+    The capture screen sends device = {ua, w, h, source} and study = {session, eye, shot, photos, source, light,
+    comfort}; any other plain field passes the same way, so the screen can add one without a server change."""
+    if not isinstance(v, dict):
+        return None
+    out = {}
+    for k, x in list(v.items())[:TELEMETRY_KEYS * 4]:
+        if len(out) >= TELEMETRY_KEYS:
+            break
+        if isinstance(k, str) and TELEMETRY_KEY.fullmatch(k):
+            out[k] = _tvalue(x, depth, TELEMETRY_UA if (k == "ua" and depth == 0) else TELEMETRY_TEXT)
+    if depth == 0 and len(json.dumps(out)) > TELEMETRY_JSON:
+        return {"dropped": "too_large"}
+    return out
+
 def analyze(body):
+    device, study = telemetry(body.get("device")), telemetry(body.get("study"))
     im = L.b64_to_pil(body["image"])
     W, H = im.size
     ow, oh = int(body.get("origWidth") or W), int(body.get("origHeight") or H)
@@ -188,13 +232,13 @@ def analyze(body):
     if not locked:
         tips.insert(0, "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
                        "little space around it, and keep the eyelid out of the way.")
-    # There is one mode now, so these say how much of the print will be the customer's own fibre detail
-    # rather than which of two modes to pick. Still honest, without the word "interpreted" doing the scaring.
-    msg = {"good": "Great capture. Your own fibres are sharp enough to carry the print at full size.",
-           "ok": "This will make a beautiful print. A closer or steadier shot would keep more of your own fibre detail.",
-           "weak": "Small or soft, so more of the fine detail gets rebuilt. Closer and steadier gives a truer print."}[verdict]
+    # These say how much of the artwork will be the customer's own fibre detail. The product is a digital file,
+    # so no word here may promise or imply a physical print.
+    msg = {"good": "Great capture. Your own fibres are sharp enough to carry the full-size artwork.",
+           "ok": "This will make a beautiful artwork. A closer or steadier shot would keep more of your own fibre detail.",
+           "weak": "Small or soft, so more of the fine detail gets rebuilt. Closer and steadier gives a truer artwork."}[verdict]
     if glare_capped:
-        msg = {"ok": "This will make a beautiful print. A shot without the reflection on your iris would keep more of your own fibre detail.",
+        msg = {"ok": "This will make a beautiful artwork. A shot without the reflection on your iris would keep more of your own fibre detail.",
                "weak": "A reflection covers too much of your iris, so the fibres under it would be rebuilt. Move the light to one side and shoot again."}[verdict]
     if not locked:
         msg = "We found an eye but could not lock onto the iris edge, so the crop would be off. Please take another photo."
@@ -202,10 +246,12 @@ def analyze(body):
     # colour lock later keeps whatever colour the photo has. Only judged on a locked circle.
     tint = L.sclera_tint(im, cx, cy, r) if locked else None
     lamp = lamp_cast(tint)
-    print("snapeyes capture " + json.dumps({"verdict": verdict, "detail": detail, "fibre_score": round(fscore, 2),
-          "fibre": round(fibre, 2), "basis": round(basis, 2), "glare_on_fibres_pct": round(glare_fib, 1), "diameter_px": int(diam_orig),
-          "sclera_b": None if not tint else round(tint["b"], 1), "sclera_a": None if not tint else round(tint["a"], 1)}),
-          flush=True)
+    capture = {"verdict": verdict, "detail": detail, "fibre_score": round(fscore, 2),
+               "fibre": round(fibre, 2), "basis": round(basis, 2), "glare_on_fibres_pct": round(glare_fib, 1), "diameter_px": int(diam_orig),
+               "sclera_b": None if not tint else round(tint["b"], 1), "sclera_a": None if not tint else round(tint["a"], 1)}
+    if device is not None: capture["device"] = device
+    if study is not None: capture["study"] = study
+    print("snapeyes capture " + json.dumps(capture), flush=True)
     # a short-lived signed ticket: the paid endpoints refuse work without one, so a bare scripted loop
     # has to come through this (cheap) endpoint first instead of hitting the image model directly.
     # No ticket for a circle that is not an iris: from a crop of eyelid skin the image model invented a
