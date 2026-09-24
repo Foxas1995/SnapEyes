@@ -58,11 +58,15 @@ def deglare(body):
     if lid_pct > 0:
         # the lid area from the same radius of this iris: glare and lid pixels do not donate, and a lid too wide for
         # the near donors borrows from further round the circle
+        # (the fill then goes in feathered in tone as well as in alpha: lid_composite)
+        prho = pr / L.iris_radius_frac(pad)
         filled = L.mirror_prefill(crop, np.maximum(feather, lid_feather), L.LID_EXTRA_DONORS)
         base = L.composite(crop, filled, lid_feather)
         if L.lid_drift(crop, base, lid_hard, hard, r_px) > L.LID_DRIFT_MAX:
             base, lid_pct = crop, 0.0           # no clean iris to borrow from: leave the lid to the grade, as before
     if pct < L.GLARE_MIN_PCT:
+        if lid_pct > 0:
+            base = L.lid_composite(crop, filled, lid_hard, lid_feather, r_px, prho, glare_hard=hard)
         return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2),
                 "changed": pupil_overlap >= 0.04 or lid_pct > 0, "used_sr": used_sr,
                 "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95)}
@@ -79,9 +83,10 @@ def deglare(body):
         # survives where a reflection meets the lid's soft edge (21: a bright line along the lower lid)
         try:
             patch = L.gemini_image(L.PROMPT_DEGLARE, filled)
-            clean = L.composite(L.composite(crop, patch, feather), filled, lid_feather)
+            glared = L.composite(crop, patch, feather)
         except Exception:
-            clean = filled                      # as without a lid: the fill borrowed from the same radius everywhere
+            glared = filled                     # as without a lid: the fill borrowed from the same radius everywhere
+        clean = L.lid_composite(glared, filled, lid_hard, lid_feather, r_px, prho, photo=crop, glare_hard=hard)
     return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "changed": True, "used_sr": used_sr,
             "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95)}
 

@@ -888,6 +888,29 @@ LID_SHADOW_DC = 8.0              # lid's shadow) or greyer by this much C* (a br
 LID_SHADOW_OPEN = 3              # ...and a reach must hold over this many neighbouring 0.1-wide columns
 LID_SHADOW_PUPIL = (1.04, 0.02)  # the shadow band is read down to the pupil x 1.04 + 0.02, and never past it
 LID_FEATHER = 0.012              # soft edge of the lid mask, share of the frame side
+LID_GROW_MAX = 0.10              # the drawn edge then moves on, up to this far (iris radii), over the lid's steep shadow
+LID_GROW_STEP = 0.01             # and margin line left just outside it: in 0.01 strips per LID_GROW_COL-wide column at
+LID_GROW_COL = 0.05              # LID_GROW_SIDE px, while the strip's median L* is LID_GROW_DL or more below the iris just
+LID_GROW_REF = 0.08              # beyond (LID_GROW_REF past the search zone) AND LID_GROW_SIDE_DL or more below the side
+LID_GROW_DL = 4.0                # sectors' iris at its radius. They sat just outside the mask and drew a line across the
+LID_GROW_SIDE = 512              # iris in the render (19 with the circle 10% off, live 2026-09-24: lid19_3_studio_black)
+LID_GROW_SIDE_DL = 5.0
+LID_GROW_REF_TOL = 8.0           # a column whose iris just beyond is more than this off the side sectors' does not grow:
+                                 # that reference sat on a reflection the glare mask missed, plain iris read 12-38 darker
+                                 # and the fill borrowed the reflection (17, circle 6-12% off: a pale blue-grey blob)
+LID_GROW_BRIGHT = 12.0           # a pixel this much lighter than the side sectors at its radius is a reflection, and the
+LID_GROW_GLARE = 0.02            # glare mask widened by this is glare: neither is read, and a strip mostly made of them
+                                 # (or of the pupil) ends the grow there
+LID_GROW_WET = 0.03              # a strip LIGHTER than both references by the same margins (the wet rim) moves it at most
+                                 # this far. A lid taken by a thin-rim rule alone grows none (its dark columns were crypts)
+LID_TONE_BAND = 0.03             # lid_composite: the tone each side of the fill's edge is read over about this (iris radii)
+LID_TONE_ALONG = 0.05            # ...averaged along the edge over this
+LID_TONE_REACH = 0.08            # ...and the step between them spread over about this each side, half on each side
+LID_TONE_MAX = 40.0              # the largest step (8-bit units per channel) it spreads
+LID_TONE_NEAR = 0.05             # before that, the photo's own tone within about this of the edge (0.01 r low-pass) is
+                                 # taken to the tone just beyond it (LID_TONE_NEAR..2x), fading out over the same: the
+                                 # darkest of a shadow or a wet rim hugs the edge, 0.02-0.05 r wide (19: L* 22 at the edge,
+                                 # 30 at 0.05 r), and read as a line however the step was spread
 LID_ANGLES = 180                 # 2-degree bins for the rim continuity
 LID_EXTRA_DONORS = (140, -140, 180)   # mirror_prefill donors further round, for a lid too wide for the near ones
 LID_DRIFT_MAX = 20.0             # lid_drift of the fill above this: no clean iris to borrow from, the lid is left as
@@ -1013,7 +1036,7 @@ def _lid_side_chroma(lab, lc, rho, sides, cut, inner_f):
     return float(np.median(lc[inner_f] - np.hypot(ra, rb)))
 
 
-def lid_geometry(crop, r_frac=None, glare_hard=None, debug=None, pupil_rho=None):
+def lid_geometry(crop, r_frac=None, glare_hard=None, debug=None, pupil_rho=None, thin_sides=None):
     """The eyelids in a square iris crop: [(side, xk, bk)], side "top" or "bottom". The lid is the part of the disk
     on the rim side of the curve through (xk, bk), in iris radii from the centre, x right, y down (for the bottom lid
     y is measured upwards): the accepted margins y = c0 + c1 x + c2 x^2, plus LID_SHADOW for the lash line, plus the
@@ -1042,7 +1065,7 @@ def lid_geometry(crop, r_frac=None, glare_hard=None, debug=None, pupil_rho=None)
     crop: the square as the client sent it, NOT masked (the rim test reads outside the circle). r_frac: iris radius
     as a share of the side (iris_radius_frac(pad)). glare_hard: the glare mask at any size; those pixels are not
     read. pupil_rho: the pupil radius in iris radii (read from the crop when not given). debug: a list that collects
-    the numbers behind each decision."""
+    the numbers behind each decision. thin_sides: a set that receives each side taken by a thin-rim rule alone."""
     n = LID_WORK
     r_frac = r_frac or iris_radius_frac()
     lab = _lid_lab(crop, n)
@@ -1178,6 +1201,8 @@ def lid_geometry(crop, r_frac=None, glare_hard=None, debug=None, pupil_rho=None)
         # (215106 with its circle 7-8% low), never a lid shadow
         grow = not all(t_ for s_, _, t_ in accepted if s_ == side)
         band = LID_SHADOW if grow else LID_SHADOW_THIN
+        if thin_sides is not None and not grow:
+            thin_sides.add(side)
         Ys = Y if side == "top" else -Y
         yu = np.max([c[0] + c[1] * X + c[2] * X * X for c in caps], 0) + band   # the lid plus its lash band
         reach = np.zeros(len(xbins) - 1)
@@ -1216,6 +1241,100 @@ def lid_geometry(crop, r_frac=None, glare_hard=None, debug=None, pupil_rho=None)
     return out
 
 
+def _lid_edge_grow(crop, r_frac, geom, glare_hard=None, pupil_rho=None, debug=None, thin=()):
+    """Move each lid's drawn edge (lid_geometry's xk, bk) on over the lid's own dark structure left just outside it:
+    its margin line and the steep part of its shadow (and a wet rim right at the edge). Per LID_GROW_COL-wide column,
+    at LID_GROW_SIDE px, 0.01-high strips going away from the lid are read against two references: the iris just
+    beyond the search zone in that column (LID_GROW_REF) and the side sectors' iris at the strip's own radius (lids,
+    glare and pupil left out, as the shadow reach reads it). The edge moves to the end of the last strip at least
+    LID_GROW_DL below the first and LID_GROW_SIDE_DL below the second (or as far above both, within LID_GROW_WET of
+    the edge), stopping at the first strip that is not, never past LID_GROW_MAX. Not read: glare (widened by
+    LID_GROW_GLARE), pixels LID_GROW_BRIGHT above the side sectors (a reflection the glare mask missed) and the pupil
+    disk; a strip mostly made of them ends the column. A column whose own reference is not plain iris
+    (LID_GROW_REF_TOL off the side sectors) does not grow, nor does a side in `thin` (taken by a thin-rim rule alone).
+    The same opening and smoothing across columns as the shadow reach, and no column moves further than it or a
+    neighbour read. No side reference (under 3 bands): unchanged."""
+    n = min(LID_GROW_SIDE, crop.size[0])
+    im = crop.convert("RGB")
+    if im.size[0] != n:
+        im = im.resize((n, n), Image.BOX if im.size[0] >= 2 * n else Image.LANCZOS)
+    R = r_frac * n
+    lp = _blur_f(srgb_to_lab(np.asarray(im, dtype=np.float32))[..., 0], max(1.0, LID_GROW_STEP * R))
+    ax = (np.arange(n) - n / 2 + 0.5) / R
+    X, Y = np.meshgrid(ax, ax)
+    rho = np.sqrt(X * X + Y * Y)
+    ang = (np.degrees(np.arctan2(Y, X)) + 360.0) % 360.0
+    zone = (rho < 0.95) & (rho > max(0.25, (pupil_rho or 0.0) * 1.04))
+    ok = zone & (lp > 1.0)
+    if glare_hard is not None and np.any(glare_hard):
+        g = np.asarray(Image.fromarray(np.asarray(glare_hard, np.uint8)).resize((n, n), Image.BILINEAR)) > 60
+        ok &= ~(_blur_f(g.astype(np.float32), max(1.0, LID_GROW_GLARE * R)) > 0.05)
+    cap = np.zeros((n, n), bool)
+    for side, xk, bk in geom:
+        cap |= (Y if side == "top" else -Y) < np.interp(X, xk, bk)
+    sides = (np.abs(((ang + 180) % 360) - 180) <= 35) | (np.abs(ang - 180) <= 35)
+    edges = np.arange(0.25, 0.951, 0.05)
+    prof = np.full(len(edges) - 1, np.nan)
+    for i in range(len(edges) - 1):
+        s = ok & sides & ~cap & (rho >= edges[i]) & (rho < edges[i + 1])
+        if s.sum() >= 20: prof[i] = np.median(lp[s])
+    good = np.isfinite(prof)
+    if good.sum() < 3:
+        return geom
+    dev = lp - np.interp(rho, (edges[:-1] + 0.025)[good], prof[good])     # against the side sectors at its radius
+    ok &= dev <= LID_GROW_BRIGHT
+    nt = int(round(LID_GROW_MAX / LID_GROW_STEP)); nr = int(round(LID_GROW_REF / LID_GROW_STEP)); nk = nt + nr
+    nw = int(round(LID_GROW_WET / LID_GROW_STEP))
+    ncol = int(round(2.0 / LID_GROW_COL))
+    xc = -1.0 + (np.arange(ncol) + 0.5) * LID_GROW_COL
+    ci = np.floor((X + 1.0) / LID_GROW_COL).astype(np.int64)
+    k_ = LID_SHADOW_OPEN // 2
+    win = lambda a, f: np.array([f(a[j:j + 2 * k_ + 1]) for j in range(ncol)])
+    out = []
+    for side, xk, bk in geom:
+        grow = np.zeros(ncol)
+        if side not in thin:
+            t = (Y if side == "top" else -Y) - np.interp(X, xk, bk)       # distance past the edge, away from the lid
+            ti = np.floor(t / LID_GROW_STEP).astype(np.int64)
+            inb = (t >= 0) & (ti < nk) & (ci >= 0) & (ci < ncol)
+            nz = np.bincount((ci * nk + ti)[inb & zone], minlength=ncol * nk)   # strip pixels inside the circle
+            sel = inb & ok
+            key = (ci * nk + ti)[sel]
+            order = np.argsort(key, kind="stable")
+            key, vals, devs = key[order], lp[sel][order], dev[sel][order]
+            cuts = np.searchsorted(key, np.arange(ncol * nk + 1))
+            for j in range(ncol):
+                b0 = j * nk
+                a, b = cuts[b0 + nt], cuts[b0 + nk]
+                if b - a < 12:
+                    continue
+                ref = float(np.median(vals[a:b]))
+                if abs(float(np.median(devs[a:b]))) > LID_GROW_REF_TOL:
+                    continue                                    # the iris beyond is not plain iris here
+                seen = False
+                for k in range(nt):
+                    a, b = cuts[b0 + k], cuts[b0 + k + 1]
+                    if b - a < 3 or b - a < 0.5 * nz[b0 + k]:
+                        if seen or nz[b0 + k] >= 3: break        # a reflection, glare or the pupil: never past it
+                        continue                                 # outside the circle at this column: look further in
+                    seen = True
+                    d, ds = float(np.median(vals[a:b])) - ref, float(np.median(devs[a:b]))
+                    if d <= -LID_GROW_DL and ds <= -LID_GROW_SIDE_DL:
+                        grow[j] = (k + 1) * LID_GROW_STEP
+                    elif k < nw and d >= LID_GROW_DL and ds >= LID_GROW_SIDE_DL:
+                        grow[j] = (k + 1) * LID_GROW_STEP
+                    else:
+                        break
+            read = win(np.pad(grow, k_, mode="edge"), np.max)
+            grow = win(np.pad(win(np.pad(grow, k_, mode="edge"), np.min), k_, mode="edge"), np.max)
+            grow = np.convolve(np.pad(grow, 2, mode="edge"), np.array([1, 2, 3, 2, 1]) / 9.0, "valid")
+            grow = np.minimum(grow, read)
+        if debug is not None:
+            debug.append(dict(side=side, grow=[round(float(v), 2) for v in grow], thin=side in thin))
+        out.append((side, xk, bk + np.interp(xk, xc, grow)))
+    return out
+
+
 def lid_mask(crop, r_px, glare_hard=None, size=None, debug=None, pupil_rho=None):
     """Eyelid skin, lash line, lashes and lid shadow inside the iris circle of a square crop, as the glare mask gives
     it: (hard uint8 0/255, feathered float32 0..1, pct of the iris disk). crop must be the UNMASKED square (see
@@ -1227,11 +1346,14 @@ def lid_mask(crop, r_px, glare_hard=None, size=None, debug=None, pupil_rho=None)
     with a hand-read lid (01, 05, 06, 08, 09, 19, 26); left alone, as before: thin rim lids (02, 07, 15, 16, 17, 20,
     25, 30, the owner's 215106 and 215208), lashes over a reflection or without a lid edge (11, 23, 27), a weak margin
     deep in the iris (LID_DEEP_STEP: 29's hanging lashes, 21's circle past the iris, the blurred 10) and the oversize
-    circle of 22."""
+    circle of 22. A found lid's edge then moves on over the margin line and steep shadow it left just outside
+    (_lid_edge_grow, never over plain iris or a reflection); with no lid found nothing here changes."""
     S = int(size or crop.size[0])
-    geom = lid_geometry(crop, r_px / float(crop.size[0]), glare_hard, debug, pupil_rho)
+    thin = set()
+    geom = lid_geometry(crop, r_px / float(crop.size[0]), glare_hard, debug, pupil_rho, thin)
     if not geom:
         return np.zeros((S, S), np.uint8), np.zeros((S, S), np.float32), 0.0
+    geom = _lid_edge_grow(crop, r_px / float(crop.size[0]), geom, glare_hard, pupil_rho, debug, thin)
     R = r_px / float(crop.size[0]) * S
     ax = (np.arange(S) - S / 2 + 0.5) / R
     X, Y = np.meshgrid(ax, ax)
@@ -1249,6 +1371,85 @@ def lid_mask(crop, r_px, glare_hard=None, size=None, debug=None, pupil_rho=None)
     soft = np.clip(2.0 * _blur_f(m.astype(np.float32), max(1.0, LID_FEATHER * S / 2.0)), 0.0, 1.0)
     soft = (np.maximum(soft, m.astype(np.float32)) * keep).astype(np.float32)
     return (m * 255).astype(np.uint8), soft, pct
+
+
+def lid_composite(base, filled, lid_hard, lid_soft, r_px, pupil_rho=None, photo=None, glare_hard=None):
+    """composite(base, filled, lid_soft), feathered in tone as well as in alpha. The fill's tone just inside its edge
+    is the mean of the band it borrowed from; the photo right outside it is the darkest of the lid's shadow (or its
+    wet rim), and that step, sharp over the few pixels of LID_FEATHER, was drawn as a line across the iris (19 with
+    the circle 10% off, live 2026-09-24: lid19_3_studio_black.jpg). Two moves, on low frequencies only (the fibres
+    on both sides stay), before the usual alpha composite:
+      1) the photo within about LID_TONE_NEAR of the edge takes the tone of the photo just beyond that (LID_TONE_NEAR
+         to 2x out, averaged along the edge over LID_TONE_ALONG), fading out over the same distance: the narrow dark
+         band a shadow or margin line leaves hugging the edge;
+      2) the step still left between the fill in a band just inside the edge and that photo in a band just outside
+         it (about LID_TONE_BAND deep each) is split: the fill moves half of it one way and the photo half the other,
+         each fading over about LID_TONE_REACH, so both meet at the same tone.
+    photo: the image whose tone is read outside (default base; deglare passes the crop, so a reflection the model
+    rebuilt is not read). The pupil disk (pupil_rho x 1.04), glare and the rim are not read, and nothing moves inside
+    the pupil disk or past the rim. Bands and fades are blurs of the mask (no distance transform), worked at 512 px
+    at most. No lid pixel: exactly composite(). wave-h/seam: MERGE.md has the numbers."""
+    S = base.size[0]
+    n = min(512, S)
+    m = np.asarray(Image.fromarray(np.asarray(lid_hard, np.uint8)).resize((n, n), Image.NEAREST)) > 0
+    if not m.any():
+        return composite(base, filled, lid_soft)
+    small = lambda im: np.asarray(im.convert("RGB").resize((n, n), Image.BOX) if n != S else im.convert("RGB"),
+                                  dtype=np.float32)
+    fa, pa = small(filled), small(photo if photo is not None else base)
+    R = r_px / float(S) * n
+    ax = (np.arange(n) - n / 2 + 0.5) / R
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    keep = max(0.25, (pupil_rho or 0.0) * 1.04)
+    ring = (rho > keep + 0.03) & (rho < 0.95)
+    lit = pa.sum(-1) > 12.0                                                    # not the black past the photo
+    clean = lit.copy()
+    if glare_hard is not None and np.any(glare_hard):
+        clean &= ~(np.asarray(Image.fromarray(np.asarray(glare_hard, np.uint8)).resize((n, n), Image.BILINEAR)) > 60)
+        ring &= clean
+    mf = m.astype(np.float32)
+    sa = max(1.0, LID_TONE_ALONG * R)
+    gate = np.clip((rho - keep) / 0.03, 0.0, 1.0) * np.clip((1.0 - rho) / 0.05, 0.0, 1.0)
+    # 1) the photo next to the edge takes the tone found just beyond it; its fibres (above 0.01 r) stay
+    bn = _blur_f(mf, max(1.0, LID_TONE_NEAR * R))
+    wf = ((~m) & (bn >= 0.02) & (bn <= 0.16) & ring & lit).astype(np.float32)  # about 1..2 LID_TONE_NEAR out
+    cn = np.zeros((n, n, 3), np.float32)
+    if wf.sum() >= 20:
+        sf = _blur_f(wf, sa)
+        fn = np.where(m, 0.0, np.clip(3.0 * _blur_f(mf, max(1.0, LID_TONE_NEAR * R / 2.0)), 0.0, 1.0))
+        fn = fn * np.clip(sf / 0.05, 0.0, 1.0) * gate
+        near, cw = max(1.0, 0.01 * R), clean.astype(np.float32)
+        sn = _blur_f(cw, near)                          # the photo's own tone without its reflections: a patched one
+        fn = fn * np.clip(sn / 0.3, 0.0, 1.0)           # is lifted from the iris round it, not pushed down by the glare
+        for c in range(3):
+            far = _blur_f(pa[..., c] * wf, sa) / np.maximum(sf, 1e-4)
+            own = _blur_f(pa[..., c] * cw, near) / np.maximum(sn, 1e-4)
+            cn[..., c] = np.clip(far - own, -LID_TONE_MAX, LID_TONE_MAX) * fn
+        pa = pa + cn
+    # 2) the step left between the fill just inside and that photo just outside, half off each side
+    b = _blur_f(mf, max(1.0, LID_TONE_BAND * R))
+    wi = (m & (b <= 0.90) & ring).astype(np.float32)                          # inside, near the edge
+    wo = ((~m) & (b >= 0.10) & ring & lit).astype(np.float32)                  # outside, near the edge
+    cf, cb = np.zeros((n, n, 3), np.float32), cn
+    if wi.sum() >= 20 and wo.sum() >= 20:
+        si, so = _blur_f(wi, sa), _blur_f(wo, sa)
+        sup = np.clip(np.minimum(si, so) / 0.05, 0.0, 1.0)
+        k = 2.0 * _blur_f(mf, max(1.0, LID_TONE_REACH * R / 2.0))             # 1 on the edge, 2 deep in, 0 far out
+        k_in = np.clip(2.0 - k, 0.0, 1.0) * sup * gate
+        k_out = np.clip(k, 0.0, 1.0) * sup * gate
+        cb = cn.copy()
+        for c in range(3):
+            d = _blur_f(fa[..., c] * wi, sa) / np.maximum(si, 1e-4) - _blur_f(pa[..., c] * wo, sa) / np.maximum(so, 1e-4)
+            d = 0.5 * np.clip(d, -LID_TONE_MAX, LID_TONE_MAX)
+            cf[..., c] = -d * k_in
+            cb[..., c] += d * k_out
+    up = lambda a: a if n == S else np.stack(
+        [np.asarray(Image.fromarray(a[..., c]).resize((S, S), Image.BILINEAR)) for c in range(3)], -1)
+    f2 = np.asarray(filled.convert("RGB").resize((S, S), Image.LANCZOS) if filled.size != base.size
+                    else filled.convert("RGB"), dtype=np.float32) + up(cf)
+    b2 = np.asarray(base.convert("RGB"), dtype=np.float32) + up(cb)
+    a = np.asarray(lid_soft, np.float32)[..., None]
+    return Image.fromarray(np.clip(b2 * (1 - a) + f2 * a, 0, 255).astype(np.uint8))
 
 
 def lid_drift(crop, im, lid_hard, glare_hard, r_px):
