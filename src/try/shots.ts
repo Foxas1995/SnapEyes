@@ -1,5 +1,6 @@
 // Types and pure helpers for the capture flow: reading /api/analyze defensively, ranking shots and picking
 // the one tip worth showing. No React and no DOM here, so the rules can be checked on their own.
+import { T, type BlockCopy, type BlockReason } from './copy';
 
 export interface Quality {
   diameter_px: number;
@@ -20,6 +21,13 @@ export interface Quality {
   pupil_reflection?: boolean;
   lamp_cast?: boolean;
   lamp_message?: string | null;
+  // A shot the engine blocked (api/analyze.py): too blurry to restore the customer's own iris ('too_blurry'), a
+  // sharp photo of a dark iris with too little light to show its pattern ('too_dark'), or a pupil too wide
+  // ('pupil_too_large'). The server issues no work ticket for it, exactly as for a circle that did not lock.
+  // pattern is the measure behind the blur block (log only).
+  pattern?: number | null;
+  blocked?: boolean;
+  block_reason?: string | null;   // a BlockReason, or one this page does not know yet (blockOf)
 }
 
 export interface Targets {
@@ -81,9 +89,34 @@ const VERDICT_RANK = { weak: 0, ok: 1, good: 2 } as const;
 /** good 2, ok 1, weak 0. A missing verdict ranks as weak: no evidence the shot is usable. */
 const verdictRank = (a: Analysis): number => VERDICT_RANK[a.quality?.verdict as keyof typeof VERDICT_RANK] ?? 0;
 
+/** True when the studio may work from this shot: its circle locked onto the iris edge and the engine did not
+ *  block it (too blurry, pupil too wide, ...). The server gives neither of the other two a work ticket, so
+ *  nothing may offer them. */
+export const usable = (a: Analysis): boolean => a.quality?.locked !== false && !a.quality?.blocked;
+
+/** True when the engine blocked this shot, for whatever reason. */
+export const blockedShot = (a?: Analysis | null): boolean => !!a?.quality?.blocked;
+
+const hasBlockCopy = (r: string): r is BlockReason => Object.prototype.hasOwnProperty.call(T.quality.blocks, r);
+
+/** What to say about a blocked shot: the copy for its block_reason, the generic copy for a reason this page
+ *  does not know (a newer server), null for a shot that is not blocked. */
+export function blockOf(a?: Analysis | null): BlockCopy | null {
+  if (!blockedShot(a)) return null;
+  const r = a?.quality?.block_reason;
+  return typeof r === 'string' && hasBlockCopy(r) ? T.quality.blocks[r] : T.quality.blockedOther;
+}
+
+/** The Detail to SHOW for a shot: none for a blocked one. Detail's fibre band also reads sensor grain, so a
+ *  grainy haze with no iris in it can read 23 while a usable soft shot reads 16; printed next to "Too blurry" it
+ *  would tell the customer the opposite of the verdict. Ranking still uses detailOf (a blocked shot already
+ *  ranks below every usable one). */
+export const shownDetail = (a?: Analysis | null): number | undefined => (blockedShot(a) ? undefined : detailOf(a));
+
 /** Positive when shot x is better than shot y. Compared in this order, each step only breaking ties of the
  *  one before:
- *  1. locked: a crop that never locked onto the iris edge loses, its "detail" may be eyelash or skin texture.
+ *  1. usable: a crop that never locked onto the iris edge loses, its "detail" may be eyelash or skin texture,
+ *     and so does a shot too blurry to restore (the studio would invent the iris).
  *  2. usable: any 'ok' or 'good' shot beats a 'weak' one. Detail is glare-masked on purpose, so it cannot see
  *     the glare cap, the iris-size floor or the eyelid floor that the engine's verdict applies.
  *  3. lamp-free: a usable shot without a lamp colour cast beats a tinted one. The colour in the artwork comes
@@ -92,7 +125,7 @@ const verdictRank = (a: Analysis): number => VERDICT_RANK[a.quality?.verdict as 
  *  5. Detail, then the raw score (Detail is a capped integer, so two sharp shots can both read 100). */
 export function compareShots(x: Analysis, y: Analysis): number {
   const key = (a: Analysis) => [
-    a.quality?.locked === false ? 0 : 1,
+    usable(a) ? 1 : 0,
     verdictRank(a) > 0 ? 1 : 0,
     a.quality?.lamp_cast ? 0 : 1,
     verdictRank(a),
@@ -106,8 +139,8 @@ export function compareShots(x: Analysis, y: Analysis): number {
 
 /** A good shot goes straight to the studio, unless lamp light tinted it: then the customer sees the warning
  *  and decides, instead of learning about it from a yellow artwork. Always asked of the shot that will
- *  actually be processed, never of the latest one. */
-export const autoContinue = (a: Analysis): boolean => a.quality?.verdict === 'good' && !a.quality?.lamp_cast;
+ *  actually be processed, never of the latest one. Never a shot that is not usable. */
+export const autoContinue = (a: Analysis): boolean => usable(a) && a.quality?.verdict === 'good' && !a.quality?.lamp_cast;
 
 /** Index of the best shot; on a full tie the earlier shot wins. -1 for an empty list. */
 export function bestIndex(shots: Analysis[]): number {
@@ -132,7 +165,7 @@ export type Band = 'good' | 'ok' | 'low';
  *  green or "Fibres resolved" next to a message saying its fibres will be rebuilt. */
 export function meterBand(d: number, q: Quality | undefined, t: Targets): { band: Band; caption: string | null } {
   const byDetail = d >= t.detail_good ? 2 : d >= t.detail_ok ? 1 : 0;
-  const cap = !q?.verdict ? 2 : q.locked === false ? 0 : VERDICT_RANK[q.verdict] ?? 2;
+  const cap = !q?.verdict ? 2 : q.locked === false || q.blocked ? 0 : VERDICT_RANK[q.verdict] ?? 2;
   const band = (['low', 'ok', 'good'] as const)[Math.min(byDetail, cap)];
   // above the target but capped: the reason is on the card (message or tip), so the meter stays quiet
   const caption = d < t.detail_good ? `Aim for ${t.detail_good}+` : band === 'good' ? 'Fibres resolved' : null;
@@ -146,11 +179,13 @@ export function visibleTips(q: Quality): string[] {
 }
 
 /** The single tip that would most improve the next shot. Someone holding a phone to their eye reads one
- *  line, so pick what blocks the most detail: a crop that missed the iris, then an iris too small to carry
- *  fibres at all, then whatever the server ranked first. */
+ *  line, so pick what blocks the most detail: a crop that missed the iris, then a shot the engine blocked (its
+ *  message says why and how to retake), then an iris too small to carry fibres at all, then whatever the
+ *  server ranked first. */
 export function topTip(q: Quality, t: Targets): string | null {
   const tips = visibleTips(q);
   if (q.locked === false) return tips[0] ?? q.message ?? null;
+  if (q.blocked) return q.message || (blockOf({ ok: true, quality: q }) ?? T.quality.blockedOther).retakeLine;
   if (num(q.diameter_px) !== undefined && q.diameter_px < t.min_diameter_px) {
     return tips.find((s) => /closer|zoom/i.test(s)) ?? 'Move closer or zoom in so the iris fills more of the frame.';
   }

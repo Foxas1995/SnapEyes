@@ -257,6 +257,7 @@ def master_eye(body):
         # the model may sculpt structure and light; the colour stays the client's own photo, upsampled to 4096
         out = L.chroma_lock(out, base)
         r_frac = L.iris_radius_frac(pad)
+        out = L.pupil_lock(out, base, r_frac)   # and the pupil stays as wide as the photo's (see /api/enhance)
         qa = L.colour_qa(f"master {folder} eye {eye}", result=out, source=base, r_frac=r_frac)
         fid = L.ssim_lowfreq(base, out, r_frac)
         data = store.jpeg_bytes(out, 95)

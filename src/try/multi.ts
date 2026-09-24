@@ -102,7 +102,8 @@ export interface StudyPayload {
   shot: number;         // the analysed shot these answers describe, counted over the whole visit, 1-based
   photos: number;       // how many photos that analysis covered (a gallery pick measures several at once)
   source: ShotOrigin;
-  outcome: string;      // what the engine said about that shot: good / ok / weak / not_centred / no_eye
+  outcome: string;      // what the engine said about that shot: good / ok / weak / not_centred / no_eye, or the
+                        // block_reason of a blocked shot (too_blurry, pupil_too_large, ...)
   light: LightAnswer | null;
   comfort: number | null;   // 1 hard .. 5 easy
 }
@@ -117,6 +118,9 @@ export function outcomeOf(a: Analysis | null | undefined): string {
   if (!a) return 'failed';
   if (!a.ok || !a.iris) return a.reason || 'no_eye';
   if (a.quality?.locked === false) return 'not_centred';
+  // a blocked shot: the engine's own reason, word for word (a length-bounded text in the engine's telemetry), so
+  // a reason this page does not know yet is still told apart in the study; 'blocked' if a server sent none
+  if (a.quality?.blocked) return typeof a.quality.block_reason === 'string' && a.quality.block_reason ? a.quality.block_reason.slice(0, 40) : 'blocked';
   return a.quality?.verdict || 'ok';
 }
 

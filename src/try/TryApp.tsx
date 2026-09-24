@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Upload, Sparkles, RefreshCcw, Video, Check, AlertTriangle, ZoomIn, Info, Lightbulb, ArrowLeft } from 'lucide-react';
 import {
-  type Analysis, type Quality, type Targets, targetsOf, detailOf, rawFibre, bestIndex, visibleTips, topTip, mapPool,
-  autoContinue, fibreRatio, meterBand, PUPIL_NOTE, LAMP_FALLBACK,
+  type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, mapPool,
+  autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf, PUPIL_NOTE, LAMP_FALLBACK,
 } from './shots';
 import {
   type Art, type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
   MAX_EYES, STUDY_PENDING_MAX, colourOff, composeSide, deviceInfo, effectiveLayout, outcomeOf, studyAnswered, studyBody, studyOn,
 } from './multi';
-import { T } from './copy';
+import { T, type BlockCopy } from './copy';
 import { ResultView, type StyleOption } from './ResultView';
 import { StudyCard } from './StudyCard';
+import { RetakeGuide } from './RetakeGuide';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
 type ShotSource = 'input' | 'live';
@@ -361,13 +362,18 @@ export const TryApp: React.FC = () => {
     sampleRef.current = false;
     setError(null); setShotNote(null); setShotSource(source);
     const t = targetsOf(analysis);
-    const prev = shotsRef.current;
+    let prev = shotsRef.current;
+    if (prev.length >= t.max_shots) {
+      if (usable(prev[bestIndex(prev)])) { setStep('quality'); return; }
+      // a full set with nothing the studio may use (too blurry, or not centred): this shot starts a fresh set,
+      // so "Take another" always leads somewhere
+      clearShots(); prev = [];
+    }
     // a shot that fails keeps the collection alive when there is one, and falls back to the old error otherwise
     const fail = (msg: string) => {
       if (!prev.length) { setError(msg); setStep('capture'); return; }
       setShotNote(msg); setStep('quality');
     };
-    if (prev.length >= t.max_shots) { setStep('quality'); return; }
     setStep('analyzing'); setProgress([`Measuring shot ${prev.length + 1} of ${t.max_shots}`]);
     const url = URL.createObjectURL(file);
     const origin: ShotOrigin = source === 'live' ? 'live' : 'camera';
@@ -437,7 +443,7 @@ export const TryApp: React.FC = () => {
     askStudy(source, 1, outcomeOf(a));
     if (!a.ok || !a.iris) { setError(a.message || 'No eye found'); setStep('capture'); return; }
     setAnalysis(a);
-    const sampleOk = sampleRef.current && a.quality?.verdict !== 'weak' && a.quality?.locked !== false;
+    const sampleOk = sampleRef.current && a.quality?.verdict !== 'weak' && usable(a);
     if (autoContinue(a) || sampleOk) { await process(img, a); } else { setStep('quality'); }
   };
 
@@ -478,6 +484,13 @@ export const TryApp: React.FC = () => {
     // ticket for it either; this stops the button before the customer waits for an error.
     if (a.quality?.locked === false) {
       setError(T.quality.notCentred);
+      setStep('quality'); return;
+    }
+    // Nor a photo the engine blocked (too blurry to restore the customer's own iris, a pupil too wide): the
+    // model would invent the iris. No ticket either.
+    const block = blockOf(a);
+    if (block) {
+      setError(block.error);
       setStep('quality'); return;
     }
     const replaceId = replacingRef.current && eyesRef.current.some((x) => x.id === replacingRef.current) ? replacingRef.current : null;
@@ -632,11 +645,10 @@ export const TryApp: React.FC = () => {
             )}
 
             <div className="bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div><span className="text-[#f5c542] font-bold block">1. Back camera</span>2x or 3x zoom, not the selfie camera.</div>
-              <div><span className="text-[#f5c542] font-bold block">2. 10 cm away</span>The iris should fill a third of the frame.</div>
-              <div><span className="text-[#f5c542] font-bold block">3. Light from the side</span>Window or lamp at 45°, never straight in.</div>
-              <div><span className="text-[#f5c542] font-bold block">4. Tap to focus</span>Tap the iris on screen, hold still, shoot.</div>
-              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">Take 3-5 shots and send them all.</span> Move the light a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.</div>
+              {T.capture.steps.map((s) => (
+                <div key={s.title}><span className="text-[#f5c542] font-bold block">{s.title}</span>{s.text}</div>
+              ))}
+              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</div>
               {!adding && <div className="col-span-2 sm:col-span-4 text-zinc-400">{T.capture.helper}</div>}
             </div>
 
@@ -682,7 +694,7 @@ export const TryApp: React.FC = () => {
         {step === 'quality' && analysis?.quality && shots.length > 0 && (
           <>
             <ShotCollector shots={shots} t={targetsOf(analysis)} note={shotNote} onTakeAnother={takeAnother}
-              canUse={analysis.quality.locked !== false}
+              canUse={usable(analysis)}
               onContinue={() => imgRef.current && process(imgRef.current, analysis)} onStartOver={retake} />
             {backLink && <div className="flex justify-center mt-4">{backLink}</div>}
           </>
@@ -693,29 +705,37 @@ export const TryApp: React.FC = () => {
             <div className="grid grid-cols-[120px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
               {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt="Detected iris" className="w-[120px] h-[120px] rounded-full border border-[#f5c542]/40 object-cover" />}
               <div className="min-w-0">
-                <Verdict v={analysis.quality.verdict} />
-                <p className="text-sm text-zinc-200 mt-2">{analysis.quality.message}</p>
+                <Verdict v={analysis.quality.verdict} block={blockOf(analysis)} />
+                {/* blocked: the one-line reason; the retake steps are in the guide below (the server's message
+                    lists them too, and shown together every step was read twice) */}
+                <p className="text-sm text-zinc-200 mt-2">{blockOf(analysis)?.reason ?? analysis.quality.message}</p>
                 <DetailMeter a={analysis} t={targetsOf(analysis)} />
               </div>
             </div>
-            {analysis.picked && (
+            {analysis.picked && (usable(analysis) ? (
               <p className="text-xs text-emerald-300/90 bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-3">
                 {/* "best", not "sharpest": the verdict ranks first, so a glared photo can be sharper and still lose */}
                 We compared {analysis.picked.of} photos and used the best one (photo {analysis.picked.used}).
                 {fibreRatio(analysis.picked) !== null &&
                   ` It carries ${fibreRatio(analysis.picked)!.toFixed(1)}x the fibre detail of the softest.`}
               </p>
-            )}
+            ) : (
+              // the best of the pick still cannot be used: never say "used"
+              <p className="text-xs text-rose-200/90 bg-rose-950/25 border border-rose-500/30 rounded-xl p-3">{T.quality.noneUsable(analysis.picked.of)}</p>
+            ))}
+            {/* blocked: the retake steps for its reason replace the tips list, which would only repeat them */}
+            {blockOf(analysis) && <RetakeGuide block={blockOf(analysis)!} />}
             <ShotNotes q={analysis.quality} onRetake={retake} />
-            {visibleTips(analysis.quality).length > 0 && (
+            {!blockedShot(analysis) && visibleTips(analysis.quality).length > 0 && (
               <ul className="text-xs text-zinc-300 bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5">
                 {visibleTips(analysis.quality).map((t) => <li key={t}>• {t}</li>)}
               </ul>
             )}
-            <div className={`grid gap-3 ${analysis.quality.locked !== false ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <div className={`grid gap-3 ${usable(analysis) ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <button onClick={retake} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2"><RefreshCcw className="w-4 h-4" /> {T.quality.retake}</button>
-              {/* no way forward from a crop that is not an iris: the studio would invent one */}
-              {analysis.quality.locked !== false && (
+              {/* no way forward from a crop that is not an iris, nor from one the engine blocked: the studio
+                  would invent one, and the server gave neither a work ticket */}
+              {usable(analysis) && (
                 <button onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> {T.quality.continueAnyway}</button>
               )}
             </div>
@@ -757,15 +777,18 @@ export const TryApp: React.FC = () => {
   );
 };
 
-const Verdict: React.FC<{ v: 'good' | 'ok' | 'weak' }> = ({ v }) => {
+const Verdict: React.FC<{ v: 'good' | 'ok' | 'weak'; block?: BlockCopy | null }> = ({ v, block = null }) => {
   const map = { good: ['Great photo', 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'], ok: ['Usable photo', 'bg-amber-500/15 text-amber-300 border-amber-500/40'], weak: ['Weak photo', 'bg-rose-500/15 text-rose-300 border-rose-500/40'] } as const;
-  return <span className={`inline-block text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${map[v][1]}`}>{map[v][0]}</span>;
+  // a blocked shot is not merely weak: nothing will be made from it, and its badge says why
+  const [label, cls] = block ? [block.badge, map.weak[1]] : map[v];
+  return <span className={`inline-block text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${cls}`}>{label}</span>;
 };
 
 /** Detail N/100 with the ok and good targets marked, so the customer sees how far a retake has to go.
- *  Renders nothing against an older server that sends no score: the verdict badge still speaks there. */
+ *  Renders nothing against an older server that sends no score (the verdict badge still speaks there), nor
+ *  for a blocked shot, whose number would contradict its "Too blurry" badge (shownDetail). */
 const DetailMeter: React.FC<{ a: Analysis; t: Targets; label?: boolean }> = ({ a, t, label = true }) => {
-  const d = detailOf(a);
+  const d = shownDetail(a);
   if (d === undefined) return null;
   const { band, caption } = meterBand(d, a.quality, t);
   const [text, bar] = { good: ['text-emerald-300', 'bg-emerald-400'], ok: ['text-amber-300', 'bg-amber-400'], low: ['text-rose-300', 'bg-rose-400'] }[band];
@@ -785,10 +808,11 @@ const DetailMeter: React.FC<{ a: Analysis; t: Targets; label?: boolean }> = ({ a
 };
 
 /** Notes that come from the light in the photo rather than its sharpness. The pupil one reassures (the
- *  engine rebuilds the pupil anyway); the lamp one warns gently and offers a retake. */
+ *  engine rebuilds the pupil anyway), so it is left out for a blocked shot that will not be rebuilt at all;
+ *  the lamp one warns gently and offers a retake. */
 const ShotNotes: React.FC<{ q: Quality; onRetake?: () => void }> = ({ q, onRetake }) => (
   <>
-    {q.pupil_reflection && (
+    {q.pupil_reflection && !q.blocked && (
       <p className="text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl p-3 flex gap-2">
         <Info className="w-4 h-4 shrink-0 mt-px text-sky-300" /> <span>{PUPIL_NOTE}</span>
       </p>
@@ -814,20 +838,29 @@ const ShotCollector: React.FC<{
   const n = shots.length;
   const latest = shots[n - 1];
   const q = latest.quality;
-  const d = detailOf(latest);
+  // a blocked shot shows no Detail anywhere here: its number could read higher than the usable shot we pick
+  const d = shownDetail(latest);
   const bi = bestIndex(shots);
   const best = shots[bi];
-  const bestD = detailOf(best);
+  const bestD = shownDetail(best);
   const full = n >= t.max_shots;
+  const bestUsable = usable(best);
+  const use = canUse && bestUsable;
   // Prompting ends when the shot we would process is good and lamp-free (the page then goes on by itself).
   // Judged on the best shot, not the latest: a good but lamp-tinted latest shot must still leave room for
-  // the daylight retake its own warning asks for.
-  const canTakeMore = !full && !autoContinue(best);
-  const tip = q && canTakeMore ? topTip(q, t) : null;
+  // the daylight retake its own warning asks for. A full set with nothing usable in it still takes another
+  // shot, which starts a fresh set (onCameraShot).
+  const canTakeMore = !autoContinue(best) && (!full || !bestUsable);
+  // nothing usable yet and the latest shot was blocked: the retake card with the steps for its reason (the
+  // one the customer just saw fail). With a usable best shot the one-line tip below covers it instead.
+  const guide = !bestUsable ? blockOf(latest) : null;
+  // the latest shot's tip, unless the retake card already says it (the server's message lists the same steps)
+  const tip = q && canTakeMore && !guide ? topTip(q, t) : null;
   const bestLabel = `shot ${bi + 1}${bestD !== undefined ? ` (Detail ${bestD})` : ''}`;
   // the one case where the latest shot reads "Great photo" and is still not used: say why
   const skippedForLamp = bi !== n - 1 && !!q?.lamp_cast && !best.quality?.lamp_cast;
-  const summary = full ? `That is ${t.max_shots} shots. We will use your best one, ${bestLabel}.`
+  const summary = !bestUsable ? (full ? T.quality.fullUnusable(t.max_shots) : n === 1 ? T.quality.shotUnusable : T.quality.shotsUnusable)
+    : full ? `That is ${t.max_shots} shots. We will use your best one, ${bestLabel}.`
     : n === 1 ? (canTakeMore ? `Take up to ${t.max_shots - 1} more. We measure every shot and keep the best one.` : 'This one is sharp enough to use.')
     : bi === n - 1 ? 'This is your best shot so far.'
     : skippedForLamp ? `Lamp light tinted shot ${n}, so we will use ${bestLabel}, your best shot in true colour.`
@@ -840,7 +873,7 @@ const ShotCollector: React.FC<{
           : <span className="w-24 h-24 rounded-full bg-white/5" />}
         <div className="min-w-0">
           <p className="text-sm font-bold text-zinc-100">Shot {n} of {t.max_shots}{d !== undefined && ` · Detail ${d}`}</p>
-          {q && <div className="mt-1.5"><Verdict v={q.verdict} /></div>}
+          {q && <div className="mt-1.5"><Verdict v={q.verdict} block={blockOf(latest)} /></div>}
           <DetailMeter a={latest} t={t} label={false} />
         </div>
       </div>
@@ -855,6 +888,9 @@ const ShotCollector: React.FC<{
           <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-[#f5c542]" /> <span>{tip}</span>
         </p>
       )}
+      {/* nothing usable and the latest shot blocked: the capture guide's steps for the next one. Its title says
+          why; the server's message is left out because it lists the same steps */}
+      {guide && <RetakeGuide block={guide} />}
       {/* the notes follow the shot that will be processed, so a lamp warning never disappears while its
           shot is still the one we use. No retake link here: "Take another" below already covers it. */}
       {best.quality && <ShotNotes q={best.quality} />}
@@ -862,13 +898,17 @@ const ShotCollector: React.FC<{
       <div>
         <div className="flex items-start gap-3">
           {shots.map((s, i) => {
-            const sd = detailOf(s);
+            // a blocked shot's thumbnail names its reason: its Detail number is not a measure of anything usable
+            const sd = blockOf(s)?.thumb ?? shownDetail(s);
+            // the best shot is ringed in gold only when it is one we would really use
+            const ring = i !== bi ? 'border-white/10' : usable(s) ? 'border-[#f5c542]' : 'border-rose-400/70';
+            const ink = i !== bi ? (usable(s) ? 'text-zinc-500' : 'text-rose-300/70') : usable(s) ? 'text-[#f5c542]' : 'text-rose-300';
             return (
               <div key={i} className="flex flex-col items-center gap-1">
                 {s.preview
-                  ? <img src={`data:image/jpeg;base64,${s.preview}`} alt={`Shot ${i + 1}`} className={`w-11 h-11 rounded-full object-cover border-2 ${i === bi ? 'border-[#f5c542]' : 'border-white/10 opacity-60'}`} />
-                  : <span className={`w-11 h-11 rounded-full bg-white/5 border-2 ${i === bi ? 'border-[#f5c542]' : 'border-white/10'}`} />}
-                <span className={`text-[10px] font-mono ${i === bi ? 'text-[#f5c542]' : 'text-zinc-500'}`}>{sd ?? `#${i + 1}`}</span>
+                  ? <img src={`data:image/jpeg;base64,${s.preview}`} alt={`Shot ${i + 1}`} className={`w-11 h-11 rounded-full object-cover border-2 ${ring} ${i === bi ? '' : 'opacity-60'}`} />
+                  : <span className={`w-11 h-11 rounded-full bg-white/5 border-2 ${ring}`} />}
+                <span className={`text-[10px] font-mono ${ink}`}>{sd ?? `#${i + 1}`}</span>
               </div>
             );
           })}
@@ -879,12 +919,13 @@ const ShotCollector: React.FC<{
         <p className="text-[11px] text-zinc-500 mt-2">{summary}</p>
       </div>
 
-      <div className={`grid gap-3 ${canTakeMore && canUse ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      <div className={`grid gap-3 ${canTakeMore && use ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {canTakeMore && (
           <button onClick={onTakeAnother} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Camera className="w-4 h-4" /> Take another</button>
         )}
-        {/* the best shot is not centred on an iris: offer only another shot, never the studio */}
-        {canUse && (
+        {/* the best shot is not centred on an iris, or the engine blocked it: offer only another shot, never
+            the studio */}
+        {use && (
           <button onClick={onContinue} className={`py-3 rounded-xl text-sm flex items-center justify-center gap-2 ${canTakeMore ? 'bg-white/5 border border-white/10 font-semibold' : 'bg-[#f5c542] text-black font-bold'}`}>
             <Sparkles className="w-4 h-4" /> {n > 1 ? 'Use best shot' : 'Use this shot'}
           </button>

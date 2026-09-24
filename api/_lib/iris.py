@@ -571,6 +571,7 @@ def glare_mask(crop, r_px, extra_boxes=None):
     return hard, feather, pct
 
 ROTATION_DONORS = (24, -24, 48, -48, 78, -78, 110, -110)
+DONOR_SOFT = 0.03            # eyelid fill only (mirror_prefill with extra donors): donor fade-out ramp, share of the side
 
 BOX_LANE_BYTES = 1 << 21     # float64 scratch per block of rows in _box1 along the rows (2 MB)
 BOX_COLUMNS = 64             # columns per block in _box1 down the columns: keeps the block in cache
@@ -629,22 +630,11 @@ def _blur_f(plane, rad):
     return a
 
 
-def mirror_prefill(crop, feather):
-    """Fill the reflection from the same radius at a nearby angle.
-
-    An iris is organised radially: brightness, colour and pigment change with distance from the pupil and stay
-    comparatively steady around it. The earlier version donated from the point-mirrored side - same radius, opposite
-    angle - so an eye with a darker sector across from the highlight got that darkness stamped exactly where the
-    highlight had been. Rotating about the pupil centre keeps the radius exact while staying near in angle, and
-    several offsets are averaged so a donor that is itself under glare simply does not vote."""
-    arr = np.asarray(crop).astype(np.float32)
-    S = crop.size[0]
-    a = np.clip(feather, 0.0, 1.0)[..., None]
-    m_img = Image.fromarray((np.clip(feather, 0, 1) * 255).astype(np.uint8))
-    ones = Image.fromarray(np.full((S, S), 255, np.uint8))
-
+def _rotation_donors(crop, m_img, ones, degrees):
+    """(summed donor pixels x weight, summed weight) over rotations of the crop about its centre. A donor pixel's
+    weight is 0 where the rotated mask covers it (it is glare or lid itself) or where the frame corner swung in."""
     cands, weights = [], []
-    for deg in ROTATION_DONORS:
+    for deg in degrees:
         rot = np.asarray(crop.rotate(deg, resample=Image.BICUBIC)).astype(np.float32)
         rot_m = np.asarray(m_img.rotate(deg, resample=Image.BICUBIC)).astype(np.float32) / 255.0
         # rotation swings the frame corners in; those pixels are not iris and must not donate
@@ -653,9 +643,64 @@ def mirror_prefill(crop, feather):
         weights.append(np.clip(inside, 0, 1) * (1.0 - np.clip(rot_m, 0, 1)))
     C = np.stack(cands, 0)
     W = np.stack(weights, 0)[..., None]
+    return (C * W).sum(0), W.sum(0)
 
-    tot = W.sum(0)
-    src = (C * W).sum(0) / np.maximum(tot, 1e-3)
+
+def _ring_tone(arr, w, S):
+    """Per radius (bins of 1% of the side, from the frame centre): the mean colour of the pixels with weight w that
+    are not the black outside the disk, drawn back as an S x S x 3 image. Empty bins take their neighbours'."""
+    ax = (np.arange(S) - S / 2 + 0.5) ** 2
+    k = (np.sqrt(ax[None, :] + ax[:, None]) / max(1.0, 0.01 * S)).astype(np.int32)
+    wt = (w * (arr.sum(-1) > 12.0)).ravel()
+    nb = int(k.max()) + 1
+    den = np.bincount(k.ravel(), wt, nb)
+    has = den > 1.0
+    out = np.empty((S, S, 3), np.float32)
+    idx = np.arange(nb)
+    for c in range(3):
+        num = np.bincount(k.ravel(), arr[..., c].ravel() * wt, nb)
+        prof = np.interp(idx, idx[has], num[has] / den[has]) if has.any() else np.zeros(nb)
+        out[..., c] = prof[k]
+    return out
+
+
+def mirror_prefill(crop, feather, extra=()):
+    """Fill the reflection from the same radius at a nearby angle.
+
+    An iris is organised radially: brightness, colour and pigment change with distance from the pupil and stay
+    comparatively steady around it. The earlier version donated from the point-mirrored side - same radius, opposite
+    angle - so an eye with a darker sector across from the highlight got that darkness stamped exactly where the
+    highlight had been. Rotating about the pupil centre keeps the radius exact while staying near in angle, and
+    several offsets are averaged so a donor that is itself under glare simply does not vote.
+    extra: further rotations, used only where every ROTATION_DONORS donor is itself masked (an eyelid can cover
+    150 degrees of the rim, and there the fallback below would fill the lid with a blur of the lid); with them, the
+    tone of pixels far from any clean one is matched to the clean iris at the same radius (_ring_tone), black
+    pixels (outside the photo, where the client's square ran past its edge) never donate, and the donor set changes
+    gradually: each donor fades out over DONOR_SOFT round the hole and the far donors join as the near ones' support
+    fades (hard switches drew straight seams across a large lid fill, 26: seam step 17.1 -> 12.5, r3/softfill.py).
+    Empty, the result is exactly the glare-only fill."""
+    arr = np.asarray(crop).astype(np.float32)
+    S = crop.size[0]
+    a = np.clip(feather, 0.0, 1.0)[..., None]
+    if extra:
+        f = np.clip(feather, 0, 1).astype(np.float32)
+        f = np.maximum(f, np.clip(2.0 * _blur_f(f, DONOR_SOFT * S / 2.0), 0.0, 1.0))   # only ever lowers a weight
+        m_img = Image.fromarray((f * 255).astype(np.uint8))
+        ones = Image.fromarray(np.where(arr.sum(-1) > 12.0, 255, 0).astype(np.uint8))
+        del f
+    else:
+        m_img = Image.fromarray((np.clip(feather, 0, 1) * 255).astype(np.uint8))
+        ones = Image.fromarray(np.full((S, S), 255, np.uint8))
+
+    num, tot = _rotation_donors(crop, m_img, ones, ROTATION_DONORS)
+    if extra:
+        num2, tot2 = _rotation_donors(crop, m_img, ones, tuple(extra))
+        wf = np.clip((0.7 - tot) / 0.7, 0.0, 1.0)
+        num = num + num2 * wf
+        tot = tot + tot2 * wf
+        del num2, tot2, wf
+    src = num / np.maximum(tot, 1e-3)
+    del num
     blur = np.asarray(crop.filter(ImageFilter.GaussianBlur(S * 0.03))).astype(np.float32)
     src = np.where(tot < 0.35, blur, src)          # nowhere clean to borrow from
 
@@ -666,8 +711,18 @@ def mirror_prefill(crop, feather):
     w = np.clip(1.0 - np.clip(feather, 0, 1), 0.0, 1.0)
     wb = _blur_f(w, rad)
     ok = wb > 0.02
-    base_lo = np.stack([np.where(ok, _blur_f(arr[..., c] * w, rad) / np.maximum(wb, 1e-3),
-                                 _blur_f(src[..., c], rad)) for c in range(3)], -1)
+    if extra:
+        # An eyelid leaves pixels far from any clean one, where the old rule kept the donor's own tone: under an
+        # upper lid that is often the lit lower iris from the far side, and it showed as a pale blob in the fill.
+        # There the target is the mean tone of the clean iris at the same radius, blended in as local support fades.
+        ring = _ring_tone(arr, w, S)
+        t = np.clip(wb / 0.25, 0.0, 1.0)
+        base_lo = np.stack([t * (_blur_f(arr[..., c] * w, rad) / np.maximum(wb, 1e-3)) + (1.0 - t) * ring[..., c]
+                            for c in range(3)], -1)
+        del ring, t
+    else:
+        base_lo = np.stack([np.where(ok, _blur_f(arr[..., c] * w, rad) / np.maximum(wb, 1e-3),
+                                     _blur_f(src[..., c], rad)) for c in range(3)], -1)
     src_lo = np.stack([_blur_f(src[..., c], rad) for c in range(3)], -1)
     src = src + (base_lo - src_lo)
     return Image.fromarray(np.clip(arr * (1 - a) + src * a, 0, 255).astype(np.uint8))
@@ -713,6 +768,483 @@ def composite(base, patch, alpha):
     out = np.asarray(base).astype(np.float32) * (1 - a) + np.asarray(patch.resize(base.size, Image.LANCZOS)).astype(np.float32) * a
     return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
 
+# ----------------------------------------------------------------------------- eyelids
+# An upper lid comes in from the top of the circle, a lower lid from the bottom: a cap of the disk cut off by a
+# smooth, fairly flat margin, with skin, the lash line and hanging lashes on the rim side and the lid's shadow just
+# below it. Everything here was fitted on the 27 licensed test photos plus the owner's crops and the site's sample
+# eye, each re-cut exactly as the client sends it (TryApp.tsx: the unmasked 2 r pad square). Scratchpad
+# wave-e/eyelid: annot/gt.json and r4/gt_extra.json (01, 10, 17, 20, the owner's 215106) hold hand-read lids,
+# r4/sweep4.py gives the numbers quoted below.
+LID_WORK = 160                   # the detector's working side: a lid is a large, smooth shape
+LID_BLUR = 1.2                   # Lab blur at LID_WORK, px: fibre texture out, lid margins kept
+LID_C0 = (-0.86, -0.05, 0.02)    # margin height on the centre line, iris radii. A lid reaching less than 0.14
+                                 # into the circle stays out: the artwork keeps only 0.92 of it (STUDIO_TRIM), and
+                                 # nearer the rim the dark limbal ring reads as a margin
+LID_C1 = (-0.5, 0.51, 0.1)       # tilt (a head tilted up to ~25 degrees)
+LID_C2 = (-0.1, 0.31, 0.1)       # bow. Lid margins are far flatter than the limbus: a curve following the limbal
+                                 # ring would need ~0.55, so it is never a candidate
+LID_BAND = 0.07                  # the colour step across a margin is read between two bands this wide
+LID_EVAL_RIM = 0.90              # ...only inside this radius
+LID_TOPK = 3                     # candidate margins kept per side
+LID_HYST = 1.10                  # every plain bar below must be passed by this factor (10%): a margin sitting on a bar
+                                 # flipped when the same photo was analysed again (13: 21% of the iris, then none)
+LID_STEP_MIN = 7.0               # dE76 of the mean colour step across the margin
+LID_REGION_DE = 10.0             # dE76 between the cap and the band of iris just below the margin
+LID_REL_MAX = 0.45               # rim continuity (_lid_rim): step across the circle over the cap's arc / the same
+LID_RIMCOV_MIN = 0.30            # step on the side sectors; or this share of the arc under 0.35 of it...
+LID_CAP_DL = 8.0                 # ...either way with the cap at least this much L* above the iris below: a cap as light
+                                 # as the iris over a partly covered rim was the sclera crescent and lashes of a circle
+                                 # 6-8% high (15: dL 2.8-3.8); the real caps taken on the rim read dL 10-27 (r4 sweep)
+LID_DARK_REL = 0.12              # a cap DARKER than the iris below it is taken only when the rim over its arc is almost
+                                 # fully covered (rim median at most this). A dark cap is just as often the dark limbal
+                                 # ring of a circle placed too high or too large (the sample eye 5-8% high: 0.21-0.28;
+                                 # photo 03 8% high: 0.18); a real dark lid with lashes reads 0.02-0.04 (photo 08)
+LID_THIN_C0 = -0.70              # a margin whose centre height is nearer the rim than this is a thin rim lid: the case
+                                 # where a circle 5-8% off also puts a cap of real iris or limbus under a flat edge
+LID_THIN_RIM = (0.20, 0.65, 10.0)   # a thin rim lid needs the rim median at most the first, this share covered AND
+                                 # the cap this much L* above the iris below it (skin): the sample eye's circle 6% high
+                                 # put its limbal ring under a flat edge with rim 0.18 / 1.0 but only 3.8-6.4 L* up...
+LID_THIN_STRONG = (18.0, 23.0, 11.0, 0.40, 0.50)   # ...or a strong, clean margin: step, region dE, L* above the
+                                 # iris, rim median at most, rim share covered at least (05's thin upper lid: 22.9, 28.5,
+                                 # 13.5, 0.33, 0.60 put a red band in the artwork; the nearest lid-free candidate over the
+                                 # sweep, the amber sample 8% high, read 19.1, 22.2, 12.9, 0.48, 0.16)
+LID_SKIN_THIN = (18.0, 22.0, 18.0, 5.0)   # ...or strong skin: step, region dE, L* above the iris, and C* above the
+                                 # side iris at the same radius (skin is pink; the sclera of an oversize circle is grey)
+LID_SKIN = (15.0, 18.0, 15.0)    # no rim evidence needed for bright skin: step, region dE and L* above the iris
+LID_DEEP_STEP = 14.5             # the margin that bounds a side's mask (its deepest accepted one), when it reaches past
+                                 # LID_THIN_C0, must be a strong step (x LID_HYST: 15.95) or no lid is reported at all.
+                                 # A weak step deep in the iris is not a lid margin over iris: it is the lower end of
+                                 # lashes hanging over the iris (29: 8.4-10.6 over the sweep4 circles), a lid seen past
+                                 # the iris by a circle too large for it, over its wet rim and reflections (21: 7.8-15.6),
+                                 # or blur (10: 7.8-9.9). Filled down to it, the fill copied that texture (29: a plaid of
+                                 # squares in both renders; 21: a grey band and a straight seam; wave-g/fix-engine/
+                                 # resid29_v1_pct_rule.jpg: copied lashes). Real lid margins: 06 21.9-26.1, 26 16.6-19.9,
+                                 # 17 18.0-18.3. sweep4: off on 21 in 82 of its 82 fired circles, 29 60 of 75, 10 48 of
+                                 # 48, 27 3 of 3; 09 loses 5 of 83 and 19 7 of 75; no other photo changes
+LID_DEEPEST = -0.25              # a margin reaching nearer the centre than this (within 0.7 r of the centre line) is not
+                                 # a lid: a boundary across the pupil half is a reflection edge (02's sky: 20% real iris)
+LID_LIMBUS_MIN = 0.92            # the side sectors' limbus (both sides) inside this: the circle is oversize, and what
+                                 # a lid fill would borrow at the rim is sclera (22). No lid is then reported
+LID_PUPIL_PAD = (1.15, 0.03)     # the pupil (x 1.15 + 0.03 iris radii) is not read: its edge is not a lid margin (23)
+LID_RIM_SCALE = (1.00, 1.04)     # the rim test is read at the side sectors' limbus radius, clamped to this range: never
+                                 # inside the circle (reading it at 0.93-0.95 on the sample eye with its circle 6-10%
+                                 # too large masked 3.6-4.1% of real iris), at most 1.04 (the client's square reaches
+                                 # 1.12 radii, and the outside band needs room)
+LID_SHADOW = 0.06                # the mask always reaches this far (iris radii) below the margin: lash line, lashes
+LID_SHADOW_THIN = 0.03           # ...below a lid taken by a thin-rim rule only this far (its margin line), with no shadow
+                                 # band: with the circle 6-8% low the owner's lower lid (215106) and 20's put 0.06 and
+                                 # the band onto real iris (dark crypts). A dark lid with lashes keeps both
+LID_SHADOW_MAX = 0.30            # at most this far in all: in 0.03 strips per 0.1-wide column, it goes on while the
+LID_SHADOW_DL = 10.0             # iris there is darker than the side sectors at the same radius by this much L* (the
+LID_SHADOW_DC = 8.0              # lid's shadow) or greyer by this much C* (a brown eye's lash line: C* 2-8 vs 13-22)
+LID_SHADOW_OPEN = 3              # ...and a reach must hold over this many neighbouring 0.1-wide columns
+LID_SHADOW_PUPIL = (1.04, 0.02)  # the shadow band is read down to the pupil x 1.04 + 0.02, and never past it
+LID_FEATHER = 0.012              # soft edge of the lid mask, share of the frame side
+LID_ANGLES = 180                 # 2-degree bins for the rim continuity
+LID_EXTRA_DONORS = (140, -140, 180)   # mirror_prefill donors further round, for a lid too wide for the near ones
+LID_DRIFT_MAX = 20.0             # lid_drift of the fill above this: no clean iris to borrow from, the lid is left as
+                                 # before (studio_grade's trim). The model's recoloured lid patches read 22-26
+LID_DRIFT_ARC = 40.0             # lid_drift also compares the fill with the clean iris within this many degrees of the
+                                 # lid at the same radius (the lid's own shadow), and keeps the smaller of the two
+
+
+def _lid_lab(im, n):
+    small = np.asarray(im.resize((n, n), Image.BOX if im.size[0] >= 2 * n else Image.LANCZOS), dtype=np.float32)
+    lab = srgb_to_lab(small).astype(np.float32)
+    return np.stack([_blur_f(lab[..., c], LID_BLUR) for c in range(3)], -1)
+
+
+def _lid_curves():
+    c0 = np.arange(*LID_C0); c1 = np.arange(*LID_C1); c2 = np.arange(*LID_C2)
+    return np.stack(np.meshgrid(c0, c1, c2, indexing="ij"), -1).reshape(-1, 3)
+
+
+def _lid_margins(lab, ys, xs, valid, G, r_frac=None):
+    """Score of every candidate margin y = c0 + c1 x + c2 x^2 (in the side's own coordinates: the rim is at the
+    top, y < curve is the lid side). Per column, the mean Lab in a LID_BAND band above the curve minus the one below
+    it; the score is the length of the mean step (dE76) x sqrt(share of the columns the curve crosses inside
+    LID_EVAL_RIM that were usable) x share of usable columns whose own step points the same way. A lid margin is one
+    consistent step along its whole length; radial fibres, crypts and a lighting gradient are not. Per-column
+    cumulative sums make all 2255 curves one set of gathers (every second column: the step is a mean anyway)."""
+    n = lab.shape[0]
+    v = valid.astype(np.float32)
+    cols = np.arange(0, n, 2)
+    lab_c, v_c, xs_c = lab[:, cols], v[:, cols], xs[cols]
+    nc = len(cols)
+    CS = np.concatenate([np.zeros((1, nc, 3), np.float32), np.cumsum(lab_c * v_c[..., None], 0, dtype=np.float32)], 0)
+    CN = np.concatenate([np.zeros((1, nc), np.float32), np.cumsum(v_c, 0, dtype=np.float32)], 0)
+    CS = CS.reshape(-1, 3); CN = CN.ravel()
+    yb = (G[:, :1] + G[:, 1:2] * xs_c[None] + G[:, 2:3] * xs_c[None] ** 2).astype(np.float32)
+    y0, dy = float(ys[0]), float(ys[1] - ys[0])
+    ci = np.arange(nc)[None]
+
+    def rows(y):
+        # the rows whose centre lies above y, on the uniform grid ys (what searchsorted(ys, y) counts), as flat indices
+        return np.clip(np.ceil((y - y0) / dy), 0, n).astype(np.int64) * nc + ci
+    k0, k1, k2 = rows(yb - LID_BAND), rows(yb), rows(yb + LID_BAND)
+    na = CN[k1] - CN[k0]; nb = CN[k2] - CN[k1]
+    need = max(2.0, 0.6 * LID_BAND * (r_frac or iris_radius_frac()) * n)
+    use = (na >= need) & (nb >= need)
+    step = (CS[k1] - CS[k0]) / np.maximum(na, 1)[..., None] - (CS[k2] - CS[k1]) / np.maximum(nb, 1)[..., None]
+    step *= use[..., None]
+    ncol = use.sum(1)
+    span = ((np.abs(xs_c)[None] < LID_EVAL_RIM)
+            & (np.abs(yb) < np.sqrt(np.maximum(LID_EVAL_RIM ** 2 - xs_c[None] ** 2, 0)))).sum(1)
+    mean = step.sum(1) / np.maximum(ncol, 1)[:, None]
+    mag = np.sqrt((mean ** 2).sum(-1))
+    unit = mean / np.maximum(mag, 1e-3)[:, None]
+    agree = (((step * unit[:, None, :]).sum(-1) > 0.5 * mag[:, None]) & use).sum(1) / np.maximum(ncol, 1)
+    return mag * np.sqrt(ncol / np.maximum(span, 1)) * agree * (ncol >= 3)
+
+
+def _lid_rim(lab, rho, ang):
+    """Per 2-degree angle: how different what lies just inside the circle (0.88-0.97) is from what lies just outside
+    it (1.03-1.10), as a share of the same step on the side sectors (+-30 degrees round 0 and 180), where lids never
+    reach and the limbus is always visible. Where the iris shows up to the circle there is a limbus: limbal ring
+    inside, sclera or a lid margin outside. Where a lid covers the rim, the same skin and lashes run across it and the
+    share is small. Needs the unmasked square the client sends; returns None when there is nothing outside the circle
+    (a pre-masked crop), and then no lid is ever found by rim evidence."""
+    lp = lab[..., 0]
+    lstd = np.sqrt(np.maximum(_blur_f(lp * lp, 1.5) - _blur_f(lp, 1.5) ** 2, 0))
+    f = np.concatenate([lab, lstd[..., None]], -1)
+    NA = LID_ANGLES
+    b = (ang // (360.0 / NA)).astype(int) % NA
+    fi = np.full((NA, 4), np.nan, np.float32); fo = np.full((NA, 4), np.nan, np.float32)
+    for m, dst in (((rho >= 0.88) & (rho < 0.97), fi), ((rho >= 1.03) & (rho < 1.10), fo)):
+        bi, vals = b[m], f[m]
+        order = np.argsort(bi, kind="stable"); bi, vals = bi[order], vals[order]
+        cuts = np.searchsorted(bi, np.arange(NA + 1))
+        for i in range(NA):
+            if cuts[i + 1] > cuts[i]: dst[i] = np.median(vals[cuts[i]:cuts[i + 1]], 0)
+    dark = ~(fo[:, 0] >= 3.0)                  # nothing outside the circle at this angle (a NaN counts as nothing)
+    if dark.mean() > 0.85:
+        return None
+    fi = np.nanmedian(np.stack([np.roll(fi, s, 0) for s in range(-2, 3)]), 0)
+    fo = np.nanmedian(np.stack([np.roll(fo, s, 0) for s in range(-2, 3)]), 0)
+    step = np.sqrt(((fi - fo) ** 2).sum(-1))
+    a = (np.arange(NA) + 0.5) * 360.0 / NA
+    side = ((np.abs(((a + 180) % 360) - 180) <= 30) | (np.abs(a - 180) <= 30)) & ~dark
+    if side.sum() < 6: return None
+    ref = float(np.nanmedian(step[side]))
+    if not np.isfinite(ref) or ref < 1e-3: return None
+    return np.nan_to_num(step / ref, nan=9.0)
+
+
+def _lid_side_limbus(lab, rho, ang):
+    """The limbus radius on each side sector (+-30 degrees round 0 and 180, where lids never reach): the radius, in
+    0.70-1.15 iris radii, where the median L* of 0.025-wide rings climbs the most (iris to sclera). [right, left];
+    NaN where a side has too little to read."""
+    lp = lab[..., 0]
+    edges = np.arange(0.60, 1.20, 0.025)
+    mid = edges[1:-1]
+    out = []
+    for c in (0.0, 180.0):
+        sel = np.abs(((ang - c + 180) % 360) - 180) <= 30
+        med = np.full(len(edges) - 1, np.nan)
+        for i in range(len(edges) - 1):
+            m = sel & (rho >= edges[i]) & (rho < edges[i + 1]) & (lp > 2.0)
+            if m.sum() >= 4: med[i] = np.median(lp[m])
+        g = np.diff(med)
+        ok = np.isfinite(g) & (mid >= 0.70) & (mid <= 1.15)
+        out.append(float(mid[ok][np.argmax(g[ok])]) if ok.any() else float("nan"))
+    return out
+
+
+def _lid_side_chroma(lab, lc, rho, sides, cut, inner_f):
+    """Median C* of the cap's pixels (inner_f) minus the C* of the side sectors' iris at the same radius (median a*
+    and b* per 0.05 ring; the cap, glare and pupil left out via cut). NaN when the sides give fewer than 2 rings."""
+    edges = np.arange(0.25, 0.951, 0.05)
+    prof = np.full((len(edges) - 1, 2), np.nan)
+    for k in range(len(edges) - 1):
+        sel = (rho >= edges[k]) & (rho < edges[k + 1]) & sides & ~cut
+        if sel.sum() >= 6: prof[k] = np.median(lab[..., 1][sel]), np.median(lab[..., 2][sel])
+    okb = np.isfinite(prof[:, 0])
+    if okb.sum() < 2 or not inner_f.any(): return float("nan")
+    mid = (edges[:-1] + 0.025)[okb]
+    ra = np.interp(rho[inner_f], mid, prof[okb, 0]); rb = np.interp(rho[inner_f], mid, prof[okb, 1])
+    return float(np.median(lc[inner_f] - np.hypot(ra, rb)))
+
+
+def lid_geometry(crop, r_frac=None, glare_hard=None, debug=None, pupil_rho=None):
+    """The eyelids in a square iris crop: [(side, xk, bk)], side "top" or "bottom". The lid is the part of the disk
+    on the rim side of the curve through (xk, bk), in iris radii from the centre, x right, y down (for the bottom lid
+    y is measured upwards): the accepted margins y = c0 + c1 x + c2 x^2, plus LID_SHADOW for the lash line, plus the
+    lid's shadow where the iris below is darker than the side sectors. Empty = no lid.
+
+    How a cap is found: per side the LID_TOPK strongest margins (_lid_margins, the pupil left out), each kept only
+    when every bar is passed by LID_HYST:
+      - the margin stays out of the pupil half (LID_DEEPEST), the step and the cap's difference from the iris just
+        below it pass LID_STEP_MIN / LID_REGION_DE, and
+      - a cap darker than the iris below needs the rim over its arc almost fully covered (LID_DARK_REL);
+      - a thin rim lid (centre height at or nearer the rim than LID_THIN_C0) needs a covered rim (LID_THIN_RIM), a
+        strong clean margin (LID_THIN_STRONG) or strong pink skin (LID_SKIN_THIN); it then masks only LID_SHADOW_THIN
+        below its margin and grows no shadow band;
+      - any other cap needs LID_CAP_DL of lightness over the iris and a covered rim (_lid_rim: the lid runs out
+        across the circle, no limbus), or bright skin.
+    No lid at all when both side limbi say the circle is oversize (LID_LIMBUS_MIN), nor when a side's deepest accepted
+    margin reaches past the thin rim zone with a weak step (LID_DEEP_STEP: hanging lashes, or a circle reaching past
+    the iris, not a lid margin over iris). The shadow band below a lid holds
+    over LID_SHADOW_OPEN neighbouring columns and never reads past the pupil.
+    Measured (wave-e/eyelid/r4, sweep4.py: the live analyze circle and pupil_r of all 36 photos, moved 1-8% up and
+    down in 1% steps, 2-8% sideways, 2-12% larger or smaller, combined, and with the pupil 0.7-1.4x; 87 runs each):
+    no mask at all on the 9 lid-free eyes (6 test photos, the owner's 215102 and 215120, the blue sample) nor on 13
+    and the amber sample (957 runs); the owner's 215106 (a lower-lid sliver) fires 2 of 87 with at most 0.05% of the
+    disk outside the hand-read lid inside 0.90 r; 15 fires 0 of 87 (round 3: 9, up to 9.5% of real iris). See
+    lid_mask for coverage.
+    crop: the square as the client sent it, NOT masked (the rim test reads outside the circle). r_frac: iris radius
+    as a share of the side (iris_radius_frac(pad)). glare_hard: the glare mask at any size; those pixels are not
+    read. pupil_rho: the pupil radius in iris radii (read from the crop when not given). debug: a list that collects
+    the numbers behind each decision."""
+    n = LID_WORK
+    r_frac = r_frac or iris_radius_frac()
+    lab = _lid_lab(crop, n)
+    ax = (np.arange(n) - n / 2 + 0.5) / (r_frac * n)
+    X, Y = np.meshgrid(ax, ax)
+    rho = np.sqrt(X * X + Y * Y)
+    ang = (np.degrees(np.arctan2(Y, X)) + 360.0) % 360.0
+    glare = np.zeros((n, n), bool)
+    if glare_hard is not None and np.any(glare_hard):
+        glare = np.asarray(Image.fromarray(np.asarray(glare_hard, np.uint8)).resize((n, n), Image.BILINEAR)) > 60
+    limbus = _lid_side_limbus(lab, rho, ang)
+    if debug is not None:
+        debug.append(dict(limbus=[round(v, 3) for v in limbus]))
+    if all(np.isfinite(limbus)) and max(limbus) < LID_LIMBUS_MIN:
+        return []
+    pr = pupil_rho if pupil_rho else pupil_radius(np.clip(lab[..., 0] * 2.55, 0, 255), rho)
+    pupil = rho < max(0.25, (pr or 0.0) * LID_PUPIL_PAD[0] + LID_PUPIL_PAD[1])
+    valid = (rho < LID_EVAL_RIM) & ~pupil & ~glare
+    # the rim test reads across the limbus the side sectors show, not across the analyze circle: a circle 5% too
+    # small put both of its bands on the lid and hid a 40% lid (29)
+    lf = [v for v in limbus if np.isfinite(v)]
+    rs = float(np.clip(np.median(lf), *LID_RIM_SCALE)) if lf else 1.0
+    rel = _lid_rim(lab, rho / rs, ang)
+    G = _lid_curves()
+    th = np.radians((np.arange(LID_ANGLES) + 0.5) * 360.0 / LID_ANGLES)
+    lc = np.hypot(lab[..., 1], lab[..., 2])
+    sides = (np.abs(((ang + 180) % 360) - 180) <= 35) | (np.abs(ang - 180) <= 35)
+    xd = np.linspace(-0.7, 0.7, 29)
+    H = LID_HYST
+    accepted = []
+    deepest = {}                   # side -> (c0, step) of its deepest accepted margin (LID_DEEP_STEP)
+    for top in (True, False):
+        if top:
+            lab_s, Ys, val_s, glare_s, rho_s, pup_s = lab, Y, valid, glare, rho, pupil
+        else:          # the bottom lid is the top lid of the frame flipped upside down
+            lab_s, Ys, val_s, glare_s, rho_s, pup_s = lab[::-1], -Y[::-1], valid[::-1], glare[::-1], rho[::-1], pupil[::-1]
+        sc = _lid_margins(lab_s, Ys[:, 0], X[0], val_s, G, r_frac)
+        kept = []
+        for i in np.argsort(-sc)[:600]:
+            if sc[i] <= 0 or len(kept) >= LID_TOPK: break
+            c = G[i]
+            capm = (Ys < c[0] + c[1] * X + c[2] * X * X) & (rho_s < 0.97)
+            if capm.sum() < 5 or any((capm & q).sum() / max((capm | q).sum(), 1) > 0.5 for q, _ in kept): continue
+            kept.append((capm, i))
+        for capm, i in kept:
+            c = G[i]
+            if float(np.max(c[0] + c[1] * xd + c[2] * xd * xd)) > LID_DEEPEST:
+                if debug is not None:
+                    debug.append(dict(side="top" if top else "bottom", c=[round(float(v), 2) for v in c], ok=False,
+                                      why="deep"))
+                continue
+            yb = c[0] + c[1] * X + c[2] * X * X
+            inner = capm & (rho_s < 0.93) & (rho_s > 0.25) & ~glare_s & ~pup_s
+            below = (Ys >= yb) & (Ys < yb + 0.15) & (rho_s < 0.93) & (rho_s > 0.25) & ~glare_s & ~pup_s
+            if inner.sum() < 8 or below.sum() < 8: continue
+            a, b = lab_s[inner].mean(0), lab_s[below].mean(0)
+            dE = float(np.sqrt(((a - b) ** 2).sum())); dL = float(a[0] - b[0])
+            xr, yr = 0.97 * rs * np.cos(th), 0.97 * rs * np.sin(th)
+            on = (yr if top else -yr) < c[0] + c[1] * xr + c[2] * xr * xr      # the cap's arc of the rim
+            if rel is not None and on.any():
+                r_med = float(np.median(rel[on])); r_cov = float((rel[on] < 0.35).mean())
+            else:
+                r_med, r_cov = 9.0, 0.0
+            s = float(sc[i])
+            dC = None
+            thin = c[0] <= LID_THIN_C0 + 1e-6         # the grid's -0.70 is -0.6999...: it counts as thin (15)
+            if s < LID_STEP_MIN * H or dE < LID_REGION_DE * H:
+                ok, why = False, "weak"
+            elif dL < 0:
+                ok, why = r_med <= LID_DARK_REL / H, "dark"
+            elif thin:
+                ok, why = (r_med <= LID_THIN_RIM[0] / H and r_cov >= LID_THIN_RIM[1] * H
+                           and dL >= LID_THIN_RIM[2] * H), "thin"
+                if not ok and (s >= LID_THIN_STRONG[0] * H and dE >= LID_THIN_STRONG[1] * H
+                               and dL >= LID_THIN_STRONG[2] * H and r_med <= LID_THIN_STRONG[3] / H
+                               and r_cov >= LID_THIN_STRONG[4] * H):
+                    ok, why = True, "thin strong"
+                if not ok and s >= LID_SKIN_THIN[0] * H and dE >= LID_SKIN_THIN[1] * H and dL >= LID_SKIN_THIN[2] * H:
+                    cap_f = capm if top else capm[::-1]
+                    inner_f = inner if top else inner[::-1]
+                    dC = _lid_side_chroma(lab, lc, rho, sides, cap_f | glare | pupil, inner_f)
+                    ok, why = bool(dC >= LID_SKIN_THIN[3] * H), "thin skin"
+            else:
+                ok, why = (dL >= LID_CAP_DL * H and (r_med <= LID_REL_MAX / H or r_cov >= LID_RIMCOV_MIN * H)
+                           or (s >= LID_SKIN[0] * H and dE >= LID_SKIN[1] * H and dL >= LID_SKIN[2] * H)), "cap"
+            if debug is not None:
+                debug.append(dict(side="top" if top else "bottom", c=[round(float(v), 2) for v in c],
+                                  step=round(s, 1), dE=round(dE, 1), dL=round(dL, 1), rim=round(r_med, 2),
+                                  rim_cov=round(r_cov, 2), dC=None if dC is None else round(dC, 1), why=why,
+                                  ok=bool(ok)))
+            if ok:
+                accepted.append(("top" if top else "bottom", tuple(float(v) for v in c), why.startswith("thin")))
+                sd = "top" if top else "bottom"
+                if sd not in deepest or c[0] > deepest[sd][0]:
+                    deepest[sd] = (float(c[0]), s)
+    if not accepted:
+        return []
+    for sd, (c0_, s_) in deepest.items():
+        if c0_ > LID_THIN_C0 + 1e-6 and s_ < LID_DEEP_STEP * H:
+            if debug is not None:
+                debug.append(dict(skip="weak deep margin", at=sd, c0=round(c0_, 2), step=round(s_, 1)))
+            return []
+    # the lid's shadow, column by column: below the lid's boundary, 0.03-high strips of iris darker than the side
+    # sectors at the same radius (the sectors' own profile, lids and glare left out). A lash line is often thicker
+    # at one corner, so the reach is read in 0.1-wide columns, smoothed, and drawn as a curve
+    lp = lab[..., 0]
+    lc = np.hypot(lab[..., 1], lab[..., 2])
+    capall = np.zeros((n, n), bool)
+    for side, c, _ in accepted:
+        yb = c[0] + c[1] * X + c[2] * X * X
+        capall |= (Y < yb) if side == "top" else (-Y < yb)
+    sides = (np.abs(((ang + 180) % 360) - 180) <= 35) | (np.abs(ang - 180) <= 35)
+    edges = np.arange(0.25, 0.951, 0.05)
+    prof = np.full((len(edges) - 1, 2), np.nan)
+    for i in range(len(edges) - 1):
+        sel = (rho >= edges[i]) & (rho < edges[i + 1]) & sides & ~glare & ~capall & ~pupil
+        if sel.sum() >= 8: prof[i] = np.median(lp[sel]), np.median(lc[sel])
+    okb = np.isfinite(prof[:, 0])
+    ref = None
+    if okb.sum() >= 3:
+        mid = (edges[:-1] + 0.025)[okb]
+        ref = (np.interp(rho, mid, prof[okb, 0]), np.interp(rho, mid, prof[okb, 1]))
+    # the shadow is read down to the pupil itself (the lid_mask disk), not to the padded pupil of the margin search:
+    # a half-closed eye's lash tips hang to the pupil (26)
+    pupil_x = rho < max(0.25, (pr or 0.0) * LID_SHADOW_PUPIL[0] + LID_SHADOW_PUPIL[1])
+    xk = np.linspace(-1.0, 1.0, 81)
+    xbins = np.arange(-0.9, 0.901, 0.1)
+    out = []
+    for side in ("top", "bottom"):
+        caps = [c for s_, c, _ in accepted if s_ == side]
+        if not caps: continue
+        # a thin rim lid grows no shadow band: below a rim-thin margin the dark columns were the owner's crypts
+        # (215106 with its circle 7-8% low), never a lid shadow
+        grow = not all(t_ for s_, _, t_ in accepted if s_ == side)
+        band = LID_SHADOW if grow else LID_SHADOW_THIN
+        Ys = Y if side == "top" else -Y
+        yu = np.max([c[0] + c[1] * X + c[2] * X * X for c in caps], 0) + band   # the lid plus its lash band
+        reach = np.zeros(len(xbins) - 1)
+        if ref is not None and grow:
+            dev, devc = lp - ref[0], lc - ref[1]
+            for j in range(len(xbins) - 1):
+                colm = (X >= xbins[j]) & (X < xbins[j + 1]) & (rho < 0.95) & (rho > 0.3) & ~glare & ~pupil_x
+                t, seen = 0.0, False
+                # the band ends at the last strip darker (LID_SHADOW_DL) or greyer (LID_SHADOW_DC) than the sides, as
+                # long as no strip before it is back within half of both (one wet, bright margin line between the
+                # lashes and the shadow does not stop it)
+                while t < LID_SHADOW_MAX - band - 1e-6:
+                    strip = colm & (Ys >= yu + t) & (Ys < yu + t + 0.03)
+                    if strip.sum() < 3:
+                        if seen: break             # the pupil or a reflection ends the band: never read past it
+                        t += 0.03; continue        # outside the circle at this column: look further in
+                    seen = True
+                    d, dc = float(np.median(dev[strip])), float(np.median(devc[strip]))
+                    if d > -0.5 * LID_SHADOW_DL and dc > -0.5 * LID_SHADOW_DC: break
+                    if d <= -LID_SHADOW_DL or (dc <= -LID_SHADOW_DC and d <= 0): reach[j] = t + 0.03
+                    t += 0.03
+            nb_ = np.maximum(np.concatenate([[0.0], reach[:-1]]), np.concatenate([reach[1:], [0.0]]))
+            reach = np.minimum(reach, nb_ + 0.03)                                     # no lone spikes
+            # a lid shadow runs along the lid: the reach must hold over LID_SHADOW_OPEN neighbouring columns
+            # (a morphological opening). One or two columns reaching deeper follow dark crypts (215106, 15)
+            k_ = LID_SHADOW_OPEN // 2
+            win = lambda a, f: np.array([f(a[j:j + 2 * k_ + 1]) for j in range(len(reach))])
+            reach = win(np.pad(win(np.pad(reach, k_, mode="edge"), np.min), k_, mode="edge"), np.max)
+            reach = np.convolve(np.pad(reach, 2, mode="edge"), np.array([1, 2, 3, 2, 1]) / 9.0, "valid")  # smooth
+        xc = 0.5 * (xbins[:-1] + xbins[1:])
+        base = np.max([c[0] + c[1] * xk + c[2] * xk * xk for c in caps], 0) + band
+        bk = base + np.interp(xk, xc, reach)
+        if debug is not None:
+            debug.append(dict(side=side, reach=[round(float(v), 2) for v in reach]))
+        out.append((side, xk, bk))
+    return out
+
+
+def lid_mask(crop, r_px, glare_hard=None, size=None, debug=None, pupil_rho=None):
+    """Eyelid skin, lash line, lashes and lid shadow inside the iris circle of a square crop, as the glare mask gives
+    it: (hard uint8 0/255, feathered float32 0..1, pct of the iris disk). crop must be the UNMASKED square (see
+    lid_geometry); r_px its iris radius in its own pixels; size the side of the masks returned (default the crop's):
+    the lids are found once on a small copy and drawn at whatever size the caller works at. The mask stops at the
+    circle (1.02 radii) and never enters the inner 0.25, nor the pupil (pupil_rho x 1.04 iris radii, the disk
+    drop_pupil takes out), so pct is final: masked pixels inside the circle over the circle's pixels. No lid: all-zero
+    masks and 0.0. Measured at the live analyze circle (wave-e/eyelid/r4, sweep4.py): found on 7 of the 24 photos
+    with a hand-read lid (01, 05, 06, 08, 09, 19, 26); left alone, as before: thin rim lids (02, 07, 15, 16, 17, 20,
+    25, 30, the owner's 215106 and 215208), lashes over a reflection or without a lid edge (11, 23, 27), a weak margin
+    deep in the iris (LID_DEEP_STEP: 29's hanging lashes, 21's circle past the iris, the blurred 10) and the oversize
+    circle of 22."""
+    S = int(size or crop.size[0])
+    geom = lid_geometry(crop, r_px / float(crop.size[0]), glare_hard, debug, pupil_rho)
+    if not geom:
+        return np.zeros((S, S), np.uint8), np.zeros((S, S), np.float32), 0.0
+    R = r_px / float(crop.size[0]) * S
+    ax = (np.arange(S) - S / 2 + 0.5) / R
+    X, Y = np.meshgrid(ax, ax)
+    rho = np.sqrt(X * X + Y * Y)
+    m = np.zeros((S, S), bool)
+    for side, xk, bk in geom:
+        yb = np.interp(ax, xk, bk)[None, :]              # the lid's lower boundary, per column
+        m |= (Y < yb) if side == "top" else (-Y < yb)
+    keep = rho > max(0.25, (pupil_rho or 0.0) * 1.04)
+    m &= (rho < 1.02) & keep
+    del X, Y
+    disk = rho < 1.0
+    pct = 100.0 * float((m & disk).sum()) / max(1.0, float(disk.sum()))
+    # soft edge outwards only: the whole cap is replaced, and the fill fades into the iris over ~2 LID_FEATHER
+    soft = np.clip(2.0 * _blur_f(m.astype(np.float32), max(1.0, LID_FEATHER * S / 2.0)), 0.0, 1.0)
+    soft = (np.maximum(soft, m.astype(np.float32)) * keep).astype(np.float32)
+    return (m * 255).astype(np.uint8), soft, pct
+
+
+def lid_drift(crop, im, lid_hard, glare_hard, r_px):
+    """How far `im` (the repaired crop) moved the colour of the lid area away from the iris' own colour: per 0.05
+    band of radius, dE76 between im's median Lab inside the lid mask and the crop's median Lab of clean iris (no
+    lid, no glare), or the clean iris within LID_DRIFT_ARC degrees of the lid when that is nearer, averaged over the
+    bands weighted by lid pixels. The fill is borrowed from those same radii, so an honest repair stays near them.
+    Measured (wave-e/eyelid drift.py): the model's lid patches read 5.2-16.7 where they looked right and 22.1 / 26.4
+    where they recoloured the area (09); /api/deglare uses it as a guard on its own fill (r3/prefill3.py and
+    r4/art4.py list the values)."""
+    S0 = crop.size[0]
+    S = min(S0, 512)                     # medians of whole bands: a half-size copy reads the same and costs a quarter
+    k = S / float(S0)
+    ax = (np.arange(S) - S / 2 + 0.5) / max(1.0, r_px * k)
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    blur = ImageFilter.GaussianBlur(3 * k)
+    a = srgb_to_lab(np.asarray(crop.resize((S, S), Image.BOX).filter(blur), dtype=np.float32))
+    b = srgb_to_lab(np.asarray(im.resize((S, S), Image.BOX).filter(blur), dtype=np.float32))
+    lid = np.asarray(Image.fromarray(np.asarray(lid_hard, np.uint8)).resize((S, S), Image.NEAREST)) > 0
+    clean = ~lid
+    if glare_hard is not None:
+        clean &= ~(np.asarray(Image.fromarray(np.asarray(glare_hard, np.uint8)).resize((S, S), Image.NEAREST)) > 0)
+    # 2-degree bins of angle, for the clean iris right next to the lid at the same radius
+    abin = ((np.degrees(np.arctan2(ax[:, None], ax[None, :])) + 360.0) % 360.0 / 2.0).astype(int) % 180
+    near = int(LID_DRIFT_ARC / 2)
+    tot, acc = 0, 0.0
+    for r0 in np.arange(0.30, 0.95, 0.05):
+        band = (rho >= r0) & (rho < r0 + 0.05)
+        pl, cl = band & lid, band & clean
+        if pl.sum() < 50 * k * k or cl.sum() < 50 * k * k: continue
+        fill = np.median(b[pl], 0)
+        de = float(np.sqrt(((fill - np.median(a[cl], 0)) ** 2).sum()))
+        # ...or against the iris beside the lid (within LID_DRIFT_ARC of it): a lid casts its shadow on the iris round
+        # it, and a fill as dark as that shadow is honest (05: 23 against the whole ring, 4-9 L* against 20-23)
+        occ = np.zeros(180, bool); occ[np.unique(abin[pl])] = True
+        grow = np.zeros(180, bool)
+        for s_ in range(-near, near + 1): grow |= np.roll(occ, s_)
+        cn = cl & grow[abin]
+        if cn.sum() >= 50 * k * k:
+            de = min(de, float(np.sqrt(((fill - np.median(a[cn], 0)) ** 2).sum())))
+        acc += de * float(pl.sum()); tot += float(pl.sum())
+    return acc / tot if tot else 0.0
+
+
 # ----------------------------------------------------------------------------- fidelity
 def _box_mean(a, k):
     p = k // 2
@@ -733,6 +1265,187 @@ def ssim_lowfreq(a_im, b_im, r_frac, sigma=2.0, k=7):
     yy, xx = np.mgrid[0:S, 0:S]
     inside = np.sqrt((xx - S / 2) ** 2 + (yy - S / 2) ** 2) < r_frac * S * 0.95
     return float(smap[inside].mean())
+
+# ----------------------------------------------------------------------------- pupil lock
+# The image model draws the pupil at the size it expects, not the size the photo shows. On the 27 wave-c test
+# renders it shrank 4 of the 7 pupils of 0.37 of the iris radius or wider (23: 0.72 -> 0.32, 24: 0.53 -> 0.40,
+# 19: 0.39 -> 0.32, 12: 0.40 -> 0.34), none of the 15 narrower ones by more than 0.03, and filled the gap with iris
+# the photo does not show (grey on 23: chroma_lock gives it the pupil's colourless chroma). Four renders of the
+# owner's 215102 did the same (0.48-0.49 -> 0.30, 0.40, 0.40, 0.43). pupil_lock() puts the photo's pupil back.
+PUPIL_LOCK_SIDE = 256        # both images are measured on a copy this size, so a 4096 master reads like its preview
+PUPIL_LOCK_SECTORS = 24      # 15-degree sectors, each finds its own pupil edge; one circle is fitted through them
+PUPIL_LOCK_EDGE = 0.35       # the edge: where a sector's median climbs this share of the way from the pupil to the iris
+PUPIL_LOCK_EDGE_HI = 0.60    # second try when that fails: a room reflected in the top of a pupil sits over the first
+                             # level (the owner's 215102: pupil 19, reflection 52, iris 107) and moves those edges in
+PUPIL_LOCK_TRUE = 0.50       # the restored disk ends where the photo's edge is half way up: under an even blur the
+                             # true edge (0.011-0.028 outside the PUPIL_LOCK_EDGE circle on 12, 19, 23, 24; capped at 0.03)
+PUPIL_LOCK_FIT = 0.02        # a circle counts only when half of the sector edges lie this close to it (iris radii):
+                             # accepted fits read 0.018 at most, circles pulled by a reflection (215102) or a lid
+                             # shadow (26, 09) 0.030-0.049
+PUPIL_LOCK_CONTRAST = 25.0   # iris minus pupil, grey levels: below this the pupil is not measured (as pupil_radius)
+PUPIL_LOCK_RIM = 0.03        # the render is judged on the photo's pupil this far inside its edge...
+PUPIL_LOCK_SHARE = 0.06      # ...and corrected only when it shows iris over more than this share of it,
+PUPIL_LOCK_BAND = 0.06       # all the way round: in each of the PUPIL_LOCK_SECTORS sectors of the band this deep
+PUPIL_LOCK_EVEN = 0.35       # inside its edge, iris over at least this share. A shrunk pupil leaves iris all round
+                             # (lowest sector 0.43-0.93 on the 11 renders locked); a circle that sits off the pupil
+                             # leaves a crescent: 0.00 on 26, 07, 09 and the owner's 215102 (the builder's circles),
+                             # and at most 0.27 when a correct render's circle is moved 0.03-0.08 and grown to touch it
+PUPIL_LOCK_TOL = 0.04        # its own pupil is at least this much smaller (iris radii)...
+PUPIL_LOCK_INSIDE = 0.02     # ...and lies inside the photo's, to this much. Not the same centre: a model that shrinks
+                             # a pupil also centres it (23 by 0.06), and an off-centre photo pupil must still count.
+PUPIL_LOCK_FEATHER = 0.006   # width of the restored edge (iris radii): 3 px at 1024, 11 px on the 4096 master, as
+                             # crisp as the model's own pupil edge there
+PUPIL_LOCK_RUFF = 0.03       # just outside that edge the render is kept no brighter, against its iris, than the photo
+                             # is there against its own, fading out over this width (iris radii): it darkens the band of
+                             # the model's colourless fibres a blurred photo edge leaves round the disk (12, 19: L* 33 -> 26)
+PUPIL_LOCK_TONE_MAX = 30.0   # the restored pupil is never lighter than this (the ceiling pupil_fill uses)
+
+def _lock_lum(im):
+    im = im if im.mode == "RGB" else im.convert("RGB")
+    return _lum3(np.asarray(im.resize((PUPIL_LOCK_SIDE, PUPIL_LOCK_SIDE), Image.BOX)))[..., 0]
+
+def _pupil_edges(rows, thr):
+    """Each sector's pupil edge (iris radii) at brightness thr, from its radial medians; NaN where none."""
+    e = np.full(len(rows), np.nan)
+    for k, m in enumerate(rows):
+        up = np.nan_to_num(m, nan=-1.0) > thr
+        hit = np.nonzero(up[:-1] & up[1:])[0]
+        if not len(hit):
+            continue
+        i = int(hit[0]); r = (i + 0.5) * 0.02
+        if i > 0 and m[i - 1] == m[i - 1] and m[i] > m[i - 1]:
+            r = (i - 0.5 + (thr - m[i - 1]) / (m[i] - m[i - 1])) * 0.02    # between this bin's centre and the last
+        e[k] = r
+    return e
+
+def _pupil_fit(e):
+    """Circle through the sector edges e, refitted without the sectors a lash, a lid or a glint moved:
+    (cx, cy, rho, sectors kept, median distance of all the edges from it) or None."""
+    ns = len(e); ok = e == e
+    if ok.sum() < ns // 2:
+        return None
+    t = ((np.arange(ns) + 0.5) / ns * 2 * math.pi - math.pi)[ok]
+    p = np.c_[e[ok] * np.cos(t), e[ok] * np.sin(t)]; keep = np.ones(len(p), bool)
+    for _ in range(4):
+        q = p[keep]
+        sol = np.linalg.lstsq(np.c_[2 * q, np.ones(len(q))], (q ** 2).sum(1), rcond=None)[0]
+        cx, cy = float(sol[0]), float(sol[1]); rho = math.sqrt(max(float(sol[2]) + cx * cx + cy * cy, 1e-9))
+        res = np.abs(np.hypot(p[:, 0] - cx, p[:, 1] - cy) - rho)
+        keep = res <= max(0.03, 2.5 * float(np.median(res[keep])))
+        if keep.sum() < ns // 2:
+            return None
+    return cx, cy, rho, int(keep.sum()), float(np.median(res))
+
+def pupil_circle(lum, r_frac=None):
+    """(cx, cy, rho, edge) of the dark pupil of a square iris image (or its _lock_lum luminance), in iris radii from
+    the frame centre, or None when there is no dark centre with a clear, round edge. Unlike pupil_radius() it reads
+    out to 0.94 of the iris, so a wide pupil with a thin ring is measured too, and it finds an off-centre pupil (30:
+    0.12 right, 0.10 up). rho: where each sector's median brightness climbs PUPIL_LOCK_EDGE of the way from the
+    pupil core to the iris; edge: the same circle at PUPIL_LOCK_TRUE. When the rho edges do not make one circle
+    (PUPIL_LOCK_FIT), the edges at PUPIL_LOCK_EDGE_HI are tried, which a reflection inside the pupil does not
+    reach, and that circle steps back in by the usual distance between the levels; if they do not make one circle
+    either, None: a lid shadow is not a pupil."""
+    if isinstance(lum, Image.Image):
+        lum = _lock_lum(lum)
+    r_frac = r_frac or iris_radius_frac()
+    n = lum.shape[0]
+    ax = (np.arange(n) - n / 2 + 0.5) / (r_frac * n)
+    rr = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    ins = rr < 0.94
+    v, b = lum[ins], (rr[ins] / 0.02).astype(np.int32)
+    s = ((np.arctan2(ax[:, None], ax[None, :])[ins] + math.pi) / (2 * math.pi) * PUPIL_LOCK_SECTORS).astype(np.int32)
+    s %= PUPIL_LOCK_SECTORS
+    nb, ns = 47, PUPIL_LOCK_SECTORS
+    o = np.argsort(b, kind="stable"); bs, vs = b[o], v[o]
+    cut = np.searchsorted(bs, np.arange(nb + 1))
+    med = np.array([np.median(vs[cut[i]:cut[i + 1]]) if cut[i + 1] - cut[i] > 12 else np.nan for i in range(nb)])
+    near = rr[ins] < 0.25
+    if not near.any() or np.isnan(med[10:]).all():
+        return None
+    core, iris = float(np.percentile(v[near], 10)), float(np.nanpercentile(med[10:], 90))
+    if core > 45.0 or iris - core < PUPIL_LOCK_CONTRAST:
+        return None
+    o = np.argsort(s * nb + b, kind="stable"); ks, vs = (s * nb + b)[o], v[o]
+    cut = np.searchsorted(ks, np.arange(ns * nb + 1))
+    rows = [np.array([np.median(vs[cut[k * nb + i]:cut[k * nb + i + 1]]) if cut[k * nb + i + 1] - cut[k * nb + i] >= 3
+                      else np.nan for i in range(nb)]) for k in range(ns)]
+    e = _pupil_edges(rows, core + PUPIL_LOCK_EDGE * (iris - core))
+    et = _pupil_edges(rows, core + PUPIL_LOCK_TRUE * (iris - core))
+    fit = _pupil_fit(e)
+    if fit is None or fit[4] > PUPIL_LOCK_FIT:
+        e2 = _pupil_edges(rows, core + PUPIL_LOCK_EDGE_HI * (iris - core))
+        f2, gap = _pupil_fit(e2), e2 - e
+        if f2 is None or f2[4] > PUPIL_LOCK_FIT or f2[3] < 3 * ns // 4 or (gap == gap).sum() < ns // 2:
+            return None
+        fit = (f2[0], f2[1], f2[2] - float(np.nanpercentile(gap, 25)))   # a reflection sector only widens the gap
+        edge = f2[2] - float(np.nanpercentile(e2 - et, 25)) if ((e2 - et) == (e2 - et)).sum() >= ns // 2 else fit[2]
+    else:
+        edge = fit[2] + float(np.nanmedian(et - e)) if ((et - e) == (et - e)).sum() >= ns // 2 else fit[2]
+    cx, cy, rho = fit[:3]
+    if not 0.08 <= rho <= 0.95 or math.hypot(cx, cy) > 0.25:
+        return None
+    return cx, cy, rho, max(rho, min(edge, rho + 0.03))     # a slow climb is a dark inner iris, not the pupil
+
+def pupil_lock(out, src, r_frac=None):
+    """Keep the photo's pupil in the model's render: the model may sculpt the iris, it may not paint iris where the
+    photo shows the pupil. src is the image the model was given. Only when the render shows iris over more than
+    PUPIL_LOCK_SHARE of the photo's pupil, all the way round it (PUPIL_LOCK_EVEN), and its own pupil is
+    PUPIL_LOCK_TOL smaller and inside the photo's (PUPIL_LOCK_INSIDE), is that disk, out to the photo's true edge,
+    taken back to the render's own pupil black (never lighter than PUPIL_LOCK_TONE_MAX) over a PUPIL_LOCK_FEATHER
+    edge, with the PUPIL_LOCK_RUFF band outside it; pixels already darker keep their value. Any other render is
+    returned as it came, the same object."""
+    r_frac = r_frac or iris_radius_frac()
+    ys = _lock_lum(src)
+    photo = pupil_circle(ys, r_frac)
+    if photo is None:
+        return out
+    cx, cy, rho, edge = photo
+    y = _lock_lum(out)
+    ax = (np.arange(PUPIL_LOCK_SIDE) - PUPIL_LOCK_SIDE / 2 + 0.5) / (r_frac * PUPIL_LOCK_SIDE)
+    d = np.sqrt((ax[None, :] - cx) ** 2 + (ax[:, None] - cy) ** 2)
+    disk = d < rho - PUPIL_LOCK_RIM
+    ring = (d > rho + 0.05) & (np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2) < 0.90)
+    if disk.sum() < 20 or ring.sum() < 50:
+        return out
+    lo = float(np.percentile(y[disk], 5))
+    lit = y > lo + 0.5 * max(float(np.median(y[ring])) - lo, 20.0)
+    painted = lit[disk]
+    share = float(painted.mean())
+    if share <= PUPIL_LOCK_SHARE:
+        return out
+    band, ns = (d > rho - PUPIL_LOCK_BAND) & (d < rho), PUPIL_LOCK_SECTORS
+    sec = ((np.arctan2(ax[:, None] - cy, ax[None, :] - cx) + math.pi) / (2 * math.pi) * ns).astype(np.int32)[band] % ns
+    even = float(np.min(np.bincount(sec, weights=lit[band].astype(np.float64), minlength=ns) / np.maximum(np.bincount(sec, minlength=ns), 1)))
+    if even < PUPIL_LOCK_EVEN:
+        return out
+    own = pupil_circle(y, r_frac)
+    if own is not None and (own[2] > rho - PUPIL_LOCK_TOL
+                            or math.hypot(own[0] - cx, own[1] - cy) + own[2] > rho + PUPIL_LOCK_INSIDE):
+        return out
+    dark = y[disk][~painted]
+    tone = min(float(np.median(dark)) if dark.size > 20 else lo, PUPIL_LOCK_TONE_MAX)
+    pcore, pring = float(np.percentile(ys[disk], 10)), float(np.median(ys[ring]))
+    S = out.size[0]; R = r_frac * S; w, wr = max(PUPIL_LOCK_FEATHER * R, 1.5), PUPIL_LOCK_RUFF * R
+    x0, y0, ep = S / 2 + cx * R, S / 2 + cy * R, edge * R
+    c0, r0 = max(0, int(x0 - ep - wr) - 1), max(0, int(y0 - ep - wr) - 1)
+    c1, r1 = min(S, int(math.ceil(x0 + ep + wr)) + 2), min(S, int(math.ceil(y0 + ep + wr)) + 2)
+    blk = np.array(out.convert("RGB").crop((c0, r0, c1, r1)))
+    k = src.size[0] / S                    # the photo, sampled on the render's pixels (the 4096 master's is 1024)
+    sp = np.asarray(src.convert("RGB").resize((c1 - c0, r1 - r0), Image.BILINEAR, box=(c0 * k, r0 * k, c1 * k, r1 * k)))
+    dx2 = (np.arange(c0, c1) + 0.5 - x0) ** 2
+    for a0, a1 in _row_chunks(r1 - r0, c1 - c0):
+        dd = np.sqrt(dx2[None, :] + ((np.arange(r0 + a0, r0 + a1) + 0.5 - y0) ** 2)[:, None])
+        a = 0.5 - 0.5 * np.cos(np.clip((ep + w / 2 - dd) / w, 0.0, 1.0) * math.pi)
+        q = np.clip((_lum3(sp[a0:a1])[..., 0] - pcore) / max(pring - pcore, 1.0), 0.0, 1.0)   # the photo: 0 pupil, 1 iris
+        a = np.maximum(a, (0.5 + 0.5 * np.cos(np.clip((dd - ep) / wr, 0.0, 1.0) * math.pi)) * (1.0 - q))
+        f = blk[a0:a1].astype(np.float32)
+        blk[a0:a1] = np.clip(f - a[..., None] * np.maximum(f - tone, 0.0) + 0.5, 0, 255).astype(np.uint8)
+    res = out.convert("RGB")               # a copy: the render passed in is not changed
+    res.paste(Image.fromarray(blk), (c0, r0))
+    print("snapeyes pupil lock " + json.dumps({"photo": [round(cx, 3), round(cy, 3), round(rho, 3)], "edge": round(edge, 3),
+                                               "painted_share": round(share, 3), "lowest_sector": round(even, 2), "tone": round(tone, 1),
+                                               "render_rho": None if own is None else round(own[2], 3)}), flush=True)
+    return res
 
 # ----------------------------------------------------------------------------- super-resolution (Real-ESRGAN general x4v3, ONNX, CPU)
 _SR = None
@@ -806,6 +1519,15 @@ CHROMA_DARK = (50.0, 90.0)    # photo luma (low-passed) where the scaling applie
 REFL_BLUE = (4.0, 10.0)       # Cb/Cr units towards blue-cyan beyond the radial median: none below, full above
 REFL_LIFT = (6.0, 20.0)       # luma above the radial median: a reflection always adds light
 REFL_IRIS_BLUE = (-2.0, 4.0)  # the iris's own blue-cyan lean: full correction at or below the first, none above the second
+# The rest of a reflection on the lid-shaded top (_shaded_reflection). Each pair: none at or below, full at or above.
+REFL_SHADE = (0.0, 6.0)          # the pixel's own blue-cyan lean, (Cb - Cr) / sqrt 2
+REFL_SHADE_LIGHT = (-2.0, 0.0)   # the lit core's lean minus the pixel's: a veil is never bluer than the light it comes from
+REFL_SHADE_TOP = (0.0, 0.5)      # cosine of the pixel's angle from 12 o'clock: none at 3 and 9 o'clock, full from 10 to 2
+REFL_SHADE_RR = (0.40, 0.48)     # its radius: a rendered pupil larger than the photo's stays out (test photo 13)
+REFL_SHADE_DARK = (-10.0, -4.0)  # its luma against the median of its radius
+REFL_SHADE_CORE = (0.65, 0.85)   # its luma as a share of the iris's median: the photo's pupil edge stays out
+REFL_SHADE_IRIS = (-14.0, -8.0)  # the lean of the iris's warmer half: full at or below the first, none above the second
+REFL_SHADE_SEED = 24.0           # the lit core: a patch (2% of the side) this much brighter than its radius, and bluer
 
 
 def _radial_median(plane, rr, mask, edges):
@@ -841,7 +1563,9 @@ def reflection_chroma(y, cb, cr, r_frac=None):
     blue = (dcb - dcr) / np.sqrt(2.0)                 # projection on the blue-cyan direction (Cb up, Cr down)
     b0, b1 = REFL_BLUE; l0, l1 = REFL_LIFT
     # judged only inside 0.90 of the radius: beyond it lie the pale limbus and sclera, which the artwork trims
-    w = np.clip((blue - b0) / (b1 - b0), 0, 1) * np.clip((lift - l0) / (l1 - l0), 0, 1) * ((rr > 0.30) & (rr < 0.90))
+    tb = np.clip((blue - b0) / (b1 - b0), 0, 1) * ((rr > 0.30) & (rr < 0.90))
+    lit = np.clip((lift - l0) / (l1 - l0), 0, 1)
+    w = tb * np.maximum(lit, _shaded_reflection(y, cb, cr, rr, lift, tb))
     # On a blue or grey-blue iris a bluer, brighter patch is as likely its own light fibres as a reflection, and a
     # blue reflection does no harm there anyway. Measured along the same blue-cyan axis: 27 brown test eyes read
     # -47 to -2, the owner's blue-green eye in daylight +18, the site's sample eye +11. Full correction at -2 and
@@ -852,6 +1576,49 @@ def reflection_chroma(y, cb, cr, r_frac=None):
         w = w * float(np.clip((REFL_IRIS_BLUE[1] - iris_blue) / (REFL_IRIS_BLUE[1] - REFL_IRIS_BLUE[0]), 0.0, 1.0))
     # a reflection is a soft patch, not a pixel: smooth the weight so fibres inside it are treated alike
     return np.clip(_blur_f(w.astype(np.float32), max(1.0, S * 0.006)) * 1.3, 0, 1), rr, iris, edges
+
+
+def _shaded_reflection(y, cb, cr, rr, lift, tb, n=128):
+    """The rest of a reflection that lies on the lid-shaded top of the iris, 0..1. Test photo 14: a lamp over the upper
+    half kept 40% of it blue, because only its lit core is brighter than the median of its radius. The rest counts
+    as the same reflection when it leans blue-cyan in absolute terms (on an iris that is warm on its warmer half), is
+    no bluer than that lit core, and is connected to it through pixels that are the same. A blue sector of the iris
+    itself (sectoral heterochromia) is left as before unless it touches a lit core at least as blue as it is. The
+    patch-scale tests run on an n x n grid (a reflection is a patch, and it keeps the cost to a few hundredths of a s)."""
+    S = y.shape[0]
+    ramp = lambda v, a: np.clip((v - a[0]) / (a[1] - a[0]), 0, 1)
+    lo = lambda a: _resize_plane(a, n, Image.BOX)
+    def grid(m):                      # centred coordinates on an m x m grid: x to the right, y up
+        yy, xx = np.ogrid[0:m, 0:m]
+        return xx - m / 2 + 0.5, m / 2 - 0.5 - yy
+    xl, yl = grid(n)
+    top_lo = ramp(yl / np.maximum(np.hypot(xl, yl), 1e-6), REFL_SHADE_TOP)
+    seed = (_blur_f(lo(lift), n * 0.02) > REFL_SHADE_SEED) & (_blur_f(lo(tb), n * 0.02) > 0.5) & (top_lo > 0)
+    core = lo(((rr > 0.35) & (rr < 0.88)).astype(np.float32)) > 0.5
+    if not (core.any() and seed.any()):
+        return np.zeros_like(y)
+    lean = (cb - cr) / np.sqrt(2.0)
+    lean_lo = lo(lean)
+    sec = (np.floor(np.arctan2(xl, yl) / (np.pi / 6)) % 12).astype(np.int8)
+    med = sorted(float(np.median(lean_lo[core & (sec == k)])) for k in range(12) if (core & (sec == k)).any())
+    warm = float(np.median(med[:max(1, len(med) // 2)]))   # the warmer half of 12 sectors: a reflection may cover the rest
+    gate = float(np.clip((REFL_SHADE_IRIS[1] - warm) / (REFL_SHADE_IRIS[1] - REFL_SHADE_IRIS[0]), 0.0, 1.0))
+    if gate <= 0.0:
+        return np.zeros_like(y)
+    light = float(np.median(lean_lo[seed]))                # the lit core shows the light's own colour best
+    x, yup = grid(S)
+    top = ramp(yup / np.maximum(np.hypot(x, yup), 1e-6), REFL_SHADE_TOP)
+    own = ramp(lean, REFL_SHADE) * ramp(light - lean, REFL_SHADE_LIGHT) * ramp(rr, REFL_SHADE_RR) * top
+    ok = lo(tb * own) > 0.5
+    g = seed & ok
+    for _ in range(4 * n):            # grow the lit cores through the connected pixels that may be their veil
+        h = _grow_mask(g, 3) & ok
+        if (h == g).all():
+            break
+        g = h
+    joined = np.clip(_resize_plane(g.astype(np.float32), S, Image.BILINEAR), 0, 1)
+    core_y = max(1.0, float(np.median(lo(y)[core])))
+    return own * joined * gate * ramp(lift, REFL_SHADE_DARK) * ramp(y / core_y, REFL_SHADE_CORE)
 
 
 CHROMA_STATS_SIDE = 1024     # the colour correction maps are computed at most at this size, then stretched

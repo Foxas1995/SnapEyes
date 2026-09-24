@@ -33,10 +33,12 @@ def enhance(body):
         # this is the product now, so the colour is locked all the way to the client's own photo:
         # the model may sculpt structure and light, it may not decide what colour their eye is
         out = L.chroma_lock(out, base)
+        out = L.pupil_lock(out, base, r_frac)   # nor how wide their pupil is: no iris where the photo shows none
         fid = L.ssim_lowfreq(base, out, r_frac)
     else:
         out = L.gemini_image(L.PROMPT_ENHANCE, base, thinking="high")
         out = L.chroma_lock(out, base)   # the model restores structure; the colour stays the client's own
+        out = L.pupil_lock(out, base, r_frac)
         fid = L.ssim_lowfreq(base, out, r_frac)
         if fid < L.FIDELITY_FLOOR:
             out, fallback = base, True

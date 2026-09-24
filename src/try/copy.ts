@@ -4,6 +4,30 @@ import type { Layout, LightAnswer } from './multi';
 
 const eyes = (n: number) => `${n} ${n === 1 ? 'eye' : 'eyes'}`;
 
+// The capture guide's steps, word for word the same on the capture screen and in the retake guide of a shot the
+// engine blocked, so "Retake" never leads to advice that contradicts the screen it came from. Daylight from the
+// side: straight-on light washes over the iris (04 in the test set), and a lamp tints it (api/analyze.py
+// LAMP_MESSAGE).
+const LIGHT = 'Daylight from a window, off to one side (not straight in front). Not a lamp or the flash.';
+const CAMERA = 'Back camera at 2x zoom, about 10 cm from the eye.';
+const FOCUS = 'Tap the iris on the screen so the camera focuses on it.';
+const STEADY = 'Hold the phone steady (rest your elbows on something) and take 3-5 shots.';
+// the first retake step for a dark iris: the same light as LIGHT, only closer to the window, since more light is
+// what brings a dark iris's pattern out (api/analyze.py DARK_IRIS_TIP)
+const DARK_LIGHT = 'More light brings out a dark iris: stand close to a bright window in daylight, with the window off to one side (not direct sun). Not a lamp or the flash.';
+
+/** The reasons api/analyze.py gives for blocking a shot (quality.block_reason). A blocked shot gets no work
+ *  ticket, so the page offers only a retake. */
+export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large';
+
+/** What the page says about a blocked shot. badge: the verdict pill; title: the retake card's heading; reason:
+ *  why, in one line, on the single-photo card (the steps follow in the retake card, so the server's own message,
+ *  which lists them too, is not shown next to them); error: when the studio is asked for it anyway; retakeLine:
+ *  one self-contained line for a shot collector whose best shot is still usable (no retake card there), used
+ *  only when the server sends no message; thumb: under its thumbnail instead of a Detail number; steps: the
+ *  retake card's list. */
+export interface BlockCopy { badge: string; title: string; reason: string; error: string; retakeLine: string; thumb: string; steps: string[] }
+
 export const T = {
   header: {
     tag: 'Private Atelier · preview',
@@ -25,6 +49,15 @@ export const T = {
     sampleLoadFailed: 'The sample eye could not be loaded.',
     thumbLabel: (i: number) => `Eye ${i}`,
     sampleThumb: 'AI-generated sample',
+    // the capture guide on the first screen. Step 3 is the retake guide's first step, word for word (LIGHT).
+    steps: [
+      { title: '1. Back camera', text: '2x or 3x zoom, not the selfie camera.' },
+      { title: '2. 10 cm away', text: 'The iris should fill a third of the frame.' },
+      { title: '3. Window light', text: LIGHT },
+      { title: '4. Tap to focus', text: 'Tap the iris on screen, hold still, shoot.' },
+    ],
+    stepsShots: 'Take 3-5 shots and send them all.',
+    stepsShotsMore: ' Turn a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.',
   },
 
   working: {
@@ -41,6 +74,64 @@ export const T = {
     retake: 'Retake',
     continueAnyway: 'Continue anyway',
     notCentred: 'This photo is not centred on an iris, so it cannot be restored. Please retake it with one eye filling the frame.',
+    // shots the engine blocked (api/analyze.py quality.blocked + block_reason): no work ticket, so never a way
+    // forward from them. One entry per reason the server gives; blockOf() in shots.ts picks it.
+    blocks: {
+      // blur_blocked: too little of the customer's own iris pattern to restore it, the studio would invent one
+      too_blurry: {
+        badge: 'Too blurry',
+        title: 'Too blurry to restore your own iris',
+        reason: 'We could not see enough of your own iris pattern in this photo to restore it, so it is not used.',
+        error: 'This photo is too blurry to restore your own iris. Please retake it following the steps below.',
+        retakeLine: 'This shot is too blurry to restore your own iris. Retake it in daylight from a window off to one side, with the back camera at 2x: tap the iris to focus and hold the phone steady.',
+        thumb: 'blurry',
+        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+      },
+      // blocked for the same reason, but the photo is sharp and the iris dark: light is the fix, not focus
+      too_dark: {
+        badge: 'Too dark',
+        title: 'Too dark to see your own iris pattern',
+        reason: 'Your iris is dark and there was too little light to see its own pattern, so this photo is not used.',
+        error: 'This photo is too dark to see your own iris pattern. Please retake it following the steps below.',
+        retakeLine: 'This shot is too dark to see your own iris pattern. Retake it close to a bright window in daylight, with the window off to one side. Not a lamp or the flash.',
+        thumb: 'dark',
+        steps: [DARK_LIGHT, CAMERA, FOCUS, STEADY],
+      },
+      // a pupil so wide that too little iris shows around it. Light is the fix: the pupil narrows in bright
+      // light, while the flash comes too late to narrow it and puts a reflection on the iris
+      pupil_too_large: {
+        badge: 'Pupil too wide',
+        title: 'Your pupil is too wide to restore your iris',
+        reason: 'Your pupil is open so wide in this photo that too little of your iris shows around it, so it is not used.',
+        error: 'Your pupil is too wide in this photo to restore your own iris. Please retake it following the steps below.',
+        retakeLine: 'Your pupil is too wide in this shot. More light makes it smaller: retake it close to a bright window in daylight, not with the flash.',
+        thumb: 'pupil',
+        steps: [
+          'More light makes your pupil smaller: stand close to a bright window in daylight, with the window off to one side (not direct sun). Not the flash.',
+          'Give your eye a minute in that light before you shoot, so the pupil has time to narrow. After dark, switch on all the ceiling lights.',
+          CAMERA,
+          'Tap the iris on the screen to focus, hold the phone steady and take 3-5 shots.',
+        ],
+      },
+    } satisfies Record<BlockReason, BlockCopy>,
+    // a reason this page does not know yet (a newer server, or none sent): still never a way forward, and still
+    // the guide. Neutral on purpose: it must not claim a cause (blur, darkness) the server did not name
+    blockedOther: {
+      badge: 'Not enough detail',
+      title: 'Not enough detail to restore your own iris',
+      reason: 'We could not see enough of your own iris pattern in this photo to restore it, so it is not used.',
+      error: 'This photo does not show enough of your own iris to restore it. Please retake it following the steps below.',
+      retakeLine: 'This shot does not show enough of your own iris to restore it. Take another following the capture guide.',
+      thumb: 'retake',
+      steps: [LIGHT, CAMERA, FOCUS, STEADY],
+    } satisfies BlockCopy,
+    guideTitle: 'For the retake',
+    // a gallery pick where the best photo is still one we cannot use
+    noneUsable: (n: number) => (n === 2 ? 'We checked both photos and neither can be used.' : `We checked all ${n} photos and none of them can be used.`),
+    // the camera shot collector when its best shot cannot be used
+    shotUnusable: 'This shot cannot be used. Take another with the advice above.',
+    shotsUnusable: 'None of these shots can be used yet. Take another with the advice above.',
+    fullUnusable: (max: number) => `None of these ${max} shots can be used. Take another to start a fresh set.`,
   },
 
   result: {
