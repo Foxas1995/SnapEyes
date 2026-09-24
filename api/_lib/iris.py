@@ -104,6 +104,9 @@ class ClientError(ValueError):
     """Bad input the caller can fix. Its message is written for the customer and is returned as is, so it
     must never carry internals or echo what the caller sent."""
 
+class ModelBusy(RuntimeError):
+    """The Gemini model answered 429/503 (overloaded) on every attempt. run() answers 503 with a try-again line."""
+
 BUDGET = 52.0    # seconds of work we allow inside the 60 s Vercel function (leaves room to encode the reply)
 _LOCAL = threading.local()   # per-invocation deadline: one warm container can serve several requests at once
 
@@ -200,6 +203,10 @@ def run(req, fn, gate=True):
     except ValueError as e:
         print("snapeyes bad input:", _scrub(repr(e))[:200], flush=True)
         send_json(req, 400, {"ok": False, "error": "We could not read that image. Try another photo.",
+                             "ms": int((time.time() - t0) * 1000)})
+    except ModelBusy as e:
+        print("snapeyes model busy:", _scrub(repr(e))[:300], flush=True)
+        send_json(req, 503, {"ok": False, "error": "Our studio is very busy right now. Please try again in a minute.",
                              "ms": int((time.time() - t0) * 1000)})
     except Exception as e:  # noqa
         # detail goes to the Vercel log only; the caller gets a sentence, never internals
@@ -382,15 +389,20 @@ def gemini(model, parts, gen_cfg, timeout=55, retries=1):
             gen_cfg = {k: v for k, v in gen_cfg.items() if k != "imageConfig"}; body["generationConfig"] = gen_cfg; continue
         if r.status_code == 400 and "thinkingConfig" in gen_cfg:
             gen_cfg = {k: v for k, v in gen_cfg.items() if k != "thinkingConfig"}; body["generationConfig"] = gen_cfg; continue
-        # only retry when the sleep plus a real second attempt still fit in the budget
+        # only retry when the sleep plus a real second attempt still fit in the budget; each retry waits longer,
+        # because a model under load answers 503 for a few seconds at a time
         if r.status_code in (429, 500, 503) and left > 0 and time_left(99) > 12:
-            left -= 1; time.sleep(4); continue
+            time.sleep(4 * (retries - left + 1)); left -= 1; continue
         break
+    # the model itself was overloaded: the customer is told to try again in a minute, not that we broke
+    if r.status_code in (429, 503): raise ModelBusy(last)
     raise RuntimeError(last)
 
 def gemini_json(model, prompt, im):
+    # the vision call is small and fast, so it can afford a second retry (4 s, then 8 s): on 2026-09-24 one
+    # analyze answered 500 after a single retry because gemini-3.8-flash said "high demand" twice in a row
     j = gemini(model, [{"text": prompt}, {"inlineData": {"mimeType": "image/jpeg", "data": pil_to_b64(im, "JPEG", 90)}}],
-               {"responseMimeType": "application/json", "temperature": 0})
+               {"responseMimeType": "application/json", "temperature": 0}, retries=2)
     txt = "".join(p.get("text", "") for p in j["candidates"][0]["content"]["parts"])
     try: return json.loads(txt)
     except Exception:
