@@ -739,9 +739,32 @@ def mirror_prefill(crop, feather, extra=()):
     src = src + (base_lo - src_lo)
     return Image.fromarray(np.clip(arr * (1 - a) + src * a, 0, 255).astype(np.uint8))
 
-def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22):
+PUPIL_HAZE_SIZE = (0.80, 1.10)  # the pupil read from colour counts only when its edge is this share of the vision
+                                # pupil's radius: 0.84-1.06 on 6 of the 7 test photos where pupil_fill reads one (live
+                                # 19: 0.94), 1.11 on 01 (a photo the quality gate stops as too dark)...
+PUPIL_HAZE_SHIFT = 0.10         # ...and its centre this close to the vision pupil's (the frame centre), iris radii:
+                                # 0.05-0.07 on live 19, 07, 08, 12. Further off, the vision box missed the pupil (18:
+                                # 0.13) and the two fills join into one wide blob; the model redrew it centred and
+                                # painted the uncovered side as a grey crescent that pupil_lock rightly leaves alone
+PUPIL_HAZE_LIFT = 0.20          # ...and only when the photo, where that pupil lies past the vision fill (fill < 0.5,
+                                # outside the glare mask), is lifted this share of the way from the fill tone to the
+                                # iris just outside: a haze or a reflection left there. 0.33-0.54 on live 19, 07, 08,
+                                # 12, 18 (teal or blue haze, a window); 0.07 on the dark rim of 19 at the e2e circle,
+                                # which keeps HEAD's fill byte for byte
+PUPIL_HAZE_FEATHER = 0.03       # that pupil's edge width (iris radii), centred on it: the photo's own blurred edge
+
+def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     """Rebuild the pupil as smooth darkness. A pupil reflects the room, so whatever a reflection covers there is
     not iris detail waiting to be restored - it is a hole, and the honest reconstruction is the dark it hid.
+    The fill covers the vision pupil (pr_px, centred on the frame) and, when the brightness finds no pupil edge
+    (pupil_circle None) but colour does (pupil_circle_chroma), that pupil too, out to its own edge, if it agrees with
+    the vision pupil in size and place (PUPIL_HAZE_SIZE, PUPIL_HAZE_SHIFT) and still shows a haze or a reflection
+    past the vision fill (PUPIL_HAZE_LIFT). A haze over the pupil (the sky or the room mirrored on the cornea, blue
+    on live 19) is as bright as the iris' shadowed side and reaches past the feather, most where the vision circle
+    sits off the pupil (live 19: the pupil 0.05 below it); the model painted that band as a ring of blue-grey iris,
+    and pupil_lock could not take it back (no brightness circle on that input either). Where brightness reads the
+    pupil, colour is not asked: a colourless reflection over the iris next to it pulls the colour circle out (13:
+    0.37 against 0.31, 0.07 up). r_frac: the iris radius as a share of the crop side.
     Returns (image, how much of the pupil the reflection covered)."""
     S = crop.size[0]
     yy, xx = np.mgrid[0:S, 0:S]
@@ -765,7 +788,20 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22):
     base = np.minimum(base, 30.0)                       # and never bright
     t = np.clip(d / max(pr_px, 1.0), 0, 1)
     fill = base[None, None, :] * (0.40 + 0.60 * t[..., None] ** 2)   # deepest in the centre, lifting towards the rim
-    a = np.clip((pr_px - d) / max(pr_px * feather, 1.0), 0, 1)[..., None]
+    a = np.clip((pr_px - d) / max(pr_px * feather, 1.0), 0, 1)
+    R = (r_frac or iris_radius_frac()) * S
+    pc = pupil_circle_chroma(crop, R / S) if pupil_circle(crop, R / S) is None else None
+    if (pc is not None and PUPIL_HAZE_SIZE[0] <= pc[3] * R / pr_px <= PUPIL_HAZE_SIZE[1]
+            and math.hypot(pc[0], pc[1]) <= PUPIL_HAZE_SHIFT):
+        d2 = np.sqrt((xx - S / 2 + 0.5 - pc[0] * R) ** 2 + (yy - S / 2 + 0.5 - pc[1] * R) ** 2)
+        a2 = np.clip((pc[3] * R - d2) / max(PUPIL_HAZE_FEATHER * R, 1.0) + 0.5, 0, 1)
+        left = (a2 >= 1) & (a < 0.5) & ~g
+        ring = (d2 > (pc[3] + 0.05) * R) & (d2 < (pc[3] + 0.20) * R) & (d < 0.9 * R) & ~g
+        if int(left.sum()) > 60 and int(ring.sum()) > 60:
+            y, tone = _lum3(arr)[..., 0], float(_lum3(base[None, :])[0, 0])
+            if float(np.median(y[left])) - tone >= PUPIL_HAZE_LIFT * max(float(np.median(y[ring])) - tone, 1.0):
+                a = np.maximum(a, a2)
+    a = a[..., None]
     return Image.fromarray(np.clip(arr * (1 - a) + fill * a, 0, 255).astype(np.uint8)), overlap
 
 def drop_pupil(mask_hard, mask_soft, pr_px):
@@ -1397,6 +1433,24 @@ def pupil_circle(lum, r_frac=None):
     if not 0.08 <= rho <= 0.95 or math.hypot(cx, cy) > 0.25:
         return None
     return cx, cy, rho, max(rho, min(edge, rho + 0.03))     # a slow climb is a dark inner iris, not the pupil
+
+PUPIL_HAZE_GAIN = 3.0        # colour pupil map: a*b* distance from the pupil's colour, x this, as grey levels, so the
+                             # contrast floor (PUPIL_LOCK_CONTRAST 25) asks for an iris 8.3 chroma units off the pupil
+
+def pupil_circle_chroma(im, r_frac=None):
+    """pupil_circle() read from colour instead of brightness, on a square iris image. A haze over the pupil (the sky or
+    the room mirrored on the cornea: live 19 and wave-c 07, 08, 12, blue or teal) is as bright as the iris in a lid's
+    shadow, so the brightness edges scatter and pupil_circle() finds none, but it is colourless or cool while the iris
+    keeps its pigment's hue even in shadow (19: a* 0 and b* -5 in the haze, a* +13 in the shadowed iris above it,
+    +27 below). The map is every pixel's (a*, b*) distance from the median colour of the frame centre (inside 0.25
+    iris radii), x PUPIL_HAZE_GAIN. Small pupils, whose colour does not hold that centre, read None (06, 21, 29)."""
+    r_frac = r_frac or iris_radius_frac()
+    n = PUPIL_LOCK_SIDE
+    lab = srgb_to_lab(np.asarray(im.convert("RGB").resize((n, n), Image.BOX)))
+    ax = (np.arange(n) - n / 2 + 0.5) / (r_frac * n)
+    c = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2) < 0.25
+    a0, b0 = float(np.median(lab[..., 1][c])), float(np.median(lab[..., 2][c]))
+    return pupil_circle(np.clip(np.hypot(lab[..., 1] - a0, lab[..., 2] - b0) * PUPIL_HAZE_GAIN, 0, 255), r_frac)
 
 def pupil_lock(out, src, r_frac=None):
     """Keep the photo's pupil in the model's render: the model may sculpt the iris, it may not paint iris where the

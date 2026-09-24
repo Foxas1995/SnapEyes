@@ -50,7 +50,7 @@ def deglare(body):
     pupil_overlap = 0.0
     if pupil_ok:
         pr_px = pr * S
-        crop, pupil_overlap = L.pupil_fill(crop, pr_px, hard)
+        crop, pupil_overlap = L.pupil_fill(crop, pr_px, hard, r_frac=L.iris_radius_frac(pad))
         hard, feather = L.drop_pupil(hard, feather, pr_px)
         pct = 100.0 * float((hard > 0).sum()) / max(1.0, float((hard.size)))
         pct = round(pct * (S * S) / max(1.0, 3.1416 * r_px * r_px), 2)
