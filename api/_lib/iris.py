@@ -2246,6 +2246,57 @@ def _shaded_reflection(y, cb, cr, rr, lift, tb, n=128):
 
 
 CHROMA_STATS_SIDE = 1024     # the colour correction maps are computed at most at this size, then stretched
+# The pupil rim (_pupil_rim): where the model painted iris over the photo's pupil or its blurred edge, the photo's
+# colour there is the pupil's (a grey or blue-cyan haze), and the lock put it on the model's bright fibres: a grey or
+# blue ring round the pupil of warm eyes (19, 09, 25; the owner's screenshots 2026-09-25). There the colour of the iris
+# next to the pupil is used instead. Each pair: none at or below the first, full at or above the second, unless noted.
+PUPIL_RIM_REACH = (0.05, 0.09)   # iris radii past the photo pupil's edge: full up to the first, none from the second
+PUPIL_RIM_RING = (0.06, 0.16)    # the colour given back: the locked chroma over this ring past that edge, its median
+PUPIL_RIM_SECTORS = 24           # in each of these sectors round the photo pupil (one median for the whole ring left
+                                 # a paler arc where the iris is yellower than the ring's median, fresh 09), blended
+PUPIL_RIM_LOCAL_SHARE = (0.65, 0.95)  # into the whole ring's median when the sector's colour lies at most the first
+PUPIL_RIM_LOCAL_ACROSS = (0.0, 0.10)  # share along it (full, none from the second), or across it towards blue-cyan
+                                 # (none at the first, full from the second): the haze or a reflection reaches past the
+                                 # pupil in that sector, and its colour is not the iris' either
+PUPIL_RIM_DARK = (0.60, 0.85)    # the photo's low-passed luma as a share of its ring's: the photo's pupil or its
+                                 # blurred edge, whose colour is not the iris' at all, fully at or below the first, not
+                                 # at or above the second
+PUPIL_RIM_DARK_COUNT = 0.80      # ...and for PUPIL_RIM_COUNT a pixel below this share is the photo's pupil or its edge
+PUPIL_RIM_LIT = (0.20, 0.40)     # the render's low-passed luma as a share of its ring's: for PUPIL_RIM_COUNT and
+                                 # PUPIL_RIM_CRESCENT a pixel above the middle is iris the render keeps lit
+PUPIL_RIM_SHARE = (0.35, 0.65)   # a pixel's chroma along its sector's colour (1 as that colour, 0 neutral, below 0 the
+                                 # opposite hue): full at or below the first, none at or above the second
+PUPIL_RIM_ACROSS = (0.10, 0.20)  # ...or its chroma across that colour, towards blue-cyan, as a share of it: the teal
+                                 # haze of 09 leaves the iris its yellow but turns it cyan (a* -9 against -6)
+PUPIL_RIM_GROW = 4 / 1024        # the pixels so chosen, grown by about this much (share of the side): the edge of a
+                                 # grey or cyan patch is part grey, and left alone it drew a thin line round the pupil
+PUPIL_RIM_TONE = (0.12, 0.40)    # the render's own luma as a share of the ring's low-passed luma: the colour given
+                                 # back is neutral at or below the first and whole at or above the second...
+PUPIL_RIM_AMONG = (0.60, 0.85)   # ...or when the pixel's low-passed luma is this share of the ring's: a dark fibre gap
+                                 # among lit iris keeps the whole colour, as the lock gives it everywhere else, while
+                                 # the dark edge of the render's own pupil goes neutral (whole iris colour there read
+                                 # as a dark red or navy hairline round the pupil, 18 and 09)
+PUPIL_RIM_COUNT = (650.0, 1150.0)  # the guard: pixels (per 1024 x 1024) within 0.07 of the photo pupil's edge,
+                                 # photo-dark (PUPIL_RIM_DARK_COUNT), lit in the render and on the far side of neutral
+                                 # against the whole ring's median (share < 0). Renders with a visible grey or blue rim
+                                 # read 1181-37800, clean ones 0-617, the owner's eyes 0 and the samples 0-103 (wave-k
+                                 # trig3.py). A cyan turn alone does not count: the owner's hazel eyes and the amber
+                                 # sample show as many such pixels as the arc on a fresh render of 09, which...
+PUPIL_RIM_CRESCENT = (1000.0, 1800.0)  # ...the crescent count finds instead: when the render's own pupil does not lie
+                                 # inside the photo's (pupil_lock's PUPIL_LOCK_INSIDE test fails, so pupil_lock leaves
+                                 # the render as it is), the pixels (per 1024 x 1024) the render keeps lit that lie
+                                 # inside the photo pupil's edge and outside the render pupil's, both by
+                                 # PUPIL_RIM_CRESCENT_IN. The model re-centred an off-centre pupil and drew iris over
+                                 # one side of the photo's: fresh 09 912-3864 (its grey-cyan arc), 18 3306 (a grey
+                                 # crescent), other 09 renders 4117-13246; every other render whose pupil is not inside
+                                 # the photo's reads 0-852, and a pupil the model only shrank (the owner's 215102 and
+                                 # 215208) lies inside it: not counted
+PUPIL_RIM_CRESCENT_IN = 0.02     # iris radii
+PUPIL_RIM_CRESCENT_OFF = (600.0, 1000.0)  # ...or a thinner crescent (margins PUPIL_RIM_CRESCENT_OFF_IN) counted only
+PUPIL_RIM_CRESCENT_OFF_IN = 0.01  # where its colour is off (PUPIL_RIM_SHARE, PUPIL_RIM_ACROSS) against its sector's:
+                                 # three fresh 09 draws 1297-2393, 18 5891; every render the other counts leave alone
+                                 # 0-280. Below the first of all three nothing changes; the largest ramp is the guard's
+                                 # strength
 
 
 def _chroma_maps(Y, Ys, CB, CR, r_frac=None):
@@ -2264,6 +2315,103 @@ def _chroma_maps(Y, Ys, CB, CR, r_frac=None):
     d0, d1 = CHROMA_DARK
     k = 1.0 + (k - 1.0) * np.clip((d1 - Ys_lo) / max(d1 - d0, 1e-3), 0.0, 1.0)
     return w, mcb, mcr, k.astype(np.float32)
+
+
+def _pupil_rim(src, Y, Ys, CB, CR, r_frac=None):
+    """(weight, Cb, Cr) planes for the pupil rim, or None when there is nothing to do. src: the photo; Y, Ys: the
+    render's and the photo's luma; CB, CR: the locked chroma, all at one size. Near the photo's pupil (PUPIL_RIM_REACH
+    past its edge; pupil_circle, or pupil_circle_chroma for a hazy pupil brightness cannot read), a pixel whose locked
+    colour lies less than PUPIL_RIM_SHARE along the colour of the iris ring just beyond at its own angle
+    (PUPIL_RIM_RING, PUPIL_RIM_SECTORS), or more than PUPIL_RIM_ACROSS across it towards blue-cyan, or where the photo
+    is still its pupil or the pupil's blurred edge (PUPIL_RIM_DARK), takes that colour, grown by PUPIL_RIM_GROW and
+    faded to neutral on the render's own dark pupil edge (PUPIL_RIM_TONE): there the photo shows its pupil, its haze or
+    a reflection on the cornea, not the iris. Only on a warm iris (reflection_chroma's REFL_IRIS_BLUE measure: a blue
+    or grey-blue iris keeps its own colour at the pupil) and only when the render shows such a rim (PUPIL_RIM_COUNT)
+    or draws iris over one side of the photo's pupil (PUPIL_RIM_CRESCENT)."""
+    r_frac = r_frac or iris_radius_frac()
+    n = Y.shape[0]
+    ax = (np.arange(n) - n / 2 + 0.5) / (r_frac * n)
+    rr = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    core = (rr > 0.35) & (rr < 0.88)
+    lean = float((np.median(CB[core]) - np.median(CR[core])) / math.sqrt(2.0))
+    warm = float(np.clip((REFL_IRIS_BLUE[1] - lean) / (REFL_IRIS_BLUE[1] - REFL_IRIS_BLUE[0]), 0.0, 1.0))
+    if warm <= 0.0:
+        return None
+    pc = pupil_circle(src, r_frac)
+    if pc is None:
+        pc = pupil_circle_chroma(src, r_frac)
+    if pc is None:
+        return None
+    d = np.sqrt((ax[None, :] - pc[0]) ** 2 + (ax[:, None] - pc[1]) ** 2) - pc[3]
+    ring = (d > PUPIL_RIM_RING[0]) & (d < PUPIL_RIM_RING[1]) & (rr < 0.90)
+    if ring.sum() < 50:
+        return None
+    tcb, tcr = float(np.median(CB[ring])), float(np.median(CR[ring]))
+    u, v = tcb - 128.0, tcr - 128.0
+    if u * u + v * v < 4.0:
+        return None
+    ramp = lambda a, lo, hi: np.clip((a - lo) / (hi - lo), 0.0, 1.0)
+    sig = max(1.0, n * CHROMA_LIFT_SIGMA)
+    yl, ysl = _blur_f(Y, sig), _blur_f(Ys, sig)
+    yr = max(float(np.median(yl[ring])), 1.0)
+    lit = ramp(yl / yr, *PUPIL_RIM_LIT)
+    q = ysl / max(float(np.median(ysl[ring])), 1.0)
+    share = ((CB - 128.0) * u + (CR - 128.0) * v) / (u * u + v * v)
+    nb = (-v, u) if u + v <= 0.0 else (v, -u)                # across the ring's colour, the side towards +Cb -Cr
+    near = 1.0 - ramp(d, *PUPIL_RIM_REACH)
+    rim = float(((near > 0.5) & (lit > 0.5) & (q < PUPIL_RIM_DARK_COUNT) & (share < 0.0)).sum()) * (1024.0 / n) ** 2
+    gate = float(np.clip((rim - PUPIL_RIM_COUNT[0]) / (PUPIL_RIM_COUNT[1] - PUPIL_RIM_COUNT[0]), 0.0, 1.0))
+    do = None
+    if gate < 1.0:                                           # the crescent of a re-centred pupil (PUPIL_RIM_CRESCENT)
+        own = pupil_circle(_resize_plane(Y, min(n, PUPIL_LOCK_SIDE), Image.BOX), r_frac)
+        if own is not None and math.hypot(own[0] - pc[0], own[1] - pc[1]) + own[2] > pc[2] + PUPIL_LOCK_INSIDE:
+            do = np.sqrt((ax[None, :] - own[0]) ** 2 + (ax[:, None] - own[1]) ** 2) - own[3]
+    if gate <= 0.0 and do is None:
+        return None
+    # The colour given back is the ring's at the pixel's own angle (PUPIL_RIM_SECTORS round the photo pupil), so it
+    # meets the iris beyond without a seam (one median for the whole ring left a paler arc on fresh 09, whose iris is
+    # yellower on the left than below); a sector the haze or a reflection turned grey or cyan gives the median.
+    ns = PUPIL_RIM_SECTORS
+    t = (np.arctan2(ax[:, None] - pc[1], ax[None, :] - pc[0]) + math.pi) / (2 * math.pi) * ns
+    sec = t.astype(np.int32) % ns
+    lcb, lcr = np.full(ns, tcb), np.full(ns, tcr)
+    for k in range(ns):
+        m = ring & (sec == k)
+        if m.sum() >= 20:
+            lcb[k], lcr[k] = float(np.median(CB[m])), float(np.median(CR[m]))
+    ls = ((lcb - 128.0) * u + (lcr - 128.0) * v) / (u * u + v * v)
+    la = ((lcb - 128.0) * nb[0] + (lcr - 128.0) * nb[1]) / (u * u + v * v)
+    g = np.maximum(ramp(la, *PUPIL_RIM_LOCAL_ACROSS), 1.0 - ramp(ls, *PUPIL_RIM_LOCAL_SHARE))
+    lcb, lcr = lcb + (tcb - lcb) * g, lcr + (tcr - lcr) * g
+    lcb = (np.roll(lcb, 1) + 2.0 * lcb + np.roll(lcb, -1)) / 4.0
+    lcr = (np.roll(lcr, 1) + 2.0 * lcr + np.roll(lcr, -1)) / 4.0
+    t -= 0.5                                                 # between the two nearest sector centres
+    k0 = np.floor(t).astype(np.int32); f = (t - k0).astype(np.float32); k0 %= ns; k1 = (k0 + 1) % ns
+    lu = (lcb[k0] * (1.0 - f) + lcb[k1] * f - 128.0).astype(np.float32)
+    lv = (lcr[k0] * (1.0 - f) + lcr[k1] * f - 128.0).astype(np.float32)
+    # Which pixels take it: judged against that same local colour
+    m2 = np.maximum(lu * lu + lv * lv, 4.0)
+    share = ((CB - 128.0) * lu + (CR - 128.0) * lv) / m2
+    toward = (lu + lv) <= 0.0                                # across it, the side towards +Cb -Cr (blue-cyan)
+    across = np.where(toward, (CR - 128.0) * lu - (CB - 128.0) * lv, (CB - 128.0) * lv - (CR - 128.0) * lu) / m2
+    coff = np.maximum(1.0 - ramp(share, *PUPIL_RIM_SHARE), ramp(across, *PUPIL_RIM_ACROSS))
+    if do is not None:
+        cres = float(((lit > 0.5) & (d < -PUPIL_RIM_CRESCENT_IN) & (do > PUPIL_RIM_CRESCENT_IN)).sum())
+        thin = (lit > 0.5) & (d < -PUPIL_RIM_CRESCENT_OFF_IN) & (do > PUPIL_RIM_CRESCENT_OFF_IN) & (coff > 0.5)
+        cres, thin = cres * (1024.0 / n) ** 2, float(thin.sum()) * (1024.0 / n) ** 2
+        gate = max(gate, float(ramp(cres, *PUPIL_RIM_CRESCENT)), float(ramp(thin, *PUPIL_RIM_CRESCENT_OFF)))
+    gate *= warm
+    if gate <= 0.0:
+        return None
+    off = np.maximum(coff, 1.0 - ramp(q, *PUPIL_RIM_DARK))
+    # grown by a few pixels: the edge of a grey or cyan patch is part grey, and left alone it drew a thin line
+    off = np.maximum(off, np.clip(_blur_f(off.astype(np.float32), max(1.0, n * PUPIL_RIM_GROW)) * 2.0, 0.0, 1.0))
+    w = (near * off * gate).astype(np.float32)
+    # ...and the colour fades to neutral on the dark pixels of the render's own pupil and its edge (PUPIL_RIM_TONE),
+    # unless they lie among lit iris (PUPIL_RIM_AMONG): full iris colour on a pupil edge a few pixels wide read as a
+    # dark red or navy hairline round the pupil (18, 09)
+    cf = np.maximum(ramp(Y / yr, *PUPIL_RIM_TONE), ramp(yl / yr, *PUPIL_RIM_AMONG))
+    return w, (128.0 + lu * cf).astype(np.float32), (128.0 + lv * cf).astype(np.float32)
 
 
 def chroma_lock(ai, src, blur=1.6, amount=1.0, r_frac=None):
@@ -2304,6 +2452,17 @@ def chroma_lock(ai, src, blur=1.6, amount=1.0, r_frac=None):
         CR += (mcr - CR) * w
     CB = 128.0 + (CB - 128.0) * k   # 2. the photo's colourfulness, kept where the model lifted a dark photo
     CR = 128.0 + (CR - 128.0) * k
+    # 3. the pupil rim: where the model drew iris over the photo's pupil, the colour of the iris next to it
+    if ai.size[0] > CHROMA_STATS_SIDE:
+        sf = lambda a: np.asarray(Image.fromarray(a.astype(np.float32), mode="F").resize(n, Image.BILINEAR),
+                                  dtype=np.float32)
+        rim = _pupil_rim(src, sm(y), sm(ys), sf(CB), sf(CR), r_frac)
+        rim = None if rim is None else tuple(up(a) for a in rim)
+    else:
+        rim = _pupil_rim(src, f32(y), f32(ys), CB, CR, r_frac)
+    if rim is not None:
+        CB += (rim[1] - CB) * rim[0]
+        CR += (rim[2] - CR) * rim[0]
     cb = Image.fromarray(np.clip(CB, 0, 255).astype(np.uint8))
     cr = Image.fromarray(np.clip(CR, 0, 255).astype(np.uint8))
     if amount < 1.0:
@@ -2316,6 +2475,11 @@ PUPIL_EDGE_FRAC = 0.25
 PUPIL_DARK = (10.0, 30.0)   # pupil colour: full neutral below the first luminance, none above the second
 PUPIL_FLAT = (0.50, 0.85)   # reflections in the pupil below the first share of the iris brightness are flattened fully, above the second not at all
 PUPIL_STATS_RR = 0.86       # the pupil measurements (pupil_radius, _pupil_params) read nothing beyond 0.84 of the iris radius
+PUPIL_GRADE_SHIFT = 0.05    # the grade's pupil (neutral_pupil) is centred on the render's own pupil (pupil_circle
+                            # on the luma before sculpting) when that lies this far (iris radii) or more off the frame
+                            # centre: a disk centred on the frame overhung an off-centre pupil and pulled the iris next
+                            # to it down to the pupil floor (a "bite"), and left the pupil's far edge with its colour.
+                            # Nearer: as before
 
 
 SCLERA_RAMP = (0.70, 0.84)    # the intruder test fades in across this band of the iris radius
@@ -2531,6 +2695,22 @@ def _pupil_apply(arr, rr, tone, pp):
     return arr * (1.0 - w) + lum[..., None] * w
 
 
+def _grade_pupil_centre(lum, R, S, w0):
+    """(cx, cy, edge) of the render's own pupil in iris radii from the frame centre, read by pupil_circle from the
+    luma of the grade's window before sculpting (lum, starting at frame index w0 on both axes; the sculpting darkens a
+    shaded collarette until it joins the pupil), when it lies PUPIL_GRADE_SHIFT or more off the frame centre; else
+    None (the grade keeps its frame-centred pupil)."""
+    n = lum.shape[0]
+    m = min(n, PUPIL_LOCK_SIDE)
+    small = np.asarray(Image.fromarray(lum.astype(np.float32), mode="F").resize((m, m), Image.BOX), dtype=np.float32)
+    pc = pupil_circle(small, R / n)
+    if pc is None:
+        return None
+    d = (w0 + n / 2.0 - S / 2.0) / R          # the window's centre against the frame's (at most half a pixel)
+    cx, cy = pc[0] + d, pc[1] + d
+    return (cx, cy, pc[3]) if math.hypot(cx, cy) >= PUPIL_GRADE_SHIFT else None
+
+
 def studio_ease(im, r_frac):
     """0..1: how much of the studio sculpting this iris gets. 0 at professional fibre detail, 1 on a soft crop."""
     have = fibre_detail(im, r_frac)
@@ -2628,14 +2808,26 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     #     colour. Its tone is the luminance before the per-channel guard, which would otherwise lift a black hole
     #     to dark grey. It can only change pixels with rr < 1.04 rho, so it runs on that bounding box alone.
     #     Its statistics only read rr < 0.84, which lies inside the window, so the window gives the same numbers.
+    #     A pupil PUPIL_GRADE_SHIFT or more off centre is measured and flattened round its own centre; its rings
+    #     then reach past the window on one side, which only leaves them fewer pixels.
     tone = sculpted[..., 0]
     rr = np.sqrt(ax[None, w0:w1] + ax[w0:w1, None]) / R
+    pcx = pcy = 0.0
+    centre = _grade_pupil_centre(lum_all[..., 0], R, S, w0)
+    if centre is not None:                                   # an off-centre pupil: its own centre, not the frame's
+        pcx, pcy = centre[0], centre[1]
+        xs = (np.arange(w0, w1) - S / 2 + 0.5) / R
+        rr = np.sqrt((xs[None, :] - pcx) ** 2 + (xs[:, None] - pcy) ** 2)
     pp = _pupil_params(tone, rr)
+    if centre is not None and pp is not None and pp[0] > centre[2]:
+        pp = (centre[2],) + pp[1:]                           # and never wider than that pupil's own edge
     box = None
     if pp is not None:
-        near = np.nonzero(np.abs(np.arange(w0, w1) - S / 2 + 0.5) <= pp[0] * 1.04 * R + 2.0)[0]
-        if len(near):
-            box = (int(near[0]), int(near[-1]) + 1)          # window indices
+        pos = np.arange(w0, w1) - S / 2 + 0.5
+        rows = np.nonzero(np.abs(pos - pcy * R) <= pp[0] * 1.04 * R + 2.0)[0]
+        cols = np.nonzero(np.abs(pos - pcx * R) <= pp[0] * 1.04 * R + 2.0)[0]
+        if len(rows) and len(cols):
+            box = (int(rows[0]), int(rows[-1]) + 1, int(cols[0]), int(cols[-1]) + 1)   # window indices
 
     graded = np.empty((n, n, 3), np.uint8)
     for r0, r1 in _row_chunks(n, n):
@@ -2664,7 +2856,7 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
         if box is not None:
             b0, b1 = max(r0, box[0]), min(r1, box[1])
             if b0 < b1:
-                c0, c1 = box
+                c0, c1 = box[2], box[3]
                 blk = _pupil_apply(a[b0 - r0:b1 - r0, c0:c1], rr[b0:b1, c0:c1], tone[b0:b1, c0:c1], pp)
                 a[b0 - r0:b1 - r0, c0:c1] = np.clip(blk, 0, 255).astype(np.uint8)
         np.clip(a, 0, 255, out=a)
@@ -2706,6 +2898,8 @@ QA_RING_DE00_MAX = 10.0      # median ring dE00 above this = the render no longe
                              # what is left is the model relighting the iris: 215120 moved L* -1.6 (2.8, reads
                              # true), 215102 +13.9 (13.2) and 215208 +18.0 (16.0) came back visibly paler
 PUPIL_NEUTRAL_MAX = 1.5      # |Cb| and |Cr| of the pupil core: every professional print measured sits inside this
+PUPIL_QA_DARK = 8.0          # an off-centre pupil's core is centred on its pixels this close to its darkest (grey
+                             # levels)
 
 def srgb_to_lab(rgb):
     """sRGB (0-255, any shape ending in 3) to CIELAB, D65 / 2 degree: the same conversion as skimage.color.rgb2lab."""
@@ -2770,7 +2964,10 @@ def qa_colour(result, source, r_frac=None, parts=False):
 def pupil_core_chroma(graded, fill=None, trim=None):
     """(Y, Cb, Cr) of the pupil core of a studio_grade() disk, or None when no dark pupil is found. The core
     and the pupil edge are found exactly as neutral_pupil() finds them, with the radius mapped back from the
-    graded frame (disk = fill of the frame, cut at trim of the iris radius) to the source iris."""
+    graded frame (disk = fill of the frame, cut at trim of the iris radius) to the source iris. A pupil
+    PUPIL_GRADE_SHIFT or more off the frame centre (pupil_circle on the graded luma) is measured round the centre of
+    its dark disk (PUPIL_QA_DARK) and within its own edge, as studio_grade flattens it: a core centred on the frame
+    took in the iris next to it and failed good off-centre pupils."""
     fill = STUDIO_FILL if fill is None else fill
     trim = STUDIO_TRIM if trim is None else trim
     im = graded.convert("RGB")
@@ -2780,9 +2977,23 @@ def pupil_core_chroma(graded, fill=None, trim=None):
     yy, xx = np.mgrid[0:n, 0:n]
     rr = np.sqrt((xx - n / 2 + 0.5) ** 2 + (yy - n / 2 + 0.5) ** 2) / (n * fill / 2.0) * trim
     ycc = np.asarray(im.convert("YCbCr")).astype(np.float32)
+    rf = fill / (2.0 * trim)
+    pc = pupil_circle(_resize_plane(ycc[..., 0], min(n, PUPIL_LOCK_SIDE), Image.BOX), rf)
+    if pc is not None and math.hypot(pc[0], pc[1]) < PUPIL_GRADE_SHIFT:
+        pc = None
+    if pc is not None:
+        ax = (np.arange(n) - n / 2 + 0.5) / (rf * n)
+        rr = np.sqrt((ax[None, :] - pc[0]) ** 2 + (ax[:, None] - pc[1]) ** 2)
+        y0 = ycc[..., 0]
+        dark = (rr < pc[3]) & (y0 <= float(np.percentile(y0[rr < pc[3]], 5)) + PUPIL_QA_DARK)
+        yi, xi = np.nonzero(dark)                         # the centre of the dark disk inside that circle: on a graded
+        cx, cy = float(ax[xi].mean()), float(ax[yi].mean())   # disk the sculpted collarette can pull the circle off it
+        rr = np.sqrt((ax[None, :] - cx) ** 2 + (ax[:, None] - cy) ** 2)
     rho = pupil_radius(ycc[..., 0], rr)
     if rho is None:
         return None
+    if pc is not None:
+        rho = min(rho, pc[3])
     core = rr < 0.8 * rho
     if core.sum() < 12:
         return None
