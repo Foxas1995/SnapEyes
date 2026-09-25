@@ -816,6 +816,49 @@ def composite(base, patch, alpha):
     out = np.asarray(base).astype(np.float32) * (1 - a) + np.asarray(patch.resize(base.size, Image.LANCZOS)).astype(np.float32) * a
     return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
 
+# The de-glare model is asked to edit the reflections only, but it often answers with a new iris (20 of the 37
+# replies stored from earlier runs): centred, its own pupil and colour, no veil, no lids (14: brown where the photo's
+# upper iris is blue-grey; 21, 22: a crisp foreign texture; 09: a cream blob with a dark fleck). Composited into the
+# reflection holes, that iris showed as rust and orange blocks shaped like the mask. Such a reply is told apart
+# where the model was to change nothing: low-passed, it no longer matches the image it was given (median dE76 over
+# the iris away from the holes: 0.99 to 2.66 on the 17 faithful replies, 6.2 to 23.8 on the 20 foreign ones,
+# wave-i/glare/work/drift_all.py), and its holes then take the fill the model was given, as when the call fails.
+PATCH_SIDE = 256             # the reply and its input are compared on copies this size...
+PATCH_BLUR = 2.0             # ...low-passed this much (px): a fibre the model redrew a pixel off is not a change
+PATCH_GROW = 0.03            # the comparison stays this far (share of the side) from the holes, inside PATCH_RIM
+PATCH_RIM = 0.92             # of the iris radius
+PATCH_DRIFT = (3.5, 5.0)     # median dE76: the reply is kept below the first, replaced by the fill from the second
+
+def patch_drift(model_in, patch, hole, r_px):
+    """How far the model's reply strays from the image it was given (median dE76, low-passed) over the iris it was
+    told to leave alone: inside PATCH_RIM of the radius r_px (pixels of model_in), away from hole (0-1, model_in's
+    size: the pixels it was asked to rebuild, or filled before it). 0.0 when too little of the iris is left to read."""
+    n, S = PATCH_SIDE, model_in.size[0]
+    lo = lambda im: np.asarray(im.convert("RGB").resize((n, n), Image.BOX).filter(ImageFilter.GaussianBlur(PATCH_BLUR)))
+    d = srgb_to_lab(lo(model_in)) - srgb_to_lab(lo(patch))
+    h = Image.fromarray((np.clip(hole, 0, 1) * 255).astype(np.uint8)).resize((n, n), Image.BOX)
+    near = np.asarray(h.filter(ImageFilter.MaxFilter(int(PATCH_GROW * n) | 1))) > 2
+    ax = (np.arange(n) - n / 2 + 0.5) ** 2
+    ref = (np.sqrt(ax[None, :] + ax[:, None]) < PATCH_RIM * r_px * n / S) & ~near
+    if int(ref.sum()) < n * n // 50: return 0.0
+    return float(np.median(np.sqrt((d * d).sum(-1))[ref]))
+
+def patch_guard(clean, fill, patch, hole, r_px, share=None):
+    """clean (the reply composited into the holes) as it is when the reply is faithful (patch_drift below
+    PATCH_DRIFT[0]: the image returned untouched), fill (what the model was given) when it is a new iris, a blend
+    of the two between. share (0-1 per pixel, optional): how much of each pixel may move to the fill (deglare with a
+    lid: the glare's part of the fill, so the lid and its soft edge stay exactly as with a faithful reply)."""
+    lo, hi = PATCH_DRIFT
+    w = min(1.0, max(0.0, (patch_drift(fill, patch, hole, r_px) - lo) / (hi - lo)))
+    if w <= 0.0: return clean
+    if w >= 1.0 and share is None: return fill
+    c = np.array(clean.convert("RGB"))
+    m = np.full(c.shape[:2], w, np.float32) if share is None else w * np.clip(np.asarray(share, np.float32), 0.0, 1.0)
+    k = m > 0                                   # only the pixels that move are worked (a lid frame: ~10% of it)
+    v = c[k].astype(np.float32)
+    c[k] = np.clip(np.rint(v + (np.asarray(fill.convert("RGB"))[k].astype(np.float32) - v) * m[k][:, None]), 0, 255)
+    return Image.fromarray(c)
+
 # ----------------------------------------------------------------------------- eyelids
 # An upper lid comes in from the top of the circle, a lower lid from the bottom: a cap of the disk cut off by a
 # smooth, fairly flat margin, with skin, the lash line and hanging lashes on the rim side and the lid's shadow just

@@ -74,7 +74,8 @@ def deglare(body):
         prefilled = L.mirror_prefill(crop, feather)
         try:
             patch = L.gemini_image(L.PROMPT_DEGLARE, prefilled)
-            clean = L.composite(crop, patch, feather)
+            # a reply that redrew the whole iris is not composited: its holes take the fill (patch_guard)
+            clean = L.patch_guard(L.composite(crop, patch, feather), prefilled, patch, feather, r_px)
         except Exception:
             clean = prefilled
     else:
@@ -83,7 +84,9 @@ def deglare(body):
         # survives where a reflection meets the lid's soft edge (21: a bright line along the lower lid)
         try:
             patch = L.gemini_image(L.PROMPT_DEGLARE, filled)
-            glared = L.composite(crop, patch, feather)
+            hole = np.maximum(feather, lid_feather)
+            glared = L.patch_guard(L.composite(crop, patch, feather), filled, patch, hole, r_px,
+                                   share=feather / np.maximum(hole, 1e-6))
         except Exception:
             glared = filled                     # as without a lid: the fill borrowed from the same radius everywhere
         clean = L.lid_composite(glared, filled, lid_hard, lid_feather, r_px, prho, photo=crop, glare_hard=hard)

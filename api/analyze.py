@@ -349,10 +349,91 @@ def block_reason(trigger, dark_iris, label):
     """Why a blocked photo is blocked, in the words the capture screen shows (quality.block_reason). 'too_dark' for a
     dark iris on a photo the vision model calls sharp, where more light is the fix and focus is not; a shaken or
     smeared photo (lines 4 and 5, which compare bands of the photo with each other, so light does not move them) is
-    blurry whatever the iris; 'too_blurry' otherwise."""
-    if trigger not in ("motion", "soft") and dark_iris and label == "sharp":
+    blurry whatever the iris; 'too_blurry' otherwise. The shake question (SHAKE_CONF) is blurry the same way."""
+    if trigger not in ("motion", "soft", "shake") and dark_iris and label == "sharp":
         return "too_dark"
     return "too_blurry"
+
+# ---- the shake question. A curved hand-shake path lays shifted copies of the pattern over each other, and the lines
+# above cannot see it (see "What no line here can do"): of the curved shakes that erased the pattern (survival under
+# 0.45, wave-g/gatefix final_eval.txt) 41 of 89 kept a ticket. So one more small call to the vision model asks only
+# whether the camera moved, on a square around the iris SHAKE_PAD iris diameters wide (the lashes, lids and the
+# reflection's outline show a shake best), and a confident yes blocks as 'too_blurry'. It is asked only of a locked
+# photo that neither lines 1-5 nor the wide-pupil block (below) blocked and whose fibres read under 'ok' (Detail under
+# 40): the 185 erased copies that keep a ticket in all the attack sets read Detail 6-32. Without an answer (an error,
+# a busy model, a reply slower than SHAKE_TIMEOUT, one that cannot be read) nothing is blocked: the photo is judged
+# as before.
+# Calibration (wave-i/shake, 60 live calls, gemini-3.8-flash; this prompt is its "sep2"). How wide the square is sets
+# how large a shake the model sees. At 1.5 diameters it said yes (75-92) to 4 of 5 copies with a 0.75-1 % shake that
+# keep the pattern (survival 0.84-0.90): it would block photos the gate rightly lets through. At 2.5 it said no to
+# all 4 copies with a 0.75 % shake (survival 0.89-0.93, confidence 4-8), the owner's 215120 with 1 % (0.87, 12) and
+# 6 test photos as they are (05 09 16 18 21 29, 0-10), and yes to 5 of 9 erased curved shakes that keep a ticket
+# today (06 13 26 27 sample_blue 2 %, 85-98); the other 4 it called defocus (sample_blue 1.5 % and 2 % with noise,
+# sample_amber 2 %, 30 2.5 %: 10-15). A yes read 85-98 and a no 0-15, so the line is 80. Bars, live at 2.5: the
+# owner's four photos as they are, 1 EV darker and lighter, re-sent at q70 and sharpened (unsharp 60 %): no, 12 of 12
+# (0-10); the site's samples read Detail 78-100 on the same grid, so they are never asked (asked anyway: no, 6 of 6).
+# The same question inside the analyze vision prompt (whole photo, 4 calls) caught 1 of the 2 erased copies it was
+# shown, as the square did, but it would change the reply, and so the boxes, of every photo, and it cannot set how
+# large the iris is in the model's view. The call takes 3.3 s median as shipped (2.5-7.4 s over 38 calls; 1 of all
+# 78 calls took 15 s), only on the photos it is asked of.
+SHAKE_PAD = 2.5              # side of the square sent, in iris diameters (the part outside the photo is black)
+SHAKE_SIDE = 1024            # px: a larger square is scaled down to this, a smaller one is sent as it is
+SHAKE_MAX_PIXELS = 16_000_000   # px: a larger square is cut from a reduced copy of the photo (shake_square)
+SHAKE_CONF = 80              # a yes at this confidence or higher blocks
+SHAKE_TIMEOUT = 12           # s
+PROMPT_SHAKE = (
+    "Close-up phone photo of one human eye, cropped around the iris. Decide whether this photo is spoiled by camera "
+    "shake (the phone moved during the exposure). Look closely at the eyelashes, the pupil rim, the outer edge of the "
+    "iris, the outline of any reflection and the fine iris fibres and crypts. Camera shake drags every edge the same "
+    "way: edges are smeared into streaks or arcs, or show two or three faint offset copies (ghosting), and the fine "
+    "fibres and crypts dissolve into streaks or a haze. In a close-up the lashes, lids and iris all sit at almost the "
+    "same distance, so blur that covers all of them is not a shallow depth of field. A photo that is only "
+    "low-resolution, noisy or compressed, whose edges are fine but pixel-soft and not dragged or doubled, is NOT "
+    'camera shake. Return ONLY JSON: {"shake":true|false,"confidence":n,"blur":"none|slight|strong","evidence":"a few '
+    'words"}. confidence (0-100) is how sure you are that camera shake is visible: 0 = certainly none, 100 = certainly '
+    "shaken. blur is how blurred the iris texture is, whatever the cause."
+)
+
+def shake_square(im, cx, cy, r):
+    """The image the shake question sees: the square SHAKE_PAD iris diameters wide around the circle (cx, cy, r in
+    the photo's pixels), black outside the photo, scaled down to SHAKE_SIDE when wider. A square of more than
+    SHAKE_MAX_PIXELS (an iris about 1600 px wide or more) is cut from a copy of the photo reduced by a whole factor
+    first, so no photo can make it allocate a canvas many times its own size; the square sent then differs by a
+    fraction of a grey level (0.04 on test photo 22, whose iris runs off its frame). None when it misses the photo."""
+    S = 2 * r * SHAKE_PAD
+    box = [int(round(c)) for c in (cx - S / 2, cy - S / 2, cx + S / 2, cy + S / 2)]
+    k = max(1, math.ceil(math.sqrt(max(box[2] - box[0], 1) * max(box[3] - box[1], 1) / SHAKE_MAX_PIXELS)))
+    if k > 1:
+        im, box = im.reduce(k), [int(round(c / k)) for c in box]
+    W, H = im.size
+    if box[2] - box[0] < 8 or box[3] - box[1] < 8 or box[2] <= 0 or box[3] <= 0 or box[0] >= W or box[1] >= H:
+        return None
+    sq = im.crop(tuple(box))          # PIL fills the part outside the photo with black
+    return sq.resize((SHAKE_SIDE, SHAKE_SIDE), Image.LANCZOS) if sq.size[0] > SHAKE_SIDE else sq
+
+def shake_seen(im, cx, cy, r):
+    """(yes, confidence) from the shake question, or None when the call fails, is too slow or its answer cannot be
+    read: no answer never blocks. One call, no retry (a busy model is not waited for). Logged as 'snapeyes shake'."""
+    import time
+    t0, rec, res = time.time(), {}, None
+    try:
+        sq = shake_square(im, cx, cy, r)
+        if sq is not None:
+            parts = [{"text": PROMPT_SHAKE}, {"inlineData": {"mimeType": "image/jpeg", "data": L.pil_to_b64(sq, "JPEG", 90)}}]
+            j = L.gemini(L.VISION_MODEL, parts, {"responseMimeType": "application/json", "temperature": 0},
+                         timeout=SHAKE_TIMEOUT, retries=0)
+            a = json.loads("".join(p.get("text", "") for p in j["candidates"][0]["content"]["parts"]))
+            yes, conf = a.get("shake"), a.get("confidence")
+            yes = yes is True or (isinstance(yes, str) and yes.strip().lower() == "true")
+            if isinstance(conf, (int, float)) and not isinstance(conf, bool) and math.isfinite(conf):
+                res = (yes, float(conf))
+            rec = {"shake": yes, "confidence": conf if res else None,
+                   "evidence": "".join(c for c in str(a.get("evidence") or "")[:160] if c.isprintable())[:80]}
+    except Exception as e:  # noqa
+        rec = {"error": L._scrub(repr(e))[:160]}
+    rec["secs"] = round(time.time() - t0, 2)
+    print("snapeyes shake " + json.dumps(rec), flush=True)
+    return res
 
 # ---- the wide-pupil block. A pupil this wide leaves too thin a ring of iris to make an artwork from, and the studio
 # model then paints an iris into the pupil (test photo 23: pupil 0.74 of the iris radius; the render drew one of 0.35
@@ -536,6 +617,11 @@ def analyze(body):
     pupil_block, pupil_size = pupil_blocked(crop, pupil_r, pad, locked)
     if pupil_block and not blocked:
         blocked, block_by, reason = True, "pupil", "pupil_too_large"
+    # a curved hand-shake no line sees: asked only of a locked photo nothing above blocked, under 'ok' (SHAKE_CONF)
+    shake = shake_seen(im, cx, cy, r) if locked and not blocked and basis < FIBRE_OK else None
+    if shake is not None and shake[0] and shake[1] >= SHAKE_CONF:
+        blocked, block_by = True, "shake"
+        reason = block_reason(block_by, dark_iris, label)
     tips = []
     if diam_orig < GOOD_DIAMETER_PX:
         tips.append(f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want {GOOD_DIAMETER_PX} px or more.")
