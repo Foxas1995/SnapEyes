@@ -47,10 +47,11 @@ def deglare(body):
                                                     size=S, pupil_rho=pr / L.iris_radius_frac(pad))
     # a reflection on the pupil is not recoverable iris detail; rebuild that part as darkness ourselves and
     # keep it out of the model's mask, or it paints window frames inside the eye
-    pupil_overlap = 0.0
+    pupil_overlap, pupil_changed = 0.0, False
     if pupil_ok:
         pr_px = pr * S
-        crop, pupil_overlap = L.pupil_fill(crop, pr_px, hard, r_frac=L.iris_radius_frac(pad))
+        dark, pupil_overlap = L.pupil_fill(crop, pr_px, hard, r_frac=L.iris_radius_frac(pad))
+        pupil_changed, crop = dark is not crop, dark     # a glint on the pupil, or a haze over all of it
         hard, feather = L.drop_pupil(hard, feather, pr_px)
         pct = 100.0 * float((hard > 0).sum()) / max(1.0, float((hard.size)))
         pct = round(pct * (S * S) / max(1.0, 3.1416 * r_px * r_px), 2)
@@ -68,7 +69,7 @@ def deglare(body):
         if lid_pct > 0:
             base = L.lid_composite(crop, filled, lid_hard, lid_feather, r_px, prho, glare_hard=hard)
         return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2),
-                "changed": pupil_overlap >= 0.04 or lid_pct > 0, "used_sr": used_sr,
+                "changed": pupil_changed or lid_pct > 0, "used_sr": used_sr,
                 "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95)}
     if lid_pct <= 0:
         prefilled = L.mirror_prefill(crop, feather)

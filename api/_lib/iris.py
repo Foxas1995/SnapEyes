@@ -752,6 +752,76 @@ PUPIL_HAZE_LIFT = 0.20          # ...and only when the photo, where that pupil l
                                 # 12, 18 (teal or blue haze, a window); 0.07 on the dark rim of 19 at the e2e circle,
                                 # which keeps HEAD's fill byte for byte
 PUPIL_HAZE_FEATHER = 0.03       # that pupil's edge width (iris radii), centred on it: the photo's own blurred edge
+PUPIL_HAZE_CORE = (45.0, 15.0)  # with no reflection on the pupil (glare under 4% of it) the colour pupil is still
+                                # read, and filled alone, when the vision pupil's core (inside 0.6 of it, outside the
+                                # glare mask) has a median luma of at least the first and a median C* of at least the
+                                # second: the whole pupil lifted and tinted by a haze (09: 54 and 23, teal). The other
+                                # pupils without a glint in 45 test inputs read 0-40 and 0-12 (20, a grey-teal pupil
+                                # the brightness still reads: 40.0 and 11.5), but for 04 (64 and 17, no colour circle)
+PUPIL_HAZE_FAR = 0.20           # ...and there the colour pupil is asked even where brightness reads one (it reads the
+                                # haze only when centred, 0.02-0.05 wider than it is), and its centre may lie this far
+                                # off the frame centre, iris radii: with no vision fill there is no blob to join. The
+                                # analyze circle of one photo moves 0.03-0.10 between calls; 09's pupil, 0.08-0.09 off
+                                # at its circles, reads 0.10-0.19 at circles moved 0.02-0.07 (0.10 missed most of them)
+PUPIL_HAZE_RUFF = (0.05, 0.5, 0.9)   # ...and past that pupil's fitted edge, over the first (iris radii), what is still
+                                # the haze: filled fully up to the second share of the way from the haze to the iris,
+                                # not at all from the third. A pupil is not quite round, and its edge is blurred: on 09
+                                # the haze colour runs on 0.035-0.045 past the circle on the left and right, and the
+                                # circle alone left a teal line round the fill at the top
+PUPIL_HAZE_CHROMA = 0.3         # ...and there a pixel whose colour is this share haze or more takes the iris' chroma
+                                # (_haze_chroma). Cool pixels within 0.06 of the edge on live 09: photo 7880, circle
+                                # alone 3729, with the rim 1792, with the chroma too 331
+
+def _haze_rim(arr, y, rho, edge, haze, ring, g):
+    """Fill weight just past a haze pupil's fitted edge (rho, edge in iris radii): 1 at the edge, falling to 0 at
+    PUPIL_HAZE_RUFF[0] past it, times how much each pixel is still the haze by q, the larger of its colour's a*b*
+    distance from the haze's median and its luma above the haze's, each as a share of the iris ring's. The haze's own
+    rim (09: a navy band on the left) goes dark with it; iris that differs from the haze in either stays."""
+    width, q0, q1 = PUPIL_HAZE_RUFF
+    band = (rho > edge - PUPIL_HAZE_FEATHER / 2) & (rho < edge + width) & ~g
+    w = np.zeros(rho.shape)
+    if not band.any(): return w
+    lab_h, lab_r, lab_b = srgb_to_lab(arr[haze]), srgb_to_lab(arr[ring]), srgb_to_lab(arr[band])
+    a0, b0 = float(np.median(lab_h[:, 1])), float(np.median(lab_h[:, 2]))
+    y0, yr = float(np.median(y[haze])), float(np.median(y[ring]))
+    cr = float(np.median(np.hypot(lab_r[:, 1] - a0, lab_r[:, 2] - b0)))
+    q = np.maximum(np.hypot(lab_b[:, 1] - a0, lab_b[:, 2] - b0) / max(cr, 1.0), (y[band] - y0) / max(yr - y0, 1.0))
+    fade = 0.5 + 0.5 * np.cos(np.clip((rho[band] - edge) / width, 0, 1) * math.pi)
+    w[band] = fade * np.clip((q1 - q) / (q1 - q0), 0, 1)
+    return w
+
+def _ycc(p):
+    """Y, Cb - 128, Cr - 128 of RGB pixels (..., 3): the JPEG / PIL YCbCr that chroma_lock reads."""
+    return (0.299 * p[..., 0] + 0.587 * p[..., 1] + 0.114 * p[..., 2],
+            -0.168736 * p[..., 0] - 0.331264 * p[..., 1] + 0.5 * p[..., 2],
+            0.5 * p[..., 0] - 0.418688 * p[..., 1] - 0.081312 * p[..., 2])
+
+def _haze_chroma(arr, fill, a, rho, edge, haze, ring, g):
+    """The haze fill and its rim take the iris ring's chroma, scaled to their darkness ((Y + 4) / (ring Y + 4), at
+    least 1 / CHROMA_LIFT_CAP): the pupil becomes a near-black olive (09), which the grade's neutral_pupil takes out.
+    The model often draws its own pupil smaller or centred and paints iris over part of the fill (4 of 5 live 09
+    renders of a filled input: a crescent up to 0.07 wide), and chroma_lock gives what it paints the input's chroma
+    times the model's lift, up to CHROMA_LIFT_CAP: over a grey fill that was a grey crescent, over one with the haze's
+    cyan a pale blue one, over this the iris colour. Past the edge, over PUPIL_HAZE_RUFF[0], a pixel's weight is its
+    haze share (its Cb/Cr projected on the line from the haze's median to the ring's) over PUPIL_HAZE_CHROMA, fading out
+    with the distance: the haze the rim fill leaves there drew a thin cyan arc. Returns (fill, a), those pixels set."""
+    width = PUPIL_HAZE_RUFF[0]
+    reg = (rho < edge + width) & ~g
+    P, A = arr[reg], a[reg][:, None]
+    yo, cbo, cro = _ycc(P * (1 - A) + fill[reg] * A)              # the blend as it stands
+    _, cbp, crp = _ycc(P)
+    _, cbh, crh = (float(np.median(v)) for v in _ycc(arr[haze]))
+    yr, cbr, crr = (float(np.median(v)) for v in _ycc(arr[ring]))
+    ax, ay = cbr - cbh, crr - crh
+    share = np.clip(1 - ((cbp - cbh) * ax + (crp - crh) * ay) / max(ax * ax + ay * ay, 1.0), 0, 1)
+    fade = 0.5 + 0.5 * np.cos(np.clip((rho[reg] - edge) / width, 0, 1) * math.pi)
+    w = np.maximum(A[:, 0], fade * np.clip(share / PUPIL_HAZE_CHROMA, 0, 1))
+    k = np.clip((yo + 4) / (yr + 4), 1 / CHROMA_LIFT_CAP, 1) * w
+    cb, cr = cbo * (1 - w) + cbr * k, cro * (1 - w) + crr * k
+    fill = np.array(fill, dtype=np.float64)
+    fill[reg] = np.stack([yo + 1.402 * cr, yo - 0.344136 * cb - 0.714136 * cr, yo + 1.772 * cb], -1)
+    a = a.copy(); a[reg] = 1.0
+    return fill, a
 
 def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     """Rebuild the pupil as smooth darkness. A pupil reflects the room, so whatever a reflection covers there is
@@ -765,6 +835,11 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     and pupil_lock could not take it back (no brightness circle on that input either). Where brightness reads the
     pupil, colour is not asked: a colourless reflection over the iris next to it pulls the colour circle out (13:
     0.37 against 0.31, 0.07 up). r_frac: the iris radius as a share of the crop side.
+    With no reflection on the pupil the photo is returned as it came (the same object), unless a haze lifts and tints
+    the whole pupil (PUPIL_HAZE_CORE; 09: teal, no glint on it). Then only the colour pupil is filled, under the same
+    size and lift tests and within PUPIL_HAZE_FAR of the centre: centred on it, out to its own edge and the haze's rim
+    past it (_haze_rim), in the iris' hue (_haze_chroma). The model kept such a pupil dark blue, and the grade, which
+    darkens a pupil centred on the frame, left a blue crescent where the pupil sits off centre (live 09).
     Returns (image, how much of the pupil the reflection covered)."""
     S = crop.size[0]
     yy, xx = np.mgrid[0:S, 0:S]
@@ -773,7 +848,15 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     if pr_px < 4 or not inside.any(): return crop, 0.0
     g = (glare_hard > 0) if glare_hard is not None else np.zeros_like(inside)
     overlap = float(g[inside].mean())
-    if overlap < 0.04: return crop, overlap
+    haze = overlap < 0.04
+    if haze:
+        core = (d < 0.6 * pr_px) & ~g
+        px = np.asarray(crop)[core] if int(core.sum()) > 60 else None
+        if px is None or float(np.median(_lum3(px)[:, 0])) < PUPIL_HAZE_CORE[0]:
+            return crop, overlap
+        lab = srgb_to_lab(px)
+        if float(np.median(np.hypot(lab[:, 1], lab[:, 2]))) < PUPIL_HAZE_CORE[1]:
+            return crop, overlap
     arr = np.asarray(crop).astype(np.float32)
     # the true pupil colour is the darkest thing still visible inside it; the rim is only a fallback, and both
     # get clamped because a pupil is never bright and never coloured
@@ -788,11 +871,11 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     base = np.minimum(base, 30.0)                       # and never bright
     t = np.clip(d / max(pr_px, 1.0), 0, 1)
     fill = base[None, None, :] * (0.40 + 0.60 * t[..., None] ** 2)   # deepest in the centre, lifting towards the rim
-    a = np.clip((pr_px - d) / max(pr_px * feather, 1.0), 0, 1)
+    a = np.zeros((S, S)) if haze else np.clip((pr_px - d) / max(pr_px * feather, 1.0), 0, 1)   # a haze: no vision disk
     R = (r_frac or iris_radius_frac()) * S
-    pc = pupil_circle_chroma(crop, R / S) if pupil_circle(crop, R / S) is None else None
+    pc = pupil_circle_chroma(crop, R / S) if haze or pupil_circle(crop, R / S) is None else None
     if (pc is not None and PUPIL_HAZE_SIZE[0] <= pc[3] * R / pr_px <= PUPIL_HAZE_SIZE[1]
-            and math.hypot(pc[0], pc[1]) <= PUPIL_HAZE_SHIFT):
+            and math.hypot(pc[0], pc[1]) <= (PUPIL_HAZE_FAR if haze else PUPIL_HAZE_SHIFT)):
         d2 = np.sqrt((xx - S / 2 + 0.5 - pc[0] * R) ** 2 + (yy - S / 2 + 0.5 - pc[1] * R) ** 2)
         a2 = np.clip((pc[3] * R - d2) / max(PUPIL_HAZE_FEATHER * R, 1.0) + 0.5, 0, 1)
         left = (a2 >= 1) & (a < 0.5) & ~g
@@ -801,6 +884,13 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
             y, tone = _lum3(arr)[..., 0], float(_lum3(base[None, :])[0, 0])
             if float(np.median(y[left])) - tone >= PUPIL_HAZE_LIFT * max(float(np.median(y[ring])) - tone, 1.0):
                 a = np.maximum(a, a2)
+                if haze:    # centred on the colour pupil, its rim past the fitted edge too, in the iris' hue
+                    t2 = np.clip(d2 / max(pc[3] * R, 1.0), 0, 1)[..., None]
+                    fill = np.full(3, float(base.mean())) * (0.40 + 0.60 * t2 ** 2)
+                    a = np.maximum(a, _haze_rim(arr, y, d2 / R, pc[3], left, ring, g))
+                    fill, a = _haze_chroma(arr, fill, a, d2 / R, pc[3], left, ring, g)
+                    haze = False
+    if haze: return crop, overlap                       # a haze the colour pupil does not confirm: left as it came
     a = a[..., None]
     return Image.fromarray(np.clip(arr * (1 - a) + fill * a, 0, 255).astype(np.uint8)), overlap
 
