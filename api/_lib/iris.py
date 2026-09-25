@@ -1044,6 +1044,20 @@ LID_TONE_NEAR = 0.05             # before that, the photo's own tone within abou
                                  # taken to the tone just beyond it (LID_TONE_NEAR..2x), fading out over the same: the
                                  # darkest of a shadow or a wet rim hugs the edge, 0.02-0.05 r wide (19: L* 22 at the edge,
                                  # 30 at 0.05 r), and read as a line however the step was spread
+LID_DETAIL_SPLIT = 0.005         # lid_composite (_lid_detail): the fill keeps its averaged tone above this scale (share
+                                 # of the side, the fibre band's top) and takes its detail below it from single donors,
+LID_DETAIL_SECTOR = 12.0         # ONE per this many degrees of the lid, cross-fading over a whole sector (cos^2)
+LID_DETAIL_STEP = 6              # the candidate donors: rotations every this many degrees round the circle
+LID_DETAIL_COVER = 0.97          # a donor counts for a sector only when this share of it lands on clean iris...
+LID_DETAIL_OUTLIER = 3.0         # ...and it has at most LID_DETAIL_SLACK more outliers (detail past this many times the
+LID_DETAIL_SLACK = 0.015         # clean iris' spread at that radius: a lash, a glint) than the sector's cleanest donor.
+LID_DETAIL_FAR = 0.01            # Its cost: that outlier share, this per 180 degrees of rotation,
+LID_DETAIL_FLAT = 0.02           # this x |log| of its detail's strength against the clean iris' (a flat or busy donor),
+LID_DETAIL_SWITCH = 0.01         # this for a rotation other than its outer neighbour's,
+LID_DETAIL_REUSE = 0.03          # and this for each sector already copying the same source window
+LID_DETAIL_CLIP = 2.5            # the donors' detail is soft-clipped at this many spreads
+LID_DETAIL_GAIN = 1.5            # the most the mixed detail is lifted back to the clean iris' typical strength
+LID_DETAIL_SCORE = 256           # donors are scored on a copy this size
 LID_ANGLES = 180                 # 2-degree bins for the rim continuity
 LID_EXTRA_DONORS = (140, -140, 180)   # mirror_prefill donors further round, for a lid too wide for the near ones
 LID_DRIFT_MAX = 20.0             # lid_drift of the fill above this: no clean iris to borrow from, the lid is left as
@@ -1506,6 +1520,210 @@ def lid_mask(crop, r_px, glare_hard=None, size=None, debug=None, pupil_rho=None)
     return (m * 255).astype(np.uint8), soft, pct
 
 
+def _lid_detail(photo, filled, lid_hard, lid_soft, r_px, pupil_rho=None, glare_hard=None, debug=None):
+    """The lid fill (mirror_prefill with LID_EXTRA_DONORS) with its fibre band taken from single donors. The fill is an
+    average of several rotated donors, so its fine detail cancels out (0.44-0.76 of the clean iris' on 05, 06, 08, 09,
+    19, 26) and the render paints the lid area as a smooth zone; one donor per pixel kept the detail but cut wedge
+    seams between donors and copied lashes. Two bands instead: at scales above LID_DETAIL_SPLIT of the side the fill
+    stays as it was (its tone and colour, matched to the ring); below it the detail is the photo's own luma, rotated
+    about the centre (same radius), ONE rotation per LID_DETAIL_SECTOR sector of the lid, neighbouring sectors
+    cross-fading over a whole sector with the mix scaled back to one donor's contrast, and laid into each channel in
+    the proportion of the fill's local colour. A donor counts for a sector when LID_DETAIL_COVER of its window lands
+    on clean iris (no lid, no glare, both widened by 0.03 r, nothing past the photo's edge) and it has at most
+    LID_DETAIL_SLACK more outliers (a lash, a glint: detail past LID_DETAIL_OUTLIER times the clean iris' spread at
+    that radius) than the sector's cleanest donor; the sectors of each run are then given donors from both ends
+    inwards, cheapest first (outliers, distance, strength of the detail against the clean iris', a change of rotation
+    from the outer neighbour, and each source window already copied). A sector left without one takes a neighbour's.
+    The detail is soft-clipped at LID_DETAIL_CLIP spreads first, so a lash no rule saw comes through faint, and its
+    typical strength after the rotation is brought back to the clean iris' (at most x LID_DETAIL_GAIN). Returns the
+    new fill, float32 S x S x 3 (only pixels under lid_soft change), or None (no change)."""
+    S = photo.size[0]
+    lidm = np.asarray(lid_hard) > 0
+    soft = np.asarray(lid_soft, np.float32)
+    if lidm.shape != (S, S) or soft.shape != (S, S):
+        return None
+    arr = np.asarray(photo.convert("RGB"), dtype=np.float32)
+    fl = filled.convert("RGB")
+    fa = np.asarray(fl if fl.size == (S, S) else fl.resize((S, S), Image.LANCZOS), dtype=np.float32)
+    R = float(r_px)
+    ax = (np.arange(S) - S / 2 + 0.5) / R
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    keep = max(0.25, (pupil_rho or 0.0) * 1.04)
+    # the donors: clean iris of the photo, the lid and glare widened by 0.03 r
+    k = max(3, int(round(0.03 * R)) | 1)
+    bad = _grow_mask(lidm, k)
+    if glare_hard is not None and np.any(glare_hard):
+        g = np.asarray(glare_hard) > 0
+        if g.shape == (S, S):
+            bad |= _grow_mask(g, k)
+    clean = (arr.sum(-1) > 12.0) & ~bad & (rho > keep + 0.02) & (rho < 1.0)
+    if clean.sum() < 0.05 * np.pi * R * R:
+        return None
+    cw = clean.astype(np.float32)
+    sp = max(1.0, LID_DETAIL_SPLIT * S)
+    # the detail is luma only: the photo's colour detail, laid on a fill of another tone, drew foreign colours
+    # (26: an orange iris' crypts on a grey reflection fill came out teal)
+    lum = arr @ _W_LUM
+    hy = (lum - _blur_f(lum * cw, sp) / np.maximum(_blur_f(cw, sp), 1e-3)) * cw
+    del lum
+    # the spread of the clean detail per 0.02 r of radius (median absolute value, as a Gaussian sigma)
+    nb = int(1.02 / 0.02) + 1
+    rb = np.minimum((rho / 0.02).astype(np.int32), nb - 1)
+    idx = np.flatnonzero(clean)
+    b, v = rb.ravel()[idx], np.abs(hy.ravel()[idx])
+    o = np.lexsort((v, b)); b, v = b[o], v[o]
+    lo, hi = np.searchsorted(b, np.arange(nb)), np.searchsorted(b, np.arange(nb), "right")
+    med = np.array([v[(l + h) // 2] if h - l >= 50 else np.nan for l, h in zip(lo, hi)])
+    del idx, b, v, o
+    if not np.isfinite(med).any():
+        return None
+    ii = np.arange(nb)
+    med = np.interp(ii, ii[np.isfinite(med)], med[np.isfinite(med)])
+    sgb = np.maximum(1.4826 * med, 0.5)
+    sig = sgb[rb]
+    t = LID_DETAIL_CLIP * sig
+    x = np.abs(hy) / t
+    y = np.where(x < 0.5, x, 0.5 + 0.5 * np.tanh((x - 0.5) / 0.5))
+    hf = (hy * np.where(x > 1e-6, y / np.maximum(x, 1e-6), 1.0)).astype(np.float32)
+    outl = ((np.abs(hy) > LID_DETAIL_OUTLIER * sig) & clean).astype(np.float32)
+    enm = (np.minimum(np.abs(hy) / sig, LID_DETAIL_OUTLIER) * clean).astype(np.float32)
+    e_ref = float(enm[clean].mean())
+    del hy, x, y, t, sig
+    # sectors: cos^2 windows centred every LID_DETAIL_SECTOR degrees (they sum to 1 round the circle)
+    sec = float(LID_DETAIL_SECTOR)
+    ns = int(round(360.0 / sec))
+    win = lambda a, s: np.cos(0.5 * np.pi * np.clip(np.abs((a - (s + 0.5) * sec + 180.0) % 360.0 - 180.0) / sec,
+                                                     0.0, 1.0)) ** 2
+    # score every candidate rotation per sector on a small copy
+    n = min(S, LID_DETAIL_SCORE)
+    small = lambda a: np.asarray(Image.fromarray(a).resize((n, n), Image.BOX), dtype=np.float32)
+    c_n, o_n, e_n = Image.fromarray(small(cw)), Image.fromarray(small(outl)), Image.fromarray(small(enm))
+    axn = (np.arange(n) - n / 2 + 0.5) / (R * n / S)
+    rn = np.sqrt(axn[None, :] ** 2 + axn[:, None] ** 2)
+    an = np.degrees(np.arctan2(axn[:, None], axn[None, :])) % 360.0
+    tg = (np.asarray(Image.fromarray(lidm.astype(np.uint8) * 255).resize((n, n), Image.NEAREST)) > 0) \
+        & (rn > keep + 0.02) & (rn < 1.0)
+    if tg.sum() < 20:
+        return None
+    at = an[tg]
+    Wn = np.stack([win(at, s) for s in range(ns)], 0)
+    ws = Wn.sum(1)
+    live = np.flatnonzero(ws >= 3.0)
+    degs = [d for d in range(-180, 180, int(LID_DETAIL_STEP)) if d != 0]
+    cov = np.zeros((ns, len(degs)), np.float32); out = np.zeros_like(cov); en = np.zeros_like(cov)
+    for j, d in enumerate(degs):
+        rc = np.asarray(c_n.rotate(d, resample=Image.BILINEAR))[tg]
+        ro = np.asarray(o_n.rotate(d, resample=Image.BILINEAR))[tg]
+        cov[:, j] = Wn @ rc / np.maximum(ws, 1e-6)
+        out[:, j] = Wn @ ro / np.maximum(ws, 1e-6)
+        en[:, j] = Wn @ np.asarray(e_n.rotate(d, resample=Image.BILINEAR))[tg] / np.maximum(Wn @ rc, 1e-6)
+    choice = {}
+    far = LID_DETAIL_FAR * np.abs(np.array(degs, np.float32)) / 180.0
+    # a donor counts for a sector when it covers it and is within LID_DETAIL_SLACK of the sector's cleanest; its cost
+    # is its outlier share, its distance (FAR) and how far its detail's strength is off the clean iris' (FLAT)
+    U = np.full((ns, len(degs)), np.inf)
+    for s in live:
+        ok = cov[s] >= LID_DETAIL_COVER
+        if ok.any():
+            ok &= out[s] <= float(out[s][ok].min()) + LID_DETAIL_SLACK
+            tex = LID_DETAIL_FLAT * np.abs(np.log(np.maximum(en[s], 1e-3) / max(e_ref, 1e-3)))
+            U[s] = np.where(ok, out[s] + far + tex, np.inf)
+    # then each run of neighbouring lid sectors is assigned from both ends inwards: a sector pays LID_DETAIL_SWITCH
+    # for a rotation other than its outer neighbour's (one rotation over several sectors copies one arc, in order)
+    # and LID_DETAIL_REUSE for each source window already taken (otherwise every sector copies the one cleanest spot)
+    src = ((np.arange(ns)[:, None] + 0.5) * sec + np.array(degs, np.float32)[None, :]) % 360.0
+    used = []
+    has = np.isfinite(U).any(1)
+    start = 0 if has.all() else int(np.flatnonzero(~has)[0])
+    runs, run = [], []
+    for s in [(start + i) % ns for i in range(ns)] + [None]:
+        if s is not None and has[s]:
+            run.append(s)
+        elif run:
+            runs.append(run); run = []
+    for run in runs:
+        ends, prev = [0, len(run) - 1], [None, None]
+        side = 0
+        while ends[0] <= ends[1]:
+            s = run[ends[side]]
+            ends[side] += 1 if side == 0 else -1
+            cst = U[s].copy()
+            if prev[side] is not None:
+                cst += LID_DETAIL_SWITCH * (np.array(degs) != prev[side])
+            for c0 in used:
+                cst += LID_DETAIL_REUSE * np.clip(1.0 - np.abs((src[s] - c0 + 180.0) % 360.0 - 180.0) / sec, 0.0, 1.0)
+            j = int(np.argmin(cst))
+            if np.isfinite(cst[j]):
+                choice[int(s)] = degs[j]; used.append(float(src[s, j])); prev[side] = degs[j]
+            side ^= 1
+    # a sector with no donor of its own (a lid's thin end, a window half off the clean iris) takes its nearest
+    # neighbour's, up to two sectors off: where that donor is not clean its weight is 0 and the averaged fill stays,
+    # so the detail fades out pixel by pixel instead of stopping at a sector's edge (25 with the circle moved)
+    own = dict(choice)
+    for s in range(ns):
+        if s not in own:
+            for dd in (1, -1, 2, -2):
+                if (s + dd) % ns in own:
+                    choice[s] = own[(s + dd) % ns]; break
+    if debug is not None:
+        debug.append(dict(choice=choice, cover={int(s): round(float(cov[s].max()), 3) for s in live}, cov=cov,
+                          out=out, en=en, e_ref=e_ref, degs=degs, live=live))
+    if not choice:
+        return None
+    # the fibre band of the chosen donors over the lid (its bounding box only), mixed by the sector windows
+    zone = (soft > 0) & (rho > keep) & (rho < 1.02)
+    ys, xs = np.flatnonzero(zone.any(1)), np.flatnonzero(zone.any(0))
+    if ys.size == 0:
+        return None
+    y0, y1, x0, x1 = int(ys[0]), int(ys[-1]) + 1, int(xs[0]), int(xs[-1]) + 1
+    zb = zone[y0:y1, x0:x1]
+    T = np.flatnonzero(zb)
+    rT = rho[y0:y1, x0:x1].ravel()[T]
+    aT = (np.degrees(np.arctan2(ax[y0:y1, None], ax[None, x0:x1])) % 360.0).ravel()[T]
+    num = np.zeros(T.size, np.float32)
+    den = np.zeros(T.size, np.float32); sq = np.zeros(T.size, np.float32)
+    ci = Image.fromarray(cw)
+    hi_ = Image.fromarray(hf)
+    del hf
+    for d in sorted(set(choice.values())):
+        A = sum(win(aT, s) for s, dd in choice.items() if dd == d)
+        wd = A * np.asarray(_rotate_box(ci, d, (x0, y0, x1, y1), Image.BILINEAR)).ravel()[T]
+        num += wd * np.asarray(_rotate_box(hi_, d, (x0, y0, x1, y1), Image.BICUBIC)).ravel()[T]
+        den += wd; sq += wd * wd
+    del hi_
+    dn = np.maximum(den, 1e-4)
+    mix = num / dn / np.maximum(np.sqrt(sq) / dn, 0.6)
+    g = np.clip(den / 0.5, 0.0, 1.0) * np.clip((rT - keep) / 0.03, 0.0, 1.0) * np.clip((1.0 - rT) / 0.08, 0.0, 1.0)
+    # rotation (bicubic) and the cross-fades soften the finest detail: its typical strength is brought back to the
+    # clean iris' at the same radius (median |luma| in units of that radius' spread), never down, at most x GAIN
+    if (g > 0.5).sum() >= 50:
+        zT = np.abs(mix) / sgb[rb[y0:y1, x0:x1].ravel()[T]]
+        mix *= float(np.clip(0.6745 / max(float(np.median(zT[g > 0.5])), 1e-3), 1.0, LID_DETAIL_GAIN))
+    # the fill's own detail in the same band (read on the box widened by 4 blur radii) is what the mix replaces; the
+    # mix goes into each channel in the proportion of the fill's local colour, so the detail keeps the fill's hue
+    m_ = int(4 * sp) + 1
+    Y0, Y1, X0, X1 = max(0, y0 - m_), min(S, y1 + m_), max(0, x0 - m_), min(S, x1 + m_)
+    lo_ = [_blur_f(fa[Y0:Y1, X0:X1, c], sp)[y0 - Y0:y1 - Y0, x0 - X0:x1 - X0].ravel()[T] for c in range(3)]
+    ylo = np.maximum(lo_[0] * _W_LUM[0] + lo_[1] * _W_LUM[1] + lo_[2] * _W_LUM[2], 4.0)
+    res = fa.copy()
+    for c in range(3):
+        blk = res[y0:y1, x0:x1, c].ravel()
+        blk[T] += g * (mix * np.clip(lo_[c] / ylo, 0.0, 3.0) - (blk[T] - lo_[c]))
+        res[y0:y1, x0:x1, c] = blk.reshape(y1 - y0, x1 - x0)
+    return res
+
+
+def _rotate_box(im, deg, box, resample):
+    """im.rotate(deg, resample).crop(box), computing only the box (the same affine map PIL's rotate builds)."""
+    w, h = im.size
+    cx, cy = w / 2.0, h / 2.0
+    a = -math.radians(deg)
+    m = [round(math.cos(a), 15), round(math.sin(a), 15), 0.0, round(-math.sin(a), 15), round(math.cos(a), 15), 0.0]
+    m[2] = m[0] * -cx + m[1] * -cy + cx + m[0] * box[0] + m[1] * box[1]
+    m[5] = m[3] * -cx + m[4] * -cy + cy + m[3] * box[0] + m[4] * box[1]
+    return im.transform((box[2] - box[0], box[3] - box[1]), Image.Transform.AFFINE, m, resample)
+
+
 def lid_composite(base, filled, lid_hard, lid_soft, r_px, pupil_rho=None, photo=None, glare_hard=None):
     """composite(base, filled, lid_soft), feathered in tone as well as in alpha. The fill's tone just inside its edge
     is the mean of the band it borrowed from; the photo right outside it is the darkest of the lid's shadow (or its
@@ -1578,8 +1796,14 @@ def lid_composite(base, filled, lid_hard, lid_soft, r_px, pupil_rho=None, photo=
             cb[..., c] += d * k_out
     up = lambda a: a if n == S else np.stack(
         [np.asarray(Image.fromarray(a[..., c]).resize((S, S), Image.BILINEAR)) for c in range(3)], -1)
-    f2 = np.asarray(filled.convert("RGB").resize((S, S), Image.LANCZOS) if filled.size != base.size
-                    else filled.convert("RGB"), dtype=np.float32) + up(cf)
+    try:                                    # the fibre band from single donors; on any failure the averaged fill as before
+        fd = _lid_detail(photo if photo is not None else base, filled, lid_hard, lid_soft, r_px, pupil_rho, glare_hard)
+    except Exception:
+        fd = None
+    if fd is None:
+        fd = np.asarray(filled.convert("RGB").resize((S, S), Image.LANCZOS) if filled.size != base.size
+                        else filled.convert("RGB"), dtype=np.float32)
+    f2 = fd + up(cf)
     b2 = np.asarray(base.convert("RGB"), dtype=np.float32) + up(cb)
     a = np.asarray(lid_soft, np.float32)[..., None]
     return Image.fromarray(np.clip(b2 * (1 - a) + f2 * a, 0, 255).astype(np.uint8))
