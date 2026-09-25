@@ -56,6 +56,10 @@ export const T = {
       { title: '3. Window light', text: LIGHT },
       { title: '4. Tap to focus', text: 'Tap the iris on screen, hold still, shoot.' },
     ],
+    // lashes that hang over the iris cannot be removed by the engine (they come out as dark streaks), so the guide
+    // asks for an open eye before the first shot
+    stepsOpen: 'Eye wide open. ',
+    stepsOpenMore: 'Look straight ahead and lift the upper lid gently with a fingertip, so no lid or lashes cross the iris.',
     stepsShots: 'Take 3-5 shots and send them all.',
     stepsShotsMore: ' Turn a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.',
   },

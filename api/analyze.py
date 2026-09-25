@@ -39,6 +39,10 @@ DETAIL_CURVE = ((0.0, 0), (FIBRE_OK, DETAIL_OK), (FIBRE_GOOD, DETAIL_GOOD), (12.
 GLARE_OK_PCT = 5.0           # above this the verdict is capped at 'ok'
 GLARE_WEAK_PCT = 12.0        # above this at 'weak': about an eighth of the fibres would be invented
 OCCL_GOOD_PCT, OCCL_OK_PCT = 25, 40   # eyelid cover the vision model reports, for 'good' and 'ok'
+# the "open wide" tip comes earlier than the verdict cap: a lid or lashes over the iris are filled or rendered as dark
+# streaks, and no engine step removes lashes that hang over the iris (wave-i lashes: a detector found 5-18 % of them).
+# Vision reads 0-3 % on the owner's four photos and 8-32 % on the test photos with a lid or lashes over the iris.
+OCCL_TIP_PCT = 10
 # lamp cast, read from the white of the eye beside the iris (CIELAB of the sclera, iris.sclera_tint). A healthy
 # sclera is a slightly warm white; a red one is the eye itself (irritation), so red never counts as the light.
 LAMP_WARM_B = 24.0           # b* above this: a warm lamp
@@ -629,7 +633,9 @@ def analyze(body):
         tips.append(DARK_IRIS_TIP if dark_iris else
                     "The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
                     "hold the phone against something steady, and shoot again.")
-    if occl > OCCL_GOOD_PCT: tips.append("Open the eye wide (lift the eyelid with a finger) so the whole iris is visible.")
+    if occl > OCCL_TIP_PCT:
+        tips.append("Open the eye wide: look straight ahead and lift the upper lid gently with a fingertip, so no lid "
+                    "or lashes cross the iris. Lashes over the iris show up as dark streaks in the artwork.")
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False
     if pupil_r and v.get("glare_boxes"):

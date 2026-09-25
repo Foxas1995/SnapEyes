@@ -648,6 +648,7 @@ export const TryApp: React.FC = () => {
               {T.capture.steps.map((s) => (
                 <div key={s.title}><span className="text-[#f5c542] font-bold block">{s.title}</span>{s.text}</div>
               ))}
+              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</div>
               <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</div>
               {!adding && <div className="col-span-2 sm:col-span-4 text-zinc-400">{T.capture.helper}</div>}
             </div>
