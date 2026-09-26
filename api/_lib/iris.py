@@ -546,9 +546,19 @@ def _glare_v_threshold(v, dist, r_px):
     med_v = float(np.median(v[ring])) if ring.any() else 128.0
     return med_v, max(200.0, med_v + 45.0)
 
-def glare_mask(crop, r_px, extra_boxes=None):
+def glare_mask(crop, r_px, extra_boxes=None, parts=None):
     """Specular highlights inside the iris: a bright unsaturated core (relative to the iris itself, plus any boxes the
-    vision model reported) grown into the soft halo around it. Returns (hard uint8 mask, feathered float mask, pct)."""
+    vision model reported) grown into the soft halo around it. Returns (hard uint8 mask, feathered float mask, pct).
+    parts: _glare_core_halo's result for these same arguments, when the caller already has it."""
+    core_np, m, area = parts or _glare_core_halo(crop, r_px, extra_boxes)
+    mi = Image.fromarray((_grow_mask(m, 9) * 255).astype(np.uint8))
+    hard = np.asarray(mi)
+    feather = np.asarray(mi.filter(ImageFilter.GaussianBlur(5))).astype(np.float32) / 255.0
+    pct = 100.0 * float((hard > 0).sum()) / area
+    return hard, feather, pct
+
+def _glare_core_halo(crop, r_px, extra_boxes=None):
+    """glare_mask before its last dilation: (the eroded core, core + halo, the disk area it counts in)."""
     S = crop.size[0]
     hsv = np.asarray(crop.convert("HSV")).astype(np.int16)
     v, s = hsv[..., 2], hsv[..., 1]
@@ -576,6 +586,235 @@ def glare_mask(crop, r_px, extra_boxes=None):
     if m.sum() / area > 0.25:           # a real reflection never covers a quarter of the iris: halo grew into bright fibres
         m = core_np                     # fall back to the eroded core, never to an empty mask: discarding it
                                         # would leave the very worst glare untouched in the artwork
+    return core_np, m, area
+
+# glare_extent: the whole glint for the fill, not only its bright core. glare_mask looks for the halo only inside a
+# square window round the core, so a reflection that reaches further kept a straight-cut remnant (05: a bright
+# rectangle under the mask), and the pale disc or ring round a round glint stayed as an outline (09, live 2026-09-26);
+# the same window swallowed bright iris next to a glint (09's lower rim: yellow patches filled grey, in blocks).
+GLARE_EXT_SMOOTH = 0.002         # the photo is read low-passed this much (share of the side): single fibres out
+GLARE_EXT_REF = (0.02, 5.0, 10.0)   # the iris level: radius bins (iris radii), angle bins and angular sigma (degrees)
+GLARE_EXT_REF_MIN = 20.0         # ...near in angle where this many pixels support it, else the whole ring at that radius
+GLARE_EXT_E = (0.10, 0.24)       # a pixel is glare when its lift passes the clean iris' 90th percentile, clamped here
+GLARE_EXT_REACH = (3.0, 0.006, 0.30)   # a glint reaches at most 3 x its core radius + 0.006 of the side, <= 0.30 r
+GLARE_EXT_SECTORS = 24           # the profile is read per sector round the core's centre...
+GLARE_EXT_GAP = 2                # ...and ends where this many layers in a row are no longer mostly glare
+GLARE_EXT_MARGIN = 2             # the shoulder: layers taken past the last glare layer
+GLARE_EXT_RIM = 0.97             # nothing past this radius (as glare_mask's halo)
+GLARE_EXT_SIDE = 512             # the iris level is read on a copy at most this size
+
+
+def _polar_tone(arr, w, R, step=None, rmax=1.02):
+    """Per pixel of arr (S x S x 3 float): the mean colour of the pixels with weight w at the same radius about the
+    frame centre (bins of step[0] iris radii of R px), near in angle (step[1]-degree bins, a Gaussian of step[2] degrees
+    round the circle, radius bins mixed 1-2-1). Where fewer than GLARE_EXT_REF_MIN pixels support it, it moves to the
+    whole ring's mean at that radius; a radius with no weight at all takes its neighbours'. float32 S x S x 3."""
+    step = step or GLARE_EXT_REF
+    S = arr.shape[0]
+    ax = (np.arange(S) - S / 2 + 0.5) / R
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    ang = np.degrees(np.arctan2(ax[:, None], ax[None, :])) % 360.0
+    nr, na = int(math.ceil(rmax / step[0])) + 1, int(round(360.0 / step[1]))
+    fr = np.minimum(rho / step[0], nr - 1e-3)
+    fa = ang / step[1]
+    idx = (fr.astype(np.int32) * na + fa.astype(np.int32) % na).ravel()
+    wv = np.asarray(w, np.float64).ravel()
+    den = np.bincount(idx, wv, nr * na).reshape(nr, na)
+    num = np.stack([np.bincount(idx, wv * arr[..., c].ravel(), nr * na).reshape(nr, na) for c in range(3)], -1)
+    sb = step[2] / step[1]
+    t = np.arange(-int(3 * sb), int(3 * sb) + 1)
+    k = np.exp(-0.5 * (t / sb) ** 2); k /= k.sum()
+    circ = lambda a: sum(kk * np.roll(a, int(o), axis=1) for o, kk in zip(t, k))
+    def rad(a):
+        p = np.concatenate([a[:1], a, a[-1:]], 0)
+        return 0.25 * p[:-2] + 0.5 * p[1:-1] + 0.25 * p[2:]
+    den_s, num_s = rad(circ(den)), rad(circ(num))
+    ring_d, ring_n = rad(den.sum(1)), rad(num.sum(1))
+    has = ring_d > 1.0
+    ii = np.arange(nr)
+    ring_v = np.stack([np.interp(ii, ii[has], ring_n[has, c] / ring_d[has]) if has.any() else np.zeros(nr)
+                       for c in range(3)], -1)
+    sup = np.clip(den_s / GLARE_EXT_REF_MIN, 0.0, 1.0)[..., None]
+    val = sup * num_s / np.maximum(den_s, 1e-6)[..., None] + (1.0 - sup) * ring_v[:, None, :]
+    del den, num, den_s, num_s
+    gr = np.clip(rho / step[0] - 0.5, 0.0, nr - 1.0)
+    ga = fa - 0.5
+    r0 = np.minimum(gr.astype(np.int32), nr - 2); tr = (gr - r0)[..., None]
+    a0f = np.floor(ga); ta = (ga - a0f)[..., None]
+    a0 = a0f.astype(np.int32) % na; a1 = (a0 + 1) % na
+    out = ((1 - tr) * ((1 - ta) * val[r0, a0] + ta * val[r0, a1])
+           + tr * ((1 - ta) * val[r0 + 1, a0] + ta * val[r0 + 1, a1]))
+    return out.astype(np.float32)
+
+
+def _glare_lift(sm, tone):
+    """How far each pixel of sm (the low-passed photo, float RGB) is lifted towards white light from tone (the iris
+    level there, float RGB), 0..1: its luma's share of the way to white, but on a coloured iris no more than its
+    colour is diluted (1 - the projection of its Cb/Cr on the tone's, as a share of the tone's, x 1.3 + 0.03; the tone
+    counts as coloured from a chroma of 3 Cb/Cr units, fully from 9). A reflection adds light and washes the colour
+    out; a bright fibre or a lit patch of the same hue keeps it (09's yellow lower iris)."""
+    y, cb, cr = _ycc(sm)
+    yt, cbt, crt = _ycc(tone)
+    a_y = (y - yt) / np.maximum(255.0 - yt, 20.0)
+    c2 = cbt * cbt + crt * crt
+    a_c = np.clip(1.0 - (cb * cbt + cr * crt) / np.maximum(c2, 1e-3), 0.0, 1.0)
+    wc = np.clip((np.sqrt(c2) - 3.0) / 6.0, 0.0, 1.0)
+    return np.clip((1.0 - wc) * a_y + wc * np.minimum(a_y, 1.3 * a_c + 0.03), 0.0, 1.0).astype(np.float32)
+
+
+def _components(m):
+    """8-connected components of a boolean mask: (labels int32, 0 = none, count). Union-find over runs of pixels, one
+    Python step per run, not per pixel."""
+    parent = []
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]; i = parent[i]
+        return i
+    runs, prev = [], []
+    rows = np.flatnonzero(m.any(1))
+    last = -2
+    for y in rows:
+        d = np.diff(np.concatenate(([0], m[y].astype(np.int8), [0])))
+        st, en = np.flatnonzero(d == 1), np.flatnonzero(d == -1)
+        if y != last + 1: prev = []
+        cur = []
+        for x0, x1 in zip(st.tolist(), en.tolist()):
+            rid = len(parent); parent.append(rid)
+            for px0, px1, pid in prev:
+                if px0 <= x1 and px1 >= x0:
+                    a, b = find(rid), find(pid)
+                    if a != b: parent[max(a, b)] = min(a, b)
+            cur.append((x0, x1, rid)); runs.append((y, x0, x1, rid))
+        prev, last = cur, y
+    lab = np.zeros(m.shape, np.int32)
+    roots = {}
+    for y, x0, x1, rid in runs:
+        r = find(rid)
+        lab[y, x0:x1] = roots.setdefault(r, len(roots) + 1)
+    return lab, len(roots)
+
+
+def _dilate8(m):
+    """One step of 3 x 3 dilation of a boolean array (edges not wrapped)."""
+    o = m.copy()
+    o[1:] |= m[:-1]; o[:-1] |= m[1:]
+    p = o.copy()
+    p[:, 1:] |= o[:, :-1]; p[:, :-1] |= o[:, 1:]
+    return p
+
+
+def _dilate4(m):
+    """One step of cross-shaped dilation of a boolean array."""
+    o = m.copy()
+    o[1:] |= m[:-1]; o[:-1] |= m[1:]; o[:, 1:] |= m[:, :-1]; o[:, :-1] |= m[:, 1:]
+    return o
+
+
+def glare_extent(crop, r_px, extra_boxes=None, pupil_px=0.0, avoid=None, debug=None, parts=None):
+    """The whole glint, for the fill: glare_mask's core grown out along its own radial profile until the photo is back
+    at the iris level, instead of a halo searched only inside a square window. Returns (hard uint8, feathered float,
+    pct) as glare_mask does (its final 9 px dilation and 5 px feather), and never less than glare_mask's mask.
+    The iris level at each pixel: the clean iris at the same radius, near in angle (_polar_tone on a GLARE_EXT_SIDE copy;
+    clean = outside every core's reach zone and glare_mask's mask, `avoid` (an eyelid), the pupil (pupil_px x 1.08 +
+    0.02 r) and the black past the photo; read twice, the second time without what the first found lifted), so across a
+    glint it comes from the iris on both sides of it at that radius. A pixel's lift (_glare_lift) is its share of the way
+    to white light, and on a coloured iris no more than its colour is washed out: bright fibres and lit patches of the
+    iris' own hue do not count. A pixel is lifted past the clean iris' 90th percentile, clamped to GLARE_EXT_E. Each core
+    (8-connected) then grows in layers (alternate 3 x 3 and cross dilations: about round); per GLARE_EXT_SECTORS sector
+    round its centre the layers are taken while most of their pixels are lifted, through at most GLARE_EXT_GAP - 1
+    layers of dip, plus GLARE_EXT_MARGIN layers of shoulder; a sector's reach is the median of it and its two neighbours
+    and never past GLARE_EXT_REACH, nor past GLARE_EXT_RIM. Over a quarter of the iris, glare_mask's own mask instead (its
+    rule). No core: glare_mask's result exactly. parts: _glare_core_halo's result for these arguments, when known."""
+    S = crop.size[0]
+    core, m0, area = parts or _glare_core_halo(crop, r_px, extra_boxes)
+    if not core.any():
+        return glare_mask(crop, r_px, extra_boxes, parts=(core, m0, area))
+    arr = np.asarray(crop.convert("RGB"), np.float32)
+    sm = np.asarray(crop.convert("RGB").filter(ImageFilter.GaussianBlur(max(1.0, GLARE_EXT_SMOOTH * S))), np.float32)
+    ax = (np.arange(S) - S / 2 + 0.5) / float(r_px)
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    keep = (pupil_px or 0.0) / float(r_px) * 1.08 + 0.02
+    iris = (rho > keep) & (rho < GLARE_EXT_RIM) & (arr.sum(-1) > 12.0)
+    # every core's zone: its layers out to its reach cap (alternate 3 x 3 and cross dilations: about round)
+    lab, n = _components(core)
+    zone = _grow_mask(m0, 9)
+    comps = []
+    for c in range(1, n + 1):
+        ys, xs = np.nonzero(lab == c)
+        K = int(min(GLARE_EXT_REACH[2] * r_px, GLARE_EXT_REACH[0] * math.sqrt(ys.size / math.pi)
+                    + GLARE_EXT_REACH[1] * S))
+        if K < 1: continue
+        y0, y1 = max(0, ys.min() - K - 1), min(S, ys.max() + K + 2)
+        x0, x1 = max(0, xs.min() - K - 1), min(S, xs.max() + K + 2)
+        cur = lab[y0:y1, x0:x1] == c
+        layer = np.full(cur.shape, K + 1, np.int16)
+        layer[cur] = 0
+        for k in range(1, K + 1):
+            nxt = _dilate8(cur) if k % 2 else _dilate4(cur)
+            layer[nxt & ~cur] = k
+            cur = nxt
+        zone[y0:y1, x0:x1] |= cur
+        comps.append((c, ys, xs, K, (y0, y1, x0, x1), layer))
+    # the iris level: the clean iris at the same radius, near in angle, read outside every zone (so across a zone it
+    # comes from both its flanks), then again without what that first reading found lifted
+    ref = iris & ~zone
+    if avoid is not None and np.any(avoid):
+        ref &= ~(np.asarray(avoid) > 0)
+    thr = GLARE_EXT_E[1]
+    nw = min(S, GLARE_EXT_SIDE)                    # the level is smooth: read on a copy this size, drawn back at S
+    shrink = lambda p: np.asarray(Image.fromarray(np.ascontiguousarray(p, np.float32)).resize((nw, nw), Image.BOX),
+                                  np.float32)
+    grow = lambda p: np.asarray(Image.fromarray(p).resize((S, S), Image.BILINEAR), np.float32)
+    smn = np.stack([shrink(sm[..., c]) for c in range(3)], -1)
+    for _ in range(2):
+        tn = _polar_tone(smn, shrink(ref), float(r_px) * nw / S)
+        tone = np.stack([grow(tn[..., c]) for c in range(3)], -1) if nw != S else tn
+        lift = _glare_lift(sm, tone)
+        ring = ref & (rho < 0.93)
+        thr = float(np.clip(np.percentile(lift[ring], 90) if ring.sum() > 500 else GLARE_EXT_E[1], *GLARE_EXT_E))
+        ref = ref & (lift < thr)
+    hot = lift > thr
+    m = core.copy()
+    reach_log = []
+    ns = GLARE_EXT_SECTORS
+    for c, ys, xs, K, (y0, y1, x0, x1), layer in comps:
+        ok = iris[y0:y1, x0:x1] & (layer >= 1) & (layer <= K)
+        cy, cx = float(ys.mean()) - y0, float(xs.mean()) - x0
+        gy, gx = np.mgrid[0:y1 - y0, 0:x1 - x0]
+        fa = (np.degrees(np.arctan2(gy - cy, gx - cx)) % 360.0) / (360.0 / ns)
+        sec = fa.astype(np.int32) % ns
+        ix = (sec * (K + 1) + layer.clip(0, K)).ravel()
+        okr = ok.ravel()
+        cnt = np.bincount(ix[okr], minlength=ns * (K + 1)).reshape(ns, K + 1)
+        hit = np.bincount(ix[okr], hot[y0:y1, x0:x1].ravel()[okr].astype(np.float64),
+                          minlength=ns * (K + 1)).reshape(ns, K + 1)
+        reach = np.zeros(ns)
+        for s_ in range(ns):
+            lastk, miss = 0, 0
+            for k in range(1, K + 1):
+                if cnt[s_, k] == 0: break
+                if hit[s_, k] >= 0.5 * cnt[s_, k]:
+                    lastk, miss = k, 0
+                else:
+                    miss += 1
+                    if miss >= GLARE_EXT_GAP: break
+            reach[s_] = lastk
+        reach = np.median(np.stack([np.roll(reach, 1), reach, np.roll(reach, -1)]), 0)
+        reach = np.where(reach > 0, np.minimum(reach + GLARE_EXT_MARGIN, K), 0.0)
+        # the reach between sector centres, linear in angle
+        fa = fa - 0.5
+        a0 = np.floor(fa).astype(np.int32) % ns
+        ta = fa - np.floor(fa)
+        rr = (1 - ta) * reach[a0] + ta * reach[(a0 + 1) % ns]
+        m[y0:y1, x0:x1] |= ok & (layer <= rr)
+        reach_log.append((c, int(ys.size), K, [int(v) for v in reach]))
+    m &= rho < GLARE_EXT_RIM
+    m |= m0                             # never less than glare_mask: its halo, lashes and lid-margin glints stay
+    if m.sum() / area > 0.25:
+        m = m0
+    if debug is not None:
+        debug.update(dict(tone=tone, lift=lift, thr=thr, hot=hot, m0=m0, core=core, m=m, reach=reach_log,
+                          ref=ref, zone=zone))
     mi = Image.fromarray((_grow_mask(m, 9) * 255).astype(np.uint8))
     hard = np.asarray(mi)
     feather = np.asarray(mi.filter(ImageFilter.GaussianBlur(5))).astype(np.float32) / 255.0
@@ -738,6 +977,254 @@ def mirror_prefill(crop, feather, extra=()):
     src_lo = np.stack([_blur_f(src[..., c], rad) for c in range(3)], -1)
     src = src + (base_lo - src_lo)
     return Image.fromarray(np.clip(arr * (1 - a) + src * a, 0, 255).astype(np.uint8))
+
+# glare_fill: the fill the reflection holes get when the model's reply is thrown out (patch_guard) or the call fails,
+# and what the model is given. mirror_prefill alone averaged 8 donors, so the hole came out smooth (the render painted
+# 09's glint as a pale cream blob), matched its tone to a blur of everything round it (the pupil's dark and the
+# reflection's own grey halo included: 09's grey disc) and kept the donors' own colour below that blur (13 grey-violet
+# from the lashes' shade, 30 blue-grey from the limbus; wave-l/nodeglare), with no same-radius colour match.
+GLARE_FILL_TONE = 0.015          # the donors keep their own tone only below this scale (share of the side)
+GLARE_FILL_RING = (0.02, 5.0, 45.0)  # the same-radius tone: radius bins (iris radii), angle bins, angular Gaussian (deg)
+GLARE_FILL_SCALES = (0.01, 0.02, 0.04, 0.08, 0.16)   # _local_tone's blurs (share of the side), fine to coarse
+GLARE_FILL_SIDE = 256            # ...worked on a copy this size
+GLARE_FILL_OUTLIER = 1.5         # _glare_prefill: a donor this many spreads off the donors' mean (or darker than their
+                                 # median by this many robust spreads) at a pixel fades out
+GLARE_FILL_OUTLIER_MIN = 10.0    # ...but never for less than this many grey levels
+GLARE_FILL_LINE = (3.0, 4.0)     # a pixel whose detail (_fine_z) passes the first number of spreads donates less to
+                                 # the fill, nothing from the second; read at LID_DETAIL_SPLIT and at...
+GLARE_FILL_LINE_SPLIT = 0.012    # ...this share of the side (22's wide dark strokes by the upper limbus drew an X)
+GLARE_FILL_LINE_SOFT = 0.004     # those drops blurred by this share of the side: cut hard, a drop switched the donor
+                                 # mix along its outline (hard-edged patches, specks and a thin double line by the rim on
+                                 # the shifted cuts sC_05, sC_09, sA_19, sC_08 and on 03). Not grown first: grown, the
+                                 # drops covered twice the iris and left dark blots and a sharper seam (sA_26, sA_09)
+GLARE_FILL_DROP = (2.0, 3.0)     # the same for the fibre band, at LID_DETAIL_SPLIT: a lash, a lid margin, a speck of
+                                 # light (22's lashes and lower lid margin were copied as dark strokes, a curved seam)
+GLARE_FILL_CLIP = 1.5            # the fibre band's soft clip (spreads; the lid's LID_DETAIL_CLIP is 2.5): a lash lying at
+                                 # that radius elsewhere is copied faint, the fibres as they are (22, sample_blue)
+
+
+def _local_tone(arr, w, n=None, scales=None):
+    """Values carried into the holes: normalised blurs of arr (S x S x 3 float, any sign) weighted by w (0..1), from
+    the finest scale where it has support (a blur's weight over 0.3) to the coarsest, so a hole's edge takes the iris
+    right beside it and a wide hole's middle the iris further round. Worked at n px; float32 S x S x 3."""
+    S = arr.shape[0]
+    n = min(S, n or GLARE_FILL_SIDE)
+    small = lambda p: np.asarray(Image.fromarray(np.ascontiguousarray(p, np.float32)).resize((n, n), Image.BOX),
+                                 np.float32)
+    ws = small(w)
+    a = [small(arr[..., c]) for c in range(3)]
+    out = None
+    for sc in sorted(scales or GLARE_FILL_SCALES, reverse=True):
+        rad = max(1.0, sc * n)
+        wb = _blur_f(ws, rad)
+        nc = np.stack([_blur_f(p * ws, rad) for p in a], -1) / np.maximum(wb, 1e-4)[..., None]
+        if out is None:
+            out = nc
+        else:
+            t = np.clip(wb / 0.3, 0.0, 1.0)[..., None]
+            out = t * nc + (1.0 - t) * out
+    return np.stack([np.asarray(Image.fromarray(out[..., c]).resize((S, S), Image.BILINEAR), np.float32)
+                     for c in range(3)], -1)
+
+
+def _glare_prefill(crop, feather, tone, tone_rad, r_px=None, pupil_rho=None, hole=None, keep=None):
+    """mirror_prefill(crop, feather, LID_EXTRA_DONORS) with its tone target given (tone, S x S x 3 float, matched from
+    tone_rad of the side up instead of from 0.05 of it), worked only inside the holes' bounding box (the donors
+    rotated with _rotate_box): the same donors, weights and fall-back, at a fraction of the cost for a small hole, except
+    that a donor also fades out before the black past the photo inside the iris circle of radius r_px (outside the
+    pupil, pupil_rho x 1.08 + 0.02 iris radii: a dark pupil is not the photo's edge). hole (0..1, default feather):
+    what does not donate when it is more than the part filled here (the glint lying under a lid); keep (0..1, optional):
+    each pixel's weight as a donor. Returns the photo with the fill itself over the holes' whole bounding box, NOT
+    blended: glare_fill blends once (blended here as well, the photo and its glint kept 1 - a^2 of the soft edge instead
+    of 1 - a), and the fibre band's low-pass (_lid_detail) reads fill on both sides of the feather's last pixel, not the
+    glint lying under a lid there (06: a pale arc along the lid's edge)."""
+    arr = np.asarray(crop.convert("RGB"), np.float32)
+    S = arr.shape[0]
+    f = np.clip(np.asarray(feather, np.float32), 0.0, 1.0)
+    ys, xs = np.nonzero(f > 0)
+    if ys.size == 0:
+        return crop.convert("RGB")
+    rad = max(1.0, S * tone_rad)
+    mg = int(4 * rad) + 4
+    box = (max(0, int(xs.min()) - mg), max(0, int(ys.min()) - mg), min(S, int(xs.max()) + 1 + mg),
+           min(S, int(ys.max()) + 1 + mg))
+    h = f if hole is None else np.maximum(f, np.clip(np.asarray(hole, np.float32), 0.0, 1.0))
+    fw = np.maximum(h, np.clip(2.0 * _blur_f(h, DONOR_SOFT * S / 2.0), 0.0, 1.0))
+    del h
+    m_img = Image.fromarray((fw * 255).astype(np.uint8))
+    # the black past the photo (a square cut beyond the photo's edge) does not donate, and a donor fades out over
+    # DONOR_SOFT before it: rotated, that edge's hard cut drew straight seams across a large hole (22)
+    lit = arr.sum(-1) > 12.0
+    ax = (np.arange(S) - S / 2 + 0.5) / float(r_px or S * iris_radius_frac())
+    rho2 = ax[None, :] ** 2 + ax[:, None] ** 2
+    past = ~lit & (rho2 < 1.0) & (rho2 > ((pupil_rho or 0.0) * 1.08 + 0.02) ** 2)
+    fade = np.clip(2.0 * _blur_f(past.astype(np.float32), DONOR_SOFT * S / 2.0), 0.0, 1.0) if past.any() else 0.0
+    ow = np.where(lit, 1.0 - fade, 0.0)
+    if keep is not None:
+        ow = ow * np.clip(keep, 0.0, 1.0)
+    ones = Image.fromarray((ow * 255).astype(np.uint8))
+    del ow
+    del lit, past, fade, rho2
+    src_im = crop.convert("RGB")
+    def donors(degrees):
+        cs, ws = [], []
+        for deg in degrees:
+            cs.append(np.asarray(_rotate_box(src_im, deg, box, Image.BICUBIC), np.float32))
+            rot_m = np.asarray(_rotate_box(m_img, deg, box, Image.BICUBIC), np.float32) / 255.0
+            inside = np.asarray(_rotate_box(ones, deg, box, Image.BICUBIC), np.float32) / 255.0
+            ws.append(np.clip(inside, 0, 1) * (1.0 - np.clip(rot_m, 0, 1)))
+        return cs, ws
+    cs, ws = donors(ROTATION_DONORS)
+    cs2, ws2 = donors(LID_EXTRA_DONORS)
+    tot = sum(ws)
+    wf = np.clip((0.7 - tot) / 0.7, 0.0, 1.0)
+    cs, ws = cs + cs2, ws + [w * wf for w in ws2]
+    del cs2, ws2, wf
+    # a donor far off the others at a pixel (a lash, a crypt edge, a speck lying at that radius elsewhere) does not
+    # vote there: dropped past GLARE_FILL_OUTLIER x the donors' spread in luma (at least GLARE_FILL_OUTLIER_MIN); and
+    # a donor DARKER than the donors' weighted median by that many robust spreads (median absolute deviation) fades
+    # as well: where several donors sit on lashes they pull the mean and the spread and stay in. Darker only: fading
+    # lighter donors too left a dark majority's spots as blotches (09 with the cut shifted)
+    tot = sum(ws)
+    mean = sum(c * w[..., None] for c, w in zip(cs, ws)) / np.maximum(tot, 1e-3)[..., None]
+    ym = mean @ _W_LUM
+    dv = [np.abs(c @ _W_LUM - ym) for c in cs]
+    sd = np.sqrt(sum(w * d * d for w, d in zip(ws, dv)) / np.maximum(tot, 1e-3))
+    lim = np.maximum(GLARE_FILL_OUTLIER * sd, GLARE_FILL_OUTLIER_MIN)
+    Y = np.stack([c @ _W_LUM for c in cs], 0)
+    Wt = np.stack(ws, 0)
+    med = np.empty(Y.shape[1:], np.float32)
+    mad = np.empty(Y.shape[1:], np.float32)
+    for r0 in range(0, Y.shape[1], 64):         # in bands of rows: the sort's index arrays stay small
+        yb, wb = Y[:, r0:r0 + 64], Wt[:, r0:r0 + 64]
+        half = 0.5 * wb.sum(0)[None]
+        def wmedian(V):
+            o = np.argsort(V, 0)
+            i = np.minimum((np.cumsum(np.take_along_axis(wb, o, 0), 0) < half).sum(0), V.shape[0] - 1)
+            return np.take_along_axis(np.take_along_axis(V, o, 0), i[None], 0)[0]
+        med[r0:r0 + 64] = wmedian(yb)
+        mad[r0:r0 + 64] = wmedian(np.abs(yb - med[None, r0:r0 + 64]))
+    del Wt
+    lim_m = np.maximum(GLARE_FILL_OUTLIER * 1.4826 * mad, GLARE_FILL_OUTLIER_MIN)
+    del mad
+    # faded out between lim and 2 lim, and the fade softened over a few pixels: a hard per-pixel cut switched donors
+    # along sharp lines (22)
+    ws = [w * np.clip(_blur_f(np.clip(2.0 - d / lim, 0.0, 1.0)
+                              * np.clip(2.0 - np.maximum(med - y, 0.0) / lim_m, 0.0, 1.0), 2.0), 0.0, 1.0)
+          for w, d, y in zip(ws, dv, Y)]
+    del mean, ym, dv, sd, lim, Y, med, lim_m
+    tot = sum(ws)
+    num = sum(c * w[..., None] for c, w in zip(cs, ws))
+    tot = tot[..., None]
+    del cs, ws
+    src = num / np.maximum(tot, 1e-3)
+    blur = np.asarray(src_im.filter(ImageFilter.GaussianBlur(S * 0.03)).crop(box), np.float32)
+    src = np.where(tot < 0.35, blur, src)          # nowhere clean to borrow from
+    x0, y0, x1, y1 = box
+    base_lo = np.stack([_blur_f(tone[y0:y1, x0:x1, c], rad) for c in range(3)], -1)
+    src_lo = np.stack([_blur_f(src[..., c], rad) for c in range(3)], -1)
+    src = src + (base_lo - src_lo)
+    out = arr.copy()
+    out[y0:y1, x0:x1] = src
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+
+
+def _fine_z(arr, clean, R, split=None):
+    """Per pixel of arr (S x S x 3 float): the largest, over its 3 x 3 neighbourhood, of its luma detail below split
+    (default LID_DETAIL_SPLIT) of the side, in spreads of the clean iris' (clean, bool) at its radius (median absolute
+    detail per 0.02 R, as a Gaussian sigma), as _lid_detail reads them. Lashes, a lid margin and specks of light read
+    high, fibres low; 0 off the clean iris. None when too little clean iris is left."""
+    S = arr.shape[0]
+    if clean.sum() < 500:
+        return None
+    cw = clean.astype(np.float32)
+    sp = max(1.0, (split or LID_DETAIL_SPLIT) * S)
+    lum = arr @ _W_LUM
+    hy = np.abs(lum - _blur_f(lum * cw, sp) / np.maximum(_blur_f(cw, sp), 1e-3)) * cw
+    del lum
+    ax = (np.arange(S) - S / 2 + 0.5) / float(R)
+    nb = int(1.02 / 0.02) + 1
+    rb = np.minimum((np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2) / 0.02).astype(np.int32), nb - 1)
+    b, v = rb[clean], hy[clean]
+    o = np.lexsort((v, b)); b, v = b[o], v[o]
+    lo, hi = np.searchsorted(b, np.arange(nb)), np.searchsorted(b, np.arange(nb), "right")
+    med = np.array([v[(l + h) // 2] if h - l >= 50 else np.nan for l, h in zip(lo, hi)])
+    del b, v, o
+    if not np.isfinite(med).any():
+        return None
+    ii = np.arange(nb)
+    med = np.interp(ii, ii[np.isfinite(med)], med[np.isfinite(med)])
+    z = hy / np.maximum(1.4826 * med, 0.5)[rb]
+    del hy, rb
+    zm = z.copy()
+    zm[1:] = np.maximum(zm[1:], z[:-1]); zm[:-1] = np.maximum(zm[:-1], z[1:])
+    z = zm.copy()
+    z[:, 1:] = np.maximum(z[:, 1:], zm[:, :-1]); z[:, :-1] = np.maximum(z[:, :-1], zm[:, 1:])
+    return z
+
+
+def glare_fill(crop, feather, hard, r_px, pupil_rho=None, avoid=None, base=None, hole=None):
+    """The reflection holes (feather 0..1, hard their mask) filled the way an eyelid is: mirror_prefill's donors with
+    the far ones (LID_EXTRA_DONORS: soft donor switches, no straight seam across a large hole; every donor at the same
+    radius), their tone from GLARE_FILL_TONE of the side up matched to a target, then the fibre band from single donors
+    (_lid_detail, the holes as its 'lid', soft-clipped at GLARE_FILL_CLIP). The target is the clean iris' tone at the
+    same radius (_polar_tone, the lid path's same-radius match, weighted to the angles near the hole: GLARE_FILL_RING)
+    plus the photo's own departure from it carried in from round the hole (_local_tone of photo minus that): a
+    collarette or a darker limbus keeps its ring through the hole (the sample eyes' orange collarette, 30's dark limbus),
+    and a hole in shade stays in shade instead of taking the ring's colour as a blob (06, 13). The whole ring's median
+    instead drew 22's dark band at 0.7 r (lashes over the far side) as a dark arc through the hole (wave-m look/fv_*).
+    Lines (_fine_z past GLARE_FILL_LINE / GLARE_FILL_DROP: lashes, a lid margin no rule saw, specks of light) donate
+    less or nothing to the fill (the drops softened: GLARE_FILL_LINE_SOFT) and its fibre band, and a donor much darker
+    than the others' median fades out.
+    Clean iris: out of the holes, the pupil (pupil_rho x 1.08 + 0.02 iris radii), `avoid` (an eyelid) and the black past
+    the photo, and `hole` (0..1, default the feather: deglare's lid path passes the reflections and the lid together,
+    so the glint lying under the lid neither donates nor counts as iris: it drew a pale grey band along the lid's edge,
+    06). Returns base (default: the photo) with the fill blended in ONCE by the feather times the photo's disc:
+    base x (1 - a) + fill x a (deglare's lid path passes its lid fill as base)."""
+    S = crop.size[0]
+    arr = np.asarray(crop.convert("RGB"), np.float32)
+    ax = (np.arange(S) - S / 2 + 0.5) / float(r_px)
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    f = np.clip(np.asarray(feather, np.float32), 0.0, 1.0)
+    hf = f if hole is None else np.maximum(f, np.clip(np.asarray(hole, np.float32), 0.0, 1.0))
+    clean = (hf <= 0.02) & (arr.sum(-1) > 12.0) & (rho > (pupil_rho or 0.0) * 1.08 + 0.02) & (rho < 0.97)
+    if avoid is not None and np.any(avoid):
+        clean &= ~(np.asarray(avoid) > 0)
+    w = clean.astype(np.float32)
+    ring = _polar_tone(arr, w, float(r_px), step=GLARE_FILL_RING)
+    tone = ring + _local_tone(arr - ring, w)
+    del ring, w
+    # lines (a lash, a lid margin no rule saw, a speck of light) donate less, or nothing: the clean iris here is only
+    # 'not the holes, not a lid', and 22's lashes and lower lid margin were copied as dark strokes and a curved seam
+    # (read out to the photo's edge: the rim band donates to the rim too)
+    zc = (hf <= 0.02) & (arr.sum(-1) > 12.0) & (rho > (pupil_rho or 0.0) * 1.08 + 0.02) & (rho < 1.02)
+    if avoid is not None and np.any(avoid):
+        zc &= ~(np.asarray(avoid) > 0)
+    z = _fine_z(arr, zc, float(r_px))
+    z2 = _fine_z(arr, zc, float(r_px), split=GLARE_FILL_LINE_SPLIT)
+    del zc
+    ramp = lambda z_, lo_hi: None if z_ is None else np.clip((lo_hi[1] - z_) / (lo_hi[1] - lo_hi[0]), 0.0, 1.0)
+    keep = ramp(z if z2 is None else (z2 if z is None else np.maximum(z, z2)), GLARE_FILL_LINE)
+    del z2
+    if keep is not None:
+        # softened (GLARE_FILL_LINE_SOFT): cut hard, the drops switched the donor mix along their outlines (hard-edged
+        # patches, specks and a double line by the rim wherever many donors drop, as on a shifted cut)
+        keep = np.clip(_blur_f(keep, max(1.0, GLARE_FILL_LINE_SOFT * S)), 0.0, 1.0)
+    filled = _glare_prefill(crop, f, tone, GLARE_FILL_TONE, r_px, pupil_rho, hole=hf, keep=keep)
+    del keep, tone, hf
+    try:
+        fd = _lid_detail(crop, filled, hard, f, r_px, pupil_rho, glare_hard=avoid, clip=GLARE_FILL_CLIP,
+                         donor_w=ramp(z, GLARE_FILL_DROP))
+    except Exception:
+        fd = None
+    if fd is None:
+        fd = np.asarray(filled, np.float32)
+    # the fill goes in only as far as the photo's own disc (disk_alpha, as mask_disk cut it): past it the fill is not
+    # faded as the photo is, and blended by the feather alone it drew a thin dark grey ring just outside the iris' edge
+    # wherever a hole reaches the rim (own215120, sB_30, sA_sample_amber, 09h). Inside radius 0.965 nothing changes
+    a = (f * disk_alpha(S, float(r_px)))[..., None]
+    b = arr if base is None else np.asarray(base.convert("RGB"), np.float32)
+    return Image.fromarray(np.clip(b * (1 - a) + fd * a, 0, 255).astype(np.uint8))
 
 PUPIL_HAZE_SIZE = (0.80, 1.10)  # the pupil read from colour counts only when its edge is this share of the vision
                                 # pupil's radius: 0.84-1.06 on 6 of the 7 test photos where pupil_fill reads one (live
@@ -1520,7 +2007,8 @@ def lid_mask(crop, r_px, glare_hard=None, size=None, debug=None, pupil_rho=None)
     return (m * 255).astype(np.uint8), soft, pct
 
 
-def _lid_detail(photo, filled, lid_hard, lid_soft, r_px, pupil_rho=None, glare_hard=None, debug=None):
+def _lid_detail(photo, filled, lid_hard, lid_soft, r_px, pupil_rho=None, glare_hard=None, debug=None, split=None,
+                clip=None, donor_w=None):
     """The lid fill (mirror_prefill with LID_EXTRA_DONORS) with its fibre band taken from single donors. The fill is an
     average of several rotated donors, so its fine detail cancels out (0.44-0.76 of the clean iris' on 05, 06, 08, 09,
     19, 26) and the render paints the lid area as a smooth zone; one donor per pixel kept the detail but cut wedge
@@ -1560,7 +2048,7 @@ def _lid_detail(photo, filled, lid_hard, lid_soft, r_px, pupil_rho=None, glare_h
     if clean.sum() < 0.05 * np.pi * R * R:
         return None
     cw = clean.astype(np.float32)
-    sp = max(1.0, LID_DETAIL_SPLIT * S)
+    sp = max(1.0, (split or LID_DETAIL_SPLIT) * S)
     # the detail is luma only: the photo's colour detail, laid on a fill of another tone, drew foreign colours
     # (26: an orange iris' crypts on a grey reflection fill came out teal)
     lum = arr @ _W_LUM
@@ -1581,7 +2069,7 @@ def _lid_detail(photo, filled, lid_hard, lid_soft, r_px, pupil_rho=None, glare_h
     med = np.interp(ii, ii[np.isfinite(med)], med[np.isfinite(med)])
     sgb = np.maximum(1.4826 * med, 0.5)
     sig = sgb[rb]
-    t = LID_DETAIL_CLIP * sig
+    t = (clip or LID_DETAIL_CLIP) * sig
     x = np.abs(hy) / t
     y = np.where(x < 0.5, x, 0.5 + 0.5 * np.tanh((x - 0.5) / 0.5))
     hf = (hy * np.where(x > 1e-6, y / np.maximum(x, 1e-6), 1.0)).astype(np.float32)
@@ -1682,7 +2170,9 @@ def _lid_detail(photo, filled, lid_hard, lid_soft, r_px, pupil_rho=None, glare_h
     aT = (np.degrees(np.arctan2(ax[y0:y1, None], ax[None, x0:x1])) % 360.0).ravel()[T]
     num = np.zeros(T.size, np.float32)
     den = np.zeros(T.size, np.float32); sq = np.zeros(T.size, np.float32)
-    ci = Image.fromarray(cw)
+    # donor_w (0..1, optional; glare_fill: lines out): each pixel's weight as a donor, on top of the clean map; where
+    # it is low the mix fades to the fill's own detail
+    ci = Image.fromarray(cw if donor_w is None else (cw * np.clip(np.asarray(donor_w, np.float32), 0.0, 1.0)))
     hi_ = Image.fromarray(hf)
     del hf
     for d in sorted(set(choice.values())):

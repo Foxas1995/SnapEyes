@@ -31,7 +31,9 @@ def deglare(body):
         if crop.size[0] > L.WORK: crop = crop.resize((L.WORK, L.WORK), Image.LANCZOS)
     S = crop.size[0]; r_px = L.iris_radius_frac(pad) * S
     boxes = [[c * S for c in b] for b in (body.get("glare_boxes") or []) if isinstance(b, (list, tuple)) and len(b) == 4]
-    hard, feather, pct = L.glare_mask(crop, r_px, boxes)
+    parts = L._glare_core_halo(crop, r_px, boxes)      # glare_mask's core and halo, read again by glare_extent below
+    hard, feather, pct = L.glare_mask(crop, r_px, boxes, parts=parts)
+    mask_src = crop
     try:
         pr = float(body.get("pupil_r") or 0)
     except Exception:
@@ -71,8 +73,18 @@ def deglare(body):
         return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2),
                 "changed": pupil_changed or lid_pct > 0, "used_sr": used_sr,
                 "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95)}
+    # the reflection holes: the whole glint with its halo, outline ring and soft shoulder (glare_extent), never less than
+    # glare_mask's. The gate above and every lid and pupil decision still read glare_mask's, so a crop below the gate is
+    # exactly as before. The holes get the lid path's kind of fill (glare_fill: the tone of the iris round them, single
+    # donors' fibres): it is the model's input, and what stays wherever patch_guard throws the reply out
+    prho = pr / L.iris_radius_frac(pad) if pupil_ok else None
+    lid_glare = hard                    # the lid composite reads glare_mask's, as before: the lid itself is unchanged
+    hard, feather, _ = L.glare_extent(mask_src, r_px, boxes, pupil_px=pr * S if pupil_ok else 0.0,
+                                      avoid=lid_hard if lid_pct > 0 else None, parts=parts)
+    if pupil_ok:
+        hard, feather = L.drop_pupil(hard, feather, pr * S)
     if lid_pct <= 0:
-        prefilled = L.mirror_prefill(crop, feather)
+        prefilled = L.glare_fill(crop, feather, hard, r_px, prho)
         try:
             patch = L.gemini_image(L.PROMPT_DEGLARE, prefilled)
             # a reply that redrew the whole iris is not composited: its holes take the fill (patch_guard)
@@ -82,15 +94,19 @@ def deglare(body):
     else:
         # the model sees the lid already filled and rebuilds only the reflections: the glare is composited exactly as
         # without a lid, then the lid fill goes on top, so the model's pixels never land in the lid and no photo glare
-        # survives where a reflection meets the lid's soft edge (21: a bright line along the lower lid)
+        # survives where a reflection meets the lid's soft edge (21: a bright line along the lower lid). The holes off
+        # the lid take glare_fill, blended once onto the lid fill; the lid keeps its own fill
+        off_lid = feather * (1.0 - lid_feather)
+        prefilled = L.glare_fill(crop, off_lid, ((hard > 0) & (lid_feather < 0.5)).astype(np.uint8), r_px, prho,
+                                 avoid=lid_hard, base=filled, hole=np.maximum(feather, lid_feather))
         try:
-            patch = L.gemini_image(L.PROMPT_DEGLARE, filled)
+            patch = L.gemini_image(L.PROMPT_DEGLARE, prefilled)
             hole = np.maximum(feather, lid_feather)
-            glared = L.patch_guard(L.composite(crop, patch, feather), filled, patch, hole, r_px,
+            glared = L.patch_guard(L.composite(crop, patch, feather), prefilled, patch, hole, r_px,
                                    share=feather / np.maximum(hole, 1e-6))
         except Exception:
-            glared = filled                     # as without a lid: the fill borrowed from the same radius everywhere
-        clean = L.lid_composite(glared, filled, lid_hard, lid_feather, r_px, prho, photo=crop, glare_hard=hard)
+            glared = prefilled                  # as without a lid: the fill borrowed from the same radius everywhere
+        clean = L.lid_composite(glared, filled, lid_hard, lid_feather, r_px, prho, photo=crop, glare_hard=lid_glare)
     return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "changed": True, "used_sr": used_sr,
             "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95)}
 
