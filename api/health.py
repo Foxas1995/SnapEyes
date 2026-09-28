@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 from _lib import store
+import deglare
 
 def handle(req):
     info = {"ok": True, "commit": os.environ.get("VERCEL_GIT_COMMIT_SHA", "")[:7],
@@ -15,6 +16,8 @@ def handle(req):
             # the private Supabase store for paid 4K files (env only, no network call). Separate from blob_store,
             # which /try reads to decide whether to offer the training-memory opt-in: that must stay off.
             "master_store": store.configured(),
+            # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)
+            "deglare_model": deglare.DEGLARE_MODEL,
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx"))}
     L.send_json(req, 200, info)
 

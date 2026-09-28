@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """POST /api/deglare  {crop: b64 square iris crop, as the client cuts it (not masked), pad, pupil_r, glare_boxes}
 Detects specular reflections and eyelids (skin, lash line, lashes, lid shadow inside the iris circle). A reflection
-is rebuilt by the image model and blended back; an eyelid is filled from the same person's iris at the same radius
-(mirror_prefill), never from the model: the model's lid patches were a different iris (a new colour band, a straight
-two-tone seam, sharper than the photo), while /api/enhance re-renders the whole disc in one pass and restores the
-fibres over the fill without a seam.
+is rebuilt by the image model and blended back (with DEGLARE_MODEL off, only filled: glare_fill); an eyelid is filled
+from the same person's iris at the same radius (mirror_prefill), never from the model: the model's lid patches were a
+different iris (a new colour band, a straight two-tone seam, sharper than the photo), while /api/enhance re-renders
+the whole disc in one pass and restores the fibres over the fill without a seam.
 Reply: {ok, glare_pct, lid_pct, changed, used_sr, pupil_overlap, crop}. glare_pct and lid_pct are shares of the iris
 disk, measured separately; with no eyelid found (lid_pct 0) the result is exactly the glare-only one."""
 import os, sys
@@ -13,6 +13,16 @@ from http.server import BaseHTTPRequestHandler
 import numpy as np
 from PIL import Image
 from _lib import iris as L
+
+# The reflection call to the image model (PROMPT_DEGLARE) is a switch, OFF by default since 2026-09-29: the
+# reflection holes keep glare_fill's same-radius fill (the model's input), exactly what they got when the call failed
+# or patch_guard found that the model drew a new iris. /api/enhance re-renders the whole disc either way. On 624542e
+# (wave-n nodeglare2, 26 glare photos, 48 image calls) the call changed nothing on 12, barely anything on 6, and on
+# the 8 it changed visibly the fill alone was better on 11, 14, 30 and 25 and the same on 20, 03, 09 and the blue
+# sample; it costs about 10 s and one 1K image call per preview. SNAPEYES_DEGLARE_MODEL=on (or 1/true/yes) brings
+# the call back.
+DEGLARE_MODEL = (os.environ.get("SNAPEYES_DEGLARE_MODEL") or "off").strip().lstrip("\ufeff").lower() in (
+    "on", "1", "true", "yes")
 
 def deglare(body):
     if not L.check_ticket(body.get("ticket")):
@@ -85,12 +95,14 @@ def deglare(body):
         hard, feather = L.drop_pupil(hard, feather, pr * S)
     if lid_pct <= 0:
         prefilled = L.glare_fill(crop, feather, hard, r_px, prho)
-        try:
-            patch = L.gemini_image(L.PROMPT_DEGLARE, prefilled)
-            # a reply that redrew the whole iris is not composited: its holes take the fill (patch_guard)
-            clean = L.patch_guard(L.composite(crop, patch, feather), prefilled, patch, feather, r_px)
-        except Exception:
-            clean = prefilled
+        clean = prefilled                       # the switch off, a failed call or a new iris: the fill stays
+        if DEGLARE_MODEL:
+            try:
+                patch = L.gemini_image(L.PROMPT_DEGLARE, prefilled)
+                # a reply that redrew the whole iris is not composited: its holes take the fill (patch_guard)
+                clean = L.patch_guard(L.composite(crop, patch, feather), prefilled, patch, feather, r_px)
+            except Exception:
+                clean = prefilled
     else:
         # the model sees the lid already filled and rebuilds only the reflections: the glare is composited exactly as
         # without a lid, then the lid fill goes on top, so the model's pixels never land in the lid and no photo glare
@@ -99,13 +111,15 @@ def deglare(body):
         off_lid = feather * (1.0 - lid_feather)
         prefilled = L.glare_fill(crop, off_lid, ((hard > 0) & (lid_feather < 0.5)).astype(np.uint8), r_px, prho,
                                  avoid=lid_hard, base=filled, hole=np.maximum(feather, lid_feather))
-        try:
-            patch = L.gemini_image(L.PROMPT_DEGLARE, prefilled)
-            hole = np.maximum(feather, lid_feather)
-            glared = L.patch_guard(L.composite(crop, patch, feather), prefilled, patch, hole, r_px,
-                                   share=feather / np.maximum(hole, 1e-6))
-        except Exception:
-            glared = prefilled                  # as without a lid: the fill borrowed from the same radius everywhere
+        glared = prefilled                      # as without a lid: the fill borrowed from the same radius everywhere
+        if DEGLARE_MODEL:
+            try:
+                patch = L.gemini_image(L.PROMPT_DEGLARE, prefilled)
+                hole = np.maximum(feather, lid_feather)
+                glared = L.patch_guard(L.composite(crop, patch, feather), prefilled, patch, hole, r_px,
+                                       share=feather / np.maximum(hole, 1e-6))
+            except Exception:
+                glared = prefilled
         clean = L.lid_composite(glared, filled, lid_hard, lid_feather, r_px, prho, photo=crop, glare_hard=lid_glare)
     return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "changed": True, "used_sr": used_sr,
             "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95)}

@@ -105,7 +105,11 @@ class ClientError(ValueError):
     must never carry internals or echo what the caller sent."""
 
 class ModelBusy(RuntimeError):
-    """The Gemini model answered 429/503 (overloaded) on every attempt. run() answers 503 with a try-again line."""
+    """The Gemini model answered 429/500/503 (overloaded) on every attempt. run() answers 503 with a try-again line."""
+
+class UnlockError(PermissionError):
+    """A paid endpoint got no valid unlock ticket for this order. run() answers 403 with a sentence for a buyer,
+    not the free preview's "take the photo again"."""
 
 BUDGET = 52.0    # seconds of work we allow inside the 60 s Vercel function (leaves room to encode the reply)
 _LOCAL = threading.local()   # per-invocation deadline: one warm container can serve several requests at once
@@ -198,8 +202,10 @@ def run(req, fn, gate=True):
         send_json(req, 400, {"ok": False, "error": str(e), "ms": int((time.time() - t0) * 1000)})
     except PermissionError as e:
         print("snapeyes refused:", _scrub(repr(e))[:200], flush=True)
-        send_json(req, 403, {"ok": False, "error": "This session expired. Please take the photo again.",
-                             "ms": int((time.time() - t0) * 1000)})
+        msg = ("This download link has expired or does not belong to this order. Please open the link from your "
+               "order again, or write to info@snapeyes.com." if isinstance(e, UnlockError)
+               else "This session expired. Please take the photo again.")
+        send_json(req, 403, {"ok": False, "error": msg, "ms": int((time.time() - t0) * 1000)})
     except ValueError as e:
         print("snapeyes bad input:", _scrub(repr(e))[:200], flush=True)
         send_json(req, 400, {"ok": False, "error": "We could not read that image. Try another photo.",
@@ -394,8 +400,9 @@ def gemini(model, parts, gen_cfg, timeout=55, retries=1):
         if r.status_code in (429, 500, 503) and left > 0 and time_left(99) > 12:
             time.sleep(4 * (retries - left + 1)); left -= 1; continue
         break
-    # the model itself was overloaded: the customer is told to try again in a minute, not that we broke
-    if r.status_code in (429, 503): raise ModelBusy(last)
+    # the model itself was overloaded (a 500 that outlives the retries is Gemini's "high demand" too, seen 2026-09-24):
+    # the customer is told to try again in a minute, not that we broke
+    if r.status_code in (429, 500, 503): raise ModelBusy(last)
     raise RuntimeError(last)
 
 def gemini_json(model, prompt, im):
@@ -3620,11 +3627,13 @@ def _watermark_layer(W, H, u):
 
 WATERMARK_BADGE = "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"
 
-def _watermark(out, accent, u, tile_u=None):
+def _watermark(out, accent, u, tile_u=None, note=None):
     """The preview watermark: a faint rotated tile of SNAPEYES.COM PREVIEW over the whole artwork and a badge
     at the top centre. u is the badge scale; for the square single-eye artwork it is the side. tile_u is the
     tile's scale, u when not given. The badge's pill is cut to its measured text plus a margin, so the words
-    stay inside it on every canvas (a fixed 0.28 u pill left 40 px of text outside each end at 1024)."""
+    stay inside it on every canvas (a fixed 0.28 u pill left 40 px of text outside each end at 1024).
+    note: one short line under the badge, for a style that draws no caption (Studio Black), so a saved preview of
+    the AI-generated sample eye still says so in its pixels."""
     W, H = out.size
     layer = _watermark_layer(W, H, tile_u or u)
     out = Image.alpha_composite(out.convert("RGBA"), layer).convert("RGB")
@@ -3633,6 +3642,11 @@ def _watermark(out, accent, u, tile_u=None):
     half = min(W / 2.0 - 2.0, d.textlength(WATERMARK_BADGE, font=fp) / 2.0 + u * 0.022)
     d.rounded_rectangle((W / 2.0 - half, u * 0.03, W / 2.0 + half, u * 0.07), radius=int(u * 0.02), fill=(0, 0, 0, 200), outline=accent)
     d.text((W / 2, u * 0.05), WATERMARK_BADGE, font=fp, fill=accent, anchor="mm")
+    if note:
+        fn, txt = _font("PlusJakartaSans.ttf", int(u * 0.014), "Bold"), str(note).upper()
+        hn = min(W / 2.0 - 2.0, d.textlength(txt, font=fn) / 2.0 + u * 0.016)
+        d.rounded_rectangle((W / 2.0 - hn, u * 0.077, W / 2.0 + hn, u * 0.107), radius=int(u * 0.015), fill=(0, 0, 0, 200))
+        d.text((W / 2, u * 0.092), txt, font=fn, fill=accent, anchor="mm")
     return out
 
 BG_4K_FROM = 1024            # a canvas whose longest side is above this takes its background from bg/4k/
@@ -3731,7 +3745,7 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     if not bare:
         _caption(out, st, title, names, size / 2, size * 0.86, size * 0.905, size * 0.945, size)
     if watermark:
-        out = _watermark(out, st["accent"], size)
+        out = _watermark(out, st["accent"], size, note=title if bare else None)
     return out
 
 # ----------------------------------------------------------------------------- several eyes on one artwork
@@ -4042,7 +4056,7 @@ def compose_multi(irises, style="celestial_gold", names="", title=None, watermar
     if not bare:
         _caption(out, st, title, names, W / 2.0, H - lift - 0.14 * ut, H - lift - 0.095 * ut, H - lift - 0.055 * ut, ut)
     if watermark:
-        out = _watermark(out, st["accent"], ut, tile_u=min(float(u), WM_DISC * dia))
+        out = _watermark(out, st["accent"], ut, tile_u=min(float(u), WM_DISC * dia), note=title if bare else None)
     return out
 
 # ----------------------------------------------------------------------------- storage (Vercel Blob REST; silently skipped when not configured)

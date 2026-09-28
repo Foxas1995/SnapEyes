@@ -108,7 +108,7 @@ def master_compose(body):
         raise L.ClientError("Send a JSON object.")
     order = store.check_order(body.get("order"))
     if not L.check_ticket(body.get("ticket"), kind=store.unlock_kind(order)):
-        raise PermissionError("master_compose: unlock ticket missing, expired, of another kind or for another order")
+        raise L.UnlockError("master_compose: unlock ticket missing, expired, of another kind or for another order")
     keys = _keys(body.get("keys"), order)
     n = len(keys)
     style = body.get("style")

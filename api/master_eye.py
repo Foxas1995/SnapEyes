@@ -228,7 +228,7 @@ def master_eye(body):
         raise L.ClientError("Send a JSON object.")
     order = store.check_order(body.get("order"))
     if not L.check_ticket(body.get("ticket"), kind=store.unlock_kind(order)):
-        raise PermissionError("master_eye: unlock ticket missing, expired, of another kind or for another order")
+        raise L.UnlockError("master_eye: unlock ticket missing, expired, of another kind or for another order")
     eye = _eye(body.get("eye"))
     pad = _pad(body.get("pad"))
     want_rerender = body.get("rerender") is True
