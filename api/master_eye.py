@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
-"""POST /api/master_eye  {crop: b64 (the deglared iris square the preview used), pad, ticket, order, eye: 1-8,
-                          rerender: true (optional)}
+"""POST /api/master_eye  {crop: b64 (the deglared iris square the preview used), preview: b64 (the /api/enhance image
+                          the customer approved; optional), pad, ticket, order, eye: 1-8, rerender: true (optional)}
 The paid deliverable, step 1 of 2: this eye rendered ONCE at 4096 x 4096 by the image model and stored privately
 as orders/<order>/eye_<n>.jpg (JPEG q95 4:4:4, sRGB) with a small record orders/<order>/eye_<n>.json.
+
+preview: with it, the master is the approved preview at full size. The preview is the model's input (PROMPT_MASTER,
+"upscale this exact image"), the render is put back on the preview's framing (L.preview_register), gets the
+preview's pupil to the preview's own edge (L.preview_pupil), takes the preview's tone and colour above the fibre
+scale while it keeps its own 4K detail (L.preview_lock), and is measured against the preview (L.preview_qa: ring
+dE00, L* shift, whether the render followed the preview's fibres and pupil, and the preview against the photo
+crop). A copy of the preview is stored as orders/<order>/eye_<n>_preview.jpg for whoever reviews the order.
+Without it (the request before 2026-09-29) the crop is the input and the master is an independent render of the
+photo (PROMPT_ARTISTIC, chroma_lock, pupil_lock), which can come out lighter or darker than the preview (215120:
+iris ring luma 150 against the preview's 113, live 2026-09-28).
 
 ticket: an unlock ticket for THIS order, kind "unlock-<order>" (store.unlock_kind). A plain "unlock" ticket or one
 for another order is refused (403). order: lower-case letters, digits and "-", 4-64 characters.
@@ -12,12 +22,18 @@ by accident: the slot is claimed (orders/<order>/eye_<n>.lock, created atomicall
 request for a slot that is stored returns that master, and a request while another one renders it gets 409.
 
 rerender: true renders the slot once more, and only when its stored master failed the colour check (the record's
-qa.ok is false) and was not rendered again before. The first render is kept as eye_<n>_first.jpg; the better of
-the two (by that check) stays in eye_<n>.jpg, the other one is kept beside it.
+qa.ok is false; with a preview: when it does not follow the preview, preview.render_ok false) and was not
+rendered again before. The first render is kept as eye_<n>_first.jpg; the better of the two (by that check) stays
+in eye_<n>.jpg, the other one is kept beside it. A re-render must send the same input as the first render: a
+master made from a preview is rendered again only from that same preview (the record keeps its fingerprint,
+preview_sha), and a master made from the crop alone only from the crop alone. Anything else is a 400 before any
+spend, so an independent render can never replace a master that matches the approved preview.
 
-Reply 200: {ok, key, eye, width, height, existing, seconds, render_seconds, qa, needs_review, rerender_available,
-rerendered, ms}. needs_review is true when the stored master failed the colour check. The image itself is never
-returned (a 4K base64 is 3-4.4 MB, at the 4.5 MB body limit); /api/master_compose reads it from storage.
+Reply 200: {ok, key, eye, width, height, existing, seconds, render_seconds, qa, preview, needs_review,
+rerender_available, rerendered, ms}. qa: the colour check against the photo crop. preview: preview_qa's numbers,
+null without a preview. needs_review is true when the stored master failed the colour check or does not match its
+preview (preview.ok false). The image itself is never returned (a 4K base64 is 3-4.4 MB, at the 4.5 MB body
+limit); /api/master_compose reads it from storage.
 Other replies (all {ok: false, reason, error, retry}):
   503 storage_not_configured  nowhere to keep the file; answered before the body is parsed or anything is spent
   403                         no valid unlock ticket for this order
@@ -28,7 +44,7 @@ Other replies (all {ok: false, reason, error, retry}):
   503 storage_busy            storage did not answer; retry later
   502 render_rejected         the model answered without a usable 4096 px image; a retry would pay for the same
                               outcome, so retry is false and the order needs a person"""
-import os, sys, io, re, json, math, time, uuid, base64
+import os, sys, io, re, json, math, time, uuid, base64, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 import requests
@@ -89,19 +105,38 @@ def _base(s, pad):
     return crop, side
 
 
+def _preview(s, pad):
+    """The approved preview (the /api/enhance image) as the model input, prepared as _base prepares the crop:
+    squared, at WORK px, masked to the iris disk. None when the request has none (the old request)."""
+    if s is None or s == "":
+        return None
+    if not isinstance(s, str):
+        raise L.ClientError("Send the preview as base64 text.")
+    im = L.b64_to_pil(s, max_side=MAX_IN_SIDE)
+    side = min(im.size)
+    if side < MIN_IN_SIDE:
+        raise L.ClientError(f"The preview must be at least {MIN_IN_SIDE} pixels.")
+    im = im.crop((0, 0, side, side))
+    if side != L.WORK:
+        im = im.resize((L.WORK, L.WORK), Image.LANCZOS)
+    return L.mask_disk(im, pad)
+
+
 def _rejected(why, order, eye):
     print(f"snapeyes master REFUSED: {why} (order {order} eye {eye})", flush=True)
     return store.Answer(502, "render_rejected", "We could not finish this artwork automatically. Retrying will not "
                         "help; we will check it by hand.", False)
 
 
-def _render_4k(base, order, eye):
-    """One 4K render of PROMPT_ARTISTIC. The same request L.gemini_image(PROMPT_ARTISTIC, base, size="4K") sends,
-    through L.gemini with its own retry off, because only this function knows when an attempt still fits. Every
-    attempt gets the time left minus POST_RESERVE as its read timeout and is not sent when that is under
-    RENDER_NEED. A quick refusal (429/500/503) is tried once more when RETRY_NEED seconds are left.
-    Returns (image, attempts, token counts); anything but 4096 x 4096 is refused, never stored."""
-    parts = [{"text": L.PROMPT_ARTISTIC}, {"inlineData": {"mimeType": "image/png", "data": L.pil_to_b64(base, "PNG")}}]
+def _render_4k(base, order, eye, prompt=None):
+    """One 4K render of prompt (PROMPT_ARTISTIC, or PROMPT_MASTER from a preview). The same request
+    L.gemini_image(prompt, base, size="4K") sends, through L.gemini with its own retry off, because only this
+    function knows when an attempt still fits. Every attempt gets the time left minus POST_RESERVE as its read
+    timeout and is not sent when that is under RENDER_NEED. A quick refusal (429/500/503) is tried once more when
+    RETRY_NEED seconds are left. Returns (image, attempts, token counts); anything but 4096 x 4096 is refused, never
+    stored."""
+    parts = [{"text": prompt or L.PROMPT_ARTISTIC},
+             {"inlineData": {"mimeType": "image/png", "data": L.pil_to_b64(base, "PNG")}}]
     cfg = {"responseModalities": ["IMAGE", "TEXT"], "imageConfig": {"aspectRatio": "1:1", "imageSize": "4K"}}
     attempt = 0
     while True:
@@ -152,15 +187,45 @@ def _qa_failed(rec):
     return isinstance(rec, dict) and isinstance(rec.get("qa"), dict) and rec["qa"].get("ok") is False
 
 
+def _render_failed(rec):
+    """What a second render could fix: with a preview, the render not following it (preview.render_ok false; a
+    preview that does not match its photo is not the render's fault); without one, the colour check."""
+    if isinstance(rec, dict) and isinstance(rec.get("preview"), dict):
+        return rec["preview"].get("render_ok") is False
+    return _qa_failed(rec)
+
+
 def _can_rerender(rec):
-    return _qa_failed(rec) and not rec.get("rerendered")
+    return _render_failed(rec) and not rec.get("rerendered")
+
+
+def _from_preview(rec):
+    """Was this stored master made from a preview?"""
+    return isinstance(rec, dict) and (rec.get("input") == "preview" or isinstance(rec.get("preview"), dict))
+
+
+def _same_input(rec, pv_sha):
+    """A re-render is compared with the stored master by the same check, so it must come from the same input: from
+    the same preview (pv_sha, the fingerprint of the prepared preview) when the master was made from one, from the
+    crop alone when it was not. Without this, a re-render sent without the preview would be an independent render
+    judged only against the photo, could replace the master that matches the approved preview and clear
+    needs_review. A 400, raised before any spend."""
+    if _from_preview(rec):
+        if pv_sha is None:
+            raise L.ClientError("This eye was made from the approved preview. Send the same preview to render it again.")
+        if rec.get("preview_sha") and rec["preview_sha"] != pv_sha:
+            raise L.ClientError("This eye was made from another preview. Send the preview it was made from to render it again.")
+    elif pv_sha is not None:
+        raise L.ClientError("This eye was made without a preview. Render it again without one, or use a new order.")
 
 
 def _stored_reply(t0, key, eye, rec):
     qa = rec.get("qa") if isinstance(rec, dict) else None
+    pq = rec.get("preview") if isinstance(rec, dict) else None
     return {"ok": True, "key": key, "eye": eye, "width": MASTER_SIDE, "height": MASTER_SIDE, "existing": True,
-            "seconds": round(time.time() - t0, 1), "render_seconds": 0.0, "qa": qa, "needs_review": _qa_failed(rec),
-            "rerender_available": _can_rerender(rec), "rerendered": bool(isinstance(rec, dict) and rec.get("rerendered"))}
+            "seconds": round(time.time() - t0, 1), "render_seconds": 0.0, "qa": qa, "preview": pq,
+            "needs_review": store.needs_review(rec), "rerender_available": _can_rerender(rec),
+            "rerendered": bool(isinstance(rec, dict) and rec.get("rerendered"))}
 
 
 def _claim(folder, eye):
@@ -200,13 +265,22 @@ def _release(lock):
         print("snapeyes master lock not released:", L._scrub(str(e))[:200], flush=True)
 
 
-def _keep_better(folder, eye, key, prev, qa, data):
-    """A re-render: the better of the two renders (by the colour check) stays in eye_<n>.jpg. The first render is
-    copied to eye_<n>_first.jpg before it is replaced, and a re-render that is not better is kept as
-    eye_<n>_second.jpg. Nothing that was paid for is deleted. Returns which one is in eye_<n>.jpg."""
-    pq = prev.get("qa") or {}
-    new_ring, old_ring = qa.get("ring_de00"), pq.get("ring_de00")
-    better = bool(qa.get("ok")) or (new_ring is not None and (old_ring is None or new_ring < old_ring))
+def _keep_better(folder, eye, key, prev, qa, data, pqa=None):
+    """A re-render: the better of the two renders (by the colour check, or with a preview on both by preview_qa's
+    score) stays in eye_<n>.jpg. The first render is copied to eye_<n>_first.jpg before it is replaced, and a
+    re-render that is not better is kept as eye_<n>_second.jpg. Nothing that was paid for is deleted. Returns which
+    one is in eye_<n>.jpg. Renders from different inputs are never swapped (master_eye refuses such a re-render
+    before the render; this is the second guard): the first one stays."""
+    if isinstance(pqa, dict) != isinstance(prev.get("preview"), dict):
+        print("snapeyes master: re-render from another input than the first render, the first one is kept", flush=True)
+        better = False
+    elif isinstance(pqa, dict):
+        new_s, old_s = pqa.get("score"), prev["preview"].get("score")
+        better = bool(pqa.get("render_ok")) or (new_s is not None and (old_s is None or new_s < old_s))
+    else:
+        pq = prev.get("qa") or {}
+        new_ring, old_ring = qa.get("ring_de00"), pq.get("ring_de00")
+        better = bool(qa.get("ok")) or (new_ring is not None and (old_ring is None or new_ring < old_ring))
     if better:
         try:
             store.copy(key, f"{folder}/eye_{eye}_first.jpg")
@@ -235,6 +309,7 @@ def master_eye(body):
     folder = f"orders/{order}"
     key, rec_key = f"{folder}/eye_{eye}.jpg", f"{folder}/eye_{eye}.json"
     store.ensure_private(timeout=PRE_TIMEOUT, retry=False)      # a public bucket is refused before any spend
+    rec = None
     if store.exists(key, timeout=PRE_TIMEOUT, retry=False):
         rec = store.get_json(rec_key, timeout=PRE_TIMEOUT, retry=False)
         if not (want_rerender and _can_rerender(rec)):
@@ -242,6 +317,10 @@ def master_eye(body):
             print(f"snapeyes master: {key} already stored, not rendered again", flush=True)
             return _stored_reply(t0, key, eye, rec)
     base, input_px = _base(body.get("crop"), pad)
+    pv = _preview(body.get("preview"), pad)     # None: the old request, rendered from the crop
+    pv_sha = None if pv is None else hashlib.sha256(pv.tobytes()).hexdigest()[:16]
+    if rec is not None:
+        _same_input(rec, pv_sha)                # a re-render: the same input as the stored master, or a 400
     lock = _claim(folder, eye)
     try:
         # under the claim, look again: a request that stored this slot between the first look and the claim wins
@@ -250,14 +329,28 @@ def master_eye(body):
             prev = store.get_json(rec_key, timeout=PRE_TIMEOUT, retry=False)
             if not (want_rerender and _can_rerender(prev)):
                 return _stored_reply(t0, key, eye, prev)
+            _same_input(prev, pv_sha)
         t1 = time.time()
-        out, attempts, tokens = _render_4k(base, order, eye)
+        out, attempts, tokens = _render_4k(base if pv is None else pv, order, eye,
+                                           L.PROMPT_ARTISTIC if pv is None else L.PROMPT_MASTER)
         render_s = time.time() - t1
         t2 = time.time()
-        # the model may sculpt structure and light; the colour stays the client's own photo, upsampled to 4096
-        out = L.chroma_lock(out, base)
         r_frac = L.iris_radius_frac(pad)
-        out = L.pupil_lock(out, base, r_frac)   # and the pupil stays as wide as the photo's (see /api/enhance)
+        pqa = None
+        if pv is None:
+            # the model may sculpt structure and light; the colour stays the client's own photo, upsampled to 4096
+            out = L.chroma_lock(out, base)
+            out = L.pupil_lock(out, base, r_frac)   # and the pupil stays as wide as the photo's (see /api/enhance)
+        else:
+            # the approved preview at full size: on its framing, with its pupil, its tone and its colour
+            out, reg = L.preview_register(out, pv, r_frac)
+            out, pupil = L.preview_pupil(out, pv, r_frac)
+            follow = L.preview_follow(out, pv, r_frac)      # did the model follow the preview (before the lock)
+            out, tone = L.preview_lock(out, pv, r_frac=r_frac)
+            if pupil is not None:
+                tone["pupil"] = pupil
+            pqa = L.preview_qa(f"master {folder} eye {eye}", out, pv, photo=base, r_frac=r_frac, follow=follow,
+                               reg=reg, lock=tone)
         qa = L.colour_qa(f"master {folder} eye {eye}", result=out, source=base, r_frac=r_frac)
         fid = L.ssim_lowfreq(base, out, r_frac)
         data = store.jpeg_bytes(out, 95)
@@ -265,8 +358,10 @@ def master_eye(body):
         t3 = time.time()
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         this = {"pad": pad, "model": L.IMAGE_MODEL, "image_size": "4K", "width": MASTER_SIDE, "height": MASTER_SIDE,
-                "input_px": input_px, "attempts": attempts, "render_seconds": round(render_s, 1),
-                "fidelity": round(fid, 3), "qa": qa, "tokens": tokens, "bytes": len(data), "created": now}
+                "input": "crop" if pv is None else "preview", "preview_sha": pv_sha, "input_px": input_px,
+                "attempts": attempts,
+                "render_seconds": round(render_s, 1), "fidelity": round(fid, 3), "qa": qa, "preview": pqa,
+                "tokens": tokens, "bytes": len(data), "created": now}
         if prev is None:
             try:
                 store.put(key, data, "image/jpeg", upsert=False)
@@ -277,12 +372,21 @@ def master_eye(body):
             record = dict(this, order=order, eye=eye)
             kept = None
         else:
-            kept = _keep_better(folder, eye, key, prev, qa, data)
-            first = {k: prev.get(k) for k in ("qa", "fidelity", "bytes", "created", "render_seconds")}
+            kept = _keep_better(folder, eye, key, prev, qa, data, pqa)
+            first = {k: prev.get(k) for k in ("qa", "preview", "fidelity", "bytes", "created", "render_seconds")}
             second = dict(this)
             record = dict(second if kept == "second" else prev, order=order, eye=eye, rerendered=True, kept=kept,
                           first=dict(first, key=f"{folder}/eye_{eye}_first.jpg" if kept == "second" else key),
                           second=dict(second, key=key if kept == "second" else f"{folder}/eye_{eye}_second.jpg"))
+        if pv is not None:
+            # the picture the customer approved, beside the master, for whoever reviews the order (best effort).
+            # A re-render comes from the same preview (_same_input), so its copy is only filled in when missing.
+            try:
+                store.put(f"{folder}/eye_{eye}_preview.jpg", store.jpeg_bytes(pv, 93), "image/jpeg", upsert=prev is None)
+            except store.StorageExists:
+                pass
+            except store.StorageError as e:
+                print("snapeyes master preview copy not stored:", L._scrub(str(e))[:200], flush=True)
         t4 = time.time()
         record["seconds"] = round(time.time() - t0, 1)
         try:
@@ -295,8 +399,8 @@ def master_eye(body):
               f"{time.time() - t0:.1f} s bytes {len(data)} fidelity {fid:.3f} tokens {tokens}", flush=True)
         return {"ok": True, "key": key, "eye": eye, "width": MASTER_SIDE, "height": MASTER_SIDE, "existing": False,
                 "seconds": round(time.time() - t0, 1), "render_seconds": round(render_s, 1), "qa": record.get("qa"),
-                "needs_review": _qa_failed(record), "rerender_available": _can_rerender(record),
-                "rerendered": bool(record.get("rerendered"))}
+                "preview": record.get("preview"), "needs_review": store.needs_review(record),
+                "rerender_available": _can_rerender(record), "rerendered": bool(record.get("rerendered"))}
     finally:
         _release(lock)
 

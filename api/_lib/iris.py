@@ -84,6 +84,20 @@ PROMPT_ARTISTIC = (
     "and any pigment spots; do not change the framing or the black background. Photorealistic macro "
     "photograph, no painting style, no text, no added highlights or reflections."
 )
+# The paid 4K master when the client sends the preview it approved (/api/master_eye "preview"): that render is the
+# model's input, and this asks for the same picture at full size. 2026-09-29, 8 eyes at 4K: every render kept the
+# preview's fibres (fibre-band correlation 0.84-0.98 once registered, against 0.41-0.61 for a new render of the
+# photo) and added 4K detail; 215120 came back zoomed 1.10 (preview_register undoes it), 215102's wide pupil was
+# drawn narrower (preview_pupil puts it back), and all came back 2-27 luma lighter (preview_lock).
+PROMPT_MASTER = (
+    "This image is the approved artwork of a human iris on a black background. Upscale this exact image to a "
+    "high-resolution macro photograph of the same iris. Keep everything exactly where it is: every fibre, crypt, "
+    "furrow, pigment spot and the collarette in the same place and shape, the same pupil size and position, the "
+    "same framing and black background, and the same overall brightness, contrast and colours. Change nothing "
+    "else. Only add the fine detail a sharper photograph of this same iris would show: crisp individual fibres "
+    "and fine trabecular texture at full resolution. The pupil stays a smooth, deep black. No new highlights, "
+    "reflections, text or painting style."
+)
 
 # ----------------------------------------------------------------------------- http helpers
 def read_json(req):
@@ -3520,6 +3534,311 @@ def colour_qa(stage, result=None, source=None, r_frac=None, graded=None):
         note = " qa error " + _scrub(repr(e))[:160]
     print("snapeyes qa", stage, json.dumps(qa) + note, flush=True)
     return qa
+
+# ----------------------------------------------------------------------------- the paid master follows its preview
+# A paid master rendered from the photo is a second opinion of it, not the picture the customer approved: the
+# owner's 215120 came back with its iris ring at luma 150 against the preview's 113 (live smoke test 2026-09-28);
+# of 9 such renders of the test eyes 6 came back 3.5-13.5 L* lighter than their previews. When /api/master_eye gets
+# the approved preview, that render is the model's input (PROMPT_MASTER), and these steps make the file that
+# preview at full size: preview_register() puts the render back on the preview's framing (the model zoomed 215120
+# by 1.100), preview_pupil() gives it the preview's pupil to the preview's own edge, preview_lock() gives it the
+# preview's tone and colour above the fibre scale while it keeps its own finer detail, and preview_follow() with
+# preview_qa() measure what still differs and say when a person should look (needs_review).
+PREVIEW_REG_SIDE = (256, 512)       # the registration compares copies this size: the scale search, then its refinement
+PREVIEW_REG_SCALES = (0.80, 1.25, 0.01)   # render scale against the preview searched, and its step
+PREVIEW_REG_FINE = (0.010, 0.002)   # ...then refined this far either side of the best, in these steps
+PREVIEW_REG_BAND = (1.0, 4.0)       # structure compared: difference of blurs of these radii (px at 256, x2 at 512)
+PREVIEW_REG_RING = (0.25, 0.90)     # ...inside this ring of the iris radius: pupil edge and collarette in, lids out
+PREVIEW_REG_MIN = 0.50              # below this correlation after the search nothing is moved: no match was found
+PREVIEW_REG_STILL = (0.002, 0.5)    # a scale within the first of 1 and a shift under the second (px at 1024) is not
+                                    # resampled: a bicubic resample of the 4096 frame costs a little sharpness
+PREVIEW_PUPIL_REACH = 0.03          # preview_pupil: read this far (iris radii) past the preview's pupil edge...
+PREVIEW_PUPIL_FADE = 0.01           # ...fading out over the last this much: a dark crypt further out is never touched
+PREVIEW_PUPIL_IRIS = 0.5            # a preview pixel this share of the way from its pupil core to its iris ring
+                                    # already counts as iris: only the pupil and its edge ramp pull the render dark
+PREVIEW_LOCK_R = 2                  # preview_lock: three box passes of this radius at 1024 (sigma 2.4 px there,
+                                    # 10 px at 4096) split the preview's tone from the render's detail
+PREVIEW_LOCK_RING = (0.45, 0.90)    # the ring whose mean correction is reported (QA_RING)
+PREVIEW_FIBRE_SIGMA = (1.2, 3.5)    # fibre_band_corr: the fibre band (Gaussian sigmas at 1024)...
+PREVIEW_FIBRE_RING = (0.30, 0.92)   # ...correlated over this ring of the iris radius
+# preview_qa limits, measured 2026-09-29 on 8 masters rendered from their previews (the owner's 215120, 215102,
+# 215208, test photos 30, 09, 19, 05, the site sample) against 9 of today's masters (independent renders of the
+# same crops, 3 of them of 215120), all through this chain:
+PREVIEW_QA_DE00 = 3.0               # median ring dE00 against the preview after the lock: 0.55-0.79 (today's masters,
+                                    # which have no lock: 2.1-11.8)
+PREVIEW_QA_DL = 3.0                 # median ring L* shift against the preview: -0.43 to -0.53 (today's: -0.8 to +13.5)
+PREVIEW_QA_FOLLOW = 0.70            # the render's fibre band against the preview's before the lock (fibre_band_corr
+                                    # after preview_register and preview_pupil), at least: 0.84-0.98 from the preview,
+                                    # 0.41-0.61 for independent renders (0.78 for the sharp site sample)
+PREVIEW_QA_PUPIL = 0.03             # pupil radius and centre (pupil_circle, before the lock) within this many iris
+                                    # radii: 0.001-0.005
+PREVIEW_QA_PHOTO = 4.0              # the preview's colour-only dE00 against the photo crop: 0.61-1.78 for its own
+                                    # photo, 5.0 or more for any other eye of the test set (chroma_lock gave every
+                                    # preview its photo's colour, so a larger gap is a preview of another eye)
+PREVIEW_RENDER_CHECKS = ("ring_de00", "dl", "follow", "pupil")   # the checks a second render could pass
+
+
+def _reg_plane(im, n):
+    """Band-passed luma of im at n x n: the structure the registration aligns (no tone, no fibre grain)."""
+    im = im.convert("RGB")
+    im = im.resize((n, n), Image.BOX if im.size[0] >= n else Image.LANCZOS)
+    y = _lum3(np.asarray(im))[..., 0]
+    k = n / PREVIEW_REG_SIDE[0]
+    return _blur_f(y, PREVIEW_REG_BAND[0] * k) - _blur_f(y, PREVIEW_REG_BAND[1] * k)
+
+
+def _reg_weight(n, r_frac):
+    ax = (np.arange(n) - n / 2 + 0.5) / (r_frac * n)
+    rr = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    lo, hi = PREVIEW_REG_RING
+    return (np.clip((hi - rr) / 0.05, 0.0, 1.0) * np.clip((rr - lo) / 0.05, 0.0, 1.0)).astype(np.float32)
+
+
+def _reg_warp(p, s, tx, ty):
+    """Plane p sampled at c + s * (x - c) + (tx, ty), c the frame centre (bilinear, zero outside)."""
+    n = p.shape[0]; c = n / 2.0
+    return np.asarray(Image.fromarray(np.ascontiguousarray(p, np.float32), "F").transform(
+        (n, n), Image.AFFINE, (s, 0.0, c * (1 - s) + tx, 0.0, s, c * (1 - s) + ty), Image.BILINEAR), np.float32)
+
+
+def _reg_ncc(a, b, w):
+    sw = float(w.sum())
+    a = a - float((a * w).sum()) / sw
+    b = b - float((b * w).sum()) / sw
+    return float((a * b * w).sum() / math.sqrt(float((a * a * w).sum()) * float((b * b * w).sum()) + 1e-9))
+
+
+def _reg_shift(a, b):
+    """(dx, dy): a sampled at x + (dx, dy) matches b. Cross-correlation of the two band-passed planes (their black
+    surround is zero, so the frame needs no window; a window would pin the pupil edge and the limbus it cuts to
+    the frame and pull the peak to no shift), sub-pixel by a parabola through the peak."""
+    F = np.fft.rfft2(a) * np.conj(np.fft.rfft2(b))
+    r = np.fft.irfft2(F, s=a.shape)
+    n = r.shape[0]
+    iy, ix = np.unravel_index(int(np.argmax(r)), r.shape)
+    def sub(vm, v0, vp):
+        d = vm - 2.0 * v0 + vp
+        return 0.0 if d >= 0 else 0.5 * (vm - vp) / d
+    dx = ix + sub(r[iy, ix - 1], r[iy, ix], r[iy, (ix + 1) % n])
+    dy = iy + sub(r[iy - 1, ix], r[iy, ix], r[(iy + 1) % n, ix])
+    return (dx if dx < n / 2 else dx - n), (dy if dy < n / 2 else dy - n)
+
+
+def _reg_best(br, bp, w, scales):
+    best = None
+    for s in scales:
+        dx, dy = _reg_shift(_reg_warp(br, s, 0.0, 0.0), bp)
+        v = _reg_ncc(_reg_warp(br, s, s * dx, s * dy), bp, w)
+        if best is None or v > best[0]:
+            best = (v, float(s), s * dx, s * dy)
+    return best
+
+
+def preview_register(render, preview, r_frac=None):
+    """The render put back on the preview's framing: (image, info). A scale (about the frame centre) and a shift
+    are searched on band-passed luma, first on PREVIEW_REG_SIDE[0] copies over PREVIEW_REG_SCALES, then refined on
+    PREVIEW_REG_SIDE[1] copies. The render is resampled (bicubic) only when the match after the search reaches
+    PREVIEW_REG_MIN, beats the match where the render is now, and the move is larger than PREVIEW_REG_STILL;
+    otherwise it comes back as it came, the same object. info: scale, shift (px at 1024, where the render's content
+    sat against the preview's), the band correlation before and after, and whether it was moved."""
+    r_frac = r_frac or iris_radius_frac()
+    n0, n1 = PREVIEW_REG_SIDE
+    w0 = _reg_weight(n0, r_frac)
+    br, bp = _reg_plane(render, n0), _reg_plane(preview, n0)
+    lo, hi, st = PREVIEW_REG_SCALES
+    v, s, tx, ty = _reg_best(br, bp, w0, np.arange(lo, hi + st / 2, st))
+    w1 = _reg_weight(n1, r_frac)
+    br, bp = _reg_plane(render, n1), _reg_plane(preview, n1)
+    before = _reg_ncc(br, bp, w1)                    # where it is now
+    span, fs = PREVIEW_REG_FINE
+    grid = np.arange(s - span, s + span + fs / 2, fs)
+    vals = []
+    for g in grid:
+        dx, dy = _reg_shift(_reg_warp(br, g, 0.0, 0.0), bp)
+        vals.append((_reg_ncc(_reg_warp(br, g, g * dx, g * dy), bp, w1), float(g), g * dx, g * dy))
+    k = int(np.argmax([q[0] for q in vals]))
+    v, s, tx, ty = vals[k]
+    if 0 < k < len(vals) - 1:                        # a parabola through the best scale and its neighbours
+        va, vb, vc = vals[k - 1][0], vals[k][0], vals[k + 1][0]
+        d = va - 2 * vb + vc
+        if d < 0:
+            s2 = s + 0.5 * (va - vc) / d * fs
+            dx, dy = _reg_shift(_reg_warp(br, s2, 0.0, 0.0), bp)
+            v2 = _reg_ncc(_reg_warp(br, s2, s2 * dx, s2 * dy), bp, w1)
+            if v2 > v:
+                v, s, tx, ty = v2, float(s2), s2 * dx, s2 * dy
+    f = WORK / n1
+    tx, ty = tx * f, ty * f                           # px at 1024
+    still = abs(s - 1.0) < PREVIEW_REG_STILL[0] and math.hypot(tx, ty) < PREVIEW_REG_STILL[1]
+    moved = v >= PREVIEW_REG_MIN and v > before and not still
+    info = {"scale": round(s, 4), "shift": [round(tx, 2), round(ty, 2)], "before": round(before, 3),
+            "after": round(v, 3), "moved": bool(moved)}
+    if not moved:
+        return render, info
+    S = render.size[0]; c = S / 2.0; g = S / WORK
+    out = render.convert("RGB").transform((S, S), Image.AFFINE,
+                                          (s, 0.0, c * (1 - s) + tx * g, 0.0, s, c * (1 - s) + ty * g), Image.BICUBIC)
+    return out, info
+
+
+def preview_pupil(out, preview, r_frac=None):
+    """The preview's pupil in the render, to the preview's own edge: (image, info). pupil_lock() fits a circle on a
+    PUPIL_LOCK_SIDE copy in radial bins of 0.02 iris radii, too coarse for a 4096 edge: when the model had shrunk a
+    wide pupil (215102: 0.50 of the iris drawn as 0.35), the disk it painted back ended 8 px outside the preview's
+    edge and preview_lock turned the gap into a soft grey ring 20 px wide. Here the pupil is read from the preview itself, upsampled:
+    q = 0 where the preview shows its pupil core, 1 from PREVIEW_PUPIL_IRIS of the way to its iris ring, and every
+    render pixel within PREVIEW_PUPIL_REACH of the preview's pupil edge is taken towards the preview's pupil black
+    by (1 - q), only ever darker (the pupil_lock rule). A render that already has that pupil is left as it is.
+    info: the preview's pupil, its core and ring levels and the share of the pupil box that changed (None when the
+    preview has no measurable pupil). Returns the same object when there is no such pupil or nothing had to change."""
+    r_frac = r_frac or iris_radius_frac()
+    pc = pupil_circle(_lock_lum(preview), r_frac)
+    if pc is None:
+        return out, None
+    cx, cy, rho, edge = pc
+    pv = preview.convert("RGB")
+    n = pv.size[0]
+    ly = _lum3(np.asarray(pv))[..., 0]
+    ax = (np.arange(n) - n / 2 + 0.5) / (r_frac * n)
+    d1 = np.sqrt((ax[None, :] - cx) ** 2 + (ax[:, None] - cy) ** 2)
+    core_m = d1 < max(rho - PUPIL_LOCK_RIM, 0.5 * rho)
+    ring_m = (d1 > edge + 0.05) & (d1 < edge + 0.15) & (np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2) < 0.90)
+    if core_m.sum() < 20 or ring_m.sum() < 50:
+        return out, None
+    pcore, pring = float(np.percentile(ly[core_m], 10)), float(np.median(ly[ring_m]))
+    if pring - pcore < PUPIL_LOCK_CONTRAST:
+        return out, None
+    S = out.size[0]; R = r_frac * S
+    x0, y0 = S / 2 + cx * R, S / 2 + cy * R
+    reach = (edge + PREVIEW_PUPIL_REACH) * R
+    c0, r0 = max(0, int(x0 - reach) - 2), max(0, int(y0 - reach) - 2)
+    c1, r1 = min(S, int(math.ceil(x0 + reach)) + 3), min(S, int(math.ceil(y0 + reach)) + 3)
+    k = n / S
+    pl = np.asarray(pv.resize((c1 - c0, r1 - r0), Image.BILINEAR, box=(c0 * k, r0 * k, c1 * k, r1 * k)))
+    blk = np.array(out.convert("RGB").crop((c0, r0, c1, r1)))
+    before = blk.copy()
+    dx2 = (np.arange(c0, c1) + 0.5 - x0) ** 2
+    fade = max(PREVIEW_PUPIL_FADE * R, 1.0)
+    for a0, a1 in _row_chunks(r1 - r0, c1 - c0):
+        dd = np.sqrt(dx2[None, :] + ((np.arange(r0 + a0, r0 + a1) + 0.5 - y0) ** 2)[:, None])
+        q = np.clip((_lum3(pl[a0:a1])[..., 0] - pcore) / (PREVIEW_PUPIL_IRIS * (pring - pcore)), 0.0, 1.0)
+        w = (1.0 - q) * np.clip((reach - dd) / fade, 0.0, 1.0)
+        f = blk[a0:a1].astype(np.float32)
+        blk[a0:a1] = np.clip(f - w[..., None] * np.maximum(f - pcore, 0.0) + 0.5, 0, 255).astype(np.uint8)
+    changed = float(np.mean(np.abs(blk.astype(np.int16) - before.astype(np.int16)) > 8))
+    info = {"pupil": [round(cx, 3), round(cy, 3), round(rho, 3)], "core": round(pcore, 1), "ring": round(pring, 1),
+            "changed": round(changed, 3)}
+    if changed == 0.0:
+        return out, info
+    res = out.convert("RGB")
+    res.paste(Image.fromarray(blk), (c0, r0))
+    return res, info
+
+
+def preview_lock(out, preview, r=PREVIEW_LOCK_R, r_frac=None):
+    """The render with the approved preview's look: (image, info). Its luma keeps its own detail finer than r
+    (three box passes of radius r at WORK) and takes the preview's luma above it; its colour (Cb, Cr) is the
+    preview's, upsampled. The preview's colour is already the photo's (chroma_lock in /api/enhance), so this is the
+    lock /api/enhance applied, with the preview as its reference. info: the mean luma correction over
+    PREVIEW_LOCK_RING (how far the render's tone was from the preview's) and its 95th percentile of |correction|."""
+    S = out.size[0]
+    pv = preview.convert("RGB")
+    if pv.size != (WORK, WORK):
+        pv = pv.resize((WORK, WORK), Image.LANCZOS)
+    y = out.convert("YCbCr").getchannel(0)
+    py, pcb, pcr = pv.convert("YCbCr").split()
+    ym = np.asarray(y.resize((WORK, WORK), Image.BOX), np.float32)
+    d = _blur_f(np.asarray(py, np.float32), r) - _blur_f(ym, r)
+    ax = (np.arange(WORK) - WORK / 2 + 0.5) / ((r_frac or iris_radius_frac()) * WORK)
+    rr = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    ring = d[(rr > PREVIEW_LOCK_RING[0]) & (rr < PREVIEW_LOCK_RING[1])]
+    info = {"ring_dy": round(float(ring.mean()), 1), "p95": round(float(np.percentile(np.abs(ring), 95)), 1)}
+    up = np.asarray(Image.fromarray(d.astype(np.float32), "F").resize((S, S), Image.BILINEAR), np.float32)
+    Y = np.asarray(y)
+    Yn = np.empty((S, S), np.uint8)
+    for a0, a1 in _row_chunks(S, S):
+        Yn[a0:a1] = np.clip(Y[a0:a1].astype(np.float32) + up[a0:a1] + 0.5, 0, 255).astype(np.uint8)
+    del up
+    res = Image.merge("YCbCr", (Image.fromarray(Yn), pcb.resize((S, S), Image.BILINEAR),
+                                pcr.resize((S, S), Image.BILINEAR))).convert("RGB")
+    return res, info
+
+
+def fibre_band_corr(a_im, b_im, r_frac=None):
+    """Correlation of the fibre band (difference of Gaussians PREVIEW_FIBRE_SIGMA at 1024) of two square iris
+    images over PREVIEW_FIBRE_RING: 1.0 the same fibres in the same places, 0.4-0.6 a second render of the same
+    photo, about 0 unrelated or moved fibres (215120's render zoomed 1.10 read 0.04 before preview_register)."""
+    r_frac = r_frac or iris_radius_frac()
+    def band(im):
+        im = im.convert("L")
+        if im.size != (WORK, WORK):
+            im = im.resize((WORK, WORK), Image.BOX if im.size[0] > WORK else Image.LANCZOS)
+        s1, s2 = PREVIEW_FIBRE_SIGMA
+        return (np.asarray(im.filter(ImageFilter.GaussianBlur(s1)), np.float32)
+                - np.asarray(im.filter(ImageFilter.GaussianBlur(s2)), np.float32))
+    ax = (np.arange(WORK) - WORK / 2 + 0.5) / (r_frac * WORK)
+    rr = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    m = (rr > PREVIEW_FIBRE_RING[0]) & (rr < PREVIEW_FIBRE_RING[1])
+    a, b = band(a_im)[m], band(b_im)[m]
+    return float(np.corrcoef(a, b)[0, 1])
+
+
+def preview_follow(render, preview, r_frac=None):
+    """Did the model follow the preview? Read on the render after preview_register and preview_pupil, before
+    preview_lock, which copies the preview's tone down to the fibre scale: after it every render reads like the
+    preview at 256 px, and a pupil the model drew wider than the preview's (which preview_pupil cannot undo, it only
+    darkens) would come back as a smooth ring without fibres. {"follow": fibre_band_corr, "pupil_d": the largest
+    difference of pupil radius or centre (pupil_circle, iris radii), 1.0 when the render shows none, None when the
+    preview shows none}. Never raises: a fault leaves the numbers None."""
+    r_frac = r_frac or iris_radius_frac()
+    f = {"follow": None, "pupil_d": None}
+    try:
+        f["follow"] = round(fibre_band_corr(render, preview, r_frac), 3)
+        pr, pp = pupil_circle(_lock_lum(render), r_frac), pupil_circle(_lock_lum(preview), r_frac)
+        if pp is not None:
+            f["pupil_d"] = 1.0 if pr is None else round(max(abs(pr[2] - pp[2]),
+                                                            math.hypot(pr[0] - pp[0], pr[1] - pp[1])), 3)
+    except Exception as e:  # noqa: a QA fault must never cost the customer their picture
+        print("snapeyes preview follow error", _scrub(repr(e))[:160], flush=True)
+    return f
+
+
+def preview_qa(stage, result, preview, photo=None, r_frac=None, follow=None, reg=None, lock=None):
+    """How far the delivered master still is from the preview the customer approved. Logged and returned, never
+    raised. follow: preview_follow() of the render before preview_lock (without it those two checks are skipped).
+    ok is false when any measured check is past its limit (PREVIEW_QA_*); render_ok looks only at the checks a
+    second render could pass (PREVIEW_RENDER_CHECKS), not at a preview that does not match its photo.
+    score: the worst of those checks as a share of its limit (1.0 at the limit), for choosing between two renders."""
+    r_frac = r_frac or iris_radius_frac()
+    q = {"ring_de00": None, "dl": None, "follow": None, "pupil_d": None, "photo_de00": None}
+    try:
+        de, _, dl = qa_colour(result, preview, r_frac, parts=True)
+        q["ring_de00"], q["dl"] = round(de, 2), round(dl, 2)
+        if isinstance(follow, dict):
+            q["follow"], q["pupil_d"] = follow.get("follow"), follow.get("pupil_d")
+        if photo is not None:
+            q["photo_de00"] = round(qa_colour(preview, photo, r_frac, parts=True)[1], 2)
+        parts = {"ring_de00": q["ring_de00"] / PREVIEW_QA_DE00, "dl": abs(q["dl"]) / PREVIEW_QA_DL}
+        if q["follow"] is not None:
+            parts["follow"] = (1.0 - q["follow"]) / (1.0 - PREVIEW_QA_FOLLOW)
+        if q["pupil_d"] is not None:
+            parts["pupil"] = q["pupil_d"] / PREVIEW_QA_PUPIL
+        if q["photo_de00"] is not None:
+            parts["photo"] = q["photo_de00"] / PREVIEW_QA_PHOTO
+        fail = sorted(k for k, v in parts.items() if v > 1.0)
+        q["score"] = round(max(parts[k] for k in PREVIEW_RENDER_CHECKS if k in parts), 3)
+        q["fail"] = fail
+        q["render_ok"] = not any(k in PREVIEW_RENDER_CHECKS for k in fail)
+        q["ok"] = not fail
+    except Exception as e:  # noqa: a QA fault must never cost the customer their picture
+        q.update({"score": None, "fail": ["qa_error"], "render_ok": False, "ok": False})
+        print("snapeyes preview qa error", stage, _scrub(repr(e))[:160], flush=True)
+    if reg is not None:
+        q["register"] = reg
+    if lock is not None:
+        q["lock"] = lock
+    print("snapeyes preview qa", stage, json.dumps(q), flush=True)
+    return q
 
 # ----------------------------------------------------------------------------- lamp cast at capture
 SCLERA_RING = (1.15, 1.55)   # just outside the limbus, in iris radii: sclera to the sides, lids above and below

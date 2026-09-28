@@ -443,6 +443,15 @@ def unlock_kind(order):
     return "unlock-" + check_order(order)
 
 
+def needs_review(rec):
+    """Should a person look at this eye master before it ships? Its record (orders/<order>/eye_<n>.json) says so
+    when the master failed the colour check against the photo (qa.ok false) or does not match the preview the
+    customer approved (preview.ok false, /api/master_eye with a preview). Both paid endpoints ask this."""
+    if not isinstance(rec, dict):
+        return False
+    return any(isinstance(rec.get(k), dict) and rec[k].get("ok") is False for k in ("qa", "preview"))
+
+
 # ----------------------------------------------------------------------------- replies the paid endpoints share
 class Answer(Exception):
     """A deliberate non-200 JSON reply from a paid endpoint: 409 while an eye is still rendering, 502 when a paid

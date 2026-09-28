@@ -10,7 +10,8 @@ changed names line or a re-rendered eye makes a new file.
 ticket: an unlock ticket for THIS order, kind "unlock-<order>" (store.unlock_kind); anything else is a 403.
 
 Reply 200: {ok, url, key, width, height, bytes, style, layout, count, existing, expires_in, seconds, qa,
-needs_review, ms}. needs_review is true when an eye's master failed its colour check or a pupil came out tinted.
+needs_review, ms}. needs_review is true when an eye's master failed its colour check, does not match the preview the
+customer approved (its record's preview.ok, see /api/master_eye), or a pupil came out tinted.
 The file is never returned inline: a 4K JPEG as base64 is 3-4.4 MB, at the 4.5 MB body limit.
 Other replies: 503 storage_not_configured (before anything else), 403 without a valid ticket for this order,
 400 for bad input or an eye that is not stored for this order, 503 busy_retry when the eyes were loaded too late
@@ -123,8 +124,7 @@ def master_compose(body):
     W, H = L.multi_canvas(n, layout, SIZE)
     folder = f"orders/{order}"
     recs = _records(keys)
-    eyes_review = any(isinstance(r, dict) and isinstance(r.get("qa"), dict) and r["qa"].get("ok") is False
-                      for r in recs.values())
+    eyes_review = any(store.needs_review(r) for r in recs.values())
     spec = {"keys": keys, "style": style, "layout": layout, "names": names, "title": title, "size": SIZE}
     ident = dict(spec, eyes=[_identity(recs[k]) for k in keys])
     digest = hashlib.sha256(json.dumps(ident, sort_keys=True, ensure_ascii=True).encode()).hexdigest()[:16]
