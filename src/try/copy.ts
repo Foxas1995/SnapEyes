@@ -10,7 +10,7 @@ import { CHECKOUT_LEGAL } from '../shared/legal';
 
 /** The reasons api/analyze.py gives for blocking a shot (quality.block_reason). A blocked shot gets no work
  *  ticket, so the page offers only a retake. */
-export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large';
+export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large' | 'too_small';
 
 /** What the page says about a blocked shot. badge: the verdict pill; title: the retake card's heading; reason:
  *  why, in one line, on the single-photo card (the steps follow in the retake card, so the server's own message,
@@ -160,6 +160,21 @@ const en = {
           'Give your eye a minute in that light before you shoot, so the pupil has time to narrow. After dark, switch on all the ceiling lights.',
           CAMERA,
           'Tap the iris on the screen to focus, hold the phone steady and take 3-5 shots.',
+        ],
+      },
+      // an iris too small in the photo (BLOCK_DIAMETER_PX): the model would draw a pattern the photo does not have
+      too_small: {
+        badge: 'Too small',
+        title: 'Your iris is too small in this photo',
+        reason: 'Your iris is so small in this photo that too little of its own pattern shows, so it is not used.',
+        error: 'Your iris is too small in this photo to restore it. Please retake it closer, following the steps below.',
+        retakeLine: 'Your iris is too small in this shot. Come closer: back camera at 2x, about 10 cm from your eye, so the iris fills about a third of the frame.',
+        thumb: 'small',
+        steps: [
+          'Come closer: back camera at 2x zoom, about 10 cm from the eye, so the iris fills about a third of the frame.',
+          LIGHT,
+          FOCUS,
+          STEADY,
         ],
       },
     } satisfies Record<BlockReason, BlockCopy>,
@@ -484,6 +499,20 @@ const de: TryCopy = {
           'Geben Sie Ihrem Auge vor der Aufnahme eine Minute in diesem Licht, damit sich die Pupille verengen kann. Wenn es draußen dunkel ist, schalten Sie alle Deckenlampen ein.',
           CAMERA_DE,
           'Tippen Sie zum Scharfstellen auf die Iris, halten Sie das Smartphone ruhig und machen Sie 3-5 Aufnahmen.',
+        ],
+      },
+      too_small: {
+        badge: 'Zu klein',
+        title: 'Ihre Iris ist auf diesem Foto zu klein',
+        reason: 'Ihre Iris ist auf diesem Foto so klein, dass zu wenig von ihrem eigenen Muster zu sehen ist. Daher verwenden wir es nicht.',
+        error: 'Ihre Iris ist auf diesem Foto zu klein, um sie zu restaurieren. Bitte nehmen Sie es näher mit den Schritten unten neu auf.',
+        retakeLine: 'Ihre Iris ist auf dieser Aufnahme zu klein. Gehen Sie näher heran: Rückkamera mit 2-fachem Zoom, etwa 10 cm vor dem Auge, sodass die Iris etwa ein Drittel des Bildes füllt.',
+        thumb: 'klein',
+        steps: [
+          'Gehen Sie näher heran: Rückkamera mit 2-fachem Zoom, etwa 10 cm vor dem Auge, sodass die Iris etwa ein Drittel des Bildes füllt.',
+          LIGHT_DE,
+          FOCUS_DE,
+          STEADY_DE,
         ],
       },
     } satisfies Record<BlockReason, BlockCopy>,

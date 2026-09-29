@@ -4,7 +4,8 @@ Finds the iris, refines the limbus circle, measures size and sharpness, returns 
 A photo that shows too little of the customer's own iris pattern to restore it comes back with quality.blocked true,
 a retake message and no work ticket, the same as a circle that did not lock. quality.block_reason says why:
 "too_blurry", "too_dark" for a photo the vision model calls sharp of an iris too dark to show its pattern, or
-"pupil_too_large" for a pupil so wide that too thin a ring of iris shows (pupil_blocked).
+"pupil_too_large" for a pupil so wide that too thin a ring of iris shows (pupil_blocked), or "too_small" for an iris
+under BLOCK_DIAMETER_PX across in the original photo.
 device / study: capture telemetry, cut down by telemetry() and written to the "snapeyes capture" log line only."""
 import os, sys, re, math, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -459,6 +460,19 @@ PUPIL_BLOCK_MESSAGE = ("Your pupil is very wide in this photo, so only a thin ri
                        "pupils, wait until they wear off.")
 BLOCK_MESSAGES["pupil_too_large"] = PUPIL_BLOCK_MESSAGE
 
+# An iris this small in the original photo holds too few pixels of its own pattern: enhance upscales it four times and
+# the model draws fibres the photo does not have (2026-09-29, the owner's Drive set: a 75 px dog-and-owner screenshot
+# came back as a detailed brown iris from Detail 9, and 96-141 px web crops as crisp but largely made-up patterns; the
+# lines of blur_blocked pass them, since a small sharp iris is not blurry). Every real phone photo we have is 202 px or
+# more (the owner's 215120: 280, the 30 test photos: 428 and up; the guide's 10 cm at 2x gives 600+), so the line only
+# asks for a closer shot where nothing of the customer's own pattern could be kept. It wins over the blur reasons: a
+# small iris often reads blurry too, and coming closer is the fix.
+BLOCK_DIAMETER_PX = 170
+BLOCK_SMALL_MESSAGE = ("Your iris is too small in this photo, so too little of its own pattern shows: the studio would "
+                       "have to invent it. Hold the phone about 10 cm from your eye with the back camera at 2x zoom, so "
+                       "the iris fills about a third of the frame, tap the iris to focus and shoot again.")
+BLOCK_MESSAGES["too_small"] = BLOCK_SMALL_MESSAGE
+
 def pupil_blocked(crop, pupil_r, pad, locked):
     """(blocked, pupil_size): True when the pupil fills so much of the iris that the artwork would have to invent
     the iris (see PUPIL_BLOCK). pupil_size is the pupil measured on the crop, in iris radii, None when its edge
@@ -536,6 +550,10 @@ TEXT_DE = {
                        "Fenster seitlich. Wenn es draußen dunkel ist, schalten Sie alle Deckenlampen ein und warten Sie zuerst "
                        "eine Minute. Wurden Ihre Pupillen bei einer Augenuntersuchung mit Tropfen erweitert, warten Sie, bis "
                        "die Wirkung nachlässt.",
+    "too_small": "Ihre Iris ist auf diesem Foto zu klein, daher ist zu wenig von ihrem eigenen Muster zu sehen: Das Studio "
+                 "müsste es erfinden. Halten Sie das Smartphone etwa 10 cm vor Ihr Auge, mit der Rückkamera und 2-fachem "
+                 "Zoom, sodass die Iris etwa ein Drittel des Bildes füllt, tippen Sie zum Scharfstellen auf die Iris und "
+                 "fotografieren Sie erneut.",
     "closer": "Gehen Sie näher heran oder nutzen Sie den 2-fachen Zoom: Die Iris misst {px} px, wir brauchen {good} px oder mehr.",
     "fibres": "Die Fasern sind noch nicht scharf erkennbar. Tippen Sie auf die Iris, damit die Kamera scharfstellt, stützen Sie "
               "das Smartphone an etwas Festem ab und fotografieren Sie erneut.",
@@ -681,6 +699,9 @@ def analyze(body):
     pupil_block, pupil_size = pupil_blocked(crop, pupil_r, pad, locked)
     if pupil_block and not blocked:
         blocked, block_by, reason = True, "pupil", "pupil_too_large"
+    # too small to hold the customer's own pattern (BLOCK_DIAMETER_PX): come closer, whatever else the lines read
+    if locked and diam_orig < BLOCK_DIAMETER_PX:
+        blocked, block_by, reason = True, "size", "too_small"
     # a curved hand-shake no line sees: asked only of a locked photo nothing above blocked, under 'ok' (SHAKE_CONF)
     shake = shake_seen(im, cx, cy, r) if locked and not blocked and basis < FIBRE_OK else None
     if shake is not None and shake[0] and shake[1] >= SHAKE_CONF:
