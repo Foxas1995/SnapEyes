@@ -3920,8 +3920,8 @@ def sclera_tint(im, cx, cy, r):
     L_, a_, b_ = srgb_to_lab(np.median(px, axis=0))
     return {"L": float(L_), "a": float(a_), "b": float(b_), "n": int(len(px))}
 
-ARTWORK_FOOTER = "SNAPEYES  ·  PRECISION IRIS ART"    # the small signature line under the names. The product
-                                                        # is the digital file: nothing on it may speak of a print
+ARTWORK_FOOTER = "SNAPEYES  ·  PRECISION IRIS ART"    # no longer drawn (2026-09-30, owner: our own words on the artwork
+                                                        # read as cheap advertising); kept only for code that imports it
 CAPTION_MAX_W = 0.90         # no caption line is wider than this share of the artwork's width
 
 def _fitted_font(d, text, name, size, weight, max_w):
@@ -3935,20 +3935,30 @@ def _fitted_font(d, text, name, size, weight, max_w):
         w = d.textlength(text, font=f)
     return f
 
+def _has_text(title, names):
+    """Is there any caption to draw? Only what the customer wrote (names) or an explicit label (the AI-generated
+    sample's title): the studio writes nothing of its own on the artwork."""
+    return bool((title or "").strip() or (names or "").strip())
+
 def _caption(out, st, title, names, cx, y_title, y_names, y_footer, u):
-    """Title, names line and signature, centred on cx. u is the type scale (the side of a square artwork). The
-    title and the names line are made smaller when they would be wider than CAPTION_MAX_W of the artwork (a
-    40-character title is 1068 px at the 1024 px artwork's type size)."""
+    """The customer's own words, centred on cx, and an explicit label (title: the AI-generated sample's). u is the
+    type scale (the side of a square artwork). A line is made smaller when it would be wider than CAPTION_MAX_W of
+    the artwork (a 40-character title is 1068 px at the 1024 px artwork's type size). With only names, they take
+    the title's place (Cinzel, in the accent colour); with both, the label sits over the names. y_footer is
+    unused since the signature line went (kept for the callers)."""
     d = ImageDraw.Draw(out)
-    t = (title or st["title"]).upper()
     max_w = CAPTION_MAX_W * out.size[0]
-    ft = _fitted_font(d, t, "Cinzel.ttf", int(u * 0.042), "Bold", max_w)
-    fs = _font("PlusJakartaSans.ttf", int(u * 0.014), "Medium")
-    d.text((cx, y_title), t, font=ft, fill=st["accent"], anchor="mm")
-    if names:
-        fn = _fitted_font(d, names, "PlusJakartaSans.ttf", int(u * 0.026), "Regular", max_w)
-        d.text((cx, y_names), names, font=fn, fill=(240, 243, 250), anchor="mm")
-    d.text((cx, y_footer), ARTWORK_FOOTER, font=fs, fill=(150, 155, 170), anchor="mm")
+    label = (title or "").strip().upper()
+    who = (names or "").strip()
+    if label:
+        ft = _fitted_font(d, label, "Cinzel.ttf", int(u * 0.042), "Bold", max_w)
+        d.text((cx, y_title), label, font=ft, fill=st["accent"], anchor="mm")
+        if who:
+            fn = _fitted_font(d, who, "PlusJakartaSans.ttf", int(u * 0.026), "Regular", max_w)
+            d.text((cx, y_names), who, font=fn, fill=(240, 243, 250), anchor="mm")
+    elif who:
+        fn = _fitted_font(d, who, "Cinzel.ttf", int(u * 0.042), "Bold", max_w)
+        d.text((cx, (y_title + y_names) / 2.0), who, font=fn, fill=st["accent"], anchor="mm")
 
 WATERMARK_ANGLE = -18
 # The preview watermark's words, (tile, badge), in the language of the page that asked for the preview (page_lang).
@@ -4086,7 +4096,8 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
         keep["graded"] = graded   # handed back for the colour QA; changes nothing in the picture
     g8 = np.asarray(graded)
     Rg = max(1.0, Sd * STUDIO_FILL / 2.0)
-    cx, cy = size // 2, int(size * (0.5 if bare else 0.44))
+    text = _has_text(title, names)       # room for a caption only when there is one (else the eye is centred)
+    cx, cy = size // 2, int(size * (0.5 if bare or not text else 0.44))
     x0, y0 = cx - Sd // 2, cy - Sd // 2
     x0, y0 = max(0, min(x0, size - Sd)), max(0, min(y0, size - Sd))
     feather = 0.015 if bare else 0.05
@@ -4108,7 +4119,7 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     del bg8
     out = Image.fromarray(out8)
     del out8
-    if not bare:
+    if not bare and text:
         _caption(out, st, title, names, size / 2, size * 0.86, size * 0.905, size * 0.945, size)
     if watermark:
         out = _watermark(out, st["accent"], size, note=title if bare else None)
@@ -4388,8 +4399,9 @@ def compose_multi(irises, style="celestial_gold", names="", title=None, watermar
     W, H = multi_canvas(n, layout, size, fmt)
     u = min(W, H)
     ut = max(float(u), TYPE_WIDE * max(W, H))             # the type scale: caption and badge
+    text = _has_text(title, names)
     lift = WALL_FOOT * H if wall and not bare else 0.0    # the caption band sits this far above the bottom edge
-    if bare:
+    if bare or not text:                                  # nothing written: no caption band, the discs use the room
         top, bottom = (WALL_TOP * H, WALL_FOOT_BARE * H) if wall else (MULTI_SIDE * u, MULTI_SIDE * u)
     else:
         top, bottom = (WALL_TOP * H if wall else MULTI_TOP * ut), MULTI_CAPTION * ut + lift
@@ -4419,7 +4431,7 @@ def compose_multi(irises, style="celestial_gold", names="", title=None, watermar
     del bg8, discs
     out = Image.fromarray(out8)
     del out8
-    if not bare:
+    if not bare and text:
         _caption(out, st, title, names, W / 2.0, H - lift - 0.14 * ut, H - lift - 0.095 * ut, H - lift - 0.055 * ut, ut)
     if watermark:
         out = _watermark(out, st["accent"], ut, tile_u=min(float(u), WM_DISC * dia), note=title if bare else None)
