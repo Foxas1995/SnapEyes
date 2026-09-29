@@ -5,8 +5,11 @@
 // starts the file right after payment), change the wording here and on the withdrawal page together.
 // The right of withdrawal ends when MAKING the file begins (making.json, api/_lib/withdraw.py _began), which is what
 // the checkbox below says; the withdrawal page, the terms and the landing FAQ say the same ("once we have started
-// making your file", "sobald wir mit der Erstellung Ihrer Datei begonnen haben"). If the server ever moves that moment
-// (for example to the first download), change all of them together.
+// making your file", "sobald wir mit der Erstellung Ihrer Datei begonnen haben"), and that making starts only after
+// the order confirmation email, on the order page (never through the withdrawal link, withdrawFunctionHref or the
+// email's own withdrawal link). When nothing was made, it ends with the 14-day period (withdraw.py period_end: the day
+// of payment is not counted). If the server ever moves either moment (for example to the first download), change all
+// of them together: src/legal/docs/withdrawal.ts has the full list of the server's rules in its header.
 
 export type LegalLang = 'en' | 'de';
 

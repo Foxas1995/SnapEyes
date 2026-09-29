@@ -30,7 +30,10 @@
                                                         without a time limit; without --yes it only lists what it would do
     python scripts/order_admin.py withdrawals [--day YYMMDD] [--months 2]   the online withdrawal statements that
                                                         matched NO order (withdrawals/<yymm>/: you check them by hand),
-                                                        newest first, and the days whose digest email is still due
+                                                        newest first, and the statements still waiting for a digest
+                                                        email (NEED ACTION first: notes over the daily limit)
+    python scripts/order_admin.py refunded ORDER [--note TEXT]   you refunded a withdrawn order in Stripe: mark it
+                                                        (refunded.json), so the daily clean-up sends no reminder
 
 What stays of an erased PAID order: its records (pay.kept_record: order.json and paid.json with date, price, payment,
 email, the artwork's details and consent; the mail and note marks; withdrawal statements), plus deleted.json, so its
@@ -84,7 +87,7 @@ def cmd_status(order):
         left = pay.expires_at(rec) - time.time()
         print(f"unpaid    {'EXPIRED' if left <= 0 else f'{left / 3600:.1f} h left to pay'}")
     for name in ("review.json", "delivery.json", "release.json", "mail_delivery.json", "making.json", "withdrawn.json",
-                 "withdrawal.json", "deleted.json", "expired.json"):
+                 "withdrawal.json", "refunded.json", "deleted.json", "expired.json"):
         j = store.get_json(f"orders/{order}/{name}")
         if j is not None:
             print(f"{name:<18}{json.dumps(j, ensure_ascii=False)}")
@@ -249,14 +252,49 @@ def cmd_withdrawals(day=None, months=2):
         print(f"{w.get('received')}  order given {w.get('order_given')!r}  email {w.get('email')}  name {w.get('name')!r}  "
               f"receipt {ack.get('result') or ack.get('state') or 'none'}  lang {w.get('lang')}\n    {p}")
     print(f"{len(rows)} statement(s) that matched no order" + (f" on {day}" if day else f" in {', '.join(months_list)}"))
-    due = [r["name"] for r in store.list_all("cleanup/digest") if r["folder"]]
+    due = sorted(r["name"] for r in store.list_all("cleanup/digest") if r["folder"])
+    if day:
+        due = [d for d in due if d == day]
     if due:
-        print("digest email still to come for:", ", ".join(sorted(due)))
+        print("digest email still to come for:", ", ".join(due))
+    kinds = {"p": "NEED ACTION (note over the daily limit)", "r": "repeat, nothing new to do",
+             "n": "order never paid, nothing to do"}
+    for d in due:
+        names = sorted((r["name"] for r in store.list_all(f"cleanup/digest/{d}") if not r["folder"]),
+                       key=lambda n: ("prnu".find(n[:1]) if n[:1] in "prnu" else 9, n))
+        for n in names:
+            if n[:1] not in kinds:
+                continue                 # u-: listed above
+            ptr = store.get_json(f"cleanup/digest/{d}/{n}") or {}
+            w = store.get_json(ptr["path"]) if isinstance(ptr.get("path"), str) else None
+            if not isinstance(w, dict):
+                continue
+            extra = ""
+            if w.get("refund") == "due" and w.get("refund_by") and n.startswith("p-"):
+                extra = f"  REFUND {pay.amount_text(w.get('amount') or 0, 'en')} due by {pay.iso(w['refund_by'])}"
+            print(f"{w.get('received')}  {kinds[n[:1]]}: order {w.get('order')}  {w.get('outcome')} ({w.get('reason')})  "
+                  f"email {w.get('email')}{extra}\n    {ptr.get('path')}")
+
+
+def cmd_refunded(order, note=""):
+    """The owner refunded a withdrawn order: refunded.json (kept with the order's records), so the daily clean-up
+    sends no refund reminder. The refund itself is made in the Stripe Dashboard."""
+    _rec(order)
+    paid = pay.get_paid(order)
+    if not paid:
+        raise SystemExit("not paid: there is nothing to refund")
+    if not store.exists(f"orders/{order}/withdrawn.json"):
+        print("note: this order is not withdrawn; the mark is stored anyway")
+    store.put(f"orders/{order}/refunded.json", store.json_bytes({"t": int(time.time()), "iso": pay.iso(), "by": "owner",
+                                                                "amount": paid.get("amount_total"),
+                                                                "note": str(note or "")[:200]}),
+              "application/json", upsert=True)
+    print(f"marked refunded ({pay.amount_text(paid.get('amount_total') or 0, 'en')}); no reminder will come")
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="SnapEyes orders: status, link, release, clear-review, resend-mail, "
-                                             "mailed-by-hand, purge, expire-paid, erase, cleanup, withdrawals.")
+                                             "mailed-by-hand, purge, expire-paid, erase, cleanup, withdrawals, refunded.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("status", "link", "clear-review", "resend-mail", "mailed-by-hand"):
         sub.add_parser(name).add_argument("order")
@@ -278,6 +316,9 @@ def main(argv=None):
     w = sub.add_parser("withdrawals")
     w.add_argument("--day", help="only this UTC day, YYMMDD")
     w.add_argument("--months", type=int, default=2, help="how many months back to list (default 2)")
+    f = sub.add_parser("refunded")
+    f.add_argument("order")
+    f.add_argument("--note", default="", help="optional: how or when you refunded it")
     a = ap.parse_args(argv)
     if not store.configured():
         raise SystemExit("storage is not configured here: " + store.problem())
@@ -309,6 +350,8 @@ def main(argv=None):
         if a.day is not None and not (len(a.day) == 6 and a.day.isdigit()):
             raise SystemExit("--day must be YYMMDD, for example 260929")
         cmd_withdrawals(a.day, a.months)
+    elif a.cmd == "refunded":
+        cmd_refunded(_order(a.order), a.note)
     return 0
 
 

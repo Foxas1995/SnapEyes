@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="lt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07090e" />
+    <!-- The owner's admin panel. Not for search engines, not linked from the public site (robots.txt Disallow /admin).
+         No referrer and no third-party script or font here: the page holds the admin key. -->
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <title>SnapEyes administravimas</title>
+    <link rel="preload" as="font" type="font/woff2" href="/assets/atelier/fonts/plus-jakarta-sans-var.woff2" crossorigin />
+  </head>
+  <body class="bg-[#07090e] text-[#f0f3fa] antialiased overflow-x-hidden">
+    <noscript>
+      <div style="padding:24px;font-family:sans-serif;color:#f0f3fa">Administravimo puslapiui reikia JavaScript.</div>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/admin/main.tsx"></script>
+  </body>
+</html>

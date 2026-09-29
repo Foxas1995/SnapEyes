@@ -1,29 +1,47 @@
 // Right of withdrawal: the statutory information for digital content not supplied on a tangible medium (model
-// wording of Annex I(A) Directive 2011/83/EU; German: Muster-Widerrufsbelehrung, Anlage 1 zu Art. 246a § 1 Abs. 2
-// EGBGB in the version in force since 19.06.2026), the early expiry (Art. 16(m) Directive 2011/83/EU, § 356 Abs. 5
-// BGB) and the model withdrawal form (Annex I(B); Anlage 2). The checkbox text is imported from src/shared/legal.ts,
-// the same text the checkout shows.
+// wording of Annex I(A) Directive 2011/83/EU as amended by Directives (EU) 2019/2161 and 2023/2673; German:
+// Muster-Widerrufsbelehrung, Anlage 1 zu Art. 246a § 1 Abs. 2 EGBGB in the version in force since 19.06.2026), the
+// early expiry (Art. 16(m) Directive 2011/83/EU, § 356 Abs. 5 BGB) and the model withdrawal form (Annex I(B);
+// Anlage 2). The checkbox text is imported from src/shared/legal.ts, the same text the checkout shows.
 // The model sentences are kept word for word, including the delivery-cost clause of "Effects of withdrawal" (there
 // are no delivery costs, but leaving it out would make this no longer the unchanged statutory model). The model form
-// keeps only its own alternatives (goods / service): no added line. The telephone number the model asks for
-// (Gestaltungshinweis 2; Annex I(A) note 2) is printed by contactLine as soon as SELLER.phone is set
-// (src/landing/config.ts). Checked 2026-09-29 against Anlage 1 and 2 EGBGB (buzer.de, gesetze-im-internet.de) and
-// Annex I of Directive 2011/83/EU.
+// keeps only its own alternatives (goods / service): no added line, and its "To:" line is formLine (name, address,
+// email: exactly what Annex I(B) and Anlage 2 ask for).
+// The "[2]" contact details: the model asks for name, address, telephone number and email (Annex I(A) note 2;
+// Gestaltungshinweis 2). The OWNER DECIDED TO SHOW NO PHONE (PHONE_OMITTED_BY_OWNER, src/landing/config.ts), so
+// contactLine prints name, address and email only; this one deviation from the model is a risk the owner accepted.
 // We are obliged to offer the online withdrawal function (Art. 11a Directive 2011/83/EU, § 356a BGB), so "right"
-// carries the model sentence for exactly that case (Gestaltungshinweis 3, first alternative, as replaced by Art. 2
-// Nr. 7 of the law of 03.02.2026, BGBl. 2026 I Nr. 28: "Sie können Ihr Widerrufsrecht auch online unter ...
-// ausüben. Wenn Sie diese Online-Funktion nutzen, ..."), not the older sentence for an optional web form. The German
-// sentence is the statutory one word for word; the English one renders it faithfully (Annex I(A) note 3 as amended by
-// Directive (EU) 2023/2673; to be confirmed against the Official Journal's English text). The address, the labels and
-// the link come from src/shared/legal.ts (withdrawFunctionAddress, WITHDRAWAL_ONLINE, withdrawFunctionHref), the ones
-// the order page's form uses. The "online" section describes the function; what the server does with a statement is
-// api/order.py action "withdraw" (api/_lib/withdraw.py). Keep this text in step with both.
-// The right ends when we START MAKING the file, the beginning of performance ("mit der Vertragserfüllung begonnen",
-// § 356 Abs. 5 BGB): withdraw.py treats making.json or a stored eye as that moment, and the checkbox says the same.
+// carries the model sentence for exactly that case, not the older sentence for an optional web form:
+//  - German: Gestaltungshinweis 3, first alternative, as replaced by Art. 2 Nr. 7 of the law of 03.02.2026 (BGBl.
+//    2026 I Nr. 28), word for word; checked 2026-09-29 against gesetze-im-internet.de and buzer.de.
+//  - English: Annex I(A) instruction 3 as replaced by Annex I of Directive (EU) 2023/2673, word for word; checked
+//    2026-09-29 against the Official Journal text (OJ L, 2023/2673, 28.11.2023, from publications.europa.eu). The
+//    third paragraph uses the wording of Directive (EU) 2019/2161 ("a letter sent by post or email").
+// The inserted place is the function's address and its button (withdrawFunctionAddress, WITHDRAWAL_ONLINE,
+// withdrawFunctionHref in src/shared/legal.ts, the ones the order page's form uses), which the model allows ("internet
+// address or another appropriate explanation of where the withdrawal function is available").
+// WHEN THE RIGHT ENDS, as api/_lib/withdraw.py decides it (keep both in step):
+//  - once making the file begins (withdraw.py _began: making.json, delivery.json or a stored eye; api/order.py make
+//    writes making.json at the first render, which it starts only after the order confirmation email went out), with
+//    the recorded consent and that confirmation sent first ("lapsed, making_began"); making that began without them
+//    does not end it ("withdrawn, began_without_confirmation")
+//  - otherwise when the 14-day period is over ("lapsed, period_over"): withdraw.py period_end() does not count the
+//    day of payment and ends the period at the end of the 14th day after it, in the latest EU time zone. The texts
+//    keep the statutory sentence ("14 days from the day of the conclusion of the contract") and add only that the
+//    day of payment is not counted
+//  - an order never paid has no contract (409 not_paid, no receipt); one whose payment is still settling is stopped and
+//    refunded if the payment arrives ("withdrawn, payment_settling")
+// The "online" section describes the function as api/order.py action "withdraw" (api/_lib/withdraw.py) runs it:
+// receipts and their limits (withdraw.py _receipt_to: RECEIPT_ADDR_MAX = 2 a day and RECEIPT_ADDR_MONTH_MAX = 4 a
+// month to one address for statements that match no order; RECEIPT_OTHER_MAX = 3 per order to addresses other than
+// the payment email, then the payment email; REPEAT_RECEIPT_ORDER_MAX = 1 a day for repeats), and the refusals that
+// ask for an email instead (503 withdraw_paused, 429 too_many, storage errors). On a deployment that cannot sell yet
+// (pay.sells() false) a statement naming no stored order is not recorded (409 no_order); no contract can exist there,
+// so the texts, which describe the shop while it sells, do not mention it.
 // Not reviewed by a lawyer.
 import type { LegalDoc, LegalDocs } from '../types';
 import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
-import { CONTACT_EMAIL, contactLine } from '../facts';
+import { CONTACT_EMAIL, contactLine, formLine } from '../facts';
 
 const W = WITHDRAWAL_ONLINE;
 
@@ -40,7 +58,7 @@ const en: LegalDoc = {
       blocks: [
         'You have the right to withdraw from this contract within 14 days without giving any reason.',
         'The withdrawal period will expire after 14 days from the day of the conclusion of the contract.',
-        `To exercise the right of withdrawal, you must inform us (${contactLine('en')}) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or e-mail). You may use the attached model withdrawal form, but it is not obligatory. You can also exercise your right of withdrawal online at [${withdrawFunctionAddress('en')}](${withdrawFunctionHref('en')}) (the button "${W.en.button}"). If you use this online function, we will communicate to you an acknowledgement of receipt on a durable medium (e.g. by e-mail) without delay, with information on the content of the withdrawal statement and the date and time of its receipt.`,
+        `To exercise the right of withdrawal, you must inform us (${contactLine('en')}) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or email). You may use the attached model withdrawal form, but it is not obligatory. You can also exercise your right of withdrawal online at [${withdrawFunctionAddress('en')}](${withdrawFunctionHref('en')}) (the button "${W.en.button}"). If you use this online feature, we will send you an acknowledgement of receipt of the withdrawal on a durable medium (e.g. by email), including its content and the date and time of its submission, without undue delay.`,
         'To meet the withdrawal deadline, it is sufficient for you to send your communication concerning your exercise of the right of withdrawal before the withdrawal period has expired.',
       ],
     },
@@ -58,17 +76,17 @@ const en: LegalDoc = {
         '**Your right of withdrawal ends early** once we have begun the performance of the contract, that is, once we have started making your file, if (1) you expressly agreed that we begin the performance before the withdrawal period ends, (2) you acknowledged that you thereby lose your right of withdrawal once we have begun, and (3) we have confirmed this to you on a durable medium (we do so in the order confirmation email, which goes out before we start). This follows from Art. 16(m) of Directive 2011/83/EU.',
         'Before you pay, you give this consent by ticking this box:',
         { box: [CHECKOUT_LEGAL.en.withdrawalConsent], label: 'The checkbox at checkout' },
-        'In practice your right of withdrawal therefore ends when we start making your file, which is normally right after you pay, as soon as your order confirmation email has gone out. From then on it has ended, even while your file is still being made or is waiting for our quality check. Your statutory rights for a defective file are not affected: see [Complaints and defects](doc:terms#defects) in our terms of sale.',
+        'In practice your right of withdrawal therefore ends at the moment we start making your file. We start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open: the payment page takes you straight there. If you are not on your order page by then, we start when you open it again with the order page link in that email. The withdrawal link in the same email opens the online withdrawal function for your order without starting anything. From the moment we start, your right of withdrawal has ended, even while your file is still being made or is waiting for our quality check. If we have not started making your file, your right of withdrawal ends when the 14-day withdrawal period is over (the day of your payment is not counted). Your statutory rights for a defective file are not affected: see [Complaints and defects](doc:terms#defects) in our terms of sale.',
       ],
     },
     {
       id: 'online',
       title: 'Withdraw online',
       blocks: [
-        `While your right of withdrawal lasts, you can withdraw online at any time with the function ["${W.en.button}"](${withdrawFunctionHref('en')}). You find it at the foot of our home page and of our legal pages, and on your order page (the link in your order confirmation email).`,
-        `How it works: enter your name, your order number (it is filled in when you come from your order page) and the email address for the acknowledgement, then send your withdrawal with the button "${W.en.confirm}". If you do not come from your order page, please give the email address you paid with, so that we can match your order. If the details match none of our orders, the page tells you so; we still keep your statement, email you the acknowledgement of receipt and check it by hand.`,
-        'What happens then: we record your withdrawal with the date and time it reached us. If we have not started making your file yet, we stop your order, so nothing is made. Without delay we email you an acknowledgement of receipt with the content of your withdrawal and its date and time, and we refund you as described under [Effects of withdrawal](#effects).',
-        'If we had already started making your file with your consent, your right of withdrawal had already ended (see [When the right of withdrawal ends early](#expiry)), and we tell you so. Your rights for a defective file are not affected.',
+        `While your right of withdrawal lasts, you can withdraw online at any time with the function ["${W.en.button}"](${withdrawFunctionHref('en')}). You find it at the foot of our home page and of our legal pages, on your order page, and behind the withdrawal link in your order confirmation email. That link opens the function for your order without starting anything. Opening your order page itself starts making your file once your order confirmation email has gone out, and that ends your right of withdrawal (see [When the right of withdrawal ends early](#expiry)).`,
+        `How it works: enter your name, your order number (it is filled in when you come from your order page or through the withdrawal link) and the email address for the acknowledgement, then send your withdrawal with the button "${W.en.confirm}". If you come without one of these links, please give the email address you paid with, so that we can match your order. If the details match none of our orders, the page tells you so; we still keep your statement, check it by hand and email you an acknowledgement of receipt. To prevent misuse of our emails, acknowledgements of receipt are limited: for statements that match none of our orders, to two a day and four a month to the same address; for an order, to three in all to addresses other than the one it was paid with (further ones go to the address you paid with); and for a repeated statement about an order we have already answered, to one a day. If the page cannot take your statement, for example because of a technical fault or because unusually many statements are arriving, it tells you so: please then send us your withdrawal by email; an email is just as valid.`,
+        'What happens then: we record your statement with the date and time it reached us. If your order is paid, we have not started making your file and the 14-day withdrawal period is not over, your withdrawal takes effect: we stop your order, so nothing is made, and we refund you as described under [Effects of withdrawal](#effects). If your payment was still being processed when you withdrew, nothing is made either, and if the payment reaches us, we refund it in full. Without delay we email you an acknowledgement of receipt with the content of your withdrawal and its date and time.',
+        'If we had already started making your file with your consent, or the 14-day withdrawal period was over, your right of withdrawal had already ended (see [When the right of withdrawal ends early](#expiry)): the page and the acknowledgement of receipt tell you so, and we still look at your statement personally. If your order was never paid, there is no contract to withdraw from: the page tells you so, and nothing was charged. Your rights for a defective file are not affected.',
       ],
     },
     {
@@ -78,7 +96,7 @@ const en: LegalDoc = {
         '(Complete and return this form only if you wish to withdraw from the contract.)',
         {
           box: [
-            `To: ${contactLine('en')}`,
+            `To: ${formLine('en')}`,
             'I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract of sale of the following goods (*)/for the provision of the following service (*):',
             'Ordered on (*)/received on (*):',
             'Name of consumer(s):',
@@ -125,17 +143,17 @@ const de: LegalDoc = {
         '**Ihr Widerrufsrecht erlischt vorzeitig**, sobald wir mit der Vertragserfüllung begonnen haben, also mit der Erstellung Ihrer Datei, wenn Sie (1) ausdrücklich zugestimmt haben, dass wir vor Ablauf der Widerrufsfrist mit der Vertragserfüllung beginnen, (2) Ihre Kenntnis davon bestätigt haben, dass Sie durch Ihre Zustimmung mit Beginn der Vertragserfüllung Ihr Widerrufsrecht verlieren, und (3) wir Ihnen dies auf einem dauerhaften Datenträger bestätigt haben (das tun wir mit der Bestellbestätigung per E-Mail, die versandt wird, bevor wir beginnen). Das ergibt sich aus § 356 Abs. 5 BGB und Art. 16 Buchst. m der Richtlinie 2011/83/EU.',
         'Vor der Zahlung geben Sie diese Zustimmung, indem Sie in diesem Kästchen das Häkchen setzen:',
         { box: [CHECKOUT_LEGAL.de.withdrawalConsent], label: 'Das Kästchen im Bestellvorgang' },
-        'In der Praxis erlischt Ihr Widerrufsrecht daher, sobald wir mit der Erstellung Ihrer Datei beginnen, normalerweise direkt nach der Zahlung, sobald Ihre Bestellbestätigung per E-Mail versandt ist. Ab dann ist es erloschen, auch wenn Ihre Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Ihre gesetzlichen Rechte bei einer mangelhaften Datei bleiben davon unberührt: siehe [Reklamationen und Mängel](doc:terms#defects) in unseren AGB.',
+        'In der Praxis erlischt Ihr Widerrufsrecht daher in dem Moment, in dem wir mit der Erstellung Ihrer Datei beginnen. Wir beginnen erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist: Die Zahlungsseite führt Sie direkt dorthin. Sind Sie bis dahin nicht auf Ihrer Bestellseite, beginnen wir, wenn Sie sie mit dem Link zu Ihrer Bestellseite aus dieser E-Mail wieder öffnen. Der Widerrufslink in derselben E-Mail öffnet die Online-Widerrufsfunktion für Ihre Bestellung, ohne etwas zu starten. Ab dem Moment, in dem wir beginnen, ist Ihr Widerrufsrecht erloschen, auch wenn Ihre Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir mit Ihrer Datei noch nicht begonnen, erlischt Ihr Widerrufsrecht mit Ablauf der 14-tägigen Widerrufsfrist (der Tag Ihrer Zahlung wird nicht mitgezählt). Ihre gesetzlichen Rechte bei einer mangelhaften Datei bleiben davon unberührt: siehe [Reklamationen und Mängel](doc:terms#defects) in unseren AGB.',
       ],
     },
     {
       id: 'online',
       title: 'Online widerrufen',
       blocks: [
-        `Solange Ihr Widerrufsrecht besteht, können Sie jederzeit online mit der Funktion [„${W.de.button}“](${withdrawFunctionHref('de')}) widerrufen. Sie finden sie am Ende unserer Startseite und unserer Rechtstexte sowie auf Ihrer Bestellseite (Link in Ihrer Bestellbestätigung per E-Mail).`,
-        `So geht es: Geben Sie Ihren Namen, Ihre Bestellnummer (sie ist bereits eingetragen, wenn Sie von Ihrer Bestellseite kommen) und die E-Mail-Adresse für die Eingangsbestätigung ein und senden Sie Ihren Widerruf mit der Schaltfläche „${W.de.confirm}“ ab. Kommen Sie nicht von Ihrer Bestellseite, geben Sie bitte die E-Mail-Adresse an, mit der Sie bezahlt haben, damit wir Ihre Bestellung zuordnen können. Passen die Angaben zu keiner unserer Bestellungen, zeigt die Seite das an; Ihre Erklärung bewahren wir trotzdem auf, senden Ihnen die Eingangsbestätigung per E-Mail und prüfen sie selbst.`,
-        'Was dann geschieht: Wir erfassen Ihren Widerruf mit Datum und Uhrzeit seines Eingangs. Haben wir mit Ihrer Datei noch nicht begonnen, halten wir Ihre Bestellung an, sodass nichts erstellt wird. Wir senden Ihnen unverzüglich eine Eingangsbestätigung mit dem Inhalt Ihres Widerrufs sowie Datum und Uhrzeit per E-Mail und erstatten Ihnen Ihre Zahlung, wie unter [Folgen des Widerrufs](#effects) beschrieben.',
-        'Hatten wir mit Ihrer Zustimmung bereits mit Ihrer Datei begonnen, war Ihr Widerrufsrecht schon erloschen (siehe [Vorzeitiges Erlöschen des Widerrufsrechts](#expiry)); das teilen wir Ihnen mit. Ihre Rechte bei einer mangelhaften Datei bleiben davon unberührt.',
+        `Solange Ihr Widerrufsrecht besteht, können Sie jederzeit online mit der Funktion [„${W.de.button}“](${withdrawFunctionHref('de')}) widerrufen. Sie finden sie am Ende unserer Startseite und unserer Rechtstexte, auf Ihrer Bestellseite und hinter dem Widerrufslink in Ihrer Bestellbestätigung per E-Mail. Dieser Link öffnet die Funktion für Ihre Bestellung, ohne etwas zu starten. Das Öffnen Ihrer Bestellseite selbst startet die Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, und damit erlischt Ihr Widerrufsrecht (siehe [Vorzeitiges Erlöschen des Widerrufsrechts](#expiry)).`,
+        `So geht es: Geben Sie Ihren Namen, Ihre Bestellnummer (sie ist bereits eingetragen, wenn Sie von Ihrer Bestellseite oder über den Widerrufslink kommen) und die E-Mail-Adresse für die Eingangsbestätigung ein und senden Sie Ihren Widerruf mit der Schaltfläche „${W.de.confirm}“ ab. Kommen Sie ohne einen dieser Links, geben Sie bitte die E-Mail-Adresse an, mit der Sie bezahlt haben, damit wir Ihre Bestellung zuordnen können. Passen die Angaben zu keiner unserer Bestellungen, zeigt die Seite das an; Ihre Erklärung bewahren wir trotzdem auf, prüfen sie selbst und senden Ihnen eine Eingangsbestätigung per E-Mail. Um Missbrauch unserer E-Mails zu verhindern, sind Eingangsbestätigungen begrenzt: bei Erklärungen, die zu keiner unserer Bestellungen passen, auf zwei am Tag und vier im Monat an dieselbe Adresse; je Bestellung auf insgesamt drei an andere Adressen als die, mit der bezahlt wurde (weitere gehen an die Adresse, mit der Sie bezahlt haben); und bei einer wiederholten Erklärung zu einer Bestellung, die wir bereits beantwortet haben, auf eine am Tag. Kann die Seite Ihre Erklärung nicht annehmen, etwa wegen einer technischen Störung oder weil ungewöhnlich viele Erklärungen eingehen, zeigt sie das an: Senden Sie uns Ihren Widerruf dann bitte per E-Mail; eine E-Mail ist genauso wirksam.`,
+        'Was dann geschieht: Wir erfassen Ihre Erklärung mit Datum und Uhrzeit ihres Eingangs. Ist Ihre Bestellung bezahlt, haben wir mit Ihrer Datei noch nicht begonnen und ist die 14-tägige Widerrufsfrist nicht abgelaufen, ist Ihr Widerruf wirksam: Wir halten Ihre Bestellung an, sodass nichts erstellt wird, und erstatten Ihnen Ihre Zahlung, wie unter [Folgen des Widerrufs](#effects) beschrieben. War Ihre Zahlung bei Ihrem Widerruf noch in Bearbeitung, wird ebenfalls nichts erstellt, und geht die Zahlung bei uns ein, erstatten wir sie vollständig. Wir senden Ihnen unverzüglich eine Eingangsbestätigung mit dem Inhalt Ihres Widerrufs sowie Datum und Uhrzeit per E-Mail.',
+        'Hatten wir mit Ihrer Zustimmung bereits mit Ihrer Datei begonnen oder war die 14-tägige Widerrufsfrist abgelaufen, war Ihr Widerrufsrecht schon erloschen (siehe [Vorzeitiges Erlöschen des Widerrufsrechts](#expiry)): Die Seite und die Eingangsbestätigung teilen Ihnen das mit, und wir sehen uns Ihre Erklärung trotzdem persönlich an. Wurde Ihre Bestellung nie bezahlt, gibt es keinen Vertrag, den Sie widerrufen könnten: Die Seite zeigt das an, und es wurde nichts berechnet. Ihre Rechte bei einer mangelhaften Datei bleiben davon unberührt.',
       ],
     },
     {
@@ -145,7 +163,7 @@ const de: LegalDoc = {
         '(Wenn Sie den Vertrag widerrufen wollen, dann füllen Sie bitte dieses Formular aus und senden Sie es zurück.)',
         {
           box: [
-            `An: ${contactLine('de')}`,
+            `An: ${formLine('de')}`,
             'Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über den Kauf der folgenden Waren (*)/die Erbringung der folgenden Dienstleistung (*):',
             'Bestellt am (*)/erhalten am (*):',
             'Name des/der Verbraucher(s):',

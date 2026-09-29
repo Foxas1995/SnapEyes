@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from PIL import Image
 from _lib import iris as L
+from _lib import events as E   # the admin panel's usage events (no personal data)
 
 def enhance(body):
     t0 = time.time()
@@ -57,6 +58,7 @@ def enhance(body):
         u2 = L.store(f"eyes/{sid}/{mode}.jpg", L.pil_bytes(out, "JPEG", 93), "image/jpeg")
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
+    E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"])
     return res
 
 def handle(req): L.run(req, enhance)

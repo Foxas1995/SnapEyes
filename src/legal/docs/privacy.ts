@@ -3,6 +3,8 @@
 //    "training memory" opt-in only appears when BLOB_READ_WRITE_TOKEN is set; it is off live and must stay off,
 //    or the "never used to train AI" promise below becomes false)
 //  - capture telemetry: the "snapeyes capture" / "snapeyes shake" log lines of api/analyze.py, no image
+//  - the admin panel's usage events (api/_lib/events.py, ops/events/ and ops/daily/, 12 months) and its admin log
+//    (api/_lib/ops.py): the "operations" section, see OPS and ADMIN_LOG below
 //  - orders (api/order.py, api/_lib/pay.py): starting an order uploads, per eye, the deglared iris crop and the
 //    approved preview to orders/<order>/draft/ in the private Supabase bucket (the full phone photo never leaves
 //    the browser whole); paid.json holds the email, amount and consent; the 4K eyes, the artwork and small json
@@ -17,9 +19,13 @@
 //    payment; the records stay (order.json, paid.json: email, spec with names, consent; withdrawal statements)
 //  - withdrawals (api/_lib/withdraw.py): the statement (name, email, order, text, time, outcome) is stored with the
 //    order; one that matches no order (without the link key, the email must be the paid one) goes to withdrawals/,
-//    gets the neutral receipt email (withdraw.unmatched_mail) and is deleted by the daily clean-up 12 months after the
-//    end of its month (cleanup.UNMATCHED_KEEP_DAYS); the owner is emailed every statement; withdrawlog/ counters hold
-//    no personal data
+//    gets the neutral receipt email (withdraw.unmatched_mail, within withdraw._receipt_to's limits) and
+//    is deleted by the daily clean-up with its month once UNMATCHED_KEEP_DAYS = 396 days have passed since the month
+//    ended ("about 13 months"); the owner is emailed every statement (unmatched and never-paid ones in the daily
+//    digest); withdrawlog/ counters (a few days) and withdrawaddr/<yymm>/ monthly receipt counters (withdraw.
+//    purge_addr_marks: about 40 days after their month) hold no name or address, the receipt counters a short hash of the address
+//  - withdrawn orders: cleanup/withdrawn/ is written only for an EFFECTIVE withdrawal; its images go at the first
+//    daily run 14 days after it (an order whose payment is still settling waits for Stripe)
 //  - browser storage: localStorage "snapeyes.lang" (src/landing/lang.tsx, src/try/lang.ts) and, in the order flow,
 //    sessionStorage "snapeyes.order" and "snapeyes.checkout" (src/try/checkout.ts); no cookies, no analytics
 //  - the online withdrawal function: see WITHDRAWAL_ONLINE in src/shared/legal.ts and the "withdrawal" section
@@ -31,8 +37,53 @@ import { MAIL, SELLER, address, company } from '../facts';
 // What the online withdrawal function keeps (the "withdrawal" section): keep it in step with the order page's form
 // and the API action behind it.
 const WITHDRAW_PRIVACY = {
-  en: `If you withdraw from an order with our online function (the button "${WITHDRAWAL_ONLINE.en.button}", see [Right of withdrawal](doc:withdrawal#online)), we store your withdrawal statement with your order: your name, your email address, the order number, its wording and the date and time it reached us. We use it to stop work on your file if we have not started yet, to email you an acknowledgement of receipt with its content, date and time, and to refund you. We also receive a copy of every statement by email. If you withdraw, the images of your order are deleted automatically 14 days after your withdrawal; the order record with your statement stays (see [How long we keep your data](#retention)). If the details you give match none of our orders (without the link from your order page, the email address must be the one you paid with), we keep the statement separately, email you an acknowledgement of receipt all the same, check it by hand, and delete it automatically 12 months after the end of the month in which it reached us.`,
-  de: `Wenn Sie eine Bestellung mit unserer Online-Funktion widerrufen (Schaltfläche „${WITHDRAWAL_ONLINE.de.button}“, siehe [Widerrufsbelehrung](doc:withdrawal#online)), speichern wir Ihre Widerrufserklärung bei Ihrer Bestellung: Ihren Namen, Ihre E-Mail-Adresse, die Bestellnummer, ihren Wortlaut sowie Datum und Uhrzeit ihres Eingangs. Wir verwenden sie, um die Arbeit an Ihrer Datei anzuhalten, falls wir noch nicht begonnen haben, um Ihnen eine Eingangsbestätigung mit Inhalt, Datum und Uhrzeit per E-Mail zu senden und um Ihnen den Preis zu erstatten. Eine Kopie jeder Erklärung erhalten wir außerdem per E-Mail. Wenn Sie widerrufen, werden die Bilder Ihrer Bestellung 14 Tage nach Ihrem Widerruf automatisch gelöscht; der Bestelldatensatz mit Ihrer Erklärung bleibt (siehe [Wie lange wir Ihre Daten speichern](#retention)). Passen Ihre Angaben zu keiner unserer Bestellungen (ohne den Link von Ihrer Bestellseite muss die E-Mail-Adresse die sein, mit der Sie bezahlt haben), bewahren wir die Erklärung gesondert auf, senden Ihnen trotzdem eine Eingangsbestätigung per E-Mail, prüfen sie selbst und löschen sie automatisch 12 Monate nach Ende des Monats, in dem sie eingegangen ist.`,
+  en: `If you withdraw from an order with our online function (the button "${WITHDRAWAL_ONLINE.en.button}", see [Right of withdrawal](doc:withdrawal#online)), we store your withdrawal statement with your order: your name, your email address, the order number, its wording and the date and time it reached us. We use it to stop work on your file if we have not started yet, to email you an acknowledgement of receipt with its content, date and time, and to refund you. We also receive every statement by email: one by one, or, for statements that match none of our orders and those about orders that were never paid, in one summary a day. If your withdrawal takes effect, the images of your order are deleted automatically by our daily clean-up once 14 days have passed since your withdrawal (if your payment was still being processed, only once it has been settled); the order record with your statement stays (see [How long we keep your data](#retention)). If the details you give match none of our orders (without the link from your order page or the withdrawal link in your order confirmation email, the email address must be the one you paid with), we keep the statement separately, check it by hand, email you an acknowledgement of receipt all the same (within the limits against misuse set out under [Withdraw online](doc:withdrawal#online)) and delete it automatically about 13 months after the end of the month in which it reached us.`,
+  de: `Wenn Sie eine Bestellung mit unserer Online-Funktion widerrufen (Schaltfläche „${WITHDRAWAL_ONLINE.de.button}“, siehe [Widerrufsbelehrung](doc:withdrawal#online)), speichern wir Ihre Widerrufserklärung bei Ihrer Bestellung: Ihren Namen, Ihre E-Mail-Adresse, die Bestellnummer, ihren Wortlaut sowie Datum und Uhrzeit ihres Eingangs. Wir verwenden sie, um die Arbeit an Ihrer Datei anzuhalten, falls wir noch nicht begonnen haben, um Ihnen eine Eingangsbestätigung mit Inhalt, Datum und Uhrzeit per E-Mail zu senden und um Ihnen den Preis zu erstatten. Jede Erklärung erhalten wir außerdem per E-Mail: einzeln oder, bei Erklärungen, die zu keiner unserer Bestellungen passen, und bei solchen zu nie bezahlten Bestellungen, in einer Zusammenfassung pro Tag. Wird Ihr Widerruf wirksam, löscht unsere tägliche automatische Bereinigung die Bilder Ihrer Bestellung, sobald 14 Tage seit Ihrem Widerruf vergangen sind (war Ihre Zahlung noch in Bearbeitung, erst wenn sie abgeschlossen ist); der Bestelldatensatz mit Ihrer Erklärung bleibt (siehe [Wie lange wir Ihre Daten speichern](#retention)). Passen Ihre Angaben zu keiner unserer Bestellungen (ohne den Link von Ihrer Bestellseite oder den Widerrufslink in Ihrer Bestellbestätigung muss die E-Mail-Adresse die sein, mit der Sie bezahlt haben), bewahren wir die Erklärung gesondert auf, prüfen sie selbst, senden Ihnen trotzdem eine Eingangsbestätigung per E-Mail (in den unter [Online widerrufen](doc:withdrawal#online) genannten Grenzen gegen Missbrauch) und löschen sie automatisch rund 13 Monate nach Ende des Monats, in dem sie eingegangen ist.`,
+};
+
+// The admin log and the admin sign-in guard (api/_lib/ops.py, the admin role, 2026-09-29): every admin action writes
+// {action, order, ok, result code, eye, detail with emails masked} to ops/audit/<day>/ (no email address, no link, no
+// key), purged after AUDIT_KEEP_MONTHS = 24 months by the daily clean-up (api/_lib/cleanup.py _audit), and a copy to
+// ops/orderlog/<order>/, which the panel shows with the order and which stays with the order record. A failed sign-in
+// stores only a keyed hash of the client address (ops/adminfail/<hour>/), deleted after 2 days (events.purge_old).
+const ADMIN_LOG = {
+  en: {
+    log: "When we handle an order in our admin panel, for example release a file after our quality check, send an email again, make a refund or delete files, the panel writes an entry to our admin log: what was done, when, for which order number and how it ended. The admin log holds no images, no email addresses and no links. Legal basis: our legitimate interest in handling orders securely and traceably (Art. 6(1)(f) GDPR). It is deleted automatically after 24 months; the entries about an order are also kept with that order's record, for as long as the record is kept (see [How long we keep your data](#retention)).",
+    signin: 'Our admin panel is only for us. To stop anyone guessing its key, a failed sign-in stores a hash of the IP address it came from, made with a secret key, never the address itself, and this is deleted automatically after 2 days. Legal basis: our legitimate interest in keeping our systems secure (Art. 6(1)(f) GDPR).',
+  },
+  de: {
+    log: 'Wenn wir eine Bestellung in unserem Admin-Bereich bearbeiten, etwa eine Datei nach unserer Qualitätsprüfung freigeben, eine E-Mail erneut senden, eine Erstattung vornehmen oder Dateien löschen, schreibt der Admin-Bereich einen Eintrag in unser Admin-Protokoll: was getan wurde, wann, für welche Bestellnummer und mit welchem Ergebnis. Das Admin-Protokoll enthält keine Bilder, keine E-Mail-Adressen und keine Links. Rechtsgrundlage: unser berechtigtes Interesse an einer sicheren und nachvollziehbaren Bearbeitung von Bestellungen (Art. 6 Abs. 1 lit. f DSGVO). Es wird nach 24 Monaten automatisch gelöscht; die Einträge zu einer Bestellung bleiben außerdem beim Datensatz dieser Bestellung, solange dieser aufbewahrt wird (siehe [Wie lange wir Ihre Daten speichern](#retention)).',
+    signin: 'Unser Admin-Bereich ist nur für uns. Damit niemand seinen Schlüssel erraten kann, speichert eine fehlgeschlagene Anmeldung einen mit einem geheimen Schlüssel gebildeten Hashwert der IP-Adresse, von der sie kam, nie die Adresse selbst; er wird nach 2 Tagen automatisch gelöscht. Rechtsgrundlage: unser berechtigtes Interesse an der Sicherheit unserer Systeme (Art. 6 Abs. 1 lit. f DSGVO).',
+  },
+};
+
+// The admin panel's usage statistics and its admin log (the "operations" section and two retention rows). Written from
+// api/_lib/events.py (the admin role, 2026-09-29): one small JSON object per event under ops/events/<day>/ in the
+// private Supabase bucket, only numbers, booleans and short codes (FIELDS); no image, no typed text, no name, no
+// email, no IP address, no user agent, no signed link, no ticket; an order id ONLY in the "master" event (the file of
+// a paid order was made); day counts under ops/daily/; both deleted after 365 days by events.purge_old, which the daily
+// clean-up runs (api/_lib/cleanup.py _events). Keep every sentence in step with those files.
+const OPS = {
+  en: {
+    events:
+      'To see whether the service works, how fast it is and what it costs, our server records small technical events in our private storage at Supabase in the EU. For example: that a photo was checked (with the result, such as "no eye found", the kind of device, such as iPhone, Android or computer, whether the photo came from the camera or the gallery, and the page language), that reflections were removed, that a preview or an ordered file was made and how long it took, or that a request failed (with its error code). Our admin panel shows them to us, mostly as counts per day.',
+    content:
+      '**These events hold no image, no text you typed, no name, no email address, no IP address, no browser identification (user agent) and no link.** Events from the free preview cannot be traced back to you. Only the events about making the file of a paid order also hold its order number, so that we can find a slow or failed rendering; through our order records, that number relates to your order.',
+    basis:
+      'Legal basis: our legitimate interest in running the service reliably, finding faults and keeping its costs under control (Art. 6(1)(f) GDPR). The events, and the daily counts made from them, are deleted automatically after 12 months. You may object at any time (see [Your rights](#rights)).',
+    admin: ADMIN_LOG.en.log,
+    signin: ADMIN_LOG.en.signin,
+  },
+  de: {
+    events:
+      'Um zu sehen, ob der Dienst funktioniert, wie schnell er ist und was er kostet, legt unser Server kleine technische Ereignisse in unserem privaten Speicher bei Supabase in der EU ab. Zum Beispiel: dass ein Foto geprüft wurde (mit dem Ergebnis, etwa „kein Auge gefunden“, der Art des Geräts, etwa iPhone, Android oder Computer, ob das Foto von der Kamera oder aus der Galerie stammt, und der Sprache der Seite), dass Spiegelungen entfernt wurden, dass eine Vorschau oder eine bestellte Datei erstellt wurde und wie lange das dauerte, oder dass eine Anfrage fehlschlug (mit ihrem Fehlercode). Unser Admin-Bereich zeigt sie uns, meist als Zahlen pro Tag.',
+    content:
+      '**Diese Ereignisse enthalten kein Bild, keinen von Ihnen eingegebenen Text, keinen Namen, keine E-Mail-Adresse, keine IP-Adresse, keine Browserkennung (User-Agent) und keinen Link.** Ereignisse aus der kostenlosen Vorschau lassen sich nicht auf Sie zurückführen. Nur die Ereignisse zur Erstellung der Datei einer bezahlten Bestellung enthalten auch deren Bestellnummer, damit wir eine langsame oder fehlgeschlagene Erstellung finden können; über unsere Bestelldatensätze gehört diese Nummer zu Ihrer Bestellung.',
+    basis:
+      'Rechtsgrundlage: unser berechtigtes Interesse, den Dienst zuverlässig zu betreiben, Fehler zu finden und seine Kosten im Griff zu behalten (Art. 6 Abs. 1 lit. f DSGVO). Die Ereignisse und die daraus gebildeten Tageszahlen werden nach 12 Monaten automatisch gelöscht. Sie können jederzeit widersprechen (siehe [Ihre Rechte](#rights)).',
+    admin: ADMIN_LOG.de.log,
+    signin: ADMIN_LOG.de.signin,
+  },
 };
 
 const rep = (label: string) => (SELLER.representative ? ` ${label} ${SELLER.representative}.` : '');
@@ -68,7 +119,7 @@ const en: LegalDoc = {
       blocks: [
         'When you open a page of snapeyes.com, your browser sends technical data to our hosting provider Vercel, such as your IP address, the date and time, the page requested and your browser type (user agent). Vercel needs this data to deliver the page and to protect the service against attacks. It is kept in server logs for a short time and then deleted.',
         'Legal basis: our legitimate interest in a secure, working website (Art. 6(1)(f) GDPR).',
-        'Our fonts are served from our own server, so no data goes to Google Fonts or any other font service. We do not use analytics, advertising or tracking tools on this website.',
+        'Our fonts are served from our own server, so no data goes to Google Fonts or any other font service. We do not use analytics, advertising or tracking tools of other companies on this website, and nothing follows you from page to page or across websites. Our own anonymous service statistics are described under [Service statistics and our admin log](#operations).',
       ],
     },
     {
@@ -98,6 +149,11 @@ const en: LegalDoc = {
         'With each photo, our server writes one line to its logs so that we can improve the capture guide and the quality of the service. It holds measurements of the photo (for example the size of the iris in pixels, sharpness, brightness, a colour cast of the light and whether the photo could be used), technical facts about your device (browser type and version, screen size, whether the photo came from the camera or the gallery) and, if you answer our optional questions about a shot, your answers. It holds no image, no name and no contact details.',
         'These log lines are kept by our hosting provider for a short time and then deleted. Legal basis: our legitimate interest in improving the service (Art. 6(1)(f) GDPR). You may object at any time (see [Your rights](#rights)).',
       ],
+    },
+    {
+      id: 'operations',
+      title: 'Service statistics and our admin log',
+      blocks: [OPS.en.events, OPS.en.content, OPS.en.basis, OPS.en.admin, OPS.en.signin],
     },
     {
       id: 'orders',
@@ -156,11 +212,15 @@ const en: LegalDoc = {
           dl: [
             ['Free previews', 'Not stored by us. They are discarded when the request ends.'],
             ['Unpaid orders', 'An order that is not paid within 24 hours can no longer be paid. Our daily automatic clean-up deletes its images and records, normally within two days of the order and at the latest within 30 days.'],
-            ['Upload and statement markers', 'Small counters without images or personal details, deleted automatically after a few days.'],
+            ['Upload and statement markers', 'Small counters without images, names or email addresses (a counter of acknowledgements of receipt holds only a short hash of the email address), deleted automatically after a few days; the monthly counters of acknowledgements about 40 days after the end of their month.'],
             ['Paid orders', 'The files of your order are kept for 12 months from your payment, so that you can download them again from your order page, and then deleted by our daily automatic clean-up. On request we delete them earlier; after that your order page can no longer deliver the file.'],
-            ['Withdrawn orders', 'The images of the order are deleted automatically 14 days after the withdrawal.'],
-            ['Order records', 'When the files are deleted (after 12 months, after a withdrawal or on request), we keep the record of a paid order: order number, date, price and payment, your email address, the details of the artwork you ordered (which can include names or an inscription you added), your consent to the immediate start and, if you withdrew, your withdrawal statement. No images. We keep it as proof of the contract and for accounting, for as long as Lithuanian accounting and tax law requires.'],
+            ['Withdrawn orders', 'If the withdrawal takes effect, our daily clean-up deletes the images of the order once 14 days have passed since the withdrawal (if the payment was still being processed, once it has been settled).'],
+            ['Withdrawal statements that match no order', 'Kept separately, checked by hand and deleted automatically about 13 months after the end of the month in which they reached us.'],
+            ['Order records', 'When the files are deleted (after 12 months, after a withdrawal or on request), we keep the record of a paid order: order number, date, price, payment and any refund, your email address, the details of the artwork you ordered (which can include names or an inscription you added), your consent to the immediate start, if you withdrew, your withdrawal statement, and the entries of our admin log about your order. No images. We keep it as proof of the contract and for accounting, for as long as Lithuanian accounting and tax law requires.'],
             ['Server logs and measurements', 'Kept by our hosting provider for a short time, then deleted.'],
+            ['Service statistics', 'The technical events and their daily counts (see [Service statistics and our admin log](#operations)): deleted automatically after 12 months.'],
+            ['Admin log', 'What we did with an order in our admin panel: deleted automatically after 24 months; the entries about an order stay with its order record.'],
+            ['Failed sign-ins to our admin panel', 'A hash of the IP address, made with a secret key, deleted automatically after 2 days.'],
             ['Emails', 'For as long as we need them for your request and any follow-up.'],
           ],
         },
@@ -189,7 +249,7 @@ const en: LegalDoc = {
       id: 'storage',
       title: 'Cookies and local storage',
       blocks: [
-        'This website sets no cookies. It uses no analytics, advertising or tracking tools.',
+        'This website sets no cookies. It uses no analytics, advertising or tracking tools of other companies.',
         'When you choose a language with the EN/DE switch, your browser remembers the choice in its local storage under the key "snapeyes.lang" (the value "en" or "de"). It is never sent to us, and you can delete it at any time in your browser settings. It is strictly necessary for a function you asked for, so it needs no consent (Art. 5(3) ePrivacy Directive).',
         'When you order, the page also keeps two entries in the session storage of your browser tab. Session storage belongs to that one tab and is deleted when you close it:',
         {
@@ -238,7 +298,7 @@ const de: LegalDoc = {
       blocks: [
         'Wenn Sie eine Seite von snapeyes.com aufrufen, sendet Ihr Browser technische Daten an unseren Hosting-Anbieter Vercel, etwa Ihre IP-Adresse, Datum und Uhrzeit, die aufgerufene Seite und Ihren Browsertyp (User-Agent). Vercel braucht diese Daten, um die Seite auszuliefern und den Dienst vor Angriffen zu schützen. Sie werden für kurze Zeit in Server-Protokollen gespeichert und dann gelöscht.',
         'Rechtsgrundlage: unser berechtigtes Interesse an einer sicheren, funktionierenden Website (Art. 6 Abs. 1 lit. f DSGVO).',
-        'Unsere Schriftarten kommen von unserem eigenen Server, es werden also keine Daten an Google Fonts oder andere Schriftdienste übertragen. Wir setzen auf dieser Website keine Analyse-, Werbe- oder Tracking-Werkzeuge ein.',
+        'Unsere Schriftarten kommen von unserem eigenen Server, es werden also keine Daten an Google Fonts oder andere Schriftdienste übertragen. Wir setzen auf dieser Website keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen ein, und nichts verfolgt Sie von Seite zu Seite oder über Websites hinweg. Unsere eigene anonyme Betriebsstatistik ist unter [Betriebsstatistik und Admin-Protokoll](#operations) beschrieben.',
       ],
     },
     {
@@ -268,6 +328,11 @@ const de: LegalDoc = {
         'Zu jedem Foto schreibt unser Server eine Zeile in seine Protokolle, damit wir die Aufnahmeanleitung und die Qualität des Dienstes verbessern können. Sie enthält Messwerte des Fotos (zum Beispiel die Größe der Iris in Pixeln, Schärfe, Helligkeit, einen Farbstich des Lichts und ob das Foto verwendbar war), technische Angaben zu Ihrem Gerät (Browsertyp und -version, Bildschirmgröße, ob das Foto von der Kamera oder aus der Galerie stammt) und, falls Sie unsere freiwilligen Fragen zu einer Aufnahme beantworten, Ihre Antworten. Sie enthält kein Bild, keinen Namen und keine Kontaktdaten.',
         'Diese Protokollzeilen werden bei unserem Hosting-Anbieter für kurze Zeit gespeichert und dann gelöscht. Rechtsgrundlage: unser berechtigtes Interesse an der Verbesserung des Dienstes (Art. 6 Abs. 1 lit. f DSGVO). Sie können jederzeit widersprechen (siehe [Ihre Rechte](#rights)).',
       ],
+    },
+    {
+      id: 'operations',
+      title: 'Betriebsstatistik und Admin-Protokoll',
+      blocks: [OPS.de.events, OPS.de.content, OPS.de.basis, OPS.de.admin, OPS.de.signin],
     },
     {
       id: 'orders',
@@ -326,11 +391,15 @@ const de: LegalDoc = {
           dl: [
             ['Kostenlose Vorschauen', 'Werden von uns nicht gespeichert. Sie werden verworfen, sobald die Anfrage abgeschlossen ist.'],
             ['Unbezahlte Bestellungen', 'Eine Bestellung, die nicht innerhalb von 24 Stunden bezahlt wird, kann nicht mehr bezahlt werden. Unsere tägliche automatische Bereinigung löscht ihre Bilder und Aufzeichnungen, normalerweise innerhalb von zwei Tagen nach der Bestellung und spätestens innerhalb von 30 Tagen.'],
-            ['Upload- und Erklärungsmarkierungen', 'Kleine Zähler ohne Bilder und ohne persönliche Angaben, die nach wenigen Tagen automatisch gelöscht werden.'],
+            ['Upload- und Erklärungsmarkierungen', 'Kleine Zähler ohne Bilder, Namen oder E-Mail-Adressen (ein Zähler für Eingangsbestätigungen enthält nur einen kurzen Hashwert der E-Mail-Adresse), die nach wenigen Tagen automatisch gelöscht werden; die monatlichen Zähler für Eingangsbestätigungen rund 40 Tage nach Ende ihres Monats.'],
             ['Bezahlte Bestellungen', 'Die Dateien Ihrer Bestellung bewahren wir 12 Monate ab Ihrer Zahlung auf, damit Sie sie über Ihre Bestellseite erneut herunterladen können; danach löscht sie unsere tägliche automatische Bereinigung. Auf Wunsch löschen wir sie früher; danach kann Ihre Bestellseite die Datei nicht mehr liefern.'],
-            ['Widerrufene Bestellungen', 'Die Bilder der Bestellung werden 14 Tage nach dem Widerruf automatisch gelöscht.'],
-            ['Bestelldatensätze', 'Wenn die Dateien gelöscht sind (nach 12 Monaten, nach einem Widerruf oder auf Wunsch), bewahren wir den Datensatz einer bezahlten Bestellung auf: Bestellnummer, Datum, Preis und Zahlung, Ihre E-Mail-Adresse, die Angaben zum bestellten Kunstwerk (darunter gegebenenfalls von Ihnen eingegebene Namen oder eine Widmung), Ihre Zustimmung zum sofortigen Beginn und, falls Sie widerrufen haben, Ihre Widerrufserklärung. Keine Bilder. Wir bewahren ihn als Nachweis des Vertrags und für die Buchhaltung so lange auf, wie es das litauische Buchführungs- und Steuerrecht verlangt.'],
+            ['Widerrufene Bestellungen', 'Wird der Widerruf wirksam, löscht unsere tägliche Bereinigung die Bilder der Bestellung, sobald 14 Tage seit dem Widerruf vergangen sind (war die Zahlung noch in Bearbeitung, sobald sie abgeschlossen ist).'],
+            ['Widerrufserklärungen ohne passende Bestellung', 'Werden gesondert aufbewahrt, von uns geprüft und rund 13 Monate nach Ende des Monats, in dem sie eingegangen sind, automatisch gelöscht.'],
+            ['Bestelldatensätze', 'Wenn die Dateien gelöscht sind (nach 12 Monaten, nach einem Widerruf oder auf Wunsch), bewahren wir den Datensatz einer bezahlten Bestellung auf: Bestellnummer, Datum, Preis, Zahlung und gegebenenfalls Erstattung, Ihre E-Mail-Adresse, die Angaben zum bestellten Kunstwerk (darunter gegebenenfalls von Ihnen eingegebene Namen oder eine Widmung), Ihre Zustimmung zum sofortigen Beginn, falls Sie widerrufen haben, Ihre Widerrufserklärung, und die Einträge unseres Admin-Protokolls zu Ihrer Bestellung. Keine Bilder. Wir bewahren ihn als Nachweis des Vertrags und für die Buchhaltung so lange auf, wie es das litauische Buchführungs- und Steuerrecht verlangt.'],
             ['Server-Protokolle und Messwerte', 'Werden bei unserem Hosting-Anbieter für kurze Zeit gespeichert und dann gelöscht.'],
+            ['Betriebsstatistik', 'Die technischen Ereignisse und ihre Tageszahlen (siehe [Betriebsstatistik und Admin-Protokoll](#operations)): werden nach 12 Monaten automatisch gelöscht.'],
+            ['Admin-Protokoll', 'Was wir in unserem Admin-Bereich mit einer Bestellung getan haben: wird nach 24 Monaten automatisch gelöscht; die Einträge zu einer Bestellung bleiben bei ihrem Bestelldatensatz.'],
+            ['Fehlgeschlagene Anmeldungen im Admin-Bereich', 'Ein mit einem geheimen Schlüssel gebildeter Hashwert der IP-Adresse, nach 2 Tagen automatisch gelöscht.'],
             ['E-Mails', 'So lange, wie wir sie für Ihr Anliegen und etwaige Rückfragen brauchen.'],
           ],
         },
@@ -359,7 +428,7 @@ const de: LegalDoc = {
       id: 'storage',
       title: 'Cookies und lokaler Speicher',
       blocks: [
-        'Diese Website setzt keine Cookies. Sie nutzt keine Analyse-, Werbe- oder Tracking-Werkzeuge.',
+        'Diese Website setzt keine Cookies. Sie nutzt keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen.',
         'Wenn Sie mit dem Schalter EN/DE eine Sprache wählen, merkt sich Ihr Browser diese Wahl in seinem lokalen Speicher unter dem Schlüssel „snapeyes.lang“ (Wert „en“ oder „de“). Dieser Eintrag wird nie an uns übertragen, und Sie können ihn jederzeit in Ihren Browsereinstellungen löschen. Er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
         'Wenn Sie bestellen, legt die Seite außerdem zwei Einträge im Sitzungsspeicher (Session Storage) Ihres Browser-Tabs an. Der Sitzungsspeicher gehört nur zu diesem einen Tab und wird gelöscht, wenn Sie ihn schließen:',
         {

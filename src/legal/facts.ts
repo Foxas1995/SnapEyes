@@ -1,7 +1,7 @@
 // The seller facts and prices as the legal texts print them. Every value comes from src/landing/config.ts, so the
 // landing page, the checkout and the legal pages can never disagree.
 import type { Lang } from '../landing/copy';
-import { CONTACT_EMAIL, DELIVERY_MAX_HOURS, MAX_EYES, PRICE_CENTS, SELLER } from '../landing/config';
+import { CONTACT_EMAIL, DELIVERY_MAX_HOURS, MAX_EYES, PHONE_OMITTED_BY_OWNER, PRICE_CENTS, SELLER } from '../landing/config';
 
 export const company = (lang: Lang) => (lang === 'de' ? `MB „${SELLER.name}“` : `MB "${SELLER.name}"`);
 export const country = (lang: Lang) => (lang === 'de' ? 'Litauen' : 'Lithuania');
@@ -17,13 +17,19 @@ export const phoneSuffix = (lang: Lang) => (SELLER.phone ? (lang === 'de' ? `, T
 export const representedSuffix = (lang: Lang) =>
   SELLER.representative ? (lang === 'de' ? `, vertreten durch ${SELLER.representative}` : `, represented by ${SELLER.representative}`) : '';
 
-/** The full postal and email contact, for the withdrawal information and the model form. */
+/** The name, postal address and email: exactly what the model withdrawal FORM's "To:" line asks for (Annex I(B)
+ *  Directive 2011/83/EU as amended by Directive (EU) 2019/2161; Anlage 2 EGBGB), with no telephone number. */
+export const formLine = (lang: Lang) => `${company(lang)}, ${address(lang)}, ${lang === 'de' ? 'E-Mail' : 'email'}: ${CONTACT_EMAIL}`;
+
+/** The contact details for the model withdrawal INFORMATION's "[2]" (Annex I(A) note 2; Anlage 1 Gestaltungshinweis 2:
+ *  name, address, telephone number and email): formLine plus the phone while SELLER.phone is set. The owner decided to
+ *  show no phone (PHONE_OMITTED_BY_OWNER in src/landing/config.ts), so today it equals formLine. */
 export const contactLine = (lang: Lang) => {
   const phone = SELLER.phone ? (lang === 'de' ? `, Telefon: ${SELLER.phone}` : `, phone: ${SELLER.phone}`) : '';
-  return `${company(lang)}, ${address(lang)}, ${lang === 'de' ? 'E-Mail' : 'email'}: ${CONTACT_EMAIL}${phone}`;
+  return `${formLine(lang)}${phone}`;
 };
 
 export const eur = (cents: number, lang: Lang) =>
   new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-IE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 
-export { CONTACT_EMAIL, DELIVERY_MAX_HOURS, MAX_EYES, PRICE_CENTS, SELLER };
+export { CONTACT_EMAIL, DELIVERY_MAX_HOURS, MAX_EYES, PHONE_OMITTED_BY_OWNER, PRICE_CENTS, SELLER };

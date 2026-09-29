@@ -8,6 +8,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
+from _lib import events as E   # the admin panel's usage events (no personal data)
 
 PREVIEW_SIZE = 1024          # longest side of the artwork this endpoint returns
 MAX_SIDE = 4096              # the 4K render is 4096 px: a larger image is not an iris this site made
@@ -78,6 +79,7 @@ def compose(body):
         qa = {"ok": all(q["ok"] for q in eyes), "eyes": eyes}
     else:
         qa = L.colour_qa("compose", graded=graded)
+    E.record("compose", style=style, eyes=n, layout=layout, format=fmt, clean=bool(clean), qa_ok=bool(qa.get("ok")))
     return {"ok": True, "style": style, "layout": layout, "layouts": list(L.layouts_for(n)), "format": fmt,
             "count": n, "width": out.size[0], "height": out.size[1], "image": L.pil_to_b64(out, "JPEG", 90),
             "styles": list(L.STYLES.keys()), "qa": qa}

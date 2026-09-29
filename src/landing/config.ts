@@ -12,12 +12,20 @@ export const TRY_URL = '/try';
 export const tryUrl = (lang: 'en' | 'de') => `${TRY_URL}?lang=${lang}`;
 
 // Seller shown in the footer and on the legal pages (owner decision 2026-09-23). MB is not VAT-registered: no VAT
-// number, no "incl. VAT". representative and phone stay empty until the owner gives them: every page prints the
-// "Represented by" and "Phone" lines only when the value is set.
-// The PHONE IS REQUIRED BEFORE THE FIRST LIVE SALE: the law wants the trader's telephone number in the pre-contract
-// information and in the withdrawal information (Art. 6(1)(c) Directive 2011/83/EU; Anlage 1 EGBGB Gestaltungshinweis
-// 2). While it is '', the build's /legal/order-mail.json lists "seller.phone" under "missing" (src/legal/plain.ts), for
-// api/_lib/pay.py to keep live ordering closed. Write it in international form, with the country code.
+// number, no "incl. VAT". Every page prints the "Represented by" and "Phone" lines only when the value is set.
+// PHONE: owner decision (2026-09-29): NO telephone number is shown anywhere, so phone stays '' and
+// PHONE_OMITTED_BY_OWNER is true. The law asks for one: Art. 6(1)(c) Directive 2011/83/EU as amended by Directive (EU)
+// 2019/2161 (pre-contract information; in Germany Art. 246a § 1 Abs. 1 Nr. 2 EGBGB), Annex I(A) note 2 and Anlage 1
+// EGBGB Gestaltungshinweis 2 (the model withdrawal information: name, address, telephone number and email). The model
+// withdrawal FORM needs none (Annex I(B), Anlage 2 EGBGB: name, address, email). Leaving it out is therefore a known
+// risk the owner accepts (explained to him in Lithuanian on 2026-09-29: the rules, the risk, a cheap separate number).
+// The pages stay correct without it: they name the postal address, the email address and the online withdrawal
+// function, and never claim a phone line.
+// The build's /legal/order-mail.json (src/legal/plain.ts) lists the phone under "waived" (owner decision), not under
+// "missing", so a live-sales gate in api/_lib/pay.py that refuses on "missing" does not block on it.
+// To show a number after all: write it into phone in international form (with the country code) and set
+// PHONE_OMITTED_BY_OWNER to false; every page, the model information and the order email pick it up.
+export const PHONE_OMITTED_BY_OWNER = true;
 export interface Seller {
   name: string;           // the MB's name, printed as MB "<name>"
   code: string;           // company code (juridinio asmens kodas) in the Register of Legal Entities
@@ -25,7 +33,7 @@ export interface Seller {
   postcode: string;
   city: string;
   representative: string; // the authorised representative (vadovas); '' = not known yet, line hidden
-  phone: string;          // '' = no phone line anywhere
+  phone: string;          // '' = no phone line anywhere (owner decision, see PHONE_OMITTED_BY_OWNER above)
 }
 export const SELLER: Readonly<Seller> = {
   name: 'Portretizuokis',

@@ -21,7 +21,8 @@ draft: one eye of an unpaid order, uploaded on its own (the 4.5 MB request limit
   of one order in a day (429 too_many_uploads). Stored under orders/<order>/draft/ in the private bucket (see
   _lib/pay.py).
 draft and arrange answer 503 payments_not_configured, before anything is read or stored, whenever this deployment
-  takes no orders (pay.ordering_problem(): no Stripe, a live key without email, a test key on production).
+  takes no orders (pay.ordering_problem(): no Stripe; a live key without email, without CRON_SECRET or without
+  complete legal texts; a test key on production).
 arrange: re-maps the uploaded eyes after the customer removed or reordered one, without uploading them again
   (the work ticket that proved them lives 15 minutes). Unlisted slots are dropped with their files.
 status: unpaid / pending / paid / making / review / ready / withdrawn / deleted, the eyes, and when ready a fresh
@@ -41,8 +42,10 @@ compose: once every eye is made, the artwork with the paid style, layout, names 
   and the owner is told; scripts/order_admin.py release hands it out.
 withdraw: the online withdrawal function (api/_lib/withdraw.py): records the statement with the time it arrived,
   stops the order when nothing was made yet (state withdrawn: make and compose answer 409 withdrawn, draft and
-  checkout too), emails the receipt and tells the owner. Where the right had already lapsed it is recorded and
-  answered all the same. A status reply carries "withdrawal" once a statement exists.
+  checkout too), emails the receipt and tells the owner (at once for an order's first statement, else in the daily
+  digest; every email bounded by daily ceilings). Where the right had already lapsed it is recorded and answered all
+  the same. A status reply carries "withdrawal" once a statement exists. Where this deployment cannot have sold
+  anything (pay.sells()), a statement for an order that is not stored is not recorded: 409 no_order.
 
 Every reply is JSON; errors are {ok: false, reason, error, retry} as the paid endpoints answer them. API.md in the
 work notes lists them all."""

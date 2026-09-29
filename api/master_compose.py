@@ -22,6 +22,7 @@ from http.server import BaseHTTPRequestHandler
 from PIL import Image
 from _lib import iris as L
 from _lib import store
+from _lib import events as E   # the admin panel's usage events (no personal data)
 
 SIZE = 4096                  # longest side of the delivered artwork
 LINK_SECONDS = 7 * 86400     # the signed download link
@@ -176,6 +177,7 @@ def master_compose(body):
     # the link is a bearer credential: it goes to the customer only, never into a log line
     print(f"snapeyes master_compose: {key} {W}x{H} {n} eye(s) {style}/{layout} bytes {len(data)} load {t2 - t1:.1f} s "
           f"compose {t3 - t2:.1f} s encode {t4 - t3:.1f} s store+sign {t5 - t4:.1f} s total {t5 - t0:.1f} s", flush=True)
+    E.record("master", step="compose", order=order, count=n, style=style, needs_review=eyes_review or _pupil_failed(qa), existing=False)
     return {"ok": True, "url": url, "key": key, "width": W, "height": H, "bytes": len(data), "style": style,
             "layout": layout, "count": n, "existing": False, "expires_in": LINK_SECONDS,
             "seconds": round(time.time() - t0, 1), "qa": qa, "needs_review": eyes_review or _pupil_failed(qa)}

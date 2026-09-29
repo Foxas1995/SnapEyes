@@ -8,7 +8,7 @@
 import type { Lang } from '../landing/copy';
 import type { Block, LegalDoc } from './types';
 import { LEGAL_PATH, LEGAL_UPDATED, SITE_HOST, formatLegalDate, legalHref, type LegalDocId } from '../shared/legal';
-import { CONTACT_EMAIL, SELLER, address, company, contactLine } from './facts';
+import { CONTACT_EMAIL, PHONE_OMITTED_BY_OWNER, SELLER, address, company, formLine } from './facts';
 import { TERMS } from './docs/terms';
 import { WITHDRAWAL } from './docs/withdrawal';
 
@@ -72,19 +72,22 @@ export interface LegalMailPack {
     name: string;
     code: string;
     email: string;
-    phone: string;          // '' until the owner sets SELLER.phone
+    phone: string;          // '' while no phone is shown (owner decision: PHONE_OMITTED_BY_OWNER)
     representative: string; // '' until the owner sets SELLER.representative
     company: Record<Lang, string>;
     address: Record<Lang, string>;
-    contact: Record<Lang, string>; // company, address, email (and phone once set): the model form's "To:" line
+    contact: Record<Lang, string>; // company, address, email: the model form's "To:" line (formLine, never a phone)
   };
   docs: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>;
-  /** Facts the law requires in these texts that are still empty, as "seller.phone": [] when complete. The telephone
-   *  number is mandatory before selling (Art. 6(1)(c) Directive 2011/83/EU as amended by Directive (EU) 2019/2161;
-   *  Art. 246a § 1 Abs. 1 Nr. 2 EGBGB; Anlage 1 EGBGB Gestaltungshinweis 2), so api/_lib/pay.py should keep live
-   *  ordering closed while this list is not empty. The representative is not in it: no rule that applies to a
-   *  Lithuanian seller requires the name, the legal notice simply shows it once it is set. */
+  /** Facts the law requires in these texts that are still empty and that nobody decided to leave out, as
+   *  "seller.email": [] when complete. api/_lib/pay.py may keep live ordering closed while this list is not empty.
+   *  The representative is never in it: no rule that applies to a Lithuanian seller requires the name. */
   missing: string[];
+  /** Facts the law asks for that the OWNER decided to leave out, with the risk accepted: today ["seller.phone"]
+   *  (Art. 6(1)(c) Directive 2011/83/EU; Art. 246a § 1 Abs. 1 Nr. 2 EGBGB; Anlage 1 EGBGB Gestaltungshinweis 2; see
+   *  PHONE_OMITTED_BY_OWNER in src/landing/config.ts). Not a reason to keep ordering closed; listed so that the owner's
+   *  tools can still show the gap. */
+  waived: string[];
 }
 
 const LANGS: Lang[] = ['en', 'de'];
@@ -94,15 +97,21 @@ function mailDoc(id: LegalDocId, doc: LegalDoc, lang: Lang): LegalMailDoc {
   return { title: doc.title.replace(SHY, ''), url: ORIGIN + legalHref(id, lang), text: legalPlainText(id, doc, lang) };
 }
 
-/** The legally required seller facts that are still empty (see LegalMailPack.missing). */
+/** The legally required seller facts that are still empty and not left out by the owner's decision (see
+ *  LegalMailPack.missing). */
 export function missingLegalFacts(): string[] {
   const out: string[] = [];
-  if (!SELLER.phone.trim()) out.push('seller.phone');
+  if (!SELLER.phone.trim() && !PHONE_OMITTED_BY_OWNER) out.push('seller.phone');
   if (!CONTACT_EMAIL.trim()) out.push('seller.email');
   if (!SELLER.name.trim() || !SELLER.code.trim() || !SELLER.street.trim() || !SELLER.postcode.trim() || !SELLER.city.trim()) {
     out.push('seller.address');
   }
   return out;
+}
+
+/** The legally asked-for seller facts the owner decided to leave out (see LegalMailPack.waived). */
+export function waivedLegalFacts(): string[] {
+  return !SELLER.phone.trim() && PHONE_OMITTED_BY_OWNER ? ['seller.phone'] : [];
 }
 
 export function legalMailPack(): LegalMailPack {
@@ -116,12 +125,13 @@ export function legalMailPack(): LegalMailPack {
       representative: SELLER.representative,
       company: per(company),
       address: per(address),
-      contact: per(contactLine),
+      contact: per(formLine),
     },
     docs: per((lang) => ({
       withdrawal: mailDoc('withdrawal', WITHDRAWAL[lang], lang),
       terms: mailDoc('terms', TERMS[lang], lang),
     })),
     missing: missingLegalFacts(),
+    waived: waivedLegalFacts(),
   };
 }

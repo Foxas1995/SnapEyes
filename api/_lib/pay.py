@@ -22,7 +22,8 @@ Everything here is INACTIVE until the owner sets the environment on Vercel (valu
   SNAPEYES_DRAFT_DAY_MB  optional, default 250: how many MB of unpaid eye uploads the site accepts per day (UTC).
                          Past it, uploads pause until the next day and the owner gets one note.
   CRON_SECRET            for the daily clean-up (vercel.json crons -> GET /api/order, api/_lib/cleanup.py): Vercel
-                         sends it as "Authorization: Bearer <CRON_SECRET>". Without it the clean-up answers 503.
+                         sends it as "Authorization: Bearer <CRON_SECRET>". Without it the clean-up answers 503, and
+                         a live key takes no orders (the deletions the privacy policy promises must run).
 Tests only, ignored whenever VERCEL is set: STRIPE_API_BASE, RESEND_API_BASE and LEGAL_PACK_BASE =
 http://127.0.0.1:<port>.
 
@@ -33,8 +34,10 @@ site (the build writes it from the same constants the legal pages print: src/leg
 legal_pack(); without them the email is not sent (it is retried: "legal_unavailable").
 
 When this deployment takes NEW orders (drafts and checkout; ordering_problem()): Stripe configured, and
-  - a LIVE key only together with RESEND_API_KEY: the file may only be made after the order confirmation email
-    (which confirms the withdrawal waiver) went out, see confirmation();
+  - a LIVE key only together with RESEND_API_KEY (the file may only be made after the order confirmation email,
+    which confirms the withdrawal waiver, went out, see confirmation()), CRON_SECRET (the daily deletions) and
+    complete legal texts (legal_problem(): /legal/order-mail.json readable, the seller's facts filled in, its
+    "missing" list empty);
   - a TEST key only where test_orders_allowed(): never on production.
 Without that, /api/order draft and arrange and /api/checkout answer 503 payments_not_configured and nothing is
 stored, exactly as before payments existed.
@@ -61,16 +64,20 @@ One order = one private folder (store.py), orders/<order>/:
   making.json                  the first time /api/order make started a render (the start of performance: the
                                right of withdrawal ends here, api/_lib/withdraw.py)
   withdrawal_<id>.json         a withdrawal statement (name, email, time, outcome; withdraw.py), with
-                               withdrawal_<id>_ack.json (its receipt email) and withdrawal.json (the latest one, no
-                               personal data: what the order page shows)
+                               withdrawal_<id>_ack.json (its receipt email), withdrawal_<id>_note.json (the owner's
+                               note) and withdrawal.json (the latest one, no personal data: what the order page shows)
+  withdrawal-first-<outcome>.json / withdrawal-to-<id>.json   the withdrawal function's marks: which statement
+                               was the first with its outcome, and receipts that went to another address than the
+                               payment email (no personal data)
   withdrawn.json               the contract is withdrawn (or a payment settling at withdrawal): nothing is made
   deleted.json / expired.json  the files are deleted (on request, after a withdrawal, or 12 months after payment)
 Outside the order folders: ticketuse/<day>/<id>.json (the one order each work ticket made), draftlog/<day>/
 (<bytes>-<id>.json, one per uploaded draft eye: the daily ceiling), withdrawlog/<day>/ (the withdrawal function's
-slots: statements per order, statements that matched no order, receipts per address; no personal data),
-withdrawals/<yymm>/ (statements that match no order of ours), withdrawdue/ (receipts to send again), cleanup/
-(what the daily clean-up must do later, the days it finished, and cleanup/unmatched/<day>/: the statements for the
-owner's daily digest) and notes/ (owner notes not tied to an order).
+slots: statements per order, statements that matched no order, receipts, owner notes; no personal data),
+withdrawaddr/<yymm>/ (neutral receipts per address and month; a hash, no address), withdrawals/<yymm>/
+(statements that match no order of ours), withdrawdue/ (receipts to send again), cleanup/ (what the daily clean-up
+must do later, the days it finished, and cleanup/digest/<day>/: the statements for the owner's daily digest) and
+notes/ (owner notes not tied to an order).
 The daily clean-up (api/_lib/cleanup.py) removes unpaid orders after 26 h, the images of withdrawn orders after 14
 days, the files of paid orders 12 months after payment (the records stay), and the markers after a few days.
 
@@ -270,8 +277,12 @@ def test_orders_allowed():
 
 def ordering_problem():
     """Why this deployment takes no NEW orders (drafts, checkout), in words that never include a value ("" when it
-    does): Stripe must be configured; a live key only together with the confirmation email; a test key only where
-    test orders are allowed."""
+    does): Stripe must be configured; a test key only where test orders are allowed; a LIVE key only together with
+      - the confirmation email (RESEND_API_KEY): the file may only be made after it went out;
+      - CRON_SECRET (16 characters or more): without it the daily clean-up never runs the deletions the privacy
+        policy promises (api/order.py cron_purge answers 503);
+      - the legal texts: /legal/order-mail.json readable and complete (legal_problem()), because every order
+        confirmation carries them and is not sent without them."""
     why = problem()
     if why:
         return why
@@ -279,6 +290,12 @@ def ordering_problem():
         if not email_configured():
             return ("a live STRIPE_SECRET_KEY needs RESEND_API_KEY: the order confirmation email must go out before "
                     "the file is made")
+        if len(_env("CRON_SECRET")) < 16:
+            return ("a live STRIPE_SECRET_KEY needs CRON_SECRET (16 characters or more): the daily clean-up must run "
+                    "the deletions the privacy policy promises")
+        legal = legal_problem()
+        if legal:
+            return "a live STRIPE_SECRET_KEY needs complete legal texts: " + legal
     elif not test_orders_allowed():
         return ("STRIPE_SECRET_KEY is a TEST key and this deployment takes no test orders (production, or a preview "
                 "without SNAPEYES_ALLOW_TEST_ORDERS=1)")
@@ -287,6 +304,13 @@ def ordering_problem():
 
 def ordering_open():
     return not ordering_problem()
+
+
+def sells():
+    """Can a payment on this deployment have counted? Stripe configured with a live key, or a test key where test
+    orders count. False where no Stripe key was ever set (snapeyes.com before launch): then no contract can exist
+    here, and the withdrawal function stores nothing for an order that does not exist (withdraw.py)."""
+    return stripe_configured() and (stripe_live() or test_orders_allowed())
 
 
 def session_counts(sess):
@@ -1096,8 +1120,10 @@ def _mark(path, state, **extra):
 
 
 # ----------------------------------------------------------------------------- the legal texts for the emails
-_LEGAL = {"pack": None, "t": 0.0}
+_LEGAL = {"pack": None, "t": 0.0, "failed": 0.0}
 _LEGAL_LOCK = threading.Lock()
+LEGAL_RETRY = 60             # after a failed fetch, the pack is not fetched again for this long (the last good one or
+                             # None is used): a public endpoint that asks for it cannot make every call wait
 
 
 def _legal_ok(pack):
@@ -1118,16 +1144,19 @@ def _legal_ok(pack):
         return False
 
 
-def legal_pack(fresh=False):
+def legal_pack(fresh=False, quick=False):
     """The legal texts of this site (/legal/order-mail.json: the withdrawal information with the model form, the
     terms of sale, the seller), or None when they cannot be read. Fetched from this deployment's own site (on a
     Preview that may sit behind Vercel's login, snapeyes.com is asked next) and kept LEGAL_CACHE seconds; a pack up
-    to LEGAL_STALE old is used when a new fetch fails. Tests point LEGAL_PACK_BASE at a local stub."""
+    to LEGAL_STALE old is used when a new fetch fails. quick (the ordering gate and /api/health, which public pages
+    ask often): no new fetch within LEGAL_RETRY of a failed one. Tests point LEGAL_PACK_BASE at a local stub."""
     now = time.time()
     with _LEGAL_LOCK:
-        pack, t = _LEGAL["pack"], _LEGAL["t"]
+        pack, t, failed = _LEGAL["pack"], _LEGAL["t"], _LEGAL.get("failed", 0.0)
     if pack is not None and not fresh and now - t < LEGAL_CACHE:
         return pack
+    if quick and not fresh and now - failed < LEGAL_RETRY:
+        return pack if pack is not None and now - t < LEGAL_STALE else None
     test = _base("LEGAL_PACK_BASE", "")
     bases = [test] if test else list(dict.fromkeys([site(), SITE_DEFAULT]))
     for base in bases:
@@ -1142,12 +1171,38 @@ def legal_pack(fresh=False):
             continue
         if isinstance(got, dict) and _legal_ok(got):
             with _LEGAL_LOCK:
-                _LEGAL["pack"], _LEGAL["t"] = got, time.time()
+                _LEGAL["pack"], _LEGAL["t"], _LEGAL["failed"] = got, time.time(), 0.0
             return got
         log(f"legal pack from {base}: HTTP {r.status_code}, not usable")
+    with _LEGAL_LOCK:
+        _LEGAL["failed"] = time.time()
     if pack is not None and now - t < LEGAL_STALE:
         return pack
     return None
+
+
+def legal_problem():
+    """Why the legal texts do not allow LIVE sales, in words ("" when they do): /legal/order-mail.json must be
+    readable (legal_pack: both languages, the withdrawal information and the terms), the seller's company, company
+    code, address and email must be filled in, and the build's own list of required facts still empty ("missing",
+    src/legal/plain.ts missingLegalFacts) must be empty. Facts the owner decided to leave out ("waived", today the
+    phone number) do not count here: that is the owner's accepted risk, and the pages never claim them."""
+    pack = legal_pack(quick=True)
+    if pack is None:
+        return f"{LEGAL_PACK_PATH} cannot be read or is incomplete"
+    s = pack.get("seller") or {}
+    empty = [f"seller.{k}" for k in ("code", "email") if not str(s.get(k) or "").strip()]
+    empty += [f"seller.{k}.{lang}" for k in ("company", "address") for lang in LANGS
+              if not str((s.get(k) or {}).get(lang) or "").strip()]
+    if empty:
+        return f"{LEGAL_PACK_PATH} has empty required facts: {', '.join(empty)}"
+    missing = pack.get("missing", [])
+    if not isinstance(missing, list) or not all(isinstance(x, str) for x in missing):
+        return f"{LEGAL_PACK_PATH} has an unreadable \"missing\" list"
+    if missing:
+        return (f"{LEGAL_PACK_PATH} lists required facts that are still missing: "
+                f"{', '.join(re.sub(r'[^A-Za-z0-9_.-]', '', x)[:40] for x in missing[:8])}")
+    return ""
 
 
 def seller_lines(lang, pack=None):
@@ -1672,11 +1727,12 @@ def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.
     Stripe first (stripe_verdict): a paid one is recorded as paid instead of deleted, one still open or settling is
     kept, and nothing is deleted when Stripe cannot be asked. Without yes nothing changes anywhere (Stripe is still
     asked, nothing recorded). names: the order folders to look at; else those of the given yymmdd days; else every
-    order folder. Stops when less than stop_left seconds of the invocation are left (more: true). Returns the counts
-    and "left": the unpaid orders still there (too young, kept, or not reached)."""
+    order folder. Stops when less than stop_left seconds of the invocation are left (more: true). Returns the counts,
+    "left": the unpaid orders still there (too young, kept, or not reached), and "kept_orders": those kept because
+    Stripe could not vouch for them (the daily clean-up asks again about them: cleanup/kept/)."""
     say = out or log
     cutoff = time.time() - hours * 3600
-    res = {"deleted": 0, "kept": 0, "recorded": 0, "markers": 0, "more": False, "left": []}
+    res = {"deleted": 0, "kept": 0, "recorded": 0, "markers": 0, "more": False, "left": [], "kept_orders": []}
     names = list(names) if names is not None else _order_folders(days)
     left = set()
     todo = []                     # (order, record) of the unpaid orders old enough, read 8 at a time
@@ -1708,6 +1764,7 @@ def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.
             continue
         if verdict in ("open", "unknown"):
             res["kept"] += 1
+            res["kept_orders"].append(order)
             left.add(order)
             say(f"keep {order} made {rec.get('created')}: its Stripe session is "
                 f"{'still open or settling' if verdict == 'open' else 'unknown here (no Stripe key or no answer)'}")
@@ -1755,8 +1812,8 @@ def purge_markers(yes, stop_left, res=None):
 # accounting: order.json and paid.json (order number, date, price, payment, email, the artwork's details, consent),
 # the email and note marks, the withdrawal statements, and the marks that say what happened.
 KEEP_NAMES = ("order.json", "paid.json", "mail_delivery.json", "deleted.json", "expired.json", "withdrawn.json",
-              "withdrawal.json", "making.json")
-KEEP_PREFIXES = ("note_", "extra_payment_", "withdrawal_")
+              "withdrawal.json", "making.json", "refunded.json")
+KEEP_PREFIXES = ("note_", "extra_payment_", "withdrawal_", "withdrawal-")
 
 
 def kept_record(path):

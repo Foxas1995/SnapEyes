@@ -1,0 +1,167 @@
+// Lithuanian words and number formats of the admin panel. Every value shown comes through React text nodes, so a
+// customer's name or title is always escaped; safeUrl keeps anything but an http(s) link out of href and src.
+
+import type { Counts, Prices, Reply } from './api';
+
+export function safeUrl(u: unknown): string | undefined {
+  return typeof u === 'string' && /^https?:\/\//i.test(u) ? u : undefined;
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** 2026-09-29 14:05 (the browser's own time zone). */
+export function fmtTime(t: number | null | undefined, seconds = false): string {
+  if (typeof t !== 'number' || !Number.isFinite(t) || t <= 0) return '-';
+  const d = new Date(t * 1000);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}` +
+    (seconds ? `:${pad2(d.getSeconds())}` : '');
+}
+
+export function fmtDate(t: number | null | undefined): string {
+  return fmtTime(t).slice(0, 10);
+}
+
+/** 39,97 € */
+export function fmtEur(cents: number | null | undefined): string {
+  if (typeof cents !== 'number' || !Number.isFinite(cents)) return '-';
+  return `${(cents / 100).toFixed(2).replace('.', ',')} €`;
+}
+
+/** $0,22 */
+export function fmtUsd(v: number): string {
+  return `$${v.toFixed(v >= 10 ? 0 : v > 0 && v < 0.1 ? 3 : 2).replace('.', ',')}`;
+}
+
+export function fmtSec(ms: number | null | undefined): string {
+  if (typeof ms !== 'number' || !Number.isFinite(ms)) return '-';
+  return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0).replace('.', ',')} s`;
+}
+
+export function fmtNum(n: number | null | undefined): string {
+  return typeof n === 'number' && Number.isFinite(n) ? String(Math.round(n * 100) / 100).replace('.', ',') : '-';
+}
+
+export function fmtBytes(b: number | null | undefined): string {
+  if (typeof b !== 'number' || !Number.isFinite(b)) return '-';
+  return b > 1 << 20 ? `${(b / (1 << 20)).toFixed(1).replace('.', ',')} MB` : `${Math.round(b / 1024)} kB`;
+}
+
+export const STATE_LT: Record<string, string> = {
+  unpaid: 'Neapmokėtas', checkout: 'Atidarytas mokėjimas', expired: 'Neapmokėtas, pasibaigęs', broken: 'Be įrašo',
+  pending: 'Laukia patvirtinimo laiško', paid: 'Apmokėtas', making: 'Gaminamas', review: 'Laukia peržiūros',
+  ready: 'Paruoštas', withdrawn: 'Atsisakyta', deleted: 'Failai ištrinti', test_payment: 'Testo mokėjimas', lab: 'Laboratorijos testas',
+};
+
+export const STATE_TONE: Record<string, 'good' | 'warn' | 'bad' | 'muted' | 'info'> = {
+  unpaid: 'muted', checkout: 'info', expired: 'muted', broken: 'bad', pending: 'warn', paid: 'info', making: 'info',
+  review: 'warn', ready: 'good', withdrawn: 'bad', deleted: 'muted', test_payment: 'muted', lab: 'info',
+};
+
+export const STYLE_LT: Record<string, string> = {
+  studio_black: 'Studio Black', celestial_gold: 'Celestial Gold', deep_nebula: 'Deep Nebula',
+  emerald_aurora: 'Emerald Aurora', obsidian_smoke: 'Obsidian Smoke', supernova: 'Supernova',
+};
+
+export const VERDICT_LT: Record<string, string> = { good: 'Gera', ok: 'Tinkama', weak: 'Silpna', no_eye: 'Akies nerasta' };
+
+export const BLOCK_LT: Record<string, string> = {
+  too_blurry: 'Per neryški', too_dark: 'Per tamsi', pupil_too_large: 'Per didelis vyzdys', unknown: 'Nežinoma',
+};
+
+export const DEVICE_LT: Record<string, string> = {
+  ios: 'iPhone / iPad', android: 'Android', desktop: 'Kompiuteris', other: 'Kita', unknown: 'Nežinoma',
+};
+
+export const SOURCE_LT: Record<string, string> = {
+  camera: 'Kamera', gallery: 'Galerija', live: 'Gyva kamera', sample: 'Pavyzdys', lab: 'Laboratorija', other: 'Kita', unknown: 'Nežinoma',
+};
+
+export const STEP_LT: Record<string, string> = {
+  analyze: 'Analizė', deglare: 'Atspindžiai', enhance: 'Restauravimas', compose: 'Kompozicija',
+  master_eye: '4K akis', master_compose: '4K kūrinys',
+};
+
+export const KIND_LT: Record<string, string> = {
+  busy: 'Gemini užimtas', '400': 'Bloga užklausa', '403': 'Atmesta (403)', '429': 'Per daug (429)', '500': 'Serverio klaida',
+  '502': 'Atmetė paslauga (502)', '503': 'Neprieinama (503)',
+};
+
+export const ENDPOINT_LT: Record<string, string> = {
+  analyze: 'Analizė', deglare: 'Atspindžiai', enhance: 'Restauravimas', compose: 'Kompozicija', master_eye: '4K akis',
+  master_compose: '4K kūrinys', order: 'Užsakymas', checkout: 'Mokėjimas', admin: 'Administravimas',
+  stripe_webhook: 'Stripe webhook', other: 'Kita',
+};
+
+export const RESULT_LT: Record<string, string> = {
+  sent: 'išsiųsta', off: 'el. paštas neįjungtas', bad_address: 'blogas adresas', transient: 'laikinai nepavyko, bandyk vėliau',
+  failed: 'Resend atmetė', done: 'jau siunčiama arba išsiųsta', no_address: 'nėra adreso', no_consent: 'neužfiksuotas sutikimas',
+  withdrawn: 'užsakymo atsisakyta', legal_unavailable: 'nepavyko nuskaityti teisinių tekstų', link_unavailable: 'nuorodos atkurti negalima',
+};
+
+export const REASON_LT: Record<string, string> = {
+  admin_denied: 'Raktas netinka (pasibaigęs, atšauktas arba kitam serveriui).',
+  admin_not_configured: "Administravimas šiame serveryje neįjungtas: Vercel'e nustatyk SNAPEYES_ADMIN_SECRET (bent 32 simboliai, python scripts/mint_admin.py --new-secret), SNAPEYES_ADMIN_EPOCH palik tuščią arba tik skaičių, ir paleisk iš naujo.",
+  making_not_started: 'Gamyba dar neprasidėjo: ją pradeda pirkėjo užsakymo puslapis. Pradėjus čia pirkėjas netektų teisės atsisakyti, o paskelbtos sąlygos to nenumato.',
+  too_many_attempts: 'Per daug nesėkmingų bandymų. Palauk ir bandyk vėliau.',
+  storage_not_configured: 'Saugykla (Supabase) šiame serveryje nenustatyta.',
+  storage_busy: 'Saugykla neatsakė. Pabandyk po akimirkos.',
+  payments_not_configured: 'Stripe nenustatytas arba raktas neturi teisės.',
+  payments_busy: 'Stripe neatsakė. Pabandyk po akimirkos.',
+  payments_error: 'Stripe atmetė užklausą.',
+  not_found: 'Tokio užsakymo nėra.',
+  not_paid: 'Užsakymas neapmokėtas.',
+  withdrawn: 'Užsakymo atsisakyta: jam nieko negaminama.',
+  deleted: 'Šio užsakymo failai ištrinti.',
+  link_unavailable: 'Nuorodos atkurti negalima: pasikeitė bilietų paslaptis.',
+  email_off: 'Šiame serveryje el. paštas (Resend) neįjungtas.',
+  no_address: 'Užsakymui neužfiksuotas el. pašto adresas.',
+  no_consent: 'Neužfiksuotas pirkėjo sutikimas, patvirtinimo siųsti nėra ko.',
+  legal_unavailable: 'Nepavyko nuskaityti teisinių tekstų. Pabandyk po akimirkos.',
+  mail_in_progress: 'Laiškas kaip tik siunčiamas. Pažiūrėk po minutės.',
+  no_artwork: 'Kūrinys dar nepagamintas.',
+  held: 'Kūrinys laukia tavo peržiūros: pirma jį išleisk (tai išsiunčia ir laišką).',
+  test_payment: 'Apmokėta Stripe testo režimu: čia nieko negaminama.',
+  rerender_not_allowed: 'master_eye taisyklė: akis perpiešiama tik jei jos 4K nepraėjo patikros ir dar nebuvo perpiešta.',
+  draft_missing: 'Trūksta įkelto akies iškarpos ar peržiūros failo.',
+  draft_changed: 'Įkelta akies iškarpa ar peržiūra dingo arba pasikeitė.',
+  eyes_not_ready: 'Ne visos akys pagamintos.',
+  stripe_off: 'Stripe šiame serveryje nenustatytas.',
+  unknown_payment: 'Toks mokėjimas šiam užsakymui neužfiksuotas.',
+  already_refunded: 'Šis mokėjimas jau grąžintas.',
+  in_review: 'Užsakymas pažymėtas peržiūrai: pirma nuimk peržiūros žymą.',
+  confirming: 'Patvirtinimo laiškas dar neišsiųstas: nieko negaminama, kol jis neišeis.',
+  rendering: 'Ši akis kaip tik piešiama. Pabandyk po minutės.',
+  model_busy: 'Gemini šiuo metu užimtas. Pabandyk po minutės.',
+  busy_retry: 'Nepakako laiko šiame iškvietime. Pabandyk dar kartą.',
+  render_rejected: 'Gemini negrąžino tinkamo 4K vaizdo.',
+  bad_link: 'Užsakymo raktas nesutampa.',
+  payment_processing: 'Mokėjimas dar tvirtinamas.',
+};
+
+/** One sentence for a failed reply: our own words for a known reason, else the server's sentence, else the status. */
+export function explain(r: Reply<unknown>): string {
+  if (r.status === 0) return 'Serveris neatsakė (nėra ryšio arba baigėsi laikas).';
+  const lt = REASON_LT[r.reason];
+  const detail = r.data && typeof (r.data as Record<string, unknown>).detail === 'string' ? ` (${(r.data as Record<string, unknown>).detail as string})` : '';
+  if (lt) return lt + detail;
+  if (r.error) return r.error + detail;
+  return `Klaida, HTTP ${r.status}.`;
+}
+
+/** Estimated Gemini spend (USD) of a period's call counts. */
+export function spend(c: Pick<Counts, 'gemini'>, p: Prices): number {
+  return c.gemini.vision * p.vision + c.gemini.image_1k * p.image_1k + c.gemini.image_4k * p.image_4k;
+}
+
+export const DEFAULT_PRICES: Prices = { vision: 0.003, image_1k: 0.067, image_4k: 0.153 };
+
+/** Long base64 strings in a reply are replaced by their length, so a JSON view stays readable and light. */
+export function trimJson(v: unknown, depth = 0): unknown {
+  if (typeof v === 'string') return v.length > 300 ? `<${v.length} simbolių>` : v;
+  if (Array.isArray(v)) return depth > 6 ? '[...]' : v.slice(0, 50).map((x) => trimJson(x, depth + 1));
+  if (v && typeof v === 'object') {
+    if (depth > 6) return '{...}';
+    return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, trimJson(x, depth + 1)]));
+  }
+  return v;
+}

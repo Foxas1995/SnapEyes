@@ -11,6 +11,7 @@ from _lib import pay
 import deglare
 
 def handle(req):
+    pay.start_clock()             # this handler does not go through L.run: the legal pack fetch needs a deadline
     info = {"ok": True, "commit": os.environ.get("VERCEL_GIT_COMMIT_SHA", "")[:7],
             "gemini_key": bool(os.environ.get("GEMINI_API_KEY", "").strip()),
             "blob_store": bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()),
@@ -22,12 +23,15 @@ def handle(req):
             "stripe": pay.stripe_configured(),
             "stripe_live": pay.stripe_configured() and pay.stripe_live(),
             "email": pay.email_configured(),
-            # whether this deployment takes new orders (a live key needs the email; a test key never on production)
-            # and whether a Stripe TEST payment unlocks files here (a Preview with SNAPEYES_ALLOW_TEST_ORDERS=1 only)
+            # whether this deployment takes new orders (a live key needs the email, CRON_SECRET and complete legal
+            # texts; a test key never on production) and whether a Stripe TEST payment unlocks files here (a Preview
+            # with SNAPEYES_ALLOW_TEST_ORDERS=1 only)
             "ordering": pay.ordering_open() and store.configured(),
             "test_orders": pay.test_orders_allowed(),
             # whether the daily clean-up can run here (CRON_SECRET set; vercel.json crons calls GET /api/order)
             "cron": len(pay._env("CRON_SECRET")) >= 16,
+            # whether /legal/order-mail.json is readable and complete enough for live sales (pay.legal_problem)
+            "legal": not pay.legal_problem(),
             # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)
             "deglare_model": deglare.DEGLARE_MODEL,
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx"))}

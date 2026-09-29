@@ -51,6 +51,7 @@ import requests
 from PIL import Image
 from _lib import iris as L
 from _lib import store
+from _lib import events as E   # the admin panel's usage events (no personal data)
 
 MASTER_SIDE = 4096           # the deliverable: flash 4K measured 4096 x 4096, $0.153, 24-31 s (2026-09-23 spike)
 MAX_IN_SIDE = 2048           # the deglared crop is at most 1024 px; a larger image is not one this site made
@@ -397,6 +398,7 @@ def master_eye(body):
         print(f"snapeyes master: {key} stored ({'re-render, kept the ' + kept + ' one' if kept else 'first render'}) "
               f"attempts {attempts} render {render_s:.1f} s post {t3 - t2:.1f} s upload {t4 - t3:.1f} s total "
               f"{time.time() - t0:.1f} s bytes {len(data)} fidelity {fid:.3f} tokens {tokens}", flush=True)
+        E.record("master", step="eye", order=order, eye=eye, needs_review=store.needs_review(record), attempts=attempts, rerender=prev is not None, existing=False, render_s=round(render_s, 1))
         return {"ok": True, "key": key, "eye": eye, "width": MASTER_SIDE, "height": MASTER_SIDE, "existing": False,
                 "seconds": round(time.time() - t0, 1), "render_seconds": round(render_s, 1), "qa": record.get("qa"),
                 "preview": record.get("preview"), "needs_review": store.needs_review(record),

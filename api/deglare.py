@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler
 import numpy as np
 from PIL import Image
 from _lib import iris as L
+from _lib import events as E   # the admin panel's usage events (no personal data)
 
 # The reflection call to the image model (PROMPT_DEGLARE) is a switch, OFF by default since 2026-09-29: the
 # reflection holes keep glare_fill's same-radius fill (the model's input), exactly what they got when the call failed
@@ -80,6 +81,7 @@ def deglare(body):
     if pct < L.GLARE_MIN_PCT:
         if lid_pct > 0:
             base = L.lid_composite(crop, filled, lid_hard, lid_feather, r_px, prho, glare_hard=hard)
+        E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=bool(pupil_changed or lid_pct > 0), used_sr=used_sr, model_call=False)
         return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2),
                 "changed": pupil_changed or lid_pct > 0, "used_sr": used_sr,
                 "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95)}
@@ -121,6 +123,7 @@ def deglare(body):
             except Exception:
                 glared = prefilled
         clean = L.lid_composite(glared, filled, lid_hard, lid_feather, r_px, prho, photo=crop, glare_hard=lid_glare)
+    E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=True, used_sr=used_sr, model_call=DEGLARE_MODEL)
     return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "changed": True, "used_sr": used_sr,
             "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95)}
 

@@ -1,7 +1,10 @@
 // Legal notice (EN) / Impressum (DE). The "Represented by" and "Phone" rows appear only when SELLER.representative
-// and SELLER.phone are set in src/landing/config.ts. No VAT number: the MB is not VAT-registered.
+// and SELLER.phone are set in src/landing/config.ts; the owner decided to show no phone (PHONE_OMITTED_BY_OWNER), so
+// the contact is the email address and, for withdrawals, the online withdrawal function. No VAT number: the MB is not
+// VAT-registered.
 import type { LegalDoc, LegalDocs } from '../types';
 import { MAIL, SELLER, company, country } from '../facts';
+import { WITHDRAWAL_ONLINE, withdrawFunctionHref } from '../../shared/legal';
 
 const rows = (lang: 'en' | 'de'): Array<[string, string]> => {
   const de = lang === 'de';
@@ -38,7 +41,10 @@ const en: LegalDoc = {
     {
       id: 'contact',
       title: 'Contact',
-      blocks: [SELLER.phone ? `The quickest way to reach us is by email: ${MAIL}. By phone: ${SELLER.phone}.` : `The quickest way to reach us is by email: ${MAIL}.`],
+      blocks: [
+        SELLER.phone ? `The quickest way to reach us is by email: ${MAIL}. By phone: ${SELLER.phone}.` : `The quickest way to reach us is by email: ${MAIL}.`,
+        `To withdraw from an order, you can also use our online function ["${WITHDRAWAL_ONLINE.en.button}"](${withdrawFunctionHref('en')}).`,
+      ],
     },
     {
       id: 'images',
@@ -69,7 +75,10 @@ const de: LegalDoc = {
     {
       id: 'contact',
       title: 'Kontakt',
-      blocks: [SELLER.phone ? `Am schnellsten erreichen Sie uns per E-Mail: ${MAIL}. Telefonisch: ${SELLER.phone}.` : `Am schnellsten erreichen Sie uns per E-Mail: ${MAIL}.`],
+      blocks: [
+        SELLER.phone ? `Am schnellsten erreichen Sie uns per E-Mail: ${MAIL}. Telefonisch: ${SELLER.phone}.` : `Am schnellsten erreichen Sie uns per E-Mail: ${MAIL}.`,
+        `Um eine Bestellung zu widerrufen, können Sie auch unsere Online-Funktion [„${WITHDRAWAL_ONLINE.de.button}“](${withdrawFunctionHref('de')}) nutzen.`,
+      ],
     },
     {
       id: 'images',

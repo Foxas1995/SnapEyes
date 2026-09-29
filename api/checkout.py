@@ -13,8 +13,8 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"
      Reply 200: {ok, url, order, amount, currency, eyes, style, expires_at}; redirect the browser to url.
      Errors ({ok: false, reason, error, retry}):
        503 payments_not_configured / storage_not_configured   ordering is not open on this deployment (no Stripe,
-                                a live key without the confirmation email, a test key on production:
-                                pay.ordering_problem())
+                                a live key without the confirmation email, CRON_SECRET or complete legal texts, a
+                                test key on production: pay.ordering_problem())
        403 bad_link             order and k do not match
        409 withdrawn            the customer withdrew this order (/api/order action withdraw): start a new one
        400                      bad eyes, style or layout (L.run's sentence); consent_required without the waiver

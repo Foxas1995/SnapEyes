@@ -201,6 +201,15 @@ def _scrub(s):
         if v: s = s.replace(v, "***")
     return s
 
+def _event(req, kind, out=None):
+    """The error event of one reply for the owner's admin panel (api/_lib/events.py): best effort, never raises,
+    no message text. kind None: the reply of an endpoint's own refusal (a store.Answer, read from out)."""
+    try:
+        from . import events
+        events.error(req, kind) if kind is not None else events.answer(req, out)
+    except Exception:  # noqa
+        pass
+
 def run(req, fn, gate=True):
     """Wrap a handler body: gate, parse JSON, run, serialise, catch errors."""
     t0 = time.time()
@@ -223,9 +232,11 @@ def run(req, fn, gate=True):
         out = fn(body)
         out["ms"] = int((time.time() - t0) * 1000)
         send_json(req, 200, out)
+        _event(req, None, out)
     except ClientError as e:
         print("snapeyes client error:", _scrub(repr(e))[:200], flush=True)
         send_json(req, 400, {"ok": False, "error": str(e), "ms": int((time.time() - t0) * 1000)})
+        _event(req, "400")
     except PermissionError as e:
         print("snapeyes refused:", _scrub(repr(e))[:200], flush=True)
         if isinstance(e, UnlockError):
@@ -237,24 +248,28 @@ def run(req, fn, gate=True):
             msg = ("Diese Sitzung ist abgelaufen. Bitte fotografieren Sie Ihr Auge erneut." if de else
                    "This session expired. Please take the photo again.")
         send_json(req, 403, {"ok": False, "error": msg, "ms": int((time.time() - t0) * 1000)})
+        _event(req, "403")
     except ValueError as e:
         print("snapeyes bad input:", _scrub(repr(e))[:200], flush=True)
         send_json(req, 400, {"ok": False, "error": ("Wir konnten dieses Bild nicht lesen. Bitte versuchen Sie es mit einem "
                                                     "anderen Foto." if de else
                                                     "We could not read that image. Try another photo."),
                              "ms": int((time.time() - t0) * 1000)})
+        _event(req, "400")
     except ModelBusy as e:
         print("snapeyes model busy:", _scrub(repr(e))[:300], flush=True)
         send_json(req, 503, {"ok": False, "error": ("Unser Studio ist gerade sehr ausgelastet. Bitte versuchen Sie es in "
                                                     "einer Minute erneut." if de else
                                                     "Our studio is very busy right now. Please try again in a minute."),
                              "ms": int((time.time() - t0) * 1000)})
+        _event(req, "busy")
     except Exception as e:  # noqa
         # detail goes to the Vercel log only; the caller gets a sentence, never internals
         print("snapeyes handler error:", _scrub(repr(e))[:600], flush=True)
         send_json(req, 500, {"ok": False, "error": ("Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut." if de
                                                     else "Something went wrong on our side. Please try again."),
                              "ms": int((time.time() - t0) * 1000)})
+        _event(req, "500")
 
 # ----------------------------------------------------------------------------- image helpers
 MAX_PIXELS = 40_000_000      # ~40 MP: larger than any phone photo, so anything bigger is a memory attack

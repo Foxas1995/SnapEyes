@@ -281,7 +281,7 @@ const en: Copy = {
       },
       {
         q: 'Can I withdraw from an order?',
-        a: `Your file is made right after you pay. Before paying, you agree that we start straight away, so the 14-day right of withdrawal ends once we have started making your file. Until then you can withdraw by email or online with "${WITHDRAWAL_ONLINE.en.button}" at the foot of this page. If your file is defective or clearly differs from the preview you approved, write to us: we render it again or refund you. The details are in our terms of sale and the withdrawal information, linked at the foot of this page.`,
+        a: `We start making your file as soon as your order confirmation email has gone out, normally within a minute of your payment. Before paying, you agree that we start straight away, so the 14-day right of withdrawal ends once we have started making your file. Until then you can withdraw by email or online with "${WITHDRAWAL_ONLINE.en.button}", at the foot of this page or through the withdrawal link in your order confirmation email. If your file is defective or clearly differs from the preview you approved, write to us: we render it again or refund you. The details are in our terms of sale and the withdrawal information, linked at the foot of this page.`,
       },
       {
         q: 'When can I order?',
@@ -465,7 +465,7 @@ const de: Copy = {
       },
       {
         q: 'Kann ich eine Bestellung widerrufen?',
-        a: `Ihre Datei wird direkt nach der Zahlung erstellt. Vor der Zahlung stimmen Sie zu, dass wir sofort beginnen; das 14-tägige Widerrufsrecht erlischt daher, sobald wir mit der Erstellung Ihrer Datei begonnen haben. Bis dahin können Sie per E-Mail oder online mit „${WITHDRAWAL_ONLINE.de.button}“ am Ende dieser Seite widerrufen. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu oder erstatten Ihnen den Preis. Einzelheiten stehen in unseren AGB und der Widerrufsbelehrung, verlinkt am Ende dieser Seite.`,
+        a: `Wir beginnen mit der Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung. Vor der Zahlung stimmen Sie zu, dass wir sofort beginnen; das 14-tägige Widerrufsrecht erlischt daher, sobald wir mit der Erstellung Ihrer Datei begonnen haben. Bis dahin können Sie per E-Mail oder online mit „${WITHDRAWAL_ONLINE.de.button}“ widerrufen, am Ende dieser Seite oder über den Widerrufslink in Ihrer Bestellbestätigung per E-Mail. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu oder erstatten Ihnen den Preis. Einzelheiten stehen in unseren AGB und der Widerrufsbelehrung, verlinkt am Ende dieser Seite.`,
       },
       {
         q: 'Wann kann ich bestellen?',

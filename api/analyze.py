@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler
 import numpy as np
 from PIL import Image
 from _lib import iris as L
+from _lib import events as E   # the admin panel's usage events (no personal data)
 
 # ---- capture targets: ONE block. The verdict, the tips and the "targets" the capture screen shows all read
 # these, so the numbers a customer is told can never disagree with the numbers that judge the photo.
@@ -575,6 +576,7 @@ def analyze(body):
     scale = ow / float(W)
     v = L.gemini_json(L.VISION_MODEL, L.PROMPT_VISION, im)
     if not v or v.get("found") is False or "iris_box" not in v:
+        E.record("analyze", ok=False, verdict="no_eye", lang="de" if de else "en", device=E.device_class(device), source=E.device_source(device))
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     box = v.get("iris_box")
@@ -582,6 +584,7 @@ def analyze(body):
               and all(isinstance(c, (int, float)) and c == c and abs(c) < 1e6 for c in box)
               and box[2] > box[0] and box[3] > box[1])
     if not ok_box:
+        E.record("analyze", ok=False, verdict="no_eye", lang="de" if de else "en", device=E.device_class(device), source=E.device_source(device))
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     # The model is asked for [x1,y1,x2,y2] but sometimes answers in its native [y1,x1,y2,x2] order. On a
@@ -750,6 +753,7 @@ def analyze(body):
     # No ticket for a circle that is not an iris: from a crop of eyelid skin the image model invented a
     # complete brown iris, which would then be sold as the customer's own eye. The same for a photo too blurry to
     # carry the customer's own pattern (blur_blocked): the model would invent it.
+    E.record("analyze", ok=True, verdict=verdict, detail=detail, blocked=bool(blocked), block_reason=reason, locked=bool(locked), shake_asked=bool(locked) and basis < FIBRE_OK and block_by in (None, "shake"), lang="de" if de else "en", device=E.device_class(device), source=E.device_source(device))
     return {"ok": True, "ticket": L.mint_ticket("work") if locked and not blocked else None, "pupil_r": pupil_r, "fibre": round(fibre, 2),
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,
