@@ -1,10 +1,12 @@
 // Legal notice (EN) / Impressum (DE). The "Represented by" and "Phone" rows appear only when SELLER.representative
 // and SELLER.phone are set in src/landing/config.ts; the owner decided to show no phone (PHONE_OMITTED_BY_OWNER), so
 // the contact is the email address and, for withdrawals, the online withdrawal function. No VAT number: the MB is not
-// VAT-registered.
+// VAT-registered. IMPRINT_AU (the Australian edition, src/shared/legal.ts legalEdition "au") adds that it is not
+// registered for GST in Australia either (below the A$75,000 registration turnover), so no GST is charged.
 import type { LegalDoc, LegalDocs } from '../types';
 import { MAIL, SELLER, company, country } from '../facts';
 import { WITHDRAWAL_ONLINE, withdrawFunctionHref } from '../../shared/legal';
+import { patchDoc } from '../patch';
 
 const rows = (lang: 'en' | 'de'): Array<[string, string]> => {
   const de = lang === 'de';
@@ -98,3 +100,16 @@ const de: LegalDoc = {
 };
 
 export const IMPRINT: LegalDocs = { en, de };
+
+// ------------------------------------------------------------------------------------------ the Australian edition
+const gst = (lang: 'en' | 'de'): [string, string] => (lang === 'de'
+  ? ['GST (Australien)', 'In Australien nicht für die GST registriert, daher wird keine GST berechnet.']
+  : ['GST (Australia)', 'Not registered for GST in Australia, so no GST is charged.']);
+
+const withGst = (doc: LegalDoc, lang: 'en' | 'de') => patchDoc(doc, {
+  replace: {
+    provider: (s) => ({ ...s, blocks: s.blocks.map((b) => (typeof b !== 'string' && 'dl' in b ? { dl: [...b.dl, gst(lang)] } : b)) }),
+  },
+});
+
+export const IMPRINT_AU: LegalDocs = { en: withGst(en, 'en'), de: withGst(de, 'de') };

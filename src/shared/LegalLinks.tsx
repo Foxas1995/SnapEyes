@@ -29,7 +29,7 @@ export function LegalParts({ parts, lang = 'en' }: { parts: LegalPart[]; lang?: 
     <>
       {parts.map((p, i) =>
         p.doc ? (
-          <a key={i} href={legalHref(p.doc, lang)} target="_blank" rel="noopener" className={LINK}>
+          <a key={i} href={legalHref(p.doc, lang, p.section)} target="_blank" rel="noopener" className={LINK}>
             {p.text}
           </a>
         ) : (

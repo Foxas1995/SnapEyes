@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Clock, Download, ExternalLink, Mail, RefreshCcw } from 'lucide-react';
-import { ORDER_COPY, euroOf, mbOf, type OrderCopy } from './copy';
+import { ORDER_COPY, mbOf, type OrderCopy } from './copy';
+import { adoptMarket, money, withMarket } from '../shared/markets';
+import { useMarket } from '../shared/useMarket';
 import { EMPTY_VIEW, REAL_DEPS, driveOrder, stopOf, type DriveView, type OrderLink } from './driver';
 import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPath, type OrderState, type OrderStatus } from './api';
 import { WithdrawEntry, WithdrawForm, WithdrawnCard } from './WithdrawPanel';
@@ -48,6 +50,10 @@ export const OrderApp: React.FC = () => {
   const [email, setEmail] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
   const [makingSince, setMakingSince] = useState<number | null>(null);
+  // the order's own market (the server names it): this page's links carry it (src/shared/markets.ts withMarket)
+  useMarket();
+  const orderMarket = view.status?.market ?? view.status?.checkout?.market;
+  useEffect(() => { adoptMarket(orderMarket); }, [orderMarket]);
 
   const switchLang = (l: Lang) => { if (l !== lang) { rememberLang(l); setLangState(l); } };
 
@@ -160,7 +166,7 @@ export const OrderApp: React.FC = () => {
       content = (
         <>
           {st && <Summary C={C} st={st} lang={lang} />}
-          <WithdrawForm C={C} lang={lang} link={LINK} amount={typeof st?.amount === 'number' ? st.amount : null} backHref={back} />
+          <WithdrawForm C={C} lang={lang} link={LINK} amount={typeof st?.amount === 'number' ? st.amount : null} currency={st?.currency ?? null} backHref={back} />
         </>
       );
     }
@@ -193,7 +199,7 @@ export const OrderApp: React.FC = () => {
             <p className="text-sm text-zinc-400 mt-2">{st.expired ? C.unpaid.expired : C.unpaid.hint}</p>
             <div className={`grid gap-3 mt-4 ${st.expired ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
               {!st.expired && <button type="button" onClick={again} disabled={running} className={PLAIN_BTN}><RefreshCcw className="w-4 h-4" /> {C.unpaid.check}</button>}
-              <a href={`/try?lang=${lang}`} className={PLAIN_BTN}>{C.unpaid.studio}</a>
+              <a href={withMarket(`/try?lang=${lang}`)} className={PLAIN_BTN}>{C.unpaid.studio}</a>
             </div>
           </>
         )}
@@ -264,7 +270,7 @@ export const OrderApp: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-2xl mx-auto">
-        <a href={`/?lang=${lang}`} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
           <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-500 text-right">{C.tag}</span>
           <LangSwitch C={C} lang={lang} onSwitch={switchLang} />
@@ -326,7 +332,7 @@ const Summary: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang }> = ({ C, s
     <section data-testid="summary" className={`${CARD} text-sm`}>
       <p className="font-semibold text-zinc-100">{parts}</p>
       {st.names && <p className="text-xs text-zinc-400 mt-1 break-words">{C.summary.inscription(st.names)}</p>}
-      {typeof st.amount === 'number' && <p className="text-xs text-zinc-400 mt-1">{C.summary.paid(euroOf(st.amount, lang))}</p>}
+      {typeof st.amount === 'number' && <p className="text-xs text-zinc-400 mt-1">{C.summary.paid(money(st.amount, st.currency ?? 'eur', lang))}</p>}
     </section>
   );
 };

@@ -2,15 +2,23 @@
 """/api/checkout: opens the Stripe payment page for an order whose eyes are uploaded (/api/order action "draft").
 
 GET  /api/checkout
-     {ok, open, currency, prices, max_eyes, consent: {version, en, de}}: whether ordering is open on this deployment
-     (Stripe and storage configured), the price list the server charges, and the exact withdrawal-waiver text the
-     checkbox must show. Nothing secret, nothing per order.
-POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"|"de", consent_digital: true}
-     The server computes the price from eyes and style (a price sent by the client is ignored), refuses without the
-     withdrawal waiver, records the consent's version, time and text fingerprint, creates a Stripe Checkout Session
-     (mode payment, EUR, one line item, the customer's email collected by Stripe, Stripe's own page in de or en,
-     payment methods chosen by Stripe, no Stripe Tax) and returns its URL.
-     Reply 200: {ok, url, order, amount, currency, eyes, style, expires_at}; redirect the browser to url.
+     {ok, open, currency, prices, market, markets, max_eyes, consent: {version, en, de, markets}, country, suggest}: whether
+     ordering is open on this deployment (Stripe and storage configured), the price lists the server charges (currency
+     and prices: the default market's, as before markets existed; markets: {key: {currency, prices}} of every market
+     the site sells in, api/_lib/markets.py), and the exact withdrawal-waiver text the checkbox must show (en, de:
+     the EU text; markets: {"au": {en, de}}, the text of a market that has its own, pay.ACL_MARKETS). country:
+     the visitor's country as Vercel names it (x-vercel-ip-country, "" when unknown) and suggest: a sellable market
+     for that country other than the default one, or null. Only a hint the page may offer; it never picks the market.
+     Nothing secret, nothing per order.
+POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"|"de", market, consent_digital: true}
+     market: one of the markets the site sells in ("eu" when missing; one that is not offered, "hu" today, or any other
+     value: 400). The server computes the price from eyes, style and market (a price or currency sent by the client is
+     ignored), refuses without the withdrawal waiver, records the consent's version, time and text fingerprint,
+     creates a Stripe Checkout Session (mode payment, the market's currency, one line item, the customer's email
+     collected by Stripe, Stripe's own page in de or en (en-GB for Australia), payment methods chosen by Stripe, no
+     Stripe Tax, no Adaptive Pricing), records market, currency and amount with the order and in the session's
+     metadata, and returns its URL.
+     Reply 200: {ok, url, order, amount, currency, market, eyes, style, expires_at}; redirect the browser to url.
      Errors ({ok: false, reason, error, retry}):
        503 payments_not_configured / storage_not_configured   ordering is not open on this deployment (no Stripe,
                                 a live key without the confirmation email, CRON_SECRET or complete legal texts, a
@@ -26,7 +34,7 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"
        410 draft_expired        the order is older than 24 h (less than 32 min left): start a new one
        503 payments_busy        Stripe did not answer; retry
        502 payments_error       Stripe refused the request; not retryable, logged"""
-import os, sys, time, hashlib
+import os, re, sys, time, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
@@ -34,12 +42,28 @@ from _lib import store
 from _lib import pay
 
 
-def info(body):
-    return {"ok": True, "open": pay.ordering_open() and store.configured(), "currency": "EUR",
-            "prices": {"one_eye_studio_black": pay.PRICE_ONE_STUDIO, "one_eye_art": pay.PRICE_ONE_ART,
-                       "two_eyes": pay.PRICE_TWO, "each_further_eye": pay.PRICE_EXTRA},
+def country_hint(value):
+    """(country, suggested market) from Vercel's x-vercel-ip-country: a sellable market other than the default one
+    that names this country (api/_lib/markets.py countries), else None. A hint only: nothing is priced by it."""
+    cc = value.strip().upper() if isinstance(value, str) and re.fullmatch(r"\s*[A-Za-z]{2}\s*", value) else ""
+    for m in pay.SELECTABLE:
+        if (m != pay.DEFAULT_MARKET and cc and cc in (pay.MARKETS[m].get("countries") or ())
+                and pay.market_currency(m) != pay.market_currency(pay.DEFAULT_MARKET)):
+            return cc, m
+    return cc, None
+
+
+def info(body, country=None):
+    cc, suggest = country_hint(country)
+    return {"ok": True, "open": pay.ordering_open() and store.configured(),
+            "currency": pay.market_currency(pay.DEFAULT_MARKET).upper(), "prices": pay.price_list(pay.DEFAULT_MARKET),
+            "market": pay.DEFAULT_MARKET,
+            "markets": {m: {"currency": pay.market_currency(m).upper(), "prices": pay.price_list(m)} for m in pay.SELECTABLE},
             "max_eyes": pay.MAX_EYES,
-            "consent": {"version": pay.CONSENT_VERSION, "en": pay.CONSENT_TEXT["en"], "de": pay.CONSENT_TEXT["de"]}}
+            "consent": {"version": pay.CONSENT_VERSION, "en": pay.CONSENT_TEXT["en"], "de": pay.CONSENT_TEXT["de"],
+                        "markets": {m: {lang: pay.consent_for(m, lang) for lang in pay.LANGS}
+                                    for m in pay.SELECTABLE if pay.acl_market(m)}},
+            "country": cc, "suggest": suggest}
 
 
 def checkout(body):
@@ -48,7 +72,7 @@ def checkout(body):
         raise pay.PayNotConfigured(why)
     order, k = body.get("order"), body.get("k")
     rec = pay.load_order(order, k)
-    spec = pay.spec_from(body)
+    spec = pay.spec_from(body, markets=pay.SELECTABLE)
     if body.get("consent_digital") is not True:
         raise store.Answer(400, "consent_required", "Please tick the box about the digital file and your right of "
                            "withdrawal.", False)
@@ -83,24 +107,30 @@ def checkout(body):
     if settling:
         raise store.Answer(409, "already_paid", "A payment for this order is already being confirmed.", False,
                            order_url=pay.order_url(order, k, lang), settling=True)
-    amount = pay.price_cents(n, spec["style"])
-    # the exact text the customer ticked is kept with the order: the confirmation email quotes it word for word
-    consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": pay.CONSENT_TEXT[lang],
-               "text_sha256": hashlib.sha256(pay.CONSENT_TEXT[lang].encode("utf-8")).hexdigest()[:16]}
+    market = spec["market"]
+    currency = pay.market_currency(market)
+    amount = pay.price_cents(n, spec["style"], market)
+    # the exact text the customer ticked (the market's own for Australia) is kept with the order: the confirmation
+    # email quotes it word for word
+    text = pay.consent_for(market, lang)
+    consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": text,
+               "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]}
     sess = pay.create_session(order, k, spec, amount, consent, expires)
     sid = sess["id"]
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,
-                         "currency": pay.CURRENCY, "spec": spec, "consent": consent, "expires_at": int(expires),
+                         "currency": currency, "market": market, "spec": spec, "consent": consent,
+                         "expires_at": int(expires),
                          "livemode": bool(sess.get("livemode"))})
     pay.write_order(order, rec)
-    pay.log(f"order {order}: checkout {sid} {amount} {pay.CURRENCY} {n} eye(s) {spec['style']} {lang}")
-    return {"ok": True, "url": sess["url"], "order": order, "amount": amount, "currency": "EUR", "eyes": n,
-            "style": spec["style"], "expires_at": int(expires)}
+    pay.log(f"order {order}: checkout {sid} {amount} {currency} ({market}) {n} eye(s) {spec['style']} {lang}")
+    return {"ok": True, "url": sess["url"], "order": order, "amount": amount, "currency": currency.upper(),
+            "market": market, "eyes": n, "style": spec["style"], "expires_at": int(expires)}
 
 
 def handle_get(req):
-    L.run(req, info, gate=False)
+    country = req.headers.get("x-vercel-ip-country") if hasattr(req, "headers") else None
+    L.run(req, lambda body: info(body, country), gate=False)
 
 
 def handle_post(req):

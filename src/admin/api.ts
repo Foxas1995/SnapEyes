@@ -118,7 +118,7 @@ export interface Errors { errors: ErrorRow[]; partial: boolean }
 
 export interface OrderRow {
   order: string; state: string; created_at: number | null; lang: string | null; eyes: number | null; style: string | null;
-  layout: string | null; amount: number | null; currency: string; paid: boolean; live: boolean | null; paid_at: number | null;
+  layout: string | null; amount: number | null; currency: string; market?: string; paid: boolean; live: boolean | null; paid_at: number | null;
   email: string | null; drafts: number; made: number; files: number; delivery: boolean; held: boolean; review: boolean;
   withdrawal: boolean; extra_payments: number; mail: string | null;
 }

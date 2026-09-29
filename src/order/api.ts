@@ -3,6 +3,8 @@
 // and the server's reason code (the work notes' API.md lists them all). Nothing here talks to a third party or writes
 // to the browser.
 
+import type { PriceList } from '../shared/markets';
+
 export interface ApiReply<T> {
   ok: boolean;          // HTTP 2xx and the body did not say ok: false
   status: number;       // the HTTP status; 0 = no answer at all (offline, or our own time limit)
@@ -57,20 +59,28 @@ export async function callApi<T>(path: string, opts: { body?: Record<string, unk
 /** GET /api/health: which pieces this deployment has (booleans only). */
 export interface Health { stripe?: boolean; stripe_live?: boolean; email?: boolean; blob_store?: boolean }
 
-/** The prices api/_lib/pay.py charges, in euro cents. */
-export interface PriceList { one_eye_studio_black: number; one_eye_art: number; two_eyes: number; each_further_eye: number }
+/** The prices api/_lib/pay.py charges in one market, in Stripe's smallest unit (src/shared/markets.ts). */
+export type { PriceList };
 
-/** GET /api/checkout: whether ordering is open here, the prices and the exact withdrawal-waiver text. */
+/** GET /api/checkout: whether ordering is open here, the price lists and the exact withdrawal-waiver text. currency and
+ *  prices: the default market's; markets: every market the site sells in; country and suggest: the visitor's country
+ *  (Vercel) and a market the page may offer for it (a hint only, never applied by itself). */
 export interface CheckoutInfo {
   open: boolean;
   currency?: string;
   prices?: Partial<PriceList>;
+  market?: string;
+  markets?: Record<string, { currency?: string; prices?: Partial<PriceList> } | undefined>;
   max_eyes?: number;
-  consent?: { version?: string; en?: string; de?: string };
+  // the waiver text per language (the EU edition), and per market where a market has its own (markets.au: the
+  // Australian checkbox, src/shared/legal.ts CHECKOUT_LEGAL_AU)
+  consent?: { version?: string; en?: string; de?: string; markets?: Record<string, { en?: string; de?: string } | undefined> };
+  country?: string;
+  suggest?: string | null;
 }
 
 export interface DraftReply { order: string; k: string; eye: number; created: boolean; expires_at: number }
-export interface CheckoutReply { url: string; order: string; amount: number; currency: string; eyes: number; style: string; expires_at: number; order_url?: string }
+export interface CheckoutReply { url: string; order: string; amount: number; currency: string; market?: string; eyes: number; style: string; expires_at: number; order_url?: string }
 
 // withdrawn: the customer withdrew from the contract before anything was made (./withdraw.ts); nothing is made
 export type OrderState = 'unpaid' | 'pending' | 'paid' | 'making' | 'review' | 'ready' | 'deleted' | 'withdrawn';
@@ -97,12 +107,15 @@ export interface OrderStatus {
   names?: string;
   title?: string;
   amount?: number | null;
+  // the currency the order was paid (or is priced) in ("EUR", "AUD", "HUF") and its market (src/shared/markets.ts)
+  currency?: string;
+  market?: string;
   download?: Download;
   // unpaid orders
   expires_at?: number;
   expired?: boolean;
   payments?: boolean;
-  checkout?: { eyes?: number; style?: string; amount?: number };
+  checkout?: { eyes?: number; style?: string; amount?: number; currency?: string; market?: string };
   payment_check?: string;
   // "pending" of a paid order: what it waits for ("confirmation_email": the order confirmation has not gone out yet)
   waiting_for?: string;
@@ -139,16 +152,4 @@ export function orderPageUrl(order: string, k: string, lang: 'en' | 'de'): strin
   const q = new URLSearchParams({ o: order, k });
   if (lang === 'de') q.set('lang', 'de');
   return `/order?${q.toString()}`;
-}
-
-/** The price in euro cents the server will charge for n eyes in a style, by its own price list when it sent one (the
- *  landing page's rule: 1 eye by style, 2 eyes the Couple Duo, every further eye the same amount). */
-export function priceFromList(list: Partial<PriceList> | undefined, fallback: PriceList, n: number, style: string): number {
-  const p = { ...fallback };
-  for (const k of Object.keys(fallback) as (keyof PriceList)[]) {
-    const v = list?.[k];
-    if (typeof v === 'number' && Number.isInteger(v) && v > 0) p[k] = v;
-  }
-  if (n <= 1) return style === 'studio_black' ? p.one_eye_studio_black : p.one_eye_art;
-  return p.two_eyes + (n - 2) * p.each_further_eye;
 }

@@ -58,14 +58,18 @@ export function ordersSince(rows: OrderRow[], days: number, now: number): OrderR
   return rows.filter((r) => (r.created_at ?? 0) >= cut);
 }
 
-export function revenue(rows: OrderRow[], days: number, now: number): { live: number; test: number; n: number } {
+/** The paid orders of the last n days, summed PER CURRENCY (an amount in forints is never added to euros):
+ *  {currency (lower case): {live, test, n}}, the default currency first. */
+export function revenue(rows: OrderRow[], days: number, now: number): Record<string, { live: number; test: number; n: number }> {
   const cut = startOfDay(now) - (days - 1) * DAY;
-  let live = 0, test = 0, n = 0;
+  const out: Record<string, { live: number; test: number; n: number }> = {};
   for (const r of rows) {
     if (!r.paid || (r.paid_at ?? 0) < cut || typeof r.amount !== 'number') continue;
-    if (r.live) { live += r.amount; n += 1; } else test += r.amount;
+    const cur = (r.currency || 'eur').toLowerCase();
+    const v = out[cur] || (out[cur] = { live: 0, test: 0, n: 0 });
+    if (r.live) { v.live += r.amount; v.n += 1; } else v.test += r.amount;
   }
-  return { live, test, n };
+  return out;
 }
 
 /** 00:00 UTC of the day `t` (unix seconds) falls in: the event days are UTC days. */

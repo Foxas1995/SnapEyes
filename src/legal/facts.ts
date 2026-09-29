@@ -2,6 +2,8 @@
 // landing page, the checkout and the legal pages can never disagree.
 import type { Lang } from '../landing/copy';
 import { CONTACT_EMAIL, DELIVERY_MAX_HOURS, MAX_EYES, PHONE_OMITTED_BY_OWNER, PRICE_CENTS, SELLER } from '../landing/config';
+import { money, priceList } from '../shared/markets';
+import { EDITION_MARKETS } from '../shared/legal';
 
 export const company = (lang: Lang) => (lang === 'de' ? `MB „${SELLER.name}“` : `MB "${SELLER.name}"`);
 export const country = (lang: Lang) => (lang === 'de' ? 'Litauen' : 'Lithuania');
@@ -29,7 +31,11 @@ export const contactLine = (lang: Lang) => {
   return `${formLine(lang)}${phone}`;
 };
 
-export const eur = (cents: number, lang: Lang) =>
-  new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-IE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+// the terms print the default market's euro prices (src/landing/config.ts PRICE_CENTS, read from api/_lib/markets.py)
+export const eur = (cents: number, lang: Lang) => money(cents, 'eur', lang);
+
+// the Australian edition's terms print the Australian market's prices (api/_lib/markets.py, in A$: "A$39", never "$")
+export const AU_PRICES = priceList(EDITION_MARKETS.au);
+export const aud = (cents: number, lang: Lang) => money(cents, 'aud', lang);
 
 export { CONTACT_EMAIL, DELIVERY_MAX_HOURS, MAX_EYES, PHONE_OMITTED_BY_OWNER, PRICE_CENTS, SELLER };

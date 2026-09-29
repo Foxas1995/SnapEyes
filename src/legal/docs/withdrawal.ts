@@ -44,9 +44,14 @@
 // (pay.sells() false) a statement naming no stored order is not recorded (409 no_order); no contract can exist there,
 // so the texts, which describe the shop while it sells, do not mention it.
 // Not reviewed by a lawyer.
-import type { LegalDoc, LegalDocs } from '../types';
-import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
+// WITHDRAWAL_AU (the end of this file) is the Australian edition (src/shared/legal.ts legalEdition "au"): the same
+// statutory EU text, with a lead that frames it as the EU right to cancel for a change of mind (never as "no refunds":
+// the Australian Consumer Law's guarantees cannot be excluded), the Australian checkbox text in its box and links to
+// the terms' "Your rights in Australia".
+import type { Block, LegalDoc, LegalDocs, LegalSection } from '../types';
+import { CHECKOUT_LEGAL, CHECKOUT_LEGAL_AU, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
 import { CONTACT_EMAIL, contactLine, formLine } from '../facts';
+import { patchDoc } from '../patch';
 
 const W = WITHDRAWAL_ONLINE;
 
@@ -185,3 +190,42 @@ const de: LegalDoc = {
 };
 
 export const WITHDRAWAL: LegalDocs = { en, de };
+
+// ------------------------------------------------------------------------------------------ the Australian edition
+/** The "expiry" section with the Australian checkbox text in its box and its closing sentence pointing at the
+ *  Australian rights (the build stops if the EU sentence it replaces is not there any more). */
+function expiryAu(s: LegalSection, consent: string, from: string, to: string): LegalSection {
+  let hit = false;
+  const blocks = s.blocks.map((b): Block => {
+    if (typeof b === 'string') {
+      if (!b.includes(from)) return b;
+      hit = true;
+      return b.replace(from, to);
+    }
+    return 'box' in b ? { ...b, box: [consent] } : b;
+  });
+  if (!hit) throw new Error('withdrawal page, Australian edition: the closing sentence of "expiry" changed');
+  return { ...s, blocks };
+}
+
+const auEn = patchDoc(en, {
+  lead:
+    'This page sets out the right of withdrawal under EU consumer law, which applies to your contract through Lithuanian law: the right to cancel within 14 days without giving a reason. For a digital file like ours, it ends early once we start making your file with your consent. It is only about cancelling for a change of mind and never limits your rights if your file is faulty: see [Your rights in Australia](doc:terms#australia). Here is the full information.',
+  replace: {
+    expiry: (s) => expiryAu(s, CHECKOUT_LEGAL_AU.en.withdrawalConsent,
+      'Your statutory rights for a defective file are not affected: see [Complaints and defects](doc:terms#defects) in our terms of sale.',
+      'Your rights for a faulty file are not affected: see [Complaints and faulty files](doc:terms#defects) and [Your rights in Australia](doc:terms#australia) in our terms of sale.'),
+  },
+});
+
+const auDe = patchDoc(de, {
+  lead:
+    'Diese Seite beschreibt das Widerrufsrecht nach dem EU-Verbraucherrecht, das über das litauische Recht für Ihren Vertrag gilt: das Recht, den Vertrag binnen 14 Tagen ohne Angabe von Gründen zu widerrufen. Bei einer digitalen Datei wie unserer erlischt es vorzeitig, sobald wir mit Ihrer Zustimmung mit der Erstellung Ihrer Datei beginnen. Es betrifft nur den Widerruf ohne Angabe von Gründen und schränkt Ihre Rechte bei einer mangelhaften Datei nie ein: siehe [Ihre Rechte in Australien](doc:terms#australia). Hier finden Sie alle Informationen.',
+  replace: {
+    expiry: (s) => expiryAu(s, CHECKOUT_LEGAL_AU.de.withdrawalConsent,
+      'Ihre gesetzlichen Rechte bei einer mangelhaften Datei bleiben davon unberührt: siehe [Reklamationen und Mängel](doc:terms#defects) in unseren AGB.',
+      'Ihre Rechte bei einer mangelhaften Datei bleiben davon unberührt: siehe [Reklamationen und mangelhafte Dateien](doc:terms#defects) und [Ihre Rechte in Australien](doc:terms#australia) in unseren AGB.'),
+  },
+});
+
+export const WITHDRAWAL_AU: LegalDocs = { en: auEn, de: auDe };

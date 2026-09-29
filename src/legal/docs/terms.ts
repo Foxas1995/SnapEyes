@@ -13,9 +13,18 @@
 // "withdrawal" below say so in the same words as the withdrawal page (see its header for the server's rules). The
 // seller line has no phone: owner decision (PHONE_OMITTED_BY_OWNER, src/landing/config.ts).
 // Not reviewed by a lawyer.
-import type { LegalDoc, LegalDocs } from '../types';
-import { DELIVERY_MAX_HOURS, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, company, eur, phoneSuffix, representedSuffix } from '../facts';
+// TERMS_AU (the end of this file) is the Australian edition (src/shared/legal.ts legalEdition "au"): the EU terms with
+// prices in A$ and "no GST charged", the right of withdrawal framed as EU law and as cancelling for a change of mind
+// only, complaints without any promise of our own beyond the law (no free-redo promise: that would be a warranty
+// against defects needing the reg 90 text and a phone number, Competition and Consumer Regulations 2010), a new
+// "Your rights in Australia" section that opens with the ACCC's own sentence, and liability and disputes that keep the
+// Australian Consumer Law. Nothing in it may read as "no refunds" (ACCC: consumer guarantees cannot be excluded).
+import type { LegalDoc, LegalDocs, LegalSection } from '../types';
+import {
+  AU_PRICES, DELIVERY_MAX_HOURS, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, aud, company, eur, phoneSuffix, representedSuffix,
+} from '../facts';
 import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE } from '../../shared/legal';
+import { patchDoc } from '../patch';
 
 const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.';
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
@@ -268,3 +277,168 @@ const de: LegalDoc = {
 };
 
 export const TERMS: LegalDocs = { en, de };
+
+// ------------------------------------------------------------------------------------------ the Australian edition
+// The opening sentence of "australia" is the ACCC's wording, word for word, in both languages (the German text follows
+// it with a translation). The remedies are the prescribed text for services (Competition and Consumer Regulations 2010
+// reg 90, as the ACCC publishes it), word for word in English and translated in German: never more than the law gives
+// (a remedy stated more generously would itself be an extra promise, a warranty against defects with its own document
+// rules), and never a promise of ours to redo or refund. The guarantees are paraphrased from ss 60-62 (due care and
+// skill, fit for any purpose made known, reasonable time).
+const AU_ID = 'australia';
+
+/** A shared section whose link to "defects" names that section's Australian title (the build stops if the EU wording
+ *  it replaces is not there any more). */
+const relabel = (from: string, to: string) => (s: LegalSection): LegalSection => {
+  const blocks = s.blocks.map((b) => (typeof b === 'string' ? b.replace(from, to) : b));
+  if (JSON.stringify(blocks) === JSON.stringify(s.blocks)) throw new Error(`terms, Australian edition: "${from}" not found`);
+  return { ...s, blocks };
+};
+
+const auEn = patchDoc(en, {
+  description:
+    'The terms for ordering a SnapEyes digital iris artwork in Australian dollars: the product, prices, payment, delivery, your licence, cancelling, your rights under the Australian Consumer Law and complaints.',
+  lead: `These terms apply to every order placed on snapeyes.com in Australian dollars (A$), and they include [your rights in Australia](#${AU_ID}). Please read them before you order. The free preview is offered without any obligation.`,
+  replace: {
+    preview: relabel('[Complaints and defects](#defects)', '[Complaints and faulty files](#defects)'),
+    prices: (s): LegalSection => ({
+      ...s,
+      blocks: [
+        {
+          dl: [
+            ['One eye, Studio Black', aud(AU_PRICES.one_eye_studio_black, 'en')],
+            ['One eye with an art background', `${aud(AU_PRICES.one_eye_art, 'en')} (${ART})`],
+            ['Two eyes (Couple Duo), any style', aud(AU_PRICES.two_eyes, 'en')],
+            ['Each further eye', `+${aud(AU_PRICES.each_further_eye, 'en')}, up to ${MAX_EYES} eyes on one artwork`],
+          ],
+        },
+        'All prices are in Australian dollars (A$), and each is the total price you pay: no GST, no delivery cost, no card surcharge and no other fee is added. We are not registered for GST in Australia, so no GST is charged. Your order confirmation email includes your invoice.',
+        'You pay in advance through our payment provider Stripe, with the payment methods shown on the payment page. Your card issuer may charge its own fee for a payment to a business based outside Australia; we do not charge it and do not receive it.',
+      ],
+    }),
+    withdrawal: {
+      id: 'withdrawal',
+      title: 'Cancelling for a change of mind (right of withdrawal)',
+      blocks: [
+        `Your contract is governed by Lithuanian law (see [Disputes and applicable law](#disputes)), and EU consumer law gives consumers a 14-day right of withdrawal: a right to cancel without giving a reason. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal, and so can no longer cancel for a change of mind, once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open. This applies even while the file is still being made or is waiting for our quality check. If we have not started, it ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button "${WITHDRAWAL_ONLINE.en.button}", and we refund you in full; the withdrawal link in your order confirmation email opens it for your order without starting to make your file. The full information, the online function and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page.`,
+        `**This is only about cancelling for a change of mind.** It never limits your rights if your file is faulty or not as described: see [Complaints and faulty files](#defects) and [Your rights in Australia](#${AU_ID}).`,
+      ],
+    },
+    defects: {
+      id: 'defects',
+      title: 'Complaints and faulty files',
+      blocks: [
+        `If your file is faulty, for example it cannot be downloaded or opened, is damaged, is smaller than promised, clearly differs from the preview you approved or is not ready in time, please write to ${MAIL} with your order number. We look at every complaint personally. Your rights are the ones the law gives you, and these terms do not limit them: in Australia, the consumer guarantees of the Australian Consumer Law (see [Your rights in Australia](#${AU_ID})); in the EU, the statutory rights for digital content that does not conform to the contract.`,
+      ],
+    },
+    liability: {
+      id: 'liability',
+      title: 'Liability',
+      blocks: [
+        `Nothing in these terms excludes, restricts or modifies your rights under the Australian Consumer Law or under any other law that cannot be excluded (see [Your rights in Australia](#${AU_ID})). Subject to that, we are liable without limitation for intent and gross negligence, for injury to life, body or health, and wherever mandatory law provides for it; otherwise we are liable for the loss or damage that was reasonably foreseeable when the contract was made. The free preview is offered as it is, without any claim to its availability.`,
+      ],
+    },
+    disputes: {
+      id: 'disputes',
+      title: 'Disputes and applicable law',
+      blocks: [
+        'If something is wrong, please write to us first: most problems are solved quickly by email.',
+        'If we cannot agree and you are a consumer in Australia, you can turn to the consumer protection agency (fair trading office) of your state or territory, which helps with complaints about businesses, and read about your rights on the website of the Australian Competition and Consumer Commission ([accc.gov.au](https://www.accc.gov.au)).',
+        'Consumers in the EU can turn to the Lithuanian State Consumer Rights Protection Authority (Valstybinė vartotojų teisių apsaugos tarnyba, [vvtat.lt](https://vvtat.lt)), which settles consumer disputes out of court, or to the consumer bodies and courts of their own country.',
+        'Lithuanian law applies. You keep the protection of the mandatory consumer law of the country where you live: in Australia, the Australian Consumer Law; in another EU country, the mandatory consumer law of that country.',
+      ],
+    },
+  },
+  after: {
+    defects: [
+      {
+        id: AU_ID,
+        title: 'Your rights in Australia',
+        blocks: [
+          '**Our services come with guarantees that cannot be excluded under the Australian Consumer Law.**',
+          `If you are a consumer in Australia, these guarantees apply to your order, whatever else these terms say. We make your artwork for you as a service, from your own photo, and under the Australian Consumer Law it must be made with due care and skill, be reasonably fit for any purpose you tell us about or that we describe (for example your personal artwork, matching the preview you approved and the description on our website) and be delivered within a reasonable time (we deliver at the latest ${DELIVERY_MAX_HOURS} hours after your payment, see [Delivery](#delivery)).`,
+          'For major failures with the service, you are entitled: to cancel your service contract with us; and to a refund for the unused portion, or to compensation for its reduced value. You are also entitled to be compensated for any other reasonably foreseeable loss or damage. If the failure does not amount to a major failure, you are entitled to have problems with the service rectified in a reasonable time and, if this is not done, to cancel your contract and obtain a refund for the unused portion of the contract.',
+          `Changing your mind: once we have started making your file, you can't cancel just because you changed your mind (you agreed to this at checkout, see [Cancelling for a change of mind](#withdrawal)). That doesn't affect any of the rights above.`,
+          `To make a claim, reply to your order confirmation email or write to ${MAIL} with your order number and what is wrong. You don't need to send anything back. We deal with every claim personally.`,
+          'Nothing in these terms excludes, restricts or modifies any right or remedy, or any guarantee, warranty or other term or condition, implied or imposed by the Australian Consumer Law that cannot lawfully be excluded, restricted or modified. Where anything in these terms seems to do so, it does not apply to that extent.',
+          'How we handle your eye photos under Australian privacy law: see [Your data if you live in Australia](doc:privacy#australia) in our privacy policy.',
+        ],
+      },
+    ],
+  },
+});
+
+const auDe = patchDoc(de, {
+  description:
+    'Die Bedingungen für die Bestellung eines digitalen Iris-Kunstwerks bei SnapEyes in australischen Dollar: Produkt, Preise, Zahlung, Lieferung, Nutzungsrecht, Widerruf, Ihre Rechte nach dem Australian Consumer Law und Reklamationen.',
+  lead: `Diese Bedingungen gelten für jede Bestellung auf snapeyes.com in australischen Dollar (A$) und enthalten [Ihre Rechte in Australien](#${AU_ID}). Bitte lesen Sie sie, bevor Sie bestellen. Die kostenlose Vorschau ist unverbindlich.`,
+  replace: {
+    preview: relabel('[Reklamationen und Mängel](#defects)', '[Reklamationen und mangelhafte Dateien](#defects)'),
+    prices: (s): LegalSection => ({
+      ...s,
+      blocks: [
+        {
+          dl: [
+            ['Ein Auge, Studio Black', aud(AU_PRICES.one_eye_studio_black, 'de')],
+            ['Ein Auge mit Kunsthintergrund', `${aud(AU_PRICES.one_eye_art, 'de')} (${ART})`],
+            ['Zwei Augen (Couple Duo), jeder Stil', aud(AU_PRICES.two_eyes, 'de')],
+            ['Jedes weitere Auge', `+${aud(AU_PRICES.each_further_eye, 'de')}, bis zu ${MAX_EYES} Augen auf einem Kunstwerk`],
+          ],
+        },
+        'Alle Preise sind in australischen Dollar (A$) angegeben und jeweils der Gesamtpreis, den Sie zahlen: Es kommen keine GST, keine Versandkosten, kein Kartenzuschlag und keine sonstigen Gebühren hinzu. Wir sind in Australien nicht für die GST registriert, daher wird keine GST berechnet. Ihre Bestellbestätigung per E-Mail enthält Ihre Rechnung.',
+        'Sie zahlen im Voraus über unseren Zahlungsdienstleister Stripe, mit den auf der Zahlungsseite angezeigten Zahlungsarten. Ihr Kartenaussteller kann für eine Zahlung an ein Unternehmen außerhalb Australiens eigene Gebühren berechnen; diese berechnen nicht wir, und wir erhalten sie nicht.',
+      ],
+    }),
+    withdrawal: {
+      id: 'withdrawal',
+      title: 'Widerruf ohne Angabe von Gründen (Widerrufsrecht)',
+      blocks: [
+        `Für Ihren Vertrag gilt litauisches Recht (siehe [Streitigkeiten und anwendbares Recht](#disputes)), und das EU-Verbraucherrecht gibt Verbrauchern ein 14-tägiges Widerrufsrecht: das Recht, den Vertrag ohne Angabe von Gründen zu lösen. Bei einer digitalen Datei erlischt es vorzeitig: Vor der Zahlung bitten wir Sie, zuzustimmen, dass wir sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung Ihrer Datei beginnen, und zu bestätigen, dass Ihnen bekannt ist, dass Sie dadurch Ihr Widerrufsrecht verlieren, sobald damit begonnen wurde, und den Vertrag dann nicht mehr ohne Angabe von Gründen lösen können. Es erlischt daher, sobald wir mit der Erstellung Ihrer Datei (der Vertragserfüllung) begonnen haben; damit beginnen wir erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist. Das gilt auch, solange die Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir noch nicht begonnen, erlischt es mit Ablauf der 14-tägigen Widerrufsfrist: Der Tag Ihrer Zahlung wird nicht mitgezählt, und fällt der letzte Tag der Frist auf einen Samstag, einen Sonntag oder einen gesetzlichen Feiertag, endet die Frist mit Ablauf des nächsten Arbeitstags. Solange Ihr Widerrufsrecht besteht, können Sie per E-Mail, per Post oder online mit der Schaltfläche „${WITHDRAWAL_ONLINE.de.button}“ widerrufen, und wir erstatten Ihnen den vollen Preis; der Widerrufslink in Ihrer Bestellbestätigung per E-Mail öffnet sie für Ihre Bestellung, ohne dass wir mit der Erstellung Ihrer Datei beginnen. Alle Einzelheiten, die Online-Funktion und ein Muster-Widerrufsformular finden Sie in unserer [Widerrufsbelehrung](doc:withdrawal).`,
+        `**Das betrifft nur den Widerruf ohne Angabe von Gründen.** Ihre Rechte, wenn Ihre Datei mangelhaft ist oder nicht der Beschreibung entspricht, schränkt es nie ein: siehe [Reklamationen und mangelhafte Dateien](#defects) und [Ihre Rechte in Australien](#${AU_ID}).`,
+      ],
+    },
+    defects: {
+      id: 'defects',
+      title: 'Reklamationen und mangelhafte Dateien',
+      blocks: [
+        `Ist Ihre Datei mangelhaft, lässt sie sich zum Beispiel nicht herunterladen oder öffnen, ist sie beschädigt, kleiner als zugesagt, weicht sie deutlich von der freigegebenen Vorschau ab oder ist sie nicht rechtzeitig fertig, schreiben Sie bitte mit Ihrer Bestellnummer an ${MAIL}. Wir sehen uns jede Reklamation persönlich an. Es gelten Ihre gesetzlichen Rechte, und diese Bedingungen schränken sie nicht ein: in Australien die Verbrauchergarantien des Australian Consumer Law (siehe [Ihre Rechte in Australien](#${AU_ID})); in der EU die gesetzlichen Rechte bei digitalen Inhalten, die nicht vertragsgemäß sind.`,
+      ],
+    },
+    liability: {
+      id: 'liability',
+      title: 'Haftung',
+      blocks: [
+        `Nichts in diesen Bedingungen schließt Ihre Rechte nach dem Australian Consumer Law oder nach anderem Recht, das nicht ausgeschlossen werden kann, aus, beschränkt oder ändert sie (siehe [Ihre Rechte in Australien](#${AU_ID})). Im Übrigen haften wir unbeschränkt bei Vorsatz und grober Fahrlässigkeit, bei Verletzung von Leben, Körper oder Gesundheit und soweit zwingendes Recht es vorsieht; ansonsten haften wir für die Verluste und Schäden, die bei Vertragsschluss vernünftigerweise vorhersehbar waren. Die kostenlose Vorschau wird so angeboten, wie sie ist, ohne Anspruch auf ihre Verfügbarkeit.`,
+      ],
+    },
+    disputes: {
+      id: 'disputes',
+      title: 'Streitigkeiten und anwendbares Recht',
+      blocks: [
+        'Wenn etwas nicht stimmt, schreiben Sie uns bitte zuerst: Die meisten Probleme lassen sich schnell per E-Mail lösen.',
+        'Können wir uns nicht einigen und sind Sie Verbraucher in Australien, können Sie sich an die Verbraucherschutzbehörde (Fair Trading) Ihres Bundesstaats oder Territoriums wenden, die bei Beschwerden über Unternehmen hilft, und sich auf der Website der Australian Competition and Consumer Commission ([accc.gov.au](https://www.accc.gov.au)) über Ihre Rechte informieren.',
+        'Verbraucher in der EU können sich an die litauische Staatliche Verbraucherschutzbehörde (Valstybinė vartotojų teisių apsaugos tarnyba, [vvtat.lt](https://vvtat.lt)) wenden, die Verbraucherstreitigkeiten außergerichtlich beilegt, oder an die Verbraucherschutzstellen und Gerichte ihres eigenen Landes.',
+        'Es gilt litauisches Recht. Den Schutz der zwingenden Verbraucherschutzvorschriften des Landes, in dem Sie leben, behalten Sie: in Australien das Australian Consumer Law, in einem anderen EU-Land die zwingenden Verbraucherschutzvorschriften dieses Landes.',
+      ],
+    },
+  },
+  after: {
+    defects: [
+      {
+        id: AU_ID,
+        title: 'Ihre Rechte in Australien',
+        blocks: [
+          '**Our services come with guarantees that cannot be excluded under the Australian Consumer Law.** (Unsere Leistungen sind mit Garantien verbunden, die nach dem australischen Verbraucherrecht, dem Australian Consumer Law, nicht ausgeschlossen werden können.)',
+          `Wenn Sie als Verbraucher in Australien bestellen, gelten diese Garantien für Ihre Bestellung, unabhängig davon, was diese Bedingungen sonst sagen. Wir erstellen Ihr Kunstwerk für Sie als Dienstleistung aus Ihrem eigenen Foto, und nach dem Australian Consumer Law muss es mit der gebotenen Sorgfalt und Sachkunde erstellt werden, für jeden Zweck, den Sie uns mitteilen oder den wir beschreiben, vernünftigerweise geeignet sein (zum Beispiel Ihr persönliches Kunstwerk, entsprechend der freigegebenen Vorschau und der Beschreibung auf unserer Website) und innerhalb einer angemessenen Zeit geliefert werden (wir liefern spätestens ${DELIVERY_MAX_HOURS} Stunden nach Ihrer Zahlung, siehe [Lieferung](#delivery)).`,
+          'Bei einem erheblichen Mangel der Leistung (major failure) haben Sie Anspruch darauf, Ihren Dienstleistungsvertrag mit uns zu kündigen, und auf eine Erstattung für den nicht genutzten Teil oder einen Ausgleich für dessen Minderwert. Außerdem haben Sie Anspruch auf Ersatz für jeden anderen vernünftigerweise vorhersehbaren Verlust oder Schaden. Ist der Mangel nicht erheblich, haben Sie Anspruch darauf, dass die Probleme mit der Leistung innerhalb angemessener Zeit behoben werden, und wenn das nicht geschieht, den Vertrag zu kündigen und eine Erstattung für den nicht genutzten Teil des Vertrags zu erhalten.',
+          `Meinungsänderung: Sobald wir mit der Erstellung Ihrer Datei begonnen haben, können Sie den Vertrag nicht mehr nur deshalb lösen, weil Sie es sich anders überlegt haben (dem haben Sie bei der Bestellung zugestimmt, siehe [Widerruf ohne Angabe von Gründen](#withdrawal)). Die oben genannten Rechte bleiben davon unberührt.`,
+          `Für eine Reklamation antworten Sie auf Ihre Bestellbestätigung oder schreiben an ${MAIL}, mit Ihrer Bestellnummer und dem, was nicht stimmt. Sie müssen nichts zurücksenden. Wir bearbeiten jede Reklamation persönlich.`,
+          'Nichts in diesen Bedingungen schließt Rechte, Rechtsbehelfe, Garantien, Gewährleistungen oder sonstige Bedingungen, die das Australian Consumer Law vorsieht und die rechtlich nicht ausgeschlossen, beschränkt oder geändert werden können, aus, beschränkt oder ändert sie. Soweit diese Bedingungen etwas anderes zu sagen scheinen, gelten sie insoweit nicht.',
+          'Wie wir Ihre Augenfotos nach australischem Datenschutzrecht behandeln: siehe [Ihre Daten, wenn Sie in Australien leben](doc:privacy#australia) in unserer Datenschutzerklärung.',
+        ],
+      },
+    ],
+  },
+});
+
+export const TERMS_AU: LegalDocs = { en: auEn, de: auDe };

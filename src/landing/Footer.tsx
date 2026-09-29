@@ -1,8 +1,53 @@
-import type { Ref } from 'react';
+import { useState, type Ref } from 'react';
 import { useLang } from './lang';
 import { CONTACT_EMAIL, SELLER } from './config';
 import { CtaLink, CtaNote, Logo } from './ui';
 import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref, withdrawFunctionHref } from '../shared/legal';
+import { DEFAULT_MARKET, SELECTABLE, currencyOf, setMarket, type Currency, type Market } from '../shared/markets';
+import { useMarket } from '../shared/useMarket';
+
+const CURRENCY_LABEL: Record<Currency, string> = { eur: '€ EUR', aud: 'A$ AUD', huf: 'Ft HUF' };
+
+/** The visitor's currency, one button per currency the site sells in. A choice is a market (src/shared/markets.ts
+ *  setMarket): remembered, and carried to /try and the legal pages as m=. Never set by the visitor's country: the ad
+ *  links name the market (?m=au). Shown only to a visitor who sees another currency than the default market's (they
+ *  came through such a link, or chose it before), and then for the rest of the visit, so they can go back and forth;
+ *  the default page stays as it was. */
+function CurrencySwitch({ label }: { label: string }) {
+  const market = useMarket();
+  const own = currencyOf(market);
+  const base = currencyOf(DEFAULT_MARKET);
+  const [offered] = useState(() => own !== base);
+  if (!offered && own === base) return null;
+  const choices: Array<{ currency: Currency; market: Market }> = [];
+  for (const m of SELECTABLE) {
+    const c = currencyOf(m);
+    if (choices.some((x) => x.currency === c)) continue;
+    // the visitor's own market stands for its currency (lt stays lt), otherwise the first market of that currency
+    choices.push({ currency: c, market: c === own ? market : m });
+  }
+  if (choices.length < 2) return null;
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
+      <span>{label}</span>
+      <div className="flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.08em]">
+        {choices.map((x) => (
+          <button
+            key={x.currency}
+            type="button"
+            onClick={() => setMarket(x.market)}
+            aria-pressed={own === x.currency}
+            className={`min-w-[44px] rounded-full px-2.5 py-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${
+              own === x.currency ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {CURRENCY_LABEL[x.currency]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function FinalCta({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
   const { t } = useLang();
@@ -77,9 +122,12 @@ export function Footer() {
         </nav>
       </div>
       <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-4 border-t border-white/[0.06] px-4 pt-6 text-xs text-zinc-400 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p>
-          © {year} {f.rights}
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+          <p>
+            © {year} {f.rights}
+          </p>
+          <CurrencySwitch label={f.currency} />
+        </div>
         {/* the legal pages (src/legal), in the language the visitor reads now, and the online withdrawal function
             (Art. 11a Directive 2011/83/EU: clearly labelled and easy to reach while the right of withdrawal lasts) */}
         <nav aria-label={legal.nav} className="flex flex-wrap gap-x-5 gap-y-2">

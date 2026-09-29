@@ -11,10 +11,42 @@
 // of payment is not counted). If the server ever moves either moment (for example to the first download), change all
 // of them together: src/legal/docs/withdrawal.ts has the full list of the server's rules in its header.
 
+import { adoptMarket, currentMarket, linkMarket, withMarket, type Market } from './markets';
+
 export type LegalLang = 'en' | 'de';
 
 /** The date every legal page prints as "Last updated". Change it whenever a legal text changes. */
 export const LEGAL_UPDATED = '2026-09-30';
+
+/** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
+ *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right
+ *  framed as EU law, its own checkout consent, and an Australian part in the privacy policy. Every other market (eu,
+ *  lt, and hu once it opens) reads the EU edition, unchanged. api/_lib/pay.py ACL_MARKETS is the same list: keep both
+ *  in step. The build's legal pack carries the au edition apart (src/legal/plain.ts), with links that carry m=au. */
+export type LegalEdition = 'eu' | 'au';
+export const EDITION_MARKETS: Readonly<Record<Exclude<LegalEdition, 'eu'>, Market>> = { au: 'au' };
+export function legalEdition(m: Market = currentMarket()): LegalEdition {
+  return m === EDITION_MARKETS.au ? 'au' : 'eu';
+}
+
+/** A link with a market in it: a market with its own edition always carries it (m=au), also while the owner has
+ *  paused that market ("selectable": 0), so that the links in an order's emails and pages keep opening the texts the
+ *  order was made under; any other market as src/shared/markets.ts withMarket does (m= only for a selectable market
+ *  other than the default one). */
+function editionHref(href: string, m: Market): string {
+  if (legalEdition(m) === 'eu') return withMarket(href, m);
+  const hash = href.indexOf('#');
+  const path = hash < 0 ? href : href.slice(0, hash);
+  return `${path}${path.includes('?') ? '&' : '?'}m=${m}${hash < 0 ? '' : href.slice(hash)}`;
+}
+
+/** The legal pages and the order page: a link that names a market with its own edition (?m=au) shows that edition and
+ *  keeps it in every link, even while the market is paused (then src/shared/markets.ts detectMarket ignores it for
+ *  prices and checkout). Call once, before the page renders. */
+export function adoptLinkedEdition(): void {
+  const m = linkMarket();
+  if (m !== null && legalEdition(m) !== 'eu') adoptMarket(m);
+}
 
 export function formatLegalDate(iso: string, lang: LegalLang): string {
   const [y, m, d] = iso.split('-');
@@ -33,9 +65,11 @@ export const LEGAL_PATH: Record<LegalDocId, string> = {
   imprint: '/imprint',
 };
 
-/** The link to a legal page in a language, optionally to one of its sections (#id). */
-export function legalHref(doc: LegalDocId, lang: LegalLang = 'en', section = ''): string {
-  return `${LEGAL_PATH[doc]}?lang=${lang}${section ? `#${section}` : ''}`;
+/** The link to a legal page in a language, optionally to one of its sections (#id). In a browser it carries the page's
+ *  market (editionHref: m=, never for the default market; always for a market with its own edition); the build's legal
+ *  pack, made without a browser, gets the plain link, or the link of the market it names (its au edition: m=au). */
+export function legalHref(doc: LegalDocId, lang: LegalLang = 'en', section = '', market?: Market): string {
+  return `${editionHref(`${LEGAL_PATH[doc]}?lang=${lang}`, market ?? currentMarket())}${section ? `#${section}` : ''}`;
 }
 
 export const LEGAL_LABELS: Record<LegalLang, Record<LegalDocId, string> & { nav: string }> = {
@@ -68,6 +102,11 @@ export const WITHDRAWAL_ONLINE: Record<LegalLang, WithdrawalOnline> = {
  *  starts making anything. Without an order link the customer types the order number there. The landing footer and
  *  the legal pages link here with the label WITHDRAWAL_ONLINE[lang].button; the withdrawal page describes it. */
 export function withdrawFunctionHref(lang: LegalLang = 'en'): string {
+  return editionHref(withdrawFunctionPath(lang), currentMarket());
+}
+
+/** The same link without the market: the address the legal texts print (withdrawFunctionAddress). */
+function withdrawFunctionPath(lang: LegalLang): string {
   return `/order?withdraw=1&lang=${lang}`;
 }
 
@@ -76,17 +115,19 @@ export function withdrawFunctionHref(lang: LegalLang = 'en'): string {
  *  Annex I(A) Directive 2011/83/EU, note 3 as amended by Directive (EU) 2023/2673). */
 export const SITE_HOST = 'snapeyes.com';
 export function withdrawFunctionAddress(lang: LegalLang = 'en'): string {
-  return `${SITE_HOST}${withdrawFunctionHref(lang)}`;
+  return `${SITE_HOST}${withdrawFunctionPath(lang)}`;
 }
 
-/** Text, or a link to one of the legal pages, for sentences that mix both. */
-export interface LegalPart { text: string; doc?: LegalDocId }
+/** Text, or a link to one of the legal pages (and one of its sections), for sentences that mix both. */
+export interface LegalPart { text: string; doc?: LegalDocId; section?: string }
 
-// The withdrawal waiver exactly as the server records it: api/_lib/pay.py CONSENT_TEXT, version CONSENT_VERSION
-// (GET /api/checkout also returns it). /api/checkout refuses an order without it and stores its version, time and
-// a fingerprint of the text; the delivery email confirms it (the durable-medium confirmation of Art. 16(m)(iii)
-// Directive 2011/83/EU and § 356 Abs. 5 Nr. 3 BGB). Change both files together and bump the version.
-export const WITHDRAWAL_CONSENT_VERSION = '2026-09-29.1';
+// The withdrawal waiver exactly as the server records it: api/_lib/pay.py CONSENT_TEXT (and CONSENT_TEXT_AU for the
+// Australian market, CHECKOUT_LEGAL_AU below), version CONSENT_VERSION (GET /api/checkout also returns them).
+// /api/checkout refuses an order without it and stores its version, time and a fingerprint of the text; the delivery
+// email confirms it (the durable-medium confirmation of Art. 16(m)(iii) Directive 2011/83/EU and § 356 Abs. 5 Nr. 3
+// BGB). Change both files together and bump the version (2026-09-30.1: the Australian text added, the EU text as it
+// was).
+export const WITHDRAWAL_CONSENT_VERSION = '2026-09-30.1';
 
 export interface CheckoutLegal {
   /** The withdrawal checkbox: unticked by default and required before the payment page opens. Art. 16(m)
@@ -144,3 +185,47 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
   },
 };
+
+/** The checkout of the Australian market (legalEdition "au"): the same checkbox, with a text that keeps both EU
+ *  elements (the express consent to start before the withdrawal period ends and the acknowledgement of losing the
+ *  right of withdrawal: an EU consumer may buy in A$ too) and adds what an Australian reads in it: no cancelling for a
+ *  change of mind once making has started, and that the Australian Consumer Law is not affected (its guarantees cannot
+ *  be excluded, so nothing here may read as "no refunds"). Identical to api/_lib/pay.py CONSENT_TEXT_AU. The line
+ *  under it names the terms' "Your rights in Australia" section. */
+export const CHECKOUT_LEGAL_AU: Record<LegalLang, Pick<CheckoutLegal, 'withdrawalConsent' | 'acceptance'>> = {
+  en: {
+    withdrawalConsent:
+      "I expressly agree that SnapEyes starts making my personalised digital artwork right away, before the withdrawal period ends. I know that once this has started, I lose my right of withdrawal and can't cancel for a change of mind. This doesn't affect my rights under the Australian Consumer Law.",
+    acceptance: [
+      { text: 'By ordering you accept our ' },
+      { text: 'Terms of sale', doc: 'terms' },
+      { text: ', including ' },
+      { text: 'your rights in Australia', doc: 'terms', section: 'australia' },
+      { text: '. Please also read our ' },
+      { text: 'Privacy policy', doc: 'privacy' },
+      { text: ' and the ' },
+      { text: 'information on the right of withdrawal', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+  },
+  de: {
+    withdrawalConsent:
+      'Ich stimme ausdrücklich zu, dass SnapEyes sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung meines personalisierten digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere, sobald damit begonnen wurde, und den Vertrag dann nicht mehr ohne Angabe von Gründen widerrufen kann. Meine Rechte nach dem australischen Verbraucherrecht (Australian Consumer Law) bleiben davon unberührt.',
+    acceptance: [
+      { text: 'Mit Ihrer Bestellung akzeptieren Sie unsere ' },
+      { text: 'AGB', doc: 'terms' },
+      { text: ', einschließlich ' },
+      { text: 'Ihrer Rechte in Australien', doc: 'terms', section: 'australia' },
+      { text: '. Bitte beachten Sie auch unsere ' },
+      { text: 'Datenschutzerklärung', doc: 'privacy' },
+      { text: ' und die ' },
+      { text: 'Widerrufsbelehrung', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+  },
+};
+
+/** The checkout wording for a market: the EU wording, with the Australian checkbox and line for the au edition. */
+export function checkoutLegal(lang: LegalLang, market: Market = currentMarket()): CheckoutLegal {
+  return legalEdition(market) === 'au' ? { ...CHECKOUT_LEGAL[lang], ...CHECKOUT_LEGAL_AU[lang] } : CHECKOUT_LEGAL[lang];
+}

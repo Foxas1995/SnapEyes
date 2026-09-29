@@ -7,7 +7,10 @@ import { useSyncExternalStore } from 'react';
 // Until both answers say yes, and whenever either cannot be read (offline, the Vite dev server without the API), the
 // page keeps the "soon" lines: it never promises more than /try sells. Asked once per page load, never per component.
 
+// The same GET /api/checkout answer also names a market the visitor's country may suggest ("suggest", from Vercel's
+// x-vercel-ip-country): kept here for the landing page's offer of that currency (./MarketHint.tsx), never applied.
 let open = false;
+let suggested: string | null = null;
 let started = false;
 const listeners = new Set<() => void>();
 
@@ -26,11 +29,13 @@ async function getJson(path: string, needOk: boolean): Promise<Record<string, un
   }
 }
 
-async function check(): Promise<boolean> {
+async function check(): Promise<{ open: boolean; suggest: string | null }> {
+  const none = { open: false, suggest: null };
   const h = await getJson('/api/health', false);
-  if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) return false;
+  if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) return none;
   const c = await getJson('/api/checkout', true);
-  return !!c && c.ok !== false && c.open === true;
+  if (!c) return none;
+  return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null };
 }
 
 function subscribe(onChange: () => void): () => void {
@@ -38,8 +43,9 @@ function subscribe(onChange: () => void): () => void {
   if (!started) {
     started = true;
     void check().then((v) => {
-      if (!v) return;
-      open = true;
+      if (!v.open && v.suggest === null) return;
+      open = v.open;
+      suggested = v.suggest;
       listeners.forEach((l) => l());
     });
   }
@@ -49,4 +55,10 @@ function subscribe(onChange: () => void): () => void {
 /** true once this deployment is known to take orders; false until then (and on the server-less dev page). */
 export function useOrderingOpen(): boolean {
   return useSyncExternalStore(subscribe, () => open, () => false);
+}
+
+/** The market GET /api/checkout suggests for the visitor's country, or null (src/shared/markets.ts hintMarket decides
+ *  whether it may be offered). */
+export function useSuggestedMarket(): string | null {
+  return useSyncExternalStore(subscribe, () => suggested, () => null);
 }

@@ -21,11 +21,19 @@ export function fmtDate(t: number | null | undefined): string {
   return fmtTime(t).slice(0, 10);
 }
 
-/** 39,97 € */
-export function fmtEur(cents: number | null | undefined): string {
+/** An amount in Stripe's smallest unit, in its currency, as the panel writes it (Lithuanian style): "39,97 €",
+ *  "79,00 A$", "13 990 Ft" (forints whole: Stripe's HUF amount is the forint x 100). No currency named: euros (every
+ *  order before markets existed). */
+export function fmtMoney(cents: number | null | undefined, currency?: string | null): string {
   if (typeof cents !== 'number' || !Number.isFinite(cents)) return '-';
-  return `${(cents / 100).toFixed(2).replace('.', ',')} €`;
+  const cur = (currency || 'eur').toLowerCase();
+  if (cur === 'huf') return `${String(Math.round(cents / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')}\u00a0Ft`;
+  const sign = cur === 'aud' ? 'A$' : cur === 'eur' ? '€' : cur.toUpperCase();
+  return `${(cents / 100).toFixed(2).replace('.', ',')} ${sign}`;
 }
+
+/** 39,97 € (fmtMoney in euros) */
+export const fmtEur = (cents: number | null | undefined): string => fmtMoney(cents, 'eur');
 
 /** $0,22 */
 export function fmtUsd(v: number): string {

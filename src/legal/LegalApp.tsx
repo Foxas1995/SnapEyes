@@ -1,6 +1,8 @@
 // One component for the four legal pages (privacy, terms, withdrawal, imprint). Each HTML page names its document
 // in <div id="root" data-doc="...">; the language follows the landing page's rules (?lang=, then the visitor's
-// earlier choice, then the browser) and the EN/DE switch is the landing's own.
+// earlier choice, then the browser) and the EN/DE switch is the landing's own. The edition follows the page's market
+// (src/shared/legal.ts legalEdition: ?m=au or the visitor's remembered market shows the Australian texts); the
+// canonical address stays the plain one of the language.
 import { useCallback, useEffect } from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { LangProvider, setCanonical, setMeta, useLang } from '../landing/lang';
@@ -8,17 +10,16 @@ import { LangSwitch } from '../landing/Header';
 import { Logo } from '../landing/ui';
 import type { Lang } from '../landing/copy';
 import {
-  LEGAL_DOCS, LEGAL_LABELS, LEGAL_PATH, LEGAL_UPDATED, WITHDRAWAL_ONLINE, formatLegalDate, legalHref, withdrawFunctionHref, type LegalDocId,
+  LEGAL_DOCS, LEGAL_LABELS, LEGAL_PATH, LEGAL_UPDATED, WITHDRAWAL_ONLINE, formatLegalDate, legalEdition, legalHref, withdrawFunctionHref,
+  type LegalDocId,
 } from '../shared/legal';
 import { CONTACT_EMAIL, SELLER, address, company } from './facts';
+import { withMarket } from '../shared/markets';
+import { useMarket } from '../shared/useMarket';
 import { Inline } from './Inline';
-import type { Block, LegalDocs } from './types';
-import { PRIVACY } from './docs/privacy';
-import { TERMS } from './docs/terms';
-import { WITHDRAWAL } from './docs/withdrawal';
-import { IMPRINT } from './docs/imprint';
+import type { Block } from './types';
+import { EDITIONS } from './editions';
 
-const DOCS: Record<LegalDocId, LegalDocs> = { privacy: PRIVACY, terms: TERMS, withdrawal: WITHDRAWAL, imprint: IMPRINT };
 const ORIGIN = 'https://snapeyes.com';
 
 const UI: Record<Lang, { updated: string; back: string; contents: string; print: string }> = {
@@ -65,10 +66,10 @@ function BlockView({ block, lang }: { block: Block; lang: Lang }) {
 
 function LegalPage({ id }: { id: LegalDocId }) {
   const { lang, t } = useLang();
-  const doc = DOCS[id][lang];
+  const doc = EDITIONS[legalEdition(useMarket())][id][lang];
   const ui = UI[lang];
   const labels = LEGAL_LABELS[lang];
-  const home = `/?lang=${lang}`;
+  const home = withMarket(`/?lang=${lang}`);
 
   // the page renders after load, so the browser's own jump to #section happens too early: do it once here
   useEffect(() => {
@@ -170,7 +171,7 @@ function LegalPage({ id }: { id: LegalDocId }) {
 
 export function LegalApp({ doc }: { doc: LegalDocId }) {
   const applyHead = useCallback((lang: Lang) => {
-    const d = DOCS[doc][lang];
+    const d = EDITIONS[legalEdition()][doc][lang];
     document.title = `${d.title.replace(/\u00AD/g, '')} | SnapEyes`;   // the German titles carry soft hyphens for the h1
     setMeta('name', 'description', d.description);
     setCanonical(`${ORIGIN}${LEGAL_PATH[doc]}${lang === 'de' ? '?lang=de' : ''}`);

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
 import type { EyeView, OrderDetail, Payment, Reply } from './api';
 import type { Call } from './AdminApp';
-import { actionLt, AKYS, explain, fmtBytes, fmtEur, fmtNum, fmtTime, logResultLt, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
+import { actionLt, AKYS, explain, fmtBytes, fmtMoney, fmtNum, fmtTime, logResultLt, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, ConfirmDialog, CopyField, DANGER, ExtLink, H2, JsonView, MUTED, Notice, Rows, Spinner, Thumb, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
 
@@ -132,8 +132,8 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
   const refundButton = (p: Payment) => (
     <button type="button" className={DANGER} disabled={!d?.can.stripe || p.refunded} onClick={() => setConfirm({
       title: 'Grąžinti pinigus', danger: true, confirmLabel: 'Grąžinti', typeToConfirm: order,
-      text: `Stripe grąžins visą šio mokėjimo sumą (${fmtEur(p.amount)}${p.live ? '' : ', testo režimas'}) pirkėjui. To atšaukti negalima.\nMokėjimas: ${p.payment_intent}`,
-      run: () => act('refund', { payment_intent: p.payment_intent, confirm: order }, (x) => `Grąžinimas: ${s(obj(x.refund).status) || s(x.result)} (${fmtEur(n(obj(x.refund).amount))}).`),
+      text: `Stripe grąžins visą šio mokėjimo sumą (${fmtMoney(p.amount, p.currency)}${p.live ? '' : ', testo režimas'}) pirkėjui. To atšaukti negalima.\nMokėjimas: ${p.payment_intent}`,
+      run: () => act('refund', { payment_intent: p.payment_intent, confirm: order }, (x) => `Grąžinimas: ${s(obj(x.refund).status) || s(x.result)} (${fmtMoney(n(obj(x.refund).amount), s(obj(x.refund).currency) || p.currency)}).`),
     })}>{p.refunded ? 'Grąžinta' : 'Grąžinti pinigus'}</button>
   );
 
@@ -183,7 +183,8 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
                 : s(obj(checkout.spec).style) ? `mokėjimas pradėtas: ${eyesText(obj(checkout.spec).eyes)}, ${STYLE_LT[s(obj(checkout.spec).style)] || s(obj(checkout.spec).style)}` : 'neapmokėtas'],
               ['Vardai ant kūrinio', s(spec.names) || '-'],
               ['Pavadinimas', s(spec.title) || '-'],
-              ['Kaina', d.paid ? `${fmtEur(n(paidRec.amount_total))}${paidRec.amount_mismatch ? ' (nesutampa su kainoraščiu!)' : ''}` : checkout.amount ? fmtEur(n(checkout.amount)) : '-'],
+              ['Kaina', d.paid ? `${fmtMoney(n(paidRec.amount_total), s(paidRec.currency))}${paidRec.amount_mismatch ? ' (nesutampa su kainoraščiu!)' : ''}` : checkout.amount ? fmtMoney(n(checkout.amount), s(checkout.currency)) : '-'],
+              ['Rinka', s(paidRec.market) || s(spec.market) || s(checkout.market) || (d.paid || checkout.amount ? 'eu' : '-')],
               ['Apmokėta', d.paid ? `${isoTime(paidRec.paid_iso)} per ${s(paidRec.source)}` : '-'],
               ['Pirkėjo el. paštas', d.email || '-'],
               ['Stripe sesija', s(paidRec.session_id) || s(checkout.session_id) || '-'],
@@ -325,7 +326,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
               {d.payments.map((p) => (
                 <div key={p.payment_intent} className="border-t border-white/5 pt-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm min-w-0 break-all">
-                    <p>{p.kind === 'extra' ? 'Papildomas (dvigubas) mokėjimas' : 'Užsakymo mokėjimas'}: <b>{fmtEur(p.amount)}</b>{p.live ? '' : ' (testas)'}</p>
+                    <p>{p.kind === 'extra' ? 'Papildomas (dvigubas) mokėjimas' : 'Užsakymo mokėjimas'}: <b>{fmtMoney(p.amount, p.currency)}</b>{p.live ? '' : ' (testas)'}</p>
                     <p className={`text-xs ${MUTED}`}>{p.payment_intent} · {isoTime(p.paid)}{p.refunded ? ' · grąžinta' : ''}</p>
                   </div>
                   {refundButton(p)}
@@ -344,7 +345,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
                 </div>
               )}
               {d.refunds.map((r, i) => (
-                <p key={i} className="text-xs break-all">Grąžinimas {s(r.refund)}: {s(r.status)}, {fmtEur(n(r.amount))}, {isoTime(r.t)}</p>
+                <p key={i} className="text-xs break-all">Grąžinimas {s(r.refund)}: {s(r.status)}, {fmtMoney(n(r.amount), s(r.currency))}, {isoTime(r.t)}</p>
               ))}
             </section>
           )}

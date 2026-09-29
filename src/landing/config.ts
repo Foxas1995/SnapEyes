@@ -1,4 +1,5 @@
 // Facts the landing page prints. Keep every value here true; the copy dictionary only words them.
+import { MARKETS, DEFAULT_MARKET, MAX_EYES, withMarket } from '../shared/markets';
 
 // Every email address on the page and the curator's "send me your photos" offer come from this one constant
 // and stay hidden while it is empty. Owner decision 2026-09-23: info@snapeyes.com at Hostinger; the owner confirmed
@@ -9,7 +10,8 @@ export const CONTACT_EMAIL = 'info@snapeyes.com';
 export const TRY_URL = '/try';
 // ...in the page's language: /try reads ?lang= first (src/try/lang.ts, the same rule as ./lang.tsx), so a visitor
 // who reads this page in German through /?lang=de, without ever touching the switch, still gets /try in German.
-export const tryUrl = (lang: 'en' | 'de') => `${TRY_URL}?lang=${lang}`;
+// And in the page's market (m=, src/shared/markets.ts withMarket), so /try shows the same currency.
+export const tryUrl = (lang: 'en' | 'de') => withMarket(`${TRY_URL}?lang=${lang}`);
 
 // Seller shown in the footer and on the legal pages (owner decision 2026-09-23). MB is not VAT-registered: no VAT
 // number, no "incl. VAT". Every page prints the "Represented by" and "Phone" lines only when the value is set.
@@ -45,17 +47,20 @@ export const SELLER: Readonly<Seller> = {
   phone: '',
 };
 
-// Prices in euro cents (owner decision 2026-09-23). The landing page shows them with no purchase buttons (an order
-// starts from the customer's own preview on /try) and says "ordering opens soon" until the deployment takes orders
-// (src/landing/ordering.ts). The terms of sale (src/legal/docs/terms.ts) print these same constants, so a price
-// change here changes them too; api/_lib/pay.py charges its own copy of them, so change both together.
+// The DEFAULT market's prices in euro cents, in the names the landing page and the terms of sale use. They are not a
+// copy: every price lives in api/_lib/markets.py (the server charges from it, src/shared/markets.ts reads it at build
+// time), and a price change there changes the pages, the terms and what Stripe charges together. The landing page
+// shows its visitor's own market (src/shared/markets.ts priceList); the terms print these. No purchase buttons here: an
+// order starts from the customer's own preview on /try, and the page says "ordering opens soon" until the deployment
+// takes orders (src/landing/ordering.ts).
+const DEFAULT_PRICES = MARKETS[DEFAULT_MARKET].prices;
 export const PRICE_CENTS = {
-  studioBlack: 1997,   // 1 eye, Studio Black
-  artBackground: 2497, // 1 eye, any of the five art backgrounds
-  coupleDuo: 3997,     // 2 eyes
-  extraEye: 1500,      // each eye after the second
+  studioBlack: DEFAULT_PRICES.one_eye_studio_black,   // 1 eye, Studio Black
+  artBackground: DEFAULT_PRICES.one_eye_art,          // 1 eye, any of the five art backgrounds
+  coupleDuo: DEFAULT_PRICES.two_eyes,                 // 2 eyes
+  extraEye: DEFAULT_PRICES.each_further_eye,          // each eye after the second
 } as const;
-export const MAX_EYES = 8;
+export { MAX_EYES };
 
 // The latest delivery the terms of sale promise (Art. 6(1)(g) Directive 2011/83/EU, Art. 246a § 1 Abs. 1 Nr. 7
 // EGBGB). Normally the file is ready on the order page within minutes of payment (the page makes it as soon as the
@@ -64,10 +69,6 @@ export const MAX_EYES = 8;
 // go out. Owner decision: a time that can always be kept, weekends included. src/legal/docs/terms.ts prints it.
 export const DELIVERY_MAX_HOURS = 48;
 
-export function centsForEyes(eyes: number): number {
-  if (eyes <= 1) return PRICE_CENTS.studioBlack;
-  return PRICE_CENTS.coupleDuo + (eyes - 2) * PRICE_CENTS.extraEye;
-}
 
 // The six styles of the capture tool, in the order the page shows them. Every image under
 // /assets/atelier/ is the founder's own eye rendered by the engine (api/_lib/iris.py compose), not a mockup.

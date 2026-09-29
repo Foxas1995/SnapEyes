@@ -309,6 +309,8 @@ const en = {
     extra: (duo: string, extra: string, max: number) => `Couple Duo ${duo}, then +${extra} for each extra eye, up to ${max} eyes.`,
     notice: 'Ordering opens soon - your preview is free today.',
     footnote: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in euros.',
+    footnoteAud: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in Australian dollars (A$).',
+    footnoteHuf: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in Hungarian forints (Ft).',
     demo: 'This is a demo with the AI-generated sample eye. Try your own eye to see your price.',
     sampleNotCounted: (k: number) => (k === 1
       ? 'The AI-generated sample eye is not part of an order, so it is not counted.'
@@ -356,6 +358,7 @@ const en = {
       closed: 'Ordering is not open yet.',
     },
     footnote: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the final price: we are not registered for VAT, so no VAT is added.',
+    footnoteAud: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no GST is charged.',
   },
 
   study: {
@@ -636,6 +639,8 @@ const de: TryCopy = {
     // src/landing/copy.ts de.pricing.notice, word for word
     notice: 'Bestellungen sind bald möglich - Ihre Vorschau ist schon heute kostenlos.',
     footnote: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in Euro.',
+    footnoteAud: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in australischen Dollar (A$).',
+    footnoteHuf: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in ungarischen Forint (Ft).',
     demo: 'Dies ist eine Demo mit dem KI-generierten Beispielauge. Probieren Sie es mit Ihrem eigenen Auge, um Ihren Preis zu sehen.',
     sampleNotCounted: (k: number) => (k === 1
       ? 'Das KI-generierte Beispielauge ist nicht Teil einer Bestellung und wird daher nicht mitgezählt.'
@@ -674,6 +679,7 @@ const de: TryCopy = {
       closed: 'Bestellungen sind noch nicht möglich.',
     },
     footnote: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.',
+    footnoteAud: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine GST berechnet.',
   },
 
   study: {

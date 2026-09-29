@@ -1,8 +1,9 @@
 import type { Ref } from 'react';
 import { Check, Clock } from 'lucide-react';
 import { useLang } from './lang';
-import { BEFORE_SRC, PRICE_CENTS, styleSrc, styleSrcSet } from './config';
-import { formatEuro } from './copy';
+import { BEFORE_SRC, styleSrc, styleSrcSet } from './config';
+import { currencyOf, money, priceList } from '../shared/markets';
+import { useMarket } from '../shared/useMarket';
 import { useOrderingOpen } from './ordering';
 import { CtaLink, CtaNote, Eyebrow } from './ui';
 
@@ -10,6 +11,7 @@ import { CtaLink, CtaNote, Eyebrow } from './ui';
 // Desktop: text and points on the left, the artwork on the right across both rows.
 export function Hero({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
   const { t, lang } = useLang();
+  const market = useMarket();
   const open = useOrderingOpen();
   const h = t.hero;
   return (
@@ -78,7 +80,7 @@ export function Hero({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
           {open ? (
             <li className="flex items-start gap-3">
               <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#f5c542]" />
-              <span>{h.ready(formatEuro(PRICE_CENTS.studioBlack, lang))}</span>
+              <span>{h.ready(money(priceList(market).one_eye_studio_black, currencyOf(market), lang))}</span>
             </li>
           ) : (
             <li className="flex items-start gap-3 text-zinc-400">

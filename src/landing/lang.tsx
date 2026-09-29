@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { COPY, type Copy, type Lang } from './copy';
+import { COPY, copyFor, type Copy, type Lang } from './copy';
+import { useMarket } from '../shared/useMarket';
 
 const STORE_KEY = 'snapeyes.lang';
 
@@ -90,7 +91,9 @@ export function LangProvider({ children, applyHead }: { children: ReactNode; app
     applyHeadTags(lang, t);
   }, [lang, applyHead]);
 
-  const value = useMemo(() => ({ lang, t: COPY[lang], setLang }), [lang, setLang]);
+  // the copy of the language, with the lines of the visitor's market where it has its own (copyFor: Australia)
+  const market = useMarket();
+  const value = useMemo(() => ({ lang, t: copyFor(lang, market), setLang }), [lang, market, setLang]);
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }
 

@@ -390,12 +390,15 @@ def order_row(order):
     spec = spec if isinstance(spec, dict) else {}
     co = (rec or {}).get("checkout") if isinstance(rec, dict) else None
     amount = paid.get("amount_total") if is_paid else (co.get("amount") if isinstance(co, dict) else None)
+    currency = pay.currency_of(paid.get("currency") if is_paid else (co.get("currency") if isinstance(co, dict) else None))
+    market = (paid.get("market") if is_paid else (co.get("market") if isinstance(co, dict) else None)) or spec.get("market")
     created_at = (rec or {}).get("created_at") if isinstance(rec, dict) else None
     lang = spec.get("lang") or (rec.get("lang") if isinstance(rec, dict) else None)
     return {"order": order, "state": state, "created_at": created_at if isinstance(created_at, (int, float)) else None,
             "lang": lang if lang in pay.LANGS else None,
             "eyes": spec.get("eyes") or (len(drafts) or None), "style": spec.get("style"), "layout": spec.get("layout"),
-            "amount": amount, "currency": "EUR", "paid": is_paid, "live": bool(paid.get("livemode")) if is_paid else None,
+            "amount": amount, "currency": currency.upper(), "market": market if market in pay.MARKETS else pay.DEFAULT_MARKET,
+            "paid": is_paid, "live": bool(paid.get("livemode")) if is_paid else None,
             "paid_at": paid.get("paid_at") if is_paid else None, "email": mask_email(paid.get("email")) if is_paid else None,
             "drafts": len(drafts), "made": len(made), "files": len(files), "delivery": isinstance(delivery, dict),
             "held": isinstance(delivery, dict) and bool(delivery.get("needs_review")) and "release.json" not in names,
@@ -732,7 +735,8 @@ def act_resend_confirmation(body, who):
             raise store.Answer(409, "no_consent", "No consent is recorded for this order, so there is no confirmation "
                                "to send.", False)
         pack = pay.legal_pack()
-        if pack is None:
+        if pack is None or pay.pack_docs(pack, (paid.get("spec") or {}).get("lang"), pay.paid_market(paid)) is None:
+            # unreadable, or without the texts of this order's market (the Australian edition): never another's
             raise store.busy("legal_unavailable", 30, "The legal texts (/legal/order-mail.json) could not be read. Try "
                              "again in a moment.")
         subject, text, html_body = pay.confirmation_mail(order, paid, k, pack, consent)

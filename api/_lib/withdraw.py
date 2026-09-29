@@ -390,6 +390,7 @@ def _assess_paid(order, rec, paid, now):
                                   lambda: store.get_json(pay.order_path(order, "mail_delivery.json"), timeout=8.0)])
     consent = pay.paid_consent(order, rec, paid)
     facts = {"paid_at": paid.get("paid_at"), "amount": paid.get("amount_total"), "currency": paid.get("currency"),
+             "market": pay.paid_market(paid),
              "session_id": paid.get("session_id"), "payment_intent": paid.get("payment_intent"),
              "consent_at": consent.get("at") if consent else None,
              "consent_version": consent.get("version") if consent else None}
@@ -548,7 +549,12 @@ def _finish(stmt, path, repeat):
              "reason": stmt.get("reason"), "already": bool(stmt.get("already")) or repeat, "text": stmt.get("text"),
              "name": stmt.get("name"), "email": stmt.get("email")}
     if outcome == "withdrawn" and stmt.get("amount"):
-        reply.update(amount=stmt["amount"], currency="EUR", refund="due", refund_by=pay.iso(stmt.get("refund_by")))
+        reply.update(amount=stmt["amount"], currency=pay.currency_of(stmt.get("currency")).upper(), refund="due",
+                     refund_by=pay.iso(stmt.get("refund_by")))
+    if outcome in ("withdrawn", "lapsed") and pay.market_of(stmt.get("market")):
+        # the order's market (a matched order only): the page shows the notes of that market's texts (an Australian
+        # order: the Australian Consumer Law next to the end of the withdrawal right), whatever the browser remembers
+        reply["market"] = stmt["market"]
     if outcome == "lapsed":
         reply.update(began_at=stmt.get("began_at"), confirmation_at=stmt.get("confirmation_at"),
                      consent_at=stmt.get("consent_at"), period_end=stmt.get("period_end"),
@@ -724,7 +730,7 @@ def send_receipt(stmt, path):
 
 
 def _money(stmt, lang):
-    return pay.price_text(stmt.get("amount") or 0, lang)
+    return pay.price_text(stmt.get("amount") or 0, lang, stmt.get("currency"))
 
 
 def _last_day(stmt):
@@ -790,6 +796,16 @@ def receipt_mail(stmt, pack):
                  f"in place, and your file is delivered on your order page.",
                  "We will still look at your statement personally and reply to you by email. Your statutory rights "
                  "for a defective file are not affected."])
+    if outcome == "lapsed" and pay.acl_market(stmt.get("market")):
+        # an Australian order: the end of the EU right of withdrawal must never read as "no refunds" (the Australian
+        # Consumer Law's guarantees cannot be excluded; the terms' "Your rights in Australia")
+        what = what + [("Das betraf nur den Widerruf ohne Angabe von Gründen nach dem EU-Verbraucherrecht. Ihre Rechte "
+                        "nach dem Australian Consumer Law bleiben unberührt: Ist Ihre Datei mangelhaft oder entspricht sie "
+                        "nicht der Beschreibung, antworten Sie einfach auf diese E-Mail. Siehe „Ihre Rechte in "
+                        "Australien“ in unseren AGB.") if de else
+                       ("That was only about cancelling for a change of mind under EU consumer law. Your rights under "
+                        "the Australian Consumer Law are not affected: if your file is faulty or not as described, simply "
+                        "reply to this email. See “Your rights in Australia” in our terms of sale.")]
     moved = []
     if stmt.get("email_given"):
         moved = [("Sie haben für diese Bestätigung eine andere Adresse angegeben. Wir senden sie an die E-Mail-Adresse, "
@@ -899,7 +915,7 @@ def send_owner_note(stmt, path):
 def _todo(stmt):
     """(subject head, what to do) of a proven statement, for its note and for the digest."""
     outcome, reason = stmt.get("outcome"), stmt.get("reason")
-    amount = pay.amount_text(stmt.get("amount") or 0, "en")
+    amount = pay.amount_text(stmt.get("amount") or 0, "en", stmt.get("currency"))
     if outcome == "withdrawn" and stmt.get("already"):
         return "repeat, already withdrawn", (f"The order was withdrawn already on "
                                              f"{pay.iso(stmt['first_at']) if stmt.get('first_at') else 'an earlier day'}"

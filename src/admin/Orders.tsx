@@ -5,7 +5,7 @@ import type React from 'react';
 import type { Orders, Reply } from './api';
 import type { Call } from './AdminApp';
 import { countBy } from './agg';
-import { AKYS, explain, fmtEur, fmtTime, ltCount, STATE_LT, STATE_TONE, STYLE_LT } from './format';
+import { AKYS, explain, fmtMoney, fmtTime, ltCount, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, H2, INPUT, MUTED, Notice, Spinner } from './ui';
 
 const PERIODS: [number, string][] = [[7, '7 d.'], [30, '30 d.'], [90, '90 d.'], [400, 'Visi']];
@@ -82,7 +82,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
                 {fmtTime(r.created_at)}
                 {r.eyes ? ` · ${ltCount(r.eyes, AKYS)}` : ''}
                 {r.style ? ` · ${STYLE_LT[r.style] || r.style}` : ''}
-                {typeof r.amount === 'number' ? ` · ${fmtEur(r.amount)}` : ''}
+                {typeof r.amount === 'number' ? ` · ${fmtMoney(r.amount, r.currency)}` : ''}
                 {r.paid && r.live === false ? ' · testas' : ''}
               </p>
               <p className="text-xs text-white/55 break-words">

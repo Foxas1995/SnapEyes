@@ -82,7 +82,8 @@ def cmd_status(order):
     print(f"order     {order}  made {rec.get('created')}  lang {rec.get('lang')}")
     co = rec.get("checkout") or {}
     if co:
-        print(f"checkout  {co.get('session_id')}  {co.get('amount')} cents  spec {json.dumps(co.get('spec'), ensure_ascii=False)}")
+        print(f"checkout  {co.get('session_id')}  {pay.amount_text(co.get('amount') or 0, 'en', co.get('currency'))}  "
+              f"market {co.get('market') or pay.DEFAULT_MARKET}  spec {json.dumps(co.get('spec'), ensure_ascii=False)}")
     if paid:
         print(f"PAID      {paid.get('paid_iso')} via {paid.get('source')}  {paid.get('amount_total')} {paid.get('currency')}"
               f"  live={paid.get('livemode')}  email {paid.get('email')}")
@@ -277,7 +278,7 @@ def cmd_withdrawals(day=None, months=2):
                 continue
             extra = ""
             if w.get("refund") == "due" and w.get("refund_by") and n.startswith("p-"):
-                extra = f"  REFUND {pay.amount_text(w.get('amount') or 0, 'en')} due by {pay.iso(w['refund_by'])}"
+                extra = f"  REFUND {pay.amount_text(w.get('amount') or 0, 'en', w.get('currency'))} due by {pay.iso(w['refund_by'])}"
             print(f"{w.get('received')}  {kinds[n[:1]]}: order {w.get('order')}  {w.get('outcome')} ({w.get('reason')})  "
                   f"email {w.get('email')}{extra}\n    {ptr.get('path')}")
 
@@ -295,7 +296,7 @@ def cmd_refunded(order, note=""):
                                                                 "amount": paid.get("amount_total"),
                                                                 "note": str(note or "")[:200]}),
               "application/json", upsert=True)
-    print(f"marked refunded ({pay.amount_text(paid.get('amount_total') or 0, 'en')}); no reminder will come")
+    print(f"marked refunded ({pay.amount_text(paid.get('amount_total') or 0, 'en', paid.get('currency'))}); no reminder will come")
 
 
 def _probe_why(h, rec):

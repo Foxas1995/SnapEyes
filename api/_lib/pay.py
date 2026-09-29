@@ -28,7 +28,8 @@ Everything here is INACTIVE until the owner sets the environment on Vercel (valu
                          python scripts/mint_admin.py --new-secret): the admin keys are signed with it. Without it
                          (and without a SNAPEYES_TICKET_SECRET of 32 or more characters) /api/admin answers 503.
   VERCEL_AUTOMATION_BYPASS_SECRET  set by Vercel itself when the project has "Protection Bypass for Automation": the
-                         server's self-call on a protected Preview carries it (api/_lib/maker.py kick). Never logged.
+                         server's self-calls on a protected Preview carry it (api/_lib/maker.py kick, and legal_pack
+                         reading the Preview's own legal texts). Never logged.
 Tests only, ignored whenever VERCEL is set: STRIPE_API_BASE, RESEND_API_BASE, LEGAL_PACK_BASE and SNAPEYES_SELF_BASE
 (where the server's self-call goes; without it a local run makes no self-call) = http://127.0.0.1:<port>.
 
@@ -98,12 +99,17 @@ records of a paid order.
 The daily clean-up (api/_lib/cleanup.py) removes unpaid orders after 26 h, the images of withdrawn orders after 14
 days, the files of paid orders 12 months after payment (the records stay), and the markers after a few days.
 
-Prices are computed here and nowhere else on the server (never from the client): 1 eye Studio Black 19.97 EUR,
-1 eye on an art background 24.97, 2 eyes 39.97, each further eye +15.00, up to 8. Digital only."""
+Prices are computed here and nowhere else on the server (never from the client), from the market's price list in
+api/_lib/markets.py (the one place every price lives; the site's build reads the same file): per market one currency
+and 1 eye Studio Black, 1 eye on an art background, 2 eyes, each further eye, up to 8. Digital only. The market comes
+from the checkout request (only a selectable one: MARKETS "selectable"); an order records it with its currency and
+amount (order.json checkout, the Stripe metadata, paid.json), and every paid session is checked against it: its
+currency must be its market's (session_matches), and its amount the one the server priced (record_paid)."""
 import os, re, json, time, hmac, html, calendar, hashlib, secrets, threading
 import requests
 from . import iris as L
 from . import store
+from .markets import MARKETS, DEFAULT_MARKET
 
 STRIPE_API = "https://api.stripe.com"
 RESEND_API = "https://api.resend.com"
@@ -121,11 +127,12 @@ LEGAL_CACHE = 600            # seconds a fetched legal pack is used before it is
 LEGAL_STALE = 86400          # a pack this old is still used when a fresh fetch fails
 MAIL_SLOW = 900              # the owner is told when a paid order's confirmation has not gone out after this long
 
-CURRENCY = "eur"
-PRICE_ONE_STUDIO = 1997      # 1 eye, Studio Black
-PRICE_ONE_ART = 2497         # 1 eye, any of the five art backgrounds
-PRICE_TWO = 3997             # 2 eyes
-PRICE_EXTRA = 1500           # each eye after the second
+# The markets (api/_lib/markets.py): {key: {currency, prices, selectable, lang, stripe_locale, countries}}. A market
+# that is not selectable keeps its prices (a paid order of it is still checked and shown) but takes no new checkout.
+SELECTABLE = tuple(m for m, v in MARKETS.items() if v.get("selectable") == 1)
+CURRENCY = MARKETS[DEFAULT_MARKET]["currency"]      # the default market's currency: "eur"
+CURRENCIES = ("eur", "aud", "huf")
+PRICE_KEYS = ("one_eye_studio_black", "one_eye_art", "two_eyes", "each_further_eye")
 MAX_EYES = L.MULTI_MAX       # 8
 LANGS = ("en", "de")
 STYLE_NAMES = {"studio_black": "Studio Black", "celestial_gold": "Celestial Gold", "deep_nebula": "Deep Nebula",
@@ -144,7 +151,8 @@ DRAFT_ORDER_MAX = 30         # uploads one unpaid order may take per day (8 eyes
 # The withdrawal waiver (EU consumer law for digital content: the consumer expressly agrees that performance starts
 # before the withdrawal period ends and acknowledges losing the right). /api/checkout refuses without it and
 # records this version, the time and a fingerprint of the text in the order's language. Show exactly this text.
-CONSENT_VERSION = "2026-09-29.1"
+# Version 2026-09-30.1 added the Australian market's text (CONSENT_TEXT_AU); the EU text is the one of 2026-09-29.1.
+CONSENT_VERSION = "2026-09-30.1"
 CONSENT_TEXT = {
     "en": ("I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period "
            "ends. I know that I lose my right of withdrawal once this has started."),
@@ -152,14 +160,40 @@ CONSENT_TEXT = {
            "digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere, sobald damit "
            "begonnen wurde."),
 }
-# Every consent text ever shown, by version: an order's confirmation email quotes the text its customer ticked, also
-# after CONSENT_TEXT changes (add the new version here, keep the old ones).
-CONSENT_TEXTS = {CONSENT_VERSION: CONSENT_TEXT}
+# The markets whose customers read the Australian edition of the legal texts (src/shared/legal.ts EDITION_MARKETS and
+# legalEdition: keep both in step): terms with the Australian Consumer Law and prices in A$ without GST, the right of
+# withdrawal framed as EU law, this checkbox text, SUBMIT_NOTE_AU, an invoice and "Your rights in Australia" in the
+# confirmation email, and the "editions" part of the legal pack (pack_docs).
+ACL_MARKETS = ("au",)
+# The Australian checkbox (src/shared/legal.ts CHECKOUT_LEGAL_AU, word for word): both EU elements (an EU consumer may
+# buy in A$ too), plus no cancelling for a change of mind once making started, and the Australian Consumer Law kept.
+CONSENT_TEXT_AU = {
+    "en": ("I expressly agree that SnapEyes starts making my personalised digital artwork right away, before the "
+           "withdrawal period ends. I know that once this has started, I lose my right of withdrawal and can't cancel "
+           "for a change of mind. This doesn't affect my rights under the Australian Consumer Law."),
+    "de": ("Ich stimme ausdrücklich zu, dass SnapEyes sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung meines "
+           "personalisierten digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht "
+           "verliere, sobald damit begonnen wurde, und den Vertrag dann nicht mehr ohne Angabe von Gründen widerrufen "
+           "kann. Meine Rechte nach dem australischen Verbraucherrecht (Australian Consumer Law) bleiben davon "
+           "unberührt."),
+}
+# Every consent text ever shown, by version (and for the Australian market apart): an order's confirmation email
+# quotes the text its customer ticked, also after a text changes (add the new version here, keep the old ones).
+CONSENT_TEXTS = {"2026-09-29.1": CONSENT_TEXT, CONSENT_VERSION: CONSENT_TEXT}
+CONSENT_TEXTS_AU = {CONSENT_VERSION: CONSENT_TEXT_AU}
 SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit)
     "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
            "right away and that your right of withdrawal ends once we have started."),
     "de": ("Sie kaufen eine digitale Datei (JPEG, 4096 px). Es wird kein Druck und kein Rahmen versendet. Sie haben "
            "zugestimmt, dass wir sofort beginnen und Ihr Widerrufsrecht damit erlischt."),
+}
+SUBMIT_NOTE_AU = {   # the same for the Australian market: never a "no refunds", the Australian Consumer Law kept
+    "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
+           "right away, so you can't cancel for a change of mind once we have started. Your rights under the "
+           "Australian Consumer Law are not affected."),
+    "de": ("Sie kaufen eine digitale Datei (JPEG, 4096 px). Es wird kein Druck und kein Rahmen versendet. Sie haben "
+           "zugestimmt, dass wir sofort beginnen; danach können Sie nicht mehr ohne Angabe von Gründen widerrufen. Ihre "
+           "Rechte nach dem Australian Consumer Law bleiben unberührt."),
 }
 ITEM_DESC = {
     "en": "Digital file only: JPEG, 4096 px on the longest side. No print, no frame.",
@@ -170,6 +204,7 @@ _SK = re.compile(r"^(sk|rk)_(test|live)_[A-Za-z0-9]{10,247}$")
 _WHSEC = re.compile(r"^whsec_[A-Za-z0-9+/=]{16,200}$")
 _RESEND = re.compile(r"^re_[A-Za-z0-9_]{10,200}$")
 _SITE = re.compile(r"^(https://[a-z0-9.-]+(:[0-9]{1,5})?|http://(localhost|127\.0\.0\.1)(:[0-9]{1,5})?)$")
+_BYPASS = re.compile(r"^[A-Za-z0-9_-]{8,256}$")     # VERCEL_AUTOMATION_BYPASS_SECRET's shape (api/_lib/maker.py too)
 _TEST_BASE = re.compile(r"^http://(localhost|127\.0\.0\.1):[0-9]{1,5}$")
 _EMAIL = re.compile(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
                     r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$")
@@ -489,14 +524,54 @@ def serve(req, name, fn, gate=True):
 
 
 # ----------------------------------------------------------------------------- prices and the order spec
-def price_cents(eyes, style):
-    """The price in euro cents, from the number of eyes and the style only."""
+def market_of(v, allowed=None):
+    """The market key v names, when it is one of `allowed` (default: every market in MARKETS); else None."""
+    allowed = MARKETS if allowed is None else allowed
+    return v if isinstance(v, str) and v in MARKETS and v in allowed else None
+
+
+def market_currency(market):
+    """The lower-case currency of a market (the default market's for an unknown key)."""
+    return MARKETS[market if isinstance(market, str) and market in MARKETS else DEFAULT_MARKET]["currency"]
+
+
+def price_list(market=DEFAULT_MARKET):
+    """A market's four prices in Stripe's smallest unit, as GET /api/checkout names them."""
+    p = MARKETS[market]["prices"]
+    return {k: int(p[k]) for k in PRICE_KEYS}
+
+
+def price_cents(eyes, style, market=DEFAULT_MARKET):
+    """The price in the market's smallest unit (euro or dollar cents, forint x 100), from the number of eyes, the style
+    and the market only (never from the client)."""
     n = int(eyes)
     if not 1 <= n <= MAX_EYES:
         raise L.ClientError(f"An artwork holds 1 to {MAX_EYES} eyes.")
+    if market_of(market) is None:
+        raise L.ClientError("Choose one of the markets: " + ", ".join(SELECTABLE) + ".")
+    p = price_list(market)
     if n == 1:
-        return PRICE_ONE_STUDIO if style == "studio_black" else PRICE_ONE_ART
-    return PRICE_TWO + (n - 2) * PRICE_EXTRA
+        return p["one_eye_studio_black"] if style == "studio_black" else p["one_eye_art"]
+    return p["two_eyes"] + (n - 2) * p["each_further_eye"]
+
+
+def stripe_locale(spec):
+    """The language of Stripe's payment page: the page's own (en, de), except where the market names another one for
+    it (Stripe has no en-AU: the Australian market's English is en-GB)."""
+    lang = lang_of(spec.get("lang"))
+    m = MARKETS[market_of(spec.get("market")) or DEFAULT_MARKET]
+    loc = (m.get("stripe_locale") or {}).get(lang)
+    return loc if isinstance(loc, str) and re.fullmatch(r"[a-z]{2}(-[A-Z]{2})?", loc) else lang
+
+
+def acl_market(market):
+    """Does this market read the Australian edition of the legal texts (ACL_MARKETS)?"""
+    return isinstance(market, str) and market in ACL_MARKETS
+
+
+def consent_for(market, lang):
+    """The withdrawal-waiver text the checkout of this market shows today, in a language (CONSENT_VERSION)."""
+    return (CONSENT_TEXT_AU if acl_market(market) else CONSENT_TEXT)[lang_of(lang)]
 
 
 def clean_text(v, n):
@@ -505,6 +580,15 @@ def clean_text(v, n):
 
 def lang_of(v):
     return v if isinstance(v, str) and v in LANGS else "en"
+
+
+def _int_amount(v):
+    """An amount as the session metadata keeps it (a string of digits), or None."""
+    if isinstance(v, str) and re.fullmatch(r"[0-9]{1,9}", v.strip()):
+        return int(v.strip())
+    if isinstance(v, int) and not isinstance(v, bool) and v >= 0:
+        return v
+    return None
 
 
 def _int(v):
@@ -519,11 +603,19 @@ def _int(v):
     return None
 
 
-def spec_from(src):
-    """The artwork an order is for: {eyes, style, layout, names, title, lang}, validated (ClientError otherwise).
-    src is the checkout request, or a paid session's metadata (all strings)."""
+def spec_from(src, markets=None):
+    """The artwork an order is for: {eyes, style, layout, names, title, lang, market}, validated (ClientError
+    otherwise). src is the checkout request (markets=SELECTABLE: only a market the site sells in), or a paid session's
+    metadata or an order's recorded spec (all strings; markets None: any market in MARKETS, so an order stays readable
+    after its market stops being offered). No market named: the default one (every order made before markets existed
+    was one of it)."""
     if not isinstance(src, dict):
         raise L.ClientError("Send a JSON object.")
+    market = src.get("market")
+    if market in (None, ""):
+        market = DEFAULT_MARKET
+    if market_of(market, MARKETS if markets is None else markets) is None:
+        raise L.ClientError("Choose one of the markets: " + ", ".join(SELECTABLE) + ".")
     n = _int(src.get("eyes"))
     if n is None or not 1 <= n <= MAX_EYES:
         raise L.ClientError(f"Choose between 1 and {MAX_EYES} eyes.")
@@ -536,7 +628,7 @@ def spec_from(src):
     elif not isinstance(layout, str) or layout not in L.layouts_for(n):
         raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(L.layouts_for(n)) + ".")
     return {"eyes": n, "style": style, "layout": layout, "names": clean_text(src.get("names"), 60),
-            "title": clean_text(src.get("title"), 40), "lang": lang_of(src.get("lang"))}
+            "title": clean_text(src.get("title"), 40), "lang": lang_of(src.get("lang")), "market": market}
 
 
 def item_name(spec):
@@ -546,19 +638,65 @@ def item_name(spec):
     return f"SnapEyes iris artwork, {n} {'eye' if n == 1 else 'eyes'}, {style}, 4096 px digital file"
 
 
-def amount_text(cents, lang):
-    s = f"{int(cents) // 100}.{int(cents) % 100:02d}"
-    return (s.replace(".", ",") if lang == "de" else s) + " EUR"
+def currency_of(v):
+    """A recorded currency ("eur", "EUR", ...) as one of CURRENCIES; a missing or unknown one is the default market's
+    (every order made before markets existed paid in euros)."""
+    v = str(v or "").strip().lower()
+    return v if v in CURRENCIES else CURRENCY
 
 
-def price_text(cents, lang):
-    """A price as the site shows it: "€19.97" in English, "19,97 €" in German (the customer's emails)."""
+def _cents(v):
     try:
-        c = int(cents)
+        return int(v)
     except (TypeError, ValueError):
-        c = 0
+        return 0
+
+
+def _grouped(n, sep):
+    s = str(abs(int(n)))
+    out = []
+    while len(s) > 3:
+        out.insert(0, s[-3:])
+        s = s[:-3]
+    return ("-" if n < 0 else "") + sep.join([s] + out)
+
+
+def amount_text(cents, lang, currency=None):
+    """An amount for the owner's notes and logs: "39.97 EUR", "79.00 AUD", "13990 HUF" (Stripe's smallest unit in,
+    forints shown whole)."""
+    cur = currency_of(currency)
+    c = _cents(cents)
+    if cur == "huf":
+        return f"{c // 100} HUF"
     s = f"{c // 100}.{c % 100:02d}"
+    return (s.replace(".", ",") if lang == "de" else s) + " " + cur.upper()
+
+
+def price_text(cents, lang, currency=None):
+    """A price as the site shows it (the customer's emails; src/shared/markets.ts money is the same rule): euros
+    "€19.97" in English, "19,97 €" in German; Australian dollars "A$39" (whole dollars without decimals, "A$39.50"
+    otherwise); forints "6 990 Ft" (whole forints; Stripe's HUF amount is the forint x 100)."""
+    cur = currency_of(currency)
+    c = _cents(cents)
+    if cur == "huf":
+        return f"{_grouped(round(c / 100), ' ')} Ft"
+    s = f"{c // 100}.{c % 100:02d}"
+    if cur == "aud":
+        whole = _grouped(c // 100, "." if lang == "de" else ",")
+        return f"A${whole}" if c % 100 == 0 else f"A${whole}{',' if lang == 'de' else '.'}{c % 100:02d}"
     return f"{s.replace('.', ',')} €" if lang == "de" else f"€{s}"
+
+
+def tax_note(currency, lang):
+    """The sentence after a price in a customer's email: nothing added on top, in the words of the currency's market.
+    Euros and forints: not registered for VAT (Lithuania's small-business rule). Australian dollars: one total price,
+    no GST charged (not registered for GST in Australia, below A$75,000 a year)."""
+    cur = currency_of(currency)
+    if cur == "aud":
+        return ("Das ist der Gesamtpreis: Es wird keine GST berechnet." if lang == "de" else
+                "This is the total price: no GST is charged.")
+    return ("Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet."
+            if lang == "de" else "This is the final price: we are not registered for VAT, so no VAT is charged.")
 
 
 # ----------------------------------------------------------------------------- orders and their access key
@@ -793,29 +931,36 @@ def _raise_for(r, label):
 
 
 def create_session(order, k, spec, amount, consent, expires):
-    """A Stripe Checkout Session for this order (mode payment, EUR, one line item, dynamic payment methods, no
-    Stripe Tax). Returns Stripe's session object (id, url, ...)."""
+    """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
+    methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
+    Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
+    market = spec.get("market") or DEFAULT_MARKET
+    currency = market_currency(market)
     params = [
         ("mode", "payment"),
         ("success_url", order_url(order, k, lang, session=True)),
         # no k here: /try may one day carry an analytics script, and the page keeps order and k in sessionStorage.
-        # lang always (en too): the customer comes back in the order's language, whatever the browser says
-        ("cancel_url", f"{site()}/try?checkout=cancelled&o={order}&lang={lang}"),
-        ("locale", lang),
+        # lang always (en too): the customer comes back in the order's language, whatever the browser says; m only
+        # for a market other than the default one, so /try shows the same currency again
+        ("cancel_url", f"{site()}/try?checkout=cancelled&o={order}&lang={lang}"
+                       + (f"&m={market}" if market != DEFAULT_MARKET else "")),
+        ("locale", stripe_locale(spec)),
         ("client_reference_id", order),
         ("expires_at", str(int(expires))),
+        ("adaptive_pricing[enabled]", "false"),
         ("line_items[0][quantity]", "1"),
-        ("line_items[0][price_data][currency]", CURRENCY),
+        ("line_items[0][price_data][currency]", currency),
         ("line_items[0][price_data][unit_amount]", str(int(amount))),
         ("line_items[0][price_data][product_data][name]", item_name(spec)),
         ("line_items[0][price_data][product_data][description]", ITEM_DESC[lang]),
-        ("custom_text[submit][message]", SUBMIT_NOTE[lang]),
+        ("custom_text[submit][message]", (SUBMIT_NOTE_AU if acl_market(market) else SUBMIT_NOTE)[lang]),
         ("payment_intent_data[description]", f"SnapEyes order {order}"),
         ("payment_intent_data[metadata][order]", order),
     ]
     meta = {"order": order, "key_sha": key_sha(k), "eyes": str(spec["eyes"]), "style": spec["style"],
             "layout": spec["layout"], "names": spec["names"], "title": spec["title"], "lang": lang,
+            "market": market, "currency": currency,
             "amount": str(int(amount)), "consent_version": consent["version"], "consent_at": consent["at"]}
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
@@ -902,15 +1047,42 @@ def close_open_sessions(order, rec):
     return paid, settling
 
 
-def session_matches(sess, order, rec):
+def session_ours(sess, order, rec):
     """Was this session made by /api/checkout for this order? The metadata carries the order id and the fingerprint
-    of its access key, both written by the server."""
+    of its access key, both written by the server. Says nothing about its currency (session_matches does)."""
     if not isinstance(sess, dict) or sess.get("object") != "checkout.session" or sess.get("mode") != "payment":
         return False
     meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
     want = rec.get("key_sha") if isinstance(rec, dict) else None
     return (meta.get("order") == order and isinstance(want, str) and isinstance(meta.get("key_sha"), str)
-            and hmac.compare_digest(meta["key_sha"], want) and str(sess.get("currency") or "").lower() == CURRENCY)
+            and hmac.compare_digest(meta["key_sha"], want))
+
+
+def session_market(sess):
+    """The market a session was made for (its metadata, written by the server; none named: the default market, as
+    every session made before markets existed), or None when it names no market of ours."""
+    meta = sess.get("metadata") if isinstance(sess, dict) and isinstance(sess.get("metadata"), dict) else {}
+    m = meta.get("market")
+    return DEFAULT_MARKET if m in (None, "") else market_of(m)
+
+
+def session_currency_ok(sess):
+    """Is the session in its market's currency (and in the currency its metadata names)? A session in another currency
+    is never an order's payment here: its amount would not be the price of that market."""
+    market = session_market(sess)
+    if market is None:
+        return False
+    cur = str(sess.get("currency") or "").lower()
+    meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
+    named = meta.get("currency")
+    return cur == market_currency(market) and (named in (None, "") or str(named).lower() == cur)
+
+
+def session_matches(sess, order, rec):
+    """Was this session made by /api/checkout for this order, in its market's currency? (session_ours plus
+    session_currency_ok: the order id, the key fingerprint, the market and the currency, all written by the server.)
+    A session that is only ours in the currency is refused: the webhook tells the owner (stripe_webhook.py)."""
+    return session_ours(sess, order, rec) and session_currency_ok(sess)
 
 
 def session_paid(sess):
@@ -921,6 +1093,15 @@ def session_paid(sess):
 def get_paid(order, timeout=8.0):
     rec = store.get_json(order_path(order, "paid.json"), timeout=timeout)
     return rec if isinstance(rec, dict) and rec.get("paid") is True else None
+
+
+def paid_market(paid):
+    """The market of a paid order: paid.json's own (record_paid), else its spec's; none named (an order from before
+    markets existed): the default market."""
+    if not isinstance(paid, dict):
+        return DEFAULT_MARKET
+    m = paid.get("market") or (paid.get("spec") if isinstance(paid.get("spec"), dict) else {}).get("market")
+    return m if isinstance(m, str) and m in MARKETS else DEFAULT_MARKET
 
 
 def _paid_spec(sess, rec):
@@ -938,16 +1119,17 @@ def _paid_spec(sess, rec):
     return None
 
 
-def consent_text(version, lang):
-    """The exact waiver text of a consent version in a language, or None for a version this code never showed."""
-    t = CONSENT_TEXTS.get(version) if isinstance(version, str) else None
+def consent_text(version, lang, market=None):
+    """The exact waiver text of a consent version in a language (the market's own text for the Australian market), or
+    None for a version this code never showed there."""
+    t = (CONSENT_TEXTS_AU if acl_market(market) else CONSENT_TEXTS).get(version) if isinstance(version, str) else None
     return t.get(lang_of(lang)) if isinstance(t, dict) else None
 
 
 def consent_record(meta, rec, sess, lang):
     """The customer's consent as paid.json keeps it: version and time from the session's metadata (written by the
     server at checkout), the language, and the exact text they ticked: the order record's copy for this very
-    session, else the text of that version."""
+    session, else the text of that version for the session's market."""
     version, at = meta.get("consent_version"), meta.get("consent_at")
     co = rec.get("checkout") if isinstance(rec, dict) else None
     text = None
@@ -955,7 +1137,7 @@ def consent_record(meta, rec, sess, lang):
         c = co["consent"]
         if c.get("version") == version and isinstance(c.get("text"), str):
             text = c["text"]
-    text = text or consent_text(version, lang)
+    text = text or consent_text(version, lang, session_market(sess))
     return {"version": version if isinstance(version, str) else None, "at": at if isinstance(at, str) else None,
             "lang": lang_of(lang), "text": text,
             "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16] if text else None}
@@ -973,7 +1155,7 @@ def paid_consent(order, rec, paid):
         co = rec.get("checkout") if isinstance(rec, dict) else None
         cc = co.get("consent") if isinstance(co, dict) and co.get("session_id") == paid.get("session_id") else None
         text = cc.get("text") if isinstance(cc, dict) and cc.get("version") == c["version"] else None
-        text = text if isinstance(text, str) else consent_text(c["version"], lang)
+        text = text if isinstance(text, str) else consent_text(c["version"], lang, paid_market(paid))
     return dict(c, lang=lang, text=text) if text else None
 
 
@@ -999,20 +1181,30 @@ def record_paid(order, rec, sess, source, event_id=None):
     email = email if isinstance(email, str) and _EMAIL.fullmatch(email.strip()) else None
     amount = sess.get("amount_total")
     now = int(time.time())
+    market = spec["market"]
     paid = {"paid": True, "order": order, "session_id": sess.get("id"), "payment_intent": sess.get("payment_intent")
             if isinstance(sess.get("payment_intent"), str) else None, "amount_total": amount,
-            "currency": str(sess.get("currency") or "").lower(), "livemode": bool(sess.get("livemode")),
+            "currency": str(sess.get("currency") or "").lower(), "market": market, "livemode": bool(sess.get("livemode")),
             "email": email.strip() if email else None, "paid_at": now, "paid_iso": iso(now),
             "source": source, "event_id": event_id if isinstance(event_id, str) else None, "spec": spec,
             "consent": consent_record(meta, rec, sess, spec["lang"])}
-    want = price_cents(spec["eyes"], spec["style"])
-    if amount != want:
-        paid["amount_mismatch"] = {"expected": want}
-        log(f"order {order}: paid {amount} but the spec costs {want} (recorded, delivered as paid)")
+    # what the server priced at checkout (the metadata's amount, written by it), else the market's price now; and the
+    # market's currency. A difference is recorded and the owner told (note_paid), and the order is delivered as paid:
+    # only the server can make a session, so it is a price change or a Stripe-side conversion, never the customer
+    want = price_cents(spec["eyes"], spec["style"], market)
+    priced = _int_amount(meta.get("amount"))
+    want_cur = market_currency(market)
+    expected = priced if priced is not None else want
+    if amount != expected or paid["currency"] != want_cur:
+        paid["amount_mismatch"] = {"expected": expected, "currency": want_cur, "market": market}
+        log(f"order {order}: paid {amount} {paid['currency']} but the order costs {expected} {want_cur} "
+            f"(market {market}; recorded, delivered as paid)")
+    elif priced is not None and priced != want:
+        log(f"order {order}: priced {priced} at checkout, the {market} price list says {want} now (a price change)")
     try:
         store.put(order_path(order, "paid.json"), store.json_bytes(paid), "application/json", upsert=False)
-        log(f"order {order} PAID via {source}: {amount} {paid['currency']} {spec['eyes']} eye(s) {spec['style']} "
-            f"live={paid['livemode']}")
+        log(f"order {order} PAID via {source}: {amount} {paid['currency']} ({market}) {spec['eyes']} eye(s) "
+            f"{spec['style']} live={paid['livemode']}")
         index_making(order, now)       # the daily clean-up's catch-up (api/_lib/maker.py) finds it until it is done
         if paid["livemode"]:
             _mark_sold(order)
@@ -1020,10 +1212,11 @@ def record_paid(order, rec, sess, source, event_id=None):
             # the customer withdrew while this payment was still settling (or an old tab was paid after they
             # withdrew): nothing is made, no confirmation goes out, and the owner refunds it
             log(f"order {order}: PAID after its withdrawal: refund it")
+            cur = paid["currency"]
             owner_note(order, "paid_after_withdrawal",
-                       f"SnapEyes: order {order} was paid after it was withdrawn, please refund {amount_text(amount or 0, 'en')}",
+                       f"SnapEyes: order {order} was paid after it was withdrawn, please refund {amount_text(amount or 0, 'en', cur)}",
                        f"Order {order} was withdrawn by the customer before this payment arrived "
-                       f"({amount_text(amount or 0, 'en')}, {'live' if paid['livemode'] else 'TEST mode'}, Stripe session "
+                       f"({amount_text(amount or 0, 'en', cur)}, {'live' if paid['livemode'] else 'TEST mode'}, Stripe session "
                        f"{paid['session_id']}, payment {paid['payment_intent']}).\nNothing is made for the order. Please "
                        f"refund the payment in the Stripe Dashboard (Payments, search {paid['payment_intent'] or paid['session_id']}, "
                        f"Refund) within 14 days of the withdrawal.\nStatus: python scripts/order_admin.py status {order}\n")
@@ -1047,12 +1240,12 @@ def extra_payment(order, cur, extra):
                   upsert=False)
     except store.StorageExists:
         return            # recorded and told before (a replayed event)
-    amount = amount_text(extra.get("amount_total") or 0, "en")
+    amount = amount_text(extra.get("amount_total") or 0, "en", extra.get("currency"))
     log(f"order {order}: EXTRA PAYMENT {amount} session {sid} payment {extra.get('payment_intent')} (the order was "
         f"paid by {cur.get('session_id')}): REFUND IT")
     spec = extra.get("spec") or {}
     owner_note(order, "extra_" + tag[:12], f"SnapEyes: order {order} was paid twice, please refund {amount}",
-               f"Order {order} was already paid ({amount_text(cur.get('amount_total') or 0, 'en')}, Stripe session "
+               f"Order {order} was already paid ({amount_text(cur.get('amount_total') or 0, 'en', cur.get('currency'))}, Stripe session "
                f"{cur.get('session_id')}).\nA second Checkout Session of the same order was paid too:\n"
                f"  amount   {amount} ({'live' if extra.get('livemode') else 'TEST mode'})\n"
                f"  session  {sid}\n  payment  {extra.get('payment_intent')}\n  customer {extra.get('email') or 'no email'}\n"
@@ -1198,15 +1391,20 @@ LEGAL_RETRY = 60             # after a failed fetch, the pack is not fetched aga
                              # None is used): a public endpoint that asks for it cannot make every call wait
 
 
+def _doc_ok(d):
+    """One legal text of the pack ({title, url, text}) as the email needs it."""
+    return (isinstance(d, dict) and isinstance(d.get("text"), str) and len(d["text"]) > 400
+            and isinstance(d.get("title"), str) and isinstance(d.get("url"), str) and d["url"].startswith("https://"))
+
+
 def _legal_ok(pack):
-    """Is this the build's legal pack (src/legal/plain.ts LegalMailPack), with every text the email needs?"""
+    """Is this the build's legal pack (src/legal/plain.ts LegalMailPack), with every text the email needs? (The EU
+    edition; an Australian order also needs the pack's "au" edition: pack_docs, legal_problem.)"""
     try:
         s = pack["seller"]
         for lang in LANGS:
             for doc in ("withdrawal", "terms"):
-                d = pack["docs"][lang][doc]
-                if not (isinstance(d["text"], str) and len(d["text"]) > 400 and isinstance(d["title"], str)
-                        and isinstance(d["url"], str) and d["url"].startswith("https://")):
+                if not _doc_ok(pack["docs"][lang][doc]):
                     return False
             if not (isinstance(s["company"][lang], str) and isinstance(s["address"][lang], str)):
                 return False
@@ -1216,12 +1414,40 @@ def _legal_ok(pack):
         return False
 
 
+def pack_docs(pack, lang, market=None):
+    """The withdrawal information and the terms an order's confirmation quotes ({"withdrawal", "terms"}, each {title,
+    url, text}): the EU edition of the language (pack "docs"), or for the Australian market its own edition (pack
+    "editions" "au", links with m=au). None when the pack lacks them: then nothing is sent (the texts the customer
+    accepted are never swapped for another edition's)."""
+    try:
+        docs = pack["editions"][market][lang_of(lang)] if acl_market(market) else pack["docs"][lang_of(lang)]
+    except (KeyError, TypeError):
+        return None
+    if not (isinstance(docs, dict) and _doc_ok(docs.get("withdrawal")) and _doc_ok(docs.get("terms"))):
+        return None
+    return docs
+
+
+def _self_headers(base):
+    """The headers of a request to this deployment itself: on a Vercel Preview behind Vercel's login, the protection
+    bypass (VERCEL_AUTOMATION_BYPASS_SECRET, as api/_lib/maker.py kick sends it). Only ever to this deployment's own
+    address (VERCEL_URL), never to snapeyes.com or any other site, and never logged."""
+    bypass = _env("VERCEL_AUTOMATION_BYPASS_SECRET")
+    own = _env("VERCEL_URL").lower()
+    if (os.environ.get("VERCEL") and _BYPASS.fullmatch(bypass) and re.fullmatch(r"[a-z0-9][a-z0-9.-]{2,200}", own)
+            and base == "https://" + own):
+        return {"x-vercel-protection-bypass": bypass}
+    return {}
+
+
 def legal_pack(fresh=False, quick=False):
     """The legal texts of this site (/legal/order-mail.json: the withdrawal information with the model form, the
     terms of sale, the seller), or None when they cannot be read. Fetched from this deployment's own site (on a
-    Preview that may sit behind Vercel's login, snapeyes.com is asked next) and kept LEGAL_CACHE seconds; a pack up
-    to LEGAL_STALE old is used when a new fetch fails. quick (the ordering gate and /api/health, which public pages
-    ask often): no new fetch within LEGAL_RETRY of a failed one. Tests point LEGAL_PACK_BASE at a local stub."""
+    Preview behind Vercel's login with the protection bypass, _self_headers: the Preview's own pack is the one with
+    its own texts, for example the Australian edition before production has it; snapeyes.com is asked next) and kept
+    LEGAL_CACHE seconds; a pack up to LEGAL_STALE old is used when a new fetch fails. quick (the ordering gate and
+    /api/health, which public pages ask often): no new fetch within LEGAL_RETRY of a failed one. Tests point
+    LEGAL_PACK_BASE at a local stub."""
     now = time.time()
     with _LEGAL_LOCK:
         pack, t, failed = _LEGAL["pack"], _LEGAL["t"], _LEGAL.get("failed", 0.0)
@@ -1236,7 +1462,8 @@ def legal_pack(fresh=False, quick=False):
         if tt < 1.0:
             break
         try:
-            r = requests.get(base + LEGAL_PACK_PATH, timeout=tt, headers={"Accept": "application/json"})
+            r = requests.get(base + LEGAL_PACK_PATH, timeout=tt,
+                             headers={"Accept": "application/json", **_self_headers(base)})
             got = r.json() if r.status_code == 200 else None
         except Exception as e:  # noqa: any failure is "not readable now"; never the exception's text
             log(f"legal pack from {base}: {type(e).__name__}")
@@ -1257,7 +1484,8 @@ def legal_problem():
     """Why the legal texts do not allow LIVE sales, in words ("" when they do): /legal/order-mail.json must be
     readable (legal_pack: both languages, the withdrawal information and the terms), the seller's company, company
     code, address and email must be filled in, and the build's own list of required facts still empty ("missing",
-    src/legal/plain.ts missingLegalFacts) must be empty. Facts the owner decided to leave out ("waived", today the
+    src/legal/plain.ts missingLegalFacts) must be empty, and every selectable market with its own edition of the
+    texts (Australia) must find it in the pack (pack_docs). Facts the owner decided to leave out ("waived", today the
     phone number) do not count here: that is the owner's accepted risk, and the pages never claim them."""
     pack = legal_pack(quick=True)
     if pack is None:
@@ -1274,6 +1502,10 @@ def legal_problem():
     if missing:
         return (f"{LEGAL_PACK_PATH} lists required facts that are still missing: "
                 f"{', '.join(re.sub(r'[^A-Za-z0-9_.-]', '', x)[:40] for x in missing[:8])}")
+    # a market the site sells in with its own edition (Australia) needs it: its orders' emails quote it
+    for m in SELECTABLE:
+        if acl_market(m) and any(pack_docs(pack, lang, m) is None for lang in LANGS):
+            return f"{LEGAL_PACK_PATH} has no complete texts for the {m} market (editions.{m})"
     return ""
 
 
@@ -1396,16 +1628,21 @@ def confirmation_mail(order, paid, k, pack, consent):
     final price without VAT, the customer's consent with its recorded time and exact text, how to withdraw (with the
     link to the order's withdrawal form, withdraw_url(): the order page link itself starts making the file), the
     full withdrawal information with the model form and the full terms of sale (legal_pack(), the site's own
-    texts)."""
+    texts). An order of the Australian market (ACL_MARKETS) gets its own edition of those texts and, in the email,
+    an invoice ("Invoice", never "Tax invoice": no GST is charged) and "Your rights in Australia" (_australian)."""
     spec = paid.get("spec") or {}
     lang = lang_of(spec.get("lang"))
     de = lang == "de"
+    market = paid_market(paid)
     auto = server_starts(pack)       # the texts in this pack say the server starts right after this email
     n = int(spec.get("eyes") or 1)
     link = order_url(order, k, lang)
     wlink = withdraw_url(order, k, lang)
-    price = price_text(paid.get("amount_total") or 0, lang)
-    docs = pack["docs"][lang]
+    currency = currency_of(paid.get("currency"))
+    price = price_text(paid.get("amount_total") or 0, lang, currency)
+    docs = pack_docs(pack, lang, market)
+    if docs is None:     # deliver_mail and the admin's copy check this first: never the texts of another edition
+        raise PayError(f"order {order}: the legal pack has no texts for the {market} market")
     wd, terms = docs["withdrawal"], docs["terms"]
     layout = LAYOUT_NAMES[lang].get(spec.get("layout") or "", "")
     rows = [("Bestellnummer" if de else "Order number", order),
@@ -1419,8 +1656,7 @@ def confirmation_mail(order, paid, k, pack, consent):
     if de:
         rows += [("Lieferung", "eine digitale Datei (JPEG, 4096 px an der längsten Seite) auf Ihrer Bestellseite; es "
                                "wird kein Druck und kein Rahmen versendet"),
-                 ("Preis", f"{price}. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird "
-                           f"keine Umsatzsteuer berechnet."),
+                 ("Preis", f"{price}. {tax_note(currency, lang)}"),
                  ("Zahlung", "bezahlt über Stripe")]
         subject = f"Ihre SnapEyes-Bestellung {order}: Bestellbestätigung"
         blocks = [
@@ -1467,7 +1703,7 @@ def confirmation_mail(order, paid, k, pack, consent):
     else:
         rows += [("Delivery", "a digital file (JPEG, 4096 px on the longest side) on your order page; no print and no "
                               "frame are shipped"),
-                 ("Price", f"{price}. This is the final price: we are not registered for VAT, so no VAT is charged."),
+                 ("Price", f"{price}. {tax_note(currency, lang)}"),
                  ("Payment", "paid through Stripe")]
         subject = f"Your SnapEyes order {order}: order confirmation"
         blocks = [
@@ -1510,9 +1746,147 @@ def confirmation_mail(order, paid, k, pack, consent):
             ("p", "Kind regards\nSnapEyes"),
             ("p", seller_lines(lang, pack)),
         ]
+    if acl_market(market):
+        subject, blocks = _australian(blocks, order, paid, pack, lang, auto, terms["url"])
     blocks += [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
     text, html_body = render_mail(blocks, lang, subject)
     return subject, text, html_body
+
+
+DELIVERY_MAX_HOURS = 48      # the terms' latest delivery (src/landing/config.ts DELIVERY_MAX_HOURS: keep both in step)
+
+
+def sydney_day(ts=None):
+    """The calendar day ("YYYY-MM-DD") of a unix time in Sydney, for the Australian invoice: AEST (UTC+10), and AEDT
+    (UTC+11) from the first Sunday of October at 2:00 AEST to the first Sunday of April at 3:00 AEDT (both Saturday
+    16:00 UTC). No time zone database needed (the Python runtime may have none)."""
+    try:
+        t = float(ts)
+    except (TypeError, ValueError):
+        t = time.time()
+
+    def first_sunday(year, month):
+        d = next(d for d in range(1, 8) if calendar.weekday(year, month, d) == 6)
+        return calendar.timegm((year, month, d, 0, 0, 0)) - 8 * 3600
+
+    y = time.gmtime(t).tm_year
+    summer = t >= first_sunday(y, 10) or t < first_sunday(y, 4)
+    return time.strftime("%Y-%m-%d", time.gmtime(t + (11 if summer else 10) * 3600))
+
+
+def invoice_rows(order, paid, pack, lang):
+    """The invoice of a paid order as label: value rows (the confirmation email of the Australian market; ACL s 100
+    proof of transaction: the supplier, the date, what was supplied and when, and the price). The dates are Sydney's
+    (sydney_day: a payment in the Australian morning is not dated the UTC day before), and the date of supply is when
+    the file is ready, at the latest DELIVERY_MAX_HOURS after payment (this email goes out before making starts). It is
+    an "Invoice", never a "Tax invoice": the seller is not registered for GST in Australia (turnover below A$75,000), so
+    no GST is charged."""
+    de = lang == "de"
+    spec = paid.get("spec") or {}
+    s = pack["seller"]
+    paid_day = date_text(sydney_day(paid.get("paid_at")), lang)
+    total = price_text(paid.get("amount_total") or 0, lang, paid.get("currency"))
+    return [("Rechnungsnummer" if de else "Invoice number", order),
+            ("Rechnungsdatum" if de else "Invoice date", paid_day),
+            ("Verkäufer" if de else "Supplier",
+             f"{s['company'][lang]}, {'Unternehmenscode' if de else 'company code'} {s['code']}, {s['address'][lang]}"),
+            ("Kunde" if de else "Customer", paid.get("email") or "-"),
+            ("Leistung" if de else "Supplied", f"1 x {item_name(dict(spec, lang=lang))}"),
+            ("Leistungsdatum" if de else "Date of supply",
+             (f"wenn Ihre Datei auf Ihrer Bestellseite zum Download bereitsteht, spätestens {DELIVERY_MAX_HOURS} Stunden "
+              f"nach Ihrer Zahlung" if de else
+              f"when your file is ready for download on your order page, at the latest {DELIVERY_MAX_HOURS} hours after "
+              f"your payment")),
+            ("Gesamtbetrag" if de else "Total", total),
+            ("GST", ("Es wurde keine GST berechnet. Der Verkäufer ist in Australien nicht für die GST registriert." if de else
+                     "No GST has been charged. The supplier is not registered for GST in Australia.")),
+            ("Zahlung" if de else "Payment", (f"vollständig bezahlt über Stripe am {paid_day}" if de else
+                                              f"paid in full through Stripe on {paid_day}"))]
+
+
+def _australian(blocks, order, paid, pack, lang, auto, terms_url):
+    """The confirmation of an Australian order: the EU email's blocks with its invoice, "Your rights in Australia"
+    (the ACCC sentence first, a link to the terms' section), the consent and the right of withdrawal framed as EU law
+    and as cancelling for a change of mind only (never "no refunds": the Australian Consumer Law cannot be excluded).
+    Returns (subject, blocks). Each EU block it changes must be there (ValueError otherwise): the email of every market
+    is tested."""
+    de = lang == "de"
+    out = list(blocks)
+    heading = ("h", "Ihre Bestellung" if de else "Your order")
+    consent_h = ("h", "Ihre Zustimmung zum sofortigen Beginn" if de else "Your consent to the immediate start")
+    withdraw_h = ("h", "Ihr Widerrufsrecht" if de else "Your right of withdrawal")
+    rights_url = terms_url.split("#")[0] + "#australia"
+    if de:
+        subject = f"Ihre SnapEyes-Bestellung {order}: Bestellbestätigung und Rechnung"
+        intro = ("vielen Dank für Ihre Bestellung. Diese E-Mail bestätigt Ihren Vertrag mit uns und ist Ihre Rechnung. "
+                 "Bitte bewahren Sie sie auf: Sie enthält Ihre Bestellung und Rechnung, Ihre Zustimmung zum sofortigen "
+                 "Beginn, Ihre Rechte in Australien, die Widerrufsbelehrung mit dem Muster-Widerrufsformular und unsere "
+                 "AGB.")
+        confirmed = ("Wir bestätigen Ihre ausdrückliche Zustimmung und Ihre Kenntnisnahme. Mit der Erstellung Ihrer Datei "
+                     "beginnen wir erst, nachdem diese E-Mail versandt ist. Mit diesem Beginn erlischt Ihr Widerrufsrecht "
+                     "nach dem EU-Verbraucherrecht, und Sie können den Vertrag nicht mehr ohne Angabe von Gründen "
+                     "widerrufen. Ihre Rechte nach dem Australian Consumer Law bleiben davon unberührt (siehe unten).")
+        rights = [("h", "Ihre Rechte in Australien"),
+                  ("p", "Our services come with guarantees that cannot be excluded under the Australian Consumer Law. "
+                        "(Unsere Leistungen sind mit Garantien verbunden, die nach dem Australian Consumer Law nicht "
+                        "ausgeschlossen werden können.) Ist Ihre Datei mangelhaft, entspricht sie nicht der Beschreibung, "
+                        "weicht sie deutlich von der freigegebenen Vorschau ab oder wird sie nicht rechtzeitig geliefert, "
+                        "antworten Sie einfach mit Ihrer Bestellnummer auf diese E-Mail. Ihre Rechte stehen unter „Ihre "
+                        "Rechte in Australien“ in unseren AGB:"),
+                  ("link", rights_url)]
+        withdraw = [("h", "Widerruf, bevor wir beginnen"),
+                    ("p", "Für Ihren Vertrag gilt das EU-Verbraucherrecht mit seinem Widerrufsrecht. Wir beginnen direkt "
+                          "nach dem Versand dieser E-Mail mit der Erstellung Ihrer Datei, daher erlischt es meist schon "
+                          "wenige Augenblicke danach. Bis wir begonnen haben, können Sie den Vertrag widerrufen und "
+                          "erhalten den vollen Preis zurück: mit der Schaltfläche „Vertrag hier widerrufen“ auf der "
+                          "Widerrufsseite Ihrer Bestellung:"
+                     if auto else
+                          "Für Ihren Vertrag gilt das EU-Verbraucherrecht mit seinem Widerrufsrecht. Bis wir begonnen "
+                          "haben, können Sie den Vertrag widerrufen und erhalten den vollen Preis zurück: mit der "
+                          "Schaltfläche „Vertrag hier widerrufen“ auf der Widerrufsseite Ihrer Bestellung. Dieser Link "
+                          "öffnet sie, ohne dass wir mit der Erstellung Ihrer Datei beginnen (anders als der Link zu Ihrer "
+                          "Bestellseite oben):")]
+        invoice_h = ("h", "Rechnung")
+    else:
+        subject = f"Your SnapEyes order {order}: order confirmation and invoice"
+        intro = ("thank you for your order. This email confirms your contract with us and is your invoice. Please keep "
+                 "it: it holds your order and invoice, your consent to the immediate start, your rights in Australia, "
+                 "the withdrawal information with the model withdrawal form, and our terms of sale.")
+        confirmed = ("We confirm your express consent and your acknowledgement. We start making your file only after "
+                     "this email has been sent. Once we have started, your right of withdrawal under EU consumer law has "
+                     "ended and you can't cancel for a change of mind. This doesn't affect your rights under the "
+                     "Australian Consumer Law (see below).")
+        rights = [("h", "Your rights in Australia"),
+                  ("p", "Our services come with guarantees that cannot be excluded under the Australian Consumer Law. "
+                        "If your file is faulty, is not as described, clearly differs from the preview you approved or "
+                        "is not delivered in time, simply reply to this email with your order number. Your rights are "
+                        "set out under “Your rights in Australia” in our terms of sale:"),
+                  ("link", rights_url)]
+        withdraw = [("h", "Cancelling before we start"),
+                    ("p", "EU consumer law, with its right of withdrawal, applies to your contract. We start making your "
+                          "file right after this email has been sent, so that right usually ends within a few moments. "
+                          "Until we have started, you can withdraw from the contract and get a full refund: with the "
+                          "button “Withdraw from contract here” on the withdrawal page of your order:"
+                     if auto else
+                          "EU consumer law, with its right of withdrawal, applies to your contract. Until we have "
+                          "started, you can withdraw from the contract and get a full refund: with the button “Withdraw "
+                          "from contract here” on the withdrawal page of your order. This link opens it without starting "
+                          "to make your file (unlike the order page link above):")]
+        invoice_h = ("h", "Invoice")
+    out[1] = ("p", intro)
+    i = out.index(heading)
+    if out[i + 1][0] != "rows":
+        raise ValueError("the order rows moved")
+    out[i + 2:i + 2] = [invoice_h, ("rows", invoice_rows(order, paid, pack, lang))]
+    i = out.index(consent_h)
+    if out[i + 2][0] != "quote" or out[i + 3][0] != "p":
+        raise ValueError("the consent blocks moved")
+    out[i + 3] = ("p", confirmed)
+    i = out.index(withdraw_h)
+    if out[i + 1][0] != "p":
+        raise ValueError("the withdrawal blocks moved")
+    out[i:i + 2] = rights + withdraw
+    return subject, out
 
 
 def ready_mail(order, paid, k, checked=True):
@@ -1576,6 +1950,11 @@ def deliver_mail(order, rec, paid, idem_suffix=""):
     pack = legal_pack()
     if pack is None:
         log(f"order {order}: confirmation email waits, the legal texts ({LEGAL_PACK_PATH}) could not be read")
+        return "legal_unavailable"
+    if pack_docs(pack, (paid.get("spec") or {}).get("lang"), paid_market(paid)) is None:
+        # the texts of this order's market (the Australian edition) are not in the pack: never the EU ones instead
+        log(f"order {order}: confirmation email waits, {LEGAL_PACK_PATH} has no texts for the "
+            f"{paid_market(paid)} market")
         return "legal_unavailable"
     path = order_path(order, "mail_delivery.json")
     if not claim_once(path):
@@ -1766,7 +2145,7 @@ def hold_confirmation(order, paid, why):
     log(f"order {order}: confirmation email {why}: HELD, nothing is made until it went out")
     mark_review(order, f"{MAIL_REVIEW}_{why}")
     owner_note(order, "mail", f"SnapEyes: order {order} is paid, but its confirmation email did not go out",
-               f"Order {order} is paid ({amount_text(paid.get('amount_total') or 0, 'en')}, "
+               f"Order {order} is paid ({amount_text(paid.get('amount_total') or 0, 'en', paid.get('currency'))}, "
                f"{'live' if paid.get('livemode') else 'TEST mode'}), but the order confirmation email could not be sent "
                f"({why}).\nNothing is made for this order yet: the file may only be made after the customer has the "
                f"confirmation, because it confirms their withdrawal waiver (otherwise they keep the right of "
@@ -1807,13 +2186,40 @@ def owner_note(order, kind, subject, text):
     return note_once(path, f"{kind} order {order}", subject, text)
 
 
+def note_wrong_currency(order, sess):
+    """Tell the owner (once per session) that a session of ours for this order was PAID in a currency that is not its
+    market's (or names no market of ours): it is never recorded as the order's payment and nothing is made, so the
+    owner checks it and refunds it. Used by the webhook and by the daily clean-up (stripe_verdict), so that such a
+    payment is never silent, whichever of them sees it first."""
+    sid = str(sess.get("id") or "")
+    meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
+    return owner_note(order, "wrong_currency_" + _order_tag(sid),
+                      f"SnapEyes: order {order} was paid in an unexpected currency, please check and refund",
+                      f"Stripe reports a PAID Checkout Session {sid} for order {order} "
+                      f"({amount_text(sess.get('amount_total') or 0, 'en', sess.get('currency'))}, Stripe says "
+                      f"currency {str(sess.get('currency') or '')[:8]!r}, the session was made for market "
+                      f"{str(meta.get('market') or DEFAULT_MARKET)[:8]!r} in {str(meta.get('currency') or '')[:8]!r}).\n"
+                      f"It is NOT recorded as the order's payment and nothing is made. Check the session in the "
+                      f"Stripe Dashboard (is Adaptive Pricing or a currency conversion switched on?), refund it "
+                      f"(Payments, search {sess.get('payment_intent') or sid}, Refund) and write to the customer "
+                      f"({(sess.get('customer_details') or {}).get('email') or 'email at Stripe'}).\n"
+                      f"The order is kept (the daily clean-up does not delete it); delete it by hand once refunded.\n"
+                      f"Status: python scripts/order_admin.py status {order}\n")
+
+
 def note_paid(order, paid):
     spec = paid.get("spec") or {}
-    subject = f"SnapEyes: new order {order}, {amount_text(paid.get('amount_total') or 0, 'en')}"
+    cur = paid.get("currency")
+    subject = f"SnapEyes: new order {order}, {amount_text(paid.get('amount_total') or 0, 'en', cur)}"
+    mm = paid.get("amount_mismatch") if isinstance(paid.get("amount_mismatch"), dict) else None
     text = (f"Order {order} is paid ({'live' if paid.get('livemode') else 'TEST mode'}).\n"
             f"Eyes: {spec.get('eyes')}, style {spec.get('style')}, layout {spec.get('layout')}\n"
             f"Names: {spec.get('names') or '-'}\nTitle: {spec.get('title') or '-'}\nLanguage: {spec.get('lang')}\n"
-            f"Customer: {paid.get('email') or 'no email'}\nStripe session: {paid.get('session_id')}\n"
+            f"Market: {spec.get('market') or DEFAULT_MARKET}\n"
+            + (f"CHECK THE AMOUNT: paid {amount_text(paid.get('amount_total') or 0, 'en', cur)}, the order costs "
+               f"{amount_text(mm.get('expected') or 0, 'en', mm.get('currency'))} (market {mm.get('market')}). It is "
+               f"delivered as paid; refund the difference in the Stripe Dashboard if it was too much.\n" if mm else "")
+            + f"Customer: {paid.get('email') or 'no email'}\nStripe session: {paid.get('session_id')}\n"
             f"Status: python scripts/order_admin.py status {order}\n")
     return owner_note(order, "paid", subject, text)
 
@@ -1834,13 +2240,16 @@ def stripe_verdict(order, rec, record=True):
       "paid"     a session IS paid: the webhook never arrived. With record, it is recorded now (paid.json; the
                  customer gets the confirmation email and the owner the note, as after any payment)
       "open"     a session is still payable, or completed with a method that settles later: keep the order
-      "unknown"  Stripe cannot be asked here (no key, a live session and a test key, no answer): keep the order"""
+      "unknown"  Stripe cannot be asked here (no key, a live session and a test key, no answer), or a session of
+                 ours is PAID in another currency than its market's (never the order's payment; with record, the owner
+                 is told once, note_wrong_currency): keep the order"""
     ids = order_sessions(rec, n=10)
     if not ids:
         return "none"
     if not stripe_key():
         return "unknown"
     verdict = "none"
+    wrong = False                 # a session of ours PAID in another currency than its market's: keep the order
     for sid in ids:
         if sid.startswith("cs_test_") and stripe_live():
             continue                  # a test session: never money, and a live key cannot see it
@@ -1852,6 +2261,14 @@ def stripe_verdict(order, rec, record=True):
             log(f"clean-up: order {order}: Stripe did not answer about {sid}: {e}")
             return "unknown"
         if not session_matches(sess, order, rec):
+            if session_ours(sess, order, rec) and session_paid(sess) and session_counts(sess):
+                # our own session, PAID, but not in its market's currency: never this order's payment, and never
+                # deleted in silence (the webhook may never have arrived): the owner is told, the order is kept
+                log(f"clean-up: order {order}: session {sid} is PAID in {str(sess.get('currency') or '')[:8]!r}, not "
+                    f"its market's currency: kept, owner told")
+                if record:
+                    note_wrong_currency(order, sess)
+                wrong = True      # asked on: another session of the order may still be its payment
             continue
         if session_paid(sess) and session_counts(sess):
             if record:
@@ -1866,7 +2283,7 @@ def stripe_verdict(order, rec, record=True):
                                             (created is None or created > time.time() - SETTLE_DAYS * 86400)):
             verdict = "open"
         # a session completed but still unpaid after SETTLE_DAYS: its delayed payment failed, it is no money
-    return verdict
+    return "unknown" if wrong and verdict == "none" else verdict
 
 
 SETTLE_DAYS = 20             # a delayed payment method (SEPA and the like) settles within about 14 business days
@@ -1938,7 +2355,7 @@ def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.
             res["kept_orders"].append(order)
             left.add(order)
             say(f"keep {order} made {rec.get('created')}: its Stripe session is "
-                f"{'still open or settling' if verdict == 'open' else 'unknown here (no Stripe key or no answer)'}")
+                f"{'still open or settling' if verdict == 'open' else 'unknown here (no Stripe key, no answer, or paid in another currency than its market: the owner was told)'}")
             continue
         files = folder_files(f"orders/{order}")
         say(f"{'DELETE' if yes else 'would delete'} unpaid {order} made {rec.get('created')}: {len(files)} files")

@@ -18,6 +18,9 @@ live payment), the order is held for review and the owner told: nothing is made 
 Resend busy or the legal texts unreadable: 503, and Stripe retries. An order the customer withdrew while the payment
 was settling gets no confirmation; the owner is told to refund it (pay.record_paid).
 A second paid session of an order that is already paid is recorded apart and the owner told to refund it.
+A paid session of ours in another currency than its market's (api/_lib/markets.py; the metadata names the market and
+currency the server priced it in) is refused, not recorded, and the owner told to check and refund it; a paid amount
+other than the one the server priced is recorded with amount_mismatch and named in the owner's note (pay.record_paid).
 A paid session for an order whose record is gone is answered 200, and the owner is told to refund it.
 A test-mode session where test orders are not allowed (production), every other event, and a session that is not
 paid yet are answered 200 at once and ignored.
@@ -61,13 +64,21 @@ def on_event(event):
             sid = str(obj.get("id") or "")
             pay.note_once(f"notes/unknown_paid_{pay._order_tag(sid)}.json", "unknown_paid",
                           f"SnapEyes: a payment for order {order} arrived, but the order is gone",
-                          f"Stripe reports a PAID Checkout Session {sid} ({pay.amount_text(obj.get('amount_total') or 0, 'en')}, "
+                          f"Stripe reports a PAID Checkout Session {sid} ({pay.amount_text(obj.get('amount_total') or 0, 'en', obj.get('currency'))}, "
                           f"{'live' if obj.get('livemode') else 'TEST mode'}) for order {order}, but this site has no "
                           f"record of that order any more.\nNothing can be made for it. Please refund it in the Stripe "
                           f"Dashboard (Payments, search {obj.get('payment_intent') or sid}, Refund) and write to the "
                           f"customer ({(obj.get('customer_details') or {}).get('email') or 'email at Stripe'}).\n")
         return 200, {"ok": True, "ignored": "unknown order"}
     if not pay.session_matches(obj, order, rec):
+        if pay.session_ours(obj, order, rec) and pay.session_counts(obj):
+            # our own session, paid, but not in the currency of its market (or naming no market of ours): it is not
+            # this order's payment and nothing is made; never silent, the owner looks at it and refunds it
+            sid = str(obj.get("id") or "")
+            meta = obj.get("metadata") if isinstance(obj.get("metadata"), dict) else {}
+            pay.log(f"webhook {event.get('id')}: order {order}: PAID session {sid} in {obj.get('currency')!r} for market "
+                    f"{meta.get('market')!r}: refused")
+            pay.note_wrong_currency(order, obj)
         pay.log(f"webhook {event.get('id')}: order {order}: the session does not match the order record, ignored")
         return 200, {"ok": True, "ignored": "session does not match"}
     if not pay.session_counts(obj):

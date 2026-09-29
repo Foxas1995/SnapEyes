@@ -4,7 +4,8 @@
 // swaps in once this deployment takes orders (src/landing/ordering.ts asks the API, as /try does). The meta
 // description names neither, because it is read before that answer arrives.
 import type { StyleId } from './config';
-import { WITHDRAWAL_ONLINE } from '../shared/legal';
+import { WITHDRAWAL_ONLINE, legalEdition } from '../shared/legal';
+import type { Currency, Market } from '../shared/markets';
 
 export type Lang = 'en' | 'de';
 
@@ -78,7 +79,11 @@ export interface Copy {
     duoLabel: string;
     eyes: (n: number) => string;
     perEye: (price: string, max: number) => string;
+    // the line under the prices, by the currency of the visitor's market (src/shared/markets.ts): footnote for
+    // euros, the others for Australian dollars and forints; each names the currency and what is (not) added
     footnote: string;
+    footnoteAud: string;
+    footnoteHuf: string;
   };
   curator: {
     eyebrow: string;
@@ -114,7 +119,12 @@ export interface Copy {
     representedBy: string;
     phone: string;
     rights: string;
+    // the currency switch (the visitor's market, src/shared/markets.ts): shown when the site sells in more than one
+    currency: string;
   };
+  // the offer of the visitor's own currency (./MarketHint.tsx): shown only when the server's country hint names a
+  // market in another currency, until the visitor takes it or closes it; one text per currency it can offer
+  marketHint: { label: string; close: string } & Partial<Record<Currency, { text: string; show: string }>>;
 }
 
 const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.';
@@ -124,6 +134,9 @@ const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartph
 // eyes are 4096 px on the longest side (a Couple Duo is 4096 x 2731). Never promise a square file for all orders.
 const PX = '4096\u00a0px';
 const SQUARE = '4096\u00a0×\u00a04096\u00a0px';
+
+// The withdrawal question of the FAQ: the Australian market answers it in its own words (copyFor below).
+const WITHDRAW_Q: Record<Lang, string> = { en: 'Can I withdraw from an order?', de: 'Kann ich eine Bestellung widerrufen?' };
 
 const en: Copy = {
   meta: {
@@ -224,6 +237,8 @@ const en: Copy = {
     eyes: (n) => `${n} eyes`,
     perEye: (price, max) => `+${price} for each further eye, up to ${max} eyes`,
     footnote: `Every order is one digital file without watermark, ${PX} on its longest side (${SQUARE} for one eye). Prices in euros. These are final prices: we are not registered for VAT, so no VAT is added.`,
+    footnoteAud: `Every order is one digital file without watermark, ${PX} on its longest side (${SQUARE} for one eye). Prices in Australian dollars (A$). Each price is the total price: no GST is charged.`,
+    footnoteHuf: `Every order is one digital file without watermark, ${PX} on its longest side (${SQUARE} for one eye). Prices in Hungarian forints (Ft). These are final prices: we are not registered for VAT, so no VAT is added.`,
   },
   curator: {
     eyebrow: 'The curator',
@@ -280,7 +295,7 @@ const en: Copy = {
         a: 'For the free preview, your photo is processed and then discarded; we do not store it. When you order, we keep the files of your order (not your phone photo) for 12 months so you can download them again, and then delete them. Your iris is never used to identify anyone or to train AI. The details are in our privacy policy, linked at the foot of this page.',
       },
       {
-        q: 'Can I withdraw from an order?',
+        q: WITHDRAW_Q.en,
         a: `We start making your file as soon as your order confirmation email has gone out, normally within a minute of your payment. Before paying, you agree that we start straight away, so the 14-day right of withdrawal ends once we have started making your file. Until then you can withdraw by email or online with "${WITHDRAWAL_ONLINE.en.button}", at the foot of this page or through the withdrawal link in your order confirmation email. If your file is defective or clearly differs from the preview you approved, write to us: we render it again or refund you. The details are in our terms of sale and the withdrawal information, linked at the foot of this page.`,
       },
       {
@@ -304,6 +319,15 @@ const en: Copy = {
     representedBy: 'Represented by',
     phone: 'Phone',
     rights: 'SnapEyes',
+    currency: 'Prices in',
+  },
+  marketHint: {
+    label: 'Prices in your currency',
+    close: 'No thanks',
+    aud: {
+      text: 'Shopping from Australia? See our prices in Australian dollars (A$), with our terms for Australia.',
+      show: 'Show prices in A$',
+    },
   },
 };
 
@@ -408,6 +432,8 @@ const de: Copy = {
     eyes: (n) => `${n} Augen`,
     perEye: (price, max) => `+${price} für jedes weitere Auge, bis zu ${max} Augen`,
     footnote: `Jede Bestellung ist eine digitale Datei ohne Wasserzeichen, mit ${PX} an der längsten Seite (${SQUARE} bei einem Auge). Preise in Euro. Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.`,
+    footnoteAud: `Jede Bestellung ist eine digitale Datei ohne Wasserzeichen, mit ${PX} an der längsten Seite (${SQUARE} bei einem Auge). Preise in australischen Dollar (A$). Jeder Preis ist der Gesamtpreis: Es wird keine GST berechnet.`,
+    footnoteHuf: `Jede Bestellung ist eine digitale Datei ohne Wasserzeichen, mit ${PX} an der längsten Seite (${SQUARE} bei einem Auge). Preise in ungarischen Forint (Ft). Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.`,
   },
   curator: {
     eyebrow: 'Der Kurator',
@@ -464,7 +490,7 @@ const de: Copy = {
         a: 'Für die kostenlose Vorschau wird Ihr Foto verarbeitet und danach verworfen; wir speichern es nicht. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung (nicht Ihr Smartphone-Foto) 12 Monate auf, damit Sie sie erneut herunterladen können, und löschen sie danach. Ihre Iris wird nie zur Identifizierung oder zum Training von KI verwendet. Einzelheiten finden Sie in unserer Datenschutzerklärung, verlinkt am Ende dieser Seite.',
       },
       {
-        q: 'Kann ich eine Bestellung widerrufen?',
+        q: WITHDRAW_Q.de,
         a: `Wir beginnen mit der Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung. Vor der Zahlung stimmen Sie zu, dass wir sofort beginnen; das 14-tägige Widerrufsrecht erlischt daher, sobald wir mit der Erstellung Ihrer Datei begonnen haben. Bis dahin können Sie per E-Mail oder online mit „${WITHDRAWAL_ONLINE.de.button}“ widerrufen, am Ende dieser Seite oder über den Widerrufslink in Ihrer Bestellbestätigung per E-Mail. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu oder erstatten Ihnen den Preis. Einzelheiten stehen in unseren AGB und der Widerrufsbelehrung, verlinkt am Ende dieser Seite.`,
       },
       {
@@ -488,11 +514,47 @@ const de: Copy = {
     representedBy: 'Vertreten durch',
     phone: 'Telefon',
     rights: 'SnapEyes',
+    currency: 'Preise in',
+  },
+  marketHint: {
+    label: 'Preise in Ihrer Währung',
+    close: 'Nein, danke',
+    aud: {
+      text: 'Sie kaufen aus Australien? Sehen Sie unsere Preise in australischen Dollar (A$), mit unseren Bedingungen für Australien.',
+      show: 'Preise in A$ anzeigen',
+    },
   },
 };
 
 export const COPY: Record<Lang, Copy> = { en, de };
 
-export function formatEuro(cents: number, lang: Lang): string {
-  return new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-IE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+// The Australian market's lines (src/shared/legal.ts legalEdition "au"), in place of the language's own: the FAQ answer
+// about cancelling keeps the Australian Consumer Law (its guarantees cannot be excluded, so nothing may read as "no
+// refunds", and no promise of our own to redo a faulty file: see src/legal/docs/terms.ts TERMS_AU) and frames the
+// 14-day right as EU law. The rest of the copy is already written in Australian (British) spelling: colour,
+// personalised, licence. Prices and their footnote follow the currency (pricing.footnoteAud).
+const AU_FAQ: Record<Lang, { q: string; a: string }> = {
+  en: {
+    q: 'Can I cancel an order?',
+    a: `We start making your file as soon as your order confirmation email has gone out, normally within a minute of your payment. Before paying, you agree that we start straight away, so the 14-day right of withdrawal under EU consumer law, which applies to your order, ends once we have started making your file. Until then you can cancel by email or online with "${WITHDRAWAL_ONLINE.en.button}", at the foot of this page or through the withdrawal link in your order confirmation email, and we refund you in full. That is only about changing your mind: our services come with guarantees that cannot be excluded under the Australian Consumer Law, so if your file is faulty or clearly differs from the preview you approved, write to us. The details are in our terms of sale (Your rights in Australia) and the withdrawal information, linked at the foot of this page.`,
+  },
+  de: {
+    q: 'Kann ich eine Bestellung stornieren?',
+    a: `Wir beginnen mit der Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung. Vor der Zahlung stimmen Sie zu, dass wir sofort beginnen; das 14-tägige Widerrufsrecht nach dem EU-Verbraucherrecht, das für Ihre Bestellung gilt, erlischt daher, sobald wir mit der Erstellung Ihrer Datei begonnen haben. Bis dahin können Sie per E-Mail oder online mit „${WITHDRAWAL_ONLINE.de.button}“ widerrufen, am Ende dieser Seite oder über den Widerrufslink in Ihrer Bestellbestätigung per E-Mail, und wir erstatten Ihnen den vollen Preis. Das betrifft nur eine Meinungsänderung: Unsere Leistungen sind mit Garantien verbunden, die nach dem Australian Consumer Law nicht ausgeschlossen werden können. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns. Einzelheiten stehen in unseren AGB (Ihre Rechte in Australien) und der Widerrufsbelehrung, verlinkt am Ende dieser Seite.`,
+  },
+};
+
+const COPY_AU: Record<Lang, Copy> = {
+  en: { ...en, faq: { ...en.faq, items: en.faq.items.map((it) => (it.q === WITHDRAW_Q.en ? { ...it, ...AU_FAQ.en } : it)) } },
+  de: { ...de, faq: { ...de.faq, items: de.faq.items.map((it) => (it.q === WITHDRAW_Q.de ? { ...it, ...AU_FAQ.de } : it)) } },
+};
+
+/** The landing copy for a language and the visitor's market: the language's own, with the Australian lines for au. */
+export function copyFor(lang: Lang, market: Market): Copy {
+  return legalEdition(market) === 'au' ? COPY_AU[lang] : COPY[lang];
+}
+
+/** The price line under the price cards, in the words of the market's currency. */
+export function priceFootnote(p: Copy['pricing'], currency: Currency): string {
+  return currency === 'aud' ? p.footnoteAud : currency === 'huf' ? p.footnoteHuf : p.footnote;
 }

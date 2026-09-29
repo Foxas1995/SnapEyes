@@ -32,7 +32,9 @@ export interface WithdrawDone {
   mail: ReceiptMail;
   refundStarted: boolean;         // the refund is already under way at the payment provider
   refundBy: number | null;        // the refund is due by then (unix seconds)
-  amount: number | null;          // euro cents paid, when the server named them
+  amount: number | null;          // what was paid (Stripe's smallest unit), when the server named it
+  currency: string | null;        // ...and in which currency ("EUR", "AUD", "HUF")
+  market: string | null;          // the order's market ("eu", "au", ...), when the server named it
   already: boolean;               // the same statement (or the order's withdrawal) was on record before
 }
 
@@ -108,6 +110,8 @@ export function readWithdrawal(v: unknown): WithdrawDone | null {
     refundStarted: w.refund === 'started' || w.refund === 'refunded',
     refundBy: isoSeconds(w.refund_by),
     amount: num(w.amount),
+    currency: typeof w.currency === 'string' ? w.currency : null,
+    market: typeof w.market === 'string' ? w.market : null,
     already: w.already === true,
   };
 }

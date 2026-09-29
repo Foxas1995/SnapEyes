@@ -20,6 +20,7 @@ import {
 } from './checkout';
 import { callApi, type CheckoutInfo } from '../order/api';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
+import { currentMarket, serverPrices, withMarket } from '../shared/markets';
 import { LegalParts } from '../shared/LegalLinks';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
@@ -271,7 +272,7 @@ export const TryApp: React.FC = () => {
         const c = await callApi<CheckoutInfo>('/api/checkout');
         if (!alive) return;
         const d = c.ok ? c.data : null;
-        setOrdering(d && d.open === true ? { open: true, prices: d.prices, consent: d.consent } : { open: false });
+        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent } : { open: false });
       })
       .catch(() => { if (alive) setOrdering({ open: false }); });
     return () => { alive = false; };
@@ -842,7 +843,7 @@ export const TryApp: React.FC = () => {
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
         {/* back to the landing page in the same language */}
-        <a href={`/?lang=${lang}`} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
           <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-500 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
             {STUDY && <span className="text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}

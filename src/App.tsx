@@ -11,17 +11,23 @@ import { Trust } from './landing/Trust';
 import { Faq } from './landing/Faq';
 import { FinalCta, Footer } from './landing/Footer';
 import { StickyCta } from './landing/StickyCta';
+import { MarketHint } from './landing/MarketHint';
+import { useMarket } from './shared/useMarket';
 
 // SnapEyes Private Atelier: one honest page. Every image is the founder's own eye, every primary
 // action goes to /try, and ordering is announced as "opens soon" until checkout exists.
 export function App() {
   const heroCta = useRef<HTMLAnchorElement>(null);
   const finalCta = useRef<HTMLAnchorElement>(null);
+  // the visitor's market (src/shared/markets.ts): every section re-renders when it changes (the footer's currency
+  // switch), so every price and every link (m=) follows at once
+  useMarket();
   return (
     <LangProvider>
       <div className="min-h-screen bg-[#030408] text-[#f0f3fa] selection:bg-[#f5c542] selection:text-black">
         <Header />
         <main>
+          <MarketHint />
           <Hero ctaRef={heroCta} />
           <BeforeAfter />
           <HowItWorks />

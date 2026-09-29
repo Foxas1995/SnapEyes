@@ -8,6 +8,7 @@
 import { callApi, isStatus, orderPageUrl, statusPath, type ApiReply, type CheckoutReply, type DraftReply } from '../order/api';
 import type { Eye, Layout } from './multi';
 import type { Lang } from './lang';
+import { currentMarket } from '../shared/markets';
 
 /** api/_lib/iris.py TICKET_TTL: a work ticket from /api/analyze is good for 15 minutes. */
 export const TICKET_MS = 900_000;
@@ -117,6 +118,8 @@ export interface CheckoutInput {
   names: string;
   lang: Lang;
   ref: OrderRef | null;
+  /** The market to buy in (src/shared/markets.ts); the page's own when not given. The server prices it itself. */
+  market?: string;
 }
 
 type Api = typeof callApi;
@@ -247,7 +250,7 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
   // 6. Stripe's page. The server prices the order itself and records the waiver the customer ticked.
   onStep({ kind: 'checkout' });
   const r = await api<CheckoutReply>('/api/checkout', {
-    body: { order: ref.order, k: ref.k, eyes: n, style: inp.style, layout: inp.layout, names: inp.names, title: '', lang: inp.lang, consent_digital: true },
+    body: { order: ref.order, k: ref.k, eyes: n, style: inp.style, layout: inp.layout, names: inp.names, title: '', lang: inp.lang, market: inp.market ?? currentMarket(), consent_digital: true },
     timeoutMs: 30_000,
   });
   if (r.ok && r.data && typeof r.data.url === 'string' && r.data.url.startsWith('https://')) {

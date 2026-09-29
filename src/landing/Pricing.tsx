@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { useLang } from './lang';
-import { MAX_EYES, PRICE_CENTS, centsForEyes, tryUrl } from './config';
-import { formatEuro } from './copy';
+import { MAX_EYES, tryUrl } from './config';
+import { priceFootnote } from './copy';
 import { useOrderingOpen } from './ordering';
+import { currencyOf, money, priceList, priceMinor } from '../shared/markets';
+import { useMarket } from '../shared/useMarket';
 import { SectionHead } from './ui';
 
 function Card({ title, children, accent = false, className = '' }: { title: string; children: ReactNode; accent?: boolean; className?: string }) {
@@ -33,7 +35,11 @@ export function Pricing() {
   const { t, lang } = useLang();
   const open = useOrderingOpen();
   const p = t.pricing;
-  const eur = (c: number) => formatEuro(c, lang);
+  // the visitor's market (src/shared/markets.ts: the link's m=, or their earlier choice): its currency and prices
+  const market = useMarket();
+  const currency = currencyOf(market);
+  const prices = priceList(market);
+  const fmt = (c: number) => money(c, currency, lang);
   return (
     <section id="pricing" className="scroll-mt-16 border-t border-white/[0.06] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -66,24 +72,24 @@ export function Pricing() {
           <Card title={p.oneEyeTitle}>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{p.oneEyeNote}</p>
             <div className="mt-5">
-              <Row label={p.studioBlack} value={eur(PRICE_CENTS.studioBlack)} />
-              <Row label={p.artBackground} value={eur(PRICE_CENTS.artBackground)} note={p.artBackgroundNote} />
+              <Row label={p.studioBlack} value={fmt(prices.one_eye_studio_black)} />
+              <Row label={p.artBackground} value={fmt(prices.one_eye_art)} note={p.artBackgroundNote} />
             </div>
           </Card>
 
           <Card title={p.severalTitle} className="sm:col-span-2 lg:col-span-1">
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{p.severalNote}</p>
             <div className="mt-5">
-              <Row label={p.duoLabel} value={eur(PRICE_CENTS.coupleDuo)} />
+              <Row label={p.duoLabel} value={fmt(prices.two_eyes)} />
               {[3, 4, 5].map((n) => (
-                <Row key={n} label={p.eyes(n)} value={eur(centsForEyes(n))} />
+                <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, 'studio_black', market))} />
               ))}
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400">{p.perEye(eur(PRICE_CENTS.extraEye), MAX_EYES)}</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400">{p.perEye(fmt(prices.each_further_eye), MAX_EYES)}</p>
           </Card>
         </div>
 
-        <p className="mt-6 text-sm leading-relaxed text-zinc-400">{p.footnote}</p>
+        <p className="mt-6 text-sm leading-relaxed text-zinc-400">{priceFootnote(p, currency)}</p>
       </div>
     </section>
   );

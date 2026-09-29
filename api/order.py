@@ -316,7 +316,8 @@ def _unpaid(order, rec, pending, check):
     co = rec.get("checkout")
     if isinstance(co, dict) and isinstance(co.get("spec"), dict):
         out["checkout"] = {"eyes": co["spec"].get("eyes"), "style": co["spec"].get("style"), "amount": co.get("amount"),
-                           "currency": "EUR"}
+                           "currency": pay.currency_of(co.get("currency")).upper(),
+                           "market": co.get("market") or co["spec"].get("market") or pay.DEFAULT_MARKET}
     if check:
         out["payment_check"] = check
     return out
@@ -375,7 +376,8 @@ def _paid_reply(order, paid, made, delivery, review, released, url=None, preview
         state = "pending"         # paid, but nothing may be made before the order confirmation went out
     out = {"ok": True, "order": order, "state": state, "lang": spec.get("lang"), "count": n, "style": spec.get("style"),
            "layout": spec.get("layout"), "names": spec.get("names"), "title": spec.get("title"),
-           "amount": paid.get("amount_total"), "currency": "EUR",
+           "amount": paid.get("amount_total"), "currency": pay.currency_of(paid.get("currency")).upper(),
+           "market": paid.get("market") or spec.get("market") or pay.DEFAULT_MARKET,
            "eyes": [{"eye": i, "made": bool(made[i - 1])} for i in range(1, n + 1)]}
     if state == "pending":
         out["waiting_for"] = waiting

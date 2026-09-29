@@ -1,8 +1,6 @@
-// Pure helpers for the multi-eye result: layouts the engine accepts, the canvas shape it returns, the price
-// for the eyes on the artwork, and the capture-study payloads. No React and no DOM here.
-import { PRICE_CENTS } from '../landing/config';
+// Pure helpers for the multi-eye result: layouts the engine accepts, the canvas shape it returns, and the
+// capture-study payloads (the price is src/shared/markets.ts priceMinor). No React and no DOM here.
 import type { Analysis } from './shots';
-import type { Lang } from './lang';
 
 /** api/_lib/iris.py MULTI_MAX: the most eyes one artwork holds. */
 export const MAX_EYES = 8;
@@ -81,21 +79,7 @@ export function composeSide(n: number): number | null {
   return n <= 4 ? 768 : 560;
 }
 
-/** Price in euro cents for n eyes (owner decision 2026-09-23): one eye depends on the style, two eyes are
- *  the Couple Duo, and every eye after the second adds the same amount. */
-export function priceCents(n: number, style: string): number {
-  if (n <= 1) return style === 'studio_black' ? PRICE_CENTS.studioBlack : PRICE_CENTS.artBackground;
-  return PRICE_CENTS.coupleDuo + (Math.min(n, MAX_EYES) - 2) * PRICE_CENTS.extraEye;
-}
-
-export { PRICE_CENTS };
-
-// as the landing page writes a price (src/landing/copy.ts formatEuro): "€19.97" in English, "19,97 €" in German
-const EURO: Record<Lang, Intl.NumberFormat> = {
-  en: new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }),
-  de: new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }),
-};
-export const euro = (cents: number, lang: Lang = 'en'): string => EURO[lang].format(cents / 100);
+// The price of an artwork and how it is written: src/shared/markets.ts priceMinor and money, in the page's market.
 
 // ---- capture study (?study=1): the owner's family test
 

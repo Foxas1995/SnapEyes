@@ -315,7 +315,7 @@ def _refund_reminder(order, t, yes, say):
             checks.append(f"{REFUNDS_TOP}/{order}/{hashlib.sha256(pi.encode('utf-8')).hexdigest()[:16]}.json")
         if any(pay.parallel([lambda p=p: store.exists(p, timeout=8.0) for p in checks])):
             return 0
-        amount = pay.amount_text(paid.get("amount_total") or 0, "en")
+        amount = pay.amount_text(paid.get("amount_total") or 0, "en", paid.get("currency"))
         due = pay.iso(t + W.REFUND_DAYS * 86400)
         if not yes:
             say(f"would remind the owner to refund {order} ({amount}, due by {due})")

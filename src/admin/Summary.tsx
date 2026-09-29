@@ -7,7 +7,7 @@ import { getHealth } from './api';
 import type { Counts, Health, OrderRow, Orders, Stats, Summary } from './api';
 import type { Call } from './AdminApp';
 import { countBy, lastDays, ordersSince, revenue, sumTable } from './agg';
-import { BLOCK_LT, DEFAULT_PRICES, explain, fmtEur, fmtTime, fmtUsd, KIND_LT, spend, STATE_LT, VERDICT_LT } from './format';
+import { BLOCK_LT, DEFAULT_PRICES, explain, fmtEur, fmtMoney, fmtTime, fmtUsd, KIND_LT, spend, STATE_LT, VERDICT_LT } from './format';
 import { BTN, CARD, Flag, H2, MUTED, Notice, Spinner } from './ui';
 
 const WINDOWS: [number, string][] = [[1, 'Šiandien'], [7, '7 d.'], [30, '30 d.']];
@@ -60,7 +60,13 @@ export const SummaryPage: React.FC<{ call: Call }> = ({ call }) => {
       const keys = Object.keys(t);
       return keys.length ? keys.map((k) => `${STATE_LT[k] || k} ${t[k]}`).join(', ') : '0';
     }],
-    ['Apmokėta (tikri mokėjimai)', (_c, r, n) => { const v = revenue(r, n, now); return `${fmtEur(v.live)} (${v.n})${v.test ? `, testo ${fmtEur(v.test)}` : ''}`; }],
+    ['Apmokėta (tikri mokėjimai)', (_c, r, n) => {
+      // one line part per currency: euros, dollars and forints are never added together
+      const by = revenue(r, n, now);
+      const curs = Object.keys(by).sort((a, b) => (a === 'eur' ? -1 : b === 'eur' ? 1 : a.localeCompare(b)));
+      if (!curs.length) return `${fmtEur(0)} (0)`;
+      return curs.map((c) => `${fmtMoney(by[c].live, c)} (${by[c].n})${by[c].test ? `, testo ${fmtMoney(by[c].test, c)}` : ''}`).join('; ');
+    }],
     ['Gemini užklausos', (c) => `vaizdo analizė ${c.gemini.vision}, 1K ${c.gemini.image_1k}, 4K ${c.gemini.image_4k}`],
     ['Gemini išlaidos (įvertis)', (c) => fmtUsd(spend(c, prices))],
     ['Gemini užimtas', (c) => c.busy],

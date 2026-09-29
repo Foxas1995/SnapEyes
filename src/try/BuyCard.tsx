@@ -1,22 +1,18 @@
 import React from 'react';
 import { Lock, RefreshCcw } from 'lucide-react';
 import { T } from './copy';
-import { type Eye, MAX_EYES, PRICE_CENTS, billableEyes, euro, priceCents } from './multi';
-import { priceFromList, type PriceList } from '../order/api';
-import { CHECKOUT_LEGAL } from '../shared/legal';
+import { type Eye, MAX_EYES, billableEyes } from './multi';
+import { currencyOf, currentMarket, money, priceList, priceMinor, type PriceList } from '../shared/markets';
+import { checkoutLegal, legalEdition } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
 
 /** Whether this deployment takes orders (/api/health stripe and GET /api/checkout open), with the server's own price
- *  list and withdrawal-waiver text. null: not known yet, shown as closed. */
-export interface Ordering { open: boolean; prices?: Partial<PriceList>; consent?: { en?: string; de?: string } }
-
-// src/landing/config.ts PRICE_CENTS in the server's names: the fallback when the server sent no price list
-const CONFIG_PRICES: PriceList = {
-  one_eye_studio_black: PRICE_CENTS.studioBlack,
-  one_eye_art: PRICE_CENTS.artBackground,
-  two_eyes: PRICE_CENTS.coupleDuo,
-  each_further_eye: PRICE_CENTS.extraEye,
-};
+ *  list for this page's market and its withdrawal-waiver text. null: not known yet, shown as closed. */
+export interface Ordering {
+  open: boolean;
+  prices?: Partial<PriceList>;
+  consent?: { en?: string; de?: string; markets?: Record<string, { en?: string; de?: string } | undefined> };
+}
 
 interface Props {
   eyes: Eye[];
@@ -58,17 +54,23 @@ export const BuyCard: React.FC<Props> = (p) => {
   }
 
   const n = billable;
-  const cents = open ? priceFromList(p.ordering?.prices, CONFIG_PRICES, n, p.style) : priceCents(n, p.style);
+  // the page's market (src/shared/markets.ts: the link's m=, or the visitor's earlier choice): its currency and prices,
+  // the server's own list for it once ordering is open (the server prices the checkout itself either way)
+  const market = currentMarket();
+  const currency = currencyOf(market);
+  const fmt = (c: number) => money(c, currency, lang);
+  const list = priceList(market);
+  const cents = priceMinor(n, p.style, market, open ? p.ordering?.prices : undefined);
   const label = n === 1 ? T.price.oneEye(p.styleName) : n === 2 ? T.price.duo : T.price.many(n);
   const hint = n === 1
-    ? `${T.price.oneEyeOther(euro(PRICE_CENTS.studioBlack, lang), euro(PRICE_CENTS.artBackground, lang))} ${T.price.duoOffer(euro(PRICE_CENTS.coupleDuo, lang))}`
-    : T.price.extra(euro(PRICE_CENTS.coupleDuo, lang), euro(PRICE_CENTS.extraEye, lang), MAX_EYES);
+    ? `${T.price.oneEyeOther(fmt(list.one_eye_studio_black), fmt(list.one_eye_art))} ${T.price.duoOffer(fmt(list.two_eyes))}`
+    : T.price.extra(fmt(list.two_eyes), fmt(list.each_further_eye), MAX_EYES);
   const head = (
     <>
       <p className="text-[10px] uppercase tracking-widest text-zinc-500">{T.price.title}</p>
       <div className="flex items-baseline justify-between gap-3 mt-1.5">
         <span className="text-sm font-semibold text-zinc-100">{label}</span>
-        <span data-testid="price" className="font-luxury text-2xl font-bold text-[#f5c542] whitespace-nowrap">{euro(cents, lang)}</span>
+        <span data-testid="price" className="font-luxury text-2xl font-bold text-[#f5c542] whitespace-nowrap">{fmt(cents)}</span>
       </div>
       <p className="text-[11px] text-zinc-400 mt-2">{hint}</p>
       {samples > 0 && <p className="text-[11px] text-amber-200/90 mt-2">{T.price.sampleNotCounted(samples)}</p>}
@@ -81,7 +83,7 @@ export const BuyCard: React.FC<Props> = (p) => {
       <section aria-label={T.price.title} className={CARD}>
         {head}
         <p className="text-sm font-semibold text-emerald-300 mt-3">{T.price.notice}</p>
-        <p className="text-[11px] text-zinc-500 mt-1">{T.price.footnote}</p>
+        <p className="text-[11px] text-zinc-500 mt-1">{currency === 'aud' ? T.price.footnoteAud : currency === 'huf' ? T.price.footnoteHuf : T.price.footnote}</p>
       </section>
     );
   }
@@ -96,9 +98,11 @@ export const BuyCard: React.FC<Props> = (p) => {
     );
   }
 
-  const legal = CHECKOUT_LEGAL[lang];
-  // the server records a fingerprint of its own waiver text: show exactly that one (it equals CHECKOUT_LEGAL's)
-  const waiverText = (lang === 'de' ? p.ordering?.consent?.de : p.ordering?.consent?.en) || legal.withdrawalConsent;
+  // the market's checkout wording (src/shared/legal.ts checkoutLegal: the Australian checkbox for au). The server records
+  // a fingerprint of its own waiver text for the market: show exactly that one (it equals checkoutLegal's)
+  const legal = checkoutLegal(lang, market);
+  const texts = legalEdition(market) === 'eu' ? p.ordering?.consent : p.ordering?.consent?.markets?.[market];
+  const waiverText = (lang === 'de' ? texts?.de : texts?.en) || legal.withdrawalConsent;
   const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : !p.waiver ? 'waiver' : null;
   const disabled = p.busy || blockedBy !== null;
   return (
@@ -133,7 +137,7 @@ export const BuyCard: React.FC<Props> = (p) => {
         {p.busy
           ? <span className="w-4 h-4 shrink-0 border-2 border-zinc-500/40 border-t-zinc-300 rounded-full animate-spin" aria-hidden />
           : <Lock className="w-4 h-4 shrink-0" />}
-        <span>{p.busy && p.step ? p.step : T.buy.button(euro(cents, lang))}</span>
+        <span>{p.busy && p.step ? p.step : T.buy.button(fmt(cents))}</span>
       </button>
       {!p.busy && blockedBy === 'waiver' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{legal.withdrawalConsentMissing}</p>}
       {!p.busy && blockedBy === 'composing' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.buy.waitPreview}</p>}
@@ -142,7 +146,7 @@ export const BuyCard: React.FC<Props> = (p) => {
         <p role="alert" data-testid="buy-error" className="mt-3 text-xs text-rose-200 bg-rose-950/40 border border-rose-500/40 rounded-xl p-3">{p.error}</p>
       )}
       <p className="text-[11px] text-zinc-400 mt-3">{T.buy.next}</p>
-      <p className="text-[11px] text-zinc-500 mt-1">{T.buy.footnote}</p>
+      <p className="text-[11px] text-zinc-500 mt-1">{currency === 'aud' ? T.buy.footnoteAud : T.buy.footnote}</p>
     </section>
   );
 };

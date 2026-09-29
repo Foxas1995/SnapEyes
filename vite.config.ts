@@ -1,6 +1,7 @@
 import { defineConfig, runnerImport, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { checkPrices, type ClientMarkets } from './scripts/check_prices.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
 // withdrawal information with the model form, per language, plus the seller's contact facts). Built from the same
@@ -21,11 +22,28 @@ function legalMail(): Plugin {
   }
 }
 
+// Every price lives in api/_lib/markets.py (the server charges from it; src/shared/markets.ts reads it for every page).
+// Before a build: that file is sound, the site's own reading of it (loaded through Vite's module runner, as the legal
+// pack is) gives the server's prices for every market, eye count and style, and no other file holds a price of its
+// own (scripts/check_prices.mjs; `npm run check:prices` runs the file checks alone). Any problem stops the build.
+function priceCheck(): Plugin {
+  return {
+    name: 'snapeyes-price-check',
+    apply: 'build',
+    async buildStart() {
+      const { module } = await runnerImport<ClientMarkets>('./src/shared/markets.ts', { configFile: false, logLevel: 'silent' })
+      const problems = checkPrices(process.cwd(), module)
+      if (problems.length) this.error(`price check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    priceCheck(),
     legalMail(),
   ],
   build: {
@@ -47,8 +65,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // local Python stand-in for the Vercel functions: python scripts/dev_api.py
-      '/api': 'http://localhost:5050',
+      // local Python stand-in for the Vercel functions: python scripts/dev_api.py. The one source file the site itself
+      // imports from api/ (src/shared/markets.ts reads api/_lib/markets.py as text) is served by Vite, not proxied
+      '/api': {
+        target: 'http://localhost:5050',
+        bypass: (req) => (req.url && req.url.startsWith('/api/_lib/markets.py?') ? req.url : undefined),
+      },
     },
   },
 })

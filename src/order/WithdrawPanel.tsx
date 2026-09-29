@@ -10,22 +10,30 @@
 //    the page says exactly that, with the time the statement arrived.
 import React, { useRef, useState } from 'react';
 import { ExternalLink, FileX2 } from 'lucide-react';
-import { dateOf, euroOf, whenOf, type OrderCopy } from './copy';
+import { dateOf, whenOf, type OrderCopy } from './copy';
+import { adoptMarket, money } from '../shared/markets';
 import type { OrderLink } from './driver';
 import type { OrderStatus } from './api';
 import { cleanOrder, emailOk, nameOk, newNonce, orderOk, readWithdrawal, sendWithdrawal, withdrawHref, NAME_MAX, EMAIL_MAX, type WithdrawDone, type WithdrawError } from './withdraw';
-import { WITHDRAWAL_ONLINE, legalHref } from '../shared/legal';
+import { WITHDRAWAL_ONLINE, legalEdition, legalHref } from '../shared/legal';
+import { useMarket } from '../shared/useMarket';
 import type { Lang } from '../try/lang';
 import { CARD, LINK, PLAIN_BTN, Spinner } from './ui';
 
 const FIELD = 'mt-1 w-full min-h-[44px] rounded-xl bg-black/40 border px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-[#f5c542]/70';
 const CONFIRM_BTN = 'min-h-[48px] px-4 py-3 rounded-xl bg-[#f0f3fa] text-black text-sm font-bold flex items-center justify-center gap-2 text-center active:scale-[0.98] disabled:opacity-60';
 
+/** An order of the Australian market (the page adopts its order's market): the line that keeps the Australian
+ *  Consumer Law next to anything about the end of the right of withdrawal. */
+const AclNote: React.FC<{ C: OrderCopy }> = ({ C }) =>
+  legalEdition(useMarket()) === 'au' ? <p data-testid="withdraw-acl" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.acl}</p> : null;
+
 /** The order page's withdrawal section: what the right is, and the button to the form. */
 export const WithdrawEntry: React.FC<{ C: OrderCopy; lang: Lang; link: OrderLink }> = ({ C, lang, link }) => (
   <section data-testid="withdraw-entry" aria-labelledby="withdraw-entry-h" className={CARD}>
     <h2 id="withdraw-entry-h" className="font-luxury text-lg font-bold">{C.withdraw.heading}</h2>
     <p className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.lead}</p>
+    <AclNote C={C} />
     <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-4">
       <a data-testid="withdraw-open" href={withdrawHref(lang, link)} className={`${PLAIN_BTN} w-full sm:w-auto`}>
         <FileX2 className="w-4 h-4 shrink-0" /> {WITHDRAWAL_ONLINE[lang].button}
@@ -54,11 +62,12 @@ interface FormProps {
   link: OrderLink | null;      // null: opened without an order link, the customer types the order number
   initialOrder?: string;       // without a link: an order number to start from
   amount: number | null;       // what the order cost, when the page knows it
+  currency?: string | null;    // ...and in which currency (the status reply's "currency"; euros when unknown)
   backHref: string | null;     // the order page itself (normal mode), when there is an order link
 }
 
 /** The withdrawal statement form and, once sent, the server's answer. */
-export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder = '', amount, backHref }) => {
+export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder = '', amount, currency = null, backHref }) => {
   const W = C.withdraw;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -74,7 +83,7 @@ export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder 
   const n = name.trim().replace(/\s+/g, ' '), e = email.trim(), o = link ? link.o : cleanOrder(order);
   const bad = { name: !nameOk(n), email: !emailOk(e), order: !link && !orderOk(o) };
 
-  if (done) return <WithdrawResult C={C} lang={lang} d={done.d} email={done.email} amount={done.d.amount ?? amount} backHref={backHref} />;
+  if (done) return <WithdrawResult C={C} lang={lang} d={done.d} email={done.email} amount={done.d.amount ?? amount} currency={done.d.amount ? done.d.currency : currency} backHref={backHref} />;
 
   const submit = async (ev: React.FormEvent) => {
     ev.preventDefault();
@@ -85,8 +94,14 @@ export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder 
     setSending(true); setError(null);
     const out = await sendWithdrawal({ order: o, k: link?.k ?? null, name: n, email: e, lang, nonce });
     setSending(false);
-    if (out.kind === 'done') setDone({ d: out.done, email: e });
-    else setError({ code: out.code, at: out.at });
+    if (out.kind === 'done') {
+      // the order's own market, as the server names it: the Australian note and the links follow the order, not a
+      // market this browser remembers
+      adoptMarket(out.done.market);
+      setDone({ d: out.done, email: e });
+    } else {
+      setError({ code: out.code, at: out.at });
+    }
   };
 
   const invalid = (f: keyof typeof bad) => tried && bad[f];
@@ -98,6 +113,8 @@ export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder 
       <p data-testid="withdraw-statement" className="text-sm text-zinc-100 mt-3 bg-white/5 border border-white/10 rounded-xl p-3 break-words">
         {link ? W.statement(link.o) : W.statementNoOrder}
       </p>
+      {/* after the statement the lead introduces, never between them: the note is not part of what is sent */}
+      <AclNote C={C} />
       <form noValidate onSubmit={submit} className="mt-4 flex flex-col gap-4">
         <label className="block text-xs font-semibold text-zinc-300">
           {W.name}
@@ -146,9 +163,9 @@ export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder 
   );
 };
 
-const WithdrawResult: React.FC<{ C: OrderCopy; lang: Lang; d: WithdrawDone; email: string; amount: number | null; backHref: string | null }> = ({ C, lang, d, email, amount, backHref }) => {
+const WithdrawResult: React.FC<{ C: OrderCopy; lang: Lang; d: WithdrawDone; email: string; amount: number | null; currency: string | null; backHref: string | null }> = ({ C, lang, d, email, amount, currency, backHref }) => {
   const D = C.withdraw.done;
-  const price = amount ? euroOf(amount, lang) : null;
+  const price = amount ? money(amount, currency ?? 'eur', lang) : null;
   const settling = d.reason === 'payment_settling' || d.reason === 'payment_unknown';
   const refund = settling ? D.settling
     : d.refundStarted && price ? D.refundStarted(price)
@@ -169,6 +186,7 @@ const WithdrawResult: React.FC<{ C: OrderCopy; lang: Lang; d: WithdrawDone; emai
         <>
           <p className="text-sm text-zinc-300 mt-2">{d.reason === 'period_over' ? D.lapsedPeriod : D.lapsed}</p>
           <p className="text-xs text-zinc-400 mt-2">{D.lapsedHelp}</p>
+          <AclNote C={C} />
         </>
       )}
       {d.mail === 'sent' && <p data-testid="withdraw-mail" className="text-xs text-zinc-400 mt-3 break-words">{D.mailSent(email)}</p>}

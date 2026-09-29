@@ -26,13 +26,23 @@
 //    purge_addr_marks: about 40 days after their month) hold no name or address, the receipt counters a short hash of the address
 //  - withdrawn orders: cleanup/withdrawn/ is written only for an EFFECTIVE withdrawal; its images go at the first
 //    daily run 14 days after it (an order whose payment is still settling waits for Stripe)
+//  - the market (src/shared/markets.ts): localStorage "snapeyes.market" when a link named a market other than the
+//    default one or the currency switch chose one, and "eu" when the visitor declined the landing page's offer of
+//    their own currency (src/landing/MarketHint.tsx; m= in the site's links, "market" in the checkout request); GET
+//    /api/checkout reads Vercel's x-vercel-ip-country and answers it with a suggested market (api/checkout.py
+//    country_hint), stored nowhere, only offered
 //  - browser storage: localStorage "snapeyes.lang" (src/landing/lang.tsx, src/try/lang.ts) and, in the order flow,
 //    sessionStorage "snapeyes.order" and "snapeyes.checkout" (src/try/checkout.ts); no cookies, no analytics
 //  - the online withdrawal function: see WITHDRAWAL_ONLINE in src/shared/legal.ts and the "withdrawal" section
+// PRIVACY_AU (the end of this file) is the Australian edition (src/shared/legal.ts legalEdition "au"): the same policy
+// with a section for people in Australia (eye photos as possible biometric information, never used to identify
+// anyone; data processed outside Australia; the Australian Privacy Principles and the small business exemption as they
+// stand; the statutory privacy tort since 10 June 2025; the OAIC).
 // Not reviewed by a lawyer. Keep every sentence true when the code or a service changes.
 import type { LegalDoc, LegalDocs } from '../types';
 import { ORDER_EMAIL_SENDER, WITHDRAWAL_ONLINE } from '../../shared/legal';
 import { MAIL, SELLER, address, company } from '../facts';
+import { patchDoc } from '../patch';
 
 // What the online withdrawal function keeps (the "withdrawal" section): keep it in step with the order page's form
 // and the API action behind it.
@@ -118,6 +128,7 @@ const en: LegalDoc = {
       title: 'When you visit the website',
       blocks: [
         'When you open a page of snapeyes.com, your browser sends technical data to our hosting provider Vercel, such as your IP address, the date and time, the page requested and your browser type (user agent). Vercel needs this data to deliver the page and to protect the service against attacks. It is kept in server logs for a short time and then deleted.',
+        'To be able to suggest prices in your own currency, our server can also read the country that Vercel derives from your IP address (for example "AU"). It is used only for that suggestion, never changes the prices you see, and is not stored.',
         'Legal basis: our legitimate interest in a secure, working website (Art. 6(1)(f) GDPR).',
         'Our fonts are served from our own server, so no data goes to Google Fonts or any other font service. We do not use analytics, advertising or tracking tools of other companies on this website, and nothing follows you from page to page or across websites. Our own anonymous service statistics are described under [Service statistics and our admin log](#operations).',
       ],
@@ -251,6 +262,7 @@ const en: LegalDoc = {
       blocks: [
         'This website sets no cookies. It uses no analytics, advertising or tracking tools of other companies.',
         'When you choose a language with the EN/DE switch, your browser remembers the choice in its local storage under the key "snapeyes.lang" (the value "en" or "de"). It is never sent to us, and you can delete it at any time in your browser settings. It is strictly necessary for a function you asked for, so it needs no consent (Art. 5(3) ePrivacy Directive).',
+        'If you come to us through a link with prices in another currency (for example in Australian dollars), or choose a currency with our currency switch or in our offer of prices in your own currency, your browser also remembers that choice in its local storage under the key "snapeyes.market" (for example "au", or "eu" once you have declined that offer), so that the site keeps showing you the same prices. Our pages carry it in their links (m=au) and send it with an order, so that you are charged the prices you saw. You can delete it at any time in your browser settings; it is strictly necessary for a function you asked for, so it needs no consent either (Art. 5(3) ePrivacy Directive).',
         'When you order, the page also keeps two entries in the session storage of your browser tab. Session storage belongs to that one tab and is deleted when you close it:',
         {
           ul: [
@@ -297,6 +309,7 @@ const de: LegalDoc = {
       title: 'Beim Besuch der Website',
       blocks: [
         'Wenn Sie eine Seite von snapeyes.com aufrufen, sendet Ihr Browser technische Daten an unseren Hosting-Anbieter Vercel, etwa Ihre IP-Adresse, Datum und Uhrzeit, die aufgerufene Seite und Ihren Browsertyp (User-Agent). Vercel braucht diese Daten, um die Seite auszuliefern und den Dienst vor Angriffen zu schützen. Sie werden für kurze Zeit in Server-Protokollen gespeichert und dann gelöscht.',
+        'Um Ihnen Preise in Ihrer eigenen Währung vorschlagen zu können, kann unser Server außerdem das Land lesen, das Vercel aus Ihrer IP-Adresse ableitet (zum Beispiel „AU“). Es dient nur diesem Vorschlag, ändert nie die angezeigten Preise und wird nicht gespeichert.',
         'Rechtsgrundlage: unser berechtigtes Interesse an einer sicheren, funktionierenden Website (Art. 6 Abs. 1 lit. f DSGVO).',
         'Unsere Schriftarten kommen von unserem eigenen Server, es werden also keine Daten an Google Fonts oder andere Schriftdienste übertragen. Wir setzen auf dieser Website keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen ein, und nichts verfolgt Sie von Seite zu Seite oder über Websites hinweg. Unsere eigene anonyme Betriebsstatistik ist unter [Betriebsstatistik und Admin-Protokoll](#operations) beschrieben.',
       ],
@@ -430,6 +443,7 @@ const de: LegalDoc = {
       blocks: [
         'Diese Website setzt keine Cookies. Sie nutzt keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen.',
         'Wenn Sie mit dem Schalter EN/DE eine Sprache wählen, merkt sich Ihr Browser diese Wahl in seinem lokalen Speicher unter dem Schlüssel „snapeyes.lang“ (Wert „en“ oder „de“). Dieser Eintrag wird nie an uns übertragen, und Sie können ihn jederzeit in Ihren Browsereinstellungen löschen. Er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
+        'Wenn Sie über einen Link mit Preisen in einer anderen Währung zu uns kommen (zum Beispiel in australischen Dollar) oder mit unserem Währungsschalter oder in unserem Angebot von Preisen in Ihrer eigenen Währung eine Währung wählen, merkt sich Ihr Browser diese Wahl außerdem in seinem lokalen Speicher unter dem Schlüssel „snapeyes.market“ (zum Beispiel „au“, oder „eu“, wenn Sie dieses Angebot abgelehnt haben), damit die Website Ihnen weiter dieselben Preise zeigt. Unsere Seiten tragen sie in ihren Links (m=au) und senden sie mit einer Bestellung, damit Ihnen die Preise berechnet werden, die Sie gesehen haben. Sie können den Eintrag jederzeit in Ihren Browsereinstellungen löschen; er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher ebenfalls keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
         'Wenn Sie bestellen, legt die Seite außerdem zwei Einträge im Sitzungsspeicher (Session Storage) Ihres Browser-Tabs an. Der Sitzungsspeicher gehört nur zu diesem einen Tab und wird gelöscht, wenn Sie ihn schließen:',
         {
           ul: [
@@ -455,3 +469,45 @@ const de: LegalDoc = {
 };
 
 export const PRIVACY: LegalDocs = { en, de };
+
+// ------------------------------------------------------------------------------------------ the Australian edition
+// Written from what the code does (see the header) and the Australian sources of 2026-09-29: OAIC on biometric
+// information (sensitive when used to identify or verify), the small business exemption (A$3 million turnover, still
+// in force; its removal is expected, not passed) and the statutory tort for serious invasions of privacy (10 June 2025).
+const auEn = patchDoc(en, {
+  after: {
+    rights: [
+      {
+        id: 'australia',
+        title: 'Your data if you live in Australia',
+        blocks: [
+          'This policy follows the EU General Data Protection Regulation (GDPR), which applies to everything we do with your data, wherever you live. If you live in Australia, this section adds what you should know under Australian privacy law.',
+          '**Your eye photos.** A photo of an eye can be biometric information, which the Australian Privacy Act 1988 treats as sensitive information when it is used to identify or verify a person. We never use it that way: we never create, compare or store an iris template or any other biometric identifier, never identify or verify anyone, never sell your photos and never use them to train AI (see [Your iris is never used to identify anyone](#iris)). We collect your eye photos only because you send them to us to make your preview and your artwork, and we use them only for that.',
+          '**Where your data goes.** We are based in Lithuania, so your data is processed outside Australia: in the EU and by the services named under [Services we use](#services), some of which may process it in the USA or in other countries. The safeguards for these transfers are described there.',
+          '**Australian Privacy Principles.** We handle your data as this policy describes, whether or not the Australian Privacy Principles apply to us: as a small business with an annual turnover of A$3 million or less, we are generally exempt from them under the Privacy Act as it stands today. Your right to sue for a serious invasion of privacy, which has applied since 10 June 2025, is not affected.',
+          `**Access, correction and complaints.** You can ask us at any time for access to the data we hold about you and to have it corrected (see [Your rights](#rights)): write to ${MAIL}. If the Australian Privacy Principles apply to us and you are not satisfied with our answer, you can complain to the Office of the Australian Information Commissioner ([oaic.gov.au](https://www.oaic.gov.au)).`,
+        ],
+      },
+    ],
+  },
+});
+
+const auDe = patchDoc(de, {
+  after: {
+    rights: [
+      {
+        id: 'australia',
+        title: 'Ihre Daten, wenn Sie in Australien leben',
+        blocks: [
+          'Diese Erklärung folgt der EU-Datenschutz-Grundverordnung (DSGVO), die für alles gilt, was wir mit Ihren Daten tun, wo auch immer Sie leben. Wenn Sie in Australien leben, ergänzt dieser Abschnitt, was Sie nach australischem Datenschutzrecht wissen sollten.',
+          '**Ihre Augenfotos.** Ein Foto eines Auges kann eine biometrische Information sein, die der australische Privacy Act 1988 als sensible Information behandelt, wenn sie zur Identifizierung oder Verifizierung einer Person dient. So verwenden wir sie nie: Wir erstellen, vergleichen oder speichern nie ein Iris-Template oder ein anderes biometrisches Merkmal, identifizieren oder verifizieren niemanden, verkaufen Ihre Fotos nie und nutzen sie nie zum Training von KI (siehe [Ihre Iris dient nie zur Identifizierung](#iris)). Wir erheben Ihre Augenfotos nur, weil Sie sie uns senden, damit wir Ihre Vorschau und Ihr Kunstwerk erstellen, und verwenden sie nur dafür.',
+          '**Wohin Ihre Daten gehen.** Wir sitzen in Litauen, Ihre Daten werden also außerhalb Australiens verarbeitet: in der EU und bei den unter [Dienste, die wir nutzen](#services) genannten Diensten, von denen einige sie in den USA oder in anderen Ländern verarbeiten können. Die Garantien für diese Übermittlungen sind dort beschrieben.',
+          '**Australian Privacy Principles.** Wir behandeln Ihre Daten so, wie diese Erklärung es beschreibt, ob die Australian Privacy Principles für uns gelten oder nicht: Als kleines Unternehmen mit einem Jahresumsatz von höchstens 3 Millionen australischen Dollar sind wir nach dem Privacy Act in seiner heutigen Fassung in der Regel davon ausgenommen. Ihr Recht, wegen einer schweren Verletzung Ihrer Privatsphäre zu klagen, das seit dem 10. Juni 2025 gilt, bleibt davon unberührt.',
+          `**Auskunft, Berichtigung und Beschwerden.** Sie können jederzeit Auskunft über die Daten verlangen, die wir über Sie speichern, und ihre Berichtigung (siehe [Ihre Rechte](#rights)): Schreiben Sie an ${MAIL}. Gelten die Australian Privacy Principles für uns und sind Sie mit unserer Antwort nicht zufrieden, können Sie sich beim Office of the Australian Information Commissioner ([oaic.gov.au](https://www.oaic.gov.au)) beschweren.`,
+        ],
+      },
+    ],
+  },
+});
+
+export const PRIVACY_AU: LegalDocs = { en: auEn, de: auDe };
