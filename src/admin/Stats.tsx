@@ -7,7 +7,7 @@ import type { Counts, Reply, Stats, Table } from './api';
 import type { Call } from './AdminApp';
 import { avgMs, lastDays, sumTable } from './agg';
 import { BarChart } from './charts';
-import { BLOCK_LT, DEFAULT_PRICES, DEVICE_LT, explain, fmtSec, fmtUsd, SOURCE_LT, STEP_LT, STYLE_LT, VERDICT_LT } from './format';
+import { BLOCK_LT, DEFAULT_PRICES, DEVICE_LT, explain, fmtSec, fmtUsd, KARTAI, ltCount, SOURCE_LT, STEP_LT, STYLE_LT, VERDICT_LT } from './format';
 import { BTN, CARD, H2, MUTED, Notice, Spinner } from './ui';
 
 const PERIODS = [7, 30, 90];
@@ -90,7 +90,7 @@ export const StatsPage: React.FC<{ call: Call }> = ({ call }) => {
                 <div key={k} className="rounded-xl bg-black/30 border border-white/10 p-3">
                   <p className="text-xs text-white/60">{STEP_LT[k]}</p>
                   <p className="text-lg font-bold">{fmtSec(avgMs(all, k))}</p>
-                  <p className="text-[11px] text-white/45">{all.ms[k]?.[1] || 0} kartų</p>
+                  <p className="text-[11px] text-white/45">{ltCount(all.ms[k]?.[1] || 0, KARTAI)}</p>
                 </div>
               ))}
             </div>

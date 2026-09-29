@@ -5,7 +5,7 @@ import type React from 'react';
 import type { Errors, LogEntry } from './api';
 import type { Call } from './AdminApp';
 import { countBy } from './agg';
-import { ENDPOINT_LT, explain, fmtSec, fmtTime, KIND_LT, REASON_LT } from './format';
+import { ENDPOINT_LT, explain, fmtSec, fmtTime, KIND_LT, kindLabel, REASON_LT } from './format';
 import { BTN, CARD, Chip, H2, MUTED, Notice, Spinner } from './ui';
 
 export const ErrorsPage: React.FC<{ call: Call }> = ({ call }) => {
@@ -53,7 +53,7 @@ export const ErrorsPage: React.FC<{ call: Call }> = ({ call }) => {
             <li key={i} className="border-t border-white/5 py-2 text-xs flex flex-col sm:flex-row sm:items-baseline gap-x-3 gap-y-0.5">
               <span className="text-white/60 whitespace-nowrap">{fmtTime(r.t, true)}</span>
               <span className="font-semibold">{ENDPOINT_LT[r.endpoint || ''] || r.endpoint}</span>
-              <span>{KIND_LT[r.kind || ''] || r.kind}{r.status ? ` (${r.status})` : ''}</span>
+              <span>{kindLabel(r.kind, r.status)}</span>
               <span className="text-white/70 break-words min-w-0">{r.reason ? `${r.reason}${REASON_LT[r.reason] ? `: ${REASON_LT[r.reason]}` : ''}` : ''}</span>
               {typeof r.ms === 'number' && <span className="text-white/45 whitespace-nowrap">{fmtSec(r.ms)}</span>}
             </li>

@@ -27,7 +27,10 @@ begun on the customer's order page, see act_render, or re-render one by master_e
 lab_start (an unlock ticket for a test order lab-<yymmdd>-<rand>), lab_delete. They reuse pay.py, order.py,
 master_eye.py, master_compose.py and store.py, and each one is written to the admin audit log:
 ops/audit/<YYYY-MM-DD>/<HHMMSS>-<rand>.json and ops/orderlog/<order>/<time>-<rand>.json (action, order, result code;
-no email address, no link)."""
+no email address, no link). The order's copy belongs to its record (privacy policy): it goes whenever the order goes
+completely (pay.drop_orderlog: an unpaid order's purge or deletion, a lab test's deletion; the daily clean-up removes
+what is left of an order that is gone, cleanup._orphan_logs), no copy is written for an order that is not there
+(404) or was just deleted completely, and a paid order keeps it with its records."""
 import re, json, time, hmac, base64, hashlib, secrets, threading, importlib
 from . import iris as L
 from . import store
@@ -44,7 +47,7 @@ FAIL_HOURLY = 20             # failed attempts per client in the current and the
 FAIL_SLEEP = 0.8             # every failed attempt waits this long
 SIGN_SECONDS = 3600          # the admin page's image links
 LAB_TICKET = 900             # the lab's unlock ticket (seconds)
-AUDIT, ORDERLOG, REFUNDS, LAB, ADMINFAIL = "ops/audit", "ops/orderlog", "ops/refunds", "ops/lab", E.ADMINFAIL
+AUDIT, ORDERLOG, REFUNDS, LAB, ADMINFAIL = "ops/audit", pay.ORDERLOG_TOP, "ops/refunds", "ops/lab", E.ADMINFAIL
 # Gemini list prices per call (USD), an ESTIMATE ("įvertis") for the panel: the 4K render measured $0.153
 # (master_eye.MASTER_SIDE note, 2026-09-23), a 1K gemini-3.1-flash-image image $0.067 (ai.google.dev pricing, noted
 # 2026-09-16), a vision call on gemini-3.8-flash (one photo of up to 1600 px and a short JSON reply) about $0.003.
@@ -278,9 +281,10 @@ def authorize(req):
 
 
 # ----------------------------------------------------------------------------- the audit log
-def audit(action, order=None, ok=True, result=None, eye=None, detail=None):
+def audit(action, order=None, ok=True, result=None, eye=None, detail=None, orderlog=True):
     """One line of the admin audit log (never raises): what was done, to which order, and how it ended. No email
-    address, no link, no key."""
+    address, no link, no key. orderlog=False: no copy in the order's own log (ops/orderlog/<order>/), for an order
+    that is not there or was just deleted completely (its log went with it)."""
     try:
         now = time.time()
         g = time.gmtime(now)
@@ -295,7 +299,7 @@ def audit(action, order=None, ok=True, result=None, eye=None, detail=None):
         rand = secrets.token_hex(4)
         store.put(f"{AUDIT}/{time.strftime('%Y-%m-%d', g)}/{time.strftime('%H%M%S', g)}-{rand}.json", data,
                   "application/json", upsert=False, timeout=5.0, retry=False)
-        if o:
+        if o and orderlog:
             store.put(f"{ORDERLOG}/{o}/{time.strftime('%Y%m%d%H%M%S', g)}-{rand}.json", data, "application/json",
                       upsert=False, timeout=5.0, retry=False)
         log(f"{entry['action']} {o or ''} {'ok' if ok else 'failed'} {entry['result'] or ''}")
@@ -310,7 +314,8 @@ def audited(name, fn):
         try:
             res = fn(body, who)
         except store.Answer as a:
-            audit(name, order, False, a.body.get("reason"), eye)
+            # a 404 names an order that is not there: no order log is started for it
+            audit(name, order, False, a.body.get("reason"), eye, orderlog=a.status != 404)
             raise
         except L.ClientError as e:
             audit(name, order, False, "bad_request", eye, str(e))
@@ -318,7 +323,8 @@ def audited(name, fn):
         except Exception as e:  # noqa
             audit(name, order, False, type(e).__name__, eye)
             raise
-        audit(name, order, True, res.get("result"), eye, res.get("audit_detail"))
+        # an action that deleted the order completely says orderlog: False (its log went with it)
+        audit(name, order, True, res.get("result"), eye, res.get("audit_detail"), orderlog=res.pop("orderlog", True))
         res.pop("audit_detail", None)
         return res
     return run
@@ -892,6 +898,8 @@ def act_recompose(body, who):
     if delivery["needs_review"] and released and changed:
         store.delete(f"{folder}/release.json")       # a new, flagged artwork: it waits for your release again
         released = False
+    if delivery["needs_review"] and not released:
+        pay.index_review(order, now)                  # held: the daily clean-up's reminder after 36 h
     return {"ok": True, "result": "composed" if changed else "same", "changed": changed, "delivery": delivery,
             "held": delivery["needs_review"] and not released, "url": r.get("url")}
 
@@ -949,8 +957,10 @@ def act_mark_refunded(body, who):
 
 
 def act_delete_files(body, who):
-    """Delete the order's files now (a customer's request): pay.erase_files, so a paid order keeps its records and
-    says "deleted"; an unpaid order or a lab test goes completely. Only with the order number typed as confirm."""
+    """Delete the order's files now (a customer's request): pay.erase_files, so a paid order keeps its records (and
+    its admin log) and says "deleted"; an unpaid order or a lab test goes completely, its admin log
+    (ops/orderlog/<order>/) with it, and this action writes no new entry there. Only with the order number typed as
+    confirm."""
     order = _order(body)
     if body.get("confirm") != order:
         raise L.ClientError("Type the order number to confirm the deletion.")
@@ -958,12 +968,15 @@ def act_delete_files(body, who):
         files = pay.folder_files(f"orders/{order}")
         if files:
             store.delete_many(files)
+        pay.drop_orderlog(order, out=log)
         store.delete(f"{LAB}/{order}.json")
-        return {"ok": True, "result": "deleted", "deleted": len(files), "of": len(files)}
+        return {"ok": True, "result": "deleted", "deleted": len(files), "of": len(files), "orderlog": False}
     gone, total = pay.erase_files(order, "admin", yes=True, out=log)
     if not total:
         raise store.Answer(404, "not_found", "No files for this order.", False)
-    return {"ok": True, "result": "deleted", "deleted": gone, "of": total, "audit_detail": f"{gone} of {total} files"}
+    # everything went (an unpaid order: erase_files dropped its admin log too), or a paid order's records stay
+    return {"ok": True, "result": "deleted", "deleted": gone, "of": total, "audit_detail": f"{gone} of {total} files",
+            "orderlog": gone < total}
 
 
 # ----------------------------------------------------------------------------- the lab

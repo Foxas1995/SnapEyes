@@ -7,8 +7,12 @@ it twice): a missed day is caught up by the next run, and a second run finds not
   1. receipts of withdrawal statements Resend did not take at the time are sent again (withdraw.retry_due), for at
      most withdraw.RETRY_SECONDS, so a queue of them never crowds out the deletions below; then the owner's digest
      of the finished days' withdrawal statements that matched no order or named an order never paid
-     (withdraw.send_digests: one email a day instead of one per statement)
-  2. UNPAID orders older than 26 h are deleted with their images (policy: within 30 days). Only after Stripe was
+     (withdraw.send_digests: one email a day instead of one per statement); then the reminders for PAID orders held
+     for a person (review.json, or an artwork waiting for release) for more than pay.REVIEW_REMIND_HOURS (36 h; the
+     terms promise the file within 48 h of payment): one owner note per order (_reviews, from the index
+     cleanup/review/ that every hold writes, pay.index_review), for at most REVIEW_SECONDS of the run
+  2. UNPAID orders older than 26 h are deleted with their images and their admin log (ops/orderlog/<order>/, which
+     belongs to the order record: pay.drop_orderlog) (policy: within 30 days). Only after Stripe was
      asked: a session paid without paid.json is recorded as paid instead (the customer gets the confirmation), one
      still open or settling is kept, and nothing is deleted when Stripe cannot be asked (pay.stripe_verdict). A
      kept order is marked in cleanup/kept/ and asked again every day, also after its day left the window (_kept);
@@ -18,13 +22,16 @@ it twice): a missed day is caught up by the next run, and a second run finds not
      REFUND_REMIND_DAYS after the withdrawal, a paid order the owner has not marked refunded
      (scripts/order_admin.py refunded ORDER) gets ONE reminder note before the refund is due
   4. the files of PAID orders go 12 months after payment (pay.expire_paid); the records stay (order number, date,
-     price, payment, email, the artwork's details, consent, withdrawal statements: the policy's "Order records")
+     price, payment, email, the artwork's details, consent, withdrawal statements and the admin log's entries about
+     the order: the policy's "Order records")
   5. the upload and statement markers older than a few days (and the withdrawal function's monthly receipt marks
      after the next month), the clean-up's own day marks, and withdrawal statements that matched no order
      (withdrawals/<yymm>/) 12 months after their month
   6. the site's other logs: events.purge_old() when api/_lib/events.py exists (the owner's admin tools keep their
-     own retention there), and the audit log ops/audit/ after AUDIT_KEEP_MONTHS (24 months), by the dates in its
-     names (_audit)
+     own retention there), the audit log ops/audit/ after AUDIT_KEEP_MONTHS (24 months), by the dates in its
+     names (_audit), and the admin log of an order that is gone completely (ops/orderlog/<order>/ without any file
+     of the order left: a deletion that could not finish, an admin action on an order number that does not exist;
+     _orphan_logs). A paid order's log stays with its records
 Order folders are named by the day they were made (yymmdd-...), so a run lists only the days it needs: the last
 UNPAID_WINDOW days for step 2, the EXPIRE_WINDOW days before the 12-month cut-off for step 4, minus the days a run
 already finished (cleanup/done_unpaid/<day>, cleanup/done_expired/<day>). The run stops with more: true when less
@@ -46,6 +53,10 @@ UNMATCHED_KEEP_DAYS = 396    # statements that matched no order: kept 12 months 
 AUDIT_TOP = "ops/audit"      # the admin tools' audit log (api/_lib/ops.py: ops/audit/<YYYY-MM-DD>/...), kept
 AUDIT_KEEP_MONTHS = 24       # 24 months, then deleted by its day
 REFUNDS_TOP = "ops/refunds"  # the admin panel's refund records (api/_lib/ops.py act_refund): a refund made there counts
+LAB_TOP = "ops/lab"          # the admin panel's lab test markers (api/_lib/ops.py LAB): a lab test still there
+ORPHAN_GRACE_DAYS = 2        # an order log whose newest entry is younger than this is left alone (a lab test's folder
+                             # appears only with its first eye; a deletion may be running right now)
+REVIEW_SECONDS = 6.0         # the daily run spends at most this long on the review reminders (the rest: next run)
 LOCK = "cleanup/running.json"
 LOCK_STALE = 120             # a lock older than this belongs to a run that died (a function lives at most 60 s)
 
@@ -116,6 +127,8 @@ def run(yes=True, stop_left=10.0, out=None, lock=True):
         late = bool(res["receipts"].pop("more", False))
         res["digest"] = W.send_digests(yes, stop_left, say, W.DIGEST_SECONDS if boxed else 1e9)
         late = bool(res["digest"].pop("more", False)) or late
+        res["reviews"] = _reviews(yes, stop_left, say, REVIEW_SECONDS if boxed else 1e9)
+        late = bool(res["reviews"].pop("more", False)) or late
         if not res["more"]:
             res["unpaid"] = _unpaid(yes, stop_left, say)
             res["more"] = res["unpaid"].pop("more", False)
@@ -134,8 +147,9 @@ def run(yes=True, stop_left=10.0, out=None, lock=True):
         if not res["more"]:
             res["events"] = _events(yes, stop_left, say)
             res["audit"] = _audit(yes, stop_left, say)
-            res["more"] = bool(isinstance(res["events"], dict) and res["events"].get("more")) or \
-                res["audit"].pop("more", False)
+            res["orderlog"] = _orphan_logs(yes, stop_left, say)
+            more = [res["audit"].pop("more", False), res["orderlog"].pop("more", False)]
+            res["more"] = bool(isinstance(res["events"], dict) and res["events"].get("more")) or any(more)
         res["more"] = res["more"] or late
     finally:
         if lock and yes:
@@ -307,6 +321,112 @@ def _refund_reminder(order, t, yes, say):
     except Exception as e:  # noqa: a reminder must never stop the clean-up
         pay.log(f"clean-up: refund reminder for {order} failed: {type(e).__name__}")
         return 0
+
+
+def _held(review, delivery, released):
+    """(held, since) of a paid order: is it held for a person (review.json, or an artwork that waits for release),
+    and since when (the earliest of the two, unix seconds; None when neither says)."""
+    held, times = False, []
+    if isinstance(review, dict):
+        held = True
+        times.append(review.get("t"))
+    if isinstance(delivery, dict) and delivery.get("needs_review") and not released:
+        held = True
+        times.append(delivery.get("created_at"))
+    times = [t for t in times if isinstance(t, (int, float)) and not isinstance(t, bool)]
+    return held, (min(times) if times else None)
+
+
+def _review_todo(order, review):
+    """(why it waits, what to do) for the owner's reminder of a held order."""
+    reason = str(review.get("reason") or "") if isinstance(review, dict) else ""
+    if not isinstance(review, dict):
+        return ("the artwork is made, but a check says a person should look first (colour or preview match), so it "
+                "is not delivered yet"), (
+                f"Look at the artwork in the admin panel (/admin, order {order}) and release it there, or: python "
+                f"scripts/order_admin.py release {order} (the customer gets the 'ready' email).")
+    if reason.startswith(pay.MAIL_REVIEW):
+        return (f"the order confirmation email did not go out ({reason}), and nothing is made before it has"), (
+                f"Fix the cause (RESEND_API_KEY, the snapeyes.com domain at Resend), then send it again from the admin "
+                f"panel (/admin, order {order}) or: python scripts/order_admin.py resend-mail {order}. If you sent it "
+                f"yourself: python scripts/order_admin.py mailed-by-hand {order}.")
+    return (f"making stopped for a person to look ({reason or 'no reason recorded'}"
+            f"{', eye ' + str(review.get('eye')) if review.get('eye') else ''})"), (
+            f"Look at the order in the admin panel (/admin, order {order}): render the eye again or clear the review "
+            f"there, then the customer's order page goes on; or write to the customer. From the command line: python "
+            f"scripts/order_admin.py clear-review {order}.")
+
+
+def _reviews(yes, stop_left, say, max_seconds=REVIEW_SECONDS):
+    """Step 1b: PAID orders held for a person (review.json, or an artwork waiting for release) longer than
+    pay.REVIEW_REMIND_HOURS (36 h: the terms promise the file within 48 h of payment) get ONE reminder note to the
+    owner per order (orders/<order>/note_review_late.json), in addition to the note at the time of the hold. The
+    orders come from the index every hold writes (cleanup/review/<order>.json, pay.index_review); an index entry goes
+    once the reminder went out, or when the order is no longer held (released, cleared, withdrawn, deleted, not
+    paid, or a test payment that counts for nothing here). At most max_seconds of the run; never raises. Returns
+    {held, reminded, cleared} (+ more when it stopped for time)."""
+    res = {"held": 0, "reminded": 0, "cleared": 0, "more": False}
+    now = time.time()
+    until = now + max_seconds
+    try:
+        rows = store.list_all(pay.REVIEW_INDEX)
+    except store.StorageError as e:
+        pay.log(f"clean-up: review index not read: {e}")
+        return res
+    for row in rows:
+        name = row["name"]
+        if row["folder"] or not name.endswith(".json") or not store.ORDER_RE.fullmatch(name[:-5]):
+            continue
+        if L.time_left() < stop_left or time.time() > until:
+            res["more"] = True
+            break
+        order, mark = name[:-5], f"{pay.REVIEW_INDEX}/{name}"
+        folder = f"orders/{order}"
+        try:
+            m, paid, review, delivery, released, stopped, deleted, expired = pay.parallel([
+                lambda: store.get_json(mark, timeout=8.0),
+                lambda: pay.get_paid(order),
+                lambda: store.get_json(f"{folder}/review.json", timeout=8.0),
+                lambda: store.get_json(f"{folder}/delivery.json", timeout=8.0),
+                lambda: store.exists(f"{folder}/release.json", timeout=8.0),
+                lambda: store.exists(f"{folder}/withdrawn.json", timeout=8.0),
+                lambda: store.exists(f"{folder}/deleted.json", timeout=8.0),
+                lambda: store.exists(f"{folder}/expired.json", timeout=8.0)])
+            held, since = _held(review, delivery, released)
+            if not held or not pay.paid_counts(paid) or stopped or deleted or expired:
+                if yes:
+                    store.delete(mark, timeout=6.0)
+                res["cleared"] += 1
+                continue
+            res["held"] += 1
+            if since is None:
+                t = m.get("t") if isinstance(m, dict) else None
+                since = t if isinstance(t, (int, float)) and not isinstance(t, bool) else now
+            hours = int((now - since) // 3600)
+            if now - since < pay.REVIEW_REMIND_HOURS * 3600:
+                continue
+            why, todo = _review_todo(order, review)
+            if not yes:
+                say(f"would remind the owner of {order}: held for review {hours} h ({why})")
+                res["reminded"] += 1
+                continue
+            paid_at = paid.get("paid_at") if isinstance(paid.get("paid_at"), (int, float)) else None
+            paid_on = pay.iso(paid_at) if paid_at else "an unknown date"
+            r = pay.owner_note(order, "review_late",
+                               f"SnapEyes: reminder, order {order} has waited {hours} h for your review",
+                               f"Order {order} has been held for your review since {pay.iso(since)} (UTC), "
+                               f"{hours} hours now. It was paid on {paid_on} (UTC), and our terms promise the file "
+                               f"within 48 hours of payment.\nWhy it waits: {why}.\n\n{todo}\n\n"
+                               f"This is the only reminder for this order.\n"
+                               f"Status: python scripts/order_admin.py status {order}\n")
+            say(f"review reminder for {order} (held {hours} h): {r}")
+            if r == "sent":
+                res["reminded"] += 1
+            if r in ("sent", "done", "failed", "bad_address"):
+                store.delete(mark, timeout=6.0)       # one reminder per order; "off" and "transient" try again
+        except Exception as e:  # noqa: a reminder must never stop the clean-up
+            pay.log(f"clean-up: review reminder for {order} failed: {type(e).__name__} {e}")
+    return res
 
 
 def _expire(yes, stop_left, say):
@@ -495,4 +615,50 @@ def _audit(yes, stop_left, say, top=AUDIT_TOP, depth=3):
         walk(top, 1)
     except store.StorageError as e:
         pay.log(f"clean-up: audit log not purged: {e}")
+    return res
+
+
+def _orphan_logs(yes, stop_left, say):
+    """Step 6c: the admin log of an order (ops/orderlog/<order>/, api/_lib/ops.py) belongs to the order's record
+    (privacy policy: kept "with that order's record, for as long as the record is kept"). Every complete deletion
+    removes it (pay.drop_orderlog); this finds what is left: the log of an order of which no file is left (no
+    order.json, nothing under orders/<order>/, and for a lab test no ops/lab marker), e.g. a deletion that stopped
+    half way, or an action tried on an order number that does not exist. A log whose newest entry is younger than
+    ORPHAN_GRACE_DAYS is left for the next run. A paid order keeps its order.json, so its log stays. Never raises.
+    Returns {orders, files} (+ more when it stopped for time)."""
+    res = {"orders": 0, "files": 0, "more": False}
+    top = pay.ORDERLOG_TOP
+    recent = time.strftime("%Y%m%d%H%M%S", time.gmtime(time.time() - ORPHAN_GRACE_DAYS * 86400))
+    try:
+        names = [r["name"] for r in store.list_all(top) if r["folder"] and store.ORDER_RE.fullmatch(r["name"])]
+        for i in range(0, len(names), 8):
+            if L.time_left() < stop_left:
+                res["more"] = True
+                break
+            batch = names[i:i + 8]
+            has = pay.parallel([lambda o=o: store.exists(f"orders/{o}/order.json", timeout=8.0) for o in batch])
+            for order, record in zip(batch, has):
+                if record:
+                    continue
+                if L.time_left() < stop_left:
+                    res["more"] = True
+                    break
+                if pay.folder_files(f"orders/{order}"):
+                    continue          # files of the order are still there (a lab test, an order being deleted)
+                if order.startswith("lab-") and store.exists(f"{LAB_TOP}/{order}.json", timeout=8.0):
+                    continue          # a lab test that has no file yet
+                logs = pay.folder_files(f"{top}/{order}")
+                newest = max((p.rsplit("/", 1)[-1][:14] for p in logs), default="")
+                if not logs or newest > recent:
+                    continue
+                say(f"{'DELETE' if yes else 'would delete'} the admin log of {order} ({len(logs)} entries): no file of "
+                    f"the order is left")
+                if yes:
+                    store.delete_many(logs)
+                res["orders"] += 1
+                res["files"] += len(logs)
+            if res["more"]:
+                break
+    except store.StorageError as e:
+        pay.log(f"clean-up: order logs not checked: {e}")
     return res

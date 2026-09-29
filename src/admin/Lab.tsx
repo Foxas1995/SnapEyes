@@ -2,15 +2,16 @@
 // calls it: /api/analyze -> /api/deglare -> /api/enhance -> /api/compose, with every stage's image, reply and time,
 // and the estimated cost shown before it runs. Optionally a 4K master too: /api/admin lab_start gives a test order
 // (lab-<date>-<rand>) and its unlock ticket, then /api/master_eye and /api/master_compose make the 4K files. The
-// test orders are listed below and can be deleted.
+// test orders are listed below and can be deleted. Results show next to what started them: the run's progress card is
+// brought into view when it starts and a failed stage when it fails; a deletion's result is a toast at the bottom.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import { getHealth, publicCall } from './api';
 import type { LabRow, LabStart, Reply } from './api';
 import type { Call } from './AdminApp';
 import { DEFAULT_PRICES, explain, fmtSec, fmtUsd, STYLE_LT } from './format';
-import { BTN, CARD, ConfirmDialog, DANGER, ExtLink, GOLD, H2, INPUT, JsonView, MUTED, Notice, Spinner, Thumb } from './ui';
-import type { ConfirmSpec } from './ui';
+import { BTN, CARD, ConfirmDialog, DANGER, ExtLink, GOLD, H2, INPUT, JsonView, MUTED, Notice, Spinner, Thumb, Toast } from './ui';
+import type { ConfirmSpec, Tone } from './ui';
 
 const SAMPLE = '/assets/sample_eye_blue_1789706902835.jpg';
 const STYLES = Object.keys(STYLE_LT);
@@ -64,7 +65,26 @@ export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
   const [lab, setLab] = useState<LabRow[]>([]);
   const [labErr, setLabErr] = useState('');
   const [confirm, setConfirm] = useState<ConfirmSpec | null>(null);
+  const [toast, setToast] = useState<{ tone: Tone; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const progressRef = useRef<HTMLElement>(null);
+  const [runId, setRunId] = useState(0);
+
+  // a run's progress card comes into view when the run starts (on a phone it begins below the Paleisti button) ...
+  useEffect(() => {
+    if (runId) progressRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [runId]);
+  // ... and so does the stage that failed, with its reason
+  const failed = stages.find((x) => x.status === 'fail')?.key;
+  useEffect(() => {
+    if (failed) document.getElementById(`lab-stage-${failed}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [failed, runId]);
+  // a plain success closes itself; a failure stays until closed
+  useEffect(() => {
+    if (!toast || toast.tone !== 'good') return;
+    const t = setTimeout(() => setToast((cur) => (cur === toast ? null : cur)), 9000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const loadLab = useCallback(async () => {
     const r = await call<{ lab: LabRow[] }>('lab_list');
@@ -106,6 +126,7 @@ export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
     if (!src) return;
     setErr(''); setRunning(true);
     setStages(STAGES.map(([key, label]) => ({ key, label, status: (!want4k && ['lab_start', 'master_eye', 'master_compose'].includes(key) ? 'skip' : 'wait') as Status })));
+    setRunId((n) => n + 1);
     try {
       const img = await loadImage(src.url);
       const W = img.naturalWidth, H = img.naturalHeight;
@@ -196,14 +217,15 @@ export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
           <span className={MUTED}> (analizė {fmtUsd(p.vision)}-{fmtUsd(2 * p.vision)}, restauravimas 1K {fmtUsd(p.image_1k)}{deglareModel ? `, atspindžiai iki ${fmtUsd(p.image_1k)}` : ''}{want4k ? `, 4K ${fmtUsd(p.image_4k)}` : ''}; kompozicija nemokama)</span>
         </p>
         <button type="button" className={GOLD} disabled={!src || running} onClick={() => void run()}>{running && <Spinner />}Paleisti</button>
-        {err && <Notice>{err}</Notice>}
+        {err && stages.length === 0 && <Notice>{err}</Notice>}
       </section>
 
       {stages.length > 0 && (
-        <section className={`${CARD} flex flex-col gap-3`}>
+        <section ref={progressRef} className={`${CARD} flex flex-col gap-3 scroll-mt-28`}>
           <h3 className="text-sm font-bold">Eiga{total ? ` · iš viso ${fmtSec(total)}` : ''}</h3>
+          {err && <Notice>{err}</Notice>}
           {stages.map((s) => (
-            <div key={s.key} className="border-t border-white/5 pt-3 flex flex-col gap-2 min-w-0">
+            <div key={s.key} id={`lab-stage-${s.key}`} className="border-t border-white/5 pt-3 flex flex-col gap-2 min-w-0 scroll-mt-28">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-semibold">{s.label}</p>
                 <p className={`text-xs ${TONE[s.status]} flex items-center gap-1.5`}>
@@ -239,13 +261,14 @@ export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
               text: `Ištrinami visi ${l.order} failai.`,
               run: async () => {
                 const r = await call<J>('lab_delete', { order: l.order });
-                if (!r.ok) setLabErr(explain(r));
+                setToast(r.ok ? { tone: 'good', text: `Testo užsakymas ${l.order} ištrintas.` } : { tone: 'bad', text: `${l.order} ištrinti nepavyko: ${explain(r)}` });
                 await loadLab();
               },
             })}>Ištrinti</button>
           </div>
         ))}
       </section>
+      {toast && <Toast tone={toast.tone} onClose={() => setToast(null)}>{toast.text}</Toast>}
       <ConfirmDialog spec={confirm} onClose={() => setConfirm(null)} />
     </div>
   );

@@ -6,6 +6,7 @@
 import type { Layout, LightAnswer } from './multi';
 import type { Lang } from './lang';
 import { CONTACT_EMAIL } from '../landing/config';
+import { CHECKOUT_LEGAL } from '../shared/legal';
 
 /** The reasons api/analyze.py gives for blocking a shot (quality.block_reason). A blocked shot gets no work
  *  ticket, so the page offers only a retake. */
@@ -300,10 +301,13 @@ const en = {
   },
 
   // ordering from the result screen (./BuyCard.tsx, ./checkout.ts). The withdrawal waiver and the links under it are
-  // src/shared/legal.ts CHECKOUT_LEGAL, word for word the text the server records.
+  // src/shared/legal.ts CHECKOUT_LEGAL, word for word the text the server records. The button only opens Stripe's
+  // payment page: the binding order is Stripe's own pay button (src/legal/docs/terms.ts "contract", § 312j Abs. 3
+  // BGB), so it carries CHECKOUT_LEGAL's continueButton, never "buy" or "order"; "next" says the same as the terms
+  // (binding on Stripe's pay button; making starts once the order confirmation email has gone out).
   buy: {
-    button: (price: string) => `Buy the full-size file · ${price}`,
-    next: "Next is Stripe's secure payment page, where you enter your email and pay. We start on your file right after payment.",
+    button: (price: string) => `${CHECKOUT_LEGAL.en.continueButton} · ${price}`,
+    next: "Next is Stripe's secure payment page. There you enter your email and place your binding order when you confirm the payment with the pay button. We start making your file once your order confirmation email has gone out, normally within a minute of your payment.",
     waitPreview: 'The preview for this choice is still being made. You can order as soon as you see it.',
     previewFailed: 'Please load the preview for this choice first (Try again above), so you see what you order.',
     steps: {
@@ -610,8 +614,8 @@ const de: TryCopy = {
   },
 
   buy: {
-    button: (price: string) => `Datei in voller Größe kaufen · ${price}`,
-    next: 'Als Nächstes öffnet sich die sichere Zahlungsseite von Stripe. Dort geben Sie Ihre E-Mail-Adresse ein und bezahlen. Direkt nach der Zahlung beginnen wir mit Ihrer Datei.',
+    button: (price: string) => `${CHECKOUT_LEGAL.de.continueButton} · ${price}`,
+    next: 'Als Nächstes öffnet sich die sichere Zahlungsseite von Stripe. Dort geben Sie Ihre E-Mail-Adresse ein und bestellen verbindlich, wenn Sie die Zahlung mit der Zahlungsschaltfläche bestätigen. Sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, beginnen wir mit der Erstellung Ihrer Datei.',
     waitPreview: 'Die Vorschau für diese Auswahl wird noch erstellt. Sie können bestellen, sobald Sie sie sehen.',
     previewFailed: 'Bitte laden Sie zuerst die Vorschau für diese Auswahl (oben „Erneut versuchen“), damit Sie sehen, was Sie bestellen.',
     steps: {

@@ -5,7 +5,7 @@ import type React from 'react';
 import type { Orders, Reply } from './api';
 import type { Call } from './AdminApp';
 import { countBy } from './agg';
-import { explain, fmtEur, fmtTime, STATE_LT, STATE_TONE, STYLE_LT } from './format';
+import { AKYS, explain, fmtEur, fmtTime, ltCount, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, H2, INPUT, MUTED, Notice, Spinner } from './ui';
 
 const PERIODS: [number, string][] = [[7, '7 d.'], [30, '30 d.'], [90, '90 d.'], [400, 'Visi']];
@@ -31,7 +31,10 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
 
   const load = async (d: number) => { setBusy(true); apply(await call<Orders>('orders', { days: d })); };
 
-  const rows = useMemo(() => data?.orders || [], [data]);
+  // newest first: the server lists folders by name, and within a day the ids differ only by random hex
+  const rows = useMemo(() => [...(data?.orders || [])].sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0)), [data]);
+  const stateOrder = Object.keys(STATE_LT);
+  const rank = (s: string) => (stateOrder.includes(s) ? stateOrder.indexOf(s) : stateOrder.length);
   const byState = useMemo(() => countBy(rows, (r) => r.state), [rows]);
   const q = find.trim().toLowerCase();
   const shown = rows.filter((r) => (!state || r.state === state) && (!q || r.order.includes(q)));
@@ -51,7 +54,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Būsena">
           <button type="button" onClick={() => setState('')} aria-pressed={!state}
             className={`px-2.5 py-1 rounded-lg text-xs border ${!state ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>Visi ({rows.length})</button>
-          {Object.keys(byState).sort().map((s) => (
+          {Object.keys(byState).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).map((s) => (
             <button key={s} type="button" onClick={() => setState(s)} aria-pressed={state === s}
               className={`px-2.5 py-1 rounded-lg text-xs border ${state === s ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>
               {STATE_LT[s] || s} ({byState[s]})
@@ -77,7 +80,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
               </div>
               <p className="text-xs text-white/70 break-words">
                 {fmtTime(r.created_at)}
-                {r.eyes ? ` · ${r.eyes} ${r.eyes === 1 ? 'akis' : 'akys'}` : ''}
+                {r.eyes ? ` · ${ltCount(r.eyes, AKYS)}` : ''}
                 {r.style ? ` · ${STYLE_LT[r.style] || r.style}` : ''}
                 {typeof r.amount === 'number' ? ` · ${fmtEur(r.amount)}` : ''}
                 {r.paid && r.live === false ? ' · testas' : ''}

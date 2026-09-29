@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
 import type { EyeView, OrderDetail, Payment, Reply } from './api';
 import type { Call } from './AdminApp';
-import { explain, fmtBytes, fmtEur, fmtNum, fmtTime, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
+import { AKYS, explain, fmtBytes, fmtEur, fmtNum, fmtTime, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, ConfirmDialog, CopyField, DANGER, ExtLink, H2, JsonView, MUTED, Notice, Rows, Spinner, Thumb, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
 
@@ -18,6 +18,10 @@ const isoTime = (v: unknown): string => {
   return Number.isFinite(t) ? fmtTime(t, true) : s(v) || '-';
 };
 const yesNo = (v: unknown) => (v === true ? 'taip' : v === false ? 'ne' : '-');
+const eyesText = (v: unknown) => { const k = n(v) ?? Number(s(v)); return Number.isFinite(k) && k > 0 ? ltCount(k, AKYS) : '- akys'; };
+
+// an action's result as the toast shows it
+interface Note { tone: Tone; text: string; busy?: boolean; link?: string; withdraw?: string; order?: string }
 
 const QaLine: React.FC<{ label: string; qa: J | null | undefined }> = ({ label, qa }) => {
   if (!qa || !Object.keys(qa).length) return null;
@@ -38,7 +42,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
   const [d, setD] = useState<OrderDetail | null>(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(true);
-  const [note, setNote] = useState<{ tone: Tone; text: string; busy?: boolean; link?: string; withdraw?: string; order?: string } | null>(null);
+  const [note, setNote] = useState<Note | null>(null);
   const [confirm, setConfirm] = useState<ConfirmSpec | null>(null);
 
   const apply = useCallback((r: Reply<OrderDetail>) => {
@@ -59,16 +63,24 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
     return () => clearTimeout(t);
   }, [note]);
 
-  const load = async () => { setBusy(true); apply(await call<OrderDetail>('order', { order })); };
+  const load = async () => { setBusy(true); const r = await call<OrderDetail>('order', { order }); apply(r); return r; };
 
   const act = async (action: string, extra: J, done: (x: J) => string) => {
     setNote({ tone: 'info', text: 'Vykdoma...', busy: true });
     const r = await call<J>(action, { order, ...extra }, 90_000);
-    if (r.ok && r.data) {
-      setNote({ tone: r.data.sent === false ? 'warn' : 'good', text: done(r.data), link: s(r.data.url) || undefined,
-        withdraw: s(r.data.withdraw_url) || undefined, order: s(r.data.order_url) || undefined });
-    } else setNote({ tone: 'bad', text: explain(r) });
-    if (action !== 'link') await load();
+    const result: Note = r.ok && r.data
+      ? { tone: r.data.sent === false ? 'warn' : 'good', text: done(r.data), link: s(r.data.url) || undefined,
+        withdraw: s(r.data.withdraw_url) || undefined, order: s(r.data.order_url) || undefined }
+      : { tone: 'bad', text: explain(r) };
+    setNote(result);
+    if (action === 'link') return;
+    // the page reloads the order after every action; if that fails, the toast says so too (the page's own notice
+    // for it sits at the top, far from the button)
+    const again = await load();
+    if (!again.ok) {
+      setNote((cur) => (cur === result ? { ...result, tone: result.tone === 'good' ? 'warn' : result.tone,
+        text: `${result.text} Užsakymo duomenų atnaujinti nepavyko: ${explain(again)}` } : cur));
+    }
   };
   const mailWord = (x: J) => RESULT_LT[s(x.result)] || s(x.result);
 
@@ -167,8 +179,8 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
             <Rows rows={[
               ['Sukurtas', s(orderRec.created) ? isoTime(orderRec.created) : '-'],
               ['Kalba', s(spec.lang) || s(orderRec.lang) || '-'],
-              ['Kūrinys', d.paid ? `${s(spec.eyes)} ${n(spec.eyes) === 1 ? 'akis' : 'akys'}, ${STYLE_LT[s(spec.style)] || s(spec.style)}, išdėstymas ${s(spec.layout) || '-'}`
-                : s(obj(checkout.spec).style) ? `mokėjimas pradėtas: ${s(obj(checkout.spec).eyes)} akys, ${STYLE_LT[s(obj(checkout.spec).style)] || s(obj(checkout.spec).style)}` : 'neapmokėtas'],
+              ['Kūrinys', d.paid ? `${eyesText(spec.eyes)}, ${STYLE_LT[s(spec.style)] || s(spec.style)}, išdėstymas ${s(spec.layout) || '-'}`
+                : s(obj(checkout.spec).style) ? `mokėjimas pradėtas: ${eyesText(obj(checkout.spec).eyes)}, ${STYLE_LT[s(obj(checkout.spec).style)] || s(obj(checkout.spec).style)}` : 'neapmokėtas'],
               ['Vardai ant kūrinio', s(spec.names) || '-'],
               ['Pavadinimas', s(spec.title) || '-'],
               ['Kaina', d.paid ? `${fmtEur(n(paidRec.amount_total))}${paidRec.amount_mismatch ? ' (nesutampa su kainoraščiu!)' : ''}` : checkout.amount ? fmtEur(n(checkout.amount)) : '-'],

@@ -3,15 +3,19 @@
 // (EU) 2024/3228), a VAT number (the MB is not VAT-registered), any promise the code does not keep.
 // The latest delivery time is DELIVERY_MAX_HOURS (src/landing/config.ts). The "contract" section says how the contract
 // text is kept: the order record in the bucket, and these terms plus the withdrawal information as text in the order
-// confirmation email (src/legal/plain.ts builds them into /legal/order-mail.json for api/_lib/pay.py).
+// confirmation email (src/legal/plain.ts builds them into /legal/order-mail.json for api/_lib/pay.py). It also names
+// the /try button that opens Stripe's page (CHECKOUT_LEGAL continueButton, the label src/try/copy.ts buy.button
+// shows): that button places no order, the binding order is Stripe's own pay button (§ 312j Abs. 3 BGB).
 // The right of withdrawal ends when making the file begins, as the checkout's checkbox and api/_lib/withdraw.py have
-// it (see src/shared/legal.ts), or, when nothing was made, at the end of the 14-day period; "delivery" and
+// it (see src/shared/legal.ts), or, when nothing was made, at the end of the 14-day period (the day of payment not
+// counted, a last day on a Saturday, Sunday or public holiday moved to the next working day: withdraw.py
+// period_end, the withdrawal page's "expiry" in the same words); "delivery" and
 // "withdrawal" below say so in the same words as the withdrawal page (see its header for the server's rules). The
 // seller line has no phone: owner decision (PHONE_OMITTED_BY_OWNER, src/landing/config.ts).
 // Not reviewed by a lawyer.
 import type { LegalDoc, LegalDocs } from '../types';
 import { DELIVERY_MAX_HOURS, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, company, eur, phoneSuffix, representedSuffix } from '../facts';
-import { WITHDRAWAL_ONLINE } from '../../shared/legal';
+import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE } from '../../shared/legal';
 
 const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.';
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
@@ -55,7 +59,7 @@ const en: LegalDoc = {
       id: 'contract',
       title: 'How the contract is made',
       blocks: [
-        'The previews and prices on our website are not yet a binding offer. Before you pay, you can check your eyes, style, layout and inscription and correct any input by going back or retaking a photo. You then open the payment page of our payment provider Stripe, where you enter your email address and payment details and can correct them. You place a binding order when you confirm the payment there with the pay button.',
+        `The previews and prices on our website are not yet a binding offer. Before you pay, you can check your eyes, style, layout and inscription and correct any input by going back or retaking a photo. You then open the payment page of our payment provider Stripe with our button "${CHECKOUT_LEGAL.en.continueButton}"; this button does not yet place an order. On that page you enter your email address and payment details and can correct them. You place a binding order when you confirm the payment there with the pay button.`,
         'The contract is concluded when your payment is confirmed. Your order page then opens, and we email you its link with your order confirmation. We start making your file there as soon as that email has gone out.',
         'The contract languages are English and German.',
         'We store your order with the details of the contract: the artwork you ordered, the price, the date, your email address and your consent to the immediate start. Your order page shows these details for as long as we keep your order. We do not keep a separate copy of these terms for each order. Instead, your order confirmation email contains, as text, your order details, these terms and the withdrawal information with the model withdrawal form, in the version in force when you ordered: please keep that email. You can also save or print this page at any time.',
@@ -89,7 +93,7 @@ const en: LegalDoc = {
       id: 'withdrawal',
       title: 'Right of withdrawal',
       blocks: [
-        `As a consumer you generally have a 14-day right of withdrawal. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open. This applies even while the file is still being made or is waiting for our quality check. If we have not started, it ends when the 14-day withdrawal period is over. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button "${WITHDRAWAL_ONLINE.en.button}"; the withdrawal link in your order confirmation email opens it for your order without starting to make your file. The full information, the online function and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page.`,
+        `As a consumer you generally have a 14-day right of withdrawal. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open. This applies even while the file is still being made or is waiting for our quality check. If we have not started, it ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button "${WITHDRAWAL_ONLINE.en.button}"; the withdrawal link in your order confirmation email opens it for your order without starting to make your file. The full information, the online function and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page.`,
       ],
     },
     {
@@ -177,7 +181,7 @@ const de: LegalDoc = {
       id: 'contract',
       title: 'Vertragsschluss',
       blocks: [
-        'Die Vorschauen und Preise auf unserer Website sind noch kein verbindliches Angebot. Vor der Zahlung können Sie Ihre Augen, den Stil, die Anordnung und die Widmung prüfen und Eingaben korrigieren, indem Sie zurückgehen oder ein Foto neu aufnehmen. Danach öffnen Sie die Zahlungsseite unseres Zahlungsdienstleisters Stripe, auf der Sie Ihre E-Mail-Adresse und Zahlungsangaben eingeben und korrigieren können. Eine verbindliche Bestellung geben Sie ab, wenn Sie dort die Zahlung mit der Zahlungsschaltfläche bestätigen.',
+        `Die Vorschauen und Preise auf unserer Website sind noch kein verbindliches Angebot. Vor der Zahlung können Sie Ihre Augen, den Stil, die Anordnung und die Widmung prüfen und Eingaben korrigieren, indem Sie zurückgehen oder ein Foto neu aufnehmen. Danach öffnen Sie mit unserer Schaltfläche „${CHECKOUT_LEGAL.de.continueButton}“ die Zahlungsseite unseres Zahlungsdienstleisters Stripe; diese Schaltfläche löst noch keine Bestellung aus. Auf dieser Seite geben Sie Ihre E-Mail-Adresse und Zahlungsangaben ein und können sie korrigieren. Eine verbindliche Bestellung geben Sie ab, wenn Sie dort die Zahlung mit der Zahlungsschaltfläche bestätigen.`,
         'Der Vertrag kommt zustande, sobald Ihre Zahlung bestätigt ist. Dann öffnet sich Ihre Bestellseite, und wir senden Ihnen deren Link mit Ihrer Bestellbestätigung per E-Mail. Sobald diese E-Mail versandt ist, beginnen wir dort mit Ihrer Datei.',
         'Vertragssprachen sind Deutsch und Englisch.',
         'Wir speichern Ihre Bestellung mit den Vertragsdaten: das bestellte Kunstwerk, den Preis, das Datum, Ihre E-Mail-Adresse und Ihre Zustimmung zum sofortigen Beginn. Ihre Bestellseite zeigt diese Angaben, solange wir Ihre Bestellung aufbewahren. Eine eigene Kopie dieser Bedingungen je Bestellung bewahren wir nicht auf. Stattdessen enthält Ihre Bestellbestätigung per E-Mail als Text Ihre Bestelldaten, diese Bedingungen und die Widerrufsbelehrung mit dem Muster-Widerrufsformular, in der bei Ihrer Bestellung gültigen Fassung: Bitte bewahren Sie diese E-Mail auf. Sie können diese Seite außerdem jederzeit speichern oder ausdrucken.',
@@ -211,7 +215,7 @@ const de: LegalDoc = {
       id: 'withdrawal',
       title: 'Widerrufsrecht',
       blocks: [
-        `Als Verbraucher haben Sie grundsätzlich ein 14-tägiges Widerrufsrecht. Bei einer digitalen Datei erlischt es vorzeitig: Vor der Zahlung bitten wir Sie, zuzustimmen, dass wir sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung Ihrer Datei beginnen, und zu bestätigen, dass Ihnen bekannt ist, dass Sie dadurch Ihr Widerrufsrecht verlieren, sobald damit begonnen wurde. Es erlischt daher, sobald wir mit der Erstellung Ihrer Datei (der Vertragserfüllung) begonnen haben; damit beginnen wir erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist. Das gilt auch, solange die Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir noch nicht begonnen, erlischt es mit Ablauf der 14-tägigen Widerrufsfrist. Solange Ihr Widerrufsrecht besteht, können Sie per E-Mail, per Post oder online mit der Schaltfläche „${WITHDRAWAL_ONLINE.de.button}“ widerrufen; der Widerrufslink in Ihrer Bestellbestätigung per E-Mail öffnet sie für Ihre Bestellung, ohne dass wir mit der Erstellung Ihrer Datei beginnen. Alle Einzelheiten, die Online-Funktion und ein Muster-Widerrufsformular finden Sie in unserer [Widerrufsbelehrung](doc:withdrawal).`,
+        `Als Verbraucher haben Sie grundsätzlich ein 14-tägiges Widerrufsrecht. Bei einer digitalen Datei erlischt es vorzeitig: Vor der Zahlung bitten wir Sie, zuzustimmen, dass wir sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung Ihrer Datei beginnen, und zu bestätigen, dass Ihnen bekannt ist, dass Sie dadurch Ihr Widerrufsrecht verlieren, sobald damit begonnen wurde. Es erlischt daher, sobald wir mit der Erstellung Ihrer Datei (der Vertragserfüllung) begonnen haben; damit beginnen wir erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist. Das gilt auch, solange die Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir noch nicht begonnen, erlischt es mit Ablauf der 14-tägigen Widerrufsfrist: Der Tag Ihrer Zahlung wird nicht mitgezählt, und fällt der letzte Tag der Frist auf einen Samstag, einen Sonntag oder einen gesetzlichen Feiertag, endet die Frist mit Ablauf des nächsten Arbeitstags. Solange Ihr Widerrufsrecht besteht, können Sie per E-Mail, per Post oder online mit der Schaltfläche „${WITHDRAWAL_ONLINE.de.button}“ widerrufen; der Widerrufslink in Ihrer Bestellbestätigung per E-Mail öffnet sie für Ihre Bestellung, ohne dass wir mit der Erstellung Ihrer Datei beginnen. Alle Einzelheiten, die Online-Funktion und ein Muster-Widerrufsformular finden Sie in unserer [Widerrufsbelehrung](doc:withdrawal).`,
       ],
     },
     {

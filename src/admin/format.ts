@@ -41,6 +41,15 @@ export function fmtNum(n: number | null | undefined): string {
   return typeof n === 'number' && Number.isFinite(n) ? String(Math.round(n * 100) / 100).replace('.', ',') : '-';
 }
 
+/** A count with the Lithuanian noun form it takes: 1, 21, 31 "kartas"; 2-9, 22-29 "kartai"; 0, 10-20, 30 "kartų". */
+export function ltCount(n: number, forms: [one: string, few: string, many: string]): string {
+  const a = Math.abs(Math.trunc(n)), d = a % 10, h = a % 100;
+  const w = d === 1 && h !== 11 ? forms[0] : d >= 2 && (h < 12 || h > 19) ? forms[1] : forms[2];
+  return `${n} ${w}`;
+}
+export const AKYS: [string, string, string] = ['akis', 'akys', 'akių'];
+export const KARTAI: [string, string, string] = ['kartas', 'kartai', 'kartų'];
+
 export function fmtBytes(b: number | null | undefined): string {
   if (typeof b !== 'number' || !Number.isFinite(b)) return '-';
   return b > 1 << 20 ? `${(b / (1 << 20)).toFixed(1).replace('.', ',')} MB` : `${Math.round(b / 1024)} kB`;
@@ -85,6 +94,13 @@ export const KIND_LT: Record<string, string> = {
   busy: 'Gemini užimtas', '400': 'Bloga užklausa', '403': 'Atmesta (403)', '429': 'Per daug (429)', '500': 'Serverio klaida',
   '502': 'Atmetė paslauga (502)', '503': 'Neprieinama (503)',
 };
+
+/** An error event's kind in words, with its HTTP status once (a label such as "Atmesta (403)" names it already). */
+export function kindLabel(kind: string | null | undefined, status?: number | null): string {
+  const k = kind || '';
+  const label = KIND_LT[k] || k;
+  return status && !label.includes(`(${status})`) ? `${label} (${status})` : label;
+}
 
 export const ENDPOINT_LT: Record<string, string> = {
   analyze: 'Analizė', deglare: 'Atspindžiai', enhance: 'Restauravimas', compose: 'Kompozicija', master_eye: '4K akis',

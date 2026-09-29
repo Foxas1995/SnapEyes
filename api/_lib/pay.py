@@ -24,6 +24,9 @@ Everything here is INACTIVE until the owner sets the environment on Vercel (valu
   CRON_SECRET            for the daily clean-up (vercel.json crons -> GET /api/order, api/_lib/cleanup.py): Vercel
                          sends it as "Authorization: Bearer <CRON_SECRET>". Without it the clean-up answers 503, and
                          a live key takes no orders (the deletions the privacy policy promises must run).
+  SNAPEYES_ADMIN_SECRET  for the owner's admin panel (/admin, api/_lib/ops.py; 32 characters or more, made with
+                         python scripts/mint_admin.py --new-secret): the admin keys are signed with it. Without it
+                         (and without a SNAPEYES_TICKET_SECRET of 32 or more characters) /api/admin answers 503.
 Tests only, ignored whenever VERCEL is set: STRIPE_API_BASE, RESEND_API_BASE and LEGAL_PACK_BASE =
 http://127.0.0.1:<port>.
 
@@ -76,8 +79,12 @@ Outside the order folders: ticketuse/<day>/<id>.json (the one order each work ti
 slots: statements per order, statements that matched no order, receipts, owner notes; no personal data),
 withdrawaddr/<yymm>/ (neutral receipts per address and month; a hash, no address), withdrawals/<yymm>/
 (statements that match no order of ours), withdrawdue/ (receipts to send again), cleanup/ (what the daily clean-up
-must do later, the days it finished, and cleanup/digest/<day>/: the statements for the owner's daily digest) and
-notes/ (owner notes not tied to an order).
+must do later, the days it finished, cleanup/digest/<day>/: the statements for the owner's daily digest, and
+cleanup/review/<order>.json: a paid order held for review, index_review(), for the owner's reminder after
+REVIEW_REMIND_HOURS), notes/ (owner notes not tied to an order) and marks/sold_live.json (the first live payment
+was recorded here: sells()). The admin panel's log of an order, ops/orderlog/<order>/ (api/_lib/ops.py), belongs to
+the order record: it is deleted with it (drop_orderlog) whenever an order goes completely, and kept with the
+records of a paid order.
 The daily clean-up (api/_lib/cleanup.py) removes unpaid orders after 26 h, the images of withdrawn orders after 14
 days, the files of paid orders 12 months after payment (the records stay), and the markers after a few days.
 
@@ -306,11 +313,52 @@ def ordering_open():
     return not ordering_problem()
 
 
+SOLD_MARK = "marks/sold_live.json"      # written with the first LIVE payment recorded in this bucket (record_paid)
+_SOLD = {"yes": False}                  # this instance saw SOLD_MARK: it never goes away
+
+
 def sells():
-    """Can a payment on this deployment have counted? Stripe configured with a live key, or a test key where test
-    orders count. False where no Stripe key was ever set (snapeyes.com before launch): then no contract can exist
-    here, and the withdrawal function stores nothing for an order that does not exist (withdraw.py)."""
-    return stripe_configured() and (stripe_live() or test_orders_allowed())
+    """Can a contract exist on this deployment? Yes when Stripe is configured with a live key, or a test key where
+    test orders count; and, whatever the keys say now, once a LIVE payment was ever recorded in this bucket
+    (ever_sold(): the owner may remove the keys to pause sales, and a real customer who then mistypes their order
+    number must still have their statement recorded). False only where nothing can have been sold (snapeyes.com
+    before launch): the withdrawal function then stores nothing for an order that does not exist (withdraw.py,
+    409 no_order)."""
+    if stripe_configured() and (stripe_live() or test_orders_allowed()):
+        return True
+    return ever_sold()
+
+
+def ever_sold():
+    """Was a LIVE payment ever recorded in this bucket (SOLD_MARK)? A storage error counts as yes: when in doubt, a
+    withdrawal statement is recorded rather than refused."""
+    if _SOLD["yes"]:
+        return True
+    try:
+        seen = store.exists(SOLD_MARK, timeout=6.0)
+    except store.StorageNotConfigured:
+        return False
+    except store.StorageError as e:
+        log(f"sold mark not readable ({e}): counted as sold")
+        return True
+    if seen:
+        _SOLD["yes"] = True
+    return bool(seen)
+
+
+def _mark_sold(order):
+    """SOLD_MARK, once (record_paid of a live payment). Never raises."""
+    if _SOLD["yes"]:
+        return
+    try:
+        store.put(SOLD_MARK, store.json_bytes({"t": int(time.time()), "iso": iso(), "order": order}),
+                  "application/json", upsert=False, timeout=6.0)
+    except store.StorageExists:
+        pass
+    except store.StorageError as e:
+        log(f"order {order}: sold mark not stored: {e}")
+        return
+    _SOLD["yes"] = True
 
 
 def session_counts(sess):
@@ -328,7 +376,7 @@ def scrub(s):
     """No key, webhook secret, order access key or signed-link token may reach a log line or a reply."""
     s = L._scrub(str(s))
     for name in ("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "SNAPEYES_SUPABASE_SERVICE_KEY",
-                 "SNAPEYES_TICKET_SECRET", "CRON_SECRET"):
+                 "SNAPEYES_TICKET_SECRET", "CRON_SECRET", "SNAPEYES_ADMIN_SECRET"):
         for part in _env(name).split(","):
             part = part.strip()
             if len(part) >= 8:
@@ -944,6 +992,8 @@ def record_paid(order, rec, sess, source, event_id=None):
         store.put(order_path(order, "paid.json"), store.json_bytes(paid), "application/json", upsert=False)
         log(f"order {order} PAID via {source}: {amount} {paid['currency']} {spec['eyes']} eye(s) {spec['style']} "
             f"live={paid['livemode']}")
+        if paid["livemode"]:
+            _mark_sold(order)
         if withdrawn(order):
             # the customer withdrew while this payment was still settling (or an old tab was paid after they
             # withdrew): nothing is made, no confirmation goes out, and the owner refunds it
@@ -1587,6 +1637,26 @@ def mark_review(order, reason, eye=0):
         pass
     except store.StorageError as e:
         log(f"order {order}: review mark not stored: {e}")
+    index_review(order, now)
+
+
+REVIEW_INDEX = "cleanup/review"    # paid orders held for a person: cleanup/review/<order>.json {"t": when held}
+REVIEW_REMIND_HOURS = 24           # held this long, the owner gets one reminder (the terms promise the file in 48 h;
+                                   # the daily run lands 24-48 h after the hold, so always before the promise)
+
+
+def index_review(order, t=None):
+    """Note that a paid order is held for a person (review.json, or an artwork waiting for release): the daily
+    clean-up reminds the owner of it once it has waited REVIEW_REMIND_HOURS (cleanup._reviews) and drops the note
+    when the hold is gone. The first note of an order is kept (upsert=False). Written wherever an order is held:
+    mark_review, order.py _to_review and compose, the admin panel's recompose. Never raises."""
+    try:
+        store.put(f"{REVIEW_INDEX}/{order}.json", store.json_bytes({"t": int(t or time.time())}), "application/json",
+                  upsert=False, timeout=6.0)
+    except store.StorageExists:
+        pass
+    except Exception as e:  # noqa: the hold itself and its note stand; only the later reminder is at stake
+        log(f"order {order}: review index not stored: {type(e).__name__} {e}")
 
 
 def hold_confirmation(order, paid, why):
@@ -1772,9 +1842,11 @@ def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.
         files = folder_files(f"orders/{order}")
         say(f"{'DELETE' if yes else 'would delete'} unpaid {order} made {rec.get('created')}: {len(files)} files")
         if yes:
-            # order.json last, so a run that stops half way leaves an order this clean-up finds again
+            # order.json last, so a run that stops half way leaves an order this clean-up finds again; the admin
+            # log of the order goes with its record, before order.json
             rest = [p for p in files if not p.endswith("/order.json")]
             store.delete_many(rest)
+            drop_orderlog(order, out=say)
             store.delete_many([p for p in files if p.endswith("/order.json")])
         else:
             left.add(order)
@@ -1822,9 +1894,10 @@ def kept_record(path):
 
 
 def erase_files(order, why, yes=True, out=None):
-    """Delete an order's files: all of them when it is unpaid; for a paid order everything but its records
-    (kept_record). deleted.json is written first, so the order page says "deleted" (410) even if a run stops half
-    way. Returns (files deleted or to delete, files in all)."""
+    """Delete an order's files: all of them when it is unpaid (its admin log, ops/orderlog/<order>/, with them:
+    nothing of the order stays); for a paid order everything but its records (kept_record), and its admin log stays
+    with them. deleted.json is written first, so the order page says "deleted" (410) even if a run stops half way.
+    Returns (files deleted or to delete, files in all)."""
     say = out or log
     files = folder_files(f"orders/{order}")
     paid = store.exists(f"orders/{order}/paid.json")
@@ -1836,8 +1909,32 @@ def erase_files(order, why, yes=True, out=None):
                   "application/json", upsert=True)
     if yes and gone:
         store.delete_many([p for p in gone if not p.endswith("/order.json")])
+        if not paid:
+            drop_orderlog(order, out=say)
         store.delete_many([p for p in gone if p.endswith("/order.json")])
     return len(gone), len(files)
+
+
+ORDERLOG_TOP = "ops/orderlog"      # the admin panel's log of one order (api/_lib/ops.py audit): part of its record
+
+
+def drop_orderlog(order, yes=True, out=None):
+    """Delete the admin panel's log of an order (ops/orderlog/<order>/) when the order goes completely (an unpaid
+    order, a lab test): the privacy policy keeps those entries only "with that order's record, for as long as the
+    record is kept". A paid order's records stay, and its log with them (never call this for one). Best effort:
+    what a failed call leaves is found by the daily clean-up (cleanup._orphan_logs). Returns how many files went
+    (or would go)."""
+    say = out or log
+    try:
+        files = folder_files(f"{ORDERLOG_TOP}/{order}")
+        if yes and files:
+            store.delete_many(files)
+    except store.StorageError as e:
+        log(f"order {order}: admin log not deleted (the daily clean-up retries): {e}")
+        return 0
+    if files:
+        say(f"{'DELETE' if yes else 'would delete'} the admin log of {order}: {len(files)} entries")
+    return len(files)
 
 
 PAID_KEEP_DAYS = 365         # the files of a paid order are kept 12 months after payment (privacy policy), then go

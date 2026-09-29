@@ -16,9 +16,11 @@ export interface WithdrawInput {
   nonce: string;       // one per form: a statement sent again after a lost answer is the same statement, not a second
 }
 
-/** How the receipt email went: sent; to be sent again later (the provider was busy); refused (a bad address);
- *  null: the server said nothing about it, or sends none on this deployment. */
-export type ReceiptMail = 'sent' | 'later' | 'failed' | null;
+/** How the receipt email went: sent; sent to the email address the order was paid with instead of the given one
+ *  (api/_lib/withdraw.py: an order's receipts to other addresses are capped, then they go to the payment email);
+ *  to be sent again later (the provider was busy); refused (a bad address); null: the server said nothing about it,
+ *  or sends none on this deployment. */
+export type ReceiptMail = 'sent' | 'redirected' | 'later' | 'failed' | null;
 
 /** What the server made of the statement. */
 export interface WithdrawDone {
@@ -34,7 +36,9 @@ export interface WithdrawDone {
   already: boolean;               // the same statement (or the order's withdrawal) was on record before
 }
 
-export type WithdrawError = 'network' | 'busy' | 'unmatched' | 'not_paid' | 'invalid' | 'paused' | 'too_many' | 'failed';
+// no_order: api/_lib/withdraw.py 409 no_order (recorded: false). On a deployment that cannot have sold anything, a
+// statement naming no stored order is NOT kept, so it must never be worded as "unmatched" (that text says we kept it)
+export type WithdrawError = 'network' | 'busy' | 'unmatched' | 'no_order' | 'not_paid' | 'invalid' | 'paused' | 'too_many' | 'failed';
 
 export type WithdrawOutcome = { kind: 'done'; done: WithdrawDone } | { kind: 'error'; code: WithdrawError; at: number | null };
 
@@ -82,6 +86,7 @@ const isoSeconds = (v: unknown): number | null => {
 
 function receipt(v: unknown): ReceiptMail {
   if (v === 'sent' || v === true) return 'sent';
+  if (v === 'redirected') return 'redirected';
   if (v === 'pending' || v === 'retry') return 'later';
   if (v === 'not_sent' || v === 'failed' || v === 'bad_address' || v === false) return 'failed';
   return null;   // "off" (no email on this deployment) or nothing said
@@ -109,6 +114,7 @@ export function readWithdrawal(v: unknown): WithdrawDone | null {
 
 function failure(r: ApiReply<unknown>): WithdrawError {
   if (r.status === 0 || (r.status >= 500 && !r.data)) return 'network';
+  if (r.reason === 'no_order') return 'no_order';
   if (r.reason === 'withdraw_paused') return 'paused';
   if (r.reason === 'too_many' || r.status === 429) return 'too_many';
   if (r.reason === 'storage_busy' || r.reason === 'payments_busy' || r.status === 503) return 'busy';

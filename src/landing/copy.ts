@@ -185,7 +185,7 @@ const en: Copy = {
       {
         title: `Order your ${PX} file`,
         body: `Choose a style and receive your artwork as a digital file, ${PX} on its longest side, rendered once in full resolution when you approve it. Ordering opens soon.`,
-        bodyOpen: `Choose a style, pay through Stripe and receive your artwork as a digital file, ${PX} on its longest side, rendered once in full resolution right after payment.`,
+        bodyOpen: `Choose a style, pay through Stripe and receive your artwork as a digital file, ${PX} on its longest side, made once in full resolution as soon as your order is confirmed.`,
       },
     ],
   },
@@ -369,7 +369,7 @@ const de: Copy = {
       {
         title: `Datei mit ${PX} bestellen`,
         body: `Wählen Sie einen Stil und erhalten Sie Ihr Kunstwerk als digitale Datei mit ${PX} an der längsten Seite. Sie wird einmalig in voller Auflösung erstellt, sobald Sie das Motiv freigeben. Bestellungen sind in Kürze möglich.`,
-        bodyOpen: `Wählen Sie einen Stil, bezahlen Sie über Stripe und erhalten Sie Ihr Kunstwerk als digitale Datei mit ${PX} an der längsten Seite, direkt nach der Zahlung einmalig in voller Auflösung erstellt.`,
+        bodyOpen: `Wählen Sie einen Stil, bezahlen Sie über Stripe und erhalten Sie Ihr Kunstwerk als digitale Datei mit ${PX} an der längsten Seite, einmalig in voller Auflösung erstellt, sobald Ihre Bestellung bestätigt ist.`,
       },
     ],
   },

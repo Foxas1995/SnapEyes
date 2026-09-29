@@ -14,7 +14,7 @@
 export type LegalLang = 'en' | 'de';
 
 /** The date every legal page prints as "Last updated". Change it whenever a legal text changes. */
-export const LEGAL_UPDATED = '2026-09-29';
+export const LEGAL_UPDATED = '2026-09-30';
 
 export function formatLegalDate(iso: string, lang: LegalLang): string {
   const [y, m, d] = iso.split('-');

@@ -10,9 +10,10 @@ is told to try again). Then:
     with. A statement that matches no order that way is kept apart (withdrawals/<yymm>/) and the owner checks it by
     hand; the page hears 404 not_found (as for an order that does not exist, so nobody learns which orders exist),
     and the given address gets a neutral receipt (the statement, the date and time it arrived, "we are checking
-    it"; nothing about any order). On a deployment that cannot have sold anything (pay.sells(): no Stripe keys, as
-    the live site before launch) a statement that names no stored order is neither stored nor answered by email:
-    409 no_order ("nothing was recorded, please check the number or email us"), so the function is no anonymous
+    it"; nothing about any order). On a deployment that cannot have sold anything (pay.sells(): no Stripe keys that
+    count, as the live site before launch, and no live payment ever recorded in the bucket) a statement that names
+    no stored order is neither stored nor answered by email: 409 with the reason code no_order and recorded false
+    ("nothing was recorded, please check the number or email us"; _no_order), so the function is no anonymous
     write path into the bucket there
   - paid, nothing made yet (making.json, a stored eye or artwork), within the period: EFFECTIVE. withdrawn.json stops
     the order (make and compose answer 409 withdrawn), the owner is told to refund the payment within 14 days, and
@@ -21,9 +22,10 @@ is told to try again). Then:
     (Art. 16(m); § 356 Abs. 5 BGB). The statement is still recorded and answered, honestly, with the reason and the
     times; the owner looks at it and replies. Making began without those conditions: effective after all
   - paid, nothing made, and the withdrawal period is over: lapsed. The period is counted as the law counts it
-    (Regulation 1182/71 Art. 3; §§ 187(1), 188(1) BGB): the day of the contract is not counted, the period ends at
-    the END of the 14th day after it, in the customer's own calendar (period_end(): the latest such end among the
-    EU time zones, so nobody loses a day to UTC)
+    (Regulation 1182/71 Art. 3; §§ 187(1), 188(1), 193 BGB): the day of the contract is not counted, the period ends
+    at the END of the 14th day after it, in the customer's own calendar, and a last day on a Saturday, a Sunday or a
+    public holiday moves to the next working day (period_end(): the latest such end anywhere in the EU, so nobody
+    loses a day to UTC, to summer time or to a holiday; see "working days" below)
   - not paid: Stripe is asked first. A session paid meanwhile is recorded and handled as paid; one still settling
     (a delayed method) makes the withdrawal effective, and a payment that arrives later is flagged for a refund
     (pay.record_paid). Otherwise there is no contract: open sessions are closed so the order cannot be paid by
@@ -68,7 +70,7 @@ withdrawal-to-<id>.json (receipts that went to another address than the payment 
 Storage: orders/<order>/withdrawal_<id>.json (the statement: name, email, time, text, outcome), _ack.json and
 _note.json beside it (the two emails, each once), withdrawal.json (the latest statement without personal data: what
 the order page shows) and withdrawn.json (the order is stopped). Kept with the order record (privacy policy)."""
-import re, time, hmac, hashlib, secrets, threading
+import re, time, hmac, hashlib, secrets, threading, datetime
 from . import iris as L
 from . import store
 from . import pay
@@ -86,7 +88,8 @@ REPEAT_RECEIPT_ORDER_MAX = 1  # receipts per order and day for repeats (not the 
 REPEAT_RECEIPT_DAY_MAX = 5   # ... and per day on the whole site
 NOTE_DAY_MAX = 10            # owner notes at once per UTC day (first statements); the rest come in the daily digest
 WITHDRAW_DAYS = 14           # the withdrawal period: 14 days after the day of the contract (the payment)
-PERIOD_ZONES = (-1, 0, 1, 2, 3)   # hours east of UTC: every EU time zone in winter and in summer (Azores to Finland)
+PERIOD_EAST = 4              # hours east of UTC of the EU's easternmost clock (Réunion; Finland to Cyprus are +2/+3)
+PERIOD_WEST = -4             # ... and of its westernmost (Guadeloupe, Martinique, Saint-Martin; the Azores are -1/0)
 REFUND_DAYS = 14             # the refund is due within 14 days of the withdrawal (Art. 13)
 DUE_DAYS = 3                 # a receipt Resend would not take is tried again by the daily clean-up this long
 RETRY_SECONDS = 12.0         # the daily clean-up spends at most this long on receipts to send again
@@ -288,22 +291,79 @@ def echo_order(s):
     return re.sub(r"\s+", " ", _PHONEISH.sub("[...]", plain(s))).strip()[:80]
 
 
+# ----------------------------------------------------------------------------- working days
+# When the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the
+# next working day: Regulation 1182/71 Art. 3(4) (which recital 41 of Directive 2011/83/EU applies to its periods)
+# and § 193 BGB. Whose holidays count is the customer's place, and we do not reliably know the customer's country
+# (the order stores no address), so the rule here is the conservative one: every Saturday and Sunday, and every
+# national public holiday of Lithuania (the seller's country) or of Germany (the main market). Holidays of other
+# countries and the holidays of single German states are NOT in it; the owner looks at every lapsed statement by
+# hand (the note says so), so a customer whose own holiday was the last day is answered personally.
+# The dates follow from fixed rules (Easter by the Gregorian computus, easter()), so the table never runs out:
+#   Lithuania (Labour Code Art. 123): 1 Jan, 16 Feb, 11 Mar, Easter Sunday and Monday, 1 May, 24 Jun, 6 Jul,
+#     15 Aug, 1 Nov, 2 Nov, 24 Dec, 25 Dec, 26 Dec (Mother's and Father's Day are Sundays anyway)
+#   Germany, the nine holidays of every state: 1 Jan, Good Friday, Easter Monday, 1 May, Ascension Day,
+#     Whit Monday, 3 Oct, 25 Dec, 26 Dec
+# For 2026 to 2028 that gives these moving dates (checked against the published calendars on 2026-09-29):
+#   2026: Good Friday 3 Apr, Easter 5/6 Apr, Ascension 14 May, Whit Monday 25 May
+#   2027: Good Friday 26 Mar, Easter 28/29 Mar, Ascension 6 May, Whit Monday 17 May
+#   2028: Good Friday 14 Apr, Easter 16/17 Apr, Ascension 25 May, Whit Monday 5 Jun
+# If either country adds or moves a holiday by law, change HOLIDAYS_LT / HOLIDAYS_DE (or their Easter offsets).
+HOLIDAYS_LT = ((1, 1), (2, 16), (3, 11), (5, 1), (6, 24), (7, 6), (8, 15), (11, 1), (11, 2), (12, 24), (12, 25),
+               (12, 26))
+EASTER_LT = (0, 1)                        # days after Easter Sunday: Easter Sunday, Easter Monday
+HOLIDAYS_DE = ((1, 1), (5, 1), (10, 3), (12, 25), (12, 26))
+EASTER_DE = (-2, 1, 39, 50)               # Good Friday, Easter Monday, Ascension Day, Whit Monday
+_EPOCH = datetime.date(1970, 1, 1)
+_HOLIDAYS = {}                            # year -> the set of its holidays (dates)
+
+
+def easter(year):
+    """Easter Sunday of a Gregorian year (the anonymous Gregorian computus, Meeus/Jones/Butcher)."""
+    a, b, c = year % 19, year // 100, year % 100
+    d, e = b // 4, b % 4
+    g = (8 * b + 13) // 25
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 19 * l) // 433
+    month = (h + l - 7 * m + 90) // 25
+    return datetime.date(year, month, (h + l - 7 * m + 33 * month + 19) % 32)
+
+
+def holidays(year):
+    """The public holidays of a year that stop a period ending on them: Lithuania's and Germany's national ones."""
+    got = _HOLIDAYS.get(year)
+    if got is None:
+        e = easter(year)
+        got = {datetime.date(year, m, d) for m, d in HOLIDAYS_LT + HOLIDAYS_DE}
+        got |= {e + datetime.timedelta(days=n) for n in EASTER_LT + EASTER_DE}
+        _HOLIDAYS[year] = got = frozenset(got)
+    return got
+
+
+def working_day(day):
+    """Is this date (datetime.date) a working day: not a Saturday or Sunday, and no holiday in holidays()?"""
+    return day.weekday() < 5 and day not in holidays(day.year)
+
+
 # ----------------------------------------------------------------------------- what the statement means
 def period_end(paid_at):
     """(end, last_day) of the withdrawal period of a contract made at paid_at (unix seconds): the day of the
-    contract is not counted, the period runs to the END of the 14th day after it (Regulation 1182/71 Art. 3;
-    §§ 187(1), 188(1) BGB). Days are the customer's own calendar days, and we do not know their time zone, so this
-    takes the latest end among PERIOD_ZONES (every EU time zone, summer time included): nobody loses the evening
-    of their last day to UTC. end: the first moment after the period (unix seconds); last_day: "YYYY-MM-DD", the
-    period's last day in that time zone."""
-    best = None
-    for h in PERIOD_ZONES:
-        o = h * 3600
-        d0 = int((float(paid_at) + o) // 86400)        # the contract's day in that zone, as days since 1970
-        end = (d0 + 1 + WITHDRAW_DAYS) * 86400 - o
-        if best is None or end > best[0]:
-            best = (end, time.strftime("%Y-%m-%d", time.gmtime((d0 + WITHDRAW_DAYS) * 86400)))
-    return best
+    contract is not counted, the period runs to the END of the 14th day after it (Regulation 1182/71 Art. 3(1)(b),
+    (2)(b); §§ 187(1), 188(1) BGB), and when that day is a Saturday, a Sunday or a holiday, to the end of the next
+    working day (Art. 3(4); § 193 BGB; working_day()). Days are the customer's own calendar days, and we know
+    neither their time zone nor whether summer time changed in between, so the contract's day is taken where it is
+    latest (PERIOD_EAST) and the last day's end where it comes latest (PERIOD_WEST): the result is never earlier
+    than the period's true end anywhere in the EU, overseas regions included (the time zones make it at most 32
+    hours later; a holiday of the other of the two countries can add a day or two). end: the first moment after the
+    period (unix seconds); last_day: "YYYY-MM-DD", the period's last day (after any move to a working day)."""
+    d0 = int((float(paid_at) + PERIOD_EAST * 3600) // 86400)    # the contract's day, as days since 1970
+    last = _EPOCH + datetime.timedelta(days=d0 + WITHDRAW_DAYS)
+    while not working_day(last):
+        last += datetime.timedelta(days=1)
+    end = ((last - _EPOCH).days + 1) * 86400 - PERIOD_WEST * 3600
+    return end, last.isoformat()
 
 
 def _began(order, n):
@@ -389,6 +449,11 @@ def withdraw(body):
 
 
 def _no_order():
+    """409 for a statement naming no stored order where nothing can have been sold (pay.sells() false). The reply
+    carries the reason code "no_order" (a code of its own: no other reply of /api/order uses it), retry false and
+    recorded false, and no "withdrawal" object: nothing was stored and nobody was emailed. The page shows its own
+    text for it (we could not find an order with this number, nothing was recorded; check the number or email the
+    withdrawal), never the "unmatched" text (that one says the statement was kept)."""
     return store.Answer(409, "no_order", "We could not find an order with this number, so nothing was recorded. Please "
                         "check the order number, or email your withdrawal to info@snapeyes.com: an email is just as "
                         "valid.", False, recorded=False)
@@ -406,7 +471,8 @@ def _withdraw(now, t, sid, name, email, given, order, k, nonce, page_lang):
         verified = "email"
     if not verified and not isinstance(rec, dict) and not pay.sells():
         # this deployment cannot have taken a payment (no Stripe keys, or test keys where test orders do not
-        # count), and no such order is stored: there is no contract to withdraw from and nothing to keep
+        # count, and no live payment was ever recorded here), and no such order is stored: there is no contract to
+        # withdraw from and nothing to keep
         pay.log(f"withdrawal for an order that does not exist, while this deployment sells nothing: not recorded")
         raise _no_order()
     if verified:
@@ -849,7 +915,10 @@ def _todo(stmt):
             f"{pay.iso(stmt.get('refund_by'))} at the latest. The order's images are deleted 14 days after the "
             f"withdrawal; its record and this statement stay.")
     if reason == "period_over":
-        detail = f"period_over: the last day was {_last_day(stmt)}"
+        detail = (f"period_over: the last day was {_last_day(stmt)}, already moved past weekends and the national "
+                  f"holidays of Lithuania and Germany; if the customer's own country or German state had a public "
+                  f"holiday on that day, the period ran to the end of the next working day there: then treat the "
+                  f"withdrawal as effective and refund it")
     else:
         detail = (f"{reason}: consent {stmt.get('consent_at')}, confirmation email "
                   f"{pay.iso(stmt['confirmation_at']) if stmt.get('confirmation_at') else '-'}, making began "

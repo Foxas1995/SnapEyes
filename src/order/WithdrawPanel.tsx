@@ -172,6 +172,7 @@ const WithdrawResult: React.FC<{ C: OrderCopy; lang: Lang; d: WithdrawDone; emai
         </>
       )}
       {d.mail === 'sent' && <p data-testid="withdraw-mail" className="text-xs text-zinc-400 mt-3 break-words">{D.mailSent(email)}</p>}
+      {d.mail === 'redirected' && <p data-testid="withdraw-mail" className="text-xs text-zinc-400 mt-3 break-words">{D.mailRedirected}</p>}
       {d.mail === 'later' && <p data-testid="withdraw-mail" className="text-xs text-amber-100/90 mt-3 break-words">{D.mailLater(email)}</p>}
       {d.mail === 'failed' && <p data-testid="withdraw-mail" className="text-xs text-amber-100/90 mt-3 break-words">{D.mailFailed(email)}</p>}
       {backHref && <a data-testid="withdraw-back" href={backHref} className={`${PLAIN_BTN} mt-4 w-full sm:w-auto`}>{C.withdraw.back}</a>}

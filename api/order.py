@@ -39,13 +39,17 @@ make: renders one eye of a PAID order at 4096 px from its stored crop and previe
   test_payment).
 compose: once every eye is made, the artwork with the paid style, layout, names and title (master_compose's own
   function), and the download link. When a check says a person should look first, the delivery waits (state review)
-  and the owner is told; scripts/order_admin.py release hands it out.
+  and the owner is told; scripts/order_admin.py release hands it out. Every hold (review.json or a held artwork) is
+  also noted in cleanup/review/ (pay.index_review): the daily clean-up reminds the owner once when it has waited
+  pay.REVIEW_REMIND_HOURS (36 h; the terms promise the file within 48 h).
 withdraw: the online withdrawal function (api/_lib/withdraw.py): records the statement with the time it arrived,
   stops the order when nothing was made yet (state withdrawn: make and compose answer 409 withdrawn, draft and
   checkout too), emails the receipt and tells the owner (at once for an order's first statement, else in the daily
   digest; every email bounded by daily ceilings). Where the right had already lapsed it is recorded and answered all
   the same. A status reply carries "withdrawal" once a statement exists. Where this deployment cannot have sold
-  anything (pay.sells()), a statement for an order that is not stored is not recorded: 409 no_order.
+  anything (pay.sells(): no keys that count, and no live payment ever recorded), a statement for an order that is
+  not stored is not recorded: 409 with the reason code "no_order" and recorded false (no "withdrawal" object, no
+  email), which the page shows with its own text (nothing was recorded: check the number, or email the withdrawal).
 
 Every reply is JSON; errors are {ok: false, reason, error, retry} as the paid endpoints answer them. API.md in the
 work notes lists them all."""
@@ -136,6 +140,7 @@ def _to_review(order, eye, reason):
                                                                    "iso": pay.iso(now)}), "application/json", upsert=True)
     except store.StorageError as e:
         pay.log(f"order {order}: review mark not stored: {e}")
+    pay.index_review(order, now)          # the daily clean-up's reminder after pay.REVIEW_REMIND_HOURS
     pay.owner_note(order, "review", f"SnapEyes: order {order} needs a look",
                    f"Order {order}, eye {eye}: {reason}.\nNothing more is rendered for this order until review.json is "
                    f"cleared.\nStatus: python scripts/order_admin.py status {order}\n")
@@ -515,6 +520,7 @@ def compose(body):
                 "needs_review": bool(r.get("needs_review")), "created_at": now, "created": pay.iso(now)}
     store.put(f"{folder}/delivery.json", store.json_bytes(delivery), "application/json", upsert=True)
     if delivery["needs_review"] and not released:
+        pay.index_review(order, now)      # the daily clean-up's reminder after pay.REVIEW_REMIND_HOURS
         pay.owner_note(order, "review", f"SnapEyes: order {order} waits for your look",
                        f"Order {order}: the artwork is made, but a check says a person should look first "
                        f"(colour or preview match).\nIt is NOT delivered until you release it:\n"

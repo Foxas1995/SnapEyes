@@ -18,7 +18,10 @@ export type Call = <T>(action: string, body?: Record<string, unknown>, timeoutMs
 type Route = { page: 'summary' | 'orders' | 'order' | 'lab' | 'stats' | 'errors'; order?: string };
 
 function readRoute(): Route {
-  const h = decodeURIComponent((typeof location !== 'undefined' ? location.hash : '').replace(/^#\/?/, ''));
+  const raw = (typeof location !== 'undefined' ? location.hash : '').replace(/^#\/?/, '');
+  // a malformed hash (a stray "%") must not blank the panel: it simply opens the summary
+  let h = '';
+  try { h = decodeURIComponent(raw); } catch { h = ''; }
   const m = /^order\/([a-z0-9][a-z0-9-]{3,63})$/.exec(h);
   if (m) return { page: 'order', order: m[1] };
   if (h === 'orders' || h === 'lab' || h === 'stats' || h === 'errors') return { page: h };
@@ -75,6 +78,7 @@ export const AdminApp: React.FC = () => {
   const [checking, setChecking] = useState(() => !!loadKey());
   const [message, setMessage] = useState('');
   const [route, setRoute] = useState<Route>(readRoute);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const on = () => setRoute(readRoute());
@@ -91,11 +95,13 @@ export const AdminApp: React.FC = () => {
       if (!live) return;
       setChecking(false);
       if (r.ok && r.data) setMe(r.data);
-      else if (r.status === 403 || r.status === 429) logout(explain(r));
+      // only a key the server refuses as such is forgotten; a 429 (wait), a refusal by the platform or a server
+      // that is not set up keeps it, so the owner can simply try again
+      else if (r.status === 403 && r.reason === 'admin_denied') logout(explain(r));
       else setMessage(explain(r));
     });
     return () => { live = false; };
-  }, [key, me, logout]);
+  }, [key, me, logout, attempt]);
 
   const call: Call = useCallback(async <T,>(action: string, body: Record<string, unknown> = {}, timeoutMs?: number) => {
     const r = await adminCall<T>(action, body, key, timeoutMs);
@@ -110,7 +116,12 @@ export const AdminApp: React.FC = () => {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center gap-3 px-4">
         {message ? <Notice>{message}</Notice> : <p className="flex items-center gap-2 text-sm"><Spinner />Tikrinamas raktas...</p>}
-        {message && <button type="button" className={BTN} onClick={() => logout('')}>Įvesti kitą raktą</button>}
+        {message && (
+          <div className="flex flex-wrap justify-center gap-2">
+            <button type="button" className={BTN} onClick={() => { setMessage(''); setChecking(true); setAttempt((a) => a + 1); }}>Bandyti dar kartą</button>
+            <button type="button" className={BTN} onClick={() => logout('')}>Įvesti kitą raktą</button>
+          </div>
+        )}
       </main>
     );
   }
