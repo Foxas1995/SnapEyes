@@ -4,8 +4,9 @@ Finds the iris, refines the limbus circle, measures size and sharpness, returns 
 A photo that shows too little of the customer's own iris pattern to restore it comes back with quality.blocked true,
 a retake message and no work ticket, the same as a circle that did not lock. quality.block_reason says why:
 "too_blurry", "too_dark" for a photo the vision model calls sharp of an iris too dark to show its pattern, or
-"pupil_too_large" for a pupil so wide that too thin a ring of iris shows (pupil_blocked), or "too_small" for an iris
-under BLOCK_DIAMETER_PX across in the original photo.
+"pupil_too_large" for a pupil so wide that too thin a ring of iris shows (pupil_blocked), "too_small" for an iris
+under BLOCK_DIAMETER_PX across in the original photo, or "eyelid" for an eyelid over too much of the iris
+(EYELID_BLOCK_PCT). quality.covered_pct is the share of the iris the lids cover, as measured (_lib/coverage.py).
 device / study: capture telemetry, cut down by telemetry() and written to the "snapeyes capture" log line only."""
 import os, sys, re, math, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -14,6 +15,7 @@ import numpy as np
 from PIL import Image
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
+from _lib import coverage as CV   # how much of the iris an eyelid covers, measured on the photo
 
 # ---- capture targets: ONE block. The verdict, the tips and the "targets" the capture screen shows all read
 # these, so the numbers a customer is told can never disagree with the numbers that judge the photo.
@@ -473,6 +475,36 @@ BLOCK_SMALL_MESSAGE = ("Your iris is too small in this photo, so too little of i
                        "the iris fills about a third of the frame, tap the iris to focus and shoot again.")
 BLOCK_MESSAGES["too_small"] = BLOCK_SMALL_MESSAGE
 
+# ---- the eyelid block. Lid skin, the lash line or lashes over part of the iris (a shot at an angle, where the upper
+# lid cuts across the iris, or an eye not opened wide) are painted over with iris fibres by the studio model, and the
+# artwork looks fake, as if seen through the lid (the owner, 2026-09-29: Drive photos d02/d04/d05, test photos 06,
+# 19, 21). The vision model's occlusion number cannot carry a block (0 for d04's lid wedge; 15-27 for one photo on
+# different calls), so _lib/coverage.py measures the lids on the photo: wedge_pct, the largest single lid as a share
+# of the iris disc, from any direction (a thin cap at the top and another at the bottom pass; one wedge does not).
+# Calibration (wave-lid/fx, this analyze() and coverage.py on 50 photos with an iris and the circle their labels were
+# read on, the vision model stubbed): the 30 test photos, the owner's 4, the 2 site samples and 14 Drive photos, each
+# labelled by eye with the share of the iris a lid hides (wave-lid/labels.json). The labelled passes read at most 9.9
+# (05: a lid margin and its shadow band, labelled 9 %, "borderline"; its other live circle 11.5) and 9.8 (22); every
+# other one 7.3 or less (the owner's four 0-1.9, the owner's showcase 30: 2.6). The lids read 12.5 and up: 12.7-14.3
+# (d02, d04, d05: the owner's angled lid wedge), 12.5 (w08), 14.5-20.7 (06, 19, 21, 27, w02, w03, w10). The line sits
+# in the empty band between the two: 10 of the 20 labelled lids read over it (w08 is too small first) and 0 of the 30
+# clean photos; with the other blocks 15 of the 20 get no ticket. Not caught: a curtain of dark lashes or mascara with
+# little lid skin inside the circle (09 reads 8.6; 11, 25, 29 and w12 0-7.3) and 26's hooded lid (9.9). On the circles
+# the live refinement locks (a 3-10 % move) w10 reads 11.3 and passes; the clean photos read at most 10.0 there.
+# Bars (wave-lid/fx/h.py, the 23 clean passing photos, the circle pinned): window, sky and warm-lamp reflections 3 of
+# 414 blocked (30 under a warm lamp, 22 beside a side window), light ramps, caustics, veils and arcus 3 of 460,
+# contrast, saturation and sharpening edits 0 of 184, the circle moved by 2 % 3 of 621, exposure +-1 EV, casts,
+# re-encoding, noise, blur and 4-5 % circle moves 3 of 345 (05 and 22 only, their own lid margins). The real lids stay
+# blocked turned to any of 24 angles (240 of 240, 26 aside) and in 137 of 150 changed copies; real lids pasted over
+# 19 clean eyes are blocked in 82 % of 3360 cases (15-40 % of the iris, 8 directions). The existing "open wide" tip
+# (OCCL_TIP_PCT) stays for the lighter cases.
+EYELID_BLOCK_PCT = 12.0
+BLOCK_EYELID_MESSAGE = ("Your eyelid covers part of your iris in this photo, so we have not used it: the studio would "
+                        "have to paint iris over the lid, and that looks fake. Please retake it looking straight into "
+                        "the lens, not at an angle, with the eye open wide: lift the upper lid gently with a fingertip, "
+                        "and keep your lashes and mascara out of the iris.")
+BLOCK_MESSAGES["eyelid"] = BLOCK_EYELID_MESSAGE
+
 def pupil_blocked(crop, pupil_r, pad, locked):
     """(blocked, pupil_size): True when the pupil fills so much of the iris that the artwork would have to invent
     the iris (see PUPIL_BLOCK). pupil_size is the pupil measured on the crop, in iris radii, None when its edge
@@ -554,6 +586,10 @@ TEXT_DE = {
                  "müsste es erfinden. Halten Sie das Smartphone etwa 10 cm vor Ihr Auge, mit der Rückkamera und 2-fachem "
                  "Zoom, sodass die Iris etwa ein Drittel des Bildes füllt, tippen Sie zum Scharfstellen auf die Iris und "
                  "fotografieren Sie erneut.",
+    "eyelid": "Ihr Augenlid verdeckt auf diesem Foto einen Teil Ihrer Iris, daher haben wir es nicht verwendet: Das Studio "
+              "müsste Iris über das Lid malen, und das wirkt unecht. Bitte nehmen Sie es neu auf und schauen Sie dabei gerade "
+              "in die Kamera, nicht schräg, mit weit geöffnetem Auge: Heben Sie das Oberlid sanft mit einer Fingerspitze an "
+              "und halten Sie Wimpern und Wimperntusche aus der Iris heraus.",
     "closer": "Gehen Sie näher heran oder nutzen Sie den 2-fachen Zoom: Die Iris misst {px} px, wir brauchen {good} px oder mehr.",
     "fibres": "Die Fasern sind noch nicht scharf erkennbar. Tippen Sie auf die Iris, damit die Kamera scharfstellt, stützen Sie "
               "das Smartphone an etwas Festem ab und fotografieren Sie erneut.",
@@ -702,6 +738,16 @@ def analyze(body):
     # too small to hold the customer's own pattern (BLOCK_DIAMETER_PX): come closer, whatever else the lines read
     if locked and diam_orig < BLOCK_DIAMETER_PX:
         blocked, block_by, reason = True, "size", "too_small"
+    # an eyelid over too much of the iris (EYELID_BLOCK_PCT): look straight into the lens and open the eye wide. Read on
+    # every locked photo for the capture log; it blocks only a photo nothing above blocked (their fix comes first). A
+    # failure of the measure costs no one the analysis: it is logged and blocks nothing
+    try:
+        cover = CV.lid_cover(im, cx, cy, r, pupil_r) if locked else None
+    except Exception as e:  # noqa
+        cover = None
+        print("snapeyes lid_cover " + json.dumps({"error": L._scrub(repr(e))[:160]}), flush=True)
+    if cover is not None and not blocked and cover["wedge_pct"] >= EYELID_BLOCK_PCT:
+        blocked, block_by, reason = True, "eyelid", "eyelid"
     # a curved hand-shake no line sees: asked only of a locked photo nothing above blocked, under 'ok' (SHAKE_CONF)
     shake = shake_seen(im, cx, cy, r) if locked and not blocked and basis < FIBRE_OK else None
     if shake is not None and shake[0] and shake[1] >= SHAKE_CONF:
@@ -765,7 +811,10 @@ def analyze(body):
                "direction": None if direction is None else round(direction, 3),
                "direction_fine": None if direction_fine is None else round(direction_fine, 3),
                "softness": None if softness is None else round(softness, 3),
-               "blocked": blocked, "block_by": block_by, "block_reason": reason, "pupil_size": pupil_size}
+               "blocked": blocked, "block_by": block_by, "block_reason": reason, "pupil_size": pupil_size,
+               "covered_pct": None if cover is None else cover["covered_pct"],
+               "lid_wedge_pct": None if cover is None else cover["wedge_pct"],
+               "lid_side": None if cover is None else cover["side"], "lid_tilt": None if cover is None else cover["tilt"]}
     if device is not None: capture["device"] = device
     if study is not None: capture["study"] = study
     print("snapeyes capture " + json.dumps(capture), flush=True)
@@ -787,7 +836,9 @@ def analyze(body):
                         "direction": None if direction is None else round(direction, 3),
                         "direction_fine": None if direction_fine is None else round(direction_fine, 3),
                         "softness": None if softness is None else round(softness, 3), "blocked": blocked,
-                        "block_reason": reason, "pupil_size": pupil_size},
+                        "block_reason": reason, "pupil_size": pupil_size,
+                        "covered_pct": None if cover is None else cover["covered_pct"],
+                        "lid_wedge_pct": None if cover is None else cover["wedge_pct"]},
             "targets": TARGETS,
             "preview": L.pil_to_b64(crop.resize((320, 320), Image.LANCZOS), "JPEG", 85)}
 

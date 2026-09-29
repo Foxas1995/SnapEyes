@@ -10,7 +10,7 @@ import { CHECKOUT_LEGAL } from '../shared/legal';
 
 /** The reasons api/analyze.py gives for blocking a shot (quality.block_reason). A blocked shot gets no work
  *  ticket, so the page offers only a retake. */
-export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large' | 'too_small';
+export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large' | 'too_small' | 'eyelid';
 
 /** What the page says about a blocked shot. badge: the verdict pill; title: the retake card's heading; reason:
  *  why, in one line, on the single-photo card (the steps follow in the retake card, so the server's own message,
@@ -173,6 +173,22 @@ const en = {
           LIGHT,
           FOCUS,
           STEADY,
+        ],
+      },
+      // an eyelid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would paint iris over the lid.
+      // A sideways glance lets the upper lid slide across the iris, so looking into the lens comes first
+      eyelid: {
+        badge: 'Eyelid in the way',
+        title: 'Your eyelid covers part of your iris',
+        reason: 'Part of your iris is hidden under your eyelid or lashes in this photo, so it is not used.',
+        error: 'Your eyelid covers part of your iris in this photo. Please retake it following the steps below.',
+        retakeLine: 'Your eyelid covers part of your iris in this shot. Look straight into the lens, open the eye wide and lift the upper lid gently with a fingertip.',
+        thumb: 'eyelid',
+        steps: [
+          'Look straight into the lens, not at an angle: a sideways glance lets the upper lid slide over the iris.',
+          'Open the eye wide and lift the upper lid gently with a fingertip, so no skin, lashes or mascara cross the iris.',
+          CAMERA,
+          'Tap the iris on the screen to focus, hold the phone steady and take 3-5 shots.',
         ],
       },
     } satisfies Record<BlockReason, BlockCopy>,
@@ -507,6 +523,20 @@ const de: TryCopy = {
           LIGHT_DE,
           FOCUS_DE,
           STEADY_DE,
+        ],
+      },
+      eyelid: {
+        badge: 'Lid im Weg',
+        title: 'Ihr Augenlid verdeckt einen Teil Ihrer Iris',
+        reason: 'Auf diesem Foto liegt ein Teil Ihrer Iris unter dem Augenlid oder den Wimpern. Daher verwenden wir es nicht.',
+        error: 'Ihr Augenlid verdeckt auf diesem Foto einen Teil Ihrer Iris. Bitte nehmen Sie es mit den Schritten unten neu auf.',
+        retakeLine: 'Ihr Augenlid verdeckt auf dieser Aufnahme einen Teil Ihrer Iris. Schauen Sie gerade in die Kamera, öffnen Sie das Auge weit und heben Sie das Oberlid sanft mit einer Fingerspitze an.',
+        thumb: 'Lid',
+        steps: [
+          'Schauen Sie gerade in die Kamera, nicht schräg: Bei einem seitlichen Blick schiebt sich das Oberlid über die Iris.',
+          'Öffnen Sie das Auge weit und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit weder Haut noch Wimpern oder Wimperntusche über der Iris liegen.',
+          CAMERA_DE,
+          'Tippen Sie zum Scharfstellen auf die Iris, halten Sie das Smartphone ruhig und machen Sie 3-5 Aufnahmen.',
         ],
       },
     } satisfies Record<BlockReason, BlockCopy>,
