@@ -375,6 +375,85 @@ def delete(path, timeout=10.0, retry=True):
         return True
 
 
+def list_folder(folder, limit=1000, timeout=15.0, retry=True, offset=0, search=""):
+    """What lies directly in one folder: a list of {"name", "folder": bool}, files and sub-folders, sorted by
+    name. For housekeeping and counting only (scripts/order_admin.py purge, the daily clean-up, the upload
+    ceiling): Supabase lists a folder case-insensitively (see exists()), so a listing is never the answer to "is
+    this object there?". Order ids are lower case, so the orders/ listing names each order folder once.
+    offset: page through a folder of more than `limit` entries. search: only names that start with this text
+    (letters, digits and "-" only: Supabase matches prefix + search with ILIKE, so "_" or "%" would be wildcards)."""
+    _check_path(folder)
+    limit = int(max(1, min(1000, int(limit))))
+    offset = int(max(0, int(offset)))
+    search = str(search or "")
+    if search and not re.fullmatch(r"[A-Za-z0-9-]{1,64}", search):
+        raise StorageError("list: refused an invalid search text")
+    d = _local_dir()
+    if d:
+        base = _local_file(d, folder)
+        if not base.is_dir():
+            return []
+        out = [{"name": p.name, "folder": p.is_dir()} for p in base.iterdir()
+               if not p.name.endswith(".part") and p.name.lower().startswith(search.lower())]
+        return sorted(out, key=lambda x: x["name"])[offset:offset + limit]
+    url, key, bucket = _require()
+    body = {"prefix": folder.rstrip("/") + "/", "limit": limit, "offset": offset,
+            "sortBy": {"column": "name", "order": "asc"}}
+    if search:
+        body["search"] = search
+    r = _call(f"list {folder}", "POST", f"{url}/storage/v1/object/list/{quote(bucket)}", timeout, retry,
+              json=body, headers=_headers(key))
+    if r.status_code != 200:
+        raise StorageError(f"list {folder}: HTTP {r.status_code} {_safe(r.text)}")
+    try:
+        rows = r.json()
+    except ValueError:
+        raise StorageError(f"list {folder}: unreadable reply") from None
+    out = []
+    for row in rows if isinstance(rows, list) else []:
+        name = row.get("name") if isinstance(row, dict) else None
+        if isinstance(name, str) and name and name != ".emptyFolderPlaceholder":
+            out.append({"name": name, "folder": row.get("id") is None})
+    return out
+
+
+def list_all(folder, search="", page=1000, max_pages=50, timeout=15.0):
+    """list_folder, every page of it (at most max_pages pages)."""
+    out = []
+    for n in range(max_pages):
+        rows = list_folder(folder, limit=page, timeout=timeout, offset=n * page, search=search)
+        out += rows
+        if len(rows) < page:
+            break
+    return out
+
+
+def delete_many(paths, timeout=15.0, retry=True, chunk=100):
+    """Remove many objects, up to `chunk` per request (Supabase's delete takes a list). Returns how many requests
+    were sent. Paths that are not there are simply not removed."""
+    paths = [_check_path(p) for p in paths]
+    d = _local_dir()
+    if d:
+        for p in paths:
+            try:
+                _local_file(d, p).unlink()
+            except FileNotFoundError:
+                pass
+        return len(paths) and 1
+    if not paths:
+        return 0
+    url, key, bucket = _require()
+    sent = 0
+    for i in range(0, len(paths), chunk):
+        part = paths[i:i + chunk]
+        r = _call(f"delete {len(part)} objects", "DELETE", f"{url}/storage/v1/object/{quote(bucket)}", timeout, retry,
+                  json={"prefixes": part}, headers=_headers(key))
+        if r.status_code != 200:
+            raise StorageError(f"delete {len(part)} objects: HTTP {r.status_code} {_safe(r.text)}")
+        sent += 1
+    return sent
+
+
 # ----------------------------------------------------------------------------- the stored file format
 _SRGB = None
 

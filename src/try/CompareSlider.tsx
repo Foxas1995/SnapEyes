@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { MoveHorizontal } from 'lucide-react';
+import { T } from './copy';
 
 interface Props {
   before: string;
@@ -9,7 +10,7 @@ interface Props {
 }
 
 /** Before/after slider: both images fill the same square, the "after" layer is clipped at the handle. Works with touch and mouse. */
-export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = 'Your photo', afterLabel = 'Restored' }) => {
+export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = T.result.sliderBefore, afterLabel = T.result.sliderAfter }) => {
   const [pos, setPos] = useState(50);
   const [dragging, setDragging] = useState(false);
   const box = useRef<HTMLDivElement>(null);

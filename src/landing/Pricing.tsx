@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { useLang } from './lang';
-import { MAX_EYES, PRICE_CENTS, TRY_URL, centsForEyes } from './config';
+import { MAX_EYES, PRICE_CENTS, centsForEyes, tryUrl } from './config';
 import { formatEuro } from './copy';
+import { useOrderingOpen } from './ordering';
 import { SectionHead } from './ui';
 
 function Card({ title, children, accent = false, className = '' }: { title: string; children: ReactNode; accent?: boolean; className?: string }) {
@@ -26,9 +27,11 @@ function Row({ label, value, note }: { label: string; value: string; note?: stri
   );
 }
 
-// No purchase buttons: ordering is not open yet (no checkout). The only action is the free preview.
+// No purchase buttons here: an order starts from the customer's own preview on /try, so the only action is the free
+// preview. The notice says "ordering opens soon" until src/landing/ordering.ts finds that this deployment takes orders.
 export function Pricing() {
   const { t, lang } = useLang();
+  const open = useOrderingOpen();
   const p = t.pricing;
   const eur = (c: number) => formatEuro(c, lang);
   return (
@@ -38,7 +41,7 @@ export function Pricing() {
 
         <p role="note" className="mt-8 inline-flex items-start gap-3 rounded-2xl border border-[#f5c542]/30 bg-[#f5c542]/[0.06] px-5 py-3.5 text-[15px] font-medium text-[#f7d77a]">
           <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#f5c542]" />
-          <span>{p.notice}</span>
+          <span>{open ? p.noticeOpen : p.notice}</span>
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -53,7 +56,7 @@ export function Pricing() {
               ))}
             </ul>
             <a
-              href={TRY_URL}
+              href={tryUrl(lang)}
               className="mt-7 inline-flex min-h-11 items-center justify-center rounded-full border border-[#f5c542]/60 px-5 py-2.5 text-center text-sm font-semibold text-[#f5c542] transition-colors hover:bg-[#f5c542] hover:text-[#030408] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] sm:mt-auto"
             >
               {t.cta}

@@ -131,6 +131,11 @@ _LOCAL = threading.local()   # per-invocation deadline: one warm container can s
 def deadline():
     return getattr(_LOCAL, "deadline", 0.0)
 
+def page_lang():
+    """The language of the page this request came from: "de" when run() parsed a body saying so, else "en" (also
+    outside run(): tests, scripts). The preview watermark is drawn in it (WATERMARK_TEXT)."""
+    return "de" if getattr(_LOCAL, "lang", "en") == "de" else "en"
+
 def time_left(default=BUDGET):
     d = deadline()
     return default if d <= 0 else d - time.time()
@@ -200,6 +205,11 @@ def run(req, fn, gate=True):
     """Wrap a handler body: gate, parse JSON, run, serialise, catch errors."""
     t0 = time.time()
     _LOCAL.deadline = t0 + BUDGET
+    # the capture screen sends its page's language ("lang": "de"): the sentences below then come in German, and so
+    # does the preview watermark (page_lang). Known only once the body is parsed, so the gate's refusals and an
+    # unreadable body stay English; a ClientError's text is its raiser's, as it is
+    de = False
+    _LOCAL.lang = "en"            # never the language of the request this thread served before
     try:
         if gate and not json_content_type(req):
             return send_json(req, 415, {"ok": False, "error": "Send application/json."})
@@ -208,6 +218,8 @@ def run(req, fn, gate=True):
         body = read_json(req)
         if not isinstance(body, dict):   # [], "x", 5 or null parse as JSON too; every endpoint takes an object
             raise ClientError("Send a JSON object.")
+        de = body.get("lang") == "de"
+        _LOCAL.lang = "de" if de else "en"
         out = fn(body)
         out["ms"] = int((time.time() - t0) * 1000)
         send_json(req, 200, out)
@@ -216,22 +228,32 @@ def run(req, fn, gate=True):
         send_json(req, 400, {"ok": False, "error": str(e), "ms": int((time.time() - t0) * 1000)})
     except PermissionError as e:
         print("snapeyes refused:", _scrub(repr(e))[:200], flush=True)
-        msg = ("This download link has expired or does not belong to this order. Please open the link from your "
-               "order again, or write to info@snapeyes.com." if isinstance(e, UnlockError)
-               else "This session expired. Please take the photo again.")
+        if isinstance(e, UnlockError):
+            msg = ("Dieser Download-Link ist abgelaufen oder gehört nicht zu dieser Bestellung. Bitte öffnen Sie den Link "
+                   "aus Ihrer Bestellung erneut oder schreiben Sie an info@snapeyes.com." if de else
+                   "This download link has expired or does not belong to this order. Please open the link from your "
+                   "order again, or write to info@snapeyes.com.")
+        else:
+            msg = ("Diese Sitzung ist abgelaufen. Bitte fotografieren Sie Ihr Auge erneut." if de else
+                   "This session expired. Please take the photo again.")
         send_json(req, 403, {"ok": False, "error": msg, "ms": int((time.time() - t0) * 1000)})
     except ValueError as e:
         print("snapeyes bad input:", _scrub(repr(e))[:200], flush=True)
-        send_json(req, 400, {"ok": False, "error": "We could not read that image. Try another photo.",
+        send_json(req, 400, {"ok": False, "error": ("Wir konnten dieses Bild nicht lesen. Bitte versuchen Sie es mit einem "
+                                                    "anderen Foto." if de else
+                                                    "We could not read that image. Try another photo."),
                              "ms": int((time.time() - t0) * 1000)})
     except ModelBusy as e:
         print("snapeyes model busy:", _scrub(repr(e))[:300], flush=True)
-        send_json(req, 503, {"ok": False, "error": "Our studio is very busy right now. Please try again in a minute.",
+        send_json(req, 503, {"ok": False, "error": ("Unser Studio ist gerade sehr ausgelastet. Bitte versuchen Sie es in "
+                                                    "einer Minute erneut." if de else
+                                                    "Our studio is very busy right now. Please try again in a minute."),
                              "ms": int((time.time() - t0) * 1000)})
     except Exception as e:  # noqa
         # detail goes to the Vercel log only; the caller gets a sentence, never internals
         print("snapeyes handler error:", _scrub(repr(e))[:600], flush=True)
-        send_json(req, 500, {"ok": False, "error": "Something went wrong on our side. Please try again.",
+        send_json(req, 500, {"ok": False, "error": ("Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut." if de
+                                                    else "Something went wrong on our side. Please try again."),
                              "ms": int((time.time() - t0) * 1000)})
 
 # ----------------------------------------------------------------------------- image helpers
@@ -3914,8 +3936,16 @@ def _caption(out, st, title, names, cx, y_title, y_names, y_footer, u):
     d.text((cx, y_footer), ARTWORK_FOOTER, font=fs, fill=(150, 155, 170), anchor="mm")
 
 WATERMARK_ANGLE = -18
+# The preview watermark's words, (tile, badge), in the language of the page that asked for the preview (page_lang).
+# The German badge ends in the words of the German buy button ("Datei in voller Größe kaufen"). Both German lines
+# were measured on every canvas /api/compose makes: the badge's pill is at most 592 px wide on the 1024 px square
+# and 391 px on the 473 px wide wallpaper, the tile text 542 px against a 716 px tile step at 1024.
+WATERMARK_TEXT = {
+    "en": ("SNAPEYES.COM  ·  PREVIEW", "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"),
+    "de": ("SNAPEYES.COM  ·  VORSCHAU", "VORSCHAU MIT WASSERZEICHEN  ·  DATEI IN VOLLER GRÖSSE KAUFEN"),
+}
 
-def _watermark_layer(W, H, u):
+def _watermark_layer(W, H, u, text=WATERMARK_TEXT["en"][0]):
     """The rotated text tile for a W x H artwork. Defined as: draw the tile on a 2W x 2H layer, rotate it
     WATERMARK_ANGLE degrees about its centre (bicubic), crop the central W x H. Built here without the 2W x 2H
     layer: only the window the rotation can sample is drawn (rows of text start on their own grid, so the
@@ -3941,26 +3971,28 @@ def _watermark_layer(W, H, u):
         if y + step_y < wy0 or y > sy1:
             continue
         for x in range(0, W * 2, step_x):
-            ld.text((x + (y // step_y % 2) * u * 0.35, y - wy0), "SNAPEYES.COM  ·  PREVIEW", font=fw, fill=(255, 255, 255, 40))
+            ld.text((x + (y // step_y % 2) * u * 0.35, y - wy0), text, font=fw, fill=(255, 255, 255, 40))
     return layer.transform((W, H), Image.AFFINE, (a, b, c, d, e, f - wy0), resample=Image.BICUBIC)
 
-WATERMARK_BADGE = "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"
+WATERMARK_BADGE = WATERMARK_TEXT["en"][1]   # the English badge (kept under its old name)
 
-def _watermark(out, accent, u, tile_u=None, note=None):
+def _watermark(out, accent, u, tile_u=None, note=None, lang=None):
     """The preview watermark: a faint rotated tile of SNAPEYES.COM PREVIEW over the whole artwork and a badge
     at the top centre. u is the badge scale; for the square single-eye artwork it is the side. tile_u is the
     tile's scale, u when not given. The badge's pill is cut to its measured text plus a margin, so the words
     stay inside it on every canvas (a fixed 0.28 u pill left 40 px of text outside each end at 1024).
     note: one short line under the badge, for a style that draws no caption (Studio Black), so a saved preview of
-    the AI-generated sample eye still says so in its pixels."""
+    the AI-generated sample eye still says so in its pixels. lang: the words' language (WATERMARK_TEXT), the
+    requesting page's (page_lang) when not given; English draws exactly the pixels it always did."""
+    tile, badge = WATERMARK_TEXT.get(lang or page_lang(), WATERMARK_TEXT["en"])
     W, H = out.size
-    layer = _watermark_layer(W, H, tile_u or u)
+    layer = _watermark_layer(W, H, tile_u or u, tile)
     out = Image.alpha_composite(out.convert("RGBA"), layer).convert("RGB")
     del layer
     d = ImageDraw.Draw(out); fp = _font("PlusJakartaSans.ttf", int(u * 0.016), "Bold")
-    half = min(W / 2.0 - 2.0, d.textlength(WATERMARK_BADGE, font=fp) / 2.0 + u * 0.022)
+    half = min(W / 2.0 - 2.0, d.textlength(badge, font=fp) / 2.0 + u * 0.022)
     d.rounded_rectangle((W / 2.0 - half, u * 0.03, W / 2.0 + half, u * 0.07), radius=int(u * 0.02), fill=(0, 0, 0, 200), outline=accent)
-    d.text((W / 2, u * 0.05), WATERMARK_BADGE, font=fp, fill=accent, anchor="mm")
+    d.text((W / 2, u * 0.05), badge, font=fp, fill=accent, anchor="mm")
     if note:
         fn, txt = _font("PlusJakartaSans.ttf", int(u * 0.014), "Bold"), str(note).upper()
         hn = min(W / 2.0 - 2.0, d.textlength(txt, font=fn) / 2.0 + u * 0.016)

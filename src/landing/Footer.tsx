@@ -2,6 +2,7 @@ import type { Ref } from 'react';
 import { useLang } from './lang';
 import { CONTACT_EMAIL, SELLER } from './config';
 import { CtaLink, CtaNote, Logo } from './ui';
+import { LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 
 export function FinalCta({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
   const { t } = useLang();
@@ -25,8 +26,9 @@ export function FinalCta({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
 }
 
 export function Footer() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const f = t.footer;
+  const legal = LEGAL_LABELS[lang];
   const year = 2026;
   return (
     <footer className="border-t border-white/[0.06] bg-[#020306] pb-28 pt-14 md:pb-14">
@@ -44,6 +46,19 @@ export function Footer() {
           <span className="block">
             {SELLER.postcode} {SELLER.city}, {f.country}
           </span>
+          {SELLER.representative && (
+            <span className="block">
+              {f.representedBy} {SELLER.representative}
+            </span>
+          )}
+          {SELLER.phone && (
+            <span className="mt-3 block">
+              {f.phone}:{' '}
+              <a href={`tel:${SELLER.phone.replace(/[^+\d]/g, '')}`} className="text-zinc-200 underline underline-offset-4 hover:text-[#f5c542]">
+                {SELLER.phone}
+              </a>
+            </span>
+          )}
           {CONTACT_EMAIL && (
             <span className="mt-3 block">
               {f.contact}:{' '}
@@ -61,9 +76,19 @@ export function Footer() {
           <a href="#faq" className="hover:text-white">{t.nav.faq}</a>
         </nav>
       </div>
-      <p className="mx-auto mt-12 max-w-6xl px-4 text-xs text-zinc-400 sm:px-6">
-        © {year} {f.rights}
-      </p>
+      <div className="mx-auto mt-12 flex max-w-6xl flex-col gap-4 border-t border-white/[0.06] px-4 pt-6 text-xs text-zinc-400 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p>
+          © {year} {f.rights}
+        </p>
+        {/* the legal pages (src/legal), in the language the visitor reads now */}
+        <nav aria-label={legal.nav} className="flex flex-wrap gap-x-5 gap-y-2">
+          {LEGAL_DOCS.map((d) => (
+            <a key={d} href={legalHref(d, lang)} className="hover:text-white">
+              {legal[d]}
+            </a>
+          ))}
+        </nav>
+      </div>
     </footer>
   );
 }

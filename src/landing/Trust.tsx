@@ -1,14 +1,16 @@
-import { Ban, Clock, Lock, Mail, Trash2 } from 'lucide-react';
+import { ArrowRight, Ban, Clock, Lock, Mail, Trash2 } from 'lucide-react';
 import { useLang } from './lang';
 import { CONTACT_EMAIL, styleSrc } from './config';
 import { SectionHead } from './ui';
+import { legalHref } from '../shared/legal';
 
 const PRIVACY_ICONS = [Lock, Ban, Trash2, Clock];
 
 // Curator note and privacy promise. The personal "send me your photos" offer only renders when
-// CONTACT_EMAIL is set: snapeyes.com cannot receive mail yet.
+// CONTACT_EMAIL is set. The promise must match the privacy policy (src/legal/docs/privacy.ts): free previews are
+// not stored; paid orders keep their files (not the phone photo) for 12 months.
 export function Trust() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const c = t.curator;
   const pv = t.privacy;
   return (
@@ -66,10 +68,17 @@ export function Trust() {
               );
             })}
           </ul>
-          {/* who is responsible, and the rights every visitor has (GDPR Art. 13 basics; full notice: owner) */}
+          {/* who is responsible and the rights every visitor has; the full notice is the privacy policy (/privacy) */}
           <div className="mt-8 border-t border-white/[0.06] pt-6 text-sm leading-relaxed text-zinc-400">
             <p>{pv.controller}</p>
             <p className="mt-2">{pv.rights}</p>
+            <a
+              href={legalHref('privacy', lang)}
+              className="mt-4 inline-flex items-center gap-2 font-semibold text-zinc-200 underline decoration-[#f5c542]/50 underline-offset-4 hover:text-[#f5c542] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm"
+            >
+              {pv.policyLink}
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </a>
           </div>
         </div>
       </div>

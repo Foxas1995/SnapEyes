@@ -2,6 +2,7 @@
 // for the eyes on the artwork, and the capture-study payloads. No React and no DOM here.
 import { PRICE_CENTS } from '../landing/config';
 import type { Analysis } from './shots';
+import type { Lang } from './lang';
 
 /** api/_lib/iris.py MULTI_MAX: the most eyes one artwork holds. */
 export const MAX_EYES = 8;
@@ -23,7 +24,15 @@ export interface Eye {
   diameterPx?: number;
   sample: boolean;      // the site's AI-generated demo eye, never a customer's
   colourOff: boolean;   // the engine's own colour check measured this restoration as off from the photo
+  // what ordering this eye needs (./checkout.ts): null for the AI-generated sample, which is never ordered, and for
+  // an eye brought back after the payment page (it is in the order by then). image above is the preview string
+  // /api/enhance returned, byte for byte: the draft upload sends exactly that.
+  draft?: EyeDraft | null;
 }
+
+/** What an eye needs to be uploaded as a draft: the deglared crop its preview was made from (/api/deglare's crop) and
+ *  its work ticket from /api/analyze. until: the local time (ms) after which the ticket is too old to use. */
+export interface EyeDraft { crop: string; ticket: string; until: number }
 
 /** The colour QA /api/enhance returns (api/_lib/iris.py colour_qa). All optional: an older server sends none. */
 export interface ColourQa { ring_de00?: number | null; pupil_neutral?: boolean | null; ok?: boolean }
@@ -81,8 +90,12 @@ export function priceCents(n: number, style: string): number {
 
 export { PRICE_CENTS };
 
-const EURO = new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' });
-export const euro = (cents: number): string => EURO.format(cents / 100);
+// as the landing page writes a price (src/landing/copy.ts formatEuro): "€19.97" in English, "19,97 €" in German
+const EURO: Record<Lang, Intl.NumberFormat> = {
+  en: new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }),
+  de: new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }),
+};
+export const euro = (cents: number, lang: Lang = 'en'): string => EURO[lang].format(cents / 100);
 
 // ---- capture study (?study=1): the owner's family test
 

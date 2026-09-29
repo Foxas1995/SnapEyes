@@ -510,8 +510,65 @@ def telemetry(v, depth=0):
         return {"dropped": "too_large"}
     return out
 
+# ---- the customer-facing sentences in German, for a request with "lang": "de" (the capture screen sends its page's
+# language). The English ones stay where they are, word for word, and any other lang (or none) gets them. Formal "Sie"
+# and the landing page's words; the capture screen (src/try/shots.ts visibleTips, topTip) recognises three tips by
+# "automatisch", "Spiegelung" + "Pupille" and "näher", so keep those words in them.
+TEXT_DE = {
+    "no_eye": "Auf diesem Foto haben wir kein Auge gefunden. Füllen Sie das Bild mit einem geöffneten Auge und versuchen Sie "
+              "es erneut.",
+    "lamp": "Lampenlicht verfälscht Ihre Augenfarbe. Tageslicht von einem Fenster gibt die Farbe echter wieder.",
+    "dark_iris": "Ihre Iris ist dunkel, daher sind ihre Fasern nur schwach zu sehen. Stellen Sie sich bei Tageslicht nah an ein "
+                 "helles Fenster (keine direkte Sonne), das Fenster seitlich, und fotografieren Sie erneut: Mehr Licht bringt "
+                 "sie hervor. Eine Schreibtischlampe oder eine Taschenlampe verändert Ihre Augenfarbe.",
+    "too_blurry": "Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren, daher haben wir es nicht verwendet: Das "
+                  "Studio müsste das Muster erfinden. Bitte nehmen Sie es bei Tageslicht von einem seitlichen Fenster neu auf, "
+                  "mit der Rückkamera und 2-fachem Zoom, tippen Sie zum Scharfstellen auf die Iris und halten Sie das "
+                  "Smartphone ruhig.",
+    "too_dark": "Ihre Iris ist dunkel und auf diesem Foto war zu wenig Licht, um ihr eigenes Muster zu erkennen, daher haben "
+                "wir es nicht verwendet: Das Studio müsste das Muster erfinden. Bitte nehmen Sie es bei Tageslicht nah an "
+                "einem hellen Fenster neu auf, das Fenster seitlich (keine direkte Sonne, keine Lampe, kein Blitz), mit der "
+                "Rückkamera und 2-fachem Zoom, tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.",
+    "pupil_too_large": "Ihre Pupille ist auf diesem Foto sehr weit, daher ist nur ein schmaler Ring Ihrer Iris zu sehen: zu "
+                       "wenig für Ihr Kunstwerk. Mehr Licht macht die Pupille kleiner: Stellen Sie sich eine Minute lang bei "
+                       "Tageslicht nah an ein helles Fenster (keine direkte Sonne) und fotografieren Sie dann erneut, das "
+                       "Fenster seitlich. Wenn es draußen dunkel ist, schalten Sie alle Deckenlampen ein und warten Sie zuerst "
+                       "eine Minute. Wurden Ihre Pupillen bei einer Augenuntersuchung mit Tropfen erweitert, warten Sie, bis "
+                       "die Wirkung nachlässt.",
+    "closer": "Gehen Sie näher heran oder nutzen Sie den 2-fachen Zoom: Die Iris misst {px} px, wir brauchen {good} px oder mehr.",
+    "fibres": "Die Fasern sind noch nicht scharf erkennbar. Tippen Sie auf die Iris, damit die Kamera scharfstellt, stützen Sie "
+              "das Smartphone an etwas Festem ab und fotografieren Sie erneut.",
+    "open": "Öffnen Sie das Auge weit: Schauen Sie geradeaus und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit "
+            "weder Lid noch Wimpern über der Iris liegen. Wimpern über der Iris erscheinen im Kunstwerk als dunkle Streifen.",
+    "on_pupil": "Die Spiegelung liegt auf Ihrer Pupille. Neigen Sie den Kopf oder bewegen Sie das Licht zur Seite, sonst bauen "
+                "wir die Pupille als schlichtes Schwarz neu auf.",
+    "reflection": "Eine Spiegelung wurde gefunden, wir entfernen sie automatisch.",
+    "glare": "Eine Spiegelung verdeckt einen Teil der Irisfasern, und was sie verdeckt, muss neu aufgebaut werden. Drehen Sie "
+             "sich so, dass Fenster oder Lampe seitlich stehen und nicht direkt vor Ihnen.",
+    "soft": "Die Aufnahme ist etwas unscharf. Nutzen Sie die Rückkamera mit 2-fachem Zoom, tippen Sie zum Scharfstellen auf die "
+            "Iris und halten Sie das Smartphone ruhig. Frontkameras können auf diese Entfernung gar nicht scharfstellen.",
+    "no_lock": "Wir konnten den runden Rand Ihrer Iris nicht sicher erfassen. Zentrieren Sie ein Auge im Bild, mit etwas Platz "
+               "drumherum, und halten Sie das Lid aus dem Weg.",
+    "good": "Sehr gute Aufnahme. Ihre eigenen Fasern sind scharf genug für das Kunstwerk in voller Größe.",
+    "ok": "Daraus wird ein schönes Kunstwerk. Eine nähere oder ruhigere Aufnahme würde mehr von Ihren eigenen Faserdetails "
+          "erhalten.",
+    "weak": "Klein oder etwas unscharf, daher wird mehr vom feinen Detail neu aufgebaut. Näher und ruhiger ergibt ein echteres "
+            "Kunstwerk.",
+    "glare_ok": "Daraus wird ein schönes Kunstwerk. Eine Aufnahme ohne die Spiegelung auf Ihrer Iris würde mehr von Ihren "
+                "eigenen Faserdetails erhalten.",
+    "glare_weak": "Eine Spiegelung verdeckt zu viel von Ihrer Iris, daher würden die Fasern darunter neu aufgebaut. Bewegen Sie "
+                  "das Licht zur Seite und fotografieren Sie erneut.",
+    "unlocked": "Wir haben ein Auge gefunden, konnten den Rand der Iris aber nicht sicher erfassen, daher wäre der Ausschnitt "
+                "ungenau. Bitte machen Sie ein weiteres Foto.",
+}
+
 def analyze(body):
     device, study = telemetry(body.get("device")), telemetry(body.get("study"))
+    de = body.get("lang") == "de"
+
+    def say(key, en, **kw):
+        """The sentence for the request's language: TEXT_DE[key] (filled with kw) for "de", else en as it is."""
+        return TEXT_DE[key].format(**kw) if de else en
     im = L.b64_to_pil(body["image"])
     W, H = im.size
     ow, oh = int(body.get("origWidth") or W), int(body.get("origHeight") or H)
@@ -519,14 +576,14 @@ def analyze(body):
     v = L.gemini_json(L.VISION_MODEL, L.PROMPT_VISION, im)
     if not v or v.get("found") is False or "iris_box" not in v:
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
-                "message": "We could not find an eye in this photo. Fill the frame with one open eye and try again."}
+                "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     box = v.get("iris_box")
     ok_box = (isinstance(box, (list, tuple)) and len(box) == 4
               and all(isinstance(c, (int, float)) and c == c and abs(c) < 1e6 for c in box)
               and box[2] > box[0] and box[3] > box[1])
     if not ok_box:
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
-                "message": "We could not find an eye in this photo. Fill the frame with one open eye and try again."}
+                "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     # The model is asked for [x1,y1,x2,y2] but sometimes answers in its native [y1,x1,y2,x2] order. On a
     # non-square photo that lands the circle on the eyelid or the skin: 10_Mybrownyes10 and 20_Auge (test set,
     # 2 of 30) and the owner's 215106 eyelid crop were all this, and a re-run of 20 swapped again. So both
@@ -628,14 +685,15 @@ def analyze(body):
         reason = block_reason(block_by, dark_iris, label)
     tips = []
     if diam_orig < GOOD_DIAMETER_PX:
-        tips.append(f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want {GOOD_DIAMETER_PX} px or more.")
+        tips.append(say("closer", f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want {GOOD_DIAMETER_PX} px or more.",
+                        px=int(diam_orig), good=GOOD_DIAMETER_PX))
     if basis < FIBRE_GOOD:
-        tips.append(DARK_IRIS_TIP if dark_iris else
-                    "The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
-                    "hold the phone against something steady, and shoot again.")
+        tips.append(say("dark_iris", DARK_IRIS_TIP) if dark_iris else
+                    say("fibres", "The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
+                                  "hold the phone against something steady, and shoot again."))
     if occl > OCCL_TIP_PCT:
-        tips.append("Open the eye wide: look straight ahead and lift the upper lid gently with a fingertip, so no lid "
-                    "or lashes cross the iris. Lashes over the iris show up as dark streaks in the artwork.")
+        tips.append(say("open", "Open the eye wide: look straight ahead and lift the upper lid gently with a fingertip, so no lid "
+                                "or lashes cross the iris. Lashes over the iris show up as dark streaks in the artwork."))
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False
     if pupil_r and v.get("glare_boxes"):
@@ -647,31 +705,31 @@ def analyze(body):
                 if ((gcx - pcx) ** 2 + (gcy - pcy) ** 2) ** 0.5 < prad: on_pupil = True
             except Exception: pass
     if on_pupil:
-        tips.append("The reflection sits on your pupil. Tilt your head or move the light to the side, or we will "
-                    "have to rebuild the pupil as plain darkness.")
-    elif v.get("glare_boxes"): tips.append("A reflection was found; we will remove it automatically.")
+        tips.append(say("on_pupil", "The reflection sits on your pupil. Tilt your head or move the light to the side, or we will "
+                                    "have to rebuild the pupil as plain darkness."))
+    elif v.get("glare_boxes"): tips.append(say("reflection", "A reflection was found; we will remove it automatically."))
     if glare_fib > GLARE_OK_PCT:
-        tips.append("A reflection covers part of the iris fibres, and what it hides has to be rebuilt. Turn so the "
-                    "window or lamp is off to one side rather than straight in front of you.")
+        tips.append(say("glare", "A reflection covers part of the iris fibres, and what it hides has to be rebuilt. Turn so the "
+                                 "window or lamp is off to one side rather than straight in front of you."))
     # a dark iris that the vision model still calls sharp needs light, not focus: its tip is already above
     if label != "sharp" or (basis < FIBRE_GOOD and not dark_iris):
-        tips.append("This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
-                    "steady; front cameras cannot focus at this distance at all.")
+        tips.append(say("soft", "This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
+                                "steady; front cameras cannot focus at this distance at all."))
     if not locked:
-        tips.insert(0, "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
-                       "little space around it, and keep the eyelid out of the way.")
+        tips.insert(0, say("no_lock", "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
+                                      "little space around it, and keep the eyelid out of the way."))
     # These say how much of the artwork will be the customer's own fibre detail. The product is a digital file,
     # so no word here may promise or imply a physical print.
-    msg = {"good": "Great capture. Your own fibres are sharp enough to carry the full-size artwork.",
-           "ok": "This will make a beautiful artwork. A closer or steadier shot would keep more of your own fibre detail.",
-           "weak": "Small or soft, so more of the fine detail gets rebuilt. Closer and steadier gives a truer artwork."}[verdict]
+    msg = say(verdict, {"good": "Great capture. Your own fibres are sharp enough to carry the full-size artwork.",
+                        "ok": "This will make a beautiful artwork. A closer or steadier shot would keep more of your own fibre detail.",
+                        "weak": "Small or soft, so more of the fine detail gets rebuilt. Closer and steadier gives a truer artwork."}[verdict])
     if glare_capped:
-        msg = {"ok": "This will make a beautiful artwork. A shot without the reflection on your iris would keep more of your own fibre detail.",
-               "weak": "A reflection covers too much of your iris, so the fibres under it would be rebuilt. Move the light to one side and shoot again."}[verdict]
+        msg = say("glare_" + verdict, {"ok": "This will make a beautiful artwork. A shot without the reflection on your iris would keep more of your own fibre detail.",
+                                       "weak": "A reflection covers too much of your iris, so the fibres under it would be rebuilt. Move the light to one side and shoot again."}[verdict])
     if not locked:
-        msg = "We found an eye but could not lock onto the iris edge, so the crop would be off. Please take another photo."
+        msg = say("unlocked", "We found an eye but could not lock onto the iris edge, so the crop would be off. Please take another photo.")
     if blocked:
-        msg = BLOCK_MESSAGES[reason]
+        msg = say(reason, BLOCK_MESSAGES[reason])
     # the white of the eye shows the colour of the light: a strong cast here is on the iris too, and the
     # colour lock later keeps whatever colour the photo has. Only judged on a locked circle.
     tint = L.sclera_tint(im, cx, cy, r) if locked else None
@@ -697,7 +755,7 @@ def analyze(body):
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,
                         "glare": bool(v.get("glare_boxes")), "locked": bool(locked),
                         "detail": detail, "fibre_score": round(fscore, 2), "glare_on_fibres_pct": round(glare_fib, 1),
-                        "pupil_reflection": bool(on_pupil), "lamp_cast": lamp, "lamp_message": LAMP_MESSAGE if lamp else None,
+                        "pupil_reflection": bool(on_pupil), "lamp_cast": lamp, "lamp_message": say("lamp", LAMP_MESSAGE) if lamp else None,
                         "verdict": verdict, "message": msg, "tips": tips,
                         "pattern": None if pattern is None else round(pattern, 2),
                         "pattern_shape": None if shape is None else round(shape, 2),

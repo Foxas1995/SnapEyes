@@ -1,24 +1,42 @@
 // Facts the landing page prints. Keep every value here true; the copy dictionary only words them.
 
 // Every email address on the page and the curator's "send me your photos" offer come from this one constant
-// and stay hidden while it is empty. Owner decision 2026-09-23: info@snapeyes.com, created at Hostinger while
-// the domain moves there. Until its MX records exist, mail to it bounces: check that it receives before ads run.
+// and stay hidden while it is empty. Owner decision 2026-09-23: info@snapeyes.com at Hostinger; the owner confirmed
+// on 2026-09-29 that the mailbox exists. The legal pages (src/legal) name it as the contact for every request.
 export const CONTACT_EMAIL = 'info@snapeyes.com';
 
 // Every primary call to action goes straight to the capture tool: people should see their own result.
 export const TRY_URL = '/try';
+// ...in the page's language: /try reads ?lang= first (src/try/lang.ts, the same rule as ./lang.tsx), so a visitor
+// who reads this page in German through /?lang=de, without ever touching the switch, still gets /try in German.
+export const tryUrl = (lang: 'en' | 'de') => `${TRY_URL}?lang=${lang}`;
 
-// Seller shown in the footer (owner decision 2026-09-23). MB is not VAT-registered: no VAT number, no "incl. VAT".
-export const SELLER = {
+// Seller shown in the footer and on the legal pages (owner decision 2026-09-23). MB is not VAT-registered: no VAT
+// number, no "incl. VAT". representative and phone stay empty until the owner gives them: every page prints the
+// "Represented by" and "Phone" lines only when the value is set.
+export interface Seller {
+  name: string;           // the MB's name, printed as MB "<name>"
+  code: string;           // company code (juridinio asmens kodas) in the Register of Legal Entities
+  street: string;
+  postcode: string;
+  city: string;
+  representative: string; // the authorised representative (vadovas); '' = not known yet, line hidden
+  phone: string;          // '' = no phone line anywhere
+}
+export const SELLER: Readonly<Seller> = {
   name: 'Portretizuokis',
   code: '305605052',
   street: 'Gedimino g. 22A-14',
   postcode: 'LT-44319',
   city: 'Kaunas',
-} as const;
+  representative: '',
+  phone: '',
+};
 
-// Prices in euro cents (owner decision 2026-09-23). Ordering is not open yet: there is no checkout, so the
-// page shows prices with a plain "ordering opens soon" notice and no purchase buttons.
+// Prices in euro cents (owner decision 2026-09-23). The landing page shows them with no purchase buttons (an order
+// starts from the customer's own preview on /try) and says "ordering opens soon" until the deployment takes orders
+// (src/landing/ordering.ts). The terms of sale (src/legal/docs/terms.ts) print these same constants, so a price
+// change here changes them too; api/_lib/pay.py charges its own copy of them, so change both together.
 export const PRICE_CENTS = {
   studioBlack: 1997,   // 1 eye, Studio Black
   artBackground: 2497, // 1 eye, any of the five art backgrounds

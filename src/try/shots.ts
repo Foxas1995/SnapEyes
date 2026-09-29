@@ -58,9 +58,6 @@ export interface Analysis {
 // meter; the size floors are the ones the old verdict used (280 px usable, 420 px good).
 export const DEFAULT_TARGETS: Targets = { detail_good: 70, detail_ok: 40, min_diameter_px: 280, good_diameter_px: 420, max_shots: 5 };
 
-export const PUPIL_NOTE = 'A reflection on the pupil is fine: we rebuild the pupil as clean darkness.';
-export const LAMP_FALLBACK = 'Lamp light is tinting the white of your eye, so the colours may come out warmer than they really are.';
-
 export const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
 
 export function targetsOf(a?: Analysis | null): Targets {
@@ -168,14 +165,16 @@ export function meterBand(d: number, q: Quality | undefined, t: Targets): { band
   const cap = !q?.verdict ? 2 : q.locked === false || q.blocked ? 0 : VERDICT_RANK[q.verdict] ?? 2;
   const band = (['low', 'ok', 'good'] as const)[Math.min(byDetail, cap)];
   // above the target but capped: the reason is on the card (message or tip), so the meter stays quiet
-  const caption = d < t.detail_good ? `Aim for ${t.detail_good}+` : band === 'good' ? 'Fibres resolved' : null;
+  const caption = d < t.detail_good ? T.quality.aimFor(t.detail_good) : band === 'good' ? T.quality.fibresResolved : null;
   return { band, caption };
 }
 
 /** Tips worth showing. "We will remove it automatically" instructs nothing, and the old "reflection sits on
- *  your pupil, move the light" tip contradicts the calm pupil note whenever the server sets pupil_reflection. */
+ *  your pupil, move the light" tip contradicts the calm pupil note whenever the server sets pupil_reflection.
+ *  The German words are api/analyze.py TEXT_DE's ("automatisch", "Spiegelung", "Pupille"). */
 export function visibleTips(q: Quality): string[] {
-  return (q.tips || []).filter((s) => !/automatically/i.test(s) && !(q.pupil_reflection && /reflection/i.test(s) && /pupil/i.test(s)));
+  return (q.tips || []).filter((s) => !/automatically|automatisch/i.test(s)
+    && !(q.pupil_reflection && /reflection|spiegelung/i.test(s) && /pupil/i.test(s)));
 }
 
 /** The single tip that would most improve the next shot. Someone holding a phone to their eye reads one
@@ -187,7 +186,7 @@ export function topTip(q: Quality, t: Targets): string | null {
   if (q.locked === false) return tips[0] ?? q.message ?? null;
   if (q.blocked) return q.message || (blockOf({ ok: true, quality: q }) ?? T.quality.blockedOther).retakeLine;
   if (num(q.diameter_px) !== undefined && q.diameter_px < t.min_diameter_px) {
-    return tips.find((s) => /closer|zoom/i.test(s)) ?? 'Move closer or zoom in so the iris fills more of the frame.';
+    return tips.find((s) => /closer|zoom|näher/i.test(s)) ?? T.quality.closer;
   }
   return tips[0] ?? null;
 }

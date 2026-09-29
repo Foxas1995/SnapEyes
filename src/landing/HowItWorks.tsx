@@ -1,11 +1,13 @@
 import { Camera, FileImage, ScanEye } from 'lucide-react';
 import { useLang } from './lang';
+import { useOrderingOpen } from './ordering';
 import { CtaLink, SectionHead } from './ui';
 
 const ICONS = [Camera, ScanEye, FileImage];
 
 export function HowItWorks() {
   const { t } = useLang();
+  const open = useOrderingOpen();
   return (
     <section id="how" className="scroll-mt-16 border-t border-white/[0.06] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -20,7 +22,7 @@ export function HowItWorks() {
                   <Icon aria-hidden="true" className="h-5 w-5 text-zinc-500" strokeWidth={1.5} />
                 </div>
                 <h3 className="mt-5 font-body text-lg font-semibold text-white">{s.title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">{s.body}</p>
+                <p className="mt-2 text-[15px] leading-relaxed text-zinc-400">{open && s.bodyOpen ? s.bodyOpen : s.body}</p>
               </li>
             );
           })}

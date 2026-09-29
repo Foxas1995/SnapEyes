@@ -1,0 +1,22 @@
+/* Legal pages only (src/legal/main.tsx). The page is dark on screen; on paper (or "save as PDF") it prints as
+   black text on white, without the header, the language switch and the contents list. */
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .legal-noprint {
+    display: none !important;
+  }
+  .legal-page,
+  .legal-page * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #bbb !important;
+    box-shadow: none !important;
+  }
+  .legal-page h2 {
+    break-after: avoid;
+  }
+}

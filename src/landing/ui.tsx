@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { TRY_URL } from './config';
+import { tryUrl } from './config';
+import { useLang } from './lang';
 
 export function Eyebrow({ children, center = false }: { children: ReactNode; center?: boolean }) {
   return (
@@ -24,10 +25,11 @@ export function SectionHead({ eyebrow, title, intro, center = false }: { eyebrow
 // The one primary action on the page: straight to the capture tool. min-h, not a fixed height: on a 320 px
 // screen a long German label may still need two lines, and then the pill grows instead of clipping it.
 export function CtaLink({ label, full = false, ref }: { label: string; full?: boolean; ref?: Ref<HTMLAnchorElement> }) {
+  const { lang } = useLang();
   return (
     <a
       ref={ref}
-      href={TRY_URL}
+      href={tryUrl(lang)}
       className={`group inline-flex min-h-[52px] items-center justify-center gap-2.5 rounded-full bg-[#f5c542] px-6 py-3 text-center text-[15px] leading-tight font-semibold tracking-[0.01em] text-[#030408] shadow-[0_10px_40px_-12px_rgba(245,197,66,0.55)] transition-colors hover:bg-[#ffd666] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f5c542] max-[359px]:px-4 max-[359px]:text-[14px] sm:px-7 ${full ? 'w-full' : ''}`}
     >
       <span>{label}</span>
@@ -36,15 +38,16 @@ export function CtaLink({ label, full = false, ref }: { label: string; full?: bo
   );
 }
 
-// A quiet line under a call to action (German: the preview app is in English for now). Renders nothing when empty.
+// A quiet line under a call to action (t.ctaNote). Renders nothing when empty, as it is in both languages today.
 export function CtaNote({ text, className = '' }: { text: string; className?: string }) {
   if (!text) return null;
   return <p className={`text-[13px] leading-relaxed text-zinc-400 ${className}`}>{text}</p>;
 }
 
-export function Logo({ tag }: { tag: string }) {
+// href: the landing links to its own top; the legal pages link home.
+export function Logo({ tag, href = '#top' }: { tag: string; href?: string }) {
   return (
-    <a href="#top" className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f5c542]" aria-label="SnapEyes Private Atelier">
+    <a href={href} className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f5c542]" aria-label="SnapEyes Private Atelier">
       <svg aria-hidden="true" viewBox="0 0 32 32" className="h-8 w-8 shrink-0">
         <circle cx="16" cy="16" r="15" fill="none" stroke="#f5c542" strokeOpacity="0.55" strokeWidth="1" />
         <circle cx="16" cy="16" r="9.5" fill="none" stroke="#f5c542" strokeWidth="1.4" />

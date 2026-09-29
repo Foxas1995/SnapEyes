@@ -25,7 +25,7 @@ export function detectLang(): Lang {
 const SITE_ORIGIN = 'https://snapeyes.com';
 const canonicalUrl = (lang: Lang) => (lang === 'de' ? `${SITE_ORIGIN}/?lang=de` : `${SITE_ORIGIN}/`);
 
-function setMeta(attr: 'name' | 'property', key: string, content: string) {
+export function setMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
   if (!el) {
     el = document.createElement('meta');
@@ -35,8 +35,8 @@ function setMeta(attr: 'name' | 'property', key: string, content: string) {
   el.setAttribute('content', content);
 }
 
-function applyHeadTags(lang: Lang, t: Copy) {
-  const url = canonicalUrl(lang);
+/** The page's one rel=canonical, created on first use (any extra ones are removed). */
+export function setCanonical(url: string) {
   const links = document.head.querySelectorAll<HTMLLinkElement>('link[rel="canonical"]');
   let canonical = links[0];
   links.forEach((l, i) => { if (i > 0) l.remove(); });
@@ -46,6 +46,11 @@ function applyHeadTags(lang: Lang, t: Copy) {
     document.head.appendChild(canonical);
   }
   canonical.href = url;
+}
+
+function applyHeadTags(lang: Lang, t: Copy) {
+  const url = canonicalUrl(lang);
+  setCanonical(url);
   setMeta('name', 'description', t.meta.description);
   setMeta('property', 'og:url', url);
   setMeta('property', 'og:locale', t.meta.locale);
@@ -60,7 +65,8 @@ interface LangState { lang: Lang; t: Copy; setLang: (l: Lang) => void }
 
 const LangContext = createContext<LangState | null>(null);
 
-export function LangProvider({ children }: { children: ReactNode }) {
+// applyHead: the legal pages set their own title, description and canonical; without it the landing's tags apply.
+export function LangProvider({ children, applyHead }: { children: ReactNode; applyHead?: (lang: Lang) => void }) {
   const [lang, setLangState] = useState<Lang>(detectLang);
 
   const setLang = useCallback((l: Lang) => {
@@ -76,9 +82,13 @@ export function LangProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const t = COPY[lang];
     document.documentElement.lang = lang;
+    if (applyHead) {
+      applyHead(lang);
+      return;
+    }
     document.title = t.meta.title;
     applyHeadTags(lang, t);
-  }, [lang]);
+  }, [lang, applyHead]);
 
   const value = useMemo(() => ({ lang, t: COPY[lang], setLang }), [lang, setLang]);
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;

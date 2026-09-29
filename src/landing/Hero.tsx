@@ -1,13 +1,16 @@
 import type { Ref } from 'react';
 import { Check, Clock } from 'lucide-react';
 import { useLang } from './lang';
-import { BEFORE_SRC, styleSrc, styleSrcSet } from './config';
+import { BEFORE_SRC, PRICE_CENTS, styleSrc, styleSrcSet } from './config';
+import { formatEuro } from './copy';
+import { useOrderingOpen } from './ordering';
 import { CtaLink, CtaNote, Eyebrow } from './ui';
 
 // Phones: headline, action, then the artwork (its centre lands on the first 390 x 844 screen), then the points.
 // Desktop: text and points on the left, the artwork on the right across both rows.
 export function Hero({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const open = useOrderingOpen();
   const h = t.hero;
   return (
     <section id="top" className="relative overflow-hidden pt-24 pb-20 sm:pt-36 sm:pb-28">
@@ -72,10 +75,17 @@ export function Hero({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
               <span>{p}</span>
             </li>
           ))}
-          <li className="flex items-start gap-3 text-zinc-400">
-            <Clock aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-            <span>{h.soon}</span>
-          </li>
+          {open ? (
+            <li className="flex items-start gap-3">
+              <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#f5c542]" />
+              <span>{h.ready(formatEuro(PRICE_CENTS.studioBlack, lang))}</span>
+            </li>
+          ) : (
+            <li className="flex items-start gap-3 text-zinc-400">
+              <Clock aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+              <span>{h.soon}</span>
+            </li>
+          )}
         </ul>
       </div>
     </section>

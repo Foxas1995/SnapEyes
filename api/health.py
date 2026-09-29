@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 from _lib import store
+from _lib import pay
 import deglare
 
 def handle(req):
@@ -16,6 +17,15 @@ def handle(req):
             # the private Supabase store for paid 4K files (env only, no network call). Separate from blob_store,
             # which /try reads to decide whether to offer the training-memory opt-in: that must stay off.
             "master_store": store.configured(),
+            # payments (booleans only): Stripe secret key + webhook secret both usable, whether that key is a live
+            # one, and whether the delivery email (Resend) is configured. /api/checkout GET says whether ordering is open.
+            "stripe": pay.stripe_configured(),
+            "stripe_live": pay.stripe_configured() and pay.stripe_live(),
+            "email": pay.email_configured(),
+            # whether this deployment takes new orders (a live key needs the email; a test key never on production)
+            # and whether a Stripe TEST payment unlocks files here (a Preview with SNAPEYES_ALLOW_TEST_ORDERS=1 only)
+            "ordering": pay.ordering_open() and store.configured(),
+            "test_orders": pay.test_orders_allowed(),
             # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)
             "deglare_model": deglare.DEGLARE_MODEL,
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx"))}

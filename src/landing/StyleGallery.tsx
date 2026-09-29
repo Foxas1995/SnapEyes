@@ -1,19 +1,21 @@
 import { useLang } from './lang';
 import { PRICE_CENTS, STYLES, styleSrc, styleSrcSet } from './config';
 import { formatEuro } from './copy';
+import { useOrderingOpen } from './ordering';
 import { SectionHead } from './ui';
 
 export function StyleGallery() {
   const { t, lang } = useLang();
+  const open = useOrderingOpen();
   const s = t.styles;
   return (
     <section id="styles" className="scroll-mt-16 border-t border-white/[0.06] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHead eyebrow={s.eyebrow} title={s.title} intro={s.intro} />
-        {/* prices appear below, so the "ordering opens soon" notice sits right here too (owner decision 2) */}
+        {/* prices appear below, so the pricing notice ("ordering opens soon", or its open wording) sits right here too (owner decision 2) */}
         <p role="note" className="mt-5 flex items-start gap-2.5 text-sm font-medium text-[#f7d77a]">
           <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#f5c542]" />
-          <span>{t.pricing.notice}</span>
+          <span>{open ? t.pricing.noticeOpen : t.pricing.notice}</span>
         </p>
         <ul className="mt-12 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 md:gap-y-12">
           {STYLES.map((st) => {

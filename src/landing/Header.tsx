@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLang } from './lang';
-import { TRY_URL } from './config';
+import { tryUrl } from './config';
 import { Logo } from './ui';
 import type { Lang } from './copy';
 
@@ -29,7 +29,7 @@ export function LangSwitch() {
 }
 
 export function Header() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <LangSwitch />
           <a
-            href={TRY_URL}
+            href={tryUrl(lang)}
             className="hidden h-9 items-center rounded-full border border-[#f5c542]/50 px-4 text-[13px] font-semibold text-[#f5c542] transition-colors hover:bg-[#f5c542] hover:text-[#030408] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] sm:inline-flex"
           >
             {t.ctaShort}
