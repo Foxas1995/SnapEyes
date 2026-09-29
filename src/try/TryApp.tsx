@@ -82,6 +82,15 @@ const STYLES: StyleOption[] = [
 ];
 
 const SAMPLE_EYE = '/assets/sample_eye_blue_1789706902835.jpg';   // AI-generated: always labelled as such
+// The sample's restoration, made once by the live engine (2026-09-29: analyze, deglare, enhance artistic) and shipped
+// as files: every "Try the sample" click ran the whole paid restoration again (about 0.07 USD each) for the same
+// demo eye. before is the client crop, restored the exact JPEG /api/enhance returned. Composing it stays free.
+const SAMPLE_BEFORE = '/assets/sample_eye_blue_before.jpg';
+const SAMPLE_RESTORED = '/assets/sample_eye_blue_restored.jpg';
+const SAMPLE_PAD = 1.12;
+// A gallery selection is measured photo by photo (one vision call each): more than this many of the same eye adds
+// cost and waiting, not a better pick.
+const GALLERY_MAX = 8;
 
 // A user-agent test was hiding the live camera from every iPhone. WebKit has shipped zoom and torch for a
 // while and ImageCapture landed in Safari 18.4, so ask the device instead of guessing from its name.
@@ -132,6 +141,14 @@ function drawToDataUrl(img: HTMLImageElement, sx: number, sy: number, sw: number
 }
 
 function stripDataUrl(s: string) { return s.includes(',') ? s.split(',')[1] : s; }
+function blobToDataUrl(b: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(b);
+  });
+}
 
 /** A smaller JPEG data URL of an image (never larger than it was), for the copy kept while Stripe's page is open. */
 async function shrunk(src: string, side: number, quality: number): Promise<string> {
@@ -446,7 +463,8 @@ export const TryApp: React.FC = () => {
   /** Several shots of the same eye are never equally good. On four real photos of one eye the sharpest
    *  carried 3.7x the fibre detail of the softest, and the largest iris of the four was the softest - so
    *  the customer cannot pick by eye and neither can a size rule. Measure each and use the best. */
-  const onFiles = async (files: File[]) => {
+  const onFiles = async (all: File[]) => {
+    const files = all.slice(0, GALLERY_MAX);
     if (files.length === 1) return onFile(files[0]);
     sampleRef.current = false;
     setError(null); setStep('analyzing'); clearShots();
@@ -788,6 +806,31 @@ export const TryApp: React.FC = () => {
     </button>
   );
   const trySample = async () => {
+    // the prepared restoration (SAMPLE_RESTORED): no paid call. If its files cannot be read, the sample photo
+    // goes through the studio as before
+    try {
+      const [rb, ra] = await Promise.all([fetch(SAMPLE_BEFORE), fetch(SAMPLE_RESTORED)]);
+      if (!rb.ok || !ra.ok) throw new Error('sample files');
+      const [before, restored] = await Promise.all([blobToDataUrl(await rb.blob()), blobToDataUrl(await ra.blob())]);
+      const image = stripDataUrl(restored);
+      const eye: Eye = {
+        id: newEyeId(), before, image, thumb: await thumbOf(image), pad: SAMPLE_PAD,
+        fallback: false, usedSr: false, stored: false, glarePct: 0, sample: true, colourOff: false, draft: null,
+      };
+      sampleRef.current = false;
+      setError(null); setWorking({ eye: 1, sample: true });
+      setStep('processing'); setProgress([T.working.composing(1)]);
+      const list = [eye];
+      commitEyes(list); setSelectedId(eye.id);
+      const lay = effectiveLayout(list.length, layoutWant);
+      try {
+        const lg = T.lang;
+        cacheArt(artKeyOf(list, lay, style, names, lg), await composeArt(list, lay, style, names, lg));
+      } catch { /* the result screen retries once, then offers "Try again" */ }
+      releasePhoto(); setAnalysis(null); setClientCrop(null);
+      setStep('result'); toTop();
+      return;
+    } catch { /* fall back to the studio below */ }
     try {
       const r = await fetch(SAMPLE_EYE);
       if (!r.ok) throw new Error(T.capture.sampleLoadFailed);
