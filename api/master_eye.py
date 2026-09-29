@@ -43,7 +43,12 @@ Other replies (all {ok: false, reason, error, retry}):
   503 model_busy              the image model refused for now (429/5xx) or did not answer in time; retry later
   503 storage_busy            storage did not answer; retry later
   502 render_rejected         the model answered without a usable 4096 px image; a retry would pay for the same
-                              outcome, so retry is false and the order needs a person"""
+                              outcome, so retry is false and the order needs a person
+A failure this raises where no paid render can have been lost is marked unspent (store.mark_unspent): before the
+model call, a model that refused with an HTTP error, and after the master was stored. Any other failure, above all one
+after the model answered (the master could not be stored, the post-processing broke), may have lost a paid render:
+api/order.py make_eye counts those per order and holds the order for a person after a few, so no retry pays for the
+same failure again and again."""
 import os, sys, io, re, json, math, time, uuid, base64, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -166,6 +171,8 @@ def _render_4k(base, order, eye, prompt=None):
                 raise store.busy("model_busy", 20, "The artwork renderer is busy. Please try again in a moment.") from None
             if code == 400:
                 raise _rejected("image model answered HTTP 400", order, eye) from None
+            if code is not None:
+                store.mark_unspent(e)            # the model refused with an HTTP error: nothing was rendered or paid
             raise
     cand = (j.get("candidates") or [{}])[0]
     raw = None
@@ -298,6 +305,18 @@ def _keep_better(folder, eye, key, prev, qa, data, pqa=None):
 
 
 def master_eye(body):
+    stage = {"spent": False}         # True while a failure could lose a paid render (see the module)
+    try:
+        return _master_eye(body, stage)
+    except store.Answer:
+        raise
+    except Exception as e:
+        if not stage["spent"]:
+            store.mark_unspent(e)    # before the model call, or after the master was stored: nothing paid was lost
+        raise
+
+
+def _master_eye(body, stage):
     t0 = time.time()
     if not isinstance(body, dict):
         raise L.ClientError("Send a JSON object.")
@@ -332,6 +351,7 @@ def master_eye(body):
                 return _stored_reply(t0, key, eye, prev)
             _same_input(prev, pv_sha)
         t1 = time.time()
+        stage["spent"] = True        # from the model call until the master is stored, a failure may lose a paid render
         out, attempts, tokens = _render_4k(base if pv is None else pv, order, eye,
                                            L.PROMPT_ARTISTIC if pv is None else L.PROMPT_MASTER)
         render_s = time.time() - t1
@@ -369,11 +389,14 @@ def master_eye(body):
             except store.StorageExists:
                 # only when a claim was taken over from a request that was not dead after all
                 print(f"snapeyes master: {key} was stored meanwhile; this render is discarded", flush=True)
+                stage["spent"] = False
                 return _stored_reply(t0, key, eye, store.get_json(rec_key))
+            stage["spent"] = False   # the master is stored: nothing paid can be lost from here on
             record = dict(this, order=order, eye=eye)
             kept = None
         else:
             kept = _keep_better(folder, eye, key, prev, qa, data, pqa)
+            stage["spent"] = False
             first = {k: prev.get(k) for k in ("qa", "preview", "fidelity", "bytes", "created", "render_seconds")}
             second = dict(this)
             record = dict(second if kept == "second" else prev, order=order, eye=eye, rerendered=True, kept=kept,

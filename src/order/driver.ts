@@ -1,7 +1,10 @@
-// What the /order page does with a paid order: nothing renders in the background on the server, so the page asks for
-// each eye's 4096 px rendering (action "make", at most two at a time), then for the artwork (action "compose"), and
-// shows the download. Every server step is idempotent (an eye or an artwork is never made twice), so opening the
-// page again, from the email a day later or after a dropped connection, simply carries on. No React here.
+// What the /order page does with a paid order. The server makes a paid order by itself too (api/_lib/maker.py): while
+// the status says it is on it (server.active), the page only watches and shows its progress. Whenever the server is
+// not on it, the page asks for each eye's 4096 px rendering (action "make", at most two at a time), then for the
+// artwork (action "compose"), and shows the download. Every server step is idempotent and claimed (an eye or an
+// artwork is never made twice, whoever asks first makes it), so the page and the server can never double the work,
+// and opening the page again, from the email a day later or after a dropped connection, simply carries on. No React
+// here.
 import { callApi, isStatus, statusPath, type ApiReply, type OrderStatus } from './api';
 
 export interface OrderLink { o: string; k: string; s: string | null }
@@ -18,9 +21,10 @@ export interface DriveView {
   composing: boolean;                                // the artwork is being put together
   wait: { reason: WaitReason; until: number } | null;
   stop: StopReason | null;
+  server: boolean;                                   // the server makes the order by itself: the page only watches
 }
 
-export const EMPTY_VIEW: DriveView = { status: null, making: [], composing: false, wait: null, stop: null };
+export const EMPTY_VIEW: DriveView = { status: null, making: [], composing: false, wait: null, stop: null, server: false };
 
 export interface DriveDeps {
   api: typeof callApi;
@@ -40,6 +44,8 @@ const RELOAD = new Set(['in_review', 'render_rejected', 'deleted', 'not_paid', '
 const MAKE_TIMEOUT = 75_000;     // API.md: a make or compose takes up to about 50 s; Vercel stops it at 60 s
 const STATUS_TIMEOUT = 25_000;
 const PARALLEL = 2;              // API.md: one eye at a time, or at most two in parallel
+export const WATCH_POLL = 6_000; // while the server makes the order, the page reads its status this often
+const WATCH_MAX = 200;           // ... at most this many times (20 min), then it drives the steps itself
 
 const clampS = (s: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, s || lo));
 
@@ -91,7 +97,7 @@ export async function driveOrder(link: OrderLink, deps: DriveDeps, emit: (v: Par
     }
   };
 
-  const stop = (r: ApiReply<unknown>) => { if (alive()) emit({ stop: stopOf(r), wait: null, making: [], composing: false }); };
+  const stop = (r: ApiReply<unknown>) => { if (alive()) emit({ stop: stopOf(r), wait: null, making: [], composing: false, server: false }); };
 
   const load = async (): Promise<OrderStatus | null> => {
     const r = await patiently(() => api<unknown>(statusPath(link.o, link.k, link.s, true), { timeoutMs: STATUS_TIMEOUT }));
@@ -102,9 +108,10 @@ export async function driveOrder(link: OrderLink, deps: DriveDeps, emit: (v: Par
   };
 
   let st = await load();
-  let unpaidChecks = 0, reloads = 0;
+  let unpaidChecks = 0, reloads = 0, watched = 0, watching = false;
+  const unwatch = () => { if (watching) { watching = false; emit({ server: false, making: [], composing: false }); } };
   while (st && alive()) {
-    if (st.state === 'ready' || st.state === 'review' || st.state === 'deleted' || st.state === 'withdrawn') return;
+    if (st.state === 'ready' || st.state === 'review' || st.state === 'deleted' || st.state === 'withdrawn') { unwatch(); return; }
     if (st.state === 'unpaid') {
       // straight from Stripe (s in the link) the payment is confirmed within seconds; the same when the server could
       // not ask Stripe just now. Otherwise the order simply is not paid.
@@ -121,6 +128,19 @@ export async function driveOrder(link: OrderLink, deps: DriveDeps, emit: (v: Par
       st = alive() ? await load() : null;
       continue;
     }
+
+    // paid or making, and the server is making it by itself: show its progress from the status, ask for nothing (the
+    // server's claims would stop a second render anyway). The page drives again once the server is not on it.
+    if (st.server?.active && watched < WATCH_MAX) {
+      watched++;
+      watching = true;
+      const eye = st.server.step === 'eye' && typeof st.server.eye === 'number' ? [st.server.eye] : [];
+      emit({ server: true, making: eye, composing: st.server.step === 'compose', wait: null });
+      await sleep(WATCH_POLL);
+      st = alive() ? await load() : null;
+      continue;
+    }
+    unwatch();
 
     // paid or making: the eyes first, then the artwork
     if (++reloads > 8) { emit({ stop: 'failed', making: [], composing: false, wait: null }); return; }

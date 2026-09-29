@@ -10,7 +10,14 @@ it twice): a missed day is caught up by the next run, and a second run finds not
      (withdraw.send_digests: one email a day instead of one per statement); then the reminders for PAID orders held
      for a person (review.json, or an artwork waiting for release) for more than pay.REVIEW_REMIND_HOURS (36 h; the
      terms promise the file within 48 h of payment): one owner note per order (_reviews, from the index
-     cleanup/review/ that every hold writes, pay.index_review), for at most REVIEW_SECONDS of the run
+     cleanup/review/ that every hold writes, pay.index_review), for at most REVIEW_SECONDS of the run; then the
+     catch-up of PAID orders nobody finished (api/_lib/maker.py catch_up, from the index cleanup/making/ that
+     paid.json's writer fills, pay.index_making): every paid, confirmed, unfinished order older than 30 minutes
+     without a live server step gets the server's making asked for again (at most maker.CATCHUP_MAX a run, each in
+     its own invocation; for at most maker.CATCHUP_SECONDS of the run); finished ones leave the index; and every
+     one of them that is not held for the owner and still not ready maker.LATE_HOURS (12 h) after payment gets ONE
+     owner reminder (note_late.json; the run comes once a day, so it arrives 12 to 36 h after payment, inside the
+     48 h the terms promise)
   2. UNPAID orders older than 26 h are deleted with their images and their admin log (ops/orderlog/<order>/, which
      belongs to the order record: pay.drop_orderlog) (policy: within 30 days). Only after Stripe was
      asked: a session paid without paid.json is recorded as paid instead (the customer gets the confirmation), one
@@ -41,6 +48,7 @@ from . import iris as L
 from . import store
 from . import pay
 from . import withdraw as W
+from . import maker as M
 
 UNPAID_WINDOW = 35           # days of orders step 2 looks at (the policy promises deletion within 30 days)
 EXPIRE_WINDOW = 60           # days before the 12-month cut-off step 4 looks at (a longer gap: order_admin expire-paid)
@@ -129,6 +137,9 @@ def run(yes=True, stop_left=10.0, out=None, lock=True):
         late = bool(res["digest"].pop("more", False)) or late
         res["reviews"] = _reviews(yes, stop_left, say, REVIEW_SECONDS if boxed else 1e9)
         late = bool(res["reviews"].pop("more", False)) or late
+        # paid orders nobody finished (the customer closed the tab, a self-call lost): the server goes on with them
+        res["advance"] = M.catch_up(yes, stop_left, say, M.CATCHUP_SECONDS if boxed else 1e9)
+        late = bool(res["advance"].pop("more", False)) or late
         if not res["more"]:
             res["unpaid"] = _unpaid(yes, stop_left, say)
             res["more"] = res["unpaid"].pop("more", False)
@@ -345,6 +356,13 @@ def _review_todo(order, review):
                 "is not delivered yet"), (
                 f"Look at the artwork in the admin panel (/admin, order {order}) and release it there, or: python "
                 f"scripts/order_admin.py release {order} (the customer gets the 'ready' email).")
+    if reason.startswith("render_lost"):
+        return (f"paid renders of this order were lost after the image model answered ({reason}), so nothing more "
+                f"is rendered for it by itself"), (
+                f"Check the storage (Supabase: is it up, the project's quota, the bucket's file size limit) and the "
+                f"Vercel log of /api/order, then clear the review in the admin panel (/admin, order {order}) or: python "
+                f"scripts/order_admin.py clear-review {order}. The customer's order page and the daily run then go "
+                f"on; each further lost render holds the order again at once (one 4K render, about $0.15, each).")
     if reason.startswith(pay.MAIL_REVIEW):
         return (f"the order confirmation email did not go out ({reason}), and nothing is made before it has"), (
                 f"Fix the cause (RESEND_API_KEY, the snapeyes.com domain at Resend), then send it again from the admin "

@@ -79,6 +79,11 @@ export interface OrderEye { eye: number; made?: boolean; uploaded?: boolean; ref
 
 export interface Download { url: string; download_url: string; expires_in?: number; width?: number | null; height?: number | null; bytes?: number | null }
 
+/** The server's own making of a paid order (api/_lib/maker.py), as the status of a "paid" or "making" order says it:
+ *  while `active`, the server makes the order without this page (the page only watches), `step` "eye" (with `eye`)
+ *  or "compose" when it says what it is doing. */
+export interface ServerMaking { active?: boolean; step?: string | null; eye?: number | null }
+
 /** GET /api/order (or action "status" / "compose"): one order as the server sees it. */
 export interface OrderStatus {
   order: string;
@@ -103,6 +108,8 @@ export interface OrderStatus {
   waiting_for?: string;
   // the withdrawal the server recorded for this order, if any (./withdraw.ts readWithdrawal reads it)
   withdrawal?: unknown;
+  // "paid" or "making": whether the server is making it by itself right now (./driver.ts then only watches)
+  server?: ServerMaking;
 }
 
 export const ORDER_STATES: readonly OrderState[] = ['unpaid', 'pending', 'paid', 'making', 'review', 'ready', 'deleted', 'withdrawn'];

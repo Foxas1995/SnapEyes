@@ -236,8 +236,8 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
                   {d.records['review.json'] && (
                     <button type="button" className={BTN} onClick={() => setConfirm({
                       title: 'Nuimti peržiūros žymą', confirmLabel: 'Nuimti',
-                      text: `Priežastis: ${s(review.reason)}. Nuėmus užsakymo puslapis vėl galės gaminti akis (kitas bandymas kainuoja dar vieną 4K).`,
-                      run: () => act('clear_review', {}, (x) => (x.removed ? 'Žyma nuimta.' : 'Žymos nebuvo.')),
+                      text: `Priežastis: ${s(review.reason)}. Nuėmus gamyba tęsiama iš karto: serveris ir pirkėjo užsakymo puslapis vėl galės gaminti akis (kitas bandymas kainuoja dar vieną 4K).`,
+                      run: () => act('clear_review', {}, (x) => (x.removed ? (x.server === 'sent' || x.server === 'done' ? 'Žyma nuimta, serveris tęsia gamybą.' : 'Žyma nuimta.') : 'Žymos nebuvo.')),
                     })}>Nuimti peržiūros žymą</button>
                   )}
                   {mail.state !== 'sent' && (

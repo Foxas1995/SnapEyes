@@ -34,6 +34,12 @@
                                                         email (NEED ACTION first: notes over the daily limit)
     python scripts/order_admin.py refunded ORDER [--note TEXT]   you refunded a withdrawn order in Stripe: mark it
                                                         (refunded.json), so the daily clean-up sends no reminder
+    python scripts/order_admin.py selfcall-probe [--site URL] [--keep]   the self-call test: can the server call
+                                                        itself as many times in a row as an order needs (Vercel's
+                                                        loop protection publishes no limit)? About a minute, no order
+                                                        touched, nothing paid; PASS or FAIL with the reason. --site:
+                                                        default the site (SNAPEYES_SITE, https://snapeyes.com); a
+                                                        Preview address needs VERCEL_AUTOMATION_BYPASS_SECRET here
 
 What stays of an erased PAID order: its records (pay.kept_record: order.json and paid.json with date, price, payment,
 email, the artwork's details and consent; the mail and note marks; withdrawal statements), plus deleted.json, so its
@@ -86,8 +92,8 @@ def cmd_status(order):
     else:
         left = pay.expires_at(rec) - time.time()
         print(f"unpaid    {'EXPIRED' if left <= 0 else f'{left / 3600:.1f} h left to pay'}")
-    for name in ("review.json", "delivery.json", "release.json", "mail_delivery.json", "making.json", "withdrawn.json",
-                 "withdrawal.json", "refunded.json", "deleted.json", "expired.json"):
+    for name in ("review.json", "delivery.json", "release.json", "mail_delivery.json", "making.json", "advance.json",
+                 "withdrawn.json", "withdrawal.json", "refunded.json", "deleted.json", "expired.json"):
         j = store.get_json(f"orders/{order}/{name}")
         if j is not None:
             print(f"{name:<18}{json.dumps(j, ensure_ascii=False)}")
@@ -292,9 +298,120 @@ def cmd_refunded(order, note=""):
     print(f"marked refunded ({pay.amount_text(paid.get('amount_total') or 0, 'en')}); no reminder will come")
 
 
+def _probe_why(h, rec):
+    """Why the self-call test stopped after hop h (its record rec), for the owner."""
+    word, code = rec.get("next"), rec.get("code")
+    if "done" not in rec:
+        return (f"hop {h} started but never finished: its invocation was stopped before it could ask for the next "
+                f"one (Vercel may cancel a function whose caller has left; the server's making needs it to run on)")
+    if word == "refused":
+        extra = {508: "Vercel's loop protection (INFINITE_LOOP_DETECTED) refused the call after "
+                      f"{h + 1} nested self-calls: the server cannot finish orders by itself on this deployment",
+                 401: "a protected deployment: create Protection Bypass for Automation in Vercel and deploy again",
+                 403: "refused: another SNAPEYES_TICKET_SECRET there, or the Vercel Firewall or Bot Protection "
+                      "challenged the User-Agent snapeyes-self-call/1 (let it through in Vercel, Firewall)",
+                 429: "rate limited by the Vercel Firewall or Bot Protection (let snapeyes-self-call/1 through)"}
+        return f"hop {h} asked for hop {h + 1} and was answered HTTP {code}: " + extra.get(
+            code, "a redirect: SNAPEYES_SITE must be the canonical address" if isinstance(code, int) and 300 <= code < 400
+            else "look at the Vercel log of /api/order")
+    if word == "failed":
+        return f"hop {h} could not send its call for hop {h + 1} ({code})"
+    if word == "off":
+        return f"hop {h} found no address to call (SNAPEYES_SITE, VERCEL_URL)"
+    if word == "no_time":
+        return f"hop {h} had no time left to ask for hop {h + 1}"
+    return (f"hop {h} asked for hop {h + 1} ({word}), but hop {h + 1} never ran: a call is lost when its caller "
+            f"stops waiting before the called function starts (a cold start); the server's making needs that call")
+
+
+def cmd_selfcall_probe(site=None, keep=False):
+    """The self-call test (api/_lib/maker.py probe): does this deployment let the server call itself as many times in
+    a row as an order needs (an 8-eye order: 10 or more)? Vercel's loop protection publishes no limit. Starts
+    maker.PROBE_HOPS hops on the site (each works longer than the caller waits, as a render step does), follows them
+    in storage (ops/selfcall/<id>/), prints what each did and PASS or FAIL, and deletes the test's files. No order is
+    touched and nothing is paid. Needs the site's SNAPEYES_TICKET_SECRET here (the site refuses another), and on a
+    protected Preview VERCEL_AUTOMATION_BYPASS_SECRET too."""
+    import re, secrets, requests
+    from _lib import iris as L
+    from _lib import maker as M
+    base = (site or pay.site()).strip().rstrip("/")
+    if not re.fullmatch(r"https://[a-z0-9][a-z0-9.-]{2,200}|http://127\.0\.0\.1:[0-9]{2,5}", base):
+        raise SystemExit("--site must be https://<host> (or http://127.0.0.1:<port> for a local test)")
+    pid = secrets.token_hex(6)
+    folder = f"{M.PROBE_TOP}/{pid}"
+    headers = {"Content-Type": "application/json", "Accept": "application/json", "User-Agent": "snapeyes-self-call/1"}
+    bypass = os.environ.get("VERCEL_AUTOMATION_BYPASS_SECRET", "").strip()
+    if bypass:
+        headers["x-vercel-protection-bypass"] = bypass
+    print(f"self-call test {pid} on {base}: {M.PROBE_HOPS} hops of about {M.PROBE_WORK + 0.5:.0f} s each")
+    body = {"action": "advance", "probe": pid, "hop": 0, "ticket": L.mint_ticket(M.PROBE_KIND + pid, M.TICKET_TTL)}
+    t0 = time.time()
+    ok = False
+    try:
+        try:
+            r = requests.post(base + "/api/order", data=json.dumps(body), headers=headers, timeout=(10, 1.5),
+                              allow_redirects=False)
+            code = r.status_code
+            r.close()
+            if code != 200:
+                why = {403: "the site refused the test's ticket: SNAPEYES_TICKET_SECRET here is not the site's (or the "
+                            "Vercel Firewall challenged the call)",
+                       401: "the deployment is protected: set VERCEL_AUTOMATION_BYPASS_SECRET here to its bypass secret",
+                       400: "the site does not know the self-call test yet: deploy this version first"}.get(code, "")
+                raise SystemExit(f"FAIL: the site answered HTTP {code} to the first hop{': ' + why if why else ''}")
+        except requests.exceptions.ReadTimeout:
+            pass                          # the first hop is working (it answers only after PROBE_WORK)
+        except requests.RequestException as e:
+            raise SystemExit(f"FAIL: the site could not be reached: {type(e).__name__}")
+        deadline = t0 + M.PROBE_HOPS * (M.PROBE_WORK + 6.0) + 30.0
+        hops, stall = {}, None
+        while time.time() < deadline:
+            time.sleep(2.0)
+            for row in store.list_all(folder):
+                m = re.fullmatch(r"hop_([0-9]{2})\.json", row["name"])
+                if m and not row["folder"]:
+                    rec = store.get_json(f"{folder}/{row['name']}")
+                    if isinstance(rec, dict):
+                        hops[int(m.group(1))] = rec
+            top = max(hops) if hops else -1
+            last = hops.get(top) or {}
+            if top == M.PROBE_HOPS - 1 and "done" in last:
+                break
+            if "done" in last and last.get("next") not in ("sent", "done"):
+                break                     # the chain ended here: why below
+            if "done" in last:
+                stall = stall if stall and stall[0] == top else (top, time.time())
+                if time.time() - stall[1] > 25.0:
+                    break                 # it asked for the next hop, which never came
+        for h in sorted(hops):
+            rec = hops[h]
+            code = f" HTTP {rec['code']}" if isinstance(rec.get("code"), int) else ""
+            print(f"  hop {h:2d}  ran {rec.get('t', t0) - t0:6.1f} s after the start, {rec.get('left')} s of its "
+                  f"invocation left; the next: {rec.get('next', 'still working')}{code}")
+        n = len(hops)
+        top = max(hops) if hops else -1
+        if n == M.PROBE_HOPS and hops.get(M.PROBE_HOPS - 1, {}).get("next") == "last":
+            ok = True
+            print(f"PASS: the server called itself {M.PROBE_HOPS - 1} times in a row, each call answered after its "
+                  f"caller had left (an 8-eye order needs about 10). The server's own making works on {base}.")
+        elif top < 0:
+            print("FAIL: the first hop never ran (look at the Vercel log of /api/order)")
+        else:
+            print(f"FAIL after {n} of {M.PROBE_HOPS} hops: {_probe_why(top, hops[top])}. Until this is solved, paid "
+                  f"orders are finished by the customer's order page while it is open and by the daily run.")
+    finally:
+        if not keep:
+            try:
+                store.delete_many(pay.folder_files(folder))
+            except Exception as e:  # noqa: a few small files; the next test does not need them gone
+                print(f"(the test's files under {folder} were not deleted: {type(e).__name__})")
+    return ok
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="SnapEyes orders: status, link, release, clear-review, resend-mail, "
-                                             "mailed-by-hand, purge, expire-paid, erase, cleanup, withdrawals, refunded.")
+                                             "mailed-by-hand, purge, expire-paid, erase, cleanup, withdrawals, refunded, "
+                                             "selfcall-probe.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("status", "link", "clear-review", "resend-mail", "mailed-by-hand"):
         sub.add_parser(name).add_argument("order")
@@ -319,6 +436,9 @@ def main(argv=None):
     f = sub.add_parser("refunded")
     f.add_argument("order")
     f.add_argument("--note", default="", help="optional: how or when you refunded it")
+    sp = sub.add_parser("selfcall-probe")
+    sp.add_argument("--site", default=None, help="the address to test (default: the site, SNAPEYES_SITE)")
+    sp.add_argument("--keep", action="store_true", help="keep the test's files in storage (ops/selfcall/)")
     a = ap.parse_args(argv)
     if not store.configured():
         raise SystemExit("storage is not configured here: " + store.problem())
@@ -352,6 +472,8 @@ def main(argv=None):
         cmd_withdrawals(a.day, a.months)
     elif a.cmd == "refunded":
         cmd_refunded(_order(a.order), a.note)
+    elif a.cmd == "selfcall-probe":
+        return 0 if cmd_selfcall_probe(a.site, a.keep) else 1
     return 0
 
 

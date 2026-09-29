@@ -323,7 +323,10 @@ def audited(name, fn):
         except Exception as e:  # noqa
             audit(name, order, False, type(e).__name__, eye)
             raise
-        # an action that deleted the order completely says orderlog: False (its log went with it)
+        # an action that deleted the order completely says orderlog: False (its log went with it); one that made the
+        # order (lab_start) names it in its reply
+        if order is None and isinstance(res.get("order"), str):
+            order = res["order"]
         audit(name, order, True, res.get("result"), eye, res.get("audit_detail"), orderlog=res.pop("orderlog", True))
         res.pop("audit_detail", None)
         return res
@@ -778,7 +781,13 @@ def act_release(body, who):
               "application/json", upsert=True)
     store.delete(f"orders/{order}/review.json")
     mail = None
-    if body.get("mail") is not False:
+    held = bool(dl.get("needs_review"))
+    if body.get("mail") is not False and not held:
+        # an artwork that was never held had its "ready" email when it was made (maker.ready_mail_once): a second
+        # one would be a duplicate (and Resend refuses the same idempotency key with another text for 24 h). The
+        # panel's resend_ready sends it again on purpose
+        mail = "not_held"
+    elif body.get("mail") is not False:
         if not pay.email_configured():
             mail = "off"
         else:
@@ -788,8 +797,7 @@ def act_release(body, who):
             else:
                 subject, text, html_body = pay.ready_mail(order, paid, k)
                 mail = pay.send_mail(paid.get("email"), subject, text, f"snapeyes-ready-{order}", html_body)
-    return {"ok": True, "result": "released", "mail": mail, "was_held": bool(dl.get("needs_review")),
-            "audit_detail": f"mail {mail}"}
+    return {"ok": True, "result": "released", "mail": mail, "was_held": held, "audit_detail": f"mail {mail}"}
 
 
 def act_clear_review(body, who):
@@ -797,7 +805,20 @@ def act_clear_review(body, who):
     if not isinstance(_json_or_none(f"orders/{order}/order.json"), dict):
         raise store.Answer(404, "not_found", "There is no such order.", False)
     removed = store.delete(f"orders/{order}/review.json")
-    return {"ok": True, "result": "removed" if removed else "none", "removed": bool(removed)}
+    return {"ok": True, "result": "removed" if removed else "none", "removed": bool(removed),
+            "server": _ask_server(order) if removed else None}
+
+
+def _ask_server(order):
+    """After a hold is lifted: the server's making is asked to go on at once (api/_lib/maker.py kick; its step reads
+    the order again and does only what is due), instead of at the customer's next visit or the next daily run.
+    Returns kick()'s word; never raises."""
+    try:
+        from . import maker
+        return maker.kick(order, why="admin")
+    except Exception as e:  # noqa: the hold is lifted all the same
+        log(f"order {order}: server making not asked for: {type(e).__name__}")
+        return "failed"
 
 
 def act_mailed_by_hand(body, who):

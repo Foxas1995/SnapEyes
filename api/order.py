@@ -8,6 +8,8 @@ POST /api/order  {action: "status", order, k, s?, previews?}
 POST /api/order  {action: "make", order, k, eye: 1-8, s?}
 POST /api/order  {action: "compose", order, k, s?}
 POST /api/order  {action: "withdraw", order, k?, name, email, lang, nonce?}   the online withdrawal function
+POST /api/order  {action: "advance", order, ticket, hop, ...}   the server's own making, one step (api/_lib/maker.py):
+                 only the server's self-call, with its internal ticket; 403 forbidden for anyone else
 GET  /api/order  from Vercel Cron (its x-vercel-cron-schedule header or vercel-cron user agent), or with ?cron=purge:
                  the daily clean-up (api/_lib/cleanup.py), only with "Authorization: Bearer <CRON_SECRET>"
 
@@ -31,14 +33,23 @@ status: unpaid / pending / paid / making / review / ready / withdrawn / deleted,
   page, or the order's latest one). A paid order says "paid" only once its order confirmation email went out: until
   then "pending" with waiting_for "confirmation_email" (this call sends it when nobody has), and "review" when it
   cannot go out (the owner was told). A Stripe TEST payment counts only where test orders are allowed (never on
-  production): elsewhere such an order is "unpaid" with payment_check "test_mode".
+  production): elsewhere such an order is "unpaid" with payment_check "test_mode". A "paid" or "making" reply carries
+  "server": {active, step, eye}: while active the server makes the order itself (api/_lib/maker.py) and the page
+  only watches; an order whose making has begun and that has no live server step gets one asked for here
+  (maker.nudge). A status read never starts an order: the withdrawal page reads it too.
 make: renders one eye of a PAID order at 4096 px from its stored crop and preview (master_eye's own function, with an
   unlock ticket minted here, so one eye fits in one 60 s call). Call it once per eye; a stored eye is answered from
   storage and never rendered twice. Nothing is rendered before the order confirmation email went out (402
   confirming: ask for the status, which sends it) or for a test payment where test orders do not count (402
-  test_payment).
+  test_payment). After the page made an eye, the server is asked to go on with the rest (maker.nudge), so a page
+  closed now still gets its file. A failure where a paid render may have been lost (master_eye failed after the
+  image model answered: the master not stored, the post-processing broken) is counted per order
+  (render_lost_<i>.json); the LOST_MAX-th (2) holds the order for a person (409 in_review, review.json, the owner
+  told), so no retry by anyone pays for the same failure again and again.
 compose: once every eye is made, the artwork with the paid style, layout, names and title (master_compose's own
-  function), and the download link. When a check says a person should look first, the delivery waits (state review)
+  function), and the download link. One compose at a time (compose.lock: another one is answered 409 "rendering",
+  like an eye). A ready artwork sends the customer the "ready" email, once (maker.ready_mail_once). When a check says
+  a person should look first, the delivery waits (state review)
   and the owner is told; scripts/order_admin.py release hands it out. Every hold (review.json or a held artwork) is
   also noted in cleanup/review/ (pay.index_review): the daily clean-up reminds the owner once when it has waited
   pay.REVIEW_REMIND_HOURS (36 h; the terms promise the file within 48 h).
@@ -50,6 +61,12 @@ withdraw: the online withdrawal function (api/_lib/withdraw.py): records the sta
   anything (pay.sells(): no keys that count, and no live payment ever recorded), a statement for an order that is
   not stored is not recorded: 409 with the reason code "no_order" and recorded false (no "withdrawal" object, no
   email), which the page shows with its own text (nothing was recorded: check the number, or email the withdrawal).
+advance: the server's own making of a paid order without the page (api/_lib/maker.py): one step with make_eye or
+  compose_order (the same code and rules as make and compose), then a self-call for the next step. Started by the
+  one who sends the order confirmation email, by the page's status call when nobody is on an unfinished order, and
+  by the daily clean-up for orders older than 30 minutes that nobody finished. With "probe" instead of an order:
+  one hop of the self-call test (maker.probe, scripts/order_admin.py selfcall-probe: does Vercel let the server call
+  itself as often in a row as an order needs?), with the test's own internal ticket; nothing of any order is touched.
 
 Every reply is JSON; errors are {ok: false, reason, error, retry} as the paid endpoints answer them. API.md in the
 work notes lists them all."""
@@ -63,6 +80,7 @@ from _lib import store
 from _lib import pay
 from _lib import withdraw as W
 from _lib import cleanup as C
+from _lib import maker as M
 import master_eye as ME
 import master_compose as MC
 
@@ -74,6 +92,8 @@ FORMATS = {"JPEG": ("jpg", "image/jpeg"), "PNG": ("png", "image/png")}
 FILE_MAX = 8 << 20           # a stored draft file larger than this is not one we stored
 PREVIEW_LINK = 3600          # the order page's thumbnails of the approved previews
 LINK_SECONDS = MC.LINK_SECONDS
+LOST_MAX = 2                 # paid renders an order may lose (master_eye failed after the model call), then it is held
+                             # for a person (_render_lost): one automatic retry, never a loop of paid ones
 
 
 def _sha(b):
@@ -305,7 +325,8 @@ def _unpaid(order, rec, pending, check):
 def _paid_facts(order, n, mail=False):
     """What is stored for a paid order, read at once: made (per eye), delivery, review, released, deleted,
     withdrawn (withdrawn.json), withdrawal (the latest statement's summary) and, with mail=True, mail
-    (mail_delivery.json)."""
+    (mail_delivery.json), beat (advance.json: the server's own making, api/_lib/maker.py) and making (making.json
+    exists: making began)."""
     folder = f"orders/{order}"
     res = pay.parallel([lambda i=i: store.exists(f"{folder}/eye_{i}.jpg", timeout=8.0) for i in range(1, n + 1)] +
                        [lambda: store.get_json(f"{folder}/delivery.json", timeout=8.0),
@@ -314,10 +335,13 @@ def _paid_facts(order, n, mail=False):
                         lambda: store.exists(f"{folder}/deleted.json", timeout=8.0),
                         lambda: store.get_json(f"{folder}/withdrawn.json", timeout=8.0),
                         lambda: store.get_json(f"{folder}/withdrawal.json", timeout=8.0)] +
-                       ([lambda: store.get_json(f"{folder}/mail_delivery.json", timeout=8.0)] if mail else []))
+                       ([lambda: store.get_json(f"{folder}/mail_delivery.json", timeout=8.0),
+                         lambda: store.get_json(f"{folder}/advance.json", timeout=8.0),
+                         lambda: store.exists(f"{folder}/making.json", timeout=8.0)] if mail else []))
     return {"made": list(res[:n]), "delivery": res[n], "review": res[n + 1], "released": bool(res[n + 2]),
             "deleted": bool(res[n + 3]), "withdrawn": res[n + 4], "withdrawal": res[n + 5],
-            "mail": res[n + 6] if mail else None}
+            "mail": res[n + 6] if mail else None, "beat": res[n + 7] if mail else None,
+            "making": bool(res[n + 8]) if mail else False}
 
 
 def _withdrawal_view(summary):
@@ -396,8 +420,17 @@ def _status(order, rec, s=None, previews=False):
             review = {"reason": pay.MAIL_REVIEW}
         elif c == "waiting":
             waiting = "confirmation_email"
-    return _paid_reply(order, paid, f["made"], f["delivery"], review, f["released"], previews=previews,
-                       deleted=f["deleted"], waiting=waiting, withdrawn=f["withdrawn"], withdrawal=f["withdrawal"])
+    out = _paid_reply(order, paid, f["made"], f["delivery"], review, f["released"], previews=previews,
+                      deleted=f["deleted"], waiting=waiting, withdrawn=f["withdrawn"], withdrawal=f["withdrawal"])
+    if out["state"] in ("paid", "making"):
+        # the server's own making (api/_lib/maker.py): the page drives nothing while it is on the order, and an
+        # order whose making has begun gets it asked for again when no step is live. A status read never STARTS an
+        # order (the withdrawal page reads this too: opening it must not start the work that ends the right)
+        v = M.view(f["beat"], order)
+        if not v["active"] and (f["making"] or any(f["made"])) and M.nudge(order, f["beat"], why="status"):
+            v = M.view(f["beat"], order)
+        out["server"] = v
+    return out
 
 
 def status(body):
@@ -420,18 +453,27 @@ def make(body):
     rec = pay.load_order(order, k)
     eye = ME._eye(body.get("eye"))
     paid = _require_paid(order, rec, body.get("s"))
+    return make_eye(order, rec, paid, eye)
+
+
+def make_eye(order, rec, paid, eye, server=False):
+    """One eye of a paid order (paid: its paid record, already checked to count here): every rule of make, for the
+    order page (make) and for the server's own making (server=True, api/_lib/maker.py advance). After the page made an
+    eye, the server is asked to go on with the rest (maker.nudge), so the order is finished even if the page is
+    closed now."""
     n = paid["spec"]["eyes"]
     if eye > n:
         raise L.ClientError(f"This order has {n} eye{'s' if n > 1 else ''}.")
     folder = f"orders/{order}"
     # short and not retried: these reads must not eat the render's time (master_eye needs ~46 s of the 52)
-    stored, review, drec, deleted, mail, stopped = pay.parallel([
+    stored, review, drec, deleted, mail, stopped, beat = pay.parallel([
         lambda: store.exists(f"{folder}/eye_{eye}.jpg", timeout=5.0, retry=False),
         lambda: store.get_json(f"{folder}/review.json", timeout=5.0, retry=False),
         lambda: store.get_json(f"{folder}/draft/eye_{eye}.json", timeout=5.0, retry=False),
         lambda: store.exists(f"{folder}/deleted.json", timeout=5.0, retry=False),
         lambda: store.get_json(f"{folder}/mail_delivery.json", timeout=5.0, retry=False),
-        lambda: store.exists(f"{folder}/withdrawn.json", timeout=5.0, retry=False)])
+        lambda: store.exists(f"{folder}/withdrawn.json", timeout=5.0, retry=False),
+        lambda: store.get_json(f"{folder}/advance.json", timeout=5.0, retry=False)])
     if stopped:
         raise _withdrawn()
     if deleted:
@@ -470,10 +512,53 @@ def make(body):
         if a.status == 502:
             _to_review(order, eye, str(a.body.get("reason") or "render_rejected"))
         raise
+    except Exception as e:
+        if isinstance(e, (store.StorageExists, L.ClientError)) or store.unspent(e):
+            raise                        # nothing paid was lost (master_eye marks these): a retry costs nothing
+        lost = _render_lost(order, eye, e)
+        if lost >= LOST_MAX:
+            raise _in_review() from e    # held for a person (_render_lost): the page and the server stop here
+        store.mark_lost(e, lost)         # the server's own making stops instead of trying again at once
+        raise
     pay.log(f"order {order}: eye {eye}/{n} {'was stored' if r.get('existing') else 'made'} in {r.get('seconds')} s"
-            f"{' NEEDS REVIEW' if r.get('needs_review') else ''}")
+            f"{' NEEDS REVIEW' if r.get('needs_review') else ''}{' (server)' if server else ''}")
+    if not server and not r.get("existing"):
+        # making has begun: the server goes on with the rest too, so a page closed now still gets its file
+        M.nudge(order, beat, why="page_made_an_eye")
     return {"ok": True, "order": order, "eye": eye, "count": n, "made": True, "existing": bool(r.get("existing")),
             "seconds": r.get("seconds")}
+
+
+def _render_lost(order, eye, e):
+    """master_eye failed where a paid render may have been lost (not marked unspent: the master could not be stored,
+    the post-processing broke after the model answered). Counted per order, whoever asked (the order page, the
+    server's own making, the admin panel): render_lost_<i>.json, each created atomically, so two losses at once both
+    count. The LOST_MAX-th holds the order for a person (review.json, the owner told once): nothing more is rendered
+    for it by itself, so the same failure is never paid for again and again. After the owner clears that hold, each
+    further loss holds it again at once. A count that cannot be stored holds it too (the safe side). Returns the
+    count. Never raises."""
+    detail = pay.scrub(f"{type(e).__name__}: {e}")[:200]
+    now = time.time()
+    n = LOST_MAX + 1
+    try:
+        mark = store.json_bytes({"eye": eye, "t": round(now, 3), "iso": pay.iso(now), "error": detail})
+        for i in range(1, LOST_MAX + 1):
+            try:
+                store.put(f"orders/{order}/render_lost_{i}.json", mark, "application/json", upsert=False, timeout=5.0,
+                          retry=False)
+                n = i
+                break
+            except store.StorageExists:
+                continue
+    except Exception as se:  # noqa: not countable, so held rather than paid for again
+        pay.log(f"order {order}: a lost render was not counted: {type(se).__name__}")
+        n = LOST_MAX
+    count = str(n) if n <= LOST_MAX else f"more than {LOST_MAX}"
+    pay.log(f"order {order}: eye {eye}: a paid render may be lost ({count}, {LOST_MAX} allowed): {detail}")
+    if n >= LOST_MAX:
+        _to_review(order, eye, f"render_lost ({count} paid renders lost after the image model call; the last: "
+                               f"{detail})")
+    return n
 
 
 def _making_started(order, eye, mail):
@@ -494,6 +579,55 @@ def compose(body):
     order, k = body.get("order"), body.get("k")
     rec = pay.load_order(order, k)
     paid = _require_paid(order, rec, body.get("s"))
+    return compose_order(order, rec, paid)
+
+
+COMPOSE_STALE = 75.0         # a compose claim older than this belongs to an invocation that is dead (60 s at most)
+
+
+def _compose_claim(order):
+    """Claim composing the order's artwork (compose.lock, created atomically) so the order page and the server
+    never compose it twice at once. A live claim of another request is a 409 with the reason "rendering" (the page's
+    driver waits and asks again, as for an eye); one older than COMPOSE_STALE is taken over. Returns the claim."""
+    path = f"orders/{order}/compose.lock"
+    cid = secrets.token_hex(6)
+    age = None
+    for _ in range(3):
+        try:
+            store.put(path, store.json_bytes({"t": round(time.time(), 3), "id": cid}), "application/json",
+                      upsert=False, timeout=5.0, retry=False)
+            return path, cid
+        except store.StorageExists:
+            pass
+        cur = store.get_json(path, timeout=5.0, retry=False)
+        if cur is None:
+            continue                     # released a moment ago
+        try:
+            age = time.time() - float(cur.get("t"))
+        except (TypeError, ValueError):
+            age = None
+        if age is not None and -60.0 < age < COMPOSE_STALE:
+            break
+        pay.log(f"order {order}: a stale compose claim is taken over")
+        store.delete(path, timeout=5.0, retry=False)
+    wait = 15 if age is None else int(max(5, min(40, COMPOSE_STALE - age)))
+    raise store.Answer(409, "rendering", "Your artwork is being put together. Please wait a moment.", True, wait)
+
+
+def _compose_release(claim):
+    path, cid = claim
+    try:
+        cur = store.get_json(path, timeout=4.0, retry=False)
+        if isinstance(cur, dict) and cur.get("id") == cid:
+            store.delete(path, timeout=4.0, retry=False)
+    except store.StorageError as e:
+        pay.log(f"compose claim not released (taken over after {COMPOSE_STALE:.0f} s): {e}")
+
+
+def compose_order(order, rec, paid, server=False):
+    """The artwork of a paid order (paid: its paid record, already checked to count here): every rule of compose, for
+    the order page (compose) and the server's own making (server=True, api/_lib/maker.py). Once an artwork is ready
+    without a hold, the customer gets the "ready" email, once (maker.ready_mail_once)."""
     spec = paid["spec"]
     n = spec["eyes"]
     f = _paid_facts(order, n)
@@ -511,28 +645,49 @@ def compose(body):
     if missing:
         raise store.Answer(409, "eyes_not_ready", "Not every eye is finished yet.", True, 5, missing=missing)
     folder = f"orders/{order}"
-    r = MC.master_compose({"order": order, "ticket": L.mint_ticket(store.unlock_kind(order), 300),
-                           "keys": [f"{folder}/eye_{i}.jpg" for i in range(1, n + 1)], "style": spec["style"],
-                           "layout": spec["layout"], "names": spec["names"], "title": spec["title"]})
-    now = int(time.time())
-    delivery = {"key": r["key"], "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
-                "style": r.get("style"), "layout": r.get("layout"), "count": r.get("count"),
-                "needs_review": bool(r.get("needs_review")), "created_at": now, "created": pay.iso(now)}
-    store.put(f"{folder}/delivery.json", store.json_bytes(delivery), "application/json", upsert=True)
-    if delivery["needs_review"] and not released:
+    claim = _compose_claim(order)
+    try:
+        # under the claim, look again: a request that composed it between the first look and the claim wins
+        done = store.get_json(f"{folder}/delivery.json", timeout=5.0, retry=False)
+        if isinstance(done, dict):
+            return _paid_reply(order, paid, made, done, None, released)
+        r = MC.master_compose({"order": order, "ticket": L.mint_ticket(store.unlock_kind(order), 300),
+                               "keys": [f"{folder}/eye_{i}.jpg" for i in range(1, n + 1)], "style": spec["style"],
+                               "layout": spec["layout"], "names": spec["names"], "title": spec["title"]})
+        now = int(time.time())
+        delivery = {"key": r["key"], "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
+                    "style": r.get("style"), "layout": r.get("layout"), "count": r.get("count"),
+                    "needs_review": bool(r.get("needs_review")), "created_at": now, "created": pay.iso(now)}
+        store.put(f"{folder}/delivery.json", store.json_bytes(delivery), "application/json", upsert=True)
+    finally:
+        _compose_release(claim)
+    held = delivery["needs_review"] and not released
+    if held:
         pay.index_review(order, now)      # the daily clean-up's reminder after pay.REVIEW_REMIND_HOURS
         pay.owner_note(order, "review", f"SnapEyes: order {order} waits for your look",
                        f"Order {order}: the artwork is made, but a check says a person should look first "
                        f"(colour or preview match).\nIt is NOT delivered until you release it:\n"
                        f"  python scripts/order_admin.py status {order}\n  python scripts/order_admin.py release {order}\n")
-    pay.log(f"order {order}: artwork {'HELD for review' if delivery['needs_review'] and not released else 'ready'} "
-            f"{delivery['width']}x{delivery['height']} {delivery['bytes']} bytes")
+    pay.log(f"order {order}: artwork {'HELD for review' if held else 'ready'} "
+            f"{delivery['width']}x{delivery['height']} {delivery['bytes']} bytes{' (server)' if server else ''}")
+    if not held:
+        M.ready_mail_once(order, rec, paid, released)
     return _paid_reply(order, paid, [True] * n, delivery, None, released, url=r.get("url"))
+
+
+def advance(body):
+    """POST /api/order {action: "advance", ...}: the server's own making, one step (api/_lib/maker.py). Only with the
+    internal ticket the server's self-call carries: 403 forbidden for anyone else, before anything is read."""
+    return M.advance(body, STEPS)
+
+
+STEPS = {"make_eye": lambda order, rec, paid, eye: make_eye(order, rec, paid, eye, server=True),
+         "compose_order": lambda order, rec, paid: compose_order(order, rec, paid, server=True)}
 
 
 # ----------------------------------------------------------------------------- routing
 ACTIONS = {"draft": draft, "arrange": arrange, "status": status, "make": make, "compose": compose,
-           "withdraw": W.withdraw}
+           "withdraw": W.withdraw, "advance": advance}
 
 
 def dispatch(body):

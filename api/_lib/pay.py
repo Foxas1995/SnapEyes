@@ -27,8 +27,10 @@ Everything here is INACTIVE until the owner sets the environment on Vercel (valu
   SNAPEYES_ADMIN_SECRET  for the owner's admin panel (/admin, api/_lib/ops.py; 32 characters or more, made with
                          python scripts/mint_admin.py --new-secret): the admin keys are signed with it. Without it
                          (and without a SNAPEYES_TICKET_SECRET of 32 or more characters) /api/admin answers 503.
-Tests only, ignored whenever VERCEL is set: STRIPE_API_BASE, RESEND_API_BASE and LEGAL_PACK_BASE =
-http://127.0.0.1:<port>.
+  VERCEL_AUTOMATION_BYPASS_SECRET  set by Vercel itself when the project has "Protection Bypass for Automation": the
+                         server's self-call on a protected Preview carries it (api/_lib/maker.py kick). Never logged.
+Tests only, ignored whenever VERCEL is set: STRIPE_API_BASE, RESEND_API_BASE, LEGAL_PACK_BASE and SNAPEYES_SELF_BASE
+(where the server's self-call goes; without it a local run makes no self-call) = http://127.0.0.1:<port>.
 
 The order confirmation email (confirmation_mail) carries the contract on a durable medium: the seller, what was
 bought, the final price (no VAT), the customer's recorded consent with its exact text and time, the withdrawal
@@ -66,6 +68,12 @@ One order = one private folder (store.py), orders/<order>/:
   note_<kind>.json             an owner note of this kind was sent (once per kind)
   making.json                  the first time /api/order make started a render (the start of performance: the
                                right of withdrawal ends here, api/_lib/withdraw.py)
+  advance.json / advance.lock  the server's own making (api/_lib/maker.py): its latest step (what the order page
+                               shows as "the server is on it") and the lease that lets one step run at a time
+  compose.lock                 an artwork is being composed (the order page and the server never compose twice)
+  mail_ready.json              the "your artwork is ready" email: claimed before sending, marked after
+  render_lost_<i>.json         a paid render that may have been lost (master_eye failed after the image model
+                               answered; api/order.py make_eye): the order's LOST_MAX-th holds it for a person
   withdrawal_<id>.json         a withdrawal statement (name, email, time, outcome; withdraw.py), with
                                withdrawal_<id>_ack.json (its receipt email), withdrawal_<id>_note.json (the owner's
                                note) and withdrawal.json (the latest one, no personal data: what the order page shows)
@@ -81,8 +89,10 @@ withdrawaddr/<yymm>/ (neutral receipts per address and month; a hash, no address
 (statements that match no order of ours), withdrawdue/ (receipts to send again), cleanup/ (what the daily clean-up
 must do later, the days it finished, cleanup/digest/<day>/: the statements for the owner's daily digest, and
 cleanup/review/<order>.json: a paid order held for review, index_review(), for the owner's reminder after
-REVIEW_REMIND_HOURS), notes/ (owner notes not tied to an order) and marks/sold_live.json (the first live payment
-was recorded here: sells()). The admin panel's log of an order, ops/orderlog/<order>/ (api/_lib/ops.py), belongs to
+REVIEW_REMIND_HOURS; cleanup/making/<order>.json: a paid order not finished yet, index_making(), which the daily
+clean-up advances when nobody else did), notes/ (owner notes not tied to an order), ops/selfcall/<id>/ (the self-call
+test's hops, api/_lib/maker.py probe; scripts/order_admin.py selfcall-probe deletes them) and marks/sold_live.json (the
+first live payment was recorded here: sells()). The admin panel's log of an order, ops/orderlog/<order>/ (api/_lib/ops.py), belongs to
 the order record: it is deleted with it (drop_orderlog) whenever an order goes completely, and kept with the
 records of a paid order.
 The daily clean-up (api/_lib/cleanup.py) removes unpaid orders after 26 h, the images of withdrawn orders after 14
@@ -376,7 +386,7 @@ def scrub(s):
     """No key, webhook secret, order access key or signed-link token may reach a log line or a reply."""
     s = L._scrub(str(s))
     for name in ("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "SNAPEYES_SUPABASE_SERVICE_KEY",
-                 "SNAPEYES_TICKET_SECRET", "CRON_SECRET", "SNAPEYES_ADMIN_SECRET"):
+                 "SNAPEYES_TICKET_SECRET", "CRON_SECRET", "SNAPEYES_ADMIN_SECRET", "VERCEL_AUTOMATION_BYPASS_SECRET"):
         for part in _env(name).split(","):
             part = part.strip()
             if len(part) >= 8:
@@ -464,7 +474,12 @@ def serve(req, name, fn, gate=True):
             a = e
         box.status, box.retry_after = a.status, a.retry_after
         return dict(a.body)
-    L.run(box, wrapped, gate=gate)
+    try:
+        L.run(box, wrapped, gate=gate)
+    except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError) as e:
+        # the caller left before the reply: the server's own self-call (api/_lib/maker.py kick) never waits for it.
+        # The work is done and stored; only the reply is lost
+        log(f"{name}: the caller left before the reply ({type(e).__name__})")
 
 
 # ----------------------------------------------------------------------------- prices and the order spec
@@ -992,6 +1007,7 @@ def record_paid(order, rec, sess, source, event_id=None):
         store.put(order_path(order, "paid.json"), store.json_bytes(paid), "application/json", upsert=False)
         log(f"order {order} PAID via {source}: {amount} {paid['currency']} {spec['eyes']} eye(s) {spec['style']} "
             f"live={paid['livemode']}")
+        index_making(order, now)       # the daily clean-up's catch-up (api/_lib/maker.py) finds it until it is done
         if paid["livemode"]:
             _mark_sold(order)
         if withdrawn(order):
@@ -1378,6 +1394,7 @@ def confirmation_mail(order, paid, k, pack, consent):
     spec = paid.get("spec") or {}
     lang = lang_of(spec.get("lang"))
     de = lang == "de"
+    auto = server_starts(pack)       # the texts in this pack say the server starts right after this email
     n = int(spec.get("eyes") or 1)
     link = order_url(order, k, lang)
     wlink = withdraw_url(order, k, lang)
@@ -1407,9 +1424,13 @@ def confirmation_mail(order, paid, k, pack, consent):
                   "mit dem Muster-Widerrufsformular und unsere AGB."),
             ("h", "Ihre Bestellseite"),
             ("link", link),
-            ("p", "Sobald Sie diese Seite öffnen, beginnen wir mit der Erstellung Ihres Kunstwerks (meist ist es in "
-                  "wenigen Minuten fertig), und dort laden Sie die Datei herunter. Bitte geben Sie diesen Link nicht "
-                  "weiter: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen."),
+            ("p", ("Direkt nach dem Versand dieser E-Mail beginnen wir mit der Erstellung Ihres Kunstwerks; dafür müssen "
+                   "Sie keine Seite geöffnet lassen. Meist ist es in wenigen Minuten fertig: Sie laden die Datei auf "
+                   "Ihrer Bestellseite herunter, und wir schreiben Ihnen eine E-Mail, sobald sie fertig ist. "
+                   if auto else
+                   "Sobald Sie diese Seite öffnen, beginnen wir mit der Erstellung Ihres Kunstwerks (meist ist es in "
+                   "wenigen Minuten fertig), und dort laden Sie die Datei herunter. ") +
+                  "Bitte geben Sie diesen Link nicht weiter: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen."),
             ("h", "Ihre Bestellung"),
             ("rows", rows),
             ("h", "Ihre Zustimmung zum sofortigen Beginn"),
@@ -1418,7 +1439,11 @@ def confirmation_mail(order, paid, k, pack, consent):
             ("p", "Wir bestätigen Ihre ausdrückliche Zustimmung und Ihre Kenntnisnahme. Mit der Erstellung Ihrer Datei "
                   "beginnen wir erst, nachdem diese E-Mail versandt ist. Mit diesem Beginn erlischt Ihr Widerrufsrecht."),
             ("h", "Ihr Widerrufsrecht"),
-            ("p", "Bis wir begonnen haben, können Sie den Vertrag widerrufen: mit der Schaltfläche „Vertrag hier "
+            ("p", "Wir beginnen direkt nach dem Versand dieser E-Mail mit der Erstellung Ihrer Datei, daher erlischt Ihr "
+                  "Widerrufsrecht meist schon wenige Augenblicke danach. Bis wir begonnen haben, können Sie den Vertrag "
+                  "widerrufen: mit der Schaltfläche „Vertrag hier widerrufen“ auf der Widerrufsseite Ihrer Bestellung:"
+             if auto else
+                  "Bis wir begonnen haben, können Sie den Vertrag widerrufen: mit der Schaltfläche „Vertrag hier "
                   "widerrufen“ auf der Widerrufsseite Ihrer Bestellung. Dieser Link öffnet sie, ohne dass wir mit der "
                   "Erstellung Ihrer Datei beginnen (anders als der Link zu Ihrer Bestellseite oben):"),
             ("link", wlink),
@@ -1446,9 +1471,13 @@ def confirmation_mail(order, paid, k, pack, consent):
                   "form, and our terms of sale."),
             ("h", "Your order page"),
             ("link", link),
-            ("p", "When you open it, we start making your artwork (it is usually ready within a few minutes), and you "
-                  "download the file there. Please keep this link to yourself: anyone who has it can download your "
-                  "artwork."),
+            ("p", ("We start making your artwork right after this email has been sent; you do not need to keep any page "
+                   "open. It is usually ready within a few minutes: you download the file on your order page, and we "
+                   "email you when it is ready. "
+                   if auto else
+                   "When you open it, we start making your artwork (it is usually ready within a few minutes), and you "
+                   "download the file there. ") +
+                  "Please keep this link to yourself: anyone who has it can download your artwork."),
             ("h", "Your order"),
             ("rows", rows),
             ("h", "Your consent to the immediate start"),
@@ -1457,7 +1486,11 @@ def confirmation_mail(order, paid, k, pack, consent):
             ("p", "We confirm your express consent and your acknowledgement. We start making your file only after this "
                   "email has been sent. Once we have started, your right of withdrawal has ended."),
             ("h", "Your right of withdrawal"),
-            ("p", "Until we have started, you can withdraw from the contract: with the button “Withdraw from contract "
+            ("p", "We start making your file right after this email has been sent, so your right of withdrawal usually "
+                  "ends within a few moments. Until we have started, you can withdraw from the contract: with the "
+                  "button “Withdraw from contract here” on the withdrawal page of your order:"
+             if auto else
+                  "Until we have started, you can withdraw from the contract: with the button “Withdraw from contract "
                   "here” on the withdrawal page of your order. This link opens it without starting to make your file "
                   "(unlike the order page link above):"),
             ("link", wlink),
@@ -1476,21 +1509,24 @@ def confirmation_mail(order, paid, k, pack, consent):
     return subject, text, html_body
 
 
-def ready_mail(order, paid, k):
-    """The short "it is ready" email scripts/order_admin.py release sends after a held delivery was checked:
-    (subject, text, html)."""
+def ready_mail(order, paid, k, checked=True):
+    """The short "it is ready" email: (subject, text, html). checked (the default): scripts/order_admin.py release and
+    the admin panel after a held delivery was looked at ("ready and checked"); checked=False: the server's own
+    making when an artwork is ready without a hold (api/_lib/maker.py ready_mail_once)."""
     lang = lang_of((paid.get("spec") or {}).get("lang"))
     link = order_url(order, k, lang)
     pack = legal_pack()
     if lang == "de":
         subject = "Ihr SnapEyes-Kunstwerk ist fertig"
-        blocks = [("p", "Guten Tag,"), ("p", "Ihr Iris-Kunstwerk ist fertig und geprüft. Sie laden es auf Ihrer "
-                                              "Bestellseite herunter:"),
+        blocks = [("p", "Guten Tag,"), ("p", ("Ihr Iris-Kunstwerk ist fertig und geprüft." if checked else
+                                              "Ihr Iris-Kunstwerk ist fertig.") +
+                                             " Sie laden es auf Ihrer Bestellseite herunter:"),
                   ("link", link), ("p", f"Bestellung: {order}"), ("p", "Fragen? Antworten Sie einfach auf diese E-Mail."),
                   ("p", "Mit freundlichen Grüßen\nSnapEyes"), ("p", seller_lines(lang, pack))]
     else:
         subject = "Your SnapEyes artwork is ready"
-        blocks = [("p", "Hello,"), ("p", "your iris artwork is ready and checked. Download it on your order page:"),
+        blocks = [("p", "Hello,"), ("p", ("your iris artwork is ready and checked." if checked else
+                                          "your iris artwork is ready.") + " Download it on your order page:"),
                   ("link", link), ("p", f"Order: {order}"), ("p", "Questions? Simply reply to this email."),
                   ("p", "Kind regards\nSnapEyes"), ("p", seller_lines(lang, pack))]
     text, html_body = render_mail(blocks, lang, subject)
@@ -1539,10 +1575,13 @@ def deliver_mail(order, rec, paid, idem_suffix=""):
     if not claim_once(path):
         return "done"
     subject, text, html_body = confirmation_mail(order, paid, k, pack, consent)
+    auto = server_starts(pack)          # what this email says: the server starts right after it, or the order page
     res = send_mail(paid["email"], subject, text, f"snapeyes-delivery-{order}{idem_suffix}", html_body)
     _mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res,
-          legal=pack.get("updated"), consent=consent.get("version"))
+          legal=pack.get("updated"), consent=consent.get("version"), making="server" if auto else "page")
     log(f"order {order}: confirmation email {res}")
+    if res == "sent":
+        _after_confirmation(order, auto)   # the precondition for making is met (api/_lib/maker.py)
     return res
 
 
@@ -1657,6 +1696,62 @@ def index_review(order, t=None):
         pass
     except Exception as e:  # noqa: the hold itself and its note stand; only the later reminder is at stake
         log(f"order {order}: review index not stored: {type(e).__name__} {e}")
+
+
+MAKING_INDEX = "cleanup/making"    # paid orders not finished yet: cleanup/making/<order>.json {"t": when paid}
+
+
+def index_making(order, t=None):
+    """Note a paid order the server has to finish (written with paid.json, record_paid, and again by the first step
+    of the server's own making): the daily clean-up advances the ones nobody finished (api/_lib/maker.py catch_up)
+    and drops the note once the order is ready, withdrawn or deleted. The first note is kept. Never raises."""
+    try:
+        store.put(f"{MAKING_INDEX}/{order}.json", store.json_bytes({"t": int(t or time.time())}), "application/json",
+                  upsert=False, timeout=6.0, retry=False)
+    except store.StorageExists:
+        pass
+    except Exception as e:  # noqa: the order itself stands; only the daily catch-up would miss it
+        log(f"order {order}: making index not stored: {type(e).__name__} {e}")
+
+
+def unindex_making(order):
+    """The order needs nothing more from the server: its note in MAKING_INDEX goes. Never raises."""
+    try:
+        store.delete(f"{MAKING_INDEX}/{order}.json", timeout=6.0, retry=False)
+    except Exception as e:  # noqa: the next daily run drops it
+        log(f"order {order}: making index not removed: {type(e).__name__} {e}")
+
+
+# When may the SERVER start making a paid order by itself, without the customer's order page? Only where the
+# published legal texts say so: the terms and the withdrawal information describe when making starts (the moment the
+# customer's right of withdrawal ends), and the order confirmation email repeats it. The build's legal pack
+# (/legal/order-mail.json, src/legal/plain.ts legalMailPack) says which practice its texts describe:
+#   "making_start": "after_confirmation"   the texts say making starts right after the confirmation email, with or
+#                                          without the order page (the server starts it: api/_lib/maker.py)
+#   missing (today)                        the texts say making starts while the order page is open, or when the
+#                                          customer opens it again: the server never STARTS an order, it only
+#                                          finishes one the page started (the right of withdrawal has ended then)
+# The same field decides the wording of the order confirmation email (confirmation_mail), so the email, the pages and
+# what the server does can never disagree.
+MAKING_START_FIELD = "making_start"
+MAKING_START_SERVER = "after_confirmation"
+
+
+def server_starts(pack=None):
+    """Do the published texts let the server start making a paid order by itself (see above)? False when the legal
+    pack cannot be read (the safe side: the order page starts it, as the texts have always said)."""
+    pack = pack if isinstance(pack, dict) else legal_pack(quick=True)
+    return isinstance(pack, dict) and pack.get(MAKING_START_FIELD) == MAKING_START_SERVER
+
+
+def _after_confirmation(order, auto):
+    """The confirmation email just went out: making may start. The server starts it where that email said so (auto;
+    api/_lib/maker.py after_confirmation). Never raises: the order page and the daily run are the fallbacks."""
+    try:
+        from . import maker
+        maker.after_confirmation(order, auto)
+    except Exception as e:  # noqa
+        log(f"order {order}: server making not started: {type(e).__name__} {e}")
 
 
 def hold_confirmation(order, paid, why):

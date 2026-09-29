@@ -10,7 +10,10 @@ metadata naming an order of ours (with the fingerprint of its access key): the o
 created once: a replayed or retried event changes nothing), the customer's email is kept with it, the order
 confirmation email goes out once when email is configured (EN or DE by the order's language; it carries the
 contract, the consent, the withdrawal information and the terms, pay.confirmation_mail), and the owner gets a short
-note. When that email cannot go out (Resend refused it, no or bad address, no consent recorded, email off for a
+note. Once it went out (or where none is needed: a test order where email is off), the server's own making of the
+order is asked for with a short self-call that does not wait (api/_lib/maker.py), where the texts that email carried
+say the server starts right after it: the customer does not have to keep the order page open. When that email cannot
+go out (Resend refused it, no or bad address, no consent recorded, email off for a
 live payment), the order is held for review and the owner told: nothing is made before the confirmation went out.
 Resend busy or the legal texts unreadable: 503, and Stripe retries. An order the customer withdrew while the payment
 was settling gets no confirmation; the owner is told to refund it (pay.record_paid).
@@ -28,6 +31,7 @@ from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 from _lib import store
 from _lib import pay
+from _lib import maker as M
 
 MAX_BODY = 512 << 10         # a Checkout Session event is a few kB
 HANDLED = ("checkout.session.completed", "checkout.session.async_payment_succeeded")
@@ -75,7 +79,9 @@ def on_event(event):
         # a second paid session of an order that was already paid: record_paid stored it and told the owner to
         # refund it; the order and its confirmation stay as the first payment made them
         return 200, {"ok": True, "order": order, "new": False, "extra_payment": True}
-    mail = pay.deliver_mail(order, rec, paid)      # once per order (claimed), also when the order page came first
+    # once per order (claimed), also when the order page came first. Once it went out, the server's own making is
+    # asked for (pay.deliver_mail -> api/_lib/maker.py): the order is finished even if the customer closed the tab
+    mail = pay.deliver_mail(order, rec, paid)
     pay.note_paid(order, paid)
     if mail in ("transient", "legal_unavailable"):
         # Resend busy, or the legal texts the confirmation carries could not be read: Stripe retries the event
@@ -83,6 +89,9 @@ def on_event(event):
     if mail in pay.MAIL_HOLD or (mail == "off" and pay.confirmation_needed(paid)):
         # the confirmation cannot go out: nothing is made for the order until the owner sends it
         pay.hold_confirmation(order, paid, mail)
+    elif mail == "off" and new:
+        # no confirmation is needed here (a test order where email is off): making may start now
+        M.after_confirmation(order)
     return 200, {"ok": True, "order": order, "new": new, "mail": mail}
 
 

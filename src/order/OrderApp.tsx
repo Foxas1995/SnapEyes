@@ -85,7 +85,7 @@ export const OrderApp: React.FC = () => {
     if (!LINK || WITHDRAW_MODE) return;
     let alive = true;
     driveOrder(LINK, REAL_DEPS, (patch) => { if (alive) setView((v) => ({ ...v, ...patch })); }, () => alive)
-      .catch(() => { if (alive) setView((v) => ({ ...v, stop: 'failed', making: [], composing: false, wait: null })); })
+      .catch(() => { if (alive) setView((v) => ({ ...v, stop: 'failed', making: [], composing: false, wait: null, server: false })); })
       .finally(() => { if (alive) { runningRef.current = false; setRunning(false); } });
     return () => { alive = false; };
   }, [run]);
@@ -94,7 +94,7 @@ export const OrderApp: React.FC = () => {
     if (runningRef.current) return;
     runningRef.current = true;
     setRunning(true);
-    setView((v) => ({ ...v, stop: null, wait: null, making: [], composing: false }));
+    setView((v) => ({ ...v, stop: null, wait: null, making: [], composing: false, server: false }));
     setRun((r) => r + 1);
   };
 
@@ -369,9 +369,16 @@ const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: 
         <p data-testid="making-line" className="text-xs text-zinc-300 flex items-center gap-2 min-w-0">{(view.making.length > 0 || view.composing) && !w && <Spinner />}<span>{line}</span></p>
         {since !== null && <span className="shrink-0 text-[11px] font-mono text-zinc-500">{C.making.elapsed(Math.max(0, Math.round((clock - since) / 1000)))}</span>}
       </div>
-      <p className="text-xs text-amber-100/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 mt-4">
-        {C.making.keepOpen} {email ? C.making.closeEmail : C.making.closeNoEmail}
-      </p>
+      {view.server ? (
+        // the server makes it by itself (api/_lib/maker.py): the page may be closed
+        <p data-testid="making-server" className="text-xs text-emerald-100/90 bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-3 mt-4">
+          {C.making.serverOn} {email ? C.making.serverEmail : C.making.serverNoEmail}
+        </p>
+      ) : (
+        <p className="text-xs text-amber-100/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 mt-4">
+          {C.making.keepOpen} {email ? C.making.closeEmail : C.making.closeNoEmail}
+        </p>
+      )}
     </section>
   );
 };

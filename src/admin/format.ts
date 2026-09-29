@@ -112,6 +112,7 @@ export const RESULT_LT: Record<string, string> = {
   sent: 'išsiųsta', off: 'el. paštas neįjungtas', bad_address: 'blogas adresas', transient: 'laikinai nepavyko, bandyk vėliau',
   failed: 'Resend atmetė', done: 'jau siunčiama arba išsiųsta', no_address: 'nėra adreso', no_consent: 'neužfiksuotas sutikimas',
   withdrawn: 'užsakymo atsisakyta', legal_unavailable: 'nepavyko nuskaityti teisinių tekstų', link_unavailable: 'nuorodos atkurti negalima',
+  not_held: 'nesiųstas: kūrinys nebuvo sulaikytas, laiškas „paruošta“ išėjo, kai jis buvo pagamintas',
 };
 
 export const REASON_LT: Record<string, string> = {

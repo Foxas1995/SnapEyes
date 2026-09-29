@@ -551,6 +551,43 @@ def busy(reason, retry_after, error="We are busy for a moment. Please try again 
     return Answer(503, reason, error, True, retry_after)
 
 
+# ----------------------------------------------------------------------------- a paid render that was lost
+# A 4K render is paid once the image model has answered. /api/master_eye marks every failure it raises where no paid
+# render can have been lost (unspent): before the model call (the claim, the storage reads, the input checks), a
+# model that refused with an HTTP error, and anything after the master was stored. Any other failure out of it, above
+# all one after the model answered (the master not stored, the post-processing broken), may have lost a paid render:
+# api/order.py make_eye counts those per order and holds the order for a person after a few (lost), so no retry, by
+# the order page, the server's own making or the daily run, pays for the same failure again and again. The marks are
+# attributes: the exception keeps its type, so every reply stays what it was.
+def mark_unspent(e):
+    """Mark an exception raised where no paid render was lost: retrying it costs nothing. Returns e."""
+    try:
+        e.snapeyes_unspent = True
+    except Exception:  # noqa: an exception that takes no attribute stays unmarked, which counts it (the safe side)
+        pass
+    return e
+
+
+def unspent(e):
+    return getattr(e, "snapeyes_unspent", False) is True
+
+
+def mark_lost(e, n):
+    """Mark an exception after which api/order.py make_eye counted a lost paid render (the n-th of the order), so
+    the server's own making stops instead of trying again at once (api/_lib/maker.py). Returns e."""
+    try:
+        e.snapeyes_lost = int(n)
+    except Exception:  # noqa
+        pass
+    return e
+
+
+def lost(e):
+    """The count make_eye recorded for this exception (0: none, not a lost render)."""
+    n = getattr(e, "snapeyes_lost", 0)
+    return n if isinstance(n, int) and not isinstance(n, bool) else 0
+
+
 class _StatusReq:
     """The request as L.run sees it, except that L.run's 200 becomes the status of an Answer the endpoint raised.
     Everything else (headers, body, the 400/403/415/500 replies) is L.run's own."""
