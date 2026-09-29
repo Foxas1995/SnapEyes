@@ -4000,19 +4000,55 @@ def _watermark_layer(W, H, u, text=WATERMARK_TEXT["en"][0]):
     return layer.transform((W, H), Image.AFFINE, (a, b, c, d, e, f - wy0), resample=Image.BICUBIC)
 
 WATERMARK_BADGE = WATERMARK_TEXT["en"][1]   # the English badge (kept under its old name)
+# On the iris discs of a preview the tile's words are WATERMARK_IRIS times as opaque (40/255 -> 140/255), over a soft
+# dark copy of them (1 px down and right, 1 px blur, WATERMARK_IRIS_SHADOW of their opacity). At the tile's own
+# strength the words vanished into the fibres of a pale iris, so a preview handed out a nearly clean iris larger than
+# the slider's display copy (api/_lib/preview.py draws that copy at the same strength). Outside the discs no pixel
+# changes.
+WATERMARK_IRIS = 3.5
+WATERMARK_IRIS_SHADOW = 1.0
 
-def _watermark(out, accent, u, tile_u=None, note=None, lang=None):
+def _iris_mark(out, layer, discs):
+    """out (RGBA, the tile layer already on it) with the tile's words WATERMARK_IRIS times as opaque on each disc
+    (cx, cy, r: the visible iris disc, pixel centres at +0.5), fading to the plain tile across 4 px at its rim."""
+    W, H = out.size
+    m = np.zeros((H, W), np.float32)
+    for cx, cy, r in discs:
+        ya, yb = max(0, int(cy - r) - 4), min(H, int(math.ceil(cy + r)) + 5)
+        xa, xb = max(0, int(cx - r) - 4), min(W, int(math.ceil(cx + r)) + 5)
+        if ya >= yb or xa >= xb:
+            continue
+        dy = (np.arange(ya, yb, dtype=np.float32) + np.float32(0.5 - cy))[:, None]
+        dx = (np.arange(xa, xb, dtype=np.float32) + np.float32(0.5 - cx))[None, :]
+        w = np.clip((np.float32(r + 2.0) - np.sqrt(dx * dx + dy * dy)) / np.float32(4.0), 0, 1)
+        np.maximum(m[ya:yb, xa:xb], w, out=m[ya:yb, xa:xb])
+    a = np.asarray(layer.getchannel("A"), np.float32) / np.float32(255.0)
+    want = np.minimum(np.float32(1.0), a * (np.float32(1.0) + np.float32(WATERMARK_IRIS - 1.0) * m))
+    # white over the tile's own white: 1 - (1 - a)(1 - extra) = want
+    extra = np.clip((want - a) / np.maximum(np.float32(1.0) - a, np.float32(1e-6)), 0, 1)
+    shade = Image.new("L", (W, H), 0)
+    shade.paste(Image.fromarray(np.round(want * m * np.float32(WATERMARK_IRIS_SHADOW * 255.0)).astype(np.uint8)), (1, 1))
+    zero, white = Image.new("L", (W, H), 0), Image.new("L", (W, H), 255)
+    out = Image.alpha_composite(out, Image.merge("RGBA", (zero, zero, zero, shade.filter(ImageFilter.GaussianBlur(1.0)))))
+    return Image.alpha_composite(out, Image.merge("RGBA", (white, white, white,
+                                                           Image.fromarray(np.round(extra * 255.0).astype(np.uint8)))))
+
+def _watermark(out, accent, u, tile_u=None, note=None, lang=None, discs=None):
     """The preview watermark: a faint rotated tile of SNAPEYES.COM PREVIEW over the whole artwork and a badge
     at the top centre. u is the badge scale; for the square single-eye artwork it is the side. tile_u is the
     tile's scale, u when not given. The badge's pill is cut to its measured text plus a margin, so the words
     stay inside it on every canvas (a fixed 0.28 u pill left 40 px of text outside each end at 1024).
     note: one short line under the badge, for a style that draws no caption (Studio Black), so a saved preview of
     the AI-generated sample eye still says so in its pixels. lang: the words' language (WATERMARK_TEXT), the
-    requesting page's (page_lang) when not given; English draws exactly the pixels it always did."""
+    requesting page's (page_lang) when not given; English draws exactly the pixels it always did.
+    discs: the artwork's iris discs (cx, cy, r); the tile is drawn WATERMARK_IRIS times as strong on them (_iris_mark)."""
     tile, badge = WATERMARK_TEXT.get(lang or page_lang(), WATERMARK_TEXT["en"])
     W, H = out.size
     layer = _watermark_layer(W, H, tile_u or u, tile)
-    out = Image.alpha_composite(out.convert("RGBA"), layer).convert("RGB")
+    out = Image.alpha_composite(out.convert("RGBA"), layer)
+    if discs:
+        out = _iris_mark(out, layer, discs)
+    out = out.convert("RGB")
     del layer
     d = ImageDraw.Draw(out); fp = _font("PlusJakartaSans.ttf", int(u * 0.016), "Bold")
     half = min(W / 2.0 - 2.0, d.textlength(badge, font=fp) / 2.0 + u * 0.022)
@@ -4122,7 +4158,7 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     if not bare and text:
         _caption(out, st, title, names, size / 2, size * 0.86, size * 0.905, size * 0.945, size)
     if watermark:
-        out = _watermark(out, st["accent"], size, note=title if bare else None)
+        out = _watermark(out, st["accent"], size, note=title if bare else None, discs=[(x0 + Sd / 2.0, y0 + Sd / 2.0, Rg)])
     return out
 
 # ----------------------------------------------------------------------------- several eyes on one artwork
@@ -4428,13 +4464,15 @@ def compose_multi(irises, style="celestial_gold", names="", title=None, watermar
         _discs_band(canvas, r0, r1, discs, feather, None if bare else acc, layout == "fusion")
         np.clip(canvas, 0, 255, out=canvas)
         out8[r0:r1] = canvas.astype(np.uint8)
+    marks = [(d.cx, d.cy, d.Rg) for d in discs]
     del bg8, discs
     out = Image.fromarray(out8)
     del out8
     if not bare and text:
         _caption(out, st, title, names, W / 2.0, H - lift - 0.14 * ut, H - lift - 0.095 * ut, H - lift - 0.055 * ut, ut)
     if watermark:
-        out = _watermark(out, st["accent"], ut, tile_u=min(float(u), WM_DISC * dia), note=title if bare else None)
+        out = _watermark(out, st["accent"], ut, tile_u=min(float(u), WM_DISC * dia), note=title if bare else None,
+                         discs=marks)
     return out
 
 # ----------------------------------------------------------------------------- storage (Vercel Blob REST; silently skipped when not configured)

@@ -78,7 +78,6 @@ const en = {
     retakeTitle: (n: number) => `Retake eye ${n}`,
     retakeLead: 'Same steps as before. Your new shot replaces this eye on the artwork; until then it stays as it is.',
     back: (n: number) => `Back to your artwork (${eyes(n)})`,
-    sampleLink: 'or try with an AI-generated sample eye',
     sampleButton: 'AI-generated sample eye',
     sampleLoadFailed: 'The sample eye could not be loaded.',
     thumbLabel: (i: number) => `Eye ${i}`,
@@ -98,7 +97,6 @@ const en = {
     stepsShotsMore: ' Turn a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.',
     takePhoto: 'Take a photo',
     pickShots: 'Pick 3-5 shots',
-    liveCamera: 'Live camera + zoom',
     consent: "Save my eye photo and result to SnapEyes' training memory so restorations get better over time. Anonymous, no name or face. You can ask us to delete it any time.",
   },
 
@@ -230,18 +228,6 @@ const en = {
     startOver: 'Start over',
   },
 
-  live: {
-    guide: 'iris fills this circle · 12-15 cm · 2x',
-    sharp: 'Sharp ✓',
-    holdStill: 'Hold still / tap to focus',
-    close: 'Close',
-    zoom: (v: string) => `Zoom ${v}x`,
-    noZoom: 'This browser does not expose camera zoom. Use "Take a photo" and pinch to 2x in your camera app instead.',
-    lowRes: 'This browser can only grab a low-resolution frame here. For a sharp result use "Take a photo" instead, which opens the real camera.',
-    capture: 'Capture',
-    unavailable: 'Camera not available',
-  },
-
   result: {
     beforeAfter: 'Before / after',
     eyes: 'Eyes on this artwork',
@@ -279,6 +265,13 @@ const en = {
     artwork: 'Your artwork',
     composing: 'Composing…',
     composeFailed: 'We could not compose this preview.',
+    // under the artwork: the preview is a reduced, watermarked copy (api/compose.py, api/_lib/preview.py), the file is not.
+    // previewFile only under an artwork that can be bought (not the AI sample alone); square: the single-eye artwork,
+    // the only 4096 x 4096 file (several eyes are 4096 px on the longest side: never promise a square file for all)
+    previewReduced: 'Preview reduced and watermarked.',
+    previewFile: (square: boolean): string => (square
+      ? 'Your file: 4096 px, sharp enough to print up to 50 x 50 cm.'
+      : 'Your file: 4096 px on its longest side, sharp enough to print up to 50 cm on that side.'),
     retry: 'Try again',
     layout: 'Layout',
     layouts: {
@@ -429,7 +422,6 @@ const de: TryCopy = {
     retakeTitle: (n: number) => `Auge ${n} neu aufnehmen`,
     retakeLead: 'Dieselben Schritte wie zuvor. Ihre neue Aufnahme ersetzt dieses Auge im Kunstwerk, bis dahin bleibt es, wie es ist.',
     back: (n: number) => `Zurück zu Ihrem Kunstwerk (${augen(n)})`,
-    sampleLink: 'oder mit einem KI-generierten Beispielauge ausprobieren',
     sampleButton: 'KI-generiertes Beispielauge',
     sampleLoadFailed: 'Das Beispielauge konnte nicht geladen werden.',
     thumbLabel: (i: number) => `Auge ${i}`,
@@ -446,7 +438,6 @@ const de: TryCopy = {
     stepsShotsMore: ' Drehen Sie sich zwischen den Aufnahmen ein wenig. Wir messen jede und verwenden die schärfste; in einem echten Test hatte die beste Aufnahme 3,7-mal so viele Details wie die schlechteste.',
     takePhoto: 'Foto aufnehmen',
     pickShots: '3-5 Fotos wählen',
-    liveCamera: 'Live-Kamera + Zoom',
     consent: 'Mein Augenfoto und das Ergebnis im Trainingsspeicher von SnapEyes sichern, damit Restaurierungen mit der Zeit besser werden. Anonym, ohne Namen oder Gesicht. Sie können jederzeit die Löschung verlangen.',
   },
 
@@ -564,18 +555,6 @@ const de: TryCopy = {
     startOver: 'Neu beginnen',
   },
 
-  live: {
-    guide: 'Iris füllt diesen Kreis · 12-15 cm · 2x',
-    sharp: 'Scharf ✓',
-    holdStill: 'Ruhig halten / Iris antippen',
-    close: 'Schließen',
-    zoom: (v: string) => `Zoom ${v}x`,
-    noZoom: 'Dieser Browser bietet keinen Kamerazoom. Nutzen Sie stattdessen „Foto aufnehmen“ und zoomen Sie in Ihrer Kamera-App auf 2x.',
-    lowRes: 'Dieser Browser kann hier nur ein Bild mit geringer Auflösung aufnehmen. Für ein scharfes Ergebnis nutzen Sie stattdessen „Foto aufnehmen“, das öffnet die echte Kamera.',
-    capture: 'Auslösen',
-    unavailable: 'Kamera nicht verfügbar',
-  },
-
   result: {
     beforeAfter: 'Vorher/Nachher',
     eyes: 'Augen auf diesem Kunstwerk',
@@ -609,6 +588,10 @@ const de: TryCopy = {
     artwork: 'Ihr Kunstwerk',
     composing: 'Wird gestaltet…',
     composeFailed: 'Diese Vorschau konnte nicht erstellt werden.',
+    previewReduced: 'Vorschau verkleinert und mit Wasserzeichen.',
+    previewFile: (square: boolean): string => (square
+      ? 'Ihre Datei: 4096 px, scharf genug für einen Druck bis 50 x 50 cm.'
+      : 'Ihre Datei: 4096 px an der längsten Seite, scharf genug für einen Druck mit bis zu 50 cm an dieser Seite.'),
     retry: 'Erneut versuchen',
     layout: 'Anordnung',
     layouts: {

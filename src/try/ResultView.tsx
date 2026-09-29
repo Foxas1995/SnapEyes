@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, Check, Download, Plus, RefreshCcw, Trash2 } from 'lucide-react';
 import { CompareSlider } from './CompareSlider';
 import { T } from './copy';
+import { NO_SAVE, NO_SAVE_BOX } from './noSave';
 import { type Art, type Eye, type Layout, MAX_EYES, canvasSize, layoutsFor } from './multi';
 
 /** accent: the style's accent colour (api/_lib/iris.py STYLES), null for the bare Studio Black. */
@@ -63,7 +64,7 @@ export const ResultView: React.FC<Props> = (p) => {
           {p.eyes.map((e, i) => (
             <button key={e.id} role="tab" aria-selected={i === idx} onClick={() => p.onSelect(e.id)}
               className="shrink-0 flex flex-col items-center gap-1 w-16 pt-1">
-              <img src={e.thumb} alt="" className={`w-12 h-12 rounded-full object-cover border-2 ${i === idx ? 'border-[#f5c542] ring-2 ring-[#f5c542]/40' : 'border-white/15 opacity-75'}`} />
+              <img {...NO_SAVE} src={e.thumb} alt="" className={`w-12 h-12 rounded-full object-cover border-2 ${i === idx ? 'border-[#f5c542] ring-2 ring-[#f5c542]/40' : 'border-white/15 opacity-75'}`} />
               <span className={`text-[10px] font-bold leading-tight text-center ${i === idx ? 'text-[#f5c542]' : 'text-zinc-400'}`}>
                 {T.result.eyeLabel(i + 1)}
                 {e.sample && <span className="block text-[9px] font-semibold text-amber-200/90">{T.result.sampleLabel}</span>}
@@ -123,8 +124,8 @@ export const ResultView: React.FC<Props> = (p) => {
         )}
       </div>
       <div data-testid="artwork" className="relative w-full rounded-2xl overflow-hidden border border-white/10 bg-black"
-        style={{ aspectRatio: `${expected.w} / ${expected.h}` }}>
-        {shown && <img src={shown.src} alt={artAlt} className={`absolute inset-0 w-full h-full object-contain transition-opacity ${p.art ? '' : 'opacity-50'}`} />}
+        {...NO_SAVE_BOX} style={{ ...NO_SAVE_BOX.style, aspectRatio: `${expected.w} / ${expected.h}` }}>
+        {shown && <img {...NO_SAVE} src={shown.src} alt={artAlt} className={`absolute inset-0 w-full h-full object-contain transition-opacity ${p.art ? '' : 'opacity-50'}`} />}
         {!shown && composing && <div className="absolute inset-0 flex items-center justify-center text-zinc-500 text-sm">{T.result.composing}</div>}
         {composing && <div aria-label={T.result.composing} className="absolute top-3 right-3 w-5 h-5 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" />}
         {!p.art && p.composeError && (
@@ -134,6 +135,12 @@ export const ResultView: React.FC<Props> = (p) => {
           </div>
         )}
       </div>
+      {/* under a shown artwork only; what the file is, only when this artwork can be bought (not the AI sample alone) */}
+      {shown && (
+        <p data-testid="preview-note" className="text-[11px] text-zinc-400 mt-2">
+          {allSample ? T.result.previewReduced : `${T.result.previewReduced} ${T.result.previewFile(expected.w === expected.h)}`}
+        </p>
+      )}
       {samples > 0 && <p className="text-[11px] text-amber-200/90 mt-2">{allSample ? T.result.sampleArtworkNote : T.result.mixedArtworkNote}</p>}
 
       {layouts.length > 1 && (
@@ -157,7 +164,7 @@ export const ResultView: React.FC<Props> = (p) => {
             className={`rounded-lg overflow-hidden border text-left ${p.style === s.id ? 'border-[#f5c542] ring-2 ring-[#f5c542]' : 'border-white/10'}`}>
             {/* the customer's own iris, never a stock eye */}
             <span className="relative block w-full aspect-[16/11]" style={{ background: swatch(s.accent) }}>
-              <img src={eye.thumb} alt="" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[64%] aspect-square rounded-full object-cover" />
+              <img {...NO_SAVE} src={eye.thumb} alt="" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[64%] aspect-square rounded-full object-cover" />
             </span>
             <span className="block text-[10px] font-bold px-1.5 py-1 truncate">{s.name}</span>
           </button>

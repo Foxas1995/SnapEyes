@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { MoveHorizontal } from 'lucide-react';
 import { T } from './copy';
+import { NO_SAVE, NO_SAVE_BOX, NO_SAVE_IMG_STYLE } from './noSave';
 
 interface Props {
   before: string;
@@ -9,7 +10,8 @@ interface Props {
   afterLabel?: string;
 }
 
-/** Before/after slider: both images fill the same square, the "after" layer is clipped at the handle. Works with touch and mouse. */
+/** Before/after slider: both images fill the same square, the "after" layer is clipped at the handle. Works with touch and mouse.
+ *  after is the watermarked display copy /api/enhance returns; neither image can be dragged out or long-pressed (./noSave). */
 export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = T.result.sliderBefore, afterLabel = T.result.sliderAfter }) => {
   const [pos, setPos] = useState(50);
   const [dragging, setDragging] = useState(false);
@@ -27,18 +29,19 @@ export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = T.
     <div
       ref={box}
       className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black border border-white/10 select-none touch-none cursor-ew-resize"
+      {...NO_SAVE_BOX}
       onPointerDown={(e) => { setDragging(true); (e.target as Element).setPointerCapture?.(e.pointerId); update(e.clientX); }}
       onPointerMove={(e) => { if (dragging) update(e.clientX); }}
       onPointerUp={() => setDragging(false)}
       onPointerCancel={() => setDragging(false)}
     >
-      <img src={before} alt={beforeLabel} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
+      <img {...NO_SAVE} src={before} alt={beforeLabel} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
       <img
+        {...NO_SAVE}
         src={after}
         alt={afterLabel}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        draggable={false}
-        style={{ clipPath: `inset(0 0 0 ${pos}%)` }}
+        style={{ ...NO_SAVE_IMG_STYLE, clipPath: `inset(0 0 0 ${pos}%)` }}
       />
       <span className="absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-zinc-200">{beforeLabel}</span>
       <span className="absolute top-3 right-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-[#f5c542]">{afterLabel}</span>

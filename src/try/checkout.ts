@@ -77,7 +77,10 @@ export function takeSnapshot(order: string | null): Snapshot | null {
   if (order && s.order !== order) return null;
   if (typeof s.at !== 'number' || Date.now() - s.at > 24 * 3600_000) return null;
   const good = s.eyes.every((e) => e && typeof e.id === 'string' && typeof e.image === 'string' && typeof e.thumb === 'string'
-    && typeof e.before === 'string' && typeof e.pad === 'number' && !e.sample);
+    && typeof e.before === 'string' && typeof e.pad === 'number' && !e.sample
+    && (e.sealed === undefined || typeof e.sealed === 'string')
+    && (e.sealedSizes === undefined || (typeof e.sealedSizes === 'object' && e.sealedSizes !== null
+      && Object.values(e.sealedSizes).every((v) => typeof v === 'string'))));
   return good ? s : null;
 }
 
@@ -218,14 +221,20 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
     const slot = next++;
     const d = e.draft!;
     onStep({ kind: 'upload', i: j + 1, n: need.length });
+    // the approved preview as the server sealed it (the server opens it and stores the clean file); an eye from an
+    // older server holds its clean preview itself
     const body: Record<string, unknown> = {
-      action: 'draft', eye: slot, crop: d.crop, preview: e.image, pad: e.pad, ticket: d.ticket, lang: inp.lang, ref: e.id,
+      action: 'draft', eye: slot, crop: d.crop, ...(e.sealed ? { sealed: e.sealed } : { preview: e.image }), pad: e.pad,
+      ticket: d.ticket, lang: inp.lang, ref: e.id,
     };
     if (ref) { body.order = ref.order; body.k = ref.k; }
     const r = await api<DraftReply>('/api/order', { body, timeoutMs: 60_000 });
     if (!r.ok || !r.data || typeof r.data.order !== 'string' || typeof r.data.k !== 'string') {
-      // a 403 without a reason is the work ticket: this eye has to be taken again
-      if (r.status === 403 && !r.reason) return { kind: 'stale', eyes: [list.indexOf(e) + 1], ref };
+      // a 403 without a reason is the work ticket, and a sealed preview the server will not open (too old, or not one
+      // it made) cannot be ordered either: this eye has to be taken again
+      if ((r.status === 403 && !r.reason) || r.reason === 'preview_expired' || r.reason === 'preview_invalid') {
+        return { kind: 'stale', eyes: [list.indexOf(e) + 1], ref };
+      }
       if (r.reason === 'draft_expired' || r.reason === 'bad_link' || r.reason === 'order_paid' || r.reason === 'withdrawn') return { kind: 'restart' };
       return failure(r, ref);
     }

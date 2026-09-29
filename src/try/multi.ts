@@ -8,12 +8,17 @@ export const MAX_EYES = 8;
 export type Layout = 'single' | 'duo' | 'fusion' | 'triangle' | 'row' | 'grid' | 'galaxy';
 
 /** One finished eye. Only its restored iris and the small crop it came from are kept: the full-size photo
- *  is released as soon as the eye is done, so eight eyes never mean eight 12 MP photos in a phone tab. */
+ *  is released as soon as the eye is done, so eight eyes never mean eight 12 MP photos in a phone tab.
+ *  The page never holds the clean restoration (api/_lib/preview.py): it shows the display copy and hands the sealed
+ *  copies back to the server, which alone can open them. */
 export interface Eye {
   id: string;
   before: string;       // data URL: the iris crop cut from the customer's photo (at most 1400 px)
-  image: string;        // base64 JPEG: the restored iris square from /api/enhance (1024 px)
+  image: string;        // base64 JPEG: the display copy /api/enhance returned (800 px, the preview watermark across
+                        // the iris). From an older server (no sealed below): the clean restoration itself
   thumb: string;        // data URL: a 160 px copy of image for the eye chips
+  sealed?: string;      // the clean restoration (1024 px), sealed by the server: what an order's draft uploads
+  sealedSizes?: Record<string, string>;   // the same, sealed at the sides composeSide() asks for ("768", "560")
   pad: number;
   fallback: boolean;
   usedSr: boolean;
@@ -23,8 +28,8 @@ export interface Eye {
   sample: boolean;      // the site's AI-generated demo eye, never a customer's
   colourOff: boolean;   // the engine's own colour check measured this restoration as off from the photo
   // what ordering this eye needs (./checkout.ts): null for the AI-generated sample, which is never ordered, and for
-  // an eye brought back after the payment page (it is in the order by then). image above is the preview string
-  // /api/enhance returned, byte for byte: the draft upload sends exactly that.
+  // an eye brought back after the payment page (it is in the order by then). sealed above is the preview string
+  // /api/enhance returned, byte for byte: the draft upload sends exactly that, and the server opens it.
   draft?: EyeDraft | null;
 }
 
@@ -42,6 +47,32 @@ export const colourOff = (qa: ColourQa | null | undefined): boolean =>
 
 /** The eyes an order would be for: the AI-generated sample eye is never one of them. */
 export const billableEyes = (list: readonly Eye[]): number => list.filter((e) => !e.sample).length;
+
+/** The sealed iris /api/compose gets for this eye on an artwork of n eyes: the size composeSide(n) asks for (the
+ *  server seals those sizes itself, api/_lib/preview.py COMPOSE_SIDES: a sealed iris cannot be shrunk here), else the
+ *  nearest one the eye still has (a copy kept for the way back from the payment page may have dropped some), else
+ *  null: an eye from an older server, which holds its clean image instead. */
+export function sealedFor(e: Pick<Eye, 'sealed' | 'sealedSizes'>, n: number): string | null {
+  const side = composeSide(n);
+  const sizes = e.sealedSizes ?? {};
+  const want = side ? sizes[String(side)] : e.sealed;
+  if (want) return want;
+  // largest first for a small artwork, smallest first for a crowded one (the request limit)
+  const all = [e.sealed, sizes['768'], sizes['560']].filter((x): x is string => typeof x === 'string' && x.length > 0);
+  return (side ? all.reverse() : all)[0] ?? null;
+}
+
+/** The sealed copies an eye keeps in the smaller copy of an artwork of n eyes saved for the way back from the payment
+ *  page (TryApp keepForReturn). The page cannot shrink a sealed iris, so it leaves out the copy this artwork is least
+ *  likely to be composed from again (the eyes are in the order by then, so no draft needs the full one): the 560 px
+ *  one for one or two eyes, the full 1024 px one for three or more. Whatever the number of eyes becomes on the way
+ *  back, sealedFor() then still finds a copy of at least 768 px. */
+export function keptSealed(e: Pick<Eye, 'sealed' | 'sealedSizes'>, n: number): Pick<Eye, 'sealed' | 'sealedSizes'> {
+  const sizes = e.sealedSizes ?? {};
+  if (composeSide(n) && Object.keys(sizes).length) return { sealedSizes: { ...sizes } };
+  const { '560': _s560, ...upper } = sizes;
+  return { ...(e.sealed ? { sealed: e.sealed } : {}), ...(Object.keys(upper).length ? { sealedSizes: upper } : {}) };
+}
 
 /** One composed preview as /api/compose returned it. */
 export interface Art { src: string; w: number; h: number; layout: string }
@@ -87,7 +118,7 @@ export type LightAnswer = 'window_daylight' | 'room_lamp' | 'phone_torch' | 'som
 export const LIGHT_ANSWERS: readonly LightAnswer[] = ['window_daylight', 'room_lamp', 'phone_torch', 'someone_helped'];
 
 /** Where the analysed photo came from. 'sample' is the site's own AI-generated demo eye, not a capture. */
-export type ShotOrigin = 'camera' | 'gallery' | 'live' | 'sample';
+export type ShotOrigin = 'camera' | 'gallery' | 'sample';
 
 /** Sent with every /api/analyze request. w and h are the screen in CSS pixels. */
 export interface DeviceInfo { ua: string; w: number; h: number; source: ShotOrigin }

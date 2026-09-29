@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Upload, Sparkles, RefreshCcw, Video, Check, AlertTriangle, ZoomIn, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
+import { Camera, Upload, Sparkles, RefreshCcw, Check, AlertTriangle, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
 import {
   type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, mapPool,
   autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf,
 } from './shots';
 import {
   type Art, type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
-  MAX_EYES, STUDY_PENDING_MAX, colourOff, composeSide, deviceInfo, effectiveLayout, outcomeOf, studyAnswered, studyBody, studyOn,
+  MAX_EYES, STUDY_PENDING_MAX, colourOff, composeSide, deviceInfo, effectiveLayout, keptSealed, outcomeOf, sealedFor, studyAnswered, studyBody, studyOn,
 } from './multi';
 import { COPY, T, setCopyLang, type BlockCopy } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
@@ -22,9 +22,9 @@ import { callApi, type CheckoutInfo } from '../order/api';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currentMarket, serverPrices, withMarket } from '../shared/markets';
 import { LegalParts } from '../shared/LegalLinks';
+import { NO_SAVE } from './noSave';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
-type ShotSource = 'input' | 'live';
 
 // Several photos are measured at once: each /api/analyze call is mostly waiting on the vision model, so
 // three in flight cut the wait roughly threefold without piling a whole gallery onto the server at once.
@@ -68,7 +68,12 @@ function readReturn(): { snap: Snapshot | null; cancelled: boolean } | null {
 // the analysis replies carry the time they arrived: the work ticket in them lives 15 minutes from then
 type Stamped = Analysis & { receivedAt?: number };
 
-interface Enhanced { image: string; fidelity: number; used_sr: boolean; fallback: boolean; seconds: number; stored?: boolean; qa?: ColourQa | null }
+// image: the display copy (800 px, watermarked across the iris); sealed / sealed_sizes: the clean restoration, sealed by
+// the server (api/_lib/preview.py). An older server sent the clean image alone.
+interface Enhanced {
+  image: string; sealed?: string; sealed_sizes?: Record<string, string>;
+  fidelity: number; used_sr: boolean; fallback: boolean; seconds: number; stored?: boolean; qa?: ColourQa | null;
+}
 interface ComposeReply { image: string; width: number; height: number; layout: string }
 
 // accent = api/_lib/iris.py STYLES[id].accent. The picker draws each swatch from it around the customer's
@@ -85,18 +90,25 @@ const STYLES: StyleOption[] = [
 const SAMPLE_EYE = '/assets/sample_eye_blue_1789706902835.jpg';   // AI-generated: always labelled as such
 // The sample's restoration, made once by the live engine (2026-09-29: analyze, deglare, enhance artistic) and shipped
 // as files: every "Try the sample" click ran the whole paid restoration again (about 0.07 USD each) for the same
-// demo eye. before is the client crop, restored the exact JPEG /api/enhance returned. Composing it stays free.
+// demo eye. before is the client crop, restored the exact JPEG /api/enhance returned. Composing it stays free. The page
+// shows it the way it shows every restoration: /api/enhance {sample: true} turns this very file (and no other) into the
+// watermarked display copy and the sealed originals, without a ticket or a model call.
 const SAMPLE_BEFORE = '/assets/sample_eye_blue_before.jpg';
 const SAMPLE_RESTORED = '/assets/sample_eye_blue_restored.jpg';
 const SAMPLE_PAD = 1.12;
 // A gallery selection is measured photo by photo (one vision call each): more than this many of the same eye adds
 // cost and waiting, not a better pick.
 const GALLERY_MAX = 8;
+// There is no in-page live camera any more (owner decision 2026-09-29): a browser camera stream gives much softer photos
+// than the phone's own camera app (no multi-frame processing, no switch to the telephoto lens, poor close focus), so
+// "Take a photo" opens the phone's camera through the file input and "Pick 3-5 shots" the gallery.
 
-// A user-agent test was hiding the live camera from every iPhone. WebKit has shipped zoom and torch for a
-// while and ImageCapture landed in Safari 18.4, so ask the device instead of guessing from its name.
-const hasCameraApi = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
-const hasStillCapture = typeof window !== 'undefined' && 'ImageCapture' in window;
+/** The restored iris for a new eye, from what /api/enhance returned. */
+const restored = (e: Pick<Enhanced, 'image' | 'sealed' | 'sealed_sizes'>) => ({
+  image: e.image,
+  ...(typeof e.sealed === 'string' && e.sealed ? { sealed: e.sealed } : {}),
+  ...(e.sealed_sizes && typeof e.sealed_sizes === 'object' ? { sealedSizes: e.sealed_sizes } : {}),
+});
 
 /** POST JSON and return the reply. Throws with the server's own message on any failure, except that with
  *  answerNotOk a 2xx reply saying ok:false is returned: /api/analyze answers a photo with no eye in it that
@@ -211,11 +223,9 @@ export const TryApp: React.FC = () => {
   const sizedRef = useRef(new Map<string, string>());   // `${eyeId}:${side}` -> iris re-encoded for /api/compose
   const [progress, setProgress] = useState<string[]>([]);
   const [clock, setClock] = useState<{ step: Step | null; secs: number }>({ step: null, secs: 0 });
-  const [liveOpen, setLiveOpen] = useState(false);
   // Camera shot collector: one analysis per camera shot (up to targets.max_shots). Only the best shot keeps
   // its full-size image; five 12 MP photos held at once is how a phone tab gets killed.
   const [shots, setShots] = useState<Analysis[]>([]);
-  const [shotSource, setShotSource] = useState<ShotSource>('input');
   const [shotNote, setShotNote] = useState<string | null>(null);
   const shotsRef = useRef<Analysis[]>([]);
   const bestShotRef = useRef<{ img: HTMLImageElement; url: string } | null>(null);
@@ -501,11 +511,11 @@ export const TryApp: React.FC = () => {
     if (autoContinue(chosen)) { await process(win.img, chosen); } else { setStep('quality'); }
   };
 
-  /** One photo from the camera (the capture input or the live camera). Measured at once and kept if it is
-   *  the best so far, so the customer can shoot, see the score, and shoot again until one is good. */
-  const onCameraShot = async (file: Blob, source: ShotSource) => {
+  /** One photo from the phone's camera (the capture input). Measured at once and kept if it is the best so far,
+   *  so the customer can shoot, see the score, and shoot again until one is good. */
+  const onCameraShot = async (file: Blob) => {
     sampleRef.current = false;
-    setError(null); setShotNote(null); setShotSource(source);
+    setError(null); setShotNote(null);
     const t = targetsOf(analysis);
     let prev = shotsRef.current;
     if (prev.length >= t.max_shots) {
@@ -521,7 +531,7 @@ export const TryApp: React.FC = () => {
     };
     setStep('analyzing'); setProgress([T.working.measuringShot(prev.length + 1, t.max_shots)]);
     const url = URL.createObjectURL(file);
-    const origin: ShotOrigin = source === 'live' ? 'live' : 'camera';
+    const origin: ShotOrigin = 'camera';
     let img: HTMLImageElement; let a: Analysis;
     try {
       img = await loadImage(url);
@@ -551,7 +561,7 @@ export const TryApp: React.FC = () => {
 
   const takeAnother = () => {
     setError(null);
-    if (shotSource === 'live' && hasCameraApi) setLiveOpen(true); else fileRef.current?.click();
+    fileRef.current?.click();
   };
 
   /** /api/analyze for one photo. Always says what kind of device and source it came from. In study mode every
@@ -593,7 +603,8 @@ export const TryApp: React.FC = () => {
     if (autoContinue(a) || sampleOk) { await process(img, a); } else { setStep('quality'); }
   };
 
-  /** The iris re-encoded at the side /api/compose needs for this many eyes (cached per eye). */
+  /** The eye's image re-encoded at the side /api/compose needs for this many eyes (cached per eye). Only for an
+   *  artwork with an eye that has no sealed copy (see composeArt). */
   const sizedIris = async (e: Eye, side: number | null): Promise<string> => {
     if (!side) return e.image;
     const k = `${e.id}:${side}`;
@@ -607,10 +618,15 @@ export const TryApp: React.FC = () => {
   };
 
   /** One preview of these eyes, its words in lg (the language it is cached under, sent as the request's lang).
-   *  The watermark is the server's business: no unlock ticket is ever sent. */
+   *  The watermark is the server's business: no unlock ticket is ever sent. The irises go as the server sealed them
+   *  (it opens them itself). Only an artwork holding an eye from before sealed previews (brought back from the payment
+   *  page by the previous release, for one release) goes as images, each eye's own. */
   const composeArt = async (list: Eye[], layout: Layout, st: string, nm: string, lg: Lang): Promise<Art> => {
-    const irises = await Promise.all(list.map((e) => sizedIris(e, composeSide(list.length))));
-    const body: Record<string, unknown> = { irises, style: st, names: nm, pad: list[0].pad, lang: lg };
+    const n = list.length;
+    const sealed = list.map((e) => sealedFor(e, n));
+    const body: Record<string, unknown> = sealed.every((s): s is string => !!s)
+      ? { sealed, style: st, names: nm, pad: list[0].pad, lang: lg }
+      : { irises: await Promise.all(list.map((e) => sizedIris(e, composeSide(n)))), style: st, names: nm, pad: list[0].pad, lang: lg };
     if (list.length > 1) body.layout = layout;
     // the sample eye's label goes into the picture itself (the caption title), so a saved preview keeps it
     if (list.some((e) => e.sample)) body.title = COPY[lg].result.sampleTitle;
@@ -671,13 +687,14 @@ export const TryApp: React.FC = () => {
     }
     // The restoration is paid for by this point. The eye joins the artwork before anything else can fail,
     // and a free composition failure must never send the customer back to a screen that buys it again.
-    // image is the preview string /api/enhance returned, never re-encoded: an order uploads exactly it, with the
-    // deglared crop it was made from and the photo's work ticket (./checkout.ts). The sample eye is never ordered.
+    // sealed is the clean preview /api/enhance made, as the server sealed it and never re-encoded: an order uploads
+    // exactly it, with the deglared crop it was made from and the photo's work ticket (./checkout.ts), and the server
+    // opens it. image is only the watermarked display copy. The sample eye is never ordered.
     const draft = !sample && a.ticket && typeof d.crop === 'string' && d.crop
       ? { crop: d.crop, ticket: a.ticket, until: ((a as Stamped).receivedAt ?? Date.now()) + TICKET_MS - TICKET_MARGIN_MS }
       : null;
     const eye: Eye = {
-      id, before: crop, image: e.image, thumb: await thumbOf(e.image), pad,
+      id, before: crop, ...restored(e), thumb: await thumbOf(e.image), pad,
       fallback: !!e.fallback, usedSr: !!e.used_sr, stored: !!e.stored, glarePct: d.glare_pct,
       diameterPx: a.quality?.diameter_px, sample, colourOff: colourOff(e.qa), draft,
     };
@@ -737,8 +754,10 @@ export const TryApp: React.FC = () => {
     const plain = list.map(({ draft: _draft, ...e }) => e);
     if (saveSnapshot({ ...base, eyes: plain })) return;
     try {
-      const small = await Promise.all(plain.map(async (e) => ({
+      // the sealed irises cannot be shrunk here: the smaller copy leaves one of them out (keptSealed)
+      const small = await Promise.all(plain.map(async ({ sealed, sealedSizes, ...e }) => ({
         ...e,
+        ...keptSealed({ sealed, sealedSizes }, plain.length),
         before: await shrunk(e.before, 480, 0.8),
         image: stripDataUrl(await shrunk(`data:image/jpeg;base64,${e.image}`, 768, 0.88)),
       })));
@@ -807,15 +826,17 @@ export const TryApp: React.FC = () => {
     </button>
   );
   const trySample = async () => {
-    // the prepared restoration (SAMPLE_RESTORED): no paid call. If its files cannot be read, the sample photo
-    // goes through the studio as before
+    // the prepared restoration (SAMPLE_RESTORED): no paid call. The server makes its display copy and seals it, as for
+    // every restoration. If the files cannot be read or the server does not take them, the sample photo goes through
+    // the studio as before
     try {
       const [rb, ra] = await Promise.all([fetch(SAMPLE_BEFORE), fetch(SAMPLE_RESTORED)]);
       if (!rb.ok || !ra.ok) throw new Error('sample files');
-      const [before, restored] = await Promise.all([blobToDataUrl(await rb.blob()), blobToDataUrl(await ra.blob())]);
-      const image = stripDataUrl(restored);
+      const [before, file] = await Promise.all([blobToDataUrl(await rb.blob()), blobToDataUrl(await ra.blob())]);
+      const r = await post<Enhanced>('/api/enhance', { sample: true, image: stripDataUrl(file) });
+      if (typeof r.image !== 'string' || !r.image || typeof r.sealed !== 'string') throw new Error('sample preview');
       const eye: Eye = {
-        id: newEyeId(), before, image, thumb: await thumbOf(image), pad: SAMPLE_PAD,
+        id: newEyeId(), before, ...restored(r), thumb: await thumbOf(r.image), pad: SAMPLE_PAD,
         fallback: false, usedSr: false, stored: false, glarePct: 0, sample: true, colourOff: false, draft: null,
       };
       sampleRef.current = false;
@@ -876,7 +897,7 @@ export const TryApp: React.FC = () => {
         {/* Both pickers live outside the capture screen so "Take another" can reopen the camera from the
             shot collector. The value is cleared after every pick so the same file can be chosen again. */}
         <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onCameraShot(f, 'input'); }} />
+          onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onCameraShot(f); }} />
         <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden"
           onChange={(e) => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) onFiles(fs); }} />
 
@@ -889,7 +910,7 @@ export const TryApp: React.FC = () => {
                 <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 mt-3">
                   {eyes.map((e, i) => (
                     <span key={e.id} className="flex flex-col items-center gap-0.5 w-16">
-                      <img src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-[#f5c542]/70 opacity-50' : 'border border-[#f5c542]/40'}`} />
+                      <img {...NO_SAVE} src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-[#f5c542]/70 opacity-50' : 'border border-[#f5c542]/40'}`} />
                       <span className={`text-[8px] leading-tight text-center ${e.sample ? 'font-semibold text-amber-200/90' : 'text-zinc-500'}`}>
                         {e.sample ? T.capture.sampleThumb : T.capture.thumbLabel(i + 1)}
                       </span>
@@ -920,25 +941,16 @@ export const TryApp: React.FC = () => {
               <Camera className="w-5 h-5" /> {T.capture.takePhoto}
             </button>
 
-            <div className={`grid gap-3 ${hasCameraApi || offerSample ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <div className={`grid gap-3 ${offerSample ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <button onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                 <Upload className="w-4 h-4 text-[#f5c542]" /> {T.capture.pickShots}
               </button>
-              {hasCameraApi ? (
-                <button onClick={() => { clearShots(); setLiveOpen(true); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
-                  <Video className="w-4 h-4 text-emerald-400" /> {T.capture.liveCamera}
-                </button>
-              ) : offerSample ? (
+              {offerSample && (
                 <button onClick={trySample} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                   <Sparkles className="w-4 h-4 text-[#f5c542]" /> {T.capture.sampleButton}
                 </button>
-              ) : null}
+              )}
             </div>
-            {hasCameraApi && offerSample && (
-              <button onClick={trySample} className="text-xs text-zinc-400 underline underline-offset-4 self-center">
-                {T.capture.sampleLink}
-              </button>
-            )}
 
             {/* whose eye may be photographed (the terms of sale), and where the photo goes */}
             <p data-testid="photo-notice" className="text-[11px] leading-relaxed text-zinc-500 text-center">
@@ -1050,8 +1062,6 @@ export const TryApp: React.FC = () => {
           <button onClick={undoRemove} className="min-h-[44px] min-w-[44px] px-3 font-bold text-[#f5c542] underline underline-offset-4">{T.result.undo}</button>
         </div>
       )}
-
-      {liveOpen && <LiveCamera onClose={() => setLiveOpen(false)} onCapture={(b) => { setLiveOpen(false); onCameraShot(b, 'live'); }} />}
     </div>
   );
 };
@@ -1244,107 +1254,3 @@ const Working: React.FC<{ title: string; lines: string[]; elapsed: number; image
     <span className="text-[11px] font-mono text-zinc-500">{T.working.elapsed(elapsed)}</span>
   </section>
 );
-
-/** Live camera with hardware zoom where the browser supports it (Android Chrome). Captures a full-resolution still. */
-const LiveCamera: React.FC<{ onClose: () => void; onCapture: (b: Blob) => void }> = ({ onClose, onCapture }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const [zoom, setZoom] = useState<{ min: number; max: number; step: number; value: number } | null>(null);
-  const [sharp, setSharp] = useState(0);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 4096 }, height: { ideal: 3072 } }, audio: false });
-        if (!alive) { stream.getTracks().forEach((t) => t.stop()); return; }
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-        const track = stream.getVideoTracks()[0];
-        const caps = (track.getCapabilities?.() || {}) as { zoom?: { min: number; max: number; step: number } };
-        if (caps.zoom) {
-          const value = Math.min(2, caps.zoom.max);
-          await track.applyConstraints({ advanced: [{ zoom: value } as MediaTrackConstraintSet] });
-          setZoom({ ...caps.zoom, value });
-        }
-      } catch (e) { setErr((e as Error).message || T.live.unavailable); }
-    })();
-    const id = setInterval(() => {
-      const v = videoRef.current; if (!v || v.videoWidth === 0) return;
-      const c = document.createElement('canvas'); const n = 160; c.width = n; c.height = n;
-      const ctx = c.getContext('2d')!; const s = Math.min(v.videoWidth, v.videoHeight) * 0.35;
-      ctx.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, n, n);
-      const d = ctx.getImageData(0, 0, n, n).data; let sum = 0, sq = 0, k = 0;
-      for (let y = 1; y < n - 1; y++) for (let x = 1; x < n - 1; x++) {
-        const i = (y * n + x) * 4; const g = (i2: number) => d[i2] * 0.299 + d[i2 + 1] * 0.587 + d[i2 + 2] * 0.114;
-        const lap = -4 * g(i) + g(i - 4) + g(i + 4) + g(i - n * 4) + g(i + n * 4); sum += lap; sq += lap * lap; k++;
-      }
-      setSharp(Math.round(sq / k - (sum / k) ** 2));
-    }, 500);
-    return () => { alive = false; clearInterval(id); streamRef.current?.getTracks().forEach((t) => t.stop()); };
-  }, []);
-
-  const applyZoom = async (value: number) => {
-    const track = streamRef.current?.getVideoTracks()[0]; if (!track || !zoom) return;
-    try { await track.applyConstraints({ advanced: [{ zoom: value } as MediaTrackConstraintSet] }); setZoom({ ...zoom, value }); } catch { /* ignore */ }
-  };
-
-  const capture = async () => {
-    const track = streamRef.current?.getVideoTracks()[0]; const v = videoRef.current; if (!track || !v) return;
-    // typed as optional on purpose: the DOM lib declares ImageCapture, but iOS Safari before 18.4 has none
-    const IC = (window as unknown as { ImageCapture?: typeof ImageCapture }).ImageCapture;
-    if (IC) {
-      try {
-        const ic = new IC(track);
-        // Ask for the sensor's largest still. Without settings some Chrome builds return the photo at the
-        // preview stream's size, which throws away the iris pixels the 2x zoom was there to gain.
-        let settings: PhotoSettings | undefined;
-        try {
-          const caps = await ic.getPhotoCapabilities?.();
-          const w = caps?.imageWidth?.max, h = caps?.imageHeight?.max;
-          if (w && h) settings = { imageWidth: w, imageHeight: h };
-        } catch { /* capabilities are optional: take the default photo */ }
-        let blob: Blob;
-        try { blob = await ic.takePhoto(settings); }
-        catch (e) { if (!settings) throw e; blob = await ic.takePhoto(); }   // a camera that refuses the size still shoots
-        onCapture(blob); return;
-      } catch { /* fall through to a video frame */ }
-    }
-    const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d')!.drawImage(v, 0, 0);
-    c.toBlob((b) => b && onCapture(b), 'image/jpeg', 0.95);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      <div className="relative flex-1 overflow-hidden">
-        <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-          <div className="w-[17%] aspect-square rounded-full border-2 border-[#f5c542] shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] flex items-end justify-center">
-            <span className="absolute top-[58%] text-[10px] font-mono bg-black/75 px-2 py-0.5 rounded text-white/90 whitespace-nowrap">{T.live.guide}</span>
-          </div>
-        </div>
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-xs">
-          <span className={`px-2.5 py-1 rounded-full font-bold ${sharp > 60 ? 'bg-emerald-500/80 text-black' : 'bg-black/70 text-amber-300'}`}>{sharp > 60 ? T.live.sharp : T.live.holdStill}</span>
-          <button onClick={onClose} className="px-3 py-1 rounded-full bg-black/70 text-white">{T.live.close}</button>
-        </div>
-        {err && <div className="absolute bottom-4 left-4 right-4 text-xs text-rose-200 bg-rose-950/70 rounded-xl p-3">{err}</div>}
-      </div>
-      <div className="bg-[#07090e] px-4 py-4 flex flex-col gap-3">
-        {zoom ? (
-          <label className="flex items-center gap-3 text-xs text-zinc-300"><ZoomIn className="w-4 h-4 text-[#f5c542]" /> {T.live.zoom(T.dec1(zoom.value))}
-            <input type="range" min={zoom.min} max={zoom.max} step={zoom.step || 0.1} value={zoom.value} onChange={(e) => applyZoom(parseFloat(e.target.value))} className="flex-1" />
-          </label>
-        ) : (
-          <p className="text-[11px] text-zinc-500">{T.live.noZoom}</p>
-        )}
-        {!hasStillCapture && (
-          // without ImageCapture we can only grab a video frame, and a video frame of this framing is about
-          // 250px of iris: below our own 300px floor, so it would fail the quality gate anyway
-          <p className="text-[11px] text-amber-300/80">{T.live.lowRes}</p>
-        )}
-        <button onClick={capture} className="w-full py-4 rounded-2xl bg-[#f5c542] text-black font-luxury font-bold uppercase tracking-widest text-sm">{T.live.capture}</button>
-      </div>
-    </div>
-  );
-};

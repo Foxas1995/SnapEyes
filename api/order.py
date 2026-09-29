@@ -2,7 +2,7 @@
 """/api/order: one endpoint for an order's whole life (Vercel Hobby counts functions, so the four steps share one).
 
 GET  /api/order?o=<order>&k=<key>[&s=<checkout session id>][&p=1]      the status (the same as action "status")
-POST /api/order  {action: "draft", eye: 1-8, crop, preview, pad, ticket, lang, ref, order?, k?}
+POST /api/order  {action: "draft", eye: 1-8, crop, sealed (or preview), pad, ticket, lang, ref, order?, k?}
 POST /api/order  {action: "arrange", order, k, slots: [old eye numbers in the new order]}
 POST /api/order  {action: "status", order, k, s?, previews?}
 POST /api/order  {action: "make", order, k, eye: 1-8, s?}
@@ -14,7 +14,12 @@ GET  /api/order  from Vercel Cron (its x-vercel-cron-schedule header or vercel-c
                  the daily clean-up (api/_lib/cleanup.py), only with "Authorization: Bearer <CRON_SECRET>"
 
 draft: one eye of an unpaid order, uploaded on its own (the 4.5 MB request limit): crop = the deglared iris square the
-  preview was made from (/api/deglare's crop), preview = the exact image string /api/enhance returned, pad = the pad
+  preview was made from (/api/deglare's crop), sealed = the "sealed" string /api/enhance returned (the clean preview,
+  encrypted with the server's key: opened here, so the stored preview is exactly the enhance output while the page never
+  holds it in the clear; refused 410 preview_expired after api/_lib/preview.py SEAL_TTL, 400 preview_invalid when it
+  does not verify or is one of the smaller "sealed_sizes" copies, which only /api/compose opens). Old pages send
+  preview = the clean image string instead, accepted for one release (a display copy, which an old page would get
+  from the new /api/enhance, is refused 409 preview_outdated). pad = the pad
   both used, ticket = the work ticket from /api/analyze (15 minutes: proof the eye came through the engine). Without
   order and k a new order is made and its id and access key are returned; with them the eye is added to that order
   or replaces the eye in the same slot. One work ticket has at most one unpaid order (a repeat gets the same order
@@ -81,6 +86,7 @@ from _lib import pay
 from _lib import withdraw as W
 from _lib import cleanup as C
 from _lib import maker as M
+from _lib import preview as P
 import master_eye as ME
 import master_compose as MC
 
@@ -143,6 +149,31 @@ def _image(s, what, cap):
     return raw, fmt, min(w, h)
 
 
+def _preview_image(body):
+    """(bytes, format, side) of the eye's approved preview. New pages send it sealed (/api/enhance "sealed"), opened
+    here; old pages the clean "preview" string, accepted for one release. Sealed wins when both are sent. A display copy
+    (the watermarked 800 px image the new /api/enhance shows) is never an order's preview: the 4K file would be made
+    from its watermark."""
+    ss = body.get("sealed")
+    if isinstance(ss, str) and ss:
+        if len(ss) > P.SEALED_B64_MAX:
+            raise _too_large("preview")
+        try:
+            clean = P.unseal(ss, kinds=(P.KIND_ORDER,))   # a smaller compose copy is never an order's preview
+        except P.SealExpired:
+            raise store.Answer(410, "preview_expired", "This preview is too old. Please take the photo again.",
+                               False) from None
+        except P.SealError:
+            raise store.Answer(400, "preview_invalid", "We could not verify this preview. Please take the photo again.",
+                               False) from None
+        return _image(base64.b64encode(clean).decode("ascii"), "preview", PREVIEW_B64_MAX)
+    got = _image(body.get("preview"), "preview", PREVIEW_B64_MAX)
+    if P.is_display(got[0]):
+        raise store.Answer(409, "preview_outdated", "This page is out of date. Please reload it and take the photo "
+                           "again.", False)
+    return got
+
+
 def _withdrawn():
     return store.Answer(409, "withdrawn", "This order was withdrawn, so nothing is made for it.", False)
 
@@ -194,11 +225,12 @@ def draft(body):
     if not L.check_ticket(ticket):
         raise PermissionError("order draft: work ticket missing or expired")
     eye = ME._eye(body.get("eye"))
-    cs, ps = body.get("crop"), body.get("preview")
+    cs, ss = body.get("crop"), body.get("sealed")
+    ps = ss if isinstance(ss, str) and ss else body.get("preview")
     if isinstance(cs, str) and isinstance(ps, str) and len(cs) + len(ps) > BODY_B64_MAX:
         raise _too_large("upload")
     craw, cfmt, cside = _image(cs, "crop", CROP_B64_MAX)
-    praw, pfmt, pside = _image(ps, "preview", PREVIEW_B64_MAX)
+    praw, pfmt, pside = _preview_image(body)
     pad = ME._pad(body.get("pad"))
     lang = pay.lang_of(body.get("lang"))
     ref = body.get("ref")

@@ -150,11 +150,14 @@ export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
       if (!d) return;
       const e = await step<J>('enhance', () => publicCall('/api/enhance', { crop: d.crop, mode: 'artistic', pad, ticket: a.ticket, used_sr: d.used_sr, meta: q, lang: 'en' }), (x) => ({ image: jpeg(x.image) }));
       if (!e) return;
-      const c = await step<J>('compose', () => publicCall('/api/compose', { irises: [e.image], style, names, pad, lang: 'en' }), (x) => ({ image: jpeg(x.image) }));
+      // e.image is the watermarked 800 px display copy /try shows; the clean restoration comes back only sealed
+      // (api/_lib/preview.py), and the server opens it for the preview and for the 4K master
+      const sealed = typeof e.sealed === 'string' && e.sealed ? e.sealed : null;
+      const c = await step<J>('compose', () => publicCall('/api/compose', { ...(sealed ? { sealed: [sealed] } : { irises: [e.image] }), style, names, pad, lang: 'en' }), (x) => ({ image: jpeg(x.image) }));
       if (!c || !want4k) return;
       const ls = await step<LabStart>('lab_start', () => call<LabStart>('lab_start', {}), (x) => ({ note: `Testo užsakymas ${x.order}` }));
       if (!ls) return;
-      const m = await step<J>('master_eye', () => publicCall('/api/master_eye', { crop: d.crop, preview: e.image, pad, ticket: ls.ticket, order: ls.order, eye: 1 }),
+      const m = await step<J>('master_eye', () => publicCall('/api/master_eye', { crop: d.crop, ...(sealed ? { sealed } : { preview: e.image }), pad, ticket: ls.ticket, order: ls.order, eye: 1 }),
         (x) => ({ note: `4K ${String(x.width)}x${String(x.height)}${x.needs_review ? ', patikra liepė peržiūrėti' : ''}` }));
       if (!m) return;
       await step<J>('master_compose', () => publicCall('/api/master_compose', { order: ls.order, ticket: ls.ticket, keys: [`orders/${ls.order}/eye_1.jpg`], style, layout: 'single', names, title: '' }),

@@ -1,16 +1,44 @@
 # -*- coding: utf-8 -*-
 """POST /api/enhance  {crop: b64 clean iris square, mode: "faithful"|"artistic", pad, session, consent, meta}
 faithful: Real-ESRGAN x4 for small crops -> Gemini restoration with thinking -> fidelity guard.
-artistic: Gemini macro re-interpretation (beautiful, not pixel-faithful)."""
-import os, sys, json, time
+artistic: Gemini macro re-interpretation (beautiful, not pixel-faithful).
+The page never gets the clean restoration (api/_lib/preview.py): "image" is an 800 px display copy with the preview
+watermark across the iris, "sealed" the clean 1024 px JPEG encrypted with the server's key (what /api/compose and the
+order draft take back), "sealed_sizes" the clean iris at the sides /api/compose is sent for 3-8 eyes, sealed too.
+POST /api/enhance  {sample: true, image: b64}: the AI-generated sample eye's prepared restoration (SAMPLE_SHA256) comes
+back the same way, with no ticket and no model call."""
+import os, sys, json, time, base64, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from PIL import Image
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
+from _lib import preview as P
+
+# sha256 of public/assets/sample_eye_blue_restored.jpg, the sample eye's restoration the page ships (made once by the
+# live engine, 2026-09-29). Replace the file and this changes with it; the page then falls back to the studio.
+SAMPLE_SHA256 = "7e681ceca21955127d41cb6c899c4f5dd708819ea872a9dc305f8d0cce3e6cb7"
+SAMPLE_B64_MAX = 600_000
+
+def sample(body):
+    """The AI-generated sample eye's prepared restoration, sent back by the page as it downloaded it: the display copy
+    and the sealed originals, exactly as a real restoration comes back, so the sample shows and composes through the
+    same path. Only that one file is accepted: no ticket and no model call, so this is no free watermarking service."""
+    s = body.get("image")
+    if not isinstance(s, str) or not s or len(s) > SAMPLE_B64_MAX:
+        raise L.ClientError("That is not the sample eye.")
+    try:
+        raw = base64.b64decode(s, validate=True)
+    except ValueError:
+        raise L.ClientError("That is not the sample eye.") from None
+    if hashlib.sha256(raw).hexdigest() != SAMPLE_SHA256:
+        raise L.ClientError("That is not the sample eye.")
+    return {"ok": True, "mode": "artistic", "sample": True, **P.protect(L.b64_to_pil(s), raw)}
 
 def enhance(body):
     t0 = time.time()
+    if body.get("sample") is True:
+        return sample(body)
     if not L.check_ticket(body.get("ticket")):
         raise PermissionError("expired_or_missing_ticket")
     crop = L.b64_to_pil(body["crop"])
@@ -47,7 +75,10 @@ def enhance(body):
     # colour QA: how far the render moved the iris colour from the deglared crop it was made from. The pupil
     # is only made neutral later, by the grade in /api/compose, so it is checked there. Logged, never blocking.
     qa = L.colour_qa("enhance", result=out, source=source, r_frac=r_frac)
-    res = {"ok": True, "mode": mode, "image": L.pil_to_b64(out, "JPEG", 93), "fidelity": round(fid, 3), "used_sr": used_sr,
+    # the clean restoration exactly as the page used to receive it (JPEG q93): sealed, never shown. The order's preview
+    # and master_eye's preview_sha are these bytes, as before
+    clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
+    res = {"ok": True, "mode": mode, **P.protect(out, clean), "fidelity": round(fid, 3), "used_sr": used_sr,
            "fallback": fallback, "seconds": round(time.time() - t0, 1), "qa": qa}
     # optional training memory (only with consent and when storage is configured)
     if body.get("consent") and body.get("session"):

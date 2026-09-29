@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-"""POST /api/master_eye  {crop: b64 (the deglared iris square the preview used), preview: b64 (the /api/enhance image
-                          the customer approved; optional), pad, ticket, order, eye: 1-8, rerender: true (optional)}
+"""POST /api/master_eye  {crop: b64 (the deglared iris square the preview used), preview: b64 (the clean /api/enhance
+                          output the customer approved, as the order draft stored it from its sealed copy; optional),
+                          sealed (instead of preview: /api/enhance's "sealed", opened here; the admin Laboratorija),
+                          pad, ticket, order, eye: 1-8, rerender: true (optional)}
 The paid deliverable, step 1 of 2: this eye rendered ONCE at 4096 x 4096 by the image model and stored privately
 as orders/<order>/eye_<n>.jpg (JPEG q95 4:4:4, sRGB) with a small record orders/<order>/eye_<n>.json.
 
@@ -57,6 +59,7 @@ from PIL import Image
 from _lib import iris as L
 from _lib import store
 from _lib import events as E   # the admin panel's usage events (no personal data)
+from _lib import preview as P
 
 MASTER_SIDE = 4096           # the deliverable: flash 4K measured 4096 x 4096, $0.153, 24-31 s (2026-09-23 spike)
 MAX_IN_SIDE = 2048           # the deglared crop is at most 1024 px; a larger image is not one this site made
@@ -111,13 +114,22 @@ def _base(s, pad):
     return crop, side
 
 
-def _preview(s, pad):
-    """The approved preview (the /api/enhance image) as the model input, prepared as _base prepares the crop:
-    squared, at WORK px, masked to the iris disk. None when the request has none (the old request)."""
+def _preview(s, pad, sealed=None):
+    """The approved preview (the clean /api/enhance output) as the model input, prepared as _base prepares the crop:
+    squared, at WORK px, masked to the iris disk. None when the request has none (the old request). sealed: the
+    preview as /api/enhance sealed it (its "sealed", never a smaller "sealed_sizes" copy), opened here; it wins over s.
+    The watermarked display copy /try shows is refused whoever sends it: a 4K file is never made from a watermark."""
+    if isinstance(sealed, str) and sealed:
+        try:
+            s = base64.b64encode(P.unseal(sealed, kinds=(P.KIND_ORDER,))).decode("ascii")
+        except P.SealError as e:
+            raise L.ClientError(P.refusal(e)) from None
     if s is None or s == "":
         return None
     if not isinstance(s, str):
         raise L.ClientError("Send the preview as base64 text.")
+    if P.is_display_b64(s):
+        raise L.ClientError("This preview is the watermarked copy the page shows. Send the sealed preview instead.")
     im = L.b64_to_pil(s, max_side=MAX_IN_SIDE)
     side = min(im.size)
     if side < MIN_IN_SIDE:
@@ -337,7 +349,7 @@ def _master_eye(body, stage):
             print(f"snapeyes master: {key} already stored, not rendered again", flush=True)
             return _stored_reply(t0, key, eye, rec)
     base, input_px = _base(body.get("crop"), pad)
-    pv = _preview(body.get("preview"), pad)     # None: the old request, rendered from the crop
+    pv = _preview(body.get("preview"), pad, body.get("sealed"))     # None: the old request, rendered from the crop
     pv_sha = None if pv is None else hashlib.sha256(pv.tobytes()).hexdigest()[:16]
     if rec is not None:
         _same_input(rec, pv_sha)                # a re-render: the same input as the stored master, or a 400

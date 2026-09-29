@@ -1,16 +1,24 @@
 # -*- coding: utf-8 -*-
 """POST /api/compose
-  {irises: [b64, ...] 1-8 enhanced iris squares, in canvas order  (or iris: b64, the one-eye form, still accepted),
+  {sealed: [sealed, ...] 1-8 restored irises as /api/enhance sealed them ("sealed", or one of its "sealed_sizes"),
+   in canvas order; opened here (api/_lib/preview.py), the page never holds them in the clear.
+   Old pages: irises: [b64, ...] 1-8 enhanced iris squares (or iris: b64, the one-eye form), still accepted for one
+   release; sealed wins when both are sent.
    layout, format ("artwork" | "wallpaper"), style, title, names, pad, unlock}
-Places the eyes on the chosen style background with typography and (unless unlocked) a preview watermark.
+Places the eyes on the chosen style background with typography and (unless unlocked) a preview watermark, whose words
+are drawn iris.WATERMARK_IRIS times as strong on every iris disc (the slider's display copy strength), so neither the
+artwork box nor its "Save preview" file is a clean iris.
 Reply: {ok, style, layout, layouts, format, count, width, height, image (JPEG b64), styles, qa}"""
-import os, sys
+import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
+from _lib import preview as P
 
-PREVIEW_SIZE = 1024          # longest side of the artwork this endpoint returns
+PREVIEW_SIZE = 1024          # longest side of the artwork this endpoint returns. Kept at 1024 when the iris preview
+                             # went down to 800 px (2026-09-29): at 900 the footer line of a 21:9 row of four eyes
+                             # drops from 9 to 8 px and no longer reads; the badge, title and names read at both
 MAX_SIDE = 4096              # the 4K render is 4096 px: a larger image is not an iris this site made
 MIN_SIDE = 64
 WORK_SIDE = 2048             # a 1024 px preview never needs more than this, so a larger iris is shrunk on arrival.
@@ -35,15 +43,23 @@ def _pad(v):
     return min(2.0, max(1.0, p)) if p == p else 1.12
 
 def _irises(body):
-    raw = body.get("irises")
-    if (raw is None or (isinstance(raw, list) and not raw)) and body.get("iris") is not None:
-        raw = [body.get("iris")]          # the one-eye form, also when a client sends it next to an empty list
+    raw = body.get("sealed")
+    sealed = isinstance(raw, list) and len(raw) > 0     # the sealed form wins whenever it is sent
+    if not sealed:
+        raw = body.get("irises")
+        if (raw is None or (isinstance(raw, list) and not raw)) and body.get("iris") is not None:
+            raw = [body.get("iris")]      # the one-eye form, also when a client sends it next to an empty list
     if not isinstance(raw, list) or not 1 <= len(raw) <= L.MULTI_MAX:
         raise L.ClientError(f"Send between 1 and {L.MULTI_MAX} iris images.")
     if not all(isinstance(s, str) and s for s in raw):
         raise L.ClientError("Each iris image must be sent as base64 text.")
     if sum(len(s) for s in raw) > MAX_TOTAL_B64:
         raise L.ClientError("Those images are too large together. Send each one at 1024 pixels.")
+    if sealed:
+        try:
+            raw = [base64.b64encode(P.unseal(s)).decode("ascii") for s in raw]
+        except P.SealError as e:
+            raise L.ClientError(P.refusal(e)) from None
     out = []
     for s in raw:
         im = L.b64_to_pil(s, max_side=MAX_SIDE)
