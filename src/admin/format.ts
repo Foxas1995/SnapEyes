@@ -115,6 +115,29 @@ export const RESULT_LT: Record<string, string> = {
   not_held: 'nesiųstas: kūrinys nebuvo sulaikytas, laiškas „paruošta“ išėjo, kai jis buvo pagamintas',
 };
 
+// the admin audit log's actions (api/_lib/ops.py ACTIONS), named as the buttons that run them
+export const ACTION_LT: Record<string, string> = {
+  link: 'Pirkėjo nuoroda', resend_confirmation: 'Siųsti patvirtinimą', resend_ready: 'Siųsti „paruošta“',
+  release: 'Išleisti kūrinį', clear_review: 'Nuimti peržiūros žymą', mailed_by_hand: 'Išsiunčiau ranka',
+  render: 'Pagaminti 4K', recompose: 'Sudėti kūrinį iš naujo', refund: 'Grąžinti pinigus',
+  mark_refunded: 'Grąžinau Stripe svetainėje', delete_files: 'Ištrinti failus', lab_start: 'Laboratorijos testas',
+  lab_delete: 'Ištrinti laboratorijos testą',
+};
+
+// an audit entry's result code in words (RESULT_LT for the email words, then these), else the code itself
+const LOG_RESULT_LT: Record<string, string> = {
+  started: 'pradėta', deleted: 'ištrinta', released: 'išleista', removed: 'nuimta', none: 'nebuvo ko nuimti',
+  marked: 'pažymėta', made: 'padaryta', stored: 'jau buvo padaryta', rerendered: 'perpiešta', composed: 'sudėta',
+  same: 'nepasikeitė', shown: 'parodyta', by_hand: 'pažymėta ranka', refunded: 'grąžinta', succeeded: 'grąžinta',
+  pending: 'laukia Stripe', bad_request: 'bloga užklausa', not_found: 'nerasta',
+};
+
+export const actionLt = (a: unknown): string => ACTION_LT[String(a ?? '')] || String(a ?? '');
+export const logResultLt = (r: unknown): string => {
+  const k = String(r ?? '');
+  return RESULT_LT[k] || LOG_RESULT_LT[k] || k;
+};
+
 export const REASON_LT: Record<string, string> = {
   admin_denied: 'Raktas netinka (pasibaigęs, atšauktas arba kitam serveriui).',
   admin_not_configured: "Administravimas šiame serveryje neįjungtas: Vercel'e nustatyk SNAPEYES_ADMIN_SECRET (bent 32 simboliai, python scripts/mint_admin.py --new-secret), SNAPEYES_ADMIN_EPOCH palik tuščią arba tik skaičių, ir paleisk iš naujo.",

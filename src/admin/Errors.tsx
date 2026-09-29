@@ -5,7 +5,7 @@ import type React from 'react';
 import type { Errors, LogEntry } from './api';
 import type { Call } from './AdminApp';
 import { countBy } from './agg';
-import { ENDPOINT_LT, explain, fmtSec, fmtTime, KIND_LT, kindLabel, REASON_LT } from './format';
+import { actionLt, ENDPOINT_LT, explain, fmtSec, fmtTime, KIND_LT, kindLabel, logResultLt, REASON_LT } from './format';
 import { BTN, CARD, Chip, H2, MUTED, Notice, Spinner } from './ui';
 
 export const ErrorsPage: React.FC<{ call: Call }> = ({ call }) => {
@@ -65,9 +65,9 @@ export const ErrorsPage: React.FC<{ call: Call }> = ({ call }) => {
         {audit.length === 0 && <p className={`text-xs ${MUTED}`}>Dar nieko.</p>}
         {audit.map((l, i) => (
           <p key={i} className="text-xs break-words border-t border-white/5 pt-1.5">
-            {fmtTime(l.t, true)} · <b>{l.action}</b>
+            {fmtTime(l.t, true)} · <b>{actionLt(l.action)}</b>
             {l.order ? <> · <a className="underline underline-offset-4 decoration-white/30 break-all" href={`#order/${l.order}`}>{l.order}</a></> : ''}
-            {l.eye ? ` (akis ${l.eye})` : ''} · {l.ok ? 'pavyko' : 'nepavyko'}{l.result ? ` · ${l.result}` : ''}{l.detail ? ` · ${l.detail}` : ''}
+            {l.eye ? ` (akis ${l.eye})` : ''} · {l.ok ? 'pavyko' : 'nepavyko'}{l.result ? ` · ${logResultLt(l.result)}` : ''}{l.detail ? ` · ${l.detail}` : ''}
           </p>
         ))}
       </section>

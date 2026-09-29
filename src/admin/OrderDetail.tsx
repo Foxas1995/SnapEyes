@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
 import type { EyeView, OrderDetail, Payment, Reply } from './api';
 import type { Call } from './AdminApp';
-import { AKYS, explain, fmtBytes, fmtEur, fmtNum, fmtTime, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
+import { actionLt, AKYS, explain, fmtBytes, fmtEur, fmtNum, fmtTime, logResultLt, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, ConfirmDialog, CopyField, DANGER, ExtLink, H2, JsonView, MUTED, Notice, Rows, Spinner, Thumb, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
 
@@ -200,7 +200,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
                 ['Sutikimo laikas', d.consent?.at ? isoTime(d.consent.at) : '-'],
                 ['Teksto versija', `${d.consent?.version || '-'} (${d.consent?.lang || '-'})`],
                 ['Patvirtinimo laiškas', d.records['mail_delivery.json'] ? `${s(mail.state)}${s(mail.result) ? `, ${RESULT_LT[s(mail.result)] || s(mail.result)}` : ''}, ${isoTime(mail.t)}${mail.by === 'owner' ? ' (pažymėjai ranka)' : ''}` : 'dar nesiųstas'],
-                ['Laiškai „paruošta“', d.log.filter((l) => l.action === 'release' || l.action === 'resend_ready').map((l) => `${fmtTime(l.t)} ${l.action} ${l.ok ? 'ok' : 'nepavyko'}`).join('; ') || '-'],
+                ['Laiškai „paruošta“', d.log.filter((l) => l.action === 'release' || l.action === 'resend_ready').map((l) => `${fmtTime(l.t)} ${actionLt(l.action)} ${l.ok ? 'ok' : 'nepavyko'}`).join('; ') || '-'],
                 ['Gamybos pradžia', d.records['making.json'] ? isoTime(rec('making.json').t) : '-'],
                 ['Pristatymas', d.records['delivery.json'] ? `${isoTime(delivery.created)}${delivery.needs_review ? ', patikra liepė peržiūrėti' : ''}${d.records['release.json'] ? `, išleista ${isoTime(rec('release.json').t)}` : ''}` : '-'],
                 ['Atsisakyta', d.records['withdrawn.json'] ? isoTime(rec('withdrawn.json').t ?? rec('withdrawn.json').iso) : '-'],
@@ -371,7 +371,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
             {d.log.length === 0 && <p className={`text-xs ${MUTED}`}>Dar nieko.</p>}
             {d.log.map((l, i) => (
               <p key={i} className="text-xs break-words">
-                {fmtTime(l.t, true)} · <b>{l.action}</b>{l.eye ? ` (akis ${l.eye})` : ''} · {l.ok ? 'pavyko' : 'nepavyko'}{l.result ? ` · ${l.result}` : ''}{l.detail ? ` · ${l.detail}` : ''}
+                {fmtTime(l.t, true)} · <b>{actionLt(l.action)}</b>{l.eye ? ` (akis ${l.eye})` : ''} · {l.ok ? 'pavyko' : 'nepavyko'}{l.result ? ` · ${logResultLt(l.result)}` : ''}{l.detail ? ` · ${l.detail}` : ''}
               </p>
             ))}
           </section>
