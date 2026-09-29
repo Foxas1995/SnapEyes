@@ -498,7 +498,11 @@ BLOCK_MESSAGES["too_small"] = BLOCK_SMALL_MESSAGE
 # blocked turned to any of 24 angles (240 of 240, 26 aside) and in 137 of 150 changed copies; real lids pasted over
 # 19 clean eyes are blocked in 82 % of 3360 cases (15-40 % of the iris, 8 directions). The existing "open wide" tip
 # (OCCL_TIP_PCT) stays for the lighter cases.
-EYELID_BLOCK_PCT = 12.0
+# 11.0 rather than the 12.0 the calibration first sat on: live, the vision model's iris box moves from call to call and
+# the owner's own d02 read 12.6 in one run and less in another; the clean photos read at most 10.0 on the circles the
+# live fit locks, so 11.0 keeps a margin of 1.0 below the lids and above the clean photos (wave-lid/lab robust2: at 11.0
+# 138 of 256 altered lid copies block against 113 at 12.0, and 2 of 176 altered clean copies against 0).
+EYELID_BLOCK_PCT = 11.0
 BLOCK_EYELID_MESSAGE = ("Your eyelid covers part of your iris in this photo, so we have not used it: the studio would "
                         "have to paint iris over the lid, and that looks fake. Please retake it looking straight into "
                         "the lens, not at an angle, with the eye open wide: lift the upper lid gently with a fingertip, "
