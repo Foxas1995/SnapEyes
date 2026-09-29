@@ -5,8 +5,12 @@ is rebuilt by the image model and blended back (with DEGLARE_MODEL off, only fil
 from the same person's iris at the same radius (mirror_prefill), never from the model: the model's lid patches were a
 different iris (a new colour band, a straight two-tone seam, sharper than the photo), while /api/enhance re-renders
 the whole disc in one pass and restores the fibres over the fill without a seam.
-Reply: {ok, glare_pct, lid_pct, changed, used_sr, pupil_overlap, crop}. glare_pct and lid_pct are shares of the iris
-disk, measured separately; with no eyelid found (lid_pct 0) the result is exactly the glare-only one."""
+Last, a veil (a wide, soft reflection of a window or the sky over part of the iris, L.veil_fix) loses the light it
+added, so the render and its colour lock no longer paint it as blue-grey fibres; with no veil found (veil_pct 0) the
+crop is exactly the one before.
+Reply: {ok, glare_pct, lid_pct, veil_pct, changed, used_sr, pupil_overlap, crop}. glare_pct and lid_pct are shares of
+the iris disk, measured separately, veil_pct a share of the fibre ring; with no eyelid found (lid_pct 0) the result is
+exactly the glare-only one."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -81,9 +85,12 @@ def deglare(body):
     if pct < L.GLARE_MIN_PCT:
         if lid_pct > 0:
             base = L.lid_composite(crop, filled, lid_hard, lid_feather, r_px, prho, glare_hard=hard)
-        E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=bool(pupil_changed or lid_pct > 0), used_sr=used_sr, model_call=False)
-        return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2),
-                "changed": pupil_changed or lid_pct > 0, "used_sr": used_sr,
+        # a veil (L.veil_fix) loses the light it added; none found: base itself comes back
+        base, veil = L.veil_fix(base, r_px, pr / L.iris_radius_frac(pad) if pupil_ok else None)
+        changed = bool(pupil_changed or lid_pct > 0 or veil > 0)
+        E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=changed, used_sr=used_sr, model_call=False)
+        return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
+                "changed": changed, "used_sr": used_sr,
                 "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95)}
     # the reflection holes: the whole glint with its halo, outline ring and soft shoulder (glare_extent), never less than
     # glare_mask's. The gate above and every lid and pupil decision still read glare_mask's, so a crop below the gate is
@@ -123,8 +130,12 @@ def deglare(body):
             except Exception:
                 glared = prefilled
         clean = L.lid_composite(glared, filled, lid_hard, lid_feather, r_px, prho, photo=crop, glare_hard=lid_glare)
+    # last, as above: a veil loses the light it added (the fills already in place, so a hole inside a veil is treated
+    # as the veil round it); none found: clean itself comes back
+    clean, veil = L.veil_fix(clean, r_px, prho)
     E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=True, used_sr=used_sr, model_call=DEGLARE_MODEL)
-    return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "changed": True, "used_sr": used_sr,
+    return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
+            "changed": True, "used_sr": used_sr,
             "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95)}
 
 def handle(req): L.run(req, deglare)

@@ -1284,6 +1284,267 @@ def glare_fill(crop, feather, hard, r_px, pupil_rho=None, avoid=None, base=None,
     b = arr if base is None else np.asarray(base.convert("RGB"), np.float32)
     return Image.fromarray(np.clip(b * (1 - a) + fd * a, 0, 255).astype(np.uint8))
 
+# ----------------------------------------------------------------------------- veil
+# A wide, soft reflection of a window or the sky on the cornea: not a glint (glare_mask, glare_fill) but a low-contrast
+# grey, blue or violet veil over a large part of the iris. The render painted it as blue-grey fibres and patches on warm
+# eyes (14: the top half of an amber iris came out with blue patches; 27 violet, 11 lavender, 21 and 13 blue-grey), and
+# chroma_lock kept that colour, because the deglared crop is its colour reference. A reflection ADDS light: in linear
+# light the photo is the iris plus the reflection. veil_fix takes out the least light that explains the shift of a
+# broad patch away from the iris colour of its own radius, and nothing else:
+#   - the iris colour of each radius (_veil_ring_colour): the median of 10-degree cells round the circle, first of the
+#     warmer half (a veil may cover half a ring), then of the cells that do not read as veil (VEIL_CELL), twice;
+#   - per pixel of a low-passed copy (VEIL_SIDE, VEIL_BLUR): the most of that colour that fits under the pixel in all
+#     three channels (k), and the rest, the minimal veil (one channel empty; on a warm iris red, so what goes is green
+#     and blue light: never a colour from outside this iris);
+#   - it counts where taking it out moves the colour far (VEIL_DAB: CIELAB a*b* distance, so a blue veil over a shaded,
+#     dark part of the iris counts as much as it shows), where it is neutral to blue (VEIL_BLUE: a greener or redder
+#     patch is the iris' own), inside the fibre ring (VEIL_RHO: the pupil and its edge stay out), and not where a
+#     bright patch at the top or bottom rim is left (VEIL_LID: a lid's skin, lashes over it);
+#   - only a broad patch is a veil: the largest connected area must reach VEIL_DETECT of the ring. Then every patch of
+#     at least VEIL_COMP is taken, grown a little through its softer edge (VEIL_DAB_SOFT, VEIL_GROW);
+#   - how much of it goes rises smoothly with the iris' warmth (VEIL_WARM_IRIS: on a blue or grey iris a veil is the
+#     iris' own colour and does no harm) and with the largest patch's size (VEIL_DETECT), so a few per cent more or
+#     less of either (the vision model's iris box moves a little from shot to shot) moves the result a little, never
+#     all or nothing;
+#   - at full size the smoothed veil is taken out, per channel never more than the pixel's own minimal veil (read on
+#     the pixel and on its slightly blurred copy, the smaller), and a thin dark line keeps its light (VEIL_DARK): a
+#     lash in front of the cornea is not under the veil and a mirrored lash is a gap in it. Taken out anyway, the
+#     neighbours' veil left them dark red (21, 27, 13 on the first version: crimson lashes in the render).
+# Measured (wave-v veil) on the 22 test photos with saved crops, the owner's four eyes and the two samples: found on
+# 11, 13, 14, 21, 27, 28 (largest patch 0.12-0.27 of the ring); every other crop reads 0.043 or less (0.065 at most
+# with the crop moved by 4 %) and is byte for byte the one before, as are the owner's eyes and both samples. Composed
+# renders, 4-7 before and 4-6 after, the blue share (b* < 5) of the veil: 14 20.9 to 4.1 % (the blue patch at 12
+# o'clock gone), 11 23.0 to 2.9, 21 32.9 to 2.4, 27 22.3 to 5.2, 13 8.8 to 4.6; 28's b* deficit against its radius
+# -9.8 to -2.7. The rest of the iris keeps its lightness (no photo moved beyond the render's own spread); on 27 the
+# lid-shaded top is painted as iris instead of violet, and the red lid above it more often as a scarlet rim. Lashes
+# keep their colour (21: no crimson lashes). A synthetic veil added to clean crops: dE00 to the clean crop 9.0 before,
+# 5.2 after (median, 46 found of 108; a weak or neutral one is mostly left alone).
+VEIL_SIDE = 256                  # the veil is read on a copy this size (a veil is a broad, soft shape)
+VEIL_BLUR = 0.010                # ...low-passed this much (share of the side): single fibres and specks out
+VEIL_RING = (0.04, 36)           # the iris colour of each radius: bins this wide (iris radii), cells of 360/36 degrees
+VEIL_WARM_START = 0.5            # its first pass takes the warmer half of a radius' cells
+VEIL_CELL = 0.20                 # a cell whose minimal veil is this share of its radius' luminance, and neutral to blue,
+VEIL_ITER = 2                    # is left out of the next pass, this many times
+VEIL_WARM_IRIS = (0.30, 0.35)    # the iris' warmth, (R - B) / (R + G + B) in linear light, as the median of the
+                                 # warmer half of 36 sectors round the core of the ring (a veil may cover the rest; the
+                                 # median of all read 11 at 0.27-0.37 as its crop moved by 4 % and switched the fix off
+                                 # on 2 of 7 cuts, this reads 0.38-0.42): the share of the veil taken out, none at or
+                                 # below (then nothing is read further), all from. Veiled 11 14 13 21 27 28 read
+                                 # 0.35-0.77 (14 0.35-0.36); 04 09 16 24 (hazel, green) 0.19-0.29, 04's hazy
+                                 # overexposed shot with a bluish patch among them; the owner's eyes and both samples
+                                 # -0.13 to 0.35 with no patch at all
+VEIL_RHO = (0.03, 0.10, 0.88, 0.95)   # past the pupil (+ first, full from + second), to the rim (full to third, none past fourth)
+VEIL_DAB = (10.0, 20.0)          # a*b* distance the minimal veil moves the colour: none at or below, full from
+VEIL_DAB_SOFT = (6.0, 16.0)      # ...and for the softer edge of a found veil
+VEIL_BLUE = (0.55, 0.85)         # the minimal veil's blue over its green (linear): none at or below, full from
+VEIL_LID = ((50.0, 70.0), (0.70, 0.80), (1.15, 1.40))   # degrees from 12 and 6 o'clock (full within the first), radius,
+                                 # and the iris left as a share of its radius' luminance: a bright patch there is a lid
+VEIL_DETECT = (0.08, 0.12)       # the largest patch, as a share of the ring: below the first nothing is changed at
+                                 # all, from the second the whole veil is taken out, in between that share of it
+VEIL_SECTOR = (0.32, 0.42)       # a patch this large is more likely the iris' own colour sector (sectoral heterochromia, a
+                                 # blue segment in a brown iris) than a reflection: the veils found so far reach 0.12-0.27
+                                 # of the ring; from the first the amount fades out, none from the second
+VEIL_COMP = 0.04                 # ...and every patch of at least this share is taken (a smaller one next to a
+                                 # veil was a lid's lashes or a lower lid's wet rim: 29 and 21, wave-v truth test)
+VEIL_GROW = 0.05                 # a patch grows through its softer edge at most this far (share of the side)
+VEIL_WBLUR = 0.008               # the weight is blurred this much (share of the side)
+VEIL_PIX_BLUR = 0.0015           # a pixel's own minimal veil is also read on the photo blurred this much (share of
+                                 # the side); the smaller of the two is the most it loses
+VEIL_DARK = (0.35, 0.70)         # a pixel's luminance as a share of its neighbourhood's (VEIL_DARK_BLUR): at or below
+VEIL_DARK_BLUR = 0.008           # the first it keeps all its light (a lash, a mirrored lash, a window bar: 0.07-0.50
+                                 # on 11, 13, 21, 27, 28), from the second it loses its full share (the iris round them:
+                                 # 0.28-0.87 at the 5th percentile, 0.76-0.94 at the 25th)
+_VEIL_W = np.array([0.2126, 0.7152, 0.0722], np.float32)   # linear luminance
+_VEIL_XYZ = np.array([[0.412453, 0.357580, 0.180423], [0.212671, 0.715160, 0.072169],
+                      [0.019334, 0.119193, 0.950227]], np.float32)
+_VEIL_LIN = None
+
+
+def _veil_linear(arr):
+    """sRGB uint8 -> linear float32 through a 256-entry table."""
+    global _VEIL_LIN
+    if _VEIL_LIN is None:
+        a = np.arange(256, dtype=np.float64) / 255.0
+        _VEIL_LIN = np.where(a <= 0.04045, a / 12.92, ((a + 0.055) / 1.055) ** 2.4).astype(np.float32)
+    return _VEIL_LIN[arr]
+
+
+def _veil_srgb(lin):
+    x = np.clip(lin, 0.0, 1.0)
+    return np.where(x <= 0.0031308, 12.92 * x, 1.055 * np.power(x, 1.0 / 2.4) - 0.055) * 255.0
+
+
+def _veil_ab(lin):
+    """CIELAB a*, b* (D65) of linear RGB."""
+    xyz = (lin @ _VEIL_XYZ.T) / np.array([0.95047, 1.0, 1.08883], np.float32)
+    f = np.where(xyz > 0.008856, np.cbrt(np.maximum(xyz, 0.0)), 7.787 * xyz + 16.0 / 116.0)
+    return 500.0 * (f[..., 0] - f[..., 1]), 200.0 * (f[..., 1] - f[..., 2])
+
+
+def _veil_ramp(v, a):
+    return np.clip((v - a[0]) / (a[1] - a[0]), 0.0, 1.0)
+
+
+def _veil_min(O, A):
+    """The minimal veil: O - k A with k the most of A that fits under O in every channel (>= 0), and k."""
+    k = np.min(O / np.maximum(A, 1e-6), -1)
+    return np.maximum(O - k[..., None] * A, 0.0), k
+
+
+def _veil_ring_colour(cell, ok):
+    """(iris colour per radius bin, its luminance per bin) from the cells' mean colours, or (None, None)."""
+    nb, na = ok.shape
+    veil = np.zeros(ok.shape, bool)
+    ii = np.arange(nb)
+    Ai = Yri = None
+    for it in range(VEIL_ITER + 1):
+        A = np.full((nb, 3), np.nan, np.float32); Yr = np.full(nb, np.nan, np.float32)
+        for k in range(nb):
+            m = ok[k] & ~veil[k]
+            if m.sum() < max(6, na // 4):
+                m = ok[k]
+            if m.sum() < 6:
+                continue
+            cs = cell[k][m]
+            if it == 0:
+                warm = (cs[:, 0] - cs[:, 2]) / np.maximum(cs.sum(1), 1e-6)
+                cs = cs[np.argsort(-warm)[:max(3, int(len(cs) * VEIL_WARM_START))]]
+            A[k] = np.median(cs, 0)
+            Yr[k] = float(np.median(cell[k][m] @ _VEIL_W))
+        has = ~np.isnan(A[:, 0])
+        if has.sum() < 2:
+            return None, None
+        Ai = np.stack([np.interp(ii, ii[has], A[has, c]) for c in range(3)], -1).astype(np.float32)
+        Yri = np.interp(ii, ii[has], Yr[has]).astype(np.float32)
+        if it == VEIL_ITER:
+            break
+        Lc, _ = _veil_min(cell, Ai[:, None, :])
+        share = (Lc @ _VEIL_W) / np.maximum(Yri[:, None], 1e-6)
+        veil = ok & (share > VEIL_CELL) & (Lc[..., 2] > VEIL_BLUE[0] * Lc[..., 1])
+    return Ai, Yri
+
+
+def _veil_on_ring(prof, rho):
+    """A per-radius-bin profile read at each rho (linear between bin centres)."""
+    nb = prof.shape[0]
+    fr = np.clip(rho / VEIL_RING[0] - 0.5, 0.0, nb - 1.001)
+    i0 = fr.astype(np.int32); t = (fr - i0).astype(np.float32)
+    if prof.ndim == 2:
+        t = t[..., None]
+    return (1 - t) * prof[i0] + t * prof[np.minimum(i0 + 1, nb - 1)]
+
+
+def veil_map(crop, r_px, pupil_rho=None, debug=None):
+    """The veil to take out, on the VEIL_SIDE grid ({"V": n x n x 3 linear light, "A": iris colour per radius bin}),
+    or None; and a dict of numbers (area: the patches taken as a share of the ring, top: the largest, warmth: the
+    iris'; amount: the share of the veil taken out, VEIL_WARM_IRIS times VEIL_DETECT)."""
+    arr = np.asarray(crop.convert("RGB"))
+    S = arr.shape[0]; n = VEIL_SIDE
+    lin = _veil_linear(arr)
+    lo = np.stack([_blur_f(_resize_plane(lin[..., c], n, Image.BOX), max(1.0, VEIL_BLUR * n)) for c in range(3)], -1)
+    ax = (np.arange(n) - n / 2 + 0.5) / (float(r_px) / S * n)
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2).astype(np.float32)
+    ang = (np.degrees(np.arctan2(ax[None, :], -ax[:, None])) % 360.0).astype(np.float32)   # 0 at 12, clockwise
+    p0 = 0.30 if pupil_rho is None else float(pupil_rho)
+    win = _veil_ramp(rho, (p0 + VEIL_RHO[0], p0 + VEIL_RHO[1])) * (1.0 - _veil_ramp(rho, VEIL_RHO[2:]))
+    ring = win > 0.5
+    Y = lo @ _VEIL_W
+    valid = ring & (Y > 1e-4)
+    info = {"area": 0.0, "top": 0.0}
+    if valid.sum() < 100:
+        return None, info
+    nb, na = int(math.ceil(1.0 / VEIL_RING[0])) + 1, VEIL_RING[1]
+    cid = np.minimum((rho / VEIL_RING[0]).astype(np.int32), nb - 1) * na + (ang / (360.0 / na)).astype(np.int32) % na
+    sec = cid % na                                               # the iris' warmth (VEIL_WARM_IRIS)
+    cm = valid & (rho > p0 + 0.1) & (rho < 0.85)
+    ns = np.bincount(sec[cm], minlength=na)
+    col = np.stack([np.bincount(sec[cm], lo[..., c][cm], na) for c in range(3)], -1)[ns > 10]
+    ws = np.sort((col[:, 0] - col[:, 2]) / np.maximum(col.sum(1), 1e-9))
+    if len(ws) < 4:
+        return None, info
+    warmth = float(np.median(ws[len(ws) // 2:]))
+    info["warmth"] = round(warmth, 3)
+    gate = float(_veil_ramp(warmth, VEIL_WARM_IRIS))
+    if gate <= 0.0:
+        return None, info
+    cnt = np.bincount(cid[valid], minlength=nb * na).reshape(nb, na)
+    cell = np.stack([np.bincount(cid[valid], lo[..., c][valid], nb * na).reshape(nb, na) for c in range(3)], -1)
+    cell = (cell / np.maximum(cnt, 1)[..., None]).astype(np.float32)
+    A, Yr = _veil_ring_colour(cell, cnt >= 3)
+    if A is None:
+        return None, info
+    Ap = _veil_on_ring(A, rho); Yp = _veil_on_ring(Yr, rho)
+    Lv, k = _veil_min(lo, Ap)
+    a0, b0 = _veil_ab(lo)
+    a1, b1 = _veil_ab(np.maximum(lo - Lv, 0.0))
+    dab = np.hypot(a0 - a1, b0 - b1)
+    blue = _veil_ramp(Lv[..., 2] / np.maximum(Lv[..., 1], 1e-6), VEIL_BLUE)
+    left = k * (Ap @ _VEIL_W) / np.maximum(Yp, 1e-6)          # the iris left under it, against its radius
+    off = np.abs(((ang + 180.0) % 360.0) - 180.0)              # degrees from 12 o'clock, 0..180
+    arc, lr, lb = VEIL_LID
+    lid = np.maximum(1.0 - _veil_ramp(off, arc), _veil_ramp(off, (180.0 - arc[1], 180.0 - arc[0])))
+    lid = lid * _veil_ramp(rho, lr) * _veil_ramp(left, lb)
+    base = blue * win * (1.0 - lid)
+    w = _veil_ramp(dab, VEIL_DAB) * base
+    lab, nc = _components(w > 0.5)
+    if nc == 0:
+        return None, info
+    sizes = np.bincount(lab.ravel(), minlength=nc + 1).astype(np.float64) / max(1.0, float(ring.sum()))
+    sizes[0] = 0.0
+    keep = sizes >= VEIL_COMP
+    big = keep[lab]
+    info.update(area=round(float(big.sum()) / max(1.0, float(ring.sum())), 3), top=round(float(sizes.max()), 3))
+    wc = _veil_ramp(dab, VEIL_DAB_SOFT) * base
+    if debug is not None:
+        debug.update(dab=dab, blue=blue, left=left, lid=lid, w=w, wc=wc, win=win)
+    amount = gate * float(_veil_ramp(sizes.max(), VEIL_DETECT)) * (1.0 - float(_veil_ramp(sizes.max(), VEIL_SECTOR)))
+    if amount <= 0.0:
+        return None, info
+    info["amount"] = round(amount, 3)
+    sup, grow = big, wc > 0.05
+    for _ in range(int(VEIL_GROW * n)):
+        g = _dilate8(sup) & grow
+        if (g == sup).all():
+            break
+        sup = g
+    wf = _blur_f((np.maximum(w, wc) * sup).astype(np.float32), max(1.0, VEIL_WBLUR * n))
+    V = (Lv * (wf * amount)[..., None]).astype(np.float32)
+    if debug is not None:
+        debug.update(wf=wf, light=float((V @ _VEIL_W)[ring].mean() / max(1e-6, float(np.median(Y[ring])))))
+    return {"V": V, "A": A}, info
+
+
+def veil_fix(crop, r_px, pupil_rho=None, debug=None):
+    """(image, veil share of the ring 0..1): crop with the veil (veil_map) taken out, or crop itself (the same object)
+    when there is none. Linear light: the smoothed veil at full size, per channel never more than the pixel's own
+    minimal veil against the iris colour of its radius (the smaller of the pixel's and of the photo blurred by
+    VEIL_PIX_BLUR), and none of it on a pixel much darker than its neighbourhood (VEIL_DARK)."""
+    if crop.size[0] != crop.size[1]:
+        return crop, 0.0                      # the veil is read on a square crop around the iris (the pipeline's)
+    vm, info = veil_map(crop, r_px, pupil_rho, debug=debug)
+    if debug is not None:
+        debug["info"] = info
+    if vm is None:
+        return crop, 0.0
+    arr = np.asarray(crop.convert("RGB"))
+    S = arr.shape[0]
+    Vu = np.stack([_resize_plane(vm["V"][..., c], S, Image.BILINEAR) for c in range(3)], -1)
+    sel = Vu.max(-1) > 1e-6
+    if not sel.any():
+        return crop, 0.0
+    lin = _veil_linear(arr)
+    sm = np.stack([_blur_f(lin[..., c], max(1.0, VEIL_PIX_BLUR * S)) for c in range(3)], -1)
+    Y = lin @ _VEIL_W
+    dark = _veil_ramp(Y / np.maximum(_blur_f(Y, max(1.0, VEIL_DARK_BLUR * S)), 1e-6), VEIL_DARK)[sel]
+    ax = (np.arange(S) - S / 2 + 0.5) / float(r_px)
+    rho = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)[sel]
+    Ar = _veil_on_ring(vm["A"], rho)
+    own = np.minimum(_veil_min(sm[sel], Ar)[0], _veil_min(lin[sel], Ar)[0])
+    take = np.minimum(Vu[sel], own) * dark[:, None]
+    out = arr.copy()
+    out[sel] = np.clip(np.round(_veil_srgb(np.maximum(lin[sel] - take, 0.0))), 0, 255).astype(np.uint8)
+    return Image.fromarray(out), float(info["area"])
+
 PUPIL_HAZE_SIZE = (0.80, 1.10)  # the pupil read from colour counts only when its edge is this share of the vision
                                 # pupil's radius: 0.84-1.06 on 6 of the 7 test photos where pupil_fill reads one (live
                                 # 19: 0.94), 1.11 on 01 (a photo the quality gate stops as too dark)...
