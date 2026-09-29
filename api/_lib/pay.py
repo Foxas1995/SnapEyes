@@ -12,7 +12,7 @@ Everything here is INACTIVE until the owner sets the environment on Vercel (valu
   SNAPEYES_MAIL_FROM     optional sender, default "SnapEyes <info@snapeyes.com>" (the domain must be verified at Resend)
   SNAPEYES_OWNER_MAIL    optional address for the owner's order notes, default info@snapeyes.com
   SNAPEYES_SITE          optional, default https://snapeyes.com: the links in Stripe and in the emails
-  SNAPEYES_TICKET_SECRET recommended (iris.py): the access keys are made from it. Orders made before it changes
+  SNAPEYES_TICKET_SECRET needed for a live key (iris.py): the access keys are made from it. Orders made before it changes
                          keep working (their key is checked against the stored fingerprint), but the delivery email
                          and scripts/order_admin.py can only rebuild a link with the secret the order was made with.
   SNAPEYES_ALLOW_TEST_ORDERS  "1" on a Vercel PREVIEW deployment only (or a local run on the real bucket): there a
@@ -299,7 +299,10 @@ def ordering_problem():
       - CRON_SECRET (16 characters or more): without it the daily clean-up never runs the deletions the privacy
         policy promises (api/order.py cron_purge answers 503);
       - the legal texts: /legal/order-mail.json readable and complete (legal_problem()), because every order
-        confirmation carries them and is not sent without them."""
+        confirmation carries them and is not sent without them;
+      - SNAPEYES_TICKET_SECRET (16 characters or more): the customers' order links are made from it. Without it they
+        come from GEMINI_API_KEY (iris.py), and a new Gemini key would leave every open order's emails without a
+        link (link_key)."""
     why = problem()
     if why:
         return why
@@ -313,6 +316,9 @@ def ordering_problem():
         legal = legal_problem()
         if legal:
             return "a live STRIPE_SECRET_KEY needs complete legal texts: " + legal
+        if len(_env("SNAPEYES_TICKET_SECRET")) < 16:
+            return ("a live STRIPE_SECRET_KEY needs SNAPEYES_TICKET_SECRET (16 characters or more, never changed "
+                    "afterwards): the customers' order links are made from it, not from the Gemini key")
     elif not test_orders_allowed():
         return ("STRIPE_SECRET_KEY is a TEST key and this deployment takes no test orders (production, or a preview "
                 "without SNAPEYES_ALLOW_TEST_ORDERS=1)")
