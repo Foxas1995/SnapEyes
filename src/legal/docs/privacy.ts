@@ -8,16 +8,36 @@
 //    the browser whole); paid.json holds the email, amount and consent; the 4K eyes, the artwork and small json
 //    records follow (master_eye, master_compose). The emailed order page link carries the access key and makes
 //    7-day signed download links (store.SIGNED_MAX). Emails go through Resend (pay.send_mail).
-//  - NOT automated yet, but promised below: deleting unpaid drafts within 30 days and paid orders after 12 months
-//  - browser storage: only localStorage "snapeyes.lang" (src/landing/lang.tsx); no cookies, no analytics
+//  - Stripe: create_session puts the order spec into the Checkout Session metadata (order, eyes, style, layout,
+//    names, title, lang, amount, consent version and time), so names and inscription reach Stripe
+//  - upload markers outside the order folders: ticketuse/ and draftlog/ (no image), removed after MARKER_DAYS
+//  - deletion: the daily clean-up (GET /api/order?cron=purge, vercel.json crons + CRON_SECRET; pay.purge_unpaid)
+//    (api/_lib/cleanup.py) deletes unpaid orders older than 26 h (the policy promises "at the latest within 30 days"),
+//    the images of withdrawn orders 14 days after the withdrawal, and the files of paid orders 12 months after
+//    payment; the records stay (order.json, paid.json: email, spec with names, consent; withdrawal statements)
+//  - withdrawals (api/_lib/withdraw.py): the statement (name, email, order, text, time, outcome) is stored with the
+//    order; one that matches no order (without the link key, the email must be the paid one) goes to withdrawals/,
+//    gets the neutral receipt email (withdraw.unmatched_mail) and is deleted by the daily clean-up 12 months after the
+//    end of its month (cleanup.UNMATCHED_KEEP_DAYS); the owner is emailed every statement; withdrawlog/ counters hold
+//    no personal data
+//  - browser storage: localStorage "snapeyes.lang" (src/landing/lang.tsx, src/try/lang.ts) and, in the order flow,
+//    sessionStorage "snapeyes.order" and "snapeyes.checkout" (src/try/checkout.ts); no cookies, no analytics
+//  - the online withdrawal function: see WITHDRAWAL_ONLINE in src/shared/legal.ts and the "withdrawal" section
 // Not reviewed by a lawyer. Keep every sentence true when the code or a service changes.
 import type { LegalDoc, LegalDocs } from '../types';
-import { ORDER_EMAIL_SENDER } from '../../shared/legal';
+import { ORDER_EMAIL_SENDER, WITHDRAWAL_ONLINE } from '../../shared/legal';
 import { MAIL, SELLER, address, company } from '../facts';
 
+// What the online withdrawal function keeps (the "withdrawal" section): keep it in step with the order page's form
+// and the API action behind it.
+const WITHDRAW_PRIVACY = {
+  en: `If you withdraw from an order with our online function (the button "${WITHDRAWAL_ONLINE.en.button}", see [Right of withdrawal](doc:withdrawal#online)), we store your withdrawal statement with your order: your name, your email address, the order number, its wording and the date and time it reached us. We use it to stop work on your file if we have not started yet, to email you an acknowledgement of receipt with its content, date and time, and to refund you. We also receive a copy of every statement by email. If you withdraw, the images of your order are deleted automatically 14 days after your withdrawal; the order record with your statement stays (see [How long we keep your data](#retention)). If the details you give match none of our orders (without the link from your order page, the email address must be the one you paid with), we keep the statement separately, email you an acknowledgement of receipt all the same, check it by hand, and delete it automatically 12 months after the end of the month in which it reached us.`,
+  de: `Wenn Sie eine Bestellung mit unserer Online-Funktion widerrufen (Schaltfläche „${WITHDRAWAL_ONLINE.de.button}“, siehe [Widerrufsbelehrung](doc:withdrawal#online)), speichern wir Ihre Widerrufserklärung bei Ihrer Bestellung: Ihren Namen, Ihre E-Mail-Adresse, die Bestellnummer, ihren Wortlaut sowie Datum und Uhrzeit ihres Eingangs. Wir verwenden sie, um die Arbeit an Ihrer Datei anzuhalten, falls wir noch nicht begonnen haben, um Ihnen eine Eingangsbestätigung mit Inhalt, Datum und Uhrzeit per E-Mail zu senden und um Ihnen den Preis zu erstatten. Eine Kopie jeder Erklärung erhalten wir außerdem per E-Mail. Wenn Sie widerrufen, werden die Bilder Ihrer Bestellung 14 Tage nach Ihrem Widerruf automatisch gelöscht; der Bestelldatensatz mit Ihrer Erklärung bleibt (siehe [Wie lange wir Ihre Daten speichern](#retention)). Passen Ihre Angaben zu keiner unserer Bestellungen (ohne den Link von Ihrer Bestellseite muss die E-Mail-Adresse die sein, mit der Sie bezahlt haben), bewahren wir die Erklärung gesondert auf, senden Ihnen trotzdem eine Eingangsbestätigung per E-Mail, prüfen sie selbst und löschen sie automatisch 12 Monate nach Ende des Monats, in dem sie eingegangen ist.`,
+};
+
 const rep = (label: string) => (SELLER.representative ? ` ${label} ${SELLER.representative}.` : '');
-const senderEn = ORDER_EMAIL_SENDER === 'Hostinger' ? [] : [`${ORDER_EMAIL_SENDER}: sending the emails about your order (the link to your order page and the confirmation). Its servers may be outside the EU.`];
-const senderDe = ORDER_EMAIL_SENDER === 'Hostinger' ? [] : [`${ORDER_EMAIL_SENDER}: Versand der E-Mails zu Ihrer Bestellung (Link zu Ihrer Bestellseite und Bestätigung). Die Server können außerhalb der EU liegen.`];
+const senderEn = ORDER_EMAIL_SENDER === 'Hostinger' ? [] : [`${ORDER_EMAIL_SENDER}: sending the emails about your order (the link to your order page, the order confirmation and, if you withdraw, the acknowledgement of receipt). Its servers may be outside the EU.`];
+const senderDe = ORDER_EMAIL_SENDER === 'Hostinger' ? [] : [`${ORDER_EMAIL_SENDER}: Versand der E-Mails zu Ihrer Bestellung (Link zu Ihrer Bestellseite, Bestellbestätigung und, falls Sie widerrufen, Eingangsbestätigung). Die Server können außerhalb der EU liegen.`];
 const hostingerEn = ORDER_EMAIL_SENDER === 'Hostinger'
   ? 'Hostinger: our email, the mailbox info@snapeyes.com, including the emails about your order.'
   : 'Hostinger: our mailbox info@snapeyes.com.';
@@ -30,7 +50,7 @@ const en: LegalDoc = {
   description:
     'How SnapEyes handles your eye photo, your preview and, when you order, your order data: what we process, why, with which services, for how long, and your rights.',
   lead:
-    'This policy explains what happens to your data when you use snapeyes.com: the free preview and, when you order, your digital artwork. In short: your photo is used only to make your artwork, never to identify anyone and never to train AI. We do not store free previews. Paid orders are kept for 12 months so you can download your file again, then deleted.',
+    'This policy explains what happens to your data when you use snapeyes.com: the free preview and, when you order, your digital artwork. In short: your photo is used only to make your artwork, never to identify anyone and never to train AI. We do not store free previews. The files of paid orders are kept for 12 months so you can download them again, then deleted.',
   toc: true,
   numbered: true,
   sections: [
@@ -56,7 +76,7 @@ const en: LegalDoc = {
       title: 'Your free preview',
       blocks: [
         "To make your preview, you send one or more photos of an eye from your browser to our server functions. There the photo is processed in memory: we find the iris, cut it out, check whether it is sharp and bright enough, remove reflections, restore the fine fibres with Google's Gemini API and set the iris in the styles you see. The result goes back to your browser. Every transfer is encrypted (HTTPS).",
-        '**We do not store your photo, the iris crop or the preview on our servers.** They are discarded when the request ends. The preview stays in your browser until you close the page, unless you save it yourself. Only when you start an order do we keep the iris crop and the preview you approved: see [When you order](#orders).',
+        '**We do not store your photo, the iris crop or the preview on our servers.** They are discarded when the request ends. The preview stays in your browser until you close the page (while you are on the payment page, in the session storage of your browser tab: see [Cookies and local storage](#storage)), unless you save it yourself. Only when you start an order do we keep the iris crop and the preview you approved: see [When you order](#orders).',
         "Google processes the image to make the restoration. We use Google's paid API service, under whose terms Google does not use the images to improve its products or to train its models. Google may keep requests for a limited period, solely to detect misuse and for disclosures the law requires.",
         'Legal basis: you ask us to make your preview, and the photo is needed for it (Art. 6(1)(b) GDPR, steps taken at your request).',
         'Our software decides automatically whether a photo can be used (for example when it is too blurry or too dark). This decision has no legal or similarly significant effect on you: you can simply take another photo.',
@@ -68,6 +88,7 @@ const en: LegalDoc = {
       blocks: [
         "An iris can, in principle, be used to recognise a person. We do not do that. We never create, compare or store an iris template or any other biometric identifier, we never use your images to identify or verify anyone, we never sell them, and we never use them to train AI, neither our own nor anyone else's.",
         'Please only use your own eye, or the eye of someone who has agreed to it. For a child, a parent or guardian must agree.',
+        "If you add the eyes of other people (for example for a Couple Duo), we process their images only to make the artwork they agreed to. Legal basis: your and our legitimate interest in making that artwork (Art. 6(1)(f) GDPR). Please show them this policy.",
       ],
     },
     {
@@ -82,11 +103,13 @@ const en: LegalDoc = {
       id: 'orders',
       title: 'When you order',
       blocks: [
-        'When you start an order, two images of each eye are uploaded to our private storage, so that your file is made from exactly what you saw: the square around your iris cut from your photo (with reflections removed) and the preview you approved. **Your full phone photo is not stored, not even for an order.** An order that is not paid within 24 hours can no longer be paid; its images are then deleted within 30 days.',
+        'When you start an order, two images of each eye are uploaded to our private storage, so that your file is made from exactly what you saw: the square around your iris cut from your photo (with reflections removed) and the preview you approved. **Your full phone photo is not stored, not even for an order.** An order that is not paid within 24 hours can no longer be paid. An automatic clean-up that runs once a day then deletes its images and records, normally within two days of the order and at the latest within 30 days.',
+        'To keep uploads within limits, our server also writes a small marker for each upload (its size, the day and the order number, no image). These markers are deleted automatically after a few days.',
         'To sell and deliver your artwork, we process: the order (order number, date, eyes, style, layout, any names or inscription you add, language, price), your email address (you enter it on the payment page), the payment status we receive from Stripe, your consent to the immediate start (see [Right of withdrawal](doc:withdrawal)), and the files of your order: the two images of each eye named above, the 4096\u00a0px rendering of each eye and the finished artwork, with technical quality records.',
         'We keep these files in a private storage bucket at Supabase, located in the EU. You reach them through your order page, whose link we email to you; it contains a private key, so anyone with the link can download your artwork. Each download link it creates expires after 7 days.',
         'We may look at the files of your order to check their quality, for example when our automatic check reports a difference from the preview you approved.',
         'Legal basis: the contract with you (Art. 6(1)(b) GDPR); for accounting records, our legal obligations (Art. 6(1)(c) GDPR).',
+        'When you continue to the payment page, we pass the order details to Stripe with your payment: the order number, the price, the number of eyes, the style, the layout, the language, any names or inscription you added, and the version and time of your consent. Stripe keeps them with the payment record, and we read them back from there to make exactly the artwork you paid for.',
         'Payment: Stripe processes your payment. We never see your full card number. Stripe also processes payment data under its own privacy policy, for fraud prevention and for its own legal duties.',
         'We need your email address to send you the link to your order page and the order confirmation. Without it you could lose access to your file.',
       ],
@@ -95,7 +118,15 @@ const en: LegalDoc = {
       id: 'email',
       title: 'When you write to us',
       blocks: [
-        'If you email us, we use your address and your message to answer you and, where it concerns an order, to handle that order. Legal basis: Art. 6(1)(b) GDPR for orders, otherwise our legitimate interest in answering you (Art. 6(1)(f) GDPR). We keep your emails for as long as we need them for your request and any follow-up.',
+        'If you email us, we use your address and your message to answer you and, where it concerns an order, to handle that order. Legal basis: Art. 6(1)(b) GDPR for orders, otherwise our legitimate interest in answering you (Art. 6(1)(f) GDPR). If you send us photos, for example of your eye so that we can advise you on a better shot, we use them only for your request. We keep your emails, with any photos, for as long as we need them for your request and any follow-up.',
+      ],
+    },
+    {
+      id: 'withdrawal',
+      title: 'When you withdraw from an order online',
+      blocks: [
+        WITHDRAW_PRIVACY.en,
+        'Legal basis: our legal obligation to accept your withdrawal and to confirm it to you (Art. 6(1)(c) GDPR) and the contract with you (Art. 6(1)(b) GDPR). We keep the statement with your order record, as proof, for as long as that record is kept (see [How long we keep your data](#retention)).',
       ],
     },
     {
@@ -108,12 +139,12 @@ const en: LegalDoc = {
             "Vercel: hosting of the website and of the server functions that make your preview and your file. Vercel's data centres may be outside the EU, for example in the USA.",
             "Google (Gemini API): the AI restoration of the iris and the checks of your photo. Google's servers may be outside the EU.",
             'Supabase: private storage of the files of orders, in an EU region.',
-            'Stripe: payment processing.',
+            'Stripe: payment processing, with the order details named in [When you order](#orders).',
             hostingerEn,
             ...senderEn,
           ],
         },
-        'These providers process your data on our behalf and on our instructions (Stripe partly as an independent controller, see [When you order](#orders)). Where data is transferred outside the EU or EEA, this happens under the safeguards the providers offer, such as the European Commission\'s standard contractual clauses or the EU-US Data Privacy Framework.',
+        `These providers process your data on our behalf and on our instructions (Stripe partly as an independent controller, see [When you order](#orders)). Where data is transferred outside the EU or EEA, this happens under the safeguards the providers offer, such as the European Commission's standard contractual clauses or the EU-US Data Privacy Framework. You can ask us for a copy of these safeguards at ${MAIL}.`,
         'We do not sell your data and we do not pass it on to anyone else, unless the law obliges us to.',
       ],
     },
@@ -124,9 +155,11 @@ const en: LegalDoc = {
         {
           dl: [
             ['Free previews', 'Not stored by us. They are discarded when the request ends.'],
-            ['Unpaid orders', 'An order that is not paid within 24 hours can no longer be paid; its images are deleted within 30 days.'],
-            ['Paid orders', 'The files of your order are kept for 12 months from the order, so that you can download them again from your order page, and then deleted. On request we delete them earlier; after that your order page can no longer deliver the file.'],
-            ['Accounting records', 'Records the law obliges us to keep (such as the date, price and payment of an order; no images) are kept for as long as Lithuanian accounting and tax law requires.'],
+            ['Unpaid orders', 'An order that is not paid within 24 hours can no longer be paid. Our daily automatic clean-up deletes its images and records, normally within two days of the order and at the latest within 30 days.'],
+            ['Upload and statement markers', 'Small counters without images or personal details, deleted automatically after a few days.'],
+            ['Paid orders', 'The files of your order are kept for 12 months from your payment, so that you can download them again from your order page, and then deleted by our daily automatic clean-up. On request we delete them earlier; after that your order page can no longer deliver the file.'],
+            ['Withdrawn orders', 'The images of the order are deleted automatically 14 days after the withdrawal.'],
+            ['Order records', 'When the files are deleted (after 12 months, after a withdrawal or on request), we keep the record of a paid order: order number, date, price and payment, your email address, the details of the artwork you ordered (which can include names or an inscription you added), your consent to the immediate start and, if you withdrew, your withdrawal statement. No images. We keep it as proof of the contract and for accounting, for as long as Lithuanian accounting and tax law requires.'],
             ['Server logs and measurements', 'Kept by our hosting provider for a short time, then deleted.'],
             ['Emails', 'For as long as we need them for your request and any follow-up.'],
           ],
@@ -158,6 +191,14 @@ const en: LegalDoc = {
       blocks: [
         'This website sets no cookies. It uses no analytics, advertising or tracking tools.',
         'When you choose a language with the EN/DE switch, your browser remembers the choice in its local storage under the key "snapeyes.lang" (the value "en" or "de"). It is never sent to us, and you can delete it at any time in your browser settings. It is strictly necessary for a function you asked for, so it needs no consent (Art. 5(3) ePrivacy Directive).',
+        'When you order, the page also keeps two entries in the session storage of your browser tab. Session storage belongs to that one tab and is deleted when you close it:',
+        {
+          ul: [
+            '"snapeyes.order": the number of the order you are building and its private key, so that the page can continue your order, for example when you come back from the payment page. It is removed when the page of your paid order opens in that tab, and replaced when you start a new order.',
+            '"snapeyes.checkout": only while you are on the payment page, your artwork as you left it (the iris crops from your photos, the previews, the style, the layout and any names), so that going back from the payment page shows it again. It is removed as soon as you come back, or when the page of your paid order opens in that tab.',
+          ],
+        },
+        'The page uses them only for your order, and they are strictly necessary for it, so they need no consent either (Art. 5(3) ePrivacy Directive).',
         "When you pay, Stripe's payment page may use its own cookies that are needed for secure payment and fraud prevention; Stripe's own privacy and cookie policy applies there.",
       ],
     },
@@ -179,7 +220,7 @@ const de: LegalDoc = {
   description:
     'Wie SnapEyes mit Ihrem Augenfoto, Ihrer Vorschau und bei Bestellungen mit Ihren Bestelldaten umgeht: was wir verarbeiten, warum, mit welchen Diensten, wie lange, und welche Rechte Sie haben.',
   lead:
-    'Diese Erklärung beschreibt, was mit Ihren Daten geschieht, wenn Sie snapeyes.com nutzen: die kostenlose Vorschau und, wenn Sie bestellen, Ihr digitales Kunstwerk. Kurz gesagt: Ihr Foto dient nur dazu, Ihr Kunstwerk zu erstellen, nie dazu, jemanden zu identifizieren, und nie zum Training von KI. Kostenlose Vorschauen speichern wir nicht. Bezahlte Bestellungen bewahren wir 12 Monate auf, damit Sie Ihre Datei erneut herunterladen können, danach werden sie gelöscht.',
+    'Diese Erklärung beschreibt, was mit Ihren Daten geschieht, wenn Sie snapeyes.com nutzen: die kostenlose Vorschau und, wenn Sie bestellen, Ihr digitales Kunstwerk. Kurz gesagt: Ihr Foto dient nur dazu, Ihr Kunstwerk zu erstellen, nie dazu, jemanden zu identifizieren, und nie zum Training von KI. Kostenlose Vorschauen speichern wir nicht. Die Dateien bezahlter Bestellungen bewahren wir 12 Monate auf, damit Sie sie erneut herunterladen können, danach werden sie gelöscht.',
   toc: true,
   numbered: true,
   sections: [
@@ -204,8 +245,8 @@ const de: LegalDoc = {
       id: 'preview',
       title: 'Ihre kostenlose Vorschau',
       blocks: [
-        'Für Ihre Vorschau senden Sie ein oder mehrere Fotos eines Auges aus Ihrem Browser an unsere Server-Funktionen. Dort wird das Foto im Arbeitsspeicher verarbeitet: Wir finden die Iris, schneiden sie aus, prüfen, ob sie scharf und hell genug ist, entfernen Reflexionen, stellen die feinen Fasern mit der Gemini API von Google wieder her und setzen die Iris in die Stile, die Sie sehen. Das Ergebnis geht an Ihren Browser zurück. Jede Übertragung ist verschlüsselt (HTTPS).',
-        '**Ihr Foto, den Iris-Ausschnitt und die Vorschau speichern wir nicht auf unseren Servern.** Sie werden verworfen, sobald die Anfrage abgeschlossen ist. Die Vorschau bleibt in Ihrem Browser, bis Sie die Seite schließen, es sei denn, Sie speichern sie selbst. Nur wenn Sie eine Bestellung beginnen, bewahren wir den Iris-Ausschnitt und die freigegebene Vorschau auf: siehe [Wenn Sie bestellen](#orders).',
+        'Für Ihre Vorschau senden Sie ein oder mehrere Fotos eines Auges aus Ihrem Browser an unsere Server-Funktionen. Dort wird das Foto im Arbeitsspeicher verarbeitet: Wir finden die Iris, schneiden sie aus, prüfen, ob sie scharf und hell genug ist, entfernen Spiegelungen, stellen die feinen Fasern mit der Gemini-API von Google wieder her und setzen die Iris in die Stile, die Sie sehen. Das Ergebnis geht an Ihren Browser zurück. Jede Übertragung ist verschlüsselt (HTTPS).',
+        '**Ihr Foto, den Iris-Ausschnitt und die Vorschau speichern wir nicht auf unseren Servern.** Sie werden verworfen, sobald die Anfrage abgeschlossen ist. Die Vorschau bleibt in Ihrem Browser, bis Sie die Seite schließen (während Sie auf der Zahlungsseite sind, im Sitzungsspeicher des Tabs: siehe [Cookies und lokaler Speicher](#storage)), es sei denn, Sie speichern sie selbst. Nur wenn Sie eine Bestellung beginnen, bewahren wir den Iris-Ausschnitt und die freigegebene Vorschau auf: siehe [Wenn Sie bestellen](#orders).',
         'Google verarbeitet das Bild, um die Restaurierung zu erstellen. Wir nutzen den kostenpflichtigen API-Dienst von Google; nach dessen Bedingungen verwendet Google die Bilder weder zur Verbesserung seiner Produkte noch zum Training seiner Modelle. Google kann Anfragen für begrenzte Zeit speichern, ausschließlich um Missbrauch zu erkennen und gesetzlich vorgeschriebene Offenlegungen zu erfüllen.',
         'Rechtsgrundlage: Sie bitten uns, Ihre Vorschau zu erstellen, und dafür wird das Foto benötigt (Art. 6 Abs. 1 lit. b DSGVO, Maßnahmen auf Ihre Anfrage).',
         'Unsere Software entscheidet automatisch, ob ein Foto verwendbar ist (zum Beispiel, wenn es zu unscharf oder zu dunkel ist). Diese Entscheidung hat für Sie keine rechtliche oder ähnlich erhebliche Wirkung: Sie können einfach ein neues Foto aufnehmen.',
@@ -217,6 +258,7 @@ const de: LegalDoc = {
       blocks: [
         'Eine Iris kann grundsätzlich dazu dienen, einen Menschen wiederzuerkennen. Das tun wir nicht. Wir erstellen, vergleichen oder speichern keine Iris-Merkmalsvorlage und keine anderen biometrischen Kennungen, wir nutzen Ihre Bilder nie, um jemanden zu identifizieren oder zu verifizieren, wir verkaufen sie nie, und wir verwenden sie nie zum Training von KI, weder unserer eigenen noch der anderer.',
         'Bitte verwenden Sie nur Ihr eigenes Auge oder das Auge einer Person, die damit einverstanden ist. Bei einem Kind muss ein Elternteil oder eine sorgeberechtigte Person einverstanden sein.',
+        'Wenn Sie Augen anderer Personen hinzufügen (zum Beispiel für ein Couple Duo), verarbeiten wir deren Bilder nur, um das Kunstwerk zu erstellen, dem diese Personen zugestimmt haben. Rechtsgrundlage: Ihr und unser berechtigtes Interesse an diesem Kunstwerk (Art. 6 Abs. 1 lit. f DSGVO). Bitte zeigen Sie ihnen diese Erklärung.',
       ],
     },
     {
@@ -231,11 +273,13 @@ const de: LegalDoc = {
       id: 'orders',
       title: 'Wenn Sie bestellen',
       blocks: [
-        'Wenn Sie eine Bestellung beginnen, werden von jedem Auge zwei Bilder in unseren privaten Speicher hochgeladen, damit Ihre Datei genau aus dem entsteht, was Sie gesehen haben: das Quadrat um Ihre Iris, aus Ihrem Foto ausgeschnitten (ohne Reflexionen), und die von Ihnen freigegebene Vorschau. **Ihr vollständiges Smartphone-Foto wird nicht gespeichert, auch nicht bei einer Bestellung.** Eine Bestellung, die nicht innerhalb von 24 Stunden bezahlt wird, kann nicht mehr bezahlt werden; ihre Bilder werden dann innerhalb von 30 Tagen gelöscht.',
+        'Wenn Sie eine Bestellung beginnen, werden von jedem Auge zwei Bilder in unseren privaten Speicher hochgeladen, damit Ihre Datei genau aus dem entsteht, was Sie gesehen haben: das Quadrat um Ihre Iris, aus Ihrem Foto ausgeschnitten (ohne Spiegelungen), und die von Ihnen freigegebene Vorschau. **Ihr vollständiges Smartphone-Foto wird nicht gespeichert, auch nicht bei einer Bestellung.** Eine Bestellung, die nicht innerhalb von 24 Stunden bezahlt wird, kann nicht mehr bezahlt werden. Eine automatische Bereinigung, die einmal täglich läuft, löscht dann ihre Bilder und Aufzeichnungen, normalerweise innerhalb von zwei Tagen nach der Bestellung und spätestens innerhalb von 30 Tagen.',
+        'Damit die Uploads in Grenzen bleiben, legt unser Server außerdem zu jedem Upload eine kleine Markierung an (Größe, Tag und Bestellnummer, kein Bild). Diese Markierungen werden nach wenigen Tagen automatisch gelöscht.',
         'Um Ihr Kunstwerk zu verkaufen und zu liefern, verarbeiten wir: die Bestellung (Bestellnummer, Datum, Augen, Stil, Anordnung, von Ihnen eingegebene Namen oder Widmung, Sprache, Preis), Ihre E-Mail-Adresse (Sie geben sie auf der Zahlungsseite ein), den Zahlungsstatus, den wir von Stripe erhalten, Ihre Zustimmung zum sofortigen Beginn (siehe [Widerrufsbelehrung](doc:withdrawal)) und die Dateien Ihrer Bestellung: die beiden oben genannten Bilder jedes Auges, die 4096-px-Fassung jedes Auges und das fertige Kunstwerk, mit technischen Qualitätsprotokollen.',
         'Diese Dateien bewahren wir in einem privaten Speicher bei Supabase in der EU auf. Sie erreichen sie über Ihre Bestellseite, deren Link wir Ihnen per E-Mail senden; er enthält einen privaten Schlüssel, daher kann jede Person mit diesem Link Ihr Kunstwerk herunterladen. Jeder Download-Link, den die Seite erzeugt, läuft nach 7 Tagen ab.',
         'Wir können die Dateien Ihrer Bestellung ansehen, um ihre Qualität zu prüfen, etwa wenn unsere automatische Prüfung eine Abweichung von der freigegebenen Vorschau meldet.',
         'Rechtsgrundlage: der Vertrag mit Ihnen (Art. 6 Abs. 1 lit. b DSGVO); für Buchhaltungsunterlagen unsere gesetzlichen Pflichten (Art. 6 Abs. 1 lit. c DSGVO).',
+        'Wenn Sie zur Zahlungsseite weitergehen, übermitteln wir Stripe mit Ihrer Zahlung die Bestelldaten: Bestellnummer, Preis, Anzahl der Augen, Stil, Anordnung, Sprache, von Ihnen eingegebene Namen oder Widmung sowie Fassung und Zeitpunkt Ihrer Zustimmung. Stripe speichert sie mit dem Zahlungsdatensatz, und wir lesen sie von dort wieder aus, um genau das Kunstwerk zu erstellen, das Sie bezahlt haben.',
         'Zahlung: Stripe wickelt Ihre Zahlung ab. Ihre vollständige Kartennummer sehen wir nie. Stripe verarbeitet Zahlungsdaten außerdem nach seiner eigenen Datenschutzerklärung, zur Betrugsvorbeugung und für seine eigenen gesetzlichen Pflichten.',
         'Ihre E-Mail-Adresse brauchen wir, um Ihnen den Link zu Ihrer Bestellseite und die Bestellbestätigung zu senden. Ohne sie könnten Sie den Zugang zu Ihrer Datei verlieren.',
       ],
@@ -244,7 +288,15 @@ const de: LegalDoc = {
       id: 'email',
       title: 'Wenn Sie uns schreiben',
       blocks: [
-        'Wenn Sie uns eine E-Mail senden, nutzen wir Ihre Adresse und Ihre Nachricht, um Ihnen zu antworten und, falls es um eine Bestellung geht, diese abzuwickeln. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO bei Bestellungen, sonst unser berechtigtes Interesse, Ihnen zu antworten (Art. 6 Abs. 1 lit. f DSGVO). Wir bewahren Ihre E-Mails so lange auf, wie wir sie für Ihr Anliegen und etwaige Rückfragen brauchen.',
+        'Wenn Sie uns eine E-Mail senden, nutzen wir Ihre Adresse und Ihre Nachricht, um Ihnen zu antworten und, falls es um eine Bestellung geht, diese abzuwickeln. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO bei Bestellungen, sonst unser berechtigtes Interesse, Ihnen zu antworten (Art. 6 Abs. 1 lit. f DSGVO). Wenn Sie uns Fotos senden, etwa von Ihrem Auge, damit wir Sie zu einer besseren Aufnahme beraten, verwenden wir sie nur für Ihr Anliegen. Wir bewahren Ihre E-Mails samt Fotos so lange auf, wie wir sie für Ihr Anliegen und etwaige Rückfragen brauchen.',
+      ],
+    },
+    {
+      id: 'withdrawal',
+      title: 'Wenn Sie online widerrufen',
+      blocks: [
+        WITHDRAW_PRIVACY.de,
+        'Rechtsgrundlage: unsere gesetzliche Pflicht, Ihren Widerruf entgegenzunehmen und Ihnen zu bestätigen (Art. 6 Abs. 1 lit. c DSGVO), und der Vertrag mit Ihnen (Art. 6 Abs. 1 lit. b DSGVO). Die Erklärung bleibt als Nachweis bei Ihrem Bestelldatensatz, solange dieser aufbewahrt wird (siehe [Wie lange wir Ihre Daten speichern](#retention)).',
       ],
     },
     {
@@ -255,14 +307,14 @@ const de: LegalDoc = {
         {
           ul: [
             'Vercel: Hosting der Website und der Server-Funktionen, die Ihre Vorschau und Ihre Datei erstellen. Die Rechenzentren von Vercel können außerhalb der EU liegen, zum Beispiel in den USA.',
-            'Google (Gemini API): die KI-Restaurierung der Iris und die Prüfung Ihres Fotos. Die Server von Google können außerhalb der EU liegen.',
+            'Google (Gemini-API): die KI-Restaurierung der Iris und die Prüfung Ihres Fotos. Die Server von Google können außerhalb der EU liegen.',
             'Supabase: privater Speicher für die Dateien von Bestellungen, in einer EU-Region.',
-            'Stripe: Zahlungsabwicklung.',
+            'Stripe: Zahlungsabwicklung, mit den unter [Wenn Sie bestellen](#orders) genannten Bestelldaten.',
             hostingerDe,
             ...senderDe,
           ],
         },
-        'Diese Anbieter verarbeiten Ihre Daten in unserem Auftrag und nach unseren Weisungen (Stripe teilweise als eigenständig Verantwortlicher, siehe [Wenn Sie bestellen](#orders)). Werden Daten außerhalb der EU oder des EWR übermittelt, geschieht dies auf Grundlage der Garantien, die die Anbieter bieten, etwa der Standardvertragsklauseln der EU-Kommission oder des EU-US Data Privacy Framework.',
+        `Diese Anbieter verarbeiten Ihre Daten in unserem Auftrag und nach unseren Weisungen (Stripe teilweise als eigenständig Verantwortlicher, siehe [Wenn Sie bestellen](#orders)). Werden Daten außerhalb der EU oder des EWR übermittelt, geschieht dies auf Grundlage der Garantien, die die Anbieter bieten, etwa der Standardvertragsklauseln der EU-Kommission oder des EU-US Data Privacy Framework. Eine Kopie dieser Garantien erhalten Sie auf Anfrage unter ${MAIL}.`,
         'Wir verkaufen Ihre Daten nicht und geben sie an niemanden sonst weiter, es sei denn, wir sind gesetzlich dazu verpflichtet.',
       ],
     },
@@ -273,9 +325,11 @@ const de: LegalDoc = {
         {
           dl: [
             ['Kostenlose Vorschauen', 'Werden von uns nicht gespeichert. Sie werden verworfen, sobald die Anfrage abgeschlossen ist.'],
-            ['Unbezahlte Bestellungen', 'Eine Bestellung, die nicht innerhalb von 24 Stunden bezahlt wird, kann nicht mehr bezahlt werden; ihre Bilder werden innerhalb von 30 Tagen gelöscht.'],
-            ['Bezahlte Bestellungen', 'Die Dateien Ihrer Bestellung bewahren wir 12 Monate ab der Bestellung auf, damit Sie sie über Ihre Bestellseite erneut herunterladen können, und löschen sie danach. Auf Wunsch löschen wir sie früher; danach kann Ihre Bestellseite die Datei nicht mehr liefern.'],
-            ['Buchhaltungsunterlagen', 'Unterlagen, die wir gesetzlich aufbewahren müssen (etwa Datum, Preis und Zahlung einer Bestellung; keine Bilder), bewahren wir so lange auf, wie es das litauische Buchführungs- und Steuerrecht verlangt.'],
+            ['Unbezahlte Bestellungen', 'Eine Bestellung, die nicht innerhalb von 24 Stunden bezahlt wird, kann nicht mehr bezahlt werden. Unsere tägliche automatische Bereinigung löscht ihre Bilder und Aufzeichnungen, normalerweise innerhalb von zwei Tagen nach der Bestellung und spätestens innerhalb von 30 Tagen.'],
+            ['Upload- und Erklärungsmarkierungen', 'Kleine Zähler ohne Bilder und ohne persönliche Angaben, die nach wenigen Tagen automatisch gelöscht werden.'],
+            ['Bezahlte Bestellungen', 'Die Dateien Ihrer Bestellung bewahren wir 12 Monate ab Ihrer Zahlung auf, damit Sie sie über Ihre Bestellseite erneut herunterladen können; danach löscht sie unsere tägliche automatische Bereinigung. Auf Wunsch löschen wir sie früher; danach kann Ihre Bestellseite die Datei nicht mehr liefern.'],
+            ['Widerrufene Bestellungen', 'Die Bilder der Bestellung werden 14 Tage nach dem Widerruf automatisch gelöscht.'],
+            ['Bestelldatensätze', 'Wenn die Dateien gelöscht sind (nach 12 Monaten, nach einem Widerruf oder auf Wunsch), bewahren wir den Datensatz einer bezahlten Bestellung auf: Bestellnummer, Datum, Preis und Zahlung, Ihre E-Mail-Adresse, die Angaben zum bestellten Kunstwerk (darunter gegebenenfalls von Ihnen eingegebene Namen oder eine Widmung), Ihre Zustimmung zum sofortigen Beginn und, falls Sie widerrufen haben, Ihre Widerrufserklärung. Keine Bilder. Wir bewahren ihn als Nachweis des Vertrags und für die Buchhaltung so lange auf, wie es das litauische Buchführungs- und Steuerrecht verlangt.'],
             ['Server-Protokolle und Messwerte', 'Werden bei unserem Hosting-Anbieter für kurze Zeit gespeichert und dann gelöscht.'],
             ['E-Mails', 'So lange, wie wir sie für Ihr Anliegen und etwaige Rückfragen brauchen.'],
           ],
@@ -307,6 +361,14 @@ const de: LegalDoc = {
       blocks: [
         'Diese Website setzt keine Cookies. Sie nutzt keine Analyse-, Werbe- oder Tracking-Werkzeuge.',
         'Wenn Sie mit dem Schalter EN/DE eine Sprache wählen, merkt sich Ihr Browser diese Wahl in seinem lokalen Speicher unter dem Schlüssel „snapeyes.lang“ (Wert „en“ oder „de“). Dieser Eintrag wird nie an uns übertragen, und Sie können ihn jederzeit in Ihren Browsereinstellungen löschen. Er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
+        'Wenn Sie bestellen, legt die Seite außerdem zwei Einträge im Sitzungsspeicher (Session Storage) Ihres Browser-Tabs an. Der Sitzungsspeicher gehört nur zu diesem einen Tab und wird gelöscht, wenn Sie ihn schließen:',
+        {
+          ul: [
+            '„snapeyes.order“: die Nummer der Bestellung, die Sie gerade anlegen, und ihr privater Schlüssel, damit die Seite Ihre Bestellung fortsetzen kann, etwa wenn Sie von der Zahlungsseite zurückkommen. Der Eintrag wird entfernt, wenn sich in diesem Tab die Seite Ihrer bezahlten Bestellung öffnet, und ersetzt, wenn Sie eine neue Bestellung beginnen.',
+            '„snapeyes.checkout“: nur während Sie auf der Zahlungsseite sind, Ihr Kunstwerk so, wie Sie es verlassen haben (die Iris-Ausschnitte aus Ihren Fotos, die Vorschauen, der Stil, die Anordnung und gegebenenfalls Namen), damit es beim Zurückgehen von der Zahlungsseite wieder erscheint. Der Eintrag wird entfernt, sobald Sie zurückkommen oder sich in diesem Tab die Seite Ihrer bezahlten Bestellung öffnet.',
+          ],
+        },
+        'Die Seite nutzt sie nur für Ihre Bestellung, und sie sind dafür unbedingt erforderlich; auch sie brauchen daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
         'Wenn Sie bezahlen, kann die Zahlungsseite von Stripe eigene Cookies verwenden, die für eine sichere Zahlung und zur Betrugsvorbeugung nötig sind; dort gilt die Datenschutz- und Cookie-Richtlinie von Stripe.',
       ],
     },

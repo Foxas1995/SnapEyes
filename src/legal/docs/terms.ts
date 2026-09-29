@@ -1,15 +1,21 @@
 // Terms of sale (AGB), English and German. Prices, seller and contact come from src/landing/config.ts.
 // Deliberately NOT here: a link to the EU ODR platform (the platform was shut down on 20 July 2025, Regulation
 // (EU) 2024/3228), a VAT number (the MB is not VAT-registered), any promise the code does not keep.
+// The latest delivery time is DELIVERY_MAX_HOURS (src/landing/config.ts). The "contract" section says how the contract
+// text is kept: the order record in the bucket, and these terms plus the withdrawal information as text in the order
+// confirmation email (src/legal/plain.ts builds them into /legal/order-mail.json for api/_lib/pay.py).
+// The right of withdrawal ends when making the file begins, as the checkout's checkbox and api/_lib/withdraw.py have
+// it (see src/shared/legal.ts); "delivery" and "withdrawal" below say so in the same words as the withdrawal page.
 // Not reviewed by a lawyer.
 import type { LegalDoc, LegalDocs } from '../types';
-import { MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, company, eur, phoneSuffix, representedSuffix } from '../facts';
+import { DELIVERY_MAX_HOURS, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, company, eur, phoneSuffix, representedSuffix } from '../facts';
+import { WITHDRAWAL_ONLINE } from '../../shared/legal';
 
 const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.';
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
 const ART = 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke, Supernova';
 const PX = '4096\u00a0px';
-const SQUARE = '4096\u00a0x\u00a04096\u00a0px';
+const SQUARE = '4096\u00a0×\u00a04096\u00a0px';
 
 const en: LegalDoc = {
   title: 'Terms of sale',
@@ -48,8 +54,9 @@ const en: LegalDoc = {
       title: 'How the contract is made',
       blocks: [
         'The previews and prices on our website are not yet a binding offer. Before you pay, you can check your eyes, style, layout and inscription and correct any input by going back or retaking a photo. You then open the payment page of our payment provider Stripe, where you enter your email address and payment details and can correct them. You place a binding order when you confirm the payment there with the pay button.',
-        'The contract is concluded when your payment is confirmed. We then start making your file on your order page and email you the link to that page with your order confirmation.',
-        'The contract languages are English and German. Your order details are in the confirmation email; these terms are always available on this page, and you can save or print them.',
+        'The contract is concluded when your payment is confirmed. Your order page then opens, and we email you its link with your order confirmation. We start making your file there as soon as that email has gone out.',
+        'The contract languages are English and German.',
+        'We store your order with the details of the contract: the artwork you ordered, the price, the date, your email address and your consent to the immediate start. Your order page shows these details for as long as we keep your order. We do not keep a separate copy of these terms for each order. Instead, your order confirmation email contains, as text, your order details, these terms and the withdrawal information with the model withdrawal form, in the version in force when you ordered: please keep that email. You can also save or print this page at any time.',
       ],
     },
     {
@@ -72,7 +79,7 @@ const en: LegalDoc = {
       id: 'delivery',
       title: 'Delivery',
       blocks: [
-        'Right after payment your file is made on your order page, usually within a few minutes (about half a minute per eye). If our automatic quality check flags a file, we look at it ourselves before we release it, and we email you when it is ready. From your order page you can download your file at any time while we keep it: 12 months from your order (see our [Privacy policy](doc:privacy)). Each download link it creates is valid for 7 days; the page makes a new one whenever you open it. If you lose the email, write to us.',
+        `Your order page makes your file as soon as your order confirmation email has gone out, which is normally right after your payment; this usually takes a few minutes (about half a minute per eye). If you close the page before your file is finished, it carries on when you open it again from the link in the email. If our automatic quality check flags a file, we look at it ourselves before we release it, and we email you when it is ready. **At the latest, your file is ready for download on your order page within ${DELIVERY_MAX_HOURS} hours after your payment is confirmed.** From your order page you can download your file at any time while we keep it: 12 months from your payment (see our [Privacy policy](doc:privacy)). Each download link it creates is valid for 7 days; the page makes a new one whenever you open it. If you lose the email, write to us.`,
         'The link to your order page contains a private key: anyone who has it can download your artwork, so please keep it to yourself. Please download your file and keep a copy. After 12 months it is deleted and cannot be restored.',
       ],
     },
@@ -80,7 +87,7 @@ const en: LegalDoc = {
       id: 'withdrawal',
       title: 'Right of withdrawal',
       blocks: [
-        'As a consumer you generally have a 14-day right of withdrawal. For a digital file it ends early: before you pay, we ask you to agree that we start creating and delivering your file straight away, and to confirm that you know you lose your right of withdrawal as soon as delivery begins. The full information and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page.',
+        `As a consumer you generally have a 14-day right of withdrawal. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out. This applies even while the file is still being made or is waiting for our quality check. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button "${WITHDRAWAL_ONLINE.en.button}". The full information, the online function and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page.`,
       ],
     },
     {
@@ -169,8 +176,9 @@ const de: LegalDoc = {
       title: 'Vertragsschluss',
       blocks: [
         'Die Vorschauen und Preise auf unserer Website sind noch kein verbindliches Angebot. Vor der Zahlung können Sie Ihre Augen, den Stil, die Anordnung und die Widmung prüfen und Eingaben korrigieren, indem Sie zurückgehen oder ein Foto neu aufnehmen. Danach öffnen Sie die Zahlungsseite unseres Zahlungsdienstleisters Stripe, auf der Sie Ihre E-Mail-Adresse und Zahlungsangaben eingeben und korrigieren können. Eine verbindliche Bestellung geben Sie ab, wenn Sie dort die Zahlung mit der Zahlungsschaltfläche bestätigen.',
-        'Der Vertrag kommt zustande, sobald Ihre Zahlung bestätigt ist. Dann beginnen wir mit Ihrer Datei auf Ihrer Bestellseite und senden Ihnen den Link zu dieser Seite mit Ihrer Bestellbestätigung per E-Mail.',
-        'Vertragssprachen sind Deutsch und Englisch. Ihre Bestelldaten stehen in der Bestätigungs-E-Mail; diese Bedingungen sind jederzeit auf dieser Seite abrufbar und können gespeichert oder ausgedruckt werden.',
+        'Der Vertrag kommt zustande, sobald Ihre Zahlung bestätigt ist. Dann öffnet sich Ihre Bestellseite, und wir senden Ihnen deren Link mit Ihrer Bestellbestätigung per E-Mail. Sobald diese E-Mail versandt ist, beginnen wir dort mit Ihrer Datei.',
+        'Vertragssprachen sind Deutsch und Englisch.',
+        'Wir speichern Ihre Bestellung mit den Vertragsdaten: das bestellte Kunstwerk, den Preis, das Datum, Ihre E-Mail-Adresse und Ihre Zustimmung zum sofortigen Beginn. Ihre Bestellseite zeigt diese Angaben, solange wir Ihre Bestellung aufbewahren. Eine eigene Kopie dieser Bedingungen je Bestellung bewahren wir nicht auf. Stattdessen enthält Ihre Bestellbestätigung per E-Mail als Text Ihre Bestelldaten, diese Bedingungen und die Widerrufsbelehrung mit dem Muster-Widerrufsformular, in der bei Ihrer Bestellung gültigen Fassung: Bitte bewahren Sie diese E-Mail auf. Sie können diese Seite außerdem jederzeit speichern oder ausdrucken.',
       ],
     },
     {
@@ -193,7 +201,7 @@ const de: LegalDoc = {
       id: 'delivery',
       title: 'Lieferung',
       blocks: [
-        'Direkt nach der Zahlung wird Ihre Datei auf Ihrer Bestellseite erstellt, meist innerhalb weniger Minuten (etwa eine halbe Minute pro Auge). Meldet unsere automatische Qualitätsprüfung eine Datei, sehen wir sie uns vor der Freigabe selbst an und benachrichtigen Sie per E-Mail, sobald sie fertig ist. Über Ihre Bestellseite können Sie Ihre Datei jederzeit herunterladen, solange wir sie aufbewahren: 12 Monate ab der Bestellung (siehe [Datenschutzerklärung](doc:privacy)). Jeder Download-Link, den die Seite erzeugt, ist 7 Tage gültig; beim nächsten Öffnen erzeugt sie einen neuen. Haben Sie die E-Mail verloren, schreiben Sie uns.',
+        `Ihre Bestellseite erstellt Ihre Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise direkt nach der Zahlung; das dauert meist wenige Minuten (etwa eine halbe Minute pro Auge). Schließen Sie die Seite, bevor Ihre Datei fertig ist, macht sie weiter, wenn Sie sie über den Link in der E-Mail wieder öffnen. Meldet unsere automatische Qualitätsprüfung eine Datei, sehen wir sie uns vor der Freigabe selbst an und benachrichtigen Sie per E-Mail, sobald sie fertig ist. **Spätestens ${DELIVERY_MAX_HOURS} Stunden nach der Bestätigung Ihrer Zahlung steht Ihre Datei auf Ihrer Bestellseite zum Download bereit.** Über Ihre Bestellseite können Sie Ihre Datei jederzeit herunterladen, solange wir sie aufbewahren: 12 Monate ab Ihrer Zahlung (siehe [Datenschutzerklärung](doc:privacy)). Jeder Download-Link, den die Seite erzeugt, ist 7 Tage gültig; beim nächsten Öffnen erzeugt sie einen neuen. Haben Sie die E-Mail verloren, schreiben Sie uns.`,
         'Der Link zu Ihrer Bestellseite enthält einen privaten Schlüssel: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen. Bitte geben Sie ihn nicht weiter. Laden Sie Ihre Datei herunter und bewahren Sie eine Kopie auf. Nach 12 Monaten wird sie gelöscht und kann nicht wiederhergestellt werden.',
       ],
     },
@@ -201,7 +209,7 @@ const de: LegalDoc = {
       id: 'withdrawal',
       title: 'Widerrufsrecht',
       blocks: [
-        'Als Verbraucher haben Sie grundsätzlich ein 14-tägiges Widerrufsrecht. Bei einer digitalen Datei erlischt es vorzeitig: Vor der Zahlung bitten wir Sie, zuzustimmen, dass wir sofort mit der Erstellung und Bereitstellung Ihrer Datei beginnen, und zu bestätigen, dass Ihnen bekannt ist, dass Sie damit mit Beginn der Bereitstellung Ihr Widerrufsrecht verlieren. Alle Einzelheiten und ein Muster-Widerrufsformular finden Sie in unserer [Widerrufsbelehrung](doc:withdrawal).',
+        `Als Verbraucher haben Sie grundsätzlich ein 14-tägiges Widerrufsrecht. Bei einer digitalen Datei erlischt es vorzeitig: Vor der Zahlung bitten wir Sie, zuzustimmen, dass wir sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung Ihrer Datei beginnen, und zu bestätigen, dass Ihnen bekannt ist, dass Sie dadurch Ihr Widerrufsrecht verlieren, sobald damit begonnen wurde. Es erlischt daher, sobald wir mit der Erstellung Ihrer Datei (der Vertragserfüllung) begonnen haben; damit beginnen wir erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist. Das gilt auch, solange die Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Solange Ihr Widerrufsrecht besteht, können Sie per E-Mail, per Post oder online mit der Schaltfläche „${WITHDRAWAL_ONLINE.de.button}“ widerrufen. Alle Einzelheiten, die Online-Funktion und ein Muster-Widerrufsformular finden Sie in unserer [Widerrufsbelehrung](doc:withdrawal).`,
       ],
     },
     {

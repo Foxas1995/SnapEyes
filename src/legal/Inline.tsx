@@ -1,4 +1,5 @@
 // Renders the two kinds of inline markup the legal texts use (see src/legal/types.ts): [label](href) and **bold**.
+// href may also be a path of this site ("/order?withdraw=1&lang=en"): an ordinary link in the same tab.
 // The texts are our own constants, never user input, so no HTML is ever parsed.
 import type { ReactNode } from 'react';
 import type { Lang } from '../landing/copy';

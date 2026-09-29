@@ -51,7 +51,7 @@ export const BuyCard: React.FC<Props> = (p) => {
         <p className="text-[10px] uppercase tracking-widest text-zinc-500">{T.price.title}</p>
         <p data-testid="price-demo" className="text-sm text-zinc-200 mt-1.5">{T.price.demo}</p>
         {open
-          ? <p data-testid="buy-sample" className="text-sm text-amber-200/90 mt-3">{T.buy.sample}</p>
+          ? <SampleSwap eyes={p.eyes} onRetake={p.onRetake} />
           : <p className="text-sm font-semibold text-emerald-300 mt-3">{T.price.notice}</p>}
       </section>
     );
@@ -91,7 +91,7 @@ export const BuyCard: React.FC<Props> = (p) => {
     return (
       <section aria-label={T.price.title} className={CARD}>
         {head}
-        <p data-testid="buy-sample" className="text-sm text-amber-200/90 mt-3">{T.buy.sample}</p>
+        <SampleSwap eyes={p.eyes} onRetake={p.onRetake} />
       </section>
     );
   }
@@ -144,5 +144,25 @@ export const BuyCard: React.FC<Props> = (p) => {
       <p className="text-[11px] text-zinc-400 mt-3">{T.buy.next}</p>
       <p className="text-[11px] text-zinc-500 mt-1">{T.buy.footnote}</p>
     </section>
+  );
+};
+
+/** Why an artwork with the AI-generated sample eye cannot be bought, and the way out right here: one button per sample
+ *  eye that retakes it with the customer's own eye. The card never names a button elsewhere on the page, because the
+ *  result screen shows the sample's own "use your own eye" button only while that eye is the one selected. */
+const SampleSwap: React.FC<{ eyes: Eye[]; onRetake: (position: number) => void }> = ({ eyes, onRetake }) => {
+  const at = eyes.flatMap((e, i) => (e.sample ? [i + 1] : []));
+  return (
+    <div data-testid="buy-sample" className="mt-3">
+      <p className="text-sm text-amber-200/90">{T.buy.sample(at.length)}</p>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {at.map((i) => (
+          <button key={i} type="button" data-testid={`buy-sample-swap-${i}`} onClick={() => onRetake(i)}
+            className="min-h-[44px] px-3 rounded-xl border border-amber-400/50 bg-amber-500/10 text-amber-100 text-sm font-semibold flex items-center gap-2 text-left">
+            <RefreshCcw className="w-4 h-4 shrink-0" /> {at.length === 1 ? T.result.replaceSample : T.buy.replaceSampleEye(i)}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 };

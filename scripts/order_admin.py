@@ -4,8 +4,9 @@
 
     python scripts/order_admin.py status ORDER          what is stored, paid, made, held; the order page link
     python scripts/order_admin.py link ORDER            only the order page link (to send to a customer)
-    python scripts/order_admin.py release ORDER [--mail]   hand out a delivery that waited for review (state
-                                                        "review" after compose); --mail sends the "ready" email
+    python scripts/order_admin.py release ORDER [--no-mail]   hand out a delivery that waited for review (state
+                                                        "review" after compose) and email the customer that it is
+                                                        ready (the terms promise it; --no-mail skips the email)
     python scripts/order_admin.py clear-review ORDER    let /api/order make an eye again after a refused render
                                                         (the next attempt costs one more 4K render)
     python scripts/order_admin.py resend-mail ORDER     send the order confirmation email again after it failed
@@ -20,12 +21,20 @@
                                                         The site runs the same clean-up daily (GET
                                                         /api/order?cron=purge, vercel.json crons + CRON_SECRET).
     python scripts/order_admin.py expire-paid [--months 12] [--yes]   delete the files of PAID orders paid more than
-                                                        --months ago (the privacy policy keeps them 12 months)
+                                                        --months ago (the privacy policy keeps them 12 months); every
+                                                        order, not only the days the daily run looks at
     python scripts/order_admin.py erase ORDER [--yes]   delete one order's files now (a customer's request)
+    python scripts/order_admin.py cleanup [--yes]       the site's whole daily clean-up (api/_lib/cleanup.py: receipts
+                                                        to send again, the withdrawal digest, unpaid orders, withdrawn
+                                                        orders' images, paid orders after 12 months, markers), here and
+                                                        without a time limit; without --yes it only lists what it would do
+    python scripts/order_admin.py withdrawals [--day YYMMDD] [--months 2]   the online withdrawal statements that
+                                                        matched NO order (withdrawals/<yymm>/: you check them by hand),
+                                                        newest first, and the days whose digest email is still due
 
-What stays of an erased PAID order: order.json and paid.json (date, price, payment, email, consent: records without
-images) and the small mail/note marks, plus deleted.json, so its order page answers "deleted" (410) instead of
-failing. An erased UNPAID order is removed completely.
+What stays of an erased PAID order: its records (pay.kept_record: order.json and paid.json with date, price, payment,
+email, the artwork's details and consent; the mail and note marks; withdrawal statements), plus deleted.json, so its
+order page answers "deleted" (410) instead of failing. An erased UNPAID order is removed completely.
 
 Environment: the same as the site. SNAPEYES_SUPABASE_URL + SNAPEYES_SUPABASE_SERVICE_KEY (or STORE_LOCAL_DIR for a
 local test folder); the link needs the ticket secret the order was made with (SNAPEYES_TICKET_SECRET, or the
@@ -37,6 +46,7 @@ import os, sys, time, json, argparse
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "api"))
 from _lib import store  # noqa: E402
 from _lib import pay  # noqa: E402
+from _lib import cleanup  # noqa: E402
 
 
 def _order(v):
@@ -73,7 +83,8 @@ def cmd_status(order):
     else:
         left = pay.expires_at(rec) - time.time()
         print(f"unpaid    {'EXPIRED' if left <= 0 else f'{left / 3600:.1f} h left to pay'}")
-    for name in ("review.json", "delivery.json", "release.json", "mail_delivery.json", "deleted.json"):
+    for name in ("review.json", "delivery.json", "release.json", "mail_delivery.json", "making.json", "withdrawn.json",
+                 "withdrawal.json", "deleted.json", "expired.json"):
         j = store.get_json(f"orders/{order}/{name}")
         if j is not None:
             print(f"{name:<18}{json.dumps(j, ensure_ascii=False)}")
@@ -85,6 +96,12 @@ def cmd_status(order):
     if paid and not pay.paid_counts(paid):
         print("WARNING   a Stripe TEST payment: this machine's settings make nothing for it")
     for p in _files(f"orders/{order}"):
+        base = p.rsplit("/", 1)[-1]
+        if base.startswith("withdrawal_") and not base.endswith(("_ack.json", "_note.json")):
+            w = store.get_json(p) or {}
+            print(f"WITHDRAWAL {w.get('received')}  {w.get('outcome')} ({w.get('reason')})  by {w.get('name')} "
+                  f"<{w.get('email')}>  matched by {w.get('verified')}"
+                  + (f"  REFUND due by {pay.iso(w['refund_by'])}" if w.get("refund") == "due" and w.get("refund_by") else ""))
         if p.rsplit("/", 1)[-1].startswith("extra_payment_"):
             x = store.get_json(p) or {}
             print(f"EXTRA PAYMENT (refund it) {x.get('amount_total')} {x.get('currency')}  session {x.get('session_id')}"
@@ -99,6 +116,8 @@ def cmd_status(order):
         print("   ", p)
     k = pay.link_key(order, rec)
     print("link     ", pay.order_url(order, k, rec.get("lang")) if k else "cannot be rebuilt: the ticket secret changed")
+    if k:
+        print("withdraw ", pay.withdraw_url(order, k, rec.get("lang")), " (the withdrawal form: opening it starts nothing)")
 
 
 def cmd_link(order):
@@ -109,7 +128,7 @@ def cmd_link(order):
     print(pay.order_url(order, k, rec.get("lang")))
 
 
-def cmd_release(order, mail):
+def cmd_release(order, mail=True):
     rec = _rec(order)
     paid = pay.get_paid(order)
     if not paid:
@@ -125,8 +144,8 @@ def cmd_release(order, mail):
         k = pay.link_key(order, rec)
         if not k:
             raise SystemExit("released, but no email: the link cannot be rebuilt with this machine's ticket secret")
-        subject, text = pay.ready_mail(order, paid, k)
-        print("ready email:", pay.send_mail(paid.get("email"), subject, text, f"snapeyes-ready-{order}"))
+        subject, text, html_body = pay.ready_mail(order, paid, k)
+        print("ready email:", pay.send_mail(paid.get("email"), subject, text, f"snapeyes-ready-{order}", html_body))
 
 
 def cmd_clear_review(order):
@@ -185,62 +204,66 @@ def cmd_mailed_by_hand(order):
     _mail_hold_cleared(order)
 
 
-KEEP = ("order.json", "paid.json", "mail_delivery.json", "deleted.json")
-
-
-def _erase(order, yes, why):
-    """Delete an order's files: all of them when it is unpaid; for a paid order everything but its records."""
-    files = _files(f"orders/{order}")
-    paid = store.exists(f"orders/{order}/paid.json")
-    if paid:
-        gone = [p for p in files if p.rsplit("/", 1)[-1] not in KEEP and not p.rsplit("/", 1)[-1].startswith("note_")]
-    else:
-        gone = files
-    print(f"{'DELETE' if yes else 'would delete'} {'paid' if paid else 'unpaid'} {order} ({why}): {len(gone)} of "
-          f"{len(files)} files")
-    if not yes:
-        return 0
-    if paid:
-        # first, so the order page says "deleted" even if this run stops half way
-        store.put(f"orders/{order}/deleted.json", store.json_bytes({"t": int(time.time()), "iso": pay.iso(), "why": why}),
-                  "application/json", upsert=True)
-    for p in gone:
-        store.delete(p)
-    return 1
-
-
 def cmd_erase(order, yes):
     _rec(order)
-    _erase(order, yes, "request")
+    pay.erase_files(order, "request", yes, print)
     if not yes:
         print("dry run: add --yes to delete")
 
 
 def cmd_expire_paid(months, yes):
-    cutoff = time.time() - months * 30.44 * 86400
-    n = 0
-    for row in store.list_folder("orders"):
-        if not row["folder"] or not store.ORDER_RE.fullmatch(row["name"]):
-            continue
-        order = row["name"]
-        paid = pay.get_paid(order)
-        if not paid or store.exists(f"orders/{order}/deleted.json"):
-            continue
-        t = paid.get("paid_at")
-        if isinstance(t, (int, float)) and t < cutoff:
-            n += _erase(order, yes, f"kept {months:g} months")
-    print(f"{n} paid orders' files deleted" if yes else "dry run: add --yes to delete them")
+    res = pay.expire_paid(round(months * 30.44), yes=yes, out=print, stop_left=-1e9)
+    print(f"{res['expired']} paid orders' files deleted ({res['files']} files)" if yes else
+          f"dry run: {res['expired']} paid orders would lose their files; add --yes")
+
+
+def cmd_cleanup(yes):
+    res = cleanup.run(yes=yes, stop_left=-1e9, out=print, lock=yes)
+    if not yes:
+        print("dry run: nothing was changed; add --yes")
+    return res
+
+
+def cmd_withdrawals(day=None, months=2):
+    """The statements that matched no order, newest first: when, the order text and email given, the name, what the
+    receipt did, and where it is kept. Plus the days whose digest email the daily clean-up still has to send."""
+    now = time.time()
+    months_list = []
+    for i in range(max(1, int(months))):
+        yymm = time.strftime("%y%m", time.gmtime(now - i * 30.44 * 86400))
+        if yymm not in months_list:
+            months_list.append(yymm)
+    if day:
+        months_list = [day[:4]]
+    rows = []
+    for yymm in months_list:
+        for p in _files(f"withdrawals/{yymm}"):
+            if p.endswith(("_ack.json", "_note.json")):
+                continue
+            w = store.get_json(p) or {}
+            if day and pay.day(w.get("received_at") or 0) != day:
+                continue
+            ack = store.get_json(p[:-5] + "_ack.json") or {}
+            rows.append((w.get("received_at") or 0, w, p, ack))
+    for _, w, p, ack in sorted(rows, key=lambda r: r[0], reverse=True):
+        print(f"{w.get('received')}  order given {w.get('order_given')!r}  email {w.get('email')}  name {w.get('name')!r}  "
+              f"receipt {ack.get('result') or ack.get('state') or 'none'}  lang {w.get('lang')}\n    {p}")
+    print(f"{len(rows)} statement(s) that matched no order" + (f" on {day}" if day else f" in {', '.join(months_list)}"))
+    due = [r["name"] for r in store.list_all("cleanup/digest") if r["folder"]]
+    if due:
+        print("digest email still to come for:", ", ".join(sorted(due)))
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="SnapEyes orders: status, link, release, clear-review, resend-mail, "
-                                             "mailed-by-hand, purge, expire-paid, erase.")
+                                             "mailed-by-hand, purge, expire-paid, erase, cleanup, withdrawals.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("status", "link", "clear-review", "resend-mail", "mailed-by-hand"):
         sub.add_parser(name).add_argument("order")
     r = sub.add_parser("release")
     r.add_argument("order")
-    r.add_argument("--mail", action="store_true", help="also send the customer the 'ready' email")
+    r.add_argument("--no-mail", action="store_true", help="do not send the customer the 'ready' email")
+    r.add_argument("--mail", action="store_true", help=argparse.SUPPRESS)   # the default now; kept for old notes
     p = sub.add_parser("purge")
     p.add_argument("--hours", type=float, default=48.0, help="age of unpaid orders to delete (at least 25)")
     p.add_argument("--yes", action="store_true", help="really delete (default: list only)")
@@ -250,6 +273,11 @@ def main(argv=None):
     x = sub.add_parser("erase")
     x.add_argument("order")
     x.add_argument("--yes", action="store_true", help="really delete (default: list only)")
+    c = sub.add_parser("cleanup")
+    c.add_argument("--yes", action="store_true", help="really do it (default: list only)")
+    w = sub.add_parser("withdrawals")
+    w.add_argument("--day", help="only this UTC day, YYMMDD")
+    w.add_argument("--months", type=int, default=2, help="how many months back to list (default 2)")
     a = ap.parse_args(argv)
     if not store.configured():
         raise SystemExit("storage is not configured here: " + store.problem())
@@ -258,7 +286,7 @@ def main(argv=None):
     elif a.cmd == "link":
         cmd_link(_order(a.order))
     elif a.cmd == "release":
-        cmd_release(_order(a.order), a.mail)
+        cmd_release(_order(a.order), not a.no_mail)
     elif a.cmd == "clear-review":
         cmd_clear_review(_order(a.order))
     elif a.cmd == "resend-mail":
@@ -275,6 +303,12 @@ def main(argv=None):
         cmd_expire_paid(a.months, a.yes)
     elif a.cmd == "erase":
         cmd_erase(_order(a.order), a.yes)
+    elif a.cmd == "cleanup":
+        cmd_cleanup(a.yes)
+    elif a.cmd == "withdrawals":
+        if a.day is not None and not (len(a.day) == 6 and a.day.isdigit()):
+            raise SystemExit("--day must be YYMMDD, for example 260929")
+        cmd_withdrawals(a.day, a.months)
     return 0
 
 

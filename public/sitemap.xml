@@ -1,7 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Only indexable pages belong here. /try is noindex on purpose, so it is left out. -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<!-- Only indexable pages belong here. /try and /order are noindex on purpose, so they are left out.
+     Each page has one URL per language (English plain, German ?lang=de), each its own canonical; every URL lists all
+     its language versions plus x-default, the same alternates the pages' own <link rel="alternate"> tags name. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://snapeyes.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/?lang=de</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/privacy?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/privacy?lang=de</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/privacy?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/terms?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/terms?lang=de</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/terms?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/withdrawal</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/withdrawal" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/withdrawal?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/withdrawal?lang=de</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/withdrawal" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/withdrawal?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/imprint</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/imprint" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/imprint?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/imprint?lang=de</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/imprint" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/imprint?lang=de" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
   </url>
 </urlset>

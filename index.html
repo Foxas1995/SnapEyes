@@ -7,8 +7,10 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#030408" />
     <title>SnapEyes Private Atelier - Precision Iris Art from Your Smartphone</title>
-    <!-- Search and share copy must stay strictly true: same rules as src/landing/copy.ts. -->
-    <meta name="description" content="Photograph one eye with your phone's back camera and see your own iris as fine art in six styles. The watermarked preview is free; ordering opens soon." />
+    <!-- Search and share copy must stay strictly true: same rules as src/landing/copy.ts. It is read before the page
+         knows whether ordering is open (src/landing/ordering.ts), so it says nothing about ordering: the same words as
+         copy.ts en.meta.description, true before and after ordering opens. -->
+    <meta name="description" content="Photograph one eye with your phone's back camera and see your own iris as fine art in six styles. The watermarked preview is free." />
     <!-- rel=canonical is injected once by src/landing/lang.tsx (self-referencing: / for English, /?lang=de for
          German), so the German URL is not canonicalised to the English one. Do not add a static canonical here. -->
     <link rel="alternate" hreflang="en" href="https://snapeyes.com/" />

@@ -7,14 +7,14 @@
 // deployment and puts the texts of the order's language into the email. Plain data only, no React, no DOM.
 import type { Lang } from '../landing/copy';
 import type { Block, LegalDoc } from './types';
-import { LEGAL_PATH, LEGAL_UPDATED, formatLegalDate, legalHref, type LegalDocId } from '../shared/legal';
+import { LEGAL_PATH, LEGAL_UPDATED, SITE_HOST, formatLegalDate, legalHref, type LegalDocId } from '../shared/legal';
 import { CONTACT_EMAIL, SELLER, address, company, contactLine } from './facts';
 import { TERMS } from './docs/terms';
 import { WITHDRAWAL } from './docs/withdrawal';
 
-const ORIGIN = 'https://snapeyes.com';
+const ORIGIN = `https://${SITE_HOST}`;
 const TOKEN = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*/g;
-const SHY = /­/g;
+const SHY = /\u00AD/g;
 
 /** The inline markup of src/legal/types.ts as text: a link keeps its label and shows where it goes. */
 function inline(text: string, lang: Lang, page: LegalDocId): string {
@@ -32,8 +32,13 @@ function inline(text: string, lang: Lang, page: LegalDocId): string {
       if (doc in LEGAL_PATH) url = ORIGIN + legalHref(doc as LegalDocId, lang, section);
     } else if (h.startsWith('#')) {
       url = ORIGIN + legalHref(page, lang, h.slice(1));
+    } else if (h.startsWith('/')) {
+      url = ORIGIN + h;          // a page of the site, such as the online withdrawal function
     }
-    return l === url ? l : `${l} (${url})`;
+    // a label that is the address itself, with or without https:// (the online withdrawal function's address in
+    // the statutory sentence), prints once, as the full address
+    if (url === l || url === `https://${l}`) return url;
+    return `${l} (${url})`;
   });
 }
 
@@ -74,6 +79,12 @@ export interface LegalMailPack {
     contact: Record<Lang, string>; // company, address, email (and phone once set): the model form's "To:" line
   };
   docs: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>;
+  /** Facts the law requires in these texts that are still empty, as "seller.phone": [] when complete. The telephone
+   *  number is mandatory before selling (Art. 6(1)(c) Directive 2011/83/EU as amended by Directive (EU) 2019/2161;
+   *  Art. 246a § 1 Abs. 1 Nr. 2 EGBGB; Anlage 1 EGBGB Gestaltungshinweis 2), so api/_lib/pay.py should keep live
+   *  ordering closed while this list is not empty. The representative is not in it: no rule that applies to a
+   *  Lithuanian seller requires the name, the legal notice simply shows it once it is set. */
+  missing: string[];
 }
 
 const LANGS: Lang[] = ['en', 'de'];
@@ -81,6 +92,17 @@ const per = <T,>(f: (lang: Lang) => T) => Object.fromEntries(LANGS.map((l) => [l
 
 function mailDoc(id: LegalDocId, doc: LegalDoc, lang: Lang): LegalMailDoc {
   return { title: doc.title.replace(SHY, ''), url: ORIGIN + legalHref(id, lang), text: legalPlainText(id, doc, lang) };
+}
+
+/** The legally required seller facts that are still empty (see LegalMailPack.missing). */
+export function missingLegalFacts(): string[] {
+  const out: string[] = [];
+  if (!SELLER.phone.trim()) out.push('seller.phone');
+  if (!CONTACT_EMAIL.trim()) out.push('seller.email');
+  if (!SELLER.name.trim() || !SELLER.code.trim() || !SELLER.street.trim() || !SELLER.postcode.trim() || !SELLER.city.trim()) {
+    out.push('seller.address');
+  }
+  return out;
 }
 
 export function legalMailPack(): LegalMailPack {
@@ -100,5 +122,6 @@ export function legalMailPack(): LegalMailPack {
       withdrawal: mailDoc('withdrawal', WITHDRAWAL[lang], lang),
       terms: mailDoc('terms', TERMS[lang], lang),
     })),
+    missing: missingLegalFacts(),
   };
 }

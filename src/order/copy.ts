@@ -35,6 +35,10 @@ const en = {
   pending: {
     title: 'Your payment is being confirmed',
     body: 'Your payment method takes a little longer to confirm. We start on your artwork as soon as it is confirmed. This page checks again by itself.',
+    // paid, but the order confirmation email (it confirms the withdrawal waiver) has not gone out yet: nothing is made
+    // before it has (api/order.py status: state "pending", waiting_for "confirmation_email")
+    mailTitle: 'Payment received',
+    mailBody: 'Your payment is confirmed. We are sending your order confirmation by email and start on your artwork right after. This page checks again by itself.',
   },
   making: {
     title: 'Making your artwork',
@@ -83,6 +87,66 @@ const en = {
     failed: `Something went wrong on our side. Please try again. If it happens again, write to ${CONTACT_EMAIL} with your order number.`,
     retry: 'Try again',
   },
+  // The online withdrawal function (Art. 11a Directive 2011/83/EU as amended by Directive (EU) 2023/2673; § 356a
+  // BGB): a button labelled with the statutory words, a short statement form (name, contract, email for the receipt),
+  // and a second button with the statutory words that sends it (./WithdrawPanel.tsx). The two button labels are
+  // src/shared/legal.ts WITHDRAWAL_ONLINE, which the legal pages quote.
+  withdraw: {
+    heading: 'Withdraw from the contract',
+    lead: 'At checkout you agreed that we start making your file right away. Until we have started, you can withdraw from this contract here. Once making has started, your right of withdrawal has ended.',
+    info: 'Right of withdrawal',
+    formLead: (confirm: string) => `Please check your details. With "${confirm}" you send us this statement:`,
+    statement: (o: string) => `I hereby withdraw from the contract I concluded for the supply of the following digital content: SnapEyes artwork, order ${o}.`,
+    statementNoOrder: 'I hereby withdraw from the contract I concluded for the supply of the following digital content: SnapEyes artwork, the order named below.',
+    name: 'Your name',
+    email: 'Email address for the confirmation',
+    emailHint: 'We send the confirmation of receipt, with the date and time, to this address.',
+    emailHintNoLink: 'Please use the email address you paid with: it shows us that the order is yours. We send the confirmation of receipt, with the date and time, to this address.',
+    order: 'Order number',
+    orderHint: 'You find it in your order confirmation email and on the order page.',
+    sending: 'Sending your withdrawal…',
+    cancel: 'Cancel',
+    back: 'Back to your order',
+    invalid: {
+      name: 'Please enter your name.',
+      email: 'Please enter a valid email address.',
+      order: 'Please enter your order number as it appears in your email.',
+    },
+    errors: {
+      network: 'We could not reach SnapEyes, so we cannot tell whether your withdrawal arrived. Please check your connection and try again: sending it again does no harm.',
+      busy: `Our system is busy right now, so your withdrawal could not be recorded. Please try again in a moment, or write your withdrawal to ${CONTACT_EMAIL}: an email is just as valid.`,
+      unmatched: (when: string | null) => `We could not match your statement to an order with these details. We have kept it${when ? ` (received on ${when})` : ''} and check it by hand. Please check the order number and, if you came without the link to your order, use the email address you paid with. You can also write to ${CONTACT_EMAIL}.`,
+      not_paid: 'This order was never paid, so there is no contract to withdraw from. Nothing was charged.',
+      invalid: 'Please check your name and email address and try again.',
+      paused: `We cannot take online withdrawals at the moment. Please write your withdrawal to ${CONTACT_EMAIL}: an email is just as valid.`,
+      too_many: `We have already received several withdrawal statements for this order today. If something is missing, please write to ${CONTACT_EMAIL}.`,
+      failed: `Your withdrawal could not be sent. Please try again, or write your withdrawal to ${CONTACT_EMAIL}: an email is just as valid.`,
+    },
+    done: {
+      effectiveTitle: 'Your withdrawal was received',
+      lapsedTitle: 'Your statement was received',
+      checking: 'We now check your order by hand and email you the result.',
+      received: (when: string) => `We received your withdrawal on ${when}.`,
+      effective: 'Your contract is withdrawn. We do not make your file.',
+      refund: (amount: string) => `We refund the ${amount} you paid to the payment method you used, within 14 days at the latest.`,
+      refundNoAmount: 'We refund what you paid to the payment method you used, within 14 days at the latest.',
+      refundBy: (amount: string, date: string) => `We refund the ${amount} you paid to the payment method you used, by ${date} at the latest. You pay no fees for this.`,
+      settling: 'Your payment was still being processed when you withdrew. If it reaches us, we refund it in full to the payment method you used, within 14 days at the latest.',
+      refundStarted: (amount: string) => `The refund of ${amount} to the payment method you used has been started. Depending on your bank it can take a few days to arrive.`,
+      lapsed: 'Making your file had already started. At checkout you agreed that we start right away and confirmed that you lose your right of withdrawal once we have started, so the right had already ended. Your order stays in place: you find your file on your order page.',
+      lapsedPeriod: 'The 14-day withdrawal period for this order had already ended, so your right of withdrawal had ended when your statement arrived.',
+      lapsedHelp: 'We still look at your statement personally and reply to you by email. Your statutory rights for a defective file are not affected.',
+      mailSent: (email: string) => `A confirmation of receipt is on its way to ${email}.`,
+      mailLater: (email: string) => `We could not send the confirmation of receipt to ${email} just now. We send it as soon as we can. Your withdrawal counts from the time above.`,
+      mailFailed: (email: string) => `We could not send the confirmation of receipt to ${email}. Your withdrawal is on record from the time above. Please check that address, or write to ${CONTACT_EMAIL} for a copy.`,
+    },
+    withdrawn: {
+      title: 'This order was withdrawn',
+      body: (when: string) => `Your withdrawal was received on ${when}. Nothing is made for this order.`,
+      bodyNoTime: 'Your withdrawal was received. Nothing is made for this order.',
+    },
+    unpaid: 'This order is not paid, so there is no contract to withdraw from. Nothing was charged.',
+  },
   contact: {
     lead: 'Questions about your order?',
     write: (email: string) => `Write to ${email}`,
@@ -123,6 +187,8 @@ const de: OrderCopy = {
   pending: {
     title: 'Ihre Zahlung wird bestätigt',
     body: 'Ihre Zahlungsart braucht etwas länger für die Bestätigung. Sobald die Zahlung bestätigt ist, beginnen wir mit Ihrem Kunstwerk. Diese Seite prüft das von selbst.',
+    mailTitle: 'Zahlung eingegangen',
+    mailBody: 'Ihre Zahlung ist bestätigt. Wir senden Ihnen jetzt die Bestellbestätigung per E-Mail und beginnen direkt danach mit Ihrem Kunstwerk. Diese Seite prüft das von selbst.',
   },
   making: {
     title: 'Ihr Kunstwerk wird erstellt',
@@ -171,6 +237,62 @@ const de: OrderCopy = {
     failed: `Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut. Wenn es wieder passiert, schreiben Sie mit Ihrer Bestellnummer an ${CONTACT_EMAIL}.`,
     retry: 'Erneut versuchen',
   },
+  withdraw: {
+    heading: 'Vertrag widerrufen',
+    lead: 'Sie haben bei der Bestellung zugestimmt, dass wir sofort mit der Erstellung Ihrer Datei beginnen. Solange wir noch nicht begonnen haben, können Sie diesen Vertrag hier widerrufen. Sobald die Erstellung begonnen hat, ist Ihr Widerrufsrecht erloschen.',
+    info: 'Widerrufsbelehrung',
+    formLead: (confirm: string) => `Bitte prüfen Sie Ihre Angaben. Mit „${confirm}“ senden Sie uns diese Erklärung:`,
+    statement: (o: string) => `Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über die Bereitstellung der folgenden digitalen Inhalte: SnapEyes-Kunstwerk, Bestellung ${o}.`,
+    statementNoOrder: 'Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über die Bereitstellung der folgenden digitalen Inhalte: SnapEyes-Kunstwerk, Bestellung wie unten angegeben.',
+    name: 'Ihr Name',
+    email: 'E-Mail-Adresse für die Bestätigung',
+    emailHint: 'An diese Adresse senden wir die Eingangsbestätigung mit Datum und Uhrzeit.',
+    emailHintNoLink: 'Bitte verwenden Sie die E-Mail-Adresse, mit der Sie bezahlt haben: Daran erkennen wir, dass die Bestellung Ihre ist. An diese Adresse senden wir die Eingangsbestätigung mit Datum und Uhrzeit.',
+    order: 'Bestellnummer',
+    orderHint: 'Sie finden sie in Ihrer Bestellbestätigung per E-Mail und auf der Bestellseite.',
+    sending: 'Ihr Widerruf wird gesendet…',
+    cancel: 'Abbrechen',
+    back: 'Zurück zu Ihrer Bestellung',
+    invalid: {
+      name: 'Bitte geben Sie Ihren Namen ein.',
+      email: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
+      order: 'Bitte geben Sie Ihre Bestellnummer so ein, wie sie in Ihrer E-Mail steht.',
+    },
+    errors: {
+      network: 'Wir konnten SnapEyes nicht erreichen und wissen daher nicht, ob Ihr Widerruf angekommen ist. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut: Ein erneutes Senden schadet nicht.',
+      busy: `Unser System ist gerade ausgelastet, daher konnte Ihr Widerruf nicht erfasst werden. Bitte versuchen Sie es gleich noch einmal oder senden Sie Ihren Widerruf an ${CONTACT_EMAIL}: Eine E-Mail ist genauso gültig.`,
+      unmatched: (when: string | null) => `Wir konnten Ihre Erklärung keiner Bestellung mit diesen Angaben zuordnen. Wir haben sie${when ? ` (eingegangen am ${when})` : ''} aufbewahrt und prüfen sie von Hand. Bitte prüfen Sie die Bestellnummer und verwenden Sie, wenn Sie ohne den Link zu Ihrer Bestellung gekommen sind, die E-Mail-Adresse, mit der Sie bezahlt haben. Sie können auch an ${CONTACT_EMAIL} schreiben.`,
+      not_paid: 'Diese Bestellung wurde nie bezahlt, daher gibt es keinen Vertrag, den Sie widerrufen könnten. Es wurde nichts berechnet.',
+      invalid: 'Bitte prüfen Sie Ihren Namen und Ihre E-Mail-Adresse und versuchen Sie es erneut.',
+      paused: `Online-Widerrufe sind gerade nicht möglich. Bitte senden Sie Ihren Widerruf an ${CONTACT_EMAIL}: Eine E-Mail ist genauso gültig.`,
+      too_many: `Für diese Bestellung sind heute bereits mehrere Widerrufserklärungen eingegangen. Falls etwas fehlt, schreiben Sie bitte an ${CONTACT_EMAIL}.`,
+      failed: `Ihr Widerruf konnte nicht gesendet werden. Bitte versuchen Sie es erneut oder senden Sie Ihren Widerruf an ${CONTACT_EMAIL}: Eine E-Mail ist genauso gültig.`,
+    },
+    done: {
+      effectiveTitle: 'Ihr Widerruf ist eingegangen',
+      lapsedTitle: 'Ihre Erklärung ist eingegangen',
+      checking: 'Wir prüfen Ihre Bestellung jetzt von Hand und teilen Ihnen das Ergebnis per E-Mail mit.',
+      received: (when: string) => `Ihr Widerruf ist am ${when} bei uns eingegangen.`,
+      effective: 'Ihr Vertrag ist widerrufen. Wir erstellen Ihre Datei nicht.',
+      refund: (amount: string) => `Wir erstatten Ihnen die gezahlten ${amount} über das Zahlungsmittel, mit dem Sie bezahlt haben, spätestens binnen 14 Tagen.`,
+      refundNoAmount: 'Wir erstatten Ihnen den gezahlten Betrag über das Zahlungsmittel, mit dem Sie bezahlt haben, spätestens binnen 14 Tagen.',
+      refundBy: (amount: string, date: string) => `Wir erstatten Ihnen die gezahlten ${amount} über das Zahlungsmittel, mit dem Sie bezahlt haben, spätestens bis zum ${date}. Dafür fallen für Sie keine Gebühren an.`,
+      settling: 'Ihre Zahlung war bei Ihrem Widerruf noch in Bearbeitung. Falls sie eingeht, erstatten wir sie Ihnen vollständig über das Zahlungsmittel, mit dem Sie bezahlt haben, spätestens binnen 14 Tagen.',
+      refundStarted: (amount: string) => `Die Erstattung von ${amount} über das Zahlungsmittel, mit dem Sie bezahlt haben, ist veranlasst. Je nach Bank kann es einige Tage dauern, bis sie ankommt.`,
+      lapsed: 'Die Erstellung Ihrer Datei hatte bereits begonnen. Sie haben bei der Bestellung zugestimmt, dass wir sofort beginnen, und bestätigt, dass Sie Ihr Widerrufsrecht mit Beginn der Erstellung verlieren. Ihr Widerrufsrecht war daher bereits erloschen. Ihre Bestellung bleibt bestehen: Ihre Datei finden Sie auf Ihrer Bestellseite.',
+      lapsedPeriod: 'Die 14-tägige Widerrufsfrist für diese Bestellung war bereits abgelaufen. Ihr Widerrufsrecht war daher bei Eingang Ihrer Erklärung bereits erloschen.',
+      lapsedHelp: 'Wir sehen uns Ihre Erklärung trotzdem persönlich an und antworten Ihnen per E-Mail. Ihre gesetzlichen Rechte bei einer mangelhaften Datei bleiben unberührt.',
+      mailSent: (email: string) => `Eine Eingangsbestätigung ist an ${email} unterwegs.`,
+      mailLater: (email: string) => `Wir konnten die Eingangsbestätigung an ${email} gerade nicht senden. Wir senden sie, sobald es geht. Ihr Widerruf gilt ab dem oben genannten Zeitpunkt.`,
+      mailFailed: (email: string) => `Wir konnten die Eingangsbestätigung nicht an ${email} senden. Ihr Widerruf ist ab dem oben genannten Zeitpunkt erfasst. Bitte prüfen Sie diese Adresse oder schreiben Sie an ${CONTACT_EMAIL}, wenn Sie eine Kopie möchten.`,
+    },
+    withdrawn: {
+      title: 'Diese Bestellung wurde widerrufen',
+      body: (when: string) => `Ihr Widerruf ist am ${when} bei uns eingegangen. Für diese Bestellung wird nichts erstellt.`,
+      bodyNoTime: 'Ihr Widerruf ist bei uns eingegangen. Für diese Bestellung wird nichts erstellt.',
+    },
+    unpaid: 'Diese Bestellung ist nicht bezahlt, daher gibt es keinen Vertrag, den Sie widerrufen könnten. Es wurde nichts berechnet.',
+  },
   contact: {
     lead: 'Fragen zu Ihrer Bestellung?',
     write: (email: string) => `Schreiben Sie an ${email}`,
@@ -187,3 +309,13 @@ export const euroOf = (cents: number, lang: Lang) =>
 /** Megabytes with one decimal, as the language writes it. */
 export const mbOf = (bytes: number, lang: Lang) =>
   new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-IE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(bytes / 1_000_000);
+
+/** A day in the language's own words (the date a refund is due by). */
+export const dateOf = (unixSeconds: number, lang: Lang) =>
+  new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(unixSeconds * 1000));
+
+/** A moment in the language's own words, with its time zone (the withdrawal receipt names the date and time). */
+export const whenOf = (unixSeconds: number, lang: Lang) =>
+  new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+  }).format(new Date(unixSeconds * 1000));

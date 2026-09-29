@@ -4,6 +4,7 @@
 // swaps in once this deployment takes orders (src/landing/ordering.ts asks the API, as /try does). The meta
 // description names neither, because it is read before that answer arrives.
 import type { StyleId } from './config';
+import { WITHDRAWAL_ONLINE } from '../shared/legal';
 
 export type Lang = 'en' | 'de';
 
@@ -122,7 +123,7 @@ const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartph
 // Measured deliverable (api/master_compose.py, L.multi_canvas at 4096): one eye is 4096 x 4096 px; several
 // eyes are 4096 px on the longest side (a Couple Duo is 4096 x 2731). Never promise a square file for all orders.
 const PX = '4096\u00a0px';
-const SQUARE = '4096\u00a0x\u00a04096\u00a0px';
+const SQUARE = '4096\u00a0×\u00a04096\u00a0px';
 
 const en: Copy = {
   meta: {
@@ -238,7 +239,7 @@ const en: Copy = {
     eyebrow: 'Your photo',
     title: 'A promise about your eye',
     items: [
-      { title: 'Only for your artwork', body: 'Your photo is used to make your artwork and for nothing else.' },
+      { title: 'Only for your artwork', body: 'Your photo is used only to make your artwork. From each shot we log a few measurements, never the image, to improve the capture guide.' },
       { title: 'Never for identification', body: 'It is never used to identify anyone, never sold and not used to train AI.' },
       {
         title: 'Free previews are not kept',
@@ -280,13 +281,13 @@ const en: Copy = {
       },
       {
         q: 'Can I withdraw from an order?',
-        a: 'Your file is made right after you pay. Before paying, you agree that we start straight away, so the 14-day right of withdrawal ends once delivery begins. If your file is defective or clearly differs from the preview you approved, write to us: we render it again or refund you. The details are in our terms of sale and the withdrawal information, linked at the foot of this page.',
+        a: `Your file is made right after you pay. Before paying, you agree that we start straight away, so the 14-day right of withdrawal ends once we have started making your file. Until then you can withdraw by email or online with "${WITHDRAWAL_ONLINE.en.button}" at the foot of this page. If your file is defective or clearly differs from the preview you approved, write to us: we render it again or refund you. The details are in our terms of sale and the withdrawal information, linked at the foot of this page.`,
       },
       {
         q: 'When can I order?',
         a: 'Ordering opens soon. Until then the preview is free.',
         qOpen: 'How do I order?',
-        aOpen: `Right after your free preview, on the same page: choose your style, tick the box about the digital file and tap "Buy the full-size file". You pay on Stripe's payment page. Your order page opens straight away, and its link comes by email.`,
+        aOpen: "Right after your free preview, on the same page: choose your style, tick the box about the digital file and continue to Stripe's payment page, where you pay. Your order page opens straight away, and its link comes by email.",
       },
     ],
   },
@@ -411,7 +412,7 @@ const de: Copy = {
   curator: {
     eyebrow: 'Der Kurator',
     title: 'Hinter dem Atelier',
-    role: 'SnapEyes Studio Curator',
+    role: 'Kurator des SnapEyes-Studios',
     note:
       'Das Auge auf dieser Seite ist mein eigenes, zu Hause mit meinem Smartphone fotografiert. Die Vorschau ist kostenlos, damit Sie das Ergebnis mit eigenen Augen beurteilen können, bevor Sie etwas bezahlen.',
     photoAlt: 'Die Iris von Mantas',
@@ -422,7 +423,7 @@ const de: Copy = {
     eyebrow: 'Ihr Foto',
     title: 'Unser Versprechen für Ihr Auge',
     items: [
-      { title: 'Nur für Ihr Kunstwerk', body: 'Ihr Foto dient dazu, Ihr Kunstwerk zu erstellen, und zu nichts anderem.' },
+      { title: 'Nur für Ihr Kunstwerk', body: 'Ihr Foto dient nur dazu, Ihr Kunstwerk zu erstellen. Von jeder Aufnahme protokollieren wir einige Messwerte, nie das Bild, um die Aufnahmeanleitung zu verbessern.' },
       { title: 'Nie zur Identifizierung', body: 'Es wird nie genutzt, um jemanden zu identifizieren, nie verkauft und nicht zum Training von KI verwendet.' },
       {
         title: 'Vorschauen werden nicht gespeichert',
@@ -430,7 +431,7 @@ const de: Copy = {
       },
       {
         title: 'Wenige externe Dienste',
-        body: 'Vercel betreibt die Seite und die Vorschau, die Gemini API von Google die Restaurierung (Google speichert Anfrageprotokolle für begrenzte Zeit). Bei Bestellungen kommen Stripe für die Zahlung und ein privater Supabase-Speicher in der EU hinzu.',
+        body: 'Vercel betreibt die Seite und die Vorschau, die Gemini-API von Google die Restaurierung (Google speichert Anfrageprotokolle für begrenzte Zeit). Bei Bestellungen kommen Stripe für die Zahlung und ein privater Supabase-Speicher in der EU hinzu.',
       },
     ],
     controller: 'Verantwortlich für Ihre Daten: MB „Portretizuokis“, Kaunas, Litauen (vollständige Angaben am Ende dieser Seite).',
@@ -464,13 +465,13 @@ const de: Copy = {
       },
       {
         q: 'Kann ich eine Bestellung widerrufen?',
-        a: 'Ihre Datei wird direkt nach der Zahlung erstellt. Vor der Zahlung stimmen Sie zu, dass wir sofort beginnen; das 14-tägige Widerrufsrecht erlischt daher mit Beginn der Bereitstellung. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu oder erstatten Ihnen den Preis. Einzelheiten stehen in unseren AGB und der Widerrufsbelehrung, verlinkt am Ende dieser Seite.',
+        a: `Ihre Datei wird direkt nach der Zahlung erstellt. Vor der Zahlung stimmen Sie zu, dass wir sofort beginnen; das 14-tägige Widerrufsrecht erlischt daher, sobald wir mit der Erstellung Ihrer Datei begonnen haben. Bis dahin können Sie per E-Mail oder online mit „${WITHDRAWAL_ONLINE.de.button}“ am Ende dieser Seite widerrufen. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu oder erstatten Ihnen den Preis. Einzelheiten stehen in unseren AGB und der Widerrufsbelehrung, verlinkt am Ende dieser Seite.`,
       },
       {
         q: 'Wann kann ich bestellen?',
         a: 'Bestellungen sind in Kürze möglich. Bis dahin ist die Vorschau kostenlos.',
         qOpen: 'Wie bestelle ich?',
-        aOpen: 'Direkt nach Ihrer kostenlosen Vorschau, auf derselben Seite: Wählen Sie Ihren Stil, setzen Sie das Häkchen zur digitalen Datei und tippen Sie auf „Datei in voller Größe kaufen“. Sie bezahlen auf der Zahlungsseite von Stripe. Danach öffnet sich sofort Ihre Bestellseite, und ihren Link erhalten Sie per E-Mail.',
+        aOpen: 'Direkt nach Ihrer kostenlosen Vorschau, auf derselben Seite: Wählen Sie Ihren Stil, setzen Sie das Häkchen zur digitalen Datei und gehen Sie weiter zur Zahlungsseite von Stripe, auf der Sie bezahlen. Danach öffnet sich sofort Ihre Bestellseite, und ihren Link erhalten Sie per E-Mail.',
       },
     ],
   },

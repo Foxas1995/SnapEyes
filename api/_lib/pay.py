@@ -21,9 +21,16 @@ Everything here is INACTIVE until the owner sets the environment on Vercel (valu
                          public test card).
   SNAPEYES_DRAFT_DAY_MB  optional, default 250: how many MB of unpaid eye uploads the site accepts per day (UTC).
                          Past it, uploads pause until the next day and the owner gets one note.
-  CRON_SECRET            for the daily clean-up (vercel.json crons -> GET /api/order?cron=purge): Vercel sends it
-                         as "Authorization: Bearer <CRON_SECRET>". Without it the clean-up answers 503.
-Tests only, ignored whenever VERCEL is set: STRIPE_API_BASE and RESEND_API_BASE = http://127.0.0.1:<port>.
+  CRON_SECRET            for the daily clean-up (vercel.json crons -> GET /api/order, api/_lib/cleanup.py): Vercel
+                         sends it as "Authorization: Bearer <CRON_SECRET>". Without it the clean-up answers 503.
+Tests only, ignored whenever VERCEL is set: STRIPE_API_BASE, RESEND_API_BASE and LEGAL_PACK_BASE =
+http://127.0.0.1:<port>.
+
+The order confirmation email (confirmation_mail) carries the contract on a durable medium: the seller, what was
+bought, the final price (no VAT), the customer's recorded consent with its exact text and time, the withdrawal
+information with the model form and the terms of sale. The legal texts come from /legal/order-mail.json of this
+site (the build writes it from the same constants the legal pages print: src/legal/plain.ts), fetched by
+legal_pack(); without them the email is not sent (it is retried: "legal_unavailable").
 
 When this deployment takes NEW orders (drafts and checkout; ordering_problem()): Stripe configured, and
   - a LIVE key only together with RESEND_API_KEY: the file may only be made after the order confirmation email
@@ -51,13 +58,25 @@ One order = one private folder (store.py), orders/<order>/:
                                the confirmation email cannot go out)
   release.json                 the owner looked and released a delivery that waited for review
   note_<kind>.json             an owner note of this kind was sent (once per kind)
+  making.json                  the first time /api/order make started a render (the start of performance: the
+                               right of withdrawal ends here, api/_lib/withdraw.py)
+  withdrawal_<id>.json         a withdrawal statement (name, email, time, outcome; withdraw.py), with
+                               withdrawal_<id>_ack.json (its receipt email) and withdrawal.json (the latest one, no
+                               personal data: what the order page shows)
+  withdrawn.json               the contract is withdrawn (or a payment settling at withdrawal): nothing is made
+  deleted.json / expired.json  the files are deleted (on request, after a withdrawal, or 12 months after payment)
 Outside the order folders: ticketuse/<day>/<id>.json (the one order each work ticket made), draftlog/<day>/
-(<bytes>-<id>.json, one per uploaded draft eye: the daily ceiling) and notes/ (owner notes not tied to an order).
-The daily clean-up (purge_unpaid) removes unpaid orders after 26 h and these markers after a few days.
+(<bytes>-<id>.json, one per uploaded draft eye: the daily ceiling), withdrawlog/<day>/ (the withdrawal function's
+slots: statements per order, statements that matched no order, receipts per address; no personal data),
+withdrawals/<yymm>/ (statements that match no order of ours), withdrawdue/ (receipts to send again), cleanup/
+(what the daily clean-up must do later, the days it finished, and cleanup/unmatched/<day>/: the statements for the
+owner's daily digest) and notes/ (owner notes not tied to an order).
+The daily clean-up (api/_lib/cleanup.py) removes unpaid orders after 26 h, the images of withdrawn orders after 14
+days, the files of paid orders 12 months after payment (the records stay), and the markers after a few days.
 
 Prices are computed here and nowhere else on the server (never from the client): 1 eye Studio Black 19.97 EUR,
 1 eye on an art background 24.97, 2 eyes 39.97, each further eye +15.00, up to 8. Digital only."""
-import os, re, json, time, hmac, hashlib, secrets, threading
+import os, re, json, time, hmac, html, calendar, hashlib, secrets, threading
 import requests
 from . import iris as L
 from . import store
@@ -68,8 +87,15 @@ STRIPE_VERSION = "2026-08-26.dahlia"     # pinned: every request says which API 
 SITE_DEFAULT = "https://snapeyes.com"
 CONTACT = "info@snapeyes.com"
 MAIL_FROM_DEFAULT = "SnapEyes <info@snapeyes.com>"
-SELLER = {"en": "MB Portretizuokis, company code 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania",
-          "de": "MB Portretizuokis, Unternehmenscode 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen"}
+# The seller as the emails sign. The confirmation email takes it from the legal pack (src/landing/config.ts SELLER:
+# representative and phone appear there once the owner sets them); these lines are only for the short emails when
+# the pack cannot be read.
+SELLER = {"en": 'MB "Portretizuokis", company code 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania',
+          "de": "MB „Portretizuokis“, Unternehmenscode 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen"}
+LEGAL_PACK_PATH = "/legal/order-mail.json"
+LEGAL_CACHE = 600            # seconds a fetched legal pack is used before it is fetched again
+LEGAL_STALE = 86400          # a pack this old is still used when a fresh fetch fails
+MAIL_SLOW = 900              # the owner is told when a paid order's confirmation has not gone out after this long
 
 CURRENCY = "eur"
 PRICE_ONE_STUDIO = 1997      # 1 eye, Studio Black
@@ -102,6 +128,9 @@ CONSENT_TEXT = {
            "digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere, sobald damit "
            "begonnen wurde."),
 }
+# Every consent text ever shown, by version: an order's confirmation email quotes the text its customer ticked, also
+# after CONSENT_TEXT changes (add the new version here, keep the old ones).
+CONSENT_TEXTS = {CONSENT_VERSION: CONSENT_TEXT}
 SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit)
     "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
            "right away and that your right of withdrawal ends once we have started."),
@@ -420,13 +449,23 @@ def spec_from(src):
 def item_name(spec):
     n, style = spec["eyes"], STYLE_NAMES.get(spec["style"], spec["style"])
     if spec["lang"] == "de":
-        return f"SnapEyes Iris-Kunstwerk, {n} {'Auge' if n == 1 else 'Augen'}, {style}, digitale Datei 4096 px"
+        return f"SnapEyes-Iris-Kunstwerk, {n} {'Auge' if n == 1 else 'Augen'}, {style}, digitale Datei 4096 px"
     return f"SnapEyes iris artwork, {n} {'eye' if n == 1 else 'eyes'}, {style}, 4096 px digital file"
 
 
 def amount_text(cents, lang):
     s = f"{int(cents) // 100}.{int(cents) % 100:02d}"
     return (s.replace(".", ",") if lang == "de" else s) + " EUR"
+
+
+def price_text(cents, lang):
+    """A price as the site shows it: "€19.97" in English, "19,97 €" in German (the customer's emails)."""
+    try:
+        c = int(cents)
+    except (TypeError, ValueError):
+        c = 0
+    s = f"{c // 100}.{c % 100:02d}"
+    return f"{s.replace('.', ',')} €" if lang == "de" else f"€{s}"
 
 
 # ----------------------------------------------------------------------------- orders and their access key
@@ -447,8 +486,17 @@ def key_sha(k):
 
 
 def order_url(order, k, lang="en", session=False):
-    q = "&lang=de" if lang == "de" else ""
-    return f"{site()}/order?o={order}&k={k}{q}" + ("&s={CHECKOUT_SESSION_ID}" if session else "")
+    """The order page link. It always names the ORDER's language (en too), so an English order opened in a
+    German-language browser stays English: the page reads ?lang= before the browser's language."""
+    return f"{site()}/order?o={order}&k={k}&lang={lang_of(lang)}" + ("&s={CHECKOUT_SESSION_ID}" if session else "")
+
+
+def withdraw_url(order, k, lang="en"):
+    """The order page in its WITHDRAWAL mode (src/order/withdraw.ts withdrawHref): it opens the form with the
+    button "Withdraw from contract here" and only reads the order's status, so opening it never starts making the
+    file (the normal order page does, and with that the right of withdrawal ends). The confirmation email's
+    withdrawal paragraph links here."""
+    return f"{site()}/order?o={order}&k={k}&withdraw=1&lang={lang_of(lang)}"
 
 
 def bad_link():
@@ -522,11 +570,13 @@ def order_for_ticket(ticket, lang):
     path = ticket_path(ticket)
     prev = store.get_json(path, timeout=8.0)
     if isinstance(prev, dict) and isinstance(prev.get("order"), str) and store.ORDER_RE.fullmatch(prev["order"]) \
-            and store.exists(order_path(prev["order"], "paid.json"), timeout=8.0):
+            and any(parallel([lambda: store.exists(order_path(prev["order"], "paid.json"), timeout=8.0),
+                              lambda: store.exists(order_path(prev["order"], "withdrawn.json"), timeout=8.0)])):
+        # that order is paid (or withdrawn): a new artwork from the same photo is a new order
         order, k, rec = new_order(lang)
         store.put(path, store.json_bytes({"order": order, "t": int(time.time()), "after": prev["order"]}),
                   "application/json", upsert=True, timeout=8.0)
-        log(f"order {order}: a new order from the photo of paid order {prev['order']}")
+        log(f"order {order}: a new order from the photo of paid or withdrawn order {prev['order']}")
         return order, k, rec, True
     if prev is None:
         order, k, rec = new_order(lang)
@@ -653,12 +703,12 @@ def create_session(order, k, spec, amount, consent, expires):
     """A Stripe Checkout Session for this order (mode payment, EUR, one line item, dynamic payment methods, no
     Stripe Tax). Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
-    q = "&lang=de" if lang == "de" else ""
     params = [
         ("mode", "payment"),
         ("success_url", order_url(order, k, lang, session=True)),
-        # no k here: /try may one day carry an analytics script, and the page keeps order and k in sessionStorage
-        ("cancel_url", f"{site()}/try?checkout=cancelled&o={order}{q}"),
+        # no k here: /try may one day carry an analytics script, and the page keeps order and k in sessionStorage.
+        # lang always (en too): the customer comes back in the order's language, whatever the browser says
+        ("cancel_url", f"{site()}/try?checkout=cancelled&o={order}&lang={lang}"),
         ("locale", lang),
         ("client_reference_id", order),
         ("expires_at", str(int(expires))),
@@ -795,6 +845,45 @@ def _paid_spec(sess, rec):
     return None
 
 
+def consent_text(version, lang):
+    """The exact waiver text of a consent version in a language, or None for a version this code never showed."""
+    t = CONSENT_TEXTS.get(version) if isinstance(version, str) else None
+    return t.get(lang_of(lang)) if isinstance(t, dict) else None
+
+
+def consent_record(meta, rec, sess, lang):
+    """The customer's consent as paid.json keeps it: version and time from the session's metadata (written by the
+    server at checkout), the language, and the exact text they ticked: the order record's copy for this very
+    session, else the text of that version."""
+    version, at = meta.get("consent_version"), meta.get("consent_at")
+    co = rec.get("checkout") if isinstance(rec, dict) else None
+    text = None
+    if isinstance(co, dict) and co.get("session_id") == sess.get("id") and isinstance(co.get("consent"), dict):
+        c = co["consent"]
+        if c.get("version") == version and isinstance(c.get("text"), str):
+            text = c["text"]
+    text = text or consent_text(version, lang)
+    return {"version": version if isinstance(version, str) else None, "at": at if isinstance(at, str) else None,
+            "lang": lang_of(lang), "text": text,
+            "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16] if text else None}
+
+
+def paid_consent(order, rec, paid):
+    """The consent a paid order's confirmation quotes ({version, at, lang, text}), or None when none is recorded
+    (then the waiver cannot be confirmed, and the right of withdrawal would not end)."""
+    c = paid.get("consent") if isinstance(paid, dict) else None
+    if not isinstance(c, dict) or not isinstance(c.get("version"), str) or not isinstance(c.get("at"), str):
+        return None
+    lang = lang_of(c.get("lang") or (paid.get("spec") or {}).get("lang"))
+    text = c.get("text") if isinstance(c.get("text"), str) else None
+    if not text:
+        co = rec.get("checkout") if isinstance(rec, dict) else None
+        cc = co.get("consent") if isinstance(co, dict) and co.get("session_id") == paid.get("session_id") else None
+        text = cc.get("text") if isinstance(cc, dict) and cc.get("version") == c["version"] else None
+        text = text if isinstance(text, str) else consent_text(c["version"], lang)
+    return dict(c, lang=lang, text=text) if text else None
+
+
 def record_paid(order, rec, sess, source, event_id=None):
     """Mark the order paid, once: paid.json is created atomically and never overwritten, so a replayed webhook
     or a second order-page check finds it and changes nothing. Returns (paid record, new)."""
@@ -822,7 +911,7 @@ def record_paid(order, rec, sess, source, event_id=None):
             "currency": str(sess.get("currency") or "").lower(), "livemode": bool(sess.get("livemode")),
             "email": email.strip() if email else None, "paid_at": now, "paid_iso": iso(now),
             "source": source, "event_id": event_id if isinstance(event_id, str) else None, "spec": spec,
-            "consent": {"version": meta.get("consent_version"), "at": meta.get("consent_at")}}
+            "consent": consent_record(meta, rec, sess, spec["lang"])}
     want = price_cents(spec["eyes"], spec["style"])
     if amount != want:
         paid["amount_mismatch"] = {"expected": want}
@@ -831,6 +920,17 @@ def record_paid(order, rec, sess, source, event_id=None):
         store.put(order_path(order, "paid.json"), store.json_bytes(paid), "application/json", upsert=False)
         log(f"order {order} PAID via {source}: {amount} {paid['currency']} {spec['eyes']} eye(s) {spec['style']} "
             f"live={paid['livemode']}")
+        if withdrawn(order):
+            # the customer withdrew while this payment was still settling (or an old tab was paid after they
+            # withdrew): nothing is made, no confirmation goes out, and the owner refunds it
+            log(f"order {order}: PAID after its withdrawal: refund it")
+            owner_note(order, "paid_after_withdrawal",
+                       f"SnapEyes: order {order} was paid after it was withdrawn, please refund {amount_text(amount or 0, 'en')}",
+                       f"Order {order} was withdrawn by the customer before this payment arrived "
+                       f"({amount_text(amount or 0, 'en')}, {'live' if paid['livemode'] else 'TEST mode'}, Stripe session "
+                       f"{paid['session_id']}, payment {paid['payment_intent']}).\nNothing is made for the order. Please "
+                       f"refund the payment in the Stripe Dashboard (Payments, search {paid['payment_intent'] or paid['session_id']}, "
+                       f"Refund) within 14 days of the withdrawal.\nStatus: python scripts/order_admin.py status {order}\n")
         return paid, True
     except store.StorageExists:
         cur = get_paid(order) or paid
@@ -931,9 +1031,10 @@ def verify_signature(payload, header, secrets_list, now=None, tolerance=WEBHOOK_
 
 
 # ----------------------------------------------------------------------------- email (Resend)
-def send_mail(to, subject, text, idem):
-    """One plain-text email through Resend. Returns "sent", "off" (no key), "bad_address", "transient" (try
-    again later) or "failed" (Resend refused: the domain, the key or the request)."""
+def send_mail(to, subject, text, idem, html_body=None):
+    """One email through Resend: plain text, and the same content as simple HTML when html_body is given. Returns
+    "sent", "off" (no key), "bad_address", "transient" (try again later) or "failed" (Resend refused: the domain,
+    the key or the request)."""
     key = resend_key()
     if not key:
         return "off"
@@ -944,6 +1045,8 @@ def send_mail(to, subject, text, idem):
     if t < 2.0:
         return "transient"
     body = {"from": mail_from(), "to": [to], "subject": subject, "text": text, "reply_to": CONTACT}
+    if html_body:
+        body["html"] = html_body
     try:
         r = requests.post(_base("RESEND_API_BASE", RESEND_API) + "/emails", json=body, timeout=t,
                           headers={"Authorization": "Bearer " + key, "Idempotency-Key": idem[:256]})
@@ -992,47 +1095,301 @@ def _mark(path, state, **extra):
         log(f"claim {path} not updated: {e}")
 
 
-def delivery_mail(order, paid, k):
-    spec = paid.get("spec") or {}
-    lang, n = lang_of(spec.get("lang")), int(spec.get("eyes") or 1)
-    link = order_url(order, k, lang)
-    style = STYLE_NAMES.get(spec.get("style"), spec.get("style") or "")
-    amount = amount_text(paid.get("amount_total") or 0, lang)
+# ----------------------------------------------------------------------------- the legal texts for the emails
+_LEGAL = {"pack": None, "t": 0.0}
+_LEGAL_LOCK = threading.Lock()
+
+
+def _legal_ok(pack):
+    """Is this the build's legal pack (src/legal/plain.ts LegalMailPack), with every text the email needs?"""
+    try:
+        s = pack["seller"]
+        for lang in LANGS:
+            for doc in ("withdrawal", "terms"):
+                d = pack["docs"][lang][doc]
+                if not (isinstance(d["text"], str) and len(d["text"]) > 400 and isinstance(d["title"], str)
+                        and isinstance(d["url"], str) and d["url"].startswith("https://")):
+                    return False
+            if not (isinstance(s["company"][lang], str) and isinstance(s["address"][lang], str)):
+                return False
+        return (isinstance(s["code"], str) and isinstance(s["email"], str) and isinstance(s.get("phone", ""), str)
+                and isinstance(s.get("representative", ""), str) and isinstance(pack.get("updated"), str))
+    except (KeyError, TypeError):
+        return False
+
+
+def legal_pack(fresh=False):
+    """The legal texts of this site (/legal/order-mail.json: the withdrawal information with the model form, the
+    terms of sale, the seller), or None when they cannot be read. Fetched from this deployment's own site (on a
+    Preview that may sit behind Vercel's login, snapeyes.com is asked next) and kept LEGAL_CACHE seconds; a pack up
+    to LEGAL_STALE old is used when a new fetch fails. Tests point LEGAL_PACK_BASE at a local stub."""
+    now = time.time()
+    with _LEGAL_LOCK:
+        pack, t = _LEGAL["pack"], _LEGAL["t"]
+    if pack is not None and not fresh and now - t < LEGAL_CACHE:
+        return pack
+    test = _base("LEGAL_PACK_BASE", "")
+    bases = [test] if test else list(dict.fromkeys([site(), SITE_DEFAULT]))
+    for base in bases:
+        tt = min(6.0, L.time_left() - 3.0)
+        if tt < 1.0:
+            break
+        try:
+            r = requests.get(base + LEGAL_PACK_PATH, timeout=tt, headers={"Accept": "application/json"})
+            got = r.json() if r.status_code == 200 else None
+        except Exception as e:  # noqa: any failure is "not readable now"; never the exception's text
+            log(f"legal pack from {base}: {type(e).__name__}")
+            continue
+        if isinstance(got, dict) and _legal_ok(got):
+            with _LEGAL_LOCK:
+                _LEGAL["pack"], _LEGAL["t"] = got, time.time()
+            return got
+        log(f"legal pack from {base}: HTTP {r.status_code}, not usable")
+    if pack is not None and now - t < LEGAL_STALE:
+        return pack
+    return None
+
+
+def seller_lines(lang, pack=None):
+    """The seller as an email signs: company and code, address, representative and phone when set, email."""
+    s = (pack or {}).get("seller") if isinstance(pack, dict) else None
+    if not isinstance(s, dict):
+        return SELLER[lang_of(lang)].replace(", Gedimino", "\nGedimino") + f"\n{'E-Mail' if lang == 'de' else 'Email'}: {CONTACT}"
+    de = lang == "de"
+    out = [f"{s['company'][lang]}, {'Unternehmenscode' if de else 'company code'} {s['code']}", s["address"][lang]]
+    if s.get("representative"):
+        out.append(f"{'Vertreten durch' if de else 'Represented by'}: {s['representative']}")
+    if s.get("phone"):
+        out.append(f"{'Telefon' if de else 'Phone'}: {s['phone']}")
+    out.append(f"{'E-Mail' if de else 'Email'}: {s.get('email') or CONTACT}")
+    return "\n".join(out)
+
+
+# ----------------------------------------------------------------------------- email layout
+_MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+           "November", "December")
+
+
+def when_text(ts, lang, seconds=False):
+    """A moment for a customer: "29 September 2026, 10:15 UTC" / "29.09.2026, 10:15 Uhr UTC". ts: unix seconds
+    or an ISO text as the records keep it."""
+    if isinstance(ts, str):
+        try:
+            ts = calendar.timegm(time.strptime(ts.strip()[:19], "%Y-%m-%dT%H:%M:%S"))
+        except ValueError:
+            return ts
+    try:
+        g = time.gmtime(float(ts))
+    except (TypeError, ValueError, OverflowError):
+        return str(ts)
+    hm = f"{g.tm_hour:02d}:{g.tm_min:02d}" + (f":{g.tm_sec:02d}" if seconds else "")
     if lang == "de":
-        subject = "Ihre SnapEyes Bestellung"
-        text = (f"Guten Tag,\n\nvielen Dank für Ihre Bestellung. Ihr Iris-Kunstwerk wird auf Ihrer Bestellseite "
-                f"fertiggestellt, meist innerhalb weniger Minuten. Dort laden Sie auch die Datei herunter (JPEG, "
-                f"4096 px):\n\n{link}\n\n"
-                f"Bitte geben Sie diesen Link nicht weiter: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen.\n\n"
-                f"Bestellung: {order}\nKunstwerk: {n} {'Auge' if n == 1 else 'Augen'}, {style}\nBezahlt: {amount}\n\n"
-                f"Sie haben ausdrücklich zugestimmt, dass wir sofort mit der Erstellung beginnen, und bestätigt, dass "
-                f"Sie damit Ihr Widerrufsrecht verlieren, sobald wir begonnen haben. Diese E-Mail bestätigt Ihre "
-                f"Bestellung und diese Zustimmung.\n\nFragen? Antworten Sie einfach auf diese E-Mail.\n\n"
-                f"SnapEyes\n{SELLER['de']}\n")
+        return f"{g.tm_mday:02d}.{g.tm_mon:02d}.{g.tm_year}, {hm} Uhr UTC"
+    return f"{g.tm_mday} {_MONTHS[g.tm_mon - 1]} {g.tm_year}, {hm} UTC"
+
+
+def date_text(day_iso, lang):
+    """A date for a customer from "YYYY-MM-DD": "29 September 2026" / "29.09.2026"."""
+    try:
+        g = time.strptime(str(day_iso)[:10], "%Y-%m-%d")
+    except ValueError:
+        return str(day_iso)
+    return f"{g.tm_mday:02d}.{g.tm_mon:02d}.{g.tm_year}" if lang == "de" else f"{g.tm_mday} {_MONTHS[g.tm_mon - 1]} {g.tm_year}"
+
+
+def quoted(text, lang):
+    return f"„{text}“" if lang == "de" else f"“{text}”"
+
+
+def render_mail(blocks, lang, title):
+    """(text, html) of one email from blocks, so both parts always say the same:
+      ("p", text)            a paragraph (line breaks kept)
+      ("h", text)            a heading; the next block follows it directly
+      ("rows", [(k, v)])     label: value lines
+      ("link", url)          a link on its own line
+      ("quote", text)        the customer's consent, set off
+      ("rule",)              a separator before the attached legal texts
+      ("doc", text)          a legal text as plain text (the build's own line breaks kept)"""
+    esc = lambda s: html.escape(str(s), quote=True)
+    t, h = [], []
+    after_heading = False
+    for b in blocks:
+        kind = b[0]
+        if kind == "h":
+            part, hp = b[1], f'<h2 style="font-size:17px;line-height:1.3;margin:26px 0 8px">{esc(b[1])}</h2>'
+        elif kind == "p":
+            part, hp = b[1], f'<p style="margin:0 0 12px">{esc(b[1]).replace(chr(10), "<br>")}</p>'
+        elif kind == "rows":
+            part = "\n".join(f"{k}: {v}" for k, v in b[1])
+            # one "label: value" line each: wraps in every mail client and at any width (no table columns)
+            hp = '<div style="margin:0 0 12px">' + "".join(
+                f'<p style="margin:0 0 4px"><span style="color:#555">{esc(k)}:</span> {esc(v)}</p>' for k, v in b[1]) + "</div>"
+        elif kind == "link":
+            part = b[1]
+            hp = (f'<p style="margin:0 0 12px;word-break:break-all;overflow-wrap:anywhere"><a href="{esc(b[1])}" '
+                  f'style="color:#1a4fd6">{esc(b[1])}</a></p>')
+        elif kind == "quote":
+            part = "    " + b[1]
+            hp = (f'<blockquote style="margin:0 0 12px;padding:8px 12px;border-left:3px solid #999;background:#f6f6f6">'
+                  f'{esc(b[1])}</blockquote>')
+        elif kind == "rule":
+            part, hp = "_" * 64, '<hr style="border:0;border-top:1px solid #ccc;margin:28px 0">'
+        elif kind == "doc":
+            part = b[1]
+            hp = (f'<div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-size:13px;'
+                  f'line-height:1.5;color:#333">{esc(b[1])}</div>')
+        else:
+            continue
+        if t:
+            t.append("\n" if after_heading else "\n\n")
+        t.append(part)
+        h.append(hp)
+        after_heading = kind == "h"
+    text = "".join(t) + "\n"
+    doc = (f'<!doctype html><html lang="{lang_of(lang)}"><head><meta charset="utf-8">'
+           f'<meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)}</title></head>'
+           f'<body style="margin:0;padding:24px 16px;background:#ffffff;color:#1a1a1a;font-family:Arial,Helvetica,'
+           f'sans-serif;font-size:15px;line-height:1.5"><div style="max-width:640px;margin:0 auto">{"".join(h)}'
+           f'</div></body></html>')
+    return text, doc
+
+
+LAYOUT_NAMES = {   # as the order page names them (src/order/copy.ts layouts)
+    "en": {"single": "Single", "duo": "Side by side", "fusion": "Fusion", "triangle": "Triangle", "row": "In a row",
+           "grid": "Grid", "galaxy": "Galaxy"},
+    "de": {"single": "Einzeln", "duo": "Nebeneinander", "fusion": "Fusion", "triangle": "Dreieck",
+           "row": "In einer Reihe", "grid": "Raster", "galaxy": "Galaxie"},
+}
+
+
+# ----------------------------------------------------------------------------- the order confirmation
+def confirmation_mail(order, paid, k, pack, consent):
+    """The order confirmation (subject, text, html) in the order's language: the contract on a durable medium.
+    Sent before anything is made (confirmation()). It holds the order page link, the seller, what was bought, the
+    final price without VAT, the customer's consent with its recorded time and exact text, how to withdraw (with the
+    link to the order's withdrawal form, withdraw_url(): the order page link itself starts making the file), the
+    full withdrawal information with the model form and the full terms of sale (legal_pack(), the site's own
+    texts)."""
+    spec = paid.get("spec") or {}
+    lang = lang_of(spec.get("lang"))
+    de = lang == "de"
+    n = int(spec.get("eyes") or 1)
+    link = order_url(order, k, lang)
+    wlink = withdraw_url(order, k, lang)
+    price = price_text(paid.get("amount_total") or 0, lang)
+    docs = pack["docs"][lang]
+    wd, terms = docs["withdrawal"], docs["terms"]
+    layout = LAYOUT_NAMES[lang].get(spec.get("layout") or "", "")
+    rows = [("Bestellnummer" if de else "Order number", order),
+            ("Vertragsschluss" if de else "Contract date", when_text(paid.get("paid_at"), lang)),
+            ("Kunstwerk" if de else "Artwork", item_name(dict(spec, lang=lang, eyes=n))
+             + (f", {'Anordnung' if de else 'layout'} {layout}" if n > 1 and layout else ""))]
+    if spec.get("names"):
+        rows.append(("Namen auf dem Kunstwerk" if de else "Names on the artwork", spec["names"]))
+    if spec.get("title"):
+        rows.append(("Titel auf dem Kunstwerk" if de else "Title on the artwork", spec["title"]))
+    if de:
+        rows += [("Lieferung", "eine digitale Datei (JPEG, 4096 px an der längsten Seite) auf Ihrer Bestellseite; es "
+                               "wird kein Druck und kein Rahmen versendet"),
+                 ("Preis", f"{price}. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird "
+                           f"keine Umsatzsteuer berechnet."),
+                 ("Zahlung", "bezahlt über Stripe")]
+        subject = f"Ihre SnapEyes-Bestellung {order}: Bestellbestätigung"
+        blocks = [
+            ("p", "Guten Tag,"),
+            ("p", "vielen Dank für Ihre Bestellung. Diese E-Mail bestätigt Ihren Vertrag mit uns. Bitte bewahren Sie "
+                  "sie auf: Sie enthält Ihre Bestellung, Ihre Zustimmung zum sofortigen Beginn, die Widerrufsbelehrung "
+                  "mit dem Muster-Widerrufsformular und unsere AGB."),
+            ("h", "Ihre Bestellseite"),
+            ("link", link),
+            ("p", "Sobald Sie diese Seite öffnen, beginnen wir mit der Erstellung Ihres Kunstwerks (meist ist es in "
+                  "wenigen Minuten fertig), und dort laden Sie die Datei herunter. Bitte geben Sie diesen Link nicht "
+                  "weiter: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen."),
+            ("h", "Ihre Bestellung"),
+            ("rows", rows),
+            ("h", "Ihre Zustimmung zum sofortigen Beginn"),
+            ("p", f"Vor der Zahlung haben Sie am {when_text(consent['at'], lang)} bei diesem Text das Häkchen gesetzt:"),
+            ("quote", quoted(consent["text"], lang)),
+            ("p", "Wir bestätigen Ihre ausdrückliche Zustimmung und Ihre Kenntnisnahme. Mit der Erstellung Ihrer Datei "
+                  "beginnen wir erst, nachdem diese E-Mail versandt ist. Mit diesem Beginn erlischt Ihr Widerrufsrecht."),
+            ("h", "Ihr Widerrufsrecht"),
+            ("p", "Bis wir begonnen haben, können Sie den Vertrag widerrufen: mit der Schaltfläche „Vertrag hier "
+                  "widerrufen“ auf der Widerrufsseite Ihrer Bestellung. Dieser Link öffnet sie, ohne dass wir mit der "
+                  "Erstellung Ihrer Datei beginnen (anders als der Link zu Ihrer Bestellseite oben):"),
+            ("link", wlink),
+            ("p", "Sie können auch per E-Mail an info@snapeyes.com oder mit dem Muster-Widerrufsformular widerrufen. "
+                  "Die vollständige Widerrufsbelehrung steht unten in dieser E-Mail."),
+            ("h", "Unsere AGB"),
+            ("p", f"Für Ihre Bestellung gelten unsere Allgemeinen Geschäftsbedingungen in der Fassung vom "
+                  f"{date_text(pack['updated'], lang)}. Der vollständige Text steht am Ende dieser E-Mail; Sie finden "
+                  f"die AGB auch hier:"),
+            ("link", terms["url"]),
+            ("p", "Fragen? Antworten Sie einfach auf diese E-Mail."),
+            ("p", "Mit freundlichen Grüßen\nSnapEyes"),
+            ("p", seller_lines(lang, pack)),
+        ]
     else:
-        subject = "Your SnapEyes order"
-        text = (f"Hello,\n\nthank you for your order. Your iris artwork is finished on your order page, usually "
-                f"within a few minutes. There you can also download the file (JPEG, 4096 px):\n\n{link}\n\n"
-                f"Please keep this link to yourself: anyone who has it can download your artwork.\n\n"
-                f"Order: {order}\nArtwork: {n} {'eye' if n == 1 else 'eyes'}, {style}\nPaid: {amount}\n\n"
-                f"You expressly agreed that we start making your artwork right away, and you confirmed that you lose "
-                f"your right of withdrawal once we have started. This email confirms your order and that consent.\n\n"
-                f"Questions? Simply reply to this email.\n\nSnapEyes\n{SELLER['en']}\n")
-    return subject, text
+        rows += [("Delivery", "a digital file (JPEG, 4096 px on the longest side) on your order page; no print and no "
+                              "frame are shipped"),
+                 ("Price", f"{price}. This is the final price: we are not registered for VAT, so no VAT is charged."),
+                 ("Payment", "paid through Stripe")]
+        subject = f"Your SnapEyes order {order}: order confirmation"
+        blocks = [
+            ("p", "Hello,"),
+            ("p", "thank you for your order. This email confirms your contract with us. Please keep it: it holds your "
+                  "order, your consent to the immediate start, the withdrawal information with the model withdrawal "
+                  "form, and our terms of sale."),
+            ("h", "Your order page"),
+            ("link", link),
+            ("p", "When you open it, we start making your artwork (it is usually ready within a few minutes), and you "
+                  "download the file there. Please keep this link to yourself: anyone who has it can download your "
+                  "artwork."),
+            ("h", "Your order"),
+            ("rows", rows),
+            ("h", "Your consent to the immediate start"),
+            ("p", f"Before paying, on {when_text(consent['at'], lang)}, you ticked this box:"),
+            ("quote", quoted(consent["text"], lang)),
+            ("p", "We confirm your express consent and your acknowledgement. We start making your file only after this "
+                  "email has been sent. Once we have started, your right of withdrawal has ended."),
+            ("h", "Your right of withdrawal"),
+            ("p", "Until we have started, you can withdraw from the contract: with the button “Withdraw from contract "
+                  "here” on the withdrawal page of your order. This link opens it without starting to make your file "
+                  "(unlike the order page link above):"),
+            ("link", wlink),
+            ("p", "You can also withdraw by email to info@snapeyes.com or with the model withdrawal form. The full "
+                  "withdrawal information is below in this email."),
+            ("h", "Our terms of sale"),
+            ("p", f"Our terms of sale as of {date_text(pack['updated'], lang)} apply to your order. Their full "
+                  f"text is at the end of this email; you can also read them here:"),
+            ("link", terms["url"]),
+            ("p", "Questions? Simply reply to this email."),
+            ("p", "Kind regards\nSnapEyes"),
+            ("p", seller_lines(lang, pack)),
+        ]
+    blocks += [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
+    text, html_body = render_mail(blocks, lang, subject)
+    return subject, text, html_body
 
 
 def ready_mail(order, paid, k):
-    """The short "it is ready" email scripts/order_admin.py release sends after a held delivery was checked."""
+    """The short "it is ready" email scripts/order_admin.py release sends after a held delivery was checked:
+    (subject, text, html)."""
     lang = lang_of((paid.get("spec") or {}).get("lang"))
     link = order_url(order, k, lang)
+    pack = legal_pack()
     if lang == "de":
-        return ("Ihr SnapEyes Kunstwerk ist fertig",
-                f"Guten Tag,\n\nIhr Iris-Kunstwerk ist fertig und geprüft. Sie laden es auf Ihrer Bestellseite herunter:"
-                f"\n\n{link}\n\nBestellung: {order}\n\nFragen? Antworten Sie einfach auf diese E-Mail.\n\n"
-                f"SnapEyes\n{SELLER['de']}\n")
-    return ("Your SnapEyes artwork is ready",
-            f"Hello,\n\nyour iris artwork is ready and checked. Download it on your order page:\n\n{link}\n\n"
-            f"Order: {order}\n\nQuestions? Simply reply to this email.\n\nSnapEyes\n{SELLER['en']}\n")
+        subject = "Ihr SnapEyes-Kunstwerk ist fertig"
+        blocks = [("p", "Guten Tag,"), ("p", "Ihr Iris-Kunstwerk ist fertig und geprüft. Sie laden es auf Ihrer "
+                                              "Bestellseite herunter:"),
+                  ("link", link), ("p", f"Bestellung: {order}"), ("p", "Fragen? Antworten Sie einfach auf diese E-Mail."),
+                  ("p", "Mit freundlichen Grüßen\nSnapEyes"), ("p", seller_lines(lang, pack))]
+    else:
+        subject = "Your SnapEyes artwork is ready"
+        blocks = [("p", "Hello,"), ("p", "your iris artwork is ready and checked. Download it on your order page:"),
+                  ("link", link), ("p", f"Order: {order}"), ("p", "Questions? Simply reply to this email."),
+                  ("p", "Kind regards\nSnapEyes"), ("p", seller_lines(lang, pack))]
+    text, html_body = render_mail(blocks, lang, subject)
+    return subject, text, html_body
 
 
 def link_key(order, rec):
@@ -1043,36 +1400,59 @@ def link_key(order, rec):
     return k if isinstance(want, str) and hmac.compare_digest(want, key_sha(k)) else None
 
 
+def withdrawn(order, timeout=8.0):
+    """Was this order withdrawn (withdrawn.json, api/_lib/withdraw.py)? Then nothing is made and no confirmation
+    goes out."""
+    return store.exists(order_path(order, "withdrawn.json"), timeout=timeout)
+
+
 def deliver_mail(order, rec, paid, idem_suffix=""):
-    """The delivery email (the order confirmation: it confirms the order and the withdrawal waiver on a durable
-    medium), at most once per order: "sent", "done" (sent, failed or being sent before), "off", "no_address",
-    "transient" (released, so a retried webhook or the next order-page check sends it) or "failed"."""
+    """The order confirmation email (it confirms the order and the withdrawal waiver on a durable medium), at most
+    once per order. Returns "sent", "done" (sent, failed or being sent before), "off", "no_address", "no_consent"
+    (no consent recorded: nothing to confirm), "withdrawn" (the customer withdrew first: none is sent),
+    "legal_unavailable" (the legal texts could not be read: nothing sent, try again), "transient" (released, so a
+    retried webhook or the next order-page check sends it) or "failed"."""
     if not email_configured():
         return "off"
     if not paid.get("email"):
         return "no_address"
     k = link_key(order, rec)
     if k is None:
-        log(f"order {order}: delivery mail NOT sent, the ticket secret changed since the order was made")
+        log(f"order {order}: confirmation email NOT sent, the ticket secret changed since the order was made")
         return "failed"
+    if withdrawn(order):
+        return "withdrawn"
+    consent = paid_consent(order, rec, paid)
+    if consent is None:
+        log(f"order {order}: confirmation email NOT sent, no consent is recorded for this order")
+        return "no_consent"
+    pack = legal_pack()
+    if pack is None:
+        log(f"order {order}: confirmation email waits, the legal texts ({LEGAL_PACK_PATH}) could not be read")
+        return "legal_unavailable"
     path = order_path(order, "mail_delivery.json")
     if not claim_once(path):
         return "done"
-    subject, text = delivery_mail(order, paid, k)
-    res = send_mail(paid["email"], subject, text, f"snapeyes-delivery-{order}{idem_suffix}")
-    _mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res)
-    log(f"order {order}: delivery mail {res}")
+    subject, text, html_body = confirmation_mail(order, paid, k, pack, consent)
+    res = send_mail(paid["email"], subject, text, f"snapeyes-delivery-{order}{idem_suffix}", html_body)
+    _mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res,
+          legal=pack.get("updated"), consent=consent.get("version"))
+    log(f"order {order}: confirmation email {res}")
     return res
 
 
+MAIL_WAIT = ("transient", "done", "legal_unavailable")     # deliver_mail results that are retried, not held
+MAIL_HOLD = ("failed", "bad_address", "no_address", "no_consent")   # results that hold the order for the owner
+
+
 def after_paid(order, rec, paid):
-    """The order page confirmed a payment before the webhook did: the delivery email and the owner's note go out
-    now (each once; the webhook finds them claimed). Best effort here: nothing is made for the order until
-    confirmation() finds the email sent, and it tries again itself."""
+    """The order page (or checkout, or the clean-up) confirmed a payment before the webhook did: the confirmation
+    email and the owner's note go out now (each once; the webhook finds them claimed). Best effort here: nothing is
+    made for the order until confirmation() finds the email sent, and it tries again itself."""
     try:
         deliver_mail(order, rec, paid)
     except Exception as e:  # noqa: never costs the customer their order page
-        log(f"order {order}: delivery mail from the order page failed: {type(e).__name__} {e}")
+        log(f"order {order}: confirmation email from the order page failed: {type(e).__name__} {e}")
     note_paid(order, paid)
 
 
@@ -1090,9 +1470,10 @@ def confirmation_needed(paid):
 def confirmation(order, rec, paid, cur=None, send=True):
     """Where the order confirmation stands before anything is made for a paid order:
       "sent"     it went out (or none is needed: a test order where email is off); making may start
-      "waiting"  it is being sent, or a retry is due: ask again shortly, make nothing yet
-      "held"     it cannot go out (Resend refused, no or bad address, email off for a live payment): the order is
-                 held for review and the owner was told; nothing is made until they send it
+      "waiting"  it is being sent, or a retry is due (Resend busy, the legal texts not readable): ask again shortly,
+                 make nothing yet; after MAIL_SLOW the owner is told once
+      "held"     it cannot go out (Resend refused, no or bad address, no consent recorded, email off for a live
+                 payment): the order is held for review and the owner was told; nothing is made until they send it
     cur: mail_delivery.json when the caller has read it already. send: try to send it now when nobody has."""
     if not confirmation_needed(paid):
         return "sent"
@@ -1112,10 +1493,31 @@ def confirmation(order, rec, paid, cur=None, send=True):
     res = deliver_mail(order, rec, paid)
     if res == "sent":
         return "sent"
-    if res in ("transient", "done"):
+    if res == "withdrawn":
+        return "waiting"         # the status call shows the order as withdrawn; nothing is made
+    if res in MAIL_WAIT:
+        mail_slow(order, paid, res)
         return "waiting"
     hold_confirmation(order, paid, res)
     return "held"
+
+
+def mail_slow(order, paid, why):
+    """Tell the owner once when a paid order's confirmation has waited more than MAIL_SLOW (the customer's page
+    says it is on its way, and nothing is made until it went out)."""
+    try:
+        age = time.time() - float(paid.get("paid_at") or time.time())
+    except (TypeError, ValueError):
+        age = 0
+    if age < MAIL_SLOW or why == "done":
+        return
+    reason = ("the legal texts for the email could not be read from " + site() + LEGAL_PACK_PATH
+              if why == "legal_unavailable" else "Resend did not take it (busy or unreachable)")
+    owner_note(order, "mail_slow", f"SnapEyes: order {order} still waits for its confirmation email",
+               f"Order {order} was paid {int(age // 60)} minutes ago, but its order confirmation email has not gone out: "
+               f"{reason}.\nNothing is made before it has. It is tried again whenever the order page asks and when "
+               f"Stripe retries the webhook. If it does not go out soon, check {site()}{LEGAL_PACK_PATH} and Resend, then:\n"
+               f"  python scripts/order_admin.py resend-mail {order}\n")
 
 
 def mark_review(order, reason, eye=0):
@@ -1145,7 +1547,8 @@ def hold_confirmation(order, paid, why):
                f"withdrawal).\nCustomer: {paid.get('email') or 'no email'}\n\n"
                f"Fix the cause (RESEND_API_KEY, the snapeyes.com domain at Resend), then:\n"
                f"  python scripts/order_admin.py resend-mail {order}\n"
-               f"If you sent the confirmation yourself (for example to a corrected address):\n"
+               f"If you sent the confirmation yourself (for example to a corrected address; it must hold the same "
+               f"texts: the order, the consent, the withdrawal information and the terms):\n"
                f"  python scripts/order_admin.py mailed-by-hand {order}\n"
                f"Either one lets the order page go on.\nStatus: python scripts/order_admin.py status {order}\n")
 
@@ -1232,49 +1635,71 @@ def stripe_verdict(order, rec, record=True):
                         f"recorded by the clean-up")
                     after_paid(order, rec, paid)
             return "paid"
-        if sess.get("status") in ("open", "complete"):
+        created = sess.get("created") if isinstance(sess.get("created"), (int, float)) else None
+        if sess.get("status") == "open" or (sess.get("status") == "complete" and
+                                            (created is None or created > time.time() - SETTLE_DAYS * 86400)):
             verdict = "open"
+        # a session completed but still unpaid after SETTLE_DAYS: its delayed payment failed, it is no money
     return verdict
+
+
+SETTLE_DAYS = 20             # a delayed payment method (SEPA and the like) settles within about 14 business days
 
 
 def _order_folders(days=None):
     """The order folder names to look at: those of the given yymmdd days, or every one."""
     if days is None:
         return [r["name"] for r in store.list_all("orders") if r["folder"] and store.ORDER_RE.fullmatch(r["name"])]
-    names = []
-    for d in days:
-        names += [r["name"] for r in store.list_all("orders", search=d + "-")
-                  if r["folder"] and r["name"].startswith(d + "-") and store.ORDER_RE.fullmatch(r["name"])]
-    return sorted(set(names))
+    return sorted({o for rows in day_folders(days).values() for o in rows})
 
 
-def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.0):
-    """Delete UNPAID orders older than `hours` (their eye photos and records), and the ticketuse/ and draftlog/
-    markers older than MARKER_DAYS days. An order with a Checkout Session is asked of Stripe first (stripe_verdict):
-    a paid one is recorded as paid instead of deleted, one still open or settling is kept, and nothing is deleted
-    when Stripe cannot be asked. Without yes nothing changes anywhere (Stripe is still asked, nothing recorded).
-    days: the order-id days (yymmdd) to look at (the daily run's short list); None = every order folder.
-    Stops when less than stop_left seconds of the invocation are left (more: true). Returns the counts."""
+def day_folders(days):
+    """{yymmdd: [order folder names made that day]} for the given days, listed 8 days at a time."""
+    days = sorted(set(days))
+    out = {}
+    for i in range(0, len(days), 8):
+        batch = days[i:i + 8]
+        rows = parallel([lambda d=d: store.list_all("orders", search=d + "-") for d in batch])
+        for d, rs in zip(batch, rows):
+            out[d] = sorted(r["name"] for r in rs if r["folder"] and r["name"].startswith(d + "-")
+                            and store.ORDER_RE.fullmatch(r["name"]))
+    return out
+
+
+def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.0, names=None, markers=True):
+    """Delete UNPAID orders older than `hours` (their eye photos and records), and (markers) the ticketuse/,
+    draftlog/ and withdrawlog/ markers older than MARKER_DAYS days. An order with a Checkout Session is asked of
+    Stripe first (stripe_verdict): a paid one is recorded as paid instead of deleted, one still open or settling is
+    kept, and nothing is deleted when Stripe cannot be asked. Without yes nothing changes anywhere (Stripe is still
+    asked, nothing recorded). names: the order folders to look at; else those of the given yymmdd days; else every
+    order folder. Stops when less than stop_left seconds of the invocation are left (more: true). Returns the counts
+    and "left": the unpaid orders still there (too young, kept, or not reached)."""
     say = out or log
     cutoff = time.time() - hours * 3600
-    res = {"deleted": 0, "kept": 0, "recorded": 0, "markers": 0, "more": False}
-    names = _order_folders(days)
+    res = {"deleted": 0, "kept": 0, "recorded": 0, "markers": 0, "more": False, "left": []}
+    names = list(names) if names is not None else _order_folders(days)
+    left = set()
     todo = []                     # (order, record) of the unpaid orders old enough, read 8 at a time
     for i in range(0, len(names), 8):
         if L.time_left() < stop_left:
             res["more"] = True
+            left.update(names[i:])
             break
         batch = names[i:i + 8]
         facts = parallel([lambda o=o: (store.exists(f"orders/{o}/paid.json"), store.get_json(f"orders/{o}/order.json"))
                           for o in batch])
         for order, (is_paid, rec) in zip(batch, facts):
             made = rec.get("created_at") if isinstance(rec, dict) else None
-            if not is_paid and isinstance(made, (int, float)) and made <= cutoff:
+            if is_paid or not isinstance(rec, dict):
+                continue          # paid, or a folder that is not a draft order (test runs): left alone
+            if isinstance(made, (int, float)) and made <= cutoff:
                 todo.append((order, rec))
-            # else: paid, a young draft, or a folder that is not a draft order (test runs): left alone
-    for order, rec in todo:
+            else:
+                left.add(order)   # a young draft
+    for n, (order, rec) in enumerate(todo):
         if L.time_left() < stop_left:
             res["more"] = True
+            left.update(o for o, _ in todo[n:])
             break
         verdict = stripe_verdict(order, rec, record=yes)
         if verdict == "paid":
@@ -1283,6 +1708,7 @@ def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.
             continue
         if verdict in ("open", "unknown"):
             res["kept"] += 1
+            left.add(order)
             say(f"keep {order} made {rec.get('created')}: its Stripe session is "
                 f"{'still open or settling' if verdict == 'open' else 'unknown here (no Stripe key or no answer)'}")
             continue
@@ -1293,16 +1719,108 @@ def purge_unpaid(hours=PURGE_HOURS, yes=False, out=None, days=None, stop_left=8.
             rest = [p for p in files if not p.endswith("/order.json")]
             store.delete_many(rest)
             store.delete_many([p for p in files if p.endswith("/order.json")])
+        else:
+            left.add(order)
         res["deleted"] += 1
+    if markers and not res["more"]:
+        res["markers"] = purge_markers(yes, stop_left, res)
+    res["left"] = sorted(left)
+    return res
+
+
+MARKER_TOPS = ("ticketuse", "draftlog", "withdrawlog")
+
+
+def purge_markers(yes, stop_left, res=None):
+    """Remove the per-day marker folders (ticketuse/, draftlog/, withdrawlog/) older than MARKER_DAYS. Returns how
+    many files went (or would go)."""
     old = day(time.time() - MARKER_DAYS * 86400)
-    for top in ("ticketuse", "draftlog"):
+    n = 0
+    for top in MARKER_TOPS:
         for row in store.list_all(top):
-            if res["more"] or L.time_left() < stop_left:
-                res["more"] = True
-                break
+            if L.time_left() < stop_left:
+                if res is not None:
+                    res["more"] = True
+                return n
             if row["folder"] and re.fullmatch(r"[0-9]{6}", row["name"]) and row["name"] < old:
                 files = folder_files(f"{top}/{row['name']}")
                 if yes:
                     store.delete_many(files)
-                res["markers"] += len(files)
+                n += len(files)
+    return n
+
+
+# What stays of a PAID order once its files are deleted (on request, after a withdrawal, or 12 months after payment):
+# the order's records, no images. The privacy policy ("Order records") keeps them as proof of the contract and for
+# accounting: order.json and paid.json (order number, date, price, payment, email, the artwork's details, consent),
+# the email and note marks, the withdrawal statements, and the marks that say what happened.
+KEEP_NAMES = ("order.json", "paid.json", "mail_delivery.json", "deleted.json", "expired.json", "withdrawn.json",
+              "withdrawal.json", "making.json")
+KEEP_PREFIXES = ("note_", "extra_payment_", "withdrawal_")
+
+
+def kept_record(path):
+    name = path.rsplit("/", 1)[-1]
+    return name in KEEP_NAMES or name.startswith(KEEP_PREFIXES)
+
+
+def erase_files(order, why, yes=True, out=None):
+    """Delete an order's files: all of them when it is unpaid; for a paid order everything but its records
+    (kept_record). deleted.json is written first, so the order page says "deleted" (410) even if a run stops half
+    way. Returns (files deleted or to delete, files in all)."""
+    say = out or log
+    files = folder_files(f"orders/{order}")
+    paid = store.exists(f"orders/{order}/paid.json")
+    gone = [p for p in files if not kept_record(p)] if paid else files
+    say(f"{'DELETE' if yes else 'would delete'} {'paid' if paid else 'unpaid'} {order} ({why}): {len(gone)} of "
+        f"{len(files)} files")
+    if yes and paid:
+        store.put(f"orders/{order}/deleted.json", store.json_bytes({"t": int(time.time()), "iso": iso(), "why": why}),
+                  "application/json", upsert=True)
+    if yes and gone:
+        store.delete_many([p for p in gone if not p.endswith("/order.json")])
+        store.delete_many([p for p in gone if p.endswith("/order.json")])
+    return len(gone), len(files)
+
+
+PAID_KEEP_DAYS = 365         # the files of a paid order are kept 12 months after payment (privacy policy), then go
+
+
+def expire_paid(days_kept=PAID_KEEP_DAYS, yes=False, out=None, names=None, stop_left=8.0):
+    """Delete the files of PAID orders paid more than days_kept days ago (their records stay: erase_files), once
+    (expired.json). names: the order folders to look at (the daily run's), else every order folder. Returns
+    {expired, files, left, more}: left = paid orders among names that are not due yet (or not reached)."""
+    say = out or log
+    cutoff = time.time() - days_kept * 86400
+    names = list(names) if names is not None else _order_folders(None)
+    res = {"expired": 0, "files": 0, "left": [], "more": False}
+    left = set()
+    for i in range(0, len(names), 8):
+        if L.time_left() < stop_left:
+            res["more"] = True
+            left.update(names[i:])
+            break
+        batch = names[i:i + 8]
+        facts = parallel([lambda o=o: (get_paid(o), store.exists(f"orders/{o}/expired.json")) for o in batch])
+        for order, (paid, done) in zip(batch, facts):
+            if not paid or done:
+                continue
+            t = paid.get("paid_at")
+            if not isinstance(t, (int, float)) or t >= cutoff:
+                left.add(order)
+                continue
+            if L.time_left() < stop_left:
+                res["more"] = True
+                left.add(order)
+                continue
+            n, _ = erase_files(order, f"kept {days_kept} days after payment", yes, say)
+            if yes:
+                store.put(f"orders/{order}/expired.json", store.json_bytes({"t": int(time.time()), "iso": iso(),
+                                                                           "paid_at": t}),
+                          "application/json", upsert=True)
+            else:
+                left.add(order)
+            res["expired"] += 1
+            res["files"] += n
+    res["left"] = sorted(left)
     return res

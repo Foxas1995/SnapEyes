@@ -7,11 +7,15 @@ a 400 and nothing else happens.
 
 Handled: checkout.session.completed and checkout.session.async_payment_succeeded with payment_status "paid" and
 metadata naming an order of ours (with the fingerprint of its access key): the order is marked paid (paid.json,
-created once: a replayed or retried event changes nothing), the customer's email is kept with it, the delivery email
-(the order confirmation) goes out once when email is configured (EN or DE by the order's language), and the owner
-gets a short note. When that email cannot go out (Resend refused it, no or bad address, email off for a live
-payment), the order is held for review and the owner told: nothing is made before the confirmation went out.
+created once: a replayed or retried event changes nothing), the customer's email is kept with it, the order
+confirmation email goes out once when email is configured (EN or DE by the order's language; it carries the
+contract, the consent, the withdrawal information and the terms, pay.confirmation_mail), and the owner gets a short
+note. When that email cannot go out (Resend refused it, no or bad address, no consent recorded, email off for a
+live payment), the order is held for review and the owner told: nothing is made before the confirmation went out.
+Resend busy or the legal texts unreadable: 503, and Stripe retries. An order the customer withdrew while the payment
+was settling gets no confirmation; the owner is told to refund it (pay.record_paid).
 A second paid session of an order that is already paid is recorded apart and the owner told to refund it.
+A paid session for an order whose record is gone is answered 200, and the owner is told to refund it.
 A test-mode session where test orders are not allowed (production), every other event, and a session that is not
 paid yet are answered 200 at once and ignored.
 
@@ -48,6 +52,16 @@ def on_event(event):
     rec = store.get_json(f"orders/{order}/order.json", timeout=8.0)
     if not isinstance(rec, dict):
         pay.log(f"webhook {event.get('id')}: order {order} is PAID at Stripe but has no order record here")
+        if pay.session_counts(obj):
+            # a payment for an order this site no longer has (deleted meanwhile): never silent, the owner refunds it
+            sid = str(obj.get("id") or "")
+            pay.note_once(f"notes/unknown_paid_{pay._order_tag(sid)}.json", "unknown_paid",
+                          f"SnapEyes: a payment for order {order} arrived, but the order is gone",
+                          f"Stripe reports a PAID Checkout Session {sid} ({pay.amount_text(obj.get('amount_total') or 0, 'en')}, "
+                          f"{'live' if obj.get('livemode') else 'TEST mode'}) for order {order}, but this site has no "
+                          f"record of that order any more.\nNothing can be made for it. Please refund it in the Stripe "
+                          f"Dashboard (Payments, search {obj.get('payment_intent') or sid}, Refund) and write to the "
+                          f"customer ({(obj.get('customer_details') or {}).get('email') or 'email at Stripe'}).\n")
         return 200, {"ok": True, "ignored": "unknown order"}
     if not pay.session_matches(obj, order, rec):
         pay.log(f"webhook {event.get('id')}: order {order}: the session does not match the order record, ignored")
@@ -63,9 +77,10 @@ def on_event(event):
         return 200, {"ok": True, "order": order, "new": False, "extra_payment": True}
     mail = pay.deliver_mail(order, rec, paid)      # once per order (claimed), also when the order page came first
     pay.note_paid(order, paid)
-    if mail == "transient":
+    if mail in ("transient", "legal_unavailable"):
+        # Resend busy, or the legal texts the confirmation carries could not be read: Stripe retries the event
         return 503, {"ok": False, "order": order, "reason": "mail_retry"}
-    if mail in ("failed", "bad_address", "no_address") or (mail == "off" and pay.confirmation_needed(paid)):
+    if mail in pay.MAIL_HOLD or (mail == "off" and pay.confirmation_needed(paid)):
         # the confirmation cannot go out: nothing is made for the order until the owner sends it
         pay.hold_confirmation(order, paid, mail)
     return 200, {"ok": True, "order": order, "new": new, "mail": mail}

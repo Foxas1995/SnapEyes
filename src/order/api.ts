@@ -72,7 +72,8 @@ export interface CheckoutInfo {
 export interface DraftReply { order: string; k: string; eye: number; created: boolean; expires_at: number }
 export interface CheckoutReply { url: string; order: string; amount: number; currency: string; eyes: number; style: string; expires_at: number; order_url?: string }
 
-export type OrderState = 'unpaid' | 'pending' | 'paid' | 'making' | 'review' | 'ready' | 'deleted';
+// withdrawn: the customer withdrew from the contract before anything was made (./withdraw.ts); nothing is made
+export type OrderState = 'unpaid' | 'pending' | 'paid' | 'making' | 'review' | 'ready' | 'deleted' | 'withdrawn';
 
 export interface OrderEye { eye: number; made?: boolean; uploaded?: boolean; ref?: string | null; preview_url?: string | null }
 
@@ -98,9 +99,13 @@ export interface OrderStatus {
   payments?: boolean;
   checkout?: { eyes?: number; style?: string; amount?: number };
   payment_check?: string;
+  // "pending" of a paid order: what it waits for ("confirmation_email": the order confirmation has not gone out yet)
+  waiting_for?: string;
+  // the withdrawal the server recorded for this order, if any (./withdraw.ts readWithdrawal reads it)
+  withdrawal?: unknown;
 }
 
-export const ORDER_STATES: readonly OrderState[] = ['unpaid', 'pending', 'paid', 'making', 'review', 'ready', 'deleted'];
+export const ORDER_STATES: readonly OrderState[] = ['unpaid', 'pending', 'paid', 'making', 'review', 'ready', 'deleted', 'withdrawn'];
 
 /** A status reply we can act on: a known state and a list of eyes. */
 export function isStatus(d: unknown): d is OrderStatus {

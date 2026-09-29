@@ -7,7 +7,9 @@ POST /api/order  {action: "arrange", order, k, slots: [old eye numbers in the ne
 POST /api/order  {action: "status", order, k, s?, previews?}
 POST /api/order  {action: "make", order, k, eye: 1-8, s?}
 POST /api/order  {action: "compose", order, k, s?}
-GET  /api/order?cron=purge   the daily clean-up (Vercel Cron, "Authorization: Bearer <CRON_SECRET>")
+POST /api/order  {action: "withdraw", order, k?, name, email, lang, nonce?}   the online withdrawal function
+GET  /api/order  from Vercel Cron (its x-vercel-cron-schedule header or vercel-cron user agent), or with ?cron=purge:
+                 the daily clean-up (api/_lib/cleanup.py), only with "Authorization: Bearer <CRON_SECRET>"
 
 draft: one eye of an unpaid order, uploaded on its own (the 4.5 MB request limit): crop = the deglared iris square the
   preview was made from (/api/deglare's crop), preview = the exact image string /api/enhance returned, pad = the pad
@@ -22,7 +24,8 @@ draft and arrange answer 503 payments_not_configured, before anything is read or
   takes no orders (pay.ordering_problem(): no Stripe, a live key without email, a test key on production).
 arrange: re-maps the uploaded eyes after the customer removed or reordered one, without uploading them again
   (the work ticket that proved them lives 15 minutes). Unlisted slots are dropped with their files.
-status: unpaid / pending / paid / making / review / ready, the eyes, and when ready a fresh signed download link
+status: unpaid / pending / paid / making / review / ready / withdrawn / deleted, the eyes, and when ready a fresh
+  signed download link
   (7 days). Before the webhook has arrived, the payment is confirmed with Stripe (the session id s from the success
   page, or the order's latest one). A paid order says "paid" only once its order confirmation email went out: until
   then "pending" with waiting_for "confirmation_email" (this call sends it when nobody has), and "review" when it
@@ -36,6 +39,10 @@ make: renders one eye of a PAID order at 4096 px from its stored crop and previe
 compose: once every eye is made, the artwork with the paid style, layout, names and title (master_compose's own
   function), and the download link. When a check says a person should look first, the delivery waits (state review)
   and the owner is told; scripts/order_admin.py release hands it out.
+withdraw: the online withdrawal function (api/_lib/withdraw.py): records the statement with the time it arrived,
+  stops the order when nothing was made yet (state withdrawn: make and compose answer 409 withdrawn, draft and
+  checkout too), emails the receipt and tells the owner. Where the right had already lapsed it is recorded and
+  answered all the same. A status reply carries "withdrawal" once a statement exists.
 
 Every reply is JSON; errors are {ok: false, reason, error, retry} as the paid endpoints answer them. API.md in the
 work notes lists them all."""
@@ -47,6 +54,8 @@ from PIL import Image
 from _lib import iris as L
 from _lib import store
 from _lib import pay
+from _lib import withdraw as W
+from _lib import cleanup as C
 import master_eye as ME
 import master_compose as MC
 
@@ -105,6 +114,10 @@ def _image(s, what, cap):
     except Exception:  # noqa
         raise L.ClientError(f"We could not read the {what}.") from None
     return raw, fmt, min(w, h)
+
+
+def _withdrawn():
+    return store.Answer(409, "withdrawn", "This order was withdrawn, so nothing is made for it.", False)
 
 
 def _in_review():
@@ -209,8 +222,12 @@ def _open_draft(order, k):
     if pay.draft_expired(rec):
         raise store.Answer(410, "draft_expired", "This unpaid order is more than 24 hours old. Please start a new one.",
                            False)
-    if store.exists(f"orders/{order}/paid.json", timeout=8.0):
+    paid, stopped = pay.parallel([lambda: store.exists(f"orders/{order}/paid.json", timeout=8.0),
+                                  lambda: store.exists(f"orders/{order}/withdrawn.json", timeout=8.0)])
+    if paid:
         raise store.Answer(409, "order_paid", "This order is paid, so its eyes can no longer change.", False)
+    if stopped:
+        raise _withdrawn()
     return rec
 
 
@@ -255,13 +272,19 @@ def arrange(body):
 
 # ----------------------------------------------------------------------------- status
 def _unpaid(order, rec, pending, check):
-    drafts = pay.parallel([lambda i=i: store.get_json(f"orders/{order}/draft/eye_{i}.json", timeout=8.0)
-                           for i in range(1, pay.MAX_EYES + 1)])
+    got = pay.parallel([lambda i=i: store.get_json(f"orders/{order}/draft/eye_{i}.json", timeout=8.0)
+                        for i in range(1, pay.MAX_EYES + 1)] +
+                       [lambda: store.get_json(f"orders/{order}/withdrawn.json", timeout=8.0),
+                        lambda: store.get_json(f"orders/{order}/withdrawal.json", timeout=8.0)])
+    drafts, stopped, summary = got[:pay.MAX_EYES], got[pay.MAX_EYES], got[pay.MAX_EYES + 1]
     eyes = [{"eye": i, "uploaded": True, "ref": d.get("ref"), "uploaded_at": d.get("uploaded_at")}
             for i, d in enumerate(drafts, 1) if isinstance(d, dict)]
-    out = {"ok": True, "order": order, "state": "pending" if pending else "unpaid", "lang": pay.lang_of(rec.get("lang")),
+    state = "withdrawn" if isinstance(stopped, dict) else ("pending" if pending else "unpaid")
+    out = {"ok": True, "order": order, "state": state, "lang": pay.lang_of(rec.get("lang")),
            "expires_at": pay.expires_at(rec), "expired": pay.draft_expired(rec), "eyes": eyes,
            "payments": pay.ordering_open()}
+    if isinstance(summary, dict):
+        out["withdrawal"] = _withdrawal_view(summary)
     co = rec.get("checkout")
     if isinstance(co, dict) and isinstance(co.get("spec"), dict):
         out["checkout"] = {"eyes": co["spec"].get("eyes"), "style": co["spec"].get("style"), "amount": co.get("amount"),
@@ -272,16 +295,26 @@ def _unpaid(order, rec, pending, check):
 
 
 def _paid_facts(order, n, mail=False):
-    """(made per eye, delivery, review, released, deleted), and with mail=True mail_delivery.json as a sixth."""
+    """What is stored for a paid order, read at once: made (per eye), delivery, review, released, deleted,
+    withdrawn (withdrawn.json), withdrawal (the latest statement's summary) and, with mail=True, mail
+    (mail_delivery.json)."""
     folder = f"orders/{order}"
     res = pay.parallel([lambda i=i: store.exists(f"{folder}/eye_{i}.jpg", timeout=8.0) for i in range(1, n + 1)] +
                        [lambda: store.get_json(f"{folder}/delivery.json", timeout=8.0),
                         lambda: store.get_json(f"{folder}/review.json", timeout=8.0),
                         lambda: store.exists(f"{folder}/release.json", timeout=8.0),
-                        lambda: store.exists(f"{folder}/deleted.json", timeout=8.0)] +
+                        lambda: store.exists(f"{folder}/deleted.json", timeout=8.0),
+                        lambda: store.get_json(f"{folder}/withdrawn.json", timeout=8.0),
+                        lambda: store.get_json(f"{folder}/withdrawal.json", timeout=8.0)] +
                        ([lambda: store.get_json(f"{folder}/mail_delivery.json", timeout=8.0)] if mail else []))
-    out = (list(res[:n]), res[n], res[n + 1], bool(res[n + 2]), bool(res[n + 3]))
-    return out + (res[n + 4],) if mail else out
+    return {"made": list(res[:n]), "delivery": res[n], "review": res[n + 1], "released": bool(res[n + 2]),
+            "deleted": bool(res[n + 3]), "withdrawn": res[n + 4], "withdrawal": res[n + 5],
+            "mail": res[n + 6] if mail else None}
+
+
+def _withdrawal_view(summary):
+    """The latest withdrawal statement as the order page shows it (no personal data)."""
+    return {k: summary.get(k) for k in ("id", "at", "received", "state", "effective", "reason", "mail")}
 
 
 def _deleted():
@@ -290,11 +323,13 @@ def _deleted():
 
 
 def _paid_reply(order, paid, made, delivery, review, released, url=None, previews=False, deleted=False,
-                waiting=None):
+                waiting=None, withdrawn=None, withdrawal=None):
     spec = paid["spec"]
     n = spec["eyes"]
     held = isinstance(delivery, dict) and bool(delivery.get("needs_review")) and not released
-    if deleted:
+    if isinstance(withdrawn, dict):
+        state = "withdrawn"       # the customer withdrew before anything was made: nothing is made or delivered
+    elif deleted:
         state = "deleted"
     elif isinstance(delivery, dict) and not held:
         state = "ready"
@@ -312,7 +347,9 @@ def _paid_reply(order, paid, made, delivery, review, released, url=None, preview
            "eyes": [{"eye": i, "made": bool(made[i - 1])} for i in range(1, n + 1)]}
     if state == "pending":
         out["waiting_for"] = waiting
-    if state == "deleted":
+    if isinstance(withdrawal, dict):
+        out["withdrawal"] = _withdrawal_view(withdrawal)
+    if state in ("deleted", "withdrawn"):
         return out
     if state == "ready":
         out["download"] = _download(order, delivery["key"], delivery, url)
@@ -341,17 +378,18 @@ def _status(order, rec, s=None, previews=False):
         return _unpaid(order, rec, None, "test_mode")
     if not paid:
         return _unpaid(order, rec, pending, check)
-    made, delivery, review, released, deleted, mail = _paid_facts(order, paid["spec"]["eyes"], mail=True)
-    waiting = None
-    if not deleted and not isinstance(delivery, dict) and not isinstance(review, dict):
+    f = _paid_facts(order, paid["spec"]["eyes"], mail=True)
+    review, waiting = f["review"], None
+    if not f["deleted"] and not isinstance(f["withdrawn"], dict) and not isinstance(f["delivery"], dict) \
+            and not isinstance(review, dict):
         # the order confirmation first (it confirms the withdrawal waiver): nothing is made before it went out
-        c = pay.confirmation(order, rec, paid, cur=mail)
+        c = pay.confirmation(order, rec, paid, cur=f["mail"])
         if c == "held":
             review = {"reason": pay.MAIL_REVIEW}
         elif c == "waiting":
             waiting = "confirmation_email"
-    return _paid_reply(order, paid, made, delivery, review, released, previews=previews, deleted=deleted,
-                       waiting=waiting)
+    return _paid_reply(order, paid, f["made"], f["delivery"], review, f["released"], previews=previews,
+                       deleted=f["deleted"], waiting=waiting, withdrawn=f["withdrawn"], withdrawal=f["withdrawal"])
 
 
 def status(body):
@@ -379,12 +417,15 @@ def make(body):
         raise L.ClientError(f"This order has {n} eye{'s' if n > 1 else ''}.")
     folder = f"orders/{order}"
     # short and not retried: these reads must not eat the render's time (master_eye needs ~46 s of the 52)
-    stored, review, drec, deleted, mail = pay.parallel([
+    stored, review, drec, deleted, mail, stopped = pay.parallel([
         lambda: store.exists(f"{folder}/eye_{eye}.jpg", timeout=5.0, retry=False),
         lambda: store.get_json(f"{folder}/review.json", timeout=5.0, retry=False),
         lambda: store.get_json(f"{folder}/draft/eye_{eye}.json", timeout=5.0, retry=False),
         lambda: store.exists(f"{folder}/deleted.json", timeout=5.0, retry=False),
-        lambda: store.get_json(f"{folder}/mail_delivery.json", timeout=5.0, retry=False)])
+        lambda: store.get_json(f"{folder}/mail_delivery.json", timeout=5.0, retry=False),
+        lambda: store.exists(f"{folder}/withdrawn.json", timeout=5.0, retry=False)])
+    if stopped:
+        raise _withdrawn()
     if deleted:
         raise _deleted()
     if isinstance(review, dict) and not stored:
@@ -412,6 +453,9 @@ def make(body):
             raise _in_review()
         req.update(crop=base64.b64encode(craw).decode("ascii"), preview=base64.b64encode(praw).decode("ascii"), pad=pad)
         del craw, praw
+        # making.json: the moment performance began (the first render of this order, right before the model is
+        # called), read by the withdrawal function: from here on the right of withdrawal has lapsed
+        _making_started(order, eye, mail)
     try:
         r = ME.master_eye(req)
     except store.Answer as a:
@@ -424,13 +468,30 @@ def make(body):
             "seconds": r.get("seconds")}
 
 
+def _making_started(order, eye, mail):
+    """Record when making began, once per order (never raises: the stored eyes are the evidence otherwise)."""
+    now = time.time()
+    try:
+        store.put(f"orders/{order}/making.json",
+                  store.json_bytes({"t": round(now, 3), "iso": pay.iso(now), "eye": eye,
+                                    "confirmation_at": mail.get("t") if isinstance(mail, dict) else None}),
+                  "application/json", upsert=False, timeout=3.0, retry=False)
+    except store.StorageExists:
+        pass
+    except store.StorageError as e:
+        pay.log(f"order {order}: making.json not stored: {e}")
+
+
 def compose(body):
     order, k = body.get("order"), body.get("k")
     rec = pay.load_order(order, k)
     paid = _require_paid(order, rec, body.get("s"))
     spec = paid["spec"]
     n = spec["eyes"]
-    made, delivery, review, released, deleted = _paid_facts(order, n)
+    f = _paid_facts(order, n)
+    made, delivery, review, released, deleted = f["made"], f["delivery"], f["review"], f["released"], f["deleted"]
+    if isinstance(f["withdrawn"], dict):
+        raise _withdrawn()
     if deleted:
         raise _deleted()
     if isinstance(delivery, dict):
@@ -461,14 +522,15 @@ def compose(body):
 
 
 # ----------------------------------------------------------------------------- routing
-ACTIONS = {"draft": draft, "arrange": arrange, "status": status, "make": make, "compose": compose}
+ACTIONS = {"draft": draft, "arrange": arrange, "status": status, "make": make, "compose": compose,
+           "withdraw": W.withdraw}
 
 
 def dispatch(body):
     act = body.get("action")
     fn = ACTIONS.get(act) if isinstance(act, str) else None
     if fn is None:
-        raise L.ClientError("Send an action: draft, arrange, status, make or compose.")
+        raise L.ClientError("Send an action: draft, arrange, status, make, compose or withdraw.")
     return fn(body)
 
 
@@ -482,30 +544,29 @@ def get_status(q):
     return _status(q["o"], rec, q.get("s"), q.get("p") in ("1", "true"))
 
 
-CRON_DAYS = 4                # the daily clean-up looks at orders made up to this many days before its cut-off (a
-                             # longer gap: scripts/order_admin.py purge --yes looks at every order)
+def is_cron(req, q):
+    """A clean-up call: Vercel Cron marks its requests (x-vercel-cron-schedule, user agent vercel-cron/1.0; the
+    vercel.json path is the plain /api/order), or ?cron=purge by hand. Either way CRON_SECRET decides."""
+    ua = str(req.headers.get("user-agent") or "").lower()
+    return q.get("cron") == "purge" or bool(req.headers.get("x-vercel-cron-schedule")) or ua.startswith("vercel-cron/")
 
 
 def cron_purge(req):
-    """The daily clean-up (vercel.json crons, once a day on Hobby): unpaid orders older than 26 h and the old
-    upload markers go (pay.purge_unpaid, which asks Stripe before deleting an order that had a checkout). Only for
-    Vercel Cron: "Authorization: Bearer <CRON_SECRET>"."""
+    """The daily clean-up (vercel.json crons, once a day on Hobby): api/_lib/cleanup.py run(), time-boxed inside
+    this 60 s function (it stops with more: true 10 s before the budget ends; the next day goes on). Only with
+    "Authorization: Bearer <CRON_SECRET>"."""
     secret = pay._env("CRON_SECRET")
     if len(secret) < 16:
         raise store.Answer(503, "cron_not_configured", "CRON_SECRET is not set.", False)
     got = str(req.headers.get("authorization") or "")
     if not hmac.compare_digest(got.encode("utf-8", "replace"), ("Bearer " + secret).encode("utf-8")):
         raise store.Answer(403, "forbidden", "Not allowed.", False)
-    top = time.time() - pay.PURGE_HOURS * 3600
-    days = sorted({pay.day(top - i * 86400) for i in range(CRON_DAYS + 1)})
-    res = pay.purge_unpaid(pay.PURGE_HOURS, yes=True, days=days, stop_left=10.0)
-    pay.log(f"clean-up: {res}")
-    return dict(res, ok=True)
+    return C.run(yes=True, stop_left=10.0)
 
 
 def handle_get(req):
     q = _query(req)
-    if q.get("cron") == "purge":
+    if is_cron(req, q):
         pay.serve(req, "order cron", lambda body: cron_purge(req), gate=False)
         return
     pay.serve(req, "order", lambda body: get_status(q), gate=False)

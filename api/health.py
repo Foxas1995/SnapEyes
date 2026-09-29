@@ -26,6 +26,8 @@ def handle(req):
             # and whether a Stripe TEST payment unlocks files here (a Preview with SNAPEYES_ALLOW_TEST_ORDERS=1 only)
             "ordering": pay.ordering_open() and store.configured(),
             "test_orders": pay.test_orders_allowed(),
+            # whether the daily clean-up can run here (CRON_SECRET set; vercel.json crons calls GET /api/order)
+            "cron": len(pay._env("CRON_SECRET")) >= 16,
             # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)
             "deglare_model": deglare.DEGLARE_MODEL,
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx"))}

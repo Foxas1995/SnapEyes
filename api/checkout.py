@@ -16,6 +16,7 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"
                                 a live key without the confirmation email, a test key on production:
                                 pay.ordering_problem())
        403 bad_link             order and k do not match
+       409 withdrawn            the customer withdrew this order (/api/order action withdraw): start a new one
        400                      bad eyes, style or layout (L.run's sentence); consent_required without the waiver
        409 already_paid         the order is paid, or an earlier checkout of it was completed and its payment is
                                 still settling (settling: true); order_url says where it lives
@@ -53,10 +54,14 @@ def checkout(body):
                            "withdrawal.", False)
     n, lang = spec["eyes"], spec["lang"]
     folder = f"orders/{order}"
-    found = pay.parallel([lambda: store.exists(f"{folder}/paid.json", timeout=8.0)] +
+    found = pay.parallel([lambda: store.exists(f"{folder}/paid.json", timeout=8.0),
+                          lambda: store.exists(f"{folder}/withdrawn.json", timeout=8.0)] +
                          [lambda i=i: store.get_json(f"{folder}/draft/eye_{i}.json", timeout=8.0) for i in range(1, n + 1)])
     if found[0]:
         raise store.Answer(409, "already_paid", "This order is already paid.", False, order_url=pay.order_url(order, k, lang))
+    if found[1]:
+        raise store.Answer(409, "withdrawn", "This order was withdrawn. Please start a new one.", False)
+    found = [found[0]] + found[2:]
     now = time.time()
     # the session ends when the draft does (24 h after the order was made), and always under Stripe's 24 h maximum
     expires = min(pay.expires_at(rec), int(now) + 86400 - 120)
@@ -79,7 +84,8 @@ def checkout(body):
         raise store.Answer(409, "already_paid", "A payment for this order is already being confirmed.", False,
                            order_url=pay.order_url(order, k, lang), settling=True)
     amount = pay.price_cents(n, spec["style"])
-    consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang,
+    # the exact text the customer ticked is kept with the order: the confirmation email quotes it word for word
+    consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": pay.CONSENT_TEXT[lang],
                "text_sha256": hashlib.sha256(pay.CONSENT_TEXT[lang].encode("utf-8")).hexdigest()[:16]}
     sess = pay.create_session(order, k, spec, amount, consent, expires)
     sid = sess["id"]

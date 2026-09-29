@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Clock, Download, ExternalLink, Mail, RefreshCcw } from 'lucide-react';
 import { ORDER_COPY, euroOf, mbOf, type OrderCopy } from './copy';
-import { EMPTY_VIEW, REAL_DEPS, driveOrder, type DriveView, type OrderLink } from './driver';
-import { KEY_RE, ORDER_RE, SESSION_RE, type OrderStatus } from './api';
+import { EMPTY_VIEW, REAL_DEPS, driveOrder, stopOf, type DriveView, type OrderLink } from './driver';
+import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPath, type OrderState, type OrderStatus } from './api';
+import { WithdrawEntry, WithdrawForm, WithdrawnCard } from './WithdrawPanel';
+import { CARD, GOLD_BTN, PLAIN_BTN, Spinner } from './ui';
 import { detectLang, rememberLang, type Lang } from '../try/lang';
 import { clearCheckoutStorage } from '../try/checkout';
 import { CONTACT_EMAIL, STYLES } from '../landing/config';
-import { LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
+import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref } from '../shared/legal';
+import { withdrawHref } from './withdraw';
 
 // The order and its private key come from the address (the Stripe success page and the emails link here); s is the
 // Stripe session the success page names, so the payment is confirmed even before Stripe's webhook has arrived.
@@ -21,9 +24,17 @@ function readLink(): OrderLink | null {
 
 const LINK: OrderLink | null = typeof window !== 'undefined' ? readLink() : null;
 
-const CARD = 'bg-[#0b0e17] border border-white/10 rounded-2xl p-4 sm:p-5';
-const GOLD_BTN = 'w-full min-h-[48px] px-4 py-3 rounded-xl bg-gradient-to-r from-[#f5c542] to-[#d4af37] text-black text-sm font-bold flex items-center justify-center gap-2 text-center shadow-lg shadow-[#f5c542]/20 active:scale-[0.98]';
-const PLAIN_BTN = 'min-h-[44px] px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 text-center hover:bg-white/10';
+// ?withdraw=1: the withdrawal form (./WithdrawPanel.tsx). In this mode the page only reads the order's status and never
+// asks for anything to be made, so opening the form cannot itself start the work that ends the right of withdrawal.
+// Without an order link (the footer's and the legal pages' link) the customer types the order number.
+function readWithdrawMode(): boolean {
+  try { return new URLSearchParams(window.location.search).get('withdraw') === '1'; } catch { return false; }
+}
+const WITHDRAW_MODE: boolean = typeof window !== 'undefined' ? readWithdrawMode() : false;
+
+// the states of a concluded contract: the withdrawal function stays on the page for all of them (the server decides
+// whether the right still exists and says so in its answer)
+const CONTRACT_STATES: readonly OrderState[] = ['pending', 'paid', 'making', 'review', 'ready'];
 
 const secondsLeft = (until: number, now: number) => Math.max(0, Math.ceil((until - now) / 1000));
 
@@ -31,8 +42,8 @@ export const OrderApp: React.FC = () => {
   const [lang, setLangState] = useState<Lang>(() => detectLang());
   const C = ORDER_COPY[lang];
   const [view, setView] = useState<DriveView>(EMPTY_VIEW);
-  const [running, setRunning] = useState(!!LINK);
-  const runningRef = useRef(!!LINK);
+  const [running, setRunning] = useState(!!LINK && !WITHDRAW_MODE);
+  const runningRef = useRef(!!LINK && !WITHDRAW_MODE);
   const [run, setRun] = useState(0);
   const [email, setEmail] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
@@ -43,7 +54,7 @@ export const OrderApp: React.FC = () => {
   useEffect(() => {
     try {
       document.documentElement.lang = lang;
-      document.title = C.meta.title;
+      document.title = WITHDRAW_MODE ? `${C.withdraw.heading} | SnapEyes` : C.meta.title;
       document.head.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', C.meta.description);
     } catch { /* no document */ }
   }, [lang, C]);
@@ -58,9 +69,20 @@ export const OrderApp: React.FC = () => {
     return () => { alive = false; };
   }, []);
 
+  // the withdrawal mode reads the order once, for its summary and whether there is a contract to withdraw from
+  useEffect(() => {
+    if (!LINK || !WITHDRAW_MODE) return;
+    let alive = true;
+    callApi<unknown>(statusPath(LINK.o, LINK.k, LINK.s), { timeoutMs: 25_000 }).then((r) => {
+      if (!alive) return;
+      if (r.ok && isStatus(r.data)) { const st = r.data; setView((v) => ({ ...v, status: st })); } else setView((v) => ({ ...v, stop: stopOf(r) }));
+    });
+    return () => { alive = false; };
+  }, []);
+
   // one driver at a time: a new one starts only from "Try again" / "Check again", which show once the last has ended
   useEffect(() => {
-    if (!LINK) return;
+    if (!LINK || WITHDRAW_MODE) return;
     let alive = true;
     driveOrder(LINK, REAL_DEPS, (patch) => { if (alive) setView((v) => ({ ...v, ...patch })); }, () => alive)
       .catch(() => { if (alive) setView((v) => ({ ...v, stop: 'failed', making: [], composing: false, wait: null })); })
@@ -78,7 +100,7 @@ export const OrderApp: React.FC = () => {
 
   // a phone that put the tab to sleep drops the connection: coming back to the page picks the work up again
   useEffect(() => {
-    if (view.stop !== 'network') return;
+    if (view.stop !== 'network' || WITHDRAW_MODE) return;   // the withdrawal mode drives nothing
     const onVisible = () => { if (document.visibilityState === 'visible') again(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
@@ -107,7 +129,42 @@ export const OrderApp: React.FC = () => {
 
   let content: React.ReactNode;
   const st = view.status;
-  if (!LINK) {
+  if (WITHDRAW_MODE) {
+    const back = LINK ? orderPageUrl(LINK.o, LINK.k, lang) : null;
+    if (LINK && !st && !view.stop) {
+      content = (
+        <section className={`${CARD} flex items-center gap-3`} aria-busy="true">
+          <Spinner /> <span className="text-sm text-zinc-300">{C.loading}</span>
+        </section>
+      );
+    } else if (view.stop === 'bad_link') {
+      // the key does not fit: the statement can still go out with the order number alone
+      content = (
+        <>
+          <Problem C={C} text={C.errors.bad_link} />
+          <WithdrawForm C={C} lang={lang} link={null} initialOrder={LINK?.o ?? ''} amount={null} backHref={null} />
+        </>
+      );
+    } else if (st?.state === 'withdrawn') {
+      content = <><Summary C={C} st={st} lang={lang} /><WithdrawnCard C={C} lang={lang} st={st} /></>;
+    } else if (st?.state === 'unpaid' && st.payment_check !== 'unavailable') {
+      // (when Stripe could not be asked just now the order may well be paid: the form stays, the server decides)
+      content = (
+        <section data-testid="withdraw-unpaid" className={CARD}>
+          <h2 className="font-luxury text-xl font-bold">{C.withdraw.heading}</h2>
+          <p className="text-sm text-zinc-300 mt-2">{C.withdraw.unpaid}</p>
+        </section>
+      );
+    } else {
+      // a status that could not be read (offline, busy) still leaves the form: sending it gives its own answer
+      content = (
+        <>
+          {st && <Summary C={C} st={st} lang={lang} />}
+          <WithdrawForm C={C} lang={lang} link={LINK} amount={typeof st?.amount === 'number' ? st.amount : null} backHref={back} />
+        </>
+      );
+    }
+  } else if (!LINK) {
     content = <Problem C={C} text={C.errors.missing} />;
   } else if (view.stop) {
     content = (
@@ -143,13 +200,19 @@ export const OrderApp: React.FC = () => {
       </section>
     );
   } else if (st.state === 'pending') {
+    // two kinds: a payment that settles later (unpaid as yet), or a paid order whose confirmation email is on its way
+    const mailing = st.waiting_for === 'confirmation_email';
     content = (
-      <section data-testid="state-pending" className={CARD}>
-        <h2 className="font-luxury text-xl font-bold">{C.pending.title}</h2>
-        <p className="text-sm text-zinc-300 mt-2">{C.pending.body}</p>
-        {view.wait && <p className="text-xs text-zinc-500 mt-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {C.wait.confirming(secondsLeft(view.wait.until, clock))}</p>}
-        <p className="text-xs text-zinc-400 mt-3">{email ? C.ready.email : C.ready.bookmark}</p>
-      </section>
+      <>
+        {mailing && <Summary C={C} st={st} lang={lang} />}
+        <section data-testid="state-pending" data-waiting={st.waiting_for || ''} className={CARD}>
+          <h2 className="font-luxury text-xl font-bold">{mailing ? C.pending.mailTitle : C.pending.title}</h2>
+          <p className="text-sm text-zinc-300 mt-2">{mailing ? C.pending.mailBody : C.pending.body}</p>
+          {view.wait && <p className="text-xs text-zinc-500 mt-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {C.wait.confirming(secondsLeft(view.wait.until, clock))}</p>}
+          {/* the email with this page's link has not gone out yet: never say it is in the email */}
+          <p className="text-xs text-zinc-400 mt-3">{email && !mailing ? C.ready.email : C.ready.bookmark}</p>
+        </section>
+      </>
     );
   } else if (st.state === 'paid' || st.state === 'making') {
     content = (
@@ -166,6 +229,13 @@ export const OrderApp: React.FC = () => {
           <h2 className="font-luxury text-xl font-bold">{C.review.title}</h2>
           <p className="text-sm text-zinc-300 mt-2">{C.review.body}</p>
         </section>
+      </>
+    );
+  } else if (st.state === 'withdrawn') {
+    content = (
+      <>
+        <Summary C={C} st={st} lang={lang} />
+        <WithdrawnCard C={C} lang={lang} st={st} />
       </>
     );
   } else if (st.state === 'ready' && st.download) {
@@ -206,6 +276,7 @@ export const OrderApp: React.FC = () => {
         {LINK && <p data-testid="order-no" className="text-center text-xs text-zinc-500 mt-2 break-all">{C.orderNo(LINK.o)}</p>}
         <div className="mt-6 flex flex-col gap-4">
           {content}
+          {!WITHDRAW_MODE && LINK && st && CONTRACT_STATES.includes(st.state) && <WithdrawEntry C={C} lang={lang} link={LINK} />}
           <p className="text-center text-xs text-zinc-400 mt-2">
             {C.contact.lead}{' '}
             <a href={mail} className="inline-flex items-center gap-1 underline underline-offset-4 decoration-white/30 hover:text-white">
@@ -215,7 +286,8 @@ export const OrderApp: React.FC = () => {
         </div>
       </main>
 
-      {/* the legal pages open in a new tab, so an artwork being made is never interrupted */}
+      {/* the legal pages open in a new tab, so an artwork being made is never interrupted; the withdrawal function, as
+          on every page's foot (src/shared/legal.ts), leads to this page's own form with this order filled in */}
       <footer className="max-w-2xl mx-auto px-4 pb-10">
         <nav aria-label={LEGAL_LABELS[lang].nav} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-zinc-400">
           {LEGAL_DOCS.map((d) => (
@@ -223,15 +295,16 @@ export const OrderApp: React.FC = () => {
               {LEGAL_LABELS[lang][d]}
             </a>
           ))}
+          {!WITHDRAW_MODE && (
+            <a data-testid="footer-withdraw" href={withdrawHref(lang, LINK)} className="hover:text-white hover:underline underline-offset-4 rounded-sm">
+              {WITHDRAWAL_ONLINE[lang].button}
+            </a>
+          )}
         </nav>
       </footer>
     </div>
   );
 };
-
-const Spinner: React.FC = () => (
-  <span aria-hidden className="inline-block w-4 h-4 shrink-0 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" />
-);
 
 const Problem: React.FC<{ C: OrderCopy; text: string; onRetry?: () => void }> = ({ C, text, onRetry }) => (
   <section role="alert" data-testid="state-error" className="bg-rose-950/30 border border-rose-500/40 rounded-2xl p-4 sm:p-5">

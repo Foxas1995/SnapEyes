@@ -6,5 +6,8 @@
       "maxDuration": 60,
       "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,.git/**,*.html,*.json,*.ts,*.md}"
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/order", "schedule": "17 3 * * *" }
+  ]
 }

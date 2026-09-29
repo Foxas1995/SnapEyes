@@ -99,7 +99,9 @@ export function staleEyes(list: readonly Eye[], ref: OrderRef | null, now: numbe
 
 export type CheckoutStep = { kind: 'sync' } | { kind: 'upload'; i: number; n: number } | { kind: 'arrange' } | { kind: 'checkout' };
 
-export type CheckoutError = 'network' | 'busy' | 'payments' | 'too_large' | 'failed';
+/** paused: the server's daily ceiling on unpaid uploads is reached (draft 503 uploads_paused); too_many: this order had
+ *  its 30 uploads of the day (draft 429 too_many_uploads). Both clear the next day (UTC). */
+export type CheckoutError = 'network' | 'busy' | 'payments' | 'too_large' | 'paused' | 'too_many' | 'failed';
 
 export type CheckoutOutcome =
   | { kind: 'redirect'; url: string; ref: OrderRef }            // Stripe's payment page
@@ -128,6 +130,8 @@ function failure(r: ApiReply<unknown>, ref: OrderRef | null): CheckoutOutcome {
   if (r.reason === 'payments_busy' || r.reason === 'storage_busy') return { kind: 'error', code: 'busy', ref };
   if (r.reason === 'payments_error') return { kind: 'error', code: 'payments', ref };
   if (r.status === 413 || r.reason === 'too_large') return { kind: 'error', code: 'too_large', ref };
+  if (r.reason === 'uploads_paused') return { kind: 'error', code: 'paused', ref };
+  if (r.reason === 'too_many_uploads' || r.status === 429) return { kind: 'error', code: 'too_many', ref };
   return { kind: 'error', code: 'failed', ref };
 }
 
@@ -160,6 +164,8 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
     if (r.status === 403) return { kind: 'restart' };
     if (!r.ok || !isStatus(r.data)) return failure(r, ref);
     const st = r.data;
+    // withdrawn (api/_lib/withdraw.py): that contract is over, so buying again is a new order
+    if (st.state === 'withdrawn') return { kind: 'restart' };
     if (st.state !== 'unpaid') {
       // paid, or being paid: the same artwork goes to its order page and is never paid for twice; a changed artwork
       // is a new purchase and gets a new order
@@ -184,7 +190,7 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
     const r = await api<unknown>('/api/order', { body: { action: 'arrange', order: o.order, k: o.k, slots: want } });
     if (r.ok) return null;
     if (r.reason === 'eyes_missing') return { kind: 'resync', ref: o };
-    if (r.reason === 'draft_expired' || r.reason === 'order_paid' || r.status === 403) return { kind: 'restart' };
+    if (r.reason === 'draft_expired' || r.reason === 'order_paid' || r.reason === 'withdrawn' || r.status === 403) return { kind: 'restart' };
     return failure(r, o);
   };
 
@@ -217,7 +223,7 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
     if (!r.ok || !r.data || typeof r.data.order !== 'string' || typeof r.data.k !== 'string') {
       // a 403 without a reason is the work ticket: this eye has to be taken again
       if (r.status === 403 && !r.reason) return { kind: 'stale', eyes: [list.indexOf(e) + 1], ref };
-      if (r.reason === 'draft_expired' || r.reason === 'bad_link' || r.reason === 'order_paid') return { kind: 'restart' };
+      if (r.reason === 'draft_expired' || r.reason === 'bad_link' || r.reason === 'order_paid' || r.reason === 'withdrawn') return { kind: 'restart' };
       return failure(r, ref);
     }
     if (!ref) ref = { order: r.data.order, k: r.data.k, expiresAt: r.data.expires_at, eyes: [], checkout: [] };
@@ -249,6 +255,6 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
   }
   if (r.reason === 'eyes_missing') return { kind: 'resync', ref };
   if (r.reason === 'already_paid') return { kind: 'paid', url: orderPageUrl(ref.order, ref.k, inp.lang), ref: null };
-  if (r.reason === 'draft_expired' || r.reason === 'bad_link') return { kind: 'restart' };
+  if (r.reason === 'draft_expired' || r.reason === 'bad_link' || r.reason === 'withdrawn') return { kind: 'restart' };
   return failure(r, ref);
 }

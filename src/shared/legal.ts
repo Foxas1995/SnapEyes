@@ -3,6 +3,10 @@
 //
 // Not reviewed by a lawyer. Every sentence here must stay true: if the checkout changes (for example it no longer
 // starts the file right after payment), change the wording here and on the withdrawal page together.
+// The right of withdrawal ends when MAKING the file begins (making.json, api/_lib/withdraw.py _began), which is what
+// the checkbox below says; the withdrawal page, the terms and the landing FAQ say the same ("once we have started
+// making your file", "sobald wir mit der Erstellung Ihrer Datei begonnen haben"). If the server ever moves that moment
+// (for example to the first download), change all of them together.
 
 export type LegalLang = 'en' | 'de';
 
@@ -40,6 +44,37 @@ export const LEGAL_LABELS: Record<LegalLang, Record<LegalDocId, string> & { nav:
 // through Resend. The privacy policy names it next to Hostinger (the mailbox info@snapeyes.com). If the sender
 // changes, change this line and the policy follows.
 export const ORDER_EMAIL_SENDER: string = 'Resend';
+
+/** The online withdrawal function (Art. 11a Directive 2011/83/EU, added by Directive (EU) 2023/2673 and applied since
+ *  19 June 2026; § 356a BGB): a clearly labelled function to withdraw, a confirming step, and an acknowledgement on a
+ *  durable medium. The withdrawal page, the terms and the privacy policy quote these labels, so the order page's
+ *  button and its confirming button must carry exactly these words (import them from here). */
+export interface WithdrawalOnline {
+  /** The function's label: "withdraw from contract here" or an equally unambiguous wording (Art. 11a(1)). */
+  button: string;
+  /** The label of the step that sends the statement: "confirm withdrawal" or equivalent (Art. 11a(3)). */
+  confirm: string;
+}
+
+export const WITHDRAWAL_ONLINE: Record<LegalLang, WithdrawalOnline> = {
+  en: { button: 'Withdraw from contract here', confirm: 'Confirm withdrawal' },
+  de: { button: 'Vertrag hier widerrufen', confirm: 'Widerruf bestätigen' },
+};
+
+/** Where the function is: the order page in its withdrawal mode (src/order/withdraw.ts withdrawHref), which never
+ *  starts making anything. Without an order link the customer types the order number there. The landing footer and
+ *  the legal pages link here with the label WITHDRAWAL_ONLINE[lang].button; the withdrawal page describes it. */
+export function withdrawFunctionHref(lang: LegalLang = 'en'): string {
+  return `/order?withdraw=1&lang=${lang}`;
+}
+
+/** The same address as people read and type it ("snapeyes.com/order?withdraw=1&lang=de"): the internet address the
+ *  statutory withdrawal information names for the function (Anlage 1 EGBGB, Gestaltungshinweis 3, since 19.06.2026;
+ *  Annex I(A) Directive 2011/83/EU, note 3 as amended by Directive (EU) 2023/2673). */
+export const SITE_HOST = 'snapeyes.com';
+export function withdrawFunctionAddress(lang: LegalLang = 'en'): string {
+  return `${SITE_HOST}${withdrawFunctionHref(lang)}`;
+}
 
 /** Text, or a link to one of the legal pages, for sentences that mix both. */
 export interface LegalPart { text: string; doc?: LegalDocId }

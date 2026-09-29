@@ -36,7 +36,7 @@ export const REAL_DEPS: DriveDeps = {
 
 const BUSY = new Set(['model_busy', 'storage_busy', 'payments_busy']);
 // an answer that means "the order is no longer what this step expected": ask for its status and go from there
-const RELOAD = new Set(['in_review', 'render_rejected', 'deleted', 'not_paid', 'payment_processing', 'eyes_not_ready']);
+const RELOAD = new Set(['in_review', 'render_rejected', 'deleted', 'not_paid', 'payment_processing', 'eyes_not_ready', 'withdrawn']);
 const MAKE_TIMEOUT = 75_000;     // API.md: a make or compose takes up to about 50 s; Vercel stops it at 60 s
 const STATUS_TIMEOUT = 25_000;
 const PARALLEL = 2;              // API.md: one eye at a time, or at most two in parallel
@@ -104,7 +104,7 @@ export async function driveOrder(link: OrderLink, deps: DriveDeps, emit: (v: Par
   let st = await load();
   let unpaidChecks = 0, reloads = 0;
   while (st && alive()) {
-    if (st.state === 'ready' || st.state === 'review' || st.state === 'deleted') return;
+    if (st.state === 'ready' || st.state === 'review' || st.state === 'deleted' || st.state === 'withdrawn') return;
     if (st.state === 'unpaid') {
       // straight from Stripe (s in the link) the payment is confirmed within seconds; the same when the server could
       // not ask Stripe just now. Otherwise the order simply is not paid.

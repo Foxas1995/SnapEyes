@@ -312,7 +312,11 @@ const en = {
       arrange: 'Arranging your eyes…',
       checkout: 'Opening the secure payment page…',
     },
-    sample: 'The AI-generated sample eye cannot be ordered. Replace it with your own eye ("Use your own eye instead") to order this artwork.',
+    // the card shows its own replace button(s) right under this line (./BuyCard.tsx), so the line names none
+    sample: (k: number): string => (k === 1
+      ? 'The AI-generated sample eye cannot be ordered. Replace it with your own eye to order this artwork.'
+      : 'The AI-generated sample eyes cannot be ordered. Replace them with your own eyes to order this artwork.'),
+    replaceSampleEye: (i: number) => `Replace eye ${i} with your own`,
     // api/_lib/iris.py TICKET_TTL: an eye's draft is accepted only with its photo's 15-minute work ticket
     stale: (list: number[], total: number) => (total === 1
       ? 'Your photo was taken more than 15 minutes ago. A photo can be ordered within 15 minutes of taking it, so please take it again to order.'
@@ -324,7 +328,11 @@ const en = {
       network: 'We could not reach SnapEyes. Please check your internet connection and try again.',
       busy: 'The payment service did not answer. Please try again in a moment.',
       payments: `We could not open the payment page. Please try again later, or write to ${CONTACT_EMAIL}.`,
-      too_large: 'One of your eyes is too large to upload. Please take it again.',
+      too_large: 'The photo of one of your eyes is too large to upload. Please take that eye again.',
+      // api/order.py draft: 503 uploads_paused (the daily ceiling on unpaid uploads) and 429 too_many_uploads (30 per
+      // order and day, retakes included). Both last until the next day (UTC).
+      paused: `New orders are paused for today: the daily upload limit has been reached. Nothing was charged. Please try again tomorrow, or write to ${CONTACT_EMAIL}.`,
+      too_many: `This order has reached its upload limit for today (30 uploads, retakes included). Nothing was charged. Please try again tomorrow, or write to ${CONTACT_EMAIL}.`,
       failed: `Something went wrong while preparing your order. Please try again, or write to ${CONTACT_EMAIL}.`,
       closed: 'Ordering is not open yet.',
     },
@@ -612,7 +620,10 @@ const de: TryCopy = {
       arrange: 'Ihre Augen werden angeordnet…',
       checkout: 'Die sichere Zahlungsseite wird geöffnet…',
     },
-    sample: 'Das KI-generierte Beispielauge kann nicht bestellt werden. Ersetzen Sie es durch Ihr eigenes Auge („Stattdessen Ihr eigenes Auge verwenden“), um dieses Kunstwerk zu bestellen.',
+    sample: (k: number): string => (k === 1
+      ? 'Das KI-generierte Beispielauge kann nicht bestellt werden. Ersetzen Sie es durch Ihr eigenes Auge, um dieses Kunstwerk zu bestellen.'
+      : 'Die KI-generierten Beispielaugen können nicht bestellt werden. Ersetzen Sie sie durch Ihre eigenen Augen, um dieses Kunstwerk zu bestellen.'),
+    replaceSampleEye: (i: number) => `Auge ${i} durch Ihr eigenes ersetzen`,
     stale: (list: number[], total: number) => (total === 1
       ? 'Ihr Foto wurde vor mehr als 15 Minuten aufgenommen. Ein Foto kann innerhalb von 15 Minuten nach der Aufnahme bestellt werden. Bitte nehmen Sie es neu auf, um zu bestellen.'
       : `${list.length === 1 ? `Auge ${list[0]} wurde` : `Die Augen ${andList(list, 'und')} wurden`} vor mehr als 15 Minuten aufgenommen. Ein Foto kann innerhalb von 15 Minuten nach der Aufnahme bestellt werden. Bitte nehmen Sie ${list.length === 1 ? 'es' : 'sie'} neu auf, um zu bestellen.${list.length < total ? ' Ihre anderen Augen bleiben, wie sie sind.' : ''}`),
@@ -623,7 +634,9 @@ const de: TryCopy = {
       network: 'Wir konnten SnapEyes nicht erreichen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
       busy: 'Der Zahlungsdienst hat nicht geantwortet. Bitte versuchen Sie es gleich noch einmal.',
       payments: `Wir konnten die Zahlungsseite nicht öffnen. Bitte versuchen Sie es später erneut oder schreiben Sie an ${CONTACT_EMAIL}.`,
-      too_large: 'Eines Ihrer Augen ist zu groß zum Hochladen. Bitte nehmen Sie es neu auf.',
+      too_large: 'Die Aufnahme eines Ihrer Augen ist zu groß zum Hochladen. Bitte nehmen Sie dieses Auge neu auf.',
+      paused: `Neue Bestellungen sind für heute pausiert: Das tägliche Upload-Limit ist erreicht. Es wurde nichts berechnet. Bitte versuchen Sie es morgen erneut oder schreiben Sie an ${CONTACT_EMAIL}.`,
+      too_many: `Diese Bestellung hat ihr Upload-Limit für heute erreicht (30 Uploads, Neuaufnahmen eingeschlossen). Es wurde nichts berechnet. Bitte versuchen Sie es morgen erneut oder schreiben Sie an ${CONTACT_EMAIL}.`,
       failed: `Beim Vorbereiten Ihrer Bestellung ist etwas schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie an ${CONTACT_EMAIL}.`,
       closed: 'Bestellungen sind noch nicht möglich.',
     },

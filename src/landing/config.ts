@@ -14,6 +14,10 @@ export const tryUrl = (lang: 'en' | 'de') => `${TRY_URL}?lang=${lang}`;
 // Seller shown in the footer and on the legal pages (owner decision 2026-09-23). MB is not VAT-registered: no VAT
 // number, no "incl. VAT". representative and phone stay empty until the owner gives them: every page prints the
 // "Represented by" and "Phone" lines only when the value is set.
+// The PHONE IS REQUIRED BEFORE THE FIRST LIVE SALE: the law wants the trader's telephone number in the pre-contract
+// information and in the withdrawal information (Art. 6(1)(c) Directive 2011/83/EU; Anlage 1 EGBGB Gestaltungshinweis
+// 2). While it is '', the build's /legal/order-mail.json lists "seller.phone" under "missing" (src/legal/plain.ts), for
+// api/_lib/pay.py to keep live ordering closed. Write it in international form, with the country code.
 export interface Seller {
   name: string;           // the MB's name, printed as MB "<name>"
   code: string;           // company code (juridinio asmens kodas) in the Register of Legal Entities
@@ -29,7 +33,7 @@ export const SELLER: Readonly<Seller> = {
   street: 'Gedimino g. 22A-14',
   postcode: 'LT-44319',
   city: 'Kaunas',
-  representative: '',
+  representative: 'Mantas Bakšys',
   phone: '',
 };
 
@@ -44,6 +48,13 @@ export const PRICE_CENTS = {
   extraEye: 1500,      // each eye after the second
 } as const;
 export const MAX_EYES = 8;
+
+// The latest delivery the terms of sale promise (Art. 6(1)(g) Directive 2011/83/EU, Art. 246a § 1 Abs. 1 Nr. 7
+// EGBGB). Normally the file is ready on the order page within minutes of payment (the page makes it as soon as the
+// order confirmation email has gone out). This bound covers the slow cases: an order held for the owner's own check
+// (review.json, released with scripts/order_admin.py release --mail) or held because its confirmation email could not
+// go out. Owner decision: a time that can always be kept, weekends included. src/legal/docs/terms.ts prints it.
+export const DELIVERY_MAX_HOURS = 48;
 
 export function centsForEyes(eyes: number): number {
   if (eyes <= 1) return PRICE_CENTS.studioBlack;

@@ -2,7 +2,7 @@ import type { Ref } from 'react';
 import { useLang } from './lang';
 import { CONTACT_EMAIL, SELLER } from './config';
 import { CtaLink, CtaNote, Logo } from './ui';
-import { LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
+import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref, withdrawFunctionHref } from '../shared/legal';
 
 export function FinalCta({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
   const { t } = useLang();
@@ -80,13 +80,17 @@ export function Footer() {
         <p>
           © {year} {f.rights}
         </p>
-        {/* the legal pages (src/legal), in the language the visitor reads now */}
+        {/* the legal pages (src/legal), in the language the visitor reads now, and the online withdrawal function
+            (Art. 11a Directive 2011/83/EU: clearly labelled and easy to reach while the right of withdrawal lasts) */}
         <nav aria-label={legal.nav} className="flex flex-wrap gap-x-5 gap-y-2">
           {LEGAL_DOCS.map((d) => (
             <a key={d} href={legalHref(d, lang)} className="hover:text-white">
               {legal[d]}
             </a>
           ))}
+          <a href={withdrawFunctionHref(lang)} className="hover:text-white">
+            {WITHDRAWAL_ONLINE[lang].button}
+          </a>
         </nav>
       </div>
     </footer>

@@ -7,7 +7,9 @@ import { LangProvider, setCanonical, setMeta, useLang } from '../landing/lang';
 import { LangSwitch } from '../landing/Header';
 import { Logo } from '../landing/ui';
 import type { Lang } from '../landing/copy';
-import { LEGAL_DOCS, LEGAL_LABELS, LEGAL_PATH, LEGAL_UPDATED, formatLegalDate, legalHref, type LegalDocId } from '../shared/legal';
+import {
+  LEGAL_DOCS, LEGAL_LABELS, LEGAL_PATH, LEGAL_UPDATED, WITHDRAWAL_ONLINE, formatLegalDate, legalHref, withdrawFunctionHref, type LegalDocId,
+} from '../shared/legal';
 import { CONTACT_EMAIL, SELLER, address, company } from './facts';
 import { Inline } from './Inline';
 import type { Block, LegalDocs } from './types';
@@ -146,6 +148,8 @@ function LegalPage({ id }: { id: LegalDocId }) {
                 {labels[d]}
               </a>
             ))}
+            {/* the online withdrawal function (Art. 11a Directive 2011/83/EU), on every legal page */}
+            <a href={withdrawFunctionHref(lang)} className={`hover:text-white ${FOCUS}`}>{WITHDRAWAL_ONLINE[lang].button}</a>
           </nav>
           <p className="mt-6 text-xs leading-relaxed">
             {company(lang)}, {address(lang)},{' '}

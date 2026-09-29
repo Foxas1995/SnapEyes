@@ -1,6 +1,7 @@
 // The shape of a legal page. Text may carry two kinds of inline markup, parsed by src/legal/Inline.tsx:
 //   [label](href)  a link. href: "doc:terms" or "doc:terms#defects" (another legal page, same language),
-//                  "#section" (this page), "mailto:..." or "https://..." (external, opens in a new tab)
+//                  "#section" (this page), "/path?query" (another page of this site, such as the online
+//                  withdrawal function), "mailto:..." or "https://..." (external, opens in a new tab)
 //   **text**       strong emphasis
 import type { Lang } from '../landing/copy';
 
