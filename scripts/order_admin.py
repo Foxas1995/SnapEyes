@@ -84,12 +84,16 @@ def cmd_status(order):
     if co:
         print(f"checkout  {co.get('session_id')}  {pay.amount_text(co.get('amount') or 0, 'en', co.get('currency'))}  "
               f"market {co.get('market') or pay.DEFAULT_MARKET}  spec {json.dumps(co.get('spec'), ensure_ascii=False)}")
+        if co.get("experiment"):
+            print(f"experiment {json.dumps(co['experiment'], ensure_ascii=False)} (the price list of that variant applied)")
     if paid:
         print(f"PAID      {paid.get('paid_iso')} via {paid.get('source')}  {paid.get('amount_total')} {paid.get('currency')}"
               f"  live={paid.get('livemode')}  email {paid.get('email')}")
         print(f"spec      {json.dumps(paid.get('spec'), ensure_ascii=False)}")
         if paid.get("amount_mismatch"):
             print(f"WARNING   amount differs from the price: {paid['amount_mismatch']}")
+        if paid.get("experiment"):
+            print(f"experiment {json.dumps(paid['experiment'], ensure_ascii=False)}")
     else:
         left = pay.expires_at(rec) - time.time()
         print(f"unpaid    {'EXPIRED' if left <= 0 else f'{left / 3600:.1f} h left to pay'}")

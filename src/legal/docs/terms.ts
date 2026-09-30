@@ -34,6 +34,13 @@ const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not 
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
 const ART = 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke, Supernova';
 const PX = '4096\u00a0px';
+// The price tables below are the standard price lists. A price test (api/_lib/abtest.py; only while the owner runs one) shows
+// some visitors, at random, another list: what is charged is what was shown before payment, and the order confirmation
+// email names the list that applied (pay.confirmation_mail). This sentence follows every price table, in both editions.
+const STANDARD_LIST_NOTE = {
+  en: 'The table above is our standard price list. From time to time, for a limited period, we try other price lists on some visitors, chosen at random. You are always charged the prices shown to you on the artwork page before you pay and on the payment page, and your order confirmation email names the price list that applied to your order. Which price list you see never depends on the country you live in, only on the market (currency) you choose.',
+  de: 'Die obige Tabelle ist unsere Standardpreisliste. Von Zeit zu Zeit erproben wir für einen begrenzten Zeitraum andere Preislisten bei einzelnen, zufällig ausgewählten Besuchern. Berechnet werden Ihnen immer die Preise, die Ihnen vor der Zahlung auf der Kunstwerk-Seite und auf der Zahlungsseite angezeigt werden, und Ihre Bestellbestätigung per E-Mail nennt die Preisliste, die für Ihre Bestellung galt. Welche Preisliste Sie sehen, hängt nie vom Land ab, in dem Sie wohnen, sondern nur vom Markt (der Währung), den Sie wählen.',
+};
 const SQUARE = '4096\u00a0×\u00a04096\u00a0px';
 
 const en: LegalDoc = {
@@ -91,6 +98,7 @@ const en: LegalDoc = {
           ],
         },
         'All prices are final prices in euros. We are not registered for VAT, so no VAT is charged or shown. There are no delivery costs.',
+        STANDARD_LIST_NOTE.en,
         'You pay in advance through our payment provider Stripe, with the payment methods shown on the payment page.',
       ],
     },
@@ -213,6 +221,7 @@ const de: LegalDoc = {
           ],
         },
         'Alle Preise sind Endpreise in Euro. Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet oder ausgewiesen. Versandkosten fallen nicht an.',
+        STANDARD_LIST_NOTE.de,
         'Sie zahlen im Voraus über unseren Zahlungsdienstleister Stripe, mit den auf der Zahlungsseite angezeigten Zahlungsarten.',
       ],
     },
@@ -319,6 +328,7 @@ const auEn = patchDoc(en, {
         },
         'All prices are in Australian dollars (A$), and each is the total price you pay: no GST, no delivery cost, no card surcharge and no other fee is added. We are not registered for GST in Australia, so no GST is charged. Your order confirmation email includes your invoice.',
         'You pay in advance through our payment provider Stripe, with the payment methods shown on the payment page. Your card issuer may charge its own fee for a payment to a business based outside Australia; we do not charge it and do not receive it.',
+        STANDARD_LIST_NOTE.en,
       ],
     }),
     withdrawal: {
@@ -393,6 +403,7 @@ const auDe = patchDoc(de, {
         },
         'Alle Preise sind in australischen Dollar (A$) angegeben und jeweils der Gesamtpreis, den Sie zahlen: Es kommen keine GST, keine Versandkosten, kein Kartenzuschlag und keine sonstigen Gebühren hinzu. Wir sind in Australien nicht für die GST registriert, daher wird keine GST berechnet. Ihre Bestellbestätigung per E-Mail enthält Ihre Rechnung.',
         'Sie zahlen im Voraus über unseren Zahlungsdienstleister Stripe, mit den auf der Zahlungsseite angezeigten Zahlungsarten. Ihr Kartenaussteller kann für eine Zahlung an ein Unternehmen außerhalb Australiens eigene Gebühren berechnen; diese berechnen nicht wir, und wir erhalten sie nicht.',
+        STANDARD_LIST_NOTE.de,
       ],
     }),
     withdrawal: {
@@ -471,6 +482,7 @@ const enHufPrices: LegalSection = {
       ],
     },
     `All prices are final prices in Hungarian forints (Ft). We are not registered for VAT, so no VAT is charged or shown. There are no delivery costs. ${AFTER_CURRENCY_EN}`,
+    STANDARD_LIST_NOTE.en,
     'You pay in advance through our payment provider Stripe, with the payment methods shown on the payment page.',
   ],
 };
@@ -488,6 +500,7 @@ const deHufPrices: LegalSection = {
       ],
     },
     `Alle Preise sind Endpreise in ungarischen Forint (Ft). Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet oder ausgewiesen. Versandkosten fallen nicht an. ${AFTER_CURRENCY_DE}`,
+    STANDARD_LIST_NOTE.de,
     'Sie zahlen im Voraus über unseren Zahlungsdienstleister Stripe, mit den auf der Zahlungsseite angezeigten Zahlungsarten.',
   ],
 };

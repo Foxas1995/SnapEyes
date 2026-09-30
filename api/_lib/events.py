@@ -28,6 +28,10 @@ The kinds (all with "ms", the time since the request started, when known):
   master    step (eye/compose), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab
   error     endpoint, class (the error's kind: busy/400/403/429/500/502/503), reason (the reply's reason code),
             status. ("class", because "kind" names the event itself.)
+  exp       a price experiment's funnel (api/_lib/abtest.py; only while the owner has one running): stage (visit,
+            preview, checkout, paid), exp (the experiment's key), variant, market, eyes, amount and currency (checkout
+            and paid), hit (the artwork's price differs between the variants), live (paid: a real payment). No visitor
+            id and no order number: the counts per variant are all it can give
 
 The reading side (the admin panel) is here too: day_events() reads one day, summarize() turns events into counts,
 rollup() stores a finished day's counts once (ops/daily/<YYYY-MM-DD>.json), purge_old() is the clean-up."""
@@ -38,8 +42,9 @@ from . import store
 CRON_MIN = 16                # characters of CRON_SECRET (pay.ordering_problem and /api/health use the same rule)
 WAIT = 1.5                   # seconds a request waits for its event to be written, at most
 PUT_TIMEOUT = 1.2            # the storage call itself
-RATE = {"all": (240, 60.0), "error": (30, 60.0)}   # events per instance per window (seconds)
+RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0)}   # events per instance per window (seconds)
 ERROR_DAY_MAX = 1500         # error events per instance per UTC day
+EXP_DAY_MAX = 5000           # price-test visit and preview beacons per instance per UTC day (they need no order, so they are capped)
 EVENTS = "ops/events"
 DAILY = "ops/daily"
 ADMINFAIL = "ops/adminfail"
@@ -59,18 +64,38 @@ FIELDS = {
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
                "rerender": "b", "existing": "b", "render_s": "n", "style": "c"},
     "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n"},
+    "exp": {"stage": "c", "exp": "c", "variant": "c", "market": "c", "eyes": "n", "amount": "n", "currency": "c",
+            "hit": "b", "live": "b"},
 }
+EXP_STAGES = ("visit", "preview", "checkout", "paid")
 SOURCES = ("camera", "gallery", "live", "sample", "lab")
 
 
 # ----------------------------------------------------------------------------- writing
 _RATE_LOCK = threading.Lock()
-_SEEN = {"all": [], "error": [], "day": "", "errors_today": 0}
+_SEEN = {"all": [], "error": [], "exp": [], "day": "", "errors_today": 0, "exp_day": "", "exp_today": 0}
 
 
-def _allow(kind, now):
-    """The per-instance ceiling: True when this event may be written."""
+def _allow(kind, now, stage=None):
+    """The per-instance ceiling: True when this event may be written. A price test's visit and preview beacons (the only
+    events anybody can send without an order) have a small budget of their own, per minute and per day, so a flood of them
+    can neither fill the bucket nor use up the ceiling of the ordinary events. The test's paid events follow a real payment
+    and are never held back."""
+    if kind == "exp" and stage == "paid":
+        return True
     with _RATE_LOCK:
+        if kind == "exp" and stage in ("visit", "preview"):
+            n, win = RATE.get("exp", (60, 60.0))
+            q = [t for t in _SEEN["exp"] if now - t < win]
+            _SEEN["exp"] = q
+            d = time.strftime("%Y-%m-%d", time.gmtime(now))
+            if _SEEN["exp_day"] != d:
+                _SEEN["exp_day"], _SEEN["exp_today"] = d, 0
+            if len(q) >= n or _SEEN["exp_today"] >= EXP_DAY_MAX:
+                return False
+            _SEEN["exp_today"] += 1
+            q.append(now)
+            return True
         for name in (("all", "error") if kind == "error" else ("all",)):
             n, win = RATE[name]
             q = [t for t in _SEEN[name] if now - t < win]
@@ -162,11 +187,12 @@ def record(kind, **fields):
     """Store one event (see the module text). True when it was written in time; never raises. Skipped (False) while
     storage is not configured or the daily clean-up cannot run here (retention_ok)."""
     try:
+        cap = fields.pop("_wait", None)       # a caller that must not hold its request long (the price test's beacons)
         if kind not in FIELDS or not store.configured() or not retention_ok():
             return False
         now = time.time()
-        wait = min(WAIT, L.time_left() - 1.0)
-        if wait < 0.2 or not _allow(kind, now):
+        wait = min(WAIT if not isinstance(cap, (int, float)) or isinstance(cap, bool) else float(cap), L.time_left() - 1.0)
+        if wait < 0.2 or not _allow(kind, now, fields.get("stage") if isinstance(fields.get("stage"), str) else None):
             return False
         ev = build(kind, fields, now)
         box = {}
@@ -246,7 +272,11 @@ def empty():
             "deglare_lid": 0, "compose_style": {}, "compose_eyes": {}, "compose_clean": 0, "master_eye": 0,
             "master_compose": 0, "master_review": 0, "master_rerender": 0, "master_lab": 0, "master_existing": 0,
             "errors": {}, "error_endpoint": {}, "error_reason": {}, "busy": 0,
-            "gemini": {"vision": 0, "image_1k": 0, "image_4k": 0}, "ms": {}, "recent_errors": []}
+            "gemini": {"vision": 0, "image_1k": 0, "image_4k": 0}, "ms": {}, "recent_errors": [],
+            # price experiments (kind "exp"): "<experiment>|<variant>|<stage>" -> events (exp_stage; exp_hit counts only the
+            # events whose artwork's price differs between the variants; stage "paid_test" is a Stripe test payment) and
+            # "<experiment>|<variant>|<currency>" -> the paid amounts in the smallest unit (exp_rev; exp_rev_hit the affected ones)
+            "exp_stage": {}, "exp_hit": {}, "exp_rev": {}, "exp_rev_hit": {}}
 
 
 def _inc(d, k, n=1):
@@ -320,6 +350,22 @@ def add(agg, ev):
             agg["master_rerender"] += 1
         if ev.get("lab"):
             agg["master_lab"] += 1
+    elif kind == "exp":
+        stage, key, var = ev.get("stage"), ev.get("exp"), ev.get("variant")
+        if stage in EXP_STAGES and key and var:
+            live = stage == "paid" and ev.get("live") is not False
+            if stage == "paid" and not live:
+                stage = "paid_test"
+            base = f"{key}|{var}"
+            _inc(agg["exp_stage"], f"{base}|{stage}")
+            if ev.get("hit"):
+                _inc(agg["exp_hit"], f"{base}|{stage}")
+            amount = ev.get("amount")
+            if live and isinstance(amount, (int, float)) and not isinstance(amount, bool) and amount > 0:
+                cur = ev.get("currency") or "eur"
+                _inc(agg["exp_rev"], f"{base}|{cur}", amount)
+                if ev.get("hit"):
+                    _inc(agg["exp_rev_hit"], f"{base}|{cur}", amount)
     elif kind == "error":
         k = ev.get("class") or "unknown"
         _inc(agg["errors"], k)

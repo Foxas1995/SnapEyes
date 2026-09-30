@@ -11,11 +11,12 @@ import { OrdersPage } from './Orders';
 import { OrderDetailPage } from './OrderDetail';
 import { LabPage } from './Lab';
 import { StatsPage } from './Stats';
+import { TestsPage } from './Tests';
 import { ErrorsPage } from './Errors';
 
 export type Call = <T>(action: string, body?: Record<string, unknown>, timeoutMs?: number) => Promise<Reply<T>>;
 
-type Route = { page: 'summary' | 'orders' | 'order' | 'lab' | 'stats' | 'errors'; order?: string };
+type Route = { page: 'summary' | 'orders' | 'order' | 'lab' | 'stats' | 'tests' | 'errors'; order?: string };
 
 function readRoute(): Route {
   const raw = (typeof location !== 'undefined' ? location.hash : '').replace(/^#\/?/, '');
@@ -24,12 +25,12 @@ function readRoute(): Route {
   try { h = decodeURIComponent(raw); } catch { h = ''; }
   const m = /^order\/([a-z0-9][a-z0-9-]{3,63})$/.exec(h);
   if (m) return { page: 'order', order: m[1] };
-  if (h === 'orders' || h === 'lab' || h === 'stats' || h === 'errors') return { page: h };
+  if (h === 'orders' || h === 'lab' || h === 'stats' || h === 'tests' || h === 'errors') return { page: h };
   return { page: 'summary' };
 }
 
 const TABS: [Route['page'], string][] = [
-  ['summary', 'Suvestinė'], ['orders', 'Užsakymai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['errors', 'Klaidos'],
+  ['summary', 'Suvestinė'], ['orders', 'Užsakymai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['tests', 'Kainų testai'], ['errors', 'Klaidos'],
 ];
 
 const Login: React.FC<{ onIn: (key: string, me: Me) => void; message: string }> = ({ onIn, message }) => {
@@ -151,6 +152,7 @@ export const AdminApp: React.FC = () => {
         {route.page === 'order' && route.order && <OrderDetailPage key={route.order} call={call} order={route.order} />}
         {route.page === 'lab' && <LabPage call={call} />}
         {route.page === 'stats' && <StatsPage call={call} />}
+        {route.page === 'tests' && <TestsPage call={call} />}
         {route.page === 'errors' && <ErrorsPage call={call} />}
       </main>
     </div>

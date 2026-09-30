@@ -16,6 +16,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(true);
   const [state, setState] = useState('');
+  const [variant, setVariant] = useState('');      // '' all, 'none' no price test, else "<experiment>:<variant>"
   const [find, setFind] = useState('');
 
   const apply = useCallback((r: Reply<Orders>) => {
@@ -37,7 +38,10 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
   const rank = (s: string) => (stateOrder.includes(s) ? stateOrder.indexOf(s) : stateOrder.length);
   const byState = useMemo(() => countBy(rows, (r) => r.state), [rows]);
   const q = find.trim().toLowerCase();
-  const shown = rows.filter((r) => (!state || r.state === state) && (!q || r.order.includes(q)));
+  const vkey = (r: Orders['orders'][number]) => (r.experiment ? `${r.experiment.key}:${r.experiment.variant}` : 'none');
+  const byVariant = useMemo(() => countBy(rows, vkey), [rows]);
+  const hasTests = Object.keys(byVariant).some((k) => k !== 'none');
+  const shown = rows.filter((r) => (!state || r.state === state) && (!variant || vkey(r) === variant) && (!q || r.order.includes(q)));
 
   return (
     <div className="flex flex-col gap-4">
@@ -61,6 +65,19 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
             </button>
           ))}
         </div>
+        {hasTests && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Kainų testas">
+            <span className={`text-xs self-center ${MUTED}`}>Kainų testas:</span>
+            <button type="button" onClick={() => setVariant('')} aria-pressed={!variant}
+              className={`px-2.5 py-1 rounded-lg text-xs border ${!variant ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>Visi</button>
+            {Object.keys(byVariant).sort((a, b) => (a === 'none' ? 1 : b === 'none' ? -1 : a.localeCompare(b))).map((k) => (
+              <button key={k} type="button" onClick={() => setVariant(k)} aria-pressed={variant === k}
+                className={`px-2.5 py-1 rounded-lg text-xs border ${variant === k ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>
+                {k === 'none' ? 'Be testo' : k.replace(':', ': ')} ({byVariant[k]})
+              </button>
+            ))}
+          </div>
+        )}
         <input className={INPUT} placeholder="Ieškoti pagal užsakymo numerį" value={find} onChange={(e) => setFind(e.target.value)}
           aria-label="Ieškoti pagal užsakymo numerį" spellCheck={false} />
         <p className={`text-xs ${MUTED}`}>
@@ -90,6 +107,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
                 {r.extra_payments ? ` · papildomi mokėjimai: ${r.extra_payments}` : ''}
                 {r.withdrawal ? ' · atsisakymo pareiškimas' : ''}
                 {r.held ? ' · laukia tavo peržiūros' : ''}
+                {r.experiment ? ` · kainų testas: ${r.experiment.variant}${r.experiment.label ? ` (${r.experiment.label})` : ''}` : ''}
               </p>
             </a>
           </li>

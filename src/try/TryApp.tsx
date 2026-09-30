@@ -20,8 +20,10 @@ import {
   loadOrderRef, runCheckout, saveOrderRef, saveSnapshot, staleEyes, takeSnapshot,
 } from './checkout';
 import { callApi, type CheckoutInfo } from '../order/api';
+import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavailable, notePreview } from '../shared/pricing';
+import { priceChangedNote } from './priceNote';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
-import { currentMarket, serverPrices, withMarket } from '../shared/markets';
+import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
 
@@ -214,6 +216,7 @@ export const TryApp: React.FC = () => {
   const [orderRef, setOrderRefState] = useState<OrderRef | null>(() => loadOrderRef());
   const orderRefRef = useRef<OrderRef | null>(orderRef);
   const [waiver, setWaiver] = useState(false);
+  const [priceNote, setPriceNote] = useState<string | null>(null);   // the price changed while the customer looked (409 price_changed)
   const [buy, setBuy] = useState<{ busy: boolean; step: CheckoutStep | null; error: CheckoutError | null }>({ busy: false, step: null, error: null });
   const buyingRef = useRef(false);
   const [now, setNow] = useState(() => Date.now());   // for the 15-minute ticket check, refreshed while ordering is open
@@ -279,15 +282,27 @@ export const TryApp: React.FC = () => {
         setStorageOn(!!h.blob_store);
         // live payments only with the delivery email: it carries the confirmation of the withdrawal waiver that the
         // law asks for (src/shared/legal.ts), so a live key without Resend sells nothing yet. Test mode may try it.
-        if (h.stripe !== true || (h.stripe_live === true && h.email !== true)) { setOrdering({ open: false }); return; }
+        if (h.stripe !== true || (h.stripe_live === true && h.email !== true)) { noteInfoUnavailable(); setOrdering({ open: false }); return; }
+        // asked without any id. While a price experiment runs for the visitor's market, noteCheckoutInfo asks once more with the
+        // visitor's anonymous id (in a header) and hands back the answer with the ladders of the visitor's variant and the
+        // signed token the checkout sends back (src/shared/pricing.ts); otherwise it hands back the same answer
         const c = await callApi<CheckoutInfo>('/api/checkout');
         if (!alive) return;
-        const d = c.ok ? c.data : null;
+        let d = c.ok ? c.data : null;
+        if (d) d = ((await noteCheckoutInfo(d)) ?? d) as CheckoutInfo; else noteInfoUnavailable();
+        if (!alive) return;
         setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent } : { open: false });
       })
-      .catch(() => { if (alive) setOrdering({ open: false }); });
+      .catch(() => { noteInfoUnavailable(); if (alive) setOrdering({ open: false }); });
     return () => { alive = false; };
   }, []);
+
+  // a preview was made: once per visitor and price experiment the server hears it (anonymously; src/shared/pricing.ts)
+  useEffect(() => {
+    if (step !== 'result') return;
+    const real = eyes.filter((e) => !e.sample).length;
+    if (real > 0) notePreview(real, style);
+  }, [step, eyes, style, ordering]);   // ordering: the server's answer (the token) may arrive after the first preview
 
   // the "payment cancelled" note belongs to the screen it came back to: once the customer moves on, it is done
   useEffect(() => {
@@ -771,11 +786,15 @@ export const TryApp: React.FC = () => {
     if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open) return;
     buyingRef.current = true;
     setNotice(null);
+    setPriceNote(null);
     setBuy({ busy: true, step: null, error: null });
     const lay = effectiveLayout(list.length, layoutWant);
     let out: CheckoutOutcome;
     try {
-      out = await runCheckout({ eyes: list, style, layout: lay, names, lang: T.lang, ref: orderRefRef.current },
+      // the price on the button is what the server is asked to confirm (shown); the token names the visitor's variant
+      const market = currentMarket();
+      const shown = priceMinor(list.length, style, market, listFor(market, ordering?.prices));
+      out = await runCheckout({ eyes: list, style, layout: lay, names, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown },
         (s) => setBuy((b) => ({ ...b, step: s })));
     } catch {
       out = { kind: 'error', code: 'failed', ref: orderRefRef.current };
@@ -797,6 +816,15 @@ export const TryApp: React.FC = () => {
       return;
     }
     if (out.kind === 'closed') { setOrdering({ open: false }); setBuy({ busy: false, step: null, error: null }); return; }
+    if (out.kind === 'price_changed') {
+      // the price is not the one shown: nothing was created. Show the server's price and let the customer decide again
+      noteChanged(out.reply);
+      const market = currentMarket();
+      setOrdering((o) => (o ? { ...o, prices: serverPrices({ prices: out.reply.prices, markets: { [market]: { prices: out.reply.prices } } }, market) } : o));
+      setPriceNote(priceChangedNote(T.lang, money(out.reply.amount, currencyOf(market), T.lang)));
+      setBuy({ busy: false, step: null, error: null });
+      return;
+    }
     setBuy({ busy: false, step: null, error: out.code });
   };
 
@@ -813,6 +841,7 @@ export const TryApp: React.FC = () => {
       onRetake={(i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); }}
       waiver={waiver} onWaiver={setWaiver}
       busy={buy.busy} step={stepText(buy.step)} error={buy.error ? T.buy.errors[buy.error] : null}
+      priceNote={priceNote}
       onBuy={onBuy} />
   );
 

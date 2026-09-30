@@ -35,13 +35,28 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"
        409 eyes_missing         eyes 1..n are not all uploaded (missing: [n, ...]); upload them and ask again
        410 draft_expired        the order is older than 24 h (less than 32 min left): start a new one
        503 payments_busy        Stripe did not answer; retry
-       502 payments_error       Stripe refused the request; not retryable, logged"""
+       502 payments_error       Stripe refused the request; not retryable, logged
+       409 price_changed        (only when the request carried "shown") the price the page showed is not what would be
+                                charged now: {amount, prices, currency, market[, exp_token]} is the current one; nothing was
+                                created
+
+Price experiments (api/_lib/abtest.py, api/_lib/experiments.py; none runs unless the owner switched it on in the admin page):
+GET /api/checkout while one runs and ordering is open: without a visitor id the reply only adds "exp_markets" (the markets
+     that run one: the page creates an id only for those); with the id in the header X-Snapeyes-Visitor (32 hex characters,
+     made by the page, never in a URL) it holds the ladders of the visitor's variant in "markets" (and "prices" for the
+     default market), "experiments": [{key, variant, markets, run}] and the signed "exp_token". Nothing running: the reply
+     is exactly the old one.
+POST /api/checkout {..., exp_token, shown}: the price comes from the verified token only ("shown" is checked, never used);
+     no valid token for a running experiment of the order's market: the standard ladder. Errors as above.
+POST /api/checkout {exp_event: "visit" | "preview", exp_token, market[, eyes, style]}: the page's once-per-visitor funnel
+     beacon (no order, no Stripe): {ok, counted}."""
 import os, re, sys, time, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 from _lib import store
 from _lib import pay
+from _lib import abtest
 
 
 def country_hint(value):
@@ -69,6 +84,8 @@ def info(body, country=None):
 
 
 def checkout(body):
+    if "exp_event" in body:      # the price test's anonymous beacon: no order, no Stripe (api/_lib/abtest.py)
+        return abtest.beacon(body)
     why = pay.ordering_problem()
     if why:
         raise pay.PayNotConfigured(why)
@@ -79,6 +96,12 @@ def checkout(body):
         raise store.Answer(400, "consent_required", "Please tick the box about the digital file and your right of "
                            "withdrawal.", False)
     n, lang = spec["eyes"], spec["lang"]
+    # a price experiment (api/_lib/abtest.py): the ladder of the variant the signed token names, when that experiment runs
+    # for this market, else the standard price; the price the page says it showed is only compared with it, never used.
+    # Checked before anything is closed or stored: a changed price answers 409 and touches nothing
+    exp = abtest.assignment(body.get("exp_token"), spec["market"])
+    amount = abtest.price_cents(exp, n, spec["style"], spec["market"]) if exp else pay.price_cents(n, spec["style"], spec["market"])
+    abtest.check_shown(body, spec["market"], amount, exp)
     folder = f"orders/{order}"
     found = pay.parallel([lambda: store.exists(f"{folder}/paid.json", timeout=8.0),
                           lambda: store.exists(f"{folder}/withdrawn.json", timeout=8.0)] +
@@ -111,28 +134,32 @@ def checkout(body):
                            order_url=pay.order_url(order, k, lang), settling=True)
     market = spec["market"]
     currency = pay.market_currency(market)
-    amount = pay.price_cents(n, spec["style"], market)
     # the exact text the customer ticked (the market's own for Australia) is kept with the order: the confirmation
     # email quotes it word for word
     text = pay.consent_for(market, lang)
     consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": text,
                "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]}
-    sess = pay.create_session(order, k, spec, amount, consent, expires)
+    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp)
     sid = sess["id"]
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,
                          "currency": currency, "market": market, "spec": spec, "consent": consent,
                          "expires_at": int(expires),
                          "livemode": bool(sess.get("livemode"))})
+    if exp:
+        rec["checkout"]["experiment"] = abtest.checkout_block(exp, market)
     pay.write_order(order, rec)
-    pay.log(f"order {order}: checkout {sid} {amount} {currency} ({market}) {n} eye(s) {spec['style']} {lang}")
+    pay.log(f"order {order}: checkout {sid} {amount} {currency} ({market}) {n} eye(s) {spec['style']} {lang}"
+            + (f" experiment {exp['key']}/{exp['variant']}" if exp else ""))
+    abtest.note_checkout(exp, market, n, spec["style"], amount)
     return {"ok": True, "url": sess["url"], "order": order, "amount": amount, "currency": currency.upper(),
             "market": market, "eyes": n, "style": spec["style"], "expires_at": int(expires)}
 
 
 def handle_get(req):
     country = req.headers.get("x-vercel-ip-country") if hasattr(req, "headers") else None
-    L.run(req, lambda body: info(body, country), gate=False)
+    vid = abtest.vid_of(req)        # the visitor id travels in a header, never in the address (api/_lib/abtest.py)
+    L.run(req, lambda body: abtest.decorate(info(body, country), vid), gate=False)
 
 
 def handle_post(req):

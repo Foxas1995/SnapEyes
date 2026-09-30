@@ -2,6 +2,7 @@ import { useLang } from './lang';
 import { STYLES, styleSrc, styleSrcSet } from './config';
 import { currencyOf, money, priceMinor } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
+import { usePrices, usePricesReady } from '../shared/usePrices';
 import { useOrderingOpen } from './ordering';
 import { SectionHead } from './ui';
 
@@ -9,6 +10,8 @@ export function StyleGallery() {
   const { t, lang } = useLang();
   const open = useOrderingOpen();
   const market = useMarket();
+  const prices = usePrices(market);          // the visitor's own ladder while a price experiment runs for them
+  const pending = !usePricesReady();         // the server's first answer is waited for (a moment) before a price is printed
   const s = t.styles;
   return (
     <section id="styles" className="scroll-mt-16 border-t border-white/[0.06] py-20 sm:py-28">
@@ -21,7 +24,7 @@ export function StyleGallery() {
         </p>
         <ul className="mt-12 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 md:gap-y-12">
           {STYLES.map((st) => {
-            const cents = priceMinor(1, st.id, market);
+            const cents = priceMinor(1, st.id, market, prices);
             return (
               <li key={st.id}>
                 <figure>
@@ -42,7 +45,7 @@ export function StyleGallery() {
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <h3 className="font-luxury text-[15px] font-semibold tracking-[0.04em] text-white sm:text-base">{st.name}</h3>
                       <span className="text-xs text-zinc-400">
-                        {s.oneEye} · <span className="text-zinc-300">{money(cents, currencyOf(market), lang)}</span>
+                        {s.oneEye} · <span className={`text-zinc-300 ${pending ? 'opacity-0' : ''}`} aria-hidden={pending || undefined}>{money(cents, currencyOf(market), lang)}</span>
                       </span>
                     </div>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400 sm:text-sm">{s.desc[st.id]}</p>

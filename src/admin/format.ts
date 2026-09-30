@@ -129,7 +129,7 @@ export const ACTION_LT: Record<string, string> = {
   release: 'Išleisti kūrinį', clear_review: 'Nuimti peržiūros žymą', mailed_by_hand: 'Išsiunčiau ranka',
   render: 'Pagaminti 4K', recompose: 'Sudėti kūrinį iš naujo', refund: 'Grąžinti pinigus',
   mark_refunded: 'Grąžinau Stripe svetainėje', delete_files: 'Ištrinti failus', lab_start: 'Laboratorijos testas',
-  lab_delete: 'Ištrinti laboratorijos testą',
+  lab_delete: 'Ištrinti laboratorijos testą', exp_start: 'Paleisti kainų testą', exp_stop: 'Sustabdyti kainų testą',
 };
 
 // an audit entry's result code in words (RESULT_LT for the email words, then these), else the code itself
@@ -137,7 +137,9 @@ const LOG_RESULT_LT: Record<string, string> = {
   started: 'pradėta', deleted: 'ištrinta', released: 'išleista', removed: 'nuimta', none: 'nebuvo ko nuimti',
   marked: 'pažymėta', made: 'padaryta', stored: 'jau buvo padaryta', rerendered: 'perpiešta', composed: 'sudėta',
   same: 'nepasikeitė', shown: 'parodyta', by_hand: 'pažymėta ranka', refunded: 'grąžinta', succeeded: 'grąžinta',
-  pending: 'laukia Stripe', bad_request: 'bloga užklausa', not_found: 'nerasta',
+  pending: 'laukia Stripe', bad_request: 'bloga užklausa', not_found: 'nerasta', stopped: 'sustabdyta',
+  already_running: 'jau veikė', not_running: 'neveikė', market_taken: 'rinkoje veikia kitas testas', sells_at_loss: 'atmesta: nuostolis',
+  stats_not_collected: 'atmesta: statistika nerenkama', retired: 'atmesta: testas užbaigtas',
 };
 
 export const actionLt = (a: unknown): string => ACTION_LT[String(a ?? '')] || String(a ?? '');
@@ -183,6 +185,12 @@ export const REASON_LT: Record<string, string> = {
   busy_retry: 'Nepakako laiko šiame iškvietime. Pabandyk dar kartą.',
   render_rejected: 'Gemini negrąžino tinkamo 4K vaizdo.',
   bad_link: 'Užsakymo raktas nesutampa.',
+  already_running: 'Šis kainų testas jau veikia.',
+  not_running: 'Šis kainų testas neveikia.',
+  market_taken: 'Šioje rinkoje jau veikia kitas kainų testas: pirma sustabdyk jį.',
+  sells_at_loss: 'Kainynas kai kuriems užsakymams parduodamas nuostoliu: paleidimui reikia aiškaus patvirtinimo.',
+  stats_not_collected: 'Šiame serveryje nenustatytas CRON_SECRET, todėl lankytojų ir peržiūrų skaičiai nebūtų renkami: paleidimui reikia aiškaus patvirtinimo.',
+  retired: 'Šis kainų testas užbaigtas ir daugiau nepaleidžiamas.',
   payment_processing: 'Mokėjimas dar tvirtinamas.',
 };
 

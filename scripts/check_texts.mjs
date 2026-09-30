@@ -116,7 +116,7 @@ const ENGLISH_OK = new RegExp([
   'snapeyes\\.[a-z]+', 'mailto:\\S+', 'https?:\\/\\/\\S+', 'snapeyes\\.com\\/\\S*', 'order\\?\\S*', '\\/order\\S*', '\\/try\\S*',
   '\\.jpg', '\\.png', 'info@snapeyes\\.com', 'example\\.com', 'doc:\\S+', 'Australian Consumer Law', 'GST', 'Stripe', 'Resend',
   'Vercel', 'Supabase', 'Hostinger', 'Apple Pay', 'Google Pay', 'Link', 'PayPal', 'Revolut Pay', 'JPEG', 'PNG', 'PDF', 'px', 'AI',
-  'Art\\. 5', 'GDPR', 'Directive', 'Regulation', 'Mantas Bakšys', 'Portretizuokis',
+  'Art\\. 5', 'GDPR', 'Directive', 'Regulation', 'Mantas Bakšys', 'Portretizuokis', 'Global Privacy Control',
 ].join('|'), 'g');
 const LT_LETTERS = 'A-Za-zĄČĘĖĮŠŲŪŽąčęėįšųūž';
 const LT_LOWER_JUS = new RegExp(`(^|[^${LT_LETTERS}])(jūs|jūsų|jums|jus|jumis)(?![${LT_LETTERS}])`, 'u');

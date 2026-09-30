@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { noteCheckoutInfo, noteInfoUnavailable } from '../shared/pricing';
 
 // Whether this deployment takes orders, by the capture tool's own rule (src/try/TryApp.tsx): /api/health says Stripe
 // is set up (and, with a live key, the delivery email too), then GET /api/checkout says "open". The landing page is
@@ -9,6 +10,9 @@ import { useSyncExternalStore } from 'react';
 
 // The same GET /api/checkout answer also names a market the visitor's country may suggest ("suggest", from Vercel's
 // x-vercel-ip-country): kept here for the landing page's offer of that currency (./MarketHint.tsx), never applied.
+// It is asked WITHOUT any id. While a price test runs for the visitor's market the pricing store (src/shared/pricing.ts)
+// asks once more with the visitor's anonymous id in a header and keeps the ladders of the visitor's variant, so this page
+// prints the price it will charge; while none runs nothing is created or sent.
 let open = false;
 let suggested: string | null = null;
 let started = false;
@@ -32,9 +36,10 @@ async function getJson(path: string, needOk: boolean): Promise<Record<string, un
 async function check(): Promise<{ open: boolean; suggest: string | null }> {
   const none = { open: false, suggest: null };
   const h = await getJson('/api/health', false);
-  if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) return none;
-  const c = await getJson('/api/checkout', true);
-  if (!c) return none;
+  if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) { noteInfoUnavailable(); return none; }
+  const plain = await getJson('/api/checkout', true);
+  if (!plain) { noteInfoUnavailable(); return none; }
+  const c = ((await noteCheckoutInfo(plain)) ?? plain) as Record<string, unknown>;
   return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null };
 }
 

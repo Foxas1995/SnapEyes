@@ -92,6 +92,7 @@ export const lt: LegalDoc = {
           ],
         },
         `Visos kainos yra galutinės ir nurodytos eurais. ${companyLt} nėra PVM mokėtoja, todėl PVM netaikomas. Pristatymo išlaidų nėra.`,
+        'Pirmiau pateikta lentelė yra mūsų standartinis kainoraštis. Kartkartėmis ribotą laiką kai kuriems atsitiktinai parinktiems lankytojams išbandome kitus kainoraščius. Visada mokate kainas, kurios Jums parodytos kūrinio puslapyje prieš apmokėjimą ir mokėjimo puslapyje, o Jūsų užsakymo patvirtinimo el. laiške nurodomas kainoraštis, kuris taikytas Jūsų užsakymui. Koks kainoraštis Jums rodomas, niekada nepriklauso nuo šalies, kurioje gyvenate, o tik nuo Jūsų pasirinktos rinkos (valiutos).',
         'Mokate iš anksto per mūsų mokėjimo paslaugų teikėją Stripe, mokėjimo puslapyje rodomais mokėjimo būdais.',
       ],
     },
@@ -174,6 +175,7 @@ export const ltHufPrices: LegalSection = {
       ],
     },
     `Visos kainos yra galutinės ir nurodytos Vengrijos forintais (Ft). ${companyLt} nėra PVM mokėtoja, todėl PVM netaikomas. Pristatymo išlaidų nėra. Jei svetainė Jums rodo kainas kita valiuta, mokėjimo puslapyje ir užsakymo patvirtinimo el. laiške nurodoma valiuta ir suma, kurią iš tikrųjų mokate.`,
+    'Pirmiau pateikta lentelė yra mūsų standartinis kainoraštis. Kartkartėmis ribotą laiką kai kuriems atsitiktinai parinktiems lankytojams išbandome kitus kainoraščius. Visada mokate kainas, kurios Jums parodytos kūrinio puslapyje prieš apmokėjimą ir mokėjimo puslapyje, o Jūsų užsakymo patvirtinimo el. laiške nurodomas kainoraštis, kuris taikytas Jūsų užsakymui. Koks kainoraštis Jums rodomas, niekada nepriklauso nuo šalies, kurioje gyvenate, o tik nuo Jūsų pasirinktos rinkos (valiutos).',
     'Mokate iš anksto per mūsų mokėjimo paslaugų teikėją Stripe, mokėjimo puslapyje rodomais mokėjimo būdais.',
   ],
 };

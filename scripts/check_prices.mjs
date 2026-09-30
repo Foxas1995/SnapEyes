@@ -6,6 +6,9 @@
 //      price rule (priceMinor) gives another price than api/_lib/pay.py's rule for any market, number of eyes and style;
 //   3. any other file of the site or the server holds a price of its own: a price in Stripe's units in the files that
 //      deal with prices, or a written price ("19.97", "A$39", "6 990 Ft") anywhere in src/ or api/ (comments aside);
+//   5. every price experiment (api/_lib/experiments.py, checked by scripts/check_experiments.mjs): full ladders per
+//      variant and market, control = the standard ladder, no variant that sells at a loss, the site's price rule
+//      agrees with the server's for every variant, and no other file holds a variant's price;
 //   4. a market is selectable in another currency than the default market's without its own edition of the legal
 //      texts (src/shared/legal.ts EDITION_MARKETS = api/_lib/pay.py EDITION_MARKETS): the EU texts print euro prices
 //      only. The two lists, and the languages each edition has (EDITION_LANGS in both files), must agree.
@@ -13,6 +16,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkExperiments, withVariantLadders } from './check_experiments.mjs';
 
 export const MARKETS_FILE = 'api/_lib/markets.py';
 const CURRENCIES = ['eur', 'aud', 'huf'];
@@ -34,10 +38,12 @@ const PRICE_FILES = [
   'src/landing/copy.lt.ts', 'src/landing/copy.hu.ts', 'src/try/copy.lt.ts', 'src/try/copy.hu.ts', 'src/order/copy.lt.ts',
   'src/order/copy.hu.ts', 'api/_lib/pay_lt.py', 'api/_lib/pay_hu.py', 'api/_lib/withdraw_lt.py', 'api/_lib/withdraw_hu.py',
   'src/admin/format.ts', 'src/admin/agg.ts', 'src/admin/Summary.tsx', 'src/admin/Orders.tsx', 'src/admin/OrderDetail.tsx',
+  'src/admin/Tests.tsx', 'api/_lib/abtest.py', 'src/shared/pricing.ts', 'src/shared/usePrices.ts', 'src/try/priceNote.ts',
   'src/shared/markets.ts', 'src/shared/legal.ts',
 ];
-// Never scanned for written prices: the one place itself, and the image engine (another team's, no prices in it).
-const SKIP = new Set([MARKETS_FILE, 'api/_lib/iris.py']);
+// Never scanned for written prices: the one place itself, the place of the price experiments' ladders
+// (scripts/check_experiments.mjs checks those) and the image engine (another team's, no prices in it).
+const SKIP = new Set([MARKETS_FILE, 'api/_lib/experiments.py', 'api/_lib/iris.py']);
 
 /** DEFAULT_MARKET and MARKETS of api/_lib/markets.py's text (src/shared/markets.ts parseMarketsSource, the same rule). */
 export function parseMarketsSource(src) {
@@ -247,7 +253,8 @@ function writtenPatterns(markets) {
 
 function checkCopies(root, markets, out) {
   const minors = new Set();
-  for (const m of Object.values(markets)) for (const k of PRICE_KEYS) minors.add(m.prices[k]);
+  // a variant's round thousands (1000, 2000 ...) are too common in code to mean a price: only its other amounts are looked for
+  for (const m of Object.values(markets)) for (const k of PRICE_KEYS) if (!(m.variant && m.prices[k] % 1000 === 0)) minors.add(m.prices[k]);
   const minorRe = new RegExp(`(?<![\\w.$])(${[...minors].map(String).map(esc).join('|')})(?![\\w.])`);
   for (const rel of PRICE_FILES) {
     let text;
@@ -287,7 +294,9 @@ export function checkPrices(root, client) {
   if (out.length) return out;
   checkEditions(root, defaultMarket, markets, out);
   if (client) checkClient(defaultMarket, markets, client, out);
-  checkCopies(root, markets, out);
+  // the price experiments' variant ladders (api/_lib/experiments.py): validated, and no other file may hold their prices
+  const experiments = checkExperiments(root, markets, out, client);
+  checkCopies(root, withVariantLadders(markets, experiments), out);
   return out;
 }
 

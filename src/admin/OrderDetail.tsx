@@ -185,6 +185,9 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
               ['Pavadinimas', s(spec.title) || '-'],
               ['Kaina', d.paid ? `${fmtMoney(n(paidRec.amount_total), s(paidRec.currency))}${paidRec.amount_mismatch ? ' (nesutampa su kainoraščiu!)' : ''}` : checkout.amount ? fmtMoney(n(checkout.amount), s(checkout.currency)) : '-'],
               ['Rinka', s(paidRec.market) || s(spec.market) || s(checkout.market) || (d.paid || checkout.amount ? 'eu' : '-')],
+              ['Kainų testas', d.experiment
+                ? `${d.experiment.title || d.experiment.key}, variantas ${d.experiment.variant}${d.experiment.label ? ` (${d.experiment.label})` : ''}${d.experiment.prices ? `; taikytas kainynas: 1 akis juoda ${fmtMoney(d.experiment.prices.one_eye_studio_black, s(paidRec.currency) || s(checkout.currency))}, meninė ${fmtMoney(d.experiment.prices.one_eye_art, s(paidRec.currency) || s(checkout.currency))}, 2 akys ${fmtMoney(d.experiment.prices.two_eyes, s(paidRec.currency) || s(checkout.currency))}, kiekviena kita +${fmtMoney(d.experiment.prices.each_further_eye, s(paidRec.currency) || s(checkout.currency))}` : ''}${d.experiment.source === 'checkout' ? ' (mokėjimas dar neužfiksuotas)' : ''}${d.experiment.known ? '' : ' (šio testo apibrėžime nebėra)'}`
+                : (d.paid || checkout.amount ? 'nedalyvavo (įprasta kaina)' : 'kaina dar nenustatyta (mokėjimas neatidarytas)')],
               ['Apmokėta', d.paid ? `${isoTime(paidRec.paid_iso)} per ${s(paidRec.source)}` : '-'],
               ['Pirkėjo el. paštas', d.email || '-'],
               ['Stripe sesija', s(paidRec.session_id) || s(checkout.session_id) || '-'],

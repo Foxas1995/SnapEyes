@@ -13,10 +13,12 @@ FAIL_WINDOW on one instance, or FAIL_HOURLY in an hour across instances (ops/adm
 where tag is a keyed hash of the client address and nothing else is kept; written only while the daily clean-up can
 delete them after 2 days, events.retention_ok(): CRON_SECRET set), answer 429 without looking at the key.
 
-Read-only views: me, summary (configuration and ordering state), stats (per-day counts from the usage events,
-api/_lib/events.py), errors (the latest error events), orders (the order folders, state derived from the stored files
-only: nothing is sent, asked of Stripe or changed), order (one order: every record, signed image links valid 1 h,
-QA flags, payments, refunds, the admin log), audit, lab_list.
+Read-only views: me, summary (configuration and ordering state, the price experiments that run), stats (per-day counts
+from the usage events, api/_lib/events.py), errors (the latest error events), orders (the order folders, state derived from
+the stored files only: nothing is sent, asked of Stripe or changed), order (one order: every record, signed image links
+valid 1 h, QA flags, payments, refunds, the admin log, its price experiment), audit, lab_list, experiments (the page
+"Kainų testai": every price experiment of api/_lib/experiments.py with its state, variants, the funnel and revenue per
+variant, the significance note and the warnings; api/_lib/abtest.py).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
 "confirm"): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
@@ -24,7 +26,9 @@ resend_confirmation, resend_ready, release, clear_review, mailed_by_hand, render
 begun on the customer's order page, see act_render, or re-render one by master_eye's rules), recompose, refund
 (Stripe POST /v1/refunds on the payment intent), mark_refunded
 (refunded.json, as scripts/order_admin.py refunded), delete_files,
-lab_start (an unlock ticket for a test order lab-<yymmdd>-<rand>), lab_delete. They reuse pay.py, order.py,
+lab_start (an unlock ticket for a test order lab-<yymmdd>-<rand>), lab_delete, exp_start and exp_stop (switch a price
+experiment on or off: api/_lib/abtest.py start and stop; nothing runs until the owner does this, and both are in the audit
+log with the experiment's key). They reuse pay.py, order.py,
 master_eye.py, master_compose.py and store.py, and each one is written to the admin audit log:
 ops/audit/<YYYY-MM-DD>/<HHMMSS>-<rand>.json and ops/orderlog/<order>/<time>-<rand>.json (action, order, result code;
 no email address, no link). The order's copy belongs to its record (privacy policy): it goes whenever the order goes
@@ -35,6 +39,7 @@ import re, json, time, hmac, base64, hashlib, secrets, threading, importlib
 from . import iris as L
 from . import store
 from . import pay
+from . import abtest
 from . import events as E
 from . import withdraw as W
 
@@ -311,17 +316,19 @@ def audited(name, fn):
     def run(body, who):
         order = body.get("order") if isinstance(body.get("order"), str) else None
         eye = body.get("eye") if isinstance(body.get("eye"), int) else None
+        # a price experiment's start or stop names its test in the log line even when it is refused
+        xk = body.get("key") if name.startswith("exp_") and isinstance(body.get("key"), str) and abtest.get(body.get("key")) else None
         try:
             res = fn(body, who)
         except store.Answer as a:
             # a 404 names an order that is not there: no order log is started for it
-            audit(name, order, False, a.body.get("reason"), eye, orderlog=a.status != 404)
+            audit(name, order, False, a.body.get("reason"), eye, xk, orderlog=a.status != 404)
             raise
         except L.ClientError as e:
             audit(name, order, False, "bad_request", eye, str(e))
             raise
         except Exception as e:  # noqa
-            audit(name, order, False, type(e).__name__, eye)
+            audit(name, order, False, type(e).__name__, eye, xk)
             raise
         # an action that deleted the order completely says orderlog: False (its log went with it); one that made the
         # order (lab_start) names it in its reply
@@ -394,7 +401,10 @@ def order_row(order):
     market = (paid.get("market") if is_paid else (co.get("market") if isinstance(co, dict) else None)) or spec.get("market")
     created_at = (rec or {}).get("created_at") if isinstance(rec, dict) else None
     lang = spec.get("lang") or (rec.get("lang") if isinstance(rec, dict) else None)
-    return {"order": order, "state": state, "created_at": created_at if isinstance(created_at, (int, float)) else None,
+    xv = abtest.order_view(paid if is_paid else None, rec)
+    return {"order": order, "state": state,
+            "experiment": {"key": xv["key"], "variant": xv["variant"], "label": xv.get("label")} if xv else None,
+            "created_at": created_at if isinstance(created_at, (int, float)) else None,
             "lang": lang if lang in pay.LANGS else None,
             "eyes": spec.get("eyes") or (len(drafts) or None), "style": spec.get("style"), "layout": spec.get("layout"),
             "amount": amount, "currency": currency.upper(), "market": market if market in pay.MARKETS else pay.DEFAULT_MARKET,
@@ -511,6 +521,7 @@ def a_summary(body, who):
             "admin": {"kind": who["kind"], "expires_at": who["exp"], "secret": admin_secret_source()},
             # the usage events and the failed-login markers are stored only while the daily clean-up can delete them
             "retention": {"cron": E.retention_ok(), "events": E.retention_ok() and not sp},
+            "experiments": _safe(abtest.summary, []),
             "prices_usd": PRICES_USD}
 
 
@@ -634,6 +645,7 @@ def a_order(body, who):
             "files": [{"path": rel(p), "url": urls.get(p)} for p in files],
             "records": {rel(p): r for p, r in recs.items()},
             "eyes": eyes, "artworks": arts, "payments": payments, "refunds": refunds, "log": admin_log,
+            "experiment": abtest.order_view(paid if is_paid else None, rec),
             "making": {"began": began, "period_over": over},
             "can": {"email": pay.email_configured(), "stripe": pay.stripe_configured(), "link": k_ok,
                     "counts": bool(is_paid and pay.paid_counts(paid)), "start": bool(began or over)}}
@@ -1004,6 +1016,76 @@ def act_delete_files(body, who):
             "orderlog": gone < total}
 
 
+# ----------------------------------------------------------------------------- the price experiments
+def _returned(order, row):
+    """Was this paid order given back: withdrawn by the customer, refunded in the Stripe Dashboard (refunded.json) or
+    refunded from the admin panel (maker.refund_marks)?"""
+    if row.get("state") == "withdrawn":
+        return True
+    from . import maker
+    marks = maker.refund_marks(order, pay.get_paid(order))
+    return any(store.exists(p, timeout=5.0, retry=False) for p in marks)
+
+
+def _exp_orders(days):
+    """(rows, more): the order rows of the last `days` days, with "returned" set on the live payments of price tests."""
+    res = a_orders({"days": days}, None)
+    rows = res["orders"]
+    todo = [r for r in rows if r.get("experiment") and r.get("paid") and r.get("live") is True]
+    for r, x in zip(todo, each([lambda r=r: _returned(r["order"], r) for r in todo])):
+        r["returned"] = x is True
+    return rows, bool(res.get("more"))
+
+
+def a_experiments(body, who):
+    """The page "Kainų testai": the definitions, states, per-variant funnel, revenue, significance and warnings, and the
+    experiments' lines of the audit log (abtest.admin_view; the visitors, previews and payment pages come from the events
+    through collect_days like the statistics, the paid orders and the revenue from the order records)."""
+    try:
+        entries = a_audit({}, who)["entries"]
+    except store.StorageNotConfigured:
+        raise
+    except Exception as e:  # noqa: the page works without the log
+        log(f"experiments: audit not read: {type(e).__name__}")
+        entries = []
+    st = abtest.states(force=True)
+    started = [k for k in abtest.DEFS if (st.get(k) or {}).get("since")]
+    orders, more = None, False
+    if started:
+        try:
+            orders, more = _exp_orders(max(abtest.window_days(st[k]) for k in started))
+        except store.StorageNotConfigured:
+            raise
+        except Exception as e:  # noqa: the page then counts from the events
+            log(f"experiments: orders not read: {type(e).__name__}")
+    return abtest.admin_view(collect_days, audit=entries, ordering_open=not pay.ordering_problem() and not store.problem(),
+                             orders=orders, orders_more=more, collecting=E.retention_ok())
+
+
+def act_exp_start(body, who):
+    """Switch a price experiment on (abtest.start: 409 when it runs, when another runs in one of its markets, and when a
+    variant would sell at a loss unless accept_loss is true; 409 stats_not_collected when this deployment stores no events
+    (no CRON_SECRET) unless accept_no_stats is true). From then on visitors of its markets are assigned to a variant and
+    charged that variant's ladder; nothing else about an order changes. The audit line says which risks were accepted."""
+    key = abtest.check_key(body.get("key"))
+    no_stats = body.get("accept_no_stats") is True
+    if not E.retention_ok() and not no_stats:
+        raise store.Answer(409, "stats_not_collected", "This deployment stores no usage events (CRON_SECRET), so the visitor "
+                           "and preview counts would stay at zero.", False)
+    loss = body.get("accept_loss") is True
+    st = abtest.start(key, accept_loss=loss)
+    flags = (" accept_loss" if loss else "") + (" accept_no_stats" if no_stats and not E.retention_ok() else "")
+    return {"ok": True, "result": "started", "key": key, "state": st, "audit_detail": key + flags}
+
+
+def act_exp_stop(body, who):
+    """Switch a price experiment off (abtest.stop): no new visitor is assigned, everybody pays the standard ladder again;
+    a checkout already open keeps its variant's price and is still recorded."""
+    key = abtest.check_key(body.get("key"))
+    st = abtest.stop(key)
+    return {"ok": True, "result": "stopped", "key": key, "state": st, "audit_detail": key}
+
+
 # ----------------------------------------------------------------------------- the lab
 def act_lab_start(body, who):
     """A test order for the lab's 4K master: an id lab-<yymmdd>-<rand>, its marker ops/lab/<id>.json, and an unlock
@@ -1037,7 +1119,9 @@ def a_lab_list(body, who):
 # ----------------------------------------------------------------------------- serving
 ACTIONS = {
     "me": a_me, "summary": a_summary, "stats": a_stats, "errors": a_errors, "orders": a_orders, "order": a_order,
-    "audit": a_audit, "lab_list": a_lab_list,
+    "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments,
+    "exp_start": audited("exp_start", act_exp_start),
+    "exp_stop": audited("exp_stop", act_exp_stop),
     "link": audited("link", act_link),
     "resend_confirmation": audited("resend_confirmation", act_resend_confirmation),
     "resend_ready": audited("resend_ready", act_resend_ready),

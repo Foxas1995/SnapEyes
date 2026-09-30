@@ -2,7 +2,8 @@ import React from 'react';
 import { Lock, RefreshCcw } from 'lucide-react';
 import { T } from './copy';
 import { type Eye, MAX_EYES, billableEyes } from './multi';
-import { currencyOf, currentMarket, money, priceList, priceMinor, type PriceList } from '../shared/markets';
+import { currencyOf, currentMarket, money, priceMinor, type PriceList } from '../shared/markets';
+import { listFor } from '../shared/pricing';
 import { checkoutLegal, legalEdition } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
 import type { Lang } from '../shared/lang';
@@ -34,6 +35,9 @@ interface Props {
   step: string | null;
   error: string | null;
   onBuy: () => void;
+  /** The price changed while the customer looked (the server answered 409 price_changed): the sentence naming the new
+   *  price, shown above the button until the next press. */
+  priceNote?: string | null;
 }
 
 const CARD = 'bg-[#0b0e17] border border-[#f5c542]/25 rounded-2xl p-4';
@@ -65,8 +69,10 @@ export const BuyCard: React.FC<Props> = (p) => {
   const market = currentMarket();
   const currency = currencyOf(market);
   const fmt = (c: number) => money(c, currency, lang);
-  const list = priceList(market);
-  const cents = priceMinor(n, p.style, market, open ? p.ordering?.prices : undefined);
+  // the visitor's own ladder: while a price experiment runs for them, the ladder of their variant (the server's answer,
+  // src/shared/pricing.ts), else the standard one; every number on this card, the button's included, comes from it
+  const list = listFor(market, open ? p.ordering?.prices : undefined);
+  const cents = priceMinor(n, p.style, market, list);
   const label = n === 1 ? T.price.oneEye(p.styleName) : n === 2 ? T.price.duo : T.price.many(n);
   const hint = n === 1
     ? `${T.price.oneEyeOther(fmt(list.one_eye_studio_black), fmt(list.one_eye_art))} ${T.price.duoOffer(fmt(list.two_eyes))}`
@@ -148,6 +154,9 @@ export const BuyCard: React.FC<Props> = (p) => {
       {!p.busy && blockedBy === 'waiver' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{legal.withdrawalConsentMissing}</p>}
       {!p.busy && blockedBy === 'composing' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.buy.waitPreview}</p>}
       {!p.busy && blockedBy === 'failed' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.buy.previewFailed}</p>}
+      {p.priceNote && !p.busy && (
+        <p role="status" data-testid="buy-price-changed" className="mt-3 text-xs text-amber-100 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3">{p.priceNote}</p>
+      )}
       {p.error && (
         <p role="alert" data-testid="buy-error" className="mt-3 text-xs text-rose-200 bg-rose-950/40 border border-rose-500/40 rounded-xl p-3">{p.error}</p>
       )}

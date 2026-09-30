@@ -104,11 +104,18 @@ api/_lib/markets.py (the one place every price lives; the site's build reads the
 and 1 eye Studio Black, 1 eye on an art background, 2 eyes, each further eye, up to 8. Digital only. The market comes
 from the checkout request (only a selectable one: MARKETS "selectable"); an order records it with its currency and
 amount (order.json checkout, the Stripe metadata, paid.json), and every paid session is checked against it: its
-currency must be its market's (session_matches), and its amount the one the server priced (record_paid)."""
+currency must be its market's (session_matches), and its amount the one the server priced (record_paid).
+
+Price experiments (api/_lib/abtest.py, api/_lib/experiments.py): a checkout under an experiment carries {exp, exp_var,
+exp_lad} in the session metadata (exp_lad: the ladder the price came from), {experiment: {key, variant, prices}} in
+order.json's checkout block and in paid.json. session_matches also refuses a session whose amount is not the price of
+its own ladder (abtest.session_ok), and the owner is told (note_wrong_currency). Orders without an experiment are
+unchanged."""
 import os, re, json, time, hmac, html, calendar, hashlib, secrets, threading
 import requests
 from . import iris as L
 from . import store
+from . import abtest
 from .markets import MARKETS, DEFAULT_MARKET
 from . import pay_lt, pay_hu
 
@@ -976,9 +983,10 @@ def _raise_for(r, label):
     raise PayError(msg)
 
 
-def create_session(order, k, spec, amount, consent, expires):
+def create_session(order, k, spec, amount, consent, expires, exp=None):
     """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
     methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
+    exp: the price experiment and variant the amount was priced under (abtest.assignment), written to the metadata.
     Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
     market = spec.get("market") or DEFAULT_MARKET
@@ -1008,6 +1016,7 @@ def create_session(order, k, spec, amount, consent, expires):
             "layout": spec["layout"], "names": spec["names"], "title": spec["title"], "lang": lang,
             "market": market, "currency": currency,
             "amount": str(int(amount)), "consent_version": consent["version"], "consent_at": consent["at"]}
+    meta.update(abtest.metadata(exp, market))
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
             params.append((f"metadata[{name}]", v))
@@ -1128,7 +1137,7 @@ def session_matches(sess, order, rec):
     """Was this session made by /api/checkout for this order, in its market's currency? (session_ours plus
     session_currency_ok: the order id, the key fingerprint, the market and the currency, all written by the server.)
     A session that is only ours in the currency is refused: the webhook tells the owner (stripe_webhook.py)."""
-    return session_ours(sess, order, rec) and session_currency_ok(sess)
+    return session_ours(sess, order, rec) and session_currency_ok(sess) and abtest.session_ok(sess)
 
 
 def session_paid(sess):
@@ -1209,6 +1218,10 @@ def record_paid(order, rec, sess, source, event_id=None):
     """Mark the order paid, once: paid.json is created atomically and never overwritten, so a replayed webhook
     or a second order-page check finds it and changes nothing. Returns (paid record, new)."""
     spec = _paid_spec(sess, rec)
+    if not abtest.session_ok(sess):
+        # every caller checks session_matches first; a session of a price experiment at a price the server does not set
+        # is never recorded, whoever asks (the owner is told by note_wrong_currency where the session is seen)
+        raise PayError(f"order {order}: the paid session of a price experiment is not at a price the server sets")
     if spec is None:
         cur = get_paid(order)
         if cur is None:
@@ -1237,7 +1250,12 @@ def record_paid(order, rec, sess, source, event_id=None):
     # what the server priced at checkout (the metadata's amount, written by it), else the market's price now; and the
     # market's currency. A difference is recorded and the owner told (note_paid), and the order is delivered as paid:
     # only the server can make a session, so it is a price change or a Stripe-side conversion, never the customer
-    want = price_cents(spec["eyes"], spec["style"], market)
+    exp = abtest.paid_record(sess, spec)
+    if exp:
+        paid["experiment"] = exp            # {key, variant, prices}: the ladder this order was priced on
+    want = abtest.expected_price(exp, spec) if exp else None
+    if want is None:
+        want = price_cents(spec["eyes"], spec["style"], market)
     priced = _int_amount(meta.get("amount"))
     want_cur = market_currency(market)
     expected = priced if priced is not None else want
@@ -1254,6 +1272,7 @@ def record_paid(order, rec, sess, source, event_id=None):
         index_making(order, now)       # the daily clean-up's catch-up (api/_lib/maker.py) finds it until it is done
         if paid["livemode"]:
             _mark_sold(order)
+        abtest.note_paid(paid)             # the anonymous event of a price experiment's payment, once
         if withdrawn(order):
             # the customer withdrew while this payment was still settling (or an old tab was paid after they
             # withdrew): nothing is made, no confirmation goes out, and the owner refunds it
@@ -1832,6 +1851,7 @@ def confirmation_mail(order, paid, k, pack, consent):
             ("p", "Kind regards\nSnapEyes"),
             ("p", seller_lines(lang, pack)),
         ]
+    abtest.insert_price_list_row(rows, paid, lang)      # an order made under a price experiment: the list that applied to it
     if acl_market(market):
         subject, blocks = _australian(blocks, order, paid, pack, lang, auto, terms["url"])
     blocks += [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
@@ -2281,7 +2301,10 @@ def note_wrong_currency(order, sess):
     """Tell the owner (once per session) that a session of ours for this order was PAID in a currency that is not its
     market's (or names no market of ours): it is never recorded as the order's payment and nothing is made, so the
     owner checks it and refunds it. Used by the webhook and by the daily clean-up (stripe_verdict), so that such a
-    payment is never silent, whichever of them sees it first."""
+    payment is never silent, whichever of them sees it first. A session of a price experiment that is in its market's
+    currency but at another price than its variant's (abtest.session_ok) gets its own note, abtest.note_refused."""
+    if session_currency_ok(sess) and not abtest.session_ok(sess):
+        return abtest.note_refused(order, sess)
     sid = str(sess.get("id") or "")
     meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
     return owner_note(order, "wrong_currency_" + _order_tag(sid),
@@ -2356,7 +2379,7 @@ def stripe_verdict(order, rec, record=True):
                 # our own session, PAID, but not in its market's currency: never this order's payment, and never
                 # deleted in silence (the webhook may never have arrived): the owner is told, the order is kept
                 log(f"clean-up: order {order}: session {sid} is PAID in {str(sess.get('currency') or '')[:8]!r}, not "
-                    f"its market's currency: kept, owner told")
+                    f"its market's currency or not at its experiment's price: kept, owner told")
                 if record:
                     note_wrong_currency(order, sess)
                 wrong = True      # asked on: another session of the order may still be its payment

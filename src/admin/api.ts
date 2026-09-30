@@ -87,6 +87,9 @@ export interface Me { kind: string; expires_at: number; storage: boolean; now: n
 
 export interface Prices { vision: number; image_1k: number; image_4k: number }
 
+/** A running (or idle) price experiment as the summary lists it (api/_lib/abtest.py summary). */
+export interface ExpBrief { key: string; title: string; markets: string[]; running: boolean; since: number | null; started_at: number | null }
+
 export interface Summary {
   now: number;
   ordering: { open: boolean; problem: string };
@@ -95,6 +98,8 @@ export interface Summary {
   admin: { kind: string; expires_at: number; secret?: string };
   /** events and failed-login markers are stored only while the daily clean-up (CRON_SECRET) can delete them */
   retention?: { cron: boolean; events: boolean };
+  /** the price experiments and whether each runs (api/_lib/experiments.py) */
+  experiments?: ExpBrief[];
   prices_usd: Prices;
 }
 
@@ -121,6 +126,8 @@ export interface OrderRow {
   layout: string | null; amount: number | null; currency: string; market?: string; paid: boolean; live: boolean | null; paid_at: number | null;
   email: string | null; drafts: number; made: number; files: number; delivery: boolean; held: boolean; review: boolean;
   withdrawal: boolean; extra_payments: number; mail: string | null;
+  /** the price experiment and variant the order was priced under, if any */
+  experiment?: { key: string; variant: string; label?: string | null } | null;
 }
 export interface Orders { days: number; orders: OrderRow[]; total: number; more: boolean }
 
@@ -154,8 +161,69 @@ export interface OrderDetail {
   eyes: EyeView[]; artworks: ArtworkView[]; payments: Payment[]; refunds: Json[]; log: LogEntry[];
   /** began: the customer's order page started making (the right of withdrawal ended); period_over: 14 days passed */
   making?: { began: boolean; period_over: boolean };
+  /** the price experiment the order was made under: its variant and the price list that applied (paid.json, else the checkout) */
+  experiment?: null | { key: string; variant: string; title?: string | null; label?: string | null; prices: ExpLadder | null; source: string; known: boolean };
   /** start: an eye not made yet may be made from here (making began, or the withdrawal period is over) */
   can: { email: boolean; stripe: boolean; link: boolean; counts: boolean; start?: boolean };
+}
+
+// ---------------------------------------------------------------------------------------------------- price experiments
+
+export interface ExpLadder { one_eye_studio_black: number; one_eye_art: number; two_eyes: number; each_further_eye: number }
+export interface ExpVariant { variant: string; label: string; split: number; prices: Record<string, ExpLadder> }
+export interface ExpStats {
+  variant: string; visitors: number; previews: number; checkouts: number; paid: number; paid_test: number;
+  hit_previews: number; hit_checkouts: number; hit_paid: number; revenue: number; revenue_hit: number;
+  avg_order: number | null; avg_order_hit: number | null; revenue_per_visitor: number | null;
+  rate_preview: number | null; rate_checkout: number | null; rate_paid: number | null; rate_hit_paid: number | null;
+  rate_paid_of_checkout: number | null;
+  /** paid orders given back (refunded or withdrawn) and their amount: not in paid or revenue */
+  returned: number; returned_revenue: number;
+  /** what the anonymous events say about paid orders (the cross-check of the order records) */
+  paid_events: number; revenue_events: number;
+  /** where paid and revenue come from: the order records, or the events when the records could not be read */
+  source: 'orders' | 'events';
+}
+export interface ExpTest { p: number | null; z: number | null; enough: boolean; why: string | null; diff?: number }
+export interface ExpCompare extends ExpTest {
+  variant: string;
+  /** revenue per visitor against the control (the decision metric): difference in the smallest unit, z, p */
+  rpv: { diff: number; z: number; p: number } | null;
+  /** only for a test that changes some of the prices: the conversion to the affected orders alone */
+  hit: ExpTest | null;
+  /** every arm has reached the size the note asks for: only then a verdict is allowed */
+  planned: boolean;
+}
+export interface ExpWarning {
+  code: 'loss' | 'spread' | 'events_differ'; variant?: string; market?: string; eyes?: number; style?: string; price?: number; net?: number;
+  ratio?: number; orders?: number; events?: number;
+}
+export interface ExpNeed { visitors: number; paid: number; rate: number; rel: number; assumed: boolean }
+export interface Experiment {
+  key: string; title: string; about: string; markets: string[]; currency: string; changes: string[]; hit_label: string;
+  partial: boolean; retired: boolean; stats_error: boolean;
+  state: { running: boolean; since: number | null; started_at: number | null; stopped_at: number | null; updated: number | null;
+    runs: { start: number | null; stop: number | null }[] };
+  conflict: string | null;
+  variants: ExpVariant[];
+  stats: ExpStats[];
+  compare: ExpCompare[];
+  need: ExpNeed | null;
+  need_hit: ExpNeed | null;
+  /** orders of the test's markets made while it ran that carry no variant */
+  untokened: { orders: number; paid: number } | null;
+  days: number;
+  warnings: ExpWarning[];
+}
+export interface Experiments {
+  now: number; experiments: Experiment[]; partial: boolean; log: LogEntry[];
+  runs: { key: string; title: string; start: number; stop: number | null }[];
+  ordering_open: boolean | null;
+  /** does this deployment store events at all (CRON_SECRET)? */
+  collecting: boolean | null;
+  orders_source: 'orders' | 'events' | 'events_cut';
+  costs: { unit_usd_per_eye: number };
+  rules: { min_arm_paid: number; min_arm_visitors: number; spread_warn: number; rel_effect: number };
 }
 
 export interface LabRow { order: string; files: number; eyes: number; artwork_url: string | null; eye_url: string | null }

@@ -78,9 +78,17 @@ export interface CheckoutInfo {
   consent?: Partial<Record<Lang, string>> & { version?: string; markets?: Record<string, Partial<Record<Lang, string>> | undefined> };
   country?: string;
   suggest?: string | null;
+  // price experiments (api/_lib/abtest.py, src/shared/pricing.ts): exp_markets, while one runs, names the markets that run one;
+  // an answer to a request that carried the visitor's id (a header) holds the visitor's variant's ladders in the markets'
+  // prices above, the assignments, and exp_token, the signed assignment a checkout sends back
+  exp_markets?: string[];
+  experiments?: { key: string; variant: string; markets: string[]; run?: number }[];
+  exp_token?: string;
 }
 
 export interface DraftReply { order: string; k: string; eye: number; created: boolean; expires_at: number }
+/** 409 price_changed of POST /api/checkout: the price the server would charge now (nothing was created). */
+export interface PriceChangedReply { amount: number; prices?: Partial<PriceList>; market?: string; currency?: string; exp_token?: string }
 export interface CheckoutReply { url: string; order: string; amount: number; currency: string; market?: string; eyes: number; style: string; expires_at: number; order_url?: string }
 
 // withdrawn: the customer withdrew from the contract before anything was made (./withdraw.ts); nothing is made

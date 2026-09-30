@@ -95,6 +95,7 @@ export const hu: LegalDoc = {
           ],
         },
         'Minden ár euróban értendő végső ár, amely minden adót és díjat tartalmaz. Nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel és nem tüntetünk fel. Szállítási költség nincs.',
+        'A fenti táblázat a mi általános árlistánk. Időről időre, korlátozott ideig más árlistákat is kipróbálunk néhány, véletlenszerűen kiválasztott látogatón. Mindig azokat az árakat fizeti, amelyeket a fizetés előtt a műalkotás oldalán és a fizetési oldalon mutattunk Önnek, és a megrendelés visszaigazoló e-mailje megnevezi a megrendelésére alkalmazott árlistát. Az, hogy melyik árlistát látja, sosem függ attól, melyik országban él, csak az Ön által választott piactól (pénznemtől).',
         'Előre fizet, a fizetési szolgáltatónkon, a Stripe-on keresztül, a fizetési oldalon feltüntetett fizetési módok egyikével.',
       ],
     },
@@ -183,6 +184,7 @@ export const huHufPrices: LegalSection = {
       ],
     },
     'Minden ár forintban értendő végső ár, amely minden adót és díjat tartalmaz. Nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel és nem tüntetünk fel. Szállítási költség nincs. Ha a weboldal más pénznemben mutatja Önnek az árakat, a fizetési oldal és a visszaigazoló e-mail az Ön által fizetett pénznemet és összeget tünteti fel.',
+    'A fenti táblázat a mi általános árlistánk. Időről időre, korlátozott ideig más árlistákat is kipróbálunk néhány, véletlenszerűen kiválasztott látogatón. Mindig azokat az árakat fizeti, amelyeket a fizetés előtt a műalkotás oldalán és a fizetési oldalon mutattunk Önnek, és a megrendelés visszaigazoló e-mailje megnevezi a megrendelésére alkalmazott árlistát. Az, hogy melyik árlistát látja, sosem függ attól, melyik országban él, csak az Ön által választott piactól (pénznemtől).',
     'Előre fizet, a fizetési szolgáltatónkon, a Stripe-on keresztül, a fizetési oldalon feltüntetett fizetési módok egyikével.',
   ],
 };

@@ -4,8 +4,9 @@ import { useLang } from './lang';
 import { MAX_EYES, tryUrl } from './config';
 import { priceFootnote } from './copy';
 import { useOrderingOpen } from './ordering';
-import { currencyOf, money, priceList, priceMinor } from '../shared/markets';
+import { currencyOf, money, priceMinor } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
+import { usePrices, usePricesReady } from '../shared/usePrices';
 import { SectionHead } from './ui';
 
 function Card({ title, children, accent = false, className = '' }: { title: string; children: ReactNode; accent?: boolean; className?: string }) {
@@ -17,12 +18,12 @@ function Card({ title, children, accent = false, className = '' }: { title: stri
   );
 }
 
-function Row({ label, value, note }: { label: string; value: string; note?: string }) {
+function Row({ label, value, note, pending = false }: { label: string; value: string; note?: string; pending?: boolean }) {
   return (
     <div className="border-t border-white/[0.06] py-3 first:border-t-0 first:pt-0">
       <div className="flex items-baseline justify-between gap-4">
         <span className="text-sm text-zinc-300">{label}</span>
-        <span className="shrink-0 font-luxury text-lg font-semibold text-white">{value}</span>
+        <span className={`shrink-0 font-luxury text-lg font-semibold text-white ${pending ? 'opacity-0' : ''}`} aria-hidden={pending || undefined}>{value}</span>
       </div>
       {note && <p className="mt-1 text-xs leading-relaxed text-zinc-400">{note}</p>}
     </div>
@@ -38,7 +39,11 @@ export function Pricing() {
   // the visitor's market (src/shared/markets.ts: the link's m=, or their earlier choice): its currency and prices
   const market = useMarket();
   const currency = currencyOf(market);
-  const prices = priceList(market);
+  // the visitor's own ladder while a price experiment runs for them (src/shared/pricing.ts); the first answer of the
+  // server is waited for (a moment), so no visitor sees the standard price before their own
+  const prices = usePrices(market);
+  const ready = usePricesReady();
+  const pending = !ready;
   const fmt = (c: number) => money(c, currency, lang);
   return (
     <section id="pricing" className="scroll-mt-16 border-t border-white/[0.06] py-20 sm:py-28">
@@ -72,20 +77,20 @@ export function Pricing() {
           <Card title={p.oneEyeTitle}>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{p.oneEyeNote}</p>
             <div className="mt-5">
-              <Row label={p.studioBlack} value={fmt(prices.one_eye_studio_black)} />
-              <Row label={p.artBackground} value={fmt(prices.one_eye_art)} note={p.artBackgroundNote} />
+              <Row label={p.studioBlack} value={fmt(prices.one_eye_studio_black)} pending={pending} />
+              <Row label={p.artBackground} value={fmt(prices.one_eye_art)} note={p.artBackgroundNote} pending={pending} />
             </div>
           </Card>
 
           <Card title={p.severalTitle} className="sm:col-span-2 lg:col-span-1">
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{p.severalNote}</p>
             <div className="mt-5">
-              <Row label={p.duoLabel} value={fmt(prices.two_eyes)} />
+              <Row label={p.duoLabel} value={fmt(prices.two_eyes)} pending={pending} />
               {[3, 4, 5].map((n) => (
-                <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, 'studio_black', market))} />
+                <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, 'studio_black', market, prices))} pending={pending} />
               ))}
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-400">{p.perEye(fmt(prices.each_further_eye), MAX_EYES)}</p>
+            <p className={`mt-1 text-xs leading-relaxed text-zinc-400 ${pending ? 'opacity-0' : ''}`}>{p.perEye(fmt(prices.each_further_eye), MAX_EYES)}</p>
           </Card>
         </div>
 

@@ -8,7 +8,7 @@ import type { Counts, Health, OrderRow, Orders, Stats, Summary } from './api';
 import type { Call } from './AdminApp';
 import { countBy, lastDays, ordersSince, revenue, sumTable } from './agg';
 import { BLOCK_LT, DEFAULT_PRICES, explain, fmtEur, fmtMoney, fmtTime, fmtUsd, KIND_LT, spend, STATE_LT, VERDICT_LT } from './format';
-import { BTN, CARD, Flag, H2, MUTED, Notice, Spinner } from './ui';
+import { BTN, CARD, Chip, Flag, H2, MUTED, Notice, Spinner } from './ui';
 
 const WINDOWS: [number, string][] = [[1, 'Šiandien'], [7, '7 d.'], [30, '30 d.']];
 
@@ -80,6 +80,21 @@ export const SummaryPage: React.FC<{ call: Call }> = ({ call }) => {
       </H2>
       {err.map((e, i) => <Notice key={i}>{e}</Notice>)}
       {sum?.retention && !sum.retention.cron && <Notice tone="warn">Statistika nerenkama: šiame serveryje nenustatytas CRON_SECRET (bent 16 simbolių). Privatumo politika žada įvykius ištrinti po 12 mėnesių, o nesėkmingų prisijungimų žymas po 2 dienų, bet juos ištrina tik kasdienis valymas, kuriam reikia CRON_SECRET. Kol jo nėra, niekas nerašoma.</Notice>}
+      <section className={CARD} aria-label="Kainų testai">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h3 className="text-sm font-bold">Kainų testai</h3>
+          <a href="#tests" className={BTN}>Atidaryti kainų testus</a>
+        </div>
+        {sum?.experiments && sum.experiments.some((x) => x.running) ? (
+          <ul className="flex flex-col gap-1.5 text-sm">
+            {sum.experiments.filter((x) => x.running).map((x) => (
+              <li key={x.key} className="break-words">
+                <Chip tone="good">Veikia</Chip> <b>{x.title}</b> ({x.markets.join(', ')}){x.started_at ? `, nuo ${fmtTime(x.started_at)}` : ''}
+              </li>
+            ))}
+          </ul>
+        ) : <p className={`text-sm ${MUTED}`}>Šiuo metu joks kainų testas neveikia: visi lankytojai moka įprastas kainas.</p>}
+      </section>
       <div className="grid gap-4 md:grid-cols-2">
         <section className={CARD}>
           <h3 className="text-sm font-bold mb-3">Užsakymų priėmimas</h3>

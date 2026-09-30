@@ -5,7 +5,7 @@
 // are kept only once an order is started (src/legal/docs/privacy.ts). The server accepts an eye's draft only with the
 // work ticket /api/analyze gave its photo, and that ticket lives 15 minutes, so an eye taken earlier than that and
 // not yet uploaded has to be taken again before it can be ordered.
-import { callApi, isStatus, orderPageUrl, statusPath, type ApiReply, type CheckoutReply, type DraftReply } from '../order/api';
+import { callApi, isStatus, orderPageUrl, statusPath, type ApiReply, type CheckoutReply, type DraftReply, type PriceChangedReply } from '../order/api';
 import type { Eye, Layout } from './multi';
 import type { Lang } from './lang';
 import { currentMarket } from '../shared/markets';
@@ -110,6 +110,7 @@ export type CheckoutError = 'network' | 'busy' | 'payments' | 'too_large' | 'pau
 export type CheckoutOutcome =
   | { kind: 'redirect'; url: string; ref: OrderRef }            // Stripe's payment page
   | { kind: 'paid'; url: string; ref: null }                    // this very artwork is paid already: its order page
+  | { kind: 'price_changed'; reply: PriceChangedReply; ref: OrderRef }   // the price is not what the page showed: show the new one
   | { kind: 'stale'; eyes: number[]; ref: OrderRef | null }     // these eyes have to be taken again
   | { kind: 'closed'; ref: OrderRef | null }                    // ordering is not open on this deployment
   | { kind: 'error'; code: CheckoutError; ref: OrderRef | null };
@@ -123,6 +124,12 @@ export interface CheckoutInput {
   ref: OrderRef | null;
   /** The market to buy in (src/shared/markets.ts); the page's own when not given. The server prices it itself. */
   market?: string;
+  /** A price experiment's signed assignment token (src/shared/pricing.ts experimentToken): the server prices the order from
+   *  it alone. None: the standard ladder. */
+  expToken?: string | null;
+  /** The price the page showed, in the market's smallest unit: only compared by the server (409 price_changed when it
+   *  would charge another), never used to price. */
+  shown?: number;
 }
 
 type Api = typeof callApi;
@@ -259,11 +266,18 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
   // 6. Stripe's page. The server prices the order itself and records the waiver the customer ticked.
   onStep({ kind: 'checkout' });
   const r = await api<CheckoutReply>('/api/checkout', {
-    body: { order: ref.order, k: ref.k, eyes: n, style: inp.style, layout: inp.layout, names: inp.names, title: '', lang: inp.lang, market: inp.market ?? currentMarket(), consent_digital: true },
+    body: {
+      order: ref.order, k: ref.k, eyes: n, style: inp.style, layout: inp.layout, names: inp.names, title: '', lang: inp.lang, market: inp.market ?? currentMarket(), consent_digital: true,
+      ...(inp.expToken ? { exp_token: inp.expToken } : {}),
+      ...(typeof inp.shown === 'number' ? { shown: inp.shown } : {}),
+    },
     timeoutMs: 30_000,
   });
   if (r.ok && r.data && typeof r.data.url === 'string' && r.data.url.startsWith('https://')) {
     return { kind: 'redirect', url: r.data.url, ref: { ...ref, expiresAt: r.data.expires_at || ref.expiresAt } };
+  }
+  if (r.reason === 'price_changed' && r.data && typeof (r.data as unknown as PriceChangedReply).amount === 'number') {
+    return { kind: 'price_changed', reply: r.data as unknown as PriceChangedReply, ref };
   }
   if (r.reason === 'eyes_missing') return { kind: 'resync', ref };
   if (r.reason === 'already_paid') return { kind: 'paid', url: orderPageUrl(ref.order, ref.k, inp.lang), ref: null };

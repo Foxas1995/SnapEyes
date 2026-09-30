@@ -15,7 +15,7 @@ export interface MarketsSource {
 export interface ClientMarkets {
   DEFAULT_MARKET: string;
   MARKETS: unknown;
-  priceMinor: (n: number, style: string, market: string) => number;
+  priceMinor: (n: number, style: string, market: string, list?: Partial<Record<string, number>>) => number;
 }
 
 export const MARKETS_FILE: string;
