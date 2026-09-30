@@ -1,7 +1,7 @@
 import { defineConfig, runnerImport, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { checkPrices, type ClientMarkets } from './scripts/check_prices.mjs'
+import { checkPrices, type ClientMarkets, type LandingPriceModule } from './scripts/check_prices.mjs'
 import { checkPack, checkTexts } from './scripts/check_texts.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
@@ -28,14 +28,17 @@ function legalMail(): Plugin {
 // Every price lives in api/_lib/markets.py (the server charges from it; src/shared/markets.ts reads it for every page).
 // Before a build: that file is sound, the site's own reading of it (loaded through Vite's module runner, as the legal
 // pack is) gives the server's prices for every market, eye count and style, and no other file holds a price of its
-// own (scripts/check_prices.mjs; `npm run check:prices` runs the file checks alone). Any problem stops the build.
+// own, and the new landing prints only the visitor's own ladder (scripts/check_prices.mjs; `npm run check:prices` runs the
+// same checks alone). Any problem stops the build.
 function priceCheck(): Plugin {
   return {
     name: 'snapeyes-price-check',
     apply: 'build',
     async buildStart() {
       const { module } = await runnerImport<ClientMarkets>('./src/shared/markets.ts', { configFile: false, logLevel: 'silent' })
-      const problems = checkPrices(process.cwd(), module)
+      // the new landing's price texts (src/landing/priceText.ts) are run against every price ladder, variants included
+      const landing = (await runnerImport<LandingPriceModule>('./src/landing/priceText.ts', { configFile: false, logLevel: 'silent' })).module
+      const problems = checkPrices(process.cwd(), module, landing)
       if (problems.length) this.error(`price check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
     },
   }

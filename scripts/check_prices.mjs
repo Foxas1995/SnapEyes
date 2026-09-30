@@ -9,14 +9,20 @@
 //   5. every price experiment (api/_lib/experiments.py, checked by scripts/check_experiments.mjs): full ladders per
 //      variant and market, control = the standard ladder, no variant that sells at a loss, the site's price rule
 //      agrees with the server's for every variant, and no other file holds a variant's price;
+//   6. the new landing (src/landing, every file but today's landing) prints only the visitor's own ladder: none of its files
+//      reads the standard ladder or calls priceMinor without a ladder, and for every market, language and ladder (each
+//      variant of each experiment, and a probe ladder that changes all four prices) every price text it can make is the
+//      ladder's own price and changes when the ladder does (src/landing/priceText.ts, checkLandingPrices below);
 //   4. a market is selectable in another currency than the default market's without its own edition of the legal
 //      texts (src/shared/legal.ts EDITION_MARKETS = api/_lib/pay.py EDITION_MARKETS): the EU texts print euro prices
 //      only. The two lists, and the languages each edition has (EDITION_LANGS in both files), must agree.
-// vite.config.ts runs it before every build (with the site's reading, check 2); `npm run check:prices` runs 1, 3, 4.
+// vite.config.ts runs it before every build (with the site's reading, check 2, and the landing's price texts, check 6);
+// `npm run check:prices` loads both as well and runs everything.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { checkExperiments, withVariantLadders } from './check_experiments.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+import { checkExperiments, ladderRule, withVariantLadders } from './check_experiments.mjs';
 
 export const MARKETS_FILE = 'api/_lib/markets.py';
 const CURRENCIES = ['eur', 'aud', 'huf'];
@@ -40,7 +46,12 @@ const PRICE_FILES = [
   'src/admin/format.ts', 'src/admin/agg.ts', 'src/admin/Summary.tsx', 'src/admin/Orders.tsx', 'src/admin/OrderDetail.tsx',
   'src/admin/Tests.tsx', 'api/_lib/abtest.py', 'src/shared/pricing.ts', 'src/shared/usePrices.ts', 'src/try/priceNote.ts',
   'src/shared/markets.ts', 'src/shared/legal.ts',
+  // the files of the new landing that print prices (BUILD_PLAN section 2; a file that does not exist yet is skipped) and its
+  // copy (every file of src/landing/copy, see checkCopies). A number in these files that equals a price in Stripe's smallest
+  // unit is taken for a price: image sizes come from the asset manifest, never typed here.
+  'src/landing/priceText.ts', 'src/landing/prices.ts', 'src/landing/PriceTable.tsx', 'src/landing/HeroScene.tsx', 'src/landing/StyleTile.tsx',
 ];
+const PRICE_DIRS = ['src/landing/copy'];
 // Never scanned for written prices: the one place itself, the place of the price experiments' ladders
 // (scripts/check_experiments.mjs checks those) and the image engine (another team's, no prices in it).
 const SKIP = new Set([MARKETS_FILE, 'api/_lib/experiments.py', 'api/_lib/iris.py']);
@@ -273,7 +284,7 @@ function checkCopies(root, markets, out) {
   // a variant's round thousands (1000, 2000 ...) are too common in code to mean a price: only its other amounts are looked for
   for (const m of Object.values(markets)) for (const k of PRICE_KEYS) if (!(m.variant && m.prices[k] % 1000 === 0)) minors.add(m.prices[k]);
   const minorRe = new RegExp(`(?<![\\w.$])(${[...minors].map(String).map(esc).join('|')})(?![\\w.])`);
-  for (const rel of PRICE_FILES) {
+  for (const rel of [...PRICE_FILES, ...PRICE_DIRS.flatMap((d) => listFiles(root, d, ['.ts', '.tsx', '.json']))]) {
     let text;
     try { text = readFileSync(join(root, rel), 'utf8'); } catch { continue; }
     const code = stripComments(text, rel.endsWith('.py'));
@@ -283,7 +294,7 @@ function checkCopies(root, markets, out) {
     });
   }
   const written = writtenPatterns(markets);
-  const files = [...listFiles(root, 'src', ['.ts', '.tsx']), ...listFiles(root, 'api', ['.py']), ...listFiles(root, 'scripts', ['.py'])];
+  const files = [...listFiles(root, 'src', ['.ts', '.tsx']), ...listFiles(root, 'api', ['.py']), ...listFiles(root, 'scripts', ['.py']), ...PRICE_DIRS.flatMap((d) => listFiles(root, d, ['.json']))];
   for (const rel of files) {
     if (SKIP.has(rel)) continue;
     const text = readFileSync(join(root, rel), 'utf8');
@@ -296,9 +307,117 @@ function checkCopies(root, markets, out) {
   }
 }
 
+// ------------------------------------------------------------------------------------------ the new landing's prices
+// The new landing (BUILD_PLAN section 2) prints every price through src/landing/prices.ts (useLandingPrices), which makes
+// its texts with src/landing/priceText.ts from the ladder of src/shared/usePrices.ts: the visitor's variant while a price
+// experiment runs for them, else the standard one. Two checks keep that true.
+//   a. Static: no file of the new landing reads the standard ladder itself (priceList, effectiveList, listFor, MARKETS,
+//      PRICE_CENTS, DEFAULT_PRICES) or calls priceMinor without the ladder (its fourth argument): either would print the
+//      standard price to a visitor in an experiment. Every file of src/landing except today's landing is a file of the new one.
+//   b. Dynamic (the "client rule" of scripts/check_experiments.mjs, here for the page's texts): for every market, language and
+//      ladder (every variant of every experiment of the market, and a probe ladder whose four prices all differ from the
+//      standard ones) each text the page can print (from, black, art, price, price2, every number of eyes in both one-eye
+//      styles) is exactly the ladder's own price by the server's rule in the site's money format, and changes when the ladder
+//      changes it: with the probe ladder EVERY text differs from the standard one.
+
+// today's landing: its files stay as they are until the integrator removes them (not governed by the rules above)
+export const OLD_LANDING_FILES = new Set([
+  'BeforeAfter.tsx', 'Faq.tsx', 'Footer.tsx', 'Header.tsx', 'Hero.tsx', 'HowItWorks.tsx', 'MarketHint.tsx', 'Pricing.tsx',
+  'StickyCta.tsx', 'StyleGallery.tsx', 'Trust.tsx', 'config.ts', 'copy.hu.ts', 'copy.lt.ts', 'copy.ts', 'lang.tsx', 'ordering.ts',
+  'ui.tsx', 'landing.css',
+]);
+
+// the standard ladder may be read by nothing in the new landing
+const STANDARD_LADDER_READS = /\b(priceList|effectiveList|listFor|PRICE_CENTS|DEFAULT_PRICES|MARKETS)\b/;
+
+/** The number of top-level arguments of each priceMinor( ... ) call of a source text (comments already stripped). */
+function priceMinorArgCounts(code) {
+  const counts = [];
+  for (const m of code.matchAll(/\bpriceMinor\s*\(/g)) {
+    let depth = 1, args = 1, empty = true;
+    for (let i = m.index + m[0].length; i < code.length && depth > 0; i++) {
+      const c = code[i];
+      if (c === '(' || c === '[' || c === '{') { depth++; empty = false; }
+      else if (c === ')' || c === ']' || c === '}') depth--;
+      else if (c === ',' && depth === 1) args++;
+      else if (!/\s/.test(c)) empty = false;
+    }
+    counts.push(empty ? 0 : args);
+  }
+  return counts;
+}
+
+function checkLandingSources(root, out) {
+  const files = listFiles(root, 'src/landing', ['.ts', '.tsx']).filter((rel) => {
+    const inside = rel.slice('src/landing/'.length);
+    return inside.includes('/') || !OLD_LANDING_FILES.has(inside);
+  });
+  for (const rel of files) {
+    const code = stripComments(readFileSync(join(root, rel), 'utf8'), false);
+    const lines = code.split('\n');
+    const i = lines.findIndex((l) => STANDARD_LADDER_READS.test(l));
+    if (i >= 0) out.push(`${rel}: reads the standard price ladder itself (${STANDARD_LADDER_READS.exec(lines[i])[1]}, line ~${i + 1}); the new landing prints the visitor's ladder only, through src/landing/prices.ts (useLandingPrices)`);
+    const bad = priceMinorArgCounts(code).some((n) => n < 4);
+    if (bad) out.push(`${rel}: calls priceMinor without the ladder (its fourth argument): that prints the standard price to a visitor in a price experiment`);
+  }
+}
+
+const LANDING_LANGS = ['en', 'de', 'lt', 'hu'];
+
+/** Every text the page can print for a ladder, with the amount it must show (in Stripe's smallest unit). */
+function landingTexts(p, L) {
+  const rows = [
+    ['from', p.from, Math.min(L.one_eye_studio_black, L.one_eye_art)],
+    ['black', p.black, L.one_eye_studio_black],
+    ['art', p.art, L.one_eye_art],
+    ['price (each further eye)', p.price, L.each_further_eye],
+    ['price2 (two eyes)', p.price2, L.two_eyes],
+  ];
+  for (let n = 1; n <= MAX_EYES; n++) {
+    rows.push([`eyes(${n}, studio_black)`, p.eyes(n, 'studio_black'), ladderRule(L, n, 'studio_black')]);
+    rows.push([`eyes(${n}, art)`, p.eyes(n, 'art'), ladderRule(L, n, 'celestial_gold')]);
+  }
+  return rows;
+}
+
+/** The dynamic check above. landing: src/landing/priceText.ts as the build loaded it; client: src/shared/markets.ts. */
+export function checkLandingPrices(markets, experiments, client, landing, out) {
+  const at = 'src/landing/priceText.ts';
+  if (typeof landing?.landingPrices !== 'function') { out.push(`${at}: landingPrices not found (the price check reads it)`); return; }
+  if (typeof client?.money !== 'function') { out.push('src/shared/markets.ts: money not found (the price check reads it)'); return; }
+  let cases = 0;
+  for (const [m, def] of Object.entries(markets)) {
+    const standard = def.prices;
+    // a ladder whose four prices all differ from the standard ones, and from each other's sums
+    const probe = Object.fromEntries(PRICE_KEYS.map((k) => [k, standard[k] * 2 + 7]));
+    const ladders = [['probe ladder', probe, true]];
+    for (const [key, d] of Object.entries(experiments ?? {})) {
+      for (const [name, v] of Object.entries(d?.variants ?? {})) {
+        if (v?.prices?.[m] && typeof v.prices[m] === 'object') ladders.push([`experiment "${key}" variant "${name}"`, v.prices[m], false]);
+      }
+    }
+    for (const lang of LANDING_LANGS) {
+      let base;
+      try { base = landingTexts(landing.landingPrices(standard, m, lang), standard); } catch (e) { out.push(`${at}: landingPrices threw for market "${m}" in ${lang}: ${e instanceof Error ? e.message : String(e)}`); continue; }
+      for (const [label, L, every] of ladders) {
+        cases++;
+        let got;
+        try { got = landingTexts(landing.landingPrices(L, m, lang), L); } catch (e) { out.push(`${at}: landingPrices threw for ${label}, market "${m}" in ${lang}: ${e instanceof Error ? e.message : String(e)}`); continue; }
+        got.forEach(([what, text, minor], i) => {
+          const want = client.money(minor, def.currency, lang);
+          if (text !== want) out.push(`${at}: ${what} is "${text}" for ${label}, market "${m}" in ${lang}; the ladder's price is ${want}`);
+          else if ((every || minor !== base[i][2]) && text === base[i][1]) out.push(`${at}: ${what} stays "${text}" under ${label}, market "${m}" in ${lang}, although the ladder changed it (a price that ignores the visitor's ladder)`);
+        });
+      }
+    }
+  }
+  if (cases === 0) out.push(`${at}: no market to check`);
+}
+
 /** Every problem found, as sentences ([] when the prices are sound). client: src/shared/markets.ts as the build loaded
- *  it (vite.config.ts), for the agreement check; without it that check is left out. */
-export function checkPrices(root, client) {
+ *  it (vite.config.ts), for the agreement check; without it that check is left out. landing: src/landing/priceText.ts as
+ *  the build loaded it, for the check of the new landing's price texts (also left out without it). */
+export function checkPrices(root, client, landing) {
   const out = [];
   let parsed;
   try {
@@ -314,13 +433,20 @@ export function checkPrices(root, client) {
   // the price experiments' variant ladders (api/_lib/experiments.py): validated, and no other file may hold their prices
   const experiments = checkExperiments(root, markets, out, client);
   checkCopies(root, withVariantLadders(markets, experiments), out);
+  // the new landing prints only the visitor's own ladder (source rules, then its price texts for every ladder)
+  checkLandingSources(root, out);
+  if (client && landing) checkLandingPrices(markets, experiments, client, landing, out);
   return out;
 }
 
-// `node scripts/check_prices.mjs` (npm run check:prices): checks 1 and 3, exit code 1 on any problem
+// `node scripts/check_prices.mjs` (npm run check:prices): every check, exit code 1 on any problem. src/ is loaded through
+// Vite's module runner, as check_texts.mjs and vite.config.ts do, for the checks that run the site's own code.
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const root = join(fileURLToPath(new URL('.', import.meta.url)), '..');
-  const problems = checkPrices(root);
+  const require = createRequire(join(root, 'package.json'));
+  const { runnerImport } = await import(pathToFileURL(require.resolve('vite')).href);
+  const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent', root })).module;
+  const problems = checkPrices(root, await load('./src/shared/markets.ts'), await load('./src/landing/priceText.ts'));
   const { markets } = parseMarketsSource(readFileSync(join(root, MARKETS_FILE), 'utf8'));
   if (problems.length) {
     console.error(`price check FAILED (${problems.length}):\n  ${problems.join('\n  ')}`);

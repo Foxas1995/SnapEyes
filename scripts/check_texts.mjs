@@ -24,6 +24,14 @@
 //   9. a Lithuanian or Hungarian string is the very same words as the English or German one (untranslated), or one of
 //      the customer sentences in the Python files of those languages (api/_lib/*_lt.py, *_hu.py: the emails, the
 //      receipts, the Stripe notes, the analyze tips) holds English or German words or a dash.
+//  10. the copy of the NEW landing (src/landing/copy/<lang>.json, one file per language of src/shared/lang.ts LANGS): every
+//      language has its file, with the keys, the value kinds, the list lengths, the numbers and the {tokens} of en.json, only
+//      tokens the page knows (src/landing/copy/format.ts TOKENS), no dash and no spaced hyphen, none of the banned claims
+//      ("ready to print", "100 percent", "museum glass"), the honesty lines where the prototype has them (the labels, "Printing
+//      is not part of your order", "Ordering opens soon" in exactly three places), the legal labels and the withdrawal button of
+//      src/shared/legal.ts, the facts of src/landing/config.ts, the FAQ ids in the same order and the Australian FAQ answers for
+//      ids that exist. The files PLACEHOLDERS.txt lists (lt.json, hu.json until the translations land) may hold the English
+//      words and no other file may; a flagged file that holds a translation fails, so a forgotten flag is loud.
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as the legal pack is);
 // `npm run check:texts` runs it alone. The legal pack the confirmation email carries is checked by checkPack, which the
 // build also runs on the very JSON it writes to /legal/order-mail.json (vite.config.ts legalMail), so no untranslated
@@ -486,13 +494,161 @@ export function checkServerTexts(root, legal, orderCopy) {
   return out;
 }
 
+// ------------------------------------------------------------------------------------------ the new landing's copy
+const COPY_DIR = 'src/landing/copy';
+const FLAG_FILE = `${COPY_DIR}/PLACEHOLDERS.txt`;
+// a spaced hyphen (a hyphen between two spaces) is a dash in disguise (owner rule: no dash anywhere)
+const SPACED_HYPHEN = /(^|[  ])-([  ]|$)/;
+// claims the page must never make (hard rule of the landing v2 port): phrases, in the languages the copy is checked in
+const BANNED_CLAIMS = /ready to print|print[- ]ready|druckfertig|druckbereit|100 ?(percent|%|prozent)|museum[- ]?glass|museumsglas/i;
+// Lines that must stay where the prototype has them, per language the check knows the words of (Lithuanian and Hungarian
+// join when their translations are reviewed: add their patterns here). keys: the copy paths that hold the phrase.
+const HONESTY = {
+  en: {
+    chips: { 'example.chip': 'Example', 'example.vis': 'AI visualisation' },
+    printing: { re: /Printing is not part of your order/i, keys: ['hero.caption', 'wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small'] },
+    soon: { re: /Ordering opens soon/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+  de: {
+    chips: { 'example.chip': 'Beispiel', 'example.vis': 'KI-Visualisierung' },
+    printing: { re: /Der Druck gehört nicht zur Bestellung/i, keys: ['hero.caption', 'wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small'] },
+    soon: { re: /Bestellungen sind bald möglich/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+};
+// the question of the FAQ item "withdraw", word for word as src/landing/copy.ts WITHDRAW_Q has it (the old landing keyed
+// its Australian override on these words; the new one replaces by id, but the words are not to drift)
+const WITHDRAW_Q = { en: 'Can I withdraw from an order?', de: 'Kann ich eine Bestellung widerrufen?' };
+
+const tokensOf = (s) => [...String(s).matchAll(/\{([a-zA-Z0-9]+)\}/g)].map((m) => m[1]);
+const blankTokens = (s) => s.replace(/\{[a-zA-Z0-9]+\}/g, '0');
+const dig = (o, path) => path.split('.').reduce((v, k) => (v == null ? v : v[k]), o);
+
+function leafPaths(o, path = '', out = []) {
+  if (Array.isArray(o)) o.forEach((v, i) => leafPaths(v, path ? `${path}.${i}` : String(i), out));
+  else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) leafPaths(v, path ? `${path}.${k}` : k, out);
+  else out.push([path, o]);
+  return out;
+}
+
+/** Compare a language file with en.json: same keys, same kinds, same list lengths, same numbers, same {tokens} in every string. */
+function walkCopyJson(en, x, path, at, out) {
+  const tag = `${at}${path ? `.${path}` : ''}`;
+  const kind = (v) => (v === null ? 'null' : Array.isArray(v) ? 'list' : typeof v);
+  if (kind(en) !== kind(x)) { out.push(`${tag}: a ${kind(x)} where en.json has a ${kind(en)}`); return; }
+  if (typeof en === 'string') {
+    const a = tokensOf(en).sort(), b = tokensOf(x).sort();
+    if (a.join() !== b.join()) out.push(`${tag}: the tokens are {${b.join('}, {')}}, en.json has {${a.join('}, {')}}: ${x.slice(0, 90)}`);
+    return;
+  }
+  if (Array.isArray(en)) {
+    if (en.length !== x.length) out.push(`${tag}: ${x.length} items, en.json has ${en.length}`);
+    en.forEach((v, i) => { if (i < x.length) walkCopyJson(v, x[i], path ? `${path}.${i}` : String(i), at, out); });
+    return;
+  }
+  if (en && typeof en === 'object') {
+    const a = Object.keys(en), b = Object.keys(x);
+    const missing = a.filter((k) => !b.includes(k)), extra = b.filter((k) => !a.includes(k));
+    if (missing.length) out.push(`${tag}: lacks ${missing.join(', ')} (en.json has it)`);
+    if (extra.length) out.push(`${tag}: has ${extra.join(', ')}, which en.json lacks`);
+    for (const k of a) if (k in x) walkCopyJson(en[k], x[k], path ? `${path}.${k}` : k, at, out);
+    return;
+  }
+  if (en !== x) out.push(`${tag}: ${String(x)} where en.json has ${String(en)}`);
+}
+
+/** The copy files of the new landing: every problem as a sentence. strings: the per language lists of the lint (every
+ *  string of en, de and of every translated lt or hu file joins them, so the dash, the typography, the untranslated English
+ *  and the word for word checks treat them like every other dictionary). */
+function checkLandingCopy(root, mods, strings, out) {
+  const { lang, legal, config, format } = mods;
+  const read = (rel) => { try { return readFileSync(join(root, rel), 'utf8').replace(/^﻿/, ''); } catch { return null; } };
+  // which files are English stand-ins
+  const flagText = read(FLAG_FILE);
+  const flagged = new Set();
+  if (flagText !== null) {
+    for (const raw of flagText.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const m = /^([a-z]{2})\.json$/.exec(line);
+      if (!m || !lang.LANGS.includes(m[1])) out.push(`${FLAG_FILE}: "${line}" is not the file of a language of src/shared/lang.ts (one "<lang>.json" per line)`);
+      else if (!NEW_LANGS.includes(m[1])) out.push(`${FLAG_FILE}: ${line} cannot be a placeholder (only ${NEW_LANGS.map((l) => `${l}.json`).join(' and ')} may be)`);
+      else flagged.add(m[1]);
+    }
+  }
+  const files = {};
+  for (const l of lang.LANGS) {
+    const rel = `${COPY_DIR}/${l}.json`;
+    const text = read(rel);
+    if (text === null) {
+      out.push(`${rel}: missing. ${l} is a language of the site (src/shared/lang.ts LANGS), so the new landing needs its copy: drop the translation here with the keys and {tokens} of en.json`);
+      continue;
+    }
+    try { files[l] = JSON.parse(text); } catch (e) { out.push(`${rel}: not valid JSON (${e instanceof Error ? e.message : String(e)})`); }
+  }
+  const en = files.en;
+  if (!en) return;
+  const EN = new Map(leafPaths(en));
+  for (const l of lang.LANGS) {
+    const x = files[l];
+    if (!x) continue;
+    const rel = `${COPY_DIR}/${l}.json`;
+    if (l !== 'en') walkCopyJson(en, x, '', rel, out);
+    const leaves = leafPaths(x);
+    // every string of every language: the tokens exist, no spaced hyphen, none of the banned claims
+    for (const [p, v] of leaves) {
+      if (typeof v !== 'string') continue;
+      for (const k of tokensOf(v)) if (!format.TOKENS.includes(k)) out.push(`${rel}: ${p} holds the token {${k}}, which the page does not know (src/landing/copy/format.ts TOKENS)`);
+      if (SPACED_HYPHEN.test(v)) out.push(`${rel}: ${p} holds a spaced hyphen (a dash in disguise; owner rule: none): ${v.slice(0, 90)}`);
+      if (BANNED_CLAIMS.test(v)) out.push(`${rel}: ${p} makes a claim the page must not make ("${BANNED_CLAIMS.exec(v)[0]}"): ${v.slice(0, 90)}`);
+    }
+    // what a language says about itself, and the facts, against the single sources
+    if (x.meta?.locale !== lang.LOCALES[l].og) out.push(`${rel}: meta.locale is "${x.meta?.locale}", src/shared/lang.ts LOCALES.${l}.og is "${lang.LOCALES[l].og}"`);
+    if (x.langName !== lang.LANG_NAMES[l]) out.push(`${rel}: langName is "${x.langName}", src/shared/lang.ts LANG_NAMES.${l} is "${lang.LANG_NAMES[l]}"`);
+    if (x.facts?.email !== config.CONTACT_EMAIL) out.push(`${rel}: facts.email is "${x.facts?.email}", src/landing/config.ts CONTACT_EMAIL is "${config.CONTACT_EMAIL}"`);
+    if (x.facts?.hours !== String(config.DELIVERY_MAX_HOURS)) out.push(`${rel}: facts.hours is "${x.facts?.hours}", the delivery promise DELIVERY_MAX_HOURS (src/landing/config.ts) is ${config.DELIVERY_MAX_HOURS}`);
+    // the faq: the same ids in the same order, and the Australian answers belong to ids that exist
+    const ids = (f) => (f?.faq?.items ?? []).map((it) => it.id);
+    if (ids(x).join() !== ids(en).join()) out.push(`${rel}: faq.items has the ids ${ids(x).join(', ')}, en.json has ${ids(en).join(', ')} (same ids, same order)`);
+    for (const k of Object.keys(x.faqAu ?? {})) if (!ids(x).includes(k)) out.push(`${rel}: faqAu.${k} replaces no faq item (no item has that id)`);
+    if (flagged.has(l)) {
+      // a flagged file must BE a stand-in: a string of its own (other than the two identity lines) means a translation
+      // landed and the flag was forgotten, which would let the untranslated checks be skipped
+      const own = leaves.filter(([p, v]) => typeof v === 'string' && p !== 'meta.locale' && p !== 'langName' && v !== EN.get(p)).map(([p]) => p);
+      if (own.length) out.push(`${rel}: listed in ${FLAG_FILE} as a placeholder, but ${own.length} of its strings are not the English ones (first: ${own[0]}). It holds a translation: delete its line in ${FLAG_FILE} so the translation is checked`);
+      continue;
+    }
+    // the statutory words of the legal links, and the online withdrawal button inside the withdrawal answers
+    const labels = legal.LEGAL_LABELS[l], online = legal.WITHDRAWAL_ONLINE[l];
+    for (const d of ['privacy', 'terms', 'withdrawal', 'imprint']) if (x.footer?.legal?.[d] !== labels[d]) out.push(`${rel}: footer.legal.${d} is "${x.footer?.legal?.[d]}", src/shared/legal.ts LEGAL_LABELS.${l}.${d} is "${labels[d]}"`);
+    if (x.footer?.legalNav !== labels.nav) out.push(`${rel}: footer.legalNav is "${x.footer?.legalNav}", LEGAL_LABELS.${l}.nav is "${labels.nav}"`);
+    if (x.footer?.legal?.withdrawFn !== online.button) out.push(`${rel}: footer.legal.withdrawFn is "${x.footer?.legal?.withdrawFn}", WITHDRAWAL_ONLINE.${l}.button is "${online.button}"`);
+    const w = (x.faq?.items ?? []).find((it) => it.id === 'withdraw');
+    if (w && !w.a.includes(online.button)) out.push(`${rel}: the faq answer "withdraw" does not name the online withdrawal button "${online.button}" (src/shared/legal.ts WITHDRAWAL_ONLINE.${l}.button)`);
+    if (x.faqAu?.withdraw && !x.faqAu.withdraw.a.includes(online.button)) out.push(`${rel}: faqAu.withdraw.a does not name the online withdrawal button "${online.button}"`);
+    if (WITHDRAW_Q[l] !== undefined && w?.q !== WITHDRAW_Q[l]) out.push(`${rel}: the faq question "withdraw" is "${w?.q}", it must stay "${WITHDRAW_Q[l]}" word for word`);
+    // the honesty lines, where the prototype has them
+    const h = HONESTY[l];
+    if (h) {
+      for (const [p, want] of Object.entries(h.chips)) if (dig(x, p) !== want) out.push(`${rel}: ${p} is "${dig(x, p)}", the label must read "${want}" word for word`);
+      for (const p of ['hero.chipTitle', 'final.chip']) if (dig(x, p) !== x.example?.vis) out.push(`${rel}: ${p} ("${dig(x, p)}") must be the same label as example.vis ("${x.example?.vis}")`);
+      for (const [what, rule] of Object.entries({ 'the line "printing is not part of your order"': h.printing, 'the line "ordering opens soon"': h.soon })) {
+        const where = leaves.filter(([, v]) => typeof v === 'string' && rule.re.test(v)).map(([p]) => p).sort();
+        if (where.join() !== [...rule.keys].sort().join()) out.push(`${rel}: ${what} must be in exactly ${rule.keys.join(', ')}; it is in ${where.join(', ') || 'no string'}`);
+      }
+    }
+    // the words join the lint lists of every other dictionary (dash, typography, untranslated English, word for word)
+    for (const [p, v] of leaves) if (typeof v === 'string' && v !== '') strings[l].push([`landing copy ${l}.${p}`, blankTokens(v)]);
+  }
+}
+
 /** Every problem found, as sentences ([] when the texts are sound). load(path): a module of src/ through Vite's module
  *  runner (vite.config.ts); root: the repository. */
 export async function checkTexts(load, root) {
   const out = [];
-  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets] = await Promise.all([
+  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets, config, format] = await Promise.all([
     load('./src/shared/lang.ts'), load('./src/shared/legal.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'),
     load('./src/order/copy.ts'), load('./src/legal/editions.ts'), load('./src/legal/plain.ts'), load('./src/shared/markets.ts'),
+    load('./src/landing/config.ts'), load('./src/landing/copy/format.ts'),
   ]);
   if (lang.LANGS.join() !== LANGS.join()) out.push(`src/shared/lang.ts LANGS is ${lang.LANGS.join()}, this check knows ${LANGS.join()}: update scripts/check_texts.mjs`);
 
@@ -514,6 +670,9 @@ export async function checkTexts(load, root) {
     walk({ LEGAL_LABELS: legal.LEGAL_LABELS.en, WITHDRAWAL_ONLINE: legal.WITHDRAWAL_ONLINE.en, CHECKOUT_LEGAL: legal.CHECKOUT_LEGAL.en },
       shared, '', l, 'legal.shared', NEW_LANGS.includes(l) ? out : [], strings[l]);
   }
+
+  // 10. the copy of the new landing (src/landing/copy/*.json)
+  checkLandingCopy(root, { lang, legal, config, format }, strings, out);
 
   // 3. the legal pages of every edition, in every language the edition has
   for (const [edition, langs] of Object.entries(legal.EDITION_LANGS)) {
