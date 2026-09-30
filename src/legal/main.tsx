@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../index.css';
-import '../landing/landing.css';
 import './legal.css';
 import { LegalApp } from './LegalApp';
 import { LEGAL_DOCS, adoptLinkedEdition, type LegalDocId } from '../shared/legal';

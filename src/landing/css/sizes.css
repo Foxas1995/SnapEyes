@@ -1,0 +1,36 @@
+/* SnapEyes landing v2: The size guide: drawn to scale, size chips, pixels per inch card.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  /* sizes */
+  .lp-sizes-blk { margin-top: 56px; }
+  .lp-size-grid { display: grid; gap: 28px; margin-top: 36px; }
+  @media (min-width: 960px) {
+    .lp-size-grid { grid-template-columns: 1.25fr .75fr; gap: 64px; align-items: center; margin-top: 54px; }
+  }
+  .lp-ruler { position: relative; border-radius: 18px; background: var(--bg-2); box-shadow: 0 0 0 1px var(--line); overflow: hidden; }
+  .lp-ruler svg { width: 100%; height: auto; }
+  .lp-ruler .lp-lbl { position: absolute; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; pointer-events: none; transition: color .2s; text-shadow: 0 0 4px var(--bg-2), 0 0 4px var(--bg-2), 0 0 8px var(--bg-2); }
+  .lp-ruler .lp-lbl.lp-on { color: var(--gold); }
+  .lp-ruler .lp-lbl.lp-note { font-weight: 500; letter-spacing: .02em; }
+  @media (max-width: 639px) {
+    .lp-ruler .lp-lbl:not(.lp-on):not(.lp-note) { display: none; }
+    .lp-ruler .lp-lbl.lp-note { font-size: 12px; }
+  }
+  .lp-ruler rect.lp-sq { cursor: pointer; transition: fill .25s, stroke .25s; }
+  .lp-ruler .lp-sqg { cursor: pointer; }
+  .lp-ruler .lp-hit { fill: transparent; }
+  .lp-size-side .lp-pills { margin-top: 0; }
+  .lp-size-card { margin-top: 26px; }
+  .lp-size-card .lp-big { display: flex; align-items: baseline; gap: 12px; }
+  .lp-size-card .lp-big b { font-family: var(--display); font-size: clamp(54px, 10vw, 76px); font-weight: 600; line-height: 1; color: var(--gold); letter-spacing: .01em; }
+  .lp-size-card .lp-big span { font-size: 13px; line-height: 1.35; color: var(--ink-2); max-width: 9em; }
+  .lp-size-card h3 { margin-top: 16px; font-size: 19px; }
+  .lp-size-card p { margin-top: 8px; font-size: 15px; color: var(--ink-2); }
+  .lp-size-notes { margin-top: 26px; display: grid; gap: 10px; }
+  .lp-size-notes p { font-size: 13.5px; line-height: 1.6; color: var(--ink-3); padding-left: 16px; position: relative; }
+  .lp-size-notes p::before { content: ""; position: absolute; left: 0; top: 11px; width: 8px; height: 1px; background: var(--gold); }
+  .lp-size-grid > * { min-width: 0; }
+}

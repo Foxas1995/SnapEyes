@@ -1,0 +1,336 @@
+{
+ "note": "The files of the landing page and how its pictures are grouped. scripts/build_landing_assets.py reads this, copies exactly these files from a folder of rendered pictures (--src) to public/assets/landing with content hashed names, and writes src/landing/assets.ts and assets.data.ts. A picture family is a base name; its files are base_<width>.webp. A name in extras is a file a component names itself.",
+ "stage": {
+  "acrylic": {
+   "eye": {
+    "base": "m/lounge_acrylic__eye__tight",
+    "sizeOk": true
+   },
+   "universe": {
+    "base": "m/lounge_acrylic__universe__tight",
+    "sizeOk": true
+   },
+   "family4": {
+    "base": "m/lounge_acrylic__family4__tight",
+    "sizeOk": true
+   },
+   "collision": {
+    "base": "m/lounge_acrylic_3x2__collision__tall",
+    "sizeOk": false
+   }
+  },
+  "metal": {
+   "eye": {
+    "base": "m/dining_metal__eye__tight",
+    "sizeOk": true
+   },
+   "universe": {
+    "base": "m/dining_metal__universe__tight",
+    "sizeOk": true
+   },
+   "family4": {
+    "base": "m/dining_metal__family4__tight",
+    "sizeOk": true
+   },
+   "collision": {
+    "base": "m/lounge_metal_3x2__collision__tall",
+    "sizeOk": false
+   }
+  },
+  "canvas": {
+   "eye": {
+    "base": "m/living_canvas__eye__tight",
+    "sizeOk": true
+   },
+   "universe": {
+    "base": "m/living_canvas__universe__tight",
+    "sizeOk": true
+   },
+   "family4": {
+    "base": "m/living_canvas__family4__tight",
+    "sizeOk": true
+   },
+   "collision": {
+    "base": "m/lounge_canvas_3x2__collision__tall",
+    "sizeOk": false
+   }
+  },
+  "framed": {
+   "eye": {
+    "base": "m/lounge_framed__eye__tight",
+    "sizeOk": true
+   },
+   "universe": {
+    "base": "m/lounge_framed__universe__tight",
+    "sizeOk": true
+   },
+   "family4": {
+    "base": "m/lounge_framed__family4__tight",
+    "sizeOk": true
+   },
+   "collision": {
+    "base": "m/lounge_framed_3x2__collision__tall",
+    "sizeOk": false
+   }
+  },
+  "block": {
+   "eye": {
+    "base": "m/desk_block__eye__tight",
+    "sizeOk": false
+   },
+   "universe": {
+    "base": "m/desk_block__universe__tight",
+    "sizeOk": false
+   },
+   "family4": {
+    "base": "m/desk_block__family4__tight",
+    "sizeOk": false
+   }
+  },
+  "phone": {
+   "eye": {
+    "base": "m/phone_desk__eye__wide",
+    "sizeOk": false,
+    "de": "m/phone_desk__eye_de__wide"
+   },
+   "universe": {
+    "base": "m/phone_desk__universe__wide",
+    "sizeOk": false
+   },
+   "family4": {
+    "base": "m/phone_desk__family4__wide",
+    "sizeOk": false
+   },
+   "collision": {
+    "base": "m/phone_desk__collision__wide",
+    "sizeOk": false
+   }
+  }
+ },
+ "gallery": {
+  "groups": [
+   "one",
+   "two",
+   "family"
+  ],
+  "eyes": [
+   {
+    "id": "own",
+    "thumb": "art/dot_own_64"
+   },
+   {
+    "id": "yg",
+    "thumb": "art/dot_yg_64"
+   },
+   {
+    "id": "br",
+    "thumb": "art/dot_br_64"
+   },
+   {
+    "id": "gr",
+    "thumb": "art/dot_gr_64"
+   }
+  ],
+  "one": [
+   {
+    "id": "radiance",
+    "design": "radiance",
+    "price": "art",
+    "engine": null,
+    "wallOwn": {
+     "base": "m/lounge_acrylic__eye__tight",
+     "ratio": "4/5"
+    }
+   },
+   {
+    "id": "powder",
+    "design": "powder",
+    "price": "art",
+    "engine": null
+   },
+   {
+    "id": "universe",
+    "design": "universe",
+    "price": "art",
+    "engine": null,
+    "wallOwn": {
+     "base": "m/lounge_acrylic__universe__tight",
+     "ratio": "4/5"
+    }
+   },
+   {
+    "id": "gold",
+    "design": "gold",
+    "price": "art",
+    "engine": "celestial_gold"
+   },
+   {
+    "id": "splash",
+    "design": "splash",
+    "price": "art",
+    "engine": null
+   },
+   {
+    "id": "clean",
+    "design": "clean",
+    "price": "black",
+    "engine": "studio_black"
+   }
+  ],
+  "two": [
+   {
+    "id": "duo_infinity",
+    "file": "duo_infinity_by",
+    "price": "two",
+    "src": "mixed",
+    "engine": null,
+    "wall": {
+     "base": "m/lounge_acrylic_3x2__collision__tall",
+     "ratio": "4/5"
+    }
+   },
+   {
+    "id": "duo_infinity_bb",
+    "file": "duo_infinity_bb",
+    "price": "two",
+    "src": "mixed",
+    "engine": null
+   },
+   {
+    "id": "duo_infinity_uni",
+    "file": "duo_infinity_bb_uni",
+    "price": "two",
+    "src": "mixed",
+    "engine": null
+   },
+   {
+    "id": "duo_kiss",
+    "file": "duo_kiss_bb",
+    "price": "two",
+    "src": "mixed",
+    "engine": null
+   },
+   {
+    "id": "duo_clean",
+    "file": "duo_clean_by",
+    "price": "two",
+    "src": "mixed",
+    "engine": null
+   }
+  ],
+  "family": [
+   {
+    "id": "fam_trio",
+    "file": "fam_trio",
+    "price": "n",
+    "n": 3,
+    "src": "mixed",
+    "square": true,
+    "engine": null
+   },
+   {
+    "id": "fam_4",
+    "file": "fam_4",
+    "price": "n",
+    "n": 4,
+    "src": "mixed",
+    "engine": null
+   },
+   {
+    "id": "fam_5",
+    "file": "fam_5",
+    "price": "n",
+    "n": 5,
+    "src": "mixed",
+    "engine": null
+   },
+   {
+    "id": "fam_6",
+    "file": "fam_6",
+    "price": "n",
+    "n": 6,
+    "src": "mixed",
+    "engine": null
+   },
+   {
+    "id": "fam_6_uni",
+    "file": "fam_6_uni",
+    "price": "n",
+    "n": 6,
+    "src": "mixed",
+    "engine": null
+   }
+  ]
+ },
+ "more": [
+  {
+   "id": "hands",
+   "base": "m/hands_acrylic__eye__tight"
+  },
+  {
+   "id": "shelf",
+   "base": "m/shelf_acrylic_30__eye__tight"
+  },
+  {
+   "id": "hall",
+   "base": "m/hall_acrylic_3x2__collision__tight"
+  },
+  {
+   "id": "gallery",
+   "base": "m/gallery_acrylic_oblique__collision__tight"
+  }
+ ],
+ "reveal": {
+  "eyes": [
+   {
+    "id": "gd",
+    "photo": "reveal/gd_photo",
+    "iris": "reveal/gd_iris",
+    "art": "art/radiance_gd_900"
+   },
+   {
+    "id": "br",
+    "photo": "reveal/br_photo",
+    "iris": "reveal/br_iris",
+    "art": "art/radiance_br_900"
+   },
+   {
+    "id": "own",
+    "photo": "reveal/own_photo",
+    "iris": "reveal/own_iris",
+    "art": "art/radiance_own_900"
+   }
+  ]
+ },
+ "wallThumbs": {
+  "eye": "art/wallthumb_eye_96",
+  "universe": "art/wallthumb_universe_96",
+  "family4": "art/wallthumb_family4_96",
+  "collision": "art/wallthumb_collision_96"
+ },
+ "fibre": {
+  "crop_px": [
+   2000,
+   1000,
+   3200,
+   2200
+  ],
+  "of": 4096
+ },
+ "extras": [
+  "art/fibre_crop_1200",
+  "art/fibre_full_480",
+  "m/dining_metal__eye__wide_1200",
+  "m/dining_metal__eye__wide_2000",
+  "m/macro_acrylic_corner__universe__wide_1200",
+  "m/macro_acrylic_corner__universe__wide_2000",
+  "m/macro_acrylic_corner__universe__wide_600",
+  "reveal/disc_own_420",
+  "ui/before-phone-crop-315",
+  "ui/preview_wm_360"
+ ],
+ "engine": {
+  "gold": "celestial_gold",
+  "clean": "studio_black"
+ }
+}

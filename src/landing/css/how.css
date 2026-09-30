@@ -1,0 +1,61 @@
+/* SnapEyes landing v2: How it works: the three steps with their phone visuals, the tips disclosure.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-steps { display: grid; gap: 44px; margin-top: 44px; counter-reset: st; }
+  @media (min-width: 860px) {
+    .lp-steps { grid-template-columns: repeat(3, 1fr); gap: 36px; margin-top: 60px; }
+  }
+  .lp-step { display: flex; flex-direction: column; gap: 22px; }
+  .lp-vis { position: relative; aspect-ratio: 1 / 1; border-radius: 20px; overflow: hidden; background: radial-gradient(120% 90% at 50% 0%, #1b2130 0%, #0c0f17 62%); box-shadow: 0 0 0 1px rgba(255, 255, 255, .07); display: grid; place-items: center; }
+  .lp-vis.lp-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; }
+  .lp-phone { position: relative; width: 44%; aspect-ratio: 9 / 18.6; border-radius: 26px; background: #05070b; box-shadow: 0 0 0 5px #1d2230, 0 0 0 6px rgba(255, 255, 255, .1), 0 30px 60px -20px rgba(0, 0, 0, .9); overflow: hidden; }
+  .lp-phone::before { content: ""; position: absolute; z-index: 3; top: 9px; left: 50%; width: 32%; height: 11px; margin-left: -16%; border-radius: 99px; background: #000; }
+  .lp-cam { position: absolute; inset: 0; }
+  .lp-cam img { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.05); }
+  .lp-cam .lp-ring { position: absolute; left: 50%; top: 46%; width: 76%; aspect-ratio: 1; margin: -38% 0 0 -38%; border-radius: 50%; border: 1.5px solid var(--gold); box-shadow: 0 0 0 1px rgba(0, 0, 0, .3), inset 0 0 0 1px rgba(0, 0, 0, .25); }
+  .lp-cam .lp-br { position: absolute; width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, .85); }
+  .lp-cam .lp-br.lp-a { left: 10%; top: 24%; border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0; }
+  .lp-cam .lp-br.lp-b { right: 10%; top: 24%; border-left: 0; border-bottom: 0; border-radius: 0 4px 0 0; }
+  .lp-cam .lp-br.lp-c { left: 10%; bottom: 26%; border-right: 0; border-top: 0; border-radius: 0 0 0 4px; }
+  .lp-cam .lp-br.lp-d { right: 10%; bottom: 26%; border-left: 0; border-top: 0; border-radius: 0 0 4px 0; }
+  .lp-cam .lp-zoom { position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); padding: 2px 9px; border-radius: 99px; background: rgba(0, 0, 0, .55); color: var(--gold-2); font-size: 11px; font-weight: 700; }
+  .lp-cam .lp-shutter { position: absolute; left: 50%; bottom: 4%; width: 26px; height: 26px; margin-left: -13px; border-radius: 50%; border: 2px solid #fff; box-shadow: inset 0 0 0 3px #05070b, inset 0 0 0 30px #fff; }
+  .lp-prev { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 8px 8px; gap: 8px; background: #070a10; }
+  .lp-prev b { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); text-align: center; }
+  .lp-prev img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
+  .lp-prev span { margin-top: auto; display: block; text-align: center; padding: 9px 6px; border-radius: 99px; background: rgba(245, 197, 66, .14); color: var(--gold-soft); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
+  .lp-prev.lp-open span { background: var(--gold); color: #000; }
+  .lp-step-body .lp-num { font-size: 15px; display: flex; align-items: center; gap: 12px; }
+  .lp-step-body .lp-num::after { content: ""; height: 1px; flex: 1; background: var(--line-2); }
+  .lp-step-body h3 { margin-top: 12px; font-size: 20px; }
+  .lp-step-body p { margin-top: 10px; font-size: 15px; line-height: 1.6; color: var(--ink-2); }
+  .lp-step-body .lp-vcap { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); display: flex; gap: 8px; align-items: flex-start; }
+  .lp-vis.lp-file { background: radial-gradient(120% 90% at 50% 0%, #1b2130 0%, #0c0f17 62%); }
+  .lp-filecard { width: 66%; padding: 11px; border-radius: 16px; background: #0f1320; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 24px 50px -20px rgba(0, 0, 0, .9); }
+  .lp-filecard img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 9px; }
+  .lp-filecard div { margin-top: 12px; display: grid; gap: 3px; }
+  .lp-filecard b { font-size: 13.5px; font-weight: 600; color: #fff; word-break: break-all; }
+  .lp-filecard span { font-size: 12.5px; color: var(--ink-2); }
+  .lp-filecard em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+  details.lp-tips { margin-top: 14px; border-top: 1px solid var(--line); }
+  details.lp-tips > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--gold-soft); }
+  details.lp-tips > summary::-webkit-details-marker { display: none; }
+  details.lp-tips > summary svg { width: 14px; height: 14px; color: var(--gold); flex: none; transition: transform .2s; }
+  details.lp-tips[open] > summary svg { transform: rotate(45deg); }
+  details.lp-tips ul { display: grid; gap: 8px; padding: 2px 0 10px; }
+  details.lp-tips li { position: relative; padding-left: 18px; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+  details.lp-tips li::before { content: ""; position: absolute; left: 0; top: 10px; width: 8px; height: 1px; background: var(--gold); }
+  .lp-how-cta { margin-top: 48px; display: flex; justify-content: center; }
+  @media (min-width: 860px) {
+    .lp-how-cta { justify-content: flex-start; }
+  }
+  @media (max-width: 859px) {
+    .lp-steps { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; margin: 30px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 12px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
+    .lp-steps::-webkit-scrollbar { display: none; }
+    .lp-step { flex: 0 0 82%; scroll-snap-align: start; gap: 18px; }
+    .lp-how-cta { margin-top: 22px; }
+  }
+}

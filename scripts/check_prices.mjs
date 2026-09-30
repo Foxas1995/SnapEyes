@@ -50,6 +50,8 @@ const PRICE_FILES = [
   // copy (every file of src/landing/copy, see checkCopies). A number in these files that equals a price in Stripe's smallest
   // unit is taken for a price: image sizes come from the asset manifest, never typed here.
   'src/landing/priceText.ts', 'src/landing/prices.ts', 'src/landing/PriceTable.tsx', 'src/landing/HeroScene.tsx', 'src/landing/StyleTile.tsx',
+  // the first screen's shell (BUILD_PLAN section 4 step 1: the hero's price line is made here; the build hands render.tsx its one price)
+  'src/landing/shell/parts.tsx', 'src/landing/shell/render.tsx', 'src/landing/shell/FirstScreen.tsx',
 ];
 const PRICE_DIRS = ['src/landing/copy'];
 // Never scanned for written prices: the one place itself, the place of the price experiments' ladders

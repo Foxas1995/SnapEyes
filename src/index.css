@@ -1,4 +1,17 @@
+/* The cascade layers, in order. Tailwind declares theme, base, components and utilities; the new landing page puts all its
+   rules in "landing" (src/landing/css), which therefore sits above Tailwind's base (its resets and the body rules below)
+   and under the utilities. A statement that only names layers may come before an @import. Every page loads this file, so
+   the order is the same everywhere; the landing layer is empty on every page but the landing. */
+@layer theme, base, landing, components, utilities;
 @import "tailwindcss";
+
+/* Tailwind reads every source file for class names, and takes any word that is a utility ("resize" in an event name) for one.
+   The landing v2 shell and its generated picture manifest use no utility (their classes are lp- classes of src/landing/css),
+   and neither do the check scripts, so they are not read: the CSS of every other page stays exactly what it was. */
+@source not "./landing/shell";
+@source not "./landing/assets.ts";
+@source not "./landing/assets.data.ts";
+@source not "../scripts";
 
 /* Self-hosted fonts: no request to Google Fonts, so no visitor IP goes to a third party for typography
    (LG Muenchen I, 3 O 17493/20). Both are variable OFL fonts, subset to Latin from the engine's own copies

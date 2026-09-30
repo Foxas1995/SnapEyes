@@ -1,0 +1,27 @@
+/* SnapEyes landing v2: More ways to see it: the rail of four rooms.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  /* more ways to see it */
+  .lp-more { margin-top: 44px; border-top: 1px solid var(--line); }
+  .lp-more > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; min-height: 64px; }
+  .lp-more > summary::-webkit-details-marker { display: none; }
+  .lp-more > summary b { display: block; font-family: var(--display); font-size: 20px; font-weight: 600; letter-spacing: .02em; color: #fff; }
+  .lp-more > summary small { display: block; margin-top: 4px; font-size: 13.5px; line-height: 1.5; color: var(--ink-3); }
+  .lp-more > summary svg { width: 16px; height: 16px; color: var(--gold); flex: none; transition: transform .2s; }
+  .lp-more[open] > summary svg { transform: rotate(45deg); }
+  .lp-rail { display: flex; gap: 14px; margin-inline: calc(-1 * var(--gut)); padding: 6px var(--gut) 18px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut); scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }
+  .lp-rail::-webkit-scrollbar { display: none; }
+  .lp-rail figure { flex: none; scroll-snap-align: start; }
+  .lp-rail figure > div { position: relative; height: 280px; border-radius: 16px; overflow: hidden; background: #111; box-shadow: 0 0 0 1px rgba(255, 255, 255, .07); }
+  .lp-rail img { height: 100%; width: auto; max-width: none; }
+  .lp-rail figcaption { margin-top: 12px; max-width: 290px; }
+  .lp-rail figcaption b { display: block; font-size: 14px; color: #fff; font-weight: 600; }
+  .lp-rail figcaption span { display: block; margin-top: 3px; font-size: 13px; line-height: 1.45; color: var(--ink-3); }
+  @media (min-width: 960px) {
+    .lp-rail figure > div { height: 300px; }
+    .lp-rail { gap: 18px; }
+  }
+}

@@ -1,0 +1,46 @@
+/* SnapEyes landing v2: The fixed header: logo, navigation, language switch, header button.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-hdr { position: fixed; left: 0; right: 0; top: var(--bar-h); z-index: 50; height: var(--hdr-h); transition: background .3s, border-color .3s; border-bottom: 1px solid transparent; }
+  .lp-hdr.lp-solid { background: rgba(7, 9, 14, .86); border-bottom-color: var(--line); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .lp-hdr .lp-wrap { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .lp-logo svg { width: 32px; height: 32px; flex: none; }
+  .lp-logo b { display: block; font-family: var(--display); font-weight: 600; letter-spacing: .18em; font-size: 17px; line-height: 1; color: #fff; }
+  .lp-logo small { display: block; margin-top: 5px; font-size: 9px; font-weight: 600; letter-spacing: .34em; text-transform: uppercase; color: var(--ink-3); line-height: 1; }
+  .lp-nav { display: none; gap: 18px; font-size: 13px; color: var(--ink-3); }
+  .lp-nav a { text-decoration: none; transition: color .2s; padding: 6px 0; }
+  .lp-nav a:hover { color: #fff; }
+  @media (min-width: 960px) {
+    .lp-nav { display: flex; }
+    .lp-hdr .lp-btn-line { display: none; }
+  }
+  @media (min-width: 1160px) {
+    .lp-nav { gap: 26px; }
+    .lp-hdr .lp-btn-line { display: inline-flex; }
+  }
+  .lp-hdr-r { display: flex; align-items: center; gap: 12px; }
+  .lp-hdr .lp-btn-line { display: none; }
+  @media (min-width: 640px) and (max-width: 959px) {
+    .lp-hdr .lp-btn-line { display: inline-flex; }
+  }
+  @media (min-width: 1160px) {
+    .lp-hdr .lp-btn-line { display: inline-flex; }
+  }
+  @media (max-width: 340px) {
+    .lp-logo small { display: none; }
+    .lp-logo b { letter-spacing: .12em; font-size: 15px; }
+    .lp-hdr .lp-wrap { gap: 8px; }
+  }
+  @media (max-width: 300px) {
+    .lp-hdr-r { gap: 6px; }
+    .lp-logo svg { width: 26px; height: 26px; }
+    .lp-logo b { font-size: 14px; letter-spacing: .08em; }
+  }
+  @media (max-width: 340px) {
+    .lp-hdr .lp-wrap { padding-inline: 12px; gap: 8px; }
+  }
+}

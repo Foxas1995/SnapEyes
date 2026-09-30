@@ -1,0 +1,22 @@
+/* The landing page's stylesheet: one file per section, imported in the order they cascade. Loaded by the landing's entry
+   (src/main.tsx) only: the legal pages, /try, /order and /admin never get it (scripts/legal_look.mjs proves the legal pages
+   did not change). Every rule is inside @layer landing and every class is prefixed lp- (see base.css). The layer order is
+   also declared in src/index.css; repeating it here keeps this file correct if it is ever loaded first. */
+@layer theme, base, landing, components, utilities;
+
+@import './base.css';
+@import './bar.css';
+@import './header.css';
+@import './hero.css';
+@import './reveal.css';
+@import './wall.css';
+@import './sizes.css';
+@import './more.css';
+@import './styles.css';
+@import './how.css';
+@import './pricing.css';
+@import './closeups.css';
+@import './trust.css';
+@import './faq.css';
+@import './footer.css';
+@import './sticky.css';

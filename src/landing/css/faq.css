@@ -1,0 +1,20 @@
+/* SnapEyes landing v2: The FAQ (native details elements).
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-faq-grid { display: grid; gap: 34px; }
+  @media (min-width: 960px) {
+    .lp-faq-grid { grid-template-columns: .7fr 1.3fr; gap: 80px; }
+    .lp-faq-grid .lp-sec-head { position: sticky; top: calc(var(--hdr-h) + 30px); align-self: start; }
+  }
+  .lp-faq-list { border-top: 1px solid var(--line-2); }
+  details.lp-qa { border-bottom: 1px solid var(--line-2); }
+  details.lp-qa summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 0; min-height: 60px; font-size: 16.5px; font-weight: 600; color: #fff; line-height: 1.4; }
+  details.lp-qa summary::-webkit-details-marker { display: none; }
+  details.lp-qa summary svg { width: 16px; height: 16px; color: var(--gold); flex: none; transition: transform .25s var(--ease); }
+  details.lp-qa[open] summary svg { transform: rotate(45deg); }
+  details.lp-qa p { padding: 0 34px 24px 0; font-size: 15px; line-height: 1.7; color: var(--ink-2); }
+  .lp-faq-grid > * { min-width: 0; }
+}

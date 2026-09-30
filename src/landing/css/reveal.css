@@ -1,0 +1,75 @@
+/* SnapEyes landing v2: The Reveal (photo left, iris right), the three up strip, the AI table, the quiet call to action.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-your-turn .lp-btn { white-space: nowrap; }
+  .lp-reveal-grid { display: grid; gap: 30px; }
+  @media (max-width: 959px) {
+    .lp-reveal-text { display: contents; }
+    .lp-reveal-text .lp-sec-head { order: 1; }
+    .lp-cmp-wrap { order: 2; }
+    .lp-reveal-text .lp-ai { order: 3; margin-top: 0; }
+  }
+  @media (min-width: 960px) {
+    .lp-reveal-grid { grid-template-columns: .86fr 1.14fr; gap: 80px; align-items: center; }
+  }
+  .lp-cmp-wrap { width: 100%; max-width: 560px; margin-inline: auto; }
+  .lp-cmp { position: relative; aspect-ratio: 1; border-radius: var(--r); overflow: hidden; background: #000; box-shadow: var(--ring); touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: ew-resize; container-type: inline-size; }
+  .lp-cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
+  .lp-cmp .lp-cmp-photo { clip-path: inset(0 calc(100% - var(--pos, 50) * 1%) 0 0); }
+  .lp-cmp-line { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: rgba(245, 197, 66, .9); transform: translateX(calc(var(--pos, 50) * 1cqw - .5px)); will-change: transform; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .lp-cmp.lp-show .lp-cmp-line, .lp-cmp:hover .lp-cmp-line, .lp-cmp:focus-within .lp-cmp-line { opacity: 1; }
+  .lp-cmp-grip { position: absolute; top: 50%; left: 0; width: 46px; height: 46px; margin: -23px 0 0 0; transform: translateX(calc(var(--pos, 50) * 1cqw - 23px)); will-change: transform; border-radius: 50%; background: rgba(7, 9, 14, .78); box-shadow: 0 0 0 1px var(--gold); display: grid; place-items: center; backdrop-filter: blur(8px); opacity: 0; transition: opacity .3s; }
+  .lp-cmp.lp-show .lp-cmp-grip, .lp-cmp:hover .lp-cmp-grip, .lp-cmp:focus-within .lp-cmp-grip { opacity: 1; }
+  .lp-cmp-grip svg { width: 22px; height: 22px; color: var(--gold); }
+  .lp-cmp-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+  .lp-cmp-ring { position: absolute; inset: 0; border-radius: var(--r); pointer-events: none; }
+  .lp-cmp-range:focus-visible ~ .lp-cmp-ring { outline: 2px solid var(--gold); outline-offset: -4px; }
+  .lp-cmp-lab { position: absolute; top: 12px; padding: 6px 12px; border-radius: 999px; background: rgba(7, 9, 14, .78); color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .04em; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); backdrop-filter: blur(6px); transition: opacity .4s; pointer-events: none; }
+  .lp-cmp-lab.lp-l { left: 12px; }
+  .lp-cmp-lab.lp-r { right: 12px; color: var(--gold); box-shadow: 0 0 0 1px var(--gold-line); }
+  .lp-cmp-meta { display: flex; justify-content: space-between; gap: 14px; margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
+  .lp-cmp-meta .lp-hint { white-space: nowrap; color: var(--gold-soft); }
+  .lp-cmp-scale { margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--ink-2); font-weight: 600; }
+  .lp-ai { margin-top: 34px; }
+  .lp-ai h3 { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); }
+  .lp-ai dl { display: grid; margin-top: 6px; }
+  .lp-ai dl > div { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .lp-ai dt { font-weight: 700; font-size: 14px; color: var(--gold-soft); }
+  .lp-ai dd { font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
+  .lp-ai dl > div:last-child dt { color: #fff; }
+  @media (min-width: 640px) {
+    .lp-ai dl > div { grid-template-columns: 11em 1fr; gap: 20px; }
+  }
+  .lp-strip { margin-top: 56px; }
+  .lp-strip ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 900px; margin-inline: auto; }
+  @media (min-width: 640px) {
+    .lp-strip ol { gap: 16px; }
+  }
+  .lp-strip li { min-width: 0; opacity: 0; transform: translateY(10px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
+  .lp-strip.lp-in li { opacity: 1; transform: none; }
+  .lp-strip.lp-in li:nth-child(2) { transition-delay: .35s; }
+  .lp-strip.lp-in li:nth-child(3) { transition-delay: .7s; }
+  .lp-strip figure > div { aspect-ratio: 1; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08); }
+  .lp-strip img { width: 100%; height: 100%; object-fit: cover; }
+  .lp-strip figcaption { margin-top: 10px; font-size: 12px; line-height: 1.4; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+  .lp-strip figcaption i { font-style: normal; font-family: var(--display); color: var(--gold); font-size: 13px; }
+  .lp-never { margin: 26px auto 0; max-width: 30em; text-align: center; font-family: var(--display); font-size: clamp(17px, 3.4vw, 24px); line-height: 1.3; color: #fff; text-wrap: balance; }
+  .lp-reveal-note { margin: 18px auto 0; max-width: 40em; text-align: center; font-size: 13.5px; line-height: 1.6; color: var(--ink-3); }
+  .lp-your-turn { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 34px; text-align: center; }
+  .lp-your-turn p { max-width: 26em; font-size: 16.5px; line-height: 1.5; color: var(--ink); font-weight: 600; }
+  .lp-never::before, .lp-never::after { content: ""; display: block; width: 28px; height: 1px; background: var(--gold); margin: 0 auto 14px; }
+  .lp-never::after { margin: 14px auto 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .lp-strip li { opacity: 1; transform: none; transition: none; }
+  }
+  .lp-reveal-grid > * { min-width: 0; }
+  @media (max-width: 359px) {
+    .lp-your-turn .lp-btn { white-space: normal; }
+  }
+  @media (max-width: 340px) {
+    .lp-cmp-meta .lp-hint { white-space: normal; }
+  }
+}

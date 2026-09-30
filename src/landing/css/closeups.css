@@ -1,0 +1,28 @@
+/* SnapEyes landing v2: Close-ups: the 1200 px crop with its locator and the polished edge.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-cu-grid { display: grid; gap: 36px; margin-top: 48px; }
+  @media (min-width: 960px) {
+    .lp-cu-grid { grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: start; }
+  }
+  .lp-cu-fibre .lp-cu-img { position: relative; aspect-ratio: 1; border-radius: var(--r); overflow: hidden; background: #000; box-shadow: var(--ring); }
+  .lp-cu-fibre .lp-cu-img > img { width: 100%; height: 100%; object-fit: cover; }
+  .lp-cu-badge { position: absolute; left: 14px; top: 14px; padding: 5px 11px; border-radius: 99px; background: rgba(7, 9, 14, .8); box-shadow: 0 0 0 1px var(--gold-line); color: var(--gold-2); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; backdrop-filter: blur(6px); }
+  .lp-locator { position: absolute; right: 14px; bottom: 14px; width: 26%; max-width: 130px; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 14px 30px -6px rgba(0, 0, 0, .8); }
+  .lp-locator img { width: 100%; height: 100%; object-fit: cover; }
+  .lp-locator i { position: absolute; border: 1.5px solid var(--gold); box-shadow: 0 0 0 1px rgba(0, 0, 0, .5); }
+  .lp-cu-cap h3 { margin-top: 18px; font-size: 17px; }
+  .lp-cu-cap p { margin-top: 6px; font-size: 14.5px; color: var(--ink-2); max-width: 36em; }
+  .lp-cu-edge .lp-edge-img { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden; background: #111; box-shadow: var(--ring); }
+  .lp-cu-edge .lp-edge-img img { width: 100%; height: 100%; object-fit: cover; }
+  .lp-cu-edge .lp-stage-cap { margin-left: 0; }
+  @media (max-width: 639px) {
+    .lp-cu-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; margin: 32px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 12px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
+    .lp-cu-grid::-webkit-scrollbar { display: none; }
+    .lp-cu-grid > figure { flex: 0 0 88%; scroll-snap-align: start; }
+  }
+  .lp-cu-grid > * { min-width: 0; }
+}
