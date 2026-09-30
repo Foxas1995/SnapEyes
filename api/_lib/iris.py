@@ -5,6 +5,7 @@ import os, io, json, base64, time, math, re, uuid, hmac, hashlib, threading
 import numpy as np
 import requests
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
+from . import iris_lt, iris_hu
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(os.path.dirname(HERE), "_assets")
@@ -131,10 +132,14 @@ _LOCAL = threading.local()   # per-invocation deadline: one warm container can s
 def deadline():
     return getattr(_LOCAL, "deadline", 0.0)
 
+PAGE_LANGS = ("de", "lt", "hu")   # the languages besides English that the customer sentences of run() and the preview
+                                 # watermark (WATERMARK_TEXT) come in: api/_lib/pay.py LANGS without "en"
+
 def page_lang():
-    """The language of the page this request came from: "de" when run() parsed a body saying so, else "en" (also
-    outside run(): tests, scripts). The preview watermark is drawn in it (WATERMARK_TEXT)."""
-    return "de" if getattr(_LOCAL, "lang", "en") == "de" else "en"
+    """The language of the page this request came from: "de", "lt" or "hu" when run() parsed a body saying so, else
+    "en" (also outside run(): tests, scripts). The preview watermark is drawn in it (WATERMARK_TEXT)."""
+    lang = getattr(_LOCAL, "lang", "en")
+    return lang if lang in PAGE_LANGS else "en"
 
 def time_left(default=BUDGET):
     d = deadline()
@@ -210,14 +215,34 @@ def _event(req, kind, out=None):
     except Exception:  # noqa
         pass
 
+# The customer sentences of run() in the languages besides English (the English ones stay inline where run() says them,
+# word for word): a refused download link, an expired photo session, an unreadable image, a busy studio, anything else.
+# Lithuanian and Hungarian: api/_lib/iris_lt.py RUN_ERRORS_LT and api/_lib/iris_hu.py ERRORS_HU.
+RUN_ERRORS = {
+    "de": {
+        "unlock": ("Dieser Download-Link ist abgelaufen oder gehört nicht zu dieser Bestellung. Bitte öffnen Sie den Link "
+                   "aus Ihrer Bestellung erneut oder schreiben Sie an info@snapeyes.com."),
+        "session": "Diese Sitzung ist abgelaufen. Bitte fotografieren Sie Ihr Auge erneut.",
+        "unreadable": "Wir konnten dieses Bild nicht lesen. Bitte versuchen Sie es mit einem anderen Foto.",
+        "busy": "Unser Studio ist gerade sehr ausgelastet. Bitte versuchen Sie es in einer Minute erneut.",
+        "failed": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.",
+    },
+    "lt": iris_lt.RUN_ERRORS_LT,
+    "hu": iris_hu.ERRORS_HU,
+}
+
+def _say(lang, key, english):
+    """The sentence of run() for a page language: its RUN_ERRORS entry, else the English one as it is."""
+    return RUN_ERRORS.get(lang, {}).get(key, english)
+
 def run(req, fn, gate=True):
     """Wrap a handler body: gate, parse JSON, run, serialise, catch errors."""
     t0 = time.time()
     _LOCAL.deadline = t0 + BUDGET
-    # the capture screen sends its page's language ("lang": "de"): the sentences below then come in German, and so
-    # does the preview watermark (page_lang). Known only once the body is parsed, so the gate's refusals and an
+    # the capture screen sends its page's language ("lang": "de", "lt" or "hu"): the sentences below then come in it,
+    # and so does the preview watermark (page_lang). Known only once the body is parsed, so the gate's refusals and an
     # unreadable body stay English; a ClientError's text is its raiser's, as it is
-    de = False
+    lang = "en"
     _LOCAL.lang = "en"            # never the language of the request this thread served before
     try:
         if gate and not json_content_type(req):
@@ -227,8 +252,8 @@ def run(req, fn, gate=True):
         body = read_json(req)
         if not isinstance(body, dict):   # [], "x", 5 or null parse as JSON too; every endpoint takes an object
             raise ClientError("Send a JSON object.")
-        de = body.get("lang") == "de"
-        _LOCAL.lang = "de" if de else "en"
+        lang = body.get("lang") if body.get("lang") in PAGE_LANGS else "en"
+        _LOCAL.lang = lang
         out = fn(body)
         out["ms"] = int((time.time() - t0) * 1000)
         send_json(req, 200, out)
@@ -240,34 +265,26 @@ def run(req, fn, gate=True):
     except PermissionError as e:
         print("snapeyes refused:", _scrub(repr(e))[:200], flush=True)
         if isinstance(e, UnlockError):
-            msg = ("Dieser Download-Link ist abgelaufen oder gehört nicht zu dieser Bestellung. Bitte öffnen Sie den Link "
-                   "aus Ihrer Bestellung erneut oder schreiben Sie an info@snapeyes.com." if de else
-                   "This download link has expired or does not belong to this order. Please open the link from your "
-                   "order again, or write to info@snapeyes.com.")
+            msg = _say(lang, "unlock", "This download link has expired or does not belong to this order. Please open the "
+                                       "link from your order again, or write to info@snapeyes.com.")
         else:
-            msg = ("Diese Sitzung ist abgelaufen. Bitte fotografieren Sie Ihr Auge erneut." if de else
-                   "This session expired. Please take the photo again.")
+            msg = _say(lang, "session", "This session expired. Please take the photo again.")
         send_json(req, 403, {"ok": False, "error": msg, "ms": int((time.time() - t0) * 1000)})
         _event(req, "403")
     except ValueError as e:
         print("snapeyes bad input:", _scrub(repr(e))[:200], flush=True)
-        send_json(req, 400, {"ok": False, "error": ("Wir konnten dieses Bild nicht lesen. Bitte versuchen Sie es mit einem "
-                                                    "anderen Foto." if de else
-                                                    "We could not read that image. Try another photo."),
+        send_json(req, 400, {"ok": False, "error": _say(lang, "unreadable", "We could not read that image. Try another photo."),
                              "ms": int((time.time() - t0) * 1000)})
         _event(req, "400")
     except ModelBusy as e:
         print("snapeyes model busy:", _scrub(repr(e))[:300], flush=True)
-        send_json(req, 503, {"ok": False, "error": ("Unser Studio ist gerade sehr ausgelastet. Bitte versuchen Sie es in "
-                                                    "einer Minute erneut." if de else
-                                                    "Our studio is very busy right now. Please try again in a minute."),
+        send_json(req, 503, {"ok": False, "error": _say(lang, "busy", "Our studio is very busy right now. Please try again in a minute."),
                              "ms": int((time.time() - t0) * 1000)})
         _event(req, "busy")
     except Exception as e:  # noqa
         # detail goes to the Vercel log only; the caller gets a sentence, never internals
         print("snapeyes handler error:", _scrub(repr(e))[:600], flush=True)
-        send_json(req, 500, {"ok": False, "error": ("Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut." if de
-                                                    else "Something went wrong on our side. Please try again."),
+        send_json(req, 500, {"ok": False, "error": _say(lang, "failed", "Something went wrong on our side. Please try again."),
                              "ms": int((time.time() - t0) * 1000)})
         _event(req, "500")
 
@@ -4226,9 +4243,14 @@ WATERMARK_ANGLE = -18
 # The German badge ends in the words of the German buy button ("Datei in voller Größe kaufen"). Both German lines
 # were measured on every canvas /api/compose makes: the badge's pill is at most 592 px wide on the 1024 px square
 # and 391 px on the 473 px wide wallpaper, the tile text 542 px against a 716 px tile step at 1024.
+# The Lithuanian and Hungarian pairs (api/_lib/iris_lt.py, iris_hu.py) were measured the same way: narrower than the
+# German badge on every canvas (badge pill 561 / 481 px against 592 on the 1024 px square, 374 / 311 against 391 of the
+# 469 px on the 473 px wallpaper, tile text 508 / 520 px against 542 of the 716 px step).
 WATERMARK_TEXT = {
     "en": ("SNAPEYES.COM  ·  PREVIEW", "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"),
     "de": ("SNAPEYES.COM  ·  VORSCHAU", "VORSCHAU MIT WASSERZEICHEN  ·  DATEI IN VOLLER GRÖSSE KAUFEN"),
+    "lt": iris_lt.WATERMARK_TEXT_LT,
+    "hu": iris_hu.WATERMARK_TEXT_HU,
 }
 
 def _watermark_layer(W, H, u, text=WATERMARK_TEXT["en"][0]):

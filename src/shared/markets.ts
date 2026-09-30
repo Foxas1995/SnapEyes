@@ -100,8 +100,10 @@ function grouped(n: number, sep: string): string {
 }
 
 /** A price as the site writes it, from Stripe's smallest unit (api/_lib/pay.py price_text is the same rule for the
- *  emails): euros "€19.97" in English, "19,97 €" in German (as the site always wrote them); Australian dollars "A$39"
- *  (whole dollars without decimals, never a bare "$"); forints "6 990 Ft" (whole forints, Stripe's amount / 100). */
+ *  emails): euros "€19.97" in English, "19,97 €" in German, Lithuanian and Hungarian (a decimal comma and a no-break
+ *  space before the sign; Lithuanian and Hungarian are written by hand, never by Intl, whose hu-HU prints
+ *  "19,97 EUR"); Australian dollars "A$39" (whole dollars without decimals, never a bare "$"); forints "6 990 Ft"
+ *  (whole forints, Stripe's amount / 100, no-break spaces, in every language). */
 export function money(minor: number, currency: Currency | string, lang: string = 'en'): string {
   const cur = asCurrency(currency);
   const de = lang === 'de';
@@ -111,6 +113,11 @@ export function money(minor: number, currency: Currency | string, lang: string =
     const units = Math.floor(Math.abs(minor) / 100);
     const cents = String(Math.abs(minor) % 100).padStart(2, '0');
     return `A$${grouped(units, de ? '.' : ',')}${whole ? '' : `${de ? ',' : '.'}${cents}`}`;
+  }
+  if (lang === 'lt' || lang === 'hu') {
+    const units = Math.floor(Math.abs(minor) / 100);
+    const cents = String(Math.abs(minor) % 100).padStart(2, '0');
+    return `${minor < 0 ? '-' : ''}${grouped(units, NBSP)},${cents}${NBSP}€`;
   }
   return EUR_FMT[de ? 'de' : 'en'].format(minor / 100);
 }

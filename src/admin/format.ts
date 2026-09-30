@@ -82,7 +82,7 @@ export const STYLE_LT: Record<string, string> = {
 export const VERDICT_LT: Record<string, string> = { good: 'Gera', ok: 'Tinkama', weak: 'Silpna', no_eye: 'Akies nerasta' };
 
 export const BLOCK_LT: Record<string, string> = {
-  too_blurry: 'Per neryški', too_dark: 'Per tamsi', pupil_too_large: 'Per didelis vyzdys', unknown: 'Nežinoma',
+  too_blurry: 'Per neryški', too_dark: 'Per tamsi', pupil_too_large: 'Per didelis vyzdys', too_small: 'Per maža rainelė', eyelid: 'Vokas dengia rainelę', unknown: 'Nežinoma',
 };
 
 export const DEVICE_LT: Record<string, string> = {

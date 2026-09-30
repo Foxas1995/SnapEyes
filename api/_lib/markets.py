@@ -19,19 +19,25 @@ True/False/None (use 1/0), and nothing after it in this file.
                    two_eyes              2 eyes (any style)
                    each_further_eye      each eye after the second, up to 8
   selectable     1: the site offers it (?m=<key>) and /api/checkout sells in it; 0: priced, but refused at checkout
-                 and ignored in links (hu until the Hungarian texts exist). A market in another currency than the
-                 default market's can be 1 only with its own edition of the legal texts, whose terms print its prices
-                 (src/shared/legal.ts EDITION_MARKETS = api/_lib/pay.py ACL_MARKETS; the build checks it). Setting
-                 au to 0 pauses new Australian orders; the Australian texts stay readable for the orders already
-                 made (their links carry m=au).
-  lang           the market's own page language, used once the site speaks it (today: en and de only)
+                 and ignored in links. A market in another currency than the default market's can be 1 only with its
+                 own edition of the legal texts, whose terms print its prices (src/shared/legal.ts EDITION_MARKETS =
+                 api/_lib/pay.py EDITION_MARKETS; the build checks it): au has the Australian edition, hu the
+                 Hungarian one (the EU texts with the forint prices, in English, German, Lithuanian and Hungarian).
+                 Setting au or hu to 0 pauses new orders there; the texts stay readable for the orders already made
+                 (their links carry m=au / m=hu). Setting hu to 0 only closes the FORINT market: the Hungarian
+                 LANGUAGE is not a market, so a Hungarian page on the euro market (?lang=hu, a Hungarian browser)
+                 still sells, in euros, under the Hungarian terms (README: go-live gates).
+  lang           the market's own page language: the language a page of it opens in when the link and the visitor
+                 named none (src/shared/lang.ts detectLang; lt: Lithuanian, hu: Hungarian; "en" changes nothing,
+                 it is the site's language of last resort). The language and the market stay independent: ?lang=
+                 always wins, and the market never redirects.
   stripe_locale  the language of Stripe's payment page per page language, where it differs from the page's own
                  (Stripe has no en-AU: the Australian market gets en-GB)
   countries      ISO codes of the visitor's country (Vercel's x-vercel-ip-country) for which GET /api/checkout suggests
                  this market; only ever a suggestion, never a redirect
 Owner decisions of 2026-09-29 (the numbers are the literal's): eu and lt share one euro price list (lt is its own key
-for the statistics and later tests); au in Australian dollars (one total price, no GST charged); hu in forints, priced
-but not selectable until the Hungarian texts exist."""
+for the statistics and later tests); au in Australian dollars (one total price, no GST charged); hu in forints,
+selectable together with the Hungarian edition of the legal texts (Lithuanian and Hungarian wired 2026-09-30)."""
 DEFAULT_MARKET = "eu"
 MARKETS = {
     "eu": {
@@ -61,7 +67,7 @@ MARKETS = {
     "hu": {
         "currency": "huf",
         "prices": {"one_eye_studio_black": 699000, "one_eye_art": 899000, "two_eyes": 1399000, "each_further_eye": 499000},
-        "selectable": 0,
+        "selectable": 1,
         "lang": "hu",
         "stripe_locale": {},
         "countries": ["HU"]

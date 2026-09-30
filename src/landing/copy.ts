@@ -6,8 +6,11 @@
 import type { StyleId } from './config';
 import { WITHDRAWAL_ONLINE, legalEdition } from '../shared/legal';
 import type { Currency, Market } from '../shared/markets';
+import type { Lang } from '../shared/lang';
+import { lt } from './copy.lt';
+import { hu } from './copy.hu';
 
-export type Lang = 'en' | 'de';
+export type { Lang };
 
 export interface Copy {
   meta: { title: string; description: string; shareDescription: string; locale: string };
@@ -136,7 +139,7 @@ const PX = '4096\u00a0px';
 const SQUARE = '4096\u00a0×\u00a04096\u00a0px';
 
 // The withdrawal question of the FAQ: the Australian market answers it in its own words (copyFor below).
-const WITHDRAW_Q: Record<Lang, string> = { en: 'Can I withdraw from an order?', de: 'Kann ich eine Bestellung widerrufen?' };
+const WITHDRAW_Q: Record<'en' | 'de', string> = { en: 'Can I withdraw from an order?', de: 'Kann ich eine Bestellung widerrufen?' };
 
 const en: Copy = {
   meta: {
@@ -327,6 +330,10 @@ const en: Copy = {
     aud: {
       text: 'Shopping from Australia? See our prices in Australian dollars (A$), with our terms for Australia.',
       show: 'Show prices in A$',
+    },
+    huf: {
+      text: 'Shopping from Hungary? See our prices in Hungarian forints (Ft).',
+      show: 'Show prices in Ft',
     },
   },
 };
@@ -523,17 +530,21 @@ const de: Copy = {
       text: 'Sie kaufen aus Australien? Sehen Sie unsere Preise in australischen Dollar (A$), mit unseren Bedingungen für Australien.',
       show: 'Preise in A$ anzeigen',
     },
+    huf: {
+      text: 'Sie kaufen aus Ungarn? Sehen Sie unsere Preise in ungarischen Forint (Ft).',
+      show: 'Preise in Ft anzeigen',
+    },
   },
 };
 
-export const COPY: Record<Lang, Copy> = { en, de };
+export const COPY: Record<Lang, Copy> = { en, de, lt, hu };
 
 // The Australian market's lines (src/shared/legal.ts legalEdition "au"), in place of the language's own: the FAQ answer
 // about cancelling keeps the Australian Consumer Law (its guarantees cannot be excluded, so nothing may read as "no
 // refunds", and no promise of our own to redo a faulty file: see src/legal/docs/terms.ts TERMS_AU) and frames the
 // 14-day right as EU law. The rest of the copy is already written in Australian (British) spelling: colour,
 // personalised, licence. Prices and their footnote follow the currency (pricing.footnoteAud).
-const AU_FAQ: Record<Lang, { q: string; a: string }> = {
+const AU_FAQ: Record<'en' | 'de', { q: string; a: string }> = {
   en: {
     q: 'Can I cancel an order?',
     a: `We start making your file as soon as your order confirmation email has gone out, normally within a minute of your payment. Before paying, you agree that we start straight away, so the 14-day right of withdrawal under EU consumer law, which applies to your order, ends once we have started making your file. Until then you can cancel by email or online with "${WITHDRAWAL_ONLINE.en.button}", at the foot of this page or through the withdrawal link in your order confirmation email, and we refund you in full. That is only about changing your mind: our services come with guarantees that cannot be excluded under the Australian Consumer Law, so if your file is faulty or clearly differs from the preview you approved, write to us. The details are in our terms of sale (Your rights in Australia) and the withdrawal information, linked at the foot of this page.`,
@@ -544,14 +555,15 @@ const AU_FAQ: Record<Lang, { q: string; a: string }> = {
   },
 };
 
-const COPY_AU: Record<Lang, Copy> = {
+// The Australian market has English and German pages only (src/shared/legal.ts EDITION_LANGS)
+const COPY_AU: Partial<Record<Lang, Copy>> = {
   en: { ...en, faq: { ...en.faq, items: en.faq.items.map((it) => (it.q === WITHDRAW_Q.en ? { ...it, ...AU_FAQ.en } : it)) } },
   de: { ...de, faq: { ...de.faq, items: de.faq.items.map((it) => (it.q === WITHDRAW_Q.de ? { ...it, ...AU_FAQ.de } : it)) } },
 };
 
 /** The landing copy for a language and the visitor's market: the language's own, with the Australian lines for au. */
 export function copyFor(lang: Lang, market: Market): Copy {
-  return legalEdition(market) === 'au' ? COPY_AU[lang] : COPY[lang];
+  return legalEdition(market) === 'au' ? COPY_AU[lang] ?? COPY[lang] : COPY[lang];
 }
 
 /** The price line under the price cards, in the words of the market's currency. */

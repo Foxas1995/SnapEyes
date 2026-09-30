@@ -28,7 +28,7 @@
 //  - otherwise when the 14-day period is over ("lapsed, period_over"): withdraw.py period_end() does not count the
 //    day of payment, ends the period at the end of the 14th day after it, and moves a last day on a Saturday, a
 //    Sunday or a public holiday to the next working day (Regulation 1182/71 Art. 3(4), § 193 BGB; the server knows
-//    the national holidays of Lithuania and Germany, and the owner looks at every lapsed statement by hand, so a
+//    the national holidays of Lithuania, Germany and Hungary, and the owner looks at every lapsed statement by hand, so a
 //    customer's own holiday elsewhere is answered personally), taking the latest end anywhere in the EU. The texts
 //    keep the statutory sentence ("14 days from the day of the conclusion of the contract") and add only these two
 //    counting rules, in the words of the Regulation ("working day" / "Arbeitstag": not a Saturday, Sunday or
@@ -48,10 +48,12 @@
 // statutory EU text, with a lead that frames it as the EU right to cancel for a change of mind (never as "no refunds":
 // the Australian Consumer Law's guarantees cannot be excluded), the Australian checkbox text in its box and links to
 // the terms' "Your rights in Australia".
-import type { Block, LegalDoc, LegalDocs, LegalSection } from '../types';
+import type { Block, EditionDocs, LegalDoc, LegalDocs, LegalSection } from '../types';
 import { CHECKOUT_LEGAL, CHECKOUT_LEGAL_AU, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
 import { CONTACT_EMAIL, contactLine, formLine } from '../facts';
 import { patchDoc } from '../patch';
+import { lt } from './withdrawal.lt';
+import { hu } from './withdrawal.hu';
 
 const W = WITHDRAWAL_ONLINE;
 
@@ -189,7 +191,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const WITHDRAWAL: LegalDocs = { en, de };
+export const WITHDRAWAL: LegalDocs = { en, de, lt, hu };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 /** The "expiry" section with the Australian checkbox text in its box and its closing sentence pointing at the
@@ -228,4 +230,4 @@ const auDe = patchDoc(de, {
   },
 });
 
-export const WITHDRAWAL_AU: LegalDocs = { en: auEn, de: auDe };
+export const WITHDRAWAL_AU: EditionDocs = { en: auEn, de: auDe };

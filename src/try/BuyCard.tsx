@@ -5,13 +5,19 @@ import { type Eye, MAX_EYES, billableEyes } from './multi';
 import { currencyOf, currentMarket, money, priceList, priceMinor, type PriceList } from '../shared/markets';
 import { checkoutLegal, legalEdition } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
+import type { Lang } from '../shared/lang';
+
+/** The withdrawal-waiver text per language, as GET /api/checkout sends it. */
+export type ConsentTexts = Partial<Record<Lang, string>>;
 
 /** Whether this deployment takes orders (/api/health stripe and GET /api/checkout open), with the server's own price
  *  list for this page's market and its withdrawal-waiver text. null: not known yet, shown as closed. */
 export interface Ordering {
   open: boolean;
   prices?: Partial<PriceList>;
-  consent?: { en?: string; de?: string; markets?: Record<string, { en?: string; de?: string } | undefined> };
+  // the EU texts per language (also the Hungarian edition's), and per market where a market has its own (markets.au: the
+  // Australian checkbox)
+  consent?: ConsentTexts & { version?: string; markets?: Record<string, ConsentTexts | undefined> };
 }
 
 interface Props {
@@ -101,8 +107,8 @@ export const BuyCard: React.FC<Props> = (p) => {
   // the market's checkout wording (src/shared/legal.ts checkoutLegal: the Australian checkbox for au). The server records
   // a fingerprint of its own waiver text for the market: show exactly that one (it equals checkoutLegal's)
   const legal = checkoutLegal(lang, market);
-  const texts = legalEdition(market) === 'eu' ? p.ordering?.consent : p.ordering?.consent?.markets?.[market];
-  const waiverText = (lang === 'de' ? texts?.de : texts?.en) || legal.withdrawalConsent;
+  const texts = legalEdition(market) === 'au' ? p.ordering?.consent?.markets?.[market] : p.ordering?.consent;
+  const waiverText = texts?.[lang] || legal.withdrawalConsent;
   const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : !p.waiver ? 'waiver' : null;
   const disabled = p.busy || blockedBy !== null;
   return (

@@ -100,7 +100,7 @@ export const StatsPage: React.FC<{ call: Call }> = ({ call }) => {
             <Dist title="Blokavimo priežastys" t={all.block_reason} names={BLOCK_LT} />
             <Dist title="Įrenginiai" t={all.device} names={DEVICE_LT} />
             <Dist title="Šaltinis" t={all.source} names={SOURCE_LT} />
-            <Dist title="Kalba" t={all.lang} names={{ en: 'Anglų', de: 'Vokiečių' }} />
+            <Dist title="Kalba" t={all.lang} names={{ en: 'Anglų', de: 'Vokiečių', lt: 'Lietuvių', hu: 'Vengrų' }} />
             <Dist title="Stiliai (kompozicijos)" t={all.compose_style} names={STYLE_LT} />
           </div>
           <section className={CARD}>

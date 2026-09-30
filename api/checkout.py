@@ -2,17 +2,19 @@
 """/api/checkout: opens the Stripe payment page for an order whose eyes are uploaded (/api/order action "draft").
 
 GET  /api/checkout
-     {ok, open, currency, prices, market, markets, max_eyes, consent: {version, en, de, markets}, country, suggest}: whether
+     {ok, open, currency, prices, market, markets, max_eyes, consent: {version, en, de, lt, hu, markets}, country, suggest}: whether
      ordering is open on this deployment (Stripe and storage configured), the price lists the server charges (currency
      and prices: the default market's, as before markets existed; markets: {key: {currency, prices}} of every market
-     the site sells in, api/_lib/markets.py), and the exact withdrawal-waiver text the checkbox must show (en, de:
-     the EU text; markets: {"au": {en, de}}, the text of a market that has its own, pay.ACL_MARKETS). country:
+     the site sells in, api/_lib/markets.py), and the exact withdrawal-waiver text the checkbox must show (en, de, lt,
+     hu: the EU text, also the Hungarian edition's; markets: {"au": {en, de}}, the text of a market that has its own,
+     pay.ACL_MARKETS, in the languages of its edition). country:
      the visitor's country as Vercel names it (x-vercel-ip-country, "" when unknown) and suggest: a sellable market
      for that country other than the default one, or null. Only a hint the page may offer; it never picks the market.
      Nothing secret, nothing per order.
-POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"|"de", market, consent_digital: true}
-     market: one of the markets the site sells in ("eu" when missing; one that is not offered, "hu" today, or any other
-     value: 400). The server computes the price from eyes, style and market (a price or currency sent by the client is
+POST /api/checkout {order, k, eyes: 1-8, style, layout, names, title, lang: "en"|"de"|"lt"|"hu", market, consent_digital: true}
+     market: one of the markets the site sells in ("eu" when missing; one that is not offered, or any other value:
+     400). lang: the page's language when the market's edition of the legal texts has it (the Australian one: en, de),
+     else "en": the order, its consent text and its emails are in that language. The server computes the price from eyes, style and market (a price or currency sent by the client is
      ignored), refuses without the withdrawal waiver, records the consent's version, time and text fingerprint,
      creates a Stripe Checkout Session (mode payment, the market's currency, one line item, the customer's email
      collected by Stripe, Stripe's own page in de or en (en-GB for Australia), payment methods chosen by Stripe, no
@@ -60,9 +62,9 @@ def info(body, country=None):
             "market": pay.DEFAULT_MARKET,
             "markets": {m: {"currency": pay.market_currency(m).upper(), "prices": pay.price_list(m)} for m in pay.SELECTABLE},
             "max_eyes": pay.MAX_EYES,
-            "consent": {"version": pay.CONSENT_VERSION, "en": pay.CONSENT_TEXT["en"], "de": pay.CONSENT_TEXT["de"],
-                        "markets": {m: {lang: pay.consent_for(m, lang) for lang in pay.LANGS}
-                                    for m in pay.SELECTABLE if pay.acl_market(m)}},
+            "consent": dict({"version": pay.CONSENT_VERSION}, **{lang: pay.CONSENT_TEXT[lang] for lang in pay.LANGS},
+                            markets={m: {lang: pay.consent_for(m, lang) for lang in pay.edition_langs(m)}
+                                     for m in pay.SELECTABLE if pay.acl_market(m)}),
             "country": cc, "suggest": suggest}
 
 

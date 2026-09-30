@@ -74,6 +74,7 @@ import re, time, hmac, hashlib, secrets, threading, datetime
 from . import iris as L
 from . import store
 from . import pay
+from . import withdraw_lt, withdraw_hu
 
 NAME_MAX = 100
 EMAIL_MAX = 254
@@ -113,6 +114,8 @@ STATEMENT = {   # as the order page shows it before "Confirm withdrawal" (src/or
           "artwork, order {order}.",
     "de": "Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über die Bereitstellung der folgenden digitalen "
           "Inhalte: SnapEyes-Kunstwerk, Bestellung {order}.",
+    "lt": withdraw_lt.STATEMENT_LT,
+    "hu": withdraw_hu.STATEMENT_HU,
 }
 
 
@@ -296,9 +299,10 @@ def echo_order(s):
 # next working day: Regulation 1182/71 Art. 3(4) (which recital 41 of Directive 2011/83/EU applies to its periods)
 # and § 193 BGB. Whose holidays count is the customer's place, and we do not reliably know the customer's country
 # (the order stores no address), so the rule here is the conservative one: every Saturday and Sunday, and every
-# national public holiday of Lithuania (the seller's country) or of Germany (the main market). Holidays of other
-# countries and the holidays of single German states are NOT in it; the owner looks at every lapsed statement by
-# hand (the note says so), so a customer whose own holiday was the last day is answered personally.
+# national public holiday of Lithuania (the seller's country), of Germany (the main market) or of Hungary (the
+# Hungarian market). Holidays of other countries and the holidays of single German states are NOT in it; the owner
+# looks at every lapsed statement by hand (the note says so), so a customer whose own holiday was the last day is
+# answered personally.
 # The dates follow from fixed rules (Easter by the Gregorian computus, easter()), so the table never runs out:
 #   Lithuania (Labour Code Art. 123): 1 Jan, 16 Feb, 11 Mar, Easter Sunday and Monday, 1 May, 24 Jun, 6 Jul,
 #     15 Aug, 1 Nov, 2 Nov, 24 Dec, 25 Dec, 26 Dec (Mother's and Father's Day are Sundays anyway)
@@ -308,12 +312,17 @@ def echo_order(s):
 #   2026: Good Friday 3 Apr, Easter 5/6 Apr, Ascension 14 May, Whit Monday 25 May
 #   2027: Good Friday 26 Mar, Easter 28/29 Mar, Ascension 6 May, Whit Monday 17 May
 #   2028: Good Friday 14 Apr, Easter 16/17 Apr, Ascension 25 May, Whit Monday 5 Jun
-# If either country adds or moves a holiday by law, change HOLIDAYS_LT / HOLIDAYS_DE (or their Easter offsets).
+# If a country adds or moves a holiday by law, change HOLIDAYS_LT / HOLIDAYS_DE / HOLIDAYS_HU (or their Easter offsets).
+# Hungary (Mt. 102. § (1), for the Hungarian market): 1 Jan, 15 Mar, Good Friday, Easter Monday, 1 May, Whit Monday,
+# 20 Aug, 23 Oct, 1 Nov, 25 and 26 Dec. Only 15 Mar, 20 Aug and 23 Oct are new against the two above, and the latest end
+# anywhere is taken, so adding them only ever lengthens a period, on the consumer's side.
 HOLIDAYS_LT = ((1, 1), (2, 16), (3, 11), (5, 1), (6, 24), (7, 6), (8, 15), (11, 1), (11, 2), (12, 24), (12, 25),
                (12, 26))
 EASTER_LT = (0, 1)                        # days after Easter Sunday: Easter Sunday, Easter Monday
 HOLIDAYS_DE = ((1, 1), (5, 1), (10, 3), (12, 25), (12, 26))
 EASTER_DE = (-2, 1, 39, 50)               # Good Friday, Easter Monday, Ascension Day, Whit Monday
+HOLIDAYS_HU = withdraw_hu.HOLIDAYS_HU     # Hungary (Mt. 102. § (1)): 1 Jan, 15 Mar, 1 May, 20 Aug, 23 Oct, 1 Nov, 25-26 Dec
+EASTER_HU = withdraw_hu.EASTER_HU         # Good Friday, Easter Monday, Whit Monday (only 15 Mar, 20 Aug, 23 Oct are new)
 _EPOCH = datetime.date(1970, 1, 1)
 _HOLIDAYS = {}                            # year -> the set of its holidays (dates)
 
@@ -332,12 +341,14 @@ def easter(year):
 
 
 def holidays(year):
-    """The public holidays of a year that stop a period ending on them: Lithuania's and Germany's national ones."""
+    """The public holidays of a year that stop a period ending on them: the national ones of Lithuania, Germany and
+    Hungary, for every order whatever its market (the latest end anywhere is taken: an English, German or Australian
+    order's period also runs past 15 Mar, 20 Aug and 23 Oct, one working day longer, on the consumer's side)."""
     got = _HOLIDAYS.get(year)
     if got is None:
         e = easter(year)
-        got = {datetime.date(year, m, d) for m, d in HOLIDAYS_LT + HOLIDAYS_DE}
-        got |= {e + datetime.timedelta(days=n) for n in EASTER_LT + EASTER_DE}
+        got = {datetime.date(year, m, d) for m, d in HOLIDAYS_LT + HOLIDAYS_DE + HOLIDAYS_HU}
+        got |= {e + datetime.timedelta(days=n) for n in EASTER_LT + EASTER_DE + EASTER_HU}
         _HOLIDAYS[year] = got = frozenset(got)
     return got
 
@@ -356,7 +367,7 @@ def period_end(paid_at):
     neither their time zone nor whether summer time changed in between, so the contract's day is taken where it is
     latest (PERIOD_EAST) and the last day's end where it comes latest (PERIOD_WEST): the result is never earlier
     than the period's true end anywhere in the EU, overseas regions included (the time zones make it at most 32
-    hours later; a holiday of the other of the two countries can add a day or two). end: the first moment after the
+    hours later; a holiday of another of the three countries can add a day or two). end: the first moment after the
     period (unix seconds); last_day: "YYYY-MM-DD", the period's last day (after any move to a working day)."""
     d0 = int((float(paid_at) + PERIOD_EAST * 3600) // 86400)    # the contract's day, as days since 1970
     last = _EPOCH + datetime.timedelta(days=d0 + WITHDRAW_DAYS)
@@ -740,12 +751,42 @@ def _last_day(stmt):
     return pay.iso(float(stmt.get("period_end") or stmt["received_at"]) - 1)[:10]
 
 
+def _receipt_other(stmt, pack, lang, order, name):
+    """(subject, text, html) of the receipt in Lithuanian or Hungarian (api/_lib/withdraw_lt.py, withdraw_hu.py), the
+    same paragraphs as the English one, branch for branch. Neither language belongs to an Australian market, so there
+    is no Australian Consumer Law paragraph."""
+    seller = pay.seller_lines(lang, pack)
+    by_at = stmt.get("refund_by") or stmt["received_at"] + REFUND_DAYS * 86400
+    if lang == "hu":
+        subject, blocks = withdraw_hu.receipt_hu(stmt, order=order, name=name, money=_money(stmt, lang),
+                                                 by_day=pay.iso(by_at), last_day=_last_day(stmt), seller=seller)
+    else:
+        outcome, reason = stmt.get("outcome"), stmt.get("reason")
+        unknown = withdraw_lt.RECEIPT_LT["unknown"]
+        w = lambda ts: pay.when_text(ts, lang) if ts else unknown
+        first = w(stmt["first_at"]) if stmt.get("already") and stmt.get("first_at") else None
+        what = withdraw_lt.receipt_what_lt(
+            outcome, reason, money=_money(stmt, lang), by=pay.date_text(pay.iso(by_at), lang),
+            end=pay.date_text(_last_day(stmt), lang) if outcome == "lapsed" and reason == "period_over" else "",
+            first_when=first, consent_at=w(stmt.get("consent_at")), confirmation_at=w(stmt.get("confirmation_at")),
+            began_at=w(stmt.get("began_at")))
+        rows = withdraw_lt.receipt_rows_lt(pay.when_text(stmt["received_at"], lang, seconds=True), order, name,
+                                           stmt["email"])
+        subject = withdraw_lt.RECEIPT_LT["subject"].format(order=order)
+        blocks = withdraw_lt.receipt_blocks_lt(rows, pay.quoted(stmt["text"], lang), what, bool(stmt.get("email_given")),
+                                               seller)
+    text, html_body = pay.render_mail(blocks, lang, subject)
+    return subject, text, html_body
+
+
 def receipt_mail(stmt, pack):
     """(subject, text, html) of the receipt, in the order's language."""
     lang = pay.lang_of(stmt.get("lang"))
     de = lang == "de"
     order = stmt.get("order") or echo_order(stmt.get("order_given"))
     name = echo_name(stmt.get("name"))
+    if lang in ("lt", "hu"):
+        return _receipt_other(stmt, pack, lang, order, name)
     got = pay.when_text(stmt["received_at"], lang, seconds=True)
     rows = [("Eingegangen am" if de else "Received on", got), ("Bestellung" if de else "Order", order),
             ("Name", name or "-"), ("E-Mail für diese Bestätigung" if de else "Email for this receipt", stmt["email"])]
@@ -843,6 +884,17 @@ def unmatched_mail(stmt, pack):
     lang = pay.lang_of(stmt.get("lang"))
     de = lang == "de"
     given = echo_order(stmt.get("order_given")) or "-"
+    if lang in ("lt", "hu"):
+        seller = pay.seller_lines(lang, pack)
+        if lang == "hu":
+            subject, blocks = withdraw_hu.unmatched_hu(stmt, given=given, name=echo_name(stmt.get("name")), seller=seller)
+        else:
+            subject = withdraw_lt.UNMATCHED_LT["subject"]
+            blocks = withdraw_lt.unmatched_blocks_lt(
+                pay.when_text(stmt["received_at"], lang, seconds=True), given, echo_name(stmt.get("name")), stmt["email"],
+                pay.quoted(STATEMENT[lang].format(order=given), lang), seller)
+        text, html_body = pay.render_mail(blocks, lang, subject)
+        return subject, text, html_body
     rows = [("Eingegangen am" if de else "Received on", pay.when_text(stmt["received_at"], lang, seconds=True)),
             ("Angegebene Bestellnummer" if de else "Order number given", given),
             ("Name", echo_name(stmt.get("name")) or "-"),
@@ -932,9 +984,9 @@ def _todo(stmt):
             f"withdrawal; its record and this statement stay.")
     if reason == "period_over":
         detail = (f"period_over: the last day was {_last_day(stmt)}, already moved past weekends and the national "
-                  f"holidays of Lithuania and Germany; if the customer's own country or German state had a public "
-                  f"holiday on that day, the period ran to the end of the next working day there: then treat the "
-                  f"withdrawal as effective and refund it")
+                  f"holidays of Lithuania, Germany and Hungary; if the customer's own country or German state had a "
+                  f"public holiday on that day, the period ran to the end of the next working day there: then treat "
+                  f"the withdrawal as effective and refund it")
     else:
         detail = (f"{reason}: consent {stmt.get('consent_at')}, confirmation email "
                   f"{pay.iso(stmt['confirmation_at']) if stmt.get('confirmation_at') else '-'}, making began "

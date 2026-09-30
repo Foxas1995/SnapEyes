@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "check:prices": "node scripts/check_prices.mjs",
+    "check:texts": "node scripts/check_texts.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },

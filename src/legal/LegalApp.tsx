@@ -1,17 +1,18 @@
 // One component for the four legal pages (privacy, terms, withdrawal, imprint). Each HTML page names its document
-// in <div id="root" data-doc="...">; the language follows the landing page's rules (?lang=, then the visitor's
-// earlier choice, then the browser) and the EN/DE switch is the landing's own. The edition follows the page's market
-// (src/shared/legal.ts legalEdition: ?m=au or the visitor's remembered market shows the Australian texts); the
+// in <div id="root" data-doc="...">; the language follows the landing page's rules (src/shared/lang.ts detectLang:
+// ?lang=, then the visitor's earlier choice, then the market's own language, then the browser) and the language switch
+// is the landing's own. The edition follows the page's market (src/shared/legal.ts legalEdition: ?m=au or the
+// visitor's remembered market shows the Australian texts, ?m=hu the Hungarian edition with the prices in forints); the
 // canonical address stays the plain one of the language.
 import { useCallback, useEffect } from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { LangProvider, setCanonical, setMeta, useLang } from '../landing/lang';
 import { LangSwitch } from '../landing/Header';
 import { Logo } from '../landing/ui';
-import type { Lang } from '../landing/copy';
+import { langQuery, type Lang } from '../shared/lang';
 import {
-  LEGAL_DOCS, LEGAL_LABELS, LEGAL_PATH, LEGAL_UPDATED, WITHDRAWAL_ONLINE, formatLegalDate, legalEdition, legalHref, withdrawFunctionHref,
-  type LegalDocId,
+  LEGAL_DOCS, LEGAL_LABELS, LEGAL_PATH, LEGAL_UPDATED, WITHDRAWAL_ONLINE, editionLang, formatLegalDate, legalEdition, legalHref,
+  withdrawFunctionHref, type LegalDocId,
 } from '../shared/legal';
 import { CONTACT_EMAIL, SELLER, address, company } from './facts';
 import { withMarket } from '../shared/markets';
@@ -25,6 +26,8 @@ const ORIGIN = 'https://snapeyes.com';
 const UI: Record<Lang, { updated: string; back: string; contents: string; print: string }> = {
   en: { updated: 'Last updated', back: 'Back to SnapEyes', contents: 'Contents', print: 'Print or save as PDF' },
   de: { updated: 'Zuletzt aktualisiert am', back: 'Zurück zu SnapEyes', contents: 'Inhalt', print: 'Drucken oder als PDF speichern' },
+  lt: { updated: 'Atnaujinta', back: 'Grįžti į SnapEyes', contents: 'Turinys', print: 'Spausdinti arba išsaugoti PDF' },
+  hu: { updated: 'Utolsó frissítés:', back: 'Vissza a SnapEyes oldalára', contents: 'Tartalom', print: 'Nyomtatás vagy mentés PDF-ként' },
 };
 
 const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm';
@@ -66,7 +69,9 @@ function BlockView({ block, lang }: { block: Block; lang: Lang }) {
 
 function LegalPage({ id }: { id: LegalDocId }) {
   const { lang, t } = useLang();
-  const doc = EDITIONS[legalEdition(useMarket())][id][lang];
+  const market = useMarket();
+  // the edition's own text in the page's language (langFor already keeps a market to the languages it has)
+  const doc = EDITIONS[legalEdition(market)][id][editionLang(lang, market)]!;
   const ui = UI[lang];
   const labels = LEGAL_LABELS[lang];
   const home = withMarket(`/?lang=${lang}`);
@@ -80,7 +85,7 @@ function LegalPage({ id }: { id: LegalDocId }) {
   return (
     <div className="legal-page min-h-screen bg-[#030408] text-[#f0f3fa] selection:bg-[#f5c542] selection:text-black">
       <header className="legal-noprint border-b border-white/[0.06]">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 max-[340px]:gap-2 sm:px-6">
           <Logo tag={t.brandTag} href={home} />
           <LangSwitch />
         </div>
@@ -171,10 +176,10 @@ function LegalPage({ id }: { id: LegalDocId }) {
 
 export function LegalApp({ doc }: { doc: LegalDocId }) {
   const applyHead = useCallback((lang: Lang) => {
-    const d = EDITIONS[legalEdition()][doc][lang];
+    const d = EDITIONS[legalEdition()][doc][editionLang(lang)]!;
     document.title = `${d.title.replace(/\u00AD/g, '')} | SnapEyes`;   // the German titles carry soft hyphens for the h1
     setMeta('name', 'description', d.description);
-    setCanonical(`${ORIGIN}${LEGAL_PATH[doc]}${lang === 'de' ? '?lang=de' : ''}`);
+    setCanonical(`${ORIGIN}${LEGAL_PATH[doc]}${langQuery(lang)}`);
   }, [doc]);
   return (
     <LangProvider applyHead={applyHead}>

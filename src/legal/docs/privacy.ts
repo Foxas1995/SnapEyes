@@ -39,10 +39,12 @@
 // anyone; data processed outside Australia; the Australian Privacy Principles and the small business exemption as they
 // stand; the statutory privacy tort since 10 June 2025; the OAIC).
 // Not reviewed by a lawyer. Keep every sentence true when the code or a service changes.
-import type { LegalDoc, LegalDocs } from '../types';
+import type { EditionDocs, LegalDoc, LegalDocs } from '../types';
 import { ORDER_EMAIL_SENDER, WITHDRAWAL_ONLINE } from '../../shared/legal';
 import { MAIL, SELLER, address, company } from '../facts';
 import { patchDoc } from '../patch';
+import { lt } from './privacy.lt';
+import { hu } from './privacy.hu';
 
 // What the online withdrawal function keeps (the "withdrawal" section): keep it in step with the order page's form
 // and the API action behind it.
@@ -261,7 +263,7 @@ const en: LegalDoc = {
       title: 'Cookies and local storage',
       blocks: [
         'This website sets no cookies. It uses no analytics, advertising or tracking tools of other companies.',
-        'When you choose a language with the EN/DE switch, your browser remembers the choice in its local storage under the key "snapeyes.lang" (the value "en" or "de"). It is never sent to us, and you can delete it at any time in your browser settings. It is strictly necessary for a function you asked for, so it needs no consent (Art. 5(3) ePrivacy Directive).',
+        'When you choose a language with the language switch, your browser remembers the choice in its local storage under the key "snapeyes.lang" (the value is the language code, for example "lt"). It is never sent to us, and you can delete it at any time in your browser settings. It is strictly necessary for a function you asked for, so it needs no consent (Art. 5(3) ePrivacy Directive).',
         'If you come to us through a link with prices in another currency (for example in Australian dollars), or choose a currency with our currency switch or in our offer of prices in your own currency, your browser also remembers that choice in its local storage under the key "snapeyes.market" (for example "au", or "eu" once you have declined that offer), so that the site keeps showing you the same prices. Our pages carry it in their links (m=au) and send it with an order, so that you are charged the prices you saw. You can delete it at any time in your browser settings; it is strictly necessary for a function you asked for, so it needs no consent either (Art. 5(3) ePrivacy Directive).',
         'When you order, the page also keeps two entries in the session storage of your browser tab. Session storage belongs to that one tab and is deleted when you close it:',
         {
@@ -442,7 +444,7 @@ const de: LegalDoc = {
       title: 'Cookies und lokaler Speicher',
       blocks: [
         'Diese Website setzt keine Cookies. Sie nutzt keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen.',
-        'Wenn Sie mit dem Schalter EN/DE eine Sprache wählen, merkt sich Ihr Browser diese Wahl in seinem lokalen Speicher unter dem Schlüssel „snapeyes.lang“ (Wert „en“ oder „de“). Dieser Eintrag wird nie an uns übertragen, und Sie können ihn jederzeit in Ihren Browsereinstellungen löschen. Er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
+        'Wenn Sie mit dem Sprachschalter eine Sprache wählen, merkt sich Ihr Browser diese Wahl in seinem lokalen Speicher unter dem Schlüssel „snapeyes.lang“ (der Wert ist der Sprachcode, zum Beispiel „lt“). Dieser Eintrag wird nie an uns übertragen, und Sie können ihn jederzeit in Ihren Browsereinstellungen löschen. Er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
         'Wenn Sie über einen Link mit Preisen in einer anderen Währung zu uns kommen (zum Beispiel in australischen Dollar) oder mit unserem Währungsschalter oder in unserem Angebot von Preisen in Ihrer eigenen Währung eine Währung wählen, merkt sich Ihr Browser diese Wahl außerdem in seinem lokalen Speicher unter dem Schlüssel „snapeyes.market“ (zum Beispiel „au“, oder „eu“, wenn Sie dieses Angebot abgelehnt haben), damit die Website Ihnen weiter dieselben Preise zeigt. Unsere Seiten tragen sie in ihren Links (m=au) und senden sie mit einer Bestellung, damit Ihnen die Preise berechnet werden, die Sie gesehen haben. Sie können den Eintrag jederzeit in Ihren Browsereinstellungen löschen; er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher ebenfalls keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).',
         'Wenn Sie bestellen, legt die Seite außerdem zwei Einträge im Sitzungsspeicher (Session Storage) Ihres Browser-Tabs an. Der Sitzungsspeicher gehört nur zu diesem einen Tab und wird gelöscht, wenn Sie ihn schließen:',
         {
@@ -468,7 +470,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const PRIVACY: LegalDocs = { en, de };
+export const PRIVACY: LegalDocs = { en, de, lt, hu };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 // Written from what the code does (see the header) and the Australian sources of 2026-09-29: OAIC on biometric
@@ -510,4 +512,4 @@ const auDe = patchDoc(de, {
   },
 });
 
-export const PRIVACY_AU: LegalDocs = { en: auEn, de: auDe };
+export const PRIVACY_AU: EditionDocs = { en: auEn, de: auDe };

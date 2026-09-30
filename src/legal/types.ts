@@ -3,7 +3,7 @@
 //                  "#section" (this page), "/path?query" (another page of this site, such as the online
 //                  withdrawal function), "mailto:..." or "https://..." (external, opens in a new tab)
 //   **text**       strong emphasis
-import type { Lang } from '../landing/copy';
+import type { Lang } from '../shared/lang';
 
 export type Block =
   | string                                  // a paragraph
@@ -27,3 +27,7 @@ export interface LegalDoc {
 }
 
 export type LegalDocs = Record<Lang, LegalDoc>;
+
+/** The texts of one edition (src/shared/legal.ts legalEdition): the languages EDITION_LANGS lists for it. The
+ *  Australian edition has English and German only. */
+export type EditionDocs = Partial<Record<Lang, LegalDoc>>;

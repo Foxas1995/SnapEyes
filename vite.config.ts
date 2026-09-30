@@ -2,6 +2,7 @@ import { defineConfig, runnerImport, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { checkPrices, type ClientMarkets } from './scripts/check_prices.mjs'
+import { checkPack, checkTexts } from './scripts/check_texts.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
 // withdrawal information with the model form, per language, plus the seller's contact facts). Built from the same
@@ -13,11 +14,13 @@ function legalMail(): Plugin {
     name: 'snapeyes-legal-mail',
     apply: 'build',
     async generateBundle() {
-      const { module } = await runnerImport<{ legalMailPack: () => unknown }>('./src/legal/plain.ts', {
-        configFile: false,
-        logLevel: 'silent',
-      })
-      this.emitFile({ type: 'asset', fileName: 'legal/order-mail.json', source: JSON.stringify(module.legalMailPack()) })
+      const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
+      const source = JSON.stringify((await load('./src/legal/plain.ts')).legalMailPack())
+      // the file itself is checked before it is written: every edition complete, and no dash, slip or untranslated English
+      // in a Lithuanian or Hungarian text (scripts/check_texts.mjs checkPack)
+      const problems = checkPack(JSON.parse(source), await load('./src/shared/legal.ts'), await load('./src/shared/markets.ts'))
+      if (problems.length) this.error(`legal pack check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
+      this.emitFile({ type: 'asset', fileName: 'legal/order-mail.json', source })
     },
   }
 }
@@ -38,12 +41,29 @@ function priceCheck(): Plugin {
   }
 }
 
+// The texts: the Lithuanian and Hungarian dictionaries and legal texts have the shape of the English ones, no string holds
+// an en or em dash or untranslated English, every edition of the legal texts is complete (its languages, its prices in
+// its currency, its contract languages), the consent version is a real date and the server's (scripts/check_texts.mjs;
+// `npm run check:texts` runs it alone). Any problem stops the build.
+function textCheck(): Plugin {
+  return {
+    name: 'snapeyes-text-check',
+    apply: 'build',
+    async buildStart() {
+      const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
+      const problems = await checkTexts(load, process.cwd())
+      if (problems.length) this.error(`text check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
     priceCheck(),
+    textCheck(),
     legalMail(),
   ],
   build: {

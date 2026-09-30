@@ -1,30 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { COPY, copyFor, type Copy, type Lang } from './copy';
+import { COPY, copyFor, type Copy } from './copy';
 import { useMarket } from '../shared/useMarket';
+import { LANGS, detectLang, langAllowed, langFor, langQuery, rememberLang, type Lang } from '../shared/lang';
+import { currentMarket, type Market } from '../shared/markets';
 
-const STORE_KEY = 'snapeyes.lang';
+// The language rule lives in src/shared/lang.ts (?lang=, then the visitor's earlier choice, then the market's own
+// language, then the browser's), shared with /try, /order and the legal pages.
+export { detectLang };
 
-const isLang = (v: unknown): v is Lang => v === 'en' || v === 'de';
-
-// ?lang= wins, then the visitor's own earlier choice, then the browser language (German for "de*").
-export function detectLang(): Lang {
-  try {
-    const q = new URLSearchParams(window.location.search).get('lang');
-    if (isLang(q)) return q;
-  } catch { /* no URL access: fall through */ }
-  try {
-    const s = window.localStorage.getItem(STORE_KEY);
-    if (isLang(s)) return s;
-  } catch { /* storage blocked: fall through */ }
-  const nav = typeof navigator !== 'undefined' ? navigator.language || '' : '';
-  return nav.toLowerCase().startsWith('de') ? 'de' : 'en';
-}
-
-// One URL per language, each its own canonical: English at /, German at /?lang=de (index.html lists both as
-// hreflang alternates). index.html has no static canonical on purpose: this is the only one, so the rendered
-// German page is never canonicalised to the English root.
+// One URL per language, each its own canonical: English at /, the others at /?lang=de, /?lang=lt, /?lang=hu (index.html
+// lists them all as hreflang alternates). index.html has no static canonical on purpose: this is the only one, so a
+// rendered German page is never canonicalised to the English root.
 const SITE_ORIGIN = 'https://snapeyes.com';
-const canonicalUrl = (lang: Lang) => (lang === 'de' ? `${SITE_ORIGIN}/?lang=de` : `${SITE_ORIGIN}/`);
+const canonicalUrl = (lang: Lang) => `${SITE_ORIGIN}/${langQuery(lang)}`;
 
 export function setMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
@@ -49,13 +37,24 @@ export function setCanonical(url: string) {
   canonical.href = url;
 }
 
-function applyHeadTags(lang: Lang, t: Copy) {
+/** Every meta tag of this kind, one per value (og:locale:alternate is repeated once per other language). */
+function setMetaAll(attr: 'name' | 'property', key: string, values: string[]) {
+  document.head.querySelectorAll(`meta[${attr}="${key}"]`).forEach((el) => el.remove());
+  for (const v of values) {
+    const el = document.createElement('meta');
+    el.setAttribute(attr, key);
+    el.setAttribute('content', v);
+    document.head.appendChild(el);
+  }
+}
+
+function applyHeadTags(lang: Lang, t: Copy, market: Market) {
   const url = canonicalUrl(lang);
   setCanonical(url);
   setMeta('name', 'description', t.meta.description);
   setMeta('property', 'og:url', url);
   setMeta('property', 'og:locale', t.meta.locale);
-  setMeta('property', 'og:locale:alternate', COPY[lang === 'de' ? 'en' : 'de'].meta.locale);
+  setMetaAll('property', 'og:locale:alternate', LANGS.filter((l) => l !== lang && langAllowed(l, market)).map((l) => COPY[l].meta.locale));
   setMeta('property', 'og:title', t.meta.title);
   setMeta('property', 'og:description', t.meta.shareDescription);
   setMeta('name', 'twitter:title', t.meta.title);
@@ -68,16 +67,15 @@ const LangContext = createContext<LangState | null>(null);
 
 // applyHead: the legal pages set their own title, description and canonical; without it the landing's tags apply.
 export function LangProvider({ children, applyHead }: { children: ReactNode; applyHead?: (lang: Lang) => void }) {
-  const [lang, setLangState] = useState<Lang>(detectLang);
+  const [chosen, setChosen] = useState<Lang>(() => detectLang(currentMarket()));
+  // the language the page shows: the visitor's, unless the market has no texts in it (the Australian market: English
+  // and German only); the choice itself is kept, so going back to a market that has it shows it again
+  const market = useMarket();
+  const lang = langFor(chosen, market);
 
   const setLang = useCallback((l: Lang) => {
-    setLangState(l);
-    try { window.localStorage.setItem(STORE_KEY, l); } catch { /* per-visitor convenience only */ }
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('lang', l);
-      window.history.replaceState(null, '', url);
-    } catch { /* keep the page working without history access */ }
+    setChosen(l);
+    rememberLang(l);
   }, []);
 
   useEffect(() => {
@@ -88,11 +86,10 @@ export function LangProvider({ children, applyHead }: { children: ReactNode; app
       return;
     }
     document.title = t.meta.title;
-    applyHeadTags(lang, t);
-  }, [lang, applyHead]);
+    applyHeadTags(lang, t, market);
+  }, [lang, market, applyHead]);
 
   // the copy of the language, with the lines of the visitor's market where it has its own (copyFor: Australia)
-  const market = useMarket();
   const value = useMemo(() => ({ lang, t: copyFor(lang, market), setLang }), [lang, market, setLang]);
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }

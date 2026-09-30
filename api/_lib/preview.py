@@ -127,14 +127,23 @@ def unseal(s, now=None, kinds=KINDS_ALL):
     return _xor(k_enc, body[6:HEAD_BYTES], body[HEAD_BYTES:])
 
 
+# (expired, unreadable) per page language
+REFUSALS = {
+    "en": ("This preview is too old. Please take the photo again.",
+           "We could not read this preview. Please take the photo again."),
+    "de": ("Diese Vorschau ist zu alt. Bitte fotografieren Sie Ihr Auge erneut.",
+           "Wir konnten diese Vorschau nicht lesen. Bitte fotografieren Sie Ihr Auge erneut."),
+    "lt": ("Ši peržiūra per sena. Nufotografuokite savo akį dar kartą.",
+           "Nepavyko nuskaityti šios peržiūros. Nufotografuokite savo akį dar kartą."),
+    "hu": ("Ez az előnézet túl régi. Kérjük, fotózd le újra a szemed.",
+           "Ezt az előnézetet nem tudtuk beolvasni. Kérjük, fotózd le újra a szemed."),
+}
+
+
 def refusal(e, lang=None):
     """The customer's sentence for a sealed preview that was refused, in the page's language."""
-    de = (lang or L.page_lang()) == "de"
-    if isinstance(e, SealExpired):
-        return ("Diese Vorschau ist zu alt. Bitte fotografieren Sie Ihr Auge erneut." if de else
-                "This preview is too old. Please take the photo again.")
-    return ("Wir konnten diese Vorschau nicht lesen. Bitte fotografieren Sie Ihr Auge erneut." if de else
-            "We could not read this preview. Please take the photo again.")
+    words = REFUSALS.get(lang or L.page_lang(), REFUSALS["en"])
+    return words[0] if isinstance(e, SealExpired) else words[1]
 
 
 # ----------------------------------------------------------------------------- the display copy

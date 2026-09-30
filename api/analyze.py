@@ -16,6 +16,8 @@ from PIL import Image
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import coverage as CV   # how much of the iris an eyelid covers, measured on the photo
+from _lib.analyze_lt import TEXT_LT
+from _lib.analyze_hu import TEXT_HU
 
 # ---- capture targets: ONE block. The verdict, the tips and the "targets" the capture screen shows all read
 # these, so the numbers a customer is told can never disagree with the numbers that judge the photo.
@@ -564,7 +566,9 @@ def telemetry(v, depth=0):
 # ---- the customer-facing sentences in German, for a request with "lang": "de" (the capture screen sends its page's
 # language). The English ones stay where they are, word for word, and any other lang (or none) gets them. Formal "Sie"
 # and the landing page's words; the capture screen (src/try/shots.ts visibleTips, topTip) recognises three tips by
-# "automatisch", "Spiegelung" + "Pupille" and "näher", so keep those words in them.
+# "automatisch", "Spiegelung" + "Pupille" and "näher", so keep those words in them. Lithuanian (api/_lib/analyze_lt.py
+# TEXT_LT: "automatiškai", "atspindys" + "vyzdys", "arčiau") and Hungarian (api/_lib/analyze_hu.py TEXT_HU:
+# "automatikusan", "tükröződés" + "pupilla", "zoom") have exactly the same keys, and shots.ts knows their words too.
 TEXT_DE = {
     "no_eye": "Auf diesem Foto haben wir kein Auge gefunden. Füllen Sie das Bild mit einem geöffneten Auge und versuchen Sie "
               "es erneut.",
@@ -621,20 +625,23 @@ TEXT_DE = {
                 "ungenau. Bitte machen Sie ein weiteres Foto.",
 }
 
+TEXTS = {"de": TEXT_DE, "lt": TEXT_LT, "hu": TEXT_HU}   # by the request's "lang"; English is inline
+
 def analyze(body):
     device, study = telemetry(body.get("device")), telemetry(body.get("study"))
-    de = body.get("lang") == "de"
+    lang = body.get("lang") if body.get("lang") in TEXTS else "en"
 
     def say(key, en, **kw):
-        """The sentence for the request's language: TEXT_DE[key] (filled with kw) for "de", else en as it is."""
-        return TEXT_DE[key].format(**kw) if de else en
+        """The sentence for the request's language: TEXTS[lang][key] (filled with kw) for "de", "lt" and "hu", else en
+        as it is."""
+        return TEXTS[lang][key].format(**kw) if lang in TEXTS else en
     im = L.b64_to_pil(body["image"])
     W, H = im.size
     ow, oh = int(body.get("origWidth") or W), int(body.get("origHeight") or H)
     scale = ow / float(W)
     v = L.gemini_json(L.VISION_MODEL, L.PROMPT_VISION, im)
     if not v or v.get("found") is False or "iris_box" not in v:
-        E.record("analyze", ok=False, verdict="no_eye", lang="de" if de else "en", device=E.device_class(device), source=E.device_source(device))
+        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device))
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     box = v.get("iris_box")
@@ -642,7 +649,7 @@ def analyze(body):
               and all(isinstance(c, (int, float)) and c == c and abs(c) < 1e6 for c in box)
               and box[2] > box[0] and box[3] > box[1])
     if not ok_box:
-        E.record("analyze", ok=False, verdict="no_eye", lang="de" if de else "en", device=E.device_class(device), source=E.device_source(device))
+        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device))
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     # The model is asked for [x1,y1,x2,y2] but sometimes answers in its native [y1,x1,y2,x2] order. On a
@@ -827,7 +834,7 @@ def analyze(body):
     # No ticket for a circle that is not an iris: from a crop of eyelid skin the image model invented a
     # complete brown iris, which would then be sold as the customer's own eye. The same for a photo too blurry to
     # carry the customer's own pattern (blur_blocked): the model would invent it.
-    E.record("analyze", ok=True, verdict=verdict, detail=detail, blocked=bool(blocked), block_reason=reason, locked=bool(locked), shake_asked=bool(locked) and basis < FIBRE_OK and block_by in (None, "shake"), lang="de" if de else "en", device=E.device_class(device), source=E.device_source(device))
+    E.record("analyze", ok=True, verdict=verdict, detail=detail, blocked=bool(blocked), block_reason=reason, locked=bool(locked), shake_asked=bool(locked) and basis < FIBRE_OK and block_by in (None, "shake"), lang=lang, device=E.device_class(device), source=E.device_source(device))
     return {"ok": True, "ticket": L.mint_ticket("work") if locked and not blocked else None, "pupil_r": pupil_r, "fibre": round(fibre, 2),
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,

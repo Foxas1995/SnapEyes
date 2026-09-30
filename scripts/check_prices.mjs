@@ -7,7 +7,8 @@
 //   3. any other file of the site or the server holds a price of its own: a price in Stripe's units in the files that
 //      deal with prices, or a written price ("19.97", "A$39", "6 990 Ft") anywhere in src/ or api/ (comments aside);
 //   4. a market is selectable in another currency than the default market's without its own edition of the legal
-//      texts (src/shared/legal.ts EDITION_MARKETS = api/_lib/pay.py ACL_MARKETS): the EU texts print euro prices only.
+//      texts (src/shared/legal.ts EDITION_MARKETS = api/_lib/pay.py EDITION_MARKETS): the EU texts print euro prices
+//      only. The two lists, and the languages each edition has (EDITION_LANGS in both files), must agree.
 // vite.config.ts runs it before every build (with the site's reading, check 2); `npm run check:prices` runs 1, 3, 4.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -29,7 +30,9 @@ const PRICE_FILES = [
   'src/landing/StyleGallery.tsx', 'src/landing/Faq.tsx', 'src/landing/Footer.tsx',
   'src/try/BuyCard.tsx', 'src/try/multi.ts', 'src/try/checkout.ts', 'src/try/copy.ts',
   'src/order/api.ts', 'src/order/copy.ts', 'src/order/OrderApp.tsx', 'src/order/WithdrawPanel.tsx', 'src/order/withdraw.ts',
-  'src/legal/facts.ts', 'src/legal/docs/terms.ts', 'src/legal/plain.ts',
+  'src/legal/facts.ts', 'src/legal/docs/terms.ts', 'src/legal/docs/terms.lt.ts', 'src/legal/docs/terms.hu.ts', 'src/legal/plain.ts',
+  'src/landing/copy.lt.ts', 'src/landing/copy.hu.ts', 'src/try/copy.lt.ts', 'src/try/copy.hu.ts', 'src/order/copy.lt.ts',
+  'src/order/copy.hu.ts', 'api/_lib/pay_lt.py', 'api/_lib/pay_hu.py', 'api/_lib/withdraw_lt.py', 'api/_lib/withdraw_hu.py',
   'src/admin/format.ts', 'src/admin/agg.ts', 'src/admin/Summary.tsx', 'src/admin/Orders.tsx', 'src/admin/OrderDetail.tsx',
   'src/shared/markets.ts', 'src/shared/legal.ts',
 ];
@@ -96,8 +99,8 @@ function checkRules(defaultMarket, markets, out) {
 }
 
 // Which markets have their own edition of the legal texts: src/shared/legal.ts EDITION_MARKETS (the pages) and
-// api/_lib/pay.py ACL_MARKETS (the emails), two lists that must agree. Every other market reads the EU edition, whose
-// terms print the euro price list only.
+// api/_lib/pay.py EDITION_MARKETS (the emails), two lists that must agree, and the languages each edition has
+// (EDITION_LANGS, in both files). Every other market reads the EU edition, whose terms print the euro price list only.
 const LEGAL_FILE = 'src/shared/legal.ts';
 const PAY_FILE = 'api/_lib/pay.py';
 
@@ -105,25 +108,51 @@ function readOptional(root, rel) {
   try { return readFileSync(join(root, rel), 'utf8'); } catch { return null; }
 }
 
+/** EDITION_LANGS of src/shared/legal.ts as {edition: [lang, ...]} (or null when the table is not there). */
+export function pageEditionLangs(legal) {
+  const m = /export const EDITION_LANGS[^=]*=\s*\{([^}]*)\}/.exec(legal);
+  if (!m) return null;
+  const out = {};
+  for (const x of m[1].matchAll(/\b([a-z]{2,8})\s*:\s*\[([^\]]*)\]/g)) out[x[1]] = [...x[2].matchAll(/'([a-z]{2})'/g)].map((y) => y[1]).sort();
+  return out;
+}
+
+/** EDITION_LANGS of api/_lib/pay.py as {edition: [lang, ...]} (or null). */
+export function serverEditionLangs(payPy) {
+  const m = /^EDITION_LANGS = \{([^}]*)\}/m.exec(payPy);
+  if (!m) return null;
+  const out = {};
+  for (const x of m[1].matchAll(/"([a-z]{2,8})"\s*:\s*\(([^)]*)\)/g)) out[x[1]] = [...x[2].matchAll(/"([a-z]{2})"/g)].map((y) => y[1]).sort();
+  return out;
+}
+
 /** 4. A selectable market in another currency than the default market's must have its own edition of the legal texts
  *  (the EU terms and emails quote euro prices only, so an order in forints would get a contract with a euro price
- *  table): today hu stays "selectable": 0 until its texts exist. And the pages' and the server's lists agree. */
+ *  table). And the pages' and the server's lists agree: the markets with an edition and the languages of each. */
 function checkEditions(root, defaultMarket, markets, out) {
   const legal = readOptional(root, LEGAL_FILE);
   const payPy = readOptional(root, PAY_FILE);
   let pages = null, server = null;
   if (legal !== null) {
-    const m = /EDITION_MARKETS[^=]*=\s*\{([^}]*)\}/.exec(legal);
+    const m = /export const EDITION_MARKETS[^=]*=\s*\{([^}]*)\}/.exec(legal);
     if (!m) out.push(`${LEGAL_FILE}: EDITION_MARKETS not found (the price check reads it)`);
     else pages = [...m[1].matchAll(/[a-z]+\s*:\s*'([a-z]{2,8})'/g)].map((x) => x[1]).sort();
   }
   if (payPy !== null) {
-    const m = /^ACL_MARKETS = \(([^)]*)\)/m.exec(payPy);
-    if (!m) out.push(`${PAY_FILE}: ACL_MARKETS not found (the price check reads it)`);
+    const m = /^EDITION_MARKETS = \(([^)]*)\)/m.exec(payPy);
+    if (!m) out.push(`${PAY_FILE}: EDITION_MARKETS not found (the price check reads it)`);
     else server = [...m[1].matchAll(/"([a-z]{2,8})"/g)].map((x) => x[1]).sort();
   }
   if (pages && server && pages.join() !== server.join()) {
-    out.push(`${LEGAL_FILE} EDITION_MARKETS (${pages.join(', ')}) and ${PAY_FILE} ACL_MARKETS (${server.join(', ')}) must name the same markets`);
+    out.push(`${LEGAL_FILE} EDITION_MARKETS (${pages.join(', ')}) and ${PAY_FILE} EDITION_MARKETS (${server.join(', ')}) must name the same markets`);
+  }
+  if (legal !== null && payPy !== null) {
+    const a = pageEditionLangs(legal), b = serverEditionLangs(payPy);
+    if (!a) out.push(`${LEGAL_FILE}: EDITION_LANGS not found (the price check reads it)`);
+    else if (!b) out.push(`${PAY_FILE}: EDITION_LANGS not found (the price check reads it)`);
+    else if (JSON.stringify(a, Object.keys(a).sort()) !== JSON.stringify(b, Object.keys(b).sort())) {
+      out.push(`${LEGAL_FILE} EDITION_LANGS (${JSON.stringify(a)}) and ${PAY_FILE} EDITION_LANGS (${JSON.stringify(b)}) must list the same languages per edition`);
+    }
   }
   const own = pages ?? server;
   if (!own) return;
@@ -133,7 +162,7 @@ function checkEditions(root, defaultMarket, markets, out) {
     if (m.selectable === 1 && m.currency !== base && !own.includes(key)) {
       out.push(`${MARKETS_FILE} market "${key}": selectable, but no edition of the legal texts prints its ${m.currency.toUpperCase()} prices `
         + `(the EU terms and emails list ${String(base).toUpperCase()} prices only): keep "selectable": 0 until its own texts exist `
-        + `(${LEGAL_FILE} EDITION_MARKETS, ${PAY_FILE} ACL_MARKETS)`);
+        + `(${LEGAL_FILE} EDITION_MARKETS, ${PAY_FILE} EDITION_MARKETS)`);
     }
   }
 }

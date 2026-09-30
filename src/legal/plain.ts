@@ -5,12 +5,16 @@
 // The build writes legalMailPack() to /legal/order-mail.json (vite.config.ts), made from the very constants the legal
 // pages print, so the email can never drift from them: the sender (api/_lib/pay.py) reads that file of its own
 // deployment and puts the texts of the order's language into the email. Plain data only, no React, no DOM.
-// The Australian edition (src/shared/legal.ts legalEdition "au") travels apart, under "editions": {"au": ...}, with
-// every link to a legal page carrying m=au, so an Australian order's email quotes (and links) the texts its customer
-// accepted; "docs" stays the EU edition, as before, with plain links.
-import type { Lang } from '../landing/copy';
+// The other editions (src/shared/legal.ts legalEdition: "au", the Australian market's, and "hu", the Hungarian market's
+// with the prices in forints) travel apart, under "editions": {"au": ..., "hu": ...}, with every link to a legal page
+// carrying m=au / m=hu, so an order's email quotes (and links) the texts its customer accepted; "docs" stays the EU
+// edition, as before, with plain links. Languages: English, German, Lithuanian and Hungarian for the EU and Hungarian
+// editions, English and German for the Australian one (src/shared/legal.ts EDITION_LANGS).
+import type { Lang } from '../shared/lang';
 import type { Block, LegalDoc } from './types';
-import { EDITION_MARKETS, LEGAL_PATH, LEGAL_UPDATED, SITE_HOST, formatLegalDate, legalHref, type LegalDocId } from '../shared/legal';
+import {
+  EDITION_LANGS, EDITION_MARKETS, LEGAL_PATH, LEGAL_UPDATED, SITE_HOST, formatLegalDate, legalHref, type LegalDocId, type LegalEdition,
+} from '../shared/legal';
 import { DEFAULT_MARKET } from '../shared/markets';
 import { CONTACT_EMAIL, PHONE_OMITTED_BY_OWNER, SELLER, address, company, formLine } from './facts';
 import { EDITIONS } from './editions';
@@ -54,10 +58,13 @@ function block(b: Block, lang: Lang, page: LegalDocId, market: string): string {
   return (b.label ? [`${b.label}:`, ...lines] : lines).join('\n');
 }
 
+/** The words before the date under a legal text's title in the email ("Last updated: 2026-09-30"). */
+const UPDATED: Record<Lang, string> = { en: 'Last updated:', de: 'Stand:', lt: 'Atnaujinta:', hu: 'Utolsó frissítés:' };
+
 /** One legal page as plain text: title, date, address of the page, lead, then the sections. Paragraphs are separated
  *  by an empty line and never wrapped (mail clients wrap them). */
 export function legalPlainText(id: LegalDocId, doc: LegalDoc, lang: Lang, market: string = DEFAULT_MARKET): string {
-  const updated = lang === 'de' ? `Stand: ${formatLegalDate(LEGAL_UPDATED, lang)}` : `Last updated: ${formatLegalDate(LEGAL_UPDATED, lang)}`;
+  const updated = `${UPDATED[lang]} ${formatLegalDate(LEGAL_UPDATED, lang)}`;
   const out: string[] = [doc.title.replace(SHY, '').toUpperCase(), `${updated} · ${ORIGIN}${legalHref(id, lang, '', market)}`];
   if (doc.lead) out.push(inline(doc.lead, lang, id, market));
   doc.sections.forEach((s, i) => {
@@ -83,9 +90,10 @@ export interface LegalMailPack {
     contact: Record<Lang, string>; // company, address, email: the model form's "To:" line (formLine, never a phone)
   };
   docs: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>;
-  /** The other editions (today only "au", the Australian market's), the same shape as docs: api/_lib/pay.py quotes
-   *  them for an order of that market and keeps live ordering closed while one of a selectable market is missing. */
-  editions: { au: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }> };
+  /** The other editions ("au", the Australian market's, in English and German; "hu", the Hungarian market's, in every
+   *  language), the same shape as docs: api/_lib/pay.py quotes them for an order of that market and keeps live
+   *  ordering closed while one of a selectable market is missing. */
+  editions: { au: Partial<Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>>; hu: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }> };
   /** Facts the law requires in these texts that are still empty and that nobody decided to leave out, as
    *  "seller.email": [] when complete. api/_lib/pay.py may keep live ordering closed while this list is not empty.
    *  The representative is never in it: no rule that applies to a Lithuanian seller requires the name. */
@@ -97,13 +105,23 @@ export interface LegalMailPack {
   waived: string[];
 }
 
-const LANGS: Lang[] = ['en', 'de'];
-const per = <T,>(f: (lang: Lang) => T) => Object.fromEntries(LANGS.map((l) => [l, f(l)])) as Record<Lang, T>;
+const LANGS: Lang[] = ['en', 'de', 'lt', 'hu'];
+const per = <T,>(f: (lang: Lang) => T, langs: readonly Lang[] = LANGS) => Object.fromEntries(langs.map((l) => [l, f(l)])) as Record<Lang, T>;
 
 function mailDoc(id: LegalDocId, doc: LegalDoc, lang: Lang, market: string = DEFAULT_MARKET): LegalMailDoc {
   return {
     title: doc.title.replace(SHY, ''), url: ORIGIN + legalHref(id, lang, '', market), text: legalPlainText(id, doc, lang, market),
   };
+}
+
+/** The withdrawal information and the terms of an edition in a language, as the email quotes them (an edition with
+ *  its own market: links carrying m=). A text an edition lacks stops the build. */
+function editionDocs(edition: LegalEdition, lang: Lang): { withdrawal: LegalMailDoc; terms: LegalMailDoc } {
+  const market = edition === 'eu' ? DEFAULT_MARKET : EDITION_MARKETS[edition];
+  const w = EDITIONS[edition].withdrawal[lang];
+  const t = EDITIONS[edition].terms[lang];
+  if (!w || !t) throw new Error(`legal pack: the ${edition} edition has no ${lang} texts`);
+  return { withdrawal: mailDoc('withdrawal', w, lang, market), terms: mailDoc('terms', t, lang, market) };
 }
 
 /** The legally required seller facts that are still empty and not left out by the owner's decision (see
@@ -136,15 +154,10 @@ export function legalMailPack(): LegalMailPack {
       address: per(address),
       contact: per(formLine),
     },
-    docs: per((lang) => ({
-      withdrawal: mailDoc('withdrawal', EDITIONS.eu.withdrawal[lang], lang),
-      terms: mailDoc('terms', EDITIONS.eu.terms[lang], lang),
-    })),
+    docs: per((lang) => editionDocs('eu', lang)),
     editions: {
-      au: per((lang) => ({
-        withdrawal: mailDoc('withdrawal', EDITIONS.au.withdrawal[lang], lang, EDITION_MARKETS.au),
-        terms: mailDoc('terms', EDITIONS.au.terms[lang], lang, EDITION_MARKETS.au),
-      })),
+      au: per((lang) => editionDocs('au', lang), EDITION_LANGS.au),
+      hu: per((lang) => editionDocs('hu', lang), EDITION_LANGS.hu),
     },
     missing: missingLegalFacts(),
     waived: waivedLegalFacts(),

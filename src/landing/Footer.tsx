@@ -3,6 +3,7 @@ import { useLang } from './lang';
 import { CONTACT_EMAIL, SELLER } from './config';
 import { CtaLink, CtaNote, Logo } from './ui';
 import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref, withdrawFunctionHref } from '../shared/legal';
+import { langAllowed } from '../shared/lang';
 import { DEFAULT_MARKET, SELECTABLE, currencyOf, setMarket, type Currency, type Market } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
 
@@ -12,8 +13,11 @@ const CURRENCY_LABEL: Record<Currency, string> = { eur: '€ EUR', aud: 'A$ AUD'
  *  setMarket): remembered, and carried to /try and the legal pages as m=. Never set by the visitor's country: the ad
  *  links name the market (?m=au). Shown only to a visitor who sees another currency than the default market's (they
  *  came through such a link, or chose it before), and then for the rest of the visit, so they can go back and forth;
- *  the default page stays as it was. */
+ *  the default page stays as it was. A market is offered only in a language its legal edition has texts in: a
+ *  Lithuanian or Hungarian page does not offer the Australian market (English and German only), whose page would
+ *  silently turn English. */
 function CurrencySwitch({ label }: { label: string }) {
+  const { lang } = useLang();
   const market = useMarket();
   const own = currencyOf(market);
   const base = currencyOf(DEFAULT_MARKET);
@@ -21,6 +25,7 @@ function CurrencySwitch({ label }: { label: string }) {
   if (!offered && own === base) return null;
   const choices: Array<{ currency: Currency; market: Market }> = [];
   for (const m of SELECTABLE) {
+    if (m !== market && !langAllowed(lang, m)) continue;
     const c = currencyOf(m);
     if (choices.some((x) => x.currency === c)) continue;
     // the visitor's own market stands for its currency (lt stays lt), otherwise the first market of that currency

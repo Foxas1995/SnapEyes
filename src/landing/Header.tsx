@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react';
 import { useLang } from './lang';
 import { tryUrl } from './config';
 import { Logo } from './ui';
-import type { Lang } from './copy';
+import { LANG_NAMES, marketLangs } from '../shared/lang';
+import { useMarket } from '../shared/useMarket';
 
+/** One button per language the visitor's market can be read in (English, German, Lithuanian and Hungarian; the
+ *  Australian market: English and German, src/shared/legal.ts EDITION_LANGS). Below 340 px wide (the smallest phones)
+ *  the buttons are narrower, so four of them still fit beside the logo and none is pushed off the screen. */
 export function LangSwitch() {
   const { lang, setLang, t } = useLang();
-  const options: Lang[] = ['en', 'de'];
+  const options = marketLangs(useMarket());
   return (
     <div role="group" aria-label={t.switchLabel} className="flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
       {options.map((l) => (
@@ -16,8 +20,8 @@ export function LangSwitch() {
           onClick={() => setLang(l)}
           aria-pressed={lang === l}
           lang={l}
-          title={l === 'en' ? 'English' : 'Deutsch'}
-          className={`min-w-[40px] rounded-full px-2.5 py-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${
+          title={LANG_NAMES[l]}
+          className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${
             lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'
           }`}
         >
@@ -53,7 +57,7 @@ export function Header() {
         scrolled ? 'border-b border-white/[0.06] bg-[#030408]/85 backdrop-blur-xl' : 'border-b border-transparent bg-transparent'
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 max-[340px]:gap-2 sm:px-6">
         <Logo tag={t.brandTag} />
         <nav aria-label={t.navLabels.main} className="hidden items-center gap-7 text-[13px] text-zinc-400 lg:flex">
           {links.map(([href, label]) => (

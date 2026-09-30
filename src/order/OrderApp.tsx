@@ -8,6 +8,7 @@ import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPa
 import { WithdrawEntry, WithdrawForm, WithdrawnCard } from './WithdrawPanel';
 import { CARD, GOLD_BTN, PLAIN_BTN, Spinner } from './ui';
 import { detectLang, rememberLang, type Lang } from '../try/lang';
+import { LANG_NAMES, langFor, marketLangs } from '../shared/lang';
 import { clearCheckoutStorage } from '../try/checkout';
 import { CONTACT_EMAIL, STYLES } from '../landing/config';
 import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref } from '../shared/legal';
@@ -41,7 +42,11 @@ const CONTRACT_STATES: readonly OrderState[] = ['pending', 'paid', 'making', 're
 const secondsLeft = (until: number, now: number) => Math.max(0, Math.ceil((until - now) / 1000));
 
 export const OrderApp: React.FC = () => {
-  const [lang, setLangState] = useState<Lang>(() => detectLang());
+  const market = useMarket();
+  const [chosenLang, setLangState] = useState<Lang>(() => detectLang());
+  // the language the page shows: the visitor's, unless the order's market has no texts in it (the Australian market:
+  // English and German only, src/shared/lang.ts langFor); the choice itself is kept
+  const lang = langFor(chosenLang, market);
   const C = ORDER_COPY[lang];
   const [view, setView] = useState<DriveView>(EMPTY_VIEW);
   const [running, setRunning] = useState(!!LINK && !WITHDRAW_MODE);
@@ -51,11 +56,11 @@ export const OrderApp: React.FC = () => {
   const [clock, setClock] = useState(() => Date.now());
   const [makingSince, setMakingSince] = useState<number | null>(null);
   // the order's own market (the server names it): this page's links carry it (src/shared/markets.ts withMarket)
-  useMarket();
   const orderMarket = view.status?.market ?? view.status?.checkout?.market;
   useEffect(() => { adoptMarket(orderMarket); }, [orderMarket]);
 
   const switchLang = (l: Lang) => { if (l !== lang) { rememberLang(l); setLangState(l); } };
+  const langs = marketLangs(market);
 
   useEffect(() => {
     try {
@@ -273,7 +278,7 @@ export const OrderApp: React.FC = () => {
         <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
           <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-500 text-right">{C.tag}</span>
-          <LangSwitch C={C} lang={lang} onSwitch={switchLang} />
+          <LangSwitch C={C} lang={lang} langs={langs} onSwitch={switchLang} />
         </div>
       </header>
 
@@ -412,12 +417,12 @@ const Ready: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang; email: boolea
   );
 };
 
-/** EN/DE, as on /try and the landing page. */
-const LangSwitch: React.FC<{ C: OrderCopy; lang: Lang; onSwitch: (l: Lang) => void }> = ({ C, lang, onSwitch }) => (
+/** The language switch, as on /try and the landing page: one button per language the order's market can be read in. */
+const LangSwitch: React.FC<{ C: OrderCopy; lang: Lang; langs: readonly Lang[]; onSwitch: (l: Lang) => void }> = ({ C, lang, langs, onSwitch }) => (
   <div role="group" aria-label={C.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
-    {(['en', 'de'] as const).map((l) => (
-      <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={l === 'en' ? 'English' : 'Deutsch'}
-        className={`min-w-[40px] rounded-full px-2.5 py-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+    {langs.map((l) => (
+      <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
+        className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
         {l}
       </button>
     ))}

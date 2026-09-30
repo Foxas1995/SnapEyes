@@ -4,6 +4,7 @@
 // to the browser.
 
 import type { PriceList } from '../shared/markets';
+import type { Lang } from '../shared/lang';
 
 export interface ApiReply<T> {
   ok: boolean;          // HTTP 2xx and the body did not say ok: false
@@ -74,7 +75,7 @@ export interface CheckoutInfo {
   max_eyes?: number;
   // the waiver text per language (the EU edition), and per market where a market has its own (markets.au: the
   // Australian checkbox, src/shared/legal.ts CHECKOUT_LEGAL_AU)
-  consent?: { version?: string; en?: string; de?: string; markets?: Record<string, { en?: string; de?: string } | undefined> };
+  consent?: Partial<Record<Lang, string>> & { version?: string; markets?: Record<string, Partial<Record<Lang, string>> | undefined> };
   country?: string;
   suggest?: string | null;
 }
@@ -148,8 +149,8 @@ export function statusPath(order: string, k: string, s?: string | null, previews
 }
 
 /** The order page of an order, in the page's language (the address the Stripe success page and the emails use). */
-export function orderPageUrl(order: string, k: string, lang: 'en' | 'de'): string {
+export function orderPageUrl(order: string, k: string, lang: Lang): string {
   const q = new URLSearchParams({ o: order, k });
-  if (lang === 'de') q.set('lang', 'de');
+  if (lang !== 'en') q.set('lang', lang);
   return `/order?${q.toString()}`;
 }

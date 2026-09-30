@@ -171,10 +171,12 @@ export function meterBand(d: number, q: Quality | undefined, t: Targets): { band
 
 /** Tips worth showing. "We will remove it automatically" instructs nothing, and the old "reflection sits on
  *  your pupil, move the light" tip contradicts the calm pupil note whenever the server sets pupil_reflection.
- *  The German words are api/analyze.py TEXT_DE's ("automatisch", "Spiegelung", "Pupille"). */
+ *  The other languages' words are the ones api/analyze.py's texts use: German ("automatisch", "Spiegelung", "Pupille"),
+ *  Lithuanian ("automatiškai", "atspindys", "vyzdys": api/_lib/analyze_lt.py) and Hungarian ("automatikusan",
+ *  "tükröződés", "pupilla": api/_lib/analyze_hu.py). */
 export function visibleTips(q: Quality): string[] {
-  return (q.tips || []).filter((s) => !/automatically|automatisch/i.test(s)
-    && !(q.pupil_reflection && /reflection|spiegelung/i.test(s) && /pupil/i.test(s)));
+  return (q.tips || []).filter((s) => !/automatically|automatisch|automatiškai|automatikusan/i.test(s)
+    && !(q.pupil_reflection && /reflection|spiegelung|atspind|tükröződés/i.test(s) && /pupil|vyzd/i.test(s)));
 }
 
 /** The single tip that would most improve the next shot. Someone holding a phone to their eye reads one
@@ -186,7 +188,7 @@ export function topTip(q: Quality, t: Targets): string | null {
   if (q.locked === false) return tips[0] ?? q.message ?? null;
   if (q.blocked) return q.message || (blockOf({ ok: true, quality: q }) ?? T.quality.blockedOther).retakeLine;
   if (num(q.diameter_px) !== undefined && q.diameter_px < t.min_diameter_px) {
-    return tips.find((s) => /closer|zoom|näher/i.test(s)) ?? T.quality.closer;
+    return tips.find((s) => /closer|zoom|näher|arčiau/i.test(s)) ?? T.quality.closer;
   }
   return tips[0] ?? null;
 }

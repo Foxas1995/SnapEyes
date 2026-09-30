@@ -3,10 +3,12 @@
 // the contact is the email address and, for withdrawals, the online withdrawal function. No VAT number: the MB is not
 // VAT-registered. IMPRINT_AU (the Australian edition, src/shared/legal.ts legalEdition "au") adds that it is not
 // registered for GST in Australia either (below the A$75,000 registration turnover), so no GST is charged.
-import type { LegalDoc, LegalDocs } from '../types';
+import type { EditionDocs, LegalDoc, LegalDocs } from '../types';
 import { MAIL, SELLER, company, country } from '../facts';
 import { WITHDRAWAL_ONLINE, withdrawFunctionHref } from '../../shared/legal';
 import { patchDoc } from '../patch';
+import { lt } from './imprint.lt';
+import { hu } from './imprint.hu';
 
 const rows = (lang: 'en' | 'de'): Array<[string, string]> => {
   const de = lang === 'de';
@@ -99,7 +101,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const IMPRINT: LegalDocs = { en, de };
+export const IMPRINT: LegalDocs = { en, de, lt, hu };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 const gst = (lang: 'en' | 'de'): [string, string] => (lang === 'de'
@@ -112,4 +114,4 @@ const withGst = (doc: LegalDoc, lang: 'en' | 'de') => patchDoc(doc, {
   },
 });
 
-export const IMPRINT_AU: LegalDocs = { en: withGst(en, 'en'), de: withGst(de, 'de') };
+export const IMPRINT_AU: EditionDocs = { en: withGst(en, 'en'), de: withGst(de, 'de') };

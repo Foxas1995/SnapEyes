@@ -12,21 +12,41 @@
 // of them together: src/legal/docs/withdrawal.ts has the full list of the server's rules in its header.
 
 import { adoptMarket, currentMarket, linkMarket, withMarket, type Market } from './markets';
+import type { Lang } from './lang';
 
-export type LegalLang = 'en' | 'de';
+/** The languages the legal texts, the checkout wording and the emails exist in (src/shared/lang.ts): English, German,
+ *  Lithuanian and Hungarian. Which of them an edition has is EDITION_LANGS. */
+export type LegalLang = Lang;
 
 /** The date every legal page prints as "Last updated". Change it whenever a legal text changes. */
 export const LEGAL_UPDATED = '2026-09-30';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right
- *  framed as EU law, its own checkout consent, and an Australian part in the privacy policy. Every other market (eu,
- *  lt, and hu once it opens) reads the EU edition, unchanged. api/_lib/pay.py ACL_MARKETS is the same list: keep both
- *  in step. The build's legal pack carries the au edition apart (src/legal/plain.ts), with links that carry m=au. */
-export type LegalEdition = 'eu' | 'au';
-export const EDITION_MARKETS: Readonly<Record<Exclude<LegalEdition, 'eu'>, Market>> = { au: 'au' };
+ *  framed as EU law, its own checkout consent, and an Australian part in the privacy policy. "hu" (the Hungarian
+ *  market): the EU texts with the forint prices in the terms (the EU terms print euros, and an order in forints must
+ *  be under a contract that prints forints). Every other market (eu, lt) reads the EU edition, unchanged.
+ *  api/_lib/pay.py EDITION_MARKETS is the same list (and ACL_MARKETS the Australian part of it): keep them in step;
+ *  the build checks it (scripts/check_prices.mjs). The build's legal pack carries the other editions apart
+ *  (src/legal/plain.ts), with links that carry m=au / m=hu. */
+export type LegalEdition = 'eu' | 'au' | 'hu';
+export const EDITION_MARKETS: Readonly<Record<Exclude<LegalEdition, 'eu'>, Market>> = { au: 'au', hu: 'hu' };
 export function legalEdition(m: Market = currentMarket()): LegalEdition {
-  return m === EDITION_MARKETS.au ? 'au' : 'eu';
+  return m === EDITION_MARKETS.au ? 'au' : m === EDITION_MARKETS.hu ? 'hu' : 'eu';
+}
+
+/** The languages each edition has texts in. The Australian edition is English and German only (its Australian
+ *  Consumer Law text is not translated into Lithuanian or Hungarian), so a page of the Australian market never shows
+ *  those two languages (src/shared/lang.ts langFor). api/_lib/pay.py EDITION_LANGS is the same table. */
+export const EDITION_LANGS: Readonly<Record<LegalEdition, readonly LegalLang[]>> = {
+  eu: ['en', 'de', 'lt', 'hu'],
+  au: ['en', 'de'],
+  hu: ['en', 'de', 'lt', 'hu'],
+};
+
+/** The language an edition's texts are read in: the asked one, or English where the edition has none in it. */
+export function editionLang(lang: LegalLang, m: Market = currentMarket()): LegalLang {
+  return EDITION_LANGS[legalEdition(m)].includes(lang) ? lang : 'en';
 }
 
 /** A link with a market in it: a market with its own edition always carries it (m=au), also while the owner has
@@ -48,9 +68,11 @@ export function adoptLinkedEdition(): void {
   if (m !== null && legalEdition(m) !== 'eu') adoptMarket(m);
 }
 
+/** A legal date as the language writes it: German "30.09.2026", Hungarian "2026. 09. 30.", English and Lithuanian keep
+ *  the ISO order ("2026-09-30": Lithuanian writes dates that way, LST ISO 8601). */
 export function formatLegalDate(iso: string, lang: LegalLang): string {
   const [y, m, d] = iso.split('-');
-  return lang === 'de' ? `${d}.${m}.${y}` : iso;
+  return lang === 'de' ? `${d}.${m}.${y}` : lang === 'hu' ? `${y}. ${m}. ${d}.` : iso;
 }
 
 export type LegalDocId = 'privacy' | 'terms' | 'withdrawal' | 'imprint';
@@ -75,6 +97,9 @@ export function legalHref(doc: LegalDocId, lang: LegalLang = 'en', section = '',
 export const LEGAL_LABELS: Record<LegalLang, Record<LegalDocId, string> & { nav: string }> = {
   en: { privacy: 'Privacy policy', terms: 'Terms of sale', withdrawal: 'Right of withdrawal', imprint: 'Legal notice', nav: 'Legal' },
   de: { privacy: 'Datenschutzerklärung', terms: 'AGB', withdrawal: 'Widerrufsbelehrung', imprint: 'Impressum', nav: 'Rechtliches' },
+  // Terms of sale = "Pardavimo sąlygos", the legal notice = "Rekvizitai" (the Lithuanian name of a company-details page)
+  lt: { privacy: 'Privatumo politika', terms: 'Pardavimo sąlygos', withdrawal: 'Teisė atsisakyti sutarties', imprint: 'Rekvizitai', nav: 'Teisinė informacija' },
+  hu: { privacy: 'Adatkezelési tájékoztató', terms: 'ÁSZF', withdrawal: 'Elállási tájékoztató', imprint: 'Impresszum', nav: 'Jogi információk' },
 };
 
 // The service that sends the order emails (the order page link and the confirmation): api/_lib/pay.py send_mail,
@@ -96,6 +121,12 @@ export interface WithdrawalOnline {
 export const WITHDRAWAL_ONLINE: Record<LegalLang, WithdrawalOnline> = {
   en: { button: 'Withdraw from contract here', confirm: 'Confirm withdrawal' },
   de: { button: 'Vertrag hier widerrufen', confirm: 'Widerruf bestätigen' },
+  // the statutory labels, word for word (a label starts with a capital, as a button does; the statute prints it in lower
+  // case inside a sentence): Lithuania, Civilinis kodeksas 6.228(10) str. 11 and 13 d. ("atsisakyti sutarties čia",
+  // "patvirtinti sutarties atsisakymą"); Hungary, 45/2014. (II. 26.) Korm. rendelet 22. § (1b) ("elállás a szerződéstől",
+  // "elállás megerősítése")
+  lt: { button: 'Atsisakyti sutarties čia', confirm: 'Patvirtinti sutarties atsisakymą' },
+  hu: { button: 'Elállás a szerződéstől', confirm: 'Elállás megerősítése' },
 };
 
 /** Where the function is: the order page in its withdrawal mode (src/order/withdraw.ts withdrawHref), which never
@@ -126,8 +157,10 @@ export interface LegalPart { text: string; doc?: LegalDocId; section?: string }
 // /api/checkout refuses an order without it and stores its version, time and a fingerprint of the text; the delivery
 // email confirms it (the durable-medium confirmation of Art. 16(m)(iii) Directive 2011/83/EU and § 356 Abs. 5 Nr. 3
 // BGB). Change both files together and bump the version (2026-09-30.1: the Australian text added, the EU text as it
-// was).
-export const WITHDRAWAL_CONSENT_VERSION = '2026-09-30.1';
+// was; 2026-09-30.2: the Lithuanian and the Hungarian texts added, the English, German and Australian texts as they
+// were). The build refuses a consent text that changed under the same version, and a version without its fingerprint
+// (scripts/check_texts.mjs CONSENT_FINGERPRINTS: the check prints the new one).
+export const WITHDRAWAL_CONSENT_VERSION = '2026-09-30.2';
 
 export interface CheckoutLegal {
   /** The withdrawal checkbox: unticked by default and required before the payment page opens. Art. 16(m)
@@ -184,6 +217,55 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
       { text: 'Datenschutzerklärung', doc: 'privacy' },
     ],
   },
+  // Lithuanian: the two things Civilinis kodeksas 6.228(10) str. 2 d. 13 p. (a) and (b) ask for, in the customer's own
+  // voice. Our button only opens Stripe's page and places no order; the binding order is Stripe's own pay button (CK
+  // 6.228(8) str. 3 d.: "užsakymas su prievole sumokėti" or an equally unambiguous wording; Stripe's Lithuanian
+  // Checkout labels it "Mokėti"). Identical to api/_lib/pay.py CONSENT_TEXT["lt"].
+  lt: {
+    withdrawalConsent:
+      'Aiškiai sutinku, kad SnapEyes pradėtų kurti mano skaitmeninį kūrinį iš karto, dar nepasibaigus sutarties atsisakymo terminui. Pripažįstu, kad pradėjus kurti kūrinį neteksiu teisės atsisakyti sutarties.',
+    withdrawalConsentMissing: 'Pažymėkite langelį aukščiau: Jūsų kūrinį pradėti kurti galime tik gavę Jūsų sutikimą.',
+    acceptance: [
+      { text: 'Užsakydami sutinkate su mūsų ' },
+      { text: 'pardavimo sąlygomis', doc: 'terms' },
+      { text: '. Taip pat perskaitykite mūsų ' },
+      { text: 'privatumo politiką', doc: 'privacy' },
+      { text: ' ir ' },
+      { text: 'informaciją apie teisę atsisakyti sutarties', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+    continueButton: 'Pereiti prie apmokėjimo',
+    photoNotice: [
+      { text: 'Fotografuokite tik savo akį arba kito žmogaus akį, jei jis su tuo sutiko (vaiko atveju sutikti turi vienas iš tėvų, globėjas ar rūpintojas). Jūsų nuotrauka naudojama tik Jūsų kūriniui sukurti. ' },
+      { text: 'Privatumo politika', doc: 'privacy' },
+    ],
+  },
+  // Hungarian: 45/2014. (II. 26.) Korm. rendelet 29. § (1) m): both elements, the express prior consent to start AND the
+  // acknowledgement that the right of withdrawal is lost once performance has started. The buy button carries the
+  // label of the owner's Hungarian launch plan "Megrendelés fizetési kötelezettséggel" (an equivalent, unambiguous wording under 15. § (2);
+  // the decree's own words "fizetési kötelezettséggel járó megrendelés" stand above Stripe's pay button, the click that
+  // binds: api/_lib/pay_hu.py SUBMIT_NOTE_HU). The legal reviewer may prefer "Fizetési kötelezettséggel járó
+  // megrendelés" or "Tovább a fizetéshez": this one line, every other place reads it from here. Identical to
+  // api/_lib/pay.py CONSENT_TEXT["hu"].
+  hu: {
+    withdrawalConsent:
+      'Kifejezetten hozzájárulok ahhoz, hogy a SnapEyes még az elállási határidő lejárta előtt azonnal megkezdje a digitális alkotásom elkészítését. Tudomásul veszem, hogy a teljesítés megkezdését követően elveszítem az elállási jogomat.',
+    withdrawalConsentMissing: 'Kérjük, jelöld be a fenti négyzetet: az alkotásod elkészítését csak a hozzájárulásoddal kezdhetjük meg.',
+    acceptance: [
+      { text: 'A megrendeléssel elfogadod az ' },
+      { text: 'ÁSZF-et', doc: 'terms' },
+      { text: '. Kérjük, olvasd el az ' },
+      { text: 'adatkezelési tájékoztatót', doc: 'privacy' },
+      { text: ' és az ' },
+      { text: 'elállási tájékoztatót', doc: 'withdrawal' },
+      { text: ' is.' },
+    ],
+    continueButton: 'Megrendelés fizetési kötelezettséggel',
+    photoNotice: [
+      { text: 'Csak a saját szemedet fotózd le, vagy olyan személy szemét, aki ehhez hozzájárult (gyermek esetén a szülő vagy a gondviselő). A fotódat kizárólag az alkotásod elkészítéséhez használjuk. ' },
+      { text: 'Adatkezelési tájékoztató', doc: 'privacy' },
+    ],
+  },
 };
 
 /** The checkout of the Australian market (legalEdition "au"): the same checkbox, with a text that keeps both EU
@@ -192,7 +274,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
  *  change of mind once making has started, and that the Australian Consumer Law is not affected (its guarantees cannot
  *  be excluded, so nothing here may read as "no refunds"). Identical to api/_lib/pay.py CONSENT_TEXT_AU. The line
  *  under it names the terms' "Your rights in Australia" section. */
-export const CHECKOUT_LEGAL_AU: Record<LegalLang, Pick<CheckoutLegal, 'withdrawalConsent' | 'acceptance'>> = {
+export const CHECKOUT_LEGAL_AU: Record<'en' | 'de', Pick<CheckoutLegal, 'withdrawalConsent' | 'acceptance'>> = {
   en: {
     withdrawalConsent:
       "I expressly agree that SnapEyes starts making my personalised digital artwork right away, before the withdrawal period ends. I know that once this has started, I lose my right of withdrawal and can't cancel for a change of mind. This doesn't affect my rights under the Australian Consumer Law.",
@@ -225,7 +307,10 @@ export const CHECKOUT_LEGAL_AU: Record<LegalLang, Pick<CheckoutLegal, 'withdrawa
   },
 };
 
-/** The checkout wording for a market: the EU wording, with the Australian checkbox and line for the au edition. */
+/** The checkout wording for a market: the EU wording (also for the hu edition: the same checkbox, the prices differ
+ *  only in the terms), with the Australian checkbox and line for the au edition. A language the edition has no texts
+ *  in (editionLang) reads the edition's English. */
 export function checkoutLegal(lang: LegalLang, market: Market = currentMarket()): CheckoutLegal {
-  return legalEdition(market) === 'au' ? { ...CHECKOUT_LEGAL[lang], ...CHECKOUT_LEGAL_AU[lang] } : CHECKOUT_LEGAL[lang];
+  const l = editionLang(lang, market);
+  return legalEdition(market) === 'au' ? { ...CHECKOUT_LEGAL[l], ...CHECKOUT_LEGAL_AU[l === 'de' ? 'de' : 'en'] } : CHECKOUT_LEGAL[l];
 }

@@ -1,5 +1,6 @@
 // Facts the landing page prints. Keep every value here true; the copy dictionary only words them.
 import { MARKETS, DEFAULT_MARKET, MAX_EYES, withMarket } from '../shared/markets';
+import type { Lang } from '../shared/lang';
 
 // Every email address on the page and the curator's "send me your photos" offer come from this one constant
 // and stay hidden while it is empty. Owner decision 2026-09-23: info@snapeyes.com at Hostinger; the owner confirmed
@@ -11,7 +12,7 @@ export const TRY_URL = '/try';
 // ...in the page's language: /try reads ?lang= first (src/try/lang.ts, the same rule as ./lang.tsx), so a visitor
 // who reads this page in German through /?lang=de, without ever touching the switch, still gets /try in German.
 // And in the page's market (m=, src/shared/markets.ts withMarket), so /try shows the same currency.
-export const tryUrl = (lang: 'en' | 'de') => withMarket(`${TRY_URL}?lang=${lang}`);
+export const tryUrl = (lang: Lang) => withMarket(`${TRY_URL}?lang=${lang}`);
 
 // Seller shown in the footer and on the legal pages (owner decision 2026-09-23). MB is not VAT-registered: no VAT
 // number, no "incl. VAT". Every page prints the "Represented by" and "Phone" lines only when the value is set.

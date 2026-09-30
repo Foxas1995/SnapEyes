@@ -10,6 +10,7 @@ import {
 } from './multi';
 import { COPY, T, setCopyLang, type BlockCopy } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
+import { LANGS, LANG_NAMES, marketLangs } from '../shared/lang';
 import { ResultView, type StyleOption } from './ResultView';
 import { StudyCard } from './StudyCard';
 import { RetakeGuide } from './RetakeGuide';
@@ -37,7 +38,7 @@ const ART_CACHE_MAX = 12;
 const STUDY = typeof window !== 'undefined' && studyOn(window.location.search);
 
 // The page's language, by the landing page's rule (./lang). Set before the first render, so no screen ever shows in
-// the wrong language; after that only the EN/DE switch in the header changes it.
+// the wrong language; after that only the language switch in the header changes it.
 if (typeof window !== 'undefined') setCopyLang(detectLang());
 
 // The way back from Stripe's payment page (its cancel link, or the browser's back button after a fresh load): the
@@ -183,7 +184,7 @@ let eyeSeq = 0;
 const newEyeId = () => `e${Date.now().toString(36)}${(eyeSeq++).toString(36)}`;
 const eyesPrefix = (list: Eye[]) => `${list.map((e) => e.id).join('.')}|`;
 // the preview's words (its watermark, the sample eye's label) are in the page's language, so the language is part
-// of the key: after the EN/DE switch the preview is made again in the new one
+// of the key: after a language switch the preview is made again in the new one
 const artKeyOf = (list: Eye[], layout: Layout, style: string, names: string, lang: Lang) => `${eyesPrefix(list)}${layout}|${style}|${names}|${lang}`;
 
 // the eyes brought back from the payment page: in the order already, so they need no draft of their own
@@ -250,7 +251,7 @@ export const TryApp: React.FC = () => {
   // ---- the eye just removed, kept for a few seconds so one mistaken tap never throws a paid restoration away
   const [undo, setUndo] = useState<{ eye: Eye; index: number } | null>(null);
 
-  /** The EN/DE switch: the whole page re-renders in the new language. Words already on screen that came from
+  /** The language switch: the whole page re-renders in the new language. Words already on screen that came from
    *  the server (a shot's message and tips) stay as they were until the next photo. */
   const switchLang = (l: Lang) => {
     if (l === T.lang) return;
@@ -719,9 +720,9 @@ export const TryApp: React.FC = () => {
   // ---- the result screen composes whenever the eyes, the layout, the style, the names or the language change
   const layout = effectiveLayout(eyes.length, layoutWant);
   const artKey = artKeyOf(eyes, layout, style, names, lang);
-  // Right after the EN/DE switch the same choice's preview in the other language stands in (shown, saved, orderable:
+  // Right after a language switch the same choice's preview in another language stands in (shown, saved, orderable:
   // only its watermark's words differ) until the effect below has made it in this one.
-  const art = artCache[artKey] ?? artCache[artKeyOf(eyes, layout, style, names, lang === 'de' ? 'en' : 'de')];
+  const art = artCache[artKey] ?? LANGS.map((lg) => artCache[artKeyOf(eyes, layout, style, names, lg)]).find(Boolean);
   const staleArt = art ?? Object.values(artCache).at(-1);
 
   useEffect(() => {
@@ -1066,12 +1067,13 @@ export const TryApp: React.FC = () => {
   );
 };
 
-/** EN/DE, as on the landing page (src/landing/Header.tsx LangSwitch). */
+/** The language switch, as on the landing page (src/landing/Header.tsx LangSwitch): one button per language the page's
+ *  market can be read in. */
 const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lang, onSwitch }) => (
   <div role="group" aria-label={T.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
-    {(['en', 'de'] as const).map((l) => (
-      <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={l === 'en' ? 'English' : 'Deutsch'}
-        className={`min-w-[40px] rounded-full px-2.5 py-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+    {marketLangs(currentMarket()).map((l) => (
+      <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
+        className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
         {l}
       </button>
     ))}

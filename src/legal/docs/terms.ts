@@ -1,4 +1,5 @@
-// Terms of sale (AGB), English and German. Prices, seller and contact come from src/landing/config.ts.
+// Terms of sale (AGB), English, German, Lithuanian (./terms.lt.ts) and Hungarian (./terms.hu.ts). Prices, seller and
+// contact come from src/landing/config.ts.
 // Deliberately NOT here: a link to the EU ODR platform (the platform was shut down on 20 July 2025, Regulation
 // (EU) 2024/3228), a VAT number (the MB is not VAT-registered), any promise the code does not keep.
 // The latest delivery time is DELIVERY_MAX_HOURS (src/landing/config.ts). The "contract" section says how the contract
@@ -19,12 +20,15 @@
 // against defects needing the reg 90 text and a phone number, Competition and Consumer Regulations 2010), a new
 // "Your rights in Australia" section that opens with the ACCC's own sentence, and liability and disputes that keep the
 // Australian Consumer Law. Nothing in it may read as "no refunds" (ACCC: consumer guarantees cannot be excluded).
-import type { LegalDoc, LegalDocs, LegalSection } from '../types';
+import type { EditionDocs, LegalDoc, LegalDocs, LegalSection } from '../types';
 import {
-  AU_PRICES, DELIVERY_MAX_HOURS, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, aud, company, eur, phoneSuffix, representedSuffix,
+  AU_PRICES, DELIVERY_MAX_HOURS, HU_PRICES, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, aud, company, eur, huf, phoneSuffix,
+  representedSuffix,
 } from '../facts';
 import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE } from '../../shared/legal';
 import { patchDoc } from '../patch';
+import { lt, ltHufPrices } from './terms.lt';
+import { hu, huHufPrices } from './terms.hu';
 
 const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.';
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
@@ -70,7 +74,7 @@ const en: LegalDoc = {
       blocks: [
         `The previews and prices on our website are not yet a binding offer. Before you pay, you can check your eyes, style, layout and inscription and correct any input by going back or retaking a photo. You then open the payment page of our payment provider Stripe with our button "${CHECKOUT_LEGAL.en.continueButton}"; this button does not yet place an order. On that page you enter your email address and payment details and can correct them. You place a binding order when you confirm the payment there with the pay button.`,
         'The contract is concluded when your payment is confirmed. Your order page then opens, and we email you its link with your order confirmation. We start making your file there as soon as that email has gone out.',
-        'The contract languages are English and German.',
+        'The contract languages are English, German, Lithuanian and Hungarian.',
         'We store your order with the details of the contract: the artwork you ordered, the price, the date, your email address and your consent to the immediate start. Your order page shows these details for as long as we keep your order. We do not keep a separate copy of these terms for each order. Instead, your order confirmation email contains, as text, your order details, these terms and the withdrawal information with the model withdrawal form, in the version in force when you ordered: please keep that email. You can also save or print this page at any time.',
       ],
     },
@@ -192,7 +196,7 @@ const de: LegalDoc = {
       blocks: [
         `Die Vorschauen und Preise auf unserer Website sind noch kein verbindliches Angebot. Vor der Zahlung können Sie Ihre Augen, den Stil, die Anordnung und die Widmung prüfen und Eingaben korrigieren, indem Sie zurückgehen oder ein Foto neu aufnehmen. Danach öffnen Sie mit unserer Schaltfläche „${CHECKOUT_LEGAL.de.continueButton}“ die Zahlungsseite unseres Zahlungsdienstleisters Stripe; diese Schaltfläche löst noch keine Bestellung aus. Auf dieser Seite geben Sie Ihre E-Mail-Adresse und Zahlungsangaben ein und können sie korrigieren. Eine verbindliche Bestellung geben Sie ab, wenn Sie dort die Zahlung mit der Zahlungsschaltfläche bestätigen.`,
         'Der Vertrag kommt zustande, sobald Ihre Zahlung bestätigt ist. Dann öffnet sich Ihre Bestellseite, und wir senden Ihnen deren Link mit Ihrer Bestellbestätigung per E-Mail. Sobald diese E-Mail versandt ist, beginnen wir dort mit Ihrer Datei.',
-        'Vertragssprachen sind Deutsch und Englisch.',
+        'Vertragssprachen sind Deutsch, Englisch, Litauisch und Ungarisch.',
         'Wir speichern Ihre Bestellung mit den Vertragsdaten: das bestellte Kunstwerk, den Preis, das Datum, Ihre E-Mail-Adresse und Ihre Zustimmung zum sofortigen Beginn. Ihre Bestellseite zeigt diese Angaben, solange wir Ihre Bestellung aufbewahren. Eine eigene Kopie dieser Bedingungen je Bestellung bewahren wir nicht auf. Stattdessen enthält Ihre Bestellbestätigung per E-Mail als Text Ihre Bestelldaten, diese Bedingungen und die Widerrufsbelehrung mit dem Muster-Widerrufsformular, in der bei Ihrer Bestellung gültigen Fassung: Bitte bewahren Sie diese E-Mail auf. Sie können diese Seite außerdem jederzeit speichern oder ausdrucken.',
       ],
     },
@@ -276,7 +280,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const TERMS: LegalDocs = { en, de };
+export const TERMS: LegalDocs = { en, de, lt, hu };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 // The opening sentence of "australia" is the ACCC's wording, word for word, in both languages (the German text follows
@@ -301,6 +305,7 @@ const auEn = patchDoc(en, {
   lead: `These terms apply to every order placed on snapeyes.com in Australian dollars (A$), and they include [your rights in Australia](#${AU_ID}). Please read them before you order. The free preview is offered without any obligation.`,
   replace: {
     preview: relabel('[Complaints and defects](#defects)', '[Complaints and faulty files](#defects)'),
+    contract: relabel('The contract languages are English, German, Lithuanian and Hungarian.', 'The contract languages are English and German.'),
     prices: (s): LegalSection => ({
       ...s,
       blocks: [
@@ -374,6 +379,7 @@ const auDe = patchDoc(de, {
   lead: `Diese Bedingungen gelten für jede Bestellung auf snapeyes.com in australischen Dollar (A$) und enthalten [Ihre Rechte in Australien](#${AU_ID}). Bitte lesen Sie sie, bevor Sie bestellen. Die kostenlose Vorschau ist unverbindlich.`,
   replace: {
     preview: relabel('[Reklamationen und Mängel](#defects)', '[Reklamationen und mangelhafte Dateien](#defects)'),
+    contract: relabel('Vertragssprachen sind Deutsch, Englisch, Litauisch und Ungarisch.', 'Vertragssprachen sind Deutsch und Englisch.'),
     prices: (s): LegalSection => ({
       ...s,
       blocks: [
@@ -441,4 +447,54 @@ const auDe = patchDoc(de, {
   },
 });
 
-export const TERMS_AU: LegalDocs = { en: auEn, de: auDe };
+// the Australian pages exist in English and German only (src/shared/legal.ts EDITION_LANGS), so its contract languages
+// are those two
+export const TERMS_AU: EditionDocs = { en: auEn, de: auDe };
+
+// ------------------------------------------------------------------------------------------ the Hungarian edition
+// The EU texts with the prices of the Hungarian market in forints (api/_lib/markets.py, "6 990 Ft"): only the "prices"
+// section changes, in every language (the Hungarian and Lithuanian ones are in ./terms.hu.ts and ./terms.lt.ts). Every
+// other section is shared word for word, so a change to it reaches both editions.
+const AFTER_CURRENCY_EN = 'If our website shows you prices in another currency, the payment page and your order confirmation email show the currency and amount you actually pay.';
+const AFTER_CURRENCY_DE = 'Zeigt Ihnen unsere Website Preise in einer anderen Währung, nennen die Zahlungsseite und Ihre Bestellbestätigung per E-Mail die Währung und den Betrag, die Sie tatsächlich zahlen.';
+
+const enHufPrices: LegalSection = {
+  id: 'prices',
+  title: 'Prices and payment',
+  blocks: [
+    {
+      dl: [
+        ['One eye, Studio Black', huf(HU_PRICES.one_eye_studio_black, 'en')],
+        ['One eye with an art background', `${huf(HU_PRICES.one_eye_art, 'en')} (${ART})`],
+        ['Two eyes (Couple Duo), any style', huf(HU_PRICES.two_eyes, 'en')],
+        ['Each further eye', `+${huf(HU_PRICES.each_further_eye, 'en')}, up to ${MAX_EYES} eyes on one artwork`],
+      ],
+    },
+    `All prices are final prices in Hungarian forints (Ft). We are not registered for VAT, so no VAT is charged or shown. There are no delivery costs. ${AFTER_CURRENCY_EN}`,
+    'You pay in advance through our payment provider Stripe, with the payment methods shown on the payment page.',
+  ],
+};
+
+const deHufPrices: LegalSection = {
+  id: 'prices',
+  title: 'Preise und Zahlung',
+  blocks: [
+    {
+      dl: [
+        ['Ein Auge, Studio Black', huf(HU_PRICES.one_eye_studio_black, 'de')],
+        ['Ein Auge mit Kunsthintergrund', `${huf(HU_PRICES.one_eye_art, 'de')} (${ART})`],
+        ['Zwei Augen (Couple Duo), jeder Stil', huf(HU_PRICES.two_eyes, 'de')],
+        ['Jedes weitere Auge', `+${huf(HU_PRICES.each_further_eye, 'de')}, bis zu ${MAX_EYES} Augen auf einem Kunstwerk`],
+      ],
+    },
+    `Alle Preise sind Endpreise in ungarischen Forint (Ft). Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet oder ausgewiesen. Versandkosten fallen nicht an. ${AFTER_CURRENCY_DE}`,
+    'Sie zahlen im Voraus über unseren Zahlungsdienstleister Stripe, mit den auf der Zahlungsseite angezeigten Zahlungsarten.',
+  ],
+};
+
+export const TERMS_HU: LegalDocs = {
+  en: patchDoc(en, { replace: { prices: enHufPrices } }),
+  de: patchDoc(de, { replace: { prices: deHufPrices } }),
+  lt: patchDoc(lt, { replace: { prices: ltHufPrices } }),
+  hu: patchDoc(hu, { replace: { prices: huHufPrices } }),
+};

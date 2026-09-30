@@ -74,7 +74,7 @@ export function withdrawHref(lang: Lang, link?: { o: string; k: string } | null)
   const q = new URLSearchParams();
   if (link && ORDER_RE.test(link.o) && KEY_RE.test(link.k)) { q.set('o', link.o); q.set('k', link.k); }
   q.set('withdraw', '1');
-  if (lang === 'de') q.set('lang', 'de');
+  if (lang !== 'en') q.set('lang', lang);
   return `/order?${q.toString()}`;
 }
 
