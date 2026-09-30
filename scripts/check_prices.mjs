@@ -160,6 +160,23 @@ function checkEditions(root, defaultMarket, markets, out) {
       out.push(`${LEGAL_FILE} EDITION_LANGS (${JSON.stringify(a)}) and ${PAY_FILE} EDITION_LANGS (${JSON.stringify(b)}) must list the same languages per edition`);
     }
   }
+  // the server's Australian part (pay.py ACL_MARKETS: the Australian checkbox, note and invoice) is exactly the market the
+  // pages give the "au" edition (legal.ts EDITION_MARKETS.au), and inside the server's EDITION_MARKETS
+  if (payPy !== null) {
+    const m = /^ACL_MARKETS = \(([^)]*)\)/m.exec(payPy);
+    if (!m) out.push(`${PAY_FILE}: ACL_MARKETS not found (the price check reads it)`);
+    else {
+      const acl = [...m[1].matchAll(/"([a-z]{2,8})"/g)].map((x) => x[1]);
+      const table = legal !== null ? /export const EDITION_MARKETS[^=]*=\s*\{([^}]*)\}/.exec(legal)?.[1] : undefined;
+      const au = table !== undefined ? /\bau\s*:\s*'([a-z]{2,8})'/.exec(table)?.[1] : undefined;
+      if (au !== undefined && acl.join() !== au) {
+        out.push(`${PAY_FILE} ACL_MARKETS (${acl.join(', ')}) must be exactly the market of the Australian edition in ${LEGAL_FILE} EDITION_MARKETS (${au})`);
+      }
+      if (server && !acl.every((x) => server.includes(x))) {
+        out.push(`${PAY_FILE} ACL_MARKETS (${acl.join(', ')}) must be inside its EDITION_MARKETS (${server.join(', ')})`);
+      }
+    }
+  }
   const own = pages ?? server;
   if (!own) return;
   for (const m of own) if (!markets[m]) out.push(`${LEGAL_FILE}: the legal edition of market "${m}" names no market of ${MARKETS_FILE}`);
