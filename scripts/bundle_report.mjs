@@ -12,7 +12,8 @@
 //   --budget-mb N       the tripwire (default 235)
 //   --json              the report as JSON
 //   --check             exit 1 when a MEASURED function is over the budget, or when a function bundles a folder that is not
-//                       the api folder (a new top-level folder not in excludeFiles would ride into all 11 functions), or
+//                       the api folder (a new top-level folder not in excludeFiles would ride into all 11 functions; read WITHOUT
+//                       .vercelignore, which may not be honoured by Git deployments: V2), or
 //                       when vercel.json and the budget disagree with the function files. Estimates only warn.
 //
 // The model (what Vercel is believed to bundle; closing steps V1 and V2 of the plan check it on a Preview): every function holds
@@ -100,18 +101,22 @@ function deployedFiles() {
   }
   const vi = path.join(root, '.vercelignore');
   const ignored = existsSync(vi) ? ignoreMatcher(readFileSync(vi, 'utf8')) : () => false;
-  const files = [];
+  const files = [];    // as deployed if .vercelignore is honoured
+  const raw = [];      // the same without it: whether Git deployments honour .vercelignore is open (V2), so --check reads this one
   for (const f of list) {
-    if (f.includes('__pycache__') || f.endsWith('.pyc') || ignored(f)) continue;
-    try { files.push({ f, bytes: statSync(path.join(root, f)).size }); } catch { /* a file git lists and the disk lost */ }
+    if (f.includes('__pycache__') || f.endsWith('.pyc')) continue;
+    let bytes;
+    try { bytes = statSync(path.join(root, f)).size; } catch { continue; /* a file git lists and the disk lost */ }
+    raw.push({ f, bytes });
+    if (!ignored(f)) files.push({ f, bytes });
   }
-  return files;
+  return { files, raw };
 }
 
 // ----------------------------------------------------------------------------- the functions of vercel.json
 const vercel = JSON.parse(readFileSync(path.join(root, 'vercel.json'), 'utf8'));
 const entries = Object.entries(vercel.functions ?? {}).map(([pat, cfg]) => ({ pat, cfg, re: globToRegex(pat, true) }));
-const files = deployedFiles();
+const { files, raw: filesRaw } = deployedFiles();
 const functions = files
   .map((x) => x.f)
   .filter((f) => /^api\/[^/_][^/]*\.py$/.test(f) || /^api\/[^_][^/]*\/.*\.py$/.test(f))
@@ -119,18 +124,19 @@ const functions = files
 const notes = [];
 function configFor(fn) {
   const hits = entries.filter((e) => e.re.test(fn));
-  if (hits.length > 1) notes.push(`${fn}: ${hits.length} functions patterns match (${hits.map((h) => h.pat).join(', ')}); which one wins is unverified (V2), the longest pattern is read`);
+  const note = `${fn}: ${hits.length} functions patterns match (${hits.map((h) => h.pat).join(', ')}); which one wins is unverified (V2), the longest pattern is read`;
+  if (hits.length > 1 && !notes.includes(note)) notes.push(note);
   return hits.sort((a, b) => b.pat.length - a.pat.length)[0] ?? null;
 }
 
-function bundle(fn) {
+function bundle(fn, fileSet = files) {
   const cfg = configFor(fn);
   const ex = cfg?.cfg?.excludeFiles;
   const patterns = Array.isArray(ex) ? `{${ex.join(',')}}` : (ex ?? '');
   const out = {};
   for (const [mode, loose] of [['strict', false], ['loose', true]]) {
     const excl = patterns ? matcher(patterns, loose) : () => false;
-    const inc = files.filter((x) => !excl(x.f));
+    const inc = fileSet.filter((x) => !excl(x.f));
     const top = {};
     for (const x of inc) {
       const t = x.f.includes('/') ? x.f.split('/')[0] : '(root files)';
@@ -140,7 +146,8 @@ function bundle(fn) {
   }
   return { fn, pattern: cfg?.pat ?? null, maxDuration: cfg?.cfg?.maxDuration ?? null, exclude: patterns, ...out };
 }
-const bundles = functions.map(bundle);
+const bundles = functions.map((fn) => bundle(fn));
+const bundlesRaw = functions.map((fn) => bundle(fn, filesRaw));    // without .vercelignore: the reading that --check holds to
 
 // ----------------------------------------------------------------------------- the dependencies
 const args = process.argv.slice(2);
@@ -150,7 +157,11 @@ const budget = Number(value('--budget-mb') ?? LIMITS.tripwire);
 const python = process.env.PYTHON || 'python';
 function deps(how) {
   const r = spawnSync(python, [path.join(root, 'scripts', 'bundle_deps.py'), how], { cwd: root, encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, maxBuffer: 32 * MIB });
-  try { return JSON.parse(r.stdout); } catch { return { how, error: (r.stderr || r.stdout || 'no output').slice(-300) }; }
+  try {
+    const v = JSON.parse(r.stdout);
+    if (v && typeof v === 'object') return v;       // JSON.parse(null) is null, not an error: a missing interpreter must not read as a report
+  } catch { /* falls through */ }
+  return { how, error: (r.error ? String(r.error.code ?? r.error.message) : r.stderr || r.stdout || 'no output').slice(-300) };
 }
 const local = deps('local');
 const linux = flag('--pypi') ? deps('pypi') : null;
@@ -197,18 +208,21 @@ const report = {
   python: { windows_or_local: local.error ? { error: local.error } : { platform: local.platform, python: local.python, total_mib: mb(local.total), dists: local.dists.map((d) => ({ name: d.name, version: d.version, mib: mb(d.bytes) })), notes: local.notes },
             linux: linux ? (linux.error ? { error: linux.error } : { python: linux.python, total_mib: mb(linux.total), dists: linux.dists.map((d) => ({ name: d.name, version: d.version, mib: mb(d.bytes), wheel: d.file })), notes: linux.notes }) : null },
   top_level_included: Object.fromEntries(Object.keys(bundles[0]?.strict.top ?? {}).map((k) => [k, { strict_mib: mb(bundles[0].strict.top[k]), loose_mib: mb(bundles[0].loose.top[k] ?? 0) }])),
+  top_level_without_vercelignore: Object.fromEntries(Object.keys(bundlesRaw[0]?.strict.top ?? {}).map((k) => [k, { strict_mib: mb(bundlesRaw[0].strict.top[k]), loose_mib: mb(bundlesRaw[0].loose.top[k] ?? 0) }])),
   rows, notes,
 };
 
 const problems = [];
 const warnings = [];
 const strangeBy = new Map();
-for (const b of bundles) {
+// A folder that rides along only because .vercelignore is not read is still a problem: whether Git deployments honour that file
+// is open (V2), and excludeFiles is the one that does not depend on it. So the check reads the bundle WITHOUT .vercelignore.
+for (const b of bundlesRaw) {
   const strange = Object.keys(b.strict.top).filter((t) => t !== 'api' && t !== '(root files)').join(', ');
   if (strange) strangeBy.set(strange, [...(strangeBy.get(strange) ?? []), b.fn]);
 }
 for (const [folders, fns] of strangeBy) {
-  problems.push(`${fns.length === bundles.length ? `all ${fns.length} functions bundle` : `${fns.join(', ')} bundle`} folder(s) outside api/: ${folders} (add them to excludeFiles in vercel.json)`);
+  problems.push(`${fns.length === bundles.length ? `all ${fns.length} functions bundle` : `${fns.join(', ')} bundle`} folder(s) outside api/: ${folders} (add them to excludeFiles in vercel.json; .vercelignore alone is not relied on)`);
 }
 for (const r of rows) {
   if (r.measured_mib !== null && r.measured_mib > budget) problems.push(`${r.name}: measured ${f1(r.measured_mib)} MiB is over the ${budget} MiB budget`);

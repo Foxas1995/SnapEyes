@@ -1,3 +1,32 @@
 # Not uploaded with a deployment: the guard suites (suites/README.md) and their run folder. vercel.json excludeFiles keeps
-# them out of the functions as well; the private image fixtures are not in git at all.
+# them out of the functions as well (excludeFiles is the one that does not depend on this file); the private image fixtures
+# are not in git at all.
 /suites/
+
+# The Vercel CLI reads this file INSTEAD OF .gitignore when it exists (not verified here: step V2 of the plan), so everything
+# .gitignore keeps out of git is repeated here. A CLI upload must not start carrying node_modules, a local dist, .env files
+# or the local .vercel folder because this file appeared.
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+node_modules
+dist
+dist-ssr
+*.local
+.vscode/*
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+__pycache__/
+*.pyc
+.venv
+.vercel
+.env*

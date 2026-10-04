@@ -52,9 +52,17 @@ for (const file of files) {
   const text = readFileSync(file, 'utf8');
   if (/from\s+['"]node:test['"]/.test(text)) {
     const r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', file], { cwd: root, encoding: 'utf8' });
-    const pass = Number(/^# pass (\d+)/m.exec(r.stdout)?.[1] ?? 0);
-    const fail = Number(/^# fail (\d+)/m.exec(r.stdout)?.[1] ?? 0);
-    line(r.status === 0 && fail === 0 && pass > 0, `${rel(file)}: ${pass} node:test checks`, (r.stdout + r.stderr).slice(-600));
+    // one line per top-level test of the TAP report (a `describe` is one line, its parts are inside it), so that a file of ten
+    // tests counts ten and a file with none counts as the failure it is. A skipped or todo test did not run: not a pass.
+    const all = [...r.stdout.matchAll(/^(not ok|ok) \d+ - (.*?)(?: # (SKIP|TODO)\b.*)?$/gm)];
+    // node reports a file that defines no test (or fails to load) as one result named after the file itself
+    const isFile = (name) => path.resolve(root, name) === file || name.replaceAll('\\', '/').endsWith(rel(file));
+    const results = all.filter((m) => !isFile(m[2]));
+    const tail = (r.stdout + r.stderr).slice(-600);
+    for (const m of all.filter((x) => isFile(x[2]) && x[1] !== 'ok')) line(false, `${rel(file)}: the file did not run`, tail);
+    if (!results.length && !all.some((m) => isFile(m[2]) && m[1] !== 'ok')) line(false, `${rel(file)}: the file defines no node:test test`, tail);
+    for (const m of results) line(m[1] === 'ok' && !m[3], `${rel(file)}: ${m[2]}`, m[3] ? `a ${m[3]} test did not run: not a pass` : tail);
+    if (results.length && r.status !== 0 && results.every((m) => m[1] === 'ok' && !m[3])) line(false, `${rel(file)}: the node:test process failed after its tests`, tail);
     continue;
   }
   try {
