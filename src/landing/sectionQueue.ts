@@ -18,6 +18,9 @@ export const SECTION_ORDER: readonly SectionName[] = ['reveal', 'wall', 'styles'
 
 const IDLE_TIMEOUT_MS = 250;
 const NEAR_PX = 1500;
+// a chunk that has not answered after this long (a stalled connection) does not hold the sections behind it back: they go on, and the
+// slow one mounts whenever it arrives
+const STALL_MS = 4000;
 
 const opened = new Set<SectionName>();
 const components = new Map<SectionName, ComponentType>();
@@ -79,7 +82,7 @@ export function startSections(): void {
     for (let i = 0; i < SECTION_ORDER.length; i++) {
       const name = SECTION_ORDER[i];
       if (opened.has(name)) continue;
-      await loads[i];
+      await Promise.race([loads[i], new Promise<void>((done) => window.setTimeout(done, STALL_MS))]);
       await idle();
       openSection(name);
     }

@@ -25,6 +25,7 @@
 //              not blank and does not reload itself in a loop
 //   skew       a new deploy under an open page (the old chunk is a 404 and the server's index.html names another script): the page reloads
 //              itself once, not in a loop; a chunk that fails while index.html is still the page's own does not reload it
+//   stall      one chunk whose request is never answered (a stalled connection) does not hold the sections behind it back
 //   glass      the frosted blur of the header, the hero chip and the sticky phone button is really applied (a build that dropped the unprefixed
 //              backdrop-filter once left it off in Chrome, Edge and Firefox)
 //   shellclick a tap on a language button of the static first screen BEFORE the page's script has run switches the language, remembers it,
@@ -63,7 +64,7 @@ const pass = (check, msg) => console.log(`  ok   ${check}: ${msg}`);
 // ---------------------------------------------------------------------------------------------------- the server and its API stub
 const stub = { open: false, suggest: null, delay: 0 };
 // a pretend new deploy for the skew check: from the second request for / on the server's index.html names another script, and the chunk is gone
-const skew = { on: false, chunk: '', rootHits: 0, mainFile: '' };
+const skew = { on: false, chunk: '', rootHits: 0, mainFile: '', hang: false };
 const handler = (req, res) => {
   const url = new URL(req.url, 'http://x');
   const json = (o) => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(o)); };
@@ -74,6 +75,7 @@ const handler = (req, res) => {
     res.end(html);
     return true;
   }
+  if (skew.on && skew.hang && skew.chunk && url.pathname.includes(skew.chunk)) return true;   // a stalled connection: the request is never answered
   if (skew.on && skew.chunk && url.pathname.includes(skew.chunk)) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('gone'); return true; }
   if (url.pathname === '/api/health') { later({ stripe: true, stripe_live: false, email: false }); return true; }
   if (url.pathname === '/api/checkout') { later({ ok: true, open: stub.open, suggest: stub.suggest }); return true; }
@@ -596,6 +598,23 @@ async function checkSkew() {
   skew.on = false; skew.chunk = '';
 }
 
+async function checkStall() {
+  console.log('stall');
+  const wall = readdirSync(join(dist, 'assets')).find((f) => f.startsWith('Wall-') && f.endsWith('.js'));
+  if (!wall) { fail('stall', 'no Wall chunk in the build'); return; }
+  skew.on = true; skew.hang = true; skew.chunk = wall; skew.rootHits = 0; skew.mainFile = '/assets/no-such-script-name.js';
+  const page = await openBlocked([], {});
+  await sleep(11000);
+  const r = JSON.parse(await page.eval(`JSON.stringify({ wallHole: !!document.querySelector('#wall.lp-slot'), mounted: [...document.querySelectorAll('main > section:not(.lp-slot)')].map((s) => s.id).filter(Boolean) })`));
+  skew.on = false; skew.hang = false; skew.chunk = '';
+  const want = ['reveal', 'styles', 'how', 'pricing', 'closeups', 'trust', 'faq', 'final'];
+  const missing = want.filter((id) => !r.mounted.includes(id));
+  if (!r.wallHole) fail('stall', 'the stalled section is not waiting as an empty slot');
+  else if (missing.length) fail('stall', `with the wall chunk stalled these sections never mounted: ${missing.join(', ')}`);
+  else pass('stall', 'the wall chunk stalled: the other eight sections mounted all the same, the wall waits as an empty slot');
+  await page.close();
+}
+
 // ---------------------------------------------------------------------------------------------------- glass
 async function checkGlass() {
   console.log('glass');
@@ -678,7 +697,7 @@ async function checkOffers() {
 }
 
 // ---------------------------------------------------------------------------------------------------- run
-const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, vitals: checkVitals };
+const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, stall: checkStall, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, vitals: checkVitals };
 try {
   for (const [name, fn] of Object.entries(checks)) {
     if (!wants(name)) continue;
