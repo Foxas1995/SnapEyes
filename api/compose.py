@@ -8,7 +8,11 @@
 Places the eyes on the chosen style background with typography and (unless unlocked) a preview watermark, whose words
 are drawn iris.WATERMARK_IRIS times as strong on every iris disc (the slider's display copy strength), so neither the
 artwork box nor its "Save preview" file is a clean iris.
-Reply: {ok, style, layout, layouts, format, count, width, height, image (JPEG b64), styles, qa}"""
+Reply: {ok, style, layout, layouts, format, count, width, height, image (JPEG b64), styles, qa, eyes}
+eyes: one entry per eye, {eye, eye_id, cls, pupil, gate {lid, fill}}: what the eye's seal says (api/_lib/preview.py seal v2, the
+profile measured at /api/enhance): the eye id, the colour class, the pupil class and the ok of each restoration gate rule (true,
+false, or null = unknown: a version 1 seal, or a profile that was not measured; and null for an old page's plain irises). The page
+ignores it (the picker work package reads it); the compose event carries the set-level gate."""
 import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -16,6 +20,7 @@ from _lib import iris as L
 from _lib import catalogue
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
+from _lib.styles import gate as GATE   # the restoration gate: the set-level result of the eyes of one request
 
 PREVIEW_SIZE = 1024          # longest side of the artwork this endpoint returns. Kept at 1024 when the iris preview
                              # went down to 800 px (2026-09-29): at 900 the footer line of a 21:9 row of four eyes
@@ -44,6 +49,12 @@ def _pad(v):
     return min(2.0, max(1.0, p)) if p == p else 1.12
 
 def _irises(body):
+    """The iris squares of a request (the form every caller used before the eye profile): _irises_full(body)[0]."""
+    return _irises_full(body)[0]
+
+def _irises_full(body):
+    """(squares, metas): the iris squares of a request and, per eye, what its seal said (preview.unseal_full's meta: v, kind, eye_id,
+    profile), or None for an old page's plain irises."""
     raw = body.get("sealed")
     sealed = isinstance(raw, list) and len(raw) > 0     # the sealed form wins whenever it is sent
     if not sealed:
@@ -56,11 +67,14 @@ def _irises(body):
         raise L.ClientError("Each iris image must be sent as base64 text.")
     if sum(len(s) for s in raw) > MAX_TOTAL_B64:
         raise L.ClientError("Those images are too large together. Send each one at 1024 pixels.")
+    metas = [None] * len(raw)
     if sealed:
         try:
-            raw = [base64.b64encode(P.unseal(s)).decode("ascii") for s in raw]
+            opened = [P.unseal_full(s) for s in raw]
         except P.SealError as e:
             raise L.ClientError(P.refusal(e)) from None
+        raw = [base64.b64encode(plain).decode("ascii") for plain, _ in opened]
+        metas = [meta for _, meta in opened]
     out = []
     for s in raw:
         im = L.b64_to_pil(s, max_side=MAX_SIDE)
@@ -71,12 +85,29 @@ def _irises(body):
         if side > WORK_SIDE:
             im = im.resize((WORK_SIDE, WORK_SIDE), L.Image.LANCZOS)
         out.append(im)
-    return out
+    return out, metas
+
+def _eyes_reply(metas):
+    """The reply's "eyes": what each eye's seal says (see the module text)."""
+    rows = []
+    for i, m in enumerate(metas, 1):
+        prof = m.get("profile") if isinstance(m, dict) else None
+        ok = {r: (prof.gate(r)["ok"] if prof is not None else None) for r in GATE.RULES}
+        rows.append({"eye": i, "eye_id": m.get("eye_id") if isinstance(m, dict) else None,
+                     "cls": prof.cls if prof is not None else None, "pupil": prof.pupil_cls if prof is not None else None, "gate": ok})
+    return rows
+
+def _gate_code(style, n, metas):
+    """The set-level gate code of the request for the event: ok, unknown, or the reason code of the first failing eye, under the rule
+    set the style's engine entry names (the collision rule when the style has none)."""
+    rule = ((catalogue.engine_for(style, n) or {}).get("gate_rules")) or "lid"
+    r = GATE.set_result([(m or {}).get("profile") for m in metas], rule)
+    return "ok" if r["ok"] is True else ("unknown" if r["ok"] is None else r["first"]["why"])
 
 def compose(body):
     if not isinstance(body, dict):
         raise L.ClientError("Send a JSON object.")
-    ims = _irises(body)
+    ims, metas = _irises_full(body)
     n = len(ims)
     style = _choice(body.get("style"), catalogue.previewable_ids(n), catalogue.DEFAULT_STYLE)
     layouts = catalogue.layouts_for(style, n)
@@ -97,10 +128,11 @@ def compose(body):
         qa = {"ok": all(q["ok"] for q in eyes), "eyes": eyes}
     else:
         qa = L.colour_qa("compose", graded=graded)
-    E.record("compose", style=style, eyes=n, layout=layout, format=fmt, clean=bool(clean), qa_ok=bool(qa.get("ok")))
+    E.record("compose", style=style, eyes=n, layout=layout, format=fmt, clean=bool(clean), qa_ok=bool(qa.get("ok")),
+             gate=_gate_code(style, n, metas))
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": fmt,
             "count": n, "width": out.size[0], "height": out.size[1], "image": L.pil_to_b64(out, "JPEG", 90),
-            "styles": list(catalogue.previewable_ids(n)), "qa": qa}
+            "styles": list(catalogue.previewable_ids(n)), "qa": qa, "eyes": _eyes_reply(metas)}
 
 def handle(req): L.run(req, compose)
 
