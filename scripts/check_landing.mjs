@@ -21,10 +21,20 @@
 //   links      every legal link carries ?lang= and the market's edition (m=au, m=hu); every call to action goes to /try in the language
 //   ordering   the closed and the open states: the bar, the pricing notice, the FAQ item about ordering
 //   axe        axe-core with every <details> open, in eight states (needs axe-core: --axe, AXE_CORE, or node_modules/axe-core)
+//   resilience each lazy chunk of the page blocked in turn (a flaky network, a new deploy): the header, the hero and the footer stay, the page is
+//              not blank and does not reload itself in a loop
+//   skew       a new deploy under an open page (the old chunk is a 404 and the server's index.html names another script): the page reloads
+//              itself once, not in a loop; a chunk that fails while index.html is still the page's own does not reload it
+//   glass      the frosted blur of the header, the hero chip and the sticky phone button is really applied (a build that dropped the unprefixed
+//              backdrop-filter once left it off in Chrome, Edge and Firefox)
+//   shellclick a tap on a language button of the static first screen BEFORE the page's script has run switches the language, remembers it,
+//              keeps the focus on the new button, and the page that React then starts speaks that language
+//   offers     the offer of another currency: A$ only to a reader of English or German (the Australian edition has no other language), the
+//              forint offer to every language
 //   vitals     phone, slow 4G, CPU x4 (BUILD_PLAN section 5): LCP under 2.5 s (a warning above the 1.6 s target), CLS under 0.05, with
 //              the ordering flip mocked (the stub answers "open" after 2.5 s: the bar sentence changes in a page that is on screen)
 // Exit code 1 when any check fails.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch, sleep } from './lib/cdp.mjs';
@@ -52,10 +62,19 @@ const pass = (check, msg) => console.log(`  ok   ${check}: ${msg}`);
 
 // ---------------------------------------------------------------------------------------------------- the server and its API stub
 const stub = { open: false, suggest: null, delay: 0 };
+// a pretend new deploy for the skew check: from the second request for / on the server's index.html names another script, and the chunk is gone
+const skew = { on: false, chunk: '', rootHits: 0, mainFile: '' };
 const handler = (req, res) => {
   const url = new URL(req.url, 'http://x');
   const json = (o) => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(o)); };
   const later = (o) => setTimeout(() => json(o), stub.delay);
+  if (skew.on && url.pathname === '/' && ++skew.rootHits > 1) {
+    const html = readFileSync(join(dist, 'index.html'), 'utf8').split(skew.mainFile).join('/assets/main-NEWDEPLOY.js');
+    res.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
+    res.end(html);
+    return true;
+  }
+  if (skew.on && skew.chunk && url.pathname.includes(skew.chunk)) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('gone'); return true; }
   if (url.pathname === '/api/health') { later({ stripe: true, stripe_live: false, email: false }); return true; }
   if (url.pathname === '/api/checkout') { later({ ok: true, open: stub.open, suggest: stub.suggest }); return true; }
   if (url.pathname.startsWith('/api/')) { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{}'); return true; }
@@ -173,7 +192,7 @@ async function checkPhrases() {
       if (lang === 'en' || lang === 'de') {
         const printing = lang === 'en' ? /Printing is not part of your order/gi : /Der Druck gehört nicht zur Bestellung/gi;
         const n = (text.match(printing) || []).length;
-        if (n !== 5) msgs.push(`the line "printing is not part of your order" appears ${n} times (5 in the prototype: hero caption, wall, pricing, FAQ, closing)`);
+        if (n !== 6) msgs.push(`the line "printing is not part of your order" appears ${n} times (6: hero caption, wall, pricing, FAQ, polished edge, closing)`);
       }
       if (state === 'open') {
         const bar = await page.eval("document.getElementById('barText').textContent");
@@ -496,8 +515,170 @@ async function checkVitals() {
   }
 }
 
+// ---------------------------------------------------------------------------------------------------- resilience
+/** A page with some request URLs blocked from the first byte (Network.setBlockedURLs takes patterns with *). */
+async function openBlocked(patterns, { width = 375, height = 812, query = '' } = {}) {
+  const wipe = await chrome.page({ width: 400, height: 300 });
+  await wipe.goto(`${origin}/imprint?lang=en`);
+  await wipe.loaded();
+  await wipe.send('Storage.clearDataForOrigin', { origin, storageTypes: 'all' }).catch(() => undefined);
+  await wipe.close();
+  const page = await chrome.page({ width, height, mobile: width < 800, dpr: width < 800 ? 2 : 1 });
+  // a file this browser has fetched before comes from its cache and is never asked for again, so a block would not touch it
+  await page.send('Network.setCacheDisabled', { cacheDisabled: true });
+  await page.send('Network.setBlockedURLs', { urls: patterns });
+  // which requests the block really stopped (a check that blocks nothing proves nothing)
+  const urls = new Map();
+  page.blocked = [];
+  page.on((e) => {
+    if (e.method === 'Network.requestWillBeSent') urls.set(e.params.requestId, e.params.request.url);
+    if (e.method === 'Network.loadingFailed' && e.params.blockedReason) page.blocked.push(urls.get(e.params.requestId) || '');
+  });
+  await page.goto(`${origin}/${query}`);
+  return page;
+}
+
+async function checkResilience() {
+  console.log('resilience');
+  const files = readdirSync(join(dist, 'assets')).filter((f) => f.endsWith('.js'));
+  const SECTIONS = ['Reveal', 'Wall', 'StyleGallery', 'HowItWorks', 'Pricing', 'CloseUps', 'Trust', 'Faq', 'ClosingScene', 'SizeGuide', 'MoreRooms'];
+  const picked = quick ? ['Faq', 'Wall', 'SizeGuide'] : SECTIONS;
+  for (const name of picked) {
+    const file = files.find((f) => f.startsWith(`${name}-`));
+    if (!file) { fail('resilience', `no chunk ${name}-*.js in ${dist}/assets: the section list of this check is out of date`); continue; }
+    const page = await openBlocked([`*/assets/${file}`]);
+    await sleep(1500);
+    await page.eval('window.__marker = 1');
+    await sleep(5500);
+    const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: !!document.getElementById('hdr'), hero: !!document.querySelector('.lp-hero h1'), ftr: !!document.querySelector('.lp-ftr'),
+      root: document.getElementById('root').childElementCount, h: document.documentElement.scrollHeight,
+      marker: window.__marker === 1, others: document.querySelectorAll('main > section.lp-sec, main > section.lp-final').length })`));
+    const msgs = [];
+    if (!page.blocked.some((u) => u.includes(file))) msgs.push(`the block did not apply (no request for ${file} was stopped), so nothing was tested`);
+    if (!r.hdr || !r.hero || !r.ftr) msgs.push(`the page lost ${[!r.hdr && 'the header', !r.hero && 'the hero', !r.ftr && 'the footer'].filter(Boolean).join(', ')}`);
+    if (!r.root) msgs.push('React left #root empty (a blank page)');
+    // the blocked section is the one that is missing: the others are all there
+    const total = SECTIONS.filter((s) => !['SizeGuide', 'MoreRooms'].includes(s)).length;
+    if (!['SizeGuide', 'MoreRooms'].includes(name) && r.others !== total - 1) msgs.push(`${r.others} sections are on the page, ${total - 1} expected (the blocked one missing, the others there)`);
+    if (r.h < 2500) msgs.push(`the page is ${r.h} px high: the other sections are gone too`);
+    if (!r.marker) msgs.push('the page reloaded itself');
+    if (msgs.length) fail('resilience', `${name} blocked: ${msgs.join('; ')}`);
+    else pass('resilience', `${name} blocked: the page stays (${r.others} sections, ${r.h} px, no reload)`);
+    await page.close();
+  }
+}
+
+async function checkSkew() {
+  console.log('skew');
+  const html = readFileSync(join(dist, 'index.html'), 'utf8');
+  const main = /\/assets\/main-[\w-]+\.js/.exec(html);
+  const faq = readdirSync(join(dist, 'assets')).find((f) => f.startsWith('Faq-') && f.endsWith('.js'));
+  if (!main || !faq) { fail('skew', 'no main or Faq chunk in the build'); return; }
+  for (const deployed of [true, false]) {
+    skew.on = true; skew.rootHits = 0; skew.chunk = faq; skew.mainFile = deployed ? main[0] : '/assets/no-such-script-name.js';
+    const page = await openBlocked([], {});
+    await sleep(7000);
+    const hits1 = skew.rootHits;
+    await sleep(3500);
+    const hits2 = skew.rootHits;
+    skew.on = false;
+    const msgs = [];
+    if (deployed) {
+      if (hits1 !== 3) msgs.push(`/ was asked for ${hits1} times (3 expected: the page, the freshness check, the one reload)`);
+      if (hits2 !== hits1) msgs.push(`the page kept asking for / (${hits1} then ${hits2}): a reload loop`);
+    } else {
+      if (hits1 !== 2) msgs.push(`/ was asked for ${hits1} times (2 expected: the page and the freshness check; more means the page reloaded although only the network failed)`);
+    }
+    if (msgs.length) fail('skew', `${deployed ? 'a new deploy' : 'a failed chunk, same deploy'}: ${msgs.join('; ')}`);
+    else pass('skew', deployed ? 'a new deploy under an open page: reloaded once, no loop' : 'a failed chunk with the same deploy: no reload, the page stays');
+    await page.close();
+  }
+  skew.on = false; skew.chunk = '';
+}
+
+// ---------------------------------------------------------------------------------------------------- glass
+async function checkGlass() {
+  console.log('glass');
+  for (const width of [375, 1280]) {
+    const page = await open({ lang: 'en', width, settle: false });
+    await sleep(2500);
+    await page.eval('window.scrollTo({ top: 400, behavior: "instant" })');
+    await sleep(500);
+    const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: getComputedStyle(document.getElementById('hdr')).backdropFilter, chip: getComputedStyle(document.querySelector('.lp-frame-chip')).backdropFilter })`));
+    const msgs = [];
+    if (!r.hdr || r.hdr === 'none') msgs.push(`the solid header has backdrop-filter "${r.hdr}"`);
+    if (!r.chip || r.chip === 'none') msgs.push(`the hero chip has backdrop-filter "${r.chip}"`);
+    if (width < 768) {
+      await page.eval('window.scrollTo({ top: 1500, behavior: "instant" })');
+      await sleep(700);
+      const s = await page.eval(`getComputedStyle(document.querySelector('.lp-sticky')).backdropFilter`);
+      if (!s || s === 'none') msgs.push(`the sticky phone bar has backdrop-filter "${s}"`);
+    }
+    if (msgs.length) fail('glass', `${width}px: ${msgs.join('; ')}`);
+    else pass('glass', `${width}px: the header, the hero chip${width < 768 ? ' and the sticky bar' : ''} are frosted (${r.hdr})`);
+    await page.close();
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------- shellclick
+async function checkShellClick() {
+  console.log('shellclick');
+  const page = await openBlocked(['*/assets/main-*.js']);
+  await sleep(2500);
+  // the static first screen is on screen and React has not started (its script is blocked)
+  const before = await page.eval("JSON.stringify({ shell: !!document.getElementById('shell'), root: document.getElementById('root').childElementCount, lang: document.documentElement.lang })");
+  const b = JSON.parse(before);
+  if (!b.shell || b.root) { fail('shellclick', `the test setup failed (${before})`); await page.close(); return; }
+  await page.eval("document.querySelector('#langSeg button[lang=de]').click()");
+  await sleep(300);
+  const r = JSON.parse(await page.eval(`JSON.stringify({ lang: document.documentElement.lang, pressed: document.querySelector('#langSeg button[aria-pressed=true]')?.getAttribute('lang'),
+    focus: document.activeElement?.getAttribute('lang'), stored: localStorage.getItem('snapeyes.lang'), url: location.search, h1: document.querySelector('#shell h1')?.textContent || '' })`));
+  const msgs = [];
+  if (r.lang !== 'de') msgs.push(`html lang is "${r.lang}"`);
+  if (r.pressed !== 'de') msgs.push(`the pressed button is "${r.pressed}"`);
+  if (r.focus !== 'de') msgs.push(`the focus is on "${r.focus}" (the markup was replaced)`);
+  if (r.stored !== 'de') msgs.push(`the choice was not remembered ("${r.stored}")`);
+  if (!/lang=de/.test(r.url)) msgs.push(`the address has "${r.url}"`);
+  if (r.h1.trim() !== COPY.de.hero.title) msgs.push(`the headline is "${r.h1.trim().slice(0, 40)}", not the German "${COPY.de.hero.title.slice(0, 40)}"`);
+  // and back to English from the German shell (the English markup is kept)
+  await page.eval("document.querySelector('#langSeg button[lang=en]').click()");
+  await sleep(200);
+  const back = await page.eval("document.documentElement.lang + '|' + document.querySelector('#shell h1').textContent");
+  if (back !== `en|${COPY.en.hero.title}`) msgs.push(`back to English gives "${back.slice(0, 60)}"`);
+  // React starts now (the script is let through) and speaks what the visitor chose
+  await page.send('Network.setBlockedURLs', { urls: [] });
+  await page.goto(`${origin}/?lang=de`);
+  await page.loaded();
+  for (let i = 0; i < 60 && !(await page.eval("document.getElementById('root').childElementCount > 0")); i++) await sleep(100);
+  const live = JSON.parse(await page.eval("JSON.stringify({ lang: document.documentElement.lang, pressed: document.querySelector('#langSeg button[aria-pressed=true]')?.getAttribute('lang'), shell: !!document.getElementById('shell') })"));
+  if (live.lang !== 'de' || live.pressed !== 'de' || live.shell) msgs.push(`after React started: ${JSON.stringify(live)}`);
+  if (msgs.length) fail('shellclick', msgs.join('; '));
+  else pass('shellclick', 'a tap on DE before React ran switched the first screen, kept the choice and the focus; React then started in German');
+  await page.close();
+}
+
+// ---------------------------------------------------------------------------------------------------- offers
+async function checkOffers() {
+  console.log('offers');
+  const cases = [
+    ['en', 'au', true], ['de', 'au', true], ['lt', 'au', false], ['hu', 'au', false],
+    ['en', 'hu', true], ['lt', 'hu', true], ['hu', 'hu', true],
+  ];
+  for (const [lang, suggest, want] of cases) {
+    stub.suggest = suggest;
+    stub.delay = 0;
+    const page = await open({ lang, width: 375, settle: false });
+    await sleep(2500);
+    const offered = await page.eval('!!document.querySelector(".lp-market")');
+    stub.suggest = null;
+    if (offered !== want) fail('offers', `${lang} reader, the server suggests ${suggest}: the offer is ${offered ? 'shown' : 'not shown'}, it should be ${want ? 'shown' : 'not shown'}`);
+    else pass('offers', `${lang} reader, the server suggests ${suggest}: ${offered ? 'offered' : 'not offered'}`);
+    await page.close();
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------- run
-const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, vitals: checkVitals };
+const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, vitals: checkVitals };
 try {
   for (const [name, fn] of Object.entries(checks)) {
     if (!wants(name)) continue;
