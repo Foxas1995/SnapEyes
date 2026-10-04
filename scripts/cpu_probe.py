@@ -38,14 +38,28 @@ def show_local(res):
     print(f"  {'total':20} {res['total']:8.3f}   (process CPU {res['process_cpu_s']} s over {res['wall_s']} s of wall time)")
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """urllib would follow a 301, 302 or 303 on this POST and send the Authorization header (the admin key) and the extra
+    headers to whatever host the Location names. A redirect is refused instead: the caller gets the 3xx as an answer."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
 def post(url, key, body, headers):
     req = urllib.request.Request(url.rstrip("/") + "/api/admin", data=json.dumps(body).encode("utf-8"), method="POST",
                                  headers=dict({"Content-Type": "application/json", "Authorization": "Bearer " + key,
                                                "User-Agent": "snapeyes-cpu-probe"}, **headers))
     try:
-        with urllib.request.urlopen(req, timeout=100) as r:
+        with _OPENER.open(req, timeout=100) as r:
             return r.status, json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
+        if 300 <= e.code < 400:
+            where = urlsplit(e.headers.get("Location") or "").netloc or "?"
+            return e.code, {"ok": False, "reason": f"redirect_refused (to {where}): the admin key is not sent on, use the final URL"}
         try:
             return e.code, json.loads(e.read().decode("utf-8"))
         except ValueError:
@@ -115,6 +129,8 @@ def main():
     print(f"  process CPU {rep['process_cpu_s']} s over {rep['wall_s']} s of wall time; run totals {rep['run_totals']}")
     if rep.get("imports"):
         print("  imports on this instance: " + ", ".join(f"{k} {v['s']} s{' (already loaded)' if v['already_loaded'] else ''}" for k, v in rep["imports"].items()))
+    if rep.get("imports_fresh_interpreter"):
+        print("  imports in a fresh interpreter there: " + json.dumps(rep["imports_fresh_interpreter"]))
     print(f"  configured STYLE_SLOW_CPU there: {rep['configured_style_slow_cpu']}")
     print("  instance: " + json.dumps(rep["instance"], sort_keys=True))
     return 0

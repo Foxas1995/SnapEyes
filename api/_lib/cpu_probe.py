@@ -6,15 +6,19 @@ The workload stands in for what the style engines do at 4096 px and uses no engi
 sine, cosine and exp, a 4096 px RGB frame, a LANCZOS reduction to 1024 px, a bincount scatter, a JPEG q95 4:4:4 encode and a
 decode. It is the workload of the planning spike's `cpu_probe` with one change: the RGB frame is made in float32 (50 MB as bytes,
 about 200 MB while it is made), not float64 (about 800 MB at the peak), so that the probe cannot be the thing that runs a
-1 GB function out of memory; the whole probe peaks near 350 MB. Because the code differs from the spike's, its baseline is
-measured again with this very code (scripts/cpu_probe.py), on the day of the Vercel run, and sent with the request.
+1 GB function out of memory; the whole probe peaks near 420 MB of working set (measured on the development machine, Windows,
+2026-10-04; the commit charge there reads 920 MB, which is not resident memory). Because the code differs from the spike's, its
+baseline is measured again with this very code (scripts/cpu_probe.py), on the day of the Vercel run, and sent with the request.
 
 slow_factor = seconds on the instance / baseline seconds, over the sum of the phases (and per phase). The style engines' time
 estimates multiply their local seconds by STYLE_SLOW_CPU (environment, default 1.6, style_slow_cpu() here); this is where a
-better number comes from. `mode`: "cold" is one measured run with no warm-up and with the import times of numpy and Pillow, the
-way the first request on a fresh instance sees it (call it right after a deploy, once: `first_on_instance` says whether it was
-the first probe of this process); "warm" is one unmeasured run, then the median of up to three. The reply also carries what the
-instance says about itself (memory and CPU limits, /tmp, interpreter and package versions, the region), a fixed list of facts
+better number comes from. `mode`: "cold" is one measured run with no warm-up and with the import times of numpy and Pillow,
+the way the first request on a fresh instance sees it (call it right after a deploy, once: `first_on_instance` says whether it was
+the first probe of this process); "warm" is one unmeasured run, then the median of up to three. The admin function has numpy and
+Pillow loaded long before the probe runs (api/_lib/iris.py imports them), so the in-process import time of a cold probe reads
+"already_loaded" and about zero: the real import cost is measured in a fresh interpreter (`imports_fresh_interpreter`, a child
+process that imports the two packages, a few seconds at most; the page cache is warm by then, so it is a floor). The reply also
+carries what the instance says about itself (memory and CPU limits, /tmp, interpreter and package versions, the region), a fixed list of facts
 and no environment values besides it, so it answers the instance questions of the plan (memory, vCPU, /tmp) as far as an
 instance can know them; the project's own settings (Fluid, maximum duration) stay unverified until someone reads them."""
 from __future__ import annotations
@@ -24,6 +28,7 @@ import math
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -108,17 +113,46 @@ def _median(v):
     return s[len(s) // 2]
 
 
+_CHILD_IMPORTS = ("import time, json; t = time.perf_counter(); import numpy; a = time.perf_counter() - t; "
+                  "t = time.perf_counter(); import PIL.Image; b = time.perf_counter() - t; "
+                  "print(json.dumps({'numpy': round(a, 3), 'PIL.Image': round(b, 3)}))")
+
+
+def fresh_import_seconds(timeout: float = 20.0) -> dict:
+    """What importing numpy and Pillow costs in an interpreter that has not loaded them: a child process, so that the answer
+    does not read "already loaded" in a function that imports them at start. The child gets this process's module path (a
+    function's packages are not on a bare interpreter's path). {"numpy": s, "PIL.Image": s} or {"error": the exception type
+    or "exit N"}. Nothing of the environment is passed on beyond what the child inherits, and nothing is read from its output
+    except two numbers."""
+    try:
+        r = subprocess.run([sys.executable, "-c", _CHILD_IMPORTS], capture_output=True, text=True, timeout=timeout,
+                           env=dict(os.environ, PYTHONPATH=os.pathsep.join(p for p in sys.path if p), PYTHONIOENCODING="utf-8"))
+    except (OSError, subprocess.SubprocessError) as e:
+        return {"error": type(e).__name__}
+    if r.returncode != 0:
+        return {"error": f"exit {r.returncode}"}
+    try:
+        import json
+        v = json.loads(r.stdout.strip().splitlines()[-1])
+        return {"numpy": float(v["numpy"]), "PIL.Image": float(v["PIL.Image"])}
+    except (ValueError, KeyError, IndexError, TypeError):
+        return {"error": "unreadable"}
+
+
 def measure(mode: str = "warm", runs: int = 3, time_left=None) -> dict:
     """Run the probe here. `time_left()` (seconds, optional) stops the warm runs early; at least one measured run is always
     made. Returns {mode, runs, phases, total, cpu_total, run_totals, imports (cold)}."""
     imports = {}
+    fresh = None
     if mode == "cold":
-        # what a fresh instance pays for these two imports (zero when they are already loaded: noted)
+        # in this process: zero when the modules are already loaded (the admin function loads them at start: noted)...
         for name in ("numpy", "PIL.Image"):
             t0 = time.perf_counter()
             loaded = name in sys.modules
             __import__(name)
             imports[name] = {"s": round(time.perf_counter() - t0, 3), "already_loaded": loaded}
+        # ...and in an interpreter that has not loaded them, which is what a fresh instance pays
+        fresh = fresh_import_seconds(20.0 if time_left is None else max(3.0, min(20.0, time_left() - 15.0)))
     all_runs, cpu0 = [], time.process_time()
     wall0 = time.perf_counter()
     if mode == "warm":
@@ -138,6 +172,8 @@ def measure(mode: str = "warm", runs: int = 3, time_left=None) -> dict:
            "process_cpu_s": round(cpu, 3), "wall_s": round(time.perf_counter() - wall0, 3)}
     if imports:
         out["imports"] = imports
+    if fresh is not None:
+        out["imports_fresh_interpreter"] = fresh
     return out
 
 
@@ -223,7 +259,11 @@ def _baseline_from(body: dict):
         raise ValueError("baseline must be an object")
 
     def num(v):
-        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or not 0.001 <= v <= 120:
+        try:
+            ok = not isinstance(v, bool) and isinstance(v, (int, float)) and math.isfinite(v) and 0.001 <= v <= 120
+        except OverflowError:      # math.isfinite(10 ** 400): a whole number too big for a float is a bad number, not a crash
+            ok = False
+        if not ok:
             raise ValueError("baseline seconds must be numbers between 0.001 and 120")
         return float(v)
     if "phases" in b:
