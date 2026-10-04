@@ -29,7 +29,11 @@ let failTimer = 0;
 export function boot() {
   if (!motionOk() || !('IntersectionObserver' in window)) return;
   root.classList.add('mo');
-  failTimer = window.setTimeout(() => root.classList.add('mo-fail'), 3500);
+  const arm = () => { failTimer = window.setTimeout(() => root.classList.add('mo-fail'), 3500); };
+  // a page opened in a background tab is not rendered, so no observer can report: the clock starts when the tab is first seen, not before
+  // (otherwise every page opened in a new tab would give up its reveals while nobody was looking)
+  if (document.hidden) document.addEventListener('visibilitychange', function seen() { if (!document.hidden) { document.removeEventListener('visibilitychange', seen); arm(); } });
+  else arm();
 }
 
 // Reveal once. Call it ONCE per page (the entry, right after boot()): a MutationObserver picks up every [data-reveal] node React

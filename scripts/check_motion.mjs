@@ -289,6 +289,23 @@ async function checkEngine() {
   expect('engine', r2.at39[0] === true && r2.at39[1] === '1', `after 3.5 s with a dead observer: ${JSON.stringify(r2.at39)} (want mo-fail and opacity 1)`);
   await p.close();
 
+  // 2b. a page opened in a background tab gets its failsafe clock only when the tab is first seen (nothing is rendered, so no observer could report)
+  p = await sandbox();
+  const r2b = JSON.parse(await p.eval(`(async () => {
+    document.body.innerHTML = '<div class="pad"></div><div id="a" data-reveal="fade">A</div><div class="pad"></div>';
+    let hidden = true; Object.defineProperty(document, 'hidden', { get: () => hidden });
+    const real = window.IntersectionObserver; window.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+    const m = await window.importMotion(); m.boot(); m.reveals(); window.IntersectionObserver = real;
+    const root = document.documentElement, out = {};
+    await new Promise((r) => setTimeout(r, 4200)); out.hiddenFor42 = root.classList.contains('mo-fail');
+    hidden = false; document.dispatchEvent(new Event('visibilitychange'));
+    await new Promise((r) => setTimeout(r, 3000)); out.seen3 = root.classList.contains('mo-fail');
+    await new Promise((r) => setTimeout(r, 900)); out.seen39 = root.classList.contains('mo-fail');
+    return JSON.stringify(out);
+  })()`));
+  expect('engine', r2b.hiddenFor42 === false && r2b.seen3 === false && r2b.seen39 === true, `the failsafe clock of a page opened in a background tab: ${JSON.stringify(r2b)} (want false, false, true)`);
+  await p.close();
+
   // 3. the pinned scene at 1280 x 800: the stage holds the top at every p, the progress reads p
   p = await sandbox({ width: 1280, height: 800 });
   const r3 = JSON.parse(await p.eval(`(async () => {

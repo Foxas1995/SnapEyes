@@ -554,7 +554,7 @@ async function checkResilience() {
     await sleep(5500);
     const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: !!document.getElementById('hdr'), hero: !!document.querySelector('.lp-hero h1'), ftr: !!document.querySelector('.lp-ftr'),
       root: document.getElementById('root').childElementCount, h: document.documentElement.scrollHeight,
-      marker: window.__marker === 1, others: document.querySelectorAll('main > section.lp-sec, main > section.lp-final').length })`));
+      marker: window.__marker === 1, others: document.querySelectorAll('main > section.lp-sec, main > .lp-sheet > section.lp-sec, main > section.lp-final').length })`));
     const msgs = [];
     if (!page.blocked.some((u) => u.includes(file))) msgs.push(`the block did not apply (no request for ${file} was stopped), so nothing was tested`);
     if (!r.hdr || !r.hero || !r.ftr) msgs.push(`the page lost ${[!r.hdr && 'the header', !r.hero && 'the hero', !r.ftr && 'the footer'].filter(Boolean).join(', ')}`);
@@ -605,7 +605,7 @@ async function checkStall() {
   skew.on = true; skew.hang = true; skew.chunk = wall; skew.rootHits = 0; skew.mainFile = '/assets/no-such-script-name.js';
   const page = await openBlocked([], {});
   await sleep(11000);
-  const r = JSON.parse(await page.eval(`JSON.stringify({ wallHole: !!document.querySelector('#wall.lp-slot'), mounted: [...document.querySelectorAll('main > section:not(.lp-slot)')].map((s) => s.id).filter(Boolean) })`));
+  const r = JSON.parse(await page.eval(`JSON.stringify({ wallHole: !!document.querySelector('#wall.lp-slot'), mounted: [...document.querySelectorAll('main > section:not(.lp-slot), main > .lp-sheet > section:not(.lp-slot)')].map((s) => s.id).filter(Boolean) })`));
   skew.on = false; skew.hang = false; skew.chunk = '';
   const want = ['reveal', 'styles', 'how', 'pricing', 'closeups', 'trust', 'faq', 'final'];
   const missing = want.filter((id) => !r.mounted.includes(id));
