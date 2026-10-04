@@ -204,6 +204,21 @@ check("the seal's profile size cap equals the profile module's (8192 bytes)", P.
 
 # ============================================================================================ 3. the profile of procedural eyes
 section("3. the profile: classes, pupils, gates (procedural eyes)")
+import collections  # noqa: E402
+
+
+def container_sizes():
+    """The size of every module level dict, list and set of the new modules: nothing there may grow with the eyes seen (a warm
+    instance renders for hours: the design code kept unbounded dicts keyed by eye, test IE6 holds this port to none)."""
+    out = {}
+    for mod in (EYE, GATE, PUP, PAL):
+        for name, v in vars(mod).items():
+            if isinstance(v, (dict, list, set, collections.OrderedDict)) and not name.startswith("__"):
+                out[f"{mod.__name__}.{name}"] = len(v)
+    return out
+
+
+SIZES_BEFORE = container_sizes()
 EYES = {}
 for key, args in {"own": ("own", "round", False), "brown": ("dark_brown", "round", False), "grey": ("grey", "round", False),
                   "slit": ("own", "slit", False), "bar": ("own", "bar", False), "own_lid": ("own", "round", True),
@@ -262,6 +277,8 @@ check("public(): eye_id, version, class, ease, pupil class, the gate's ok per ru
 check("the profile's wire form is at most 8192 bytes for every procedural eye (about 1 to 1.8 KB)",
       all(len(EYES[k]["prof"].to_wire()) <= EYE.MAX_PROFILE_BYTES for k in EYES) and max(len(EYES[k]["prof"].to_wire()) for k in EYES) < 3000,
       {k: len(EYES[k]["prof"].to_wire()) for k in EYES})
+check("eight profiles of different eyes leave every module level container of the new modules as it was (no cache that grows with the eyes seen)",
+      container_sizes() == SIZES_BEFORE, {k: (SIZES_BEFORE.get(k), v) for k, v in container_sizes().items() if SIZES_BEFORE.get(k) != v})
 cpu_best = min(EYES[k]["cpu"] for k in EYES)
 check("measuring a profile (both gate rules) takes at most 3 s of CPU per eye locally (the best of eight, CPU time)", cpu_best <= 3.0, cpu_best)
 print("   profile CPU seconds per eye:", {k: round(EYES[k]["cpu"], 2) for k in EYES}, flush=True)
