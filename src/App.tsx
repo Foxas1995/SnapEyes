@@ -85,14 +85,23 @@ function Page() {
       <main id="main">
         <MarketHintBar />
         <HeroSection ctaRef={heroCta} />
-        <Slot name="reveal" />
-        <Slot name="wall" />
-        <Slot name="styles" />
-        <Slot name="how" />
-        <Slot name="pricing" />
-        <Slot name="closeups" />
-        <Slot name="trust" />
-        <Slot name="faq" />
+        {/* Three chapters, three rounded sheets that roll over what is above them (motion spec 6.0, src/motion/motion.css): the proof (the
+            Reveal), the choice (the wall, the styles, how it works), the price and the trust (pricing, the close-ups, trust, the FAQ). The
+            closing scene and the footer are flat bands. The slots are inside the sheets, so a section arrives where its place was held. */}
+        <div className="lp-sheet lp-sheet-a">
+          <Slot name="reveal" />
+        </div>
+        <div className="lp-sheet lp-sheet-c">
+          <Slot name="wall" />
+          <Slot name="styles" />
+          <Slot name="how" />
+        </div>
+        <div className="lp-sheet lp-sheet-d">
+          <Slot name="pricing" />
+          <Slot name="closeups" />
+          <Slot name="trust" />
+          <Slot name="faq" />
+        </div>
         <Slot name="final" />
       </main>
       <SiteFooter />
