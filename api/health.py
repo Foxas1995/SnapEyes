@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 from _lib import store
 from _lib import pay
+from _lib.styles import plates
 import deglare
 
 def handle(req):
@@ -35,6 +36,8 @@ def handle(req):
             # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)
             "deglare_model": deglare.DEGLARE_MODEL,
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx"))}
+    # the style engine (booleans only): the registries agree, and the 4K plates the visible styles fetch are in storage (api/_lib/styles/plates.py health)
+    info.update(plates.health())
     L.send_json(req, 200, info)
 
 class handler(BaseHTTPRequestHandler):

@@ -20,7 +20,9 @@ valid 1 h, QA flags, payments, refunds, the admin log, its price experiment), au
 "Kainų testai": every price experiment of api/_lib/experiments.py with its state, variants, the funnel and revenue per
 variant, the significance note and the warnings; api/_lib/abtest.py), cpu_probe (a fixed CPU workload run on this very
 instance, cold or warm: seconds per phase, the slow factor against a baseline the caller sends, and what the instance says
-about its memory, CPUs and /tmp; nothing is read from storage or changed; api/_lib/cpu_probe.py).
+about its memory, CPUs and /tmp; nothing is read from storage or changed; api/_lib/cpu_probe.py), plates_status (the plate
+library as THIS function sees it: the 1K plates and the two atlases in the bundle with their recorded sizes, the 4K plates in
+private storage when asked for, the registry's version and hash; read only; api/_lib/styles/plates.py).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
 "confirm"): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
@@ -1134,10 +1136,39 @@ def a_cpu_probe(body, who):
         raise L.ClientError(str(e))
 
 
+# ----------------------------------------------------------------------------- the plate library
+def a_plates_status(body, who):
+    """{deep: bool, storage: bool, families: [family ids]}: the plate library as this function sees it. bundle: every usable plate's 1K
+    file in api/_assets/plates with the size the baked registry records (deep: and its sha256), the two atlases; registry: the style
+    registry's hash and plates version, the plates version of the baked library, the number of plates; storage (only when asked: one
+    request per plate, so it is bounded to the families named, default the families of the first release): the 4K plates in private
+    storage, with a downloaded and hashed sample. Reads and changes nothing (no write, no audit line); this function is a rendering
+    one, so its bundle is the bundle of compose, master_compose and order."""
+    from . import catalogue as CT
+    from . import plates_registry as PR
+    from .styles import atlas as AT, plates as PL, costs as CO
+    deep = bool(body.get("deep"))
+    out = {"ok": True, "bundle": PL.bundle_status(deep=deep), "atlas": AT.status(),
+           "registry": {"styles_hash": CT.registry_hash(), "plates_version": CT.PLATES_VERSION, "library_version": PR.PLATES_VERSION,
+                        "plates": len(PR.PLATES_REGISTRY["plates"]), "usable": sum(PL.families().values()),
+                        "families": {f: {"usable": n, "store4k": PR.PLATES_REGISTRY["families"][f]["store4k"],
+                                         "release1": PR.PLATES_REGISTRY["families"][f]["release1"]} for f, n in PL.families().items()}},
+           "function": {"memory_mb": CO.FUNCTION_MEM_MB, "memory_budget_mb": CO.MEM_BUDGET_MB, "cache": PL.cache_dir()}}
+    if body.get("storage"):
+        fams = body.get("families")
+        if fams is None:
+            fams = [f for f, d in PR.PLATES_REGISTRY["families"].items() if d["release1"]]
+        if not isinstance(fams, list) or not all(isinstance(f, str) and f in PR.PLATES_REGISTRY["families"] for f in fams):
+            raise L.ClientError("families must be a list of plate family ids")
+        out["storage"] = PL.storage_status(fams, deep=True)
+    out["ok"] = out["bundle"]["ok"] and out["atlas"]["ok"] and out["registry"]["library_version"] == out["registry"]["plates_version"]         and out.get("storage", {"ok": True})["ok"]
+    return out
+
+
 # ----------------------------------------------------------------------------- serving
 ACTIONS = {
     "me": a_me, "summary": a_summary, "stats": a_stats, "errors": a_errors, "orders": a_orders, "order": a_order,
-    "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe,
+    "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe, "plates_status": a_plates_status,
     "exp_start": audited("exp_start", act_exp_start),
     "exp_stop": audited("exp_stop", act_exp_stop),
     "link": audited("link", act_link),
