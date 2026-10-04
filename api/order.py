@@ -20,8 +20,9 @@ draft: one eye of an unpaid order, uploaded on its own (the 4.5 MB request limit
   does not verify or is one of the smaller "sealed_sizes" copies, which only /api/compose opens). The eye record the draft
   stores (draft/eye_<n>.json) gains eye_id (the first 16 hex digits of the sha256 of the preview bytes, which is what the
   seal's own id says too) and, when the seal carries one, profile (the eye profile measured at /api/enhance, api/_lib/
-  styles/eye.py: read from the seal, so authentic, never from the page): checkout reads the gate from it, the master
-  compares its own measurement with it. A preview sealed before the profile existed, or one an old page sends plain, has
+  styles/eye.py: read from the seal, so authentic, never from the page); a style whose gate is hard reads its gate from
+  it at checkout and the master compares its own measurement with it (those readers land with the checkout and master
+  work packages; nothing reads it yet). A preview sealed before the profile existed, or one an old page sends plain, has
   the id and no profile (the gate is unknown). Old pages send
   preview = the clean image string instead, accepted for one release (a display copy, which an old page would get
   from the new /api/enhance, is refused 409 preview_outdated). pad = the pad
