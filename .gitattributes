@@ -1,0 +1,4 @@
+# line endings that must not turn into CRLF on a Windows checkout (autocrlf): shell scripts run by bash, the interpreter pin
+*.sh text eol=lf
+.python-version text eol=lf
+suites/** text=auto eol=lf

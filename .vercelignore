@@ -1,0 +1,3 @@
+# Not uploaded with a deployment: the guard suites (suites/README.md) and their run folder. vercel.json excludeFiles keeps
+# them out of the functions as well; the private image fixtures are not in git at all.
+/suites/

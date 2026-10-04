@@ -4,7 +4,7 @@
   "functions": {
     "api/**/*.py": {
       "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,.git/**,*.html,*.json,*.ts,*.md}"
+      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
     }
   },
   "crons": [

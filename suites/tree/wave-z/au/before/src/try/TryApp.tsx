@@ -1,0 +1,1350 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Camera, Upload, Sparkles, RefreshCcw, Video, Check, AlertTriangle, ZoomIn, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
+import {
+  type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, mapPool,
+  autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf,
+} from './shots';
+import {
+  type Art, type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
+  MAX_EYES, STUDY_PENDING_MAX, colourOff, composeSide, deviceInfo, effectiveLayout, outcomeOf, studyAnswered, studyBody, studyOn,
+} from './multi';
+import { COPY, T, setCopyLang, type BlockCopy } from './copy';
+import { detectLang, rememberLang, type Lang } from './lang';
+import { ResultView, type StyleOption } from './ResultView';
+import { StudyCard } from './StudyCard';
+import { RetakeGuide } from './RetakeGuide';
+import { BuyCard, type Ordering } from './BuyCard';
+import {
+  type CheckoutError, type CheckoutOutcome, type CheckoutStep, type OrderRef, type Snapshot, TICKET_MARGIN_MS, TICKET_MS,
+  loadOrderRef, runCheckout, saveOrderRef, saveSnapshot, staleEyes, takeSnapshot,
+} from './checkout';
+import { callApi, type CheckoutInfo } from '../order/api';
+import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
+import { currentMarket, serverPrices, withMarket } from '../shared/markets';
+import { LegalParts } from '../shared/LegalLinks';
+
+type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
+type ShotSource = 'input' | 'live';
+
+// Several photos are measured at once: each /api/analyze call is mostly waiting on the vision model, so
+// three in flight cut the wait roughly threefold without piling a whole gallery onto the server at once.
+const ANALYZE_CONCURRENCY = 3;
+
+// Composed previews kept per set of eyes: enough to flip between styles and layouts without a new request.
+const ART_CACHE_MAX = 12;
+
+// The owner's capture study (?study=1): two questions after each analysed shot, sent with the next analyze.
+const STUDY = typeof window !== 'undefined' && studyOn(window.location.search);
+
+// The page's language, by the landing page's rule (./lang). Set before the first render, so no screen ever shows in
+// the wrong language; after that only the EN/DE switch in the header changes it.
+if (typeof window !== 'undefined') setCopyLang(detectLang());
+
+// The way back from Stripe's payment page (its cancel link, or the browser's back button after a fresh load): the
+// artwork this tab kept in sessionStorage just before it opened that page (./checkout.ts). Read once, when the page
+// loads, and removed from storage at once; the cancel link's own parameters leave the address bar, so a reload does not
+// announce the cancelled payment again.
+const RETURN: { snap: Snapshot | null; cancelled: boolean } | null = typeof window !== 'undefined' ? readReturn() : null;
+
+function readReturn(): { snap: Snapshot | null; cancelled: boolean } | null {
+  let cancelled = false;
+  let order: string | null = null;
+  try {
+    const q = new URLSearchParams(window.location.search);
+    cancelled = q.get('checkout') === 'cancelled';
+    order = q.get('o');
+  } catch { /* no URL access */ }
+  const snap = takeSnapshot(cancelled ? order : null);
+  if (cancelled) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('checkout'); url.searchParams.delete('o');
+      window.history.replaceState(null, '', url);
+    } catch { /* keep the page working without history access */ }
+  }
+  return snap || cancelled ? { snap, cancelled } : null;
+}
+
+// the analysis replies carry the time they arrived: the work ticket in them lives 15 minutes from then
+type Stamped = Analysis & { receivedAt?: number };
+
+interface Enhanced { image: string; fidelity: number; used_sr: boolean; fallback: boolean; seconds: number; stored?: boolean; qa?: ColourQa | null }
+interface ComposeReply { image: string; width: number; height: number; layout: string }
+
+// accent = api/_lib/iris.py STYLES[id].accent. The picker draws each swatch from it around the customer's
+// own iris: the old style_thumb_*.jpg showed a stock blue eye next to the customer's result.
+const STYLES: StyleOption[] = [
+  { id: 'celestial_gold', name: 'Celestial Gold', accent: [245, 197, 66] },
+  { id: 'deep_nebula', name: 'Deep Nebula', accent: [129, 140, 248] },
+  { id: 'emerald_aurora', name: 'Emerald Aurora', accent: [52, 211, 153] },
+  { id: 'obsidian_smoke', name: 'Obsidian Smoke', accent: [203, 213, 225] },
+  { id: 'supernova', name: 'Supernova', accent: [251, 146, 60] },
+  { id: 'studio_black', name: 'Studio Black', accent: null },   // bare: no glow, no text
+];
+
+const SAMPLE_EYE = '/assets/sample_eye_blue_1789706902835.jpg';   // AI-generated: always labelled as such
+// The sample's restoration, made once by the live engine (2026-09-29: analyze, deglare, enhance artistic) and shipped
+// as files: every "Try the sample" click ran the whole paid restoration again (about 0.07 USD each) for the same
+// demo eye. before is the client crop, restored the exact JPEG /api/enhance returned. Composing it stays free.
+const SAMPLE_BEFORE = '/assets/sample_eye_blue_before.jpg';
+const SAMPLE_RESTORED = '/assets/sample_eye_blue_restored.jpg';
+const SAMPLE_PAD = 1.12;
+// A gallery selection is measured photo by photo (one vision call each): more than this many of the same eye adds
+// cost and waiting, not a better pick.
+const GALLERY_MAX = 8;
+
+// A user-agent test was hiding the live camera from every iPhone. WebKit has shipped zoom and torch for a
+// while and ImageCapture landed in Safari 18.4, so ask the device instead of guessing from its name.
+const hasCameraApi = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+const hasStillCapture = typeof window !== 'undefined' && 'ImageCapture' in window;
+
+/** POST JSON and return the reply. Throws with the server's own message on any failure, except that with
+ *  answerNotOk a 2xx reply saying ok:false is returned: /api/analyze answers a photo with no eye in it that
+ *  way, and the capture flow has its own branches for it. Every request carries the page's language, so the
+ *  server's own sentences (the quality message, tips and errors) and the preview watermark come back in it. A body
+ *  that names its own lang keeps it (composeArt: the language its preview is cached under). */
+async function post<R>(path: string, body: Record<string, unknown>, answerNotOk = false): Promise<R> {
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ lang: T.lang, ...body }),
+  });
+  // Vercel answers a timeout or an oversized body with text/plain, so read text first and never let
+  // JSON.parse throw the real status away
+  const raw = await r.text();
+  let j: any = null;
+  try { j = JSON.parse(raw); } catch { /* platform error, not ours */ }
+  if (!j) {
+    if (r.status === 413) throw new Error(T.errors.tooLarge);
+    if (r.status === 504 || /TIMEOUT/i.test(raw)) throw new Error(T.errors.timeout);
+    throw new Error(T.errors.notResponding);
+  }
+  if (!r.ok || (j.ok === false && !answerNotOk)) throw new Error(j.error || j.message || T.errors.requestFailed(r.status));
+  return j as R;
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(T.errors.unreadable));
+    img.src = src;
+  });
+}
+
+function drawToDataUrl(img: HTMLImageElement, sx: number, sy: number, sw: number, sh: number, outW: number, outH: number, quality = 0.92): string {
+  const c = document.createElement('canvas');
+  c.width = outW; c.height = outH;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, outW, outH);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+  return c.toDataURL('image/jpeg', quality);
+}
+
+function stripDataUrl(s: string) { return s.includes(',') ? s.split(',')[1] : s; }
+function blobToDataUrl(b: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(b);
+  });
+}
+
+/** A smaller JPEG data URL of an image (never larger than it was), for the copy kept while Stripe's page is open. */
+async function shrunk(src: string, side: number, quality: number): Promise<string> {
+  const img = await loadImage(src);
+  const s = Math.min(side, img.naturalWidth, img.naturalHeight);
+  return drawToDataUrl(img, 0, 0, img.naturalWidth, img.naturalHeight, s, s, quality);
+}
+
+/** A 160 px copy of a restored iris for the eye chips. Never throws: the restoration it comes from is paid for. */
+async function thumbOf(b64: string): Promise<string> {
+  const full = `data:image/jpeg;base64,${b64}`;
+  try {
+    const img = await loadImage(full);
+    return drawToDataUrl(img, 0, 0, img.naturalWidth, img.naturalHeight, 160, 160, 0.85);
+  } catch { return full; }
+}
+
+let eyeSeq = 0;
+const newEyeId = () => `e${Date.now().toString(36)}${(eyeSeq++).toString(36)}`;
+const eyesPrefix = (list: Eye[]) => `${list.map((e) => e.id).join('.')}|`;
+// the preview's words (its watermark, the sample eye's label) are in the page's language, so the language is part
+// of the key: after the EN/DE switch the preview is made again in the new one
+const artKeyOf = (list: Eye[], layout: Layout, style: string, names: string, lang: Lang) => `${eyesPrefix(list)}${layout}|${style}|${names}|${lang}`;
+
+// the eyes brought back from the payment page: in the order already, so they need no draft of their own
+const RESTORED: Eye[] = RETURN?.snap ? RETURN.snap.eyes.slice(0, MAX_EYES).map((e) => ({ ...e, draft: null })) : [];
+
+export const TryApp: React.FC = () => {
+  const [lang, setLangState] = useState<Lang>(() => T.lang);
+  const [step, setStep] = useState<Step>(RESTORED.length ? 'result' : 'capture');
+  const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [storageOn, setStorageOn] = useState(false);
+  const [session] = useState(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
+  // ---- the eye being captured now
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [clientCrop, setClientCrop] = useState<string | null>(null);
+  const [working, setWorking] = useState<{ eye: number; sample: boolean }>({ eye: 1, sample: false });
+  // ---- the finished eyes, in canvas order. One restored iris each; the photos they came from are released.
+  const [eyes, setEyes] = useState<Eye[]>(RESTORED);
+  const eyesRef = useRef<Eye[]>(RESTORED);   // async steps read this, never a render's stale copy
+  const [selectedId, setSelectedId] = useState<string | null>(RESTORED[0]?.id ?? null);
+  const [layoutWant, setLayoutWant] = useState<Layout | null>(RETURN?.snap?.layoutWant ?? null);
+  const [style, setStyle] = useState(() => (STYLES.some((s) => s.id === RETURN?.snap?.style) ? RETURN!.snap!.style : 'celestial_gold'));
+  const [names, setNames] = useState(() => (typeof RETURN?.snap?.names === 'string' ? RETURN.snap.names.slice(0, 60) : ''));
+  // ---- ordering (./BuyCard.tsx, ./checkout.ts): whether this deployment takes orders, the order this tab builds, the
+  // withdrawal waiver (never ticked in advance) and the purchase under way
+  const [ordering, setOrdering] = useState<Ordering | null>(null);
+  const [orderRef, setOrderRefState] = useState<OrderRef | null>(() => loadOrderRef());
+  const orderRefRef = useRef<OrderRef | null>(orderRef);
+  const [waiver, setWaiver] = useState(false);
+  const [buy, setBuy] = useState<{ busy: boolean; step: CheckoutStep | null; error: CheckoutError | null }>({ busy: false, step: null, error: null });
+  const buyingRef = useRef(false);
+  const [now, setNow] = useState(() => Date.now());   // for the 15-minute ticket check, refreshed while ordering is open
+  const [notice, setNotice] = useState<'cancelled' | 'lost' | null>(RETURN?.cancelled ? (RESTORED.length ? 'cancelled' : 'lost') : null);
+  const [artCache, setArtCache] = useState<Record<string, Art>>({});
+  const [composeFail, setComposeFail] = useState<Record<string, string>>({});
+  const inflightRef = useRef(new Set<string>());
+  const sizedRef = useRef(new Map<string, string>());   // `${eyeId}:${side}` -> iris re-encoded for /api/compose
+  const [progress, setProgress] = useState<string[]>([]);
+  const [clock, setClock] = useState<{ step: Step | null; secs: number }>({ step: null, secs: 0 });
+  const [liveOpen, setLiveOpen] = useState(false);
+  // Camera shot collector: one analysis per camera shot (up to targets.max_shots). Only the best shot keeps
+  // its full-size image; five 12 MP photos held at once is how a phone tab gets killed.
+  const [shots, setShots] = useState<Analysis[]>([]);
+  const [shotSource, setShotSource] = useState<ShotSource>('input');
+  const [shotNote, setShotNote] = useState<string | null>(null);
+  const shotsRef = useRef<Analysis[]>([]);
+  const bestShotRef = useRef<{ img: HTMLImageElement; url: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const photoUrlRef = useRef<string | null>(null);
+  // The site's own demo eye is a studio photo whose ring light covers part of the fibres, so on the glare
+  // cap it reads 'ok', not 'good'. We know it restores well, so it is not parked on the quality screen.
+  const sampleRef = useRef(false);
+  // ---- capture study: the open question card, and the answers waiting for an analyze request the engine
+  // logs. The engine writes them only with an analyze that found an eye, so answers stay here until one
+  // such reply comes back. Held in the page only; nothing is written to the browser.
+  const [studyAsk, setStudyAsk] = useState<StudyPayload | null>(null);
+  const pendingStudyRef = useRef<StudyPayload[]>([]);
+  const [pendingShots, setPendingShots] = useState<number[]>([]);   // for the "not sent yet" note
+  const studyInflightRef = useRef(new Set<number>());               // shots whose answers ride on a request now
+  const shotNoRef = useRef(0);
+  // ---- retaking one eye of the artwork: its id, so the new restoration takes that eye's place
+  const [replacing, setReplacingState] = useState<string | null>(null);
+  const replacingRef = useRef<string | null>(null);
+  // ---- the eye just removed, kept for a few seconds so one mistaken tap never throws a paid restoration away
+  const [undo, setUndo] = useState<{ eye: Eye; index: number } | null>(null);
+
+  /** The EN/DE switch: the whole page re-renders in the new language. Words already on screen that came from
+   *  the server (a shot's message and tips) stay as they were until the next photo. */
+  const switchLang = (l: Lang) => {
+    if (l === T.lang) return;
+    setCopyLang(l); rememberLang(l); setLangState(l);
+  };
+
+  // the document's language, title and description follow the page's (try.html carries the English ones)
+  useEffect(() => {
+    try {
+      document.documentElement.lang = lang;
+      document.title = T.meta.title;
+      document.head.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', T.meta.description);
+    } catch { /* no document: nothing to label */ }
+  }, [lang]);
+
+  // only offer the training-memory checkbox when this deployment can really store something, and the buy button only
+  // when it takes orders: /api/health says whether Stripe is set up, GET /api/checkout whether ordering is open (Stripe
+  // and the private store) and gives the server's prices and waiver text. Until both say yes: "ordering opens soon".
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/health')
+      .then((r) => r.json())
+      .then(async (h) => {
+        if (!alive) return;
+        setStorageOn(!!h.blob_store);
+        // live payments only with the delivery email: it carries the confirmation of the withdrawal waiver that the
+        // law asks for (src/shared/legal.ts), so a live key without Resend sells nothing yet. Test mode may try it.
+        if (h.stripe !== true || (h.stripe_live === true && h.email !== true)) { setOrdering({ open: false }); return; }
+        const c = await callApi<CheckoutInfo>('/api/checkout');
+        if (!alive) return;
+        const d = c.ok ? c.data : null;
+        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent } : { open: false });
+      })
+      .catch(() => { if (alive) setOrdering({ open: false }); });
+    return () => { alive = false; };
+  }, []);
+
+  // the "payment cancelled" note belongs to the screen it came back to: once the customer moves on, it is done
+  useEffect(() => {
+    if (!notice || (notice === 'cancelled' && step === 'result') || (notice === 'lost' && step === 'capture')) return;
+    const id = setTimeout(() => setNotice(null), 0);
+    return () => clearTimeout(id);
+  }, [notice, step]);
+
+  // the 15-minute ticket check looks at the clock again now and then while the buy card is on screen
+  const ticking = step === 'result' && !!ordering?.open;
+  useEffect(() => {
+    if (!ticking) return;
+    const first = setTimeout(() => setNow(Date.now()), 0);
+    const id = setInterval(() => setNow(Date.now()), 15_000);
+    return () => { clearTimeout(first); clearInterval(id); };
+  }, [ticking]);
+
+  // back from Stripe's page out of the browser's page cache: this page still holds the artwork as it was, so the copy
+  // kept for the way back goes, and the buy button works again
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      takeSnapshot(null);
+      buyingRef.current = false;
+      setBuy({ busy: false, step: null, error: null });
+      setOrderRefState(loadOrderRef()); orderRefRef.current = loadOrderRef();
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
+
+  // elapsed timer while the engine works. Counted per step and only set from the timer, so a new step
+  // starts at 0 without a synchronous reset.
+  useEffect(() => {
+    if (step !== 'analyzing' && step !== 'processing') return;
+    const t0 = Date.now();
+    const id = setInterval(() => setClock({ step, secs: Math.round((Date.now() - t0) / 1000) }), 1000);
+    return () => { clearInterval(id); setClock({ step: null, secs: 0 }); };
+  }, [step]);
+  const elapsed = clock.step === step ? clock.secs : 0;
+
+  // a fully answered study card says thank you, then gets out of the way (the answers stay pending)
+  useEffect(() => {
+    if (!studyAsk || studyAsk.light === null || studyAsk.comfort === null) return;
+    const id = setTimeout(() => setStudyAsk(null), 2500);
+    return () => clearTimeout(id);
+  }, [studyAsk]);
+
+  // the Undo offer for a removed eye lasts a few seconds
+  useEffect(() => {
+    if (!undo) return;
+    const id = setTimeout(() => setUndo(null), 8000);
+    return () => clearTimeout(id);
+  }, [undo]);
+
+  const clearShots = () => {
+    if (bestShotRef.current) URL.revokeObjectURL(bestShotRef.current.url);
+    bestShotRef.current = null; shotsRef.current = []; setShots([]); setShotNote(null);
+  };
+
+  const setPhoto = (img: HTMLImageElement, url: string) => {
+    if (photoUrlRef.current && photoUrlRef.current !== url) URL.revokeObjectURL(photoUrlRef.current);
+    photoUrlRef.current = url; imgRef.current = img;
+  };
+
+  /** Let go of every full-size photo of the eye being captured. */
+  const releasePhoto = () => {
+    clearShots();
+    if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
+    photoUrlRef.current = null; imgRef.current = null;
+  };
+
+  /** Forget the eye being captured. The finished eyes stay. */
+  const clearCapture = () => {
+    releasePhoto();
+    setError(null); setAnalysis(null); setClientCrop(null); setProgress([]);
+    sampleRef.current = false;
+  };
+
+  const commitEyes = (next: Eye[]) => {
+    eyesRef.current = next; setEyes(next);
+    const ids = new Set(next.map((e) => e.id));
+    for (const k of [...sizedRef.current.keys()]) if (!ids.has(k.split(':')[0])) sizedRef.current.delete(k);
+    // a preview of another set of eyes is never shown again
+    const prefix = eyesPrefix(next);
+    setArtCache((c) => Object.fromEntries(Object.entries(c).filter(([k]) => k.startsWith(prefix))));
+    setComposeFail({});
+  };
+
+  const toTop = () => { try { window.scrollTo({ top: 0 }); } catch { /* old browsers */ } };
+
+  const setReplacing = (id: string | null) => { replacingRef.current = id; setReplacingState(id); };
+
+  /** Where the eye being captured goes on the artwork, 0-based: the place of the eye being retaken, or
+   *  the end for a new eye. */
+  const capturePos = () => {
+    const r = replacingRef.current;
+    const i = r ? eyesRef.current.findIndex((e) => e.id === r) : -1;
+    return i >= 0 ? i : eyesRef.current.length;
+  };
+
+  /** Retake the eye being captured: back to the capture screen, the finished eyes untouched. */
+  const retake = () => { clearCapture(); setStep('capture'); };
+
+  const backToArtwork = () => { clearCapture(); setReplacing(null); setStep('result'); toTop(); };
+
+  const addEye = () => {
+    if (eyesRef.current.length >= MAX_EYES) return;
+    clearCapture(); setReplacing(null); setUndo(null); setStep('capture'); toTop();
+  };
+
+  /** Photograph one eye of the artwork again. Nothing changes until the new eye is restored. */
+  const retakeEye = (id: string) => {
+    if (!eyesRef.current.some((e) => e.id === id)) return;
+    clearCapture(); setReplacing(id); setUndo(null); setStep('capture'); toTop();
+  };
+
+  const startOver = () => {
+    const n = eyesRef.current.length;
+    if (n > 1 && !window.confirm(T.result.confirmStartOver(n))) return;
+    clearCapture(); commitEyes([]); setSelectedId(null); setLayoutWant(null); setArtCache({});
+    setReplacing(null); setUndo(null);
+    // a new artwork is a new decision: the waiver is asked again (the order itself is reused for its eyes)
+    setWaiver(false); setBuy({ busy: false, step: null, error: null });
+    sizedRef.current.clear(); setStep('capture'); toTop();
+  };
+
+  const removeEye = (id: string) => {
+    const list = eyesRef.current;
+    const index = list.findIndex((e) => e.id === id);
+    if (index < 0) return;
+    const next = list.filter((e) => e.id !== id);
+    if (!next.length) { startOver(); return; }
+    commitEyes(next);
+    setSelectedId(next[Math.min(index, next.length - 1)].id);
+    setUndo({ eye: list[index], index });
+  };
+
+  const undoRemove = () => {
+    const u = undo;
+    setUndo(null);
+    const list = eyesRef.current;
+    if (!u || list.length >= MAX_EYES || list.some((e) => e.id === u.eye.id)) return;
+    commitEyes([...list.slice(0, u.index), u.eye, ...list.slice(u.index)]);
+    setSelectedId(u.eye.id);
+  };
+
+  // ---- capture study
+  const setPending = (list: StudyPayload[]) => {
+    pendingStudyRef.current = list.slice(-STUDY_PENDING_MAX);
+    setPendingShots(pendingStudyRef.current.filter(studyAnswered).map((s) => s.shot));
+  };
+  /** The two questions about the shot (or gallery pick) just measured, whatever the engine made of it: the
+   *  shots it could not use are the ones the study most needs to hear about. */
+  const askStudy = (source: ShotOrigin, photos: number, outcome: string) => {
+    if (!STUDY || source === 'sample' || photos < 1) return;
+    setStudyAsk({ session, eye: capturePos() + 1, shot: shotNoRef.current, photos, source, outcome, light: null, comfort: null });
+  };
+  const answerStudy = (patch: { light?: LightAnswer; comfort?: number }) => {
+    if (!studyAsk) return;
+    const next = { ...studyAsk, ...patch };
+    setPending([...pendingStudyRef.current.filter((s) => s.shot !== next.shot), next]);
+    setStudyAsk(next);
+  };
+  const skipStudy = () => {
+    const shot = studyAsk?.shot;
+    setPending(pendingStudyRef.current.filter((s) => s.shot !== shot));
+    setStudyAsk(null);
+  };
+
+  const onFile = async (file: File | Blob, isSample = false) => {
+    sampleRef.current = isSample;
+    setError(null); setProgress([]); clearShots();
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await loadImage(url);
+      setPhoto(img, url);
+      await analyze(img, isSample ? 'sample' : 'gallery');
+    } catch (e) {
+      if (photoUrlRef.current !== url) URL.revokeObjectURL(url);   // an unreadable file never became the photo
+      setError((e as Error).message); setStep('capture');
+    }
+  };
+
+  /** Several shots of the same eye are never equally good. On four real photos of one eye the sharpest
+   *  carried 3.7x the fibre detail of the softest, and the largest iris of the four was the softest - so
+   *  the customer cannot pick by eye and neither can a size rule. Measure each and use the best. */
+  const onFiles = async (all: File[]) => {
+    const files = all.slice(0, GALLERY_MAX);
+    if (files.length === 1) return onFile(files[0]);
+    sampleRef.current = false;
+    setError(null); setStep('analyzing'); clearShots();
+    // several run at once, so "photo 3 of 5" would be a lie: count the ones that are finished
+    let done = 0, sent = 0;
+    const tick = () => setProgress([T.working.checking(files.length, done)]);
+    tick();
+    const measured = await mapPool(files, ANALYZE_CONCURRENCY, async (file) => {
+      const url = URL.createObjectURL(file);
+      try {
+        const img = await loadImage(url);
+        sent++;
+        const a = await measure(img, 'gallery');
+        if (a.ok && a.iris) return { img, url, a };
+      } catch { /* an unreadable file just does not compete */ }
+      finally { done++; tick(); }
+      URL.revokeObjectURL(url);
+      return null;
+    });
+    // mapPool keeps input order, so i is the photo's position in the customer's own selection
+    const scored = measured.flatMap((m, i) => (m ? [{ ...m, i }] : []));
+    const win = scored.length ? scored[bestIndex(scored.map((s) => s.a))] : null;
+    askStudy('gallery', sent, win ? outcomeOf(win.a) : 'no_eye');
+    if (!win) {
+      setError(T.errors.noEyeAny); setStep('capture'); return;
+    }
+    scored.forEach((s) => { if (s !== win) URL.revokeObjectURL(s.url); });
+    const chosen: Analysis = {
+      ...win.a,
+      picked: { used: win.i + 1, of: files.length, fibre: rawFibre(win.a), worst: Math.min(...scored.map((s) => rawFibre(s.a))) },
+    };
+    setPhoto(win.img, win.url); setAnalysis(chosen); setProgress([]);
+    if (autoContinue(chosen)) { await process(win.img, chosen); } else { setStep('quality'); }
+  };
+
+  /** One photo from the camera (the capture input or the live camera). Measured at once and kept if it is
+   *  the best so far, so the customer can shoot, see the score, and shoot again until one is good. */
+  const onCameraShot = async (file: Blob, source: ShotSource) => {
+    sampleRef.current = false;
+    setError(null); setShotNote(null); setShotSource(source);
+    const t = targetsOf(analysis);
+    let prev = shotsRef.current;
+    if (prev.length >= t.max_shots) {
+      if (usable(prev[bestIndex(prev)])) { setStep('quality'); return; }
+      // a full set with nothing the studio may use (too blurry, or not centred): this shot starts a fresh set,
+      // so "Take another" always leads somewhere
+      clearShots(); prev = [];
+    }
+    // a shot that fails keeps the collection alive when there is one, and falls back to the old error otherwise
+    const fail = (msg: string) => {
+      if (!prev.length) { setError(msg); setStep('capture'); return; }
+      setShotNote(msg); setStep('quality');
+    };
+    setStep('analyzing'); setProgress([T.working.measuringShot(prev.length + 1, t.max_shots)]);
+    const url = URL.createObjectURL(file);
+    const origin: ShotOrigin = source === 'live' ? 'live' : 'camera';
+    let img: HTMLImageElement; let a: Analysis;
+    try {
+      img = await loadImage(url);
+      a = await measure(img, origin);
+    } catch (e) { URL.revokeObjectURL(url); fail((e as Error).message); return; }
+    // measure() hands back a no-eye reply instead of throwing, so this shot gets its questions too
+    askStudy(origin, 1, outcomeOf(a));
+    if (!a.ok || !a.iris) { URL.revokeObjectURL(url); fail(a.message || T.errors.noEyeShot); return; }
+    const next = [...prev, a];
+    const bi = bestIndex(next);
+    if (bi === next.length - 1) {
+      if (bestShotRef.current) URL.revokeObjectURL(bestShotRef.current.url);
+      bestShotRef.current = { img, url };
+    } else {
+      URL.revokeObjectURL(url);
+    }
+    const best = bestShotRef.current;
+    if (!best) { fail(T.errors.keepFailed); return; }
+    shotsRef.current = next; setShots(next); setProgress([]);
+    const chosen = next[bi];
+    setPhoto(best.img, best.url); setAnalysis(chosen);
+    // go on by itself only when the shot that will be processed is good and lamp-free. Asking this of the
+    // latest shot instead once sent an earlier 'weak' shot (sharp, but glared) to the studio unseen.
+    if (autoContinue(chosen)) { await process(best.img, chosen); return; }
+    setStep('quality');
+  };
+
+  const takeAnother = () => {
+    setError(null);
+    if (shotSource === 'live' && hasCameraApi) setLiveOpen(true); else fileRef.current?.click();
+  };
+
+  /** /api/analyze for one photo. Always says what kind of device and source it came from. In study mode every
+   *  answer that no logged analyze has carried yet rides along; the engine logs only a reply that found an
+   *  eye, so the answers are dropped here only after such a reply (a no-eye shot or a failed request keeps
+   *  them for the next photo). A no-eye reply is returned, not thrown. */
+  const measure = async (img: HTMLImageElement, source: ShotOrigin): Promise<Analysis> => {
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const f = Math.min(1, 1600 / Math.max(W, H));
+    const small = drawToDataUrl(img, 0, 0, W, H, Math.round(W * f), Math.round(H * f), 0.9);
+    const body: Record<string, unknown> = { image: stripDataUrl(small), origWidth: W, origHeight: H, device: deviceInfo(source) };
+    // photos of one gallery pick are measured side by side: each answer rides on one request at a time
+    const sending = pendingStudyRef.current.filter((s) => studyAnswered(s) && !studyInflightRef.current.has(s.shot));
+    const study = studyBody(sending);
+    if (study) body.study = study;
+    sending.forEach((s) => studyInflightRef.current.add(s.shot));
+    if (STUDY) setStudyAsk(null);
+    shotNoRef.current += 1;
+    try {
+      const a = await post<Analysis>('/api/analyze', body, true);
+      (a as Stamped).receivedAt = Date.now();
+      if (a.ok && sending.length) {
+        const sent = new Set(sending.map((s) => s.shot));
+        setPending(pendingStudyRef.current.filter((s) => !sent.has(s.shot)));
+      }
+      return a;
+    } finally {
+      sending.forEach((s) => studyInflightRef.current.delete(s.shot));
+    }
+  };
+
+  const analyze = async (img: HTMLImageElement, source: ShotOrigin) => {
+    setStep('analyzing');
+    const a = await measure(img, source);
+    askStudy(source, 1, outcomeOf(a));
+    if (!a.ok || !a.iris) { setError(a.message || T.errors.noEye); setStep('capture'); return; }
+    setAnalysis(a);
+    const sampleOk = sampleRef.current && a.quality?.verdict !== 'weak' && usable(a);
+    if (autoContinue(a) || sampleOk) { await process(img, a); } else { setStep('quality'); }
+  };
+
+  /** The iris re-encoded at the side /api/compose needs for this many eyes (cached per eye). */
+  const sizedIris = async (e: Eye, side: number | null): Promise<string> => {
+    if (!side) return e.image;
+    const k = `${e.id}:${side}`;
+    const hit = sizedRef.current.get(k);
+    if (hit) return hit;
+    const img = await loadImage(`data:image/jpeg;base64,${e.image}`);
+    const s = Math.min(side, img.naturalWidth, img.naturalHeight);
+    const b64 = stripDataUrl(drawToDataUrl(img, 0, 0, img.naturalWidth, img.naturalHeight, s, s, 0.9));
+    sizedRef.current.set(k, b64);
+    return b64;
+  };
+
+  /** One preview of these eyes, its words in lg (the language it is cached under, sent as the request's lang).
+   *  The watermark is the server's business: no unlock ticket is ever sent. */
+  const composeArt = async (list: Eye[], layout: Layout, st: string, nm: string, lg: Lang): Promise<Art> => {
+    const irises = await Promise.all(list.map((e) => sizedIris(e, composeSide(list.length))));
+    const body: Record<string, unknown> = { irises, style: st, names: nm, pad: list[0].pad, lang: lg };
+    if (list.length > 1) body.layout = layout;
+    // the sample eye's label goes into the picture itself (the caption title), so a saved preview keeps it
+    if (list.some((e) => e.sample)) body.title = COPY[lg].result.sampleTitle;
+    const c = await post<ComposeReply>('/api/compose', body);
+    return { src: `data:image/jpeg;base64,${c.image}`, w: c.width, h: c.height, layout: c.layout };
+  };
+
+  const cacheArt = (key: string, art: Art) => setArtCache((c) => {
+    // an answer for eyes that were removed or added meanwhile is dropped
+    if (!key.startsWith(eyesPrefix(eyesRef.current))) return c;
+    const entries = Object.entries({ ...c, [key]: art });
+    return Object.fromEntries(entries.slice(-ART_CACHE_MAX));
+  });
+
+  const process = async (img: HTMLImageElement, a: Analysis) => {
+    // A crop that is not centred on an iris must never reach the studio: from a crop of eyelid skin the image
+    // model invented a complete brown iris, and nothing downstream can tell. The server issues no work
+    // ticket for it either; this stops the button before the customer waits for an error.
+    if (a.quality?.locked === false) {
+      setError(T.quality.notCentred);
+      setStep('quality'); return;
+    }
+    // Nor a photo the engine blocked (too blurry to restore the customer's own iris, a pupil too wide): the
+    // model would invent the iris. No ticket either.
+    const block = blockOf(a);
+    if (block) {
+      setError(block.error);
+      setStep('quality'); return;
+    }
+    const replaceId = replacingRef.current && eyesRef.current.some((x) => x.id === replacingRef.current) ? replacingRef.current : null;
+    const eyeNo = capturePos() + 1;
+    if (!replaceId && eyeNo > MAX_EYES) { backToArtwork(); return; }
+    const sample = sampleRef.current;
+    // The eye's own id names its storage folder. A count (eyes + 1) repeats after a removal, and the new eye
+    // then overwrote the training-memory files of an eye still on the artwork.
+    const id = newEyeId();
+    setError(null); setWorking({ eye: eyeNo, sample });
+    setStep('processing'); setProgress([T.working.cut]);
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const { cx, cy, r } = a.iris!; const pad = a.pad || 1.12;
+    const S = 2 * r * W * pad;
+    const out = Math.min(1400, Math.round(S));
+    const crop = drawToDataUrl(img, cx * W - S / 2, cy * H - S / 2, S, S, out, out, 0.95);
+    setClientCrop(crop);
+    let d: { crop: string; glare_pct: number; changed: boolean; used_sr: boolean };
+    let e: Enhanced;
+    try {
+      setProgress((p) => [...p, T.working.reflections]);
+      d = await post('/api/deglare', { crop: stripDataUrl(crop), pad, ticket: a.ticket, pupil_r: a.pupil_r, glare_boxes: a.glare_boxes_crop || [] });
+      setProgress((p) => [...p, T.working.macro]);
+      // each eye has its own storage folder, or one eye would overwrite another one's files
+      e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'artistic', pad, ticket: a.ticket, session: `${session}-${id}`, consent, used_sr: d.used_sr, meta: a.quality });
+    } catch (err) {
+      // the photo is still held, so "Continue anyway" / "Use this shot" can run it again
+      setError((err as Error).message);
+      setStep('quality');
+      return;
+    }
+    // The restoration is paid for by this point. The eye joins the artwork before anything else can fail,
+    // and a free composition failure must never send the customer back to a screen that buys it again.
+    // image is the preview string /api/enhance returned, never re-encoded: an order uploads exactly it, with the
+    // deglared crop it was made from and the photo's work ticket (./checkout.ts). The sample eye is never ordered.
+    const draft = !sample && a.ticket && typeof d.crop === 'string' && d.crop
+      ? { crop: d.crop, ticket: a.ticket, until: ((a as Stamped).receivedAt ?? Date.now()) + TICKET_MS - TICKET_MARGIN_MS }
+      : null;
+    const eye: Eye = {
+      id, before: crop, image: e.image, thumb: await thumbOf(e.image), pad,
+      fallback: !!e.fallback, usedSr: !!e.used_sr, stored: !!e.stored, glarePct: d.glare_pct,
+      diameterPx: a.quality?.diameter_px, sample, colourOff: colourOff(e.qa), draft,
+    };
+    // a retaken eye takes the old one's place; the old restoration goes only now that the new one exists
+    const cur = eyesRef.current;
+    const list = replaceId && cur.some((x) => x.id === replaceId)
+      ? cur.map((x) => (x.id === replaceId ? eye : x))
+      : [...cur, eye];
+    setReplacing(null);
+    commitEyes(list); setSelectedId(eye.id);
+    releasePhoto(); sampleRef.current = false;
+    setProgress((p) => [...p, T.working.composing(list.length)]);
+    const lay = effectiveLayout(list.length, layoutWant);
+    try {
+      const lg = T.lang;
+      cacheArt(artKeyOf(list, lay, style, names, lg), await composeArt(list, lay, style, names, lg));
+    } catch { /* the effect below retries once on the result screen, then offers "Try again" */ }
+    setAnalysis(null); setClientCrop(null);
+    setStep('result'); toTop();
+  };
+
+  // ---- the result screen composes whenever the eyes, the layout, the style, the names or the language change
+  const layout = effectiveLayout(eyes.length, layoutWant);
+  const artKey = artKeyOf(eyes, layout, style, names, lang);
+  // Right after the EN/DE switch the same choice's preview in the other language stands in (shown, saved, orderable:
+  // only its watermark's words differ) until the effect below has made it in this one.
+  const art = artCache[artKey] ?? artCache[artKeyOf(eyes, layout, style, names, lang === 'de' ? 'en' : 'de')];
+  const staleArt = art ?? Object.values(artCache).at(-1);
+
+  useEffect(() => {
+    if (step !== 'result' || !eyes.length) return;
+    if (artCache[artKey] || composeFail[artKey] !== undefined || inflightRef.current.has(artKey)) return;
+    const list = eyes, l = layout, st = style, nm = names, key = artKey, lg = lang;
+    const t = setTimeout(async () => {
+      inflightRef.current.add(key);
+      try {
+        cacheArt(key, await composeArt(list, l, st, nm, lg));
+      } catch (err) {
+        setComposeFail((f) => ({ ...f, [key]: (err as Error).message }));
+      } finally {
+        inflightRef.current.delete(key);
+      }
+    }, names ? 500 : 0);
+    return () => clearTimeout(t);
+    // composeArt and cacheArt are left out on purpose: they read only refs and their own arguments
+  }, [step, eyes, layout, style, names, lang, artKey, artCache, composeFail]);
+
+  const retryCompose = () => setComposeFail((f) => { const n = { ...f }; delete n[artKey]; return n; });
+
+  // ---- buying
+  const setOrderRef = (r: OrderRef | null) => { orderRefRef.current = r; setOrderRefState(r); saveOrderRef(r); };
+
+  /** Keep the artwork in this tab while Stripe's page is open, so its cancel link (or "back") finds it as it was. When
+   *  the browser will not hold it at full size, a smaller copy; when not even that, nothing (the page then says so). */
+  const keepForReturn = async (order: string, list: Eye[], st: string, lw: Layout | null, nm: string) => {
+    const base = { v: 1 as const, order, at: Date.now(), style: st, layoutWant: lw, names: nm };
+    const plain = list.map(({ draft: _draft, ...e }) => e);
+    if (saveSnapshot({ ...base, eyes: plain })) return;
+    try {
+      const small = await Promise.all(plain.map(async (e) => ({
+        ...e,
+        before: await shrunk(e.before, 480, 0.8),
+        image: stripDataUrl(await shrunk(`data:image/jpeg;base64,${e.image}`, 768, 0.88)),
+      })));
+      saveSnapshot({ ...base, eyes: small });
+    } catch { /* nothing kept: the way back says so */ }
+  };
+
+  const onBuy = async () => {
+    const list = eyesRef.current;
+    if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open) return;
+    buyingRef.current = true;
+    setNotice(null);
+    setBuy({ busy: true, step: null, error: null });
+    const lay = effectiveLayout(list.length, layoutWant);
+    let out: CheckoutOutcome;
+    try {
+      out = await runCheckout({ eyes: list, style, layout: lay, names, lang: T.lang, ref: orderRefRef.current },
+        (s) => setBuy((b) => ({ ...b, step: s })));
+    } catch {
+      out = { kind: 'error', code: 'failed', ref: orderRefRef.current };
+    }
+    setOrderRef(out.ref);
+    if (out.kind === 'redirect') {
+      await keepForReturn(out.ref.order, list, style, layoutWant, names);
+      window.location.assign(out.url);
+      return;   // the page is leaving for Stripe: the button stays busy
+    }
+    if (out.kind === 'paid') { window.location.assign(out.url); return; }
+    buyingRef.current = false;
+    if (out.kind === 'stale') {
+      // those eyes' tickets are spent: they show as "take again" from now on
+      const bad = new Set(out.eyes.map((i) => eyesRef.current[i - 1]?.id));
+      commitEyes(eyesRef.current.map((e) => (bad.has(e.id) ? { ...e, draft: null } : e)));
+      setNow(Date.now());
+      setBuy({ busy: false, step: null, error: null });
+      return;
+    }
+    if (out.kind === 'closed') { setOrdering({ open: false }); setBuy({ busy: false, step: null, error: null }); return; }
+    setBuy({ busy: false, step: null, error: out.code });
+  };
+
+  const stepText = (s: CheckoutStep | null): string | null => {
+    if (!s) return null;
+    if (s.kind === 'upload') return T.buy.steps.upload(s.i, s.n);
+    return T.buy.steps[s.kind];
+  };
+  const purchase = (
+    <BuyCard
+      eyes={eyes} style={style} styleName={STYLES.find((s) => s.id === style)?.name ?? style} ordering={ordering}
+      preview={art ? 'ready' : composeFail[artKey] !== undefined ? 'failed' : 'composing'}
+      stale={ordering?.open && !eyes.some((e) => e.sample) ? staleEyes(eyes, orderRef, now) : []}
+      onRetake={(i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); }}
+      waiver={waiver} onWaiver={setWaiver}
+      busy={buy.busy} step={stepText(buy.step)} error={buy.error ? T.buy.errors[buy.error] : null}
+      onBuy={onBuy} />
+  );
+
+  const adding = eyes.length > 0;   // the capture screens are for eye n + 1 of an artwork that already exists
+  const replaceNo = replacing ? eyes.findIndex((e) => e.id === replacing) + 1 : 0;   // 0: not retaking an eye
+  // The AI-generated sample is a demo for someone without a photo at hand. It is never offered once a real
+  // eye is on the artwork, so it cannot slip into a real couple's artwork, nor as a "retake" of an eye.
+  const offerSample = !replaceNo && !eyes.some((e) => !e.sample);
+  const backLink = adding && (
+    <button onClick={backToArtwork} className="text-xs text-zinc-400 underline underline-offset-4 self-center flex items-center gap-1">
+      <ArrowLeft className="w-3 h-3" /> {T.capture.back(eyes.length)}
+    </button>
+  );
+  const trySample = async () => {
+    // the prepared restoration (SAMPLE_RESTORED): no paid call. If its files cannot be read, the sample photo
+    // goes through the studio as before
+    try {
+      const [rb, ra] = await Promise.all([fetch(SAMPLE_BEFORE), fetch(SAMPLE_RESTORED)]);
+      if (!rb.ok || !ra.ok) throw new Error('sample files');
+      const [before, restored] = await Promise.all([blobToDataUrl(await rb.blob()), blobToDataUrl(await ra.blob())]);
+      const image = stripDataUrl(restored);
+      const eye: Eye = {
+        id: newEyeId(), before, image, thumb: await thumbOf(image), pad: SAMPLE_PAD,
+        fallback: false, usedSr: false, stored: false, glarePct: 0, sample: true, colourOff: false, draft: null,
+      };
+      sampleRef.current = false;
+      setError(null); setWorking({ eye: 1, sample: true });
+      setStep('processing'); setProgress([T.working.composing(1)]);
+      const list = [eye];
+      commitEyes(list); setSelectedId(eye.id);
+      const lay = effectiveLayout(list.length, layoutWant);
+      try {
+        const lg = T.lang;
+        cacheArt(artKeyOf(list, lay, style, names, lg), await composeArt(list, lay, style, names, lg));
+      } catch { /* the result screen retries once, then offers "Try again" */ }
+      releasePhoto(); setAnalysis(null); setClientCrop(null);
+      setStep('result'); toTop();
+      return;
+    } catch { /* fall back to the studio below */ }
+    try {
+      const r = await fetch(SAMPLE_EYE);
+      if (!r.ok) throw new Error(T.capture.sampleLoadFailed);
+      await onFile(await r.blob(), true);
+    } catch (e) { setError((e as Error).message); }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
+      <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
+        {/* back to the landing page in the same language */}
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
+        <div className="flex items-center justify-end gap-3 min-w-0">
+          <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-500 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
+            {STUDY && <span className="text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}
+            <span>{T.header.tag}</span>
+          </span>
+          <LangSwitch lang={lang} onSwitch={switchLang} />
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-4 pb-12">
+        {error && (
+          <div className="mb-4 bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm rounded-xl p-3 flex gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{error}</span>
+          </div>
+        )}
+
+        {/* back from Stripe's page without paying */}
+        {((notice === 'cancelled' && step === 'result') || (notice === 'lost' && step === 'capture')) && (
+          <div role="status" data-testid="checkout-notice" className="mb-4 bg-sky-950/40 border border-sky-400/40 text-sky-100 text-sm rounded-xl p-3 flex gap-2 items-start">
+            <Info className="w-4 h-4 shrink-0 mt-0.5 text-sky-300" />
+            <span className="flex-1 min-w-0">{notice === 'cancelled' ? T.buy.cancelled : T.buy.cancelledLost}</span>
+            <button type="button" onClick={() => setNotice(null)} aria-label={T.buy.close} className="shrink-0 -m-1 p-1 text-sky-200 hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+        )}
+
+        {studyAsk && (
+          <StudyCard ask={studyAsk} onLight={(light) => answerStudy({ light })} onComfort={(comfort) => answerStudy({ comfort })} onSkip={skipStudy} />
+        )}
+
+        {/* Both pickers live outside the capture screen so "Take another" can reopen the camera from the
+            shot collector. The value is cleared after every pick so the same file can be chosen again. */}
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onCameraShot(f, 'input'); }} />
+        <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden"
+          onChange={(e) => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) onFiles(fs); }} />
+
+        {step === 'capture' && (
+          <section className="flex flex-col gap-5">
+            {adding ? (
+              <div className="text-center mt-2">
+                <h1 className="font-luxury text-3xl sm:text-4xl font-bold">{(replaceNo ? T.capture.retakeTitle(replaceNo) : T.capture.addTitle(eyes.length + 1)).toUpperCase()}</h1>
+                <p className="text-zinc-400 text-sm mt-2">{replaceNo ? T.capture.retakeLead : T.capture.addLead}</p>
+                <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 mt-3">
+                  {eyes.map((e, i) => (
+                    <span key={e.id} className="flex flex-col items-center gap-0.5 w-16">
+                      <img src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-[#f5c542]/70 opacity-50' : 'border border-[#f5c542]/40'}`} />
+                      <span className={`text-[8px] leading-tight text-center ${e.sample ? 'font-semibold text-amber-200/90' : 'text-zinc-500'}`}>
+                        {e.sample ? T.capture.sampleThumb : T.capture.thumbLabel(i + 1)}
+                      </span>
+                    </span>
+                  ))}
+                  {!replaceNo && <span className="w-9 h-9 rounded-full border-2 border-dashed border-[#f5c542]/60" aria-hidden />}
+                </div>
+                <p className="text-xs text-[#f5c542]/90 bg-[#f5c542]/5 border border-[#f5c542]/20 rounded-xl px-3 py-2 mt-3">{T.capture.takeTurns}</p>
+              </div>
+            ) : (
+              <div className="text-center mt-2">
+                <h1 className="font-luxury text-3xl sm:text-4xl font-bold">{T.capture.titleA}<span className="text-gold-gradient">{T.capture.titleB}</span></h1>
+                <p className="text-zinc-400 text-sm mt-2">{T.capture.lead}</p>
+              </div>
+            )}
+
+            <div className="bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {T.capture.steps.map((s) => (
+                <div key={s.title}><span className="text-[#f5c542] font-bold block">{s.title}</span>{s.text}</div>
+              ))}
+              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</div>
+              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</div>
+              {!adding && <div className="col-span-2 sm:col-span-4 text-zinc-400">{T.capture.helper}</div>}
+            </div>
+
+            {/* the first camera shot starts a fresh collection */}
+            <button onClick={() => { clearShots(); fileRef.current?.click(); }} className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#f5c542] to-[#d4af37] text-black font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#f5c542]/20 active:scale-[0.98]">
+              <Camera className="w-5 h-5" /> {T.capture.takePhoto}
+            </button>
+
+            <div className={`grid gap-3 ${hasCameraApi || offerSample ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <button onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                <Upload className="w-4 h-4 text-[#f5c542]" /> {T.capture.pickShots}
+              </button>
+              {hasCameraApi ? (
+                <button onClick={() => { clearShots(); setLiveOpen(true); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                  <Video className="w-4 h-4 text-emerald-400" /> {T.capture.liveCamera}
+                </button>
+              ) : offerSample ? (
+                <button onClick={trySample} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                  <Sparkles className="w-4 h-4 text-[#f5c542]" /> {T.capture.sampleButton}
+                </button>
+              ) : null}
+            </div>
+            {hasCameraApi && offerSample && (
+              <button onClick={trySample} className="text-xs text-zinc-400 underline underline-offset-4 self-center">
+                {T.capture.sampleLink}
+              </button>
+            )}
+
+            {/* whose eye may be photographed (the terms of sale), and where the photo goes */}
+            <p data-testid="photo-notice" className="text-[11px] leading-relaxed text-zinc-500 text-center">
+              <LegalParts parts={CHECKOUT_LEGAL[lang].photoNotice} lang={lang} />
+            </p>
+
+            {storageOn && (
+            <label className="flex items-start gap-3 text-xs text-zinc-400 bg-white/5 border border-white/5 rounded-xl p-3 cursor-pointer">
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 w-4 h-4" />
+              <span>{T.capture.consent}</span>
+            </label>
+            )}
+            {backLink}
+          </section>
+        )}
+
+        {step === 'analyzing' && (
+          <Working title={T.working.finding} lines={progress.length ? progress : [T.working.locating, T.working.measuringSize]} elapsed={elapsed} />
+        )}
+
+        {step === 'quality' && analysis?.quality && shots.length > 0 && (
+          <>
+            <ShotCollector shots={shots} t={targetsOf(analysis)} note={shotNote} onTakeAnother={takeAnother}
+              canUse={usable(analysis)}
+              onContinue={() => imgRef.current && process(imgRef.current, analysis)} onStartOver={retake} />
+            {backLink && <div className="flex justify-center mt-4">{backLink}</div>}
+          </>
+        )}
+
+        {step === 'quality' && analysis?.quality && shots.length === 0 && (
+          <section className="flex flex-col gap-4">
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
+              {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt={T.quality.detectedIris} className="w-[120px] h-[120px] rounded-full border border-[#f5c542]/40 object-cover" />}
+              <div className="min-w-0">
+                <Verdict v={analysis.quality.verdict} block={blockOf(analysis)} />
+                {/* blocked: the one-line reason; the retake steps are in the guide below (the server's message
+                    lists them too, and shown together every step was read twice) */}
+                <p className="text-sm text-zinc-200 mt-2">{blockOf(analysis)?.reason ?? analysis.quality.message}</p>
+                <DetailMeter a={analysis} t={targetsOf(analysis)} />
+              </div>
+            </div>
+            {analysis.picked && (usable(analysis) ? (
+              <p className="text-xs text-emerald-300/90 bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-3">
+                {/* "best", not "sharpest": the verdict ranks first, so a glared photo can be sharper and still lose */}
+                {T.quality.picked(analysis.picked.of, analysis.picked.used)}
+                {fibreRatio(analysis.picked) !== null && T.quality.pickedRatio(T.dec1(fibreRatio(analysis.picked)!))}
+              </p>
+            ) : (
+              // the best of the pick still cannot be used: never say "used"
+              <p className="text-xs text-rose-200/90 bg-rose-950/25 border border-rose-500/30 rounded-xl p-3">{T.quality.noneUsable(analysis.picked.of)}</p>
+            ))}
+            {/* blocked: the retake steps for its reason replace the tips list, which would only repeat them */}
+            {blockOf(analysis) && <RetakeGuide block={blockOf(analysis)!} />}
+            <ShotNotes q={analysis.quality} onRetake={retake} />
+            {!blockedShot(analysis) && visibleTips(analysis.quality).length > 0 && (
+              <ul className="text-xs text-zinc-300 bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5">
+                {visibleTips(analysis.quality).map((t) => <li key={t}>• {t}</li>)}
+              </ul>
+            )}
+            <div className={`grid gap-3 ${usable(analysis) ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <button onClick={retake} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2"><RefreshCcw className="w-4 h-4" /> {T.quality.retake}</button>
+              {/* no way forward from a crop that is not an iris, nor from one the engine blocked: the studio
+                  would invent one, and the server gave neither a work ticket */}
+              {usable(analysis) && (
+                <button onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> {T.quality.continueAnyway}</button>
+              )}
+            </div>
+            {backLink}
+          </section>
+        )}
+
+        {step === 'processing' && (
+          <Working title={working.eye > 1 ? T.working.restoringEye(working.eye) : T.working.restoring} lines={progress} elapsed={elapsed} image={clientCrop}
+            caption={working.sample ? T.working.sampleCaption : undefined}
+            note={analysis?.quality?.pupil_reflection ? T.quality.pupilNote : undefined} />
+        )}
+
+        {step === 'result' && STUDY && !studyAsk && pendingShots.length > 0 && (
+          <p data-testid="study-pending" className="mb-4 text-xs text-sky-200 bg-sky-950/30 border border-sky-400/30 rounded-xl p-3">
+            {T.study.pending(pendingShots)}
+          </p>
+        )}
+
+        {step === 'result' && eyes.length > 0 && (
+          <ResultView
+            eyes={eyes} selectedId={selectedId} onSelect={setSelectedId} onRemove={removeEye} onRetake={retakeEye} onAdd={addEye}
+            art={art} staleArt={staleArt} composeError={composeFail[artKey] ?? null} onRetryCompose={retryCompose}
+            layout={layout} onLayout={setLayoutWant}
+            styles={STYLES} style={style} onStyle={setStyle} names={names} onNames={setNames}
+            onStartOver={startOver} purchase={purchase} />
+        )}
+      </main>
+
+      {/* the four legal pages (the Impressum must be one click away from every page), opened in a new tab so a
+          capture or an artwork is never lost */}
+      <footer className="max-w-3xl mx-auto px-4 pb-24">
+        <nav aria-label={LEGAL_LABELS[lang].nav} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+          {LEGAL_DOCS.map((d) => (
+            <a key={d} href={legalHref(d, lang)} target="_blank" rel="noopener" className="hover:text-white hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm">
+              {LEGAL_LABELS[lang][d]}
+            </a>
+          ))}
+        </nav>
+      </footer>
+
+      {step === 'result' && undo && (
+        <div role="status" className="fixed bottom-4 inset-x-4 z-40 mx-auto max-w-sm bg-zinc-900 border border-white/15 rounded-xl pl-4 pr-1 flex items-center justify-between gap-3 text-sm text-zinc-100 shadow-lg shadow-black/50">
+          <span>{T.result.removed(undo.index + 1)}</span>
+          <button onClick={undoRemove} className="min-h-[44px] min-w-[44px] px-3 font-bold text-[#f5c542] underline underline-offset-4">{T.result.undo}</button>
+        </div>
+      )}
+
+      {liveOpen && <LiveCamera onClose={() => setLiveOpen(false)} onCapture={(b) => { setLiveOpen(false); onCameraShot(b, 'live'); }} />}
+    </div>
+  );
+};
+
+/** EN/DE, as on the landing page (src/landing/Header.tsx LangSwitch). */
+const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lang, onSwitch }) => (
+  <div role="group" aria-label={T.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
+    {(['en', 'de'] as const).map((l) => (
+      <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={l === 'en' ? 'English' : 'Deutsch'}
+        className={`min-w-[40px] rounded-full px-2.5 py-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+        {l}
+      </button>
+    ))}
+  </div>
+);
+
+const Verdict: React.FC<{ v: 'good' | 'ok' | 'weak'; block?: BlockCopy | null }> = ({ v, block = null }) => {
+  const map = { good: [T.quality.verdicts.good, 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'], ok: [T.quality.verdicts.ok, 'bg-amber-500/15 text-amber-300 border-amber-500/40'], weak: [T.quality.verdicts.weak, 'bg-rose-500/15 text-rose-300 border-rose-500/40'] } as const;
+  // a blocked shot is not merely weak: nothing will be made from it, and its badge says why
+  const [label, cls] = block ? [block.badge, map.weak[1]] : map[v];
+  return <span className={`inline-block text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${cls}`}>{label}</span>;
+};
+
+/** Detail N/100 with the ok and good targets marked, so the customer sees how far a retake has to go.
+ *  Renders nothing against an older server that sends no score (the verdict badge still speaks there), nor
+ *  for a blocked shot, whose number would contradict its "Too blurry" badge (shownDetail). */
+const DetailMeter: React.FC<{ a: Analysis; t: Targets; label?: boolean }> = ({ a, t, label = true }) => {
+  const d = shownDetail(a);
+  if (d === undefined) return null;
+  const { band, caption } = meterBand(d, a.quality, t);
+  const [text, bar] = { good: ['text-emerald-300', 'bg-emerald-400'], ok: ['text-amber-300', 'bg-amber-400'], low: ['text-rose-300', 'bg-rose-400'] }[band];
+  return (
+    <div className="mt-3" role="meter" aria-label={T.quality.detail} aria-valuemin={0} aria-valuemax={100} aria-valuenow={d}>
+      <div className="flex items-baseline justify-between gap-2 text-xs">
+        {label ? <span className="font-bold text-zinc-200">{T.quality.detail} <span className={text}>{d}</span><span className="text-zinc-500">/100</span></span> : <span />}
+        {caption && <span className="text-[10px] text-zinc-500">{caption}</span>}
+      </div>
+      <div className="relative h-2 mt-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.max(d, 2)}%` }} />
+        <span className="absolute inset-y-0 w-px bg-white/35" style={{ left: `${t.detail_ok}%` }} />
+        <span className="absolute inset-y-0 w-px bg-white/70" style={{ left: `${t.detail_good}%` }} />
+      </div>
+    </div>
+  );
+};
+
+/** Notes that come from the light in the photo rather than its sharpness. The pupil one reassures (the
+ *  engine rebuilds the pupil anyway), so it is left out for a blocked shot that will not be rebuilt at all;
+ *  the lamp one warns gently and offers a retake. */
+const ShotNotes: React.FC<{ q: Quality; onRetake?: () => void }> = ({ q, onRetake }) => (
+  <>
+    {q.pupil_reflection && !q.blocked && (
+      <p className="text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl p-3 flex gap-2">
+        <Info className="w-4 h-4 shrink-0 mt-px text-sky-300" /> <span>{T.quality.pupilNote}</span>
+      </p>
+    )}
+    {q.lamp_cast && (
+      <div className="text-xs text-amber-200/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
+        <Lightbulb className="w-4 h-4 shrink-0 mt-px text-amber-300" />
+        <span>
+          {q.lamp_message || T.quality.lampFallback}
+          {onRetake && <> <button onClick={onRetake} className="underline underline-offset-2 font-semibold text-amber-100">{T.quality.tryRetake}</button></>}
+        </span>
+      </div>
+    )}
+  </>
+);
+
+/** The camera shot collector: the latest shot's score and the one tip for the next shot, every shot so far
+ *  with the best one ringed, and a way to shoot again or go on with the best at any point. */
+const ShotCollector: React.FC<{
+  shots: Analysis[]; t: Targets; note: string | null;
+  onTakeAnother: () => void; onContinue: () => void; onStartOver: () => void; canUse?: boolean;
+}> = ({ shots, t, note, onTakeAnother, onContinue, onStartOver, canUse = true }) => {
+  const n = shots.length;
+  const latest = shots[n - 1];
+  const q = latest.quality;
+  // a blocked shot shows no Detail anywhere here: its number could read higher than the usable shot we pick
+  const d = shownDetail(latest);
+  const bi = bestIndex(shots);
+  const best = shots[bi];
+  const bestD = shownDetail(best);
+  const full = n >= t.max_shots;
+  const bestUsable = usable(best);
+  const use = canUse && bestUsable;
+  // Prompting ends when the shot we would process is good and lamp-free (the page then goes on by itself).
+  // Judged on the best shot, not the latest: a good but lamp-tinted latest shot must still leave room for
+  // the daylight retake its own warning asks for. A full set with nothing usable in it still takes another
+  // shot, which starts a fresh set (onCameraShot).
+  const canTakeMore = !autoContinue(best) && (!full || !bestUsable);
+  // nothing usable yet and the latest shot was blocked: the retake card with the steps for its reason (the
+  // one the customer just saw fail). With a usable best shot the one-line tip below covers it instead.
+  const guide = !bestUsable ? blockOf(latest) : null;
+  // the latest shot's tip, unless the retake card already says it (the server's message lists the same steps)
+  const tip = q && canTakeMore && !guide ? topTip(q, t) : null;
+  const bestLabel = T.collector.bestLabel(bi + 1, bestD);
+  // the one case where the latest shot reads "Great photo" and is still not used: say why
+  const skippedForLamp = bi !== n - 1 && !!q?.lamp_cast && !best.quality?.lamp_cast;
+  const summary = !bestUsable ? (full ? T.quality.fullUnusable(t.max_shots) : n === 1 ? T.quality.shotUnusable : T.quality.shotsUnusable)
+    : full ? T.collector.full(t.max_shots, bestLabel)
+    : n === 1 ? (canTakeMore ? T.collector.more(t.max_shots - 1) : T.collector.sharpEnough)
+    : bi === n - 1 ? T.collector.bestSoFar
+    : skippedForLamp ? T.collector.lampSkipped(n, bestLabel)
+    : T.collector.bestIs(bestLabel);
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="grid grid-cols-[96px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
+        {latest.preview
+          ? <img src={`data:image/jpeg;base64,${latest.preview}`} alt={T.collector.shotAlt(n)} className="w-24 h-24 rounded-full border border-[#f5c542]/40 object-cover" />
+          : <span className="w-24 h-24 rounded-full bg-white/5" />}
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-zinc-100">{T.collector.header(n, t.max_shots)}{d !== undefined && T.collector.headerDetail(d)}</p>
+          {q && <div className="mt-1.5"><Verdict v={q.verdict} block={blockOf(latest)} /></div>}
+          <DetailMeter a={latest} t={t} label={false} />
+        </div>
+      </div>
+
+      {note && (
+        <p className="text-xs text-amber-200/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">
+          {T.collector.lastFailed(note)}
+        </p>
+      )}
+      {tip && (
+        <p className="text-sm text-zinc-200 bg-white/5 border border-white/10 rounded-xl p-3 flex gap-2">
+          <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-[#f5c542]" /> <span>{tip}</span>
+        </p>
+      )}
+      {/* nothing usable and the latest shot blocked: the capture guide's steps for the next one. Its title says
+          why; the server's message is left out because it lists the same steps */}
+      {guide && <RetakeGuide block={guide} />}
+      {/* the notes follow the shot that will be processed, so a lamp warning never disappears while its
+          shot is still the one we use. No retake link here: "Take another" below already covers it. */}
+      {best.quality && <ShotNotes q={best.quality} />}
+
+      <div>
+        <div className="flex items-start gap-3">
+          {shots.map((s, i) => {
+            // a blocked shot's thumbnail names its reason: its Detail number is not a measure of anything usable
+            const sd = blockOf(s)?.thumb ?? shownDetail(s);
+            // the best shot is ringed in gold only when it is one we would really use
+            const ring = i !== bi ? 'border-white/10' : usable(s) ? 'border-[#f5c542]' : 'border-rose-400/70';
+            const ink = i !== bi ? (usable(s) ? 'text-zinc-500' : 'text-rose-300/70') : usable(s) ? 'text-[#f5c542]' : 'text-rose-300';
+            return (
+              <div key={i} className="flex flex-col items-center gap-1">
+                {s.preview
+                  ? <img src={`data:image/jpeg;base64,${s.preview}`} alt={T.collector.shotAlt(i + 1)} className={`w-11 h-11 rounded-full object-cover border-2 ${ring} ${i === bi ? '' : 'opacity-60'}`} />
+                  : <span className={`w-11 h-11 rounded-full bg-white/5 border-2 ${ring}`} />}
+                <span className={`text-[10px] font-mono ${ink}`}>{sd ?? `#${i + 1}`}</span>
+              </div>
+            );
+          })}
+          {canTakeMore && Array.from({ length: t.max_shots - n }, (_, i) => (
+            <span key={`slot-${i}`} className="w-11 h-11 rounded-full border-2 border-dashed border-white/10" aria-hidden />
+          ))}
+        </div>
+        <p className="text-[11px] text-zinc-500 mt-2">{summary}</p>
+      </div>
+
+      <div className={`grid gap-3 ${canTakeMore && use ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        {canTakeMore && (
+          <button onClick={onTakeAnother} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Camera className="w-4 h-4" /> {T.collector.takeAnother}</button>
+        )}
+        {/* the best shot is not centred on an iris, or the engine blocked it: offer only another shot, never
+            the studio */}
+        {use && (
+          <button onClick={onContinue} className={`py-3 rounded-xl text-sm flex items-center justify-center gap-2 ${canTakeMore ? 'bg-white/5 border border-white/10 font-semibold' : 'bg-[#f5c542] text-black font-bold'}`}>
+            <Sparkles className="w-4 h-4" /> {n > 1 ? T.collector.useBest : T.collector.useThis}
+          </button>
+        )}
+      </div>
+      <button onClick={onStartOver} className="text-xs text-zinc-400 underline underline-offset-4 self-center">{T.collector.startOver}</button>
+    </section>
+  );
+};
+
+const Working: React.FC<{ title: string; lines: string[]; elapsed: number; image?: string | null; note?: string; caption?: string }> = ({ title, lines, elapsed, image, note, caption }) => (
+  <section className="flex flex-col items-center gap-5 py-6 text-center">
+    {image ? <img src={image} alt={T.working.yourIris} className="w-40 h-40 rounded-full object-cover border-2 border-[#f5c542]/40 shadow-[0_0_40px_rgba(245,197,66,0.25)] animate-pulse" /> : <div className="w-16 h-16 border-4 border-[#f5c542]/20 border-t-[#f5c542] rounded-full animate-spin" />}
+    {image && caption && <span className="-mt-3 text-[10px] uppercase tracking-widest text-amber-200/90">{caption}</span>}
+    <h2 className="font-luxury text-xl font-bold">{title}</h2>
+    <ul className="text-sm text-zinc-300 space-y-1.5">
+      {lines.map((l, i) => (
+        <li key={l} className="flex items-center gap-2 justify-center">
+          {i < lines.length - 1 ? <Check className="w-4 h-4 text-emerald-400" /> : <span className="w-3.5 h-3.5 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" />}
+          {l}
+        </li>
+      ))}
+    </ul>
+    {note && <p className="text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl px-3 py-2 max-w-sm">{note}</p>}
+    <span className="text-[11px] font-mono text-zinc-500">{T.working.elapsed(elapsed)}</span>
+  </section>
+);
+
+/** Live camera with hardware zoom where the browser supports it (Android Chrome). Captures a full-resolution still. */
+const LiveCamera: React.FC<{ onClose: () => void; onCapture: (b: Blob) => void }> = ({ onClose, onCapture }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [zoom, setZoom] = useState<{ min: number; max: number; step: number; value: number } | null>(null);
+  const [sharp, setSharp] = useState(0);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 4096 }, height: { ideal: 3072 } }, audio: false });
+        if (!alive) { stream.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+        const track = stream.getVideoTracks()[0];
+        const caps = (track.getCapabilities?.() || {}) as { zoom?: { min: number; max: number; step: number } };
+        if (caps.zoom) {
+          const value = Math.min(2, caps.zoom.max);
+          await track.applyConstraints({ advanced: [{ zoom: value } as MediaTrackConstraintSet] });
+          setZoom({ ...caps.zoom, value });
+        }
+      } catch (e) { setErr((e as Error).message || T.live.unavailable); }
+    })();
+    const id = setInterval(() => {
+      const v = videoRef.current; if (!v || v.videoWidth === 0) return;
+      const c = document.createElement('canvas'); const n = 160; c.width = n; c.height = n;
+      const ctx = c.getContext('2d')!; const s = Math.min(v.videoWidth, v.videoHeight) * 0.35;
+      ctx.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, n, n);
+      const d = ctx.getImageData(0, 0, n, n).data; let sum = 0, sq = 0, k = 0;
+      for (let y = 1; y < n - 1; y++) for (let x = 1; x < n - 1; x++) {
+        const i = (y * n + x) * 4; const g = (i2: number) => d[i2] * 0.299 + d[i2 + 1] * 0.587 + d[i2 + 2] * 0.114;
+        const lap = -4 * g(i) + g(i - 4) + g(i + 4) + g(i - n * 4) + g(i + n * 4); sum += lap; sq += lap * lap; k++;
+      }
+      setSharp(Math.round(sq / k - (sum / k) ** 2));
+    }, 500);
+    return () => { alive = false; clearInterval(id); streamRef.current?.getTracks().forEach((t) => t.stop()); };
+  }, []);
+
+  const applyZoom = async (value: number) => {
+    const track = streamRef.current?.getVideoTracks()[0]; if (!track || !zoom) return;
+    try { await track.applyConstraints({ advanced: [{ zoom: value } as MediaTrackConstraintSet] }); setZoom({ ...zoom, value }); } catch { /* ignore */ }
+  };
+
+  const capture = async () => {
+    const track = streamRef.current?.getVideoTracks()[0]; const v = videoRef.current; if (!track || !v) return;
+    // typed as optional on purpose: the DOM lib declares ImageCapture, but iOS Safari before 18.4 has none
+    const IC = (window as unknown as { ImageCapture?: typeof ImageCapture }).ImageCapture;
+    if (IC) {
+      try {
+        const ic = new IC(track);
+        // Ask for the sensor's largest still. Without settings some Chrome builds return the photo at the
+        // preview stream's size, which throws away the iris pixels the 2x zoom was there to gain.
+        let settings: PhotoSettings | undefined;
+        try {
+          const caps = await ic.getPhotoCapabilities?.();
+          const w = caps?.imageWidth?.max, h = caps?.imageHeight?.max;
+          if (w && h) settings = { imageWidth: w, imageHeight: h };
+        } catch { /* capabilities are optional: take the default photo */ }
+        let blob: Blob;
+        try { blob = await ic.takePhoto(settings); }
+        catch (e) { if (!settings) throw e; blob = await ic.takePhoto(); }   // a camera that refuses the size still shoots
+        onCapture(blob); return;
+      } catch { /* fall through to a video frame */ }
+    }
+    const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d')!.drawImage(v, 0, 0);
+    c.toBlob((b) => b && onCapture(b), 'image/jpeg', 0.95);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      <div className="relative flex-1 overflow-hidden">
+        <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div className="w-[17%] aspect-square rounded-full border-2 border-[#f5c542] shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] flex items-end justify-center">
+            <span className="absolute top-[58%] text-[10px] font-mono bg-black/75 px-2 py-0.5 rounded text-white/90 whitespace-nowrap">{T.live.guide}</span>
+          </div>
+        </div>
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-xs">
+          <span className={`px-2.5 py-1 rounded-full font-bold ${sharp > 60 ? 'bg-emerald-500/80 text-black' : 'bg-black/70 text-amber-300'}`}>{sharp > 60 ? T.live.sharp : T.live.holdStill}</span>
+          <button onClick={onClose} className="px-3 py-1 rounded-full bg-black/70 text-white">{T.live.close}</button>
+        </div>
+        {err && <div className="absolute bottom-4 left-4 right-4 text-xs text-rose-200 bg-rose-950/70 rounded-xl p-3">{err}</div>}
+      </div>
+      <div className="bg-[#07090e] px-4 py-4 flex flex-col gap-3">
+        {zoom ? (
+          <label className="flex items-center gap-3 text-xs text-zinc-300"><ZoomIn className="w-4 h-4 text-[#f5c542]" /> {T.live.zoom(T.dec1(zoom.value))}
+            <input type="range" min={zoom.min} max={zoom.max} step={zoom.step || 0.1} value={zoom.value} onChange={(e) => applyZoom(parseFloat(e.target.value))} className="flex-1" />
+          </label>
+        ) : (
+          <p className="text-[11px] text-zinc-500">{T.live.noZoom}</p>
+        )}
+        {!hasStillCapture && (
+          // without ImageCapture we can only grab a video frame, and a video frame of this framing is about
+          // 250px of iris: below our own 300px floor, so it would fail the quality gate anyway
+          <p className="text-[11px] text-amber-300/80">{T.live.lowRes}</p>
+        )}
+        <button onClick={capture} className="w-full py-4 rounded-2xl bg-[#f5c542] text-black font-luxury font-bold uppercase tracking-widest text-sm">{T.live.capture}</button>
+      </div>
+    </div>
+  );
+};

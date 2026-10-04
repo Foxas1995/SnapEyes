@@ -1,0 +1,22 @@
+# sha256, bytes, name of the private image fixtures (suites/private/fixtures, never in git: replies recorded from the owner's own photos).
+# `python suites/check_fixtures.py` compares a restored copy with this list.
+34ae1338f3e156ca98effcb78022b77f202423871f6e2b56e815e2052b03ff52     17420  analyze_founder_215102.json
+e9e3dea3e70da46d27859e633f5342e3beb7d585f225e7eea2ad328fdbea42de     22387  analyze_founder_215120.json
+cccfdab9dfb3e48c1af55109974c44b3892b4d2067f42d262d97d4f4874db9c6     16849  analyze_founder_215208.json
+ce6526c6c203922570c91ed15e42fad6672b2049c9ec4a165a3f4aec789855e2     38046  analyze_sample_ai.json
+2b405a5eb0426e5b51c02be315d06cd687fc7d7f14c68a81bc1964c4348688dc     69515  crop_founder_215102.jpg
+a3cd4682aff2fd56a45235492fffe0cf406013237b041c247b60c4bb4d56c011     28030  crop_founder_215120.jpg
+7156529082855e483f7b5c2ff8bee651cedfd043a9f08eb37d13a525ab1a9bed     31235  crop_founder_215208.jpg
+a7e5d1769cebc3ceb6ec293522586b1b76b112b3697989e9a14d733063a54b49    166169  crop_sample_ai.jpg
+1eb461ab31be7894bdc1b6ac0e0e0d8a04be38043b916875170f9e43a8cc83d8     84667  deglare_founder_215102.json
+6892671c157c4130726ef5fc51104988432be8aa80926e6136b090b6369dd198    203016  deglare_founder_215120.json
+2160f779849e9b235b5caac97a2bbde0cb90faf9d86b1096d513a9373c5db5fb    140858  deglare_founder_215208.json
+8502729431072529319622d2caa77cd4b69d6f54b96b29b7106ce3dc27057299    182858  deglare_sample_ai.json
+f8425b656f5522e293ab810b660a5d05e51480cd63a973ddf3cf2bb4c9836a51    305002  enhance_founder_215102.json
+88f966c755d1491b08934f8a4762ed29a877d0432725569ae2242390830de2fc    309964  enhance_founder_215120.json
+cd7b476e9ded9e6a39657e4c1f8f7c19d87fbbdabf2918f7c9dc1627ff18ed06    278718  enhance_founder_215208.json
+f932d29debaf12a29e97e19edb7b90e5439d42afa8f5c4abac922283c750e8e4    347753  enhance_sample_ai.json
+a756be858c12a46f9135d731a0f13d0ce9eddedbf54b5a84668ff6e260c52b27    241808  enhanced_founder_215102.jpg
+0bafaabcf7d73b0eb2ebe7d94c64c80d71649585c27f7a4ae07743c33774b276    237708  enhanced_founder_215120.jpg
+d97b4706247305d2d4c2d12fbce7972068fcea59ceaf0b6fd319a267dc526532    220442  enhanced_founder_215208.jpg
+8aa24ad2a34879ff8d330ba3d306bf0a4e429f7a1e02f6322e9a35c80d15500d    258806  enhanced_sample_ai.jpg

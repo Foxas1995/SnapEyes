@@ -1,0 +1,73 @@
+{
+ "commit": "1d58fbf",
+ "recorded": "2026-10-04",
+ "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch). A change lowers a number only with a reason in the commit message.",
+ "suites": {
+  "r2": {
+   "pass": 105
+  },
+  "r3": {
+   "pass": 48
+  },
+  "r4": {
+   "pass": 69
+  },
+  "r5": {
+   "pass": 54
+  },
+  "fix": {
+   "pass": 53
+  },
+  "admin": {
+   "pass": 186
+  },
+  "pay": {
+   "pass": 120
+  },
+  "advance": {
+   "pass": 66
+  },
+  "refund": {
+   "pass": 7
+  },
+  "preview": {
+   "pass": 60
+  },
+  "review": {
+   "pass": 11
+  },
+  "fixmk": {
+   "pass": 36
+  },
+  "markets": {
+   "pass": 58
+  },
+  "au": {
+   "pass": 70
+  },
+  "payrev": {
+   "pass": 19
+  },
+  "fixer": {
+   "pass": 43
+  },
+  "oldpay": {
+   "pass": 120
+  },
+  "oldadv": {
+   "pass": 66
+  },
+  "oldadmin": {
+   "pass": 186
+  },
+  "exp": {
+   "pass": 349
+  },
+  "ts": {
+   "pass": 20
+  },
+  "v3wp0": {
+   "pass": 61
+  }
+ }
+}
