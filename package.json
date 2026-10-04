@@ -12,6 +12,8 @@
     "check:shell": "node scripts/check_shell.mjs",
     "check:legal": "node scripts/legal_look.mjs",
     "check:landing": "node scripts/check_landing.mjs",
+    "check:motion": "node scripts/check_motion.mjs",
+    "check:taste": "node scripts/check_taste.mjs",
     "check:slots": "node scripts/measure_slots.mjs --check",
     "lint": "oxlint",
     "preview": "vite preview",
