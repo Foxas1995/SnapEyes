@@ -1,0 +1,353 @@
+{
+ "about": "verdicts of the scratch cx_kit.gate (lid rule), uni_gate.gate (fill rule) and cx_pupil.analyse on the synthetic fixtures",
+ "fixtures": {
+  "amber_slit": {
+   "class": "own",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 6.5,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "slit",
+   "sha256": "10be5b5174a59579f50444c401bdf91b909cd6a93fce011e9f8ff1bf4730a48e",
+   "stats": {
+    "C": 47.07,
+    "L": 46.51,
+    "class": "own",
+    "h": 69.8,
+    "mean_rgb": [
+     152.5,
+     98.4,
+     32.7
+    ]
+   }
+  },
+  "blue_lid": {
+   "class": "own",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 19,
+    "ok": false,
+    "run18": 132
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 12,
+    "maxdev70": 8.2,
+    "ok": false,
+    "outlier_bins": 131
+   },
+   "pupil": "round",
+   "sha256": "d7a9b250920f6e755c91d3f0c1ab64b934b99ee4512aa1dbbd72d20e9092acf6",
+   "stats": {
+    "C": 22.25,
+    "L": 48.63,
+    "class": "own",
+    "h": 263.7,
+    "mean_rgb": [
+     85.2,
+     118.5,
+     152.5
+    ]
+   }
+  },
+  "blue_round": {
+   "class": "own",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 9.8,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "round",
+   "sha256": "fd37d54ef6cccd707e85949f5567db5dc9d5518265bf4cd942acc6b44561cefd",
+   "stats": {
+    "C": 28.85,
+    "L": 45.47,
+    "class": "own",
+    "h": 266.4,
+    "mean_rgb": [
+     65.7,
+     110.9,
+     155.4
+    ]
+   }
+  },
+  "blue_slit": {
+   "class": "own",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 4.6,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "slit",
+   "sha256": "b186491d698f074952249bc7e7bd21a48b29758c6297d075b6168a0ce32bf87d",
+   "stats": {
+    "C": 29.2,
+    "L": 46.23,
+    "class": "own",
+    "h": 266.3,
+    "mean_rgb": [
+     66.9,
+     112.9,
+     158.0
+    ]
+   }
+  },
+  "dark_brown_bar": {
+   "class": "dark_brown",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 3.2,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "bar",
+   "sha256": "782dfd7c50f3d5aec29e6824c062b27f296945d621886b9e4738b79d6f2492ea",
+   "stats": {
+    "C": 21.2,
+    "L": 16.46,
+    "class": "dark_brown",
+    "h": 56.7,
+    "mean_rgb": [
+     62.1,
+     33.7,
+     15.3
+    ]
+   }
+  },
+  "dark_brown_lid": {
+   "class": "dark_brown",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 30,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 14,
+    "lid88": 0,
+    "maxdev70": 38.1,
+    "ok": false,
+    "outlier_bins": 136
+   },
+   "pupil": "round",
+   "sha256": "501cb99fe4aea0be29a263b859667e51f2bf3b81666edaa80d79a17dfad18851",
+   "stats": {
+    "C": 19.98,
+    "L": 17.33,
+    "class": "dark_brown",
+    "h": 57.6,
+    "mean_rgb": [
+     62.9,
+     36.1,
+     18.6
+    ]
+   }
+  },
+  "dark_brown_round": {
+   "class": "dark_brown",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 4.2,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "round",
+   "sha256": "db098e0c793e0392e5516794a266a15dd021f6a9031a37ffb211d2aa94c4f750",
+   "stats": {
+    "C": 21.78,
+    "L": 16.98,
+    "class": "dark_brown",
+    "h": 56.8,
+    "mean_rgb": [
+     63.8,
+     34.6,
+     15.6
+    ]
+   }
+  },
+  "green_bar": {
+   "class": "own",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 5.5,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "bar",
+   "sha256": "c52806de923fa6fc6a955f2472791260510b79fb951610fe2112528648404dbe",
+   "stats": {
+    "C": 33.49,
+    "L": 41.95,
+    "class": "own",
+    "h": 134.7,
+    "mean_rgb": [
+     71.4,
+     108.4,
+     58.4
+    ]
+   }
+  },
+  "green_round": {
+   "class": "own",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 8.1,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "round",
+   "sha256": "74581b43c400688ab65fd8d05e754e7a3a0e07dc0db82dc7f72d1a7281ba128c",
+   "stats": {
+    "C": 35.32,
+    "L": 44.6,
+    "class": "own",
+    "h": 134.7,
+    "mean_rgb": [
+     76.0,
+     115.5,
+     62.2
+    ]
+   }
+  },
+  "grey_lash": {
+   "class": "grey",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 4
+   },
+   "lid": {
+    "lid70": 11,
+    "lid88": 3,
+    "maxdev70": 27.8,
+    "ok": false,
+    "outlier_bins": 48
+   },
+   "pupil": "round",
+   "sha256": "a5fcb06c053d3c45881c680c3f7662cdce40a185600c907c75d2c09e0cdeee44",
+   "stats": {
+    "C": 4.73,
+    "L": 46.7,
+    "class": "grey",
+    "h": 261.6,
+    "mean_rgb": [
+     105.5,
+     111.3,
+     118.4
+    ]
+   }
+  },
+  "grey_lid": {
+   "class": "grey",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 1,
+    "ok": false,
+    "run18": 132
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 13,
+    "maxdev70": 15.6,
+    "ok": false,
+    "outlier_bins": 131
+   },
+   "pupil": "round",
+   "sha256": "27c125b39536bf162249af4fc5c7325a233611d778e779f7a76d6e24a88d4f24",
+   "stats": {
+    "C": 1.48,
+    "L": 53.29,
+    "class": "grey",
+    "h": 328.4,
+    "mean_rgb": [
+     128.9,
+     126.6,
+     128.6
+    ]
+   }
+  },
+  "grey_round": {
+   "class": "grey",
+   "fill": {
+    "catch": 0.0,
+    "n_step": 0,
+    "ok": true,
+    "run18": 0
+   },
+   "lid": {
+    "lid70": 0,
+    "lid88": 0,
+    "maxdev70": 8.7,
+    "ok": true,
+    "outlier_bins": 0
+   },
+   "pupil": "round",
+   "sha256": "42f0adad5ea8db965a21465cb6e5eb8c3cd6abf06715ac9fd98f386313894529",
+   "stats": {
+    "C": 5.21,
+    "L": 49.66,
+    "class": "grey",
+    "h": 259.7,
+    "mean_rgb": [
+     111.9,
+     118.9,
+     126.6
+    ]
+   }
+  }
+ }
+}
