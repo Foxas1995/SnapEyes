@@ -10,7 +10,6 @@
   @media (min-width: 960px) {
     .lp-price-grid { grid-template-columns: 1.25fr .75fr; gap: 80px; align-items: start; }
   }
-  .lp-cur-sw { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 13px; color: var(--ink-3); font-weight: 600; letter-spacing: .04em; }
   .lp-ptable { border-top: 1px solid var(--line-2); }
   .lp-prow { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; align-items: baseline; padding: 20px 0; border-bottom: 1px solid var(--line); }
   .lp-prow b { font-weight: 600; color: #fff; font-size: 16px; }
@@ -26,8 +25,7 @@
   .lp-incl .lp-pay-open, .lp-incl .lp-au-line { margin-top: 10px; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
   .lp-incl .lp-btn { margin-top: 26px; width: 100%; }
   .lp-foot-price { margin-top: 34px; font-size: 13px; line-height: 1.65; color: var(--ink-3); max-width: 58em; }
-  .lp-foot-price a { color: var(--ink-2); text-underline-offset: 4px; }
+  .lp-foot-price a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 4px; }
   .lp-foot-price a:hover { color: var(--gold); }
-  .lp-cur-seg button { text-transform: none; letter-spacing: .04em; font-size: 13px; min-height: 44px; min-width: 56px; }
   .lp-price-grid > * { min-width: 0; }
 }

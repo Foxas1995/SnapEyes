@@ -1,0 +1,9 @@
+/* SnapEyes landing v2: The currency switch (the pricing block and the footer use the same component, CurrencySwitch.tsx).
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. These two rules were part of pricing.css; the footer needs them as much as the pricing block does. */
+@layer landing {
+  .lp-cur-sw { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 13px; color: var(--ink-3); font-weight: 600; letter-spacing: .04em; }
+  .lp-cur-seg button { text-transform: none; letter-spacing: .04em; font-size: 13px; min-height: 44px; min-width: 56px; }
+}

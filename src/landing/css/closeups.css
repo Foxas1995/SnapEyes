@@ -18,7 +18,7 @@
   .lp-cu-cap p { margin-top: 6px; font-size: 14.5px; color: var(--ink-2); max-width: 36em; }
   .lp-cu-edge .lp-edge-img { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden; background: #111; box-shadow: var(--ring); }
   .lp-cu-edge .lp-edge-img img { width: 100%; height: 100%; object-fit: cover; }
-  .lp-cu-edge .lp-stage-cap { margin-left: 0; }
+  .lp-edge-cap { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: flex-start; margin: 14px auto 0 0; max-width: 540px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
   @media (max-width: 639px) {
     .lp-cu-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; margin: 32px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 12px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
     .lp-cu-grid::-webkit-scrollbar { display: none; }
