@@ -20,6 +20,15 @@
     .lp-final .lp-bg::after { background: linear-gradient(90deg, rgba(7, 9, 14, .86) 14%, rgba(7, 9, 14, .45) 46%, rgba(7, 9, 14, .08) 78%), linear-gradient(0deg, rgba(7, 9, 14, .5), transparent 34%); }
     .lp-final .lp-wrap { padding-block: 100px; }
   }
+  /* from 1200 px the piece (about 0.486 of the width from the left) comes close to the copy: a headline of about 8.5 em wraps and leaves 48 px or more
+     between the text and the print at every width up to 1920 px (it was 13 px at 1280 and 3 px at 1920) */
+  @media (min-width: 1200px) {
+    .lp-final h2 { max-width: 8.5em; }
+  }
+  /* from 960 to 1199 px the headline sits below the print (one line, 9 px under it at 1100 px): the picture moves up by 36 px, 45 px of clear wall between them */
+  @media (min-width: 960px) and (max-width: 1199px) {
+    .lp-final .lp-bg img { top: -16%; }
+  }
   .lp-final-chip { left: auto; right: var(--gut); top: 16px; z-index: 4; }
   @media (min-width: 960px) {
     .lp-final-chip { top: auto; bottom: 18px; }
