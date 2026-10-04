@@ -76,7 +76,10 @@
    "pass": 97
   },
   "v3core": {
-   "pass": 81
+   "pass": 82
+  },
+  "v3plates": {
+   "pass": 99
   }
  }
 }

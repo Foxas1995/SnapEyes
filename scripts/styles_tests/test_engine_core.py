@@ -209,6 +209,20 @@ bc3 = C.BoundedCache(3)
 for i in range(1000):
     bc3.put(i, bytes(10))
 check("BoundedCache never holds more than its bound however much goes through it", len(bc3) == 3 and list(bc3._d) == [997, 998, 999])
+import gc  # noqa: E402
+import tracemalloc  # noqa: E402
+tracemalloc.start()
+grown = []
+for k in range(12):
+    ir_k = C.Iris(SI.png_bytes_of(kind=("blue", "green", "amber", "dark_brown", "grey")[k % 5], pupil=("round", "slit", "bar")[k % 3], seed=300 + k, side=384), f"leak{k}")
+    d_k = C.place_disc(ir_k, 384.0, 384.0, 150.0, 0)
+    CC.mini_render(C, ir_k, d_k)
+    del ir_k, d_k
+    gc.collect()
+    grown.append(tracemalloc.get_traced_memory()[0])
+tracemalloc.stop()
+check("twelve different eyes through the core (grade, ring, disc, a small effect) in one process: the memory held after the third does not grow by more than 60 MiB "
+      "(test IE6, the core's side: nothing keeps an eye alive)", (grown[-1] - grown[2]) / 1048576 < 60 and max(grown) / 1048576 < 200, [round(g / 1048576, 1) for g in grown])
 
 # ============================================================================================ 3. text
 section("3. the customer's words: limits, the font check, the drawers")

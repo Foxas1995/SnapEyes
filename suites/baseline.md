@@ -196,3 +196,41 @@ pure Python; the file breakdown in section 3 is 15.4 plus 1.1 MiB (it read 16 pl
 **Not fixed, and why (all recorded as unverified in sections 3 to 6, each with its closing step):** V1 to V4 and VE3 (real function
 sizes, `excludeFiles` semantics, the slow factor, memory, Fluid, duration, `/tmp`, the Python version of a real build log) need a
 Preview deployment and the admin secret, and this machine has no Vercel access. Nothing else of the review is open.
+
+## 8. The plates land (WP4, 2026-10-05): V1 and V2 with the plates in
+
+What changed in the bundle: `api/_assets/plates` (the 1K files of 169 usable plates), `api/_assets/atlas` (two sprite atlases), the baked
+registry `api/_lib/plates_registry.py` and the foundation modules of `api/_lib/styles/` (core, layouts, text, plates, atlas, costs,
+selfcheck, 0.3 MiB of source). `vercel.json` now has one entry per function (11), and the seven that never render exclude the plates and
+atlases. All figures from `node scripts/bundle_report.mjs --pypi` (Linux wheels as in section 3), MiB = 2^20 bytes:
+
+| Function | Files of the repository | Of which plates and atlases | Python packages (Linux wheels) | Estimate | Room under 235 |
+|---|---:|---:|---:|---:|---:|
+| compose, master_compose, order, admin (4) | 60.8 | 43.8 (plates 37.0, atlases 6.8) | 125.6 | **186.4** | 48.6 |
+| the other seven | 17.0 | 0 | 125.6 | **142.6** | 92.4 |
+
+The 60.8 MiB are `api/_assets/plates` 37.0, `bg` 10.5 (the legacy backgrounds, gone at WP19: 175.9 MiB then), `atlas` 6.8, `models` 4.6,
+`_lib` 1.3, `fonts` 0.3, handlers 0.2. The registry's recorded dependency size is 126 MiB (an estimate until V1 reads a Preview);
+`check_styles` item 9 fails the build when files plus that figure pass 235 MiB for a rendering function.
+
+The library, by family (plates / usable / 1K MiB of the usable ones / 4K MiB of the plates an engine can fetch):
+
+| Family | Plates | Usable | 1K MiB | 4K MiB | Note |
+|---|---:|---:|---:|---:|---|
+| P-SN-CLOUD | 47 | 47 | 9.52 | 237.64 | 4K only for the Powder Burst filter (black 30, 45, 60, a direction, void 0.40 or more) |
+| P-SP-CROWN | 60 | 60 | 6.36 | 59.68 | Splash and Elements |
+| P-DN-SPIRAL | 16 | 10 | 1.80 | 72.48 | the crisp ones (Vortex, void 0.20 or more) |
+| P-EL-FLAME | 14 | 6 | 0.28 | 3.43 | the v3 flames; Elements stays in the laboratory |
+| P-UV-DUST, P-UV-MILKY | 14 | 11 | 4.96 | 56.71 | Deep Field and Starfield (laboratory); three milky ways vetoed |
+| P-CX-JET, P-CX-RIVER | 70 | 35 | 14.07 | 0 | collision plates are used at 1K only |
+| **all** | **221** | **169** | **36.99** | **429.95** | |
+
+Storage for V6: the first release's three families (CLOUD, CROWN, SPIRAL) are **369.8 MiB** of 4K files (`upload_plates.py --release1`, a dry run
+prints it); all families together 430 MiB. The plan's estimate was 415 MB for release 1 and 675 MB as an upper bound: the engines' own filters
+decide which CLOUD plates are ever fetched at 4K, so the figure is lower. The project's real storage plan is still unread (V6).
+
+V2, what the explicit entries settle and what they do not: with one `functions` entry per file, no file matches two patterns, so the question
+of how overlapping globs resolve no longer arises (`check_styles` item 10 refuses a glob). Whether `excludeFiles` reaches the installed
+packages (so that nine functions could drop onnxruntime, about 49 MiB each) and whether it reads `api/_assets/plates/**` as a path from the
+project root are still unverified: a Preview's function list answers both, and the four rendering functions' sizes against the table above
+are how the plates exclusion is confirmed (the seven others should be 43.8 MiB smaller).

@@ -29,3 +29,4 @@ v3wp0:scripts/styles_tests:test_wp0.py
 v3reg:scripts/styles_tests:test_registry.py
 v3gate:scripts/styles_tests:test_gate_seal.py
 v3core:scripts/styles_tests:test_engine_core.py
+v3plates:scripts/styles_tests:test_plates.py

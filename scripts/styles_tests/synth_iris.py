@@ -178,6 +178,13 @@ def png_bytes(name, side=1024):
     return b.getvalue()
 
 
+def png_bytes_of(**kw):
+    """The PNG bytes of make(**kw): an eye that is not one of the standard fixtures (a leak test needs many different ones)."""
+    b = io.BytesIO()
+    make(**kw).save(b, "PNG", compress_level=3)
+    return b.getvalue()
+
+
 def jpeg_bytes(name, side=1024, quality=92):
     b = io.BytesIO()
     make_named(name, side).save(b, "JPEG", quality=quality, subsampling=0)
