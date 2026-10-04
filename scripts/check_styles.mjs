@@ -512,6 +512,8 @@ export const BUDGET_MIB = 235;
 export const RENDERING = ['admin', 'compose', 'master_compose', 'order'];
 const BASE_EXCLUDE = ['node_modules/**', 'dist/**', 'public/**', 'src/**', 'assets/**', 'scripts/**', 'suites/**', '.git/**', '*.html', '*.json', '*.ts', '*.md'];
 const PLATES_EXCLUDE = ['api/_assets/plates/**', 'api/_assets/atlas/**'];
+/** The only keys a function entry of vercel.json may carry: memory is not settable under Fluid compute, and includeFiles would undo the exclusions. */
+const FUNCTION_KEYS = ['maxDuration', 'excludeFiles'];
 export const PLATE_FAMILY_SOURCES = ['y2', 'uv', 'cx'];
 const PLATE_FIELDS = ['family', 'since', 'until', 'usable', 'mono', 'kind', 'variables', 'score', 'k1', 'k4'];
 const PLATE_OPTIONAL = ['void', 'void_diam', 'strong_angle', 'strength', 'fit', 'crisp', 'extra'];
@@ -653,6 +655,12 @@ export function checkFunctions(root, out, rendering = RENDERING) {
     const cfg = fns[`api/${h}.py`];
     if (!isObj(cfg)) continue;
     durations.add(cfg.maxDuration);
+    for (const k of Object.keys(cfg)) {
+      if (FUNCTION_KEYS.includes(k)) continue;
+      out.push(k === 'includeFiles'
+        ? `vercel.json api/${h}.py: includeFiles puts files back into the function that excludeFiles took out (the plates and atlases of a function that never renders, the scripts, the suites): the entry holds only ${FUNCTION_KEYS.join(' and ')}`
+        : `vercel.json api/${h}.py: the key "${k}" is not one this check reads (it knows ${FUNCTION_KEYS.join(' and ')}): a setting that changes what a function holds or how much it may use must be added to the check with its rule first`);
+    }
     const ex = typeof cfg.excludeFiles === 'string' ? cfg.excludeFiles : '';
     const m = /^\{(.*)\}$/.exec(ex);
     const have = (m ? m[1] : ex).split(',').map((s) => s.trim()).filter(Boolean).sort();

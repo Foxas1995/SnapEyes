@@ -318,6 +318,29 @@ with local_store(), mock.patch.dict(P._TABLE, {SYN_ID: syn_rec}):
     P.clear_memory()
     check("... and a cache file of the wrong size is not trusted: the plate is fetched again (and is now missing)",
           (open(os.path.join(CACHE, os.listdir(CACHE)[0]), "ab").write(b"x") or True) and raises(lambda: P.fetch_4k(SYN_ID), P.PlateUnavailable) is not False)
+    # a cache file of the right size and the wrong bytes (a disk fault, an edit) is not drawn from either: the object is fetched again and the cache healed
+    clean_state()
+    stored(SYN)
+    P.clear_memory()
+    P.fetch_4k(SYN_ID)
+    cfile = os.path.join(CACHE, os.listdir(CACHE)[0])
+    dmg = bytearray(open(cfile, "rb").read())
+    dmg[40] ^= 1
+    open(cfile, "wb").write(bytes(dmg))
+    P.clear_memory()
+    try:
+        im4 = P.fetch_4k(SYN_ID)
+    except Exception as ex_:  # noqa: BLE001  (a damaged file that was decoded raises here: the check below then fails instead of the suite)
+        im4 = ex_
+    healed = open(cfile, "rb").read() == SYN
+    shutil.rmtree(STORE)
+    os.makedirs(STORE)
+    open(cfile, "wb").write(bytes(dmg))
+    P.clear_memory()
+    e = raises(lambda: P.fetch_4k(SYN_ID), P.PlateUnavailable)
+    check("a cache file of the right size and the wrong bytes is not trusted (the hit is checked by sha256 too): the object is fetched again and the cache file is "
+          "healed; with the object gone as well the plate is PlateUnavailable and the damaged file is never decoded", healed and getattr(im4, "size", None) == (96, 96)
+          and isinstance(e, P.PlateUnavailable) and e.why == "missing", (healed, e))
     e = raises(lambda: P.fetch_4k(next(i for i, r in USABLE.items() if not r["k4"])), P.PlateUnavailable)
     check("a plate the registry holds no 4K file of is PlateUnavailable(no_4k): a master never invents one", isinstance(e, P.PlateUnavailable) and e.why == "no_4k", e)
     # two writers: eight threads and two processes race for one uncached plate
@@ -646,6 +669,8 @@ cases = [
     ("vercel.json: the plates excluded from compose", vj_edit(lambda d: d["functions"]["api/compose.py"].update({"excludeFiles": d["functions"]["api/health.py"]["excludeFiles"]})), "api/compose.py: excludeFiles must be the base list"),
     ("vercel.json: suites/** gone from an entry", vj_edit(lambda d: d["functions"]["api/order.py"].update({"excludeFiles": d["functions"]["api/order.py"]["excludeFiles"].replace("suites/**,", "")})), "api/order.py: excludeFiles must be"),
     ("vercel.json: another maxDuration", vj_edit(lambda d: d["functions"]["api/analyze.py"].update({"maxDuration": 300})), "do not share one maxDuration"),
+    ("vercel.json: includeFiles puts the plates back into a function that never renders", vj_edit(lambda d: d["functions"]["api/analyze.py"].update({"includeFiles": "api/_assets/plates/**"})), "api/analyze.py: includeFiles puts files back"),
+    ("vercel.json: a key the check does not read (memory)", vj_edit(lambda d: d["functions"]["api/compose.py"].update({"memory": 3008})), "api/compose.py: the key \"memory\" is not one this check reads"),
     ("vercel.json: not JSON", lambda r: open(os.path.join(r, "vercel.json"), "w").write("{"), "vercel.json: cannot be read as JSON"),
     ("a repository image that is byte for byte a reference work", lambda r: add_file(r, "public/assets/h10.png", b"\x89PNG a reference work"), "public/assets/h10.png: is byte for byte \"wave-y3/ref/H10.png\""),
     ("a calibration iris under another name and folder", lambda r: add_file(r, "src/landing/eye.png", b"\x89PNG a calibration iris"), "src/landing/eye.png: is byte for byte \"wave-g/live/out/x_2_enhanced.jpg\""),

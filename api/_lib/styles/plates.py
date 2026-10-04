@@ -8,7 +8,7 @@ Where a plate lives
   1K file      in the bundle of the four rendering functions: api/_assets/plates/<family>/<file> (previews and the collision family read these)
   4K file      in private storage, plates/v1/<family>/<file>, for the plates an engine can fetch at a master: fetch_4k() reads the local cache
                first (/tmp/snapeyes_plates/<sha12><ext>, written under a temporary name and renamed, capped at 256 MB with the least recently
-               used deleted), else the bucket, checks the sha256 of what came back against the registry, and decodes it. A missing object, a
+               used deleted; a hit is used only when its size and sha256 are the registry's), else the bucket, checks the sha256 of what came back against the registry, and decodes it. A missing object, a
                wrong size or a wrong hash raises PlateUnavailable: the engine never draws with another plate (the order is held for the owner)
 
 The pick (the engines' own rule, the plate workflow's registry.pick ported without its curation half)
@@ -210,15 +210,19 @@ def _evict(keep, cap):
 
 
 def _read_4k(plate_id, rec):
-    """The bytes of a 4K file: the local cache when it holds the right size, else the bucket (sha256 checked) and then the cache."""
+    """The bytes of a 4K file: the local cache when it holds the right bytes (size and sha256, so a file that was cut, edited or damaged on
+    the disk is never drawn from; hashing 8 MB takes a few milliseconds), else the bucket (sha256 checked) and then the cache."""
     k4 = rec["k4"]
     path = _cache_file(rec)
     try:
         if os.path.getsize(path) == k4["bytes"]:
-            os.utime(path, None)                                     # recently used
             with open(path, "rb") as f:
                 data = f.read()
-            if len(data) == k4["bytes"]:
+            if len(data) == k4["bytes"] and hashlib.sha256(data).hexdigest() == k4["sha256"]:
+                try:
+                    os.utime(path, None)                             # recently used
+                except OSError:
+                    pass
                 return data
     except OSError:
         pass
