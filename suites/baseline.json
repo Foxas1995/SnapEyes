@@ -1,7 +1,7 @@
 {
  "commit": "1d58fbf",
  "recorded": "2026-10-04",
- "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch). A change lowers a number only with a reason in the commit message.",
+ "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch; v3wp0 is 93 after the review fixes of baseline.md section 7, it was 61). A change lowers a number only with a reason in the commit message. Every suite is expected green in EVERY run: the fix suite's Windows race in the local store was fixed (baseline.md section 7), a suite that goes red once is investigated, not rerun until green.",
  "suites": {
   "r2": {
    "pass": 105
@@ -67,7 +67,7 @@
    "pass": 20
   },
   "v3wp0": {
-   "pass": 61
+   "pass": 93
   }
  }
 }

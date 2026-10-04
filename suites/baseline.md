@@ -36,7 +36,14 @@ folder of the old scratch tree that does not exist: `ERR_MODULE_NOT_FOUND`, and 
 | oldadmin | 0 | 186 | GREEN |
 | exp | 0 | 349 | GREEN |
 | ts | 0 | 20 | GREEN |
-| v3wp0 | 0 | 61 | GREEN |
+| v3wp0 | 0 | 93 | GREEN |
+
+(`v3wp0` was 61 checks when WP0 was first committed and is 93 after the review fixes of section 7.)
+
+**Determinism: this list was NOT deterministic when it was first recorded, and is now (section 7).** The suite `fix` (check
+`A2 six parallel drafts with one ticket`) failed on Windows in 3 of 8 serial runs on main `1d58fbf` and 2 of 8 on the WP0 branch
+(the review's loop), and the first record above happened to be a green draw. The cause was in the local-folder store, not in the
+checkout code under test: see section 7. Since that fix the same suite is green in every run of the loops recorded there.
 
 The counts are in `baseline.json`; `summary.py` flags a suite that passes fewer checks than recorded. Around them: `npm run build`
 (tsc, the price check with the experiments' ladders, the text check, Vite) exits 0; `python -m compileall api` exits 0 under Python
@@ -67,7 +74,16 @@ wheels for exactly these versions, and requests is a pure wheel, so a Linux buil
 **Unverified (closing step VE3, decision DE2): the Python version and the onnxruntime wheel in a real Vercel build log.** The
 deployed versions of the last Vercel build are not in the repository, so the pin is the pair both the development machine and a
 Linux build can run, not a copy of production's. The pin changes the interpreter of the next deploy (3.12 to 3.14): if the Preview
-build log shows a missing wheel, `.python-version` 3.13 is the fallback (the pins support it) and the suites must be re-run on it.
+build log shows a missing wheel, `.python-version` 3.13 is the fallback and the suites must be re-run on it. **Measured in the review
+fix (2026-10-04, a throwaway 3.13.1 venv with the same four pins): the fallback renders the same bytes.** The legacy compose path
+(6 styles x 1, 2 and 3 eyes through `compose.compose`, 18 pixel hashes, and 12 clean engine renders) gives identical hashes on 3.13.1
+and 3.14.3 with these pins. The libraries matter more than the interpreter: numpy 2.3.5 with Pillow 11.3.0 (what 3.13 had installed
+on this machine without the pins) gives the same QA flags, the same layouts and the same 12 clean engine renders, but **different
+preview pixels in all 18 compose outputs** (one measured case, celestial_gold with one eye: 6.9 percent of the pixels differ, 0.4
+percent by more than 32 levels, in blocks spread over the picture; the preview path adds the watermark and a JPEG encode). So the
+byte-level goldens hold only on the pinned versions, and the first deploy with the pins may change the preview pixels of the
+legacy styles slightly against whatever versions production resolves today (not knowable here: the last build log is not in the
+repository). Not measured: which of the two libraries causes it, and the paid master path (it was not run: it needs the image model).
 
 ## 3. Function size (V1) and `excludeFiles` (V2)
 
@@ -78,7 +94,7 @@ downloaded). MiB = 2^20 bytes.
 
 | Part | MiB | Note |
 |---|---:|---|
-| Files of the repository in each function | 16.5 | all of it `api/`: `_assets` 16 (11 backgrounds, the ONNX model, 2 fonts), `_lib` and the handlers 1.4 |
+| Files of the repository in each function | 16.5 | all of it `api/`: `_assets` 15.4 (11 backgrounds, the ONNX model, 2 fonts), `_lib` and the handlers 1.1 |
 | numpy (Linux wheel, unpacked) | 53.9 | Windows 39.3 |
 | Pillow | 18.6 | Windows 14.0 |
 | onnxruntime | 49.3 | Windows 36.8 |
@@ -112,7 +128,8 @@ workload locally and, with `--remote URL --key-file F`, measures the baseline he
 Local baseline of the development machine on 2026-10-04 (median of three invocations of `python scripts/cpu_probe.py --runs 5`),
 seconds: blur 0.303, float32 math 0.060, RGB frame 0.203, LANCZOS 0.158, scatter 0.083, JPEG encode 0.275, JPEG decode 0.311,
 **total 1.393**. The planning spike's own probe took 1.464 on a pinned quiet core; its RGB frame was built in float64 (about 800 MB
-at the peak, which could run a 1 GB function out of memory), this one in float32 (the probe peaks near 350 MB), and the other six
+at the peak, which could run a 1 GB function out of memory), this one in float32 (the probe peaks near 420 MB of working set, measured on Windows; the commit charge there reads 920 MB, which is
+not resident memory), and the other six
 phases agree within 5 percent. Sanity check of the action against the local dev server on the same machine: slow factor 0.99.
 
 **Unverified, closing step V3 (WP17a, VE1):** the slow factor cold and warm on a real instance. The action is not deployed (it is
@@ -137,3 +154,45 @@ project settings themselves (Fluid, maximum duration) are read in the Vercel das
 | V3 | slow factor cold and warm | WP17a (VE1), needs a Preview with the admin secret |
 | V4, VE3 | memory, Fluid, duration, `/tmp`, Python version and onnxruntime wheel of the real build | owner reads the project settings, WP17a reads the build log |
 | DE4 | a safe copy of `suites/private/` outside the repository | owner |
+
+## 7. Review of WP0 and its fixes (2026-10-04)
+
+An independent review re-ran everything on throwaway clones. No blocker. What it found, and what was done:
+
+**The regression net was not deterministic (major).** `fix` is the one suite that failed on both main and the branch: serial runs
+of the same suite on the same checkout, red 3 of 8 times on main `1d58fbf` and 2 of 8 on the WP0 branch, always the check
+`A2 six parallel drafts with one ticket: all answered, ONE order`. Root cause, reproduced with a traceback: the local-folder store
+(`api/_lib/store.py`, the stand-in for the bucket that `STORE_LOCAL_DIR` switches on in the tests and the dev server) writes with
+`os.replace` and reads with `read_bytes`. On Windows a file that another thread has open, or is just replacing, refuses open,
+rename and delete with `PermissionError` for a few milliseconds (POSIX does not, and neither does the bucket). Six parallel drafts
+of one work ticket all write the same `orders/<order>/draft/eye_1.json`, so one of them got `PermissionError(13)`, which the API
+turns into 403 "This session expired". In an isolated loop of the six-thread draft (a script, 100 rounds on the unfixed code):
+8 rounds failed, 6 in `os.replace` and 2 in `read_bytes`. The fix: `store._retry_busy`, used by the local branches of `put`
+(replace), `get`, `delete` and `delete_many`; it retries `PermissionError` up to 40 times with a few milliseconds between tries,
+only on Windows (`os.name == "nt"`), and re-raises after the last try or for any other error; nothing changes on Linux or against
+the bucket. After it: the same loop, 400 rounds, 0 failures and 0 `PermissionError`; **the `fix` suite, 30 serial runs, 30 green
+(53 of 53 checks each)**; the full harness is green (the table of section 1). A thread stress test of the store that fails on the
+unfixed code in every round (20 of 20) and passes on the fixed code in every round (20 of 20) is part of `v3wp0` (section 7a of the
+suite). **Rule for later packages: a suite that goes red once is investigated, never rerun until green; a flake found is fixed or
+listed here.**
+
+**Fixed minors:** `cpu_probe` with a whole number too big for a float as the baseline answered 500 and now 400
+(`math.isfinite(10 ** 400)` raised `OverflowError`); `suites/run_all.sh` called with fewer than three arguments expanded
+`rm -f "$OUT"/*` to `/*` and now refuses with a usage message (exit 2) and clears only plain files of a non-trivial folder;
+`scripts/cpu_probe.py` followed a 301, 302 or 303 on its POST and sent the admin key to the Location host, now no redirect is
+followed (the 3xx is reported); a duplicate `shutil.copy` in `test_fixer.py` is gone (the commit that moved the suites says
+nothing else was changed); a run without the private fixtures (a fresh clone) exited 0 with the two admin suites SKIPPED, it now
+exits 1 and says `INCOMPLETE` unless `--allow-skipped` or `SNAPEYES_ALLOW_SKIPPED=1` says the skip is on purpose; the cold-mode
+import timings of the probe always read "already loaded" in the admin function (which imports numpy and Pillow at start), so the
+probe now also times the two imports in a fresh child interpreter (`imports_fresh_interpreter`); the probe's memory note read
+"near 350 MB" and the measured working set is 420 MB (the commit charge reads 920 MB, not resident memory);
+`bundle_report.mjs --check` treated `.vercelignore` as authoritative, it now judges the folders that would ride into a function
+without it (Git deployments may not honour it: V2); `.vercelignore` repeats the entries of `.gitignore` (the CLI may read it
+instead of `.gitignore`: not verified); `run_ts_tests.mjs` counted a `node:test` file as one pass whatever it held, it now prints
+one line per test, and a file with no test, a skipped test or a failing one is a FAIL; `bundle_report.mjs` no longer reads a
+missing Python interpreter as a report; the comment in `requirements.txt` named four wheels for Python 3.14 where `requests` is
+pure Python; the file breakdown in section 3 is 15.4 plus 1.1 MiB (it read 16 plus 1.4).
+
+**Not fixed, and why (all recorded as unverified in sections 3 to 6, each with its closing step):** V1 to V4 and VE3 (real function
+sizes, `excludeFiles` semantics, the slow factor, memory, Fluid, duration, `/tmp`, the Python version of a real build log) need a
+Preview deployment and the admin secret, and this machine has no Vercel access. Nothing else of the review is open.

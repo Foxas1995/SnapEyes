@@ -242,6 +242,238 @@ check("compile_matrix.py: compileall api passes under every installed Python of 
 check("...and it names each of the three (an interpreter that is not installed is reported, not skipped silently)",
       all(("python " + v + ":") in r.stdout for v in ("3.12", "3.13", "3.14")), r.stdout)
 
+# ----------------------------------------------------------------------------- 7. the fixes after the review of WP0
+print()
+print("== 7. review fixes: the local store under threads, the probe's inputs, the runners")
+import tempfile  # noqa: E402
+import time  # noqa: E402
+import unittest.mock as mock  # noqa: E402
+
+# 7a. the local folder store on Windows: a file that another thread has open or is replacing refuses open, rename and delete for a
+# moment; six parallel drafts of one work ticket (suite fix, A2) failed one run in thirteen before store._retry_busy.
+calls = []
+
+
+def flaky(n, exc=PermissionError):
+    def fn():
+        calls.append(1)
+        if len(calls) <= n:
+            raise exc("busy")
+        return "done"
+    return fn
+
+
+calls.clear()
+with mock.patch.object(store.os, "name", "nt"), mock.patch.object(store.time, "sleep", lambda s: None):
+    got = store._retry_busy(flaky(5))
+check("store._retry_busy: on Windows a PermissionError is tried again and the call then succeeds", got == "done" and len(calls) == 6, (got, len(calls)))
+calls.clear()
+with mock.patch.object(store.os, "name", "nt"), mock.patch.object(store.time, "sleep", lambda s: None):
+    try:
+        store._retry_busy(flaky(10 ** 6), tries=7)
+        err = None
+    except PermissionError as e:
+        err = e
+check("...after the last try the PermissionError stays (a real refusal is not swallowed): exactly 7 tries", isinstance(err, PermissionError) and len(calls) == 7, (err, len(calls)))
+calls.clear()
+with mock.patch.object(store.os, "name", "posix"), mock.patch.object(store.time, "sleep", lambda s: None):
+    try:
+        store._retry_busy(flaky(1))
+        err = None
+    except PermissionError as e:
+        err = e
+check("...and off Windows there is no retry at all: the first PermissionError is raised", isinstance(err, PermissionError) and len(calls) == 1, len(calls))
+calls.clear()
+try:
+    store._retry_busy(flaky(1, FileNotFoundError))
+    err = None
+except FileNotFoundError as e:
+    err = e
+check("...other errors (a missing file: delete() relies on it) pass through at once", isinstance(err, FileNotFoundError) and len(calls) == 1, len(calls))
+
+stress_errors, stress_n = [], [0]
+
+
+def hammer(worker):
+    for i in range(60):
+        try:
+            if worker % 3 == 0:
+                store.put("wp0stress/ticket.json", b'{"w": %d, "i": %d}' % (worker, i), "application/json", upsert=True)
+            elif worker % 3 == 1:
+                got_ = store.get("wp0stress/ticket.json")
+                if got_ is not None:
+                    json.loads(got_)
+            else:
+                store.put(f"wp0stress/gone_{worker}_{i % 4}.json", b"{}", "application/json", upsert=True)
+                store.delete(f"wp0stress/gone_{worker}_{i % 4}.json")
+            stress_n[0] += 1
+        except Exception as e:  # noqa: the point is that nothing is raised
+            stress_errors.append(f"{type(e).__name__}: {str(e)[:80]}")
+
+
+store.put("wp0stress/ticket.json", b'{"w": -1}', "application/json", upsert=True)
+ths = [threading.Thread(target=hammer, args=(w,)) for w in range(9)]
+[t.start() for t in ths]
+[t.join() for t in ths]
+check("the local store under 9 threads (replace, read and delete of the same files, 540 calls): no error, no torn read",
+      not stress_errors and stress_n[0] == 540, (stress_n[0], stress_errors[:3]))
+
+# 7b. the probe's inputs and its cold mode
+for label, body in (("a whole number too big for a float as the baseline total", {"baseline": {"total": 10 ** 400}}),
+                    ("the same as one baseline phase", {"baseline": {"phases": {**{k: 1.0 for k in P.PHASES}, "blur_cumsum": 10 ** 400}}}),
+                    ("a negative one", {"baseline": {"total": -(10 ** 400)}})):
+    r = adm("cpu_probe", **body)
+    check(f"400, not 500, for {label}", r.status_code == 400 and r.json().get("ok") is False and "phases" not in r.json(), (r.status_code, r.text[:200]))
+r = adm("cpu_probe", mode="cold", runs=1)
+fresh = r.json().get("imports_fresh_interpreter", {})
+check("cold: the import cost is also measured in a fresh interpreter (the admin function has numpy and Pillow loaded already)",
+      r.status_code == 200 and fresh.get("numpy", 0) > 0 and fresh.get("PIL.Image", 0) > 0 and "error" not in fresh, (r.status_code, fresh))
+with mock.patch.object(sys, "executable", os.path.join(STORE, "no-such-python")):
+    bad_child = P.fresh_import_seconds(5.0)
+check("...and when the child cannot start the answer says so instead of failing the probe", "error" in bad_child, bad_child)
+check("the warm reply has no fresh-interpreter figure (only cold pays for the child)", "imports_fresh_interpreter" not in adm("cpu_probe", runs=1).json())
+
+# 7c. scripts/cpu_probe.py never follows a redirect with the admin key
+sys.path.insert(0, os.path.join(REPO, "scripts"))
+import cpu_probe as CP  # noqa: E402
+seen = []
+
+
+class Target(BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_GET(self):
+        seen.append(("GET", self.headers.get("Authorization")))
+        self.send_response(200)
+        self.end_headers()
+
+    def do_POST(self):
+        seen.append(("POST", self.headers.get("Authorization")))
+        self.send_response(200)
+        self.end_headers()
+
+
+tgt = ThreadingHTTPServer(("127.0.0.1", 0), Target)
+threading.Thread(target=tgt.serve_forever, daemon=True).start()
+
+
+def redirector(code):
+    class R(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def do_POST(self):
+            self.send_response(code)
+            self.send_header("Location", f"http://127.0.0.1:{tgt.server_address[1]}/elsewhere")
+            self.end_headers()
+    return R
+
+
+for code in (301, 302, 303, 307, 308):
+    red = ThreadingHTTPServer(("127.0.0.1", 0), redirector(code))
+    threading.Thread(target=red.serve_forever, daemon=True).start()
+    st, rep = CP.post(f"http://127.0.0.1:{red.server_address[1]}", "admin-v1.1700000000.0123456789abcdef0123456789abcdef", {"action": "cpu_probe"}, {})
+    red.shutdown()
+    check(f"scripts/cpu_probe.py: a {code} answer is not followed, the caller is told", st == code and str(rep.get("reason", "")).startswith("redirect_refused"), (st, rep))
+check("...and the redirect target never received a request, so no Authorization header", not seen, seen)
+tgt.shutdown()
+
+# 7d. the runner of the suites and the result table
+tmp = tempfile.mkdtemp(prefix="wp0_runner_")
+try:
+    for name, code in (("aa", 0), ("bb", 77)):
+        open(os.path.join(tmp, name + ".exit"), "w").write(f"{name} EXIT {code}\n")
+        open(os.path.join(tmp, name + ".out"), "w").write("PASS one\n" if code == 0 else "SKIPPED: x\n")
+    env_ = {k: v for k, v in os.environ.items() if k != "SNAPEYES_ALLOW_SKIPPED"}
+    run = lambda *a, **kw: subprocess.run([sys.executable, os.path.join(S, "summary.py"), tmp, *a], capture_output=True, text=True, encoding="utf-8", env={**env_, **kw})
+    r = run()
+    check("summary.py: a skipped suite makes the run INCOMPLETE: exit 1 and the last lines say which suite did not run",
+          r.returncode == 1 and "INCOMPLETE: bb did not run" in r.stdout and "1 skipped" in r.stdout, (r.returncode, r.stdout[-300:]))
+    r = run("--allow-skipped")
+    check("...--allow-skipped accepts it on purpose (exit 0, still named)", r.returncode == 0 and "INCOMPLETE: bb" in r.stdout and "Accepted" in r.stdout, (r.returncode, r.stdout[-300:]))
+    r = run(SNAPEYES_ALLOW_SKIPPED="1")
+    check("...and so does SNAPEYES_ALLOW_SKIPPED=1", r.returncode == 0, (r.returncode, r.stdout[-200:]))
+    os.remove(os.path.join(tmp, "bb.exit"))
+    open(os.path.join(tmp, "bb.exit"), "w").write("bb EXIT 0\n")
+    open(os.path.join(tmp, "bb.out"), "w").write("PASS two\n")
+    r = run()
+    check("...a run with nothing skipped and nothing red still exits 0", r.returncode == 0 and "INCOMPLETE" not in r.stdout, (r.returncode, r.stdout[-200:]))
+finally:
+    shutil.rmtree(tmp, ignore_errors=True)
+
+
+def working_bash():
+    """A bash that runs scripts: on Windows plain "bash" can be the WSL launcher of System32, found before Git's by CreateProcess."""
+    for cand in (shutil.which("bash"), os.path.join(os.environ.get("EXEPATH", ""), "bin", "bash.exe"), "/bin/bash"):
+        if cand and os.path.isfile(cand):
+            try:
+                if subprocess.run([cand, "-c", "echo ok"], capture_output=True, text=True, timeout=30).stdout.strip() == "ok":
+                    return cand
+            except (OSError, subprocess.SubprocessError):
+                pass
+    return None
+
+
+BASH = working_bash()
+check("a working bash is available for the runner checks", BASH is not None, shutil.which("bash"))
+for argv_ in ([], ["a", "b"], ["a", "b", ""]):
+    r = subprocess.run([BASH, os.path.join(S, "run_all.sh"), *argv_], capture_output=True, text=True, encoding="utf-8", timeout=60, cwd=tempfile.gettempdir())
+    check(f"run_all.sh with {len(argv_)} argument(s): usage message, exit 2, nothing deleted (it used to expand rm -f /*)",
+          r.returncode == 2 and "usage" in r.stderr, (r.returncode, r.stderr[:200]))
+r = subprocess.run([BASH, os.path.join(S, "run_all.sh"), "a", "b", "/"], capture_output=True, text=True, encoding="utf-8", timeout=60, cwd=tempfile.gettempdir())
+check("run_all.sh refuses a results folder of / and of .", r.returncode == 2 and "refusing" in r.stderr, (r.returncode, r.stderr[:200]))
+
+# 7e. the page-code runner counts every node:test test, and an empty file is a failure
+tt = tempfile.mkdtemp(prefix="wp0_tstest_")
+try:
+    open(os.path.join(tt, "three.test.ts"), "w").write("import test from 'node:test';\ntest('one', () => {});\ntest('two', () => {});\ntest('three', () => {});\n")
+    open(os.path.join(tt, "empty.test.ts"), "w").write("import test from 'node:test';\nvoid test;\n")
+    open(os.path.join(tt, "bad.test.ts"), "w").write("import test from 'node:test';\nimport assert from 'node:assert';\ntest('fine', () => {});\ntest('broken', () => { assert.equal(1, 2); });\ntest('later', { skip: true }, () => {});\n")
+    runner = ["node", os.path.join(REPO, "scripts", "run_ts_tests.mjs")]
+    r3 = subprocess.run([*runner, os.path.join(tt, "three.test.ts")], cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=120)
+    check("run_ts_tests.mjs: a node:test file of three tests counts three PASS lines (not one) and exits 0",
+          r3.returncode == 0 and len(re.findall(r"^PASS ", r3.stdout, flags=re.M)) == 3 and "3 of 3 passed" in r3.stdout, (r3.returncode, r3.stdout[-300:]))
+    re_ = subprocess.run([*runner, os.path.join(tt, "empty.test.ts")], cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=120)
+    check("...a node:test file that defines no test is a FAIL, never a pass", re_.returncode == 1 and "defines no node:test test" in re_.stdout and not re.search(r"^PASS ", re_.stdout, flags=re.M), (re_.returncode, re_.stdout[-300:]))
+    rb = subprocess.run([*runner, os.path.join(tt, "bad.test.ts")], cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=120)
+    check("...a failing test and a skipped one are FAIL lines, the good one a PASS line, and the exit is 1",
+          rb.returncode == 1 and len(re.findall(r"^PASS ", rb.stdout, flags=re.M)) == 1 and len(re.findall(r"^FAIL ", rb.stdout, flags=re.M)) == 2, (rb.returncode, rb.stdout[-300:]))
+finally:
+    shutil.rmtree(tt, ignore_errors=True)
+
+# 7f. the bundle report no longer relies on .vercelignore, and .vercelignore carries what .gitignore keeps out of git
+BR = open(os.path.join(REPO, "scripts", "bundle_report.mjs"), encoding="utf-8").read()
+
+
+def mini_tree(exclude):
+    d = tempfile.mkdtemp(prefix="wp0_bundle_")
+    for sub in ("scripts", "api", "suites"):
+        os.makedirs(os.path.join(d, sub))
+    open(os.path.join(d, "scripts", "bundle_report.mjs"), "w", encoding="utf-8").write(BR)
+    shutil.copy(os.path.join(REPO, "scripts", "bundle_deps.py"), os.path.join(d, "scripts", "bundle_deps.py"))
+    open(os.path.join(d, "api", "x.py"), "w").write("x = 1\n")
+    open(os.path.join(d, "suites", "t.py"), "w").write("t = 1\n")
+    open(os.path.join(d, ".vercelignore"), "w").write("/suites/\n")
+    json.dump({"functions": {"api/**/*.py": {"maxDuration": 60, "excludeFiles": exclude}}}, open(os.path.join(d, "vercel.json"), "w"))
+    return d
+
+
+for exclude, want_rc in (("{scripts/**,suites/**}", 0), ("{scripts/**}", 1)):
+    d = mini_tree(exclude)
+    try:
+        r = subprocess.run(["node", os.path.join(d, "scripts", "bundle_report.mjs"), "--check"], cwd=d, capture_output=True, text=True, encoding="utf-8", timeout=120,
+                           env=dict(os.environ))
+        check(f"bundle_report --check with excludeFiles {exclude} and .vercelignore naming /suites/: exit {want_rc}"
+              + (" (suites/ would ride into every function if the Git deployment ignores .vercelignore)" if want_rc else ""),
+              r.returncode == want_rc and (want_rc == 0 or "suites" in r.stdout), (r.returncode, r.stdout[-300:], r.stderr[-200:]))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+gi = [ln.strip() for ln in open(os.path.join(REPO, ".gitignore"), encoding="utf-8") if ln.strip() and not ln.startswith(("#", "!"))]
+vil = {ln.strip() for ln in open(os.path.join(REPO, ".vercelignore"), encoding="utf-8")}
+missing_vi = [x for x in gi if not x.startswith("suites/") and x not in vil]
+check(".vercelignore repeats every .gitignore entry (a CLI upload reads one of the two files, not both: not verified, V2)", not missing_vi, missing_vi)
+
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed")
 srv.shutdown()
 shutil.rmtree(STORE, ignore_errors=True)
