@@ -5,6 +5,14 @@
 @layer theme, base, landing, components, utilities;
 @import "tailwindcss";
 
+/* Tailwind keeps a default theme variable out of the build until a stylesheet reads it, and the landing's motion tokens (src/motion/motion.css)
+   read --ease-out: then Tailwind's own value (cubic-bezier(0, 0, .2, 1)) would be written onto the root of EVERY page, the legal pages, /try, /order
+   and /admin included, which the legal look check sees as a change. The landing defines its own --ease-out (the expo curve); no other page uses
+   the variable or the ease-out utility, so the default is dropped. */
+@theme {
+  --ease-out: initial;
+}
+
 /* Tailwind reads every source file for class names, and takes any word that is a utility ("resize" in an event name) for one.
    The landing v2 shell and its generated picture manifest use no utility (their classes are lp- classes of src/landing/css),
    and neither do the check scripts, so they are not read: the CSS of every other page stays exactly what it was. */
