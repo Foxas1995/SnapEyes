@@ -319,7 +319,7 @@ with contextlib.redirect_stdout(io.StringIO()):
         img = Image.open(io.BytesIO(base64.b64decode(rep["image"]))).convert("RGB")
         got[f"handler {style} {n} {layout}"] = h(img)
         got[f"handler {style} {n} {layout} fields"] = hashlib.sha256(
-            json.dumps({k: v for k, v in rep.items() if k not in ("image", "qa")}, sort_keys=True).encode()).hexdigest()[:20]
+            json.dumps({k: v for k, v in rep.items() if k not in ("image", "qa", "eyes")}, sort_keys=True).encode()).hexdigest()[:20]   # "eyes": added by WP3, additive (v3gate checks it); the old fields stay byte for byte
 diff = {k: (got.get(k), v) for k, v in GOLDENS.items() if got.get(k) != v}
 check("the six legacy ids render the same pixels as before the registry (22 results of the engine and of the compose handler)", not diff, diff)
 rep = replies[("celestial_gold", 4)]
