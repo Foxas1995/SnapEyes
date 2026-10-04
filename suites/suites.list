@@ -2,7 +2,8 @@
 # needs = fixtures: the private image fixtures (suites/private/fixtures, never in git); skipped (exit 77) when they are missing.
 # New suites of the v3 work (suites/README.md, section "Adding a suite") are appended at the end, with the same format:
 #   v3reg:scripts/styles_tests:test_registry.py          (a suite in the repository itself, copied from REPO_DIRS by mksp.py)
-# The line at the end, v3wp0, is the first of them (the probe, the pins, this folder, the bundle report).
+# The lines at the end are those suites: v3wp0 (the probe, the pins, this folder, the bundle report), v3reg (WP1: the style registry, the
+# catalogue, the price class, the build check).
 r2:wave-r-back/pb/r2:test_round2.py
 r3:wave-r-back/pb/r3:test_round3.py
 r4:wave-r-back/pb/r4:test_round4.py
@@ -24,3 +25,4 @@ oldadv:wave-s/advance:test_advance.py
 oldadmin:wave-q/admin:test_admin.py:fixtures
 exp:wave-exp/suite:test_experiments.py
 v3wp0:scripts/styles_tests:test_wp0.py
+v3reg:scripts/styles_tests:test_registry.py
