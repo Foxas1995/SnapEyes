@@ -11,10 +11,21 @@
   }
   .lp-faq-list { border-top: 1px solid var(--line-2); }
   details.lp-qa { border-bottom: 1px solid var(--line-2); }
-  details.lp-qa summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 0; min-height: 60px; font-size: 16.5px; font-weight: 600; color: #fff; line-height: 1.4; }
+  details.lp-qa summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0; min-height: 60px; font-size: 16.5px; font-weight: 600; color: #fff; line-height: 1.4; }
   details.lp-qa summary::-webkit-details-marker { display: none; }
-  details.lp-qa summary svg { width: 16px; height: 16px; color: var(--gold); flex: none; transition: transform .25s var(--ease); }
-  details.lp-qa[open] summary svg { transform: rotate(45deg); }
+  /* the plus sits in a thin circle: it turns 45 degrees when the item opens and the circle warms to gold (no fill) */
+  details.lp-qa summary svg { box-sizing: content-box; width: 16px; height: 16px; padding: 7px; border: 1px solid var(--line-2); border-radius: 50%; color: var(--t-2); flex: none; transition: transform var(--d-ui) var(--ease-out), border-color var(--d-ui) var(--ease-out); }
+  details.lp-qa[open] summary svg { transform: rotate(45deg); border-color: rgb(245 197 66 / .6); }
+  @media (hover: hover) {
+    details.lp-qa summary:hover svg { border-color: rgb(245 197 66 / .6); }
+  }
+  /* the answer opens in .5 s (the height is animated through ::details-content and interpolate-size, set on the root in src/motion/motion.css);
+     a browser without them opens it at once */
+  details.lp-qa::details-content { block-size: 0; overflow: clip; transition: block-size var(--d-ui) var(--ease-out), content-visibility var(--d-ui) allow-discrete; }
+  details.lp-qa[open]::details-content { block-size: auto; }
+  @media (prefers-reduced-motion: reduce) {
+    details.lp-qa::details-content { transition: none; }
+  }
   details.lp-qa p { padding: 0 34px 24px 0; font-size: 15px; line-height: 1.7; color: var(--ink-2); }
   .lp-faq-grid > * { min-width: 0; }
 }

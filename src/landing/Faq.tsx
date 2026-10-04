@@ -8,6 +8,7 @@ import { useCopy } from './copy/useCopy';
 import { faqEntries } from './copy/index';
 import { useOrderingOpen } from './ordering';
 import { Disclosure } from './ui';
+import { Title } from '../motion/Title';
 import './css/faq.css';
 
 export function Faq() {
@@ -17,10 +18,11 @@ export function Faq() {
     <section className="lp-sec" id="faq" aria-labelledby="faqH">
       <div className="lp-wrap lp-faq-grid">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow">{c.faq.eyebrow}</p>
-          <h2 id="faqH">{c.faq.title}</h2>
+          <p className="lp-eyebrow" data-reveal="fade-s">{c.faq.eyebrow}</p>
+          <Title id="faqH" text={c.faq.title} />
         </div>
-        <div className="lp-faq-list">
+        {/* the items rise one after the other when the list comes into view (src/motion/motion.ts: a child of data-stagger is revealed on its own) */}
+        <div className="lp-faq-list" data-stagger>
           {faqEntries(c, open).map((item) => (
             <Disclosure key={item.id} id={`faq-${item.id}`} className="lp-qa" summary={<span>{fmt(item.q)}</span>}>
               <p>{fmt(item.a)}</p>
