@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """The result table of a suite run.   python suites/summary.py <results dir> [--baseline suites/baseline.json] [--all] [--md]
+                                                                 [--allow-skipped]
 
 A suite is GREEN when its .exit file says 0, SKIPPED on 77 (its private fixtures are missing), RED on anything else. Checks are
 counted as the lines of its output that start with PASS or FAIL (every suite and the page-code tests print those). With a
 baseline, a green suite that passes FEWER checks than the baseline records is flagged too: a suite that quietly stops running
-checks is not "at least as green". Exit code 0 only when nothing is RED, FEWER or MISSING (a skipped suite does not fail the run;
-the table says so). --md prints the table as markdown rows (suites/baseline.md)."""
+checks is not "at least as green". Exit code 0 only when nothing is RED, FEWER, MISSING or SKIPPED: a skipped suite is a suite
+that did not run (the two admin suites in a fresh clone, which has no private fixtures), so a run that skipped one is
+INCOMPLETE, exits 1 and says so, and a gate that reads the exit code cannot take it for green. --allow-skipped (or the
+environment variable SNAPEYES_ALLOW_SKIPPED=1) accepts the skip on purpose, for a machine that cannot have the fixtures; the
+last line still names what did not run. --md prints the table as markdown rows (suites/baseline.md)."""
 import json, os, re, sys
 
 
@@ -21,6 +25,7 @@ def main(argv):
         sys.exit(__doc__)
     res = argv[0]
     md = "--md" in argv
+    allow_skipped = "--allow-skipped" in argv or os.environ.get("SNAPEYES_ALLOW_SKIPPED") == "1"
     base = {}
     if "--baseline" in argv:
         base = json.load(open(argv[argv.index("--baseline") + 1], encoding="utf-8")).get("suites", {})
@@ -47,7 +52,7 @@ def main(argv):
             state = "RED"
         if state == "GREEN" and want is not None and p < want:
             state = "FEWER"
-        if state in ("RED", "FEWER", "MISSING"):
+        if state in ("RED", "FEWER", "MISSING") or (state == "SKIPPED" and not allow_skipped):
             bad += 1
         rows.append((n, "-" if code is None else code, p, f, want if want is not None else "-", state))
     if md:
@@ -59,8 +64,12 @@ def main(argv):
         for r in rows:
             print(f"{r[0]:10} {r[1]!s:>4} {r[2]:>5} {r[3]:>5} {r[4]!s:>5}  {r[5]}")
     green = sum(1 for r in rows if r[5] == "GREEN")
-    skipped = sum(1 for r in rows if r[5] == "SKIPPED")
-    print(f"\n{green} of {len(rows)} green" + (f", {skipped} skipped" if skipped else "") + (f", {bad} NOT GREEN" if bad else ""))
+    skipped = [r[0] for r in rows if r[5] == "SKIPPED"]
+    print(f"\n{green} of {len(rows)} green" + (f", {len(skipped)} skipped" if skipped else "") + (f", {bad} NOT GREEN" if bad else ""))
+    if skipped:
+        print(f"INCOMPLETE: {', '.join(skipped)} did not run (the private image fixtures are missing: suites/README.md, "
+              "SNAPEYES_FIXTURES)." + (" Accepted by --allow-skipped." if allow_skipped else
+                                       " Exit 1; --allow-skipped or SNAPEYES_ALLOW_SKIPPED=1 accepts it on purpose."))
     return 1 if bad else 0
 
 

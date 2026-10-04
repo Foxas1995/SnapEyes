@@ -381,7 +381,6 @@ def neg_root(name, markets_sub=None, pay_sub=None):
     # 1acef38: the price check also reads the price experiments' ladders, so a minimal root needs that file too
     shutil.copy(os.path.join(H.REPO, "api", "_lib", "experiments.py"), os.path.join(root, "api", "_lib", "experiments.py"))
     shutil.copy(os.path.join(H.REPO, "src", "shared", "legal.ts"), os.path.join(root, "src", "shared", "legal.ts"))
-    shutil.copy(os.path.join(H.REPO, "api", "_lib", "experiments.py"), os.path.join(root, "api", "_lib", "experiments.py"))
     return root
 
 

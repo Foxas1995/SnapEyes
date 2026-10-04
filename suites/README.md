@@ -11,8 +11,9 @@ folder (a temp path that disappears); since 2026-10-04 they live here, versioned
     node scripts/run_ts_tests.mjs        # the page-code tests alone
 
 `run_main.sh` tests the checkout it sits in (`SNAPEYES_REPO` overrides), builds the site first when `dist/legal/order-mail.json` is
-missing (the admin suites read the legal pack), prints one table (`summary.py`) and exits 1 when a suite is red or passes fewer
-checks than `baseline.json` records. Results and the prepared copy go to `suites/out/` (not in git).
+missing (the admin suites read the legal pack), prints one table (`summary.py`) and exits 1 when a suite is red, passes fewer
+checks than `baseline.json` records, or did not run at all (SKIPPED: see below). Results and the prepared copy go to
+`suites/out/` (not in git).
 
 ## What is where
 
@@ -35,7 +36,10 @@ The two admin suites (`admin`, `oldadmin`) replay the replies of the image model
 (`suites/private/fixtures`, 20 files, 3 MB). A real eye is biometric data, so they are **never committed** (`.gitignore`,
 `suites/private/`); `fixtures.sha256` lists their hashes so that a copy kept elsewhere can be verified
 (`python suites/check_fixtures.py [folder]`). `SNAPEYES_FIXTURES` points the runner at another folder. When they are missing the two
-suites are reported SKIPPED (exit 77), not green. The v3 style suites use a synthetic iris generator (work package WP4) and need none.
+suites are reported SKIPPED (exit 77), not green, and the run ends with `INCOMPLETE: admin, oldadmin did not run` and **exits 1**,
+so that a gate reading the exit code of `run_main.sh` in a fresh clone cannot take a run without the 372 admin checks for a green
+one. A machine that cannot have the fixtures says so on purpose: `--allow-skipped` for `summary.py`, or `SNAPEYES_ALLOW_SKIPPED=1`
+for `run_main.sh` (the last lines still name what did not run). The v3 style suites use a synthetic iris generator (work package WP4) and need none.
 Keep a copy of `suites/private/` somewhere safe outside the repository: the only other copy is in a session scratch folder.
 
 ## Adding a suite

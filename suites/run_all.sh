@@ -4,8 +4,12 @@
 # checkout <repo>. Results: <outdir>/<name>.out and <name>.exit ("<name> EXIT <code>"; 77 = skipped), then all.done.
 export PYTHONIOENCODING=utf-8
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ $# -lt 3 ] || [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+  echo "usage: run_all.sh <spdir> <repo> <outdir> [name ...]   (suites/run_main.sh calls it with all three)" >&2; exit 2
+fi
 SP=$1; export SNAPEYES_REPO=$2; OUT=$3; shift 3
-mkdir -p "$OUT"; rm -f "$OUT"/*
+case "$OUT" in /|.|..|./|../) echo "run_all.sh: refusing to clear the results folder '$OUT'" >&2; exit 2;; esac
+mkdir -p "$OUT" && find "$OUT" -maxdepth 1 -type f -delete
 ALL=$(grep -v '^[[:space:]]*#' "$HERE/suites.list" | grep -v '^[[:space:]]*$' | tr -d '\r')
 export SP OUT
 run() {

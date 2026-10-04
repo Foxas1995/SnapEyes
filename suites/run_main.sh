@@ -2,9 +2,11 @@
 # usage: bash suites/run_main.sh [name ...]
 # Every guard suite of suites.list (or the named ones) and the page-code tests (scripts/run_ts_tests.mjs, entry "ts"), against
 # the checkout this folder lives in (override: SNAPEYES_REPO). Three suites at a time. Prints the table of summary.py and exits 1
-# when anything is red or runs fewer checks than suites/baseline.json records.
+# when anything is red, runs fewer checks than suites/baseline.json records, or did not run (SKIPPED: the private image fixtures
+# are missing; SNAPEYES_ALLOW_SKIPPED=1 accepts that on purpose).
 #   SNAPEYES_SUITES_OUT   where the prepared tree and the results go (default suites/out, not in git)
 #   SNAPEYES_FIXTURES     the private image fixtures (default suites/private/fixtures, not in git)
+#   SNAPEYES_ALLOW_SKIPPED=1   do not fail the run because the two admin suites were skipped (no fixtures on this machine)
 export PYTHONIOENCODING=utf-8
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${SNAPEYES_REPO:-$(cd "$HERE/.." && pwd)}"
