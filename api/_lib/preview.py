@@ -18,7 +18,18 @@ iris.WATERMARK_IRIS times as strong on every iris disc (iris._watermark discs), 
 
 Sealing uses the standard library only (the function bundle carries no crypto package):
   blob       = VERSION (1 byte) | KIND (1 byte) | expiry (4 bytes, unix seconds, big endian) | nonce (16 random bytes)
-               | ciphertext | tag (32 bytes)
+               | ciphertext | tag (32 bytes)                                     version 1, the plain envelope
+             = VERSION_V2 | KIND | expiry | nonce | eye_id (8 bytes) | profile length (2 bytes, big endian) | profile
+               | ciphertext | tag                                                version 2 ("seal v2", work package WP3)
+  eye_id     the first 16 hex digits of the sha256 of the clean 1024 px preview bytes (KIND_ORDER's plaintext), written identically
+             into all three blobs of an eye (the order copy and the two compose copies, whose own bytes differ); for a KIND_ORDER
+             blob it is checked against the plaintext on opening
+  profile    the eye's profile (api/_lib/styles/eye.py EyeProfile.to_wire: canonical JSON, zlib, at most PROFILE_MAX bytes): what
+             was measured once at /api/enhance (colour class, ring colours, pupil, gate results). It sits in the AUTHENTICATED
+             part (the tag covers it, so a page cannot change a byte of it) but is not encrypted: it is derived numbers, never an
+             image. Zero length: the profile was not measured (enhance ran short of time), the gate is then unknown.
+  seal() writes version 1 unless it is given an eye id or a profile; protect() always gives both. A version 1 blob (at most
+  SEAL_TTL old after the deploy of v2) still opens: it carries no profile, so its gate is unknown (hard styles answer "reseal").
   KIND       = KIND_ORDER for "sealed" (the exact enhance output: the only kind an order's draft or /api/master_eye
                opens), KIND_COMPOSE for the smaller "sealed_sizes" copies (only /api/compose opens those), so a 560 px
                compose copy can never become the preview a 4K file is made from
@@ -36,7 +47,12 @@ import os, io, time, hmac, base64, hashlib, binascii
 from PIL import Image, ImageFilter
 from . import iris as L
 
-VERSION = 1
+VERSION = 1                  # the plain envelope, what seal() writes without an eye id
+VERSION_V2 = 2               # seal v2: eye id and profile in the authenticated header
+VERSIONS = (VERSION, VERSION_V2)
+EYE_ID_BYTES = 8             # 16 hex digits
+PROFILE_LEN_BYTES = 2
+PROFILE_MAX = 8192           # a profile after zlib (api/_lib/styles/eye.py MAX_PROFILE_BYTES)
 KIND_ORDER = 1               # "sealed": the exact enhance output, what an order's preview is made from
 KIND_COMPOSE = 2             # "sealed_sizes": a smaller copy, only ever composed into a watermarked preview
 KINDS_ALL = (KIND_ORDER, KIND_COMPOSE)
@@ -88,24 +104,57 @@ def _xor(k_enc, nonce, data):
     return (int.from_bytes(data, "big") ^ int.from_bytes(ks[:n], "big")).to_bytes(n, "big")
 
 
-def seal(data, ttl=SEAL_TTL, now=None, kind=KIND_ORDER):
+def eye_id_of(data):
+    """The eye id of the clean 1024 px preview bytes: the first 16 hex digits of their sha256 (api/_lib/styles/eye.py eye_id_of is
+    the same formula; the order draft stores it as preview.sha256[:16])."""
+    return hashlib.sha256(bytes(data)).hexdigest()[:16]
+
+
+def _profile_wire(profile, eye_id):
+    """The wire bytes of a profile (an EyeProfile, or the bytes it made), checked against its eye."""
+    if profile is None:
+        return b""
+    if isinstance(profile, (bytes, bytearray)):
+        wire = bytes(profile)
+    else:
+        if getattr(profile, "eye_id", None) != eye_id:
+            raise ValueError("the profile belongs to another eye")
+        wire = profile.to_wire()
+    if len(wire) > PROFILE_MAX:
+        raise ValueError("profile too large")
+    return wire
+
+
+def seal(data, ttl=SEAL_TTL, now=None, kind=KIND_ORDER, eye_id=None, profile=None):
     """The bytes encrypted and authenticated with the server's key, as base64 text for a JSON reply. kind: KIND_ORDER
-    (the enhance output an order may be made from) or KIND_COMPOSE (a copy only /api/compose opens)."""
+    (the enhance output an order may be made from) or KIND_COMPOSE (a copy only /api/compose opens). With an eye_id (16 hex) or a
+    profile (an EyeProfile or its wire bytes) the blob is a version 2 seal that carries them in its authenticated header; without
+    either it is the version 1 envelope, byte for byte as before."""
     if not isinstance(data, (bytes, bytearray)) or not data:
         raise ValueError("nothing to seal")
     if kind not in KINDS_ALL:
         raise ValueError("unknown seal kind")
+    if eye_id is None and profile is not None and not isinstance(profile, (bytes, bytearray)):
+        eye_id = getattr(profile, "eye_id", None)
+    if eye_id is not None and not (isinstance(eye_id, str) and len(eye_id) == 2 * EYE_ID_BYTES
+                                   and all(c in "0123456789abcdef" for c in eye_id)):
+        raise ValueError("eye id: 16 hex digits")
+    if eye_id is None and profile is not None:
+        raise ValueError("a profile needs its eye id")
     exp = int(time.time() if now is None else now) + int(ttl)
     k_enc, k_mac = _keys()
     nonce = os.urandom(NONCE_BYTES)
-    body = bytes([VERSION, kind]) + exp.to_bytes(4, "big") + nonce + _xor(k_enc, nonce, bytes(data))
+    head = bytes([VERSION, kind]) + exp.to_bytes(4, "big") + nonce
+    if eye_id is not None:
+        wire = _profile_wire(profile, eye_id)
+        head = bytes([VERSION_V2]) + head[1:] + bytes.fromhex(eye_id) + len(wire).to_bytes(PROFILE_LEN_BYTES, "big") + wire
+    body = head + _xor(k_enc, nonce, bytes(data))
     return base64.b64encode(body + hmac.digest(k_mac, body, "sha256")).decode("ascii")
 
 
-def unseal(s, now=None, kinds=KINDS_ALL):
-    """The bytes seal() was given. SealError for anything this server did not seal or that was changed (the tag is
-    checked first) and for a seal of a kind the caller does not take (kinds), SealExpired for a blob past its
-    expiry."""
+def _open(s, now, kinds):
+    """(plaintext, header) of a sealed blob: header = {v, kind, eye_id (hex or None), profile (wire bytes, may be empty)}. Every
+    refusal of unseal() is made here: the tag first, then the kind and the expiry."""
     if not isinstance(s, str) or not s:
         raise SealError("no sealed preview")
     if len(s) > SEALED_B64_MAX:
@@ -114,7 +163,7 @@ def unseal(s, now=None, kinds=KINDS_ALL):
         raw = base64.b64decode(s, validate=True)
     except (binascii.Error, ValueError):
         raise SealError("sealed preview is not base64") from None
-    if len(raw) < HEAD_BYTES + 1 + TAG_BYTES or raw[0] != VERSION:
+    if len(raw) < HEAD_BYTES + 1 + TAG_BYTES or raw[0] not in VERSIONS:
         raise SealError("not a sealed preview")
     body, tag = raw[:-TAG_BYTES], raw[-TAG_BYTES:]
     k_enc, k_mac = _keys()
@@ -124,7 +173,49 @@ def unseal(s, now=None, kinds=KINDS_ALL):
         raise SealError("sealed preview of another kind")
     if int.from_bytes(body[2:6], "big") < (time.time() if now is None else now):
         raise SealExpired("sealed preview expired")
-    return _xor(k_enc, body[6:HEAD_BYTES], body[HEAD_BYTES:])
+    v, pos, eye_id, wire = body[0], HEAD_BYTES, None, b""
+    if v == VERSION_V2:
+        if len(body) < pos + EYE_ID_BYTES + PROFILE_LEN_BYTES + 1:
+            raise SealError("not a sealed preview")
+        eye_id = body[pos:pos + EYE_ID_BYTES].hex()
+        pos += EYE_ID_BYTES
+        n = int.from_bytes(body[pos:pos + PROFILE_LEN_BYTES], "big")
+        pos += PROFILE_LEN_BYTES
+        if n > PROFILE_MAX or len(body) < pos + n + 1:
+            raise SealError("not a sealed preview")
+        wire, pos = body[pos:pos + n], pos + n
+    plain = _xor(k_enc, body[6:HEAD_BYTES], body[pos:])
+    if v == VERSION_V2 and body[1] == KIND_ORDER and eye_id_of(plain) != eye_id:
+        raise SealError("sealed preview does not match its id")    # an order seal's id is the hash of its own bytes
+    return plain, {"v": v, "kind": body[1], "eye_id": eye_id, "profile": wire}
+
+
+def unseal(s, now=None, kinds=KINDS_ALL):
+    """The bytes seal() was given. SealError for anything this server did not seal or that was changed (the tag is
+    checked first) and for a seal of a kind the caller does not take (kinds), SealExpired for a blob past its
+    expiry."""
+    return _open(s, now, kinds)[0]
+
+
+def unseal_full(s, now=None, kinds=KINDS_ALL):
+    """(bytes, meta): unseal() and what the blob says about its eye. meta = {v (1 or 2), kind, eye_id, profile}. eye_id: 16 hex, from
+    a version 2 header, or the sha256 prefix of the plaintext of a version 1 KIND_ORDER blob (its own bytes are the clean
+    preview), else None (a version 1 compose copy: its bytes are not the preview's). profile: the sealed EyeProfile, or None
+    (version 1, or a version 2 whose profile was not measured: the gate is unknown). Same refusals as unseal(); a profile that
+    does not parse is a SealError too (the tag already vouches that this server wrote it, so this is a bug, not an attack)."""
+    plain, h = _open(s, now, kinds)
+    eye_id, prof = h["eye_id"], None
+    if h["profile"]:
+        from .styles import eye as EYE            # imported here: opening a seal must not load the profile code unless one is carried
+        try:
+            prof = EYE.EyeProfile.from_wire(h["profile"])
+        except EYE.ProfileError:
+            raise SealError("sealed preview carries an unreadable profile") from None
+        if prof.eye_id != eye_id:
+            raise SealError("sealed profile belongs to another eye")
+    if eye_id is None and h["v"] == VERSION and h["kind"] == KIND_ORDER:
+        eye_id = eye_id_of(plain)
+    return plain, {"v": h["v"], "kind": h["kind"], "eye_id": eye_id, "profile": prof}
 
 
 # (expired, unreadable) per page language
@@ -196,12 +287,18 @@ def is_display_b64(s):
         return False
 
 
-def protect(clean_im, clean_bytes, lang=None):
+def protect(clean_im, clean_bytes, lang=None, profile=None):
     """What /api/enhance hands the page for one restored iris: the display copy and the sealed clean originals.
-    clean_bytes: the exact JPEG the page used to get (the order's preview); clean_im: the same image, decoded."""
+    clean_bytes: the exact JPEG the page used to get (the order's preview); clean_im: the same image, decoded. All three seals carry
+    the eye id (eye_id_of(clean_bytes)); profile (an EyeProfile of that very eye, measured by enhance when it had the time) rides in
+    all three too. Without it the seals still carry the id and say that the profile was not measured."""
+    eid = eye_id_of(clean_bytes)
+    wire = _profile_wire(profile, eid) if profile is not None else b""
+    wire = wire or None
     sizes = {}
     for s in COMPOSE_SIDES:
         buf = io.BytesIO()
         clean_im.convert("RGB").resize((s, s), Image.LANCZOS).save(buf, "JPEG", quality=COMPOSE_QUALITY)
-        sizes[str(s)] = seal(buf.getvalue(), kind=KIND_COMPOSE)
-    return {"image": display_b64(clean_im, lang), "sealed": seal(clean_bytes, kind=KIND_ORDER), "sealed_sizes": sizes}
+        sizes[str(s)] = seal(buf.getvalue(), kind=KIND_COMPOSE, eye_id=eid, profile=wire)
+    return {"image": display_b64(clean_im, lang), "sealed": seal(clean_bytes, kind=KIND_ORDER, eye_id=eid, profile=wire),
+            "sealed_sizes": sizes}

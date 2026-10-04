@@ -93,9 +93,9 @@ SEEN = []                                                     # what enhance han
 _REAL_PROTECT = P.protect
 
 
-def spy_protect(clean_im, clean_bytes, lang=None):
+def spy_protect(clean_im, clean_bytes, lang=None, **kw):       # protect() gained profile= (the eye profile, WP3): passed through
     SEEN.append((clean_im.copy(), bytes(clean_bytes)))
-    return _REAL_PROTECT(clean_im, clean_bytes, lang)
+    return _REAL_PROTECT(clean_im, clean_bytes, lang, **kw)
 
 
 P.protect = spy_protect
