@@ -516,11 +516,13 @@ def storage_status(families=None, store=None, deep=True):
         return {"ok": False, "checked": 0, "present": 0, "missing": list(ids_), "sample": None, "why": "storage not configured"}
     present, missing = 0, []
     try:
-        for pid in ids_:
-            if store.exists(storage_path(pid)):
-                present += 1
-            else:
-                missing.append(pid)
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=8) as pool:                 # one existence request per plate: eight at a time
+            for pid, there in pool.map(lambda i: (i, store.exists(storage_path(i))), ids_):
+                if there:
+                    present += 1
+                else:
+                    missing.append(pid)
         sample = None
         if deep and present:
             pid = next(i for i in ids_ if i not in missing)

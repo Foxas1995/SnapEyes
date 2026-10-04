@@ -190,7 +190,7 @@ check("import, pick, place, 1K and atlas loads, the status probes: no open for w
       cp.returncode == 0 and "OK" in cp.stdout, (cp.stdout[-200:], cp.stderr[-500:]))
 src_plates = read("api/_lib/styles/plates.py") + read("api/_lib/styles/atlas.py")
 check("no glob, walk or scandir and no fit (linalg, eigh, moments) in the loader; the one directory listing is the cache folder's (_evict)",
-      not re.search(r"\bglob\b|os\.walk|scandir|linalg|eigh|_fit\b", src_plates) and len(re.findall(r"os\.listdir", src_plates)) == 1
+      not re.search(r"\bglob\b|os\.walk|scandir|linalg|\beigh\b|_fit\b", src_plates) and len(re.findall(r"os\.listdir", src_plates)) == 1
       and re.search(r"def _evict\(.*?os\.listdir", src_plates, re.S) is not None)
 import ast  # noqa: E402
 calls = {getattr(n.func, "id", "") for n in ast.walk(ast.parse(read("api/_lib/styles/plates.py"))) if isinstance(n, ast.Call)}

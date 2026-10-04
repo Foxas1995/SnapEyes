@@ -112,7 +112,7 @@ else:
 check("a legacy style is refused by the style package (the legacy engine draws it)",
       raises(lambda: ST.resolve({"style": CT.legacy_ids()[0], "eyes": 1}, []), ST.EngineNotBuilt) is True)
 check("every module of the package has the __future__ import (annotations) and parses as Python 3.12",
-      all(re.search(r"^from __future__ import annotations$", read(os.path.join(STYLES, m)), re.M) for m in MODULES)
+      all(re.search(r"^from __future__ import annotations\r?$", read(os.path.join(STYLES, m)), re.M) for m in MODULES)
       and all(ast.parse(read(os.path.join(STYLES, m)), feature_version=(3, 12)) for m in MODULES), MODULES)
 
 
@@ -172,6 +172,13 @@ check("the customer's text: names and date, names only, date only, a long line s
       "scratch drawer's", not diff("text."), diff("text."))
 check("the four fixtures of the replay are the very bytes of the recording", all(__import__("hashlib").sha256(fixtures[n]).hexdigest() == GOLD["fixtures"][n] for n in fixtures),
       [n for n in fixtures if __import__("hashlib").sha256(fixtures[n]).hexdigest() != GOLD["fixtures"][n]])
+
+import unittest.mock as mock  # noqa: E402
+_erf0 = C._erf
+with mock.patch.object(C, "_erf", lambda x: (_erf0(x) * np.float32(0.999)).astype(np.float32)), mock.patch.object(C, "SPLAT_CHUNK", 1 << 21):
+    moved = CC.primitive_cases(C)
+check("the replay can fail: a change of one thousandth in the error function of the splat moves the splat hash and not the unrelated ones",
+      moved["splat"] != gold["splat"] and moved["rand.uniform"] == gold["rand.uniform"] and moved["blur.rgb.6.0"] == gold["blur.rgb.6.0"], (moved["splat"] == gold["splat"]))
 
 section("2b. what the port changed, and nothing else")
 check("core.py has no studio words and no orchestration: no TAGLINE, FOOTER, caption, watermark, render, Ctx, WORK_SIDE",
