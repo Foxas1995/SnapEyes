@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { checkPrices, type ClientMarkets } from './scripts/check_prices.mjs'
 import { checkPack, checkTexts } from './scripts/check_texts.mjs'
+import { checkStyles, describeRegistry } from './scripts/check_styles.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
 // withdrawal information with the model form, per language, plus the seller's contact facts). Built from the same
@@ -57,6 +58,23 @@ function textCheck(): Plugin {
   }
 }
 
+// Every style id, name, layout and the price class lives in api/_lib/styles_registry.py (src/shared/styles.ts reads it for every page;
+// api/_lib/catalogue.py for the server). Before a build: both literals are sound, no other file writes a style id, the copy
+// dictionaries keyed by style id and the layout names match it, the site's price rule agrees with the registry's price classes, and the
+// terms of sale name the price classes (scripts/check_styles.mjs; `npm run check:styles` runs it alone). The registry hash is printed.
+function styleCheck(): Plugin {
+  return {
+    name: 'snapeyes-style-check',
+    apply: 'build',
+    async buildStart() {
+      const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
+      const problems = await checkStyles(process.cwd(), load)
+      if (problems.length) this.error(`style check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
+      console.log(describeRegistry(process.cwd()))
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -64,6 +82,7 @@ export default defineConfig({
     tailwindcss(),
     priceCheck(),
     textCheck(),
+    styleCheck(),
     legalMail(),
   ],
   build: {
@@ -85,11 +104,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // local Python stand-in for the Vercel functions: python scripts/dev_api.py. The one source file the site itself
-      // imports from api/ (src/shared/markets.ts reads api/_lib/markets.py as text) is served by Vite, not proxied
+      // local Python stand-in for the Vercel functions: python scripts/dev_api.py. The two source files the site itself
+      // imports from api/ (src/shared/markets.ts reads api/_lib/markets.py and src/shared/styles.ts reads
+      // api/_lib/styles_registry.py, both as text) are served by Vite, not proxied
       '/api': {
         target: 'http://localhost:5050',
-        bypass: (req) => (req.url && req.url.startsWith('/api/_lib/markets.py?') ? req.url : undefined),
+        bypass: (req) => (req.url && /^\/api\/_lib\/(markets|styles_registry)\.py\?/.test(req.url) ? req.url : undefined),
       },
     },
   },

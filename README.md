@@ -37,6 +37,14 @@ Price tests are defined in one place, `api/_lib/experiments.py` (every variant c
 - Anonymous events (kind `exp`: visit, preview, checkout, paid) give the visitors, previews and payment pages per variant; paid orders and revenue come from the order records (live payments, refunded and withdrawn ones apart). The admin page shows the funnel, conversion, revenue per visitor and average order in the test's currency, significance tests (conversion, the affected orders, revenue per visitor; a p-value only with at least 10 paid orders and 100 visitors per arm, and a verdict only once the planned size is reached), the sample size needed, orders that took no part, and a warning when a ladder would sell at a loss (`COSTS` in the same file).
 - `npm run check:prices` (and every build) validates every variant ladder (`scripts/check_experiments.mjs`) and that the page's price rule agrees with the server's. Never edit a ladder that has run: add a new experiment key instead.
 
+## Styles
+
+Which styles exist is defined in one place, `api/_lib/styles_registry.py`: the ids, brand names, slugs, eye counts, layouts, the stage ceiling, the price class (`black` or `art`), the gate policy and the sizes a render may work at. How each style is drawn is in `api/_lib/styles_engine.py`, which only Python reads (the public file is imported by the pages as text and ships in their JavaScript). The server asks `api/_lib/catalogue.py` (`known`, `orderable`, `previewable`, `stage_of`, `price_class`, `engine_for`, `tiles_for`, `pick_for`, ...), the pages ask `src/shared/styles.ts`; nobody else keeps a list of style ids, a style name or the rule that makes a style cost the black price.
+
+- The stage in the file is the CEILING (`planned`, `lab`, `preview`, `live`, `retired`); the owner's override in the admin page can only lower it. The six ids of today carry `legacy: 1` and stay `live` until the v3 cutover. The v3 ids are `lab` or `planned`, so no customer can preview or order one, and a style whose engine module is not in the repository is never routed to, whatever its stage says (`catalogue.engine_built`).
+- `npm run check:styles` (and every build) refuses a registry that breaks the schema, two ids with one slug, a heart or a pet symbol in an id, a style id written in any other file of `api/`, `src/` or `scripts/` (the allow list is in `scripts/check_styles.mjs`), a copy dictionary keyed by style id that does not match, a layout without a name, and price rules that disagree; it prints the registry hash (12 hex digits, also `catalogue.registry_hash()`). The rules that need the new texts (no number of styles or of eyes in a string, the run-time tokens of the pricing rows) are built and switched off until `WP12_RULES` is set.
+- A new style is a registry entry first: add it to both files, run `npm run check:styles`, and raise its stage only in a reviewed change.
+
 ## Environment variables (Vercel)
 
 - `GEMINI_API_KEY` (required)

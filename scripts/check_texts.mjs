@@ -110,8 +110,17 @@ const WORDS_DE = [
 const wordRe = (words) => new RegExp(`(?<![\\p{L}])(${words.join('|')})(?![\\p{L}])`, 'iu');
 const ENGLISH = wordRe(WORDS_EN);
 const GERMAN = wordRe(WORDS_DE);
+// The brand names are English in every language (api/_lib/styles_registry.py names): the eleven names of the v3 catalogue, the held
+// and later ones (Elements, Reflection, Infinity Chain, Universe Duo) and the looks inside Universe, so that no string that names
+// them is flagged as untranslated English in Lithuanian or Hungarian. Longer names come before the names they contain.
+const STYLE_NAMES_OK = [
+  'Celestial Gold Duo', 'Radiance Duo', 'Universe Duo', 'Infinity Chain', 'Collision Infinity', 'Clean Infinity', 'Clean Family', 'Clean Iris',
+  'Kiss Collision', 'Family Colours', 'Powder Burst', 'Celestial Gold', 'Universe', 'Splash', 'Radiance', 'Elements', 'Reflection',
+  'Echo', 'Vortex', 'Deep Field', 'Starfield',
+];
 const ENGLISH_OK = new RegExp([
-  'SnapEyes', 'Studio Black', 'Celestial Gold', 'Deep Nebula', 'Emerald Aurora', 'Obsidian Smoke', 'Supernova', 'Couple Duo',
+  ...STYLE_NAMES_OK,
+  'SnapEyes', 'Studio Black', 'Deep Nebula', 'Emerald Aurora', 'Obsidian Smoke', 'Supernova', 'Couple Duo',
   'Private Atelier', 'Studio', 'Gemini API', 'Google Fonts', 'Google Gemini', 'user agent', 'local storage', 'session storage',
   'snapeyes\\.[a-z]+', 'mailto:\\S+', 'https?:\\/\\/\\S+', 'snapeyes\\.com\\/\\S*', 'order\\?\\S*', '\\/order\\S*', '\\/try\\S*',
   '\\.jpg', '\\.png', 'info@snapeyes\\.com', 'example\\.com', 'doc:\\S+', 'Australian Consumer Law', 'GST', 'Stripe', 'Resend',
