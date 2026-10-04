@@ -23,7 +23,7 @@
 //   handoff   phone profile (slow 4G, CPU x4): the entrance does not start again when React takes the page (no frame where the lead or the
 //             headline goes back); a deliberate defect (the adoption switched off) must be caught
 //   sheets    the three stacked sheets: tones, rounded top, rim, nothing of the content under the next sheet's overlap, and every sticky element of
-//             the page (the Reveal's stage, how it works, the FAQ's head) still sticks inside a sheet's overflow clip
+//             the page (the Reveal's stage, how it works, the FAQ's head) still sticks inside a sheet
 //   gold      the gold census of the first screen (13.9): at most 3 gold groups per viewport, chrome excluded
 //   overflow  no headline wider than its box and no horizontal scroll at 320 and 390 px in every language; no headline word cut by its mask
 import { createHash } from 'node:crypto';
@@ -553,9 +553,11 @@ async function checkHandoff() {
   console.log('handoff');
   const SAMPLER = `window.__s = []; window.__swap = null;
     new MutationObserver((_, o) => { if (!document.getElementById('shell') && document.getElementById('root') && document.getElementById('root').childElementCount) { window.__swap = Math.round(performance.now()); o.disconnect(); } }).observe(document, { childList: true, subtree: true });
-    (function loop() { const l = document.querySelector('.lp-hero .lp-lead'), s = document.querySelector('.lp-hero h1 .lp-line-mask > span'), c = document.querySelector('.lp-hero .lp-cta-row');
-      if (l && s && c) { const ty = (e) => { const v = getComputedStyle(e).translate; const p = v.split(' '); return p.length > 1 ? parseFloat(p[1]) : 0; }; window.__s.push([Math.round(performance.now()), +getComputedStyle(l).opacity, ty(s), +getComputedStyle(c).opacity, ty(c)]); }
-      requestAnimationFrame(loop); })();`;
+    // sampled in a task after each frame's rendering (a timer set inside the animation callback), so what it reads is what was painted: reading in the
+    // callback itself would see the state before the frame's own callbacks (the handoff's included) have run
+    const sample = () => { const l = document.querySelector('.lp-hero .lp-lead'), s = document.querySelector('.lp-hero h1 .lp-line-mask > span'), c = document.querySelector('.lp-hero .lp-cta-row');
+      if (l && s && c) { const ty = (e) => { const v = getComputedStyle(e).translate; const p = v.split(' '); return p.length > 1 ? parseFloat(p[1]) : 0; }; window.__s.push([Math.round(performance.now()), +getComputedStyle(l).opacity, ty(s), +getComputedStyle(c).opacity, ty(c)]); } };
+    (function loop() { setTimeout(sample, 0); requestAnimationFrame(loop); })();`;
   const run = async (mutate) => {
     const page = await chrome.page({ width: 375, height: 812, mobile: true, dpr: 2, cpu: 4, throttle: { latency: 150, down: 200000, up: 93750 } });
     await page.send('Page.addScriptToEvaluateOnNewDocument', { source: (mutate ? 'Element.prototype.getAnimations = function () { return []; };' : '') + SAMPLER });
@@ -610,7 +612,7 @@ async function checkSheets() {
     expect('sheets', r.n === 3, `${tag}: ${r.n} sheets (want 3)`);
     const bgs = new Set(r.rows.map((x) => x.bg));
     expect('sheets', bgs.size === 2 && r.rows[0].bg === r.rows[2].bg && r.rows[0].bg !== r.rows[1].bg, `${tag}: the sheet tones are ${[...bgs].join(' | ')} (want A and D alike, C another)`);
-    expect('sheets', r.rows.every((x) => x.overflow === 'clip' && x.rim === '1px' && x.shadow && x.radius === (w >= 1024 ? '32px' : '24px')), `${tag}: a sheet has the wrong overflow, rim, shadow or radius: ${JSON.stringify(r.rows)}`);
+    expect('sheets', r.rows.every((x) => x.overflow === 'visible' && x.rim === '1px' && x.shadow && x.radius === (w >= 1024 ? '32px' : '24px')), `${tag}: a sheet has the wrong overflow (it must stay visible: a clip stops native lazy loading of the pictures of a horizontal rail), rim, shadow or radius: ${JSON.stringify(r.rows)}`);
     expect('sheets', r.rows.every((x) => x.secs > 0), `${tag}: a sheet holds no section`);
     expect('sheets', r.rows.every((x) => x.room === null || x.room <= 0.5), `${tag}: the next piece starts below a sheet's last section (${JSON.stringify(r.rows.map((x) => x.room))}): the overlap would lie over content`);
     expect('sheets', r.hero !== null && r.hero >= 16, `${tag}: the first sheet starts ${r.hero} px below the hero's last line (want 16 px or more: it rolls over padding only)`);

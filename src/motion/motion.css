@@ -165,10 +165,13 @@
   @keyframes lp-settle { from { scale: 1.03; } }
 
   /* ------------------------------------------------------------------------------------------------ 6. stacked sheets (chapters)
-     Three rounded edges on the whole page. The rim is light catching an edge, so it fades out toward the corners. overflow is clip,
-     never hidden: sticky stages inside keep working. Each sheet carries a bottom padding as deep as the next sheet's overlap, so
-     the next one rolls over this sheet's own surface and never over a line of content. */
-  .lp-sheet { position: relative; z-index: 1; margin-top: var(--sheet-overlap); padding-bottom: calc(-1 * var(--sheet-overlap)); overflow: clip; border-radius: var(--r-sheet) var(--r-sheet) 0 0; box-shadow: var(--sh-sheet); }
+     Three rounded edges on the whole page. The rim is light catching an edge, so it fades out toward the corners. A sheet sets NO
+     overflow (the spec says clip, never hidden, and sticky stages work without either): an overflow clip also changes what the browser
+     calls "near the screen", and native lazy loading then stops fetching the pictures of a horizontal rail that lie beyond the edge
+     of the screen (measured: three pictures and 147 kB fewer on a phone, a blank tile when the rail is swiped). Nothing inside a
+     sheet reaches a rounded corner. Each sheet carries a bottom padding as deep as the next sheet's overlap, so the next one rolls
+     over this sheet's own surface and never over a line of content. */
+  .lp-sheet { position: relative; z-index: 1; margin-top: var(--sheet-overlap); padding-bottom: calc(-1 * var(--sheet-overlap)); border-radius: var(--r-sheet) var(--r-sheet) 0 0; box-shadow: var(--sh-sheet); }
   .lp-sheet::before { content: ""; position: absolute; inset: 0 0 auto; z-index: 2; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--rim) 18%, var(--rim) 82%, transparent); }
   .lp-sheet-a, .lp-sheet-d { background: var(--tone-1); }
   .lp-sheet-c { background: var(--tone-2); }
