@@ -3,14 +3,16 @@
 //   node scripts/check_shell.mjs --rules                                 part 1 only (Node, no browser, no build needed)
 //
 // Part 1, the decision script (src/landing/shell/scripts.ts) against src/shared/lang.ts detectLang and detectMarket, over a matrix of
-// links (?m=, ?lang=), stored choices (localStorage snapeyes.market, snapeyes.lang) and browser languages: the script hides the
-// shell exactly when the visitor will not read the shell's language and market.
-// Part 2, in real Chrome on the built page at 375, 768 and 1280 px: the shell (the page with its main script blocked: only the
-// static HTML and the two inline scripts) and the live first screen (React, after the shell has gone) occupy the same boxes, with
-// the same styles and the same pixels (the held-back price aside), the shell is gone after the handoff, no id is used twice, the
-// honesty words are in the static HTML (the label "AI visualisation" and "Printing is not included" inside the picture's frame,
-// the lead names the digital file), the LCP picture is preloaded with the srcset of the image, and a visitor the shell is not for
-// never has it on screen (German, Australian, Lithuanian).
+// links (?m=, ?lang=), stored choices (localStorage snapeyes.market, snapeyes.lang) and browser languages: the script names the
+// visitor's language and market exactly as the two functions do (window.__lpShell), and hides the shell
+// never (a script that fails hides it).
+// Part 2, in real Chrome on the built page at 375, 768 and 1280 px, in English, German, Lithuanian and Hungarian (and the
+// Lithuanian, Hungarian and Australian markets): the shell (the page with its main script blocked: only the static HTML and the inline
+// scripts, the swap to the visitor's language included) and the live first screen (React, after the shell has gone) occupy the same
+// boxes, with the same styles and the same pixels (the held-back price aside), say the same words and link to the same /try, the
+// shell is gone after the handoff, no id is used twice, the honesty words are in the static HTML of every language (the label
+// "AI visualisation" and "Printing is not included" inside the picture's frame, the lead names the digital file), the LCP picture
+// is preloaded with the srcset of the image.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -39,7 +41,6 @@ async function rules() {
   const all = Object.keys(markets.MARKETS);
   const rule = {
     defaultMarket: markets.DEFAULT_MARKET,
-    lang: 'en',
     selectable: markets.SELECTABLE,
     allowed: Object.fromEntries(all.map((m) => [m, lang.marketLangs(m)])),
     own: Object.fromEntries(all.map((m) => [m, lang.marketDefaultLang(m)])),
@@ -48,7 +49,8 @@ async function rules() {
   const ctxOf = (s) => {
     const preloads = [];
     const doc = { documentElement: { className: '' }, head: { appendChild: (n) => preloads.push(n) }, createElement: () => ({ setAttribute() {} }) };
-    return { doc, preloads, sandbox: { URLSearchParams, location: { search: s.search }, localStorage: { getItem: (k) => (k in s.store ? s.store[k] : null) }, navigator: { language: s.nav }, document: doc } };
+    const win = {};
+    return { doc, preloads, win, sandbox: { URLSearchParams, location: { search: s.search }, localStorage: { getItem: (k) => (k in s.store ? s.store[k] : null) }, navigator: { language: s.nav }, document: doc, window: win } };
   };
   const qm = [null, 'au', 'hu', 'lt', 'AU ', 'xx', 'eu'];
   const ql = [null, 'en', 'de', 'lt', 'hu', 'xx'];
@@ -71,14 +73,15 @@ async function rules() {
       Object.defineProperty(globalThis, 'navigator', { value: { language: e }, configurable: true });
       const m = markets.detectMarket();
       const l = lang.detectLang(m);
-      const wantHide = l !== 'en' || m !== markets.DEFAULT_MARKET;
+      const wantHide = false;
       // the script
-      const { doc, preloads, sandbox } = ctxOf(s);
+      const { doc, preloads, win, sandbox } = ctxOf(s);
       vm.runInNewContext(script, sandbox);
       const gotHide = doc.documentElement.className.includes('lp-noshell');
+      const said = win.__lpShell;
       n += 1;
-      if (gotHide !== wantHide || preloads.length > 0) {
-        note(`decision script: ${JSON.stringify(s)} -> market ${m}, language ${l}: the rule says hide ${wantHide}; the script says ${gotHide} (and it added ${preloads.length} nodes to the head, it must add none)`);
+      if (gotHide !== wantHide || preloads.length > 0 || !said || said.l !== l || said.m !== m) {
+        note(`decision script: ${JSON.stringify(s)} -> market ${m}, language ${l}: the rule says hide ${wantHide}; the script says hide ${gotHide}, language ${said?.l}, market ${said?.m} (and it added ${preloads.length} nodes to the head, it must add none)`);
         if (problems.length > 12) return n;
       }
     }
@@ -106,6 +109,7 @@ const MEASURE = `(() => {
   out['.lp-micro li'] = Array.from(document.querySelectorAll('.lp-micro li')).map((li) => { const r = li.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height].map((v) => Math.round(v * 100) / 100); });
   out.ids = (() => { const seen = {}, dup = []; for (const e of document.querySelectorAll('[id]')) { if (seen[e.id]) dup.push(e.id); seen[e.id] = 1; } return dup; })();
   out.shell = !!document.getElementById('shell') && getComputedStyle(document.getElementById('shell')).display !== 'none';
+  out.words = [document.documentElement.lang, document.getElementById('h1').textContent, document.getElementById('barText').textContent, document.getElementById('ctaHero').textContent, document.querySelector('.lp-hdr .lp-btn-line').getAttribute('href'), document.getElementById('ctaHero').getAttribute('href'), document.querySelector('.lp-link-quiet').textContent, document.getElementById('heroCap').textContent, [...document.querySelectorAll('#langSeg button')].map((b) => b.textContent + b.getAttribute('aria-pressed')).join(',')].join(' | ');
   out.bar = getComputedStyle(document.documentElement).getPropertyValue('--bar-h');
   return JSON.stringify(out);
 })()`;
@@ -150,87 +154,118 @@ async function browser(dist, shotsDir) {
   const mainJs = /var M="(\/assets\/main-[^"]+\.js)"/.exec(html)?.[1];
   if (!mainJs) note('dist/index.html: the loader of the page script is missing');
   if (/<script type="module"[^>]*src=/.test(html) || /<link rel="modulepreload"/.test(html)) note('dist/index.html: a module script or modulepreload is still in the head (it would compete with the LCP picture)');
+  // every page starts as a first visit: the page remembers the market of a ?m= link (localStorage), which would change the next page
+  const fresh = async (opts) => {
+    const p = await chrome.page(opts);
+    await p.goto(`${origin}/imprint?lang=en`);
+    await p.loaded();
+    await p.send('Storage.clearDataForOrigin', { origin, storageTypes: 'all' }).catch(() => undefined);
+    return p;
+  };
+  const LANGS = ['en', 'de', 'lt', 'hu'];
+  const COPY = Object.fromEntries(LANGS.map((l) => [l, JSON.parse(readFileSync(join(ROOT, `src/landing/copy/${l}.json`), 'utf8'))]));
   try {
-    // static HTML facts (what a crawler or a script-less visitor gets)
+    // static HTML facts (what a crawler or a script-less visitor gets): the English shell, and a template per other language
     const shellHtml = html.slice(html.indexOf('<div id="shell"'), html.indexOf('<div id="root">'));
-    const copy = JSON.parse(readFileSync(join(ROOT, 'src/landing/copy/en.json'), 'utf8'));
-    const f = (s) => s.replace(/\{(\w+)\}/g, (w, k) => copy.facts[k] ?? w);
     const decode = (s) => s.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-    const text = decode(shellHtml);
-    for (const [what, s] of [['the label inside the picture frame', copy.hero.chipTitle], ['its second line', copy.hero.chipBody], ['the lead (digital file, printing not included)', f(copy.hero.lead)],
-      ['the caption', copy.hero.caption], ['the bar sentence', copy.bar.soon], ['the picture alt text', copy.hero.imageAlt]]) {
-      if (!text.includes(s)) note(`static HTML: ${what} is missing ("${s.slice(0, 50)}")`);
-    }
-    if (!/<div class="lp-frame-chip"[^>]*><b>[^<]+<\/b><span>[^<]+<\/span><\/div><\/div>/.test(shellHtml)) note('static HTML: the label is not inside the picture frame (.lp-hero-frame)');
-    if (!/<img id="heroImg"[^>]*fetchpriority="high"/i.test(shellHtml)) note('static HTML: the hero picture is not fetchpriority=high');
     const pre = /<link rel="preload" as="image"[^>]*imagesrcset="([^"]+)"[^>]*imagesizes="([^"]+)"/.exec(html.slice(0, html.indexOf('<body')));
-    const img = /<img id="heroImg" src="([^"]+)" srcSet="([^"]+)" sizes="([^"]+)"/i.exec(shellHtml);
     if (!pre) note('head: no preload of the LCP picture');
-    else if (!img || pre[1] !== img[2] || pre[2] !== img[3]) note('head: the preload srcset or sizes differs from the hero image of the shell');
-    if (/\.lp-price/.test(shellHtml) === false && !/class="lp-price"[^>]*inert/.test(shellHtml)) note('static HTML: the price line is not held back');
-    if (/€\s?\d|A\$\s?\d/.test(shellHtml.replace(/class="lp-price"[\s\S]*?<\/li>/, ''))) note('static HTML: a price is printed outside the held-back line');
-
-    const sizes = [[375, 812, true], [768, 1024, false], [1280, 800, false]];
-    const shots = [];
-    for (const [w, h, mobile] of sizes) {
-      // 1. the shell: the page with its main script blocked, so nothing but the static HTML and the two inline scripts has run
-      const a = await chrome.page({ width: w, height: h, mobile, dpr: 1, reduceMotion: true });
-      await a.send('Network.setBlockedURLs', { urls: [`*${mainJs}`] });
-      await a.goto(`${origin}/`);
-      await a.loaded();
-      await sleep(400);
-      await a.eval(HIDE_PRICE);
-      const shellM = JSON.parse(await a.eval(MEASURE));
-      const shellPng = await a.shot();
-      await a.close();
-      // 2. the live first screen
-      const b = await chrome.page({ width: w, height: h, mobile, dpr: 1, reduceMotion: true });
-      await b.goto(`${origin}/`);
-      await b.loaded();
-      for (let i = 0; i < 100; i++) {
-        if (await b.eval("!document.getElementById('shell') && !!document.querySelector('#root .lp-hero')")) break;
-        await sleep(100);
-      }
-      await sleep(700);
-      await b.eval(HIDE_PRICE);
-      const liveM = JSON.parse(await b.eval(MEASURE));
-      const livePng = await b.shot();
-      await b.close();
-      const tag = `${w}px`;
-      if (!shellM.shell) note(`${tag}: the shell is not on screen before React`);
-      if (liveM.shell) note(`${tag}: the shell is still on screen after React took over`);
-      if (liveM.ids.length) note(`${tag}: ids used twice in the live page: ${liveM.ids.join(', ')}`);
-      if (shellM.bar !== liveM.bar) note(`${tag}: --bar-h is ${shellM.bar} in the shell and ${liveM.bar} in the live page`);
-      for (const sel of LANDMARKS) {
-        const x = shellM[sel], y = liveM[sel];
-        if (!x || !y) { note(`${tag}: ${sel} is missing in the ${x ? 'live page' : 'shell'}`); continue; }
-        if (!close(x.box, y.box)) note(`${tag}: ${sel} box ${x.box} in the shell, ${y.box} live`);
-        if (x.style !== y.style) note(`${tag}: ${sel} styles differ: ${x.style} | ${y.style}`);
-      }
-      const lx = shellM['.lp-micro li'], ly = liveM['.lp-micro li'];
-      if (lx.length !== ly.length || lx.some((bx, i) => !close(bx, ly[i]))) note(`${tag}: the micro line items differ: ${JSON.stringify(lx)} | ${JSON.stringify(ly)}`);
-      if (shotsDir) {
-        mkdirSync(shotsDir, { recursive: true });
-        writeFileSync(join(shotsDir, `shell_${w}.png`), shellPng);
-        writeFileSync(join(shotsDir, `live_${w}.png`), livePng);
-      }
-      shots.push([tag, sha(shellPng), sha(livePng)]);
-      // an antialiasing speck on the edge of a rounded shadow may differ by a pixel; more than a handful is a real difference
-      const d = await pngDiff(chrome, shellPng, livePng);
-      if (d.size || d.n > 30) note(`${tag}: the first screen pixels differ between the shell and the live page: ${d.size ? `sizes ${d.size}` : `${d.n} pixels, ${d.box}`} (run with --shots and compare shell_${w}.png and live_${w}.png)`);
-      else console.log(`${tag}: shell and live first screen: ${d.n} pixels differ by more than 8 of ${w * h}`);
+    const parts = { en: shellHtml.slice(0, shellHtml.indexOf('<template')) };
+    for (const l of LANGS) if (l !== 'en') {
+      const a = shellHtml.indexOf(`<template id="tpl-${l}">`);
+      parts[l] = a < 0 ? '' : shellHtml.slice(a, shellHtml.indexOf('</template>', a));
+      if (a < 0) note(`static HTML: the ${l} first screen (template tpl-${l}) is missing`);
     }
-    // a visitor the shell is not for never has it on screen
-    for (const [what, url, extra] of [['German', '/?lang=de', {}], ['Australian', '/?m=au', {}], ['Lithuanian', '/?lang=lt', {}], ['a German browser', '/', { lang: 'de-DE' }]]) {
-      const p = await chrome.page({ width: 375, height: 812, mobile: true, reduceMotion: true });
-      if (extra.lang) await p.send('Emulation.setLocaleOverride', { locale: extra.lang }).catch(() => undefined);
-      if (extra.lang) await p.send('Network.setUserAgentOverride', { userAgent: 'Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36', acceptLanguage: extra.lang }).catch(() => undefined);
+    for (const l of LANGS) {
+      const copy = COPY[l];
+      const f = (s) => s.replace(/\{(\w+)\}/g, (w, k) => copy.facts[k] ?? w);
+      const text = decode(parts[l]);
+      for (const [what, s] of [['the label inside the picture frame', copy.hero.chipTitle], ['its second line', copy.hero.chipBody], ['the lead (digital file, printing not included)', f(copy.hero.lead)],
+        ['the caption', copy.hero.caption], ['the bar sentence', copy.bar.soon], ['the picture alt text', copy.hero.imageAlt]]) {
+        if (!text.includes(s)) note(`static HTML (${l}): ${what} is missing ("${s.slice(0, 50)}")`);
+      }
+      if (!/<div class="lp-frame-chip"[^>]*><b>[^<]+<\/b><span>[^<]+<\/span><\/div><\/div>/.test(parts[l])) note(`static HTML (${l}): the label is not inside the picture frame (.lp-hero-frame)`);
+      if (!/<img id="heroImg"[^>]*fetchpriority="high"/i.test(parts[l])) note(`static HTML (${l}): the hero picture is not fetchpriority=high`);
+      const img = /<img id="heroImg" src="([^"]+)" srcSet="([^"]+)" sizes="([^"]+)"/i.exec(parts[l]);
+      if (pre && (!img || pre[1] !== img[2] || pre[2] !== img[3])) note(`head: the preload srcset or sizes differs from the hero image of the ${l} shell`);
+      if (!/class="lp-price"[^>]*inert/.test(parts[l])) note(`static HTML (${l}): the price line is not held back`);
+      if (/€\s?\d|\d\s?€|A\$\s?\d/.test(parts[l].replace(/class="lp-price"[\s\S]*?<\/li>/g, ''))) note(`static HTML (${l}): a price is printed outside the held-back line`);
+    }
+
+    // the shell (main script blocked) against the live first screen, for every language and the markets with a language of their own
+    const sizes = [[375, 812, true], [768, 1024, false], [1280, 800, false]];
+    const cases = [['en', '/', 'eu'], ['de', '/?lang=de', 'eu'], ['lt', '/?lang=lt', 'eu'], ['hu', '/?lang=hu', 'eu'], ['lt', '/?m=lt', 'lt'], ['hu', '/?m=hu', 'hu'], ['en', '/?m=au', 'au'], ['de', '/?m=au&lang=de', 'au']];
+    const shots = [];
+    for (const [lang, url, market] of cases) {
+      for (const [w, h, mobile] of sizes) {
+        if (market !== 'eu' && w !== 375) continue;
+        const tag = `${lang}${market === 'eu' ? '' : ' m=' + market} ${w}px`;
+        // 1. the shell: the page with its main script blocked, so nothing but the static HTML and the inline scripts has run
+        const a = await fresh({ width: w, height: h, mobile, dpr: 1, reduceMotion: true });
+        await a.send('Network.setBlockedURLs', { urls: [`*${mainJs}`] });
+        await a.goto(`${origin}${url}`);
+        await a.loaded();
+        await sleep(400);
+        await a.eval(HIDE_PRICE);
+        const shellM = JSON.parse(await a.eval(MEASURE));
+        const shellPng = await a.shot();
+        await a.close();
+        // 2. the live first screen
+        const b = await fresh({ width: w, height: h, mobile, dpr: 1, reduceMotion: true });
+        await b.goto(`${origin}${url}`);
+        await b.loaded();
+        for (let i = 0; i < 100; i++) {
+          if (await b.eval("!document.getElementById('shell') && !!document.querySelector('#root .lp-hero')")) break;
+          await sleep(100);
+        }
+        await sleep(700);
+        await b.eval(HIDE_PRICE);
+        const liveM = JSON.parse(await b.eval(MEASURE));
+        const livePng = await b.shot();
+        const templates = await b.eval("document.querySelectorAll('template[id^=\"tpl-\"]').length");
+        await b.close();
+        if (!shellM.shell) note(`${tag}: the shell is not on screen before React`);
+        if (liveM.shell) note(`${tag}: the shell is still on screen after React took over`);
+        if (templates) note(`${tag}: ${templates} language templates are still in the page after the handoff`);
+        if (liveM.ids.length) note(`${tag}: ids used twice in the live page: ${liveM.ids.join(', ')}`);
+        if (shellM.ids.length) note(`${tag}: ids used twice in the shell page: ${shellM.ids.join(', ')}`);
+        if (shellM.bar !== liveM.bar) note(`${tag}: --bar-h is ${shellM.bar} in the shell and ${liveM.bar} in the live page`);
+        if (shellM.words !== liveM.words) note(`${tag}: the shell says "${shellM.words}", the live page "${liveM.words}"`);
+        if (shellM.words.split(' | ')[0] !== lang) note(`${tag}: the shell's html lang is ${shellM.words.split(' | ')[0]}`);
+        if (shellM.words.split(' | ')[1] !== COPY[lang].hero.title) note(`${tag}: the shell's title is "${shellM.words.split(' | ')[1]}", the copy says "${COPY[lang].hero.title}"`);
+        for (const sel of LANDMARKS) {
+          const x = shellM[sel], y = liveM[sel];
+          if (!x || !y) { note(`${tag}: ${sel} is missing in the ${x ? 'live page' : 'shell'}`); continue; }
+          if (!close(x.box, y.box)) note(`${tag}: ${sel} box ${x.box} in the shell, ${y.box} live`);
+          if (x.style !== y.style) note(`${tag}: ${sel} styles differ: ${x.style} | ${y.style}`);
+        }
+        const lx = shellM['.lp-micro li'], ly = liveM['.lp-micro li'];
+        // the held-back price line is made in the default currency: on the forint and the Australian dollar markets its text (invisible) is another width
+        const sameBox = (bx, i) => (['hu', 'au'].includes(market) && i === lx.length - 1 ? close(bx.slice(0, 2), ly[i].slice(0, 2)) && Math.abs(bx[3] - ly[i][3]) <= 0.51 : close(bx, ly[i]));
+        if (lx.length !== ly.length || lx.some((bx, i) => !sameBox(bx, i))) note(`${tag}: the micro line items differ: ${JSON.stringify(lx)} | ${JSON.stringify(ly)}`);
+        if (shotsDir) {
+          mkdirSync(shotsDir, { recursive: true });
+          writeFileSync(join(shotsDir, `shell_${lang}_${market}_${w}.png`), shellPng);
+          writeFileSync(join(shotsDir, `live_${lang}_${market}_${w}.png`), livePng);
+        }
+        shots.push([tag, sha(shellPng), sha(livePng)]);
+        // an antialiasing speck on the edge of a rounded shadow may differ by a pixel; more than a handful is a real difference
+        const d = await pngDiff(chrome, shellPng, livePng);
+        if (d.size || d.n > 30) note(`${tag}: the first screen pixels differ between the shell and the live page: ${d.size ? `sizes ${d.size}` : `${d.n} pixels, ${d.box}`} (run with --shots and compare the shell_ and live_ pictures)`);
+        else console.log(`${tag}: shell and live first screen: ${d.n} pixels differ by more than 8 of ${w * h}`);
+      }
+    }
+    // a German browser on the plain address has the German shell
+    {
+      const p = await fresh({ width: 375, height: 812, mobile: true, reduceMotion: true });
+      await p.send('Emulation.setLocaleOverride', { locale: 'de-DE' }).catch(() => undefined);
+      await p.send('Network.setUserAgentOverride', { userAgent: 'Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36', acceptLanguage: 'de-DE' }).catch(() => undefined);
       await p.send('Network.setBlockedURLs', { urls: [`*${mainJs}`] });
-      await p.goto(`${origin}${url}`);
+      await p.goto(`${origin}/`);
       await p.loaded();
       await sleep(300);
-      const shown = await p.eval("!!document.getElementById('shell') && getComputedStyle(document.getElementById('shell')).display !== 'none'");
-      if (shown) note(`${what} (${url}): the English shell is on screen for a visitor who will read another language or market`);
+      const r = JSON.parse(await p.eval("JSON.stringify([!!document.getElementById('shell') && getComputedStyle(document.getElementById('shell')).display !== 'none', document.getElementById('h1').textContent, document.documentElement.lang])"));
+      if (!r[0] || r[1] !== COPY.de.hero.title || r[2] !== 'de') note(`a German browser on /: the shell is ${r[0] ? '' : 'not '}on screen with "${r[1]}" and html lang ${r[2]}, it should be the German one`);
       await p.close();
     }
     return shots;

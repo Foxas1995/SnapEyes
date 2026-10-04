@@ -81,19 +81,21 @@ function assetCheck(): Plugin {
 // The landing page's first screen, prerendered into index.html (BUILD_PLAN section 4, step 1). Without it the first paint waits for
 // the whole React bundle (about 2 s of LCP on a phone over slow 4G instead of about 1.3 s): with it the browser paints the notice
 // bar, the header and the hero, with the LCP picture already preloaded, before a line of script has run.
-//   * lp:shell (body): the English first screen of the default market, rendered by the very components the live page uses
-//     (src/landing/shell: parts.tsx, render.tsx), inside <div id="shell">. src/main.tsx takes it away the moment React has put the
-//     page in its place (createRoot, not hydrateRoot: the live page renders more than the first screen, and another language or
-//     market renders other words, so there is nothing to hydrate against). The prices in it are held back (invisible) like every
-//     price of the page until the server has answered.
-//   * lp:head: (1) the decision script (src/landing/shell/scripts.ts): a visitor who will read another language or market than the
-//     shell's must never see the English shell flash up, so it is hidden for them; written from the tables of src/shared/lang.ts,
-//     src/shared/markets.ts, and proven equal to detectLang and detectMarket by scripts/check_shell.mjs. (2) The preload of the
-//     new hero picture.
+//   * lp:shell (body): the first screen of the default market, rendered by the very components the live page uses
+//     (src/landing/SiteTopView.tsx, HeroView.tsx, called by src/landing/shell/render.tsx), inside <div id="shell">, in English; the
+//     German, Lithuanian and Hungarian ones follow as <template id="tpl-xx"> and a swap script puts the visitor's language in place
+//     before the first paint. src/main.tsx takes the shell away the moment React has put the page in its place (createRoot, not
+//     hydrateRoot: the live page renders more than the first screen, so there is nothing to hydrate against). The prices in it are
+//     held back (invisible) like every price of the page until the server has answered.
+//   * lp:head: (1) the decision script (src/landing/shell/scripts.ts): which language and market will this visitor read, written from
+//     the tables of src/shared/lang.ts and src/shared/markets.ts and proven equal to detectLang and detectMarket by
+//     scripts/check_shell.mjs. (2) The preload of the new hero picture.
+//     (3) The early ask of the two API answers the page needs (scripts.ts prefetchScript), so the offer of another currency, when the
+//     server suggests one, is part of the first render and pushes nothing down.
 //   * the title, description and share texts come from the English copy (src/landing/copy/en.json meta), as they do at run time.
 // Loaded through Vite's module runner, like the other build steps, so this file imports no app code itself.
 function heroShell(): Plugin {
-  type Parts = { html: string; preload: string; decision: string; bar: string; meta: { title: string; description: string; shareDescription: string } }
+  type Parts = { html: string; templates: Record<string, string>; preload: string; decision: string; swap: string; prefetch: string; bar: string; meta: { title: string; description: string; shareDescription: string } }
   let built: Promise<Parts> | null = null
   const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
   async function make(): Promise<Parts> {
@@ -106,19 +108,22 @@ function heroShell(): Plugin {
     const all = Object.keys(markets.MARKETS)
     const rule = {
       defaultMarket: market,
-      lang: 'en',
       selectable: markets.SELECTABLE,
       allowed: Object.fromEntries(all.map((m) => [m, lang.marketLangs(m)])),
       own: Object.fromEntries(all.map((m) => [m, lang.marketDefaultLang(m)])),
     }
-    // the price of the micro line: the ladder the shell is made from (held back in the markup, see src/landing/shell/parts.tsx)
-    const fromPrice: string = priceText.landingPrices(markets.priceList(market), market, 'en').from
+    // the price of the micro line in each language: the ladder the shells are made from (held back in the markup, see src/landing/HeroView.tsx)
+    const prices = Object.fromEntries(lang.LANGS.map((l: string) => [l, priceText.landingPrices(markets.priceList(market), market, l).from]))
     const langs = lang.LANGS.filter((l: string) => lang.langAllowed(l, market))
-    const out = shell.renderShell({ fromPrice, langs })
+    const out = shell.renderShell({ prices, langs })
     return {
       html: out.html,
+      templates: out.templates,
       preload: out.preload,
       decision: scripts.decisionScript(rule),
+      // the markets whose edition has fewer languages than the site (the Australian one): the swap keeps only their language buttons
+      swap: scripts.swapScript(market, Object.fromEntries(all.filter((m) => lang.marketLangs(m).length < lang.LANGS.length).map((m) => [m, lang.marketLangs(m)]))),
+      prefetch: scripts.prefetchScript,
       bar: scripts.barScript,
       meta: out.meta,
     }
@@ -147,8 +152,11 @@ function heroShell(): Plugin {
         .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
         .replace(/(<meta name="twitter:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.title)}${b}`)
         .replace(/(<meta name="twitter:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
-        .replace('<!-- lp:head -->', () => `<script>${p.decision}</script>\n    ${p.preload}`)
-        .replace('<!-- lp:shell -->', () => `<div id="shell" class="lp-shell">${p.html}</div>\n    <script>${p.bar}</script>`)
+        .replace('<!-- lp:head -->', () => `<script>${p.decision}</script>\n    <script>${p.prefetch}</script>\n    ${p.preload}`)
+        .replace('<!-- lp:shell -->', () => {
+          const templates = Object.entries(p.templates).map(([l, h]) => `<template id="tpl-${l}">${h}</template>`).join('\n    ')
+          return `<div id="shell" class="lp-shell">${p.html}</div>\n    ${templates}\n    <script>${p.swap}</script>\n    <script>${p.bar}</script>`
+        })
     },
   }
 }
@@ -169,11 +177,18 @@ function lateMainScript(): Plugin {
         const main = /<script type="module"[^>]*\ssrc="([^"]+)"[^>]*><\/script>\s*/.exec(html)
         if (!main) throw new Error('dist index.html: the module script was not found')
         const preloads = [...html.matchAll(/<link rel="modulepreload"[^>]*\shref="([^"]+)"[^>]*>\s*/g)].map((m) => m[1])
+        // the chunk of each language's words (src/landing/copy/<lang>.json, loaded by the page on demand): the loader starts the visitor's own
+        // one together with the page's script, instead of when the page's script asks for it a round trip later
+        const langChunks: Record<string, string> = {}
+        for (const l of ['de', 'lt', 'hu']) {
+          const chunk = Object.values(ctx.bundle).find((c) => c.type === 'chunk' && (c.facadeModuleId ?? '').split('\\').join('/').endsWith(`/landing/copy/${l}.json`))
+          if (chunk) langChunks[l] = `/${chunk.fileName}`
+        }
         const scripts = await runnerImport<any>('./src/landing/shell/scripts.ts', { configFile: false, logLevel: 'silent' })
         return html
           .replace(main[0], '')
           .replace(/<link rel="modulepreload"[^>]*>\s*/g, '')
-          .replace('<div id="root"></div>', () => `<div id="root"></div>\n    <script>${scripts.module.loaderScript(main[1], preloads)}</script>`)
+          .replace('<div id="root"></div>', () => `<div id="root"></div>\n    <script>${scripts.module.loaderScript(main[1], preloads, langChunks)}</script>`)
       },
     },
   }

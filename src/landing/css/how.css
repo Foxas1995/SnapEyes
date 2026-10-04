@@ -28,6 +28,13 @@
   .lp-prev img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
   .lp-prev span { margin-top: auto; display: block; text-align: center; padding: 9px 6px; border-radius: 99px; background: rgba(245, 197, 66, .14); color: var(--gold-soft); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
   .lp-prev.lp-open span { background: var(--gold); color: #000; }
+  /* the label of the open button is the real checkout button of /try, in the statutory words of each language: the Hungarian one is 38 letters
+     and 16 for its longest word, which does not fit the 88 px pill of a 320 px screen at 10.5 px. Smaller and tighter on a phone, and the
+     last resort for a word that still does not fit is to break it (the picture is decoration, aria-hidden). */
+  .lp-prev span { overflow-wrap: anywhere; hyphens: auto; }
+  @media (max-width: 479px) {
+    .lp-prev.lp-open span { padding-inline: 4px; font-size: 9.5px; letter-spacing: -.01em; }
+  }
   .lp-step-body .lp-num { font-size: 15px; display: flex; align-items: center; gap: 12px; }
   .lp-step-body .lp-num::after { content: ""; height: 1px; flex: 1; background: var(--line-2); }
   .lp-step-body h3 { margin-top: 12px; font-size: 20px; }

@@ -617,6 +617,9 @@ function checkLandingCopy(root, mods, strings, out) {
     if (x.footer?.legal?.withdrawFn !== online.button) out.push(`${rel}: footer.legal.withdrawFn is "${x.footer?.legal?.withdrawFn}", WITHDRAWAL_ONLINE.${l}.button is "${online.button}"`);
     const w = (x.faq?.items ?? []).find((it) => it.id === 'withdraw');
     if (w && !w.a.includes(online.button)) out.push(`${rel}: the faq answer "withdraw" does not name the online withdrawal button "${online.button}" (src/shared/legal.ts WITHDRAWAL_ONLINE.${l}.button)`);
+    // the button of the phone picture in step 2 (shown once ordering is open) is the real checkout button of /try: its statutory label
+    // (in Hungary the one that says the order carries an obligation to pay), not a friendlier one
+    if (x.how?.previewButton !== legal.CHECKOUT_LEGAL[l].continueButton) out.push(`${rel}: how.previewButton is "${x.how?.previewButton}", the checkout button of /try says "${legal.CHECKOUT_LEGAL[l].continueButton}" (src/shared/legal.ts CHECKOUT_LEGAL.${l}.continueButton)`);
     if (x.faqAu?.withdraw && !x.faqAu.withdraw.a.includes(online.button)) out.push(`${rel}: faqAu.withdraw.a does not name the online withdrawal button "${online.button}"`);
     if (WITHDRAW_Q[l] !== undefined && w?.q !== WITHDRAW_Q[l]) out.push(`${rel}: the faq question "withdraw" is "${w?.q}", it must stay "${WITHDRAW_Q[l]}" word for word`);
     // the honesty lines, where the prototype has them
