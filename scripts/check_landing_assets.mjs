@@ -23,7 +23,7 @@ const HASH_LEN = 10;
 const TOTAL_BUDGET = 10.5e6;       // bytes of all pictures together (9.2 MB today: 163 files)
 const FILE_BUDGET = 350e3;         // bytes of any one picture
 const HERO_FAMILY = 'm/lounge_acrylic__eye__tight';
-const HERO_BUDGET = 60e3;          // the LCP picture the phone fetches (900 px) on slow 4G
+const HERO_BUDGET = 38e3;          // the LCP picture the phone fetches (900 px) on slow 4G: the measuring rig (scripts/measure_landing.mjs) shows a cliff of about 100 ms of LCP between a 38.5 and a 39.3 kB file
 const WIDTH_RE = /^(.*)_(\d+)$/;
 
 function listFiles(dir, acc = []) {

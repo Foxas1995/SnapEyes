@@ -64,6 +64,10 @@
   "ui/preview_wm_360.webp": {
    "what": "the watermarked free preview of own215120 as /try renders it",
    "label": "own"
+  },
+  "m/lounge_acrylic__eye__tight_{600,900,1200} (the hero)": {
+   "what": "the lounge plate with the final Radiance of own215120; the three widths the first screen offers are derived from the 2000 px composite (WebP quality 80, method 6) so that the 900 px LCP picture stays near 35 kB (check:assets budget 38 kB); the 2000 px file of the picture library is not used by the page",
+   "label": "visualisation"
   }
  },
  "never_used": [
