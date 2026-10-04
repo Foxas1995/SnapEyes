@@ -17,16 +17,18 @@ export interface SiteTopViewProps {
   tryHref: string;
   /** Only the live page gives these: the static shell has no handlers and no refs. */
   onLang?: (l: Lang) => void;
+  /** The visitor is about to press a language button (see Header.tsx): the live page starts fetching that language's words. */
+  onLangIntent?: (l: Lang) => void;
   barRef?: Ref<HTMLDivElement>;
   headerRef?: Ref<HTMLElement>;
 }
 
-export function SiteTopView({ copy, lang, langs, barText, tryHref, onLang, barRef, headerRef }: SiteTopViewProps) {
+export function SiteTopView({ copy, lang, langs, barText, tryHref, onLang, onLangIntent, barRef, headerRef }: SiteTopViewProps) {
   return (
     <>
       <a className="lp-skip" href="#main">{copy.skip}</a>
       <TopBarView label={copy.bar.label} text={barText} barRef={barRef} />
-      <SiteHeaderView copy={copy} lang={lang} langs={langs} tryHref={tryHref} onLang={onLang} headerRef={headerRef} />
+      <SiteHeaderView copy={copy} lang={lang} langs={langs} tryHref={tryHref} onLang={onLang} onLangIntent={onLangIntent} headerRef={headerRef} />
     </>
   );
 }

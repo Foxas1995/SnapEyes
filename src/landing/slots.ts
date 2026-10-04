@@ -1,30 +1,32 @@
 import type { CSSProperties } from 'react';
+import type { Lang } from '../shared/lang';
 
-// The height of each lazy section of the page, so that the empty slot that holds its place while its chunk is on the way is about as
-// tall as the section will be (src/App.tsx Slot). Measured on the integrated page, the mean of English, German, Lithuanian and
-// Hungarian: phone is the layout below 640 px (measured at 375 px), tablet from 640 px (measured at 768 px, the sections are tallest
-// there), desktop from 960 px (measured at 1280 px). A slot is below the first screen and is replaced within a moment, so the numbers
-// only have to be near; they are not a promise. The ids are the sections' own: a link to #pricing has its target while the chunk loads.
+// The height of each lazy section of the page, so that the empty slot that holds its place until the section is mounted is as tall as the
+// section will be (src/App.tsx Slot). Written by `node scripts/measure_slots.mjs --write` from the built page in real Chrome: [phone, tablet,
+// desktop] per language, where phone is the layout below 640 px (measured at 375 px), tablet from 640 px (768 px) and desktop from 960 px
+// (1280 px), ordering closed, EU market, details closed. The words differ in length between the languages, so each language has its own
+// numbers: with one mean for all four a slot was up to 190 px off and the page jumped by that much when a section arrived above the
+// reader (a browser without scroll anchoring, Safari, shows it). The numbers only have to be near: a slot is replaced within a moment, and
+// a section's real height also depends on the market and on whether ordering is open (`--check` fails above 12 percent). The
+// ids are the sections' own: a link to #pricing has its target while the section is on its way.
 export const SLOT_HEIGHTS = {
-  reveal: { id: 'reveal', phone: 1910, tablet: 1930, desktop: 1566 },
-  // the wall chapter holds the size guide and "More ways to see it": its slot is their sum, theirs are below
-  wall: { id: 'wall', phone: 2813, tablet: 2891, desktop: 2796 },
-  styles: { id: 'styles', phone: 980, tablet: 1958, desktop: 1576 },
-  how: { id: 'how', phone: 925, tablet: 1157, desktop: 1079 },
-  pricing: { id: 'pricing', phone: 1646, tablet: 1353, desktop: 990 },
-  closeups: { id: 'closeups', phone: 822, tablet: 1833, desktop: 1022 },
-  trust: { id: 'trust', phone: 2007, tablet: 1462, desktop: 1308 },
-  faq: { id: 'faq', phone: 1277, tablet: 1237, desktop: 1179 },
-  final: { id: 'final', phone: 682, tablet: 700, desktop: 600 },
-  // the two blocks at the foot of the wall chapter, chunks of their own (src/landing/Wall.tsx)
-  sizes: { id: 'sizes', phone: 934, tablet: 1032, desktop: 678 },
-  more: { id: 'more', phone: 115, tablet: 94, desktop: 503 },
+  reveal: { id: 'reveal', h: { en: [1835, 1903, 1551], de: [1995, 1932, 1567], lt: [1887, 1975, 1589], hu: [1946, 1933, 1556] } },
+  wall: { id: 'wall', h: { en: [2715, 2834, 2733], de: [2876, 2876, 2798], lt: [2809, 2954, 2872], hu: [2852, 2898, 2779] } },
+  styles: { id: 'styles', h: { en: [947, 1925, 1543], de: [988, 1966, 1584], lt: [1015, 1994, 1612], hu: [968, 1945, 1563] } },
+  how: { id: 'how', h: { en: [884, 1132, 1054], de: [939, 1181, 1103], lt: [939, 1181, 1103], hu: [939, 1132, 1054] } },
+  pricing: { id: 'pricing', h: { en: [1552, 1324, 968], de: [1702, 1371, 990], lt: [1691, 1371, 990], hu: [1640, 1347, 1013] } },
+  closeups: { id: 'closeups', h: { en: [829, 1801, 990], de: [856, 1851, 1039], lt: [824, 1801, 990], hu: [856, 1879, 1067] } },
+  trust: { id: 'trust', h: { en: [1912, 1430, 1206], de: [2117, 1501, 1403], lt: [1996, 1501, 1343], hu: [2109, 1494, 1311] } },
+  faq: { id: 'faq', h: { en: [1219, 1237, 1179], de: [1311, 1237, 1179], lt: [1288, 1237, 1179], hu: [1288, 1237, 1179] } },
+  final: { id: 'final', h: { en: [660, 660, 600], de: [689, 722, 600], lt: [689, 694, 600], hu: [689, 722, 600] } },
+  sizes: { id: 'sizes', h: { en: [876, 998, 648], de: [971, 1020, 672], lt: [944, 1069, 718], hu: [944, 1042, 672] } },
+  more: { id: 'more', h: { en: [115, 94, 494], de: [115, 94, 513], lt: [115, 94, 513], hu: [115, 94, 494] } },
 } as const;
 
 export type SlotName = keyof typeof SLOT_HEIGHTS;
 
-/** The style that gives the empty slot (class lp-slot, src/landing/css/base.css) its three heights. */
-export function slotStyle(name: SlotName): CSSProperties {
-  const h = SLOT_HEIGHTS[name];
-  return { '--slot-p': `${h.phone}px`, '--slot-t': `${h.tablet}px`, '--slot-d': `${h.desktop}px` } as CSSProperties;
+/** The style that gives the empty slot (class lp-slot, src/landing/css/base.css) its three heights, in the page's language. */
+export function slotStyle(name: SlotName, lang: Lang): CSSProperties {
+  const [phone, tablet, desktop] = SLOT_HEIGHTS[name].h[lang];
+  return { '--slot-p': `${phone}px`, '--slot-t': `${tablet}px`, '--slot-d': `${desktop}px` } as CSSProperties;
 }

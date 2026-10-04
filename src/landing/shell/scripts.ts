@@ -51,14 +51,28 @@ export function decisionScript(rule: ShellRule): string {
 
 /** The swap (2): the visitor's language in place of the English shell, the visitor's market in the links to /try (the shells are made
  *  for the default market, whose links carry no m=; src/landing/config.ts tryUrl adds it for any other, and so does this) and, for a
- *  market whose edition has fewer languages than the site (fewer: market -> its languages), only its language buttons. */
-export function swapScript(defaultMarket: string, fewer: Record<string, string[]>): string {
+ *  market whose edition has fewer languages than the site (fewer: market -> its languages), only its language buttons.
+ *
+ *  It also answers a click on a language button of the shell. Until React has taken the page over (about 2 s on a slow phone) the
+ *  buttons would be dead and the tap lost; now the shell puts the chosen language's first screen in place, remembers the choice the way
+ *  the live page does (localStorage "snapeyes.lang" and ?lang= in the address, src/shared/lang.ts rememberLang), and gives the new
+ *  button the focus (the markup was replaced). React then starts in that language: detectLang reads exactly those two. */
+export function swapScript(defaultMarket: string, fewer: Record<string, string[]>, langKey: string = LANG_KEY): string {
   return (
-    `(function(){var s=window.__lpShell,sh=document.getElementById('shell'),F=${JSON.stringify(fewer)};if(!s||!sh)return;try{` +
-    `if(s.l!=='en'){var t=document.getElementById('tpl-'+s.l);if(t)sh.innerHTML=t.innerHTML;document.documentElement.lang=s.l}` +
+    `(function(){var s=window.__lpShell,sh=document.getElementById('shell'),F=${JSON.stringify(fewer)};if(!s||!sh)return;` +
+    // the English markup is the shell's own; put(l) makes the shell read l from it or from l's template, fix() applies the market
+    `var en=sh.innerHTML;function fix(){try{` +
     `if(s.m!==${JSON.stringify(defaultMarket)}){var a=sh.querySelectorAll('a[href^="/try"]');` +
     `for(var i=0;i<a.length;i++)a[i].setAttribute('href',a[i].getAttribute('href')+'&m='+encodeURIComponent(s.m))}` +
-    `if(F[s.m]){var b=sh.querySelectorAll('#langSeg button');for(var j=0;j<b.length;j++)if(F[s.m].indexOf(b[j].getAttribute('lang'))<0)b[j].remove()}}catch(e){}})()`
+    `if(F[s.m]){var b=sh.querySelectorAll('#langSeg button');for(var j=0;j<b.length;j++)if(F[s.m].indexOf(b[j].getAttribute('lang'))<0)b[j].remove()}}catch(e){}}` +
+    `function put(l){try{if(l==='en')sh.innerHTML=en;else{var t=document.getElementById('tpl-'+l);if(t)sh.innerHTML=t.innerHTML}` +
+    `document.documentElement.lang=l;s.l=l}catch(e){}fix()}` +
+    `if(s.l!=='en')put(s.l);else fix();` +
+    `sh.addEventListener('click',function(e){try{var c=e.target&&e.target.closest&&e.target.closest('#langSeg button[lang]');if(!c)return;` +
+    `var l=c.getAttribute('lang');if(!l||l===s.l)return;put(l);` +
+    `try{localStorage.setItem('${langKey}',l)}catch(x){}` +
+    `try{var u=new URL(location.href);u.searchParams.set('lang',l);history.replaceState(null,'',u)}catch(x){}` +
+    `var n=sh.querySelector('#langSeg button[lang="'+l+'"]');if(n)n.focus()}catch(x){}})})()`
   );
 }
 

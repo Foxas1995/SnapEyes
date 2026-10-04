@@ -43,10 +43,13 @@ export interface SiteHeaderViewProps {
   tryHref: string;
   /** Only the live page gives these: the static shell has no handlers and no refs. */
   onLang?: (l: Lang) => void;
+  /** The visitor is about to press a language button (pointer over it, finger down, focus): the live page starts fetching that
+   *  language's words, so the first switch does not wait for the file after the press. */
+  onLangIntent?: (l: Lang) => void;
   headerRef?: Ref<HTMLElement>;
 }
 
-export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, headerRef }: SiteHeaderViewProps) {
+export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangIntent, headerRef }: SiteHeaderViewProps) {
   return (
     <header className="lp-hdr" id="hdr" ref={headerRef}>
       <div className="lp-wrap">
@@ -59,7 +62,17 @@ export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, headerRef }
         <div className="lp-hdr-r">
           <div className="lp-seg" role="group" id="langSeg" aria-label={copy.switchLabel}>
             {langs.map((l) => (
-              <button key={l} type="button" lang={l} aria-pressed={lang === l} title={LANG_NAMES[l]} onClick={onLang ? () => onLang(l) : undefined}>
+              <button
+                key={l}
+                type="button"
+                lang={l}
+                aria-pressed={lang === l}
+                title={LANG_NAMES[l]}
+                onClick={onLang ? () => onLang(l) : undefined}
+                onPointerEnter={onLangIntent ? () => onLangIntent(l) : undefined}
+                onTouchStart={onLangIntent ? () => onLangIntent(l) : undefined}
+                onFocus={onLangIntent ? () => onLangIntent(l) : undefined}
+              >
                 {l.toUpperCase()}
               </button>
             ))}

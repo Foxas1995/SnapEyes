@@ -7,6 +7,7 @@ import { detectLang } from './shared/lang'
 import { currentMarket } from './shared/markets'
 import { preloadCopy } from './landing/copy/index'
 import { startOrdering } from './landing/ordering'
+import { watchPreloadErrors } from './landing/lazy'
 
 // The landing entry. index.html already holds the first screen as static HTML (<div id="shell">, written at build time by the
 // heroShell plugin of vite.config.ts from src/landing/SiteTopView.tsx and HeroView.tsx, in the visitor's language: English in the
@@ -29,6 +30,9 @@ if (shell) {
   })
   handoff.observe(root, { childList: true })
 }
+
+// a section's chunk or stylesheet that cannot be fetched (a flaky network, a new deploy): src/landing/lazy.ts
+watchPreloadErrors()
 
 // a visitor who reads another language than English: its file travels while React boots
 preloadCopy(detectLang(currentMarket()))

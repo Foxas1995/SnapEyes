@@ -13,6 +13,7 @@ import { useTryHref } from './links';
 import { useHeaderChrome } from './shell/chrome';
 import { SiteTopView } from './SiteTopView';
 import { marketLangs, type Lang } from '../shared/lang';
+import { preloadCopy } from './copy/index';
 import { useMarket } from '../shared/useMarket';
 
 export function SiteTop() {
@@ -31,5 +32,5 @@ export function SiteTop() {
   const langs = marketLangs(market);
   // a language switch re-renders the whole page: a transition, so the page stays responsive while it does
   const onLang = (l: Lang) => startTransition(() => setLang(l));
-  return <SiteTopView copy={c} lang={lang} langs={langs} barText={barText} tryHref={tryHref} onLang={onLang} barRef={barRef} headerRef={headerRef} />;
+  return <SiteTopView copy={c} lang={lang} langs={langs} barText={barText} tryHref={tryHref} onLang={onLang} onLangIntent={preloadCopy} barRef={barRef} headerRef={headerRef} />;
 }

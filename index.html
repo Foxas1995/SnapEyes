@@ -44,11 +44,13 @@
     <link rel="preload" as="font" type="font/woff2" href="/assets/atelier/fonts/plus-jakarta-sans-var.woff2" crossorigin />
   </head>
   <body class="lp">
-    <noscript>
-      <p style="padding:24px;font-family:sans-serif;color:#f0f3fa">SnapEyes Private Atelier: precision iris art from your smartphone. Please enable JavaScript to see this page.</p>
-    </noscript>
     <!-- lp:shell -->
     <div id="root"></div>
+    <!-- without JavaScript the page is the static first screen above; this line is its footnote (styled in src/landing/css/base.css; it used to
+         come first and printed over the fixed header) -->
+    <noscript>
+      <p class="lp-noscript">SnapEyes Private Atelier: precision iris art from your smartphone. Please enable JavaScript to see the whole page.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
