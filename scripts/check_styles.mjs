@@ -33,7 +33,7 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import {
-  STYLES_FILE, ENGINE_FILE, LAYOUTS_FILE, parseRegistrySource, parseEngineSource, parseLayoutNamesSource, registryHash, byEyes, rangeOf, ceilingOf,
+  STYLES_FILE, ENGINE_FILE, LAYOUTS_FILE, parseRegistrySource, parseEngineSource, parseLayoutNamesSource, registryHash, rangeOf, ceilingOf,
 } from './styles_source.mjs';
 import { parseMarketsSource, MARKETS_FILE, priceRule } from './check_prices.mjs';
 import { parseExperimentsSource, EXPERIMENTS_FILE, ladderRule } from './check_experiments.mjs';
@@ -386,7 +386,7 @@ export function checkLayoutNames(names, out) {
     }
     for (const l of LAYOUT_LANGS) {
       const w = row[l];
-      if (typeof w !== 'string' || !w.length || w !== w.trim() || /[\u0000-\u001f]/.test(w) || w.length > 40) {
+      if (typeof w !== 'string' || !w.length || w !== w.trim() || [...w].some((c) => c.charCodeAt(0) < 32) || w.length > 40) {
         out.push(`${at}: the ${l} word must be a short text (1 to 40 characters, no space at either end, no line break): ${JSON.stringify(w)}`);
       }
     }
