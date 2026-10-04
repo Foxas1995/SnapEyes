@@ -114,6 +114,7 @@ unchanged."""
 import os, re, json, time, hmac, html, calendar, hashlib, secrets, threading
 import requests
 from . import iris as L
+from . import catalogue
 from . import store
 from . import abtest
 from .markets import MARKETS, DEFAULT_MARKET
@@ -144,8 +145,7 @@ CURRENCIES = ("eur", "aud", "huf")
 PRICE_KEYS = ("one_eye_studio_black", "one_eye_art", "two_eyes", "each_further_eye")
 MAX_EYES = L.MULTI_MAX       # 8
 LANGS = ("en", "de", "lt", "hu")
-STYLE_NAMES = {"studio_black": "Studio Black", "celestial_gold": "Celestial Gold", "deep_nebula": "Deep Nebula",
-               "emerald_aurora": "Emerald Aurora", "obsidian_smoke": "Obsidian Smoke", "supernova": "Supernova"}
+STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 
 DRAFT_TTL = 24 * 3600        # an unpaid order can be paid for 24 h after its first eye was uploaded
 SESSION_MIN = 1800 + 120     # Stripe: a Checkout Session lives at least 30 min; with less draft time left: expired
@@ -577,7 +577,7 @@ def price_cents(eyes, style, market=DEFAULT_MARKET):
         raise L.ClientError("Choose one of the markets: " + ", ".join(SELECTABLE) + ".")
     p = price_list(market)
     if n == 1:
-        return p["one_eye_studio_black"] if style == "studio_black" else p["one_eye_art"]
+        return p["one_eye_studio_black"] if catalogue.is_black(style) else p["one_eye_art"]
     return p["two_eyes"] + (n - 2) * p["each_further_eye"]
 
 
@@ -665,19 +665,24 @@ def spec_from(src, markets=None):
     if n is None or not 1 <= n <= MAX_EYES:
         raise L.ClientError(f"Choose between 1 and {MAX_EYES} eyes.")
     style = src.get("style")
-    if not isinstance(style, str) or style not in L.STYLES:
-        raise L.ClientError("Choose one of the styles: " + ", ".join(L.STYLES) + ".")
+    # a checkout request (markets given) takes only a style that can be ordered now; a paid session's metadata or a recorded
+    # spec (markets None) takes any style of the registry that has n eyes, so an order stays readable after its style stops
+    # being offered
+    allowed = catalogue.orderable_ids(n) if markets is not None else tuple(i for i in catalogue.ids() if catalogue.in_range(i, n))
+    if not isinstance(style, str) or style not in allowed:
+        raise L.ClientError("Choose one of the styles: " + ", ".join(allowed) + ".")
     layout = src.get("layout")
+    layouts = catalogue.layouts_for(style, n)
     if layout in (None, ""):
-        layout = L.multi_layout(n)
-    elif not isinstance(layout, str) or layout not in L.layouts_for(n):
-        raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(L.layouts_for(n)) + ".")
+        layout = layouts[0]
+    elif not isinstance(layout, str) or layout not in layouts:
+        raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(layouts) + ".")
     return {"eyes": n, "style": style, "layout": layout, "names": clean_text(src.get("names"), 60),
             "title": clean_text(src.get("title"), 40), "lang": lang_for(market, src.get("lang")), "market": market}
 
 
 def item_name(spec):
-    n, style = spec["eyes"], STYLE_NAMES.get(spec["style"], spec["style"])
+    n, style = spec["eyes"], catalogue.name_of(spec["style"])
     if spec["lang"] == "lt":
         return pay_lt.item_name_lt(n, style)
     if spec["lang"] == "hu":

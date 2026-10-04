@@ -25,6 +25,7 @@ on its own; pay.py passes in what it has computed.
 """
 import calendar
 import time
+from . import catalogue
 
 SELLER_HU = "MB „Portretizuokis”, cégazonosító szám: 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Litvánia"
 
@@ -45,8 +46,7 @@ ITEM_DESC_HU = "Csak digitális fájl: JPEG, a hosszabbik oldalán 4096 px. Nyom
 LAYOUT_NAMES_HU = {"single": "Egy szem", "duo": "Egymás mellett", "fusion": "Összeolvadás", "triangle": "Háromszög",
                    "row": "Egy sorban", "grid": "Rács", "galaxy": "Galaxis"}
 
-STYLE_NAMES = {"studio_black": "Studio Black", "celestial_gold": "Celestial Gold", "deep_nebula": "Deep Nebula",
-               "emerald_aurora": "Emerald Aurora", "obsidian_smoke": "Obsidian Smoke", "supernova": "Supernova"}
+STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 
 MONTHS_HU = ("január", "február", "március", "április", "május", "június", "július", "augusztus", "szeptember",
              "október", "november", "december")
@@ -56,7 +56,7 @@ NBSP = " "
 
 def item_name_hu(spec):
     """The Stripe line item and the confirmation's "Alkotás" row. A noun stays singular after a number (2 szem)."""
-    n, style = int(spec["eyes"]), STYLE_NAMES.get(spec["style"], spec["style"])
+    n, style = int(spec["eyes"]), catalogue.name_of(spec["style"])
     return f"SnapEyes íriszalkotás, {n} szem, {style}, 4096 px-es digitális fájl"
 
 

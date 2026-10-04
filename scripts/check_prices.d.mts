@@ -20,5 +20,6 @@ export interface ClientMarkets {
 
 export const MARKETS_FILE: string;
 export function parseMarketsSource(src: string): MarketsSource;
-export function priceRule(markets: MarketsSource['markets'], market: string, eyes: number, style: string): number;
+/** The price of n eyes by the price class ("black" or "art") of the style: one eye by its class, then the same amount per further eye. */
+export function priceRule(markets: MarketsSource['markets'], market: string, eyes: number, cls: string): number;
 export function checkPrices(root: string, client?: ClientMarkets): string[];

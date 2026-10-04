@@ -10,14 +10,16 @@
 //   3. a variant would sell at a loss (its price after Stripe's fee and about 0.22 US dollars of image work per eye is
 //      negative for some number of eyes and style: the same estimate the admin page warns with);
 //   4. the site's own price rule (src/shared/markets.ts priceMinor, fed the variant's ladder as the server's answer feeds
-//      it) gives another price than the server's rule for any variant, market, number of eyes and style;
+//      it) gives another price than the server's rule for any variant, market, number of eyes and style (every id of
+//      api/_lib/styles_registry.py, by its price class);
 //   5. (scripts/check_prices.mjs, with withVariantLadders) no other file holds a price of a variant of its own.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { STYLES_FILE, loadRegistry, priceClassOf, classStyle } from './styles_source.mjs';
 
 export const EXPERIMENTS_FILE = 'api/_lib/experiments.py';
 const PRICE_KEYS = ['one_eye_studio_black', 'one_eye_art', 'two_eyes', 'each_further_eye'];
-const STYLES = ['studio_black', 'celestial_gold', 'deep_nebula', 'emerald_aurora', 'obsidian_smoke', 'supernova'];
+const CLASSES = ['black', 'art'];   // the price classes (api/_lib/styles_registry.py price_class)
 const MAX_EYES = 8;
 const STRIPE_MIN = { eur: 50, aud: 50, huf: 17500 };
 const isInt = (v) => typeof v === 'number' && Number.isInteger(v);
@@ -33,9 +35,10 @@ export function parseExperimentsSource(src) {
   };
 }
 
-/** One price of a ladder rule, restated (api/_lib/pay.py price_cents and abtest.ladder_price are the same rule). */
-export function ladderRule(l, eyes, style) {
-  if (eyes <= 1) return style === 'studio_black' ? l.one_eye_studio_black : l.one_eye_art;
+/** One price of a ladder rule, restated (api/_lib/pay.py price_cents and abtest.ladder_price are the same rule): one eye by the price
+ *  class of its style (the registry's price_class, "black" or "art"), then two eyes and the same amount per further eye. */
+export function ladderRule(l, eyes, cls) {
+  if (eyes <= 1) return cls === 'black' ? l.one_eye_studio_black : l.one_eye_art;
   return l.two_eyes + (eyes - 2) * l.each_further_eye;
 }
 
@@ -78,9 +81,9 @@ function checkLadder(at, currency, p, out) {
   if (!ok) return false;
   if (p.two_eyes + (MAX_EYES - 2) * p.each_further_eye > 99999999) out.push(`${at}: ${MAX_EYES} eyes cost more than Stripe takes in one payment`);
   if (p.one_eye_art < p.one_eye_studio_black) out.push(`${at}: one eye on an art background must not cost less than Studio Black`);
-  for (const style of ['studio_black', 'celestial_gold']) {
+  for (const cls of CLASSES) {
     for (let n = 1; n < MAX_EYES; n++) {
-      if (ladderRule(p, n + 1, style) <= ladderRule(p, n, style)) out.push(`${at}: ${n + 1} eyes must cost more than ${n} (${style})`);
+      if (ladderRule(p, n + 1, cls) <= ladderRule(p, n, cls)) out.push(`${at}: ${n + 1} eyes must cost more than ${n} (${cls} price class)`);
     }
   }
   return true;
@@ -99,6 +102,13 @@ export function checkExperiments(root, markets, out, client) {
     return null;
   }
   const { costs, experiments } = parsed;
+  let styles;
+  try {
+    styles = loadRegistry(root).styles;
+  } catch (e) {
+    out.push(`${STYLES_FILE}: the STYLES literal cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`);
+    return null;
+  }
   if (new RegExp('[' + String.fromCharCode(0x2013, 0x2014) + ']').test(src)) out.push(`${EXPERIMENTS_FILE}: no en or em dash anywhere in this file`);
   for (const k of ['unit_usd_per_eye', 'fee_fixed_eur']) if (typeof costs?.[k] !== 'number' || !(costs[k] >= 0)) out.push(`${EXPERIMENTS_FILE} COSTS: ${k} must be a number`);
   for (const k of ['per_usd', 'per_eur', 'fee_pct']) {
@@ -159,10 +169,10 @@ export function checkExperiments(root, markets, out, client) {
             out.push(`${vat} market "${m}": the control ladder is not the standard ladder of api/_lib/markets.py (they must be the same)`);
           }
           for (const eyes of Array.from({ length: MAX_EYES }, (_, i) => i + 1)) {
-            for (const style of eyes === 1 ? ['studio_black', 'celestial_gold'] : ['studio_black']) {
-              const price = ladderRule(v.prices[m], eyes, style);
+            for (const cls of eyes === 1 ? CLASSES : ['black']) {
+              const price = ladderRule(v.prices[m], eyes, cls);
               if (!retired && netMinor(costs, currency, price, eyes) < 0) {
-                out.push(`${vat} market "${m}": ${eyes} eye(s), ${style} would sell at a loss (price ${price}, after Stripe's fee and the image work ${netMinor(costs, currency, price, eyes)})`);
+                out.push(`${vat} market "${m}": ${eyes} eye(s), ${classStyle(styles, cls)} would sell at a loss (price ${price}, after Stripe's fee and the image work ${netMinor(costs, currency, price, eyes)})`);
               }
             }
           }
@@ -180,9 +190,9 @@ export function checkExperiments(root, markets, out, client) {
       if (client && typeof client.priceMinor === 'function') {
         for (const [name, l] of Object.entries(set)) {
           for (let eyes = 1; eyes <= MAX_EYES; eyes++) {
-            for (const style of STYLES) {
+            for (const style of Object.keys(styles)) {
               const got = client.priceMinor(eyes, style, m, l);
-              const wantPrice = ladderRule(l, eyes, style);
+              const wantPrice = ladderRule(l, eyes, priceClassOf(styles, style));
               if (got !== wantPrice) out.push(`src/shared/markets.ts priceMinor(${eyes}, ${style}, ${m}, ladder of "${key}"/"${name}") = ${got}, the server charges ${wantPrice}`);
             }
           }

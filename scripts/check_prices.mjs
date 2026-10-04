@@ -3,7 +3,8 @@
 //   1. that file's MARKETS literal is not plain JSON, or breaks a rule (currencies, Stripe's smallest units and minimum
 //      charges, whole Australian dollars and whole forints, a selectable default market, ...);
 //   2. the site's own reading of it (src/shared/markets.ts, loaded by vite.config.ts) differs from this one, or its
-//      price rule (priceMinor) gives another price than api/_lib/pay.py's rule for any market, number of eyes and style;
+//      price rule (priceMinor) gives another price than api/_lib/pay.py's rule for any market, number of eyes and style (every id
+//      of api/_lib/styles_registry.py, by its price class: scripts/check_styles.mjs also compares the rules);
 //   3. any other file of the site or the server holds a price of its own: a price in Stripe's units in the files that
 //      deal with prices, or a written price ("19.97", "A$39", "6 990 Ft") anywhere in src/ or api/ (comments aside);
 //   5. every price experiment (api/_lib/experiments.py, checked by scripts/check_experiments.mjs): full ladders per
@@ -17,11 +18,12 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkExperiments, withVariantLadders } from './check_experiments.mjs';
+import { STYLES_FILE, loadRegistry, priceClassOf } from './styles_source.mjs';
 
 export const MARKETS_FILE = 'api/_lib/markets.py';
 const CURRENCIES = ['eur', 'aud', 'huf'];
 const PRICE_KEYS = ['one_eye_studio_black', 'one_eye_art', 'two_eyes', 'each_further_eye'];
-const STYLES = ['studio_black', 'celestial_gold', 'deep_nebula', 'emerald_aurora', 'obsidian_smoke', 'supernova'];
+const CLASSES = ['black', 'art'];   // the price classes (api/_lib/styles_registry.py price_class)
 const MAX_EYES = 8;
 // Stripe's minimum charge per currency, in its smallest unit (docs.stripe.com/currencies: EUR 0.50, AUD 0.50, HUF 175)
 const STRIPE_MIN = { eur: 50, aud: 50, huf: 17500 };
@@ -53,10 +55,11 @@ export function parseMarketsSource(src) {
   return { defaultMarket: d[1], markets: JSON.parse(src.slice(at + 'MARKETS = '.length)) };
 }
 
-/** api/_lib/pay.py price_cents, restated: one eye by its style, two eyes, then the same amount per further eye. */
-export function priceRule(markets, market, eyes, style) {
+/** api/_lib/pay.py price_cents, restated: one eye by the price class of its style (the registry's price_class, "black" or "art"),
+ *  two eyes, then the same amount per further eye. */
+export function priceRule(markets, market, eyes, cls) {
   const p = markets[market].prices;
-  if (eyes <= 1) return style === 'studio_black' ? p.one_eye_studio_black : p.one_eye_art;
+  if (eyes <= 1) return cls === 'black' ? p.one_eye_studio_black : p.one_eye_art;
   return p.two_eyes + (eyes - 2) * p.each_further_eye;
 }
 
@@ -197,13 +200,13 @@ function sameJson(a, b) {
   return ka.join() === kb.join() && ka.every((k) => sameJson(a[k], b[k]));
 }
 
-function checkClient(defaultMarket, markets, client, out) {
+function checkClient(defaultMarket, markets, client, out, registry) {
   if (client.DEFAULT_MARKET !== defaultMarket) out.push(`src/shared/markets.ts reads DEFAULT_MARKET "${client.DEFAULT_MARKET}", not "${defaultMarket}"`);
   if (!sameJson(client.MARKETS, markets)) out.push('src/shared/markets.ts reads another MARKETS than api/_lib/markets.py holds');
   for (const market of Object.keys(markets)) {
     for (let eyes = 1; eyes <= MAX_EYES; eyes++) {
-      for (const style of STYLES) {
-        const want = priceRule(markets, market, eyes, style);
+      for (const style of Object.keys(registry.styles)) {
+        const want = priceRule(markets, market, eyes, priceClassOf(registry.styles, style));
         const got = client.priceMinor(eyes, style, market);
         if (got !== want) out.push(`src/shared/markets.ts priceMinor(${eyes}, ${style}, ${market}) = ${got}, api/_lib/pay.py charges ${want}`);
       }
@@ -242,8 +245,8 @@ function writtenPatterns(markets) {
   const out = new Map();
   for (const [key, m] of Object.entries(markets)) {
     for (let eyes = 1; eyes <= MAX_EYES; eyes++) {
-      for (const style of ['studio_black', 'celestial_gold']) {
-        const minor = priceRule(markets, key, eyes, style);
+      for (const cls of CLASSES) {
+        const minor = priceRule(markets, key, eyes, cls);
         const units = Math.floor(minor / 100);
         const cents = String(minor % 100).padStart(2, '0');
         if (m.currency === 'huf') {
@@ -310,7 +313,14 @@ export function checkPrices(root, client) {
   checkRules(defaultMarket, markets, out);
   if (out.length) return out;
   checkEditions(root, defaultMarket, markets, out);
-  if (client) checkClient(defaultMarket, markets, client, out);
+  let registry;
+  try {
+    registry = loadRegistry(root);
+  } catch (e) {
+    out.push(`${STYLES_FILE}: the STYLES literal cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`);
+    return out;
+  }
+  if (client) checkClient(defaultMarket, markets, client, out, registry);
   // the price experiments' variant ladders (api/_lib/experiments.py): validated, and no other file may hold their prices
   const experiments = checkExperiments(root, markets, out, client);
   checkCopies(root, withVariantLadders(markets, experiments), out);

@@ -44,6 +44,7 @@ Rotating SNAPEYES_TICKET_SECRET (or the Gemini key when it stands in for it) res
 tokens: checkouts then get 409 price_changed or the standard ladder, never a wrong charge."""
 import re, json, math, time, hmac, base64, hashlib, threading
 from . import iris as L
+from . import catalogue
 from . import store
 from . import events as E
 from .markets import MARKETS, DEFAULT_MARKET
@@ -118,7 +119,7 @@ def ladder_price(ladder, eyes, style):
     if not 1 <= n <= MAX_EYES:
         raise L.ClientError(f"An artwork holds 1 to {MAX_EYES} eyes.")
     if n == 1:
-        return int(ladder["one_eye_studio_black"] if style == "studio_black" else ladder["one_eye_art"])
+        return int(ladder["one_eye_studio_black"] if catalogue.is_black(style) else ladder["one_eye_art"])
     return int(ladder["two_eyes"]) + (n - 2) * int(ladder["each_further_eye"])
 
 
@@ -558,7 +559,7 @@ def session_ok(sess):
     amount = sess.get("amount_total")
     try:
         eyes, style = int(m.get("eyes")), m.get("style")
-        if lad is None or style not in L.STYLES or not isinstance(amount, int) or isinstance(amount, bool):
+        if lad is None or not catalogue.known(style) or not isinstance(amount, int) or isinstance(amount, bool):
             return False
         if amount != ladder_price(lad, eyes, style):
             return False
@@ -652,7 +653,7 @@ def beacon(body):
         eyes, style = body.get("eyes"), body.get("style")
         if isinstance(eyes, int) and not isinstance(eyes, bool) and 1 <= eyes <= MAX_EYES:
             f["eyes"] = eyes
-            if isinstance(style, str) and style in L.STYLES:
+            if catalogue.known(style):
                 f["hit"] = differs(exp["key"], market, eyes, style)
     return {"ok": True, "counted": bool(_rec(_wait=BEACON_WAIT, **f))}
 
@@ -743,9 +744,10 @@ def loss_report(key, defs=None, costs=None):
         for m, p in (v.get("prices") or {}).items():
             cur = MARKETS[m if m in MARKETS else DEFAULT_MARKET]["currency"]
             for eyes in range(1, MAX_EYES + 1):
-                for style in ("studio_black", "celestial_gold"):
-                    if eyes > 1 and style != "studio_black":
+                for cls in catalogue.PRICE_CLASSES:
+                    if eyes > 1 and cls != "black":
                         continue
+                    style = catalogue.class_style(cls)
                     price = ladder_price(p, eyes, style)
                     net = net_minor(cur, price, eyes, costs)
                     if net < 0:
@@ -763,9 +765,10 @@ def spread_report(key, defs=None):
         return rows
     for m in d.get("markets") or []:
         for eyes in range(1, MAX_EYES + 1):
-            for style in ("studio_black", "celestial_gold"):
-                if eyes > 1 and style != "studio_black":
+            for cls in catalogue.PRICE_CLASSES:
+                if eyes > 1 and cls != "black":
                     continue
+                style = catalogue.class_style(cls)
                 ps = [ladder_price(v["prices"][m], eyes, style) for v in d["variants"].values() if m in v.get("prices", {})]
                 if ps and min(ps) > 0 and max(ps) / min(ps) > SPREAD_WARN:
                     rows.append({"market": m, "eyes": eyes, "style": style, "ratio": round(max(ps) / min(ps), 2)})

@@ -380,6 +380,8 @@ def neg_root(name, markets_sub=None, pay_sub=None):
     open(os.path.join(root, "api", "_lib", "pay.py"), "w", encoding="utf-8").write(py)
     # 1acef38: the price check also reads the price experiments' ladders, so a minimal root needs that file too
     shutil.copy(os.path.join(H.REPO, "api", "_lib", "experiments.py"), os.path.join(root, "api", "_lib", "experiments.py"))
+    # WP1 of the v3 work: the price rule reads the registry's price classes (api/_lib/styles_registry.py), so a minimal root needs it
+    shutil.copy(os.path.join(H.REPO, "api", "_lib", "styles_registry.py"), os.path.join(root, "api", "_lib", "styles_registry.py"))
     shutil.copy(os.path.join(H.REPO, "src", "shared", "legal.ts"), os.path.join(root, "src", "shared", "legal.ts"))
     return root
 

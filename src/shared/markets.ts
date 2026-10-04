@@ -16,6 +16,7 @@
 // Every internal link carries the market as m= (withMarket), except for the default market, whose links stay as they
 // always were.
 import MARKETS_SOURCE from '../../api/_lib/markets.py?raw';
+import { isBlack } from './styles';
 
 export type Currency = 'eur' | 'aud' | 'huf';
 export type Market = string;
@@ -66,8 +67,9 @@ export function priceList(m: Market): PriceList {
   return { ...(isMarket(m) ? MARKETS[m] : MARKETS[DEFAULT_MARKET]).prices };
 }
 
-/** The price of n eyes in a style (api/_lib/pay.py price_cents, the same rule): one eye by its style, two eyes the
- *  Couple Duo, every further eye the same amount. list: the server's own price list when it sent one. */
+/** The price of n eyes in a style (api/_lib/pay.py price_cents, the same rule): one eye by the price class of its style
+ *  (the registry's price_class, one predicate: isBlack), two eyes the Couple Duo, every further eye the same amount.
+ *  list: the server's own price list when it sent one. */
 export function priceMinor(n: number, style: string, m: Market, list?: Partial<PriceList>): number {
   const p = priceList(m);
   for (const k of PRICE_KEYS) {
@@ -75,7 +77,7 @@ export function priceMinor(n: number, style: string, m: Market, list?: Partial<P
     if (typeof v === 'number' && Number.isInteger(v) && v > 0) p[k] = v;
   }
   const eyes = Math.max(1, Math.min(Math.floor(n), MAX_EYES));
-  if (eyes <= 1) return style === 'studio_black' ? p.one_eye_studio_black : p.one_eye_art;
+  if (eyes <= 1) return isBlack(style) ? p.one_eye_studio_black : p.one_eye_art;
   return p.two_eyes + (eyes - 2) * p.each_further_eye;
 }
 

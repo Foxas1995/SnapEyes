@@ -167,6 +167,11 @@ def previewable(style_id, n, admin=False):
     return (s in ("preview", "live") or (admin and s == "lab")) and _built(style_id)
 
 
+def renderable_ids(n):
+    """The ids the render path can draw for n eyes, in registry order."""
+    return tuple(i for i in STYLES if renderable(i, n))
+
+
 def orderable_ids(n):
     return tuple(i for i in STYLES if orderable(i, n))
 

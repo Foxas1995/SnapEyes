@@ -4,6 +4,9 @@ python scripts/test_flow.py <photo> [base_url]  -> writes outputs next to the ph
 import os, sys, io, json, time, base64
 import requests
 from PIL import Image, ImageOps
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api"))
+from _lib import catalogue     # the style ids come from api/_lib/styles_registry.py
+STYLE_A, STYLE_B = catalogue.legacy_ids()[:2]
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 photo = args[0]; base = args[1] if len(args) > 1 else "http://localhost:5050"
@@ -32,10 +35,10 @@ e = post("/api/enhance", {"crop": d["crop"], "mode": "artistic", "pad": a["pad"]
 # image is the watermarked 800 px display copy /try shows; the clean restoration comes back only sealed (api/_lib/preview.py)
 print("enhance studio macro:", {k: v for k, v in e.items() if k not in ("image", "sealed", "sealed_sizes")}); dec(e["image"]).save(os.path.join(out, f"{tag}_2_studio_display.jpg"), quality=95)
 IRIS = {"sealed": [e["sealed"]]} if e.get("sealed") else {"iris": e["image"]}   # an older server: the clean image itself
-c = post("/api/compose", {**IRIS, "style": "celestial_gold", "names": "Mantas", "pad": a["pad"]})
+c = post("/api/compose", {**IRIS, "style": STYLE_A, "names": "Mantas", "pad": a["pad"]})
 print("compose:", {k: v for k, v in c.items() if k != "image"}); dec(c["image"]).save(os.path.join(out, f"{tag}_3_art_celestial.jpg"), quality=95)
 # the watermark is not the caller's to turn off (only an unlock ticket does): this preview is watermarked too
-c2 = post("/api/compose", {**IRIS, "style": "deep_nebula", "names": "Mantas", "pad": a["pad"]})
+c2 = post("/api/compose", {**IRIS, "style": STYLE_B, "names": "Mantas", "pad": a["pad"]})
 dec(c2["image"]).save(os.path.join(out, f"{tag}_3_art_nebula.jpg"), quality=95)
 if "--artistic" in sys.argv:
     ar = post("/api/enhance", {"crop": d["crop"], "mode": "artistic", "pad": a["pad"], "ticket": TICKET})

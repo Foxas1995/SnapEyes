@@ -6,6 +6,7 @@ import numpy as np
 import requests
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
 from . import iris_lt, iris_hu
+from . import catalogue
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(os.path.dirname(HERE), "_assets")
@@ -37,6 +38,9 @@ STUDIO_SAT = 0.18            # colour depth. The sculpting runs on luminance, so
 STUDIO_SCLERA = 0.85         # how hard the pale sclera / eyelid is pushed out of the outer rim
 STUDIO_TRIM = 0.92           # cut just inside the detected limbus: that last sliver is where lids and lashes live
 
+# The engine table of the six styles of today (their background, accent and title). Which ids exist, their names, their layouts and
+# their price class are in api/_lib/styles_registry.py (api/_lib/catalogue.py); this table must hold exactly the registry's legacy
+# ids, in its order (asserted below at import, and by scripts/check_styles.mjs with the accents).
 STYLES = {
     "celestial_gold": {"bg": "bg_celestial_gold.jpg", "accent": (245, 197, 66), "title": "THE UNIVERSE WITHIN"},
     "deep_nebula": {"bg": "bg_deep_nebula.jpg", "accent": (129, 140, 248), "title": "DEEP NEBULA"},
@@ -45,6 +49,10 @@ STYLES = {
     "supernova": {"bg": "bg_supernova.jpg", "accent": (251, 146, 60), "title": "SUPERNOVA"},
     "studio_black": {"bg": "bg_studio_black.jpg", "accent": (212, 175, 55), "title": "THE UNIVERSE WITHIN"},
 }
+if tuple(STYLES) != catalogue.legacy_ids():
+    raise RuntimeError(f"iris.STYLES {tuple(STYLES)} is not the legacy block of api/_lib/styles_registry.py {catalogue.legacy_ids()}")
+# the bare print (pure black, nothing else in the picture): the legacy styles the registry gives no accent colour
+BARE_STYLES = frozenset(i for i in catalogue.legacy_ids() if not catalogue.STYLES[i]["accent"])
 
 PROMPT_VISION = (
     "Close-up or selfie photo containing a human eye. Return ONLY JSON, coordinates on a 0-1000 grid relative to the "
@@ -4394,13 +4402,13 @@ def _paste_disk(canvas, r0, r1, g8, Sd, Rg, x0, y0, feather, acc):
     mixed += arr * alpha
     canvas[d0 - r0:d1 - r0, x0:x0 + Sd] = mixed
 
-def compose(iris, style="celestial_gold", title=None, names="", watermark=True, r_frac=None, size=1024, keep=None):
+def compose(iris, style=catalogue.DEFAULT_STYLE, title=None, names="", watermark=True, r_frac=None, size=1024, keep=None):
     """The single-eye artwork: a size x size square. The canvas is rendered in row bands with the same
     per-pixel expressions as the whole-canvas version, so the banding itself changes no pixel at any size; the
     float64 canvas and its glow planes (~2 GB at 4096 px) are never held whole. studio_grade is exact for every
     preview-sized disc (see PALE_MAP_MAX). Above BG_4K_FROM px the background comes from the 4096 px file
     (_style_bg)."""
-    st = STYLES.get(style, STYLES["celestial_gold"])
+    st = STYLES.get(style, STYLES[catalogue.DEFAULT_STYLE])
     bg8 = _style_bg(st, size, size)
     r_frac = r_frac or iris_radius_frac()
     # iris disk with feathered edge; the iris square is assumed centred with radius r_frac*side
@@ -4408,7 +4416,7 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     # Studio Black is the bare fine-art print the reference galleries sell: the iris fills the frame on
     # pure black, with nothing else in the picture. The other styles keep the iris large but leave room
     # for the scene and the typography.
-    bare = style == "studio_black"
+    bare = style in BARE_STYLES
     Sd = int(size * (0.96 if bare else 0.80))
     graded = studio_grade(iris, r_frac, out=Sd)
     if keep is not None:
@@ -4445,9 +4453,8 @@ def compose(iris, style="celestial_gold", title=None, names="", watermark=True, 
     return out
 
 # ----------------------------------------------------------------------------- several eyes on one artwork
-MULTI_MAX = 8                # eyes on one artwork
-LAYOUTS = {1: ("single",), 2: ("duo", "fusion"), 3: ("triangle", "row"), 4: ("grid", "row"),
-           5: ("galaxy",), 6: ("galaxy",), 7: ("galaxy",), 8: ("galaxy",)}   # the first one is the default
+MULTI_MAX = catalogue.MAX_EYES   # eyes on one artwork (8)
+LAYOUTS = catalogue.legacy_layouts_table()   # {n: (layout, ...)}, the first one is the default: the registry's legacy layouts
 FORMATS = ("artwork", "wallpaper")   # the canvas: the artwork's own shape (multi_canvas), or a phone screen
 MULTI_GAP = 0.06             # space between two neighbouring discs, as a share of the disc diameter
 FUSION_OVERLAP = 0.18        # "fusion": the two discs share this much of their diameter
@@ -4694,7 +4701,7 @@ def _glow_band(canvas, r0, r1, discs, acc):
     canvas *= 1.0 - g
     canvas += acc * g
 
-def compose_multi(irises, style="celestial_gold", names="", title=None, watermark=True, r_frac=None, size=1024,
+def compose_multi(irises, style=catalogue.DEFAULT_STYLE, names="", title=None, watermark=True, r_frac=None, size=1024,
                   layout=None, fmt=None, keep=None):
     """The artwork for 1-8 eyes. irises: masked iris squares, the input compose() takes, in the order they go on
     the canvas. One eye as an "artwork" is exactly compose(). More eyes: each is graded on its own
@@ -4712,8 +4719,8 @@ def compose_multi(irises, style="celestial_gold", names="", title=None, watermar
     if n == 1 and not wall:
         return compose(irises[0], style=style, title=title, names=names, watermark=watermark, r_frac=r_frac,
                        size=size, keep=keep)
-    st = STYLES.get(style, STYLES["celestial_gold"])
-    bare = style == "studio_black"
+    st = STYLES.get(style, STYLES[catalogue.DEFAULT_STYLE])
+    bare = style in BARE_STYLES
     r_frac = r_frac or iris_radius_frac()
     W, H = multi_canvas(n, layout, size, fmt)
     u = min(W, H)

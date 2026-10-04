@@ -433,6 +433,10 @@ shutil.rmtree(ALT, ignore_errors=True)
 os.makedirs(os.path.join(ALT, "src", "shared"))
 os.makedirs(os.path.join(ALT, "api", "_lib"))
 shutil.copy(os.path.join(H.REPO, "src", "shared", "markets.ts"), os.path.join(ALT, "src", "shared", "markets.ts"))
+# WP1 of the v3 work: priceMinor reads the registry's price classes, so markets.ts imports src/shared/styles.ts, which reads the
+# registry file as text: the copy holds those two as well
+shutil.copy(os.path.join(H.REPO, "src", "shared", "styles.ts"), os.path.join(ALT, "src", "shared", "styles.ts"))
+shutil.copy(os.path.join(H.REPO, "api", "_lib", "styles_registry.py"), os.path.join(ALT, "api", "_lib", "styles_registry.py"))
 alt_markets = json.loads(json.dumps(MK.MARKETS))
 alt_markets["hu"]["selectable"] = 0
 with open(os.path.join(ALT, "api", "_lib", "markets.py"), "w", encoding="utf-8") as f:

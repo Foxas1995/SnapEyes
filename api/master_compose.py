@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from PIL import Image
 from _lib import iris as L
+from _lib import catalogue
 from _lib import store
 from _lib import events as E   # the admin panel's usage events (no personal data)
 
@@ -114,13 +115,16 @@ def master_compose(body):
     keys = _keys(body.get("keys"), order)
     n = len(keys)
     style = body.get("style")
-    if not isinstance(style, str) or style not in L.STYLES:
-        raise L.ClientError("Choose one of the styles: " + ", ".join(L.STYLES) + ".")
+    # the render path ignores stages (an order already paid for a style rolled back still renders); it needs a built engine
+    renderable = catalogue.renderable_ids(n)
+    if not isinstance(style, str) or style not in renderable:
+        raise L.ClientError("Choose one of the styles: " + ", ".join(renderable) + ".")
     layout = body.get("layout")
+    layouts = catalogue.layouts_for(style, n)
     if layout in (None, ""):
-        layout = L.multi_layout(n)
-    elif not isinstance(layout, str) or layout not in L.layouts_for(n):
-        raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(L.layouts_for(n)) + ".")
+        layout = layouts[0]
+    elif not isinstance(layout, str) or layout not in layouts:
+        raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(layouts) + ".")
     names, title = _text(body.get("names"), 60), _text(body.get("title"), 40)
     W, H = L.multi_canvas(n, layout, SIZE)
     folder = f"orders/{order}"

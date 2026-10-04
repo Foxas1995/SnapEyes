@@ -13,6 +13,7 @@ import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
+from _lib import catalogue
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
 
@@ -77,8 +78,9 @@ def compose(body):
         raise L.ClientError("Send a JSON object.")
     ims = _irises(body)
     n = len(ims)
-    style = _choice(body.get("style"), L.STYLES, "celestial_gold")
-    layout = L.multi_layout(n, _choice(body.get("layout"), L.layouts_for(n), None))
+    style = _choice(body.get("style"), catalogue.previewable_ids(n), catalogue.DEFAULT_STYLE)
+    layouts = catalogue.layouts_for(style, n)
+    layout = _choice(body.get("layout"), layouts, None) or layouts[0]
     fmt = _choice(body.get("format"), L.FORMATS, L.FORMATS[0])
     # the watermark is the only thing separating a preview from the product, so the caller does not get to
     # turn it off: only a server-signed unlock ticket can, and nothing mints one yet
@@ -96,9 +98,9 @@ def compose(body):
     else:
         qa = L.colour_qa("compose", graded=graded)
     E.record("compose", style=style, eyes=n, layout=layout, format=fmt, clean=bool(clean), qa_ok=bool(qa.get("ok")))
-    return {"ok": True, "style": style, "layout": layout, "layouts": list(L.layouts_for(n)), "format": fmt,
+    return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": fmt,
             "count": n, "width": out.size[0], "height": out.size[1], "image": L.pil_to_b64(out, "JPEG", 90),
-            "styles": list(L.STYLES.keys()), "qa": qa}
+            "styles": list(catalogue.previewable_ids(n)), "qa": qa}
 
 def handle(req): L.run(req, compose)
 
