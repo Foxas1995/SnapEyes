@@ -25,6 +25,8 @@ engine asked of the plate folders is decided here, once, and written down:
            reason each). The plate is NOT retired: a retired plate would change every pick among the family and leave the prototype's picks.
            The fit of a retouched plate is made again on the retouched pixels, and the plate must still pass the accept rules (the bake stops
            otherwise); scripts/styles_tests/test_plates.py proves that every collision plate's fit is the fit of the pixels it ships.
+           No pixel test finds such a blemish (every plate holds detached debris): look at scripts/plate_sheet.py's sheet and bottom strips of every
+           family before it is baked, and add what you find to RETOUCH (or retire the plate).
   4K file  private storage (plates/v1/<family>/<file>), fetched by id at a master that needs it, sha256 checked; the registry holds its
            size and hash, and only for the plates an engine can fetch at all (needs_4k: the engines' own filters, so CLOUD is the
            Powder-eligible subset); the others are read at 1K or not at all. FLAKE, SHARD, DROPS and BUTTERFLY sheets are not read at run time (the atlases were built from them) and are not here.
