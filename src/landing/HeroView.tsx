@@ -8,10 +8,11 @@
 // The micro line's price ("Digital file from {from}") is the visitor's own price, held back (invisible, out of the tab order, its
 // space kept) until the server has answered about the visitor's prices, so nobody in a price experiment sees the standard price
 // for a moment and nothing moves when it appears (src/landing/prices.ts).
-import type { Ref } from 'react';
+import type { CSSProperties, Ref } from 'react';
 import type { LandingCopy } from './copy/types';
 import { fill } from './copy/format';
 import { HeroScene } from './HeroScene';
+import { Title } from '../motion/Title';
 
 function Arrow() {
   return (
@@ -31,23 +32,27 @@ export interface HeroViewProps {
   ctaRef?: Ref<HTMLAnchorElement>;
 }
 
+/** The entrance of the first screen (motion spec 6.2): when this element starts, in seconds. The CSS (src/motion/motion.css lp-rise,
+ *  lp-rise-s) plays from the markup that is already painted, the prerendered shell included; nothing here waits for a script. */
+const at = (s: number): CSSProperties => ({ '--d': `${s}s` }) as CSSProperties;
+
 export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef }: HeroViewProps) {
   const h = copy.hero;
   return (
     <section className="lp-hero" id="top" aria-labelledby="h1">
       <div className="lp-wrap lp-hero-grid">
         <div className="lp-hero-copy">
-          <p className="lp-eyebrow">{h.eyebrow}</p>
-          <h1 id="h1">{h.title}</h1>
-          <p className="lp-lead">{fill(h.lead, copy.facts)}</p>
-          <div className="lp-cta-row">
+          <p className="lp-eyebrow lp-rise-s" style={at(0.1)}>{h.eyebrow}</p>
+          <Title as="h1" id="h1" text={h.title} intro className="lp-t-display" />
+          <p className="lp-lead lp-rise" style={at(0.5)}>{fill(h.lead, copy.facts)}</p>
+          <div className="lp-cta-row lp-rise" style={at(0.62)}>
             <a className="lp-btn lp-btn-gold" id="ctaHero" href={tryHref} ref={ctaRef}>
               <span>{copy.cta}</span>
               <Arrow />
             </a>
             <a className="lp-link-quiet" href="#reveal">{h.secondary}</a>
           </div>
-          <ul className="lp-micro" id="heroMicro">
+          <ul className="lp-micro lp-rise-s" id="heroMicro" style={at(0.76)}>
             {h.micro.map((x) => (
               <li key={x}>{x}</li>
             ))}
@@ -55,7 +60,7 @@ export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef }: Her
               <a href="#pricing">{priceLine}</a>
             </li>
           </ul>
-          <p className="lp-computer-hint">{h.computerHint}</p>
+          <p className="lp-computer-hint lp-rise-s" style={at(0.8)}>{h.computerHint}</p>
         </div>
         <HeroScene hero={h} />
       </div>

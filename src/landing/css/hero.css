@@ -15,26 +15,24 @@
   .lp-cta-row .lp-link-quiet { text-align: center; }
   .lp-micro { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 22px; font-size: 13px; color: var(--ink-2); }
   .lp-micro li { display: inline-flex; align-items: center; gap: 8px; }
-  .lp-micro li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
-  .lp-micro li.lp-price a { color: var(--gold-soft); font-weight: 600; text-decoration: underline; text-decoration-color: var(--gold-line); text-underline-offset: 4px; }
-  .lp-micro li.lp-price a:hover { color: var(--gold-2); }
+  .lp-micro li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: rgb(240 243 250 / .35); }
+  .lp-micro li.lp-price a { color: var(--t-2); font-weight: 600; text-decoration: underline; text-decoration-color: var(--gold-line); text-underline-offset: 4px; }
+  .lp-micro li.lp-price a:hover { color: var(--t-1); }
   .lp-hero-fig { position: relative; margin-top: 4px; }
   .lp-hero-stage { position: relative; }
   .lp-frame-chip { position: absolute; left: 12px; top: 12px; z-index: 3; max-width: calc(100% - 24px); padding: 8px 12px 9px; border: 1px solid var(--gold-line); border-radius: 14px; background: rgba(7, 9, 14, .86); backdrop-filter: blur(6px); }
-  .lp-frame-chip b { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; line-height: 1.25; color: var(--gold-2); }
+  .lp-frame-chip b { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; line-height: 1.25; color: var(--t-1); }
   .lp-frame-chip span { display: block; margin-top: 2px; font-size: 12px; line-height: 1.4; color: #fff; }
   .lp-hero-frame { position: relative; aspect-ratio: 4 / 5; border-radius: var(--r); overflow: hidden; background: #1a1518; box-shadow: var(--ring); }
   .lp-hero-frame img { width: 100%; height: 100%; object-fit: cover; }
   .lp-hero-frame .lp-glint { left: 28.1%; top: 23.8%; width: 43.85%; height: 34.8%; }
   .lp-disc { position: absolute; left: 12px; bottom: 34px; width: 104px; height: 104px; border-radius: 50%; text-decoration: none; }
-  .lp-disc img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--gold-line), 0 18px 40px -8px rgba(0, 0, 0, .8); transition: transform .4s var(--ease); }
-  .lp-disc:hover img { transform: scale(1.05); }
-  .lp-disc::after { content: ""; position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: rgba(245, 197, 66, .7); transform: translateX(-.5px); pointer-events: none; opacity: .0; transition: opacity .3s; }
-  .lp-disc:hover::after, .lp-disc:focus-visible::after { opacity: 1; }
-  .lp-disc-label { position: absolute; left: 0; bottom: -18px; width: max-content; max-width: 188px; padding: 5px 11px; border-radius: 12px; background: rgba(7, 9, 14, .9); box-shadow: 0 0 0 1px var(--gold-line); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 1.25; color: var(--gold-soft); pointer-events: none; text-wrap: balance; }
+  .lp-disc img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--gold-line), 0 18px 40px -8px rgba(0, 0, 0, .8); }
+  .lp-disc::after { content: ""; position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: rgba(245, 197, 66, .7); transform: translateX(-.5px); transform-origin: 50% 0; pointer-events: none; }
+  .lp-disc-label { position: absolute; left: 0; bottom: -18px; width: max-content; max-width: 188px; padding: 5px 11px; border-radius: 12px; background: rgba(7, 9, 14, .9); box-shadow: 0 0 0 1px var(--gold-line); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 1.25; color: var(--t-2); pointer-events: none; text-wrap: balance; }
   .lp-hero-cap { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
   @media (min-width: 960px) {
-    .lp-hero { padding-top: calc(var(--bar-h) + var(--hdr-h) + 44px); padding-bottom: 88px; }
+    .lp-hero { padding-top: calc(var(--bar-h) + var(--hdr-h) + 44px); padding-bottom: calc(88px - var(--sheet-overlap)); }
     .lp-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(380px, .92fr); gap: clamp(40px, 5vw, 72px); align-items: center; }
     .lp-hero-fig { width: min(100%, calc((100svh - var(--bar-h) - var(--hdr-h) - 88px) * .8)); min-width: min(400px, 100%); margin-left: auto; }
     .lp-computer-hint { display: block; }
@@ -44,7 +42,7 @@
     .lp-disc-label { bottom: -20px; padding: 6px 13px; max-width: 214px; }
   }
   @media (max-width: 959px) {
-    .lp-hero { padding-top: calc(var(--bar-h) + var(--hdr-h) + 18px); padding-bottom: 36px; }
+    .lp-hero { padding-top: calc(var(--bar-h) + var(--hdr-h) + 18px); padding-bottom: calc(36px - var(--sheet-overlap)); }
     .lp-hero-grid { gap: 0; }
     .lp-hero-copy { display: contents; }
     .lp-hero-copy .lp-eyebrow { display: none; }
@@ -69,4 +67,22 @@
   @media (min-width: 960px) {
     :root[lang="hu"] .lp-hero h1 { font-size: min(clamp(32px, 8.6vw, 62px), 4.7vw, 58px); }
   }
+  /* The entrance (motion spec 6.2), in three calm beats; everything is settled by about 2 s, the glint is the last flourish. Pure CSS, from
+     the markup that is already painted (the shell included): src/motion/handoff.ts carries the clock over when React takes the page.
+     The text items are .lp-rise and .lp-rise-s in the markup (src/landing/HeroView.tsx). The picture itself is never faded: it is the
+     LCP element and the artwork (.lp-settle only scales it from 1.03 to 1). The two honesty labels (the chip in the frame, the caption)
+     are static: a picture never appears without its label. */
+  .lp-hero-stage::before { content: ""; position: absolute; inset: -8px; border: 1px solid var(--ring-gold); border-radius: calc(var(--r) + 8px); pointer-events: none; }
+  .lp-hero-frame .lp-glint::after { background: linear-gradient(105deg, transparent 34%, #fff 50%, transparent 66%); }
+  @media (prefers-reduced-motion: no-preference) {
+    .lp-hero::before { animation: lp-fade-in 1.6s var(--ease-out) .2s backwards; }
+    .lp-hero-stage::before { animation: lp-fade-in 1.2s var(--ease-out) .35s backwards; }
+    .lp-disc { animation: lp-disc-in .9s var(--ease-out) .9s backwards; }
+    .lp-disc::after { animation: lp-cut .9s var(--ease-out) 1.2s backwards; }
+    .lp-hero-frame .lp-glint::after { animation: lp-sweep 2.4s var(--ease-inout) 2.1s backwards; }
+  }
+  @keyframes lp-fade-in { from { opacity: 0; } }
+  @keyframes lp-disc-in { from { opacity: 0; translate: -10px 10px; } }
+  @keyframes lp-cut { from { scale: 1 0; } }
+  @keyframes lp-sweep { 0% { opacity: 0; transform: translateX(-40%); } 20%, 80% { opacity: .1; } 100% { opacity: 0; transform: translateX(40%); } }
 }
