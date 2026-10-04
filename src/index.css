@@ -11,6 +11,9 @@
 @source not "./landing/shell";
 @source not "./landing/assets.ts";
 @source not "./landing/assets.data.ts";
+/* The motion engine and its components (src/motion) use lp- classes and no utility: its comments say "static", "fixed", "sticky", and
+   Tailwind would turn each of those words into a utility that outranks the landing layer. */
+@source not "./motion";
 @source not "../scripts";
 
 /* Self-hosted fonts: no request to Google Fonts, so no visitor IP goes to a third party for typography

@@ -2,12 +2,15 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './landing/css/index.css'
+import './motion/motion.css'
 import App from './App.tsx'
 import { detectLang } from './shared/lang'
 import { currentMarket } from './shared/markets'
 import { preloadCopy } from './landing/copy/index'
 import { startOrdering } from './landing/ordering'
 import { watchPreloadErrors } from './landing/lazy'
+import { boot, reveals } from './motion/motion'
+import { adoptIntro } from './motion/handoff'
 
 // The landing entry. index.html already holds the first screen as static HTML (<div id="shell">, written at build time by the
 // heroShell plugin of vite.config.ts from src/landing/SiteTopView.tsx and HeroView.tsx, in the visitor's language: English in the
@@ -17,12 +20,20 @@ import { watchPreloadErrors } from './landing/lazy'
 // MutationObserver runs as a microtask right after the commit, before the browser paints. While the language file of a
 // non-English visitor is still coming, React commits nothing and the shell stays; if React never commits (a script error), the
 // static first screen stays as the fallback.
+// Motion (src/motion): html.mo switches the hidden-until-revealed states on when motion is allowed, with a failsafe that lifts them
+// after 3.5 s if no observer ever reports; reveals() then watches every [data-reveal] node, present or mounted later by the lazy
+// sections. Nothing is hidden before this runs: the first screen's entrance is pure CSS and plays from the prerendered markup.
+boot()
+reveals()
+
 const root = document.getElementById('root')!
 const shell = document.getElementById('shell')
 if (shell) {
   const handoff = new MutationObserver(() => {
     if (root.childElementCount > 0) {
       handoff.disconnect()
+      // the entrance of the first screen is under way on the shell: the live hero continues it where it has got to instead of starting again
+      adoptIntro(shell, root)
       shell.remove()
       // the other languages' first screens (src/landing/shell/render.tsx) have done their job too
       document.querySelectorAll('template[id^="tpl-"]').forEach((t) => t.remove())
