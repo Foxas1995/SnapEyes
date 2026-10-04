@@ -20,6 +20,11 @@ engine asked of the plate folders is decided here, once, and written down:
   1K file  bundled with the four rendering functions (api/_assets/plates/<family>/<file>); sha256 and size below. The collision plates
            are used as luminance at 1K only (no 4K file leaves the archive); their 1K files are made here from the raw files exactly
            as the prototype's _plate_lum did (convert to L, LANCZOS to 1024 px, PNG level 3).
+  retouch  a few collision plates carry a blemish the generator drew into the picture (a scale bar, a size legend with "(mm)"); the blemish
+           lies on black, outside the plume, and is filled with black in the 1K file (RETOUCH below: rectangles of the 1024 px luminance, one
+           reason each). The plate is NOT retired: a retired plate would change every pick among the family and leave the prototype's picks.
+           The fit of a retouched plate is made again on the retouched pixels, and the plate must still pass the accept rules (the bake stops
+           otherwise); scripts/styles_tests/test_plates.py proves that every collision plate's fit is the fit of the pixels it ships.
   4K file  private storage (plates/v1/<family>/<file>), fetched by id at a master that needs it, sha256 checked; the registry holds its
            size and hash, and only for the plates an engine can fetch at all (needs_4k: the engines' own filters, so CLOUD is the
            Powder-eligible subset); the others are read at 1K or not at all. FLAKE, SHARD, DROPS and BUTTERFLY sheets are not read at run time (the atlases were built from them) and are not here.
@@ -55,6 +60,16 @@ PLATES_VERSION = 1
 DEPENDENCIES_MIB = 126        # the Linux wheels of requirements.txt (suites/baseline.md, from the PyPI zip directories: 125.6); replaced by V1
 MILKY_BLOCKED = ("P-UV-MILKY__band-high_stars-dense__v1__pro4K__t0", "P-UV-MILKY__band-high_stars-sparse__v1__pro4K__t0",
                  "P-UV-MILKY__band-high_stars-sparse__v1__pro4K__t1")
+# Rectangles (x0, y0, x1, y1), half open, in the 1024 px luminance of a collision plate that are filled with black: the generator drew a
+# scientific legend into the picture, bright enough (up to 0.4 of white at 1K) to show on the artwork, which carries nothing written but the
+# customer's own words. Each lies on the black background well clear of the plume (the frame of one pixel around it is black, the test
+# checks it); the 4K raw files are not used for this family (store4k 0). A new entry needs the plate id, the rectangles and the reason.
+RETOUCH = {
+    # two checkerboard scale bars with a tiny "50 cm" caption beside the jet's tip
+    "P-CX-JET__medium_left_b75__pro4K__t2": ((398, 918, 442, 941), (573, 918, 661, 941)),
+    # three particle size icons, each with the legend "(mm)", in the bottom right corner
+    "P-CX-JET__wide_right_b75__pro4K__t1": ((786, 928, 1010, 1018),),
+}
 FAMILIES = {
     # store4k: the 4K files of this family go to private storage; release1: a style of the first release needs them
     "P-SN-CLOUD": {"store4k": 1, "release1": 1, "source": "y2"},
@@ -99,6 +114,77 @@ def spiral_crisp(path_1k, void):
     return bool(sd < 0.004 and w < 0.02)
 
 
+def fit_jet(L):
+    """cx_plates.fit_jet of the design rounds, verbatim: the source point, the principal axis above it, the half angle, the dense reach, the strong side."""
+    h, w = L.shape
+    strip = L[int(h * 0.96):, :]
+    ys, xs = np.mgrid[int(h * 0.96):h, 0:w]
+    wgt = strip.astype(np.float64) ** 2
+    sx = float((xs * wgt).sum() / max(wgt.sum(), 1e-9))
+    sy = float(h - 1)
+    # moments above the source
+    Y, X = np.mgrid[0:int(h * 0.94), 0:w]
+    m = L[:int(h * 0.94)].astype(np.float64) ** 2
+    dx, dy = X - sx, Y - sy
+    tot = m.sum()
+    cxx = (m * dx * dx).sum() / tot
+    cyy = (m * dy * dy).sum() / tot
+    cxy = (m * dx * dy).sum() / tot
+    ev, evec = np.linalg.eigh(np.array([[cxx, cxy], [cxy, cyy]]))
+    v = evec[:, 1]
+    if v[1] > 0:
+        v = -v
+    axis = math.atan2(v[1], v[0])                      # image frame (y down): mostly -pi/2
+    ang = np.arctan2(dy, dx)
+    da = (ang - axis + math.pi) % (2 * math.pi) - math.pi
+    r = np.hypot(dx, dy)
+    ok = r > 0.03 * w
+    order = np.argsort(np.abs(da[ok]))
+    cum = np.cumsum(m[ok][order]) / m[ok].sum()
+    half = float(np.abs(da[ok][order])[np.searchsorted(cum, 0.90)])
+    # dense reach: radius holding 60 % of the mass
+    ro = np.argsort(r[ok])
+    cr = np.cumsum(m[ok][ro]) / m[ok].sum()
+    reach60 = float(r[ok][ro][np.searchsorted(cr, 0.60)]) / w
+    reach90 = float(r[ok][ro][np.searchsorted(cr, 0.90)]) / w
+    side_mass = float((m * (da > 0)).sum() / tot)         # da > 0: clockwise (image frame) side = the +x side of an upward axis
+    black = float((L < 0.03).mean())
+    c = int(0.15 * w)
+    glare = float(max(L[:c, :c].mean(), L[:c, -c:].mean(), L[-c:, :c].mean(), L[-c:, -c:].mean()))
+    return dict(glare=glare, sx=sx / w, sy=sy / h, axis=axis, half=half, reach60=reach60, reach90=reach90, strong_cw=side_mass > 0.5,
+                strong_share=max(side_mass, 1 - side_mass), black=black, fam="JET")
+
+
+def fit_river(L):
+    """cx_plates.fit_river of the design rounds, verbatim: the luminance centroid, the principal axis, the width at the centre, the strong half."""
+    h, w = L.shape
+    Y, X = np.mgrid[0:h, 0:w]
+    m = L.astype(np.float64) ** 2
+    tot = m.sum()
+    cx = (m * X).sum() / tot
+    cy = (m * Y).sum() / tot
+    dx, dy = X - cx, Y - cy
+    cxx, cyy, cxy = (m * dx * dx).sum() / tot, (m * dy * dy).sum() / tot, (m * dx * dy).sum() / tot
+    ev, evec = np.linalg.eigh(np.array([[cxx, cxy], [cxy, cyy]]))
+    v = evec[:, 1]
+    axis = math.atan2(v[1], v[0])
+    # width at the centre: luminance profile across the axis through the centre (10-90 % of the cumulative mass within +-0.25 W)
+    nx, ny = -math.sin(axis), math.cos(axis)
+    ax_ = dx * v[0] + dy * v[1]
+    perp = dx * nx + dy * ny
+    sel = np.abs(ax_) < 0.08 * w
+    o = np.argsort(perp[sel])
+    cum = np.cumsum(m[sel][o]) / m[sel].sum()
+    p = perp[sel][o]
+    lo, hi = p[np.searchsorted(cum, 0.10)], p[np.searchsorted(cum, 0.90)]
+    width = float(hi - lo) / w
+    up_mass = float((m * (ax_ > 0)).sum() / tot)
+    c = int(0.15 * w)
+    glare = float(max(L[:c, :c].mean(), L[:c, -c:].mean(), L[-c:, :c].mean(), L[-c:, -c:].mean()))
+    return dict(glare=glare, cx=cx / w, cy=cy / h, axis=axis, width=width, strong_pos=up_mass > 0.5, strong_share=max(up_mass, 1 - up_mass),
+                black=float((L < 0.03).mean()), fam="RIVER")
+
+
 def cx_qa(p):
     """cx_plates.qa: the accept rules of the collision plates."""
     if p["fam"] == "JET":
@@ -110,16 +196,33 @@ def cx_qa(p):
     return ok_axis and 0.10 <= p["width"] <= 0.62 and p["black"] >= 0.40
 
 
-def lum1k(path):
-    """cx_plates._lum(path, 1024) as PNG bytes (level 3), what _plate_lum wrote for the 1K LOD."""
+def lum_array(path, retouch=()):
+    """cx_plates._lum(path, 1024) with the plate's retouch applied: the 1024 px luminance as a uint8 array (what the 1K file holds)."""
     im = Image.open(path).convert("L")
     if im.size[0] != 1024:
         im = im.resize((1024, 1024), Image.LANCZOS if im.size[0] > 1024 else Image.BICUBIC)
-    a = np.asarray(im, np.float32) / 255.0
+    a = np.array(im, np.uint8)
+    for x0, y0, x1, y1 in retouch:
+        a[y0:y1, x0:x1] = 0
+    return a
+
+
+def lum1k(path, retouch=()):
+    """cx_plates._lum(path, 1024) as PNG bytes (level 3), what _plate_lum wrote for the 1K LOD (the same bytes when nothing is retouched)."""
+    a = lum_array(path, retouch).astype(np.float32) / 255.0
     import io
     b = io.BytesIO()
     Image.fromarray((a * 255 + 0.5).astype(np.uint8)).save(b, "PNG", compress_level=3)
     return b.getvalue()
+
+
+def refit(key, f, raw):
+    """The fit record of a collision plate: the design rounds' (fits.json) unless the plate is retouched, then the fit of the retouched pixels
+    (the keys the fit function makes are replaced, side stays). The record is the same shape either way."""
+    if key not in RETOUCH:
+        return f
+    L = lum_array(raw, RETOUCH[key]).astype(np.float32) / 255.0
+    return dict(f, **(fit_jet(L) if f["fam"] == "JET" else fit_river(L)))
 
 
 def needs_4k(rec):
@@ -183,6 +286,10 @@ def collect(y2, y3):
         out.append((pid, rec, k1, os.path.basename(k1), k4, os.path.basename(k4)))
     # ---- the collision plates: the fits and the raw files
     fits = json.load(open(os.path.join(y3, "plates_cx", "fits.json"), encoding="utf-8"))
+    for key in RETOUCH:
+        if key not in fits:
+            raise SystemExit(f"RETOUCH names {key}, which the design rounds' fits.json does not have")
+        fits[key] = refit(key, fits[key], os.path.join(y3, fits[key]["path"].replace("/", os.sep)))
     by_fam = {}
     for key, f in fits.items():
         by_fam.setdefault(f["fam"], []).append((key, f))
@@ -194,6 +301,8 @@ def collect(y2, y3):
             fit = {k: (fl(x) if isinstance(x, float) else (1 if x is True else (0 if x is False else x))) for k, x in f.items() if k not in ("path",)}
             rec = {"family": f"P-CX-{fam}", "since": PLATES_VERSION, "until": 0, "usable": 1 if key in ok else 0, "mono": 1, "kind": fam.lower(),
                    "variables": {}, "score": 0.0, "fit": fit}
+            if key in RETOUCH and not rec["usable"]:
+                raise SystemExit(f"{key} is retouched but fails the collision accept rules after it: retire it (usable 0) instead of shipping it")
             out.append((key, rec, raw if rec["usable"] else None, key + ".png", None, ""))
     out.sort(key=lambda t: (t[1]["family"], t[0]))
     return out
@@ -211,7 +320,7 @@ def main():
     for pid, rec, src1, name1, src4, name4 in rows:
         if rec["usable"]:
             if rec["family"].startswith("P-CX"):
-                data = lum1k(src1)
+                data = lum1k(src1, RETOUCH.get(pid, ()))
                 rec["k1"] = {"file": name1, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "px": 1024}
                 todo.append((rec["family"], name1, data))
             else:

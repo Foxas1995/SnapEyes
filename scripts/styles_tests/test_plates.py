@@ -149,6 +149,49 @@ check("what the first release must upload (CLOUD for Powder Burst, CROWN for Spl
 check("a plate that is not usable keeps its record and ships no file; a plate without a void is never offered to place()", all(not r["k1"] and not r["k4"] for r in TABLE.values() if not r["usable"])
       and all("void" in r for r in USABLE.values() if r["family"] in ("P-SN-CLOUD", "P-SP-CROWN", "P-EL-FLAME", "P-DN-SPIRAL")))
 check("the fits of the collision plates are full precision (the prototype read them unrounded): JET axis of the first plate", TABLE["P-CX-JET__medium_left_b60__flash1K__t0"]["fit"]["axis"] == -1.7105220328572195)
+
+# the plates' pixels are what the registry says they are, and what they show is the plate and nothing else (no legend, no scale bar)
+sys.path.insert(0, os.path.join(REPO, "scripts"))
+import bake_plates_registry as BK  # noqa: E402
+
+
+def lum_of(pid):
+    r = TABLE[pid]
+    return np.asarray(Image.open(os.path.join(bundle, r["family"], r["k1"]["file"])).convert("L"), np.float32) / 255.0
+
+
+def fit_gap(pid, L):
+    """The largest difference between the registry's fit of a collision plate and the fit of the pixels L (the fit functions of the design rounds)."""
+    f = TABLE[pid]["fit"]
+    new = BK.fit_jet(L) if TABLE[pid]["family"] == "P-CX-JET" else BK.fit_river(L)
+    return max(abs(float(v) - float(f[k])) for k, v in new.items() if k != "fam")
+
+
+gaps = {i: fit_gap(i, lum_of(i)) for i, r in USABLE.items() if r["family"] in ("P-CX-JET", "P-CX-RIVER")}
+check("the fit of every collision plate (19 JET, 16 RIVER) is the fit of the pixels it ships, to 1e-9 (fit_jet and fit_river of the design rounds): a plate "
+      "whose picture is changed after it was fitted would put the source point and the axis off its notch", len(gaps) == 35 and max(gaps.values()) < 1e-9, sorted(gaps.items(), key=lambda t: -t[1])[:3])
+check("the retouched plates are the two the generator drew a legend on (a scale bar pair, three particle size icons with '(mm)'): each is registered, usable, "
+      "and in the bundle", set(BK.RETOUCH) == {"P-CX-JET__medium_left_b75__pro4K__t2", "P-CX-JET__wide_right_b75__pro4K__t1"} and all(USABLE.get(i) for i in BK.RETOUCH)
+      and all(TABLE[i]["family"] == "P-CX-JET" for i in BK.RETOUCH))
+dirty = []
+for pid, rects in BK.RETOUCH.items():
+    Lr = lum_of(pid)
+    for x0, y0, x1, y1 in rects:
+        frame = np.zeros(Lr.shape, bool)
+        frame[y0 - 1:y1 + 1, x0 - 1:x1 + 1] = True
+        frame[y0:y1, x0:x1] = False
+        if not (0 <= x0 < x1 <= 1024 and 1 <= y0 < y1 <= 1023 and x0 >= 1 and x1 <= 1023) or Lr[y0:y1, x0:x1].max() != 0 or Lr[frame].max() > 8 / 255:
+            dirty.append((pid[-24:], (x0, y0, x1, y1), float(Lr[y0:y1, x0:x1].max()), float(Lr[frame].max())))
+check("each retouch rectangle is inside the plate, black in the shipped file, and cut clean (the pixel frame around it is at most 8 of 255): no trace of the "
+      "legend is left and no edge shows", not dirty, dirty)
+# the proofs that these checks can fail: draw a scale bar and a "(mm)" style mark back into a retouched plate
+lp = lum_of("P-CX-JET__wide_right_b75__pro4K__t1")
+lp[996:1010, 790:830] = 0.38
+check("a legend drawn back into the plate: its rectangle is no longer black, and the fit of the new pixels is not the registry's (sx moves by more than 0.001, the "
+      "state the original plate was in: its source point was 1.8 percent of the width off)",
+      lp[928:1018, 786:1010].max() > 0 and fit_gap("P-CX-JET__wide_right_b75__pro4K__t1", lp) > 0.001, fit_gap("P-CX-JET__wide_right_b75__pro4K__t1", lp))
+check("the retouched plates still pass the collision accept rules, and the bake refuses a retouched plate that would not",
+      all(BK.cx_qa(TABLE[i]["fit"]) for i in BK.RETOUCH) and "fails the collision accept rules after it" in read("scripts/bake_plates_registry.py"))
 mine = PC.run_cases(P)
 check("the pick of the prototype's registry replayed on the port: CLOUD with and without the black filter, with excludes, CROWN by liquid, FLAME, pick_n, "
       "and four placed 1K plates bit for bit (14 groups of cases, 100s of picks)", mine == GOLD, [k for k in GOLD if GOLD[k] != mine.get(k)][:5])
