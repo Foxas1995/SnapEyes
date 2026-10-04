@@ -11,4 +11,17 @@
     .lp-topbar { font-size: 12px; letter-spacing: 0; }
     .lp-topbar span::before { align-self: flex-start; margin-top: 5px; }
   }
+  /* The offer of the visitor's own currency (src/landing/MarketHint.tsx): in the page's flow at the top of <main>, below the fixed header
+     (padding-top is the header's height, the negative margin gives that height back to the hero, whose own top padding already clears
+     the header), above the hero's glow. It is not in the prototype; it is a fact of the live site. */
+  .lp-market { position: relative; z-index: 10; padding-top: var(--hdr-h); margin-bottom: calc(-1 * var(--hdr-h)); }
+  .lp-market section { background: var(--bg-2); border-bottom: 1px solid var(--line); }
+  .lp-market-in { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 20px; padding-block: 8px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+  .lp-market-in p { flex: 1 1 16rem; min-width: 0; }
+  .lp-market-btns { display: flex; align-items: center; gap: 8px; }
+  .lp-market-btns button { min-height: 44px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: background .2s, color .2s; }
+  .lp-market-show { border: 1px solid var(--gold-line); color: var(--gold); }
+  .lp-market-show:hover { background: var(--gold); color: #07090e; }
+  .lp-market-close { color: var(--ink-3); }
+  .lp-market-close:hover { color: #fff; }
 }

@@ -1,97 +1,77 @@
+// The hero (prototype: section.hero). Copy and call to action on the left, the picture with its in-frame label and the disc on
+// the right (./HeroScene.tsx). On a phone the order is headline, lead, button, picture, micro line (the CSS unwraps the copy
+// column); from 960 px it is two columns, the picture sized to the viewport so it is whole on a 1366 x 768 screen.
+//
+//   <HeroSection ctaRef={heroCta} />   live, inside <main id="main"> (needs <LangProvider> and <CopyProvider>)
+//   <HeroView ... />                   the same markup as a pure component: props in, markup out
+//
+// The micro line's price ("Digital file from {from}") is the visitor's own price, held back (invisible, out of the tab order, its
+// space kept) until the server has answered about the visitor's prices, so nobody in a price experiment sees the standard price
+// for a moment and nothing moves when it appears (src/landing/prices.ts).
 import type { Ref } from 'react';
-import { Check, Clock } from 'lucide-react';
-import { useLang } from './lang';
-import { BEFORE_SRC, styleSrc, styleSrcSet } from './config';
-import { currencyOf, money } from '../shared/markets';
-import { useMarket } from '../shared/useMarket';
-import { usePrices } from '../shared/usePrices';
-import { useOrderingOpen } from './ordering';
-import { CtaLink, CtaNote, Eyebrow } from './ui';
+import type { LandingCopy } from './copy/types';
+import { fill } from './copy/format';
+import { useCopy } from './copy/useCopy';
+import { useLandingPrices } from './prices';
+import { useTryHref } from './links';
+import { HeroScene } from './HeroScene';
 
-// Phones: headline, action, then the artwork (its centre lands on the first 390 x 844 screen), then the points.
-// Desktop: text and points on the left, the artwork on the right across both rows.
-export function Hero({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
-  const { t, lang } = useLang();
-  const market = useMarket();
-  const prices = usePrices(market);          // the visitor's own ladder while a price experiment runs for them
-  const open = useOrderingOpen();
-  const h = t.hero;
+// Today's hero, for the visitors the new landing does not serve yet (src/landing/gate.ts). Delete with that fallback.
+export { Hero } from './legacy/Hero';
+
+function Arrow() {
   return (
-    <section id="top" className="relative overflow-hidden pt-24 pb-20 sm:pt-36 sm:pb-28">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-40 right-[-20%] h-[720px] w-[720px] rounded-full opacity-60"
-        style={{ background: 'radial-gradient(closest-side, rgba(245,197,66,0.10), rgba(245,197,66,0.03) 55%, transparent)' }}
-      />
-      <div className="relative mx-auto grid max-w-6xl gap-y-10 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-x-16 lg:gap-y-10">
-        <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
-          <Eyebrow>{h.eyebrow}</Eyebrow>
-          <h1 className="mt-5 font-luxury text-[32px] font-semibold leading-[1.1] text-white text-balance hyphens-auto sm:mt-6 sm:text-[52px] lg:text-[58px]">
-            {h.title}
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-300 sm:mt-6 sm:text-lg">{h.lead}</p>
-          <div className="mt-8 flex flex-col gap-4 sm:mt-9 sm:flex-row sm:items-center sm:gap-6">
-            <CtaLink ref={ctaRef} label={t.cta} />
-            <a href="#before-after" className="text-center text-sm text-zinc-300 underline decoration-white/20 underline-offset-[6px] transition-colors hover:text-white hover:decoration-[#f5c542] sm:text-left">
-              {h.secondary}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+export interface HeroViewProps {
+  copy: LandingCopy;
+  tryHref: string;
+  /** "Digital file from {from}" with the price filled in. */
+  priceLine: string;
+  /** Hold the price line back until the visitor's prices are known. */
+  pricePending: boolean;
+  ctaRef?: Ref<HTMLAnchorElement>;
+}
+
+export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef }: HeroViewProps) {
+  const h = copy.hero;
+  return (
+    <section className="lp-hero" id="top" aria-labelledby="h1">
+      <div className="lp-wrap lp-hero-grid">
+        <div className="lp-hero-copy">
+          <p className="lp-eyebrow">{h.eyebrow}</p>
+          <h1 id="h1">{h.title}</h1>
+          <p className="lp-lead">{fill(h.lead, copy.facts)}</p>
+          <div className="lp-cta-row">
+            <a className="lp-btn lp-btn-gold" id="ctaHero" href={tryHref} ref={ctaRef}>
+              <span>{copy.cta}</span>
+              <Arrow />
             </a>
+            <a className="lp-link-quiet" href="#reveal">{h.secondary}</a>
           </div>
-          <CtaNote text={t.ctaNote} className="mt-4 text-center sm:text-left" />
+          <ul className="lp-micro" id="heroMicro">
+            {h.micro.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+            <li className="lp-price" inert={pricePending || undefined} style={pricePending ? { opacity: 0, userSelect: 'none' } : undefined}>
+              <a href="#pricing">{priceLine}</a>
+            </li>
+          </ul>
+          <p className="lp-computer-hint">{h.computerHint}</p>
         </div>
-
-        <figure className="mx-auto w-full max-w-[520px] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
-          <div className="aspect-square overflow-hidden rounded-[28px] bg-black ring-1 ring-white/10 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.95)]">
-            <img
-              src={styleSrc('celestial-gold', 800)}
-              srcSet={styleSrcSet('celestial-gold')}
-              sizes="(min-width: 640px) 520px, calc(100vw - 32px)"
-              width={800}
-              height={800}
-              fetchPriority="high"
-              decoding="async"
-              alt={h.imageAlt}
-              className="h-full w-full object-cover"
-            />
-          </div>
-          {/* the phone photo this artwork was made from sits below the frame, never over the artwork */}
-          <figcaption className="mt-4 flex items-center gap-3.5">
-            <img
-              src={BEFORE_SRC}
-              width={315}
-              height={315}
-              decoding="async"
-              alt={h.insetAlt}
-              className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-white/15"
-            />
-            <span className="text-[13px] leading-snug text-zinc-400">
-              <span className="block text-zinc-200">{h.caption}</span>
-              <span className="mt-0.5 block">
-                {h.insetLabel} · {h.styleNote}
-              </span>
-            </span>
-          </figcaption>
-        </figure>
-
-        <ul className="grid gap-3 text-sm text-zinc-300 lg:col-start-1 lg:row-start-2 lg:self-start">
-          {h.points.map((p) => (
-            <li key={p} className="flex items-start gap-3">
-              <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#f5c542]" />
-              <span>{p}</span>
-            </li>
-          ))}
-          {open ? (
-            <li className="flex items-start gap-3">
-              <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#f5c542]" />
-              <span>{h.ready(money(prices.one_eye_studio_black, currencyOf(market), lang))}</span>
-            </li>
-          ) : (
-            <li className="flex items-start gap-3 text-zinc-400">
-              <Clock aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-              <span>{h.soon}</span>
-            </li>
-          )}
-        </ul>
+        <HeroScene hero={h} />
       </div>
     </section>
   );
+}
+
+export function HeroSection({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
+  const { c, t } = useCopy();
+  const prices = useLandingPrices();
+  const tryHref = useTryHref();
+  return <HeroView copy={c} tryHref={tryHref} priceLine={t('hero.fromPrice', { from: prices.from })} pricePending={prices.pending} ctaRef={ctaRef} />;
 }

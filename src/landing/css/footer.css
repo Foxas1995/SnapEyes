@@ -34,7 +34,9 @@
   }
   .lp-ftr address { font-style: normal; line-height: 1.75; }
   .lp-ftr address b { color: var(--ink); font-weight: 500; }
-  .lp-ftr address a { color: var(--ink); text-underline-offset: 4px; }
+  .lp-ftr address a { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+  .lp-ftr address .lp-ftr-by { display: block; }
+  .lp-ftr address .lp-ftr-line { display: block; margin-top: 10px; }
   .lp-ftr address a:hover, .lp-ftr nav a:hover { color: var(--gold); }
   .lp-ftr nav { display: flex; flex-direction: column; gap: 10px; }
   .lp-ftr nav a { text-decoration: none; padding: 9px 0; min-height: 44px; display: inline-flex; align-items: center; }
