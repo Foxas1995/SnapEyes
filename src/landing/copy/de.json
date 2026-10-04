@@ -91,15 +91,6 @@
         "artAlt": "Die restaurierte graugrüne Iris als Kunstwerk im Stil Radiance"
       },
       {
-        "id": "br",
-        "label": "Braunes Auge",
-        "n": 314,
-        "note": "Beispielfoto, kein Kunde. Lider und Wimpern bleiben in der Foto-Hälfte.",
-        "photoAlt": "Ein Beispielfoto eines braunen Auges mit Wimpern",
-        "irisAlt": "Dieselbe braune Iris restauriert, auf Schwarz",
-        "artAlt": "Die restaurierte braune Iris als Kunstwerk im Stil Radiance"
-      },
-      {
         "id": "own",
         "label": "Das Auge von Mantas",
         "n": 315,

@@ -104,8 +104,7 @@ export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, S
   "phone": {
     "eye": {
       "base": "m/phone_desk__eye__wide",
-      "sizeOk": false,
-      "de": "m/phone_desk__eye_de__wide"
+      "sizeOk": false
     },
     "universe": {
       "base": "m/phone_desk__universe__wide",
@@ -172,8 +171,8 @@ export const GALLERY: {
       "design": "radiance",
       "price": "art",
       "wallOwn": {
-        "base": "m/living_acrylic__eye__tight",
-        "ratio": "4/5"
+        "base": "m/living_acrylic__eye__sq",
+        "ratio": "1/1"
       }
     },
     {
@@ -186,8 +185,8 @@ export const GALLERY: {
       "design": "universe",
       "price": "art",
       "wallOwn": {
-        "base": "m/living_acrylic__universe__tight",
-        "ratio": "4/5"
+        "base": "m/living_acrylic__universe__sq",
+        "ratio": "1/1"
       }
     },
     {
@@ -213,8 +212,8 @@ export const GALLERY: {
       "price": "two",
       "src": "mixed",
       "wall": {
-        "base": "m/living_acrylic_3x2__collision__tall",
-        "ratio": "4/5"
+        "base": "m/living_acrylic_3x2__collision__tight",
+        "ratio": "3/2"
       }
     },
     {
@@ -317,13 +316,6 @@ export const REVEAL: { readonly eyes: readonly { id: 'gd' | 'br' | 'own'; phone:
       "iris": "reveal/gd_iris",
       "art": "art/radiance_gd_900",
       "phone": true
-    },
-    {
-      "id": "br",
-      "photo": "reveal/br_photo",
-      "iris": "reveal/br_iris",
-      "art": "art/radiance_w03_900",
-      "phone": false
     },
     {
       "id": "own",

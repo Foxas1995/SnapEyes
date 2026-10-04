@@ -91,15 +91,6 @@
         "artAlt": "Atkurta pilkai žalia rainelė kaip kūrinys Radiance stiliumi"
       },
       {
-        "id": "br",
-        "label": "Ruda akis",
-        "n": 314,
-        "note": "Pavyzdinė nuotrauka, ne kliento. Vokai ir blakstienos lieka nuotraukos pusėje.",
-        "photoAlt": "Pavyzdinė rudos akies nuotrauka su blakstienomis",
-        "irisAlt": "Ta pati ruda rainelė, atkurta, juodame fone",
-        "artAlt": "Atkurta ruda rainelė kaip kūrinys Radiance stiliumi"
-      },
-      {
         "id": "own",
         "label": "Manto akis",
         "n": 315,

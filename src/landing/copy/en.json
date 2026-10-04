@@ -91,15 +91,6 @@
         "artAlt": "The restored grey green iris as a Radiance artwork"
       },
       {
-        "id": "br",
-        "label": "Brown eye",
-        "n": 314,
-        "note": "Example photo, not a customer. Lids and lashes stay in the photo half.",
-        "photoAlt": "An example photo of a brown eye, with lashes",
-        "irisAlt": "The same brown iris restored, on black",
-        "artAlt": "The restored brown iris as a Radiance artwork"
-      },
-      {
         "id": "own",
         "label": "Mantas's eye",
         "n": 315,

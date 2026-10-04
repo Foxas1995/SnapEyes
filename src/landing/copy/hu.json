@@ -91,15 +91,6 @@
         "artAlt": "A helyreállított szürkészöld írisz műalkotásként, Radiance stílusban"
       },
       {
-        "id": "br",
-        "label": "Barna szem",
-        "n": 314,
-        "note": "Példafotó, nem vásárló. A szemhéj és a szempillák a fotó felén maradnak.",
-        "photoAlt": "Példafotó egy barna szemről, szempillákkal",
-        "irisAlt": "Ugyanaz a barna írisz helyreállítva, fekete háttéren",
-        "artAlt": "A helyreállított barna írisz műalkotásként, Radiance stílusban"
-      },
-      {
         "id": "own",
         "label": "Mantas szeme",
         "n": 315,

@@ -58,10 +58,10 @@ export function stagePicture(mat: Material, art: WallArt, lang: Lang): StagePict
 }
 
 /** The glint of a polished surface: left, top, width, height of the sweep in percent of the stage. Acrylic only. The boxes are the
- *  face of the print in the living room plates (the pictures' rooms_slots.json): the square plate for one eye, the 3:2 plate of the
- *  same room for the pair and the family. */
+ *  face of the print in the living room pictures (the pictures' rooms_slots.json, the room crops of the fix round): the square plate for
+ *  one eye, the 3:2 plate of the same room for the pair and the family. */
 export type GlintBox = readonly [number, number, number, number];
-const GLINT: Readonly<Record<'single' | 'wide', GlintBox>> = { single: [28.08, 23.62, 43.85, 35.14], wide: [17.02, 22.75, 65.97, 34.5] };
+const GLINT: Readonly<Record<'single' | 'wide', GlintBox>> = { single: [31.0, 15.27, 38.01, 30.46], wide: [25.0, 29.75, 50.01, 26.15] };
 
 export function glintFor(mat: Material, art: WallArt): GlintBox | null {
   if (mat !== 'acrylic') return null;
