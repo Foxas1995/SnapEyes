@@ -4,8 +4,8 @@
    .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
    no specificity. */
 @layer landing {
-  .lp-hdr { position: fixed; left: 0; right: 0; top: var(--bar-h); z-index: 50; height: var(--hdr-h); transition: background .3s, border-color .3s; border-bottom: 1px solid transparent; }
-  .lp-hdr.lp-solid { background: rgba(7, 9, 14, .86); border-bottom-color: var(--line); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .lp-hdr { position: fixed; left: 0; right: 0; top: 0; transform: translateY(var(--bar-h)); z-index: 50; height: var(--hdr-h); transition: background .3s, border-color .3s; border-bottom: 1px solid transparent; }
+  .lp-hdr.lp-solid { background: rgba(7, 9, 14, .86); border-bottom-color: var(--line); backdrop-filter: blur(18px); }
   .lp-hdr .lp-wrap { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .lp-logo svg { width: 32px; height: 32px; flex: none; }

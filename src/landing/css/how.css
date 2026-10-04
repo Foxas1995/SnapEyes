@@ -40,7 +40,8 @@
   .lp-step-body h3 { margin-top: 12px; font-size: 20px; }
   .lp-step-body p { margin-top: 10px; font-size: 15px; line-height: 1.6; color: var(--ink-2); }
   .lp-step-body .lp-vcap { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); display: flex; gap: 8px; align-items: flex-start; }
-  .lp-vis.lp-file { background: radial-gradient(120% 90% at 50% 0%, #1b2130 0%, #0c0f17 62%); }
+  /* overflow: clip, not hidden: a box that clips does not become a scroll container, so its automatic minimum height (the card) still holds and the square grows when the text is spaced out (WCAG 1.4.12) */
+  .lp-vis.lp-file { overflow: clip; background: radial-gradient(120% 90% at 50% 0%, #1b2130 0%, #0c0f17 62%); }
   .lp-filecard { width: 66%; padding: 11px; border-radius: 16px; background: #0f1320; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 24px 50px -20px rgba(0, 0, 0, .9); }
   .lp-filecard img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 9px; }
   .lp-filecard div { margin-top: 12px; display: grid; gap: 3px; }

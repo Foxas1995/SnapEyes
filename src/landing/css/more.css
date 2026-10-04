@@ -14,6 +14,8 @@
   .lp-more[open] > summary svg { transform: rotate(45deg); }
   .lp-rail { display: flex; gap: 14px; margin-inline: calc(-1 * var(--gut)); padding: 6px var(--gut) 18px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut); scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }
   .lp-rail::-webkit-scrollbar { display: none; }
+  /* the rail masks its own right edge, which would hide an outline drawn outside it: the ring sits inside (WCAG 2.4.7) */
+  .lp-rail:focus-visible { outline-offset: -3px; }
   .lp-rail figure { flex: none; scroll-snap-align: start; }
   .lp-rail figure > div { position: relative; height: 280px; border-radius: 16px; overflow: hidden; background: #111; box-shadow: 0 0 0 1px rgba(255, 255, 255, .07); }
   .lp-rail img { height: 100%; width: auto; max-width: none; }

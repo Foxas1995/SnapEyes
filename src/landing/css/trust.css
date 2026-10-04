@@ -42,7 +42,7 @@
   .lp-priv-list p { margin-top: 5px; font-size: 14px; line-height: 1.6; color: var(--ink-3); }
   .lp-priv-foot { margin-top: 22px; font-size: 13.5px; line-height: 1.65; color: var(--ink-3); }
   .lp-priv-foot p + p { margin-top: 8px; }
-  .lp-priv-foot a { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--gold-line); text-underline-offset: 5px; }
+  .lp-priv-foot a { display: inline-block; margin-top: 12px; padding-block: 1px; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--gold-line); text-underline-offset: 5px; }
   .lp-priv-foot a:hover { color: var(--gold); }
   details.lp-pv { border-top: 1px solid var(--line); }
   details.lp-pv > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 0; min-height: 52px; font-weight: 600; font-size: 15.5px; color: #fff; }

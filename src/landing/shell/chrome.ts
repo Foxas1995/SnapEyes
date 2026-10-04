@@ -1,7 +1,7 @@
 // The behaviour of the notice bar and the fixed header (the prototype's initHeader): the header sits under the bar while the bar
 // is on screen and follows it up as the page scrolls, goes solid after 24 px, and --bar-h (the bar's height, which places the
 // header and the hero) follows the bar when the window is resized, the fonts arrive or the bar's words change. No re-render
-// per scroll event: the class and the offset are set on the elements directly.
+// per scroll event: the class and the offset (a transform) are set on the elements directly.
 import { useLayoutEffect, type RefObject } from 'react';
 
 export function useHeaderChrome(barRef: RefObject<HTMLElement | null>, headerRef: RefObject<HTMLElement | null>, barText: string): void {
@@ -16,7 +16,8 @@ export function useHeaderChrome(barRef: RefObject<HTMLElement | null>, headerRef
       const bh = bar.offsetHeight;
       root.style.setProperty('--bar-h', `${bh}px`);
       const y = window.scrollY;
-      hdr.style.top = `${Math.max(0, bh - y)}px`;
+      // a transform, not `top`: the header follows the bar every frame, and a layout property would be a layout shift each time
+      hdr.style.transform = `translateY(${Math.max(0, bh - y)}px)`;
       hdr.classList.toggle('lp-solid', y > 24);
     };
     const onScroll = () => {
@@ -32,7 +33,7 @@ export function useHeaderChrome(barRef: RefObject<HTMLElement | null>, headerRef
     return () => {
       window.removeEventListener('resize', place);
       window.removeEventListener('scroll', onScroll);
-      hdr.style.top = '';
+      hdr.style.transform = '';
     };
   }, [barRef, headerRef]);
 
