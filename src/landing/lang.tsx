@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { COPY, copyFor, type Copy } from './copy';
+import { COPY, type Copy } from './copy';
 import { useMarket } from '../shared/useMarket';
 import { LANGS, LOCALES, detectLang, langAllowed, langFor, langQuery, rememberLang, type Lang } from '../shared/lang';
 import { currentMarket, type Market } from '../shared/markets';
@@ -48,8 +48,7 @@ function setMetaAll(attr: 'name' | 'property', key: string, values: string[]) {
   }
 }
 
-// What the head tags say about a language (the meta block of a copy): today's landing copy (./copy.ts) and the new
-// landing's copy (./copy/en.json and the other languages) both have it.
+// What the head tags say about a language: the meta block of the landing's copy (./copy/en.json and the other languages).
 interface HeadMeta { title: string; description: string; shareDescription: string; locale: string }
 
 function writeHead(lang: Lang, meta: HeadMeta, alternateLocales: string[]) {
@@ -65,10 +64,6 @@ function writeHead(lang: Lang, meta: HeadMeta, alternateLocales: string[]) {
   setMeta('name', 'twitter:description', meta.shareDescription);
 }
 
-function applyHeadTags(lang: Lang, t: Copy, market: Market) {
-  writeHead(lang, t.meta, LANGS.filter((l) => l !== lang && langAllowed(l, market)).map((l) => COPY[l].meta.locale));
-}
-
 /** The head of the new landing: the tab title, the description, the canonical, the Open Graph and Twitter tags, all from the
  *  meta of the language's copy (src/landing/copy/CopyProvider.tsx calls it once the language's words are here). The other
  *  languages' og:locale values come from src/shared/lang.ts LOCALES (scripts/check_texts.mjs checks the copy's own locale
@@ -82,15 +77,15 @@ interface LangState {
   lang: Lang;
   t: Copy;
   setLang: (l: Lang) => void;
-  /** A component that writes the head tags itself (the new landing's CopyProvider) claims them while it is mounted: this
-   *  provider then leaves title, description and canonical alone (its own effect runs after the child's, so without a claim
-   *  it would write today's copy over the new one). Returns the release. */
+  /** A component that writes the head tags itself (the landing's CopyProvider) claims them while it is mounted: this provider
+   *  then leaves them alone. Returns the release. */
   claimHead: () => () => void;
 }
 
 const LangContext = createContext<LangState | null>(null);
 
-// applyHead: the legal pages set their own title, description and canonical; without it the landing's tags apply.
+// applyHead: the legal pages set their own title, description and canonical. The landing writes its head from its copy
+// (CopyProvider claims it); a page with neither leaves the head as its HTML has it.
 export function LangProvider({ children, applyHead }: { children: ReactNode; applyHead?: (lang: Lang) => void }) {
   const [chosen, setChosen] = useState<Lang>(() => detectLang(currentMarket()));
   // the language the page shows: the visitor's, unless the market has no texts in it (the Australian market: English
@@ -110,19 +105,12 @@ export function LangProvider({ children, applyHead }: { children: ReactNode; app
   }, []);
 
   useEffect(() => {
-    const t = COPY[lang];
     document.documentElement.lang = lang;
     if (headClaims.current > 0) return;
-    if (applyHead) {
-      applyHead(lang);
-      return;
-    }
-    document.title = t.meta.title;
-    applyHeadTags(lang, t, market);
-  }, [lang, market, applyHead]);
+    if (applyHead) applyHead(lang);
+  }, [lang, applyHead]);
 
-  // the copy of the language, with the lines of the visitor's market where it has its own (copyFor: Australia)
-  const value = useMemo(() => ({ lang, t: copyFor(lang, market), setLang, claimHead }), [lang, market, setLang, claimHead]);
+  const value = useMemo(() => ({ lang, t: COPY[lang], setLang, claimHead }), [lang, setLang, claimHead]);
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }
 

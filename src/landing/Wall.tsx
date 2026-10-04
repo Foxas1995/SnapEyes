@@ -5,17 +5,22 @@
 //
 // Keyboard: the materials are a vertical tab list and the artworks a radio group, both with a roving tabindex (one tab stop
 // each; arrow keys, Home and End move AND pick, as the prototype does), and the focus stays on the control after a pick.
-import { useState, type SyntheticEvent } from 'react';
+import { Suspense, lazy, useState, type SyntheticEvent } from 'react';
 import { asset } from './assets';
 import { WALL_THUMBS } from './assets.data';
 import { CompareTable } from './CompareTable';
-import { MoreRooms } from './MoreRooms';
-import { SizeGuide } from './SizeGuide';
 import { useCopy } from './copy/useCopy';
 import { useTryHref } from './links';
 import { useKeepFocus, useRoving } from './ui';
 import { WallStage } from './WallStage';
 import { ARTS, DEFAULT_ART, DEFAULT_MATERIAL, MATERIALS, artFor, glintFor, hasScene, isSized, stagePicture, warm, type Material, type WallArt } from './wallScenes';
+import { slotStyle } from './slots';
+import './css/wall.css';
+
+// The size guide and "More ways to see it" are chunks of their own: they are far below the stage, and a visitor who stops at the
+// materials never needs their code or their stylesheet. Until a chunk is here its place is held by an empty block of its height.
+const SizeGuide = lazy(() => import('./SizeGuide').then((m) => ({ default: m.SizeGuide })));
+const MoreRooms = lazy(() => import('./MoreRooms').then((m) => ({ default: m.MoreRooms })));
 
 export function Wall() {
   const { c, t, lang } = useCopy();
@@ -154,8 +159,12 @@ export function Wall() {
           <a className="lp-link-gold" href={tryHref}>{w.cta}</a>
         </p>
 
-        <SizeGuide />
-        <MoreRooms />
+        <Suspense fallback={<div className="lp-slot" id="sizes" aria-hidden="true" style={slotStyle('sizes')} />}>
+          <SizeGuide />
+        </Suspense>
+        <Suspense fallback={<div className="lp-slot" id="more" aria-hidden="true" style={slotStyle('more')} />}>
+          <MoreRooms />
+        </Suspense>
       </div>
     </section>
   );

@@ -5,9 +5,7 @@
 // No purchase button here: an order starts from the visitor's own preview on /try, so the one action is the free preview. Every
 // price comes through src/landing/prices.ts (PriceTable.tsx); the words come from the copy (src/landing/copy), the links from
 // src/landing/links.ts. Importing this file brings its own stylesheet, so it can be loaded lazily with its section.
-import { useContext } from 'react';
-import { CopyContext, useCopy } from './copy/useCopy';
-import { PricingLegacy } from './PricingLegacy';
+import { useCopy } from './copy/useCopy';
 import { useLandingPrices } from './prices';
 import { useLegalHref, useTryHref } from './links';
 import { legalEdition } from '../shared/legal';
@@ -24,7 +22,7 @@ function Arrow() {
   );
 }
 
-export function PricingSection() {
+export function Pricing() {
   const { c, fmt } = useCopy();
   const p = useLandingPrices();
   const tryHref = useTryHref();
@@ -68,13 +66,6 @@ export function PricingSection() {
       </div>
     </section>
   );
-}
-
-/** What the page renders: the new section inside a CopyProvider (every visitor the new landing serves, src/landing/gate.ts), today's
- *  pricing block outside it (Lithuanian, Hungarian and the forint market keep today's page until their copy exists). Delete the
- *  fallback with PricingLegacy.tsx when the last old section goes. */
-export function Pricing() {
-  return useContext(CopyContext) ? <PricingSection /> : <PricingLegacy />;
 }
 
 export default Pricing;

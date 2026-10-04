@@ -1,22 +1,18 @@
-/* The landing page's stylesheet: one file per section, imported in the order they cascade. Loaded by the landing's entry
-   (src/main.tsx) only: the legal pages, /try, /order and /admin never get it (scripts/legal_look.mjs proves the legal pages
-   did not change). Every rule is inside @layer landing and every class is prefixed lp- (see base.css). The layer order is
-   also declared in src/index.css; repeating it here keeps this file correct if it is ever loaded first. */
+/* The landing page's stylesheet, in two parts. THIS file is what the first render needs (the entry, src/main.tsx, imports it):
+   the page's primitives, the notice bar, the header, the hero, the footer and the sticky button. The lazy sections bring their own
+   file with their chunk (src/landing/Reveal.tsx imports css/reveal.css, Wall.tsx wall.css, SizeGuide.tsx sizes.css, MoreRooms.tsx
+   more.css, StyleGallery.tsx styles.css, HowItWorks.tsx how.css, Pricing.tsx pricing.css, CloseUps.tsx closeups.css, Trust.tsx
+   trust.css, Faq.tsx faq.css, ClosingScene.tsx final.css), so a visitor loads a section's rules with its code. Each of those files
+   states only its own classes, so the order they arrive in changes nothing (scripts/check_landing.mjs compares every computed
+   style of the whole page with all files loaded eagerly). Loaded by the landing's entry only: the legal pages, /try, /order and
+   /admin never get it (scripts/legal_look.mjs proves the legal pages did not change). Every rule is inside @layer landing and
+   every class is prefixed lp- (see base.css). The layer order is also declared in src/index.css; repeating it here keeps this file
+   correct if it is ever loaded first. */
 @layer theme, base, landing, components, utilities;
 
 @import './base.css';
 @import './bar.css';
 @import './header.css';
 @import './hero.css';
-@import './reveal.css';
-@import './wall.css';
-@import './sizes.css';
-@import './more.css';
-@import './styles.css';
-@import './how.css';
-@import './pricing.css';
-@import './closeups.css';
-@import './trust.css';
-@import './faq.css';
 @import './footer.css';
 @import './sticky.css';

@@ -6,7 +6,6 @@ import App from './App.tsx'
 import { detectLang } from './shared/lang'
 import { currentMarket } from './shared/markets'
 import { preloadCopy } from './landing/copy/index'
-import { newLandingFor } from './landing/gate'
 
 // The landing entry. index.html already holds the first screen as static HTML (<div id="shell">, written at build time by the
 // heroShell plugin of vite.config.ts from src/landing/shell), so the visitor sees the bar, the header and the hero, LCP picture
@@ -29,8 +28,7 @@ if (shell) {
 }
 
 // a visitor who reads another language than English: its file travels while React boots
-const lang = detectLang(currentMarket())
-if (newLandingFor(lang, currentMarket())) preloadCopy(lang)
+preloadCopy(detectLang(currentMarket()))
 
 createRoot(root).render(
   <StrictMode>

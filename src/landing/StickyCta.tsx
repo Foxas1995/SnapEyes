@@ -15,9 +15,6 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useCopy } from './copy/useCopy';
 import { useTryHref } from './links';
 
-// Today's sticky bar, for the visitors the new landing does not serve yet (src/landing/gate.ts). Delete with that fallback.
-export { StickyCta } from './legacy/StickyCta';
-
 /** Which elements make the bar step aside: every inline gold button, and the pricing block. */
 const SHOWS_OWN_ACTION = 'a.lp-btn-gold, #pricing';
 

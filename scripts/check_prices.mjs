@@ -51,7 +51,7 @@ const PRICE_FILES = [
   // unit is taken for a price: image sizes come from the asset manifest, never typed here.
   'src/landing/priceText.ts', 'src/landing/prices.ts', 'src/landing/PriceTable.tsx', 'src/landing/HeroScene.tsx', 'src/landing/StyleTile.tsx',
   // the first screen's shell (BUILD_PLAN section 4 step 1: the hero's price line is made here; the build hands render.tsx its one price)
-  'src/landing/shell/parts.tsx', 'src/landing/shell/render.tsx', 'src/landing/shell/FirstScreen.tsx',
+  'src/landing/shell/render.tsx', 'src/landing/HeroView.tsx',
 ];
 const PRICE_DIRS = ['src/landing/copy'];
 // Never scanned for written prices: the one place itself, the place of the price experiments' ladders
@@ -322,11 +322,10 @@ function checkCopies(root, markets, out) {
 //      styles) is exactly the ladder's own price by the server's rule in the site's money format, and changes when the ladder
 //      changes it: with the probe ladder EVERY text differs from the standard one.
 
-// today's landing: its files stay as they are until the integrator removes them (not governed by the rules above)
+// the files of src/landing that are not the landing's own sections (the facts of the seller, the words other pages still use, the
+// language and ordering state, the primitives the legal pages import): not governed by the rules above
 export const OLD_LANDING_FILES = new Set([
-  'BeforeAfter.tsx', 'Faq.tsx', 'Footer.tsx', 'Header.tsx', 'Hero.tsx', 'HowItWorks.tsx', 'MarketHint.tsx', 'Pricing.tsx',
-  'StickyCta.tsx', 'StyleGallery.tsx', 'Trust.tsx', 'config.ts', 'copy.hu.ts', 'copy.lt.ts', 'copy.ts', 'lang.tsx', 'ordering.ts',
-  'ui.tsx', 'landing.css',
+  'config.ts', 'copy.hu.ts', 'copy.lt.ts', 'copy.ts', 'lang.tsx', 'ordering.ts', 'ui.tsx',
 ]);
 
 // the standard ladder may be read by nothing in the new landing

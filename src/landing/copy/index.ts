@@ -3,15 +3,14 @@
 // the page needs it (loadCopy). The shape of the words is the shape of en.json (./types.ts), so a component cannot read
 // a key that does not exist, and a language file that does not fit the type does not compile (asCopy below).
 //
-// Adding Lithuanian or Hungarian is a pure file drop: replace lt.json or hu.json with the translation (the same keys and
-// {tokens} as en.json; scripts/check_texts.mjs checks both and the words), delete the language's line in PLACEHOLDERS.txt.
-// Until then those two files are English stand-ins (PLACEHOLDERS.txt lists them, isPlaceholderCopy says so), so the
-// build compiles and the text check accepts English in exactly those files and in no other.
+// A language's file has the keys and {tokens} of en.json, and scripts/check_texts.mjs checks that and the words (a dash, an
+// untranslated sentence, the legal labels, the honesty lines). All four languages of the site (src/shared/lang.ts LANGS) have
+// their translation here.
 //
 // A language that src/shared/lang.ts lists (LANGS) and has no file here fails the build twice: the loader table below is
 // a Record over those languages (tsc), and scripts/check_texts.mjs wants every file (vite build).
 import en from './en.json';
-import { LANGS, type Lang } from '../../shared/lang';
+import type { Lang } from '../../shared/lang';
 import { legalEdition } from '../../shared/legal';
 import type { Market } from '../../shared/markets';
 import type { CopyPath, CopyTokens, LandingCopy } from './types';
@@ -95,25 +94,6 @@ export function preloadCopy(lang: Lang): void {
   if (failed.has(lang)) return;
   void loadCopy(lang).catch(() => undefined);
 }
-
-// ---------------------------------------------------------------------------------------------------- placeholders
-
-// PLACEHOLDERS.txt names the language files that are English stand-ins (one "lt.json" per line; # starts a comment).
-// import.meta.glob finds it when it exists and finds nothing when it is deleted, so finishing the translations never
-// leaves a dangling import: delete the file and this list is empty.
-const FLAG_FILES = import.meta.glob('./PLACEHOLDERS.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-const FLAGGED = new Set(
-  Object.values(FLAG_FILES).flatMap((text) => text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== '' && !l.startsWith('#'))),
-);
-
-/** Is this language's landing copy still an English stand-in? Then a page in that language must not serve the new landing
- *  (the integrator's language gate: until the translation lands, lt and hu keep today's landing). */
-export function isPlaceholderCopy(lang: Lang): boolean {
-  return lang !== 'en' && FLAGGED.has(`${lang}.json`);
-}
-
-/** The languages the new landing can really speak: every language of the site whose copy is a translation. */
-export const COPY_LANGS: readonly Lang[] = LANGS.filter((l) => !isPlaceholderCopy(l));
 
 // ---------------------------------------------------------------------------------------------------- the market layer
 

@@ -722,6 +722,10 @@
     "aud": {
       "text": "Sie kaufen aus Australien? Sehen Sie unsere Preise in australischen Dollar (A$), mit unseren Bedingungen für Australien.",
       "show": "Preise in A$ anzeigen"
+    },
+    "huf": {
+      "text": "Sie kaufen aus Ungarn? Sehen Sie unsere Preise in ungarischen Forint (Ft).",
+      "show": "Preise in Ft anzeigen"
     }
   },
   "ui": {

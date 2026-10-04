@@ -56,6 +56,12 @@
   .lp-strip img { width: 100%; height: 100%; object-fit: cover; }
   .lp-strip figcaption { margin-top: 10px; font-size: 12px; line-height: 1.4; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
   .lp-strip figcaption i { font-style: normal; font-family: var(--display); color: var(--gold); font-size: 13px; }
+  /* the three captions share a screen only 280 px wide (a folded phone): the longest word of the German and Hungarian ones ("KUNSTWERK",
+     "ALKOTÁSOD") is wider than its 77 px column at 12 px, so the page scrolled sideways by 9 px. Smaller, tighter, and the number
+     above the words when they do not fit beside it. */
+  @media (max-width: 359px) {
+    .lp-strip figcaption { flex-wrap: wrap; gap: 0 5px; font-size: 10.5px; letter-spacing: .04em; overflow-wrap: anywhere; }
+  }
   .lp-never { margin: 26px auto 0; max-width: 30em; text-align: center; font-family: var(--display); font-size: clamp(17px, 3.4vw, 24px); line-height: 1.3; color: #fff; text-wrap: balance; }
   .lp-reveal-note { margin: 18px auto 0; max-width: 40em; text-align: center; font-size: 13.5px; line-height: 1.6; color: var(--ink-3); }
   .lp-your-turn { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 34px; text-align: center; }

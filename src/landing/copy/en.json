@@ -722,6 +722,10 @@
     "aud": {
       "text": "Shopping from Australia? See our prices in Australian dollars (A$), with our terms for Australia.",
       "show": "Show prices in A$"
+    },
+    "huf": {
+      "text": "Shopping from Hungary? See our prices in Hungarian forints (Ft).",
+      "show": "Show prices in Ft"
     }
   },
   "ui": {

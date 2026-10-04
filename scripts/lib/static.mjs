@@ -58,11 +58,13 @@ export function headersFor(vercel, pathname) {
   return out;
 }
 
-export function serve(dir, { port = 0, vercelFile, compress = true } = {}) {
+export function serve(dir, { port = 0, vercelFile, compress = true, handler } = {}) {
   let vercel = { cleanUrls: true };
   try { vercel = JSON.parse(readFileSync(vercelFile || join(dir, '..', 'vercel.json'), 'utf8')); } catch { /* no vercel.json next to the build: clean URLs, no headers */ }
   const cache = new Map();
   const server = createServer((req, res) => {
+    // a check may answer some requests itself (a stub of /api/health and /api/checkout): handler(req, res) returns true when it did
+    if (handler && handler(req, res)) return;
     let pathname = decodeURIComponent((req.url || '/').split('?')[0]);
     if (pathname.endsWith('/')) pathname += 'index.html';
     let file = normalize(join(dir, pathname));
@@ -79,7 +81,8 @@ export function serve(dir, { port = 0, vercelFile, compress = true } = {}) {
     if (compress && COMPRESSIBLE.has(ext) && body.length > 256) {
       const enc = /\bbr\b/.test(accept) ? 'br' : /\bgzip\b/.test(accept) ? 'gzip' : '';
       if (enc) {
-        const key = `${enc}:${file}:${body.length}`;
+        // the key holds the modification time: a rebuild gives index.html another content of the same length (the hashes in it)
+        const key = `${enc}:${file}:${statSync(file).mtimeMs}:${body.length}`;
         if (!cache.has(key)) cache.set(key, enc === 'br' ? brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 5 } }) : gzipSync(body, { level: 6 }));
         body = cache.get(key);
         headers['content-encoding'] = enc;

@@ -4,16 +4,14 @@
 // holds the founder and the privacy promise. The promises must stay true to the privacy policy (src/legal/docs/privacy.ts):
 // free previews are not stored, paid orders keep their files (not the phone photo) for 12 months. Importing this file brings
 // its own stylesheet, so it can be loaded lazily with its section.
-import { useContext } from 'react';
-import { CopyContext, useCopy } from './copy/useCopy';
-import { TrustLegacy } from './TrustLegacy';
+import { useCopy } from './copy/useCopy';
 import { useLegalHref } from './links';
 import { Never } from './Never';
 import { Curator } from './Curator';
 import { PrivacyList } from './PrivacyList';
 import './css/trust.css';
 
-export function TrustSection() {
+export function Trust() {
   const { c } = useCopy();
   const tr = c.trust;
   const privacyHref = useLegalHref('privacy');
@@ -43,13 +41,6 @@ export function TrustSection() {
       </div>
     </section>
   );
-}
-
-/** What the page renders: the new section inside a CopyProvider (every visitor the new landing serves, src/landing/gate.ts), today's
- *  trust section outside it (Lithuanian, Hungarian and the forint market keep today's page until their copy exists). Delete the
- *  fallback with TrustLegacy.tsx when the last old section goes. */
-export function Trust() {
-  return useContext(CopyContext) ? <TrustSection /> : <TrustLegacy />;
 }
 
 export default Trust;

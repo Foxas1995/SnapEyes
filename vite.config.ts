@@ -88,9 +88,8 @@ function assetCheck(): Plugin {
 //     price of the page until the server has answered.
 //   * lp:head: (1) the decision script (src/landing/shell/scripts.ts): a visitor who will read another language or market than the
 //     shell's must never see the English shell flash up, so it is hidden for them; written from the tables of src/shared/lang.ts,
-//     src/shared/markets.ts and src/landing/gate.ts, and proven equal to detectLang and detectMarket by scripts/check_shell.mjs.
-//     A visitor the new landing does not serve (Lithuanian, Hungarian, forint while those have no copy) gets the preload of today's
-//     first picture from that script. (2) The preload of the new hero picture.
+//     src/shared/markets.ts, and proven equal to detectLang and detectMarket by scripts/check_shell.mjs. (2) The preload of the
+//     new hero picture.
 //   * the title, description and share texts come from the English copy (src/landing/copy/en.json meta), as they do at run time.
 // Loaded through Vite's module runner, like the other build steps, so this file imports no app code itself.
 function heroShell(): Plugin {
@@ -101,8 +100,6 @@ function heroShell(): Plugin {
     const markets = await load('./src/shared/markets.ts')
     const lang = await load('./src/shared/lang.ts')
     const priceText = await load('./src/landing/priceText.ts')
-    const gate = await load('./src/landing/gate.ts')
-    const config = await load('./src/landing/config.ts')
     const shell = await load('./src/landing/shell/render.tsx')
     const scripts = await load('./src/landing/shell/scripts.ts')
     const market: string = markets.DEFAULT_MARKET
@@ -113,13 +110,10 @@ function heroShell(): Plugin {
       selectable: markets.SELECTABLE,
       allowed: Object.fromEntries(all.map((m) => [m, lang.marketLangs(m)])),
       own: Object.fromEntries(all.map((m) => [m, lang.marketDefaultLang(m)])),
-      newLangs: gate.NEW_LANDING_LANGS,
-      legacyMarkets: all.filter((m) => markets.currencyOf(m) === 'huf'),
-      legacy: { href: config.styleSrc('celestial-gold', 800), srcset: config.styleSrcSet('celestial-gold'), sizes: '(min-width: 640px) 520px, calc(100vw - 32px)' },
     }
     // the price of the micro line: the ladder the shell is made from (held back in the markup, see src/landing/shell/parts.tsx)
     const fromPrice: string = priceText.landingPrices(markets.priceList(market), market, 'en').from
-    const langs = lang.LANGS.filter((l: string) => gate.NEW_LANDING_LANGS.includes(l) && lang.langAllowed(l, market))
+    const langs = lang.LANGS.filter((l: string) => lang.langAllowed(l, market))
     const out = shell.renderShell({ fromPrice, langs })
     return {
       html: out.html,

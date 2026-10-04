@@ -13,7 +13,7 @@
 //    afterwards (src/landing/shell/chrome.ts).
 // 3. The loader (end of the body, build only): starts the page's own script after the LCP picture has loaded, see loaderScript.
 
-/** The tables of src/shared/markets.ts and src/shared/lang.ts the decision needs, and the gate of src/landing/gate.ts. */
+/** The tables of src/shared/markets.ts and src/shared/lang.ts the decision needs. */
 export interface ShellRule {
   /** DEFAULT_MARKET and the language of the shell. */
   defaultMarket: string;
@@ -24,11 +24,6 @@ export interface ShellRule {
   allowed: Record<string, string[]>;
   /** market -> its own language when it names one that is not English (marketDefaultLang). */
   own: Record<string, string | null>;
-  /** The gate: the languages the new landing speaks and the markets it does not serve (forint). A visitor it does not serve
-   *  gets today's landing, whose first picture is preloaded by `legacy` instead of the new hero's. */
-  newLangs: string[];
-  legacyMarkets: string[];
-  legacy: { href: string; srcset: string; sizes: string };
 }
 
 export const MARKET_KEY = 'snapeyes.market';
@@ -46,10 +41,7 @@ export function decisionScript(rule: ShellRule): string {
     `var al=R.allowed[m]||[],ok=function(v){return al.indexOf(v)>=0},l=q.get('lang');` +
     `if(!ok(l)){l=st('${LANG_KEY}');if(!ok(l)){l=R.own[m]||null;if(!l){var n=(navigator.language||'').toLowerCase();` +
     `n=n.indexOf('de')===0?'de':n.indexOf('lt')===0?'lt':n.indexOf('hu')===0?'hu':'en';l=ok(n)?n:'en'}}}` +
-    `if(l!==R.lang||m!==R.defaultMarket)${hide};` +
-    `if(R.newLangs.indexOf(l)<0||R.legacyMarkets.indexOf(m)>=0){var k=document.createElement('link');k.rel='preload';k.as='image';` +
-    `k.href=R.legacy.href;k.setAttribute('imagesrcset',R.legacy.srcset);k.setAttribute('imagesizes',R.legacy.sizes);` +
-    `k.setAttribute('fetchpriority','high');document.head.appendChild(k)}}catch(e){${hide}}})()`
+    `if(l!==R.lang||m!==R.defaultMarket)${hide}}catch(e){${hide}}})()`
   );
 }
 

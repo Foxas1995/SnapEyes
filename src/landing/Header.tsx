@@ -3,16 +3,11 @@
 // (src/landing/shell) and live (./SiteTop.tsx, which also gives it its behaviour: it sits under the notice bar and follows it up
 // as the page scrolls, goes solid after 24 px).
 //
-// This file is also imported by the legal pages (src/legal/LegalApp.tsx takes LangSwitch from it), so it imports nothing that
-// carries the landing's words or pictures: types only, plus the language names.
+// It imports nothing that carries the landing's words or pictures: types only, plus the language names (the legal pages have
+// their own language switch, src/legal/LangSwitch.tsx).
 import type { Ref } from 'react';
 import { LANG_NAMES, type Lang } from '../shared/lang';
 import type { LandingCopy } from './copy/types';
-
-// Today's header and language switch, for the visitors the new landing does not serve yet (Lithuanian, Hungarian, the forint
-// market: src/landing/gate.ts) and for the legal pages. Delete `Header` with that fallback; `LangSwitch` stays while the legal
-// pages use it.
-export { Header, LangSwitch } from './legacy/Header';
 
 /** The header's navigation, in the order of the page's sections (copy nav.*). */
 const NAV_KEYS = ['reveal', 'wall', 'styles', 'how', 'pricing', 'faq'] as const;

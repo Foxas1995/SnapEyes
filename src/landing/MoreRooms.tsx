@@ -7,6 +7,7 @@ import { asset } from './assets';
 import { MORE } from './assets.data';
 import { useCopy } from './copy/useCopy';
 import { Disclosure, ExampleChip } from './ui';
+import './css/more.css';
 
 /** Open on a desktop or when the visitor came by the link #more; read once, on the first render, and left to the visitor after. */
 function initiallyOpen(): boolean {

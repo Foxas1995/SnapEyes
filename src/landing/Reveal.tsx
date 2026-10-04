@@ -11,6 +11,7 @@ import { RevealSlider } from './RevealSlider';
 import { RevealStrip } from './RevealStrip';
 import { REVEAL_SIZES, revealEyes, type RevealEye } from './revealEyes';
 import type { PictureAsset } from './assets';
+import './css/reveal.css';
 
 /** A picture fetched and decoded ahead of the frame, so both layers of the next eye can change in the same frame. */
 function ready(a: PictureAsset): Promise<void> {

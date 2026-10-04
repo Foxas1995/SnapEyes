@@ -8,6 +8,7 @@ import { assetUrl } from './assets';
 import { useCopy } from './copy/useCopy';
 import { DEFAULT_SIZE, FLOOR, SCENE, SIZES, labelSpots, person, ppi, sofaRects, squares, viewBoxFor, type SizeCm } from './sizeScale';
 import { Pill, useKeepFocus, useMediaQuery, useRoving } from './ui';
+import './css/sizes.css';
 
 const ART = assetUrl('art/radiance_own_480');
 

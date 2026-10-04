@@ -59,6 +59,14 @@
   @media (min-width: 960px) {
     .lp-sec { padding-block: 76px; }
   }
+  /* the empty place of a lazy section while its chunk is on the way (src/App.tsx Slot, heights in src/landing/slots.ts) */
+  .lp-slot { min-height: var(--slot-p); }
+  @media (min-width: 640px) {
+    .lp-slot { min-height: var(--slot-t); }
+  }
+  @media (min-width: 960px) {
+    .lp-slot { min-height: var(--slot-d); }
+  }
   .lp-sec + .lp-sec::before { content: ""; position: absolute; top: 0; left: 50%; width: min(1120px, calc(100% - 2 * var(--gut))); transform: translateX(-50%); height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 197, 66, .28), transparent); }
   .lp-sec-head { max-width: 680px; }
   .lp-sec-head h2 { margin-top: 18px; }

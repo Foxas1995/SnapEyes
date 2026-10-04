@@ -3,26 +3,18 @@
 // ./gallery.ts, the look css/styles.css. Words come from the copy layer, prices from the visitor's own ladder, pictures from
 // the asset manifest; nothing is written here. Importing this file brings its own stylesheet, so it can be loaded lazily
 // with its section.
-import { useContext, useState } from 'react';
-import { CopyContext, useCopy } from './copy/useCopy';
+import { useState } from 'react';
+import { useCopy } from './copy/useCopy';
 import { DEFAULT_EYE, DEFAULT_GROUP, hasEyeSwitch, isWide, tileKey, tilesOf, type EyeId, type GalleryGroup } from './gallery';
 import { useLandingPrices } from './prices';
 import { EyeChips } from './EyeChips';
-import { StyleGalleryLegacy } from './StyleGalleryLegacy';
 import { StyleTabs } from './StyleTabs';
 import { StyleTile } from './StyleTile';
 import { PriceGate } from './ui';
 import { useScrollableRegion } from './useScrollableRegion';
 import './css/styles.css';
 
-/** The chapter. Inside the new landing's copy layer it is the new gallery; outside it (a visitor the new landing does not
- *  serve yet: Lithuanian, Hungarian, the forint market) it is today's gallery, as it was. The fallback goes with the last old
- *  section (./StyleGalleryLegacy.tsx). */
 export function StyleGallery() {
-  return useContext(CopyContext) ? <Styles /> : <StyleGalleryLegacy />;
-}
-
-function Styles() {
   const { c, t } = useCopy();
   const prices = useLandingPrices();
   const [group, setGroup] = useState<GalleryGroup>(DEFAULT_GROUP);

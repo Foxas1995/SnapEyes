@@ -26,8 +26,15 @@ for (const d of ['terms', 'withdrawal']) {
   CASES.push({ path: `/${d}?lang=hu&m=hu`, width: 1280 });
 }
 
+// Two Tailwind theme variables that the old landing's markup (backdrop-blur-xl, max-w-xl) made the build write into the root of every
+// page, inherited by every element, and that nothing reads any more (checked below: no stylesheet of the build holds var(--blur-xl)
+// or var(--container-xl)). They stay out of the style fingerprint, so deleting the old landing does not look like a change of the
+// legal pages; the pixels, every box and every other property still have to be identical. The baseline must be taken with the same list.
+const IGNORED_VARIABLES = ['--blur-xl', '--container-xl'];
+
 // in the page: one record per element (tag, class, box, hash of every computed style, own text)
 const COLLECT = `(() => {
+  const SKIP = new Set(${JSON.stringify(IGNORED_VARIABLES)});
   const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(16); };
   const out = [];
   for (const el of document.querySelectorAll('html, body, body *')) {
@@ -36,7 +43,7 @@ const COLLECT = `(() => {
     // custom properties come in no fixed order: sort by name
     const names = []; for (let i = 0; i < cs.length; i++) names.push(cs[i]); names.sort();
     let s = '';
-    for (const n of names) s += n + ':' + cs.getPropertyValue(n) + ';';
+    for (const n of names) if (!SKIP.has(n)) s += n + ':' + cs.getPropertyValue(n) + ';';
     const r = el.getBoundingClientRect();
     const own = Array.from(el.childNodes).filter((n) => n.nodeType === 3).map((n) => n.textContent).join('');
     out.push([el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : ''),
@@ -90,6 +97,9 @@ function cssLeaks(dir) {
       if (rules.test(css)) problems.push(`${f}: the stylesheet ${m[1]} holds landing rules`);
     }
   }
+  // the ignored variables are really unused: a build that reads one of them would hide a change
+  const read = (d) => readdirSync(d, { withFileTypes: true }).flatMap((f) => (f.isDirectory() ? read(join(d, f.name)) : f.name.endsWith('.css') ? [readFileSync(join(d, f.name), 'utf8')] : []));
+  for (const css of read(dir)) for (const v of IGNORED_VARIABLES) if (css.includes(`var(${v}`)) problems.push(`a stylesheet of the build reads ${v}, which the legal look check leaves out of its fingerprint: take it off IGNORED_VARIABLES`);
   return problems;
 }
 

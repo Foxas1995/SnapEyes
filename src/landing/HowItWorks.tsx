@@ -3,23 +3,14 @@
 // ./PhoneMock.tsx, the file card ./FileCard.tsx, the look css/how.css. Words come from the copy layer; the open wording of
 // step 3 ("pay through Stripe") is used only once ordering is open (src/landing/ordering.ts). Importing this file brings its own
 // stylesheet, so it can be loaded lazily with its section.
-import { useContext } from 'react';
-import { CopyContext, useCopy } from './copy/useCopy';
+import { useCopy } from './copy/useCopy';
 import { FileCard } from './FileCard';
-import { HowItWorksLegacy } from './HowItWorksLegacy';
 import { useTryHref } from './links';
 import { useOrderingOpen } from './ordering';
 import { PhoneMock } from './PhoneMock';
 import { Disclosure } from './ui';
 import { useScrollableRegion } from './useScrollableRegion';
 import './css/how.css';
-
-/** The chapter. Inside the new landing's copy layer it is the new section; outside it (a visitor the new landing does not
- *  serve yet: Lithuanian, Hungarian, the forint market) it is today's section, as it was. The fallback goes with the last old
- *  section (./HowItWorksLegacy.tsx). */
-export function HowItWorks() {
-  return useContext(CopyContext) ? <How /> : <HowItWorksLegacy />;
-}
 
 function Arrow() {
   return (
@@ -29,7 +20,7 @@ function Arrow() {
   );
 }
 
-function How() {
+export function HowItWorks() {
   const { c, fmt } = useCopy();
   const open = useOrderingOpen();
   const tryHref = useTryHref();

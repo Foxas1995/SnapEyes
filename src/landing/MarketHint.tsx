@@ -6,16 +6,12 @@
 // on the default market who came through no ?m= link and never chose. Nothing changes by itself: only the visitor's click
 // switches the market (setMarket, remembered like the currency switch), and closing it is remembered too (declineHint), so it is
 // never offered again. It sits in the page's flow (it scrolls away) below the fixed header and pushes the hero down by its own
-// height (.lp-market in src/landing/css/bar.css). The words are the copy's marketHint.*; a currency it has no words for
-// (the forint, while the page has no Hungarian copy) is never offered.
+// height (.lp-market in src/landing/css/bar.css). The words are the copy's marketHint.* (Australian dollars and forints).
 import { useState } from 'react';
 import { useCopy } from './copy/useCopy';
 import { useSuggestedMarket } from './ordering';
 import { currencyOf, declineHint, hintMarket, setMarket, type Currency } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
-
-// Today's offer, for the visitors the new landing does not serve yet (src/landing/gate.ts). Delete with that fallback.
-export { MarketHint } from './legacy/MarketHint';
 
 interface OfferWords { text: string; show: string }
 
@@ -25,8 +21,7 @@ export function MarketHintBar() {
   const suggest = useSuggestedMarket();
   const [closed, setClosed] = useState(false);
   const offer = closed ? null : hintMarket(suggest, market);
-  // the copy has words for the currencies it offers (marketHint.aud); the others are simply not offered
-  const byCurrency: Partial<Record<Currency, OfferWords>> = { aud: c.marketHint.aud };
+  const byCurrency: Partial<Record<Currency, OfferWords>> = { aud: c.marketHint.aud, huf: c.marketHint.huf };
   const words = offer ? byCurrency[currencyOf(offer)] : undefined;
   if (!offer || !words?.text) return null;
   return (

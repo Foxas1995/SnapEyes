@@ -4,8 +4,7 @@
 //
 // Part 1, the decision script (src/landing/shell/scripts.ts) against src/shared/lang.ts detectLang and detectMarket, over a matrix of
 // links (?m=, ?lang=), stored choices (localStorage snapeyes.market, snapeyes.lang) and browser languages: the script hides the
-// shell exactly when the visitor will not read the shell's language and market, and preloads today's first picture exactly when
-// src/landing/gate.ts newLandingFor says the new landing does not serve them.
+// shell exactly when the visitor will not read the shell's language and market.
 // Part 2, in real Chrome on the built page at 375, 768 and 1280 px: the shell (the page with its main script blocked: only the
 // static HTML and the two inline scripts) and the live first screen (React, after the shell has gone) occupy the same boxes, with
 // the same styles and the same pixels (the held-back price aside), the shell is gone after the handoff, no id is used twice, the
@@ -36,7 +35,6 @@ async function load(p) {
 async function rules() {
   const markets = await load('./src/shared/markets.ts');
   const lang = await load('./src/shared/lang.ts');
-  const gate = await load('./src/landing/gate.ts');
   const scripts = await load('./src/landing/shell/scripts.ts');
   const all = Object.keys(markets.MARKETS);
   const rule = {
@@ -45,9 +43,6 @@ async function rules() {
     selectable: markets.SELECTABLE,
     allowed: Object.fromEntries(all.map((m) => [m, lang.marketLangs(m)])),
     own: Object.fromEntries(all.map((m) => [m, lang.marketDefaultLang(m)])),
-    newLangs: gate.NEW_LANDING_LANGS,
-    legacyMarkets: all.filter((m) => markets.currencyOf(m) === 'huf'),
-    legacy: { href: '/x.webp', srcset: '/x.webp 1w', sizes: '1px' },
   };
   const script = scripts.decisionScript(rule);
   const ctxOf = (s) => {
@@ -77,15 +72,13 @@ async function rules() {
       const m = markets.detectMarket();
       const l = lang.detectLang(m);
       const wantHide = l !== 'en' || m !== markets.DEFAULT_MARKET;
-      const wantLegacy = !gate.newLandingFor(l, m);
       // the script
       const { doc, preloads, sandbox } = ctxOf(s);
       vm.runInNewContext(script, sandbox);
       const gotHide = doc.documentElement.className.includes('lp-noshell');
-      const gotLegacy = preloads.length > 0;
       n += 1;
-      if (gotHide !== wantHide || gotLegacy !== wantLegacy) {
-        note(`decision script: ${JSON.stringify(s)} -> market ${m}, language ${l}: the rule says hide ${wantHide}, legacy preload ${wantLegacy}; the script says ${gotHide}, ${gotLegacy}`);
+      if (gotHide !== wantHide || preloads.length > 0) {
+        note(`decision script: ${JSON.stringify(s)} -> market ${m}, language ${l}: the rule says hide ${wantHide}; the script says ${gotHide} (and it added ${preloads.length} nodes to the head, it must add none)`);
         if (problems.length > 12) return n;
       }
     }
@@ -248,7 +241,7 @@ async function browser(dist, shotsDir) {
 }
 
 const n = await rules();
-if (!problems.length) console.log(`decision script: ${n} combinations of link, stored choice and browser language agree with detectLang, detectMarket and the gate`);
+if (!problems.length) console.log(`decision script: ${n} combinations of link, stored choice and browser language agree with detectLang and detectMarket`);
 if (!flag('--rules')) {
   const dist = resolve(opt('--dist', join(ROOT, 'dist')));
   if (!existsSync(join(dist, 'index.html'))) {

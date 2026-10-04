@@ -81,10 +81,3 @@ export const STYLES = [
   { id: 'obsidian_smoke', name: 'Obsidian Smoke', slug: 'obsidian-smoke' },
   { id: 'supernova', name: 'Supernova', slug: 'supernova' },
 ] as const;
-export type StyleId = (typeof STYLES)[number]['id'];
-
-export const styleSrc = (slug: string, width: 480 | 800) => `/assets/atelier/style-${slug}-${width}.webp`;
-export const styleSrcSet = (slug: string) => `${styleSrc(slug, 480)} 480w, ${styleSrc(slug, 800)} 800w`;
-
-// The founder's phone crop at its native 315 px, not upscaled and not retouched.
-export const BEFORE_SRC = '/assets/atelier/before-phone-crop-315.webp';
