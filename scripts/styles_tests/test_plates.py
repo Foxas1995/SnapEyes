@@ -192,6 +192,13 @@ check("a legend drawn back into the plate: its rectangle is no longer black, and
       lp[928:1018, 786:1010].max() > 0 and fit_gap("P-CX-JET__wide_right_b75__pro4K__t1", lp) > 0.001, fit_gap("P-CX-JET__wide_right_b75__pro4K__t1", lp))
 check("the retouched plates still pass the collision accept rules, and the bake refuses a retouched plate that would not",
       all(BK.cx_qa(TABLE[i]["fit"]) for i in BK.RETOUCH) and "fails the collision accept rules after it" in read("scripts/bake_plates_registry.py"))
+sheet_png, strip_png = os.path.join(TMP, "sheet.png"), os.path.join(TMP, "strips.png")
+sh1 = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "plate_sheet.py"), "P-CX-JET", "--out", sheet_png, "--cell", "64", "--cols", "5"], capture_output=True, text=True, timeout=120)
+sh2 = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "plate_sheet.py"), "P-CX-JET", "--out", strip_png, "--cell", "128", "--strips", "140", "--gain", "3"], capture_output=True, text=True, timeout=120)
+check("scripts/plate_sheet.py (the curation tool: look at a sheet and at the brightened bottom strips of a family before baking it) makes a 5 x 4 sheet of the 19 JET "
+      "plates and a strip sheet, and names every plate id", sh1.returncode == 0 and sh2.returncode == 0 and Image.open(sheet_png).size == (320, 256) and Image.open(strip_png).size == (512, 10 * 35)
+      and sh1.stdout.count("P-CX-JET__") == 19 and "no usable plate" in subprocess.run([sys.executable, os.path.join(REPO, "scripts", "plate_sheet.py"), "P-NO-NONE", "--out", sheet_png], capture_output=True, text=True).stderr,
+      (sh1.stderr[-300:], sh2.stderr[-300:], sh1.stdout[-200:]))
 mine = PC.run_cases(P)
 check("the pick of the prototype's registry replayed on the port: CLOUD with and without the black filter, with excludes, CROWN by liquid, FLAME, pick_n, "
       "and four placed 1K plates bit for bit (14 groups of cases, 100s of picks)", mine == GOLD, [k for k in GOLD if GOLD[k] != mine.get(k)][:5])
