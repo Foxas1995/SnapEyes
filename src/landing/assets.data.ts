@@ -318,7 +318,7 @@ export const REVEAL: { readonly eyes: readonly { id: 'gd' | 'br' | 'own'; phone:
       "id": "br",
       "photo": "reveal/br_photo",
       "iris": "reveal/br_iris",
-      "art": "art/radiance_br_900",
+      "art": "art/radiance_w03_900",
       "phone": false
     },
     {

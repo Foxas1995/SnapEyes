@@ -17,14 +17,19 @@
    "rights": "owner confirmed the right to use and publish on 2026-09-29 (LICENCIJOS.csv w04). It is a stock image file: show only as an example, never as a customer",
    "label": "licensed"
   },
-  "art/*_br_*, reveal/br_* (Brown)": {
+  "art/*_br_* (eye chip Brown)": {
+   "eye": "drv_w06 = 4_drive_nuotraukos/w06_Screenshot_24.jpg (since 2026-10-04; the chip showed w03 before, which fails the round 2c input gate: pink eyelid skin at the top of the iris and a red pupil)",
+   "rights": "owner confirmed 2026-09-29 (LICENCIJOS.csv w06)",
+   "label": "licensed"
+  },
+  "reveal/br_*, art/radiance_w03_900 (the Reveal's brown eye, shown only as Radiance)": {
    "eye": "drv_w03 = 4_drive_nuotraukos/w03_geltonos_demeles.jpg",
    "rights": "owner confirmed 2026-09-29 (LICENCIJOS.csv w03)",
    "label": "licensed"
   },
-  "art/*_gr_* (Grey)": {
-   "eye": "drv_w08 = 4_drive_nuotraukos/w08_997539.jpg",
-   "rights": "owner confirmed 2026-09-29 (LICENCIJOS.csv w08)",
+  "art/*_gr_* (eye chip Grey)": {
+   "eye": "drv_d01 = 4_drive_nuotraukos/d01_IMG_20260926_153816.jpg (since 2026-10-04; the chip showed w08 before, which fails the round 2c input gate: eyelid and lashes inside the iris). Same eye as the Reveal's grey green one",
+   "rights": "owner confirmed 2026-09-29 (LICENCIJOS.csv d01)",
    "label": "licensed"
   },
   "reveal/gd_*, art/radiance_gd_* (Grey green, reflection removed)": {
@@ -38,13 +43,13 @@
    "label": "mixed"
   },
   "art/duo_infinity_bb_*, duo_infinity_bb_uni_*, duo_kiss_bb_*": {
-   "eyes": "own215120 + drv_w03 (re-rendered for this page with the collision engine; the render script is kept outside this repository, with the picture sources)",
+   "eyes": "own215120 + drv_w06 (round 2c collision engine; Infinity Universe is the Universe Duo variant B; the render script is kept outside this repository, with the picture sources)",
    "rights": "as above",
    "label": "mixed"
   },
   "art/fam_*": {
-   "eyes": "trio: own215120, drv_w04, drv_w03. Family 4 to 6: own215120, drv_w04, drv_w03, drv_w08, drv_d01, drv_w02 (re-rendered; the wave-y3 family renders use p05i and p09f, which are CC BY-SA, so they were NOT used)",
-   "rights": "owner confirmed for every Drive photo",
+   "eyes": "trio: own215120, drv_w04, drv_w06. Family 4 to 6 and Family Universe: own215120, drv_w04, drv_w06, drv_d01, then lid19h (photo 19, Ojo-retina.jpg, Public domain, no conditions, LICENCIJOS.csv 19) as the fifth eye and drv_w09 (owner confirmed) as the sixth. The round 2c boards use p05i, p08f and p09f, which are CC BY-SA, so they were NOT used",
+   "rights": "owner confirmed for every Drive photo, Public domain for lid19h; all shown only as 'Example photo, not a customer'",
    "label": "mixed"
   },
   "m/* (rooms, hands, desk, phone, macro)": {
@@ -65,5 +70,11 @@
   "st_* generated animal stand-ins",
   "any competitor image",
   "any Etsy image"
- ]
+ ],
+ "art_tiles": {
+  "what": "the 74 tile files art/<design>_<eye>_{480,900}, the pair and family files and the 64 px eye dots: the FINAL round 2c designs (wave-y3 board, approved by the owner 2026-10-04) rendered by the engine code of that round; Celestial Gold is the approved variant A (wave-cg2). Real engine artwork, so the chip is 'Example' (copy example.chip)",
+  "text on pictures": "none (the engine's draw log is empty for every render, no name and no date is drawn)",
+  "iris": "the iris pixels are the graded iris untouched (max absolute difference 0 on 8,271,297 visible iris pixels of 36 renders at 1024 px)",
+  "source": "wave-lp/assets_v3/tiles (TILES.md, gate_v3.json, render_tiles.py)"
+ }
 }
