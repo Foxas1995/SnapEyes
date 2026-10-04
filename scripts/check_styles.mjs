@@ -25,15 +25,27 @@
 //   7. the terms of sale name the price classes: the rows of the black class print the name of its one member (a second member,
 //      or a rename, needs a text change); and, from WP12_RULES, no terms table prints a number of eyes as a maximum and the
 //      landing's art row and eye limit come from the run-time tokens;
-//  11. (not a refusal) the registry hash is printed: 12 hex digits of the sha256 of both literals in canonical form.
+//   8. the plate library baked into api/_lib/plates_registry.py is sound (its version is the registry's, every plate is well formed, every
+//      usable plate's 1K file is in api/_assets/plates with the recorded size and sha256 and no file rides in unlisted, the two atlases
+//      likewise, the engine entries name only families and atlases that exist) and every style shown to customers (stage preview or live) has
+//      usable plates for the families it reads and its tile images (public/assets/atelier/style-<slug>-480.webp and -800.webp);
+//   9. the byte budget: the files of api/ plus the recorded size of the Python packages stay under 235 MiB for a rendering function (the
+//      documented limit is 500 MB; 235 is the plan's own tripwire until the real size is read from a deployment);
+//  10. vercel.json names every function of api/ on its own (no catch-all glob), with one shared maxDuration, and only compose, master_compose,
+//      order and admin keep the plates and the atlases (the other seven exclude them);
+//  11. (not a refusal) the registry hash is printed: 12 hex digits of the sha256 of both literals in canonical form;
+//  12. provenance: no image of the repository is byte for byte one of the owner's reference works or one of the calibration irises (the deny list of
+//      hashes in scripts/hygiene_denylist.json): the originals never enter the repository.
+// Items 8, 9, 10 and 12 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
-// `npm run check:styles` runs it alone. Items 8 to 10 (plates, the byte budget, the function entries) come with the engine core.
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+// `npm run check:styles` runs it alone.
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import {
-  STYLES_FILE, ENGINE_FILE, LAYOUTS_FILE, parseRegistrySource, parseEngineSource, parseLayoutNamesSource, registryHash, rangeOf, ceilingOf,
+  STYLES_FILE, ENGINE_FILE, LAYOUTS_FILE, PLATES_FILE, parseRegistrySource, parseEngineSource, parseLayoutNamesSource, parsePlatesSource, registryHash, rangeOf, ceilingOf,
 } from './styles_source.mjs';
 import { parseMarketsSource, MARKETS_FILE, priceRule } from './check_prices.mjs';
 import { parseExperimentsSource, EXPERIMENTS_FILE, ladderRule } from './check_experiments.mjs';
@@ -491,6 +503,206 @@ export function checkRuntimeTokens(copy, out) {
   }
 }
 
+// ---------------------------------------------------------------------------------------------------- 8. plates, 9. byte budget, 10. function entries, 12. provenance
+// These read the deployment tree (the plate files, vercel.json, the tile images, the reference-image deny list). A copy of the repository that
+// has no vercel.json is not a deployment tree (the mutation copies of the registry suite carry api/, src/ and scripts/ only): they are skipped there.
+export const BUDGET_MIB = 235;
+/** The four functions that render (compose, master_compose, order and admin: order calls master_compose in process, admin recomposes through
+ *  the same module): the only ones that carry the plates and the atlases. */
+export const RENDERING = ['admin', 'compose', 'master_compose', 'order'];
+const BASE_EXCLUDE = ['node_modules/**', 'dist/**', 'public/**', 'src/**', 'assets/**', 'scripts/**', 'suites/**', '.git/**', '*.html', '*.json', '*.ts', '*.md'];
+const PLATES_EXCLUDE = ['api/_assets/plates/**', 'api/_assets/atlas/**'];
+export const PLATE_FAMILY_SOURCES = ['y2', 'uv', 'cx'];
+const PLATE_FIELDS = ['family', 'since', 'until', 'usable', 'mono', 'kind', 'variables', 'score', 'k1', 'k4'];
+const PLATE_OPTIONAL = ['void', 'void_diam', 'strong_angle', 'strength', 'fit', 'crisp', 'extra'];
+const STORE_SEGMENT = /^[A-Za-z0-9_-][A-Za-z0-9_.-]{0,79}$/;
+const IMAGE_EXT = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
+export const DENYLIST_FILE = 'scripts/hygiene_denylist.json';
+
+const sha256File = (p) => createHash('sha256').update(readFileSync(p)).digest('hex');
+const isFile = (p) => { try { return statSync(p).isFile(); } catch { return false; } };
+
+function checkPlainValuesLoose(v, at, out) {
+  if (v === null || typeof v === 'boolean') out.push(`${at}: null, true and false are not Python (use 0, 1, {} or [])`);
+  else if (typeof v === 'string') { if (!asciiOnly(v)) out.push(`${at}: ASCII only: ${JSON.stringify(v)}`); }
+  else if (Array.isArray(v)) v.forEach((x, i) => checkPlainValuesLoose(x, `${at}[${i}]`, out));
+  else if (isObj(v)) for (const [k, x] of Object.entries(v)) { if (!asciiOnly(k)) out.push(`${at}: a key that is not ASCII: ${JSON.stringify(k)}`); checkPlainValuesLoose(x, `${at}.${k}`, out); }
+}
+
+function filesUnder(root, dir) {
+  const out = [];
+  const walk = (rel) => {
+    let names = [];
+    try { names = readdirSync(join(root, rel)); } catch { return; }
+    for (const n of names) {
+      if (n === '__pycache__') continue;
+      const r = `${rel}/${n}`;
+      if (statSync(join(root, r)).isDirectory()) walk(r); else if (!n.endsWith('.pyc')) out.push(r);
+    }
+  };
+  walk(dir);
+  return out;
+}
+
+/** Item 8: the baked plate library (api/_lib/plates_registry.py) is sound and the bundle holds exactly it. */
+export function checkPlates(root, reg, engine, out) {
+  const at0 = PLATES_FILE;
+  let pr;
+  try { pr = parsePlatesSource(readFileSync(join(root, PLATES_FILE), 'utf8')); } catch (e) {
+    out.push(`${at0}: cannot be read (${e instanceof Error ? e.message : String(e)})`);
+    return null;
+  }
+  if (pr.schema !== 1) out.push(`${at0}: PLATES_REGISTRY_SCHEMA is ${pr.schema}, this check knows 1`);
+  if (pr.platesVersion !== reg.platesVersion) out.push(`${at0}: PLATES_VERSION ${pr.platesVersion} is not the registry's ${reg.platesVersion} (${STYLES_FILE}): one number names the library`);
+  if (!(pr.dependenciesMib > 0 && pr.dependenciesMib < BUDGET_MIB)) out.push(`${at0}: DEPENDENCIES_MIB ${pr.dependenciesMib} must be the size of the Python packages in MiB (more than 0, less than the ${BUDGET_MIB} budget)`);
+  if (!isObj(pr.families) || !isObj(pr.plates) || !isObj(pr.atlas)) { out.push(`${at0}: the literal must hold atlas, families and plates objects`); return null; }
+  checkPlainValuesLoose(pr, at0, out);
+  for (const [f, d] of Object.entries(pr.families)) {
+    if (!/^P-[A-Z]{2}-[A-Z]+$/.test(f)) out.push(`${at0}: the family "${f}" must look like P-SN-CLOUD`);
+    if (!isObj(d) || Object.keys(d).sort().join() !== 'release1,source,store4k' || ![0, 1].includes(d.store4k) || ![0, 1].includes(d.release1) || !PLATE_FAMILY_SOURCES.includes(d.source)) {
+      out.push(`${at0}: the family "${f}" must be {store4k 0 or 1, release1 0 or 1, source ${PLATE_FAMILY_SOURCES.join(' or ')}}`);
+    }
+  }
+  // the engine entries only name families and atlases that exist
+  for (const [id, e] of Object.entries(engine)) {
+    for (const f of e.plates ?? []) if (!(f in pr.families)) out.push(`${ENGINE_FILE} style "${id}" reads the plate family "${f}", which ${PLATES_FILE} does not have`);
+    for (const a of e.atlas ?? []) if (!(a in pr.atlas)) out.push(`${ENGINE_FILE} style "${id}" reads the atlas "${a}", which ${PLATES_FILE} does not have`);
+  }
+  const shown = Object.entries(reg.styles).filter(([, d]) => [d.stage, ...Object.values(d.stage_by_eyes ?? {})].some((s) => s === 'preview' || s === 'live'));
+  const usableByFamily = {};
+  const wanted = new Set();
+  for (const [id, p] of Object.entries(pr.plates)) {
+    const at = `${at0} plate "${id}"`;
+    if (!STORE_SEGMENT.test(id)) out.push(`${at}: the id must be a storage path segment (letters, digits, "_", "-", ".", at most 80 characters)`);
+    if (!isObj(p)) { out.push(`${at}: not an object`); continue; }
+    const have = Object.keys(p);
+    const missing = PLATE_FIELDS.filter((f) => !have.includes(f)), extra = have.filter((f) => !PLATE_FIELDS.includes(f) && !PLATE_OPTIONAL.includes(f));
+    if (missing.length || extra.length) { out.push(`${at}: fields missing ${missing.join(', ') || 'none'}, unknown ${extra.join(', ') || 'none'}`); continue; }
+    if (!(p.family in pr.families)) { out.push(`${at}: the family "${p.family}" is not in families`); continue; }
+    if (!id.startsWith(`${p.family}__`)) out.push(`${at}: the id must start with its family and two underscores`);
+    if (!isInt(p.since) || p.since < 1 || p.since > pr.platesVersion) out.push(`${at}: since must be a version from 1 to ${pr.platesVersion}`);
+    if (!isInt(p.until) || (p.until !== 0 && p.until <= p.since)) out.push(`${at}: until must be 0 (never retired) or a version after since`);
+    if (![0, 1].includes(p.usable) || ![0, 1].includes(p.mono)) out.push(`${at}: usable and mono must be 1 or 0`);
+    if (p.usable === 1) {
+      usableByFamily[p.family] = (usableByFamily[p.family] ?? 0) + 1;
+      if (!isObj(p.k1) || !STORE_SEGMENT.test(p.k1.file ?? '') || !isInt(p.k1.bytes) || !/^[0-9a-f]{64}$/.test(p.k1.sha256 ?? '') || p.k1.px !== 1024) out.push(`${at}: a usable plate has a 1K file {file, bytes, sha256, px 1024}`);
+      else {
+        const rel = `api/_assets/plates/${p.family}/${p.k1.file}`;
+        wanted.add(rel);
+        if (!isFile(join(root, rel))) out.push(`${rel}: the plate "${id}" is in the registry and its 1K file is not in the bundle`);
+        else if (statSync(join(root, rel)).size !== p.k1.bytes) out.push(`${rel}: ${statSync(join(root, rel)).size} bytes, the registry says ${p.k1.bytes}`);
+        else if (sha256File(join(root, rel)) !== p.k1.sha256) out.push(`${rel}: not the file the registry names (sha256 differs)`);
+      }
+      if (isObj(p.k4) && Object.keys(p.k4).length) {
+        if (!pr.families[p.family].store4k) out.push(`${at}: the family keeps no 4K files in storage (store4k 0) but the plate has one`);
+        if (!STORE_SEGMENT.test(p.k4.file ?? '') || !isInt(p.k4.bytes) || p.k4.bytes < 1 || p.k4.bytes > (16 << 20) || !/^[0-9a-f]{64}$/.test(p.k4.sha256 ?? '') || p.k4.px !== 4096) {
+          out.push(`${at}: a 4K file is {file, bytes up to 16 MiB, sha256, px 4096}`);
+        }
+      }
+    } else if ((isObj(p.k1) && Object.keys(p.k1).length) || (isObj(p.k4) && Object.keys(p.k4).length)) out.push(`${at}: a plate that is not usable ships no file (k1 and k4 are empty)`);
+  }
+  for (const rel of filesUnder(root, 'api/_assets/plates')) if (!wanted.has(rel)) out.push(`${rel}: a file in the plate bundle that no usable plate of ${PLATES_FILE} names (the library is the registry: nothing rides in unlisted)`);
+  for (const [key, a] of Object.entries(pr.atlas)) {
+    const rel = `api/_assets/atlas/${a?.file}`;
+    if (!isObj(a) || !STORE_SEGMENT.test(a.file ?? '') || !isInt(a.bytes) || !/^[0-9a-f]{64}$/.test(a.sha256 ?? '')) out.push(`${at0}: the atlas "${key}" is {file, bytes, sha256}`);
+    else if (!isFile(join(root, rel))) out.push(`${rel}: the atlas "${key}" is in the registry and its file is not in the bundle`);
+    else if (statSync(join(root, rel)).size !== a.bytes || sha256File(join(root, rel)) !== a.sha256) out.push(`${rel}: not the file the registry names`);
+  }
+  for (const rel of filesUnder(root, 'api/_assets/atlas')) if (!Object.values(pr.atlas).some((a) => `api/_assets/atlas/${a?.file}` === rel)) out.push(`${rel}: a file in the atlas bundle that ${PLATES_FILE} does not name`);
+  // a style shown to customers: its plate families have plates, and its tile images exist at both widths
+  for (const [id, d] of shown) {
+    for (const f of engine[id]?.plates ?? []) if (!usableByFamily[f]) out.push(`style "${id}" (stage preview or live) reads the plate family "${f}", which has no usable plate`);
+    if (existsSync(join(root, 'public'))) {
+      for (const w of [480, 800]) {
+        const rel = `public/assets/atelier/style-${d.slug}-${w}.webp`;
+        if (!isFile(join(root, rel))) out.push(`${rel}: the style "${id}" is shown to customers and has no tile image at ${w} px (the file name is the slug)`);
+      }
+    }
+  }
+  return pr;
+}
+
+/** Item 9: the files a rendering function bundles (everything under api/) plus the Python packages (the recorded figure) stay under the budget. */
+export function checkByteBudget(root, pr, out, budget = BUDGET_MIB) {
+  const files = filesUnder(root, 'api');
+  const size = (rel) => statSync(join(root, rel)).size;
+  const total = files.reduce((s, f) => s + size(f), 0);
+  const plates = files.filter((f) => f.startsWith('api/_assets/plates/') || f.startsWith('api/_assets/atlas/')).reduce((s, f) => s + size(f), 0);
+  const MIB = 1048576;
+  const rendering = total / MIB + pr.dependenciesMib, other = (total - plates) / MIB + pr.dependenciesMib;
+  if (rendering > budget) out.push(`a rendering function would hold ${rendering.toFixed(1)} MiB (api/ ${(total / MIB).toFixed(1)} MiB, with the plates ${(plates / MIB).toFixed(1)} MiB, plus the Python packages ${pr.dependenciesMib} MiB recorded in ${PLATES_FILE}): over the ${budget} MiB budget`);
+  return { apiMib: total / MIB, platesMib: plates / MIB, rendering, other, budget };
+}
+
+/** Item 10: vercel.json names every function of api/ on its own, with no catch-all glob (two overlapping globs resolve in a way nobody has verified), and
+ *  only the four rendering functions keep the plates and the atlases. */
+export function checkFunctions(root, out, rendering = RENDERING) {
+  let v;
+  try { v = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8')); } catch (e) { out.push(`vercel.json: cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`); return; }
+  const fns = isObj(v.functions) ? v.functions : {};
+  const handlers = readdirSync(join(root, 'api')).filter((n) => /^[^_.][^/]*\.py$/.test(n) && isFile(join(root, 'api', n))).map((n) => n.slice(0, -3)).sort();
+  for (const h of handlers) if (!(`api/${h}.py` in fns)) out.push(`vercel.json: no functions entry for api/${h}.py (one entry per function: a catch-all glob leaves the size and the plates of each function to a rule nobody verified)`);
+  for (const key of Object.keys(fns)) {
+    const m = /^api\/([^/*?{}[\]]+)\.py$/.exec(key);
+    if (!m) out.push(`vercel.json: the functions pattern "${key}" is a glob; name each function (api/<name>.py)`);
+    else if (!handlers.includes(m[1])) out.push(`vercel.json: the functions entry "${key}" names no function of api/`);
+  }
+  for (const r of rendering) if (!handlers.includes(r)) out.push(`the check's list of rendering functions names "${r}", which is not a function of api/`);
+  const durations = new Set();
+  for (const h of handlers) {
+    const cfg = fns[`api/${h}.py`];
+    if (!isObj(cfg)) continue;
+    durations.add(cfg.maxDuration);
+    const ex = typeof cfg.excludeFiles === 'string' ? cfg.excludeFiles : '';
+    const m = /^\{(.*)\}$/.exec(ex);
+    const have = (m ? m[1] : ex).split(',').map((s) => s.trim()).filter(Boolean).sort();
+    const want = [...BASE_EXCLUDE, ...(rendering.includes(h) ? [] : PLATES_EXCLUDE)].sort();
+    if (have.join() !== want.join()) {
+      const miss = want.filter((x) => !have.includes(x)), more = have.filter((x) => !want.includes(x));
+      out.push(`vercel.json api/${h}.py: excludeFiles must be ${rendering.includes(h) ? 'the base list' : 'the base list and the plates and atlases (this function never renders)'} (missing ${miss.join(', ') || 'none'}, unexpected ${more.join(', ') || 'none'})`);
+    }
+  }
+  if (durations.size > 1) out.push(`vercel.json: the functions do not share one maxDuration (${[...durations].join(', ')})`);
+}
+
+/** Item 12 (provenance): no repository image is byte for byte one of the owner's reference works or one of the calibration irises (volunteers' eyes,
+ *  biometric-adjacent): the originals never enter the repository. The deny list holds hashes and labels only (scripts/make_denylist.py makes it from the
+ *  scratch tree). A tripwire against the original bytes, not a detector of derived images. */
+export function checkProvenance(root, out, listFile = DENYLIST_FILE) {
+  let deny;
+  try { deny = JSON.parse(readFileSync(join(root, listFile), 'utf8')).sha256; } catch (e) { out.push(`${listFile}: cannot be read (${e instanceof Error ? e.message : String(e)})`); return 0; }
+  if (!isObj(deny) || !Object.keys(deny).length || Object.keys(deny).some((h) => !/^[0-9a-f]{64}$/.test(h))) { out.push(`${listFile}: sha256 must map sha256 hashes to labels`); return 0; }
+  let n = 0;
+  const walk = (rel) => {
+    let names = [];
+    try { names = readdirSync(join(root, rel)); } catch { return; }
+    for (const name of names) {
+      if (['node_modules', '.git', '.vercel', 'dist', '__pycache__', 'private', 'out'].includes(name) || (rel === '' && name.startsWith('.'))) continue;
+      const r = rel ? `${rel}/${name}` : name;
+      const st = statSync(join(root, r));
+      if (st.isDirectory()) walk(r);
+      else if (IMAGE_EXT.test(name) && st.size > 0) {
+        n++;
+        const h = sha256File(join(root, r));
+        if (h in deny) out.push(`${r}: is byte for byte "${deny[h]}", a reference work or a calibration iris that never enters the repository (the originals are not committed: provenance, T20 of the plan)`);
+      }
+    }
+  };
+  walk('');
+  return n;
+}
+
+/** The one line the build prints for items 8 and 9, or "" when the tree has none (a copy without vercel.json). */
+export function describePlates(root) {
+  try {
+    const pr = parsePlatesSource(readFileSync(join(root, PLATES_FILE), 'utf8'));
+    const usable = Object.values(pr.plates).filter((p) => p.usable === 1);
+    const k1 = usable.reduce((s, p) => s + p.k1.bytes, 0) / 1048576, k4 = usable.reduce((s, p) => s + (p.k4?.bytes ?? 0), 0) / 1048576;
+    const b = checkByteBudget(root, pr, []);
+    return `plates ok: ${Object.keys(pr.plates).length} plates, ${usable.length} usable (1K files ${k1.toFixed(1)} MiB in the bundle, 4K files ${k4.toFixed(0)} MiB for storage); a rendering function ${b.rendering.toFixed(1)} MiB and any other ${b.other.toFixed(1)} MiB of ${b.budget} (Python packages ${pr.dependenciesMib} MiB, an estimate until V1)`;
+  } catch { return ''; }
+}
+
 // ---------------------------------------------------------------------------------------------------- the whole check
 /** Every problem found, as sentences ([] when the registry is sound). load(path): a module of src/ through Vite's module runner
  *  (vite.config.ts); without it the checks that need the page code (the pages' reading of the registry and of the layout words, 4, 6) are left out. */
@@ -513,6 +725,12 @@ export async function checkStyles(root, load) {
   checkLegacyTable(root, reg, out);
   checkLiteralIds(root, Object.keys(reg.styles), out);
   checkTerms(root, reg.styles, out);
+  if (existsSync(join(root, 'vercel.json'))) {       // a deployment tree: the plates, the byte budget, the function entries, the provenance
+    const pr = checkPlates(root, reg, engine, out);
+    if (pr) checkByteBudget(root, pr, out);
+    checkFunctions(root, out);
+    checkProvenance(root, out);
+  }
   let surfaces = null;
   let client = null;
   let pageNames;
@@ -561,4 +779,6 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     process.exit(1);
   }
   console.log(describeRegistry(root));
+  const plates = describePlates(root);
+  if (plates) console.log(plates);
 }

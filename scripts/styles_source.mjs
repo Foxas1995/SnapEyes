@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 export const STYLES_FILE = 'api/_lib/styles_registry.py';
 export const ENGINE_FILE = 'api/_lib/styles_engine.py';
 export const LAYOUTS_FILE = 'api/_lib/layout_names.py';
+export const PLATES_FILE = 'api/_lib/plates_registry.py';
 
 /** The JSON literal that ends a file, after "<name> = " at the start of a line. Throws when it is not there or is not plain JSON. */
 export function parseLiteral(src, name, file) {
@@ -35,6 +36,17 @@ export function parseEngineSource(src) {
 /** The LAYOUT_NAMES literal of layout_names.py's text: {layout id: {en, de, lt, hu}}, the one table of layout words (UTF-8, not ASCII). */
 export function parseLayoutNamesSource(src) {
   return parseLiteral(src, 'LAYOUT_NAMES', LAYOUTS_FILE);
+}
+
+/** {schema, platesVersion, dependenciesMib, atlas, families, plates} of plates_registry.py's text (the library the engines read: baked offline by
+ *  scripts/bake_plates_registry.py). One line each for the three constants, then the PLATES_REGISTRY literal that ends the file. */
+export function parsePlatesSource(src) {
+  const schema = /^PLATES_REGISTRY_SCHEMA = (\d+)\s*$/m.exec(src);
+  const pv = /^PLATES_VERSION = (\d+)\s*$/m.exec(src);
+  const dep = /^DEPENDENCIES_MIB = (\d+(?:\.\d+)?)\s*$/m.exec(src);
+  if (!schema || !pv || !dep) throw new Error(`${PLATES_FILE}: PLATES_REGISTRY_SCHEMA, PLATES_VERSION or DEPENDENCIES_MIB not found (one line each: NAME = value)`);
+  const lit = parseLiteral(src, 'PLATES_REGISTRY', PLATES_FILE);
+  return { schema: Number(schema[1]), platesVersion: Number(pv[1]), dependenciesMib: Number(dep[1]), atlas: lit.atlas, families: lit.families, plates: lit.plates };
 }
 
 export function loadLayoutNames(root) {

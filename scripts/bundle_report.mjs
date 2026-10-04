@@ -138,11 +138,17 @@ function bundle(fn, fileSet = files) {
     const excl = patterns ? matcher(patterns, loose) : () => false;
     const inc = fileSet.filter((x) => !excl(x.f));
     const top = {};
+    const detail = {};       // the folders of api/ one level down (api/_assets/plates, api/_lib, ...): what the plates and atlases add to a rendering function
     for (const x of inc) {
       const t = x.f.includes('/') ? x.f.split('/')[0] : '(root files)';
       top[t] = (top[t] ?? 0) + x.bytes;
+      if (t === 'api') {
+        const seg = x.f.split('/');
+        const k = seg.length <= 2 ? 'api/*.py' : seg.length > 3 && seg[1] === '_assets' ? `api/_assets/${seg[2]}` : `api/${seg[1]}`;
+        detail[k] = (detail[k] ?? 0) + x.bytes;
+      }
     }
-    out[mode] = { bytes: inc.reduce((s, x) => s + x.bytes, 0), files: inc.length, top };
+    out[mode] = { bytes: inc.reduce((s, x) => s + x.bytes, 0), files: inc.length, top, detail };
   }
   return { fn, pattern: cfg?.pat ?? null, maxDuration: cfg?.cfg?.maxDuration ?? null, exclude: patterns, ...out };
 }
@@ -199,7 +205,8 @@ const rows = bundles.map((b) => {
   const est = linux && !linux.error
     ? { low: lo + mb(linux.total), high: hi + mb(linux.total), basis: 'linux wheels from PyPI' }
     : depsLow === null ? null : { low: lo + depsLow * LINUX_FACTOR[0], high: hi + depsLow * LINUX_FACTOR[1], basis: `Windows packages x ${LINUX_FACTOR.join(' to ')}` };
-  return { name, files_mib: { loose: lo, strict: hi }, estimate_mib: est, measured_mib: measured[name] ?? null };
+  const det = Object.fromEntries(Object.entries(b.strict.detail).map(([k, v]) => [k, mb(v)]));
+  return { name, files_mib: { loose: lo, strict: hi }, api_mib: det, estimate_mib: est, measured_mib: measured[name] ?? null };
 });
 
 const report = {
@@ -248,7 +255,7 @@ else {
   console.log('\nPer function (MiB):');
   const groups = new Map();
   for (const r of rows) {
-    const key = JSON.stringify([r.files_mib, r.estimate_mib, r.measured_mib]);
+    const key = JSON.stringify([r.files_mib, r.api_mib, r.estimate_mib, r.measured_mib]);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(r);
   }
@@ -258,6 +265,7 @@ else {
     const est = r.estimate_mib ? `estimate ${f1(r.estimate_mib.low)} to ${f1(r.estimate_mib.high)} (${r.estimate_mib.basis})` : 'no estimate (packages unreadable)';
     const meas = r.measured_mib !== null ? `MEASURED ${f1(r.measured_mib)}` : 'not measured';
     console.log(`  ${names}\n    files ${f1(r.files_mib.loose)} to ${f1(r.files_mib.strict)}; ${est}; ${meas}`);
+    console.log(`    of api/: ${Object.entries(r.api_mib).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${f1(v)}`).join(', ')}`);
   }
   if (Object.keys(measured).length === 0) console.log('\nNo measured size yet: the numbers above are estimates. Close V1 with --func-dir (a Linux build) or --sizes (the Preview function list).');
   for (const n of notes) console.log(`note: ${n}`);

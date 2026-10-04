@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { checkPrices, type ClientMarkets } from './scripts/check_prices.mjs'
 import { checkPack, checkTexts } from './scripts/check_texts.mjs'
-import { checkStyles, describeRegistry } from './scripts/check_styles.mjs'
+import { checkStyles, describeRegistry, describePlates } from './scripts/check_styles.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
 // withdrawal information with the model form, per language, plus the seller's contact facts). Built from the same
@@ -71,6 +71,8 @@ function styleCheck(): Plugin {
       const problems = await checkStyles(process.cwd(), load)
       if (problems.length) this.error(`style check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
       console.log(describeRegistry(process.cwd()))
+      const plates = describePlates(process.cwd())
+      if (plates) console.log(plates)
     },
   }
 }

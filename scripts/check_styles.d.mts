@@ -11,3 +11,9 @@ export const ID_ALLOW: Record<string, string>;
 export function checkStyles(root: string, load?: (path: string) => Promise<any>): Promise<string[]>;
 /** One line for the build log: how many styles at which stages, and the registry hash. */
 export function describeRegistry(root: string): string;
+/** The one line the build prints for the plate library and the byte budget (items 8 and 9), or "" when the tree has no plate registry. */
+export function describePlates(root: string): string;
+/** The tripwire for the size of a rendering function, in MiB. */
+export const BUDGET_MIB: number;
+/** The functions that render and so keep the plates and atlases. */
+export const RENDERING: string[];
