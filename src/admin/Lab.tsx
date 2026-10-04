@@ -12,9 +12,10 @@ import type { Call } from './AdminApp';
 import { DEFAULT_PRICES, explain, fmtSec, fmtUsd, STYLE_LT } from './format';
 import { BTN, CARD, ConfirmDialog, DANGER, ExtLink, GOLD, H2, INPUT, JsonView, MUTED, Notice, Spinner, Thumb, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
+import { DEFAULT_STYLE, LEGACY_IDS } from '../shared/styles';
 
 const SAMPLE = '/assets/sample_eye_blue_1789706902835.jpg';
-const STYLES = Object.keys(STYLE_LT);
+const STYLES = LEGACY_IDS;   // the styles the engine can draw today (api/_lib/styles_registry.py); the v3 engines add their own with their packages
 
 type J = Record<string, unknown>;
 type Status = 'wait' | 'run' | 'ok' | 'fail' | 'skip';
@@ -55,7 +56,7 @@ const TONE: Record<Status, string> = { wait: 'text-white/50', run: 'text-sky-200
 
 export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
   const [src, setSrc] = useState<{ url: string; name: string; sample: boolean } | null>(null);
-  const [style, setStyle] = useState('celestial_gold');
+  const [style, setStyle] = useState(DEFAULT_STYLE);
   const [names, setNames] = useState('');
   const [want4k, setWant4k] = useState(false);
   const [stages, setStages] = useState<Stage[]>([]);

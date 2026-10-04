@@ -2,6 +2,7 @@
 // customer's name or title is always escaped; safeUrl keeps anything but an http(s) link out of href and src.
 
 import type { Counts, Prices, Reply } from './api';
+import { STYLE_NAMES } from '../shared/styles';
 
 export function safeUrl(u: unknown): string | undefined {
   return typeof u === 'string' && /^https?:\/\//i.test(u) ? u : undefined;
@@ -74,10 +75,8 @@ export const STATE_TONE: Record<string, 'good' | 'warn' | 'bad' | 'muted' | 'inf
   review: 'warn', ready: 'good', withdrawn: 'bad', deleted: 'muted', test_payment: 'muted', lab: 'info',
 };
 
-export const STYLE_LT: Record<string, string> = {
-  studio_black: 'Studio Black', celestial_gold: 'Celestial Gold', deep_nebula: 'Deep Nebula',
-  emerald_aurora: 'Emerald Aurora', obsidian_smoke: 'Obsidian Smoke', supernova: 'Supernova',
-};
+/** The brand name of every style id, generated from the registry (api/_lib/styles_registry.py): never typed here. */
+export const STYLE_LT: Record<string, string> = { ...STYLE_NAMES };
 
 export const VERDICT_LT: Record<string, string> = { good: 'Gera', ok: 'Tinkama', weak: 'Silpna', no_eye: 'Akies nerasta' };
 

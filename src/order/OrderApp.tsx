@@ -10,7 +10,8 @@ import { CARD, GOLD_BTN, PLAIN_BTN, Spinner } from './ui';
 import { detectLang, rememberLang, type Lang } from '../try/lang';
 import { LANG_NAMES, langFor, marketLangs } from '../shared/lang';
 import { clearCheckoutStorage } from '../try/checkout';
-import { CONTACT_EMAIL, STYLES } from '../landing/config';
+import { CONTACT_EMAIL } from '../landing/config';
+import { styleName } from '../shared/styles';
 import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref } from '../shared/legal';
 import { withdrawHref } from './withdraw';
 
@@ -330,7 +331,7 @@ const Problem: React.FC<{ C: OrderCopy; text: string; onRetry?: () => void }> = 
 const Summary: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang }> = ({ C, st, lang }) => {
   const n = typeof st.count === 'number' ? st.count : 0;
   if (!n) return null;
-  const style = STYLES.find((s) => s.id === st.style)?.name ?? st.style;
+  const style = st.style ? styleName(st.style) : st.style;
   const layout = n > 1 && st.layout ? C.layouts[st.layout] ?? st.layout : null;
   const parts = [C.summary.eyes(n), style, layout].filter(Boolean).join(' · ');
   return (

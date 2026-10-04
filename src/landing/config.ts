@@ -1,5 +1,6 @@
 // Facts the landing page prints. Keep every value here true; the copy dictionary only words them.
 import { MARKETS, DEFAULT_MARKET, MAX_EYES, withMarket } from '../shared/markets';
+import { landingStyles } from '../shared/styles';
 import type { Lang } from '../shared/lang';
 
 // Every email address on the page and the curator's "send me your photos" offer come from this one constant
@@ -71,17 +72,11 @@ export { MAX_EYES };
 export const DELIVERY_MAX_HOURS = 48;
 
 
-// The six styles of the capture tool, in the order the page shows them. Every image under
-// /assets/atelier/ is the founder's own eye rendered by the engine (api/_lib/iris.py compose), not a mockup.
-export const STYLES = [
-  { id: 'studio_black', name: 'Studio Black', slug: 'studio-black' },
-  { id: 'celestial_gold', name: 'Celestial Gold', slug: 'celestial-gold' },
-  { id: 'deep_nebula', name: 'Deep Nebula', slug: 'deep-nebula' },
-  { id: 'emerald_aurora', name: 'Emerald Aurora', slug: 'emerald-aurora' },
-  { id: 'obsidian_smoke', name: 'Obsidian Smoke', slug: 'obsidian-smoke' },
-  { id: 'supernova', name: 'Supernova', slug: 'supernova' },
-] as const;
-export type StyleId = (typeof STYLES)[number]['id'];
+// The styles of the capture tool, in the order the page shows them (the registry's tile_order: api/_lib/styles_registry.py, read
+// through src/shared/styles.ts). Every image under /assets/atelier/ is the founder's own eye rendered by the engine
+// (api/_lib/iris.py compose), not a mockup.
+export const STYLES = landingStyles();
+export type StyleId = string;
 
 export const styleSrc = (slug: string, width: 480 | 800) => `/assets/atelier/style-${slug}-${width}.webp`;
 export const styleSrcSet = (slug: string) => `${styleSrc(slug, 480)} 480w, ${styleSrc(slug, 800)} 800w`;

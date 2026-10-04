@@ -13,6 +13,7 @@ import { actionLt, AKYS, explain, fmtMoney, fmtTime, logResultLt, ltCount, STYLE
 import { BTN, CARD, Chip, ConfirmDialog, DANGER, GOLD, H2, MUTED, Notice, Rows, Spinner, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
 import { priceMinor } from '../shared/markets';
+import { classStyle } from '../shared/styles';
 
 interface Note { tone: Tone; text: string; busy?: boolean }
 
@@ -27,7 +28,7 @@ const KEY_LT: Record<keyof ExpLadder, string> = {
 const ATVEJIS: [string, string, string] = ['atvejis', 'atvejai', 'atvejų'];
 
 /** The ladder's example totals for this many eyes (Studio Black), by the very rule the pages use (src/shared/markets.ts). */
-const total = (market: string, ladder: ExpLadder, eyes: number, style = 'studio_black'): number => priceMinor(eyes, style, market, ladder);
+const total = (market: string, ladder: ExpLadder, eyes: number, style = classStyle('black')): number => priceMinor(eyes, style, market, ladder);
 
 /** How long ago, in words: "15 min.", "3 val.", "12 d." */
 const elapsed = (from: number | null | undefined, now: number): string => {

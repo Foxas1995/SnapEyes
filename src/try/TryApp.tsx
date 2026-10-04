@@ -24,6 +24,7 @@ import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavai
 import { priceChangedNote } from './priceNote';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
+import { DEFAULT_STYLE, legacyStyles } from '../shared/styles';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
 
@@ -79,16 +80,11 @@ interface Enhanced {
 }
 interface ComposeReply { image: string; width: number; height: number; layout: string }
 
-// accent = api/_lib/iris.py STYLES[id].accent. The picker draws each swatch from it around the customer's
-// own iris: the old style_thumb_*.jpg showed a stock blue eye next to the customer's result.
-const STYLES: StyleOption[] = [
-  { id: 'celestial_gold', name: 'Celestial Gold', accent: [245, 197, 66] },
-  { id: 'deep_nebula', name: 'Deep Nebula', accent: [129, 140, 248] },
-  { id: 'emerald_aurora', name: 'Emerald Aurora', accent: [52, 211, 153] },
-  { id: 'obsidian_smoke', name: 'Obsidian Smoke', accent: [203, 213, 225] },
-  { id: 'supernova', name: 'Supernova', accent: [251, 146, 60] },
-  { id: 'studio_black', name: 'Studio Black', accent: null },   // bare: no glow, no text
-];
+// The styles of the picker and their accent (api/_lib/styles_registry.py, read through src/shared/styles.ts; the engine's own
+// table is api/_lib/iris.py STYLES, which the build keeps equal). The picker draws each swatch from the accent around the
+// customer's own iris: the old style_thumb_*.jpg showed a stock blue eye next to the customer's result. A null accent is the
+// bare style: no glow, no text.
+const STYLES: StyleOption[] = legacyStyles();
 
 const SAMPLE_EYE = '/assets/sample_eye_blue_1789706902835.jpg';   // AI-generated: always labelled as such
 // The sample's restoration, made once by the live engine (2026-09-29: analyze, deglare, enhance artistic) and shipped
@@ -208,7 +204,7 @@ export const TryApp: React.FC = () => {
   const eyesRef = useRef<Eye[]>(RESTORED);   // async steps read this, never a render's stale copy
   const [selectedId, setSelectedId] = useState<string | null>(RESTORED[0]?.id ?? null);
   const [layoutWant, setLayoutWant] = useState<Layout | null>(RETURN?.snap?.layoutWant ?? null);
-  const [style, setStyle] = useState(() => (STYLES.some((s) => s.id === RETURN?.snap?.style) ? RETURN!.snap!.style : 'celestial_gold'));
+  const [style, setStyle] = useState(() => (STYLES.some((s) => s.id === RETURN?.snap?.style) ? RETURN!.snap!.style : DEFAULT_STYLE));
   const [names, setNames] = useState(() => (typeof RETURN?.snap?.names === 'string' ? RETURN.snap.names.slice(0, 60) : ''));
   // ---- ordering (./BuyCard.tsx, ./checkout.ts): whether this deployment takes orders, the order this tab builds, the
   // withdrawal waiver (never ticked in advance) and the purchase under way

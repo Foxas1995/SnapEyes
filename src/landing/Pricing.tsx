@@ -5,6 +5,7 @@ import { MAX_EYES, tryUrl } from './config';
 import { priceFootnote } from './copy';
 import { useOrderingOpen } from './ordering';
 import { currencyOf, money, priceMinor } from '../shared/markets';
+import { classStyle } from '../shared/styles';
 import { useMarket } from '../shared/useMarket';
 import { usePrices, usePricesReady } from '../shared/usePrices';
 import { SectionHead } from './ui';
@@ -87,7 +88,7 @@ export function Pricing() {
             <div className="mt-5">
               <Row label={p.duoLabel} value={fmt(prices.two_eyes)} pending={pending} />
               {[3, 4, 5].map((n) => (
-                <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, 'studio_black', market, prices))} pending={pending} />
+                <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, classStyle('black'), market, prices))} pending={pending} />
               ))}
             </div>
             <p className={`mt-1 text-xs leading-relaxed text-zinc-400 ${pending ? 'opacity-0' : ''}`}>{p.perEye(fmt(prices.each_further_eye), MAX_EYES)}</p>
