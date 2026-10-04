@@ -42,7 +42,7 @@ NAME_TRACK = 0.18        # em
 DATE_TRACK = 0.30
 LOCKUP_JOIN = " · "                 # middle dot, covered by both artwork fonts
 
-_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f​-‏ -‮⁠-⁤﻿]")
+_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u200b-\u200f\u2028-\u202e\u2060-\u2064\ufeff]")
 _SPACES = re.compile(r"\s+")
 
 

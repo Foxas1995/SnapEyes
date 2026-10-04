@@ -138,6 +138,12 @@ src_all = "".join(read(os.path.join(STYLES, m)) for m in MODULES)
 check("no module of the package holds a dash, a Windows or scratch path, a studio tagline or footer, or a secret name",
       not re.search(DASH, src_all) and not re.search(r"C:\\|wave-[a-z0-9]+|THE UNIVERSE WITHIN|PRECISE IRIS|GEMINI_API_KEY|SERVICE_KEY", src_all),
       re.findall(r"C:\\|wave-[a-z0-9]+|THE UNIVERSE WITHIN|PRECISE IRIS|GEMINI_API_KEY|SERVICE_KEY", src_all)[:5])
+# A raw invisible or bidirectional character in source (a zero width space, a right to left override, a line separator, a byte order mark, a soft
+# hyphen) cannot be read in review and can change what the line means (Trojan Source): the regex of text.clean names them by escape, never by glyph.
+INVISIBLE = re.compile("[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]")
+hid = [(m, [(i + 1, hex(ord(c))) for i, c in enumerate(read(os.path.join(STYLES, m))) if INVISIBLE.match(c)][:3]) for m in MODULES]
+check("no module of the package holds a raw invisible, control or bidirectional character (text.clean writes its character class with escapes)",
+      not any(h for _, h in hid), [x for x in hid if x[1]])
 
 # ============================================================================================ 2. core: the golden replay
 section("2. core, layouts, text: the golden hashes of the scratch prototype replayed on the port")
