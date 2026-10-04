@@ -5,7 +5,7 @@
 // The server's own sentences (quality.message, tips) come from api/analyze.py in the request's language:
 // api/_lib/analyze_lt.py TEXT_LT. src/try/shots.ts recognises three of those tips by words (see the header of that file).
 import type { BlockCopy, BlockReason, TryCopy } from './copy';
-import type { Layout, LightAnswer } from './multi';
+import type { LightAnswer } from './multi';
 import { CONTACT_EMAIL } from '../landing/config';
 import { CHECKOUT_LEGAL } from '../shared/legal';
 import { akiuWord, akys, akysWord, dec1Lt, kadrai, kadruWord, ltForm, nuotraukasAcc } from '../shared/lt';
@@ -255,9 +255,6 @@ export const lt: TryCopy = {
       : 'Jūsų failas: 4096 px ilgiausioje kraštinėje, pakankamai ryškus spaudai, kurios ilgiausia kraštinė iki 50 cm.'),
     retry: 'Bandyti dar kartą',
     layout: 'Išdėstymas',
-    layouts: {
-      single: 'Viena akis', duo: 'Greta', fusion: 'Susiliejimas', triangle: 'Trikampis', row: 'Vienoje eilėje', grid: 'Tinklelis', galaxy: 'Galaktika',
-    } satisfies Record<Layout, string>,
     style: 'Stilius',
     namesPlaceholder: 'Vardai arba užrašas (nebūtina)',
     save: 'Išsaugoti peržiūrą',

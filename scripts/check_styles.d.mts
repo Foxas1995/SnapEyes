@@ -2,8 +2,8 @@
 /** The sub-rules of items 4 and 7 that wait for work package 12's texts (a number of styles in a string, a maximum number of eyes in the
  *  terms, the run-time tokens of the landing's pricing rows): built and tested, not enforced until this is true. */
 export const WP12_RULES: boolean;
-/** Every layout id a style may name. */
-export const LAYOUT_IDS: string[];
+/** The languages every layout has a word in (api/_lib/layout_names.py). */
+export const LAYOUT_LANGS: string[];
 /** Files outside the registry that may write a style id, with the reason. */
 export const ID_ALLOW: Record<string, string>;
 /** Every problem found in the style registry and in what reads it, as sentences ([] when it is sound). load: a module of src/ through

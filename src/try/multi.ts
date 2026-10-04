@@ -1,11 +1,15 @@
 // Pure helpers for the multi-eye result: layouts the engine accepts, the canvas shape it returns, and the
 // capture-study payloads (the price is src/shared/markets.ts priceMinor). No React and no DOM here.
 import type { Analysis } from './shots';
+import { legacyLayoutsFor } from '../shared/styles';
 
 /** api/_lib/iris.py MULTI_MAX: the most eyes one artwork holds. */
 export const MAX_EYES = 8;
 
-export type Layout = 'single' | 'duo' | 'fusion' | 'triangle' | 'row' | 'grid' | 'galaxy';
+/** A layout id (api/_lib/styles_registry.py names the ids each style takes, api/_lib/layout_names.py the words: src/shared/layouts.ts). Not a
+ *  union: the ids are data of the registry, so a new layout needs no change here. A snapshot kept by an older page may carry an id the
+ *  registry no longer offers for the eye count: effectiveLayout() then takes the default. */
+export type Layout = string;
 
 /** One finished eye. Only its restored iris and the small crop it came from are kept: the full-size photo
  *  is released as soon as the eye is done, so eight eyes never mean eight 12 MP photos in a phone tab.
@@ -77,16 +81,9 @@ export function keptSealed(e: Pick<Eye, 'sealed' | 'sealedSizes'>, n: number): P
 /** One composed preview as /api/compose returned it. */
 export interface Art { src: string; w: number; h: number; layout: string }
 
-// api/_lib/iris.py LAYOUTS, the first entry of each is the engine's default for that count
-const LAYOUTS: Record<number, readonly Layout[]> = {
-  1: ['single'],
-  2: ['duo', 'fusion'],
-  3: ['triangle', 'row'],
-  4: ['grid', 'row'],
-  5: ['galaxy'], 6: ['galaxy'], 7: ['galaxy'], 8: ['galaxy'],
-};
-
-export const layoutsFor = (n: number): readonly Layout[] => LAYOUTS[n] ?? [];
+/** The layouts n eyes can take, the first one the engine's default for that count: the table the six legacy styles share in the registry
+ *  (api/_lib/styles_registry.py; api/_lib/iris.py LAYOUTS reads the same). The picker offers the legacy styles only, so this is its list. */
+export const layoutsFor = (n: number): readonly Layout[] => legacyLayoutsFor(n);
 
 /** The layout n eyes will be composed in: the wanted one when n can take it, else the engine's default. */
 export function effectiveLayout(n: number, want: Layout | null | undefined): Layout {
@@ -94,7 +91,8 @@ export function effectiveLayout(n: number, want: Layout | null | undefined): Lay
   return want && options.includes(want) ? want : options[0] ?? 'single';
 }
 
-/** api/_lib/iris.py multi_canvas at 1024: (W, H) of the preview before the reply says so. */
+/** api/_lib/iris.py multi_canvas at 1024: (W, H) of the preview before the reply says so. This is the shape of the legacy layouts, which are
+ *  the only ones the picker offers; the canvas of a v3 layout comes with the reply of the compose call that draws it. */
 export function canvasSize(n: number, layout: Layout): { w: number; h: number } {
   const l = effectiveLayout(n, layout);
   const [a, b] = l === 'single' ? [1, 1] : l === 'duo' || l === 'fusion' ? [3, 2]

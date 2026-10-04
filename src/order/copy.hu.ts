@@ -25,9 +25,6 @@ export const hu: OrderCopy = {
     paid: (amount: string) => `Fizetve: ${amount}`,
     inscription: (s: string) => `Felirat: ${s}`,
   },
-  layouts: {
-    single: 'Egy szem', duo: 'Egymás mellett', fusion: 'Összeolvadás', triangle: 'Háromszög', row: 'Egy sorban', grid: 'Rács', galaxy: 'Galaxis',
-  },
   unpaid: {
     title: 'Még nincs kifizetve',
     body: 'Ehhez a rendeléshez még nem érkezett fizetés.',

@@ -40,10 +40,6 @@ ITEM_DESC_LT = "Tik skaitmeninis failas: JPEG, ilgoji kraštinė 4096 px. Be spa
 # the online withdrawal function's button, as the order page and the legal pages name it
 WITHDRAW_BUTTON_LT = "Atsisakyti sutarties čia"
 
-# pay.LAYOUT_NAMES["lt"] (as the order page names them: src/order/copy.lt.ts layouts)
-LAYOUT_NAMES_LT = {"single": "Viena akis", "duo": "Greta", "fusion": "Susiliejimas", "triangle": "Trikampis",
-                   "row": "Vienoje eilėje", "grid": "Tinklelis", "galaxy": "Galaktika"}
-
 # months in the genitive, as Lithuanian writes a date in words ("2026 m. rugsėjo 29 d.")
 MONTHS_GEN_LT = ("sausio", "vasario", "kovo", "balandžio", "gegužės", "birželio", "liepos", "rugpjūčio", "rugsėjo",
                  "spalio", "lapkričio", "gruodžio")
@@ -181,7 +177,7 @@ CONFIRMATION_LT = {
 
 def confirmation_rows_lt(order, contract_when, artwork, layout_name, n, names, title, price):
     """The ("rows", ...) of the confirmation, as pay.confirmation_mail builds them for "en": contract_when is
-    when_text_lt(paid_at), artwork item_name_lt(n, style), layout_name LAYOUT_NAMES_LT[layout] or "", price
+    when_text_lt(paid_at), artwork item_name_lt(n, style), layout_name catalogue.layout_name("lt", layout) or "", price
     price_text_lt(amount_total)."""
     c = CONFIRMATION_LT
     rows = [(c["row_order"], order), (c["row_contract"], contract_when),

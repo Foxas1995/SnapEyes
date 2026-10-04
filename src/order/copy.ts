@@ -22,9 +22,6 @@ const en = {
     paid: (amount: string) => `Paid ${amount}`,
     inscription: (s: string) => `Inscription: ${s}`,
   },
-  layouts: {
-    single: 'Single', duo: 'Side by side', fusion: 'Fusion', triangle: 'Triangle', row: 'In a row', grid: 'Grid', galaxy: 'Galaxy',
-  } as Record<string, string>,
   unpaid: {
     title: 'Not paid yet',
     body: 'We have not received a payment for this order.',
@@ -183,9 +180,6 @@ const de: OrderCopy = {
     eyes: (n: number) => (n === 1 ? '1 Auge' : `${n} Augen`),
     paid: (amount: string) => `Bezahlt: ${amount}`,
     inscription: (s: string) => `Widmung: ${s}`,
-  },
-  layouts: {
-    single: 'Einzeln', duo: 'Nebeneinander', fusion: 'Fusion', triangle: 'Dreieck', row: 'In einer Reihe', grid: 'Raster', galaxy: 'Galaxie',
   },
   unpaid: {
     title: 'Noch nicht bezahlt',

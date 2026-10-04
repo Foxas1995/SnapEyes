@@ -6,7 +6,6 @@ What is here, and where pay.py uses it ("hu" is in LANGS):
   SUBMIT_NOTE_HU       SUBMIT_NOTE["hu"]       Stripe's note above its pay button (custom_text.submit), with the
                                                15. § (2) words „fizetési kötelezettséggel járó megrendelés”
   ITEM_DESC_HU         ITEM_DESC["hu"]         the Stripe line item's description
-  LAYOUT_NAMES_HU      LAYOUT_NAMES["hu"]      as src/order/copy.hu.ts layouts
   item_name_hu()       item_name() for "hu"
   price_text_hu()      price_text() for "hu": "6 990 Ft" (HUF), "19,97 €" (EUR); amount_text_hu() the plain one
   when_text_hu()       when_text() for "hu": "2026. szeptember 29., 10:15 UTC"
@@ -42,9 +41,6 @@ SUBMIT_NOTE_HU = ("Digitális fájlt vásárolsz (JPEG, 4096 px). Nyomatot és k
                   "gombbal fizetési kötelezettséggel járó megrendelést adsz le.")
 
 ITEM_DESC_HU = "Csak digitális fájl: JPEG, a hosszabbik oldalán 4096 px. Nyomat és keret nélkül."
-
-LAYOUT_NAMES_HU = {"single": "Egy szem", "duo": "Egymás mellett", "fusion": "Összeolvadás", "triangle": "Háromszög",
-                   "row": "Egy sorban", "grid": "Rács", "galaxy": "Galaxis"}
 
 STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 
@@ -146,7 +142,7 @@ BUTTON_HU = "Elállás a szerződéstől"          # src/shared/legal.ts WITHDRA
 def confirmation_hu(*, order, spec, n, layout, price, paid_at, consent_at, consent_text, auto, link, wlink,
                     terms_url, updated_day, seller):
     """The "hu" branch of confirmation_mail(): (subject, blocks). pay.py computes what it computes for English
-    (link, wlink, price with price_text_hu, layout with LAYOUT_NAMES_HU, auto = server_starts(pack), the terms URL and
+    (link, wlink, price with price_text_hu, layout as catalogue.layout_name("hu", id) gives it, auto = server_starts(pack), the terms URL and
     the pack's "updated" day, seller = seller_lines_hu(pack)) and then appends the rule and the two legal texts."""
     rows = [("Rendelésszám", order),
             ("A szerződés létrejötte", when_text_hu(paid_at)),

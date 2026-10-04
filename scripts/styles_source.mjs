@@ -1,13 +1,15 @@
 // The registry files as the build scripts read them (no checks here, so scripts/check_prices.mjs, scripts/check_experiments.mjs and
 // scripts/check_styles.mjs can all import it without importing each other): api/_lib/styles_registry.py (the public literal, the
-// one place for style ids, names, layouts, stages and the price class) and api/_lib/styles_engine.py (how each style is drawn,
-// Python only). Both are a JSON literal inside a Python file that ends the file, as api/_lib/markets.py is.
+// one place for style ids, names, layouts, stages and the price class), api/_lib/styles_engine.py (how each style is drawn,
+// Python only) and api/_lib/layout_names.py (the words for the layout ids, in four languages). Each is a JSON literal inside a Python
+// file that ends the file, as api/_lib/markets.py is.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
 export const STYLES_FILE = 'api/_lib/styles_registry.py';
 export const ENGINE_FILE = 'api/_lib/styles_engine.py';
+export const LAYOUTS_FILE = 'api/_lib/layout_names.py';
 
 /** The JSON literal that ends a file, after "<name> = " at the start of a line. Throws when it is not there or is not plain JSON. */
 export function parseLiteral(src, name, file) {
@@ -28,6 +30,15 @@ export function parseRegistrySource(src) {
 /** The ENGINE literal of styles_engine.py's text. */
 export function parseEngineSource(src) {
   return parseLiteral(src, 'ENGINE', ENGINE_FILE);
+}
+
+/** The LAYOUT_NAMES literal of layout_names.py's text: {layout id: {en, de, lt, hu}}, the one table of layout words (UTF-8, not ASCII). */
+export function parseLayoutNamesSource(src) {
+  return parseLiteral(src, 'LAYOUT_NAMES', LAYOUTS_FILE);
+}
+
+export function loadLayoutNames(root) {
+  return parseLayoutNamesSource(readFileSync(join(root, LAYOUTS_FILE), 'utf8'));
 }
 
 export function loadRegistry(root) {

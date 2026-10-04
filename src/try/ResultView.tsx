@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Check, Download, Plus, RefreshCcw, Trash2 } from 'lucide-react';
 import { CompareSlider } from './CompareSlider';
-import { T } from './copy';
+import { T, layoutLabel } from './copy';
 import { NO_SAVE, NO_SAVE_BOX } from './noSave';
 import { type Art, type Eye, type Layout, MAX_EYES, canvasSize, layoutsFor } from './multi';
 
@@ -150,7 +150,7 @@ export const ResultView: React.FC<Props> = (p) => {
             {layouts.map((l) => (
               <button key={l} role="radio" aria-checked={p.layout === l} onClick={() => p.onLayout(l)}
                 className={`py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 ${p.layout === l ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
-                <LayoutGlyph layout={l} n={n} /> {T.result.layouts[l]}
+                <LayoutGlyph layout={l} n={n} /> {layoutLabel(l)}
               </button>
             ))}
           </div>

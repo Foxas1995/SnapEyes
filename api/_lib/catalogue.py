@@ -22,9 +22,12 @@ import json
 
 from . import styles_registry as R
 from . import styles_engine as X
+from . import layout_names as LN
 
 STYLES = R.STYLES                  # {id: public entry}
 ENGINE = X.ENGINE                  # {id: engine entry}
+LAYOUT_NAMES = LN.LAYOUT_NAMES     # {layout id: {en, de, lt, hu}}: the words (api/_lib/layout_names.py)
+LAYOUT_LANGS = ("en", "de", "lt", "hu")
 PLATES_VERSION = R.PLATES_VERSION
 DEFAULT_STYLE = R.DEFAULT_STYLE
 
@@ -196,6 +199,21 @@ def layouts_for(style_id, n):
 def default_layout(style_id, n):
     lay = layouts_for(style_id, n)
     return lay[0] if lay else None
+
+
+def layout_ids():
+    """Every layout id that has a word (the vocabulary: the ids of the registry's styles, legacy and v3), in the file's order."""
+    return tuple(LAYOUT_NAMES)
+
+
+def layout_name(lang, layout_id, default=""):
+    """The word for a layout in a language, as the e-mails and the order page print it ("Side by side", "Nebeneinander", "Greta",
+    "Egymás mellett"). lang is en, de, lt or hu (any other reads English); `default` is returned for an id with no word, which is
+    "" unless the caller wants the raw id: an e-mail prints no layout row for an unknown layout, as it always did."""
+    row = LAYOUT_NAMES.get(layout_id) if isinstance(layout_id, str) else None
+    if not row:
+        return default
+    return row.get(lang if lang in LAYOUT_LANGS else "en", default)
 
 
 def legacy_layouts_table():

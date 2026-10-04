@@ -35,7 +35,8 @@ Fields of an entry (all are required):
   name         the proper name printed in Stripe line items, e-mails, the terms and the owner's panel; English in every language
   legacy       1 for the six engine ids of today (api/_lib/iris.py), else 0
   eyes         [min, max] eyes the style accepts, inside 1 to 8
-  layouts      per eye count of that range, the layout ids that count can take, the default first
+  layouts      per eye count of that range, the layout ids that count can take, the default first (the words for the ids, in four
+               languages, are api/_lib/layout_names.py: the build refuses a layout id that has none)
   stage        the CEILING of the style: planned (id reserved, no engine) | lab (admin laboratory only, hidden from customers) |
                preview (/try may draw it, the buy card says soon, checkout refuses) | live (orderable) | retired (renders for orders
                already made and the admin recompose, never offered). The effective stage is the lower of this and the owner's

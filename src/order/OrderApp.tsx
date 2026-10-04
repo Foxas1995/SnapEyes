@@ -12,6 +12,7 @@ import { LANG_NAMES, langFor, marketLangs } from '../shared/lang';
 import { clearCheckoutStorage } from '../try/checkout';
 import { CONTACT_EMAIL } from '../landing/config';
 import { styleName } from '../shared/styles';
+import { layoutName } from '../shared/layouts';
 import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref } from '../shared/legal';
 import { withdrawHref } from './withdraw';
 
@@ -332,7 +333,7 @@ const Summary: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang }> = ({ C, s
   const n = typeof st.count === 'number' ? st.count : 0;
   if (!n) return null;
   const style = st.style ? styleName(st.style) : st.style;
-  const layout = n > 1 && st.layout ? C.layouts[st.layout] ?? st.layout : null;
+  const layout = n > 1 && st.layout ? layoutName(lang, st.layout, st.layout) : null;
   const parts = [C.summary.eyes(n), style, layout].filter(Boolean).join(' · ');
   return (
     <section data-testid="summary" className={`${CARD} text-sm`}>

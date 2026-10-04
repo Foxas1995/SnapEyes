@@ -22,9 +22,6 @@ export const lt: OrderCopy = {
     paid: (amount: string) => `Sumokėta ${amount}`,
     inscription: (s: string) => `Užrašas: ${s}`,
   },
-  layouts: {
-    single: 'Viena akis', duo: 'Greta', fusion: 'Susiliejimas', triangle: 'Trikampis', row: 'Vienoje eilėje', grid: 'Tinklelis', galaxy: 'Galaktika',
-  },
   unpaid: {
     title: 'Dar neapmokėta',
     body: 'Šio užsakymo apmokėjimo dar negavome.',

@@ -14,8 +14,10 @@
 //   4. a copy dictionary keyed by style id (the landing page's styles.desc) has other keys than the ids shown to customers
 //      (stage preview or live) in some language; and, from the work package that rewrites the texts (WP12_RULES below), a string
 //      that states a number of styles;
-//   5. a layout id is outside the vocabulary, or a layout of a style shown to customers has no name in the tables the pages and
-//      the e-mails keep today (the layout-name tables move into the registry with work package 2, this check with them);
+//   5. the layout words (api/_lib/layout_names.py, the one table of them) are not plain JSON, lack one of the four languages for a layout
+//      id, name a layout no style takes, or leave out a layout some style takes; the pages' reading of the file (src/shared/layouts.ts)
+//      differs from this one; or any other file of api/, src/ or scripts/ holds a table that names layouts again (the 14 tables of the
+//      e-mails, the picker, the order page and the Python files moved into that file with work package 2);
 //   6. the price rules disagree: for every id, every eye count of 1 to 8, every market and every price experiment ladder the
 //      site's rule (src/shared/markets.ts priceMinor), this build's restatements (check_prices.mjs priceRule,
 //      check_experiments.mjs ladderRule) and the registry's price class give one price (api/_lib/pay.py and abtest.py are
@@ -31,7 +33,7 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import {
-  STYLES_FILE, ENGINE_FILE, parseRegistrySource, parseEngineSource, registryHash, byEyes, rangeOf, ceilingOf,
+  STYLES_FILE, ENGINE_FILE, LAYOUTS_FILE, parseRegistrySource, parseEngineSource, parseLayoutNamesSource, registryHash, byEyes, rangeOf, ceilingOf,
 } from './styles_source.mjs';
 import { parseMarketsSource, MARKETS_FILE, priceRule } from './check_prices.mjs';
 import { parseExperimentsSource, EXPERIMENTS_FILE, ladderRule } from './check_experiments.mjs';
@@ -54,8 +56,8 @@ const ATLASES = ['chips', 'drops'];
 const STEP_KINDS = ['prep', 'art', 'scene', 'finish', 'bands'];
 const WAVES = ['R1', 'R2', 'R3', 'legacy'];
 const MAX_EYES = 8;
-/** Every layout id a style may name: the v3 ids and the legacy ones (api/_lib/iris.py LAYOUTS), which old orders still carry. */
-export const LAYOUT_IDS = ['single', 'pair', 'trio', 'diag', 'zigzag', 'cluster', 'brick', 'ring', 'flower', 'chain', 'duo', 'fusion', 'triangle', 'row', 'grid', 'galaxy'];
+/** The languages every layout has a word in (the site's four: src/shared/lang.ts). */
+export const LAYOUT_LANGS = ['en', 'de', 'lt', 'hu'];
 const PUBLIC_FIELDS = ['accent', 'eyes', 'gate', 'group', 'layouts', 'legacy', 'name', 'pick', 'price_class', 'reason', 'slug', 'stage', 'stage_by_eyes', 'tile_order', 'work_side'];
 const ENGINE_FIELDS = ['atlas', 'canvases', 'design_by_eyes', 'engine', 'fill_side', 'gate_rules', 'plates', 'steps', 'wave'];
 const HEART_WORDS = ['heart', 'hearts', 'love', 'loves', 'valentine', 'valentines', 'cupid'];
@@ -116,8 +118,8 @@ function words(s) {
   return String(s).toLowerCase().split(/[^a-z]+/).filter(Boolean);
 }
 
-/** 1 and 2 for the public literal. */
-function checkPublic(reg, out) {
+/** 1 and 2 for the public literal. layoutIds: the vocabulary, the ids api/_lib/layout_names.py has words for. */
+function checkPublic(reg, out, layoutIds) {
   const at0 = STYLES_FILE;
   if (reg.schema !== 1) out.push(`${at0}: STYLES_SCHEMA is ${reg.schema}, this check knows 1`);
   if (!isInt(reg.platesVersion) || reg.platesVersion < 1) out.push(`${at0}: PLATES_VERSION must be a whole number from 1`);
@@ -152,8 +154,8 @@ function checkPublic(reg, out) {
     else {
       for (const [k, list] of Object.entries(d.layouts)) {
         if (!/^[1-8]$/.test(k) || Number(k) < eyes[0] || Number(k) > eyes[1]) out.push(`${at}: layouts key "${k}" is not an eye count inside ${eyes[0]} to ${eyes[1]}`);
-        if (!Array.isArray(list) || !list.length || new Set(list).size !== list.length || list.some((x) => !LAYOUT_IDS.includes(x))) {
-          out.push(`${at}: layouts["${k}"] must be a list of distinct layout ids (${LAYOUT_IDS.join(', ')}), the default first`);
+        if (!Array.isArray(list) || !list.length || new Set(list).size !== list.length || list.some((x) => !layoutIds.includes(x))) {
+          out.push(`${at}: layouts["${k}"] must be a list of distinct layout ids (${layoutIds.join(', ')}: the ones ${LAYOUTS_FILE} has words for), the default first`);
         }
       }
       for (let n = eyes[0]; n <= eyes[1]; n++) if (!(String(n) in d.layouts)) out.push(`${at}: layouts has nothing for ${n} eyes`);
@@ -370,48 +372,61 @@ export function checkNumberOfStyles(surfaces, out, extraTexts = []) {
 }
 
 // ---------------------------------------------------------------------------------------------------- 5. layout names
-const layoutTablesOf = (surfaces) => {
-  const tables = [];
-  for (const [name, dict] of surfaces) {
-    for (const [lang, copy] of Object.entries(dict ?? {})) {
-      walkObjects(copy, `${name}.${lang}`, (o, path) => {
-        if (isObj(o.layouts)) tables.push([`${path}.layouts`, Object.keys(o.layouts)]);
-      });
+/** The words themselves: an object of layout ids, each with exactly the four languages, each word a short text with no space at either end. */
+export function checkLayoutNames(names, out) {
+  const at0 = LAYOUTS_FILE;
+  if (!isObj(names) || !Object.keys(names).length) { out.push(`${at0}: LAYOUT_NAMES is not an object of layout ids`); return; }
+  for (const [id, row] of Object.entries(names)) {
+    const at = `${at0} layout "${id}"`;
+    if (!/^[a-z][a-z0-9_]*$/.test(id)) out.push(`${at}: a layout id is lower case letters, digits and _`);
+    if (!isObj(row)) { out.push(`${at}: not an object of words`); continue; }
+    if (Object.keys(row).sort().join() !== [...LAYOUT_LANGS].sort().join()) {
+      out.push(`${at}: it must have a word in exactly ${LAYOUT_LANGS.join(', ')} (it has ${Object.keys(row).join(', ') || 'none'})`);
+      continue;
+    }
+    for (const l of LAYOUT_LANGS) {
+      const w = row[l];
+      if (typeof w !== 'string' || !w.length || w !== w.trim() || /[\u0000-\u001f]/.test(w) || w.length > 40) {
+        out.push(`${at}: the ${l} word must be a short text (1 to 40 characters, no space at either end, no line break): ${JSON.stringify(w)}`);
+      }
     }
   }
-  return tables;
-};
-
-const dictKeys = (text, start) => {
-  const end = text.indexOf('}', start);
-  return [...text.slice(start, end).matchAll(/"([a-z]+)"\s*:/g)].map((m) => m[1]);
-};
-
-/** The layout-name tables the Python files keep today: pay.py LAYOUT_NAMES (en, de), pay_lt.py LAYOUT_NAMES_LT, pay_hu.py LAYOUT_NAMES_HU. */
-function pythonLayoutTables(root) {
-  const read = (rel) => { try { return readFileSync(join(root, rel), 'utf8'); } catch { return ''; } };
-  const tables = [];
-  const pay = read('api/_lib/pay.py');
-  const at = pay.search(/^LAYOUT_NAMES = \{/m);
-  if (at >= 0) for (const lang of ['en', 'de']) {
-    const m = new RegExp(`"${lang}": \\{`).exec(pay.slice(at));
-    if (m) tables.push([`api/_lib/pay.py LAYOUT_NAMES["${lang}"]`, dictKeys(pay, at + m.index + m[0].length)]);
-  }
-  for (const [rel, name] of [['api/_lib/pay_lt.py', 'LAYOUT_NAMES_LT'], ['api/_lib/pay_hu.py', 'LAYOUT_NAMES_HU']]) {
-    const t = read(rel);
-    const i = t.search(new RegExp(`^${name} = \\{`, 'm'));
-    if (i >= 0) tables.push([`${rel} ${name}`, dictKeys(t, i + `${name} = {`.length)]);
-  }
-  return tables;
 }
 
-export function checkLayouts(root, styles, surfaces, out) {
-  const used = dedupe(shownIds(styles).flatMap((id) => Object.values(styles[id].layouts).flat()));
-  for (const l of used) if (!LAYOUT_IDS.includes(l)) out.push(`layout id "${l}" is not in the vocabulary (${LAYOUT_IDS.join(', ')})`);
-  const tables = [...(surfaces ? layoutTablesOf(surfaces) : []), ...pythonLayoutTables(root)];
-  for (const [where, keys] of tables) {
-    for (const l of used) if (!keys.includes(l)) out.push(`${where} has no name for the layout "${l}", which a style shown to customers takes`);
+/** The files that may hold the ids of layouts next to words: this check, its source reader and the registry files themselves. */
+const LAYOUT_SKIP_FILES = [LAYOUTS_FILE, STYLES_FILE, ENGINE_FILE, 'scripts/check_styles.mjs', 'scripts/styles_source.mjs', 'scripts/check_styles.d.mts'];
+const LAYOUT_TABLE_WINDOW = 400;       // characters: two layout ids that each name a word within this are one table
+
+/** Another table that names layouts: in one file, two different layout ids, each as a key with a word that starts with a capital letter, as
+ *  every layout word does (`single: 'Single'`, `"duo": "Greta"`; a lower case value such as a caption mode is not a word), within a few
+ *  hundred characters of each other. The e-mails, the picker, the order page and the Python files each had
+ *  one; they read api/_lib/layout_names.py now (catalogue.layout_name, src/shared/layouts.ts layoutName). */
+export function checkLayoutTables(root, ids, out, skip = LAYOUT_SKIP_FILES) {
+  if (!ids.length) return;
+  const re = new RegExp(`(?<![\\w.])["'\\x60]?(${ids.map(esc).join('|')})["'\\x60]?\\s*:\\s*["'\\x60]\\p{Lu}`, 'gu');
+  for (const dir of ['api', 'src', 'scripts']) {
+    for (const rel of sourceFiles(root, dir)) {
+      if (skip.includes(rel)) continue;
+      const text = readFileSync(join(root, rel), 'utf8');
+      const hits = [...text.matchAll(re)].map((m) => ({ id: m[1], at: m.index }));
+      for (let i = 1; i < hits.length; i++) {
+        const prev = hits.slice(0, i).reverse().find((h) => h.id !== hits[i].id && hits[i].at - h.at <= LAYOUT_TABLE_WINDOW);
+        if (prev) {
+          out.push(`${rel}: a table that names layouts again ("${prev.id}" and "${hits[i].id}" with words, line ${text.slice(0, prev.at).split('\n').length}): the words are in ${LAYOUTS_FILE} only (catalogue.layout_name, src/shared/layouts.ts layoutName)`);
+          break;
+        }
+      }
+    }
   }
+}
+
+/** Every word belongs to a layout some style takes, the pages read the same words, and no other table names layouts (a layout id a style
+ *  takes that has no words is refused earlier, by checkPublic, which knows the vocabulary). pageNames: the LAYOUT_NAMES src/shared/layouts.ts parsed (without the page code loaded, that comparison is left out). */
+export function checkLayouts(root, styles, names, out, pageNames) {
+  const taken = new Set(Object.values(styles).flatMap((d) => Object.values(d.layouts).flat()));
+  for (const l of Object.keys(names)) if (!taken.has(l)) out.push(`${LAYOUTS_FILE} has words for the layout "${l}", which no style of ${STYLES_FILE} takes (a word nobody uses: remove it, or give the style its layout)`);
+  if (pageNames !== undefined && !sameJson(pageNames, names)) out.push(`src/shared/layouts.ts reads another LAYOUT_NAMES than ${LAYOUTS_FILE} holds`);
+  checkLayoutTables(root, Object.keys(names), out);
 }
 
 // ---------------------------------------------------------------------------------------------------- 6. price rules
@@ -478,17 +493,21 @@ export function checkRuntimeTokens(copy, out) {
 
 // ---------------------------------------------------------------------------------------------------- the whole check
 /** Every problem found, as sentences ([] when the registry is sound). load(path): a module of src/ through Vite's module runner
- *  (vite.config.ts); without it the checks that need the page code (the pages' reading, 4, the TypeScript tables of 5, 6) are left out. */
+ *  (vite.config.ts); without it the checks that need the page code (the pages' reading of the registry and of the layout words, 4, 6) are left out. */
 export async function checkStyles(root, load) {
   const out = [];
-  let reg, engine;
+  let reg, engine, names;
   try { reg = parseRegistrySource(readFileSync(join(root, STYLES_FILE), 'utf8')); } catch (e) {
     return [`${STYLES_FILE}: the STYLES literal cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`];
   }
   try { engine = parseEngineSource(readFileSync(join(root, ENGINE_FILE), 'utf8')); } catch (e) {
     return [`${ENGINE_FILE}: the ENGINE literal cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`];
   }
-  checkPublic(reg, out);
+  try { names = parseLayoutNamesSource(readFileSync(join(root, LAYOUTS_FILE), 'utf8')); } catch (e) {
+    return [`${LAYOUTS_FILE}: the LAYOUT_NAMES literal cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`];
+  }
+  checkLayoutNames(names, out);
+  checkPublic(reg, out, isObj(names) ? Object.keys(names) : []);
   checkEngine(reg, engine, out);
   if (out.length) return out;       // nothing below makes sense on a broken registry
   checkLegacyTable(root, reg, out);
@@ -496,11 +515,14 @@ export async function checkStyles(root, load) {
   checkTerms(root, reg.styles, out);
   let surfaces = null;
   let client = null;
+  let pageNames;
   if (load) {
-    const [stylesTs, markets, landing, tryCopy, orderCopy] = await Promise.all([
-      load('./src/shared/styles.ts'), load('./src/shared/markets.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'), load('./src/order/copy.ts'),
+    const [stylesTs, layoutsTs, markets, landing, tryCopy, orderCopy] = await Promise.all([
+      load('./src/shared/styles.ts'), load('./src/shared/layouts.ts'), load('./src/shared/markets.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'),
+      load('./src/order/copy.ts'),
     ]);
     client = markets;
+    pageNames = layoutsTs.LAYOUT_NAMES;
     if (!sameJson(stylesTs.STYLES, reg.styles)) out.push('src/shared/styles.ts reads another STYLES than api/_lib/styles_registry.py holds');
     if (stylesTs.DEFAULT_STYLE !== reg.defaultStyle) out.push(`src/shared/styles.ts reads DEFAULT_STYLE "${stylesTs.DEFAULT_STYLE}", not "${reg.defaultStyle}"`);
     if (stylesTs.STYLES_SCHEMA !== reg.schema || stylesTs.PLATES_VERSION !== reg.platesVersion) out.push('src/shared/styles.ts reads another STYLES_SCHEMA or PLATES_VERSION');
@@ -511,7 +533,7 @@ export async function checkStyles(root, load) {
       checkRuntimeTokens(landing.COPY, out);
     }
   }
-  checkLayouts(root, reg.styles, surfaces, out);
+  checkLayouts(root, reg.styles, names, out, pageNames);
   checkPriceRules(root, reg.styles, client, out);
   return dedupe(out);
 }
@@ -523,7 +545,8 @@ export function describeRegistry(root) {
   const by = {};
   for (const d of Object.values(reg.styles)) by[d.stage] = (by[d.stage] ?? 0) + 1;
   const stages = STAGES.filter((s) => by[s]).map((s) => `${by[s]} ${s}`).join(', ');
-  return `styles registry ok: ${Object.keys(reg.styles).length} ids (${stages}), registry hash ${registryHash(reg, engine)}`;
+  const layouts = Object.keys(parseLayoutNamesSource(readFileSync(join(root, LAYOUTS_FILE), 'utf8'))).length;
+  return `styles registry ok: ${Object.keys(reg.styles).length} ids (${stages}), registry hash ${registryHash(reg, engine)}; ${layouts} layouts named in ${LAYOUT_LANGS.join(', ')}`;
 }
 
 // `node scripts/check_styles.mjs` (npm run check:styles): loads src/ through Vite's module runner, exit code 1 on any problem

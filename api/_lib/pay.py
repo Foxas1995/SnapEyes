@@ -1699,14 +1699,8 @@ def render_mail(blocks, lang, title):
     return text, doc
 
 
-LAYOUT_NAMES = {   # as the order page names them (src/order/copy.ts layouts)
-    "en": {"single": "Single", "duo": "Side by side", "fusion": "Fusion", "triangle": "Triangle", "row": "In a row",
-           "grid": "Grid", "galaxy": "Galaxy"},
-    "de": {"single": "Einzeln", "duo": "Nebeneinander", "fusion": "Fusion", "triangle": "Dreieck",
-           "row": "In einer Reihe", "grid": "Raster", "galaxy": "Galaxie"},
-    "lt": pay_lt.LAYOUT_NAMES_LT,
-    "hu": pay_hu.LAYOUT_NAMES_HU,
-}
+# The words for the layouts (the "layout ..." row of the confirmation) are catalogue.layout_name(lang, id): api/_lib/layout_names.py is
+# the one table, and the order page and the picker read it too (src/shared/layouts.ts).
 
 
 # ----------------------------------------------------------------------------- the order confirmation
@@ -1734,7 +1728,7 @@ def confirmation_mail(order, paid, k, pack, consent):
     if docs is None:     # deliver_mail and the admin's copy check this first: never the texts of another edition
         raise PayError(f"order {order}: the legal pack has no texts for the {market} market")
     wd, terms = docs["withdrawal"], docs["terms"]
-    layout = LAYOUT_NAMES[lang].get(spec.get("layout") or "", "")
+    layout = catalogue.layout_name(lang, spec.get("layout"))
     if lang in ("lt", "hu"):
         # Lithuanian and Hungarian (api/_lib/pay_lt.py, pay_hu.py): block for block the English email, then the same legal
         # texts. Neither is an Australian market's language, so no invoice and no "Your rights in Australia" here

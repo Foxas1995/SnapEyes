@@ -13,7 +13,8 @@
 //      the contract languages does not name every language the edition can be read in;
 //   4. the withdrawal-consent version and the date of the legal texts are malformed, in the future, or (the version)
 //      not the one api/_lib/pay.py CONSENT_VERSION says;
-//   5. a source file holds an en or em dash;
+//   5. a source file holds an en or em dash (api/_lib/layout_names.py, the one table of the layout words, is read as strings too: the
+//      words of every language go through the checks of 2 and 9 like any dictionary string);
 //   6. a language of api/analyze.py's customer sentences (TEXT_DE, TEXT_LT, TEXT_HU) lacks a key or a placeholder, or lacks
 //      a sentence for a reason a photo can be blocked for;
 //   7. the withdrawal waiver (checkbox) or the withdrawal statement is not the same words on the page and on the server,
@@ -499,9 +500,10 @@ export function checkServerTexts(root, legal, orderCopy) {
  *  runner (vite.config.ts); root: the repository. */
 export async function checkTexts(load, root) {
   const out = [];
-  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets] = await Promise.all([
+  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets, layouts] = await Promise.all([
     load('./src/shared/lang.ts'), load('./src/shared/legal.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'),
     load('./src/order/copy.ts'), load('./src/legal/editions.ts'), load('./src/legal/plain.ts'), load('./src/shared/markets.ts'),
+    load('./src/shared/layouts.ts'),
   ]);
   if (lang.LANGS.join() !== LANGS.join()) out.push(`src/shared/lang.ts LANGS is ${lang.LANGS.join()}, this check knows ${LANGS.join()}: update scripts/check_texts.mjs`);
 
@@ -514,6 +516,14 @@ export async function checkTexts(load, root) {
       if (!dict[l]) { out.push(`${name}: no ${l} dictionary`); continue; }
       if (NEW_LANGS.includes(l)) walk(dict.en, dict[l], '', l, name, out, list);
       else walk(dict.en, dict[l], '', l, name, [], list);   // English and German: their strings only, for the dash lint
+    }
+  }
+  // the layout words (api/_lib/layout_names.py through src/shared/layouts.ts): every layout has a word in every language, and each word is
+  // linted as a string of its language (no en or em dash, no untranslated English or German in a Lithuanian or Hungarian one)
+  for (const [id, row] of Object.entries(layouts.LAYOUT_NAMES)) {
+    for (const l of LANGS) {
+      if (typeof row[l] !== 'string' || !row[l].trim()) out.push(`layout words: "${id}" has no ${l} word (api/_lib/layout_names.py)`);
+      else strings[l].push([`layout words.${id}`, row[l]]);
     }
   }
   for (const l of LANGS) {

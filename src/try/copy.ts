@@ -3,10 +3,11 @@
 // renders, and again when the visitor switches, so every component and helper reads T at render time.
 // The server's own sentences (quality.message, tips, errors) come in the language the request asked for
 // (the "lang" field every request carries).
-import type { Layout, LightAnswer } from './multi';
+import type { LightAnswer } from './multi';
 import type { Lang } from './lang';
 import { CONTACT_EMAIL } from '../landing/config';
 import { CHECKOUT_LEGAL } from '../shared/legal';
+import { layoutName } from '../shared/layouts';
 import { lt } from './copy.lt';
 import { hu } from './copy.hu';
 
@@ -292,9 +293,6 @@ const en = {
       : 'Your file: 4096 px on its longest side, sharp enough to print up to 50 cm on that side.'),
     retry: 'Try again',
     layout: 'Layout',
-    layouts: {
-      single: 'Single', duo: 'Side by side', fusion: 'Fusion', triangle: 'Triangle', row: 'In a row', grid: 'Grid', galaxy: 'Galaxy',
-    } satisfies Record<Layout, string>,
     style: 'Style',
     namesPlaceholder: 'Names or inscription (optional)',
     save: 'Save preview',
@@ -626,9 +624,6 @@ const de: TryCopy = {
       : 'Ihre Datei: 4096 px an der längsten Seite, scharf genug für einen Druck mit bis zu 50 cm an dieser Seite.'),
     retry: 'Erneut versuchen',
     layout: 'Anordnung',
-    layouts: {
-      single: 'Einzeln', duo: 'Nebeneinander', fusion: 'Fusion', triangle: 'Dreieck', row: 'In einer Reihe', grid: 'Raster', galaxy: 'Galaxie',
-    } satisfies Record<Layout, string>,
     style: 'Stil',
     namesPlaceholder: 'Namen oder Widmung (optional)',
     save: 'Vorschau speichern',
@@ -719,3 +714,7 @@ export let T: TryCopy = en;
 export function setCopyLang(l: Lang): void {
   T = COPY[l];
 }
+
+/** The word for a layout id in the page's current language ("Side by side", "Nebeneinander", "Greta", "Egymás mellett"). The words are not in
+ *  the dictionaries above: api/_lib/layout_names.py is the one table (src/shared/layouts.ts), for the e-mails and the order page too. */
+export const layoutLabel = (id: string): string => layoutName(T.lang, id, id);

@@ -14,7 +14,7 @@
 // megrendelés”; Art. 8(2) Directive 2011/83/EU), without the price: the card shows the price right above it. The
 // click that binds is Stripe's pay button; api/_lib/pay_hu.py SUBMIT_NOTE_HU puts the decree's words right above it.
 import type { BlockCopy, BlockReason, TryCopy } from './copy';
-import type { Layout, LightAnswer } from './multi';
+import type { LightAnswer } from './multi';
 import { CONTACT_EMAIL } from '../landing/config';
 import { CHECKOUT_LEGAL } from '../shared/legal';
 import { TRANSPARENCY_HU } from '../landing/copy.hu';
@@ -283,9 +283,6 @@ export const hu: TryCopy = {
       : 'A fájlod: 4096 px a hosszabbik oldalán, elég éles olyan nyomtatáshoz, amelynek hosszabbik oldala legfeljebb 50 cm.'),
     retry: 'Próbáld újra',
     layout: 'Elrendezés',
-    layouts: {
-      single: 'Egy szem', duo: 'Egymás mellett', fusion: 'Összeolvadás', triangle: 'Háromszög', row: 'Egy sorban', grid: 'Rács', galaxy: 'Galaxis',
-    } satisfies Record<Layout, string>,
     style: 'Stílus',
     namesPlaceholder: 'Nevek vagy felirat (nem kötelező)',
     save: 'Előnézet mentése',
