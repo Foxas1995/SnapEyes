@@ -1,5 +1,5 @@
-// "More ways to see it": four pictures that are not on the stage (in your hands, on a shelf, two of you in a hall, seen from an
-// angle), in a disclosure that is open on a desktop and closed on a phone (where it would add about 450 px of scrolling). The
+// "More ways to see it": five pictures that are not on the stage (two of you on walnut, four of you in a frame, in your hands, seen
+// from an angle, on a shelf), in a disclosure that is open on a desktop and closed on a phone (where it would add about 450 px of scrolling). The
 // rail scrolls sideways; it is a named region with a tab stop so the keyboard can scroll it. Every picture is an AI
 // visualisation and carries its chip inside its frame.
 import { useState } from 'react';

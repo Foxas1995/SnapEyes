@@ -146,7 +146,7 @@ def write_manifest(spec, files, ts_files_path, ts_data_path):
 //
 //   asset('m/lounge_acrylic__eye__tight')     the family: every width as a srcset, one of them as src (pick, default 900)
 //   asset('reveal/gd_iris_900')               one file
-//   asset('m/dining_metal__eye__wide', 2000)  the family with the 2000 px file as the src
+//   asset('m/study_acrylic_3x2__eye__wide', 2000)  the family with the 2000 px file as the src
 //   asset('m/lounge_acrylic__eye__tight', {{ max: 1200 }})   the family without its widest files
 // A name that is not here does not compile. The structures that name pictures (wall, gallery, rooms, Reveal) are in
 // ./assets.data.ts, which only the sections below the first screen load.

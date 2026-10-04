@@ -318,24 +318,29 @@
     "railLabel": "More AI visualisations",
     "scenes": [
       {
+        "id": "pair",
+        "t": "Two of you, on dark walnut",
+        "c": "Your file printed on acrylic. Eyes: Mantas and an example photo, not customers."
+      },
+      {
+        "id": "group",
+        "t": "Four of you, in a frame",
+        "c": "Your file, framed. Eyes: Mantas and example photos, not customers."
+      },
+      {
         "id": "hands",
         "t": "In your hands",
         "c": "Your file printed on acrylic."
       },
       {
-        "id": "shelf",
-        "t": "On a shelf",
-        "c": "Your file printed on acrylic."
-      },
-      {
-        "id": "hall",
-        "t": "Two of you, in a hall",
-        "c": "Your file printed on acrylic, about 50 cm. Eyes: Mantas and an example photo, not customers."
-      },
-      {
         "id": "gallery",
         "t": "Seen from an angle",
         "c": "Your file on acrylic with standoff posts. Eyes: Mantas and an example photo, not customers."
+      },
+      {
+        "id": "shelf",
+        "t": "On a shelf",
+        "c": "Your file printed on acrylic."
       }
     ]
   },
@@ -700,7 +705,7 @@
     "title": "See your own iris",
     "body": "All it takes is your phone, good light and about a minute.",
     "small": "You receive a digital file. Printing is not part of your order.",
-    "imageAlt": "An AI visualisation: a dark dining room with Mantas's iris printed on aluminium on the wall.",
+    "imageAlt": "An AI visualisation: a dark study at dusk with Mantas's iris printed on acrylic on the wall.",
     "chip": "AI visualisation"
   },
   "footer": {

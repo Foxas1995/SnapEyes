@@ -318,24 +318,29 @@
     "railLabel": "Daugiau DI vizualizacijų",
     "scenes": [
       {
+        "id": "pair",
+        "t": "Jūs dviese, ant tamsaus riešutmedžio",
+        "c": "Jūsų failas, atspausdintas ant akrilo. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+      },
+      {
+        "id": "group",
+        "t": "Jūs keturiese, rėme",
+        "c": "Jūsų failas, įrėmintas. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+      },
+      {
         "id": "hands",
         "t": "Jūsų rankose",
         "c": "Jūsų failas, atspausdintas ant akrilo."
       },
       {
-        "id": "shelf",
-        "t": "Lentynoje",
-        "c": "Jūsų failas, atspausdintas ant akrilo."
-      },
-      {
-        "id": "hall",
-        "t": "Jūs dviese, koridoriuje",
-        "c": "Jūsų failas, atspausdintas ant akrilo, maždaug 50 cm. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
-      },
-      {
         "id": "gallery",
         "t": "Žvelgiant iš šono",
         "c": "Jūsų failas ant akrilo su atstumo laikikliais. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+      },
+      {
+        "id": "shelf",
+        "t": "Lentynoje",
+        "c": "Jūsų failas, atspausdintas ant akrilo."
       }
     ]
   },
@@ -700,7 +705,7 @@
     "title": "Pamatykite savo rainelę",
     "body": "Tereikia telefono, geros šviesos ir maždaug minutės.",
     "small": "Gausite skaitmeninį failą. Spausdinimas nėra Jūsų užsakymo dalis.",
-    "imageAlt": "DI vizualizacija: tamsus valgomasis, ant sienos Manto rainelė, atspausdinta ant aliuminio.",
+    "imageAlt": "DI vizualizacija: tamsus kabinetas prieblandoje, ant sienos Manto rainelė, atspausdinta ant akrilo.",
     "chip": "DI vizualizacija"
   },
   "footer": {

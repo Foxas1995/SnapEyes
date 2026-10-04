@@ -1,5 +1,5 @@
-// The closing scene of the new landing (prototype: section.final): the last section of <main>, a dark dining room with Mantas's iris on
-// aluminium, the headline, the gold button, and the line that the file is digital and printing is not part of the order.
+// The closing scene of the new landing (prototype: section.final): the last section of <main>, a dark study with Mantas's iris on
+// acrylic, the headline, the gold button, and the line that the file is digital and printing is not part of the order.
 //
 //   <ClosingScene ctaRef={...} />     needs <LangProvider> and <CopyProvider> above it
 //
@@ -15,7 +15,7 @@ import './css/final.css';
 export function ClosingScene({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
   const { c } = useCopy();
   const tryHref = useTryHref();
-  const pic = asset('m/dining_metal__eye__wide', { pick: 2000 });
+  const pic = asset('m/study_acrylic_3x2__eye__wide', { pick: 2000 });
   return (
     <section className="lp-final" id="final" aria-labelledby="finalH">
       <div className="lp-bg">

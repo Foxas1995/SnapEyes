@@ -17,73 +17,73 @@ export interface StageScene { base: AssetFamily; sizeOk: boolean; de?: AssetFami
 export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, StageScene>>>>> = {
   "acrylic": {
     "eye": {
-      "base": "m/lounge_acrylic__eye__tight",
-      "sizeOk": true
+      "base": "m/living_acrylic__eye__tight",
+      "sizeOk": false
     },
     "universe": {
-      "base": "m/lounge_acrylic__universe__tight",
-      "sizeOk": true
+      "base": "m/living_acrylic__universe__tight",
+      "sizeOk": false
     },
     "family4": {
-      "base": "m/lounge_acrylic__family4__tight",
-      "sizeOk": true
+      "base": "m/living_acrylic_3x2__family4__tall",
+      "sizeOk": false
     },
     "collision": {
-      "base": "m/lounge_acrylic_3x2__collision__tall",
+      "base": "m/living_acrylic_3x2__collision__tall",
       "sizeOk": false
     }
   },
   "metal": {
     "eye": {
-      "base": "m/dining_metal__eye__tight",
-      "sizeOk": true
+      "base": "m/office_metal__eye__tight",
+      "sizeOk": false
     },
     "universe": {
-      "base": "m/dining_metal__universe__tight",
-      "sizeOk": true
+      "base": "m/office_metal__universe__tight",
+      "sizeOk": false
     },
     "family4": {
-      "base": "m/dining_metal__family4__tight",
-      "sizeOk": true
+      "base": "m/office_metal_3x2__family4__tall",
+      "sizeOk": false
     },
     "collision": {
-      "base": "m/lounge_metal_3x2__collision__tall",
+      "base": "m/office_metal_3x2__collision__tall",
       "sizeOk": false
     }
   },
   "canvas": {
     "eye": {
-      "base": "m/living_canvas__eye__tight",
-      "sizeOk": true
+      "base": "m/hall_canvas__eye__tight",
+      "sizeOk": false
     },
     "universe": {
-      "base": "m/living_canvas__universe__tight",
-      "sizeOk": true
+      "base": "m/hall_canvas__universe__tight",
+      "sizeOk": false
     },
     "family4": {
-      "base": "m/living_canvas__family4__tight",
+      "base": "m/hall_canvas_3x2__family4__tall",
       "sizeOk": true
     },
     "collision": {
-      "base": "m/lounge_canvas_3x2__collision__tall",
-      "sizeOk": false
+      "base": "m/hall_canvas_3x2__collision__tall",
+      "sizeOk": true
     }
   },
   "framed": {
     "eye": {
-      "base": "m/lounge_framed__eye__tight",
+      "base": "m/hotel_framed__eye__tight",
       "sizeOk": true
     },
     "universe": {
-      "base": "m/lounge_framed__universe__tight",
+      "base": "m/hotel_framed__universe__tight",
       "sizeOk": true
     },
     "family4": {
-      "base": "m/lounge_framed__family4__tight",
-      "sizeOk": true
+      "base": "m/hotel_framed_3x2__family4__tall",
+      "sizeOk": false
     },
     "collision": {
-      "base": "m/lounge_framed_3x2__collision__tall",
+      "base": "m/hotel_framed_3x2__collision__tall",
       "sizeOk": false
     }
   },
@@ -172,7 +172,7 @@ export const GALLERY: {
       "design": "radiance",
       "price": "art",
       "wallOwn": {
-        "base": "m/lounge_acrylic__eye__tight",
+        "base": "m/living_acrylic__eye__tight",
         "ratio": "4/5"
       }
     },
@@ -186,7 +186,7 @@ export const GALLERY: {
       "design": "universe",
       "price": "art",
       "wallOwn": {
-        "base": "m/lounge_acrylic__universe__tight",
+        "base": "m/living_acrylic__universe__tight",
         "ratio": "4/5"
       }
     },
@@ -213,7 +213,7 @@ export const GALLERY: {
       "price": "two",
       "src": "mixed",
       "wall": {
-        "base": "m/lounge_acrylic_3x2__collision__tall",
+        "base": "m/living_acrylic_3x2__collision__tall",
         "ratio": "4/5"
       }
     },
@@ -285,20 +285,24 @@ export const GALLERY: {
 /** "More ways to see it": the rooms that are not on the wall stage. */
 export const MORE: readonly { id: string; base: AssetFamily }[] = [
   {
+    "id": "pair",
+    "base": "m/cafe_acrylic_3x2__collision__tight"
+  },
+  {
+    "id": "group",
+    "base": "m/gallery_framed_3x2__family4__tight"
+  },
+  {
     "id": "hands",
     "base": "m/hands_acrylic__eye__tight"
   },
   {
-    "id": "shelf",
-    "base": "m/shelf_acrylic_30__eye__tight"
-  },
-  {
-    "id": "hall",
-    "base": "m/hall_acrylic_3x2__collision__tight"
-  },
-  {
     "id": "gallery",
     "base": "m/gallery_acrylic_oblique__collision__tight"
+  },
+  {
+    "id": "shelf",
+    "base": "m/shelf_acrylic_30__eye__tight"
   }
 ];
 

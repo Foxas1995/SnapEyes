@@ -13,7 +13,7 @@ export const MATERIALS: readonly Material[] = ['acrylic', 'metal', 'canvas', 'fr
 /** The artworks in the order of the chips. */
 export const ARTS: readonly WallArt[] = ['eye', 'universe', 'family4', 'collision'];
 
-/** The wall opens on aluminium in the dining room with the Radiance artwork, not on the hero picture. */
+/** The wall opens on aluminium in the home office with the Radiance artwork, not on the hero picture. */
 export const DEFAULT_MATERIAL: Material = 'metal';
 export const DEFAULT_ART: WallArt = 'eye';
 
@@ -57,13 +57,15 @@ export function stagePicture(mat: Material, art: WallArt, lang: Lang): StagePict
   return { family, key: family, asset: asset(family, { pick: 100000 }), sizeOk: s.sizeOk };
 }
 
-/** The glint of a polished surface: left, top, width, height of the sweep in percent of the stage. Acrylic only. */
+/** The glint of a polished surface: left, top, width, height of the sweep in percent of the stage. Acrylic only. The boxes are the
+ *  face of the print in the living room plates (the pictures' rooms_slots.json): the square plate for one eye, the 3:2 plate of the
+ *  same room for the pair and the family. */
 export type GlintBox = readonly [number, number, number, number];
-const GLINT: Readonly<Record<'default' | 'collision', GlintBox>> = { default: [28.1, 23.8, 43.85, 34.8], collision: [17.0, 21.3, 66.0, 37.3] };
+const GLINT: Readonly<Record<'single' | 'wide', GlintBox>> = { single: [28.08, 23.62, 43.85, 35.14], wide: [17.02, 22.75, 65.97, 34.5] };
 
 export function glintFor(mat: Material, art: WallArt): GlintBox | null {
   if (mat !== 'acrylic') return null;
-  return art === 'collision' ? GLINT.collision : GLINT.default;
+  return art === 'collision' || art === 'family4' ? GLINT.wide : GLINT.single;
 }
 
 // One material is warmed on hover, focus or touch (the visitor's intent), not all six on idle: no speculative 400 KB. A

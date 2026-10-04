@@ -318,24 +318,29 @@
     "railLabel": "További MI-vizualizációk",
     "scenes": [
       {
+        "id": "pair",
+        "t": "Ti ketten, sötét diófán",
+        "c": "A fájlod akrilra nyomtatva. Szemek: Mantasé és egy példafotó, nem vásárlóké."
+      },
+      {
+        "id": "group",
+        "t": "Ti négyen, keretben",
+        "c": "A fájlod, keretezve. Szemek: Mantasé és példafotók, nem vásárlóké."
+      },
+      {
         "id": "hands",
         "t": "A kezedben",
         "c": "A fájlod akrilra nyomtatva."
       },
       {
-        "id": "shelf",
-        "t": "Polcon",
-        "c": "A fájlod akrilra nyomtatva."
-      },
-      {
-        "id": "hall",
-        "t": "Ti ketten, előszobában",
-        "c": "A fájlod akrilra nyomtatva, kb. 50 cm. Szemek: Mantasé és egy példafotó, nem vásárlóké."
-      },
-      {
         "id": "gallery",
         "t": "Ferde szögből nézve",
         "c": "A fájlod akrilon, távtartókkal. Szemek: Mantasé és egy példafotó, nem vásárlóké."
+      },
+      {
+        "id": "shelf",
+        "t": "Polcon",
+        "c": "A fájlod akrilra nyomtatva."
       }
     ]
   },
@@ -700,7 +705,7 @@
     "title": "Nézd meg a saját íriszed",
     "body": "Csak a telefonodra, jó fényre és kb. egy percre van szükséged.",
     "small": "Digitális fájlt kapsz. A nyomtatás nem része a rendelésnek.",
-    "imageAlt": "MI-vizualizáció: egy sötét étkező, amelynek falán Mantas írisze látható alumíniumra nyomtatva.",
+    "imageAlt": "MI-vizualizáció: egy sötét dolgozószoba alkonyatkor, amelynek falán Mantas írisze látható akrilra nyomtatva.",
     "chip": "MI-vizualizáció"
   },
   "footer": {

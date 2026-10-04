@@ -318,24 +318,29 @@
     "railLabel": "Weitere KI-Visualisierungen",
     "scenes": [
       {
+        "id": "pair",
+        "t": "Sie zu zweit, auf dunklem Nussbaum",
+        "c": "Ihre Datei auf Acryl gedruckt. Augen: Mantas und ein Beispielfoto, keine Kunden."
+      },
+      {
+        "id": "group",
+        "t": "Sie zu viert, im Rahmen",
+        "c": "Ihre Datei, gerahmt. Augen: Mantas und Beispielfotos, keine Kunden."
+      },
+      {
         "id": "hands",
         "t": "In Ihren Händen",
         "c": "Ihre Datei auf Acryl gedruckt."
       },
       {
-        "id": "shelf",
-        "t": "Im Regal",
-        "c": "Ihre Datei auf Acryl gedruckt."
-      },
-      {
-        "id": "hall",
-        "t": "Sie zu zweit, im Flur",
-        "c": "Ihre Datei auf Acryl gedruckt, etwa 50 cm. Augen: Mantas und ein Beispielfoto, keine Kunden."
-      },
-      {
         "id": "gallery",
         "t": "Aus einem Blickwinkel",
         "c": "Ihre Datei auf Acryl mit Abstandhaltern. Augen: Mantas und ein Beispielfoto, keine Kunden."
+      },
+      {
+        "id": "shelf",
+        "t": "Im Regal",
+        "c": "Ihre Datei auf Acryl gedruckt."
       }
     ]
   },
@@ -700,7 +705,7 @@
     "title": "Sehen Sie Ihre eigene Iris",
     "body": "Sie brauchen nur Ihr Smartphone, gutes Licht und etwa eine Minute.",
     "small": "Sie erhalten eine digitale Datei. Der Druck gehört nicht zur Bestellung.",
-    "imageAlt": "Eine KI-Visualisierung: ein dunkles Esszimmer, an der Wand die Iris von Mantas auf Aluminium gedruckt.",
+    "imageAlt": "Eine KI-Visualisierung: ein dunkles Arbeitszimmer in der Dämmerung, an der Wand die Iris von Mantas auf Acryl gedruckt.",
     "chip": "KI-Visualisierung"
   },
   "footer": {
