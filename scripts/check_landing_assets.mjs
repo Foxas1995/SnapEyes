@@ -24,6 +24,7 @@ const TOTAL_BUDGET = 10.5e6;       // bytes of all pictures together (9.2 MB tod
 const FILE_BUDGET = 350e3;         // bytes of any one picture
 const HERO_FAMILY = 'm/lounge_acrylic__eye__tight';
 const HERO_BUDGET = 38e3;          // the LCP picture the phone fetches (900 px) on slow 4G: the measuring rig (scripts/measure_landing.mjs) shows a cliff of about 100 ms of LCP between a 38.5 and a 39.3 kB file
+const HERO_WIDTHS = [900, 1200];   // the 1200 px file is fetched by phones at pixel ratio 3 and 412 px Androids (pixel ratio 2.6 and more), so it gets the same cap
 const WIDTH_RE = /^(.*)_(\d+)$/;
 
 function listFiles(dir, acc = []) {
@@ -150,9 +151,11 @@ export function checkLandingAssets(root, assets, data) {
     if (!want.has(rel)) problems.push(`${LANDING_DIR}/${rel} is not in the manifest (only pictures the page uses belong in the repository)`);
   }
   if (total > TOTAL_BUDGET) problems.push(`${LANDING_DIR}: ${(total / 1e6).toFixed(2)} MB, over the ${TOTAL_BUDGET / 1e6} MB budget`);
-  const hero = files[`${HERO_FAMILY}_900`];
-  if (!hero) problems.push(`the LCP picture ${HERO_FAMILY}_900 is not in the manifest`);
-  else if (hero[3] > HERO_BUDGET) problems.push(`the LCP picture ${HERO_FAMILY}_900 is ${hero[3]} bytes, over the ${HERO_BUDGET} byte budget`);
+  for (const w of HERO_WIDTHS) {
+    const hero = files[`${HERO_FAMILY}_${w}`];
+    if (!hero) problems.push(`the LCP picture ${HERO_FAMILY}_${w} is not in the manifest`);
+    else if (hero[3] > HERO_BUDGET) problems.push(`the LCP picture ${HERO_FAMILY}_${w} is ${hero[3]} bytes, over the ${HERO_BUDGET} byte budget`);
+  }
 
   // the manifest against the list that makes it
   let spec = null;
@@ -162,6 +165,17 @@ export function checkLandingAssets(root, assets, data) {
     problems.push(...missing);
     for (const n of Object.keys(files)) if (!used.has(n)) problems.push(`${n} is in the manifest but nothing in scripts/landing_assets.json names it`);
     for (const n of used) if (!(n in files)) problems.push(`${n} is named in scripts/landing_assets.json but is not in the manifest`);
+    // a room picture never offers a file wider than the plate it was made from: stage and More 1200 px, the phone 1856 px, the gallery wall views
+    // 1200 px. (Five old prototype phone files of 2000 px were served to tablets and foldables; the family had a width nobody had made again.)
+    const cap = (base, max) => {
+      for (const n of Object.keys(files)) {
+        const m = WIDTH_RE.exec(n);
+        if (m && m[1] === base && +m[2] > max) problems.push(`${n} is wider than the ${max} px cap of its picture family (a stale width of an older design?)`);
+      }
+    };
+    for (const [mat, arts] of Object.entries(spec.stage)) for (const a of Object.values(arts)) cap(a.base, mat === 'phone' ? 1856 : 1200);
+    for (const r of spec.more) cap(r.base, 1200);
+    for (const g of spec.gallery.groups) for (const it of spec.gallery[g]) for (const k of ['wall', 'wallOwn']) if (it[k]) cap(it[k].base, 1200);
   }
 
   // cache headers
