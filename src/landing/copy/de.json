@@ -76,6 +76,10 @@
     "before": "Smartphone-Foto",
     "after": "Restaurierte Iris",
     "scale": "Smartphone-Foto: {n} px. Die restaurierte Datei: {px}.",
+    "beforeWeb": "Foto",
+    "scaleWeb": "Foto: {n} px. Die restaurierte Datei: {px}.",
+    "introWeb": "Die linke Hälfte ist das Originalfoto, die rechte Hälfte dieselbe Iris, restauriert. Der Schnitt verläuft durch die Pupille: Verfolgen Sie eine Furche oder einen Farbfleck von einer Seite zur anderen.",
+    "sliderLabelWeb": "Foto und restaurierte Iris vergleichen",
     "eyes": [
       {
         "id": "gd",
@@ -438,6 +442,7 @@
     "wallOff": "Flach",
     "wallOnAria": "{name} an einer Wand zeigen",
     "wallOffAria": "{name} flach zeigen",
+    "wallFile": "Der Preis gilt für die digitale Datei. Der Druck gehört nicht zur Bestellung.",
     "comboTitle": "Zwei bis acht Augen auf einem Kunstwerk",
     "comboBody": "Ihres und die Augen der Menschen, die Sie lieben. Jedes weitere Auge kostet {price} mehr.",
     "soonTag": "Bald"
@@ -537,7 +542,7 @@
     "edgeTitle": "Die Kante eines Acryldrucks",
     "edgeBody": "Eine KI-generierte Nahaufnahme der Ecke eines Acryldrucks: polierte Kante, ein Abstandhalter und eine Fensterspiegelung. Ein echter Druck unterscheidet sich je nach Druckerei und Licht in Ihrem Raum.",
     "edgeAlt": "Eine KI-Visualisierung der Ecke eines Drucks auf Acryl: polierte klare Kante, ein Abstandhalter aus Stahl und eine weiche Fensterspiegelung.",
-    "edgeCaption": "Die polierte Kante eines Drucks auf Acryl."
+    "edgeCaption": "Die polierte Kante eines Drucks auf Acryl. Der Druck gehört nicht zur Bestellung."
   },
   "trust": {
     "eyebrow": "Was wir nie tun",
@@ -549,7 +554,7 @@
       },
       {
         "t": "Wir geben Beispiele nie als Kunden aus",
-        "b": "Jedes Beispielbild ist gekennzeichnet. Das Auge von Mantas ist sein eigenes. Die anderen Augen sind Beispielfotos, nie Kunden."
+        "b": "Jedes Beispielbild ist gekennzeichnet oder beschriftet. Das Auge von Mantas ist sein eigenes. Die anderen Augen sind Beispielfotos, nie Kunden."
       },
       {
         "t": "Wir verschweigen nie, was die KI tut",
@@ -564,7 +569,7 @@
     "curatorEyebrow": "Der Gründer",
     "curatorTitle": "Hinter SnapEyes",
     "curatorRole": "Gründer",
-    "curatorNote": "Das Auge auf dieser Seite ist mein eigenes, zu Hause mit meinem Smartphone fotografiert. Die Vorschau ist kostenlos, damit Sie das Ergebnis mit eigenen Augen beurteilen können, bevor Sie etwas bezahlen.",
+    "curatorNote": "Das Auge, das ich auf dieser Seite am häufigsten zeige, ist mein eigenes, zu Hause mit meinem Smartphone fotografiert. Die Vorschau ist kostenlos, damit Sie das Ergebnis mit eigenen Augen beurteilen können, bevor Sie etwas bezahlen.",
     "curatorPhotoAlt": "Die Iris von Mantas",
     "offer": "Gelingt Ihnen kein scharfes Foto? Schicken Sie mir Ihre besten Aufnahmen, ich sehe sie mir persönlich an, meist innerhalb von ein bis zwei Werktagen.",
     "offerCta": "E-Mail an Mantas",

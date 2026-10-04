@@ -10,6 +10,9 @@ export const REVEAL_SIZES = '(min-width: 960px) 560px, calc(100vw - 32px)';
 
 export interface RevealEye {
   id: string;
+  /** The left half is a phone photo (true), or a photograph from elsewhere (the brown eye: a web photograph). The page says "Phone photo"
+   *  only for the first kind and "Photo" for the second (copy reveal.before, reveal.beforeWeb). */
+  phone: boolean;
   /** The pill's words (Grey green eye, Brown eye, Mantas's eye). */
   label: string;
   /** The width of the phone photo in pixels: the number in "Phone photo: {n} px". */
@@ -29,6 +32,7 @@ export interface RevealEye {
 }
 
 interface Pictures {
+  phone: boolean;
   photo: PictureAsset;
   iris: PictureAsset;
   stripPhoto: PictureAsset;
@@ -40,6 +44,7 @@ const PICTURES = new Map<string, Pictures>(
   REVEAL.eyes.map((e) => [
     e.id,
     {
+      phone: e.phone,
       photo: asset(e.photo, { pick: 900 }),
       iris: asset(e.iris, { pick: 900 }),
       stripPhoto: asset(e.photo, { max: 900 }),

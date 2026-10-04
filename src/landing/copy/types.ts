@@ -3,8 +3,15 @@
 // must fit the same type (index.ts asCopy).
 import type en from './en.json';
 
-/** The copy of one language: exactly the keys of en.json (nested objects, arrays, strings, a few numbers). */
-export type LandingCopy = typeof en;
+type EnglishCopy = typeof en;
+
+/** The copy of one language: exactly the keys of en.json (nested objects, arrays, strings, a few numbers), except that the offer of
+ *  Australian dollars (marketHint.aud) exists only in the languages of the Australian edition (English and German, src/shared/legal.ts
+ *  EDITION_LANGS): a Lithuanian or Hungarian page is never offered that market, so it carries no words for it
+ *  (scripts/check_texts.mjs holds every language file to this). */
+export type LandingCopy = Omit<EnglishCopy, 'marketHint'> & {
+  marketHint: Omit<EnglishCopy['marketHint'], 'aud'> & { aud?: EnglishCopy['marketHint']['aud'] };
+};
 
 type Join<P extends string, K extends string | number> = P extends '' ? `${K}` : `${P}.${K}`;
 

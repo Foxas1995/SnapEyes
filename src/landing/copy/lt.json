@@ -48,7 +48,7 @@
   "hero": {
     "eyebrow": "SnapEyes Private Atelier",
     "title": "Jūsų tikroji rainelė, paversta menu.",
-    "lead": "Nufotografuokite vieną akį telefonu. Atkursime Jūsų tikrąją rainelę ir perteiksime ją Jūsų pasirinktu stiliumi. Gausite skaitmeninį failą ({px}), tinkamą spausdinti iki {printMax} dydžio. Spausdinimas neįskaičiuotas.",
+    "lead": "Nufotografuokite vieną akį telefonu. Atkursime Jūsų tikrąją rainelę ir perteiksime ją Jūsų pasirinktu stiliumi. Gausite skaitmeninį failą ({px}), skirtą spausdinti iki {printMax} dydžio. Spausdinimas neįskaičiuotas.",
     "micro": [
       "Nemokama peržiūra su vandens ženklu",
       "Peržiūra maždaug per minutę",
@@ -76,6 +76,10 @@
     "before": "Nuotrauka telefonu",
     "after": "Atkurta rainelė",
     "scale": "Nuotrauka telefonu: {n} px. Atkurtas failas: {px}.",
+    "beforeWeb": "Nuotrauka",
+    "scaleWeb": "Nuotrauka: {n} px. Atkurtas failas: {px}.",
+    "introWeb": "Kairė pusė yra pradinė nuotrauka, dešinė pusė yra ta pati atkurta rainelė. Pjūvis eina per vyzdį: sekite vieną vagelę ar spalvos dėmę iš vienos pusės į kitą.",
+    "sliderLabelWeb": "Palyginkite nuotrauką ir atkurtą rainelę",
     "eyes": [
       {
         "id": "gd",
@@ -120,7 +124,7 @@
       },
       {
         "t": "Atkurta mūsų DI",
-        "b": "Smulkios detalės, kurių Jūsų telefonas nepajėgė užfiksuoti, atkurtos taip, kad atitiktų Jūsų nuotrauką. Atspindžiai pašalinami. Pačios smulkiausios plaukelio storio linijos yra atkurtos, o ne nufotografuotos mikroskopu."
+        "b": "Smulkios detalės, kurių Jūsų telefonas nepajėgė užfiksuoti, atkurtos taip, kad atitiktų Jūsų nuotrauką. Atspindžiai pašalinami. Pačios smulkiausios plaukelio storio linijos yra rekonstrukcija, o ne mikroskopu užfiksuotas vaizdas."
       },
       {
         "t": "Niekada",
@@ -438,6 +442,7 @@
     "wallOff": "Plokščias vaizdas",
     "wallOnAria": "Rodyti ant sienos: {name}",
     "wallOffAria": "Rodyti plokščiai: {name}",
+    "wallFile": "Kaina galioja skaitmeniniam failui. Spausdinimas nėra Jūsų užsakymo dalis.",
     "comboTitle": "Nuo dviejų iki aštuonių akių viename kūrinyje",
     "comboBody": "Jūsų ir Jūsų artimųjų akys. Kiekviena papildoma akis: +{price}.",
     "soonTag": "Netrukus"
@@ -537,7 +542,7 @@
     "edgeTitle": "Spaudinio ant akrilo kraštas",
     "edgeBody": "DI sugeneruotas spaudinio ant akrilo kampo vaizdas iš arti: nupoliruotas kraštas, atstumo laikiklis ir lango atspindys. Tikras spaudinys gali atrodyti kitaip: tai priklauso nuo spaustuvės ir šviesos Jūsų kambaryje.",
     "edgeAlt": "DI vizualizacija: spaudinio ant akrilo kampas su nupoliruotu skaidriu kraštu, plieniniu atstumo laikikliu ir švelniu lango atspindžiu.",
-    "edgeCaption": "Nupoliruotas spaudinio ant akrilo kraštas."
+    "edgeCaption": "Nupoliruotas spaudinio ant akrilo kraštas. Spausdinimas nėra Jūsų užsakymo dalis."
   },
   "trust": {
     "eyebrow": "Ko niekada nedarome",
@@ -549,7 +554,7 @@
       },
       {
         "t": "Niekada nepristatome pavyzdžių kaip klientų nuotraukų",
-        "b": "Kiekvienas pavyzdinis vaizdas pažymėtas. Manto akis yra jo paties. Kitos akys yra pavyzdinės nuotraukos, o ne klientų."
+        "b": "Kiekvienas pavyzdinis vaizdas pažymėtas arba turi parašą. Manto akis yra jo paties. Kitos akys yra pavyzdinės nuotraukos, o ne klientų."
       },
       {
         "t": "Niekada neslėpame, ką daro DI",
@@ -564,7 +569,7 @@
     "curatorEyebrow": "Įkūrėjas",
     "curatorTitle": "Kas kuria SnapEyes",
     "curatorRole": "Įkūrėjas",
-    "curatorNote": "Šiame puslapyje esanti akis yra mano, nufotografuota namuose mano telefonu. Peržiūra nemokama, kad rezultatą galėtumėte įvertinti savo akimis prieš ką nors mokėdami.",
+    "curatorNote": "Akis, kurią šiame puslapyje rodau dažniausiai, yra mano, nufotografuota namuose mano telefonu. Peržiūra nemokama, kad rezultatą galėtumėte įvertinti savo akimis prieš ką nors mokėdami.",
     "curatorPhotoAlt": "Paties Manto rainelė",
     "offer": "Nepavyksta padaryti ryškaus kadro? Atsiųskite man geriausias savo nuotraukas: asmeniškai jas peržiūrėsiu, paprastai per vieną ar dvi darbo dienas.",
     "offerCta": "Rašyti Mantui",
@@ -619,7 +624,7 @@
       {
         "id": "real",
         "q": "Ar tai tikrai mano akis?",
-        "a": "Taip. Spalva ir raštas paimti iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI, todėl pačios smulkiausios detalės yra atkurtos, o ne nufotografuotos mikroskopu. Nemokama peržiūra leidžia įvertinti rezultatą dar prieš bet kokį mokėjimą."
+        "a": "Taip. Spalva ir raštas paimti iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI, todėl pačios smulkiausios detalės yra rekonstrukcija, o ne mikroskopu užfiksuotas vaizdas. Nemokama peržiūra leidžia įvertinti rezultatą dar prieš bet kokį mokėjimą."
       },
       {
         "id": "bad",
@@ -719,10 +724,6 @@
   "marketHint": {
     "label": "Kainos Jūsų valiuta",
     "close": "Ne, ačiū",
-    "aud": {
-      "text": "Perkate iš Australijos? Peržiūrėkite mūsų kainas Australijos doleriais (A$) ir mūsų sąlygas Australijai.",
-      "show": "Rodyti kainas A$"
-    },
     "huf": {
       "text": "Perkate iš Vengrijos? Peržiūrėkite mūsų kainas Vengrijos forintais (Ft).",
       "show": "Rodyti kainas forintais"

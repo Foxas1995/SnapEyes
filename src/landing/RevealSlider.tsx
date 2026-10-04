@@ -179,7 +179,7 @@ export function RevealSlider({ eye }: RevealSliderProps) {
       >
         <img className="lp-cmp-iris" src={eye.iris.src} srcSet={eye.iris.srcset} sizes={REVEAL_SIZES} width={eye.iris.w} height={eye.iris.h} loading="lazy" decoding="async" alt={eye.irisAlt} />
         <img ref={photo} className="lp-cmp-photo" src={eye.photo.src} srcSet={eye.photo.srcset} sizes={REVEAL_SIZES} width={eye.photo.w} height={eye.photo.h} loading="lazy" decoding="async" alt={eye.photoAlt} />
-        <span className="lp-cmp-lab lp-l" style={{ opacity: pos > LABEL_LEFT_HIDDEN ? 1 : 0 }}>{r.before}</span>
+        <span className="lp-cmp-lab lp-l" style={{ opacity: pos > LABEL_LEFT_HIDDEN ? 1 : 0 }}>{eye.phone ? r.before : r.beforeWeb}</span>
         <span className="lp-cmp-lab lp-r" style={{ opacity: pos < LABEL_RIGHT_HIDDEN ? 1 : 0 }}>{r.after}</span>
         <span className="lp-cmp-line" aria-hidden="true" />
         <span className="lp-cmp-grip" aria-hidden="true">
@@ -194,7 +194,7 @@ export function RevealSlider({ eye }: RevealSliderProps) {
           max={100}
           step={1}
           value={whole}
-          aria-label={r.sliderLabel}
+          aria-label={eye.phone ? r.sliderLabel : r.sliderLabelWeb}
           aria-valuetext={t('reveal.valueText', { n: whole })}
           onChange={(e) => {
             const h = hand.current;
@@ -214,7 +214,7 @@ export function RevealSlider({ eye }: RevealSliderProps) {
         <span>{eye.note}</span>
         <span className="lp-hint">{r.hint}</span>
       </figcaption>
-      <p className="lp-cmp-scale">{t('reveal.scale', { n: eye.n })}</p>
+      <p className="lp-cmp-scale">{t(eye.phone ? 'reveal.scale' : 'reveal.scaleWeb', { n: eye.n })}</p>
     </figure>
   );
 }

@@ -1,10 +1,10 @@
 // The style gallery's data and rules, without React: which tiles a group has, which picture is a tile in an eye colour, which
-// tiles have a wall view, which carry the "Example photo" label, and the RELEASE GATE (BUILD_PLAN section 3, item 1): which
-// tile the engine can make today. The pictures come from the asset manifest (./assets), the structure of the gallery from
-// ./assets.data (generated with the pictures), the words from the copy; no text and no price is written here.
+// tiles have a wall view, which carry the "Example photo" label. The pictures come from the asset manifest (./assets), the structure
+// of the gallery from ./assets.data (generated with the pictures), the words from the copy; no text and no price is written here.
+// (The release gate, which tile the order flow can make today, is not a page matter: it is checked at build time by
+// scripts/check_landing_assets.mjs from ENGINE_STYLE in ./assets.data.)
 import { asset, type AssetFamily, type PictureAsset } from './assets';
 import { GALLERY, type EyeId, type GalleryGroup, type GalleryTile } from './assets.data';
-import { STYLES } from './config';
 import type { LandingCopy } from './copy/types';
 
 export type { EyeId, GalleryGroup, GalleryTile };
@@ -79,55 +79,4 @@ export type Provenance = 'own' | 'licensed' | 'mixed';
 export function provenance(tile: GalleryTile, eye: EyeId): Provenance {
   if (tile.src === 'mixed') return 'mixed';
   return eye === 'own' ? 'own' : 'licensed';
-}
-
-// ----------------------------------------------------------------------------------------------------------------
-// The release gate: the page shows 16 styles, the engine (api/_lib/iris.py STYLES) makes the six of the capture tool, and
-// only two of them carry the name of a tile. Until the v3 engine, pay.py, the terms of sale and the checkout consent go
-// live in the same deploy, 14 of the 16 tiles show something the order flow cannot make. The table is data: one row per
-// tile, which engine style makes it (null: none), whether the engine can make it today. The build prints the same table
-// (scripts/check_landing_assets.mjs, from iris.py itself); LANDING_GATE=strict makes it an error there.
-// ----------------------------------------------------------------------------------------------------------------
-
-/** The styles the capture tool offers today, the same six as api/_lib/iris.py STYLES (src/landing/config.ts STYLES). When the
- *  v3 engine lands and that list changes, every row below follows. */
-export const LIVE_ENGINE_STYLES: readonly string[] = STYLES.map((s) => s.id);
-
-export interface GateRow {
-  tile: string;
-  group: GalleryGroup;
-  /** The engine style id that makes this tile, or null while the engine has none of that name. */
-  engineStyle: string | null;
-  /** The engine can make it today (its style is one of the live ones). */
-  inEngineToday: boolean;
-  /** Which price the tile's line shows: one eye in an art style ('art'), on black ('black'), two eyes ('two') or n eyes ('n'). */
-  priceKind: GalleryTile['price'];
-}
-
-function gateRows(live: readonly string[]): GateRow[] {
-  return GROUPS.flatMap((group) =>
-    tilesOf(group).map((t) => ({
-      tile: t.id,
-      group,
-      engineStyle: t.engine,
-      inEngineToday: t.engine !== null && live.includes(t.engine),
-      priceKind: t.price,
-    })),
-  );
-}
-
-/** The gate table against the styles the engine makes today. */
-export const GATE: readonly GateRow[] = gateRows(LIVE_ENGINE_STYLES);
-
-/** The gate table against another list of live styles (the build passes the ones it reads from iris.py). */
-export function gateFor(live: readonly string[]): readonly GateRow[] {
-  return gateRows(live);
-}
-
-/** The ids of the tiles the engine cannot make yet. */
-export const GATE_BLOCKED: readonly string[] = GATE.filter((r) => !r.inEngineToday).map((r) => r.tile);
-
-/** Can the engine make this tile today? */
-export function orderableToday(tileId: string): boolean {
-  return GATE.some((r) => r.tile === tileId && r.inEngineToday);
 }

@@ -38,7 +38,7 @@
    "label": "mixed"
   },
   "art/duo_infinity_bb_*, duo_infinity_bb_uni_*, duo_kiss_bb_*": {
-   "eyes": "own215120 + drv_w03 (re-rendered for this page with the collision engine, wave-lp/prototype/_work/render_safe.py)",
+   "eyes": "own215120 + drv_w03 (re-rendered for this page with the collision engine; the render script is kept outside this repository, with the picture sources)",
    "rights": "as above",
    "label": "mixed"
   },

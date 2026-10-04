@@ -76,6 +76,10 @@
     "before": "Telefonos fotó",
     "after": "Helyreállított írisz",
     "scale": "Telefonos fotó: {n} px. A helyreállított fájl: {px}.",
+    "beforeWeb": "Fotó",
+    "scaleWeb": "Fotó: {n} px. A helyreállított fájl: {px}.",
+    "introWeb": "A kép bal fele az eredeti fotó, a jobb fele ugyanaz az írisz, helyreállítva. A vágás a pupillán halad át: kövess egy barázdát vagy egy színfoltot az egyik oldalról a másikra.",
+    "sliderLabelWeb": "Hasonlítsd össze a fotót és a helyreállított íriszt",
     "eyes": [
       {
         "id": "gd",
@@ -438,6 +442,7 @@
     "wallOff": "Fal nélkül",
     "wallOnAria": "{name} megjelenítése a falon",
     "wallOffAria": "{name} megjelenítése fal nélkül",
+    "wallFile": "Az ár a digitális fájlra vonatkozik. A nyomtatás nem része a rendelésnek.",
     "comboTitle": "Két-nyolc szem egy alkotáson",
     "comboBody": "A szemed és azoké, akiket szeretsz. Minden további szem felára: {price}.",
     "soonTag": "Hamarosan"
@@ -537,7 +542,7 @@
     "edgeTitle": "Az akrilnyomat éle",
     "edgeBody": "Egy MI által generált közelkép egy akrilnyomat sarkáról: polírozott él, távtartó és ablaktükröződés. Egy valódi nyomat a nyomdától és a szobád fényviszonyaitól függően eltér ettől.",
     "edgeAlt": "Egy akrilnyomat sarkának MI-vizualizációja: polírozott, átlátszó él, egy acél távtartó és lágy ablaktükröződés.",
-    "edgeCaption": "Egy akrilnyomat polírozott éle."
+    "edgeCaption": "Egy akrilnyomat polírozott éle. A nyomtatás nem része a rendelésnek."
   },
   "trust": {
     "eyebrow": "Amit sosem teszünk",
@@ -549,7 +554,7 @@
       },
       {
         "t": "Soha nem tüntetünk fel példákat vásárlóinkként",
-        "b": "Minden példaként mutatott képet megjelölünk. Mantas szeme a sajátja. A többi szem példafotó: soha nem vásárlók szeme."
+        "b": "Minden példaként mutatott képet megjelölünk vagy felirattal látunk el. Mantas szeme a sajátja. A többi szem példafotó: soha nem vásárlók szeme."
       },
       {
         "t": "Soha nem titkoljuk, mit tesz az MI",
@@ -564,7 +569,7 @@
     "curatorEyebrow": "Az alapító",
     "curatorTitle": "A SnapEyes mögött",
     "curatorRole": "Alapító",
-    "curatorNote": "Az ezen az oldalon látható szem az enyém, otthon fotóztam a telefonommal. Az előnézet azért ingyenes, hogy a saját szemeddel ítélhesd meg az eredményt, mielőtt bármit is fizetnél.",
+    "curatorNote": "Az a szem, amelyet ezen az oldalon a legtöbbször mutatok, az enyém, otthon fotóztam a telefonommal. Az előnézet azért ingyenes, hogy a saját szemeddel ítélhesd meg az eredményt, mielőtt bármit is fizetnél.",
     "curatorPhotoAlt": "Mantas saját írisze",
     "offer": "Nem sikerül éles felvételt készítened? Küldd el nekem a legjobb fotóidat, és személyesen megnézem őket, általában egy-két munkanapon belül.",
     "offerCta": "Írj Mantasnak",
@@ -719,10 +724,6 @@
   "marketHint": {
     "label": "Árak a saját pénznemedben",
     "close": "Nem, köszönöm",
-    "aud": {
-      "text": "Ausztráliából vásárolsz? Nézd meg árainkat ausztrál dollárban (A$) és az Ausztráliára vonatkozó feltételeinket.",
-      "show": "Árak megjelenítése A$-ban"
-    },
     "huf": {
       "text": "Magyarországról vásárolsz? Nézd meg az árainkat forintban (Ft).",
       "show": "Árak megjelenítése Ft-ban"

@@ -76,6 +76,10 @@
     "before": "Phone photo",
     "after": "Restored iris",
     "scale": "Phone photo: {n} px. The restored file: {px}.",
+    "beforeWeb": "Photo",
+    "scaleWeb": "Photo: {n} px. The restored file: {px}.",
+    "introWeb": "The left half is the original photo, the right half is the same iris, restored. The cut runs through the pupil: follow a furrow or a patch of colour from one side to the other.",
+    "sliderLabelWeb": "Compare the photo and the restored iris",
     "eyes": [
       {
         "id": "gd",
@@ -438,6 +442,7 @@
     "wallOff": "Flat",
     "wallOnAria": "Show {name} on a wall",
     "wallOffAria": "Show {name} flat",
+    "wallFile": "The price is for the digital file. Printing is not part of your order.",
     "comboTitle": "Two to eight eyes on one artwork",
     "comboBody": "Yours and the eyes of the people you love. Each further eye adds {price}.",
     "soonTag": "Soon"
@@ -537,7 +542,7 @@
     "edgeTitle": "The edge of an acrylic print",
     "edgeBody": "An AI-generated close-up of the corner of an acrylic print: a polished edge, a standoff post and a window reflection. A real print differs with the print shop and the light in your room.",
     "edgeAlt": "An AI visualisation of the corner of a print on acrylic: a polished clear edge, a steel standoff post and a soft window reflection.",
-    "edgeCaption": "The polished edge of a print on acrylic."
+    "edgeCaption": "The polished edge of a print on acrylic. Printing is not part of your order."
   },
   "trust": {
     "eyebrow": "What we never do",
@@ -549,7 +554,7 @@
       },
       {
         "t": "We never pass examples off as customers",
-        "b": "Every example picture is labelled. Mantas's eye is his own. The other eyes are example photos, never customers."
+        "b": "Every example picture is labelled or captioned. Mantas's eye is his own. The other eyes are example photos, never customers."
       },
       {
         "t": "We never hide what the AI does",
@@ -564,7 +569,7 @@
     "curatorEyebrow": "The founder",
     "curatorTitle": "Behind SnapEyes",
     "curatorRole": "Founder",
-    "curatorNote": "The eye on this page is mine, photographed at home with my phone. The preview is free so that you can judge the result with your own eyes before you pay anything.",
+    "curatorNote": "The eye I show most on this page is mine, photographed at home with my phone. The preview is free so that you can judge the result with your own eyes before you pay anything.",
     "curatorPhotoAlt": "Mantas's own iris",
     "offer": "Can't get a sharp shot? Send me your best photos and I will look at them personally, usually within one or two working days.",
     "offerCta": "Email Mantas",

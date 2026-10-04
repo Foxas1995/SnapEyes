@@ -136,7 +136,6 @@
     "id": "radiance",
     "design": "radiance",
     "price": "art",
-    "engine": null,
     "wallOwn": {
      "base": "m/lounge_acrylic__eye__tight",
      "ratio": "4/5"
@@ -145,14 +144,12 @@
    {
     "id": "powder",
     "design": "powder",
-    "price": "art",
-    "engine": null
+    "price": "art"
    },
    {
     "id": "universe",
     "design": "universe",
     "price": "art",
-    "engine": null,
     "wallOwn": {
      "base": "m/lounge_acrylic__universe__tight",
      "ratio": "4/5"
@@ -161,20 +158,17 @@
    {
     "id": "gold",
     "design": "gold",
-    "price": "art",
-    "engine": "celestial_gold"
+    "price": "art"
    },
    {
     "id": "splash",
     "design": "splash",
-    "price": "art",
-    "engine": null
+    "price": "art"
    },
    {
     "id": "clean",
     "design": "clean",
-    "price": "black",
-    "engine": "studio_black"
+    "price": "black"
    }
   ],
   "two": [
@@ -183,7 +177,6 @@
     "file": "duo_infinity_by",
     "price": "two",
     "src": "mixed",
-    "engine": null,
     "wall": {
      "base": "m/lounge_acrylic_3x2__collision__tall",
      "ratio": "4/5"
@@ -193,29 +186,25 @@
     "id": "duo_infinity_bb",
     "file": "duo_infinity_bb",
     "price": "two",
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    },
    {
     "id": "duo_infinity_uni",
     "file": "duo_infinity_bb_uni",
     "price": "two",
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    },
    {
     "id": "duo_kiss",
     "file": "duo_kiss_bb",
     "price": "two",
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    },
    {
     "id": "duo_clean",
     "file": "duo_clean_by",
     "price": "two",
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    }
   ],
   "family": [
@@ -225,40 +214,35 @@
     "price": "n",
     "n": 3,
     "src": "mixed",
-    "square": true,
-    "engine": null
+    "square": true
    },
    {
     "id": "fam_4",
     "file": "fam_4",
     "price": "n",
     "n": 4,
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    },
    {
     "id": "fam_5",
     "file": "fam_5",
     "price": "n",
     "n": 5,
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    },
    {
     "id": "fam_6",
     "file": "fam_6",
     "price": "n",
     "n": 6,
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    },
    {
     "id": "fam_6_uni",
     "file": "fam_6_uni",
     "price": "n",
     "n": 6,
-    "src": "mixed",
-    "engine": null
+    "src": "mixed"
    }
   ]
  },
@@ -286,19 +270,22 @@
     "id": "gd",
     "photo": "reveal/gd_photo",
     "iris": "reveal/gd_iris",
-    "art": "art/radiance_gd_900"
+    "art": "art/radiance_gd_900",
+    "phone": true
    },
    {
     "id": "br",
     "photo": "reveal/br_photo",
     "iris": "reveal/br_iris",
-    "art": "art/radiance_br_900"
+    "art": "art/radiance_br_900",
+    "phone": false
    },
    {
     "id": "own",
     "photo": "reveal/own_photo",
     "iris": "reveal/own_iris",
-    "art": "art/radiance_own_900"
+    "art": "art/radiance_own_900",
+    "phone": true
    }
   ]
  },
@@ -330,7 +317,15 @@
   "ui/preview_wm_360"
  ],
  "engine": {
-  "gold": "celestial_gold",
-  "clean": "studio_black"
+  "gold": {
+   "style": "celestial_gold",
+   "look": false,
+   "name": true
+  },
+  "clean": {
+   "style": "studio_black",
+   "look": true,
+   "name": false
+  }
  }
 }

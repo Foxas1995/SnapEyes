@@ -73,7 +73,7 @@ export function Reveal() {
           <div className="lp-sec-head">
             <p className="lp-eyebrow">{r.eyebrow}</p>
             <h2 id="revealH">{r.title}</h2>
-            <p className="lp-intro">{r.intro}</p>
+            <p className="lp-intro">{shown.phone ? r.intro : r.introWeb}</p>
           </div>
           <div className="lp-ai">
             <h3>{r.aiTitle}</h3>

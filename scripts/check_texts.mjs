@@ -504,25 +504,29 @@ const BANNED_CLAIMS = /ready to print|print[- ]ready|druckfertig|druckbereit|100
 // paths (keys) that hold it. Lithuanian hero.caption says "neįskaičiuotas" (not included, as hero.lead and hero.chipBody do in
 // every language) where the others say "not part of your order": the same promise in a shorter caption, so `alt` names the
 // strings that must hold the other wording instead.
+// The strings that say "Printing is not part of your order", and no others do: the hero caption, the sentence under the wall title, the
+// pricing block, the FAQ answer about printing, the closing scene, and (fix round: a price or a picture of a printed piece must not
+// stand without it) the line under a tile that is shown on a wall (styles.wallFile) and the caption of the polished edge.
+const PRINTING_KEYS = ['hero.caption', 'wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small', 'styles.wallFile', 'closeups.edgeCaption'];
 const HONESTY = {
   en: {
     chips: { 'example.chip': 'Example', 'example.vis': 'AI visualisation' },
-    printing: { re: /Printing is not part of your order/i, keys: ['hero.caption', 'wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small'] },
+    printing: { re: /Printing is not part of your order/i, keys: PRINTING_KEYS },
     soon: { re: /Ordering opens soon/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   de: {
     chips: { 'example.chip': 'Beispiel', 'example.vis': 'KI-Visualisierung' },
-    printing: { re: /Der Druck gehört nicht zur Bestellung/i, keys: ['hero.caption', 'wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small'] },
+    printing: { re: /Der Druck gehört nicht zur Bestellung/i, keys: PRINTING_KEYS },
     soon: { re: /Bestellungen sind bald möglich/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   lt: {
     chips: { 'example.chip': 'Pavyzdys', 'example.vis': 'DI vizualizacija' },
-    printing: { re: /Spausdinimas nėra Jūsų užsakymo dalis/i, keys: ['wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small'], alt: { 'hero.caption': /Spausdinimas neįskaičiuotas/i } },
+    printing: { re: /Spausdinimas nėra Jūsų užsakymo dalis/i, keys: PRINTING_KEYS.filter((k) => k !== 'hero.caption'), alt: { 'hero.caption': /Spausdinimas neįskaičiuotas/i } },
     soon: { re: /Užsakymus pradėsime priimti netrukus/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   hu: {
     chips: { 'example.chip': 'Példa', 'example.vis': 'MI-vizualizáció' },
-    printing: { re: /A nyomtatás nem része a rendelésnek/i, keys: ['hero.caption', 'wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small'] },
+    printing: { re: /A nyomtatás nem része a rendelésnek/i, keys: PRINTING_KEYS },
     soon: { re: /A rendelés hamarosan indul/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
 };
@@ -592,7 +596,16 @@ function checkLandingCopy(root, mods, strings, out) {
     const x = files[l];
     if (!x) continue;
     const rel = `${COPY_DIR}/${l}.json`;
-    if (l !== 'en') walkCopyJson(en, x, '', rel, out);
+    if (l !== 'en') {
+      // the offer of Australian dollars (marketHint.aud) belongs to the languages of the Australian edition (English and German) and to
+      // no other: a Lithuanian or Hungarian visitor who took it would land on a page in English (src/landing/MarketHint.tsx offers a
+      // market only in a language its edition has, and this keeps the words from existing where they could never be shown)
+      const auOk = lang.langAllowed(l, 'au');
+      const hasAud = x.marketHint && 'aud' in x.marketHint;
+      if (hasAud && !auOk) out.push(`${rel}: marketHint.aud must not exist: the Australian edition has no texts in ${l} (src/shared/legal.ts EDITION_LANGS), so a visitor could never be offered it in ${l}`);
+      const without = (o) => (o.marketHint ? { ...o, marketHint: Object.fromEntries(Object.entries(o.marketHint).filter(([k]) => k !== 'aud')) } : o);
+      walkCopyJson(auOk ? en : without(en), auOk ? x : without(x), '', rel, out);
+    }
     const leaves = leafPaths(x);
     // every string of every language: the tokens exist, no spaced hyphen, none of the banned claims
     for (const [p, v] of leaves) {

@@ -7,9 +7,11 @@
 //   3. the budgets: the whole folder, the biggest file, the LCP picture of the first screen (phone, slow 4G: BUILD_PLAN section 5);
 //   4. the cache headers: vercel.json gives every picture of the folder and every hashed script and stylesheet of the build
 //      "immutable" for a year, and gives nothing that is not hashed (the pages, the pictures of /assets/atelier, the fonts) that;
-// and, as a notice that never fails the build (the owner's decision, BUILD_PLAN section 3 item 1): the RELEASE GATE, which tiles of
-// the style gallery the engine (api/_lib/iris.py STYLES) can make today. LANDING_GATE=strict makes an unorderable tile an error
-// (for the go-live build).
+// and the RELEASE GATE (BUILD_PLAN section 3 item 1): which tiles of the style gallery the order flow can make today. A tile counts only
+// when the engine really has its style (api/_lib/iris.py STYLES), the style LOOKS like the tile and carries its NAME (ENGINE_STYLE in
+// src/landing/assets.data.ts, written from scripts/landing_assets.json). While a tile cannot be made the build prints a notice, and
+// the build of a PRODUCTION deploy (VERCEL_ENV=production, or LANDING_GATE=strict anywhere) fails: this page must not go live
+// before the engine, pay.py, the terms of sale and the checkout consent do (the page would sell pictures the contract cannot deliver).
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -92,6 +94,33 @@ export function liveEngineStyles(root) {
   }
 }
 
+/** Is the release gate an error in this environment? A production deploy (Vercel sets VERCEL_ENV=production) or an explicit
+ *  LANDING_GATE=strict: yes. A local build, a preview deploy: a notice only. There is deliberately no switch that turns a production
+ *  gate off: the way to a production build is to make the gate empty. */
+export function gateIsStrict(env) {
+  return env.LANDING_GATE === 'strict' || env.VERCEL_ENV === 'production';
+}
+
+/** The gate table against the engine as it is today: { live, total, blocked: [{ tile, reason }] }. data: src/landing/assets.data.ts. */
+export function releaseGate(root, data) {
+  const live = liveEngineStyles(root);
+  const blocked = [];
+  let total = 0;
+  for (const g of data?.GALLERY?.groups ?? []) {
+    for (const it of data.GALLERY[g]) {
+      total += 1;
+      const e = data.ENGINE_STYLE?.[it.id];
+      let reason = '';
+      if (!e) reason = 'the engine has no such style';
+      else if (!live.includes(e.style)) reason = `the engine has no style ${e.style} any more`;
+      else if (!e.look) reason = `the engine's ${e.style} looks different`;
+      else if (!e.name) reason = `the engine's ${e.style} looks the same but the terms of sale and /try call it by another name`;
+      if (reason) blocked.push({ tile: it.id, reason });
+    }
+  }
+  return { live, total, blocked };
+}
+
 /** { problems, notices } for the committed pictures. assets: src/landing/assets.ts, data: src/landing/assets.data.ts (as the build loaded them). */
 export function checkLandingAssets(root, assets, data) {
   const problems = [];
@@ -150,14 +179,12 @@ export function checkLandingAssets(root, assets, data) {
     }
   }
 
-  // the release gate (a notice, see the top)
-  const live = liveEngineStyles(root);
-  const tiles = [];
-  for (const g of data?.GALLERY?.groups ?? []) for (const it of data.GALLERY[g]) tiles.push(it.id);
-  const notLive = tiles.filter((t) => !data.ENGINE_STYLE[t] || !live.includes(data.ENGINE_STYLE[t]));
-  if (notLive.length) {
-    const line = `RELEASE GATE: the engine (api/_lib/iris.py) makes ${live.join(', ')}; ${notLive.length} of ${tiles.length} tiles of the style gallery cannot be ordered yet (${notLive.join(', ')}). Ship the v3 engine, pay.py style ids, terms.ts and the checkout consent in the same deploy, or cut the gallery to what exists (BUILD_PLAN section 3, item 1).`;
-    if (process.env.LANDING_GATE === 'strict') problems.push(line);
+  // the release gate (a notice, an error for a production build: see the top)
+  const gate = releaseGate(root, data);
+  if (gate.blocked.length) {
+    const why = gate.blocked.map((b) => `${b.tile} (${b.reason})`).join('; ');
+    const line = `RELEASE GATE: the engine (api/_lib/iris.py) makes ${gate.live.join(', ')}; ${gate.blocked.length} of ${gate.total} tiles of the style gallery cannot be ordered yet: ${why}. Ship the v3 engine, pay.py style ids, terms.ts, the order e-mail and the checkout consent in the same deploy with the same names (then set the tiles' rows in ENGINE_STYLE, scripts/landing_assets.json), or cut the gallery to what exists (BUILD_PLAN section 3, item 1).`;
+    if (gateIsStrict(process.env)) problems.push(`${line} This is a production build (VERCEL_ENV=production or LANDING_GATE=strict): it must not go live before the gate is empty.`);
     else notices.push(line);
   }
   return { problems, notices };

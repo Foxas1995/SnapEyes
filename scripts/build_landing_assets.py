@@ -110,12 +110,16 @@ def live_engine_styles():
 
 
 def release_gate(spec):
+    """One row per tile: can the order flow make what the tile shows, today? It can when the engine has the style (STYLES of iris.py),
+    the style LOOKS like the tile (look) and the terms of sale, /try and the order e-mail call it by the tile's name (name). A style
+    that shares only a name with a tile, or only a look, does not count."""
     live = live_engine_styles()
     rows = []
     for grp in spec["gallery"]["groups"]:
         for it in spec["gallery"][grp]:
             eng = spec["engine"].get(it["id"])
-            rows.append({"tile": it["id"], "group": grp, "engine_style": eng, "in_engine_today": bool(eng and eng in live)})
+            ok = bool(eng and eng["style"] in live and eng["look"] and eng["name"])
+            rows.append({"tile": it["id"], "group": grp, "engine_style": eng["style"] if eng else None, "in_engine_today": ok})
     return live, rows
 
 
@@ -230,7 +234,7 @@ export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, S
 
 /** A tile of the style gallery. design: a single-eye style, its flat art is art/<design>_<eye> (two widths); file: a two-eye
  *  or family artwork, art/<file> (two widths). wallOwn / wall: the tile shown on the wall (Mantas's eye, or a fixed scene).
- *  engine: the style id of api/_lib/iris.py that makes it, null while the engine has none of that name. */
+ */
 export interface GalleryTile {{
   id: string;
   design?: string;
@@ -239,7 +243,6 @@ export interface GalleryTile {{
   src?: 'mixed';
   n?: number;
   square?: boolean;
-  engine: string | null;
   wallOwn?: {{ base: AssetFamily; ratio: string }};
   wall?: {{ base: AssetFamily; ratio: string }};
 }}
@@ -254,8 +257,10 @@ export const GALLERY: {{
 /** "More ways to see it": the rooms that are not on the wall stage. */
 export const MORE: readonly {{ id: string; base: AssetFamily }}[] = {ts_literal(spec["more"])};
 
-/** The Reveal's eyes: two registered layers (photo, restored iris; 900 and 1200 px) and the artwork of the strip. */
-export const REVEAL: {{ readonly eyes: readonly {{ id: 'gd' | 'br' | 'own'; photo: AssetFamily; iris: AssetFamily; art: AssetFile }}[] }} = {ts_literal(spec["reveal"])};
+/** The Reveal's eyes: two registered layers (photo, restored iris; 900 and 1200 px) and the artwork of the strip. phone: the left half
+ *  IS a phone photo (the owner's own phone, rights confirmed); false for a photograph from elsewhere (the brown eye is a web photograph),
+ *  whose left half the page calls "Photo", never "Phone photo" (src/landing/RevealSlider.tsx, copy reveal.beforeWeb). */
+export const REVEAL: {{ readonly eyes: readonly {{ id: 'gd' | 'br' | 'own'; phone: boolean; photo: AssetFamily; iris: AssetFamily; art: AssetFile }}[] }} = {ts_literal(spec["reveal"])};
 
 /** The 96 px thumbnail of each wall artwork (the chips of the wall stage). */
 export const WALL_THUMBS: Readonly<Record<WallArt, AssetFile>> = {ts_literal(spec["wallThumbs"])};
@@ -263,9 +268,13 @@ export const WALL_THUMBS: Readonly<Record<WallArt, AssetFile>> = {ts_literal(spe
 /** The close-up: a square of crop_px = [left, top, right, bottom] cut from the 4096 px file. */
 export const FIBRE: {{ readonly crop_px: readonly [number, number, number, number]; readonly of: number }} = {ts_literal(spec["fibre"])};
 
-/** The gallery tile -> the style id of api/_lib/iris.py that makes it today. The release gate (scripts/check_landing_assets.mjs)
- *  compares this with the styles the engine really has: a tile without one cannot be ordered yet. */
-export const ENGINE_STYLE: Readonly<Record<string, string>> = {ts_literal(spec["engine"])};
+/** The gallery tile -> the engine style that could make it today. The release gate (scripts/check_landing_assets.mjs) counts a tile as
+ *  orderable only when ALL of these hold: the engine really has the style (STYLES of api/_lib/iris.py), the style looks like the tile
+ *  (look), and the terms of sale, /try and the order e-mail call it by the tile's name (name). A tile that is not in this table, or
+ *  whose style shares only a name or only a look with it, cannot be ordered yet. Update it in scripts/landing_assets.json, in the
+ *  same change that ships the engine styles (BUILD_PLAN section 3, item 1). */
+export interface EngineStyle {{ style: string; look: boolean; name: boolean }}
+export const ENGINE_STYLE: Readonly<Record<string, EngineStyle>> = {ts_literal(spec["engine"])};
 """
     open(ts_data_path, "w", encoding="utf-8", newline="\n").write(data)
 
