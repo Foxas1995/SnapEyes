@@ -3,7 +3,8 @@
 # New suites of the v3 work (suites/README.md, section "Adding a suite") are appended at the end, with the same format:
 #   v3reg:scripts/styles_tests:test_registry.py          (a suite in the repository itself, copied from REPO_DIRS by mksp.py)
 # The lines at the end are those suites: v3wp0 (the probe, the pins, this folder, the bundle report), v3reg (WP1: the style registry, the
-# catalogue, the price class, the build check).
+# catalogue, the price class, the build check), v3gate (WP3: the eye profile, the restoration gate, eye_id and seal v2; set
+# SNAPEYES_CALIB and SNAPEYES_GATE_TABLE to also replay the calibration set, reported as LOCAL lines).
 r2:wave-r-back/pb/r2:test_round2.py
 r3:wave-r-back/pb/r3:test_round3.py
 r4:wave-r-back/pb/r4:test_round4.py
@@ -26,3 +27,4 @@ oldadmin:wave-q/admin:test_admin.py:fixtures
 exp:wave-exp/suite:test_experiments.py
 v3wp0:scripts/styles_tests:test_wp0.py
 v3reg:scripts/styles_tests:test_registry.py
+v3gate:scripts/styles_tests:test_gate_seal.py
