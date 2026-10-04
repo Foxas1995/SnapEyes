@@ -18,7 +18,9 @@ from the usage events, api/_lib/events.py), errors (the latest error events), or
 the stored files only: nothing is sent, asked of Stripe or changed), order (one order: every record, signed image links
 valid 1 h, QA flags, payments, refunds, the admin log, its price experiment), audit, lab_list, experiments (the page
 "Kainų testai": every price experiment of api/_lib/experiments.py with its state, variants, the funnel and revenue per
-variant, the significance note and the warnings; api/_lib/abtest.py).
+variant, the significance note and the warnings; api/_lib/abtest.py), cpu_probe (a fixed CPU workload run on this very
+instance, cold or warm: seconds per phase, the slow factor against a baseline the caller sends, and what the instance says
+about its memory, CPUs and /tmp; nothing is read from storage or changed; api/_lib/cpu_probe.py).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
 "confirm"): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
@@ -1116,10 +1118,26 @@ def a_lab_list(body, who):
     return {"ok": True, "lab": [r for r in got if r["files"] or r["order"] in marked]}
 
 
+# ----------------------------------------------------------------------------- the CPU probe
+def a_cpu_probe(body, who):
+    """{mode: "cold"|"warm", runs: 1 to 5, baseline: {phases|total}}: a fixed CPU workload run on this instance (api/_lib/
+    cpu_probe.py). Seconds per phase and in all, the slow factor against the baseline the caller sends (the same code run on
+    the developer machine the same day: scripts/cpu_probe.py --remote does both), the configured STYLE_SLOW_CPU, and the
+    instance's own facts (memory, CPUs, /tmp). It reads nothing from storage and changes nothing, so it is not in the audit
+    log. 400 for a bad request, 503 probe_running while another probe of this instance is under way."""
+    from . import cpu_probe as P
+    try:
+        return P.run_action(body, L.time_left)
+    except BlockingIOError:
+        raise store.busy("probe_running", 10, "Another probe is running on this instance. Try again in a few seconds.")
+    except ValueError as e:
+        raise L.ClientError(str(e))
+
+
 # ----------------------------------------------------------------------------- serving
 ACTIONS = {
     "me": a_me, "summary": a_summary, "stats": a_stats, "errors": a_errors, "orders": a_orders, "order": a_order,
-    "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments,
+    "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe,
     "exp_start": audited("exp_start", act_exp_start),
     "exp_stop": audited("exp_stop", act_exp_stop),
     "link": audited("link", act_link),
