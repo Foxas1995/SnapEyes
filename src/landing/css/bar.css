@@ -4,7 +4,7 @@
    .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
    no specificity. */
 @layer landing {
-  .lp-topbar { position: relative; z-index: 60; min-height: 34px; padding-block: 6px; display: flex; align-items: center; justify-content: center; padding-inline: var(--gut); background: #0b0e16; border-bottom: 1px solid var(--line); text-align: center; font-size: 12px; letter-spacing: .03em; color: var(--gold-soft); }
+  .lp-topbar { position: relative; z-index: 60; min-height: 34px; padding-block: 6px; display: flex; align-items: center; justify-content: center; padding-inline: var(--gut); background: #0b0e16; border-bottom: 1px solid var(--line); text-align: center; font-size: 12px; letter-spacing: .03em; color: var(--t-2); }
   .lp-topbar span { display: inline-flex; align-items: center; gap: 10px; line-height: 1.35; text-align: left; }
   .lp-topbar span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex: none; }
   @media (max-width: 420px) {
