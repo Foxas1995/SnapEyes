@@ -8,6 +8,7 @@ What lives here
                          normalise_names(), lockup() (the names as one line: "ANNA · MAX · LINA")
   the font check         unsupported(text): the letters the artwork font cannot draw (a missing glyph would print as an empty box in a
                          delivered file), read from the font's own cmap table with no dependency; the page and checkout refuse such a name
+  the drawers (limit)    a line over LINE_MAX characters is refused with TextTooLong before anything is drawn
   the drawers            draw_names(): the verbatim port of the singles drawer (names in Cinzel capitals, tracked 0.18 em, cap height
                          0.017 S; the date at 0.011 S, tracked 0.30 em, at 55 percent opacity), draw_line(): one centred tracked line (the
                          family name inside a ring of seven or eight eyes), both with the draw log
@@ -33,6 +34,8 @@ DATE_MAX = 20
 FAMILY_MAX = 24
 NAMES_MAX = 8            # one name per eye
 SEPARATOR = ";"          # the old wire form: one string, names joined by a semicolon
+LINE_MAX = 256            # characters one drawn line may hold: the longest legal line is the lockup of eight names (213), and the drawers set a
+                         # line character by character with a width measure of the whole prefix (quadratic: 1,500 characters took 8 s at 4096 px)
 
 NAME_WARM = "#C9B8A0"
 NAME_GOLD = "#C9A86A"
@@ -44,6 +47,11 @@ LOCKUP_JOIN = " · "                 # middle dot, covered by both artwork fonts
 
 _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u200b-\u200f\u2028-\u202e\u2060-\u2064\ufeff]")
 _SPACES = re.compile(r"\s+")
+
+
+class TextTooLong(ValueError):
+    """A line handed to a drawer is longer than LINE_MAX characters. Callers run normalise_names first (at most 24 characters a name, 200 in all,
+    eight names); this is the last line of defence, and it refuses rather than cuts: what is drawn must be what the log says was drawn."""
 
 
 # ----------------------------------------------------------------------------- cleaning and limits
@@ -190,6 +198,8 @@ def draw_names(img, frame, names="", date="", colour=NAME_WARM, log=None, iris_c
     log = [] if log is None else log
     names = clean(names)
     date = clean(date)
+    if len(names) > LINE_MAX or len(date) > LINE_MAX:
+        raise TextTooLong(f"a line of {max(len(names), len(date))} characters (limit {LINE_MAX})")
     if not names and not date:
         return log
     W, H, S = frame.W, frame.H, frame.S
@@ -225,6 +235,8 @@ def draw_line(img, cx, baseline, text, S, kind="family", colour=NAME_WARM, max_w
     cap height cap x S, shrunk until it fits max_w (default 0.80 of the canvas width). Returns the log."""
     log = [] if log is None else log
     text = clean(text)
+    if len(text) > LINE_MAX:
+        raise TextTooLong(f"a line of {len(text)} characters (limit {LINE_MAX})")
     if not text:
         return log
     W = img.size[0]

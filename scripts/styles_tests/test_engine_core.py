@@ -281,6 +281,30 @@ arr4 = np.asarray(img4).max(-1)
 cols = np.nonzero(arr4.max(0) > 60)[0]
 check("a line that is too long is shrunk to 0.80 of the canvas width, never cut and never off the canvas", lg4[0]["px"] < TX._cap_font_px("Cinzel.ttf", "Regular", TX.CAP_H * 1024) and cols.min() >= 0.1 * 1024 - 2 and cols.max() <= 0.9 * 1024 + 2, (lg4, cols.min(), cols.max()))
 
+# the drawers set a line character by character with a width measure of the whole prefix: quadratic, so the length of a line is bounded here too
+longest = TX.lockup(["N" * TX.NAME_MAX] * TX.NAMES_MAX)
+img5 = Image.new("RGB", (1024, 1024), (4, 4, 6))
+t5 = time.time()
+lg5 = TX.draw_names(img5, fr, longest, "12.05.2026", TX.NAME_WARM, [])
+dt5 = time.time() - t5
+check("the longest legal line (the lockup of eight names of 24 letters, 213 characters) is drawn, is under LINE_MAX, and takes seconds not minutes",
+      len(longest) == 213 <= TX.LINE_MAX and [e["kind"] for e in lg5] == ["names", "date"] and dt5 < 10, (len(longest), dt5))
+refused = []
+for what, fn in (("names", lambda im: TX.draw_names(im, fr, "A" * (TX.LINE_MAX + 1), "", TX.NAME_WARM, [])),
+                 ("date", lambda im: TX.draw_names(im, fr, "", "9" * (TX.LINE_MAX + 1), TX.NAME_WARM, [])),
+                 ("line", lambda im: TX.draw_line(im, 512, 500, "B" * (TX.LINE_MAX + 1), 1024, log=[])),
+                 ("names with a blank run", lambda im: TX.draw_names(im, fr, "A" * TX.LINE_MAX + " B", "", TX.NAME_WARM, []))):
+    imx = Image.new("RGB", (1024, 1024), (4, 4, 6))
+    t_ = time.time()
+    try:
+        fn(imx)
+        refused.append((what, "drawn"))
+    except TX.TextTooLong as e_:
+        if not isinstance(e_, ValueError) or time.time() - t_ > 1.0 or np.asarray(imx).astype(int).__sub__(np.asarray(Image.new("RGB", (1024, 1024), (4, 4, 6)))).any():
+            refused.append((what, "slow or touched the canvas"))
+check("a line over LINE_MAX (256) characters is refused with TextTooLong (a ValueError) at once and before anything is drawn, whichever drawer or field; "
+      "exactly LINE_MAX is drawn", not refused and TX.draw_names(Image.new("RGB", (256, 256)), types.SimpleNamespace(W=256, H=256, S=256, text_y=200.0), "A" * TX.LINE_MAX, "", TX.NAME_WARM, [])[0]["text"] == "A" * TX.LINE_MAX, refused)
+
 # ============================================================================================ 4. the synthetic fixtures
 section("4. the synthetic irises the style suites use: deterministic, three classes, three pupils, clean ones pass, failures fail")
 
