@@ -338,6 +338,36 @@ check("pay.item_name of the six legacy ids in English and German is the old sent
 check("the Lithuanian and Hungarian sentences carry the same brand name",
       all(OLD_NAMES[i] in pay.item_name({"eyes": 2, "style": i, "lang": lg, "market": "eu" if lg == "lt" else "hu"}) for i in LEGACY for lg in ("lt", "hu")))
 SPEC = {"eyes": "2", "style": "supernova", "layout": "fusion", "names": "Anna;Max", "title": "T", "lang": "en", "market": "eu"}
+
+
+class _Reply:
+    status_code = 200
+
+    def json(self):
+        return {"id": "cs_test_" + "a" * 20, "url": "https://checkout.stripe.com/c/pay/x"}
+
+
+def stripe_form_hash():
+    """SHA-256 of the Stripe Checkout Session parameters pay.create_session builds for every legacy style x market x language x 1, 2, 3, 8 eyes."""
+    captured, real = [], pay._stripe
+    pay._stripe = lambda method, path, params=None, idem=None, timeout=None: (captured.append(sorted((k, v) for k, v in params)), _Reply())[1]
+    out = {}
+    lay = {1: "single", 2: "fusion", 3: "triangle", 8: "galaxy"}
+    try:
+        for market in pay.MARKETS:
+            for lang in ("en", "de", "lt", "hu"):
+                for style in LEGACY:
+                    for n in (1, 2, 3, 8):
+                        spec = {"eyes": n, "style": style, "layout": lay[n], "names": "Anna", "title": "T", "lang": pay.lang_for(market, lang), "market": market}
+                        pay.create_session("260101-abcd", "k" * 40, spec, pay.price_cents(n, style, market), {"version": "2026-09-30.2", "at": "2026-01-01T00:00:00Z"}, 1900000000)
+                        out[f"{market} {lang} {style} {n}"] = captured[-1]
+    finally:
+        pay._stripe = real
+    return len(out), hashlib.sha256(json.dumps(out, sort_keys=True).encode("utf-8")).hexdigest()[:24]
+
+
+check("the Stripe Checkout Session parameters of the six legacy ids (item name, amount, metadata: 384 combinations) are byte equal to those of 90695da",
+      stripe_form_hash() == (384, "9d3e048ab360e89bac51819b"), stripe_form_hash())
 ok_specs = [pay.spec_from(dict(SPEC, eyes=str(n), style=i, layout=OLD_LAYOUTS[n][-1]), pay.SELECTABLE) for i in LEGACY for n in range(1, 9)]
 check("spec_from: every legacy id, 1 to 8 eyes and each layout is read at checkout exactly as before",
       len(ok_specs) == 48 and all(s["layout"] == OLD_LAYOUTS[s["eyes"]][-1] and s["style"] in LEGACY for s in ok_specs)
