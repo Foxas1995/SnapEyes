@@ -28,7 +28,8 @@
   },
   "navLabels": {
     "main": "Main",
-    "footer": "Footer"
+    "footer": "Footer",
+    "menu": "Menu"
   },
   "cta": "Create my free preview",
   "ctaShort": "Free preview",

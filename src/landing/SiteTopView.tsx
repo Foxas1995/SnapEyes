@@ -6,6 +6,7 @@ import type { Lang } from '../shared/lang';
 import type { LandingCopy } from './copy/types';
 import { SiteHeaderView } from './Header';
 import { TopBarView } from './TopBar';
+import { MenuDialogView } from './MenuDialog';
 
 export interface SiteTopViewProps {
   copy: LandingCopy;
@@ -29,6 +30,7 @@ export function SiteTopView({ copy, lang, langs, barText, tryHref, onLang, onLan
       <a className="lp-skip" href="#main">{copy.skip}</a>
       <TopBarView label={copy.bar.label} text={barText} barRef={barRef} />
       <SiteHeaderView copy={copy} lang={lang} langs={langs} tryHref={tryHref} onLang={onLang} onLangIntent={onLangIntent} headerRef={headerRef} />
+      <MenuDialogView copy={copy} tryHref={tryHref} />
     </>
   );
 }

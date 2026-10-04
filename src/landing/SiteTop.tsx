@@ -27,7 +27,7 @@ export function SiteTop() {
   const headerRef = useRef<HTMLElement>(null);
   // the two sentences are the same length (BUILD_PLAN section 1), so the flip moves nothing
   const barText = open ? c.bar.open : c.bar.soon;
-  useHeaderChrome(barRef, headerRef, barText);
+  useHeaderChrome(barRef, headerRef, barText, lang);
   // one button per language the visitor's market can be read in
   const langs = marketLangs(market);
   // a language switch re-renders the whole page: a transition, so the page stays responsive while it does

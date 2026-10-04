@@ -17,6 +17,7 @@
 //    afterwards (src/landing/shell/chrome.ts).
 // 4. The loader (end of the body, build only): starts the page's own script after the LCP picture has loaded, see loaderScript.
 // 5. The early ask (in the head): the two small API answers the page needs (see prefetchScript).
+// 6. The menu (right after the bar script): the dialog of the narrow widths opens and closes, see menuScript.
 
 /** The tables of src/shared/markets.ts and src/shared/lang.ts the decision needs. */
 export interface ShellRule {
@@ -91,6 +92,18 @@ export const barScript =
   "(function(){var b=document.getElementById('topbar'),r=document.documentElement;" +
   "function s(){r.style.setProperty('--bar-h',b.offsetHeight+'px')}s();addEventListener('resize',s);" +
   'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(s)})()';
+
+/** The menu (6): the header's menu button (below 960 px) opens the page's links in a native dialog (src/landing/MenuDialog.tsx), a chosen link
+ *  closes it, and a window that grows to 960 px closes it (the header shows the navigation itself from there). The close button of the dialog is a
+ *  form method="dialog" and Escape is the browser's: neither needs a script. One handler on the document, looking elements up by id at the
+ *  moment of the click, so the same few lines serve the static first screen, the live page after React took over, and every language. */
+export const menuScript =
+  "(function(){var D=document;function m(){return D.getElementById('menu')}" +
+  "D.addEventListener('click',function(e){try{var t=e.target,d=m();if(!d||!t||!t.closest)return;" +
+  "var b=t.closest('#menuBtn');if(b){if(d.showModal&&!d.open){d.showModal();b.setAttribute('aria-expanded','true')}return}" +
+  "if(d.open&&t.closest('#menu a'))d.close()}catch(x){}});" +
+  "D.addEventListener('close',function(e){var b=D.getElementById('menuBtn');if(e.target&&e.target.id==='menu'&&b)b.setAttribute('aria-expanded','false')},true);" +
+  "try{window.matchMedia('(min-width:960px)').addEventListener('change',function(e){var d=m();if(e.matches&&d&&d.open)d.close()})}catch(x){}})()";
 
 /** The loader of the page's own script (4): the build takes the module script and its modulepreload links out of the head and this
  *  inline script adds them once the LCP picture has loaded (at once for a visitor the shell is not for, whose page has no such

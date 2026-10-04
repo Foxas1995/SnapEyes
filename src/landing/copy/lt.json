@@ -28,7 +28,8 @@
   },
   "navLabels": {
     "main": "Pagrindinė navigacija",
-    "footer": "Poraštė"
+    "footer": "Poraštė",
+    "menu": "Meniu"
   },
   "cta": "Sukurti nemokamą peržiūrą",
   "ctaShort": "Nemokama peržiūra",

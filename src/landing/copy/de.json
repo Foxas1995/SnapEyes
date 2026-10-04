@@ -28,7 +28,8 @@
   },
   "navLabels": {
     "main": "Hauptnavigation",
-    "footer": "Fußzeile"
+    "footer": "Fußzeile",
+    "menu": "Menü"
   },
   "cta": "Kostenlose Vorschau erstellen",
   "ctaShort": "Kostenlose Vorschau",

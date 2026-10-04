@@ -5,12 +5,12 @@
 //
 // It imports nothing that carries the landing's words or pictures: types only, plus the language names (the legal pages have
 // their own language switch, src/legal/LangSwitch.tsx).
-import type { Ref } from 'react';
+import type { CSSProperties, Ref } from 'react';
 import { LANG_NAMES, type Lang } from '../shared/lang';
 import type { LandingCopy } from './copy/types';
 
 /** The header's navigation, in the order of the page's sections (copy nav.*). */
-const NAV_KEYS = ['reveal', 'wall', 'styles', 'how', 'pricing', 'faq'] as const;
+export const NAV_KEYS = ['reveal', 'wall', 'styles', 'how', 'pricing', 'faq'] as const;
 
 export function LogoMark() {
   return (
@@ -58,9 +58,13 @@ export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangInten
           {NAV_KEYS.map((k) => (
             <a key={k} href={`#${k}`}>{copy.nav[k]}</a>
           ))}
+          {/* the one gold hairline that slides under the link of the section being read (src/landing/shell/navMark.ts; decorative) */}
+          <i className="lp-nav-mark" aria-hidden="true" />
         </nav>
         <div className="lp-hdr-r">
-          <div className="lp-seg" role="group" id="langSeg" aria-label={copy.switchLabel}>
+          {/* --n is the pressed button's place: the one pressed background slides to it in .3 s (css/header.css); the words change at once */}
+          <div className="lp-seg" role="group" id="langSeg" aria-label={copy.switchLabel} style={{ '--n': Math.max(0, langs.indexOf(lang)) } as CSSProperties}>
+            <span className="lp-seg-ind" aria-hidden="true" />
             {langs.map((l) => (
               <button
                 key={l}
@@ -78,6 +82,11 @@ export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangInten
             ))}
           </div>
           <a className="lp-btn lp-btn-line" href={tryHref}>{copy.ctaShort}</a>
+          {/* phones and tablets: the page's links in a real dialog (showModal: focus kept inside, the page behind inert, Escape closes it).
+              It works before React has started too: one delegated handler (src/landing/shell/scripts.ts menuScript) opens and closes it. */}
+          <button type="button" className="lp-menu-btn" id="menuBtn" aria-haspopup="dialog" aria-controls="menu" aria-expanded="false" aria-label={copy.navLabels.menu}>
+            <span aria-hidden="true" />
+          </button>
         </div>
       </div>
     </header>

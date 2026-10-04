@@ -28,7 +28,8 @@
   },
   "navLabels": {
     "main": "Fő navigáció",
-    "footer": "Lábléc"
+    "footer": "Lábléc",
+    "menu": "Menü"
   },
   "cta": "Ingyenes előnézetet kérek",
   "ctaShort": "Ingyenes előnézet",
