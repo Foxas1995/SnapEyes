@@ -6,7 +6,12 @@ The page never gets the clean restoration (api/_lib/preview.py): "image" is an 8
 watermark across the iris, "sealed" the clean 1024 px JPEG encrypted with the server's key (what /api/compose and the
 order draft take back), "sealed_sizes" the clean iris at the sides /api/compose is sent for 3-8 eyes, sealed too.
 POST /api/enhance  {sample: true, image: b64}: the AI-generated sample eye's prepared restoration (SAMPLE_SHA256) comes
-back the same way, with no ticket and no model call."""
+back the same way, with no ticket and no model call.
+The eye profile (api/_lib/styles/eye.py): measured once here on the clean preview bytes (colour class, ring colours, pupil, the two
+restoration gates, 1 to 2 s), sealed into all three seals (preview.py, seal v2) and told to the page in "profile" (eye_id, class,
+ease, pupil class, the gate's ok per rule; reply field added, nothing else changes). Measured only when EYE.PROFILE_MIN_LEFT seconds
+are left after the model call; otherwise the seals carry the eye id alone and "profile" says unknown: true (hard styles then ask
+for the preview again). A failing measurement never costs the preview."""
 import os, sys, json, time, base64, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -14,11 +19,43 @@ from PIL import Image
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
+from _lib.styles import eye as EYE   # the eye profile: measured here, sealed, read by compose, the order draft and the master
 
 # sha256 of public/assets/sample_eye_blue_restored.jpg, the sample eye's restoration the page ships (made once by the
 # live engine, 2026-09-29). Replace the file and this changes with it; the page then falls back to the studio.
 SAMPLE_SHA256 = "7e681ceca21955127d41cb6c899c4f5dd708819ea872a9dc305f8d0cce3e6cb7"
 SAMPLE_B64_MAX = 600_000
+
+def _measure(clean, pad, memo=False):
+    """(profile, ms): the eye's profile measured on the clean preview bytes (what every later step reads back), or (None, None) when
+    the invocation has no time left for it or the measurement fails. A preview is never lost to its profile."""
+    if not EYE.time_for_profile():
+        return None, None
+    t0 = time.time()
+    try:
+        prof = EYE.profile_of_bytes(clean, pad=pad, memo=memo)
+    except Exception as e:  # noqa: the page gets its preview; the gate is then unknown until the preview is made again
+        print("snapeyes enhance: profile not measured:", L._scrub(repr(e))[:200], flush=True)
+        return None, None
+    return prof, int((time.time() - t0) * 1000)
+
+
+def _public(prof, clean):
+    """The reply's "profile": the public part of the profile, or just the eye id and unknown: true when it was not measured."""
+    return prof.public() if prof is not None else {"eye_id": P.eye_id_of(clean), "v": EYE.PROFILE_V, "unknown": True}
+
+
+def _codes(prof, ms):
+    """The event fields of one eye's profile (codes and numbers only): gate ok / lid / fill / both / unknown, the first reason code of
+    a failure, the colour class, the pupil class, the measuring time."""
+    if prof is None:
+        return {"gate": "unknown", "reason": "none"}
+    g = {r: prof.gate(r) for r in ("lid", "fill")}
+    failed = [r for r in ("lid", "fill") if g[r]["ok"] is False]
+    why = next((c for r in failed for c in g[r]["why"]), None)
+    return {"gate": ("both" if len(failed) == 2 else failed[0]) if failed else ("unknown" if any(x["ok"] is None for x in g.values()) else "ok"),
+            "reason": why or "none", "cls": prof.cls, "pupil": prof.pupil_cls, "profile_ms": ms}
+
 
 def sample(body):
     """The AI-generated sample eye's prepared restoration, sent back by the page as it downloaded it: the display copy
@@ -33,7 +70,8 @@ def sample(body):
         raise L.ClientError("That is not the sample eye.") from None
     if hashlib.sha256(raw).hexdigest() != SAMPLE_SHA256:
         raise L.ClientError("That is not the sample eye.")
-    return {"ok": True, "mode": "artistic", "sample": True, **P.protect(L.b64_to_pil(s), raw)}
+    prof, _ = _measure(raw, 1.12, memo=True)          # the same file every time: measured once per instance
+    return {"ok": True, "mode": "artistic", "sample": True, **P.protect(L.b64_to_pil(s), raw, profile=prof), "profile": _public(prof, raw)}
 
 def enhance(body):
     t0 = time.time()
@@ -78,8 +116,9 @@ def enhance(body):
     # the clean restoration exactly as the page used to receive it (JPEG q93): sealed, never shown. The order's preview
     # and master_eye's preview_sha are these bytes, as before
     clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
-    res = {"ok": True, "mode": mode, **P.protect(out, clean), "fidelity": round(fid, 3), "used_sr": used_sr,
-           "fallback": fallback, "seconds": round(time.time() - t0, 1), "qa": qa}
+    prof, prof_ms = _measure(clean, pad)
+    res = {"ok": True, "mode": mode, **P.protect(out, clean, profile=prof), "profile": _public(prof, clean), "fidelity": round(fid, 3),
+           "used_sr": used_sr, "fallback": fallback, "seconds": round(time.time() - t0, 1), "qa": qa}
     # optional training memory (only with consent and when storage is configured)
     if body.get("consent") and body.get("session"):
         sid = L.safe_segment(body["session"])
@@ -89,7 +128,8 @@ def enhance(body):
         u2 = L.store(f"eyes/{sid}/{mode}.jpg", L.pil_bytes(out, "JPEG", 93), "image/jpeg")
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
-    E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"])
+    E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"],
+             **_codes(prof, prof_ms))
     return res
 
 def handle(req): L.run(req, enhance)

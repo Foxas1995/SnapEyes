@@ -23,8 +23,11 @@ The kinds (all with "ms", the time since the request started, when known):
   analyze   ok, verdict (good/ok/weak/no_eye), detail, blocked, block_reason, locked, shake_asked, lang, device
             (ios/android/desktop/other/unknown), source (camera/gallery/live/sample/lab/other/unknown)
   deglare   glare_pct, lid_pct, changed, used_sr, model_call (the reflection call to the image model)
-  enhance   mode, qa_ok, ring_de00, fallback, used_sr, fidelity
-  compose   style, eyes, layout, format, clean (unwatermarked), qa_ok
+  enhance   mode, qa_ok, ring_de00, fallback, used_sr, fidelity; and the eye profile (api/_lib/styles/eye.py): gate (ok, lid, fill,
+            both, or unknown when the profile was not measured), reason (the first reason code of a failure, else none), cls (the
+            colour class: own, dark_brown, grey), pupil (round, slit, bar), profile_ms (the time it took)
+  compose   style, eyes, layout, format, clean (unwatermarked), qa_ok; gate: the SET-level result of the request under the style's
+            gate rule (ok, unknown, or the first failing eye's reason code)
   master    step (eye/compose), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab
   error     endpoint, class (the error's kind: busy/400/403/429/500/502/503), reason (the reply's reason code),
             status. ("class", because "kind" names the event itself.)
@@ -59,8 +62,9 @@ FIELDS = {
     "analyze": {"ok": "b", "verdict": "c", "detail": "n", "blocked": "b", "block_reason": "c", "locked": "b",
                 "shake_asked": "b", "lang": "c", "device": "c", "source": "c"},
     "deglare": {"glare_pct": "n", "lid_pct": "n", "changed": "b", "used_sr": "b", "model_call": "b"},
-    "enhance": {"mode": "c", "qa_ok": "b", "ring_de00": "n", "fallback": "b", "used_sr": "b", "fidelity": "n"},
-    "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b"},
+    "enhance": {"mode": "c", "qa_ok": "b", "ring_de00": "n", "fallback": "b", "used_sr": "b", "fidelity": "n",
+                "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n"},
+    "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c"},
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
                "rerender": "b", "existing": "b", "render_s": "n", "style": "c"},
     "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n"},
@@ -269,7 +273,9 @@ def read_event(day, name):
 def empty():
     return {"events": 0, "kinds": {}, "verdict": {}, "block_reason": {}, "blocked": 0, "locked": 0, "unlocked": 0,
             "device": {}, "source": {}, "lang": {}, "enhance_qa_fail": 0, "enhance_fallback": 0, "deglare_glare": 0,
-            "deglare_lid": 0, "compose_style": {}, "compose_eyes": {}, "compose_clean": 0, "master_eye": 0,
+            "deglare_lid": 0, "compose_style": {}, "compose_eyes": {}, "compose_clean": 0,
+            # the restoration gate (eye profile): per eye at enhance, per request at compose; the colour and pupil classes seen
+            "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
             "master_compose": 0, "master_review": 0, "master_rerender": 0, "master_lab": 0, "master_existing": 0,
             "errors": {}, "error_endpoint": {}, "error_reason": {}, "busy": 0,
             "gemini": {"vision": 0, "image_1k": 0, "image_4k": 0}, "ms": {}, "recent_errors": [],
@@ -328,9 +334,21 @@ def add(agg, ev):
             agg["enhance_fallback"] += 1
         g["image_1k"] += 1
         _ms(agg, "enhance", ev)
+        for field, key in (("gate", "enhance_gate"), ("cls", "enhance_class"), ("pupil", "enhance_pupil")):
+            if ev.get(field):
+                _inc(agg[key], ev[field])
+        if ev.get("reason") and ev["reason"] != "none":
+            _inc(agg["enhance_reason"], ev["reason"])
+        pm = ev.get("profile_ms")
+        if isinstance(pm, (int, float)) and not isinstance(pm, bool) and pm >= 0:
+            cur = agg["ms"].setdefault("profile", [0, 0])
+            cur[0] += pm
+            cur[1] += 1
     elif kind == "compose":
         _inc(agg["compose_style"], ev.get("style") or "unknown")
         _inc(agg["compose_eyes"], ev.get("eyes") or 1)
+        if ev.get("gate"):
+            _inc(agg["compose_gate"], ev["gate"])
         if ev.get("clean"):
             agg["compose_clean"] += 1
         _ms(agg, "compose", ev)
