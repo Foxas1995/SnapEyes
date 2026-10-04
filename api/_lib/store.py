@@ -211,6 +211,21 @@ def _local_file(d, path):
     return pathlib.Path(d, *path.split("/"))
 
 
+def _retry_busy(fn, tries=40):
+    """The local folder only (STORE_LOCAL_DIR: the tests and the dev server). On Windows a file that another thread has
+    open, or is just replacing, refuses open, rename and delete with PermissionError for a few milliseconds; POSIX renames
+    and unlinks over an open file and never does, and neither does the bucket. So try again, for about a second at most;
+    anywhere else, and after the last try, the error stays. (Without this, six parallel drafts of one work ticket failed
+    one run in thirteen on Windows: a reader met the replace of eye_1.json, or two replaces met each other.)"""
+    for i in range(tries):
+        try:
+            return fn()
+        except PermissionError:
+            if os.name != "nt" or i == tries - 1:
+                raise
+            time.sleep(0.002 * (1 + i // 4))
+
+
 def put(path, data, content_type, upsert=False, timeout=30.0, retry=True):
     """Store bytes at path. upsert=False never overwrites (StorageExists instead) and is atomic: of two requests
     that race for the same path exactly one wins, so it can claim a slot. Returns the path."""
@@ -225,7 +240,7 @@ def put(path, data, content_type, upsert=False, timeout=30.0, retry=True):
         tmp.write_bytes(bytes(data))
         try:
             if upsert:
-                os.replace(tmp, f)
+                _retry_busy(lambda: os.replace(tmp, f))
             else:
                 try:
                     os.link(tmp, f)      # create-if-absent in one step, like the bucket's own 409
@@ -256,7 +271,7 @@ def get(path, max_bytes=GET_MAX_BYTES, timeout=30.0, retry=True):
             return None
         if f.stat().st_size > max_bytes:
             raise StorageError(f"get {path}: larger than {max_bytes} bytes")
-        return f.read_bytes()
+        return _retry_busy(f.read_bytes)
     url, key, bucket = _require()
     r = _call(f"get {path}", "GET", _obj(url, bucket, path, "object/authenticated"), timeout, retry,
               headers=_headers(key), stream=True)
@@ -360,7 +375,7 @@ def delete(path, timeout=10.0, retry=True):
     if d:
         f = _local_file(d, path)
         try:
-            f.unlink()
+            _retry_busy(f.unlink)
             return True
         except FileNotFoundError:
             return False
@@ -436,7 +451,7 @@ def delete_many(paths, timeout=15.0, retry=True, chunk=100):
     if d:
         for p in paths:
             try:
-                _local_file(d, p).unlink()
+                _retry_busy(_local_file(d, p).unlink)
             except FileNotFoundError:
                 pass
         return len(paths) and 1
