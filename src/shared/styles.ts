@@ -95,6 +95,19 @@ export function layoutsFor(id: string, n: number): readonly string[] {
   return ceilingStage(id, n) === null ? [] : STYLES[id].layouts[String(n)] ?? [];
 }
 
+let legacyLayouts: Record<string, string[]> | null = null;
+/** The layouts of the six legacy styles for n eyes, the default first (empty for any other n): the one table they share (api/_lib/catalogue.py
+ *  legacy_layouts_table). The /try picker offers the legacy styles only until the new picker lands, so this is what it offers for n eyes. */
+export function legacyLayoutsFor(n: number): readonly string[] {
+  if (!legacyLayouts) {
+    if (new Set(LEGACY_IDS.map((id) => JSON.stringify(STYLES[id].layouts))).size !== 1) {
+      throw new Error('the legacy styles of api/_lib/styles_registry.py do not share one layout table');
+    }
+    legacyLayouts = STYLES[LEGACY_IDS[0]].layouts;
+  }
+  return legacyLayouts[String(n)] ?? [];
+}
+
 /** A style a customer can buy in a price class, for the places that show one example (api/_lib/catalogue.py class_style). */
 export function classStyle(cls: PriceClass): string {
   const pool = STYLE_IDS.filter((id) => STYLES[id].price_class === cls && STYLES[id].eyes[0] <= 1);

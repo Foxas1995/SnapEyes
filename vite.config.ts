@@ -104,12 +104,12 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // local Python stand-in for the Vercel functions: python scripts/dev_api.py. The two source files the site itself
-      // imports from api/ (src/shared/markets.ts reads api/_lib/markets.py and src/shared/styles.ts reads
-      // api/_lib/styles_registry.py, both as text) are served by Vite, not proxied
+      // local Python stand-in for the Vercel functions: python scripts/dev_api.py. The source files the site itself
+      // imports from api/ (src/shared/markets.ts reads api/_lib/markets.py, src/shared/styles.ts reads
+      // api/_lib/styles_registry.py and src/shared/layouts.ts reads api/_lib/layout_names.py, all as text) are served by Vite, not proxied
       '/api': {
         target: 'http://localhost:5050',
-        bypass: (req) => (req.url && /^\/api\/_lib\/(markets|styles_registry)\.py\?/.test(req.url) ? req.url : undefined),
+        bypass: (req) => (req.url && /^\/api\/_lib\/(markets|styles_registry|layout_names)\.py\?/.test(req.url) ? req.url : undefined),
       },
     },
   },
