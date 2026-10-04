@@ -17,7 +17,12 @@ draft: one eye of an unpaid order, uploaded on its own (the 4.5 MB request limit
   preview was made from (/api/deglare's crop), sealed = the "sealed" string /api/enhance returned (the clean preview,
   encrypted with the server's key: opened here, so the stored preview is exactly the enhance output while the page never
   holds it in the clear; refused 410 preview_expired after api/_lib/preview.py SEAL_TTL, 400 preview_invalid when it
-  does not verify or is one of the smaller "sealed_sizes" copies, which only /api/compose opens). Old pages send
+  does not verify or is one of the smaller "sealed_sizes" copies, which only /api/compose opens). The eye record the draft
+  stores (draft/eye_<n>.json) gains eye_id (the first 16 hex digits of the sha256 of the preview bytes, which is what the
+  seal's own id says too) and, when the seal carries one, profile (the eye profile measured at /api/enhance, api/_lib/
+  styles/eye.py: read from the seal, so authentic, never from the page): checkout reads the gate from it, the master
+  compares its own measurement with it. A preview sealed before the profile existed, or one an old page sends plain, has
+  the id and no profile (the gate is unknown). Old pages send
   preview = the clean image string instead, accepted for one release (a display copy, which an old page would get
   from the new /api/enhance, is refused 409 preview_outdated). pad = the pad
   both used, ticket = the work ticket from /api/analyze (15 minutes: proof the eye came through the engine). Without
@@ -150,28 +155,34 @@ def _image(s, what, cap):
 
 
 def _preview_image(body):
-    """(bytes, format, side) of the eye's approved preview. New pages send it sealed (/api/enhance "sealed"), opened
+    """(bytes, format, side) of the eye's approved preview (see _preview_full)."""
+    return _preview_full(body)[:3]
+
+
+def _preview_full(body):
+    """(bytes, format, side, meta) of the eye's approved preview. New pages send it sealed (/api/enhance "sealed"), opened
     here; old pages the clean "preview" string, accepted for one release. Sealed wins when both are sent. A display copy
     (the watermarked 800 px image the new /api/enhance shows) is never an order's preview: the 4K file would be made
-    from its watermark."""
+    from its watermark. meta: what the seal says about the eye (preview.unseal_full: v, kind, eye_id, profile), None for
+    a plain preview."""
     ss = body.get("sealed")
     if isinstance(ss, str) and ss:
         if len(ss) > P.SEALED_B64_MAX:
             raise _too_large("preview")
         try:
-            clean = P.unseal(ss, kinds=(P.KIND_ORDER,))   # a smaller compose copy is never an order's preview
+            clean, meta = P.unseal_full(ss, kinds=(P.KIND_ORDER,))   # a smaller compose copy is never an order's preview
         except P.SealExpired:
             raise store.Answer(410, "preview_expired", "This preview is too old. Please take the photo again.",
                                False) from None
         except P.SealError:
             raise store.Answer(400, "preview_invalid", "We could not verify this preview. Please take the photo again.",
                                False) from None
-        return _image(base64.b64encode(clean).decode("ascii"), "preview", PREVIEW_B64_MAX)
+        return _image(base64.b64encode(clean).decode("ascii"), "preview", PREVIEW_B64_MAX) + (meta,)
     got = _image(body.get("preview"), "preview", PREVIEW_B64_MAX)
     if P.is_display(got[0]):
         raise store.Answer(409, "preview_outdated", "This page is out of date. Please reload it and take the photo "
                            "again.", False)
-    return got
+    return got + (None,)
 
 
 def _withdrawn():
@@ -230,7 +241,7 @@ def draft(body):
     if isinstance(cs, str) and isinstance(ps, str) and len(cs) + len(ps) > BODY_B64_MAX:
         raise _too_large("upload")
     craw, cfmt, cside = _image(cs, "crop", CROP_B64_MAX)
-    praw, pfmt, pside = _preview_image(body)
+    praw, pfmt, pside, pmeta = _preview_full(body)
     pad = ME._pad(body.get("pad"))
     lang = pay.lang_of(body.get("lang"))
     ref = body.get("ref")
@@ -261,7 +272,10 @@ def draft(body):
     now = int(time.time())
     erec = {"eye": eye, "pad": pad, "ref": ref, "uploaded_at": now, "uploaded": pay.iso(now),
             "crop": {"path": cpath, "type": ctype, "side": cside, "bytes": len(craw), "sha256": _sha(craw)},
-            "preview": {"path": ppath, "type": ptype, "side": pside, "bytes": len(praw), "sha256": _sha(praw)}}
+            "preview": {"path": ppath, "type": ptype, "side": pside, "bytes": len(praw), "sha256": _sha(praw)},
+            "eye_id": (pmeta or {}).get("eye_id") or P.eye_id_of(praw)}
+    if (pmeta or {}).get("profile") is not None:
+        erec["profile"] = pmeta["profile"].rec        # the sealed eye profile (authentic: it came out of the seal, not from the page)
     # written last: the slot only ever points at complete files
     store.put(f"{folder}/eye_{eye}.json", store.json_bytes(erec), "application/json", upsert=True)
     if isinstance(old, dict):

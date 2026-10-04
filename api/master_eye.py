@@ -31,6 +31,10 @@ master made from a preview is rendered again only from that same preview (the re
 preview_sha), and a master made from the crop alone only from the crop alone. Anything else is a 400 before any
 spend, so an independent render can never replace a master that matches the approved preview.
 
+The eye's record (eye_<n>.json) carries eye_id: the first 16 hex digits of the sha256 of the clean preview bytes the master was
+made from (the same id the preview's seal and the order draft carry, api/_lib/styles/eye.py), null for a master made without a
+preview. Seeds of the styles are made from eye ids, never from the pixels they draw, so a 4K master and its preview share one.
+
 Reply 200: {ok, key, eye, width, height, existing, seconds, render_seconds, qa, preview, needs_review,
 rerender_available, rerendered, ms}. qa: the colour check against the photo crop. preview: preview_qa's numbers,
 null without a preview. needs_review is true when the stored master failed the colour check or does not match its
@@ -138,6 +142,23 @@ def _preview(s, pad, sealed=None):
     if side != L.WORK:
         im = im.resize((L.WORK, L.WORK), Image.LANCZOS)
     return L.mask_disk(im, pad)
+
+
+def _preview_eye_id(s, sealed=None):
+    """The eye id (16 hex: the sha256 prefix of the clean preview bytes) of the preview a request carries, read the way _preview
+    reads it (the sealed form wins), or None when there is none. The caller has already validated the preview."""
+    try:
+        if isinstance(sealed, str) and sealed:
+            raw = P.unseal(sealed, kinds=(P.KIND_ORDER,))
+        elif isinstance(s, str) and s:
+            if "," in s[:64] and s.strip().startswith("data:"):
+                s = s.split(",", 1)[1]
+            raw = base64.b64decode(s)
+        else:
+            return None
+        return P.eye_id_of(raw) if raw else None
+    except Exception:  # noqa: the id is a record, never a reason to refuse a render
+        return None
 
 
 def _rejected(why, order, eye):
@@ -351,6 +372,7 @@ def _master_eye(body, stage):
     base, input_px = _base(body.get("crop"), pad)
     pv = _preview(body.get("preview"), pad, body.get("sealed"))     # None: the old request, rendered from the crop
     pv_sha = None if pv is None else hashlib.sha256(pv.tobytes()).hexdigest()[:16]
+    eye_id = None if pv is None else _preview_eye_id(body.get("preview"), body.get("sealed"))
     if rec is not None:
         _same_input(rec, pv_sha)                # a re-render: the same input as the stored master, or a 400
     lock = _claim(folder, eye)
@@ -391,7 +413,7 @@ def _master_eye(body, stage):
         t3 = time.time()
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         this = {"pad": pad, "model": L.IMAGE_MODEL, "image_size": "4K", "width": MASTER_SIDE, "height": MASTER_SIDE,
-                "input": "crop" if pv is None else "preview", "preview_sha": pv_sha, "input_px": input_px,
+                "input": "crop" if pv is None else "preview", "preview_sha": pv_sha, "eye_id": eye_id, "input_px": input_px,
                 "attempts": attempts,
                 "render_seconds": round(render_s, 1), "fidelity": round(fid, 3), "qa": qa, "preview": pqa,
                 "tokens": tokens, "bytes": len(data), "created": now}
