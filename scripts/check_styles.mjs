@@ -84,6 +84,7 @@ export const ID_ALLOW = {
   'src/landing/copy.ts': 'copy dictionary keyed by style id (styles.desc), item 4 keeps its keys equal to the shown ids',
   'src/landing/copy.lt.ts': 'copy dictionary keyed by style id (styles.desc), item 4',
   'src/landing/copy.hu.ts': 'copy dictionary keyed by style id (styles.desc), item 4',
+  'api/_lib/styles/collision/scenes.py': 'the scene key of a collision artwork is the registry id of its style: it is part of the prototype\'s seed in step A (WP7A), which step B (WP7B) replaces by the plan\'s seed key',
 };
 // folders of a scan that never hold customer-facing code: the style suites (they name ids to test them) and this check's own files
 const ID_SKIP_DIRS = ['scripts/styles_tests'];
