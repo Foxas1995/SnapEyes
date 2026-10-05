@@ -8,7 +8,7 @@
 // The page's hash links stay plain links. The dialog fades and rises in .5 s (css/header.css; under reduced motion it just appears).
 import type { CSSProperties } from 'react';
 import type { LandingCopy } from './copy/types';
-import { NAV_KEYS } from './Header';
+import { NAV_KEYS } from './navKeys';
 
 export function MenuDialogView({ copy, tryHref }: { copy: LandingCopy; tryHref: string }) {
   return (

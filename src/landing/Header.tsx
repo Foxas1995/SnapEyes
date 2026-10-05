@@ -8,9 +8,8 @@
 import type { CSSProperties, Ref } from 'react';
 import { LANG_NAMES, type Lang } from '../shared/lang';
 import type { LandingCopy } from './copy/types';
+import { NAV_KEYS } from './navKeys';
 
-/** The header's navigation, in the order of the page's sections (copy nav.*). */
-export const NAV_KEYS = ['reveal', 'wall', 'styles', 'how', 'pricing', 'faq'] as const;
 
 export function LogoMark() {
   return (
