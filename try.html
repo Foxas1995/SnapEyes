@@ -6,6 +6,9 @@
     <title>SnapEyes Studio - Turn your eye photo into iris art</title>
     <meta name="description" content="Take a photo of your eye with your phone and see your own iris restored and turned into cosmic art in about a minute." />
     <meta name="robots" content="noindex" />
+    <!-- The page transition (src/motion/transition.css) never covers an order, a payment or a form: this page arrives without it when its address names
+         an order (o, k, s), a payment (checkout, session_id) or the online withdrawal function (withdraw). The address is read while the head is parsed: the page's own script may already have tidied it (a return from payment is cleaned) when the page is revealed. -->
+    <script>(function(q){addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v&&/[?&](o|k|s|checkout|session_id|withdraw)=/.test(q))v.skipTransition()})})(location.search)</script>
     <!-- fonts are self-hosted through src/index.css: no visitor IP goes to Google before any consent -->
   </head>
   <body class="bg-[#07090e] text-[#f0f3fa] antialiased overflow-x-hidden">

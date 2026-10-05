@@ -16,3 +16,7 @@
 @import './hero.css';
 @import './footer.css';
 @import './sticky.css';
+/* the page transition to /try (motion spec 6.17): the opt-in and the dissolve, written once in src/motion/transition.css and imported here so that it is part of
+   this stylesheet and not a file of its own (the entries /try and /order import the same file, and the bundler would otherwise make it a shared chunk that the
+   landing has to fetch) */
+@import '../../motion/transition.css';

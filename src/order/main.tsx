@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../index.css';
+import '../motion/transition.css';
 import { OrderApp } from './OrderApp';
 import { adoptLinkedEdition } from '../shared/legal';
 
