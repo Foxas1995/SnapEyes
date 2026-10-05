@@ -79,7 +79,16 @@ export const ResultView: React.FC<Props> = (p) => {
       </p>
     </div>
   ) : null;
+  // The colour check's warning (the engine's own check failed for this eye, or the Reveal was withheld because the restored colour drifted from the photo).
+  // It comes BEFORE the transparency sentence, and while it shows the promise line ("we never recolour your iris") does not: the two together would
+  // contradict each other on exactly the eyes where the promise is under strain (the p09f case). The transparency sentence stays: it is also the AI
+  // disclosure, and it says where the colour comes from, which the warning then qualifies.
   const colourNote = !eye.sample && (eye.colourOff || withheldByColour(rev.rv));
+  const colourWarning = colourNote ? (
+    <p data-testid="colour-off" className="text-xs text-amber-200/90 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
+      <AlertTriangle className="w-4 h-4 shrink-0 mt-px text-amber-300" /> <span>{T.result.colourOff}</span>
+    </p>
+  ) : null;
   // one eye on the artwork: the same eye three times, between the Reveal and the style tiles
   const stripSection = n === 1 && rev.view === 'cut' && rev.frame ? (
     <div data-testid="strip-section">
@@ -123,16 +132,12 @@ export const ResultView: React.FC<Props> = (p) => {
         <CompareSlider key={eye.id} before={eye.before} after={`data:image/jpeg;base64,${eye.image}`}
           beforeLabel={eye.sample ? T.result.samplePhoto : T.result.yourPhoto} afterLabel={T.result.after} />
       )}
+      {colourWarning}
       {/* decision 5 speaks about the customer's own photo, so the sample gets its own line instead */}
       {eye.sample
         ? <p className="text-xs text-amber-100 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">{T.result.sampleNote}</p>
-        : <p className="text-xs text-zinc-200 mt-3 bg-white/5 border border-white/10 rounded-xl p-3">{T.result.transparency}</p>}
-      {revealHero && <p data-testid="promise" className="text-xs text-zinc-300 mt-2">{R.promise}</p>}
-      {colourNote && (
-        <p data-testid="colour-off" className="text-xs text-amber-200/90 mt-2 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-px text-amber-300" /> <span>{T.result.colourOff}</span>
-        </p>
-      )}
+        : <p data-testid="transparency" className="text-xs text-zinc-200 mt-3 bg-white/5 border border-white/10 rounded-xl p-3">{T.result.transparency}</p>}
+      {revealHero && !colourNote && <p data-testid="promise" className="text-xs text-zinc-300 mt-2">{R.promise}</p>}
       <p className="text-[11px] text-zinc-500 mt-2">
         {[
           rev.view === 'cut' ? R.drag : rev.view === 'strip' ? '' : T.result.drag,

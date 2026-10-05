@@ -283,7 +283,7 @@ export const lt: TryCopy = {
       noCut: 'Šiai akiai pjūvio parodyti nepavyko, todėl Jūsų nuotrauka ir atkurta rainelė rodomos greta.',
       softTip: 'Jūsų nuotrauka maža, todėl jos pusė atrodo minkšta. Prisiartinkite arba naudokite 2x priartinimą, kad palyginimas būtų ryškesnis.',
       frameWide: 'Platus kadras',
-      frameTight: 'Siauras kadras: Jūsų nuotrauka yra artimas iškarpymas, aplink rainelę nieko nepiešiama',
+      frameTight: 'Siauras kadras: Jūsų nuotrauka apkirpta prie pat rainelės, aplink ją nieko nepiešiama',
     },
   },
 

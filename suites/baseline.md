@@ -428,6 +428,8 @@ px wide (no horizontal overflow, the strip in three columns at 375 and stacked a
 
 **Counts:** `v3reveal` 63 (new), `ts` 79 (was 31: 15 ported node tests, 11 new node tests in `src/reveal/reveal.test.ts`, 22 in `suites/ts/reveal_page.test.ts`). `scripts/run_ts_tests.mjs` runs both kinds.
 
+**Review fixes of WP9 (2026-10-05, fixer).** `v3reveal` 72 (9 more: the crop padding of the request, the display copy's anchor, a NaN in the wire dict) and `ts` 89 (10 more: the real `ResultView` rendered on the server with `react-dom/server` for six eyes, so the promise line and the colour warning are checked as the page prints them). Mutations seen to fail: the padding ignored by the anchor, the padding gate removed, the promise shown beside the colour warning. A real browser against the dev API with the models stubbed: the warm case (the chroma lock off, red x1.3, blue x0.7) prints the no-cut note, the colour check, then the transparency sentence and no promise line; the ordinary case prints the Reveal with the promise line and no colour warning.
+
 ## 13. The collision family (WP7A, 2026-10-05): the replay, the seam budget and what 4096 px costs
 
 The collision family (Kiss Collision, Collision Infinity, Clean Infinity, Family Colours, Infinity Chain) is the DG1 snapshot of the design rounds' code ported verbatim

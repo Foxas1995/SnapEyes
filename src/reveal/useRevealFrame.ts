@@ -56,7 +56,9 @@ export function useRevealFrame(eye: FrameEye | undefined): RevealState {
     if (!wanted || !restored) return;
     let live = true;
     const i = new Image();
-    i.onload = () => { if (live) setDecoded(restored); };
+    // a layer that cannot be decoded still settles: without this `ready` never turned true and the arrival sweep never started (the restored half is then a
+    // broken image, exactly as in the plain slider, and the page is not left holding the photo alone)
+    i.onload = i.onerror = () => { if (live) setDecoded(restored); };
     i.src = restored;
     return () => { live = false; };
   }, [wanted, restored]);
