@@ -35,7 +35,7 @@ The kinds (all with "ms", the time since the request started, when known):
             Universe look), pick (the style is the recommended tile), fallback (what the geometry fell back to: kiss, stack_contrast, ...),
             stage (the effective stage of the style asked: live or preview, so that the demand for a Soon style is counted), retake (how
             many eyes of the set the page replaced since its last compose), lang and market (page language, price market), ms (a tile: its
-            own render time), cls (the set's colour class: own, dark_brown, grey; only a tiles 0 event writes it). tiles 0 is a request that judged
+            own render time), cls (the set's colour class: own, dark_brown, grey). tiles 0 is a request that judged
             a set of eyes and drew nothing for it (the tile list alone, a batch whose tiles the gate held back, a style or a pick the eyes cannot
             take): it carries the set level fields (gate, eyes, cls, retake, lang, market) and reaches the gate funnel and nothing else
   master    step (eye/compose/art), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab; and, from the master plan's steps

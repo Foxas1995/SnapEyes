@@ -1045,8 +1045,16 @@ check("a request that says nothing of the set writes no set event: a style that 
       all(r_[2] == [] for r_ in (ne_lab, ne_adm, ne_eyes, ne_unk, ne_many, ne_busy)) and [getattr(r_[0], "status", None) for r_ in (ne_lab, ne_eyes, ne_many, ne_busy)] == [422, 422, 422, 503]
       and isinstance(ne_unk[0], L.ClientError), [r_[2] for r_ in (ne_lab, ne_adm, ne_eyes, ne_unk, ne_many, ne_busy)])
 check("a request that draws is counted by its pictures as before and writes no set event beside them: a batch of two tiles writes its two tile events (tiles 2 on the first), one preview writes one event (tiles 1)",
-      [e_.get("tiles") for e_ in ev_two[2]] == [2, None] and all(e_.get("tile") is True and "cls" not in e_ for e_ in ev_two[2]) and len(ev_one[2]) == 1 and ev_one[2][0]["tiles"] == 1
-      and "cls" not in ev_one[2][0] and not any(e_.get("tiles") == 0 for e_ in ev_two[2] + ev_one[2]), (ev_two[2], ev_one[2]))
+      [e_.get("tiles") for e_ in ev_two[2]] == [2, None] and all(e_.get("tile") is True for e_ in ev_two[2]) and len(ev_one[2]) == 1 and ev_one[2][0]["tiles"] == 1
+      and not any(e_.get("tiles") == 0 for e_ in ev_two[2] + ev_one[2]), (ev_two[2], ev_one[2]))
+fd_agg = E.empty()
+for ev_ in ev_two[2] + ev_one[2]:
+    E.add(fd_agg, E.build("compose", ev_))
+c1_ = ev_one[2][0].get("cls")
+check("the pictures' own events carry the set's colour class too, so the funnel by class is complete (the failing sets of a class are not shown without the passing ones): a batch (one request, counted by its "
+      "first event) and one preview are two requests of one class, and the class is the one the set tiles report",
+      c1_ in ("own", "dark_brown", "grey") and all(e_.get("cls") == c1_ for e_ in ev_two[2] + ev_one[2]) and sum(fd_agg["compose_funnel_cls"].values()) == 2
+      and all(k.startswith(f"1|{c1_}|") for k in fd_agg["compose_funnel_cls"]) and sum(fd_agg["compose_funnel"].values()) == 2, (fd_agg["compose_funnel_cls"], c1_))
 with Show(*PAIR), Show(*LEGACY, stage="retired"):
     n_min = len(ev_run({"sealed": LID_PAIR, "styles": []})[2])           # (the budget starts empty)
     EVENTS.clear()

@@ -597,7 +597,12 @@ def _pick_reply(cat):
     return {"id": cat["pick"], "reason": cat["reason"]} if cat["pick"] else None
 
 
-def _event_fields(req, style, n, layout, fmt, size, gate, qa_ok, pick_id, look, fallback, clean=False, tile=False):
+def _set_cls(metas):
+    """The colour class of the set of eyes (own, dark_brown, grey: catalogue.set_class of the sealed profiles), the class of the funnel by eye class."""
+    return catalogue.set_class(_recs(metas))
+
+
+def _event_fields(req, style, n, layout, fmt, size, gate, qa_ok, pick_id, look, fallback, clean=False, tile=False, cls=None):
     f = {"style": style, "eyes": n, "layout": layout, "format": fmt, "clean": bool(clean), "gate": gate, "size": size,
          "stage": catalogue.stage_of(style, n), "pick": style == pick_id, "retake": req["retake"], "lang": req["lang"]}
     if qa_ok is not None:
@@ -610,6 +615,8 @@ def _event_fields(req, style, n, layout, fmt, size, gate, qa_ok, pick_id, look, 
         f["fallback"] = fallback
     if req["market"]:
         f["market"] = req["market"]
+    if cls:
+        f["cls"] = cls
     return f
 
 
@@ -640,7 +647,7 @@ def _set_event(req, n, metas, style=None):
     try:
         if not _sets_room():
             return False
-        f = {"tiles": 0, "eyes": n, "gate": _gate_code(style if isinstance(style, str) else "", n, metas), "cls": catalogue.set_class(_recs(metas)),
+        f = {"tiles": 0, "eyes": n, "gate": _gate_code(style if isinstance(style, str) else "", n, metas), "cls": _set_cls(metas),
              "retake": req["retake"], "lang": req["lang"]}
         if req["market"]:
             f["market"] = req["market"]
@@ -686,7 +693,7 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
     pick_id = cat["pick"]
     if not admin:
         E.record("compose", tiles=1, **_event_fields(req, style, n, layout, word, size, _gate_code(style, n, metas), qa.get("ok"), pick_id,
-                                                    opts.get("look"), fallback, clean))
+                                                    opts.get("look"), fallback, clean, cls=_set_cls(metas)))
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": word, "canvas": canvas,
             "count": n, "width": img.size[0], "height": img.size[1], "image": _jpeg(img),
             "styles": list(catalogue.previewable_ids(n, admin)), "qa": qa, "eyes": _eyes_reply(metas), "tiles": cat["tiles"], "pick": _pick_reply(cat),
@@ -716,7 +723,8 @@ def _one_legacy(req, style, n, body, opened, metas, cat, admin, clean, t0):
     else:
         qa = L.colour_qa("compose", graded=graded)
     if not admin:
-        E.record("compose", tiles=1, **_event_fields(req, style, n, layout, fmt, size, _gate_code(style, n, metas), qa.get("ok"), cat["pick"], None, None, clean))
+        E.record("compose", tiles=1, **_event_fields(req, style, n, layout, fmt, size, _gate_code(style, n, metas), qa.get("ok"), cat["pick"], None, None, clean,
+                                                    cls=_set_cls(metas)))
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": fmt,
             "count": n, "width": out.size[0], "height": out.size[1], "image": _jpeg(out),
             "styles": list(catalogue.previewable_ids(n, admin)), "qa": qa, "eyes": _eyes_reply(metas), "tiles": cat["tiles"], "pick": _pick_reply(cat),
@@ -838,7 +846,8 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
     if made and not admin:
         pick_id = cat["pick"]
         gate = {s: _gate_code(s, n, metas) for s in made}
-        fields = [_event_fields(req, s, n, made[s]["layout"], "artwork", size, gate[s], None, pick_id, opts.get(s, {}).get("look"), (rows[s].get("fallback")), False, True)
+        fields = [_event_fields(req, s, n, made[s]["layout"], "artwork", size, gate[s], None, pick_id, opts.get(s, {}).get("look"), (rows[s].get("fallback")), False, True,
+                         cls=_set_cls(metas))
                   for s in made]
         for f, s in zip(fields, made):
             f["ms"] = timing.get(s)
