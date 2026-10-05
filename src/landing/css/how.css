@@ -14,14 +14,14 @@
   .lp-phone { position: relative; width: 44%; aspect-ratio: 9 / 18.6; border-radius: 26px; background: #05070b; box-shadow: 0 0 0 5px #1d2230, 0 0 0 6px rgba(255, 255, 255, .1), 0 30px 60px -20px rgba(0, 0, 0, .9); overflow: hidden; }
   .lp-phone::before { content: ""; position: absolute; z-index: 3; top: 9px; left: 50%; width: 32%; height: 11px; margin-left: -16%; border-radius: 99px; background: #000; }
   .lp-cam { position: absolute; inset: 0; }
-  .lp-cam img { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.05); }
+  .lp-cam img { width: 100%; height: 100%; object-fit: cover; }
   .lp-cam .lp-ring { position: absolute; left: 50%; top: 46%; width: 76%; aspect-ratio: 1; margin: -38% 0 0 -38%; border-radius: 50%; border: 1.5px solid var(--gold); box-shadow: 0 0 0 1px rgba(0, 0, 0, .3), inset 0 0 0 1px rgba(0, 0, 0, .25); }
   .lp-cam .lp-br { position: absolute; width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, .85); }
   .lp-cam .lp-br.lp-a { left: 10%; top: 24%; border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0; }
   .lp-cam .lp-br.lp-b { right: 10%; top: 24%; border-left: 0; border-bottom: 0; border-radius: 0 4px 0 0; }
   .lp-cam .lp-br.lp-c { left: 10%; bottom: 26%; border-right: 0; border-top: 0; border-radius: 0 0 0 4px; }
   .lp-cam .lp-br.lp-d { right: 10%; bottom: 26%; border-left: 0; border-top: 0; border-radius: 0 0 4px 0; }
-  .lp-cam .lp-zoom { position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); padding: 2px 9px; border-radius: 99px; background: rgba(0, 0, 0, .55); color: var(--gold-2); font-size: 11px; font-weight: 700; }
+  .lp-cam .lp-zoom { position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); padding: 2px 9px; border-radius: 99px; background: rgba(0, 0, 0, .55); color: var(--t-1); font-size: 11px; font-weight: 700; }
   .lp-cam .lp-shutter { position: absolute; left: 50%; bottom: 4%; width: 26px; height: 26px; margin-left: -13px; border-radius: 50%; border: 2px solid #fff; box-shadow: inset 0 0 0 3px #05070b, inset 0 0 0 30px #fff; }
   .lp-prev { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 8px 8px; gap: 8px; background: #070a10; }
   .lp-prev b { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); text-align: center; }

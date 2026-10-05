@@ -98,7 +98,7 @@ async function goP(page, g, p) {
 /** The expected frame at p, written out here once more from the table of the spec (6.4), on purpose: the check is of the table, not of the code. */
 const want = (p) => {
   const ramp = (a, b) => Math.min(1, Math.max(0, (p - a) / (b - a)));
-  return { pos: 100 * (1 - ramp(0.06, 0.5)), ap: 72 * ramp(0.56, 0.94), step: p >= 0.68 ? 2 : p >= 0.34 ? 1 : 0 };
+  return { pos: 100 * (1 - ramp(0.06, 0.5)), ap: 72 * ramp(0.56, 0.94), step: p >= 0.72 ? 2 : p >= 0.34 ? 1 : 0 };
 };
 /** How many pixels differ (any channel, and by how much) inside the rectangle [x, y, w, h] of two PNGs of the same size. */
 async function pngDiff(a, b, rect) {
@@ -142,6 +142,13 @@ async function checkScene() {
     if (p === 0.75) expect('scene', s.chips === 'art' && s.ring > 0.9, `p .75: the chips are "${s.chips}", the ring ${s.ring} (want "art" and a visible ring)`);
     if (p === 1) expect('scene', s.ring === 0 && s.chips === 'art', `p 1: the ring has opacity ${s.ring} (want none: the circle has left the frame)`);
   }
+  // the artwork layer is fetched before the aperture opens (it is clipped to nothing, which a lazy loader never fetches: on a slow line the aperture opened on
+  // nothing), and the label says "art" only once the aperture shows a good part of it (a label that says art over the restored iris is not exact)
+  const art0 = await page.eval("(() => { const a = document.querySelector('.lp-rv-art'); return a.complete && a.naturalWidth > 0; })()");
+  expect('scene', art0 === true, 'the artwork layer is not loaded long after the scene came on screen (a lazy image clipped to nothing is never fetched)');
+  await goP(page, g, 0.62);
+  const s62 = await frameState(page);
+  expect('scene', s62.chips === 'iris' && s62.step === 1, `p .62: the chips are "${s62.chips}" and step ${s62.step + 1} (want "iris" and step 2: the aperture shows only ${s62.ap.toFixed(0)} percent)`);
   // a jump from far away (the page's end) into the middle shows the middle at once, not a catch up from 0: the first reading of a scene that has
   // just come into range is applied whole (a reload, an anchor or a restored scroll position inside a scene)
   await page.eval("window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })");
@@ -192,11 +199,11 @@ async function checkPixels() {
   for (const [p, layer] of [[0, 'photo'], [0.56, 'iris'], [1, 'art']]) {
     await style('');
     await goP(page, g, p);
-    await style(`${HIDE_CHROME} .lp-rv-chip { visibility: hidden !important; transition: none !important; }`);
+    await style(`${HIDE_CHROME} .lp-rv-chip, .lp-rv-who { visibility: hidden !important; transition: none !important; }`);   // the labels lie over the frame by design (AC-8); the claim is about the artwork's own pixels
     await sleep(300);
     const a = await shot();
     // the layer alone: every other layer and every overlay hidden, its own clip taken away
-    await style(`${HIDE_CHROME} .lp-rv-chip { visibility: hidden !important; } .lp-rv-frame > :not(.lp-rv-${layer}) { visibility: hidden !important; } .lp-rv-frame::before, .lp-rv-frame::after { display: none !important; } .lp-rv-${layer} { clip-path: none !important; }`);
+    await style(`${HIDE_CHROME} .lp-rv-chip, .lp-rv-who { visibility: hidden !important; } .lp-rv-frame > :not(.lp-rv-${layer}) { visibility: hidden !important; } .lp-rv-frame::before, .lp-rv-frame::after { display: none !important; } .lp-rv-${layer} { clip-path: none !important; }`);
     await sleep(300);
     const b = await shot();
     const d = await pngDiff(a, b, await rect());
@@ -278,7 +285,7 @@ async function checkStatic() {
 async function checkFit() {
   console.log('fit');
   for (const lang of LANGS) {
-    for (const [w, h] of [[1280, 800], [1366, 650], [768, 1024], [768, 600]]) {
+    for (const [w, h] of [[1280, 800], [1366, 650], [768, 1024], [768, 600], [768, 560], [768, 590], [800, 560], [1024, 560]]) {
       const page = await open({ lang, width: w, height: h });
       const r = JSON.parse(await page.eval(`JSON.stringify((() => { const s = document.querySelector('.lp-rv-stage'); if (!s) return null;
         const sr = s.getBoundingClientRect(), box = (e) => e.getBoundingClientRect(), copy = box(s.querySelector('.lp-rv-copy')), fig = box(s.querySelector('.lp-rv-fig')), h2 = document.getElementById('revealH');
@@ -290,11 +297,20 @@ async function checkFit() {
       expect('fit', r.slack >= 0 && r.top >= 0, `${lang} ${w} x ${h}: the stage's content (${r.slack} px to spare) does not fit its stage`);
       expect('fit', r.wide.length === 0 && r.masks === 0, `${lang} ${w} x ${h}: wider than its box: ${r.wide.join(' | ')} (${r.masks} masks)`);
       expect('fit', r.sw <= r.iw, `${lang} ${w} x ${h}: the page scrolls sideways (${r.sw} of ${r.iw} px)`);
+      // the three step rows are on screen from the first frame of the pin and must be SEEN in a short, narrow window too (2026-10-05: in a 768 x 560 window the third
+      // row waited for an observer that its place never reached, so it stayed invisible for the whole pin while its button was focusable)
+      const g = await geo(page);
+      if (g) {
+        await page.eval(`window.scrollTo({ top: ${g.top - TOP + g.span * 0.3}, behavior: 'instant' })`);
+        await sleep(900);
+        const rows = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('.lp-rv-step')].map((b) => { const li = b.closest('li'); return { op: +getComputedStyle(li).opacity, hid: li.hasAttribute('data-reveal') && !li.hasAttribute('data-in') }; }))`));
+        expect('fit', rows.length === 3 && rows.every((x) => x.op === 1 && !x.hid), `${lang} ${w} x ${h}: a step row is not visible at p .3: ${JSON.stringify(rows)}`);
+      }
       expect('fit', r.copyw >= 280, `${lang} ${w} x ${h}: the copy column is ${r.copyw} px wide (want 280 or more)`);
       await page.close();
     }
   }
-  if (!problems.some((x) => x.startsWith('fit'))) pass('fit', 'en de lt hu at 1280 x 800, 1366 x 650, 768 x 1024 and 768 x 600: the stage holds its content, no heading or row wider than its box, no sideways scroll');
+  if (!problems.some((x) => x.startsWith('fit'))) pass('fit', 'en de lt hu at 1280 x 800, 1366 x 650, 768 x 1024, 768 x 600 and the short windows 768 x 560, 768 x 590, 800 x 560, 1024 x 560: the stage holds its content, all three step rows are seen, no heading or row wider than its box, no sideways scroll');
 }
 
 // ---------------------------------------------------------------------------------------------------- sheet

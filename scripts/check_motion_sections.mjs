@@ -285,7 +285,7 @@ async function checkStyles() {
   }
   // the eye colour, the hover, the buttons
   let page = await open({ width: 1280 });
-  await scrollTo(page, '#gEyeChips', 300); await sleep(2200);
+  await scrollTo(page, '.lp-tile .lp-tile-img', 200); await sleep(2200);   // the tile itself: #gEyeChips is display: contents and has no box of its own to scroll to
   await page.eval("document.querySelector('#gEyeChips [data-e=br]').click()");
   const eye = await page.eval(`new Promise((done) => { const out = []; const t0 = performance.now(); const tick = (now) => { const t = Math.round(now - t0); const tile = document.querySelector('.lp-tile .lp-tile-img'); out.push([t, [...tile.querySelectorAll('img')].filter((i) => i.classList.contains('lp-art')).map((i) => [i.classList.contains('lp-ghost'), +getComputedStyle(i).opacity, i.src.split('/').pop().slice(0, 18)]), [...tile.querySelectorAll('.lp-chip-ex')].map((c) => getComputedStyle(c).opacity + getComputedStyle(c).visibility)]); if (t < 1400) requestAnimationFrame(tick); else done(JSON.stringify(out)); }; requestAnimationFrame(tick); })`);
   const rows = JSON.parse(eye);
@@ -555,7 +555,10 @@ async function checkCloseups() {
     expect('closeups', opened[0][0] > geo.top - 2 && opened.at(-1)[0] === 0 && opened.every(([v], i) => i === 0 || v <= opened[i - 1][0] + 1e-6), `${tag}: the crop does not open from the square to the whole panel monotonically (${opened[0][0]} to ${opened.at(-1)[0]})`);
     const startOpen = img.find((r, i) => i > 0 && insets[i] < insets[0] - 1), endOpen = img.find((r, i) => insets[i] === 0);
     note(`closeups ${tag}: the crop starts to open at ${startOpen?.[0]} ms and is whole at ${endOpen?.[0]} ms (the square starts drawing at 0)`);
-    expect('closeups', startOpen && startOpen[0] >= 450 && endOpen && endOpen[0] <= 2600, `${tag}: the crop opens between ${startOpen?.[0]} and ${endOpen?.[0]} ms (it should start about 600 ms after the square and end within 2.6 s)`);
+    expect('closeups', startOpen && startOpen[0] >= 250 && endOpen && endOpen[0] <= 2400, `${tag}: the crop opens between ${startOpen?.[0]} and ${endOpen?.[0]} ms (it should start about 300 ms after the square and end within 2.4 s)`);
+    // no dead start (2026-10-05: on the in out curve the panel was a black square for 1.2 s and read as a missing picture): a second in, most of the panel is open
+    const atOne = img.find((r) => r[0] >= 1000), i1 = atOne ? img.indexOf(atOne) : -1;
+    expect('closeups', i1 > 0 && insets[i1] <= insets[0] * 0.5, `${tag}: one second in, the crop's top inset is still ${insets[i1]} of ${insets[0]} px (want half of it or less: the panel must not sit black)`);
     expect('closeups', img.every((r) => r[4] === 'none' && r[5] === 'none' && r[6] === 'none' && r[3] === '1'), `${tag}: the crop is scaled, moved or faded at some frame`);
     expect('closeups', col(f['.lp-cu-badge'], 3).every((v) => v === '1') && col(f['.lp-locator'], 3).every((v) => v === '1'), `${tag}: the badge or the map faded`);
     expect('closeups', col(f['.lp-edge-img .lp-vis-chip'], 3).every((v) => v === '1'), `${tag}: the label of the edge faded`);
@@ -603,7 +606,7 @@ async function checkIdentity() {
         await sleep(150);
         const r = JSON.parse(await page.eval(`JSON.stringify((() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; const r = e.getBoundingClientRect(), k = devicePixelRatio; return [Math.round((r.left + 10) * k), Math.round((r.top + 10) * k), Math.round((Math.min(r.width, innerWidth * ${clamp} - r.left) - 20) * k), Math.round((r.height - 20) * k), r.left + scrollX, r.top + scrollY]; })())`));
         if (!r || r[2] <= 8 || r[1] < 0 || r[1] + r[3] > (await page.eval('innerHeight * devicePixelRatio'))) { out.push(null); continue; }
-        out.push({ png: await page.shot(), crop: r.slice(0, 4), frac: [r[4] % 1, r[5] % 1], sig: await page.eval(SIG(sel)), size: [r[2], r[3]] });
+        out.push({ png: await page.shot(), crop: r.slice(0, 4), frac: [r[4] % 1, r[5] % 1], sig: await page.eval(SIG(sel)), size: [r[2], r[3]], file: await page.eval(`(document.querySelector(${JSON.stringify(sel)}).currentSrc || '').split('/').pop()`) });
         await page.eval("document.getElementById('hide')?.remove()");
       }
       await page.close();
@@ -616,6 +619,9 @@ async function checkIdentity() {
       if (!a[i] || !b[i]) { note(`identity ${width}px: ${TARGETS[i][0]} not on screen at this width, skipped`); continue; }
       expect('identity', a[i].sig === b[i].sig, `${name}: its visual state differs between reduced motion and motion after the entrance:\n    ${a[i].sig}\n    ${b[i].sig}`);
       expect('identity', near(a[i].size[0], b[i].size[0], 0.01) && near(a[i].size[1], b[i].size[1], 0.01), `${name}: its size differs (${a[i].size} against ${b[i].size})`);
+      // the browser prefers a candidate of a srcset that it already holds: the pinned Reveal fetches the Radiance artwork (900 px) at once, so a tile of the same artwork
+      // takes that file instead of its 480 px one. The same artwork from another file of the set is not what this claim is about (the pixels of one file, with and without motion)
+      if (a[i].file !== b[i].file) { bySignature++; note(`identity ${name}: the browser chose ${a[i].file} with reduced motion and ${b[i].file} with motion (it reuses an image of the same set that it already holds); the pixel diff is skipped, the visual state is identical`); continue; }
       const sameSpot = near(a[i].frac[0], b[i].frac[0], 0.02) && near(a[i].frac[1], b[i].frac[1], 0.02);
       if (!sameSpot) { bySignature++; note(`identity ${name}: the two runs lay it out at other sub-pixel positions (${a[i].frac.map((v) => v.toFixed(2))} and ${b[i].frac.map((v) => v.toFixed(2))}); the pixel diff is skipped, the visual state is identical`); continue; }
       const d = await pngDiff(a[i].png, b[i].png, a[i].crop, b[i].crop);

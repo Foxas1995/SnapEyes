@@ -92,8 +92,8 @@
 
   /* ------------------------------------------------------------------------------------------------ 2. type scale
      Cinzel needs no negative tracking; sizes come from clamp, capped by the screen height. Weight 500 from 28 px up, 600 below. */
-  .lp-t-display { font-family: var(--display); font-weight: var(--w-display); font-size: min(clamp(2rem, 1.3rem + 3vw, 3.75rem), 13svh); line-height: 1.08; letter-spacing: var(--track-display); text-wrap: balance; hyphens: manual; overflow-wrap: break-word; }
-  .lp-t-title { font-family: var(--display); font-weight: var(--w-display); font-size: clamp(1.75rem, 1.25rem + 2.1vw, 2.75rem); line-height: 1.12; letter-spacing: .015em; text-wrap: balance; hyphens: manual; overflow-wrap: break-word; }
+  .lp-t-display { font-family: var(--display); font-weight: var(--w-display); font-size: min(clamp(2rem, 1.3rem + 3vw, 3.75rem), 13svh, 11.5vw); line-height: 1.08; letter-spacing: var(--track-display); text-wrap: balance; hyphens: manual; overflow-wrap: break-word; }
+  .lp-t-title { font-family: var(--display); font-weight: var(--w-display); font-size: min(clamp(1.75rem, 1.25rem + 2.1vw, 2.75rem), 11.5vw); line-height: 1.12; letter-spacing: .015em; text-wrap: balance; hyphens: manual; overflow-wrap: break-word; }
   .lp-t-lead { font-size: clamp(1.0625rem, 1rem + .3vw, 1.1875rem); line-height: 1.6; color: var(--t-2); text-wrap: pretty; }
   .lp-acc, .lp-dot { color: var(--gold); }       /* the gold word or full stop of a title, never more than one per heading */
 

@@ -84,8 +84,9 @@ export function Reveal() {
     <div className="lp-ai">
       <h3>{r.aiTitle}</h3>
       <dl data-stagger>
-        {r.ai.map((x) => (
-          <div key={x.t}>
+        {r.ai.map((x, i) => (
+          // keyed by place, not by its words: a language switch must not make new nodes that wait hidden (they are reveal nodes of a stagger list)
+          <div key={i}>
             <dt>{x.t}</dt>
             <dd>{x.b}</dd>
           </div>

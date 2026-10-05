@@ -36,8 +36,8 @@ export function RevealStrip({ eye }: RevealStripProps) {
           </li>
         ))}
       </ol>
-      <p className="lp-never" data-reveal="fade">{r.never}</p>
-      <p className="lp-reveal-note" data-reveal="fade">{r.note}</p>
+      <p className="lp-never">{r.never}</p>
+      <p className="lp-reveal-note">{r.note}</p>
       <div className="lp-your-turn" data-reveal="fade">
         <p>{r.yourTurn}</p>
         <a className="lp-btn lp-btn-gold" href={tryHref}>

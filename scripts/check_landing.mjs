@@ -124,6 +124,8 @@ async function key(page, k) {
   await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code: k, windowsVirtualKeyCode: KEYS[k] });
   await sleep(250);
 }
+/** Every section drawn at its real height: a section far from the screen is skipped (content-visibility: auto, css/base.css), and a skipped one has no innerText and is not seen by a script that measures. */
+const NO_SKIP = "document.head.appendChild(Object.assign(document.createElement('style'), { textContent: '.lp-sheet > .lp-sec, .lp-final { content-visibility: visible !important }' }))";
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // ---------------------------------------------------------------------------------------------------- labels
@@ -134,7 +136,8 @@ async function checkLabels() {
     const page = await open({ lang, width });
     const r = JSON.parse(await page.eval(`(() => {
       const AREAS = [['hero', '.lp-hero-frame', '.lp-frame-chip', 1], ['stage', '#stage', '.lp-vis-chip', 1], ['rooms', '#rail figure > div', '.lp-vis-chip', 4],
-        ['edge', '.lp-edge-img', '.lp-vis-chip', 1], ['crop', '.lp-cu-img', '.lp-cu-badge', 1], ['final', '.lp-final', '.lp-final-chip', 1]];
+        ['edge', '.lp-edge-img', '.lp-vis-chip', 1], ['crop', '.lp-cu-img', '.lp-cu-badge', 1], ['final', '.lp-final', '.lp-final-chip', 1],
+        ...(innerWidth >= 768 ? [['reveal', '.lp-rv-frame', '.lp-rv-who', 1]] : [])];
       const out = { miss: [], texts: {}, imgs: [], tiles: 0, tilesWithPhotoChip: 0, legend: !!document.querySelector('.lp-legend') };
       for (const [name, sel, chip, n] of AREAS) {
         const boxes = [...document.querySelectorAll(sel)];
@@ -155,6 +158,9 @@ async function checkLabels() {
     const problemsHere = [...r.miss, ...r.imgs.slice(0, 5)];
     const wantVis = c.example.vis;
     for (const name of ['hero', 'stage', 'rooms', 'edge', 'final']) for (const t of r.texts[name] || []) if (t !== wantVis) problemsHere.push(`${name} label "${t}", the language says "${wantVis}"`);
+    // the pinned scene's frame is the founder's own eye and says so in the picture (charter AC-8), whatever the chips are doing
+    for (const t of r.texts.reveal || []) if (t !== c.example.mantas) problemsHere.push(`reveal frame label "${t}", the language says "${c.example.mantas}"`);
+    if (width >= 768 && !(r.texts.reveal || []).length) problemsHere.push('the pinned scene has no label of whose eye it is');
     if (!r.legend) problemsHere.push('the styles legend line is missing (it is the label of the flat artworks)');
     // the other people's eyes carry "Example photo": pick the brown eye of the first group, every tile of it shows a chip
     const chips = await page.eval(`(async () => {
@@ -183,6 +189,9 @@ async function checkPhrases() {
       const page = await open({ lang, details: true });
       // wait for the answer of the stub to have been used
       await sleep(600);
+      // innerText leaves out what is not rendered, and a section far from the screen is skipped (content-visibility, css/base.css): draw them all first
+      await page.eval(NO_SKIP);
+      await sleep(300);
       const text = await page.eval('document.body.innerText');
       const html = await page.eval('document.documentElement.outerHTML');
       const soonCount = (text.match(new RegExp(esc(soon), 'gi')) || []).length;
@@ -461,7 +470,8 @@ async function checkAxe() {
   for (const [lang, width, state] of quick ? states.slice(0, 3) : states) {
     stub.open = state === 'open';
     const page = await open({ lang, width, query: state.startsWith('m=') ? state : '', details: true });
-    await sleep(300);
+    await page.eval(NO_SKIP);   // axe judges what is rendered: a section far from the screen is skipped (content-visibility) and would pass for free
+    await sleep(500);
     await page.eval(AXE);
     const r = JSON.parse(await page.eval(`axe.run(document, { resultTypes: ['violations'] }).then((r) => JSON.stringify(r.violations.map((v) => [v.id, v.impact, v.nodes.length, v.nodes.slice(0, 2).map((n) => n.target.join(' '))])))`));
     if (r.length) fail('axe', `${lang} ${width}px ${state}: ${r.map((v) => `${v[0]} (${v[1]}, ${v[2]}: ${v[3].join(' ; ')})`).join(', ')}`);
@@ -623,10 +633,13 @@ async function checkGlass() {
     await sleep(2500);
     await page.eval('window.scrollTo({ top: 400, behavior: "instant" })');
     await sleep(500);
-    const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: getComputedStyle(document.getElementById('hdr')).backdropFilter, chip: getComputedStyle(document.querySelector('.lp-frame-chip')).backdropFilter })`));
+    const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: getComputedStyle(document.getElementById('hdr')).backdropFilter, chip: getComputedStyle(document.querySelector('.lp-frame-chip')).backdropFilter, chipBg: getComputedStyle(document.querySelector('.lp-frame-chip')).backgroundColor })`));
     const msgs = [];
     if (!r.hdr || r.hdr === 'none') msgs.push(`the solid header has backdrop-filter "${r.hdr}"`);
-    if (!r.chip || r.chip === 'none') msgs.push(`the hero chip has backdrop-filter "${r.chip}"`);
+    // the chips lie on artwork: nothing blurs it (charter AC-2), the chip is solid enough to read on its own (the two fixed bars are the page's only blurred surfaces)
+    if (r.chip !== 'none') msgs.push(`the hero chip blurs the artwork behind it (backdrop-filter "${r.chip}")`);
+    const alpha = /rgba?\((?:[^,]+,){3}\s*([\d.]+)\)/.exec(r.chipBg);
+    if (!alpha || +alpha[1] < 0.9) msgs.push(`the hero chip is not solid enough without a blur (${r.chipBg})`);
     if (width < 768) {
       await page.eval('window.scrollTo({ top: 1500, behavior: "instant" })');
       await sleep(700);
@@ -634,7 +647,7 @@ async function checkGlass() {
       if (!s || s === 'none') msgs.push(`the sticky phone bar has backdrop-filter "${s}"`);
     }
     if (msgs.length) fail('glass', `${width}px: ${msgs.join('; ')}`);
-    else pass('glass', `${width}px: the header, the hero chip${width < 768 ? ' and the sticky bar' : ''} are frosted (${r.hdr})`);
+    else pass('glass', `${width}px: the header${width < 768 ? ' and the sticky bar' : ''} are frosted (${r.hdr}), the hero chip is solid and blurs nothing`);
     await page.close();
   }
 }

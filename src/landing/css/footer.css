@@ -4,7 +4,7 @@
    .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
    no specificity. */
 @layer landing {
-  .lp-ftr { --ftr-bg: #020306; border-top: 1px solid var(--line); background: var(--ftr-bg); padding: 56px 0 120px; font-size: 14px; color: var(--ink-3); }
+  .lp-ftr { --ftr-bg: #020306; border-top: 1px solid var(--line); background: var(--ftr-bg); padding: 56px 0 120px; font-size: 14px; color: var(--ink-3); overflow-x: clip; }
   @media (min-width: 768px) {
     .lp-ftr { padding-bottom: 56px; }
   }

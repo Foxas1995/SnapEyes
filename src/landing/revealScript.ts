@@ -7,9 +7,10 @@
 //   p .56 to .94   the aperture: a circle centred on the pupil opens (--r 0 to 72 percent of the frame, which covers the corners) and shows
 //                  the artwork; a 1 px gold ring at .6 alpha follows its edge (no glow)
 //   p .94 to 1     the artwork whole
-//   steps          01 your photo, 02 your iris from p .34, 03 your art from p .68
+//   steps          01 your photo, 02 your iris from p .34, 03 your art from p .72
 //   chips          "phone photo" while the cut is right of 18 percent, "restored iris" while it is left of 82 percent (the slider's own rule),
-//                  "your art" from the moment the aperture starts
+//                  "your art" once the aperture covers about a third of the frame (radius 34 percent, p .74): a label that says art over a frame
+//                  that is still the restored iris is not exact
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const ramp = (p: number, from: number, to: number) => clamp01((p - from) / (to - from));
@@ -20,7 +21,9 @@ export const APERTURE_START = 0.56;
 export const APERTURE_END = 0.94;
 /** The aperture's radius at the end, in percent of the frame: 72 covers the corners (the half diagonal is 70.7). */
 export const APERTURE_R = 72;
-export const STEP_AT = [0, 0.34, 0.68] as const;
+export const STEP_AT = [0, 0.34, 0.72] as const;
+/** The aperture radius, in percent of the frame, from which the chip says "your art" (about 36 percent of the frame's area is the artwork). */
+export const ART_CHIP_R = 34;
 /** Where a click on a step row takes the scroll: inside the step's stretch, away from the thresholds. */
 export const STEP_GOTO = [0, 0.53, 0.97] as const;
 
@@ -43,7 +46,7 @@ export interface SceneState {
 export function sceneState(p: number): SceneState {
   const pos = 100 * (1 - ramp(p, CUT_START, CUT_END));
   const r = APERTURE_R * ramp(p, APERTURE_START, APERTURE_END);
-  const art = p >= APERTURE_START;
+  const art = r >= ART_CHIP_R;
   const chips: Chip[] = [];
   if (!art && pos > 18) chips.push('photo');
   if (!art && pos < 82) chips.push('iris');

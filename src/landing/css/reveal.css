@@ -89,7 +89,7 @@
     .lp-rv-stage { position: sticky; top: var(--rv-top); height: calc(100svh - var(--rv-top)); box-sizing: border-box; display: grid; align-items: center; padding-block: 4px 12px; }
     .lp-rv-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: clamp(28px, 5vw, 80px); }
     .lp-rv-copy { min-width: 0; max-width: 31rem; }
-    .lp-rv-fig { width: min(540px, calc(100svh - 220px), 46vw); }
+    .lp-rv-fig { width: min(clamp(540px, 36vw, 680px), calc(100svh - 220px), 46vw); }
   }
   .lp-rv-frame { --rv-pos: 100; --rv-ap: 0; --rv-line: 0; --rv-ring: 0; position: relative; aspect-ratio: 1; border-radius: var(--r); overflow: hidden; isolation: isolate; background: #000; box-shadow: var(--ring); container-type: inline-size; }
   .lp-rv-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -98,10 +98,12 @@
   .lp-rv-art { clip-path: circle(calc(var(--rv-ap) * 1%) at 50% 50%); }
   .lp-rv-ap { position: absolute; inset: 0; width: 100%; height: 100%; color: rgb(245 197 66 / .6); opacity: var(--rv-ring); pointer-events: none; }
   .lp-rv-line { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: rgba(245, 197, 66, .9); box-shadow: var(--glow); opacity: var(--rv-line); translate: calc(var(--rv-pos) * 1cqw - .5px) 0; will-change: translate; pointer-events: none; }
-  .lp-rv-chip { position: absolute; top: 12px; z-index: 2; padding: 6px 12px; border-radius: 999px; background: rgb(3 4 8 / .72); color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .04em; line-height: 1.4; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); opacity: 0; transition: opacity .4s var(--ease-out); pointer-events: none; }
+  .lp-rv-chip { position: absolute; top: 12px; z-index: 2; padding: 6px 12px; border-radius: 999px; background: rgb(3 4 8 / .72); color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .04em; line-height: 1.4; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); opacity: 0; transition: opacity .15s var(--ease-out); pointer-events: none; }
   .lp-rv-chip[data-k="photo"] { left: 12px; }
   .lp-rv-chip[data-k="iris"], .lp-rv-chip[data-k="art"] { right: 12px; box-shadow: 0 0 0 1px var(--gold-line); }
-  .lp-rv-frame[data-c~="photo"] .lp-rv-chip[data-k="photo"], .lp-rv-frame[data-c~="iris"] .lp-rv-chip[data-k="iris"], .lp-rv-frame[data-c~="art"] .lp-rv-chip[data-k="art"] { opacity: 1; }
+  .lp-rv-frame[data-c~="photo"] .lp-rv-chip[data-k="photo"], .lp-rv-frame[data-c~="iris"] .lp-rv-chip[data-k="iris"], .lp-rv-frame[data-c~="art"] .lp-rv-chip[data-k="art"] { opacity: 1; transition-duration: .3s; transition-delay: .15s; }
+  /* whose eye it is: a static label in the frame (charter AC-8), bottom left, off the pupil, never animated */
+  .lp-rv-who { position: absolute; left: 12px; bottom: 12px; z-index: 2; max-width: calc(100% - 24px); }
   .lp-rv-cap { display: grid; gap: 3px; margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
   .lp-rv-scale { color: var(--ink-2); font-weight: 600; }
   /* the three states as rows: a gold numeral, the title at full strength while it is the state on show, dimmed (never below .50, 4.91:1) otherwise */
@@ -113,6 +115,12 @@
   .lp-rv-step[aria-current="step"] span { color: var(--t-1); }
   @media (hover: hover) {
     .lp-rv-step:hover span { color: var(--t-1); }
+  }
+  /* forced colours: the page's colour cues are gone, so the step on show gets a bar of the system's own highlight and the cut line keeps its gold */
+  @media (forced-colors: active) {
+    .lp-rv-step { border-inline-start: 3px solid transparent; }
+    .lp-rv-step[aria-current="step"] { border-inline-start-color: Highlight; }
+    .lp-rv-line { forced-color-adjust: none; }
   }
   @media print {
     .lp-rv-scene { height: auto; }

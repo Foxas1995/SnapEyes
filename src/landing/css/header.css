@@ -16,6 +16,9 @@
   .lp-nav { position: relative; display: none; gap: 18px; font-size: 13px; color: var(--t-3); }
   .lp-nav a { text-decoration: none; transition: color var(--d-ui) var(--ease-out); padding: 6px 0; }
   .lp-nav a:hover, .lp-nav a[aria-current] { color: var(--t-1); }
+  @media (forced-colors: active) {
+    .lp-nav a[aria-current] { text-decoration: underline; }
+  }
   .lp-nav-mark { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; background: rgb(245 197 66 / .8); transform-origin: 0 50%; translate: var(--mx, 0px) 0; scale: var(--mw, 0) 1; opacity: var(--mo, 0); pointer-events: none; transition: translate var(--d-ui) var(--ease-out), scale var(--d-ui) var(--ease-out), opacity var(--d-ui) var(--ease-out); }
   .lp-nav.lp-nm-jump .lp-nav-mark { transition: none; }
   @media (min-width: 960px) {
@@ -70,8 +73,8 @@
   @media (max-width: 299px) {
     .lp-seg { --bw: 26px; }
     .lp-logo svg { width: 24px; height: 24px; }
-    .lp-logo b { font-size: 14px; letter-spacing: .06em; }
-    .lp-menu-btn { display: none; }
+    /* the mark alone keeps the room for the menu button (the word stays in the page for a screen reader) */
+    .lp-logo b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   }
 
   /* the dialog: the whole screen, a near black, the links in the display face. It fades and rises in .5 s and leaves the same way (display and

@@ -23,8 +23,8 @@
 //               and the accessibility tree while hidden
 //   states      a language switch re-keys nothing and replays nothing; the ordering flip (answered late by the server) swaps words without any
 //               animation and keeps every revealed node revealed; an anchor click scrolls smoothly (instantly under reduced motion)
-//   transition  the native page transition: a link from the landing to /try has it (old page out in .4 s, new page in over .6 s, about a second in
-//               all); the legal pages, the online withdrawal form, an order or payment address, the admin and reduced motion never have it (the gate in the head
+//   transition  the native page transition: a link from the landing to /try has it (old page out in .25 s, new page in over .4 s after .25 s, about .65 s
+//               in all); the legal pages, the online withdrawal form, an order or payment address, the admin and reduced motion never have it (the gate in the head
 //               of try.html and order.html is taken from the built pages and run on its own for every address that matters)
 //   failsafe    with a dead IntersectionObserver every hidden state of these sections is lifted after 3.5 s
 //   focus       every link and button of these sections takes the page's gold focus ring from the keyboard (2 px, 4 px off, settled), in view and not clipped
@@ -101,6 +101,9 @@ const frames = (page, ms, probe) => page.eval(`new Promise((res) => { const out 
   const f = () => { const t = performance.now() - t0; out.push([Math.round(t), probe()]); if (t < ${ms}) requestAnimationFrame(f); else res(JSON.stringify(out)); }; f(); })`).then(J);
 const num = (v) => (v === 'none' || v === 'normal' || v === undefined ? 1 : parseFloat(String(v).split(' ')[0]));
 /** CSS animations of the page that have not finished, by what they run on. */
+/** Every section drawn at its real height (content-visibility: auto skips the ones far from the screen and stands in for them with an estimate: the position of the band would
+ *  differ by a fraction of a pixel from one load to the next, and this check lays two pages over each other to the pixel). */
+const NO_SKIP = "document.head.appendChild(Object.assign(document.createElement('style'), { textContent: '.lp-sheet > .lp-sec, .lp-final { content-visibility: visible !important }' }))";
 const ANIMS = `[...document.getAnimations()].filter((a) => a.playState !== 'finished').map((a) => { const e = a.effect, t = e && e.target; return (t ? t.tagName + '.' + String(t.className && t.className.baseVal !== undefined ? t.className.baseVal : t.className).slice(0, 26) : '?') + (e && e.pseudoElement ? e.pseudoElement : '') + ' ' + (a.animationName || a.transitionProperty || ''); })`;
 const rest = (sel) => `[...document.querySelectorAll(${JSON.stringify(sel)})].filter((e) => { const c = getComputedStyle(e); return +c.opacity < 0.99 || (c.translate !== 'none' && c.translate !== '0px' && c.translate !== '0px 0px') || (c.scale !== 'none' && c.scale !== '1' && c.scale !== '1 1'); }).map((e) => e.tagName + '.' + String(e.className).slice(0, 24))`;
 const pngDiff = async (a, b) => {
@@ -369,6 +372,7 @@ async function checkFinal() {
     // whatever the motion did. So the band is photographed at the SAME height of the page in both modes (the shorter page is pushed down at its very top).
     const where = async (reduceMotion) => {
       const page = await open({ lang: 'en', width, height, reduceMotion });
+      await page.eval(NO_SKIP);
       await walk(page, '.lp-final');
       const y = await page.eval("document.querySelector('.lp-final').getBoundingClientRect().top + scrollY");
       await page.close();
@@ -378,6 +382,7 @@ async function checkFinal() {
     const target = Math.max(ya, yb);
     const shot = async (reduceMotion, lift) => {
       const page = await open({ lang: 'en', width, height, reduceMotion });
+      await page.eval(NO_SKIP);
       await walk(page, '.lp-final');
       await page.eval(`document.body.style.paddingTop = ${lift} + 'px'`);   // above everything: the sheet's soft shadow over the band's top edge stays as it is
       await page.eval(`window.scrollTo({ top: document.querySelector('.lp-final').getBoundingClientRect().top + scrollY - innerHeight * 0.3, behavior: 'instant' })`);
@@ -620,7 +625,7 @@ async function checkTransition() {
     return { all, hit: all.find((r) => r && r.vt && r.vt.has) || null, n: all.length };
   };
 
-  // the landing to /try by the hero's link: the transition runs, about a second from the first frame to its end
+  // the landing to /try by the hero's link: the transition runs, about .65 s from the first frame to its end
   {
     const r = await offered('/?lang=en', "document.querySelector('a#ctaHero').click()", 8);
     expect('transition', !!r.hit, `the browser never offered a transition for a link from the landing to /try in ${r.n} attempts`);
@@ -629,7 +634,7 @@ async function checkTransition() {
       expect('transition', t.url.startsWith('/try'), `the hero link did not lead to /try (${t.url})`);
       expect('transition', t.vt.ran === true && t.skipped === 0, `the transition offered for the hero link did not run (ran ${t.vt.ran}, skipped ${t.skipped}): the gate skipped a harmless address`);
       const dur = t.vt.done > 0 ? t.vt.done - t.vt.at : null;
-      expect('transition', dur !== null && dur > 850 && dur < 1700, `the transition took ${dur} ms from the first frame to its end, expected about 1000`);
+      expect('transition', dur !== null && dur > 520 && dur < 1300, `the transition took ${dur} ms from the first frame to its end, expected about 650`);
       console.log(`  note transition: / -> /try ran in ${dur !== null ? Math.round(dur) : '?'} ms (offered at attempt ${r.n})`);
     }
   }
@@ -652,7 +657,7 @@ async function checkTransition() {
     expect('transition', !!seen, 'the timings of the transition could not be read in 8 attempts');
     if (seen) {
       const o = seen.find((a) => /old\(root\)/.test(a[0]) && a[1] === 'pt-out'), n = seen.find((a) => /new\(root\)/.test(a[0]) && a[1] === 'pt-in');
-      expect('transition', !!o && o[2] === 400 && o[3] === 0 && !!n && n[2] === 600 && n[3] === 400, `the transition is not the old page out in .4 s and the new page in over .6 s after .4 s: ${seen.map((a) => a.join(' ')).join(' | ')}`);
+      expect('transition', !!o && o[2] === 250 && o[3] === 0 && !!n && n[2] === 400 && n[3] === 250, `the transition is not the old page out in .25 s and the new page in over .4 s after .25 s: ${seen.map((a) => a.join(' ')).join(' | ')}`);
       console.log(`  note transition: ${seen.map((a) => `${a[0]} ${a[1]} ${a[2]}ms+${a[3]}ms ${a[4]}`).join(' | ')}`);
     }
   }

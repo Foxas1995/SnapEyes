@@ -1,5 +1,6 @@
-/* The page transition between the landing, /try and /order (motion spec 6.17): a native cross-document view transition, opacity only, one second in all.
-   The old page dissolves into the page's own dark in .4 s and the new page comes up out of it in .6 s. The page's dark is the background that the new
+/* The page transition between the landing, /try and /order (motion spec 6.17): a native cross-document view transition, opacity only, about .65 s in all.
+   The old page dissolves into the page's own dark in .25 s and the new page comes up out of it in .4 s. (First built at .4 s and .6 s, a full second
+   of dip on the click that matters most; the taste review set it back to about the ledger's numbers.) The page's dark is the background that the new
    page's first paint already has, so a page that is still being built by its script (/try and /order are client rendered) fills the dip and is the
    picture the visitor sees come up. Nothing slides, scales or blurs.
 
@@ -21,11 +22,11 @@
     pointer-events: none;
   }
   ::view-transition-old(root) {
-    animation: pt-out .4s cubic-bezier(.16, 1, .3, 1) both;
+    animation: pt-out .25s cubic-bezier(.16, 1, .3, 1) both;
     mix-blend-mode: normal;
   }
   ::view-transition-new(root) {
-    animation: pt-in .6s cubic-bezier(.16, 1, .3, 1) .4s both;
+    animation: pt-in .4s cubic-bezier(.16, 1, .3, 1) .25s both;
     mix-blend-mode: normal;
   }
 }

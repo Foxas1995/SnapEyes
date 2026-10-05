@@ -19,7 +19,7 @@
   .lp-market-in { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 20px; padding-block: 8px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
   .lp-market-in p { flex: 1 1 16rem; min-width: 0; }
   .lp-market-btns { display: flex; align-items: center; gap: 8px; }
-  .lp-market-btns button { min-height: 44px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: background .2s, color .2s; }
+  .lp-market-btns button { min-height: 44px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: background-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out); }
   .lp-market-show { border: 1px solid var(--gold-line); color: var(--gold); }
   .lp-market-show:hover { background: var(--gold); color: #07090e; }
   .lp-market-close { color: var(--ink-3); }

@@ -7,11 +7,12 @@
 // The numbers are in ./revealScript.ts, the engine is src/motion/motion.ts (track: smoothed progress, listeners only while the wrapper is near
 // the screen). The frame is driven by custom properties written on the frame itself (never on html or body): --rv-pos (the cut), --rv-ap (the
 // aperture), --rv-line and --rv-ring (their opacity; the page's own --r is a radius token, so the spec's names --pos and --r are not used); the
-// ring is an SVG circle whose radius is set directly, because its 1 px stroke must not scale with it. The three step rows are real buttons that scroll to their state, so a keyboard has a way to every state. The honesty lines
+// ring is an SVG circle whose radius is set directly, because its 1 px stroke must not scale with it. The three step rows are real buttons that scroll to their state, so a keyboard has a way to every state. The step rows are never in a hidden entrance state: the stage is on screen from the first frame of the pin, and a row that waited for an observer never came in a short, narrow window. The honesty lines
 // (whose eye it is, the photo's size) are static text under the frame. Below 768 px, under reduced motion and when the window is too short,
 // Reveal.tsx renders the static layout instead of this one (./useScenePinned.ts): the same words, the pictures in a row, the slider.
 import { useEffect, useRef, useState } from 'react';
 import { useCopy } from './copy/useCopy';
+import { ExampleChip } from './ui';
 import type { RevealEye } from './revealEyes';
 import { sceneState, STEP_GOTO, type Chip } from './revealScript';
 import { Title } from '../motion/Title';
@@ -33,12 +34,14 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
     const w = wrap.current, s = stage.current, f = frame.current, ap = ring.current;
     if (!w || !s || !f || !ap) return;
     let chips = '';
+    // the stage's sticky offset is a constant of the stylesheet (--rv-top): read once, not on every scroll event (a forced style read each time)
+    const stickyTop = parseFloat(getComputedStyle(s).top);
     return track(
       w,
       () => {
         // p = 0 when the stage has just stuck (its top is at its sticky offset), p = 1 when the wrapper lets it go
         const span = w.offsetHeight - s.offsetHeight;
-        return span > 0 ? (parseFloat(getComputedStyle(s).top) - w.getBoundingClientRect().top) / span : 0;
+        return span > 0 ? (stickyTop - w.getBoundingClientRect().top) / span : 0;
       },
       (p) => {
         const st = sceneState(p);
@@ -75,7 +78,7 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
               <Title id="revealH" text={r.title} />
               <p className="lp-intro" data-reveal="fade">{eye.phone ? r.intro : r.introWeb}</p>
             </div>
-            <ol className="lp-rv-steps" data-stagger>
+            <ol className="lp-rv-steps">
               {names.map((name, i) => (
                 <li key={i}>
                   <button type="button" className="lp-rv-step" aria-current={step === i ? 'step' : undefined} onClick={() => go(i)}>
@@ -90,7 +93,7 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
             <div ref={frame} className="lp-rv-frame" data-c="photo">
               <img className="lp-rv-iris" src={eye.iris.src} srcSet={eye.iris.srcset} sizes={SCENE_SIZES} width={eye.iris.w} height={eye.iris.h} loading="lazy" decoding="async" alt={eye.irisAlt} />
               <img className="lp-rv-photo" src={eye.photo.src} srcSet={eye.photo.srcset} sizes={SCENE_SIZES} width={eye.photo.w} height={eye.photo.h} loading="lazy" decoding="async" alt={eye.photoAlt} />
-              <img className="lp-rv-art" src={eye.art.src} width={eye.art.w} height={eye.art.h} loading="lazy" decoding="async" alt={eye.artAlt} />
+              <img className="lp-rv-art" src={eye.art.src} width={eye.art.w} height={eye.art.h} loading="eager" fetchPriority="low" decoding="async" alt={eye.artAlt} />
               <svg className="lp-rv-ap" viewBox="0 0 100 100" aria-hidden="true">
                 <circle ref={ring} cx="50" cy="50" r="0" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
               </svg>
@@ -98,6 +101,7 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
               {(['photo', 'iris', 'art'] as const).map((k) => (
                 <span key={k} className="lp-rv-chip" data-k={k} aria-hidden="true">{label[k]}</span>
               ))}
+              <ExampleChip variant="example" label={c.example.mantas} className="lp-rv-who" />
             </div>
             <figcaption className="lp-rv-cap">
               <span>{eye.note}</span>

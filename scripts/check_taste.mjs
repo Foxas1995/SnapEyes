@@ -20,8 +20,6 @@ const strict = process.argv.includes('--strict');
 const ALLOW_BLUR = {
   'src/landing/css/header.css': 'the fixed header: one of the two blurred surfaces, static, 64 px high',
   'src/landing/css/sticky.css': 'the sticky phone bar: the other blurred surface, static',
-  'src/landing/css/base.css': 'the "AI visualisation" chip over a picture: a known debt (charter AC-2 wants a solid chip), still blurred 6 px; decide with the owner',
-  'src/landing/css/hero.css': 'the in-frame chip of the first screen, the same debt as base.css',
 };
 
 function* walk(dir) {
