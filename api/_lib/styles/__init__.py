@@ -16,6 +16,11 @@ This module only dispatches: it finds the family the catalogue names for the sty
 that is not in the repository raises EngineNotBuilt (never an ImportError that reads like a bug): the catalogue already refuses to
 route to such a style (catalogue.engine_built), this is the second wall.
 
+Preview is what a family's preview() answers (below); watermarked() is the one place a preview gets its watermark, the words of the free
+preview that make a picture of a customer's iris not the product (an engine never draws it: the paid file has none). It is the legacy
+engine's own watermark (api/_lib/iris.py) laid on the picture with the discs the engine reports; the iris-anchored version of the compose
+work package replaces it here, in one place.
+
 Module rule of the v3 work: every module starts with the __future__ import below (Vercel's default Python is 3.12).
 """
 from __future__ import annotations
@@ -41,6 +46,44 @@ def family(name):
         raise
 
 
+class Preview:
+    """What preview() answers for one style on one canvas.
+    img        the picture, a PIL RGB image (the clean render: watermarked() makes the free preview from it)
+    discs      [(cx, cy, r)] the visible iris discs in canvas pixels (pixel centres at +0.5), for the watermark and the checks
+    graded     [PIL image] the studio-graded frame of each iris as the legacy engine keeps it (iris.colour_qa reads it)
+    design, fmt, size, seed, cls    what was drawn: the design id of its family, the canvas, the long side, the seed, the eye colour class
+    log        the engine's own facts (the plates it picked, the wind, the palette mode): small JSON-safe numbers and words
+    times      seconds per stage (grade, place, effect, finish, text, total)
+    text_log   what the text drawer drew (selfcheck T7 reads it); selfcheck the report of selfcheck.run when asked for, else None
+    """
+    __slots__ = ("img", "discs", "graded", "design", "fmt", "size", "seed", "cls", "log", "times", "text_log", "selfcheck", "ctx", "frame")
+
+    def __init__(self, **kw):
+        for k in self.__slots__:
+            setattr(self, k, kw.get(k))
+
+    @property
+    def width(self):
+        return self.img.size[0]
+
+    @property
+    def height(self):
+        return self.img.size[1]
+
+
+WATERMARK_ACCENT = (245, 197, 66)       # the badge's colour on a free preview of a style that has no accent of its own (the site's gold)
+
+
+def watermarked(pv, lang=None):
+    """The free-preview picture of a Preview: its clean img with the preview watermark (a faint rotated tile of words over the whole picture,
+    drawn 3.5 times as strong on every iris disc, and the badge at the top). The tile is scaled to at most 1.33 times the disc diameter, as the
+    legacy multi-eye preview does. Returns a new PIL image; the Preview is not changed."""
+    from .. import iris as L
+    u = min(pv.img.size)
+    dia = max(2.0 * d[2] for d in pv.discs) if pv.discs else float(u)
+    return L._watermark(pv.img.copy(), WATERMARK_ACCENT, u, tile_u=min(float(u), L.WM_DISC * dia), lang=lang, discs=list(pv.discs))
+
+
 def _engine_of(spec):
     from .. import catalogue as C                 # cheap (reads two literals); imported here so that importing the package stays light
     style, n = spec.get("style"), spec.get("eyes")
@@ -56,8 +99,13 @@ def resolve(spec, profiles):
     return family(_engine_of(spec)["module"]).resolve(spec, profiles)
 
 
-def preview(eyes, spec, size=1024, watermark=False):
-    return family(_engine_of(spec)["module"]).preview(eyes, spec, size=size, watermark=watermark)
+def preview(eyes, spec, size=1024, watermark=False, **kw):
+    """One style, one canvas: a Preview (clean). watermark=True returns it with img replaced by the watermarked picture; kw go to the family
+    (check=True: run the selfcheck report; the admin laboratory asks for it)."""
+    pv = family(_engine_of(spec)["module"]).preview(eyes, spec, size=size, **kw)
+    if watermark:
+        pv.img = watermarked(pv)
+    return pv
 
 
 def tiles(eyes, styles, spec, size=480):
