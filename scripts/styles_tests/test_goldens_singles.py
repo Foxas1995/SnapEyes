@@ -1,0 +1,546 @@
+# -*- coding: utf-8 -*-
+"""WP5A of the v3 engine work, step A: the singles family (Clean Iris, Powder Burst, Splash, Elements, Radiance, Celestial Gold variant A) ported
+verbatim into api/_lib/styles/singles. Test I6 (goldens) for the family, the singles share of I7 (T1, T4, T6, T7, T12) and the places the family is
+reached from: the style package's contract, /api/compose for a style a customer may see, and the admin laboratory (styles_lab).
+
+  1. the family in the repository: its files, the rules of every module, the registry and the family agree, no stage was raised
+  2. the golden replay: the SHA-256 of the pictures the SCRATCH prototype made (record_goldens_scratch.py; Celestial Gold is the owner-approved
+     variant A) equals the port's, for every design x three synthetic eye classes x 512, 1024 and 4096 px, the other two canvases and the text lockup;
+     the plate picks and the seeds equal too; the replay can fail. The 4096 px pictures of the three plate styles draw from 4K plates that live in
+     private storage: they are replayed only with the scratch tree (LOCAL lines)
+  3. the hard rules on every picture of the replay: the iris is the graded iris byte for byte (T1, T6), the text log holds the customer's words only
+     (T7), no hearts (T12), the black share of Powder Burst and Elements (T4), Clean's ground is pure black, the veil of Powder Burst
+  4. determinism, bounded caches, the guards of render()
+  5. the contract (resolve, preview, tiles, the watermark) and plates that are missing (never another plate)
+  6. /api/compose: a style a customer may see is drawn by the engine with the preview watermark; a laboratory style is not; the old styles are unchanged
+  7. the admin laboratory: styles_lab behind the admin key
+  8. the real calibration eyes (LOCAL: SNAPEYES_CALIB) and the port as the scratch plus its edits (LOCAL: SNAPEYES_SCRATCH_Y3)
+No network, no image model, no real eye in the repository (the eyes are procedural: synth_iris). A golden is exact for this machine class and the pins
+of requirements.txt; a mismatch elsewhere means recording again on the scratch code there, never changing the port.
+    SNAPEYES_SCRATCH_Y3  the wave-y3 folder of the scratch tree (the 4K plates, the edit check); SNAPEYES_CALIB the calibration restorations' folder
+    python test_goldens_singles.py   prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
+Run by suites/run_main.sh as v3single."""
+import ast
+import base64
+import gc
+import hashlib
+import io
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import unittest.mock as mock
+
+REPO = os.environ.get("SNAPEYES_REPO") or sys.exit("SNAPEYES_REPO is not set: run suites/run_main.sh")
+HERE = os.path.dirname(os.path.abspath(__file__))
+API = os.path.join(REPO, "api")
+FAMILY = os.path.join(API, "_lib", "styles", "singles")
+STYLES = os.path.join(API, "_lib", "styles")
+SCRATCH_Y3 = os.environ.get("SNAPEYES_SCRATCH_Y3") or ""
+CALIB = os.environ.get("SNAPEYES_CALIB") or ""
+
+RESULTS = []
+LOCAL = []
+
+
+def check(name, ok, detail=""):
+    RESULTS.append(bool(ok))
+    print(("PASS " if ok else "FAIL ") + name + ("" if ok else f"   <- {str(detail)[:700]}"), flush=True)
+
+
+def local(name, ok, detail=""):
+    """A check that needs the scratch tree or the real calibration eyes: reported, not counted among the PASS lines (a failure still fails the run)."""
+    LOCAL.append(bool(ok))
+    print(("LOCAL ok   " if ok else "FAIL LOCAL ") + name + ("" if ok else f"   <- {str(detail)[:700]}"), flush=True)
+
+
+def section(title):
+    print(f"\n== {title}", flush=True)
+
+
+for k in list(os.environ):
+    if k.startswith(("VERCEL", "SNAPEYES_", "STRIPE_", "RESEND_", "CRON_", "LEGAL_", "STYLE_", "GEMINI", "AWS_", "NOW_", "LAMBDA_", "STORE_")):
+        if k not in ("SNAPEYES_REPO", "SNAPEYES_SP", "SNAPEYES_SCRATCH_Y3", "SNAPEYES_CALIB"):
+            os.environ.pop(k)
+TMP = tempfile.mkdtemp(prefix="snapeyes_v3single_")
+STORE = os.path.join(TMP, "store")
+os.makedirs(STORE)
+os.environ.update({"PYTHONIOENCODING": "utf-8", "SNAPEYES_TICKET_SECRET": "wp5a-ticket-secret-for-tests-0123456789abcdef",
+                   "SNAPEYES_ADMIN_SECRET": "wp5a-admin-secret-for-tests-0123456789abcdef0123", "STORE_LOCAL_DIR": STORE,
+                   "STYLE_PLATE_CACHE": os.path.join(TMP, "cache")})
+sys.path.insert(0, API)
+sys.path.insert(0, HERE)
+import numpy as np  # noqa: E402
+import PIL  # noqa: E402
+from PIL import Image  # noqa: E402
+import synth_iris as SI  # noqa: E402
+import singles_cases as SC  # noqa: E402
+from _lib import iris as L  # noqa: E402
+from _lib import catalogue as CT  # noqa: E402
+from _lib import preview as P  # noqa: E402
+from _lib import events as E  # noqa: E402
+from _lib import store  # noqa: E402
+import _lib.styles as ST  # noqa: E402
+from _lib.styles import core as C, selfcheck as SCK, plates as PL, text as TX, costs as CO  # noqa: E402
+from _lib.styles import singles as S  # noqa: E402
+from _lib.styles.singles import kit as K  # noqa: E402
+
+DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
+GOLD = json.load(open(os.path.join(HERE, "data", "singles_goldens.json"), encoding="utf-8"))
+G = GOLD["cases"]
+MACHINE_SAME = GOLD["machine"]["numpy"] == np.__version__ and GOLD["machine"]["pillow"] == PIL.__version__
+NOTE = "" if MACHINE_SAME else f" (numpy/Pillow differ from the recording {GOLD['machine']}: record again on the scratch code, do not change the port)"
+FAMILY_FILES = sorted(f for f in os.listdir(FAMILY) if f.endswith(".py"))
+
+
+def read(path):
+    with open(path, encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+def b64(raw):
+    return base64.b64encode(raw).decode("ascii")
+
+
+def raises(fn, exc):
+    try:
+        fn()
+    except exc as e:
+        return e
+    except Exception as e:  # noqa: BLE001
+        return repr(e)
+    return False
+
+
+# ============================================================================================ 1. the family in the repository
+section("1. the family in the repository")
+SINGLES_STYLES = [i for i in CT.ids() if CT.ENGINE[i]["engine"] and CT.ENGINE[i]["engine"].get("module") == "singles"]
+check("the family has its six designs, a module each (Clean Iris draws no effect), the primitives are styles/matter.py, and the style catalogue sees the family built",
+      FAMILY_FILES == ["__init__.py", "elements.py", "gold.py", "kit.py", "powder.py", "radiance.py", "splash.py"] and os.path.isfile(os.path.join(STYLES, "matter.py"))
+      and CT.engine_built("singles") and ST.family("singles").__name__ == "_lib.styles.singles" and len(SINGLES_STYLES) == 6, (FAMILY_FILES, SINGLES_STYLES))
+mods = [os.path.join(FAMILY, f) for f in FAMILY_FILES] + [os.path.join(STYLES, "matter.py")]
+src_all = "".join(read(m) for m in mods)
+check("every module of the family has the __future__ import (Python 3.12 is Vercel's default) and parses as 3.12",
+      all(re.search(r"^from __future__ import annotations\r?$", read(m), re.M) and ast.parse(read(m), feature_version=(3, 12)) for m in mods), [os.path.basename(m) for m in mods])
+check("no module holds a dash, a Windows or scratch path, a studio tagline, a secret name, an environment line for threads or a path read at run time",
+      not re.search(DASH, src_all) and not re.search(r"C:\\|wave-g|wave-y2|wave-y3|THE UNIVERSE WITHIN|PRECISE IRIS|GEMINI_API_KEY|SERVICE_KEY|OMP_NUM_THREADS|sys\.path", src_all),
+      re.findall(r"C:\\|wave-g|wave-y2|wave-y3|GEMINI_API_KEY|OMP_NUM_THREADS|sys\.path", src_all)[:5])
+INVISIBLE = re.compile("[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]")
+check("no module holds a raw invisible, control or bidirectional character", not any(INVISIBLE.search(read(m)) for m in mods))
+
+
+def empty_containers(path):
+    """Names assigned at module level to an EMPTY dict, list or set: the signature of a cache that grows with the eyes seen."""
+    out = []
+    for node in ast.parse(read(path)).body:
+        v = getattr(node, "value", None)
+        empty = (isinstance(v, ast.Dict) and not v.keys) or (isinstance(v, (ast.List, ast.Set)) and not v.elts) or \
+            (isinstance(v, ast.Call) and getattr(v.func, "id", "") in ("dict", "list", "set", "defaultdict", "OrderedDict") and not v.args)
+        if empty:
+            out += [t.id for t in (node.targets if isinstance(node, ast.Assign) else [node.target]) if isinstance(t, ast.Name)]
+    return out
+check("no module of the family keeps an empty module level dict, list or set (a cache): the two caches that were keyed by the eye are BoundedCache(64), the atlases and plates are the foundation's",
+      not any(empty_containers(m) for m in mods), {os.path.basename(m): empty_containers(m) for m in mods if empty_containers(m)})
+check("importing a design reads no file of its own, opens no socket and writes nothing: no open(), no os.environ, no subprocess in any module of the family",
+      not re.search(r"\bopen\(|os\.environ|subprocess|socket|np\.load|\.save\(", src_all), re.findall(r"\bopen\(|os\.environ|subprocess|socket|np\.load|\.save\(", src_all)[:5])
+DESIGNS_IN_REGISTRY = sorted(CT.ENGINE[i]["engine"]["design"] for i in SINGLES_STYLES)
+check("the registry's six single styles and the family agree: same designs, same canvases (the geometry table of the kit has a row per design and canvas)",
+      DESIGNS_IN_REGISTRY == sorted(S.DESIGNS) and all(CT.ENGINE[i]["canvases"] == list(S.FORMATS) for i in SINGLES_STYLES)
+      and set(K.SPECS) == set(S.DESIGNS) and all(set(K.SPECS[d]["r"]) == set(S.FORMATS) and set(K.SPECS[d]["cy"]) == set(S.FORMATS) for d in K.SPECS), (DESIGNS_IN_REGISTRY, K.SPECS.keys()))
+PROTO_PICK = {"own": "powder", "dark_brown": "gold", "grey": "radiance"}      # the prototype's PICK table: the recommended design per colour class
+check("the prototype's recommend and PICK are the registry's pick: own colours Powder Burst, dark brown Celestial Gold, grey Radiance (each with a reason key), and no other single style is picked",
+      {c: [CT.ENGINE[i]["engine"]["design"] for i in SINGLES_STYLES if c in CT.STYLES[i]["pick"]] for c in PROTO_PICK} == {c: [d] for c, d in PROTO_PICK.items()}
+      and all(CT.STYLES[i]["reason"].keys() == set(CT.STYLES[i]["pick"]) for i in SINGLES_STYLES if CT.STYLES[i]["pick"]) and not hasattr(S, "recommend") and not hasattr(S, "PICK"))
+check("every cost row the family needs exists: a preview row and a master row for each of the six designs",
+      all(CO.known(f"singles.{d}", 1) and 1 in CO.PREVIEW[f"singles.{d}"] for d in S.DESIGNS))
+check("no stage was raised: every single style of the engine is still at the laboratory ceiling, so a customer can neither order nor preview one, and the admin can look at all six",
+      all(CT.ceiling(i, 1) == "lab" and not CT.orderable(i, 1) and not CT.previewable(i, 1) and CT.previewable(i, 1, admin=True) for i in SINGLES_STYLES)
+      and not any(t["id"] in SINGLES_STYLES for t in CT.tiles_for(1))
+      and {t["id"] for t in CT.tiles_for(1, admin=True)} >= {i for i in SINGLES_STYLES if CT.STYLES[i]["tile_order"] > 0} and CT.STYLES["solo.elements"]["tile_order"] == 0,
+      [(i, CT.ceiling(i, 1)) for i in SINGLES_STYLES])
+
+# ============================================================================================ 2. the golden replay
+section("2. the golden replay: the scratch prototype's pictures, byte for byte")
+FIX = {n: SI.png_bytes(n) for n in SC.FIXTURE_BASE}
+check("the three fixtures of the replay are the very bytes of the recording", all(hashlib.sha256(FIX[n]).hexdigest() == GOLD["fixtures"][n] for n in FIX),
+      [n for n in FIX if hashlib.sha256(FIX[n]).hexdigest() != GOLD["fixtures"][n]])
+print(f"   (recorded on {GOLD['machine']}; running on python {sys.version.split()[0]}, numpy {np.__version__}, Pillow {PIL.__version__})", flush=True)
+
+LAST = {}
+SEEN = {"t": [], "black": {}, "clean_out": [], "veil": []}
+IRISES = {}
+
+
+def port_render(design, eye, fmt, size, names, date):
+    r = S.render(design, eye, fmt, size, names, date)
+    LAST["r"] = r
+    return r
+
+
+def replay(cases, with_checks=True):
+    """The cases rendered on the port: [(case, record, differences)]. For every picture the hard rules of section 3 are measured on the way."""
+    out = []
+    for c in cases:
+        rec = SC.render_case(port_render, C.Iris, FIX, c, IRISES)
+        g = G[c["key"]]
+        diff = [k for k in ("sha", "seed", "facts", "w", "h", "cls") if rec[k] != g[k]]
+        out.append((c, rec, diff))
+        if with_checks:
+            r = LAST["r"]
+            img8 = np.asarray(r.img)
+            rep = SCK.run(img8, [r.d], text_log=r.log, customer=[c["names"], c["date"]], ids=[c["design"], "single"])
+            SEEN["t"].append((c["key"], rep["ok"], {k: v["ok"] for k, v in rep["checks"].items()}))
+            if c["size"] == 1024 and not (c["names"] or c["date"]) and c["fmt"] == "1:1":
+                SEEN["black"][(c["design"], c["eye"])] = SCK.black_share(img8)
+                if c["design"] == "powder":
+                    SEEN["veil"].append((r.ctx.log.get("veil_mean_alpha"), r.ctx.log.get("veil_max_alpha")))
+            if c["design"] == "clean" and c["size"] == 1024 and not (c["names"] or c["date"]):
+                rho = np.hypot(np.arange(img8.shape[1])[None, :] + 0.5 - r.d.cx, np.arange(img8.shape[0])[:, None] + 0.5 - r.d.cy) / r.d.R
+                SEEN["clean_out"].append(int(img8[rho > 1.03].max()))
+        if c["size"] >= 2048:
+            IRISES.clear()
+            gc.collect()
+    return out
+
+
+t0 = time.time()
+ALL = SC.cases()
+for size in (512, 1024):
+    for design in S.DESIGNS:
+        rows = replay([c for c in ALL if c["size"] == size and c["design"] == design and not (c["names"] or c["date"]) and c["fmt"] == "1:1"])
+        bad = [(c["key"], d) for c, _, d in rows if d]
+        check(f"{design} at {size} px: the three eye classes give the scratch's pictures, seeds and plate picks, byte for byte", len(rows) == 3 and not bad, str(bad) + NOTE)
+for design in S.DESIGNS:
+    rows = replay([c for c in ALL if c["size"] == 512 and c["design"] == design and (c["names"] or c["date"])])
+    bad = [(c["key"], d) for c, _, d in rows if d]
+    check(f"{design}: the 4:5 canvas with names, the wallpaper with a date and the square with both (the frame shrinks and moves up with text) equal the scratch's", len(rows) == 3 and not bad, str(bad) + NOTE)
+for design in ("clean", "radiance", "gold"):
+    rows = replay([c for c in ALL if c["size"] == 4096 and c["design"] == design])
+    bad = [(c["key"], d) for c, _, d in rows if d]
+    check(f"{design} at 4096 px (a master): the three eye classes equal the scratch's pictures, byte for byte", len(rows) == 3 and not bad, str(bad) + NOTE)
+print(f"   (replayed in {time.time() - t0:.0f} s)", flush=True)
+with mock.patch.object(K, "F3_SPAN", K.F3_SPAN * 1.02):
+    moved = SC.render_case(port_render, C.Iris, FIX, [c for c in ALL if c["design"] == "clean" and c["size"] == 512][0], {})
+check("the replay can fail: a two percent change of the iris feather moves the hash of Clean Iris", moved["sha"] != G["clean.blue_round.1:1.512"]["sha"])
+
+# the 4096 px pictures of the plate styles: 4K plates from a local store made out of the scratch tree's own files
+if SCRATCH_Y3 and os.path.isdir(SCRATCH_Y3):
+    sys.path.insert(0, os.path.join(REPO, "scripts"))
+    import upload_plates as UP  # noqa: E402
+    from _lib import plates_registry as REG  # noqa: E402
+    need = set()
+    for k, v in G.items():
+        if k.endswith(".4096"):
+            for f in v["facts"].values():
+                need |= {f[x] for x in ("plate", "flame_plate", "water_plate") if x in f}
+    table = REG.PLATES_REGISTRY["plates"]
+    y2 = os.path.join(os.path.dirname(os.path.abspath(SCRATCH_Y3)), "wave-y2", "plates")
+    rows_ = UP.plan({i: table[i] for i in need}, {table[i]["family"] for i in need}, UP.sources(y2, SCRATCH_Y3))
+    tot = UP.run(rows_, store, True, out=lambda m: None)
+    local(f"the {len(need)} 4K plates the three plate styles pick at 4096 px are in a local store (read from the scratch tree, sha256 equal to the registry's)",
+          tot["bad_source"] == 0 and tot["wrong"] == 0 and tot["uploaded"] + tot["present"] == len(need), tot)
+    for design in ("powder", "splash", "elements"):
+        rows = replay([c for c in ALL if c["size"] == 4096 and c["design"] == design])
+        bad = [(c["key"], d) for c, _, d in rows if d]
+        local(f"{design} at 4096 px (4K plates through storage, the cache and the sha256 check): the three eye classes equal the scratch's pictures, byte for byte",
+              len(rows) == 3 and not bad, str(bad) + NOTE)
+        PL.clear_memory()
+else:
+    print("   (the 4096 px pictures of Powder Burst, Splash and Elements are replayed only with SNAPEYES_SCRATCH_Y3: their 4K plates are in private storage)", flush=True)
+
+# ============================================================================================ 3. the hard rules
+section("3. the hard rules on every picture of the replay (synthetic eyes)")
+bad = [t for t in SEEN["t"] if not t[1]]
+check(f"T1, T6, T7 and T12 on every one of the {len(SEEN['t'])} pictures: the iris is the graded iris byte for byte (zone A, largest difference 0), nothing of the matter lies on it, "
+      "the text drawn is the customer's own words, no heart", len(SEEN["t"]) >= 60 and not bad, bad[:3])
+check("T4: the black share of Powder Burst is inside 45 to 65 percent and Elements inside 55 to 75 on the three eyes (the numbers are the picture's own, 1024 px)",
+      all(0.45 <= SEEN["black"][("powder", e)] <= 0.65 and 0.55 <= SEEN["black"][("elements", e)] <= 0.75 for e in SC.EYES),
+      {k: round(v, 3) for k, v in SEEN["black"].items() if k[0] in ("powder", "elements")})
+check("Clean Iris: every pixel more than 1.03 R from the iris is exactly black", SEEN["clean_out"] and max(SEEN["clean_out"]) == 0, SEEN["clean_out"])
+check("Powder Burst's veil is a veil: mean alpha at most 0.10 and no pixel above 0.6 (zone B only, the wind side)",
+      SEEN["veil"] and all(m is not None and m <= 0.10 and x <= 0.6 + 1e-6 for m, x in SEEN["veil"]), SEEN["veil"])
+r_txt = S.render("gold", C.Iris(FIX["blue_round"], "x"), "1:1", 512, "Anna;Max", "12 May 2026")
+check("the customer's words: the old string \"Anna;Max\" is drawn as one lockup line, the date as typed, and nothing else is ever drawn",
+      [(e["kind"], e["text"]) for e in r_txt.log] == [("names", "Anna \u00b7 Max"), ("date", "12 May 2026")], r_txt.log)
+
+# ============================================================================================ 4. determinism, caches, guards
+section("4. determinism, bounded caches and the guards of render()")
+a = SC.render_case(port_render, C.Iris, FIX, [c for c in ALL if c["design"] == "powder" and c["size"] == 512][0], {})
+check("the same eye twice in one process gives the same picture; so does a fresh Iris of the same bytes", a["sha"] == G["powder.blue_round.1:1.512"]["sha"])
+code = ("import sys; sys.path.insert(0, %r); sys.path.insert(0, %r); import hashlib, numpy as np, synth_iris as SI; from _lib.styles import core as C, singles as S; "
+        "r = S.render('splash', C.Iris(SI.png_bytes('grey_round'), 'g'), '1:1', 512); print(hashlib.sha256(np.ascontiguousarray(np.asarray(r.img)).tobytes()).hexdigest())") % (API, HERE)
+env = dict(os.environ, PYTHONHASHSEED="12345")
+pr = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=300, env=env)
+check("a fresh interpreter with another PYTHONHASHSEED draws the same picture (no hash(), no dict order, no clock in a seed)",
+      pr.returncode == 0 and pr.stdout.strip() == G["splash.grey_round.1:1.512"]["sha"], (pr.stdout[-200:], pr.stderr[-300:]))
+from _lib.styles.singles import radiance as RAD  # noqa: E402
+RAD._INFO.clear()
+K._H2.clear()
+for n_ in ("blue_round", "dark_brown_round", "grey_round", "amber_slit", "green_round"):
+    ir_ = C.Iris(SI.png_bytes(n_), n_)
+    S.render("radiance", ir_, "1:1", 256)
+    S.render("powder", ir_, "1:1", 256)
+check("the two caches the prototype kept per eye (the secondary hue, the fibre facts) are BoundedCache(64), keep what was seen and hold the last 64 at most",
+      isinstance(K._H2, C.BoundedCache) and isinstance(RAD._INFO, C.BoundedCache) and K._H2.maxsize == 64 and RAD._INFO.maxsize == 64 and len(K._H2) == 5 and len(RAD._INFO) >= 1
+      and (lambda c: [c.put(i, i) for i in range(200)] and len(c) == 64)(C.BoundedCache(64)))
+eye0 = C.Iris(FIX["blue_round"], "e")
+check("render() refuses an unknown design, a canvas the family does not draw, a size outside 64 to 4096 and anything that is not an eye",
+      raises(lambda: S.render("nope", eye0), KeyError) is not False and isinstance(raises(lambda: S.render("clean", eye0, "3:2"), ValueError), ValueError)
+      and isinstance(raises(lambda: S.render("clean", eye0, size=8192), ValueError), ValueError) and isinstance(raises(lambda: S.render("clean", eye0, size=10), ValueError), ValueError)
+      and isinstance(raises(lambda: S.render("clean", "a/path.jpg"), TypeError), TypeError) and isinstance(raises(lambda: K.load_eye(None), TypeError), TypeError))
+check("the round 1 feather option (opts feather legacy) is gone: it changes nothing",
+      S.render("clean", eye0, "1:1", 256, opts={"feather": "legacy"}).img.tobytes() == S.render("clean", eye0, "1:1", 256).img.tobytes())
+check("an eye may be the bytes of a restored square (a function reads what the request carried, never a path): bytes and Iris give the same picture",
+      S.render("clean", FIX["blue_round"], "1:1", 256).img.tobytes() == S.render("clean", eye0, "1:1", 256).img.tobytes())
+
+# ============================================================================================ 5. the contract
+section("5. the contract: resolve, preview, tiles, the watermark, a plate that is missing")
+spec = {"style": "solo.powder", "layout": "single", "eyes": 1, "canvas": "1:1", "names": ["Anna", "Max"], "date": ""}
+pl = ST.resolve(spec, [])
+check("resolve answers the plan without a pixel: family, design, canvas, the iris at 1024 px, the seed key of the plan (registry id, design, background, clean flag, layout, options, plates version); "
+      "the plates stay unknown until the seed comes from eye_id (step B)",
+      pl["family"] == "singles" and pl["design_used"] == "powder" and pl["fallback"] is None and pl["canvas"] == "1:1" and pl["layout"] == "single"
+      and set(pl["seed_key"]) == {"style", "design_used", "bg", "clean", "layout", "opts", "pv"} and pl["seed_key"]["pv"] == CT.PLATES_VERSION and pl["plates"] is None
+      and pl["seed_from"] == "iris_bytes" and pl["steps"] == ["art"] and pl["iris_at_1024"]["R"] > 200 and ST.resolve(dict(spec, canvas="9:19.5"), None)["canvas"] == "9:19.5"
+      and ST.resolve(dict(spec, canvas="bogus"), None)["canvas"] == "1:1", pl)
+t0 = time.perf_counter()
+ST.resolve(spec, [])
+check("resolve takes a few milliseconds (at most 50)", (time.perf_counter() - t0) * 1000 < 50)
+check("resolve refuses a style that is not of the family (a legacy id, another family's style)",
+      isinstance(raises(lambda: ST.resolve({"style": CT.legacy_ids()[0], "eyes": 1}, []), ST.EngineNotBuilt), ST.EngineNotBuilt))
+eye_a = C.Iris(FIX["dark_brown_round"], "a")
+pv = ST.preview([eye_a], dict(spec, style="solo.gold", names="Anna", date="2026"), size=512, check=True)
+check("preview: the clean render as a Preview (picture, disc, graded frame, design, canvas, size, seed, class, the design's facts, times, text log, the selfcheck report that passes)",
+      pv.img.size == (512, 512) and pv.design == "gold" and pv.fmt == "1:1" and pv.size == 512 and pv.cls == "dark_brown" and len(pv.discs) == 1 and pv.discs[0][2] > 100
+      and isinstance(pv.graded[0], Image.Image) and pv.selfcheck["ok"] is True and set(pv.selfcheck["checks"]) >= {"t1", "t6", "t7", "t12"} and "gold" in pv.log
+      and pv.times["total"] > 0 and [e["kind"] for e in pv.text_log] == ["names", "date"] and pv.width == 512, (pv.fmt, pv.size, pv.selfcheck))
+pw = ST.preview([eye_a], dict(spec, style="solo.gold", names="", date=""), size=512, watermark=True)
+pc_ = ST.preview([eye_a], dict(spec, style="solo.gold", names="", date=""), size=512)
+d0 = pc_.discs[0]
+yy, xx = np.mgrid[0:512, 0:512]
+inside = np.hypot(xx + 0.5 - d0[0], yy + 0.5 - d0[1]) < 0.9 * d0[2]
+diff_in = np.abs(np.asarray(pw.img).astype(int) - np.asarray(pc_.img).astype(int)).max(-1)[inside]
+check("watermark=True returns the free preview: the words lie on the iris disc too (the clean render differs from it on the iris), while the clean render is the golden picture and the Preview of "
+      "watermarked() is a copy (the clean one is not changed)", (diff_in > 8).mean() > 0.01 and pc_.img.tobytes() != pw.img.tobytes() and ST.watermarked(pc_).tobytes() == pw.img.tobytes()
+      and S.render("gold", eye_a, "1:1", 512).img.tobytes() == pc_.img.tobytes(), float((diff_in > 8).mean()))
+tl = ST.tiles([eye_a], ["solo.clean", "solo.radiance", "solo.gold"], dict(spec, names=""), size=480)
+check("tiles: several styles of the family on one eye (one Iris, its ring and class measured once), a Preview each at the size asked",
+      set(tl) == {"solo.clean", "solo.radiance", "solo.gold"} and all(t.img.size == (480, 480) for t in tl.values()) and tl["solo.gold"].design == "gold"
+      and len({t.img.tobytes() for t in tl.values()}) == 3)
+check("preview refuses a set of eyes (the family draws one) and a style that is not its own",
+      isinstance(raises(lambda: ST.preview([eye_a, eye_a], spec), ValueError), ValueError) and isinstance(raises(lambda: ST.preview([eye_a], {"style": "duo.kiss_collision", "eyes": 2}), (ValueError, ST.EngineNotBuilt)), Exception))
+# a plate styles' 1K plate comes from the bundle at a preview; the 4K plate comes from storage at a master and a missing one is never replaced by another
+check("a preview draws its plate from the 1K file in the bundle (no storage, no cache); Powder Burst, Splash and Elements all name a plate of the registry",
+      all(G[f"{d}.{e}.1:1.1024"]["facts"][d if d != "elements" else "elements"].get("lod", "1k") == "1k" for d in ("powder", "splash") for e in SC.EYES)
+      and all(PL.known(G[f"splash.{e}.1:1.1024"]["facts"]["splash"]["plate"]) and PL.known(G[f"powder.{e}.1:1.1024"]["facts"]["powder"]["plate"]) for e in SC.EYES)
+      and PL.known(G["elements.blue_round.1:1.1024"]["facts"]["elements"]["flame_plate"]))
+
+
+class EmptyStore:
+    """An empty private storage and an empty plate cache for the length of a block: what a deployment looks like before the 4K plates are uploaded."""
+    def __enter__(self):
+        PL.clear_memory()
+        self.dir = tempfile.mkdtemp(prefix="empty_store_", dir=TMP)
+        self.patch = mock.patch.dict(os.environ, {"STORE_LOCAL_DIR": os.path.join(self.dir, "store"), "STYLE_PLATE_CACHE": os.path.join(self.dir, "cache")})
+        os.makedirs(os.path.join(self.dir, "store"))
+        self.patch.start()
+
+    def __exit__(self, *a):
+        self.patch.stop()
+        PL.clear_memory()
+
+
+with EmptyStore():
+    e_missing = raises(lambda: S.render("powder", C.Iris(FIX["blue_round"], "m", max_side=4096), "1:1", 4096), PL.PlateUnavailable)
+check("a master of a plate style whose 4K plate is not in storage is PlateUnavailable(missing) naming the plate: the render stops, no other plate is drawn",
+      isinstance(e_missing, PL.PlateUnavailable) and e_missing.why == "missing" and e_missing.plate_id.startswith("P-SN-CLOUD"), e_missing)
+gc.collect()
+
+# ============================================================================================ 6. /api/compose
+section("6. /api/compose: a style a customer may see is drawn by the engine, a laboratory style is not")
+import importlib.util  # noqa: E402
+spec_ = importlib.util.spec_from_file_location("compose", os.path.join(API, "compose.py"))
+CMP = importlib.util.module_from_spec(spec_)
+spec_.loader.exec_module(CMP)
+EVENTS = []
+E.record = lambda kind, **f: EVENTS.append((kind, dict(f))) or False
+jpeg = SI.jpeg_bytes("dark_brown_round")
+im_j = Image.open(io.BytesIO(jpeg)).convert("RGB")
+sealed = P.protect(im_j, jpeg)["sealed"]
+
+
+class Show:
+    """A style of the engine made visible to customers for the length of a block (the ceilings are the registry's, a test may not raise one for good)."""
+    def __init__(self, style, stage="preview"):
+        self.style, self.stage = style, stage
+
+    def __enter__(self):
+        self.old = CT.STYLES[self.style]["stage"]
+        CT.STYLES[self.style]["stage"] = self.stage
+
+    def __exit__(self, *a):
+        CT.STYLES[self.style]["stage"] = self.old
+
+
+ids_before = list(CT.previewable_ids(1))
+check("before anything is raised the customer's list of styles for one eye holds the legacy six and no style of the engine",
+      not any(i in ids_before for i in SINGLES_STYLES) and len(ids_before) == 6, ids_before)
+r_lab = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12})
+check("a laboratory style asked by a customer is not drawn by the engine (the request falls to the default style, as an unknown id always did); no compose event names it",
+      r_lab["style"] == CT.DEFAULT_STYLE and "canvas" not in r_lab and all(e[1].get("style") != "solo.gold" for e in EVENTS), (r_lab["style"], EVENTS[-1:]))
+EVENTS.clear()
+with Show("solo.gold"), mock.patch.object(L, "colour_qa", wraps=L.colour_qa) as qa_spy:
+    r_g = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026", "lang": "en"})
+    ids_shown = list(CT.previewable_ids(1))
+    rg2 = CMP.compose({"sealed": [sealed], "style": "solo.gold", "format": "wallpaper", "pad": 1.12})
+    rg3 = CMP.compose({"sealed": [sealed], "style": "solo.gold", "format": "bogus", "layout": "ring", "pad": 1.12})
+    ev_g = [e for e in EVENTS if e[0] == "compose"][0][1]
+meta_ = P.unseal_full(sealed)[1]
+exp_pv = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye_id"])], {"style": "solo.gold", "layout": "single", "eyes": 1, "canvas": "1:1", "names": "Anna \u00b7 Max", "date": "12 May 2026"},
+                    size=1024, watermark=True)
+check("a style made visible is drawn by the engine: the reply has every field of a compose reply (and canvas), the picture is the engine's clean render with the preview watermark (equal to a render of the same bytes, "
+      "names as one lockup, date as typed), the eye id and gate of the seal are in eyes[]",
+      r_g["ok"] and r_g["style"] == "solo.gold" and r_g["layout"] == "single" and r_g["layouts"] == ["single"] and r_g["format"] == "artwork" and r_g["canvas"] == "1:1" and r_g["count"] == 1
+      and (r_g["width"], r_g["height"]) == (1024, 1024) and r_g["image"] == L.pil_to_b64(exp_pv.img, "JPEG", 90) and "solo.gold" in r_g["styles"] and "solo.gold" in ids_shown
+      and {"ok", "style", "layout", "layouts", "format", "count", "width", "height", "image", "styles", "qa", "eyes", "canvas"} <= set(r_g)
+      and r_g["eyes"][0]["eye_id"] == meta_["eye_id"] and isinstance(r_g["qa"].get("ok"), bool), {k: r_g[k] for k in r_g if k not in ("image",)})
+check("the picture a customer gets is a preview: it is not the clean picture (the words of the watermark lie over the whole canvas and on the iris), and the clean render of the same bytes is not what the reply holds",
+      r_g["image"] != L.pil_to_b64(ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye_id"])], {"style": "solo.gold", "layout": "single", "eyes": 1, "canvas": "1:1", "names": "Anna \u00b7 Max", "date": "12 May 2026"}, size=1024).img, "JPEG", 90))
+check("the format words of the legacy page read as canvases: wallpaper is the phone canvas (9:19.5), an unknown format and a layout that is not the style's fall back to the square artwork",
+      rg2["canvas"] == "9:19.5" and rg2["format"] == "wallpaper" and rg2["width"] < rg2["height"] and abs(rg2["height"] / rg2["width"] - 19.5 / 9) < 0.01
+      and rg3["canvas"] == "1:1" and rg3["format"] == "artwork" and rg3["layout"] == "single")
+check("the compose event names the style and the set's gate like every compose event, and the colour QA ran on the graded frame",
+      ev_g.get("style") == "solo.gold" and ev_g.get("eyes") == 1 and ev_g.get("layout") == "single" and ev_g.get("format") == "artwork" and ev_g.get("clean") is False and "gate" in ev_g
+      and E.build("compose", ev_g).get("style") == "solo.gold" and qa_spy.called, ev_g)
+tkt = L.mint_ticket("unlock")
+with Show("solo.gold"):
+    r_clean = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12, "unlock": tkt, "names": "Anna", "date": ""})
+    r_noclean = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12, "unlock": tkt + "x", "names": "Anna"})
+exp_clean = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye_id"])], {"style": "solo.gold", "layout": "single", "eyes": 1, "canvas": "1:1", "names": "Anna", "date": ""}, size=1024)
+check("a valid unlock ticket gives the clean render and nothing else does (a ticket that is not valid leaves the watermark)",
+      r_clean["image"] == L.pil_to_b64(exp_clean.img, "JPEG", 90) and r_noclean["image"] != r_clean["image"])
+with Show("solo.gold"):
+    r_plain = CMP.compose({"irises": [b64(jpeg)], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026"})
+check("an old page's plain iris gives the same picture as the sealed one (the same bytes, the same seed), with unknown gates and no eye id",
+      r_plain["image"] == r_g["image"] and r_plain["eyes"][0]["eye_id"] is None and r_plain["eyes"][0]["gate"] == {"lid": None, "fill": None})
+with Show("solo.gold"):
+    r_font = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12, "names": "Anna \u4e2d\u6587 \u2665 Max"})
+check("a letter the artwork font cannot draw is left out of a free preview (it would print as an empty box); a heart never reaches the picture",
+      r_font["ok"] and CMP._engine_text("Anna \u4e2d\u6587 \u2665 Max") == "Anna Max" and CMP._engine_text("\u0105\u010d\u0119\u0117\u012f\u0161\u0173\u016b\u017e \u0151\u0171 \u00e4\u00f6\u00fc\u00df") != "", CMP._engine_text("Anna \u4e2d\u6587 \u2665 Max"))
+two = [sealed] * 2
+with Show("solo.gold"):
+    r_two = CMP.compose({"sealed": two, "style": "solo.gold", "pad": 1.12})
+check("two eyes asked for a one-eye style are not drawn by it: the request falls back to a style that takes two eyes",
+      r_two["style"] != "solo.gold" and r_two["count"] == 2)
+with Show("solo.gold"):
+    r_legacy = CMP.compose({"sealed": [sealed], "style": "celestial_gold", "pad": 1.12})
+check("a legacy style is still drawn by the legacy engine, with none of the engine's fields", r_legacy["style"] == "celestial_gold" and "canvas" not in r_legacy and r_legacy["format"] == "artwork")
+check("compose.py has no path to the lab for a customer: it never imports ops, never reads an authorization header, an admin key or a lab flag",
+      not re.search(r"import ops|\bops\.\w+\(|authorization|body\.get\(.lab.\)|admin_key", read(os.path.join(API, "compose.py"))),
+      re.findall(r"import ops|\bops\.\w+\(|authorization|body\.get\(.lab.\)|admin_key", read(os.path.join(API, "compose.py")))[:4])
+EVENTS.clear()
+
+# ============================================================================================ 7. the admin laboratory
+section("7. the admin laboratory: styles_lab (no image model, nothing stored, behind the admin key)")
+from _lib import ops  # noqa: E402
+SAMPLE = open(os.path.join(REPO, "public", "assets", "sample_eye_blue_restored.jpg"), "rb").read()
+lst = ops.a_styles_lab({}, "t")
+check("without a style styles_lab lists what the page builds its menu from: the six styles of the engine this deployment can draw, with their stage, canvases, plates and the sizes",
+      lst["ok"] and sorted(r["id"] for r in lst["styles"]) == sorted(SINGLES_STYLES) and all(r["stage"] == "lab" and r["ceiling"] == "lab" and r["canvases"] == list(S.FORMATS) for r in lst["styles"])
+      and lst["sizes"] == [480, 1024, 2048, 4096] and {r["name"] for r in lst["styles"]} >= {"Clean Iris", "Powder Burst", "Celestial Gold"}, lst)
+ok_all = True
+rows_ = []
+for sid in SINGLES_STYLES:
+    t0 = time.time()
+    rr = ops.a_styles_lab({"style": sid, "eye": b64(SAMPLE), "size": 480, "names": "Anna;Max", "date": "2026"}, "t")
+    rows_.append((sid, rr["selfcheck"]["ok"], round(time.time() - t0, 2)))
+    ok_all = ok_all and rr["ok"] and rr["width"] == rr["height"] == 480 and rr["cls"] in ("own", "dark_brown", "grey") and isinstance(rr["image"], str) and rr["crop"] is None \
+        and set(rr["selfcheck"]["checks"]) >= {"t1", "t6", "t7", "t12"} and rr["design"] == CT.ENGINE[sid]["engine"]["design"] and rr["plan"]["design_used"] == rr["design"] \
+        and rr["times"]["total"] > 0 and isinstance(rr["estimate"]["need_s"], float)
+check("styles_lab draws every style of the engine on the site's restored sample eye, whatever its stage: picture, class, seed, facts, plan, the self checks and the time, with the estimate of the cost table",
+      ok_all, rows_)
+check("the self checks of the laboratory are the ones that run on a delivered file: T1 iris untouched on all six (T4 is the black share: Elements may be outside its range on a real eye and says so)",
+      all(ops.a_styles_lab({"style": sid, "eye": b64(SAMPLE), "size": 480}, "t")["selfcheck"]["checks"]["t1"]["ok"] for sid in SINGLES_STYLES))
+big = ops.a_styles_lab({"style": "solo.clean", "eye": b64(SAMPLE), "size": 4096, "crop": [3000, 900]}, "t")
+check("a 4096 px render comes back as a view of 1536 px and a window of 1280 px at 100 percent (a 4096 px JPEG would not fit the reply); the whole reply is far below 4.5 MB and the checks ran on the full size",
+      big["width"] == big["height"] == 4096 and big["view"] == [1536, 1536] and big["crop"]["w"] == 1280 and big["crop"]["h"] == 1280 and big["crop"]["x"] == 3000 - 640 and big["crop"]["y"] == 900 - 640
+      and len(json.dumps(big)) < 3_500_000 and big["selfcheck"]["checks"]["t1"]["ok"] and big["selfcheck"]["checks"]["t1"]["checked"] > 2_000_000 and big["estimate"]["ok"] is True and big["selfcheck"]["ms"] < 5000, (big["view"], len(json.dumps(big))))
+refusals = []
+for label, body in (("a legacy style", {"style": CT.legacy_ids()[0], "eye": b64(SAMPLE)}), ("an unknown style", {"style": "solo.nope", "eye": b64(SAMPLE)}),
+                    ("a style whose family is not built", {"style": "solo.universe", "eye": b64(SAMPLE)}), ("a size outside the four", {"style": "solo.clean", "eye": b64(SAMPLE), "size": 3000}),
+                    ("a size as a boolean", {"style": "solo.clean", "eye": b64(SAMPLE), "size": True}), ("no eye", {"style": "solo.clean"}),
+                    ("a text that is no image", {"style": "solo.clean", "eye": b64(b"not an image at all")}),
+                    ("an order that is not a lab order", {"style": "solo.clean", "order": "order-20260101-abcd", "n": 1}),
+                    ("an eye number out of range", {"style": "solo.clean", "order": "lab-260101-abcd1234", "n": 9}), ("a list as the style", {"style": ["solo.clean"], "eye": b64(SAMPLE)})):
+    e_ = raises(lambda b=body: ops.a_styles_lab(b, "t"), L.ClientError)
+    refusals.append((label, isinstance(e_, L.ClientError)))
+check("styles_lab refuses with a 400 (ClientError): " + ", ".join(r[0] for r in refusals), all(r[1] for r in refusals), [r for r in refusals if not r[1]])
+e_nostore = raises(lambda: ops.a_styles_lab({"style": "solo.clean", "order": "lab-260101-abcd1234", "n": 1}, "t"), L.ClientError)
+store.put("orders/lab-260101-abcd1234/eye_1.jpg", SAMPLE, "image/jpeg", upsert=True)
+by_order = ops.a_styles_lab({"style": "solo.clean", "order": "lab-260101-abcd1234", "n": 1, "size": 480}, "t")
+check("a lab test order's stored eye is an eye (a real master without a new image model call); an order with no such eye is a 400",
+      isinstance(e_nostore, L.ClientError) and by_order["ok"] and by_order["width"] == 480, e_nostore)
+with EmptyStore():
+    e_plate = raises(lambda: ops.a_styles_lab({"style": "solo.powder", "eye": b64(SAMPLE), "size": 4096}, "t"), store.Answer)
+check("a 4096 px render of a plate style without its 4K plate in storage is 409 plate_unavailable naming the plate (the page says so), never a render with another plate",
+      isinstance(e_plate, store.Answer) and e_plate.status == 409 and e_plate.body["reason"] == "plate_unavailable" and e_plate.body.get("why") == "missing", e_plate)
+with mock.patch.object(CO, "assess", return_value={"need_s": 99.0, "est_mb": 9999, "ok": False, "why": "time"}):
+    e_time = raises(lambda: ops.a_styles_lab({"style": "solo.radiance", "eye": b64(SAMPLE), "size": 4096}, "t"), L.ClientError)
+check("a 4096 px render the cost table says cannot finish in the time or the memory of this function is refused before it starts, with the numbers", isinstance(e_time, L.ClientError) and "99.0" in str(e_time), e_time)
+
+
+class Req:
+    def __init__(self, token=None):
+        self.headers = {"authorization": f"Bearer {token}"} if token else {}
+        self.client_address = ("127.0.0.1", 1)
+
+
+ops.FAIL_SLEEP = 0.0
+e_auth = raises(lambda: ops.dispatch(Req(), {"action": "styles_lab", "style": "solo.clean", "eye": b64(SAMPLE), "size": 480}), store.Answer)
+via_key = ops.dispatch(Req(ops.mint_admin_key(3600)), {"action": "styles_lab", "style": "solo.clean", "eye": b64(SAMPLE), "size": 480})
+check("styles_lab is an admin action: without an admin key it is a 403 and draws nothing, with a valid one it answers; it is read only (not in the audit list of actions) and calls no image model",
+      isinstance(e_auth, store.Answer) and e_auth.status == 403 and via_key["ok"] and "styles_lab" in ops.ACTIONS and ops.ACTIONS["styles_lab"] is ops.a_styles_lab
+      and not any(k.startswith("GEMINI") for k in os.environ), e_auth)
+tsx = read(os.path.join(REPO, "src", "admin", "StyleLab.tsx"))
+labtsx = read(os.path.join(REPO, "src", "admin", "Lab.tsx"))
+check("the admin page has the laboratory: StyleLab.tsx (menu from the server's list, the eye, size, names, the picture, the 100 percent window, the checks, the facts) is on the Laboratorija page, "
+      "holds no literal style id, no dash and no call to the image model's endpoints",
+      "<StyleLab call={call} lab={lab} />" in labtsx and "'styles_lab'" in tsx and "Piešti" in tsx and "selfcheck" in tsx and not re.search(r"\b(solo|duo|grp|pet)\.[a-z_]+\b", tsx) and not re.search(DASH, tsx)
+      and "/api/enhance" not in tsx and "/api/master_eye" not in tsx)
+
+# ============================================================================================ 8. local only
+section("8. the real calibration eyes and the port as the scratch plus its edits (local only)")
+if CALIB and os.path.isdir(CALIB) and os.path.isfile(os.path.join(HERE, "data", "singles_goldens_real.json")):
+    RG = json.load(open(os.path.join(HERE, "data", "singles_goldens_real.json"), encoding="utf-8"))
+    fx = {}
+    for n in SC.REAL_EYES:
+        p_ = os.path.join(CALIB, f"{n}_2_enhanced.jpg")
+        if os.path.isfile(p_):
+            fx[n] = open(p_, "rb").read()
+    same_files = {n: hashlib.sha256(b).hexdigest() == RG["eye_files"][n] for n, b in fx.items()}
+    local(f"the {len(fx)} real eyes are the files of the recording (their hashes equal)", len(fx) == len(SC.REAL_EYES) and all(same_files.values()), same_files)
+    irises = {}
+    for design in S.DESIGNS:
+        bad = []
+        for c in [c for c in SC.real_cases() if c["design"] == design]:
+            rec = SC.render_case(lambda d, e, f, s, nm, dt: S.render(d, e, f, s, nm, dt), C.Iris, fx, c, irises)
+            if rec["sha"] != RG["cases"][c["key"]]["sha"] or rec["facts"] != RG["cases"][c["key"]]["facts"]:
+                bad.append(c["key"])
+        local(f"{design} on the four real eyes (own, own, dark brown, grey) at 1024 px equals the scratch's pictures, byte for byte", not bad, str(bad) + NOTE)
+else:
+    print("   (the real-eye goldens need SNAPEYES_CALIB, the folder of the calibration restorations)", flush=True)
+if SCRATCH_Y3 and os.path.isdir(SCRATCH_Y3):
+    pr = subprocess.run([sys.executable, os.path.join(HERE, "port_singles.py"), "--check"], capture_output=True, text=True, timeout=120,
+                        env=dict(os.environ, SNAPEYES_SCRATCH_Y3=SCRATCH_Y3))
+    local("the committed files of the family are what port_singles.py makes of the scratch files (the listed edits and nothing else)", pr.returncode == 0 and "DIFFERS" not in pr.stdout, pr.stdout[-400:] + pr.stderr[-300:])
+else:
+    print("   (the edit check needs SNAPEYES_SCRATCH_Y3, the wave-y3 folder of the scratch tree)", flush=True)
+
+shutil.rmtree(TMP, ignore_errors=True)
+ok = sum(RESULTS)
+print(f"\n{ok} of {len(RESULTS)} passed" + (f"   (+ {len(LOCAL)} local checks)" if LOCAL else ""))
+sys.exit(0 if ok == len(RESULTS) and all(LOCAL) else 1)

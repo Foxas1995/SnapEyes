@@ -80,6 +80,9 @@
   },
   "v3plates": {
    "pass": 108
+  },
+  "v3single": {
+   "pass": 75
   }
  }
 }

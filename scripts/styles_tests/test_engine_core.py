@@ -129,10 +129,10 @@ def module_level_growers(path, allow=()):
         if bad:
             out += [t.id for t in targets if isinstance(t, ast.Name) and t.id not in allow]
     return out
-OWN = ["__init__.py", "core.py", "layouts.py", "text.py", "plates.py", "atlas.py", "costs.py", "selfcheck.py"]    # this package's; each later one adds its own checks
+OWN = ["__init__.py", "core.py", "layouts.py", "text.py", "plates.py", "atlas.py", "costs.py", "selfcheck.py", "matter.py"]    # this package's; each later one adds its own checks (the singles family: test_goldens_singles.py)
 growers = {m: module_level_growers(os.path.join(STYLES, m), allow={"MASTER", "CAPPED", "PREVIEW", "ASPECTS", "N_RANGE", "DEFAULT_CAPTION", "_FAMILY_FN", "TEXT_KINDS"})
            for m in OWN}
-check("no foundation module (core, layouts, text, plates, atlas, costs, selfcheck) keeps a module level dict, list or set that can grow (the baked cost "
+check("no foundation module (core, layouts, text, plates, atlas, costs, selfcheck, matter) keeps a module level dict, list or set that can grow (the baked cost "
       "table and the constant tables aside): caches are BoundedCache, so a warm instance cannot leak (rule c of the Eng review)", not any(growers.values()), {m: g for m, g in growers.items() if g})
 src_all = "".join(read(os.path.join(STYLES, m)) for m in MODULES)
 check("no module of the package holds a dash, a Windows or scratch path, a studio tagline or footer, or a secret name",
