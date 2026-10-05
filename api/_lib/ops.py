@@ -1185,7 +1185,7 @@ def a_styles_lab(body, who):
     A render above 2048 px comes back as a reduced view plus the window at full size. 4096 px is refused when the cost table says it cannot
     finish inside the time or the memory this function has (the rule a paid master is held to), and answers 409 plate_unavailable when a
     plate of the design has no 4K file in storage. Without a style the reply is the list of styles to choose from ({styles, sizes}).
-    Reply: ok, style, design, canvas, width, height, image (JPEG, b64), view, crop, cls, seed,
+    Reply: ok, style, design, canvas, width, height, image (JPEG, b64), view, crop, cls, seed (a text: a 64 bit number is not safe in a page's JSON),
     facts, plan, selfcheck, times, estimate."""
     import io as _io
     from . import catalogue as CT
@@ -1250,7 +1250,7 @@ def a_styles_lab(body, who):
     except PL.PlateUnavailable as e:
         raise store.Answer(409, "plate_unavailable", "A plate this design needs is not in storage.", False, None, plate=str(e.plate_id)[:80], why=e.why)
     img = pv.img
-    out = {"ok": True, "style": style, "design": pv.design, "canvas": pv.fmt, "width": img.size[0], "height": img.size[1], "cls": pv.cls, "seed": pv.seed,
+    out = {"ok": True, "style": style, "design": pv.design, "canvas": pv.fmt, "width": img.size[0], "height": img.size[1], "cls": pv.cls, "seed": str(pv.seed),
            "facts": pv.log, "plan": ST.resolve(spec, None), "selfcheck": pv.selfcheck, "times": pv.times, "estimate": est}
     if size > 2048:
         crop = body.get("crop")
