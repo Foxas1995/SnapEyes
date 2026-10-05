@@ -67,6 +67,7 @@ import time
 from .. import catalogue as CT
 from .. import duration as D
 from .. import store
+from .. import words as WORDS
 from . import ENGINE_V
 from . import seeds as SD
 from . import costs as CO
@@ -201,7 +202,7 @@ def _iso(t=None):
 
 
 # ----------------------------------------------------------------------------- the customer's words
-def _clean_names(value, limit=60):
+def _clean_names(value, limit=WORDS.LOCKUP_MAX):
     """The customer's names as the v3 engine draws them (the same function of the same input as api/compose.py _engine_text, so the paid file draws
     the words of the preview; a test holds them equal): cleaned, one lockup line, without a letter the artwork font cannot draw."""
     from . import text as TX
@@ -225,8 +226,9 @@ def _clean_date(value, limit=20):
 
 
 def master_words(spec):
-    """(names line, date line) the paid file draws: the names cut at 60 characters and the date at 20, as the preview does."""
-    return _clean_names(spec.get("names"), 60), _clean_date(spec.get("date"), 20)
+    """(names line, date line) the paid file draws: the names line cut at LOCKUP_MAX characters (eight names of 24 letters: the 200 total of C16) and the date at
+    20, as the preview does."""
+    return _clean_names(spec.get("names"), WORDS.LOCKUP_MAX), _clean_date(spec.get("date"), 20)
 
 
 def words_sha(spec):
@@ -531,6 +533,11 @@ def create_plan(ctx):
     """The order's plan: the one the checkout froze, else made now from the eyes' sealed profiles (and their pixels, for a family that decides from them)
     and stored (upsert=False: of two callers the first wins and both use that one)."""
     plan = _stored_plan(ctx.rec)
+    if plan is not None and isinstance(ctx.paid, dict) and ctx.paid.get("plan8") and plan.get("plan8") != ctx.paid["plan8"]:
+        # the plan in order.json is another checkout's than the session that was paid (a second checkout replaced it in the moment the first was paid: the
+        # paid record carries the plan8 of the session's own metadata, WP12): never draw the paid order from a plan of another spec
+        _log(f"order {ctx.order}: the stored plan {plan.get('plan8')} is not the paid session's {ctx.paid.get('plan8')}: made again from the paid spec")
+        plan = None
     if plan is None:
         plan = plan_for(ctx)
     plan = dict(plan, created_at=plan.get("created_at") or int(time.time()))
@@ -721,7 +728,7 @@ def _exec_legacy(ctx, plan, step, rerun):
     L = _L()
     spec = ctx.spec
     body = {"order": ctx.order, "ticket": L.mint_ticket(store.unlock_kind(ctx.order), 300), "keys": _eye_keys(ctx, step),
-            "style": spec.get("style"), "layout": spec.get("layout"), "names": spec.get("names") or "", "title": spec.get("title") or ""}
+            "style": spec.get("style"), "layout": spec.get("layout"), "names": WORDS.names_wire(spec.get("names")), "title": spec.get("title") or ""}
     r = ctx.legacy(body)
     res = {k: r.get(k) for k in ("key", "width", "height", "bytes", "style", "layout", "count", "needs_review", "existing", "qa", "url", "seconds")}
     res["needs_review"] = bool(r.get("needs_review"))

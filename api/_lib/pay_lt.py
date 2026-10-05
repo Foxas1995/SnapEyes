@@ -56,9 +56,12 @@ def lt_form(n, one, few, many):
     return many
 
 
-def item_name_lt(n, style_name):
-    """pay.item_name for "lt": "SnapEyes rainelės kūrinys, 2 akys, Celestial Gold, skaitmeninis 4096 px failas"."""
-    return f"SnapEyes rainelės kūrinys, {n} {lt_form(n, 'akis', 'akys', 'akių')}, {style_name}, skaitmeninis 4096 px failas"
+def item_name_lt(n, style_name, layout_word=""):
+    """pay.item_name for "lt": "SnapEyes rainelės kūrinys, 2 akys, Celestial Gold, skaitmeninis 4096 px failas"; a style of the v3 engine with two or more
+    eyes names its layout after the style ("..., 3 akys, Family Colours, Trikampis, skaitmeninis 4096 px failas"); style_name is catalogue.style_label
+    (the look is part of it: "Universe, Vortex")."""
+    return (f"SnapEyes rainelės kūrinys, {n} {lt_form(n, 'akis', 'akys', 'akių')}, {style_name}"
+            + (f", {layout_word}" if layout_word else "") + ", skaitmeninis 4096 px failas")
 
 
 def amount_text_lt(cents):
@@ -133,6 +136,7 @@ CONFIRMATION_LT = {
     "layout": "išdėstymas",                 # "..., išdėstymas Greta"
     "row_names": "Vardai kūrinyje",
     "row_title": "Pavadinimas kūrinyje",
+    "row_date": "Data kūrinyje",
     "row_delivery": "Pristatymas",
     "delivery": ("skaitmeninis failas (JPEG, ilgoji kraštinė 4096 px) Jūsų užsakymo puslapyje; joks spaudinys ar "
                  "rėmelis nesiunčiamas"),
@@ -175,10 +179,11 @@ CONFIRMATION_LT = {
 }
 
 
-def confirmation_rows_lt(order, contract_when, artwork, layout_name, n, names, title, price):
+def confirmation_rows_lt(order, contract_when, artwork, layout_name, n, names, title, price, date=""):
     """The ("rows", ...) of the confirmation, as pay.confirmation_mail builds them for "en": contract_when is
-    when_text_lt(paid_at), artwork item_name_lt(n, style), layout_name catalogue.layout_name("lt", layout) or "", price
-    price_text_lt(amount_total)."""
+    when_text_lt(paid_at), artwork item_name_lt(n, style) without the layout (this adds its own "išdėstymas ..." phrase), layout_name
+    catalogue.layout_name("lt", layout) or "", names the names as one text ("Anna, Max"), price price_text_lt(amount_total), date the date line of the
+    artwork when there is one."""
     c = CONFIRMATION_LT
     rows = [(c["row_order"], order), (c["row_contract"], contract_when),
             (c["row_artwork"], artwork + (f", {c['layout']} {layout_name}" if n > 1 and layout_name else ""))]
@@ -186,6 +191,8 @@ def confirmation_rows_lt(order, contract_when, artwork, layout_name, n, names, t
         rows.append((c["row_names"], names))
     if title:
         rows.append((c["row_title"], title))
+    if date:
+        rows.append((c["row_date"], date))
     rows += [(c["row_delivery"], c["delivery"]), (c["row_price"], c["price"].format(price=price)),
              (c["row_payment"], c["payment"])]
     return rows

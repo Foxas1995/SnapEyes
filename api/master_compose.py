@@ -25,6 +25,7 @@ from PIL import Image
 from _lib import iris as L
 from _lib import catalogue
 from _lib import store
+from _lib import words as WORDS
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib.styles import costs as CO   # what a master takes, in seconds and megabytes (one table for every engine)
 from _lib.styles import steps as SP   # the master plan: a style of the v3 engine is made by its step runner
@@ -161,7 +162,7 @@ def master_compose(body):
         layout = layouts[0]
     elif not isinstance(layout, str) or layout not in layouts:
         raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(layouts) + ".")
-    names, title = _text(body.get("names"), 60), _text(body.get("title"), 40)
+    names, title = WORDS.names_wire(body.get("names")), _text(body.get("title"), 40)       # a list of names (the order's spec) is joined as the legacy engine reads it; 200 in all
     if not catalogue.is_legacy(style):
         return _master_engine(order, keys, style, layout, names, title, body.get("date"), t0)
     W, H = L.multi_canvas(n, layout, SIZE)

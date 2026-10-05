@@ -117,6 +117,7 @@ from . import iris as L
 from . import catalogue
 from . import store
 from . import abtest
+from . import words as W
 from .markets import MARKETS, DEFAULT_MARKET
 from . import pay_lt, pay_hu
 
@@ -648,12 +649,97 @@ def _int(v):
     return None
 
 
+def unavailable(style, n, why, **extra):
+    """409 style_unavailable: the style is known but cannot be bought for these eyes right now (why: eyes, stage, gate, reseal, bar_pupil, plates,
+    capacity). The body names the style, the eye count and why, so that the page can say it and the admin counts the demand (events.answer)."""
+    return store.Answer(409, "style_unavailable", "This style cannot be ordered right now. Please choose another one.", False, None,
+                        style=style, eyes=n, why=why, **extra)
+
+
+def _bad_words(why, field, message, **extra):
+    return store.Answer(400, "bad_words", message, False, None, why=why, field=field, **extra)
+
+
+def _strict_names(value, n):
+    """The names of a new order for a style of the v3 engine: a list of at most one name per eye, 24 characters a name, 200 in all, each name made of letters
+    the artwork font can draw (a letter it lacks would print as an empty box in the delivered file). The limits are REFUSED, never cut: the customer sees
+    on the preview what the file will say. The old string "Anna;Max" is still read."""
+    from .styles import text as TX
+    if value is None:
+        return []
+    if isinstance(value, str):
+        value = value[:W.RAW_MAX]
+    elif isinstance(value, (list, tuple)) and all(isinstance(v, str) for v in value):
+        value = [v[:W.RAW_MAX] for v in list(value)[:W.PARTS_MAX]]
+    else:
+        raise _bad_words("kind", "names", "The names are text, or a list of texts.")
+    names, problem = TX.normalise_names(value, eyes=n)
+    if problem == "too_many":
+        raise _bad_words(problem, "names", f"Add at most one name per eye ({n}).")
+    if problem == "name_long":
+        raise _bad_words(problem, "names", f"A name may have at most {W.NAME_MAX} characters.")
+    if problem == "names_long":
+        raise _bad_words(problem, "names", f"The names may have at most {W.NAMES_TOTAL_MAX} characters together.")
+    if problem == "glyph":
+        bad = sorted({ch for nm in names for ch in TX.unsupported(nm)})
+        raise _bad_words(problem, "names", "The artwork font cannot draw one of the letters in the names.", chars=bad[:12])
+    return names
+
+
+def _strict_date(value):
+    """The date line of a new order for a style of the v3 engine: one line of at most 20 characters the artwork font can draw."""
+    from .styles import text as TX
+    if value is None or value == "":
+        return ""
+    if not isinstance(value, str):
+        raise _bad_words("kind", "date", "The date is text.")
+    d = TX.clean(value[:W.RAW_MAX])
+    if len(d) > W.DATE_MAX:
+        raise _bad_words("date_long", "date", f"The date may have at most {W.DATE_MAX} characters.")
+    bad = TX.unsupported(d)
+    if bad:
+        raise _bad_words("glyph", "date", "The artwork font cannot draw one of the characters in the date.", chars=bad[:12])
+    return d
+
+
+def opts_from_request(value):
+    """The options a checkout request names, checked for their kind (the very rule api/compose.py _opts follows for a preview: swap true or false, rotate a
+    whole number from 0 to 7, look the code of a look; any other key is a 400)."""
+    if value is None or value == "":
+        return {}
+    if not isinstance(value, dict):
+        raise L.ClientError("opts is an object.")
+    if set(value) - set(W.OPT_KEYS):
+        raise L.ClientError(f"Unknown option: the options are {', '.join(W.OPT_KEYS)}.")
+    out = {}
+    if "swap" in value:
+        if not isinstance(value["swap"], bool):
+            raise L.ClientError("The option swap is true or false.")
+        out["swap"] = value["swap"]
+    if "rotate" in value:
+        if not isinstance(value["rotate"], int) or isinstance(value["rotate"], bool) or not 0 <= value["rotate"] <= 7:
+            raise L.ClientError("The option rotate is a whole number from 0 to 7.")
+        out["rotate"] = value["rotate"]
+    if "look" in value:
+        lk = value["look"]
+        if not isinstance(lk, str) or not 1 <= len(lk) <= 24 or not all(c.islower() or c.isdigit() or c == "_" for c in lk):
+            raise L.ClientError("The option look is the code of a look.")
+        out["look"] = lk
+    return out
+
+
 def spec_from(src, markets=None):
-    """The artwork an order is for: {eyes, style, layout, names, title, lang, market}, validated (ClientError
-    otherwise). src is the checkout request (markets=SELECTABLE: only a market the site sells in), or a paid session's
-    metadata or an order's recorded spec (all strings; markets None: any market in MARKETS, so an order stays readable
-    after its market stops being offered). No market named: the default one (every order made before markets existed
-    was one of it). The language is one of the market's edition (lang_for): an Australian order is English or German."""
+    """The artwork an order is for: {eyes, style, layout, names (a list), title, lang, market} and, when the order has them, date and opts (swap, rotate, look:
+    the options that APPLY to the style), validated (ClientError otherwise). src is the checkout request (markets=SELECTABLE: only a market the site sells in,
+    and only a style that can be ordered now), or a paid session's metadata or an order's recorded spec (markets None: lenient, any market in MARKETS and any
+    style of the registry that has n eyes, so an order stays readable after its market or its style stops being offered). No market named: the default one
+    (every order made before markets existed was one of it). The language is one of the market's edition (lang_for): an Australian order is English or German.
+
+    A known style that cannot be ordered is a 409 style_unavailable (why eyes: it does not take n eyes; stage: it is not live for n eyes, or the look the
+    order draws is not live), not a 400: an id the registry does not know is the 400. A NEW order for a style of the v3 engine has its words checked
+    strictly (names: one per eye, 24 characters, 200 in all; date: 20; a letter the artwork font cannot draw is refused); an order for a legacy style
+    keeps what the legacy engine always did (the names as text cut at 200 characters, no date and no options: the engine has none). The checks of the plan
+    (the gate of the sealed eyes, the plates, the capacity, the page's plan8) need the order's draft and are api/checkout.py's."""
     if not isinstance(src, dict):
         raise L.ClientError("Send a JSON object.")
     market = src.get("market")
@@ -665,31 +751,66 @@ def spec_from(src, markets=None):
     if n is None or not 1 <= n <= MAX_EYES:
         raise L.ClientError(f"Choose between 1 and {MAX_EYES} eyes.")
     style = src.get("style")
-    # a checkout request (markets given) takes only a style that can be ordered now; a paid session's metadata or a recorded
-    # spec (markets None) takes any style of the registry that has n eyes, so an order stays readable after its style stops
-    # being offered
-    allowed = catalogue.orderable_ids(n) if markets is not None else tuple(i for i in catalogue.ids() if catalogue.in_range(i, n))
-    if not isinstance(style, str) or style not in allowed:
+    strict = markets is not None
+    if not isinstance(style, str) or not catalogue.known(style) or (not strict and not catalogue.in_range(style, n)):
+        # a paid session's metadata or a recorded spec takes any style of the registry that has n eyes; a checkout request names one of the ids that can be ordered
+        allowed = catalogue.orderable_ids(n) if strict else tuple(i for i in catalogue.ids() if catalogue.in_range(i, n))
         raise L.ClientError("Choose one of the styles: " + ", ".join(allowed) + ".")
+    if strict:
+        if not catalogue.in_range(style, n):
+            raise unavailable(style, n, "eyes")
+        if not catalogue.orderable(style, n):          # strict: a storage error that hides the owner's switch is a 503, never read as live
+            raise unavailable(style, n, "stage")
     layout = src.get("layout")
     layouts = catalogue.layouts_for(style, n)
     if layout in (None, ""):
         layout = layouts[0]
     elif not isinstance(layout, str) or layout not in layouts:
         raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(layouts) + ".")
-    return {"eyes": n, "style": style, "layout": layout, "names": clean_text(src.get("names"), 60),
-            "title": clean_text(src.get("title"), 40), "lang": lang_for(market, src.get("lang")), "market": market}
+    spec = {"eyes": n, "style": style, "layout": layout, "names": [], "title": clean_text(src.get("title"), 40),
+            "lang": lang_for(market, src.get("lang")), "market": market}
+    if catalogue.is_legacy(style):
+        spec["names"] = W.names_list(src.get("names"))
+        return spec
+    if strict:
+        spec["names"] = _strict_names(src.get("names"), n)
+        date = _strict_date(src.get("date"))
+        opts = catalogue.applied_opts(style, n, opts_from_request(src.get("opts")))
+        if not catalogue.look_orderable(style, n, opts):
+            raise unavailable(style, n, "stage", look=catalogue.look_of(style, n, opts))
+    else:
+        spec["names"] = W.names_list(src.get("names"))
+        date = W.date_clean(src.get("date"))
+        opts = W.opts_read(src.get("opts"))
+    if date:
+        spec["date"] = date
+    if opts:
+        spec["opts"] = opts
+    return spec
 
 
-def item_name(spec):
-    n, style = spec["eyes"], catalogue.name_of(spec["style"])
+def names_text(spec):
+    """The names of a spec for an e-mail row or a log line: "Anna, Max" (a spec of this code), or the old string as it was; '' for none."""
+    return W.names_text(spec.get("names") if isinstance(spec, dict) else None)
+
+
+def item_name(spec, layout=True):
+    """The Stripe line item and the confirmation e-mail's artwork row, in the order's language: the style as an order prints it (its brand name, and for a style
+    with looks the look: "Universe, Vortex", because the look is a different product) and, for a style of the v3 engine with two or more eyes, the layout word
+    ("Family Colours, Triangle"). layout=False leaves the layout out: the confirmation e-mail adds its own "layout ..." phrase to this row. A legacy style is
+    named exactly as it always was."""
+    n = spec["eyes"]
+    style = catalogue.style_label(spec["style"], n, spec.get("opts"))
+    word = ""
+    if layout and n > 1 and catalogue.known(spec["style"]) and not catalogue.is_legacy(spec["style"]):
+        word = catalogue.layout_name(spec.get("lang") if spec.get("lang") in LANGS else "en", spec.get("layout"))
     if spec["lang"] == "lt":
-        return pay_lt.item_name_lt(n, style)
+        return pay_lt.item_name_lt(n, style, word)
     if spec["lang"] == "hu":
-        return pay_hu.item_name_hu(dict(spec, eyes=n))
+        return pay_hu.item_name_hu(dict(spec, eyes=n), layout)
     if spec["lang"] == "de":
-        return f"SnapEyes-Iris-Kunstwerk, {n} {'Auge' if n == 1 else 'Augen'}, {style}, digitale Datei 4096 px"
-    return f"SnapEyes iris artwork, {n} {'eye' if n == 1 else 'eyes'}, {style}, 4096 px digital file"
+        return f"SnapEyes-Iris-Kunstwerk, {n} {'Auge' if n == 1 else 'Augen'}, {style}{', ' + word if word else ''}, digitale Datei 4096 px"
+    return f"SnapEyes iris artwork, {n} {'eye' if n == 1 else 'eyes'}, {style}{', ' + word if word else ''}, 4096 px digital file"
 
 
 def currency_of(v):
@@ -988,10 +1109,12 @@ def _raise_for(r, label):
     raise PayError(msg)
 
 
-def create_session(order, k, spec, amount, consent, expires, exp=None):
+def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None):
     """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
     methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
     exp: the price experiment and variant the amount was priced under (abtest.assignment), written to the metadata.
+    plan: the plan the checkout froze for the order (api/_lib/styles/steps.py make_plan): its plates version, engine version and plan8 are written to the
+    metadata (pv, ev, plan8), so that a paid record can be compared with the plan stored in order.json (record_paid, steps.create_plan).
     Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
     market = spec.get("market") or DEFAULT_MARKET
@@ -1018,9 +1141,13 @@ def create_session(order, k, spec, amount, consent, expires, exp=None):
         ("payment_intent_data[metadata][order]", order),
     ]
     meta = {"order": order, "key_sha": key_sha(k), "eyes": str(spec["eyes"]), "style": spec["style"],
-            "layout": spec["layout"], "names": spec["names"], "title": spec["title"], "lang": lang,
+            "layout": spec["layout"], "names": W.meta_names(spec.get("names")), "title": spec["title"], "lang": lang,
             "market": market, "currency": currency,
             "amount": str(int(amount)), "consent_version": consent["version"], "consent_at": consent["at"]}
+    # what the order carries beyond the old keys (WP12): the date line and the options that apply (each one short string; an empty value is left out below)
+    meta.update(date=W.date_clean(spec.get("date")), opts=W.meta_opts(spec.get("opts")))
+    if isinstance(plan, dict):
+        meta.update(pv=str(plan.get("pv")), ev=str(plan.get("engine_v")), plan8=str(plan.get("plan8") or ""))
     meta.update(abtest.metadata(exp, market))
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
@@ -1219,6 +1346,22 @@ def paid_consent(order, rec, paid):
     return dict(c, lang=lang, text=text) if text else None
 
 
+def note_checkout(stage, spec, rec, sess=None, gate=None):
+    """The anonymous event of the style's funnel after the preview (events.py kind checkout; counts only, no order id, no amount): stage start (the Stripe
+    session was created) or paid (the payment was recorded, once per order: record_paid's new path). gate is the set level gate result of the order under the
+    style's rule (checkout computes it and keeps it in order.json's checkout block, where the payment finds it again: a style whose gate is advisory can be
+    bought on a failing set, and that is "ordered after failure"). Best effort: it never raises and never costs a payment or a checkout."""
+    try:
+        from . import events
+        co = rec.get("checkout") if isinstance(rec, dict) else None
+        if gate is None and isinstance(co, dict) and sess is not None and co.get("session_id") == sess.get("id"):
+            gate = co.get("gate")
+        events.record("checkout", stage=stage, style=spec.get("style"), eyes=spec.get("eyes"), gate=gate if isinstance(gate, str) else "unknown",
+                      lang=spec.get("lang"), market=spec.get("market"), _wait=0.6)
+    except Exception:  # noqa: a count must never cost a payment
+        pass
+
+
 def record_paid(order, rec, sess, source, event_id=None):
     """Mark the order paid, once: paid.json is created atomically and never overwritten, so a replayed webhook
     or a second order-page check finds it and changes nothing. Returns (paid record, new)."""
@@ -1252,6 +1395,12 @@ def record_paid(order, rec, sess, source, event_id=None):
             "email": email.strip() if email else None, "paid_at": now, "paid_iso": iso(now),
             "source": source, "event_id": event_id if isinstance(event_id, str) else None, "spec": spec,
             "consent": consent_record(meta, rec, sess, spec["lang"])}
+    # the plan the checkout froze for this session (WP12): its identity and the engine it was made under, as the session's metadata says them (the server
+    # wrote them; the client cannot change them). steps.create_plan uses the plan stored in order.json only when its plan8 is this one
+    p8 = meta.get("plan8")
+    if isinstance(p8, str) and re.fullmatch(r"[0-9a-f]{8}", p8):
+        paid["plan8"] = p8
+        paid["engine"] = {"v": _int(meta.get("ev")), "pv": _int(meta.get("pv"))}
     # what the server priced at checkout (the metadata's amount, written by it), else the market's price now; and the
     # market's currency. A difference is recorded and the owner told (note_paid), and the order is delivered as paid:
     # only the server can make a session, so it is a price change or a Stripe-side conversion, never the customer
@@ -1278,6 +1427,7 @@ def record_paid(order, rec, sess, source, event_id=None):
         if paid["livemode"]:
             _mark_sold(order)
         abtest.note_paid(paid)             # the anonymous event of a price experiment's payment, once
+        note_checkout("paid", spec, rec, sess)         # the style's own funnel after the preview (api/_lib/events.py kind checkout), once per order
         if withdrawn(order):
             # the customer withdrew while this payment was still settling (or an old tab was paid after they
             # withdrew): nothing is made, no confirmation goes out, and the owner refunds it
@@ -1734,8 +1884,8 @@ def confirmation_mail(order, paid, k, pack, consent):
         # texts. Neither is an Australian market's language, so no invoice and no "Your rights in Australia" here
         if lang == "lt":
             when = pay_lt.when_text_lt
-            crows = pay_lt.confirmation_rows_lt(order, when(paid.get("paid_at")), item_name(dict(spec, lang=lang, eyes=n)),
-                                                layout, n, spec.get("names"), spec.get("title"), price)
+            crows = pay_lt.confirmation_rows_lt(order, when(paid.get("paid_at")), item_name(dict(spec, lang=lang, eyes=n), layout=False),
+                                                layout, n, names_text(spec), spec.get("title"), price, spec.get("date"))
             subject = pay_lt.CONFIRMATION_LT["subject"].format(order=order)
             blocks = pay_lt.confirmation_blocks_lt(link, wlink, crows, when(consent["at"]), consent["text"], auto,
                                                    pay_lt.date_text_lt(pack["updated"]), terms["url"],
@@ -1751,12 +1901,14 @@ def confirmation_mail(order, paid, k, pack, consent):
         return subject, text, html_body
     rows = [("Bestellnummer" if de else "Order number", order),
             ("Vertragsschluss" if de else "Contract date", when_text(paid.get("paid_at"), lang)),
-            ("Kunstwerk" if de else "Artwork", item_name(dict(spec, lang=lang, eyes=n))
+            ("Kunstwerk" if de else "Artwork", item_name(dict(spec, lang=lang, eyes=n), layout=False)
              + (f", {'Anordnung' if de else 'layout'} {layout}" if n > 1 and layout else ""))]
-    if spec.get("names"):
-        rows.append(("Namen auf dem Kunstwerk" if de else "Names on the artwork", spec["names"]))
+    if names_text(spec):
+        rows.append(("Namen auf dem Kunstwerk" if de else "Names on the artwork", names_text(spec)))
     if spec.get("title"):
         rows.append(("Titel auf dem Kunstwerk" if de else "Title on the artwork", spec["title"]))
+    if spec.get("date"):
+        rows.append(("Datum auf dem Kunstwerk" if de else "Date on the artwork", spec["date"]))
     if de:
         rows += [("Lieferung", "eine digitale Datei (JPEG, 4096 px an der längsten Seite) auf Ihrer Bestellseite; es "
                                "wird kein Druck und kein Rahmen versendet"),

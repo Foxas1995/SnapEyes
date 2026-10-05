@@ -25,6 +25,7 @@ on its own; pay.py passes in what it has computed.
 import calendar
 import time
 from . import catalogue
+from . import words as W
 
 SELLER_HU = "MB „Portretizuokis”, cégazonosító szám: 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Litvánia"
 
@@ -50,10 +51,15 @@ MONTHS_HU = ("január", "február", "március", "április", "május", "június",
 NBSP = " "
 
 
-def item_name_hu(spec):
-    """The Stripe line item and the confirmation's "Alkotás" row. A noun stays singular after a number (2 szem)."""
-    n, style = int(spec["eyes"]), catalogue.name_of(spec["style"])
-    return f"SnapEyes íriszalkotás, {n} szem, {style}, 4096 px-es digitális fájl"
+def item_name_hu(spec, layout=True):
+    """The Stripe line item and the confirmation's "Alkotás" row. A noun stays singular after a number (2 szem). The style is as an order prints it
+    (catalogue.style_label: the look is part of it, "Universe, Vortex"); a style of the v3 engine with two or more eyes names its layout after the style
+    ("3 szem, Family Colours, Háromszög, 4096 px-es digitális fájl") unless layout is False (the confirmation adds its own "elrendezés: ..." phrase)."""
+    n, style = int(spec["eyes"]), catalogue.style_label(spec["style"], int(spec["eyes"]), spec.get("opts"))
+    word = ""
+    if layout and n > 1 and catalogue.known(spec["style"]) and not catalogue.is_legacy(spec["style"]):
+        word = catalogue.layout_name("hu", spec.get("layout"))
+    return f"SnapEyes íriszalkotás, {n} szem, {style}{', ' + word if word else ''}, 4096 px-es digitális fájl"
 
 
 def _group(n):
@@ -146,11 +152,14 @@ def confirmation_hu(*, order, spec, n, layout, price, paid_at, consent_at, conse
     the pack's "updated" day, seller = seller_lines_hu(pack)) and then appends the rule and the two legal texts."""
     rows = [("Rendelésszám", order),
             ("A szerződés létrejötte", when_text_hu(paid_at)),
-            ("Alkotás", item_name_hu(dict(spec, eyes=n)) + (f", elrendezés: {layout}" if n > 1 and layout else ""))]
-    if spec.get("names"):
-        rows.append(("Nevek az alkotáson", spec["names"]))
+            ("Alkotás", item_name_hu(dict(spec, eyes=n), False) + (f", elrendezés: {layout}" if n > 1 and layout else ""))]
+    names = W.names_text(spec.get("names"))
+    if names:
+        rows.append(("Nevek az alkotáson", names))
     if spec.get("title"):
         rows.append(("Cím az alkotáson", spec["title"]))
+    if spec.get("date"):
+        rows.append(("Dátum az alkotáson", spec["date"]))
     rows += [("Teljesítés", "digitális fájl (JPEG, a hosszabbik oldalán 4096 px) a rendelési oldaladon; nyomatot és "
                             "keretet nem küldünk"),
              ("Ár", f"{price}. Ez a végső ár: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem "

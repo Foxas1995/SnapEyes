@@ -60,6 +60,7 @@ from _lib import events as E   # the admin panel's usage events (no personal dat
 from _lib import preview as P
 from _lib import store         # Answer: the refusals that are not a 400, and _StatusReq, which gives them their status
 from _lib import markets as MK
+from _lib import words as W
 from _lib.styles import gate as GATE   # the restoration gate: the set-level result of the eyes of one request
 from _lib.styles import guard as GUARD   # one heavy render at a time per instance, one memory budget
 from _lib.styles import costs as COSTS   # what a preview and a batch of tiles cost, before any pixel is drawn
@@ -255,10 +256,10 @@ def _gate_code(style, n, metas):
 
 
 # ----------------------------------------------------------------------------- the customer's words
-TEXT_RAW_MAX = 1000          # characters of one customer text field that are read at all (the preview keeps 60 of the names and 20 of the date): the body
+TEXT_RAW_MAX = 1000          # characters of one customer text field that are read at all (the preview keeps the names line up to 213 characters and 20 of the date): the body
                              # may be 4 MB, and cleaning it letter by letter cost 7.5 s of CPU before the picture was drawn (the legacy path cuts first)
 TEXT_PARTS_MAX = 16          # parts of a names list that are read (the old wire form holds one name per eye, eight at most)
-NAMES_CUT = 60               # characters of the names line the preview keeps; the paid file cuts at the same place (styles/steps.py master_words)
+NAMES_CUT = W.LOCKUP_MAX     # characters of the names line the preview keeps (eight names of 24 letters, C16); the paid file cuts at the same place (styles/steps.py master_words)
 DATE_CUT = 20
 
 def _engine_text(value, limit=None):
@@ -303,10 +304,11 @@ def _engine_date(value, limit=None):
     return out[:limit] if limit else out
 
 def _legacy_names(value):
-    """The names of a legacy preview: the old string cut at 60 characters; a list (the new wire form) is joined with the old separator first."""
+    """The names of a legacy preview: the old string cut at the 200 characters of the order's total (the paid file's own cut, master_compose); a list (the new
+    wire form) is joined with the old separator first."""
     if isinstance(value, (list, tuple)):
         value = ";".join(v[:TEXT_RAW_MAX] for v in value[:TEXT_PARTS_MAX] if isinstance(v, str))
-    return _text(value, NAMES_CUT)
+    return _text(value, W.NAMES_TOTAL_MAX)
 
 
 def _engine_canvas(style, n, fmt_in):

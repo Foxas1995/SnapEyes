@@ -365,6 +365,64 @@ def looks_for(style_id, n, admin=False):
     return out
 
 
+LOOK_NAMES = {"echo": "Echo", "vortex": "Vortex", "deepfield": "Deep Field", "starfield": "Starfield"}      # the proper names of the Universe looks (English in every language)
+
+
+def look_name(look):
+    """The proper name of a look ("Vortex"); an unknown code is returned as it came."""
+    return LOOK_NAMES.get(look, look) if isinstance(look, str) else ""
+
+
+def default_look(style_id, n):
+    """The look a style of n eyes draws when the customer chooses none (its engine design when that is one of its looks, else its first look), or None for
+    a style with no looks."""
+    e = engine_for(style_id, n)
+    looks = (e or {}).get("looks") or {}
+    if not looks:
+        return None
+    return e["design"] if e["design"] in looks else next(iter(looks))
+
+
+def look_of(style_id, n, opts=None):
+    """The look an order of this style draws: the one in its (applied) options, else the style's default; None for a style with no looks."""
+    d = default_look(style_id, n)
+    look = (opts or {}).get("look") if isinstance(opts, dict) else None
+    return look if d is not None and look in ((engine_for(style_id, n) or {}).get("looks") or {}) else d
+
+
+def look_orderable(style_id, n, opts=None):
+    """May the look an order draws be bought now: a style with no looks always, else the look must be live (looks_for: never above the stage of
+    the style itself, so a storage error that capped the style at preview caps its looks too)."""
+    look = look_of(style_id, n, opts)
+    return look is None or looks_for(style_id, n).get(look) == "live"
+
+
+def applied_opts(style_id, n, opts):
+    """The options of a request that APPLY to this style for n eyes, in the form the seed key and the plan read them (swap for two eyes, rotate modulo n
+    for three or more, a look the style has; every other key is left out): the very rule api/compose.py _tile_opts follows for a preview, so that a
+    checkout and a preview of the same choice make the same plan (the page's plan8 is compared with the server's at checkout; a test holds the two
+    functions equal). Pure: it reads the options and the engine entry, never a stage."""
+    opts = opts if isinstance(opts, dict) else {}
+    out = {}
+    if "swap" in opts and n == 2:
+        out["swap"] = opts["swap"]
+    if "rotate" in opts and n >= 3:
+        out["rotate"] = opts["rotate"] % n
+    if "look" in opts and opts["look"] in ((engine_for(style_id, n) or {}).get("looks") or {}):
+        out["look"] = opts["look"]
+    return out
+
+
+def style_label(style_id, n, opts=None):
+    """The style as an order prints it (the Stripe line item, the confirmation e-mail): its brand name, and for a style with looks the look, because the
+    look is a different product ("Universe, Vortex"); English in every language, as the brand names are."""
+    d = STYLES.get(style_id) if isinstance(style_id, str) else None
+    if not d:
+        return str(style_id)
+    look = look_of(style_id, n, opts) if not d["legacy"] and in_range(style_id, n) else None
+    return d["name"] + (f", {look_name(look)}" if look else "")
+
+
 def tile_row(style_id, n, profiles=None, admin=False):
     """The tile of one style for n eyes: {id, name, slug, group, legacy, stage, available, why, layouts, eyes, price_class, looks, gate, rule}. available
     is False with a why when the eyes cannot take the style (_problem); looks is {look: stage} (looks_for); eyes is n, the count the tile is for; gate is

@@ -661,11 +661,14 @@ def beacon(body):
 # ----------------------------------------------------------------------------- the emails
 ROW_LABEL = {"en": "Price list that applied to your order", "de": "Preisliste, die für Ihre Bestellung galt",
              "lt": "Jūsų užsakymui taikytas kainoraštis", "hu": "A megrendelésére alkalmazott árlista"}
+# The row names the price CLASSES, not a list of styles or a number of eyes (WP12, the terms of sale do the same): {black} is the one style of the black class
+# (catalogue.class_style("black"), Clean Iris once the v3 styles are live), every other style costs the art price, two or more eyes cost the same in any style.
+# No maximum number of eyes: it is a run-time catalogue value, and this row is part of the contract e-mail.
 ROW_TEXT = {
-    "en": "one eye Studio Black {b}, one eye on an art background {a}, two eyes {t}, each further eye +{f} (up to {m} eyes)",
-    "de": "ein Auge Studio Black {b}, ein Auge mit Kunsthintergrund {a}, zwei Augen {t}, jedes weitere Auge +{f} (bis zu {m} Augen)",
-    "lt": "viena akis Studio Black {b}, viena akis su meniniu fonu {a}, dvi akys {t}, kiekviena papildoma akis +{f} (iki {m} akių)",
-    "hu": "egy szem Studio Black {b}, egy szem művészi háttérrel {a}, két szem {t}, minden további szem +{f} (legfeljebb {m} szem)",
+    "en": "one eye, {black}: {b}; one eye, any other style: {a}; two eyes, any style: {t}; each further eye: +{f}",
+    "de": "ein Auge, {black}: {b}; ein Auge, jeder andere Stil: {a}; zwei Augen, jeder Stil: {t}; jedes weitere Auge: +{f}",
+    "lt": "viena akis, {black}: {b}; viena akis, bet kuris kitas stilius: {a}; dvi akys, bet kuris stilius: {t}; kiekviena papildoma akis: +{f}",
+    "hu": "egy szem, {black}: {b}; egy szem, bármely más stílus: {a}; két szem, bármelyik stílus: {t}; minden további szem: +{f}",
 }
 
 
@@ -681,8 +684,8 @@ def price_list_row(paid, lang):
     cur = paid.get("currency")
     t = lambda c: pay.price_text(c, lang, cur)
     l = lang if lang in ROW_TEXT else "en"
-    return ROW_LABEL[l], ROW_TEXT[l].format(b=t(lad["one_eye_studio_black"]), a=t(lad["one_eye_art"]), t=t(lad["two_eyes"]),
-                                            f=t(lad["each_further_eye"]), m=MAX_EYES)
+    return ROW_LABEL[l], ROW_TEXT[l].format(black=catalogue.name_of(catalogue.class_style("black")), b=t(lad["one_eye_studio_black"]),
+                                            a=t(lad["one_eye_art"]), t=t(lad["two_eyes"]), f=t(lad["each_further_eye"]))
 
 
 def insert_price_list_row(rows, paid, lang):
