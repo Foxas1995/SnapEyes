@@ -57,7 +57,13 @@ export function saveOrderRef(r: OrderRef | null): void {
  *  only: multi.ts savedEye leaves both out). */
 export type SnapEye = Omit<Eye, 'draft' | 'wide'>;
 
-export interface Snapshot { v: 1; order: string; at: number; style: string; layoutWant: Layout | null; names: string; eyes: SnapEye[] }
+/** The artwork as this tab kept it for the way back from Stripe. names: the old wire string, one name per eye joined by a semicolon (src/try/names.ts
+ *  wireNames; a snapshot of an older page holds the one free line of 60 characters, which reads the same way). date, family and opts are optional, so a
+ *  snapshot of an older page loads unchanged. */
+export interface Snapshot {
+  v: 1; order: string; at: number; style: string; layoutWant: Layout | null; names: string; eyes: SnapEye[];
+  date?: string; family?: string; opts?: { swap?: boolean; rotate?: number; look?: string | null };
+}
 
 /** Keep the artwork for the way back from Stripe. Returns false when the browser would not hold it. */
 export function saveSnapshot(s: Snapshot): boolean {
@@ -110,6 +116,8 @@ export type CheckoutError = 'network' | 'busy' | 'payments' | 'too_large' | 'pau
 
 export type CheckoutOutcome =
   | { kind: 'redirect'; url: string; ref: OrderRef }            // Stripe's payment page
+  | { kind: 'plan_changed'; ref: OrderRef }                     // 409 plan_changed: the artwork the server would make is not the one on screen; nothing was created
+  | { kind: 'unavailable'; why: string; ref: OrderRef }         // 409 style_unavailable: the style cannot be ordered for these eyes now (stage, gate, pupil)
   | { kind: 'paid'; url: string; ref: null }                    // this very artwork is paid already: its order page
   | { kind: 'price_changed'; reply: PriceChangedReply; ref: OrderRef }   // the price is not what the page showed: show the new one
   | { kind: 'stale'; eyes: number[]; ref: OrderRef | null }     // these eyes have to be taken again
@@ -125,6 +133,13 @@ export interface CheckoutInput {
   ref: OrderRef | null;
   /** The market to buy in (src/shared/markets.ts); the page's own when not given. The server prices it itself. */
   market?: string;
+  /** The rest of the artwork's description (api/compose.py's reply names the options that applied): the date line and the family name, the options
+   *  (swap, rotate, look) and plan8, the identity of the plan the preview on screen is (the server recomputes the plan from the sealed profiles and answers 409
+   *  plan_changed when it differs). Absent or empty ones are not sent. */
+  date?: string;
+  familyName?: string;
+  opts?: Record<string, unknown>;
+  plan8?: string | null;
   /** A price experiment's signed assignment token (src/shared/pricing.ts experimentToken): the server prices the order from
    *  it alone. None: the standard ladder. */
   expToken?: string | null;
@@ -269,6 +284,10 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
   const r = await api<CheckoutReply>('/api/checkout', {
     body: {
       order: ref.order, k: ref.k, eyes: n, style: inp.style, layout: inp.layout, names: inp.names, title: '', lang: inp.lang, market: inp.market ?? currentMarket(), consent_digital: true,
+      ...(inp.date ? { date: inp.date } : {}),
+      ...(inp.familyName ? { family_name: inp.familyName } : {}),
+      ...(inp.opts && Object.keys(inp.opts).length ? { opts: inp.opts } : {}),
+      ...(inp.plan8 ? { plan8: inp.plan8 } : {}),
       ...(inp.expToken ? { exp_token: inp.expToken } : {}),
       ...(typeof inp.shown === 'number' ? { shown: inp.shown } : {}),
     },
@@ -283,5 +302,10 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
   if (r.reason === 'eyes_missing') return { kind: 'resync', ref };
   if (r.reason === 'already_paid') return { kind: 'paid', url: orderPageUrl(ref.order, ref.k, inp.lang), ref: null };
   if (r.reason === 'draft_expired' || r.reason === 'bad_link' || r.reason === 'withdrawn') return { kind: 'restart' };
+  if (r.status === 409 && r.reason === 'plan_changed') return { kind: 'plan_changed', ref };
+  if (r.status === 409 && r.reason === 'style_unavailable') {
+    const why = r.data && typeof (r.data as unknown as { why?: unknown }).why === 'string' ? (r.data as unknown as { why: string }).why : 'stage';
+    return { kind: 'unavailable', why, ref };
+  }
   return failure(r, ref);
 }

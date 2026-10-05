@@ -294,7 +294,6 @@ const en = {
     retry: 'Try again',
     layout: 'Layout',
     style: 'Style',
-    namesPlaceholder: 'Names or inscription (optional)',
     save: 'Save preview',
     // the saved preview's file name; a sample preview says so in its name too
     fileName: (style: string, n: number, sample: boolean) => `snapeyes-preview-${style}-${n}-${n === 1 ? 'eye' : 'eyes'}${sample ? '-ai-generated-sample' : ''}.jpg`,
@@ -328,14 +327,109 @@ const en = {
     },
   },
 
+  // the style picker (./picker.ts, ./StylePicker.tsx): the tiles the server sends for these eyes, the retake state, the options and the words on the
+  // artwork. The three groups and their lines are the landing page's (wave-lp styles.groups and styles.groupIntro); the group follows the number of eyes.
+  picker: {
+    groups: { one: 'Just you', two: 'Two of you', family: 'Family' },
+    groupIntro: {
+      one: 'One iris, alone on black or set in a universe of its own.',
+      two: 'For a partner: two irises that meet.',
+      family: 'For a family: each iris keeps its own colour.',
+    },
+    // a group none of whose styles can be bought yet says so once, instead of a "Soon" mark on every tile
+    groupSoon: 'Free preview now. Ordering for this group opens soon.',
+    // the buy card when no style of this many eyes can be bought yet, and when the selected style opens soon: one line, no price, no date
+    countSoon: (n: number) => `Ordering for ${eyes(n)} opens soon.`,
+    soonBuy: 'This style opens soon. Choose another to order now.',
+    soonNote: 'This style opens soon.',
+    listLabel: 'Styles for your eyes',
+    soon: 'Soon',
+    recommended: 'Recommended',
+    // the line under the recommended tile, by the key the server sends (api/_lib/styles_registry.py reason): chosen by the colour of the eyes, never by price
+    reasons: {
+      'reason.solo_powder.own': 'Your own colours, turned to powder',
+      'reason.solo_gold.dark_brown': 'Gold makes dark brown eyes glow',
+      'reason.solo_radiance.grey': 'Silver light for grey eyes',
+      'reason.duo_collision_infinity.own': 'Two irises, one infinity',
+      'reason.duo_kiss_collision.own': 'Two worlds, one burst',
+      'reason.duo_kiss_collision.dark_brown': 'Two worlds, one burst',
+      'reason.duo_kiss_collision.grey': 'Two worlds, one burst',
+      'reason.grp_collision.own': 'Everyone in their own colour',
+      'reason.grp_collision.dark_brown': 'Everyone in their own colour',
+      'reason.grp_collision.grey': 'Everyone in their own colour',
+    },
+    retakeFirst: (i: number) => `Retake eye ${i} first`,
+    resealFirst: (i: number) => `Make the preview of eye ${i} again`,
+    pupil: 'Not for this pupil shape',
+    tileAlt: (name: string) => `${name} on your eyes: reduced preview with a watermark`,
+    tileMaking: (name: string) => `${name}: the preview is being made`,
+    tileFailed: 'Preview not made',
+    // the one line that says why the style on screen is not the one the customer chose (a chosen style is kept whenever the eyes can take it)
+    changed: {
+      eyes: (from: string, to: string, n: number) => `${from} is not available for ${eyes(n)}, so we chose ${to}.`,
+      gate: (from: string, to: string, i: number) => `${from} needs a cleaner iris, so we chose ${to} for now. Retake eye ${i} to use ${from}.`,
+      reseal: (from: string, to: string, i: number) => `To use ${from}, please make the preview of eye ${i} again. For now we chose ${to}.`,
+      pupil: (from: string, to: string) => `${from} does not suit this pupil shape, so we chose ${to}.`,
+    },
+    // the retake state: the eye chip, the warning of a style that only warns, and the card with the reason, one tip and the way to ask us
+    chipRetake: 'Retake',
+    chipLabel: (i: number) => `Eye ${i}: a retake is needed`,
+    advisory: (list: number[], total: number) => (total === 1
+      ? 'An eyelid or lash is still in the ring of your iris. Retake it for a cleaner result.'
+      : `${list.length === 1 ? `Eye ${list[0]}` : `Eyes ${andList(list, 'and')}`}: an eyelid or lash is still in the ring. Retake for a cleaner result.`),
+    retake: {
+      title: (list: number[], total: number) => (total === 1 ? 'Your eye needs a retake' : list.length === 1 ? `Eye ${list[0]} needs a retake` : `Eyes ${andList(list, 'and')} need a retake`),
+      lid: 'An eyelid, a lash or skin is still inside the ring of the iris.',
+      reflection: 'A reflection is still left in the iris.',
+      reseal: (list: number[], total: number) => (total === 1
+        ? 'This preview is from an older version of the page. Please retake the eye to go on.'
+        : `${list.length === 1 ? `The preview of eye ${list[0]} is` : `The previews of eyes ${andList(list, 'and')} are`} from an older version of the page. Please retake ${list.length === 1 ? 'it' : 'them'} to go on.`),
+      held: 'Styles that need a cleaner iris are greyed out until then.',
+      tips: {
+        open: 'Open the eye wide, look straight into the lens and lift the upper lid gently with a fingertip.',
+        light: 'Use daylight from a window, off to one side. No flash and no lamp.',
+        grey: 'A grey iris has a soft edge and shows best in even daylight: stand close to a window, off to one side, and keep the eye wide open.',
+      },
+      // the landing page's FAQ answer, word for word ({link} is a link): the owner looks at the photos, no promise of a time
+      manual: 'Still stuck? Email your best photos to {link} and Mantas will look at them.',
+      noPreview: 'We cannot show a preview of these eyes yet. See below what to change.',
+    },
+    stack: 'Your two irises differ strongly in colour, so one sits in front of the other.',
+    widePupil: 'Your pupils are wide, so the irises touch instead of overlapping.',
+    options: {
+      swap: 'Swap places',
+      rotate: 'Rotate places',
+      earlier: 'Move earlier',
+      later: 'Move later',
+      earlierLabel: (i: number) => `Move eye ${i} earlier on the artwork`,
+      laterLabel: (i: number) => `Move eye ${i} later on the artwork`,
+      look: 'Look',
+    },
+    // the customer's own words on the artwork: a name per eye, a date and (for an arrangement with a hollow) a family name. Nothing else is ever written on it.
+    names: {
+      title: 'Words on the artwork (optional)',
+      nameFor: (i: number, total: number) => (total === 1 ? 'Name (optional)' : `Name for eye ${i}`),
+      date: 'Date (optional)',
+      datePlaceholder: 'For example 14 June 2026',
+      family: 'Family name (optional)',
+      problem: {
+        nameLong: (i: number, max: number) => `The name for eye ${i} is too long: at most ${max} letters.`,
+        namesLong: (max: number) => `The names are too long together: at most ${max} letters.`,
+        glyph: (chars: string) => `The artwork font cannot draw ${chars}. Please use another letter.`,
+        dateLong: (max: number) => `The date is too long: at most ${max} characters.`,
+        familyLong: (max: number) => `The family name is too long: at most ${max} letters.`,
+      },
+    },
+  },
+
   price: {
     title: 'Price for this artwork',
-    oneEye: (style: string) => `1 eye · ${style}`,
-    duo: 'Couple Duo · 2 eyes',
-    many: (n: number) => `${n} eyes · Couple Duo + ${n - 2} extra`,
-    oneEyeOther: (studioBlack: string, art: string) => `1 eye: ${studioBlack} in Studio Black, ${art} with an art background.`,
-    duoOffer: (duo: string) => `Add a second eye for the Couple Duo: ${duo} for both.`,
-    extra: (duo: string, extra: string, max: number) => `Couple Duo ${duo}, then +${extra} for each extra eye, up to ${max} eyes.`,
+    // the label of the card names the selected style and nothing else (no tile and no hint names a style the customer did not choose); the hints
+    // name the price classes, not styles: the one style of the black class (api/_lib/styles_registry.py price_class) and "every other style"
+    eyes: (n: number, style: string) => `${eyes(n)} · ${style}`,
+    black: (name: string, black: string, art: string) => `1 eye: ${black} for ${name}, ${art} for every other style.`,
+    duoOffer: (two: string) => `Add a second eye: ${two} for both.`,
+    extra: (two: string, further: string, max: number) => `Two eyes ${two}, then +${further} for each further eye, up to ${max} eyes.`,
     notice: 'Ordering opens soon - your preview is free today.',
     footnote: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in euros.',
     footnoteAud: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in Australian dollars (A$).',
@@ -385,7 +479,12 @@ const en = {
       too_many: `This order has reached its upload limit for today (30 uploads, retakes included). Nothing was charged. Please try again tomorrow, or write to ${CONTACT_EMAIL}.`,
       failed: `Something went wrong while preparing your order. Please try again, or write to ${CONTACT_EMAIL}.`,
       closed: 'Ordering is not open yet.',
+      // api/checkout.py (WP12): 409 plan_changed (the artwork the server would make is not the one on screen: the preview is made again, nothing was created) and
+      // 409 style_unavailable (the style cannot be ordered for these eyes any more)
+      plan_changed: 'Your artwork changed just now, so we made the preview again. Please look at it, then press the button again.',
+      unavailable: 'This style cannot be ordered for your eyes right now. Please choose another or retake the eye.',
     },
+    namesBlocked: 'Please fix the words on the artwork first (see above).',
     footnote: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the final price: we are not registered for VAT, so no VAT is added.',
     footnoteAud: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no GST is charged.',
   },
@@ -645,7 +744,6 @@ const de: TryCopy = {
     retry: 'Erneut versuchen',
     layout: 'Anordnung',
     style: 'Stil',
-    namesPlaceholder: 'Namen oder Widmung (optional)',
     save: 'Vorschau speichern',
     fileName: (style: string, n: number, sample: boolean) => `snapeyes-vorschau-${style}-${n}-${n === 1 ? 'auge' : 'augen'}${sample ? '-ki-generiertes-beispiel' : ''}.jpg`,
     addSecond: 'Zweites Auge hinzufügen',
@@ -675,14 +773,98 @@ const de: TryCopy = {
     },
   },
 
+  picker: {
+    groups: { one: 'Nur Sie', two: 'Sie zu zweit', family: 'Familie' },
+    groupIntro: {
+      one: 'Eine Iris, allein auf Schwarz oder in einem eigenen Universum.',
+      two: 'Für Ihren Partner: zwei Iriden, die sich treffen.',
+      family: 'Für eine Familie: Jede Iris behält ihre eigene Farbe.',
+    },
+    groupSoon: 'Die Vorschau ist jetzt kostenlos. Bestellungen für diese Gruppe sind bald möglich.',
+    countSoon: (n: number) => `Bestellungen für ${augen(n)} sind bald möglich.`,
+    soonBuy: 'Dieser Stil ist bald erhältlich. Wählen Sie einen anderen, um jetzt zu bestellen.',
+    soonNote: 'Dieser Stil ist bald erhältlich.',
+    listLabel: 'Stile für Ihre Augen',
+    soon: 'Bald',
+    recommended: 'Empfohlen',
+    reasons: {
+      'reason.solo_powder.own': 'Ihre eigenen Farben, zu Pulver geworden',
+      'reason.solo_gold.dark_brown': 'Gold lässt dunkelbraune Augen leuchten',
+      'reason.solo_radiance.grey': 'Silbernes Licht für graue Augen',
+      'reason.duo_collision_infinity.own': 'Zwei Iriden, eine Unendlichkeit',
+      'reason.duo_kiss_collision.own': 'Zwei Welten, ein Ausbruch',
+      'reason.duo_kiss_collision.dark_brown': 'Zwei Welten, ein Ausbruch',
+      'reason.duo_kiss_collision.grey': 'Zwei Welten, ein Ausbruch',
+      'reason.grp_collision.own': 'Jeder in seiner eigenen Farbe',
+      'reason.grp_collision.dark_brown': 'Jeder in seiner eigenen Farbe',
+      'reason.grp_collision.grey': 'Jeder in seiner eigenen Farbe',
+    },
+    retakeFirst: (i: number) => `Zuerst Auge ${i} neu aufnehmen`,
+    resealFirst: (i: number) => `Vorschau von Auge ${i} neu erstellen`,
+    pupil: 'Nicht für diese Pupillenform',
+    tileAlt: (name: string) => `${name} an Ihren Augen: verkleinerte Vorschau mit Wasserzeichen`,
+    tileMaking: (name: string) => `${name}: Die Vorschau wird erstellt`,
+    tileFailed: 'Vorschau nicht erstellt',
+    changed: {
+      eyes: (from: string, to: string, n: number) => `${from} gibt es nicht für ${augen(n)}, deshalb haben wir ${to} gewählt.`,
+      gate: (from: string, to: string, i: number) => `${from} braucht eine sauberere Iris, deshalb haben wir vorerst ${to} gewählt. Nehmen Sie Auge ${i} neu auf, um ${from} zu nutzen.`,
+      reseal: (from: string, to: string, i: number) => `Um ${from} zu nutzen, erstellen Sie bitte die Vorschau von Auge ${i} neu. Vorerst haben wir ${to} gewählt.`,
+      pupil: (from: string, to: string) => `${from} passt nicht zu dieser Pupillenform, deshalb haben wir ${to} gewählt.`,
+    },
+    chipRetake: 'Neu aufnehmen',
+    chipLabel: (i: number) => `Auge ${i}: Neuaufnahme nötig`,
+    advisory: (list: number[], total: number) => (total === 1
+      ? 'Ein Lid oder eine Wimper liegt noch im Ring Ihrer Iris. Eine neue Aufnahme gibt ein saubereres Ergebnis.'
+      : `${list.length === 1 ? `Auge ${list[0]}` : `Augen ${andList(list, 'und')}`}: Ein Lid oder eine Wimper liegt noch im Ring. Eine neue Aufnahme gibt ein saubereres Ergebnis.`),
+    retake: {
+      title: (list: number[], total: number) => (total === 1 ? 'Ihr Auge muss neu aufgenommen werden' : list.length === 1 ? `Auge ${list[0]} muss neu aufgenommen werden` : `Die Augen ${andList(list, 'und')} müssen neu aufgenommen werden`),
+      lid: 'Ein Augenlid, eine Wimper oder Haut liegt noch im Ring der Iris.',
+      reflection: 'In der Iris ist noch eine Spiegelung übrig.',
+      reseal: (list: number[], total: number) => (total === 1
+        ? 'Diese Vorschau stammt aus einer älteren Version der Seite. Bitte nehmen Sie das Auge neu auf, um fortzufahren.'
+        : `${list.length === 1 ? `Die Vorschau von Auge ${list[0]} stammt` : `Die Vorschauen der Augen ${andList(list, 'und')} stammen`} aus einer älteren Version der Seite. Bitte nehmen Sie ${list.length === 1 ? 'es' : 'sie'} neu auf, um fortzufahren.`),
+      held: 'Stile, die eine sauberere Iris brauchen, sind bis dahin ausgegraut.',
+      tips: {
+        open: 'Öffnen Sie das Auge weit, schauen Sie gerade in die Kamera und heben Sie das Oberlid sanft mit einer Fingerspitze an.',
+        light: 'Nutzen Sie Tageslicht von einem Fenster, seitlich. Kein Blitz und keine Lampe.',
+        grey: 'Eine graue Iris hat einen weichen Rand und kommt bei gleichmäßigem Tageslicht am besten heraus: Stellen Sie sich nah an ein Fenster, das Fenster seitlich, und halten Sie das Auge weit geöffnet.',
+      },
+      manual: 'Kommen Sie nicht weiter? Schicken Sie Ihre besten Fotos an {link}, und Mantas sieht sie sich an.',
+      noPreview: 'Für diese Augen können wir noch keine Vorschau zeigen. Unten steht, was Sie ändern können.',
+    },
+    stack: 'Ihre beiden Iriden unterscheiden sich stark in der Farbe, deshalb liegt eine vor der anderen.',
+    widePupil: 'Ihre Pupillen sind weit, deshalb berühren sich die Iriden, statt sich zu überlappen.',
+    options: {
+      swap: 'Plätze tauschen',
+      rotate: 'Plätze drehen',
+      earlier: 'Weiter nach vorn',
+      later: 'Weiter nach hinten',
+      earlierLabel: (i: number) => `Auge ${i} im Kunstwerk weiter nach vorn setzen`,
+      laterLabel: (i: number) => `Auge ${i} im Kunstwerk weiter nach hinten setzen`,
+      look: 'Variante',
+    },
+    names: {
+      title: 'Worte auf dem Kunstwerk (optional)',
+      nameFor: (i: number, total: number) => (total === 1 ? 'Name (optional)' : `Name für Auge ${i}`),
+      date: 'Datum (optional)',
+      datePlaceholder: 'Zum Beispiel 14. Juni 2026',
+      family: 'Familienname (optional)',
+      problem: {
+        nameLong: (i: number, max: number) => `Der Name für Auge ${i} ist zu lang: höchstens ${max} Buchstaben.`,
+        namesLong: (max: number) => `Die Namen sind zusammen zu lang: höchstens ${max} Buchstaben.`,
+        glyph: (chars: string) => `Die Schrift des Kunstwerks kann ${chars} nicht darstellen. Bitte verwenden Sie einen anderen Buchstaben.`,
+        dateLong: (max: number) => `Das Datum ist zu lang: höchstens ${max} Zeichen.`,
+        familyLong: (max: number) => `Der Familienname ist zu lang: höchstens ${max} Buchstaben.`,
+      },
+    },
+  },
+
   price: {
     title: 'Preis für dieses Kunstwerk',
-    oneEye: (style: string) => `1 Auge · ${style}`,
-    duo: 'Couple Duo · 2 Augen',
-    many: (n: number) => `${n} Augen · Couple Duo + ${n - 2} weitere`,
-    oneEyeOther: (studioBlack: string, art: string) => `1 Auge: ${studioBlack} in Studio Black, ${art} mit Kunsthintergrund.`,
-    duoOffer: (duo: string) => `Mit einem zweiten Auge wird es das Couple Duo: ${duo} für beide.`,
-    extra: (duo: string, extra: string, max: number) => `Couple Duo ${duo}, dann +${extra} für jedes weitere Auge, bis zu ${max} Augen.`,
+    eyes: (n: number, style: string) => `${augen(n)} · ${style}`,
+    black: (name: string, black: string, art: string) => `1 Auge: ${black} für ${name}, ${art} für jeden anderen Stil.`,
+    duoOffer: (two: string) => `Mit einem zweiten Auge: ${two} für beide.`,
+    extra: (two: string, further: string, max: number) => `Zwei Augen ${two}, dann +${further} für jedes weitere Auge, bis zu ${max} Augen.`,
     // src/landing/copy.ts de.pricing.notice, word for word
     notice: 'Bestellungen sind bald möglich - Ihre Vorschau ist schon heute kostenlos.',
     footnote: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in Euro.',
@@ -724,7 +906,10 @@ const de: TryCopy = {
       too_many: `Diese Bestellung hat ihr Upload-Limit für heute erreicht (30 Uploads, Neuaufnahmen eingeschlossen). Es wurde nichts berechnet. Bitte versuchen Sie es morgen erneut oder schreiben Sie an ${CONTACT_EMAIL}.`,
       failed: `Beim Vorbereiten Ihrer Bestellung ist etwas schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie an ${CONTACT_EMAIL}.`,
       closed: 'Bestellungen sind noch nicht möglich.',
+      plan_changed: 'Ihr Kunstwerk hat sich gerade geändert, deshalb haben wir die Vorschau neu erstellt. Bitte sehen Sie sie an und drücken Sie den Knopf dann erneut.',
+      unavailable: 'Dieser Stil kann für Ihre Augen gerade nicht bestellt werden. Bitte wählen Sie einen anderen oder nehmen Sie das Auge neu auf.',
     },
+    namesBlocked: 'Bitte korrigieren Sie zuerst die Worte auf dem Kunstwerk (siehe oben).',
     footnote: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.',
     footnoteAud: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine GST berechnet.',
   },

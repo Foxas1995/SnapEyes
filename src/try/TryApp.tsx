@@ -5,13 +5,19 @@ import {
   autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf,
 } from './shots';
 import {
-  type Art, type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
-  MAX_EYES, STUDY_PENDING_MAX, colourOff, composeSide, deviceInfo, effectiveLayout, keptSealed, outcomeOf, savedEye, sealedFor, studyAnswered, studyBody, studyOn,
+  type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
+  MAX_EYES, STUDY_PENDING_MAX, colourOff, deviceInfo, keptSealed, outcomeOf, savedEye, studyAnswered, studyBody, studyOn,
 } from './multi';
-import { COPY, T, setCopyLang, type BlockCopy } from './copy';
+import { T, setCopyLang, type BlockCopy } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
-import { LANGS, LANG_NAMES, marketLangs } from '../shared/lang';
-import { ResultView, type StyleOption } from './ResultView';
+import { LANG_NAMES, marketLangs } from '../shared/lang';
+import { ResultView } from './ResultView';
+import { usePreviews } from './usePreviews';
+import { sendHelp } from './composeApi';
+import { type Opts, type ServerTile, NO_OPTS, advisoryEyes, buyState, defaultLook, retakeView, showsPrice } from './picker';
+import type { PickerModel } from './StylePicker';
+import type { WordsModel } from './Words';
+import { DATE_MAX, FAMILY_MAX, NAME_MAX, drawsFamilyName, namesFromWire, namesOf, problems, typed, wireNames } from './names';
 import { StudyCard } from './StudyCard';
 import { RetakeGuide } from './RetakeGuide';
 import { BuyCard, type Ordering } from './BuyCard';
@@ -24,7 +30,7 @@ import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavai
 import { priceChangedNote } from './priceNote';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
-import { DEFAULT_STYLE, legacyStyles } from '../shared/styles';
+import { STYLES as REGISTRY, isStyle } from '../shared/styles';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
 import { parseReveal } from '../reveal/revealMath';
@@ -35,9 +41,6 @@ type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
 // Several photos are measured at once: each /api/analyze call is mostly waiting on the vision model, so
 // three in flight cut the wait roughly threefold without piling a whole gallery onto the server at once.
 const ANALYZE_CONCURRENCY = 3;
-
-// Composed previews kept per set of eyes: enough to flip between styles and layouts without a new request.
-const ART_CACHE_MAX = 12;
 
 // The owner's capture study (?study=1): two questions after each analysed shot, sent with the next analyze.
 const STUDY = typeof window !== 'undefined' && studyOn(window.location.search);
@@ -81,13 +84,19 @@ interface Enhanced {
   reveal?: unknown;   // the numbers for the Reveal (src/reveal: parseReveal checks them); absent: not measured, the plain slider stays
   fidelity: number; used_sr: boolean; fallback: boolean; seconds: number; stored?: boolean; qa?: ColourQa | null;
 }
-interface ComposeReply { image: string; width: number; height: number; layout: string }
+/** The eye counts a style id takes (the registry, src/shared/styles.ts), for the line that says why a chosen style was not kept. */
+const eyesOf = (id: string): readonly [number, number] | null => (isStyle(id) ? REGISTRY[id].eyes : null);
 
-// The styles of the picker and their accent (api/_lib/styles_registry.py, read through src/shared/styles.ts; the engine's own
-// table is api/_lib/iris.py STYLES, which the build keeps equal). The picker draws each swatch from the accent around the
-// customer's own iris: the old style_thumb_*.jpg showed a stock blue eye next to the customer's result. A null accent is the
-// bare style: no glow, no text.
-const STYLES: StyleOption[] = legacyStyles();
+/** The options a saved artwork carries (a snapshot of an older page has none): only the kinds this page makes itself. */
+function optsOf(v: unknown): Partial<Opts> {
+  if (!v || typeof v !== 'object') return {};
+  const o = v as Record<string, unknown>;
+  return {
+    ...(o.swap === true ? { swap: true } : {}),
+    ...(typeof o.rotate === 'number' && Number.isInteger(o.rotate) && o.rotate >= 0 && o.rotate < 8 ? { rotate: o.rotate } : {}),
+    ...(typeof o.look === 'string' && /^[a-z0-9_]{1,24}$/.test(o.look) ? { look: o.look } : {}),
+  };
+}
 
 const SAMPLE_EYE = '/assets/sample_eye_blue_1789706902835.jpg';   // AI-generated: always labelled as such
 // The sample's restoration, made once by the live engine (2026-09-29: analyze, deglare, enhance artistic) and shipped
@@ -116,7 +125,7 @@ const restored = (e: Pick<Enhanced, 'image' | 'sealed' | 'sealed_sizes'>) => ({
  *  answerNotOk a 2xx reply saying ok:false is returned: /api/analyze answers a photo with no eye in it that
  *  way, and the capture flow has its own branches for it. Every request carries the page's language, so the
  *  server's own sentences (the quality message, tips and errors) and the preview watermark come back in it. A body
- *  that names its own lang keeps it (composeArt: the language its preview is cached under). */
+ *  that names its own lang keeps it. */
 async function post<R>(path: string, body: Record<string, unknown>, answerNotOk = false): Promise<R> {
   const r = await fetch(path, {
     method: 'POST',
@@ -183,10 +192,6 @@ async function thumbOf(b64: string): Promise<string> {
 
 let eyeSeq = 0;
 const newEyeId = () => `e${Date.now().toString(36)}${(eyeSeq++).toString(36)}`;
-const eyesPrefix = (list: Eye[]) => `${list.map((e) => e.id).join('.')}|`;
-// the preview's words (its watermark, the sample eye's label) are in the page's language, so the language is part
-// of the key: after a language switch the preview is made again in the new one
-const artKeyOf = (list: Eye[], layout: Layout, style: string, names: string, lang: Lang) => `${eyesPrefix(list)}${layout}|${style}|${names}|${lang}`;
 
 // the eyes brought back from the payment page: in the order already, so they need no draft of their own
 const RESTORED: Eye[] = RETURN?.snap ? RETURN.snap.eyes.slice(0, MAX_EYES).map((e) => ({ ...e, draft: null })) : [];
@@ -207,8 +212,14 @@ export const TryApp: React.FC = () => {
   const eyesRef = useRef<Eye[]>(RESTORED);   // async steps read this, never a render's stale copy
   const [selectedId, setSelectedId] = useState<string | null>(RESTORED[0]?.id ?? null);
   const [layoutWant, setLayoutWant] = useState<Layout | null>(RETURN?.snap?.layoutWant ?? null);
-  const [style, setStyle] = useState(() => (STYLES.some((s) => s.id === RETURN?.snap?.style) ? RETURN!.snap!.style : DEFAULT_STYLE));
-  const [names, setNames] = useState(() => (typeof RETURN?.snap?.names === 'string' ? RETURN.snap.names.slice(0, 60) : ''));
+  // the style the customer chose (null: none yet, the recommended tile is shown). A saved choice is only a wish: the server's tile list says whether these
+  // eyes can take it (src/try/picker.ts resolveStyle), so a choice kept across a change of the number of eyes comes back when the number does
+  const [want, setWant] = useState<string | null>(() => (isStyle(RETURN?.snap?.style) ? RETURN!.snap!.style : null));
+  // the words on the artwork: a name per eye (by the eye's id, so moving, removing and putting an eye back keep its name), a date, a family name
+  const [nameById, setNameById] = useState<Record<string, string>>(() => namesFromWire(RETURN?.snap?.names, RESTORED.map((e) => e.id)));
+  const [date, setDate] = useState(() => typed(typeof RETURN?.snap?.date === 'string' ? RETURN.snap.date : '', DATE_MAX));
+  const [family, setFamily] = useState(() => typed(typeof RETURN?.snap?.family === 'string' ? RETURN.snap.family : '', FAMILY_MAX));
+  const [opts, setOpts] = useState<Opts>(() => ({ ...NO_OPTS, ...optsOf(RETURN?.snap?.opts) }));
   // ---- ordering (./BuyCard.tsx, ./checkout.ts): whether this deployment takes orders, the order this tab builds, the
   // withdrawal waiver (never ticked in advance) and the purchase under way
   const [ordering, setOrdering] = useState<Ordering | null>(null);
@@ -216,13 +227,11 @@ export const TryApp: React.FC = () => {
   const orderRefRef = useRef<OrderRef | null>(orderRef);
   const [waiver, setWaiver] = useState(false);
   const [priceNote, setPriceNote] = useState<string | null>(null);   // the price changed while the customer looked (409 price_changed)
-  const [buy, setBuy] = useState<{ busy: boolean; step: CheckoutStep | null; error: CheckoutError | null }>({ busy: false, step: null, error: null });
+  const [buy, setBuy] = useState<{ busy: boolean; step: CheckoutStep | null; error: CheckoutError | 'plan_changed' | 'unavailable' | null }>({ busy: false, step: null, error: null });
   const buyingRef = useRef(false);
   const [now, setNow] = useState(() => Date.now());   // for the 15-minute ticket check, refreshed while ordering is open
   const [notice, setNotice] = useState<'cancelled' | 'lost' | null>(RETURN?.cancelled ? (RESTORED.length ? 'cancelled' : 'lost') : null);
-  const [artCache, setArtCache] = useState<Record<string, Art>>({});
-  const [composeFail, setComposeFail] = useState<Record<string, string>>({});
-  const inflightRef = useRef(new Set<string>());
+  const retakesRef = useRef(0);   // eyes replaced since the last set of eyes was asked about: sent with the next tile list (the gate funnel's "retake")
   const sizedRef = useRef(new Map<string, string>());   // `${eyeId}:${side}` -> iris re-encoded for /api/compose
   const [progress, setProgress] = useState<string[]>([]);
   const [clock, setClock] = useState<{ step: Step | null; secs: number }>({ step: null, secs: 0 });
@@ -290,18 +299,11 @@ export const TryApp: React.FC = () => {
         let d = c.ok ? c.data : null;
         if (d) d = ((await noteCheckoutInfo(d)) ?? d) as CheckoutInfo; else noteInfoUnavailable();
         if (!alive) return;
-        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent } : { open: false });
+        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent, maxEyes: typeof d.max_eyes === 'number' ? d.max_eyes : undefined } : { open: false });
       })
       .catch(() => { noteInfoUnavailable(); if (alive) setOrdering({ open: false }); });
     return () => { alive = false; };
   }, []);
-
-  // a preview was made: once per visitor and price experiment the server hears it (anonymously; src/shared/pricing.ts)
-  useEffect(() => {
-    if (step !== 'result') return;
-    const real = eyes.filter((e) => !e.sample).length;
-    if (real > 0) notePreview(real, style);
-  }, [step, eyes, style, ordering]);   // ordering: the server's answer (the token) may arrive after the first preview
 
   // the "payment cancelled" note belongs to the screen it came back to: once the customer moves on, it is done
   useEffect(() => {
@@ -382,13 +384,12 @@ export const TryApp: React.FC = () => {
   };
 
   const commitEyes = (next: Eye[]) => {
+    // the places of the eyes mean something else for another number of eyes: swap is for two, rotate for three
+    if (next.length !== eyesRef.current.length) setOpts((o) => (o.swap || o.rotate ? { ...o, swap: false, rotate: 0 } : o));
     eyesRef.current = next; setEyes(next);
     const ids = new Set(next.map((e) => e.id));
     for (const k of [...sizedRef.current.keys()]) if (!ids.has(k.split(':')[0])) sizedRef.current.delete(k);
-    // a preview of another set of eyes is never shown again
-    const prefix = eyesPrefix(next);
-    setArtCache((c) => Object.fromEntries(Object.entries(c).filter(([k]) => k.startsWith(prefix))));
-    setComposeFail({});
+    // (the previews of another set of eyes are dropped by usePreviews)
   };
 
   const toTop = () => { try { window.scrollTo({ top: 0 }); } catch { /* old browsers */ } };
@@ -422,7 +423,8 @@ export const TryApp: React.FC = () => {
   const startOver = () => {
     const n = eyesRef.current.length;
     if (n > 1 && !window.confirm(T.result.confirmStartOver(n))) return;
-    clearCapture(); commitEyes([]); setSelectedId(null); setLayoutWant(null); setArtCache({});
+    clearCapture(); commitEyes([]); setSelectedId(null); setLayoutWant(null); setWant(null);
+    setNameById({}); setDate(''); setFamily(''); setOpts(NO_OPTS); retakesRef.current = 0;
     setReplacing(null); setUndo(null);
     // a new artwork is a new decision: the waiver is asked again (the order itself is reused for its eyes)
     setWaiver(false); setBuy({ busy: false, step: null, error: null });
@@ -447,6 +449,16 @@ export const TryApp: React.FC = () => {
     if (!u || list.length >= MAX_EYES || list.some((e) => e.id === u.eye.id)) return;
     commitEyes([...list.slice(0, u.index), u.eye, ...list.slice(u.index)]);
     setSelectedId(u.eye.id);
+  };
+
+  /** An eye one place earlier or later on the artwork (four to eight eyes): the order of the eyes is the order on the canvas, and checkout puts the drafts in it. */
+  const moveEye = (id: string, delta: -1 | 1) => {
+    const list = eyesRef.current;
+    const i = list.findIndex((e) => e.id === id), j = i + delta;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    const next = [...list];
+    [next[i], next[j]] = [next[j], next[i]];
+    commitEyes(next); setSelectedId(id);
   };
 
   // ---- capture study
@@ -632,30 +644,6 @@ export const TryApp: React.FC = () => {
     return b64;
   };
 
-  /** One preview of these eyes, its words in lg (the language it is cached under, sent as the request's lang).
-   *  The watermark is the server's business: no unlock ticket is ever sent. The irises go as the server sealed them
-   *  (it opens them itself). Only an artwork holding an eye from before sealed previews (brought back from the payment
-   *  page by the previous release, for one release) goes as images, each eye's own. */
-  const composeArt = async (list: Eye[], layout: Layout, st: string, nm: string, lg: Lang): Promise<Art> => {
-    const n = list.length;
-    const sealed = list.map((e) => sealedFor(e, n));
-    const body: Record<string, unknown> = sealed.every((s): s is string => !!s)
-      ? { sealed, style: st, names: nm, pad: list[0].pad, lang: lg }
-      : { irises: await Promise.all(list.map((e) => sizedIris(e, composeSide(n)))), style: st, names: nm, pad: list[0].pad, lang: lg };
-    if (list.length > 1) body.layout = layout;
-    // the sample eye's label goes into the picture itself (the caption title), so a saved preview keeps it
-    if (list.some((e) => e.sample)) body.title = COPY[lg].result.sampleTitle;
-    const c = await post<ComposeReply>('/api/compose', body);
-    return { src: `data:image/jpeg;base64,${c.image}`, w: c.width, h: c.height, layout: c.layout };
-  };
-
-  const cacheArt = (key: string, art: Art) => setArtCache((c) => {
-    // an answer for eyes that were removed or added meanwhile is dropped
-    if (!key.startsWith(eyesPrefix(eyesRef.current))) return c;
-    const entries = Object.entries({ ...c, [key]: art });
-    return Object.fromEntries(entries.slice(-ART_CACHE_MAX));
-  });
-
   const process = async (img: HTMLImageElement, a: Analysis) => {
     // A crop that is not centred on an iris must never reach the studio: from a crop of eyelid skin the image
     // model invented a complete brown iris, and nothing downstream can tell. The server issues no work
@@ -727,46 +715,55 @@ export const TryApp: React.FC = () => {
     const list = replaceId && cur.some((x) => x.id === replaceId)
       ? cur.map((x) => (x.id === replaceId ? eye : x))
       : [...cur, eye];
+    // a retaken eye takes the old one's place AND its name; the gate funnel hears that an eye of the set was replaced (api/compose.py retake)
+    if (replaceId) {
+      setNameById((m) => { const { [replaceId]: kept, ...rest } = m; return kept ? { ...rest, [eye.id]: kept } : rest; });
+      retakesRef.current += 1;
+    }
     setReplacing(null);
     commitEyes(list); setSelectedId(eye.id);
     releasePhoto(); sampleRef.current = false;
-    setProgress((p) => [...p, T.working.composing(list.length)]);
-    const lay = effectiveLayout(list.length, layoutWant);
-    try {
-      const lg = T.lang;
-      cacheArt(artKeyOf(list, lay, style, names, lg), await composeArt(list, lay, style, names, lg));
-    } catch { /* the effect below retries once on the result screen, then offers "Try again" */ }
     setAnalysis(null); setClientCrop(null);
     setStep('result'); toTop();
   };
 
-  // ---- the result screen composes whenever the eyes, the layout, the style, the names or the language change
-  const layout = effectiveLayout(eyes.length, layoutWant);
-  const artKey = artKeyOf(eyes, layout, style, names, lang);
-  // Right after a language switch the same choice's preview in another language stands in (shown, saved, orderable:
-  // only its watermark's words differ) until the effect below has made it in this one.
-  const art = artCache[artKey] ?? LANGS.map((lg) => artCache[artKeyOf(eyes, layout, style, names, lg)]).find(Boolean);
-  const staleArt = art ?? Object.values(artCache).at(-1);
+  // ---- the result screen: the server's tile list for these eyes, the style on screen and its previews (src/try/usePreviews.ts)
+  const namesList = namesOf(nameById, eyes.map((e) => e.id));
+  const previews = usePreviews({
+    active: step === 'result' && eyes.length > 0, eyes, lang, market: currentMarket(), want, layoutWant, names: namesList, date, family, opts,
+    retakes: retakesRef, sized: sizedIris, eyesOf,
+  });
+  const { catalog, art, style } = previews;
+  const selectedTile = previews.selected;
+  const wordProblems = problems(namesList, date, family);
 
+  // a preview was made: once per visitor and price experiment the server hears it (anonymously; src/shared/pricing.ts)
   useEffect(() => {
-    if (step !== 'result' || !eyes.length) return;
-    if (artCache[artKey] || composeFail[artKey] !== undefined || inflightRef.current.has(artKey)) return;
-    const list = eyes, l = layout, st = style, nm = names, key = artKey, lg = lang;
-    const t = setTimeout(async () => {
-      inflightRef.current.add(key);
-      try {
-        cacheArt(key, await composeArt(list, l, st, nm, lg));
-      } catch (err) {
-        setComposeFail((f) => ({ ...f, [key]: (err as Error).message }));
-      } finally {
-        inflightRef.current.delete(key);
-      }
-    }, names ? 500 : 0);
-    return () => clearTimeout(t);
-    // composeArt and cacheArt are left out on purpose: they read only refs and their own arguments
-  }, [step, eyes, layout, style, names, lang, artKey, artCache, composeFail]);
+    if (step !== 'result' || !style) return;
+    const real = eyes.filter((e) => !e.sample).length;
+    if (real > 0) notePreview(real, style);
+  }, [step, eyes, style, ordering]);   // ordering: the server's answer (the token) may arrive after the first preview
 
-  const retryCompose = () => setComposeFail((f) => { const n = { ...f }; delete n[artKey]; return n; });
+  // what the picker shows: everything is a function of the server's tile list (src/try/picker.ts)
+  const market = currentMarket();
+  const priceList = listFor(market, ordering?.open ? ordering.prices : undefined);
+  const priceOf = (tl: ServerTile) => (!eyes.some((e) => e.sample) && showsPrice(eyes.length, tl) ? money(priceMinor(1, tl.id, market, priceList), currencyOf(market), T.lang) : null);
+  const retakeState = catalog ? retakeView({ tiles: catalog.tiles, eyes: catalog.eyes, selected: selectedTile }) : null;
+  const advisory = advisoryEyes(selectedTile, catalog?.eyes ?? []);
+  const lookNow = selectedTile ? (selectedTile.looks[opts.look ?? ''] ? opts.look : defaultLook(selectedTile)) : null;
+  const picker: PickerModel = {
+    n: eyes.length, catalog, error: previews.catalogError, onRetryCatalog: previews.retryCatalog, style, selected: selectedTile, changed: previews.changed,
+    tilePicture: previews.tilePicture, tileBusy: previews.tileBusy, tileFailed: previews.tileFailed, onRetryTiles: previews.retryTiles, priceOf,
+    onStyle: (id) => setWant(id), look: lookNow, onLook: (code) => setOpts((o) => ({ ...o, look: code })), retake: retakeState, advisory,
+    onRetakeEye: (i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); },
+    onManual: () => sendHelp({ route: 'manual', eyes: eyes.length, why: retakeState?.why ?? 'unknown', lang: T.lang }),
+  };
+  const words: WordsModel = {
+    names: namesList,
+    onName: (i, v) => { const e = eyes[i]; if (e) setNameById((m) => ({ ...m, [e.id]: typed(v, NAME_MAX) })); },
+    date, onDate: (v) => setDate(typed(v, DATE_MAX)), family, onFamily: (v) => setFamily(typed(v, FAMILY_MAX)),
+    showFamily: !!previews.layout && drawsFamilyName(previews.layout), problems: wordProblems,
+  };
 
   // ---- buying
   const setOrderRef = (r: OrderRef | null) => { orderRefRef.current = r; setOrderRefState(r); saveOrderRef(r); };
@@ -774,7 +771,7 @@ export const TryApp: React.FC = () => {
   /** Keep the artwork in this tab while Stripe's page is open, so its cancel link (or "back") finds it as it was. When
    *  the browser will not hold it at full size, a smaller copy; when not even that, nothing (the page then says so). */
   const keepForReturn = async (order: string, list: Eye[], st: string, lw: Layout | null, nm: string) => {
-    const base = { v: 1 as const, order, at: Date.now(), style: st, layoutWant: lw, names: nm };
+    const base = { v: 1 as const, order, at: Date.now(), style: st, layoutWant: lw, names: nm, date, family, opts };
     // the Reveal's frame is memory only: never saved, even here (savedEye leaves it out; the way back builds it again from the crop it keeps)
     const plain = list.map(savedEye);
     if (saveSnapshot({ ...base, eyes: plain })) return;
@@ -792,25 +789,26 @@ export const TryApp: React.FC = () => {
 
   const onBuy = async () => {
     const list = eyesRef.current;
-    if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open) return;
+    if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open || !style || !art || wordProblems.length) return;
     buyingRef.current = true;
     setNotice(null);
     setPriceNote(null);
     setBuy({ busy: true, step: null, error: null });
-    const lay = effectiveLayout(list.length, layoutWant);
+    const lay = previews.layout ?? '';
     let out: CheckoutOutcome;
     try {
       // the price on the button is what the server is asked to confirm (shown); the token names the visitor's variant
       const market = currentMarket();
       const shown = priceMinor(list.length, style, market, listFor(market, ordering?.prices));
-      out = await runCheckout({ eyes: list, style, layout: lay, names, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown },
+      // the artwork on screen, as the server described it: its plan (plan8) and the options that applied are sent back, so a checkout of something else is a 409
+      out = await runCheckout({ eyes: list, style, layout: lay, names: wireNames(namesList), date, familyName: family, opts: art.opts, plan8: art.plan8, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown },
         (s) => setBuy((b) => ({ ...b, step: s })));
     } catch {
       out = { kind: 'error', code: 'failed', ref: orderRefRef.current };
     }
     setOrderRef(out.ref);
     if (out.kind === 'redirect') {
-      await keepForReturn(out.ref.order, list, style, layoutWant, names);
+      await keepForReturn(out.ref.order, list, style, layoutWant, wireNames(namesList));
       window.location.assign(out.url);
       return;   // the page is leaving for Stripe: the button stays busy
     }
@@ -825,6 +823,12 @@ export const TryApp: React.FC = () => {
       return;
     }
     if (out.kind === 'closed') { setOrdering({ open: false }); setBuy({ busy: false, step: null, error: null }); return; }
+    if (out.kind === 'plan_changed' || out.kind === 'unavailable') {
+      // nothing was created: the tile list and the previews are made again, and the customer looks at the artwork once more before going on
+      previews.refresh();
+      setBuy({ busy: false, step: null, error: out.kind });
+      return;
+    }
     if (out.kind === 'price_changed') {
       // the price is not the one shown: nothing was created. Show the server's price and let the customer decide again
       noteChanged(out.reply);
@@ -844,8 +848,10 @@ export const TryApp: React.FC = () => {
   };
   const purchase = (
     <BuyCard
-      eyes={eyes} style={style} styleName={STYLES.find((s) => s.id === style)?.name ?? style} ordering={ordering}
-      preview={art ? 'ready' : composeFail[artKey] !== undefined ? 'failed' : 'composing'}
+      eyes={eyes} style={style ?? ''} styleName={selectedTile?.name ?? style ?? ''} ordering={ordering}
+      preview={art ? 'ready' : previews.composeError !== null ? 'failed' : 'composing'}
+      state={buyState({ n: eyes.length, tiles: catalog?.tiles ?? [], selected: selectedTile })} loading={!catalog && !previews.catalogError}
+      advisory={advisory} wordsBlocked={wordProblems.length > 0}
       stale={ordering?.open && !eyes.some((e) => e.sample) ? staleEyes(eyes, orderRef, now) : []}
       onRetake={(i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); }}
       waiver={waiver} onWaiver={setWaiver}
@@ -883,11 +889,6 @@ export const TryApp: React.FC = () => {
       setStep('processing'); setProgress([T.working.composing(1)]);
       const list = [eye];
       commitEyes(list); setSelectedId(eye.id);
-      const lay = effectiveLayout(list.length, layoutWant);
-      try {
-        const lg = T.lang;
-        cacheArt(artKeyOf(list, lay, style, names, lg), await composeArt(list, lay, style, names, lg));
-      } catch { /* the result screen retries once, then offers "Try again" */ }
       releasePhoto(); setAnalysis(null); setClientCrop(null);
       setStep('result'); toTop();
       return;
@@ -905,7 +906,7 @@ export const TryApp: React.FC = () => {
         {/* back to the landing page in the same language */}
         <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
-          <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-500 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
+          <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
             {STUDY && <span className="text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}
             <span>{T.header.tag}</span>
           </span>
@@ -914,6 +915,8 @@ export const TryApp: React.FC = () => {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 pb-12">
+        {/* every screen after the first has its headings below this one: the page's own title for a screen reader (the first screen has its own h1) */}
+        {step !== 'capture' && <h1 className="sr-only">{T.meta.title}</h1>}
         {error && (
           <div className="mb-4 bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm rounded-xl p-3 flex gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{error}</span>
@@ -1075,10 +1078,10 @@ export const TryApp: React.FC = () => {
 
         {step === 'result' && eyes.length > 0 && (
           <ResultView
-            eyes={eyes} selectedId={selectedId} onSelect={setSelectedId} onRemove={removeEye} onRetake={retakeEye} onAdd={addEye}
-            art={art} staleArt={staleArt} composeError={composeFail[artKey] ?? null} onRetryCompose={retryCompose}
-            layout={layout} onLayout={setLayoutWant}
-            styles={STYLES} style={style} onStyle={setStyle} names={names} onNames={setNames}
+            eyes={eyes} selectedId={selectedId} onSelect={setSelectedId} onRemove={removeEye} onRetake={retakeEye} onAdd={addEye} onMove={moveEye}
+            art={art} staleArt={previews.staleArt} composeError={previews.composeError} onRetryCompose={previews.retryCompose}
+            picker={picker} layout={previews.layout} layoutOptions={selectedTile?.layouts ?? []} onLayout={setLayoutWant}
+            opts={opts} onOpts={setOpts} words={words}
             onStartOver={startOver} purchase={purchase} />
         )}
       </main>

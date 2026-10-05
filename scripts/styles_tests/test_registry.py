@@ -823,11 +823,12 @@ def text_probs(root):
 
 
 def add_entry(root, line):
-    """One more key before each `namesPlaceholder:` of the four /try dictionaries (English and German in copy.ts, Lithuanian, Hungarian)."""
+    """One more key before each `save:` of the four /try dictionaries (English and German in copy.ts, Lithuanian, Hungarian). The marker was `namesPlaceholder:`
+    until WP11 replaced that one free line by the names form (src/try/Words.tsx); `save:` (result.save) is one key per dictionary as well."""
     for rel in ("src/try/copy.ts", "src/try/copy.lt.ts", "src/try/copy.hu.ts"):
         path = os.path.join(root, *rel.split("/"))
         text = open(path, encoding="utf-8", newline="").read()
-        text, k = re.subn(r"^(\s*)namesPlaceholder: ", lambda m: f"{m.group(1)}{line}\n{m.group(1)}namesPlaceholder: ", text, flags=re.M)
+        text, k = re.subn(r"^(\s*)save: ", lambda m: f"{m.group(1)}{line}\n{m.group(1)}save: ", text, flags=re.M)
         assert k >= 1, rel
         open(path, "w", encoding="utf-8", newline="").write(text)
 

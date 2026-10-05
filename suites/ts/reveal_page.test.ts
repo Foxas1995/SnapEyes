@@ -6,6 +6,9 @@ import { savedEye, type Eye } from '../../src/try/multi';
 import { saveSnapshot, takeSnapshot } from '../../src/try/checkout';
 import { COPY } from '../../src/try/copy';
 import { ResultView } from '../../src/try/ResultView';
+import { emptyPicker } from '../../src/try/StylePicker';
+import { emptyWords } from '../../src/try/Words';
+import { NO_OPTS } from '../../src/try/picker';
 import { LANGS } from '../../src/shared/lang';
 import { parseReveal, revealGeometry, tightFit, valueText } from '../../src/reveal/revealMath';
 
@@ -64,8 +67,8 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   }) as unknown as Eye;
   const noop = () => {};
   const page = (eye: Eye) => renderToStaticMarkup(createElement(ResultView, {
-    eyes: [eye], selectedId: eye.id, onSelect: noop, onRemove: noop, onRetake: noop, onAdd: noop, art: undefined, staleArt: undefined, composeError: null, onRetryCompose: noop,
-    layout: 'single', onLayout: noop, styles: [], style: 'x', onStyle: noop, names: '', onNames: noop, onStartOver: noop, purchase: null,
+    eyes: [eye], selectedId: eye.id, onSelect: noop, onRemove: noop, onRetake: noop, onAdd: noop, onMove: noop, art: undefined, staleArt: undefined, composeError: null, onRetryCompose: noop,
+    picker: emptyPicker(1), layout: null, layoutOptions: [], onLayout: noop, opts: NO_OPTS, onOpts: noop, words: emptyWords(1), onStartOver: noop, purchase: null,
   }));
   const has = (h: string, id: string) => h.includes(`data-testid="${id}"`);
   const okRv = { ...base, ok: true, drift: 1.2 };
