@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useCopy } from './copy/useCopy';
 import { artPicture, hasPhotoChip, provenance, tileCopy, tileKey, tileSizes, wallPicture, type EyeId, type GalleryGroup, type GalleryTile } from './gallery';
 import type { LandingPricesState } from './prices';
-import { ExampleChip, Picture, PriceGate } from './ui';
+import { ExampleChip, Picture, PriceGate, type PictureAsset } from './ui';
 
 function WallIcon() {
   return (
@@ -38,26 +38,52 @@ export interface StyleTileProps {
   wallAsked: boolean;
   onWall: (key: string) => void;
   prices: LandingPricesState;
+  /** How the tile arrives: 'reveal' (the first grid: it rises when it scrolls into view) or 'swap' (after the visitor changed the group:
+   *  it fades in, nothing rises). */
+  enter: 'reveal' | 'swap';
+  /** The tile's place in its grid: the stagger of the arrival. */
+  index: number;
 }
+
+/** Why a tile keeps the picture it had: when the eye colour changes, the old picture stays on top until the new one has loaded, then fades
+ *  out over it (a cross fade between two whole pictures, .42 s, no scale and no blur). Under reduced motion there is no old picture
+ *  to keep: the new one simply replaces it. */
+interface Shown { cur: PictureAsset; prev: PictureAsset | null; ready: boolean }
+const calm = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** One tile of the gallery: the flat artwork (an Example), optionally the same artwork on a wall (an AI visualisation,
  *  fetched only when asked for), the labels, the name, the price line and whose eye it is.
  *  Labels (BUILD_PLAN section 7): the flat artworks of Mantas's own eye carry no chip, the legend line under the styles intro
  *  is their label; "Example photo" (example.photo) sits in the picture of every tile that shows someone else's eye; the
  *  wall view carries "AI visualisation" (example.vis), which is only visible while the wall is on. */
-export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices }: StyleTileProps) {
+export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices, enter, index }: StyleTileProps) {
   const { c, t } = useCopy();
   const key = tileKey(group, tile);
   const { n: name, d: desc } = tileCopy(c, tile);
   const wide = group === 'two' || group === 'family';
   const sizes = tileSizes(wide);
   const art = artPicture(tile, eye);
+  // adjusting state while rendering is the documented way to derive it from a prop: the guard ends after one round
+  const [shown, setShown] = useState<Shown>({ cur: art, prev: null, ready: false });
+  if (shown.cur.src !== art.src) setShown({ cur: art, prev: calm() ? null : (shown.prev ?? shown.cur), ready: false });
+  // the new picture's load event is what starts the fade of the old one; if it never comes, the old picture must not stay on top
+  const waiting = !!shown.prev && !shown.ready;
+  useEffect(() => {
+    if (!waiting) return;
+    const id = window.setTimeout(() => setShown((p) => ({ ...p, ready: true })), 2500);
+    return () => window.clearTimeout(id);
+  }, [waiting]);
   const wall = wallPicture(group, tile, eye);
   const on = wallOn && !!wall;
   const photo = hasPhotoChip(group, tile, eye);
   const prov = provenance(tile, eye);
   return (
-    <figure className={on ? 'lp-tile lp-on-wall' : 'lp-tile'} data-k={key}>
+    <figure
+      className={`lp-tile${enter === 'swap' ? ' lp-tile-in' : ''}${on ? ' lp-on-wall' : ''}`}
+      data-k={key}
+      data-reveal={enter === 'reveal' ? 'fade' : undefined}
+      style={{ '--i': Math.min(index, 4), '--j': Math.min(index, 5) } as CSSProperties}
+    >
       {/* The picture's own chip: "AI visualisation" when the tile has a wall view (shown only while the wall is on), else
           "Example photo" when it shows another person's eye, else none (the legend line is the label). A tile with both
           gets the photo chip as a second layer; the two never show at the same time (css/styles.css). */}
@@ -69,8 +95,28 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices 
         alt={`${name}. ${desc}`}
         chip={wall ? 'vis' : photo ? 'example' : 'none'}
         photo={!wall && photo}
-        imgProps={{ 'aria-hidden': on || undefined, style: tile.square ? { objectFit: 'contain' } : undefined }}
+        imgProps={{
+          'aria-hidden': on || undefined,
+          style: tile.square ? { objectFit: 'contain' } : undefined,
+          onLoad: () => setShown((p) => (p.ready ? p : { ...p, ready: true })),
+          onError: () => setShown((p) => ({ ...p, prev: null })),
+        }}
       >
+        {shown.prev && (
+          <img
+            className={`lp-art lp-ghost${shown.ready ? ' lp-out' : ''}`}
+            src={shown.prev.src}
+            srcSet={shown.prev.srcset}
+            sizes={shown.prev.srcset ? sizes : undefined}
+            width={shown.prev.w}
+            height={shown.prev.h}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            style={tile.square ? { objectFit: 'contain' } : undefined}
+            onAnimationEnd={() => setShown((p) => ({ ...p, prev: null }))}
+          />
+        )}
         {wall && (
           <img
             className="lp-wall"

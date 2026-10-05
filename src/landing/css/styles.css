@@ -4,23 +4,31 @@
    .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
    no specificity. */
 @layer landing {
-  .lp-tabs { display: flex; gap: 6px; margin-top: 40px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; border-bottom: 1px solid var(--line); }
+  .lp-tabs { position: relative; display: flex; gap: 6px; margin-top: 40px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 1px; background: linear-gradient(var(--line), var(--line)) 0 100% / 100% 1px no-repeat local; }
   .lp-tabs::-webkit-scrollbar { display: none; }
-  .lp-tab { position: relative; flex: none; min-height: 48px; padding: 10px 18px; font-size: 14.5px; font-weight: 600; color: var(--ink-3); transition: color .2s; white-space: nowrap; }
-  .lp-tab::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2px; background: var(--gold); transform: scaleX(0); transition: transform .3s var(--ease); }
+  .lp-tab { position: relative; flex: none; min-height: 48px; padding: 10px 18px; font-size: 14.5px; font-weight: 600; color: var(--ink-3); transition: color var(--d-tap) var(--ease-out); white-space: nowrap; }
+  /* the plain underline of the selected tab: the mark until the sliding line below has been measured (and the only mark when it cannot be) */
+  .lp-tab::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 1px; background: var(--gold); transform: scaleX(0); }
+  .lp-tabs[data-bar] .lp-tab::after { display: none; }
+  /* the sliding line: one gold hairline, placed by translate and scale from the selected tab's box (src/landing/StyleTabs.tsx) */
+  .lp-tabs-bar { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; background: var(--gold); transform-origin: 0 0; translate: 0 0; scale: 0 1; pointer-events: none; transition: translate .4s var(--ease-out), scale .4s var(--ease-out); }
+  .lp-tabs:not([data-bar]) .lp-tabs-bar { display: none; }
   /* the tab list scrolls (overflow-x), which clips an outline drawn outside the first tab: the ring sits inside (WCAG 2.4.7) */
   .lp-tab:focus-visible { outline-offset: -4px; }
   .lp-tab:hover { color: #fff; }
   .lp-tab[aria-selected="true"] { color: #fff; }
   .lp-tab[aria-selected="true"]::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: reduce) {
+    .lp-tabs-bar { transition: none; }
+  }
   .lp-group-intro { margin-top: 22px; color: var(--ink-2); font-size: 16px; max-width: 40em; }
   .lp-legend { margin-top: 10px; font-size: 13px; line-height: 1.55; color: var(--ink-3); max-width: 46em; }
   .lp-eyepick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 20px; }
   .lp-eyechips { display: contents; }
   .lp-eyedot { display: block; width: 32px; height: 32px; border-radius: 50%; flex: none; }
   .lp-eyepick .lp-lab { font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--ink-3); margin-right: 4px; }
-  .lp-eyechip { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 5px 16px 5px 6px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); transition: border-color .2s, color .2s, background .2s; }
-  .lp-eyechip[aria-checked="true"] { border-color: var(--gold); color: var(--gold); background: rgba(245, 197, 66, .07); }
+  .lp-eyechip { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 5px 16px 5px 6px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); }
+  .lp-eyechip[aria-checked="true"] { border-color: var(--gold); color: var(--t-1); background: rgba(245, 197, 66, .07); }
   .lp-eyechip:hover { color: #fff; }
   .lp-eyenote { margin-top: 10px; font-size: 13px; color: var(--ink-3); }
   .lp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px 12px; margin-top: 30px; }
@@ -40,20 +48,33 @@
   .lp-tile { min-width: 0; }
   .lp-tile-img { position: relative; aspect-ratio: 1; border-radius: 16px; overflow: hidden; background: #020204; box-shadow: 0 0 0 1px rgba(255, 255, 255, .07); }
   .lp-wide .lp-tile-img { aspect-ratio: 3 / 2; }
-  .lp-tile-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .45s var(--ease), transform .8s var(--ease); }
+  .lp-tile-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity var(--d-swap) var(--ease-out); }
   .lp-wide .lp-tile-img img.lp-art { object-fit: contain; }
-  .lp-tile:hover .lp-tile-img img.lp-art { transform: scale(1.025); }
+  /* the hover zoom: 1.02 at most, inside the clipped frame, only where there is a real hover (spec 6.6, charter AC-3) */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .lp-tile-img img.lp-art { transition: opacity var(--d-swap) var(--ease-out), transform 1.2s var(--ease-out); }
+    .lp-tile:hover .lp-tile-img img.lp-art { transform: scale(1.02); }
+  }
+  /* the picture the tile had before the eye colour changed stays on top until the new one is in, then fades out over it (src/landing/StyleTile.tsx) */
+  .lp-tile-img img.lp-ghost { z-index: 1; transition: none; }
+  .lp-tile-img img.lp-ghost.lp-out { animation: lp-ghost-out var(--d-swap) var(--ease-out) forwards; }
+  @keyframes lp-ghost-out { to { opacity: 0; } }
   .lp-tile-img img.lp-wall { opacity: 0; }
   .lp-tile.lp-on-wall img.lp-wall { opacity: 1; }
   .lp-tile.lp-on-wall img.lp-art { opacity: 0; }
-  .lp-tile-img .lp-chip-ex { position: absolute; left: 10px; top: 10px; z-index: 2; backdrop-filter: blur(6px); }
+  .lp-tile-img .lp-chip-ex { position: absolute; left: 10px; top: 10px; z-index: 2; }
   /* a label that is not showing is not in the accessibility tree either (visibility): a screen reader never hears "AI visualisation"
      after a flat artwork, or "Example photo" after a wall view; the fade keeps its .45 s, visibility flips after it on the way out */
-  .lp-tile-img .lp-vis-chip { left: 10px; top: 10px; opacity: 0; visibility: hidden; transition: opacity .45s var(--ease), visibility 0s .45s; }
+  .lp-tile-img .lp-vis-chip { left: 10px; top: 10px; opacity: 0; visibility: hidden; transition: opacity var(--d-swap) var(--ease-out), visibility 0s var(--d-swap); }
   .lp-tile.lp-on-wall .lp-vis-chip { opacity: 1; visibility: visible; transition-delay: 0s; }
   .lp-tile.lp-on-wall .lp-chip-ex.lp-photo { opacity: 0; visibility: hidden; }
-  .lp-wallbtn { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: rgba(7, 9, 14, .78); color: #fff; font-size: 12.5px; font-weight: 600; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); backdrop-filter: blur(8px); transition: background .2s, color .2s, box-shadow .2s; }
-  .lp-wallbtn:hover { box-shadow: 0 0 0 1px var(--gold); color: var(--gold); }
+  .lp-wallbtn { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: rgb(3 4 8 / .82); color: #fff; font-size: 12.5px; font-weight: 600; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); transition: opacity var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), box-shadow var(--d-tap) var(--ease-out); }
+  /* with a mouse the button fades in when the tile is hovered or holds the focus (and stays while the wall is on); on a touch screen it is always there */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .lp-wallbtn:not([aria-pressed="true"]) { opacity: 0; }
+    .lp-tile:is(:hover, :focus-within) .lp-wallbtn { opacity: 1; }
+  }
+  .lp-wallbtn:hover { box-shadow: 0 0 0 1px var(--gold); color: #fff; }
   .lp-wallbtn svg { width: 15px; height: 15px; }
   .lp-tile figcaption { margin-top: 14px; }
   .lp-tile-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; }
@@ -68,7 +89,7 @@
   @media (min-width: 960px) {
     .lp-combo { grid-column: auto; align-self: stretch; }
   }
-  .lp-combo h3 { font-family: var(--display); font-size: 18px; color: var(--gold-soft); line-height: 1.3; }
+  .lp-combo h3 { font-family: var(--display); font-size: 18px; color: var(--t-1); line-height: 1.3; }
   .lp-combo p { font-size: 14px; color: var(--ink-2); }
   .lp-combo .lp-btn-line { align-self: flex-start; margin-top: 6px; }
   @media (max-width: 639px) {
@@ -97,4 +118,29 @@
   @media (max-width: 340px) {
     .lp-eyepick { flex-wrap: wrap !important; }
   }
+  /* ------------------------------------------------------------------------------------------------ motion (spec 6.6)
+     Hidden states only under html.mo:not(.mo-fail) and prefers-reduced-motion: no-preference (src/motion/motion.css), so every tile is there
+     without the engine, under reduced motion and after the failsafe. The tiles are artworks: nothing scales, blurs or tilts on arrival. */
+  @keyframes lp-tile-in { from { opacity: 0; } }
+  @media (prefers-reduced-motion: no-preference) {
+    /* a changed group: the new tiles fade in, 300 ms, 40 ms apart, no rise (a repeated action stays quiet) */
+    .lp-tile-in { animation: lp-tile-in .3s var(--ease-out) calc(var(--j, 0) * 40ms) backwards; }
+    /* the first grid, two or three columns: each tile rises, 90 ms apart (the index stops at 4); the grid does not fade as well */
+    @media (min-width: 640px) {
+      html.mo:not(.mo-fail) .lp-grid[data-reveal="soft"]:not([data-in]) { opacity: 1; }
+      html.mo:not(.mo-fail) .lp-grid[data-reveal="soft"][data-in] { animation: none; }
+      html.mo:not(.mo-fail) .lp-tile[data-reveal][data-in] { animation-delay: calc(var(--i, 0) * var(--stagger-card)); }
+    }
+    /* the swipe rail of a phone appears as one piece; the tiles stay put while it is swiped */
+    @media (max-width: 639px) {
+      html.mo:not(.mo-fail) .lp-grid > .lp-tile[data-reveal]:not([data-in]) { opacity: 1; translate: none; }
+      html.mo:not(.mo-fail) .lp-grid > .lp-tile[data-reveal][data-in] { animation: none; }
+    }
+  }  /* quiet details (spec 5.6): a chip is pressed to .985 and released in .3 s, its hover ring is the gold ring; a rail never takes a swipe for "back" */
+  .lp-eyechip { transition-property: border-color, color, background-color, scale; }
+  .lp-eyechip:active { scale: .985; }
+  @media (hover: hover) {
+    .lp-eyechip:not([aria-checked="true"]):hover { border-color: var(--ring-gold); }
+  }
+  .lp-tabs, .lp-grid { overscroll-behavior-x: contain; }
 }
