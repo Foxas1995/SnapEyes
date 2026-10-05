@@ -1136,6 +1136,28 @@ check("a plan of two steps made by the server: both done records, the artwork de
       "advance.json named the steps (part 1 of 2, part 2 of 2), one ready email",
       bool(done7s) and exists(f"orders/{o7s}/style/done_prep.json") and exists(f"orders/{o7s}/style/done_art.json") and prep.calls == 1 and exe.calls == 1
       and (1, 2) in seen_parts and (2, 2) in seen_parts and len(mails("sam@example.com", READY_EN, n0)) == 1 and exists(f"orders/{o7s}/delivery.json"), (done7s, seen_parts, prep.calls, exe.calls))
+
+# withdrawn in the middle of the chain: the order is withdrawn while step 1 of 2 draws; the chain stops at its next hop, the second step is never drawn, no email goes
+class PrepWithdrawn(Prep):
+    def __call__(self, ctx, plan, step, rerun):
+        out = Prep.__call__(self, ctx, plan, step, rerun)
+        store.put(f"orders/{ctx.order}/withdrawn.json", b"{}", "application/json", upsert=True)
+        return out
+
+
+prep, exe = PrepWithdrawn(), Exe()
+with mock.patch.dict(SP.EXECUTORS, {"prep": prep, "art": exe}):
+    with Show("solo.clean"):
+        o7w, k7w, sid7w = new_order(1, "solo.clean", "wanda@example.com", pay_it=False)
+    wj(f"orders/{o7w}/style/plan.json", two_step_plan())
+    n0 = len(H.Fake.emails)
+    hook(H.pay_session(sid7w, email="wanda@example.com"))
+    done7w = wait_for(lambda: stopped(o7w), 60)
+time.sleep(1.0)
+check("an order withdrawn while step 1 of 2 draws: the chain stops with why withdrawn at its next hop, step 1 is done and recorded, step 2 is never drawn (no done record, no claim left), "
+      "no delivery.json and no ready email",
+      bool(done7w) and done7w.get("why") == "withdrawn" and prep.calls == 1 and exe.calls == 0 and exists(f"orders/{o7w}/style/done_prep.json")
+      and not exists(f"orders/{o7w}/style/done_art.json") and not exists(f"orders/{o7w}/delivery.json") and not mails("wanda@example.com", READY_EN, n0), (done7w, prep.calls, exe.calls))
 H.Fake.legal = PACK
 pay._LEGAL.update(pack=None, t=0.0, failed=0.0)
 M._KICKED.clear()
