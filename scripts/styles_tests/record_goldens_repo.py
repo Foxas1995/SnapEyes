@@ -57,9 +57,7 @@ DATA = os.path.join(HERE, "data")
 
 def sha_file(path):
     with open(path, "rb") as f:
-        return hashlib.sha256(f.read().replace(b"
-", b"
-")).hexdigest()       # a checkout with CRLF line ends hashes as the repository's LF
+        return hashlib.sha256(f.read().replace(b"\r\n", b"\n")).hexdigest()       # a checkout with CRLF line ends hashes as the repository's LF
 
 
 def render(d, e, f, s, n, dt):

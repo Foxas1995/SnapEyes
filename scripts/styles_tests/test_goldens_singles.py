@@ -265,9 +265,7 @@ check("the step A recording is kept as it was (data/stepA: the scratch prototype
       set(GA) == set(G) and len(GA) == 72 and GOLD["step"] == "B"
       and GOLD["stepA_file_sha256"] == hashlib.sha256(open(os.path.join(HERE, "data", "stepA", "singles_goldens.json"), "rb").read().replace(b"\r\n", b"\n")).hexdigest()
       and all((G[k]["sha"] == GA[k]["sha"]) == k.startswith("clean.") for k in G) and json.load(open(os.path.join(HERE, "data", "singles_goldens_real.json"), encoding="utf-8"))["stepA_file_sha256"]
-      == hashlib.sha256(open(os.path.join(HERE, "data", "stepA", "singles_goldens_real.json"), "rb").read().replace(b"
-", b"
-")).hexdigest(),
+      == hashlib.sha256(open(os.path.join(HERE, "data", "stepA", "singles_goldens_real.json"), "rb").read().replace(b"\r\n", b"\n")).hexdigest(),
       [k for k in G if (G[k]["sha"] == GA[k]["sha"]) != k.startswith("clean.")][:5])
 with mock.patch.object(K, "F3_SPAN", K.F3_SPAN * 1.02):
     moved = SC.render_case(port_render, C.Iris, FIX, [c for c in ALL if c["design"] == "clean" and c["size"] == 512][0], {})
