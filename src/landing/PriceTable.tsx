@@ -2,6 +2,8 @@
 // visitor's own (src/landing/prices.ts: their variant's ladder while a price experiment runs for them) and is held back
 // (PriceGate) until the server's first answer about the prices has arrived, so nobody sees the standard price for a moment
 // and nothing moves when the price appears. No price is written here: the texts come from the hook, the words from the copy.
+// Motion (motion spec 6.12): a row's own hairline draws when the table comes into view (data-reveal="rule", one row after the other,
+// .12 s apart, css/pricing.css); the words and the price in the row never move, fade or change: nothing animates on a price.
 import type { ReactNode } from 'react';
 import { useCopy } from './copy/useCopy';
 import type { LandingCopy } from './copy/index';
@@ -29,7 +31,7 @@ interface RowProps {
 
 function Row({ title, note, value, free = false }: RowProps) {
   return (
-    <div className={free ? 'lp-prow lp-free' : 'lp-prow'}>
+    <div className={free ? 'lp-prow lp-free' : 'lp-prow'} data-reveal="rule">
       <div>
         <b>{title}</b>
         <small>{note}</small>
@@ -46,7 +48,7 @@ export function PriceTable() {
   const tokens = { ...p.tokens, styles: artStyleNames(c) };
   const gate = (text: string) => <PriceGate pending={p.pending}>{text}</PriceGate>;
   return (
-    <div className="lp-ptable">
+    <div className="lp-ptable" data-stagger>
       <Row free title={rows.free.t} note={fmt(rows.free.b)} value={c.pricing.free} />
       <Row title={rows.black.t} note={fmt(rows.black.b)} value={gate(p.black)} />
       <Row title={rows.art.t} note={fmt(rows.art.b, tokens)} value={gate(p.art)} />

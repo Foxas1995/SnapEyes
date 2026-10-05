@@ -5,12 +5,16 @@
 // No purchase button here: an order starts from the visitor's own preview on /try, so the one action is the free preview. Every
 // price comes through src/landing/prices.ts (PriceTable.tsx); the words come from the copy (src/landing/copy), the links from
 // src/landing/links.ts. Importing this file brings its own stylesheet, so it can be loaded lazily with its section.
+// Motion (motion spec 6.12): NOTHING animates on a price, a sentence that holds one, the notice, the list of what you receive, the
+// statement that printing is not part of the order, the footnote or the links to the terms. Only the eyebrow and the title enter, and
+// the hairlines between the rows of the price table draw one after the other (src/landing/PriceTable.tsx, css/pricing.css).
 import { useCopy } from './copy/useCopy';
 import { useLandingPrices } from './prices';
 import { useLegalHref, useTryHref } from './links';
 import { legalEdition } from '../shared/legal';
 import { CurrencySwitch } from './CurrencySwitch';
 import { PriceTable } from './PriceTable';
+import { Title } from '../motion/Title';
 import './css/pricing.css';
 
 // the prototype's arrow (a shorter head than the icon set's): the same on every button of the page
@@ -33,8 +37,8 @@ export function Pricing() {
     <section className="lp-sec" id="pricing" aria-labelledby="priceH">
       <div className="lp-wrap">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow">{pr.eyebrow}</p>
-          <h2 id="priceH">{pr.title}</h2>
+          <p className="lp-eyebrow" data-reveal="fade-s">{pr.eyebrow}</p>
+          <Title id="priceH" text={pr.title} />
         </div>
         <p className="lp-notice" role="note">
           {p.open ? pr.noticeOpen : pr.notice}
@@ -47,8 +51,8 @@ export function Pricing() {
           <div className="lp-incl">
             <h3>{pr.includesTitle}</h3>
             <ul>
-              {pr.includes.map((line) => (
-                <li key={line}>{fmt(line)}</li>
+              {pr.includes.map((line, i) => (
+                <li key={i}>{fmt(line)}</li>
               ))}
             </ul>
             <p className="lp-not">{pr.notIncludes}</p>
