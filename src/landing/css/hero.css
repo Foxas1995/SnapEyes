@@ -80,10 +80,10 @@
     .lp-hero-stage::before { animation: lp-fade-in 1.2s var(--ease-out) .35s backwards; }
     .lp-disc { animation: lp-disc-in .9s var(--ease-out) .9s backwards; }
     .lp-disc::after { animation: lp-cut .9s var(--ease-out) 1.2s backwards; }
-    .lp-hero-frame .lp-glint::after { animation: lp-sweep 2.4s var(--ease-inout) 2.1s backwards; }
+    .lp-hero-frame .lp-glint::after { animation: lp-sweep-hero 2.4s var(--ease-inout) 2.1s backwards; }
   }
   @keyframes lp-fade-in { from { opacity: 0; } }
   @keyframes lp-disc-in { from { opacity: 0; translate: -10px 10px; } }
   @keyframes lp-cut { from { scale: 1 0; } }
-  @keyframes lp-sweep { 0% { opacity: 0; transform: translateX(-40%); } 20%, 80% { opacity: .1; } 100% { opacity: 0; transform: translateX(40%); } }
+  @keyframes lp-sweep-hero { 0% { opacity: 0; transform: translateX(-40%); } 20%, 80% { opacity: .1; } 100% { opacity: 0; transform: translateX(40%); } }
 }

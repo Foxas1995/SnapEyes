@@ -420,7 +420,7 @@ async function checkEngine() {
 async function checkHero() {
   console.log('hero');
   // sampled every frame from the very start, on the phone profile so the entrance is slow enough to see
-  const SAMPLER = `window.__f = []; (function loop() { const i = document.getElementById('heroImg'); if (i) { let min = 1, filt = 'none', tf = 0; for (let e = i; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e); min = Math.min(min, +c.opacity); if (c.filter !== 'none') filt = c.filter; } const c = getComputedStyle(i); const sc = c.scale === 'none' ? 1 : parseFloat(c.scale); const rot = c.rotate; const chip = document.querySelector('.lp-frame-chip'), cap = document.querySelector('.lp-hero-cap'); window.__f.push({ t: Math.round(performance.now()), min, filt, sc, rot, tr: c.transform, chip: chip ? +getComputedStyle(chip).opacity : -1, cap: cap ? +getComputedStyle(cap).opacity : -1, vis: i.getBoundingClientRect().width > 0 }); } requestAnimationFrame(loop); })();`;
+  const SAMPLER = `window.__f = []; (function loop() { const i = document.getElementById('heroImg'); if (i) { let min = 1, filt = 'none', tf = 0; for (let e = i; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e); min = Math.min(min, +c.opacity); if (c.filter !== 'none') filt = c.filter; } const c = getComputedStyle(i); const sc = c.scale === 'none' ? 1 : parseFloat(c.scale); const rot = c.rotate; const chip = document.querySelector('.lp-frame-chip'), cap = document.querySelector('.lp-hero-cap'), gl = document.querySelector('.lp-hero-frame .lp-glint'); window.__f.push({ t: Math.round(performance.now()), min, filt, sc, rot, tr: c.transform, chip: chip ? +getComputedStyle(chip).opacity : -1, cap: cap ? +getComputedStyle(cap).opacity : -1, vis: i.getBoundingClientRect().width > 0, gl: gl ? +getComputedStyle(gl, '::after').opacity : -1 }); } requestAnimationFrame(loop); })();`;
   for (const [lang, width] of [['en', 375], ['de', 1280]]) {
     const page = await chrome.page({ width, height: width < 800 ? 812 : 900, mobile: width < 800, dpr: 1, cpu: 4, throttle: { latency: 150, down: 200000, up: 93750 } });
     await page.send('Page.addScriptToEvaluateOnNewDocument', { source: SAMPLER });
@@ -434,6 +434,13 @@ async function checkHero() {
     expect('hero', f.every((x) => x.sc <= 1.0301 && x.sc >= 0.9999), `${tag}: the picture scales to ${Math.max(...f.map((x) => x.sc))} (the charter allows 1.03)`);
     expect('hero', f.every((x) => x.rot === 'none' && !/matrix\(.*,\s*-?[1-9]/.test(x.tr.replace(/matrix\(1, 0, 0, 1,[^)]*\)/, ''))), `${tag}: the picture is rotated or skewed`);
     expect('hero', f.every((x) => x.chip === 1 && x.cap === 1), `${tag}: the honesty chip or the caption was below full opacity in some frame (chip min ${Math.min(...f.map((x) => x.chip))}, caption min ${Math.min(...f.map((x) => x.cap))})`);
+    // the glint on the print face is one quiet sweep at .10 (spec 6.2, ledger 16.2 C). Its keyframes once shared a global name with the wall's glint, whose chunk arrives
+    // after the first render and replaces the running keyframes (2026-10-05: a white slab at opacity 1 over the print face): so the painted opacity is read every frame,
+    // after every chunk that could replace it, and the sweep must have been seen at all
+    const gl = f.map((x) => x.gl).filter((x) => x >= 0);
+    expect('hero', gl.length > 30, `${tag}: the glint element was not found`);
+    expect('hero', Math.max(0, ...gl) <= 0.1005, `${tag}: the hero glint reached opacity ${Math.max(0, ...gl)} (the spec's sweep peaks at .10: a second @keyframes of the same name replaced it?)`);
+    expect('hero', Math.max(0, ...gl) >= 0.05, `${tag}: the hero glint never showed (peak ${Math.max(0, ...gl)})`);
     const last = f.at(-1);
     expect('hero', last.sc === 1, `${tag}: the picture ends at scale ${last.sc}`);
     await page.close();

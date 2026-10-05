@@ -81,6 +81,21 @@ for (const file of walk(join(ROOT, 'src'))) {
   });
 }
 
+// a second @keyframes with the same name anywhere in the CSS: names are global, so the later chunk's definition silently replaces the keyframes of an
+// animation that is already running (2026-10-05: lp-sweep in hero.css and wall.css made the hero glint a white slab for every visitor)
+const seenFrames = new Map();
+for (const file of walk(join(ROOT, 'src'))) {
+  if (!file.endsWith('.css')) continue;
+  const rel = relative(ROOT, file).split('\\').join('/');
+  strip(readFileSync(file, 'utf8'), true).split('\n').forEach((line, i) => {
+    for (const m of line.matchAll(/@keyframes\s+([\w-]+)/g)) {
+      const first = seenFrames.get(m[1]);
+      if (first) hits.push({ rule: 'duplicate @keyframes name', file: rel, line: i + 1, text: `${m[1]} is also defined in ${first}` });
+      else seenFrames.set(m[1], `${rel}:${i + 1}`);
+    }
+  });
+}
+
 const byRule = new Map();
 for (const h of hits) byRule.set(h.rule, (byRule.get(h.rule) ?? 0) + 1);
 for (const h of hits) console.log(`${h.rule}: ${h.file}:${h.line}  ${h.text}`);
