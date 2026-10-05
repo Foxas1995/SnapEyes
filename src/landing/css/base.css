@@ -81,6 +81,10 @@
   @media (min-width: 960px) {
     .lp-slot { min-height: var(--slot-d); }
   }
+  /* the Reveal is a pinned scene from 768 px (src/landing/RevealScene.tsx), about twice as tall as the flat layout that 640 to 767 px gets: there its place is the phone's */
+  @media (min-width: 640px) and (max-width: 767px) {
+    #reveal.lp-slot { min-height: var(--slot-p); }
+  }
   .lp-sec + .lp-sec::before { content: ""; position: absolute; top: 0; left: 50%; width: min(1120px, calc(100% - 2 * var(--gut))); transform: translateX(-50%); height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 197, 66, .28), transparent); }
   .lp-sec-head { max-width: 680px; }
   .lp-sec-head h2 { margin-top: 18px; }

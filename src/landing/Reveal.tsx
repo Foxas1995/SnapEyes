@@ -4,11 +4,20 @@
 //
 // Every word is the copy's (c.reveal, c.cta), every picture the asset manifest's (revealEyes), the link to /try is useTryHref.
 // The sections below the first screen are meant to be loaded lazily, so this file has a default export for React.lazy.
+//
+// Two layouts with the same words (motion spec 6.4). Where a scene can be pinned (768 px and up, motion allowed, a window tall enough,
+// the engine running: ./useScenePinned.ts) the section opens with the pinned scene (./RevealScene.tsx: one frame, three states of the
+// founder's own eye, scroll drives it), and under it, in normal flow, come the table of what is yours and what the AI adds and the slider
+// with its eye pills and the strip. On a phone, under reduced motion and in a short window there is no scene: the heading, the slider with
+// its pills, the table and the strip, as before.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCopy } from './copy/useCopy';
 import { Pill, useKeepFocus, useRoving } from './ui';
 import { RevealSlider } from './RevealSlider';
 import { RevealStrip } from './RevealStrip';
+import { RevealScene } from './RevealScene';
+import { useScenePinned } from './useScenePinned';
+import { Title } from '../motion/Title';
 import { REVEAL_SIZES, revealEyes, type RevealEye } from './revealEyes';
 import type { PictureAsset } from './assets';
 import './css/reveal.css';
@@ -25,6 +34,8 @@ function ready(a: PictureAsset): Promise<void> {
 }
 
 const GIVE_UP_MS = 5000;
+/** The eye of the pinned scene: the founder's own (the scene never shows a customer's pictures; the other eyes are the slider's examples). */
+const SCENE_EYE = 'own';
 
 /** The eye whose pictures are in the frame. A pick changes the pill at once, but the frame, the note, the scale line and the
  *  strip change together once both layers of the new eye have arrived (or after a few seconds whatever happens): on a slow
@@ -66,38 +77,58 @@ export function Reveal() {
   const pick = (id: string) => keepFocus(() => setPicked(id), `[data-eye="${id}"]`);
   const roving = useRoving<HTMLDivElement>((el) => pick(el.dataset.eye ?? ''));
 
-  return (
-    <section className="lp-sec" id="reveal" aria-labelledby="revealH">
-      <div className="lp-wrap lp-reveal-grid">
-        <div className="lp-reveal-text">
-          <div className="lp-sec-head">
-            <p className="lp-eyebrow">{r.eyebrow}</p>
-            <h2 id="revealH">{r.title}</h2>
-            <p className="lp-intro">{shown.phone ? r.intro : r.introWeb}</p>
+  const pinned = useScenePinned();
+  const sceneEye = eyes.find((e) => e.id === SCENE_EYE) ?? eyes[0];
+
+  const ai = (
+    <div className="lp-ai">
+      <h3>{r.aiTitle}</h3>
+      <dl data-stagger>
+        {r.ai.map((x) => (
+          <div key={x.t}>
+            <dt>{x.t}</dt>
+            <dd>{x.b}</dd>
           </div>
-          <div className="lp-ai">
-            <h3>{r.aiTitle}</h3>
-            <dl>
-              {r.ai.map((x) => (
-                <div key={x.t}>
-                  <dt>{x.t}</dt>
-                  <dd>{x.b}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-        <div ref={wrap} className="lp-cmp-wrap">
-          <RevealSlider eye={shown} />
-          <div ref={roving.ref} onKeyDown={roving.onKeyDown} className="lp-pills" role="radiogroup" aria-label={r.eyeGroup}>
-            {eyes.map((e) => (
-              <Pill key={e.id} role="radio" on={e.id === picked} data-eye={e.id} onClick={() => pick(e.id)}>
-                {e.label}
-              </Pill>
-            ))}
-          </div>
-        </div>
+        ))}
+      </dl>
+    </div>
+  );
+  const compare = (
+    <div ref={wrap} className="lp-cmp-wrap">
+      <RevealSlider eye={shown} />
+      <div ref={roving.ref} onKeyDown={roving.onKeyDown} className="lp-pills" role="radiogroup" aria-label={r.eyeGroup}>
+        {eyes.map((e) => (
+          <Pill key={e.id} role="radio" on={e.id === picked} data-eye={e.id} onClick={() => pick(e.id)}>
+            {e.label}
+          </Pill>
+        ))}
       </div>
+    </div>
+  );
+
+  return (
+    <section className={pinned ? 'lp-sec lp-rv-pin' : 'lp-sec'} id="reveal" aria-labelledby="revealH">
+      {pinned ? (
+        <>
+          <RevealScene eye={sceneEye} />
+          <div className="lp-wrap lp-reveal-grid lp-rv-lower">
+            <div className="lp-reveal-text">{ai}</div>
+            {compare}
+          </div>
+        </>
+      ) : (
+        <div className="lp-wrap lp-reveal-grid">
+          <div className="lp-reveal-text">
+            <div className="lp-sec-head">
+              <p className="lp-eyebrow" data-reveal="fade-s">{r.eyebrow}</p>
+              <Title id="revealH" text={r.title} />
+              <p className="lp-intro" data-reveal="fade">{shown.phone ? r.intro : r.introWeb}</p>
+            </div>
+            {ai}
+          </div>
+          {compare}
+        </div>
+      )}
       <RevealStrip eye={shown} />
     </section>
   );

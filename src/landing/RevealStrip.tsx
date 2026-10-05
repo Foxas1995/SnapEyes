@@ -1,7 +1,7 @@
 // Under the Reveal: the three up strip (your photo, your iris, your art), the line that says nothing is ever repainted, the note
 // about how the examples were taken, and the quiet call to action ("Your turn"). The strip follows the eye that is on show
-// in the frame above it, and fades in 1, 2, 3 the first time it is seen (plain CSS transitions, see css/reveal.css).
-import { useEffect, useRef, useState } from 'react';
+// in the frame above it, and its three pictures rise one after the other the first time they are seen (the engine's reveal and stagger,
+// src/motion/motion.ts: 120 ms apart here, see css/reveal.css; under reduced motion and without the engine they are simply there).
 import { useCopy } from './copy/useCopy';
 import { useTryHref } from './links';
 import type { RevealEye } from './revealEyes';
@@ -13,25 +13,6 @@ export interface RevealStripProps {
 export function RevealStrip({ eye }: RevealStripProps) {
   const { c } = useCopy();
   const tryHref = useTryHref();
-  const root = useRef<HTMLDivElement>(null);
-  // without IntersectionObserver the strip is simply there
-  const [seen, setSeen] = useState(() => !('IntersectionObserver' in window));
-  useEffect(() => {
-    const el = root.current;
-    if (!el || seen) return;
-    const io = new IntersectionObserver(
-      (es) => {
-        if (es[0].isIntersecting) {
-          setSeen(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [seen]);
-
   const r = c.reveal;
   const steps = [
     { key: 'photo', pic: eye.stripPhoto, alt: eye.photoAlt, caption: r.strip.photo },
@@ -39,8 +20,8 @@ export function RevealStrip({ eye }: RevealStripProps) {
     { key: 'art', pic: eye.art, alt: eye.artAlt, caption: r.strip.art },
   ];
   return (
-    <div ref={root} className={seen ? 'lp-wrap lp-strip lp-in' : 'lp-wrap lp-strip'}>
-      <ol>
+    <div className="lp-wrap lp-strip">
+      <ol data-stagger>
         {steps.map((s, i) => (
           <li key={s.key}>
             <figure>
@@ -55,9 +36,9 @@ export function RevealStrip({ eye }: RevealStripProps) {
           </li>
         ))}
       </ol>
-      <p className="lp-never">{r.never}</p>
-      <p className="lp-reveal-note">{r.note}</p>
-      <div className="lp-your-turn">
+      <p className="lp-never" data-reveal="fade">{r.never}</p>
+      <p className="lp-reveal-note" data-reveal="fade">{r.note}</p>
+      <div className="lp-your-turn" data-reveal="fade">
         <p>{r.yourTurn}</p>
         <a className="lp-btn lp-btn-gold" href={tryHref}>
           <span>{c.cta}</span>

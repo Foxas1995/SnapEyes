@@ -10,7 +10,7 @@ import type { Lang } from '../shared/lang';
 // a section's real height also depends on the market and on whether ordering is open (`--check` fails above 12 percent). The
 // ids are the sections' own: a link to #pricing has its target while the section is on its way.
 export const SLOT_HEIGHTS = {
-  reveal: { id: 'reveal', h: { en: [1787, 1903, 1551], de: [1946, 1932, 1567], lt: [1887, 1975, 1589], hu: [1897, 1933, 1556] } },
+  reveal: { id: 'reveal', h: { en: [1787, 3677, 3483], de: [1946, 3677, 3483], lt: [1887, 3700, 3483], hu: [1897, 3679, 3483] } },
   wall: { id: 'wall', h: { en: [2715, 2834, 2733], de: [2876, 2876, 2779], lt: [2809, 2954, 2853], hu: [2852, 2898, 2779] } },
   styles: { id: 'styles', h: { en: [947, 1925, 1543], de: [988, 1966, 1584], lt: [1015, 1994, 1612], hu: [968, 1945, 1563] } },
   how: { id: 'how', h: { en: [884, 1132, 1054], de: [939, 1181, 1103], lt: [939, 1181, 1103], hu: [939, 1132, 1054] } },
