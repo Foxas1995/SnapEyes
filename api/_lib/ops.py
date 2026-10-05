@@ -1343,6 +1343,9 @@ def a_styles_lab(body, who):
     format: a canvas id of the style ("1:1" ...); size: 480, 1024, 2048 or 4096 (the long side). names and date are the customer's words,
     drawn under the iris when given (a line the drawer cannot take, over 256 characters or with a letter the font lacks, is a 400 that says which).
     crop: [x, y] the centre of the 100 percent window, in canvas pixels (default: the upper right rim).
+    seed: "eye_id" (default: the seed a customer's picture has, made from the eye's id and the plan's seed key) or "legacy" (the seed the pictures had
+    before the seed change of WP5B, from the bytes of the iris: the owner's before and after look at a board). The eye's id is the one of the stored eye
+    record for a lab test order, else the hash of the image sent.
     A render above 2048 px comes back as a reduced view plus the window at full size. 4096 px is refused when the cost table says it cannot
     finish inside the time or the memory this function has (the rule a paid master is held to), and answers 409 plate_unavailable when a
     plate of the design has no 4K file in storage. Without a style the reply is the list of styles to choose from ({styles, sizes}).
@@ -1354,6 +1357,7 @@ def a_styles_lab(body, who):
     from .styles import core as SC
     from .styles import costs as CO
     from .styles import plates as PL
+    from .styles import seeds as SD
     style = body.get("style")
     if style is None:
         # no style: the list the page builds its menu from (the styles of the v3 engine this deployment can draw, with their stage)
@@ -1374,6 +1378,9 @@ def a_styles_lab(body, who):
     if isinstance(size, bool) or size not in LAB_SIZES:
         raise L.ClientError(f"size is one of {', '.join(str(x) for x in LAB_SIZES)}.")
     fmt = body.get("format") if body.get("format") in eng["canvases"] else eng["canvases"][0]
+    seed_mode = body.get("seed", "eye_id")
+    if seed_mode not in ("eye_id", "legacy"):
+        raise L.ClientError('seed is "eye_id" or "legacy".')
     # the eye: an image sent, or the stored eye of a lab test order
     order = body.get("order")
     if order is not None:
@@ -1386,7 +1393,13 @@ def a_styles_lab(body, who):
         data = store.get(f"orders/{order}/eye_{n}.jpg", max_bytes=16 << 20)
         if data is None:
             raise L.ClientError("That test order has no such eye.")
+        try:
+            eye_rec = store.get_json(f"orders/{order}/eye_{n}.json", timeout=5.0, retry=False)
+        except store.StorageError:
+            eye_rec = None
+        eye_id = eye_rec.get("eye_id") if isinstance(eye_rec, dict) and isinstance(eye_rec.get("eye_id"), str) and SD.is_eye_id(eye_rec["eye_id"]) else None
     else:
+        eye_id = None
         eye = body.get("eye")
         if not isinstance(eye, str) or not eye or len(eye) > LAB_EYE_B64:
             raise L.ClientError("Send eye as the base64 of a restored iris square, or order and n.")
@@ -1414,16 +1427,19 @@ def a_styles_lab(body, who):
                             f"{est.get('est_mb')} MB).")
     spec = {"style": style, "layout": "single", "eyes": 1, "canvas": fmt, "names": _lab_words(body.get("names"), "names"), "date": _lab_words(body.get("date"), "date")}
     try:
-        iris = SC.Iris(data, "lab", max_side=4096 if size == 4096 else 2048)
+        iris = SC.Iris(data, "lab", max_side=4096 if size == 4096 else 2048, eye_id=eye_id)
     except (OSError, SyntaxError, ValueError, L.Image.DecompressionBombError):     # a truncated file passes verify() and fails when its pixels are decoded
         raise L.ClientError("That is not a readable image.") from None
+    if seed_mode == "legacy":
+        spec["engine_opts"] = {"seed_mode": "legacy"}
     try:
         pv = ST.preview([iris], spec, size=size, check=True)
     except PL.PlateUnavailable as e:
         raise store.Answer(409, "plate_unavailable", "A plate this design needs is not in storage.", False, None, plate=str(e.plate_id)[:80], why=e.why)
     img = pv.img
     out = {"ok": True, "style": style, "design": pv.design, "canvas": pv.fmt, "width": img.size[0], "height": img.size[1], "cls": pv.cls, "seed": str(pv.seed),
-           "facts": pv.log, "plan": ST.resolve(spec, None), "selfcheck": pv.selfcheck, "times": pv.times, "estimate": est}
+           "seed_mode": seed_mode, "eye_id": iris.eye_id, "facts": pv.log, "plan": ST.resolve(dict(spec, eye_ids=[iris.eye_id]), None),
+           "selfcheck": pv.selfcheck, "times": pv.times, "estimate": est}
     if size > 2048:
         crop = body.get("crop")
         d = pv.discs[0]

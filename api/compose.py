@@ -161,7 +161,7 @@ def _compose_engine(body, style, n, metas, raws, layouts, clean):
     meta = metas[0] if isinstance(metas[0], dict) else {}
     eye = SCORE.Iris(raws[0], "compose", max_side=WORK_SIDE, eye_id=meta.get("eye_id"))
     spec = {"style": style, "layout": layouts[0], "eyes": n, "canvas": canvas, "names": _engine_text(body.get("names"), 60),
-            "date": _engine_date(body.get("date"), 20)}
+            "date": _engine_date(body.get("date"), 20), "profiles": [meta.get("profile")]}
     pv = ST.preview([eye], spec, size=PREVIEW_SIZE, watermark=not clean)
     qa = L.colour_qa("compose", graded=L.Image.fromarray(pv.graded[0]))
     E.record("compose", style=style, eyes=n, layout=layouts[0], format=word, clean=bool(clean), qa_ok=bool(qa.get("ok")),

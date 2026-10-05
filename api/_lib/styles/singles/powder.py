@@ -22,6 +22,7 @@ from __future__ import annotations
 
 # PORT of work package WP5A (step A): singles_powder.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_singles.py lists
 # (imports, plates); test_goldens_singles.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP5B (step B) changed the seed and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 import hashlib
@@ -87,13 +88,14 @@ def plate_scale(p, r_max=R_MAX_4K):
     return float(min(1.0, need))
 
 
-def pick_cloud(seed, allowed, maxrot=10.0, black=("30", "45", "60")):
+def pick_cloud(seed, allowed, maxrot=10.0, black=("30", "45", "60"), pv=None):
     """One P-SN-CLOUD keeper whose strong side (after an optional mirror and a small rotation) lands in one of the allowed screen-angle
-    bands (deg CCW from 3 o'clock). Only plates that can be placed at R = 0.24 S without an upscale beyond x1.1 at 4096 (void >= 0.437)."""
+    bands (deg CCW from 3 o'clock). Only plates that can be placed at R = 0.24 S without an upscale beyond x1.1 at 4096 (void >= 0.437).
+    pv: the plates version of the spec (a plate that arrived later is not a candidate; None is the current version)."""
     R = registry()
     rnd = C.Rand(seed, "cloudpick")
     cands = []
-    for p in R.plates("P-SN-CLOUD", black=list(black)):
+    for p in R.plates("P-SN-CLOUD", pv, black=list(black)):
         if p.strength < R.WEAK_STRENGTH or p.strong_angle is None or (p.void_diam or 0) < MIN_VOID:
             continue
         for mir in (False, True):
@@ -253,7 +255,7 @@ def fx_powder(cv, ctx):
     _bg(cv, ctx, d)
     # ---- wind and plate
     allowed = WIND_SETS["wall" if ctx.wall else "square"]
-    pk = pick_cloud(ctx.seed, allowed)
+    pk = pick_cloud(ctx.seed, allowed, pv=ctx.pv)
     wind_deg = pk.strong_angle
     wind = -math.radians(wind_deg)
     emis = M.Emission(ctx.rand("emis"), wind, b=opts["b"], halo=opts["halo"], plume=opts["plume"])

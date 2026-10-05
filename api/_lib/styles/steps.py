@@ -41,7 +41,9 @@ duration.watchdog_total plus one step, with no page open.
 
 Holds (Hold, raised to the caller, which writes review.json and tells the owner; the order is never made in another style): style_step_too_big,
 style_not_priced, engine_skew (the plan was made under another ENGINE_V), class_changed (the master's colour class is not the preview's: never
-another palette), style_step_failed (the third kill, the second identical exception), plate_unavailable (the second plate fault), no_engine.
+another palette), style_step_failed (the third kill, the second identical exception), plate_unavailable (the second plate fault), no_engine,
+eye_changed (a master was made from another preview than the plan's: another seed), picture_drift (the picture drew another seed or other plates than the
+plan names: never delivered).
 
 A style of the legacy engine is one art step as well (the executor calls the legacy master compose with the very body it always had: the artwork's
 file name is that function's own digest, unchanged); a style of the v3 engine is drawn here by its family's preview() at 4096 px and stored as
@@ -61,6 +63,7 @@ from .. import catalogue as CT
 from .. import duration as D
 from .. import store
 from . import ENGINE_V
+from . import seeds as SD
 from . import costs as CO
 from . import guard as GD
 
@@ -227,7 +230,7 @@ def words_sha(spec):
 
 # ----------------------------------------------------------------------------- the plan
 PLAN8_KEYS = ("v", "pv", "engine_v", "style", "family", "design_used", "fallback", "layout", "canvas", "opts", "eyes", "eye_ids", "work_side",
-              "seed_key", "plate_families", "plates", "clean")
+              "seed_key", "plate_families", "plates", "frozen", "clean")
 
 
 def plan8(plan):
@@ -287,22 +290,27 @@ def make_plan(spec, eyes=None, factor=None):
         plan.update(engine_v=0, design_used=style, fallback=None, canvas="artwork", seed_key=None, clean=0, cost_key=None)
     else:
         from .. import styles as ST
+        from . import plates as PL
         try:
-            rp = ST.resolve({"style": style, "layout": layout, "eyes": n, "opts": opts, "canvas": None}, [(e or {}).get("profile") for e in (eyes or [])])
+            rp = ST.resolve({"style": style, "layout": layout, "eyes": n, "opts": opts, "canvas": None, "pv": CT.PLATES_VERSION, "eye_ids": plan["eye_ids"]},
+                            [(e or {}).get("profile") for e in (eyes or [])])
         except ST.EngineNotBuilt as e:
             raise Hold("no_engine", str(e)) from None
+        except PL.NoPlate as e:
+            raise Hold("no_engine", f"the plate library has no plate for this style at plates version {CT.PLATES_VERSION}: {e}") from None
         try:
             key = CO.cost_key(eng, "dark", opts.get("look"))
         except CO.NoCost:
             key = None
         plates = [str(x) for x in rp["plates"]] if isinstance(rp.get("plates"), (list, tuple)) and rp["plates"] else None
         plan.update(engine_v=ENGINE_V, design_used=rp.get("design_used"), fallback=rp.get("fallback"), canvas=rp.get("canvas"),
-                    seed_key=rp.get("seed_key"), seed_from=rp.get("seed_from"), clean=1 if rp.get("clean") else 0, cost_key=key, plates=plates)
+                    seed_key=rp.get("seed_key"), seed_from=rp.get("seed_from"), seed=rp.get("seed"), frozen=dict(rp.get("frozen") or {}),
+                    clean=1 if rp.get("clean") else 0, cost_key=key, plates=plates)
         if plates:
             # the 4K plates the picture will draw from (the id, the storage path, the sha256 and the size of each: checkout verifies that every one is in
-            # storage before the customer pays, and the step never substitutes another). A family that draws plates not known before the render
-            # (the single styles seed from the master's own bytes until the seed comes from eye_id) leaves plates empty: the family is in plate_families.
-            from . import plates as PL
+            # storage before the customer pays, and the step never substitutes another). The plates and the seed are known here when every eye's id is
+            # (the seed is made from the eye ids and the seed key, WP5B); a family that cannot name its plates before the render (a splash whose eye has
+            # no sealed profile, Elements) leaves plates empty: the family is in plate_families, and the master checks what it drew against what is here.
             plan["plates_needed"] = PL.needed(plates)
     plan["steps"] = plan_steps(plan, factor)
     plan["plan8"] = plan8(plan)
@@ -495,6 +503,14 @@ HOLDS = {
     "plate_unavailable": ("a 4K plate of this style is not in storage, or is not the file the registry names, twice in a row",
                           "Upload the plates (python scripts/upload_plates.py --yes) and check the storage with the admin action plates_status; then "
                           "clear the review. The order is never drawn with another plate"),
+    "eye_changed": ("the 4096 px master of an eye was made from another preview than the one the plan was frozen on (its eye id differs), so the picture "
+                    "would not be the one the customer approved",
+                    "Look at the eye records of the order (orders/<order>/eye_<n>.json) and the plan; render the eye again from the approved preview, or delete "
+                    "the plan (style/plan.json) so that it is made again from the eyes as they are; then clear the review"),
+    "picture_drift": ("the picture the master drew uses another seed or other plates than the plan names (the code that draws changed without a new "
+                      "ENGINE_V, or a record was changed by hand), so it was not delivered",
+                      "Look at the plan (the admin order detail), the engine version of the deployment and the step's event; roll back the deployment or "
+                      "delete the plan so that it is made again; then clear the review"),
     "plan_mismatch": ("the plan stored for this order is for another style or another number of eyes than the order's own record says (it was changed "
                       "by hand?)", "Look at orders/<order>/style/plan.json and the paid record; delete the plan if it is wrong; then clear the review"),
     "no_engine": ("no engine can draw this style for this number of eyes on this deployment",
@@ -629,6 +645,19 @@ def _exec_legacy(ctx, plan, step, rerun):
     return Out(res, out, inputs=_inputs(ctx, plan, recs))
 
 
+def _check_drawn(plan, pv):
+    """The picture is the plan's: the seed it was drawn from and the plates it drew from are the ones the plan names (when it names them). The seed is a
+    function of the plan's eye ids and seed key, so only a change of the code without a new ENGINE_V or a record changed by hand can make them differ:
+    then nothing is stored or delivered and the order is held (never another picture than the approved one)."""
+    want = plan.get("seed")
+    if want is not None and str(pv.seed) != str(want):
+        raise Hold("picture_drift", f"drawn from seed {pv.seed}, the plan names {want}")
+    plates = plan.get("plates")
+    used = (pv.log or {}).get("plates") if isinstance(pv.log, dict) else None
+    if isinstance(plates, list) and isinstance(used, list) and sorted(map(str, plates)) != sorted(map(str, used)):
+        raise Hold("picture_drift", f"drew from plates {sorted(used)}, the plan names {sorted(plates)}")
+
+
 def _exec_engine(ctx, plan, step, rerun):
     """A style of the v3 engine: the eyes' 4096 px masters from storage, the family's preview() at 4096 px (clean: the paid file has no watermark),
     the checks, JPEG q95 4:4:4, the artwork and its record. Idempotent: an artwork whose digest is already stored with its record is reused."""
@@ -651,12 +680,21 @@ def _exec_engine(ctx, plan, step, rerun):
                        inputs=inputs, drift=art.get("drift"), reused=True)
     side = min(int(plan.get("work_side") or SIZE), SIZE)
     eyes, drift = [], []
+    plan_ids = [x for x in (plan.get("eye_ids") or [])]
     for i, (k, rec) in enumerate(zip(keys, recs), 1):
         raw = store.get(k, timeout=20.0, retry=False)
         if raw is None:
             raise store.Answer(409, "eyes_not_ready", "Not every eye is finished yet.", True, 5, missing=[i])
-        eid = (rec or {}).get("eye_id") if isinstance(rec, dict) else None
-        eyes.append(SCORE.Iris(raw, f"eye{i}", max_side=side, eye_id=eid if isinstance(eid, str) and eid else None))
+        rid = (rec or {}).get("eye_id") if isinstance(rec, dict) else None
+        pid = plan_ids[i - 1] if i - 1 < len(plan_ids) else None
+        if SD.is_eye_id(pid):
+            # the eye the plan was frozen on seeds the picture; a master of another preview would draw another seed than the customer approved
+            if SD.is_eye_id(rid) and rid != pid:
+                raise Hold("eye_changed", f"eye {i}: the master was made from preview {rid}, the plan was frozen on {pid}")
+            eid = pid
+        else:
+            eid = rid if SD.is_eye_id(rid) else None
+        eyes.append(SCORE.Iris(raw, f"eye{i}", max_side=side, eye_id=eid))
         del raw
     prof = plan.get("eye_prof") or []
     for i, eye in enumerate(eyes):
@@ -675,10 +713,12 @@ def _exec_engine(ctx, plan, step, rerun):
             raise Hold("class_changed", f"eye {i + 1}: the master's colour class is {st['class']}, the preview's was {want['cls']} (the ring colour "
                        f"moved {d_rgb:.1f} levels): the picture would take another palette than the one the customer approved")
     names, date = master_words(ctx.spec)
-    fam_spec = {"style": plan["style"], "layout": plan["layout"], "eyes": n, "canvas": plan.get("canvas"), "names": names, "date": date, "opts": plan.get("opts")}
+    fam_spec = {"style": plan["style"], "layout": plan["layout"], "eyes": n, "canvas": plan.get("canvas"), "names": names, "date": date, "opts": plan.get("opts"),
+                "pv": plan.get("pv"), "frozen": plan.get("frozen") or None}
     t0 = time.time()
     pv = ST.preview(eyes, fam_spec, size=SIZE, watermark=False, check=True)
     t1 = time.time()
+    _check_drawn(plan, pv)
     graded = list(pv.graded or [])
     qa_eyes = [L.colour_qa(f"art {folder} eye {i + 1}/{n}", graded=L.Image.fromarray(g)) for i, g in enumerate(graded)]
     qa = {"ok": all(q["ok"] for q in qa_eyes) if qa_eyes else None, "eyes": qa_eyes}

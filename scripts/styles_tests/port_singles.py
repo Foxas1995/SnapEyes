@@ -10,7 +10,10 @@ test_goldens_singles.py runs the check when the scratch tree is there (a LOCAL l
 proven sentence and not a claim, next to the pixel goldens that prove the same from the other side. Every edit is a substring replacement that must
 match exactly the number of times it says, or a cut of whole lines between two markers; a scratch file that moved makes the tool stop.
 
-What the edits are, in four kinds (each file's header comment repeats the kinds that touch it):
+Two sets of edits, applied in this order: PORTS (step A, WP5A: the port) and STEP_B (WP5B: the seed, below; the one reviewed change of what a
+picture is made from). With the STEP_B edits taken out the files are the step A port and replay the prototype's pictures byte for byte.
+
+What the step A edits are, in four kinds (each file's header comment repeats the kinds that touch it):
   imports     the scratch paths and sys.path lines go; the engine core, layouts, text, plates and atlases are the repo modules; the thread-count
               environment lines at import go (run time rule of the plan: set them where the entry points are, not in a module)
   plates      `registry` (the plate workflow's module, which drags in the generation tooling) is api/_lib/styles/plates.py, which has the same surface;
@@ -108,6 +111,72 @@ GOLD = ("../wave-cg2/A/cg_a.py", "singles/gold.py", "imports; the approved varia
 ])
 
 
+# WP5B, step B: the seed is made from the eye ids and the plan's seed key (api/_lib/styles/seeds.py), not from the bytes of the iris; the plates version
+# of the spec reaches every plate pick; the liquid of a splash can be fixed by the plan. Nothing else. Keyed by the destination file.
+STEP_B = {
+    "singles/kit.py": [
+        sub('''    cx, cy, R), irises, seed, opts, rand(tag, eye), grid(), count(). The effect draws into the float canvas only."""
+
+    def __init__(self, frame, d, iris, style, opts=None):
+''', '''    cx, cy, R), irises, seed, pv, frozen, opts, rand(tag, eye), grid(), count(). The effect draws into the float canvas only.
+    seed: the seed of the artwork (api/_lib/styles/seeds.py: the eye ids and the plan's seed key, WP5B); pv: the plates version a plate pick takes;
+    frozen: the choices the plan fixed before the render (the liquid of a splash), which an effect reads before it measures the eye."""
+
+    def __init__(self, frame, d, iris, style, opts=None, seed=None, pv=None, frozen=None):
+'''),
+        sub("        self.seed = C.seed_for(iris.raw, 0, style, frame.key)\n",
+            '        if seed is None:\n            raise ValueError("an effect context needs the seed of its artwork (api/_lib/styles/seeds.py)")\n'
+            "        self.seed = int(seed)\n        self.pv = pv\n        self.frozen = dict(frozen or {})\n"),
+        sub("                  whiten=C.WHITEN, opts=None, times=None, limb=None):\n", "                  whiten=C.WHITEN, opts=None, times=None, limb=None, seed=None, pv=None, frozen=None):\n"),
+        sub("    ctx = MCtx(frame, d, iris, design, opts)\n", "    ctx = MCtx(frame, d, iris, design, opts, seed=seed, pv=pv, frozen=frozen)\n"),
+    ],
+    "singles/powder.py": [
+        sub('def pick_cloud(seed, allowed, maxrot=10.0, black=("30", "45", "60")):', 'def pick_cloud(seed, allowed, maxrot=10.0, black=("30", "45", "60"), pv=None):'),
+        sub('''    bands (deg CCW from 3 o'clock). Only plates that can be placed at R = 0.24 S without an upscale beyond x1.1 at 4096 (void >= 0.437)."""
+''', '''    bands (deg CCW from 3 o'clock). Only plates that can be placed at R = 0.24 S without an upscale beyond x1.1 at 4096 (void >= 0.437).
+    pv: the plates version of the spec (a plate that arrived later is not a candidate; None is the current version)."""
+'''),
+        sub('    for p in R.plates("P-SN-CLOUD", black=list(black)):', '    for p in R.plates("P-SN-CLOUD", pv, black=list(black)):'),
+        sub("    pk = pick_cloud(ctx.seed, allowed)\n", "    pk = pick_cloud(ctx.seed, allowed, pv=ctx.pv)\n"),
+    ],
+    "singles/splash.py": [
+        sub('''def liquid_for(iris):
+    """The liquid family of one eye by class and hue (brief 3.7.1)."""
+    st = iris.stats
+    if st["class"] == "dark_brown":''', '''def liquid_for(iris):
+    """The liquid family of one eye by class and hue (brief 3.7.1)."""
+    return liquid_from_stats(iris.stats)
+
+
+def liquid_from_stats(st):
+    """liquid_for() of the numbers alone: st is the eye's colour_stats (class, h, C), measured on the iris or read from its sealed profile (the plan
+    fixes the liquid from the profile, so that the preview and the master draw the plate the plan names)."""
+    if st["class"] == "dark_brown":'''),
+        sub('''    liquid = ctx.opts.get("liquid") or liquid_for(iris)
+    rnd = ctx.rand("splash")
+    wanted = opts["wind_lo"] + (opts["wind_hi"] - opts["wind_lo"]) * float(rnd.uniform())
+    pk = reg.pick("P-SP-CROWN", ctx.seed, wanted_strong_angle=wanted, max_rotation=30.0, liquid=liquid)
+''', '''    liquid = ctx.opts.get("liquid") or ctx.frozen.get("liquid") or liquid_for(iris)
+    wanted, pk = crown_pick(ctx.seed, liquid, ctx.pv, opts)
+'''),
+        sub('''def fx_splash(cv, ctx):''', '''def crown_pick(seed, liquid, pv=None, opts=None):
+    """(the screen angle the crown's tall side is wanted at, the Pick): the crown plate of one splash, from the artwork's seed, the liquid and the
+    plates version of the spec. No pixels: resolve() calls it to name the plate before the render, and the render calls it to draw."""
+    o = dict(SP)
+    o.update(opts or {})
+    wanted = o["wind_lo"] + (o["wind_hi"] - o["wind_lo"]) * float(C.Rand(seed, "splash").uniform())
+    return wanted, registry().pick("P-SP-CROWN", seed, wanted_strong_angle=wanted, max_rotation=30.0, liquid=liquid, pv=pv)
+
+
+def fx_splash(cv, ctx):'''),
+    ],
+    "singles/elements.py": [
+        sub("max_rotation=25.0, exclude=v3_exclude(reg))", "max_rotation=25.0, exclude=v3_exclude(reg), pv=ctx.pv)"),
+        sub("max_rotation=35.0, liquid=liquid)", "max_rotation=35.0, liquid=liquid, pv=ctx.pv)"),
+    ],
+}
+
+
 def _apply(text, edits, name):
     for e in edits:
         if e[0] == "sub":
@@ -130,13 +199,14 @@ def _apply(text, edits, name):
     return text
 
 
-def _with_future(text, words, src):
+def _with_future(text, words, src, step_b=False):
     """After the module docstring: the future import and a note of what the file is."""
     tree = ast.parse(text)
     end = tree.body[0].end_lineno
     lines = text.split("\n")
     note = (f"# PORT of work package WP5A (step A): {src} of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_singles.py lists\n"
-            f"# ({words}); test_goldens_singles.py replays the edits on the scratch and the pixels of the scratch's own pictures.")
+            f"# ({words}); test_goldens_singles.py replays the edits on the scratch and the pixels of the scratch's own pictures."
+            + ("\n# WP5B (step B) changed the seed and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py." if step_b else ""))
     return "\n".join(lines[:end] + ["from __future__ import annotations", ""] + note.split("\n") + [""] + lines[end:])
 
 
@@ -149,8 +219,8 @@ def build(y3):
             path = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(y3)), src[3:]))
         with open(path, encoding="utf-8", newline="") as f:
             text = f.read().replace("\r\n", "\n")
-        text = _apply(text, edits, src)
-        out[dst] = _with_future(text, words, os.path.basename(src))
+        text = _apply(_apply(text, edits, src), STEP_B.get(dst, []), src + " (step B)")
+        out[dst] = _with_future(text, words, os.path.basename(src), bool(STEP_B.get(dst)))
     return out
 
 

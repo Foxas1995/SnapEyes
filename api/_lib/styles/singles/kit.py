@@ -17,6 +17,7 @@ from __future__ import annotations
 
 # PORT of work package WP5A (step A): singles_kit.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_singles.py lists
 # (imports, plates, caches, text; the legacy feather option is gone); test_goldens_singles.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP5B (step B) changed the seed and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 import time
@@ -573,9 +574,11 @@ class _Lay:
 
 class MCtx:
     """What an effect function receives (a duck-typed fx.core.Ctx): W, H, S, wall, stretch, discs (fx Discs with exact
-    cx, cy, R), irises, seed, opts, rand(tag, eye), grid(), count(). The effect draws into the float canvas only."""
+    cx, cy, R), irises, seed, pv, frozen, opts, rand(tag, eye), grid(), count(). The effect draws into the float canvas only.
+    seed: the seed of the artwork (api/_lib/styles/seeds.py: the eye ids and the plan's seed key, WP5B); pv: the plates version a plate pick takes;
+    frozen: the choices the plan fixed before the render (the liquid of a splash), which an effect reads before it measures the eye."""
 
-    def __init__(self, frame, d, iris, style, opts=None):
+    def __init__(self, frame, d, iris, style, opts=None, seed=None, pv=None, frozen=None):
         self.frame = frame
         self.W, self.H, self.S = frame.W, frame.H, frame.S
         self.wall = frame.wall
@@ -587,7 +590,11 @@ class MCtx:
         lay.aspect = frame.fmt
         lay.key = frame.key
         self.layout = lay
-        self.seed = C.seed_for(iris.raw, 0, style, frame.key)
+        if seed is None:
+            raise ValueError("an effect context needs the seed of its artwork (api/_lib/styles/seeds.py)")
+        self.seed = int(seed)
+        self.pv = pv
+        self.frozen = dict(frozen or {})
         self.eye_seeds = [self.seed]
         self.stretch = 1.0
         self.caption_accent = None
@@ -666,7 +673,7 @@ class Result:
 
 
 def render_single(effect, iris, design, fmt="1:1", size=1024, names="", date="", bg=C.BG, name_colour=None, knee=C.KNEE,
-                  whiten=C.WHITEN, opts=None, times=None, limb=None):
+                  whiten=C.WHITEN, opts=None, times=None, limb=None, seed=None, pv=None, frozen=None):
     """One artwork: frame -> place + grade the iris -> canvas (bg) -> effect(cv, ctx) -> tone map -> dither -> iris pasted
     LAST (F3) -> the customer's names. effect None draws nothing (Clean). Returns a Result."""
     t0 = time.perf_counter()
@@ -679,7 +686,7 @@ def render_single(effect, iris, design, fmt="1:1", size=1024, names="", date="",
     d, d3 = place_iris(iris, frame, span, sharpen=o_.get("sharpen", True), limb=(lb if lb else None))
     iris.ring
     t1 = time.perf_counter()
-    ctx = MCtx(frame, d, iris, design, opts)
+    ctx = MCtx(frame, d, iris, design, opts, seed=seed, pv=pv, frozen=frozen)
     cv = C.canvas(frame.W, frame.H, bg)
     if effect is not None:
         effect(cv, ctx)

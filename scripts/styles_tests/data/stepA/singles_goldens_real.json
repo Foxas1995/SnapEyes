@@ -1,11 +1,11 @@
 {
- "about": "SHA-256 of the RGB bytes of the real calibration eyes drawn by api/_lib/styles/singles (step B: the seed from the eye id, WP5B; Celestial Gold = variant A) at 1024 px: hashes only. The step A recording (scratch code) is in data/stepA/.",
+ "about": "SHA-256 of the RGB bytes of the real calibration eyes drawn by the scratch designs (Celestial Gold = variant A) at 1024 px: hashes only",
  "cases": {
   "clean.drv_d01.1:1.1024": {
    "cls": "own",
    "facts": {},
    "h": 1024,
-   "seed": 9783143818485995630,
+   "seed": 4858840404543720192,
    "sha": "25c193398b0ca8036ba9dab5df905f8fbda032523dc909b2d29b3da68dfca42e",
    "w": 1024
   },
@@ -13,7 +13,7 @@
    "cls": "grey",
    "facts": {},
    "h": 1024,
-   "seed": 13097880711640007142,
+   "seed": 13330031288801994994,
    "sha": "19e5d77a4e2617d75bad1a887efe13c6f6ba630e7d9c392a5153db081169c0d9",
    "w": 1024
   },
@@ -21,7 +21,7 @@
    "cls": "dark_brown",
    "facts": {},
    "h": 1024,
-   "seed": 17425300805983178740,
+   "seed": 17384420530512973252,
    "sha": "e441818979fe85a67aecb591560bcf51f1a3ef1f963e8d2a54e1261cf96f7a1b",
    "w": 1024
   },
@@ -29,7 +29,7 @@
    "cls": "own",
    "facts": {},
    "h": 1024,
-   "seed": 2771622463945251800,
+   "seed": 16345356933775383845,
    "sha": "3f4cfce97b64594178f7e8b0add8af62741892d6b70b60458bb62350ffa26916",
    "w": 1024
   },
@@ -38,25 +38,25 @@
    "facts": {
     "elements": {
      "crown_lod": "1k",
-     "crown_upscale": 1.0246,
+     "crown_upscale": 1.0245,
      "drops": 24.0,
      "fire_left": true,
      "flame_hue_delta": 0.0,
      "flame_lod": "1k",
-     "flame_plate": "P-EL-FLAME__tongues-16_side-up_right__v3__pro4K__t1",
+     "flame_plate": "P-EL-FLAME__tongues-16_side-up__v3__pro4K__t1",
      "flame_r_scale": 0.985,
-     "flame_strong": 121.4608,
+     "flame_strong": 116.5121,
      "flame_upscale": 1.0,
      "gap": 0.14,
      "lip_drops": 16.0,
      "liquid": "water_clear",
-     "lobes": 6.0,
-     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-20_rise-up_right__ve__pro4K__t0_g47"
+     "lobes": 5.0,
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vd__pro4K__t0_g47"
     }
    },
    "h": 1024,
-   "seed": 16375867348030887389,
-   "sha": "14e1f5dca594bf1ebdafc5c7e60978fa0d436c295e5671a490073d3fa3ed174f",
+   "seed": 7603575656207373772,
+   "sha": "650c1fe0e9b7e965833bc633a20c01dbbe918dae22736c50b716d385fe8bfb96",
    "w": 1024
   },
   "elements.drv_d02.1:1.1024": {
@@ -64,25 +64,25 @@
    "facts": {
     "elements": {
      "crown_lod": "1k",
-     "crown_upscale": 1.0245,
+     "crown_upscale": 1.0244,
      "drops": 24.0,
      "fire_left": true,
      "flame_hue_delta": 0.0,
      "flame_lod": "1k",
-     "flame_plate": "P-EL-FLAME__tongues-16_side-up_right__v3__pro4K__t1",
+     "flame_plate": "P-EL-FLAME__tongues-12_side-up_right__v3__pro4K__t0",
      "flame_r_scale": 0.985,
-     "flame_strong": 121.3665,
+     "flame_strong": 113.6863,
      "flame_upscale": 1.0,
      "gap": 0.14,
      "lip_drops": 16.0,
      "liquid": "water_clear",
-     "lobes": 7.0,
-     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_left__ve__pro4K__t0_g47"
+     "lobes": 6.0,
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up__v7__pro4K__t0_g47"
     }
    },
    "h": 1024,
-   "seed": 11704566069279549901,
-   "sha": "c95a7a46a45e847351f0227f2e4edcb7e90daf3bba97aca8c8c90eabf85e7b9d",
+   "seed": 18174708504835134894,
+   "sha": "f5c3f7f7c0b149f3e76406cc2bfc14bae77269875af8c49ec178a989bb8345a2",
    "w": 1024
   },
   "elements.drv_w06.1:1.1024": {
@@ -90,25 +90,25 @@
    "facts": {
     "elements": {
      "crown_lod": "1k",
-     "crown_upscale": 1.0245,
+     "crown_upscale": 1.0244,
      "drops": 24.0,
      "fire_left": false,
      "flame_hue_delta": 15.0,
      "flame_lod": "1k",
-     "flame_plate": "P-EL-FLAME__tongues-12_side-up_right__v3__pro4K__t0",
+     "flame_plate": "P-EL-FLAME__tongues-16_side-up_right__v3__pro4K__t1",
      "flame_r_scale": 0.985,
-     "flame_strong": 63.9124,
+     "flame_strong": 63.0804,
      "flame_upscale": 1.0,
      "gap": 0.14,
      "lip_drops": 16.0,
      "liquid": "water_clear",
      "lobes": 6.0,
-     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-20_rise-up__v7__pro4K__t0_g47"
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vc__pro4K__t0_g47"
     }
    },
    "h": 1024,
-   "seed": 18108661814013505361,
-   "sha": "5497ad46d937c7f1ecef24e6bb36cccfa83651637aa0ee10dca99556fff1345d",
+   "seed": 3052432964462095201,
+   "sha": "c039522caaab9067f115bd1c10fd30d9ce71be3db7953f047f4cadb304ffd312",
    "w": 1024
   },
   "elements.own215120.1:1.1024": {
@@ -123,18 +123,18 @@
      "flame_lod": "1k",
      "flame_plate": "P-EL-FLAME__tongues-16_side-up__v3__pro4K__t1",
      "flame_r_scale": 0.985,
-     "flame_strong": 112.1136,
+     "flame_strong": 113.4567,
      "flame_upscale": 1.0,
      "gap": 0.14,
      "lip_drops": 16.0,
      "liquid": "water_clear",
-     "lobes": 5.0,
-     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up__v7__pro4K__t0_g47"
+     "lobes": 7.0,
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vc__pro4K__t0_g47"
     }
    },
    "h": 1024,
-   "seed": 17835054660845391623,
-   "sha": "ff7e7efdbe117ca0b1880d75e3690b1eec18436863c0c0f248b1ce319cffb967",
+   "seed": 15886898577741236330,
+   "sha": "073a05342c6676bf69926ff98c670bdb99097b58316be455dbb4801ef680073f",
    "w": 1024
   },
   "gold.drv_d01.1:1.1024": {
@@ -152,8 +152,8 @@
     }
    },
    "h": 1024,
-   "seed": 11260992514887612784,
-   "sha": "ae308290f46429b533996054f2f659a3bad9589ced58799310f3817749bb4b7e",
+   "seed": 8430024683203161799,
+   "sha": "3a2cbf23a9b8dd121ba8de966430191ec1a802f71b8af818ea8ce7f53bb7a3eb",
    "w": 1024
   },
   "gold.drv_d02.1:1.1024": {
@@ -171,8 +171,8 @@
     }
    },
    "h": 1024,
-   "seed": 12757876563790493547,
-   "sha": "80089744173b2c28dc7723bce713e69a35baa8a73159b06a665155f5e14ef3ec",
+   "seed": 17007872070778209934,
+   "sha": "f3e0d512cd1281d023896c9840b903e1f4fdf270c38c5ac16b6cdba1c8131155",
    "w": 1024
   },
   "gold.drv_w06.1:1.1024": {
@@ -190,8 +190,8 @@
     }
    },
    "h": 1024,
-   "seed": 7968000586198782434,
-   "sha": "6cdf138019745ce9aa7050e93c17daca00571e2411c07b406c409f24f9a5839c",
+   "seed": 12325358483857694933,
+   "sha": "95b4d663e1b7fcf653420e94ecf4cca4e29716f58a061cf152891f8f98c3ba46",
    "w": 1024
   },
   "gold.own215120.1:1.1024": {
@@ -209,8 +209,8 @@
     }
    },
    "h": 1024,
-   "seed": 18023148787027949010,
-   "sha": "307ecf064191b295499d9da112b1d119f13464b26bf6fa9eb96644a72ec1d45a",
+   "seed": 4496405511493686410,
+   "sha": "61bb4ed8a7493c8c9e8fe768259e0a9560be0c9fc631af6a9dd289f29d494f77",
    "w": 1024
   },
   "powder.drv_d01.1:1.1024": {
@@ -220,16 +220,16 @@
      "h2": "analogous",
      "lod": "1k",
      "mirror": false,
-     "plate": "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2",
-     "r_scale": 0.8135,
-     "rot": -4.1,
-     "upscale": 1.0244,
-     "wind_deg": 160.0
+     "plate": "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
+     "r_scale": 0.9024,
+     "rot": -0.6358,
+     "upscale": 1.0243,
+     "wind_deg": 45.5642
     }
    },
    "h": 1024,
-   "seed": 14926934297904534890,
-   "sha": "bdefd5050eaaaa5ce94a78e9cd947ec05ecaa23c62d2954905b181ca1880e4a9",
+   "seed": 16497130013050946499,
+   "sha": "20be58f060a3e54d4e7ea56700c69e1f37b315fd7c217238e832874f8c722fac",
    "w": 1024
   },
   "powder.drv_d02.1:1.1024": {
@@ -238,17 +238,17 @@
     "powder": {
      "h2": "analogous",
      "lod": "1k",
-     "mirror": false,
-     "plate": "P-SN-CLOUD__strong-up_black-60__v4__pro4K__t0",
-     "r_scale": 0.7922,
-     "rot": 3.742,
-     "upscale": 1.0244,
-     "wind_deg": 107.342
+     "mirror": true,
+     "plate": "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
+     "r_scale": 0.9024,
+     "rot": 8.4313,
+     "upscale": 1.0243,
+     "wind_deg": 142.2313
     }
    },
    "h": 1024,
-   "seed": 3767379413147362129,
-   "sha": "54629d28be749f7d1d874b8ea074f2eb0e3ffd8cd21eba75e0f171b74f5b5775",
+   "seed": 16116988337535713996,
+   "sha": "d55c8e01d530f2673d749ceb1a9714b4ac6912a1d7390918a33d3f04c48088f9",
    "w": 1024
   },
   "powder.drv_w06.1:1.1024": {
@@ -258,16 +258,16 @@
      "h2": "analogous",
      "lod": "1k",
      "mirror": false,
-     "plate": "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
-     "r_scale": 0.9024,
-     "rot": 8.1529,
+     "plate": "P-SN-CLOUD__strong-upper_left_black-45__v4__pro4K__t2",
+     "r_scale": 0.8143,
+     "rot": -7.9092,
      "upscale": 1.0243,
-     "wind_deg": 54.3529
+     "wind_deg": 124.7908
     }
    },
    "h": 1024,
-   "seed": 8775107985140663615,
-   "sha": "f7e550c73dcd1bcf5303d0169ca41416b1db39a84ad7dbdc9493ce404faa7dd1",
+   "seed": 9189197132914602105,
+   "sha": "b341d90bc468960a658edf81b04b903efbe8a915a2be089a6b5f6feba2c4f317",
    "w": 1024
   },
   "powder.own215120.1:1.1024": {
@@ -276,17 +276,17 @@
     "powder": {
      "h2": "analogous",
      "lod": "1k",
-     "mirror": true,
-     "plate": "P-SN-CLOUD__strong-right_black-60__v4__pro4K__t1",
-     "r_scale": 0.8812,
-     "rot": -1.9452,
-     "upscale": 1.0243,
-     "wind_deg": 153.1548
+     "mirror": false,
+     "plate": "P-SN-CLOUD__strong-up_black-45__v4__pro4K__t1",
+     "r_scale": 0.8248,
+     "rot": -5.9528,
+     "upscale": 1.0244,
+     "wind_deg": 113.6472
     }
    },
    "h": 1024,
-   "seed": 529430088095632614,
-   "sha": "aefa1dc5b9153fd092f79deb0b000abd1be1c7c8bec370c3a69f35c8a1b4f016",
+   "seed": 1188059173342719759,
+   "sha": "03a378b4f4f3a3a73c5434b54f89861a7e6099a8f792e70b6e2aba6430e976b3",
    "w": 1024
   },
   "radiance.drv_d01.1:1.1024": {
@@ -298,8 +298,8 @@
     }
    },
    "h": 1024,
-   "seed": 8832833645797038198,
-   "sha": "b7a186558b40a06e6774d27e589a15cc33c157291aba036d94e0363cac873ea7",
+   "seed": 1444056057410618015,
+   "sha": "d86b07f0245b3900aafa177a1471ba7e2063a16646a88092f53c28c31312f89f",
    "w": 1024
   },
   "radiance.drv_d02.1:1.1024": {
@@ -311,8 +311,8 @@
     }
    },
    "h": 1024,
-   "seed": 3908375918152852982,
-   "sha": "74e1498778ae260d98f86d4929d2ec565d039950411bae0c1678b0c7800fe06a",
+   "seed": 4242672934034712972,
+   "sha": "be92267bcd02d5cf996acd869ead7e54d1cdfd8792a53467244f5585f9c23c83",
    "w": 1024
   },
   "radiance.drv_w06.1:1.1024": {
@@ -324,8 +324,8 @@
     }
    },
    "h": 1024,
-   "seed": 7136613171173730603,
-   "sha": "3d1d4a140c0b61a6ba3577c14433612a160945fd7684d45184240a39b1748bf9",
+   "seed": 18072787354781164676,
+   "sha": "85fdca7986e4f28ae9a8512c6b9b8e13cfc46b660b7ebf8a835582d50b0f270c",
    "w": 1024
   },
   "radiance.own215120.1:1.1024": {
@@ -337,8 +337,8 @@
     }
    },
    "h": 1024,
-   "seed": 1307868344497000271,
-   "sha": "d5d01909ebcc658c43a704d6637f2d52f9912ce3cdc8effaf2069019abebc874",
+   "seed": 4785680330386660274,
+   "sha": "98d7aab74e894f7bafe3ba955d6124e36f2408326b244c2dfc14668661952a97",
    "w": 1024
   },
   "splash.drv_d01.1:1.1024": {
@@ -350,16 +350,16 @@
      "liquid": "water_clear",
      "lod": "1k",
      "mirror": false,
-     "plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up__vh__pro4K__t0_g47",
-     "rot": 11.3342,
-     "strong": 103.2342,
-     "upscale": 1.0246,
+     "plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vc__pro4K__t0_g47",
+     "rot": 18.5979,
+     "strong": 68.5979,
+     "upscale": 1.0244,
      "warp": 0.3
     }
    },
    "h": 1024,
-   "seed": 18154200755317949415,
-   "sha": "5038dbc3f97f8e336e84e208cbc7d175f4e831c5c49b8d869055bb851e5036e6",
+   "seed": 17009446445062706226,
+   "sha": "e4931fe78bf2e1a518236d3a908b0fb1d7646e0919afeb96c55dbf4a22886dce",
    "w": 1024
   },
   "splash.drv_d02.1:1.1024": {
@@ -371,16 +371,16 @@
      "liquid": "water_clear",
      "lod": "1k",
      "mirror": false,
-     "plate": "P-SP-CROWN__liquid-water_clear_spikes-20_rise-up__v7__pro4K__t0_g47",
-     "rot": 0.0,
-     "strong": null,
-     "upscale": 1.0245,
+     "plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up__vh__pro4K__t0_g47",
+     "rot": -0.3884,
+     "strong": 91.5116,
+     "upscale": 1.0246,
      "warp": 0.3
     }
    },
    "h": 1024,
-   "seed": 16013406065188637010,
-   "sha": "2249c4257d4cf83ee8deaab656d2435443cafd91e4f5a91ee8f9668351636d60",
+   "seed": 533966339948442434,
+   "sha": "fda285b0ec2084c3988da0030f81b8e7e8b839792a6b8130933871978a8d1342",
    "w": 1024
   },
   "splash.drv_w06.1:1.1024": {
@@ -391,17 +391,17 @@
      "hue_delta_max": 15.0,
      "liquid": "cognac",
      "lod": "1k",
-     "mirror": true,
-     "plate": "P-SP-CROWN__liquid-cognac_spikes-12_rise-up_right__vh__pro4K__t0_g47",
-     "rot": -16.7724,
-     "strong": 108.7276,
+     "mirror": false,
+     "plate": "P-SP-CROWN__liquid-cognac_spikes-12_rise-up__ve__pro4K__t0_g47",
+     "rot": -3.4731,
+     "strong": 90.6269,
      "upscale": 1.0246,
      "warp": 0.3
     }
    },
    "h": 1024,
-   "seed": 10796743922712982524,
-   "sha": "01309890be49d96339294903475d2308285aab2e65e15077acb59f79323d4c01",
+   "seed": 16932224280834043678,
+   "sha": "e4c414a57f2a8d9ec4abd5de6e89ee4d497399bc522ffb40f4686177e1620664",
    "w": 1024
   },
   "splash.own215120.1:1.1024": {
@@ -413,16 +413,16 @@
      "liquid": "water_clear",
      "lod": "1k",
      "mirror": false,
-     "plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vc__pro4K__t0_g47",
-     "rot": 18.7922,
-     "strong": 68.7922,
-     "upscale": 1.0244,
+     "plate": "P-SP-CROWN__liquid-water_clear_spikes-20_rise-up__v7__pro4K__t0_g47",
+     "rot": 0.0,
+     "strong": null,
+     "upscale": 1.0245,
      "warp": 0.3
     }
    },
    "h": 1024,
-   "seed": 5730198828905261325,
-   "sha": "c9de44e4e26cc9ff9114920b0dce5138a3b5db759b4a851a765383b8e6d7857d",
+   "seed": 11485466750625942763,
+   "sha": "36d52984ac808469a823b33ae420980d0a2a7699db029b98092d550389f56fe2",
    "w": 1024
   }
  },
@@ -437,7 +437,5 @@
   "pillow": "12.2.0",
   "platform": "Windows-11-10.0.26100-SP0",
   "python": "3.14.3"
- },
- "step": "B",
- "stepA_file_sha256": "f86adc4f2da31bd25a792a6078bc1775abc181cb0c6ad5321b92c8d85b8940b3"
+ }
 }

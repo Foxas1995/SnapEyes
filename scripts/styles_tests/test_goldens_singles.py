@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-"""WP5A of the v3 engine work, step A: the singles family (Clean Iris, Powder Burst, Splash, Elements, Radiance, Celestial Gold variant A) ported
-verbatim into api/_lib/styles/singles. Test I6 (goldens) for the family, the singles share of I7 (T1, T4, T6, T7, T12) and the places the family is
-reached from: the style package's contract, /api/compose for a style a customer may see, and the admin laboratory (styles_lab).
+"""WP5A and WP5B of the v3 engine work: the singles family (Clean Iris, Powder Burst, Splash, Elements, Radiance, Celestial Gold variant A) ported
+verbatim into api/_lib/styles/singles (step A), then re-seeded once from the eye id (step B). Test I6 (goldens) for the family, the singles share of
+I7 (T1, T4, T6, T7, T12) and the places the family is reached from: the style package's contract, /api/compose for a style a customer may see, and
+the admin laboratory (styles_lab).
 
   1. the family in the repository: its files, the rules of every module, the registry and the family agree, no stage was raised
-  2. the golden replay: the SHA-256 of the pictures the SCRATCH prototype made (record_goldens_scratch.py; Celestial Gold is the owner-approved
-     variant A) equals the port's, for every design x three synthetic eye classes x 512, 1024 and 4096 px, the other two canvases and the text lockup;
-     the plate picks and the seeds equal too; the replay can fail. The 4096 px pictures of the three plate styles draw from 4K plates that live in
-     private storage: they are replayed only with the scratch tree (LOCAL lines)
+  2. the golden replay: the SHA-256 of the pictures this code makes (record_goldens_repo.py, step B: the seed from the eye id and the plan's seed key)
+     for every design x three synthetic eye classes x 512, 1024 and 4096 px, the other two canvases and the text lockup; the plate picks and the seeds
+     equal too; the replay can fail. And the STEP A recording (the scratch prototype's own pictures, data/stepA/) replayed with the old seed (opts
+     seed_mode legacy): byte for byte equal, which proves that the seed is the ONLY thing step B changed. The 4096 px pictures of the three plate
+     styles draw from 4K plates that live in private storage: they are replayed only with the scratch tree (LOCAL lines)
   3. the hard rules on every picture of the replay: the iris is the graded iris byte for byte (T1, T6), the text log holds the customer's words only
      (T7), no hearts (T12), the black share of Powder Burst and Elements (T4), Clean's ground is pure black, the veil of Powder Burst
   4. determinism, bounded caches, the guards of render()
@@ -15,6 +17,9 @@ reached from: the style package's contract, /api/compose for a style a customer 
   6. /api/compose: a style a customer may see is drawn by the engine with the preview watermark; a laboratory style is not; the old styles are unchanged
   7. the admin laboratory: styles_lab behind the admin key
   8. the real calibration eyes (LOCAL: SNAPEYES_CALIB) and the port as the scratch plus its edits (LOCAL: SNAPEYES_SCRATCH_Y3)
+  9. step B, the seed: made from the eye id and the plan's seed key and from nothing else, the plates a plan names are the plates the picture draws
+     from, the plates version of the spec reaches every pick, what the plan freezes (the liquid of a splash) is what the preview and the master draw,
+     the statistical rules (T1, T4, T6, T7, T12, the veil) hold over many seeds, the preview of /api/compose and the laboratory seed alike
 No network, no image model, no real eye in the repository (the eyes are procedural: synth_iris). A golden is exact for this machine class and the pins
 of requirements.txt; a mismatch elsewhere means recording again on the scratch code there, never changing the port.
     SNAPEYES_SCRATCH_Y3  the wave-y3 folder of the scratch tree (the 4K plates, the edit check); SNAPEYES_CALIB the calibration restorations' folder
@@ -86,12 +91,15 @@ from _lib import events as E  # noqa: E402
 from _lib import store  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, selfcheck as SCK, plates as PL, text as TX, costs as CO  # noqa: E402
+from _lib.styles import seeds as SD, eye as EYE  # noqa: E402
 from _lib.styles import singles as S  # noqa: E402
 from _lib.styles.singles import kit as K  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 GOLD = json.load(open(os.path.join(HERE, "data", "singles_goldens.json"), encoding="utf-8"))
 G = GOLD["cases"]
+GOLD_A = json.load(open(os.path.join(HERE, "data", "stepA", "singles_goldens.json"), encoding="utf-8"))      # step A: the scratch prototype's own pictures
+GA = GOLD_A["cases"]
 MACHINE_SAME = GOLD["machine"]["numpy"] == np.__version__ and GOLD["machine"]["pillow"] == PIL.__version__
 NOTE = "" if MACHINE_SAME else f" (numpy/Pillow differ from the recording {GOLD['machine']}: record again on the scratch code, do not change the port)"
 FAMILY_FILES = sorted(f for f in os.listdir(FAMILY) if f.endswith(".py"))
@@ -164,7 +172,7 @@ check("no stage was raised: every single style of the engine is still at the lab
       [(i, CT.ceiling(i, 1)) for i in SINGLES_STYLES])
 
 # ============================================================================================ 2. the golden replay
-section("2. the golden replay: the scratch prototype's pictures, byte for byte")
+section("2. the golden replay: this code's recorded pictures, and the step A recording with the old seed")
 FIX = {n: SI.png_bytes(n) for n in SC.FIXTURE_BASE}
 check("the three fixtures of the replay are the very bytes of the recording", all(hashlib.sha256(FIX[n]).hexdigest() == GOLD["fixtures"][n] for n in FIX),
       [n for n in FIX if hashlib.sha256(FIX[n]).hexdigest() != GOLD["fixtures"][n]])
@@ -213,16 +221,54 @@ for size in (512, 1024):
     for design in S.DESIGNS:
         rows = replay([c for c in ALL if c["size"] == size and c["design"] == design and not (c["names"] or c["date"]) and c["fmt"] == "1:1"])
         bad = [(c["key"], d) for c, _, d in rows if d]
-        check(f"{design} at {size} px: the three eye classes give the scratch's pictures, seeds and plate picks, byte for byte", len(rows) == 3 and not bad, str(bad) + NOTE)
+        check(f"{design} at {size} px: the three eye classes give the recorded pictures, seeds and plate picks, byte for byte", len(rows) == 3 and not bad, str(bad) + NOTE)
 for design in S.DESIGNS:
     rows = replay([c for c in ALL if c["size"] == 512 and c["design"] == design and (c["names"] or c["date"])])
     bad = [(c["key"], d) for c, _, d in rows if d]
-    check(f"{design}: the 4:5 canvas with names, the wallpaper with a date and the square with both (the frame shrinks and moves up with text) equal the scratch's", len(rows) == 3 and not bad, str(bad) + NOTE)
+    check(f"{design}: the 4:5 canvas with names, the wallpaper with a date and the square with both (the frame shrinks and moves up with text) equal the recorded pictures", len(rows) == 3 and not bad, str(bad) + NOTE)
 for design in ("clean", "radiance", "gold"):
     rows = replay([c for c in ALL if c["size"] == 4096 and c["design"] == design])
     bad = [(c["key"], d) for c, _, d in rows if d]
-    check(f"{design} at 4096 px (a master): the three eye classes equal the scratch's pictures, byte for byte", len(rows) == 3 and not bad, str(bad) + NOTE)
+    check(f"{design} at 4096 px (a master): the three eye classes equal the recorded pictures, byte for byte", len(rows) == 3 and not bad, str(bad) + NOTE)
 print(f"   (replayed in {time.time() - t0:.0f} s)", flush=True)
+
+
+def legacy_render(design, eye, fmt, size, names, date):
+    return S.render(design, eye, fmt, size, names, date, opts={"seed_mode": "legacy"})
+
+
+def replay_legacy(cases):
+    """The step A cases rendered with the seed of the prototype (the bytes of the iris): [(case, differences from the step A recording)]."""
+    out = []
+    for c in cases:
+        rec = SC.render_case(legacy_render, C.Iris, FIX, c, IRISES)
+        g = GA[c["key"]]
+        out.append((c, [k for k in ("sha", "seed", "facts", "w", "h", "cls") if rec[k] != g[k]]))
+        if c["size"] >= 2048:
+            IRISES.clear()
+            gc.collect()
+    return out
+
+
+t0 = time.time()
+for label, cases_ in (("512 px (every design x three eyes, and the other two canvases with names and a date)", [c for c in ALL if c["size"] == 512]),
+                      ("1024 px (every design x three eyes)", [c for c in ALL if c["size"] == 1024]),
+                      ("4096 px (a master of Clean Iris, Radiance and Celestial Gold on the blue eye)", [c for c in ALL if c["size"] == 4096 and c["eye"] == "blue_round"
+                                                                                                           and c["design"] in ("clean", "radiance", "gold")])):
+    rows = replay_legacy(cases_)
+    bad = [(c["key"], d) for c, d in rows if d]
+    check(f"STEP A replay with the old seed (opts seed_mode legacy), {label}: {len(rows)} pictures equal the scratch prototype's, byte for byte, with their seeds and plate picks "
+          "(the seed is the only thing step B changed)", len(rows) >= 3 and not bad, str(bad[:4]) + NOTE)
+print(f"   (legacy replay in {time.time() - t0:.0f} s)", flush=True)
+check("the step A recording is kept as it was (data/stepA: the scratch prototype's hashes, 72 cases and the 24 real-eye ones) and the new recording names it by its hash: the same 72 keys, and exactly the Clean Iris "
+      "pictures kept their hashes (Clean Iris draws no matter, its seed only dithers pure black), every picture of the five other designs moved",
+      set(GA) == set(G) and len(GA) == 72 and GOLD["step"] == "B"
+      and GOLD["stepA_file_sha256"] == hashlib.sha256(open(os.path.join(HERE, "data", "stepA", "singles_goldens.json"), "rb").read().replace(b"\r\n", b"\n")).hexdigest()
+      and all((G[k]["sha"] == GA[k]["sha"]) == k.startswith("clean.") for k in G) and json.load(open(os.path.join(HERE, "data", "singles_goldens_real.json"), encoding="utf-8"))["stepA_file_sha256"]
+      == hashlib.sha256(open(os.path.join(HERE, "data", "stepA", "singles_goldens_real.json"), "rb").read().replace(b"
+", b"
+")).hexdigest(),
+      [k for k in G if (G[k]["sha"] == GA[k]["sha"]) != k.startswith("clean.")][:5])
 with mock.patch.object(K, "F3_SPAN", K.F3_SPAN * 1.02):
     moved = SC.render_case(port_render, C.Iris, FIX, [c for c in ALL if c["design"] == "clean" and c["size"] == 512][0], {})
 check("the replay can fail: a two percent change of the iris feather moves the hash of Clean Iris", moved["sha"] != G["clean.blue_round.1:1.512"]["sha"])
@@ -243,10 +289,21 @@ if SCRATCH_Y3 and os.path.isdir(SCRATCH_Y3):
     tot = UP.run(rows_, store, True, out=lambda m: None)
     local(f"the {len(need)} 4K plates the three plate styles pick at 4096 px are in a local store (read from the scratch tree, sha256 equal to the registry's)",
           tot["bad_source"] == 0 and tot["wrong"] == 0 and tot["uploaded"] + tot["present"] == len(need), tot)
+    need_a = set()
+    for k, v in GA.items():
+        if k == "powder.blue_round.1:1.4096":
+            for f in v["facts"].values():
+                need_a |= {f[x] for x in ("plate", "flame_plate", "water_plate") if x in f}
+    rows_a = UP.plan({i: table[i] for i in need_a}, {table[i]["family"] for i in need_a}, UP.sources(y2, SCRATCH_Y3))
+    tot_a = UP.run(rows_a, store, True, out=lambda m: None)
+    rows_l = replay_legacy([c for c in ALL if c["key"] == "powder.blue_round.1:1.4096"])
+    local("Powder Burst at 4096 px on the blue eye with the old seed (4K plate through storage and the cache) equals the scratch prototype's picture of step A, byte for byte",
+          tot_a["bad_source"] == 0 and tot_a["wrong"] == 0 and len(rows_l) == 1 and not rows_l[0][1], (tot_a, rows_l))
+    PL.clear_memory()
     for design in ("powder", "splash", "elements"):
         rows = replay([c for c in ALL if c["size"] == 4096 and c["design"] == design])
         bad = [(c["key"], d) for c, _, d in rows if d]
-        local(f"{design} at 4096 px (4K plates through storage, the cache and the sha256 check): the three eye classes equal the scratch's pictures, byte for byte",
+        local(f"{design} at 4096 px (4K plates through storage, the cache and the sha256 check): the three eye classes equal the recorded pictures, byte for byte",
               len(rows) == 3 and not bad, str(bad) + NOTE)
         PL.clear_memory()
 else:
@@ -302,10 +359,11 @@ section("5. the contract: resolve, preview, tiles, the watermark, a plate that i
 spec = {"style": "solo.powder", "layout": "single", "eyes": 1, "canvas": "1:1", "names": ["Anna", "Max"], "date": ""}
 pl = ST.resolve(spec, [])
 check("resolve answers the plan without a pixel: family, design, canvas, the iris at 1024 px, the seed key of the plan (registry id, design, background, clean flag, layout, options, plates version); "
-      "the plates stay unknown until the seed comes from eye_id (step B)",
+      "with no eye known there is no seed and no plate (the seed is made from the eye id: step B)",
       pl["family"] == "singles" and pl["design_used"] == "powder" and pl["fallback"] is None and pl["canvas"] == "1:1" and pl["layout"] == "single"
       and set(pl["seed_key"]) == {"style", "design_used", "bg", "clean", "layout", "opts", "pv"} and pl["seed_key"]["pv"] == CT.PLATES_VERSION and pl["plates"] is None
-      and pl["seed_from"] == "iris_bytes" and pl["steps"] == ["art"] and pl["iris_at_1024"]["R"] > 200 and ST.resolve(dict(spec, canvas="9:19.5"), None)["canvas"] == "9:19.5"
+      and pl["seed_from"] == "eye_id" and pl["seed"] is None and pl["eye_ids"] == [] and pl["frozen"] == {}
+      and pl["steps"] == ["art"] and pl["iris_at_1024"]["R"] > 200 and ST.resolve(dict(spec, canvas="9:19.5"), None)["canvas"] == "9:19.5"
       and ST.resolve(dict(spec, canvas="bogus"), None)["canvas"] == "1:1", pl)
 t0 = time.perf_counter()
 ST.resolve(spec, [])
@@ -597,6 +655,213 @@ check("the admin page has the laboratory: StyleLab.tsx (menu from the server's l
       "<StyleLab call={call} lab={lab} />" in labtsx and "'styles_lab'" in tsx and "Piešti" in tsx and "selfcheck" in tsx and not re.search(r"\b(solo|duo|grp|pet)\.[a-z_]+\b", tsx) and not re.search(DASH, tsx)
       and "/api/enhance" not in tsx and "/api/master_eye" not in tsx)
 
+# ============================================================================================ 9. step B: the seed
+section("9. step B: the seed is made from the eye id and the plan's seed key and from nothing else")
+EID_A, EID_B = "0123456789abcdef", "fedcba9876543210"
+K_POW = S.seed_key("solo.powder", "powder")
+s_pow = SD.seed_for_key([EID_A], K_POW)
+code = ("import sys; sys.path.insert(0, %r); from _lib.styles import seeds as SD; import _lib.styles.singles as S; "
+        "print(SD.seed_for_key(['0123456789abcdef'], S.seed_key('solo.powder', 'powder')))") % API
+pr = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=120, env=dict(os.environ, PYTHONHASHSEED="777"))
+check("the seed is a 64 bit number made by sha256 of the eye ids and the seed key: the same in this process and in a fresh interpreter with another PYTHONHASHSEED, and pinned (a change of "
+      "the formula is a change of every picture: it needs a new ENGINE_V)",
+      s_pow == 8843487212479903757 and pr.returncode == 0 and pr.stdout.strip() == str(s_pow) and 0 <= s_pow < 2 ** 64, (s_pow, pr.stdout, pr.stderr[-200:]))
+variants = {
+    "another eye id": SD.seed_for_key([EID_B], K_POW), "two eyes": SD.seed_for_key([EID_A, EID_B], K_POW), "the eyes in the other order": SD.seed_for_key([EID_B, EID_A], K_POW),
+    "another style id": SD.seed_for_key([EID_A], dict(K_POW, style="solo.splash")), "another design used": SD.seed_for_key([EID_A], dict(K_POW, design_used="stack")),
+    "another ground": SD.seed_for_key([EID_A], dict(K_POW, bg="universe")), "the clean flag": SD.seed_for_key([EID_A], dict(K_POW, clean=True)),
+    "another layout": SD.seed_for_key([EID_A], dict(K_POW, layout="pair")), "an option": SD.seed_for_key([EID_A], dict(K_POW, opts={"swap": 1, "rotate": None, "look": None})),
+    "another plates version": SD.seed_for_key([EID_A], dict(K_POW, pv=K_POW["pv"] + 1))}
+check("another eye id, a second eye, the eyes in another order, another style id, design used, ground, clean flag, layout, option or plates version each give another seed (and all are different)",
+      s_pow not in variants.values() and len(set(variants.values())) == len(variants), variants)
+check("an option left unset is the same as not mentioned (the key has all three options, None when unset), and a bool for the clean flag is read as a bool",
+      SD.seed_for_key([EID_A], dict(K_POW, opts={})) == s_pow and SD.seed_for_key([EID_A], dict(K_POW, clean=0)) == s_pow)
+refusals = {"no eyes": lambda: SD.seed_for_key([], K_POW), "an eye id that is not 16 hex digits": lambda: SD.seed_for_key(["xyz"], K_POW), "upper case hex": lambda: SD.seed_for_key(["0123456789ABCDEF"], K_POW),
+            "an eye id that is a number": lambda: SD.seed_for_key([1234567890123456], K_POW), "eyes that are one text": lambda: SD.seed_for_key(EID_A, K_POW),
+            "a key that is not a dict": lambda: SD.seed_for_key([EID_A], "powder"), "an unknown field": lambda: SD.seed_for_key([EID_A], dict(K_POW, names="Anna")),
+            "a missing field": lambda: SD.seed_for_key([EID_A], {k: v for k, v in K_POW.items() if k != "pv"}), "a pv that is a bool": lambda: SD.seed_for_key([EID_A], dict(K_POW, pv=True)),
+            "a negative pv": lambda: SD.seed_for_key([EID_A], dict(K_POW, pv=-1)), "an option that is not one of the three": lambda: SD.seed_for_key([EID_A], dict(K_POW, opts={"names": "x"})),
+            "an option that is a list": lambda: SD.seed_for_key([EID_A], dict(K_POW, opts={"look": ["a"]})), "an empty style": lambda: SD.seed_for_key([EID_A], dict(K_POW, style=""))}
+bad_ref = [k for k, f in refusals.items() if not isinstance(raises(f, ValueError), ValueError)]
+check("seed_for_key refuses what is not a seed: " + ", ".join(refusals), not bad_ref, bad_ref)
+check("the eye of an Iris made from bytes has the id of its bytes (the first 16 hex digits of their sha256: the id an order-kind seal of those bytes carries), a given id is kept, and render() "
+      "refuses an eye whose id is not a valid one rather than seed a guess",
+      C.Iris(FIX["blue_round"]).eye_id == hashlib.sha256(FIX["blue_round"]).hexdigest()[:16] == EYE.eye_id_of(FIX["blue_round"]) and C.Iris(FIX["blue_round"], eye_id=EID_A).eye_id == EID_A
+      and isinstance(raises(lambda: S.render("clean", C.Iris(FIX["blue_round"], eye_id="not-an-id"), "1:1", 64), ValueError), ValueError))
+
+# nothing but the eyes and the key is in the seed
+eye_b = C.Iris(FIX["blue_round"], "b")
+seeds_same = {(f, s, n, d): S.render("powder", eye_b, f, s, n, d).info["seed"] for f, s, n, d in (("1:1", 256, "", ""), ("1:1", 512, "Anna Max", "12 May 2026"), ("4:5", 256, "Anna", ""),
+                                                                                              ("9:19.5", 256, "", "2026"))}
+check("the seed does not depend on the names, the date, the canvas ratio or the size of the canvas: four renders of one eye (1:1, 4:5 and the wallpaper, 256 and 512 px, with and without "
+      "names and a date) have one seed, so a typo in a name can never reshuffle the powder", len(set(seeds_same.values())) == 1 and next(iter(seeds_same.values())) == SD.seed_for_key([eye_b.eye_id], K_POW), seeds_same)
+raw_b = FIX["blue_round"]
+small = io.BytesIO()
+Image.open(io.BytesIO(raw_b)).convert("RGB").resize((768, 768), Image.LANCZOS).save(small, "JPEG", quality=88)
+eA, eB = C.Iris(raw_b, "a", eye_id=EID_A), C.Iris(small.getvalue(), "b", eye_id=EID_A)
+rA, rB = S.render("powder", eA, "1:1", 256), S.render("powder", eB, "1:1", 256)
+rC = S.render("powder", C.Iris(raw_b, "c", eye_id=EID_B), "1:1", 256)
+check("the seed does not depend on the pixels or the bytes the eye arrives in: the 1024 px preview and a 768 px copy of the same eye (the same id) draw the same seed and the same plate, and "
+      "the same pixels under another eye id draw another seed (the preview, the draft and the master of one eye all carry the eye id of the sealed preview)",
+      rA.info["seed"] == rB.info["seed"] and rA.ctx.log["powder"]["plate"] == rB.ctx.log["powder"]["plate"] and rA.info["seed"] != rC.info["seed"] and eA.digest != eB.digest, (rA.info["seed"], rB.info["seed"], rC.info["seed"]))
+r_leg = S.render("powder", eye_b, "1:1", 256, opts={"seed_mode": "legacy"})
+check("the old seed is still one switch away for the laboratory's before and after look: opts seed_mode legacy seeds from the iris bytes, the design and the frame key (the prototype's formula), "
+      "and the new seed is not that number", r_leg.info["seed"] == C.seed_for(FIX["blue_round"], 0, "powder", "single/1:1") != seeds_same[("1:1", 256, "", "")], r_leg.info["seed"])
+
+# resolve names the seed and the plates, and the render draws what it names
+PROF = {e: EYE.profile_of_bytes(FIX[e], rules=("lid",)) for e in SC.EYES}
+IDS = {e: PROF[e].eye_id for e in SC.EYES}
+rows, bad = [], []
+for style, design in (("solo.powder", "powder"), ("solo.splash", "splash"), ("solo.clean", "clean"), ("solo.radiance", "radiance"), ("solo.gold", "gold")):
+    for e in SC.EYES:
+        for fmt in ("1:1", "9:19.5"):
+            plan = ST.resolve({"style": style, "eyes": 1, "canvas": fmt}, [PROF[e]])
+            pv_ = ST.preview([C.Iris(FIX[e], e)], {"style": style, "eyes": 1, "canvas": fmt, "profiles": [PROF[e]]}, size=256)
+            rows.append((style, e, fmt, plan["plates"], pv_.log["plates"], plan["seed"], str(pv_.seed)))
+            if not (plan["seed"] == str(pv_.seed) and plan["plates"] == pv_.log["plates"] and plan["eye_ids"] == [IDS[e]] and plan["plates"] is not None
+                    and (len(plan["plates"]) == (1 if design in ("powder", "splash") else 0))):
+                bad.append(rows[-1])
+check("resolve names the seed and the plates before the render and the render draws exactly those: five styles x three eye classes x the square and the wallpaper (30 pictures at 256 px) "
+      "have the plan's seed and the plan's plate (none, for the three styles that draw none)", len(rows) == 30 and not bad, bad[:3])
+plan_rec = ST.resolve({"style": "solo.splash", "eyes": 1}, [PROF["blue_round"].rec])
+plan_obj = ST.resolve({"style": "solo.splash", "eyes": 1}, [PROF["blue_round"]])
+plan_ids = ST.resolve({"style": "solo.powder", "eyes": 1, "eye_ids": [IDS["blue_round"]]}, None)
+plan_none = ST.resolve({"style": "solo.splash", "eyes": 1, "eye_ids": [IDS["blue_round"]]}, None)
+plan_junk = ST.resolve({"style": "solo.splash", "eyes": 1, "eye_ids": [IDS["blue_round"]]}, [{"eye_id": IDS["blue_round"], "cls": "own"}])
+plan_badid = ST.resolve({"style": "solo.powder", "eyes": 1, "eye_ids": ["short"]}, None)
+check("resolve reads the eye from the record dict a draft keeps as from an EyeProfile; a powder needs only the eye id (spec eye_ids), a splash also the profile (its liquid): with no profile the "
+      "plates stay unknown (None) and nothing is frozen, an unreadable profile is no profile, an id that is not 16 hex digits is no id",
+      plan_rec == plan_obj and plan_rec["plates"] and plan_rec["frozen"].get("liquid") and plan_ids["plates"] and len(plan_ids["plates"]) == 1 and plan_ids["seed"] is not None
+      and plan_none["plates"] is None and plan_none["frozen"] == {} and plan_none["seed"] is not None and plan_junk["plates"] is None and plan_junk["frozen"] == {}
+      and plan_badid["seed"] is None and plan_badid["plates"] is None and plan_badid["eye_ids"] == [], (plan_rec["plates"], plan_none["plates"], plan_badid["eye_ids"]))
+t0 = time.perf_counter()
+for _ in range(20):
+    ST.resolve({"style": "solo.splash", "eyes": 1}, [PROF["grey_round"].rec])
+t_res = (time.perf_counter() - t0) / 20 * 1000
+check("resolve with the eye, the seed, the pick of the plate and the frozen liquid takes a few milliseconds (at most 50)", t_res < 50, round(t_res, 1))
+check("the plates a plan names are plates of the library a spec of its version may pick, with a 4K file for the two plate styles (checkout verifies those in storage)",
+      all(PL.known(x) and PL.visible(PL.record(x), plan_rec["seed_key"]["pv"]) for x in plan_rec["plates"] + plan_ids["plates"]) and all(PL.record(x)["k4"] for x in plan_rec["plates"] + plan_ids["plates"]))
+
+
+# what the plan freezes
+class FakeProf:
+    def __init__(self, cls, h, c):
+        self.eye_id = EID_A
+        self.stats = {"class": cls, "h": h, "C": c, "L": 50.0, "mean_rgb": [90.0, 90.0, 90.0]}
+
+
+from _lib.styles.singles import splash as SPL  # noqa: E402
+lq = {k: S.frozen_for("splash", FakeProf(*v)).get("liquid") for k, v in {"dark brown": ("dark_brown", 60.0, 30.0), "grey": ("grey", 200.0, 5.0), "teal (hue 177.9)": ("own", 177.9, 30.0),
+                                                                          "clear (hue 178.0)": ("own", 178.0, 30.0), "olive": ("own", 120.0, 30.0), "amber": ("own", 60.0, 40.0)}.items()}
+check("the liquid of a splash is fixed from the profile's numbers by the very function the render uses (class and hue thresholds of the brief): cognac, clear, teal below hue 178, clear above, tea olive, "
+      "amber; a design that fixes nothing and a profile that is not known freeze nothing",
+      lq == {"dark brown": "cognac", "grey": "water_clear", "teal (hue 177.9)": "water_teal", "clear (hue 178.0)": "water_clear", "olive": "tea_olive", "amber": "whisky_amber"}
+      and S.frozen_for("powder", FakeProf("own", 60.0, 30.0)) == {} and S.frozen_for("splash", None) == {} and SPL.liquid_from_stats({"class": "own", "h": 120.0, "C": 30.0}) == "tea_olive", lq)
+eye_s = C.Iris(FIX["blue_round"], "s")
+own_liquid = SPL.liquid_for(eye_s)
+pk_a = S.render("splash", eye_s, "1:1", 128)
+pk_f = S.render("splash", eye_s, "1:1", 128, frozen={"liquid": "cognac"})
+check("what the plan froze wins over what the eye measures: the same eye draws a crown plate of the frozen liquid (cognac) instead of its own, and the laboratory's liquid option still wins over both",
+      pk_a.ctx.log["splash"]["liquid"] == own_liquid != "cognac" and pk_f.ctx.log["splash"]["liquid"] == "cognac"
+      and PL.record(pk_f.ctx.log["splash"]["plate"])["variables"]["liquid"] == "cognac" and PL.record(pk_a.ctx.log["splash"]["plate"])["variables"]["liquid"] == own_liquid
+      and S.render("splash", eye_s, "1:1", 128, opts={"liquid": "tea_olive"}, frozen={"liquid": "cognac"}).ctx.log["splash"]["liquid"] == "tea_olive", (own_liquid, pk_a.ctx.log["splash"]["liquid"]))
+tl2 = ST.tiles([eye_s], ["solo.splash", "solo.powder"], {"style": "solo.splash", "eyes": 1, "frozen": {"liquid": "cognac"}, "profiles": [PROF["blue_round"]]}, size=128)
+check("a batch of tiles takes the frozen choices of each style from the profiles and never the spec's own frozen (that belongs to one style): the splash tile ignores the cognac of the spec and "
+      "draws the liquid the profile gives", tl2["solo.splash"].log["splash"]["liquid"] == plan_rec["frozen"]["liquid"] != "cognac" and tl2["solo.powder"].log["plates"] == [tl2["solo.powder"].log["powder"]["plate"]])
+
+# the plates version of the spec reaches every pick
+calls = []
+real_plates = PL.plates
+with mock.patch.object(PL, "plates", lambda family, pv=None, **kw: calls.append((family, pv)) or real_plates(family, pv, **kw)):
+    ST.preview([C.Iris(FIX["blue_round"], "p")], {"style": "solo.powder", "eyes": 1, "pv": 1}, size=128)
+    ST.preview([C.Iris(FIX["blue_round"], "p")], {"style": "solo.splash", "eyes": 1, "pv": 1}, size=128)
+    ST.preview([C.Iris(FIX["blue_round"], "p")], {"style": "solo.elements", "eyes": 1, "pv": 1}, size=128)
+    ST.resolve({"style": "solo.powder", "eyes": 1, "pv": 1, "eye_ids": [EID_A]}, None)
+check("every plate pick of a render and of resolve is asked with the spec's plates version: the cloud, the crown and the flame are asked with pv 1, and the only call without one is Elements' list of "
+      "plates to leave out (the v2 flames, which no version may pick)",
+      {f for f, v in calls if v == 1} >= {"P-SN-CLOUD", "P-SP-CROWN", "P-EL-FLAME"} and [c for c in calls if c[1] != 1] == [("P-EL-FLAME", None)], calls)
+POW = __import__("_lib.styles.singles.powder", fromlist=["x"])
+allowed = POW.WIND_SETS["square"]
+picked = {}
+for sd_ in range(200):
+    picked.setdefault(POW.pick_cloud(sd_, allowed, pv=CT.PLATES_VERSION).plate.id, sd_)
+some_id, some_seed = next(iter(picked.items()))
+rec_ = PL._TABLE[some_id]
+old_since = rec_["since"]
+try:
+    rec_["since"] = CT.PLATES_VERSION + 1
+    before = POW.pick_cloud(some_seed, allowed, pv=CT.PLATES_VERSION).plate.id
+    after_v = POW.pick_cloud(some_seed, allowed, pv=CT.PLATES_VERSION + 1).plate.id
+    never = {POW.pick_cloud(sd_, allowed, pv=CT.PLATES_VERSION).plate.id for sd_ in range(200)}
+finally:
+    rec_["since"] = old_since
+check("a plate that arrives later never changes the pick of an older plates version: with a plate's `since` raised past the spec's pv it is picked by no seed of 200 (its seed used to pick it), and a "
+      "spec of the newer version can pick it again", some_id not in never and before != some_id and after_v == some_id, (some_id, before, after_v))
+
+# the statistical rules over many seeds (the seed re-rolled every plate, wind and particle: the rules are not a property of three lucky eyes)
+SW_BAD, SW_BLACK, SW_VEIL = [], {"powder": [], "elements": []}, []
+t0 = time.time()
+sweep_eyes = {e: C.Iris(FIX[e], e) for e in SC.EYES}
+for k_ in range(4):
+    for e, ir_ in sweep_eyes.items():
+        ir_.eye_id = hashlib.sha256(f"sweep|{k_}|{e}".encode()).hexdigest()[:16]
+        for design in ("powder", "splash", "elements", "radiance", "gold"):
+            r_ = S.render(design, ir_, "1:1", 512, "Anna", "")
+            rep = SCK.run(np.asarray(r_.img), [r_.d], text_log=r_.log, customer=["Anna", ""], ids=[design, "single"])
+            if not rep["ok"]:
+                SW_BAD.append((design, e, k_, {kk: v["ok"] for kk, v in rep["checks"].items()}))
+        for design in SW_BLACK:                                  # T4 is the picture's own at 1024 px, with no text (the golden checks measure it so)
+            r_ = S.render(design, ir_, "1:1", 1024)
+            SW_BLACK[design].append(SCK.black_share(np.asarray(r_.img)))
+            if design == "powder":
+                SW_VEIL.append((r_.ctx.log.get("veil_mean_alpha"), r_.ctx.log.get("veil_max_alpha")))
+print(f"   (sweep in {time.time() - t0:.0f} s; black share at 1024 px: powder {min(SW_BLACK['powder']):.3f} to {max(SW_BLACK['powder']):.3f}, "
+      f"elements {min(SW_BLACK['elements']):.3f} to {max(SW_BLACK['elements']):.3f}; veil mean alpha up to {max(m for m, _ in SW_VEIL):.3f})", flush=True)
+check("T1, T6, T7 and T12 hold on 60 pictures of 5 designs x 3 eye classes x 4 other seeds (512 px with a name): the iris is the graded iris byte for byte whatever the seed",
+      not SW_BAD, SW_BAD[:3])
+check("T4 and the veil over those seeds, at 1024 px with no text: the black share of Powder Burst stays inside 45 to 65 percent and Elements inside 55 to 75 on all 12 pictures each, the veil's "
+      "mean alpha is at most 0.10 and no pixel of it above 0.6",
+      all(0.45 <= v <= 0.65 for v in SW_BLACK["powder"]) and all(0.55 <= v <= 0.75 for v in SW_BLACK["elements"]) and all(m <= 0.10 and x <= 0.6 + 1e-6 for m, x in SW_VEIL),
+      (min(SW_BLACK["powder"]), max(SW_BLACK["powder"]), min(SW_BLACK["elements"]), max(SW_BLACK["elements"]), max(m for m, _ in SW_VEIL)))
+picks_seen = {S.render("powder", C.Iris(FIX["blue_round"], "z", eye_id=hashlib.sha256(f"spread|{i}".encode()).hexdigest()[:16]), "1:1", 64).ctx.log["powder"]["plate"] for i in range(24)}
+check("the new seed spreads the plate pick: 24 different eyes draw at least 6 different cloud plates (a seed that always picked the same plate would make every Powder Burst alike)", len(picks_seen) >= 6, len(picks_seen))
+
+# the preview of /api/compose and the laboratory draw the plan's picture
+prof_j = EYE.profile_of_bytes(jpeg, rules=("lid",))
+sealed_p = P.protect(im_j, jpeg, profile=prof_j)["sealed"]
+meta_p = P.unseal_full(sealed_p)[1]
+with Show("solo.splash"), Show("solo.powder"):
+    r_sp = CMP.compose({"sealed": [sealed_p], "style": "solo.splash", "pad": 1.12})
+    r_pw = CMP.compose({"sealed": [sealed_p], "style": "solo.powder", "pad": 1.12})
+    r_pl = CMP.compose({"sealed": [sealed], "style": "solo.splash", "pad": 1.12})
+plan_p = ST.resolve({"style": "solo.splash", "eyes": 1, "eye_ids": [meta_p["eye_id"]]}, [meta_p["profile"]])
+plan_w = ST.resolve({"style": "solo.powder", "eyes": 1, "eye_ids": [meta_p["eye_id"]]}, None)
+exp_sp = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_p["eye_id"])], {"style": "solo.splash", "eyes": 1, "canvas": "1:1", "frozen": plan_p["frozen"]}, size=1024, watermark=True)
+exp_pw = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_p["eye_id"])], {"style": "solo.powder", "eyes": 1, "canvas": "1:1"}, size=1024, watermark=True)
+check("the preview a customer sees through /api/compose is the plan's picture: with a sealed profile the splash is drawn with the plan's frozen liquid and the powder from the seal's eye id, "
+      "byte for byte what a master of the same plan would draw at this size (the plan's seed key, frozen choices and eye id)",
+      r_sp["image"] == L.pil_to_b64(exp_sp.img, "JPEG", 90) and r_pw["image"] == L.pil_to_b64(exp_pw.img, "JPEG", 90) and r_sp["eyes"][0]["eye_id"] == meta_p["eye_id"]
+      and str(exp_sp.seed) == plan_p["seed"] and exp_sp.log["plates"] == plan_p["plates"] and exp_pw.log["plates"] == plan_w["plates"], (plan_p["plates"], exp_sp.log["plates"]))
+check("a sealed eye with no profile (a preview of the old kind, the gate unknown) is still drawn by the engine: the splash is drawn from what the render measures on the eye",
+      r_pl["ok"] and r_pl["style"] == "solo.splash" and "canvas" in r_pl, r_pl.get("style"))
+lab_new = ops.a_styles_lab({"style": "solo.powder", "eye": b64(jpeg), "size": 480}, "t")
+lab_old = ops.a_styles_lab({"style": "solo.powder", "eye": b64(jpeg), "size": 480, "seed": "legacy"}, "t")
+lab_same = ops.a_styles_lab({"style": "solo.powder", "eye": b64(jpeg), "size": 480, "seed": "eye_id"}, "t")
+iris_l = C.Iris(jpeg, "lab", max_side=2048)
+bad_seed = raises(lambda: ops.a_styles_lab({"style": "solo.powder", "eye": b64(jpeg), "size": 480, "seed": "random"}, "t"), L.ClientError)
+check("the laboratory draws with the customer's seed by default (the eye's id is the hash of the image sent) and, when asked (seed legacy), with the old one for the owner's before and after look: "
+      "two different pictures, the reply says which seed it used and the eye's id, the plan shows the seed and the plate, and any other value is a 400",
+      lab_new["seed_mode"] == "eye_id" and lab_old["seed_mode"] == "legacy" and lab_new["image"] != lab_old["image"] and lab_new["image"] == lab_same["image"] and lab_new["eye_id"] == iris_l.eye_id
+      and lab_new["seed"] == str(SD.seed_for_key([iris_l.eye_id], S.seed_key("solo.powder", "powder"))) and lab_new["plan"]["seed"] == lab_new["seed"] and lab_new["plan"]["plates"] == [lab_new["facts"]["powder"]["plate"]]
+      and lab_old["seed"] == str(C.seed_for(jpeg, 0, "powder", "single/1:1")) and isinstance(bad_seed, L.ClientError), (lab_new["seed"], lab_old["seed"], bad_seed))
+store.put("orders/lab-260101-abcd1234/eye_1.json", json.dumps({"eye_id": EID_B, "side": 4096}).encode(), "application/json", upsert=True)
+by_order2 = ops.a_styles_lab({"style": "solo.powder", "order": "lab-260101-abcd1234", "n": 1, "size": 480}, "t")
+check("a lab test order's eye takes the eye id of its stored record (the id of the preview the master was made from), so a style looked at on a real master has the seed of the order's picture",
+      by_order2["eye_id"] == EID_B and by_order2["seed"] == str(SD.seed_for_key([EID_B], S.seed_key("solo.powder", "powder"))), (by_order2["eye_id"], by_order2["seed"]))
+tsx2 = read(os.path.join(REPO, "src", "admin", "StyleLab.tsx"))
+check("the admin page's laboratory has the switch: a Sėkla menu with the new seed and the old one for comparison, sent as seed, and the answer shows which was used",
+      "Sėkla" in tsx2 and "'legacy'" in tsx2 and "seed," in tsx2 and "seed_mode" in tsx2 and not re.search(DASH, tsx2))
+
 # ============================================================================================ 8. local only
 section("8. the real calibration eyes and the port as the scratch plus its edits (local only)")
 if CALIB and os.path.isdir(CALIB) and os.path.isfile(os.path.join(HERE, "data", "singles_goldens_real.json")):
@@ -608,14 +873,20 @@ if CALIB and os.path.isdir(CALIB) and os.path.isfile(os.path.join(HERE, "data", 
             fx[n] = open(p_, "rb").read()
     same_files = {n: hashlib.sha256(b).hexdigest() == RG["eye_files"][n] for n, b in fx.items()}
     local(f"the {len(fx)} real eyes are the files of the recording (their hashes equal)", len(fx) == len(SC.REAL_EYES) and all(same_files.values()), same_files)
+    RGA = json.load(open(os.path.join(HERE, "data", "stepA", "singles_goldens_real.json"), encoding="utf-8"))
+    local("the step A recording of the real eyes (the scratch prototype's) was made from the very same eye files", RGA["eye_files"] == RG["eye_files"])
     irises = {}
     for design in S.DESIGNS:
-        bad = []
+        bad, bad_a = [], []
         for c in [c for c in SC.real_cases() if c["design"] == design]:
             rec = SC.render_case(lambda d, e, f, s, nm, dt: S.render(d, e, f, s, nm, dt), C.Iris, fx, c, irises)
             if rec["sha"] != RG["cases"][c["key"]]["sha"] or rec["facts"] != RG["cases"][c["key"]]["facts"]:
                 bad.append(c["key"])
-        local(f"{design} on the four real eyes (own, own, dark brown, grey) at 1024 px equals the scratch's pictures, byte for byte", not bad, str(bad) + NOTE)
+            rec_a = SC.render_case(legacy_render, C.Iris, fx, c, irises)
+            if rec_a["sha"] != RGA["cases"][c["key"]]["sha"] or rec_a["facts"] != RGA["cases"][c["key"]]["facts"]:
+                bad_a.append(c["key"])
+        local(f"{design} on the four real eyes (own, own, dark brown, grey) at 1024 px equals the recorded pictures, byte for byte", not bad, str(bad) + NOTE)
+        local(f"{design} on the four real eyes with the old seed equals the scratch prototype's pictures of step A, byte for byte", not bad_a, str(bad_a) + NOTE)
 else:
     print("   (the real-eye goldens need SNAPEYES_CALIB, the folder of the calibration restorations)", flush=True)
 if SCRATCH_Y3 and os.path.isdir(SCRATCH_Y3):

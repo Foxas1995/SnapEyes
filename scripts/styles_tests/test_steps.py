@@ -248,7 +248,9 @@ def fake_master_eye(body):
         with LOCK:
             RENDERS.append((order, eye))
         store.put(key, data, "image/jpeg", upsert=False)
-        store.put(f"{folder}/eye_{eye}.json", store.json_bytes({"order": order, "eye": eye, "eye_id": f"{eye:02x}" * 8, "qa": {"ok": True}, "bytes": len(data), "pad": 1.12,
+        draft = store.get_json(f"{folder}/draft/eye_{eye}.json")            # the real master_eye records the id of the preview it was made from: the draft's own
+        eid = draft.get("eye_id") if isinstance(draft, dict) and isinstance(draft.get("eye_id"), str) else f"{eye:02x}" * 8
+        store.put(f"{folder}/eye_{eye}.json", store.json_bytes({"order": order, "eye": eye, "eye_id": eid, "qa": {"ok": True}, "bytes": len(data), "pad": 1.12,
                                                               "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}), "application/json", upsert=True)
         return {"ok": True, "existing": False, "seconds": 1.0, "needs_review": False, "key": key}
     finally:
@@ -1023,12 +1025,55 @@ ids4k = [i for i in PLT.ids("P-SN-CLOUD") if PLT.record(i)["k4"]][:2]
 real_resolve = ST.resolve
 with mock.patch.object(ST, "resolve", lambda spec, profiles=None: dict(real_resolve(spec, profiles), plates=ids4k)):
     p_pl = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, eyes1)
-p_nopl = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, eyes1)
+p_nopl = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": None, "profile": None}])
 check("a plan that knows its plates carries plates_needed (id, family, storage path, sha256 and size of every 4K file: checkout verifies each exists before the customer pays) and the plates "
-      "are part of plan8; a plan that does not know them yet (the seed is still the master's own bytes) has none, and the family is named in plate_families",
+      "are part of plan8; a plan whose eye has no id cannot make the seed, so it does not know them yet and has none, and the family is named in plate_families",
       p_pl["plates"] == ids4k and p_pl["plates_needed"] == PLT.needed(ids4k) and len(ids4k) == 2 and all(re.fullmatch(r"[0-9a-f]{64}", x["sha256"]) and x["path"].startswith("plates/v1/")
                                                                                                     for x in p_pl["plates_needed"]) and p_pl["plan8"] != p_nopl["plan8"]
       and p_nopl["plates"] is None and "plates_needed" not in p_nopl and p_nopl["plate_families"] == ["P-SN-CLOUD"], (p_pl.get("plates_needed"), p_nopl["plate_families"]))
+
+# step B of the seed change (WP5B): the plan carries the seed, the plates and what it freezes, from the eye ids and the sealed profile
+from _lib.styles import seeds as SD  # noqa: E402
+from _lib.styles import eye as EYE  # noqa: E402
+IDA, IDB = "0123456789abcdef", "fedcba9876543210"
+p_a = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}])
+p_a2 = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}])
+p_b = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDB, "profile": None}])
+check("a plan of Powder Burst made from an eye id knows its seed (sha256 of the eye id and the seed key, seeds.py), its one cloud plate and the 4K plate it needs; the same eye gives the same plan "
+      "(plan8 too), another eye another seed and another plan8; nothing but the eye and the style decides it",
+      p_a["seed"] == str(SD.seed_for_key([IDA], p_a["seed_key"])) and p_a["seed_from"] == "eye_id" and len(p_a["plates"]) == 1 and p_a["plates"][0].startswith("P-SN-CLOUD")
+      and p_a["plates_needed"] == PLT.needed(p_a["plates"]) and p_a["frozen"] == {} and p_a["plan8"] == p_a2["plan8"] and p_a["plan8"] != p_b["plan8"] and p_a["seed"] != p_b["seed"]
+      and p_a["eye_ids"] == [IDA], (p_a["seed"], p_a["plates"], p_b["plates"]))
+prof_blue = EYE.profile_of_bytes(SI.png_bytes("blue_round"), rules=("lid",))
+p_s = SP.make_plan({"style": "solo.splash", "eyes": 1, "layout": "single"}, [{"eye_id": prof_blue.eye_id, "profile": prof_blue.rec}])
+p_s0 = SP.make_plan({"style": "solo.splash", "eyes": 1, "layout": "single"}, [{"eye_id": prof_blue.eye_id, "profile": None}])
+check("a plan of a Splash made from the eye id and the draft's sealed profile freezes the liquid, names its crown plate and the 4K file it needs (and the frozen liquid is part of plan8); with no profile "
+      "it knows its seed but not its plate: plates None, nothing frozen, no plates_needed, the family named in plate_families",
+      p_s["frozen"].get("liquid") and len(p_s["plates"]) == 1 and PLT.record(p_s["plates"][0])["variables"]["liquid"] == p_s["frozen"]["liquid"] and p_s["plates_needed"] == PLT.needed(p_s["plates"])
+      and p_s0["plates"] is None and p_s0["frozen"] == {} and "plates_needed" not in p_s0 and p_s0["seed"] == p_s["seed"] and p_s0["plate_families"] == ["P-SP-CROWN"]
+      and p_s0["plan8"] != p_s["plan8"], (p_s["frozen"], p_s["plates"], p_s0["plates"]))
+p_clean0 = SP.make_plan({"style": "solo.clean", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}])
+p_leg0 = SP.make_plan({"style": "studio_black", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}])
+check("a style that draws no plate has its seed and no plate to name (plates None: no plates_needed); a plan of the legacy engine has none of it (it is drawn by the old composer)",
+      p_clean0["seed"] == str(SD.seed_for_key([IDA], p_clean0["seed_key"])) and p_clean0["plates"] is None and p_clean0["frozen"] == {} and "plates_needed" not in p_clean0
+      and "seed" not in p_leg0 and "frozen" not in p_leg0, (p_clean0["plates"], p_leg0.get("seed")))
+with mock.patch.object(ST, "resolve", side_effect=PLT.NoPlate("no plate for P-SN-CLOUD {}")):
+    e_np = raises(lambda: SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}]), SP.Hold)
+check("a plate library with no plate for the style at the plan's version is a hold (no_engine), not a crash at checkout", isinstance(e_np, SP.Hold) and e_np.reason == "no_engine", e_np)
+
+
+class FakePv:
+    def __init__(self, seed, plates):
+        self.seed, self.log = seed, {"plates": plates}
+
+
+e_s = raises(lambda: SP._check_drawn(p_a, FakePv(1, p_a["plates"])), SP.Hold)
+e_p = raises(lambda: SP._check_drawn(p_a, FakePv(int(p_a["seed"]), ["P-SN-CLOUD__other"])), SP.Hold)
+check("the picture is checked against the plan before anything is stored: the drawn seed and plates equal the plan's (nothing raised), another seed or other plates is a hold picture_drift, and a plan "
+      "that names no plates is not checked for them (a splash with no profile, an old plan)",
+      SP._check_drawn(p_a, FakePv(int(p_a["seed"]), p_a["plates"])) is None and isinstance(e_s, SP.Hold) and e_s.reason == "picture_drift" and isinstance(e_p, SP.Hold) and e_p.reason == "picture_drift"
+      and SP._check_drawn(p_s0, FakePv(int(p_s0["seed"]), ["P-SP-CROWN__x"])) is None and SP._check_drawn({}, FakePv(5, [])) is None, (e_s, e_p))
+check("the two new holds have their words for the owner's reminder (why it waits, what to do)", all(SP.hold_text(r, "261005-x") for r in ("eye_changed", "picture_drift")), "")
 
 
 # ============================================================================================ 6. a paid order of the legacy engine through the chain
@@ -1097,7 +1142,9 @@ check("the file is one JPEG, 4096 x 4096, 4:4:4 (no chroma subsampling), with th
 rec_parts = [("selfcheck ok", (art7.get("selfcheck") or {}).get("ok") is True), ("pupil neutral", ((art7.get("qa") or {}).get("eyes") or [{}])[0].get("pupil_neutral") is True),
              ("seed text", isinstance(art7.get("seed"), str)), ("plan8", art7.get("plan8") == s7["plan"]["plan8"]), ("engine_v", art7.get("engine_v") == ST.ENGINE_V),
              ("reg", bool(re.fullmatch(r"[0-9a-f]{12}", str(art7.get("reg"))))), ("design", art7.get("design_used") == "clean"), ("times", "times" in art7),
-             ("not held", art7.get("needs_review") is False), ("inputs", isinstance(art7.get("inputs"), dict)), ("rerun 0", art7.get("rerun") == 0)]
+             ("not held", art7.get("needs_review") is False), ("inputs", isinstance(art7.get("inputs"), dict)), ("rerun 0", art7.get("rerun") == 0),
+             ("seed is the plan's", s7["plan"].get("seed") is not None and art7.get("seed") == s7["plan"]["seed"]
+              and s7["plan"]["seed"] == str(SD.seed_for_key(s7["plan"]["eye_ids"], s7["plan"]["seed_key"])))]
 check("its record holds what the owner reads: the colour check per eye, the self checks (T1 to T12 ok), the seed as text, the plan and engine versions, the registry hash, "
       "the times, the drift, the inputs and the design", all(ok for _, ok in rec_parts), [n for n, ok in rec_parts if not ok])
 check("while the server composed, the status told the page which step ran: step compose, part 1 of 1, and the artwork progress",
@@ -1321,6 +1368,29 @@ with mock.patch.dict(SP.EXECUTORS, {"art": exe}), Show("solo.clean"):
     done8b = wait_for(lambda: stopped(o8b, "review"), 60)
 ok, d = held(o8b, "engine_skew", n0)
 check("a deploy between payment and master (the plan was made under another ENGINE_V): held engine_skew, one note, nothing rendered, no other style", bool(done8b) and ok and exe.calls == 0, (done8b, d))
+# (b2) the master was made from another preview than the plan was frozen on
+n0 = len(H.Fake.emails)
+with Show("solo.clean"):
+    o8e, k8e, sid8e = new_order(1, "solo.clean", "hold-e@example.com", pay_it=False)
+    pl = SP.make_plan({"style": "solo.clean", "eyes": 1, "layout": "single"}, [{"eye_id": "cd" * 8, "profile": None}])
+    wj(f"orders/{o8e}/style/plan.json", dict(pl, created_at=int(time.time())))
+    hook(H.pay_session(sid8e, email="hold-e@example.com"))
+    done8e = wait_for(lambda: stopped(o8e, "review"), 60)
+ok, d = held(o8e, "eye_changed", n0)
+check("an eye master made from another preview than the one the plan was frozen on (its eye id is not the plan's): held eye_changed, one note, nothing drawn (the seed would not be the approved one)",
+      bool(done8e) and ok and not exists(f"orders/{o8e}/style/done_art.json"), (done8e, d))
+# (b3) the real engine draws a picture the plan does not name (a plan whose seed is not the one its eyes make): never delivered
+n0 = len(H.Fake.emails)
+with Show("solo.clean"):
+    o8f, k8f, sid8f = new_order(1, "solo.clean", "hold-f@example.com", pay_it=False)
+    dr = rj(f"orders/{o8f}/draft/eye_1.json")
+    pl = SP.make_plan({"style": "solo.clean", "eyes": 1, "layout": "single"}, [{"eye_id": dr["eye_id"], "profile": None}])
+    wj(f"orders/{o8f}/style/plan.json", dict(pl, seed="12345", created_at=int(time.time())))
+    hook(H.pay_session(sid8f, email="hold-f@example.com"))
+    done8f = wait_for(lambda: stopped(o8f, "review"), 90)
+ok, d = held(o8f, "picture_drift", n0)
+check("a picture drawn from another seed than the plan names (a plan changed by hand, or code that changed without a new ENGINE_V) is held picture_drift AFTER the render and before anything is stored: "
+      "one note, no artwork file, no delivery", bool(done8f) and ok, (done8f, d))
 # (c) class drift: the master's colour class is not the preview's
 n0 = len(H.Fake.emails)
 MODE.update(side=4096)

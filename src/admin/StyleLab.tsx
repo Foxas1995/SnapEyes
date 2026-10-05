@@ -2,7 +2,8 @@
 // No image model is called and nothing is stored: a held or not yet visible style is looked at here and nowhere else. The eye is a
 // restored iris square: the site's own restored sample, a file the owner picks (its centre square is sent), or the stored 4K eye of a
 // lab test order (the real masters, no new Gemini call). The reply is the picture, the self checks that ran on it (T1 iris untouched,
-// T6, T7 text, T12, T4 black share), the colour class, the seed, what the design picked (plates, wind) and the times.
+// T6, T7 text, T12, T4 black share), the colour class, the seed, what the design picked (plates, wind) and the times. The seed is the one a customer's
+// picture has (made from the eye's id and the plan's seed key) or, for the owner's before and after look at a board, the old one (from the iris bytes).
 import { useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import type { LabRow, StyleLabList, StyleLabResult } from './api';
@@ -57,6 +58,7 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
   const [size, setSize] = useState(1024);
   const [names, setNames] = useState('');
   const [date, setDate] = useState('');
+  const [seed, setSeed] = useState<'eye_id' | 'legacy'>('eye_id');
   const [src, setSrc] = useState<Source>({ kind: 'sample' });
   const [running, setRunning] = useState(false);
   const [err, setErr] = useState('');
@@ -83,7 +85,7 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
     if (!row) return;
     setErr(''); setRes(null); setRunning(true);
     try {
-      const body: Record<string, unknown> = { style: row.id, size, format: canvases.includes(canvas) ? canvas : canvases[0], names, date };
+      const body: Record<string, unknown> = { style: row.id, size, format: canvases.includes(canvas) ? canvas : canvases[0], names, date, seed };
       if (src.kind === 'order') { body.order = src.order; body.n = 1; }
       else if (src.kind === 'file') body.eye = await squareB64(src.file);
       else body.eye = await toB64(await (await fetch(SAMPLE)).blob());
@@ -153,6 +155,13 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
           <span className={MUTED}>Data (nebūtina)</span>
           <input className={INPUT} value={date} maxLength={20} onChange={(e) => setDate(e.target.value)} disabled={running} />
         </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className={MUTED}>Sėkla</span>
+          <select className={INPUT} value={seed} onChange={(e) => setSeed(e.target.value === 'legacy' ? 'legacy' : 'eye_id')} disabled={running}>
+            <option value="eye_id">nauja: iš akies id (tokia pati kaip pirkėjo kūrinio)</option>
+            <option value="legacy">sena: iš rainelės baitų (kaip prieš sėklos pakeitimą, tik palyginimui)</option>
+          </select>
+        </label>
       </div>
       {row && row.plates.length > 0 && size === 4096 && (
         <p className={`text-xs ${MUTED}`}>Šis stilius 4096 px piešia iš 4K plokštelių ({row.plates.join(', ')}); jei jų saugykloje dar nėra, atsakymas bus „plate_unavailable“.</p>
@@ -162,7 +171,7 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
       {res && (
         <div className="flex flex-col gap-3 min-w-0">
           <p className="text-sm">
-            {res.width} x {res.height} px, rainelės klasė <b>{res.cls}</b>, sėkla {res.seed}
+            {res.width} x {res.height} px, rainelės klasė <b>{res.cls}</b>, sėkla {res.seed}{res.seed_mode === 'legacy' ? ' (sena)' : ''}{res.eye_id ? `, akies id ${res.eye_id}` : ''}
             <span className={MUTED}> · serveryje {fmtSec(res.ms)}{res.times?.effect !== undefined ? `, efektas ${res.times.effect.toFixed(2)} s, iš viso ${res.times.total?.toFixed(2)} s` : ''}</span>
           </p>
           <img src={`data:image/jpeg;base64,${res.image}`} alt="Stiliaus rezultatas" className="max-w-full rounded-lg border border-white/10 bg-black" style={{ maxHeight: 640, objectFit: 'contain' }} />

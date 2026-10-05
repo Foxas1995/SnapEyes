@@ -21,6 +21,7 @@ from __future__ import annotations
 
 # PORT of work package WP5A (step A): singles_elements.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_singles.py lists
 # (imports, plates); test_goldens_singles.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP5B (step B) changed the seed and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 
@@ -224,7 +225,7 @@ def fx_elements(cv, ctx):
     gap = opts["gap"]
     # ---------------------------------------------------------------- fire half
     want_fire = 90.0 + (26.0 if warm_left else -26.0) + float(rnd.uniform(1, -8.0, 8.0)[0])
-    pkf = reg.pick("P-EL-FLAME", ctx.seed, wanted_strong_angle=want_fire, max_rotation=25.0, exclude=v3_exclude(reg))
+    pkf = reg.pick("P-EL-FLAME", ctx.seed, wanted_strong_angle=want_fire, max_rotation=25.0, exclude=v3_exclude(reg), pv=ctx.pv)
     rs_f = min(0.985, 1.045 * pkf.plate.void_diam * 4096.0 / (2.0 * 0.255 * 4096.0))
     flame_im, finfo = K.place_u8(pkf, W, H, d.cx, d.cy, R, r_scale=rs_f, edge_fade=0.05)
     ph, _ = SS._plate_hue(np.asarray(flame_im)[::4, ::4].astype(np.float32) / 255.0)
@@ -281,7 +282,7 @@ def fx_elements(cv, ctx):
     # ---------------------------------------------------------------- water half
     liquid = ctx.opts.get("water_liquid") or ("water_teal" if (iris.stats["class"] == "own" and 160.0 <= iris.stats["h"] < 178.0) else "water_clear")
     want_w = 90.0 + (-58.0 if warm_left else 58.0) + float(rnd.uniform(1, -8.0, 8.0)[0])      # tall spikes AWAY from the water half
-    pkw = reg.pick("P-SP-CROWN", ctx.seed, wanted_strong_angle=want_w, max_rotation=35.0, liquid=liquid)
+    pkw = reg.pick("P-SP-CROWN", ctx.seed, wanted_strong_angle=want_w, max_rotation=35.0, liquid=liquid, pv=ctx.pv)
     rs_w = min(0.975, 1.045 * pkw.plate.void_diam * 4096.0 / (2.0 * 0.255 * 4096.0))
     crown_im, winfo2 = K.place_u8(pkw, W, H, d.cx, d.cy, R, r_scale=rs_w, edge_fade=0.05)
     rl = ctx.rand("lobes")

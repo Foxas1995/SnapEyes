@@ -234,7 +234,7 @@ export interface StyleLabList { styles: StyleLabRow[]; sizes: number[] }
 export interface SelfcheckItem { ok: boolean; [k: string]: unknown }
 /** styles_lab with a style: one picture, the checks that ran on it and what the engine says it did */
 export interface StyleLabResult {
-  style: string; design: string; canvas: string; width: number; height: number; cls: string; seed: string;
+  style: string; design: string; canvas: string; width: number; height: number; cls: string; seed: string; seed_mode?: string; eye_id?: string;
   image: string; view: [number, number];
   crop: null | { x: number; y: number; w: number; h: number; image: string };
   facts: Record<string, unknown>; plan: Record<string, unknown>;

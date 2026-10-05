@@ -35,7 +35,7 @@ ENGINE_FAMILIES = ("singles", "collision", "universe")      # the engine package
 # The version of the engine's PICTURES. It changes if and only if a golden changes (scripts/styles_tests/data/engine_v.json records it with the
 # hashes of the golden files and v3steps compares them): a plan records the version it was made under and the master step holds an order whose
 # plan was made under another one (engine_skew: a deploy between payment and master must never draw a picture the preview did not show).
-ENGINE_V = 1
+ENGINE_V = 2          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change (WP5B: from the eye ids and the plan's seed key)
 
 
 class EngineNotBuilt(LookupError):

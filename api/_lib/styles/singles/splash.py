@@ -15,6 +15,7 @@ from __future__ import annotations
 
 # PORT of work package WP5A (step A): singles_splash.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_singles.py lists
 # (imports, plates, the drops atlas read through atlas.py); test_goldens_singles.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP5B (step B) changed the seed and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 import hashlib
@@ -53,7 +54,12 @@ def _hash(seed, *parts):
 
 def liquid_for(iris):
     """The liquid family of one eye by class and hue (brief 3.7.1)."""
-    st = iris.stats
+    return liquid_from_stats(iris.stats)
+
+
+def liquid_from_stats(st):
+    """liquid_for() of the numbers alone: st is the eye's colour_stats (class, h, C), measured on the iris or read from its sealed profile (the plan
+    fixes the liquid from the profile, so that the preview and the master draw the plate the plan names)."""
     if st["class"] == "dark_brown":
         return "cognac"
     h, c = st["h"], st["C"]
@@ -172,6 +178,15 @@ def crown_tint(iris):
     return (0.65 + 0.35 * c).astype(np.float32)
 
 
+def crown_pick(seed, liquid, pv=None, opts=None):
+    """(the screen angle the crown's tall side is wanted at, the Pick): the crown plate of one splash, from the artwork's seed, the liquid and the
+    plates version of the spec. No pixels: resolve() calls it to name the plate before the render, and the render calls it to draw."""
+    o = dict(SP)
+    o.update(opts or {})
+    wanted = o["wind_lo"] + (o["wind_hi"] - o["wind_lo"]) * float(C.Rand(seed, "splash").uniform())
+    return wanted, registry().pick("P-SP-CROWN", seed, wanted_strong_angle=wanted, max_rotation=30.0, liquid=liquid, pv=pv)
+
+
 def fx_splash(cv, ctx):
     opts = dict(SP)
     opts.update(ctx.opts.get("splash", {}))
@@ -179,10 +194,8 @@ def fx_splash(cv, ctx):
     iris = ctx.irises[0]
     W, H, S, R = ctx.W, ctx.H, ctx.S, d.R
     reg = registry()
-    liquid = ctx.opts.get("liquid") or liquid_for(iris)
-    rnd = ctx.rand("splash")
-    wanted = opts["wind_lo"] + (opts["wind_hi"] - opts["wind_lo"]) * float(rnd.uniform())
-    pk = reg.pick("P-SP-CROWN", ctx.seed, wanted_strong_angle=wanted, max_rotation=30.0, liquid=liquid)
+    liquid = ctx.opts.get("liquid") or ctx.frozen.get("liquid") or liquid_for(iris)
+    wanted, pk = crown_pick(ctx.seed, liquid, ctx.pv, opts)
     # background: #050505 with a 3 % radial lift inside 1.6 R
     K.fill_radial_bg(cv, d.cx, d.cy, 1.6 * R, "#0B0B0C", "#050505")
     lip = min(opts["lip_scale"], 1.045 * pk.plate.void_diam * 4096.0 / (2.0 * 0.255 * 4096.0))       # plate upscale at 4096 <= x1.045 (AD: x1.05)
