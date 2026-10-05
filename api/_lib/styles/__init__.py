@@ -12,6 +12,9 @@ api/_lib/catalogue.py and answers for the design the catalogue names):
     resolve(spec, profiles) -> Plan          no pixels: layout, design used, fallback, canvas, contact distances, seed key, plates needed
     preview(eyes, spec, size=1024, watermark=False) -> Preview     one style, one canvas
     tiles(eyes, styles, spec, size=480) -> dict                    several styles on one eye preparation
+and the master plan's two (api/_lib/styles/steps.py: the plan record, the steps and the state machine that runs them, the guards in guard.py):
+    plan_steps(plan) -> [step]                                     the steps of a plan: one "art" step by default
+    run_step(ctx, plan, step, k, rerun, after) -> {out, done}      one step through the state machine (claim, try record, guards, done record)
 This module only dispatches: it finds the family the catalogue names for the style and the eye count, loads it, and calls it. A family
 that is not in the repository raises EngineNotBuilt (never an ImportError that reads like a bug): the catalogue already refuses to
 route to such a style (catalogue.engine_built), this is the second wall.
@@ -28,6 +31,11 @@ from __future__ import annotations
 import importlib
 
 ENGINE_FAMILIES = ("singles", "collision", "universe")      # the engine packages; legacy styles never come through here
+
+# The version of the engine's PICTURES. It changes if and only if a golden changes (scripts/styles_tests/data/engine_v.json records it with the
+# hashes of the golden files and v3steps compares them): a plan records the version it was made under and the master step holds an order whose
+# plan was made under another one (engine_skew: a deploy between payment and master must never draw a picture the preview did not show).
+ENGINE_V = 1
 
 
 class EngineNotBuilt(LookupError):
@@ -106,6 +114,18 @@ def preview(eyes, spec, size=1024, watermark=False, **kw):
     if watermark:
         pv.img = watermarked(pv)
     return pv
+
+
+def plan_steps(plan, factor=None):
+    """The steps of a master plan (api/_lib/styles/steps.py; imported here on use, so this package stays light)."""
+    from . import steps
+    return steps.plan_steps(plan, factor)
+
+
+def run_step(ctx, plan, step, k=1, rerun=0, after=None):
+    """One step of a master plan through its state machine (api/_lib/styles/steps.py run_step)."""
+    from . import steps
+    return steps.run_step(ctx, plan, step, k, rerun, after)
 
 
 def tiles(eyes, styles, spec, size=480):
