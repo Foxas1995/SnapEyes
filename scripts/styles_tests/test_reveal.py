@@ -260,9 +260,9 @@ seen = {}
 _real_display = P.display_image
 
 
-def spy_display(clean, lang=None):
-    seen["im"], seen["lang"] = clean.copy(), lang
-    return _real_display(clean, lang)
+def spy_display(clean, lang=None, pad=P.DISPLAY_PAD):
+    seen["im"], seen["lang"], seen["pad"] = clean.copy(), lang, pad
+    return _real_display(clean, lang, pad)
 
 
 P.display_image = spy_display
@@ -272,7 +272,7 @@ finally:
     P.display_image = _real_display
 check("reveal_for: params, the display copy and the code 'ok' come back; the display copy is the repo's tile over the PREPARED restoration, in the page's language",
       rv["code"] == "ok" and rv["params"] == RES["blue_clean"]["pub"] and rv["image"].size == (P.DISPLAY_SIDE, P.DISPLAY_SIDE) and sha(seen["im"]) == sha(RES["blue_clean"]["prep"])
-      and seen["lang"] == "lt" and rv["ms"] >= 0, (rv["code"], seen.get("lang")))
+      and seen["lang"] == "lt" and rv["ms"] >= 0 and seen["pad"] == P.DISPLAY_PAD, (rv["code"], seen.get("lang"), seen.get("pad")))
 check("reveal_for: a withheld pair (colour) still comes back with its params and its prepared copy, code 'colour'",
       (lambda r: r["code"] == "colour" and r["params"]["ok"] is False and r["image"] is not None)(R.reveal_for(RES["blue_warm"]["crop"], RES["blue_warm"]["rest"])))
 r_none = R.reveal_for(RES["blue_clean"]["crop"], RES["blue_clean"]["rest"], left=R.REVEAL_MIN_LEFT - 0.5)
@@ -292,6 +292,52 @@ finally:
     R.reveal_params = _real_rp
 check("reveal_for: a measurement that raises never raises out of it: no params, no image, code 'error'",
       r_err["params"] is None and r_err["image"] is None and r_err["code"] == "error")
+# the crop padding of the request (review of WP9: the display copy's watermark was anchored at the site's padding whatever the request said, while the profile and the
+# seals carry the request's)
+check("standard_pad: None and the site's padding (within PAD_TOL) are standard; another padding, NaN, infinity, a word and nothing numeric are not",
+      R.standard_pad(None) and R.standard_pad(1.12) and R.standard_pad(1.1234) and R.standard_pad("1.12") and not R.standard_pad(1.2) and not R.standard_pad(1.6) and not R.standard_pad(1.0)
+      and not R.standard_pad(2.0) and not R.standard_pad(float("nan")) and not R.standard_pad(float("inf")) and not R.standard_pad("x") and not R.standard_pad([1.12]) and not R.standard_pad(0),
+      [R.standard_pad(v) for v in (None, 1.12, 1.1234, 1.2, float("nan"), "x")])
+seen.clear()
+P.display_image = spy_display
+try:
+    rv_p = R.reveal_for(RES["blue_clean"]["crop"], RES["blue_clean"]["rest"], lang="en", pad=1.1234)
+finally:
+    P.display_image = _real_display
+want_p = _real_display(RES["blue_clean"]["prep"], "en", 1.123)
+check("reveal_for with a padding: the watermark of the display copy is anchored to the disc of that padding, rounded to the thousandths the eye profile keeps (1.123), "
+      "pixel for pixel what preview.display_image makes of the prepared restoration at that padding",
+      rv_p["code"] == "ok" and seen["pad"] == 1.123 and sha(rv_p["image"]) == sha(want_p) and sha(want_p) != sha(_real_display(RES["blue_clean"]["prep"], "en", 1.2)),
+      (rv_p["code"], seen.get("pad")))
+check("reveal_for without a padding is what it was: the site's padding, the same pixels as with 1.12 given",
+      sha(R.reveal_for(RES["blue_clean"]["crop"], RES["blue_clean"]["rest"], lang="en")["image"]) == sha(R.reveal_for(RES["blue_clean"]["crop"], RES["blue_clean"]["rest"], lang="en", pad=1.12)["image"])
+      == sha(_real_display(RES["blue_clean"]["prep"], "en", 1.12)))
+bad_pads = []
+for pad_ in (1.6, 1.2, 1.0, 2.0, 0, -1, 7, float("nan"), float("inf"), "x", {}, [1.12]):
+    r_ = R.reveal_for(RES["blue_clean"]["crop"], RES["blue_clean"]["rest"], pad=pad_)
+    if r_ != {"params": None, "image": None, "code": "none", "ms": 0}:
+        bad_pads.append((repr(pad_), r_["code"]))
+check("reveal_for with another padding, NaN, infinity or a word: not measured (the numbers are made at the site's padding, on any other radius they would be wrong), code 'none', never raises",
+      not bad_pads, bad_pads)
+_nan_hits = []
+for _bad in (float("nan"), float("inf"), float("-inf")):
+    for _p in ({"pupil": [_bad, 0.0], "ok": True}, {"drift": _bad, "ok": True}, {"edge": [0.95, _bad], "ok": True}):
+        try:
+            R.wire(_p)
+            _nan_hits.append(("not refused", _p))
+        except ValueError:
+            pass
+_fine = R.wire({"pupil": [-0.0, 0.5], "rho": None, "cls": None, "ok": True, "soft": False, "drift": 1.5, "_pupil": {"x": float("nan")}})
+check("wire refuses NaN and infinity in a number or a pair, keeps None, booleans and words, drops the private diagnostics (which may hold anything), and still writes no negative zero",
+      not _nan_hits and _fine == {"pupil": [0.0, 0.5], "rho": None, "cls": None, "ok": True, "soft": False, "drift": 1.5} and str(_fine["pupil"][0]) == "0.0", (_nan_hits, _fine))
+R.reveal_params = lambda *a, **k: {"pupil": [float("nan"), 0.0], "rho": 0.2, "cls": "round", "shift": [0.0, 0.0], "edge": [0.95, 1.02], "ok": True, "soft": False, "drift": 1.0, "lid": 0.0,
+                                   "_pupil": None, "_lid": None, "_info": {}}
+try:
+    r_nan = R.reveal_for(RES["blue_clean"]["crop"], RES["blue_clean"]["rest"])
+finally:
+    R.reveal_params = _real_rp
+check("reveal_for: a measurement that came out NaN is 'not measured' (code 'error', no params, no image), so the reply stays valid JSON and the preview is whole",
+      r_nan["params"] is None and r_nan["image"] is None and r_nan["code"] == "error", r_nan["code"])
 check("reveal_for: the codes it can answer are all in CODES, and the event field accepts every one (a code E.build keeps)",
       all(c in R.CODES and E.build("enhance", {"reveal": c}).get("reveal") == c for c in R.CODES), R.CODES)
 d64 = R.display_b64(rv["image"])
@@ -417,6 +463,45 @@ finally:
     R.reveal_params = _real_rp
 check("enhance: a Reveal that fails never costs the preview (200 with the display copy and the seals, no reveal, the event says error)",
       out_f["ok"] is True and "reveal" not in out_f and ev_f.get("reveal") == "error" and P.unseal(out_f["sealed"]) and P.is_display(base64.b64decode(out_f["image"])), ev_f)
+
+# the crop padding of the request (review of WP9). The body's "pad" may be anywhere in 1 to 2 and the profile and the three seals carry it; the display copy's
+# watermark must sit on the iris disc of that padding like theirs, with or without a Reveal (the Reveal is measured at the site's padding only: no reveal field then)
+def ring_diff(a_, b_, pad_):
+    Rp = P.DISPLAY_SIDE / (2.0 * pad_)
+    rr_ = np.hypot(xx + 0.5 - P.DISPLAY_SIDE / 2, yy + 0.5 - P.DISPLAY_SIDE / 2) / Rp
+    m_ = (rr_ > 0.5) & (rr_ < 0.95)
+    return float(np.abs(a_.astype(np.float32) - b_.astype(np.float32))[m_].mean())
+
+
+_real_protect = P.protect
+cap = {}
+
+
+def spy_protect(clean_im, clean_bytes, lang=None, profile=None):
+    cap["im"], cap["pad"] = clean_im.copy(), getattr(profile, "pad", None)          # what enhance hands protect: the restoration and the profile whose padding the seals carry
+    return _real_protect(clean_im, clean_bytes, lang, profile)
+
+
+P.protect = spy_protect
+try:
+    out_q, ev_q, _ = enhance(pad=1.6)
+finally:
+    P.protect = _real_protect
+dec = lambda b: np.asarray(Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB"))
+shown_q = dec(out_q["image"])
+at_16, at_112 = dec(P.display_b64(cap["im"], "en", 1.6)), dec(P.display_b64(cap["im"], "en", 1.12))
+d_16, d_112 = ring_diff(shown_q, at_16, 1.6), ring_diff(shown_q, at_112, 1.6)
+print(f"   pad 1.6: the display copy against the pad 1.6 anchor {d_16:.3f}, against the 1.12 anchor {d_112:.2f} (mean absolute difference on the 0.5 to 0.95 R ring)", flush=True)
+check("enhance with a request padding of 1.6: the display copy's watermark is anchored to the disc of that padding like the seals and the profile (not to the site's 1.12): "
+      "the same pixels as preview.display_image at the profile's padding, far from the 1.12 anchor",
+      cap.get("pad") == 1.6 and d_16 < 0.05 and d_112 > 3.0, (cap.get("pad"), d_16, d_112))
+check("enhance with a request padding of 1.6: no Reveal is made for it (the numbers are measured at the site's padding): 'reveal' absent, the event says none, the display copy is "
+      "the plain one, the preview is whole",
+      out_q["ok"] is True and "reveal" not in out_q and ev_q.get("reveal") == "none" and "reveal_ms" not in ev_q and P.is_display(base64.b64decode(out_q["image"])) and P.unseal(out_q["sealed"])
+      and luma(shown_q)[near].mean() > 0.6 * luma(plain)[near].mean(), (list(out_q), ev_q.get("reveal")))
+out_t, ev_t, _ = enhance(pad=1.123)
+check("enhance with a padding within the tolerance of the site's (1.123): the Reveal is measured, the event says ok",
+      out_t["ok"] is True and out_t["reveal"]["ok"] is True and ev_t.get("reveal") == "ok", (out_t.get("reveal"), ev_t.get("reveal")))
 
 # the p09f case end to end: the model changes the colour, the lock is off, so the restored colour is not the photo's
 def warm_model(prompt, im, size=None, thinking=None, model=None):

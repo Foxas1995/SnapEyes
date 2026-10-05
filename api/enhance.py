@@ -17,7 +17,9 @@ circle with a hard cut through the pupil ("reveal": the pupil, the registration 
 about 150 bytes), measured on the clean restoration and the deglared crop it was made from, and the display copy built from the restoration with its
 eyelid skin hidden and its pupil crushed to black (the sealed copies are untouched: they are the clean preview). ok false means the restored colour
 drifted from the photo or the halves do not register: the page then shows the strip without the cut and says why. Measured only with
-REVEAL_MIN_LEFT seconds left; otherwise "reveal" is absent and the display copy is the plain one (the page keeps the plain before and after slider).
+REVEAL_MIN_LEFT seconds left and for the site's crop padding (the body's "pad" may be anywhere in 1 to 2, and the Reveal's measurements are made at 1.12);
+otherwise "reveal" is absent and the display copy is the plain one (the page keeps the plain before and after slider). Either way the display copy's
+watermark sits on the iris disc of the request's padding, the one the profile and the seals carry.
 No stored wide frame, no card: the browser builds the photo's frame itself (decision C10)."""
 import os, sys, json, time, base64, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -125,7 +127,7 @@ def enhance(body):
     # and master_eye's preview_sha are these bytes, as before
     clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
     prof, prof_ms = _measure(clean, pad)
-    rv = REV.reveal_for(source, out)    # the Reveal's numbers (about 0.5 s) and the display copy as the Reveal shows it; {"params": None} when unmeasured
+    rv = REV.reveal_for(source, out, pad=pad)    # the Reveal's numbers (about 0.5 s) and the display copy as the Reveal shows it, its watermark on this padding's iris disc; {"params": None} when unmeasured
     prot = P.protect(out, clean, profile=prof)
     if rv["image"] is not None:
         prot["image"] = REV.display_b64(rv["image"])    # the same watermark, over the restoration with its eyelid hidden and its pupil black

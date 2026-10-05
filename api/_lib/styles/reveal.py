@@ -407,6 +407,8 @@ def prepare_restored(restored, params, pupil_mode="crush", lid=True):
 # ---- hand written below this line (scripts/styles_tests/port_reveal.py leaves it alone) --------------------
 REVEAL_MIN_LEFT = 4.0        # seconds left in the invocation (after the profile) that /api/enhance asks of the Reveal's measurement: it is about 0.5 s of
                              # work on a quiet core (0.25 s for the parameters, 0.2 s for the prepared and watermarked copy), twice that on a slow one
+PAD_TOL = 0.005              # the measurements above are made at the site's crop padding (PAD: R_FRAC, the pupil detector, the frame the page cuts); a request that says another
+                             # padding (the body's "pad" is allowed anywhere in 1 to 2) gets no Reveal, and with it the plain display copy, never numbers measured on the wrong radius
 CODES = ("ok", "colour", "registration", "none", "error")   # what the event says about one eye's Reveal (events.FIELDS["enhance"]["reveal"])
 
 
@@ -417,15 +419,42 @@ def time_for_reveal(left=None):
 
 def wire(p):
     """The public part of reveal_params as it goes over the wire: no private masks, and no negative zero (a measured offset of
-    minus one ten thousandth rounds to -0.0, which JSON would print as "-0.0")."""
+    minus one ten thousandth rounds to -0.0, which JSON would print as "-0.0"). Every number is finite or this raises ValueError:
+    one NaN in the reply would make the whole /api/enhance answer unparseable in the browser and lose the paid preview, so reveal_for
+    turns it into "not measured" (the plain slider) instead."""
     out = {}
     for k, v in public_params(p).items():
         if isinstance(v, (list, tuple)):
             v = [x + 0.0 if isinstance(x, float) else x for x in v]
         elif isinstance(v, float):
             v = v + 0.0
+        if any(isinstance(x, float) and not math.isfinite(x) for x in (v if isinstance(v, list) else [v])):
+            raise ValueError("a Reveal number is not finite: " + k)
         out[k] = v
     return out
+
+
+def standard_pad(pad):
+    """True when `pad` (the crop padding a request says its crop was cut with) is the site's, within PAD_TOL: the one padding the Reveal is measured at.
+    None means the site's padding. NaN, infinity and anything that is not a number are not standard (a comparison with NaN is never true)."""
+    if pad is None:
+        return True
+    try:
+        return abs(float(pad) - PAD) <= PAD_TOL
+    except (TypeError, ValueError):
+        return False
+
+
+def shown_copy(prepared, lang, style="repo", pad=None):
+    """The display copy of the prepared restoration, its watermark anchored to the iris disc of the padding the eye was cut with, exactly where the seals, the
+    profile and every tile of this eye carry it (preview.display_image takes the padding and places the overlay on the disc). display_copy above is the
+    prototype's own and knows no padding: the repo tile goes through here, the arcs variant (D14, off) through display_copy. pad is rounded to the thousandths
+    the eye profile keeps, so a measured profile and this copy name the same disc."""
+    if style != "repo":
+        return display_copy(prepared, lang, style)
+    from .. import preview as PV
+    p = PAD if pad is None else int(round(float(pad) * 1000)) / 1000.0
+    return PV.display_image(prepared.convert("RGB"), lang, p)
 
 
 def code_of(pub):
@@ -445,20 +474,22 @@ def display_b64(shown):
     return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def reveal_for(crop, restored, lang=None, left=None, style="repo"):
+def reveal_for(crop, restored, lang=None, left=None, pad=None, style="repo"):
     """What /api/enhance does for the Reveal, in one call that never raises and never costs the preview.
     crop: the deglared crop this restoration was made from (the colour reference of enhance), restored: the clean restoration (PIL).
+    pad: the crop padding the request says it cut with (None: the site's). The Reveal is measured at the site's padding only (standard_pad): any other
+    padding is "not measured", and the display copy of a measured eye has its watermark on the disc of that padding (shown_copy).
     Returns {"params": the wire dict or None, "image": the display copy (PIL, the prepared restoration under the preview watermark) or
     None, "code": one of CODES, "ms": the time it took}. None for params and image means "not measured": the page then keeps the plain
     before and after slider and the display copy is the plain one (no eyelid hidden, no pupil crushed). A withheld Reveal (ok false)
     still comes back with its params and its prepared copy: the page shows the strip without the cut, and tells the customer why."""
     t0 = time.time()
-    if not time_for_reveal(left):
+    if not time_for_reveal(left) or not standard_pad(pad):
         return {"params": None, "image": None, "code": "none", "ms": 0}
     try:
         p = reveal_params(crop, restored)
         pub = wire(p)
-        shown = display_copy(prepare_restored(restored, p), lang or L.page_lang(), style)
+        shown = shown_copy(prepare_restored(restored, p), lang or L.page_lang(), style, pad)
     except Exception as e:  # noqa: a broken measurement must never cost the customer's preview
         print("snapeyes reveal: not measured:", L._scrub(repr(e))[:200], flush=True)
         return {"params": None, "image": None, "code": "error", "ms": int((time.time() - t0) * 1000)}
