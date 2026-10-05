@@ -2,7 +2,9 @@
 """order_admin.py - the owner's tool for paid orders and old drafts. Runs on the owner's machine, never deployed
 (vercel.json excludeFiles "scripts/**").
 
-    python scripts/order_admin.py status ORDER          what is stored, paid, made, held; the order page link
+    python scripts/order_admin.py status ORDER          what is stored, paid, made, held; the master plan and its steps (plan8,
+                                                        the design used, every step with its time, memory, kills, plate faults);
+                                                        the order page link
     python scripts/order_admin.py link ORDER            only the order page link (to send to a customer)
     python scripts/order_admin.py release ORDER [--no-mail]   hand out a delivery that waited for review (state
                                                         "review" after compose) and email the customer that it is
@@ -56,6 +58,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 from _lib import store  # noqa: E402
 from _lib import pay  # noqa: E402
 from _lib import cleanup  # noqa: E402
+from _lib.styles import steps as SP  # noqa: E402
 
 
 def _order(v):
@@ -125,6 +128,24 @@ def cmd_status(order):
         if j:
             print(f"eye {n}     needs_review={store.needs_review(j)}  qa.ok={(j.get('qa') or {}).get('ok')}  "
                   f"preview.ok={(j.get('preview') or {}).get('ok')}  render {j.get('render_seconds')} s")
+    st = SP.read_state(order)
+    if st["plan"]:
+        pl = st["plan"]
+        print(f"plan      {pl.get('plan8')}  {pl.get('style')} ({pl.get('family')}, design {pl.get('design_used')}"
+              f"{', fallback ' + str(pl['fallback']) if pl.get('fallback') else ''})  layout {pl.get('layout')}  canvas {pl.get('canvas')}  "
+              f"engine v{pl.get('engine_v')} (this deployment v{SP.ENGINE_V})  registry {pl.get('reg')}  plates v{pl.get('pv')}  "
+              f"eyes {','.join(x or '?' for x in pl.get('eye_ids') or [])}")
+        cap = SP.capacity(pl)
+        print(f"capacity  {'fits one call' if cap['ok'] else 'DOES NOT FIT (' + str(cap['why']) + ')'}: needs about {cap['need_s']} s of {cap['budget_s']:.0f} s and "
+              f"{cap['est_mb']} MB of {cap['mem_budget_mb']} MB at the slow factor {cap['factor']}")
+        for s in pl["steps"]:
+            d, tr = st["done"].get(s["name"]), st["tries"].get(s["name"]) or {}
+            took = (f"done {d.get('at')} by {d.get('by')}: {d.get('ms')} ms, cpu {d.get('cpu_s')} s, memory +{d.get('peak_mb')} MB (instance high-water "
+                    f"{d.get('hwm_mb')} MB)") if d else "NOT DONE"
+            print(f"step      {s['name']:<6} planned {s.get('need_s')} s / {s.get('est_mb')} MB   {took}   attempts {tr.get('attempts', 0)}, kills "
+                  f"{tr.get('kills', 0)}, plate faults {tr.get('plate', 0)}, errors {len(tr.get('errors') or [])}{', OPEN' if tr.get('open') else ''}")
+        if st["rerun"]:
+            print(f"rerun     {st['rerun']} (the artwork was drawn again: a new file beside the delivered one)")
     print("files:")
     for p in _files(f"orders/{order}"):
         print("   ", p)

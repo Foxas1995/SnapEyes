@@ -24,10 +24,12 @@ about its memory, CPUs and /tmp; nothing is read from storage or changed; api/_l
 library as THIS function sees it: the 1K plates and the two atlases in the bundle with their recorded sizes, the 4K plates in
 private storage when asked for, the registry's version and hash; read only; api/_lib/styles/plates.py), styles_lab (one style of the
 v3 engine drawn on one restored iris, whatever its stage: the laboratory is where a held or not yet visible style is looked at; the eye
-is sent as an image or is the stored eye of a lab test order; no image model is called and nothing is stored or audited; a_styles_lab).
+is sent as an image or is the stored eye of a lab test order; no image model is called and nothing is stored or audited; a_styles_lab),
+order_steps (one order's master plan: the plan, every step with its done and try record, the rerun count, the claims, the capacity at the factor in
+force, the eyes' ids, classes and gate results, the current artwork's record; read only; api/_lib/styles/steps.py).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
-"confirm"): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
+"confirm"; rerun_step and lab_steps draw a 4K master through the master plan's step runner, with the claims and guards of a paid order): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
 resend_confirmation, resend_ready, release, clear_review, mailed_by_hand, render (make an eye only once making has
 begun on the customer's order page, see act_render, or re-render one by master_eye's rules), recompose, refund
 (Stripe POST /v1/refunds on the payment intent), mark_refunded
@@ -48,6 +50,8 @@ from . import pay
 from . import abtest
 from . import events as E
 from . import withdraw as W
+from . import catalogue as CT
+from .styles import steps as SP
 
 ADMIN_TTL_MAX = 90 * 86400   # a key may live this long at most (scripts/mint_admin.py mints 1 to 90 days)
 ADMIN_SECRET_MIN = 32        # characters of SNAPEYES_ADMIN_SECRET (or SNAPEYES_TICKET_SECRET) the admin keys need
@@ -657,6 +661,100 @@ def a_order(body, who):
                     "counts": bool(is_paid and pay.paid_counts(paid)), "start": bool(began or over)}}
 
 
+def _gate_of(prof):
+    """{lid, fill} ok flags of a sealed eye profile record (None: unknown)."""
+    g = prof.get("gate") if isinstance(prof, dict) else None
+    return {r: (g[r].get("ok") if isinstance(g, dict) and isinstance(g.get(r), dict) else None) for r in ("lid", "fill")}
+
+
+def _steps_view(order, st, spec=None, eyes=None):
+    """What the admin needs of one order's master plan: the state SP.read_state read, the capacity at the factor in force, the claims with their age,
+    the eyes' ids and sealed results. Everything is a plain number, a code or a record the order folder holds."""
+    plan = st["plan"]
+    now = time.time()
+    locks = {}
+    for name, p in (("compose", f"orders/{order}/compose.lock"), (SP.ART, SP.path(order, f"{SP.ART}.lock"))):
+        cur = _safe(lambda p=p: store.get_json(p, timeout=5.0, retry=False))
+        t = cur.get("t") if isinstance(cur, dict) else None
+        locks[name] = {"age_s": round(now - t, 1), "stale": now - t > SP.LOCK_STALE} if isinstance(t, (int, float)) and not isinstance(t, bool) else None
+    steps = []
+    for s in (plan["steps"] if plan else []):
+        steps.append({"name": s["name"], "kind": s["kind"], "eyes": s.get("eyes"), "need_s": s.get("need_s"), "est_mb": s.get("est_mb"),
+                      "done": st["done"].get(s["name"]), "try": st["tries"].get(s["name"])})
+    cap = SP.capacity(plan) if plan else None
+    return {"plan": plan, "steps": steps, "rerun": st["rerun"], "progress": SP.progress(st), "locks": locks, "capacity": cap,
+            "factor": SP.CO.slow_factor(), "registry_hash": CT.registry_hash(), "engine_v": SP.ENGINE_V, "eyes": eyes or []}
+
+
+def a_order_steps(body, who):
+    """{order}: one order's master plan for the admin page (read only, nothing is sent or changed): the plan (plan.json), every step with its done record
+    (time, CPU, the increase of the resident size, outputs, inputs, drift) and its try record (kills, plate faults, errors, the watchdog), the rerun
+    count, the claims and their age, the capacity of the plan at the slow factor in force, the eyes' ids, colour classes and sealed gate results, and
+    the record of the artwork the plan made (checks, self checks, seed, plates)."""
+    order = _order(body)
+    st = SP.read_state(order)
+    recs = each([lambda i=i: _json_or_none(f"orders/{order}/draft/eye_{i}.json") for i in range(1, 9)] +
+                [lambda: pay.get_paid(order)], tolerant=True)
+    paid = recs[8]
+    eyes = []
+    for i, r in enumerate(recs[:8], 1):
+        if isinstance(r, dict):
+            prof = r.get("profile") if isinstance(r.get("profile"), dict) else None
+            eyes.append({"eye": i, "eye_id": r.get("eye_id"), "cls": prof.get("cls") if prof else None,
+                         "pupil": (prof.get("pupil") or {}).get("cls") if prof else None, "gate": _gate_of(prof)})
+    out = _steps_view(order, st, (paid or {}).get("spec"), eyes)
+    done = st["done"].get((st["plan"] or {"steps": [{"name": SP.ART}]})["steps"][-1]["name"]) if st["plan"] else None
+    key = ((done or {}).get("result") or {}).get("key")
+    out["artwork"] = _safe(lambda: store.get_json(key[:-4] + ".json", timeout=6.0, retry=False)) if isinstance(key, str) else None
+    return dict(out, ok=True, order=order)
+
+
+def a_lab_steps(body, who):
+    """{order: a lab test order (lab-...), style, n (eyes, default every stored eye), layout, names, date, opts, fresh, dry}: the master steps of a v3
+    style on the 4096 px masters stored for a lab test order: the same plan, guards, claim and executor as a paid order's (api/_lib/styles/steps.py),
+    with no payment and no image model call. Reply: the plan, the capacity, the steps with their wall time, CPU and the increase of the resident size
+    (from a fresh instance this is VE1: compare with the cost table), and a link to the artwork. fresh: draw again (a new file beside the old). dry: the
+    plan and the capacity only, nothing drawn. 409 step_held when the step must be held (too big for this function, an engine version mismatch, a
+    plate missing twice)."""
+    order = _order(body)
+    if not order.startswith("lab-"):
+        raise L.ClientError("Only a lab test order (lab-...) is run this way.")
+    style = body.get("style")
+    if not isinstance(style, str) or not CT.known(style) or CT.is_legacy(style):
+        raise L.ClientError("Name a style of the v3 engine.")
+    present = [i for i in range(1, 9) if store.exists(f"orders/{order}/eye_{i}.jpg")]
+    n = body.get("n", len(present))
+    if isinstance(n, bool) or not isinstance(n, int) or not 1 <= n <= 8 or present[:n] != list(range(1, n + 1)):
+        raise L.ClientError("That test order does not hold the eyes 1 to n as 4096 px masters.")
+    if not CT.renderable(style, n):
+        raise L.ClientError("This deployment cannot draw that style for that number of eyes.")
+    layouts = CT.layouts_for(style, n)
+    layout = body.get("layout") or (layouts[0] if layouts else None)
+    if layout not in layouts:
+        raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(layouts) + ".")
+    spec = {"eyes": n, "style": style, "layout": layout, "names": body.get("names") if isinstance(body.get("names"), (str, list)) else "",
+            "date": body.get("date") if isinstance(body.get("date"), str) else "", "title": "",
+            "opts": body.get("opts") if isinstance(body.get("opts"), dict) else {}}
+    ctx = SP.Ctx(order, spec, by="lab", lab=True, eyes_from="master", arrival_left=L.time_left())
+    ORD = _mod("order")
+    claim = ORD._compose_claim(order)
+    try:
+        try:
+            got = SP.lab_run(ctx, fresh=body.get("fresh") is True, dry=body.get("dry") is True)
+        except SP.Hold as h:
+            raise store.Answer(409, "step_held", f"The master step was held: {h.note}", False, None, hold=h.reason) from h
+    finally:
+        ORD._compose_release(claim)
+    if got.get("dry"):
+        return {"ok": True, "result": "dry", "plan": got["plan"], "capacity": got["capacity"], "factor": SP.CO.slow_factor(),
+                "audit_detail": f"{style} {n} dry"}
+    st = SP.read_state(order)
+    view = _steps_view(order, st)
+    r = got["artwork"] or {}
+    return dict(view, ok=True, order=order, result="same" if r.get("existing") else "made", artwork=r,
+                audit_detail=f"{style} {n} eyes {SP.SIZE}")
+
+
 def a_audit(body, who):
     out = []
     now = time.time()
@@ -910,11 +1008,11 @@ def act_render(body, who):
     return {"ok": True, "result": "rerendered" if r.get("rerendered") and not r.get("existing") else "stored", "reply": r}
 
 
-def act_recompose(body, who):
-    """Compose the artwork again from the stored masters (after a re-render: master_compose makes a new file when an
-    eye changed, and returns the same file when nothing did), and make it the order's delivery. A new artwork that a
-    check flags waits for your release again."""
-    order = _order(body)
+def _remake(order, mode):
+    """The artwork of a paid order made again by the admin through the master plan (api/_lib/styles/steps.py), under the same claims as the chain: the
+    order's compose.lock and the step's own. mode "recompose": the same file when no input changed, a new one when a master was re-rendered (the
+    legacy engine decides that itself); "rerun": always a new file (the digest is salted: the delivered file is never deleted, the new one lies beside
+    it). The new artwork becomes the order's delivery; one that a check flags waits for your release again."""
     rec, paid = _paid_order(order)
     if not pay.paid_counts(paid):
         raise store.Answer(409, "test_payment", "Paid in Stripe's test mode: nothing is made for it here.", False)
@@ -926,15 +1024,25 @@ def act_recompose(body, who):
     missing = [i for i, m in enumerate(made, 1) if not m]
     if not n or missing:
         raise store.Answer(409, "eyes_not_ready", "Not every eye is made yet.", False, None, missing=missing)
-    MC = _mod("master_compose")
-    r = MC.master_compose({"order": order, "ticket": L.mint_ticket(store.unlock_kind(order), 300),
-                           "keys": [f"{folder}/eye_{i}.jpg" for i in range(1, n + 1)], "style": spec.get("style"),
-                           "layout": spec.get("layout"), "names": spec.get("names") or "", "title": spec.get("title") or ""})
+    ORD = _mod("order")
+    arrival = L.time_left()
+    claim = ORD._compose_claim(order)
+    try:
+        try:
+            got = SP.advance(ORD.master_ctx(order, rec, paid, "admin", arrival_left=arrival, finish=False, arm=False), mode)
+        except SP.Hold as h:
+            raise store.Answer(409, "step_held", f"The master step was held: {h.note}", False, None, hold=h.reason) from h
+    finally:
+        ORD._compose_release(claim)
+    r = got["artwork"]
     prev = store.get_json(f"{folder}/delivery.json")
     now = int(time.time())
     delivery = {"key": r["key"], "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
                 "style": r.get("style"), "layout": r.get("layout"), "count": r.get("count"),
                 "needs_review": bool(r.get("needs_review")), "created_at": now, "created": pay.iso(now), "by": "admin"}
+    for k in ("design_used", "plan8"):
+        if got.get(k) and not CT.is_legacy(spec.get("style")):
+            delivery[k] = got[k]
     store.put(f"{folder}/delivery.json", store.json_bytes(delivery), "application/json", upsert=True)
     released = store.exists(f"{folder}/release.json")
     changed = not (isinstance(prev, dict) and prev.get("key") == r["key"])
@@ -944,7 +1052,27 @@ def act_recompose(body, who):
     if delivery["needs_review"] and not released:
         pay.index_review(order, now)                  # held: the daily clean-up's reminder after 36 h
     return {"ok": True, "result": "composed" if changed else "same", "changed": changed, "delivery": delivery,
-            "held": delivery["needs_review"] and not released, "url": r.get("url")}
+            "held": delivery["needs_review"] and not released, "url": r.get("url"), "ran": got.get("ran"), "plan8": got.get("plan8")}
+
+
+def act_recompose(body, who):
+    """Compose the artwork again from the stored masters (after a re-render: the same file when nothing changed, a new one when an eye did), and make
+    it the order's delivery. A new artwork that a check flags waits for your release again. Under the order's compose claim (a compose that is running
+    is answered 409 rendering, never doubled)."""
+    return _remake(_order(body), "recompose")
+
+
+def act_rerun_step(body, who):
+    """{order, step: "art"}: draw the artwork again whatever changed (a new file beside the delivered one: the digest is salted with the order's rerun
+    count, so a link already mailed keeps working), and make it the order's delivery; a flagged one waits for your release. Not for an order of the
+    legacy engine (re-render an eye and recompose instead). Same claims as the chain."""
+    step = body.get("step", SP.ART)
+    if step != SP.ART:
+        raise L.ClientError(f"The only step an order has is {SP.ART}.")
+    out = _remake(_order(body), "rerun")
+    out["result"] = "rerun" if out["changed"] else "same"
+    out["audit_detail"] = f"{SP.ART} {out.get('plan8') or ''}"
+    return out
 
 
 def act_refund(body, who):
@@ -1318,7 +1446,7 @@ def a_styles_lab(body, who):
 ACTIONS = {
     "me": a_me, "summary": a_summary, "stats": a_stats, "errors": a_errors, "orders": a_orders, "order": a_order,
     "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe, "plates_status": a_plates_status,
-    "styles_lab": a_styles_lab,
+    "styles_lab": a_styles_lab, "order_steps": a_order_steps,
     "exp_start": audited("exp_start", act_exp_start),
     "exp_stop": audited("exp_stop", act_exp_stop),
     "link": audited("link", act_link),
@@ -1329,6 +1457,8 @@ ACTIONS = {
     "mailed_by_hand": audited("mailed_by_hand", act_mailed_by_hand),
     "render": audited("render", act_render),
     "recompose": audited("recompose", act_recompose),
+    "rerun_step": audited("rerun_step", act_rerun_step),
+    "lab_steps": audited("lab_steps", a_lab_steps),
     "refund": audited("refund", act_refund),
     "mark_refunded": audited("mark_refunded", act_mark_refunded),
     "delete_files": audited("delete_files", act_delete_files),

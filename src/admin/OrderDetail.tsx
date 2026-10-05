@@ -3,7 +3,8 @@
 // action's result shows in a toast pinned to the bottom of the screen, next to wherever its button was.
 import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
-import type { EyeView, OrderDetail, Payment, Reply } from './api';
+import type { EyeView, OrderDetail, Payment, Reply, StepsView } from './api';
+import { StepTable } from './StepTable';
 import type { Call } from './AdminApp';
 import { actionLt, AKYS, explain, fmtBytes, fmtMoney, fmtNum, fmtTime, logResultLt, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, ConfirmDialog, CopyField, DANGER, ExtLink, H2, JsonView, MUTED, Notice, Rows, Spinner, Thumb, Toast } from './ui';
@@ -44,6 +45,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
   const [busy, setBusy] = useState(true);
   const [note, setNote] = useState<Note | null>(null);
   const [confirm, setConfirm] = useState<ConfirmSpec | null>(null);
+  const [steps, setSteps] = useState<StepsView | null>(null);
 
   const apply = useCallback((r: Reply<OrderDetail>) => {
     setBusy(false);
@@ -55,6 +57,15 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
     void call<OrderDetail>('order', { order }).then((r) => { if (live) apply(r); });
     return () => { live = false; };
   }, [call, order, apply]);
+
+  // the master plan (api/_lib/styles/steps.py): read again whenever the order is (an action reloads it), for a paid order or a lab test
+  const hasPlan = !!d && (d.paid || d.lab) && !!d.records['style/plan.json'];
+  useEffect(() => {
+    if (!hasPlan) { setSteps(null); return; }
+    let live = true;
+    void call<StepsView>('order_steps', { order }).then((r) => { if (live) setSteps(r.ok && r.data ? r.data : null); });
+    return () => { live = false; };
+  }, [call, order, hasPlan, d]);
 
   // a plain success closes itself after a while; a failure, a warning or links stay until closed
   useEffect(() => {
@@ -251,6 +262,13 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
                       run: () => act('mailed_by_hand', {}, () => 'Pažymėta: patvirtinimas išsiųstas ranka.'),
                     })}>Išsiunčiau ranka</button>
                   )}
+                  {allMade && steps?.plan && steps.plan.family !== 'legacy' && (
+                    <button type="button" className={BTN} disabled={!d.can.counts} onClick={() => setConfirm({
+                      title: 'Perpiešti kūrinio žingsnį', confirmLabel: 'Perpiešti',
+                      text: 'Piešia kūrinį iš naujo, nesvarbu ar kas nors pasikeitė: naujas failas šalia pristatyto (pristatytas niekada netrinamas, jau išsiųsta nuoroda veikia). Naujas kūrinys tampa užsakymo kūriniu; jei patikra jį pažymės, jis lauks tavo išleidimo. Trunka 10-45 s, Gemini nekviečiamas.',
+                      run: () => act('rerun_step', { step: 'art' }, (x) => `${x.changed ? 'Naujas kūrinys sudėtas' : 'Kūrinys tas pats'}${x.held ? ', laukia tavo peržiūros' : ''}.`),
+                    })}>Perpiešti kūrinio žingsnį</button>
+                  )}
                   {allMade && (
                     <button type="button" className={BTN} disabled={!d.can.counts} onClick={() => setConfirm({
                       title: 'Sudėti kūrinį iš naujo', confirmLabel: 'Sudėti',
@@ -303,6 +321,13 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
                   {e.draft && <p className={`text-xs ${MUTED}`}>Įkelta {isoTime(e.draft.uploaded)} · pad {fmtNum(e.draft.pad)}</p>}
                 </div>
               ))}
+            </section>
+          )}
+
+          {steps && (
+            <section className={`${CARD} flex flex-col gap-3`}>
+              <h3 className="text-sm font-bold">Gamybos planas ir žingsniai</h3>
+              <StepTable view={steps} />
             </section>
           )}
 

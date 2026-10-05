@@ -244,3 +244,22 @@ export interface StyleLabResult {
   ms?: number;
 }
 export interface LabStart { order: string; ticket: string; expires_in: number; prices_usd: Prices }
+
+// The master plan of an order or a lab test (api/_lib/styles/steps.py): the admin actions order_steps, rerun_step and lab_steps.
+export interface StepDone {
+  step: string; rerun?: number; ms?: number; cpu_s?: number; peak_mb?: number | null; rss_mb?: number | null; hwm_mb?: number | null; attempt?: number;
+  need_s?: number | null; est_mb?: number | null; by?: string; at?: string; drift?: unknown; inputs?: unknown;
+  outputs?: { path: string; bytes?: number | null; sha12?: string | null }[]; result?: Record<string, unknown>;
+}
+export interface StepTry { kills: number; open: boolean; plate: number; errors: string[]; watchdog: number; attempts: number; last?: string; plate_id?: string }
+export interface StepRow { name: string; kind: string; eyes?: number[]; need_s?: number | null; est_mb?: number | null; done: StepDone | null; try: StepTry | null }
+/** steps.capacity(): can the plan's step run at all on this function (why: time, memory or no_cost when it cannot) */
+export interface StepCapacity { ok: boolean; why: string | null; need_s: number | null; est_mb: number | null; factor: number; budget_s: number; mem_budget_mb: number }
+export interface StepEye { eye: number; eye_id?: string | null; cls?: string | null; pupil?: string | null; gate: { lid: boolean | null; fill: boolean | null } }
+export interface StepsView {
+  plan: Record<string, unknown> | null; steps: StepRow[]; rerun: number; progress: { done: number; of: number; step: string | null };
+  locks: Record<string, { age_s: number; stale: boolean } | null>; capacity: StepCapacity | null; factor: number; registry_hash: string; engine_v: number;
+  eyes: StepEye[]; artwork?: Record<string, unknown> | null;
+}
+/** lab_steps: a dry run has a plan and a capacity; a run the whole view and the artwork (with a signed link) */
+export type LabStepsResult = Partial<StepsView> & { result: string; artwork?: Record<string, unknown> | null };

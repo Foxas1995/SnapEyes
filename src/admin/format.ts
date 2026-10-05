@@ -126,7 +126,8 @@ export const RESULT_LT: Record<string, string> = {
 export const ACTION_LT: Record<string, string> = {
   link: 'Pirkėjo nuoroda', resend_confirmation: 'Siųsti patvirtinimą', resend_ready: 'Siųsti „paruošta“',
   release: 'Išleisti kūrinį', clear_review: 'Nuimti peržiūros žymą', mailed_by_hand: 'Išsiunčiau ranka',
-  render: 'Pagaminti 4K', recompose: 'Sudėti kūrinį iš naujo', refund: 'Grąžinti pinigus',
+  render: 'Pagaminti 4K', recompose: 'Sudėti kūrinį iš naujo', rerun_step: 'Perpiešti kūrinio žingsnį', lab_steps: 'Laboratorijos gamybos žingsniai',
+  refund: 'Grąžinti pinigus',
   mark_refunded: 'Grąžinau Stripe svetainėje', delete_files: 'Ištrinti failus', lab_start: 'Laboratorijos testas',
   lab_delete: 'Ištrinti laboratorijos testą', exp_start: 'Paleisti kainų testą', exp_stop: 'Sustabdyti kainų testą',
 };
@@ -134,7 +135,8 @@ export const ACTION_LT: Record<string, string> = {
 // an audit entry's result code in words (RESULT_LT for the email words, then these), else the code itself
 const LOG_RESULT_LT: Record<string, string> = {
   started: 'pradėta', deleted: 'ištrinta', released: 'išleista', removed: 'nuimta', none: 'nebuvo ko nuimti',
-  marked: 'pažymėta', made: 'padaryta', stored: 'jau buvo padaryta', rerendered: 'perpiešta', composed: 'sudėta',
+  marked: 'pažymėta', made: 'padaryta', stored: 'jau buvo padaryta', rerendered: 'perpiešta', composed: 'sudėta', rerun: 'perpiešta', dry: 'tik planas',
+  step_held: 'žingsnis sulaikytas', rerun_not_available: 'perpiešti negalima',
   same: 'nepasikeitė', shown: 'parodyta', by_hand: 'pažymėta ranka', refunded: 'grąžinta', succeeded: 'grąžinta',
   pending: 'laukia Stripe', bad_request: 'bloga užklausa', not_found: 'nerasta', stopped: 'sustabdyta',
   already_running: 'jau veikė', not_running: 'neveikė', market_taken: 'rinkoje veikia kitas testas', sells_at_loss: 'atmesta: nuostolis',
@@ -191,6 +193,10 @@ export const REASON_LT: Record<string, string> = {
   stats_not_collected: 'Šiame serveryje nenustatytas CRON_SECRET, todėl lankytojų ir peržiūrų skaičiai nebūtų renkami: paleidimui reikia aiškaus patvirtinimo.',
   retired: 'Šis kainų testas užbaigtas ir daugiau nepaleidžiamas.',
   payment_processing: 'Mokėjimas dar tvirtinamas.',
+  step_held: 'Gamybos žingsnis sulaikytas (priežastis ir ką daryti: pranešime ir užsakymo peržiūros žymoje).',
+  rerun_not_available: 'Šio užsakymo kūrinį piešia senasis variklis: perpiešk akį ir sudėk kūrinį iš naujo.',
+  plate_retry: 'Stiliui reikalingas failas dar neparuoštas. Pabandyk po akimirkos.',
+  not_lab: 'Tik laboratorijos testinis užsakymas (lab-...) paleidžiamas šitaip.',
 };
 
 /** One sentence for a failed reply: our own words for a known reason, else the server's sentence, else the status. */
