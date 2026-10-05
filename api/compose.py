@@ -40,7 +40,12 @@ TILES_BUDGET_S seconds; 503 busy_retry {retry_after}: another render holds the C
 call; 503 tiles_paused: this instance's ceiling of tiles for today is reached.
 A style of the v3 engine (the registry's engine module is not "legacy": api/_lib/styles) is drawn by its family; the legacy styles by
 api/_lib/iris.py as always. The words on the picture are the customer's own (names, date, family name) and nothing else; the watermark is
-drawn over the clean render here and nowhere else (api/_lib/preview.py watermark: iris-anchored on every disc)."""
+drawn over the clean render here and nowhere else (api/_lib/preview.py watermark: iris-anchored on every disc).
+Events (api/_lib/events.py; codes and numbers only; none for the admin's laboratory looks): a picture is a compose event (a tile: tile true, and the request's
+first event carries tiles), and a request that judged a set of eyes and drew nothing for it (the tile list alone, a batch whose tiles the eyes' gate held back, a
+422 for a style or a pick the eyes cannot take) writes ONE compose event with tiles 0: the set's gate result, eye count and colour class, the retake counter. So
+the set level funnel sees the sets that fail and not only the ones that draw (WP10 review). A refusal that says nothing of the set (400, a style that is not open,
+too many styles, busy, tiles paused) writes none."""
 import os, sys, io, time, base64, threading, inspect
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -77,6 +82,8 @@ LEGACY_TILE_S = 0.6          # and a 480 px tile of it
 OPT_KEYS = ("swap", "rotate", "look")
 PICK = "pick"                # the style id that means "the recommended tile"
 RETAKE_MAX = 8
+SET_EVENTS_MIN = 60          # events of "a set judged, nothing drawn" per minute per instance: they cost no pixel (a tile list is a few milliseconds), so a seal that
+SET_EVENTS_DAY = 5000        # is replayed in a loop could write them as fast as it can ask; per UTC day as well (a budget of their own, as the help beacon has)
 
 # ----------------------------------------------------------------------------- the customer's sentences of the new refusals
 WORDS = {
@@ -600,6 +607,42 @@ def _event_fields(req, style, n, layout, fmt, size, gate, qa_ok, pick_id, look, 
     return f
 
 
+_SETS = {"day": "", "n": 0, "q": []}
+_SETS_LOCK = threading.Lock()
+
+
+def _sets_room():
+    """May one more event of a set that was judged and not drawn be written now? A budget of its own, per minute and per UTC day (SET_EVENTS_MIN, SET_EVENTS_DAY)."""
+    now = time.time()
+    day = time.strftime("%Y-%m-%d", time.gmtime(now))
+    with _SETS_LOCK:
+        if _SETS["day"] != day:
+            _SETS["day"], _SETS["n"] = day, 0
+        q = [t for t in _SETS["q"] if now - t < 60.0]
+        _SETS["q"] = q
+        if len(q) >= SET_EVENTS_MIN or _SETS["n"] >= SET_EVENTS_DAY:
+            return False
+        q.append(now)
+        _SETS["n"] += 1
+        return True
+
+
+def _set_event(req, n, metas, style=None):
+    """The compose event of a request that judged a set of eyes and drew nothing for it (tiles 0; the module text says which requests): the set level gate
+    result under the rule of the style asked (the collision rule when none was: the rule of every count of two or more eyes), the eye count, the set's colour
+    class, the retake counter, the page's language and market. No style, no picture. Best effort like every event: it never raises and never costs a request."""
+    try:
+        if not _sets_room():
+            return False
+        f = {"tiles": 0, "eyes": n, "gate": _gate_code(style if isinstance(style, str) else "", n, metas), "cls": catalogue.set_class(_recs(metas)),
+             "retake": req["retake"], "lang": req["lang"]}
+        if req["market"]:
+            f["market"] = req["market"]
+        return bool(E.record("compose", _wait=0.5, **f))
+    except Exception:  # noqa: a count must never cost a request
+        return False
+
+
 # ----------------------------------------------------------------------------- one style
 def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
     """One style of the v3 engine at req['size']: the clean render, the plan, then the preview watermark (unless a signed unlock ticket says the file is
@@ -795,6 +838,8 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
             f["ms"] = timing.get(s)
         fields[0]["tiles"] = len(made)                # the request is counted once: by its first event
         E.record_many("compose", fields)
+    elif not made and not admin:                      # every tile held back (or only the tile list asked for): the set was still judged, and a failing one must be seen
+        _set_event(req, n, metas, styles[0] if styles else cat["pick"])
     return {"ok": True, "batch": True, "count": n, "size": size, "format": _choice(req["fmt"], L.FORMATS, L.FORMATS[0]),
             "tiles": cat["tiles"], "pick": _pick_reply(cat), "styles": list(catalogue.previewable_ids(n, admin)), "eyes": _eyes_reply(metas),
             "engine": _engine_facts(), "timing": {"tiles_ms": timing, "total_ms": int((time.time() - t0) * 1000), "eyes_ms": int((time.time() - t_eyes) * 1000)}}
@@ -830,6 +875,8 @@ def compose(body, bearer=""):
     for s in req["styles"]:
         if s == PICK:
             if not cat["pick"]:
+                if not admin:
+                    _set_event(req, n, metas)               # nothing can be bought for these eyes: a set seen (a pair that fails the gate ends here)
                 raise _refuse(422, "style_unavailable", "stage", False, None, why="stage", style=PICK)
             s = cat["pick"]
         why = catalogue.why_unavailable(s, n, recs, admin)
@@ -838,6 +885,8 @@ def compose(body, bearer=""):
         if why in ("stage", "eyes"):
             raise _refuse(422, "style_unavailable", why, False, None, why=why, style=s)
         if why and not req["batch"]:
+            if not admin:
+                _set_event(req, n, metas, s)                # the eyes' own answer (gate, reseal, bar_pupil) to the one style asked
             raise _refuse(422, "style_unavailable", why, False, None, why=why, style=s)
         if s not in styles:                             # "pick" may name a style that was asked for by its id too
             styles.append(s)

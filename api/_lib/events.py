@@ -35,7 +35,9 @@ The kinds (all with "ms", the time since the request started, when known):
             Universe look), pick (the style is the recommended tile), fallback (what the geometry fell back to: kiss, stack_contrast, ...),
             stage (the effective stage of the style asked: live or preview, so that the demand for a Soon style is counted), retake (how
             many eyes of the set the page replaced since its last compose), lang and market (page language, price market), ms (a tile: its
-            own render time)
+            own render time), cls (the set's colour class: own, dark_brown, grey; only a tiles 0 event writes it). tiles 0 is a request that judged
+            a set of eyes and drew nothing for it (the tile list alone, a batch whose tiles the gate held back, a style or a pick the eyes cannot
+            take): it carries the set level fields (gate, eyes, cls, retake, lang, market) and reaches the gate funnel and nothing else
   master    step (eye/compose/art), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab; and, from the master plan's steps
             (api/_lib/styles/steps.py: one event per step, "art" for the artwork): part and of (the step and how many the plan has), ms (the step's
             wall time), need_s (the estimate it was planned with), cpu_s, peak_mb (the INCREASE of the process's resident size over the step, VmRSS) and
@@ -82,7 +84,7 @@ FIELDS = {
                 "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n", "reveal": "c", "reveal_ms": "n"},
     "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c",
                 "size": "n", "tiles": "n", "tile": "b", "look": "c", "pick": "b", "fallback": "c", "stage": "c", "retake": "n",
-                "lang": "c", "market": "c"},
+                "lang": "c", "market": "c", "cls": "c"},
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
                "rerender": "b", "existing": "b", "render_s": "n", "style": "c",
                "part": "n", "of": "n", "need_s": "n", "cpu_s": "n", "peak_mb": "n", "hwm_mb": "n", "kills": "n", "design": "c", "d_rgb": "n",
@@ -340,9 +342,11 @@ def empty():
             # previews only, as before); a request is counted once (compose_gate, compose_funnel, compose_lang, compose_market, compose_tiles: the
             # event that carries "tiles"); compose_demand "<style>|<eyes>|<stage>|<tile or large>" counts what was looked at, so a Soon style's demand
             # shows; compose_funnel "<eyes>|<set gate code>|<retakes 0, 1 or 2 for two or more>" is the set level gate funnel; compose_chosen counts the
-            # previews of the recommended tile against the others
+            # previews of the recommended tile against the others; compose_funnel_cls "<eyes>|<colour class>|<set gate code>|<retakes>" is the same
+            # funnel by the set's colour class (grey, dark_brown, own); a request that judged a set and drew nothing (tiles 0) is counted in the
+            # funnel, the gate, lang, market and compose_tiles (key 0) and in nothing that is about a picture
             "compose_tile_style": {}, "compose_tile_eyes": {}, "compose_demand": {}, "compose_size": {}, "compose_look": {}, "compose_fallback": {},
-            "compose_chosen": {}, "compose_funnel": {}, "compose_lang": {}, "compose_market": {}, "compose_tiles": {},
+            "compose_chosen": {}, "compose_funnel": {}, "compose_funnel_cls": {}, "compose_lang": {}, "compose_market": {}, "compose_tiles": {},
             "help_route": {}, "help_why": {}, "help_eyes": {}, "error_style": {},
             # the restoration gate (eye profile): per eye at enhance, per request at compose; the colour and pupil classes seen
             "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
@@ -371,6 +375,27 @@ def _ms(agg, step, ev):
         s = agg["ms"].setdefault(step, [0, 0])
         s[0] += v
         s[1] += 1
+
+
+def _undrawn(ev):
+    """Is this compose event a request that judged a set of eyes and drew nothing for it (tiles 0)? It is a set seen, not a picture."""
+    t = ev.get("tiles")
+    return isinstance(t, (int, float)) and not isinstance(t, bool) and t == 0
+
+
+def _set_counts(agg, ev, eyes):
+    """What a compose request says of the SET of eyes (never of a picture): the set level gate, the funnel by eye count, gate code and retakes, the same
+    by the set's colour class, the page's language and the price market."""
+    if ev.get("gate"):
+        _inc(agg["compose_gate"], ev["gate"])
+        retake = ev.get("retake")
+        retake = int(retake) if isinstance(retake, (int, float)) and not isinstance(retake, bool) and retake > 0 else 0
+        _inc(agg["compose_funnel"], f"{eyes}|{ev['gate']}|{min(2, retake)}")
+        if ev.get("cls"):
+            _inc(agg["compose_funnel_cls"], f"{eyes}|{ev['cls']}|{ev['gate']}|{min(2, retake)}")
+    for field, key in (("lang", "compose_lang"), ("market", "compose_market")):
+        if ev.get(field):
+            _inc(agg[key], ev[field])
 
 
 def add(agg, ev):
@@ -426,6 +451,9 @@ def add(agg, ev):
             cur = agg["ms"].setdefault("reveal", [0, 0])
             cur[0] += rm
             cur[1] += 1
+    elif kind == "compose" and _undrawn(ev):
+        _set_counts(agg, ev, ev.get("eyes") or 1)
+        _inc(agg["compose_tiles"], 0)
     elif kind == "compose":
         tile = ev.get("tile") is True
         request = (not tile) or ev.get("tiles") is not None       # a request is counted once: by its first event when it is a batch of tiles
@@ -443,16 +471,9 @@ def add(agg, ev):
         if not tile and ev.get("pick") is not None:
             _inc(agg["compose_chosen"], "pick" if ev["pick"] else "other")
         if request:
-            if ev.get("gate"):
-                _inc(agg["compose_gate"], ev["gate"])
-                retake = ev.get("retake")
-                retake = int(retake) if isinstance(retake, (int, float)) and not isinstance(retake, bool) and retake > 0 else 0
-                _inc(agg["compose_funnel"], f"{eyes}|{ev['gate']}|{min(2, retake)}")
+            _set_counts(agg, ev, eyes)
             if ev.get("clean"):
                 agg["compose_clean"] += 1
-            for field, key in (("lang", "compose_lang"), ("market", "compose_market")):
-                if ev.get(field):
-                    _inc(agg[key], ev[field])
             if ev.get("tiles") is not None:
                 _inc(agg["compose_tiles"], ev["tiles"])
         _ms(agg, "compose_tile" if tile else "compose", ev)
