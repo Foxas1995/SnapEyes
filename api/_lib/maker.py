@@ -49,6 +49,13 @@ withdrawal and making rules):
   not started, and the texts say the page starts it: stop (the page, or the owner)
   an eye missing            make it (an eye another request is rendering is skipped for the next missing one)
   every eye made            compose the artwork (then the ready email in the same step)
+The artwork is made by the order's master PLAN (api/_lib/styles/steps.py): compose_order runs ONE step per call, and a plan of more
+than one answers state "making" with artwork {done, of, step}, which this chain takes as "ask for the next step" without a busy count
+(the default plan has one step, so the chain is the eyes, the artwork and the email, as before). A step arms a WATCHDOG before it renders
+(arm_watchdog): two relay hops that wait out its claim and retake a step that was killed, since nothing runs after a killed function
+but the order page, the status nudge and the daily run. A plate fault (plate_retry) is a back-off that is not a busy hop. Every constant
+tied to the function's duration (the work budget, FUNCTION_SECONDS, SPARE, LEASE_STALE, FRESH, WAIT_MAX) derives from the one
+duration.DURATION_S; PROBE_HOPS is the longest planned chain plus 4.
 Busy answers (the image model or storage busy, an eye or the artwork being made elsewhere, no time left for a
 render) back off: the next self-call goes out after a delay, waited inside this invocation when it has the time, else
 by a relay hop that only waits; after MAX_BUSY busy steps in a row the chain stops with one owner note
@@ -76,21 +83,23 @@ import requests
 from . import iris as L
 from . import store
 from . import pay
+from . import duration
+from .styles import steps as SP
 
 KIND = "advance-"              # the internal ticket's kind: "advance-<order>", minted only here, never handed out
 TICKET_TTL = 300               # seconds the ticket of one self-call is valid
 KICK_CONNECT = 1.5             # the self-call's connect timeout
 KICK_READ = 1.5                # ... and how long it waits for an answer (it does not wait for the work)
-FUNCTION_SECONDS = 60.0        # vercel.json maxDuration of api/**/*.py (L.run gives the work L.BUDGET of it)
-SPARE = 4.0                    # of the FUNCTION_SECONDS - L.BUDGET after the work, what a self-call may still use
+FUNCTION_SECONDS = duration.FUNCTION_SECONDS   # the one duration constant (api/_lib/duration.py; vercel.json's maxDuration is held equal by the build)
+SPARE = duration.SPARE_S       # of the FUNCTION_SECONDS - L.BUDGET after the work, what a self-call may still use
                                # (the rest covers a cold start's imports, which the deadline does not count)
 KICK_NEED = 3.5                # seconds a self-call needs: connect, send, the answer's timeout, a margin
 KICK_MEMO = 60.0               # one instance asks for the same order at most once in this long (status polls)
-LEASE_STALE = 75.0             # a lease older than this belongs to an invocation that is dead (60 s at most)
-FRESH = 100.0                  # advance.json younger than this (a render is at most 60 s): the server is on it
+LEASE_STALE = duration.LEASE_STALE_S   # a lease older than this belongs to an invocation that is dead (the longest life of one, plus 15 s)
+FRESH = duration.FRESH_S       # advance.json younger than this (a render is at most FUNCTION_SECONDS): the server is on it
 MAX_HOPS = 40                  # steps of one chain (8 eyes, the artwork, the email and many busy answers)
 MAX_BUSY = 10                  # busy answers in a row, then the order page and the daily run go on
-WAIT_MAX = 40                  # the longest back-off between two steps (seconds)
+WAIT_MAX = duration.WAIT_MAX_S  # the longest back-off between two steps and the longest wait of one relay hop (seconds)
 CATCHUP_AGE = 1800             # the daily run advances paid, confirmed, unfinished orders older than this
 CATCHUP_MAX = 8                # ... at most this many a run (the rest the next day, "more")
 CATCHUP_SECONDS = 8.0          # ... in at most this long of the run
@@ -100,7 +109,8 @@ LATE_HOURS = 12                # a paid order not ready this long after payment:
                                # (which comes once a day: the reminder arrives 12 to 36 h after payment, inside 48 h)
 LATE_MAX = 5                   # ... at most this many reminders a run (the rest the next day)
 PROBE_KIND = "selfcall-probe-" # the self-call test's internal ticket: "selfcall-probe-<id>" (scripts/order_admin.py)
-PROBE_HOPS = 12                # hops of one test (an 8-eye order needs 10 or more nested self-calls)
+PROBE_HOPS = min(MAX_HOPS, SP.longest_chain() + 4)   # hops of one test: the longest chain the plans can make (eyes + the master steps of the plan + the
+                               # ready email: 10 for eight eyes with the default one-step plan) plus 4, 14 now (it was 12 before the plan)
 PROBE_WORK = 2.5               # seconds each hop works before it asks for the next: longer than KICK_READ, so its
                                # caller has left before it answers, exactly as after a render
 PROBE_TOP = "ops/selfcall"     # ops/selfcall/<id>/hop_<nn>.json: what each hop of a test did
@@ -229,12 +239,14 @@ def _refused_note(order, code, why):
         pay.log(f"order {order}: self-call note failed: {type(e).__name__}")
 
 
-def kick(order, hop=0, busy=0, after=None, wait=0, why=""):
+def kick(order, hop=0, busy=0, after=None, wait=0, why="", then=0):
     """Ask for the next step of an order: POST /api/order {action: "advance"} to this deployment, and do not wait
     for it (KICK_READ). Returns "sent" (it went out, the step is running: no answer within KICK_READ), "done" (it
     answered 200 already), "refused" (an error status: 401 a protected preview, 403 a ticket this deployment does
     not accept or the Vercel Firewall, 508 Vercel's loop protection; the owner is told once per order), "off" (no
-    self-call here), "no_time" or "failed". Never raises; the ticket is never logged."""
+    self-call here), "no_time" or "failed". Never raises; the ticket is never logged.
+    wait: a RELAY hop: the callee waits that long (it is an invocation of its own) and then asks for the next step itself; then: after its wait it
+    asks for another relay that waits `then`, not for a step (arm_watchdog)."""
     try:
         store.check_order(order)
         if not self_base():
@@ -249,6 +261,8 @@ def kick(order, hop=0, busy=0, after=None, wait=0, why=""):
             return "no_time"
         body = {"action": "advance", "order": order, "ticket": L.mint_ticket(KIND + order, TICKET_TTL),
                 "hop": int(hop), "busy": int(busy), "wait": int(wait), "why": str(why)[:40]}
+        if then:
+            body["then"] = int(then)             # a relay that waits `wait`, then is itself a relay that waits `then` (the watchdog's two hops)
         if isinstance(after, str) and _ID.fullmatch(after):
             body["after"] = after
         t0 = time.time()
@@ -303,8 +317,9 @@ def after_confirmation(order, auto=None):
 
 
 def view(beat, order=None, now=None):
-    """What the order page is told about the server's making (status "server"): {active, step, eye}. Active while
-    advance.json is fresh and not "stopped", or when this instance asked for a step a moment ago."""
+    """What the order page is told about the server's making (status "server"): {active, step, eye, part, of}: step "eye" (with
+    its number) or "compose" (with part, the master step now running, of how many the plan has). Active while advance.json is
+    fresh and not "stopped", or when this instance asked for a step a moment ago."""
     now = time.time() if now is None else now
     b = beat if isinstance(beat, dict) else {}
     t = b.get("t") if isinstance(b.get("t"), (int, float)) and not isinstance(b.get("t"), bool) else None
@@ -318,8 +333,10 @@ def view(beat, order=None, now=None):
         active = bool(r and r[1] and (t is None or t < r[0]))
     working = active and state == "working"
     eye = b.get("eye") if working and isinstance(b.get("eye"), int) and not isinstance(b.get("eye"), bool) else None
+    part, of = (b.get(k) if working and isinstance(b.get(k), int) and not isinstance(b.get(k), bool) and 1 <= b.get(k) <= 99 else None
+                for k in ("part", "of"))
     return {"active": bool(active), "step": b.get("step") if working and b.get("step") in ("eye", "compose") else None,
-            "eye": eye}
+            "eye": eye, "part": part if of else None, "of": of}
 
 
 def nudge(order, beat, why="page"):
@@ -335,6 +352,33 @@ def nudge(order, beat, why="page"):
     if r is not None and (t is None or t < r[0]):
         return False                     # asked from here a moment ago and it did not go out: not again yet
     return kick(order, why=why) in ("sent", "done")
+
+
+def _settled(order):
+    """Has the order nothing left for a step to do: an artwork delivered (ready, or held for the owner's release), the order held for a person, withdrawn
+    or deleted? One parallel read of four marks. The watchdog's relay asks before it goes on (a relay that wakes to a finished order has no work); a read that
+    fails says no (the relay then goes on: a step that finds nothing to do stops at once)."""
+    try:
+        got = pay.parallel([lambda n=n: store.exists(pay.order_path(order, n), timeout=5.0, retry=False)
+                            for n in ("delivery.json", "review.json", "withdrawn.json", "deleted.json")])
+        return any(got)
+    except Exception as e:  # noqa
+        pay.log(f"order {order}: settled not read: {type(e).__name__}")
+        return False
+
+
+def arm_watchdog(order, hop=1):
+    """The watchdog of a master step (api/_lib/styles/steps.py): two relay hops of the chain that wait out the step's claim, then a normal step. A
+    step that is killed has no caller left to ask for the next hop (nothing runs after a killed function but the order page when it is open, the
+    status nudge and the daily run, once a day on Hobby), so without this a killed render could wait days against the 48 hours the terms promise.
+    The first relay waits duration.WATCHDOG_FIRST_S, the second WATCHDOG_THEN_S: together longer than the lease, so the step is retaken as soon as
+    its claim has aged out. When the step lives and finishes, the relays find a ready order (or one a live step holds) and leave. Never raises.
+    Returns kick()'s word."""
+    try:
+        return kick(order, hop, 0, wait=duration.WATCHDOG_FIRST_S, then=duration.WATCHDOG_THEN_S, why="watchdog")
+    except Exception as e:  # noqa
+        pay.log(f"order {order}: watchdog not armed: {type(e).__name__}")
+        return "failed"
 
 
 # ----------------------------------------------------------------------------- the lease and the heartbeat
@@ -445,12 +489,12 @@ def _facts(order, n, paid=None):
     marks = refund_marks(order, paid)
     r = pay.parallel([ex(f"eye_{i}.jpg") for i in range(1, n + 1)] +
                      [js("delivery.json"), js("review.json"), ex("release.json"), ex("deleted.json"), ex("expired.json"),
-                      ex("withdrawn.json"), js("mail_delivery.json"), ex("making.json")] +
+                      ex("withdrawn.json"), js("mail_delivery.json"), ex("making.json")] + SP.state_reads(order) +
                      [lambda p=p: store.exists(p, timeout=5.0, retry=False) for p in marks])
     t = r[n:]
     return {"made": list(r[:n]), "delivery": t[0], "review": t[1], "released": bool(t[2]),
             "deleted": bool(t[3]) or bool(t[4]), "withdrawn": bool(t[5]), "mail": t[6], "making": bool(t[7]),
-            "refunded": any(bool(x) for x in t[8:])}
+            "art": SP.progress(SP.state_from(order, t[8:12])), "refunded": any(bool(x) for x in t[12:])}
 
 
 def _clamp(v, lo, hi):
@@ -477,6 +521,10 @@ def _answer(a):
         return ("stop", reason)
     if reason in ("eyes_not_ready", "busy_retry"):
         return ("next", 0, True, reason)
+    if reason == "plate_retry":
+        # a plate that is missing or does not match (api/_lib/styles/steps.py counts it in try_art.json: the second holds the order): asked
+        # again after a pause, and NOT a MAX_BUSY hop
+        return ("next", _clamp(a.retry_after or 20, 5, WAIT_MAX), False, reason)
     if reason == "rendering":
         return ("next", _clamp(a.retry_after or 15, 5, WAIT_MAX), True, reason)
     if a.status == 503 or a.body.get("retry") is True:
@@ -535,7 +583,8 @@ def _step(order, rec, paid, hop, steps):
                     continue                 # another request is on this eye: the next missing one
                 return _answer(a)
         return ("next", max(wait, 10), True, "rendering")
-    beat(order, "working", step="compose", hop=hop)
+    art = f["art"]
+    beat(order, "working", step="compose", hop=hop, part=min(art["done"] + 1, art["of"]), of=art["of"])
     try:
         r = steps["compose_order"](order, rec, paid)
     except store.Answer as a:
@@ -544,6 +593,9 @@ def _step(order, rec, paid, hop, steps):
         if ready_mail_once(order, rec, paid) == "transient":
             return ("next", 30, True, "ready_mail")
         return ("stop", "ready")
+    a2 = r.get("artwork") if isinstance(r.get("artwork"), dict) else None
+    if r.get("state") == "making" and a2 and a2.get("done", 0) < a2.get("of", 0):
+        return ("next", 0, False, f"art_{a2.get('done')}")      # a plan with more than one step: the next one, no busy count
     return ("stop", "review" if r.get("state") == "review" else str(r.get("state") or "unknown"))
 
 
@@ -567,14 +619,20 @@ def advance(body, steps):
         pay.log("advance refused: no valid internal ticket")
         raise store.Answer(403, "forbidden", "Not allowed.", False)
     hop, busy, wait = _num(body.get("hop"), 100000), _num(body.get("busy"), 1000), _num(body.get("wait"), WAIT_MAX)
+    then = _num(body.get("then"), WAIT_MAX)
     after = body.get("after") if isinstance(body.get("after"), str) and _ID.fullmatch(body.get("after")) else None
     why = pay.clean_text(body.get("why"), 40)
     if wait:
         # a relay: the step before had no time left to wait out a busy answer, so this one waits, then asks for it
         wait = min(wait, max(0, int(real_left() - KICK_NEED - 1)))
-        beat(order, "waiting", until=round(time.time() + wait, 3), why=why, hop=hop)
+        if why != "watchdog":
+            # (the watchdog's relay writes no beat: the step it watches is working, and advance.json must keep saying so)
+            beat(order, "waiting", until=round(time.time() + wait, 3), why=why, hop=hop)
         time.sleep(wait)
-        return _reply(order, "waited", why, next=kick(order, hop + 1, busy, after=after, why=why))
+        if why == "watchdog" and _settled(order):
+            # the step it was armed for finished meanwhile (or the order is held, withdrawn, deleted): nothing to retake
+            return _reply(order, "waited", why, next="settled")
+        return _reply(order, "waited", why, next=kick(order, hop + 1, busy, after=after, wait=then, why=why))
     rec, paid = pay.parallel([lambda: store.get_json(pay.order_path(order, "order.json"), timeout=6.0, retry=False),
                               lambda: pay.get_paid(order, timeout=6.0)])
     if not isinstance(rec, dict) or not paid:

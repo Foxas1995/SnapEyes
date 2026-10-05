@@ -2,10 +2,12 @@
 """POST /api/master_compose  {keys: ["orders/<order>/eye_<n>.jpg", ...] 1-8 in canvas order, style, layout,
                               names, title, ticket, order}
 The paid deliverable, step 2 of 2: the stored 4096 px eye masters placed on the chosen style at 4096 px on the
-longest side (L.compose_multi, no watermark), stored privately as orders/<order>/artwork_<digest>.jpg (JPEG q95
-4:4:4, sRGB) and handed out as a signed link valid for 7 days. The digest covers every input, including which
-render each eye slot holds, so the same request again returns the stored file without composing it twice, and a
-changed names line or a re-rendered eye makes a new file.
+longest side (L.compose_multi for a style of the legacy engine, no watermark; the step runner of api/_lib/styles/steps.py
+for a style of the v3 engine, which has its own plan and digest), stored privately as orders/<order>/artwork_<digest>.jpg
+(JPEG q95 4:4:4, sRGB) and handed out as a signed link valid for 7 days. The digest of a legacy style covers every input,
+including which render each eye slot holds, so the same request again returns the stored file without composing it twice,
+and a changed names line or a re-rendered eye makes a new file. (A paid order's own artwork is made by api/order.py
+compose_order through the master plan; this endpoint is what the lab and the admin tools call.)
 
 ticket: an unlock ticket for THIS order, kind "unlock-<order>" (store.unlock_kind); anything else is a 403.
 
@@ -24,23 +26,35 @@ from _lib import iris as L
 from _lib import catalogue
 from _lib import store
 from _lib import events as E   # the admin panel's usage events (no personal data)
+from _lib.styles import costs as CO   # what a master takes, in seconds and megabytes (one table for every engine)
+from _lib.styles import steps as SP   # the master plan: a style of the v3 engine is made by its step runner
 
 SIZE = 4096                  # longest side of the delivered artwork
 LINK_SECONDS = 7 * 86400     # the signed download link
 MASTER_SIDE = 4096           # what /api/master_eye stores; anything else in an eye slot is not a master
-# Seconds the composition needs once the eyes are loaded, on ONE core (Vercel Hobby: 1 vCPU): compose_multi at 4096
-# measured on one Ryzen core, times SLOW_CPU for a slower vCPU, plus STORE_RESERVE for the JPEG encode, the upload,
-# the record and the link. Below it the request is refused with a retryable 503 before the work starts, because
-# compose_multi has no deadline of its own. See _compose_need().
-COMPOSE_BASE, COMPOSE_PER_EYE = 10.5, 0.9     # one core, 2026-09-23: 1 eye 6.2-10.5 s (by style), 2 eyes 9.6-12.6 s,
-                                              # 4 eyes 11.5-12.4 s, 8 eyes 11.0-16.5 s; one run on a busy core: 20.9 s
-SLOW_CPU = 1.6               # a slower or shared vCPU: n=1 needs 21.8 s, n=8 needs 31.9 s of the 52 s budget
-STORE_RESERVE = 5.0
+# Seconds the composition needs once the eyes are loaded, on ONE core (Vercel Hobby: 1 vCPU): below it the request is refused with a
+# retryable 503 before the work starts, because compose_multi has no deadline of its own. The legacy engine's figures (compose_multi at 4096
+# measured on one Ryzen core, times STYLE_SLOW_CPU for a slower vCPU, plus a reserve for the JPEG encode, the upload, the record and the link:
+# 21.8 s for one eye, 31.9 s for eight) now live with every other design's in api/_lib/styles/costs.py (legacy_need): one table answers "how
+# long does this master take" for every engine, and the factor is the one STYLE_SLOW_CPU (measured by the admin action cpu_probe).
+COMPOSE_BASE, COMPOSE_PER_EYE, STORE_RESERVE = CO.LEGACY_BASE_S, CO.LEGACY_PER_EYE_S, CO.LEGACY_RESERVE_S
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
 
 def _compose_need(n):
-    return round(SLOW_CPU * (COMPOSE_BASE + COMPOSE_PER_EYE * (n - 1)) + STORE_RESERVE, 1)
+    return CO.legacy_need(n)
+
+
+def step_need(style, n, layout=None):
+    """Seconds a call needs to make the master of n eyes in this style: the legacy engine's own figure, or the step cost of the style's design
+    (api/_lib/styles/costs.py). None when the cost table has no row for it."""
+    if catalogue.is_legacy(style):
+        return CO.legacy_need(n)
+    eng = catalogue.engine_for(style, n)
+    try:
+        return CO.step_need(CO.cost_key(eng), n, side=eng.get("work_side")) if eng else None
+    except CO.NoCost:
+        return None
 
 
 def _text(v, n):
@@ -105,6 +119,26 @@ def _load(key):
     return im.convert("RGB")
 
 
+def _master_engine(order, keys, style, layout, names, title, date, t0):
+    """A style of the v3 engine asked of this endpoint (the lab, the admin tools): the same plan, guards, claim and executor as a paid order's
+    (api/_lib/styles/steps.py), run once for these eyes. A step that must be held answers 409 step_held with the owner's sentence."""
+    n = len(keys)
+    spec = {"eyes": n, "style": style, "layout": layout, "names": names, "title": title, "date": date if isinstance(date, str) else ""}
+    lab = order.startswith("lab-")
+    ctx = SP.Ctx(order, spec, by="lab" if lab else "api", lab=lab, eyes_from="master", arrival_left=L.time_left())
+    try:
+        # a lab test order's style folder belongs to the lab (another style starts again from nothing); any other order has ONE plan: a request for
+        # another style than its plan's is a hold (plan_mismatch), never the artwork of the other style
+        got = SP.lab_run(ctx) if lab else SP.advance(ctx)
+    except SP.Hold as h:
+        raise store.Answer(409, "step_held", h.note, False, None, hold=h.reason) from h
+    r = got["artwork"] or {}
+    return {"ok": True, "url": r.get("url"), "key": r.get("key"), "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
+            "style": style, "layout": layout, "count": n, "existing": bool(r.get("existing")), "expires_in": SP.LINK_SECONDS,
+            "seconds": round(time.time() - t0, 1), "qa": r.get("qa"), "needs_review": bool(r.get("needs_review")), "plan8": got.get("plan8"),
+            "design_used": got.get("design_used"), "final": bool(got["final"])}
+
+
 def master_compose(body):
     t0 = time.time()
     if not isinstance(body, dict):
@@ -115,10 +149,10 @@ def master_compose(body):
     keys = _keys(body.get("keys"), order)
     n = len(keys)
     style = body.get("style")
-    # the render path ignores stages (an order already paid for a style rolled back still renders); it needs a built engine. This function draws
-    # with the legacy engine only: a style of the v3 engine is made by the master plan (the step runner of its own work package), and until that
-    # lands it is refused here, never drawn by the legacy engine in its place (L.compose_multi reads an id it does not know as the default style)
-    renderable = tuple(i for i in catalogue.renderable_ids(n) if catalogue.is_legacy(i))
+    # the render path ignores stages (an order already paid for a style rolled back still renders); it needs a built engine. A style of the v3
+    # engine is made by the master plan's step runner (_master_engine), never by L.compose_multi, which reads an id it does not know as the
+    # default style
+    renderable = catalogue.renderable_ids(n)
     if not isinstance(style, str) or style not in renderable:
         raise L.ClientError("Choose one of the styles: " + ", ".join(renderable) + ".")
     layout = body.get("layout")
@@ -128,6 +162,8 @@ def master_compose(body):
     elif not isinstance(layout, str) or layout not in layouts:
         raise L.ClientError(f"{n} eye{'s' if n > 1 else ''} can use: " + ", ".join(layouts) + ".")
     names, title = _text(body.get("names"), 60), _text(body.get("title"), 40)
+    if not catalogue.is_legacy(style):
+        return _master_engine(order, keys, style, layout, names, title, body.get("date"), t0)
     W, H = L.multi_canvas(n, layout, SIZE)
     folder = f"orders/{order}"
     recs = _records(keys)

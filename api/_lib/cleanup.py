@@ -34,6 +34,9 @@ it twice): a missed day is caught up by the next run, and a second run finds not
   5. the upload and statement markers older than a few days (and the withdrawal function's monthly receipt marks
      after the next month), the clean-up's own day marks, and withdrawal statements that matched no order
      (withdrawals/<yymm>/) 12 months after their month
+  5b. the style folder of a paid order (orders/<order>/style/: the master plan's records and intermediates, api/_lib/styles/steps.py) goes
+     STYLE_KEEP_DAYS (14) after delivery.json: the order's own record of what was made stays, the working files do not (one marker per order
+     in cleanup/style/, written with the plan; a marker whose order is gone goes too)
   6. the site's other logs: events.purge_old() when api/_lib/events.py exists (the owner's admin tools keep their
      own retention there), the audit log ops/audit/ after AUDIT_KEEP_MONTHS (24 months), by the dates in its
      names (_audit), and the admin log of an order that is gone completely (ops/orderlog/<order>/ without any file
@@ -49,6 +52,8 @@ from . import store
 from . import pay
 from . import withdraw as W
 from . import maker as M
+from . import duration
+from .styles import steps as SP
 
 UNPAID_WINDOW = 35           # days of orders step 2 looks at (the policy promises deletion within 30 days)
 EXPIRE_WINDOW = 60           # days before the 12-month cut-off step 4 looks at (a longer gap: order_admin expire-paid)
@@ -65,8 +70,10 @@ LAB_TOP = "ops/lab"          # the admin panel's lab test markers (api/_lib/ops.
 ORPHAN_GRACE_DAYS = 2        # an order log whose newest entry is younger than this is left alone (a lab test's folder
                              # appears only with its first eye; a deletion may be running right now)
 REVIEW_SECONDS = 6.0         # the daily run spends at most this long on the review reminders (the rest: next run)
+STYLE_KEEP_DAYS = 14         # the style folder of a paid order is kept this long after delivery.json
+STYLE_SECONDS = 6.0          # the daily run spends at most this long on the style folders (the rest: next run)
 LOCK = "cleanup/running.json"
-LOCK_STALE = 120             # a lock older than this belongs to a run that died (a function lives at most 60 s)
+LOCK_STALE = duration.CLEANUP_STALE_S   # a run's lock older than this belongs to a run that died (a function lives at most DURATION_S: twice that)
 
 
 def _day_ts(d):
@@ -149,6 +156,9 @@ def run(yes=True, stop_left=10.0, out=None, lock=True):
         if not res["more"]:
             res["expired"] = _expire(yes, stop_left, say)
             res["more"] = res["expired"].pop("more", False)
+        if not res["more"]:
+            res["style"] = _styles(yes, stop_left, say, STYLE_SECONDS if boxed else 1e9)
+            res["more"] = res["style"].pop("more", False)
         if not res["more"]:
             m = {"more": False}
             res["markers"] = pay.purge_markers(yes, stop_left, m) + _old_day_marks(yes) + W.purge_addr_marks(yes)
@@ -363,6 +373,9 @@ def _review_todo(order, review):
                 f"Vercel log of /api/order, then clear the review in the admin panel (/admin, order {order}) or: python "
                 f"scripts/order_admin.py clear-review {order}. The customer's order page and the daily run then go "
                 f"on; each further lost render holds the order again at once (one 4K render, about $0.15, each).")
+    hold = SP.hold_text(reason, order)
+    if hold:
+        return hold
     if reason.startswith(pay.MAIL_REVIEW):
         return (f"the order confirmation email did not go out ({reason}), and nothing is made before it has"), (
                 f"Fix the cause (RESEND_API_KEY, the snapeyes.com domain at Resend), then send it again from the admin "
@@ -467,6 +480,51 @@ def _expire(yes, stop_left, say):
             finished += 1
     r["days"], r["days_finished"] = len(days), finished
     return r
+
+
+def _styles(yes, stop_left, say, max_seconds=STYLE_SECONDS):
+    """Step 5b: the style folder of every paid order delivered STYLE_KEEP_DAYS ago or more goes (the plan's records, locks and intermediates), and
+    its marker (cleanup/style/<order>.json, written with the plan). An order that was never delivered (held, or still making) keeps its folder
+    and its marker; a marker of an order that is gone completely is dropped. Never raises. Returns {orders, folders, files, kept, gone, more}."""
+    res = {"orders": 0, "folders": 0, "files": 0, "kept": 0, "gone": 0, "more": False}
+    try:
+        until = time.time() + max_seconds
+        cut = time.time() - STYLE_KEEP_DAYS * 86400
+        names = [r["name"][:-5] for r in store.list_all(SP.INDEX) if not r["folder"] and r["name"].endswith(".json")
+                 and store.ORDER_RE.fullmatch(r["name"][:-5])]
+        for order in names:
+            if L.time_left() < stop_left or time.time() > until:
+                res["more"] = True
+                break
+            res["orders"] += 1
+            mark = f"{SP.INDEX}/{order}.json"
+            dl, deleted, expired = pay.parallel([lambda: store.get_json(f"orders/{order}/delivery.json", timeout=8.0),
+                                                 lambda: store.exists(f"orders/{order}/deleted.json", timeout=8.0),
+                                                 lambda: store.exists(f"orders/{order}/expired.json", timeout=8.0)])
+            files = pay.folder_files(f"orders/{order}/{SP.FOLDER}")
+            if deleted or expired or (not files and not isinstance(dl, dict) and not pay.folder_files(f"orders/{order}")):
+                # the order's files are gone (a deletion, the 12 months, an unpaid order's purge): nothing of the folder is left to keep
+                if files and yes:
+                    store.delete_many(files)
+                res["files"] += len(files)
+                res["gone"] += 1
+                if yes:
+                    store.delete(mark, timeout=6.0)
+                continue
+            t = dl.get("created_at") if isinstance(dl, dict) else None
+            if not isinstance(t, (int, float)) or isinstance(t, bool) or t > cut:
+                res["kept"] += 1
+                continue
+            say(f"{'DELETE' if yes else 'would delete'} the {len(files)} style files of order {order} (delivered {STYLE_KEEP_DAYS} days ago or more)")
+            if yes and files:
+                store.delete_many(files)
+            if yes:
+                store.delete(mark, timeout=6.0)
+            res["folders"] += 1 if files else 0
+            res["files"] += len(files)
+    except Exception as e:  # noqa: the clean-up goes on without this step
+        pay.log(f"clean-up: style folders failed: {type(e).__name__} {e}")
+    return res
 
 
 def _old_unmatched(yes, say):

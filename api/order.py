@@ -57,9 +57,14 @@ make: renders one eye of a PAID order at 4096 px from its stored crop and previe
   image model answered: the master not stored, the post-processing broken) is counted per order
   (render_lost_<i>.json); the LOST_MAX-th (2) holds the order for a person (409 in_review, review.json, the owner
   told), so no retry by anyone pays for the same failure again and again.
-compose: once every eye is made, the artwork with the paid style, layout, names and title (master_compose's own
-  function), and the download link. One compose at a time (compose.lock: another one is answered 409 "rendering",
-  like an eye). A ready artwork sends the customer the "ready" email, once (maker.ready_mail_once). When a check says
+compose: once every eye is made, the artwork with the paid style, layout, names and title, and the download link. The
+  artwork is made by the order's master PLAN (api/_lib/styles/steps.py): one "art" step per call (the default plan is one
+  step; a plan with more answers state "making" with artwork {done, of, step} and the caller asks again). A style of the
+  legacy engine takes the very same path with master_compose's own function inside the step, so its file and digest are
+  unchanged. One compose at a time (compose.lock: another one is answered 409 "rendering", like an eye); a step holds its own
+  claim, try record and process guards besides. A step that can never fit this function, a killed step that keeps dying, a
+  master whose colour class is not the preview's and a plate that is not there twice hold the order for a person
+  (409 in_review, review.json, the owner told): never another style. A ready artwork sends the customer the "ready" email, once (maker.ready_mail_once). When a check says
   a person should look first, the delivery waits (state review)
   and the owner is told; scripts/order_admin.py release hands it out. Every hold (review.json or a held artwork) is
   also noted in cleanup/review/ (pay.index_review): the daily clean-up reminds the owner once when it has waited
@@ -93,6 +98,8 @@ from _lib import withdraw as W
 from _lib import cleanup as C
 from _lib import maker as M
 from _lib import preview as P
+from _lib import duration
+from _lib.styles import steps as SP
 import master_eye as ME
 import master_compose as MC
 
@@ -195,8 +202,9 @@ def _in_review():
                         "you by email, or write to info@snapeyes.com.", False)
 
 
-def _to_review(order, eye, reason):
-    """Hold the order for a person: review.json, and a note to the owner. Nothing more is rendered for it."""
+def _to_review(order, eye, reason, note=None):
+    """Hold the order for a person: review.json, and a note to the owner (note: what the owner needs to know, a sentence). Nothing more is rendered
+    for it. eye None: the hold is about the artwork, not one eye."""
     now = int(time.time())
     try:
         store.put(f"orders/{order}/review.json", store.json_bytes({"reason": reason, "eye": eye, "t": now,
@@ -205,8 +213,9 @@ def _to_review(order, eye, reason):
         pay.log(f"order {order}: review mark not stored: {e}")
     pay.index_review(order, now)          # the daily clean-up's reminder after pay.REVIEW_REMIND_HOURS
     pay.owner_note(order, "review", f"SnapEyes: order {order} needs a look",
-                   f"Order {order}, eye {eye}: {reason}.\nNothing more is rendered for this order until review.json is "
-                   f"cleared.\nStatus: python scripts/order_admin.py status {order}\n")
+                   f"Order {order}, {'eye ' + str(eye) if eye else 'the artwork'}: {reason}.\n" + (f"{note}\n" if note else "") +
+                   f"Nothing more is rendered for this order until review.json is cleared.\n"
+                   f"Status: python scripts/order_admin.py status {order}\n")
 
 
 def _require_paid(order, rec, s):
@@ -373,8 +382,8 @@ def _unpaid(order, rec, pending, check):
 def _paid_facts(order, n, mail=False):
     """What is stored for a paid order, read at once: made (per eye), delivery, review, released, deleted,
     withdrawn (withdrawn.json), withdrawal (the latest statement's summary) and, with mail=True, mail
-    (mail_delivery.json), beat (advance.json: the server's own making, api/_lib/maker.py) and making (making.json
-    exists: making began)."""
+    (mail_delivery.json), beat (advance.json: the server's own making, api/_lib/maker.py), making (making.json
+    exists: making began) and art ({done, of, step}: the master plan's steps, api/_lib/styles/steps.py)."""
     folder = f"orders/{order}"
     res = pay.parallel([lambda i=i: store.exists(f"{folder}/eye_{i}.jpg", timeout=8.0) for i in range(1, n + 1)] +
                        [lambda: store.get_json(f"{folder}/delivery.json", timeout=8.0),
@@ -385,11 +394,12 @@ def _paid_facts(order, n, mail=False):
                         lambda: store.get_json(f"{folder}/withdrawal.json", timeout=8.0)] +
                        ([lambda: store.get_json(f"{folder}/mail_delivery.json", timeout=8.0),
                          lambda: store.get_json(f"{folder}/advance.json", timeout=8.0),
-                         lambda: store.exists(f"{folder}/making.json", timeout=8.0)] if mail else []))
+                         lambda: store.exists(f"{folder}/making.json", timeout=8.0)] + SP.state_reads(order) if mail else []))
     return {"made": list(res[:n]), "delivery": res[n], "review": res[n + 1], "released": bool(res[n + 2]),
             "deleted": bool(res[n + 3]), "withdrawn": res[n + 4], "withdrawal": res[n + 5],
             "mail": res[n + 6] if mail else None, "beat": res[n + 7] if mail else None,
-            "making": bool(res[n + 8]) if mail else False}
+            "making": bool(res[n + 8]) if mail else False,
+            "art": SP.progress(SP.state_from(order, res[n + 9:n + 13])) if mail else None}
 
 
 def _withdrawal_view(summary):
@@ -403,7 +413,7 @@ def _deleted():
 
 
 def _paid_reply(order, paid, made, delivery, review, released, url=None, previews=False, deleted=False,
-                waiting=None, withdrawn=None, withdrawal=None):
+                waiting=None, withdrawn=None, withdrawal=None, artwork=None):
     spec = paid["spec"]
     n = spec["eyes"]
     held = isinstance(delivery, dict) and bool(delivery.get("needs_review")) and not released
@@ -428,6 +438,9 @@ def _paid_reply(order, paid, made, delivery, review, released, url=None, preview
            "eyes": [{"eye": i, "made": bool(made[i - 1])} for i in range(1, n + 1)]}
     if state == "pending":
         out["waiting_for"] = waiting
+    if isinstance(artwork, dict) and state in ("paid", "making", "pending"):
+        # the master plan's progress: {done, of, step}: steps done, steps in all, the name of the next one (the default plan has one, "art")
+        out["artwork"] = {"done": artwork.get("done"), "of": artwork.get("of"), "step": artwork.get("step")}
     if isinstance(withdrawal, dict):
         out["withdrawal"] = _withdrawal_view(withdrawal)
     if state in ("deleted", "withdrawn"):
@@ -470,7 +483,7 @@ def _status(order, rec, s=None, previews=False):
         elif c == "waiting":
             waiting = "confirmation_email"
     out = _paid_reply(order, paid, f["made"], f["delivery"], review, f["released"], previews=previews,
-                      deleted=f["deleted"], waiting=waiting, withdrawn=f["withdrawn"], withdrawal=f["withdrawal"])
+                      deleted=f["deleted"], waiting=waiting, withdrawn=f["withdrawn"], withdrawal=f["withdrawal"], artwork=f["art"])
     if out["state"] in ("paid", "making"):
         # the server's own making (api/_lib/maker.py): the page drives nothing while it is on the order, and an
         # order whose making has begun gets it asked for again when no step is live. A status read never STARTS an
@@ -631,7 +644,7 @@ def compose(body):
     return compose_order(order, rec, paid)
 
 
-COMPOSE_STALE = 75.0         # a compose claim older than this belongs to an invocation that is dead (60 s at most)
+COMPOSE_STALE = duration.COMPOSE_STALE_S   # a compose claim older than this belongs to an invocation that is dead (the longest life of one, plus 15 s)
 
 
 def _compose_claim(order):
@@ -673,10 +686,35 @@ def _compose_release(claim):
         pay.log(f"compose claim not released (taken over after {COMPOSE_STALE:.0f} s): {e}")
 
 
+def _write_delivery(order, r):
+    """delivery.json of a made artwork (what every reader of an order's artwork reads): the file, its size, the style and layout, whether a check
+    wants a person to look first. A style of the v3 engine adds the design it was drawn in and the plan's identity (plan8). Returns it."""
+    now = int(time.time())
+    delivery = {"key": r["key"], "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
+                "style": r.get("style"), "layout": r.get("layout"), "count": r.get("count"),
+                "needs_review": bool(r.get("needs_review")), "created_at": now, "created": pay.iso(now)}
+    for k in ("design_used", "plan8"):
+        if r.get(k):
+            delivery[k] = r[k]
+    store.put(f"orders/{order}/delivery.json", store.json_bytes(delivery), "application/json", upsert=True)
+    return delivery
+
+
+def master_ctx(order, rec, paid, by, arrival_left=None, finish=True, arm=True):
+    """The context of the order's master steps (api/_lib/styles/steps.py): the paid spec, the delivery writer, the watchdog, and the legacy composer
+    (looked up when it is called, so a test that replaces MC.master_compose is heard)."""
+    return SP.Ctx(order, paid["spec"], rec=rec, paid=paid, by=by, arrival_left=arrival_left,
+                  finish=(lambda r: _write_delivery(order, r)) if finish else None,
+                  arm=(lambda: M.arm_watchdog(order)) if arm else None,
+                  legacy=lambda body: MC.master_compose(body))
+
+
 def compose_order(order, rec, paid, server=False):
     """The artwork of a paid order (paid: its paid record, already checked to count here): every rule of compose, for
-    the order page (compose) and the server's own making (server=True, api/_lib/maker.py). Once an artwork is ready
-    without a hold, the customer gets the "ready" email, once (maker.ready_mail_once)."""
+    the order page (compose) and the server's own making (server=True, api/_lib/maker.py). ONE master step per call (the
+    default plan has one: the artwork); a plan with more answers state "making" with artwork {done, of, step}. Once an
+    artwork is ready without a hold, the customer gets the "ready" email, once (maker.ready_mail_once)."""
+    arrival_left = L.time_left()
     spec = paid["spec"]
     n = spec["eyes"]
     f = _paid_facts(order, n)
@@ -700,16 +738,18 @@ def compose_order(order, rec, paid, server=False):
         done = store.get_json(f"{folder}/delivery.json", timeout=5.0, retry=False)
         if isinstance(done, dict):
             return _paid_reply(order, paid, made, done, None, released)
-        r = MC.master_compose({"order": order, "ticket": L.mint_ticket(store.unlock_kind(order), 300),
-                               "keys": [f"{folder}/eye_{i}.jpg" for i in range(1, n + 1)], "style": spec["style"],
-                               "layout": spec["layout"], "names": spec["names"], "title": spec["title"]})
-        now = int(time.time())
-        delivery = {"key": r["key"], "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
-                    "style": r.get("style"), "layout": r.get("layout"), "count": r.get("count"),
-                    "needs_review": bool(r.get("needs_review")), "created_at": now, "created": pay.iso(now)}
-        store.put(f"{folder}/delivery.json", store.json_bytes(delivery), "application/json", upsert=True)
+        try:
+            got = SP.advance(master_ctx(order, rec, paid, "server" if server else "page", arrival_left))
+        except SP.Hold as h:
+            _to_review(order, None, h.reason, h.note)
+            raise _in_review() from h
+        if not got["final"]:
+            return _paid_reply(order, paid, [True] * n, None, None, released, artwork=got["progress"])
+        r = got["artwork"]
+        delivery = got["delivery"] or _write_delivery(order, dict(r, plan8=got.get("plan8"), design_used=got.get("design_used")))
     finally:
         _compose_release(claim)
+    now = delivery["created_at"]
     held = delivery["needs_review"] and not released
     if held:
         pay.index_review(order, now)      # the daily clean-up's reminder after pay.REVIEW_REMIND_HOURS

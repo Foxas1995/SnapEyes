@@ -28,7 +28,12 @@ The kinds (all with "ms", the time since the request started, when known):
             colour class: own, dark_brown, grey), pupil (round, slit, bar), profile_ms (the time it took)
   compose   style, eyes, layout, format, clean (unwatermarked), qa_ok; gate: the SET-level result of the request under the style's
             gate rule (ok, unknown, or the first failing eye's reason code)
-  master    step (eye/compose), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab
+  master    step (eye/compose/art), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab; and, from the master plan's steps
+            (api/_lib/styles/steps.py: one event per step, "art" for the artwork): part and of (the step and how many the plan has), ms (the step's
+            wall time), need_s (the estimate it was planned with), cpu_s, peak_mb (the INCREASE of the process's resident size over the step, VmRSS) and
+            hwm_mb (the instance's own high-water mark, labelled as that: it never falls on a warm instance), kills (the killed attempts of the step),
+            design (the design drawn), d_rgb (how far the master's ring colour drifted from the preview's, levels), hold (a code: the order was held
+            instead of made: style_step_too_big, engine_skew, class_changed, style_step_failed, plate_unavailable, ...)
   error     endpoint, class (the error's kind: busy/400/403/429/500/502/503), reason (the reply's reason code),
             status. ("class", because "kind" names the event itself.)
   exp       a price experiment's funnel (api/_lib/abtest.py; only while the owner has one running): stage (visit,
@@ -66,7 +71,9 @@ FIELDS = {
                 "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n"},
     "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c"},
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
-               "rerender": "b", "existing": "b", "render_s": "n", "style": "c"},
+               "rerender": "b", "existing": "b", "render_s": "n", "style": "c",
+               "part": "n", "of": "n", "need_s": "n", "cpu_s": "n", "peak_mb": "n", "hwm_mb": "n", "kills": "n", "design": "c", "d_rgb": "n",
+               "hold": "c"},
     "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n"},
     "exp": {"stage": "c", "exp": "c", "variant": "c", "market": "c", "eyes": "n", "amount": "n", "currency": "c",
             "hit": "b", "live": "b"},
@@ -277,6 +284,9 @@ def empty():
             # the restoration gate (eye profile): per eye at enhance, per request at compose; the colour and pupil classes seen
             "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
             "master_compose": 0, "master_review": 0, "master_rerender": 0, "master_lab": 0, "master_existing": 0,
+            # the master plan's steps (kind master, step art): steps made, by style; orders held instead of made, by code (sums of peak_mb and need_s
+            # are in "ms" as art_peak_mb and art_need_s with their counts, so averages need no new shape)
+            "master_art": 0, "master_art_style": {}, "master_hold": {},
             "errors": {}, "error_endpoint": {}, "error_reason": {}, "busy": 0,
             "gemini": {"vision": 0, "image_1k": 0, "image_4k": 0}, "ms": {}, "recent_errors": [],
             # price experiments (kind "exp"): "<experiment>|<variant>|<stage>" -> events (exp_stage; exp_hit counts only the
@@ -352,6 +362,26 @@ def add(agg, ev):
         if ev.get("clean"):
             agg["compose_clean"] += 1
         _ms(agg, "compose", ev)
+    elif kind == "master" and ev.get("step") == "art":
+        if ev.get("hold"):
+            _inc(agg["master_hold"], ev["hold"])
+        else:
+            if ev.get("existing"):
+                agg["master_existing"] += 1
+            else:
+                agg["master_art"] += 1
+                _inc(agg["master_art_style"], ev.get("style") or "unknown")
+                _ms(agg, "master_art", ev)
+                for field, key in (("peak_mb", "art_peak_mb"), ("need_s", "art_need_s")):
+                    v = ev.get(field)
+                    if isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0:
+                        cur = agg["ms"].setdefault(key, [0, 0])
+                        cur[0] += v
+                        cur[1] += 1
+            if ev.get("needs_review"):
+                agg["master_review"] += 1
+            if ev.get("lab"):
+                agg["master_lab"] += 1
     elif kind == "master":
         step = "master_compose" if ev.get("step") == "compose" else "master_eye"
         if ev.get("existing"):
