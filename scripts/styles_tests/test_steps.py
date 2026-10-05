@@ -20,6 +20,7 @@ class drift hold) and IE12 of the plan.
 
 No network, no image model (every master is a procedural iris or a scripted stand in), no real eye. Run by suites/run_main.sh as v3steps.
     python test_steps.py       prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure"""
+import atexit
 import base64
 import hashlib
 import io
@@ -59,6 +60,7 @@ for k in list(os.environ):
         if k not in ("SNAPEYES_REPO", "SNAPEYES_SP"):
             os.environ.pop(k)
 TMP = tempfile.mkdtemp(prefix="snapeyes_v3steps_")
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 STORE = os.path.join(TMP, "store")
 sys.path.insert(0, HARNESS)
 sys.path.insert(0, HERE)
@@ -1139,6 +1141,8 @@ check("a style of the v3 engine, paid and made by the server: ready, one ready e
 im = Image.open(local(dl7["key"])) if dl7 else None
 check("the file is one JPEG, 4096 x 4096, 4:4:4 (no chroma subsampling), with the sRGB profile embedded: the stored format of every deliverable",
       im is not None and im.format == "JPEG" and im.size == (4096, 4096) and __import__("PIL.JpegImagePlugin", fromlist=["x"]).get_sampling(im) == 0 and bool(im.info.get("icc_profile")), im and (im.format, im.size))
+if im is not None:
+    im.close()                  # a handle left open would keep Windows from deleting the file, and the run's folder with it
 rec_parts = [("selfcheck ok", (art7.get("selfcheck") or {}).get("ok") is True), ("pupil neutral", ((art7.get("qa") or {}).get("eyes") or [{}])[0].get("pupil_neutral") is True),
              ("seed text", isinstance(art7.get("seed"), str)), ("plan8", art7.get("plan8") == s7["plan"]["plan8"]), ("engine_v", art7.get("engine_v") == ST.ENGINE_V),
              ("reg", bool(re.fullmatch(r"[0-9a-f]{12}", str(art7.get("reg"))))), ("design", art7.get("design_used") == "clean"), ("times", "times" in art7),

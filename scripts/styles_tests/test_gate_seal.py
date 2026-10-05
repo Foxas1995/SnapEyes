@@ -11,6 +11,7 @@ Without them those checks are skipped, and their lines are LOCAL lines, not PASS
     python test_gate_seal.py        prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as the entry v3gate (SNAPEYES_REPO names the checkout)."""
 import ast
+import atexit
 import base64
 import copy
 import hashlib
@@ -62,6 +63,7 @@ for k in list(os.environ):
 if os.path.isdir(TMP):
     shutil.rmtree(TMP, ignore_errors=True)
 os.makedirs(TMP)
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 sys.path.insert(0, HARNESS)
 os.environ["PYTHONIOENCODING"] = "utf-8"
 import harness as H  # noqa: E402
@@ -860,7 +862,6 @@ else:
     print("   (skipped: SNAPEYES_CALIB and SNAPEYES_GATE_TABLE are not set)", flush=True)
 
 # ------------------------------------------------------------------
-shutil.rmtree(TMP, ignore_errors=True)
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed" + (f"   (+ {len(LOCAL)} local checks)" if LOCAL else ""))
 sys.exit(0 if ok == len(RESULTS) and all(LOCAL) else 1)

@@ -11,6 +11,7 @@ check scripts run by Node on copies of the repository with one mutated line each
     python test_registry.py        prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as the entry v3reg (SNAPEYES_REPO names the checkout)."""
 import ast
+import atexit
 import base64
 import contextlib
 import copy
@@ -48,6 +49,7 @@ for k in list(os.environ):
 if os.path.isdir(TMP):
     shutil.rmtree(TMP, ignore_errors=True)
 os.makedirs(TMP)
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 os.environ.update({"SNAPEYES_TICKET_SECRET": "wp1-ticket-secret-for-tests-0123456789abcdef", "PYTHONIOENCODING": "utf-8"})
 sys.path.insert(0, API)
 import numpy as np  # noqa: E402
@@ -765,7 +767,7 @@ for label, mutate, needle in [
 RULES = os.path.join(TMP, "wp1_rules.mjs")
 with open(RULES, "w", encoding="utf-8", newline="\n") as f:
     f.write(r"""
-import { join } from 'node:path'; import { pathToFileURL } from 'node:url'; import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'; import { tmpdir } from 'node:os';
+import { join } from 'node:path'; import { pathToFileURL } from 'node:url'; import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 const repo = process.argv[2];
 const M = await import(pathToFileURL(join(repo, 'scripts', 'check_styles.mjs')).href);
 const S = await import(pathToFileURL(join(repo, 'scripts', 'styles_source.mjs')).href);
@@ -776,13 +778,13 @@ res.numberYes = ['six styles', 'All 6 styles', 'in allen sechs Stilen', 'Alle 6 
 res.numberNo = ['any style', 'in the style you choose', 'Choose a style', 'One eye, any style', 'Two eyes (Couple Duo), jeder Stil', 'iki 8 akiu', 'Sechs Augen auf einem Kunstwerk'].map(hit);
 let out = []; M.checkNumberOfStyles([['landing', { en: { a: { b: 'All 6 styles' } } }]], out); res.numberCheck = out;
 out = []; M.checkRuntimeTokens({ en: { pricing: { artBackgroundNote: 'Celestial Gold, Deep Nebula' } }, de: { pricing: { artBackgroundNote: '{styles}' } } }, out); res.tokens = out;
-const dir = mkdtempSync(join(tmpdir(), 'wp1-terms-')); mkdirSync(join(dir, 'src/legal/docs'), { recursive: true });
+const dir = mkdtempSync(join(process.argv[3], 'wp1-terms-')); mkdirSync(join(dir, 'src/legal/docs'), { recursive: true });
 writeFileSync(join(dir, 'src/legal/docs/terms.ts'), "const rows = [['One eye, Studio Black', eur(PRICE_CENTS.studioBlack, 'en')], ['Each further eye', `+${eur(1, 'en')}, up to ${MAX_EYES} eyes on one artwork`]];\n");
 out = []; M.checkTerms(dir, styles, out, ['src/legal/docs/terms.ts'], true); res.termsOn = out;
 out = []; M.checkTerms(dir, styles, out, ['src/legal/docs/terms.ts'], false); res.termsOff = out;
 console.log(JSON.stringify(res));
 """)
-rc, so, se = run_node([RULES, REPO])
+rc, so, se = run_node([RULES, REPO, TMP])                       # the probe's folder is made inside TMP, which the suite removes at exit
 rules = last_json(so)
 check("the rules of items 4 and 7 that wait for WP12 are built: the number-of-styles pattern catches six, 6, sechs, 6 stiliais, stilus and spares 'any style'",
       bool(rules) and all(rules["numberYes"]) and not any(rules["numberNo"]) and len(rules["numberCheck"]) == 1 and "states a number of styles" in rules["numberCheck"][0],
@@ -1036,7 +1038,6 @@ for label, case_fn, needle in [
     check(f"the text check refuses: {label}", not PROBLEMS.get("t") and any(needle in p for p in probs), (PROBLEMS.get("t"), needle, probs[:3]))
     PROBLEMS.pop("t", None)
 
-shutil.rmtree(TMP, ignore_errors=True)
 fails = len([r for r in RESULTS if not r])
 print(f"\n{len(RESULTS) - fails} of {len(RESULTS)} passed" + (f"; {fails} FAILED" if fails else ""))
 sys.exit(1 if fails else 0)

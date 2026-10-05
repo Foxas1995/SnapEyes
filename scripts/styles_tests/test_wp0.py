@@ -4,6 +4,7 @@
 Real admin handler over HTTP on a local store folder, synthetic secrets, no network, no image model.
     python test_wp0.py        prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as the entry v3wp0 (SNAPEYES_REPO names the checkout)."""
+import atexit
 import importlib.metadata as md
 import json
 import math
@@ -39,6 +40,7 @@ for k in list(os.environ):
 if os.path.isdir(STORE):
     shutil.rmtree(STORE)
 os.makedirs(STORE)
+atexit.register(shutil.rmtree, STORE, ignore_errors=True)   # its own folder only: gone at exit, green, red or crashed
 os.environ.update({"STORE_LOCAL_DIR": STORE, "SNAPEYES_TICKET_SECRET": TICKET, "SNAPEYES_ADMIN_SECRET": ADMIN_SECRET,
                    "PYTHONIOENCODING": "utf-8", **FAKE_KEYS})
 sys.path.insert(0, API)
@@ -476,6 +478,5 @@ check(".vercelignore repeats every .gitignore entry (a CLI upload reads one of t
 
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed")
 srv.shutdown()
-shutil.rmtree(STORE, ignore_errors=True)
 sys.stdout.flush()
 sys.exit(0 if all(RESULTS) else 1)

@@ -10,6 +10,7 @@ the owner's real calibration restorations are read only from a folder named by a
 Without them those checks are skipped, and their lines are LOCAL lines, not PASS lines, so the PASS count is the same everywhere.
     python test_reveal.py        prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as the entry v3reveal (SNAPEYES_REPO names the checkout). The browser half (src/reveal) is tested by src/reveal/*.test.ts."""
+import atexit
 import base64
 import hashlib
 import importlib.util
@@ -59,6 +60,7 @@ for k in list(os.environ):
 if os.path.isdir(TMP):
     shutil.rmtree(TMP, ignore_errors=True)
 os.makedirs(TMP)
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 sys.path.insert(0, HARNESS)
 sys.path.insert(0, HERE)
 os.environ["PYTHONIOENCODING"] = "utf-8"
@@ -572,7 +574,6 @@ section("11. no model call, no key")
 check("nothing in this suite called the model or looked for a key (the image model was the stub of section 8, which answers from the crop)", not CALLED and len(MODEL) >= 4, (CALLED, len(MODEL)))
 
 # ------------------------------------------------------------------
-shutil.rmtree(TMP, ignore_errors=True)
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed" + (f"   (+ {len(LOCAL)} local checks)" if LOCAL else ""))
 sys.exit(0 if ok == len(RESULTS) and all(LOCAL) else 1)

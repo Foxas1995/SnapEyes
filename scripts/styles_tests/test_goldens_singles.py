@@ -26,6 +26,7 @@ of requirements.txt; a mismatch elsewhere means recording again on the scratch c
     python test_goldens_singles.py   prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as v3single."""
 import ast
+import atexit
 import base64
 import gc
 import hashlib
@@ -72,6 +73,7 @@ for k in list(os.environ):
         if k not in ("SNAPEYES_REPO", "SNAPEYES_SP", "SNAPEYES_SCRATCH_Y3", "SNAPEYES_CALIB"):
             os.environ.pop(k)
 TMP = tempfile.mkdtemp(prefix="snapeyes_v3single_")
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 STORE = os.path.join(TMP, "store")
 os.makedirs(STORE)
 os.environ.update({"PYTHONIOENCODING": "utf-8", "SNAPEYES_TICKET_SECRET": "wp5a-ticket-secret-for-tests-0123456789abcdef",
@@ -912,7 +914,6 @@ if SCRATCH_Y3 and os.path.isdir(SCRATCH_Y3):
 else:
     print("   (the edit check needs SNAPEYES_SCRATCH_Y3, the wave-y3 folder of the scratch tree)", flush=True)
 
-shutil.rmtree(TMP, ignore_errors=True)
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed" + (f"   (+ {len(LOCAL)} local checks)" if LOCAL else ""))
 sys.exit(0 if ok == len(RESULTS) and all(LOCAL) else 1)

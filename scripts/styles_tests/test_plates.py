@@ -17,6 +17,7 @@
   7. the bundle checks: the real tree passes check_styles (items 8, 9, 10, 12) and each refusal is proved on a small copy of the tree with one change
 No network, no image model, no real eye, no key: a local store folder and synthetic plates. Run by suites/run_main.sh as v3plates.
     python test_plates.py        prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure"""
+import atexit
 import contextlib
 import hashlib
 import io
@@ -56,6 +57,7 @@ for k in list(os.environ):
 if os.path.isdir(TMP):
     shutil.rmtree(TMP, ignore_errors=True)
 os.makedirs(TMP)
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 STORE = os.path.join(TMP, "store")
 CACHE = os.path.join(TMP, "cache")
 os.environ.update({"PYTHONIOENCODING": "utf-8", "SNAPEYES_TICKET_SECRET": "wp4-ticket-secret-for-tests-0123456789abcdef", "STYLE_PLATE_CACHE": CACHE,
@@ -720,7 +722,6 @@ rc3 = subprocess.run([NODE, BATCH, REPO, bare], capture_output=True, text=True, 
 check("a copy without vercel.json is not a deployment tree: items 8, 9, 10 and 12 are skipped there (the registry suite's mutation copies carry no plates and no vercel.json)",
       json.loads(rc3.stdout.strip().splitlines()[-1])[bare] == [], rc3.stdout[-300:])
 
-shutil.rmtree(TMP, ignore_errors=True)
 fails = len([r for r in RESULTS if not r])
 print(f"\n{len(RESULTS) - fails} of {len(RESULTS)} passed" + (f"; {fails} FAILED" if fails else ""))
 sys.exit(1 if fails else 0)

@@ -28,6 +28,7 @@ requirements.txt; a mismatch elsewhere means recording again on the scratch code
     python test_goldens_universe.py   prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as v3uni."""
 import ast
+import atexit
 import base64
 import gc
 import hashlib
@@ -36,6 +37,7 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -74,6 +76,7 @@ for k in list(os.environ):
         if k not in ("SNAPEYES_REPO", "SNAPEYES_SP", "SNAPEYES_SCRATCH_Y3", "SNAPEYES_CALIB"):
             os.environ.pop(k)
 TMP = tempfile.mkdtemp(prefix="snapeyes_v3uni_")
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 STORE = os.path.join(TMP, "store")
 os.makedirs(STORE)
 os.environ.update({"PYTHONIOENCODING": "utf-8", "SNAPEYES_TICKET_SECRET": "wp8a-ticket-secret-for-tests-0123456789abcdef",

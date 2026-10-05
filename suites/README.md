@@ -51,6 +51,7 @@ Keep a copy of `suites/private/` somewhere safe outside the repository: the only
    `SNAPEYES_REPO` and takes its fake services from `wave-pv/tests/harness.py` (see `scripts/styles_tests/test_wp0.py`).
 2. Add `name:scripts/styles_tests:test_file.py` to `suites.list`.
 3. Add its check count to `baseline.json` in the same commit.
+4. A suite that makes a folder (a store and a plate cache, with LOCAL lines hundreds of MB of 4K plates) removes it itself: `atexit.register(shutil.rmtree, TMP, ignore_errors=True)` right after the `mkdtemp`, only that folder and nothing else, so that a green, a red and a crashed run leave nothing in the temp directory (a file the suite still holds open, a PIL image that was not closed, keeps Windows from deleting it; a run that is killed, for example by `SNAPEYES_SUITE_TIMEOUT`, may still leave its folder: 150 stale ones once filled the C: drive, OSError 28).
 
 Rules that the build enforces on the files of `scripts/` and `src/`: no written price (amounts in minor units, taken from
 `api/_lib/markets.py`), no en or em dash, Lithuanian and Hungarian strings by `scripts/check_texts.mjs`. This folder is not scanned

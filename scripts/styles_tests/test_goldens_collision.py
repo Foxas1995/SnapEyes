@@ -29,6 +29,7 @@ a mismatch elsewhere means recording again (step B: record_goldens_collision_rep
     python test_goldens_collision.py   prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as v3coll."""
 import ast
+import atexit
 import gc
 import hashlib
 import io
@@ -36,6 +37,7 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -77,6 +79,7 @@ for k in list(os.environ):
         if k not in ("SNAPEYES_REPO", "SNAPEYES_SP", "SNAPEYES_SCRATCH_Y3", "SNAPEYES_SCRATCH_DG1", "SNAPEYES_CALIB"):
             os.environ.pop(k)
 TMP = tempfile.mkdtemp(prefix="snapeyes_v3coll_")
+atexit.register(shutil.rmtree, TMP, ignore_errors=True)   # its own folder only (store, plate cache): gone at exit, green, red or crashed
 STORE = os.path.join(TMP, "store")
 os.makedirs(STORE)
 os.environ.update({"PYTHONIOENCODING": "utf-8", "SNAPEYES_TICKET_SECRET": "wp7a-ticket-secret-for-tests-0123456789abcdef",
