@@ -12,7 +12,12 @@ Reply: {ok, style, layout, layouts, format, count, width, height, image (JPEG b6
 eyes: one entry per eye, {eye, eye_id, cls, pupil, gate {lid, fill}}: what the eye's seal says (api/_lib/preview.py seal v2, the
 profile measured at /api/enhance): the eye id, the colour class, the pupil class and the ok of each restoration gate rule (true,
 false, or null = unknown: a version 1 seal, or a profile that was not measured; and null for an old page's plain irises). The page
-ignores it (the picker work package reads it); the compose event carries the set-level gate."""
+ignores it (the picker work package reads it); the compose event carries the set-level gate.
+A style of the v3 engine (the registry's engine module is not "legacy": api/_lib/styles) is drawn by that engine, one eye of the singles
+family so far, and only while its effective stage lets a customer see it (preview or live; a laboratory style is the admin page's:
+api/_lib/ops.py styles_lab). The picture is the engine's clean render with the same preview watermark, and the reply has the same fields
+(format is "artwork" or "wallpaper" as asked; canvas, the engine's own canvas id, is added). The seed of a picture is the bytes of the iris
+it was made from (the engine's step A), so the same restored iris gives the same picture every time."""
 import os, sys, base64
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -53,8 +58,9 @@ def _irises(body):
     return _irises_full(body)[0]
 
 def _irises_full(body):
-    """(squares, metas): the iris squares of a request and, per eye, what its seal said (preview.unseal_full's meta: v, kind, eye_id,
-    profile), or None for an old page's plain irises."""
+    """(squares, metas, raws): the iris squares of a request, per eye what its seal said (preview.unseal_full's meta: v, kind, eye_id,
+    profile; None for an old page's plain irises) and the bytes of the image as it was sent (opened from its seal, or decoded): the engine
+    of the v3 styles seeds from them and builds its own eye from them, so every byte is the very one the eye id was made from."""
     raw = body.get("sealed")
     sealed = isinstance(raw, list) and len(raw) > 0     # the sealed form wins whenever it is sent
     if not sealed:
@@ -68,12 +74,14 @@ def _irises_full(body):
     if sum(len(s) for s in raw) > MAX_TOTAL_B64:
         raise L.ClientError("Those images are too large together. Send each one at 1024 pixels.")
     metas = [None] * len(raw)
+    plains = None
     if sealed:
         try:
             opened = [P.unseal_full(s) for s in raw]
         except P.SealError as e:
             raise L.ClientError(P.refusal(e)) from None
-        raw = [base64.b64encode(plain).decode("ascii") for plain, _ in opened]
+        plains = [plain for plain, _ in opened]
+        raw = [base64.b64encode(plain).decode("ascii") for plain in plains]
         metas = [meta for _, meta in opened]
     out = []
     for s in raw:
@@ -85,7 +93,9 @@ def _irises_full(body):
         if side > WORK_SIDE:
             im = im.resize((WORK_SIDE, WORK_SIDE), L.Image.LANCZOS)
         out.append(im)
-    return out, metas
+    if plains is None:
+        plains = [base64.b64decode(s.split(",", 1)[1] if (s.strip().startswith("data:") and "," in s[:64]) else s) for s in raw]
+    return out, metas, plains
 
 def _eyes_reply(metas):
     """The reply's "eyes": what each eye's seal says (see the module text)."""
@@ -104,15 +114,54 @@ def _gate_code(style, n, metas):
     r = GATE.set_result([(m or {}).get("profile") for m in metas], rule)
     return "ok" if r["ok"] is True else ("unknown" if r["ok"] is None else r["first"]["why"])
 
+def _engine_text(value, limit=None):
+    """The customer's names or date as the v3 engine draws them: cleaned, the names as one lockup line, and without a letter the artwork font
+    cannot draw (it would print as an empty box; checkout refuses such a name, a free preview just leaves the letter out)."""
+    from _lib.styles import text as TX
+    parts = [p for p in (TX.clean("".join(ch for ch in n if not TX.unsupported(ch))) for n in TX.split_names(value)) if p]
+    out = TX.lockup(parts)
+    return out[:limit] if limit else out
+
+def _engine_canvas(style, n, fmt_in):
+    """(engine entry, the canvas id, the legacy format word) of a request for a v3 style: the format asked ("artwork", "wallpaper" or a canvas id
+    of the engine) read as a canvas the engine draws, else its own default."""
+    eng = catalogue.engine_for(style, n)
+    canvases = eng["canvases"]
+    canvas = fmt_in if fmt_in in canvases else ("9:19.5" if fmt_in == "wallpaper" and "9:19.5" in canvases else canvases[0])
+    return eng, canvas, ("wallpaper" if canvas == "9:19.5" else "artwork")
+
+def _compose_engine(body, style, n, metas, raws, layouts, clean):
+    """One eye of a v3 style, drawn by the engine of api/_lib/styles: the clean render, then the preview watermark (unless a signed unlock
+    ticket says the file is paid for: nothing mints one yet), the colour QA on the graded frame, the event and the reply of compose()."""
+    if n != 1:
+        raise L.ClientError("That style draws one eye.")
+    from _lib import styles as ST
+    from _lib.styles import core as SCORE
+    _eng, canvas, word = _engine_canvas(style, n, body.get("format"))
+    meta = metas[0] if isinstance(metas[0], dict) else {}
+    eye = SCORE.Iris(raws[0], "compose", max_side=WORK_SIDE, eye_id=meta.get("eye_id"))
+    spec = {"style": style, "layout": layouts[0], "eyes": n, "canvas": canvas, "names": _engine_text(body.get("names"), 60),
+            "date": _engine_text(body.get("date"), 20)}
+    pv = ST.preview([eye], spec, size=PREVIEW_SIZE, watermark=not clean)
+    qa = L.colour_qa("compose", graded=pv.graded[0])
+    E.record("compose", style=style, eyes=n, layout=layouts[0], format=word, clean=bool(clean), qa_ok=bool(qa.get("ok")),
+             gate=_gate_code(style, n, metas))
+    return {"ok": True, "style": style, "layout": layouts[0], "layouts": list(layouts), "format": word, "canvas": canvas,
+            "count": n, "width": pv.img.size[0], "height": pv.img.size[1], "image": L.pil_to_b64(pv.img, "JPEG", 90),
+            "styles": list(catalogue.previewable_ids(n)), "qa": qa, "eyes": _eyes_reply(metas)}
+
 def compose(body):
     if not isinstance(body, dict):
         raise L.ClientError("Send a JSON object.")
-    ims, metas = _irises_full(body)
+    ims, metas, raws = _irises_full(body)
     n = len(ims)
     style = _choice(body.get("style"), catalogue.previewable_ids(n), catalogue.DEFAULT_STYLE)
     layouts = catalogue.layouts_for(style, n)
     layout = _choice(body.get("layout"), layouts, None) or layouts[0]
     fmt = _choice(body.get("format"), L.FORMATS, L.FORMATS[0])
+    if not catalogue.is_legacy(style):
+        # a style of the v3 engine (previewable_ids lists only those a customer may see and whose engine is in the repository)
+        return _compose_engine(body, style, n, metas, raws, layouts, L.check_ticket(body.get("unlock"), kind="unlock"))
     # the watermark is the only thing separating a preview from the product, so the caller does not get to
     # turn it off: only a server-signed unlock ticket can, and nothing mints one yet
     clean = L.check_ticket(body.get("unlock"), kind="unlock")
