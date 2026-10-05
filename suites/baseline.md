@@ -225,8 +225,8 @@ The library, by family (plates / usable / 1K MiB of the usable ones / 4K MiB of 
 | P-CX-JET, P-CX-RIVER | 70 | 35 | 14.07 | 0 | collision plates are used at 1K only |
 | **all** | **221** | **169** | **36.99** | **429.95** | |
 
-Storage for V6: the first release's three families (CLOUD, CROWN, SPIRAL) are **369.8 MiB** of 4K files (`upload_plates.py --release1`, a dry run
-prints it); all families together 430 MiB. The plan's estimate was 415 MB for release 1 and 675 MB as an upper bound: the engines' own filters
+Storage for V6: the first release's three families (CLOUD, CROWN, SPIRAL) were **369.8 MiB** of 4K files when this section was written; the review of WP8A added a fourth, DUST (Universe Echo's tall canvas,
+section 14), so the first release is 109 plates and **413.5 MiB** (`upload_plates.py --release1`, a dry run prints it); all families together 449 MiB (430 before the DUST rule of section 14). The plan's estimate was 415 MB for release 1 and 675 MB as an upper bound: the engines' own filters
 decide which CLOUD plates are ever fetched at 4K, so the figure is lower. The project's real storage plan is still unread (V6).
 
 V2, what the explicit entries settle and what they do not: with one `functions` entry per file, no file matches two patterns, so the question
@@ -535,7 +535,7 @@ dark brown iris is darker than any real one). Equal pictures carry the real-eye 
 have been a silent substitution after payment. The port lets `PlateUnavailable` and `NoPlate` through (the step runner retries once and then holds the order); the build of the family
 has no `except Exception` around a plate (a check of `v3uni`). (2) The Echo look on the wall canvas picks ANY of the seven DUST plates for its accent, and at 1024 px that is the 2k mip
 of the 4K file, but the baked registry named a 4K file only for the four DUST plates that Deep Field picks: the bake rule `needs_4k` now says all seven (+19 MiB of 4K files for storage,
-449 MiB in all, none of it in the first release: DUST is a laboratory family). (3) The pick of a spiral is an index into the candidate list and the baked registry is sorted by id while
+449 MiB in all; the review of WP8A moved the family into the first release's upload, see the paragraph at the end of this section). (3) The pick of a spiral is an index into the candidate list and the baked registry is sorted by id while
 the prototype's registry file was not: the order is kept in `plates.SPIRAL_ORDER` (the nine crisp spirals with a void of 0.20 R or more; the replay of Vortex proves it).
 
 **Suite.** `v3uni` 102 checks (10 LOCAL lines with `SNAPEYES_SCRATCH_Y3` and `SNAPEYES_CALIB`), 12 to 14 minutes on a machine shared with other builders (741 s and 835 s in the last two runs; the replay about 170 s of it): the family's files and
@@ -550,6 +550,19 @@ whole folder when it is not a git checkout (an export), and a suite writing a te
 list comes from `git ls-files` and this never happened); `r3` check S10 (12 concurrent proven withdrawal statements: at most `ORDER_DAY_MAX` taken, the rest 429) saw all twelve answered 429 under the load of three
 suites: **a race in the limiter's count, not touched by this work** (`r3` alone: 48 of 48, and green in the second full run). Listed here as a flake, not fixed (it is the withdrawal limiter's, and a retry would hide it):
 the twelve statements each write a marker and then count the markers, so under a heavy load all twelve can count more than five.
+
+**Review of WP8A (fixer, 2026-10-05).** One major, confirmed: Echo on the tall canvas (9:19.5, the registry's `wallpaper`) lays a DUST accent plate over the lower third, its side 2.6 canvas widths, so even a 1024 px
+preview reads the 2k mip of a 4K file from storage, and the first release's upload skipped the family (`release1` 0): a raised `solo.universe` answered that canvas with a bare `PlateUnavailable`, HTTP 500 (2 of the 43
+registry combinations at 1024 px: `wallpaper` and `9:19.5` with one eye). Fixed twice. (1) `P-UV-DUST` is `release1` 1 in `scripts/bake_plates_registry.py` and in the baked registry (a rebake from the scratch libraries differs
+from the committed file in that one line): the first release's upload is four families, 109 plates, 413.5 MiB (the plan's estimate was 415 MB), run into a local folder with the real command: 109 uploaded, 0 wrong; the
+laboratory families (FLAME, MILKY) stay out. (2) `/api/compose` answers a `PlateUnavailable` of a one-style preview 503 `plate_retry` (retry true, `Retry-After` 20 s like the master's first plate fault, a sentence in four
+languages, the style in the body so the error event names it, a log line with the plate id, never a picture without the plate) and no longer a 500. End to end on the export: with an empty store the wall canvas and `9:19.5` at
+1024 px answer 503 and the square canvas is drawn (no 4K file); with the store the release-1 upload made, the wall canvas is drawn (473 x 1024, 3.2 s). `v3compose` gains four checks (section 6c), `v3plates` 108 (the first
+release's family set and size, 109 plates in the dry run). The stale docstring of the wall accent (`Any plate problem: no accent`) now says what the code does, through a new edit line of `port_universe.py` (`--check`: all eleven files
+same). Not changed, as the reviewer said no action was needed: the loose wall-clock gates of T15 and T15b (a flake on a shared machine is worse than a loose gate; the real numbers are in this section), the determinism test's missing
+SIMD proxy (the reviewer ran one: 1 pixel of 174,592 by 1 level, inside the C11 rule), `engine_layout`'s KeyError for an impossible layout and eye count (compose validates first), the pair's round 2c seam (HOLD, lab, WP19).
+
+**Full set of the fix**, exports by `git archive` of the branch tip plus this fix (the private fixtures, `SNAPEYES_SCRATCH_Y3`, and `SNAPEYES_CALIB` = `wave-dg1/fixtures` so that the LOCAL lines of `v3uni` ran: 10 of 10 ok), three suites at a time. On `9e0bdb4`: 31 of 32, every count equal to `baseline.json`; the one red was `v3reveal`, whose own LOCAL part reads another calibration folder than the dg1 fixtures and finds no real eye (`max()` of an empty list: not this fix; alone without the variable 72 of 72, as in the review). On `021cfab`: 29 of 32 with `v3reveal` again, `v3wp0` (a `ConnectionAbortedError` of the cpu probe client under the load of three suites, a Windows socket race: alone 93 of 93) and `v3coll` (105 of 106: WP7B's layout sweep check asked for 20 combinations when the registry of that commit offers 18, fixed by WP7B in `a2a3010`; nothing to do with plates or the preview). On `0ffc5b7` the suites this fix can touch, together: `v3compose` 114 (110 plus the four of section 6c), `v3plates` 108, `v3reg` 172, `v3wp0` 93, `v3steps` 150, `v3single` 115, `v3uni` 102 and 10 of 10 LOCAL: 7 of 7 green. The registry hash moved from `870892880cf3` to `7b1b4069399b` in WP7B's `dce63a9` (the trio's cap), not in this fix.
 
 ## 15. The collision family, step B (WP7B, 2026-10-05): the seed from the eye ids, the plan freeze, the Trio delta and what moved
 
