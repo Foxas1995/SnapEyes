@@ -1,7 +1,9 @@
 #!/bin/bash
 # usage: run_all.sh <spdir> <repo> <outdir> [name ...]
 # Runs the suites of suites.list three at a time (no names = every suite) in the prepared tree <spdir> (mksp.py), against the
-# checkout <repo>. Results: <outdir>/<name>.out and <name>.exit ("<name> EXIT <code>"; 77 = skipped), then all.done.
+# checkout <repo>. Results: <outdir>/<name>.out and <name>.exit ("<name> EXIT <code>"; 77 = skipped), <name>.secs (the seconds it took), then all.done.
+# A suite is stopped after SNAPEYES_SUITE_TIMEOUT seconds (default 3600: v3coll takes 15 to 20 minutes alone and more with three suites and another
+# builder's process on one machine, v3uni 12 to 14; a timeout is exit 124, RED, and says so in the table).
 export PYTHONIOENCODING=utf-8
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ $# -lt 3 ] || [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
@@ -22,7 +24,9 @@ run() {
     echo "MISSING: $dir/$script is not in the prepared tree" > "$OUT/$name.out"
     echo "$name EXIT 78" > "$OUT/$name.exit"; return
   fi
-  (cd "$SP/$dir" && timeout 1800 python "$script" > "$OUT/$name.out" 2>&1; echo "$name EXIT $?" > "$OUT/$name.exit")
+  t0=$(date +%s)
+  (cd "$SP/$dir" && timeout "${SNAPEYES_SUITE_TIMEOUT:-3600}" python "$script" > "$OUT/$name.out" 2>&1; echo "$name EXIT $?" > "$OUT/$name.exit")
+  echo $(( $(date +%s) - t0 )) > "$OUT/$name.secs"
 }
 export -f run
 if [ $# -gt 0 ]; then

@@ -44,10 +44,10 @@ duration.watchdog_total plus one step, with no page open.
 
 Holds (Hold, raised to the caller, which writes review.json and tells the owner; the order is never made in another style): style_step_too_big,
 style_not_priced, engine_skew (the plan was made under another ENGINE_V), class_changed (the master's colour class is not the preview's: never
-another palette), style_step_failed (the third kill, the second identical exception), plate_unavailable (the second plate fault), no_engine,
+another palette), pupil_changed (the master's pupil class is not the preview's: another geometry), style_step_failed (the third kill, the second identical exception), plate_unavailable (the second plate fault), no_engine,
 eye_changed (a master was made from another preview than the plan's: another seed), picture_drift (the picture drew another seed, other plates, another design
-or other frozen choices than the plan names: never delivered), design_changed (a choice the plan froze contradicts the eyes of the master: the collision family
-refuses it, never another picture).
+or other frozen choices than the plan names: never delivered), design_changed (a choice the plan froze contradicts the eyes of the master, or the plan pass itself
+refuses the eyes of the draft, a bar pupil: the collision family refuses it, never another picture).
 
 A style of the legacy engine is one art step as well (the executor calls the legacy master compose with the very body it always had: the artwork's
 file name is that function's own digest, unchanged); a style of the v3 engine is drawn here by its family's preview() at 4096 px and stored as
@@ -90,6 +90,7 @@ WORDS_RAW_MAX = 1000                 # characters of one customer text field tha
 WORDS_PARTS_MAX = 16
 RECORD_MAX = 48 << 10                # a record is read back with store.get_json (64 KB): keep well under
 INDEX = "cleanup/style"              # one marker per order that has a style folder: the clean-up's index (api/_lib/cleanup.py)
+PUPIL_CLASSES = ("round", "slit", "bar")          # styles/pupil.py CLASSES (not imported: this module loads no numpy)
 
 
 class Hold(Exception):
@@ -260,8 +261,9 @@ def _opts(spec):
 
 
 def _eye_facts(eyes):
-    """[{cls, rgb, pad}] of the sealed profiles the eyes carry (None where an eye has none): the colour class the preview was drawn for, the ring colour
-    in tenths of a level and the crop padding in thousandths, so that the master can say how far it drifted (class and colour, and the pad it was cut with)."""
+    """[{cls, rgb, pad, pupil, aspect}] of the sealed profiles the eyes carry (None where an eye has none): the colour class the preview was drawn for, the ring
+    colour in tenths of a level, the crop padding in thousandths and the pupil class (round, slit or bar) with its aspect in thousandths, so that the master can say
+    how far it drifted (class and colour, the pad it was cut with, the pupil: a class that changed is a geometry that changed, WP7B review)."""
     out = []
     for e in eyes or []:
         prof = (e or {}).get("profile")
@@ -270,6 +272,11 @@ def _eye_facts(eyes):
             row = {"cls": prof["cls"], "rgb": [int(x) for x in st["rgb"][:3]]}
             if isinstance(prof.get("pad"), int) and not isinstance(prof.get("pad"), bool):
                 row["pad"] = prof["pad"]
+            pup = prof.get("pupil")
+            if isinstance(pup, dict) and pup.get("cls") in PUPIL_CLASSES:
+                row["pupil"] = pup["cls"]
+                if isinstance(pup.get("aspect"), int) and not isinstance(pup.get("aspect"), bool):
+                    row["aspect"] = pup["aspect"]
             out.append(row)
         else:
             out.append(None)
@@ -310,6 +317,12 @@ def make_plan(spec, eyes=None, factor=None, irises=None):
             raise Hold("no_engine", str(e)) from None
         except PL.NoPlate as e:
             raise Hold("no_engine", f"the plate library has no plate for this style at plates version {CT.PLATES_VERSION}: {e}") from None
+        except ValueError as e:
+            if getattr(e, "why", None) in ("design_changed", "bar_pupil"):
+                # the plan pass of a family that decides from the pixels refuses these eyes (the collision family: a bar pupil, which checkout does not refuse yet): a
+                # deterministic refusal, the same answer at every retry. A hold for the owner, never a bare exception that the chain retries as busy (review of WP7B)
+                raise Hold("design_changed", f"{type(e).__name__}: {str(e)[:220]}") from e
+            raise
         try:
             key = CO.cost_key(eng, "dark", opts.get("look"))
         except CO.NoCost:
@@ -470,8 +483,10 @@ def index_style(order):
 def plan_irises(ctx, eyes):
     """The eyes of the order as Iris objects for the plan pass (make_plan(irises=)), or None when the style's family does not need them or they cannot be
     read. A paid order: the clean 1024 px preview the customer approved, from the draft (its sha256 checked; the id is the eye's sealed id, so the seed is the
-    preview's). A lab test order has no draft: the 4096 px master, shrunk to the preview's size. None, never an exception: a plan made without the pixels
-    is a plan whose choices the master decides (plan["decided"] False), which the artwork's record then says."""
+    preview's). A lab test order has no draft: the 4096 px master, shrunk to the preview's size. None when they are not there, do not match the draft's hash
+    or cannot be decoded (facts about the order, the same at every retry): a plan made without the pixels is a plan whose choices the master decides
+    (plan["decided"] False), which the artwork's record then says. A storage error is not such a fact and is raised (store.StorageError: the caller asks again,
+    nothing is stored)."""
     from .. import styles as ST
     if not ST.wants_eyes({"style": ctx.spec.get("style"), "eyes": ctx.n}):
         return None
@@ -493,7 +508,11 @@ def plan_irises(ctx, eyes):
             eid = (e or {}).get("eye_id")
             out.append(SCORE.Iris(raw, f"plan{i}", max_side=1024, eye_id=eid if SD.is_eye_id(eid) else None))
         return out
-    except (store.StorageError, OSError, SyntaxError, ValueError) as e:
+    except (OSError, SyntaxError, ValueError) as e:
+        # an image that cannot be decoded is the same at every retry (the bytes are the ones whose sha256 the draft names): the plan is made without the pixels. A storage
+        # error is NOT that: it is a moment, not a fact about the order, and a plan stored without the pixels is stored for good (upsert=False: the first writer wins and
+        # the master then decides from its own eyes, which is exactly what the plan freeze exists to prevent). It propagates (store.serve answers 503 storage_busy, the
+        # chain asks again) and nothing is stored (review of WP7B)
         _log(f"order {ctx.order}: the pixels for the plan pass are not readable ({type(e).__name__}): the plan is made without them")
         return None
 
@@ -549,6 +568,10 @@ HOLDS = {
                     "laboratory) and, if you accept it, have the order's plan made again (delete its style/plan.json); then clear the review"),
     "class_changed": ("the 4096 px master of an eye has another colour class than its preview (the palette would not be the approved one)",
                       "Look at the preview and the master in the admin panel; render the eye again if the master is wrong, or write to the customer"),
+    "pupil_changed": ("the 4096 px master of an eye has another pupil class (round, slit or bar) than its preview: the irises would be placed and the pupils drawn "
+                      "for other pupils than the ones the customer approved",
+                      "Look at the preview and the master in the admin panel (the step's drift line names both classes and their aspects); render the eye again if the "
+                      "master is wrong, or write to the customer"),
     "style_step_failed": ("a master step was killed three times, or raised the same exception twice",
                           "Look at the Vercel log of /api/order and /api/admin around the order's time (memory? time?); fix the cause; then clear the "
                           "review"),
@@ -564,8 +587,8 @@ HOLDS = {
                       "Look at the plan (the admin order detail), the engine version of the deployment and the step's event; roll back the deployment or "
                       "delete the plan so that it is made again; then clear the review"),
     "design_changed": ("the eyes of the master contradict what the plan froze before the render (the plan draws the infinity overlap and the master's pupils reach "
-                       "past the limit, a bar pupil where the preview had a round one, a front order that does not fit): the picture would not be the one the customer "
-                       "approved",
+                       "past the limit, a bar pupil where the preview had a round one, a front order that does not fit), or the eyes of the order's own draft are eyes "
+                       "this family does not draw (a bar pupil: the plan cannot be made): the picture would not be the one the customer approved",
                        "Look at the plan (its `frozen` block in the admin order detail) and at the eye masters; render the eye again if the master is wrong, or write "
                        "to the customer; delete the plan (style/plan.json) only if you accept the picture the master's eyes now draw; then clear the review"),
     "plan_mismatch": ("the plan stored for this order is for another style or another number of eyes than the order's own record says (it was changed "
@@ -702,6 +725,15 @@ def _exec_legacy(ctx, plan, step, rerun):
     return Out(res, out, inputs=_inputs(ctx, plan, recs))
 
 
+def _pupil_measure(eye):
+    """The pupil analysis of a master's eye as the sealed profile's was made (styles/pupil.py analyse on the tight canonical 256 grade, resolution independent), so
+    its class and aspect are comparable with the profile's. The grade is the iris's own cache, which the ring colours read already."""
+    from . import core as SCORE
+    from . import pupil as PUP
+    sq, _ = SCORE._tight(eye.graded(SCORE.REF_SIDE))
+    return PUP.analyse(sq)
+
+
 def _check_drawn(plan, pv):
     """The picture is the plan's: the seed it was drawn from and the plates it drew from are the ones the plan names (when it names them). The seed is a
     function of the plan's eye ids and seed key, so only a change of the code without a new ENGINE_V or a record changed by hand can make them differ:
@@ -776,6 +808,18 @@ def _exec_engine(ctx, plan, step, rerun):
         if want["cls"] != st["class"]:
             raise Hold("class_changed", f"eye {i + 1}: the master's colour class is {st['class']}, the preview's was {want['cls']} (the ring colour "
                        f"moved {d_rgb:.1f} levels): the picture would take another palette than the one the customer approved")
+        if want.get("pupil"):
+            # the second drift that changes geometry (spec 2.4, profile source): the pupil class. The collision family places the irises by how far the pupils reach and
+            # refuses a bar, Powder and Splash draw the pupil's own hole; the preview was drawn for the class the sealed profile names. Measured as the preview's was: pupil.analyse
+            # on the tight canonical grade of the master
+            got = _pupil_measure(eye)
+            was_a = None if want.get("aspect") is None else round(want["aspect"] / 1000.0, 3)
+            row["pupil"] = [want["pupil"], got["cls"]]
+            row["aspect"] = [was_a, round(float(got["aspect"]), 3)]
+            if got["cls"] != want["pupil"]:
+                was_txt = "unknown" if was_a is None else "%.2f" % was_a
+                raise Hold("pupil_changed", f"eye {i + 1}: the master's pupil is {got['cls']} (aspect {float(got['aspect']):.2f}), the preview's was {want['pupil']} "
+                           f"(aspect {was_txt}): the picture would be drawn for other pupils than the ones the customer approved")
     names, date = master_words(ctx.spec)
     fam_spec = {"style": plan["style"], "layout": plan["layout"], "eyes": n, "canvas": plan.get("canvas"), "names": names, "date": date, "opts": plan.get("opts"),
                 "pv": plan.get("pv"), "frozen": plan.get("frozen") or None}

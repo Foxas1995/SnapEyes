@@ -65,8 +65,11 @@ def local(name, ok, detail=""):
     print(("LOCAL ok   " if ok else "FAIL LOCAL ") + name + ("" if ok else f"   <- {str(detail)[:700]}"), flush=True)
 
 
+T_START = time.time()
+
+
 def section(title):
-    print(f"\n== {title}", flush=True)
+    print(f"\n== {title}   [{time.time() - T_START:.0f} s since the start]", flush=True)
 
 
 for k in list(os.environ):
@@ -939,6 +942,100 @@ check("a paid order's plan is made from its draft: the clean previews (their sha
       plan4["decided"] is True and plan4["frozen"] == ref4["frozen"] and plan4["seed"] == ref4["seed"] and plan4["eye_ids"] == eids4 and plan4["frozen"]["hairline"] == [0]
       and plan5["decided"] is False and plan5["frozen"] == {} and plan5["seed"] is None and plan5["eye_ids"] == eids4
       and {k: v for k, v in plan4.items() if k != "created_at"} == plan4_for, (plan4.get("frozen"), ref4["frozen"], plan5.get("decided")))
+
+# ---- the review of WP7B: a refusal of the plan pass is a hold, a storage error is not a plan, the options have one seed
+order6, order7, order10 = "261005-wp7b000006", "261005-wp7b000007", "261005-wp7b000010"
+
+
+def put_draft(order_, raws_):
+    ids_ = []
+    for i_, raw_ in enumerate(raws_, 1):
+        sha_ = hashlib.sha256(raw_).hexdigest()
+        ids_.append(sha_[:16])
+        store.put(f"orders/{order_}/draft/preview_{i_}.jpg", raw_, "image/jpeg", upsert=True)
+        store.put(f"orders/{order_}/draft/eye_{i_}.json", store.json_bytes({"eye_id": ids_[-1], "profile": None, "preview": {"path": f"orders/{order_}/draft/preview_{i_}.jpg", "type": "image/jpeg",
+                                                                                                                         "side": 512, "bytes": len(raw_), "sha256": sha_}}), "application/json", upsert=True)
+    return ids_
+
+
+def small_jpeg(raw_, side=512):
+    b_ = io.BytesIO()
+    Image.open(io.BytesIO(raw_)).convert("RGB").resize((side, side), Image.LANCZOS).save(b_, "JPEG", quality=92)
+    return b_.getvalue()
+
+
+bar_raw = SI.png_bytes_of(kind="amber", pupil="bar", seed=5)
+put_draft(order6, [small_jpeg(bar_raw), small_jpeg(FIX["blue"])])
+held_bar = [raises(lambda: STP.create_plan(STP.Ctx(order6, spec4, eyes_from="draft")), STP.Hold), raises(lambda: STP.plan_for(STP.Ctx(order6, spec4, eyes_from="draft")), STP.Hold)]
+held_bar.append(raises(lambda: STP.make_plan(spec4, [{"eye_id": i_, "profile": None} for i_ in ("a" * 16, "b" * 16)],
+                                             irises=[C.Iris(bar_raw, "bar", max_side=1024, eye_id="a" * 16), EYEOBJ["blue"]]), STP.Hold))
+n_deliv6 = len(DELIVERED)
+held_adv = raises(lambda: STP.advance(STP.Ctx(order6, spec4, by="test", eyes_from="draft", finish=fin)), STP.Hold)
+check("a bar pupil in the draft of a paid order is a hold, not a bare exception: the plan pass refuses it (engine.NotOffered, why bar_pupil) and make_plan, plan_for, create_plan and the master's advance "
+      "all answer Hold design_changed (the caller writes review.json and tells the owner), nothing is stored, nothing is delivered; the deterministic refusal is never a busy retry",
+      all(isinstance(h_, STP.Hold) and h_.reason == "design_changed" and "bar" in h_.note for h_ in held_bar + [held_adv]) and not store.exists(f"orders/{order6}/style/plan.json")
+      and len(DELIVERED) == n_deliv6 and STP.hold_text("design_changed", order6) and "bar pupil" in STP.HOLDS["design_changed"][0], (held_bar, held_adv))
+
+put_draft(order7, [small_jpeg(FIX["blue"]), small_jpeg(FIX["brown"])])
+real_get = store.get
+flaky = {"left": 1}
+
+
+def flaky_get(path_, *a_, **k_):
+    if path_.endswith("draft/preview_2.jpg") and flaky["left"] > 0:
+        flaky["left"] -= 1
+        raise store.StorageError("get: ConnectionError")
+    return real_get(path_, *a_, **k_)
+
+
+with mock.patch.object(store, "get", flaky_get):
+    hiccup = raises(lambda: STP.create_plan(STP.Ctx(order7, spec4, eyes_from="draft")), store.StorageError)
+    stored_after = store.exists(f"orders/{order7}/style/plan.json")
+    plan7 = STP.create_plan(STP.Ctx(order7, spec4, eyes_from="draft"))
+check("a storage error while the plan pass reads the draft's previews is a storage error, not a plan: create_plan raises it (store.serve answers 503 storage_busy, the chain asks again) and stores "
+      "NOTHING; the next call reads them and stores the whole plan (decided, the choices frozen). A plan made without the pixels is stored for good (upsert=False, the first writer wins) and the master "
+      "would then decide from its own eyes, which is what the plan freeze exists to prevent; the facts about the order (a hash that does not match, an image that cannot be decoded) still make the "
+      "plan of the profiles' alone",
+      isinstance(hiccup, store.StorageError) and not stored_after and plan7["decided"] is True and plan7["frozen"] and store.exists(f"orders/{order7}/style/plan.json"), (hiccup, stored_after, plan7.get("decided")))
+put_draft(order10, [small_jpeg(FIX["blue"]), small_jpeg(FIX["brown"])])
+store.put(f"orders/{order10}/draft/preview_2.jpg", b"not an image", "image/jpeg", upsert=True)
+d10 = store.get_json(f"orders/{order10}/draft/eye_2.json")
+d10["preview"]["sha256"] = hashlib.sha256(b"not an image").hexdigest()
+store.put(f"orders/{order10}/draft/eye_2.json", store.json_bytes(d10), "application/json", upsert=True)
+plan10 = STP.create_plan(STP.Ctx(order10, spec4, eyes_from="draft"))
+check("... an image that cannot be decoded (its hash is the draft's) is the same at every retry: the plan of the profiles' alone (decided False, nothing frozen), as a hash that does not match",
+      plan10["decided"] is False and plan10["frozen"] == {} and plan10["eye_ids"][0] == plan4["eye_ids"][0], (plan10.get("decided"), plan10.get("frozen")))
+
+three_ = [EYEOBJ["blue"], EYEOBJ["brown"], EYEOBJ["green"]]
+five_ = [EYEOBJ[n_] for n_ in e5_]
+
+
+def plan_with(style_, eyes_, **kw_):
+    return CX.resolve(dict({"style": style_, "eyes": len(eyes_), "opts": {}}, **kw_), None, eyes=eyes_)
+
+
+pair_ = {tuple(sorted(o_.items())): plan_with("duo.kiss_collision", two_, opts=o_)["seed"] for o_ in ({}, {"swap": False}, {"rotate": 0}, {"rotate": 3}, {"look": "echo"}, {"swap": None, "rotate": None, "look": None})}
+trio_ = {tuple(sorted(o_.items())): plan_with("grp.collision", three_, layout="trio", opts=o_)["seed"]
+         for o_ in ({}, {"swap": True}, {"swap": False}, {"rotate": 0}, {"rotate": 3}, {"rotate": 6})}
+rot_ = {r_: plan_with("grp.collision", three_, layout="trio", opts={"rotate": r_}) for r_ in (1, 2, 4, 5, 7)}
+fam_ = [plan_with("grp.collision", five_, opts=o_)["seed"] for o_ in ({}, {"rotate": 2, "swap": True})]
+trio_pix = {r_: hashlib.sha256(np.asarray(CX.preview(three_, {"style": "grp.collision", "eyes": 3, "layout": "trio", "opts": {"rotate": r_}}, size=96).img).tobytes()).hexdigest() for r_ in (0, 1, 3, 4)}
+check("one choice has one seed (the review of WP7B: the seed key holds the options in the form that decides the picture, as the universe family's does): a pair's seed is the same whether the buyer's "
+      "options are {}, swap false, rotate 0 or 3, a look, or all unset; a trio's the same for {}, swap, rotate 0, 3 and 6; a family of five's for any swap or rotate; the options that do change the picture still "
+      "change the seed (a pair's swap; a trio's rotate 1 and 2, and 4, 5 and 7 are 1 and 2: the same seed and the very same picture), and rotate 3 is the picture of rotate 0",
+      len(set(pair_.values())) == 1 and len(set(trio_.values())) == 1 and fam_[0] == fam_[1]
+      and plan_with("duo.kiss_collision", two_, opts={"swap": True})["seed"] != pair_[()] and len({rot_[1]["seed"], rot_[2]["seed"], next(iter(trio_.values()))}) == 3
+      and rot_[1]["seed"] == rot_[4]["seed"] == rot_[7]["seed"] and rot_[2]["seed"] == rot_[5]["seed"] and trio_pix[1] == trio_pix[4] and trio_pix[0] == trio_pix[3] and trio_pix[0] != trio_pix[1]
+      and rot_[1]["seed_key"]["opts"] == {"swap": None, "rotate": 1, "look": None} and plan_with("duo.kiss_collision", two_, opts={"swap": True})["seed_key"]["opts"] == {"swap": True, "rotate": None, "look": None},
+      (pair_, trio_, fam_, {k_: v_["seed_key"]["opts"] for k_, v_ in rot_.items()}))
+k_def = CX.default_key("infinity", 2)
+k_spelled = dict(k_def, opts={"swap": False, "rotate": 0, "look": None})
+check("... and a key handed to render() is put in the same form: swap false and rotate 0 draw the seed of the unset options, swap true another one; effective_opts is idempotent",
+      seed_of(two_, key=k_def) == seed_of(two_, key=k_spelled) and seed_of(two_, key=k_def) != seed_of(two_, key=dict(k_def, opts={"swap": True, "rotate": None, "look": None}))
+      and CX.effective_opts("trio", CX.effective_opts("trio", {"rotate": 4})) == CX.effective_opts("trio", {"rotate": 4}) == {"swap": None, "rotate": 1, "look": None}
+      and CX.effective_opts("infinity", {"swap": 1}) == {"swap": None, "rotate": None, "look": None} and CX.effective_opts("stack", {"swap": True})["swap"] is True
+      and CX.effective_opts("trio", {"rotate": True})["rotate"] is None and CX.effective_opts("trio", {"rotate": 9})["rotate"] is None and CX.effective_opts("trio", None)["rotate"] is None,
+      (CX.effective_opts("trio", {"rotate": 4}),))
 
 # ---- the layouts the registry offers
 sweep_bad, sweep_n = [], 0

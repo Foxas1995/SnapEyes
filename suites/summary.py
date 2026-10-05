@@ -66,6 +66,19 @@ def main(argv):
     green = sum(1 for r in rows if r[5] == "GREEN")
     skipped = [r[0] for r in rows if r[5] == "SKIPPED"]
     print(f"\n{green} of {len(rows)} green" + (f", {len(skipped)} skipped" if skipped else "") + (f", {bad} NOT GREEN" if bad else ""))
+    limit = int(os.environ.get("SNAPEYES_SUITE_TIMEOUT") or 3600)
+    secs = {}
+    for r in rows:
+        try:
+            secs[r[0]] = int(read(os.path.join(res, r[0] + ".secs")).strip())
+        except ValueError:
+            pass
+    stopped = [r[0] for r in rows if r[1] == 124]
+    if stopped:
+        print(f"TIMEOUT: {', '.join(stopped)} was stopped by the time limit of {limit} s (exit 124), which is a red suite, not a slow one: SNAPEYES_SUITE_TIMEOUT raises it.")
+    slow = sorted(((v, k) for k, v in secs.items() if v * 2 > limit), reverse=True)
+    if slow:
+        print("SLOW: " + ", ".join(f"{k} {v} s" for v, k in slow) + f" (more than half of the {limit} s limit: a loaded machine can push them over it)")
     if skipped:
         print(f"INCOMPLETE: {', '.join(skipped)} did not run (the private image fixtures are missing: suites/README.md, "
               "SNAPEYES_FIXTURES)." + (" Accepted by --allow-skipped." if allow_skipped else

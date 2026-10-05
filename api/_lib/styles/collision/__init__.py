@@ -65,6 +65,7 @@ from . import jetplates as JP
 from . import scenes as CL
 
 DESIGNS = ("infinity", "kiss", "trio", "family", "chain")                  # the prototype's NAMES
+PAIR_DESIGNS = ("infinity", "kiss", "stack")                                # what a pair is drawn as (stack: the infinity's stacked lens, design_used only)
 SIZES = (64, 4096)                                                          # the long side a render may ask for
 NAMES_MAX = 8
 E1_BAND_MAX = 0.04                                                          # the owner's budget: the seam band (support of the blend, as T1 pads it) per iris
@@ -210,20 +211,35 @@ def _opts3(spec):
     return spec.get("opts") if isinstance(spec.get("opts"), dict) else {}
 
 
+def effective_opts(design, opts):
+    """The buyer's options in the form that DECIDES the picture, which is the form the seed key holds (the review of WP7B: one choice has one seed, however a caller
+    spells it; the universe family's seed_key does the same). None is the default, and an option that means nothing for this design is the default as well:
+    swap is True only for a pair (design infinity, kiss or stack) that is swapped (it exchanges the two irises); rotate is the trio's shift of the roles, modulo three,
+    0 being the default (every other design draws the same picture whatever it is, and rotate counts from 0 to 7 as the page's request allows); look means nothing
+    here (no collision style has a look). So {} and {swap: False}, {rotate: 0} and {rotate: 3} on a trio, a swap asked of a trio or a rotate asked of a pair are one
+    seed each. design is the design DRAWN (the prototype's name: a trio drawn as a diagonal of three is the family design)."""
+    o = opts if isinstance(opts, dict) else {}
+    rot = o.get("rotate")
+    swap = True if (design in PAIR_DESIGNS and o.get("swap") is True) else None
+    rotate = ((rot % 3) or None) if (design == "trio" and isinstance(rot, int) and not isinstance(rot, bool) and 0 <= rot <= 7) else None
+    return {"swap": swap, "rotate": rotate, "look": None}
+
+
 def seed_key(style, design, layout, clean=False, bg="dark", opts=None, pv=None):
     """The plan's seed key of a collision artwork (seeds.py names its fields): what the picture is seeded from (with the eyes' ids) and what makes two plans
     that draw differently differ (plan8). design is the design DRAWN: a fallen back infinity is "kiss" and a stacked lens "stack" (the engine fills in the
-    design it really drew, the ground and the clean flag: a plan made before the pixel pass names the design asked for)."""
-    o = opts if isinstance(opts, dict) else {}
-    return {"style": style, "design_used": design, "bg": bg, "clean": bool(clean), "layout": layout, "opts": {k: o.get(k) for k in SD.OPT_FIELDS},
+    design it really drew, the ground and the clean flag: a plan made before the pixel pass names the design asked for). The options are in their canonical
+    form (effective_opts)."""
+    return {"style": style, "design_used": design, "bg": bg, "clean": bool(clean), "layout": layout, "opts": effective_opts(design, opts),
             "pv": CT.PLATES_VERSION if pv is None else int(pv)}
 
 
 def _engine_opts(spec, design):
-    """The options of one render: the production constants, the buyer's rotate (trio), then the laboratory's engine_opts."""
+    """The options of one render: the production constants, the buyer's rotate (trio: effective_opts, the same shift the seed key names), then the laboratory's
+    engine_opts."""
     o = dict(PRODUCTION)
-    rot = _opts3(spec).get("rotate")
-    if design == "trio" and isinstance(rot, int) and not isinstance(rot, bool) and 0 <= rot <= 2:
+    rot = effective_opts(design, _opts3(spec))["rotate"]
+    if design == "trio" and rot:
         o["rotate"] = rot
     eo = spec.get("engine_opts")
     if isinstance(eo, dict):
@@ -304,8 +320,10 @@ def render(design, eyes, fmt=None, size=1024, names=None, date=None, bg="dark", 
     if key is None and o.get("seed_mode") != "legacy":
         key = default_key(design, n, layout, bool(clean), bg)
     elif key is not None:
-        # the engine fills in the design drawn, the ground and the clean flag: a key with a field missing or a field it does not know is refused here, before anything is drawn
-        SD.clean_key({"design_used": design, "bg": bg, "clean": bool(clean), **key} if isinstance(key, dict) else key)
+        # the engine fills in the design drawn, the ground and the clean flag: a key with a field missing or a field it does not know is refused here, before anything is drawn.
+        # Its options are put in their canonical form (effective_opts), so that a caller's spelling of a default (swap False, rotate 0) is not another seed
+        ck = SD.clean_key({"design_used": design, "bg": bg, "clean": bool(clean), **key} if isinstance(key, dict) else key)
+        key = dict(key, opts=effective_opts(design, ck["opts"]))
     JP.trace(True)
     try:
         with JP.plates_version(key["pv"] if key else None):

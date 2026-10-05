@@ -1418,6 +1418,34 @@ check("... and with a profile of the same class the picture is made, and the dri
       bool(done8d) and isinstance(dd[0], dict) and dd[0]["cls"] == ["own", "own"] and isinstance(dd[0]["d_rgb"], (int, float))
       and any(f.get("order") == o8d and isinstance(f.get("d_rgb"), (int, float)) for k, f in EVENTS if k == "master")
       and dd[0].get("d_pad") == 0.01, dd)
+# (c2) pupil drift (spec 2.4: a pupil class change is a drift that changes geometry; WP7B review): the sealed profile says a slit, the master measures a round pupil
+n0 = len(H.Fake.emails)
+with Show("solo.clean"):
+    o8p, k8p, sid8p = new_order(1, "solo.clean", "hold-p@example.com", pay_it=False)
+    dr = rj(f"orders/{o8p}/draft/eye_1.json")
+    dr["profile"] = {"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}, "pupil": {"cls": "slit", "aspect": 1600}}
+    wj(f"orders/{o8p}/draft/eye_1.json", dr)
+    hook(H.pay_session(sid8p, email="hold-p@example.com"))
+    done8p = wait_for(lambda: stopped(o8p, "review"), 90)
+ok, d = held(o8p, "pupil_changed", n0)
+txt8p = [m for m in NOTES(n0) if "needs a look" in m["subject"]][0]["text"]
+check("IE9: the sealed profile says a slit pupil and the 4096 px master measures a round one: held pupil_changed BEFORE anything is drawn (another geometry), one note naming the eye, both classes and "
+      "the preview's aspect, no artwork; the hold has its words for the owner's reminder",
+      bool(done8p) and ok and "eye 1" in txt8p and "round" in txt8p and "slit" in txt8p and "1.60" in txt8p and SP.hold_text("pupil_changed", o8p), (done8p, d, txt8p[:200]))
+n0 = len(H.Fake.emails)
+with Show("solo.clean"):
+    o8q, k8q, sid8q = new_order(1, "solo.clean", "hold-q@example.com", pay_it=False)
+    dr = rj(f"orders/{o8q}/draft/eye_1.json")
+    dr["profile"] = {"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}, "pupil": {"cls": "round", "aspect": 1020}}
+    wj(f"orders/{o8q}/draft/eye_1.json", dr)
+    hook(H.pay_session(sid8q, email="hold-q@example.com"))
+    done8q = wait_for(lambda: stopped(o8q, "ready"), 120)
+dq = (steps_of(o8q)["done"] or {}).get("drift") or [None]
+check("... and with a profile of the same pupil class the picture is made, and the drift names both classes and both aspects (the numbers the hold rate of IE9 is measured from); a profile with no pupil "
+      "(a v1 seal) is compared on colour alone, and the plan carries the pupil class and the aspect of the profile it was made from",
+      bool(done8q) and isinstance(dq[0], dict) and dq[0]["pupil"] == ["round", "round"] and dq[0]["aspect"][0] == 1.02 and isinstance(dq[0]["aspect"][1], (int, float))
+      and SP._eye_facts([{"profile": dr["profile"]}])[0]["pupil"] == "round" and SP._eye_facts([{"profile": dr["profile"]}])[0]["aspect"] == 1020
+      and "pupil" not in SP._eye_facts([{"profile": dict(dr["profile"], pupil=None)}])[0] and "pupil" not in SP._eye_facts([{"profile": dict(dr["profile"], pupil={"cls": "oval"})}])[0], dq)
 MODE.update(side=256)
 # (d) the plate fault: the first is a busy answer that does not count, the second holds
 exe = Exe(["plate", "plate"])
