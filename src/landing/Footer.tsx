@@ -2,6 +2,9 @@
 // legal links. Needs <LangProvider> and <CopyProvider> above it. The seller is MB Portretizuokis (src/landing/config.ts SELLER): its
 // lines come from there, never from here, and the legal links only through src/landing/links.ts (legalHref, which carries the
 // language and the market's edition). (The closing scene above it is ./ClosingScene.tsx.)
+// Under the legal links stands a giant outline wordmark, SNAPEYES (motion spec 6.15, D9): decoration only (aria-hidden, its letters are drawn
+// by the stylesheet, so they are not text to find, copy or read). It rises once out of its mask when it comes into view; the address, the
+// links, the currency switch and the legal links are static, in the order of the markup, at full contrast.
 import { useCopy } from './copy/useCopy';
 import { useLegalLinks } from './links';
 import { CONTACT_EMAIL, SELLER } from './config';
@@ -68,6 +71,9 @@ export function SiteFooter() {
             ))}
           </nav>
         </div>
+      </div>
+      <div className="lp-ftr-mark" aria-hidden="true" data-reveal="mark">
+        <span />
       </div>
     </footer>
   );
