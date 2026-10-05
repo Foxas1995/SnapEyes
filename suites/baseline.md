@@ -254,7 +254,7 @@ byte-identical to it, so the difference between the port and the table is the ma
 | Radiance | 1.05 / 1.14 / 1.00 | 0.46 / 0.54 / 0.38 | 1.07 / 1.16 / 0.83 |
 | Celestial Gold (variant A) | 0.96 / 1.28 (the old design) / 1.04 | 0.33 / 0.61 (old) / 0.40 | 1.00 / 1.30 (old) / 0.89 |
 
-The port is 0 to 15 percent faster than the scratch in every cell. Against the spike's table the cold previews are +0 percent (Clean), +19 (Powder),
+For the five designs whose code is unchanged the port is 0 to 16 percent faster than the scratch in every cell (the Gold row's scratch column is the old design). Against the spike's table the cold previews are +0 percent (Clean), +19 (Powder),
 +29 (Splash), +26 (Elements), +5 (Radiance), -8 (Gold); the acceptance line of the work package ("within 10 percent of the table") is therefore met
 for Clean, Radiance and Gold and not for Powder Burst, Splash and Elements, by the same margin that the unchanged scratch code misses it on this
 machine. The cause is not in the port; V3 and V11 (WP17a) measure the real instance, and the cost table is not touched by this package.
@@ -265,5 +265,5 @@ peak working set in MiB (Windows; the table's cold peaks in brackets): Clean 3.0
 table's, so `costs.est_mb` is a safe bound for the family. The row of Celestial Gold in `costs.MASTER` (12.4 s, 734 MB) is the old design's: variant A
 is cheaper, and the row is left as it is (conservative) until V11 measures a real 4096 px master of it.
 
-The golden replay (`v3single`): 75 pictures at 512 and 1024 px and 9 at 4096 px (the non-plate designs) are counted; with the scratch tree the 9
+The golden replay (`v3single`): 54 pictures at 512 and 1024 px (every design, three eye classes, three canvases, the text lockup) and 9 at 4096 px (the non-plate designs) are counted; with the scratch tree the 9
 plate-style pictures at 4096 px, 24 real-eye pictures and the check of the port's edits run as LOCAL lines (all equal). `v3single` takes about 2.5 minutes alone.
