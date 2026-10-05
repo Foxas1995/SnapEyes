@@ -427,3 +427,56 @@ advice, the amber retake button), the AI-generated sample (the plain slider, no 
 px wide (no horizontal overflow, the strip in three columns at 375 and stacked at 320).
 
 **Counts:** `v3reveal` 63 (new), `ts` 79 (was 31: 15 ported node tests, 11 new node tests in `src/reveal/reveal.test.ts`, 22 in `suites/ts/reveal_page.test.ts`). `scripts/run_ts_tests.mjs` runs both kinds.
+
+## 13. The collision family (WP7A, 2026-10-05): the replay, the seam budget and what 4096 px costs
+
+The collision family (Kiss Collision, Collision Infinity, Clean Infinity, Family Colours, Infinity Chain) is the DG1 snapshot of the design rounds' code ported verbatim
+(`scripts/styles_tests/port_collision.py`: a listed set of edits, the sha256 of the twelve source files, `--check` against the scratch tree). Recorded on this machine class (Windows 11,
+Python 3.14.3, numpy 2.4.4, Pillow 12.2.0) by `record_goldens_collision_scratch.py` in a tree made by `make_collision_scratch_tree.py`: the DG1 folder has no `plates_cx`, so a render
+there draws no JET plate; the recording tree has the plates of the design round, and exactly the two JET plates the bake retouched (a scale bar and a legend of the generator were painted
+into the raw files) are taken from the baked library instead (the recorder finds them by comparing fits and says so). The other 33 of the 35 collision plates are the prototype's own raw and
+1K files, which proves that `jetplates.py` picks, fits and places like the prototype.
+
+**The replay.** 62 of 62 synthetic pictures byte for byte equal, with their seeds and facts (design drawn, lens mode and colour step, fronts, edge modes, the plates the haze took, shares): the
+three pairs (a blue and a dark brown, a blue and a green, a grey and an amber) in the three pair designs at 1024 px, the five canvases, 512, 1024 and 4096 px, the words, the forced stack
+lens, the wide pupil that falls back to the Kiss geometry, the laboratory switches, the trio, every layout of the family for four to eight eyes and the chain. 21 of 21 real calibration-eye
+pictures equal too (LOCAL lines, hashes only), and the colour steps K of the eight DG1 board pairs are the judge's own table: blue with brown 46.84, blue with copper 33.21, blue with
+yellow 29.93, grey with hazel 17.84, two similar blues 16.62, two browns 10.66, the very dark pair 9.18, two similar browns 7.99.
+
+**The owner's seam budget E1, measured.** The pixels that are really mixed (0.02 < w < 0.98) and the support of the blend (0 < w < 1) are limits of 3 percent of an iris each (the plan scales the
+half width down to hold them), the seam band as the integrity test pads it at most 4 percent (the owner's reading). Synthetic replay, 23 woven pairs: mixed at most 0.0280, support at most
+0.0295, band at most 0.0319. On the eight real pairs of the DG1 boards (16 woven pictures, both infinity builds) mixed at most 0.0279, support at most 0.0295, band at most 0.0317; the largest colour step K is 46.8 against the stack lens's limit of 62.
+
+**Time and memory at 4096 px.** A fresh process per render, one thread, this machine (shared with other builders: the cells differ by up to 10 percent between two runs of the same code),
+the real calibration restorations resized to the working copy a master gets (2048 px for a pair, a family and a chain; the trio's registry `work_side` is 4096), Windows peak working set.
+CPU seconds of the render (imports apart), the port and the scratch alternating, two rounds each, against the spike's table (SP 4.1, quiet core, cold) scaled by this machine's
+yardstick (1.393 s against the spike's 1.464 s, x0.95):
+
+| Render | Port, runs | Scratch, runs | SP table x0.95 | Peak port | Peak scratch | SP peak |
+|---|---|---|---|---|---|---|
+| Collision Infinity, 2 eyes, 3:2 | 8.3, 8.1, 7.9, 7.9 | 7.8, 8.0 | 8.0 | 550 MB | 557 | 645 |
+| Clean Infinity | 7.0 | not measured | 8.6 | 557 | | 642 |
+| Kiss Collision | 7.5 | not measured | 6.8 | 552 | | 643 |
+| Trio, 2048 px copy | 16.1, 15.9 | 16.3, 17.4 | 14.6 | 778 | 792 | |
+| Trio, 4096 px sources (the registry's work_side) | 23.5 | n/a (the scratch always shrinks to 2048) | 14.6 | 992 | | 929 |
+| Family Colours 4 (zigzag, 3:2) | 13.2, 11.3 | 12.6, 11.4 | 9.4 | 572 | 595 | 782 |
+| Family Colours 8 (ring, 1:1) | 26.1, 23.8 | 28.2, 25.7 | 19.2 | 915 | 985 | 1330 uncapped, 945 capped |
+| Chain 4 (3:2) | 11.2 | not measured | 9.6 | 557 | | 772 |
+| Chain 6 (3:1) | 13.3 | not measured | 10.5 | 482 | | 800 |
+
+The pair designs and the trio from a 2048 px copy are within 15 percent of the table (clean infinity 18 percent under it); the families and the chains are 20 to 40 percent over it on this
+machine and the **unchanged scratch code takes the same time** (the port is 0 to 7 percent faster and a little smaller in memory in every pair of runs), so the cause is the machine and the
+eyes, not the port, as WP5A found for the singles. Family Colours with eight eyes peaks at 915 MB (acceptance: at most 945 MB capped). **The trio from 4096 px sources costs 23.5 s of CPU and 992 MB,
+not the table's 15.4 s: at the slow factor 1.6 that is about 45 s of the 52 s budget** (the table's row is a 2048 px copy's); the plan freeze (WP7B) decides between capping the trio at 2048 px
+(the Trio delta check) and raising its cost row.
+
+**Known misses of the layouts, found by the self check on synthetic eyes and left as the prototype has them** (step A is verbatim): Family Colours as a flower of six eyes (petals 1.94 R apart,
+an overlap of 0.06 R that is no contact: T1 and T6 fail on about 20 pixels at 0.94 to 0.95 R); T3, the visible share, on Family Colours as a brick of four eyes (0.76 against 0.82) and a flower of
+eight (0.77), and on the end irises of a chain of three (0.895 against 0.90). The pairs, the trio and the default layout of every eye count keep their floors.
+
+**Suite.** `v3coll` 70 checks (6 LOCAL lines with `SNAPEYES_CALIB` and `SNAPEYES_SCRATCH_DG1`), about 7 minutes (the replay 116 s, the 4096 px pictures and the real eyes the rest) alone: the family's files and rules, the registry against the family
+(every layout of the five styles builds a scene on its default canvas), the replay, the hard rules on every picture of 1024 px and less, the seam, the tests of the brief (T4, T6, T7, T10, T12,
+T13, T18, T19), determinism in two fresh processes with different hash seeds, the bounded caches, the guards, the plates, the contract, a master through the master plan's art step.
+
+**Full set** on an export of `aac24fe` (`git archive`, CRLF line ends, the private fixtures, `SNAPEYES_SCRATCH_Y3`, `SNAPEYES_CALIB` and `SNAPEYES_SCRATCH_DG1` set so that the LOCAL lines of `v3single` and `v3coll` ran too): **29 of 30 green**, every count equal to `baseline.json` (r2 105, r3 48, r4 69, r5 54, fix 53, admin 186, pay 120, advance 66, refund 7, preview 60, review 11, fixmk 36, markets 58, au 70, payrev 19, fixer 43, oldpay 120, oldadv 66, oldadmin 186, exp 349, ts 78, v3wp0 93, v3reg 172, v3gate 97, v3core 86, v3plates 108, v3single 115, v3steps 150, **v3coll 70** (new)). The one red suite is `v3reveal` (WP9's, 61 of 63): its check "each module opens with its docstring and then the __future__ import" reads `
+`, and the export has CRLF line ends (the trap the WP3 and WP4 notes record; on the working tree, with LF files, it passes), and its check "the whole call with the stub model costs at most 4 s of CPU" measured 4.25 s with three suites and other builders' processes on the machine. Neither touches a collision file; WP9 owns both. `python -m compileall api` exit 0, `npm run build` exit 0 (the registry hash is still `870892880cf3`, a rendering function 187.7 MiB of the 235), and `python scripts/dev_api.py` starts with the 11 routes and `/api/health` answers `styles: true, plates_4k: true`.
