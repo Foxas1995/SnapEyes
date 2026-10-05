@@ -239,7 +239,7 @@ def needs_4k(rec):
     if fam == "P-DN-SPIRAL":
         return rec["void"][2] >= 0.20
     if fam == "P-UV-DUST":
-        return rec["void"][2] >= 0.185
+        return True       # the Deep Field look picks the plates with a void of 0.185 or more; the Echo look on the wall canvas picks ANY of the seven (its accent plate)
     return True
 
 

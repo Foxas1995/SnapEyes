@@ -6427,7 +6427,12 @@ PLATES_REGISTRY = {
     "px": 1024,
     "sha256": "aa613ab70f30685d8788ba99e73114508e268477003087fc3c13756a54904eb0"
    },
-   "k4": {},
+   "k4": {
+    "bytes": 6604747,
+    "file": "P-UV-DUST__density-dense_curl-ccw__v4__pro4K__t0.png",
+    "px": 4096,
+    "sha256": "7c1078be59beab009a4f2f3286e3ddc48751fc7b97e50ff0ec1bfbaca447af99"
+   },
    "kind": "uv",
    "mono": 1,
    "score": 0.0,
@@ -6454,7 +6459,12 @@ PLATES_REGISTRY = {
     "px": 1024,
     "sha256": "6ea19092676ae8b7003fce223dc14fcb1ef5dc6f2b8501f062d4f76db8f67360"
    },
-   "k4": {},
+   "k4": {
+    "bytes": 6572080,
+    "file": "P-UV-DUST__density-dense_curl-ccw__v4__pro4K__t1.png",
+    "px": 4096,
+    "sha256": "de6eb00493792476badba26efaf39e43843e101e2ee8829f8f3571df17b0120b"
+   },
    "kind": "uv",
    "mono": 1,
    "score": 0.0,
@@ -6609,7 +6619,12 @@ PLATES_REGISTRY = {
     "px": 1024,
     "sha256": "8368180296627b353c3478236a9a9dedbf9af3e84c4d6f6ae72afdf583cb2c89"
    },
-   "k4": {},
+   "k4": {
+    "bytes": 6413983,
+    "file": "P-UV-DUST__density-sparse_curl-cw__v4__pro4K__t0.png",
+    "px": 4096,
+    "sha256": "94749b477eaf7e0452c7e692b10b14ee893bd21dc27a8662007a7119c0f1a1de"
+   },
    "kind": "uv",
    "mono": 1,
    "score": 0.0,
