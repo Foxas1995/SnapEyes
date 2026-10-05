@@ -455,6 +455,9 @@ pv_r = U.preview([C.Iris(FIX[n], n) for n in UC.MULTI[:3]], trio_spec, 512)
 check("preview of a trio with the buyer's rotate option equals the recorded rotated trio (rotate cycles the roles of the first named eyes: a picture and a seed of their own)",
       hashlib.sha256(np.ascontiguousarray(np.asarray(pv_r.img)).tobytes()).hexdigest() == G["echo.blue_round+green_round+amber_slit.auto.512.rot1"]["sha"]
       and pv_r.seed == G["echo.blue_round+green_round+amber_slit.auto.512.rot1"]["seed"] and len(pv_r.discs) == 3)
+pv_k = U.preview([C.Iris(FIX["blue_round"], "a"), C.Iris(FIX["dark_brown_round"], "b")], dict(pair_spec, engine_opts={"kiss": True}), 512)
+check("the Preview's log names the fallback the render took (the compose reply reports it): kiss for a pair drawn at the Kiss distance (here forced as the laboratory does), none for a weave, a single eye or a trio",
+      pv_k.log["fallback"] == "kiss" and pv_p.log["fallback"] is None and pv_t.log["fallback"] is None and pv_r.log["fallback"] is None, (pv_k.log.get("fallback"), pv_p.log.get("fallback")))
 tl = ST.tiles([eye_a], ["solo.universe"], dict(spec1), size=480)
 check("tiles: a Preview per style of the family at the size asked (the Src of the fill is cached on the Iris, so a look drawn after another on the same eye does not prepare it again)",
       set(tl) == {"solo.universe"} and tl["solo.universe"].img.size == (480, 480))

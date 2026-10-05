@@ -241,10 +241,11 @@ def plates_used(info):
 
 
 def _log_of(scene, look):
-    """The facts of a render that name something (small JSON-safe numbers and words): the look, the layout, the plates, the halo, the contacts."""
+    """The facts of a render that name something (small JSON-safe numbers and words): the look, the layout, the plates, the halo, the contacts, and the fallback the
+    render took (kiss: a pair whose pupils need more than the weave allows is drawn at the Kiss distance; the compose reply reports it as its fallback)."""
     info = scene.info
     log = {"look": look, "layout": scene.layout.key, "aspect": scene.layout.aspect, "plates": plates_used(info), "halo_rows": info.get("halo_rows"),
-           "band_rows": info.get("band_rows"), "coarse": scene.f}
+           "band_rows": info.get("band_rows"), "coarse": scene.f, "fallback": "kiss" if scene.layout.info.get("overlap_fallback") else None}
     for k in ("plate", "accent_plate", "notches", "contacts", "plate_fallback"):
         if k in info:
             log[k] = info[k]
