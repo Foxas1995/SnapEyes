@@ -580,8 +580,9 @@ section("7. the admin laboratory: styles_lab (no image model, nothing stored, be
 from _lib import ops  # noqa: E402
 SAMPLE = open(os.path.join(REPO, "public", "assets", "sample_eye_blue_restored.jpg"), "rb").read()
 lst = ops.a_styles_lab({}, "t")
-check("without a style styles_lab lists what the page builds its menu from: the six styles of the engine this deployment can draw, with their stage, canvases, plates and the sizes",
-      lst["ok"] and sorted(r["id"] for r in lst["styles"]) == sorted(SINGLES_STYLES) and all(r["stage"] == "lab" and r["ceiling"] == "lab" and r["canvases"] == list(S.FORMATS) for r in lst["styles"])
+lst_s = [r for r in lst["styles"] if r["module"] == "singles"]        # the list holds every one-eye style of every family built (the universe family joined it: its rows carry looks)
+check("without a style styles_lab lists what the page builds its menu from: the six styles of the singles engine (and those of the other families built), with their stage, canvases, plates and the sizes",
+      lst["ok"] and sorted(r["id"] for r in lst_s) == sorted(SINGLES_STYLES) and all(r["stage"] == "lab" and r["ceiling"] == "lab" and r["canvases"] == list(S.FORMATS) and r["looks"] == [] for r in lst_s)
       and lst["sizes"] == [480, 1024, 2048, 4096] and {r["name"] for r in lst["styles"]} >= {"Clean Iris", "Powder Burst", "Celestial Gold"}, lst)
 ok_all = True
 rows_ = []

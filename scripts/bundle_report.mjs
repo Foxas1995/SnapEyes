@@ -94,7 +94,9 @@ function deployedFiles() {
       for (const n of readdirSync(path.join(root, dir))) {
         if (['node_modules', '.git', '.vercel', '__pycache__'].includes(n)) continue;
         const rel = dir ? `${dir}/${n}` : n;
-        if (statSync(path.join(root, rel)).isDirectory()) walk(rel); else list.push(rel);
+        let st;
+        try { st = statSync(path.join(root, rel)); } catch { continue; /* a file that vanished while the folder was read: a suite writes under suites/out in the same checkout */ }
+        if (st.isDirectory()) walk(rel); else list.push(rel);
       }
     };
     walk('');

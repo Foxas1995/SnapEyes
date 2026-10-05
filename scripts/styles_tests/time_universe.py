@@ -4,8 +4,8 @@
     set SNAPEYES_SCRATCH_Y3=<the wave-y3 folder of the scratch tree>
     python scripts/styles_tests/time_universe.py [--rounds 2] [CASE ...]        cases: echo1 echo2 echo6 vortex deepfield starfield (default: all)
 
-The eyes are the synthetic irises of synth_iris at 1024 px (the same bytes for both sides); a pair and a group work on copies of at most 2048 px (the registry's work_side), a single eye
-on 4096 px. The plate looks draw their 2k and 4k LODs of the 4K plates: the port reads them from a local store made out of the scratch tree's own files (scripts/upload_plates.py logic),
+The eyes are the synthetic irises of synth_iris at 1024 px (the same bytes for both sides); the canvas is 4096 px on its long side, a pair and a group work on copies of the eyes of at most 2048 px
+(the registry's work_side), a single eye on 4096 px. The plate looks draw their 2k and 4k LODs of the 4K plates: the port reads them from a local store made out of the scratch tree's own files (scripts/upload_plates.py logic),
 the scratch from its folders. Printed per run: CPU seconds of the render (process time, imports apart), wall seconds, the peak working set in MB (Windows psapi, or VmHWM). The
 baseline document (suites/baseline.md, section 14) holds the table this tool printed, next to the spike's table (SP 4.1) scaled by this machine's yardstick (scripts/cpu_probe.py).
 Not run by any suite: it measures, it does not decide.
@@ -22,8 +22,8 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.environ.get("SNAPEYES_REPO") or os.path.dirname(os.path.dirname(HERE))
 Y3 = os.environ.get("SNAPEYES_SCRATCH_Y3") or ""
-CASES = {"echo1": ("echo", ["blue_round"], None, 4096), "echo2": ("echo", ["blue_round", "dark_brown_round"], "3:2", 2048),
-         "echo6": ("echo", ["blue_round", "green_round", "amber_slit", "dark_brown_round", "grey_round", "blue_slit"], None, 2048),
+CASES = {"echo1": ("echo", ["blue_round"], None, 4096), "echo2": ("echo", ["blue_round", "dark_brown_round"], "3:2", 4096),
+         "echo6": ("echo", ["blue_round", "green_round", "amber_slit", "dark_brown_round", "grey_round", "blue_slit"], None, 4096),
          "vortex": ("vortex", ["blue_round"], None, 4096), "deepfield": ("deepfield", ["green_round"], None, 4096), "starfield": ("starfield", ["dark_brown_round"], None, 4096)}
 
 
