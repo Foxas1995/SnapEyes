@@ -58,7 +58,7 @@ export function HowItWorks() {
     <section className="lp-sec" id="how" aria-labelledby="howH">
       <div className="lp-wrap">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow" data-reveal="fade-s">{c.how.eyebrow}</p>
+          <p className="lp-eyebrow">{c.how.eyebrow}</p>
           <Title id="howH" text={c.how.title} />
         </div>
         {/* data-reveal on the list is for the swipe rail (it appears as one piece), on each step for the three columns (css/how.css says

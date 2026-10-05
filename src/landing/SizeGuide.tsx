@@ -42,7 +42,7 @@ export function SizeGuide() {
   return (
     <div className="lp-sizes-blk" id="sizes">
       <div className="lp-sec-head">
-        <p className="lp-eyebrow" data-reveal="fade-s">{s.eyebrow}</p>
+        <p className="lp-eyebrow">{s.eyebrow}</p>
         <Title id="sizesH" text={t('sizes.title')} />
         <p className="lp-intro">{t('sizes.intro')}</p>
       </div>

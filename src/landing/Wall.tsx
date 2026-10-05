@@ -6,7 +6,7 @@
 // Keyboard: the materials are a vertical tab list and the artworks a radio group, both with a roving tabindex (one tab stop
 // each; arrow keys, Home and End move AND pick, as the prototype does), and the focus stays on the control after a pick.
 //
-// Motion (motion spec 6.7): the title rises out of its mask and the controls rise one after the other; a pick of a material or an artwork
+// Motion (motion spec 6.7): the title rises out of its mask; a pick of a material or an artwork
 // cross-fades the stage (two stacked pictures, .42 s, no scale: WallStage.tsx) and fades the facts of the material in, line by line
 // (.35 s, 50 ms apart, no rise); on a polished acrylic plate a soft band of light travels across the print face while the visitor scrolls
 // past, never following the pointer (WallStage.tsx). The honesty words, the chip and the captions never animate.
@@ -76,7 +76,7 @@ export function Wall() {
     <section className="lp-sec lp-wall" id="wall" aria-labelledby="wallH">
       <div className="lp-wrap">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow" data-reveal="fade-s">{w.eyebrow}</p>
+          <p className="lp-eyebrow">{w.eyebrow}</p>
           <Title id="wallH" text={w.title} />
         </div>
         <div className="lp-note-box">
@@ -96,7 +96,7 @@ export function Wall() {
               eyesNote={art === 'family4' || art === 'collision' ? w.eyesNote : undefined}
             />
           </div>
-          <div className="lp-ctl" data-stagger>
+          <div className="lp-ctl">
             <p className="lp-ctl-h lp-mat-h" id="matH">{w.materialsLabel}</p>
             <div
               ref={matRoving.ref}

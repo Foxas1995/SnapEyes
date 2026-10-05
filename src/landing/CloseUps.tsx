@@ -77,7 +77,7 @@ export function CloseUps() {
     <section className="lp-sec" id="closeups" aria-labelledby="cuH">
       <div className="lp-wrap">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow" data-reveal="fade-s">{cu.eyebrow}</p>
+          <p className="lp-eyebrow">{cu.eyebrow}</p>
           <Title id="cuH" text={cu.title} />
           <p className="lp-intro">{t('closeups.intro', figures)}</p>
         </div>

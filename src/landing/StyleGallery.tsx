@@ -41,7 +41,7 @@ export function StyleGallery() {
     <section className="lp-sec" id="styles" aria-labelledby="stylesH">
       <div className="lp-wrap">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow" data-reveal="fade-s">{c.styles.eyebrow}</p>
+          <p className="lp-eyebrow">{c.styles.eyebrow}</p>
           <Title id="stylesH" text={c.styles.title} />
           <p className="lp-intro">{c.styles.intro}</p>
         </div>
