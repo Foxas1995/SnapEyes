@@ -254,7 +254,7 @@ byte-identical to it, so the difference between the port and the table is the ma
 | Radiance | 1.05 / 1.14 / 1.00 | 0.46 / 0.54 / 0.38 | 1.07 / 1.16 / 0.83 |
 | Celestial Gold (variant A) | 0.96 / 1.28 (the old design) / 1.04 | 0.33 / 0.61 (old) / 0.40 | 1.00 / 1.30 (old) / 0.89 |
 
-(Correction below: the scratch column of this table was timed at a busier moment, and a repeat that alternates the two shows the port and the scratch equal, not the port faster. The Gold row's scratch column is the old design.) Against the spike's table the cold previews are +0 percent (Clean), +19 (Powder),
+(Correction below: a repeat that alternates the two shows the port and the scratch equal, not the port faster. The Gold row's scratch column is the old design.) Against the spike's table the cold previews are +0 percent (Clean), +19 (Powder),
 +29 (Splash), +26 (Elements), +5 (Radiance), -8 (Gold); the acceptance line of the work package ("within 10 percent of the table") is therefore met
 for Clean, Radiance and Gold and not for Powder Burst, Splash and Elements, by the same margin that the unchanged scratch code misses it on this
 machine. The cause is not in the port; V3 and V11 (WP17a) measure the real instance, and the cost table is not touched by this package.
