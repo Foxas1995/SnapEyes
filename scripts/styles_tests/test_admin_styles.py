@@ -455,6 +455,8 @@ with ceiling("solo.powder", "live"):
     x = refused("styles_override", style="solo.powder", eyes=1, tick={"L0": True})
     check("L0 has no bare tick: a tick of L0 is a 400 that says to send the score or the waiver (and a tick of false is still allowed, below)",
           says(x, 400, "bad_request") and "evidence" in x[3]["error"] and "waiver" in x[3]["error"], x)
+    x0 = refused("styles_override", style="solo.powder", eyes=1, evidence={"L0": {}})
+    check("an empty score is a 400 as well (it would make a mark that says nothing)", says(x0, 400, "bad_request"), x0)
     r = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": 1.0, "min_axis": 0.5, "by": "Art Director"}})
     x = live_try()
     check("a failing score (mean 1.0, axis 0.5) is RECORDED and shown with the scorer's name, and does not unlock live: 409 needs_ticks, L0 missing, its state below_bar",
@@ -1187,6 +1189,10 @@ check("ordered after failure per eye count: of 9 solo.gold starts 2 were on a fa
 rp = SS.report(a8)
 check("report() carries them, and says which tables a filter does not slice", set(rp) >= {"chosen_by_class", "conversion", "after_failure", "busy_retry", "qa"}
       and {"chosen_by_class", "conversion", "after_failure", "busy_retry", "qa"} <= set(rp["filter"]["whole"]))
+E._SEEN["all"] = [time.time()] * E.RATE["all"][0]               # the per-instance ceiling is reached
+allowed = (E._allow("compose", time.time(), None), E._allow("checkout", time.time(), "start"), E._allow("checkout", time.time(), "paid"))
+E._SEEN["all"] = []
+check("a paid checkout event follows a real payment and is not lost to a flood of other events (the ceiling holds back the rest)", allowed == (False, False, True), allowed)
 check("the checkout kind is whitelisted: stage, style, eyes, gate, lang and market only, no order id and no amount", set(E.FIELDS["checkout"]) == {"stage", "style", "eyes", "gate", "lang", "market"}
       and E.CHECKOUT_STAGES == ("start", "paid") and "order" not in E.FIELDS["checkout"] and "amount" not in E.FIELDS["checkout"])
 check("the new tables merge across days (numbers add) and an old day without them merges as before",

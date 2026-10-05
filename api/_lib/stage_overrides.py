@@ -312,7 +312,7 @@ def parse(body):
         raise L.ClientError("evidence holds the score of L0: {L0: {mean, min_axis, by}}.")
     ev0 = evidence.get("L0")
     if ev0 is not None:
-        if not isinstance(ev0, dict) or set(ev0) - {"mean", "min_axis", "by"}:
+        if not isinstance(ev0, dict) or not ev0 or set(ev0) - {"mean", "min_axis", "by"}:
             raise L.ClientError("The score of L0 is {mean, min_axis, by}.")
         for k in ("mean", "min_axis"):
             v = ev0.get(k)

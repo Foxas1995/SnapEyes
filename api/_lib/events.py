@@ -120,7 +120,7 @@ def _allow(kind, now, stage=None):
     events anybody can send without an order) have a small budget of their own, per minute and per day, so a flood of them
     can neither fill the bucket nor use up the ceiling of the ordinary events. The test's paid events follow a real payment
     and are never held back."""
-    if kind == "exp" and stage == "paid":
+    if kind in ("exp", "checkout") and stage == "paid":      # a payment was made: its count must not be lost to a flood of other events
         return True
     with _RATE_LOCK:
         if kind == "exp" and stage in ("visit", "preview"):

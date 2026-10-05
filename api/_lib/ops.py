@@ -1863,7 +1863,10 @@ def a_styles_stats(body, who):
     button of a style that was Soon, checkouts refused, per style and eye count), chosen (the recommended tile against the others), previews, fallbacks (the
     share of pictures that fell back, stack_contrast among them), times (p50 and p95 per style and eye count with the cost table's estimate in need_s),
     errors, review (artworks held for a look by style), gate (per eye, and per style under its own rule), holds, help (clicks on the manual route),
-    reveal, memory, attention (what crossed the limits the owner set, a failing health boolean, orders held for a style step), requests. Read only."""
+    reveal, memory, attention (what crossed the limits the owner set, a failing health boolean, orders held for a style step), requests, and (from the review of
+    WP13a) chosen_by_class (the pick followed, by the set's eye class), conversion (previews while live, sessions started, paid, by style and eye count, from the
+    checkout events: recorded says whether any came in), after_failure (the paid orders made on a set that failed the gate of its style, per eye count), qa
+    (qa_ok false by style) and busy_retry (by endpoint and style). Read only."""
     from . import stage_overrides as SO
     from . import style_stats as SS
     n = body.get("days")
@@ -1914,7 +1917,7 @@ def _flip_numbers(counts):
 
 
 def a_styles_audit(body, who):
-    """The audit log of the switch, newest first: {limit (1 to 200, default 100), style}. Each entry: kind (override or limits), by, style, eyes, the override
+    """The audit log of the switch, newest first: {limit (1 to 200, default 100), style}. Each entry: kind (override, limits, or hold: the same request sent again to finish a hold), by, style, eyes, the override
     and the effective stage before and after, the ceiling, the reason, the ticks that changed, the numbers of the funnel at that moment (with n), the price
     test that ran, what the owner chose for the orders in flight and how many were held, the revision. Read only."""
     from . import stage_overrides as SO
