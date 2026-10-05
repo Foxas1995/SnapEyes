@@ -2,7 +2,7 @@
 // way Vercel serves it, with a stub of the two API calls the page makes. Not part of `vite build` (it needs Chrome and a minute or two); run it
 // after a build:
 //   npm run build && npm run check:motion
-//   node scripts/check_motion.mjs [--dist dist] [--only reduced,nojs,failsafe,engine,hero,header,menu,handoff,sheets,gold,overflow]
+//   node scripts/check_motion.mjs [--dist dist] [--only reduced,nojs,failsafe,engine,hero,header,menu,handoff,sheets,gold,overflow,skip]
 // Exit code 1 when any check fails.
 //
 // What it checks (each name is a value of --only):
@@ -26,6 +26,8 @@
 //             the page (the Reveal's stage, how it works, the FAQ's head) still sticks inside a sheet
 //   gold      the gold census of the first screen (13.9): at most 3 gold groups per viewport, chrome excluded
 //   overflow  no headline wider than its box and no horizontal scroll at 320 and 390 px in every language; no headline word cut by its mask
+//   skip      the chapters below the first screen are skipped until near the screen (content-visibility), the pinned Reveal is not, a jump to a section lands on it
+//             and the page keeps its height from the first moment to the end of a full scroll (within 3.5 percent)
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -196,6 +198,10 @@ async function checkFailsafe() {
   const live = await open({ lang: 'en', width: 1280, height: 800 });
   const y = await scrollThrough(live, 220);
   await sleep(1800);
+  // a section that has been scrolled past is skipped again (content-visibility, css/base.css) and the browser does not update the animations inside a skipped subtree:
+  // an animation that finished there is still listed. So every section is made to render first (the engine's work is over by now) and the frames get their turn
+  await live.eval("document.head.appendChild(Object.assign(document.createElement('style'), { textContent: '.lp-sheet > .lp-sec, .lp-final { content-visibility: visible !important }' }))");
+  await sleep(500);
   const r = JSON.parse(await live.eval(`JSON.stringify((() => {
     const out = { fail: document.documentElement.classList.contains('mo-fail'), mo: document.documentElement.classList.contains('mo'), passed: 0, notIn: [], left: [], delayed: [], n: document.querySelectorAll('[data-reveal]').length };
     for (const e of document.querySelectorAll('[data-reveal]')) {
@@ -696,8 +702,46 @@ async function checkOverflow() {
   if (!problems.some((x) => x.startsWith('overflow'))) pass('overflow', 'no headline wider than its box and no horizontal scroll at 320 and 390 px in en, de, lt, hu');
 }
 
+// ---------------------------------------------------------------------------------------------------- skip
+async function checkSkip() {
+  console.log('skip');
+  // The chapters below the first screen are skipped until they are near the screen (content-visibility: auto, css/base.css) and stand in for the height their slot had
+  // (src/App.tsx). Three claims: it is really on (a far section's content is not rendered while the visitor is at the top: take the rule away and this fails), the page does
+  // not change height when the sections are drawn (the intrinsic size is the CONTENT box: forgetting the sections' own padding made the page 1,000 px too tall on a desktop
+  // until it had been scrolled), and a jump to a section lands on it (the offsets above it are estimates).
+  for (const [lang, width] of [['en', 1280], ['de', 768], ['lt', 375], ['hu', 1280]]) {
+    const tag = `${lang} ${width}px`;
+    const page = await open({ lang, width, height: 900 });
+    await sleep(600);
+    const top = JSON.parse(await page.eval(`JSON.stringify({ h: document.documentElement.scrollHeight,
+      on: ['wall', 'styles', 'how', 'pricing', 'closeups', 'trust', 'faq', 'final'].map((id) => [id, getComputedStyle(document.getElementById(id)).contentVisibility, document.getElementById(id).firstElementChild.checkVisibility({ contentVisibilityAuto: true })]),
+      reveal: getComputedStyle(document.getElementById('reveal')).contentVisibility })`));
+    expect('skip', top.on.every(([, cv]) => cv === 'auto'), `${tag}: content-visibility is not auto on ${top.on.filter(([, cv]) => cv !== 'auto').map((x) => x[0]).join(', ')}`);
+    expect('skip', top.on.filter(([id, , vis]) => ['pricing', 'closeups', 'trust', 'faq'].includes(id) && vis).length === 0, `${tag}: a section far below the screen is rendered at the top of the page: ${top.on.filter(([, , vis]) => vis).map((x) => x[0]).join(', ')}`);
+    expect('skip', top.reveal !== 'auto', `${tag}: the pinned Reveal is skipped (its sticky stage must always be laid out)`);
+    // a jump to a section lands on it, whatever has been drawn above it
+    for (const id of ['how', 'pricing', 'faq']) {
+      await page.eval(`window.scrollTo({ top: 0, behavior: 'instant' })`);
+      await sleep(300);
+      await page.eval(`document.getElementById(${JSON.stringify(id)}).scrollIntoView({ behavior: 'instant', block: 'start' })`);
+      await sleep(1200);
+      const r = JSON.parse(await page.eval(`JSON.stringify({ top: Math.round(document.getElementById(${JSON.stringify(id)}).getBoundingClientRect().top), head: Math.round(document.querySelector('#${id} h2').getBoundingClientRect().top) })`));
+      expect('skip', r.head >= 0 && r.head < 700, `${tag}: after a jump to #${id} its heading is ${r.head} px from the top of the screen (the section's top is at ${r.top} px)`);
+    }
+    // the page keeps its height from the first moment to the end of a full scroll
+    await scrollThrough(page, 220);
+    await sleep(800);
+    const h1 = await page.eval('document.documentElement.scrollHeight');
+    const drift = Math.abs(h1 - top.h) / h1;
+    expect('skip', drift <= 0.035, `${tag}: the page is ${top.h} px tall before anything has been drawn and ${h1} px after a full scroll (${(drift * 100).toFixed(1)} percent: the sections' stand-in heights are off)`);
+    console.log(`  note skip ${tag}: ${top.h} px before, ${h1} px after (${(drift * 100).toFixed(1)} percent)`);
+    await page.close();
+  }
+  if (!problems.some((x) => x.startsWith('skip'))) pass('skip', 'the chapters below the first screen are skipped until near, the pinned Reveal is not, a jump lands on its section and the page keeps its height within 3.5 percent');
+}
+
 // ---------------------------------------------------------------------------------------------------- run
-const checks = { reduced: checkReduced, nojs: checkNoJs, failsafe: checkFailsafe, engine: checkEngine, hero: checkHero, header: checkHeader, menu: checkMenu, handoff: checkHandoff, sheets: checkSheets, gold: checkGold, overflow: checkOverflow };
+const checks = { reduced: checkReduced, nojs: checkNoJs, failsafe: checkFailsafe, engine: checkEngine, hero: checkHero, header: checkHeader, menu: checkMenu, handoff: checkHandoff, sheets: checkSheets, gold: checkGold, overflow: checkOverflow, skip: checkSkip };
 try {
   for (const [name, fn] of Object.entries(checks)) {
     if (!wants(name)) continue;

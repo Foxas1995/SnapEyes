@@ -48,6 +48,8 @@ async function measure() {
         const page = await chrome.page({ width, height: 900, mobile: width < 800, dpr: 1 });
         await page.goto(`${origin}/?lang=${lang}`);
         await page.loaded();
+        // a section that is skipped (content-visibility, css/base.css) reports the height its slot gave it, which would make the check measure itself
+        await page.eval("document.head.appendChild(Object.assign(document.createElement('style'), { textContent: '.lp-sheet > .lp-sec, .lp-final { content-visibility: visible !important }' }))");
         for (let i = 0; i < 150; i++) {
           if (await page.eval("document.querySelector('.lp-slot') === null && !!document.getElementById('faq') && !!document.querySelector('.lp-ftr')")) break;
           await sleep(100);

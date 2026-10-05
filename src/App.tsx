@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef } from 'react';
+import { createElement, useEffect, useLayoutEffect, useRef } from 'react';
 import { useCopy } from './landing/copy/useCopy';
 import { LangProvider } from './landing/lang';
 import { CopyProvider } from './landing/copy/CopyProvider';
@@ -39,6 +39,17 @@ function Slot({ name }: { name: SectionName }) {
   const { lang } = useCopy();
   const hole = useRef<HTMLElement>(null);
   const waiting = section === 'waiting';
+  const mounted = typeof section !== 'string';
+  // A mounted section skips style, layout and paint until it is near the screen (content-visibility, css/base.css) and stands in for the height its slot had:
+  // the slot's three heights go on the section itself, in the same commit and before the first frame. `contain-intrinsic-size: auto` then remembers the real height
+  // once the section has been drawn. React never writes a style attribute on a section, so nothing here is overwritten.
+  useLayoutEffect(() => {
+    if (!mounted) return;
+    const el = document.getElementById(SLOT_HEIGHTS[name].id);
+    if (!el) return;
+    const heights = slotStyle(name, lang) as Record<string, string>;
+    for (const k of Object.keys(heights)) el.style.setProperty(k, heights[k]);
+  }, [mounted, name, lang]);
   useEffect(() => {
     const el = hole.current;
     if (!waiting || !el || !('IntersectionObserver' in window)) return;

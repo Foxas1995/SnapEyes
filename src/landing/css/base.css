@@ -85,6 +85,24 @@
   @media (min-width: 640px) and (max-width: 767px) {
     #reveal.lp-slot { min-height: var(--slot-p); }
   }
+  /* The chapters below the first screen skip style, layout and paint until they are near the screen. They mount one by one while the visitor is still
+     on the first screen, and what they add (about 80 reveal nodes, boxes for the pictures, their stylesheets) used to be styled and laid out at once:
+     +130 ms of blocking time over the page without motion at CPU x4 (motion review, nine interleaved runs). A skipped section is as tall as its slot was
+     (src/App.tsx writes the slot's three heights on the mounted section; `auto` makes the browser remember the real height once it has been drawn), so
+     nothing moves when it arrives and a link to #pricing lands where it did. The intrinsic size is the CONTENT box, and a slot's height is the whole
+     box: the section's own vertical padding (2 x 46 px, 2 x 76 px from 960 px, see .lp-sec above) is taken off, or every skipped section would be
+     152 px too tall on a desktop (check:motion skip measures it). The pinned Reveal is left out: its sticky stage must always be laid out. */
+  .lp-sheet > .lp-sec:not(#reveal, .lp-slot), .lp-final { content-visibility: auto; }
+  .lp-sheet > .lp-sec:not(#reveal, .lp-slot) { contain-intrinsic-size: auto calc(var(--slot-p, 992px) - 92px); }
+  .lp-final { contain-intrinsic-size: auto var(--slot-p, 660px); }
+  @media (min-width: 640px) {
+    .lp-sheet > .lp-sec:not(#reveal, .lp-slot) { contain-intrinsic-size: auto calc(var(--slot-t, 992px) - 92px); }
+    .lp-final { contain-intrinsic-size: auto var(--slot-t, 660px); }
+  }
+  @media (min-width: 960px) {
+    .lp-sheet > .lp-sec:not(#reveal, .lp-slot) { contain-intrinsic-size: auto calc(var(--slot-d, 1052px) - 152px); }
+    .lp-final { contain-intrinsic-size: auto var(--slot-d, 600px); }
+  }
   .lp-sec + .lp-sec::before { content: ""; position: absolute; top: 0; left: 50%; width: min(1120px, calc(100% - 2 * var(--gut))); transform: translateX(-50%); height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 197, 66, .28), transparent); }
   .lp-sec-head { max-width: 680px; }
   .lp-sec-head h2 { margin-top: 18px; }
