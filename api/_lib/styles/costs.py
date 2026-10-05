@@ -17,6 +17,11 @@ A cost key names a design the way the catalogue does: module.design, with .clean
 a universe fill (cost_key(engine, bg)). A combination the spike did not measure has no row: cpu() raises NoCost, never a guess, and a
 planner treats that as a configuration error (a style the table cannot price is not a style that may be sold).
 
+Where this repo's own port of a family has been measured at the working copy the registry allows and the spike's row is not that run, MEASURED (below
+the baked block) holds the measurement and can only raise the planner's figure: the spike's trio ran from a 2048 px copy (the scratch code shrinks every
+eye to 2048) while the registry gives the trio 4096 px, and a trio master from 4096 px sources needs 53 percent more than the spike's row says. It applies
+only when the caller names the working copy (the plan's work_side): side None is the spike's table as baked, the one the plan's section 10.3 pins.
+
 Memory: peaks are the spike's cold peaks with uncapped 4096 px sources; est_mb() takes the 2048 px working copy row where the registry
 caps the layout (pairs, families 4 to 8, chain: catalogue.work_side) and adds the plan's Linux allowance of 15 percent. MEM_BUDGET_MB is
 70 percent of FUNCTION_MEM_MB (the project's function memory: 2048 until V4 reads the real setting, env STYLE_FUNCTION_MEM_MB).
@@ -128,6 +133,19 @@ PREVIEW = {
 }
 # END BAKED
 
+# MEASURED = ((cost key, eyes, working copy side, cpu s, peak MB), ...): quiet-core seconds in the spike's units and the cold peak of a MASTER as the master step
+# runs it (preview at 4096 px with the self check) on real calibration restorations, measured on this repo's port (WP7A review fix, 2026-10-05, Windows, one thread;
+# this machine's yardstick was 0.951 of the spike's core, so the seconds are the measured ones divided by 0.951). A tuple, edited by hand with a measurement:
+#   collision.trio 4096: 23.5 s of render (two runs 23.5 and 23.6) and 3.1 s of self check = 26.6 s, 992 MB   -> 28.0 s (the spike's row: 15.4 s, 929 MB)
+#   collision.trio 2048: 16.1 s of render and 3.2 s of self check = 19.3 s, 778 MB                            -> 20.2 s (the spike's capped row: 11.5 s, 785 MB)
+# At the slow factor 1.6 the trio from 4096 px sources needs 52.5 s of the 52 s budget (break-even factor 1.58: the spike's 2.80 was the 2048 px copy's), from a
+# 2048 px copy 40.0 s (break-even 2.17). The pairs, the families and the chains were measured too (suites/baseline.md section 13) and are also above their spike rows; they are not
+# here until the plan freeze re-bakes the whole table in one reviewed change, because the plan's section 10.3 and three suites pin the spike's figures.
+MEASURED = (
+    ("collision.trio", 3, 4096, 28.0, 992),
+    ("collision.trio", 3, 2048, 20.2, 778),
+)
+
 
 # ----------------------------------------------------------------------------- keys
 def cost_key(engine, bg="dark", look=None):
@@ -155,27 +173,43 @@ def known(key, n):
     return key in MASTER and n in MASTER[key]
 
 
+def measured(key, n, side):
+    """The port's own measured row (cpu s, peak MB) for a design at a working copy, or None. Only when the working copy is named: side None is the
+    spike's table as baked. A side of 2048 or less is the 2048 px row, any other the 4096 px one (the rule cpu() applies to the capped rows)."""
+    if side is None:
+        return None
+    s = 2048 if side <= 2048 else 4096
+    for k, e, sd, c, mb in MEASURED:
+        if k == key and e == n and sd == s:
+            return c, mb
+    return None
+
+
 def slow_factor():
     return cpu_probe.style_slow_cpu()
 
 
 # ----------------------------------------------------------------------------- the master
-def cpu(key, n, side=4096):
+def cpu(key, n, side=None):
     """Quiet-core CPU seconds of the master render alone. side: the working copy of an eye the layout allows (the registry's work_side):
-    at 2048 or less the capped row is used where the spike measured one, else the uncapped row (an upper bound)."""
+    at 2048 or less the capped row is used where the spike measured one, else the uncapped row (an upper bound); where the port was measured at that
+    working copy (MEASURED) the larger of the two. side None is the uncapped spike row as baked."""
     if side and side <= 2048 and key in CAPPED and n in CAPPED[key]:
-        return CAPPED[key][n][0]
-    return _row(MASTER, key, n)[0]
+        base = CAPPED[key][n][0]
+    else:
+        base = _row(MASTER, key, n)[0]
+    m = measured(key, n, side)
+    return max(base, m[0]) if m else base
 
 
 def step_need(design, n, size=4096, factor=None, side=None):
     """Seconds a call needs to make the master (or the step) of n eyes of a design on the real instance: the formula in the module
     docstring. design: a cost key. size is the canvas's long side; the table is for 4096, a smaller canvas is refused rather than guessed
-    (previews have preview_need). side: the eye working copy cap (None: 4096)."""
+    (previews have preview_need). side: the eye working copy cap the registry gives the layout (None: the spike's uncapped row as baked)."""
     if size < 4096:
         raise NoCost("step_need is for the 4096 px master; use preview_need for a preview")
     F = slow_factor() if factor is None else float(factor)
-    c = cpu(design, n, side or 4096)
+    c = cpu(design, n, side)
     return F * (c + DECODE_S_PER_EYE * n + ENCODE_S) + COLD_START_S + STORAGE_READ_S_PER_EYE * n + UPLOAD_S
 
 
@@ -188,12 +222,15 @@ def est_mb(design, n, size=4096, side=None):
         peak = CAPPED[design][n][1]
     else:
         peak = _row(MASTER, design, n)[2]
+    m = measured(design, n, side)
+    if m:
+        peak = max(peak, m[1])
     return int(-(-peak * LINUX_ALLOWANCE // 1))
 
 
 def break_even_factor(design, n, budget=WORK_BUDGET_S, side=None):
     """The slow factor at which step_need reaches the budget: above it the step can never succeed (a configuration error, not busy)."""
-    c = cpu(design, n, side or 4096)
+    c = cpu(design, n, side)
     fixed = COLD_START_S + STORAGE_READ_S_PER_EYE * n + UPLOAD_S
     return (budget - fixed) / (c + DECODE_S_PER_EYE * n + ENCODE_S)
 

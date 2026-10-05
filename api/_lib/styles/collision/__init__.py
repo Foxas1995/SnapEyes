@@ -111,9 +111,68 @@ def default_canvas(design, n, layout=None):
     return "1:1" if (lay == "brick" and n >= 7) else fmt
 
 
+def _scene_of(design, n, layout, fmt, clean=False):
+    """The scene the engine builds for a design with n eyes in a layout on a canvas (the canonical 1024 px, no words): the prototype's own constructors,
+    with the arguments engine.render gives them. Raises what the constructor raises for a canvas it has no constants for (a KeyError of the eye count,
+    a ValueError)."""
+    if design in ("infinity", "kiss"):
+        return CL.pair_scene(fmt, 1024, 1.3, False, False, "clean" if clean else design)
+    if design == "trio":
+        return CL.trio_scene(fmt, 1024, False, False)
+    if design == "family":
+        return CL.family_scene(n, layout, fmt, 1024, False, False)
+    if design == "chain":
+        return CL.chain_scene(n, fmt, 1024, False, False)
+    raise ValueError(design)
+
+
+def builds_on(design, n, layout, fmt, clean=False):
+    """True when the family has the constants to build this design with n eyes in this layout on this canvas, and the scene it builds is on that canvas
+    (the brick of seven and eight eyes is always the square one, whatever canvas is asked). The registry lists the canvases of a style, not of an eye
+    count: a chain draws 3:1 for four to six links, 3:2 and the phone column for three and four, and asked for the others the scene constructor used to
+    raise a KeyError (a request the registry itself advertises answered with a 500)."""
+    if fmt not in CL.ASPECTS:
+        return False
+    try:
+        return _scene_of(design, n, layout, fmt, clean).fmt == fmt
+    except (KeyError, ValueError, IndexError, AssertionError):
+        return False
+
+
+def draws_on(design, n, layout, fmt, clean=False):
+    """True when the family offers this canvas for this design, eye count and layout: it builds (builds_on) and the iris keeps the brief's size floor
+    T18 (a diameter of at least 22 percent of the canvas width, 0.60 of the height of the 3:1 panorama) with no words. The brief tested the default
+    canvas of each layout; a ring of five to eight or a flower on the 3:2 canvas is below the floor, and a request for it is drawn on the layout's
+    default canvas instead of a picture that its own hard check refuses."""
+    if fmt not in CL.ASPECTS:
+        return False
+    try:
+        sc = _scene_of(design, n, layout, fmt, clean)
+        return sc.fmt == fmt and bool(CL.dfloor_ok(sc))
+    except (KeyError, ValueError, IndexError, AssertionError):
+        return False
+
+
+def canvases_for(style, n, layout=None):
+    """The canvases of the registry's list on which the family draws this style with n eyes in a layout (the registry's order; the layout's own default
+    canvas is `default_canvas`). A canvas the registry lists for the style but not for this eye count or layout is not in the answer: _setup draws the
+    default canvas in its place."""
+    e = CT.engine_for(style, n)
+    if e is None or e.get("module") != "collision":
+        raise ValueError(f"{style!r} with {n!r} eyes is not a style of the collision family")
+    design = e["design"]
+    layout = layout or CT.default_layout(style, n)
+    if layout not in CT.layouts_for(style, n):
+        raise ValueError(f"{style!r} with {n} eyes has no layout {layout!r}")
+    if design == "trio" and layout == "diag":
+        design = "family"
+    return [c for c in e["canvases"] if draws_on(design, n, layout, c, bool(e.get("clean")))]
+
+
 def _setup(spec):
     """(engine entry, design, layout, canvas, clean) of the spec, or ValueError for a style that is not a style of this family. design is the
-    prototype's name of what is drawn: the registry names trio for three eyes, and a diagonal of three is the family engine."""
+    prototype's name of what is drawn: the registry names trio for three eyes, and a diagonal of three is the family engine. The canvas is the one the
+    spec names when the registry lists it and the family draws this design, eye count and layout on it (draws_on), else the layout's own default."""
     style, n = spec.get("style"), spec.get("eyes", 2)
     e = CT.engine_for(style, n)
     if e is None or e.get("module") != "collision":
@@ -125,7 +184,7 @@ def _setup(spec):
     if design == "trio" and layout == "diag":
         design = "family"
     fmt = spec.get("canvas") or spec.get("format")
-    if fmt not in e["canvases"]:
+    if fmt not in e["canvases"] or not draws_on(design, n, layout, fmt, bool(e.get("clean"))):
         fmt = default_canvas(design, n, layout if design == "family" else None)
     return e, design, layout, fmt, bool(e.get("clean"))
 
@@ -188,6 +247,11 @@ def render(design, eyes, fmt=None, size=1024, names=None, date=None, bg="dark", 
         raise ValueError(f"no background {bg!r}")
     if fmt is not None and fmt not in CL.ASPECTS:
         raise ValueError(f"no canvas {fmt!r} (the canvases are {', '.join(CL.ASPECTS)})")
+    if fmt is not None:
+        try:
+            _scene_of(design, n, layout, fmt, bool(clean))
+        except KeyError:                                 # the scene constructors have constants per eye count and canvas: a missing one is a canvas this design has no scene on
+            raise ValueError(f"{design} with {n} eyes has no scene on the {fmt!r} canvas") from None
     if not SIZES[0] <= int(size) <= SIZES[1]:
         raise ValueError(f"a canvas of {size} px (from {SIZES[0]} to {SIZES[1]})")
     if bg == "universe":

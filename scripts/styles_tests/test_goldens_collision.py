@@ -179,9 +179,23 @@ for sid in COLLISION_STYLES:
     for n in range(CT.eyes_range(sid)[0], CT.eyes_range(sid)[1] + 1):
         eng = CT.engine_for(sid, n)
         cost_rows[(sid, n)] = CO.assess(CO.cost_key(eng, "dark", None), n, size=4096, side=CT.work_side(sid, n), factor=1.6)
-check("every cost row the family needs exists (a master row and a preview row for each design and eye count), and every release 1 style fits one call at the slow factor 1.6: "
-      "only Family Colours with seven eyes (outside release 1, 1447 MB against the 1434 MB budget) does not", all(r["need_s"] is not None for r in cost_rows.values())
-      and [k for k, r in cost_rows.items() if not r["ok"]] == [("grp.collision", 7)], [(k, r["ok"], r["why"]) for k, r in cost_rows.items() if not r["ok"]])
+check("every cost row the family needs exists (a master row and a preview row for each design and eye count), and the master of every style fits one call at the slow factor 1.6 "
+      "except two: Family Colours with seven eyes (outside release 1, 1447 MB against the 1434 MB budget) and the Trio from 4096 px sources (the measured row, 52.5 s against the "
+      "52 s budget: WP7B caps it at 2048 px or splits it, the review of WP7A)", all(r["need_s"] is not None for r in cost_rows.values())
+      and [k for k, r in cost_rows.items() if not r["ok"]] == [("grp.collision", 3), ("grp.collision", 7)]
+      and cost_rows[("grp.collision", 3)]["why"] == "time" and cost_rows[("grp.collision", 7)]["why"] == "memory",
+      [(k, r["ok"], r["why"]) for k, r in cost_rows.items() if not r["ok"]])
+trio4 = CO.assess("collision.trio", 3, side=4096, factor=1.6)
+trio2 = CO.assess("collision.trio", 3, side=2048, factor=1.6)
+check("the cost table is honest about the Trio at the working copy its registry row gives it (review of WP7A): the spike's row (15.4 s, 929 MB) was a 2048 px copy's, the trio from 4096 px "
+      "sources was measured at 26.6 s of render and self check (28.0 s in the spike's units, 992 MB), so at 1.6 it needs 52.5 s and its break-even factor is 1.58 (the spike's 2.80); "
+      "a 2048 px copy needs 40.0 s; the spike's own figures stay what the plan's table pins (no working copy named), and no other design's row moved",
+      CT.work_side("grp.collision", 3) == 4096 and CO.measured("collision.trio", 3, 4096) == (28.0, 992) and CO.measured("collision.trio", 3, 2048) == (20.2, 778)
+      and CO.cpu("collision.trio", 3) == 15.4 and abs(CO.step_need("collision.trio", 3, factor=1.6) - 32.3) < 0.06 and abs(CO.break_even_factor("collision.trio", 3) - 2.80) < 0.011
+      and trio4["why"] == "time" and not trio4["ok"] and 52.0 < trio4["need_s"] < 53.0 and abs(CO.break_even_factor("collision.trio", 3, side=4096) - 1.58) < 0.01
+      and trio2["ok"] and 39.0 < trio2["need_s"] < 41.0 and 1000 < trio4["est_mb"] < CO.MEM_BUDGET_MB
+      and all(CO.measured(k, n, sd) is None for k, n, sd in (("collision.family", 8, 2048), ("collision.infinity", 2, 2048), ("singles.powder", 1, 4096), ("collision.trio", 3, None)))
+      and CO.cpu("collision.family", 8, 2048) == 16.8, (trio4, trio2))
 check("no stage was raised: every collision style of the engine is still at the laboratory ceiling, so a customer can neither order nor preview one, and the admin can look at all five",
       all(CT.ceiling(i, n) == "lab" and not CT.orderable(i, n) and not CT.previewable(i, n) and CT.previewable(i, n, admin=True)
           for i in COLLISION_STYLES for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1)), [(i, CT.ceiling(i, 2)) for i in COLLISION_STYLES])
@@ -486,6 +500,53 @@ check("the guards of render(): an unknown design, the wrong number of eyes for a
       and isinstance(raises(lambda: CX.render("infinity", two, "3:2", 63), ValueError), ValueError) and isinstance(raises(lambda: CX.render("infinity", two, "3:2", 4097), ValueError), ValueError)
       and isinstance(raises(lambda: CX.render("infinity", two, "3:2", 256, bg="space"), ValueError), ValueError) and isinstance(raises(lambda: CX.render("kiss", [two[0]]), ValueError), ValueError),
       "")
+# the registry lists the canvases of a STYLE, the family draws them per eye count and layout (review of WP7A: a chain of five asked for 3:2, the phone column or three
+# links asked for 3:1 raised a KeyError, a ring of five to eight on 3:2 fails T18, the brick of seven and eight is always square whatever canvas is asked)
+offer_bad, offer_n, offer_cut = [], 0, 0
+for sid in COLLISION_STYLES:
+    for n in range(CT.eyes_range(sid)[0], CT.eyes_range(sid)[1] + 1):
+        for lay in CT.layouts_for(sid, n):
+            e_, design_, layout_, dflt_, clean_ = CX._setup({"style": sid, "eyes": n, "layout": lay})
+            offered = CX.canvases_for(sid, n, lay)
+            if dflt_ not in offered or not set(offered) <= set(CT.ENGINE[sid]["canvases"]):
+                offer_bad.append(("default or list", sid, n, lay, dflt_, offered))
+            for c in CT.ENGINE[sid]["canvases"]:
+                offer_n += 1
+                offer_cut += c not in offered
+                got = CX._setup({"style": sid, "eyes": n, "layout": lay, "canvas": c})[3]
+                if got != (c if c in offered else dflt_):
+                    offer_bad.append(("asked", sid, n, lay, c, got))
+                if c in offered:
+                    sc_ = CX._scene_of(design_, n, layout_, c, bool(clean_))
+                    if sc_.fmt != c or not CL.dfloor_ok(sc_) or sc_.n != n:
+                        offer_bad.append(("scene", sid, n, lay, c))
+                elif CX.builds_on(design_, n, layout_, c, bool(clean_)) and CX.draws_on(design_, n, layout_, c, bool(clean_)):
+                    offer_bad.append(("cut but drawn", sid, n, lay, c))
+check(f"the canvases the registry lists for a style are drawn per eye count and layout: for each of the {offer_n} (layout, canvas) pairs of the five styles the family either offers the canvas "
+      f"(its scene is on that canvas and keeps the T18 floor) or draws the layout's own default canvas instead, which it always offers; {offer_cut} pairs are cut, among them the five that "
+      "raised a KeyError (the chain of three on 3:1, of five and six on 3:2 and the phone column), the ring and the flower of five to eight on 3:2 (T18) and the brick of seven and eight "
+      "on any canvas but the square one", not offer_bad and offer_cut >= 20, offer_bad[:4])
+check("... in particular: the chain draws 3:2 and the phone column for three links, every canvas for four, 3:1 only for five and six; a request for another canvas is drawn on the chain's "
+      "own default (3:2 up to four links, 3:1 above); a ring of eight is square or portrait, the brick of seven and eight square; the pairs and the trio keep every canvas of the registry",
+      CX.canvases_for("grp.chain", 3) == ["3:2", "9:19.5"] and CX.canvases_for("grp.chain", 4) == ["3:2", "3:1", "9:19.5"] and CX.canvases_for("grp.chain", 5) == ["3:1"]
+      and CX.canvases_for("grp.chain", 6) == ["3:1"] and CX._setup({"style": "grp.chain", "eyes": 5, "layout": "chain", "canvas": "3:2"})[3] == "3:1"
+      and CX._setup({"style": "grp.chain", "eyes": 6, "layout": "chain", "canvas": "9:19.5"})[3] == "3:1"
+      and CX._setup({"style": "grp.chain", "eyes": 3, "layout": "chain", "canvas": "3:1"})[3] == "3:2"
+      and CX.canvases_for("grp.collision", 8, "ring") == ["1:1", "4:5"] and CX.canvases_for("grp.collision", 7, "brick") == ["1:1"] and CX.canvases_for("grp.collision", 8, "brick") == ["1:1"]
+      and CX.canvases_for("grp.collision", 3, "trio") == CT.ENGINE["grp.collision"]["canvases"] and CX.canvases_for("duo.collision_infinity", 2, "pair") == CT.ENGINE["duo.collision_infinity"]["canvases"]
+      and CX.canvases_for("duo.kiss_collision", 2, "pair") == CT.ENGINE["duo.kiss_collision"]["canvases"] and CX.canvases_for("duo.clean", 2, "pair") == CT.ENGINE["duo.clean"]["canvases"],
+      [(k, CX.canvases_for(*k)) for k in (("grp.chain", 3), ("grp.chain", 4), ("grp.chain", 5), ("grp.chain", 6))])
+five = [C.Iris(SI.png_bytes_of(kind=k_, pupil="round", seed=300 + i_, side=160), f"cv{i_}", max_side=160) for i_, k_ in enumerate(("blue", "green", "dark_brown", "grey", "amber"))]
+pv_c5 = ST.preview(five, {"style": "grp.chain", "eyes": 5, "layout": "chain", "canvas": "3:2"}, size=128)
+brick7 = five + [C.Iris(SI.png_bytes_of(kind="blue", pupil="round", seed=310 + i_, side=160), f"cw{i_}", max_side=160) for i_ in range(2)]
+pv_b7 = ST.preview(brick7, {"style": "grp.collision", "eyes": 7, "layout": "brick", "canvas": "3:2"}, size=128)
+check("a preview of a chain of five asked for the 3:2 canvas is drawn (it raised a KeyError, a 500 for a canvas the registry lists) on the chain's own 3:1 and says so (the Preview's fmt, "
+      "the picture's size); a brick of seven asked for 3:2 says 1:1 and is square (the Preview used to name the canvas asked, the picture was the square one); render() refuses a canvas "
+      "the design has no scene on with a ValueError, not a KeyError",
+      pv_c5.fmt == "3:1" and pv_c5.img.size == (128, 43) and pv_b7.fmt == "1:1" and pv_b7.img.size == (128, 128)
+      and isinstance(raises(lambda: CX.render("chain", five, "3:2", 128), ValueError), ValueError) and isinstance(raises(lambda: CX.render("chain", five[:3], "3:1", 128), ValueError), ValueError)
+      and isinstance(raises(lambda: CX.render("chain", five, "9:19.5", 128), ValueError), ValueError), (pv_c5.fmt, pv_c5.img.size, pv_b7.fmt, pv_b7.img.size))
+del five, brick7, pv_c5, pv_b7
 check("the customer's words are cleaned before they are drawn: the old string \"Anna;Max\" and the lockup line \"Anna \u00b7 Max\" are two names, a letter the artwork font cannot draw is left out, "
       "a name is cut at 24 letters, there are at most eight names and the date at 20 characters",
       CX._words("Anna;Max") == ["Anna", "Max"] and CX._words("Anna \u00b7 Max") == ["Anna", "Max"] and CX._words(["Ana\u4e2d", "x" * 40]) == ["Ana", "x" * 24]
@@ -560,11 +621,12 @@ check("resolve() answers for every style, eye count and layout of the registry: 
       all(v["design_used"] in CX.DESIGNS and v["canvas"] in CT.ENGINE[k[0]]["canvases"] and v["layout"] == k[2] and SD.clean_key(v["seed_key"]) for k, v in every.items()) and len(every) == 25,
       [(k, v["canvas"]) for k, v in every.items() if v["canvas"] not in CT.ENGINE[k[0]]["canvases"]][:3])
 check("the plan of a pair, a trio, a family of eight and a chain through the master plan (steps.make_plan): the family, the design drawn, the canvas, the work side the registry caps the "
-      "masters at (2048 for a pair, a family and a chain, 4096 for the trio), one art step and a cost the work budget allows",
-      all((lambda p: p["family"] == "collision" and p["design_used"] == d and p["work_side"] == w and len(p["steps"]) == 1 and p["steps"][0]["need_s"] < CO.WORK_BUDGET_S)(
+      "masters at (2048 for a pair, a family and a chain, 4096 for the trio), one art step and a cost the work budget allows (the Trio's measured cost does not: see above)",
+      all((lambda p: p["family"] == "collision" and p["design_used"] == d and p["work_side"] == w and len(p["steps"]) == 1
+                     and (p["steps"][0]["need_s"] < CO.WORK_BUDGET_S) == fits)(
           STP.make_plan({"style": s, "eyes": n, "layout": lay}, [{"eye_id": f"{i:016x}", "profile": None} for i in range(1, n + 1)]))
-          for s, n, lay, d, w in (("duo.kiss_collision", 2, "pair", "kiss", 2048), ("duo.collision_infinity", 2, "pair", "infinity", 2048), ("grp.collision", 3, "trio", "trio", 4096),
-                                  ("grp.collision", 8, "ring", "family", 2048), ("grp.chain", 4, "chain", "chain", 2048))), "")
+          for s, n, lay, d, w, fits in (("duo.kiss_collision", 2, "pair", "kiss", 2048, True), ("duo.collision_infinity", 2, "pair", "infinity", 2048, True),
+                                        ("grp.collision", 3, "trio", "trio", 4096, False), ("grp.collision", 8, "ring", "family", 2048, True), ("grp.chain", 4, "chain", "chain", 2048, True))), "")
 
 # a lab order end to end: two small masters, the master plan's art step, the family at 4096 px
 order = "261005-wp7a000001"
