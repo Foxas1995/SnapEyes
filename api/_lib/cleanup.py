@@ -39,7 +39,8 @@ it twice): a missed day is caught up by the next run, and a second run finds not
      in cleanup/style/, written with the plan; a marker whose order is gone goes too)
   6. the site's other logs: events.purge_old() when api/_lib/events.py exists (the owner's admin tools keep their
      own retention there), the audit log ops/audit/ after AUDIT_KEEP_MONTHS (24 months), by the dates in its
-     names (_audit), and the admin log of an order that is gone completely (ops/orderlog/<order>/ without any file
+     names (_audit), the style switch's own audit log ops/styles/audit/ (api/_lib/stage_overrides.py: it names the order numbers a hold caught) on the
+     same rule, and the admin log of an order that is gone completely (ops/orderlog/<order>/ without any file
      of the order left: a deletion that could not finish, an admin action on an order number that does not exist;
      _orphan_logs). A paid order's log stays with its records
 Order folders are named by the day they were made (yymmdd-...), so a run lists only the days it needs: the last
@@ -65,6 +66,7 @@ FIRST_DAY = "260901"         # no order folder is older than this code
 UNMATCHED_KEEP_DAYS = 396    # statements that matched no order: kept 12 months after their month ended, then deleted
 AUDIT_TOP = "ops/audit"      # the admin tools' audit log (api/_lib/ops.py: ops/audit/<YYYY-MM-DD>/...), kept
 AUDIT_KEEP_MONTHS = 24       # 24 months, then deleted by its day
+STYLE_AUDIT_TOP = "ops/styles/audit"   # the style switch's audit log (ops/styles/audit/<YYYY-MM-DD>/...): the same 24 months
 REFUNDS_TOP = "ops/refunds"  # the admin panel's refund records (api/_lib/ops.py act_refund): a refund made there counts
 LAB_TOP = "ops/lab"          # the admin panel's lab test markers (api/_lib/ops.py LAB): a lab test still there
 ORPHAN_GRACE_DAYS = 2        # an order log whose newest entry is younger than this is left alone (a lab test's folder
@@ -168,8 +170,9 @@ def run(yes=True, stop_left=10.0, out=None, lock=True):
         if not res["more"]:
             res["events"] = _events(yes, stop_left, say)
             res["audit"] = _audit(yes, stop_left, say)
+            res["style_audit"] = _audit(yes, stop_left, say, top=STYLE_AUDIT_TOP)
             res["orderlog"] = _orphan_logs(yes, stop_left, say)
-            more = [res["audit"].pop("more", False), res["orderlog"].pop("more", False)]
+            more = [res["audit"].pop("more", False), res["style_audit"].pop("more", False), res["orderlog"].pop("more", False)]
             res["more"] = bool(isinstance(res["events"], dict) and res["events"].get("more")) or any(more)
         res["more"] = res["more"] or late
     finally:

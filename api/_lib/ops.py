@@ -1489,7 +1489,6 @@ def a_styles_lab(body, who):
 
 
 LAB_GROUP_SIZES = (480, 1024)             # the long side of a tile of the group's contact sheet
-LAB_GROUP_BUDGET_S = 44.0                 # a group is drawn while at least this much of the call is left for the next tile (the guard below: est + 6 s)
 
 
 def _lab_group_eyes(body):
@@ -1661,13 +1660,16 @@ IN_FLIGHT_LIST = 50          # order numbers named in a reply
 
 
 def _same_range(a, b):
-    keys = ("ceiling", "override", "effective", "switchable", "orderable", "missing_for_live", "waiver")
-    return all(a[k] == b[k] for k in keys) and {c: m["ticked_at"] for c, m in a["checklist"].items()} == {c: m["ticked_at"] for c, m in b["checklist"].items()}
+    """Two neighbouring eye counts read the same when everything the page shows of them is equal: the ticks with their evidence (a corrected score of
+    one count makes it a range of its own), the waiver, the stages and what live still lacks."""
+    keys = ("ceiling", "override", "effective", "switchable", "orderable", "missing_for_live", "waiver", "l0", "checklist")
+    return all(a[k] == b[k] for k in keys)
 
 
 def _style_ranges(sid, rec):
     """The eye counts of one style grouped into ranges that read the same (ceiling, override, effective stage, ticks, waiver): what the page's switch
-    shows per row. Each row: {eyes: [first, last], ceiling, override, effective, orderable, switchable, checklist, waiver, missing_for_live}."""
+    shows per row. Each row: {eyes: [first, last], ceiling, override, effective, orderable, switchable, checklist, waiver, missing_for_live, l0}; l0 is the
+    state of the independent score: pass, below_bar (recorded, does not count), incomplete, waiver or None (stage_overrides.l0_state)."""
     from . import stage_overrides as SO
     lo, hi = CT.eyes_range(sid)
     built = CT.renderable(sid)
@@ -1680,7 +1682,7 @@ def _style_ranges(sid, rec):
         row = {"ceiling": ceil, "override": ov, "effective": eff, "orderable": eff == "live" and built,
                "switchable": ceil not in (None, "planned", "retired"),
                "checklist": _copy_marks(((rec or {}).get("checklist") or {}).get(k)), "waiver": ((rec or {}).get("waiver") or {}).get(k),
-               "missing_for_live": SO.missing_for_live(rec, n)}
+               "missing_for_live": SO.missing_for_live(rec, n), "l0": SO.l0_state(rec, n)}
         if rows and _same_range(rows[-1], row):
             rows[-1]["eyes"][1] = n
         else:
@@ -1699,8 +1701,10 @@ def _style_view(sid, rec):
 
 
 def _running_price_tests():
-    """The price tests that run now (their keys): a flip of a style changes the sample of each (spec 4.4 step 3)."""
-    return list(_safe(lambda: abtest.running_keys(timeout=3.0), []) or [])
+    """The price tests that run now (their keys): a flip of a style changes the sample of each (spec 4.4 step 3). A failure is raised, not read as "none
+    run": an empty list would let a flip through without the owner's acknowledgement (abtest.states itself answers from its last good reading when the
+    storage cannot be read)."""
+    return list(abtest.running_keys(timeout=3.0) or [])
 
 
 def a_styles_catalogue(body, who):
@@ -1715,31 +1719,58 @@ def a_styles_catalogue(body, who):
     if only is not None and not CT.known(only):
         raise L.ClientError("Not a style of the catalogue.")
     ids = [only] if only else list(CT.ids())
-    return {"ok": True, "rev": obj["rev"], "at": obj["at"], "checks": list(SO.CHECKS), "limits": obj["limits"],
+    return {"ok": True, "rev": obj["rev"], "at": obj["at"], "checks": list(SO.CHECKS), "limits": obj["limits"], "l0_bar": {"mean": SO.L0_MEAN, "min_axis": SO.L0_AXIS},
             "default_effective": CT.EFFECTIVE_DEFAULT, "fallback_stage": CT.FALLBACK_STAGE, "registry_hash": CT.registry_hash(),
             "ordering_open": not pay.ordering_problem() and not store.problem(), "price_test": _running_price_tests(),
             "orderable_max_eyes": CT.orderable_max_eyes(), "styles": [_style_view(i, obj["styles"].get(i)) for i in ids]}
 
 
+def _hold_one(order):
+    """Hold one order for the owner's look: review.json (reason style_rolled_back), then READ IT BACK. pay.mark_review never raises (a failed write is only
+    logged), so the read back is what says the order IS held (an earlier review.json, of any reason, holds it as well). False when it is not."""
+    pay.mark_review(order, "style_rolled_back")
+    try:
+        return store.get(pay.order_path(order, "review.json"), max_bytes=4096, timeout=5.0, retry=False) is not None
+    except Exception:  # noqa: not read back: not known to be held
+        return False
+
+
 def _hold_in_flight(sid, counts):
     """The owner chose to HOLD the paid orders in flight of a style he took back (decision DE1): every paid order of the last IN_FLIGHT_DAYS days that is
     still being made (pending, paid or making: not ready, not withdrawn, not held already) for this style and one of these eye counts gets review.json
-    (reason style_rolled_back), so nothing more is drawn for it until he has looked and cleared the review, as for every other hold. {count, orders, checked,
-    more}. A Stripe page opened before the change and paid after it is NOT held: it finishes (the render path ignores stages); the answer says so."""
-    names = order_folders(days=IN_FLIGHT_DAYS)
-    rows, more = [], False
-    for i in range(0, len(names), 10):
-        if L.time_left() < 10:
-            more = True
-            break
-        rows += [r for r in each([lambda o=o: order_row(o) for o in names[i:i + 10]], width=10) if isinstance(r, dict)]
+    (reason style_rolled_back), so nothing more is drawn for it until he has looked and cleared the review, as for every other hold. A Stripe page opened
+    before the change and paid after it is NOT held: it finishes (the render path ignores stages); the answer says so.
+
+    It never raises and it never says more than was done: {count (held by this run, each read back after its write), orders (at most IN_FLIGHT_LIST),
+    checked (order records read), more (time ran short), failed (orders whose hold could not be stored), unread (order records that could not be read),
+    error (the class of an exception that stopped the run, else None), incomplete (any of the four: the owner sends the same request again with in_flight
+    hold, and the orders held already are left alone)}."""
+    out = {"count": 0, "orders": [], "checked": 0, "more": False, "failed": [], "unread": 0, "error": None, "incomplete": False}
     held = []
-    for r in rows:
-        if (r.get("paid") and r.get("style") == sid and r.get("eyes") in counts and r.get("state") in IN_FLIGHT_STATES and not r.get("review")
-                and not r.get("delivery")):
-            pay.mark_review(r["order"], "style_rolled_back")
-            held.append(r["order"])
-    return {"count": len(held), "orders": held[:IN_FLIGHT_LIST], "checked": len(rows), "more": more}
+    try:
+        names = order_folders(days=IN_FLIGHT_DAYS)
+        rows, tried = [], 0
+        for i in range(0, len(names), 10):
+            if L.time_left() < 10:
+                out["more"] = True
+                break
+            chunk = names[i:i + 10]
+            tried += len(chunk)
+            rows += [r for r in each([lambda o=o: order_row(o) for o in chunk], width=10) if isinstance(r, dict)]
+        out["checked"], out["unread"] = len(rows), tried - len(rows)
+        for r in rows:
+            if (r.get("paid") and r.get("style") == sid and r.get("eyes") in counts and r.get("state") in IN_FLIGHT_STATES and not r.get("review")
+                    and not r.get("delivery")):
+                if L.time_left() < 6:
+                    out["more"] = True
+                    break
+                (held if _hold_one(r["order"]) else out["failed"]).append(r["order"])
+    except Exception as e:  # noqa: the change is saved; what could not be held is reported, never hidden
+        log(f"styles: orders in flight not all held: {type(e).__name__}")
+        out["error"] = type(e).__name__
+    out["count"], out["orders"], out["failed"] = len(held), held[:IN_FLIGHT_LIST], out["failed"][:IN_FLIGHT_LIST]
+    out["incomplete"] = bool(out["more"] or out["failed"] or out["unread"] or out["error"])
+    return out
 
 
 def act_styles_override(body, who):
@@ -1747,12 +1778,16 @@ def act_styles_override(body, who):
     restore), tick {L0..L11: true or false}, evidence {L0: {mean, min_axis, by}}, waiver {text} (false removes it), reason, reason_kind (quality, capacity,
     soon, other), in_flight (finish or hold), price_test_seen, rev, confirm}. The rules (api/_lib/stage_overrides.py): the ceiling of the registry is the
     top (409 above_ceiling), a planned or retired style cannot be switched (409 not_switchable), `live` needs L1 and L0 or its waiver for every count asked for
-    (409 needs_ticks, missing says which), a stage change needs confirm true (400), rev must be the revision the page saw (409 stale_view), and while a
+    (409 needs_ticks, missing says which, l0 says where the score stands: L0 is a score with the scorer's name and mean at least 3.96 and no axis under 3.8, or the
+    written waiver, never a bare tick: a score below the bar is recorded and does not count), a stage change needs confirm true (400), rev must be the revision the
+    page saw (409 stale_view), and while a
     price test runs a flip that changes what can be ordered needs price_test_seen true (409 price_test_running: the page shows the line "a price test is
     running: this flip changes its sample", the owner decides). Taking a style that was orderable back asks what happens to the paid orders in flight (DE1):
     in_flight finish (they finish: the render path ignores stages) or hold (review.json, the owner looks first); the default is hold when reason_kind is
     quality and finish otherwise. One change is one revision, one entry of the style audit log (ops/styles/audit: the numbers of the funnel at that moment,
-    the price test, the choice for the orders in flight) and one line of the admin audit."""
+    the price test, the choice for the orders in flight) and one line of the admin audit. The change is saved first and the hold never raises: held says how
+    many orders were held (each read back after its write), which failed, and incomplete when it stopped half way, and then the same request again with in_flight
+    hold (answer result same) holds the rest. audit_written false says the log line could not be stored (the change stands)."""
     from . import stage_overrides as SO
     req = SO.parse(body)
     if req["stage"] is not None and not req["confirm"]:
@@ -1763,30 +1798,43 @@ def act_styles_override(body, who):
             raise store.Answer(409, "stale_view", "The switch was changed since this page was drawn: reload it.", False, rev=obj["rev"])
         new, rep = SO.transition(obj, req, who["kind"])
         flips = [n for n in req["counts"] if (rep["effective_before"][str(n)] == "live") != (rep["effective_after"][str(n)] == "live")]
-        tests = _running_price_tests() if flips else []
+        tests = _running_price_tests() if flips else []        # read before anything is written: a failure here changes nothing
         if tests and not req["price_test_seen"]:
             raise store.Answer(409, "price_test_running", "A price test is running: this flip changes its sample. Say that you have read this "
                                "(price_test_seen) to go on.", False, keys=tests, eyes=flips)
-        if not rep["changed"]:
-            return {"ok": True, "result": "same", "style": req["style"], "eyes": req["counts"], "rev": obj["rev"], "before": rep["before"],
-                    "after": rep["after"], "effective": rep["effective_after"], "ceiling": rep["ceiling"],
-                    "view": _style_view(req["style"], obj["styles"].get(req["style"])), "audit_detail": f"{req['style']} no change"}
-        saved = SO.save(new)
+        saved = SO.save(new) if rep["changed"] else None
+    if saved is None:
+        # No change. The same request again with in_flight hold is how the owner finishes a hold that stopped half way (a storage error, no time left): it
+        # holds the orders in flight that are not held yet, for the counts that are not live
+        view = _style_view(req["style"], obj["styles"].get(req["style"]))
+        out = {"ok": True, "result": "same", "style": req["style"], "eyes": req["counts"], "rev": obj["rev"], "before": rep["before"], "after": rep["after"],
+               "effective": rep["effective_after"], "ceiling": rep["ceiling"], "l0": rep["l0"], "in_flight": None, "held": None, "view": view,
+               "audit_detail": f"{req['style']} no change"}
+        again = [n for n in req["counts"] if rep["effective_after"][str(n)] != "live"] if req["stage"] is not None and req["in_flight"] == "hold" else []
+        if again:
+            held = _hold_in_flight(req["style"], again)
+            written = SO.audit_put({"kind": "hold", "by": who["kind"], "style": req["style"], "name": CT.name_of(req["style"]), "eyes": again, "stage": req["stage"],
+                                    "effective_after": {str(n): rep["effective_after"][str(n)] for n in again}, "reason": req["reason"],
+                                    "reason_kind": req["reason_kind"], "in_flight": "hold", "held": held, "rev": obj["rev"]})
+            out.update(in_flight="hold", held=held, audit_written=bool(written),
+                       audit_detail=f"{req['style']} {again[0]}-{again[-1]} hold again held {held['count']}" + (" incomplete" if held["incomplete"] else ""))
+        return out
     lowered = [n for n in flips if rep["effective_after"][str(n)] != "live"]
     mode = (req["in_flight"] or ("hold" if req["reason_kind"] == "quality" else "finish")) if lowered else None
-    held = _hold_in_flight(req["style"], lowered) if mode == "hold" else None
+    held = _hold_in_flight(req["style"], lowered) if mode == "hold" else None          # never raises: the change is saved, so its entry is always written
     result = "changed" if req["stage"] is not None else "ticked"
-    SO.audit_put({"kind": "override", "by": who["kind"], "style": req["style"], "name": CT.name_of(req["style"]), "eyes": req["counts"], "stage": req["stage"],
-                  "before": rep["before"], "after": rep["after"], "effective_before": rep["effective_before"], "effective_after": rep["effective_after"],
-                  "ceiling": rep["ceiling"], "reason": req["reason"], "reason_kind": req["reason_kind"], "ticked": rep["ticked"], "unticked": rep["unticked"],
-                  "waiver": rep["waiver"], "numbers": _flip_numbers(req["counts"]), "price_test": tests, "price_test_seen": req["price_test_seen"],
-                  "in_flight": mode, "held": ({"count": held["count"], "orders": held["orders"]} if held else None), "rev": saved["rev"]})
+    written = SO.audit_put({"kind": "override", "by": who["kind"], "style": req["style"], "name": CT.name_of(req["style"]), "eyes": req["counts"], "stage": req["stage"],
+                            "before": rep["before"], "after": rep["after"], "effective_before": rep["effective_before"], "effective_after": rep["effective_after"],
+                            "ceiling": rep["ceiling"], "reason": req["reason"], "reason_kind": req["reason_kind"], "ticked": rep["ticked"], "unticked": rep["unticked"],
+                            "waiver": rep["waiver"], "l0": rep["l0"], "numbers": _flip_numbers(req["counts"]), "price_test": tests, "price_test_seen": req["price_test_seen"],
+                            "in_flight": mode, "held": held, "rev": saved["rev"]})
     detail = f"{req['style']} {req['counts'][0]}-{req['counts'][-1]} {req['stage'] or 'tick'} -> {','.join(sorted(set(v or 'default' for v in rep['after'].values())))}"
     if held:
-        detail += f" held {held['count']}"
+        detail += f" held {held['count']}" + (" incomplete" if held["incomplete"] else "")
     return {"ok": True, "result": result, "style": req["style"], "eyes": req["counts"], "rev": saved["rev"], "before": rep["before"], "after": rep["after"],
-            "effective": rep["effective_after"], "ceiling": rep["ceiling"], "ticked": rep["ticked"], "unticked": rep["unticked"], "waiver": rep["waiver"],
-            "price_test": tests, "in_flight": mode, "held": held, "view": _style_view(req["style"], saved["styles"].get(req["style"])), "audit_detail": detail}
+            "effective": rep["effective_after"], "ceiling": rep["ceiling"], "ticked": rep["ticked"], "unticked": rep["unticked"], "waiver": rep["waiver"], "l0": rep["l0"],
+            "price_test": tests, "in_flight": mode, "held": held, "audit_written": bool(written), "view": _style_view(req["style"], saved["styles"].get(req["style"])),
+            "audit_detail": detail}
 
 
 def _need_for(what, style, eyes):
@@ -1854,7 +1902,12 @@ def _flip_numbers(counts):
     is made; its numbers are a note."""
     try:
         from . import style_stats as SS
-        return SS.flip_numbers([agg for _d, agg, _c in collect_days(30)], counts)
+        rows = collect_days(30)
+        out = SS.flip_numbers([agg for _d, agg, _c in rows], counts)
+        partial = not all(c for _d, _a, c in rows)       # a day that could not be read whole (time ran short): the numbers are of what was read
+        for v in out.values():
+            v["partial"] = partial
+        return out
     except Exception as e:  # noqa
         log(f"styles: numbers for the audit entry not read: {type(e).__name__}")
         return None

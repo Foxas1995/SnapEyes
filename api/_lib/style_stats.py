@@ -183,6 +183,22 @@ def chosen(agg, sl=None):
     return {"pick": pick, "other": other, "share": round(pick / (pick + other), 4) if pick + other else None}
 
 
+def chosen_by_class(agg):
+    """Rows {cls, pick, other, share, n}: the previews of the recommended tile against the others, by the set's colour class (own, dark_brown, grey: the
+    owner asked whether the recommendation is followed where the eyes are hardest). Not sliced (class by language by market is too many cells)."""
+    rows = {}
+    for key, n in table(agg, "compose_chosen_cls").items():
+        cls, _, which = key.partition("|")
+        if cls and which in ("pick", "other"):
+            rows.setdefault(cls, {"cls": cls, "pick": 0, "other": 0})[which] += n
+    out = []
+    for cls in sorted(rows):
+        r = rows[cls]
+        tot = r["pick"] + r["other"]
+        out.append(dict(r, n=tot, share=round(r["pick"] / tot, 4) if tot else None))
+    return out
+
+
 def previews(agg, sl=None):
     """Rows {style, name, previews, tiles}: the large previews the customer asked for and the tiles of the batches, by style (tiles apart from previews)."""
     pre, til = table(agg, "compose_style", sl), table(agg, "compose_tile_style", sl)
@@ -247,12 +263,93 @@ def errors_by_style(agg):
     return sorted(rows, key=lambda r: -r["errors"])
 
 
+def qa_by_style(agg):
+    """Rows {style, name, qa_fail, of, rate}: the pictures whose own colour check failed (qa_ok false on the compose event) over the pictures made of the
+    style (previews and tiles), by style. Not sliced."""
+    bad, pre, til = table(agg, "compose_qa_fail"), table(agg, "compose_style"), table(agg, "compose_tile_style")
+    rows = []
+    for st in sorted(bad):
+        of = pre.get(st, 0) + til.get(st, 0)
+        rows.append({"style": st, "name": CT.name_of(st), "qa_fail": bad[st], "of": of, "rate": round(bad[st] / of, 4) if of else None})
+    return sorted(rows, key=lambda r: -r["qa_fail"])
+
+
+def busy_retry(agg):
+    """Rows {endpoint, style, name, count}: the 503 replies busy_retry (a render that waited for room and found none, or had no time left), by endpoint and by
+    the style the refused request named ("unknown" where the reply names none, as the order steps' do). An error event holds no language or market: not sliced."""
+    rows = []
+    for key, n in table(agg, "busy_retry").items():
+        endpoint, _, style = key.partition("|")
+        rows.append({"endpoint": endpoint, "style": style, "name": CT.name_of(style) if style != "unknown" else None, "count": n})
+    return sorted(rows, key=lambda r: (-r["count"], r["endpoint"], r["style"]))
+
+
 def review_by_style(agg):
     """Rows {style, name, review, made, rate}: the artworks held for a look over the artworks made (one art step is one artwork), by style."""
     rev, made = table(agg, "master_review_style"), table(agg, "master_art_style")
     rows = [{"style": s, "name": CT.name_of(s), "review": rev.get(s, 0), "made": made.get(s, 0),
              "rate": round(rev.get(s, 0) / made[s], 4) if made.get(s) else None} for s in sorted(set(rev) | set(made))]
     return sorted(rows, key=lambda r: (-r["review"], r["style"]))
+
+
+def _checkout_rows(agg):
+    """The checkout events' counts as rows {style, eyes, stage, gate, n}."""
+    out = []
+    for key, n in table(agg, "checkout_funnel").items():
+        parts = key.split("|")
+        if len(parts) != 4 or parts[2] not in E.CHECKOUT_STAGES:
+            continue
+        try:
+            eyes = int(parts[1])
+        except ValueError:
+            continue
+        out.append({"style": parts[0], "eyes": eyes, "stage": parts[2], "gate": parts[3], "n": n})
+    return out
+
+
+def conversion(agg):
+    """The funnel of a style after the preview (PR 6.1): {recorded, rows}. recorded is whether any checkout event came in this period (the checkout sends
+    them: until it does, started and paid are 0 and say nothing). Each row, by style and eye count: previews (the large previews asked for while the style was
+    live: the customer looked at it and could buy it), started (a Stripe session was created), paid, rate_started (started over previews) and rate_paid
+    (paid over started), None where the denominator is 0; the counts are the n. Not sliced: the previews of a live style are not."""
+    ck = _checkout_rows(agg)
+    rows = {}
+    for key, n in table(agg, "compose_demand").items():
+        parts = key.split("|")
+        if len(parts) == 4 and parts[2] == "live" and parts[3] == "large":
+            try:
+                eyes = int(parts[1])
+            except ValueError:
+                continue
+            rows.setdefault((parts[0], eyes), {"previews": 0, "started": 0, "paid": 0})["previews"] += n
+    for r in ck:
+        rows.setdefault((r["style"], r["eyes"]), {"previews": 0, "started": 0, "paid": 0})["started" if r["stage"] == "start" else "paid"] += r["n"]
+    out = []
+    for (style, eyes), v in sorted(rows.items()):
+        out.append({"style": style, "name": CT.name_of(style), "eyes": eyes, "previews": v["previews"], "started": v["started"], "paid": v["paid"],
+                    "rate_started": round(v["started"] / v["previews"], 4) if v["previews"] else None,
+                    "rate_paid": round(v["paid"] / v["started"], 4) if v["started"] else None})
+    return {"recorded": bool(ck), "rows": out}
+
+
+def ordered_after_failure(agg):
+    """Rows {eyes, started, paid, started_failed, paid_failed, share_paid_failed, by_code}: of the orders started and paid for a count of eyes, how many were
+    made on a set that FAILED the gate of its style (a style whose gate is advisory can be bought on a failing set, with the warning shown before the buy
+    button). A gate of unknown is not a failure. share_paid_failed is paid_failed over paid (None without a paid order): the number the opening decision
+    wants beside the funnel. by_code counts the paid orders by the failing eye's reason code."""
+    rows = {}
+    for r in _checkout_rows(agg):
+        v = rows.setdefault(r["eyes"], {"eyes": r["eyes"], "started": 0, "paid": 0, "started_failed": 0, "paid_failed": 0, "by_code": {}})
+        failed = r["gate"] not in ("ok", "unknown")
+        if r["stage"] == "start":
+            v["started"] += r["n"]
+            v["started_failed"] += r["n"] if failed else 0
+        else:
+            v["paid"] += r["n"]
+            if failed:
+                v["paid_failed"] += r["n"]
+                v["by_code"][r["gate"]] = v["by_code"].get(r["gate"], 0) + r["n"]
+    return [dict(v, share_paid_failed=round(v["paid_failed"] / v["paid"], 4) if v["paid"] else None) for _e, v in sorted(rows.items())]
 
 
 def fallbacks(agg, sl=None):
@@ -329,11 +426,14 @@ def report(agg, limits=None, sl=None, health=None):
     limits = limits or {"min_n": 20, "error_rate": 0.05, "review_rate": 0.10, "gate_fail_rate": 0.60}
     f = funnel(table(agg, "compose_funnel", sl))
     return {"requests": requests(agg, sl), "funnel": f, "funnel_by_class": funnel(table(agg, "compose_funnel_cls"), by_class=True),
-            "opening": {str(r["eyes"]): r["line"] for r in f if r["line"]}, "demand": demand(agg, sl), "chosen": chosen(agg, sl), "previews": previews(agg, sl),
-            "fallbacks": fallbacks(agg, sl), "times": times(agg), "errors": errors_by_style(agg), "review": review_by_style(agg),
+            "opening": {str(r["eyes"]): r["line"] for r in f if r["line"]}, "demand": demand(agg, sl), "chosen": chosen(agg, sl), "chosen_by_class": chosen_by_class(agg),
+            "previews": previews(agg, sl), "conversion": conversion(agg), "after_failure": ordered_after_failure(agg),
+            "fallbacks": fallbacks(agg, sl), "times": times(agg), "busy_retry": busy_retry(agg), "errors": errors_by_style(agg), "qa": qa_by_style(agg),
+            "review": review_by_style(agg),
             "gate": {"codes": table(agg, "enhance_gate"), "reasons": table(agg, "enhance_reason"), "classes": table(agg, "enhance_class"),
                      "pupils": table(agg, "enhance_pupil"), "by_style": gate_by_style(agg)},
             "holds": table(agg, "master_hold"), "master": {"made_by_style": table(agg, "master_art_style"), "fallback": table(agg, "master_fallback")},
             "help": {"routes": table(agg, "help_route"), "why": table(agg, "help_why"), "eyes": table(agg, "help_eyes")},
             "reveal": reveal(agg), "attention": attention(agg, limits, health),
-            "filter": {"slice": sl, "sliced": list(SLICED_TABLES), "whole": ["funnel_by_class", "times", "errors", "review", "gate", "holds", "master", "help", "reveal", "attention"]}}
+            "filter": {"slice": sl, "sliced": list(SLICED_TABLES), "whole": ["funnel_by_class", "chosen_by_class", "conversion", "after_failure", "times", "busy_retry", "errors", "qa", "review", "gate", "holds",
+                                                                  "master", "help", "reveal", "attention"]}}

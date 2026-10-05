@@ -6,8 +6,9 @@ What a stage is (api/_lib/styles_registry.py): the literal of the registry is th
 is the lower of the ceiling and the owner's override, which is set in the admin page, needs no deploy, and can lower a style (take it back to
 preview or lab) or restore it up to the ceiling, never above. An override above the ceiling is refused by the admin action AND ignored by the
 reader (effective_stage), so a hand-edited file cannot raise a style either. A style becomes `live` (orderable) only after the owner has
-recorded his own look at its final renders (check L1) and the independent score of the art director (L0) or his written waiver of it: the
-action refuses `live` otherwise. Ordering itself is a different switch (pay.ordering_problem), closed until the owner opens it.
+recorded his own look at its final renders (check L1) and the independent score of the art director (L0: mean at least L0_MEAN and no axis below
+L0_AXIS, with the scorer's name; a score below the bar is recorded and shown, and does not count) or his written waiver of it: the action refuses
+`live` otherwise. L0 has no bare tick: it is recorded with its evidence (a score), or waived in words. Ordering itself is a different switch (pay.ordering_problem), closed until the owner opens it.
 
 THE OBJECT: ONE file, ops/styles/overrides.json (the override of every id; its single writer is the admin action styles_override, which holds a
 lock, checks the revision number the page saw, and clears the cache on this instance):
@@ -65,6 +66,7 @@ REASON_KINDS = ("quality", "capacity", "soon", "other")
 IN_FLIGHT = ("finish", "hold")
 REASON_MAX = 200
 WAIVER_MIN, WAIVER_MAX = 8, 300
+L0_MEAN, L0_AXIS = 3.96, 3.80     # the bar of the independent score (spec 1.6.1): mean at least this, no axis below that; below it only the written waiver counts
 LIMITS_DEFAULT = {"min_n": 20, "error_rate": 0.05, "review_rate": 0.10, "gate_fail_rate": 0.60}
 LIMIT_KEYS = tuple(LIMITS_DEFAULT)
 
@@ -75,6 +77,7 @@ _RANGE = re.compile(r"^([1-8])(?:-([1-8]))?$")
 _now = time.monotonic            # the cache's clock (a test moves it)
 _LOCK = threading.Lock()
 _WRITE_LOCK = threading.Lock()
+_READ_LOCK = threading.Lock()      # one storage read of the object at a time (load)
 _CACHE = {"obj": None, "t": 0.0, "err": None, "err_t": 0.0}
 
 
@@ -197,28 +200,52 @@ def _remember(obj):
         _CACHE.update(obj=obj, t=_now(), err=None, err_t=0.0)
 
 
+def _cached():
+    """The cached object, or raises the remembered failure, or None when a read is due. Under _LOCK."""
+    now = _now()
+    if _CACHE["obj"] is not None and now - _CACHE["t"] < TTL_S:
+        return _CACHE["obj"]
+    if _CACHE["err"] is not None and now - _CACHE["err_t"] < ERR_TTL_S:
+        raise StageStoreError(_CACHE["err"])
+    return None
+
+
 def load(force=False, timeout=READ_TIMEOUT_S):
     """The normalized object (a shared dict: copy it before changing it). force: read now. A deployment without storage has none (the empty one).
-    Raises StageStoreError when the storage or the file cannot be read; a failure is remembered for ERR_TTL_S seconds."""
+    Raises StageStoreError when the storage or the file cannot be read; a failure is remembered for ERR_TTL_S seconds, except a request's own lack of
+    time (that says nothing about the storage, and must not close the page for everyone else). One read at a time per instance: the threads that find the
+    cache expired wait for the one that reads and then use its answer (a stampede of 40 asks is one storage call, not 40)."""
     if not store.configured():
         return empty()
-    with _LOCK:
-        now = _now()
-        if not force:
-            if _CACHE["obj"] is not None and now - _CACHE["t"] < TTL_S:
-                return _CACHE["obj"]
-            if _CACHE["err"] is not None and now - _CACHE["err_t"] < ERR_TTL_S:
-                raise StageStoreError(_CACHE["err"])
-    try:
-        obj = _parse(store.get(PATH, max_bytes=MAX_BYTES, timeout=timeout, retry=False))
-    except Exception as e:  # noqa: whatever it was, the answer is "unreadable", never "no override"
-        msg = str(e) if isinstance(e, StageStoreError) else f"overrides not read ({type(e).__name__})"
+    if not force:
         with _LOCK:
-            _CACHE.update(obj=None, t=0.0, err=msg, err_t=_now())
-        print(f"snapeyes styles: {msg}", flush=True)
-        raise (e if isinstance(e, StageStoreError) else StageStoreError(msg)) from None
-    _remember(obj)
-    return obj
+            hit = _cached()
+        if hit is not None:
+            return hit
+    # the wait for the thread that reads is bounded by this request's own time (it never costs more than one read)
+    if not _READ_LOCK.acquire(timeout=max(0.0, min(timeout + 0.5, store.time_left() - store.MIN_LEFT))):
+        raise StageStoreError("overrides: out of time")
+    try:
+        if not force:
+            with _LOCK:
+                hit = _cached()          # the thread that held the lock before has read it (or failed): its answer stands
+            if hit is not None:
+                return hit
+        if store.time_left() < store.MIN_LEFT:      # the request is out of time: no storage call can start, and nothing is remembered of it
+            raise StageStoreError("overrides: out of time")
+        try:
+            obj = _parse(store.get(PATH, max_bytes=MAX_BYTES, timeout=timeout, retry=False))
+        except Exception as e:  # noqa: whatever it was, the answer is "unreadable", never "no override"
+            msg = str(e) if isinstance(e, StageStoreError) else f"overrides not read ({type(e).__name__})"
+            if "out of time" not in str(e):         # (store._call's own refusal for want of time, or ours)
+                with _LOCK:
+                    _CACHE.update(obj=None, t=0.0, err=msg, err_t=_now())
+            print(f"snapeyes styles: {msg}", flush=True)
+            raise (e if isinstance(e, StageStoreError) else StageStoreError(msg)) from None
+        _remember(obj)
+        return obj
+    finally:
+        _READ_LOCK.release()
 
 
 def source(style_id, n):
@@ -276,6 +303,8 @@ def parse(body):
         ticks = {}
     if not isinstance(ticks, dict) or not all(k in CHECKS and isinstance(v, bool) for k, v in ticks.items()):
         raise L.ClientError("tick is an object of L0 to L11 with true or false.")
+    if ticks.get("L0") is True:
+        raise L.ClientError("L0 is not ticked: it is the independent score. Send evidence {L0: {mean, min_axis, by}}, or the waiver {text} in your own words.")
     evidence = body.get("evidence")
     if evidence is None:
         evidence = {}
@@ -318,14 +347,35 @@ def parse(body):
 
 
 # ----------------------------------------------------------------------------- the change
-def missing_for_live(rec, n):
-    """What a count still lacks before the owner may make it live: [] or the codes L1 and L0 (L0 is met by its tick or by a written waiver)."""
+def l0_state(rec, n):
+    """What L0 stands at for one eye count: "pass" (a score with both numbers, mean at least L0_MEAN, no axis below L0_AXIS, and the scorer's name),
+    "below_bar" (a score under the bar: recorded and shown, and it does not count), "incomplete" (an L0 mark without both numbers or without the scorer's
+    name), "waiver" (no passing score, but the owner's written waiver of it), or None (neither). Spec 1.6.1: below the bar only the waiver counts."""
     k = str(n)
-    marks = ((rec or {}).get("checklist") or {}).get(k) or {}
+    mark = (((rec or {}).get("checklist") or {}).get(k) or {}).get("L0")
+    state = None
+    if mark:
+        sc = mark.get("score") or {}
+        mean, axis = sc.get("mean"), sc.get("min_axis")
+        if mean is None or axis is None or not mark.get("director"):
+            state = "incomplete"
+        elif mean >= L0_MEAN and axis >= L0_AXIS:
+            return "pass"
+        else:
+            state = "below_bar"
+    if k in ((rec or {}).get("waiver") or {}):
+        return "waiver"
+    return state
+
+
+def missing_for_live(rec, n):
+    """What a count still lacks before the owner may make it live: [] or the codes L1 and L0 (L0 is met by a passing score with the scorer's name, or by a
+    written waiver: l0_state; a score below the bar does not meet it)."""
+    marks = (((rec or {}).get("checklist") or {}).get(str(n))) or {}
     out = []
     if "L1" not in marks:
         out.append("L1")
-    if "L0" not in marks and k not in ((rec or {}).get("waiver") or {}):
+    if l0_state(rec, n) not in ("pass", "waiver"):
         out.append("L0")
     return out
 
@@ -370,7 +420,7 @@ def transition(obj, req, who_kind, now=None):
             ev = req["evidence"]
             sc = {k2: round(float(ev[k2]), 3) for k2 in ("mean", "min_axis") if ev.get(k2) is not None}
             if sc:
-                m["score"] = sc
+                m["score"] = {**(m.get("score") or {}), **sc}           # one number can be corrected without sending the other again
             if isinstance(ev.get("by"), str) and ev["by"].strip():
                 m["director"] = _text(ev["by"], 80)
             if "L0" not in marks:
@@ -388,8 +438,9 @@ def transition(obj, req, who_kind, now=None):
             raise store.Answer(409, "no_engine", "This deployment has no engine for this style.", False)
         lacking = {str(n): missing_for_live(rec, n) for n in counts if missing_for_live(rec, n)}
         if lacking:
-            raise store.Answer(409, "needs_ticks", "Live needs your own look at the final renders (L1) and the independent score (L0) or your written "
-                               "waiver of it, for every eye count asked for.", False, missing=lacking)
+            raise store.Answer(409, "needs_ticks", "Live needs your own look at the final renders (L1) and the independent score (L0: at least "
+                               f"{L0_MEAN} on average and no axis under {L0_AXIS}) or your written waiver of it, for every eye count asked for.", False, missing=lacking,
+                               l0={str(n): l0_state(rec, n) for n in counts})
     for n in counts:
         k = str(n)
         if stage == "restore":
@@ -409,7 +460,8 @@ def transition(obj, req, who_kind, now=None):
     same = json.dumps(_strip(new.get("styles")), sort_keys=True) == json.dumps(_strip(obj.get("styles")), sort_keys=True)
     return new, {"before": before, "after": after, "ceiling": {str(n): c for n, c in ceilings.items()}, "effective_before": eff_before,
                  "effective_after": eff_after, "ticked": ticked, "unticked": unticked,
-                 "waiver": "set" if req["waiver"] is not None else ("removed" if req["waiver_remove"] else None), "changed": not same}
+                 "waiver": "set" if req["waiver"] is not None else ("removed" if req["waiver_remove"] else None), "changed": not same,
+                 "l0": {str(n): l0_state(new["styles"].get(sid), n) for n in counts}}
 
 
 def _strip(styles):
@@ -462,7 +514,7 @@ def audit_read(limit=100, days=60, style=None, now=None):
             break
         names = sorted((r["name"] for r in store.list_all(f"{AUDIT_DIR}/{d}") if not r["folder"] and r["name"].endswith(".json")), reverse=True)
         for nm in names:
-            if len(out) >= limit:
+            if len(out) >= limit or L.time_left() < 8:
                 break
             e = store.get_json(f"{AUDIT_DIR}/{d}/{nm}", timeout=6.0)
             if isinstance(e, dict) and (style is None or e.get("style") == style):

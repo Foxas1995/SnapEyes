@@ -12,6 +12,9 @@ and I22 for the admin side (the funnel numbers equal a replay of the recorded ev
   5. the orders in flight when a style is taken back (finish or hold)
   6. the audit log of the switch and the limits
   7. over HTTP: the admin key, 503 storage_busy at checkout when the switch cannot be read
+Review fixes of WP13a (the second pass): L0 is a score with the bar and the scorer's name or the written waiver (3b), a hold that stops half way is reported and can be
+finished (5b), the single flight and the request's own lack of time in the read path (1d), audit_written and the retention of the style audit log (7b), the numbers the
+card names (8f).
 No network, no image model, no real eye in the repository.
     python test_admin_styles.py   prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as v3admin."""
@@ -245,6 +248,44 @@ reset()
 check("set_override_source(None) is 'no overrides' and the default source can be put back",
       (lambda: (CT.set_override_source(None), CT.stage_of("studio_black", 1) == "live")[1])() and (CT.set_override_source(CT._store_source), CT._override_source is CT._store_source)[1])
 
+section("1d. the read path: one read for a stampede, and a request's own lack of time is not the storage's failure")
+import threading  # noqa: E402
+reset()
+calls_ = {"n": 0}
+
+
+def slow_get(path, *a, **k):
+    if path == SO.PATH:
+        calls_["n"] += 1
+        time.sleep(0.2)
+    return REAL_GET(path, *a, **k)
+
+
+store.get = slow_get
+SO.invalidate()
+ths = [threading.Thread(target=lambda: CT.stage_of("celestial_gold", 1)) for _ in range(40)]
+for t_ in ths:
+    t_.start()
+for t_ in ths:
+    t_.join()
+store.get = REAL_GET
+check("40 concurrent first questions on a cold instance are ONE storage read (the others wait for it and use its answer)", calls_["n"] == 1, calls_)
+reset()
+real_tl = store.time_left
+store.time_left = lambda *a, **k: 1.0
+try:
+    with CountingStore() as cs:
+        e1 = raised(lambda: SO.load())
+        e2 = raised(lambda: CT.orderable("celestial_gold", 1))
+        n_out = cs.calls
+finally:
+    store.time_left = real_tl
+check("a request that has no time left raises StageStoreError (strict callers answer 503) and starts no storage call",
+      isinstance(e1, SO.StageStoreError) and "out of time" in str(e1) and isinstance(e2, SO.StageStoreError) and n_out == 0, (e1, e2, n_out))
+check("... and it is NOT remembered as the storage's failure: the next request, with time, reads at once and gets the object (no 5 second closed door for everyone)",
+      SO._CACHE["err"] is None and CT.orderable("celestial_gold", 1) and CT.stage_of("celestial_gold", 1) == "live")
+reset()
+
 section("1c. the cache is 30 seconds")
 reset()
 write_object(ov(celestial_gold={"1": "preview"}))
@@ -360,6 +401,8 @@ def ceiling(sid, stage, by_eyes=None, built=("singles",)):
         CT.ENGINES_BUILT_EXTRA.difference_update(added)
 
 
+PASS_L0 = {"L0": {"mean": 4.02, "min_axis": 3.84, "by": "Art Director"}}          # an independent score above the bar, with the scorer's name
+
 reset()
 with ceiling("solo.powder", "live"):
     x = refused("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
@@ -398,12 +441,71 @@ with ceiling("solo.powder", "live"):
     check("so live is refused again", says(x, 409, "needs_ticks"), x)
     act("styles_override", style="solo.powder", eyes=1, stage="restore", confirm=True)
     check("restore puts it at the ceiling (live in this block): ticks are kept", CT.stage_of("solo.powder", 1) == "live" and "L0" in SO.load()["styles"]["solo.powder"]["checklist"]["1"])
+section("3b. L0 is the independent score with its bar and the scorer's name, or the owner's written waiver (spec 1.6.1): a failing score never unlocks live")
+reset()
+with ceiling("solo.powder", "live"):
+    act("styles_override", style="solo.powder", eyes=1, tick={"L1": True})
+
+    def live_try():
+        return refused("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
+
+    def l0_of(r):
+        return r["l0"]["1"]
+
+    x = refused("styles_override", style="solo.powder", eyes=1, tick={"L0": True})
+    check("L0 has no bare tick: a tick of L0 is a 400 that says to send the score or the waiver (and a tick of false is still allowed, below)",
+          says(x, 400, "bad_request") and "evidence" in x[3]["error"] and "waiver" in x[3]["error"], x)
+    r = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": 1.0, "min_axis": 0.5, "by": "Art Director"}})
+    x = live_try()
+    check("a failing score (mean 1.0, axis 0.5) is RECORDED and shown with the scorer's name, and does not unlock live: 409 needs_ticks, L0 missing, its state below_bar",
+          l0_of(r) == "below_bar" and SO.load()["styles"]["solo.powder"]["checklist"]["1"]["L0"]["score"] == {"mean": 1.0, "min_axis": 0.5}
+          and says(x, 409, "needs_ticks") and x[3]["missing"] == {"1": ["L0"]} and x[3]["l0"] == {"1": "below_bar"} and not SO.can_live(SO.load()["styles"]["solo.powder"], 1)
+          and SO.source("solo.powder", 1) is None, (r.get("l0"), x))
+    got = []
+    for mean, axis, want in ((3.96, 3.8, "pass"), (3.959, 3.8, "below_bar"), (3.96, 3.79, "below_bar"), (5, 5, "pass"), (3.99, 3.2, "below_bar"), (3.0, 4.5, "below_bar")):
+        rr = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": mean, "min_axis": axis, "by": "Art Director"}})
+        got.append((mean, axis, l0_of(rr), want, SO.can_live(SO.load()["styles"]["solo.powder"], 1) == (want == "pass")))
+    check("the bar is exact: mean at least 3.96 AND no axis under 3.8 (3.96 and 3.8 pass, 3.959 or 3.79 do not, a high mean does not buy a low axis)", all(g[2] == g[3] and g[4] for g in got), got)
+    rr = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": 4.3}})
+    check("one number can be corrected without sending the other again (the old axis 4.5 stays: mean 4.3 and axis 4.5 pass)",
+          l0_of(rr) == "pass" and SO.load()["styles"]["solo.powder"]["checklist"]["1"]["L0"]["score"] == {"mean": 4.3, "min_axis": 4.5})
+    rr = act("styles_override", style="solo.powder", eyes=1, tick={"L0": False})
+    check("an L0 mark can be taken back with a tick of false", "L0" not in SO.load()["styles"]["solo.powder"]["checklist"]["1"] and l0_of(rr) is None and rr["unticked"] == ["L0@1"])
+    rr = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": 4.2, "min_axis": 4.0}})
+    x = live_try()
+    check("a score without the scorer's name is incomplete (the independence is the point of L0): recorded, state incomplete, live refused",
+          l0_of(rr) == "incomplete" and says(x, 409, "needs_ticks") and x[3]["l0"] == {"1": "incomplete"}, (rr.get("l0"), x))
+    rr = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"by": "Art Director"}})
+    check("... and with the name added to the same mark it passes", l0_of(rr) == "pass" and SO.can_live(SO.load()["styles"]["solo.powder"], 1))
+    act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": 3.1, "min_axis": 2.9}})
+    act("styles_override", style="solo.powder", eyes=1, waiver={"text": "I looked at the real masters myself and accept this one"})
+    cat = act("styles_catalogue", style="solo.powder")
+    rg = cat["styles"][0]["ranges"][0]
+    check("below the bar only the written waiver counts: the score stays recorded and shown, the state is waiver, live is allowed; the catalogue carries the bar and the state",
+          cat["l0_bar"] == {"mean": 3.96, "min_axis": 3.8} and rg["l0"] == "waiver" and rg["checklist"]["L0"]["score"] == {"mean": 3.1, "min_axis": 2.9} and rg["missing_for_live"] == []
+          and rg["waiver"]["text"].startswith("I looked"), rg)
+    r = act("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
+    e = SO.audit_read(limit=1)[0]
+    check("with the waiver the owner makes it live, and the audit entry keeps where L0 stood (waiver) beside the ticks", r["result"] == "changed" and r["l0"] == {"1": "waiver"} and e["l0"] == {"1": "waiver"}, e.get("l0"))
+    act("styles_override", style="solo.powder", eyes=1, waiver=False)
+    check("take the waiver back and the failing score is what stands: below_bar, live is refused again", SO.l0_state(SO.load()["styles"]["solo.powder"], 1) == "below_bar")
+    check("a stored mark with no score at all (a hand-edited file, or the old shape) does not count: incomplete",
+          SO.l0_state({"checklist": {"1": {"L0": {"ticked_at": "2026-10-05T00:00:00Z", "by": "admin-v1"}}}}, 1) == "incomplete"
+          and SO.missing_for_live({"checklist": {"1": {"L1": {"ticked_at": "x", "by": "y"}, "L0": {"ticked_at": "x", "by": "y"}}}}, 1) == ["L0"])
+reset()
+with ceiling("grp.collision", "live", built=("collision",)):
+    act("styles_override", style="grp.collision", eyes="3-4", tick={"L1": True}, evidence=PASS_L0)
+    act("styles_override", style="grp.collision", eyes=4, evidence={"L0": {"mean": 3.5}})
+    st = act("styles_catalogue", style="grp.collision")["styles"][0]
+    check("a count whose score was corrected is a range of its own (the ticks were made together, so equal times; the evidence differs), and the range says where its L0 stands",
+          [(g["eyes"], g["l0"]) for g in st["ranges"]] == [([3, 3], "pass"), ([4, 4], "below_bar"), ([5, 8], None)], [(g["eyes"], g["l0"]) for g in st["ranges"]])
+reset()
 with ceiling("solo.powder", "live", built=()):
     reset()
     old_built = dict(CT._BUILT)
     CT._BUILT["singles"] = False                          # this deployment has no singles engine
     try:
-        act("styles_override", style="solo.powder", eyes=1, tick={"L1": True, "L0": True})
+        act("styles_override", style="solo.powder", eyes=1, tick={"L1": True}, evidence=PASS_L0)
         x = refused("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
     finally:
         CT._BUILT.clear()
@@ -411,7 +513,7 @@ with ceiling("solo.powder", "live", built=()):
     check("a style whose engine is not in this deployment cannot be made live, ticks or not: 409 no_engine", says(x, 409, "no_engine"), x)
 reset()
 with ceiling("grp.collision", "lab", {"3": "live", "4-8": "preview"}, built=("collision",)):
-    act("styles_override", style="grp.collision", eyes=3, tick={"L1": True, "L0": True})
+    act("styles_override", style="grp.collision", eyes=3, tick={"L1": True}, evidence=PASS_L0)
     x = refused("styles_override", style="grp.collision", eyes="3-5", stage="live", confirm=True)
     check("the ticks are per eye count: the Trio's ticks do not make four and five eyes live (and 4 to 8 are over their ceiling anyway)",
           x and x[1] == 409 and x[2] in ("above_ceiling", "needs_ticks"), x)
@@ -431,7 +533,7 @@ with ceiling("solo.powder", "live"):
         check("with the default at preview a v3 style whose ceiling is live is preview (not orderable, previewable); the legacy ids are not held to it",
               CT.stage_of("solo.powder", 1) == "preview" and not CT.orderable("solo.powder", 1) and CT.previewable("solo.powder", 1)
               and all(CT.stage_of(i, 3) == "live" and CT.orderable(i, 3) for i in LEGACY))
-        act("styles_override", style="solo.powder", eyes=1, tick={"L1": True, "L0": True})
+        act("styles_override", style="solo.powder", eyes=1, tick={"L1": True}, evidence=PASS_L0)
         check("ticks alone do not open it", CT.stage_of("solo.powder", 1) == "preview" and not CT.orderable("solo.powder", 1))
         cat = act("styles_catalogue", style="solo.powder")
         check("the catalogue says so: default_effective preview, the range is preview with a live ceiling, and live is within reach (nothing missing)",
@@ -529,6 +631,111 @@ shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
 shutil.rmtree(os.path.join(STORE, "cleanup"), ignore_errors=True)
 reset()
 
+section("5b. a hold that stops half way is reported as that, never as done, and the same request again finishes it")
+import unittest.mock as mock  # noqa: E402
+REAL_LIST = store.list_all
+oa2 = make_order("bbbb0001", "celestial_gold", 1)
+
+
+def fail_orders(folder, *a, **k):
+    if folder == "orders":
+        raise store.StorageError("list orders: HTTP 503")
+    return REAL_LIST(folder, *a, **k)
+
+
+store.list_all = fail_orders
+try:
+    r = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", reason="plates", confirm=True)
+finally:
+    store.list_all = REAL_LIST
+e = SO.audit_read(limit=1)
+check("a storage error while the orders are listed does not undo or hide the change: the action answers (no 503), the override is saved, and held says error and incomplete with 0 held",
+      r["result"] == "changed" and CT.stage_of("celestial_gold", 1) == "preview" and r["held"]["error"] == "StorageError" and r["held"]["incomplete"] is True and r["held"]["count"] == 0
+      and review_of(oa2) is None and r["in_flight"] == "hold"
+      and any("held 0 incomplete" in (g.get("detail") or "") for g in ops.a_audit({}, WHO)["entries"]), r.get("held"))
+check("... and its audit entry IS written, with the same facts (it records the change and that the hold did not happen)",
+      e and e[0]["style"] == "celestial_gold" and e[0]["held"]["incomplete"] is True and e[0]["held"]["error"] == "StorageError" and e[0]["in_flight"] == "hold" and r["audit_written"] is True, e)
+r2 = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", confirm=True)
+check("the same request again WITHOUT in_flight changes nothing and holds nothing (result same: the default is not a standing order)", r2["result"] == "same" and r2["held"] is None and review_of(oa2) is None)
+r3 = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", in_flight="hold", confirm=True)
+e = SO.audit_read(limit=1)[0]
+check("the same request again WITH in_flight hold finishes it: result same (the stage is unchanged), the order in flight is held now, and the retry has its own audit entry (kind hold)",
+      r3["result"] == "same" and r3["in_flight"] == "hold" and r3["held"]["orders"] == [oa2] and r3["held"]["incomplete"] is False and review_of(oa2)["reason"] == "style_rolled_back"
+      and e["kind"] == "hold" and e["held"]["orders"] == [oa2] and e["style"] == "celestial_gold" and r3["audit_written"] is True, (r3.get("held"), e))
+r4 = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", in_flight="hold", confirm=True)
+check("and once more is harmless: nothing left to hold, 0 held, the order already held is left alone, complete", r4["held"]["count"] == 0 and r4["held"]["incomplete"] is False
+      and review_of(oa2)["reason"] == "style_rolled_back")
+check("a hold entry is not a flip of the catalogue (the price test's page lists flips only)", abtest.catalogue_changes(SO.audit_read(limit=20), "xk_test") == [])
+r5 = act("styles_override", style="celestial_gold", eyes=1, tick={"L3": True}, in_flight="hold")
+check("a tick with in_flight hold holds nothing (no stage was asked for)", r5["held"] is None and r5["result"] == "ticked")
+act("styles_override", style="celestial_gold", eyes=1, stage="restore", confirm=True)
+r6 = act("styles_override", style="celestial_gold", eyes=1, stage="restore", in_flight="hold", confirm=True)
+check("a style that is live is never held by the retry (the stage is the ceiling: same, nothing asked, nothing held)", r6["result"] == "same" and r6["held"] is None and r6["in_flight"] is None)
+reset()
+shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
+shutil.rmtree(os.path.join(STORE, "cleanup"), ignore_errors=True)
+
+ob2 = make_order("bbbb0002", "celestial_gold", 1)
+real_put_ = store.put
+
+
+def put_fail(path, *a, **k):
+    if path.endswith("review.json"):
+        raise store.StorageError("put review: HTTP 500")
+    return real_put_(path, *a, **k)
+
+
+store.put = put_fail
+try:
+    r = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", confirm=True)
+finally:
+    store.put = real_put_
+e = SO.audit_read(limit=1)[0]
+check("an order whose review.json could not be stored is NOT counted as held (pay.mark_review never raises, so the hold reads it back): 0 held, the order named in failed, incomplete, no review.json",
+      r["held"]["count"] == 0 and r["held"]["failed"] == [ob2] and r["held"]["incomplete"] is True and review_of(ob2) is None and e["held"]["failed"] == [ob2], r["held"])
+r = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", in_flight="hold", confirm=True)
+check("... and the same request again, with the storage back, holds it for real: 1 held, read back, complete", r["held"]["count"] == 1 and r["held"]["orders"] == [ob2] and r["held"]["incomplete"] is False
+      and review_of(ob2)["reason"] == "style_rolled_back")
+act("styles_override", style="celestial_gold", eyes=1, stage="restore", confirm=True)
+reset()
+shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
+shutil.rmtree(os.path.join(STORE, "cleanup"), ignore_errors=True)
+
+oc2, od2 = make_order("bbbb0003", "celestial_gold", 1), make_order("bbbb0004", "celestial_gold", 1)
+real_row = ops.order_row
+
+
+def row_fail(o, *a, **k):
+    if o == oc2:
+        raise store.StorageError("read order: HTTP 500")
+    return real_row(o, *a, **k)
+
+
+ops.order_row = row_fail
+try:
+    r = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", confirm=True)
+finally:
+    ops.order_row = real_row
+check("an order record that cannot be read is counted as unread (not skipped in silence): the readable one is held, the other is not, and the reply says incomplete",
+      r["held"]["orders"] == [od2] and r["held"]["unread"] == 1 and r["held"]["incomplete"] is True and review_of(oc2) is None and review_of(od2) is not None, r["held"])
+r = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", in_flight="hold", confirm=True)
+check("... and the same request again holds the one that was unread", r["held"]["orders"] == [oc2] and r["held"]["unread"] == 0 and review_of(oc2) is not None)
+act("styles_override", style="celestial_gold", eyes=1, stage="restore", confirm=True)
+reset()
+shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
+shutil.rmtree(os.path.join(STORE, "cleanup"), ignore_errors=True)
+
+# a hold that runs short of time says so
+oe2 = make_order("bbbb0005", "celestial_gold", 1)
+with mock.patch.object(L, "time_left", lambda default=L.BUDGET: 7.0):
+    r = act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="quality", confirm=True)
+check("a hold that has no time left to list the orders says more and incomplete (nothing is held, nothing is claimed)", r["held"]["more"] is True and r["held"]["incomplete"] is True and r["held"]["count"] == 0
+      and review_of(oe2) is None, r["held"])
+act("styles_override", style="celestial_gold", eyes=1, stage="restore", confirm=True)
+reset()
+shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
+shutil.rmtree(os.path.join(STORE, "cleanup"), ignore_errors=True)
+
 # ============================================================================================ 6. a running price test
 section("6. a running price test: the flip needs the owner's acknowledgement, and is written into the test's page")
 reset()
@@ -556,6 +763,25 @@ finally:
     ops._running_price_tests = real_running
 check("with no test running _running_price_tests is empty (the real one)", real_running() == [])
 reset()
+real_rk = abtest.running_keys
+
+
+def rk_fail(*a, **k):
+    raise store.StorageError("experiments state: HTTP 500")
+
+
+abtest.running_keys = rk_fail
+try:
+    rev_before = SO.load(force=True)["rev"]
+    e = raised(lambda: act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="other", confirm=True))
+    state_e = (SO.load(force=True)["rev"], CT.stage_of("celestial_gold", 1), SO.audit_read(limit=5))
+    e2 = raised(lambda: act("styles_override", style="celestial_gold", eyes=1, tick={"L3": True}))
+finally:
+    abtest.running_keys = real_rk
+check("when the price tests cannot be looked up a flip that changes what can be ordered is NOT let through without the acknowledgement: the error is raised (503), nothing is saved, nothing is logged",
+      isinstance(e, store.StorageError) and state_e == (rev_before, "live", []), (e, state_e))
+check("... a tick changes nothing that can be ordered and does not need the lookup", e2 is None and SO.load(force=True)["rev"] == rev_before + 1)
+reset()
 
 # ============================================================================================ 7. the audit log and the limits
 section("7. the audit log of the switch and the limits of the attention card")
@@ -569,7 +795,7 @@ check("styles_audit: the entries newest first, each with who, what, why, the ove
       and au["entries"][1]["ceiling"] == {"1": "live", "2": "live"} and au["entries"][1]["reason"] == "Soon again" and au["entries"][1]["in_flight"] == "finish"
       and isinstance(au["entries"][1]["numbers"], dict) and set(au["entries"][1]["numbers"]) == {"1", "2"}, au["entries"][:1])
 check("the numbers of an entry are the set-level numbers at that moment with n (no sets yet: n 0, rates None, a line only for two or more eyes)",
-      au["entries"][1]["numbers"]["1"] == {"n": 0, "first_pass": None, "with_retake": None, "unknown": 0, "line_ok": None, "why": []}
+      au["entries"][1]["numbers"]["1"] == {"n": 0, "first_pass": None, "with_retake": None, "unknown": 0, "line_ok": None, "why": [], "partial": False}
       and au["entries"][1]["numbers"]["2"]["line_ok"] is False and "n_low" in au["entries"][1]["numbers"]["2"]["why"], au["entries"][1]["numbers"])
 check("the filter by style and the limit", [e["style"] for e in act("styles_audit", style="supernova")["entries"]] == ["supernova"] and len(act("styles_audit", limit=1)["entries"]) == 1
       and says(refused("styles_audit", style="nope"), 400, "bad_request"))
@@ -586,6 +812,33 @@ generic = ops.a_audit({}, WHO)["entries"]
 check("a refusal is in the generic log too, with its reason code", any(e["action"] == "styles_override" and e["ok"] is False and e["result"] == "above_ceiling" for e in generic))
 check("an audit entry holds no e-mail address even when the reason has one",
       (lambda: (act("styles_override", style="supernova", eyes=1, stage="restore", reason="write to a@b.example", reason_kind="other", confirm=True), "a@b.example" not in json.dumps(SO.audit_read(limit=3)))[1])())
+real_put2 = store.put
+
+
+def audit_fail(path, *a, **k):
+    if path.startswith(SO.AUDIT_DIR + "/"):
+        raise store.StorageError("put audit: HTTP 500")
+    return real_put2(path, *a, **k)
+
+
+store.put = audit_fail
+try:
+    ra_ = act("styles_override", style="supernova", eyes=1, stage="preview", reason_kind="soon", confirm=True)
+finally:
+    store.put = real_put2
+check("a log line that could not be stored does not undo the change and is not hidden: the reply says audit_written false (and true when it was written)",
+      ra_["result"] == "changed" and ra_["audit_written"] is False and CT.stage_of("supernova", 1) == "preview"
+      and act("styles_override", style="supernova", eyes=1, stage="restore", confirm=True)["audit_written"] is True)
+import inspect  # noqa: E402
+from _lib import cleanup as CL  # noqa: E402
+SO.audit_put({"kind": "override", "by": "admin-v1", "style": "studio_black", "eyes": [1], "stage": "lab", "held": {"count": 1, "orders": ["260101-abcd1234"]}, "rev": 0}, now=time.time() - 800 * 86400)
+n_before = len(SO.audit_read(limit=100, days=2000))
+res_ = CL._audit(True, 0, lambda m: None, top=CL.STYLE_AUDIT_TOP)
+left_ = SO.audit_read(limit=100, days=2000)
+check("the style audit log has a retention rule like ops/audit (it names the order numbers a hold caught): an entry older than 24 months is deleted by the clean-up, the others stay",
+      CL.STYLE_AUDIT_TOP == SO.AUDIT_DIR and res_["files"] == 1 and len(left_) == n_before - 1 and all(x["style"] != "studio_black" or x["t"] > time.time() - 700 * 86400 for x in left_)
+      and len(left_) >= 3, (res_, n_before, len(left_)))
+check("... and the daily run calls it (the step is wired into cleanup.run, with its own counts)", "top=STYLE_AUDIT_TOP" in inspect.getsource(CL.run) and 'res["style_audit"]' in inspect.getsource(CL.run))
 lim = act("styles_catalogue")
 rev0 = lim["rev"]
 check("styles_limits needs the confirmation, a share from 0 to 1 and min_n a whole number; an unknown key is a 400",
@@ -662,7 +915,7 @@ for kind, spec_f in E.FIELDS.items():
                 leaks.append((kind, field, v))
 check("codes only: no field of any kind keeps a value of the wrong type, a code with a space, an at sign or an upper case letter, a number that is not finite (the field is dropped)", not leaks, leaks[:5])
 check("the new fields are in the whitelist: compose again, help style; and the price test's and the master's are unchanged in kind",
-      E.FIELDS["compose"]["again"] == "b" and E.FIELDS["help"]["style"] == "c" and set(E.FIELDS) == {"analyze", "deglare", "enhance", "compose", "master", "error", "help", "exp"})
+      E.FIELDS["compose"]["again"] == "b" and E.FIELDS["help"]["style"] == "c" and set(E.FIELDS) == {"analyze", "deglare", "enhance", "compose", "master", "error", "help", "checkout", "exp"})
 
 section("8b. the set-level funnel equals a replay of the recorded events; again; the slices")
 rng = random.Random(13)
@@ -879,8 +1132,65 @@ check("the old stats action does not carry the two big tables (compose_slice, ms
 ra = act("styles_override", style="celestial_gold", eyes=2, stage="preview", reason_kind="soon", confirm=True)
 ea = SO.audit_read(limit=1)[0]
 check("the audit entry of a change keeps the funnel of that count at that moment: the same numbers the page showed (n 40, 65 percent, 95 percent, green)",
-      ea["numbers"]["2"] == {"n": 40, "first_pass": 0.65, "with_retake": 0.95, "unknown": 0, "line_ok": True, "why": []}, ea["numbers"])
+      ea["numbers"]["2"] == {"n": 40, "first_pass": 0.65, "with_retake": 0.95, "unknown": 0, "line_ok": True, "why": [], "partial": False}, ea["numbers"])
 act("styles_override", style="celestial_gold", eyes=2, stage="restore", confirm=True)
+for stg_, gate_, n_ in (("start", "ok", 6), ("start", "lid_sectors_outer", 2), ("start", "unknown", 1), ("paid", "ok", 3), ("paid", "lid_sectors_outer", 1)):
+    for _ in range(n_):
+        E.record("checkout", stage=stg_, style="solo.gold", eyes=1, gate=gate_, lang="en", market="eu")
+for _ in range(20):
+    E.record("compose", style="solo.gold", eyes=1, stage="live", size=1024, pick=True, ms=800, lang="en")
+st3 = act("styles_stats", days=1)
+cv = {(r["style"], r["eyes"]): r for r in st3["conversion"]["rows"]}
+check("the checkout events written through the real recorder reach the numbers: the funnel of solo.gold after the preview, 20 large previews, 9 sessions started, 4 paid",
+      st3["conversion"]["recorded"] is True and cv[("solo.gold", 1)]["previews"] == 21 and cv[("solo.gold", 1)]["started"] == 9 and cv[("solo.gold", 1)]["paid"] == 4, st3["conversion"])
+reset()
+shutil.rmtree(os.path.join(STORE, "ops", "events"), ignore_errors=True)
+
+section("8f. the numbers the card and PR 6.1 name: chosen against recommended by eye class, qa_ok false by style, busy_retry, the funnel after the preview, ordered after failure")
+ev_ = []
+for cls_, pick_n, other_n in (("grey", 2, 3), ("own", 4, 1)):
+    ev_ += [E.build("compose", {"style": "solo.gold", "eyes": 1, "stage": "live", "size": 1024, "pick": True, "cls": cls_}) for _ in range(pick_n)]
+    ev_ += [E.build("compose", {"style": "solo.powder", "eyes": 1, "stage": "preview", "size": 1024, "pick": False, "cls": cls_}) for _ in range(other_n)]
+ev_ += [E.build("compose", {"style": "solo.gold", "eyes": 1, "stage": "live", "size": 1024, "qa_ok": False}) for _ in range(2)]
+ev_ += [E.build("compose", {"style": "solo.gold", "eyes": 1, "stage": "live", "size": 480, "tile": True, "tiles": 1, "qa_ok": False})]
+ev_ += [E.build("compose", {"style": "solo.gold", "eyes": 1, "stage": "live", "size": 480, "tile": True, "tiles": 1, "qa_ok": True})]
+ev_ += [E.build("error", {"endpoint": "compose", "class": "503", "reason": "busy_retry", "status": 503, "style": "solo.gold"}) for _ in range(2)]
+ev_ += [E.build("error", {"endpoint": "master_compose", "class": "503", "reason": "busy_retry", "status": 503})]
+ev_ += [E.build("error", {"endpoint": "compose", "class": "500", "reason": "x", "status": 500, "style": "solo.gold"})]
+a8 = E.summarize(ev_)
+cb = {r["cls"]: r for r in SS.chosen_by_class(a8)}
+check("chosen against recommended by the set's eye class: grey 2 of 5 followed the pick, own 4 of 5 (a tile of a batch is not a choice, a preview of an unknown class is in no row)",
+      cb["grey"] == {"cls": "grey", "pick": 2, "other": 3, "n": 5, "share": 0.4} and cb["own"] == {"cls": "own", "pick": 4, "other": 1, "n": 5, "share": 0.8} and set(cb) == {"grey", "own"}, cb)
+qa = {r["style"]: r for r in SS.qa_by_style(a8)}
+check("qa_ok false by style: 3 pictures of solo.gold failed their own colour check over the 10 it made (8 previews and 2 tiles); a style with none has no row",
+      qa["solo.gold"]["qa_fail"] == 3 and qa["solo.gold"]["of"] == 10 and qa["solo.gold"]["rate"] == 0.3 and "solo.powder" not in qa, qa)
+br = SS.busy_retry(a8)
+check("busy_retry by endpoint and style: 2 on compose for solo.gold, 1 on master_compose that named no style; a 500 is not a busy_retry",
+      [(r["endpoint"], r["style"], r["count"]) for r in br] == [("compose", "solo.gold", 2), ("master_compose", "unknown", 1)] and br[1]["name"] is None, br)
+ck_ = []
+for stg_, gate_, n_ in (("start", "ok", 6), ("start", "lid_sectors_outer", 2), ("start", "unknown", 1), ("paid", "ok", 3), ("paid", "lid_sectors_outer", 1)):
+    ck_ += [E.build("checkout", {"stage": stg_, "style": "solo.gold", "eyes": 1, "gate": gate_, "lang": "en", "market": "eu"}) for _ in range(n_)]
+ck_ += [E.build("checkout", {"stage": "start", "style": "duo.kiss_collision", "eyes": 2, "gate": "lid_ring_outliers"}), E.build("checkout", {"stage": "bogus", "style": "solo.gold", "eyes": 1})]
+ck_ += [E.build("compose", {"style": "solo.gold", "eyes": 1, "stage": "live", "size": 1024}) for _ in range(20)] + [E.build("compose", {"style": "solo.gold", "eyes": 1, "stage": "preview", "size": 1024})]
+a9 = E.summarize(ck_)
+cv = SS.conversion(a9)
+row = {(r["style"], r["eyes"]): r for r in cv["rows"]}
+check("the funnel after the preview by style and eye count, with n: 20 large previews while live (the one while Soon is not a chance to buy), 9 started, 4 paid; the rates are None where the denominator is 0",
+      cv["recorded"] is True and row[("solo.gold", 1)] == {"style": "solo.gold", "name": CT.name_of("solo.gold"), "eyes": 1, "previews": 20, "started": 9, "paid": 4, "rate_started": 0.45, "rate_paid": 0.4444}
+      and row[("duo.kiss_collision", 2)]["previews"] == 0 and row[("duo.kiss_collision", 2)]["rate_started"] is None and row[("duo.kiss_collision", 2)]["rate_paid"] == 0.0, cv)
+check("an event whose stage is not start or paid counts nowhere, and with no checkout event at all the funnel says it was not recorded",
+      sum(r["started"] + r["paid"] for r in cv["rows"]) == 9 + 4 + 1 and SS.conversion(E.empty()) == {"recorded": False, "rows": []})
+oaf = {r["eyes"]: r for r in SS.ordered_after_failure(a9)}
+check("ordered after failure per eye count: of 9 solo.gold starts 2 were on a failing set (an unknown gate is not a failure), of 4 paid 1, share 0.25, by the failing eye's code",
+      oaf[1] == {"eyes": 1, "started": 9, "paid": 4, "started_failed": 2, "paid_failed": 1, "by_code": {"lid_sectors_outer": 1}, "share_paid_failed": 0.25}
+      and oaf[2]["started_failed"] == 1 and oaf[2]["paid"] == 0 and oaf[2]["share_paid_failed"] is None, oaf)
+rp = SS.report(a8)
+check("report() carries them, and says which tables a filter does not slice", set(rp) >= {"chosen_by_class", "conversion", "after_failure", "busy_retry", "qa"}
+      and {"chosen_by_class", "conversion", "after_failure", "busy_retry", "qa"} <= set(rp["filter"]["whole"]))
+check("the checkout kind is whitelisted: stage, style, eyes, gate, lang and market only, no order id and no amount", set(E.FIELDS["checkout"]) == {"stage", "style", "eyes", "gate", "lang", "market"}
+      and E.CHECKOUT_STAGES == ("start", "paid") and "order" not in E.FIELDS["checkout"] and "amount" not in E.FIELDS["checkout"])
+check("the new tables merge across days (numbers add) and an old day without them merges as before",
+      E.merge(a9, a9)["checkout_funnel"]["solo.gold|1|start|ok"] == 12 and E.merge(a8, {"events": 1})["compose_chosen_cls"] == a8["compose_chosen_cls"])
 reset()
 shutil.rmtree(os.path.join(STORE, "ops", "events"), ignore_errors=True)
 
@@ -1069,7 +1379,7 @@ shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
 
 # ============================================================================================ 11. hygiene
 section("11. what the package adds holds no dash, no written price, no secret")
-mine = ["api/_lib/stage_overrides.py", "api/_lib/style_stats.py", "api/_lib/catalogue.py", "api/_lib/events.py", "api/_lib/ops.py", "api/_lib/abtest.py", "api/compose.py",
+mine = ["api/_lib/stage_overrides.py", "api/_lib/style_stats.py", "api/_lib/catalogue.py", "api/_lib/events.py", "api/_lib/ops.py", "api/_lib/abtest.py", "api/compose.py", "api/_lib/cleanup.py",
         "scripts/styles_tests/test_admin_styles.py"]
 INVIS = "[" + "".join(chr(c) for lo, hi in ((0x200b, 0x200f), (0x2028, 0x202e), (0x2060, 0x2064), (0xfeff, 0xfeff)) for c in range(lo, hi + 1)) + "]"
 texts = {f: read(os.path.join(REPO, f)) for f in mine if os.path.isfile(os.path.join(REPO, f))}

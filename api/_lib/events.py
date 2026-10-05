@@ -53,6 +53,10 @@ The kinds (all with "ms", the time since the request started, when known):
             button of a style that opens soon; blocked: the checkout refused a style that cannot be bought (409 style_unavailable), WP12), eyes,
             why (the reason code the retake state showed), lang, style (soon and blocked: the style): a count of clicks, nothing else
             (api/compose.py action help)
+  checkout  (WP13a numbers, WP12 sends it) the style's own funnel after the preview: stage (start: the Stripe session of an order was created; paid:
+            the payment was recorded), style, eyes, gate (the SET-level gate result of the order under the style's rule: ok, unknown, or the first failing
+            eye's reason code: a style whose gate is advisory can be bought on a failing set, and that is "ordered after failure"), lang, market. Counts only
+            (checkout_funnel "<style>|<eyes>|<stage>|<gate>"); no order id, no amount (the price tests' own events, kind exp, carry amounts)
   exp       a price experiment's funnel (api/_lib/abtest.py; only while the owner has one running): stage (visit,
             preview, checkout, paid), exp (the experiment's key), variant, market, eyes, amount and currency (checkout
             and paid), hit (the artwork's price differs between the variants), live (paid: a real payment). No visitor
@@ -97,10 +101,12 @@ FIELDS = {
                "hold": "c", "fallback": "c"},
     "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n", "style": "c"},
     "help": {"route": "c", "eyes": "n", "why": "c", "lang": "c", "style": "c"},
+    "checkout": {"stage": "c", "style": "c", "eyes": "n", "gate": "c", "lang": "c", "market": "c"},
     "exp": {"stage": "c", "exp": "c", "variant": "c", "market": "c", "eyes": "n", "amount": "n", "currency": "c",
             "hit": "b", "live": "b"},
 }
 EXP_STAGES = ("visit", "preview", "checkout", "paid")
+CHECKOUT_STAGES = ("start", "paid")
 SOURCES = ("camera", "gallery", "live", "sample", "lab")
 
 
@@ -366,6 +372,11 @@ def empty():
             # give only a mean); master_review_style is the artworks that were held for a look, by style; help_demand "<soon or blocked>|<style>|<eyes>" is
             # the demand for a style that cannot be bought yet
             "compose_slice": {}, "ms_hist": {}, "master_review_style": {}, "help_demand": {},
+            # the numbers the card and PR 6.1 name (WP13a review): compose_chosen_cls "<colour class>|<pick or other>" is the recommended tile against the others
+            # by the set's eye class; compose_qa_fail counts the pictures whose own colour check failed (qa_ok false), by style; busy_retry "<endpoint>|<style>"
+            # counts the 503 replies busy_retry (a render that waited for room, or had no time left); checkout_funnel "<style>|<eyes>|<start or paid>|<gate>" is
+            # the funnel after the preview (kind checkout, sent by the checkout and the payment record)
+            "compose_chosen_cls": {}, "compose_qa_fail": {}, "busy_retry": {}, "checkout_funnel": {},
             # the restoration gate (eye profile): per eye at enhance, per request at compose; the colour and pupil classes seen
             "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
             # the Reveal (WP9): per eye at enhance, the code of what the page shows (ok, colour, registration, none, error)
@@ -520,6 +531,10 @@ def add(agg, ev):
             _cinc(agg, ev, "compose_fallback", f"{style}|{ev['fallback']}")
         if not tile and ev.get("pick") is not None:
             _cinc(agg, ev, "compose_chosen", "pick" if ev["pick"] else "other")
+            if ev.get("cls"):
+                _inc(agg["compose_chosen_cls"], f"{ev['cls']}|{'pick' if ev['pick'] else 'other'}")        # not sliced: class by language by market is too many cells
+        if ev.get("qa_ok") is False:
+            _inc(agg["compose_qa_fail"], style)
         if request:
             _set_counts(agg, ev, eyes)
             if ev.get("clean"):
@@ -576,6 +591,9 @@ def add(agg, ev):
             agg["master_rerender"] += 1
         if ev.get("lab"):
             agg["master_lab"] += 1
+    elif kind == "checkout":
+        if ev.get("stage") in CHECKOUT_STAGES:
+            _inc(agg["checkout_funnel"], f"{ev.get('style') or 'unknown'}|{ev.get('eyes') or 1}|{ev['stage']}|{ev.get('gate') or 'unknown'}")
     elif kind == "exp":
         stage, key, var = ev.get("stage"), ev.get("exp"), ev.get("variant")
         if stage in EXP_STAGES and key and var:
@@ -600,6 +618,8 @@ def add(agg, ev):
             _inc(agg["error_reason"], ev["reason"])
         if ev.get("style"):
             _inc(agg["error_style"], ev["style"])
+        if ev.get("reason") == "busy_retry":
+            _inc(agg["busy_retry"], f"{ev.get('endpoint') or 'other'}|{ev.get('style') or 'unknown'}")
         if k == "busy":
             agg["busy"] += 1
         row = {x: ev.get(x) for x in ("t", "endpoint", "reason", "status", "ms") if ev.get(x) is not None}

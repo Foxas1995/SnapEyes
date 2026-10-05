@@ -204,7 +204,7 @@ export const REASON_LT: Record<string, string> = {
   not_lab: 'Tik laboratorijos testinis užsakymas (lab-...) paleidžiamas šitaip.',
   above_ceiling: 'Registro riba žemesnė: aukščiau stilių gali pakelti tik peržiūrėtas kodo pakeitimas.',
   not_switchable: 'Šio stiliaus perjungti negalima: jis dar neturi variklio arba jau išimtas. Tai registro, o ne šio puslapio pakeitimas.',
-  needs_ticks: 'Kad stilius taptų užsakomas, reikia tavo žymų: savo žvilgsnio į galutinius kūrinius (L1) ir nepriklausomo vertinimo (L0) arba tavo rašytinio atsisakymo jo.',
+  needs_ticks: 'Kad stilius taptų užsakomas, reikia tavo žymų: savo žvilgsnio į galutinius kūrinius (L1) ir nepriklausomo vertinimo (L0) arba tavo rašytinio atsisakymo jo. Vertinimas, žemesnis už kartelę (vidurkis bent 3,96, nė viena ašis ne žemiau 3,8), neužtenka: tada padeda tik tavo rašytinis atsisakymas.',
   no_engine: 'Šiame serveryje šio stiliaus variklio nėra.',
   stale_view: 'Perjungiklis pakeistas po to, kai šis puslapis buvo nupieštas: perkrauk puslapį.',
   price_test_running: 'Veikia kainų testas: šis pakeitimas keičia jo imtį. Patvirtink, kad tai perskaitei, ir tęsk.',
