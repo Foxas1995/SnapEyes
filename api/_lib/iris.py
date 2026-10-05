@@ -7,6 +7,7 @@ import requests
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
 from . import iris_lt, iris_hu
 from . import catalogue
+from . import duration
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(os.path.dirname(HERE), "_assets")
@@ -134,7 +135,7 @@ class UnlockError(PermissionError):
     """A paid endpoint got no valid unlock ticket for this order. run() answers 403 with a sentence for a buyer,
     not the free preview's "take the photo again"."""
 
-BUDGET = 52.0    # seconds of work we allow inside the 60 s Vercel function (leaves room to encode the reply)
+BUDGET = duration.BUDGET_S    # seconds of work we allow inside the Vercel function (duration.py: DURATION_S - 8 = 52 of 60 s; leaves room to encode the reply)
 _LOCAL = threading.local()   # per-invocation deadline: one warm container can serve several requests at once
 
 def deadline():

@@ -64,6 +64,7 @@ from _lib import iris as L
 from _lib import store
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
+from _lib import duration
 
 MASTER_SIDE = 4096           # the deliverable: flash 4K measured 4096 x 4096, $0.153, 24-31 s (2026-09-23 spike)
 MAX_IN_SIDE = 2048           # the deglared crop is at most 1024 px; a larger image is not one this site made
@@ -77,7 +78,7 @@ RETRY_SLEEP = 2.0
 RETRY_NEED = RETRY_SLEEP + POST_RESERVE + RENDER_NEED   # 48 s: a second attempt only after a quick refusal
 RETRY_CODES = (429, 500, 503)
 PRE_TIMEOUT = 4.0            # storage calls before the render: short and not retried, so they cannot eat the render
-LOCK_STALE = 75.0            # a claim older than this belongs to an invocation that is dead (60 s maximum)
+LOCK_STALE = duration.LEASE_STALE_S   # a claim older than this belongs to an invocation that is dead (the longest life of one, plus 15 s)
 
 
 def _eye(v):

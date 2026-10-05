@@ -26,6 +26,7 @@ from __future__ import annotations
 import os
 
 from .. import cpu_probe
+from .. import duration
 
 # ----------------------------------------------------------------------------- the model's constants
 COLD_START_S = 4.5            # seconds outside the handler on a cold instance (SPIKE 2.1, measured on the live function)
@@ -40,7 +41,7 @@ TILE_OVERHEAD_S = 0.2         # per tile of a batch: atlas and plate loads, the 
                               # the spike's group figures (SPIKE 3.2: six single tiles 4.9 s local in one call, four pair tiles 1.9, a Trio 1.8)
 
 STYLE_STEP_BUDGET = 40.0      # seconds: the planner cuts a master into steps when one would need more (a larger duration limit raises it)
-WORK_BUDGET_S = 52.0          # iris.BUDGET today; WP6a derives it from the one duration constant
+WORK_BUDGET_S = duration.BUDGET_S      # iris.BUDGET: the one duration constant minus the reply margin (api/_lib/duration.py), 52 s of 60
 
 
 def _env_float(name, default, lo, hi):
@@ -211,6 +212,21 @@ def assess(design, n, size=4096, side=None, factor=None, budget=WORK_BUDGET_S, m
 def exceeds_step_budget(need_s, budget=STYLE_STEP_BUDGET):
     """The planner's rule: a master that needs more than the step budget is cut into steps (WP6b); otherwise it is one art step."""
     return need_s > budget
+
+
+# ----------------------------------------------------------------------------- the legacy engine
+# The six legacy styles have no row in the table above (their engine is api/_lib/iris.py, which the spike did not take apart): master_compose
+# measured compose_multi at 4096 px on one core, 2026-09-23, 1 eye 6.2 to 10.5 s by style, 8 eyes 11.0 to 16.5 s, and models a call as
+# F x (base + per eye) + a reserve for the JPEG encode, the upload, the record and the link. Moved here from master_compose, where it was
+# _compose_need, so that one module answers "how long does this master take" for every engine (F is the same STYLE_SLOW_CPU).
+LEGACY_BASE_S, LEGACY_PER_EYE_S, LEGACY_RESERVE_S = 10.5, 0.9, 5.0
+
+
+def legacy_need(n, factor=None):
+    """Seconds a call needs to compose n eyes with the legacy engine on the real instance: at the default factor 21.8 s for one eye, 31.9 s for
+    eight (of the 52 s budget)."""
+    F = slow_factor() if factor is None else float(factor)
+    return round(F * (LEGACY_BASE_S + LEGACY_PER_EYE_S * (n - 1)) + LEGACY_RESERVE_S, 1)
 
 
 # ----------------------------------------------------------------------------- previews and tiles

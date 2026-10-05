@@ -35,8 +35,11 @@
 //      order and admin keep the plates and the atlases (the other seven exclude them);
 //  11. (not a refusal) the registry hash is printed: 12 hex digits of the sha256 of both literals in canonical form;
 //  12. provenance: no image of the repository is byte for byte one of the owner's reference works or one of the calibration irises (the deny list of
-//      hashes in scripts/hygiene_denylist.json): the originals never enter the repository.
-// Items 8, 9, 10 and 12 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
+//      hashes in scripts/hygiene_denylist.json): the originals never enter the repository;
+//  13. the one duration constant: every maxDuration of vercel.json equals DURATION_S of api/_lib/duration.py, from which the work budget, the leases of
+//      every claim and the waits of the server's own chain derive (raising the limit is one coordinated change, never one number in one file: a longer
+//      function with the old lease lets a second caller take over a render that is still alive).
+// Items 8, 9, 10, 12 and 13 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
 // `npm run check:styles` runs it alone.
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -671,6 +674,18 @@ export function checkFunctions(root, out, rendering = RENDERING) {
     }
   }
   if (durations.size > 1) out.push(`vercel.json: the functions do not share one maxDuration (${[...durations].join(', ')})`);
+  // item 13: the one duration constant
+  let dur = null;
+  try { const m = /^DURATION_S\s*=\s*(\d+)\b/m.exec(readFileSync(join(root, 'api', '_lib', 'duration.py'), 'utf8')); dur = m ? Number(m[1]) : null; } catch { dur = null; }
+  if (dur === null) out.push('api/_lib/duration.py: cannot be read, or holds no line "DURATION_S = <seconds>" (the one duration constant: vercel.json maxDuration is held equal to it)');
+  else {
+    for (const h of handlers) {
+      const cfg = fns[`api/${h}.py`];
+      if (isObj(cfg) && cfg.maxDuration !== dur) {
+        out.push(`vercel.json api/${h}.py: maxDuration ${cfg.maxDuration} is not api/_lib/duration.py DURATION_S ${dur}: change both together (the work budget, every lease and the chain's waits derive from DURATION_S; a longer function with the old leases lets a second caller take over a render that is still alive)`);
+      }
+    }
+  }
 }
 
 /** Item 12 (provenance): no repository image is byte for byte one of the owner's reference works or one of the calibration irises (volunteers' eyes,
