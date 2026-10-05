@@ -75,7 +75,7 @@ EVENTS = "ops/events"
 DAILY = "ops/daily"
 ADMINFAIL = "ops/adminfail"
 ROLLUP_GRACE = 300           # a day is rolled up only this long after it ended (writes still on their way)
-ROLLUP_MAX_BYTES = 2 << 20   # a stored day is read back with this ceiling (the day's counts are about 20 KB for a quiet day, 400 KB for a stress test of every combination)
+ROLLUP_MAX_BYTES = 2 << 20   # a stored day is read back with this ceiling (a few KB for a quiet day, 328 KB for 6000 events of every combination: suites/baseline.md 17)
 RECENT_ERRORS = 40           # error events kept one by one in a day's counts
 
 _CODE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,39}$")
