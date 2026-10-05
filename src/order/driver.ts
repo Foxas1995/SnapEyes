@@ -38,7 +38,8 @@ export const REAL_DEPS: DriveDeps = {
   now: () => Date.now(),
 };
 
-const BUSY = new Set(['model_busy', 'storage_busy', 'payments_busy']);
+// plate_retry: a file the style needs was not ready (api/_lib/styles/steps.py counts it; the second time the order is held for a person)
+const BUSY = new Set(['model_busy', 'storage_busy', 'payments_busy', 'plate_retry']);
 // an answer that means "the order is no longer what this step expected": ask for its status and go from there
 const RELOAD = new Set(['in_review', 'render_rejected', 'deleted', 'not_paid', 'payment_processing', 'eyes_not_ready', 'withdrawn']);
 const MAKE_TIMEOUT = 75_000;     // API.md: a make or compose takes up to about 50 s; Vercel stops it at 60 s
@@ -179,7 +180,12 @@ export async function driveOrder(link: OrderLink, deps: DriveDeps, emit: (v: Par
     const r = await patiently(() => post({ action: 'compose' }));
     if (!alive()) return;
     emit({ composing: false });
-    if (r.ok && isStatus(r.data)) { st = r.data; emit({ status: st }); continue; }
+    if (r.ok && isStatus(r.data)) {
+      // a compose answer that made progress (one more of the plan's steps is done, so the artwork is not finished yet) is not a failed round: it does
+      // not spend a reload, or a plan of several steps would run out of reloads before its last step
+      if ((r.data.artwork?.done ?? 0) > (st.artwork?.done ?? 0)) reloads = Math.max(0, reloads - 1);
+      st = r.data; emit({ status: st }); continue;
+    }
     if (RELOAD.has(r.reason) || r.status === 402 || r.status === 410) { st = await load(); continue; }
     stop(r);
     return;

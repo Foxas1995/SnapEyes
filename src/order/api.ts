@@ -100,8 +100,12 @@ export interface Download { url: string; download_url: string; expires_in?: numb
 
 /** The server's own making of a paid order (api/_lib/maker.py), as the status of a "paid" or "making" order says it:
  *  while `active`, the server makes the order without this page (the page only watches), `step` "eye" (with `eye`)
- *  or "compose" when it says what it is doing. */
-export interface ServerMaking { active?: boolean; step?: string | null; eye?: number | null }
+ *  or "compose" (with `part`, the master step now running, of `of`, how many the plan has) when it says what it is doing. */
+export interface ServerMaking { active?: boolean; step?: string | null; eye?: number | null; part?: number | null; of?: number | null }
+
+/** The master plan's progress (api/_lib/styles/steps.py): the steps of the artwork done, the steps in all (the default plan has one) and the name of
+ *  the next one. The status of a "paid" or "making" order carries it, and so does a compose answer that made progress but is not finished. */
+export interface ArtworkProgress { done: number; of: number; step?: string | null }
 
 /** GET /api/order (or action "status" / "compose"): one order as the server sees it. */
 export interface OrderStatus {
@@ -132,6 +136,8 @@ export interface OrderStatus {
   withdrawal?: unknown;
   // "paid" or "making": whether the server is making it by itself right now (./driver.ts then only watches)
   server?: ServerMaking;
+  // "paid" or "making": how far the artwork's steps are (a compose answer that made progress is a status with a larger `done`)
+  artwork?: ArtworkProgress;
 }
 
 export const ORDER_STATES: readonly OrderState[] = ['unpaid', 'pending', 'paid', 'making', 'review', 'ready', 'deleted', 'withdrawn'];

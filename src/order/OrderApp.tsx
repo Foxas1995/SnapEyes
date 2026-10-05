@@ -347,11 +347,14 @@ const Summary: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang }> = ({ C, s
 const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: number; since: number | null; email: boolean }> = ({ C, st, view, clock, since, email }) => {
   const n = st.eyes.length;
   const done = st.eyes.filter((e) => e.made).length;
-  // the artwork itself is one more step after the eyes
-  const pct = Math.round(((done + (view.composing ? 0.5 : 0)) / (n + 1)) * 100);
+  // the artwork is made by the plan's steps after the eyes (the default plan has one): the server says which one it is on, the status how many are done
+  const parts = Math.max(1, st.server?.step === 'compose' && st.server.of ? st.server.of : st.artwork?.of ?? 1);
+  const partsDone = Math.min(parts, st.artwork?.done ?? 0);
+  const part = Math.min(parts, st.server?.step === 'compose' && st.server.part ? st.server.part : partsDone + 1);
+  const pct = Math.round(((done + Math.min(parts, partsDone + (view.composing ? 0.5 : 0))) / (n + parts)) * 100);
   const w = view.wait;
   const line = w ? C.wait[w.reason](secondsLeft(w.until, clock))
-    : view.composing ? C.making.composing
+    : view.composing ? (parts > 1 ? C.making.part(part, parts) : C.making.composing)
     : C.making.progress(done, n);
   return (
     <section data-testid="state-making" className={CARD} aria-busy="true">

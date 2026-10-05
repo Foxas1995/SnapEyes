@@ -54,6 +54,8 @@ const en = {
     working: 'In progress…',
     waiting: 'Waiting',
     composing: 'Putting your artwork together…',
+    // a plan of several steps (api/_lib/styles/steps.py): which one is running
+    part: (k: number, of: number) => `Putting your artwork together (${k} of ${of})…`,
     progress: (done: number, n: number) => `${done} of ${n} ${n === 1 ? 'eye' : 'eyes'} ready`,
     elapsed: (s: number) => `${s} s`,
   },
@@ -210,6 +212,7 @@ const de: OrderCopy = {
     working: 'In Arbeit…',
     waiting: 'Wartet',
     composing: 'Ihr Kunstwerk wird zusammengesetzt…',
+    part: (k: number, of: number) => `Ihr Kunstwerk wird zusammengesetzt (${k} von ${of})…`,
     progress: (done: number, n: number) => `${done} von ${n} ${n === 1 ? 'Auge' : 'Augen'} fertig`,
     elapsed: (s: number) => `${s} s`,
   },

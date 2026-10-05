@@ -67,7 +67,7 @@ export const SAMPLES = {
   'buy.stale': [[[1], 1], [[2], 3], [[1, 2, 4], 5], [[5], 6]], 'study.title': [[3, 1], [5, 3]],
   'study.pending': [[[2]], [[1, 3]]],
   orderNo: [['260929-ab12']], 'summary.eyes': [[1], [2], [10]], 'summary.paid': [['13 990 Ft']],
-  'summary.inscription': [['Anna & Péter']], 'making.eye': [[1]], 'making.progress': [[1, 3]], 'making.elapsed': [[20]],
+  'summary.inscription': [['Anna & Péter']], 'making.eye': [[1]], 'making.progress': [[1, 3]], 'making.part': [[1, 2], [2, 2]], 'making.elapsed': [[20]],
   'wait.busy': [[10]], 'wait.network': [[10]], 'wait.rendering': [[10]], 'wait.confirming': [[10]],
   'ready.details': [[4096, 2731, '6,2']], 'withdraw.formLead': [['Confirm']], 'withdraw.statement': [['260929-ab12']],
   'withdraw.errors.unmatched': [[W], [null]], 'withdraw.done.received': [[W]], 'withdraw.done.refund': [['13 990 Ft']],

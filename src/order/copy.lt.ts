@@ -53,6 +53,7 @@ export const lt: OrderCopy = {
     working: 'Kuriama…',
     waiting: 'Laukia',
     composing: 'Komponuojame Jūsų kūrinį…',
+    part: (k: number, of: number) => `Komponuojame Jūsų kūrinį (${k} iš ${of})…`,
     progress: (done: number, n: number) => `Paruošta akių: ${done} iš ${n}`,
     elapsed: (s: number) => `${s} s`,
   },

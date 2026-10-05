@@ -54,6 +54,7 @@ export const hu: OrderCopy = {
     working: 'Folyamatban…',
     waiting: 'Várakozik',
     composing: 'Az alkotásod összeállítása…',
+    part: (k: number, of: number) => `Az alkotásod összeállítása (${k}/${of})…`,
     progress: (done: number, n: number) => `${done}/${n} szem kész`,
     elapsed: (s: number) => `${s} mp`,
   },
