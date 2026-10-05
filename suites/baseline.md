@@ -471,7 +471,7 @@ not the table's 15.4 s: at the slow factor 1.6 that is about 45 s of the 52 s bu
 (the Trio delta check) and raising its cost row.
 
 **Known misses of the layouts, found by the self check on synthetic eyes and left as the prototype has them** (step A is verbatim): Family Colours as a flower of six eyes (petals 1.94 R apart,
-an overlap of 0.06 R that is no contact: T1 and T6 fail on about 20 pixels at 0.94 to 0.95 R); T3, the visible share, on Family Colours as a brick of four eyes (0.76 against 0.82) and a flower of
+an overlap of 0.06 R that is no contact: T1 and T6 fail on 56 pixels of four petals at 0.94 to 0.95 R); T3, the visible share, on Family Colours as a brick of four eyes (0.76 against 0.82) and a flower of
 eight (0.77), and on the end irises of a chain of three (0.895 against 0.90). The pairs, the trio and the default layout of every eye count keep their floors.
 
 **Suite.** `v3coll` 70 checks (6 LOCAL lines with `SNAPEYES_CALIB` and `SNAPEYES_SCRATCH_DG1`), about 7 minutes (the replay 116 s, the 4096 px pictures and the real eyes the rest) alone: the family's files and rules, the registry against the family
