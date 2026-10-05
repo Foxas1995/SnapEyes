@@ -1347,8 +1347,8 @@ def a_styles_lab(body, who):
     Universe family need more than one eye: the laboratory of the Stiliai page (WP13) takes them; the family itself draws them (api/_lib/styles/universe).
     seed: "eye_id" (default: the seed a customer's picture has, made from the eye's id and the plan's seed key) or "legacy" (the seed the pictures had
     before the seed change of WP5B, from the bytes of the iris: the owner's before and after look at a board). The eye's id is the one of the stored eye
-    record for a lab test order, else the hash of the image sent. The Universe family has only the prototype's seed in step A (the bytes of the iris): the reply
-    says seed_mode "iris_bytes" whatever was asked.
+    record for a lab test order, else the hash of the image sent. The Universe family has both since WP8B (its step B): the seed from the eye's id (default) or the
+    prototype's, from the bytes of the iris ("legacy": the pictures as they were before the seed change).
     A render above 2048 px comes back as a reduced view plus the window at full size. 4096 px is refused when the cost table says it cannot
     finish inside the time or the memory this function has (the rule a paid master is held to), and answers 409 plate_unavailable when a
     plate of the design has no 4K file in storage. Without a style the reply is the list of styles to choose from ({styles, sizes}).
@@ -1438,9 +1438,7 @@ def a_styles_lab(body, who):
         iris = SC.Iris(data, "lab", max_side=4096 if size == 4096 else 2048, eye_id=eye_id)
     except (OSError, SyntaxError, ValueError, L.Image.DecompressionBombError):     # a truncated file passes verify() and fails when its pixels are decoded
         raise L.ClientError("That is not a readable image.") from None
-    if eng["module"] == "universe":
-        seed_mode = "iris_bytes"                 # step A of the universe family: its seed is the prototype's (the bytes of the iris), there is no other (WP8B)
-    elif seed_mode == "legacy":
+    if seed_mode == "legacy":
         spec["engine_opts"] = {"seed_mode": "legacy"}
     try:
         pv = ST.preview([iris], spec, size=size, check=True)

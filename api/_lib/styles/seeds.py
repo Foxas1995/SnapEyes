@@ -75,3 +75,19 @@ def seed_for_key(eye_ids, key):
     body = {"seed": SEED_VERSION, "eyes": list(eye_ids), "key": clean_key(key)}
     data = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
     return int.from_bytes(hashlib.sha256(data).digest()[:8], "big")
+
+
+EYE_SEED_VERSION = 1
+
+
+def eye_seed(seed, index):
+    """The 64 bit seed of ONE eye of an artwork (WP8B: the universe family's per eye fibre noise): the first 8 bytes of sha256 of the canonical JSON of
+    {eye_seed: 1, seed, index}. It is a function of the artwork's own seed (so of the eyes' ids and the plan's seed key) and the eye's place in the canvas
+    order, and of nothing else: a typo in a name, the canvas size or the eye's pixels reshuffle nothing, and a preview and its master draw the same
+    noise on the same eye. ValueError for a seed outside 0 to 2^64 - 1 or an index that is not a whole number from 0 to 7."""
+    if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed < (1 << 64):
+        raise ValueError("an eye seed is made from a 64 bit seed (seed_for_key's answer)")
+    if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index <= 7:
+        raise ValueError("an eye's place in the canvas order is a whole number from 0 to 7")
+    data = json.dumps({"eye_seed": EYE_SEED_VERSION, "seed": seed, "index": index}, sort_keys=True, separators=(",", ":")).encode("ascii")
+    return int.from_bytes(hashlib.sha256(data).digest()[:8], "big")

@@ -29,6 +29,11 @@ What the edits are, in five kinds (each file's header comment repeats the kinds 
   caches      the module level dict of decoded plates is a BoundedCache(2)
   text        no raw non ASCII character in a source file (the infinity sign and the middle dot of the names line are written as escapes)
 plus: `from __future__ import annotations` after the docstring (Vercel's default Python is 3.12), and the psutil memory meter reads guard.memory_now().
+
+Two sets of edits, applied in this order: PORTS (step A, WP8A: the port) and STEP_B (WP8B: the seed from the eyes' ids and the plan's seed key, the plates
+version of the spec reaching every plate pick, the pair's fallback taken from the plan; below). With the STEP_B edits taken out the files are the step A
+port; with opts seed_mode "legacy" the step B files draw the step A pictures byte for byte (test_goldens_universe.py replays the step A recording that way,
+which is the proof that the seed, the plates version and the frozen fallback are the ONLY things step B moved).
 """
 from __future__ import annotations
 
@@ -322,9 +327,125 @@ PORTS = [
 ]
 
 
+# WP8B, step B (decision C9): the seed is made from the eyes' ids and the plan's seed key (api/_lib/styles/seeds.py) and NOT from the bytes of the irises, the
+# look and the layout key; the per eye seeds (the fibre noise of an eye) are derived from it by seeds.eye_seed; the plates version of the spec reaches every
+# plate pick (the append-only rule: a plate that arrived later never changes an older order's pick), and the picks are functions of plates.py that the plan's
+# resolve() calls as well (so the plan and the picture cannot disagree); the pair's fallback (the Kiss distance or the weave) can be taken from the plan
+# instead of being decided again from the pupils of the render's own eyes (frozen), and a choice the eyes contradict is DesignChanged. Nothing else. Keyed by
+# the destination file. The legacy seed stays one option away (opts seed_mode "legacy").
+_SEED_OLD = """        self.seed = C.design_seed(irises, look, lay.key + f"/r{self.opts.get('rotate', 0)}/s{int(bool(self.opts.get('swap', False)))}")      # names and date never change the picture (1.7.8)
+        self.eye_seeds = [C.seed_for(ir.raw, i, look, lay.key) for i, ir in enumerate(irises)]
+"""
+_SEED_NEW = """        if self.opts.get("seed_mode") == "legacy":
+            # the seed before step B (WP8B): the bytes of the irises, the look and the layout key; the laboratory's before and after look and the replay of step A
+            self.seed = C.design_seed(irises, look, lay.key + f"/r{self.opts.get('rotate', 0)}/s{int(bool(self.opts.get('swap', False)))}")      # names and date never change the picture (1.7.8)
+            self.eye_seeds = [C.seed_for(ir.raw, i, look, lay.key) for i, ir in enumerate(irises)]
+        else:
+            if not isinstance(key, dict):
+                raise ValueError("a render needs the plan's seed key (seeds.py) or opts seed_mode legacy")
+            # names, date, canvas, size and pixels are NOT in the seed: a typo in a name must never reshuffle the matter, a preview and a master draw the same
+            self.seed = SD.seed_for_key([ir.eye_id for ir in irises], key)
+            self.eye_seeds = [SD.eye_seed(self.seed, i) for i in range(self.n)]
+"""
+_DUO_OLD = """            lay = LO.duo(size, reach_a=ra, reach_b=rb, aspect=asp, names=self.has_text,
+                         d_override=self.opts.get("d_override"), kiss=self.opts.get("kiss"))
+"""
+_DUO_NEW = """            lay = LO.duo(size, reach_a=ra, reach_b=rb, aspect=asp, names=self.has_text,
+                         d_override=self.opts.get("d_override"), kiss=self.opts.get("kiss"))
+            if "fallback" in self.frozen and self.opts.get("kiss") is None:
+                # what the plan fixed before the render is obeyed (the master is ANOTHER image of the same eyes: its pupils, measured on its own 1024 px grade, can
+                # sit on the other side of the limit than the sealed profile's): the Kiss distance is forced, a weave the pupils no longer allow is refused
+                want, got = self.frozen["fallback"] == "kiss", bool(lay.info.get("overlap_fallback"))
+                if want and not got:
+                    lay = LO.duo(size, reach_a=ra, reach_b=rb, aspect=asp, names=self.has_text, d_override=self.opts.get("d_override"), kiss=True)
+                elif got and not want:
+                    raise DesignChanged("the plan draws the weave, but the pupils of these eyes need %.3f R (the limit is the Kiss fallback)" % lay.info["d_needed"])
+"""
+_CLASS_OLD = """# ----------------------------------------------------------------------------- eyes and scene
+class Eye:
+    pass
+"""
+_CLASS_NEW = '''class DesignChanged(ValueError):
+    """The plan froze a choice that the eyes of this render contradict (the plan says the weave of a pair and the pupils now say the Kiss geometry): never another
+    picture than the approved one, so the caller holds the order. `why` names it."""
+
+    def __init__(self, msg, why="design_changed"):
+        super().__init__(msg)
+        self.why = why
+
+
+# ----------------------------------------------------------------------------- eyes and scene
+class Eye:
+    pass
+'''
+_PICKS = '''
+
+DEEP_R0 = 0.185             # Deep Field picks among the DUST plates whose void is at least this large
+
+
+def _pick(rnd, pl):
+    return pl[int(rnd.uniform() * len(pl))]
+
+
+def pick_wall(rnd, pv=None):
+    """The DUST plate of the Echo wall canvas's accent (any of the usable ones at plates version pv; the first draw of rnd)."""
+    return _pick(rnd, plates("P-UV-DUST", pv))
+
+
+def pick_deep(rnd, pv=None):
+    """The DUST plate of Deep Field (a void of DEEP_R0 or more; the next draw of rnd)."""
+    pl = [p for p in plates("P-UV-DUST", pv) if p["void"]["r0"] >= DEEP_R0]
+    if not pl:
+        raise RG.NoPlate(f"the plate library has no P-UV-DUST plate with a void of {DEEP_R0} or more at plates version {pv if pv is not None else 'current'}")
+    return _pick(rnd, pl)
+
+
+def pick_vortex(rnd, pv=None):
+    """The crisp SPIRAL plate of Vortex (the first draw of rnd)."""
+    return _pick(rnd, spiral_plates(0.20, pv))
+'''
+
+STEP_B = {
+    "engine.py": [
+        sub("from . import comp as CO\nfrom .. import pupil as PUP\n\n", "from . import comp as CO\nfrom .. import pupil as PUP\nfrom .. import seeds as SD\n\n"),
+        sub(_CLASS_OLD, _CLASS_NEW),
+        sub("    def __init__(self, look, irises, size, aspect=None, names=None, opts=None):\n        self.look = look\n",
+            "    def __init__(self, look, irises, size, aspect=None, names=None, opts=None, key=None, frozen=None):\n        self.look = look\n"),
+        sub("        self.opts = dict(opts or {})\n",
+            "        self.opts = dict(opts or {})\n        self.pv = key.get(\"pv\") if isinstance(key, dict) else None          # the plates version of the plan: every plate pick takes it\n"
+            "        self.frozen = dict(frozen or {})                                  # what the plan fixed before the render (the pair's fallback)\n"),
+        sub(_DUO_OLD, _DUO_NEW),
+        sub(_SEED_OLD, _SEED_NEW),
+        sub("def render(look, irises, size=1024, aspect=None, names=None, opts=None, times=None, want_scene=False):\n    t_all = time.perf_counter()\n"
+            "    scene = Scene(look.NAME, irises, size, aspect, names, opts)\n",
+            "def render(look, irises, size=1024, aspect=None, names=None, opts=None, times=None, want_scene=False, key=None, frozen=None):\n    t_all = time.perf_counter()\n"
+            "    scene = Scene(look.NAME, irises, size, aspect, names, opts, key=key, frozen=frozen)\n"),
+    ],
+    "looks.py": [
+        sub('        pl = PL.plates("P-UV-DUST")\n        pick = pl[int(rnd.uniform() * len(pl))]\n', "        pick = PL.pick_wall(rnd, scene.pv)\n"),
+    ],
+    "plate_looks.py": [
+        sub('        pl = [p for p in PL.plates("P-UV-DUST") if p["void"]["r0"] >= 0.185]\n        pick = pl[int(rnd.uniform() * len(pl))]\n', "        pick = PL.pick_deep(rnd, scene.pv)\n"),
+        sub("        pl = PL.spiral_plates(0.20)\n        pick = pl[int(rnd.uniform() * len(pl))]\n", "        pick = PL.pick_vortex(rnd, scene.pv)\n"),
+        sub("PL.milky_choice(rnd, 32.0, 12.0)", "PL.milky_choice(rnd, 32.0, 12.0, scene.pv)"),
+    ],
+    "plates.py": [
+        sub("def spiral_plates(min_r0=0.20):", "def spiral_plates(min_r0=0.20, pv=None):"),
+        sub('    out = [p for p in plates("P-DN-SPIRAL") if p["void"]["r0"] >= min_r0]\n', '    out = [p for p in plates("P-DN-SPIRAL", pv) if p["void"]["r0"] >= min_r0]\n'),
+        sub('def milky_plates():\n    return [e for e in plates("P-UV-MILKY") if e["id"] not in MILKY_BLOCKED]\n',
+            'def milky_plates(pv=None):\n    return [e for e in plates("P-UV-MILKY", pv) if e["id"] not in MILKY_BLOCKED]\n'),
+        sub("def milky_choice(rnd, target_deg=32.0, jitter=12.0):", "def milky_choice(rnd, target_deg=32.0, jitter=12.0, pv=None):"),
+        sub("    for e in milky_plates():\n", "    for e in milky_plates(pv):\n"),
+        ("append", _PICKS),
+    ],
+}
+
+
 def _apply(text, edits, name):
     for e in edits:
-        if e[0] == "sub":
+        if e[0] == "append":
+            text = text.rstrip("\n") + "\n" + e[1]
+        elif e[0] == "sub":
             _, old, new, count = e
             n = text.count(old)
             if n != count:
@@ -344,13 +465,14 @@ def _apply(text, edits, name):
     return text
 
 
-def _with_future(text, words, src):
+def _with_future(text, words, src, step_b=False):
     """After the module docstring: the future import and a note of what the file is."""
     tree = ast.parse(text)
     end = tree.body[0].end_lineno
     lines = text.split("\n")
     note = (f"# PORT of work package WP8A (step A): {src} of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_universe.py lists\n"
-            f"# ({words}); test_goldens_universe.py replays the edits on the scratch and the pixels of the scratch's own pictures.")
+            f"# ({words}); test_goldens_universe.py replays the edits on the scratch and the pixels of the scratch's own pictures."
+            + ("\n# WP8B (step B) moved the seed, the plates version of every pick and the pair's fallback and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py." if step_b else ""))
     return "\n".join(lines[:end] + ["from __future__ import annotations", ""] + note.split("\n") + [""] + lines[end:])
 
 
@@ -360,8 +482,8 @@ def build(y3):
     for src, dst, words, edits in PORTS:
         with open(os.path.join(y3, src), encoding="utf-8", newline="") as f:
             text = f.read().replace("\r\n", "\n")
-        text = _apply(text, edits, src)
-        out[dst] = _with_future(text, words, os.path.basename(src))
+        text = _apply(_apply(text, edits, src), STEP_B.get(dst, []), src + " (step B)")
+        out[dst] = _with_future(text, words, os.path.basename(src), bool(STEP_B.get(dst)))
     return out
 
 

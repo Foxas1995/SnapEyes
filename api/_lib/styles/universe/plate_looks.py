@@ -15,6 +15,7 @@ from __future__ import annotations
 
 # PORT of work package WP8A (step A): uni_plate_looks.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_universe.py lists
 # (imports, no fall back to a picture without the plate); test_goldens_universe.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP8B (step B) moved the seed, the plates version of every pick and the pair's fallback and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 
@@ -165,8 +166,7 @@ class DeepField:
         self.dstars = diffraction_stars(scene, 5 + int(rnd.uniform() * 4), max_arm=0.008)
         # the dust plate: the void (radius r0 x 1.06 S, the plate is never enlarged more than x1.1) hides behind the iris, the bright filaments start at the rim
         self.lut = plate_lut(src, "dust")
-        pl = [p for p in PL.plates("P-UV-DUST") if p["void"]["r0"] >= 0.185]
-        pick = pl[int(rnd.uniform() * len(pl))]
+        pick = PL.pick_deep(rnd, scene.pv)
         pcx, pcy, r0 = PL.void_of(pick)
         r_void = r0 * 1.10 * scene.S
         self.plate = PL.Placed(pick, scene.W, scene.H, e.cx, e.cy, r_void_px=r_void, mirror=rnd.uniform() < 0.5, grid_f=scene.f)
@@ -209,8 +209,7 @@ class Vortex:
         src = e.src
         rnd = scene.rand("vortex")
         self.lut = plate_lut(src, "vortex")
-        pl = PL.spiral_plates(0.20)
-        pick = pl[int(rnd.uniform() * len(pl))]
+        pick = PL.pick_vortex(rnd, scene.pv)
         pcx, pcy, r0 = PL.void_of(pick)
         r_void = min(1.10 * e.R, 1.08 * r0 * scene.S)       # void registered to 1.10 R on the iris centre (crisp, circular plates only), never enlarged more than x1.1
         self.plate = PL.Placed(pick, scene.W, scene.H, e.cx, e.cy, r_void_px=r_void, mirror=rnd.uniform() < 0.5, grid_f=scene.f)
@@ -324,7 +323,7 @@ class Starfield:
         e.fibre_noise = None
         e.k_s, e.s, e.magnification = 1.0, 1.0, 1.0
         rnd = scene.rand("starfield")
-        entry, mirror, rot, tgt = PL.milky_choice(rnd, 32.0, 12.0)
+        entry, mirror, rot, tgt = PL.milky_choice(rnd, 32.0, 12.0, scene.pv)
         rot = float(np.clip(rot, -5.0, 5.0))
         scale = 1.10 * scene.S / 1024.0              # x1.10 the canvas: the plate covers the canvas through its rotation, never enlarged more than x1.1
         cx = scene.W / 2.0 + (rnd.uniform() - 0.5) * 0.02 * scene.S

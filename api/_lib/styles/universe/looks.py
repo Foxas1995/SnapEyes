@@ -10,6 +10,7 @@ from __future__ import annotations
 
 # PORT of work package WP8A (step A): uni_looks.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_universe.py lists
 # (imports, no fall back to a picture without the plate); test_goldens_universe.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP8B (step B) moved the seed, the plates version of every pick and the pair's fallback and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 
@@ -175,8 +176,7 @@ class Echo:
         """AD D12: the tall canvas gets a P-UV-DUST accent in the lower third (the fill alone leaves the lower half flat). A plate that cannot be had stops the render (PlateUnavailable, NoPlate): never an accent-less picture."""
         e = scene.eyes[0]
         rnd = scene.rand("echo/wall")
-        pl = PL.plates("P-UV-DUST")
-        pick = pl[int(rnd.uniform() * len(pl))]
+        pick = PL.pick_wall(rnd, scene.pv)
         side = 2.6 * scene.W                                      # plate side in canvas px; its void (radius r0 x side) stays BELOW the canvas bottom
         cy = 1.0 * scene.H + 0.02 * scene.H + 1.05 * float(pick["void"]["r0"]) * side
         self.accent_plate = PL.Placed(pick, scene.W, scene.H, scene.W * 0.5, cy, scale=side / 1024.0, mirror=rnd.uniform() < 0.5, angle_deg=rnd.uniform() * 360.0,

@@ -13,7 +13,8 @@ The records (orders/<order>/style/, all small JSON, removed 14 days after delive
     plan.json            {v, reg, pv, engine_v, style, family, design_used, fallback, layout, canvas, opts, eye_ids[], eye_prof[], work_side,
                           seed_key, seed, frozen, decided, plate_families[], cost_key, steps: [{name, kind, eyes[], need_s, est_mb}], plan8, created_at}
                          frozen: the choices that depend on the PIXELS of the irises, decided once (the collision family: which iris is in front at
-                         a contact, the hairline contacts, the overlap fallback, the woven or stacked lens; WP7B) and obeyed by the master, which is
+                         a contact, the hairline contacts, the overlap fallback, the woven or stacked lens; WP7B; and the universe family's pair: the weave
+                         or the Kiss distance; WP8B) and obeyed by the master, which is
                          ANOTHER image of the same eyes than the preview; decided False: the plan was made without the pixels (the master decides)
                          created with upsert=False (the first writer wins), never changed. plan8 (8 hex) names its identity: everything that
                          decides the picture and nothing that is only provenance or an estimate (the registry hash `reg` is recorded, not hashed:
@@ -741,7 +742,7 @@ def _check_drawn(plan, pv):
     want = plan.get("seed")
     if want is not None and str(pv.seed) != str(want):
         raise Hold("picture_drift", f"drawn from seed {pv.seed}, the plan names {want}")
-    if plan.get("decided") is not False and plan.get("family") == "collision":
+    if plan.get("decided") is not False and plan.get("family") in ("collision", "universe"):
         if str(getattr(pv, "design", None)) != str(plan.get("design_used")):
             raise Hold("picture_drift", f"drew the design {pv.design!r}, the plan names {plan.get('design_used')!r}")
         want_fz = plan.get("frozen")

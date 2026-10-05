@@ -14,6 +14,7 @@ from __future__ import annotations
 
 # PORT of work package WP8A (step A): uni_engine.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_universe.py lists
 # (imports, ASCII escapes for the two glyphs of the names line); test_goldens_universe.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP8B (step B) moved the seed, the plates version of every pick and the pair's fallback and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 import time
@@ -25,6 +26,7 @@ from .common import (C, L, smooth, luma, get_src, f3_disc, enlarge_band, ramp_rg
 from . import layout as LO
 from . import comp as CO
 from .. import pupil as PUP
+from .. import seeds as SD
 
 BAND_PX = 2 * 1024 * 1024    # pixels per band (a 4096 px master never holds more than a few 4096 x 512 float arrays)
 WORK_MAX = 1200          # smooth layers are computed on a grid whose long side is at most this many px
@@ -39,17 +41,28 @@ def to_disp(x):
     return np.power(np.maximum(x, 0.0), np.float32(1.0 / GAMMA))
 
 
+class DesignChanged(ValueError):
+    """The plan froze a choice that the eyes of this render contradict (the plan says the weave of a pair and the pupils now say the Kiss geometry): never another
+    picture than the approved one, so the caller holds the order. `why` names it."""
+
+    def __init__(self, msg, why="design_changed"):
+        super().__init__(msg)
+        self.why = why
+
+
 # ----------------------------------------------------------------------------- eyes and scene
 class Eye:
     pass
 
 
 class Scene:
-    def __init__(self, look, irises, size, aspect=None, names=None, opts=None):
+    def __init__(self, look, irises, size, aspect=None, names=None, opts=None, key=None, frozen=None):
         self.look = look
         self.irises = list(irises)
         self.n = len(irises)
         self.opts = dict(opts or {})
+        self.pv = key.get("pv") if isinstance(key, dict) else None          # the plates version of the plan: every plate pick takes it
+        self.frozen = dict(frozen or {})                                  # what the plan fixed before the render (the pair's fallback)
         self.names = [n for n in (names or []) if n]
         self.date = self.opts.get("date")
         self.has_text = bool(self.names or self.date)
@@ -70,6 +83,14 @@ class Scene:
             rb = PUP.reach(srcs[1].pup, (-ua[0], -ua[1]))
             lay = LO.duo(size, reach_a=ra, reach_b=rb, aspect=asp, names=self.has_text,
                          d_override=self.opts.get("d_override"), kiss=self.opts.get("kiss"))
+            if "fallback" in self.frozen and self.opts.get("kiss") is None:
+                # what the plan fixed before the render is obeyed (the master is ANOTHER image of the same eyes: its pupils, measured on its own 1024 px grade, can
+                # sit on the other side of the limit than the sealed profile's): the Kiss distance is forced, a weave the pupils no longer allow is refused
+                want, got = self.frozen["fallback"] == "kiss", bool(lay.info.get("overlap_fallback"))
+                if want and not got:
+                    lay = LO.duo(size, reach_a=ra, reach_b=rb, aspect=asp, names=self.has_text, d_override=self.opts.get("d_override"), kiss=True)
+                elif got and not want:
+                    raise DesignChanged("the plan draws the weave, but the pupils of these eyes need %.3f R (the limit is the Kiss fallback)" % lay.info["d_needed"])
         elif 3 <= self.n <= 6:
             lay = LO.group(self.n, size, names=self.has_text, layout=self.opts.get("layout"), d=self.opts.get("d_group", LO.GROUP_D),
                            aspect=aspect, rotate=self.opts.get("rotate", 0), trio_base=self.opts.get("trio_base", "crumble"))
@@ -89,8 +110,16 @@ class Scene:
             e.cx, e.cy, e.R = float(sl.cx), float(sl.cy), float(sl.R)      # the IDEAL geometry drives matter, fill and fields (the same picture at every canvas size);
             e.snap = (d.cx, d.cy, d.R)                                       # the disc is snapped to whole pixels: only the compositor reads that
             self.eyes.append(e)
-        self.seed = C.design_seed(irises, look, lay.key + f"/r{self.opts.get('rotate', 0)}/s{int(bool(self.opts.get('swap', False)))}")      # names and date never change the picture (1.7.8)
-        self.eye_seeds = [C.seed_for(ir.raw, i, look, lay.key) for i, ir in enumerate(irises)]
+        if self.opts.get("seed_mode") == "legacy":
+            # the seed before step B (WP8B): the bytes of the irises, the look and the layout key; the laboratory's before and after look and the replay of step A
+            self.seed = C.design_seed(irises, look, lay.key + f"/r{self.opts.get('rotate', 0)}/s{int(bool(self.opts.get('swap', False)))}")      # names and date never change the picture (1.7.8)
+            self.eye_seeds = [C.seed_for(ir.raw, i, look, lay.key) for i, ir in enumerate(irises)]
+        else:
+            if not isinstance(key, dict):
+                raise ValueError("a render needs the plan's seed key (seeds.py) or opts seed_mode legacy")
+            # names, date, canvas, size and pixels are NOT in the seed: a typo in a name must never reshuffle the matter, a preview and a master draw the same
+            self.seed = SD.seed_for_key([ir.eye_id for ir in irises], key)
+            self.eye_seeds = [SD.eye_seed(self.seed, i) for i in range(self.n)]
         R0 = float(np.mean([e.R for e in self.eyes]))
         self.R = R0
         self.cxs = np.array([e.cx for e in self.eyes], np.float32)
@@ -642,9 +671,9 @@ def draw_names(scene, img):
 
 
 # ----------------------------------------------------------------------------- drivers
-def render(look, irises, size=1024, aspect=None, names=None, opts=None, times=None, want_scene=False):
+def render(look, irises, size=1024, aspect=None, names=None, opts=None, times=None, want_scene=False, key=None, frozen=None):
     t_all = time.perf_counter()
-    scene = Scene(look.NAME, irises, size, aspect, names, opts)
+    scene = Scene(look.NAME, irises, size, aspect, names, opts, key=key, frozen=frozen)
     scene.times["setup"] = round(time.perf_counter() - t_all, 3)
     t0 = time.perf_counter()
     look.prepare(scene)

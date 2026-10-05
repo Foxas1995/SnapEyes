@@ -10,6 +10,7 @@ from __future__ import annotations
 
 # PORT of work package WP8A (step A): uni_plates.py of the scratch prototype, verbatim but for the edits scripts/styles_tests/port_universe.py lists
 # (imports, the plates from the foundation's library (bundle, storage, baked registry), a bounded cache); test_goldens_universe.py replays the edits on the scratch and the pixels of the scratch's own pictures.
+# WP8B (step B) moved the seed, the plates version of every pick and the pair's fallback and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 
@@ -145,11 +146,11 @@ class Placed:
         return np.clip(np.asarray(out, np.float32), 0.0, 1.0)
 
 
-def spiral_plates(min_r0=0.20):
+def spiral_plates(min_r0=0.20, pv=None):
     """The crisp P-DN-SPIRAL plates (a flag of the baked registry: the prototype measured it on the 1k LOD at run time, the same measurement is
     baked offline, scripts/bake_plates_registry.py) whose void radius is at least min_r0, in the prototype's order. Four of the 16 curated spirals have
     a soft, lopsided void: they read as a displaced second disc behind the iris (AD C6) and are not usable in the registry."""
-    out = [p for p in plates("P-DN-SPIRAL") if p["void"]["r0"] >= min_r0]
+    out = [p for p in plates("P-DN-SPIRAL", pv) if p["void"]["r0"] >= min_r0]
     if not out:
         raise RG.NoPlate(f"the plate library has no crisp P-DN-SPIRAL plate with a void of {min_r0} or more")
     return out
@@ -161,15 +162,15 @@ MILKY_BLOCKED = ("P-UV-MILKY__band-high_stars-dense__v1__pro4K__t0", "P-UV-MILKY
                  "P-UV-MILKY__band-high_stars-sparse__v1__pro4K__t1")
 
 
-def milky_plates():
-    return [e for e in plates("P-UV-MILKY") if e["id"] not in MILKY_BLOCKED]
+def milky_plates(pv=None):
+    return [e for e in plates("P-UV-MILKY", pv) if e["id"] not in MILKY_BLOCKED]
 
 
-def milky_choice(rnd, target_deg=32.0, jitter=12.0):
+def milky_choice(rnd, target_deg=32.0, jitter=12.0, pv=None):
     """(entry, mirror, rotation deg) so that the band axis lands within ~8 degrees of the seeded target (axes 25-45 deg or mirror)."""
     tgt = target_deg + (rnd.uniform() * 2 - 1) * jitter
     best = None
-    for e in milky_plates():
+    for e in milky_plates(pv):
         for mir in (False, True):
             ax = e["axis_deg"] % 180.0
             if mir:
@@ -180,3 +181,28 @@ def milky_choice(rnd, target_deg=32.0, jitter=12.0):
                 best = (key, e, mir, diff)
     _, e, mir, diff = best
     return e, mir, float(np.clip(diff, -8.0, 8.0)), tgt
+
+
+DEEP_R0 = 0.185             # Deep Field picks among the DUST plates whose void is at least this large
+
+
+def _pick(rnd, pl):
+    return pl[int(rnd.uniform() * len(pl))]
+
+
+def pick_wall(rnd, pv=None):
+    """The DUST plate of the Echo wall canvas's accent (any of the usable ones at plates version pv; the first draw of rnd)."""
+    return _pick(rnd, plates("P-UV-DUST", pv))
+
+
+def pick_deep(rnd, pv=None):
+    """The DUST plate of Deep Field (a void of DEEP_R0 or more; the next draw of rnd)."""
+    pl = [p for p in plates("P-UV-DUST", pv) if p["void"]["r0"] >= DEEP_R0]
+    if not pl:
+        raise RG.NoPlate(f"the plate library has no P-UV-DUST plate with a void of {DEEP_R0} or more at plates version {pv if pv is not None else 'current'}")
+    return _pick(rnd, pl)
+
+
+def pick_vortex(rnd, pv=None):
+    """The crisp SPIRAL plate of Vortex (the first draw of rnd)."""
+    return _pick(rnd, spiral_plates(0.20, pv))
