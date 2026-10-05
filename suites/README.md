@@ -13,7 +13,10 @@ folder (a temp path that disappears); since 2026-10-04 they live here, versioned
 `run_main.sh` tests the checkout it sits in (`SNAPEYES_REPO` overrides), builds the site first when `dist/legal/order-mail.json` is
 missing (the admin suites read the legal pack), prints one table (`summary.py`) and exits 1 when a suite is red, passes fewer
 checks than `baseline.json` records, or did not run at all (SKIPPED: see below). Results and the prepared copy go to
-`suites/out/` (not in git).
+`suites/out/` (not in git). A suite is stopped after `SNAPEYES_SUITE_TIMEOUT` seconds (default 3600: `v3coll` takes 10 to 20 minutes and `v3uni` 12 to 14,
+more with three suites and another builder's process on one machine; a stopped suite is exit 124, RED, and the table says so). Each suite's seconds are
+in `<name>.secs` next to its output, and `summary.py` names the ones above half the limit (SLOW), so that a suite that creeps toward the limit is seen
+before it is stopped.
 
 ## What is where
 
