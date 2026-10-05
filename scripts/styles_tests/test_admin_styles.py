@@ -387,6 +387,10 @@ with ceiling("solo.powder", "live"):
     sc = SO.load()["styles"]["solo.powder"]["checklist"]["1"]["L0"]
     check("L0 can be ticked with the independent score and the scorer's name; that is the evidence kept in the override file",
           sc["score"] == {"mean": 4.02, "min_axis": 3.84} and sc["director"] == "Art Director" and SO.can_live(SO.load()["styles"]["solo.powder"], 1) and r5["ticked"] == ["L0@1"], sc)
+    r5b = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": 4.10, "min_axis": 3.90, "by": "Art Director"}})
+    r5c = act("styles_override", style="solo.powder", eyes=1, evidence={"L0": {"mean": 4.10, "min_axis": 3.90, "by": "Art Director"}})
+    check("the evidence of a tick can be corrected (the new score is kept, the tick stays), and the same evidence again is no change",
+          r5b["result"] == "ticked" and SO.load()["styles"]["solo.powder"]["checklist"]["1"]["L0"]["score"] == {"mean": 4.1, "min_axis": 3.9} and r5c["result"] == "same")
     r6 = act("styles_override", style="solo.powder", eyes=1, tick={"L1": False})
     check("a tick can be taken back: L1 is gone and so is the right to a new flip to live", "L1" not in SO.load()["styles"]["solo.powder"]["checklist"]["1"]
           and r6["unticked"] == ["L1@1"] and SO.missing_for_live(SO.load()["styles"]["solo.powder"], 1) == ["L1"])
@@ -569,6 +573,11 @@ check("the numbers of an entry are the set-level numbers at that moment with n (
       and au["entries"][1]["numbers"]["2"]["line_ok"] is False and "n_low" in au["entries"][1]["numbers"]["2"]["why"], au["entries"][1]["numbers"])
 check("the filter by style and the limit", [e["style"] for e in act("styles_audit", style="supernova")["entries"]] == ["supernova"] and len(act("styles_audit", limit=1)["entries"]) == 1
       and says(refused("styles_audit", style="nope"), 400, "bad_request"))
+SO.audit_put({"kind": "override", "by": "admin-v1", "style": "studio_black", "eyes": [1], "stage": "lab", "rev": 0}, now=time.time() - 3 * 86400)
+old_entries = SO.audit_read(limit=50)
+check("the audit log is read day by day from the days that have entries, newest first, across days (an entry of three days ago is the last)",
+      old_entries[-1]["style"] == "studio_black" and [e["t"] for e in old_entries] == sorted((e["t"] for e in old_entries), reverse=True) and len(old_entries) == 3
+      and len(SO.audit_read(limit=50, days=1)) == 2, [e["style"] for e in old_entries])
 generic = ops.a_audit({}, WHO)["entries"]
 check("the generic admin audit has one short line per change as well (action styles_override, the style and the new stage in its detail)",
       [e for e in generic if e["action"] == "styles_override" and e["ok"] and "celestial_gold" in (e.get("detail") or "")] != [])
@@ -711,6 +720,31 @@ check("an event without a market is in the base funnel and in no market slice (t
       and sum(1 for e in evs if not e.get("market") and not e.get("again")) > 0)
 check("merging two days adds the tables and the slices", (lambda m: SS.table(m, "compose_funnel", "market:au") == {k: 2 * v for k, v in SS.table(agg, "compose_funnel", "market:au").items()}
                                                          and SS.table(m, "compose_funnel") == {k: 2 * v for k, v in SS.table(agg, "compose_funnel").items()})(E.merge(agg, agg)))
+check("the funnel by colour class is not sliced (class by language by market is too many cells for a day's counts)", not [k for k in agg["compose_slice"] if "|compose_funnel_cls|" in k])
+def day_of(valid):
+    """6000 compose events: the combinations a real day can hold (a style asked only for eye counts it takes) or, for the stress test, every combination at all."""
+    day = E.empty()
+    rng2 = random.Random(7)
+    ids = [i for i in CT.ids() if CT.STYLES[i]["tile_order"]]
+    for _ in range(6000):
+        sid = rng2.choice(ids)
+        lo, hi = CT.eyes_range(sid)
+        f = {"style": sid, "eyes": rng2.randint(lo, hi) if valid else rng2.randint(1, 8), "stage": rng2.choice(["preview", "live"]), "size": rng2.choice([480, 1024]),
+             "tile": rng2.random() < 0.7, "tiles": rng2.randint(0, 6),
+             "gate": rng2.choice(["ok", "unknown", "lid_sectors_outer", "lid_ring_outliers", "lid_sectors_inner", "fill_dark", "fill_edge", "fill_low"]),
+             "retake": rng2.randint(0, 3), "lang": rng2.choice(["en", "de", "lt", "hu"]), "market": rng2.choice(["eu", "au", "hu", "lt", "us"]), "cls": rng2.choice(["own", "dark_brown", "grey"]),
+             "ms": rng2.randint(100, 80000), "pick": rng2.random() < 0.3, "fallback": rng2.choice(["kiss", "stack_contrast", "none", "kiss"])}
+        E.add(day, E.build("compose", f))
+    return day
+
+
+real_day, stress_day = day_of(True), day_of(False)
+kb_real, kb_stress = len(json.dumps(real_day)) / 1024, len(json.dumps(stress_day)) / 1024
+check("a day of 6000 compose events with the combinations a real day can hold (every language, market, gate code and retake) is a few hundred KB at most, and the stress test with EVERY combination "
+      "(a style asked for eye counts it does not take) stays under the 2 MB a stored day is read back with", kb_real < 300 and kb_stress < 1024 and E.ROLLUP_MAX_BYTES == 2 << 20, (round(kb_real), round(kb_stress)))
+check("the demand for a live style is in the day's table but not in a slice (only the styles that are Soon are filtered by language and market)",
+      any("|live|" in k for k in real_day["compose_demand"]) and not any("|compose_demand|" in k and "|live|" in k for k in real_day["compose_slice"])
+      and any("|compose_demand|" in k and "|preview|" in k for k in real_day["compose_slice"]))
 rowsf = {r["eyes"]: r for r in SS.funnel(SS.table(agg, "compose_funnel"))}
 check("rate_retake is (first pass + the failed sets that passed after one retake, at most the failed ones) over the first-photo sets, and never above 1",
       all(r["first"] == 0 or abs(r["rate_retake"] - (r["first_pass"] + min(r["first"] - r["first_pass"], r["retake1_pass"])) / r["first"]) < 1e-4 and r["rate_retake"] <= 1

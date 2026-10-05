@@ -33,8 +33,7 @@ OPEN_MIN_SETS = 30
 OPEN_FIRST = 0.50
 OPEN_RETAKE = 0.75
 SLICES = ("lang", "market")
-SLICED_TABLES = ("compose_funnel", "compose_funnel_cls", "compose_demand", "compose_chosen", "compose_style", "compose_tile_style", "compose_fallback",
-                 "compose_tiles")
+SLICED_TABLES = ("compose_funnel", "compose_demand", "compose_chosen", "compose_style", "compose_tile_style", "compose_fallback", "compose_tiles")
 ASK_STAGES = ("preview", "live")
 GATE_FAIL_BY_RULE = {"lid": ("lid", "both"), "fill": ("fill", "both"), "lid+fill": ("lid", "fill", "both")}
 
@@ -329,7 +328,7 @@ def report(agg, limits=None, sl=None, health=None):
     reported whole, which `filter.whole` says."""
     limits = limits or {"min_n": 20, "error_rate": 0.05, "review_rate": 0.10, "gate_fail_rate": 0.60}
     f = funnel(table(agg, "compose_funnel", sl))
-    return {"requests": requests(agg, sl), "funnel": f, "funnel_by_class": funnel(table(agg, "compose_funnel_cls", sl), by_class=True),
+    return {"requests": requests(agg, sl), "funnel": f, "funnel_by_class": funnel(table(agg, "compose_funnel_cls"), by_class=True),
             "opening": {str(r["eyes"]): r["line"] for r in f if r["line"]}, "demand": demand(agg, sl), "chosen": chosen(agg, sl), "previews": previews(agg, sl),
             "fallbacks": fallbacks(agg, sl), "times": times(agg), "errors": errors_by_style(agg), "review": review_by_style(agg),
             "gate": {"codes": table(agg, "enhance_gate"), "reasons": table(agg, "enhance_reason"), "classes": table(agg, "enhance_class"),
@@ -337,4 +336,4 @@ def report(agg, limits=None, sl=None, health=None):
             "holds": table(agg, "master_hold"), "master": {"made_by_style": table(agg, "master_art_style"), "fallback": table(agg, "master_fallback")},
             "help": {"routes": table(agg, "help_route"), "why": table(agg, "help_why"), "eyes": table(agg, "help_eyes")},
             "reveal": reveal(agg), "attention": attention(agg, limits, health),
-            "filter": {"slice": sl, "sliced": list(SLICED_TABLES), "whole": ["times", "errors", "review", "gate", "holds", "master", "help", "reveal", "attention"]}}
+            "filter": {"slice": sl, "sliced": list(SLICED_TABLES), "whole": ["funnel_by_class", "times", "errors", "review", "gate", "holds", "master", "help", "reveal", "attention"]}}

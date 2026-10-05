@@ -413,11 +413,12 @@ def transition(obj, req, who_kind, now=None):
 
 
 def _strip(styles):
-    """The part of the styles that a change is judged by (what is stored but who and when)."""
+    """The part of the styles that a change is judged by (what is stored but who and when): the stages, the waivers' words, which checks are ticked and what
+    evidence (the score, the scorer) a tick carries. A tick again, with the same evidence, is no change."""
     out = {}
     for sid, rec in (styles or {}).items():
         out[sid] = {"stage_by_eyes": rec.get("stage_by_eyes"), "waiver": {k: v.get("text") for k, v in (rec.get("waiver") or {}).items()},
-                    "checklist": {k: sorted(v) for k, v in (rec.get("checklist") or {}).items()}}
+                    "checklist": {k: {c: {f: x for f, x in m.items() if f not in ("ticked_at", "by")} for c, m in v.items()} for k, v in (rec.get("checklist") or {}).items()}}
     return out
 
 
@@ -453,10 +454,12 @@ def audit_read(limit=100, days=60, style=None, now=None):
     """The audit entries, newest first: at most `limit`, looking back `days` UTC days (stops when the invocation runs short of time)."""
     now = time.time() if now is None else now
     out = []
-    for i in range(days):
+    first = time.strftime("%Y-%m-%d", time.gmtime(now - days * 86400))
+    # the days that HAVE entries (one listing of the folder), newest first: not one request per day of the look back
+    present = sorted((r["name"] for r in store.list_all(AUDIT_DIR) if r["folder"] and re.fullmatch(r"\d{4}-\d\d-\d\d", r["name"]) and r["name"] >= first), reverse=True)
+    for d in present:
         if len(out) >= limit or L.time_left() < 8:
             break
-        d = time.strftime("%Y-%m-%d", time.gmtime(now - i * 86400))
         names = sorted((r["name"] for r in store.list_all(f"{AUDIT_DIR}/{d}") if not r["folder"] and r["name"].endswith(".json")), reverse=True)
         for nm in names:
             if len(out) >= limit:

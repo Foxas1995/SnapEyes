@@ -75,6 +75,7 @@ EVENTS = "ops/events"
 DAILY = "ops/daily"
 ADMINFAIL = "ops/adminfail"
 ROLLUP_GRACE = 300           # a day is rolled up only this long after it ended (writes still on their way)
+ROLLUP_MAX_BYTES = 2 << 20   # a stored day is read back with this ceiling (the day's counts are about 20 KB for a quiet day, 400 KB for a stress test of every combination)
 RECENT_ERRORS = 40           # error events kept one by one in a day's counts
 
 _CODE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,39}$")
@@ -359,8 +360,8 @@ def empty():
             "help_route": {}, "help_why": {}, "help_eyes": {}, "error_style": {},
             # the Stiliai page (WP13a): a set is counted once, by its first request (an event with again is left out of every set level table);
             # compose_slice "<lang:xx or market:xx>|<table>|<key>" repeats the tables the page filters by language and by market (compose_funnel,
-            # compose_funnel_cls, compose_demand, compose_chosen, compose_style, compose_tile_style, compose_fallback, compose_tiles) so that a filter
-            # needs no raw event; ms_hist
+            # compose_demand of the styles that are Soon, compose_chosen, compose_style, compose_tile_style, compose_fallback, compose_tiles) so that a filter
+            # needs no raw event (the funnel by colour class and the demand for live styles are not sliced: the size of a day's counts); ms_hist
             # "<tile, compose or art>|<style>|<eyes>|<bucket>" counts render times in the buckets of HIST_MS (a p50 and a p95 need the spread, a sum and a count
             # give only a mean); master_review_style is the artworks that were held for a look, by style; help_demand "<soon or blocked>|<style>|<eyes>" is
             # the demand for a style that cannot be bought yet
@@ -437,7 +438,7 @@ def _set_counts(agg, ev, eyes):
         retake = int(retake) if isinstance(retake, (int, float)) and not isinstance(retake, bool) and retake > 0 else 0
         _cinc(agg, ev, "compose_funnel", f"{eyes}|{ev['gate']}|{min(2, retake)}")
         if ev.get("cls"):
-            _cinc(agg, ev, "compose_funnel_cls", f"{eyes}|{ev['cls']}|{ev['gate']}|{min(2, retake)}")
+            _inc(agg["compose_funnel_cls"], f"{eyes}|{ev['cls']}|{ev['gate']}|{min(2, retake)}")      # not sliced: class by language by market is too many cells
     for field, key in (("lang", "compose_lang"), ("market", "compose_market")):
         if ev.get(field):
             _inc(agg[key], ev[field])
@@ -506,7 +507,11 @@ def add(agg, ev):
         _cinc(agg, ev, "compose_tile_style" if tile else "compose_style", style)
         _inc(agg["compose_tile_eyes" if tile else "compose_eyes"], eyes)
         if ev.get("stage"):
-            _cinc(agg, ev, "compose_demand", f"{style}|{eyes}|{ev['stage']}|{'tile' if tile else 'large'}")
+            key = f"{style}|{eyes}|{ev['stage']}|{'tile' if tile else 'large'}"
+            if ev["stage"] == "preview":         # the demand for a style that is Soon is what the page filters by language and market; a live style's is not sliced (size)
+                _cinc(agg, ev, "compose_demand", key)
+            else:
+                _inc(agg["compose_demand"], key)
         if ev.get("size"):
             _inc(agg["compose_size"], ev["size"])
         if ev.get("look"):
@@ -638,7 +643,7 @@ def rollup_path(day):
 
 
 def get_rollup(day):
-    raw = store.get(rollup_path(day), max_bytes=512 << 10, timeout=8.0)
+    raw = store.get(rollup_path(day), max_bytes=ROLLUP_MAX_BYTES, timeout=8.0)
     if raw is None:
         return None
     try:
