@@ -9,14 +9,14 @@ It imports fx.core and designs.universe from that folder (which puts the repo en
 runs universe_cases.cases() on synthetic irises (synth_iris) and writes data/universe_goldens.json: the hash of every picture, the facts of its
 render (the plate picks, the layout, the contacts), the machine and the hashes of the scratch sources it ran. test_goldens_universe.py replays the same
 cases on api/_lib/styles/universe and compares. This is the STEP A recording: the prototype's own pictures, seeded the prototype's way (the bytes of the
-irises). WP8B changes the seed and records its own file (the engine record, data/engine_v.json, holds the hashes of these until then).
+irises). WP8B changed the seed and recorded its own file on the repository's code (record_goldens_universe_repo.py: data/universe_goldens.json); this recording is data/stepA/ now and is replayed with opts seed_mode legacy.
 
 A golden is exact for this machine class and these pins (numpy 2.4.4, Pillow 12.2.0: the sine and exponential of float32 take other SIMD paths on other
 CPUs, and Pillow's resampling and fonts move): a mismatch on another machine means recording again on the scratch code there, never changing the port.
 Memory: a 4096 px render peaks near 700 MB; the cases run one after the other in one process.
 
 --real records the owner's calibration eyes (SNAPEYES_CALIB, the folder of the *_2_enhanced.jpg restorations) instead: Echo, Vortex, Deep Field and
-Starfield on four eyes at 1024 px, a pair and a trio at 512 px: hashes only (data/universe_goldens_real.json); the eyes are never committed.
+Starfield on four eyes at 1024 px, a pair and a trio at 512 px: hashes only (data/stepA/universe_goldens_real.json); the eyes are never committed.
 """
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ def record_real():
     out["about"] = "SHA-256 of the RGB bytes of the real calibration eyes drawn by the scratch universe family: hashes only"
     out["machine"] = {"python": platform.python_version(), "numpy": np.__version__, "pillow": PIL.__version__, "platform": platform.platform()}
     out["eye_files"] = {n: hashlib.sha256(fixtures[n]).hexdigest() for n in fixtures}
-    dst = os.path.join(HERE, "data", "universe_goldens_real.json")
+    dst = os.path.join(HERE, "data", "stepA", "universe_goldens_real.json")
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     with open(dst, "w", encoding="utf-8", newline="\n") as f:
         json.dump(out, f, indent=1, sort_keys=True)
@@ -89,7 +89,7 @@ def main():
     if a.real:
         return record_real()
     fixtures = {n: SI.png_bytes(n) for n in UC.FIXTURE_BASE}
-    dst = os.path.join(HERE, "data", "universe_goldens.json")
+    dst = os.path.join(HERE, "data", "stepA", "universe_goldens.json")
     out = {"cases": {}}
     if os.path.exists(dst):
         with open(dst, encoding="utf-8") as f:

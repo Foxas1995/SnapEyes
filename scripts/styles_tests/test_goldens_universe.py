@@ -19,7 +19,9 @@ style package's contract, /api/compose for a style a customer may see, the admin
      the format, the scale (4096 against 1024), tile legibility, dark and grey eyes, hearts, the overlap solver, the fill, the budgets, the grains, the band
      seams, the lens, the gate, robustness, the stacking solver
   7. /api/compose, the admin laboratory and the master plan (lab_steps) for a style of the family
-  8. LOCAL: the port is the scratch plus the edits of port_universe.py; the real calibration eyes; the 4K plates through storage; the gate against the 21 eyes
+  8. step B (WP8B): the seed from the eyes' ids and the plan's seed key (nothing else is in it), the eye seeds, the plates version in every pick, resolve naming the seed and the plates, the pair's
+     fallback frozen by the plan and obeyed by the master, the master plan's seed, plates and picture check, the laboratory's two seeds, other seeds on every look
+  9. LOCAL: the port is the scratch plus the edits of port_universe.py; the real calibration eyes; the 4K plates through storage; the gate against the 21 eyes
 No network, no image model, no real eye in the repository (the eyes are procedural: synth_iris). A golden is exact for this machine class and the pins of
 requirements.txt; a mismatch elsewhere means recording again on the scratch code there, never changing the port.
     SNAPEYES_SCRATCH_Y3  the wave-y3 folder of the scratch tree (the 4K plates, the edit check); SNAPEYES_CALIB the calibration restorations' folder
@@ -95,7 +97,9 @@ from _lib.styles import universe as U  # noqa: E402
 from _lib.styles.universe import layout as LO, plates as UPL  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
-GOLD = json.load(open(os.path.join(HERE, "data", "universe_goldens.json"), encoding="utf-8"))
+GOLD_A = json.load(open(os.path.join(HERE, "data", "stepA", "universe_goldens.json"), encoding="utf-8"))          # step A: the scratch prototype's own pictures (the prototype's seed)
+GA = GOLD_A["cases"]
+GOLD = json.load(open(os.path.join(HERE, "data", "universe_goldens.json"), encoding="utf-8"))                       # step B: recorded on this repository's code, on purpose, once (WP8B)
 G = GOLD["cases"]
 MACHINE_SAME = GOLD["machine"]["numpy"] == np.__version__ and GOLD["machine"]["pillow"] == PIL.__version__
 NOTE = "" if MACHINE_SAME else f" (numpy/Pillow differ from the recording {GOLD['machine']}: record again on the scratch code, do not change the port)"
@@ -216,12 +220,11 @@ check("the catalogue says the universe styles are renderable for their own eye c
 # ============================================================================================ 2. the golden replay
 section("2. the golden replay: the scratch prototype's pictures, seeds, plate picks and geometry")
 FIX = {n: SI.png_bytes(n) for n in UC.FIXTURE_BASE}
-check("the fixtures of the replay are the very bytes of the recording", all(hashlib.sha256(FIX[n]).hexdigest() == GOLD["fixtures"][n] for n in FIX),
+check("the fixtures of the replay are the very bytes of both recordings (step A and step B)", all(hashlib.sha256(FIX[n]).hexdigest() == GOLD["fixtures"][n] == GOLD_A["fixtures"][n] for n in FIX),
       [n for n in FIX if hashlib.sha256(FIX[n]).hexdigest() != GOLD["fixtures"][n]])
-print(f"   (recorded on {GOLD['machine']}; running on python {sys.version.split()[0]}, numpy {np.__version__}, Pillow {PIL.__version__})", flush=True)
+print(f"   (recorded on {GOLD['machine']} (step A on {GOLD_A['machine']}); running on python {sys.version.split()[0]}, numpy {np.__version__}, Pillow {PIL.__version__})", flush=True)
 ALL = UC.cases()
-check("the case list is the recorded one: the same keys, in the same order", [c["key"] for c in ALL] == list(G) or set(c["key"] for c in ALL) == set(G),
-      sorted(set(c["key"] for c in ALL) ^ set(G))[:6])
+check("the case list is the recorded one in both recordings: the same keys", set(c["key"] for c in ALL) == set(G) == set(GA), sorted(set(c["key"] for c in ALL) ^ set(G))[:6])
 LASTS = {}
 IRISES = {}
 SEEN = {"t": [], "scenes": {}}
@@ -233,12 +236,23 @@ def port_render(look, irises, size, aspect, names, date, opts):
     return out
 
 
-def replay(cases, with_checks=True):
-    """The cases rendered on the port: [(case, record, differences)]. For every picture the hard rules of section 6 (T1, T6, T7, T12) are measured on the way."""
+def legacy_render(look, irises, size, aspect, names, date, opts):
+    """The port with the seed of step A (opts seed_mode legacy: the bytes of the irises, the look and the layout key): the prototype's own pictures."""
+    out = U.render(look, irises, size, aspect, names, date, dict(opts, seed_mode="legacy"), want_scene=True)
+    LASTS["img"], LASTS["scene"] = out
+    return out
+
+
+def replay(cases, with_checks=True, legacy=False):
+    """The cases rendered on the port: [(case, record, differences)]. legacy: with the seed of step A, compared with the scratch prototype's recording (GA); else with the
+    shipping seed, compared with step B's (G). For every picture the hard rules of section 6 (T1, T6, T7, T12) are measured on the way."""
     out = []
     for c in cases:
-        rec = UC.render_case(port_render, C.Iris, FIX, c, IRISES)
-        g = G[c["key"]]
+        # step A: the Iris objects are shared between pictures as the scratch recorder shared them (the order of the groups below is the recording's); step B: a fresh Iris per picture, as a
+        # request draws on and as record_goldens_universe_repo.py recorded (the family caches the extended source of an eye on the Iris and the first caller's array size wins: a picture can
+        # differ by one level in a few pixels after another look of the same eye)
+        rec = UC.render_case(legacy_render, C.Iris, FIX, c, IRISES) if legacy else UC.render_case(port_render, C.Iris, FIX, c)
+        g = (GA if legacy else G)[c["key"]]
         diff = [k for k in ("sha", "seed", "eye_seeds", "facts", "w", "h", "cls") if rec[k] != g[k]]
         out.append((c, rec, diff))
         if with_checks:
@@ -257,25 +271,44 @@ def replay(cases, with_checks=True):
     return out
 
 
-def lods_of(key):
-    f = G[key]["facts"]
+def lods_of(key, gold=None):
+    f = (gold or GA)[key]["facts"]
     return [f[k]["lod"] for k in ("plate", "accent_plate") if k in f]
 
 
 CI = [c for c in ALL if not UC.needs_4k(c, lods_of(c["key"]))]
 LOC = [c for c in ALL if UC.needs_4k(c, lods_of(c["key"]))]
+assert sorted(c["key"] for c in LOC) == sorted(c["key"] for c in ALL if UC.needs_4k(c, lods_of(c["key"], G))), "a pick moved a picture across the 4K line"
 t0 = time.time()
 
 
 FAST = os.environ.get("UNI_FAST") == "1"          # a developer's switch: skip the golden replay of section 2 (the counts are then not the suite's)
 
 
+GROUPS_TODO = []
+
+
 def group_check(label, cases_, minimum=1):
+    """Each group is replayed twice (run_group_checks, below): with the seed of step A against the scratch prototype's own pictures (the proof that the port is verbatim and that the seed and
+    the plates version are the ONLY things step B moved), and with the shipping seed against step B's recording."""
     if FAST:
         return
-    rows = replay(cases_)
-    bad = [(c["key"], d) for c, _, d in rows if d]
-    check(f"{label}: {len(rows)} pictures equal the scratch prototype's, byte for byte, with their seeds, plate picks, layouts, contacts and notches", len(rows) >= minimum and not bad, str(bad[:4]) + NOTE)
+    GROUPS_TODO.append((label, cases_, minimum))
+
+
+def run_group_checks():
+    for label, cases_, minimum in GROUPS_TODO:                      # step A first, all groups in the order of the recording (they share Iris objects), then step B on fresh ones
+        rows = replay(cases_, with_checks=False, legacy=True)
+        bad = [(c["key"], d) for c, _, d in rows if d]
+        check(f"{label}: {len(rows)} pictures drawn with the seed of step A equal the scratch prototype's, byte for byte, with their seeds, plate picks, layouts, contacts and notches",
+              len(rows) >= minimum and not bad, str(bad[:4]) + NOTE)
+    IRISES.clear()
+    gc.collect()
+    for label, cases_, minimum in GROUPS_TODO:
+        rows = replay(cases_)
+        bad = [(c["key"], d) for c, _, d in rows if d]
+        check(f"{label}: the same {len(rows)} pictures with the shipping seed equal the step B recording, byte for byte, with their seeds, plate picks, layouts, contacts and notches",
+              len(rows) >= minimum and not bad, str(bad[:4]) + NOTE)
 
 
 for size in (512, 1024):
@@ -290,6 +323,7 @@ group_check("polar fill (a bar pupil, a slit pupil, a pet), the fill alone, and 
 group_check("pairs: Echo over the Collision Infinity geometry on 3:2, 1:1, 4:5 and 5:4, the Kiss distance, names and date, the switches (no zone C, the narrow seam, swap), 1024 and 4096 px",
             [c for c in CI if len(c["eyes"]) == 2], 12)
 group_check("groups of three to six: the trio, the zigzag, the bricks, the rings, the trio rotated and with the weave at its base, names", [c for c in CI if len(c["eyes"]) >= 3 and c["size"] != 2048], 10)
+run_group_checks()
 print(f"   (replayed in {time.time() - t0:.0f} s)", flush=True)
 from _lib.styles.universe import comp as COMP, fill as FILL, engine as ENG, looks as LKS, matter as MAT, plate_looks as PLK  # noqa: E402
 with mock.patch.object(COMP, "SEAM_NOISE", COMP.SEAM_NOISE * 1.1):
@@ -387,10 +421,11 @@ t_res = time.time() - t0
 r1b = U.resolve(dict(spec1, opts={"look": "vortex"}))
 r1t = U.resolve(dict(spec1, names=["Anna"]))
 check("resolve of one eye: the look, the layout, the canvas, where the iris sits at 1024 px in units of S (Echo 0.25, Vortex 0.22, a name shrinks it 0.94), no contact, no fallback, the seed key, one art "
-      "step; plates is None (the prototype's seed is the bytes of the irises: WP8B), and the answer is JSON",
+      "step; with no eye id the seed and the plates are unknown (WP8B: the seed comes from the eyes' ids), and the answer is JSON",
       r1["design_used"] == "echo" and r1["layout"] == "single" and r1["canvas"] == "1:1" and r1["fallback"] is None and r1["geometry"]["slots"] == [{"cx": 0.5, "cy": 0.5, "R": 0.25}]
       and r1["geometry"]["contacts"] == [] and r1b["design_used"] == "vortex" and r1b["geometry"]["slots"][0]["R"] == 0.22 and abs(r1t["geometry"]["slots"][0]["R"] - 0.25 * 0.94) < 1e-4
-      and r1["steps"] == ["art"] and r1["plates"] is None and r1["seed_from"] == "iris_bytes" and r1["family"] == "universe" and json.loads(json.dumps(r1)) == r1
+      and r1["steps"] == ["art"] and r1["plates"] is None and r1["seed"] is None and r1["eye_ids"] == [] and r1["seed_from"] == "eye_id" and r1["family"] == "universe"
+      and json.loads(json.dumps(r1)) == r1
       and SD.clean_key(r1["seed_key"]) == r1["seed_key"] and r1["seed_key"]["design_used"] == "echo" and r1b["seed_key"]["opts"]["look"] == "vortex" and r1["size_ratio"] == [1024, 1024], r1)
 check("resolve needs no pixels and answers in milliseconds (the plan is made at checkout and at every status read)", t_res < 0.05, round(t_res, 4))
 errs_ = [("a look the style does not have for two eyes", lambda: U.resolve({"style": "duo.universe", "eyes": 2, "layout": "pair", "opts": {"look": "vortex"}})),
@@ -485,8 +520,10 @@ plan_v = STP.make_plan({"style": "solo.universe", "eyes": 1, "layout": "single",
 plan_p = STP.make_plan({"style": "duo.universe", "eyes": 2, "layout": "pair", "opts": {}}, eyes_rec)
 plan_g = STP.make_plan({"style": "grp.universe", "eyes": 6, "layout": "brick", "opts": {}}, [])
 check("the master plan of a universe style: the family, the look it draws with, the cost key of the look (universe.vortex), the capacity at the factor in force (every one of these fits one art step), "
-      "plates unknown before the render (WP8B), one art step; a pair and a group of six are planned with their registry work_side (2048)",
-      plan_v["family"] == "universe" and plan_v["design_used"] == "vortex" and plan_v["cost_key"] == "universe.vortex" and plan_v["plates"] is None and "plates_needed" not in plan_v
+      "the seed and the one spiral plate Vortex will draw from, named before the render from the eye's id (WP8B), and that plate's 4K file in plates_needed; one art step; a pair and a group of six "
+      "are planned with their registry work_side (2048)",
+      plan_v["family"] == "universe" and plan_v["design_used"] == "vortex" and plan_v["cost_key"] == "universe.vortex" and len(plan_v["plates"]) == 1 and plan_v["plates"][0].startswith("P-DN-SPIRAL")
+      and [x["id"] for x in plan_v["plates_needed"]] == plan_v["plates"] and plan_v["seed"] is not None and plan_p["plates"] is None and plan_g["plates"] is None
       and [s["name"] for s in plan_v["steps"]] == ["art"] and STP.capacity(plan_v)["ok"] and plan_v["work_side"] == 4096
       and plan_p["family"] == "universe" and plan_p["work_side"] == 2048 and plan_p["design_used"] == "echo" and STP.capacity(plan_p)["ok"] and plan_p["layout"] == "pair"
       and plan_g["work_side"] == 2048 and plan_g["cost_key"] == "universe.echo" and STP.capacity(plan_g)["ok"] and plan_p["plan8"] != plan_v["plan8"], (STP.capacity(plan_g), plan_v["cost_key"]))
@@ -516,6 +553,16 @@ def eye(n):
     if n not in IR:
         IR[n] = C.Iris(FIX[n], n)
     return IR[n]
+
+
+SEEDS_K = 5          # WP8B: a statistic of the matter or of one row of the picture is a draw of the seed; since the seed is made from the eye's id these tests judge it over five ids (the fixture's own and four others)
+
+
+def eye_k(n, k):
+    """The fixture n with the id number k (0: the fixture's own, the first 16 hex digits of the sha256 of its bytes)."""
+    if k == 0:
+        return eye(n)
+    return C.Iris(FIX[n], n, eye_id=hashlib.sha256(f"{n}#{k}".encode()).hexdigest()[:16])
 
 
 def R(look, names, size=1024, aspect=None, text=None, opts=None):
@@ -1071,38 +1118,44 @@ def _grain_arrays(gl):
 
 def t5_matter():
     """Colours of the matter: >= 85 percent of the outline grains and dust have their hue within 15 degrees of the own iris's ring hue at the emission angle (colour class `own`; dark_brown and grey
-    use the fallback ramps), the partner share at a notch bisector is 35-45 percent, 95 percent of the outline matter lies within e = 0.55 R (+-20 percent), 99 percent within 0.9 R."""
+    use the fallback ramps), the partner share at a notch bisector is 35-45 percent, 95 percent of the outline matter lies within e = 0.55 R (+-20 percent), 99 percent within 0.9 R. WP8B: the grains are a
+    draw of the seed, so each statistic is judged over five seeds: the hue share and the 95th percentile on the median (the maximum of the 95th percentile may be 0.05 R more), the 99th percentile on every one."""
     from _lib.styles.universe.grains import GrainList
     res, ok = {}, True
     for names, asp in [(list(PAIRS[0]), "3:2"), (["green_round", "blue_round", "amber_slit"], None), (["blue_round", "dark_brown_round"], "3:2")]:
-        scene = ENG.Scene("echo", [eye(n) for n in names], 1024, asp, None, {})
-        look = LKS.Echo()
-        look.prepare(scene)
-        gl = GrainList()
-        for i in range(scene.n):
-            gl.extend(MAT.outline_grains(scene, i, 160, wind=look.wind, tag="t5"))
-        xs, ys, rg, am = _grain_arrays(gl)
-        share, e_list = [], []
-        own = np.zeros(len(xs), bool)
-        for k, e in enumerate(scene.eyes):
-            d = np.hypot(xs - e.cx, ys - e.cy) / e.R
-            near = np.ones(len(xs), bool)
-            for j, o in enumerate(scene.eyes):
-                if j != k:
-                    near &= d <= np.hypot(xs - o.cx, ys - o.cy) / o.R
-            phi = np.arctan2(ys - e.cy, xs - e.cx)
-            hr = C.lch(C.ring_at(e.iris.ring, phi))[2]
-            hc = C.lch(np.clip(rg, 0, 1))[2]
-            dh = np.abs((hc - hr + 180.0) % 360.0 - 180.0)
-            sel = near & (C.lch(np.clip(rg, 0, 1))[1] > 6)
-            own[sel] = dh[sel] <= 15.0
-            share.append((k, e.src.cls, float(own[sel].mean()) if sel.any() else None))
-            e_list.append(d[near])
-        eall = np.concatenate(e_list) - 1.0
-        p95, p99 = float(np.percentile(eall, 95)), float(np.percentile(eall, 99))
-        cls_own = [sc_ for (k, c, sc_) in share if c == "own" and sc_ is not None]
-        res["+".join(names)] = {"hue_within_15deg": [(k, c, None if v is None else round(v, 3)) for k, c, v in share], "e95": round(p95, 3), "e99": round(p99, 3)}
-        ok &= all(v >= BOUND["hue_min"] for v in cls_own) and p95 <= 0.55 * 1.2 + 0.05 and p99 <= 0.95 * 1.2
+        shares, p95s, p99s = [], [], []
+        for k in range(SEEDS_K):
+            scene = ENG.Scene("echo", [eye_k(n, k) for n in names], 1024, asp, None, {}, key=U.default_key("echo", len(names)))
+            look = LKS.Echo()
+            look.prepare(scene)
+            gl = GrainList()
+            for i in range(scene.n):
+                gl.extend(MAT.outline_grains(scene, i, 160, wind=look.wind, tag="t5"))
+            xs, ys, rg, am = _grain_arrays(gl)
+            share, e_list = [], []
+            own = np.zeros(len(xs), bool)
+            for ke, e in enumerate(scene.eyes):
+                d = np.hypot(xs - e.cx, ys - e.cy) / e.R
+                near = np.ones(len(xs), bool)
+                for j, o in enumerate(scene.eyes):
+                    if j != ke:
+                        near &= d <= np.hypot(xs - o.cx, ys - o.cy) / o.R
+                phi = np.arctan2(ys - e.cy, xs - e.cx)
+                hr = C.lch(C.ring_at(e.iris.ring, phi))[2]
+                hc = C.lch(np.clip(rg, 0, 1))[2]
+                dh = np.abs((hc - hr + 180.0) % 360.0 - 180.0)
+                sel = near & (C.lch(np.clip(rg, 0, 1))[1] > 6)
+                own[sel] = dh[sel] <= 15.0
+                share.append((ke, e.src.cls, float(own[sel].mean()) if sel.any() else None))
+                e_list.append(d[near])
+            eall = np.concatenate(e_list) - 1.0
+            shares.append(share)
+            p95s.append(float(np.percentile(eall, 95)))
+            p99s.append(float(np.percentile(eall, 99)))
+        med_share = [(ke, c, float(np.median([sh[ke][2] for sh in shares if sh[ke][2] is not None])) if any(sh[ke][2] is not None for sh in shares) else None) for ke, c, _ in shares[0]]
+        cls_own = [v for (ke, c, v) in med_share if c == "own" and v is not None]
+        res["+".join(names)] = {"hue_within_15deg_median": [(ke, c, None if v is None else round(v, 3)) for ke, c, v in med_share], "e95": [round(v, 3) for v in p95s], "e99": [round(v, 3) for v in p99s]}
+        ok &= all(v >= BOUND["hue_min"] for v in cls_own) and float(np.median(p95s)) <= 0.55 * 1.2 + 0.05 and max(p95s) <= 0.55 * 1.2 + 0.10 and max(p99s) <= 0.95 * 1.2
     ps = 0.05 + 0.35 * math.exp(-(0.0 / 0.25) ** 2)
     ok &= 0.35 <= ps <= 0.45
     return report("T5 matter colour and reach", ok, **{k: json.dumps(v) for k, v in res.items()}, partner_share_at_bisector=round(ps, 3))
@@ -1115,7 +1168,7 @@ def t23_grains():
     irs = [eye("blue_round"), eye("dark_brown_round")]
     res, ok = {}, True
     for size in (1024, 4096):
-        scene = ENG.Scene("echo", irs, size, "3:2", None, {})
+        scene = ENG.Scene("echo", irs, size, "3:2", None, {}, key=U.default_key("echo", 2))
         scene.f = 1 if size <= 1536 else 2
         look = LKS.Echo()
         look.prepare(scene)
@@ -1154,32 +1207,37 @@ def t23_grains():
 
 def t21_band_seams():
     """AD C4 / D6: no row step at band multiples. (1) the picture does not depend on the band height (128 rows, 256 rows, one giant band: the difference is the dither only, <= 2 LSB, mean < 0.6);
-    (2) the row-step excess at band multiples is <= 1.5 x the p99 of the neighbouring rows, at 1024 and 2048."""
+    (2) the row-step excess at band multiples is <= 1.5 x the p99 of the neighbouring rows, at 1024 and 2048. WP8B: the row step is a property of the picture (a spiral arm or a flake that happens to lie across
+    the row: the render with 128 rows, 256 rows and one band are equal to 1 LSB, which is the proof that no band edge shows), so it is a draw of the seed: judged on the median of five seeds (the maximum may be 1.8)."""
     res, ok = {}, True
     cases = [("echo", ["blue_round"], None, 1024), ("echo", ["dark_brown_round"], None, 1024), ("echo", list(PAIRS[0]), "3:2", 1024), ("echo", GROUPS[4], None, 1024),
              ("vortex", ["blue_round"], None, 1024), ("starfield", ["dark_brown_round"], None, 1024), ("deepfield", ["green_round"], None, 1024), ("vortex", ["green_round"], None, 2048)]
     for look, names, asp, size in cases:
-        old_px = ENG.BAND_PX
-        ENG.BAND_PX = 256 * size if size <= 1024 else old_px
-        try:
-            tm = {}
-            img, sc = U.render(look, [eye(n) for n in names], size, asp, want_scene=True, times=tm)
-        finally:
-            ENG.BAND_PX = old_px
-        lum = np.asarray(img).astype(np.float32) @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-        step = (lum[1:] - lum[:-1]).mean(1)
-        br = sc.band_rows
-        bounds = [b - 1 for b in range(br, lum.shape[0], br)]
-        key = f"{look}/{len(names)}/{size}"
-        if not bounds:
-            res[key] = {"band_rows": br, "single_band": True}
-            continue
-        bmask = np.zeros(len(step), bool)
-        bmask[bounds] = True
-        p99 = float(np.percentile(np.abs(step[~bmask]), 99))
-        ratio = max(abs(float(step[b])) for b in bounds) / max(p99, 1e-6)
-        res[key] = {"band_rows": br, "boundary_step_over_p99": round(ratio, 2), "p99_step": round(p99, 3)}
-        ok &= ratio <= 1.5
+        ratios, p99s = [], []
+        for k in range(SEEDS_K if size <= 1024 else 1):
+            old_px = ENG.BAND_PX
+            ENG.BAND_PX = 256 * size if size <= 1024 else old_px
+            try:
+                tm = {}
+                img, sc = U.render(look, [eye_k(n, k) for n in names], size, asp, want_scene=True, times=tm)
+            finally:
+                ENG.BAND_PX = old_px
+            lum = np.asarray(img).astype(np.float32) @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+            step = (lum[1:] - lum[:-1]).mean(1)
+            br = sc.band_rows
+            bounds = [b - 1 for b in range(br, lum.shape[0], br)]
+            key = f"{look}/{len(names)}/{size}"
+            if not bounds:
+                res[key] = {"band_rows": br, "single_band": True}
+                break
+            bmask = np.zeros(len(step), bool)
+            bmask[bounds] = True
+            p99 = float(np.percentile(np.abs(step[~bmask]), 99))
+            ratios.append(max(abs(float(step[b])) for b in bounds) / max(p99, 1e-6))
+            p99s.append(p99)
+        if ratios:
+            res[key] = {"band_rows": br, "boundary_step_over_p99_median": round(float(np.median(ratios)), 2), "max": round(max(ratios), 2), "p99_step": round(float(np.median(p99s)), 3)}
+            ok &= float(np.median(ratios)) <= 1.5 and max(ratios) <= 1.8
     diffs = {}
     for look, names, asp in [("echo", list(PAIRS[0]), "3:2"), ("vortex", ["blue_round"], None), ("starfield", ["dark_brown_round"], None)]:
         outs = {}
@@ -1438,9 +1496,9 @@ for lk in U.LOOKS:
     rr = ops.a_styles_lab({"style": "solo.universe", "look": lk, "eye": LAB_EYE, "size": 480, "names": "Anna"}, "t")
     rows_[lk] = rr
     PL.clear_memory()
-check("styles_lab draws every look of the Universe style on one eye, whatever its stage: the picture, the look it drew, the class, the seed (the prototype's, seed_mode iris_bytes), the facts (plates), the "
+check("styles_lab draws every look of the Universe style on one eye, whatever its stage: the picture, the look it drew, the class, the seed (the eye's: seed_mode eye_id), the facts (plates), the "
       "plan, the self checks T1, T6, T7 and T12 green, the cost table's estimate of the look",
-      all(r["ok"] and r["design"] == lk and r["width"] == r["height"] == 480 and r["seed_mode"] == "iris_bytes" and r["plan"]["design_used"] == lk and r["selfcheck"]["ok"]
+      all(r["ok"] and r["design"] == lk and r["width"] == r["height"] == 480 and r["seed_mode"] == "eye_id" and r["plan"]["seed"] == r["seed"] and r["plan"]["design_used"] == lk and r["selfcheck"]["ok"]
           and set(r["selfcheck"]["checks"]) == {"t1", "t6", "t7", "t12"} and isinstance(r["estimate"]["need_s"], float) and r["facts"]["look"] == lk for lk, r in rows_.items())
       and len(rows_["vortex"]["facts"]["plates"]) == 1 and rows_["echo"]["facts"]["plates"] == [], {k: (v["design"], v["selfcheck"]["ok"]) for k, v in rows_.items()})
 est_v = ops.a_styles_lab({"style": "solo.universe", "look": "vortex", "eye": LAB_EYE, "size": 480}, "t")["estimate"]
@@ -1475,7 +1533,8 @@ check("lab_steps draws the master of Echo through the master plan: the artwork (
       "plan's, T1 and T6 green in the artwork's record, nothing paid and no image model",
       lr["result"] == "made" and lr["artwork"]["width"] == 4096 and lr["artwork"]["height"] == 4096 and lr["artwork"]["url"] and done["by"] == "lab" and done["ms"] > 500 and lr["capacity"]["ok"]
       and lr["plan"]["family"] == "universe" and store.exists(lr["artwork"]["key"]) and lr["artwork"]["needs_review"] is False and rec_art["selfcheck"]["ok"]
-      and rec_art["selfcheck"]["checks"]["t1"]["bad"] == 0 and rec_art["design_used"] == "echo" and rec_art["canvas"] == "1:1", {k: lr.get(k) for k in ("result", "capacity")})
+      and rec_art["selfcheck"]["checks"]["t1"]["bad"] == 0 and rec_art["design_used"] == "echo" and rec_art["canvas"] == "1:1"
+      and rec_art["seed"] == lr["plan"]["seed"] == str(SD.seed_for_key(["ef" * 8], U.seed_key("solo.universe", "echo", "single", {}, CT.PLATES_VERSION))), {k: lr.get(k) for k in ("result", "capacity")})
 lr2 = ops.ACTIONS["lab_steps"]({"order": LAB, "style": "solo.universe", "names": "Anna", "date": "12 May 2026"}, "t")
 check("asked again it is the same file (nothing drawn)", lr2["result"] == "same" and lr2["artwork"]["key"] == lr["artwork"]["key"])
 e_vh = raises(lambda: ops.ACTIONS["lab_steps"]({"order": LAB, "style": "solo.universe", "opts": {"look": "vortex"}}, "t"), store.Answer)
@@ -1484,56 +1543,310 @@ check("the master of Vortex with its 4K plate missing from storage is never draw
                                                                                                         for f in os.listdir(os.path.join(STORE, "orders", LAB))), e_vh)
 gc.collect()
 
-# ============================================================================================ 8. LOCAL: the scratch tree and the real eyes
-section("8. LOCAL: the port is the scratch plus its edits; the 4K plates through storage; the real calibration eyes; the gate against the 21 eyes")
+# ============================================================================================ 8. step B: the seed from the eyes' ids, the plates, the frozen fallback
+section("8. step B (WP8B): the seed from the eyes' ids, the plates of the plan, the pair's frozen fallback, the master plan")
+import types  # noqa: E402
+from _lib.styles import steps as STP2  # noqa: E402
+from _lib.styles.universe import engine as ENG2  # noqa: E402
+
+n_moved = sum(1 for k in G if G[k]["sha"] != GA[k]["sha"])
+GOLD_REAL = json.load(open(os.path.join(HERE, "data", "universe_goldens_real.json"), encoding="utf-8"))                       # step B (this repository's code)
+GOLD_REAL_A = json.load(open(os.path.join(HERE, "data", "stepA", "universe_goldens_real.json"), encoding="utf-8"))            # step A (the scratch prototype)
+check("step B is a recording of its own and the step A one is kept as it was: the same cases, a recorded step B marker with the sha256 of the step A file (LF line ends), every one of the pictures moved "
+      "(the seed draws the matter of every look), and the choices that are not the seed's (layout, canvas, geometry, contacts, notches, text, the work grid) are equal in every case",
+      GOLD.get("step") == "B" and GOLD_A.get("step") is None and set(G) == set(GA) and n_moved == len(G)
+      and GOLD["stepA_file_sha256"] == hashlib.sha256(open(os.path.join(HERE, "data", "stepA", "universe_goldens.json"), "rb").read().replace(b"\r\n", b"\n")).hexdigest()
+      and GOLD_REAL["stepA_file_sha256"] == hashlib.sha256(open(os.path.join(HERE, "data", "stepA", "universe_goldens_real.json"), "rb").read().replace(b"\r\n", b"\n")).hexdigest()
+      and all(G[k]["facts"].get(f) == GA[k]["facts"].get(f) for k in G for f in ("layout", "aspect", "f", "S", "wh", "halo_rows", "band_rows", "contacts", "notches", "text", "eye_geometry")),
+      (n_moved, len(G)))
+check("ENGINE_V is at least 4 (the version of the universe family's step B: its pictures changed (the engine record, data/engine_v.json, names the version and the hashes of the golden files: v3steps compares them)", ST.ENGINE_V >= 4, ST.ENGINE_V)
+
+# -- the seed
+eye_b = C.Iris(FIX["blue_round"], "b", eye_id="0123456789abcdef")
+eye_b2 = C.Iris(FIX["blue_round"], "b2", eye_id="fedcba9876543210")
+eye_bp = C.Iris(FIX["blue_round"], "bp", eye_id="0123456789abcdef", max_side=640)          # the same eye as another image: a smaller copy of it, the preview of an order's draft
+key_e = U.default_key("echo", 1)
+_, sc_b = U.render("echo", [eye_b], 256, want_scene=True)
+_, sc_b_text = U.render("echo", [eye_b], 256, names=["Anna"], date="12 MAY 2026", want_scene=True)
+_, sc_b_cv = U.render("echo", [eye_b], 256, "4:5", want_scene=True)
+_, sc_b_sz = U.render("echo", [eye_b], 320, want_scene=True)
+_, sc_b_px = U.render("echo", [eye_bp], 256, want_scene=True)
+_, sc_b2 = U.render("echo", [eye_b2], 256, want_scene=True)
+_, sc_bv = U.render("vortex", [eye_b], 256, want_scene=True)
+seed_e = SD.seed_for_key(["0123456789abcdef"], key_e)
+check("the seed of an artwork is seeds.seed_for_key of the eyes' ids in canvas order and the seed key (style, look, ground, layout, swap, rotate, look option, plates version): the scene draws exactly that, "
+      "and the per eye seeds are seeds.eye_seed of it and the eye's place",
+      sc_b.seed == seed_e and sc_b.eye_seeds == [SD.eye_seed(seed_e, 0)] and key_e == {"style": "solo.universe", "design_used": "echo", "bg": "dark", "clean": False, "layout": "single",
+                                                                                   "opts": {"swap": None, "rotate": None, "look": None}, "pv": CT.PLATES_VERSION}, (sc_b.seed, seed_e))
+check("the names, the date, the canvas, the size and the pixels are NOT in the seed: a name and a date, another canvas ratio, another size and a smaller copy of the same eye (the same id) draw the same seed; "
+      "another eye id, another look, another layout of the key and another plates version draw another",
+      sc_b_text.seed == sc_b_cv.seed == sc_b_sz.seed == sc_b_px.seed == sc_b.seed and sc_b2.seed != sc_b.seed and sc_bv.seed != sc_b.seed
+      and len({SD.seed_for_key(["0123456789abcdef"], dict(key_e, layout=x)) for x in ("single", "pair")}) == 2
+      and SD.seed_for_key(["0123456789abcdef"], dict(key_e, pv=2)) != sc_b.seed, (sc_b.seed, sc_b_text.seed, sc_b_cv.seed))
+check("the eye seeds: a function of the artwork's seed and the eye's place and of nothing else (two places and two seeds give four different numbers), 64 bit, and the refusals are exact",
+      len({SD.eye_seed(s_, i) for s_ in (1, 2) for i in (0, 1)}) == 4 and SD.eye_seed(1, 0) == SD.eye_seed(1, 0) and all(0 <= SD.eye_seed(1, i) < 2 ** 64 for i in range(8))
+      and all(isinstance(raises(lambda a=a, b=b: SD.eye_seed(a, b), ValueError), ValueError) for a, b in ((-1, 0), (2 ** 64, 0), (True, 0), ("1", 0), (1, -1), (1, 8), (1, True), (1, None))), "")
+_, sc_pair = U.render("echo", [C.Iris(FIX["blue_round"], "a", eye_id="00000000000000a1"), C.Iris(FIX["dark_brown_round"], "b", eye_id="00000000000000b2")], 256, "3:2", want_scene=True)
+_, sc_pair_sw = U.render("echo", [C.Iris(FIX["blue_round"], "a", eye_id="00000000000000a1"), C.Iris(FIX["dark_brown_round"], "b", eye_id="00000000000000b2")], 256, "3:2", opts={"swap": True},
+                         want_scene=True)
+check("a pair's seed is made from both ids in canvas order and its swap is in the key: both of the pair's eye seeds differ from each other and from the single eye's, and the swapped pair is another picture",
+      sc_pair.eye_seeds[0] != sc_pair.eye_seeds[1] and sc_pair.eye_seeds[0] != sc_b.eye_seeds[0] and sc_pair_sw.seed != sc_pair.seed and len(sc_pair.eye_seeds) == 2
+      and sc_pair.seed == SD.seed_for_key(["00000000000000a1", "00000000000000b2"], U.default_key("echo", 2)), (sc_pair.seed, sc_pair_sw.seed))
+bad_keys = [("no key and no legacy option is the default key (not an error)", None),
+            ("a key that is not a dict", "x"), ("a field missing", {k: v for k, v in key_e.items() if k != "layout"}), ("a field nobody knows", dict(key_e, colour="red")),
+            ("an option nobody knows", dict(key_e, opts={"zoom": 2})), ("a plates version that is no number", dict(key_e, pv="1")), ("a layout that is no text", dict(key_e, layout=7))]
+res_k = [(label, isinstance(raises(lambda k=k: U.render("echo", [eye_b], 128, key=k), ValueError), ValueError)) for label, k in bad_keys[1:]]
+check("render refuses a seed key that is not one before anything is drawn (a seed that quietly ignored a field would be a picture that quietly ignored a choice): " + ", ".join(r[0] for r in res_k),
+      all(r[1] for r in res_k) and U.render("echo", [eye_b], 128).size == (128, 128), [r for r in res_k if not r[1]])
+img_lg = U.render("echo", [eye_b], 128, opts={"seed_mode": "legacy"})
+check("opts seed_mode legacy seeds the way step A did and needs no key: the scene's seed is the prototype's (the bytes of the irises, the look, the layout key), and it is not the shipping one",
+      U.render("echo", [eye_b], 128, opts={"seed_mode": "legacy"}, want_scene=True)[1].seed == C.design_seed([eye_b], "echo", "solo/echo/1:1/r0/s0") and img_lg.tobytes() != U.render("echo", [eye_b], 128).tobytes(),
+      "")
+pk_ = [dict(zip(("look", "n", "lname", "opts"), x)) for x in (("echo", 1, None, {}), ("vortex", 1, None, {}), ("echo", 2, None, {"swap": True}), ("echo", 3, None, {"rotate": 1}), ("echo", 5, "ring5", {}), ("echo", 6, None, {}))]
+prev_seeds = []
+for row_, (spec_k, eyes_k) in zip(pk_, (
+        (dict(spec1), [eye_b]), (dict(spec1, opts={"look": "vortex"}), [eye_b]), (dict(pair_spec, opts={"swap": True}), [eye_b, eye_b2]),
+        ({"style": "grp.universe", "eyes": 3, "layout": "trio", "opts": {"rotate": 1}}, [eye_b, eye_b2, C.Iris(FIX["amber_slit"], "c", eye_id="aaaaaaaaaaaaaaaa")]),
+        ({"style": "grp.universe", "eyes": 5, "layout": "ring", "opts": {}}, [C.Iris(FIX[n], n, eye_id=f"{k:016x}") for k, n in enumerate(UC.MULTI[:5], 1)]),
+        ({"style": "grp.universe", "eyes": 6, "layout": "brick", "opts": {}}, [C.Iris(FIX[n], n, eye_id=f"{k:016x}") for k, n in enumerate(UC.MULTI[:6], 1)]))):
+    pv_k2 = U.preview(eyes_k, spec_k, 128)
+    # the prototype's render of the very same artwork with no key given makes the key itself: the preview's seed key and the default key agree for every look, count, layout and option
+    ro = dict(row_["opts"], layout=row_["lname"]) if row_["lname"] else dict(row_["opts"])
+    if row_["n"] == 2 and row_["opts"].get("swap"):
+        eyes_r = eyes_k[::-1]
+    else:
+        eyes_r = eyes_k
+    _, sc_k = U.render(row_["look"], eyes_r, 128, None, None, None, ro, want_scene=True)
+    prev_seeds.append((pv_k2.seed, sc_k.seed))
+check("the seed key a preview makes from a spec and the default key a bare render makes agree for every look, number of eyes, layout and option (swap, rotate): the golden pictures are the previews' pictures",
+      all(a == b for a, b in prev_seeds), prev_seeds)
+
+# -- resolve and the plan: the seed and the plates before anything is drawn
+EID = ["%016x" % (0x1234567890abcdef + 7919 * k) for k in range(6)]
+spec_look = {"deepfield": dict(spec1, opts={"look": "deepfield"}), "vortex": dict(spec1, opts={"look": "vortex"}), "starfield": dict(spec1, opts={"look": "starfield"}),
+             "echo_wall": dict(spec1, canvas="9:19.5"), "echo": dict(spec1)}
+agree, seen = [], {k: set() for k in spec_look}
+for name, sp_ in spec_look.items():
+    for eid in EID:
+        rp_ = U.resolve(dict(sp_, eye_ids=[eid]))
+        pv_ = U.preview([C.Iris(FIX["blue_round"], "x", max_side=256, eye_id=eid)], sp_, 160)
+        agree.append((name, eid[-4:], rp_["plates"] == pv_.log["plates"] and rp_["seed"] == str(pv_.seed)))
+        seen[name].add(tuple(rp_["plates"]))
+check("resolve names the seed and the plates the picture will draw from, from the eye's id alone: for every look (Deep Field, Vortex, Starfield, Echo on the wall canvas and off it) and six ids the plan's "
+      "seed is the picture's seed and the plan's plates are the plates the render drew (the pick functions are the render's own): " + str({k: len(v) for k, v in seen.items()}) + " distinct picks",
+      all(a[2] for a in agree) and len(seen["vortex"]) >= 3 and len(seen["deepfield"]) >= 2 and len(seen["echo_wall"]) >= 2 and seen["echo"] == {()} and all(len(next(iter(v))) <= 1 for v in seen.values()),
+      [a for a in agree if not a[2]])
+rp_ids = U.resolve(spec1, [PROF["blue_round"]])
+check("the ids come from spec[eye_ids], else from the sealed profiles (an EyeProfile or its record dict), and only when every eye has one: no ids, no seed and no plates",
+      rp_ids["eye_ids"] == [PROF["blue_round"].eye_id] and rp_ids["seed"] is not None and U.resolve(spec1, [PROF["blue_round"].rec])["seed"] == rp_ids["seed"]
+      and U.resolve(spec1, [])["seed"] is None and U.resolve(dict(spec1, eye_ids=["xyz"]))["seed"] is None and U.resolve(dict(pair_spec, eye_ids=[EID[0]]))["seed"] is None
+      and U.resolve(dict(pair_spec, eye_ids=[EID[0], "xyz"]))["seed"] is None
+      and U.resolve(dict(spec1, eye_ids=[EID[0]]))["seed"] == str(SD.seed_for_key([EID[0]], U.seed_key("solo.universe", "echo", "single", {}, CT.PLATES_VERSION))), rp_ids["eye_ids"])
+ids2 = [PROF["blue_round"].eye_id, PROF["dark_brown_round"].eye_id]
+rp_sw = U.resolve(dict(pair_spec, opts={"swap": True}), [PROF["blue_round"], PROF["dark_brown_round"]])
+rp_ns = U.resolve(pair_spec, [PROF["blue_round"], PROF["dark_brown_round"]])
+pv_sw = U.preview([C.Iris(FIX["blue_round"], "a", eye_id=ids2[0]), C.Iris(FIX["dark_brown_round"], "b", eye_id=ids2[1])], dict(pair_spec, opts={"swap": True}), 160)
+pv_ns = U.preview([C.Iris(FIX["blue_round"], "a", eye_id=ids2[0]), C.Iris(FIX["dark_brown_round"], "b", eye_id=ids2[1])], pair_spec, 160)
+check("a swapped pair: the plan's seed is made from the ids in CANVAS order (the swap exchanges the two irises), so it is the picture's seed; the plan's geometry reads the pupils in canvas order too",
+      rp_sw["seed"] == str(pv_sw.seed) and rp_ns["seed"] == str(pv_ns.seed) and rp_sw["seed"] != rp_ns["seed"] and abs(rp_sw["geometry"]["d_units"] - pv_sw.frame.info["d_units"]) < 0.01
+      and abs(rp_ns["geometry"]["d_units"] - pv_ns.frame.info["d_units"]) < 0.01, (rp_sw["seed"], pv_sw.seed))
+trio_s = {"style": "grp.universe", "eyes": 3, "layout": "trio", "opts": {"rotate": 1}}
+eyes_t3 = [C.Iris(FIX[n], n, eye_id=f"{k:016x}") for k, n in enumerate(UC.MULTI[:3], 1)]
+rp_t3 = U.resolve(dict(trio_s, eye_ids=[f"{k:016x}" for k in (1, 2, 3)]))
+check("a trio: the plan's seed is the picture's, and a group's plan is not decided (which iris is in front at a contact and the hairline edges are decided from the luminance of the irises by the render: "
+      "decided False, nothing frozen)", rp_t3["seed"] == str(U.preview(eyes_t3, trio_s, 128).seed) and rp_t3["decided"] is False and rp_t3["frozen"] == {} and rp_t3["plates"] == [], rp_t3["decided"])
+
+# -- the plates version
+fake_id = "P-UV-DUST__synthetic_later_plate__v9__pro4K__t0"
+fake = dict(PL._TABLE[dust4[0]["id"]], since=2)
+fake_ok = fake["family"] == "P-UV-DUST" and not fake.get("until")
+picks_before = {s_: U.plates_for("deepfield", False, s_, 1) for s_ in range(40)}
+picks_before_wall = {s_: U.plates_for("echo", True, s_, 1) for s_ in range(40)}
+with mock.patch.dict(PL._TABLE, {fake_id: fake}):
+    picks_after = {s_: U.plates_for("deepfield", False, s_, 1) for s_ in range(40)}
+    picks_after_wall = {s_: U.plates_for("echo", True, s_, 1) for s_ in range(40)}
+    picks_new = {s_: U.plates_for("deepfield", False, s_, 2) for s_ in range(40)}
+    picks_new_wall = {s_: U.plates_for("echo", True, s_, 2) for s_ in range(40)}
+    spec_pv2 = dict(spec1, opts={"look": "deepfield"}, pv=2, eye_ids=[EID[0]])
+    rp_pv2 = U.resolve(spec_pv2)
+    key_pv2 = rp_pv2["seed_key"]["pv"]
+check("append-only (the plates version of the plan reaches every pick): a plate that arrives in a later version changes no pick of an older order (Deep Field and the Echo wall, forty seeds each), is a "
+      "candidate for a newer one (it is picked by some seed), and the plan carries the version it was made at",
+      fake_ok and picks_before == picks_after and picks_before_wall == picks_after_wall and any(picks_new[s_] != picks_before[s_] for s_ in picks_new) and any(fake_id in picks_new[s_] for s_ in picks_new)
+      and any(fake_id in picks_new_wall[s_] for s_ in picks_new_wall) and key_pv2 == 2, (sum(picks_new[s_] != picks_before[s_] for s_ in picks_new), key_pv2))
+check("a library with nothing at the plan's version is NoPlate (the plan holds on it: make_plan answers Hold no_engine), never an IndexError and never another plate",
+      isinstance(raises(lambda: U.resolve(dict(spec_look["vortex"], pv=0, eye_ids=[EID[0]])), PL.NoPlate), PL.NoPlate)
+      and isinstance(raises(lambda: U.plates_for("starfield", False, 5, 0), PL.NoPlate), PL.NoPlate) and isinstance(raises(lambda: U.plates_for("echo", True, 5, 0), PL.NoPlate), PL.NoPlate))
+
+# -- the pair's fallback, fixed by the plan
+eyes_pair = lambda: [C.Iris(FIX["blue_round"], "a", eye_id=ids2[0]), C.Iris(FIX["dark_brown_round"], "b", eye_id=ids2[1])]       # noqa: E731
+rp_w = U.resolve(pair_spec, [PROF["blue_round"], PROF["dark_brown_round"]])
+with mock.patch.object(PUP, "reach", lambda pup, u: 0.60):
+    rp_k = U.resolve(pair_spec, [PROF["blue_round"], PROF["dark_brown_round"]])
+rp_nop = U.resolve(pair_spec, None)
+check("resolve of a pair freezes its fallback when both profiles carry a pupil: the weave is {fallback: null}, pupils that need more than the weave allows give {fallback: kiss}; without both pupils nothing is "
+      "frozen and the plan is not decided (the render decides, as the preview did); one eye freezes nothing and is decided",
+      rp_w["frozen"] == {"fallback": None} and rp_w["decided"] is True and rp_k["frozen"] == {"fallback": "kiss"} and rp_k["decided"] is True and rp_k["fallback"] == "kiss"
+      and rp_nop["frozen"] == {} and rp_nop["decided"] is False and r1["decided"] is True and r1["frozen"] == {}, (rp_w["frozen"], rp_k["frozen"], rp_nop["frozen"]))
+with mock.patch.object(PUP, "reach", lambda pup, u: 0.60):
+    _, sc_fk = U.render("echo", eyes_pair(), 256, "3:2", want_scene=True)                       # the pupils need the Kiss distance
+    frozen_weave_err = raises(lambda: U.render("echo", eyes_pair(), 256, "3:2", frozen={"fallback": None}), ENG2.DesignChanged)
+    _, sc_fk2 = U.render("echo", eyes_pair(), 256, "3:2", frozen={"fallback": "kiss"}, want_scene=True)
+    _, sc_lab = U.render("echo", eyes_pair(), 256, "3:2", opts={"kiss": False}, frozen={"fallback": "kiss"}, want_scene=True)       # the laboratory forces the weave against the plan
+_, sc_lab2 = U.render("echo", eyes_pair(), 256, "3:2", opts={"kiss": True}, frozen={"fallback": None}, want_scene=True)             # ... and the Kiss distance against the plan
+_, sc_fw = U.render("echo", eyes_pair(), 256, "3:2", want_scene=True)                           # the pupils allow the weave
+_, sc_fz_k = U.render("echo", eyes_pair(), 256, "3:2", frozen={"fallback": "kiss"}, want_scene=True)
+_, sc_fz_w = U.render("echo", eyes_pair(), 256, "3:2", frozen={"fallback": None}, want_scene=True)
+check("the render obeys what the plan froze: the Kiss distance is forced on pupils that allow the weave (a crumble at 1.70 R, as the laboratory's kiss switch draws it), the weave is kept when it is frozen "
+      "and allowed, and a weave the pupils no longer allow is DesignChanged (a ValueError with why design_changed: the order is held, never drawn the other way); the laboratory's own kiss switch "
+      "overrides the plan",
+      sc_fz_k.layout.info["overlap_fallback"] is True and abs(sc_fz_k.layout.info["d_units"] - LO.KISS_D) < 1e-9 and not sc_fz_w.layout.info["overlap_fallback"] and not sc_fw.layout.info["overlap_fallback"]
+      and sc_fz_w.seed == sc_fw.seed and isinstance(frozen_weave_err, ENG2.DesignChanged) and isinstance(frozen_weave_err, ValueError) and frozen_weave_err.why == "design_changed"
+      and sc_fk.layout.info["overlap_fallback"] is True and sc_fk2.layout.info["overlap_fallback"] is True and sc_lab.layout.info["overlap_fallback"] is False
+      and sc_lab2.layout.info["overlap_fallback"] is True, (sc_fz_k.layout.info, frozen_weave_err))
+check("a frozen plan that is not one is refused before anything is drawn: a fallback that is neither null nor 'kiss', a key the family does not freeze, a list",
+      all(isinstance(raises(lambda f=f: U.render("echo", eyes_pair(), 128, "3:2", frozen=f), ValueError), ValueError) for f in ({"fallback": "weave"}, {"fallback": True}, {"fronts": {}}, ["kiss"], "kiss")), "")
+spec_pr = dict(pair_spec, profiles=[PROF["blue_round"], PROF["dark_brown_round"]])
+pv_pr = U.preview(eyes_pair(), spec_pr, 128)
+with mock.patch.object(PUP, "reach", lambda pup, u: 0.60):
+    pv_pk = U.preview(eyes_pair(), spec_pr, 128)                                              # the sealed profiles' pupils say Kiss: the preview is drawn at the Kiss distance
+    pv_pn = U.preview(eyes_pair(), pair_spec, 128)                                            # no profiles: the render decides, from the same pupils (Kiss here too)
+pv_pf = U.preview(eyes_pair(), dict(pair_spec, frozen={"fallback": "kiss"}), 128)
+check("the preview of a pair takes the plan's fallback from the sealed profiles of its spec (spec[profiles]) or from spec[frozen] (the master's): the Preview's log names what was drawn and frozen, one eye and a "
+      "group name nothing, and the preview's picture is the master's choice",
+      pv_pr.log["frozen"] == {"fallback": None} == rp_w["frozen"] and pv_pk.log["frozen"] == {"fallback": "kiss"} == rp_k["frozen"] and pv_pn.log["frozen"] == {"fallback": "kiss"}
+      and pv_pf.log["frozen"] == {"fallback": "kiss"} and pv_pf.log["fallback"] == "kiss" and pv_t.log["frozen"] == {} and pv_r.log["frozen"] == {}, (pv_pr.log["frozen"], pv_pk.log["frozen"]))
+
+# -- the master plan
+eyes_rec_u = [{"eye_id": PROF[n].eye_id, "profile": PROF[n].rec} for n in ("blue_round", "dark_brown_round")]
+plan_pw = STP2.make_plan({"style": "duo.universe", "eyes": 2, "layout": "pair", "opts": {}}, eyes_rec_u)
+with mock.patch.object(PUP, "reach", lambda pup, u: 0.60):
+    plan_pk = STP2.make_plan({"style": "duo.universe", "eyes": 2, "layout": "pair", "opts": {}}, eyes_rec_u)
+plan_e1 = STP2.make_plan({"style": "solo.universe", "eyes": 1, "layout": "single", "opts": {}}, eyes_rec_u[:1])
+check("the master plan of a universe style holds the seed, the frozen fallback and whether it is decided, and they are part of plan8 (a plan that freezes the Kiss distance is another plan): the pair at "
+      "the weave and at the Kiss distance have different plan8, the plan of one Echo has no plate and no plates_needed, its seed is the resolve's",
+      plan_pw["frozen"] == {"fallback": None} and plan_pw["decided"] is True and plan_pk["frozen"] == {"fallback": "kiss"} and plan_pw["plan8"] != plan_pk["plan8"] and plan_pw["engine_v"] == ST.ENGINE_V >= 4
+      and plan_e1["plates"] is None and "plates_needed" not in plan_e1 and plan_e1["seed"] == U.resolve(spec1, [PROF["blue_round"]])["seed"] and plan_e1["decided"] is True
+      and plan_e1["seed_key"]["style"] == "solo.universe", (plan_pw["frozen"], plan_pk["frozen"]))
+plan_vx = STP2.make_plan({"style": "solo.universe", "eyes": 1, "layout": "single", "opts": {"look": "vortex"}}, eyes_rec_u[:1])
+fake_pv = lambda **kw: types.SimpleNamespace(**dict(dict(seed=int(plan_vx["seed"]), design="vortex", log={"plates": list(plan_vx["plates"]), "frozen": {}}), **kw))      # noqa: E731
+hold = lambda plan, pv_: (lambda e: e.reason if isinstance(e, STP2.Hold) else e)(raises(lambda: STP2._check_drawn(plan, pv_), STP2.Hold))                         # noqa: E731
+plan_pp = dict(plan_pw, seed=str(sc_pair.seed))
+ok_pair = types.SimpleNamespace(seed=int(plan_pp["seed"]), design="echo", log={"plates": [], "frozen": {"fallback": None}})
+check("the step that draws checks the picture against the plan before anything is stored: the seed, the look (the design), the frozen fallback and the plates must be the plan's; another seed, another "
+      "look, another fallback or another plate is Hold picture_drift, and a plan that was not decided checks no choice",
+      STP2._check_drawn(plan_vx, fake_pv()) is None and hold(plan_vx, fake_pv(seed=1)) == "picture_drift" and hold(plan_vx, fake_pv(design="deepfield")) == "picture_drift"
+      and hold(plan_vx, fake_pv(log={"plates": ["P-DN-SPIRAL__x"], "frozen": {}})) == "picture_drift" and STP2._check_drawn(plan_pp, ok_pair) is None
+      and hold(plan_pp, types.SimpleNamespace(seed=ok_pair.seed, design="echo", log={"plates": [], "frozen": {"fallback": "kiss"}})) == "picture_drift"
+      and STP2._check_drawn(dict(plan_pp, decided=False), types.SimpleNamespace(seed=ok_pair.seed, design="deepfield", log={"plates": [], "frozen": {"fallback": "kiss"}})) is None, "")
+holds_ok = STP2.HOLDS.get("design_changed") is not None and STP2.HOLDS.get("picture_drift") is not None
+steps_src = read(os.path.join(STYLES, "steps.py"))
+check("a master whose pupils contradict the plan's weave is held as design_changed (the family's ValueError carries why), never drawn the other way: the step runner already maps why design_changed "
+      "to the hold, and the universe family raises that very why", holds_ok and '"design_changed", "bar_pupil"' in steps_src and ENG2.DesignChanged("x").why == "design_changed", "")
+
+# -- the laboratory: both seeds
+rr_new = ops.a_styles_lab({"style": "solo.universe", "eye": LAB_EYE, "size": 480}, "t")
+rr_old = ops.a_styles_lab({"style": "solo.universe", "eye": LAB_EYE, "size": 480, "seed": "legacy"}, "t")
+legacy_scene = U.render("echo", [C.Iris(base64.b64decode(LAB_EYE), "lab", max_side=2048)], 480, "1:1", opts={"seed_mode": "legacy"}, want_scene=True)[1]
+check("styles_lab has both seeds for the Universe style as it has for the singles: the eye's (default: the seed a customer's picture has, equal to the plan's) and the old one from the bytes of the iris "
+      "(seed legacy), and the reply says which",
+      rr_new["seed_mode"] == "eye_id" and rr_old["seed_mode"] == "legacy" and rr_new["seed"] != rr_old["seed"] and rr_old["seed"] == str(legacy_scene.seed) and rr_new["plan"]["seed"] == rr_new["seed"]
+      and rr_new["eye_id"] == rr_old["eye_id"], (rr_new["seed"], rr_old["seed"]))
+
+# -- another image of the same eye: the point of the change (a preview and its master draw the same matter and the same plate)
+buf_m = io.BytesIO()
+Image.open(io.BytesIO(FIX["blue_round"])).convert("RGB").resize((820, 820), Image.LANCZOS).save(buf_m, "JPEG", quality=92)
+eye_m = C.Iris(buf_m.getvalue(), "m", eye_id="0123456789abcdef")          # another image (smaller, re-encoded) of the eye the id 0123... names: other bytes, the same id
+rows_m = {}
+for look in ("vortex", "deepfield", "echo"):
+    img_a, sc_a = U.render(look, [eye_b], 512, want_scene=True)
+    img_c, sc_c = U.render(look, [eye_m], 512, want_scene=True)
+    img_la, sc_la = U.render(look, [eye_b], 512, opts={"seed_mode": "legacy"}, want_scene=True)
+    img_lc, sc_lc = U.render(look, [eye_m], 512, opts={"seed_mode": "legacy"}, want_scene=True)
+    s_new = float(ssim_map(luma8(img_a), luma8(img_c))[~iris_mask_r(sc_a, 1.15)].mean())
+    s_old = float(ssim_map(luma8(img_la), luma8(img_lc))[~iris_mask_r(sc_la, 1.15)].mean())
+    rows_m[look] = (sc_a.seed == sc_c.seed, sc_la.seed == sc_lc.seed, [sc_a.info.get("plate", {}).get("id")] == [sc_c.info.get("plate", {}).get("id")], round(s_new, 3), round(s_old, 3))
+check("another image of the same eye (smaller, re-encoded, the same id) draws the same seed, the same plate and the same matter as the first (SSIM of everything outside 1.15 R at least 0.98), where the seed "
+      "of step A (the bytes of the iris) drew a different seed and a different picture of the matter (SSIM below 0.95): the preview of a draft, the compose copies and the 4096 px master of one eye agree "
+      "on what is drawn. " + str(rows_m),
+      all(r[0] and not r[1] and r[2] and r[3] >= 0.98 and r[4] < 0.95 for r in rows_m.values()), rows_m)
+
+# -- other seeds: the iris is never touched and the hard rules hold
+sweep_bad, sweep_geom = [], []
+ids_sweep = ["%016x" % (0xABCDEF0123456789 + 104729 * k) for k in range(4)]
+for look in U.LOOKS:
+    ref_geom = None
+    for k, eid in enumerate(ids_sweep):
+        eye_s = C.Iris(FIX["blue_round"], "s", max_side=1024, eye_id=eid)
+        img_s, sc_s = U.render(look, [eye_s], 512, want_scene=True)
+        rep_s = SCK.run(np.asarray(img_s), [e.disc for e in sc_s.eyes], text_log=[], customer=["", ""], ids=["universe", look, "single"])
+        if not rep_s["ok"] or rep_s["checks"]["t1"]["max_abs_diff"] != 0:
+            sweep_bad.append((look, eid[-4:], {kk: v["ok"] for kk, v in rep_s["checks"].items()}))
+        geom = [(round(e.cx, 3), round(e.cy, 3), round(e.R, 3)) for e in sc_s.eyes] + [sc_s.f, sc_s.layout.key]
+        ref_geom = ref_geom or geom
+        sweep_geom.append(geom == ref_geom)
+check("four other eye ids on every look at 512 px: T1, T6, T7 and T12 hold (the iris is the graded iris byte for byte: largest difference 0), and nothing but the matter moves (the geometry of the iris, the "
+      "work grid and the layout are the same for every id)", not sweep_bad and all(sweep_geom), sweep_bad[:4])
+pics = {eid: hashlib.sha256(np.ascontiguousarray(np.asarray(U.render("echo", [C.Iris(FIX["blue_round"], "s", max_side=1024, eye_id=eid)], 256))).tobytes()).hexdigest() for eid in ids_sweep}
+check("the seed moves the picture: four ids draw four different pictures of the same eye", len(set(pics.values())) == 4, "")
+
+# ============================================================================================ 9. LOCAL: the scratch tree and the real eyes
+section("9. LOCAL: the port is the scratch plus its edits; the 4K plates through storage; the real calibration eyes; the gate against the 21 eyes")
 PRIOR = json.load(open(os.path.join(HERE, "data", "stepA", "universe_tests_scratch.json"), encoding="utf-8"))
 check("the prototype's own results on the calibration eyes are on record (data/stepA/universe_tests_scratch.json): its 23 tests, 23 of 23 ok, the numbers the thresholds above come from",
       len(PRIOR["tests"]) == 23 and all(v.get("ok") for v in PRIOR["tests"].values()) and PRIOR["tests"]["T24 restoration gate"]["blocked"] == "16/16" and PRIOR["tests"]["T24 restoration gate"]["clean_passed"] == "5/5")
-GOLD_REAL = json.load(open(os.path.join(HERE, "data", "universe_goldens_real.json"), encoding="utf-8"))
-check("the real-eye recording holds hashes only (no image, no path): 18 pictures of four calibration eyes and the hash of each eye's file",
-      len(GOLD_REAL["cases"]) == 18 and set(GOLD_REAL["eye_files"]) == set(UC.REAL_EYES) and all(re.fullmatch(r"[0-9a-f]{64}", v["sha"]) for v in GOLD_REAL["cases"].values())
-      and not re.search("[A-Za-z]:" + re.escape(chr(92)) + "|/Users/", json.dumps(GOLD_REAL)))
+check("the real-eye recordings hold hashes only (no image, no path): 18 pictures of four calibration eyes and the hash of each eye's file, in step A and in step B",
+      all(len(g["cases"]) == 18 and set(g["eye_files"]) == set(UC.REAL_EYES) and all(re.fullmatch(r"[0-9a-f]{64}", v["sha"]) for v in g["cases"].values())
+          and not re.search("[A-Za-z]:" + re.escape(chr(92)) + "|/Users/", json.dumps(g)) for g in (GOLD_REAL, GOLD_REAL_A)) and GOLD_REAL["eye_files"] == GOLD_REAL_A["eye_files"])
 if SCRATCH_Y3 and os.path.isdir(SCRATCH_Y3):
     import port_universe as PU  # noqa: E402
     made = PU.build(SCRATCH_Y3)
     diffs = [d for d, t in made.items() if read(os.path.join(FAMILY, *d.split("/"))).replace("\r\n", "\n") != t]
     local(f"the {len(made)} ported files are the scratch prototype's files with the listed edits and nothing else (port_universe.py --check)", not diffs, diffs)
-    src_hashes = {p: hashlib.sha256(open(os.path.join(SCRATCH_Y3, p), "rb").read()).hexdigest() for p in GOLD["scratch_sources"]}
-    local("the scratch sources are the ones the recording ran (their sha256 equal the recording's)", src_hashes == GOLD["scratch_sources"], [p for p in src_hashes if src_hashes[p] != GOLD["scratch_sources"][p]])
+    src_hashes = {p: hashlib.sha256(open(os.path.join(SCRATCH_Y3, p), "rb").read()).hexdigest() for p in GOLD_A["scratch_sources"]}
+    local("the scratch sources are the ones the step A recording ran (their sha256 equal the recording's)", src_hashes == GOLD_A["scratch_sources"], [p for p in src_hashes if src_hashes[p] != GOLD_A["scratch_sources"][p]])
     sys.path.insert(0, os.path.join(REPO, "scripts"))
     import upload_plates as UP  # noqa: E402
     from _lib import plates_registry as REG  # noqa: E402
     need = set()
     for c in LOC:
-        f = G[c["key"]]["facts"]
-        need |= {f[k]["id"] for k in ("plate", "accent_plate") if k in f}
+        for gold in (GA, G):                                  # the plates the old seed picks (step A) and the plates the shipping seed picks (step B)
+            f = gold[c["key"]]["facts"]
+            need |= {f[k]["id"] for k in ("plate", "accent_plate") if k in f}
     table = REG.PLATES_REGISTRY["plates"]
     y2 = os.path.join(os.path.dirname(os.path.abspath(SCRATCH_Y3)), "wave-y2", "plates")
     rows_ = UP.plan({i: table[i] for i in need}, {table[i]["family"] for i in need}, UP.sources(y2, SCRATCH_Y3))
     tot = UP.run(rows_, store, True, out=lambda m: None)
-    local(f"the {len(need)} 4K plates the four pictures need are in a local store (read from the scratch tree, sha256 equal to the registry's)", tot["bad_source"] == 0 and tot["wrong"] == 0
-          and tot["uploaded"] + tot["present"] == len(need), tot)
+    local(f"the {len(need)} 4K plates the four pictures need (with the old seed and with the shipping one) are in a local store (read from the scratch tree, sha256 equal to the registry's)",
+          tot["bad_source"] == 0 and tot["wrong"] == 0 and tot["uploaded"] + tot["present"] == len(need), tot)
     PL.clear_memory()
     UPL._IMG.clear()
-    rows = replay(LOC, with_checks=False)
-    for c, rec, diff in rows:
-        local(f"{c['key']} (a {'/'.join(lods_of(c['key']))} LOD of a 4K plate through storage, the cache and the sha256 check) equals the recorded picture, byte for byte", not diff, (diff, NOTE))
-        PL.clear_memory()
-        UPL._IMG.clear()
-        gc.collect()
+    for legacy in (True, False):
+        rows = replay(LOC, with_checks=False, legacy=legacy)
+        for c, rec, diff in rows:
+            local(f"{c['key']} (a {'/'.join(lods_of(c['key']))} LOD of a 4K plate through storage, the cache and the sha256 check) drawn with the {'seed of step A equals the scratch prototype' if legacy else 'shipping seed equals the step B recording'}'s picture, "
+                  "byte for byte", not diff, (diff, NOTE))
+            PL.clear_memory()
+            UPL._IMG.clear()
+            gc.collect()
 if CALIB and os.path.isdir(CALIB):
     real_fix = {}
     for n in UC.REAL_EYES:
         with open(os.path.join(CALIB, f"{n}_2_enhanced.jpg"), "rb") as f:
             real_fix[n] = f.read()
     local("the four calibration eyes are the ones of the recording (the sha256 of each file equals the recording's)", {n: hashlib.sha256(real_fix[n]).hexdigest() for n in real_fix} == GOLD_REAL["eye_files"])
-    bad_r, irs_r = [], {}
+    bad_r, bad_rb, irs_r = [], [], {}
     for c in UC.real_cases():
-        rec = UC.render_case(port_render, C.Iris, real_fix, c, irs_r)
-        g = GOLD_REAL["cases"][c["key"]]
+        rec = UC.render_case(legacy_render, C.Iris, real_fix, c, irs_r)
+        g = GOLD_REAL_A["cases"][c["key"]]
         bad_r += [(c["key"], k) for k in ("sha", "seed", "eye_seeds", "facts", "w", "h", "cls") if rec[k] != g[k]]
-    local(f"the {len(GOLD_REAL['cases'])} pictures of the calibration eyes (every look at 1024 px, a pair, a trio) equal the scratch prototype's, byte for byte, with their seeds, plates and geometry (the prototype's own "
-          "23 tests passed on these eyes: the numbers are on record)", not bad_r, bad_r[:4])
+    for c in UC.real_cases():
+        recb = UC.render_case(port_render, C.Iris, real_fix, c)           # a fresh Iris per picture, as step B was recorded
+        gb = GOLD_REAL["cases"][c["key"]]
+        bad_rb += [(c["key"], k) for k in ("sha", "seed", "eye_seeds", "facts", "w", "h", "cls") if recb[k] != gb[k]]
+    local(f"the {len(GOLD_REAL_A['cases'])} pictures of the calibration eyes (every look at 1024 px, a pair, a trio) drawn with the seed of step A equal the scratch prototype's, byte for byte, with their seeds, plates "
+          "and geometry (the prototype's own 23 tests passed on these eyes: the numbers are on record)", not bad_r, bad_r[:4])
+    local(f"the same {len(GOLD_REAL['cases'])} pictures with the shipping seed equal the step B recording, byte for byte, with their seeds, plates and geometry", not bad_rb, bad_rb[:4])
     # the gate: the 21 eyes of the design round (5 human and 11 pet restorations that still carry a lid, lashes or fur; 5 clean human ones)
     pets = os.path.join(os.path.dirname(os.path.abspath(SCRATCH_Y3)), "wave-pets", "fix", "work")          # the pet restorations of the design round (never committed)
     bad_names = ["drv_w02", "drv_w03", "drv_w08", "drv_d04", "drv_d05", "c_cat01", "c_cat03", "c_cat04", "c_cat05", "c_cat06", "c_cat09", "c_dog02", "c_dog06", "c_dog07", "c_horse03", "c_horse04"]
