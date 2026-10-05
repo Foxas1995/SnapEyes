@@ -953,7 +953,7 @@ for sid in COLLISION_STYLES:
             if not pvw.selfcheck["ok"]:
                 sweep_bad.append((sid, n, lay, sorted(k for k, c in pvw.selfcheck["checks"].items() if not c["ok"])))
 check(f"every layout the registry offers for the pairs and Family Colours ({sweep_n} style, eye count and layout combinations, five colours, no words) passes the whole self check on its default "
-      "canvas: T1, T2, T3, T6, T7, T12, T18, T19 (the infinity chain is held and is the one design with known misses)", not sweep_bad and sweep_n >= 20, sweep_bad[:4])
+      "canvas: T1, T2, T3, T6, T7, T12, T18, T19 (the infinity chain is held and is the one design with known misses)", not sweep_bad and sweep_n == 18, sweep_bad[:4])
 check("the layouts that failed their own checks in step A are no longer offered (the picker never shows a layout whose picture the self check would hold for review): Family Colours as a brick of "
       "four eyes (T3 0.76 against 0.82), as a flower of six (T1 and T6 on 56 pixels of four petals) and as a flower of eight (T3 0.77); the laboratory still draws them (the golden replay)",
       "brick" not in CT.layouts_for("grp.collision", 4) and "flower" not in CT.layouts_for("grp.collision", 6) and "flower" not in CT.layouts_for("grp.collision", 8)
