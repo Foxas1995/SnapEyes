@@ -1,8 +1,8 @@
 {
- "engine_v": 2,
+ "engine_v": 3,
  "goldens": {
-  "collision_goldens.json": "46b21a1d9cb9ca9de10560a40e6ea4765a53b9548233b7c93978f0ec29d90b5d",
-  "collision_goldens_real.json": "f1a028df4ea290ff4730751d935c11ce28af38a1ae933412e32fc332e9da8aa4",
+  "collision_goldens.json": "0c58de143bd9490b0bc778af93475de5b4aec5e4b54498abf5956163a0b1fe48",
+  "collision_goldens_real.json": "47d77a933acdcf93ffa6765c0e01f1641e9f9695488b52cdc9f8c7878dbfe07e",
   "core_goldens.json": "f6d38655b5028eb3f110b5c35058803d8e520f9ac96a40101b2d28b51cda7fc7",
   "plate_picks.json": "f4ddb09f748aa9e9447ddbf99de787dfbabc18eab55525a661bead8eed668b40",
   "reveal_goldens.json": "cf2aba0c1e9b8eebfb2170cf29e0ec67f7329902ab84dbb7af059a79d5b201bc",

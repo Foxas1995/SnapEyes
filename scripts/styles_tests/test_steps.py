@@ -418,7 +418,7 @@ try:
 finally:
     CT.ENGINE["grp.collision"]["steps"] = saved8
 check("... and PROBE_HOPS follows: a three step plan for eight eyes makes the longest chain 12 and the probe 16", chain8 == 12 and min(M.MAX_HOPS, chain8 + 4) == 16, chain8)
-check("the registry hash did not move while the test edited and restored an entry (the literal is the test's own copy in this process)", CT.registry_hash() == "870892880cf3", CT.registry_hash())
+check("the registry hash did not move while the test edited and restored an entry (the literal is the test's own copy in this process)", CT.registry_hash() == "7b1b4069399b", CT.registry_hash())
 
 # ============================================================================================ 3. the words
 section("3. the customer's words: the paid file draws what the preview draws")

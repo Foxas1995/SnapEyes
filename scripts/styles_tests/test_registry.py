@@ -171,7 +171,8 @@ with patched(public=lambda s: s["grp.collision"].update(stage="lab", stage_by_ey
           C.layouts_for("grp.collision", 3) == ("trio", "diag") and C.default_layout("grp.collision", 5) == "brick"
           and C.layouts_for("grp.collision", 2) == () and C.engine_for("grp.collision", 3)["design"] == "trio"
           and C.engine_for("grp.collision", 5)["design"] == "family" and C.engine_for("grp.collision", 5)["work_side"] == 2048
-          and C.engine_for("grp.collision", 3)["work_side"] == 4096 and C.work_side("grp.collision", 8) == 2048)
+          and C.engine_for("grp.collision", 3)["work_side"] == 2048 and C.work_side("grp.collision", 8) == 2048  # WP7B: the trio is capped at 2048 px as the family is
+          and C.work_side("grp.clean", 3) == 4096 and C.work_side("grp.clean", 5) == 2048)
 RANK = {"planned": 0, "lab": 1, "preview": 2, "live": 3}
 eff = {(c, o): C.effective_stage(c, o) for c in ("planned", "lab", "preview", "live", "retired") for o in (None, "planned", "lab", "preview", "live", "retired", "bogus")}
 check("effective_stage = min(ceiling, override): an override can only lower, an unknown one is ignored, retired is final",

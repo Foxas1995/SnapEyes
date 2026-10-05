@@ -196,8 +196,9 @@ def _facts(info):
     return json.loads(json.dumps(out, sort_keys=True))
 
 
-def render_case(render, Iris, fixtures, case, irises=None):
-    """Render one case and describe it. irises: an optional cache {eye name: Iris} (an Iris caches its grades and its ring)."""
+def render_case(render, Iris, fixtures, case, irises=None, with_frozen=False):
+    """Render one case and describe it. irises: an optional cache {eye name: Iris} (an Iris caches its grades and its ring). with_frozen: also the plan's
+    frozen decisions the render made (step B: the front order, the hairline contacts, the fallback and the lens: engine.decisions)."""
     irises = {} if irises is None else irises
     for n in case["eyes"]:
         if n not in irises:
@@ -205,4 +206,7 @@ def render_case(render, Iris, fixtures, case, irises=None):
     eyes = [irises[n] for n in case["eyes"]]
     r = render(case["design"], eyes, case["fmt"], case["size"], case["names"], case["date"], case["bg"], case["clean"], case["opts"], case["layout"])
     a = np.ascontiguousarray(np.asarray(r.img.convert("RGB")))
-    return {"sha": hashlib.sha256(a.tobytes()).hexdigest(), "w": int(a.shape[1]), "h": int(a.shape[0]), "seed": int(r.seed), "facts": _facts(r.info)}
+    out = {"sha": hashlib.sha256(a.tobytes()).hexdigest(), "w": int(a.shape[1]), "h": int(a.shape[0]), "seed": int(r.seed), "facts": _facts(r.info)}
+    if with_frozen:
+        out["frozen"] = json.loads(json.dumps(r.frozen, sort_keys=True))
+    return out

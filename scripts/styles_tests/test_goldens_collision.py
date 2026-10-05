@@ -1,24 +1,30 @@
 # -*- coding: utf-8 -*-
-"""WP7A of the v3 engine work: the collision family (Kiss Collision, Clean Infinity, Collision Infinity, Family Colours with the trio, Infinity Chain)
-ported verbatim into api/_lib/styles/collision (step A), with the design gate DG1's smooth planned seam. Test I6 (goldens) for the family, the collision
-share of I7 (T1, T2, T3, T4, T6, T7, T10, T12, T13, T18, T19 of the brief) and the places the family is reached from: the style package's contract and
-the master plan.
+"""WP7A and WP7B of the v3 engine work: the collision family (Kiss Collision, Clean Infinity, Collision Infinity, Family Colours with the trio, Infinity Chain) in
+api/_lib/styles/collision. Step A (WP7A) ported it verbatim with the design gate DG1's smooth planned seam; step B (WP7B, decisions C9 and C8) moved the seed to the
+eyes' ids and the plan's seed key (the names are out of it) and made the discrete choices that depend on the pixels once, on the canonical scene, so that a plan can freeze
+them and the master obeys. Test I6 (goldens) for the family, the collision share of I7 (T1, T2, T3, T4, T6, T7, T10, T12, T13, T18, T19 of the brief) and the places the
+family is reached from: the style package's contract and the master plan.
 
   1. the family in the repository: its files, the rules of every module, the registry and the family agree, no stage was raised
-  2. the golden replay: the SHA-256 of the pictures the scratch prototype (the DG1 snapshot) made, for every pair design on three pairs, the canvases, the
-     sizes 512, 1024 and 4096, the words, the stack lens, the laboratory switches, the trio, every layout of the family for four to eight eyes and the
-     chain (data/collision_goldens.json): the port draws them byte for byte, with the same fronts, edge modes, fallbacks and plates; the replay can fail
-  3. the hard rules on every picture of the replay: the iris is the graded iris byte for byte outside the seam band and the contact strips (T1, T6), the
-     pupil is untouched (T2), the visible share keeps its floor (T3), the words are the customer's (T7), no hearts (T12), the iris size floor and the
-     stacking rule (T18, T19)
-  4. the seam of DG1: smooth by construction, the owner's budget E1 (the mixed share at most about 3 percent, the seam band at most 4 percent of an
-     iris), the plan is the same at every size, the stack lens is automatic above K 62 and forced it passes T1, T2, T3, a bar pupil is refused
+  2. the golden replay. Step B: the pictures this code makes, recorded on purpose once (data/collision_goldens.json, reviewed with diff_goldens_collision.py), for every pair
+     design on three pairs, the canvases, the sizes 512, 1024 and 4096, the words, the stack lens, the laboratory switches, the trio, every layout of the family for four to
+     eight eyes and the chain, with their seeds, choices and frozen decisions; the replay can fail. Step A: the pictures the scratch prototype (the DG1 snapshot) made
+     (data/stepA/collision_goldens.json), drawn here with opts seed_mode legacy: byte equal, which is the proof that the seed and the place of the decisions are the ONLY
+     things step B changed
+  3. the hard rules on every picture of the replay: the iris is the graded iris byte for byte outside the seam band and the contact strips (T1, T6), the pupil is untouched
+     (T2), the visible share keeps its floor (T3), the words are the customer's (T7), no hearts (T12), the iris size floor and the stacking rule (T18, T19)
+  4. the seam of DG1: smooth by construction, the owner's budget E1 (the mixed share at most about 3 percent, the seam band at most 4 percent of an iris), the plan is the
+     same at every size, the stack lens is automatic above K 62 and forced it passes T1, T2, T3, a bar pupil is refused
   5. the tests of the brief (T4, T6 flood, T7, T10, T12, T13, T18, T19) on the port
   6. determinism, bounded caches, the guards of render(), the plates (the JET and RIVER plates the prototype fitted are the baked ones, none needs a 4K file)
   7. the contract (resolve, preview, tiles, the watermark) and the master plan end to end
-  8. the real calibration eyes (LOCAL: SNAPEYES_CALIB) and the port as the scratch plus its edits (LOCAL: SNAPEYES_SCRATCH_DG1)
-No network, no image model, no real eye in the repository (the eyes are procedural: synth_iris). A golden is exact for this machine class and the pins of
-requirements.txt; a mismatch elsewhere means recording again on the scratch code there, never changing the port.
+  8. step B: the seed from the eyes' ids and nothing else (a typo in a name moves nothing), resolve() with the eyes is what the render decides (on 16 designed sets and 200
+     random ones), a frozen choice is obeyed and one the eyes contradict is refused, the plan through the master plan (a master that contradicts it is held), the work sides
+     (the trio at 2048 px), the Trio delta, the layouts the registry offers, the universe fill's bounded float copies
+  9. the real calibration eyes (LOCAL: SNAPEYES_CALIB): both recordings, resolve against the render on 14 board pairs, and the port as the scratch plus its edits
+     (LOCAL: SNAPEYES_SCRATCH_DG1)
+No network, no image model, no real eye in the repository (the eyes are procedural: synth_iris). A golden is exact for this machine class and the pins of requirements.txt;
+a mismatch elsewhere means recording again (step B: record_goldens_collision_repo.py; step A: the scratch code there), never changing the port.
     SNAPEYES_SCRATCH_DG1  the wave-dg1/final folder of the scratch tree (the edit check); SNAPEYES_CALIB the calibration restorations' folder
     python test_goldens_collision.py   prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as v3coll."""
@@ -85,16 +91,19 @@ import collision_cases as CC  # noqa: E402
 from _lib import iris as L  # noqa: E402
 from _lib import catalogue as CT  # noqa: E402
 from _lib import store  # noqa: E402
+from _lib import events as EV  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, selfcheck as SCK, plates as PL, text as TX, costs as CO, seeds as SD, eye as EYE, pupil as PUPM, steps as STP  # noqa: E402
 from _lib.styles import collision as CX  # noqa: E402
-from _lib.styles.collision import engine as E, scenes as CL, compositor as CMP, seam_plan as SP, lens_mode as LM, kit as K, jetplates as JP  # noqa: E402
+from _lib.styles.collision import engine as E, scenes as CL, compositor as CMP, seam_plan as SP, lens_mode as LM, kit as K, jetplates as JP, fill as FL  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 GOLD = json.load(open(os.path.join(HERE, "data", "collision_goldens.json"), encoding="utf-8"))
 G = GOLD["cases"]
+GOLD_A = json.load(open(os.path.join(HERE, "data", "stepA", "collision_goldens.json"), encoding="utf-8"))
+G_A = GOLD_A["cases"]
 MACHINE_SAME = GOLD["machine"]["numpy"] == np.__version__ and GOLD["machine"]["pillow"] == PIL.__version__
-NOTE = "" if MACHINE_SAME else f" (numpy/Pillow differ from the recording {GOLD['machine']}: record again on the scratch code, do not change the port)"
+NOTE = "" if MACHINE_SAME else f" (numpy/Pillow differ from the recording {GOLD['machine']}: record again (record_goldens_collision_repo.py; step A on the scratch code), do not change the port)"
 FAMILY_FILES = sorted(f for f in os.listdir(FAMILY) if f.endswith(".py"))
 COLLISION_STYLES = [i for i in CT.ids() if CT.ENGINE[i]["engine"] and CT.ENGINE[i]["engine"].get("module") == "collision"]
 
@@ -180,17 +189,16 @@ for sid in COLLISION_STYLES:
         eng = CT.engine_for(sid, n)
         cost_rows[(sid, n)] = CO.assess(CO.cost_key(eng, "dark", None), n, size=4096, side=CT.work_side(sid, n), factor=1.6)
 check("every cost row the family needs exists (a master row and a preview row for each design and eye count), and the master of every style fits one call at the slow factor 1.6 "
-      "except two: Family Colours with seven eyes (outside release 1, 1447 MB against the 1434 MB budget) and the Trio from 4096 px sources (the measured row, 52.5 s against the "
-      "52 s budget: WP7B caps it at 2048 px or splits it, the review of WP7A)", all(r["need_s"] is not None for r in cost_rows.values())
-      and [k for k, r in cost_rows.items() if not r["ok"]] == [("grp.collision", 3), ("grp.collision", 7)]
-      and cost_rows[("grp.collision", 3)]["why"] == "time" and cost_rows[("grp.collision", 7)]["why"] == "memory",
+      "at the working copy the registry gives it (2048 px for every collision style since WP7B, the trio included) except Family Colours with seven eyes (outside release 1, 1447 MB "
+      "against the 1434 MB budget)", all(r["need_s"] is not None for r in cost_rows.values())
+      and [k for k, r in cost_rows.items() if not r["ok"]] == [("grp.collision", 7)] and cost_rows[("grp.collision", 7)]["why"] == "memory",
       [(k, r["ok"], r["why"]) for k, r in cost_rows.items() if not r["ok"]])
 trio4 = CO.assess("collision.trio", 3, side=4096, factor=1.6)
 trio2 = CO.assess("collision.trio", 3, side=2048, factor=1.6)
-check("the cost table is honest about the Trio at the working copy its registry row gives it (review of WP7A): the spike's row (15.4 s, 929 MB) was a 2048 px copy's, the trio from 4096 px "
-      "sources was measured at 26.6 s of render and self check (28.0 s in the spike's units, 992 MB), so at 1.6 it needs 52.5 s and its break-even factor is 1.58 (the spike's 2.80); "
-      "a 2048 px copy needs 40.0 s; the spike's own figures stay what the plan's table pins (no working copy named), and no other design's row moved",
-      CT.work_side("grp.collision", 3) == 4096 and CO.measured("collision.trio", 3, 4096) == (28.0, 992) and CO.measured("collision.trio", 3, 2048) == (20.2, 778)
+check("the cost table is honest about the Trio (review of WP7A) and WP7B caps it at 2048 px: the spike's row (15.4 s, 929 MB) was a 2048 px copy's, the trio from 4096 px "
+      "sources was measured at 26.6 s of render and self check (28.0 s in the spike's units, 992 MB), so at 1.6 it would need 52.5 s and its break-even factor is 1.58 (the spike's 2.80): "
+      "it does not fit one art step; a 2048 px copy needs 40.0 s and fits; the spike's own figures stay what the plan's table pins (no working copy named), and no other design's row moved",
+      CT.work_side("grp.collision", 3) == 2048 and CO.measured("collision.trio", 3, 4096) == (28.0, 992) and CO.measured("collision.trio", 3, 2048) == (20.2, 778)
       and CO.cpu("collision.trio", 3) == 15.4 and abs(CO.step_need("collision.trio", 3, factor=1.6) - 32.3) < 0.06 and abs(CO.break_even_factor("collision.trio", 3) - 2.80) < 0.011
       and trio4["why"] == "time" and not trio4["ok"] and 52.0 < trio4["need_s"] < 53.0 and abs(CO.break_even_factor("collision.trio", 3, side=4096) - 1.58) < 0.01
       and trio2["ok"] and 39.0 < trio2["need_s"] < 41.0 and 1000 < trio4["est_mb"] < CO.MEM_BUDGET_MB
@@ -199,18 +207,22 @@ check("the cost table is honest about the Trio at the working copy its registry 
 check("no stage was raised: every collision style of the engine is still at the laboratory ceiling, so a customer can neither order nor preview one, and the admin can look at all five",
       all(CT.ceiling(i, n) == "lab" and not CT.orderable(i, n) and not CT.previewable(i, n) and CT.previewable(i, n, admin=True)
           for i in COLLISION_STYLES for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1)), [(i, CT.ceiling(i, 2)) for i in COLLISION_STYLES])
-check("the family is the only place that writes the scene keys: they are the registry's ids, part of the prototype's seed in step A, and scripts/check_styles.mjs allows exactly that file",
+check("the family is the only place that writes the scene keys: they are the registry's ids (part of the prototype's seed, which only opts seed_mode legacy still uses), and scripts/check_styles.mjs allows exactly that file",
       "api/_lib/styles/collision/scenes.py" in read(os.path.join(REPO, "scripts", "check_styles.mjs")) and re.search(r"duo\.clean|grp\.chain", read(os.path.join(FAMILY, "scenes.py")))
       and not any(re.search(r"\b(solo|duo|grp)\.[a-z_]+", read(os.path.join(FAMILY, f))) for f in FAMILY_FILES if f not in ("scenes.py",)))
 
 # ============================================================================================ 2. the golden replay
-section("2. the golden replay: the scratch prototype's pictures (the DG1 snapshot) against this code")
+section("2. the golden replay: the pictures of this code (step B), then the scratch prototype's own (step A, the DG1 snapshot) with the prototype's seed")
 FIX = {n: CC.fixture_bytes(n) for n in CC.fixture_names()}
 check("the fixtures of the replay are the very bytes of the recording", all(hashlib.sha256(FIX[n]).hexdigest() == GOLD["fixtures"][n] for n in FIX),
       [n for n in FIX if hashlib.sha256(FIX[n]).hexdigest() != GOLD["fixtures"][n]])
 print(f"   (recorded on {GOLD['machine']}; running on python {sys.version.split()[0]}, numpy {np.__version__}, Pillow {PIL.__version__})", flush=True)
 check("the recording used the plates the owner's boards had: exactly the two retouched JET plates were taken from the baked library (their fits differ from the raw files'), "
-      "every other plate from the prototype's own raw and 1K files", GOLD["retouched_plates"] == ["P-CX-JET__medium_left_b75__pro4K__t2", "P-CX-JET__wide_right_b75__pro4K__t1"], GOLD["retouched_plates"])
+      "every other plate from the prototype's own raw and 1K files (step A's recording; step B's names the same two)",
+      GOLD["retouched_plates"] == GOLD_A["retouched_plates"] == ["P-CX-JET__medium_left_b75__pro4K__t2", "P-CX-JET__wide_right_b75__pro4K__t1"], GOLD["retouched_plates"])
+check("the step B recording is the step B recording: it says step B, holds the frozen decisions of every case, and names the sha256 of the step A file it was made beside",
+      GOLD.get("step") == "B" and all("frozen" in g for g in G.values()) and GOLD.get("stepA_file_sha256") and GOLD_A.get("step") is None
+      and GOLD["fixtures"] == GOLD_A["fixtures"] and sorted(G) == sorted(G_A), (GOLD.get("step"), GOLD_A.get("step")))
 
 LAST = {}
 SEEN = {"t": [], "plans": {}, "black": {}, "k": {}}
@@ -223,16 +235,22 @@ def port_render(design, eyes, fmt, size, names, date, bg, clean, opts, layout):
     return r
 
 
-def replay(cases, with_checks=True):
+def legacy_render(design, eyes, fmt, size, names, date, bg, clean, opts, layout):
+    """Step A's pictures: the prototype's seed (the bytes of the irises, the design, the scene key and the names), the decisions made in the place and way the prototype made them."""
+    return CX.render(design, eyes, fmt, size, names, date, bg, clean, dict(opts or {}, seed_mode="legacy"), layout)
+
+
+def replay(cases, with_checks=True, golden=None, render=None, with_frozen=True):
     """The cases rendered on the port: [(case, record, differences)]. For every picture of 1024 px and less the hard rules of section 3 are measured on the way."""
+    golden = G if golden is None else golden
     out = []
     for c in cases:
-        rec = CC.render_case(port_render, C.Iris, FIX, c, IRISES)
-        g = G[c["key"]]
-        diff = [k for k in ("sha", "seed", "facts", "w", "h") if rec[k] != g[k]]
+        rec = CC.render_case(render or port_render, C.Iris, FIX, c, IRISES, with_frozen=with_frozen)
+        g = golden[c["key"]]
+        diff = [k for k in (("sha", "seed", "facts", "w", "h") + (("frozen",) if with_frozen else ())) if rec[k] != g[k]]
         out.append((c, rec, diff))
         r = LAST["r"]
-        plans = list((r.cfg.plans or {}).values())
+        plans = list((r.cfg.plans or {}).values()) if render is None else []        # the step A replay (another render function) leaves LAST and SEEN alone
         if plans:
             SEEN["plans"][c["key"]] = (list(plans[0].a), [round(float(v), 6) for v in plans[0].hw_k], round(plans[0].info["K_chosen"], 3))
         if with_checks and c["size"] <= 1024:
@@ -255,7 +273,7 @@ GROUPS = [
 for name, what, sel, n_want in GROUPS:
     rows = replay([c for c in ALL if sel(c)])
     bad = [(c["key"], d) for c, _, d in rows if d]
-    check(f"{name}: {what} give the recorded pictures, seeds, fronts, edge modes and plates, byte for byte", len(rows) == n_want and not bad, str(bad) + NOTE)
+    check(f"{name}: {what} give the recorded pictures, seeds, fronts, edge modes, plates and frozen decisions, byte for byte", len(rows) == n_want and not bad, str(bad) + NOTE)
 rest = [c for c in ALL if not any(sel(c) for _, _, sel, _ in GROUPS) and c["size"] < 4096]
 for design in CX.DESIGNS:
     rows = replay([c for c in rest if c["design"] == design])
@@ -274,6 +292,21 @@ check("the replay can fail: a change of the strength of the contact edge moves t
 check("the production switches of the family are what the recording passed: the contact edge of the owner's reference and the prototype's own defaults for everything else",
       CX.PRODUCTION == CC.PRODUCTION and CX.PRODUCTION["edge"] == "ref" and CX.PRODUCTION["zone_c"] is True and CX.PRODUCTION["seam"] == "plan" and CX.PRODUCTION["seam_dust"] is False,
       CX.PRODUCTION)
+
+section("2b. step A: the scratch prototype's own pictures drawn with the prototype's seed (opts seed_mode legacy): the proof that step B changed the seed and the place of the decisions and nothing else")
+t0 = time.time()
+n_a = 0
+for design in CX.DESIGNS:
+    rows = replay([c for c in ALL if c["design"] == design], with_checks=False, golden=G_A, render=legacy_render, with_frozen=False)
+    bad = [(c["key"], d) for c, _, d in rows if d]
+    n_a += len(rows)
+    check(f"step A, {design}: the {len(rows)} cases (sizes 512, 1024 and 4096, the other canvases, the words, the switches, the layouts) with the prototype's seed give the scratch prototype's pictures, "
+          "seeds, fronts, edge modes, fallbacks and plates, byte for byte", rows and not bad, str(bad[:4]) + NOTE)
+print(f"   (step A replayed in {time.time() - t0:.0f} s, {n_a} cases)", flush=True)
+check("step B really changed the pictures (the replay of step A is not the replay of step B): most cases moved, and the pictures that did not are the clean infinity's, whose seed only dithers pure black "
+      "(the reviewed diff is diff_goldens_collision.py)", sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]) >= 50 and all(G[k]["sha"] == G_A[k]["sha"] for k in G if k.startswith("infinity.clean.") and not k.endswith(".stack")
+      and ".text" not in k and ".1:1." not in k) and all(G[k]["facts"].get(c) == G_A[k]["facts"].get(c) for k in G for c in ("design_used", "lens_mode", "lens_K", "overlap_fallback", "fallback", "rules", "d_over_R", "edge_modes", "gate_fail", "auto_hairline")),
+      sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]))
 
 # ============================================================================================ 3. the hard rules
 section("3. the hard rules on every picture of the replay (synthetic eyes)")
@@ -298,8 +331,8 @@ print("   known T3 misses: " + "; ".join(f"{t[0]} {min(t[3]['checks']['t3']['sha
 fl6 = [t for t in SEEN["t"] if t[0] == FLOWER6]
 check("the one known defect of the layouts, found by this check and left as the prototype has it (step A is verbatim): Family Colours as a flower of SIX eyes puts the five petals 1.94 R apart, "
       "which is no contact (the rule is below 1.90 R) and still an overlap of 0.06 R, so the later petal's rim covers the earlier one's zone A over a few pixels (T1 and T6 fail on at most "
-      "a hundred pixels at 0.94 to 0.95 R; every other check holds). The self check finds it, and a paid order of it would be held for review. WP7B (the layouts) or the families' design gate "
-      "must fix it, or the picker must not offer that layout",
+      "a hundred pixels at 0.94 to 0.95 R; every other check holds). The self check finds it, and a paid order of it would be held for review: WP7B does not offer that layout "
+      "(section 8), the laboratory still draws it",
       len(fl6) == 1 and not fl6[0][1] and not fl6[0][2]["t1"] and not fl6[0][2]["t6"] and all(v for k, v in fl6[0][2].items() if k not in ("t1", "t6"))
       and 0 < fl6[0][3]["checks"]["t1"]["bad"] < 100, [(t[0], t[2], t[3]["checks"]["t1"]) for t in fl6])
 dust = [t for t in SEEN["t"] if "dust" in t[0]]
@@ -340,11 +373,10 @@ for key, c in ((k, [c for c in ALL if c["key"] == k][0]) for k in ("infinity.blu
     pl = list(rr.cfg.plans.values())[0]
     tw.append((key, tortuosity(pl), pl.info["K_chosen"], pl.info["hw_min"], pl.info["hw_max"]))
 two_ = [C.Iris(FIX["blue"], "a"), C.Iris(FIX["brown"], "b")]
-check("names are part of the step A seed (the prototype's: the scene key and the names): the same eyes with other names draw another seed, which step B (WP7B) takes out; "
-      "the eyes' own bytes, the design and the background change it too",
-      CX.render("infinity", two_, "3:2", 128, ["Anna", "Max"]).seed != CX.render("infinity", two_, "3:2", 128, ["Ana", "Max"]).seed
-      and CX.render("infinity", two_, "3:2", 128, ["Anna", "Max"]).seed == CX.render("infinity", two_, "3:2", 128, ["Anna", "Max"]).seed
-      and CX.render("infinity", two_, "3:2", 128).seed != CX.render("kiss", two_, "3:2", 128).seed)
+leg_ = lambda design="infinity", names=None: CX.render(design, two_, "3:2", 128, names, None, "dark", False, {"seed_mode": "legacy"}, None).seed
+check("the prototype's seed (opts seed_mode legacy, step A) has the customer's names in it, the very thing step B took out (section 8): other names draw another legacy seed, so do the design "
+      "and the eyes' own bytes",
+      leg_(names=["Anna", "Max"]) != leg_(names=["Ana", "Max"]) and leg_(names=["Anna", "Max"]) == leg_(names=["Anna", "Max"]) and leg_() != leg_("kiss"), "")
 check("the seam is a smooth planned curve, not a torn one: its length over its chord is under 1.02 (the round 2c seam wandered to 1.38 to 1.72, the owner's own references measure 1.03 to "
       "1.22) and it leans at most 0.13 R from end to end", all(t[1][0] < 1.02 and t[1][1] <= SP.EXT_MAX + 1e-6 for t in tw), tw)
 check("the blend's half width is inside the planner's bounds (0.040 R for the most alike pair, 0.095 R for the most different, scaled down to the owner's budget, never below half of 0.040)",
@@ -525,7 +557,7 @@ for sid in COLLISION_STYLES:
 check(f"the canvases the registry lists for a style are drawn per eye count and layout: for each of the {offer_n} (layout, canvas) pairs of the five styles the family either offers the canvas "
       f"(its scene is on that canvas and keeps the T18 floor) or draws the layout's own default canvas instead, which it always offers; {offer_cut} pairs are cut, among them the five that "
       "raised a KeyError (the chain of three on 3:1, of five and six on 3:2 and the phone column), the ring and the flower of five to eight on 3:2 (T18) and the brick of seven and eight "
-      "on any canvas but the square one", not offer_bad and offer_cut >= 20, offer_bad[:4])
+      "on any canvas but the square one (WP7B: the registry offers fewer layouts than at step A, so 18 of 87 pairs here where 20 of 99 were)", not offer_bad and offer_cut >= 15, offer_bad[:4])
 check("... in particular: the chain draws 3:2 and the phone column for three links, every canvas for four, 3:1 only for five and six; a request for another canvas is drawn on the chain's "
       "own default (3:2 up to four links, 3:1 above); a ring of eight is square or portrait, the brick of seven and eight square; the pairs and the trio keep every canvas of the registry",
       CX.canvases_for("grp.chain", 3) == ["3:2", "9:19.5"] and CX.canvases_for("grp.chain", 4) == ["3:2", "3:1", "9:19.5"] and CX.canvases_for("grp.chain", 5) == ["3:1"]
@@ -602,11 +634,11 @@ rv = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}
 rvw = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, [pw, prof2[1]])
 rvc = CX.resolve({"style": "duo.clean", "eyes": 2, "layout": "pair", "eye_ids": [p.eye_id for p in prof2]}, [p.rec for p in prof2])
 check("resolve() needs no pixel: the design, the canvas, the layout and the seed key of a pair; a wide pupil in the sealed profile turns Collision Infinity into the Kiss geometry "
-      "(design_used kiss, fallback overlap_fallback) exactly as the render does it; the eye ids come from the spec or the profiles; the seed and the plates are not known "
-      "(step A seeds from the bytes of the eyes)",
+      "(design_used kiss, fallback overlap_fallback) exactly as the render does it; the eye ids come from the spec or the profiles; the seed of the infinity and the plates are not known "
+      "and the plan says decided False (section 8 has the plan with the eyes)",
       rv["design_used"] == "infinity" and rv["fallback"] is None and rv["canvas"] == "3:2" and rv["layout"] == "pair" and rv["size_ratio"] == [1024, 683] and rv["family"] == "collision"
       and rvw["design_used"] == "kiss" and rvw["fallback"] == "overlap_fallback" and rvw["d_over_R"] == CL.D_KISS and rvc["clean"] is True and rvc["eye_ids"] == [p.eye_id for p in prof2]
-      and rv["seed"] is None and rv["plates"] is None and rv["seed_from"] == "iris_bytes" and rv["steps"] == ["art"] and rv["seed_key"]["design_used"] == "infinity"
+      and rv["seed"] is None and rv["plates"] is None and rv["seed_from"] == "eye_id" and rv["decided"] is False and rv["frozen"] == {} and rv["steps"] == ["art"] and rv["seed_key"]["design_used"] == "infinity"
       and rv["seed_key"]["layout"] == "pair" and SD.clean_key(rv["seed_key"]) == rv["seed_key"], (rv, rvw))
 check("... and what resolve() says is what the render drew: the three pairs and the wide pupil are the same design, the same canvas and the same size as the recording",
       all(G[k]["facts"]["design_used"] == CX.resolve({"style": "duo.collision_infinity", "eyes": 2}, [EYE.profile_of_bytes(FIX[n], rules=("lid",)) for n in ks])["design_used"]
@@ -618,15 +650,15 @@ for sid in COLLISION_STYLES:
             rr_ = CX.resolve({"style": sid, "eyes": n, "layout": lay}, None)
             every[(sid, n, lay)] = rr_
 check("resolve() answers for every style, eye count and layout of the registry: a design the family draws, a canvas the registry lists, the layout asked, a plan the master can freeze",
-      all(v["design_used"] in CX.DESIGNS and v["canvas"] in CT.ENGINE[k[0]]["canvases"] and v["layout"] == k[2] and SD.clean_key(v["seed_key"]) for k, v in every.items()) and len(every) == 25,
+      all(v["design_used"] in CX.DESIGNS and v["canvas"] in CT.ENGINE[k[0]]["canvases"] and v["layout"] == k[2] and SD.clean_key(v["seed_key"]) for k, v in every.items()) and len(every) == 22,
       [(k, v["canvas"]) for k, v in every.items() if v["canvas"] not in CT.ENGINE[k[0]]["canvases"]][:3])
 check("the plan of a pair, a trio, a family of eight and a chain through the master plan (steps.make_plan): the family, the design drawn, the canvas, the work side the registry caps the "
-      "masters at (2048 for a pair, a family and a chain, 4096 for the trio), one art step and a cost the work budget allows (the Trio's measured cost does not: see above)",
+      "masters at (2048 for a pair, the trio, a family and a chain), one art step and a cost the work budget allows (the Trio at 2048 px needs 40 s of the 52 s budget)",
       all((lambda p: p["family"] == "collision" and p["design_used"] == d and p["work_side"] == w and len(p["steps"]) == 1
                      and (p["steps"][0]["need_s"] < CO.WORK_BUDGET_S) == fits)(
           STP.make_plan({"style": s, "eyes": n, "layout": lay}, [{"eye_id": f"{i:016x}", "profile": None} for i in range(1, n + 1)]))
           for s, n, lay, d, w, fits in (("duo.kiss_collision", 2, "pair", "kiss", 2048, True), ("duo.collision_infinity", 2, "pair", "infinity", 2048, True),
-                                        ("grp.collision", 3, "trio", "trio", 4096, False), ("grp.collision", 8, "ring", "family", 2048, True), ("grp.chain", 4, "chain", "chain", 2048, True))), "")
+                                        ("grp.collision", 3, "trio", "trio", 2048, True), ("grp.collision", 8, "ring", "family", 2048, True), ("grp.chain", 4, "chain", "chain", 2048, True))), "")
 
 # a lab order end to end: two small masters, the master plan's art step, the family at 4096 px
 order = "261005-wp7a000001"
@@ -657,12 +689,335 @@ check("a master of Kiss Collision through the master plan from two stored 4096 c
       got["final"] and jpg.size == (4096, 2732) and rec_["design_used"] == "kiss" and rec_["selfcheck"]["ok"] is True and rec_["qa"]["ok"] is True and not art["needs_review"]
       and rec_["canvas"] == "3:2" and rec_["facts"]["plates"] and DELIVERED == [art["key"]] and rec_["width"] == 4096, (art, rec_.get("selfcheck")))
 print(f"   (the master took {time.time() - t0:.0f} s)", flush=True)
+plan_k = json.load(open(os.path.join(STORE, "orders", order, "style", "plan.json"), encoding="utf-8"))
+check("a plan made with no pixels to read (this test order has no draft: the paid order's eyes are read from the draft's clean previews) is the plan of the profiles alone: decided False, "
+      "nothing frozen, no seed for want of eye ids; the master then decides, and the artwork's record says what it decided (facts.frozen: the front of the one contact, the hairline "
+      "contact of the dark back band) and the seed it drew from",
+      plan_k["decided"] is False and plan_k["frozen"] == {} and plan_k["seed"] is None and plan_k["design_used"] == "kiss" and plan_k["work_side"] == 2048
+      and rec_["facts"]["frozen"] == {"fronts": {"0": rec_["facts"]["frozen"]["fronts"]["0"]}, "hairline": [0]} and isinstance(rec_["seed"], str) and rec_["plan8"] == plan_k["plan8"],
+      (plan_k.get("frozen"), rec_["facts"].get("frozen")))
 STP.advance(STP.Ctx(order, {"eyes": 2, "style": "duo.kiss_collision", "layout": "pair", "names": "Anna \u00b7 Max", "title": ""}, by="test", finish=fin), "rerun")
 del jpg
 gc.collect()
 
+# ============================================================================================ 8. step B
+section("8. step B (WP7B): the seed from the eyes' ids and the seed key, the plan freeze, the work sides, the layouts, the fill")
+
+
+def seed_of(eyes, design="infinity", fmt="3:2", size=128, names=None, date=None, bg="dark", clean=False, opts=None, layout=None, key=None):
+    """The seed a render would draw from (the plan pass stops right after the decisions and the seed: no pixel of the picture is drawn)."""
+    return CX.render(design, eyes, fmt, size, names, date, bg, clean, opts, layout, key=key, plan_only=True).seed
+
+
+ids2 = [e.eye_id for e in two_]
+base_seed = seed_of(two_, names=["Anna", "Max"], date="12 MAY 2026")
+same = {"another name": seed_of(two_, names=["Ana", "Max"], date="12 MAY 2026"), "no words": seed_of(two_), "another date": seed_of(two_, names=["Anna", "Max"], date="1 JAN 2027"),
+        "another canvas": seed_of(two_, fmt="1:1", names=["Anna", "Max"]), "a master's size": seed_of(two_, size=512), "the phone canvas": seed_of(two_, fmt="9:19.5", size=256)}
+check("step B, the seed is made from the eyes' ids and the seed key and from nothing else: other names (a typo), another date, another canvas ratio or another size leave it alone "
+      "(decision 27: a typo in a name must not reshuffle the powder)", all(v == base_seed for v in same.values()), {k: v for k, v in same.items() if v != base_seed})
+k0 = CX.default_key("infinity", 2)
+alt_eye = C.Iris(FIX["blue"], "a", eye_id="0123456789abcdef")
+diff = {"another eye id": seed_of([alt_eye, two_[1]]), "the other order": seed_of(two_[::-1]), "the kiss design": seed_of(two_, "kiss"), "the clean flag": seed_of(two_, clean=True),
+        "the ground": seed_of(two_, bg="universe"), "swap": seed_of(two_, key=dict(k0, opts=dict(k0["opts"], swap=True))),
+        "the plates version": seed_of(two_, key=dict(k0, pv=k0["pv"] + 1)), "the style": seed_of(two_, key=dict(k0, style="duo.clean"))}
+check("... and another eye id, the order of the eyes, the design, the clean flag, the ground, an option, the plates version or the style each change it (nine seeds, all different)",
+      len(set(diff.values()) | {base_seed}) == len(diff) + 1, diff)
+check("the default seed key is the design's own style, its default layout, no options and the current plates version, a render with no key (and no seed_mode legacy) uses it, "
+      "and a key with a missing or an unknown field is refused",
+      seed_of(two_) == seed_of(two_, key=k0) and k0 == CX.seed_key("duo.collision_infinity", "infinity", "pair", False, "dark", {}, None)
+      and k0["layout"] == "pair" and k0["pv"] == CT.PLATES_VERSION and CX.default_key("family", 4, "zigzag")["layout"] == "zigzag"
+      and CX.default_key("family", 6, "flower")["layout"] == "flower" and CX.default_key("family", 6)["layout"] == "brick"
+      and isinstance(raises(lambda: seed_of(two_, key={"style": "x"}), ValueError), ValueError)
+      and isinstance(raises(lambda: seed_of(two_, key=dict(k0, extra=1)), ValueError), ValueError), (k0,))
+small_png = io.BytesIO()
+Image.open(io.BytesIO(FIX["blue"])).convert("RGB").resize((96, 96), Image.LANCZOS).save(small_png, "PNG")
+check("a preview and a master of one eye carry the sealed id and so seed alike: the same eye as another image (a smaller copy, other bytes) with the same eye id draws the same "
+      "seed, the same bytes under another id do not",
+      seed_of([C.Iris(small_png.getvalue(), "m", eye_id=ids2[0]), two_[1]]) == base_seed and seed_of([alt_eye, two_[1]]) != base_seed, "")
+
+# ---- the plan freeze: resolve with the eyes is what the render decides
+e4_ = ("blue", "brown", "green", "grey")
+e5_ = e4_ + ("amber",)
+e8_ = e5_ + ("blue2", "green2", "brown2")
+EYEOBJ = {n: C.Iris(FIX[n], n) for n in FIX}
+
+
+def plan_vs_preview(style, names_, extra=None, size=96):
+    """resolve(spec, None, eyes) against a preview of the same eyes that was given no plan: the choices frozen, the seed, the design, the canvas, the fallback."""
+    eyes_ = [EYEOBJ[n] if isinstance(n, str) else n for n in names_]
+    spec = dict({"style": style, "eyes": len(eyes_)}, **(extra or {}))
+    plan = CX.resolve(spec, None, eyes=eyes_)
+    pvw = CX.preview(eyes_, spec, size=size)
+    bad = [k for k, ok in (("frozen", plan["frozen"] == pvw.log["frozen"]), ("seed", plan["seed"] == str(pvw.seed)), ("design", plan["design_used"] == pvw.design),
+                           ("canvas", plan["canvas"] == pvw.fmt), ("fallback", plan["fallback"] == pvw.log.get("fallback")), ("decided", plan["decided"] is True),
+                           ("seed_from", plan["seed_from"] == "eye_id")) if not ok]
+    return bad, plan
+
+
+PV_CASES = [
+    ("infinity, blue and dark brown", "duo.collision_infinity", ("blue", "brown"), None), ("infinity, blue and green", "duo.collision_infinity", ("blue", "green"), None),
+    ("infinity, grey and amber", "duo.collision_infinity", ("grey", "amber"), None), ("clean infinity, blue and green", "duo.clean", ("blue", "green"), None),
+    ("kiss, blue and dark brown", "duo.kiss_collision", ("blue", "brown"), None), ("kiss, grey and amber", "duo.kiss_collision", ("grey", "amber"), None),
+    ("infinity forced to the stack lens", "duo.collision_infinity", ("blue", "brown"), {"engine_opts": {"lens_mode": "stack"}}),
+    ("infinity, a wide pupil", "duo.collision_infinity", ("wide", "green"), None), ("infinity, two dark browns", "duo.collision_infinity", ("brown", "brown2"), None),
+    ("swapped pair", "duo.kiss_collision", ("blue", "brown"), {"opts": {"swap": True}}),
+    ("trio", "grp.collision", ("blue", "brown", "green"), {"layout": "trio"}), ("trio, rotated", "grp.collision", ("blue", "brown", "green"), {"layout": "trio", "opts": {"rotate": 1}}),
+    ("family of four, zigzag", "grp.collision", e4_, {"layout": "zigzag"}), ("family of five, brick", "grp.collision", e5_, {"layout": "brick"}),
+    ("family of eight, ring", "grp.collision", e8_, {"layout": "ring"}), ("chain of four", "grp.chain", e4_, {"layout": "chain"})]
+rows_pv = {}
+for label, style, names_, extra in PV_CASES:
+    rows_pv[label] = plan_vs_preview(style, names_, extra)
+check(f"resolve() with the eyes is what the render decides, on {len(PV_CASES)} sets (the three pairs in three builds, the forced stack lens, the wide pupil, two dark browns, a swapped pair, the trio, "
+      "the family of four, five and eight, a chain): the choices it freezes, the seed, the design drawn, the canvas and the fallback equal the preview's own, and the plan says decided",
+      all(not b for b, _ in rows_pv.values()), {k: b for k, (b, _) in rows_pv.items() if b})
+pl = {k: p for k, (_, p) in rows_pv.items()}
+check("what the plan froze, by case: the wide pupil is the Kiss geometry (fallback overlap_fallback), the forced stack lens is design stack with the fallback stack_contrast and one front, "
+      "the pair on two dark browns and the pair with a dark back band draw a hairline contact, the family fixes a front for every contact the scene leaves open",
+      pl["infinity, a wide pupil"]["design_used"] == "kiss" and pl["infinity, a wide pupil"]["fallback"] == "overlap_fallback"
+      and pl["infinity forced to the stack lens"]["design_used"] == "stack" and pl["infinity forced to the stack lens"]["fallback"] == "stack_contrast"
+      and list(pl["infinity forced to the stack lens"]["frozen"]["fronts"]) == ["0"] and pl["infinity, two dark browns"]["frozen"]["hairline"] == [0]
+      and pl["infinity, blue and green"]["frozen"] == {"fronts": {}, "hairline": [], "fallback": None, "lens": "weave"}
+      and len(pl["family of four, zigzag"]["frozen"]["fronts"]) >= 2 and pl["trio"]["frozen"]["fronts"] != {} and pl["chain of four"]["design_used"] == "chain",
+      {k: v["frozen"] for k, v in pl.items()})
+rng_ = np.random.default_rng(2026)
+KINDS_ = ("blue", "green", "dark_brown", "grey", "amber")
+
+
+def rand_eye(i):
+    return C.Iris(SI.png_bytes_of(kind=KINDS_[int(rng_.integers(5))], pupil=("round", "round", "round", "slit")[int(rng_.integers(4))], seed=int(rng_.integers(1, 10 ** 6)), side=160),
+                  f"r{i}", max_side=160)
+
+
+bad_rand, seen_rand, t_rand = [], {}, time.time()
+for i in range(200):
+    if i < 100:
+        style_r, n_r, extra_r = ("duo.collision_infinity", "duo.clean", "duo.kiss_collision")[i % 3], 2, None
+    elif i < 150:
+        style_r, n_r, extra_r = "grp.collision", 3, {"layout": "trio" if i % 2 else "diag"}
+    elif i < 175:
+        style_r, n_r, extra_r = "grp.collision", 4, {"layout": ("zigzag", "cluster", "ring")[i % 3]}
+    else:
+        style_r, n_r, extra_r = "grp.collision", 5, {"layout": ("brick", "ring")[i % 2]}
+    bad_r, plan_r = plan_vs_preview(style_r, [rand_eye(f"{i}_{k}") for k in range(n_r)], extra_r, size=64)
+    if bad_r:
+        bad_rand.append((i, style_r, n_r, bad_r))
+    z = plan_r["frozen"]
+    seen_rand[(plan_r["design_used"], z.get("lens"), bool(z.get("hairline")), bool(z.get("fronts")))] = seen_rand.get((plan_r["design_used"], z.get("lens"), bool(z.get("hairline")), bool(z.get("fronts"))), 0) + 1
+check("... and on 200 random colour sets (100 pairs in the three builds, 50 trios, 25 families of four and 25 of five; round and slit pupils, the five colours): the frozen choices, the seed, "
+      "the design, the canvas and the fallback of resolve() are the preview's own on every one, and the sets are varied (every design, a hairline contact, a fixed front)",
+      not bad_rand and {d for d, *_ in seen_rand} >= {"infinity", "kiss", "trio", "family"} and any(h for (_, _, h, _) in seen_rand) and any(f for (_, _, _, f) in seen_rand), (bad_rand[:5], seen_rand))
+print(f"   (200 random sets: {len(seen_rand)} kinds of plan, {time.time() - t_rand:.0f} s)", flush=True)
+prof_bb = [EYE.profile_of_bytes(FIX[n], rules=("lid",)) for n in ("blue", "brown")]
+rv_nopix = CX.resolve({"style": "duo.kiss_collision", "eyes": 2, "layout": "pair", "eye_ids": ids2}, [p.rec for p in prof_bb])
+rv_pix = CX.resolve({"style": "duo.kiss_collision", "eyes": 2, "layout": "pair"}, None, eyes=[EYEOBJ["blue"], EYEOBJ["brown"]])
+check("resolve() without the eyes says only what a sealed profile can, and flags it (decided False, nothing frozen); for every design that no pixel can turn into another (the kiss, the trio, the "
+      "family, the chain) its seed is already the seed the plan pass makes, for the infinity it is not known (a stacked lens would change the key)",
+      rv_nopix["decided"] is False and rv_nopix["frozen"] == {} and rv_nopix["seed"] == rv_pix["seed"] and rv_pix["decided"] is True
+      and CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair", "eye_ids": ids2}, [p.rec for p in prof_bb])["seed"] is None
+      and [p.eye_id for p in prof_bb] == ids2, (rv_nopix["seed"], rv_pix["seed"]))
+t0 = time.time()
+CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, None, eyes=[C.Iris(FIX["blue"], "a"), C.Iris(FIX["green"], "b")])
+t_cold = time.time() - t0
+t0 = time.time()
+CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, None, eyes=[EYEOBJ["blue"], EYEOBJ["green"]])
+t_warm = time.time() - t0
+print(f"   (the plan pass of a pair: {t_cold:.2f} s on fresh eyes, {t_warm:.2f} s when the preview has graded them already; no picture is drawn)", flush=True)
+check("the plan pass costs no picture: on eyes the preview has already graded it takes well under a second, and it draws nothing (plan_only returns no image)",
+      t_warm < 1.0 and CX.render("kiss", two_, "3:2", 128, plan_only=True).img is None, (t_cold, t_warm))
+
+# ---- a frozen choice is obeyed, and a frozen choice the eyes contradict is refused
+eyes_k = [EYEOBJ["blue"], EYEOBJ["brown"]]
+nat_k = CX.resolve({"style": "duo.kiss_collision", "eyes": 2}, None, eyes=eyes_k)["frozen"]
+flip = "front_b" if nat_k["fronts"]["0"] == "front_a" else "front_a"
+r_flip = CX.render("kiss", eyes_k, "3:2", 128, frozen={"fronts": {"0": flip}, "hairline": []})
+eyes_bg = [EYEOBJ["blue"], EYEOBJ["green"]]
+r_fb = CX.render("infinity", eyes_bg, "3:2", 128, frozen={"fallback": "overlap_fallback", "hairline": []})
+r_stk = CX.render("infinity", eyes_bg, "3:2", 128, frozen={"fallback": None, "lens": "stack"})
+r_hair = CX.render("infinity", eyes_bg, "3:2", 128, frozen={"hairline": [0]})
+check("a frozen choice is obeyed over what these eyes would decide (the master of an order is ANOTHER image of the same eyes than its preview): a front the plan froze opposite to the "
+      "brighter side, the overlap fallback frozen for pupils that would not need it, the stack lens frozen for a pair that would weave, a hairline frozen where the edge would read",
+      r_flip.info["rules"][0][2] == flip and r_flip.frozen == {"fronts": {"0": flip}, "hairline": []} and r_flip.info["edge_modes"] == {}
+      and r_fb.info["design_used"] == "kiss" and r_fb.info["overlap_fallback"] is True and r_stk.info["design_used"] == "stack" and r_stk.info["lens_mode_used"] == "stack"
+      and r_hair.info["edge_modes"] == {0: "hairline"} and r_hair.frozen["hairline"] == [0], (r_flip.info["rules"], r_flip.frozen, r_stk.info.get("design_used")))
+wide_g = [C.Iris(FIX["wide"], "w"), EYEOBJ["green"]]
+dc1 = raises(lambda: CX.render("infinity", wide_g, "3:2", 128, frozen={"fallback": None}), E.DesignChanged)
+dc2 = raises(lambda: CX.render("infinity", eyes_bg, "3:2", 128, frozen={"fronts": {"0": "front_a"}}), E.DesignChanged)
+dc3 = raises(lambda: CX.render("infinity", eyes_bg, "3:2", 128, frozen={"hairline": [5]}), E.DesignChanged)
+dc4 = raises(lambda: CX.render("kiss", eyes_k, "3:2", 128, frozen={"fronts": {"0": "front_c"}}), E.DesignChanged)
+check("a frozen choice that the eyes contradict is engine.DesignChanged (a ValueError with why design_changed), never another picture: the plan draws the infinity overlap and the pupils reach "
+      "past the limit, a front order for contacts the scene does not leave open, a hairline contact that does not exist, a front that is neither iris",
+      all(isinstance(x, E.DesignChanged) and x.why == "design_changed" and isinstance(x, ValueError) for x in (dc1, dc2, dc3, dc4)), (dc1, dc2, dc3, dc4))
+
+# ---- the plan through the master plan
+eyes2_ = [EYEOBJ["blue"], EYEOBJ["brown"]]
+spec_p = {"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}
+recs2_ = [{"eye_id": e.eye_id, "profile": None} for e in eyes2_]
+p_pix = STP.make_plan(spec_p, recs2_, irises=eyes2_)
+p_pix2 = STP.make_plan(spec_p, recs2_, irises=eyes2_)
+p_nopix = STP.make_plan(spec_p, recs2_)
+check("steps.make_plan with the eyes' pixels is the whole plan (decided, the choices frozen, the seed from the eye ids, a plan8 that names them) and is the same twice; without the pixels it "
+      "is what the profiles can say (decided False, nothing frozen, no seed for the infinity) and another plan8; the registry's work side caps the master (2048)",
+      p_pix["decided"] is True and p_pix["frozen"] and p_pix["seed"] and p_pix["plan8"] == p_pix2["plan8"] and p_pix == p_pix2 and p_nopix["decided"] is False and p_nopix["frozen"] == {}
+      and p_nopix["seed"] is None and p_pix["plan8"] != p_nopix["plan8"] and p_pix["work_side"] == 2048 and p_pix["seed_from"] == "eye_id", (p_pix["plan8"], p_nopix["plan8"]))
+words_p = STP.make_plan(dict(spec_p, names=["Anna", "Max"], date="12 MAY 2026"), recs2_, irises=eyes2_)
+check("the customer's words do not change the seed of the plan (a typo is no new picture of the powder); they may move the scene and so the plan8 only through the decisions they move",
+      words_p["seed"] == p_pix["seed"] and p_pix["seed_key"] == words_p["seed_key"], (words_p["seed"], p_pix["seed"]))
+check("the family's own facts are in the master event and the daily counts: the event field fallback is whitelisted for the master kind and counted per code (master_fallback)",
+      EV.FIELDS["master"].get("fallback") == "c" and (lambda a: (EV.add(a, {"kind": "master", "step": "art", "style": "duo.clean", "fallback": "stack_contrast"}), a["master_fallback"])[1])(EV.empty())
+      == {"stack_contrast": 1} and EV.empty()["master_fallback"] == {}, "")
+
+import order as ORD  # noqa: E402  (api/order.py: the delivery record)
+res_d = {"key": "orders/261005-wp7b000009/artwork_x.jpg", "style": "duo.collision_infinity", "width": 4096, "height": 2732, "bytes": 1, "layout": "pair", "count": 2}
+d_fb = STP._for_delivery({"family": "collision", "plan8": "ab12cd34", "design_used": "kiss", "fallback": "overlap_fallback"}, dict(res_d))
+d_none = STP._for_delivery({"family": "collision", "plan8": "ab12cd34", "design_used": "infinity", "fallback": None}, dict(res_d))
+check("the design drawn and the fallback the plan took are in the order's own record: delivery.json of a v3 order names design_used, plan8 and (when there is one) the fallback, "
+      "overlap_fallback or stack_contrast; a legacy order's record is what it always was",
+      d_fb["fallback"] == "overlap_fallback" and ORD._write_delivery("261005-wp7b000009", dict(d_fb))["fallback"] == "overlap_fallback"
+      and json.load(open(os.path.join(STORE, "orders", "261005-wp7b000009", "delivery.json"), encoding="utf-8"))["design_used"] == "kiss"
+      and "fallback" not in ORD._write_delivery("261005-wp7b000008", dict(d_none)) and STP._for_delivery({"family": "legacy", "plan8": "x"}, dict(res_d)) == res_d, (d_fb, d_none))
+
+# ---- work sides, capacity
+check("work_side: every collision style is drawn from at most a 2048 px working copy of each eye (the pairs, the chain and the family as before; WP7B caps the trio as well, because from "
+      "4096 px sources one art step needs 52.5 s of the 52 s budget, from 2048 px copies 40.0 s), the registry says so for every eye count, and the master plan's cost fits the budget",
+      all(CT.work_side(i, n) == 2048 for i in COLLISION_STYLES for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1))
+      and STP.capacity(STP.make_plan({"style": "grp.collision", "eyes": 3, "layout": "trio"}, [{"eye_id": f"{i:016x}", "profile": None} for i in range(1, 4)]))["ok"], "")
+
+# ---- the Trio delta: a 2048 px working copy against the full source, on synthetic eyes at half the scale (2048 px sources, 1024 px copies: the same ratio of two)
+t0 = time.time()
+big_raw = {n: SI.png_bytes_of(kind=k_, pupil="round", seed=900 + i_, side=2048) for i_, (n, k_) in enumerate((("t1", "blue"), ("t2", "dark_brown"), ("t3", "green")))}
+tid = ["%016x" % (0xabc000 + i) for i in range(3)]
+spec_t = {"style": "grp.collision", "eyes": 3, "layout": "trio"}
+
+
+def trio_render(side):
+    eyes_ = [C.Iris(big_raw[n], n, max_side=side, eye_id=tid[i]) for i, n in enumerate(("t1", "t2", "t3"))]
+    pvw = ST.preview(eyes_, spec_t, size=2048)
+    out = (np.asarray(pvw.img.convert("RGB")).astype(np.int16), pvw.log["frozen"], pvw.seed, list(pvw.log["plates"]), [tuple(d) for d in pvw.discs])
+    del eyes_, pvw
+    return out
+
+
+full_a, fz_a, sd_a, pl_a, discs_a = trio_render(2048)
+copy_a, fz_b, sd_b, pl_b, _ = trio_render(1024)
+yy_, xx_ = np.mgrid[0:full_a.shape[0], 0:full_a.shape[1]]
+rho_ = np.min([np.hypot(xx_ + 0.5 - cx, yy_ + 0.5 - cy) / R for (cx, cy, R) in discs_a], axis=0)
+dd_ = np.abs(full_a - copy_a).max(-1)
+outside_ = rho_ > 1.06
+inside_ = rho_ <= 0.95
+luma_ = lambda a: a[..., 0] * 0.299 + a[..., 1] * 0.587 + a[..., 2] * 0.114
+print(f"   (trio delta, synthetic, {time.time() - t0:.0f} s: outside the irises mean {dd_[outside_].mean():.4f} max {int(dd_[outside_].max())}; inside mean {dd_[inside_].mean():.3f}, "
+      f"over 2 levels {(dd_[inside_] > 2).mean() * 100:.1f} percent of it; luma inside {luma_(full_a)[inside_].mean():.2f} against {luma_(copy_a)[inside_].mean():.2f})", flush=True)
+check("the Trio delta check (decision 34), synthetic proxy: the same eyes drawn from a working copy of half the side (the 4096 to 2048 ratio) make the same plan (the same frozen choices, the same "
+      "seed, the same plates), the matter and the ground outside the irises differ by under 0.05 of a level on average, the tone inside the irises is the same (the mean luma differs by "
+      "under 0.5 level) and what differs is the iris's own finest detail (scripts/styles_tests/trio_delta.py measures it on real masters: baseline.md section 15)",
+      fz_a == fz_b and sd_a == sd_b and pl_a == pl_b and dd_[outside_].mean() < 0.05 and abs(luma_(full_a)[inside_].mean() - luma_(copy_a)[inside_].mean()) < 0.5,
+      (fz_a == fz_b, sd_a == sd_b, pl_a == pl_b, float(dd_[outside_].mean()), float(abs(luma_(full_a)[inside_].mean() - luma_(copy_a)[inside_].mean()))))
+del full_a, copy_a, big_raw, yy_, xx_, rho_, dd_
+gc.collect()
+
+# ---- a paid order's plan: the eyes are the draft's clean previews
+order4, order5 = "261005-wp7b000004", "261005-wp7b000005"
+raws4, eids4 = [], []
+for i, nm in ((1, "blue"), (2, "brown")):
+    im = Image.open(io.BytesIO(FIX[nm])).convert("RGB").resize((512, 512), Image.LANCZOS)
+    b = io.BytesIO()
+    im.save(b, "JPEG", quality=92)
+    raws4.append(b.getvalue())
+    eids4.append(hashlib.sha256(b.getvalue()).hexdigest()[:16])
+    for o_, sha_ in ((order4, hashlib.sha256(b.getvalue()).hexdigest()), (order5, "0" * 64)):
+        store.put(f"orders/{o_}/draft/preview_{i}.jpg", b.getvalue(), "image/jpeg", upsert=True)
+        store.put(f"orders/{o_}/draft/eye_{i}.json", store.json_bytes({"eye_id": eids4[-1], "profile": None, "preview": {"path": f"orders/{o_}/draft/preview_{i}.jpg", "type": "image/jpeg",
+                                                                                                                   "side": 512, "bytes": len(b.getvalue()), "sha256": sha_}}), "application/json", upsert=True)
+spec4 = {"eyes": 2, "style": "duo.collision_infinity", "layout": "pair", "names": "", "title": ""}
+plan4 = STP.create_plan(STP.Ctx(order4, spec4, eyes_from="draft"))
+ref4 = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, None, eyes=[C.Iris(raws4[0], "a", eye_id=eids4[0]), C.Iris(raws4[1], "b", eye_id=eids4[1])])
+plan5 = STP.create_plan(STP.Ctx(order5, spec4, eyes_from="draft"))
+plan4_for = STP.plan_for(STP.Ctx(order4, spec4, eyes_from="draft"))
+check("a paid order's plan is made from its draft: the clean previews (their sha256 checked, the sealed id the eye's id) are the eyes of the plan pass, so the plan is decided and equals "
+      "resolve() of the very same bytes (the choices, the seed, the eye ids); a preview whose hash is not the draft's is not read at all: the plan is the profiles' alone (decided False), "
+      "never an error and never a plan from other pixels; steps.plan_for(ctx) is that plan without storing it (the interface the checkout freezes)",
+      plan4["decided"] is True and plan4["frozen"] == ref4["frozen"] and plan4["seed"] == ref4["seed"] and plan4["eye_ids"] == eids4 and plan4["frozen"]["hairline"] == [0]
+      and plan5["decided"] is False and plan5["frozen"] == {} and plan5["seed"] is None and plan5["eye_ids"] == eids4
+      and {k: v for k, v in plan4.items() if k != "created_at"} == plan4_for, (plan4.get("frozen"), ref4["frozen"], plan5.get("decided")))
+
+# ---- the layouts the registry offers
+sweep_bad, sweep_n = [], 0
+for sid in COLLISION_STYLES:
+    if sid == "grp.chain":
+        continue
+    for n in range(CT.eyes_range(sid)[0], CT.eyes_range(sid)[1] + 1):
+        for lay in CT.layouts_for(sid, n):
+            eyes_ = [C.Iris(SI.png_bytes_of(kind=KINDS_[i % 5], pupil="round", seed=520 + i, side=224), f"sw{i}", max_side=224) for i in range(n)]
+            pvw = CX.preview(eyes_, {"style": sid, "eyes": n, "layout": lay}, size=320, check=True)      # T3 is measured on pixels: at 224 px one pair misses its floor by a pixel of rounding
+            sweep_n += 1
+            if not pvw.selfcheck["ok"]:
+                sweep_bad.append((sid, n, lay, sorted(k for k, c in pvw.selfcheck["checks"].items() if not c["ok"])))
+check(f"every layout the registry offers for the pairs and Family Colours ({sweep_n} style, eye count and layout combinations, five colours, no words) passes the whole self check on its default "
+      "canvas: T1, T2, T3, T6, T7, T12, T18, T19 (the infinity chain is held and is the one design with known misses)", not sweep_bad and sweep_n >= 20, sweep_bad[:4])
+check("the layouts that failed their own checks in step A are no longer offered (the picker never shows a layout whose picture the self check would hold for review): Family Colours as a brick of "
+      "four eyes (T3 0.76 against 0.82), as a flower of six (T1 and T6 on 56 pixels of four petals) and as a flower of eight (T3 0.77); the laboratory still draws them (the golden replay)",
+      "brick" not in CT.layouts_for("grp.collision", 4) and "flower" not in CT.layouts_for("grp.collision", 6) and "flower" not in CT.layouts_for("grp.collision", 8)
+      and CT.layouts_for("grp.collision", 4) == ("zigzag", "cluster", "ring") and CT.layouts_for("grp.collision", 6) == ("brick", "ring")
+      and CT.layouts_for("grp.collision", 8) == ("ring", "brick") and "flower" in CT.layouts_for("grp.collision", 5) and "flower" in CT.layouts_for("grp.collision", 7)
+      and CT.default_layout("grp.collision", 6) == "brick" and CT.default_layout("grp.collision", 4) == "zigzag", (CT.layouts_for("grp.collision", 4), CT.layouts_for("grp.collision", 6)))
+
+# ---- the universe fill (a laboratory ground): the float copies are bounded
+big_im = Image.new("RGB", (3000, 3000), (90, 60, 40))
+src_f = FL._fill_source(big_im, FL.FILL_SIDE)
+check("the universe fill reads a copy of each source of at most 1536 px (the soft base is drawn on a 576 px grid: a larger source adds memory and no picture), the float copies of all the "
+      "sources together are asserted against 700 MB, and the render refuses a fill that would break the limit before anything is drawn (cx_fill.py:113 held 1.73 GB for eight 4096 px eyes)",
+      src_f.shape == (FL.FILL_SIDE, FL.FILL_SIDE, 3) and src_f.dtype == np.float32 and FL.FILL_SIDE == 1536 and FL.FILL_FLOAT_MB == 700.0
+      and 8 * FL.FILL_SIDE ** 2 * 12 / 1048576.0 < FL.FILL_FLOAT_MB and 8 * 4096 ** 2 * 12 / 1048576.0 > FL.FILL_FLOAT_MB
+      and FL._fill_source(Image.new("RGB", (400, 400)), FL.FILL_SIDE).shape == (400, 400, 3), src_f.shape)
+with mock.patch.object(FL, "FILL_FLOAT_MB", 0.1):
+    guard_ = raises(lambda: CX.render("kiss", two_, "3:2", 128, bg="universe"), ValueError)
+check("... and with the limit lowered the same render is a ValueError that names the float copies, not an out of memory", isinstance(guard_, ValueError) and "float copies" in str(guard_), guard_)
+del big_im, src_f
+
+# ---- a lab order of the master flow (the admin's laboratory and master_compose: eyes_from master): the plan is made from the stored masters and is the whole plan
+order3 = "261005-wp7b000003"
+for i, nm in ((1, "blue"), (2, "brown")):
+    im = Image.open(io.BytesIO(FIX[nm])).convert("RGB").resize((512, 512), Image.LANCZOS)
+    b = io.BytesIO()
+    im.save(b, "JPEG", quality=92)
+    store.put(f"orders/{order3}/eye_{i}.jpg", b.getvalue(), "image/jpeg", upsert=True)
+    store.put(f"orders/{order3}/eye_{i}.json", store.json_bytes({"created": f"t{i}", "bytes": len(b.getvalue()), "eye_id": f"{i + 2:02x}" * 8}), "application/json", upsert=True)
+ctx3 = STP.Ctx(order3, {"eyes": 2, "style": "duo.kiss_collision", "layout": "pair", "names": "", "title": ""}, by="test", lab=True, eyes_from="master", finish=fin)
+got3 = STP.advance(ctx3)
+plan3 = json.load(open(os.path.join(STORE, "orders", order3, "style", "plan.json"), encoding="utf-8"))
+rec3 = json.load(open(os.path.join(STORE, "orders", order3, got3["artwork"]["key"].split("/")[-1][:-4] + ".json"), encoding="utf-8"))
+check("a plan made from the stored masters (their shrink to the preview's size) is the WHOLE plan: decided, the choices frozen (the front of the one contact, the hairline contact of the "
+      "dark back band), the seed from the eye ids the masters carry; the master obeys it: the artwork's record says what was drawn and it is the plan's (facts.frozen equals plan.frozen, "
+      "the seed equals the plan's, the design and the plan8 too)",
+      plan3["decided"] is True and plan3["frozen"] and plan3["frozen"]["hairline"] == [0] and plan3["frozen"] == rec3["facts"]["frozen"] and plan3["seed"] == rec3["seed"]
+      and plan3["seed_from"] == "eye_id" and plan3["eye_ids"] == ["03" * 8, "04" * 8] and plan3["design_used"] == "kiss" and plan3["work_side"] == 2048
+      and rec3["plan8"] == plan3["plan8"] and rec3["design_used"] == "kiss" and got3["final"] and got3["fallback"] is None and not got3["artwork"]["needs_review"],
+      (plan3.get("frozen"), rec3["facts"].get("frozen"), plan3.get("seed"), rec3.get("seed")))
+
+# ---- a master that contradicts the frozen plan is held, never drawn as another picture
+order2 = "261005-wp7b000002"
+for i, nm in ((1, "blue"), (2, "green")):
+    im = Image.open(io.BytesIO(FIX[nm])).convert("RGB").resize((512, 512), Image.LANCZOS)
+    b = io.BytesIO()
+    im.save(b, "JPEG", quality=92)
+    store.put(f"orders/{order2}/eye_{i}.jpg", b.getvalue(), "image/jpeg", upsert=True)
+    store.put(f"orders/{order2}/eye_{i}.json", store.json_bytes({"created": f"t{i}", "bytes": len(b.getvalue()), "eye_id": f"{i + 4:02x}" * 8}), "application/json", upsert=True)
+ctx2 = STP.Ctx(order2, {"eyes": 2, "style": "duo.collision_infinity", "layout": "pair", "names": "", "title": ""}, by="test", lab=True, eyes_from="master", finish=fin)
+plan2 = STP.create_plan(ctx2)
+wide_im = Image.open(io.BytesIO(FIX["wide"])).convert("RGB").resize((512, 512), Image.LANCZOS)
+b = io.BytesIO()
+wide_im.save(b, "JPEG", quality=92)
+store.put(f"orders/{order2}/eye_2.jpg", b.getvalue(), "image/jpeg", upsert=True)           # the master of eye 2 is another image of the eye (same record, same id), with a wide pupil
+n_deliv = len(DELIVERED)
+held_ = raises(lambda: STP.advance(ctx2), STP.Hold)
+check("a master whose pupils contradict the frozen plan (the plan draws the infinity overlap, the master of eye 2 has a pupil that reaches past the limit) is held design_changed before anything "
+      "is drawn or stored, never drawn as the Kiss geometry; nothing is delivered and the hold has its words for the owner's reminder",
+      plan2["decided"] is True and plan2["design_used"] == "infinity" and plan2["frozen"]["fallback"] is None and isinstance(held_, STP.Hold) and held_.reason == "design_changed"
+      and len(DELIVERED) == n_deliv and STP.hold_text("design_changed", order2) and not [f for f in os.listdir(os.path.join(STORE, "orders", order2)) if f.startswith("artwork_")],
+      (held_, plan2.get("frozen")))
+
 # ============================================================================================ 8. real eyes and the scratch tree (LOCAL)
-section("8. LOCAL: the real calibration eyes and the port as the scratch plus its edits")
+section("9. LOCAL: the real calibration eyes and the port as the scratch plus its edits")
 if CALIB and os.path.isdir(CALIB) and os.path.exists(os.path.join(HERE, "data", "collision_goldens_real.json")):
     REAL = json.load(open(os.path.join(HERE, "data", "collision_goldens_real.json"), encoding="utf-8"))
     fx_real = {n: open(os.path.join(CALIB, f"{n}_2_enhanced.jpg"), "rb").read() for n in CC.REAL_EYES}
@@ -670,13 +1025,31 @@ if CALIB and os.path.isdir(CALIB) and os.path.exists(os.path.join(HERE, "data", 
           [n for n in fx_real if hashlib.sha256(fx_real[n]).hexdigest() != REAL["eye_files"][n]])
     irs, bad_r, reps = {}, [], {}
     for c in CC.real_cases():
-        rec = CC.render_case(port_render, C.Iris, fx_real, c, irs)
-        if any(rec[k] != REAL["cases"][c["key"]][k] for k in ("sha", "seed", "facts", "w", "h")):
+        rec = CC.render_case(port_render, C.Iris, fx_real, c, irs, with_frozen=True)
+        if any(rec[k] != REAL["cases"][c["key"]][k] for k in ("sha", "seed", "facts", "w", "h", "frozen")):
             bad_r.append(c["key"])
         r = LAST["r"]
         reps[c["key"]] = CX.selfcheck(r, c["design"], [c["design"], r.info.get("design_used", c["design"]), "x"], [], "")
-    local(f"{len(REAL['cases'])} real-eye pictures (the eight pairs of the DG1 boards in both builds of the infinity, two Kiss, a trio, a family of four, a chain) equal the scratch's, "
-          "byte for byte", not bad_r and len(REAL["cases"]) == len(CC.real_cases()), bad_r)
+    local(f"{len(REAL['cases'])} real-eye pictures (the eight pairs of the DG1 boards in both builds of the infinity, two Kiss, a trio, a family of four, a chain) equal the step B recording, "
+          "byte for byte, with their seeds and frozen decisions", not bad_r and len(REAL["cases"]) == len(CC.real_cases()), bad_r)
+    REAL_A = json.load(open(os.path.join(HERE, "data", "stepA", "collision_goldens_real.json"), encoding="utf-8"))
+    bad_ra = []
+    for c in CC.real_cases():
+        rec = CC.render_case(legacy_render, C.Iris, fx_real, c, irs)
+        if any(rec[k] != REAL_A["cases"][c["key"]][k] for k in ("sha", "seed", "facts", "w", "h")):
+            bad_ra.append(c["key"])
+    local(f"step A on the real eyes: the same {len(REAL_A['cases'])} pictures drawn with the prototype's seed equal the scratch prototype's, byte for byte", not bad_ra and len(REAL_A["cases"]) == len(CC.real_cases()), bad_ra)
+    pairs14 = list(CC.REAL_PAIRS.values()) + [("drv_w04", "p08f"), ("drv_d02", "own215120"), ("drv_w06", "p09f"), ("p05i", "drv_w04"), ("drv_d01", "drv_w03"), ("lid19b", "p21e")]
+    bad_p14, kinds14 = [], set()
+    for a_, b_ in pairs14:
+        for style_ in ("duo.collision_infinity", "duo.clean", "duo.kiss_collision"):
+            ee_ = [irs.get(a_) or C.Iris(fx_real[a_], a_), irs.get(b_) or C.Iris(fx_real[b_], b_)]
+            irs[a_], irs[b_] = ee_
+            bad_, plan_ = plan_vs_preview(style_, ee_, None, size=256)
+            kinds14.add((plan_["design_used"], plan_["frozen"].get("lens")))
+            if bad_:
+                bad_p14.append((a_, b_, style_, bad_))
+    local(f"resolve() with the eyes equals the plan the render used on {len(pairs14)} real pairs in the three pair builds ({len(pairs14) * 3} previews)", not bad_p14 and len(pairs14) == 14, (bad_p14[:3], kinds14))
     seam = {k: v["checks"]["seam"] for k, v in reps.items() if v["checks"]["seam"].get("weave")}
     pairs_ = [s for k, s in seam.items() if k.startswith("infinity.")]
     print(f"   (real pairs, {len(pairs_)} woven: mixed at most {max(s['mixed'] for s in pairs_):.4f}, support {max(s['support'] for s in pairs_):.4f}, seam band "
