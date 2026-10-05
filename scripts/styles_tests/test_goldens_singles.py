@@ -602,7 +602,7 @@ check("a 4096 px render comes back as a view of 1536 px and a window of 1280 px 
       and len(json.dumps(big)) < 3_500_000 and big["selfcheck"]["checks"]["t1"]["ok"] and big["selfcheck"]["checks"]["t1"]["checked"] > 2_000_000 and big["estimate"]["ok"] is True and big["selfcheck"]["ms"] < 5000, (big["view"], len(json.dumps(big))))
 refusals = []
 for label, body in (("a legacy style", {"style": CT.legacy_ids()[0], "eye": b64(SAMPLE)}), ("an unknown style", {"style": "solo.nope", "eye": b64(SAMPLE)}),
-                    ("a style whose family is not built", {"style": "solo.universe", "eye": b64(SAMPLE)}), ("a size outside the four", {"style": "solo.clean", "eye": b64(SAMPLE), "size": 3000}),
+                    ("a style that does not take one eye", {"style": "duo.kiss_collision", "eye": b64(SAMPLE)}), ("a size outside the four", {"style": "solo.clean", "eye": b64(SAMPLE), "size": 3000}),
                     ("a size as a boolean", {"style": "solo.clean", "eye": b64(SAMPLE), "size": True}), ("no eye", {"style": "solo.clean"}),
                     ("a text that is no image", {"style": "solo.clean", "eye": b64(b"not an image at all")}),
                     ("an order that is not a lab order", {"style": "solo.clean", "order": "order-20260101-abcd", "n": 1}),

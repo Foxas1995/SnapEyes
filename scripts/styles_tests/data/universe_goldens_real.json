@@ -1,0 +1,840 @@
+{
+ "about": "SHA-256 of the RGB bytes of the real calibration eyes drawn by the scratch universe family: hashes only",
+ "cases": {
+  "deepfield.drv_d01.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    2829124989867644891
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      245.76,
+      "uniform",
+      2.6
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/deepfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-UV-DUST__density-dense_curl-cw__v3__pro4K__t0",
+     "lod": "1k",
+     "mirror": true,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 6202498456631255502,
+   "sha": "af7147c0a2f4a2be907c1a49889ad3f4de10d74fbb79ef85d4657b145e105ea8",
+   "w": 1024
+  },
+  "deepfield.drv_d02.1:1.1024": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    7531568038466460714
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      245.76,
+      "uniform",
+      2.6
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/deepfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-UV-DUST__density-sparse_curl-ccw__v4__pro4K__t1",
+     "lod": "1k",
+     "mirror": true,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 12595519772037862305,
+   "sha": "cd5aa528f4f5aeeed845bbac44698b7c656d0a80f070586e54804dbcffbd39b2",
+   "w": 1024
+  },
+  "deepfield.drv_w06.1:1.1024": {
+   "cls": [
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    5265987880977365727
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      245.76,
+      "uniform",
+      2.5663
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/deepfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-UV-DUST__density-dense_curl-cw__v4__pro4K__t0",
+     "lod": "1k",
+     "mirror": true,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 2012959593185797776,
+   "sha": "c8813ffee085435af403861696a23fc8564bd359d7ddfa3456923d9342b435f6",
+   "w": 1024
+  },
+  "deepfield.own215120.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    12079958876735091758
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      245.76,
+      "uniform",
+      2.6
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/deepfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-UV-DUST__density-dense_curl-cw__v4__pro4K__t0",
+     "lod": "1k",
+     "mirror": false,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 13699182150632614438,
+   "sha": "d59f743ff8629172062112a0c0aa507a72e60adb88597d02c8aa5ded8efb56c4",
+   "w": 1024
+  },
+  "echo.drv_d01.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    9777005094749467030
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      256.0,
+      "uniform",
+      2.6
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/echo/1:1",
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 4010536310749257602,
+   "sha": "fbd94955f74ac31edee513820e4a740b25733b38741453395ac5c796a076791c",
+   "w": 1024
+  },
+  "echo.drv_d02.1:1.1024": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    15909428513152869894
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      256.0,
+      "uniform",
+      2.7665
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/echo/1:1",
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 9465032306783786100,
+   "sha": "7141004c44ecfc6b3d4656c0f79bb6452d11956ef02a5d093102fec76f06c3cf",
+   "w": 1024
+  },
+  "echo.drv_w06.1:1.1024": {
+   "cls": [
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    10859809169366524299
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      256.0,
+      "uniform",
+      2.5663
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/echo/1:1",
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 16663483000133460733,
+   "sha": "a25942c5d4b3d595371f2b8872a2d2286d61bd4d40cddbf79df46325f785a6de",
+   "w": 1024
+  },
+  "echo.own215120+drv_d01+drv_w06.auto.512": {
+   "cls": [
+    "own",
+    "own",
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    17149662560896028224,
+    14936559407199201783,
+    18371570926725273783
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": [
+     {
+      "a": 1,
+      "b": 2,
+      "back_L": [
+       20.6,
+       20.6
+      ],
+      "edge_mode": "hairline",
+      "front": 1,
+      "kind": "crumble"
+     },
+     {
+      "a": 0,
+      "b": 1,
+      "back_L": [
+       54.0,
+       54.0
+      ],
+      "edge_mode": "dark",
+      "front": 0,
+      "kind": "crumble"
+     },
+     {
+      "a": 0,
+      "b": 2,
+      "back_L": [
+       20.1,
+       20.1
+      ],
+      "edge_mode": "hairline",
+      "front": 0,
+      "kind": "crumble"
+     }
+    ],
+    "eye_geometry": [
+     [
+      256.0,
+      177.698,
+      102.4,
+      "uniform",
+      2.753
+     ],
+     [
+      177.664,
+      334.302,
+      102.4,
+      "uniform",
+      2.6
+     ],
+     [
+      334.336,
+      334.302,
+      102.4,
+      "uniform",
+      2.5697
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "group3/trio/1:1",
+    "notches": 3,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 13830549993331504642,
+   "sha": "28563e814a8c14f48adcd4a64ddc56a4dc9b032a957f031d4e5a76aa431915ad",
+   "w": 512
+  },
+  "echo.own215120+drv_d01.3:2.512": {
+   "cls": [
+    "own",
+    "own"
+   ],
+   "eye_seeds": [
+    15748421291420232022,
+    7064228097845925801
+   ],
+   "facts": {
+    "S": 341,
+    "aspect": "3:2",
+    "band_rows": 341,
+    "contacts": [
+     {
+      "a": 0,
+      "b": 1,
+      "back_L": [
+       42.8,
+       62.0
+      ],
+      "edge_mode": "dark",
+      "front": -1,
+      "kind": "weave"
+     }
+    ],
+    "eye_geometry": [
+     [
+      189.037,
+      170.5,
+      92.07,
+      "uniform",
+      2.7564
+     ],
+     [
+      322.963,
+      170.5,
+      92.07,
+      "uniform",
+      2.6
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "duo/3:2",
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     341
+    ]
+   },
+   "h": 341,
+   "seed": 1463893997250488835,
+   "sha": "7b10a78ed6549afb2d448978f85fbe9df90599827eef2de3b71105d7ade8c63a",
+   "w": 512
+  },
+  "echo.own215120.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    13296504156392489725
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      256.0,
+      "uniform",
+      2.7564
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/echo/1:1",
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 558237228454397264,
+   "sha": "f0396852bed5b2fa9ffac89b79a09ee6e2758807b222270f33fb15f1c17a5d95",
+   "w": 1024
+  },
+  "starfield.drv_d01.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    14555009756214213774
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "none",
+      1.0
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 18,
+    "layout": "solo/starfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": -5.0,
+     "id": "P-UV-MILKY__band-low_stars-sparse__v1__pro4K__t0",
+     "lod": "1k",
+     "mirror": false,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 2446429250991518050,
+   "sha": "1e9dd2d1de554dc1ad4b979ee65b39048cd24bac605b3149b4906eb0b993653b",
+   "w": 1024
+  },
+  "starfield.drv_d02.1:1.1024": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    7843030446851339068
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "none",
+      1.0
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 18,
+    "layout": "solo/starfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": -5.0,
+     "id": "P-UV-MILKY__band-low_stars-sparse__v1__pro4K__t0",
+     "lod": "1k",
+     "mirror": false,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 17455206975176811533,
+   "sha": "f3d2cad59343538057870a5fec596f841fa5cbe3cd07bd0b0880fa537e7fbb9c",
+   "w": 1024
+  },
+  "starfield.drv_w06.1:1.1024": {
+   "cls": [
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    6706109616307274134
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "none",
+      1.0
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 18,
+    "layout": "solo/starfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": -5.0,
+     "id": "P-UV-MILKY__band-low_stars-sparse__v1__pro4K__t0",
+     "lod": "1k",
+     "mirror": false,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 291935723829581276,
+   "sha": "2d9501f9a6717ca76fe7ca2e7b6fb3ae47a7db8a08afb5e6ce9d85b35a3451de",
+   "w": 1024
+  },
+  "starfield.own215120.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    3156540025026335258
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "none",
+      1.0
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 18,
+    "layout": "solo/starfield/1:1",
+    "notches": null,
+    "plate": {
+     "angle": -1.9374,
+     "id": "P-UV-MILKY__band-low_stars-sparse__v1__pro4K__t0",
+     "lod": "1k",
+     "mirror": false,
+     "upscale": 1.1
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 2557754015662036881,
+   "sha": "0ac4e75c966ca237e1f8ae03d0ebce0bc0c7199f8ca8ab54fdd77124bdebca3d",
+   "w": 1024
+  },
+  "vortex.drv_d01.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    5557911684691721467
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "uniform",
+      2.6
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/vortex/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-DN-SPIRAL__arms-two_sense-ccw_wound-loose__v10__pro4K__t0",
+     "lod": "1k",
+     "mirror": false,
+     "upscale": 1.08
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 1076701422110119089,
+   "sha": "956c2c206a81faffbe357fe00cfdaffa9e8da00039d782429c57e9caa84dde75",
+   "w": 1024
+  },
+  "vortex.drv_d02.1:1.1024": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    6314878729667314893
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "uniform",
+      2.7665
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/vortex/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-DN-SPIRAL__arms-two_sense-cw_wound-tight__v10__pro4K__t0_g50",
+     "lod": "1k",
+     "mirror": true,
+     "upscale": 1.08
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 9590945320108176424,
+   "sha": "0860f9b92261efdc5f3a37b8a8f1c25dbd47d970879b241e2a66c78b7ad288d5",
+   "w": 1024
+  },
+  "vortex.drv_w06.1:1.1024": {
+   "cls": [
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    18007108837443504181
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "uniform",
+      2.5663
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/vortex/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-DN-SPIRAL__arms-two_sense-ccw_wound-tight__v10__pro4K__t1",
+     "lod": "1k",
+     "mirror": true,
+     "upscale": 1.055
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 11381704112436399094,
+   "sha": "e08130cca37230a2fbe15044635b196b66fc3ca3e03fff0b57bca34579b8f600",
+   "w": 1024
+  },
+  "vortex.own215120.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    5316895056731652868
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      225.28,
+      "uniform",
+      2.7564
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 8,
+    "layout": "solo/vortex/1:1",
+    "notches": null,
+    "plate": {
+     "angle": 0.0,
+     "id": "P-DN-SPIRAL__arms-two_sense-cw_wound-tight__v4__pro4K__t0_g50",
+     "lod": "1k",
+     "mirror": false,
+     "upscale": 0.983
+    },
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 2450356993709854907,
+   "sha": "d3a54b20e4e84d01077443099b1f647e1d814dcf92f1d8fd03116ddc94e08de3",
+   "w": 1024
+  }
+ },
+ "eye_files": {
+  "drv_d01": "1497f022941187197e5727877aed89f167deaea29a6986bccb987d70152d106c",
+  "drv_d02": "cbf79a2ff3345c4c9bce64e733b27aa1b774901a65c91577615cb084349f98cd",
+  "drv_w06": "87ec906bd4ef6f7df1864a474aad5d21f1e84712159faeef86995c3460b486e2",
+  "own215120": "3587176a5180d44c5e57067546e6e07a38514ec21669b24548781480deb4afa5"
+ },
+ "machine": {
+  "numpy": "2.4.4",
+  "pillow": "12.2.0",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "python": "3.14.3"
+ }
+}

@@ -9,6 +9,8 @@
   "reveal_goldens_real.json": "bc84933a72df4e75db7471e85b25aa1739312408d1517b3825d6831c6c941413",
   "singles_goldens.json": "ec1ae4bdf51299d1e79a59aa7e4f80a5b09f93bd0c243dbdb6743dfc2a373746",
   "singles_goldens_real.json": "94c96ce142da73d83fee8689314cd1b3ce54d9c46aebd131f8636305fc44537d",
-  "synth_verdicts.json": "9e62849d106a41a82da8fcb234ed3d7ea85361c16e3d1618a7df4cc3a3f6e91f"
+  "synth_verdicts.json": "9e62849d106a41a82da8fcb234ed3d7ea85361c16e3d1618a7df4cc3a3f6e91f",
+  "universe_goldens.json": "ada2eb5b7355b387f04e0454b15173cc4f56f82be16859e05f78cf701f142010",
+  "universe_goldens_real.json": "922b395e1a38691696302c7053b8c84ce799eeba10c3a3524708d08b40e0f1fe"
  }
 }

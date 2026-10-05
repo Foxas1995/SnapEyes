@@ -1650,8 +1650,8 @@ check("master_compose of a style of the v3 engine (the lab's endpoint, which ref
       "and on a plan that can never fit 409 step_held",
       r_mc["ok"] and r_mc["width"] == 4096 and r_mc["design_used"] == "clean" and r_mc2["existing"] is True and r_mc2["key"] == r_mc["key"] and isinstance(e_mc, store.Answer)
       and e_mc.body["reason"] == "step_held" and exists(f"orders/{LAB2}/style/plan.json"), (r_mc.get("key"), e_mc))
-check("master_compose still answers 400 for a style that is not renderable (an id with no engine built)",
-      isinstance(raises(lambda: REAL_MC(dict(mcb, style="solo.universe", ticket=L.mint_ticket(store.unlock_kind(LAB2), 300))), L.ClientError), L.ClientError), "")
+check("master_compose still answers 400 for a style that is not renderable (an id that takes no one-eye order)",
+      isinstance(raises(lambda: REAL_MC(dict(mcb, style="duo.kiss_collision", ticket=L.mint_ticket(store.unlock_kind(LAB2), 300))), L.ClientError), L.ClientError), "")
 check("step_need: the legacy figure for a legacy style, the cost table's for a v3 style, None where the table has no row",
       MC.step_need("studio_black", 1) == CO.legacy_need(1) == 21.8 and 20 < MC.step_need("solo.powder", 1) < 30
       and MC.step_need("solo.powder", 1) == round(CO.step_need("singles.powder", 1, side=4096), 3), (MC.step_need("solo.powder", 1),))
