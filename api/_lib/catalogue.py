@@ -307,18 +307,71 @@ def _problem(style_id, profiles):
     return None
 
 
+def looks_for(style_id, n, admin=False):
+    """{look: stage} of the looks a customer may choose inside a style for n eyes (the Universe chips): the style's own looks at their stage
+    (never above the stage of the style itself), only preview and live ones, lab ones too for the admin. {} for a style with no looks."""
+    e = engine_for(style_id, n)
+    st = stage_of(style_id, n)
+    out = {}
+    for look, stage in ((e or {}).get("looks") or {}).items():
+        eff = effective_stage(st, stage)
+        if eff in ("preview", "live") or (admin and eff == "lab"):
+            out[look] = eff
+    return out
+
+
+def tile_row(style_id, n, profiles=None, admin=False):
+    """The tile of one style for n eyes: {id, name, slug, group, legacy, stage, available, why, layouts, eyes, price_class, looks}. available is False
+    with a why when the eyes cannot take the style (_problem); looks is {look: stage} (looks_for); eyes is n, the count the tile is for."""
+    d = STYLES[style_id]
+    why = _problem(style_id, profiles)
+    return {"id": style_id, "name": d["name"], "slug": d["slug"], "group": d["group"], "legacy": d["legacy"],
+            "stage": stage_of(style_id, n), "available": why is None, "why": why, "layouts": list(layouts_for(style_id, n)),
+            "eyes": n, "price_class": d["price_class"], "looks": looks_for(style_id, n, admin)}
+
+
 def tiles_for(n, profiles=None, admin=False):
-    """The tiles of n eyes, in tile order: [{id, name, slug, group, legacy, stage, available, why, layouts}]. The picker renders
-    what this says and owns no style list. available is False with a why when the eyes cannot take the style (_problem)."""
-    rows = []
-    for i, d in STYLES.items():
-        if d["tile_order"] <= 0 or not previewable(i, n, admin):
-            continue
-        why = _problem(i, profiles)
-        rows.append({"id": i, "name": d["name"], "slug": d["slug"], "group": d["group"], "legacy": d["legacy"],
-                     "stage": stage_of(i, n), "available": why is None, "why": why, "layouts": list(layouts_for(i, n))})
+    """The tiles of n eyes, in tile order (tile_row each): the styles with a tile slot (tile_order above 0) a customer may see, the laboratory ones
+    too for the admin. The picker renders what this says and owns no style list."""
+    rows = [tile_row(i, n, profiles, admin) for i, d in STYLES.items() if d["tile_order"] > 0 and previewable(i, n, admin)]
     rows.sort(key=lambda r: (r["legacy"], STYLES[r["id"]]["tile_order"]))
     return rows
+
+
+def why_unavailable(style_id, n, profiles=None, admin=False):
+    """Why a customer cannot have a preview of this style for these eyes, as a code, or None when they can: unknown (not an id of the registry),
+    eyes (the style does not take n eyes), stage (planned, retired, a laboratory style for a customer, or its engine is not in the repository),
+    or what the eyes themselves say (_problem: gate, reseal, bar_pupil). The compose endpoint refuses on the first three (400 for unknown, 422
+    style_unavailable for the others); the last three it reports on the tile (available false, why)."""
+    if not known(style_id):
+        return "unknown"
+    if not in_range(style_id, n):
+        return "eyes"
+    if not previewable(style_id, n, admin):
+        return "stage"
+    return _problem(style_id, profiles)
+
+
+def pick_reason(style_id, cls):
+    """The key of the reason line of the recommended tile (the copy files hold the words by key), or None: the line is the style's answer to the
+    set's colour class and only when the style's own pick table lists that class. A pick that came from the fallback (the default style, the
+    first buyable tile) has no reason line: 'Silver light for grey eyes' is never said of a style that was not chosen for grey eyes."""
+    d = STYLES.get(style_id) if isinstance(style_id, str) else None
+    if not d or cls not in d["pick"]:
+        return None
+    return d["reason"].get(cls)
+
+
+def tile_list(n, profiles=None, admin=False):
+    """What the picker is told for n eyes (one call, no pixels): {tiles, pick, reason}. tiles is tiles_for() with the recommended tile moved to
+    position 1 and every tile carrying pick (true on that one only); pick is its id (or None when nothing can be bought) and reason the key of
+    its reason line (or None). The recommended tile is the pick_for() answer: always a tile the customer can buy now (live and available)."""
+    rows = tiles_for(n, profiles, admin)
+    pid = pick_for(n, profiles)
+    for r in rows:
+        r["pick"] = r["id"] == pid
+    rows.sort(key=lambda r: not r["pick"])                 # stable: the pick first, the rest in tile order
+    return {"tiles": rows, "pick": pid, "reason": pick_reason(pid, set_class(profiles))}
 
 
 def pick_for(n, profiles=None):
