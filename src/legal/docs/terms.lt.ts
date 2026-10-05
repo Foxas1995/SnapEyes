@@ -20,7 +20,8 @@
 //    Hungarian terms name Lithuanian too (the build checks it, scripts/check_texts.mjs).
 // Not reviewed by a lawyer.
 import type { LegalDoc, LegalSection } from '../types';
-import { DELIVERY_MAX_HOURS, HU_PRICES, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, company, eur, huf, phoneSuffix, representedSuffix } from '../facts';
+import { DELIVERY_MAX_HOURS, HU_PRICES, MAIL, PRICE_CENTS, SELLER, address, company, eur, huf, phoneSuffix, representedSuffix } from '../facts';
+import { aiBlocks } from '../../shared/aiMaterial';
 import { valandasAcc } from '../../shared/lt';
 import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE } from '../../shared/legal';
 
@@ -33,7 +34,6 @@ const WITHDRAWAL_ONLINE_LT = WITHDRAWAL_ONLINE.lt;
 const CHECKOUT_LEGAL_LT = CHECKOUT_LEGAL.lt;
 
 const TRANSPARENCY_LT = 'Spalva paimta iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI.';
-const ART = 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke, Supernova';
 const PX = '4096 px';
 const SQUARE = '4096 × 4096 px';
 
@@ -59,13 +59,14 @@ export const lt: LegalDoc = {
       blocks: [
         `Personalizuotą skaitmeninį kūrinį, sukurtą iš Jūsų pačių akies (arba kelių akių) nuotraukos, Jūsų pasirinktu stiliumi, išdėstymu ir su Jūsų pasirinktu užrašu. Gausite vieną vaizdo failą (JPEG) be vandens ženklo: vienos akies kūrinys yra ${SQUARE}, kelių akių kūrinio ilgoji kraštinė yra ${PX}. Kūrinys pateikiamas tik kaip skaitmeninis failas, jį atsisiunčiant. Spaudinių, rėmelių ar kitų fizinių produktų neparduodame.`,
         `${TRANSPARENCY_LT} Todėl kūrinys yra meninis atkūrimas, o ne medicininis ar mikroskopinis vaizdas, ir jis netinka jokiems medicininiams tikslams ar asmens tapatybei nustatyti.`,
+        ...aiBlocks('lt'),
       ],
     },
     {
       id: 'preview',
       title: 'Jūsų peržiūra ir Jūsų failas',
       blocks: [
-        'Prieš užsakymą matote nemokamą peržiūrą su vandens ženklu ir ją patvirtinate. Jūsų failas atitinka patvirtintą peržiūrą: ta pati akis, stilius, išdėstymas ir užrašas, tos pačios spalvos ir tonai, vieną kartą sukurta visa raiška. Visu dydžiu mūsų DI prideda smulkias skaidulų detales, kurių peržiūra dėl mažo dydžio parodyti negali, todėl pačios smulkiausios detalės gali šiek tiek skirtis nuo peržiūros.',
+        'Prieš užsakymą matote nemokamą peržiūrą su vandens ženklu ir ją patvirtinate. Jūsų failas atitinka patvirtintą peržiūrą: ta pati akis, stilius, išdėstymas, akių tvarka ir užrašas, tos pačios spalvos ir tonai, vieną kartą sukurta visa raiška. Visu dydžiu mūsų DI prideda smulkias skaidulų detales, kurių peržiūra dėl mažo dydžio parodyti negali, todėl pačios smulkiausios detalės gali šiek tiek skirtis nuo peržiūros. Peržiūra, kurioje yra nuo penkių iki aštuonių akių, kuriama iš mažesnių Jūsų nuotraukų kopijų, todėl ji grubesnė už Jūsų failą.',
         'Jei Jūsų failas aiškiai skiriasi nuo patvirtintos peržiūros (pavyzdžiui, spalva, šviesumu ar vyzdžiu), tai yra trūkumas: žr. [Pretenzijos ir trūkumai](#defects).',
       ],
     },
@@ -85,10 +86,10 @@ export const lt: LegalDoc = {
       blocks: [
         {
           dl: [
-            ['Viena akis, Studio Black', eurLt(PRICE_CENTS.studioBlack)],
-            ['Viena akis su meniniu fonu', `${eurLt(PRICE_CENTS.artBackground)} (${ART})`],
-            ['Dvi akys (Couple Duo), bet kuris stilius', eurLt(PRICE_CENTS.coupleDuo)],
-            ['Kiekviena papildoma akis', `+${eurLt(PRICE_CENTS.extraEye)}, iki ${MAX_EYES} akių viename kūrinyje`],
+            ['Viena akis, Clean Iris', eurLt(PRICE_CENTS.studioBlack)],
+            ['Viena akis, bet kuris kitas stilius', eurLt(PRICE_CENTS.artBackground)],
+            ['Dvi akys, bet kuris stilius', eurLt(PRICE_CENTS.coupleDuo)],
+            ['Kiekviena papildoma akis', `+${eurLt(PRICE_CENTS.extraEye)}`],
           ],
         },
         `Visos kainos yra galutinės ir nurodytos eurais. ${companyLt} nėra PVM mokėtoja, todėl PVM netaikomas. Pristatymo išlaidų nėra.`,
@@ -100,7 +101,7 @@ export const lt: LegalDoc = {
       id: 'delivery',
       title: 'Pristatymas',
       blocks: [
-        `Jūsų užsakymo puslapis sukuria Jūsų failą, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo; kūrimas paprastai užtrunka kelias minutes (maždaug pusę minutės vienai akiai). Jei uždarote puslapį, kol failas dar nebaigtas, kūrimas tęsiamas, kai vėl jį atidarote per el. laiške esančią nuorodą. Jei mūsų automatinė kokybės patikra pažymi failą, prieš jį pateikdami patys jį peržiūrime ir, kai jis paruoštas, parašome Jums el. laišką. **Vėliausiai per ${valandasAcc(DELIVERY_MAX_HOURS)} nuo Jūsų mokėjimo patvirtinimo Jūsų failą galėsite atsisiųsti savo užsakymo puslapyje.** Užsakymo puslapyje failą galite atsisiųsti bet kada, kol jį saugome: 12 mėnesių nuo apmokėjimo (žr. [privatumo politiką](doc:privacy)). Kiekviena ten sukurta atsisiuntimo nuoroda galioja 7 dienas; kaskart atidarius puslapį sukuriama nauja. Jei el. laišką praradote, parašykite mums.`,
+        `Jūsų užsakymo puslapis sukuria Jūsų failą, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo; kūrimas paprastai užtrunka kelias minutes. Jei uždarote puslapį, kol failas dar nebaigtas, kūrimas tęsiamas, kai vėl jį atidarote per el. laiške esančią nuorodą. Jei mūsų automatinė kokybės patikra pažymi failą, prieš jį pateikdami patys jį peržiūrime ir, kai jis paruoštas, parašome Jums el. laišką. **Vėliausiai per ${valandasAcc(DELIVERY_MAX_HOURS)} nuo Jūsų mokėjimo patvirtinimo Jūsų failą galėsite atsisiųsti savo užsakymo puslapyje.** Užsakymo puslapyje failą galite atsisiųsti bet kada, kol jį saugome: 12 mėnesių nuo apmokėjimo (žr. [privatumo politiką](doc:privacy)). Kiekviena ten sukurta atsisiuntimo nuoroda galioja 7 dienas; kaskart atidarius puslapį sukuriama nauja. Jei el. laišką praradote, parašykite mums.`,
         'Jūsų užsakymo puslapio nuorodoje yra privatus raktas: kiekvienas, kas ją turi, gali atsisiųsti Jūsų kūrinį, todėl niekam jos neperduokite. Atsisiųskite savo failą ir pasilikite kopiją. Po 12 mėnesių jis ištrinamas ir jo atkurti nebeįmanoma.',
       ],
     },
@@ -168,10 +169,10 @@ export const ltHufPrices: LegalSection = {
   blocks: [
     {
       dl: [
-        ['Viena akis, Studio Black', huf(HU_PRICES.one_eye_studio_black, 'lt')],
-        ['Viena akis su meniniu fonu', `${huf(HU_PRICES.one_eye_art, 'lt')} (${ART})`],
-        ['Dvi akys (Couple Duo), bet kuris stilius', huf(HU_PRICES.two_eyes, 'lt')],
-        ['Kiekviena papildoma akis', `+${huf(HU_PRICES.each_further_eye, 'lt')}, iki ${MAX_EYES} akių viename kūrinyje`],
+        ['Viena akis, Clean Iris', huf(HU_PRICES.one_eye_studio_black, 'lt')],
+        ['Viena akis, bet kuris kitas stilius', huf(HU_PRICES.one_eye_art, 'lt')],
+        ['Dvi akys, bet kuris stilius', huf(HU_PRICES.two_eyes, 'lt')],
+        ['Kiekviena papildoma akis', `+${huf(HU_PRICES.each_further_eye, 'lt')}`],
       ],
     },
     `Visos kainos yra galutinės ir nurodytos Vengrijos forintais (Ft). ${companyLt} nėra PVM mokėtoja, todėl PVM netaikomas. Pristatymo išlaidų nėra. Jei svetainė Jums rodo kainas kita valiuta, mokėjimo puslapyje ir užsakymo patvirtinimo el. laiške nurodoma valiuta ir suma, kurią iš tikrųjų mokate.`,

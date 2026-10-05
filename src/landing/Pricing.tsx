@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { useLang } from './lang';
-import { MAX_EYES, tryUrl } from './config';
+import { tryUrl } from './config';
 import { priceFootnote } from './copy';
-import { useOrderingOpen } from './ordering';
+import { useCatalogue, useOrderingOpen } from './ordering';
 import { currencyOf, money, priceMinor } from '../shared/markets';
-import { classStyle } from '../shared/styles';
+import { fillTokens } from '../shared/catalogue';
+import { classStyle, styleName } from '../shared/styles';
 import { useMarket } from '../shared/useMarket';
 import { usePrices, usePricesReady } from '../shared/usePrices';
 import { SectionHead } from './ui';
@@ -33,9 +34,13 @@ function Row({ label, value, note, pending = false }: { label: string; value: st
 
 // No purchase buttons here: an order starts from the customer's own preview on /try, so the only action is the free
 // preview. The notice says "ordering opens soon" until src/landing/ordering.ts finds that this deployment takes orders.
+// The rows name PRICE CLASSES, not a list of styles or a number of eyes: the black class by its one style, every other style as "any other style" with
+// the list of the styles that can be ordered now, and the number of eyes, all from the run-time catalogue (src/shared/catalogue.ts: the tokens {styles}
+// and {max}); a price is printed only for a count of eyes some style can be ordered for (a group that cannot be ordered yet is "free preview now").
 export function Pricing() {
   const { t, lang } = useLang();
   const open = useOrderingOpen();
+  const cat = useCatalogue();
   const p = t.pricing;
   // the visitor's market (src/shared/markets.ts: the link's m=, or their earlier choice): its currency and prices
   const market = useMarket();
@@ -78,20 +83,25 @@ export function Pricing() {
           <Card title={p.oneEyeTitle}>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{p.oneEyeNote}</p>
             <div className="mt-5">
-              <Row label={p.studioBlack} value={fmt(prices.one_eye_studio_black)} pending={pending} />
-              <Row label={p.artBackground} value={fmt(prices.one_eye_art)} note={p.artBackgroundNote} pending={pending} />
+              <Row label={styleName(classStyle('black'))} value={fmt(prices.one_eye_studio_black)} pending={pending} />
+              <Row label={p.artBackground} value={fmt(prices.one_eye_art)} note={fillTokens(p.artBackgroundNote, cat)} pending={pending} />
             </div>
           </Card>
 
           <Card title={p.severalTitle} className="sm:col-span-2 lg:col-span-1">
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">{p.severalNote}</p>
-            <div className="mt-5">
-              <Row label={p.duoLabel} value={fmt(prices.two_eyes)} pending={pending} />
-              {[3, 4, 5].map((n) => (
-                <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, classStyle('black'), market, prices))} pending={pending} />
-              ))}
-            </div>
-            <p className={`mt-1 text-xs leading-relaxed text-zinc-400 ${pending ? 'opacity-0' : ''}`}>{p.perEye(fmt(prices.each_further_eye), MAX_EYES)}</p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">{cat.max >= 2 ? fillTokens(p.severalNote, cat) : p.severalSoon}</p>
+            {cat.max >= 2 && (
+              <>
+                <div className="mt-5">
+                  {[2, 3, 4, 5].filter((n) => n <= cat.max).map((n) => (
+                    <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, classStyle('black'), market, prices))} pending={pending} />
+                  ))}
+                </div>
+                {cat.max > 2 && (
+                  <p className={`mt-1 text-xs leading-relaxed text-zinc-400 ${pending ? 'opacity-0' : ''}`}>{p.perEye(fmt(prices.each_further_eye), cat.max)}</p>
+                )}
+              </>
+            )}
           </Card>
         </div>
 

@@ -74,12 +74,13 @@ export interface Copy {
     previewItems: string[];
     oneEyeTitle: string;
     oneEyeNote: string;
-    studioBlack: string;
+    // the row of the black price class is named by its one style (src/shared/styles.ts classStyle), the other by this text; the note under it and the
+    // sentence of the group card take their list of styles and their number of eyes from the run-time catalogue (src/shared/catalogue.ts): {styles}, {max}
     artBackground: string;
     artBackgroundNote: string;
     severalTitle: string;
     severalNote: string;
-    duoLabel: string;
+    severalSoon: string;
     eyes: (n: number) => string;
     perEye: (price: string, max: number) => string;
     // the line under the prices, by the currency of the visitor's market (src/shared/markets.ts): footnote for
@@ -134,7 +135,7 @@ const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not 
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
 
 // Measured deliverable (api/master_compose.py, L.multi_canvas at 4096): one eye is 4096 x 4096 px; several
-// eyes are 4096 px on the longest side (a Couple Duo is 4096 x 2731). Never promise a square file for all orders.
+// eyes are 4096 px on the longest side (a pair is 4096 x 2731). Never promise a square file for all orders.
 const PX = '4096\u00a0px';
 const SQUARE = '4096\u00a0×\u00a04096\u00a0px';
 
@@ -145,8 +146,8 @@ const en: Copy = {
   meta: {
     title: 'SnapEyes Private Atelier - Precision Iris Art from Your Smartphone',
     description:
-      "Photograph one eye with your phone's back camera and see your own iris as fine art in six styles. The watermarked preview is free.",
-    shareDescription: 'Photograph one eye with your phone and see your own iris as fine art in six styles. The watermarked preview is free.',
+      "Photograph one eye with your phone's back camera and see your own iris as fine art in a choice of styles. The watermarked preview is free.",
+    shareDescription: 'Photograph one eye with your phone and see your own iris as fine art in a choice of styles. The watermarked preview is free.',
     locale: 'en_GB',
   },
   langName: 'English',
@@ -162,7 +163,7 @@ const en: Copy = {
     title: 'Precision Iris Art from Your Smartphone',
     lead:
       'Photograph one eye with the back camera of your phone. We find your iris, restore it and set it in the style you choose. You see the result first, free of charge.',
-    points: ['Free watermarked preview in 6 styles', 'About a minute, no sign-up'],
+    points: ['Free watermarked preview of every style', 'About a minute, no sign-up'],
     soon: `Soon: your artwork as a ${PX} digital file`,
     ready: (from) => `Your artwork as a ${PX} digital file, from ${from}`,
     secondary: 'See a real before and after',
@@ -176,11 +177,11 @@ const en: Copy = {
     eyebrow: 'A real before and after',
     title: 'One eye, one phone, one result',
     intro:
-      "This is the founder's own eye. On the left, the phone photo cropped to the iris at its original 315\u00a0px. On the right, the same eye in Studio Black, rendered by the engine that makes your preview.",
+      "This is the founder's own eye. On the left, the phone photo cropped to the iris at its original 315\u00a0px. On the right, the same eye in Clean Iris, rendered by the engine that makes your preview.",
     before: 'Before: phone photo',
-    after: 'After: Studio Black',
+    after: 'After: Clean Iris',
     beforeAlt: "Before: the founder's eye as the phone captured it",
-    afterAlt: 'After: the same eye rendered in Studio Black',
+    afterAlt: 'After: the same eye rendered in Clean Iris',
     sliderLabel: 'Compare before and after',
     caption: 'Mantas, founder - photographed at home with a phone',
     transparencyTitle: 'What comes from you, and what the AI adds',
@@ -196,7 +197,7 @@ const en: Copy = {
       },
       {
         title: 'See your free preview',
-        body: 'In about a minute your iris appears in all six styles, with a watermark. No sign-up, nothing to pay.',
+        body: 'In about a minute your iris appears in every style, with a watermark. No sign-up, nothing to pay.',
       },
       {
         title: `Order your ${PX} file`,
@@ -206,10 +207,10 @@ const en: Copy = {
     ],
   },
   styles: {
-    eyebrow: 'Six styles',
-    title: 'The same eye, six ways',
+    eyebrow: 'Styles',
+    title: 'The same eye, in different styles',
     intro:
-      "Every image below is the founder's eye from the before and after above, rendered by our engine in each style. Your preview adds a watermark, and the art styles a small signature line under the title; both are left out here.",
+      "Every image below is the founder's eye from the before and after above, rendered by our engine in each style. Your preview adds a watermark, which is left out here.",
     oneEye: 'One eye',
     desc: {
       studio_black: 'Your iris alone, on pure black.',
@@ -228,15 +229,14 @@ const en: Copy = {
     noticeOpen: 'Start with the free preview: you order only once you like the result.',
     previewTitle: 'Preview',
     previewPrice: 'Free',
-    previewItems: ['All 6 styles', 'With watermark', 'Available today'],
+    previewItems: ['Every style', 'With watermark', 'Available today'],
     oneEyeTitle: 'One eye',
     oneEyeNote: 'Your iris as one artwork, in the style you choose.',
-    studioBlack: 'Studio Black',
-    artBackground: 'Art background',
-    artBackgroundNote: 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke or Supernova',
+    artBackground: 'Any other style',
+    artBackgroundNote: '{styles}',
     severalTitle: 'Several eyes',
-    severalNote: 'Two to eight eyes on one artwork: yours and those of the people you love.',
-    duoLabel: '2 eyes · Couple Duo',
+    severalNote: 'Two to {max} eyes on one artwork: yours and those of the people you love.',
+    severalSoon: 'Free preview now. Ordering for this group opens soon.',
     eyes: (n) => `${n} eyes`,
     perEye: (price, max) => `+${price} for each further eye, up to ${max} eyes`,
     footnote: `Every order is one digital file without watermark, ${PX} on its longest side (${SQUARE} for one eye). Prices in euros. These are final prices: we are not registered for VAT, so no VAT is added.`,
@@ -342,9 +342,9 @@ const de: Copy = {
   meta: {
     title: 'SnapEyes Private Atelier - Präzise Iris-Kunst vom Smartphone',
     description:
-      'Fotografieren Sie ein Auge mit der Rückkamera Ihres Smartphones und sehen Sie Ihre eigene Iris als Kunstwerk in sechs Stilen. Die Vorschau mit Wasserzeichen ist kostenlos.',
+      'Fotografieren Sie ein Auge mit der Rückkamera Ihres Smartphones und sehen Sie Ihre eigene Iris als Kunstwerk in einer Auswahl von Stilen. Die Vorschau mit Wasserzeichen ist kostenlos.',
     shareDescription:
-      'Fotografieren Sie ein Auge mit dem Smartphone und sehen Sie Ihre eigene Iris als Kunstwerk in sechs Stilen. Die Vorschau mit Wasserzeichen ist kostenlos.',
+      'Fotografieren Sie ein Auge mit dem Smartphone und sehen Sie Ihre eigene Iris als Kunstwerk in einer Auswahl von Stilen. Die Vorschau mit Wasserzeichen ist kostenlos.',
     locale: 'de_DE',
   },
   langName: 'Deutsch',
@@ -361,7 +361,7 @@ const de: Copy = {
     title: 'Präzise Iris-Kunst vom Smartphone',
     lead:
       'Fotografieren Sie ein Auge mit der Rückkamera Ihres Smartphones. Wir finden Ihre Iris, restaurieren sie und setzen sie im Stil Ihrer Wahl in Szene. Das Ergebnis sehen Sie zuerst, und zwar kostenlos.',
-    points: ['Kostenlose Vorschau in 6 Stilen, mit Wasserzeichen', 'Etwa eine Minute, ohne Anmeldung'],
+    points: ['Kostenlose Vorschau jedes Stils, mit Wasserzeichen', 'Etwa eine Minute, ohne Anmeldung'],
     soon: `Bald: Ihr Kunstwerk als digitale Datei mit ${PX}`,
     ready: (from) => `Ihr Kunstwerk als digitale Datei mit ${PX}, ab ${from}`,
     secondary: 'Echtes Vorher/Nachher ansehen',
@@ -375,11 +375,11 @@ const de: Copy = {
     eyebrow: 'Echtes Vorher/Nachher',
     title: 'Ein Auge, ein Smartphone, ein Ergebnis',
     intro:
-      'Das ist das Auge des Gründers. Links das Smartphone-Foto, auf die Iris zugeschnitten, in der Originalgröße von 315\u00a0px. Rechts dasselbe Auge im Stil Studio Black, gerendert von derselben Software, die auch Ihre Vorschau erstellt.',
+      'Das ist das Auge des Gründers. Links das Smartphone-Foto, auf die Iris zugeschnitten, in der Originalgröße von 315\u00a0px. Rechts dasselbe Auge im Stil Clean Iris, gerendert von derselben Software, die auch Ihre Vorschau erstellt.',
     before: 'Vorher: Smartphone-Foto',
-    after: 'Nachher: Studio Black',
+    after: 'Nachher: Clean Iris',
     beforeAlt: 'Vorher: das Auge des Gründers, so wie das Smartphone es aufgenommen hat',
-    afterAlt: 'Nachher: dasselbe Auge im Stil Studio Black',
+    afterAlt: 'Nachher: dasselbe Auge im Stil Clean Iris',
     sliderLabel: 'Vorher und Nachher vergleichen',
     caption: 'Mantas, Gründer - zu Hause mit dem Smartphone fotografiert',
     transparencyTitle: 'Was von Ihnen stammt und was die KI ergänzt',
@@ -395,7 +395,7 @@ const de: Copy = {
       },
       {
         title: 'Kostenlose Vorschau ansehen',
-        body: 'Nach etwa einer Minute sehen Sie Ihre Iris in allen sechs Stilen, mit Wasserzeichen. Ohne Anmeldung und ohne Kosten.',
+        body: 'Nach etwa einer Minute sehen Sie Ihre Iris in jedem Stil, mit Wasserzeichen. Ohne Anmeldung und ohne Kosten.',
       },
       {
         title: `Datei mit ${PX} bestellen`,
@@ -405,10 +405,10 @@ const de: Copy = {
     ],
   },
   styles: {
-    eyebrow: 'Sechs Stile',
-    title: 'Dasselbe Auge, sechs Stile',
+    eyebrow: 'Stile',
+    title: 'Dasselbe Auge, in verschiedenen Stilen',
     intro:
-      'Jedes Bild hier zeigt das Auge des Gründers aus dem Vorher/Nachher oben, von unserer Software in jedem Stil gerendert. Ihre Vorschau trägt ein Wasserzeichen, die Kunststile zusätzlich eine kleine Signaturzeile unter dem Titel; beides ist hier weggelassen.',
+      'Jedes Bild hier zeigt das Auge des Gründers aus dem Vorher/Nachher oben, von unserer Software in jedem Stil gerendert. Ihre Vorschau trägt ein Wasserzeichen; hier ist es weggelassen.',
     oneEye: 'Ein Auge',
     desc: {
       studio_black: 'Nur Ihre Iris, auf reinem Schwarz.',
@@ -427,15 +427,14 @@ const de: Copy = {
     noticeOpen: 'Beginnen Sie mit der kostenlosen Vorschau: Sie bestellen erst, wenn Ihnen das Ergebnis gefällt.',
     previewTitle: 'Vorschau',
     previewPrice: 'Kostenlos',
-    previewItems: ['Alle 6 Stile', 'Mit Wasserzeichen', 'Schon heute verfügbar'],
+    previewItems: ['Jeder Stil', 'Mit Wasserzeichen', 'Schon heute verfügbar'],
     oneEyeTitle: 'Ein Auge',
     oneEyeNote: 'Ihre Iris als einzelnes Kunstwerk, im Stil Ihrer Wahl.',
-    studioBlack: 'Studio Black',
-    artBackground: 'Kunsthintergrund',
-    artBackgroundNote: 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke oder Supernova',
+    artBackground: 'Jeder andere Stil',
+    artBackgroundNote: '{styles}',
     severalTitle: 'Mehrere Augen',
-    severalNote: 'Zwei bis acht Augen auf einem Kunstwerk, etwa Ihr eigenes und die Ihrer Liebsten.',
-    duoLabel: '2 Augen · Couple Duo',
+    severalNote: 'Zwei bis {max} Augen auf einem Kunstwerk, etwa Ihr eigenes und die Ihrer Liebsten.',
+    severalSoon: 'Die Vorschau ist schon jetzt kostenlos. Die Bestellung für diese Gruppe ist bald möglich.',
     eyes: (n) => `${n} Augen`,
     perEye: (price, max) => `+${price} für jedes weitere Auge, bis zu ${max} Augen`,
     footnote: `Jede Bestellung ist eine digitale Datei ohne Wasserzeichen, mit ${PX} an der längsten Seite (${SQUARE} bei einem Auge). Preise in Euro. Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.`,

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { noteCheckoutInfo, noteInfoUnavailable } from '../shared/pricing';
+import { fallbackCatalogue, readCatalogue, type RunCatalogue } from '../shared/catalogue';
 
 // Whether this deployment takes orders, by the capture tool's own rule (src/try/TryApp.tsx): /api/health says Stripe
 // is set up (and, with a live key, the delivery email too), then GET /api/checkout says "open". The landing page is
@@ -13,8 +14,12 @@ import { noteCheckoutInfo, noteInfoUnavailable } from '../shared/pricing';
 // It is asked WITHOUT any id. While a price test runs for the visitor's market the pricing store (src/shared/pricing.ts)
 // asks once more with the visitor's anonymous id in a header and keeps the ladders of the visitor's variant, so this page
 // prints the price it will charge; while none runs nothing is created or sent.
+// The same answer holds the run-time catalogue (its "styles" at their effective stage, and orderable_max_eyes: src/shared/catalogue.ts): the number of
+// eyes and the list of art styles the pricing rows print come from it, never from a text, so that a style the owner takes back in the admin page leaves
+// the page without a deploy. Until it is read (and whenever it cannot be) the build-time registry's ceilings stand in for it.
 let open = false;
 let suggested: string | null = null;
+let catalogue: RunCatalogue = fallbackCatalogue();
 let started = false;
 const listeners = new Set<() => void>();
 
@@ -33,14 +38,15 @@ async function getJson(path: string, needOk: boolean): Promise<Record<string, un
   }
 }
 
-async function check(): Promise<{ open: boolean; suggest: string | null }> {
-  const none = { open: false, suggest: null };
+async function check(): Promise<{ open: boolean; suggest: string | null; catalogue: RunCatalogue | null }> {
+  const none = { open: false, suggest: null, catalogue: null };
   const h = await getJson('/api/health', false);
   if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) { noteInfoUnavailable(); return none; }
   const plain = await getJson('/api/checkout', true);
   if (!plain) { noteInfoUnavailable(); return none; }
   const c = ((await noteCheckoutInfo(plain)) ?? plain) as Record<string, unknown>;
-  return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null };
+  // the catalogue is read from the plain answer (the one without a visitor id), whatever a price test adds to the second one
+  return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null, catalogue: readCatalogue(plain) };
 }
 
 function subscribe(onChange: () => void): () => void {
@@ -48,9 +54,10 @@ function subscribe(onChange: () => void): () => void {
   if (!started) {
     started = true;
     void check().then((v) => {
-      if (!v.open && v.suggest === null) return;
+      if (!v.open && v.suggest === null && v.catalogue === null) return;
       open = v.open;
       suggested = v.suggest;
+      if (v.catalogue) catalogue = v.catalogue;
       listeners.forEach((l) => l());
     });
   }
@@ -60,6 +67,12 @@ function subscribe(onChange: () => void): () => void {
 /** true once this deployment is known to take orders; false until then (and on the server-less dev page). */
 export function useOrderingOpen(): boolean {
   return useSyncExternalStore(subscribe, () => open, () => false);
+}
+
+/** The run-time catalogue (the number of eyes and the art styles that can be ordered now), or the build's ceilings until the server answers. The object
+ *  changes only when an answer arrives. */
+export function useCatalogue(): RunCatalogue {
+  return useSyncExternalStore(subscribe, () => catalogue, () => catalogue);
 }
 
 /** The market GET /api/checkout suggests for the visitor's country, or null (src/shared/markets.ts hintMarket decides

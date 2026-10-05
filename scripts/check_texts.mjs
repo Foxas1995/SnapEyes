@@ -22,6 +22,12 @@
 //   8. the consent texts (the four languages of the EU edition and the two of the Australian one) are not the ones the
 //      fingerprint of the current consent version says (CONSENT_FINGERPRINTS): a changed text needs a new version, in
 //      api/_lib/pay.py CONSENT_VERSION and src/shared/legal.ts WITHDRAWAL_CONSENT_VERSION together;
+//  10. a string of any language makes a claim the plate styles cannot keep (CLAIMS below: an artwork that is "unique", "one of a kind", "never
+//      repeated", "handmade", a "100 percent" close-up, "every fibre", a "best seller", "most chosen" or "most popular"), in the dictionaries, the
+//      legal texts, the Lithuanian and Hungarian e-mail sentences and the head of index.html; the powder, crowns and spirals around an iris come from a
+//      finite library of plates, so such a word would be untrue (review of 2026-10-04, risk 26). The sentence about AI-made material
+//      (src/shared/aiMaterial.ts) is linted like any other string in the four languages while it is unpublished, and is in every terms text once it is
+//      published and in none before;
 //   9. a Lithuanian or Hungarian string is the very same words as the English or German one (untranslated), or one of
 //      the customer sentences in the Python files of those languages (api/_lib/*_lt.py, *_hu.py: the emails, the
 //      receipts, the Stripe notes, the analyze tips) holds English or German words or a dash; the refusals of the compose
@@ -148,9 +154,34 @@ const LT_LOWER_JUS = new RegExp(`(^|[^${LT_LETTERS}])(jūs|jūsų|jums|jus|jumis
 // (the complete list of the Lithuanian pack's own lint, wave-lt tools/check_py.py and check_ts.mjs NONSTANDARD)
 const LT_FLAGGED = new RegExp(`(^|[^${LT_LETTERS}])(matosi|matytųsi|matėsi|ilgojoje kraštinėje|niekas nekuriama|niekas nebus kuriama|privalomas pasiūlymas|iš principo|pilno dydžio|pilną dydį|pilnai|priklausomai nuo|pagal ką|pasirodo kad|įtakoja|įtakoti|Gerb\\.)(?![${LT_LETTERS}])`, 'iu');
 
+// Claims the plate styles cannot keep, by language (check 10). The plain word "best" is not here: the FAQ asks for "your best photos". "einmalig" (German
+// "once") is not here either: "einmalig in voller Aufloesung" says the file is made once. The Hungarian "egyedi" (custom or unique) is not here: it reads
+// "made to order" as often as "unique"; "egyedülálló" and the rest are.
+const CLAIMS = {
+  en: [/\bunique(?:ly)?\b/i, /\bone[- ]of[- ]a[- ]kind\b/i, /\bnever (?:repeated|repeats)\b/i, /\bno two (?:are )?alike\b/i, /\bhand[- ]?made\b/i,
+    /\bhand[- ]?painted\b/i, /\bevery (?:single )?fib(?:re|er)\b/i, /\bbest[- ]?sellers?\b/i, /\bmost (?:chosen|popular)\b/i, /\b100\s?(?:%|per ?cent)/i],
+  de: [/einzigartig/i, /\bUnikat/i, /nie wiederholt/i, /keine zwei (?:sind )?gleich/i, /handgemacht|handgefertigt/i, /handgemalt/i, /jede (?:einzelne )?Faser/i,
+    /best[- ]?seller/i, /am (?:häufigsten gewählt|beliebtesten)|meistgewählt|beliebteste/i, /\b100\s?(?:%|Prozent)/i],
+  lt: [/unikal/i, /nepasikartoj/i, /nė dviejų vienodų/i, /rankų darbo/i, /ranka (?:nupiešt|pieštas)/i, /kiekviena skaidula/i, /perkamiaus/i, /populiariaus/i,
+    /dažniausiai (?:renkam|pasirenkam)/i, /\b100\s?(?:%|proc)/i],
+  hu: [/egyedülálló/i, /megismételhetetlen/i, /két egyforma sincs/i, /kézzel (?:készült|festett)/i, /minden (?:egyes )?rost/i, /best[- ]?seller/i, /legnépszerűbb/i,
+    /legtöbbet választott/i, /\b100\s?(?:%|százalék)/i],
+};
+
+/** A claim the plate styles cannot keep in one string (check 10), as a sentence, or null. */
+export function claimIn(s, lang) {
+  for (const re of CLAIMS[lang] ?? []) {
+    const m = s.match(re);
+    if (m) return m[0];
+  }
+  return null;
+}
+
 /** typography: false for the strings of the Python files (HTML attributes and code-like strings there are not prose). */
 function lint(path, s, lang, out, typography = true) {
   if (DASH.test(s)) out.push(`${path} (${lang}): an en or em dash: ${s.slice(0, 120)}`);
+  const claim = claimIn(s, lang);
+  if (claim) out.push(`${path} (${lang}): the claim "${claim}", which the plate styles cannot keep (the powder, crowns and spirals around an iris come from a shared library of plates): ${s.slice(0, 120)}`);
   if (!NEW_LANGS.includes(lang)) return;
   const noLinks = s.replace(/\]\([^)]*\)/g, ']');
   if (typography) {
@@ -539,10 +570,10 @@ export function checkServerTexts(root, legal, orderCopy) {
  *  runner (vite.config.ts); root: the repository. */
 export async function checkTexts(load, root) {
   const out = [];
-  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets, layouts] = await Promise.all([
+  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets, layouts, aiMaterial] = await Promise.all([
     load('./src/shared/lang.ts'), load('./src/shared/legal.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'),
     load('./src/order/copy.ts'), load('./src/legal/editions.ts'), load('./src/legal/plain.ts'), load('./src/shared/markets.ts'),
-    load('./src/shared/layouts.ts'),
+    load('./src/shared/layouts.ts'), load('./src/shared/aiMaterial.ts'),
   ]);
   if (lang.LANGS.join() !== LANGS.join()) out.push(`src/shared/lang.ts LANGS is ${lang.LANGS.join()}, this check knows ${LANGS.join()}: update scripts/check_texts.mjs`);
 
@@ -565,6 +596,8 @@ export async function checkTexts(load, root) {
       else strings[l].push([`layout words.${id}`, row[l]]);
     }
   }
+  // the sentence about AI-made material (src/shared/aiMaterial.ts), published or not: linted and compared like any dictionary string, in every language
+  for (const l of LANGS) if (typeof aiMaterial.AI_MATERIAL?.[l] === 'string') strings[l].push([`aiMaterial.${l}`, aiMaterial.AI_MATERIAL[l]]);
   // the refusals of the compose API (api/compose.py WORDS): the same checks as any dictionary string
   for (const [l, p, s] of composeWords(root, out)) strings[l].push([p, s]);
   for (const l of LANGS) {
@@ -589,6 +622,26 @@ export async function checkTexts(load, root) {
   }
   for (const l of LANGS) for (const [p, s] of strings[l]) lint(p, s, l, out);
   identical(strings, out);
+
+  // the head of index.html (search and share copy: English only): the same claims, the same dashes
+  try {
+    const html = readFileSync(join(root, 'index.html'), 'utf8');
+    for (const m of html.matchAll(/<(?:title>([^<]*)<\/title>|meta\s+(?:name|property)="([^"]+)"\s+content="([^"]*)")/g)) lint(`index.html ${m[2] ?? 'title'}`, m[1] ?? m[3], 'en', out);
+  } catch { out.push('index.html not found (the text check reads its head)'); }
+
+  // the sentence about AI-made material (owner decision 10): written in the four languages, linted like any string while it is unpublished, and present in
+  // every terms text once published and in none before (it is published by the cutover deploy, src/shared/aiMaterial.ts)
+  for (const l of LANGS) {
+    const sentence = aiMaterial.AI_MATERIAL?.[l];
+    if (typeof sentence !== 'string' || sentence.length < 80) { out.push(`src/shared/aiMaterial.ts: no ${l} sentence about AI-made material`); continue; }
+    for (const [edition, langs] of Object.entries(legal.EDITION_LANGS)) {
+      if (!langs.includes(l)) continue;
+      const text = JSON.stringify(editions.EDITIONS[edition].terms[l].sections);
+      const has = text.includes(JSON.stringify(sentence).slice(1, -1));
+      if (aiMaterial.AI_MATERIAL_PUBLISHED && !has) out.push(`legal ${edition}.terms (${l}): the sentence about AI-made material is published (src/shared/aiMaterial.ts) but not in the terms`);
+      if (!aiMaterial.AI_MATERIAL_PUBLISHED && has) out.push(`legal ${edition}.terms (${l}): holds the sentence about AI-made material before the cutover publishes it (AI_MATERIAL_PUBLISHED is false)`);
+    }
+  }
 
   // the customer sentences of the server's Lithuanian and Hungarian files
   checkPyTexts(root, out);

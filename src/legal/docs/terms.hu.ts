@@ -21,7 +21,8 @@
 // decree lists a phone among the seller's details (11. § (1) c)), a risk the owner accepted for every language.
 // Not reviewed by a Hungarian lawyer.
 import type { LegalDoc, LegalSection } from '../types';
-import { DELIVERY_MAX_HOURS, HU_PRICES, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, company, eur, huf, phoneSuffix, representedSuffix } from '../facts';
+import { DELIVERY_MAX_HOURS, HU_PRICES, MAIL, PRICE_CENTS, SELLER, address, company, eur, huf, phoneSuffix, representedSuffix } from '../facts';
+import { aiBlocks } from '../../shared/aiMaterial';
 import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE } from '../../shared/legal';
 
 const companyHu = () => company('hu');
@@ -35,7 +36,6 @@ const CHECKOUT_LEGAL_HU = CHECKOUT_LEGAL.hu;
 // Hungarian site sentence says "te", which an ÁSZF does not)
 const TRANSPARENCY_HU_ON =
   'A szín az Ön saját fotójából származik. Ahol a telefonja nem tudta rögzíteni a legfinomabb rostokat, ott a mesterséges intelligenciánk állítja helyre őket.';
-const ART = 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke, Supernova';
 const PX = '4096 px';
 const SQUARE = '4096 × 4096 px';
 
@@ -61,6 +61,7 @@ export const hu: LegalDoc = {
       blocks: [
         `Egy személyre szabott digitális alkotást, amely az Ön által egy szemről (vagy több szemről) készített fotóból készül, az Ön által választott stílusban, elrendezésben és felirattal. Egy vízjel nélküli képfájlt (JPEG) kap: egy szem esetén ${SQUARE}, több szem esetén a hosszabbik oldalán ${PX} méretben. Az alkotást kizárólag digitális fájlként, letöltéssel szolgáltatjuk. Nyomatot, keretet vagy más fizikai terméket nem árusítunk.`,
         `${TRANSPARENCY_HU_ON} Az alkotás ezért művészi helyreállítás, nem orvosi, nem mikroszkópos és nem stúdiós makrofelvétel, és nem alkalmas sem orvosi célra, sem személyek azonosítására.`,
+        ...aiBlocks('hu'),
         'A fájl szabványos JPEG kép, amely bármely szokásos számítógépen, telefonon vagy táblagépen megnyitható és kinyomtatható; külön program nem kell hozzá. Nem tartalmaz másolásvédelmet vagy más műszaki védelmi intézkedést, és frissítést nem igényel.',
       ],
     },
@@ -68,7 +69,7 @@ export const hu: LegalDoc = {
       id: 'preview',
       title: 'Az előnézet és a fájl',
       blocks: [
-        'Rendelés előtt egy ingyenes, vízjeles előnézetet lát, és azt jóváhagyja. A fájl a jóváhagyott előnézetet követi: ugyanaz a szem, stílus, elrendezés és felirat, ugyanazzal a színnel és tónussal, egyszer, teljes felbontásban elkészítve. Teljes méretben a mesterséges intelligenciánk hozzáadja azokat a finom rostrészleteket, amelyeket az előnézet a kis mérete miatt nem tud megmutatni, ezért a legapróbb részletek kissé eltérhetnek az előnézettől.',
+        'Rendelés előtt egy ingyenes, vízjeles előnézetet lát, és azt jóváhagyja. A fájl a jóváhagyott előnézetet követi: ugyanaz a szem, stílus, elrendezés, a szemek ugyanolyan sorrendje és ugyanaz a felirat, ugyanazzal a színnel és tónussal, egyszer, teljes felbontásban elkészítve. Teljes méretben a mesterséges intelligenciánk hozzáadja azokat a finom rostrészleteket, amelyeket az előnézet a kis mérete miatt nem tud megmutatni, ezért a legapróbb részletek kissé eltérhetnek az előnézettől. Az öt-nyolc szemes előnézet a fotóid kisebb másolataiból készül, ezért durvább, mint a fájl.',
         'Ha a fájl egyértelműen eltér a jóváhagyott előnézettől (például a színben, a világosságban vagy a pupillában), az hibás teljesítés: lásd a [Kellékszavatosság és hibás teljesítés](#defects) pontot.',
       ],
     },
@@ -88,10 +89,10 @@ export const hu: LegalDoc = {
       blocks: [
         {
           dl: [
-            ['Egy szem, Studio Black', eur(PRICE_CENTS.studioBlack, 'hu')],
-            ['Egy szem művészi háttérrel', `${eur(PRICE_CENTS.artBackground, 'hu')} (${ART})`],
-            ['Két szem (Couple Duo), bármely stílusban', eur(PRICE_CENTS.coupleDuo, 'hu')],
-            ['Minden további szem', `+${eur(PRICE_CENTS.extraEye, 'hu')}, legfeljebb ${MAX_EYES} szem egy alkotáson`],
+            ['Egy szem, Clean Iris', eur(PRICE_CENTS.studioBlack, 'hu')],
+            ['Egy szem, bármely más stílus', eur(PRICE_CENTS.artBackground, 'hu')],
+            ['Két szem, bármely stílus', eur(PRICE_CENTS.coupleDuo, 'hu')],
+            ['Minden további szem', `+${eur(PRICE_CENTS.extraEye, 'hu')}`],
           ],
         },
         'Minden ár euróban értendő végső ár, amely minden adót és díjat tartalmaz. Nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel és nem tüntetünk fel. Szállítási költség nincs.',
@@ -103,7 +104,7 @@ export const hu: LegalDoc = {
       id: 'delivery',
       title: 'Teljesítés',
       blocks: [
-        `A rendelési oldala akkor készíti el a fájlt, amikor elment a megrendelés visszaigazolását tartalmazó e-mail, ez általában a fizetés után egy percen belül megtörténik; az elkészítés rendszerint néhány percig tart (szemenként kb. fél percig). Ha a fájl elkészülte előtt bezárja az oldalt, az elkészítés folytatódik, amikor az e-mailben kapott linkkel újra megnyitja. Ha az automatikus minőségellenőrzésünk megjelöl egy fájlt, azt átadás előtt magunk is megnézzük, és e-mailt küldünk, amikor elkészült. **A fájl legkésőbb a fizetés megerősítését követő ${DELIVERY_MAX_HOURS} órán belül letölthető a rendelési oldalán.** A rendelési oldaláról a fájlt addig töltheti le bármikor, ameddig megőrizzük: a fizetéstől számított 12 hónapig (lásd az [Adatkezelési tájékoztatót](doc:privacy)). Az oldal által létrehozott minden letöltési link 7 napig érvényes; az oldal minden megnyitáskor újat készít. Ha az e-mail elveszett, írjon nekünk.`,
+        `A rendelési oldala akkor készíti el a fájlt, amikor elment a megrendelés visszaigazolását tartalmazó e-mail, ez általában a fizetés után egy percen belül megtörténik; az elkészítés rendszerint néhány percig tart. Ha a fájl elkészülte előtt bezárja az oldalt, az elkészítés folytatódik, amikor az e-mailben kapott linkkel újra megnyitja. Ha az automatikus minőségellenőrzésünk megjelöl egy fájlt, azt átadás előtt magunk is megnézzük, és e-mailt küldünk, amikor elkészült. **A fájl legkésőbb a fizetés megerősítését követő ${DELIVERY_MAX_HOURS} órán belül letölthető a rendelési oldalán.** A rendelési oldaláról a fájlt addig töltheti le bármikor, ameddig megőrizzük: a fizetéstől számított 12 hónapig (lásd az [Adatkezelési tájékoztatót](doc:privacy)). Az oldal által létrehozott minden letöltési link 7 napig érvényes; az oldal minden megnyitáskor újat készít. Ha az e-mail elveszett, írjon nekünk.`,
         'A rendelési oldal linkje egy privát kulcsot tartalmaz: aki ismeri, letöltheti az alkotását, ezért kérjük, ne adja tovább. Kérjük, töltse le a fájlt, és őrizzen meg róla egy másolatot. 12 hónap elteltével töröljük, és utána nem állítható helyre.',
       ],
     },
@@ -177,10 +178,10 @@ export const huHufPrices: LegalSection = {
   blocks: [
     {
       dl: [
-        ['Egy szem, Studio Black', huf(HU_PRICES.one_eye_studio_black, 'hu')],
-        ['Egy szem művészi háttérrel', `${huf(HU_PRICES.one_eye_art, 'hu')} (${ART})`],
-        ['Két szem (Couple Duo), bármely stílusban', huf(HU_PRICES.two_eyes, 'hu')],
-        ['Minden további szem', `+${huf(HU_PRICES.each_further_eye, 'hu')}, legfeljebb ${MAX_EYES} szem egy alkotáson`],
+        ['Egy szem, Clean Iris', huf(HU_PRICES.one_eye_studio_black, 'hu')],
+        ['Egy szem, bármely más stílus', huf(HU_PRICES.one_eye_art, 'hu')],
+        ['Két szem, bármely stílus', huf(HU_PRICES.two_eyes, 'hu')],
+        ['Minden további szem', `+${huf(HU_PRICES.each_further_eye, 'hu')}`],
       ],
     },
     'Minden ár forintban értendő végső ár, amely minden adót és díjat tartalmaz. Nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel és nem tüntetünk fel. Szállítási költség nincs. Ha a weboldal más pénznemben mutatja Önnek az árakat, a fizetési oldal és a visszaigazoló e-mail az Ön által fizetett pénznemet és összeget tünteti fel.',

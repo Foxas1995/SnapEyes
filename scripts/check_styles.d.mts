@@ -1,6 +1,6 @@
 // Types of ./check_styles.mjs for vite.config.ts (tsconfig.node.json checks that file with Node's module rules).
-/** The sub-rules of items 4 and 7 that wait for work package 12's texts (a number of styles in a string, a maximum number of eyes in the
- *  terms, the run-time tokens of the landing's pricing rows): built and tested, not enforced until this is true. */
+/** The sub-rules of items 4 and 7 that work package 12's texts meet (a number of styles in a string, a maximum number of eyes in the
+ *  terms, the run-time tokens of the landing's pricing rows): enforced while this is true. */
 export const WP12_RULES: boolean;
 /** The languages every layout has a word in (api/_lib/layout_names.py). */
 export const LAYOUT_LANGS: string[];

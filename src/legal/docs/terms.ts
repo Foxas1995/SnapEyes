@@ -22,17 +22,17 @@
 // Australian Consumer Law. Nothing in it may read as "no refunds" (ACCC: consumer guarantees cannot be excluded).
 import type { EditionDocs, LegalDoc, LegalDocs, LegalSection } from '../types';
 import {
-  AU_PRICES, DELIVERY_MAX_HOURS, HU_PRICES, MAIL, MAX_EYES, PRICE_CENTS, SELLER, address, aud, company, eur, huf, phoneSuffix,
+  AU_PRICES, DELIVERY_MAX_HOURS, HU_PRICES, MAIL, PRICE_CENTS, SELLER, address, aud, company, eur, huf, phoneSuffix,
   representedSuffix,
 } from '../facts';
 import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE } from '../../shared/legal';
+import { aiBlocks } from '../../shared/aiMaterial';
 import { patchDoc } from '../patch';
 import { lt, ltHufPrices } from './terms.lt';
 import { hu, huHufPrices } from './terms.hu';
 
 const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.';
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
-const ART = 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke, Supernova';
 const PX = '4096\u00a0px';
 // The price tables below are the standard price lists. A price test (api/_lib/abtest.py; only while the owner runs one) shows
 // some visitors, at random, another list: what is charged is what was shown before payment, and the order confirmation
@@ -65,13 +65,14 @@ const en: LegalDoc = {
       blocks: [
         `A personalised digital artwork made from your own photo of an eye (or of several eyes), in the style, layout and inscription you choose. You receive one image file (JPEG) without watermark: ${SQUARE} for one eye, ${PX} on the longest side for several eyes. The artwork is delivered only as a digital file, by download. We do not sell prints, frames or any other physical product.`,
         `${TRANSPARENCY_EN} The artwork is therefore an artistic restoration, not a medical or microscope image, and it is not suitable for any medical purpose or for identifying a person.`,
+        ...aiBlocks('en'),
       ],
     },
     {
       id: 'preview',
       title: 'Your preview and your file',
       blocks: [
-        'Before you order, you see a free preview with a watermark and approve it. Your file follows the preview you approved: the same eye, style, layout and inscription, with the same colour and tone, rendered once in full resolution. At full size our AI adds the fine fibre detail that the preview is too small to show, so the very finest details can differ slightly from the preview.',
+        'Before you order, you see a free preview with a watermark and approve it. Your file follows the preview you approved: the same eye, style, layout, arrangement of the eyes and inscription, with the same colour and tone, rendered once in full resolution. At full size our AI adds the fine fibre detail that the preview is too small to show, so the very finest details can differ slightly from the preview. A preview of five to eight eyes is made from smaller copies of your photos, so it is coarser than your file.',
         'If your file clearly differs from the preview you approved (for example in colour, brightness or the pupil), that is a defect: see [Complaints and defects](#defects).',
       ],
     },
@@ -91,10 +92,10 @@ const en: LegalDoc = {
       blocks: [
         {
           dl: [
-            ['One eye, Studio Black', eur(PRICE_CENTS.studioBlack, 'en')],
-            ['One eye with an art background', `${eur(PRICE_CENTS.artBackground, 'en')} (${ART})`],
-            ['Two eyes (Couple Duo), any style', eur(PRICE_CENTS.coupleDuo, 'en')],
-            ['Each further eye', `+${eur(PRICE_CENTS.extraEye, 'en')}, up to ${MAX_EYES} eyes on one artwork`],
+            ['One eye, Clean Iris', eur(PRICE_CENTS.studioBlack, 'en')],
+            ['One eye, any other style', eur(PRICE_CENTS.artBackground, 'en')],
+            ['Two eyes, any style', eur(PRICE_CENTS.coupleDuo, 'en')],
+            ['Each further eye', `+${eur(PRICE_CENTS.extraEye, 'en')}`],
           ],
         },
         'All prices are final prices in euros. We are not registered for VAT, so no VAT is charged or shown. There are no delivery costs.',
@@ -106,7 +107,7 @@ const en: LegalDoc = {
       id: 'delivery',
       title: 'Delivery',
       blocks: [
-        `Your order page makes your file as soon as your order confirmation email has gone out, normally within a minute of your payment; making it usually takes a few minutes (about half a minute per eye). If you close the page before your file is finished, it carries on when you open it again from the link in the email. If our automatic quality check flags a file, we look at it ourselves before we release it, and we email you when it is ready. **At the latest, your file is ready for download on your order page within ${DELIVERY_MAX_HOURS} hours after your payment is confirmed.** From your order page you can download your file at any time while we keep it: 12 months from your payment (see our [Privacy policy](doc:privacy)). Each download link it creates is valid for 7 days; the page makes a new one whenever you open it. If you lose the email, write to us.`,
+        `Your order page makes your file as soon as your order confirmation email has gone out, normally within a minute of your payment; making it usually takes a few minutes. If you close the page before your file is finished, it carries on when you open it again from the link in the email. If our automatic quality check flags a file, we look at it ourselves before we release it, and we email you when it is ready. **At the latest, your file is ready for download on your order page within ${DELIVERY_MAX_HOURS} hours after your payment is confirmed.** From your order page you can download your file at any time while we keep it: 12 months from your payment (see our [Privacy policy](doc:privacy)). Each download link it creates is valid for 7 days; the page makes a new one whenever you open it. If you lose the email, write to us.`,
         'The link to your order page contains a private key: anyone who has it can download your artwork, so please keep it to yourself. Please download your file and keep a copy. After 12 months it is deleted and cannot be restored.',
       ],
     },
@@ -188,13 +189,14 @@ const de: LegalDoc = {
       blocks: [
         `Ein personalisiertes digitales Kunstwerk aus Ihrem eigenen Foto eines Auges (oder mehrerer Augen), im Stil, in der Anordnung und mit der Widmung Ihrer Wahl. Sie erhalten eine Bilddatei (JPEG) ohne Wasserzeichen: ${SQUARE} bei einem Auge, bei mehreren Augen ${PX} an der längsten Seite. Das Kunstwerk wird ausschließlich als digitale Datei zum Download geliefert. Drucke, Rahmen oder andere physische Produkte verkaufen wir nicht.`,
         `${TRANSPARENCY_DE} Das Kunstwerk ist daher eine künstlerische Restaurierung, keine medizinische Aufnahme und keine Mikroskopaufnahme, und es eignet sich weder für medizinische Zwecke noch zur Identifizierung einer Person.`,
+        ...aiBlocks('de'),
       ],
     },
     {
       id: 'preview',
       title: 'Ihre Vorschau und Ihre Datei',
       blocks: [
-        'Vor der Bestellung sehen Sie eine kostenlose Vorschau mit Wasserzeichen und geben sie frei. Ihre Datei folgt der freigegebenen Vorschau: dasselbe Auge, derselbe Stil, dieselbe Anordnung und Widmung, mit derselben Farbe und Tonalität, einmalig in voller Auflösung erstellt. In voller Größe ergänzt unsere KI die feinen Faserdetails, für die die Vorschau zu klein ist; die allerfeinsten Details können daher leicht von der Vorschau abweichen.',
+        'Vor der Bestellung sehen Sie eine kostenlose Vorschau mit Wasserzeichen und geben sie frei. Ihre Datei folgt der freigegebenen Vorschau: dasselbe Auge, derselbe Stil, dieselbe Anordnung, dieselbe Reihenfolge der Augen und dieselbe Widmung, mit derselben Farbe und Tonalität, einmalig in voller Auflösung erstellt. In voller Größe ergänzt unsere KI die feinen Faserdetails, für die die Vorschau zu klein ist; die allerfeinsten Details können daher leicht von der Vorschau abweichen. Eine Vorschau mit fünf bis acht Augen wird aus kleineren Kopien Ihrer Fotos erstellt und ist daher gröber als Ihre Datei.',
         'Weicht Ihre Datei deutlich von der freigegebenen Vorschau ab (zum Beispiel in Farbe, Helligkeit oder bei der Pupille), ist das ein Mangel: siehe [Reklamationen und Mängel](#defects).',
       ],
     },
@@ -214,10 +216,10 @@ const de: LegalDoc = {
       blocks: [
         {
           dl: [
-            ['Ein Auge, Studio Black', eur(PRICE_CENTS.studioBlack, 'de')],
-            ['Ein Auge mit Kunsthintergrund', `${eur(PRICE_CENTS.artBackground, 'de')} (${ART})`],
-            ['Zwei Augen (Couple Duo), jeder Stil', eur(PRICE_CENTS.coupleDuo, 'de')],
-            ['Jedes weitere Auge', `+${eur(PRICE_CENTS.extraEye, 'de')}, bis zu ${MAX_EYES} Augen auf einem Kunstwerk`],
+            ['Ein Auge, Clean Iris', eur(PRICE_CENTS.studioBlack, 'de')],
+            ['Ein Auge, jeder andere Stil', eur(PRICE_CENTS.artBackground, 'de')],
+            ['Zwei Augen, jeder Stil', eur(PRICE_CENTS.coupleDuo, 'de')],
+            ['Jedes weitere Auge', `+${eur(PRICE_CENTS.extraEye, 'de')}`],
           ],
         },
         'Alle Preise sind Endpreise in Euro. Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet oder ausgewiesen. Versandkosten fallen nicht an.',
@@ -229,7 +231,7 @@ const de: LegalDoc = {
       id: 'delivery',
       title: 'Lieferung',
       blocks: [
-        `Ihre Bestellseite erstellt Ihre Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung; die Erstellung dauert meist wenige Minuten (etwa eine halbe Minute pro Auge). Schließen Sie die Seite, bevor Ihre Datei fertig ist, macht sie weiter, wenn Sie sie über den Link in der E-Mail wieder öffnen. Meldet unsere automatische Qualitätsprüfung eine Datei, sehen wir sie uns vor der Freigabe selbst an und benachrichtigen Sie per E-Mail, sobald sie fertig ist. **Spätestens ${DELIVERY_MAX_HOURS} Stunden nach der Bestätigung Ihrer Zahlung steht Ihre Datei auf Ihrer Bestellseite zum Download bereit.** Über Ihre Bestellseite können Sie Ihre Datei jederzeit herunterladen, solange wir sie aufbewahren: 12 Monate ab Ihrer Zahlung (siehe [Datenschutzerklärung](doc:privacy)). Jeder Download-Link, den die Seite erzeugt, ist 7 Tage gültig; beim nächsten Öffnen erzeugt sie einen neuen. Haben Sie die E-Mail verloren, schreiben Sie uns.`,
+        `Ihre Bestellseite erstellt Ihre Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung; die Erstellung dauert meist wenige Minuten. Schließen Sie die Seite, bevor Ihre Datei fertig ist, macht sie weiter, wenn Sie sie über den Link in der E-Mail wieder öffnen. Meldet unsere automatische Qualitätsprüfung eine Datei, sehen wir sie uns vor der Freigabe selbst an und benachrichtigen Sie per E-Mail, sobald sie fertig ist. **Spätestens ${DELIVERY_MAX_HOURS} Stunden nach der Bestätigung Ihrer Zahlung steht Ihre Datei auf Ihrer Bestellseite zum Download bereit.** Über Ihre Bestellseite können Sie Ihre Datei jederzeit herunterladen, solange wir sie aufbewahren: 12 Monate ab Ihrer Zahlung (siehe [Datenschutzerklärung](doc:privacy)). Jeder Download-Link, den die Seite erzeugt, ist 7 Tage gültig; beim nächsten Öffnen erzeugt sie einen neuen. Haben Sie die E-Mail verloren, schreiben Sie uns.`,
         'Der Link zu Ihrer Bestellseite enthält einen privaten Schlüssel: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen. Bitte geben Sie ihn nicht weiter. Laden Sie Ihre Datei herunter und bewahren Sie eine Kopie auf. Nach 12 Monaten wird sie gelöscht und kann nicht wiederhergestellt werden.',
       ],
     },
@@ -320,10 +322,10 @@ const auEn = patchDoc(en, {
       blocks: [
         {
           dl: [
-            ['One eye, Studio Black', aud(AU_PRICES.one_eye_studio_black, 'en')],
-            ['One eye with an art background', `${aud(AU_PRICES.one_eye_art, 'en')} (${ART})`],
-            ['Two eyes (Couple Duo), any style', aud(AU_PRICES.two_eyes, 'en')],
-            ['Each further eye', `+${aud(AU_PRICES.each_further_eye, 'en')}, up to ${MAX_EYES} eyes on one artwork`],
+            ['One eye, Clean Iris', aud(AU_PRICES.one_eye_studio_black, 'en')],
+            ['One eye, any other style', aud(AU_PRICES.one_eye_art, 'en')],
+            ['Two eyes, any style', aud(AU_PRICES.two_eyes, 'en')],
+            ['Each further eye', `+${aud(AU_PRICES.each_further_eye, 'en')}`],
           ],
         },
         'All prices are in Australian dollars (A$), and each is the total price you pay: no GST, no delivery cost, no card surcharge and no other fee is added. We are not registered for GST in Australia, so no GST is charged. Your order confirmation email includes your invoice.',
@@ -395,10 +397,10 @@ const auDe = patchDoc(de, {
       blocks: [
         {
           dl: [
-            ['Ein Auge, Studio Black', aud(AU_PRICES.one_eye_studio_black, 'de')],
-            ['Ein Auge mit Kunsthintergrund', `${aud(AU_PRICES.one_eye_art, 'de')} (${ART})`],
-            ['Zwei Augen (Couple Duo), jeder Stil', aud(AU_PRICES.two_eyes, 'de')],
-            ['Jedes weitere Auge', `+${aud(AU_PRICES.each_further_eye, 'de')}, bis zu ${MAX_EYES} Augen auf einem Kunstwerk`],
+            ['Ein Auge, Clean Iris', aud(AU_PRICES.one_eye_studio_black, 'de')],
+            ['Ein Auge, jeder andere Stil', aud(AU_PRICES.one_eye_art, 'de')],
+            ['Zwei Augen, jeder Stil', aud(AU_PRICES.two_eyes, 'de')],
+            ['Jedes weitere Auge', `+${aud(AU_PRICES.each_further_eye, 'de')}`],
           ],
         },
         'Alle Preise sind in australischen Dollar (A$) angegeben und jeweils der Gesamtpreis, den Sie zahlen: Es kommen keine GST, keine Versandkosten, kein Kartenzuschlag und keine sonstigen Gebühren hinzu. Wir sind in Australien nicht für die GST registriert, daher wird keine GST berechnet. Ihre Bestellbestätigung per E-Mail enthält Ihre Rechnung.',
@@ -475,10 +477,10 @@ const enHufPrices: LegalSection = {
   blocks: [
     {
       dl: [
-        ['One eye, Studio Black', huf(HU_PRICES.one_eye_studio_black, 'en')],
-        ['One eye with an art background', `${huf(HU_PRICES.one_eye_art, 'en')} (${ART})`],
-        ['Two eyes (Couple Duo), any style', huf(HU_PRICES.two_eyes, 'en')],
-        ['Each further eye', `+${huf(HU_PRICES.each_further_eye, 'en')}, up to ${MAX_EYES} eyes on one artwork`],
+        ['One eye, Clean Iris', huf(HU_PRICES.one_eye_studio_black, 'en')],
+        ['One eye, any other style', huf(HU_PRICES.one_eye_art, 'en')],
+        ['Two eyes, any style', huf(HU_PRICES.two_eyes, 'en')],
+        ['Each further eye', `+${huf(HU_PRICES.each_further_eye, 'en')}`],
       ],
     },
     `All prices are final prices in Hungarian forints (Ft). We are not registered for VAT, so no VAT is charged or shown. There are no delivery costs. ${AFTER_CURRENCY_EN}`,
@@ -493,10 +495,10 @@ const deHufPrices: LegalSection = {
   blocks: [
     {
       dl: [
-        ['Ein Auge, Studio Black', huf(HU_PRICES.one_eye_studio_black, 'de')],
-        ['Ein Auge mit Kunsthintergrund', `${huf(HU_PRICES.one_eye_art, 'de')} (${ART})`],
-        ['Zwei Augen (Couple Duo), jeder Stil', huf(HU_PRICES.two_eyes, 'de')],
-        ['Jedes weitere Auge', `+${huf(HU_PRICES.each_further_eye, 'de')}, bis zu ${MAX_EYES} Augen auf einem Kunstwerk`],
+        ['Ein Auge, Clean Iris', huf(HU_PRICES.one_eye_studio_black, 'de')],
+        ['Ein Auge, jeder andere Stil', huf(HU_PRICES.one_eye_art, 'de')],
+        ['Zwei Augen, jeder Stil', huf(HU_PRICES.two_eyes, 'de')],
+        ['Jedes weitere Auge', `+${huf(HU_PRICES.each_further_eye, 'de')}`],
       ],
     },
     `Alle Preise sind Endpreise in ungarischen Forint (Ft). Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet oder ausgewiesen. Versandkosten fallen nicht an. ${AFTER_CURRENCY_DE}`,

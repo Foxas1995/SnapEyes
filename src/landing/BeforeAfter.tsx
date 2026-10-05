@@ -3,7 +3,8 @@ import { useLang } from './lang';
 import { BEFORE_SRC, styleSrc, styleSrcSet } from './config';
 import { SectionHead } from './ui';
 
-// Real before and after: the founder's 315 px phone crop against the same eye rendered in Studio Black.
+// Real before and after: the founder's 315 px phone crop against the same eye rendered in the Clean Iris look (the picture is the bare iris on black, the
+// look the landing's copy names; its file is still the legacy render's, style-studio-black-*, until the cutover brings the Clean Iris images).
 // Both images keep the iris at almost the same size (about 90 % of the frame), so the split lines up.
 function CompareSlider() {
   const { t } = useLang();

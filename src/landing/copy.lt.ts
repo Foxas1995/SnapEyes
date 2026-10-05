@@ -16,8 +16,8 @@ export const lt: Copy = {
   meta: {
     title: 'SnapEyes Private Atelier - preciziškas rainelės menas iš išmaniojo telefono',
     description:
-      'Nufotografuokite vieną akį galine telefono kamera ir pamatykite savo rainelę kaip meno kūrinį šešiais stiliais. Peržiūra su vandens ženklu nemokama.',
-    shareDescription: 'Nufotografuokite vieną akį telefonu ir pamatykite savo rainelę kaip meno kūrinį šešiais stiliais. Peržiūra su vandens ženklu nemokama.',
+      'Nufotografuokite vieną akį galine telefono kamera ir pamatykite savo rainelę kaip meno kūrinį įvairiais stiliais. Peržiūra su vandens ženklu nemokama.',
+    shareDescription: 'Nufotografuokite vieną akį telefonu ir pamatykite savo rainelę kaip meno kūrinį įvairiais stiliais. Peržiūra su vandens ženklu nemokama.',
     locale: 'lt_LT',
   },
   langName: 'Lietuvių',
@@ -34,7 +34,7 @@ export const lt: Copy = {
     title: 'Preciziškas rainelės menas iš išmaniojo telefono',
     lead:
       'Nufotografuokite vieną akį galine telefono kamera. Surasime Jūsų rainelę, ją atkursime ir perteiksime Jūsų pasirinktu stiliumi. Rezultatą pirmiausia pamatysite nemokamai.',
-    points: ['Nemokama peržiūra 6 stiliais, su vandens ženklu', 'Maždaug minutė, be registracijos'],
+    points: ['Nemokama peržiūra kiekvienu stiliumi, su vandens ženklu', 'Maždaug minutė, be registracijos'],
     soon: `Netrukus: Jūsų kūrinys kaip skaitmeninis ${PX} failas`,
     ready: (from) => `Jūsų kūrinys kaip skaitmeninis ${PX} failas, nuo ${from}`,
     secondary: 'Pamatyti tikrą vaizdą prieš ir po',
@@ -48,11 +48,11 @@ export const lt: Copy = {
     eyebrow: 'Tikras vaizdas prieš ir po',
     title: 'Viena akis, vienas telefonas, vienas rezultatas',
     intro:
-      'Tai paties įkūrėjo akis. Kairėje: nuotrauka telefonu, apkirpta iki rainelės, originalaus 315 px dydžio. Dešinėje: ta pati akis Studio Black stiliumi, sukurta ta pačia programa, kuri kuria ir Jūsų peržiūrą.',
+      'Tai paties įkūrėjo akis. Kairėje: nuotrauka telefonu, apkirpta iki rainelės, originalaus 315 px dydžio. Dešinėje: ta pati akis Clean Iris stiliumi, sukurta ta pačia programa, kuri kuria ir Jūsų peržiūrą.',
     before: 'Prieš: nuotrauka telefonu',
-    after: 'Po: Studio Black',
+    after: 'Po: Clean Iris',
     beforeAlt: 'Prieš: įkūrėjo akis, kaip ją užfiksavo telefonas',
-    afterAlt: 'Po: ta pati akis Studio Black stiliumi',
+    afterAlt: 'Po: ta pati akis Clean Iris stiliumi',
     sliderLabel: 'Palyginti prieš ir po',
     caption: 'Mantas, įkūrėjas: nufotografuota namuose telefonu',
     transparencyTitle: 'Kas paimta iš Jūsų, o ką prideda DI',
@@ -68,7 +68,7 @@ export const lt: Copy = {
       },
       {
         title: 'Pamatykite nemokamą peržiūrą',
-        body: 'Maždaug per minutę Jūsų rainelė pasirodys visais šešiais stiliais, su vandens ženklu. Be registracijos, nieko mokėti nereikia.',
+        body: 'Maždaug per minutę Jūsų rainelė pasirodys kiekvienu stiliumi, su vandens ženklu. Be registracijos, nieko mokėti nereikia.',
       },
       {
         title: `Užsisakykite ${PX} failą`,
@@ -78,10 +78,10 @@ export const lt: Copy = {
     ],
   },
   styles: {
-    eyebrow: 'Šeši stiliai',
-    title: 'Ta pati akis, šeši stiliai',
+    eyebrow: 'Stiliai',
+    title: 'Ta pati akis, skirtingi stiliai',
     intro:
-      'Kiekvienas toliau esantis vaizdas yra įkūrėjo akis iš aukščiau pateikto palyginimo prieš ir po, mūsų programos sukurta kiekvienu stiliumi. Jūsų peržiūroje bus vandens ženklas, o meniniuose stiliuose po pavadinimu dar ir nedidelė parašo eilutė; čia jų nėra.',
+      'Kiekvienas toliau esantis vaizdas yra įkūrėjo akis iš aukščiau pateikto palyginimo prieš ir po, mūsų programos sukurta kiekvienu stiliumi. Jūsų peržiūroje bus vandens ženklas; čia jo nėra.',
     oneEye: 'Viena akis',
     desc: {
       studio_black: 'Tik Jūsų rainelė, grynai juodame fone.',
@@ -100,15 +100,14 @@ export const lt: Copy = {
     noticeOpen: 'Pradėkite nuo nemokamos peržiūros: užsisakysite tik tada, kai rezultatas Jums patiks.',
     previewTitle: 'Peržiūra',
     previewPrice: 'Nemokamai',
-    previewItems: ['Visi 6 stiliai', 'Su vandens ženklu', 'Jau šiandien'],
+    previewItems: ['Kiekvienas stilius', 'Su vandens ženklu', 'Jau šiandien'],
     oneEyeTitle: 'Viena akis',
     oneEyeNote: 'Jūsų rainelė kaip atskiras kūrinys, Jūsų pasirinktu stiliumi.',
-    studioBlack: 'Studio Black',
-    artBackground: 'Meninis fonas',
-    artBackgroundNote: 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke arba Supernova',
+    artBackground: 'Bet kuris kitas stilius',
+    artBackgroundNote: '{styles}',
     severalTitle: 'Kelios akys',
-    severalNote: 'Nuo dviejų iki aštuonių akių viename kūrinyje: Jūsų ir Jūsų artimųjų.',
-    duoLabel: '2 akys · Couple Duo',
+    severalNote: 'Nuo dviejų iki {max} akių viename kūrinyje: Jūsų ir Jūsų artimųjų.',
+    severalSoon: 'Nemokama peržiūra jau dabar. Šios grupės užsakymai bus galimi netrukus.',
     eyes: (n) => akys(n),
     perEye: (price, max) => `+${price} už kiekvieną papildomą akį, iki ${max} ${akiuWord(max)}`,
     footnote: `Kiekvienas užsakymas yra vienas skaitmeninis failas be vandens ženklo, kurio ilgoji kraštinė yra ${PX} (vienos akies: ${SQUARE}). Kainos nurodytos eurais. Tai galutinės kainos: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.`,

@@ -22,9 +22,10 @@
 //      site's rule (src/shared/markets.ts priceMinor), this build's restatements (check_prices.mjs priceRule,
 //      check_experiments.mjs ladderRule) and the registry's price class give one price (api/_lib/pay.py and abtest.py are
 //      compared by the style suites);
-//   7. the terms of sale name the price classes: the rows of the black class print the name of its one member (a second member,
-//      or a rename, needs a text change); and, from WP12_RULES, no terms table prints a number of eyes as a maximum and the
-//      landing's art row and eye limit come from the run-time tokens;
+//   7. the terms of sale name the price classes: the rows of the black class print the name of its one v3 member (the legacy ids retire at the
+//      cutover and are not named; a second member, or a rename, needs a text change and a new LEGAL_UPDATED); and, from WP12_RULES, no terms
+//      table prints a number of eyes as a maximum (neither \${MAX_EYES} nor a digit before "eyes") and the landing's art row and eye limit come
+//      from the run-time tokens ({styles}, {max});
 //   8. the plate library baked into api/_lib/plates_registry.py is sound (its version is the registry's, every plate is well formed, every
 //      usable plate's 1K file is in api/_assets/plates with the recorded size and sha256 and no file rides in unlisted, the two atlases
 //      likewise, the engine entries name only families and atlases that exist) and every style shown to customers (stage preview or live) has
@@ -53,10 +54,10 @@ import {
 import { parseMarketsSource, MARKETS_FILE, priceRule } from './check_prices.mjs';
 import { parseExperimentsSource, EXPERIMENTS_FILE, ladderRule } from './check_experiments.mjs';
 
-/** The rules of items 4 and 7 that the current texts cannot meet yet: the landing, the picker and the terms still say "six styles",
- *  "Couple Duo" and "up to 8 eyes". Work package 12 rewrites them (style-agnostic, count-free, run-time tokens) and sets this to true in
- *  the same change; until then those two sub-rules are built, tested on synthetic files, and not enforced. */
-export const WP12_RULES = false;
+/** The rules of items 4 and 7 that the texts of work package 12 meet: no string states a number of styles, no terms table prints a number of eyes
+ *  as a maximum (they are count-free, and so is every price row), the landing's pricing rows take the list of art styles and the eye limit from the
+ *  run-time tokens. Work package 12 rewrote the landing, the picker's price lines and the terms and set this to true in the same change. */
+export const WP12_RULES = true;
 
 const STAGES = ['planned', 'lab', 'preview', 'live', 'retired'];
 const CEILINGS = ['planned', 'lab', 'preview', 'live'];
@@ -378,6 +379,15 @@ const NUMBER_WORDS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'ei
 /** A string that states a number of styles ("six styles", "All 6 styles", "in allen sechs Stilen", "6 stiliais", "hat st\u00edlusban"). */
 export const NUMBER_OF_STYLES = new RegExp(`(?<![\\p{L}\\d])(\\d+|${NUMBER_WORDS.join('|')})\\s+(?:\\p{L}+\\s+)?(styles?|stile[ns]?|stili\\p{L}*|st\u00edl\\p{L}*)(?![\\p{L}])`, 'iu');
 
+/** The words of index.html's head (the title and every meta content): the share and search copy, which the page's dictionary cannot reach. */
+export function indexTexts(root) {
+  let html = '';
+  try { html = readFileSync(join(root, 'index.html'), 'utf8'); } catch { return []; }
+  const texts = [...html.matchAll(/<title>([^<]*)<\/title>/g)].map((m) => ['index.html title', m[1]]);
+  for (const m of html.matchAll(/<meta\s+(?:name|property)="([^"]+)"\s+content="([^"]*)"/g)) texts.push([`index.html ${m[1]}`, m[2]]);
+  return texts;
+}
+
 export function checkNumberOfStyles(surfaces, out, extraTexts = []) {
   for (const [name, dict] of surfaces) {
     for (const [lang, copy] of Object.entries(dict ?? {})) {
@@ -486,8 +496,9 @@ const BLACK_ROW = /\[\s*'([^'\\]*)'\s*,\s*\w+\(\s*(?:PRICE_CENTS\.studioBlack|(?
 /** The rows of the black price class (in every terms table) print the name of the class's one member. When enforcing the
  *  count-free rule (WP12_RULES): no terms table prints a number of eyes as a maximum. */
 export function checkTerms(root, styles, out, files = TERMS_FILES, enforce = WP12_RULES) {
-  const members = shownIds(styles).filter((id) => styles[id].price_class === 'black');
-  if (members.length !== 1) { out.push(`the black price class has ${members.length} styles shown to customers (${members.join(', ') || 'none'}); the terms of sale name exactly one: a second member needs a text change and a new LEGAL_UPDATED`); return; }
+  // the black class as the terms name it: its v3 style (the legacy ids retire at the cutover, so their Studio Black is not named; a planned id has no engine)
+  const members = Object.keys(styles).filter((id) => styles[id].price_class === 'black' && styles[id].legacy === 0 && !['planned', 'retired'].includes(styles[id].stage));
+  if (members.length !== 1) { out.push(`the black price class has ${members.length} styles that are not legacy or planned (${members.join(', ') || 'none'}); the terms of sale name exactly one: a second member needs a text change and a new LEGAL_UPDATED`); return; }
   const name = styles[members[0]].name;
   for (const rel of files) {
     let text;
@@ -496,6 +507,10 @@ export function checkTerms(root, styles, out, files = TERMS_FILES, enforce = WP1
     if (!rows.length) out.push(`${rel}: no row of the black price class found (the style check reads the terms tables)`);
     for (const r of rows) if (!r[1].includes(name)) out.push(`${rel}: the row "${r[1]}" prices the black class, whose one member is "${name}": the row must name it (a renamed or replaced style needs a text change and a new LEGAL_UPDATED)`);
     if (enforce && /\$\{MAX_EYES\}/.test(text)) out.push(`${rel}: prints the maximum number of eyes (\${MAX_EYES}): the terms print none (a build-time text cannot follow the catalogue)`);
+    const digits = enforce ? /(?<![\w.])(\d{1,2})\s+(eyes|Augen|akys|akių|szem)(?![\p{L}])/iu.exec(text) : null;
+    if (digits) out.push(`${rel}: prints a number of eyes ("${digits[0]}"): the terms print none (a build-time text cannot follow the catalogue)`);
+    // a price row prints no list of styles (the art styles come from the run-time catalogue): the old constant is gone
+    if (enforce && /\bconst ART\b/.test(text)) out.push(`${rel}: holds a list of art styles (const ART): the price rows name classes, the list is the run-time catalogue's`);
   }
 }
 
@@ -504,6 +519,8 @@ export function checkRuntimeTokens(copy, out) {
   for (const [lang, c] of Object.entries(copy ?? {})) {
     const note = c?.pricing?.artBackgroundNote;
     if (typeof note === 'string' && !note.includes('{styles}')) out.push(`landing.${lang}.pricing.artBackgroundNote must be the token {styles} (the list of art styles comes from the run-time catalogue), not a written list`);
+    const several = c?.pricing?.severalNote;
+    if (typeof several === 'string' && !several.includes('{max}')) out.push(`landing.${lang}.pricing.severalNote must hold the token {max} (the number of eyes comes from the run-time catalogue), not a written number`);
   }
 }
 
@@ -771,7 +788,7 @@ export async function checkStyles(root, load) {
     surfaces = [['landing', landing.COPY], ['try', tryCopy.COPY], ['order', orderCopy.ORDER_COPY]];
     checkCopyDictionaries(surfaces, reg.styles, out);
     if (WP12_RULES) {
-      checkNumberOfStyles(surfaces, out);
+      checkNumberOfStyles(surfaces, out, indexTexts(root));
       checkRuntimeTokens(landing.COPY, out);
     }
   }

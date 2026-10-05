@@ -27,7 +27,7 @@ const KEY_LT: Record<keyof ExpLadder, string> = {
 };
 const ATVEJIS: [string, string, string] = ['atvejis', 'atvejai', 'atvejų'];
 
-/** The ladder's example totals for this many eyes (Studio Black), by the very rule the pages use (src/shared/markets.ts). */
+/** The ladder's example totals for this many eyes (a style of the black class), by the very rule the pages use (src/shared/markets.ts). */
 const total = (market: string, ladder: ExpLadder, eyes: number, style = classStyle('black')): number => priceMinor(eyes, style, market, ladder);
 
 /** How long ago, in words: "15 min.", "3 val.", "12 d." */

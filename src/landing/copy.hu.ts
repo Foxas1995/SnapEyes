@@ -20,9 +20,9 @@ export const hu: Copy = {
   meta: {
     title: 'SnapEyes Private Atelier - Precíz íriszalkotás a telefonos fotódból',
     description:
-      'Fotózd le az egyik szemed a telefonod hátsó kamerájával, és nézd meg a saját íriszed műalkotásként, hat stílusban. A vízjeles előnézet ingyenes.',
+      'Fotózd le az egyik szemed a telefonod hátsó kamerájával, és nézd meg a saját íriszed műalkotásként, többféle stílusban. A vízjeles előnézet ingyenes.',
     shareDescription:
-      'Fotózd le az egyik szemed a telefonoddal, és nézd meg a saját íriszed műalkotásként, hat stílusban. A vízjeles előnézet ingyenes.',
+      'Fotózd le az egyik szemed a telefonoddal, és nézd meg a saját íriszed műalkotásként, többféle stílusban. A vízjeles előnézet ingyenes.',
     locale: 'hu_HU',
   },
   langName: 'Magyar',
@@ -38,7 +38,7 @@ export const hu: Copy = {
     title: 'Precíz íriszalkotás a telefonos fotódból',
     lead:
       'Fotózd le az egyik szemed a telefonod hátsó kamerájával. Megkeressük az íriszed, helyreállítjuk, és a választott stílusban műalkotássá formáljuk. Az eredményt először te látod, ingyen.',
-    points: ['Ingyenes vízjeles előnézet 6 stílusban', 'Kb. egy perc, regisztráció nélkül'],
+    points: ['Ingyenes vízjeles előnézet minden stílusban', 'Kb. egy perc, regisztráció nélkül'],
     soon: `Hamarosan: az alkotásod ${PX}-es digitális fájlként`,
     ready: (from) => `Az alkotásod ${PX}-es digitális fájlként, ${from}-tól`,
     secondary: 'Nézz meg egy valódi előtte-utána képet',
@@ -52,11 +52,11 @@ export const hu: Copy = {
     eyebrow: 'Valódi előtte-utána',
     title: 'Egy szem, egy telefon, egy eredmény',
     intro:
-      'Ez az alapító saját szeme. Balra a telefonos fotó, az íriszre vágva, eredeti, 315 px-es méretében. Jobbra ugyanez a szem Studio Black stílusban, ugyanazzal a motorral elkészítve, amely a te előnézetedet is készíti.',
+      'Ez az alapító saját szeme. Balra a telefonos fotó, az íriszre vágva, eredeti, 315 px-es méretében. Jobbra ugyanez a szem Clean Iris stílusban, ugyanazzal a motorral elkészítve, amely a te előnézetedet is készíti.',
     before: 'Előtte: telefonos fotó',
-    after: 'Utána: Studio Black',
+    after: 'Utána: Clean Iris',
     beforeAlt: 'Előtte: az alapító szeme, ahogy a telefon rögzítette',
-    afterAlt: 'Utána: ugyanez a szem Studio Black stílusban',
+    afterAlt: 'Utána: ugyanez a szem Clean Iris stílusban',
     sliderLabel: 'Előtte és utána összehasonlítása',
     caption: 'Mantas, alapító - otthon, telefonnal fotózva',
     transparencyTitle: 'Mi származik tőled, és mit ad hozzá a mesterséges intelligencia',
@@ -72,7 +72,7 @@ export const hu: Copy = {
       },
       {
         title: 'Nézd meg az ingyenes előnézeted',
-        body: 'Körülbelül egy perc alatt megjelenik az íriszed mind a hat stílusban, vízjellel. Regisztráció és fizetés nélkül.',
+        body: 'Körülbelül egy perc alatt megjelenik az íriszed minden stílusban, vízjellel. Regisztráció és fizetés nélkül.',
       },
       {
         title: `Rendeld meg a ${PX}-es fájlt`,
@@ -82,10 +82,10 @@ export const hu: Copy = {
     ],
   },
   styles: {
-    eyebrow: 'Hat stílus',
-    title: 'Ugyanaz a szem, hatféleképpen',
+    eyebrow: 'Stílusok',
+    title: 'Ugyanaz a szem, különböző stílusokban',
     intro:
-      'Minden kép az alapító szemét mutatja a fenti előtte-utána képről, a motorunkkal az adott stílusban elkészítve. Az előnézeteden vízjel is van, a művészi stílusokon pedig egy kis aláírássor a cím alatt; itt mindkettőt elhagytuk.',
+      'Minden kép az alapító szemét mutatja a fenti előtte-utána képről, a motorunkkal az adott stílusban elkészítve. Az előnézeteden vízjel is van; itt azt elhagytuk.',
     oneEye: 'Egy szem',
     desc: {
       studio_black: 'Csak az íriszed, tiszta feketén.',
@@ -104,15 +104,14 @@ export const hu: Copy = {
     noticeOpen: 'Kezdd az ingyenes előnézettel: csak akkor rendelsz, ha tetszik az eredmény.',
     previewTitle: 'Előnézet',
     previewPrice: 'Ingyenes',
-    previewItems: ['Mind a 6 stílus', 'Vízjellel', 'Már ma elérhető'],
+    previewItems: ['Minden stílus', 'Vízjellel', 'Már ma elérhető'],
     oneEyeTitle: 'Egy szem',
     oneEyeNote: 'Az íriszed egyetlen alkotásként, a választott stílusban.',
-    studioBlack: 'Studio Black',
-    artBackground: 'Művészi háttér',
-    artBackgroundNote: 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke vagy Supernova',
+    artBackground: 'Bármely más stílus',
+    artBackgroundNote: '{styles}',
     severalTitle: 'Több szem',
-    severalNote: 'Kettőtől nyolc szemig egy alkotáson: a tiéd és azoké, akiket szeretsz.',
-    duoLabel: '2 szem · Couple Duo (páros)',
+    severalNote: 'Kettőtől {max} szemig egy alkotáson: a tiéd és azoké, akiket szeretsz.',
+    severalSoon: 'Az előnézet már most ingyenes. Ennek a csoportnak a rendelése hamarosan indul.',
     eyes: (n) => `${n} szem`,
     perEye: (price, max) => `+${price} minden további szemért, legfeljebb ${max} szemig`,
     footnote: `Minden rendelés egy vízjel nélküli digitális fájl, a hosszabbik oldalán ${PX} (egy szem esetén ${SQUARE}). Az árak euróban értendő végső árak: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.`,
