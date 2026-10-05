@@ -12,11 +12,13 @@
   }
   .lp-ruler { position: relative; border-radius: 18px; background: var(--bg-2); box-shadow: 0 0 0 1px var(--line); overflow: hidden; }
   .lp-ruler svg { width: 100%; height: auto; }
-  .lp-ruler .lp-lbl { position: absolute; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; pointer-events: none; padding: 1px 6px; border-radius: 6px; background: rgb(11 14 22 / .82); transition: color var(--d-tap) var(--ease-out); }
+  .lp-ruler .lp-lbl { position: absolute; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; pointer-events: none; padding: 1px 6px; border-radius: 6px; line-height: 1.2; background: rgb(11 14 22 / .82); transition: color var(--d-tap) var(--ease-out); }
   .lp-ruler .lp-lbl.lp-on { color: var(--t-1); }
   .lp-ruler .lp-lbl.lp-note { font-weight: 500; letter-spacing: .02em; }
   @media (max-width: 639px) {
     .lp-ruler .lp-lbl:not(.lp-on):not(.lp-note) { display: none; }
+    /* the phone's crop of the drawing leaves 14 px under the floor line: the two captions on it sit 4 px higher so no letter is cut */
+    .lp-ruler .lp-lbl.lp-note { margin-top: -4px; }
     .lp-ruler .lp-lbl.lp-note { font-size: 12px; }
   }
   .lp-ruler rect.lp-sq { cursor: pointer; transition: fill var(--d-tap) var(--ease-out); }
