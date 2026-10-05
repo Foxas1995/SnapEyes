@@ -78,7 +78,10 @@ FAMILIES = {
     "P-SP-CROWN": {"store4k": 1, "release1": 1, "source": "y2"},
     "P-EL-FLAME": {"store4k": 1, "release1": 0, "source": "y2"},
     "P-DN-SPIRAL": {"store4k": 1, "release1": 1, "source": "y2"},
-    "P-UV-DUST": {"store4k": 1, "release1": 0, "source": "uv"},
+    # DUST is release 1 although Deep Field (its look) is a laboratory style: Universe Echo, a style of the first release, draws a DUST accent plate on its
+    # tall (9:19.5) canvas, picked among all seven, at a side of 2.6 canvas widths: the 2k mip of the 4K file at a 1024 px preview, the 4K file at a master
+    # (WP8A review). Without them in the first upload the style would answer 503 on that canvas the day it is raised.
+    "P-UV-DUST": {"store4k": 1, "release1": 1, "source": "uv"},
     "P-UV-MILKY": {"store4k": 1, "release1": 0, "source": "uv"},
     "P-CX-JET": {"store4k": 0, "release1": 0, "source": "cx"},
     "P-CX-RIVER": {"store4k": 0, "release1": 0, "source": "cx"},

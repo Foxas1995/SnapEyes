@@ -67,7 +67,7 @@ PLATES_REGISTRY = {
    "store4k": 1
   },
   "P-UV-DUST": {
-   "release1": 0,
+   "release1": 1,
    "source": "uv",
    "store4k": 1
   },

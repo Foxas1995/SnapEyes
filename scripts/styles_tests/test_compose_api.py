@@ -678,6 +678,33 @@ check("a batch that was answered 503 busy_retry or that failed before a tile was
       getattr(e_busy, "status", None) == 503 and e_busy.body["reason"] == "busy_retry" and n_busy == 0 and isinstance(e_fail, RuntimeError) and n_fail == 0 and r_two["batch"] and n_two == 2
       and CMP._DAY["tiles"] == 2 and GD.state() == {"mb": 0.0, "heavy": 0, "running": 0}, (n_busy, n_fail, n_two, CMP._DAY))
 
+# ============================================================================================ 6c. a plate that is not in storage
+section("6c. a plate the picture needs is not in storage: 503 plate_retry, never a 500 and never a picture without the plate (WP8A review)")
+from _lib.styles import plates as PLATES  # noqa: E402
+EVENTS.clear()
+# Universe Echo on the tall canvas lays a P-UV-DUST accent plate over the lower third: at a 1024 px preview the 2k mip of the 4K file, which the local store of this
+# suite does not hold. The preview used to fail with a bare exception (HTTP 500, "Something went wrong on our side"); the master's first plate fault is 503 plate_retry
+with Show("solo.universe", stage="live"):
+    e_wall = raised(lambda: comp({"sealed": S1, "style": "solo.universe", "format": "wallpaper"}))
+    e_cv = raised(lambda: comp({"sealed": S1, "style": "solo.universe", "format": "9:19.5"}))
+    r_art = comp({"sealed": S1, "style": "solo.universe"})
+    c_pl, j_pl, r_pl = post("/api/compose", {"sealed": S1, "style": "solo.universe", "format": "wallpaper", "lang": "lt"})
+ev_pl = [f for k, f in EVENTS if k == "error" and f.get("reason") == "plate_retry"]
+check("the tall canvas of Echo at a 1024 px preview without its 4K plate is 503 plate_retry (retry true, the master's back-off, the sentence, the style), asked as 'wallpaper' and as the canvas id 9:19.5; "
+      "the body names no plate",
+      all(getattr(e, "status", None) == 503 and e.body["reason"] == "plate_retry" and e.body["retry"] is True and e.body["retry_after"] == SPS.PLATE_RETRY_S
+          and e.body["style"] == "solo.universe" and e.body["error"] == CMP.WORDS["plate_retry"]["en"] and "P-UV" not in json.dumps(e.body) for e in (e_wall, e_cv)), (e_wall, e_cv))
+check("the same style on its square canvas needs no 4K plate and is drawn: the fault is the tall canvas's alone, the preview is a real one (1024 px, the canvas named, a picture)",
+      r_art["ok"] is True and r_art["canvas"] != "9:19.5" and r_art["width"] == r_art["height"] == 1024 and img_of(r_art).size == (1024, 1024), (r_art.get("canvas"), r_art.get("width"), r_art.get("height")))
+check("over HTTP: 503 with Retry-After of the master's back-off, the sentence in the page's language (Lithuanian here), and an error event with the reason, the status and the style (the owner's admin sees it)",
+      c_pl == 503 and j_pl["reason"] == "plate_retry" and j_pl["error"] == CMP.WORDS["plate_retry"]["lt"] and r_pl.headers.get("Retry-After") == str(SPS.PLATE_RETRY_S)
+      and any(f.get("style") == "solo.universe" and f.get("status") == 503 for f in ev_pl), (c_pl, j_pl, dict(r_pl.headers), ev_pl))
+# a plate that is there but is not the file the registry names (a wrong hash) is the same answer, and the picture is not drawn a second time, nor with another plate
+with Show("solo.gold"), mock.patch.object(ST, "preview", side_effect=PLATES.PlateUnavailable("P-SN-CLOUD__synthetic", "sha256")) as m_pu:
+    e_pu = raised(lambda: comp({"sealed": S1, "style": "solo.gold"}))
+check("a plate that is not the registry's file (sha256) is answered 503 plate_retry as well, for any style, and preview() was called once (no second picture, no other plate)",
+      getattr(e_pu, "status", None) == 503 and e_pu.body["reason"] == "plate_retry" and e_pu.body["style"] == "solo.gold" and m_pu.call_count == 1, (e_pu, m_pu.call_count))
+
 # ============================================================================================ 7. the watermark
 section("7. the watermark: every tile on every disc, outside the discs the legacy one, the overlay anchored to the iris, the aligned median attack (I14)")
 ACCENT = ST.WATERMARK_ACCENT

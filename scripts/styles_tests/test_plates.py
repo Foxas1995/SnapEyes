@@ -144,8 +144,10 @@ check("4K files: only in the families that keep them in storage, at most 16 MiB 
       "ids that start with their family", all(FAMS[r["family"]]["store4k"] and r["k4"]["bytes"] <= 16 << 20 and r["k4"]["px"] == 4096 and re.fullmatch(r"[0-9a-f]{64}", r["k4"]["sha256"]) for r in k4.values())
       and all(store._check_path(P.storage_path(i)) for i in k4) and all(i.startswith(r["family"] + "__") for i, r in TABLE.items()), [i for i in k4 if not FAMS[k4[i]["family"]]["store4k"]][:2])
 rel1 = sum(r["k4"]["bytes"] for r in k4.values() if FAMS[r["family"]]["release1"]) / 1048576
-check("what the first release must upload (CLOUD for Powder Burst, CROWN for Splash, SPIRAL for Vortex) is 370 MiB: the size V6 reads against the storage plan",
-      360 < rel1 < 380 and {r["family"] for r in k4.values() if FAMS[r["family"]]["release1"]} == {"P-SN-CLOUD", "P-SP-CROWN", "P-DN-SPIRAL"}, rel1)
+check("what the first release must upload (CLOUD for Powder Burst, CROWN for Splash, SPIRAL for Vortex, DUST for the accent plate of Universe Echo on its tall canvas) is 413 MiB: "
+      "the size V6 reads against the storage plan; the laboratory families (FLAME, MILKY) are not in it",
+      405 < rel1 < 420 and {r["family"] for r in k4.values() if FAMS[r["family"]]["release1"]} == {"P-SN-CLOUD", "P-SP-CROWN", "P-DN-SPIRAL", "P-UV-DUST"}
+      and not FAMS["P-EL-FLAME"]["release1"] and not FAMS["P-UV-MILKY"]["release1"], rel1)
 check("a plate that is not usable keeps its record and ships no file; a plate without a void is never offered to place()", all(not r["k1"] and not r["k4"] for r in TABLE.values() if not r["usable"])
       and all("void" in r for r in USABLE.values() if r["family"] in ("P-SN-CLOUD", "P-SP-CROWN", "P-EL-FLAME", "P-DN-SPIRAL")))
 check("the fits of the collision plates are full precision (the prototype read them unrounded): JET axis of the first plate", TABLE["P-CX-JET__medium_left_b60__flash1K__t0"]["fit"]["axis"] == -1.7105220328572195)
@@ -528,7 +530,7 @@ cli2 = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "upload_pla
 cli3 = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "upload_plates.py"), "--release1", "--y2", os.path.join(TMP, "none"), "--local-dir", os.path.join(TMP, "store_cli")], capture_output=True, text=True, timeout=300)
 check("the command line names the families (nothing is chosen by default), refuses a family without 4K files, and with no source folder reports every plate and exits 1; "
       "the dry run's last line says nothing was written", cli.returncode != 0 and "name the families" in (cli.stdout + cli.stderr) and cli2.returncode != 0 and "P-CX-JET" in (cli2.stdout + cli2.stderr)
-      and cli3.returncode == 1 and "102 plates" in cli3.stdout and "dry run: nothing was written" in cli3.stdout and not os.path.exists(os.path.join(TMP, "store_cli", "plates")), (cli3.stdout[-400:], cli3.stderr[-300:]))
+      and cli3.returncode == 1 and "109 plates" in cli3.stdout and "dry run: nothing was written" in cli3.stdout and not os.path.exists(os.path.join(TMP, "store_cli", "plates")), (cli3.stdout[-400:], cli3.stderr[-300:]))
 check("the script never reads or prints a key: it names no environment variable of the store", not re.search(r"SERVICE_KEY|GEMINI|os\.environ\.get|getenv", read("scripts/upload_plates.py")))
 
 # ============================================================================================ 7. the bundle checks

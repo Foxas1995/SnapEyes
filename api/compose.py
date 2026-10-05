@@ -37,7 +37,8 @@ or eyes the style cannot take: the same one-style request that a batch reports a
 finds a bar pupil the sealed profile did not show: its tile is then marked unavailable and the other tiles of the batch are still made); 422
 too_many_styles {max}: the batch costs more than
 TILES_BUDGET_S seconds; 503 busy_retry {retry_after}: another render holds the CPU or memory of this instance, or not enough time is left in the
-call; 503 tiles_paused: this instance's ceiling of tiles for today is reached.
+call; 503 tiles_paused: this instance's ceiling of tiles for today is reached; 503 plate_retry {retry_after}: a plate the one-style preview needs is
+not in storage (or is not the file the registry names): never another plate and never a picture without the plate.
 A style of the v3 engine (the registry's engine module is not "legacy": api/_lib/styles) is drawn by its family; the legacy styles by
 api/_lib/iris.py as always. The words on the picture are the customer's own (names, date, family name) and nothing else; the watermark is
 drawn over the clean render here and nowhere else (api/_lib/preview.py watermark: iris-anchored on every disc).
@@ -103,6 +104,10 @@ WORDS = {
                         "lt": "Per daug stilių vienu metu. Paprašykite mažiau.", "hu": "Túl sok stílus egyszerre. Kérj kevesebbet."},
     "busy_retry": {"en": "We are busy for a moment. Please try again shortly.", "de": "Wir sind gerade ausgelastet. Bitte versuchen Sie es gleich erneut.",
                    "lt": "Šiuo metu esame užimti. Pabandykite netrukus dar kartą.", "hu": "Egy pillanatra elfoglaltak vagyunk. Kérjük, próbáld újra hamarosan."},
+    "plate_retry": {"en": "A file we need is not ready for a moment. Please try again shortly.",
+                    "de": "Eine benötigte Datei ist gerade nicht bereit. Bitte versuchen Sie es gleich erneut.",
+                    "lt": "Reikalingas failas kol kas nepasiekiamas. Pabandykite netrukus dar kartą.",
+                    "hu": "Egy szükséges fájl egy pillanatra nem érhető el. Kérjük, próbáld újra hamarosan."},
     "tiles_paused": {"en": "We are not making more previews today. Please try again later.",
                      "de": "Heute erstellen wir keine weiteren Vorschauen. Bitte versuchen Sie es später erneut.",
                      "lt": "Šiandien daugiau peržiūrų nekuriame. Pabandykite vėliau.",
@@ -661,6 +666,7 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
     """One style of the v3 engine at req['size']: the clean render, the plan, then the preview watermark (unless a signed unlock ticket says the file is
     paid for: nothing mints one yet), the colour QA on the graded frame, the event and the reply."""
     from _lib import styles as ST
+    from _lib.styles import plates as PLATES, steps as SP
     layout, layouts = _layout_for(style, n, req["layout"], True)
     eng, canvas, word = _engine_canvas(style, n, req["fmt"])
     opts = _tile_opts(req["opts"], style, n, admin)
@@ -685,6 +691,11 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
         if _bar_refusal(e):                           # the engine's own look at the pixels refused what the sealed profile let through: the tile's own answer
             raise _refuse(422, "style_unavailable", "bar_pupil", False, None, why="bar_pupil", style=style) from None
         raise
+    except PLATES.PlateUnavailable as e:
+        # a plate this picture needs is not in storage (or is not the file the registry names): never another plate, never a plain picture, and not a 500 either.
+        # The same answer as the master's first plate fault (steps.py plate_retry); the log line names the plate for the owner (the error event carries the style)
+        print("snapeyes plate unavailable:", style, getattr(e, "plate_id", ""), getattr(e, "why", ""), flush=True)
+        raise _refuse(503, "plate_retry", "plate_retry", True, SP.PLATE_RETRY_S, style=style) from None
     img = pv.img if clean else ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n)
     qa = _qa_of(pv)
     design, fallback = _drawn(pv, plan)
