@@ -49,9 +49,9 @@
   .lp-filecard span { font-size: 12.5px; color: var(--ink-2); }
   .lp-filecard em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
   details.lp-tips { margin-top: 14px; border-top: 1px solid var(--line); }
-  details.lp-tips > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--gold-soft); }
+  details.lp-tips > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--t-1); }
   details.lp-tips > summary::-webkit-details-marker { display: none; }
-  details.lp-tips > summary svg { width: 14px; height: 14px; color: var(--gold); flex: none; transition: transform .2s; }
+  details.lp-tips > summary svg { width: 14px; height: 14px; color: var(--gold); flex: none; transition: transform var(--d-ui) var(--ease-out); }
   details.lp-tips[open] > summary svg { transform: rotate(45deg); }
   details.lp-tips ul { display: grid; gap: 8px; padding: 2px 0 10px; }
   details.lp-tips li { position: relative; padding-left: 18px; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
@@ -66,4 +66,39 @@
     .lp-step { flex: 0 0 82%; scroll-snap-align: start; gap: 18px; }
     .lp-how-cta { margin-top: 22px; }
   }
+  /* ------------------------------------------------------------------------------------------------ motion (spec 6.5)
+     Every hidden state is under html.mo:not(.mo-fail) and prefers-reduced-motion: no-preference (the page's own gate, src/motion/motion.css), so
+     with the engine off, under reduced motion and after the failsafe all three steps are there, numerals gold, hairlines whole. */
+  /* the tips open in .5 s: the height is animated through ::details-content (interpolate-size is set on the root in src/motion/motion.css) */
+  details.lp-tips::details-content { block-size: 0; overflow: clip; transition: block-size var(--d-ui) var(--ease-out), content-visibility var(--d-ui) allow-discrete; }
+  details.lp-tips[open]::details-content { block-size: auto; }
+  @media (prefers-reduced-motion: reduce) {
+    details.lp-tips::details-content { transition: none; }
+  }
+  /* the hairline of each column reaches into the gap and ends just before the next numeral, so 01, 02 and 03 sit on one continuous line (the
+     static look, the same with and without motion) */
+  @media (min-width: 860px) {
+    .lp-step:not(:last-child) .lp-num::after { margin-right: -24px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    /* three columns (860 px and up): the steps rise one after the other, the list itself does not fade as well */
+    @media (min-width: 860px) {
+      html.mo:not(.mo-fail) .lp-steps[data-reveal="soft"]:not([data-in]) { opacity: 1; }
+      html.mo:not(.mo-fail) .lp-steps[data-reveal="soft"][data-in] { animation: none; }
+      /* the line draws itself from 01 to 03: each column's piece is drawn from the left, and its numeral warms to gold as its own piece starts,
+         380 ms after the one before: no dot, no glow, no scrub */
+      html.mo:not(.mo-fail) .lp-step[data-in] .lp-num::after { transform-origin: left center; animation: lp-rv-line var(--d-draw) var(--ease-out) calc(.2s + var(--i, 0) * 380ms) backwards; }
+      html.mo:not(.mo-fail) .lp-step[data-in] .lp-num { animation: lp-numlit .9s var(--ease-out) calc(.2s + var(--i, 0) * 380ms) backwards; }
+    }
+    /* the swipe rail (under 860 px): the rail appears as one piece, the steps themselves stay put while it is swiped */
+    @media (max-width: 859px) {
+      html.mo:not(.mo-fail) .lp-steps > .lp-step[data-reveal]:not([data-in]) { opacity: 1; translate: none; }
+      html.mo:not(.mo-fail) .lp-steps > .lp-step[data-reveal][data-in] { animation: none; }
+      /* the current step is in full tone, the others in the dimmest tone that is still legible (4.9:1): the numeral goes from that tone to gold, the title to white */
+      .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) .lp-num { color: rgb(245 197 66 / .6); }
+      .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) h3 { color: var(--t-floor); }
+      .lp-step .lp-num, .lp-step h3 { transition: color var(--d-tap) var(--ease-out); }
+    }
+  }
+  @keyframes lp-numlit { from { color: var(--t-floor); } }  .lp-steps { overscroll-behavior-x: contain; }
 }
