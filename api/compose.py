@@ -114,12 +114,32 @@ def _gate_code(style, n, metas):
     r = GATE.set_result([(m or {}).get("profile") for m in metas], rule)
     return "ok" if r["ok"] is True else ("unknown" if r["ok"] is None else r["first"]["why"])
 
+TEXT_RAW_MAX = 1000          # characters of one customer text field that are read at all (the preview keeps 60 of the names and 20 of the date): the body
+                             # may be 4 MB, and cleaning it letter by letter cost 7.5 s of CPU before the picture was drawn (the legacy path cuts first)
+TEXT_PARTS_MAX = 16          # parts of a names list that are read (the old wire form holds one name per eye, eight at most)
+
 def _engine_text(value, limit=None):
-    """The customer's names or date as the v3 engine draws them: cleaned, the names as one lockup line, and without a letter the artwork font
-    cannot draw (it would print as an empty box; checkout refuses such a name, a free preview just leaves the letter out)."""
+    """The customer's names as the v3 engine draws them: cleaned, the names as one lockup line, and without a letter the artwork font
+    cannot draw (it would print as an empty box; checkout refuses such a name, a free preview just leaves the letter out). The names come as
+    text ("Anna;Max") or as a list of texts, anything else is no names; only the first TEXT_RAW_MAX characters of a field are read."""
     from _lib.styles import text as TX
+    if isinstance(value, (list, tuple)):
+        value = [v[:TEXT_RAW_MAX] for v in value[:TEXT_PARTS_MAX] if isinstance(v, str)]
+    elif isinstance(value, str):
+        value = value[:TEXT_RAW_MAX]
+    else:
+        return ""
     parts = [p for p in (TX.clean("".join(ch for ch in n if not TX.unsupported(ch))) for n in TX.split_names(value)) if p]
     out = TX.lockup(parts)
+    return out[:limit] if limit else out
+
+def _engine_date(value, limit=None):
+    """The customer's date as the v3 engine draws it: one cleaned line, as typed (a semicolon or a line break does not separate dates: the paid
+    file draws TX.clean(date) as well), without a letter the artwork font cannot draw. Only the first TEXT_RAW_MAX characters are read."""
+    from _lib.styles import text as TX
+    if not isinstance(value, str):
+        return ""
+    out = TX.clean("".join(ch for ch in value[:TEXT_RAW_MAX] if not TX.unsupported(ch)))
     return out[:limit] if limit else out
 
 def _engine_canvas(style, n, fmt_in):
@@ -141,7 +161,7 @@ def _compose_engine(body, style, n, metas, raws, layouts, clean):
     meta = metas[0] if isinstance(metas[0], dict) else {}
     eye = SCORE.Iris(raws[0], "compose", max_side=WORK_SIDE, eye_id=meta.get("eye_id"))
     spec = {"style": style, "layout": layouts[0], "eyes": n, "canvas": canvas, "names": _engine_text(body.get("names"), 60),
-            "date": _engine_text(body.get("date"), 20)}
+            "date": _engine_date(body.get("date"), 20)}
     pv = ST.preview([eye], spec, size=PREVIEW_SIZE, watermark=not clean)
     qa = L.colour_qa("compose", graded=L.Image.fromarray(pv.graded[0]))
     E.record("compose", style=style, eyes=n, layout=layouts[0], format=word, clean=bool(clean), qa_ok=bool(qa.get("ok")),

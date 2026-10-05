@@ -11,6 +11,8 @@ What changed against the scratch file, and nothing else:
 - the process-wide WORK_SIDE is a parameter of the eye: Iris(raw, name, max_side=2048) (a preview 2048, a master 4096; the registry's
   work_side per layout caps it further), and an Iris can carry the eye_id of its sealed profile;
 - BoundedCache: the one bounded cache the engines use in place of an unbounded module level dict (a warm instance renders for hours).
+- Iris applies the camera orientation of the file's EXIF block before it crops the square, as iris.b64_to_pil does for the legacy engine (WP5A review: an old
+  page's plain iris is read by both, and the two must cut the same square; the seed is still the bytes as sent, and a file with no orientation is untouched).
 
 The rules this module enforces (the scratch test_fx.py proved them; they are the engines' contract):
 - The customer's graded iris is pasted LAST (finish -> paste_iris_last). An effect only ever receives the float
@@ -43,7 +45,7 @@ import threading
 import time
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 
 from .. import iris as L
 
@@ -126,7 +128,12 @@ class Iris:
         # bytes. When the Iris is made from those very bytes it is the digest's own prefix; a master made from other bytes passes it in.
         self.eye_id = eye_id or self.digest.hex()[:16]
         self.max_side = int(max_side)
-        im = Image.open(io.BytesIO(self.raw)).convert("RGB")
+        im = Image.open(io.BytesIO(self.raw))
+        try:
+            im = ImageOps.exif_transpose(im)                   # as iris.b64_to_pil: an old page's plain iris may carry a camera orientation
+        except Exception:                                      # (a damaged EXIF block is no reason to refuse the picture)
+            pass
+        im = im.convert("RGB")
         side = min(im.size)
         im = im.crop((0, 0, side, side))                       # as compose._irises
         if side > self.max_side:

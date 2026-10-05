@@ -1174,6 +1174,36 @@ LAB_CROP = 1280                           # ... with one window of it at 100 per
 LAB_EYE_B64 = 4_300_000                   # an eye sent as an image: the reply and request bodies are limited to 4.5 MB
 
 
+def _lab_number(v):
+    """A finite number of a request (a JSON number), else None: a boolean, a text, NaN, an infinity and an integer too large for a float are no number."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    try:
+        f = float(v)
+    except OverflowError:
+        return None
+    return f if f - f == 0.0 else None
+
+
+def _lab_words(value, what):
+    """The customer's words of a laboratory request as the drawer takes them: the names as one cleaned lockup line (text, or a list of up to 16 texts),
+    the date as one cleaned line. What the drawer would refuse is a 400 that says so, never the generic "could not read that image" that a ValueError
+    of the drawer would become: a line over the drawer's limit, and a letter the artwork font cannot draw (checkout refuses such a name too: the
+    laboratory shows what a delivered file would hold, so it does not leave the letter out as a free preview does)."""
+    from .styles import text as TX
+    if value is None or value == "":
+        return ""
+    if not (isinstance(value, str) or (what == "names" and isinstance(value, (list, tuple)) and len(value) <= 16 and all(isinstance(v, str) for v in value))):
+        raise L.ClientError(f"{what} is text" + (", or a list of up to 16 texts." if what == "names" else "."))
+    line = TX.lockup(value) if what == "names" else TX.clean(value)
+    if len(line) > TX.LINE_MAX:
+        raise L.ClientError(f"{what} is {len(line)} characters long once cleaned: one line of the artwork takes at most {TX.LINE_MAX}.")
+    bad = TX.unsupported(line)
+    if bad:
+        raise L.ClientError(f"{what} holds letters the artwork font cannot draw ({' '.join(bad[:10])}): a delivered file would print them as empty boxes.")
+    return line
+
+
 def a_styles_lab(body, who):
     """{style, eye | order + n, format, size, names, date, crop}: one style of the v3 engine (api/_lib/styles) drawn on ONE restored iris,
     whatever the style's stage (a held or not yet visible style is looked at here, never by a customer). eye: the base64 of a restored iris
@@ -1181,7 +1211,8 @@ def a_styles_lab(body, who):
     order (lab-...) and n its eye number: the stored 4K master eye of that test order, so a style can be looked at on a real master without
     another call to the image model. This action calls no image model, stores nothing and is not audited (it only costs CPU).
     format: a canvas id of the style ("1:1" ...); size: 480, 1024, 2048 or 4096 (the long side). names and date are the customer's words,
-    drawn under the iris when given. crop: [x, y] the centre of the 100 percent window, in canvas pixels (default: the upper right rim).
+    drawn under the iris when given (a line the drawer cannot take, over 256 characters or with a letter the font lacks, is a 400 that says which).
+    crop: [x, y] the centre of the 100 percent window, in canvas pixels (default: the upper right rim).
     A render above 2048 px comes back as a reduced view plus the window at full size. 4096 px is refused when the cost table says it cannot
     finish inside the time or the memory this function has (the rule a paid master is held to), and answers 409 plate_unavailable when a
     plate of the design has no 4K file in storage. Without a style the reply is the list of styles to choose from ({styles, sizes}).
@@ -1231,9 +1262,18 @@ def a_styles_lab(body, who):
             raise L.ClientError("Send eye as the base64 of a restored iris square, or order and n.")
         try:
             data = base64.b64decode(eye.split(",", 1)[1] if (eye.startswith("data:") and "," in eye[:64]) else eye)
-            L.Image.open(_io.BytesIO(data)).verify()
         except Exception:
             raise L.ClientError("That is not a readable image.") from None
+    try:
+        probe = L.Image.open(_io.BytesIO(data))
+        pixels = probe.size[0] * probe.size[1]
+        probe.verify()
+    except L.Image.DecompressionBombError:
+        raise L.ClientError(f"That image is too large (over {2 * L.MAX_PIXELS // 1_000_000} megapixels).") from None
+    except Exception:
+        raise L.ClientError("That is not a readable image.") from None
+    if pixels > L.MAX_PIXELS:      # the limit of every request that carries a photo (a flat 9000 px file is a few KB and 240 MB of pixels)
+        raise L.ClientError(f"That image is too large ({pixels // 1_000_000} megapixels, the limit is {L.MAX_PIXELS // 1_000_000}).")
     design_key = CO.cost_key(eng)
     try:
         est = CO.assess(design_key, 1) if size == 4096 else {"need_s": round(CO.preview_need(design_key, 1, size), 2), "ok": True, "why": None, "est_mb": None}
@@ -1242,9 +1282,11 @@ def a_styles_lab(body, who):
     if not est.get("ok") and est.get("why") in ("time", "memory"):
         raise L.ClientError(f"A 4096 px render of this design would not fit this function ({est['why']}: needs about {est.get('need_s')} s and "
                             f"{est.get('est_mb')} MB).")
-    spec = {"style": style, "layout": "single", "eyes": 1, "canvas": fmt, "names": body.get("names") if isinstance(body.get("names"), (str, list)) else "",
-            "date": body.get("date") if isinstance(body.get("date"), str) else ""}
-    iris = SC.Iris(data, "lab", max_side=4096 if size == 4096 else 2048)
+    spec = {"style": style, "layout": "single", "eyes": 1, "canvas": fmt, "names": _lab_words(body.get("names"), "names"), "date": _lab_words(body.get("date"), "date")}
+    try:
+        iris = SC.Iris(data, "lab", max_side=4096 if size == 4096 else 2048)
+    except (OSError, SyntaxError, ValueError, L.Image.DecompressionBombError):     # a truncated file passes verify() and fails when its pixels are decoded
+        raise L.ClientError("That is not a readable image.") from None
     try:
         pv = ST.preview([iris], spec, size=size, check=True)
     except PL.PlateUnavailable as e:
@@ -1255,8 +1297,9 @@ def a_styles_lab(body, who):
     if size > 2048:
         crop = body.get("crop")
         d = pv.discs[0]
-        if isinstance(crop, list) and len(crop) == 2 and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in crop):
-            cx, cy = float(crop[0]), float(crop[1])
+        xy = [_lab_number(v) for v in crop] if isinstance(crop, list) and len(crop) == 2 else []
+        if len(xy) == 2 and None not in xy:
+            cx, cy = xy
         else:
             cx, cy = d[0] + 0.72 * d[2], d[1] - 0.72 * d[2]
         x0 = int(min(max(cx - LAB_CROP / 2.0, 0), max(img.size[0] - LAB_CROP, 0)))

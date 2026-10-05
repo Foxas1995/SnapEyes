@@ -76,7 +76,7 @@ sys.path.insert(0, API)
 sys.path.insert(0, HERE)
 import numpy as np  # noqa: E402
 import PIL  # noqa: E402
-from PIL import Image  # noqa: E402
+from PIL import Image, ImageOps  # noqa: E402
 import synth_iris as SI  # noqa: E402
 import singles_cases as SC  # noqa: E402
 from _lib import iris as L  # noqa: E402
@@ -427,6 +427,50 @@ with Show("solo.gold"):
     r_plain = CMP.compose({"irises": [b64(jpeg)], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026"})
 check("an old page's plain iris gives the same picture as the sealed one (the same bytes, the same seed), with unknown gates and no eye id",
       r_plain["image"] == r_g["image"] and r_plain["eyes"][0]["eye_id"] is None and r_plain["eyes"][0]["gate"] == {"lid": None, "fill": None})
+
+
+def exif_jpeg(orientation, junk=None):
+    """A landscape JPEG (the iris on the left of a wider black frame) with a camera orientation, as a phone writes it (junk: the bytes of a damaged EXIF block instead)."""
+    wide = Image.new("RGB", (1200, 1024), (0, 0, 0))
+    wide.paste(Image.open(io.BytesIO(SI.png_bytes("blue_round"))).convert("RGB"), (0, 0))
+    ex = Image.Exif()
+    ex[0x0112] = orientation
+    bio = io.BytesIO()
+    wide.save(bio, "JPEG", quality=92, exif=junk if junk is not None else ex.tobytes())
+    return bio.getvalue()
+
+
+raw_x = exif_jpeg(6)
+sq_legacy = CMP._irises_full({"irises": [b64(raw_x)]})
+eye_x = C.Iris(sq_legacy[2][0], "x", max_side=2048)
+up_png = io.BytesIO()
+ImageOps.exif_transpose(Image.open(io.BytesIO(raw_x))).convert("RGB").save(up_png, "PNG")
+check("the engine reads an iris the way the legacy engine does: the camera orientation of the file is applied before the square is cut, so both cut the same square (an old page's plain "
+      "iris: the engine's square equals the legacy one and equals the upright picture's); the seed is still the sha256 of the bytes as sent",
+      np.array_equal(np.asarray(sq_legacy[0][0]), np.asarray(eye_x.src)) and np.array_equal(np.asarray(eye_x.src), np.asarray(C.Iris(up_png.getvalue()).src))
+      and eye_x.src.size == (1024, 1024) and eye_x.digest == hashlib.sha256(raw_x).digest() and not np.array_equal(np.asarray(eye_x.src), np.asarray(C.Iris(exif_jpeg(1)).src)))
+im_up = Image.open(io.BytesIO(jpeg)).convert("RGB")
+check("a file with no orientation, orientation 1 or a damaged EXIF block is read as before: the pixels are the file's own (a damaged block never refuses a picture)",
+      np.array_equal(np.asarray(C.Iris(jpeg).src), np.asarray(im_up.crop((0, 0, min(im_up.size), min(im_up.size)))))
+      and C.Iris(exif_jpeg(1)).src.size == (1024, 1024) and C.Iris(exif_jpeg(1, junk=b"Exif\x00\x00MM\x00*\xff\xff\xff\xff\x00\x01")).src.size == (1024, 1024))
+with Show("solo.clean"):
+    r_exif = CMP.compose({"irises": [b64(raw_x)], "style": "solo.clean", "pad": 1.12})
+    r_upright = CMP.compose({"irises": [b64(up_png.getvalue())], "style": "solo.clean", "pad": 1.12})
+check("end to end, a phone photo with an orientation gives the picture of the same photo upright (Clean Iris has no seed to tell the two files apart)",
+      r_exif["ok"] and r_exif["style"] == "solo.clean" and r_exif["image"] == r_upright["image"], (r_exif["style"], r_exif["image"] == r_upright["image"]))
+t0 = time.time()
+tx_big = CMP._engine_text("A" * 4_000_000, 60)
+tx_parts = CMP._engine_text([f"N{i}" for i in range(300_000)], 60)
+tx_date = CMP._engine_date("9" * 4_000_000, 20)
+t_text = time.time() - t0
+check("a customer's text is read from its first 1000 characters and 16 parts only: a 4 MB names field, a list of 300 000 names and a 4 MB date cost milliseconds (cleaned whole, one 4 MB "
+      "field took 7.5 s of CPU of a public endpoint before the picture was drawn) and give the lines they gave",
+      t_text < 1.5 and tx_big == "A" * 60 and tx_parts == " · ".join(f"N{i}" for i in range(16))[:60] and tx_date == "9" * 20, (round(t_text, 2), tx_big[:10], tx_parts[:20]))
+check("names that are not text are no names (a number, a dict, None, a list of numbers: an empty line); a date is one line as typed, equal to what the paid file draws (TX.clean): a semicolon "
+      "or a line break does not turn it into a lockup of several dates (a line break is a control character that the drawer's own clean() removes), and a letter the font lacks is left out of it as of the names",
+      CMP._engine_text(12345) == "" and CMP._engine_text({"a": 1}) == "" and CMP._engine_text(None) == "" and CMP._engine_text([1, 2]) == "" and CMP._engine_text("Anna;Max") == "Anna · Max"
+      and CMP._engine_text(["Anna", "Max"], 60) == "Anna · Max" and CMP._engine_date("12;05;2026", 20) == "12;05;2026" == TX.clean("12;05;2026")
+      and CMP._engine_date("12\n05", 20) == TX.clean("12\n05") == "1205" and CMP._engine_date(5) == "" and CMP._engine_date(None) == "" and CMP._engine_date("12 中 May", 20) == "12 May")
 with Show("solo.gold"):
     r_font = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12, "names": "Anna \u4e2d\u6587 \u2665 Max"})
 check("a letter the artwork font cannot draw is left out of a free preview (it would print as an empty box); a heart never reaches the picture",
@@ -492,6 +536,33 @@ for label, body in (("a legacy style", {"style": CT.legacy_ids()[0], "eye": b64(
     e_ = raises(lambda b=body: ops.a_styles_lab(b, "t"), L.ClientError)
     refusals.append((label, isinstance(e_, L.ClientError)))
 check("styles_lab refuses with a 400 (ClientError): " + ", ".join(r[0] for r in refusals), all(r[1] for r in refusals), [r for r in refusals if not r[1]])
+trunc_eye = SAMPLE[:len(SAMPLE) * 3 // 5]
+flat_io = io.BytesIO()
+Image.new("L", (7000, 6000), 40).save(flat_io, "JPEG", quality=50)
+words = {}
+for label, body in (("names over 256 characters", {"names": "A" * 300}), ("a date over 256 characters", {"date": "9" * 300}), ("names of 4 MB", {"names": "A" * 4_000_000}),
+                    ("a letter the font cannot draw", {"names": "Anna 中文"}), ("names that are a number", {"names": 5}), ("17 names", {"names": [f"N{i}" for i in range(17)]}),
+                    ("a date that is a list", {"date": ["2026"]}), ("a truncated JPEG", {"eye": b64(trunc_eye)}), ("a flat 42 megapixel file", {"eye": b64(flat_io.getvalue())})):
+    e_ = raises(lambda b=dict({"style": "solo.clean", "eye": b64(SAMPLE), "size": 480}, **body): ops.a_styles_lab(b, "t"), L.ClientError)
+    words[label] = str(e_) if isinstance(e_, L.ClientError) else "NOT A CLIENT ERROR: " + repr(e_)
+check("styles_lab answers a 400 that says what is wrong (a ClientError: not the generic \"could not read that image\" of a ValueError, and not a 500): " + ", ".join(words),
+      not any(v.startswith("NOT A CLIENT ERROR") for v in words.values()) and "256" in words["names over 256 characters"] and "date" in words["a date over 256 characters"]
+      and "256" in words["names of 4 MB"] and "cannot draw" in words["a letter the font cannot draw"] and "names is text" in words["names that are a number"]
+      and "16 texts" in words["17 names"] and "date is text" in words["a date that is a list"] and "too large" in words["a flat 42 megapixel file"]
+      and "not a readable image" in words["a truncated JPEG"], words)
+lt = ops.a_styles_lab({"style": "solo.clean", "eye": b64(SAMPLE), "size": 480, "names": "Ąžuolas;Čiurlionis", "date": "2026-05-12"}, "t")
+check("styles_lab draws a Lithuanian name and a date, the names as one lockup line, and the text check of the report (T7) holds",
+      lt["ok"] and lt["selfcheck"]["checks"]["t7"]["ok"], lt["selfcheck"]["checks"]["t7"])
+nums = [ops._lab_number(v) for v in (float("nan"), float("inf"), -float("inf"), True, "1", None, 10 ** 400, 5, 2.5, -3)]
+big_bad = ops.a_styles_lab({"style": "solo.clean", "eye": b64(SAMPLE), "size": 4096, "crop": [float("nan"), 10 ** 400]}, "t")
+pl_ = big_bad["plan"]["iris_at_1024"]
+want_x = int(min(max(4 * (pl_["cx"] + 0.72 * pl_["R"]) - 640, 0), 4096 - 1280))
+want_y = int(min(max(4 * (pl_["cy"] - 0.72 * pl_["R"]) - 640, 0), 4096 - 1280))
+check("a crop that is not a number (NaN, an infinity, an integer too large for a float) falls back to the default window and never fails the render",
+      nums == [None, None, None, None, None, None, None, 5.0, 2.5, -3.0] and big_bad["ok"] and abs(big_bad["crop"]["x"] - want_x) <= 1 and abs(big_bad["crop"]["y"] - want_y) <= 1,
+      (nums, big_bad["crop"]["x"], want_x, big_bad["crop"]["y"], want_y))
+exif_lab = [ops.a_styles_lab({"style": "solo.clean", "eye": b64(x), "size": 480}, "t")["image"] for x in (raw_x, up_png.getvalue())]
+check("the laboratory reads an iris as the site does: a phone photo with an orientation draws as the same photo upright", exif_lab[0] == exif_lab[1])
 e_nostore = raises(lambda: ops.a_styles_lab({"style": "solo.clean", "order": "lab-260101-abcd1234", "n": 1}, "t"), L.ClientError)
 store.put("orders/lab-260101-abcd1234/eye_1.jpg", SAMPLE, "image/jpeg", upsert=True)
 by_order = ops.a_styles_lab({"style": "solo.clean", "order": "lab-260101-abcd1234", "n": 1, "size": 480}, "t")
