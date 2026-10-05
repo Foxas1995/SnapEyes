@@ -404,8 +404,22 @@ def refused(fn):
     return None
 
 
-msg = refused(lambda: pay.spec_from(dict(SPEC, style="solo.powder"), pay.SELECTABLE))
-check("a v3 id is refused at checkout with the old sentence naming the six ids", msg == "ClientError: Choose one of the styles: " + ", ".join(LEGACY) + ".", msg)
+def caught(fn):
+    try:
+        fn()
+    except Exception as e:  # noqa: BLE001
+        return e
+    return None
+
+
+# WP12 (spec 2.9): a style the registry knows but that cannot be ordered is a 409 style_unavailable (why stage), not the old 400 that named the six ids; an id the
+# registry does not know is still that 400 (the next check)
+a409 = caught(lambda: pay.spec_from(dict(SPEC, style="duo.kiss_collision"), pay.SELECTABLE))   # a TWO-eye style (solo.powder with two eyes is why eyes)
+check("a v3 id that is not live is refused at checkout as 409 style_unavailable (why stage), the body naming the style and the eye count",
+      type(a409).__name__ == "Answer" and a409.status == 409 and a409.body["reason"] == "style_unavailable" and a409.body["why"] == "stage"
+      and a409.body["style"] == "duo.kiss_collision" and a409.body["eyes"] == 2, a409)
+msg = refused(lambda: pay.spec_from(dict(SPEC, style="nothing"), pay.SELECTABLE))
+check("an id the registry does not know is the old 400, with the sentence naming the six ids", msg == "ClientError: Choose one of the styles: " + ", ".join(LEGACY) + ".", msg)
 check("an unknown style, one that is not text, and a wrong layout are refused as before",
       all(refused(lambda s=s: pay.spec_from(dict(SPEC, style=s), pay.SELECTABLE)) for s in ("nothing", None, 3, ["supernova"], {}))
       and refused(lambda: pay.spec_from(dict(SPEC, layout="grid"), pay.SELECTABLE)) == "ClientError: 2 eyes can use: duo, fusion.")
@@ -540,6 +554,7 @@ def copy_repo(dst):
     for d, ign in (("api", ("__pycache__", "_assets")), ("src", ("assets", "__pycache__")), ("scripts", ("__pycache__", "styles_tests"))):
         shutil.copytree(os.path.join(REPO, d), os.path.join(dst, d), ignore=shutil.ignore_patterns(*ign))
     shutil.copy(os.path.join(REPO, "package.json"), os.path.join(dst, "package.json"))
+    shutil.copy(os.path.join(REPO, "index.html"), os.path.join(dst, "index.html"))   # WP12: the text check lints the head of index.html
 
 
 def sub(case, root, rel, old, new):
@@ -655,13 +670,14 @@ NEG_BATCH = [   # label, mutation(case, root), a sentence the check must say
     ("an accent in iris.py that the registry does not have", lambda c, r: sub(c, r, "api/_lib/iris.py", '"accent": (245, 197, 66)', '"accent": (245, 197, 67)'),
      'api/_lib/iris.py STYLES "celestial_gold" accent is [245,197,67]'),
     ("a terms row of the black class that no longer names its style",
-     lambda c, r: sub(c, r, "src/legal/docs/terms.ts", "['One eye, Studio Black', eur(PRICE_CENTS.studioBlack, 'en')]", "['One eye, Pure Black', eur(PRICE_CENTS.studioBlack, 'en')]"),
-     'the row "One eye, Pure Black" prices the black class, whose one member is "Studio Black"'),
+     lambda c, r: sub(c, r, "src/legal/docs/terms.ts", "['One eye, Clean Iris', eur(PRICE_CENTS.studioBlack, 'en')]", "['One eye, Pure Black', eur(PRICE_CENTS.studioBlack, 'en')]"),
+     'the row "One eye, Pure Black" prices the black class, whose one member is "Clean Iris"'),
     ("a Lithuanian terms row that no longer names it",
-     lambda c, r: sub(c, r, "src/legal/docs/terms.lt.ts", "['Viena akis, Studio Black', eurLt(PRICE_CENTS.studioBlack)]", "['Viena akis, Juodas', eurLt(PRICE_CENTS.studioBlack)]"),
+     lambda c, r: sub(c, r, "src/legal/docs/terms.lt.ts", "['Viena akis, Clean Iris', eurLt(PRICE_CENTS.studioBlack)]", "['Viena akis, Juodas', eurLt(PRICE_CENTS.studioBlack)]"),
      'terms.lt.ts: the row "Viena akis, Juodas"'),
-    ("a second style in the black price class", pub(lambda s: s["solo.clean"].update(stage="preview")),
-     "the black price class has 2 styles shown to customers (solo.clean, studio_black)"),
+    # WP12: the terms name the black class's one v3 member (the legacy Studio Black retires at the cutover and is not named): a second v3 style of the class
+    ("a second style in the black price class", pub(lambda s: s["solo.powder"].update(price_class="black")),
+     "the black price class has 2 styles that are not legacy or planned (solo.clean, solo.powder)"),
     # work package 2: the words for the layouts
     ("a layout word missing in one language", names(lambda n: n["single"].pop("hu")), 'layout "single": it must have a word in exactly en, de, lt, hu'),
     ("a layout word in a fifth language", names(lambda n: n["single"].update(fr="Seul")), 'layout "single": it must have a word in exactly en, de, lt, hu'),
@@ -763,7 +779,7 @@ for label, mutate, needle in [
     probs = with_load(label, mutate)
     check(f"check_styles refuses: {label}", not PROBLEMS.get(label) and any(needle in p for p in probs), (PROBLEMS.get(label), needle, probs[:3]))
 
-# --- rules that are built and tested but not enforced yet (the texts they demand come with work package 12)
+# --- the rules of items 4 and 7 that work package 12's texts meet: built, tested on synthetic files, and enforced on the real tree (WP12_RULES)
 RULES = os.path.join(TMP, "wp1_rules.mjs")
 with open(RULES, "w", encoding="utf-8", newline="\n") as f:
     f.write(r"""
@@ -777,22 +793,23 @@ const hit = (s) => M.NUMBER_OF_STYLES.test(s);
 res.numberYes = ['six styles', 'All 6 styles', 'in allen sechs Stilen', 'Alle 6 Stile', 'Nemokama peržiūra 6 stiliais', 'Visi 6 stiliai', 'hat stílusban', '6 stílusban', 'in six styles. The watermarked', 'seven styles'].map(hit);
 res.numberNo = ['any style', 'in the style you choose', 'Choose a style', 'One eye, any style', 'Two eyes (Couple Duo), jeder Stil', 'iki 8 akiu', 'Sechs Augen auf einem Kunstwerk'].map(hit);
 let out = []; M.checkNumberOfStyles([['landing', { en: { a: { b: 'All 6 styles' } } }]], out); res.numberCheck = out;
-out = []; M.checkRuntimeTokens({ en: { pricing: { artBackgroundNote: 'Celestial Gold, Deep Nebula' } }, de: { pricing: { artBackgroundNote: '{styles}' } } }, out); res.tokens = out;
+out = []; M.checkRuntimeTokens({ en: { pricing: { artBackgroundNote: 'Celestial Gold, Deep Nebula' } }, de: { pricing: { artBackgroundNote: '{styles}', severalNote: 'Zwei bis acht Augen' } } }, out); res.tokens = out;
 const dir = mkdtempSync(join(process.argv[3], 'wp1-terms-')); mkdirSync(join(dir, 'src/legal/docs'), { recursive: true });
-writeFileSync(join(dir, 'src/legal/docs/terms.ts'), "const rows = [['One eye, Studio Black', eur(PRICE_CENTS.studioBlack, 'en')], ['Each further eye', `+${eur(1, 'en')}, up to ${MAX_EYES} eyes on one artwork`]];\n");
+writeFileSync(join(dir, 'src/legal/docs/terms.ts'), "const rows = [['One eye, Clean Iris', eur(PRICE_CENTS.studioBlack, 'en')], ['Each further eye', `+${eur(1, 'en')}, up to ${MAX_EYES} eyes on one artwork`], ['x', 'up to 8 eyes']];\n");
 out = []; M.checkTerms(dir, styles, out, ['src/legal/docs/terms.ts'], true); res.termsOn = out;
 out = []; M.checkTerms(dir, styles, out, ['src/legal/docs/terms.ts'], false); res.termsOff = out;
 console.log(JSON.stringify(res));
 """)
 rc, so, se = run_node([RULES, REPO, TMP])                       # the probe's folder is made inside TMP, which the suite removes at exit
 rules = last_json(so)
-check("the rules of items 4 and 7 that wait for WP12 are built: the number-of-styles pattern catches six, 6, sechs, 6 stiliais, stilus and spares 'any style'",
+check("the rules of items 4 and 7 (WP12) are built: the number-of-styles pattern catches six, 6, sechs, 6 stiliais, stilus and spares 'any style'",
       bool(rules) and all(rules["numberYes"]) and not any(rules["numberNo"]) and len(rules["numberCheck"]) == 1 and "states a number of styles" in rules["numberCheck"][0],
       rules or (rc, se[-400:]))
-check("... the run-time token rule flags a written list of art styles and accepts {styles}; the count-free terms rule flags the printed maximum only when enforced; today it is off",
-      bool(rules) and len(rules["tokens"]) == 1 and "landing.en.pricing.artBackgroundNote" in rules["tokens"][0]
-      and any("prints the maximum number of eyes" in p for p in rules["termsOn"]) and not any("maximum number" in p for p in rules["termsOff"])
-      and rules["enforced"] is False, rules or (rc, se[-400:]))
+check("... the run-time token rule flags a written list of art styles and a written number of eyes and accepts {styles}; the count-free terms rule flags the printed maximum "
+      "(the constant and a digit before eyes) only when enforced; it IS enforced now (WP12_RULES)",
+      bool(rules) and len(rules["tokens"]) == 2 and "landing.en.pricing.artBackgroundNote" in rules["tokens"][0] and "landing.de.pricing.severalNote" in rules["tokens"][1]
+      and any("prints the maximum number of eyes" in p for p in rules["termsOn"]) and any('prints a number of eyes ("8 eyes")' in p for p in rules["termsOn"])
+      and not any("number of eyes" in p for p in rules["termsOff"]) and rules["enforced"] is True, rules or (rc, se[-400:]))
 
 # ============================================================================================ 6. build-check hazards (IE1) that apply to WP1
 section("6. build-check hazards: a decimal price in a test file, a function without samples, a brand name equal in two languages")

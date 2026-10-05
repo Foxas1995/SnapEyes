@@ -350,7 +350,10 @@ section("2. default off")
 c, plain = info()
 check("GET /api/checkout: open and the standard reply (no experiment fields)", c == 200 and plain.get("open") is True and "experiments" not in plain and "exp_token" not in plain
       and plain["prices"] == {k: BASE_LADDER["eu"][k] for k in BASE_LADDER["eu"]}, plain)
-KEYS_OLD = {"ok", "open", "currency", "prices", "market", "markets", "max_eyes", "consent", "country", "suggest", "ms"}
+# WP12 (checkout, review of 2026-10-04): GET /api/checkout also carries the run-time catalogue (styles at their effective stage, orderable_max_eyes), which
+# the landing page and the buy card print the list of styles and the number of eyes from. Nothing about a price test changed: the two new fields are the
+# same with and without a visitor id and while a test runs.
+KEYS_OLD = {"ok", "open", "currency", "prices", "market", "markets", "max_eyes", "consent", "country", "suggest", "ms", "styles", "orderable_max_eyes"}
 check("the reply's fields are exactly the old ones", set(plain) == KEYS_OLD, sorted(set(plain) ^ KEYS_OLD))
 vid0 = vid_for("extra_eye_eur", "extra10")
 c, j = info(vid0)

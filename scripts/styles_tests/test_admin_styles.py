@@ -1291,7 +1291,9 @@ check("with the switch readable the same checkout opens a Stripe session (the de
 act("styles_override", style="celestial_gold", eyes=1, stage="preview", reason_kind="soon", confirm=True)
 o2, k2 = new_order()
 c, j = checkout(o2, k2)
-check("a style the owner took back to preview is refused at checkout (400: not one of the styles that can be ordered now), no session", c == 400 and "Choose one of the styles" in str(j.get("error")) and len(H.Fake.creates) == creates0 + 1, (c, j))
+# WP12 (spec 2.9): a known style that cannot be ordered now is a 409 style_unavailable (why stage), not the old 400 that listed the ids; nothing else changed
+check("a style the owner took back to preview is refused at checkout (409 style_unavailable, why stage: not one of the styles that can be ordered now), no session",
+      c == 409 and j.get("reason") == "style_unavailable" and j.get("why") == "stage" and j.get("style") == "celestial_gold" and len(H.Fake.creates) == creates0 + 1, (c, j))
 c, j = checkout(o2, k2, style="supernova")
 check("another style of the same eye count still opens one", c == 200 and len(H.Fake.creates) == creates0 + 2, (c, j))
 reset()

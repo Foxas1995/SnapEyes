@@ -42,3 +42,4 @@ v3compose:scripts/styles_tests:test_compose_api.py
 v3uni:scripts/styles_tests:test_goldens_universe.py
 v3admin:scripts/styles_tests:test_admin_styles.py
 v3picker:scripts/styles_tests:test_picker.py
+v3checkout:scripts/styles_tests:test_checkout_styles.py

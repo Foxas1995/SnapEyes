@@ -2,7 +2,7 @@
 """Payments backend tests without real keys: fake Stripe + Resend stub, real signature checks with a synthetic whsec,
 local store folder, master_eye / master_compose stubbed (the real render is real_run.py).
     python test_pay.py        prints PASS/FAIL per check and exits 1 on any failure"""
-import os, sys, io, json, time, base64, hashlib
+import os, sys, io, json, re, time, base64, hashlib
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import harness as H
@@ -198,7 +198,10 @@ check("cancel_url goes back to /try, without the access key", p["cancel_url"] ==
       and K1 not in p["cancel_url"], p["cancel_url"])
 check("metadata: order, key fingerprint (not the key), spec, consent", p["metadata[order]"] == O1 and
       p["metadata[key_sha]"] == pay.key_sha(K1) and K1 not in json.dumps({k: v for k, v in p.items() if k.startswith("metadata")})
-      and p["metadata[eyes]"] == "2" and p["metadata[names]"] == "Jūratė & Tomas" and p["metadata[consent_version]"] == pay.CONSENT_VERSION
+      and p["metadata[eyes]"] == "2" and p["metadata[consent_version]"] == pay.CONSENT_VERSION
+      # WP12 (C16, spec 2.4): the names travel as ONE compact JSON string (ensure_ascii False), not as the old text; the plan's identity rides along (pv, ev, plan8)
+      and p["metadata[names]"] == json.dumps(["Jūratė & Tomas"], ensure_ascii=False, separators=(",", ":"))
+      and p["metadata[pv]"] == "1" and p["metadata[ev]"] == "0" and re.fullmatch(r"[0-9a-f]{8}", p["metadata[plan8]"]) and "metadata[date]" not in p and "metadata[opts]" not in p
       and "metadata[title]" not in p, p)
 check("item name says 2 eyes, digital file", "2 Augen" in p["line_items[0][price_data][product_data][name]"]
       and "digitale Datei" in p["line_items[0][price_data][product_data][name]"], p)

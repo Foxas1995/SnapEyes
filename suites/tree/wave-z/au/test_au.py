@@ -21,6 +21,15 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # eu_before.json stays the snapshot of the EU edition from before the Australian step (the base of the allowed differences).
 # eu_1acef38.json is the EXACT pin of the EU edition (en, de) and of the checkbox wording (en, de, lt, hu) as of 1acef38, so a later
 # accidental change still fails; the difference between the two snapshots must be exactly the listed one (doc_diff in section B).
+# 1005 refresh (2026-10-05, WP12 of the v3 engine build: checkout, e-mails, legal texts). The EU edition changed on purpose, and A1, B1, B2, B3 and E8
+# (every one a pin of the old text or date, none a defect) moved to the new text, each keeping its id and the old name as the start of its name, with the
+# reason added after " - 1005:". eu_wp12.json is the EXACT pin of the EU edition as of that work (same layout as eu_1acef38.json, which stays as the base:
+# the old differences from eu_before.json are still checked on it, and the new difference from it is listed in TERMS12 and PRIV12 below):
+#   terms:   "preview" (the same arrangement of the eyes; a preview of five to eight eyes is coarser), "prices" (price classes: Clean Iris, any other
+#            style, two eyes in any style, each further eye; no list of styles, no number of eyes), "delivery" (no promise of half a minute per eye)
+#   privacy: "iris" (the example names no style), "orders" (the order of the eyes, the date, the look, the derived eye profile, the plan code to Stripe),
+#            "retention" and "storage" (the same facts in the lists); one LEGAL_UPDATED (2026-10-05) for every page and the pack; the consent
+#            version and the checkbox texts are untouched.
 import os, sys, json, time, re, subprocess, importlib.util
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -174,7 +183,9 @@ def paid_order(market, lang, email, eyes=1, style="studio_black"):
 PACK = json.load(open(os.path.join(H.REPO, "dist", "legal", "order-mail.json"), encoding="utf-8"))
 PACK_AUTO = dict(PACK, making_start="after_confirmation")
 EU_BEFORE = json.load(open(os.path.join(HERE, "eu_before.json"), encoding="utf-8"))
-EU_NOW = json.load(open(os.path.join(HERE, "eu_1acef38.json"), encoding="utf-8"))   # 0930 refresh: the EU edition as of 1acef38
+EU_1ACEF = json.load(open(os.path.join(HERE, "eu_1acef38.json"), encoding="utf-8"))   # 0930 refresh: the EU edition as of 1acef38 (the base of the 1005 refresh)
+EU_NOW = json.load(open(os.path.join(HERE, "eu_wp12.json"), encoding="utf-8"))   # 1005 refresh: the EU edition as of WP12
+LEGAL_NOW = "2026-10-05"        # 1005 refresh: LEGAL_UPDATED, one date for every legal page and the pack (it was 2026-09-30)
 CONSENT_NOW = "2026-09-30.2"    # 0930 refresh: the consent version since 30efee7 (the lt and hu texts added; en, de, AU as of .1)
 LANG2 = ("en", "de")            # the two languages the snapshots of before the Lithuanian and Hungarian work have
 set_pack(PACK)
@@ -192,9 +203,10 @@ EDI = CL["editions"]
 
 # ---------------------------------------------------------------------------------------------- A. one wording, two sides
 check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED 2026-09-30 = pack updated"
-      " - 0930: bumped again by 30efee7 (lt and hu texts), now 2026-09-30.2; 2026-09-30.1 is still quoted (A3, H1)",
+      " - 0930: bumped again by 30efee7 (lt and hu texts), now 2026-09-30.2; 2026-09-30.1 is still quoted (A3, H1)"
+      " - 1005: LEGAL_UPDATED is 2026-10-05 (WP12), the consent version is not bumped",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
-      and CL["legalUpdated"] == "2026-09-30" == PACK["updated"],
+      and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
 check("A2 AU checkbox: server CONSENT_TEXT_AU = client CHECKOUT_LEGAL_AU, en and de",
       all(pay.CONSENT_TEXT_AU[l] == CL["checkoutAu"][l]["withdrawalConsent"] for l in ("en", "de")),
@@ -288,51 +300,115 @@ def holds(blocks, phrases):
 
 
 DOCS4 = ("terms", "withdrawal", "privacy", "imprint")
-terms_diff = {l: doc_diff(EDI["eu"]["terms"][l], EU_BEFORE["terms"][l]) for l in LANG2}
+terms_diff = {l: doc_diff(EU_1ACEF["terms"][l], EU_BEFORE["terms"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 terms_ok = all(
     fr and sorted(d) == ["contract", "prices"] and d["contract"] == ([CONTRACT_LANGS[l][1]], [CONTRACT_LANGS[l][0]])
     and len(d["prices"][0]) == 1 and not d["prices"][1] and holds(d["prices"][0], [PRICE_TEST[l]])
     for l, (fr, d) in terms_diff.items())
 same = {d: all(EDI["eu"][d][l] == EU_BEFORE[d][l] for l in LANG2) for d in ("withdrawal", "imprint")}
 same["terms"] = terms_ok
+
+
+def _txt(b):
+    return b if isinstance(b, str) else json.dumps(b, ensure_ascii=False)
+
+
+def wp12_ok(d, allowed):
+    """1005: d is doc_diff's {section id: (added, removed)}: exactly the allowed sections, each with its number of blocks added and removed, every phrase of
+    "has" in some added block, no phrase of "lacks" in any added block, every phrase of "was" in some removed block."""
+    if sorted(d) != sorted(allowed):
+        return False
+    for sec, (na, nr, has, lacks, was) in allowed.items():
+        add, rem = d[sec]
+        if len(add) != na or len(rem) != nr:
+            return False
+        if not all(any(ph in _txt(b) for b in add) for ph in has) or any(ph in _txt(b) for ph in lacks for b in add):
+            return False
+        if not all(any(ph in _txt(b) for b in rem) for ph in was):
+            return False
+    return True
+
+
+# 1005 refresh: what WP12 changed in the EU edition on purpose (en and de), the ALLOWED difference from eu_1acef38.json (section: blocks added, blocks removed,
+# phrases the added ones hold, phrases they do not hold, phrases the removed ones hold); the texts themselves are pinned whole to eu_wp12.json
+TERMS12 = {
+    "en": {"preview": (1, 1, ["arrangement of the eyes", "coarser than your file"], [], []),
+           "prices": (1, 1, ["One eye, Clean Iris", "One eye, any other style", "Two eyes, any style", "Each further eye"],
+                      ["Studio Black", "Couple Duo", "Celestial Gold", "up to 8 eyes"], ["One eye, Studio Black", "Couple Duo"]),
+           "delivery": (1, 1, [], ["half a minute"], ["about half a minute per eye"])},
+    "de": {"preview": (1, 1, ["Reihenfolge der Augen", "gröber als Ihre Datei"], [], []),
+           "prices": (1, 1, ["Ein Auge, Clean Iris", "Ein Auge, jeder andere Stil", "Zwei Augen, jeder Stil", "Jedes weitere Auge"],
+                      ["Studio Black", "Couple Duo", "Celestial Gold", "bis zu 8 Augen"], ["Ein Auge, Studio Black", "Couple Duo"]),
+           "delivery": (1, 1, [], ["halbe Minute"], ["etwa eine halbe Minute pro Auge"])},
+}
+PRIV12 = {
+    "en": {"iris": (1, 1, ["for a pair"], ["Couple Duo"], ["Couple Duo"]),
+           "orders": (3, 3, ["order of the eyes", "short record of measurements", "identifies the plan"], [], []),
+           "retention": (1, 1, ["summary of the measurements"], [], []),
+           "storage": (1, 1, ["a few numbers measured"], [], [])},
+    "de": {"iris": (1, 1, ["Paar"], ["Couple Duo"], ["Couple Duo"]),
+           "orders": (3, 3, ["Reihenfolge der Augen", "Aufzeichnung von Messwerten", "Kennung des Plans"], [], []),
+           "retention": (1, 1, ["Zusammenfassung der aus Ihren Vorschauen"], [], []),
+           "storage": (1, 1, ["einige daraus gemessene Zahlen"], [], [])},
+}
+terms12 = {l: doc_diff(EDI["eu"]["terms"][l], EU_1ACEF["terms"][l]) for l in LANG2}
+terms12_ok = all(fr and wp12_ok(d, TERMS12[l]) for l, (fr, d) in terms12.items())
 pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 0930: the terms differ from before by exactly the contract languages sentence (30efee7) and the price list sentence "
-      "(1acef38); all pinned to eu_1acef38.json; lt and hu editions present",
-      all(same.values()) and all(pinned.values()) and all(v == ["de", "en", "hu", "lt"] for v in editions4.values()),
-      (same, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms_diff.items()}))
-priv_diff = {l: doc_diff(EDI["eu"]["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}
+      "(1acef38); all pinned to eu_1acef38.json; lt and hu editions present"
+      " - 1005: the pin is eu_wp12.json, and the terms differ from the pin of 1acef38 by exactly the three blocks of TERMS12 (preview, prices, delivery)",
+      all(same.values()) and terms12_ok and all(pinned.values()) and all(v == ["de", "en", "hu", "lt"] for v in editions4.values()),
+      (same, terms12_ok, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms12.items()}))
+priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
                    for sec, (na, nr, pa, pr) in PRIV_ALLOWED[l].items() if sec in d)
            for l, (fr, d) in priv_diff.items()}
+priv_diff12 = {l: doc_diff(EDI["eu"]["privacy"][l], EU_1ACEF["privacy"][l]) for l in LANG2}
+priv12_ok = {l: fr and wp12_ok(d, PRIV12[l]) for l, (fr, d) in priv_diff12.items()}
 priv_pinned = {l: EDI["eu"]["privacy"][l] == EU_NOW["privacy"][l] for l in LANG2}
 check("B2 EU privacy policy: only two sentences added per language (the market key, the country hint), all else as before"
       " - 0930: plus the language switch sentence (30efee7) and the price test sentences (1acef38: the anonymous visitor number, "
-      "the events, the data passed to Stripe); pinned to eu_1acef38.json",
-      all(priv_ok.values()) and all(priv_pinned.values()),
-      (priv_ok, priv_pinned, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv_diff.items()}))
+      "the events, the data passed to Stripe); pinned to eu_1acef38.json"
+      " - 1005: pinned to eu_wp12.json; the policy differs from the pin of 1acef38 by exactly the blocks of PRIV12 (the example without a style, the order of the "
+      "eyes, the date, the look, the derived eye profile, the plan code to Stripe, the same facts in the retention and storage lists)",
+      all(priv_ok.values()) and all(priv12_ok.values()) and all(priv_pinned.values()),
+      (priv_ok, priv12_ok, priv_pinned, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv_diff12.items()}))
 
 
 def _norm(t):
     """The pack's text without its date line (the date changes with every legal change)."""
-    return t.replace("2026-09-30", "X").replace("30.09.2026", "X")
+    return t.replace("2026-09-30", "X").replace("30.09.2026", "X").replace("2026-10-05", "X").replace("05.10.2026", "X")   # 1005: and the date of WP12
 
 
-def _terms_pack_ok(l):
-    """The pack's EU terms = the old pack's, plus exactly one paragraph (the price list sentence) and the four contract languages."""
-    pars = PACK["docs"][l]["terms"]["text"].split("\n\n")
+def _terms_pack_ok(l, pack=None):
+    """The pack's EU terms = the old pack's, plus exactly one paragraph (the price list sentence) and the four contract languages.
+    1005: checked on the pack of the pin of 1acef38 (the base), where it still holds; _terms_pack_12 checks the pack as it is now against that pin."""
+    pack = EU_1ACEF["pack"] if pack is None else pack
+    pars = pack["docs"][l]["terms"]["text"].split("\n\n")
     back = "\n\n".join(p for p in pars if PRICE_TEST[l] not in p)
     return (len([p for p in pars if PRICE_TEST[l] in p]) == 1 and back.count(CONTRACT_LANGS[l][1]) == 1
             and _norm(back.replace(CONTRACT_LANGS[l][1], CONTRACT_LANGS[l][0])) == _norm(EU_BEFORE["pack"]["docs"][l]["terms"]["text"]))
+
+
+def _terms_pack_12(l):
+    """1005: the pack's EU terms as they are now = the pin of 1acef38 (date aside) with exactly the three paragraphs of the changed blocks replaced: the
+    preview paragraph, the price rows, the delivery paragraph; and the pinned pack of WP12 holds the same text."""
+    now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
+    was = _norm(EU_1ACEF["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
+    add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
+    return (len(now) == len(was) and len(add) == 3 == len(rem) and any("Clean Iris" in p for p in add) and any("Studio Black" in p for p in rem)
+            and not any("Studio Black" in p or "Couple Duo" in p for p in now)
+            and _norm(PACK["docs"][l]["terms"]["text"]) == _norm(EU_NOW["pack"]["docs"][l]["terms"]["text"]))
 
 
 seller_en_de = {k: ({l: v[l] for l in LANG2} if isinstance(v, dict) else v) for k, v in PACK["seller"].items()}
 pack_docs_eq = lambda a, b, l, d: (_norm(a[l][d]["text"]) == _norm(b[l][d]["text"]) and a[l][d]["url"] == b[l][d]["url"]
                                     and a[l][d]["title"] == b[l][d]["title"])
 eu_pack_same = (
-    all(_terms_pack_ok(l) for l in LANG2)
+    all(_terms_pack_ok(l) for l in LANG2) and all(_terms_pack_12(l) for l in LANG2)
     and all(pack_docs_eq(PACK["docs"], EU_BEFORE["pack"]["docs"], l, "withdrawal") for l in LANG2)
     and all(PACK["docs"][l]["terms"]["url"] == EU_BEFORE["pack"]["docs"][l]["terms"]["url"] for l in LANG2)
     and all(pack_docs_eq(PACK["docs"], EU_NOW["pack"]["docs"], l, d) for l in LANG2 for d in ("terms", "withdrawal"))
@@ -341,9 +417,9 @@ seller_same = (seller_en_de == EU_BEFORE["pack"]["seller"] and PACK["seller"] ==
                and all(sorted(PACK["seller"][k]) == ["de", "en", "hu", "lt"] for k in ("company", "address", "contact")))
 check("B3 the built pack's EU texts are the same as before (the date line aside), links without m="
       " - 0930: the terms by exactly the two sentences of 30efee7 and 1acef38, the seller with its lt and hu lines; "
-      "all pinned to eu_1acef38.json",
+      "all pinned to eu_1acef38.json - 1005: pinned to eu_wp12.json, the terms by exactly the three paragraphs of the changed blocks (_terms_pack_12)",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
-      (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2]))
+      (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",
       CL["copySame"] == {"euEn": True, "euDe": True, "ltEn": True}, CL["copySame"])
 
@@ -540,8 +616,8 @@ check("E6 the full AU withdrawal information and AU terms are attached (not the 
 check("E7 the AU email: no 'no refunds' wording, no en or em dash", not bad_words(t) and not any(d in t for d in DASHES), bad_words(t))
 md = read_json(f"orders/{oE}/mail_delivery.json")
 check("E8 mail_delivery.json sent with the new consent version and the pack date"
-      " - 0930: the new version is 2026-09-30.2 (30efee7)", md.get("state") == "sent"
-      and md.get("consent") == CONSENT_NOW and md.get("legal") == "2026-09-30", md)
+      " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12)", md.get("state") == "sent"
+      and md.get("consent") == CONSENT_NOW and md.get("legal") == LEGAL_NOW, md)
 with open(os.path.join(HERE, "sample_au_confirmation_en.txt"), "w", encoding="utf-8") as f:
     f.write(head)
 

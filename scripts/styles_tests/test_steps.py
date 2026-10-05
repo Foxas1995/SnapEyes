@@ -81,6 +81,10 @@ import synth_iris as SI  # noqa: E402
 from _lib import iris as L  # noqa: E402
 from _lib import catalogue as CT  # noqa: E402
 from _lib import store  # noqa: E402
+from _lib import words as WORDS_M  # noqa: E402
+from _lib.styles import plates as PL_M  # noqa: E402
+from _lib import preview as PV_M  # noqa: E402
+from _lib.styles import eye as EYE_M  # noqa: E402
 from _lib import pay  # noqa: E402
 from _lib import maker as M  # noqa: E402
 from _lib import cleanup as C  # noqa: E402
@@ -174,25 +178,49 @@ class Show:
         CT.STYLES[self.style]["stage"] = self.old
 
 
-def draft(eye, order=None, k=None, seed=1, lang="en"):
+_SEALED = {}
+
+
+def sealed_of(name="blue_round"):
+    """WP12: the eye as /api/enhance seals it (the clean preview with the profile measured on it). A hard style (the collision family) is refused at
+    checkout (409 reseal) on a draft that carries only a plain preview, so a test that buys one drafts its eyes sealed."""
+    if name not in _SEALED:
+        jpeg = SI.jpeg_bytes(name)
+        prof = EYE_M.profile_of_bytes(jpeg, pad=1.12, rules=("lid", "fill"))
+        _SEALED[name] = PV_M.protect(Image.open(io.BytesIO(jpeg)).convert("RGB"), jpeg, profile=prof)["sealed"]
+    return _SEALED[name]
+
+
+def draft(eye, order=None, k=None, seed=1, lang="en", sealed=None):
     b = {"action": "draft", "eye": eye, "crop": H.jpeg_b64(256, seed * 10 + eye), "preview": H.jpeg_b64(256, seed * 10 + eye + 5),
          "pad": 1.12, "ticket": H.fresh_ticket() if order is None else L.mint_ticket("work"), "lang": lang, "ref": f"e{eye}"}
+    if sealed:
+        b.pop("preview")
+        b["sealed"] = sealed
     if order:
         b.update(order=order, k=k)
     return post("/api/order", b)
 
 
-def new_order(eyes=1, style="studio_black", email="kunde@example.com", pay_it=True, lang="en", layout=None):
-    c, j = draft(1, lang=lang)
+def new_order(eyes=1, style="studio_black", email="kunde@example.com", pay_it=True, lang="en", layout=None, sealed=None, profile=None):
+    c, j = draft(1, lang=lang, sealed=sealed)
     assert c == 200, (c, j)
     o, k = j["order"], j["k"]
     for i in range(2, eyes + 1):
-        c, j = draft(i, o, k, lang=lang)
+        c, j = draft(i, o, k, lang=lang, sealed=sealed)
         assert c == 200, (c, j)
+    if profile is not None:   # WP12: the plan is frozen at the checkout from the draft's profile, so a test that says what the sealed profile was sets it BEFORE the checkout
+        dr = rj(f"orders/{o}/draft/eye_1.json")
+        dr["profile"] = profile
+        wj(f"orders/{o}/draft/eye_1.json", dr)
     body = {"order": o, "k": k, "eyes": eyes, "style": style, "names": "Ona", "title": "", "lang": lang, "consent_digital": True}
     if layout:
         body["layout"] = layout
     c, j = post("/api/checkout", body)
+    if c == 409 and j.get("why") == "plates":     # WP12: a style that draws from a 4K plate is refused (409 plates) while the plate is not in storage: put the ones named, ask again
+        for pid in j["plates"]:
+            store.put(PL_M.storage_path(pid), b"plate", "image/png", upsert=True)
+        c, j = post("/api/checkout", body)
     assert c == 200, (c, j)
     sid = rj(f"orders/{o}/order.json")["checkout"]["session_id"]
     if pay_it:
@@ -433,11 +461,12 @@ if CMP is None:
 samples = ["Anna;Max", "Ona", ["Rūta", "Šarūnas", "Ąžuolas"], "Zoltán;Éva;Őrs;Űrmenet", "", None, 12, {"a": 1}, "A" * 400, ["x" * 30] * 9, "Mia\nTom", "Žemaitė ; Pétur;",
            "emoji \U0001F600 here", ["ok", 3, None]]
 dates = ["12 May 2026", "12;05;2026", "", None, "x" * 50, "2026-10-05\n", 7, "Šv. Kalėdos"]
-check("master_words cuts and cleans the names and the date exactly as the preview does (api/compose.py _engine_text and _engine_date, 60 and 20 characters): "
+check("master_words cuts and cleans the names and the date exactly as the preview does (api/compose.py _engine_text and _engine_date, the names line at the "
+      "213 characters of eight names of 24 letters since WP12 (C16: it was 60) and the date at 20): "
       f"{len(samples)} names and {len(dates)} dates, in Lithuanian, Hungarian and German letters, lists, numbers, a letter the font lacks",
-      all(SP.master_words({"names": s, "date": d})[0] == CMP._engine_text(s, 60) and SP.master_words({"names": s, "date": d})[1] == CMP._engine_date(d, 20)
-          for s in samples for d in dates), [(s, SP.master_words({"names": s})[0], CMP._engine_text(s, 60)) for s in samples
-                                              if SP.master_words({"names": s})[0] != CMP._engine_text(s, 60)])
+      all(SP.master_words({"names": s, "date": d})[0] == CMP._engine_text(s, CMP.NAMES_CUT) and SP.master_words({"names": s, "date": d})[1] == CMP._engine_date(d, 20)
+          for s in samples for d in dates) and CMP.NAMES_CUT == 213, [(s, SP.master_words({"names": s})[0], CMP._engine_text(s, CMP.NAMES_CUT)) for s in samples
+                                              if SP.master_words({"names": s})[0] != CMP._engine_text(s, CMP.NAMES_CUT)])
 check("words_sha changes with a changed line and ignores what the drawer would not draw", SP.words_sha({"names": "Anna"}) != SP.words_sha({"names": "Anne"})
       and SP.words_sha({"names": "Anna"}) == SP.words_sha({"names": " Anna "}) and SP.words_sha({}) == SP.words_sha({"names": ""}), "")
 
@@ -1106,7 +1135,8 @@ done6b = wait_for(lambda: stopped(o6b, "ready"), 240)
 dl6b = rj(f"orders/{o6b}/delivery.json") or {}
 rec_eye = rj(f"orders/{o6b}/eye_1.json")
 paid6b = rj(f"orders/{o6b}/paid.json")["spec"]
-ident = {"keys": [f"orders/{o6b}/eye_1.jpg"], "style": paid6b["style"], "layout": paid6b["layout"], "names": paid6b["names"], "title": paid6b["title"], "size": 4096,
+# WP12: the paid spec's names are a LIST now; the legacy composer is still given (and digests) the old wire string "Anna;Max" (words.names_wire)
+ident = {"keys": [f"orders/{o6b}/eye_1.jpg"], "style": paid6b["style"], "layout": paid6b["layout"], "names": WORDS_M.names_wire(paid6b["names"]), "title": paid6b["title"], "size": 4096,
          "eyes": [MC._identity(rec_eye)]}
 want = f"orders/{o6b}/artwork_{hashlib.sha256(json.dumps(ident, sort_keys=True, ensure_ascii=True).encode()).hexdigest()[:16]}.jpg"
 again_real = REAL_MC({"order": o6b, "ticket": L.mint_ticket(store.unlock_kind(o6b), 300), "keys": ident["keys"], "style": ident["style"], "layout": ident["layout"],
@@ -1267,7 +1297,7 @@ MODE.update(side=256)
 n0 = len(H.Fake.emails)
 with Show("grp.collision"):
     CT.STYLES["grp.collision"]["stage_by_eyes"], saved_sbe = {}, CT.STYLES["grp.collision"]["stage_by_eyes"]
-    o8c, k8c, sid8c = new_order(8, "grp.collision", "oskar@example.com", layout="ring")
+    o8c, k8c, sid8c = new_order(8, "grp.collision", "oskar@example.com", layout="ring", sealed=sealed_of())
     CT.STYLES["grp.collision"]["stage_by_eyes"] = saved_sbe
 done8c = wait_for(lambda: stopped(o8c, "ready"), 120)
 s8c = steps_of(o8c)
@@ -1346,9 +1376,12 @@ MODE.update(side=256)
 # (a) a plan that can never fit
 exe = Exe()
 n0 = len(H.Fake.emails)
-with mock.patch.dict(SP.EXECUTORS, {"art": exe}), mock.patch.dict(os.environ, {"STYLE_SLOW_CPU": "6"}), Show("solo.powder"):
-    o8a, k8a, sid8a = new_order(1, "solo.powder", "hold-a@example.com")
-    done8a = wait_for(lambda: stopped(o8a, "review"), 60)
+with mock.patch.dict(SP.EXECUTORS, {"art": exe}), Show("solo.powder"):
+    # WP12: the checkout itself refuses a plan that can never fit (409 capacity), so the factor rises between the checkout and the payment (a deploy, a new setting)
+    o8a, k8a, sid8a = new_order(1, "solo.powder", "hold-a@example.com", pay_it=False)
+    with mock.patch.dict(os.environ, {"STYLE_SLOW_CPU": "6"}):
+        hook(H.pay_session(sid8a, email="hold-a@example.com"))
+        done8a = wait_for(lambda: stopped(o8a, "review"), 60)
 ok, d = held(o8a, "style_step_too_big", n0)
 b = rj(f"orders/{o8a}/advance.json") or {}
 check("IE5: a paid order whose plan can never fit (Powder Burst at the slow factor 6.0) is held style_step_too_big with ZERO busy hops (the chain made the eye, tried the artwork once, stopped "
@@ -1399,10 +1432,8 @@ check("a picture drawn from another seed than the plan names (a plan changed by 
 n0 = len(H.Fake.emails)
 MODE.update(side=4096)
 with Show("solo.clean"):
-    o8c2, k8c2, sid8c2 = new_order(1, "solo.clean", "hold-c@example.com", pay_it=False)
-    dr = rj(f"orders/{o8c2}/draft/eye_1.json")
-    dr["profile"] = {"v": 1, "cls": "grey", "stats": {"L": 5000, "C": 100, "h": 1000, "rgb": [1300, 1300, 1300]}}
-    wj(f"orders/{o8c2}/draft/eye_1.json", dr)
+    o8c2, k8c2, sid8c2 = new_order(1, "solo.clean", "hold-c@example.com", pay_it=False,
+                                   profile={"v": 1, "cls": "grey", "stats": {"L": 5000, "C": 100, "h": 1000, "rgb": [1300, 1300, 1300]}})
     hook(H.pay_session(sid8c2, email="hold-c@example.com"))
     done8c2 = wait_for(lambda: stopped(o8c2, "review"), 90)
 ok, d = held(o8c2, "class_changed", n0)
@@ -1411,10 +1442,8 @@ check("IE9: the sealed profile says grey and the 4096 px master measures another
 # the same order with a profile that agrees: the picture is made and the drift is recorded
 n0 = len(H.Fake.emails)
 with Show("solo.clean"):
-    o8d, k8d, sid8d = new_order(1, "solo.clean", "hold-d@example.com", pay_it=False)
-    dr = rj(f"orders/{o8d}/draft/eye_1.json")
-    dr["profile"] = {"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}}
-    wj(f"orders/{o8d}/draft/eye_1.json", dr)
+    o8d, k8d, sid8d = new_order(1, "solo.clean", "hold-d@example.com", pay_it=False,
+                                profile={"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}})
     hook(H.pay_session(sid8d, email="hold-d@example.com"))
     done8d = wait_for(lambda: stopped(o8d, "ready"), 120)
 dd = (steps_of(o8d)["done"] or {}).get("drift") or [None]
@@ -1425,10 +1454,8 @@ check("... and with a profile of the same class the picture is made, and the dri
 # (c2) pupil drift (spec 2.4: a pupil class change is a drift that changes geometry; WP7B review): the sealed profile says a slit, the master measures a round pupil
 n0 = len(H.Fake.emails)
 with Show("solo.clean"):
-    o8p, k8p, sid8p = new_order(1, "solo.clean", "hold-p@example.com", pay_it=False)
-    dr = rj(f"orders/{o8p}/draft/eye_1.json")
-    dr["profile"] = {"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}, "pupil": {"cls": "slit", "aspect": 1600}}
-    wj(f"orders/{o8p}/draft/eye_1.json", dr)
+    o8p, k8p, sid8p = new_order(1, "solo.clean", "hold-p@example.com", pay_it=False,
+                                profile={"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}, "pupil": {"cls": "slit", "aspect": 1600}})
     hook(H.pay_session(sid8p, email="hold-p@example.com"))
     done8p = wait_for(lambda: stopped(o8p, "review"), 90)
 ok, d = held(o8p, "pupil_changed", n0)
@@ -1438,10 +1465,9 @@ check("IE9: the sealed profile says a slit pupil and the 4096 px master measures
       bool(done8p) and ok and "eye 1" in txt8p and "round" in txt8p and "slit" in txt8p and "1.60" in txt8p and SP.hold_text("pupil_changed", o8p), (done8p, d, txt8p[:200]))
 n0 = len(H.Fake.emails)
 with Show("solo.clean"):
-    o8q, k8q, sid8q = new_order(1, "solo.clean", "hold-q@example.com", pay_it=False)
+    o8q, k8q, sid8q = new_order(1, "solo.clean", "hold-q@example.com", pay_it=False,
+                                profile={"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}, "pupil": {"cls": "round", "aspect": 1020}})
     dr = rj(f"orders/{o8q}/draft/eye_1.json")
-    dr["profile"] = {"v": 1, "cls": "own", "pad": 1130, "stats": {"L": 5000, "C": 3000, "h": 2300, "rgb": [900, 1200, 1500]}, "pupil": {"cls": "round", "aspect": 1020}}
-    wj(f"orders/{o8q}/draft/eye_1.json", dr)
     hook(H.pay_session(sid8q, email="hold-q@example.com"))
     done8q = wait_for(lambda: stopped(o8q, "ready"), 120)
 dq = (steps_of(o8q)["done"] or {}).get("drift") or [None]
