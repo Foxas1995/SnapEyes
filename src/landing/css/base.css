@@ -91,8 +91,11 @@
      (src/App.tsx writes the slot's three heights on the mounted section; `auto` makes the browser remember the real height once it has been drawn), so
      nothing moves when it arrives and a link to #pricing lands where it did. The intrinsic size is the CONTENT box, and a slot's height is the whole
      box: the section's own vertical padding (2 x 46 px, 2 x 76 px from 960 px, see .lp-sec above) is taken off, or every skipped section would be
-     152 px too tall on a desktop (check:motion skip measures it). The pinned Reveal is left out: its sticky stage must always be laid out. */
-  .lp-sheet > .lp-sec:not(#reveal, .lp-slot), .lp-final { content-visibility: auto; }
+     152 px too tall on a desktop (check:motion skip measures it). The pinned Reveal is left out: its sticky stage must always be laid out.
+     Paint containment (which content-visibility: auto brings) is a clip, and a clip makes Chrome's native lazy loading skip the pictures of a horizontal
+     rail that lie beyond the screen edge (the finding that made the sheets leave overflow alone, src/motion/motion.css): three pictures, 147 kB, blank tiles
+     when a rail is swiped. The clip margin gives them back their reach (Chrome's farthest lazy distance is 2,500 px); check:motion skip loads them. */
+  .lp-sheet > .lp-sec:not(#reveal, .lp-slot), .lp-final { content-visibility: auto; overflow-clip-margin: 3000px; }
   .lp-sheet > .lp-sec:not(#reveal, .lp-slot) { contain-intrinsic-size: auto calc(var(--slot-p, 992px) - 92px); }
   .lp-final { contain-intrinsic-size: auto var(--slot-p, 660px); }
   @media (min-width: 640px) {

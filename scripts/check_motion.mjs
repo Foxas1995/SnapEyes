@@ -728,6 +728,17 @@ async function checkSkip() {
       const r = JSON.parse(await page.eval(`JSON.stringify({ top: Math.round(document.getElementById(${JSON.stringify(id)}).getBoundingClientRect().top), head: Math.round(document.querySelector('#${id} h2').getBoundingClientRect().top) })`));
       expect('skip', r.head >= 0 && r.head < 700, `${tag}: after a jump to #${id} its heading is ${r.head} px from the top of the screen (the section's top is at ${r.top} px)`);
     }
+    // the pictures of a horizontal rail beyond the screen edge still load while their section is on screen, as far as Chrome's lazy distance reaches here (the pictures within 450 px of the edge: the last two tiles
+    // of the styles rail are farther and load when the rail is swiped, in every build). Paint containment is a clip, and a clip made Chrome's native lazy loading skip them:
+    // blank tiles when a rail is swiped; css/base.css carries the margin that prevents it
+    if (width < 640) {
+      for (const id of ['styles', 'how', 'closeups']) {
+        await page.eval(`document.getElementById(${JSON.stringify(id)}).scrollIntoView({ behavior: 'instant', block: 'start' })`);
+        await sleep(2600);
+        const unloaded = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('#${id} img')].filter((i) => { const r = i.getBoundingClientRect(); return r.width > 0 && (i.currentSrc || i.src) && r.left < innerWidth + 450 && !(i.complete && i.naturalWidth > 0); }).map((i) => (i.currentSrc || i.src).split('/').pop().slice(0, 30)))`));
+        expect('skip', unloaded.length === 0, `${tag}: with #${id} on screen these pictures never load: ${unloaded.join(', ')}`);
+      }
+    }
     // the page keeps its height from the first moment to the end of a full scroll
     await scrollThrough(page, 220);
     await sleep(800);
