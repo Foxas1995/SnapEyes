@@ -268,6 +268,23 @@ export const lt: TryCopy = {
     startOver: 'Pradėti iš naujo',
     confirmStartOver: (n: number) => `Pašalinti visas akis (${n}) ir pradėti iš naujo?`,
     stored: 'Išsaugota mokymosi atmintyje',
+
+    reveal: {
+      photo: 'Jūsų nuotrauka',
+      iris: 'Jūsų rainelė',
+      art: 'Jūsų kūrinys',
+      slider: 'Palyginkite nuotrauką su atkurta rainele',
+      valueText: 'nuotrauka {n} %',
+      drag: 'Tempkite liniją arba naudokite rodykles. Enter grąžina į vyzdžio pjūvį.',
+      promise: 'Atkurta, niekada neperpiešta: niekada nekeičiame Jūsų rainelės spalvos ir nepakeičiame jos kita akimi.',
+      stripTitle: 'Nuo nuotraukos iki meno',
+      stripIntro: 'Ta pati akis tris kartus: kaip nufotografavote, atkurta ir kaip kūrinys, kurį jai siūlome.',
+      stripIntroPair: 'Ta pati akis du kartus: kaip nufotografavote ir atkurta.',
+      noCut: 'Šiai akiai pjūvio parodyti nepavyko, todėl Jūsų nuotrauka ir atkurta rainelė rodomos greta.',
+      softTip: 'Jūsų nuotrauka maža, todėl jos pusė atrodo minkšta. Prisiartinkite arba naudokite 2x priartinimą, kad palyginimas būtų ryškesnis.',
+      frameWide: 'Platus kadras',
+      frameTight: 'Siauras kadras: Jūsų nuotrauka yra artimas iškarpymas, aplink rainelę nieko nepiešiama',
+    },
   },
 
   price: {

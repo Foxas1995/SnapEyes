@@ -6,7 +6,7 @@ import {
 } from './shots';
 import {
   type Art, type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
-  MAX_EYES, STUDY_PENDING_MAX, colourOff, composeSide, deviceInfo, effectiveLayout, keptSealed, outcomeOf, sealedFor, studyAnswered, studyBody, studyOn,
+  MAX_EYES, STUDY_PENDING_MAX, colourOff, composeSide, deviceInfo, effectiveLayout, keptSealed, outcomeOf, savedEye, sealedFor, studyAnswered, studyBody, studyOn,
 } from './multi';
 import { COPY, T, setCopyLang, type BlockCopy } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
@@ -27,6 +27,8 @@ import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket 
 import { DEFAULT_STYLE, legacyStyles } from '../shared/styles';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
+import { parseReveal } from '../reveal/revealMath';
+import { wideFrame, type WideFrame } from '../reveal/wideFrame';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
 
@@ -76,6 +78,7 @@ type Stamped = Analysis & { receivedAt?: number };
 // the server (api/_lib/preview.py). An older server sent the clean image alone.
 interface Enhanced {
   image: string; sealed?: string; sealed_sizes?: Record<string, string>;
+  reveal?: unknown;   // the numbers for the Reveal (src/reveal: parseReveal checks them); absent: not measured, the plain slider stays
   fidelity: number; used_sr: boolean; fallback: boolean; seconds: number; stored?: boolean; qa?: ColourQa | null;
 }
 interface ComposeReply { image: string; width: number; height: number; layout: string }
@@ -705,10 +708,19 @@ export const TryApp: React.FC = () => {
     const draft = !sample && a.ticket && typeof d.crop === 'string' && d.crop
       ? { crop: d.crop, ticket: a.ticket, until: ((a as Stamped).receivedAt ?? Date.now()) + TICKET_MS - TICKET_MARGIN_MS }
       : null;
+    // The Reveal (src/reveal): the numbers /api/enhance measured for it and, cut now while this page still holds the photo (it is released below), the
+    // customer's own photo in the Reveal's frame. The frame lives in this tab's memory only: never uploaded, never saved (keepForReturn leaves it out).
+    // Without it the Reveal is built from the client crop (src/reveal/useRevealFrame.ts); without the numbers the plain slider stays.
+    const reveal = sample ? undefined : parseReveal(e.reveal) ?? undefined;
+    let wide: WideFrame | undefined;
+    if (reveal) {
+      try { wide = wideFrame(img, { cx: cx * W, cy: cy * H, r: r * W, W, H, pad }, reveal); } catch { /* the frame is built from the crop instead */ }
+    }
     const eye: Eye = {
       id, before: crop, ...restored(e), thumb: await thumbOf(e.image), pad,
       fallback: !!e.fallback, usedSr: !!e.used_sr, stored: !!e.stored, glarePct: d.glare_pct,
       diameterPx: a.quality?.diameter_px, sample, colourOff: colourOff(e.qa), draft,
+      ...(reveal ? { reveal } : {}), ...(wide ? { wide } : {}),
     };
     // a retaken eye takes the old one's place; the old restoration goes only now that the new one exists
     const cur = eyesRef.current;
@@ -763,7 +775,8 @@ export const TryApp: React.FC = () => {
    *  the browser will not hold it at full size, a smaller copy; when not even that, nothing (the page then says so). */
   const keepForReturn = async (order: string, list: Eye[], st: string, lw: Layout | null, nm: string) => {
     const base = { v: 1 as const, order, at: Date.now(), style: st, layoutWant: lw, names: nm };
-    const plain = list.map(({ draft: _draft, ...e }) => e);
+    // the Reveal's frame is memory only: never saved, even here (savedEye leaves it out; the way back builds it again from the crop it keeps)
+    const plain = list.map(savedEye);
     if (saveSnapshot({ ...base, eyes: plain })) return;
     try {
       // the sealed irises cannot be shrunk here: the smaller copy leaves one of them out (keptSealed)

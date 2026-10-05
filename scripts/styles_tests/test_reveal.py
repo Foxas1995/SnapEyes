@@ -81,6 +81,20 @@ from _lib.styles import reveal_wm as WM  # noqa: E402,F401  (loaded for the arcs
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 MODULES = ["reveal", "reveal_clean", "reveal_wm"]
+CALLED = []                           # any call that would reach a model or read a key: this suite makes none (the image model is a stub below)
+
+
+def _no_model(*args, **kwargs):
+    CALLED.append("gemini")
+    raise AssertionError("a model call: this suite makes none")
+
+
+def _no_key():
+    CALLED.append("key")
+    raise AssertionError("a key lookup: this suite reads none")
+
+
+L.gemini, L._key = _no_model, _no_key
 STYLES_DIR = os.path.join(API, "_lib", "styles")
 
 
@@ -335,7 +349,13 @@ def enhance(**kw):
     return out, [e for e in EVENTS if e[0] == "enhance"][-1][1], time.process_time() - t
 
 
+def store_files():
+    return sorted(os.path.join(dp, f) for dp, _d, fs in os.walk(STORE) for f in fs)
+
+
+files_before = store_files()
 out, ev, cpu_enh = enhance()
+files_after = store_files()
 clean_bytes, meta = P.unseal_full(out["sealed"])
 clean_im = Image.open(io.BytesIO(clean_bytes)).convert("RGB")
 shown = np.asarray(Image.open(io.BytesIO(base64.b64decode(out["image"]))).convert("RGB"))
@@ -357,6 +377,8 @@ check("enhance: the reveal numbers are those of a fresh measurement on the degla
       out["reveal"])
 check("enhance: the event carries the code 'ok' and the time, both allowed by events.FIELDS",
       ev.get("reveal") == "ok" and isinstance(ev.get("reveal_ms"), int) and {"reveal", "reveal_ms"} <= set(E.build("enhance", ev)), ev)
+check("enhance: nothing new is stored (no wide frame, no context crop, no photo, no reveal file): the store folder is as it was (decision C10)",
+      files_before == files_after and "context" not in json.dumps(out) and "fit" not in out and "wide" not in out, (files_before, files_after))
 check("enhance: the whole call with the stub model costs at most 4 s of CPU, the Reveal's share about half a second",
       cpu_enh <= 4.0, cpu_enh)
 
@@ -432,7 +454,7 @@ real_path = os.path.join(HERE, "data", "reveal_goldens_real.json")
 if CALIB and os.path.isfile(real_path):
     with open(real_path, encoding="utf-8") as f:
         GREAL = json.load(f)["cases"]
-    n_seen, mism = 0, []
+    n_seen, mism, spreads = 0, [], []
     for name, want in GREAL.items():
         cp, rp = os.path.join(CALIB, f"{name}_0_clientcrop.jpg"), os.path.join(CALIB, f"{name}_2_enhanced.jpg")
         if not (os.path.isfile(cp) and os.path.isfile(rp)):
@@ -442,15 +464,20 @@ if CALIB and os.path.isfile(real_path):
         n_seen += 1
         crop, rest = Image.open(cp).convert("RGB"), Image.open(rp).convert("RGB")
         p = R.reveal_params(crop, rest)
+        spreads.append(p["_info"]["reg"]["spread_r"])
         if json.loads(json.dumps(R.wire(p))) != want["params"] or sha(R.prepare_restored(rest, p)) != want["prep"]:
             mism.append(name)
     local(f"{n_seen} real eyes: reveal_params equals the scratch's number for number and prepare_restored byte for byte", n_seen >= 10 and not mism, (n_seen, mism))
+    local(f"registration of the real eyes: the four half rings of every one agree about the shift to {max(spreads):.4f} R at most (the verdict's limit is 0.005 R)", bool(spreads) and max(spreads) <= R.REG_SPREAD_OK, spreads)
     if n_seen:
         by = {n: w["params"] for n, w in GREAL.items()}
         local("only the hazel eye p09f (restored colour 19.7 dE00 from its photo) is withheld; the other nine real eyes are shown with the cut",
               [n for n, v in by.items() if not v["ok"]] == ["p09f"] and abs(by["p09f"]["drift"] - 19.7) < 0.05, [(n, v["ok"], v["drift"]) for n, v in by.items()])
 else:
     print("   (skipped: SNAPEYES_CALIB is not set)", flush=True)
+
+section("11. no model call, no key")
+check("nothing in this suite called the model or looked for a key (the image model was the stub of section 8, which answers from the crop)", not CALLED and len(MODEL) >= 4, (CALLED, len(MODEL)))
 
 # ------------------------------------------------------------------
 shutil.rmtree(TMP, ignore_errors=True)

@@ -306,6 +306,26 @@ const en = {
     startOver: 'Start over',
     confirmStartOver: (n: number) => `Discard all ${n} eyes and start over?`,
     stored: 'Saved to training memory',
+
+    // the Reveal (src/reveal): the photo left of a hard cut, the restored iris right of it; the strip of the same eye three times. The wording of the
+    // pills, the slider and the promise is the landing page's (wave-lp reveal.strip, reveal.never); the proof line ("the pixels are identical") is NOT here:
+    // it is published only when the automatic test runs on every delivery (decision 10, WP12)
+    reveal: {
+      photo: 'Your photo',
+      iris: 'Your iris',
+      art: 'Your art',
+      slider: 'Compare your photo with your restored iris',
+      valueText: 'photo {n} percent',
+      drag: 'Drag the line, or use the arrow keys. Enter returns to the pupil cut.',
+      promise: 'Restored, never repainted: we never recolour your iris or swap it for another eye.',
+      stripTitle: 'From photo to art',
+      stripIntro: 'The same eye three times: as you took it, restored, and as the art we suggest for it.',
+      stripIntroPair: 'The same eye twice: as you took it, and restored.',
+      noCut: 'We could not show the cut for this eye, so your photo and the restored iris are shown side by side.',
+      softTip: 'Your photo is small, so its half looks soft. Move closer or use 2x zoom for a sharper comparison.',
+      frameWide: 'Wide frame',
+      frameTight: 'Tight frame: your photo is a close crop, nothing is invented around it',
+    },
   },
 
   price: {
@@ -636,6 +656,23 @@ const de: TryCopy = {
     startOver: 'Neu beginnen',
     confirmStartOver: (n: number) => `Alle ${n} Augen verwerfen und neu beginnen?`,
     stored: 'Im Trainingsspeicher gesichert',
+
+    reveal: {
+      photo: 'Ihr Foto',
+      iris: 'Ihre Iris',
+      art: 'Ihr Kunstwerk',
+      slider: 'Ihr Foto mit Ihrer restaurierten Iris vergleichen',
+      valueText: 'Foto {n} Prozent',
+      drag: 'Linie ziehen oder Pfeiltasten benutzen. Enter springt zurück zum Pupillenschnitt.',
+      promise: 'Restauriert, nie neu gemalt: Wir färben Ihre Iris nie um und tauschen sie nie gegen ein anderes Auge.',
+      stripTitle: 'Vom Foto zur Kunst',
+      stripIntro: 'Dasselbe Auge dreimal: so, wie Sie es aufgenommen haben, restauriert und als das Kunstwerk, das wir dafür vorschlagen.',
+      stripIntroPair: 'Dasselbe Auge zweimal: so, wie Sie es aufgenommen haben, und restauriert.',
+      noCut: 'Den Schnitt konnten wir für dieses Auge nicht zeigen, deshalb sehen Sie Ihr Foto und die restaurierte Iris nebeneinander.',
+      softTip: 'Ihr Foto ist klein, deshalb wirkt seine Hälfte weich. Gehen Sie näher heran oder nutzen Sie 2x Zoom für einen schärferen Vergleich.',
+      frameWide: 'Weiter Ausschnitt',
+      frameTight: 'Enger Ausschnitt: Ihr Foto ist ein enger Zuschnitt, um die Iris wird nichts erfunden',
+    },
   },
 
   price: {

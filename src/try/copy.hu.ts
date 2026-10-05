@@ -296,6 +296,23 @@ export const hu: TryCopy = {
     startOver: 'Újrakezdés',
     confirmStartOver: (n: number) => `Elveted mind ${az(n)} ${n} szemet, és újrakezded?`,
     stored: 'Mentve a tanító adattárba',
+
+    reveal: {
+      photo: 'A fotód',
+      iris: 'Az íriszed',
+      art: 'Az alkotásod',
+      slider: 'Hasonlítsd össze a fotódat a helyreállított íriszeddel',
+      valueText: 'fotó {n} százalék',
+      drag: 'Húzd el a vonalat, vagy használd a nyílbillentyűket. Az Enter visszavisz a pupillán átmenő vágáshoz.',
+      promise: 'Helyreállítva, soha át nem festve: az íriszedet sosem színezzük át, és sosem cseréljük le másik szemre.',
+      stripTitle: 'A fotótól az alkotásig',
+      stripIntro: 'Ugyanaz a szem háromszor: ahogy lefotóztad, helyreállítva, és az alkotásként, amit javaslunk hozzá.',
+      stripIntroPair: 'Ugyanaz a szem kétszer: ahogy lefotóztad, és helyreállítva.',
+      noCut: 'Ennél a szemnél nem tudtuk megmutatni a vágást, ezért a fotód és a helyreállított írisz egymás mellett látható.',
+      softTip: 'A fotód kicsi, ezért a fele lágynak tűnik. Menj közelebb, vagy használj 2x nagyítást az élesebb összehasonlításhoz.',
+      frameWide: 'Széles kivágás',
+      frameTight: 'Szoros kivágás: a fotód szoros kivágás, az írisz körül semmit nem találunk ki',
+    },
   },
 
   price: {

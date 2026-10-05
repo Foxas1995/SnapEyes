@@ -1,6 +1,10 @@
 import React from 'react';
 import { AlertTriangle, Check, Download, Plus, RefreshCcw, Trash2 } from 'lucide-react';
 import { CompareSlider } from './CompareSlider';
+import { Reveal } from '../reveal/Reveal';
+import { RevealStrip } from '../reveal/RevealStrip';
+import { withheldByColour } from '../reveal/revealMath';
+import { useRevealFrame } from '../reveal/useRevealFrame';
 import { T, layoutLabel } from './copy';
 import { NO_SAVE, NO_SAVE_BOX } from './noSave';
 import { type Art, type Eye, type Layout, MAX_EYES, canvasSize, layoutsFor } from './multi';
@@ -39,6 +43,7 @@ export const ResultView: React.FC<Props> = (p) => {
   const n = p.eyes.length;
   const idx = Math.max(0, p.eyes.findIndex((e) => e.id === p.selectedId));
   const eye = p.eyes[idx];
+  const rev = useRevealFrame(eye);       // the Reveal's frame for the selected eye (a hook: it runs before the early return below)
   const layouts = layoutsFor(n);
   const expected = canvasSize(n, p.layout);
   const shown = p.art ?? p.staleArt;
@@ -49,6 +54,41 @@ export const ResultView: React.FC<Props> = (p) => {
   const artTitle = allSample ? T.result.sampleArtwork : T.result.artwork;
   const artAlt = samples ? `${artTitle} (${T.result.sampleBadge})` : artTitle;
   const retakeLabel = eye.sample ? T.result.replaceSample : n > 1 ? T.result.retakeEye(idx + 1) : T.result.retakeOnly;
+
+  // The Reveal (src/reveal, WP9): the photo left of a hard cut, the restored iris right of it. When the server withheld the cut (the colour drifted, or
+  // photo and restoration do not register) the same two pictures show side by side as a strip, with the note and, for a colour drift, the colour check's
+  // retake advice. Without the server's numbers (an older server, the sample eye, no time left there) the plain slider below stays.
+  const R = T.result.reveal;
+  const revealLabels = { photo: R.photo, iris: R.iris, slider: R.slider, valueText: R.valueText };
+  const stripAlts = { photo: R.photo, iris: R.iris, art: T.result.artwork };
+  const stripCaptions = { photo: R.photo, iris: R.iris, art: R.art };
+  const revealHero = rev.view === 'cut' ? (
+    <div className="mx-auto w-full max-w-[640px]" data-testid="reveal-hero">
+      {rev.frame
+        ? <Reveal key={eye.id} photo={rev.frame.url} restored={rev.restored} geometry={rev.frame.geometry} labels={revealLabels} ready={rev.ready} />
+        : <div className="aspect-square w-full rounded-2xl bg-black border border-white/10" />}
+    </div>
+  ) : rev.view === 'strip' ? (
+    <div data-testid="reveal-withheld">
+      {rev.frame && (
+        <RevealStrip key={eye.id} wide={rev.frame.url} restored={rev.restored} art={n === 1 ? (shown?.src ?? null) : undefined} geometry={rev.frame.geometry}
+          captions={stripCaptions} alts={stripAlts} />
+      )}
+      <p data-testid="no-cut" className="text-xs text-amber-200/90 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
+        <AlertTriangle className="w-4 h-4 shrink-0 mt-px text-amber-300" /> <span>{R.noCut}</span>
+      </p>
+    </div>
+  ) : null;
+  const colourNote = !eye.sample && (eye.colourOff || withheldByColour(rev.rv));
+  // one eye on the artwork: the same eye three times, between the Reveal and the style tiles
+  const stripSection = n === 1 && rev.view === 'cut' && rev.frame ? (
+    <div data-testid="strip-section">
+      <h2 className="font-luxury text-xl font-bold">{R.stripTitle}</h2>
+      <p className="text-xs text-zinc-400 mt-1 mb-3">{R.stripIntro}</p>
+      <RevealStrip key={eye.id} wide={rev.frame.url} restored={rev.restored} art={shown?.src ?? null} geometry={rev.frame.geometry}
+        captions={stripCaptions} alts={stripAlts} />
+    </div>
+  ) : null;
 
   // every eye on the artwork, each with its own before/after
   const beforeAfter = (
@@ -79,25 +119,34 @@ export const ResultView: React.FC<Props> = (p) => {
           )}
         </div>
       )}
-      <CompareSlider key={eye.id} before={eye.before} after={`data:image/jpeg;base64,${eye.image}`}
-        beforeLabel={eye.sample ? T.result.samplePhoto : T.result.yourPhoto} afterLabel={T.result.after} />
+      {revealHero ?? (
+        <CompareSlider key={eye.id} before={eye.before} after={`data:image/jpeg;base64,${eye.image}`}
+          beforeLabel={eye.sample ? T.result.samplePhoto : T.result.yourPhoto} afterLabel={T.result.after} />
+      )}
       {/* decision 5 speaks about the customer's own photo, so the sample gets its own line instead */}
       {eye.sample
         ? <p className="text-xs text-amber-100 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">{T.result.sampleNote}</p>
         : <p className="text-xs text-zinc-200 mt-3 bg-white/5 border border-white/10 rounded-xl p-3">{T.result.transparency}</p>}
-      {!eye.sample && eye.colourOff && (
+      {revealHero && <p data-testid="promise" className="text-xs text-zinc-300 mt-2">{R.promise}</p>}
+      {colourNote && (
         <p data-testid="colour-off" className="text-xs text-amber-200/90 mt-2 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-px text-amber-300" /> <span>{T.result.colourOff}</span>
         </p>
       )}
       <p className="text-[11px] text-zinc-500 mt-2">
         {[
-          T.result.drag,
+          rev.view === 'cut' ? R.drag : rev.view === 'strip' ? '' : T.result.drag,
           eye.diameterPx && !eye.sample ? T.result.irisPx(eye.diameterPx) : '',
           eye.glarePct >= 0.4 ? T.result.reflection : '',
           eye.usedSr ? T.result.upscaled : '',
         ].filter(Boolean).join(' ')}
       </p>
+      {rev.view !== 'plain' && rev.rv?.soft && <p data-testid="soft-tip" className="text-[11px] text-amber-200 mt-1">{R.softTip}</p>}
+      {rev.view === 'cut' && rev.frame && (
+        <p data-testid="frame-note" className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+          <Check className="w-3 h-3" /> {rev.frame.geometry.plan.mode === 'wide' ? R.frameWide : R.frameTight}
+        </p>
+      )}
       {eye.stored && <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1"><Check className="w-3 h-3" /> {T.result.stored}</p>}
       <div className={`grid gap-2 mt-3 ${n > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <button onClick={() => p.onRetake(eye.id)}
@@ -193,7 +242,7 @@ export const ResultView: React.FC<Props> = (p) => {
     <section className="flex flex-col gap-6">
       {/* One eye: its before/after is the surprise, so it leads. Two or more: the artwork of all of them is
           what the couple came for, so it leads and the per-eye before/after follows. */}
-      {n > 1 ? <>{artwork}{beforeAfter}</> : <>{beforeAfter}{artwork}</>}
+      {n > 1 ? <>{artwork}{beforeAfter}</> : <>{beforeAfter}{stripSection}{artwork}</>}
 
       {p.purchase}
 

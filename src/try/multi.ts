@@ -2,6 +2,8 @@
 // capture-study payloads (the price is src/shared/markets.ts priceMinor). No React and no DOM here.
 import type { Analysis } from './shots';
 import { legacyLayoutsFor } from '../shared/styles';
+import type { RevealParams } from '../reveal/revealMath';
+import type { WideFrame } from '../reveal/wideFrame';
 
 /** api/_lib/iris.py MULTI_MAX: the most eyes one artwork holds. */
 export const MAX_EYES = 8;
@@ -35,6 +37,21 @@ export interface Eye {
   // an eye brought back after the payment page (it is in the order by then). sealed above is the preview string
   // /api/enhance returned, byte for byte: the draft upload sends exactly that, and the server opens it.
   draft?: EyeDraft | null;
+  // The Reveal (src/reveal, work package WP9). reveal: /api/enhance's numbers for it (the pupil, the registration shift, the restored edge, ok): absent for
+  // the sample eye, from an older server, or when the server had no time for it; ok false means the cut is withheld (the strip is shown without it).
+  // wide: the customer's photo cut to the Reveal's frame in this browser, while the page still held the photo (TryApp.process). It lives in memory only:
+  // it is never uploaded and never saved, so the copy kept for the way back from the payment page leaves it out (TryApp.keepForReturn) and the Reveal
+  // is then built again from `before`, the tight frame of the client crop.
+  reveal?: RevealParams;
+  wide?: WideFrame;
+}
+
+/** An eye as it is saved for the way back from the payment page (TryApp.keepForReturn): its draft (the work ticket, spent by then) and the Reveal's frame
+ *  (memory only: never saved, never uploaded) stay out; the Reveal's numbers (about 150 bytes) go with it, so the way back builds the Reveal again from
+ *  the client crop the copy keeps (`before`). */
+export function savedEye(e: Eye): Omit<Eye, 'draft' | 'wide'> {
+  const { draft: _draft, wide: _wide, ...rest } = e;
+  return rest;
 }
 
 /** What an eye needs to be uploaded as a draft: the deglared crop its preview was made from (/api/deglare's crop) and

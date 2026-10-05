@@ -401,3 +401,29 @@ with a line break inside `b"\r\n"`, an editing slip, fixed in `5144e04`), and **
 `ConnectionAbortedError(10053)` raised in the test's own `requests.post`, after 46 of its 66 checks had passed and with no failing check; the same check H3 passed in the `advance` suite in the same run (the same file's newer copy) and
 `oldadv` passed 66 of 66 in the next full run. The call is `L.run`'s origin gate, which no WP5B file touches; it is most likely the Windows connection abort of the harness's one-thread-per-request test server that sections 7 and 10 of
 this file already record (the server answers 403 and closes before the client has sent its whole body: an inference from the error, not reproduced): a flake of the harness, recorded and not hidden; if it recurs it is a defect to chase.
+
+## 12. The Reveal's server half (WP9, 2026-10-05): what it costs and what is proven
+
+**Time.** `reveal_for` (the one call of `/api/enhance`: `reveal_params` 0.25 s, the prepared restoration and the watermarked display copy 0.2 s) takes 0.53 s of CPU per eye at 1024 px with a
+400 px crop on this machine (the calibration eyes: 0.5 to 0.6 s each, the arcs variant included in that figure). The plan's figure was 0.4 to 1.0 s per eye. `enhance` asks for 4 s left in the invocation
+(`REVEAL_MIN_LEFT`, separate from the profile's 6 s): on the quiet core that is eight times the work, on a slow instance (x1.6) five times. The memory is that of one restoration, a 1024 px square and a few
+256 px float arrays: no measurable peak beside the model call's own.
+
+**Proof that the port is the prototype.** `port_reveal.py` makes `reveal.py`, `reveal_clean.py` and `reveal_wm.py` from `designs/presentation*.py` by a listed set of edits (imports, the references
+between the three files, the docstrings, the `__future__` import) and `test_reveal.py` runs `--check` when the scratch tree is there (LOCAL). The other side: the goldens recorded on the scratch code
+(`data/reveal_goldens.json`, twelve synthetic cases: the numbers of the wire dict, the sha256 of the prepared restoration and of the arcs display copy in English and Lithuanian) and, with
+`SNAPEYES_CALIB`, the ten real calibration eyes (`data/reveal_goldens_real.json`, hashes and numbers only): every one equal. Mutations seen to fail: the crush luma, the display swap in `enhance.py`.
+
+**What the real eyes say** (the scratch code and the port agree): ok for nine of the ten human eyes, withheld by colour for the hazel eye p09f (restored colour 19.7 dE00 from its photo; the limit is 8,
+the warning 6); the drift of the other nine is 0.6 to 5.6. Registration: every real eye is inside 0.005 R on the crop pair (the largest spread is 0.0034 R, drv_w03; the page's frame-level number for the owner's d05, 0.0057 R in the prototype's
+T16 on the photo layers, needs the frame builder in Python, which the server does not carry: C10). On the synthetic cases a one degree turn (0.0079 R) and a two percent enlargement (0.0084 R) are withheld,
+a 3 px shift is corrected (measured to a fifth of a pixel) and not withheld.
+
+**The browser half** was verified in a real browser against the dev API with the image and vision models stubbed (no model call: the stub also replaces `gemini` and the key lookup and refuses every
+request to another host): the hero Reveal (the restored layer on `rgb(0, 0, 0)`, no border, outline, shadow or filter on any layer, the cut at 50.00, the handle hidden at rest), the arrival sweep
+(100 to 50 after 427 ms, `clip-path 900ms cubic-bezier(.2,.7,.2,1)`), reduced motion (the first value is 50.00, no transition, the strip columns at opacity 1 with no transition), keys and pointer (arrows
+step 2, Home 0, End 100, Enter 50, a press at 51 snaps to 50, 47.5 snaps to 50), the four languages, two eyes (no strip), the withheld colour case (the strip without the cut, the note, the colour check's
+advice, the amber retake button), the AI-generated sample (the plain slider, no strip), the way back from Stripe (a copy with no frame: the Reveal is built from the crop and says "Tight frame"), and 375 and 320
+px wide (no horizontal overflow, the strip in three columns at 375 and stacked at 320).
+
+**Counts:** `v3reveal` 63 (new), `ts` 78 (was 31: 15 ported node tests, 10 new node tests in `src/reveal/reveal.test.ts`, 22 in `suites/ts/reveal_page.test.ts`). `scripts/run_ts_tests.mjs` runs both kinds.

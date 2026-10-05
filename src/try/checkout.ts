@@ -53,8 +53,9 @@ export function saveOrderRef(r: OrderRef | null): void {
   try { window.sessionStorage.setItem(ORDER_KEY, JSON.stringify(r)); } catch { /* the order then lives in memory only */ }
 }
 
-/** One eye as the snapshot keeps it: everything the result screen shows, never the draft (it is uploaded by then). */
-export type SnapEye = Omit<Eye, 'draft'>;
+/** One eye as the snapshot keeps it: everything the result screen shows, never the draft (it is uploaded by then) and never the Reveal's frame (memory
+ *  only: multi.ts savedEye leaves both out). */
+export type SnapEye = Omit<Eye, 'draft' | 'wide'>;
 
 export interface Snapshot { v: 1; order: string; at: number; style: string; layoutWant: Layout | null; names: string; eyes: SnapEye[] }
 
