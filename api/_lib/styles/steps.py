@@ -849,6 +849,25 @@ def bump_rerun(order, by="admin", reason=""):
     return n
 
 
+def restore_rerun(order, delivery):
+    """After the style folder was cleaned up (api/_lib/cleanup.py removes it 14 days after delivery.json) the rerun count went with it, and a later admin
+    recompose would make the plan again at count 0 and point the delivery back at an older file. The delivered artwork's own record says which rerun it is:
+    when there is no rerun.json, write one from it. Returns the count (0 for a first artwork, a legacy artwork or an unreadable record)."""
+    key = delivery.get("key") if isinstance(delivery, dict) else None
+    if not (isinstance(key, str) and key.endswith(".jpg")):
+        return 0
+    rec = store.get_json(key[:-4] + ".json", timeout=6.0, retry=False)
+    n = rec.get("rerun") if isinstance(rec, dict) else 0
+    n = n if isinstance(n, int) and not isinstance(n, bool) and 0 < n <= 1000 else 0
+    if n:
+        try:
+            store.put(path(order, "rerun.json"), store.json_bytes({"n": n, "t": int(time.time()), "iso": _iso(), "by": "restore", "reason": "style folder cleaned up"}),
+                      "application/json", upsert=False, timeout=6.0, retry=False)
+        except store.StorageExists:
+            pass
+    return n
+
+
 def _unchanged(ctx, plan, st):
     """Is every input of the finished art step still what it was (the eyes' masters, the words)? A re-rendered master or a changed line makes a recompose
     a new file; nothing changed makes it the same one."""

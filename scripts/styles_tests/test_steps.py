@@ -572,7 +572,7 @@ class Exe:
         key = SP.artwork_key(ctx.order, plan, rerun)
         data = b"J" * 100 + str(self.calls).encode()
         store.put(key, data, "image/jpeg", upsert=True)
-        store.put(key[:-4] + ".json", store.json_bytes({"bytes": len(data), "needs_review": act == "review"}), "application/json", upsert=True)
+        store.put(key[:-4] + ".json", store.json_bytes({"bytes": len(data), "needs_review": act == "review", "rerun": int(rerun)}), "application/json", upsert=True)
         res = {"key": key, "width": 8, "height": 8, "bytes": len(data), "style": plan["style"], "layout": plan["layout"], "count": plan["eyes"],
                "existing": False, "needs_review": act == "review", "url": "https://example.test/u"}
         recs = [store.get_json(k[:-4] + ".json") for k in SP._eye_keys(ctx, step)]
@@ -1403,6 +1403,24 @@ leg_re = ops.ACTIONS["recompose"]({"order": o6}, WHO)
 check("a legacy order: recompose asks the legacy composer again (the same file when nothing changed); rerun_step is refused (409 rerun_not_available)",
       isinstance(e_leg, store.Answer) and e_leg.body["reason"] == "rerun_not_available" and leg_re["result"] == "same", (e_leg, leg_re.get("result")))
 
+# after the clean-up of the style folder (14 days after delivery) an admin recompose must not point the delivery back at an older file
+MODE.update(side=256)
+exe_c = Exe()
+with mock.patch.dict(SP.EXECUTORS, {"art": exe_c}), Show("solo.clean"):
+    o10, k10, sid10 = new_order(1, "solo.clean", "cleo@example.com")
+    done10 = wait_for(lambda: stopped(o10, "ready"), 60)
+    rn10 = ops.ACTIONS["rerun_step"]({"order": o10, "step": "art"}, WHO)
+    key10 = rj(f"orders/{o10}/delivery.json")["key"]
+    gone10 = pay.folder_files(f"orders/{o10}/style")
+    store.delete_many(gone10)                                    # what the daily clean-up does once the delivery is old enough
+    rc10 = ops.ACTIONS["recompose"]({"order": o10}, WHO)
+check("after the clean-up removed the style folder, an admin recompose of an order that was rerun does NOT point the delivery back at the first file: the rerun count comes back from the "
+      "delivered artwork's own record, the same plan makes the same file, nothing is drawn",
+      bool(done10) and rn10["result"] == "rerun" and len(gone10) >= 5 and rc10["result"] == "same" and rc10["delivery"]["key"] == key10 and rj(f"orders/{o10}/delivery.json")["key"] == key10
+      and exe_c.calls == 3 and rj(f"orders/{o10}/style/rerun.json")["n"] == 1 and rj(f"orders/{o10}/style/rerun.json")["by"] == "restore", (rn10.get("result"), rc10.get("result"), exe_c.calls, key10))
+# (the scripted executor has no reuse path, so it is called a third time; the real engine's executor reuses the stored artwork: the next check)
+MODE.update(side=4096)
+
 # lab_steps
 store.put(f"orders/{LAB_ORDER}/eye_1.jpg", master_jpeg("blue", "round", 4096, 11), "image/jpeg", upsert=True)
 store.put(f"orders/{LAB_ORDER}/eye_1.json", store.json_bytes({"order": LAB_ORDER, "eye": 1, "created": "2026-10-05T00:00:00Z", "bytes": 1, "eye_id": "ab" * 8}), "application/json", upsert=True)
@@ -1418,6 +1436,12 @@ lr2 = ops.ACTIONS["lab_steps"]({"order": LAB_ORDER, "style": "solo.clean", "name
 lr3 = ops.ACTIONS["lab_steps"]({"order": LAB_ORDER, "style": "solo.clean", "names": "Anna;Max", "date": "12 May 2026", "fresh": True}, WHO)
 check("asked again it is the same file (nothing drawn); fresh draws again beside it with the rerun count 1", lr2["result"] == "same" and lr2["artwork"]["key"] == lr["artwork"]["key"]
       and lr3["result"] == "made" and lr3["artwork"]["key"] != lr["artwork"]["key"] and lr3["rerun"] == 1 and store.exists(lr["artwork"]["key"]), (lr2["result"], lr3["result"], lr3.get("rerun")))
+os.remove(local(f"orders/{LAB_ORDER}/style/done_art_r1.json"))                      # (the rerun's done record: a kill between its output and its done record)
+t_re = time.time()
+lr_re = ops.ACTIONS["lab_steps"]({"order": LAB_ORDER, "style": "solo.clean", "names": "Anna;Max", "date": "12 May 2026"}, WHO)
+check("the real engine reuses a stored artwork whose done record is missing (a kill between the output and the done record): the same file, nothing drawn (seconds, not a render), the done "
+      "record written again", lr_re["artwork"]["key"] == lr3["artwork"]["key"] and lr_re["result"] == "same" and time.time() - t_re < 4.0 and exists(f"orders/{LAB_ORDER}/style/done_art_r1.json"),
+      (lr_re["result"], round(time.time() - t_re, 1)))
 dry2 = ops.ACTIONS["lab_steps"]({"order": LAB_ORDER, "style": "solo.gold", "dry": True}, WHO)
 check("a lab order's style folder belongs to the lab: another style starts again from nothing (the old plan and records are gone, the old artworks stay)",
       dry2["plan"]["style"] == "solo.gold" and not exists(f"orders/{LAB_ORDER}/style/done_art.json") and not exists(f"orders/{LAB_ORDER}/style/rerun.json") and store.exists(lr["artwork"]["key"]), dry2["plan"]["style"])
@@ -1474,7 +1498,7 @@ mk_style = lambda o, delivered_days=None, deleted=False, extra=True: (
     store.put(f"{SP.INDEX}/{o}.json", b"{}", "application/json", upsert=True),
     delivered_days is not None and store.put(f"orders/{o}/delivery.json", store.json_bytes({"key": "x", "created_at": int(time.time() - delivered_days * DAY)}), "application/json", upsert=True),
     deleted and store.put(f"orders/{o}/deleted.json", b"{}", "application/json", upsert=True))
-oc_old, oc_new, oc_none, oc_gone = "261001-clean00001", "261001-clean00002", "261001-clean00003", "261001-clean00004"
+oc_old, oc_new, oc_none, oc_gone = "260915-clean00001", "260915-clean00002", "260915-clean00003", "260915-clean00004"
 mk_style(oc_old, 15)
 mk_style(oc_new, 3)
 mk_style(oc_none)
@@ -1487,6 +1511,11 @@ check("the clean-up removes the style folder of an order delivered 14 days ago o
       not exists(f"orders/{oc_old}/style/plan.json") and not exists(f"{SP.INDEX}/{oc_old}.json") and exists(f"orders/{oc_new}/style/plan.json") and exists(f"{SP.INDEX}/{oc_new}.json")
       and exists(f"orders/{oc_none}/style/plan.json") and not exists(f"orders/{oc_gone}/style/plan.json") and not exists(f"{SP.INDEX}/{oc_gone}.json") and exists(f"orders/{oc_old}/order.json")
       and res["kept"] >= 2 and res["gone"] >= 1, res)
+oc_young = f"{time.strftime('%y%m%d', time.gmtime())}-clean00005"
+mk_style(oc_young, 20)           # (its delivery says 20 days ago, which an order made today cannot have: the id says it is too young to look at)
+res_y = C._styles(True, 0.0, seen_say.append)
+check("an order made after the cut-off is skipped by its id without a read (it cannot have been delivered before it was made): its folder and marker stay",
+      exists(f"orders/{oc_young}/style/plan.json") and exists(f"{SP.INDEX}/{oc_young}.json") and res_y["kept"] >= 1, res_y)
 run_res = C.run(yes=True, lock=False)
 check("the daily run includes the step (res['style']) after the other deletions", isinstance(run_res.get("style"), dict) and {"orders", "kept", "gone"} <= set(run_res["style"]), run_res.get("style"))
 

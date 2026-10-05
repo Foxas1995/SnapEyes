@@ -497,6 +497,9 @@ def _styles(yes, stop_left, say, max_seconds=STYLE_SECONDS):
                 res["more"] = True
                 break
             res["orders"] += 1
+            if order[:6].isdigit() and order[6:7] == "-" and _day_ts(order[:6]) > cut:
+                res["kept"] += 1                 # made after the cut-off: it cannot have been delivered before it (no reads for a young order)
+                continue
             mark = f"{SP.INDEX}/{order}.json"
             dl, deleted, expired = pay.parallel([lambda: store.get_json(f"orders/{order}/delivery.json", timeout=8.0),
                                                  lambda: store.exists(f"orders/{order}/deleted.json", timeout=8.0),

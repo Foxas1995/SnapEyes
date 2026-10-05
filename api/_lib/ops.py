@@ -1026,6 +1026,9 @@ def _remake(order, mode):
         raise store.Answer(409, "eyes_not_ready", "Not every eye is made yet.", False, None, missing=missing)
     ORD = _mod("order")
     arrival = L.time_left()
+    prev = store.get_json(f"{folder}/delivery.json")
+    if isinstance(prev, dict) and not CT.is_legacy(spec.get("style")) and SP.read_state(order)["plan"] is None:
+        SP.restore_rerun(order, prev)             # the style folder was cleaned up: the rerun count comes back from the delivered artwork's record
     claim = ORD._compose_claim(order)
     try:
         try:
@@ -1035,7 +1038,6 @@ def _remake(order, mode):
     finally:
         ORD._compose_release(claim)
     r = got["artwork"]
-    prev = store.get_json(f"{folder}/delivery.json")
     now = int(time.time())
     delivery = {"key": r["key"], "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
                 "style": r.get("style"), "layout": r.get("layout"), "count": r.get("count"),

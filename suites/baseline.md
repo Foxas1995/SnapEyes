@@ -314,15 +314,15 @@ for the order's state), about a second on a real bucket; the artwork's file and 
 to the old digest rule on a real 4096 px master). The watchdog costs one self-call of at most `KICK_READ` (1.5 s) at the start of a step, and two relay invocations that wait
 40 s each and then find the order ready (they do no work: a relay that wakes to a finished order stops after four reads).
 
-**The suite** `v3steps` (132 checks, about 1 minute 50 seconds alone) drives the real handlers over HTTP with the image model stubbed (the fake master writes a procedural iris
-of 4096 px for the single styles) and scripted executors for the state machine. It joins the list in `suites/suites.list` and `baseline.json` (v3steps 132); the page-code
+**The suite** `v3steps` (135 checks, about 1 minute 50 seconds alone) drives the real handlers over HTTP with the image model stubbed (the fake master writes a procedural iris
+of 4096 px for the single styles) and scripted executors for the state machine. It joins the list in `suites/suites.list` and `baseline.json` (v3steps 135); the page-code
 count went from 20 to 29 (the order page's driver, `suites/ts/order_driver.test.ts`). Existing checks changed, each with its reason (in the commit): the two admin suites expect
 one more master event for a composed order (the step's `art` event beside the legacy composer's own `compose` event), `v3single` no longer expects `master_compose` to answer 400
 for a style of the v3 engine (the master plan makes it: with no stored eye it answers 409 `eyes_not_ready`), and one label of `v3reg`.
 
 **Full set** on the work tree after the last code change: 28 of 28 green, every count equal to the baseline (r2 105, r3 48, r4 69, r5 54, fix 53, admin 186, pay 120, advance 66,
 refund 7, preview 60, review 11, fixmk 36, markets 58, au 70, payrev 19, fixer 43, oldpay 120, oldadv 66, oldadmin 186, exp 349, ts 29, v3wp0 93, v3reg 172, v3gate 97, v3core 86,
-v3plates 108, v3single 86, v3steps 132).
+v3plates 108, v3single 86, v3steps 135).
 
 **A flake of the harness under load, recorded and not hidden.** In one full run (the first, with three suites in parallel and another agent's node processes on the machine) the
 `pay` suite died at its third checkout with `ConnectTimeout` to its own loopback API server (60 s), after 87 of its 120 checks, with no failing check; `pay` alone passes 120 of 120
