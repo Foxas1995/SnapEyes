@@ -1041,7 +1041,16 @@ with Show("solo.gold", stage="lab"):
     c_l, j_l, _ = post("/api/compose", {"sealed": S1, "style": "solo.gold", "lab": True}, {"Authorization": "Bearer " + good_key})
     c_w, j_w, _ = post("/api/compose", {"sealed": S1, "style": "solo.gold", "lab": True}, {"Authorization": "Bearer admin-v1.1999999999.0123456789abcdef0123456789abcdef"})
 check("the lab flag over HTTP: the admin key in the Authorization header opens the laboratory (200), a wrong key does not (422)", c_l == 200 and j_l["style"] == "solo.gold" and c_w == 422, (c_l, c_w))
-c, j, r = post("/api/compose", {"sealed": S1, "style": "supernova"}, {"Origin": "https://example.org"})
+for _try in range(3):
+    # the gate answers before it reads the body, so a client still sending a 150 KB body can see its connection reset instead of the 403 (a Windows socket race that shows
+    # when three suites share the machine: WinError 10053 in the full run of the WP10 review fix); the refusal is the same, the request is made again
+    try:
+        c, j, r = post("/api/compose", {"sealed": S1, "style": "supernova"}, {"Origin": "https://example.org"})
+        break
+    except requests.exceptions.ConnectionError:
+        if _try == 2:
+            raise
+        time.sleep(0.5)
 check("the origin gate is as it was: a foreign Origin is refused (403) before anything is looked at", c == 403, c)
 check("a request that is not JSON is refused as before (415)", requests.post(BASE + "/api/compose", data="x", headers={"Content-Type": "text/plain"}, timeout=30).status_code == 415)
 
