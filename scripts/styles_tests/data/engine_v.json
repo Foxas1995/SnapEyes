@@ -1,0 +1,10 @@
+{
+ "engine_v": 1,
+ "goldens": {
+  "core_goldens.json": "f6d38655b5028eb3f110b5c35058803d8e520f9ac96a40101b2d28b51cda7fc7",
+  "plate_picks.json": "f4ddb09f748aa9e9447ddbf99de787dfbabc18eab55525a661bead8eed668b40",
+  "singles_goldens.json": "774c7743afe19b002b864540a53381e4b8d944e5e56d75b68430dceafdb88114",
+  "singles_goldens_real.json": "f86adc4f2da31bd25a792a6078bc1775abc181cb0c6ad5321b92c8d85b8940b3",
+  "synth_verdicts.json": "9e62849d106a41a82da8fcb234ed3d7ea85361c16e3d1618a7df4cc3a3f6e91f"
+ }
+}

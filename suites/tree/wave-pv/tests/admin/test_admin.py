@@ -848,8 +848,10 @@ if section("render"):
     r = adm("recompose", order=o)
     check("recompose again: the same file", r.json().get("result") == "same")
     ev = [e for _, e in events_now() if e.get("kind") == "master" and e.get("order") == o]
-    check("master events: two eye renders (one a re-render) and one composition, with the order id", sorted((e["step"], bool(e.get("rerender"))) for e in ev)
-          == [("compose", False), ("eye", False), ("eye", True)], ev)
+    # (WP6a: the master plan's step runner writes one master event per step drawn, step "art", beside the legacy composer's own "compose" event; a recompose
+    # that draws nothing, the same file again, writes none)
+    check("master events: two eye renders (one a re-render), one composition and its art step, with the order id", sorted((e["step"], bool(e.get("rerender"))) for e in ev)
+          == [("art", False), ("compose", False), ("eye", False), ("eye", True)], ev)
     o2 = f"{d}-recm{secrets.token_hex(2)}"
     make_order(o2, paid=True, eyes=2, mail="sent")
     check("recompose with an eye missing: 409 eyes_not_ready", adm("recompose", order=o2).json().get("reason") == "eyes_not_ready")

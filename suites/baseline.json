@@ -64,7 +64,7 @@
    "pass": 349
   },
   "ts": {
-   "pass": 20
+   "pass": 29
   },
   "v3wp0": {
    "pass": 93
@@ -83,6 +83,9 @@
   },
   "v3single": {
    "pass": 86
+  },
+  "v3steps": {
+   "pass": 132
   }
  }
 }

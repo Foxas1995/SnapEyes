@@ -493,12 +493,13 @@ spec_m.loader.exec_module(MC)
 lab_order = "lab-260101-abcd1234"
 tk_m = L.mint_ticket(store.unlock_kind(lab_order), 900)
 mc_body = {"order": lab_order, "ticket": tk_m, "keys": [f"orders/{lab_order}/eye_1.jpg"], "layout": "single"}
-e_v3 = raises(lambda: MC.master_compose(dict(mc_body, style="solo.powder")), L.ClientError)
+e_v3 = raises(lambda: MC.master_compose(dict(mc_body, style="solo.powder")), store.Answer)
 e_old = raises(lambda: MC.master_compose(dict(mc_body, style="celestial_gold")), L.ClientError)
-check("master_compose draws the legacy engine's styles only: asked for a style of the v3 engine it answers 400 and draws nothing (the legacy engine would read an id it does not know as the "
-      "default style: a silent substitution after payment); a legacy id still passes the style check (it stops later: no eye is stored)",
-      isinstance(e_v3, L.ClientError) and "Choose one of the styles" in str(e_v3) and "solo." not in str(e_v3) and isinstance(e_old, L.ClientError) and "not stored yet" in str(e_old), (e_v3, e_old))
-check("the catalogue still says the engine styles are renderable for one eye (the laboratory draws them), and only the render path of the paid file refuses them until the master plan lands",
+check("master_compose makes a style of the v3 engine through the master plan's step runner (WP6a replaced its 400 for such a style: it must never draw one with the legacy engine, which "
+      "would read an id it does not know as the default style, a silent substitution after payment): with no eye stored for the order it answers 409 eyes_not_ready, nothing is drawn, "
+      "the legacy engine is not asked; a legacy id still passes the style check (it stops later: no eye is stored)",
+      isinstance(e_v3, store.Answer) and e_v3.status == 409 and e_v3.body["reason"] == "eyes_not_ready" and isinstance(e_old, L.ClientError) and "not stored yet" in str(e_old), (e_v3, e_old))
+check("the catalogue still says the engine styles are renderable for one eye (the laboratory and the master plan draw them) and for no other number of eyes",
       all(CT.renderable(i, 1) for i in SINGLES_STYLES) and not any(CT.renderable(i, 2) for i in SINGLES_STYLES))
 
 # ============================================================================================ 7. the admin laboratory

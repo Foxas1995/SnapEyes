@@ -402,7 +402,7 @@ check("a paid order is read for any style of the registry that takes its eye cou
       and refused(lambda: pay.spec_from(dict(SPEC, style="solo.powder", eyes="2"))) is not None)
 SINGLES_BUILT = tuple(i for i in C.ids() if C.ENGINE[i]["engine"] and C.ENGINE[i]["engine"]["module"] == "singles" and C.engine_built("singles"))
 check("the catalogue says what can be drawn: the six legacy ids for every eye count, and the single-eye styles of a v3 family that is in the repository "
-      "for one eye (WP5A: the singles; master_compose still draws only the legacy six, test_goldens_singles.py proves it)",
+      "for one eye (WP5A: the singles; a paid order's artwork of such a style is made by the master plan's step runner, WP6a, test_steps.py)",
       all(set(C.renderable_ids(n)) == set(LEGACY) | set(SINGLES_BUILT if n == 1 else ()) and [i for i in C.renderable_ids(n) if C.is_legacy(i)] == LEGACY
           for n in range(1, 9)) and C.renderable_ids(9) == ())
 

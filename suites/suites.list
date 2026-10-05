@@ -6,7 +6,9 @@
 # catalogue, the price class, the build check), v3gate (WP3: the eye profile, the restoration gate, eye_id and seal v2; set
 # SNAPEYES_CALIB and SNAPEYES_GATE_TABLE to also replay the calibration set, reported as LOCAL lines), v3single (WP5A: the singles family
 # replayed against the scratch prototype's own pictures; set SNAPEYES_SCRATCH_Y3 (the wave-y3 folder) for the 4096 px pictures of the plate styles and the
-# check of the port's edits, SNAPEYES_CALIB for the real calibration eyes: LOCAL lines, not counted).
+# check of the port's edits, SNAPEYES_CALIB for the real calibration eyes: LOCAL lines, not counted), v3steps (WP6a: the master plan, its steps and
+# state machine, the guards, the one duration constant, the watchdog, the admin actions and the clean-up of the style folder, over HTTP with a stub for the
+# image model; about two minutes).
 r2:wave-r-back/pb/r2:test_round2.py
 r3:wave-r-back/pb/r3:test_round3.py
 r4:wave-r-back/pb/r4:test_round4.py
@@ -33,3 +35,4 @@ v3gate:scripts/styles_tests:test_gate_seal.py
 v3core:scripts/styles_tests:test_engine_core.py
 v3plates:scripts/styles_tests:test_plates.py
 v3single:scripts/styles_tests:test_goldens_singles.py
+v3steps:scripts/styles_tests:test_steps.py
