@@ -254,7 +254,7 @@ byte-identical to it, so the difference between the port and the table is the ma
 | Radiance | 1.05 / 1.14 / 1.00 | 0.46 / 0.54 / 0.38 | 1.07 / 1.16 / 0.83 |
 | Celestial Gold (variant A) | 0.96 / 1.28 (the old design) / 1.04 | 0.33 / 0.61 (old) / 0.40 | 1.00 / 1.30 (old) / 0.89 |
 
-For the five designs whose code is unchanged the port is 0 to 16 percent faster than the scratch in every cell (the Gold row's scratch column is the old design). Against the spike's table the cold previews are +0 percent (Clean), +19 (Powder),
+(Correction below: the scratch column of this table was timed at a busier moment, and a repeat that alternates the two shows the port and the scratch equal, not the port faster. The Gold row's scratch column is the old design.) Against the spike's table the cold previews are +0 percent (Clean), +19 (Powder),
 +29 (Splash), +26 (Elements), +5 (Radiance), -8 (Gold); the acceptance line of the work package ("within 10 percent of the table") is therefore met
 for Clean, Radiance and Gold and not for Powder Burst, Splash and Elements, by the same margin that the unchanged scratch code misses it on this
 machine. The cause is not in the port; V3 and V11 (WP17a) measure the real instance, and the cost table is not touched by this package.
@@ -267,3 +267,22 @@ is cheaper, and the row is left as it is (conservative) until V11 measures a rea
 
 The golden replay (`v3single`): 54 pictures at 512 and 1024 px (every design, three eye classes, three canvases, the text lockup) and 9 at 4096 px (the non-plate designs) are counted; with the scratch tree the 9
 plate-style pictures at 4096 px, 24 real-eye pictures and the check of the port's edits run as LOCAL lines (all equal). `v3single` takes about 2.5 minutes alone.
+
+Correction (review of WP5A, 2026-10-05). The first table said the port is up to 16 percent faster than the scratch code. The review could not reproduce it
+(Powder Burst cold 2.2 s for both, Splash 1.6 s for both, in fresh processes), and a repeat that alternates the two in fresh processes (one design per process,
+the port and the scratch swapping places each round, five rounds, this machine, one thread, a synthetic 1024 px eye, no other heavy process; best of five and
+median, seconds, cold = the first preview of a process) gives the same speed within noise:
+
+| Design | Cold, best (median): port | scratch |
+|---|---|---|
+| Clean Iris | 0.74 (0.75) | 0.74 (0.77) |
+| Powder Burst | 2.00 (2.04) | 1.99 (2.08) |
+| Splash | 1.38 (1.40) | 1.39 (1.41) |
+| Elements | 1.74 (1.82) | 1.76 (1.79) |
+| Radiance | 1.11 (1.15) | 1.16 (1.20) |
+| Celestial Gold (variant A) | 1.01 (1.04) | (the scratch's own Gold is the old design) |
+
+The port is the same code, so the same speed is the expected result. Why the first table showed the port faster is not established (most likely the two were timed one
+after the other while the load of the machine changed); the repeat is the figure to use. Against the spike's table (x 0.94, the figures of the first table) this repeat gives Powder Burst +24 percent, Splash +27, Elements +23, Radiance +11,
+Clean +9, Celestial Gold -3: the acceptance line "within 10 percent of the table" is met for Clean and Gold and not for Powder Burst, Splash, Elements and (by one
+point, where the first table said +5) Radiance, by the same margin that the unchanged scratch code shows. Nothing in the cost table moved.
