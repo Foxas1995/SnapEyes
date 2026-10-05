@@ -309,6 +309,7 @@ PORTS = [
             "from .grains import GrainList\nfrom .common import limb_L\n\n"),
         sub("from designs.uni_plate_looks import DeepField,", "from .plate_looks import DeepField,"),
         sub(_WALL_OLD, _WALL_NEW),
+        sub("Any plate problem: no accent.", "A plate that cannot be had stops the render (PlateUnavailable, NoPlate): never an accent-less picture."),
     ]),
     ("designs/uni_plate_looks.py", "plate_looks.py", "imports, no fall back to a picture without the plate", [
         cut("import math", "COPPER5 = ",

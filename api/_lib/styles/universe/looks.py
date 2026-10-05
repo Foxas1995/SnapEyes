@@ -172,7 +172,7 @@ class Echo:
             self.layers = []
 
     def _wall_accent(self, scene):
-        """AD D12: the tall canvas gets a P-UV-DUST accent in the lower third (the fill alone leaves the lower half flat). Any plate problem: no accent."""
+        """AD D12: the tall canvas gets a P-UV-DUST accent in the lower third (the fill alone leaves the lower half flat). A plate that cannot be had stops the render (PlateUnavailable, NoPlate): never an accent-less picture."""
         e = scene.eyes[0]
         rnd = scene.rand("echo/wall")
         pl = PL.plates("P-UV-DUST")
