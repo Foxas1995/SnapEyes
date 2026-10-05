@@ -3,9 +3,16 @@
 // picture is put into the layer that is not in front, loaded and decoded there, and only then does the front change, so the
 // stage never shows a half-loaded picture or an empty frame. The pictures are fetched when the stage comes near the screen,
 // not when the page loads (the section sits far below the first screen).
+//
+// The glint (motion spec 6.7, charter AC-6): on the polished face of an acrylic plate, and only there, a soft band of light, 30 percent
+// of the print's width and at most 10 percent white, moves across it as the visitor scrolls past (from 768 px, motion allowed): it is
+// placed by the progress of the wall chapter through the screen, so it moves the way a reflection does when you walk by, and never
+// follows the pointer. It is clipped to the print face (the span's box), decorative (aria-hidden) and exists only while the acrylic
+// picture is the one on screen. On a phone there is no scrolling to walk past: one sweep plays when the visitor picks acrylic.
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { motionOk, traverse, whenPinned } from '../motion/motion';
 import { ExampleChip, type PictureAsset } from './ui';
-import { STAGE_SIZES, type GlintBox, type StagePicture } from './wallScenes';
+import { STAGE_SIZES, type GlintBox, type Material, type StagePicture } from './wallScenes';
 
 interface Slot { key: string; asset: PictureAsset }
 type Slots = readonly [Slot | null, Slot | null];
@@ -35,9 +42,11 @@ export interface WallStageProps {
   picture: StagePicture | null;
   /** The words of the picture for a screen reader ("AI visualisation. Your file printed on aluminium, about 50 cm. Radiance."). */
   alt: string;
-  /** The sweep of light on a polished surface (acrylic), or null. The span is placed here and always in the markup; nothing
-   *  plays it yet (motion is a later task: add lp-play to #stGlint). */
+  /** The sweep of light on a polished surface (acrylic), or null: the box of the print's face, in percent of the stage. The span is
+   *  always in the markup and gets the box only while the picture it belongs to is the one in front. */
   glint: GlintBox | null;
+  /** The material on the stage: a phone's single sweep plays once per pick of the material. */
+  material: Material;
   /** The group's name (wall.stageLabel). */
   label: string;
   /** The line under the stage, in a live region. */
@@ -46,7 +55,7 @@ export interface WallStageProps {
   eyesNote?: string;
 }
 
-export function WallStage({ picture, alt, glint, label, caption, eyesNote }: WallStageProps) {
+export function WallStage({ picture, alt, glint, material, label, caption, eyesNote }: WallStageProps) {
   const frame = useRef<HTMLDivElement>(null);
   const near = useNearViewport(frame, '900px 0px');
   const want = near ? picture : null;
@@ -88,6 +97,38 @@ export function WallStage({ picture, alt, glint, label, caption, eyesNote }: Wal
     // flip reads the current values through the ref, so it is not a dependency
   }, [wantKey, slots, back]);
 
+  // the glint belongs to the acrylic picture: it is there only once that picture is in front (never over the picture it is replacing)
+  const polished = glint && !!want && slots[front]?.key === want.key ? glint : null;
+  const shine = polished !== null;
+  const glintEl = useRef<HTMLSpanElement>(null);
+
+  // from 768 px, with motion: the band follows the scroll progress of the wall chapter (listeners only while the chapter is near the screen)
+  useEffect(() => {
+    const el = glintEl.current;
+    const chapter = frame.current?.closest<HTMLElement>('.lp-wall-grid');
+    if (!el || !chapter || !shine) return;
+    return whenPinned(() => traverse(chapter, (p) => el.style.setProperty('--gx', `${(p * 80 - 40).toFixed(2)}%`), { start: 0.9, end: 0.1 }));
+  }, [shine]);
+
+  // on a phone: one sweep (1.6 s) when the visitor picks the polished material, not again for another artwork of the same material
+  const swept = useRef<Material | null>(null);
+  useEffect(() => {
+    const el = glintEl.current;
+    if (!shine) {
+      if (swept.current && swept.current !== material) swept.current = null;
+      return;
+    }
+    if (!el || swept.current === material || !motionOk() || !window.matchMedia('(max-width: 767px)').matches) return;
+    swept.current = material;
+    el.dataset.sweep = '';
+    const done = () => delete el.dataset.sweep;
+    el.addEventListener('animationend', done, { once: true });
+    return () => {
+      el.removeEventListener('animationend', done);
+      done();
+    };
+  }, [shine, material]);
+
   return (
     <figure>
       <div ref={frame} className="lp-stage" id="stage" role="group" aria-label={label} data-chip-area="vis">
@@ -115,10 +156,12 @@ export function WallStage({ picture, alt, glint, label, caption, eyesNote }: Wal
           );
         })}
         <span
+          ref={glintEl}
           className="lp-glint"
           id="stGlint"
           aria-hidden="true"
-          style={glint ? { left: `${glint[0]}%`, top: `${glint[1]}%`, width: `${glint[2]}%`, height: `${glint[3]}%` } : undefined}
+          data-shine={shine || undefined}
+          style={polished ? { left: `${polished[0]}%`, top: `${polished[1]}%`, width: `${polished[2]}%`, height: `${polished[3]}%` } : undefined}
         />
         <ExampleChip variant="vis" />
       </div>

@@ -5,7 +5,13 @@
 //
 // Keyboard: the materials are a vertical tab list and the artworks a radio group, both with a roving tabindex (one tab stop
 // each; arrow keys, Home and End move AND pick, as the prototype does), and the focus stays on the control after a pick.
-import { Suspense, useState, type SyntheticEvent } from 'react';
+//
+// Motion (motion spec 6.7): the title rises out of its mask and the controls rise one after the other; a pick of a material or an artwork
+// cross-fades the stage (two stacked pictures, .42 s, no scale: WallStage.tsx) and fades the facts of the material in, line by line
+// (.35 s, 50 ms apart, no rise); on a polished acrylic plate a soft band of light travels across the print face while the visitor scrolls
+// past, never following the pointer (WallStage.tsx). The honesty words, the chip and the captions never animate.
+import { Suspense, useState, type CSSProperties, type SyntheticEvent } from 'react';
+import { Title } from '../motion/Title';
 import { asset } from './assets';
 import { WALL_THUMBS } from './assets.data';
 import { CompareTable } from './CompareTable';
@@ -30,6 +36,8 @@ export function Wall() {
   const tryHref = useTryHref();
   const [mat, setMat] = useState<Material>(DEFAULT_MATERIAL);
   const [art, setArt] = useState<WallArt>(DEFAULT_ART);
+  // false until the visitor has picked a material once: the facts fade in on a pick, not when the section arrives
+  const [picked, setPicked] = useState(false);
 
   const matRoving = useRoving<HTMLDivElement>((el) => pickMat(el.dataset.m as Material));
   const artRoving = useRoving<HTMLDivElement>((el) => pickArt(el.dataset.a as WallArt));
@@ -37,6 +45,7 @@ export function Wall() {
   const keepArt = useKeepFocus(artRoving.ref);
 
   function pickMat(m: Material) {
+    if (m !== mat) setPicked(true);
     keepMat(() => {
       setMat(m);
       setArt(artFor(m, art));
@@ -67,8 +76,8 @@ export function Wall() {
     <section className="lp-sec lp-wall" id="wall" aria-labelledby="wallH">
       <div className="lp-wrap">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow">{w.eyebrow}</p>
-          <h2 id="wallH">{w.title}</h2>
+          <p className="lp-eyebrow" data-reveal="fade-s">{w.eyebrow}</p>
+          <Title id="wallH" text={w.title} />
         </div>
         <div className="lp-note-box">
           <strong>{w.intro}</strong>
@@ -81,12 +90,13 @@ export function Wall() {
               picture={pic}
               alt={alt}
               glint={glintFor(mat, art)}
+              material={mat}
               label={w.stageLabel}
               caption={caption}
               eyesNote={art === 'family4' || art === 'collision' ? w.eyesNote : undefined}
             />
           </div>
-          <div className="lp-ctl">
+          <div className="lp-ctl" data-stagger>
             <p className="lp-ctl-h lp-mat-h" id="matH">{w.materialsLabel}</p>
             <div
               ref={matRoving.ref}
@@ -120,13 +130,16 @@ export function Wall() {
               ))}
             </div>
             <div className="lp-specs" id="specs" role="tabpanel" aria-live="polite" aria-labelledby={`mat-${mat}`}>
-              <h3>{m.n}</h3>
-              <ul>
-                {m.facts.map((f) => (
-                  <li key={f}>{f}</li>
-                ))}
-              </ul>
-              {mat !== 'phone' && mat !== 'block' && <p className="lp-typ">{w.typical}</p>}
+              {/* keyed by the material: a pick makes new nodes, which fade in; a language change keeps them and only changes the words */}
+              <div className="lp-specs-in" key={mat} data-swap={picked || undefined}>
+                <h3>{m.n}</h3>
+                <ul>
+                  {m.facts.map((f, i) => (
+                    <li key={i} style={{ '--n': i + 1 } as CSSProperties}>{f}</li>
+                  ))}
+                </ul>
+                {mat !== 'phone' && mat !== 'block' && <p className="lp-typ" style={{ '--n': m.facts.length + 1 } as CSSProperties}>{w.typical}</p>}
+              </div>
             </div>
             <div className="lp-arts">
               <p className="lp-ctl-h" id="artH">{w.artLabel}</p>
