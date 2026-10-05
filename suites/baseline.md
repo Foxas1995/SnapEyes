@@ -550,3 +550,68 @@ whole folder when it is not a git checkout (an export), and a suite writing a te
 list comes from `git ls-files` and this never happened); `r3` check S10 (12 concurrent proven withdrawal statements: at most `ORDER_DAY_MAX` taken, the rest 429) saw all twelve answered 429 under the load of three
 suites: **a race in the limiter's count, not touched by this work** (`r3` alone: 48 of 48, and green in the second full run). Listed here as a flake, not fixed (it is the withdrawal limiter's, and a retry would hide it):
 the twelve statements each write a marker and then count the markers, so under a heavy load all twelve can count more than five.
+
+## 15. The collision family, step B (WP7B, 2026-10-05): the seed from the eye ids, the plan freeze, the Trio delta and what moved
+
+Step B of the collision family changed two things and nothing else: **the seed** (decision C9: made by `styles/seeds.py` from the eyes' ids and the plan's seed key, never from the names, the date, the canvas, the size or the pixels) and **the place of the pixel
+decisions** (decision C8: the overlap fallback of Collision Infinity and its woven or stacked lens, which iris is in front at each contact the scene leaves open, which contacts are hairlines are decided ONCE on a copy of the canonical 1024 px scene,
+and a plan can freeze them). `ENGINE_V` is 3, `data/engine_v.json` records the new goldens, the registry hash moved from `870892880cf3` to `7b1b4069399b` (the registry changed: below).
+
+**The proof that nothing else moved.** `opts seed_mode legacy` draws the prototype's way (the bytes of the irises, the design, the scene key and the names). The step A recording (`data/stepA/`, the scratch prototype's own pictures, kept as it was) replayed
+with it is **62 of 62 synthetic pictures byte for byte equal, with their seeds, fronts, edge modes, fallbacks and plates, and (LOCAL) 21 of 21 real calibration-eye pictures**: the new place of the decisions gives the prototype's choices on every picture, the seed is
+the only thing step B moved.
+
+**The reviewed diff** (`python scripts/styles_tests/diff_goldens_collision.py [--pixels] [--real]`, recorded by `record_goldens_collision_repo.py` on this machine class and these pins):
+
+| | Synthetic eyes, 62 pictures | Real calibration eyes, 21 pictures at 1024 px |
+|---|---|---|
+| pictures that moved | 55 of 62 (infinity 15 of 22, kiss 9 of 9, trio 7 of 7, family 18 of 18, chain 6 of 6) | 13 of 21 (infinity 8 of 16, kiss 2 of 2, trio, family and chain 1 of 1) |
+| pictures that did not | the 7 of Clean Infinity (its black ground is pure: the seed only dithers it) | the 8 of Clean Infinity |
+| choices that are not the seed's (design, lens mode and its K, fronts, edge modes, fallbacks, hairline retry) | equal in 62 of 62 | equal in 21 of 21 |
+| the iris deep inside (0.80 R and in, no seam, no contact strip): largest difference | 0 on every picture (T1) | 0 on every picture |
+| the rest of the picture: share that moved by more than 8 levels, mean change | infinity 0.0 to 11.2 % (0.00 to 6.22), kiss 5.0 to 5.1 % (2.6), trio 4.5 to 6.9 % (2.3 to 3.4), family 6.9 to 12.2 % (3.2 to 6.3), chain 5.1 to 10.4 % (2.4 to 4.9) | infinity 0.0 to 9.7 % (0.00 to 5.31), kiss 6.8 to 7.1 % (3.8 to 4.1), trio 9.6 % (4.9), family 9.4 % (4.7), chain 5.8 % (3.1) |
+
+What moved is the matter (the haze's cloud plates and the notch jets are other picks, the powder's particles are other rolls): of the 55 pictures that moved 45 have haze plates and every one of them draws other cloud plates (real eyes: 11 of 13). Three goldens moved for a second
+reason: the registry no longer offers Family Colours as a brick of four, a flower of six and a flower of eight, and a render of a layout the registry does not list used to share its sibling's seed key; `default_key` now keeps the layout as drawn (the laboratory
+still draws those layouts). **The owner's re-look at the re-rolled boards is merged with his check L1:** `wp7b2/boards/boards_before_after.jpg` in the session folder is the contact sheet (real calibration eyes, left the prototype's seed, right the seed from the
+eye ids: Collision Infinity on blue with brown, grey with hazel, two browns and blue with yellow, Kiss on blue with brown, the trio and a family of four).
+
+**The plan pass.** `resolve(spec, profiles, eyes)` is the geometry half of `render` on the canonical scene: nothing is drawn, no matter, no 4096 px grade. A pair: 1.12 s on fresh eyes (the canonical grade of each eye, which the preview needs anyway), 0.07 s when the
+preview has graded them already; the trio 1.5 s on fresh eyes. It equals what the preview decides on every one of 16 designed sets (the three pairs in three builds, the forced stack lens, the wide pupil, two dark browns, a swapped pair, the trio, rotated, families of
+four, five and eight, a chain), on **200 random colour sets** (100 pairs in the three builds, 50 trios, 25 families of four, 25 of five; round and slit pupils; 8 kinds of plan: the three designs, the overlap fallback, hairline contacts, fixed fronts; 222 s) and, LOCAL, on 14 real pairs in
+the three builds: the frozen choices, the seed, the design, the canvas and the fallback.
+
+**Compose against checkout.** For one and two eyes `/api/compose` and the checkout read the same bytes (the 1024 px order copy). For three to eight eyes compose reads the 768 or 560 px copies and the checkout the 1024 px ones, so a decision close to its threshold could differ:
+on the 33 real calibration eyes the band luminance (L*) of a copy differs from the 1024 px one by at most 0.22 (768 px) and 0.40 (560 px), and of **40 random trios and 60 random pairs 0 had a different plan** from either copy (`wp7b2/probe_copies.py`). A flip is rare, not impossible: WP12 should
+take the server's plan as the plan when only `frozen` differs between the page's `plan8` and the recomputation, rather than answer `409 plan_changed` for ever.
+
+**The Trio delta (decision 34).** Family Colours with three eyes drawn from three real 4096 px masters of the design round's live tests (`wave-o`: flow-preview, rev-t-215102, rev-t-215208) once from the full sources and once from a smaller working copy of each
+(`python scripts/styles_tests/trio_delta.py m1 m2 m3 --sides 3072 2560 2048`, this machine, one thread, the choices and the seed are the same at every side):
+
+| Working copy | CPU s | dE00 mean | p99 | max | SSIM (luma) | pixels over 2 levels | finest detail energy |
+|---|---|---|---|---|---|---|---|
+| 4096 px (the full source) | 22.5 | | | | | | 1.000 |
+| 3072 px | 20.3 | 0.085 | 0.86 | 3.4 | 0.9996 | 0.01 % | 1.018 |
+| 2560 px | 18.4 | 0.700 | 9.33 | 49.5 | 0.9584 | 17.45 % | 0.969 |
+| 2048 px (the registry's cap) | 16.0 | 0.362 | 4.62 | 25.9 | 0.9894 | 11.52 % | 0.868 |
+
+97 percent of the pixels that differ lie inside an iris; the matter and the ground outside the irises differ by 0.005 of a level on average (0.01 % over 2 levels, at most 14); the tone inside the irises is the same (the mean luma differs by 0.001 level); the detail at
+2 px and coarser has the same energy (1.006 and 1.002); only the finest detail at the pixel scale differs (a 2048 px copy keeps 87 percent of its energy; a non integer ratio, 2560 px, aliases more than either). So the delta is the iris's own resampling and not a different design.
+**Decision: the registry caps the trio at 2048 px like every other collision style.** From 4096 px sources one art step needs 52.5 s of the 52 s budget at the slow factor 1.6 (the WP7A review; break-even factor 1.58), from 2048 px copies 40.0 s (2.17); a 3072 px copy
+draws the full source's picture but costs the same as 4096 px; and the owner's approved design boards were drawn from a 2048 px copy, so a 2048 px working copy IS the picture he approved. The suite checks a synthetic proxy at half the scale (2048 px sources against 1024 px copies:
+the same plan, the same seed and plates, 0.006 of a level outside the irises (at most 3), the same tone inside (mean luma 83.01 against 82.97); inside the irises the mean difference is 1.8 levels, 21 percent of the iris pixels over 2 levels, because the synthetic fibres are finer than a real iris's).
+
+**Layouts.** The sweep of every style, eye count and layout the registry offers (a preview at 224 px with the whole self check, five colours) is clean for the pairs and Family Colours; the registry no longer offers the three layouts that failed their own checks in step A (Family Colours as a
+brick of four eyes: T3 0.76 against 0.82; as a flower of six: T1 and T6 on 56 pixels of four petals; as a flower of eight: T3 0.77). The chain (HOLD, a lab style) still misses T3 on its end irises on some colour sets (0.81 against 0.90 in the sweep): a paid order of it would be held for review.
+
+**The fill.** `cx_fill.py:113` converted every source to float32 (1.73 GB for eight 4096 px eyes): the fill (a laboratory ground) now reads a copy of each source of at most 1536 px (the soft base is drawn on a 576 px grid) and the render refuses a fill whose float copies pass 700 MB before it draws anything.
+
+**What the master does with the plan.** `steps.plan_for(ctx)` is the plan of an order as it stands (the checkout freezes it; WP12), `plan_irises` reads the draft's clean previews (sha256 checked) or a lab order's masters; `decided` False (no pixels to read) freezes nothing and the master decides, as the preview did.
+A frozen choice that the master's eyes contradict is `engine.DesignChanged`, held `design_changed` with the owner's note; a picture that still drew other choices than the plan names is `picture_drift`. `delivery.json`, the `master` event and the compose reply carry `design_used` and the fallback (`overlap_fallback`, `stack_contrast`), counted per code in `master_fallback`.
+
+**Time and memory at 4096 px** are unchanged by step B (the seed and the place of the decisions cost nothing measurable; the table of section 13 stands). Measured again with step B, a fresh process per render, the working copies a master gets (2048 px for every collision style now), Windows peak working set, on a machine that ran two other builders' suites (CPU seconds 15 to 30 percent above section 13, memory equal to the megabyte): Collision Infinity 10.2 s and 550 MB (before 8.3 s, 550), Kiss 9.3 s and 551 MB, the trio 21.2 s and 777 MB (from a 2048 px copy; 4096 px sources: 23.5 s, 992 MB, which is why it is capped), Family Colours of four 16.0 s and 572 MB (572), of eight 33.1 s and **915 MB (acceptance: at most 945 MB capped)**, chain of four 14.4 s and 557 MB (557). The plan pass adds about a second of CPU on fresh eyes to the first call of a plan (3 to 4 s for eight eyes) when no checkout plan exists.
+
+**Suite.** `v3coll` 106 checks (+ 8 LOCAL lines with `SNAPEYES_CALIB` and `SNAPEYES_SCRATCH_DG1`), about 15 to 20 minutes alone (each replay about two minutes, the 200 random sets 4 to 5 minutes): the replay of step B and, with the legacy seed, of step A; the seed (names, date, canvas and size leave it alone; eye ids, order, design, clean flag, ground, options, plates
+version, style change it); resolve with the eyes against the preview (16 sets, 200 random sets); frozen choices obeyed and refused; the plan through the master plan (a lab order, a draft, a master that contradicts the plan is held); the work sides; the Trio proxy; the layouts; the fill; the delivery record.
+
+**Full set** on an export of `021cfab` (`git archive`, CRLF line ends, the private fixtures, `SNAPEYES_SCRATCH_Y3`, `SNAPEYES_CALIB` and `SNAPEYES_SCRATCH_DG1` set so that the LOCAL lines ran too; the machine ran other builders' suites at the same time): **30 of 32 green, every count equal to `baseline.json`** (r2 105, r3 48, r4 69, r5 54, fix 53, admin 186, pay 120, advance 66, refund 7, preview 60, review 11, fixmk 36, markets 58, au 70, payrev 19, fixer 43, oldpay 120, oldadv 66, oldadmin 186, exp 349, ts 89, v3wp0 93, v3reg 172, v3gate 97, v3core 86, v3plates 108, v3single 115 (+20 LOCAL), v3steps 150, v3reveal 72, v3compose 109, v3uni 102 (+10 LOCAL)). The two reds, each investigated and not rerun until green: **`v3coll` 105 of 106**, my own check of the layout sweep counted 18 combinations against a bound of 20 (the registry offers fewer layouts than step A, the sweep itself found no failure: fixed in `test_goldens_collision.py`, `v3coll` alone then 106 of 106, 8 LOCAL lines); **`oldadv` 65 of 66**, check A6 ("the index note is gone, the lease released", read right after the order is ready) under the load of three suites and other builders' processes, with the ConnectionAbortedError noise of the harness that sections 11 and 14 record; `oldadv` and `advance` alone on the same export: 66 of 66 and 66 of 66. `npm run build` exit 0 (tsc -b, check:prices, check:texts, check:styles: registry hash `7b1b4069399b`, a rendering function 187.7 MiB and any other 143.9 MiB of 235), `python -m compileall api` exit 0, `python scripts/dev_api.py` starts (11 routes, `/api/health` answers `styles: true, plates_4k: true`).
