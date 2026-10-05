@@ -534,7 +534,7 @@ of the 4K file, but the baked registry named a 4K file only for the four DUST pl
 449 MiB in all, none of it in the first release: DUST is a laboratory family). (3) The pick of a spiral is an index into the candidate list and the baked registry is sorted by id while
 the prototype's registry file was not: the order is kept in `plates.SPIRAL_ORDER` (the nine crisp spirals with a void of 0.20 R or more; the replay of Vortex proves it).
 
-**Suite.** `v3uni` 102 checks (10 LOCAL lines with `SNAPEYES_SCRATCH_Y3` and `SNAPEYES_CALIB`), about 12 minutes on a loaded machine (the replay about 170 s alone): the family's files and
+**Suite.** `v3uni` 102 checks (10 LOCAL lines with `SNAPEYES_SCRATCH_Y3` and `SNAPEYES_CALIB`), 12 to 14 minutes on a machine shared with other builders (741 s and 835 s in the last two runs; the replay about 170 s of it): the family's files and
 rules, the registry against the family, the replay, the plates and the atlas (the candidates, a missing plate, a plate that arrived later), determinism in two fresh interpreters, the
 guards of `render`, the contract (`resolve`, `preview`, `tiles`, the master plan's plan and capacity), the 23 tests of the design round, `/api/compose` for a style made visible, the
 admin laboratory (every look, the estimate of a look, a Vortex master with its plate missing), and the master through `lab_steps`.
