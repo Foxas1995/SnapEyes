@@ -234,3 +234,36 @@ of how overlapping globs resolve no longer arises (`check_styles` item 10 refuse
 packages (so that nine functions could drop onnxruntime, about 49 MiB each) and whether it reads `api/_assets/plates/**` as a path from the
 project root are still unverified: a Preview's function list answers both, and the four rendering functions' sizes against the table above
 are how the plates exclusion is confirmed (the seven others should be 43.8 MiB smaller).
+
+## 9. The singles family (WP5A, 2026-10-05): time and memory of the six designs
+
+Measured on this machine (the CPU yardstick of `scripts/cpu_probe.py` is 1.373 s against the planning spike's 1.464 s, so this core is 0.94 of the
+spike's), Python 3.14.3, numpy 2.4.4, Pillow 12.2.0, one thread, synthetic 1024 px eyes (`scripts/styles_tests/synth_iris.py`), a fresh process per
+design and the best of three. "Spike" is `costs.PREVIEW` (the planning spike's table) times 0.94, the figure the same code was expected to give here.
+The scratch prototype's own code, timed the same way on the same machine the same hour, is the third column of each pair: the port is
+byte-identical to it, so the difference between the port and the table is the machine and the eyes, not the port.
+
+1024 px preview (seconds): cold = the first preview of a process (imports, plate and atlas loads), same eye = the design alone, new eye = a second eye.
+
+| Design | Cold: port / scratch / spike x 0.94 | Same eye: port / scratch / spike | New eye: port / scratch / spike |
+|---|---|---|---|
+| Clean Iris | 0.68 / 0.80 / 0.68 | 0.08 / 0.09 / 0.05 | 0.70 / 0.79 / 0.54 |
+| Powder Burst | 1.91 / 2.08 / 1.61 | 1.06 / 1.16 / 0.83 | 1.70 / 1.79 / 1.31 |
+| Splash | 1.41 / 1.46 / 1.09 | 0.71 / 0.78 / 0.48 | 1.31 / 1.45 / 0.88 |
+| Elements | 1.78 / 1.82 / 1.42 | 1.05 / 1.15 / 0.78 | 1.70 / 1.74 / 1.26 |
+| Radiance | 1.05 / 1.14 / 1.00 | 0.46 / 0.54 / 0.38 | 1.07 / 1.16 / 0.83 |
+| Celestial Gold (variant A) | 0.96 / 1.28 (the old design) / 1.04 | 0.33 / 0.61 (old) / 0.40 | 1.00 / 1.30 (old) / 0.89 |
+
+The port is 0 to 15 percent faster than the scratch in every cell. Against the spike's table the cold previews are +0 percent (Clean), +19 (Powder),
++29 (Splash), +26 (Elements), +5 (Radiance), -8 (Gold); the acceptance line of the work package ("within 10 percent of the table") is therefore met
+for Clean, Radiance and Gold and not for Powder Burst, Splash and Elements, by the same margin that the unchanged scratch code misses it on this
+machine. The cause is not in the port; V3 and V11 (WP17a) measure the real instance, and the cost table is not touched by this package.
+
+4096 px master from a 1024 px eye (the real masters start from a 4096 px eye and add its grade, 2 to 3 seconds more), seconds of one process and
+peak working set in MiB (Windows; the table's cold peaks in brackets): Clean 3.0 s, 554 (620); Radiance 6.7 s, 836 (900); Celestial Gold 6.9 s, 565
+(734: the table is the old design); Powder Burst 10.5 s, 659 (729); Splash 11.7 s, 729 (801); Elements 16.2 s, 815 (890). Every peak is under the
+table's, so `costs.est_mb` is a safe bound for the family. The row of Celestial Gold in `costs.MASTER` (12.4 s, 734 MB) is the old design's: variant A
+is cheaper, and the row is left as it is (conservative) until V11 measures a real 4096 px master of it.
+
+The golden replay (`v3single`): 75 pictures at 512 and 1024 px and 9 at 4096 px (the non-plate designs) are counted; with the scratch tree the 9
+plate-style pictures at 4096 px, 24 real-eye pictures and the check of the port's edits run as LOCAL lines (all equal). `v3single` takes about 2.5 minutes alone.
