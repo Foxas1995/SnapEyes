@@ -28,6 +28,7 @@ import {
 import { callApi, type CheckoutInfo } from '../order/api';
 import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavailable, notePreview } from '../shared/pricing';
 import { priceChangedNote } from './priceNote';
+import { readCatalogue } from '../shared/catalogue';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
 import { STYLES as REGISTRY, isStyle } from '../shared/styles';
@@ -299,7 +300,9 @@ export const TryApp: React.FC = () => {
         let d = c.ok ? c.data : null;
         if (d) d = ((await noteCheckoutInfo(d)) ?? d) as CheckoutInfo; else noteInfoUnavailable();
         if (!alive) return;
-        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent, maxEyes: typeof d.max_eyes === 'number' ? d.max_eyes : undefined } : { open: false });
+        // the most eyes an artwork can be ordered with now is the run-time catalogue's (orderable_max_eyes: the owner's switch lowers it); max_eyes is only the structural limit of an older server
+        const orderable = d ? readCatalogue(d) : null;
+        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent, maxEyes: orderable ? orderable.max : typeof d.max_eyes === 'number' ? d.max_eyes : undefined } : { open: false });
       })
       .catch(() => { noteInfoUnavailable(); if (alive) setOrdering({ open: false }); });
     return () => { alive = false; };
@@ -753,7 +756,7 @@ export const TryApp: React.FC = () => {
   const lookNow = selectedTile ? (selectedTile.looks[opts.look ?? ''] ? opts.look : defaultLook(selectedTile)) : null;
   const picker: PickerModel = {
     n: eyes.length, catalog, error: previews.catalogError, onRetryCatalog: previews.retryCatalog, style, selected: selectedTile, changed: previews.changed,
-    tilePicture: previews.tilePicture, tileBusy: previews.tileBusy, tileFailed: previews.tileFailed, onRetryTiles: previews.retryTiles, priceOf,
+    tilePicture: previews.tilePicture, tileBusy: previews.tileBusy, tileFailed: previews.tileFailed, onRetryTiles: previews.retryTiles, paused: previews.tilesPaused, priceOf,
     onStyle: (id) => setWant(id), look: lookNow, onLook: (code) => setOpts((o) => ({ ...o, look: code })), retake: retakeState, advisory,
     onRetakeEye: (i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); },
     onManual: () => sendHelp({ route: 'manual', eyes: eyes.length, why: retakeState?.why ?? 'unknown', lang: T.lang }),

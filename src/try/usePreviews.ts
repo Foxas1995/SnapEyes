@@ -68,6 +68,7 @@ export function usePreviews(p: PreviewInput): Previews {
   const seen = useRef(new Set<string>());                    // sets of eyes already asked about (the funnel counts a set once)
   const unavailableOnce = useRef(new Set<string>());
   const pausedRef = useRef<string | null>(null);
+  const catalogMissing = useRef(false);
   const eyesRef = useRef(p.eyes);
   const langRef = useRef(p.lang);
   const sizedRef = useRef(p.sized);
@@ -203,17 +204,17 @@ export function usePreviews(p: PreviewInput): Previews {
         const rows = Array.isArray((out.data as { tiles?: unknown }).tiles) ? ((out.data as { tiles: Array<Record<string, unknown>> }).tiles) : [];
         const got: Record<string, Art> = {};
         const failed: Record<string, true> = {};
-        const held: string[] = [];
+        const held: Record<string, string> = {};                 // a tile the server held back after all: its own reason (a pupil the profile did not show)
         todo.forEach((t, i) => {
           const row = rows.find((r) => r && r.id === t.id);
           const pic = pictureOf(row);
           if (pic) got[ks[i]] = { src: pic.src, w: pic.w, h: pic.h, layout: pic.layout, canvas: pic.canvas, design: pic.design, fallback: pic.fallback, plan8: pic.plan8 };
-          else if (row && row.available === false) held.push(t.id);
+          else if (row && row.available === false) held[t.id] = typeof row.why === 'string' && row.why ? row.why : 'bar_pupil';
           else failed[ks[i]] = true;
         });
         if (Object.keys(got).length) setTiles((c) => trim({ ...c, ...got }, TILE_MAX));
         if (Object.keys(failed).length) setTileFail((f) => ({ ...f, ...failed }));
-        if (held.length) setCatalog((c) => (c && c.key === set ? { ...c, tiles: c.tiles.map((x) => (held.includes(x.id) ? { ...x, available: false, why: 'bar_pupil', pick: false } : x)), pick: held.includes(c.pick ?? '') ? null : c.pick } : c));
+        if (Object.keys(held).length) setCatalog((c) => (c && c.key === set ? { ...c, tiles: c.tiles.map((x) => (x.id in held ? { ...x, available: false, why: held[x.id], pick: false } : x)), pick: (c.pick ?? '') in held ? null : c.pick } : c));
         return;
       }
       if (out.kind === 'paused') { pausedRef.current = out.message; setPaused(out.message); }
@@ -221,28 +222,34 @@ export function usePreviews(p: PreviewInput): Previews {
     })();
   }, [p.active, cat, settled, key, tiles, tileFail, tileKey, p.opts.look, ctx]);
 
+  // the large preview's own failure, or (no tile list, so no style on screen) the failure of the list: the frame where the picture would be says it either way
+  const catalogError = catErr && catErr.key === key ? catErr.message : null;
+  catalogMissing.current = !cat && catalogError !== null;
   const art = bigKey ? bigs[bigKey] ?? otherLanguage(bigs, key, selected?.id, layout, wopts, words, p.lang) : undefined;
   const lastOfSet = useMemo(() => Object.entries(bigs).filter(([k]) => k.startsWith(`${key}|`)).map(([, v]) => v).at(-1), [bigs, key]);
   const staleArt = art ?? (selected ? tiles[tileKey(selected)] : undefined) ?? lastOfSet;
 
+  const retryCatalog = useCallback(() => { setCatErr(null); setNonce((x) => x + 1); }, []);
   const retryCompose = useCallback(() => {
     pausedRef.current = null; setPaused(null);
+    // without a tile list there is no style on screen to make again: asking for the list is what a retry means then
+    if (catalogMissing.current) { retryCatalog(); return; }
     setBigFail((f) => { const c = { ...f }; if (bigRef.current) delete c[bigRef.current]; return c; });
-  }, []);
+  }, [retryCatalog]);
   const retryTiles = useCallback(() => { pausedRef.current = null; setPaused(null); setTileFail({}); }, []);
-  const retryCatalog = useCallback(() => { setCatErr(null); setNonce((x) => x + 1); }, []);
   const refresh = useCallback(() => {
     // a checkout refused the style, or the plan changed: the tile list and the large previews of these eyes are made again
     setCatalog(null); setBigs({}); setBigFail({}); setNonce((x) => x + 1);
   }, []);
 
   return {
-    catalog: cat, catalogError: catErr && catErr.key === key ? catErr.message : null,
+    catalog: cat, catalogError,
     style: resolved.style, changed: resolved.changed, selected, layout, art, staleArt,
-    composeError: bigKey ? bigFail[bigKey] ?? null : null,
+    composeError: bigKey ? bigFail[bigKey] ?? null : catalogError,
     tilePicture: (t) => tiles[tileKey(t)],
     tileBusy: (t) => busy[tileKey(t)] === true,
-    tileFailed: (t) => tileFail[tileKey(t)] === true,
+    // a server that makes no more pictures today stops the loop: the tiles it never got to say so as the ones it refused do, instead of sitting empty
+    tileFailed: (t) => { const k = tileKey(t); return tileFail[k] === true || (paused !== null && tiles[k] === undefined && busy[k] !== true); },
     tilesPaused: paused, retryCompose, retryTiles, retryCatalog, refresh,
   };
 }

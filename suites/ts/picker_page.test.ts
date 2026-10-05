@@ -76,6 +76,10 @@ export async function run(): Promise<Row[]> {
   const hErr = renderToStaticMarkup(createElement(StylePicker, { model: { ...emptyPicker(1), error: 'We are busy.' } }));
   check('a tile list that could not be had says why and offers Try again', has(hErr, 'picker-error') && text(hErr).includes('We are busy.') && text(hErr).includes('Try again'));
 
+  const hFail = renderToStaticMarkup(createElement(StylePicker, { model: model(1, singles, [eye(1)], { tilePicture: () => undefined, tileFailed: () => true, paused: 'We are not making more previews today. Please try again later.' }, 'solo.powder') }));
+  check('a tile whose picture could not be made says so and offers Try again; a server that makes no more pictures today says so under the list',
+    has(hFail, 'tile-retry') && text(hFail).includes('Preview not made') && has(hFail, 'tiles-paused') && text(hFail).includes('We are not making more previews today.') && !has(hLoad, 'tile-retry'));
+
   // ---- two eyes, every style opens soon: one line for the group
   const pair = ['duo.kiss', 'duo.inf', 'duo.clean'].map((id, i) => tile(id, { name: ['Kiss Collision', 'Collision Infinity', 'Clean Infinity'][i], group: 'duo', stage: 'preview', gate: 'hard', layouts: ['pair'], eyes: 2 }));
   const h2 = renderToStaticMarkup(createElement(StylePicker, { model: model(2, pair, [eye(1), eye(2)]) }));
@@ -169,6 +173,11 @@ export async function run(): Promise<Row[]> {
     (hw2.match(/maxLength="24"/g) ?? []).length === 2 && text(hw2).includes('Name for eye 1') && text(hw2).includes('Name for eye 2') && hw2.includes('aria-invalid="true"') && text(hw2).includes('The artwork font cannot draw Ж. Please use another letter.') && /maxLength="20"/.test(hw2));
   check('one eye: a single "Name (optional)"; the family name is not offered (no arrangement draws it yet)', text(renderToStaticMarkup(createElement(Words, { model: emptyWords(1) }))).includes('Name (optional)') && !has(renderToStaticMarkup(createElement(Words, { model: emptyWords(2) })), 'words-family')
     && has(renderToStaticMarkup(createElement(Words, { model: { ...emptyWords(2), showFamily: true } })), 'words-family'));
+
+  // ---- reduced motion: nothing of the picker moves unless the visitor allows motion
+  const rmHtml = hLoad + hLoadTile + renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], m1, { art: undefined })));
+  check('reduced motion: every skeleton, spinner and fade of the picker is the motion-safe variant', rmHtml.includes('motion-safe:animate-pulse') && !/(^|[^:\w-])(animate-(pulse|spin)|transition-opacity)/.test(rmHtml),
+    rmHtml.match(/(^|[^:\w-])(animate-(pulse|spin)|transition-opacity)/)?.[0] ?? '');
 
   // ---- the four languages
   const SOON = { en: 'Soon', de: 'Bald', lt: 'Netrukus', hu: 'Hamarosan' } as Record<Lang, string>;

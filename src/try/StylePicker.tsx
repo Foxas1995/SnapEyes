@@ -24,6 +24,7 @@ export interface PickerModel {
   tileBusy: (t: ServerTile) => boolean;         // its picture is being made
   tileFailed: (t: ServerTile) => boolean;
   onRetryTiles: () => void;
+  paused: string | null;                        // the server's sentence when it makes no more pictures today (503 tiles_paused)
   priceOf: (t: ServerTile) => string | null;    // printed on the tile (one eye, a style that can be bought now), else null
   onStyle: (id: string) => void;
   look: string | null;                          // the chosen look of the style that has looks (the default when the customer chose none)
@@ -39,7 +40,7 @@ export function emptyPicker(n = 1): PickerModel {
   const no = () => undefined;
   return {
     n, catalog: null, error: null, onRetryCatalog: no, style: null, selected: undefined, changed: null, tilePicture: no, tileBusy: () => false,
-    tileFailed: () => false, onRetryTiles: no, priceOf: () => null, onStyle: no, look: null, onLook: no, retake: null, advisory: [], onRetakeEye: no, onManual: no,
+    tileFailed: () => false, onRetryTiles: no, paused: null, priceOf: () => null, onStyle: no, look: null, onLook: no, retake: null, advisory: [], onRetakeEye: no, onManual: no,
   };
 }
 
@@ -83,7 +84,7 @@ export const StylePicker: React.FC<{ model: PickerModel }> = ({ model: m }) => {
         <ul aria-label={T.picker.listLabel} aria-busy="true" data-testid="tile-list" className="mt-2 grid gap-2 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
           {[0, 1, 2, 3].map((i) => (
             <li key={i} className="rounded-xl border border-white/10 overflow-hidden" aria-hidden="true">
-              <span className="block aspect-[4/3] bg-white/5 animate-pulse" />
+              <span className="block aspect-[4/3] bg-white/5 motion-safe:animate-pulse" />
               <span className="block h-9" />
             </li>
           ))}
@@ -93,6 +94,7 @@ export const StylePicker: React.FC<{ model: PickerModel }> = ({ model: m }) => {
           {tiles.map((t) => <Tile key={t.id} t={t} m={m} allSoon={allSoon} eyes={eyes} />)}
         </ul>
       )}
+      {m.paused && <p role="status" data-testid="tiles-paused" className="text-xs text-amber-100 mt-2 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">{m.paused}</p>}
     </div>
   );
 };
@@ -127,7 +129,7 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
           {art && <img {...NO_SAVE} src={art.src} alt={T.picker.tileAlt(t.name)} className="absolute inset-0 w-full h-full object-contain" />}
           {busy && (
             <>
-              <span aria-hidden="true" className="absolute inset-0 bg-white/5 animate-pulse" />
+              <span aria-hidden="true" className="absolute inset-0 bg-white/5 motion-safe:animate-pulse" />
               <span className="sr-only">{T.picker.tileMaking(t.name)}</span>
             </>
           )}
@@ -151,6 +153,14 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
           {label && <span data-testid="held-label" className="block text-[11px] font-semibold text-amber-200 mt-0.5">{label}</span>}
         </span>
       </button>
+      {failed && (
+        <div className="px-2 pb-2">
+          <button type="button" data-testid="tile-retry" onClick={m.onRetryTiles}
+            className="min-h-[36px] px-2.5 rounded-lg border border-white/20 bg-white/10 text-[11px] font-semibold text-zinc-100 flex items-center gap-1.5">
+            <RefreshCcw className="w-3 h-3" /> {T.result.retry}
+          </button>
+        </div>
+      )}
       {looks.length > 1 && !held && (
         <div role="group" aria-label={T.picker.options.look} className="flex flex-wrap gap-1.5 px-2 pb-2">
           {looks.map((l) => (

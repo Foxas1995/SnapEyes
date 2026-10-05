@@ -111,18 +111,18 @@ export const ResultView: React.FC<Props> = (p) => {
         // threw a paid restoration away. Removing is a full-size action on the selected eye, with Undo.
         <div className="flex gap-2 overflow-x-auto pb-2 mb-1 -mx-1 px-1">
           <div role="tablist" aria-label={T.result.eyes} className="flex gap-2">
-          {p.eyes.map((e, i) => (
-            <button key={e.id} role="tab" aria-selected={i === idx} onClick={() => p.onSelect(e.id)} data-flagged={flagged.has(i + 1) || undefined}
-              aria-label={flagged.has(i + 1) ? `${T.result.eyeLabel(i + 1)}. ${T.picker.chipLabel(i + 1)}` : undefined}
-              className="shrink-0 flex flex-col items-center gap-1 w-16 pt-1">
-              <img {...NO_SAVE} src={e.thumb} alt="" className={`w-12 h-12 rounded-full object-cover border-2 ${flagged.has(i + 1) ? 'border-amber-400' : i === idx ? 'border-[#f5c542] ring-2 ring-[#f5c542]/40' : 'border-white/15 opacity-75'}`} />
-              <span className={`text-[10px] font-bold leading-tight text-center ${i === idx ? 'text-[#f5c542]' : 'text-zinc-300'}`}>
-                {T.result.eyeLabel(i + 1)}
-                {e.sample && <span className="block text-[9px] font-semibold text-amber-200/90">{T.result.sampleLabel}</span>}
-                {flagged.has(i + 1) && <span data-testid={`chip-retake-${i + 1}`} className="block text-[9px] font-semibold text-amber-200">{T.picker.chipRetake}</span>}
-              </span>
-            </button>
-          ))}
+            {p.eyes.map((e, i) => (
+              <button key={e.id} role="tab" aria-selected={i === idx} onClick={() => p.onSelect(e.id)} data-flagged={flagged.has(i + 1) || undefined}
+                aria-label={flagged.has(i + 1) ? T.picker.chipLabel(i + 1) : undefined}
+                className="shrink-0 flex flex-col items-center gap-1 w-16 pt-1">
+                <img {...NO_SAVE} src={e.thumb} alt="" className={`w-12 h-12 rounded-full object-cover border-2 ${flagged.has(i + 1) ? 'border-amber-400' : i === idx ? 'border-[#f5c542] ring-2 ring-[#f5c542]/40' : 'border-white/15 opacity-75'}`} />
+                <span className={`text-[10px] font-bold leading-tight text-center ${i === idx ? 'text-[#f5c542]' : 'text-zinc-300'}`}>
+                  {T.result.eyeLabel(i + 1)}
+                  {e.sample && <span className="block text-[9px] font-semibold text-amber-200/90">{T.result.sampleLabel}</span>}
+                  {flagged.has(i + 1) && <span data-testid={`chip-retake-${i + 1}`} className="block text-[9px] font-semibold text-amber-200">{T.picker.chipRetake}</span>}
+                </span>
+              </button>
+            ))}
           </div>
           {/* the add button is no tab: it stands beside the tab list, not inside it */}
           {n < MAX_EYES && (
@@ -202,9 +202,9 @@ export const ResultView: React.FC<Props> = (p) => {
         <>
           <div data-testid="artwork" className="relative w-full rounded-2xl overflow-hidden border border-white/10 bg-black"
             {...NO_SAVE_BOX} style={{ ...NO_SAVE_BOX.style, aspectRatio: `${expected.w} / ${expected.h}` }}>
-            {shown && <img {...NO_SAVE} src={shown.src} alt={artAlt} className={`absolute inset-0 w-full h-full object-contain transition-opacity ${p.art ? '' : 'opacity-50'}`} />}
+            {shown && <img {...NO_SAVE} src={shown.src} alt={artAlt} className={`absolute inset-0 w-full h-full object-contain motion-safe:transition-opacity ${p.art ? '' : 'opacity-50'}`} />}
             {!shown && composing && <div className="absolute inset-0 flex items-center justify-center text-zinc-300 text-sm">{T.result.composing}</div>}
-            {composing && <div aria-label={T.result.composing} className="absolute top-3 right-3 w-5 h-5 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" />}
+            {composing && <div aria-label={T.result.composing} className="absolute top-3 right-3 w-5 h-5 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full motion-safe:animate-spin" />}
             {!p.art && p.composeError && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 text-center px-6">
                 <p className="text-sm text-rose-200">{T.result.composeFailed} {p.composeError}</p>

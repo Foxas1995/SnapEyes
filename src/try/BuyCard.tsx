@@ -18,7 +18,7 @@ export type ConsentTexts = Partial<Record<Lang, string>>;
 export interface Ordering {
   open: boolean;
   prices?: Partial<PriceList>;
-  // the most eyes an artwork can be ordered with right now (GET /api/checkout max_eyes: the catalogue's orderable maximum), printed in the hints below;
+  // the most eyes an artwork can be ordered with right now (GET /api/checkout orderable_max_eyes: the run-time catalogue's maximum), printed in the hints below;
   // absent: the artwork's own limit
   maxEyes?: number;
   // the EU texts per language (also the Hungarian edition's), and per market where a market has its own (markets.au: the
@@ -112,7 +112,7 @@ export const BuyCard: React.FC<Props> = (props) => {
   const list = listFor(market, open ? p.ordering?.prices : undefined);
   const cents = priceMinor(n, p.style, market, list);
   // the card names the selected style and the price of THAT style; the hints name price classes, and print a number of eyes only as far as this
-  // deployment sells (max_eyes of GET /api/checkout): the pair price is not printed where two eyes cannot be ordered
+  // deployment sells (orderable_max_eyes of GET /api/checkout): the pair price is not printed where two eyes cannot be ordered
   const most = Math.max(1, Math.min(MAX_EYES, p.ordering?.maxEyes ?? MAX_EYES));
   const label = T.price.eyes(n, p.styleName);
   const hint = n === 1
