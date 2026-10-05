@@ -534,14 +534,15 @@ of the 4K file, but the baked registry named a 4K file only for the four DUST pl
 449 MiB in all, none of it in the first release: DUST is a laboratory family). (3) The pick of a spiral is an index into the candidate list and the baked registry is sorted by id while
 the prototype's registry file was not: the order is kept in `plates.SPIRAL_ORDER` (the nine crisp spirals with a void of 0.20 R or more; the replay of Vortex proves it).
 
-**Suite.** `v3uni` 101 checks (10 LOCAL lines with `SNAPEYES_SCRATCH_Y3` and `SNAPEYES_CALIB`), about 12 minutes on a loaded machine (the replay about 170 s alone): the family's files and
+**Suite.** `v3uni` 102 checks (10 LOCAL lines with `SNAPEYES_SCRATCH_Y3` and `SNAPEYES_CALIB`), about 12 minutes on a loaded machine (the replay about 170 s alone): the family's files and
 rules, the registry against the family, the replay, the plates and the atlas (the candidates, a missing plate, a plate that arrived later), determinism in two fresh interpreters, the
 guards of `render`, the contract (`resolve`, `preview`, `tiles`, the master plan's plan and capacity), the 23 tests of the design round, `/api/compose` for a style made visible, the
 admin laboratory (every look, the estimate of a look, a Vortex master with its plate missing), and the master through `lab_steps`.
 
-**Full set** on an export of `e80f8c0` (`git archive`, CRLF line ends, the private fixtures, no scratch tree): **29 of 32 green**; the three that were red are not the family's: `v3single`
-because its check of the laboratory's list named six styles and the universe style joined the list (the check reads the singles' rows now); `v3wp0` because `bundle_report.mjs` walks the
-whole folder when it is not a git checkout (an export), and a suite writing a temporary file under `suites/out` at that moment made `statSync` throw (the walk skips a file that vanished;
-in a git checkout the file list comes from `git ls-files` and this never happened); `r3` check S10 (12 concurrent proven withdrawal statements: at most `ORDER_DAY_MAX` taken, the rest 429)
-saw all twelve answered 429 under the load of three suites: **a race in the limiter's count, not touched by this work** (`r3` alone: 48 of 48). Listed here as a flake, not fixed (it is
-the withdrawal limiter's, and a retry would hide it): the twelve statements each write a marker and then count the markers, so under a heavy load all twelve can count more than five.
+**Full set**: **32 of 32 green** on an export of `5e3c127` (`git archive`, CRLF line ends, the private fixtures, no scratch tree), every count equal to `suites/baseline.json` (`v3uni` 101 of
+101 at that commit, 102 with the Preview's fallback check that followed), 1485 s on a machine shared with other builders. The first run, on an export of `e80f8c0`, was 29 of 32, and the three that were red are not
+the family's: `v3single` because its check of the laboratory's list named six styles and the universe style joined the list (the check reads the singles' rows now); `v3wp0` because `bundle_report.mjs` walks the
+whole folder when it is not a git checkout (an export), and a suite writing a temporary file under `suites/out` at that moment made `statSync` throw (the walk skips a file that vanished; in a git checkout the file
+list comes from `git ls-files` and this never happened); `r3` check S10 (12 concurrent proven withdrawal statements: at most `ORDER_DAY_MAX` taken, the rest 429) saw all twelve answered 429 under the load of three
+suites: **a race in the limiter's count, not touched by this work** (`r3` alone: 48 of 48, and green in the second full run). Listed here as a flake, not fixed (it is the withdrawal limiter's, and a retry would hide it):
+the twelve statements each write a marker and then count the markers, so under a heavy load all twelve can count more than five.
