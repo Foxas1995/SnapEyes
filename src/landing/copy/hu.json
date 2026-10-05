@@ -308,6 +308,8 @@
     "title": "További nézetek",
     "intro": "További helyiségek, két kéz és egy polírozott él. Mindegyik MI-vizualizáció.",
     "railLabel": "További MI-vizualizációk",
+    "prev": "Előző kép",
+    "next": "Következő kép",
     "scenes": [
       {
         "id": "pair",

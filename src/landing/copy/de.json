@@ -308,6 +308,8 @@
     "title": "Weitere Ansichten",
     "intro": "Andere Räume, zwei Hände und eine polierte Kante. Alles KI-Visualisierungen.",
     "railLabel": "Weitere KI-Visualisierungen",
+    "prev": "Vorheriges Bild",
+    "next": "Nächstes Bild",
     "scenes": [
       {
         "id": "pair",

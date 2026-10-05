@@ -308,6 +308,8 @@
     "title": "More ways to see it",
     "intro": "Other rooms, two hands and a polished edge. All AI visualisations.",
     "railLabel": "More AI visualisations",
+    "prev": "Previous picture",
+    "next": "Next picture",
     "scenes": [
       {
         "id": "pair",

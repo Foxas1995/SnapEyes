@@ -308,6 +308,8 @@
     "title": "Daugiau vaizdų",
     "intro": "Kiti kambariai, dvi rankos ir nupoliruotas kraštas. Visa tai yra DI vizualizacijos.",
     "railLabel": "Daugiau DI vizualizacijų",
+    "prev": "Ankstesnis vaizdas",
+    "next": "Kitas vaizdas",
     "scenes": [
       {
         "id": "pair",

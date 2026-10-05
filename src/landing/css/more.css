@@ -10,7 +10,7 @@
   .lp-more > summary::-webkit-details-marker { display: none; }
   .lp-more > summary b { display: block; font-family: var(--display); font-size: 20px; font-weight: 600; letter-spacing: .02em; color: #fff; }
   .lp-more > summary small { display: block; margin-top: 4px; font-size: 13.5px; line-height: 1.5; color: var(--ink-3); }
-  .lp-more > summary svg { width: 16px; height: 16px; color: var(--gold); flex: none; transition: transform .2s; }
+  .lp-more > summary svg { width: 16px; height: 16px; color: var(--gold); flex: none; transition: transform var(--d-ui) var(--ease-out); }
   .lp-more[open] > summary svg { transform: rotate(45deg); }
   .lp-rail { display: flex; gap: 14px; margin-inline: calc(-1 * var(--gut)); padding: 6px var(--gut) 18px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut); scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }
   .lp-rail::-webkit-scrollbar { display: none; }
@@ -26,4 +26,32 @@
     .lp-rail figure > div { height: 300px; }
     .lp-rail { gap: 18px; }
   }
+  /* ------------------------------------------------------------------------------------------------ motion (spec 6.9)
+     The counter, the line and the buttons report and move the scroll position (src/landing/MoreRooms.tsx), the same under reduced motion. The
+     rail appears as one piece, and only under html.mo:not(.mo-fail) with motion allowed, so it is there without the engine and after the failsafe. */
+  .lp-rail-bar { display: flex; align-items: center; gap: 16px; padding: 2px 0 12px; }
+  /* the counter is Plus Jakarta Sans with tabular figures: Cinzel has proportional digits and the number would shift */
+  .lp-rail-count { flex: none; font: 600 13px/1 var(--body); letter-spacing: .06em; font-variant-numeric: tabular-nums; color: var(--t-2); }
+  .lp-rail-count b { font-weight: 600; color: var(--t-1); }
+  /* the gold hairline: its scale is scrollLeft over the scrollable width, set directly while scrolling, so no transition */
+  .lp-rail-line { position: relative; flex: 1; height: 1px; background: var(--line-2); }
+  .lp-rail-line i { position: absolute; inset: 0; background: var(--gold); transform-origin: left center; scale: 0 1; }
+  .lp-rail-btn { display: none; flex: none; place-items: center; width: 44px; height: 44px; border: 1px solid var(--ring-gold); border-radius: 50%; color: var(--t-1); transition: border-color var(--d-tap) var(--ease-out), opacity var(--d-tap) var(--ease-out), scale var(--d-tap) var(--ease-out); }
+  .lp-rail-btn svg { width: 18px; height: 18px; }
+  .lp-rail-btn:active { scale: .97; }
+  .lp-rail-btn[aria-disabled="true"] { opacity: .35; cursor: default; }
+  @media (hover: hover) {
+    .lp-rail-btn:not([aria-disabled="true"]):hover { border-color: var(--gold); }
+  }
+  @media (min-width: 768px) {
+    .lp-rail-btn { display: inline-grid; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    /* the picture the rail has scrolled to is in full tone, the others a shade softer; the captions are always in full tone */
+    .lp-rail figure > div img { opacity: .82; transition: opacity var(--d-ui) var(--ease-out); }
+    .lp-rail figure.lp-on > div img { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lp-rail-btn { transition: none; }
+  }  .lp-rail { overscroll-behavior-x: contain; }
 }
