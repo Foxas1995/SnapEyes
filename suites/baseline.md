@@ -286,3 +286,46 @@ The port is the same code, so the same speed is the expected result. Why the fir
 after the other while the load of the machine changed); the repeat is the figure to use. Against the spike's table (x 0.94, the figures of the first table) this repeat gives Powder Burst +24 percent, Splash +27, Elements +23, Radiance +11,
 Clean +9, Celestial Gold -3: the acceptance line "within 10 percent of the table" is met for Clean and Gold and not for Powder Burst, Splash, Elements and (by one
 point, where the first table said +5) Radiance, by the same margin that the unchanged scratch code shows. Nothing in the cost table moved.
+
+
+## 10. The master plan (WP6a, 2026-10-05): what a real 4096 px step takes, and the suite
+
+**The steps measured through the step runner** (`steps.lab_run`, the admin action `lab_steps` without the HTTP: one fresh Python process per design, so the memory is the design's
+own; this machine, Windows 11, Python 3.14.3, numpy 2.4.4, Pillow 12.2.0, one thread, a synthetic blue eye of 4096 px as the stored master, the customer's names and a date drawn,
+`STYLE_SLOW_CPU` unset; nothing else heavy of mine running). `need` and `est` are what the plan says (the cost table at the factor 1.6, with the 15 percent Linux allowance on the
+memory), `table` the spike's own cold figures for the design:
+
+| Design | wall time | CPU | memory increase (VmRSS) | plan need / est | table (cold CPU, cold peak) |
+|---|---:|---:|---:|---:|---|
+| Clean Iris | 7.0 s | 6.7 s | +486 MB | 16.4 s / 713 MB | 6.3 s, 620 MB |
+| Radiance | 10.7 s | 10.3 s | +807 MB | 21.2 s / 1035 MB | 9.3 s, 900 MB |
+| Celestial Gold (variant A) | 10.2 s | 9.8 s | +460 MB | 26.1 s / 845 MB | 12.4 s, 734 MB (the old design's row) |
+
+Every self check of the three passed (T1, T6, T7, T12), each picture is one JPEG q95 4:4:4 of 4096 x 4096. The wall time includes decoding the 4096 px master, the grade (the
+largest part, 4.7 s of Clean's 6.6 s), the finish, the checks and the encode, and is a fraction of the plan's need on every design, as the table's own model says (the need is
+the factor 1.6 times the CPU, plus the cold start the real instance pays and this machine does not). The `hwm_mb` of those runs (about 1.84 GB) is the process's high-water mark
+and includes the test script's own making of the 4096 px synthetic master: this is why the events and records carry the INCREASE of the resident size over the step
+(`peak_mb`) and the instance's high-water mark only beside it, labelled as that. Powder Burst, Splash and Elements are not measured here: their 4K plates are not in a local
+store (the release-1 upload needs the owner's service key). Celestial Gold's cost row is still the old design's (12.4 s, 734 MB): variant A measures less (10.2 s, +460 MB), so the
+row stays a safe bound until V11 reads a real master on the instance.
+
+**What the plan costs a legacy order**: the step runner adds a few small storage calls to a composition (the plan, the claim, the try record twice, the done record, three reads
+for the order's state), about a second on a real bucket; the artwork's file and digest are those of `master_compose` as before (the suite `v3steps` holds the real legacy composer
+to the old digest rule on a real 4096 px master). The watchdog costs one self-call of at most `KICK_READ` (1.5 s) at the start of a step, and two relay invocations that wait
+40 s each and then find the order ready (they do no work: a relay that wakes to a finished order stops after four reads).
+
+**The suite** `v3steps` (132 checks, about 1 minute 50 seconds alone) drives the real handlers over HTTP with the image model stubbed (the fake master writes a procedural iris
+of 4096 px for the single styles) and scripted executors for the state machine. It joins the list in `suites/suites.list` and `baseline.json` (v3steps 132); the page-code
+count went from 20 to 29 (the order page's driver, `suites/ts/order_driver.test.ts`). Existing checks changed, each with its reason (in the commit): the two admin suites expect
+one more master event for a composed order (the step's `art` event beside the legacy composer's own `compose` event), `v3single` no longer expects `master_compose` to answer 400
+for a style of the v3 engine (the master plan makes it: with no stored eye it answers 409 `eyes_not_ready`), and one label of `v3reg`.
+
+**Full set** on the work tree after the last code change: 28 of 28 green, every count equal to the baseline (r2 105, r3 48, r4 69, r5 54, fix 53, admin 186, pay 120, advance 66,
+refund 7, preview 60, review 11, fixmk 36, markets 58, au 70, payrev 19, fixer 43, oldpay 120, oldadv 66, oldadmin 186, exp 349, ts 29, v3wp0 93, v3reg 172, v3gate 97, v3core 86,
+v3plates 108, v3single 86, v3steps 132).
+
+**A flake of the harness under load, recorded and not hidden.** In one full run (the first, with three suites in parallel and another agent's node processes on the machine) the
+`pay` suite died at its third checkout with `ConnectTimeout` to its own loopback API server (60 s), after 87 of its 120 checks, with no failing check; `pay` alone passes 120 of 120
+(and did in three other runs, among them the next full run). The call that timed out is `/api/checkout`, which none of this package's code touches (it is the same kind of death
+the WP5A review saw as `ConnectionAbortedError` with three suites in parallel). It is a property of the harness's one-thread-per-request test server on a loaded Windows machine,
+not of the code under test; if it recurs on a quiet machine it is a defect to be chased, not a flake.
