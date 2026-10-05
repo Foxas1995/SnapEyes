@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NO_SAVE, NO_SAVE_BOX, NO_SAVE_IMG_STYLE } from '../try/noSave';
-import { RestoredDisc, usePrefersReducedMotion } from './Reveal';
+import { RestoredDisc } from './Reveal';
+import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 import { stripFadeMs, type Geometry } from './revealMath';
 
 interface Props {

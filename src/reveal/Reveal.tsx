@@ -1,20 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NO_SAVE, NO_SAVE_BOX, NO_SAVE_IMG_STYLE } from '../try/noSave';
+import { usePrefersReducedMotion } from './usePrefersReducedMotion';
 import { PAD, PUPIL_CUT, entersSnap, keyCut, maskCss, snapCut, sweepFor, toggleCut, valueText, type Geometry } from './revealMath';
-
-/** prefers-reduced-motion, with an override for tests and the prototype (?rm=1). */
-export function usePrefersReducedMotion(force?: boolean): boolean {
-  const [rm, setRm] = useState<boolean>(() => force ?? (typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
-  useEffect(() => {
-    if (force !== undefined) { setRm(force); return; }
-    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    if (!mq) return;
-    const on = () => setRm(mq.matches);
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
-  }, [force]);
-  return rm;
-}
 
 /** The restored iris on the frame circle: a square wrapper exactly the disc's bounding square (side 2 R_f), the restored image
  *  (the clean restoration on the landing, the watermarked display copy on /try: a square in which the iris radius is 1 / (2 PAD)
@@ -58,10 +45,11 @@ export const Reveal: React.FC<Props> = ({ photo, restored, geometry, labels, rea
   const box = useRef<HTMLDivElement>(null);
   const last = useRef({ t: 0, x: 0, moved: 0, down: 0, pre: PUPIL_CUT });
   const posRef = useRef(pos);
-  posRef.current = pos;
+  useEffect(() => { posRef.current = pos; }, [pos]);
 
   const move = (p: number) => {
     if (entersSnap(posRef.current, p)) { try { navigator.vibrate?.(10); } catch { /* no haptics */ } }
+    posRef.current = p;
     setPos(p);
     onCut?.(p);
   };
@@ -70,8 +58,7 @@ export const Reveal: React.FC<Props> = ({ photo, restored, geometry, labels, rea
   useEffect(() => {
     if (!ready) return;
     const sw = sweepFor(rm);
-    if (sw.durationMs === 0) { setPos(sw.to); return; }
-    setPos(sw.from);
+    if (sw.durationMs === 0) return;     // reduced motion: the Reveal starts at the pupil cut (its first state) and stays there
     const t1 = window.setTimeout(() => { setSweeping(true); setPos(sw.to); }, sw.delayMs);
     const t2 = window.setTimeout(() => setSweeping(false), sw.delayMs + sw.durationMs + 60);
     return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
