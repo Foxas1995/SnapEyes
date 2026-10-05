@@ -15,6 +15,7 @@
     "check:motion": "node scripts/check_motion.mjs",
     "check:motion:close": "node scripts/check_motion_close.mjs",
     "check:taste": "node scripts/check_taste.mjs",
+    "check:budget": "node scripts/check_budget.mjs",
     "check:slots": "node scripts/measure_slots.mjs --check",
     "lint": "oxlint",
     "preview": "vite preview",
