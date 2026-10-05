@@ -90,6 +90,9 @@ import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, eye as EYE, costs as CO, guard as GD, steps as SPS, gate as GATE  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
+INVISIBLE = "[" + "".join(chr(c) for lo, hi in ((0x200b, 0x200f), (0x2028, 0x202e), (0x2060, 0x2064), (0xfeff, 0xfeff)) for c in range(lo, hi + 1)) + "]"
+MIDDLE_DOT = chr(0xb7)
+LT_LETTERS = "".join(chr(c) for c in (0x105, 0x10d, 0x119, 0x117, 0x12f, 0x161, 0x173, 0x16b, 0x17e))      # the Lithuanian letters the artwork font draws
 spec_c = importlib.util.spec_from_file_location("compose", os.path.join(API, "compose.py"))
 CMP = importlib.util.module_from_spec(spec_c)
 spec_c.loader.exec_module(CMP)
@@ -184,7 +187,8 @@ section("1. the module: its files, its words, what must not be in it")
 SRC = read(os.path.join(API, "compose.py"))
 ast.parse(SRC, feature_version=(3, 12))
 check("api/compose.py parses as Python 3.12 (Vercel's default) and carries no dash, no invisible character and no written price",
-      not re.search(DASH, SRC) and not re.search("[​-‏ -‮⁠-⁤﻿]", SRC) and not re.search(r"\d[.,]\d{2}\s*(EUR|€)|A\$\d|\d\s?Ft\b", SRC))
+      not re.search(DASH, SRC) and not re.search(INVISIBLE, SRC)
+      and not re.search(r"\d[.,]\d{2}\s*(EUR|" + chr(0x20ac) + r")|A\$\d|\d\s?Ft\b", SRC))
 check("every refusal has its sentence in the four languages (en, de, lt, hu), different in each, with no dash",
       {"stage", "eyes", "gate", "reseal", "bar_pupil", "too_many_styles", "busy_retry", "tiles_paused"} <= set(CMP.WORDS)
       and all(set(CMP.WORDS[k]) == {"en", "de", "lt", "hu"} and len({CMP.WORDS[k][lg] for lg in CMP.WORDS[k]}) == 4
@@ -459,9 +463,9 @@ check("plan8 is not moved by the customer's words or the canvas (a typo in a nam
       r1["plan8"] == r1c["plan8"] == r1w["plan8"] != r1d["plan8"] and r1_again["image"] == r1["image"] and r1_again["plan8"] == r1["plan8"], (r1["plan8"], r1d["plan8"]))
 check("the names as a list and as the old string give the same preview (a v3 style), and the date is one line as typed", r1["image"] == r1b["image"] and r1["image"] != r1c["image"])
 check("format wallpaper is the phone canvas for a style of the engine (canvas 9:19.5, taller than wide)", r1w["canvas"] == "9:19.5" and r1w["format"] == "wallpaper" and r1w["height"] > r1w["width"])
-names8 = [("ąčęėįšųūž" * 3)[:24] for _ in range(8)]
+names8 = [(LT_LETTERS * 3)[:24] for _ in range(8)]
 check("eight names of 24 letters (Lithuanian letters among them) are cut as the preview cuts them (60 characters of lockup, each letter the font can draw) and every name stays a name",
-      all(len(n) <= 24 for n in names8) and len(" · ".join(CMP._engine_names(names8))) <= CMP.NAMES_CUT and len(CMP._engine_names(names8)) >= 2 and CMP._engine_names("Anna;Max") == ["Anna", "Max"]
+      all(len(n) <= 24 for n in names8) and len((" " + MIDDLE_DOT + " ").join(CMP._engine_names(names8))) <= CMP.NAMES_CUT and len(CMP._engine_names(names8)) >= 2 and CMP._engine_names("Anna;Max") == ["Anna", "Max"]
       and CMP._engine_names(None) == [] and CMP._engine_names(5) == [] and CMP._engine_names([1, "A"]) == ["A"], CMP._engine_names(names8))
 eight = [sealed(n, 560) for n in ("blue_round", "green_round", "amber_slit", "dark_brown_round", "grey_round", "blue_slit", "green_bar", "dark_brown_bar")]
 body8 = {"sealed": eight, "style": "supernova", "layout": "galaxy", "pad": 1.12, "names": names8}
