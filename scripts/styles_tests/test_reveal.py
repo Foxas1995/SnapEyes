@@ -121,7 +121,7 @@ with open(os.path.join(HERE, "data", "reveal_goldens.json"), encoding="utf-8") a
 
 # ============================================================================================ 1. the files
 section("1. the modules: what they are, and that they stay light")
-src = {m: read(f"api/_lib/styles/{m}.py") for m in MODULES}
+src = {m: read(f"api/_lib/styles/{m}.py").replace(chr(13) + chr(10), chr(10)) for m in MODULES}      # a checkout with autocrlf has CRLF files: the checks read lines
 check("each module opens with its docstring and then the __future__ import (Vercel's default Python is 3.12)",
       all(re.search(r'\A# -\*- coding: utf-8 -\*-\n"""[\s\S]*?"""\nfrom __future__ import annotations\n', s) for s in src.values()), [m for m, s in src.items() if "from __future__" not in s])
 check("no dash (en or em), no raw invisible or bidirectional character, no written price in any of them",
@@ -379,8 +379,15 @@ check("enhance: the event carries the code 'ok' and the time, both allowed by ev
       ev.get("reveal") == "ok" and isinstance(ev.get("reveal_ms"), int) and {"reveal", "reveal_ms"} <= set(E.build("enhance", ev)), ev)
 check("enhance: nothing new is stored (no wide frame, no context crop, no photo, no reveal file): the store folder is as it was (decision C10)",
       files_before == files_after and "context" not in json.dumps(out) and "fit" not in out and "wide" not in out, (files_before, files_after))
-check("enhance: the whole call with the stub model costs at most 4 s of CPU, the Reveal's share about half a second",
-      cpu_enh <= 4.0, cpu_enh)
+_real_reveal_for = R.reveal_for
+R.reveal_for = lambda *a, **k: {"params": None, "image": None, "code": "none", "ms": 0}
+try:
+    _o, _e, cpu_without = enhance()
+finally:
+    R.reveal_for = _real_reveal_for
+print(f"   enhance CPU with the stub model: {cpu_enh:.1f} s with the Reveal, {cpu_without:.1f} s without it", flush=True)
+check("enhance: the Reveal adds at most 2 s of CPU to the call (about half a second on a quiet core; measured against the same call with it switched off, so a loaded machine "
+      "moves both)", cpu_enh - cpu_without <= 2.0, (cpu_enh, cpu_without))
 
 # the guard: not enough time left
 _real_left = L.time_left
