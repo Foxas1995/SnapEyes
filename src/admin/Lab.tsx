@@ -13,9 +13,10 @@ import { DEFAULT_PRICES, explain, fmtSec, fmtUsd, STYLE_LT } from './format';
 import { BTN, CARD, ConfirmDialog, DANGER, ExtLink, GOLD, H2, INPUT, JsonView, MUTED, Notice, Spinner, Thumb, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
 import { DEFAULT_STYLE, LEGACY_IDS } from '../shared/styles';
+import { StyleLab } from './StyleLab';
 
 const SAMPLE = '/assets/sample_eye_blue_1789706902835.jpg';
-const STYLES = LEGACY_IDS;   // the styles the engine can draw today (api/_lib/styles_registry.py); the v3 engines add their own with their packages
+const STYLES = LEGACY_IDS;   // the styles the legacy pipeline above draws (api/_lib/styles_registry.py); the v3 engine's styles are looked at in StyleLab below, without the image model
 
 type J = Record<string, unknown>;
 type Status = 'wait' | 'run' | 'ok' | 'fail' | 'skip';
@@ -272,6 +273,7 @@ export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
           </div>
         ))}
       </section>
+      <StyleLab call={call} lab={lab} />
       {toast && <Toast tone={toast.tone} onClose={() => setToast(null)}>{toast.text}</Toast>}
       <ConfirmDialog spec={confirm} onClose={() => setConfirm(null)} />
     </div>

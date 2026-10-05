@@ -22,7 +22,9 @@ variant, the significance note and the warnings; api/_lib/abtest.py), cpu_probe 
 instance, cold or warm: seconds per phase, the slow factor against a baseline the caller sends, and what the instance says
 about its memory, CPUs and /tmp; nothing is read from storage or changed; api/_lib/cpu_probe.py), plates_status (the plate
 library as THIS function sees it: the 1K plates and the two atlases in the bundle with their recorded sizes, the 4K plates in
-private storage when asked for, the registry's version and hash; read only; api/_lib/styles/plates.py).
+private storage when asked for, the registry's version and hash; read only; api/_lib/styles/plates.py), styles_lab (one style of the
+v3 engine drawn on one restored iris, whatever its stage: the laboratory is where a held or not yet visible style is looked at; the eye
+is sent as an image or is the stored eye of a lab test order; no image model is called and nothing is stored or audited; a_styles_lab).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
 "confirm"): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
@@ -1165,10 +1167,115 @@ def a_plates_status(body, who):
     return out
 
 
+# ----------------------------------------------------------------------------- the style laboratory
+LAB_SIZES = (480, 1024, 2048, 4096)       # the long side of a laboratory render
+LAB_VIEW = 1536                           # a render above 2048 px comes back reduced to this (a 4096 px JPEG does not fit a 4.5 MB reply)
+LAB_CROP = 1280                           # ... with one window of it at 100 percent, where the rim of the iris is
+LAB_EYE_B64 = 4_300_000                   # an eye sent as an image: the reply and request bodies are limited to 4.5 MB
+
+
+def a_styles_lab(body, who):
+    """{style, eye | order + n, format, size, names, date, crop}: one style of the v3 engine (api/_lib/styles) drawn on ONE restored iris,
+    whatever the style's stage (a held or not yet visible style is looked at here, never by a customer). eye: the base64 of a restored iris
+    square (the 1024 px square the site's own restoration makes, the iris centred as /api/enhance leaves it); or order: the id of a lab test
+    order (lab-...) and n its eye number: the stored 4K master eye of that test order, so a style can be looked at on a real master without
+    another call to the image model. This action calls no image model, stores nothing and is not audited (it only costs CPU).
+    format: a canvas id of the style ("1:1" ...); size: 480, 1024, 2048 or 4096 (the long side). names and date are the customer's words,
+    drawn under the iris when given. crop: [x, y] the centre of the 100 percent window, in canvas pixels (default: the upper right rim).
+    A render above 2048 px comes back as a reduced view plus the window at full size. 4096 px is refused when the cost table says it cannot
+    finish inside the time or the memory this function has (the rule a paid master is held to), and answers 409 plate_unavailable when a
+    plate of the design has no 4K file in storage. Without a style the reply is the list of styles to choose from ({styles, sizes}).
+    Reply: ok, style, design, canvas, width, height, image (JPEG, b64), view, crop, cls, seed,
+    facts, plan, selfcheck, times, estimate."""
+    import io as _io
+    from . import catalogue as CT
+    from . import styles as ST
+    from .styles import core as SC
+    from .styles import costs as CO
+    from .styles import plates as PL
+    style = body.get("style")
+    if style is None:
+        # no style: the list the page builds its menu from (the styles of the v3 engine this deployment can draw, with their stage)
+        rows = []
+        for i in CT.renderable_ids(1):
+            e = CT.engine_for(i, 1)
+            if CT.is_legacy(i) or e is None:
+                continue
+            rows.append({"id": i, "name": CT.name_of(i), "design": e["design"], "module": e["module"], "ceiling": CT.ceiling(i, 1),
+                         "stage": CT.stage_of(i, 1), "gate": CT.gate_policy(i), "canvases": e["canvases"], "plates": e["plates"]})
+        return {"ok": True, "styles": rows, "sizes": list(LAB_SIZES)}
+    if not isinstance(style, str) or not CT.renderable(style, 1) or CT.is_legacy(style):
+        raise L.ClientError("Not a style of the v3 engine.")
+    eng = CT.engine_for(style, 1)
+    if eng is None or eng.get("module") == "legacy":
+        raise L.ClientError("Not a style of the v3 engine.")
+    size = body.get("size", 1024)
+    if isinstance(size, bool) or size not in LAB_SIZES:
+        raise L.ClientError(f"size is one of {', '.join(str(x) for x in LAB_SIZES)}.")
+    fmt = body.get("format") if body.get("format") in eng["canvases"] else eng["canvases"][0]
+    # the eye: an image sent, or the stored eye of a lab test order
+    order = body.get("order")
+    if order is not None:
+        n = body.get("n", 1)
+        if (not isinstance(order, str) or not order.startswith("lab-") or not store.ORDER_RE.fullmatch(order) or isinstance(n, bool)
+                or n not in range(1, 9)):
+            raise L.ClientError("order is a lab test order (lab-...) and n an eye number from 1 to 8.")
+        if not store.configured():
+            raise store.StorageNotConfigured(store.problem())
+        data = store.get(f"orders/{order}/eye_{n}.jpg", max_bytes=16 << 20)
+        if data is None:
+            raise L.ClientError("That test order has no such eye.")
+    else:
+        eye = body.get("eye")
+        if not isinstance(eye, str) or not eye or len(eye) > LAB_EYE_B64:
+            raise L.ClientError("Send eye as the base64 of a restored iris square, or order and n.")
+        try:
+            data = base64.b64decode(eye.split(",", 1)[1] if (eye.startswith("data:") and "," in eye[:64]) else eye)
+            L.Image.open(_io.BytesIO(data)).verify()
+        except Exception:
+            raise L.ClientError("That is not a readable image.") from None
+    design_key = CO.cost_key(eng)
+    try:
+        est = CO.assess(design_key, 1) if size == 4096 else {"need_s": round(CO.preview_need(design_key, 1, size), 2), "ok": True, "why": None, "est_mb": None}
+    except CO.NoCost:
+        est = {"need_s": None, "ok": True, "why": "no_cost", "est_mb": None}
+    if not est.get("ok") and est.get("why") in ("time", "memory"):
+        raise L.ClientError(f"A 4096 px render of this design would not fit this function ({est['why']}: needs about {est.get('need_s')} s and "
+                            f"{est.get('est_mb')} MB).")
+    spec = {"style": style, "layout": "single", "eyes": 1, "canvas": fmt, "names": body.get("names") if isinstance(body.get("names"), (str, list)) else "",
+            "date": body.get("date") if isinstance(body.get("date"), str) else ""}
+    iris = SC.Iris(data, "lab", max_side=4096 if size == 4096 else 2048)
+    try:
+        pv = ST.preview([iris], spec, size=size, check=True)
+    except PL.PlateUnavailable as e:
+        raise store.Answer(409, "plate_unavailable", "A plate this design needs is not in storage.", False, None, plate=str(e.plate_id)[:80], why=e.why)
+    img = pv.img
+    out = {"ok": True, "style": style, "design": pv.design, "canvas": pv.fmt, "width": img.size[0], "height": img.size[1], "cls": pv.cls, "seed": pv.seed,
+           "facts": pv.log, "plan": ST.resolve(spec, None), "selfcheck": pv.selfcheck, "times": pv.times, "estimate": est}
+    if size > 2048:
+        crop = body.get("crop")
+        d = pv.discs[0]
+        if isinstance(crop, list) and len(crop) == 2 and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in crop):
+            cx, cy = float(crop[0]), float(crop[1])
+        else:
+            cx, cy = d[0] + 0.72 * d[2], d[1] - 0.72 * d[2]
+        x0 = int(min(max(cx - LAB_CROP / 2.0, 0), max(img.size[0] - LAB_CROP, 0)))
+        y0 = int(min(max(cy - LAB_CROP / 2.0, 0), max(img.size[1] - LAB_CROP, 0)))
+        win = img.crop((x0, y0, min(x0 + LAB_CROP, img.size[0]), min(y0 + LAB_CROP, img.size[1])))
+        f = LAB_VIEW / float(max(img.size))
+        view = img.resize((max(1, round(img.size[0] * f)), max(1, round(img.size[1] * f))), L.Image.LANCZOS)
+        out["image"], out["view"] = L.pil_to_b64(view, "JPEG", 90), list(view.size)
+        out["crop"] = {"x": x0, "y": y0, "w": win.size[0], "h": win.size[1], "image": L.pil_to_b64(win, "JPEG", 92)}
+    else:
+        out["image"], out["view"], out["crop"] = L.pil_to_b64(img, "JPEG", 90), list(img.size), None
+    return out
+
+
 # ----------------------------------------------------------------------------- serving
 ACTIONS = {
     "me": a_me, "summary": a_summary, "stats": a_stats, "errors": a_errors, "orders": a_orders, "order": a_order,
     "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe, "plates_status": a_plates_status,
+    "styles_lab": a_styles_lab,
     "exp_start": audited("exp_start", act_exp_start),
     "exp_stop": audited("exp_stop", act_exp_stop),
     "link": audited("link", act_link),
