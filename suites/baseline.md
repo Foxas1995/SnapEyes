@@ -393,3 +393,11 @@ rays and the dust are drawn differently. Nothing else is asked of the owner here
 
 **Existing checks changed, each with its reason:** `v3steps` check "a plan that does not know its plates yet" uses an eye with no id (the plan of an eye with an id now knows its plates);
 the test stand in for `master_eye` records the preview's eye id from the draft, as the real one does (it wrote a made up id that nothing read until the seed did).
+
+**Full set** on an export of `5144e04` (`git archive`, the private fixtures, `SNAPEYES_SCRATCH_Y3` and `SNAPEYES_CALIB` set so that the LOCAL lines of `v3single` ran too): 28 of 28 green, exit 0, every count equal to
+`baseline.json` (r2 105, r3 48, r4 69, r5 54, fix 53, admin 186, pay 120, advance 66, refund 7, preview 60, review 11, fixmk 36, markets 58, au 70, payrev 19, fixer 43, oldpay 120, oldadv 66, oldadmin 186, exp 349, ts 31, v3wp0 93,
+v3reg 172, v3gate 97, v3core 86, v3plates 108, **v3single 115, v3steps 150**). The first full run on an export of `bc2d632` was 26 of 28 and is not counted: `v3single` did not parse (two byte literals of the WP5B files
+with a line break inside `b"\r\n"`, an editing slip, fixed in `5144e04`), and **`oldadv` died at its check H3** (a request with a foreign `Origin` header, answered 403 by the origin gate before the body is read) with
+`ConnectionAbortedError(10053)` raised in the test's own `requests.post`, after 66 of 66 earlier lines had passed and with no failing check; the same check H3 passed in the `advance` suite in the same run (the same file's newer copy) and
+`oldadv` passed 66 of 66 in the next full run. The call is `L.run`'s origin gate, which no WP5B file touches; it is the Windows connection abort of the harness's one-thread-per-request test server that sections 7 and 10 of this file
+already record (server answers and closes before the client has sent its whole body): a flake of the harness, recorded and not hidden; if it recurs it is a defect to chase.
