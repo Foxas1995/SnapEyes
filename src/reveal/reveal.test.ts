@@ -112,3 +112,19 @@ test('no component of the Reveal writes text on the picture: the only words are 
   const src = readFileSync(new URL('./Reveal.tsx', import.meta.url), 'utf8') + readFileSync(new URL('./RevealStrip.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /fillText|<text\b|textContent\s*=|SnapEyes|snapeyes/);
 });
+
+test('every wire dict the server side goldens hold (scripts/styles_tests/data/reveal_goldens.json: twelve cases) is read by parseReveal, and the view follows ok', () => {
+  const gold = JSON.parse(readFileSync(new URL('../../scripts/styles_tests/data/reveal_goldens.json', import.meta.url), 'utf8')).cases as Record<string, { params: Record<string, unknown> }>;
+  const keys = Object.keys(gold);
+  assert.ok(keys.length >= 12);
+  for (const k of keys) {
+    const rv = parseReveal(gold[k].params);
+    assert.ok(rv, k);
+    assert.equal(revealView(rv), gold[k].params.ok ? 'cut' : 'strip', k);
+    assert.equal(rv.ok, gold[k].params.ok, k);
+    // the wide frame of such an eye is built the way the page builds it: a tight crop here (no photo), the geometry is finite
+    const g = revealGeometry(tightFit(1000), rv);
+    assert.ok(Number.isFinite(g.disc.left) && Number.isFinite(g.disc.top) && g.plan.mode === 'tight', k);
+  }
+  assert.deepEqual(keys.filter((k) => !gold[k].params.ok).sort(), ['blue_rot1', 'blue_scale102', 'blue_warm', 'flat']);
+});

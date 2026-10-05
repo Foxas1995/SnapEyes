@@ -426,4 +426,4 @@ step 2, Home 0, End 100, Enter 50, a press at 51 snaps to 50, 47.5 snaps to 50),
 advice, the amber retake button), the AI-generated sample (the plain slider, no strip), the way back from Stripe (a copy with no frame: the Reveal is built from the crop and says "Tight frame"), and 375 and 320
 px wide (no horizontal overflow, the strip in three columns at 375 and stacked at 320).
 
-**Counts:** `v3reveal` 63 (new), `ts` 78 (was 31: 15 ported node tests, 10 new node tests in `src/reveal/reveal.test.ts`, 22 in `suites/ts/reveal_page.test.ts`). `scripts/run_ts_tests.mjs` runs both kinds.
+**Counts:** `v3reveal` 63 (new), `ts` 79 (was 31: 15 ported node tests, 11 new node tests in `src/reveal/reveal.test.ts`, 22 in `suites/ts/reveal_page.test.ts`). `scripts/run_ts_tests.mjs` runs both kinds.
