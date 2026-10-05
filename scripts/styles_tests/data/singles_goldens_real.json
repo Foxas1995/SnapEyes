@@ -1,0 +1,441 @@
+{
+ "about": "SHA-256 of the RGB bytes of the real calibration eyes drawn by the scratch designs (Celestial Gold = variant A) at 1024 px: hashes only",
+ "cases": {
+  "clean.drv_d01.1:1.1024": {
+   "cls": "own",
+   "facts": {},
+   "h": 1024,
+   "seed": 4858840404543720192,
+   "sha": "25c193398b0ca8036ba9dab5df905f8fbda032523dc909b2d29b3da68dfca42e",
+   "w": 1024
+  },
+  "clean.drv_d02.1:1.1024": {
+   "cls": "grey",
+   "facts": {},
+   "h": 1024,
+   "seed": 13330031288801994994,
+   "sha": "19e5d77a4e2617d75bad1a887efe13c6f6ba630e7d9c392a5153db081169c0d9",
+   "w": 1024
+  },
+  "clean.drv_w06.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {},
+   "h": 1024,
+   "seed": 17384420530512973252,
+   "sha": "e441818979fe85a67aecb591560bcf51f1a3ef1f963e8d2a54e1261cf96f7a1b",
+   "w": 1024
+  },
+  "clean.own215120.1:1.1024": {
+   "cls": "own",
+   "facts": {},
+   "h": 1024,
+   "seed": 16345356933775383845,
+   "sha": "3f4cfce97b64594178f7e8b0add8af62741892d6b70b60458bb62350ffa26916",
+   "w": 1024
+  },
+  "elements.drv_d01.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "elements": {
+     "crown_lod": "1k",
+     "crown_upscale": 1.0245,
+     "drops": 24.0,
+     "fire_left": true,
+     "flame_hue_delta": 0.0,
+     "flame_lod": "1k",
+     "flame_plate": "P-EL-FLAME__tongues-16_side-up__v3__pro4K__t1",
+     "flame_r_scale": 0.985,
+     "flame_strong": 116.5121,
+     "flame_upscale": 1.0,
+     "gap": 0.14,
+     "lip_drops": 16.0,
+     "liquid": "water_clear",
+     "lobes": 5.0,
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vd__pro4K__t0_g47"
+    }
+   },
+   "h": 1024,
+   "seed": 7603575656207373772,
+   "sha": "650c1fe0e9b7e965833bc633a20c01dbbe918dae22736c50b716d385fe8bfb96",
+   "w": 1024
+  },
+  "elements.drv_d02.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "elements": {
+     "crown_lod": "1k",
+     "crown_upscale": 1.0244,
+     "drops": 24.0,
+     "fire_left": true,
+     "flame_hue_delta": 0.0,
+     "flame_lod": "1k",
+     "flame_plate": "P-EL-FLAME__tongues-12_side-up_right__v3__pro4K__t0",
+     "flame_r_scale": 0.985,
+     "flame_strong": 113.6863,
+     "flame_upscale": 1.0,
+     "gap": 0.14,
+     "lip_drops": 16.0,
+     "liquid": "water_clear",
+     "lobes": 6.0,
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up__v7__pro4K__t0_g47"
+    }
+   },
+   "h": 1024,
+   "seed": 18174708504835134894,
+   "sha": "f5c3f7f7c0b149f3e76406cc2bfc14bae77269875af8c49ec178a989bb8345a2",
+   "w": 1024
+  },
+  "elements.drv_w06.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "elements": {
+     "crown_lod": "1k",
+     "crown_upscale": 1.0244,
+     "drops": 24.0,
+     "fire_left": false,
+     "flame_hue_delta": 15.0,
+     "flame_lod": "1k",
+     "flame_plate": "P-EL-FLAME__tongues-16_side-up_right__v3__pro4K__t1",
+     "flame_r_scale": 0.985,
+     "flame_strong": 63.0804,
+     "flame_upscale": 1.0,
+     "gap": 0.14,
+     "lip_drops": 16.0,
+     "liquid": "water_clear",
+     "lobes": 6.0,
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vc__pro4K__t0_g47"
+    }
+   },
+   "h": 1024,
+   "seed": 3052432964462095201,
+   "sha": "c039522caaab9067f115bd1c10fd30d9ce71be3db7953f047f4cadb304ffd312",
+   "w": 1024
+  },
+  "elements.own215120.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "elements": {
+     "crown_lod": "1k",
+     "crown_upscale": 1.0244,
+     "drops": 24.0,
+     "fire_left": true,
+     "flame_hue_delta": 0.0,
+     "flame_lod": "1k",
+     "flame_plate": "P-EL-FLAME__tongues-16_side-up__v3__pro4K__t1",
+     "flame_r_scale": 0.985,
+     "flame_strong": 113.4567,
+     "flame_upscale": 1.0,
+     "gap": 0.14,
+     "lip_drops": 16.0,
+     "liquid": "water_clear",
+     "lobes": 7.0,
+     "water_plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vc__pro4K__t0_g47"
+    }
+   },
+   "h": 1024,
+   "seed": 15886898577741236330,
+   "sha": "073a05342c6676bf69926ff98c670bdb99097b58316be455dbb4801ef680073f",
+   "w": 1024
+  },
+  "gold.drv_d01.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "gold": {
+     "class": "own",
+     "design": "A even corona",
+     "gap": 0.034,
+     "gap_max": 0.034,
+     "gap_min": 0.034,
+     "gild": 0.55,
+     "orbit_r": 1.39,
+     "tex_src": "noise"
+    }
+   },
+   "h": 1024,
+   "seed": 8430024683203161799,
+   "sha": "3a2cbf23a9b8dd121ba8de966430191ec1a802f71b8af818ea8ce7f53bb7a3eb",
+   "w": 1024
+  },
+  "gold.drv_d02.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "gold": {
+     "class": "grey",
+     "design": "A even corona",
+     "gap": 0.034,
+     "gap_max": 0.034,
+     "gap_min": 0.034,
+     "gild": 0.65,
+     "orbit_r": 1.39,
+     "tex_src": "noise"
+    }
+   },
+   "h": 1024,
+   "seed": 17007872070778209934,
+   "sha": "f3e0d512cd1281d023896c9840b903e1f4fdf270c38c5ac16b6cdba1c8131155",
+   "w": 1024
+  },
+  "gold.drv_w06.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "gold": {
+     "class": "dark_brown",
+     "design": "A even corona",
+     "gap": 0.034,
+     "gap_max": 0.034,
+     "gap_min": 0.034,
+     "gild": 0.85,
+     "orbit_r": 1.39,
+     "tex_src": "noise"
+    }
+   },
+   "h": 1024,
+   "seed": 12325358483857694933,
+   "sha": "95b4d663e1b7fcf653420e94ecf4cca4e29716f58a061cf152891f8f98c3ba46",
+   "w": 1024
+  },
+  "gold.own215120.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "gold": {
+     "class": "own",
+     "design": "A even corona",
+     "gap": 0.034,
+     "gap_max": 0.034,
+     "gap_min": 0.034,
+     "gild": 0.65,
+     "orbit_r": 1.39,
+     "tex_src": "noise"
+    }
+   },
+   "h": 1024,
+   "seed": 4496405511493686410,
+   "sha": "61bb4ed8a7493c8c9e8fe768259e0a9560be0c9fc631af6a9dd289f29d494f77",
+   "w": 1024
+  },
+  "powder.drv_d01.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "powder": {
+     "h2": "analogous",
+     "lod": "1k",
+     "mirror": false,
+     "plate": "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
+     "r_scale": 0.9024,
+     "rot": -0.6358,
+     "upscale": 1.0243,
+     "wind_deg": 45.5642
+    }
+   },
+   "h": 1024,
+   "seed": 16497130013050946499,
+   "sha": "20be58f060a3e54d4e7ea56700c69e1f37b315fd7c217238e832874f8c722fac",
+   "w": 1024
+  },
+  "powder.drv_d02.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "powder": {
+     "h2": "analogous",
+     "lod": "1k",
+     "mirror": true,
+     "plate": "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
+     "r_scale": 0.9024,
+     "rot": 8.4313,
+     "upscale": 1.0243,
+     "wind_deg": 142.2313
+    }
+   },
+   "h": 1024,
+   "seed": 16116988337535713996,
+   "sha": "d55c8e01d530f2673d749ceb1a9714b4ac6912a1d7390918a33d3f04c48088f9",
+   "w": 1024
+  },
+  "powder.drv_w06.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "powder": {
+     "h2": "analogous",
+     "lod": "1k",
+     "mirror": false,
+     "plate": "P-SN-CLOUD__strong-upper_left_black-45__v4__pro4K__t2",
+     "r_scale": 0.8143,
+     "rot": -7.9092,
+     "upscale": 1.0243,
+     "wind_deg": 124.7908
+    }
+   },
+   "h": 1024,
+   "seed": 9189197132914602105,
+   "sha": "b341d90bc468960a658edf81b04b903efbe8a915a2be089a6b5f6feba2c4f317",
+   "w": 1024
+  },
+  "powder.own215120.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "powder": {
+     "h2": "analogous",
+     "lod": "1k",
+     "mirror": false,
+     "plate": "P-SN-CLOUD__strong-up_black-45__v4__pro4K__t1",
+     "r_scale": 0.8248,
+     "rot": -5.9528,
+     "upscale": 1.0244,
+     "wind_deg": 113.6472
+    }
+   },
+   "h": 1024,
+   "seed": 1188059173342719759,
+   "sha": "03a378b4f4f3a3a73c5434b54f89861a7e6099a8f792e70b6e2aba6430e976b3",
+   "w": 1024
+  },
+  "radiance.drv_d01.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "radiance": {
+     "moat": 0.18,
+     "mode": "silver"
+    }
+   },
+   "h": 1024,
+   "seed": 1444056057410618015,
+   "sha": "d86b07f0245b3900aafa177a1471ba7e2063a16646a88092f53c28c31312f89f",
+   "w": 1024
+  },
+  "radiance.drv_d02.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "radiance": {
+     "moat": 0.18,
+     "mode": "silver"
+    }
+   },
+   "h": 1024,
+   "seed": 4242672934034712972,
+   "sha": "be92267bcd02d5cf996acd869ead7e54d1cdfd8792a53467244f5585f9c23c83",
+   "w": 1024
+  },
+  "radiance.drv_w06.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "radiance": {
+     "moat": 0.18,
+     "mode": "champagne"
+    }
+   },
+   "h": 1024,
+   "seed": 18072787354781164676,
+   "sha": "85fdca7986e4f28ae9a8512c6b9b8e13cfc46b660b7ebf8a835582d50b0f270c",
+   "w": 1024
+  },
+  "radiance.own215120.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "radiance": {
+     "moat": 0.18,
+     "mode": "own"
+    }
+   },
+   "h": 1024,
+   "seed": 4785680330386660274,
+   "sha": "98d7aab74e894f7bafe3ba955d6124e36f2408326b244c2dfc14668661952a97",
+   "w": 1024
+  },
+  "splash.drv_d01.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "splash": {
+     "cut_spikes": 2.0,
+     "hue_delta_max": 0.0,
+     "liquid": "water_clear",
+     "lod": "1k",
+     "mirror": false,
+     "plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up_right__vc__pro4K__t0_g47",
+     "rot": 18.5979,
+     "strong": 68.5979,
+     "upscale": 1.0244,
+     "warp": 0.3
+    }
+   },
+   "h": 1024,
+   "seed": 17009446445062706226,
+   "sha": "e4931fe78bf2e1a518236d3a908b0fb1d7646e0919afeb96c55dbf4a22886dce",
+   "w": 1024
+  },
+  "splash.drv_d02.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "splash": {
+     "cut_spikes": 2.0,
+     "hue_delta_max": 0.0,
+     "liquid": "water_clear",
+     "lod": "1k",
+     "mirror": false,
+     "plate": "P-SP-CROWN__liquid-water_clear_spikes-16_rise-up__vh__pro4K__t0_g47",
+     "rot": -0.3884,
+     "strong": 91.5116,
+     "upscale": 1.0246,
+     "warp": 0.3
+    }
+   },
+   "h": 1024,
+   "seed": 533966339948442434,
+   "sha": "fda285b0ec2084c3988da0030f81b8e7e8b839792a6b8130933871978a8d1342",
+   "w": 1024
+  },
+  "splash.drv_w06.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "splash": {
+     "cut_spikes": 2.0,
+     "hue_delta_max": 15.0,
+     "liquid": "cognac",
+     "lod": "1k",
+     "mirror": false,
+     "plate": "P-SP-CROWN__liquid-cognac_spikes-12_rise-up__ve__pro4K__t0_g47",
+     "rot": -3.4731,
+     "strong": 90.6269,
+     "upscale": 1.0246,
+     "warp": 0.3
+    }
+   },
+   "h": 1024,
+   "seed": 16932224280834043678,
+   "sha": "e4c414a57f2a8d9ec4abd5de6e89ee4d497399bc522ffb40f4686177e1620664",
+   "w": 1024
+  },
+  "splash.own215120.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "splash": {
+     "cut_spikes": 2.0,
+     "hue_delta_max": 15.0,
+     "liquid": "water_clear",
+     "lod": "1k",
+     "mirror": false,
+     "plate": "P-SP-CROWN__liquid-water_clear_spikes-20_rise-up__v7__pro4K__t0_g47",
+     "rot": 0.0,
+     "strong": null,
+     "upscale": 1.0245,
+     "warp": 0.3
+    }
+   },
+   "h": 1024,
+   "seed": 11485466750625942763,
+   "sha": "36d52984ac808469a823b33ae420980d0a2a7699db029b98092d550389f56fe2",
+   "w": 1024
+  }
+ },
+ "eye_files": {
+  "drv_d01": "1497f022941187197e5727877aed89f167deaea29a6986bccb987d70152d106c",
+  "drv_d02": "cbf79a2ff3345c4c9bce64e733b27aa1b774901a65c91577615cb084349f98cd",
+  "drv_w06": "87ec906bd4ef6f7df1864a474aad5d21f1e84712159faeef86995c3460b486e2",
+  "own215120": "3587176a5180d44c5e57067546e6e07a38514ec21669b24548781480deb4afa5"
+ },
+ "machine": {
+  "numpy": "2.4.4",
+  "pillow": "12.2.0",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "python": "3.14.3"
+ }
+}
