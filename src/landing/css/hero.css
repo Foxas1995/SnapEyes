@@ -67,7 +67,9 @@
   @media (min-width: 960px) {
     :root[lang="hu"] .lp-hero h1 { font-size: min(clamp(32px, 8.6vw, 62px), 4.7vw, 58px); }
   }
-  /* The entrance (motion spec 6.2), in three calm beats; everything is settled by about 2 s, the glint is the last flourish. Pure CSS, from
+  /* The entrance (motion spec 6.2), in three calm beats; everything is settled by about 2 s, the glint is the last flourish. The bloom behind
+     the plate (.lp-hero::before) stays STATIC: fading a 900 px glow of 10 percent would promote it to a layer of its own, a 22 MB texture on a
+     phone at pixel ratio 2.6, for a change nobody can see. Pure CSS, from
      the markup that is already painted (the shell included): src/motion/handoff.ts carries the clock over when React takes the page.
      The text items are .lp-rise and .lp-rise-s in the markup (src/landing/HeroView.tsx). The picture itself is never faded: it is the
      LCP element and the artwork (.lp-settle only scales it from 1.03 to 1). The two honesty labels (the chip in the frame, the caption)
@@ -75,7 +77,6 @@
   .lp-hero-stage::before { content: ""; position: absolute; inset: -8px; border: 1px solid var(--ring-gold); border-radius: calc(var(--r) + 8px); pointer-events: none; }
   .lp-hero-frame .lp-glint::after { background: linear-gradient(105deg, transparent 34%, #fff 50%, transparent 66%); }
   @media (prefers-reduced-motion: no-preference) {
-    .lp-hero::before { animation: lp-fade-in 1.6s var(--ease-out) .2s backwards; }
     .lp-hero-stage::before { animation: lp-fade-in 1.2s var(--ease-out) .35s backwards; }
     .lp-disc { animation: lp-disc-in .9s var(--ease-out) .9s backwards; }
     .lp-disc::after { animation: lp-cut .9s var(--ease-out) 1.2s backwards; }

@@ -38,8 +38,9 @@
      transition keeps it and simply gets the ring without the settle. outline is never turned off; the only suppression is :focus:not(:focus-visible). */
   :where(.lp) :focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 6px; }
   @media (prefers-reduced-motion: no-preference) {
-    :where(.lp) :where(a, button, summary, [tabindex]) { outline-offset: 7px; outline-color: transparent; transition: outline-offset .25s var(--ease-out), outline-color .25s var(--ease-out); }
-    :where(.lp) :where(a, button, summary, [tabindex]):focus-visible { outline-offset: 4px; outline-color: var(--gold); }
+    :where(.lp) :where(a, button, summary, [tabindex]) { outline-offset: 7px; outline-color: transparent; }
+    /* the transition is declared on the focused state only: it runs when the focus ring appears, and not when a script gives a scroller its tabindex */
+    :where(.lp) :where(a, button, summary, [tabindex]):focus-visible { outline-offset: 4px; outline-color: var(--gold); transition: outline-offset .25s var(--ease-out), outline-color .25s var(--ease-out); }
   }
   @media (forced-colors: active) {
     :where(.lp) :focus-visible { outline-color: Highlight; }
