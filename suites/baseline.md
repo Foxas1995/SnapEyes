@@ -337,3 +337,59 @@ Measured with the real constants (guard wait 2 s, back-off 5 to 40 s): a first o
 (and did in three other runs, among them the next full run). The call that timed out is `/api/checkout`, which none of this package's code touches (it is the same kind of death
 the WP5A review saw as `ConnectionAbortedError` with three suites in parallel). It is a property of the harness's one-thread-per-request test server on a loaded Windows machine,
 not of the code under test; if it recurs on a quiet machine it is a defect to be chased, not a flake.
+
+
+## 11. The seed from the eye id (WP5B, 2026-10-05): the reviewed diff of what moved
+
+Decision C9, step B: the seed of a picture is made from the eye ids and the plan's seed key (`api/_lib/styles/seeds.py`: registry id, design used, ground, clean flag, layout id, the three
+options, plates version) and from nothing else; before it was the sha256 of the bytes of the iris, the design and the canvas. `ENGINE_V` is 2 (it was 1), `data/engine_v.json` records the
+hashes of the new golden files. Recorded on this machine class (Windows 11, Python 3.14.3, numpy 2.4.4, Pillow 12.2.0) with `scripts/styles_tests/record_goldens_repo.py`; the step A
+recording (the scratch prototype's own pictures) is kept in `scripts/styles_tests/data/stepA/` and replayed with the old seed (`opts seed_mode legacy`).
+
+**What moved** (`python scripts/styles_tests/diff_goldens.py [--pixels] [--real]`): 60 of the 72 synthetic pictures (every design but Clean Iris, 12 of 12 each; Clean Iris draws no matter
+and its seed only dithered pure black, so its 12 hashes are the old ones). Plate picks at 1024 px on the three synthetic eyes (blue, dark brown, grey), old to new:
+
+| Design | blue | dark brown | grey |
+|---|---|---|---|
+| Powder Burst | strong right (black 60) to strong lower right (black 45) | strong lower right (black 60) to strong upper right (black 45) | strong upper left (black 45) to strong up (black 30) |
+| Splash | clear water, 16 spikes, rise up left to clear water, 20 spikes, rise up right | cognac, 12 spikes, rise up to cognac, 16 spikes, rise up left | clear water, 12 spikes, rise up to clear water, 20 spikes, rise up left |
+
+(the liquid is a function of the eye's colour and is the same before and after; the crown and the cloud are re-picked.) Elements picks new plates too (held, lab only). Radiance and
+Celestial Gold have no plate: their rays, dust and stars are re-rolled.
+
+**What did not move: the iris.** Measured on every 1024 px picture, old seed against new (zone A, up to 0.95 R): the largest difference is 0 for every design, on the 18 synthetic
+pictures and on the 24 real calibration pictures (T1 and T6 hold on every picture, old and new). The share of the other pixels that moved by more than 8 levels (the matter, the
+background) and their mean change, over the cases:
+
+| Design | synthetic eyes | real calibration eyes |
+|---|---|---|
+| Clean Iris | 0 % | 0 % |
+| Powder Burst | 29 to 38 %, mean change 15 to 26 | 26 to 33 %, 16 to 18 |
+| Splash | 19 to 22 %, 16 | 17 to 23 %, 16 to 19 |
+| Elements | 15 %, 15 | 13 to 15 %, 9 to 16 |
+| Radiance | 31 to 42 %, 10 to 15 | 33 to 41 %, 11 to 14 |
+| Celestial Gold | 12 to 13 %, 6 | 12 %, 6 |
+
+**That the seed is the only thing that moved** (the proof that step B changed nothing else): with `opts seed_mode legacy` the port draws the step A recording byte for byte, with the
+seeds and plate picks: 36 pictures at 512 px (every design on three eyes, and the other two canvases with names and a date), 18 at 1024 px, 3 masters at 4096 px, and, with the scratch
+tree (LOCAL lines, not counted): Powder Burst at 4096 px through storage and the plate cache, and the 24 real calibration pictures. The committed files are still what
+`port_singles.py` makes of the scratch files (the step A edits plus the one `STEP_B` set: the seed, the plates version `pv`, the liquid the plan may freeze).
+
+**The statistical rules, re-run over other seeds** (the seed re-rolled every plate, wind and particle, so the rules must hold for any seed, not for three eyes): 60 pictures of 5 designs
+x 3 eye classes x 4 other seeds (512 px with a name) pass T1, T6, T7 and T12; at 1024 px with no text over 12 seeds each the black share (T4) of Powder Burst is 0.543 to 0.587
+(range 0.45 to 0.65) and of Elements 0.725 to 0.739 (range 0.55 to 0.75), the veil of Powder Burst has a mean alpha up to 0.038 (limit 0.10). (At 512 px with a name Elements' black share
+is 0.744 to 0.764 with the new seeds and 0.748 to 0.755 with the old: that is the size and the text, not the seed; T4 is defined at 1024 px.) The 24 other seeds spread the cloud pick over at least 6 plates.
+
+**Time.** `resolve` with the eye, the seed, the plate pick and the frozen liquid: 0.4 ms warm, 563 ms for the first call of a cold process (it imports the family and the powder module;
+before this step it imported the family only). The suite `v3single` is 115 checks (was 86; 29 new: the replay of the step A recording with the old seed, the seed and its refusals,
+plan against picture on 30 pictures, the frozen liquid, `pv`, the sweep, the compose preview and the laboratory) and takes about 4 minutes 30 seconds alone (the sweep is 56 s of it);
+`v3steps` is 150 (was 142; 8 new: the plan's seed, plates and frozen liquid, the two new holds, the picture checked against the plan).
+
+**The boards for the owner's look (merged with L1).** The admin laboratory (Laboratorija, Stilių laboratorija) has a Sėkla menu: the new seed (the one a customer's picture has, made
+from the eye's id; for a lab test order's eye the id of its stored record) or the old one, so any board can be looked at before and after on any eye, in the page. A contact sheet of
+the four real calibration eyes x Powder Burst, Splash, Radiance and Celestial Gold, old and new side by side, was rendered for this review (`wp5b/boards/boards_before_after.jpg` in the
+session folder, real eyes: not in the repository). The looks are the same families (the same eye gets the same liquid, the same palette, the same iris); the cloud, the crown, the
+rays and the dust are drawn differently. Nothing else is asked of the owner here: the re-look is part of L1 for each style.
+
+**Existing checks changed, each with its reason:** `v3steps` check "a plan that does not know its plates yet" uses an eye with no id (the plan of an eye with an id now knows its plates);
+the test stand in for `master_eye` records the preview's eye id from the draft, as the real one does (it wrote a made up id that nothing read until the seed did).
