@@ -14,7 +14,9 @@ from __future__ import annotations
 # PORT of work package WP7A (step A): cx_plates.py of the DG1 snapshot of the scratch prototype, verbatim but for the edits
 # scripts/styles_tests/port_collision.py lists (the baked registry instead of the raw plates, a bounded cache); test_goldens_collision.py replays the edits on the scratch and the pixels of the
 # scratch's own pictures.
+# WP7B (step B) moved the seed and the place of the pixel decisions and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
+import contextlib
 import math
 import threading
 
@@ -33,8 +35,21 @@ _cache = C.BoundedCache(4)
 
 def registry(fam, pv=None):
     """[Plate dicts] of the usable plates of a family (JET or RIVER) that a spec of plates version pv may pick, by id: the baked fit (what the
-    prototype fitted from the raw file once and cached in fits.json) and the key, which is the plate id."""
+    prototype fitted from the raw file once and cached in fits.json) and the key, which is the plate id. pv None: the plates version of plates_version() (the spec's,
+    set by the family's render for this thread), else the current one."""
+    pv = getattr(_TL, "pv", None) if pv is None else pv
     return [dict(PL.record(pid)["fit"], key=pid) for pid in sorted(PL.ids("P-CX-" + fam, pv))]
+
+
+@contextlib.contextmanager
+def plates_version(pv):
+    """The plates version of the spec for the picks of this thread inside the block (a plate that arrived later is not a candidate: the plate registry is append-only)."""
+    old = getattr(_TL, "pv", None)
+    _TL.pv = pv
+    try:
+        yield
+    finally:
+        _TL.pv = old
 
 
 def _plate_lum(p, need_side):

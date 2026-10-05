@@ -12,6 +12,7 @@ from __future__ import annotations
 # PORT of work package WP7A (step A): cx_fill.py of the DG1 snapshot of the scratch prototype, verbatim but for the edits
 # scripts/styles_tests/port_collision.py lists (imports); test_goldens_collision.py replays the edits on the scratch and the pixels of the
 # scratch's own pictures.
+# WP7B (step B) moved the seed and the place of the pixel decisions and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 
@@ -22,6 +23,8 @@ from . import powder as PW
 from . import raster as RS
 
 BAND_ROWS = 256
+FILL_SIDE = 1536                # the soft base is computed on a 576 px grid: a source above this adds memory and no picture (WP7B; the prototype held every source whole)
+FILL_FLOAT_MB = 700.0           # the float32 copies of all the sources together may not pass this (the prototype held 1.73 GB for eight 4096 px eyes)
 COPPER = np.array([0.54, 0.29, 0.12], np.float32)
 STEEL = np.array([0.43, 0.46, 0.50], np.float32)
 
@@ -49,6 +52,14 @@ def _sample(src, xs, ys):
     top = a + (b - a) * fx
     bot = c + (d - c) * fx
     return top + (bot - top) * fy
+
+
+def _fill_source(im, side):
+    """The restored iris (a square PIL image) as float32 0..1 for the soft base, shrunk to at most `side` px first (WP7B)."""
+    if im.size[0] > side:
+        from PIL import Image
+        im = im.resize((side, side), Image.LANCZOS)
+    return np.asarray(im, np.float32) / 255.0
 
 
 def _tri(rho):
@@ -118,7 +129,11 @@ def _base_fill(sc_b, geo_b, irises, classes, prm, scale):
     Wb, Hb = max(8, int(round(sc_b.W * scale))), max(8, int(round(sc_b.H * scale)))
     cx, cy, Rk = geo_b.c[:, 0] * scale, geo_b.c[:, 1] * scale, geo_b.R * scale
     Rm = float(Rk.mean())
-    srcs = [np.asarray(ir.src, np.float32) / 255.0 for ir in irises]
+    side = int(prm.get("fill_side", FILL_SIDE))
+    srcs = [_fill_source(ir.src, side) for ir in irises]
+    mb = sum(s.nbytes for s in srcs) / 1048576.0
+    if mb > FILL_FLOAT_MB:
+        raise ValueError(f"a universe fill of {n} eyes would hold {mb:.0f} MB of float copies (the limit is {FILL_FLOAT_MB:.0f} MB)")
     corner = max(math.hypot(px - cx[k], py - cy[k]) for k in range(n) for px in (0, Wb) for py in (0, Hb)) / Rm
     ks = float(prm.get("ks", np.clip(corner * 1.03, 3.0, 3.6)))
     cv = np.empty((Hb, Wb, 3), np.float32)

@@ -9,7 +9,8 @@ this file: keep it light, test IE2 holds it to a few milliseconds and to an empt
 
 The contract an engine family implements (a family is the sub package api/_lib/styles/<family>; each function takes the spec of
 api/_lib/catalogue.py and answers for the design the catalogue names):
-    resolve(spec, profiles) -> Plan          no pixels: layout, design used, fallback, canvas, contact distances, seed key, plates needed
+    resolve(spec, profiles, eyes=None) -> Plan   no render: layout, design used, fallback, canvas, contact distances, seed key, plates needed; with the eyes
+                                             (the families that take them: wants_eyes) also the choices that depend on the pixels, frozen (WP7B)
     preview(eyes, spec, size=1024, watermark=False) -> Preview     one style, one canvas
     tiles(eyes, styles, spec, size=480) -> dict                    several styles on one eye preparation
 and the master plan's two (api/_lib/styles/steps.py: the plan record, the steps and the state machine that runs them, the guards in guard.py):
@@ -36,7 +37,8 @@ ENGINE_FAMILIES = ("singles", "collision", "universe")      # the engine package
 # The version of the engine's PICTURES. It changes if and only if a golden changes (scripts/styles_tests/data/engine_v.json records it with the
 # hashes of the golden files and v3steps compares them): a plan records the version it was made under and the master step holds an order whose
 # plan was made under another one (engine_skew: a deploy between payment and master must never draw a picture the preview did not show).
-ENGINE_V = 2          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change (WP5B: from the eye ids and the plan's seed key)
+ENGINE_V = 3          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
+                      # seed key); 3: step B for the collision family (WP7B: the same seed, the names out of it, the pixel decisions made once and frozen in the plan)
 
 
 class EngineNotBuilt(LookupError):
@@ -108,8 +110,24 @@ def _engine_of(spec):
     return e
 
 
-def resolve(spec, profiles):
-    return family(_engine_of(spec)["module"]).resolve(spec, profiles)
+def wants_eyes(spec):
+    """Does the family of this style make its plan from the eyes' pixels as well (resolve(spec, profiles, eyes))? The collision family does: which iris
+    is in front, whether a contact is a hairline and the woven or stacked lens of a pair depend on the luminance and the colour of the irises, which a
+    sealed profile does not hold. Read from the signature of the family's resolve, never learnt by a TypeError."""
+    import inspect
+    try:
+        return "eyes" in inspect.signature(family(_engine_of(spec)["module"]).resolve).parameters
+    except EngineNotBuilt:
+        return False
+
+
+def resolve(spec, profiles, eyes=None):
+    """The plan of a style (no render): the family's resolve(spec, profiles). eyes: the eyes as Iris objects, for a family that takes them (wants_eyes): its
+    plan is then the whole plan, with the choices that depend on the pixels; a family that does not take them ignores the argument."""
+    fam = family(_engine_of(spec)["module"])
+    if eyes is not None and wants_eyes(spec):
+        return fam.resolve(spec, profiles, eyes=eyes)
+    return fam.resolve(spec, profiles)
 
 
 def preview(eyes, spec, size=1024, watermark=False, **kw):

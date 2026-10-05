@@ -13,18 +13,28 @@ not in a seam band or a contact strip IS the graded iris, byte for byte).
   family     Family Colours, 4-8  zigzag, brick, ring, flower, cluster (a diagonal of three is the same engine), crumbling contacts, d 1.65 R
   chain      Infinity Chain       an S weave on every link of a chain of three to six, d 1.40 R (held: the laboratory only)
 
-This is work package WP7A, STEP A of the family: the prototype's code ported verbatim (engine.py is collision.py, compositor.py, scenes.py,
-seam_plan.py, lens_mode.py, powder.py, haze.py, raster.py, extra.py, fill.py, kit.py, jetplates.py; scripts/styles_tests/port_collision.py lists every
-edit and the golden suite replays the prototype's own pictures). The source is the DG1 snapshot of the design rounds' collision code: round 2c plus the smooth seam. The
-seed is still the prototype's (the bytes of the irises, the design, the background, the scene key and the NAMES: step B of this family, WP7B, takes
-the names out and seeds from the eye ids and the plan's seed key as the singles do since WP5B). So are the plan freeze (resolve() here says what can be
-known without a pixel, and nothing more) and the work_side per layout.
+This is work package WP7: the prototype's code ported verbatim (engine.py is collision.py, compositor.py, scenes.py, seam_plan.py, lens_mode.py,
+powder.py, haze.py, raster.py, extra.py, fill.py, kit.py, jetplates.py; scripts/styles_tests/port_collision.py lists every edit). The source is the DG1
+snapshot of the design rounds' collision code: round 2c plus the smooth seam. STEP A (WP7A) replayed the prototype's own pictures byte for byte, with the
+prototype's seed (the bytes of the irises, the design, the background, the scene key and the customer's NAMES). STEP B (WP7B, decision C9) changed two things
+and nothing else, so that a picture is a function of WHICH eyes it shows and WHICH picture was asked for, as the singles are since WP5B:
+  the seed      is made from the eyes' ids and the plan's seed key (api/_lib/styles/seeds.py: style, design drawn, ground, clean flag, layout, options,
+                plates version), never from the names, the date, the canvas, the size or the pixels: a typo in a name must not reshuffle the powder, and the
+                preview, the draft and the master of an eye seed alike. opts seed_mode "legacy" still seeds the old way (the replay of step A, the proof that
+                step B changed only this and the next).
+  the plan      (the plan freeze of decision C8): the discrete choices that depend on the PIXELS of the irises (the overlap fallback of Collision Infinity and
+                its woven or stacked lens, which iris is in front at each contact, which contacts are hairlines) are decided ONCE, on a copy of the canonical
+                1024 px scene, by engine.decisions(), and are the plan's `frozen`: resolve(spec, profiles, eyes) runs that decision pass (a plan-only render:
+                no matter, no 4096 px grade) and returns them with the seed; preview(spec["frozen"]) obeys them, so the 4096 px master of a paid order, which
+                is ANOTHER image of the same eyes than its preview, draws the picture the customer approved even where a tie (a luminance difference under
+                3) could go the other way. A frozen choice that the eyes contradict is engine.DesignChanged (the order is held, never drawn otherwise).
 
 The contract of api/_lib/styles/__init__.py, for this family:
-    resolve(spec, profiles)        the plan of a style as far as no pixel is needed: design, fallback by the pupils, layout, canvas, the seed key
-    preview(eyes, spec, size, check=False)    one style on its eyes, a Preview (clean: styles.watermarked() makes the free preview)
+    resolve(spec, profiles, eyes=None)   the plan of a style: with the eyes (Iris objects) the whole plan, frozen choices and seed; without them what a
+                                         sealed profile can say (design, the fallback by the sealed pupils, layout, canvas, the seed key) and decided False
+    preview(eyes, spec, size, check=False)    one style on its eyes, a Preview (clean: styles.watermarked() makes the free preview); spec["frozen"] is the plan's
     tiles(eyes, styles, spec, size)           several styles of one eye count on one eye preparation
-and the prototype's own entry, render(design, eyes, fmt, size, names, date, bg, clean, opts, layout), which the golden suite calls.
+and the prototype's own entry, render(design, eyes, fmt, size, names, date, bg, clean, opts, layout, key, frozen, plan_only), which the golden suite calls.
 
 An eye is a styles.core.Iris (or the bytes of a restored square). Nothing here reads a path, a key or the network; the JET, RIVER and cloud plates come
 from styles.plates (the 1K files of the bundle: a collision picture is drawn on the canonical 1024 geometry and decodes no 4K plate), the chip atlas from
@@ -50,6 +60,7 @@ from .. import seeds as SD
 from .. import text as TX
 from . import compositor as CC
 from . import engine as E
+from . import fill as FL
 from . import jetplates as JP
 from . import scenes as CL
 
@@ -59,7 +70,7 @@ NAMES_MAX = 8
 E1_BAND_MAX = 0.04                                                          # the owner's budget: the seam band (support of the blend, as T1 pads it) per iris
 MIX_MAX = 0.03                                                              # ... and the pixels that are really mixed (0.02 < w < 0.98): about 3 percent
 PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble"}
-OPT_KEYS = frozenset(("edge", "zone_c", "seam", "seam_dust", "kiss_d", "hairline", "plates", "breakup", "rotate", "trio_base", "lens_mode", "plan_mode", "beta",
+OPT_KEYS = frozenset(("edge", "zone_c", "seam", "seam_dust", "kiss_d", "hairline", "plates", "breakup", "rotate", "trio_base", "lens_mode", "plan_mode", "beta", "seed_mode",
                       "support_budget", "strict_gate", "allow_bar", "exact_scale", "auto_hairline", "mem", "prm", "fill", "keep_cv", "flood", "seam_hw",
                       "seam_amp", "seam_lam", "seam_bend", "seam_fine", "seam_wave", "blend", "pad", "dp_sigma", "dp_rho"))
 T3_TOL = 0.004                                                              # the visible share is measured on pixels: a margin of 0.4 point
@@ -70,6 +81,7 @@ ASSET_RANGE = {"infinity": (0.55, 0.70), "kiss": (0.60, 0.75), "trio": (0.50, 0.
 LOCKUP = TX.LOCKUP_JOIN
 Result = E.Result
 NotOffered = E.NotOffered
+DesignChanged = E.DesignChanged
 
 
 # ----------------------------------------------------------------------------- the words
@@ -199,8 +211,9 @@ def _opts3(spec):
 
 
 def seed_key(style, design, layout, clean=False, bg="dark", opts=None, pv=None):
-    """The plan's seed key of a collision artwork (seeds.py names its fields). Step A draws with the prototype's seed; the key is what step B seeds
-    from and what makes two plans that draw differently differ (plan8)."""
+    """The plan's seed key of a collision artwork (seeds.py names its fields): what the picture is seeded from (with the eyes' ids) and what makes two plans
+    that draw differently differ (plan8). design is the design DRAWN: a fallen back infinity is "kiss" and a stacked lens "stack" (the engine fills in the
+    design it really drew, the ground and the clean flag: a plan made before the pixel pass names the design asked for)."""
     o = opts if isinstance(opts, dict) else {}
     return {"style": style, "design_used": design, "bg": bg, "clean": bool(clean), "layout": layout, "opts": {k: o.get(k) for k in SD.OPT_FIELDS},
             "pv": CT.PLATES_VERSION if pv is None else int(pv)}
@@ -231,12 +244,37 @@ def _eyes(eyes):
 
 
 # ----------------------------------------------------------------------------- the prototype's entry
-def render(design, eyes, fmt=None, size=1024, names=None, date=None, bg="dark", clean=False, opts=None, layout=None):
+def _style_of(design, n, clean=False):
+    """The registry id of the style a design draws with n eyes (the seed key names the style; render() is called with the design alone): a trio and a
+    diagonal of three are both Family Colours, the infinity with the clean flag is Clean Infinity."""
+    want = "family" if design in ("trio", "family") else design
+    for sid in CT.ids():
+        eng = CT.engine_for(sid, n) if CT.ENGINE[sid]["engine"] else None
+        if eng is None or eng.get("module") != "collision":
+            continue
+        got = "family" if eng["design"] in ("trio", "family") else eng["design"]
+        if got == want and (design != "infinity" or bool(eng.get("clean")) == bool(clean)):
+            return sid
+    raise KeyError(design)
+
+
+def default_key(design, n, layout=None, clean=False, bg="dark", pv=None):
+    """The seed key of a render that was given none (the golden suite, the laboratory, a direct caller): the design's own style, its default layout, no
+    options and the current plates version."""
+    style = _style_of(design, n, clean)
+    # the layout as drawn: a layout the registry no longer offers (the laboratory still draws it) keeps a seed of its own, it does not share its sibling's
+    lay = layout if isinstance(layout, str) and layout else CT.default_layout(style, n)
+    return seed_key(style, design, lay, clean, bg, None, pv)
+
+
+def render(design, eyes, fmt=None, size=1024, names=None, date=None, bg="dark", clean=False, opts=None, layout=None, key=None, frozen=None, plan_only=False):
     """One collision artwork (the prototype's entry, with guards). eyes: Iris objects or the bytes of restored squares, in canvas order (A first). size:
     the long side in px (1024 a preview, 4096 a master). names: a list (the old "Anna;Max" string and the lockup line are accepted) and date: drawn
     small under the irises when given. opts: the prototype's switches for the owner's sign-offs and the laboratory (see PRODUCTION and OPT_KEYS; a key
-    that is not named is ignored as the prototype ignored it). Returns engine.Result: .img (PIL), .img8, .info (the facts of the render: timings,
-    geometry, lens mode, shares), .scene, .tiles, .discs, .comp, .cfg, .pups, .text_layout. Raises engine.NotOffered for a bar pupil."""
+    that is not named is ignored as the prototype ignored it; seed_mode "legacy" seeds as before step B). key: the plan's seed key (seed_key(); default:
+    default_key) and frozen: what the plan fixed (engine.decisions); plan_only: the plan pass, nothing is drawn. Returns engine.Result: .img (PIL), .img8,
+    .info (the facts of the render: timings, geometry, lens mode, shares), .scene, .tiles, .discs, .comp, .cfg, .pups, .text_layout, .seed, .frozen (the
+    decisions made or obeyed). Raises engine.NotOffered for a bar pupil and engine.DesignChanged when a frozen choice does not fit the eyes."""
     if design not in DESIGNS:
         raise KeyError(design)
     irises = _eyes(eyes)
@@ -254,16 +292,25 @@ def render(design, eyes, fmt=None, size=1024, names=None, date=None, bg="dark", 
             raise ValueError(f"{design} with {n} eyes has no scene on the {fmt!r} canvas") from None
     if not SIZES[0] <= int(size) <= SIZES[1]:
         raise ValueError(f"a canvas of {size} px (from {SIZES[0]} to {SIZES[1]})")
-    if bg == "universe":
-        # the fill converts every source to float32 (cx_fill: 1.73 GB at 8 full-size eyes): refuse what cannot fit, a laboratory board only
-        mb = sum(ir.src.size[0] ** 2 * 12 for ir in irises) / 1048576.0
-        if mb > 700.0:
-            raise ValueError(f"a universe fill of {n} eyes of up to {max(ir.src.size[0] for ir in irises)} px would hold {mb:.0f} MB of float copies")
     o = dict(PRODUCTION)
     o.update(opts or {})
+    if bg == "universe":
+        # the fill converts every source to float32 (the prototype held 1.73 GB at 8 full-size eyes: cx_fill.py:113): the fill reads a copy of at most FILL_SIDE px and
+        # asserts the sum of the float copies (FILL_FLOAT_MB); refused here before anything is drawn, a laboratory board only
+        side = int((o.get("fill") or {}).get("fill_side", FL.FILL_SIDE))
+        mb = sum(min(ir.src.size[0], side) ** 2 * 12 for ir in irises) / 1048576.0
+        if mb > FL.FILL_FLOAT_MB:
+            raise ValueError(f"a universe fill of {n} eyes of up to {max(ir.src.size[0] for ir in irises)} px would hold {mb:.0f} MB of float copies")
+    if key is None and o.get("seed_mode") != "legacy":
+        key = default_key(design, n, layout, bool(clean), bg)
+    elif key is not None:
+        # the engine fills in the design drawn, the ground and the clean flag: a key with a field missing or a field it does not know is refused here, before anything is drawn
+        SD.clean_key({"design_used": design, "bg": bg, "clean": bool(clean), **key} if isinstance(key, dict) else key)
     JP.trace(True)
     try:
-        r = E.render(design, irises, fmt=fmt, size=int(size), names=_words(names) or None, date=_date(date) or None, bg=bg, clean=bool(clean), opts=o, layout=layout)
+        with JP.plates_version(key["pv"] if key else None):
+            r = E.render(design, irises, fmt=fmt, size=int(size), names=_words(names) or None, date=_date(date) or None, bg=bg, clean=bool(clean), opts=o, layout=layout,
+                         key=key, frozen=frozen, plan_only=plan_only)
     finally:
         picked = JP.trace(False)
     r.picked = picked                                    # the JET and RIVER plates the render picked, in order (the haze's cloud plates are in info)
@@ -409,15 +456,39 @@ def _eye_ids(spec, profiles, n):
     return ids if len(ids) == n and all(SD.is_eye_id(i) for i in ids) else []
 
 
-def resolve(spec, profiles=None):
-    """The plan of a style as far as no pixel is needed: the design, the layout, the canvas, the seed key and, for a pair, the placement rule applied to
-    the pupils of the sealed profiles (a wide pupil turns Collision Infinity into the Kiss geometry: design_used kiss, fallback overlap_fallback). What
-    needs the pixels of the irises, the colour step across the seam (stack mode) and the seed, is None here: step A seeds from the bytes of the eyes, and
-    the plan freeze of WP7B decides the lens mode once, on the preview's canonical grade, and records it. profiles: the sealed profiles of the eyes (an
-    EyeProfile, its record dict or None)."""
+def _prelude(spec, eyes):
+    """What a preview and the plan pass share: (engine entry, design, layout, canvas, clean, engine options, the eyes in canvas order, names, date, seed key) of a
+    spec and its eyes. ValueError for a style that is not of the family or for the wrong number of eyes."""
+    e, design, layout, fmt, clean = _setup(spec)
+    n = spec.get("eyes", 2)
+    if not isinstance(eyes, (list, tuple)) or len(eyes) != n:
+        raise ValueError(f"{spec.get('style')!r} draws exactly {n} eyes")
+    o = _engine_opts(spec, design)
+    if _opts3(spec).get("swap") is True and n == 2:
+        eyes = list(eyes)[::-1]
+    key = seed_key(spec["style"], design, layout, clean, "dark", _opts3(spec), _pv(spec))
+    return e, design, layout, fmt, clean, o, eyes, _words(spec.get("names")), _date(spec.get("date")), key
+
+
+def plan_pass(eyes, spec):
+    """The plan pass: the geometry half of render() on these eyes at the canonical 1024 px, and nothing is drawn (no matter, no 4096 px grade, the grades the
+    preview needs anyway are the Iris objects' own cache). Returns the engine.Result of plan_only: .frozen (the pixel decisions), .seed, .info (design_used,
+    the fallback, the lens mode and its colour step K, the distance d). The very code render() runs first, so a preview of these eyes makes the same choices."""
+    e, design, layout, fmt, clean, o, eyes, names, date, key = _prelude(spec, eyes)
+    return render(design, eyes, fmt, 1024, names, date, "dark", clean, o, layout if design == "family" else None, key=key, plan_only=True)
+
+
+def resolve(spec, profiles=None, eyes=None):
+    """The plan of a style. With the eyes (a list of Iris objects, or the bytes of restored squares, in the order of the spec) it is the WHOLE plan: the plan
+    pass (plan_pass) makes the choices that depend on the pixels (the overlap fallback, the woven or stacked lens, the front order, the hairline contacts)
+    and the seed, and returns them as `frozen` and `seed`; `decided` is True. Without the eyes it is what a sealed profile can say, `decided` False: the
+    design, the layout, the canvas, the seed key and, for a pair, the placement rule applied to the pupils of the sealed profiles (a wide pupil turns Collision
+    Infinity into the Kiss geometry: design_used kiss, fallback overlap_fallback); the seed only where no pixel can change what is drawn (every design but
+    the infinity: a stacked lens would change its key). profiles: the sealed profiles of the eyes (an EyeProfile, its record dict or None)."""
     e, design, layout, fmt, clean = _setup(spec)
     n = spec.get("eyes", 2)
     has_text = bool(_words(spec.get("names")) or _date(spec.get("date")))
+    o3, pv = _opts3(spec), _pv(spec)
     design_used, fallback, d_over_R = design, None, None
     pups = [_pupil_of(p) for p in (profiles or [])]
     if design in ("infinity", "kiss"):
@@ -430,11 +501,22 @@ def resolve(spec, profiles=None):
             d_over_R, raw, over = CL.solve_infinity_d(PUPM.reach(pups[0], u), PUPM.reach(pups[1], (-u[0], -u[1])))
             if over:
                 design_used, fallback, d_over_R = "kiss", "overlap_fallback", CL.D_KISS
-    key = seed_key(spec["style"], design_used, layout, clean, "dark", _opts3(spec), _pv(spec))
+    ids = _eye_ids(spec, profiles, n)
+    frozen, seed, decided = {}, None, False
+    if eyes is not None:
+        r = plan_pass(eyes, dict(spec, eyes=n))
+        design_used = r.info["design_used"]
+        fallback = r.info.get("fallback") or ("overlap_fallback" if r.info.get("overlap_fallback") else None)
+        d_over_R = (r.info.get("d_over_R") or [d_over_R])[0]
+        frozen, seed, decided = r.frozen, str(r.seed), True
+    elif design != "infinity" and ids:
+        key0 = seed_key(spec["style"], design_used, layout, clean, "dark", o3, pv)
+        seed = str(SD.seed_for_key(ids[::-1] if (o3.get("swap") is True and n == 2) else ids, key0))
+    key = seed_key(spec["style"], design_used, layout, clean, "dark", o3, pv)
     W, H = CL.canvas_size(fmt, 1024)
     return {"family": "collision", "style": spec["style"], "design_used": design_used, "fallback": fallback, "layout": layout, "canvas": fmt, "clean": clean,
-            "size_ratio": [W, H], "d_over_R": None if d_over_R is None else round(float(d_over_R), 4), "lens_mode": None, "seed_key": key,
-            "seed_from": "iris_bytes", "eye_ids": _eye_ids(spec, profiles, n), "seed": None, "frozen": {}, "plates": None, "steps": ["art"]}
+            "size_ratio": [W, H], "d_over_R": None if d_over_R is None else round(float(d_over_R), 4), "lens_mode": frozen.get("lens"), "seed_key": key,
+            "seed_from": "eye_id", "eye_ids": ids, "seed": seed, "frozen": frozen, "decided": decided, "plates": None, "steps": ["art"]}
 
 
 def _log(r, used):
@@ -451,23 +533,20 @@ def _log(r, used):
     for kind in ("jets", "river"):
         plates += [str(k) for k in (pinfo.get(kind) or {}).get("keys", [])]
     log["plates"] = list(dict.fromkeys(plates))
+    log["frozen"] = getattr(r, "frozen", None)
     return log
 
 
 def preview(eyes, spec, size=1024, check=False):
-    """One style on its eyes. eyes: a list of Iris (or the bytes of restored squares), in canvas order. Returns a styles.Preview whose img is the CLEAN
-    render: the dispatcher's watermark=True (or styles.watermarked) makes the free preview. check=True adds the selfcheck report. The seed is the
-    prototype's (step A): the bytes of the eyes, the design, the scene and the names."""
+    """One style on its eyes. eyes: a list of Iris (or the bytes of restored squares), in the order of the spec (a swapped pair is turned here). Returns a
+    styles.Preview whose img is the CLEAN render: the dispatcher's watermark=True (or styles.watermarked) makes the free preview. check=True adds the
+    selfcheck report. The seed is made from the eyes' ids (Iris.eye_id) and the seed key of the spec (style, layout, options, pv); spec["frozen"], the plan's
+    record of the pixel decisions (the master: the stored plan's), is obeyed, else they are decided from these eyes (the preview: Preview.log["frozen"] says
+    what was decided). The words, the canvas and the size are not part of the seed."""
     from .. import Preview
-    e, design, layout, fmt, clean = _setup(spec)
-    n = spec.get("eyes", 2)
-    if not isinstance(eyes, (list, tuple)) or len(eyes) != n:
-        raise ValueError(f"{spec.get('style')!r} draws exactly {n} eyes")
-    names, date = _words(spec.get("names")), _date(spec.get("date"))
-    o = _engine_opts(spec, design)
-    if _opts3(spec).get("swap") is True and n == 2:
-        eyes = list(eyes)[::-1]
-    r = render(design, eyes, fmt, size, names, date, "dark", clean, o, layout if design == "family" else None)
+    e, design, layout, fmt, clean, o, eyes, names, date, key = _prelude(spec, eyes)
+    fz = spec.get("frozen") if isinstance(spec.get("frozen"), dict) and spec.get("frozen") else None
+    r = render(design, eyes, fmt, size, names, date, "dark", clean, o, layout if design == "family" else None, key=key, frozen=fz)
     used = r.info.get("design_used", design)
     graded = [d.iris.graded(d.Sd) for d in r.discs]
     r.comp.P = r.comp.A = None                           # the premultiplied layers only paste the irises; the checks read the front-most map and the geometry

@@ -11,6 +11,7 @@ from __future__ import annotations
 # PORT of work package WP7A (step A): cx_haze.py of the DG1 snapshot of the scratch prototype, verbatim but for the edits
 # scripts/styles_tests/port_collision.py lists (imports, the cloud plates come from the plate loader); test_goldens_collision.py replays the edits on the scratch and the pixels of the
 # scratch's own pictures.
+# WP7B (step B) moved the seed and the place of the pixel decisions and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
 import math
 
@@ -60,13 +61,13 @@ def cloud_haze(cv, geo, pals, rnd, prm, W, H, mask_fn=None, seed_tag="haze"):
                 vx, vy = 0.0, -1.0
         want = _brief_angle(vx, vy) + (rnd.uniform() - 0.5) * 50.0
         seed = int(rnd.uniform() * 2 ** 31)
+        classes = prm.get("cloud_black", ("45", "60"))
         try:
-            pk = R.pick("P-SN-CLOUD", seed, want, exclude=tuple(used), max_rotation=45.0, black=list(prm.get("cloud_black", ("45", "60"))))
-        except Exception:
-            try:
-                pk = R.pick("P-SN-CLOUD", seed, want, exclude=tuple(used), max_rotation=90.0)
-            except Exception:
-                continue
+            if not isinstance(classes, (tuple, list)):
+                raise R.NoPlate("no plate classes to filter by")
+            pk = R.pick("P-SN-CLOUD", seed, want, exclude=tuple(used), max_rotation=45.0, black=list(classes), pv=prm.get("pv"))
+        except R.NoPlate:
+            pk = R.pick("P-SN-CLOUD", seed, want, exclude=tuple(used), max_rotation=90.0, pv=prm.get("pv"))
         used.append(pk.plate.id)
         Rk = float(geo.R[k])
         cx, cy = float(geo.c[k][0]), float(geo.c[k][1])

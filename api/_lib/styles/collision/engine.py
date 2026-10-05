@@ -19,7 +19,9 @@ from __future__ import annotations
 # PORT of work package WP7A (step A): collision.py of the DG1 snapshot of the scratch prototype, verbatim but for the edits
 # scripts/styles_tests/port_collision.py lists (imports, a bounded cache, the style ids out of the text); test_goldens_collision.py replays the edits on the scratch and the pixels of the
 # scratch's own pictures.
+# WP7B (step B) moved the seed and the place of the pixel decisions and nothing else (STEP_B of the same tool): see api/_lib/styles/seeds.py.
 
+import copy
 import math
 import time
 
@@ -29,6 +31,7 @@ from PIL import Image, ImageDraw
 from .. import core as C
 from .. import palette as PAL
 from .. import pupil as PUPM
+from .. import seeds as SD
 from . import compositor as CC
 from . import extra as EX
 from . import fill as FL
@@ -55,6 +58,15 @@ class NotOffered(ValueError):
     """The design is not offered for these irises (a bar pupil): the caller answers `available: false, why: <why>` and shows no picture."""
 
     def __init__(self, msg, why="not_offered"):
+        super().__init__(msg)
+        self.why = why
+
+
+class DesignChanged(ValueError):
+    """The plan froze a choice that the eyes of this render contradict (the plan says Collision Infinity and the pupils now say the Kiss geometry, a front
+    order that does not fit the scene): never another picture than the approved one, so the caller holds the order. `why` names it."""
+
+    def __init__(self, msg, why="design_changed"):
         super().__init__(msg)
         self.why = why
 
@@ -372,10 +384,89 @@ def measure_edge_deltas(img8, sc, edge_modes, T=320):
     return out
 
 
+# ----------------------------------------------------------------------------- decisions
+def decisions(sc_can, irises, design, design0, info, o, frozen):
+    """The discrete choices of one artwork that depend on the PIXELS of its irises, decided ONCE on a copy of the canonical (1024 px) scene, so that they are
+    the same at every size, or taken from the plan (frozen) when the plan fixed them before the render: which iris is in front at each contact the scene
+    leaves undecided (the brighter seam side; the stacking solver for the groups), whether a contact is drawn as a hairline (its back band is dark) and,
+    decided earlier in render() from the same irises, the overlap fallback of Collision Infinity and its woven or stacked lens. The master of an order is
+    made from ANOTHER image of the same eyes than its preview (a 4096 px render registered to the 1024 px restoration), whose band luminance can differ by
+    a fraction of a unit: a tie (a difference under 3) could go the other way, so the plan stores what the preview decided and the master obeys it.
+    design is the design drawn (a fallen back infinity is a kiss), design0 the one asked for. Returns {fronts: {rule index: mode}, pend: a scene rule was left
+    to decide (the merge order is built again), lens_stack, hairline: [rule index], info: facts to report, frozen: the plan's record of all of it}.
+    DesignChanged when a frozen choice does not fit this scene."""
+    s = copy.deepcopy(sc_can)
+    pend = [i for i, r in enumerate(s.rules) if r.mode == "stack"]
+    lens_stack = info.get("lens_mode_used") == "stack" and design == "infinity" and len(s.rules) == 1
+    facts, fronts = {}, {}
+    if "fronts" in frozen:
+        fz = frozen["fronts"]
+        ok = (isinstance(fz, dict) and all(isinstance(k, (str, int)) and str(k).isdigit() for k in fz) and all(v in ("front_a", "front_b") for v in fz.values())
+              and sorted(int(k) for k in fz) == sorted(pend + ([0] if lens_stack else [])))
+        if not ok:
+            raise DesignChanged("the plan's front order %r does not fit this scene (contacts left to decide: %r)" % (fz, pend))
+        fronts = {int(k): v for k, v in fz.items()}
+        for i, m in fronts.items():
+            s.rules[i].mode = m
+    else:
+        if pend:
+            if design == "kiss":
+                r = s.rules[0]
+                pa = math.atan2(r.uy, r.ux)
+                la, lb = band_lstar(irises[0], pa), band_lstar(irises[1], pa + math.pi)
+                r.mode = "front_b" if lb - la > 3.0 else "front_a"             # ties (and A brighter): A, the lower-left eye, in front
+                facts["front"] = r.mode
+            else:
+                cache = {}
+
+                def lstar(k, phi):
+                    key = (k, round(phi, 3))
+                    if key not in cache:
+                        cache[key] = band_lstar(irises[k], phi)
+                    return cache[key]
+                facts["stack"] = decide_fronts(s, lstar)
+            fronts = {i: s.rules[i].mode for i in pend}
+        if lens_stack:
+            # DG1 rung 2: the stack lens: one iris in front over the whole lens (brief 1.3.2: the one whose seam-side band is brighter, ties A), no weave, no seam
+            r = s.rules[0]
+            pa = math.atan2(r.uy, r.ux)
+            la, lb = band_lstar(irises[0], pa), band_lstar(irises[1], pa + math.pi)
+            r.mode = "front_b" if lb - la > 3.0 else "front_a"
+            facts["front"] = r.mode
+            fronts[0] = r.mode
+    nr = len(s.rules)
+    if "hairline" in frozen:
+        hz = frozen["hairline"]
+        if not (isinstance(hz, list) and all(isinstance(i, int) and not isinstance(i, bool) and 0 <= i < nr for i in hz)):
+            raise DesignChanged("the plan's hairline contacts %r do not fit this scene (%d contacts)" % (hz, nr))
+        natural = sorted(set(hz))
+    else:
+        natural = []
+        for ri, r in enumerate(s.rules):
+            pa = math.atan2(r.uy, r.ux)
+            la = band_lstar(irises[r.a], pa)
+            lb = band_lstar(irises[r.b], pa + math.pi)
+            back_L = min(la, lb) if r.mode == "weave" else (lb if r.mode == "front_a" else la)
+            if back_L < DARK_EDGE_L:
+                natural.append(ri)
+    out = {"fronts": {str(i): m for i, m in sorted(fronts.items())}, "hairline": natural}
+    if design0 == "infinity":
+        out["fallback"] = "overlap_fallback" if info.get("overlap_fallback") else None
+        if not info.get("overlap_fallback"):
+            out["lens"] = info.get("lens_mode_used")
+    return {"fronts": fronts, "pend": bool(pend), "lens_stack": bool(lens_stack), "hairline": list(range(nr)) if o.get("hairline") else natural, "info": facts, "frozen": out}
+
+
 # ----------------------------------------------------------------------------- main
-def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark", clean=False, opts=None, layout=None):
-    """One artwork. See the module docstring. Returns a Result."""
+def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark", clean=False, opts=None, layout=None, key=None, frozen=None, plan_only=False):
+    """One artwork. See the module docstring. Returns a Result. WP7B (step B): key is the plan's seed key (seeds.py: the style, the layout, the options and the
+    plates version; the design drawn, the ground and the clean flag are filled in here), from which and from the eyes' ids (irises[k].eye_id) the seed is
+    made; opts seed_mode "legacy" seeds as before step B (the bytes of the irises, the design, the scene key and the names). frozen is what the plan fixed
+    before the render (decisions() names its fields: fallback, lens, fronts, hairline): taken from it instead of decided from these irises. plan_only stops
+    after those decisions and the seed (res.frozen, res.seed, res.info) and draws nothing: the plan pass."""
     o = dict(opts or {})
+    frozen = dict(frozen or {})
+    design0 = design
     t0 = time.perf_counter()
     res = Result()
     n = len(irises)
@@ -409,16 +500,21 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
         rb = PUPM.reach(pups[1], (-u[0], -u[1]))
         if design == "infinity":
             d_over_R, raw, over = CL.solve_infinity_d(ra, rb)
+            if "fallback" in frozen:
+                if frozen["fallback"] == "overlap_fallback":
+                    over = True                      # the plan drew the Kiss geometry for these pupils: so does every render of the order
+                elif over:
+                    raise DesignChanged("the plan draws the infinity overlap, but the pupils of these eyes reach %.3f R (the limit is the Kiss fallback)" % raw)
             info.update(d_raw=raw, reach=(ra, rb), overlap_fallback=bool(over))
             if over:
                 design, kind = "kiss", "kiss"
                 d_over_R = o.get("kiss_d", CL.D_KISS)
-            elif o.get("lens_mode", "auto") in ("auto", "stack", "weave"):
+            elif (frozen.get("lens") or o.get("lens_mode", "auto")) in ("auto", "stack", "weave"):
                 # DG1 rung 2 (fx/lens_mode.py): the automatic woven lens / stack lens decision, from the plan of the weave on the canonical grade (same at every size)
                 t_lm = time.perf_counter()
                 pl0 = SP.plan_seam(irises[0], irises[1], d_over_R, u[0], u[1], pups[0], pups[1], C, mode=o.get("plan_mode", "plan"), beta=o.get("beta", CC.Cfg.beta))
                 plan_pre = (pl0, d_over_R)                       # reused as the weave plan below (the snapped canonical geometry differs from the solver's d by < 0.002 R)
-                lens_used = LM.decide(pl0.info, o.get("lens_mode", "auto"))
+                lens_used = LM.decide(pl0.info, frozen.get("lens") or o.get("lens_mode", "auto"))
                 info.update(lens_mode_used=lens_used, lens_K=round(pl0.info["K_chosen"], 2), lens_decide_s=round(time.perf_counter() - t_lm, 3))
                 if lens_used == "stack":
                     d_over_R = LM.stack_distance(d_over_R)
@@ -466,48 +562,37 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
     mem = {}
     if o.get("mem"):
         mem["after_discs"] = K.peak_rss_mb()
-    # -- fronts and order ----------------------------------------------------------------------
-    if any(r.mode == "stack" for r in sc.rules):
-        if design == "kiss":
-            r = sc.rules[0]
-            pa = math.atan2(r.uy, r.ux)
-            la, lb = band_lstar(irises[0], pa), band_lstar(irises[1], pa + math.pi)
-            r.mode = "front_b" if lb - la > 3.0 else "front_a"             # ties (and A brighter): A, the lower-left eye, in front
-            info["front"] = r.mode
-        else:
-            cache = {}
-
-            def lstar(k, phi):
-                key = (k, round(phi, 3))
-                if key not in cache:
-                    cache[key] = band_lstar(irises[k], phi)
-                return cache[key]
-            info["stack"] = decide_fronts(sc, lstar)
+    # -- fronts and order (WP7B: decided once on the canonical scene, or the plan's) ------------------
+    dec = decisions(sc_can, irises, design, design0, info, o, frozen)
+    for ri, mode in dec["fronts"].items():
+        sc.rules[ri].mode = mode
+    if dec["lens_stack"]:
+        sc.rules[0].crumble = False
+    if dec["pend"]:
         rebuild_order(sc)
-    if info.get("lens_mode_used") == "stack" and design == "infinity" and len(sc.rules) == 1:
-        # DG1 rung 2: the stack lens: one iris in front over the whole lens (brief 1.3.2: the one whose seam-side band is brighter, ties A), no weave, no seam
-        r = sc.rules[0]
-        pa = math.atan2(r.uy, r.ux)
-        la, lb = band_lstar(irises[0], pa), band_lstar(irises[1], pa + math.pi)
-        r.mode = "front_b" if lb - la > 3.0 else "front_a"
-        r.crumble = False
-        info["front"] = r.mode
+    info.update(dec["info"])
     info["rules"] = [(r.a, r.b, r.mode) for r in sc.rules]
-    seed = C.design_seed(irises, STYLE + "." + design + "." + bg + (".clean" if clean else ""), sc.key + "/" + ",".join(names or []))
+    if o.get("seed_mode") == "legacy":
+        seed = C.design_seed(irises, STYLE + "." + design + "." + bg + (".clean" if clean else ""), sc.key + "/" + ",".join(names or []))
+    else:
+        if not isinstance(key, dict):
+            raise ValueError("a render needs the plan's seed key (seeds.py) or opts seed_mode legacy")
+        # names, date, canvas, size and pixels are NOT in the seed: a typo in a name must never reshuffle the powder, a preview and a master draw the same
+        seed = SD.seed_for_key([ir.eye_id for ir in irises], dict(key, design_used=info["design_used"], bg=bg, clean=bool(clean)))
     res.seed = seed
+    res.frozen = dec["frozen"]
+    info["frozen"] = dec["frozen"]
+    if plan_only:
+        info["d_over_R"] = [round(r.d / sc.R[r.a], 4) for r in sc.rules]
+        res.img = res.img8 = res.comp = None
+        res.info, res.scene, res.discs, res.irises, res.opts = info, sc, discs, irises, o
+        return res
     pals = make_pals(irises)
     geo = PW.Geo(sc)
     geo_can = PW.Geo(sc_can)
     # -- tiles, edge modes ---------------------------------------------------------------------
     tiles = [CC.iris_tile(d, i) for i, d in enumerate(discs)]
-    edge_modes, hair_cols = {}, {}
-    for ri, r in enumerate(sc.rules):
-        pa = math.atan2(r.uy, r.ux)
-        la = band_lstar(irises[r.a], pa)
-        lb = band_lstar(irises[r.b], pa + math.pi)
-        back_L = min(la, lb) if r.mode == "weave" else (lb if r.mode == "front_a" else la)
-        if back_L < DARK_EDGE_L or o.get("hairline"):
-            edge_modes[ri] = "hairline"
+    edge_modes, hair_cols = {ri: "hairline" for ri in dec["hairline"]}, {}
     for k in range(n):
         Lh, Ch, hh = C.lch(pals[k].ring.mean(0))
         hair_cols[k] = np.asarray(C.from_lch(70.0, min(float(Ch) * 1.1, 60.0), float(hh)), np.float32) * 255.0
@@ -545,6 +630,7 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
     if not clean:
         prm = params(design, sc, n, clean, universe)
         prm.update(o.get("prm", {}))
+        prm["pv"] = (key or {}).get("pv")                        # the plates version of the spec reaches the haze's plate pick
         prm["plate_jets"] = bool(o.get("plates", True)) and prm.get("plate_jets", True)
         theta_w = wind_angles(design, geo_can, rnd)
         info["wind_deg"] = [round(math.degrees(-t) % 360, 1) for t in theta_w]
