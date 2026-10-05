@@ -229,7 +229,7 @@ export interface Experiments {
 export interface LabRow { order: string; files: number; eyes: number; artwork_url: string | null; eye_url: string | null }
 
 /** styles_lab without a style: the styles of the v3 engine this deployment can draw, to build the menu from */
-export interface StyleLabRow { id: string; name: string; design: string; module: string; ceiling: string | null; stage: string | null; gate: string; canvases: string[]; plates: string[] }
+export interface StyleLabRow { id: string; name: string; design: string; module: string; ceiling: string | null; stage: string | null; gate: string; canvases: string[]; plates: string[]; looks?: string[] }
 export interface StyleLabList { styles: StyleLabRow[]; sizes: number[] }
 export interface SelfcheckItem { ok: boolean; [k: string]: unknown }
 /** styles_lab with a style: one picture, the checks that ran on it and what the engine says it did */

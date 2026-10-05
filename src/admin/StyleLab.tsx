@@ -55,6 +55,7 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
   const [listErr, setListErr] = useState('');
   const [style, setStyle] = useState('');
   const [canvas, setCanvas] = useState('');
+  const [look, setLook] = useState('');
   const [size, setSize] = useState(1024);
   const [names, setNames] = useState('');
   const [date, setDate] = useState('');
@@ -79,6 +80,7 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
 
   const row = list?.styles.find((s) => s.id === style);
   const canvases = row?.canvases || [];
+  const looks = row?.looks || [];
   const orders = lab.filter((l) => l.eyes > 0);
 
   const run = async () => {
@@ -86,6 +88,7 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
     setErr(''); setRes(null); setRunning(true);
     try {
       const body: Record<string, unknown> = { style: row.id, size, format: canvases.includes(canvas) ? canvas : canvases[0], names, date, seed };
+      if (looks.length) body.look = looks.includes(look) ? look : looks[0];
       if (src.kind === 'order') { body.order = src.order; body.n = 1; }
       else if (src.kind === 'file') body.eye = await squareB64(src.file);
       else body.eye = await toB64(await (await fetch(SAMPLE)).blob());
@@ -112,7 +115,7 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
           <span className={MUTED}>Stilius</span>
-          <select className={INPUT} value={style} onChange={(e) => { setStyle(e.target.value); setCanvas(''); }} disabled={running || !list}>
+          <select className={INPUT} value={style} onChange={(e) => { setStyle(e.target.value); setCanvas(''); setLook(''); }} disabled={running || !list}>
             {(list?.styles || []).map((s) => <option key={s.id} value={s.id}>{s.name} ({STAGE_LT[s.stage || ''] || s.stage})</option>)}
           </select>
         </label>
@@ -122,6 +125,14 @@ export const StyleLab: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
             {canvases.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
+        {looks.length > 0 && (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className={MUTED}>Vaizdas (stiliaus variantas)</span>
+            <select className={INPUT} value={looks.includes(look) ? look : looks[0]} onChange={(e) => setLook(e.target.value)} disabled={running || !row}>
+              {looks.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </label>
+        )}
         <label className="flex flex-col gap-1 text-sm">
           <span className={MUTED}>Dydis (ilgoji kraštinė, px)</span>
           <select className={INPUT} value={size} onChange={(e) => setSize(Number(e.target.value))} disabled={running}>

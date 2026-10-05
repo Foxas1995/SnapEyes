@@ -1343,9 +1343,12 @@ def a_styles_lab(body, who):
     format: a canvas id of the style ("1:1" ...); size: 480, 1024, 2048 or 4096 (the long side). names and date are the customer's words,
     drawn under the iris when given (a line the drawer cannot take, over 256 characters or with a letter the font lacks, is a 400 that says which).
     crop: [x, y] the centre of the 100 percent window, in canvas pixels (default: the upper right rim).
+    look: one of the style's looks (the Universe style: echo, vortex, deepfield, starfield; the default is the style's own look). The pair and the group of the
+    Universe family need more than one eye: the laboratory of the Stiliai page (WP13) takes them; the family itself draws them (api/_lib/styles/universe).
     seed: "eye_id" (default: the seed a customer's picture has, made from the eye's id and the plan's seed key) or "legacy" (the seed the pictures had
     before the seed change of WP5B, from the bytes of the iris: the owner's before and after look at a board). The eye's id is the one of the stored eye
-    record for a lab test order, else the hash of the image sent.
+    record for a lab test order, else the hash of the image sent. The Universe family has only the prototype's seed in step A (the bytes of the iris): the reply
+    says seed_mode "iris_bytes" whatever was asked.
     A render above 2048 px comes back as a reduced view plus the window at full size. 4096 px is refused when the cost table says it cannot
     finish inside the time or the memory this function has (the rule a paid master is held to), and answers 409 plate_unavailable when a
     plate of the design has no 4K file in storage. Without a style the reply is the list of styles to choose from ({styles, sizes}).
@@ -1367,7 +1370,7 @@ def a_styles_lab(body, who):
             if CT.is_legacy(i) or e is None:
                 continue
             rows.append({"id": i, "name": CT.name_of(i), "design": e["design"], "module": e["module"], "ceiling": CT.ceiling(i, 1),
-                         "stage": CT.stage_of(i, 1), "gate": CT.gate_policy(i), "canvases": e["canvases"], "plates": e["plates"]})
+                         "stage": CT.stage_of(i, 1), "gate": CT.gate_policy(i), "canvases": e["canvases"], "plates": e["plates"], "looks": list(e.get("looks") or [])})
         return {"ok": True, "styles": rows, "sizes": list(LAB_SIZES)}
     if not isinstance(style, str) or not CT.renderable(style, 1) or CT.is_legacy(style):
         raise L.ClientError("Not a style of the v3 engine.")
@@ -1381,6 +1384,9 @@ def a_styles_lab(body, who):
     seed_mode = body.get("seed", "eye_id")
     if seed_mode not in ("eye_id", "legacy"):
         raise L.ClientError('seed is "eye_id" or "legacy".')
+    look = body.get("look")
+    if look is not None and (not isinstance(look, str) or look not in (eng.get("looks") or {})):
+        raise L.ClientError("look is one of " + (", ".join(eng.get("looks") or {}) or "none: this style has no looks") + ".")
     # the eye: an image sent, or the stored eye of a lab test order
     order = body.get("order")
     if order is not None:
@@ -1417,7 +1423,7 @@ def a_styles_lab(body, who):
         raise L.ClientError("That is not a readable image.") from None
     if pixels > L.MAX_PIXELS:      # the limit of every request that carries a photo (a flat 9000 px file is a few KB and 240 MB of pixels)
         raise L.ClientError(f"That image is too large ({pixels // 1_000_000} megapixels, the limit is {L.MAX_PIXELS // 1_000_000}).")
-    design_key = CO.cost_key(eng)
+    design_key = CO.cost_key(eng, "dark", look)
     try:
         est = CO.assess(design_key, 1) if size == 4096 else {"need_s": round(CO.preview_need(design_key, 1, size), 2), "ok": True, "why": None, "est_mb": None}
     except CO.NoCost:
@@ -1426,11 +1432,15 @@ def a_styles_lab(body, who):
         raise L.ClientError(f"A 4096 px render of this design would not fit this function ({est['why']}: needs about {est.get('need_s')} s and "
                             f"{est.get('est_mb')} MB).")
     spec = {"style": style, "layout": "single", "eyes": 1, "canvas": fmt, "names": _lab_words(body.get("names"), "names"), "date": _lab_words(body.get("date"), "date")}
+    if look is not None:
+        spec["opts"] = {"look": look}
     try:
         iris = SC.Iris(data, "lab", max_side=4096 if size == 4096 else 2048, eye_id=eye_id)
     except (OSError, SyntaxError, ValueError, L.Image.DecompressionBombError):     # a truncated file passes verify() and fails when its pixels are decoded
         raise L.ClientError("That is not a readable image.") from None
-    if seed_mode == "legacy":
+    if eng["module"] == "universe":
+        seed_mode = "iris_bytes"                 # step A of the universe family: its seed is the prototype's (the bytes of the iris), there is no other (WP8B)
+    elif seed_mode == "legacy":
         spec["engine_opts"] = {"seed_mode": "legacy"}
     try:
         pv = ST.preview([iris], spec, size=size, check=True)
