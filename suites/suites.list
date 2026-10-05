@@ -37,3 +37,4 @@ v3plates:scripts/styles_tests:test_plates.py
 v3single:scripts/styles_tests:test_goldens_singles.py
 v3steps:scripts/styles_tests:test_steps.py
 v3reveal:scripts/styles_tests:test_reveal.py
+v3coll:scripts/styles_tests:test_goldens_collision.py

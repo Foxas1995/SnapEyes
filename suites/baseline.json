@@ -89,6 +89,9 @@
   },
   "v3reveal": {
    "pass": 63
+  },
+  "v3coll": {
+   "pass": 70
   }
  }
 }

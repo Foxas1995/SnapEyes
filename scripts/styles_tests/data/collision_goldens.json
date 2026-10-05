@@ -1,0 +1,3076 @@
+{
+ "about": "SHA-256 of the RGB bytes of collision_cases.cases() rendered on the scratch collision code (the DG1 snapshot: designs/collision.py with fx/collision_comp.py, seam_plan.py, lens_mode.py; the JET, RIVER and cloud plates of the design round), synthetic irises of synth_iris, the production switches",
+ "cases": {
+  "chain.blue+brown+green+grey+amber+blue2.3:1.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-up_black-60__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-right_black-60__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3981,
+     1.3981,
+     1.4175,
+     1.3981,
+     1.3981
+    ],
+    "design_used": "chain",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 12715,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ],
+     [
+      1,
+      2,
+      "weave"
+     ],
+     [
+      2,
+      3,
+      "weave"
+     ],
+     [
+      3,
+      4,
+      "weave"
+     ],
+     [
+      4,
+      5,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.9149,
+     0.8059,
+     0.8117,
+     0.8106,
+     0.8077,
+     0.8964
+    ]
+   },
+   "h": 171,
+   "seed": 17419824684494828688,
+   "sha": "41fa29158b8ca5beaada23ab0095bed469e093480696a017817329c13f426f3b",
+   "w": 512
+  },
+  "chain.blue+brown+green+grey+amber.3:1.1024": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.4047,
+     1.3953,
+     1.4047,
+     1.4047
+    ],
+    "design_used": "chain",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 11252,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ],
+     [
+      1,
+      2,
+      "weave"
+     ],
+     [
+      2,
+      3,
+      "weave"
+     ],
+     [
+      3,
+      4,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.9164,
+     0.8068,
+     0.8085,
+     0.8088,
+     0.898
+    ]
+   },
+   "h": 341,
+   "seed": 9845698418550241249,
+   "sha": "d20b4f262ec3e0443140ad397668491528cc5dd06fc14e67369295730cde85f7",
+   "w": 1024
+  },
+  "chain.blue+brown+green+grey.3:2.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-upper_left_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-down_black-60__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t1",
+     "P-SN-CLOUD__strong-up_black-30__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.4046,
+     1.3893,
+     1.4046
+    ],
+    "design_used": "chain",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9739,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ],
+     [
+      1,
+      2,
+      "weave"
+     ],
+     [
+      2,
+      3,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.9164,
+     0.8057,
+     0.8069,
+     0.8962
+    ]
+   },
+   "h": 341,
+   "seed": 1402420655637889938,
+   "sha": "80ed2ae1b2c197f7a2adcf66dcd15ba0e3e77213a5726de56dff059f96c7e0ec",
+   "w": 512
+  },
+  "chain.blue+brown+green+grey.9:19.5.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-upper_left_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t1",
+     "P-SN-CLOUD__strong-down_black-30__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.3939,
+     1.3939,
+     1.4141
+    ],
+    "design_used": "chain",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9711,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ],
+     [
+      1,
+      2,
+      "weave"
+     ],
+     [
+      2,
+      3,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.9102,
+     0.8077,
+     0.8082,
+     0.9005
+    ]
+   },
+   "h": 512,
+   "seed": 1402420655637889938,
+   "sha": "5cfbaebeb476bc8e2af8652aa3c2c96fbf620fc382c9c82da7856a3af284659f",
+   "w": 236
+  },
+  "chain.blue+brown+green.3:2.1024": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-30__v4__pro4K__t3",
+     "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.4031,
+     1.3969
+    ],
+    "design_used": "chain",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 7474,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ],
+     [
+      1,
+      2,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.9162,
+     0.8068,
+     0.8943
+    ]
+   },
+   "h": 683,
+   "seed": 9219324734724551821,
+   "sha": "e9ccbe51cad436c6e1957a974814e9728b35a9521f859c3b8226ea079e087850",
+   "w": 1024
+  },
+  "chain.blue+brown+green.9:19.5.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-30__v4__pro4K__t3",
+     "P-SN-CLOUD__strong-down_black-60__v4__pro4K__t2"
+    ],
+    "d_over_R": [
+     1.3898,
+     1.4068
+    ],
+    "design_used": "chain",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 7479,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ],
+     [
+      1,
+      2,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.9092,
+     0.8089,
+     0.8962
+    ]
+   },
+   "h": 512,
+   "seed": 9219324734724551821,
+   "sha": "8d4f83b9d2b9dcce324035291c7e5e1ffb21ea6f1bce17077f809c423b0fd9c3",
+   "w": 236
+  },
+  "family.blue+brown+green+grey+amber+blue2+green2+brown2.1:1.1024.ring": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-up_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-30__v4__pro4K__t3",
+     "P-SN-CLOUD__strong-lower_right_black-45__v4__pro4K__t5",
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6504,
+     1.6504,
+     1.6504,
+     1.6504,
+     1.6504,
+     1.6504,
+     1.6504,
+     1.6504
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline",
+     "2": "hairline",
+     "7": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 23524,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      7,
+      "front_a"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ],
+     [
+      3,
+      4,
+      "front_b"
+     ],
+     [
+      4,
+      5,
+      "front_a"
+     ],
+     [
+      5,
+      6,
+      "front_a"
+     ],
+     [
+      6,
+      7,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9896,
+     0.8397,
+     0.9146,
+     0.9144,
+     0.9882,
+     0.9149,
+     0.9138,
+     0.8402
+    ]
+   },
+   "h": 1024,
+   "seed": 3544465943126290449,
+   "sha": "f9ba32c4efee49c25987f339c075cb267ae5a72fdf37ce5c5b6d37ea986fb88b",
+   "w": 1024
+  },
+  "family.blue+brown+green+grey+amber+blue2+green2+brown2.1:1.512.brick": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-up_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-30__v4__pro4K__t3",
+     "P-SN-CLOUD__strong-lower_right_black-45__v4__pro4K__t5",
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6579,
+     1.6565,
+     1.6579,
+     1.6565,
+     1.6565,
+     1.6565,
+     1.6579,
+     1.6565,
+     1.6565,
+     1.6565,
+     1.6565,
+     1.6579,
+     1.6579
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "10": "hairline",
+     "12": "hairline",
+     "3": "hairline",
+     "4": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 17849,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_b"
+     ],
+     [
+      0,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      2,
+      "front_a"
+     ],
+     [
+      1,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      4,
+      "front_b"
+     ],
+     [
+      2,
+      4,
+      "front_b"
+     ],
+     [
+      3,
+      4,
+      "front_a"
+     ],
+     [
+      3,
+      5,
+      "front_a"
+     ],
+     [
+      3,
+      6,
+      "front_a"
+     ],
+     [
+      4,
+      6,
+      "front_b"
+     ],
+     [
+      4,
+      7,
+      "front_a"
+     ],
+     [
+      5,
+      6,
+      "front_a"
+     ],
+     [
+      6,
+      7,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.847,
+     0.8359,
+     0.8469,
+     0.9735,
+     0.8307,
+     0.9166,
+     0.8362,
+     0.8475
+    ]
+   },
+   "h": 512,
+   "seed": 3544465943126290449,
+   "sha": "e436d27e283dffb69c092fafe2b6deaaa8e46d4e8c8c6d068f3519280fe94ea2",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber+blue2+green2+brown2.1:1.512.flower": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-up_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-30__v4__pro4K__t3",
+     "P-SN-CLOUD__strong-lower_right_black-45__v4__pro4K__t5",
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6579,
+     1.648,
+     1.6598,
+     1.6654,
+     1.6654,
+     1.6598,
+     1.648,
+     1.4358,
+     1.4358,
+     1.433,
+     1.4426,
+     1.4474,
+     1.4426,
+     1.433
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "6": "hairline",
+     "7": "hairline",
+     "8": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 15226,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ],
+     [
+      0,
+      3,
+      "front_a"
+     ],
+     [
+      0,
+      4,
+      "front_a"
+     ],
+     [
+      0,
+      5,
+      "front_a"
+     ],
+     [
+      0,
+      6,
+      "front_a"
+     ],
+     [
+      0,
+      7,
+      "front_a"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      1,
+      7,
+      "front_a"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ],
+     [
+      3,
+      4,
+      "front_b"
+     ],
+     [
+      4,
+      5,
+      "front_b"
+     ],
+     [
+      5,
+      6,
+      "front_b"
+     ],
+     [
+      6,
+      7,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.9662,
+     0.7605,
+     0.7553,
+     0.763,
+     0.766,
+     0.7644,
+     0.7594,
+     0.7569
+    ]
+   },
+   "h": 512,
+   "seed": 3544465943126290449,
+   "sha": "b426fd67245e3b28d1be0a5be0a757db5c6a18480fa6b3b991e167caa386d4cf",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber+blue2+green2.1:1.512.brick": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.6596,
+     1.652,
+     1.6592,
+     1.652,
+     1.652,
+     1.6596,
+     1.6398,
+     1.6454,
+     1.6469,
+     1.6398,
+     1.6398,
+     1.6596
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "3": "hairline",
+     "4": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 15495,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_b"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ],
+     [
+      0,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      4,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ],
+     [
+      2,
+      5,
+      "front_a"
+     ],
+     [
+      3,
+      4,
+      "front_a"
+     ],
+     [
+      3,
+      5,
+      "front_a"
+     ],
+     [
+      3,
+      6,
+      "front_a"
+     ],
+     [
+      4,
+      6,
+      "front_b"
+     ],
+     [
+      5,
+      6,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.8432,
+     0.8399,
+     0.8415,
+     0.9687,
+     0.8327,
+     0.8316,
+     0.8373
+    ]
+   },
+   "h": 512,
+   "seed": 12742806928980558114,
+   "sha": "15ff2eabd161ce6e051e40de52f7d6e6cc91bc0c783eb0e7142f2a013c061b75",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber+blue2+green2.1:1.512.ring": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-up_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-up_black-30__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6496,
+     1.6624,
+     1.6554,
+     1.6459,
+     1.6596,
+     1.6459,
+     1.6554
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "2": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 21091,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      6,
+      "front_b"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ],
+     [
+      3,
+      4,
+      "front_b"
+     ],
+     [
+      4,
+      5,
+      "front_a"
+     ],
+     [
+      5,
+      6,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9184,
+     0.8419,
+     0.9124,
+     0.9189,
+     0.9885,
+     0.9127,
+     0.9161
+    ]
+   },
+   "h": 512,
+   "seed": 12742806928980558114,
+   "sha": "9b1aecebb70f411ec2ee630d06bec075235afc6f736c9bb4b8c0ab4c1f8757f8",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber+blue2.1:1.512.flower": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-30__v4__pro4K__t3",
+     "P-SN-CLOUD__strong-lower_left_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.6579,
+     1.6602,
+     1.6581,
+     1.6581,
+     1.6602
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 11764,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ],
+     [
+      0,
+      3,
+      "front_a"
+     ],
+     [
+      0,
+      4,
+      "front_a"
+     ],
+     [
+      0,
+      5,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9726,
+     0.9232,
+     0.9161,
+     0.9162,
+     0.9147,
+     0.9092
+    ]
+   },
+   "h": 512,
+   "seed": 1320151958436202112,
+   "sha": "6fab5ba1989f72464e6eed8bbb901b031f118089a77f7152d4bc23497daadcb4",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber+blue2.1:1.512.ring": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-30__v4__pro4K__t3",
+     "P-SN-CLOUD__strong-lower_left_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.6565,
+     1.6565,
+     1.6579,
+     1.6565,
+     1.6565,
+     1.6579
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "2": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 18655,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      5,
+      "front_b"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ],
+     [
+      3,
+      4,
+      "front_a"
+     ],
+     [
+      4,
+      5,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9161,
+     0.8444,
+     0.9163,
+     0.9893,
+     0.9162,
+     0.9169
+    ]
+   },
+   "h": 512,
+   "seed": 1320151958436202112,
+   "sha": "77427baee40cb34e3867f6700887d2fa7bc0333adfc681878c56fd9a6982210c",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber+blue2.3:2.1024.brick": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-30__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-15__v5__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.6541,
+     1.6572,
+     1.6541,
+     1.6572,
+     1.6572,
+     1.6572,
+     1.6572,
+     1.6541,
+     1.6541
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "3": "hairline",
+     "4": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 15415,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_b"
+     ],
+     [
+      0,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      2,
+      "front_a"
+     ],
+     [
+      1,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      4,
+      "front_b"
+     ],
+     [
+      2,
+      4,
+      "front_b"
+     ],
+     [
+      2,
+      5,
+      "front_a"
+     ],
+     [
+      3,
+      4,
+      "front_a"
+     ],
+     [
+      4,
+      5,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.8461,
+     0.8377,
+     0.8401,
+     0.9838,
+     0.9073,
+     0.8459
+    ]
+   },
+   "h": 683,
+   "seed": 1320151958436202112,
+   "sha": "795e8997bad974a51e79e75b01b581767e85d7130da69eed87fbb39caf2ee103",
+   "w": 1024
+  },
+  "family.blue+brown+green+grey+amber.1:1.512.flower": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-60__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-15__v5__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6579,
+     1.6579,
+     1.6579,
+     1.6579
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 20201,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ],
+     [
+      0,
+      3,
+      "front_a"
+     ],
+     [
+      0,
+      4,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9776,
+     0.9219,
+     0.9227,
+     0.9228,
+     0.9226
+    ]
+   },
+   "h": 512,
+   "seed": 15050275052222122895,
+   "sha": "ccbf465d7398594b67efcd30f5b26e596cf678f7266c0396f69ed5565aadce6d",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber.1:1.512.ring": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-60__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-15__v5__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6558,
+     1.6656,
+     1.656,
+     1.6606,
+     1.656
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "2": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 20419,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      4,
+      "front_b"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ],
+     [
+      3,
+      4,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9204,
+     0.8438,
+     0.9177,
+     0.9887,
+     0.9158
+    ]
+   },
+   "h": 512,
+   "seed": 15050275052222122895,
+   "sha": "a009cb054145ebf0260e86e016102749c853b9a47f47ccdaf67966434af407c5",
+   "w": 512
+  },
+  "family.blue+brown+green+grey+amber.3:2.1024.brick": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_right_black-60__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-15__v5__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6522,
+     1.6493,
+     1.6493,
+     1.6493,
+     1.6493,
+     1.6522,
+     1.6522
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "3": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 16866,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_b"
+     ],
+     [
+      0,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      4,
+      "front_a"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ],
+     [
+      3,
+      4,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.8371,
+     0.8379,
+     0.9158,
+     0.9781,
+     0.8436
+    ]
+   },
+   "h": 683,
+   "seed": 15050275052222122895,
+   "sha": "01abd1de0fd8a9e95d967d9d47cd3c03d285672bf6c313e13348ec9b291692b7",
+   "w": 1024
+  },
+  "family.blue+brown+green+grey.1:1.512.cluster": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-left_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-down_black-45__v6__pro4K__t2",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2"
+    ],
+    "d_over_R": [
+     1.6583,
+     1.6583,
+     1.6583,
+     1.6583
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "2": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 16557,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_b"
+     ],
+     [
+      1,
+      3,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.9173,
+     0.846,
+     0.9172,
+     0.9885
+    ]
+   },
+   "h": 512,
+   "seed": 11118090790720510431,
+   "sha": "4fc7ca20eb691657e9335df49984799afa34a1a9ee358044f6902cc332fdbceb",
+   "w": 512
+  },
+  "family.blue+brown+green+grey.1:1.512.ring": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-left_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-down_black-45__v6__pro4K__t2",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2"
+    ],
+    "d_over_R": [
+     1.6539,
+     1.6619,
+     1.6459,
+     1.6539
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "2": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 16520,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      3,
+      "front_b"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.9184,
+     0.84,
+     0.9163,
+     0.9898
+    ]
+   },
+   "h": 512,
+   "seed": 11118090790720510431,
+   "sha": "e983279a9e3f43c379317727670bf41f4b2320ebb680e0e83b383d28dbd40b6a",
+   "w": 512
+  },
+  "family.blue+brown+green+grey.3:2.1024.zigzag": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-down_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-right_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-up_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2"
+    ],
+    "d_over_R": [
+     1.6476,
+     1.6476,
+     1.6476
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 19174,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.9942,
+     0.838,
+     0.9136,
+     0.9949
+    ]
+   },
+   "h": 683,
+   "seed": 11118090790720510431,
+   "sha": "199cc5b370e0c67862cc996686ca35bb452a2357ac852fcb8d0c97d3ffcb9366",
+   "w": 1024
+  },
+  "family.blue+brown+green+grey.3:2.1024.zigzag.text": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-upper_left_black-45__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-right_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-15__v5__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6487,
+     1.642,
+     1.6487
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 19215,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.9949,
+     0.8367,
+     0.9134,
+     0.9948
+    ]
+   },
+   "h": 683,
+   "seed": 15771965349231883183,
+   "sha": "6b2ee21113cd2276de047c80d762e56996a03bf269639fb96a0c6da55b32271d",
+   "w": 1024
+  },
+  "family.blue+brown+green+grey.3:2.4096.zigzag": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-down_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-right_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-up_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2"
+    ],
+    "d_over_R": [
+     1.6476,
+     1.6476,
+     1.6476
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 19174,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.9942,
+     0.838,
+     0.9137,
+     0.9947
+    ]
+   },
+   "h": 2732,
+   "seed": 11118090790720510431,
+   "sha": "a22b23d85c0363611ee1d5f158b87f6aa865deb4fa6a9687c3734d83390b47b3",
+   "w": 4096
+  },
+  "family.blue+brown+green+grey.3:2.512.brick": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-left_black-15__v5__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_right_black-30__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-down_black-45__v6__pro4K__t2",
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2"
+    ],
+    "d_over_R": [
+     1.6391,
+     1.4436,
+     1.4436,
+     1.6391
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "2": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 14766,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_b"
+     ],
+     [
+      1,
+      3,
+      "front_b"
+     ],
+     [
+      2,
+      3,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.8332,
+     0.754,
+     0.9083,
+     0.9865
+    ]
+   },
+   "h": 341,
+   "seed": 11118090790720510431,
+   "sha": "92868c5c84e8a3fe06f80f733a1c6de83a931684ba028bda32978ef764bcd3b1",
+   "w": 512
+  },
+  "family.blue+brown+green.3:2.512.diag": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-60__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-up_black-60__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_left_black-30__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.6437,
+     1.6543
+    ],
+    "design_used": "family",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 14417,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      1,
+      2,
+      "front_b"
+     ]
+    ],
+    "vis": [
+     0.9932,
+     0.8402,
+     0.994
+    ]
+   },
+   "h": 341,
+   "seed": 8600862561903001156,
+   "sha": "9c161deec9a5ce842f15c350e4e03faf55c4d9cc6172e0a1afb3ddd1819be9ab",
+   "w": 512
+  },
+  "infinity.blue+brown.3:2.1024": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-60__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.3152
+    ],
+    "design_used": "infinity",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 40.99,
+    "lens_mode": "weave",
+    "n_particles": 12231,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.897,
+     0.8718
+    ]
+   },
+   "h": 683,
+   "seed": 18410325780971600975,
+   "sha": "8509b92cf7acd07fea03147103bf54c36b6e655339d21b8d722903cd886c242f",
+   "w": 1024
+  },
+  "infinity.blue+brown.3:2.1024.stack": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-60__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.5761
+    ],
+    "design_used": "stack",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": "stack_contrast",
+    "gate_fail": [],
+    "lens_K": 40.99,
+    "lens_mode": "stack",
+    "n_particles": 13099,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     1.0,
+     0.8811
+    ]
+   },
+   "h": 683,
+   "seed": 18410325780971600975,
+   "sha": "1d11fda4d936edf2ef4c8118cc59ff42572d2b92b0ea5c2d5e9e8e8d7dab898a",
+   "w": 1024
+  },
+  "infinity.blue+brown.3:2.1024.text": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-upper_left_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3199
+    ],
+    "design_used": "infinity",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 40.99,
+    "lens_mode": "weave",
+    "n_particles": 12204,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8981,
+     0.8729
+    ]
+   },
+   "h": 683,
+   "seed": 6730215964478710482,
+   "sha": "8fec6a1d88fd72d4aebfe7b430d9d966495e0d64b57ad2d438815b9c8e0f695c",
+   "w": 1024
+  },
+  "infinity.blue+brown.3:2.4096": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-60__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.3152
+    ],
+    "design_used": "infinity",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 40.99,
+    "lens_mode": "weave",
+    "n_particles": 12231,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.897,
+     0.8718
+    ]
+   },
+   "h": 2732,
+   "seed": 18410325780971600975,
+   "sha": "d135047dc1d7dc769a745cfd1ea808ac6565a7af371aa260c60489898e59f3f8",
+   "w": 4096
+  },
+  "infinity.blue+brown.3:2.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-60__v4__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.3261
+    ],
+    "design_used": "infinity",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 40.99,
+    "lens_mode": "weave",
+    "n_particles": 12232,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8993,
+     0.8746
+    ]
+   },
+   "h": 341,
+   "seed": 18410325780971600975,
+   "sha": "3ed54e1d71fb4381506ba934ee71a2d7e0f9c4907c0a10e508ab4a16979a3a25",
+   "w": 512
+  },
+  "infinity.blue+green.1:1.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3268
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 39.48,
+    "lens_mode": "weave",
+    "n_particles": 12275,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8951,
+     0.8791
+    ]
+   },
+   "h": 512,
+   "seed": 9477758347546794998,
+   "sha": "d34b2f9a0a3a31a305782a5d015ac61c979071a915edef6a97fcf88edb228807",
+   "w": 512
+  },
+  "infinity.blue+green.3:2.1024": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3261
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 39.52,
+    "lens_mode": "weave",
+    "n_particles": 12285,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8995,
+     0.8745
+    ]
+   },
+   "h": 683,
+   "seed": 9477758347546794998,
+   "sha": "d14ee41e73cf64bb2b1b4fd6f9948501f982d7f22f11cf80ddb8e989b8bb8f59",
+   "w": 1024
+  },
+  "infinity.blue+green.3:2.512.brief": {
+   "facts": {
+    "auto_hairline": [
+     0
+    ],
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3261
+    ],
+    "design_used": "infinity",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 39.52,
+    "lens_mode": "weave",
+    "n_particles": 12286,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8993,
+     0.8746
+    ]
+   },
+   "h": 341,
+   "seed": 9477758347546794998,
+   "sha": "1eec7d61aacf3dd0302e2941202b66cb52b0fcf313bef9e948bb117679176d8f",
+   "w": 512
+  },
+  "infinity.blue+green.3:2.512.hard": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3261
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 39.52,
+    "lens_mode": "weave",
+    "n_particles": 12286,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8885,
+     0.8852
+    ]
+   },
+   "h": 341,
+   "seed": 9477758347546794998,
+   "sha": "cbf316f819741dbf001b999742e4fcfe59d269146041926123c9914b70271271",
+   "w": 512
+  },
+  "infinity.blue+green.4:5.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-down_black-60__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-upper_left_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3288
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 41.2,
+    "lens_mode": "weave",
+    "n_particles": 12209,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8957,
+     0.8796
+    ]
+   },
+   "h": 512,
+   "seed": 9477758347546794998,
+   "sha": "12e280d32ddae80900691504a27a4842483fba211cdfde0e9a9ac0bee33de672",
+   "w": 410
+  },
+  "infinity.blue+green.5:4.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-lower_left_black-45__v6__pro4K__t0",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.3153
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 39.52,
+    "lens_mode": "weave",
+    "n_particles": 12255,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8972,
+     0.8718
+    ]
+   },
+   "h": 410,
+   "seed": 9477758347546794998,
+   "sha": "faad88db8bcb17750c2a3cfbeba3a0c2aae52133fac6b70d8f7edd37a84af82e",
+   "w": 512
+  },
+  "infinity.blue+green.9:19.5.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-down_black-45__v6__pro4K__t2"
+    ],
+    "d_over_R": [
+     1.3171
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 41.12,
+    "lens_mode": "weave",
+    "n_particles": 12333,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8934,
+     0.8763
+    ]
+   },
+   "h": 512,
+   "seed": 9477758347546794998,
+   "sha": "36ce011c7b52632ca6bf70e53c5c25b4117ff59544fcd08e02e726bbbcf1aa5c",
+   "w": 236
+  },
+  "infinity.brown+brown2.3:2.1024": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-left_black-60__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.3152
+    ],
+    "design_used": "infinity",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 7.72,
+    "lens_mode": "weave",
+    "n_particles": 12262,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8905,
+     0.8783
+    ]
+   },
+   "h": 683,
+   "seed": 3771083337776101517,
+   "sha": "84c784d18670aed2637f8a4560b5f37436bef59708b6f092f0b7eb1e095d7ada",
+   "w": 1024
+  },
+  "infinity.clean.blue+brown.3:2.1024": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.3132
+    ],
+    "design_used": "infinity",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 40.99,
+    "lens_mode": "weave",
+    "n_particles": null,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8966,
+     0.8713
+    ]
+   },
+   "h": 683,
+   "seed": 14542209374631614689,
+   "sha": "89e7c2b0eee964c84b0be2f7c2abb37b4ef534afe7b327d0a528c4c2eb290e07",
+   "w": 1024
+  },
+  "infinity.clean.blue+green.3:2.1024": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.3132
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 39.52,
+    "lens_mode": "weave",
+    "n_particles": null,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8966,
+     0.8713
+    ]
+   },
+   "h": 683,
+   "seed": 10528399869478546497,
+   "sha": "372830ec3d0df58ef2cb02a4483e8e5e57b9b50a1a4b5398aba51451568ff018",
+   "w": 1024
+  },
+  "infinity.clean.blue+green.3:2.4096": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.3132
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 39.52,
+    "lens_mode": "weave",
+    "n_particles": null,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8965,
+     0.8713
+    ]
+   },
+   "h": 2732,
+   "seed": 10528399869478546497,
+   "sha": "0ea57f6c75b87dad43c0044db7a5f0361ff2162afe1515a1df9dbf1cfeac508d",
+   "w": 4096
+  },
+  "infinity.clean.grey+amber.1:1.512": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.3085
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 32.15,
+    "lens_mode": "weave",
+    "n_particles": null,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8888,
+     0.8767
+    ]
+   },
+   "h": 512,
+   "seed": 5640049531101577163,
+   "sha": "011f6af4e212a14d6c0bc190879da1bd0ad45ded693b1485ebd6e8a568359364",
+   "w": 512
+  },
+  "infinity.clean.grey+amber.1:1.512.text": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.3075
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 32.15,
+    "lens_mode": "weave",
+    "n_particles": null,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8887,
+     0.8764
+    ]
+   },
+   "h": 512,
+   "seed": 4686112184520629062,
+   "sha": "4d3f12cef6cbd69ac49c15e42c80602b23ec2718aa9390895947f1f41a95dce5",
+   "w": 512
+  },
+  "infinity.clean.grey+amber.3:2.1024": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.3132
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 31.16,
+    "lens_mode": "weave",
+    "n_particles": null,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8922,
+     0.8755
+    ]
+   },
+   "h": 683,
+   "seed": 5640049531101577163,
+   "sha": "60ada7157da05acda44819ae96eff7cee49331d03c97dd805d774fca3a7af115",
+   "w": 1024
+  },
+  "infinity.clean.grey+amber.3:2.512.stack": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.5721
+    ],
+    "design_used": "stack",
+    "edge_modes": {},
+    "fallback": "stack_contrast",
+    "gate_fail": [],
+    "lens_K": 31.16,
+    "lens_mode": "stack",
+    "n_particles": null,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     1.0,
+     0.8795
+    ]
+   },
+   "h": 341,
+   "seed": 5640049531101577163,
+   "sha": "fd0e0e35d536daaa8a7c030396fae25fcebe11da12d1c6bee4e99c4a2d5c54d1",
+   "w": 512
+  },
+  "infinity.grey+amber.3:2.1024": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-upper_right_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_left_black-60__v6__pro4K__t0"
+    ],
+    "d_over_R": [
+     1.3152
+    ],
+    "design_used": "infinity",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_K": 31.16,
+    "lens_mode": "weave",
+    "n_particles": 12172,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "weave"
+     ]
+    ],
+    "vis": [
+     0.8927,
+     0.876
+    ]
+   },
+   "h": 683,
+   "seed": 16189704512080950192,
+   "sha": "f2be1f5611c2d9ad9664460df225378a17025291a74b3c687e04b3f3a494af85",
+   "w": 1024
+  },
+  "infinity.wide+green.3:2.1024": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7043
+    ],
+    "design_used": "kiss",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8720,
+    "overlap_fallback": true,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9946,
+     0.9386
+    ]
+   },
+   "h": 683,
+   "seed": 3461326824376749608,
+   "sha": "5da8447fdd15d94392c165d4dd9c169210016ac4cb571afb2a26644497c3906a",
+   "w": 1024
+  },
+  "kiss.blue+brown.3:2.1024": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7043
+    ],
+    "design_used": "kiss",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8818,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9948,
+     0.9385
+    ]
+   },
+   "h": 683,
+   "seed": 855626664116032980,
+   "sha": "7a0b52257cb428134d3d683ba2d870b30be8fe76909d59c84edff0ef5869e0df",
+   "w": 1024
+  },
+  "kiss.blue+brown.3:2.4096": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7043
+    ],
+    "design_used": "kiss",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8818,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9947,
+     0.9385
+    ]
+   },
+   "h": 2732,
+   "seed": 855626664116032980,
+   "sha": "41808b510f803e7ec2fbdd7718fec1f0c64275e7a7ea38f521f5c880bd389551",
+   "w": 4096
+  },
+  "kiss.blue+brown.3:2.512.dust": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7067
+    ],
+    "design_used": "kiss",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8818,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9945,
+     0.9392
+    ]
+   },
+   "h": 341,
+   "seed": 855626664116032980,
+   "sha": "cc289e83e13331cc485fed6b3297d4841789ea9d0849577e21c955da52f25fa6",
+   "w": 512
+  },
+  "kiss.blue+brown.3:2.512.universe": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7067
+    ],
+    "design_used": "kiss",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 4548,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9948,
+     0.9389
+    ]
+   },
+   "h": 341,
+   "seed": 4507714690065177402,
+   "sha": "11ffd1c94aff8cb1be34d9667302a6ab683ff16ebe0258e01dd07d7d084c2803",
+   "w": 512
+  },
+  "kiss.blue+brown.4:5.512": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7081
+    ],
+    "design_used": "kiss",
+    "edge_modes": {
+     "0": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8774,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9948,
+     0.9395
+    ]
+   },
+   "h": 512,
+   "seed": 855626664116032980,
+   "sha": "c2145445e6cdf11d2d913cf601a457e4098f519053016ef98c4b83f58cb4635e",
+   "w": 410
+  },
+  "kiss.blue+green.3:2.1024": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7043
+    ],
+    "design_used": "kiss",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8767,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9949,
+     0.9383
+    ]
+   },
+   "h": 683,
+   "seed": 12610576081718761381,
+   "sha": "debb0de6c7c0c73a0d0800af9987d76a6cd5a51c7c415d04bc5cafabbabf14ec",
+   "w": 1024
+  },
+  "kiss.blue+green.3:2.1024.text": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.6992
+    ],
+    "design_used": "kiss",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8692,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9948,
+     0.9367
+    ]
+   },
+   "h": 683,
+   "seed": 13810636926309235304,
+   "sha": "abe23c422fc2b1615f9ae415d544cac477e7ba0b37a70ae2eff6d680778f1d8a",
+   "w": 1024
+  },
+  "kiss.grey+amber.3:2.1024": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7043
+    ],
+    "design_used": "kiss",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8743,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9948,
+     0.9384
+    ]
+   },
+   "h": 683,
+   "seed": 9668434575972147680,
+   "sha": "a1a7beb263d064bd84602766b55776b58396a3e9cc1e05f52de24a7455dbf6e9",
+   "w": 1024
+  },
+  "kiss.grey+amber.9:19.5.512": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.6842
+    ],
+    "design_used": "kiss",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8703,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9947,
+     0.9317
+    ]
+   },
+   "h": 512,
+   "seed": 9668434575972147680,
+   "sha": "7b4b667323d4f3a37dce2e6d2477527bfabe186922f62b3b5fd6174f33810e97",
+   "w": 236
+  },
+  "trio.blue+brown+green.1:1.1024": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.5317,
+     1.7125,
+     1.7125
+    ],
+    "design_used": "trio",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9939,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9907,
+     0.8186,
+     0.9345
+    ]
+   },
+   "h": 1024,
+   "seed": 3273514129765590988,
+   "sha": "e0545d3d938ba6ef1570889e365511ea50076c468f86d48219d287574894b939",
+   "w": 1024
+  },
+  "trio.blue+brown+green.1:1.4096": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.5317,
+     1.7125,
+     1.7125
+    ],
+    "design_used": "trio",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9939,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9907,
+     0.8185,
+     0.9345
+    ]
+   },
+   "h": 4096,
+   "seed": 3273514129765590988,
+   "sha": "ccbb139d5439bb61a725de4d082a85da3a33470a3b54e07f74c17e976ab1c255",
+   "w": 4096
+  },
+  "trio.blue+brown+green.1:1.512.rot1": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-upper_left_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.5317,
+     1.7147,
+     1.7103
+    ],
+    "design_used": "trio",
+    "edge_modes": {
+     "0": "hairline",
+     "2": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9970,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      2,
+      0,
+      "front_a"
+     ],
+     [
+      2,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9354,
+     0.8175,
+     0.9906
+    ]
+   },
+   "h": 512,
+   "seed": 3273514129765590988,
+   "sha": "3438a4613aa201a49eb49edac2c1d57b581de59e972d2814fcddec70f45c0f39",
+   "w": 512
+  },
+  "trio.blue+brown+green.1:1.512.weave": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.5317,
+     1.7147,
+     1.7103
+    ],
+    "design_used": "trio",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9941,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      1,
+      2,
+      "weave"
+     ],
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9906,
+     0.8821,
+     0.8686
+    ]
+   },
+   "h": 512,
+   "seed": 3273514129765590988,
+   "sha": "becd857820ec307fd373cab1b8498ffaa83a735bbdc1f21b7c0d9ee829f6b4e8",
+   "w": 512
+  },
+  "trio.blue+brown+green.3:2.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.5143,
+     1.7058,
+     1.7058
+    ],
+    "design_used": "trio",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9937,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9908,
+     0.81,
+     0.9328
+    ]
+   },
+   "h": 341,
+   "seed": 3273514129765590988,
+   "sha": "3ef2d9709c22a8bc22a5251e36e81236f049451627364f7bfdfef78896a8716d",
+   "w": 512
+  },
+  "trio.blue+brown+green.9:19.5.512": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-right_black-15__v5__pro4K__t1",
+     "P-SN-CLOUD__strong-left_black-45__v4__pro4K__t1",
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.5506,
+     1.7386,
+     1.7286
+    ],
+    "design_used": "trio",
+    "edge_modes": {
+     "0": "hairline",
+     "1": "hairline"
+    },
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9951,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      1,
+      2,
+      "front_b"
+     ],
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9905,
+     0.8331,
+     0.94
+    ]
+   },
+   "h": 512,
+   "seed": 3273514129765590988,
+   "sha": "0244afb0e1ec7dff018943ebcdd5e4b6b3b9a4b3ed779f7051f2814d7ad25787",
+   "w": 236
+  },
+  "trio.grey+amber+blue.1:1.1024.text": {
+   "facts": {
+    "cloud": [
+     "P-SN-CLOUD__strong-left_black-30__v4__pro4K__t2",
+     "P-SN-CLOUD__strong-up_black-45__v4__pro4K__t0",
+     "P-SN-CLOUD__strong-lower_right_black-60__v4__pro4K__t1"
+    ],
+    "d_over_R": [
+     1.5325,
+     1.7099,
+     1.7075
+    ],
+    "design_used": "trio",
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 9912,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      1,
+      2,
+      "front_a"
+     ],
+     [
+      0,
+      1,
+      "front_a"
+     ],
+     [
+      0,
+      2,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9896,
+     0.9342,
+     0.8179
+    ]
+   },
+   "h": 1024,
+   "seed": 10328244071582405867,
+   "sha": "4bbb613a23109af64841d2873dec001dd33483ca52d1f6bf8b8a158084fd2f8b",
+   "w": 1024
+  }
+ },
+ "fixtures": {
+  "amber": "eba4505cee2b88f819e63577b72d1cff0366b1391015e315f16d7c59149cd067",
+  "blue": "fd37d54ef6cccd707e85949f5567db5dc9d5518265bf4cd942acc6b44561cefd",
+  "blue2": "da31ca138dbd6f892eae1bb1ea2c934273d397ef5b64f38c547d2e50362bab78",
+  "brown": "db098e0c793e0392e5516794a266a15dd021f6a9031a37ffb211d2aa94c4f750",
+  "brown2": "ff5d515e9d190a6e5ef02c2478839b57217c0141a2672cfb93cf12076ba14942",
+  "green": "74581b43c400688ab65fd8d05e754e7a3a0e07dc0db82dc7f72d1a7281ba128c",
+  "green2": "f0223a08b3f0ca85672c818ebcadba2615c1bedbdfb8ab17497f2a3e1bfb75f3",
+  "grey": "42f0adad5ea8db965a21465cb6e5eb8c3cd6abf06715ac9fd98f386313894529",
+  "wide": "7939c28fd982b8773652b258389e474ccf4ad147b06e9b4d608ced5fe8403a95"
+ },
+ "machine": {
+  "numpy": "2.4.4",
+  "pillow": "12.2.0",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "python": "3.14.3"
+ },
+ "retouched_plates": [
+  "P-CX-JET__medium_left_b75__pro4K__t2",
+  "P-CX-JET__wide_right_b75__pro4K__t1"
+ ],
+ "scratch_sources": {
+  "collision": "63f5e236bf7e2234d0c88cc49916e8972be16265cfa0e85054a159d6302f15f4",
+  "compositor": "b36b8437da86419466d008923a314d6865df52c3b04c743dbc71a0168f0be47a",
+  "core": "e2fffd9350eea1889aec0f882a83866bc675f5f67d1be007ad0dcba6128adfd9",
+  "extra": "0d7ece0267e67de5adb65b01a30c0e334b7f6d9ac558be646632e3b48628648d",
+  "fill": "a7bdbda034d74c57bc37b7dc33148454f9baa9064f0f3b23b5cf5587e0fad0d6",
+  "haze": "11231c602d8f42f20e7ca1d30a804368f1ae8fb541bc669858efbbc44bc0de72",
+  "kit": "d01ea17ea33f94e8d5b51508b42eb6af136d39d73b4aef475ff2b7d475622dd2",
+  "lens_mode": "ba1a17d205e7928ba4413b9cbd00b33653386635965ae8b889220b32d8f7c987",
+  "plates": "e9c9a1e24b0af10f16dbe079cb70ad86f5473bdb243d15e30d1251db1f730651",
+  "powder": "953fb1d0184b97844753891290d1daf2fb39a7da4ce7e409807eaf6bfb920b72",
+  "raster": "861e19a903f86bf1b6c5821edffe7858a62827b5aeac124700fcac2e7bb53e32",
+  "scenes": "9e706c08af164bc000223d1581c78880ff7b9f2b5a248849f91e408eef1f4cd3",
+  "seam_plan": "34c3bf65104bd768ddb27242081fab8819f826f22b39be504be896778040818f"
+ }
+}
