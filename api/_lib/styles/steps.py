@@ -241,12 +241,30 @@ PLAN8_KEYS = ("v", "pv", "engine_v", "style", "family", "design_used", "fallback
               "seed_key", "plate_families", "plates", "frozen", "clean")
 
 
+# What a family that decides from the PIXELS (styles.wants_eyes: the collision family) takes from them: the design it ends up drawing (and the seed key made from
+# it), the fallback, the choices it freezes (the lens, the fronts, the hairline contacts) and the plates it picks. /api/compose draws a set of three to eight eyes
+# from the 768 or 560 px copies of the eyes and checkout plans it from the 1024 px ones, so a choice that sits at its threshold can fall the other way: plan8_core is the
+# plan8 without these keys, what the page sends beside plan8 so that checkout can tell that kind of difference from a real change of the order (WP7B open item).
+PIXEL_KEYS = ("design_used", "fallback", "seed_key", "plates", "frozen")
+
+
+def _plan_digest(plan, keys):
+    core = {k: plan.get(k) for k in keys}
+    core["steps"] = [[s.get("name"), s.get("kind"), s.get("eyes")] for s in (plan.get("steps") or []) if isinstance(s, dict)]
+    return hashlib.sha256(json.dumps(core, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")).hexdigest()[:8]
+
+
 def plan8(plan):
     """The identity of a plan: 8 hex digits of everything that decides the picture. NOT in it: the registry hash (provenance), the estimates, the
     time of creation, the profile facts: an edit of an unrelated registry entry, a new slow factor or a different clock never renames an artwork."""
-    core = {k: plan.get(k) for k in PLAN8_KEYS}
-    core["steps"] = [[s.get("name"), s.get("kind"), s.get("eyes")] for s in (plan.get("steps") or []) if isinstance(s, dict)]
-    return hashlib.sha256(json.dumps(core, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")).hexdigest()[:8]
+    return _plan_digest(plan, PLAN8_KEYS)
+
+
+def plan8_core(plan):
+    """plan8 without PIXEL_KEYS: the identity of everything the customer and the registry decide (style, layout, options, the eyes' ids, the engine and plates
+    versions, the steps), not of what the pixels of one copy of the eyes decided. Two plans of the same order that differ only in the pixel choices have the same
+    core; a plan of another layout, option, eye or engine has another one."""
+    return _plan_digest(plan, [k for k in PLAN8_KEYS if k not in PIXEL_KEYS])
 
 
 def valid_plan(plan):

@@ -23,16 +23,19 @@ Request (JSON; the page's old requests are all still accepted):
   action   "help": a count of one click on the manual route of the retake state ({route: "manual", eyes, why}) or on the buy button of a style that
            opens soon ({route: "soon", style, eyes}); no eyes needed.
 Reply (one style): {ok, style, layout, layouts, format, count, width, height, image (JPEG b64), styles, qa, eyes, tiles, pick, size, opts, canvas,
-design_used, fallback, plan8, engine {v, reg, pv}, selfcheck, timing}. A batch: {ok, batch, count, size, format, tiles, pick, styles, eyes, engine, timing}.
+design_used, fallback, plan8, plan8_core, engine {v, reg, pv}, selfcheck, timing}. A batch: {ok, batch, count, size, format, tiles, pick, styles, eyes, engine, timing}.
   plan8    the identity of the plan this picture is (api/_lib/styles/steps.py make_plan: the style, layout, options, the eyes' ids, the design and the
            seed key): checkout recomputes the plan from the sealed profiles and answers 409 plan_changed when the page's differs, so the page sends it back
+  plan8_core  the same identity without what the pixels of THIS request's copies of the eyes decided (the design drawn, the fallback, the frozen choices; steps.py
+           plan8_core): the page sends it back beside plan8. For three to eight eyes this request reads the 768 or 560 px copies and checkout the 1024 px ones, so a
+           choice at its threshold can fall the other way; checkout then takes its own plan and does not answer plan_changed for ever (collision family only)
   eyes     per eye {eye, eye_id, cls, pupil, gate {lid, fill}[, why]}: what the eye's seal says (api/_lib/preview.py seal v2, the profile measured at
            /api/enhance; true, false, or null = unknown: a version 1 seal, or a profile that was not measured; null for an old page's plain irises);
            why (only for an eye that fails a rule): the reason codes of the failing rules, which the retake state turns into its two sentences and its tip
   tiles    the tiles of these eyes in the server's order, the recommended one first: {id, name, slug, group, legacy, stage (live, preview or lab),
            available, why (gate, reseal or bar_pupil: the eyes cannot take it), layouts, eyes, price_class, looks, gate (the style's policy: none,
            advisory, hard), rule (the gate rule set it reads: lid or fill; WP11's retake state names the eye by it), pick}; the tiles a batch made also
-           carry image, width, height, layout, canvas, design_used, fallback and plan8. A tile that is not available is not drawn.
+           carry image, width, height, layout, canvas, design_used, fallback, plan8 and plan8_core. A tile that is not available is not drawn.
   pick     {id, reason}: the recommended tile (always one the customer can buy now: live and available; null when nothing can be bought) and the key of
            its reason line (null unless the pick was made for the eyes' colour class)
 Refusals: 400 a request that is not one (unknown style, layout or option, a size that is not 1024 or 480, style and styles together); 422
@@ -304,11 +307,12 @@ def _engine_date(value, limit=None):
     return out[:limit] if limit else out
 
 def _legacy_names(value):
-    """The names of a legacy preview: the old string cut at the 200 characters of the order's total (the paid file's own cut, master_compose); a list (the new
-    wire form) is joined with the old separator first."""
-    if isinstance(value, (list, tuple)):
-        value = ";".join(v[:TEXT_RAW_MAX] for v in value[:TEXT_PARTS_MAX] if isinstance(v, str))
-    return _text(value, W.NAMES_TOTAL_MAX)
+    """The names line of a legacy preview: the very line the paid file draws. checkout records the names of every style as a list (pay.spec_from reads them with
+    words.names_list: a semicolon or a line break separates, control and zero width characters are out, runs of white space are one space, the total is cut at
+    200), and the legacy composer is given them joined again (words.names_wire, steps._exec_legacy, master_compose). The preview reads the request the same way
+    and joins it the same way, so "Mantas; Ruta" is "Mantas;Ruta" in both, and a no-break space, a zero width character or a run of spaces never makes the
+    preview and the file differ (review of WP12: the preview used to draw the raw string)."""
+    return W.names_wire(W.names_list(value))
 
 
 def _engine_canvas(style, n, fmt_in):
@@ -567,11 +571,13 @@ def _plan(style, spec, profiles):
         return {}
 
 
-def _plan8(style, n, layout, opts, eye_ids, metas, irises=None, spec=None):
-    """The plan identity of this picture (steps.make_plan: pure, no storage), or None when no plan can be made (the reply then says nothing). irises: the eye
+def _plan_ids(style, n, layout, opts, eye_ids, metas, irises=None, spec=None):
+    """{plan8, plan8_core} of this picture's plan (steps.make_plan: pure, no storage), both None when no plan can be made (the reply then says nothing). irises: the eye
     objects of the render, for the families whose plan depends on the pixels (the collision family: the front order, the hairline contacts, the woven or
     stacked lens; their plan pass reads the grades the render just cached), and spec the render's own spec, whose words move the scene a little: the
-    plan8 of the reply is then the very plan the checkout and the master make of the same eyes (WP7B)."""
+    plan8 of the reply is then the very plan the checkout and the master make of the same eyes (WP7B). plan8_core is the same identity without the choices the
+    pixels of THESE copies of the eyes decided (steps.plan8_core): for three to eight eyes this request reads the 768 or 560 px copies and checkout the 1024 px
+    ones, and the page sends both back so that checkout can tell such a difference from a real change of the order (WP12 review)."""
     try:
         from _lib.styles import steps as SP
         eyes = [{"eye_id": i, "profile": (m or {}).get("profile").rec if isinstance(m, dict) and m.get("profile") is not None else None}
@@ -579,9 +585,10 @@ def _plan8(style, n, layout, opts, eye_ids, metas, irises=None, spec=None):
         plan_spec = {"style": style, "layout": layout, "eyes": n, "opts": opts}
         if isinstance(spec, dict):
             plan_spec.update(names=spec.get("names"), date=spec.get("date"))
-        return SP.make_plan(plan_spec, eyes, irises=irises)["plan8"]
+        plan = SP.make_plan(plan_spec, eyes, irises=irises)
+        return {"plan8": plan["plan8"], "plan8_core": SP.plan8_core(plan)}
     except Exception:  # noqa
-        return None
+        return {"plan8": None, "plan8_core": None}
 
 
 def _qa_of(pv):
@@ -718,7 +725,7 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": word, "canvas": canvas,
             "count": n, "width": img.size[0], "height": img.size[1], "image": _jpeg(img),
             "styles": list(catalogue.previewable_ids(n, admin)), "qa": qa, "eyes": _eyes_reply(metas), "tiles": cat["tiles"], "pick": _pick_reply(cat),
-            "size": size, "opts": opts, "design_used": design, "fallback": fallback, "plan8": _plan8(style, n, layout, opts, spec["eye_ids"], metas, eyes, spec),
+            "size": size, "opts": opts, "design_used": design, "fallback": fallback, **_plan_ids(style, n, layout, opts, spec["eye_ids"], metas, eyes, spec),
             "engine": _engine_facts(), "selfcheck": _selfcheck_of(pv),
             "timing": {"eyes_ms": int((t_draw - t_eyes) * 1000), "render_ms": int((t_done - t_draw) * 1000), "total_ms": int((time.time() - t0) * 1000)}}
 
@@ -749,7 +756,7 @@ def _one_legacy(req, style, n, body, opened, metas, cat, admin, clean, t0):
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": fmt,
             "count": n, "width": out.size[0], "height": out.size[1], "image": _jpeg(out),
             "styles": list(catalogue.previewable_ids(n, admin)), "qa": qa, "eyes": _eyes_reply(metas), "tiles": cat["tiles"], "pick": _pick_reply(cat),
-            "size": size, "opts": {}, "design_used": style, "fallback": None, "plan8": _plan8(style, n, layout, {}, [(m or {}).get("eye_id") or "" for m in metas], metas),
+            "size": size, "opts": {}, "design_used": style, "fallback": None, **_plan_ids(style, n, layout, {}, [(m or {}).get("eye_id") or "" for m in metas], metas),
             "engine": _engine_facts(), "selfcheck": None,
             "timing": {"total_ms": int((time.time() - t0) * 1000)}}
 
@@ -863,7 +870,7 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
         design, fallback = _drawn(m["pv"], m["plan"])
         ids = m["spec"]["eye_ids"] if m["spec"] else [(x or {}).get("eye_id") or "" for x in metas]
         r.update(image=_jpeg(m["img"]), width=m["img"].size[0], height=m["img"].size[1], layout=m["layout"], canvas=m["canvas"], design_used=design, fallback=fallback,
-                 plan8=_plan8(s, n, m["layout"], opts.get(s) or {}, ids, metas, m.get("eyes"), m["spec"]))
+                 **_plan_ids(s, n, m["layout"], opts.get(s) or {}, ids, metas, m.get("eyes"), m["spec"]))
     if made and not admin:
         pick_id = cat["pick"]
         gate = {s: _gate_code(s, n, metas) for s in made}

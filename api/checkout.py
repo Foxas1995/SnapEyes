@@ -15,7 +15,7 @@ GET  /api/checkout
      count it has at those stages (the owner's override in the admin page lowers it; a held, planned or retired style is never listed); orderable_max_eyes: the
      largest eye count some style can be ordered for now (0 when nothing can). The landing page, the buy card and the picker print the number of eyes and
      the list of styles from here, never from a text; the terms of sale print neither (they are a build-time text). max_eyes stays the structural limit (8).
-POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the old string "Anna;Max"), date, opts {swap, rotate, look}, title, plan8,
+POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the old string "Anna;Max"), date, opts {swap, rotate, look}, title, plan8, plan8_core,
                     lang: "en"|"de"|"lt"|"hu", market, consent_digital: true}
      market: one of the markets the site sells in ("eu" when missing; one that is not offered, or any other value:
      400). lang: the page's language when the market's edition of the legal texts has it (the Australian one: en, de),
@@ -30,7 +30,12 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the ol
      the style, layout, applied options, the eyes' ids and sealed profiles, and for the collision family the pixels of the approved previews), stores it in
      order.json (checkout.plan, with engine {v, reg, pv}, the set level gate result and whether the page's plan8 was compared) and writes its plates
      version, engine version and plan8 to the Stripe metadata (pv, ev, plan8; also date, opts and the names as one JSON string). The master step reads that
-     plan and never works the geometry out again. plan8 in the request is the page's copy (compose's reply says it): it is only compared, never trusted.
+     plan and never works the geometry out again. plan8 in the request is the page's copy (compose's reply says it): it is only compared, never trusted. plan8_core (compose's reply says it too) is the same
+     identity without the choices the pixels decided (steps.py plan8_core): for three to eight eyes compose reads the 768 or 560 px copies of the eyes and this
+     route the 1024 px ones, so a choice of the collision family that sits at its threshold can fall the other way. When plan8 differs and plan8_core is equal, the
+     two plans differ in nothing but those choices: the server's plan is the plan (it is what the master will draw), the order is recorded with plan8_note
+     "pixel_choices" and the page's plan8 (plan8_page), and the customer is not sent round a 409 that would come again at every retry. Any other difference is
+     409 plan_changed; a family that does not decide from the pixels never takes this road.
      Errors ({ok: false, reason, error, retry}):
        503 payments_not_configured / storage_not_configured   ordering is not open on this deployment (no Stripe,
                                 a live key without the confirmation email, CRON_SECRET or complete legal texts, a
@@ -46,8 +51,8 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the ol
                                 draft decides, nothing is measured again), bar_pupil (the collision family draws no bar pupil), plates (a 4K plate
                                 the plan will draw is not in storage: found before payment, never after), capacity (the plan's time or memory
                                 need can never fit one call at the slow factor in force). Nothing was created. The admin counts the demand.
-       409 plan_changed         {plan8, engine}: the plan8 the page sent is not the one the server made of the same draft: show the preview again
-                                (retry true); nothing was created
+       409 plan_changed         {plan8, engine}: the plan8 the page sent is not the one the server made of the same draft (and, for the collision family,
+                                its plan8_core is not the server's either): show the preview again (retry true); nothing was created
        503 storage_busy         the owner's style switch (or a plate, or the draft) could not be read: never read as live
        409 already_paid         the order is paid, or an earlier checkout of it was completed and its payment is
                                 still settling (settling: true); order_url says where it lives
@@ -111,15 +116,23 @@ def _engine(plan):
     return {"v": plan.get("engine_v"), "reg": plan.get("reg"), "pv": plan.get("pv")}
 
 
+def _page8(body):
+    """The plan8 the page sent, as the order records it (trimmed, lower case, at most 16 characters: it is the page's text, never trusted)."""
+    v = body.get("plan8")
+    return v.strip().lower()[:16] if isinstance(v, str) else ""
+
+
 def freeze_plan(order, rec, spec, body, drafts):
-    """The plan of this order, frozen for the master (WP12; spec 2.4, C8, ED12, ER3): (plan, gate, shown). Every refusal is a 409 and nothing is created
+    """The plan of this order, frozen for the master (WP12; spec 2.4, C8, ED12, ER3): (plan, gate, shown, note). Every refusal is a 409 and nothing is created
     before it. drafts: the order's draft eye records, which carry the eye id and the sealed profile of each eye (written from the seal, never from the page).
 
       1. the gate and the pupil of the SEALED profile decide for a hard style (catalogue.why_unavailable: gate, reseal, bar_pupil); nothing is measured
          again. An advisory style is bought on a failing eye: that is recorded (gate, "ordered after failure"), not refused;
       2. make_plan recomputes the plan from those records (the collision family from the pixels of the approved previews: a plan made without them is
          refused as reseal, because nothing would freeze what the preview showed; a bar pupil the profile did not show is bar_pupil);
-      3. the page's plan8, when it sends one, must be the server's (409 plan_changed: the page shows the preview again);
+      3. the page's plan8, when it sends one, must be the server's (409 plan_changed: the page shows the preview again), except that a family that decides from
+         the pixels (the collision family) takes the server's plan when only the pixel choices differ and the page's plan8_core is the server's (the fourth value
+         of the answer: "pixel_choices", else None: the page's copies of the eyes are smaller than the ones read here, WP7B's open item);
       4. every 4K plate the plan will draw is in storage now (409 plates, not a hold after payment), and the plan can ever fit one call at the slow factor
          in force (409 capacity: a refusal that can never succeed is a configuration error, and is found here, not retried as busy after payment)."""
     from _lib import styles as ST
@@ -143,10 +156,15 @@ def freeze_plan(order, rec, spec, body, drafts):
     if plan.get("decided") is False and ST.wants_eyes({"style": style, "eyes": n}):
         raise pay.unavailable(style, n, "reseal")
     shown = body.get("plan8")
+    note = None
     if shown is not None and not catalogue.is_legacy(style):
         if not (isinstance(shown, str) and shown.strip().lower() == plan["plan8"]):
-            raise store.Answer(409, "plan_changed", "The preview you approved is not the one we would make now. Please look at the preview again.", True,
-                               None, plan8=plan["plan8"], engine=_engine(plan))
+            core = body.get("plan8_core")
+            if ST.wants_eyes({"style": style, "eyes": n}) and isinstance(shown, str) and isinstance(core, str) and core.strip().lower() == SP.plan8_core(plan):
+                note = "pixel_choices"        # the same order, layout, options and eyes: only what the pixels of the page's smaller copies decided differs. The server's plan stands
+            else:
+                raise store.Answer(409, "plan_changed", "The preview you approved is not the one we would make now. Please look at the preview again.", True,
+                                   None, plan8=plan["plan8"], engine=_engine(plan))
     need = plan.get("plates_needed") or []
     if need:
         have = pay.parallel([lambda x=x: store.exists(x["path"], timeout=8.0) for x in need])
@@ -158,7 +176,7 @@ def freeze_plan(order, rec, spec, body, drafts):
         raise pay.unavailable(style, n, "capacity", capacity=cap["why"])
     if len(json.dumps(plan, sort_keys=True)) > SP.RECORD_MAX:
         raise pay.unavailable(style, n, "capacity", capacity="plan_size")
-    return plan, gate, shown is not None
+    return plan, gate, shown is not None, note
 
 
 def checkout(body):
@@ -200,7 +218,7 @@ def checkout(body):
         raise store.Answer(409, "eyes_missing", "Some eyes of this artwork are not uploaded yet.", True, None,
                            missing=missing)
     # the plan of the order, frozen before anything is closed or made: a refused style leaves an earlier open session of the order as it was
-    plan, gate, shown = freeze_plan(order, rec, spec, body, found[1:])
+    plan, gate, shown, note = freeze_plan(order, rec, spec, body, found[1:])
     # one payable session per order: the earlier ones are expired at Stripe first, so the old tab cannot be paid too
     paid_sess, settling = pay.close_open_sessions(order, rec)
     if paid_sess is not None:
@@ -229,10 +247,14 @@ def checkout(body):
                          # the frozen plan (the master reads it, steps._stored_plan), the engine it was made under, the set level gate result at checkout
                          # and whether the page's plan8 was compared: what the admin shows beside the delivered file
                          "plan": plan, "engine": _engine(plan), "gate": gate, "plan8_shown": shown})
+    if note:
+        # the page's plan8 was not the server's but its plan8_core was (freeze_plan): the plan stored is the server's, and the owner can see that and what the page showed
+        rec["checkout"].update(plan8_note=note, plan8_page=_page8(body))
     if exp:
         rec["checkout"]["experiment"] = abtest.checkout_block(exp, market)
     pay.write_order(order, rec)
     pay.log(f"order {order}: checkout {sid} {amount} {currency} ({market}) {n} eye(s) {spec['style']} {lang} plan {plan['plan8']}"
+            + (f" (the page showed {_page8(body)}: same plan but for the choices the pixels decide)" if note else "")
             + (f" experiment {exp['key']}/{exp['variant']}" if exp else ""))
     abtest.note_checkout(exp, market, n, spec["style"], amount)
     pay.note_checkout("start", spec, rec, gate=gate)

@@ -152,7 +152,7 @@ export function usePreviews(p: PreviewInput): Previews {
         if (out.kind === 'ok') {
           const pic = pictureOf(out.data, o);
           if (pic) {
-            const art: Art = { src: pic.src, w: pic.w, h: pic.h, layout: pic.layout, canvas: pic.canvas, design: pic.design, fallback: pic.fallback, plan8: pic.plan8, opts: pic.opts };
+            const art: Art = { src: pic.src, w: pic.w, h: pic.h, layout: pic.layout, canvas: pic.canvas, design: pic.design, fallback: pic.fallback, plan8: pic.plan8, plan8Core: pic.plan8Core, opts: pic.opts };
             setBigs((c) => trim({ ...c, [k]: art }, BIG_MAX));
             // the style's own tile shows this picture until (and unless) a tile of its own is made: the style on screen needs no second render
             const tk = artKey([set, styleId, (o as { look?: string }).look ?? null]);
@@ -208,7 +208,7 @@ export function usePreviews(p: PreviewInput): Previews {
         todo.forEach((t, i) => {
           const row = rows.find((r) => r && r.id === t.id);
           const pic = pictureOf(row);
-          if (pic) got[ks[i]] = { src: pic.src, w: pic.w, h: pic.h, layout: pic.layout, canvas: pic.canvas, design: pic.design, fallback: pic.fallback, plan8: pic.plan8 };
+          if (pic) got[ks[i]] = { src: pic.src, w: pic.w, h: pic.h, layout: pic.layout, canvas: pic.canvas, design: pic.design, fallback: pic.fallback, plan8: pic.plan8, plan8Core: pic.plan8Core };
           else if (row && row.available === false) held[t.id] = typeof row.why === 'string' && row.why ? row.why : 'bar_pupil';
           else failed[ks[i]] = true;
         });

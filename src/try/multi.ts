@@ -97,10 +97,10 @@ export function keptSealed(e: Pick<Eye, 'sealed' | 'sealedSizes'>, n: number): P
 
 /** One composed preview as /api/compose returned it. The rest is what the server said about the picture (api/compose.py): the canvas it drew, the design
  *  and any fallback it took (stack_contrast: one iris in front of the other; overlap_fallback: wide pupils, the irises touch), the identity of its plan
- *  (plan8, sent back at checkout) and the options that applied (swap, rotate, look: what checkout is told). */
+ *  (plan8 and plan8Core, sent back at checkout) and the options that applied (swap, rotate, look: what checkout is told). */
 export interface Art {
   src: string; w: number; h: number; layout: string;
-  canvas?: string | null; design?: string | null; fallback?: string | null; plan8?: string | null; opts?: Record<string, unknown>;
+  canvas?: string | null; design?: string | null; fallback?: string | null; plan8?: string | null; plan8Core?: string | null; opts?: Record<string, unknown>;
 }
 
 /** The layouts n eyes can take, the first one the engine's default for that count: the table the six legacy styles share in the registry

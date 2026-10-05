@@ -98,7 +98,7 @@ export function sendHelp(f: { route: 'manual'; eyes: number; why: string; lang: 
 }
 
 /** The picture a tile or a one-style reply carries, as the page keeps it (null when there is none: a tile that was held back). */
-export interface Picture { src: string; w: number; h: number; layout: string; canvas: string | null; design: string | null; fallback: string | null; plan8: string | null; opts: Record<string, unknown> }
+export interface Picture { src: string; w: number; h: number; layout: string; canvas: string | null; design: string | null; fallback: string | null; plan8: string | null; plan8Core?: string | null; opts: Record<string, unknown> }
 
 export function pictureOf(r: unknown, opts: Record<string, unknown> = {}): Picture | null {
   if (!isObj(r) || typeof r.image !== 'string' || !r.image) return null;
@@ -106,6 +106,6 @@ export function pictureOf(r: unknown, opts: Record<string, unknown> = {}): Pictu
     src: `data:image/jpeg;base64,${r.image}`, w: typeof r.width === 'number' ? r.width : 0, h: typeof r.height === 'number' ? r.height : 0,
     layout: typeof r.layout === 'string' ? r.layout : '', canvas: typeof r.canvas === 'string' ? r.canvas : null,
     design: typeof r.design_used === 'string' ? r.design_used : null, fallback: typeof r.fallback === 'string' ? r.fallback : null,
-    plan8: typeof r.plan8 === 'string' ? r.plan8 : null, opts: isObj(r.opts) ? r.opts : opts,
+    plan8: typeof r.plan8 === 'string' ? r.plan8 : null, plan8Core: typeof r.plan8_core === 'string' ? r.plan8_core : null, opts: isObj(r.opts) ? r.opts : opts,
   };
 }

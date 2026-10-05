@@ -14,6 +14,8 @@ IE8 (a missing 4K plate is found at checkout), IE10 (the names helper: 480 chara
   7.  after payment: the paid record carries the plan, a plan of another session is not used, a session made before the cutover is paid after it
   8.  the legal texts and the strings (I15, I23): the terms and the privacy policy, one LEGAL_UPDATED and the regenerated pack, the claims scan with its refusals,
       the AI sentence, consent byte for byte, the build checks on copies of the repository with one mutated line each
+  9.  the review of WP12 (fixer): a legacy preview and its paid file draw one names line, the owner's note shows names, date and options, and the page's plan8
+      against the server's (plan8_core: only the choices the pixels decided may differ, for the collision family)
 
 No network, no image model (the eyes are procedural), no real eye. Run by suites/run_main.sh as v3checkout.
     python test_checkout_styles.py       prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure"""
@@ -783,7 +785,141 @@ check("check_styles refuses a number of styles in a string again (All 6 styles)"
 
 check("no file of this work holds a dash, an invisible character or a written price (the guard checks scan scripts/ and src/ too: this is the part they do not read)",
       all(not re.search(DASH, read(f)) and not re.search("[\u200b-\u200f\u2028-\u202e\u2060-\u2064\ufeff]", read(f)) for f in
-          ("api/_lib/words.py", "api/checkout.py", "api/_lib/pay.py", "src/shared/aiMaterial.ts", "src/shared/catalogue.ts", "scripts/styles_tests/test_checkout_styles.py")), "")
+          ("api/_lib/words.py", "api/checkout.py", "api/_lib/pay.py", "src/shared/aiMaterial.ts", "src/shared/catalogue.ts", "scripts/styles_tests/test_checkout_styles.py", "src/admin/orderWords.ts")), "")
+
+# ============================================================================================ 9. the review of WP12
+section("9. review fixes: the legacy names line is one line, the owner reads the names, the page's plan8 against the server's when only the pixel choices differ")
+# ---- 9a: a legacy style's preview and its paid file draw the same names line (the legacy composer draws the string as it is)
+LEG_IN = ["Mantas; Ruta", "Anna ; Max", "Anna" + chr(0xA0) + "Max;Ruta", "Ann" + chr(0x200B) + "a;Max", chr(0x202E) + "Anna;Max", "A   B;C", "Anna\nMax", "  Anna  ", "Anna;Max", ["Anna", " Max "], ["Mantas; Ruta"],
+          ["A\nB", "C"], "x;" * 150, ["n" * 24] * 8, "", None, 12, {"a": 1}, ["ok", 3, None]]
+
+
+def file_line(raw):
+    """The line the paid file of a legacy order draws: the record's spec (pay.spec_from, the strict reading of a checkout), then the two steps that hand it to the
+    legacy composer: steps._exec_legacy (WORDS.names_wire of the spec) and master_compose (WORDS.names_wire of the body)."""
+    sp = pay.spec_from({"eyes": 1, "style": "studio_black", "layout": "single", "names": raw, "lang": "en"}, SEL)
+    return W.names_wire(W.names_wire(sp["names"]))
+
+
+bad = [(x, CMP._legacy_names(x), file_line(x)) for x in LEG_IN if CMP._legacy_names(x) != file_line(x)]
+check("review of WP12: the names line of a legacy PREVIEW is the line of the PAID FILE for every input (a semicolon with spaces, a no-break space, a zero width character, a right-to-left override, "
+      "runs of spaces, a line break, a list, a list with a semicolon inside a name, 300 characters, eight names of 24, nothing, a number, a dict)", not bad, bad[:3])
+check("... and the page's own form is untouched: 'Anna;Max' is 'Anna;Max' in both (what the page sends is already clean), a name with spaces keeps them, the total is 200",
+      CMP._legacy_names("Anna;Max") == file_line("Anna;Max") == "Anna;Max" and CMP._legacy_names("Mantas; Ruta") == "Mantas;Ruta" and len(CMP._legacy_names("x;" * 150)) <= 200
+      and CMP._legacy_names(None) == "" and CMP._legacy_names(12) == "", (CMP._legacy_names("Mantas; Ruta"), CMP._legacy_names("x;" * 150)[:20]))
+src_steps, src_master = read("api/_lib/styles/steps.py"), read("api/master_compose.py")
+check("... the two steps that hand the line to the legacy composer still go through words.names_wire (the premise of the parity above)",
+      'WORDS.names_wire(spec.get("names"))' in src_steps and 'WORDS.names_wire(body.get("names"))' in src_master, "")
+
+# ---- 9b: the owner's note of a new order shows the names as the customer wrote them, the date and the options
+sent = []
+real_owner_note = pay.owner_note
+pay.owner_note = lambda order, kind, subject, text: sent.append((kind, subject, text)) or {"ok": True}
+try:
+    base_paid = {"paid": True, "amount_total": 7997, "currency": "eur", "session_id": "cs_test_x", "email": "jurate@example.com", "livemode": False, "market": "eu"}
+    pay.note_paid("260101-ab", dict(base_paid, spec={"eyes": 2, "style": "solo.universe", "layout": "single", "names": ["Jūratė", "Tomas"], "date": "12 05",
+                                                     "opts": {"swap": True, "rotate": 2, "look": "vortex"}, "title": "", "lang": "lt", "market": "eu"}))
+    pay.note_paid("260101-ac", dict(base_paid, spec={"eyes": 1, "style": "studio_black", "layout": "single", "names": "Anna;Max", "title": "", "lang": "en", "market": "eu"}))
+finally:
+    pay.owner_note = real_owner_note
+t_new, t_old = sent[0][2], sent[1][2]
+check("review of WP12: the owner's new-order note prints the names as 'Jūratė, Tomas' (never a Python list), the date and the options that decide the picture (swap, rotate, look)",
+      "Names: Jūratė, Tomas\n" in t_new and "Date: 12 05\n" in t_new and "Options: swap, rotate 2, look vortex\n" in t_new and "['" not in t_new and '["' not in t_new, t_new)
+check("... an order of the old form (names as one text, no date, no options) prints as it did, with dashes for what it has not", "Names: Anna;Max\n" in t_old and "Date: -\n" in t_old and "Options: -\n" in t_old, t_old)
+check("opts_text: only the options that are on (swap false and rotate 0 are not), '' for none or for anything that is not options",
+      pay.opts_text({"opts": {"swap": False, "rotate": 0}}) == "" and pay.opts_text({"opts": {"look": "echo"}}) == "look echo" and pay.opts_text({}) == "" and pay.opts_text(None) == ""
+      and pay.opts_text({"opts": "nonsense"}) == "", "")
+
+# ---- 9c: the page's plan8 against the server's: only the pixel choices may differ
+section("9c. plan8 and plan8_core: a collision plan that differs only in what the pixels decided is the server's plan; any other difference is still 409 plan_changed")
+base_plan = {"v": 1, "style": "duo.kiss_collision", "family": "collision", "layout": "pair", "eyes": 2, "opts": {}, "eye_ids": ["a" * 16, "b" * 16], "pv": 1, "engine_v": 3, "work_side": 2048,
+             "plate_families": [], "clean": 0, "canvas": "3:2", "design_used": "kiss", "fallback": None, "seed_key": "k1", "plates": None, "frozen": {"lens": "weave", "front": [0, 1]},
+             "steps": [{"name": "art", "kind": "art", "eyes": [1, 2]}]}
+flip = dict(base_plan, frozen={"lens": "stack", "front": [1, 0]}, fallback="stack_contrast", design_used="kiss", seed_key="k2", plates=["p1"])
+check("steps.plan8_core: plans that differ only in the pixel choices (the frozen choices, the fallback, the design drawn and its seed key, the plates) have the same core and another plan8",
+      SP.plan8(base_plan) != SP.plan8(flip) and SP.plan8_core(base_plan) == SP.plan8_core(flip) and SP.plan8(base_plan) == SP._plan_digest(base_plan, SP.PLAN8_KEYS), (SP.plan8(base_plan), SP.plan8(flip)))
+others = {"layout": "row", "opts": {"swap": True}, "eye_ids": ["a" * 16, "c" * 16], "eyes": 3, "pv": 2, "engine_v": 4, "style": "duo.kiss_collision_x", "work_side": 1024,
+          "steps": [{"name": "art", "kind": "art", "eyes": [1, 2, 3]}]}
+check("... and a plan of another layout, option, eye, eye count, plates version, engine version, style, working size or step has another core (a real change of the order is never forgiven)",
+      all(SP.plan8_core(dict(base_plan, **{k: v})) != SP.plan8_core(base_plan) for k, v in others.items()), [k for k, v in others.items() if SP.plan8_core(dict(base_plan, **{k: v})) == SP.plan8_core(base_plan)])
+check("a core is 8 hex digits like plan8, and a plan without the pixel keys at all has the same core as with them",
+      re.fullmatch(r"[0-9a-f]{8}", SP.plan8_core(base_plan)) and SP.plan8_core({k: v for k, v in base_plan.items() if k not in SP.PIXEL_KEYS}) == SP.plan8_core(base_plan), "")
+
+def comp9(body):
+    """/api/compose called in this process (the payments harness serves no compose route): (200, the reply) or (the status it answers, its error)."""
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            return 200, CMP.compose(body, "")
+    except Exception as e:  # noqa: BLE001
+        return getattr(e, "status", 500), {"error": f"{type(e).__name__}: {str(e)[:300]}"}
+
+
+with Show("duo.kiss_collision", "grp.collision", "solo.gold", stage="live"):
+    oA, kA = new_order(["blue_round", "green_round"])
+    cA, jA = co(oA, kA, "duo.kiss_collision", 2, names=["Jūratė", "Tomas"], date="12 05")
+    planA = (rj(f"orders/{oA}/order.json") or {}).get("checkout", {}).get("plan") or {}
+    sv, sv_core = jA.get("plan8"), SP.plan8_core(planA) if planA else None
+    alt = dict(planA, frozen=dict(planA.get("frozen") or {}, lens="stack"), fallback="stack_contrast")
+    page8, page_core = SP.plan8(alt), SP.plan8_core(alt)
+    check("setup: a pair is ordered; a copy of its plan with other pixel choices has another plan8 and the same core", cA == 200 and planA.get("decided") is True and page8 != sv and page_core == sv_core, (cA, jA))
+    # the compose reply says the core too, and it is the checkout's own for the same eyes (two eyes: compose and checkout read the same 1024 px copy)
+    c_cmp, j_cmp = comp9({"sealed": [eye("blue_round")[2], eye("green_round")[2]], "style": "duo.kiss_collision", "names": ["Jūratė", "Tomas"], "date": "12 05", "size": 480, "pad": 1.12})
+    check("compose (/api/compose) names plan8_core beside plan8, and for two eyes both are the checkout's: the core equals steps.plan8_core of the plan stored at checkout",
+          c_cmp == 200 and j_cmp.get("plan8") == sv and j_cmp.get("plan8_core") == sv_core and re.fullmatch(r"[0-9a-f]{8}", j_cmp.get("plan8_core") or ""),
+          (c_cmp, {k: j_cmp.get(k) for k in ("plan8", "plan8_core", "error")}, sv, sv_core))
+    n_creates = len(H.Fake.creates)
+    got = {}
+    for label, kw in (("no core", dict(plan8=page8)), ("a wrong core", dict(plan8=page8, plan8_core="00000000")),
+                      ("the core of another option", dict(plan8=page8, plan8_core=SP.plan8_core(dict(alt, opts={"swap": True})))),
+                      ("a core that is not text", dict(plan8=page8, plan8_core=123)), ("a core that is a list", dict(plan8=page8, plan8_core=[page_core])),
+                      ("a plan8 that is not text", dict(plan8=123, plan8_core=page_core)),
+                      ("a core and no plan8", dict(plan8_core=page_core))):
+        oB, kB = new_order(["blue_round", "green_round"])
+        got[label] = co(oB, kB, "duo.kiss_collision", 2, names=["Jūratė", "Tomas"], date="12 05", **kw), oB
+    check("only the pixel choices differ is the one exception: a page plan8 with no core, a wrong core, the core of another option, a core that is not text, a list, a plan8 that is not text are 409 plan_changed (never a 5xx) "
+          "and create nothing; a core alone compares nothing and the order is the plain one",
+          all(c == 409 and j.get("reason") == "plan_changed" and j.get("plan8") == sv for label, ((c, j), _) in got.items() if label != "a core and no plan8")
+          and got["a core and no plan8"][0][0] == 200 and len(H.Fake.creates) == n_creates + 1
+          and all("checkout" not in (rj(f"orders/{o_}/order.json") or {}) for label, (_, o_) in got.items() if label != "a core and no plan8"), {k: (v[0][0], v[0][1].get("reason")) for k, v in got.items()})
+    oC, kC = new_order(["blue_round", "green_round"])
+    cC, jC = co(oC, kC, "duo.kiss_collision", 2, names=["Jūratė", "Tomas"], date="12 05", plan8=" " + page8.upper() + " ", plan8_core=" " + page_core.upper())
+    chkC = (rj(f"orders/{oC}/order.json") or {}).get("checkout") or {}
+    pC, _ = H.Fake.creates[-1]
+    check("the pixel choices differ and the core is the server's: the order is made (200) on the SERVER's plan (reply, the plan in order.json, the Stripe metadata: its plan8, never the page's), recorded as "
+          "plan8_note pixel_choices with the page's plan8, and a plan8_shown that says it was compared",
+          cC == 200 and jC["plan8"] == sv and chkC.get("plan") and chkC["plan"]["plan8"] == sv and pC["metadata[plan8]"] == sv and chkC.get("plan8_note") == "pixel_choices"
+          and chkC.get("plan8_page") == page8 and chkC.get("plan8_shown") is True, (cC, jC, {k: chkC.get(k) for k in ("plan8_note", "plan8_page", "plan8_shown")}))
+    oD, kD = new_order(["blue_round", "green_round"])
+    cD, jD = co(oD, kD, "duo.kiss_collision", 2, names=["Jūratė", "Tomas"], date="12 05", plan8=sv, plan8_core=page_core)
+    chkD = (rj(f"orders/{oD}/order.json") or {}).get("checkout") or {}
+    check("the server's own plan8 (with or without a core) is the plain comparison: 200, no note, nothing recorded about a difference",
+          cD == 200 and "plan8_note" not in chkD and "plan8_page" not in chkD and chkD.get("plan8_shown") is True, (cD, jD))
+    # a family that does not decide from the pixels never takes the road: its plan is the sealed profile's and the same on the page and here
+    oS, kS = new_order(["blue_round"])
+    cS0, jS0 = co(oS, kS, "solo.gold", 1, names=["Jūratė"])
+    planS = (rj(f"orders/{oS}/order.json") or {}).get("checkout", {}).get("plan") or {}
+    oS2, kS2 = new_order(["blue_round"])
+    cS, jS = co(oS2, kS2, "solo.gold", 1, names=["Jūratė"], plan8=SP.plan8(dict(planS, frozen={"liquid": "other"})), plan8_core=SP.plan8_core(planS))
+    check("a family that does not decide from the pixels (Celestial Gold) never takes the exception: another plan8 is 409 plan_changed even with the server's own core",
+          cS0 == 200 and cS == 409 and jS["reason"] == "plan_changed", (cS0, cS, jS))
+    # the whole road with real copies: a trio is previewed from the 768 px copies of its eyes and ordered from the 1024 px ones
+    trio = ["blue_round", "green_round", "grey_round"]
+    s768 = []
+    for nm in trio:
+        jpeg_, prof_, _ = eye(nm)
+        s768.append(P.protect(Image.open(io.BytesIO(jpeg_)).convert("RGB"), jpeg_, profile=prof_)["sealed_sizes"]["768"])
+    c_t, j_t = comp9({"sealed": s768, "style": "grp.collision", "names": ["Jūratė", "Tomas", "Rūta"], "date": "12 05", "size": 480, "pad": 1.12})
+    oT, kT = new_order(trio)
+    cT, jT = co(oT, kT, "grp.collision", 3, names=["Jūratė", "Tomas", "Rūta"], date="12 05", plan8=j_t.get("plan8"), plan8_core=j_t.get("plan8_core"))
+    planT = (rj(f"orders/{oT}/order.json") or {}).get("checkout", {}).get("plan") or {}
+    chkT = (rj(f"orders/{oT}/order.json") or {}).get("checkout") or {}
+    check("a trio previewed from the 768 px copies and ordered from the 1024 px ones: compose's core is the checkout's core whatever the pixels decided, and the order is made whether or not the plan8 "
+          "matched (equal: the plain comparison; different: the server's plan, noted); never the 409 that would come again at every retry",
+          c_t == 200 and cT == 200 and j_t.get("plan8_core") == SP.plan8_core(planT) and jT["plan8"] == planT.get("plan8")
+          and ((j_t.get("plan8") == jT["plan8"] and "plan8_note" not in chkT) or (j_t.get("plan8") != jT["plan8"] and chkT.get("plan8_note") == "pixel_choices")),
+          (c_t, cT, j_t.get("plan8"), j_t.get("plan8_core"), jT, chkT.get("plan8_note")))
+    check("... (information) whether the 768 px copies decided the trio differently from the 1024 px ones on these three eyes: "
+          + ("yes, the exception was used" if chkT.get("plan8_note") else "no, the plans are equal"), True)
 
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed", flush=True)
 E.record = _real_record

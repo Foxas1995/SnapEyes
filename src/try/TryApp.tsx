@@ -804,7 +804,7 @@ export const TryApp: React.FC = () => {
       const market = currentMarket();
       const shown = priceMinor(list.length, style, market, listFor(market, ordering?.prices));
       // the artwork on screen, as the server described it: its plan (plan8) and the options that applied are sent back, so a checkout of something else is a 409
-      out = await runCheckout({ eyes: list, style, layout: lay, names: wireNames(namesList), date, familyName: family, opts: art.opts, plan8: art.plan8, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown },
+      out = await runCheckout({ eyes: list, style, layout: lay, names: wireNames(namesList), date, familyName: family, opts: art.opts, plan8: art.plan8, plan8Core: art.plan8Core, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown },
         (s) => setBuy((b) => ({ ...b, step: s })));
     } catch {
       out = { kind: 'error', code: 'failed', ref: orderRefRef.current };

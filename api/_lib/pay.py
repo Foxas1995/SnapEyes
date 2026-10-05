@@ -794,6 +794,13 @@ def names_text(spec):
     return W.names_text(spec.get("names") if isinstance(spec, dict) else None)
 
 
+def opts_text(spec):
+    """The options an order draws, for the owner's note: "swap, rotate 2, look vortex" (only the ones that are on); '' for none."""
+    o = W.opts_read(spec.get("opts") if isinstance(spec, dict) else None)
+    parts = (["swap"] if o.get("swap") else []) + ([f"rotate {o['rotate']}"] if o.get("rotate") else []) + ([f"look {o['look']}"] if o.get("look") else [])
+    return ", ".join(parts)
+
+
 def item_name(spec, layout=True):
     """The Stripe line item and the confirmation e-mail's artwork row, in the order's language: the style as an order prints it (its brand name, and for a style
     with looks the look: "Universe, Vortex", because the look is a different product) and, for a style of the v3 engine with two or more eyes, the layout word
@@ -2479,7 +2486,9 @@ def note_paid(order, paid):
     mm = paid.get("amount_mismatch") if isinstance(paid.get("amount_mismatch"), dict) else None
     text = (f"Order {order} is paid ({'live' if paid.get('livemode') else 'TEST mode'}).\n"
             f"Eyes: {spec.get('eyes')}, style {spec.get('style')}, layout {spec.get('layout')}\n"
-            f"Names: {spec.get('names') or '-'}\nTitle: {spec.get('title') or '-'}\nLanguage: {spec.get('lang')}\n"
+            # the names are a list for every new order: the owner reads them as the customer wrote them, with the date and the options that decide the picture
+            f"Names: {names_text(spec) or '-'}\nDate: {W.date_clean(spec.get('date')) or '-'}\nOptions: {opts_text(spec) or '-'}\n"
+            f"Title: {spec.get('title') or '-'}\nLanguage: {spec.get('lang')}\n"
             f"Market: {spec.get('market') or DEFAULT_MARKET}\n"
             + (f"CHECK THE AMOUNT: paid {amount_text(paid.get('amount_total') or 0, 'en', cur)}, the order costs "
                f"{amount_text(mm.get('expected') or 0, 'en', mm.get('currency'))} (market {mm.get('market')}). It is "

@@ -135,11 +135,13 @@ export interface CheckoutInput {
   market?: string;
   /** The rest of the artwork's description (api/compose.py's reply names the options that applied): the date line and the family name, the options
    *  (swap, rotate, look) and plan8, the identity of the plan the preview on screen is (the server recomputes the plan from the sealed profiles and answers 409
-   *  plan_changed when it differs). Absent or empty ones are not sent. */
+   *  plan_changed when it differs) and plan8Core, the same identity without the choices the pixels of the page's smaller copies of the eyes decided (checkout takes its own
+   *  plan when only those differ: the collision family, three to eight eyes). Absent or empty ones are not sent. */
   date?: string;
   familyName?: string;
   opts?: Record<string, unknown>;
   plan8?: string | null;
+  plan8Core?: string | null;
   /** A price experiment's signed assignment token (src/shared/pricing.ts experimentToken): the server prices the order from
    *  it alone. None: the standard ladder. */
   expToken?: string | null;
@@ -288,6 +290,7 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
       ...(inp.familyName ? { family_name: inp.familyName } : {}),
       ...(inp.opts && Object.keys(inp.opts).length ? { opts: inp.opts } : {}),
       ...(inp.plan8 ? { plan8: inp.plan8 } : {}),
+      ...(inp.plan8 && inp.plan8Core ? { plan8_core: inp.plan8Core } : {}),
       ...(inp.expToken ? { exp_token: inp.expToken } : {}),
       ...(typeof inp.shown === 'number' ? { shown: inp.shown } : {}),
     },

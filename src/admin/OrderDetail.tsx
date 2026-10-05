@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
 import type { EyeView, OrderDetail, Payment, Reply, StepsView } from './api';
 import { StepTable } from './StepTable';
+import { namesText } from './orderWords';
 import type { Call } from './AdminApp';
 import { actionLt, AKYS, explain, fmtBytes, fmtMoney, fmtNum, fmtTime, logResultLt, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, ConfirmDialog, CopyField, DANGER, ExtLink, H2, JsonView, MUTED, Notice, Rows, Spinner, Thumb, Toast } from './ui';
@@ -192,7 +193,8 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
               ['Kalba', s(spec.lang) || s(orderRec.lang) || '-'],
               ['Kūrinys', d.paid ? `${eyesText(spec.eyes)}, ${STYLE_LT[s(spec.style)] || s(spec.style)}, išdėstymas ${s(spec.layout) || '-'}`
                 : s(obj(checkout.spec).style) ? `mokėjimas pradėtas: ${eyesText(obj(checkout.spec).eyes)}, ${STYLE_LT[s(obj(checkout.spec).style)] || s(obj(checkout.spec).style)}` : 'neapmokėtas'],
-              ['Vardai ant kūrinio', s(spec.names) || '-'],
+              ['Vardai ant kūrinio', namesText(spec.names) || '-'],
+              ['Data ant kūrinio', s(spec.date) || '-'],
               ['Pavadinimas', s(spec.title) || '-'],
               ['Kaina', d.paid ? `${fmtMoney(n(paidRec.amount_total), s(paidRec.currency))}${paidRec.amount_mismatch ? ' (nesutampa su kainoraščiu!)' : ''}` : checkout.amount ? fmtMoney(n(checkout.amount), s(checkout.currency)) : '-'],
               ['Rinka', s(paidRec.market) || s(spec.market) || s(checkout.market) || (d.paid || checkout.amount ? 'eu' : '-')],
