@@ -445,15 +445,26 @@ class Show:
 ids_before = list(CT.previewable_ids(1))
 check("before anything is raised the customer's list of styles for one eye holds the legacy six and no style of the engine",
       not any(i in ids_before for i in SINGLES_STYLES) and len(ids_before) == 6, ids_before)
-r_lab = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12})
-check("a laboratory style asked by a customer is not drawn by the engine (the request falls to the default style, as an unknown id always did); no compose event names it",
-      r_lab["style"] == CT.DEFAULT_STYLE and "canvas" not in r_lab and all(e[1].get("style") != "solo.gold" for e in EVENTS), (r_lab["style"], EVENTS[-1:]))
+try:
+    CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12})
+    e_lab = None
+except Exception as e_:  # noqa
+    e_lab = e_
+# WP10 (compose API v3): the old check said that a laboratory style falls to the default style; the contract says 422 style_unavailable, and never a render
+check("a laboratory style asked by a customer is not drawn by the engine: 422 style_unavailable (why stage), nothing is rendered; no compose event names it",
+      getattr(e_lab, "status", None) == 422 and e_lab.body["reason"] == "style_unavailable" and e_lab.body["why"] == "stage"
+      and all(e[1].get("style") != "solo.gold" for e in EVENTS), (e_lab, EVENTS[-1:]))
 EVENTS.clear()
 with Show("solo.gold"), mock.patch.object(L, "colour_qa", wraps=L.colour_qa) as qa_spy:
     r_g = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026", "lang": "en"})
     ids_shown = list(CT.previewable_ids(1))
     rg2 = CMP.compose({"sealed": [sealed], "style": "solo.gold", "format": "wallpaper", "pad": 1.12})
-    rg3 = CMP.compose({"sealed": [sealed], "style": "solo.gold", "format": "bogus", "layout": "ring", "pad": 1.12})
+    rg3 = CMP.compose({"sealed": [sealed], "style": "solo.gold", "format": "bogus", "pad": 1.12})
+    try:
+        CMP.compose({"sealed": [sealed], "style": "solo.gold", "layout": "ring", "pad": 1.12})
+        e_ring = None
+    except Exception as e_:  # noqa
+        e_ring = e_
     ev_g = [e for e in EVENTS if e[0] == "compose"][0][1]
 meta_ = P.unseal_full(sealed)[1]
 exp_pv = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye_id"])], {"style": "solo.gold", "layout": "single", "eyes": 1, "canvas": "1:1", "names": "Anna \u00b7 Max", "date": "12 May 2026"},
@@ -466,9 +477,9 @@ check("a style made visible is drawn by the engine: the reply has every field of
       and r_g["eyes"][0]["eye_id"] == meta_["eye_id"] and isinstance(r_g["qa"].get("ok"), bool), {k: r_g[k] for k in r_g if k not in ("image",)})
 check("the picture a customer gets is a preview: it is not the clean picture (the words of the watermark lie over the whole canvas and on the iris), and the clean render of the same bytes is not what the reply holds",
       r_g["image"] != L.pil_to_b64(ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye_id"])], {"style": "solo.gold", "layout": "single", "eyes": 1, "canvas": "1:1", "names": "Anna \u00b7 Max", "date": "12 May 2026"}, size=1024).img, "JPEG", 90))
-check("the format words of the legacy page read as canvases: wallpaper is the phone canvas (9:19.5), an unknown format and a layout that is not the style's fall back to the square artwork",
+check("the format words of the legacy page read as canvases: wallpaper is the phone canvas (9:19.5), an unknown format falls back to the square artwork; a layout that is not the style's is a 400 (WP10: it fell back to the default before)",
       rg2["canvas"] == "9:19.5" and rg2["format"] == "wallpaper" and rg2["width"] < rg2["height"] and abs(rg2["height"] / rg2["width"] - 19.5 / 9) < 0.01
-      and rg3["canvas"] == "1:1" and rg3["format"] == "artwork" and rg3["layout"] == "single")
+      and rg3["canvas"] == "1:1" and rg3["format"] == "artwork" and rg3["layout"] == "single" and isinstance(e_ring, L.ClientError))
 check("the compose event names the style and the set's gate like every compose event, and the colour QA ran on the graded frame",
       ev_g.get("style") == "solo.gold" and ev_g.get("eyes") == 1 and ev_g.get("layout") == "single" and ev_g.get("format") == "artwork" and ev_g.get("clean") is False and "gate" in ev_g
       and E.build("compose", ev_g).get("style") == "solo.gold" and qa_spy.called, ev_g)
@@ -533,15 +544,21 @@ check("a letter the artwork font cannot draw is left out of a free preview (it w
       r_font["ok"] and CMP._engine_text("Anna \u4e2d\u6587 \u2665 Max") == "Anna Max" and CMP._engine_text("\u0105\u010d\u0119\u0117\u012f\u0161\u0173\u016b\u017e \u0151\u0171 \u00e4\u00f6\u00fc\u00df") != "", CMP._engine_text("Anna \u4e2d\u6587 \u2665 Max"))
 two = [sealed] * 2
 with Show("solo.gold"):
-    r_two = CMP.compose({"sealed": two, "style": "solo.gold", "pad": 1.12})
-check("two eyes asked for a one-eye style are not drawn by it: the request falls back to a style that takes two eyes",
-      r_two["style"] != "solo.gold" and r_two["count"] == 2)
+    e_two = raises(lambda: CMP.compose({"sealed": two, "style": "solo.gold", "pad": 1.12}), Exception)
+# WP10 (compose API v3): the old check said that two eyes asked for a one-eye style fall back to a style that takes two; the contract says 422 style_unavailable (why eyes)
+check("two eyes asked for a one-eye style are not drawn by it: 422 style_unavailable (why eyes), nothing is rendered",
+      getattr(e_two, "status", None) == 422 and e_two.body["reason"] == "style_unavailable" and e_two.body["why"] == "eyes", e_two)
 with Show("solo.gold"):
     r_legacy = CMP.compose({"sealed": [sealed], "style": "celestial_gold", "pad": 1.12})
 check("a legacy style is still drawn by the legacy engine, with none of the engine's fields", r_legacy["style"] == "celestial_gold" and "canvas" not in r_legacy and r_legacy["format"] == "artwork")
-check("compose.py has no path to the lab for a customer: it never imports ops, never reads an authorization header, an admin key or a lab flag",
-      not re.search(r"import ops|\bops\.\w+\(|authorization|body\.get\(.lab.\)|admin_key", read(os.path.join(API, "compose.py"))),
-      re.findall(r"import ops|\bops\.\w+\(|authorization|body\.get\(.lab.\)|admin_key", read(os.path.join(API, "compose.py")))[:4])
+with Show("solo.gold", "lab"):
+    e_lab1 = raises(lambda: CMP.compose({"sealed": [sealed], "style": "solo.gold", "lab": True, "pad": 1.12}), Exception)
+    e_lab2 = raises(lambda: CMP.compose({"sealed": [sealed], "style": "solo.gold", "lab": True, "pad": 1.12}, "admin-1.2.3"), Exception)
+src_c = read(os.path.join(API, "compose.py"))
+# WP10 (compose API v3): the old check said that compose never reads an authorization header, an admin key or a lab flag (WP5A: the lab was the admin page's own action
+# until the compose work package gave compose the flag). Now the only way to the lab is lab true with a valid admin key, looked at through ops.check_admin_key, imported on use
+check("compose.py reaches the laboratory only with lab true AND a valid admin key (ops.check_admin_key, imported on use, never at the top of the module): a customer, and a wrong key, get 422 style_unavailable",
+      getattr(e_lab1, "status", None) == 422 and getattr(e_lab2, "status", None) == 422 and not re.search(r"^(import|from)\s.*\bops\b", src_c, re.M) and "ops.check_admin_key" in src_c, (e_lab1, e_lab2))
 EVENTS.clear()
 spec_m = importlib.util.spec_from_file_location("master_compose", os.path.join(API, "master_compose.py"))
 MC = importlib.util.module_from_spec(spec_m)

@@ -301,6 +301,7 @@ GOLDENS = {   # recorded on the base commit 90695da (before the registry) with t
     "handler supernova 2 fusion": "57b2cedc3279eebb461c", "handler supernova 2 fusion fields": "84091a94180d6ee0d499",
 }
 IR = [synth_iris(seed=s, hue=s) for s in range(1, 9)]
+NEW_REPLY_FIELDS = ("tiles", "pick", "size", "opts", "design_used", "fallback", "engine", "selfcheck", "timing")      # the compose API v3's additive fields (WP10)
 got = {}
 replies = {}
 with contextlib.redirect_stdout(io.StringIO()):
@@ -319,19 +320,32 @@ with contextlib.redirect_stdout(io.StringIO()):
         img = Image.open(io.BytesIO(base64.b64decode(rep["image"]))).convert("RGB")
         got[f"handler {style} {n} {layout}"] = h(img)
         got[f"handler {style} {n} {layout} fields"] = hashlib.sha256(
-            json.dumps({k: v for k, v in rep.items() if k not in ("image", "qa", "eyes")}, sort_keys=True).encode()).hexdigest()[:20]   # "eyes": added by WP3, additive (v3gate checks it); the old fields stay byte for byte
+            json.dumps({k: v for k, v in rep.items() if k not in ("image", "qa", "eyes", *NEW_REPLY_FIELDS)}, sort_keys=True).encode()).hexdigest()[:20]   # "eyes": added by WP3, the NEW_REPLY_FIELDS by WP10 (compose API v3): additive (v3gate and v3compose check them); the old fields stay byte for byte
 diff = {k: (got.get(k), v) for k, v in GOLDENS.items() if got.get(k) != v}
 check("the six legacy ids render the same pixels as before the registry (22 results of the engine and of the compose handler)", not diff, diff)
 rep = replies[("celestial_gold", 4)]
 check("compose reply: styles is the six legacy ids in the old order, layouts the old table for the eye count, the layout as chosen",
       rep["styles"] == LEGACY and rep["layouts"] == ["grid", "row"] and rep["layout"] == "row" and replies[("studio_black", 1)]["layouts"] == ["single"]
       and replies[("supernova", 2)]["layout"] == "fusion" and rep["style"] == "celestial_gold" and rep["count"] == 4)
+def _refusal(body):
+    try:
+        COMPOSE.compose(body)
+    except Exception as e:  # noqa
+        return e
+    return None
+
+
 with contextlib.redirect_stdout(io.StringIO()):
-    r_bad = COMPOSE.compose({"irises": [b64(IR[0])], "style": "solo.powder", "pad": 1.12})
+    e_bad = _refusal({"irises": [b64(IR[0])], "style": "solo.powder", "pad": 1.12})
     r_none = COMPOSE.compose({"irises": [b64(IR[0])], "pad": 1.12})
-    r_lay = COMPOSE.compose({"irises": [b64(IR[0]), b64(IR[1])], "style": "supernova", "layout": "grid", "pad": 1.12})
-check("compose with a style that is not previewable (a v3 id, none) falls back to the default style, an unknown layout to the first, as before",
-      r_bad["style"] == r_none["style"] == "celestial_gold" and r_lay["layout"] == "duo" and r_lay["style"] == "supernova")
+    e_lay = _refusal({"irises": [b64(IR[0]), b64(IR[1])], "style": "supernova", "layout": "grid", "pad": 1.12})
+    e_unk = _refusal({"irises": [b64(IR[0])], "style": "nope", "pad": 1.12})
+# WP10 (compose API v3): the old check said that a style that is not previewable falls back to the default style and an unknown layout to the first. The
+# specification's contract says 422 style_unavailable for a style a customer may not have (a laboratory id), 400 for an id that is not the registry's and
+# 400 for a layout the style does not take; a request with no style at all still gets the default style.
+check("compose with a style a customer may not have (a laboratory id) is 422 style_unavailable, an unknown id and a layout the style does not take are 400, no style is the default style",
+      getattr(e_bad, "status", None) == 422 and e_bad.body["reason"] == "style_unavailable" and e_bad.body["why"] == "stage"
+      and isinstance(e_lay, L.ClientError) and isinstance(e_unk, L.ClientError) and r_none["style"] == "celestial_gold")
 check("pay.item_name of the six legacy ids in English and German is the old sentence",
       all(pay.item_name({"eyes": n, "style": i, "lang": lg, "market": "eu"}) == exp
           for i in LEGACY for n in (1, 3) for lg, exp in (

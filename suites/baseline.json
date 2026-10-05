@@ -92,6 +92,9 @@
   },
   "v3coll": {
    "pass": 70
+  },
+  "v3compose": {
+   "pass": 87
   }
  }
 }
