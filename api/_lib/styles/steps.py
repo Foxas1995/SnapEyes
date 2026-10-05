@@ -596,6 +596,10 @@ HOLDS = {
                       "by hand?)", "Look at orders/<order>/style/plan.json and the paid record; delete the plan if it is wrong; then clear the review"),
     "no_engine": ("no engine can draw this style for this number of eyes on this deployment",
                   "The style may have been rolled back to a build without its engine: deploy the build that has it; then clear the review"),
+    "style_rolled_back": ("you took this style back in the admin page and chose to hold the paid orders in flight for your own look (decision DE1), so "
+                          "nothing more is drawn for this order",
+                          "Look at the style on the order's eyes (the admin laboratory draws it) and at the order in the admin panel; if you are happy "
+                          "with it clear the review and the making goes on, or write to the customer"),
 }
 
 

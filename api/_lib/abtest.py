@@ -976,7 +976,19 @@ def _partial(d):
     return set(d.get("changes") or []) != set(PRICE_KEYS)
 
 
-def _experiment_view(key, d, s, rows, now, orders, collecting):
+def catalogue_changes(entries, key):
+    """The changes of the style switch (the entries of the style audit log, ops/styles/audit) that were made while the price test `key` ran and changed what
+    could be ordered: the entry names the running tests in price_test, so a test result is never read without knowing that the catalogue changed inside its
+    window (spec 4.4 step 3). Newest first, at most 30: {t, iso, style, eyes, stage, before, after}, the effective stage of each eye count before and after."""
+    out = []
+    for e in entries or []:
+        if isinstance(e, dict) and e.get("kind") == "override" and key in (e.get("price_test") or []):
+            out.append({"t": e.get("t"), "iso": e.get("iso"), "style": e.get("style"), "eyes": e.get("eyes"), "stage": e.get("stage"),
+                        "before": e.get("effective_before"), "after": e.get("effective_after")})
+    return sorted(out, key=lambda r: -(r["t"] if isinstance(r.get("t"), (int, float)) else 0))[:30]
+
+
+def _experiment_view(key, d, s, rows, now, orders, collecting, catalogue=None):
     cur = currency_of_experiment(key)
     tot = _sum_days(rows[-window_days(s, now):])
     stats = {name: variant_stats(tot, key, name, cur, orders) for name in d["variants"]}
@@ -1018,6 +1030,7 @@ def _experiment_view(key, d, s, rows, now, orders, collecting):
         "stats": [stats[n] for n in d["variants"]], "compare": comps, "need": need, "need_hit": need_hit,
         "untokened": untokened_orders(orders, key, s["runs"], now) if orders is not None else None,
         "days": window_days(s, now), "warnings": warnings, "stats_error": False,
+        "catalogue": catalogue_changes(catalogue, key),
     }
 
 
@@ -1038,17 +1051,18 @@ def _failed_view(key, d, s, now, err):
         "variants": [{"variant": n, "label": v.get("label"), "split": d["split"].get(n), "prices": v.get("prices")}
                      for n, v in d["variants"].items()],
         "stats": [], "compare": [], "need": None, "need_hit": None, "untokened": None, "days": window_days(s, now),
-        "warnings": warnings, "stats_error": True,
+        "warnings": warnings, "stats_error": True, "catalogue": [],
     }
 
 
-def admin_view(collect, audit=None, now=None, ordering_open=None, orders=None, orders_more=False, collecting=None):
+def admin_view(collect, audit=None, now=None, ordering_open=None, orders=None, orders_more=False, collecting=None, catalogue=None):
     """The data of the admin page: every experiment with its definition, state, per-variant statistics, the comparison
     with the control, the sample needed and the warnings. collect(n): ops.collect_days, [(day, counts, complete)] for the
     last n UTC days, oldest first. audit: the admin audit entries (newest first) to show the experiments' lines from.
     orders: the order rows (ops.order_row) of the experiments' window, the source of the paid numbers (None: the events';
     orders_more: the list was cut short, so it is not used). collecting: does this deployment store events at all
-    (events.retention_ok). One experiment whose numbers fail never takes the page down."""
+    (events.retention_ok). catalogue: the entries of the style switch's audit log (ops.a_styles_audit): the changes made while a test ran are shown on
+    that test's card (catalogue_changes). One experiment whose numbers fail never takes the page down."""
     now = time.time() if now is None else now
     st = states(force=True)
     widest = max([window_days(st.get(k), now) for k in DEFS] or [1])
@@ -1059,7 +1073,7 @@ def admin_view(collect, audit=None, now=None, ordering_open=None, orders=None, o
     for key, d in DEFS.items():
         s = st.get(key, _blank())
         try:
-            exps.append(_experiment_view(key, d, s, rows, now, use_orders, collecting))
+            exps.append(_experiment_view(key, d, s, rows, now, use_orders, collecting, catalogue))
         except Exception as e:  # noqa: the state, the ladders and the stop button must always render
             exps.append(_failed_view(key, d, s, now, e))
     log = [e for e in (audit or []) if isinstance(e, dict) and str(e.get("action") or "").startswith("exp_")][:30]

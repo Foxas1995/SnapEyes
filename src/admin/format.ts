@@ -130,6 +130,7 @@ export const ACTION_LT: Record<string, string> = {
   refund: 'Grąžinti pinigus',
   mark_refunded: 'Grąžinau Stripe svetainėje', delete_files: 'Ištrinti failus', lab_start: 'Laboratorijos testas',
   lab_delete: 'Ištrinti laboratorijos testą', exp_start: 'Paleisti kainų testą', exp_stop: 'Sustabdyti kainų testą',
+  styles_override: 'Pakeisti stiliaus būseną', styles_limits: 'Pakeisti dėmesio ribas',
 };
 
 // an audit entry's result code in words (RESULT_LT for the email words, then these), else the code itself
@@ -141,6 +142,9 @@ const LOG_RESULT_LT: Record<string, string> = {
   pending: 'laukia Stripe', bad_request: 'bloga užklausa', not_found: 'nerasta', stopped: 'sustabdyta',
   already_running: 'jau veikė', not_running: 'neveikė', market_taken: 'rinkoje veikia kitas testas', sells_at_loss: 'atmesta: nuostolis',
   stats_not_collected: 'atmesta: statistika nerenkama', retired: 'atmesta: testas užbaigtas',
+  changed: 'pakeista', ticked: 'žymos pakeistos', above_ceiling: 'atmesta: virš registro ribos', needs_ticks: 'atmesta: trūksta žymų',
+  not_switchable: 'atmesta: perjungti negalima', stale_view: 'atmesta: puslapis pasenęs', price_test_running: 'atmesta: veikia kainų testas',
+  no_engine: 'atmesta: nėra variklio',
 };
 
 export const actionLt = (a: unknown): string => ACTION_LT[String(a ?? '')] || String(a ?? '');
@@ -198,6 +202,12 @@ export const REASON_LT: Record<string, string> = {
   plate_retry: 'Stiliui reikalingas failas dar neparuoštas. Pabandyk po akimirkos.',
   room_retry: 'Serveris kaip tik piešia kitą užsakymą. Pabandyk po kelių sekundžių.',
   not_lab: 'Tik laboratorijos testinis užsakymas (lab-...) paleidžiamas šitaip.',
+  above_ceiling: 'Registro riba žemesnė: aukščiau stilių gali pakelti tik peržiūrėtas kodo pakeitimas.',
+  not_switchable: 'Šio stiliaus perjungti negalima: jis dar neturi variklio arba jau išimtas. Tai registro, o ne šio puslapio pakeitimas.',
+  needs_ticks: 'Kad stilius taptų užsakomas, reikia tavo žymų: savo žvilgsnio į galutinius kūrinius (L1) ir nepriklausomo vertinimo (L0) arba tavo rašytinio atsisakymo jo.',
+  no_engine: 'Šiame serveryje šio stiliaus variklio nėra.',
+  stale_view: 'Perjungiklis pakeistas po to, kai šis puslapis buvo nupieštas: perkrauk puslapį.',
+  price_test_running: 'Veikia kainų testas: šis pakeitimas keičia jo imtį. Patvirtink, kad tai perskaitei, ir tęsk.',
 };
 
 /** One sentence for a failed reply: our own words for a known reason, else the server's sentence, else the status. */

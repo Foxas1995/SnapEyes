@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 """The style catalogue: the helpers every other module asks instead of keeping its own list of style ids, names, layouts or
 price rules. The data is api/_lib/styles_registry.py (public: ids, names, eye counts, layouts, stages, price class, gate policy,
-pick, work_side) and api/_lib/styles_engine.py (how each style is drawn; Python only). Nothing here reads storage, the network
-or an engine: importing this module is cheap and safe in every function (enhance, checkout, the webhook).
+pick, work_side) and api/_lib/styles_engine.py (how each style is drawn; Python only). Importing this module reads no storage, no network
+and no engine: it is cheap and safe in every function (enhance, checkout, the webhook). Only stage_of reads something, and only the one
+small object of the owner's overrides, through a 30 s cache (api/_lib/stage_overrides.py; imported on first use).
 
 Stages (styles_registry.py explains them). The literal is the CEILING. The effective stage is the lower of the ceiling and an
-override the owner sets in the admin page (stage_of); the override read path lands with the admin work package and plugs in through
-set_override_source, so until then the effective stage is the ceiling. A style whose engine module is not in the repository
-(engine_built) is never routed to, whatever its stage says: a planned or laboratory id can exist before its engine does.
+override the owner sets in the admin page (stage_of, WP13a: ops/styles/overrides.json). It can only lower; a stage above the ceiling is
+ignored. FAILING CLOSED where money is involved: a storage error is never read as "no override". orderable and orderable_ids are strict
+(they let the storage error out: the checkout answers 503 storage_busy); stage_of without strict, the tile list, the public catalogue and
+every page-facing answer fall back to the ceiling capped at preview, never live. No storage on the deployment at all is no error: there is
+nothing to override. set_override_source(None) is "no overrides" (the literal alone); set_override_source(fn) a test's own.
+EFFECTIVE_DEFAULT is the stage a style of the v3 engine has until the owner's tick records another: None today (the ceiling alone decides);
+the cutover (WP18) raises ceilings to live and sets this to "preview", so that only the owner's recorded tick in the admin page makes a style
+orderable. The six legacy ids are never held to it. A style whose engine module is not in the repository (engine_built) is never routed to,
+whatever its stage says: a planned or laboratory id can exist before its engine does.
 
 The price class (black or art) is ONE predicate, is_black(style): pay.price_cents, abtest.ladder_price, src/shared/markets.ts
 priceMinor, scripts/check_prices.mjs priceRule and scripts/check_experiments.mjs ladderRule all read it and the build compares them.
@@ -38,8 +45,19 @@ EYE_CLASSES = ("own", "dark_brown", "grey")
 MAX_EYES = max(d["eyes"][1] for d in STYLES.values())     # 8
 
 ENGINES_BUILT_EXTRA = set()        # tests only: engine modules to treat as built
+EFFECTIVE_DEFAULT = None           # the stage a v3 style has until the owner's tick records another (None: the ceiling decides; WP18 sets "preview")
+FALLBACK_STAGE = "preview"         # what a style is capped at when the owner's overrides cannot be read (never live)
 _BUILT = {}
-_override_source = None
+
+
+def _store_source(style_id, n):
+    """The default override source: the owner's overrides in private storage (api/_lib/stage_overrides.py), read through a 30 s cache. Raises
+    StorageError when they cannot be read."""
+    from . import stage_overrides as SO
+    return SO.source(style_id, n)
+
+
+_override_source = _store_source
 
 
 # ----------------------------------------------------------------------------- ids, ranges
@@ -122,17 +140,39 @@ def effective_stage(ceil, override):
 
 
 def set_override_source(fn):
-    """The admin override (private storage, WP13a) plugs in here: fn(style_id, n) returns a stage or None. None clears it."""
+    """Where the owner's override comes from: fn(style_id, n) returns a stage or None (it may raise: stage_of fails closed). The default is
+    the owner's object in private storage (_store_source); None means no overrides at all (the literal alone), which is what the tests of the
+    registry use."""
     global _override_source
     _override_source = fn
 
 
-def stage_of(style_id, n):
-    """The effective stage for n eyes: the ceiling, lowered by the owner's override. None: not a style of n eyes."""
+def stage_with(style_id, n, override, ceil=None):
+    """The effective stage the style WOULD have for n eyes under this override (None: none): the lower of the ceiling and the override, where
+    no override means EFFECTIVE_DEFAULT for a style of the v3 engine (never for a legacy id). The one place that rule is written: stage_of reads
+    it, and the admin action's before and after read it too."""
+    c = ceiling(style_id, n) if ceil is None else ceil
+    if c is None:
+        return None
+    if override is None and EFFECTIVE_DEFAULT and not is_legacy(style_id):
+        override = EFFECTIVE_DEFAULT
+    return effective_stage(c, override)
+
+
+def stage_of(style_id, n, strict=False):
+    """The effective stage for n eyes: the ceiling, lowered by the owner's override. None: not a style of n eyes. When the overrides cannot
+    be read the stage is the ceiling capped at FALLBACK_STAGE (preview): a page is still served, nothing is ever LIVE on a guess. strict: the
+    storage error is raised instead (for the places where money is involved: orderable, orderable_ids)."""
     c = ceiling(style_id, n)
-    if c is None or _override_source is None:
+    if c is None or (_override_source is None and not EFFECTIVE_DEFAULT):
         return c
-    return effective_stage(c, _override_source(style_id, n))
+    try:
+        ov = _override_source(style_id, n) if _override_source is not None else None
+    except Exception:  # noqa: whatever failed, the owner's switch is unknown: closed
+        if strict:
+            raise
+        return effective_stage(c, FALLBACK_STAGE)
+    return stage_with(style_id, n, ov, c)
 
 
 def engine_built(module):
@@ -159,9 +199,11 @@ def renderable(style_id, n=None):
     return known(style_id) and _built(style_id) and (n is None or in_range(style_id, n))
 
 
-def orderable(style_id, n):
-    """Effective stage live for that id and eye count (ordering open and the gate are other questions)."""
-    return stage_of(style_id, n) == "live" and _built(style_id)
+def orderable(style_id, n, strict=True):
+    """Effective stage live for that id and eye count (ordering open and the gate are other questions). Strict by default: it is the question
+    the checkout asks, so a storage error that hides the owner's switch is raised (503 storage_busy), never read as live. strict=False reads
+    it as the page-facing stage_of does (capped at preview on an error: not orderable)."""
+    return stage_of(style_id, n, strict) == "live" and _built(style_id)
 
 
 def previewable(style_id, n, admin=False):
@@ -176,8 +218,9 @@ def renderable_ids(n):
     return tuple(i for i in STYLES if renderable(i, n))
 
 
-def orderable_ids(n):
-    return tuple(i for i in STYLES if orderable(i, n))
+def orderable_ids(n, strict=True):
+    """The ids a customer can order for n eyes (strict as orderable: the checkout's own question)."""
+    return tuple(i for i in STYLES if orderable(i, n, strict))
 
 
 def previewable_ids(n, admin=False):
@@ -185,8 +228,8 @@ def previewable_ids(n, admin=False):
 
 
 def orderable_max_eyes():
-    """The largest eye count some style is orderable for (0 when nothing is): the landing and the buy card print it."""
-    return max((n for n in range(1, MAX_EYES + 1) if orderable_ids(n)), default=0)
+    """The largest eye count some style is orderable for (0 when nothing is): the landing and the buy card print it (a page-facing number: not strict)."""
+    return max((n for n in range(1, MAX_EYES + 1) if orderable_ids(n, strict=False)), default=0)
 
 
 # ----------------------------------------------------------------------------- layouts

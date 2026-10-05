@@ -24,9 +24,14 @@ about its memory, CPUs and /tmp; nothing is read from storage or changed; api/_l
 library as THIS function sees it: the 1K plates and the two atlases in the bundle with their recorded sizes, the 4K plates in
 private storage when asked for, the registry's version and hash; read only; api/_lib/styles/plates.py), styles_lab (one style of the
 v3 engine drawn on one restored iris, whatever its stage: the laboratory is where a held or not yet visible style is looked at; the eye
-is sent as an image or is the stored eye of a lab test order; no image model is called and nothing is stored or audited; a_styles_lab),
+is sent as an image or is the stored eye of a lab test order; no image model is called and nothing is stored or audited; a_styles_lab; with eyes, or order and ns, it is the
+contact sheet of a group of 1 to 8 eyes: every style of that count, held ones too, clean, with the gate readout: a_styles_lab_group),
 order_steps (one order's master plan: the plan, every step with its done and try record, the rerun count, the claims, the capacity at the factor in
-force, the eyes' ids, classes and gate results, the current artwork's record; read only; api/_lib/styles/steps.py).
+force, the eyes' ids, classes and gate results, the current artwork's record; read only; api/_lib/styles/steps.py), styles_catalogue (the page "Stiliai": every id of
+the registry with its ranges of eye counts, the ceiling, the owner's override, the effective stage, the ticks L0 to L11 and the waiver, the revision the page
+sends back; api/_lib/stage_overrides.py), styles_stats (the numbers of that page worked out of the usage events: the set-level gate funnel and the opening line
+per eye count, the demand for styles that cannot be bought yet, chosen against recommended, render times p50 and p95 against the estimate, errors, review,
+gate, fallbacks, the attention card; api/_lib/style_stats.py), styles_audit (the audit log of the switch).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
 "confirm"; rerun_step and lab_steps draw a 4K master through the master plan's step runner, with the claims and guards of a paid order): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
@@ -36,7 +41,9 @@ begun on the customer's order page, see act_render, or re-render one by master_e
 (refunded.json, as scripts/order_admin.py refunded), delete_files,
 lab_start (an unlock ticket for a test order lab-<yymmdd>-<rand>), lab_delete, exp_start and exp_stop (switch a price
 experiment on or off: api/_lib/abtest.py start and stop; nothing runs until the owner does this, and both are in the audit
-log with the experiment's key). They reuse pay.py, order.py,
+log with the experiment's key), styles_override (the switch of a style's effective stage, below its ceiling: the ticks, the waiver of L0, the refusal of live
+without L1 and L0, the paid orders in flight when a style is taken back; ops/styles/overrides.json and the audit log ops/styles/audit; see act_styles_override)
+and styles_limits (what the attention card compares with). They reuse pay.py, order.py,
 master_eye.py, master_compose.py and store.py, and each one is written to the admin audit log:
 ops/audit/<YYYY-MM-DD>/<HHMMSS>-<rand>.json and ops/orderlog/<order>/<time>-<rand>.json (action, order, result code;
 no email address, no link). The order's copy belongs to its record (privacy policy): it goes whenever the order goes
@@ -509,7 +516,8 @@ def collect_days(n):
 
 
 def _slim(agg):
-    return {k: v for k, v in agg.items() if k not in ("v", "day", "t", "recent_errors")}
+    # compose_slice and ms_hist are the Stiliai page's (styles_stats): they are the largest tables and the Statistika page has no use for them
+    return {k: v for k, v in agg.items() if k not in ("v", "day", "t", "recent_errors", "compose_slice", "ms_hist")}
 
 
 # ----------------------------------------------------------------------------- read-only actions
@@ -1194,8 +1202,17 @@ def a_experiments(body, who):
             raise
         except Exception as e:  # noqa: the page then counts from the events
             log(f"experiments: orders not read: {type(e).__name__}")
+    changes = None
+    if started:
+        try:
+            from . import stage_overrides as SO
+            changes = SO.audit_read(limit=100, days=max(abtest.window_days(st[k]) for k in started))
+        except store.StorageNotConfigured:
+            raise
+        except Exception as e:  # noqa: the page works without the style switch's log
+            log(f"experiments: style audit not read: {type(e).__name__}")
     return abtest.admin_view(collect_days, audit=entries, ordering_open=not pay.ordering_problem() and not store.problem(),
-                             orders=orders, orders_more=more, collecting=E.retention_ok())
+                             orders=orders, orders_more=more, collecting=E.retention_ok(), catalogue=changes)
 
 
 def act_exp_start(body, who):
@@ -1343,8 +1360,9 @@ def a_styles_lab(body, who):
     format: a canvas id of the style ("1:1" ...); size: 480, 1024, 2048 or 4096 (the long side). names and date are the customer's words,
     drawn under the iris when given (a line the drawer cannot take, over 256 characters or with a letter the font lacks, is a 400 that says which).
     crop: [x, y] the centre of the 100 percent window, in canvas pixels (default: the upper right rim).
-    look: one of the style's looks (the Universe style: echo, vortex, deepfield, starfield; the default is the style's own look). The pair and the group of the
-    Universe family need more than one eye: the laboratory of the Stiliai page (WP13) takes them; the family itself draws them (api/_lib/styles/universe).
+    look: one of the style's looks (the Universe style: echo, vortex, deepfield, starfield; the default is the style's own look). A pair or a group needs more
+    than one eye: send eyes (a list) or order and ns instead of eye: that is the contact sheet of the group (a_styles_lab_group), which draws every style of
+    that eye count, held ones too.
     seed: "eye_id" (default: the seed a customer's picture has, made from the eye's id and the plan's seed key) or "legacy" (the seed the pictures had
     before the seed change of WP5B, from the bytes of the iris: the owner's before and after look at a board). The eye's id is the one of the stored eye
     record for a lab test order, else the hash of the image sent. The Universe family has both since WP8B (its step B): the seed from the eye's id (default) or the
@@ -1361,6 +1379,8 @@ def a_styles_lab(body, who):
     from .styles import costs as CO
     from .styles import plates as PL
     from .styles import seeds as SD
+    if "eyes" in body or "ns" in body:           # a group of 1 to 8 eyes: the contact sheet of every style of that count (a_styles_lab_group)
+        return a_styles_lab_group(body, who)
     style = body.get("style")
     if style is None:
         # no style: the list the page builds its menu from (the styles of the v3 engine this deployment can draw, with their stage)
@@ -1371,7 +1391,7 @@ def a_styles_lab(body, who):
                 continue
             rows.append({"id": i, "name": CT.name_of(i), "design": e["design"], "module": e["module"], "ceiling": CT.ceiling(i, 1),
                          "stage": CT.stage_of(i, 1), "gate": CT.gate_policy(i), "canvases": e["canvases"], "plates": e["plates"], "looks": list(e.get("looks") or [])})
-        return {"ok": True, "styles": rows, "sizes": list(LAB_SIZES)}
+        return {"ok": True, "styles": rows, "sizes": list(LAB_SIZES), "group_sizes": list(LAB_GROUP_SIZES)}
     if not isinstance(style, str) or not CT.renderable(style, 1) or CT.is_legacy(style):
         raise L.ClientError("Not a style of the v3 engine.")
     eng = CT.engine_for(style, 1)
@@ -1468,11 +1488,415 @@ def a_styles_lab(body, who):
     return out
 
 
+LAB_GROUP_SIZES = (480, 1024)             # the long side of a tile of the group's contact sheet
+LAB_GROUP_BUDGET_S = 44.0                 # a group is drawn while at least this much of the call is left for the next tile (the guard below: est + 6 s)
+
+
+def _lab_group_eyes(body):
+    """The eyes of a group request as the lab hands them to the engine: [(clean 1024 px JPEG bytes, eye_id)]. Either eyes (a list of 1 to 8 base64 texts: restored
+    iris squares, as /api/enhance leaves them) or order and ns (a lab test order and the numbers of its eyes: the stored 4K masters, shrunk to the preview's size).
+    Every refusal is a ClientError (400)."""
+    import io as _io
+    from .styles import eye as EYE
+    from .styles import seeds as SD
+    order, many = body.get("order"), body.get("eyes")
+    if (order is None) == (many is None):
+        raise L.ClientError("Send eyes (a list of 1 to 8 images) or order and ns, not both.")
+    sources = []                                            # [(bytes, eye id or None)]
+    if many is not None:
+        if not isinstance(many, list) or not 1 <= len(many) <= 8 or not all(isinstance(e, str) and e for e in many):
+            raise L.ClientError("eyes is a list of 1 to 8 images, each the base64 of a restored iris square.")
+        if sum(len(e) for e in many) > LAB_EYE_B64:
+            raise L.ClientError("Those images are too large together: send each at 1024 pixels.")
+        for e in many:
+            try:
+                sources.append((base64.b64decode(e.split(",", 1)[1] if (e.startswith("data:") and "," in e[:64]) else e), None))
+            except Exception:
+                raise L.ClientError("That is not a readable image.") from None
+    else:
+        ns = body.get("ns")
+        if (not isinstance(order, str) or not order.startswith("lab-") or not store.ORDER_RE.fullmatch(order) or not isinstance(ns, list) or not 1 <= len(ns) <= 8
+                or not all(isinstance(n, int) and not isinstance(n, bool) and 1 <= n <= 8 for n in ns) or len(set(ns)) != len(ns)):
+            raise L.ClientError("order is a lab test order (lab-...) and ns the numbers (1 to 8) of up to 8 of its eyes.")
+        if not store.configured():
+            raise store.StorageNotConfigured(store.problem())
+        for n in ns:
+            data = store.get(f"orders/{order}/eye_{n}.jpg", max_bytes=16 << 20)
+            if data is None:
+                raise L.ClientError(f"That test order has no eye {n}.")
+            try:
+                rec = store.get_json(f"orders/{order}/eye_{n}.json", timeout=5.0, retry=False)
+            except store.StorageError:
+                rec = None
+            sources.append((data, rec.get("eye_id") if isinstance(rec, dict) and isinstance(rec.get("eye_id"), str) and SD.is_eye_id(rec["eye_id"]) else None))
+    out = []
+    for data, eid in sources:
+        try:
+            probe = L.Image.open(_io.BytesIO(data))
+            pixels = probe.size[0] * probe.size[1]
+            probe.verify()
+        except L.Image.DecompressionBombError:
+            raise L.ClientError(f"That image is too large (over {2 * L.MAX_PIXELS // 1_000_000} megapixels).") from None
+        except Exception:
+            raise L.ClientError("That is not a readable image.") from None
+        if pixels > L.MAX_PIXELS:
+            raise L.ClientError(f"That image is too large ({pixels // 1_000_000} megapixels, the limit is {L.MAX_PIXELS // 1_000_000}).")
+        try:
+            im = L.Image.open(_io.BytesIO(data)).convert("RGB")
+        except (OSError, SyntaxError, ValueError, L.Image.DecompressionBombError):
+            raise L.ClientError("That is not a readable image.") from None
+        side = min(im.size)
+        im = im.crop((0, 0, side, side))
+        if side > 1024:
+            im = im.resize((1024, 1024), L.Image.LANCZOS)
+        buf = _io.BytesIO()
+        im.save(buf, "JPEG", quality=92)
+        plain = buf.getvalue()
+        out.append((plain, eid or EYE.eye_id_of(plain)))
+    return out
+
+
+def _lab_group_styles(body, n, recs):
+    """[(style id, look or None)] the contact sheet draws: the styles asked for (each must be a style of the v3 engine that can be drawn for n eyes here), else
+    every one the admin may preview for n eyes (laboratory and held ones included), a Universe style once per look."""
+    asked = body.get("styles")
+    if asked is not None:
+        if not isinstance(asked, list) or not 1 <= len(asked) <= 12 or not all(isinstance(s, str) for s in asked) or len(set(asked)) != len(asked):
+            raise L.ClientError("styles is a list of 1 to 12 style ids, each once.")
+        for s in asked:
+            if not CT.known(s) or CT.is_legacy(s):
+                raise L.ClientError("Not a style of the v3 engine.")
+    else:
+        asked = [i for i in CT.previewable_ids(n, admin=True) if not CT.is_legacy(i)]
+    out = []
+    for s in asked:
+        e = CT.engine_for(s, n)
+        looks = list((e or {}).get("looks") or {})
+        out += [(s, lk) for lk in looks] if looks else [(s, None)]
+    return out
+
+
+def a_styles_lab_group(body, who):
+    """The contact sheet of a group: one set of 1 to 8 eyes drawn in every style of that eye count, each tile clean (no watermark: this is the owner's own look),
+    with the gate readout of the eyes. {eyes (1 to 8 base64 iris squares) | order and ns (the stored 4K masters of a lab test order), styles (default: every
+    style the admin may preview for that many eyes, laboratory and held ones too, a Universe style once per look), size 480 or 1024 (default 480), names,
+    date, family_name, opts {swap, rotate}}. Reply: {ok, group (the eye count), size, eyes [{eye, eye_id, cls, pupil, gate {lid, fill: {ok, values, why}}}],
+    tiles [{id, name, look, stage, ceiling, available, why, image (JPEG b64), width, height, layout, canvas, design_used, fallback, selfcheck {ok, failed},
+    times, ms}], pick, partial, timing}. A tile that could not be drawn says why (bar_pupil for a horizontal bar pupil, plate_unavailable, stage for a style
+    this deployment cannot draw, error with its type) and carries no picture; the gate does NOT withhold a tile here, it is reported beside it (the owner
+    judges the gate by looking at what it lets through). The tiles are drawn one after the other on the SAME eye objects (the preparation is paid once); when
+    the call runs short of time the tiles made so far are returned with partial true. Calls no image model, stores nothing, is not audited."""
+    from . import styles as ST
+    from .styles import eye as EYE
+    from .styles import gate as GATE
+    from .styles import costs as CO
+    from .styles import plates as PL
+    cmp_ = _mod("compose")
+    t0 = time.time()
+    size = body.get("size", 480)
+    if isinstance(size, bool) or size not in LAB_GROUP_SIZES:
+        raise L.ClientError(f"size is one of {', '.join(str(x) for x in LAB_GROUP_SIZES)}.")
+    sources = _lab_group_eyes(body)
+    n = len(sources)
+    opts = cmp_._opts(body.get("opts"))
+    metas = []
+    for plain, eid in sources:
+        try:
+            metas.append({"eye_id": eid, "profile": EYE.profile_of_bytes(plain, rules=GATE.RULES)})
+        except Exception:  # noqa: an eye whose profile cannot be measured is drawn without one (its gate reads unknown)
+            metas.append({"eye_id": eid, "profile": None})
+    recs = cmp_._recs(metas)
+    wanted = _lab_group_styles(body, n, recs)
+    ids = sorted({s for s, _ in wanted})
+    eyes = cmp_._eyes_for([p for p, _ in sources], metas, ids, n)
+    t_eyes = time.time()
+    req = {"names": body.get("names"), "date": body.get("date"), "family": body.get("family_name"), "lang": "en"}     # compose's own reading of the customer's words
+    tiles = []
+    partial = False
+    for sid, look in wanted:
+        row = {"id": sid, "name": CT.name_of(sid), "look": look, "stage": CT.stage_of(sid, n), "ceiling": CT.ceiling(sid, n), "available": False, "why": None,
+               "image": None}
+        why = CT.why_unavailable(sid, n, recs, admin=True)
+        if why in ("stage", "eyes", "unknown", "bar_pupil"):       # nothing to draw: not built here, not for this count, or a horizontal bar pupil the family refuses
+            tiles.append(dict(row, why=why))
+            continue
+        try:
+            need = CO.preview_need(CO.cost_key(CT.engine_for(sid, n), "dark", look), n, size)
+        except Exception:  # noqa: a style with no row in the cost table is guessed
+            need = 4.0
+        if L.time_left() < need + 6.0:
+            partial = True
+            tiles.append(dict(row, why="no_time"))
+            continue
+        layout, _layouts = cmp_._layout_for(sid, n, None, False)
+        o = cmp_._tile_opts(dict(opts, **({"look": look} if look else {})), sid, n, True)
+        spec = cmp_._spec(sid, n, eyes, metas, req, None, layout, o)
+        t1 = time.time()
+        try:
+            pv = ST.preview(eyes, spec, size=size, **({"check": True} if cmp_._takes_check(sid, n) else {}))
+        except PL.PlateUnavailable as e:
+            tiles.append(dict(row, why="plate_unavailable", plate=str(e.plate_id)[:80]))
+            continue
+        except ValueError as e:
+            tiles.append(dict(row, why="bar_pupil" if getattr(e, "why", None) == "bar_pupil" else "error", error=type(e).__name__))
+            continue
+        d, f = cmp_._drawn(pv, None)
+        sc = getattr(pv, "selfcheck", None) or {}
+        tiles.append(dict(row, available=True, why=why if why in ("gate", "reseal") else None, image=L.pil_to_b64(pv.img, "JPEG", 88), width=pv.img.size[0], height=pv.img.size[1],
+                          layout=layout, canvas=getattr(pv, "fmt", None), design_used=d, fallback=f,
+                          selfcheck={"ok": sc.get("ok"), "failed": sc.get("failed")} if sc else None, times=getattr(pv, "times", None), ms=int((time.time() - t1) * 1000)))
+    eyes_reply = []
+    for i, m in enumerate(metas, 1):
+        prof = m.get("profile")
+        eyes_reply.append({"eye": i, "eye_id": m.get("eye_id"), "cls": prof.cls if prof is not None else None, "pupil": prof.pupil_cls if prof is not None else None,
+                           "gate": {r: ({k: v for k, v in prof.gate(r).items() if k in ("ok", "values", "why")} if prof is not None else None) for r in GATE.RULES}})
+    return {"ok": True, "group": n, "size": size, "eyes": eyes_reply, "tiles": tiles, "pick": CT.pick_for(n, recs), "partial": partial,
+            "timing": {"total_ms": int((time.time() - t0) * 1000), "eyes_ms": int((t_eyes - t0) * 1000)}}
+
+
+# ----------------------------------------------------------------------------- the style switch (WP13a)
+IN_FLIGHT_DAYS = 3           # a paid order that is still being made is at most this many days old (the promise is 48 hours)
+IN_FLIGHT_STATES = ("pending", "paid", "making")
+IN_FLIGHT_LIST = 50          # order numbers named in a reply
+
+
+def _same_range(a, b):
+    keys = ("ceiling", "override", "effective", "switchable", "orderable", "missing_for_live", "waiver")
+    return all(a[k] == b[k] for k in keys) and {c: m["ticked_at"] for c, m in a["checklist"].items()} == {c: m["ticked_at"] for c, m in b["checklist"].items()}
+
+
+def _style_ranges(sid, rec):
+    """The eye counts of one style grouped into ranges that read the same (ceiling, override, effective stage, ticks, waiver): what the page's switch
+    shows per row. Each row: {eyes: [first, last], ceiling, override, effective, orderable, switchable, checklist, waiver, missing_for_live}."""
+    from . import stage_overrides as SO
+    lo, hi = CT.eyes_range(sid)
+    built = CT.renderable(sid)
+    rows = []
+    for n in range(lo, hi + 1):
+        k = str(n)
+        ceil = CT.ceiling(sid, n)
+        ov = ((rec or {}).get("stage_by_eyes") or {}).get(k)
+        eff = CT.stage_with(sid, n, ov, ceil)
+        row = {"ceiling": ceil, "override": ov, "effective": eff, "orderable": eff == "live" and built,
+               "switchable": ceil not in (None, "planned", "retired"),
+               "checklist": _copy_marks(((rec or {}).get("checklist") or {}).get(k)), "waiver": ((rec or {}).get("waiver") or {}).get(k),
+               "missing_for_live": SO.missing_for_live(rec, n)}
+        if rows and _same_range(rows[-1], row):
+            rows[-1]["eyes"][1] = n
+        else:
+            rows.append(dict(row, eyes=[n, n]))
+    return rows
+
+
+def _copy_marks(marks):
+    return {c: dict(m) for c, m in (marks or {}).items()}
+
+
+def _style_view(sid, rec):
+    last = {k: (rec or {}).get(k) for k in ("by", "at", "reason", "reason_kind")} if rec else None
+    return {"id": sid, "name": CT.name_of(sid), "group": CT.STYLES[sid]["group"], "legacy": bool(CT.is_legacy(sid)), "eyes": list(CT.eyes_range(sid)),
+            "gate": CT.gate_policy(sid), "price_class": CT.price_class(sid), "built": bool(CT.renderable(sid)), "ranges": _style_ranges(sid, rec), "last": last}
+
+
+def _running_price_tests():
+    """The price tests that run now (their keys): a flip of a style changes the sample of each (spec 4.4 step 3)."""
+    return list(_safe(lambda: abtest.running_keys(timeout=3.0), []) or [])
+
+
+def a_styles_catalogue(body, who):
+    """The page "Stiliai", the catalogue and its switch: every id of the registry with its eye ranges, the ceiling (the registry's literal), the owner's
+    override, the effective stage, whether it is orderable, the ticks L0 to L11 per range (dated, attributed), the written waiver of L0, what `live` still
+    lacks, and who changed it last and why. rev is the revision the page must send back with a change (a second tab's change is then a 409, not a silent
+    overwrite). price_test: the price tests that run now. limits: what the attention card compares with. Reads storage fresh, changes nothing, is not audited.
+    A storage error is a 503: the switch is never drawn from a guess."""
+    from . import stage_overrides as SO
+    obj = SO.load(force=True)
+    only = body.get("style")
+    if only is not None and not CT.known(only):
+        raise L.ClientError("Not a style of the catalogue.")
+    ids = [only] if only else list(CT.ids())
+    return {"ok": True, "rev": obj["rev"], "at": obj["at"], "checks": list(SO.CHECKS), "limits": obj["limits"],
+            "default_effective": CT.EFFECTIVE_DEFAULT, "fallback_stage": CT.FALLBACK_STAGE, "registry_hash": CT.registry_hash(),
+            "ordering_open": not pay.ordering_problem() and not store.problem(), "price_test": _running_price_tests(),
+            "orderable_max_eyes": CT.orderable_max_eyes(), "styles": [_style_view(i, obj["styles"].get(i)) for i in ids]}
+
+
+def _hold_in_flight(sid, counts):
+    """The owner chose to HOLD the paid orders in flight of a style he took back (decision DE1): every paid order of the last IN_FLIGHT_DAYS days that is
+    still being made (pending, paid or making: not ready, not withdrawn, not held already) for this style and one of these eye counts gets review.json
+    (reason style_rolled_back), so nothing more is drawn for it until he has looked and cleared the review, as for every other hold. {count, orders, checked,
+    more}. A Stripe page opened before the change and paid after it is NOT held: it finishes (the render path ignores stages); the answer says so."""
+    names = order_folders(days=IN_FLIGHT_DAYS)
+    rows, more = [], False
+    for i in range(0, len(names), 10):
+        if L.time_left() < 10:
+            more = True
+            break
+        rows += [r for r in each([lambda o=o: order_row(o) for o in names[i:i + 10]], width=10) if isinstance(r, dict)]
+    held = []
+    for r in rows:
+        if (r.get("paid") and r.get("style") == sid and r.get("eyes") in counts and r.get("state") in IN_FLIGHT_STATES and not r.get("review")
+                and not r.get("delivery")):
+            pay.mark_review(r["order"], "style_rolled_back")
+            held.append(r["order"])
+    return {"count": len(held), "orders": held[:IN_FLIGHT_LIST], "checked": len(rows), "more": more}
+
+
+def act_styles_override(body, who):
+    """Change the effective stage of a style, tick its checks, or record the waiver of L0: {style, eyes (3, [3, 4] or "4-8"), stage (lab, preview, live or
+    restore), tick {L0..L11: true or false}, evidence {L0: {mean, min_axis, by}}, waiver {text} (false removes it), reason, reason_kind (quality, capacity,
+    soon, other), in_flight (finish or hold), price_test_seen, rev, confirm}. The rules (api/_lib/stage_overrides.py): the ceiling of the registry is the
+    top (409 above_ceiling), a planned or retired style cannot be switched (409 not_switchable), `live` needs L1 and L0 or its waiver for every count asked for
+    (409 needs_ticks, missing says which), a stage change needs confirm true (400), rev must be the revision the page saw (409 stale_view), and while a
+    price test runs a flip that changes what can be ordered needs price_test_seen true (409 price_test_running: the page shows the line "a price test is
+    running: this flip changes its sample", the owner decides). Taking a style that was orderable back asks what happens to the paid orders in flight (DE1):
+    in_flight finish (they finish: the render path ignores stages) or hold (review.json, the owner looks first); the default is hold when reason_kind is
+    quality and finish otherwise. One change is one revision, one entry of the style audit log (ops/styles/audit: the numbers of the funnel at that moment,
+    the price test, the choice for the orders in flight) and one line of the admin audit."""
+    from . import stage_overrides as SO
+    req = SO.parse(body)
+    if req["stage"] is not None and not req["confirm"]:
+        raise L.ClientError("Confirm the change: a stage change is made only after the confirmation of the page.")
+    with SO._WRITE_LOCK:
+        obj = SO.load(force=True)
+        if req["rev"] is not None and req["rev"] != obj["rev"]:
+            raise store.Answer(409, "stale_view", "The switch was changed since this page was drawn: reload it.", False, rev=obj["rev"])
+        new, rep = SO.transition(obj, req, who["kind"])
+        flips = [n for n in req["counts"] if (rep["effective_before"][str(n)] == "live") != (rep["effective_after"][str(n)] == "live")]
+        tests = _running_price_tests() if flips else []
+        if tests and not req["price_test_seen"]:
+            raise store.Answer(409, "price_test_running", "A price test is running: this flip changes its sample. Say that you have read this "
+                               "(price_test_seen) to go on.", False, keys=tests, eyes=flips)
+        if not rep["changed"]:
+            return {"ok": True, "result": "same", "style": req["style"], "eyes": req["counts"], "rev": obj["rev"], "before": rep["before"],
+                    "after": rep["after"], "effective": rep["effective_after"], "ceiling": rep["ceiling"],
+                    "view": _style_view(req["style"], obj["styles"].get(req["style"])), "audit_detail": f"{req['style']} no change"}
+        saved = SO.save(new)
+    lowered = [n for n in flips if rep["effective_after"][str(n)] != "live"]
+    mode = (req["in_flight"] or ("hold" if req["reason_kind"] == "quality" else "finish")) if lowered else None
+    held = _hold_in_flight(req["style"], lowered) if mode == "hold" else None
+    result = "changed" if req["stage"] is not None else "ticked"
+    SO.audit_put({"kind": "override", "by": who["kind"], "style": req["style"], "name": CT.name_of(req["style"]), "eyes": req["counts"], "stage": req["stage"],
+                  "before": rep["before"], "after": rep["after"], "effective_before": rep["effective_before"], "effective_after": rep["effective_after"],
+                  "ceiling": rep["ceiling"], "reason": req["reason"], "reason_kind": req["reason_kind"], "ticked": rep["ticked"], "unticked": rep["unticked"],
+                  "waiver": rep["waiver"], "numbers": _flip_numbers(req["counts"]), "price_test": tests, "price_test_seen": req["price_test_seen"],
+                  "in_flight": mode, "held": ({"count": held["count"], "orders": held["orders"]} if held else None), "rev": saved["rev"]})
+    detail = f"{req['style']} {req['counts'][0]}-{req['counts'][-1]} {req['stage'] or 'tick'} -> {','.join(sorted(set(v or 'default' for v in rep['after'].values())))}"
+    if held:
+        detail += f" held {held['count']}"
+    return {"ok": True, "result": result, "style": req["style"], "eyes": req["counts"], "rev": saved["rev"], "before": rep["before"], "after": rep["after"],
+            "effective": rep["effective_after"], "ceiling": rep["ceiling"], "ticked": rep["ticked"], "unticked": rep["unticked"], "waiver": rep["waiver"],
+            "price_test": tests, "in_flight": mode, "held": held, "view": _style_view(req["style"], saved["styles"].get(req["style"])), "audit_detail": detail}
+
+
+def _need_for(what, style, eyes):
+    """The estimate of the cost table for one render of a style (seconds at the slow factor in force): the master of the artwork (art), a 1024 px preview
+    (compose) or a 480 px tile (tile). None where the table has no row (the page then shows the time alone)."""
+    try:
+        from .styles import costs as CO
+        e = CT.engine_for(style, eyes)
+        if e is None:
+            return None
+        if e.get("module") == "legacy":
+            return CO.legacy_need(eyes) if what == "art" else None
+        key = CO.cost_key(e, "dark", None)
+        if what == "art":
+            return CO.assess(key, eyes)["need_s"]
+        return round(CO.preview_need(key, eyes, 480 if what == "tile" else 1024), 2)
+    except Exception:  # noqa: a style with no row has no estimate
+        return None
+
+
+def a_styles_stats(body, who):
+    """The numbers of the page "Stiliai" (api/_lib/style_stats.py works them out of the usage events' day counts): {days (1 to 90, default 30), market or lang
+    (one filter at a time: the tables that carry them are the slice's own, the rest are whole, filter.whole says which)}. funnel (per eye count: first photo
+    sets with n, first-photo pass, pass counting one retake: an upper bound, unknown), funnel_by_class (the same per colour class of the set), opening (per
+    count of two or more eyes the owner's criterion as a green or red line with what is not met), demand (tiles looked at, large previews, clicks on the buy
+    button of a style that was Soon, checkouts refused, per style and eye count), chosen (the recommended tile against the others), previews, fallbacks (the
+    share of pictures that fell back, stack_contrast among them), times (p50 and p95 per style and eye count with the cost table's estimate in need_s),
+    errors, review (artworks held for a look by style), gate (per eye, and per style under its own rule), holds, help (clicks on the manual route),
+    reveal, memory, attention (what crossed the limits the owner set, a failing health boolean, orders held for a style step), requests. Read only."""
+    from . import stage_overrides as SO
+    from . import style_stats as SS
+    n = body.get("days")
+    n = int(n) if isinstance(n, int) and not isinstance(n, bool) and 1 <= n <= STATS_DAYS_MAX else 30
+    market, lang = body.get("market"), body.get("lang")
+    if market is not None and (not isinstance(market, str) or market not in pay.MARKETS):
+        raise L.ClientError("market is one of: " + ", ".join(pay.MARKETS) + ".")
+    if lang is not None and (not isinstance(lang, str) or lang not in L.PAGE_LANGS):
+        raise L.ClientError("lang is one of: " + ", ".join(L.PAGE_LANGS) + ".")
+    try:
+        sl = SS.parse_slice(market, lang)
+    except ValueError as e:
+        raise L.ClientError(str(e)) from None
+    rows = collect_days(n)
+    agg = SS.merge_all([a for _d, a, _c in rows])
+    try:
+        limits = SO.load()["limits"]
+    except store.StorageNotConfigured:
+        raise
+    except store.StorageError:
+        limits = dict(SO.LIMITS_DEFAULT)
+    from .styles import plates as PL
+    health = _safe(PL.health, None)
+    rep = SS.report(agg, limits, sl, health)
+    for r in rep["times"]:
+        r["need_s"] = _need_for(r["what"], r["style"], r["eyes"])
+    pk = (agg.get("ms") or {}).get("art_peak_mb")
+    rep["memory"] = {"peak_mb_avg": round(pk[0] / pk[1], 1) if isinstance(pk, (list, tuple)) and len(pk) == 2 and pk[1] else None, "n": pk[1] if pk else 0,
+                     "peak_mb_is": "vmrss_increase_over_the_step", "hwm_is": "the_instances_own_high_water_mark_per_step_in_the_order_detail"}
+    return dict(rep, ok=True, days=n, partial=not all(c for _d, _a, c in rows), recording=E.retention_ok(), market=market, lang=lang, limits=limits,
+                health=health)
+
+
+def _flip_numbers(counts):
+    """The set-level gate numbers of each eye count at the moment of a change (style_stats.flip_numbers), for the audit entry. Never raises: the change
+    is made; its numbers are a note."""
+    try:
+        from . import style_stats as SS
+        return SS.flip_numbers([agg for _d, agg, _c in collect_days(30)], counts)
+    except Exception as e:  # noqa
+        log(f"styles: numbers for the audit entry not read: {type(e).__name__}")
+        return None
+
+
+def a_styles_audit(body, who):
+    """The audit log of the switch, newest first: {limit (1 to 200, default 100), style}. Each entry: kind (override or limits), by, style, eyes, the override
+    and the effective stage before and after, the ceiling, the reason, the ticks that changed, the numbers of the funnel at that moment (with n), the price
+    test that ran, what the owner chose for the orders in flight and how many were held, the revision. Read only."""
+    from . import stage_overrides as SO
+    lim = body.get("limit")
+    lim = lim if isinstance(lim, int) and not isinstance(lim, bool) and 1 <= lim <= 200 else 100
+    only = body.get("style")
+    if only is not None and not CT.known(only):
+        raise L.ClientError("Not a style of the catalogue.")
+    return {"ok": True, "entries": SO.audit_read(limit=lim, style=only)}
+
+
+def act_styles_limits(body, who):
+    """Set the limits the attention card of the Stiliai page compares with: {limits: {min_n, error_rate, review_rate, gate_fail_rate}} (shares from 0 to 1,
+    min_n the fewest events a share is judged on). Written with the switch's object and its revision, and into the audit log of the switch."""
+    from . import stage_overrides as SO
+    if not body.get("confirm") is True:
+        raise L.ClientError("Confirm the change.")
+    with SO._WRITE_LOCK:
+        obj = SO.load(force=True)
+        rev = body.get("rev")
+        if rev is not None and (isinstance(rev, bool) or rev != obj["rev"]):
+            raise store.Answer(409, "stale_view", "The switch was changed since this page was drawn: reload it.", False, rev=obj["rev"])
+        new = SO.set_limits(obj, body.get("limits"))
+        saved = SO.save(new)
+    SO.audit_put({"kind": "limits", "by": who["kind"], "limits": saved["limits"], "before": obj["limits"], "rev": saved["rev"]})
+    return {"ok": True, "result": "changed", "limits": saved["limits"], "rev": saved["rev"], "audit_detail": "limits " + ",".join(sorted(body["limits"]))}
+
+
 # ----------------------------------------------------------------------------- serving
 ACTIONS = {
     "me": a_me, "summary": a_summary, "stats": a_stats, "errors": a_errors, "orders": a_orders, "order": a_order,
     "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe, "plates_status": a_plates_status,
-    "styles_lab": a_styles_lab, "order_steps": a_order_steps,
+    "styles_lab": a_styles_lab, "order_steps": a_order_steps, "styles_catalogue": a_styles_catalogue, "styles_audit": a_styles_audit,
+    "styles_override": audited("styles_override", act_styles_override), "styles_stats": a_styles_stats,
+    "styles_limits": audited("styles_limits", act_styles_limits),
     "exp_start": audited("exp_start", act_exp_start),
     "exp_stop": audited("exp_stop", act_exp_stop),
     "link": audited("link", act_link),

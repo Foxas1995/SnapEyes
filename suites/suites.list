@@ -40,3 +40,4 @@ v3reveal:scripts/styles_tests:test_reveal.py
 v3coll:scripts/styles_tests:test_goldens_collision.py
 v3compose:scripts/styles_tests:test_compose_api.py
 v3uni:scripts/styles_tests:test_goldens_universe.py
+v3admin:scripts/styles_tests:test_admin_styles.py
