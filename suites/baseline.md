@@ -480,3 +480,66 @@ T13, T18, T19), determinism in two fresh processes with different hash seeds, th
 
 **Full set** on an export of `aac24fe` (`git archive`, CRLF line ends, the private fixtures, `SNAPEYES_SCRATCH_Y3`, `SNAPEYES_CALIB` and `SNAPEYES_SCRATCH_DG1` set so that the LOCAL lines of `v3single` and `v3coll` ran too): **29 of 30 green**, every count equal to `baseline.json` (r2 105, r3 48, r4 69, r5 54, fix 53, admin 186, pay 120, advance 66, refund 7, preview 60, review 11, fixmk 36, markets 58, au 70, payrev 19, fixer 43, oldpay 120, oldadv 66, oldadmin 186, exp 349, ts 78, v3wp0 93, v3reg 172, v3gate 97, v3core 86, v3plates 108, v3single 115, v3steps 150, **v3coll 70** (new)). The one red suite is `v3reveal` (WP9's, 61 of 63): its check "each module opens with its docstring and then the __future__ import" reads `
 `, and the export has CRLF line ends (the trap the WP3 and WP4 notes record; on the working tree, with LF files, it passes), and its check "the whole call with the stub model costs at most 4 s of CPU" measured 4.25 s with three suites and other builders' processes on the machine. Neither touches a collision file; WP9 owns both. `python -m compileall api` exit 0, `npm run build` exit 0 (the registry hash is still `870892880cf3`, a rendering function 187.7 MiB of the 235), and `python scripts/dev_api.py` starts with the 11 routes and `/api/health` answers `styles: true, plates_4k: true`.
+
+## 14. The universe family (WP8A, 2026-10-05): the replay, what 4096 px costs and the tests carried over
+
+The universe family (Echo, Vortex, Deep Field, Starfield on one eye; Echo on a pair and on a group of three to six) is the design rounds' code ported verbatim
+(`scripts/styles_tests/port_universe.py`: a listed set of edits, `--check` against the scratch tree). Recorded on this machine class (Windows 11, Python 3.14.3, numpy 2.4.4,
+Pillow 12.2.0) by `record_goldens_universe.py` on the scratch prototype itself: its own plates, atlas and gate, nothing swapped.
+
+**The replay.** 71 of 71 synthetic pictures byte for byte equal, with their seeds, the plates they drew from (the id, the LOD, the upscale, the mirror), the layout, the contacts and
+notches: every look on three colour classes at 512 and 1024 px, Echo as a master at 4096 px (three eyes and a pair) and at 2048 px (the coarse factor 2), the 4:5 canvas and the
+9:19.5 wall (with the accent plate at 512 px), a bar pupil, a slit pupil and a pet (the polar fill), the fill alone, names, a date and a Lithuanian letter, pairs on four canvases, a
+forced Kiss distance, a swap, the laboratory's switches, groups of three to six (the trio rotated and with the weave at its base, the two rings). The 18 pictures of four calibration
+eyes (every look at 1024 px, a pair, a trio) and the four pictures that draw from a 4K plate (the wall canvas at 1024 px: the 2k mip of a DUST plate; Vortex and Deep Field as masters: the
+2k mip of a 4K plate; Starfield as a master: a 4k LOD) are equal too (10 LOCAL lines, hashes only for the real eyes; the 4K plates came through a local store made from the scratch tree's
+own files, sha256 equal to the registry's, then the cache). The prototype's own 23 tests (T1 to T25) passed on the real eyes (`data/stepA/universe_tests_scratch.json`).
+
+**Time and memory at 4096 px** (`scripts/styles_tests/time_universe.py`): a fresh process per render, one thread, this machine (shared with other builders: two runs of the same code differ
+by up to 10 percent), synthetic eyes of 1024 px, the canvas 4096 px, a pair and a group on copies of at most 2048 px (the registry's `work_side`), Windows peak working set. CPU seconds of
+the render (imports apart), the port and the scratch alternating, two rounds each, against the spike's table (SP 4.1, quiet core, cold) scaled by this machine's yardstick (x0.95):
+
+| Render | Port, runs | Scratch, runs | SP table x0.95 | Peak port | Peak scratch | SP peak |
+|---|---|---|---|---|---|---|
+| Echo, 1 eye | 11.8, 11.8 | 12.4, 11.8 | 11.5 | 567 MB | 568 | 635 |
+| Echo, 2 eyes, 3:2 | 13.7, 14.3 | 13.7, 13.8 | 14.1 | 860 | 817 | 649 |
+| Echo, 6 eyes | 23.3, 26.5 | 25.2, 26.5 | 20.2 (capped) | 815 | 772 | 815 (capped) |
+| Vortex (a 2k mip of a 4K plate through the cache) | 8.2, 8.5 | 9.2, 9.4 | 9.7 | 459 | 459 | 526 |
+| Deep Field (a 2k mip) | 8.6, 8.3 | 8.6, 7.5 | 9.6 | 528 | 530 | 595 |
+| Starfield (a 4k LOD) | 7.2, 7.9 | 8.4, 7.2 | 8.9 | 458 | 459 | 525 |
+
+Acceptance of the card (Echo, one eye, master: about 12 s of CPU and 635 MB): 11.8 s and 567 MB. Every cell is within 15 percent of the table apart from the pair's memory (860 MB against
+649: the unchanged scratch code peaks at 817) and the group of six's CPU (up to 31 percent over, the scratch the same), so the cause is the machine and the eyes, not the port, as WP5A
+and WP7A found. The master through the step runner (`lab_steps` on one synthetic 4096 px master, Echo): 16.2 to 16.6 s of CPU, +496 MB of resident size, against the plan's estimate of
+25.6 s and 731 MB at the factor 1.6. Warm previews at 1024 px (CPU, a loaded machine): Echo 1.4 to 1.5 s, a pair 1.4 to 1.5 s, six eyes 2.6 to 2.8 s, Vortex 1.2 s, Deep Field 1.0 s,
+Starfield 0.5 s (the brief's limits are 1.5 s and 3 s for six). A preview never touches storage: at 1024 px all three plate looks read the 1K LOD (their placement scale is at most
+1.1 x 1024 by construction); only the Echo wall canvas at 1024 px and every master need a 4K file (the 2k mip or the 4k LOD).
+
+**The tests carried over** (`v3uni`, section 6, on synthetic eyes; the numbers the prototype printed on the real eyes are in `data/stepA/universe_tests_scratch.json`): T1 iris integrity
+(largest difference 1 level in the fade zone, 0 pixels over the tolerance, the seam blend share at most 8.2 percent of an iris against the bound 8.5), T1b (0 unexplained pixels over 15
+cases), T2 (0 covered pupil pixels over 7 sets), T3 (pair 0.889, trio apex 1.0 and bases 0.936 and 0.805, groups of four to six at least 0.827), T5, T6, T7, T8, T9 (the master against the
+preview: design SSIM 0.988 for one eye, 0.979 for a pair, 0.987 for a trio at 2048 px, 0.997 and 0.993 for Deep Field and Vortex at 2048 px; T9a outside 1.15 R at least 0.982; T9b
+mean dE00 inside the irises at most 1.07), T10 to T15, T18, T19 (800 sets), T21 (no row step at the band boundaries: at most 1.32 times the neighbouring rows; the picture does not depend
+on the band height: 1 level at most), T22, T23, T24 (the synthetic gate verdicts equal the scratch gate's), T25. **Six bounds depend on the eye and are relaxed for the synthetic eyes**
+(`BOUND` in the test, each with the prototype's value and what the prototype measured: the seam blend share 0.085 for 0.08, the matter's hue share 0.60 for 0.85, the p99 dE of the design
+8.0 for 5.0 on one eye, the fill's chroma 0.70 for 0.85, the least fill lightness 7.0 for 8.0, the iris above its fill 10 for 15: a synthetic blue ring has little chroma and the synthetic
+dark brown iris is darker than any real one). Equal pictures carry the real-eye results over to the port; the tests guard the structure and the numbers against later changes.
+
+**Three findings of the port.** (1) The prototype caught every error of a plate look (`except Exception`) and drew the picture without the plate: a missing, short or wrong plate would
+have been a silent substitution after payment. The port lets `PlateUnavailable` and `NoPlate` through (the step runner retries once and then holds the order); the build of the family
+has no `except Exception` around a plate (a check of `v3uni`). (2) The Echo look on the wall canvas picks ANY of the seven DUST plates for its accent, and at 1024 px that is the 2k mip
+of the 4K file, but the baked registry named a 4K file only for the four DUST plates that Deep Field picks: the bake rule `needs_4k` now says all seven (+19 MiB of 4K files for storage,
+449 MiB in all, none of it in the first release: DUST is a laboratory family). (3) The pick of a spiral is an index into the candidate list and the baked registry is sorted by id while
+the prototype's registry file was not: the order is kept in `plates.SPIRAL_ORDER` (the nine crisp spirals with a void of 0.20 R or more; the replay of Vortex proves it).
+
+**Suite.** `v3uni` 101 checks (10 LOCAL lines with `SNAPEYES_SCRATCH_Y3` and `SNAPEYES_CALIB`), about 12 minutes on a loaded machine (the replay about 170 s alone): the family's files and
+rules, the registry against the family, the replay, the plates and the atlas (the candidates, a missing plate, a plate that arrived later), determinism in two fresh interpreters, the
+guards of `render`, the contract (`resolve`, `preview`, `tiles`, the master plan's plan and capacity), the 23 tests of the design round, `/api/compose` for a style made visible, the
+admin laboratory (every look, the estimate of a look, a Vortex master with its plate missing), and the master through `lab_steps`.
+
+**Full set** on an export of `e80f8c0` (`git archive`, CRLF line ends, the private fixtures, no scratch tree): **29 of 32 green**; the three that were red are not the family's: `v3single`
+because its check of the laboratory's list named six styles and the universe style joined the list (the check reads the singles' rows now); `v3wp0` because `bundle_report.mjs` walks the
+whole folder when it is not a git checkout (an export), and a suite writing a temporary file under `suites/out` at that moment made `statSync` throw (the walk skips a file that vanished;
+in a git checkout the file list comes from `git ls-files` and this never happened); `r3` check S10 (12 concurrent proven withdrawal statements: at most `ORDER_DAY_MAX` taken, the rest 429)
+saw all twelve answered 429 under the load of three suites: **a race in the limiter's count, not touched by this work** (`r3` alone: 48 of 48). Listed here as a flake, not fixed (it is
+the withdrawal limiter's, and a retry would hide it): the twelve statements each write a marker and then count the markers, so under a heavy load all twelve can count more than five.
