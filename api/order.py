@@ -688,12 +688,13 @@ def _compose_release(claim):
 
 def _write_delivery(order, r):
     """delivery.json of a made artwork (what every reader of an order's artwork reads): the file, its size, the style and layout, whether a check
-    wants a person to look first. A style of the v3 engine adds the design it was drawn in and the plan's identity (plan8). Returns it."""
+    wants a person to look first. A style of the v3 engine adds the design it was drawn in, the fallback the plan took (overlap_fallback: the Kiss geometry for a
+    wide pupil; stack_contrast: the stacked lens of a pair whose colours differ strongly) and the plan's identity (plan8). Returns it."""
     now = int(time.time())
     delivery = {"key": r["key"], "width": r.get("width"), "height": r.get("height"), "bytes": r.get("bytes"),
                 "style": r.get("style"), "layout": r.get("layout"), "count": r.get("count"),
                 "needs_review": bool(r.get("needs_review")), "created_at": now, "created": pay.iso(now)}
-    for k in ("design_used", "plan8"):
+    for k in ("design_used", "fallback", "plan8"):
         if r.get(k):
             delivery[k] = r[k]
     store.put(f"orders/{order}/delivery.json", store.json_bytes(delivery), "application/json", upsert=True)
@@ -746,7 +747,7 @@ def compose_order(order, rec, paid, server=False):
         if not got["final"]:
             return _paid_reply(order, paid, [True] * n, None, None, released, artwork=got["progress"])
         r = got["artwork"]
-        delivery = got["delivery"] or _write_delivery(order, dict(r, plan8=got.get("plan8"), design_used=got.get("design_used")))
+        delivery = got["delivery"] or _write_delivery(order, dict(r, plan8=got.get("plan8"), design_used=got.get("design_used"), fallback=got.get("fallback")))
     finally:
         _compose_release(claim)
     now = delivery["created_at"]

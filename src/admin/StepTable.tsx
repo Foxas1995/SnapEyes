@@ -19,6 +19,17 @@ const WHY_LT: Record<string, string> = {
 };
 const FAMILY_LT: Record<string, string> = { legacy: 'senasis variklis', singles: 'pavienės akys', collision: 'susidūrimas', universe: 'visata' };
 
+/** What the plan froze before the master (the collision family, WP7B: which iris is in front at a contact, the hairline contacts, the overlap fallback, the lens). */
+const frozenText = (z: J): string => {
+  const parts: string[] = [];
+  const fronts = obj(z.fronts);
+  if (Object.keys(fronts).length) parts.push(`viršuje esanti akis: ${Object.keys(fronts).map((k) => `sąlytis ${k} ${s(fronts[k])}`).join(', ')}`);
+  if (Array.isArray(z.hairline) && z.hairline.length) parts.push(`plonos linijos sąlytis: ${(z.hairline as unknown[]).map(s).join(', ')}`);
+  if (z.fallback) parts.push(`atsarginis variantas ${s(z.fallback)}`);
+  if (z.lens) parts.push(`lęšis ${s(z.lens)}`);
+  return parts.join('; ') || (Object.keys(z).length ? 'užfiksuota be pasirinkimų' : '-');
+};
+
 /** One order's plan and steps. view is partial on purpose: a dry lab run has a plan and a capacity and nothing else. */
 export const StepTable: React.FC<{ view: Partial<StepsView> }> = ({ view }) => {
   const plan = view.plan ? obj(view.plan) : null;
@@ -26,12 +37,17 @@ export const StepTable: React.FC<{ view: Partial<StepsView> }> = ({ view }) => {
   const cap = view.capacity;
   const steps = view.steps ?? [];
   const spec = obj(plan.opts);
+  const frozen = obj(plan.frozen);
+  const frozenRow: [string, React.ReactNode] | null = plan.decided === false
+    ? ['Užfiksuoti sprendimai', 'ne: planas padarytas be pikselių, sprendimus priima gamybos žingsnis']
+    : Object.keys(frozen).length ? ['Užfiksuoti sprendimai', frozenText(frozen)] : null;
   return (
     <div className="flex flex-col gap-3 min-w-0">
       <Rows rows={[
         ['Plano žyma (plan8)', <code key="p">{dash(plan.plan8)}</code>],
         ['Stilius', `${STYLE_LT[s(plan.style)] || s(plan.style)} (${FAMILY_LT[s(plan.family)] || s(plan.family)}), ${s(plan.eyes)} ak.`],
         ['Kaip nupiešta', `dizainas ${dash(plan.design_used)}${plan.fallback ? `, atsarginis variantas ${s(plan.fallback)}` : ''}, išdėstymas ${dash(plan.layout)}, drobė ${dash(plan.canvas)}`],
+        ...(frozenRow ? [frozenRow] : []),
         ['Parinktys', Object.keys(spec).filter((k) => spec[k] !== null && spec[k] !== undefined).map((k) => `${k} ${s(spec[k])}`).join(', ') || '-'],
         ['Variklio versija / registras / plokštelės', `${dash(view.engine_v)} (plano: ${dash(plan.engine_v)}) / ${dash(plan.reg)} (dabar: ${dash(view.registry_hash)}) / pv ${dash(plan.pv)}`],
         ['Akių id', (Array.isArray(plan.eye_ids) ? (plan.eye_ids as unknown[]).map((x) => s(x) || '?').join(', ') : '-') || '-'],

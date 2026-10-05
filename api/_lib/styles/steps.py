@@ -11,7 +11,10 @@ everything to single steps with no other change. A second kind of step (the rese
 The records (orders/<order>/style/, all small JSON, removed 14 days after delivery.json by api/_lib/cleanup.py):
 
     plan.json            {v, reg, pv, engine_v, style, family, design_used, fallback, layout, canvas, opts, eye_ids[], eye_prof[], work_side,
-                          seed_key, plate_families[], cost_key, steps: [{name, kind, eyes[], need_s, est_mb}], plan8, created_at}
+                          seed_key, seed, frozen, decided, plate_families[], cost_key, steps: [{name, kind, eyes[], need_s, est_mb}], plan8, created_at}
+                         frozen: the choices that depend on the PIXELS of the irises, decided once (the collision family: which iris is in front at
+                         a contact, the hairline contacts, the overlap fallback, the woven or stacked lens; WP7B) and obeyed by the master, which is
+                         ANOTHER image of the same eyes than the preview; decided False: the plan was made without the pixels (the master decides)
                          created with upsert=False (the first writer wins), never changed. plan8 (8 hex) names its identity: everything that
                          decides the picture and nothing that is only provenance or an estimate (the registry hash `reg` is recorded, not hashed:
                          an unrelated registry edit must never rename an unfinished order's file)
@@ -42,8 +45,9 @@ duration.watchdog_total plus one step, with no page open.
 Holds (Hold, raised to the caller, which writes review.json and tells the owner; the order is never made in another style): style_step_too_big,
 style_not_priced, engine_skew (the plan was made under another ENGINE_V), class_changed (the master's colour class is not the preview's: never
 another palette), style_step_failed (the third kill, the second identical exception), plate_unavailable (the second plate fault), no_engine,
-eye_changed (a master was made from another preview than the plan's: another seed), picture_drift (the picture drew another seed or other plates than the
-plan names: never delivered).
+eye_changed (a master was made from another preview than the plan's: another seed), picture_drift (the picture drew another seed, other plates, another design
+or other frozen choices than the plan names: never delivered), design_changed (a choice the plan froze contradicts the eyes of the master: the collision family
+refuses it, never another picture).
 
 A style of the legacy engine is one art step as well (the executor calls the legacy master compose with the very body it always had: the artwork's
 file name is that function's own digest, unchanged); a style of the v3 engine is drawn here by its family's preview() at 4096 px and stored as
@@ -272,9 +276,14 @@ def _eye_facts(eyes):
     return out
 
 
-def make_plan(spec, eyes=None, factor=None):
-    """The plan of a spec ({style, layout, eyes, opts}) and its eyes ([{eye_id, profile}], the draft's records): resolve() of the engine (no pixels), the
-    steps with their estimated seconds and megabytes, plan8. Pure: it stores nothing. Raises Hold when no engine can draw the style."""
+def make_plan(spec, eyes=None, factor=None, irises=None):
+    """The plan of a spec ({style, layout, eyes, opts, names, date}) and its eyes ([{eye_id, profile}], the draft's records): resolve() of the engine, the
+    steps with their estimated seconds and megabytes, plan8. Pure: it stores nothing. Raises Hold when no engine can draw the style. irises: the eyes as
+    Iris objects (api/_lib/styles/core.py, carrying their sealed ids), for the families whose plan needs the pixels (styles.wants_eyes: the collision family
+    decides the front order, the hairline contacts and the woven or stacked lens from the luminance and the colour of the irises): their plan is then the
+    whole plan, with the choices frozen (plan["frozen"], part of plan8) and the seed; without them it is what the sealed profiles say (plan["decided"] is
+    False and the master decides, as the preview did). The words are the customer's names and date: they move the scene a little, so the decisions are
+    made with them."""
     style, n = spec.get("style"), spec.get("eyes")
     if not CT.known(style) or not isinstance(n, int) or isinstance(n, bool) or not CT.in_range(style, n):
         raise Hold("no_engine", f"style {style!r} does not take {n!r} eyes")
@@ -291,9 +300,12 @@ def make_plan(spec, eyes=None, factor=None):
     else:
         from .. import styles as ST
         from . import plates as PL
+        # the eyes go to resolve() only for a family that takes them (the collision family: its choices depend on the pixels); every other call is the two argument one
+        more = {"eyes": irises} if (irises and ST.wants_eyes({"style": style, "eyes": n})) else {}
         try:
-            rp = ST.resolve({"style": style, "layout": layout, "eyes": n, "opts": opts, "canvas": None, "pv": CT.PLATES_VERSION, "eye_ids": plan["eye_ids"]},
-                            [(e or {}).get("profile") for e in (eyes or [])])
+            rp = ST.resolve({"style": style, "layout": layout, "eyes": n, "opts": opts, "canvas": None, "pv": CT.PLATES_VERSION, "eye_ids": plan["eye_ids"],
+                             "names": spec.get("names"), "date": spec.get("date")},
+                            [(e or {}).get("profile") for e in (eyes or [])], **more)
         except ST.EngineNotBuilt as e:
             raise Hold("no_engine", str(e)) from None
         except PL.NoPlate as e:
@@ -305,7 +317,7 @@ def make_plan(spec, eyes=None, factor=None):
         plates = [str(x) for x in rp["plates"]] if isinstance(rp.get("plates"), (list, tuple)) and rp["plates"] else None
         plan.update(engine_v=ENGINE_V, design_used=rp.get("design_used"), fallback=rp.get("fallback"), canvas=rp.get("canvas"),
                     seed_key=rp.get("seed_key"), seed_from=rp.get("seed_from"), seed=rp.get("seed"), frozen=dict(rp.get("frozen") or {}),
-                    clean=1 if rp.get("clean") else 0, cost_key=key, plates=plates)
+                    clean=1 if rp.get("clean") else 0, cost_key=key, plates=plates, decided=bool(rp.get("decided", True)))
         if plates:
             # the 4K plates the picture will draw from (the id, the storage path, the sha256 and the size of each: checkout verifies that every one is in
             # storage before the customer pays, and the step never substitutes another). The plates and the seed are known here when every eye's id is
@@ -455,12 +467,52 @@ def index_style(order):
         _log(f"order {order}: style index not stored: {e}")
 
 
+def plan_irises(ctx, eyes):
+    """The eyes of the order as Iris objects for the plan pass (make_plan(irises=)), or None when the style's family does not need them or they cannot be
+    read. A paid order: the clean 1024 px preview the customer approved, from the draft (its sha256 checked; the id is the eye's sealed id, so the seed is the
+    preview's). A lab test order has no draft: the 4096 px master, shrunk to the preview's size. None, never an exception: a plan made without the pixels
+    is a plan whose choices the master decides (plan["decided"] False), which the artwork's record then says."""
+    from .. import styles as ST
+    if not ST.wants_eyes({"style": ctx.spec.get("style"), "eyes": ctx.n}):
+        return None
+    from . import core as SCORE
+    try:
+        if ctx.eyes_from == "draft":
+            recs = _parallel([lambda i=i: store.get_json(f"{ctx.folder}/draft/eye_{i}.json", timeout=5.0, retry=False) for i in range(1, ctx.n + 1)])
+            prev = [(r or {}).get("preview") if isinstance(r, dict) else None for r in recs]
+            raws = _parallel([lambda p=p: store.get(p["path"], max_bytes=8 << 20, timeout=8.0, retry=False) if isinstance(p, dict) and isinstance(p.get("path"), str) else None
+                              for p in prev])
+            if any(raw is None or hashlib.sha256(raw).hexdigest() != (p or {}).get("sha256") for raw, p in zip(raws, prev)):
+                return None
+        else:
+            raws = _parallel([lambda i=i: store.get(f"{ctx.folder}/eye_{i}.jpg", timeout=20.0, retry=False) for i in range(1, ctx.n + 1)])
+            if any(raw is None for raw in raws):
+                return None
+        out = []
+        for i, (raw, e) in enumerate(zip(raws, eyes), 1):
+            eid = (e or {}).get("eye_id")
+            out.append(SCORE.Iris(raw, f"plan{i}", max_side=1024, eye_id=eid if SD.is_eye_id(eid) else None))
+        return out
+    except (store.StorageError, OSError, SyntaxError, ValueError) as e:
+        _log(f"order {ctx.order}: the pixels for the plan pass are not readable ({type(e).__name__}): the plan is made without them")
+        return None
+
+
+def plan_for(ctx):
+    """The plan of the order as it stands now, made and not stored: make_plan() of the order's spec and its eyes (the draft's sealed ids and profiles) with the
+    eyes' pixels for a family that decides from them (plan_irises: the draft's clean previews). This is what the checkout freezes (WP12 stores it in the order and
+    its plan8 in the Stripe metadata) and what the master makes when no checkout plan exists. For the collision family `plan["decided"]` False means the pixels could
+    not be read: the plan then freezes nothing, and a caller that must freeze (the checkout) asks again or refuses rather than store it."""
+    eyes = _eye_inputs(ctx)
+    return make_plan(ctx.spec, eyes, irises=plan_irises(ctx, eyes))
+
+
 def create_plan(ctx):
-    """The order's plan: the one the checkout froze, else made now from the eyes' sealed profiles and stored (upsert=False: of two callers the first
-    wins and both use that one)."""
+    """The order's plan: the one the checkout froze, else made now from the eyes' sealed profiles (and their pixels, for a family that decides from them)
+    and stored (upsert=False: of two callers the first wins and both use that one)."""
     plan = _stored_plan(ctx.rec)
     if plan is None:
-        plan = make_plan(ctx.spec, _eye_inputs(ctx))
+        plan = plan_for(ctx)
     plan = dict(plan, created_at=plan.get("created_at") or int(time.time()))
     data = _jbytes(plan)
     if len(data) > RECORD_MAX:
@@ -511,6 +563,11 @@ HOLDS = {
                       "ENGINE_V, or a record was changed by hand), so it was not delivered",
                       "Look at the plan (the admin order detail), the engine version of the deployment and the step's event; roll back the deployment or "
                       "delete the plan so that it is made again; then clear the review"),
+    "design_changed": ("the eyes of the master contradict what the plan froze before the render (the plan draws the infinity overlap and the master's pupils reach "
+                       "past the limit, a bar pupil where the preview had a round one, a front order that does not fit): the picture would not be the one the customer "
+                       "approved",
+                       "Look at the plan (its `frozen` block in the admin order detail) and at the eye masters; render the eye again if the master is wrong, or write "
+                       "to the customer; delete the plan (style/plan.json) only if you accept the picture the master's eyes now draw; then clear the review"),
     "plan_mismatch": ("the plan stored for this order is for another style or another number of eyes than the order's own record says (it was changed "
                       "by hand?)", "Look at orders/<order>/style/plan.json and the paid record; delete the plan if it is wrong; then clear the review"),
     "no_engine": ("no engine can draw this style for this number of eyes on this deployment",
@@ -652,6 +709,13 @@ def _check_drawn(plan, pv):
     want = plan.get("seed")
     if want is not None and str(pv.seed) != str(want):
         raise Hold("picture_drift", f"drawn from seed {pv.seed}, the plan names {want}")
+    if plan.get("decided") is not False and plan.get("family") == "collision":
+        if str(getattr(pv, "design", None)) != str(plan.get("design_used")):
+            raise Hold("picture_drift", f"drew the design {pv.design!r}, the plan names {plan.get('design_used')!r}")
+        want_fz = plan.get("frozen")
+        got_fz = (pv.log or {}).get("frozen") if isinstance(pv.log, dict) else None
+        if isinstance(want_fz, dict) and want_fz and got_fz != want_fz:
+            raise Hold("picture_drift", f"drew the choices {got_fz!r}, the plan froze {want_fz!r}")
     plates = plan.get("plates")
     used = (pv.log or {}).get("plates") if isinstance(pv.log, dict) else None
     if isinstance(plates, list) and isinstance(used, list) and sorted(map(str, plates)) != sorted(map(str, used)):
@@ -716,7 +780,14 @@ def _exec_engine(ctx, plan, step, rerun):
     fam_spec = {"style": plan["style"], "layout": plan["layout"], "eyes": n, "canvas": plan.get("canvas"), "names": names, "date": date, "opts": plan.get("opts"),
                 "pv": plan.get("pv"), "frozen": plan.get("frozen") or None}
     t0 = time.time()
-    pv = ST.preview(eyes, fam_spec, size=SIZE, watermark=False, check=True)
+    try:
+        pv = ST.preview(eyes, fam_spec, size=SIZE, watermark=False, check=True)
+    except ValueError as e:
+        if getattr(e, "why", None) in ("design_changed", "bar_pupil"):
+            # the family's own refusal (collision: DesignChanged, NotOffered): the master's eyes are not the eyes the plan was made for. Never another picture,
+            # never a retry that would end the same way
+            raise Hold("design_changed", f"{type(e).__name__}: {str(e)[:220]}") from e
+        raise
     t1 = time.time()
     _check_drawn(plan, pv)
     graded = list(pv.graded or [])
@@ -764,7 +835,7 @@ def _record(ctx, plan, step, k, of, ms=None, hold=None, existing=False, **kw):
     try:
         from .. import events as E
         E.record("master", step=_safe(step["name"]), part=k, of=of, ms=ms, order=ctx.order, count=plan["eyes"], style=plan["style"],
-                 design=plan.get("design_used"), existing=existing, hold=hold, **kw)
+                 design=plan.get("design_used"), fallback=plan.get("fallback"), existing=existing, hold=hold, **kw)
     except Exception:  # noqa: an event never costs a step
         pass
 
@@ -952,24 +1023,24 @@ def _finished(plan, st):
 
 
 def _for_delivery(plan, res):
-    """The artwork as delivery.json records it: a style of the v3 engine adds the design it was drawn in and the plan's identity (plan8); a legacy
-    order's delivery.json is what it always was."""
+    """The artwork as delivery.json records it: a style of the v3 engine adds the design it was drawn in, the fallback the plan took (a pair drawn in the Kiss
+    geometry or as a stack: WP7B) and the plan's identity (plan8); a legacy order's delivery.json is what it always was."""
     out = dict(res)
     if plan.get("family") != "legacy":
-        out.update(plan8=plan.get("plan8"), design_used=plan.get("design_used"))
+        out.update(plan8=plan.get("plan8"), design_used=plan.get("design_used"), fallback=plan.get("fallback"))
     return out
 
 
 def _final(plan, st, res, ran, delivery=None):
     return {"final": True, "artwork": res, "progress": {"done": st["of"], "of": st["of"], "step": None}, "delivery": delivery, "ran": ran,
-            "plan8": plan.get("plan8"), "design_used": plan.get("design_used")}
+            "plan8": plan.get("plan8"), "design_used": plan.get("design_used"), "fallback": plan.get("fallback")}
 
 
 def advance(ctx, mode="next"):
     """Do the next missing step of the order's plan; when it was the last, the artwork is handed to ctx.finish (delivery.json) before the call ends.
     mode: "next" (the chain, the order page), "recompose" (the admin: the same file when no input changed, a new one when a master was re-rendered; the
     legacy engine decides that itself), "rerun" (the admin: always a new file; not for the legacy engine). Returns {final, artwork, progress, delivery,
-    ran, plan8, design_used}; final is False when more steps remain (the caller asks again). Raises what run_step raises."""
+    ran, plan8, design_used, fallback}; final is False when more steps remain (the caller asks again). Raises what run_step raises."""
     order = ctx.order
     st = read_state(order)
     plan = st["plan"]
@@ -1048,6 +1119,6 @@ def lab_run(ctx, fresh=False, dry=False):
         lab_reset(ctx.order)
         st = read_state(ctx.order)
     if dry:
-        plan = st["plan"] or make_plan(spec, _eye_inputs(ctx))
+        plan = st["plan"] or plan_for(ctx)
         return {"dry": True, "plan": plan, "capacity": capacity(plan)}
     return advance(ctx, "rerun" if (fresh and st["plan"] is not None) else "next")

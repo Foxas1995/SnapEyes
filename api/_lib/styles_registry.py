@@ -301,7 +301,7 @@ STYLES = {
         "name": "Family Colours",
         "legacy": 0,
         "eyes": [3, 8],
-        "layouts": {"3": ["trio", "diag"], "4": ["zigzag", "cluster", "ring", "brick"], "5": ["brick", "ring", "flower"], "6": ["brick", "ring", "flower"], "7": ["ring", "flower", "brick"], "8": ["ring", "brick", "flower"]},
+        "layouts": {"3": ["trio", "diag"], "4": ["zigzag", "cluster", "ring"], "5": ["brick", "ring", "flower"], "6": ["brick", "ring"], "7": ["ring", "flower", "brick"], "8": ["ring", "brick"]},
         "stage": "lab",
         "stage_by_eyes": {},
         "price_class": "art",
@@ -309,7 +309,7 @@ STYLES = {
         "pick": ["own", "dark_brown", "grey"],
         "reason": {"own": "reason.grp_collision.own", "dark_brown": "reason.grp_collision.dark_brown", "grey": "reason.grp_collision.grey"},
         "tile_order": 1,
-        "work_side": {"3": 4096, "4-8": 2048},
+        "work_side": {"3-8": 2048},
         "accent": []
     },
     "grp.chain": {

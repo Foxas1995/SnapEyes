@@ -88,7 +88,7 @@ FIELDS = {
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
                "rerender": "b", "existing": "b", "render_s": "n", "style": "c",
                "part": "n", "of": "n", "need_s": "n", "cpu_s": "n", "peak_mb": "n", "hwm_mb": "n", "kills": "n", "design": "c", "d_rgb": "n",
-               "hold": "c"},
+               "hold": "c", "fallback": "c"},
     "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n", "style": "c"},
     "help": {"route": "c", "eyes": "n", "why": "c", "lang": "c"},
     "exp": {"stage": "c", "exp": "c", "variant": "c", "market": "c", "eyes": "n", "amount": "n", "currency": "c",
@@ -356,6 +356,8 @@ def empty():
             # the master plan's steps (kind master, step art): steps made, by style; orders held instead of made, by code (sums of peak_mb and need_s
             # are in "ms" as art_peak_mb and art_need_s with their counts, so averages need no new shape)
             "master_art": 0, "master_art_style": {}, "master_hold": {},
+            # ... and the fallback a pair was made with (overlap_fallback: the Kiss geometry for a wide pupil; stack_contrast: the stacked lens, WP7B), by code
+            "master_fallback": {},
             "errors": {}, "error_endpoint": {}, "error_reason": {}, "busy": 0,
             "gemini": {"vision": 0, "image_1k": 0, "image_4k": 0}, "ms": {}, "recent_errors": [],
             # price experiments (kind "exp"): "<experiment>|<variant>|<stage>" -> events (exp_stage; exp_hit counts only the
@@ -490,6 +492,8 @@ def add(agg, ev):
             else:
                 agg["master_art"] += 1
                 _inc(agg["master_art_style"], ev.get("style") or "unknown")
+                if ev.get("fallback"):
+                    _inc(agg["master_fallback"], ev["fallback"])
                 _ms(agg, "master_art", ev)
                 for field, key in (("peak_mb", "art_peak_mb"), ("need_s", "art_need_s")):
                     v = ev.get(field)

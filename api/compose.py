@@ -556,13 +556,19 @@ def _plan(style, spec, profiles):
         return {}
 
 
-def _plan8(style, n, layout, opts, eye_ids, metas):
-    """The plan identity of this picture (steps.make_plan: pure, no pixel, no storage), or None when no plan can be made (the reply then says nothing)."""
+def _plan8(style, n, layout, opts, eye_ids, metas, irises=None, spec=None):
+    """The plan identity of this picture (steps.make_plan: pure, no storage), or None when no plan can be made (the reply then says nothing). irises: the eye
+    objects of the render, for the families whose plan depends on the pixels (the collision family: the front order, the hairline contacts, the woven or
+    stacked lens; their plan pass reads the grades the render just cached), and spec the render's own spec, whose words move the scene a little: the
+    plan8 of the reply is then the very plan the checkout and the master make of the same eyes (WP7B)."""
     try:
         from _lib.styles import steps as SP
         eyes = [{"eye_id": i, "profile": (m or {}).get("profile").rec if isinstance(m, dict) and m.get("profile") is not None else None}
                 for i, m in zip(eye_ids, metas)]
-        return SP.make_plan({"style": style, "layout": layout, "eyes": n, "opts": opts}, eyes)["plan8"]
+        plan_spec = {"style": style, "layout": layout, "eyes": n, "opts": opts}
+        if isinstance(spec, dict):
+            plan_spec.update(names=spec.get("names"), date=spec.get("date"))
+        return SP.make_plan(plan_spec, eyes, irises=irises)["plan8"]
     except Exception:  # noqa
         return None
 
@@ -684,7 +690,7 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": word, "canvas": canvas,
             "count": n, "width": img.size[0], "height": img.size[1], "image": _jpeg(img),
             "styles": list(catalogue.previewable_ids(n, admin)), "qa": qa, "eyes": _eyes_reply(metas), "tiles": cat["tiles"], "pick": _pick_reply(cat),
-            "size": size, "opts": opts, "design_used": design, "fallback": fallback, "plan8": _plan8(style, n, layout, opts, spec["eye_ids"], metas),
+            "size": size, "opts": opts, "design_used": design, "fallback": fallback, "plan8": _plan8(style, n, layout, opts, spec["eye_ids"], metas, eyes, spec),
             "engine": _engine_facts(), "selfcheck": _selfcheck_of(pv),
             "timing": {"eyes_ms": int((t_draw - t_eyes) * 1000), "render_ms": int((t_done - t_draw) * 1000), "total_ms": int((time.time() - t0) * 1000)}}
 
@@ -797,7 +803,7 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
                         t_w = time.time()
                         pv = pvs[s]
                         made[s] = {"img": ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n), "spec": specs[s], "plan": _plan(s, specs[s], specs[s]["profiles"]),
-                                   "layout": specs[s]["layout"], "canvas": pv.fmt or specs[s]["canvas"] or catalogue.engine_for(s, n)["canvases"][0], "pv": pv}
+                                   "layout": specs[s]["layout"], "canvas": pv.fmt or specs[s]["canvas"] or catalogue.engine_for(s, n)["canvases"][0], "pv": pv, "eyes": eyes}
                         timing[s] = int(((pv.times or {}).get("total", 0.0) + (time.time() - t_w)) * 1000)      # the design's own render and its watermark
                 if legacy:
                     ims = _irises_full(body, opened)[0]
@@ -828,7 +834,7 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
         design, fallback = _drawn(m["pv"], m["plan"])
         ids = m["spec"]["eye_ids"] if m["spec"] else [(x or {}).get("eye_id") or "" for x in metas]
         r.update(image=_jpeg(m["img"]), width=m["img"].size[0], height=m["img"].size[1], layout=m["layout"], canvas=m["canvas"], design_used=design, fallback=fallback,
-                 plan8=_plan8(s, n, m["layout"], opts.get(s) or {}, ids, metas))
+                 plan8=_plan8(s, n, m["layout"], opts.get(s) or {}, ids, metas, m.get("eyes"), m["spec"]))
     if made and not admin:
         pick_id = cat["pick"]
         gate = {s: _gate_code(s, n, metas) for s in made}
