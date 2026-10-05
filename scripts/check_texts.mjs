@@ -73,7 +73,7 @@ export const SAMPLES = {
   'price.duoOffer': [['13 990 Ft']], 'price.extra': [['13 990 Ft', '4 990 Ft', 8]], 'price.sampleNotCounted': [[1], [2], [5]],
   // the style picker (src/try/picker.ts, WP11): one entry per function of the dictionary's picker section
   'picker.countSoon': [[1], [2], [3], [5], [8]], 'picker.retakeFirst': [[1], [2]], 'picker.resealFirst': [[2]],
-  'picker.tileAlt': [['Powder Burst']], 'picker.tileMaking': [['Powder Burst']],
+  'picker.tileAlt': [['Powder Burst']], 'picker.tileMaking': [['Powder Burst']], 'picker.soonLookBuy': [['Vortex'], ['Echo']], 'picker.soonLookNote': [['Vortex'], ['Deep Field']],
   'picker.changed.eyes': [['Collision Infinity', 'Family Colours', 3], ['Powder Burst', 'Kiss Collision', 2], ['Family Colours', 'Celestial Gold', 1]],
   'picker.changed.gate': [['Kiss Collision', 'Powder Burst', 2], ['Family Colours', 'Powder Burst', 5]],
   'picker.changed.reseal': [['Kiss Collision', 'Powder Burst', 1]], 'picker.changed.pupil': [['Kiss Collision', 'Powder Burst']],

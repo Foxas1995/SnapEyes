@@ -2,7 +2,7 @@ import React from 'react';
 import { Lock, RefreshCcw } from 'lucide-react';
 import { T } from './copy';
 import { type Eye, MAX_EYES, billableEyes } from './multi';
-import type { BuyState } from './picker';
+import { type BuyState, lookName } from './picker';
 import { classStyle, styleName } from '../shared/styles';
 import { currencyOf, currentMarket, money, priceMinor, type PriceList } from '../shared/markets';
 import { listFor } from '../shared/pricing';
@@ -43,8 +43,8 @@ interface Props {
   /** The price changed while the customer looked (the server answered 409 price_changed): the sentence naming the new
    *  price, shown above the button until the next press. */
   priceNote?: string | null;
-  /** What the picker says about the selected style (src/try/picker.ts buyState): bought as it is, opens soon (no price, no button), or no style of this
-   *  many eyes can be bought yet (one line). */
+  /** What the picker says about the selected style and its look (src/try/picker.ts buyState): bought as it is, opens soon (no price, no button; the style, or
+   *  its look on screen), or no style of this many eyes can be bought yet (one line). */
   state?: BuyState;
   /** the tile list is still being asked for: the card waits for it (it cannot say what can be bought) */
   loading?: boolean;
@@ -88,7 +88,7 @@ export const BuyCard: React.FC<Props> = (props) => {
     return (
       <section aria-label={T.price.title} data-testid="buy-soon" className={CARD}>
         <p className="text-[10px] uppercase tracking-widest text-zinc-300">{T.price.title}</p>
-        <p data-testid="buy-soon-line" className="text-sm font-semibold text-emerald-300 mt-1.5">{p.state.kind === 'soon' ? T.picker.soonBuy : T.picker.countSoon(n)}</p>
+        <p data-testid="buy-soon-line" className="text-sm font-semibold text-emerald-300 mt-1.5">{p.state.kind === 'soon' ? (p.state.look ? T.picker.soonLookBuy(lookName(p.state.look)) : T.picker.soonBuy) : T.picker.countSoon(n)}</p>
       </section>
     );
   }

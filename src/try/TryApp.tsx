@@ -14,7 +14,7 @@ import { LANG_NAMES, marketLangs } from '../shared/lang';
 import { ResultView } from './ResultView';
 import { usePreviews } from './usePreviews';
 import { sendHelp } from './composeApi';
-import { type Opts, type ServerTile, NO_OPTS, advisoryEyes, buyState, defaultLook, retakeView, showsPrice } from './picker';
+import { type Opts, type ServerTile, NO_OPTS, advisoryEyes, buyState, lookOf, retakeView, showsPrice } from './picker';
 import type { PickerModel } from './StylePicker';
 import type { WordsModel } from './Words';
 import { DATE_MAX, FAMILY_MAX, NAME_MAX, drawsFamilyName, namesFromWire, namesOf, problems, typed, wireNames } from './names';
@@ -753,13 +753,16 @@ export const TryApp: React.FC = () => {
   const priceOf = (tl: ServerTile) => (!eyes.some((e) => e.sample) && showsPrice(eyes.length, tl) ? money(priceMinor(1, tl.id, market, priceList), currencyOf(market), T.lang) : null);
   const retakeState = catalog ? retakeView({ tiles: catalog.tiles, eyes: catalog.eyes, selected: selectedTile }) : null;
   const advisory = advisoryEyes(selectedTile, catalog?.eyes ?? []);
-  const lookNow = selectedTile ? (selectedTile.looks[opts.look ?? ''] ? opts.look : defaultLook(selectedTile)) : null;
+  const lookNow = lookOf(selectedTile, opts.look);
+  // what the buy card does: the price and the button only for a style AND a look that can be bought (a Soon look under a live style is drawn, never sold)
+  const buying = buyState({ n: eyes.length, tiles: catalog?.tiles ?? [], selected: selectedTile, look: lookNow });
   const picker: PickerModel = {
     n: eyes.length, catalog, error: previews.catalogError, onRetryCatalog: previews.retryCatalog, style, selected: selectedTile, changed: previews.changed,
     tilePicture: previews.tilePicture, tileBusy: previews.tileBusy, tileFailed: previews.tileFailed, onRetryTiles: previews.retryTiles, paused: previews.tilesPaused, priceOf,
     onStyle: (id) => setWant(id), look: lookNow, onLook: (code) => setOpts((o) => ({ ...o, look: code })), retake: retakeState, advisory,
     onRetakeEye: (i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); },
-    onManual: () => sendHelp({ route: 'manual', eyes: eyes.length, why: retakeState?.why ?? 'unknown', lang: T.lang }),
+    onRemoveEye: (i) => { const e = eyes[i - 1]; if (e) removeEye(e.id); },
+    onManual: () => sendHelp({ route: 'manual', eyes: eyes.length, why: retakeState?.why ?? (catalog && !style ? 'no_style' : 'unknown'), lang: T.lang }),
   };
   const words: WordsModel = {
     names: namesList,
@@ -792,7 +795,7 @@ export const TryApp: React.FC = () => {
 
   const onBuy = async () => {
     const list = eyesRef.current;
-    if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open || !style || !art || wordProblems.length) return;
+    if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open || !style || !art || wordProblems.length || buying.kind !== 'normal') return;
     buyingRef.current = true;
     setNotice(null);
     setPriceNote(null);
@@ -853,7 +856,7 @@ export const TryApp: React.FC = () => {
     <BuyCard
       eyes={eyes} style={style ?? ''} styleName={selectedTile?.name ?? style ?? ''} ordering={ordering}
       preview={art ? 'ready' : previews.composeError !== null ? 'failed' : 'composing'}
-      state={buyState({ n: eyes.length, tiles: catalog?.tiles ?? [], selected: selectedTile })} loading={!catalog && !previews.catalogError}
+      state={buying} loading={!catalog && !previews.catalogError}
       advisory={advisory} wordsBlocked={wordProblems.length > 0}
       stale={ordering?.open && !eyes.some((e) => e.sample) ? staleEyes(eyes, orderRef, now) : []}
       onRetake={(i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); }}

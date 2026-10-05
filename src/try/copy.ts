@@ -342,6 +342,9 @@ const en = {
     countSoon: (n: number) => `Ordering for ${eyes(n)} opens soon.`,
     soonBuy: 'This style opens soon. Choose another to order now.',
     soonNote: 'This style opens soon.',
+    // a style that can be bought whose look on screen opens soon (Universe: Vortex): the same line, naming the look (the look names are English in every language)
+    soonLookBuy: (look: string) => `The ${look} look opens soon. Choose another look or style to order now.`,
+    soonLookNote: (look: string) => `The ${look} look opens soon.`,
     listLabel: 'Styles for your eyes',
     soon: 'Soon',
     recommended: 'Recommended',
@@ -393,6 +396,9 @@ const en = {
       // the landing page's FAQ answer, word for word ({link} is a link): the owner looks at the photos, no promise of a time
       manual: 'Still stuck? Email your best photos to {link} and Mantas will look at them.',
       noPreview: 'We cannot show a preview of these eyes yet. See below what to change.',
+      // every style of the list is held for the shape of the pupil (the collision styles need a round one), and the case of no style at all for this many eyes
+      pupil: 'The pupil in this photo does not read as round, and these styles are made for round pupils.',
+      noStyles: 'No style can be shown for this number of eyes yet. Remove an eye, or write to us.',
     },
     stack: 'Your two irises differ strongly in colour, so one sits in front of the other.',
     widePupil: 'Your pupils are wide, so the irises touch instead of overlapping.',
@@ -784,6 +790,8 @@ const de: TryCopy = {
     countSoon: (n: number) => `Bestellungen für ${augen(n)} sind bald möglich.`,
     soonBuy: 'Dieser Stil ist bald erhältlich. Wählen Sie einen anderen, um jetzt zu bestellen.',
     soonNote: 'Dieser Stil ist bald erhältlich.',
+    soonLookBuy: (look: string) => `Die Variante ${look} ist bald erhältlich. Wählen Sie eine andere Variante oder einen anderen Stil, um jetzt zu bestellen.`,
+    soonLookNote: (look: string) => `Die Variante ${look} ist bald erhältlich.`,
     listLabel: 'Stile für Ihre Augen',
     soon: 'Bald',
     recommended: 'Empfohlen',
@@ -831,6 +839,8 @@ const de: TryCopy = {
       },
       manual: 'Kommen Sie nicht weiter? Schicken Sie Ihre besten Fotos an {link}, und Mantas sieht sie sich an.',
       noPreview: 'Für diese Augen können wir noch keine Vorschau zeigen. Unten steht, was Sie ändern können.',
+      pupil: 'Die Pupille auf diesem Foto wirkt nicht rund, und diese Stile sind für runde Pupillen gemacht.',
+      noStyles: 'Für diese Anzahl von Augen kann noch kein Stil gezeigt werden. Entfernen Sie ein Auge oder schreiben Sie uns.',
     },
     stack: 'Ihre beiden Iriden unterscheiden sich stark in der Farbe, deshalb liegt eine vor der anderen.',
     widePupil: 'Ihre Pupillen sind weit, deshalb berühren sich die Iriden, statt sich zu überlappen.',

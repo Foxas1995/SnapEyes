@@ -148,6 +148,50 @@ export async function run(): Promise<Row[]> {
   const hNone = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b'), eyeObj('c')], { ...m3, style: null, selected: undefined }, { art: undefined })));
   check('when nothing can be drawn the retake state stands where the picture would be, the eyes are marked, and nothing is for sale', has(hNone, 'no-preview') && !has(hNone, 'artwork') && has(hNone, 'retake-state') && has(hNone, 'chip-retake-3') && text(hNone).includes('We cannot show a preview of these eyes yet.'));
 
+  // ---- every style held for the pupil (review of WP11, M2): the frame says what to do; it never waits for a picture that will not come
+  const barPair = pair.map((t) => ({ ...t, available: false, why: 'bar_pupil' }));
+  const barEyes = [eye(1, { pupil: 'bar' }), eye(2, { pupil: 'bar' })];
+  const mBar: PickerModel = { ...model(2, barPair, barEyes, { tilePicture: () => undefined }), style: null, selected: undefined, retake: retakeView({ tiles: barPair, eyes: barEyes, selected: undefined }) };
+  const hBar = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b')], mBar, { art: undefined, onRemove: noop })));
+  const hBarPanel = renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 2, onRetake: noop, onRemove: noop, onManual: noop }));
+  check('two eyes, every tile held for the pupil: no "Composing" and no spinner frame; the state stands where the picture would be, with the pupil sentence, the tip, a retake and a remove button per eye and the way to ask us',
+    has(hBar, 'no-preview') && !has(hBar, 'artwork') && !text(hBar).includes(T.result.composing) && !hBar.includes('animate-spin') && has(hBar, 'retake-state') && has(hBar, 'retake-pupil')
+    && text(hBar).includes('The pupil in this photo does not read as round, and these styles are made for round pupils.') && has(hBar, 'retake-tip-open')
+    && has(hBar, 'retake-eye-1') && has(hBar, 'retake-eye-2') && has(hBarPanel, 'remove-eye-1') && has(hBarPanel, 'remove-eye-2') && has(hBar, 'manual-route'));
+  check('the pupil state marks the eyes on their chips, blames no rule (no lid or reflection sentence, no "cleaner iris") and names the eyes in its title',
+    has(hBar, 'chip-retake-1') && has(hBar, 'chip-retake-2') && !has(hBar, 'retake-lid') && !has(hBar, 'retake-reflection') && !text(hBar).includes('cleaner iris') && text(hBarPanel).includes('Eyes 1 and 2 need a retake'));
+  check('a remove button only where there is more than one eye and a way to remove (a pupil card with one eye has the retake button alone)',
+    !has(renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 1, onRetake: noop, onRemove: noop, onManual: noop })), 'remove-eye-1') && !has(renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 2, onRetake: noop, onManual: noop })), 'remove-eye-1'));
+  const tileBar = renderToStaticMarkup(createElement(StylePicker, { model: mBar }));
+  check('every held tile says "Not for this pupil shape" and is no choice', (tileBar.match(/Not for this pupil shape/g) ?? []).length === 3 && !/aria-pressed/.test(tileBar));
+  const mTrioBar: PickerModel = { ...model(3, [tile('grp.fam', { group: 'grp', gate: 'hard', available: false, why: 'bar_pupil', layouts: ['trio'], eyes: 3 })], [eye(1), eye(2, { pupil: 'bar' }), eye(3)], { tilePicture: () => undefined }), style: null, selected: undefined,
+    retake: retakeView({ tiles: [tile('grp.fam', { group: 'grp', gate: 'hard', available: false, why: 'bar_pupil', layouts: ['trio'], eyes: 3 })], eyes: [eye(1), eye(2, { pupil: 'bar' }), eye(3)], selected: undefined }) };
+  const hTrioBar = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b'), eyeObj('c')], mTrioBar, { art: undefined })));
+  check('three eyes with the Trio live and held for one pupil: the state names eye 2, says why, nothing waits; the buy card has nothing to sell and is not drawn',
+    has(hTrioBar, 'no-preview') && text(hTrioBar).includes('Eye 2 needs a retake') && has(hTrioBar, 'chip-retake-2') && !has(hTrioBar, 'chip-retake-1') && !text(hTrioBar).includes(T.result.composing)
+    && buy({ eyes: [eyeObj('a'), eyeObj('b'), eyeObj('c')], state: buyState({ n: 3, tiles: [tile('grp.fam', { group: 'grp', available: false, why: 'bar_pupil', eyes: 3 })], selected: undefined }) }) === '');
+  // no style at all for this many eyes: the frame still never waits
+  const mNone: PickerModel = { ...emptyPicker(2), catalog: { key: 'k', n: 2, tiles: [], pick: null, reasonKey: null, eyes: [eye(1), eye(2)] }, style: null, selected: undefined, retake: null };
+  const hNoStyle = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b')], mNone, { art: undefined })));
+  check('a tile list with no style in it: the frame says so, offers the way to ask us, and never shows "Composing" or the spinner',
+    has(hNoStyle, 'no-preview') && has(hNoStyle, 'no-styles') && has(hNoStyle, 'manual-route') && !has(hNoStyle, 'artwork') && !text(hNoStyle).includes(T.result.composing) && !hNoStyle.includes('animate-spin')
+    && text(hNoStyle).includes('No style can be shown for this number of eyes yet. Remove an eye, or write to us.'));
+  const hLoadingList = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b')], emptyPicker(2), { art: undefined })));
+  check('while the tile list is still being asked for (no catalogue yet) the frame does say "Composing": that wait is real', text(hLoadingList).includes(T.result.composing) && !has(hLoadingList, 'no-preview'));
+
+  // ---- a Soon look under a live style (review of WP11, M1): no price, no button, one line that names the look
+  const uniSoon = tile('solo.universe', { name: 'Universe', slug: 'universe', gate: 'hard', rule: 'fill', looks: { echo: 'live', vortex: 'preview' } });
+  const mLook = model(1, [singles[0], uniSoon], [eye(1)], { priceOf, look: 'vortex', style: 'solo.universe' }, 'solo.powder');
+  const hLook = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mLook)));
+  check('the preview note of a live style whose look opens soon says that look opens soon and does not promise a file; the live look keeps the promise',
+    text(hLook).includes('The Vortex look opens soon.') && !text(hLook).includes('Your file:')
+    && text(renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], { ...mLook, look: 'echo' })))).includes('Your file: 4096 px'));
+  const hLookBuy = buy({ styleName: 'Universe', state: buyState({ n: 1, tiles: [singles[0], uniSoon], selected: uniSoon, look: 'vortex' }) });
+  check('the buy card of a Soon look: the line names the look, no price, no waiver, no button, no date', text(hLookBuy).includes('The Vortex look opens soon. Choose another look or style to order now.')
+    && !has(hLookBuy, 'buy') && !has(hLookBuy, 'waiver') && !has(hLookBuy, 'price') && !/\d{4}|€|\d[,.]\d\d/.test(text(hLookBuy).replace('Price for this artwork', '')));
+  check('the same style with its live look is for sale: the price and the button',
+    has(buy({ styleName: 'Universe', state: buyState({ n: 1, tiles: [singles[0], uniSoon], selected: uniSoon, look: 'echo' }) }), 'buy'));
+
   // ---- four to eight eyes: an eye moves one place at a time
   const eyes4 = ['a', 'b', 'c', 'd'].map((id) => eyeObj(id));
   const grp4 = [tile('grp.fam', { name: 'Family Colours', group: 'grp', stage: 'preview', gate: 'hard', layouts: ['zigzag', 'cluster', 'ring'], eyes: 4 })];
@@ -207,6 +251,14 @@ export async function run(): Promise<Row[]> {
         const t1 = text(renderToStaticMarkup(createElement(RetakePanel, { view: m3.retake!, total: 3, onRetake: noop, onManual: noop })));
         const t2 = text(hs);
         return t1.includes(P.retake.lid) && t1.includes(P.retake.tips.open) && t1.includes(P.retake.manual.split('{link}')[0]) && (lang === 'en' || !/Still stuck|eyelid|retake/i.test(t1));
+      })());
+    check(`${lang}: the pupil sentence, the no-style sentence and the Soon look lines are written out, name the look and are not the English ones (review of WP11)`,
+      (() => {
+        const en = COPY.en.picker;
+        const pupilRender = text(renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 2, onRetake: noop, onRemove: noop, onManual: noop })));
+        const base = P.retake.pupil.length > 30 && P.retake.noStyles.length > 30 && P.soonLookBuy('Vortex').includes('Vortex') && P.soonLookNote('Vortex').includes('Vortex') && pupilRender.includes(P.retake.pupil) && pupilRender.includes(T.result.remove(1));
+        return base && (lang === 'en' || (P.retake.pupil !== en.retake.pupil && P.retake.noStyles !== en.retake.noStyles && P.soonLookBuy('Vortex') !== en.soonLookBuy('Vortex') && P.soonLookNote('Vortex') !== en.soonLookNote('Vortex')
+          && !/read as round|made for round/.test(pupilRender)));
       })());
     check(`${lang}: the held tile, the Soon note and the changed lines are written out`, P.retakeFirst(3).includes('3') && P.soonBuy.length > 20 && P.countSoon(2).includes('2') && P.changed.eyes('A', 'B', 3).includes('A') && P.changed.gate('A', 'B', 2).includes('B') && P.advisory([1, 3], 4).includes('3') && P.retake.title([2, 3], 6).includes('3'));
     check(`${lang}: the same twelve option and word labels exist and none is empty`, [P.options.swap, P.options.rotate, P.options.earlier, P.options.later, P.options.look, P.names.title, P.names.date, P.names.family, P.names.datePlaceholder, P.stack, P.widePupil, P.groupSoon].every((s) => s.trim().length > 2));

@@ -3,8 +3,8 @@
 // it returns its results and prints nothing. The rendered picker (tiles, states, buy card, four languages, claims) is suites/ts/picker_page.test.ts.
 import {
   type Catalog, type ServerEye, type ServerTile,
-  advisoryEyes, buyState, defaultLook, groupAllSoon, groupOf, layoutOf, looksOf, lookName, nextTiles, parseCatalog, reasonOf, resolveStyle, retakeView,
-  setKey, showsPrice, tileState, wireOpts, NO_OPTS, artKey, drawable, isLive, isSoon,
+  advisoryEyes, buyState, defaultLook, groupAllSoon, groupOf, layoutOf, lookOf, looksOf, lookName, nextTiles, parseCatalog, reasonOf, resolveStyle, retakeView,
+  setKey, showsPrice, soonChoice, tileState, wireOpts, NO_OPTS, artKey, drawable, isLive, isSoon,
 } from '../../src/try/picker';
 import {
   DATE_MAX, FAMILY_MAX, FAMILY_NAME_LAYOUTS, NAME_MAX, NAMES_TOTAL_MAX, cleanText, composeNames, namesFromWire, namesOf, problems, splitNames, typed, unsupportedChars, wireNames,
@@ -142,12 +142,46 @@ export async function run(): Promise<Row[]> {
   check('a one-eye set always has a style it can buy: the Universe (hard, fill) held back never leaves a dead end while an advisory style is live',
     retakeView({ tiles: [adv, uni], eyes: [eye(1, { gate: { lid: false, fill: false }, why: ['lid_sectors_outer', 'fill_rim_sector'] })], selected: adv })!.deadEnd === false);
 
+  // ---- every tile held for the pupil (review of WP11, M2): no eye fails a rule and nothing can be drawn, yet the state must exist (no dead end)
+  const barHeld = (ids: string[], o: Partial<ServerTile> = {}) => ids.map((id) => tile(id, { group: 'duo', gate: 'hard', available: false, why: 'bar_pupil', ...o }));
+  const rvp = retakeView({ tiles: barHeld(['duo.kiss', 'duo.inf'], { stage: 'preview' }), eyes: [eye(1, { pupil: 'bar' }), eye(2)], selected: undefined })!;
+  check('retakeView: every tile held for the pupil is a state, not null: the eye with the bar pupil is named (no rule is blamed), the tip is the open eye, the manual route is offered',
+    !!rvp && JSON.stringify(rvp.pupil) === '[1]' && rvp.eyes.length === 0 && rvp.reseal.length === 0 && rvp.reasons.length === 0 && rvp.tip === 'open' && rvp.why === 'bar_pupil' && rvp.deadEnd && !rvp.holds);
+  const rvp2 = retakeView({ tiles: barHeld(['grp.fam'], { stage: 'live', group: 'grp' }), eyes: [eye(1), eye(2, { pupil: 'bar' }), eye(3, { pupil: 'bar' })], selected: undefined })!;
+  check('retakeView: a LIVE Trio held for two bar pupils names both, and it is a dead end all the same (a live tile that cannot be drawn is nothing to buy)',
+    !!rvp2 && JSON.stringify(rvp2.pupil) === '[2,3]' && rvp2.deadEnd === true
+    && buyState({ n: 3, tiles: barHeld(['grp.fam'], { stage: 'live', group: 'grp' }), selected: undefined }).kind === 'none');
+  const rvp3 = retakeView({ tiles: barHeld(['duo.kiss']), eyes: [eye(1), eye(2)], selected: undefined })!;
+  check('retakeView: the engine refused a pupil the profiles did not show (no eye says bar): every eye is named, one cannot tell which', !!rvp3 && JSON.stringify(rvp3.pupil) === '[1,2]');
+  check('retakeView: a bar pupil with no tile held for it is no state (a one-eye set takes it: the singles draw any pupil); no eyes in the reply, nothing to name',
+    retakeView({ tiles: [tile('solo.powder')], eyes: [eye(1, { pupil: 'bar' })], selected: tile('solo.powder') }) === null && retakeView({ tiles: barHeld(['duo.kiss']), eyes: [], selected: undefined }) === null);
+  const rvp4 = retakeView({ tiles: [...barHeld(['duo.kiss']), tile('duo.inf', { group: 'duo', gate: 'hard', available: false, why: 'gate' })], eyes: [eye(1, { pupil: 'bar' }), bad(2)], selected: undefined })!;
+  check('retakeView: a pupil and a rule failing together keep their own lists (the pupil eye is not blamed for the lid, the lid eye is not blamed for the pupil)',
+    JSON.stringify(rvp4.pupil) === '[1]' && JSON.stringify(rvp4.eyes) === '[2]' && rvp4.holds && rvp4.tip === 'open');
+
   // ---- the buy card
   const live1 = [tile('a'), tile('b', { stage: 'preview' })];
   check('buyState: a live selected style is bought as it is; a Soon one says so (no price, no button); a count with no live style is one line; nothing selected is none',
     buyState({ n: 1, tiles: live1, selected: live1[0] }).kind === 'normal' && buyState({ n: 1, tiles: live1, selected: live1[1] }).kind === 'soon'
     && JSON.stringify(buyState({ n: 2, tiles: tilesPair, selected: tilesPair[0] })) === '{"kind":"countSoon","n":2}' && buyState({ n: 1, tiles: live1, selected: undefined }).kind === 'none' && buyState({ n: 1, tiles: [], selected: undefined }).kind === 'none');
   check('buyState: a count that IS sold but whose eyes fail the gate is not "opens soon" (the retake state speaks)', buyState({ n: 3, tiles: [tile('grp.fam', { available: false, why: 'gate' })], selected: undefined }).kind === 'none');
+
+  // a Soon look under a live style (review of WP11, M1): the tile is live, the look is not; checkout refuses it (409 style_unavailable), so the card sells nothing
+  const UE = tile('solo.universe', { gate: 'hard', rule: 'fill', looks: { echo: 'live', vortex: 'preview' } });
+  const UEsoon = tile('solo.universe', { gate: 'hard', rule: 'fill', looks: { echo: 'preview', vortex: 'live' } });
+  const bsU = (t: ServerTile, look?: string | null) => JSON.stringify(buyState({ n: 1, tiles: [t, tile('solo.powder')], selected: t, ...(look === undefined ? {} : { look }) }));
+  check('lookOf: the wanted look when the style has it, else the style\'s default; null for a style with no looks or none selected',
+    lookOf(UE, 'vortex') === 'vortex' && lookOf(UE, 'nope') === 'echo' && lookOf(UE, null) === 'echo' && lookOf(tile('a'), 'vortex') === null && lookOf(undefined, 'vortex') === null);
+  check('soonChoice: a Soon style, or a live style whose look on screen opens soon; a live look of a live style is not',
+    soonChoice(tile('a', { stage: 'preview' }), null) && soonChoice(UE, 'vortex') && !soonChoice(UE, 'echo') && !soonChoice(UE, null) && !soonChoice(tile('a'), null) && !soonChoice(undefined, 'vortex'));
+  check('buyState: a live style whose chosen look opens soon is "soon" with the look (no price, no button); its live look is bought as it is',
+    bsU(UE, 'vortex') === '{"kind":"soon","look":"vortex"}' && bsU(UE, 'echo') === '{"kind":"normal"}');
+  check('buyState: no look given reads the style\'s default look (what a request that names none draws and checkout asks about); an unknown look falls to the default too',
+    bsU(UE) === '{"kind":"normal"}' && bsU(UE, null) === '{"kind":"normal"}' && bsU(UEsoon) === '{"kind":"soon","look":"echo"}' && bsU(UEsoon, 'nope') === '{"kind":"soon","look":"echo"}' && bsU(UEsoon, 'vortex') === '{"kind":"normal"}');
+  check('buyState: a Soon style stays "soon" with no look named; a style with no looks ignores a look it is given',
+    JSON.stringify(buyState({ n: 1, tiles: live1, selected: live1[1], look: 'vortex' })) === '{"kind":"soon"}' && JSON.stringify(buyState({ n: 1, tiles: live1, selected: live1[0], look: 'vortex' })) === '{"kind":"normal"}');
+  check('showsPrice: a live style whose default look opens soon prints no price on its tile; the same style with a live default look does',
+    !showsPrice(1, UEsoon) && showsPrice(1, UE) && showsPrice(1, tile('a')));
 
   // ---- what to draw next: two at a time, in the server's order, never a held or laboratory tile, never one already there
   const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => tile(id));

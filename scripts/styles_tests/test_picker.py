@@ -8,6 +8,11 @@
      and are equal to the registry and the engine entry for every style and eye count; the page's reading of them (picker.ts) is in suites/ts
   3. the family name field is offered for a layout only where an engine draws it (nothing does yet)
   4. hygiene: the new page files hold no en or em dash, no written price, no invisible character, no style id, no key
+  5. what the page sells is what checkout accepts (review of WP11, M1): for every style and eye count of the registry, under four assignments of stages
+     (as the literals stand, everything live, a live style whose non-default looks only preview, a live style whose default look only previews), the
+     page's buy card (src/try/picker.ts buyState, run by Node on the tile rows the server sends) is "normal" exactly when checkout would take the order
+     (api/_lib/catalogue.py orderable and look_orderable): a price and a button for something checkout refuses is the bug this holds out
+  6. the wiring of the page that no DOM test reaches: TryApp reads the buy state with the look on screen and refuses to buy anything but a normal state
 No network, no image model, no real eye.
     python test_picker.py        prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure
 Run by suites/run_main.sh as the entry v3picker (SNAPEYES_REPO names the checkout)."""
@@ -109,7 +114,8 @@ check("the page offers a family name only for a layout an engine draws it for: w
 # ---------------------------------------------------------------------------------------------------- 4. hygiene
 section("4. hygiene of the new files")
 NEW = ["src/try/picker.ts", "src/try/names.ts", "src/try/nameChars.ts", "src/try/composeApi.ts", "src/try/usePreviews.ts", "src/try/StylePicker.tsx", "src/try/Words.tsx",
-       "scripts/bake_name_chars.py", "scripts/styles_tests/names_probe.mjs", "scripts/styles_tests/test_picker.py", "suites/ts/picker_state.test.ts", "suites/ts/picker_page.test.ts"]
+       "scripts/bake_name_chars.py", "scripts/styles_tests/names_probe.mjs", "scripts/styles_tests/picker_probe.mjs", "scripts/styles_tests/test_picker.py",
+       "suites/ts/picker_state.test.ts", "suites/ts/picker_page.test.ts"]
 price = re.compile(r"\d[\d., ]*\s?(€|EUR|A\$|Ft)|(€|A\$)\s?\d")
 for rel in NEW:
     try:
@@ -122,6 +128,72 @@ for rel in NEW:
     # the tests may name ids freely; the page's code never does (it reads the server's tile list)
     ok = not DASH.search(t) and not invisible and not ids and (rel.startswith(("suites/", "scripts/styles_tests/")) or not price.search(t))
     check(f"{rel}: no en or em dash, no invisible character, no style id, no written price", ok, (DASH.search(t), invisible[:3], ids[:3]))
+
+# ---------------------------------------------------------------------------------------------------- 5. what the page sells is what checkout accepts
+section("5. the buy card sells exactly what checkout accepts: stage of the style and stage of the look")
+import copy  # noqa: E402
+
+C.set_override_source(None)          # the literals alone: no owner's override (a test's own source, as test_registry.py does)
+
+
+def scenario(name):
+    """Assign stages in the registry in place (and restore them afterwards): the literal ceilings, a live registry with every look live, a live registry
+    whose non-default looks only preview, a live registry whose DEFAULT look only previews (the look a request that names none draws)."""
+    if name == "literal":
+        return
+    for sid, d in R.STYLES.items():
+        d["stage"] = "live"
+        d["stage_by_eyes"] = {k: "live" for k in d["stage_by_eyes"]}
+        looks = X.ENGINE[sid]["engine"].get("looks")
+        if looks:
+            names = list(looks)
+            for i, k in enumerate(names):
+                if name == "all_live":
+                    looks[k] = "live"
+                elif name == "extra_looks_preview":
+                    looks[k] = "live" if i == 0 else "preview"
+                elif name == "default_look_preview":
+                    looks[k] = "preview" if i == 0 else "live"
+
+
+cases, expect, where = [], [], []
+for sc in ("literal", "all_live", "extra_looks_preview", "default_look_preview"):
+    saved_styles, saved_engine = copy.deepcopy(dict(R.STYLES)), copy.deepcopy(dict(X.ENGINE))
+    try:
+        scenario(sc)
+        for sid, d in R.STYLES.items():
+            for n in range(d["eyes"][0], d["eyes"][1] + 1):
+                if not C.previewable(sid, n):
+                    continue                                   # the server sends no tile for it
+                row = C.tile_row(sid, n)
+                look_codes = list(row["looks"]) or [None]
+                for look in look_codes + ([] if look_codes == [None] else [None]):      # each look by name, and no look named (the default one)
+                    opts = {"look": look} if look else {}
+                    sells = bool(C.orderable(sid, n, strict=False) and C.look_orderable(sid, n, opts))
+                    cases.append({"n": n, "row": row, "look": look})
+                    expect.append(sells)
+                    where.append((sc, sid, n, look))
+    finally:
+        R.STYLES.clear(); R.STYLES.update(saved_styles)
+        X.ENGINE.clear(); X.ENGINE.update(saved_engine)
+kinds = node("picker_probe.mjs", {"cases": cases})["kinds"]
+wrong = [(where[i], kinds[i], expect[i]) for i in range(len(cases)) if (kinds[i] == "normal") != expect[i]]
+check(f"the page's buy state is normal exactly when checkout accepts the style and its look, for {len(cases)} cases (every style and eye count, every look and the default, four stage assignments)",
+      len(kinds) == len(cases) and not wrong, wrong[:4])
+sold_somewhere = sum(1 for e in expect if e)
+soon_look_cases = [w for w, e, k in zip(where, expect, kinds) if w[0] in ("extra_looks_preview", "default_look_preview") and not e and k == "soon"]
+check("the cases include what the review found (a live style with a look that only previews): checkout refuses it and the page says Soon, and there is something sold in the same run",
+      sold_somewhere > 0 and len(soon_look_cases) > 0, (sold_somewhere, len(soon_look_cases)))
+
+# ---------------------------------------------------------------------------------------------------- 6. the wiring
+section("6. the wiring of the page that no DOM test reaches")
+app = read("src/try/TryApp.tsx")
+check("TryApp reads the buy state with the look on screen and gives that very state to the card",
+      re.search(r"const buying = buyState\(\{[^}]*look: lookNow", app) is not None and "state={buying}" in app)
+check("TryApp's buy handler refuses anything but a normal buy state (a button that is not drawn cannot be pressed, and a stale click cannot buy a Soon look)",
+      re.search(r"const onBuy = async \(\) => \{\n[^\n]*\n[^\n]*buying\.kind !== 'normal'\) return;", app) is not None)
+check("TryApp gives the picker the way to remove an eye and counts a manual-route click with a reason even when no style could be drawn at all",
+      "onRemoveEye:" in app and "'no_style'" in app)
 
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed", flush=True)
 sys.exit(0 if all(RESULTS) else 1)

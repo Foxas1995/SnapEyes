@@ -138,6 +138,13 @@ export function looksOf(t: ServerTile): { code: string; soon: boolean }[] {
   return Object.entries(t.looks).map(([code, stage]) => ({ code, soon: stage === 'preview' }));
 }
 export const defaultLook = (t: ServerTile): string | null => Object.keys(t.looks)[0] ?? null;
+/** The look a style is drawn and ordered in: the wanted one when the style has it, else the style's default; null for a style with no looks. A request
+ *  that names no look draws the default one, and checkout asks whether THAT look can be bought (api/_lib/catalogue.py look_orderable). */
+export const lookOf = (t: ServerTile | undefined, want: string | null): string | null =>
+  t && Object.keys(t.looks).length ? (want && t.looks[want] ? want : defaultLook(t)) : null;
+/** What the customer has chosen opens soon: the style itself, or (a style that can be bought) the look on screen. A Soon look under a live style is drawn for
+ *  free and never sold: the tile is live and the look is not (the server caps a look at its style's stage and no more). */
+export const soonChoice = (t: ServerTile | undefined, look: string | null): boolean => !!t && (isSoon(t) || (look !== null && t.looks[look] === 'preview'));
 
 /** The proper names of the Universe looks (English in every language, like every style name). A code that is not listed is shown as it came. */
 const LOOK_NAMES: Record<string, string> = { echo: 'Echo', vortex: 'Vortex', deepfield: 'Deep Field', starfield: 'Starfield' };
@@ -206,6 +213,8 @@ export function reasonOf(code: string): RetakeReason {
 export interface RetakeView {
   eyes: number[];              // 1-based positions whose restoration fails a rule: they hold a tile back, or warn on the selected advisory style
   reseal: number[];            // 1-based positions with no sealed gate value (an older preview): the preview of that eye has to be made again
+  pupil: number[];             // 1-based positions whose pupil shape holds a tile back (the collision styles refuse a bar pupil): the eyes with a bar pupil,
+                               // or every eye when the engine refused and the profiles do not say which; empty when no tile is held for the pupil
   reasons: RetakeReason[];     // the distinct sentences to show for `eyes`, in the order of the eyes
   tip: RetakeTip;
   why: string;                 // the first reason code, for the one counted click on the manual route
@@ -216,27 +225,37 @@ export interface RetakeView {
 const codesOf = (e: ServerEye): string[] => (e.why.length ? e.why : ['lid_ring_outliers']);
 
 /** The retake state: null when no eye needs one. An eye needs a retake when it holds back at least one tile of the list (a hard style whose rule
- *  it fails) or, for an advisory selected style, when it fails that style's rule (the style is still drawn and can be bought, with a warning). */
+ *  it fails, or a pupil shape the style refuses) or, for an advisory selected style, when it fails that style's rule (the style is still drawn and can be
+ *  bought, with a warning). A set whose every tile is held for its pupils has a state too (no eye fails a rule, yet nothing can be drawn): never a frame
+ *  that waits for a picture that will not come (INTEGRATION_SPEC 1.6.2 rule 3). */
 export function retakeView(a: { tiles: readonly ServerTile[]; eyes: readonly ServerEye[]; selected: ServerTile | undefined }): RetakeView | null {
   const failing = new Set<number>();
   const reseal = new Set<number>();
   let holds = false;
+  let pupilHold = false;
   for (const t of a.tiles) {
     const st = tileState(t, a.eyes);
     // every eye that fails the tile's rule needs the retake, not only the first one (the tile's own label names the first)
     if (st.kind === 'gate') { eyesWith(t, a.eyes, false).forEach((n) => failing.add(n)); failing.add(st.eye); holds = true; }
     if (st.kind === 'reseal') { eyesWith(t, a.eyes, null).forEach((n) => reseal.add(n)); reseal.add(st.eye); }
+    if (st.kind === 'pupil') pupilHold = true;
   }
   for (const n of advisoryEyes(a.selected, a.eyes)) failing.add(n);
-  if (!failing.size && !reseal.size) return null;
+  // the eyes whose pupil is a bar; the engine can refuse a pupil the profile did not show (usePreviews marks the tile), then every eye is named
+  const bars = a.eyes.filter((e) => e.pupil === 'bar').map((e) => e.eye);
+  const pupil = pupilHold ? (bars.length ? bars : a.eyes.map((e) => e.eye)).sort((x, y) => x - y) : [];
+  if (!failing.size && !reseal.size && !pupil.length) return null;
   const eyes = [...failing].sort((x, y) => x - y);
   const rows = eyes.map((n) => a.eyes.find((e) => e.eye === n)).filter((e): e is ServerEye => !!e);
   const reasons: RetakeReason[] = [];
   for (const e of rows) for (const c of codesOf(e)) { const r = reasonOf(c); if (!reasons.includes(r)) reasons.push(r); }
   const first = rows[0];
-  const tip: RetakeTip = reasons.includes('reflection') && !reasons.includes('lid') ? 'light' : first?.cls === 'grey' ? 'grey' : reasons.includes('lid') ? 'open' : 'light';
+  // the one tip: for a pupil alone the open eye (round pupils show with the eye wide open and in even light)
+  const tip: RetakeTip = !eyes.length && pupil.length ? 'open'
+    : reasons.includes('reflection') && !reasons.includes('lid') ? 'light' : first?.cls === 'grey' ? 'grey' : reasons.includes('lid') ? 'open' : 'light';
   return {
-    eyes, reseal: [...reseal].sort((x, y) => x - y), reasons: eyes.length && !reasons.length ? ['lid'] : reasons, tip, why: (first ? codesOf(first)[0] : '') || 'reseal', holds,
+    eyes, reseal: [...reseal].sort((x, y) => x - y), pupil, reasons: eyes.length && !reasons.length ? ['lid'] : reasons, tip,
+    why: (first ? codesOf(first)[0] : '') || (pupil.length && !reseal.size ? 'bar_pupil' : 'reseal'), holds,
     deadEnd: !a.tiles.some((t) => isLive(t) && t.available),
   };
 }
@@ -252,14 +271,18 @@ export function advisoryEyes(selected: ServerTile | undefined, eyes: readonly Se
 
 export type BuyState =
   | { kind: 'normal' }                                  // the selected style can be bought (the card shows its price and the waiver)
-  | { kind: 'soon' }                                    // the selected style opens soon: one line, no price, no button
+  | { kind: 'soon'; look?: string }                     // the selected style opens soon, or (look: its code) the look on screen does: one line, no price, no button
   | { kind: 'countSoon'; n: number }                    // no style of this many eyes can be bought yet: one line
   | { kind: 'none' };                                   // nothing is selected (nothing can be drawn for these eyes: the retake state says why)
 
-export function buyState(a: { n: number; tiles: readonly ServerTile[]; selected: ServerTile | undefined }): BuyState {
+/** What the buy card does. look: the look the customer has on screen (src/try/picker.ts lookOf); absent, the style's default look, which is what a request
+ *  that names none draws and what checkout asks about, so a Soon look never reaches a price or a button (checkout would refuse it: 409 style_unavailable). */
+export function buyState(a: { n: number; tiles: readonly ServerTile[]; selected: ServerTile | undefined; look?: string | null }): BuyState {
   if (!a.tiles.some(isLive)) return a.tiles.length ? { kind: 'countSoon', n: a.n } : { kind: 'none' };
   if (!a.selected) return { kind: 'none' };
-  return isSoon(a.selected) ? { kind: 'soon' } : { kind: 'normal' };
+  if (isSoon(a.selected)) return { kind: 'soon' };
+  const look = lookOf(a.selected, a.look ?? null);
+  return look !== null && soonChoice(a.selected, look) ? { kind: 'soon', look } : { kind: 'normal' };
 }
 
 // ------------------------------------------------------------------------------------------------ what to draw next
@@ -270,9 +293,9 @@ export function nextTiles(tiles: readonly ServerTile[], has: (t: ServerTile) => 
   return tiles.filter((t) => drawable(t) && !has(t)).slice(0, k);
 }
 
-/** A tile's price, printed on the tile only in the one-eye group, only for a tile that can be bought now (never a Soon tile): the price is the
- *  caller's (src/shared/markets.ts priceMinor reads the price class), this only decides whether to print it. */
-export const showsPrice = (n: number, t: ServerTile): boolean => n === 1 && isLive(t) && t.available;
+/** A tile's price, printed on the tile only in the one-eye group, only for a tile that can be bought now (never a Soon tile, nor a live style whose default
+ *  look opens soon): the price is the caller's (src/shared/markets.ts priceMinor reads the price class), this only decides whether to print it. */
+export const showsPrice = (n: number, t: ServerTile): boolean => n === 1 && isLive(t) && t.available && !soonChoice(t, defaultLook(t));
 
 // ------------------------------------------------------------------------------------------------ keys
 

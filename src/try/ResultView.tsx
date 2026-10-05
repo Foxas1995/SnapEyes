@@ -8,9 +8,9 @@ import { useRevealFrame } from '../reveal/useRevealFrame';
 import { T, layoutLabel } from './copy';
 import { NO_SAVE, NO_SAVE_BOX } from './noSave';
 import { type Art, type Eye, MAX_EYES, canvasSize } from './multi';
-import { RetakePanel, StylePicker, type PickerModel } from './StylePicker';
+import { ManualRoute, RetakePanel, StylePicker, type PickerModel } from './StylePicker';
 import { Words, type WordsModel } from './Words';
-import { type Opts, isSoon } from './picker';
+import { type Opts, lookName, soonChoice } from './picker';
 
 interface Props {
   eyes: Eye[];
@@ -52,7 +52,9 @@ export const ResultView: React.FC<Props> = (p) => {
   const artAlt = samples ? `${artTitle} (${T.result.sampleBadge})` : artTitle;
   const retakeLabel = eye.sample ? T.result.replaceSample : n > 1 ? T.result.retakeEye(idx + 1) : T.result.retakeOnly;
   // the eyes the retake state names (a rule they fail holds a tile back, or warns on the style on screen): a badge on the chip
-  const flagged = new Set<number>([...(p.picker.retake?.eyes ?? []), ...(p.picker.retake?.reseal ?? []), ...p.picker.advisory]);
+  const flagged = new Set<number>([...(p.picker.retake?.eyes ?? []), ...(p.picker.retake?.reseal ?? []), ...(p.picker.retake?.pupil ?? []), ...p.picker.advisory]);
+  // the tile list is here and no style can be drawn from it: the frame never waits for a picture that will not come, whatever the retake state is (it is
+  // null for a list with no style at all, and a pupil or a gate has its own sentences)
   const noPreview = !!p.picker.catalog && !p.picker.style;
 
   // The Reveal (src/reveal, WP9): the photo left of a hard cut, the restored iris right of it. When the server withheld the cut (the colour drifted, or
@@ -182,7 +184,9 @@ export const ResultView: React.FC<Props> = (p) => {
     </div>
   );
 
-  const soonSelected = !!sel && isSoon(sel);
+  // what the customer has chosen opens soon: the style, or (a style that can be bought) the look on screen
+  const soonSelected = soonChoice(sel, p.picker.look);
+  const soonLook = !!sel && !!p.picker.look && sel.looks[p.picker.look] === 'preview' && sel.stage !== 'preview' ? p.picker.look : null;
   const fallback = shown?.fallback;
   const artwork = (
     <div>
@@ -193,10 +197,20 @@ export const ResultView: React.FC<Props> = (p) => {
           <span data-testid="sample-badge" className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-amber-400/50 text-amber-200 bg-amber-500/10">{T.result.sampleBadge}</span>
         )}
       </div>
-      {noPreview && p.picker.retake ? (
+      {noPreview ? (
         <div data-testid="no-preview">
-          <p className="text-sm text-zinc-200 mb-2">{T.picker.retake.noPreview}</p>
-          <RetakePanel view={p.picker.retake} total={n} onRetake={p.picker.onRetakeEye} onManual={p.picker.onManual} inPlace />
+          {p.picker.retake ? (
+            <>
+              <p className="text-sm text-zinc-200 mb-2">{T.picker.retake.noPreview}</p>
+              <RetakePanel view={p.picker.retake} total={n} onRetake={p.picker.onRetakeEye} onRemove={p.picker.onRemoveEye} onManual={p.picker.onManual} inPlace />
+            </>
+          ) : (
+            // no style for this many eyes at all: say so, and the way to ask us (the eye's own retake and remove buttons are under the picture)
+            <div data-testid="no-styles" className="text-xs text-amber-50 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3">
+              <p className="text-sm text-amber-100">{T.picker.retake.noStyles}</p>
+              <ManualRoute onManual={p.picker.onManual} />
+            </div>
+          )}
         </div>
       ) : (
         <>
@@ -215,7 +229,7 @@ export const ResultView: React.FC<Props> = (p) => {
           {/* under a shown artwork only; what the file is, only when this artwork can be bought (not the AI sample alone, not a style that opens soon) */}
           {shown && (
             <p data-testid="preview-note" className="text-[11px] text-zinc-300 mt-2">
-              {allSample ? T.result.previewReduced : soonSelected ? `${T.result.previewReduced} ${T.picker.soonNote}` : `${T.result.previewReduced} ${T.result.previewFile(expected.w === expected.h)}`}
+              {allSample ? T.result.previewReduced : soonSelected ? `${T.result.previewReduced} ${soonLook ? T.picker.soonLookNote(lookName(soonLook)) : T.picker.soonNote}` : `${T.result.previewReduced} ${T.result.previewFile(expected.w === expected.h)}`}
             </p>
           )}
         </>
@@ -231,7 +245,7 @@ export const ResultView: React.FC<Props> = (p) => {
 
       <p className="text-[10px] uppercase tracking-widest text-zinc-300 mt-4">{T.result.style}</p>
       <StylePicker model={p.picker} />
-      {p.picker.retake && !noPreview && <RetakePanel view={p.picker.retake} total={n} onRetake={p.picker.onRetakeEye} onManual={p.picker.onManual} />}
+      {p.picker.retake && !noPreview && <RetakePanel view={p.picker.retake} total={n} onRetake={p.picker.onRetakeEye} onRemove={p.picker.onRemoveEye} onManual={p.picker.onManual} />}
 
       {p.layoutOptions.length > 1 && (
         <div className="mt-3">

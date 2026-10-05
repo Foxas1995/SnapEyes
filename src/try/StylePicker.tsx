@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, RefreshCcw, Trash2 } from 'lucide-react';
 import { T } from './copy';
 import { NO_SAVE } from './noSave';
 import type { Art } from './multi';
@@ -32,6 +32,7 @@ export interface PickerModel {
   retake: RetakeView | null;
   advisory: number[];                           // 1-based eyes that only warn on the selected style
   onRetakeEye: (position: number) => void;
+  onRemoveEye: (position: number) => void;      // take an eye off the artwork (the pupil state offers it: an eye the styles of the list cannot take)
   onManual: () => void;                         // one counted click on the manual route
 }
 
@@ -40,7 +41,7 @@ export function emptyPicker(n = 1): PickerModel {
   const no = () => undefined;
   return {
     n, catalog: null, error: null, onRetryCatalog: no, style: null, selected: undefined, changed: null, tilePicture: no, tileBusy: () => false,
-    tileFailed: () => false, onRetryTiles: no, paused: null, priceOf: () => null, onStyle: no, look: null, onLook: no, retake: null, advisory: [], onRetakeEye: no, onManual: no,
+    tileFailed: () => false, onRetryTiles: no, paused: null, priceOf: () => null, onStyle: no, look: null, onLook: no, retake: null, advisory: [], onRetakeEye: no, onRemoveEye: no, onManual: no,
   };
 }
 
@@ -178,17 +179,33 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
 
 // ------------------------------------------------------------------------------------------------ the retake state
 
-/** The retake state (INTEGRATION_SPEC 1.6.2 rule 3, 2.5): which eyes, why in two plain sentences, the one tip that fits, the retake buttons, and where
- *  nothing can be bought the way to ask us (the owner looks at the best photos). Never a dead end. `inPlace`: shown where the preview would be. */
-export const RetakePanel: React.FC<{ view: RetakeView; total: number; onRetake: (position: number) => void; onManual: () => void; inPlace?: boolean }> = ({ view, total, onRetake, onManual, inPlace }) => {
-  const all = [...view.eyes, ...view.reseal].sort((a, b) => a - b);
+/** The way to ask us when nothing can be bought (the landing page's FAQ answer: the owner looks at the best photos, no promise of a time): the e-mail is a
+ *  link and its click is the one counted click of the manual route. */
+export const ManualRoute: React.FC<{ onManual: () => void }> = ({ onManual }) => {
   const [before, after] = T.picker.retake.manual.split('{link}');
   return (
+    <p data-testid="manual-route" className="mt-2.5 text-zinc-200">
+      {before}
+      <a href={`mailto:${CONTACT_EMAIL}`} onClick={onManual} className="underline underline-offset-2 font-semibold text-amber-100">{CONTACT_EMAIL}</a>
+      {after}
+    </p>
+  );
+};
+
+/** The retake state (INTEGRATION_SPEC 1.6.2 rule 3, 2.5): which eyes, why in plain sentences (a rule the iris fails, or a pupil that is not round), the one
+ *  tip that fits, the retake buttons (and, for a pupil the styles cannot take, a button that takes the eye off the artwork), and where nothing can be
+ *  bought the way to ask us. Never a dead end. `inPlace`: shown where the preview would be. */
+export const RetakePanel: React.FC<{
+  view: RetakeView; total: number; onRetake: (position: number) => void; onManual: () => void; onRemove?: (position: number) => void; inPlace?: boolean;
+}> = ({ view, total, onRetake, onManual, onRemove, inPlace }) => {
+  const all = [...new Set([...view.eyes, ...view.reseal, ...view.pupil])].sort((a, b) => a - b);
+  return (
     <section id="retake-state" data-testid="retake-state" aria-labelledby="retake-title" className={`text-xs text-amber-50 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3 ${inPlace ? '' : 'mt-3'}`}>
-      <h3 id="retake-title" tabIndex={-1} className="font-bold text-sm text-amber-100 flex items-center gap-2 focus:outline-none"><AlertTriangle className="w-4 h-4 shrink-0 text-amber-300" /> {T.picker.retake.title(view.eyes.length ? view.eyes : view.reseal, total)}</h3>
+      <h3 id="retake-title" tabIndex={-1} className="font-bold text-sm text-amber-100 flex items-center gap-2 focus:outline-none"><AlertTriangle className="w-4 h-4 shrink-0 text-amber-300" /> {T.picker.retake.title(view.eyes.length ? view.eyes : view.reseal.length ? view.reseal : view.pupil, total)}</h3>
       {view.reasons.length > 0 && view.eyes.length > 0 && view.reasons.map((r) => <p key={r} data-testid={`retake-${r}`} className="mt-1.5">{T.picker.retake[r]}</p>)}
+      {view.pupil.length > 0 && <p data-testid="retake-pupil" className="mt-1.5">{T.picker.retake.pupil}</p>}
       {view.reseal.length > 0 && <p data-testid="retake-reseal" className="mt-1.5">{T.picker.retake.reseal(view.reseal, total)}</p>}
-      {view.eyes.length > 0 && <p data-testid={`retake-tip-${view.tip}`} className="mt-1.5 text-amber-100">{T.picker.retake.tips[view.tip]}</p>}
+      {(view.eyes.length > 0 || view.pupil.length > 0) && <p data-testid={`retake-tip-${view.tip}`} className="mt-1.5 text-amber-100">{T.picker.retake.tips[view.tip]}</p>}
       {view.holds && <p className="mt-1.5 text-zinc-300">{T.picker.retake.held}</p>}
       <div className="flex flex-wrap gap-2 mt-2.5">
         {all.map((i) => (
@@ -197,14 +214,15 @@ export const RetakePanel: React.FC<{ view: RetakeView; total: number; onRetake: 
             <RefreshCcw className="w-3.5 h-3.5" /> {total === 1 ? T.result.retakeOnly : T.result.retakeEye(i)}
           </button>
         ))}
+        {/* a pupil the styles cannot take is a reason to leave that eye out as well as to photograph it again (the others may still make an artwork) */}
+        {onRemove && total > 1 && view.pupil.map((i) => (
+          <button key={`rm${i}`} type="button" data-testid={`remove-eye-${i}`} onClick={() => onRemove(i)}
+            className="min-h-[44px] px-3 rounded-xl border border-white/20 bg-white/10 text-zinc-100 text-xs font-semibold flex items-center gap-1.5">
+            <Trash2 className="w-3.5 h-3.5" /> {T.result.remove(i)}
+          </button>
+        ))}
       </div>
-      {view.deadEnd && (
-        <p data-testid="manual-route" className="mt-2.5 text-zinc-200">
-          {before}
-          <a href={`mailto:${CONTACT_EMAIL}`} onClick={onManual} className="underline underline-offset-2 font-semibold text-amber-100">{CONTACT_EMAIL}</a>
-          {after}
-        </p>
-      )}
+      {view.deadEnd && <ManualRoute onManual={onManual} />}
     </section>
   );
 };
