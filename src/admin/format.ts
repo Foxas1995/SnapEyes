@@ -196,6 +196,7 @@ export const REASON_LT: Record<string, string> = {
   step_held: 'Gamybos žingsnis sulaikytas (priežastis ir ką daryti: pranešime ir užsakymo peržiūros žymoje).',
   rerun_not_available: 'Šio užsakymo kūrinį piešia senasis variklis: perpiešk akį ir sudėk kūrinį iš naujo.',
   plate_retry: 'Stiliui reikalingas failas dar neparuoštas. Pabandyk po akimirkos.',
+  room_retry: 'Serveris kaip tik piešia kitą užsakymą. Pabandyk po kelių sekundžių.',
   not_lab: 'Tik laboratorijos testinis užsakymas (lab-...) paleidžiamas šitaip.',
 };
 

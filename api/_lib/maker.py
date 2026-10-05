@@ -53,7 +53,9 @@ The artwork is made by the order's master PLAN (api/_lib/styles/steps.py): compo
 than one answers state "making" with artwork {done, of, step}, which this chain takes as "ask for the next step" without a busy count
 (the default plan has one step, so the chain is the eyes, the artwork and the email, as before). A step arms a WATCHDOG before it renders
 (arm_watchdog): two relay hops that wait out its claim and retake a step that was killed, since nothing runs after a killed function
-but the order page, the status nudge and the daily run. A plate fault (plate_retry) is a back-off that is not a busy hop. Every constant
+but the order page, the status nudge and the daily run. A plate fault (plate_retry) is a back-off that is not a busy hop. A step that found the
+instance's room taken by another heavy render (room_retry, api/_lib/styles/guard.py) is a busy hop that waits as long as the holder still needs by
+its own estimate (steps._room: 5 to 40 s), so a second paid order is not out of busy hops in the few seconds of the waits. Every constant
 tied to the function's duration (the work budget, FUNCTION_SECONDS, SPARE, LEASE_STALE, FRESH, WAIT_MAX) derives from the one
 duration.DURATION_S; PROBE_HOPS is the longest planned chain plus 4.
 Busy answers (the image model or storage busy, an eye or the artwork being made elsewhere, no time left for a
@@ -521,6 +523,11 @@ def _answer(a):
         return ("stop", reason)
     if reason in ("eyes_not_ready", "busy_retry"):
         return ("next", 0, True, reason)
+    if reason == "room_retry":
+        # another heavy render holds this instance (api/_lib/styles/guard.py): asked again when the holder should be done (retry_after is its own
+        # remaining estimate, steps._room). It still counts as a busy hop, but the hops are SPACED by that wait: retried at once, ten hops were used
+        # up in the few seconds of the waits while the other order was still drawing (the review of WP6a)
+        return ("next", _clamp(a.retry_after or SP.ROOM_DEFAULT_S, SP.ROOM_MIN_S, WAIT_MAX), True, reason)
     if reason == "plate_retry":
         # a plate that is missing or does not match (api/_lib/styles/steps.py counts it in try_art.json: the second holds the order): asked
         # again after a pause, and NOT a MAX_BUSY hop
@@ -711,9 +718,11 @@ def _then(order, hop, busy, lid, d):
     if busy > MAX_BUSY:
         beat(order, "stopped", why="busy", hop=hop)
         pay.log(f"order {order}: still busy after {MAX_BUSY} tries ({why}): the order page and the daily run go on")
+        cause = ("other renders held the function's CPU or memory every time it asked (another order was being drawn)" if why == "room_retry"
+                 else "the image model, the storage or Stripe did not take the work")
         pay.owner_note(order, "making_busy", f"SnapEyes: order {order} could not be finished automatically (busy)",
                        f"Order {order} is paid, but the server's making gave up after {MAX_BUSY} busy answers in a "
-                       f"row (the last: {why}): the image model, the storage or Stripe did not take the work. "
+                       f"row (the last: {why}): {cause}. "
                        f"Nothing was paid for twice.\n"
                        f"The order is not lost: the customer's order page goes on while it is open (and asks the "
                        f"server again), the daily run asks for it once a day, and you get a reminder if it is still "

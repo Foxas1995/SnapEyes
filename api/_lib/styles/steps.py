@@ -28,7 +28,9 @@ The records (orders/<order>/style/, all small JSON, removed 14 days after delive
 The state machine of one step, in order (run_step): read the plan and the done records; wait for the two process guards (guard.py: the memory
 budget and the one-heavy-render-at-a-time semaphore); check the time and memory it needs (a plan that can NEVER fit, or a fresh invocation that
 cannot fit it, is a configuration error: Hold style_step_too_big, no busy hop is spent; an invocation that already used its time is only
-busy); claim <step>.lock; set try_<step>.json {kills, open: true}; arm the watchdog; render; write the outputs; write done_<step>.json; let the
+busy; a step that finds the instance's room taken by another render is answered 503 room_retry with a back-off as long as the holder still
+needs by its own estimate, because a busy answer retried at once spends the chain's ten busy hops in the few seconds of the waits); claim
+<step>.lock; set try_<step>.json {kills, open: true}; arm the watchdog; render; write the outputs; write done_<step>.json; let the
 caller write delivery.json; clear `open`. Whatever kills the process at any seam leaves a state the next call reads and finishes (a kill after the
 done record and before delivery.json: the next call finds the finished artwork and only writes delivery.json).
 
@@ -50,6 +52,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import json
+import math
 import re
 import secrets
 import time
@@ -70,6 +73,9 @@ KILLS_MAX = 3                        # the third kill holds the order
 ERRORS_MAX = 2                       # a second identical exception holds it
 PLATE_MAX = 2                        # the second plate fault holds it
 PLATE_RETRY_S = 20                   # a first plate fault is answered 503 plate_retry, to be asked again after this many seconds
+ROOM_MIN_S = 5                       # a step that found no room (guard.Busy) is answered 503 room_retry and asked again after the holder's remaining
+ROOM_MAX_S = D.WAIT_MAX_S            # estimate (retry_after), never less than ROOM_MIN_S nor more than ROOM_MAX_S (the longest back-off of a chain)
+ROOM_DEFAULT_S = 10                  # ... and this many seconds when no holder declared an estimate
 WATCHDOG_MAX = 2                     # relays armed for one step, at most
 FRESH_ARRIVAL_S = 3.0                # an invocation that had at least BUDGET minus this much left on arrival is fresh
 LOCK_STALE = D.LEASE_STALE_S         # a claim older than this belongs to an invocation that is dead
@@ -740,6 +746,18 @@ def _busy():
     return store.busy("busy_retry", 5, "We are busy for a moment. Please try again now.")
 
 
+def _room(e):
+    """The answer to a step that found no room (guard.Busy: another heavy render holds this instance's CPU or memory): 503 room_retry whose retry_after
+    is how long the holder that frees room first still needs by its own estimate, between ROOM_MIN_S and ROOM_MAX_S (ROOM_DEFAULT_S when it declared
+    none). The chain and the order page wait that long before they ask again, so a second paid order does not spend its busy hops in the few seconds
+    the waits take (the first answer of this kind was busy_retry, asked again at once: ten hops in about twenty seconds, then a note that blamed the
+    image model). `room` names the guard that refused (cpu or memory)."""
+    eta = getattr(e, "eta_s", None)
+    s = ROOM_DEFAULT_S if not isinstance(eta, (int, float)) or isinstance(eta, bool) or eta != eta else int(math.ceil(eta))
+    s = int(max(ROOM_MIN_S, min(ROOM_MAX_S, s)))
+    return store.Answer(503, "room_retry", "We are busy for a moment. Please try again shortly.", True, s, room=str(getattr(e, "kind", ""))[:8])
+
+
 def _counted_failure(ctx, plan, step, rerun, tr, e):
     """An executor raised an exception of its own. A plate that is missing or does not match is counted in the try record (kind plate: never a
     MAX_BUSY hop), answered 503 plate_retry the first time and held the second. Any other exception is noted by its signature: the second identical
@@ -766,7 +784,7 @@ def _counted_failure(ctx, plan, step, rerun, tr, e):
 def run_step(ctx, plan, step, k, rerun=0, after=None):
     """One step through the state machine of the module text. after(out), when given, runs after the done record and inside the claim, before `open`
     is cleared (compose_order writes delivery.json there). Returns {out, done}. Raises Hold, store.Answer (409 rendering, 503 busy_retry, 503
-    plate_retry, 409 eyes_not_ready) or the executor's own exception (after counting it)."""
+    room_retry, 503 plate_retry, 409 eyes_not_ready) or the executor's own exception (after counting it)."""
     L = _L()
     order, name = ctx.order, step["name"]
     of = len(plan["steps"])
@@ -786,8 +804,8 @@ def run_step(ctx, plan, step, k, rerun=0, after=None):
             try:
                 stack.enter_context(GD.slot(est_mb=mb, est_s=secs, left=L.time_left()))
             except GD.Busy as e:
-                _log(f"order {order}: no room for the {name} step ({e.kind})")
-                raise _busy() from None
+                _log(f"order {order}: no room for the {name} step ({e.kind}), asked again in a moment")
+                raise _room(e) from None
             # the wait for the guards counts against the time: look at what is left only now
             if secs is not None and secs > L.time_left():
                 if _fresh(ctx):

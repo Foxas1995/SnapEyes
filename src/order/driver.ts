@@ -39,7 +39,9 @@ export const REAL_DEPS: DriveDeps = {
 };
 
 // plate_retry: a file the style needs was not ready (api/_lib/styles/steps.py counts it; the second time the order is held for a person)
-const BUSY = new Set(['model_busy', 'storage_busy', 'payments_busy', 'plate_retry']);
+// room_retry: another order's heavy render holds the server's CPU or memory; retry_after is how long that render still needs by its own estimate
+// (5 to 40 s), waited out like the others: asked again at once, the page spent its twelve tries in about half a minute
+const BUSY = new Set(['model_busy', 'storage_busy', 'payments_busy', 'plate_retry', 'room_retry']);
 // an answer that means "the order is no longer what this step expected": ask for its status and go from there
 const RELOAD = new Set(['in_review', 'render_rejected', 'deleted', 'not_paid', 'payment_processing', 'eyes_not_ready', 'withdrawn']);
 const MAKE_TIMEOUT = 75_000;     // API.md: a make or compose takes up to about 50 s; Vercel stops it at 60 s

@@ -324,6 +324,14 @@ for a style of the v3 engine (the master plan makes it: with no stored eye it an
 refund 7, preview 60, review 11, fixmk 36, markets 58, au 70, payrev 19, fixer 43, oldpay 120, oldadv 66, oldadmin 186, exp 349, ts 29, v3wp0 93, v3reg 172, v3gate 97, v3core 86,
 v3plates 108, v3single 86, v3steps 136).
 
+**Review fix of WP6a (a render that waits behind another heavy render).** A step that found the instance's CPU or memory held by another render was answered `busy_retry` and asked again
+at once, so a second paid order spent its ten busy hops in about 4 to 25 s (the guard's wait is 2 s a hop) and stopped `busy` with a note that blames the image model, while the first
+order's 26 to 46 s step was still drawing. It is now answered 503 `room_retry` with `retry_after` = the holder's remaining estimate (5 to 40 s); the chain and the order page wait that long.
+`v3steps` 142 (six checks added: the guard's `eta_s`, the bounds of the back-off, the chain's decision, two paid orders at once end to end with the gaps between the refusals asserted),
+`ts` 31 (two: the page waits the server's time and stops `busy` after twelve waits); five existing `v3steps` checks that expected `busy_retry` from a full guard expect `room_retry`.
+Measured with the real constants (guard wait 2 s, back-off 5 to 40 s): a first order that holds the slot 22 s (its plan says 16.4 s), the second order's two refusals waited 13 s and
+5 s and it was ready at 25.4 s with no note. Full set after the fix: 28 of 28 green, every count the baseline's (`ts` 31, `v3steps` 142, the rest as above).
+
 **A flake of the harness under load, recorded and not hidden.** In one full run (the first, with three suites in parallel and another agent's node processes on the machine) the
 `pay` suite died at its third checkout with `ConnectTimeout` to its own loopback API server (60 s), after 87 of its 120 checks, with no failing check; `pay` alone passes 120 of 120
 (and did in three other runs, among them the next full run). The call that timed out is `/api/checkout`, which none of this package's code touches (it is the same kind of death

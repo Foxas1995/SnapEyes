@@ -462,6 +462,25 @@ check("two 4K renders never share an instance: a second of 900 MB (even a light 
 check("a second heavy render is refused for the CPU even when its memory fits (Busy, cpu), a light one (under 3 s) goes beside the heavy one",
       isinstance(e_cpu, GD.Busy) and e_cpu.kind == "cpu" and light["running"] == 2 and light["heavy"] == 1, (e_cpu, light))
 check("every slot is released when the block ends", GD.state() == {"mb": 0.0, "heavy": 0, "running": 0}, GD.state())
+check("a refusal says when the room should be there (Busy.eta_s): what the holder that frees it first still has by its own estimate, 20 s less the time already used (the CPU's and "
+      "the memory's refusal alike)", all(isinstance(x, GD.Busy) and isinstance(x.eta_s, float) and 18.0 <= x.eta_s <= 20.0 for x in (e_mem, e_cpu)), (e_mem and e_mem.eta_s, e_cpu and e_cpu.eta_s))
+GD.reset()
+with GD.slot(est_mb=100, est_s=None, wait=0.2):                      # a holder that declared no estimate (unknown counts as heavy)
+    try:
+        with GD.slot(est_mb=100, est_s=20, wait=0.2):
+            e_unknown = None
+    except GD.Busy as e:
+        e_unknown = e
+with GD.slot(est_mb=100, est_s=0.1, heavy_s=0.05):                   # a holder past its own estimate
+    time.sleep(0.3)
+    try:
+        with GD.slot(est_mb=100, est_s=20, wait=0.1):
+            e_late = None
+    except GD.Busy as e:
+        e_late = e
+check("a holder that declared no estimate gives no eta (None); a holder past its estimate gives 0.0 (never negative); the holder's record goes with its slot (nothing is left behind)",
+      isinstance(e_unknown, GD.Busy) and e_unknown.eta_s is None and isinstance(e_late, GD.Busy) and e_late.eta_s == 0.0 and not GD._HOLDERS and GD.state() == {"mb": 0.0, "heavy": 0, "running": 0},
+      (e_unknown and e_unknown.eta_s, e_late and e_late.eta_s, GD._HOLDERS))
 try:
     with GD.slot(est_mb=500, est_s=30):
         raise RuntimeError("the render broke")
@@ -707,8 +726,8 @@ with mock.patch.dict(SP.EXECUTORS, {"art": exe}), mock.patch.object(GD, "WAIT_S"
     e_busy = raises(lambda: SP.advance(mkctx(o)), store.Answer)
 holder_go.set()
 th.join()
-check("a refusal before the claim (the guards are full) is 503 busy_retry and counts nothing: no try record, no claim, the executor never ran",
-      isinstance(e_busy, store.Answer) and e_busy.status == 503 and e_busy.body["reason"] == "busy_retry" and exe.calls == 0
+check("a refusal before the claim (the guards are full) is 503 room_retry (asked again after the holder's remaining 30 s estimate) and counts nothing: no try record, no claim, the executor never ran",
+      isinstance(e_busy, store.Answer) and e_busy.status == 503 and e_busy.body["reason"] == "room_retry" and 28 <= e_busy.body["retry_after"] <= 30 and e_busy.body["room"] == "cpu" and exe.calls == 0
       and not exists(f"orders/{o}/style/try_art.json") and not exists(f"orders/{o}/style/art.lock"), (e_busy, exe.calls))
 o = fresh_order()
 exe = Exe()
@@ -742,6 +761,19 @@ store.put(f"orders/{o2}/style/plan.json", store.json_bytes(dict(cost_gap, create
 with mock.patch.dict(SP.EXECUTORS, {"art": Exe()}):
     why_cost = hold_of(lambda: SP.advance(mkctx(o2)))
 check("a plan whose design has no row in the cost table is held style_not_priced after payment (a style the table cannot price is not made blind)", why_cost == "style_not_priced", why_cost)
+
+# no room (the guards are full): 503 room_retry whose retry_after is the holder's remaining estimate between ROOM_MIN_S and ROOM_MAX_S, and the chain waits that long
+room_bounds = [(eta, SP._room(GD.Busy("cpu", "", eta)).retry_after) for eta in (None, float("nan"), 0.0, 0.2, 5.0, 16.3, 28.0, 500.0)]
+check("the back-off of a refusal for room: the holder's remaining estimate rounded up, never under ROOM_MIN_S (5 s) nor over ROOM_MAX_S (the longest back-off of a chain, 40 s), "
+      "ROOM_DEFAULT_S (10 s) when the holder declared none or the number is nonsense",
+      [r for _, r in room_bounds] == [10, 10, 5, 5, 5, 17, 28, 40] and (SP.ROOM_MIN_S, SP.ROOM_MAX_S, SP.ROOM_DEFAULT_S) == (5, DU.WAIT_MAX_S, 10), room_bounds)
+a_room = SP._room(GD.Busy("memory", "", 16.3))
+d_room = M._answer(a_room)
+d_room0 = M._answer(store.Answer(503, "room_retry", "x", True))
+check("the chain answers a refusal for room with a pause of that length and counts ONE busy hop (decision next, delay 17, counts, room_retry); an answer with no retry_after still pauses "
+      "(10 s), and the answer names the guard that refused",
+      a_room.status == 503 and a_room.body["reason"] == "room_retry" and a_room.body["retry"] is True and a_room.body["retry_after"] == 17 and a_room.body["room"] == "memory"
+      and d_room == ("next", 17, True, "room_retry") and d_room0 == ("next", 10, True, "room_retry"), (a_room.body, d_room, d_room0))
 
 # plate faults (IE8, after payment) and identical exceptions
 o = fresh_order()
@@ -816,16 +848,16 @@ with mock.patch.dict(SP.EXECUTORS, {"art": exe}):
     ta = threading.Thread(target=caller_a)
     ta.start()
     exe.entered.wait(10)
-    e_roll = raises(lambda: SP.advance(mkctx(o)), store.Answer)          # in this process the guard answers first: busy_retry
+    e_roll = raises(lambda: SP.advance(mkctx(o)), store.Answer)          # in this process the guard answers first: room_retry
     with mock.patch.object(GD, "slot", lambda **kw: contextlib.nullcontext()):
         e_claim = raises(lambda: SP.advance(mkctx(o)), store.Answer)     # another process: the claim answers 409 rendering
     lock_up = exists(f"orders/{o}/style/art.lock")
     release.set()
     ta.join(30)
     done_b = SP.advance(mkctx(o))
-check("two callers at once: in one process the guard turns the second away (503 busy_retry), in another process the claim does (409 rendering, retry_after); "
+check("two callers at once: in one process the guard turns the second away (503 room_retry), in another process the claim does (409 rendering, retry_after); "
       "exactly one render happens and the second caller then finds it done",
-      isinstance(e_roll, store.Answer) and e_roll.body["reason"] == "busy_retry" and isinstance(e_claim, store.Answer) and e_claim.status == 409
+      isinstance(e_roll, store.Answer) and e_roll.body["reason"] == "room_retry" and isinstance(e_claim, store.Answer) and e_claim.status == 409
       and e_claim.body["reason"] == "rendering" and e_claim.body.get("retry_after", 0) >= 5 and lock_up and "got" in res_a and exe.calls == 1
       and done_b["ran"] == [] and done_b["artwork"]["key"] == res_a["got"]["artwork"]["key"], (e_roll, e_claim, res_a, exe.calls))
 
@@ -980,9 +1012,9 @@ with mock.patch.dict(SP.EXECUTORS, {"art": route}), mock.patch.object(GD, "WAIT_
     release2.set()
     tab.join(30)
     got_b = SP.advance(mkctx(oB))
-check("I11: two orders at once on one instance: the second order's step is turned away with 503 busy_retry while the first draws (one heavy render at a time), nothing of it is counted, "
+check("I11: two orders at once on one instance: the second order's step is turned away with 503 room_retry while the first draws (one heavy render at a time), nothing of it is counted, "
       "and it makes its own artwork as soon as the first has let go; the two artworks are two files",
-      isinstance(e_b1, store.Answer) and e_b1.body["reason"] == "busy_retry" and "a" in res_ab and exA.calls == 1 and exB.calls == 1
+      isinstance(e_b1, store.Answer) and e_b1.body["reason"] == "room_retry" and "a" in res_ab and exA.calls == 1 and exB.calls == 1
       and got_b["artwork"]["key"] != res_ab["a"]["artwork"]["key"] and steps_of(oB)["try"]["kills"] == 0, (e_b1, res_ab, exA.calls, exB.calls))
 
 # the 4K plates a plan will draw from (the family that knows them before the render: the seed from eye_id, WP5B and the families after it)
@@ -1193,6 +1225,57 @@ check("eight eyes (the stand in family) through the server's own chain: ready, e
       "before the plan), one ready email",
       bool(done8c) and sorted(e for x, e in RENDERS if x == o8c) == list(range(1, 9)) and s8c["plan"]["steps"][0]["eyes"] == list(range(1, 9)) and s8c["done"]["result"]["count"] == 8
       and b8.get("hop", 99) <= SP.longest_chain() and len(mails("oskar@example.com", READY_EN, n0)) == 1, (done8c, b8, s8c["done"]))
+
+# two paid orders at once on one warm instance, the first holds the heavy slot for longer than ten of the second's immediate retries would last (the review of WP6a):
+# the second one's step is turned away for room, asked again after a back-off (not at once), and the order is made when the first has let go: no busy stop, no owner note
+H.Fake.legal = dict(PACK, making_start="after_confirmation")
+pay._LEGAL.update(pack=None, t=0.0, failed=0.0)
+MODE.update(side=256, kind="blue", delay=0.0)
+HOLD_S = 8.0
+slow_for, slow_in, room_log = {}, threading.Event(), []
+
+
+class SlowFirst(Exe):
+    """The art step of the order named in slow_for draws for HOLD_S seconds inside the guard's slot, as a real 4096 px master does."""
+    def __call__(self, ctx, plan, step, rerun):
+        if ctx.order == slow_for.get("a"):
+            slow_in.set()
+            time.sleep(HOLD_S)
+        return Exe.__call__(self, ctx, plan, step, rerun)
+
+
+def spy_room(e):
+    a = real_room(e)
+    room_log.append((time.time(), a.retry_after, a.body.get("room")))
+    return a
+
+
+real_room = SP._room
+exe = SlowFirst()
+n_notes0 = len(H.Fake.emails)
+with mock.patch.dict(SP.EXECUTORS, {"art": exe}), mock.patch.object(GD, "WAIT_S", 0.3), mock.patch.object(SP, "ROOM_MIN_S", 1), mock.patch.object(SP, "ROOM_MAX_S", 2),         mock.patch.object(SP, "_room", spy_room):
+    with Show("solo.clean"):
+        o7a, k7a, sid7a = new_order(1, "solo.clean", "ada@example.com", pay_it=False)
+        o7b, k7b, sid7b = new_order(1, "solo.clean", "bea@example.com", pay_it=False)
+    slow_for["a"] = o7a
+    t_two = time.time()
+    hook(H.pay_session(sid7a, email="ada@example.com"))
+    slow_in.wait(30)
+    hook(H.pay_session(sid7b, email="bea@example.com"))
+    res7a = wait_for(lambda: stopped(o7a), 120)
+    res7b = wait_for(lambda: stopped(o7b), 120)
+    took_two = time.time() - t_two
+gaps = [round(b[0] - a[0], 2) for a, b in zip(room_log, room_log[1:])]
+notes_two = [m["subject"] for m in NOTES(n_notes0)]
+check("two paid orders at once on one warm instance, the first draws for 8 s: the second's step is turned away for room (cpu) at least twice and asked again after a back-off of 1 to 2 s each "
+      "(the patched bounds), never at once (the gaps between its refusals are at least 1 s); it is made when the first has let go and BOTH orders are ready, one email each",
+      len(room_log) >= 2 and all(r[2] == "cpu" and 1 <= r[1] <= 2 for r in room_log) and all(g >= 0.9 for g in gaps) and bool(res7a) and res7a.get("why") == "ready"
+      and bool(res7b) and res7b.get("why") == "ready" and took_two >= HOLD_S - 1.5 and len(mails("ada@example.com", READY_EN, n_notes0)) == 1
+      and len(mails("bea@example.com", READY_EN, n_notes0)) == 1, (res7a, res7b, room_log, gaps, round(took_two, 1)))
+check("... and nothing about it reaches the owner as a failure: no 'busy' note, no hold, no kill counted, the second order's own steps (the eye, the artwork) made once each",
+      not any("busy" in s for s in notes_two) and not exists(f"orders/{o7b}/review.json") and steps_of(o7b)["try"]["kills"] == 0 and exe.calls == 2
+      and sorted(e for x, e in RENDERS if x == o7b) == [1], (notes_two, exe.calls))
+M._KICKED.clear()
 
 # ============================================================================================ 8. holds after payment
 section("8. holds after payment (IE5, IE8, IE9, IE3): review.json, one note, never another style")

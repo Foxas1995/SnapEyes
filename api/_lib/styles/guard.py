@@ -10,10 +10,14 @@ plan (SPIKE, ED17):
   * one semaphore of count 1 for every render estimated above HEAVY_S seconds (a master, a batch of tiles, a preview of many eyes):
     one heavy render at a time per instance.
 
-A new render waits up to WAIT_S for room; with none it is refused with Busy, and the caller answers 503 busy_retry (the wait counts against
-the invocation's time: the caller looks at the time that is left AFTER it has a slot). Both guards are released in a finally (a render that
-raises gives its slot back), and a render that is larger than the whole budget is let in when nothing else runs (assess() refuses such a
-plan long before: a guard that could never be satisfied would only be a deadlock).
+A new render waits up to WAIT_S for room; with none it is refused with Busy, and the caller answers 503 room_retry (the wait counts against
+the invocation's time: the caller looks at the time that is left AFTER it has a slot). Busy says when the room should be there: eta_s, the
+seconds the holder that frees it first still has by ITS OWN estimate (None when no holder declared one), so the caller can ask for a back-off of
+that length (api/_lib/styles/steps.py _room) and not retry at once: a refusal that is retried at once spends the busy hops of the chain in the
+few seconds of the waits (the review of WP6a).
+
+Both guards are released in a finally (a render that raises gives its slot back), and a render that is larger than the whole budget is let in
+when nothing else runs (assess() refuses such a plan long before: a guard that could never be satisfied would only be a deadlock).
 
 Nothing here imports numpy or an engine. memory_now() reads what the instance says of itself (Linux: /proc/self/status VmRSS and VmHWM;
 Windows, for the development machine: the working set; elsewhere nothing). MemWatch samples the resident size while a step runs and
@@ -34,21 +38,25 @@ SAMPLE_S = 0.1               # MemWatch's sampling interval
 
 
 class Busy(RuntimeError):
-    """No room for this render (kind: "memory" or "cpu"): the caller answers 503 busy_retry."""
+    """No room for this render (kind: "memory" or "cpu"): the caller answers 503 room_retry, with a back-off of eta_s."""
 
-    def __init__(self, kind, detail=""):
+    def __init__(self, kind, detail="", eta_s=None):
         super().__init__(f"no room for a render ({kind}){': ' + detail if detail else ''}")
         self.kind = kind
+        self.eta_s = eta_s           # seconds until the holder that frees room first should be done (its own estimate), None when unknown
 
 
 _COND = threading.Condition()
 _STATE = {"mb": 0.0, "heavy": 0, "running": 0}
+_HOLDERS = {}                # ticket -> (monotonic start, the estimate in seconds or None, heavy): what Busy.eta_s is read from
+_TICKETS = [0]
 
 
 def reset():
     """Forget every holder (a test that simulates a killed process: the real guard lives and dies with the process)."""
     with _COND:
         _STATE.update(mb=0.0, heavy=0, running=0)
+        _HOLDERS.clear()
         _COND.notify_all()
 
 
@@ -60,6 +68,14 @@ def state():
 def _budget_mb():
     from . import costs
     return float(costs.MEM_BUDGET_MB)
+
+
+def _eta_locked(kind):
+    """Seconds until the holder that frees room first should be done, by its own estimate: the heavy holder for "cpu", any holder for "memory". A
+    holder that is past its estimate counts 0 (the caller's back-off has a floor of its own); None when no holder declared an estimate. _COND is held."""
+    now = time.monotonic()
+    rest = [max(0.0, est - (now - t0)) for t0, est, heavy in _HOLDERS.values() if est is not None and (heavy or kind != "cpu")]
+    return min(rest) if rest else None
 
 
 @contextlib.contextmanager
@@ -75,6 +91,7 @@ def slot(est_mb=None, est_s=None, wait=None, left=None, budget_mb=None, heavy_s=
     limit = float(wait) if left is None else max(0.0, min(float(wait), float(left) - 1.0))
     t_end = time.monotonic() + limit
     taken = False
+    ticket = None
     with _COND:
         while True:
             alone = _STATE["running"] == 0
@@ -84,18 +101,22 @@ def slot(est_mb=None, est_s=None, wait=None, left=None, budget_mb=None, heavy_s=
                 _STATE["mb"] += mb
                 _STATE["heavy"] += 1 if heavy else 0
                 _STATE["running"] += 1
+                _TICKETS[0] += 1
+                ticket = _TICKETS[0]
+                _HOLDERS[ticket] = (time.monotonic(), None if est_s is None else max(0.0, float(est_s)), heavy)
                 taken = True
                 break
             rest = t_end - time.monotonic()
             if rest <= 0:
-                raise Busy("cpu" if not fits_cpu else "memory",
-                           f"{_STATE['mb']:.0f} of {budget:.0f} MB held by {_STATE['running']} render(s)")
+                kind = "cpu" if not fits_cpu else "memory"
+                raise Busy(kind, f"{_STATE['mb']:.0f} of {budget:.0f} MB held by {_STATE['running']} render(s)", _eta_locked(kind))
             _COND.wait(min(POLL_S * 4, rest))
     try:
         yield {"mb": mb, "heavy": heavy}
     finally:
         if taken:
             with _COND:
+                _HOLDERS.pop(ticket, None)
                 _STATE["mb"] = max(0.0, _STATE["mb"] - mb)
                 _STATE["heavy"] = max(0, _STATE["heavy"] - (1 if heavy else 0))
                 _STATE["running"] = max(0, _STATE["running"] - 1)
