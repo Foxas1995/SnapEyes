@@ -23,8 +23,9 @@ Reply (one style): {ok, style, layout, layouts, format, count, width, height, im
 design_used, fallback, plan8, engine {v, reg, pv}, selfcheck, timing}. A batch: {ok, batch, count, size, format, tiles, pick, styles, eyes, engine, timing}.
   plan8    the identity of the plan this picture is (api/_lib/styles/steps.py make_plan: the style, layout, options, the eyes' ids, the design and the
            seed key): checkout recomputes the plan from the sealed profiles and answers 409 plan_changed when the page's differs, so the page sends it back
-  eyes     per eye {eye, eye_id, cls, pupil, gate {lid, fill}}: what the eye's seal says (api/_lib/preview.py seal v2, the profile measured at
-           /api/enhance; true, false, or null = unknown: a version 1 seal, or a profile that was not measured; null for an old page's plain irises)
+  eyes     per eye {eye, eye_id, cls, pupil, gate {lid, fill}[, why]}: what the eye's seal says (api/_lib/preview.py seal v2, the profile measured at
+           /api/enhance; true, false, or null = unknown: a version 1 seal, or a profile that was not measured; null for an old page's plain irises);
+           why (only for an eye that fails a rule): the reason codes of the failing rules, which the retake state turns into its two sentences and its tip
   tiles    the tiles of these eyes in the server's order, the recommended one first: {id, name, slug, group, legacy, stage (live, preview or lab),
            available, why (gate, reseal or bar_pupil: the eyes cannot take it), layouts, eyes, price_class, looks, pick}; the tiles a batch made also
            carry image, width, height, layout, canvas, design_used, fallback and plan8. A tile that is not available is not drawn.
@@ -216,8 +217,11 @@ def _eyes_reply(metas):
     for i, m in enumerate(metas, 1):
         prof = m.get("profile") if isinstance(m, dict) else None
         ok = {r: (prof.gate(r)["ok"] if prof is not None else None) for r in GATE.RULES}
-        rows.append({"eye": i, "eye_id": m.get("eye_id") if isinstance(m, dict) else None,
-                     "cls": prof.cls if prof is not None else None, "pupil": prof.pupil_cls if prof is not None else None, "gate": ok})
+        row = {"eye": i, "eye_id": m.get("eye_id") if isinstance(m, dict) else None,
+               "cls": prof.cls if prof is not None else None, "pupil": prof.pupil_cls if prof is not None else None, "gate": ok}
+        if prof is not None and False in ok.values():
+            row["why"] = [c for r in GATE.RULES if ok[r] is False for c in prof.gate(r)["why"]]       # the reason codes of the failing rules, for the retake state
+        rows.append(row)
     return rows
 
 def _recs(metas):

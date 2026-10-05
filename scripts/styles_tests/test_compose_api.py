@@ -87,7 +87,7 @@ from _lib import events as E  # noqa: E402
 from _lib import store  # noqa: E402
 from _lib import ops  # noqa: E402
 import _lib.styles as ST  # noqa: E402
-from _lib.styles import core as C, eye as EYE, costs as CO, guard as GD, steps as SPS  # noqa: E402
+from _lib.styles import core as C, eye as EYE, costs as CO, guard as GD, steps as SPS, gate as GATE  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 spec_c = importlib.util.spec_from_file_location("compose", os.path.join(API, "compose.py"))
@@ -299,7 +299,9 @@ check("a tile that is only Soon (preview) is never the pick, and the reason line
       p_grey_soon["pick"] != "solo.radiance" and p_grey_soon["reason"] is None and any(t["id"] == "solo.radiance" and t["stage"] == "preview" and not t["pick"] for t in p_grey_soon["tiles"]),
       (p_grey_soon["pick"], p_grey_soon["reason"]))
 FILL_FAIL = {"cls": "own", "gate": {"lid": {"ok": True}, "fill": {"ok": False, "why": ["fill_lid_margin"]}}}
+CT.ENGINES_BUILT_EXTRA.add("universe")                      # the family may or may not be in the repository yet: the tile list reads the catalogue, not the family
 p_hard = tile_list(1, [FILL_FAIL], {"solo.universe": "live", "solo.powder": "live", "solo.gold": "live"})
+CT.ENGINES_BUILT_EXTRA.discard("universe")
 d_hard = {t["id"]: t for t in p_hard["tiles"]}
 check("a style whose hard gate rule failed is shown with why gate and is never the pick; an advisory style on the same eye stays available (I22)",
       d_hard["solo.universe"]["available"] is False and d_hard["solo.universe"]["why"] == "gate" and d_hard["solo.powder"]["available"] and p_hard["pick"] != "solo.universe",
@@ -319,6 +321,10 @@ with Show(*PAIR):
     e_gate = raised(lambda: comp({"sealed": [S1_560, sealed("blue_lid", 560)], "style": "duo.kiss_collision"}))
     e_reseal = raised(lambda: comp({"sealed": [v1_sz, sealed("green_round", 560)], "style": "duo.kiss_collision"}))
 CT.ENGINES_BUILT_EXTRA.discard("collision")
+r_lidreply = comp({"sealed": [S1_560, sealed("blue_lid", 560)], "styles": []})
+check("an eye that fails a gate rule carries the reason codes of the failing rules in the reply's eyes (why), for the retake state; an eye that passes carries no why",
+      "why" not in r_lidreply["eyes"][0] and r_lidreply["eyes"][1]["gate"]["lid"] is False and r_lidreply["eyes"][1]["why"]
+      and all(c in GATE.WHY["lid"] + GATE.WHY["fill"] for c in r_lidreply["eyes"][1]["why"]), r_lidreply["eyes"])
 check("pair tiles: both eyes clean: every pair style available and Soon (stage preview); an eye that fails the lid rule greys them all (why gate); a bar pupil refuses the infinity designs only (why bar_pupil, Kiss stays)",
       all(t_ok[i]["available"] and t_ok[i]["stage"] == "preview" for i in PAIR) and all(t_lid[i]["available"] is False and t_lid[i]["why"] == "gate" for i in PAIR)
       and t_bar["duo.collision_infinity"]["why"] == "bar_pupil" and t_bar["duo.clean"]["why"] == "bar_pupil" and t_bar["duo.kiss_collision"]["available"],

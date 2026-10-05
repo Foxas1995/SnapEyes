@@ -301,7 +301,7 @@ GOLDENS = {   # recorded on the base commit 90695da (before the registry) with t
     "handler supernova 2 fusion": "57b2cedc3279eebb461c", "handler supernova 2 fusion fields": "84091a94180d6ee0d499",
 }
 IR = [synth_iris(seed=s, hue=s) for s in range(1, 9)]
-NEW_REPLY_FIELDS = ("tiles", "pick", "size", "opts", "design_used", "fallback", "engine", "selfcheck", "timing")      # the compose API v3's additive fields (WP10)
+NEW_REPLY_FIELDS = ("tiles", "pick", "size", "opts", "design_used", "fallback", "plan8", "engine", "selfcheck", "timing")      # the compose API v3's additive fields (WP10)
 got = {}
 replies = {}
 with contextlib.redirect_stdout(io.StringIO()):
