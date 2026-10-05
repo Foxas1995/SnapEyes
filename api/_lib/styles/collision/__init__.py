@@ -287,7 +287,7 @@ def selfcheck(r, design, spec_ids, names, date):
     floors = t3_floors(used, r.scene, r.opts)
     shares = [round(v, 4) for v in visible_shares(r)]
     rep["checks"]["t3"] = {"ok": all(s + T3_TOL >= f for s, f in zip(shares, floors)), "shares": shares, "floors": floors, "zone": T3_ZONE}
-    lo_hi = ASSET_RANGE.get(design if used != "stack" else "infinity")
+    lo_hi = ASSET_RANGE.get("infinity" if used == "stack" else used)
     share, lit = SC.black_shares(img8, (SC.BLACK_THR, SC.BLACK_LITERAL))
     in_range = None if (r.info.get("clean") or r.info.get("bg") != "dark" or lo_hi is None) else bool(lo_hi[0] <= share <= lo_hi[1])
     rep["checks"]["t4"] = {"ok": True, "share": round(share, 4), "range": list(lo_hi) if lo_hi else None, "in_range": in_range, "literal3": round(lit, 4),
