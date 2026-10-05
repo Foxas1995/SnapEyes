@@ -37,7 +37,10 @@ The kinds (all with "ms", the time since the request started, when known):
             many eyes of the set the page replaced since its last compose), lang and market (page language, price market), ms (a tile: its
             own render time), cls (the set's colour class: own, dark_brown, grey). tiles 0 is a request that judged
             a set of eyes and drew nothing for it (the tile list alone, a batch whose tiles the gate held back, a style or a pick the eyes cannot
-            take): it carries the set level fields (gate, eyes, cls, retake, lang, market) and reaches the gate funnel and nothing else
+            take): it carries the set level fields (gate, eyes, cls, retake, lang, market) and reaches the gate funnel and nothing else.
+            again (WP13a: this request asks about a set of eyes the page has already asked about, the second request of a pick and a
+            batch for example; absent means a new set): the gate funnel counts a set once, by its first request, so a passing set that is
+            asked about twice is not worth two sets
   master    step (eye/compose/art), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab; and, from the master plan's steps
             (api/_lib/styles/steps.py: one event per step, "art" for the artwork): part and of (the step and how many the plan has), ms (the step's
             wall time), need_s (the estimate it was planned with), cpu_s, peak_mb (the INCREASE of the process's resident size over the step, VmRSS) and
@@ -46,8 +49,10 @@ The kinds (all with "ms", the time since the request started, when known):
             instead of made: style_step_too_big, engine_skew, class_changed, style_step_failed, plate_unavailable, ...)
   error     endpoint, class (the error's kind: busy/400/403/429/500/502/503), reason (the reply's reason code),
             status. ("class", because "kind" names the event itself.) style: the style the refused request asked for, when it said.
-  help      route (manual: the customer chose to send photos by e-mail for the owner to look at, see 1.6.2), eyes, why (the reason code the
-            retake state showed), lang: a count of clicks, nothing else (api/compose.py action help)
+  help      route (manual: the customer chose to send photos by e-mail for the owner to look at, see 1.6.2; soon: the customer pressed the buy
+            button of a style that opens soon; blocked: the checkout refused a style that cannot be bought (409 style_unavailable), WP12), eyes,
+            why (the reason code the retake state showed), lang, style (soon and blocked: the style): a count of clicks, nothing else
+            (api/compose.py action help)
   exp       a price experiment's funnel (api/_lib/abtest.py; only while the owner has one running): stage (visit,
             preview, checkout, paid), exp (the experiment's key), variant, market, eyes, amount and currency (checkout
             and paid), hit (the artwork's price differs between the variants), live (paid: a real payment). No visitor
@@ -84,13 +89,13 @@ FIELDS = {
                 "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n", "reveal": "c", "reveal_ms": "n"},
     "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c",
                 "size": "n", "tiles": "n", "tile": "b", "look": "c", "pick": "b", "fallback": "c", "stage": "c", "retake": "n",
-                "lang": "c", "market": "c", "cls": "c"},
+                "lang": "c", "market": "c", "cls": "c", "again": "b"},
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
                "rerender": "b", "existing": "b", "render_s": "n", "style": "c",
                "part": "n", "of": "n", "need_s": "n", "cpu_s": "n", "peak_mb": "n", "hwm_mb": "n", "kills": "n", "design": "c", "d_rgb": "n",
                "hold": "c", "fallback": "c"},
     "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n", "style": "c"},
-    "help": {"route": "c", "eyes": "n", "why": "c", "lang": "c"},
+    "help": {"route": "c", "eyes": "n", "why": "c", "lang": "c", "style": "c"},
     "exp": {"stage": "c", "exp": "c", "variant": "c", "market": "c", "eyes": "n", "amount": "n", "currency": "c",
             "hit": "b", "live": "b"},
 }
@@ -310,12 +315,16 @@ def error(req, kind, reason=None, status=None, style=None):
 def answer(req, out):
     """After L.run sent an endpoint's own refusal (a store.Answer through a _StatusReq box, which carries .status):
     an error event for 5xx, 403 and 429 replies. The ordinary steps of the order flow (402 confirming, 409
-    rendering, 410 ...) are not errors."""
+    rendering, 410 ...) are not errors. One 409 is demand and not an error: a checkout that refused a style that cannot be
+    bought (409 style_unavailable: it opens soon, it was taken back, its gate failed) is a help event with route blocked, the style
+    and the eye count the reply names (WP13a: the owner sees the demand for a style before it can be bought)."""
     try:
         st = getattr(req, "status", None)
+        reason = out.get("reason") if isinstance(out, dict) else None
+        if st == 409 and reason == "style_unavailable":
+            return record("help", route="blocked", style=out.get("style"), eyes=out.get("eyes"), why=out.get("why"), _wait=0.5)
         if not isinstance(st, int) or isinstance(st, bool) or st < 400 or not (st >= 500 or st in (403, 429)):
             return False
-        reason = out.get("reason") if isinstance(out, dict) else None
         return error(req, "busy" if reason == "model_busy" else str(st), reason, st, style=out.get("style") if isinstance(out, dict) else None)
     except Exception:  # noqa
         return False
@@ -348,6 +357,14 @@ def empty():
             "compose_tile_style": {}, "compose_tile_eyes": {}, "compose_demand": {}, "compose_size": {}, "compose_look": {}, "compose_fallback": {},
             "compose_chosen": {}, "compose_funnel": {}, "compose_funnel_cls": {}, "compose_lang": {}, "compose_market": {}, "compose_tiles": {},
             "help_route": {}, "help_why": {}, "help_eyes": {}, "error_style": {},
+            # the Stiliai page (WP13a): a set is counted once, by its first request (an event with again is left out of every set level table);
+            # compose_slice "<lang:xx or market:xx>|<table>|<key>" repeats the tables the page filters by language and by market (compose_funnel,
+            # compose_funnel_cls, compose_demand, compose_chosen, compose_style, compose_tile_style, compose_fallback, compose_tiles) so that a filter
+            # needs no raw event; ms_hist
+            # "<tile, compose or art>|<style>|<eyes>|<bucket>" counts render times in the buckets of HIST_MS (a p50 and a p95 need the spread, a sum and a count
+            # give only a mean); master_review_style is the artworks that were held for a look, by style; help_demand "<soon or blocked>|<style>|<eyes>" is
+            # the demand for a style that cannot be bought yet
+            "compose_slice": {}, "ms_hist": {}, "master_review_style": {}, "help_demand": {},
             # the restoration gate (eye profile): per eye at enhance, per request at compose; the colour and pupil classes seen
             "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
             # the Reveal (WP9): per eye at enhance, the code of what the page shows (ok, colour, registration, none, error)
@@ -385,16 +402,42 @@ def _undrawn(ev):
     return isinstance(t, (int, float)) and not isinstance(t, bool) and t == 0
 
 
+HIST_MS = (250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000, 12000, 16000, 24000, 32000, 48000, 64000)    # upper bounds, ms; one more bucket above
+SLICE_FIELDS = (("lang", "lang"), ("market", "market"))
+
+
+def hist_bucket(ms):
+    """The bucket (an index into HIST_MS, len(HIST_MS) for above the last bound) a time in milliseconds falls in."""
+    for i, ub in enumerate(HIST_MS):
+        if ms <= ub:
+            return i
+    return len(HIST_MS)
+
+
+def _hist(agg, what, style, eyes, ms):
+    if style and isinstance(ms, (int, float)) and not isinstance(ms, bool) and ms >= 0:
+        _inc(agg["ms_hist"], f"{what}|{style}|{eyes}|{hist_bucket(ms)}")
+
+
+def _cinc(agg, ev, table, key, n=1):
+    """Count into a table and, for the Stiliai page's filters, into the slices of the event's language and market (compose_slice)."""
+    _inc(agg[table], key, n)
+    for field, dim in SLICE_FIELDS:
+        v = ev.get(field)
+        if isinstance(v, str) and v:
+            _inc(agg["compose_slice"], f"{dim}:{v}|{table}|{key}", n)
+
+
 def _set_counts(agg, ev, eyes):
     """What a compose request says of the SET of eyes (never of a picture): the set level gate, the funnel by eye count, gate code and retakes, the same
     by the set's colour class, the page's language and the price market."""
-    if ev.get("gate"):
+    if ev.get("gate") and ev.get("again") is not True:       # a set is counted once, by its first request (again: the page has asked about these eyes already)
         _inc(agg["compose_gate"], ev["gate"])
         retake = ev.get("retake")
         retake = int(retake) if isinstance(retake, (int, float)) and not isinstance(retake, bool) and retake > 0 else 0
-        _inc(agg["compose_funnel"], f"{eyes}|{ev['gate']}|{min(2, retake)}")
+        _cinc(agg, ev, "compose_funnel", f"{eyes}|{ev['gate']}|{min(2, retake)}")
         if ev.get("cls"):
-            _inc(agg["compose_funnel_cls"], f"{eyes}|{ev['cls']}|{ev['gate']}|{min(2, retake)}")
+            _cinc(agg, ev, "compose_funnel_cls", f"{eyes}|{ev['cls']}|{ev['gate']}|{min(2, retake)}")
     for field, key in (("lang", "compose_lang"), ("market", "compose_market")):
         if ev.get(field):
             _inc(agg[key], ev[field])
@@ -455,34 +498,39 @@ def add(agg, ev):
             cur[1] += 1
     elif kind == "compose" and _undrawn(ev):
         _set_counts(agg, ev, ev.get("eyes") or 1)
-        _inc(agg["compose_tiles"], 0)
+        _cinc(agg, ev, "compose_tiles", 0)
     elif kind == "compose":
         tile = ev.get("tile") is True
         request = (not tile) or ev.get("tiles") is not None       # a request is counted once: by its first event when it is a batch of tiles
         style, eyes = ev.get("style") or "unknown", ev.get("eyes") or 1
-        _inc(agg["compose_tile_style" if tile else "compose_style"], style)
+        _cinc(agg, ev, "compose_tile_style" if tile else "compose_style", style)
         _inc(agg["compose_tile_eyes" if tile else "compose_eyes"], eyes)
         if ev.get("stage"):
-            _inc(agg["compose_demand"], f"{style}|{eyes}|{ev['stage']}|{'tile' if tile else 'large'}")
+            _cinc(agg, ev, "compose_demand", f"{style}|{eyes}|{ev['stage']}|{'tile' if tile else 'large'}")
         if ev.get("size"):
             _inc(agg["compose_size"], ev["size"])
         if ev.get("look"):
             _inc(agg["compose_look"], f"{style}|{ev['look']}")
         if ev.get("fallback") and ev["fallback"] != "none":
-            _inc(agg["compose_fallback"], f"{style}|{ev['fallback']}")
+            _cinc(agg, ev, "compose_fallback", f"{style}|{ev['fallback']}")
         if not tile and ev.get("pick") is not None:
-            _inc(agg["compose_chosen"], "pick" if ev["pick"] else "other")
+            _cinc(agg, ev, "compose_chosen", "pick" if ev["pick"] else "other")
         if request:
             _set_counts(agg, ev, eyes)
             if ev.get("clean"):
                 agg["compose_clean"] += 1
             if ev.get("tiles") is not None:
-                _inc(agg["compose_tiles"], ev["tiles"])
+                _cinc(agg, ev, "compose_tiles", ev["tiles"])
         _ms(agg, "compose_tile" if tile else "compose", ev)
+        _hist(agg, "tile" if tile else "compose", style, eyes, ev.get("ms"))
     elif kind == "help":
-        _inc(agg["help_route"], ev.get("route") or "unknown")
-        _inc(agg["help_why"], ev.get("why") or "unknown")
-        _inc(agg["help_eyes"], ev.get("eyes") or 0)
+        route = ev.get("route") or "unknown"
+        _inc(agg["help_route"], route)
+        if route in ("soon", "blocked"):         # the demand for a style that cannot be bought yet, by style and eye count
+            _inc(agg["help_demand"], f"{route}|{ev.get('style') or 'unknown'}|{ev.get('eyes') or 0}")
+        else:
+            _inc(agg["help_why"], ev.get("why") or "unknown")
+            _inc(agg["help_eyes"], ev.get("eyes") or 0)
     elif kind == "master" and ev.get("step") == "art":
         if ev.get("hold"):
             _inc(agg["master_hold"], ev["hold"])
@@ -495,6 +543,7 @@ def add(agg, ev):
                 if ev.get("fallback"):
                     _inc(agg["master_fallback"], ev["fallback"])
                 _ms(agg, "master_art", ev)
+                _hist(agg, "art", ev.get("style") or "unknown", ev.get("count") or 1, ev.get("ms"))
                 for field, key in (("peak_mb", "art_peak_mb"), ("need_s", "art_need_s")):
                     v = ev.get(field)
                     if isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0:
@@ -503,6 +552,7 @@ def add(agg, ev):
                         cur[1] += 1
             if ev.get("needs_review"):
                 agg["master_review"] += 1
+                _inc(agg["master_review_style"], ev.get("style") or "unknown")
             if ev.get("lab"):
                 agg["master_lab"] += 1
     elif kind == "master":

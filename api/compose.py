@@ -13,12 +13,15 @@ Request (JSON; the page's old requests are all still accepted):
   size     the preview's long side: 1024 (the default of one style) or 480 (the default of a batch, a tile); nothing else (400): a customer never
            gets a larger preview than 1024 px
   layout, format ("artwork" | "wallpaper" | a canvas of the engine), names (a list of texts, or the old string "Anna;Max"), date, family_name,
-  title (the AI-generated sample's label), pad, lang, market, retake (how many eyes of this set the page has replaced since its last compose)
+  title (the AI-generated sample's label), pad, lang, market, retake (how many eyes of this set the page has replaced since its last compose),
+  again (true on a request about eyes the page has already asked about, the second request of a pick and a batch: the gate funnel of the admin page counts a
+  set once, by its first request; absent means a new set)
   opts     {swap, rotate, look}: the three options the buyer may choose; any other key is a 400; one that does not apply (swap for other than two
            eyes, rotate for fewer than three, a look the style has not) is left out
   lab      true, with "Authorization: Bearer <admin key>": the laboratory styles too (the owner's admin page). Without a valid key it is nothing.
   unlock   a signed unlock ticket (nothing mints one yet): the clean render. Never for a batch.
-  action   "help": a count of one click on the manual route of the retake state ({route: "manual", eyes, why}); no eyes needed.
+  action   "help": a count of one click on the manual route of the retake state ({route: "manual", eyes, why}) or on the buy button of a style that
+           opens soon ({route: "soon", style, eyes}); no eyes needed.
 Reply (one style): {ok, style, layout, layouts, format, count, width, height, image (JPEG b64), styles, qa, eyes, tiles, pick, size, opts, canvas,
 design_used, fallback, plan8, engine {v, reg, pv}, selfcheck, timing}. A batch: {ok, batch, count, size, format, tiles, pick, styles, eyes, engine, timing}.
   plan8    the identity of the plan this picture is (api/_lib/styles/steps.py make_plan: the style, layout, options, the eyes' ids, the design and the
@@ -375,7 +378,7 @@ def _request(body):
     return {"batch": many is not None, "styles": styles, "size": size, "layout": layout or None, "opts": _opts(body.get("opts")),
             "fmt": body.get("format"), "names": body.get("names"), "date": body.get("date"), "family": body.get("family_name"),
             "title": _text(body.get("title"), 40), "lang": lang, "market": market if isinstance(market, str) and market in MK.MARKETS else None,
-            "retake": _int(body.get("retake"), 0, RETAKE_MAX), "lab": body.get("lab") is True}
+            "retake": _int(body.get("retake"), 0, RETAKE_MAX), "again": body.get("again") is True, "lab": body.get("lab") is True}
 
 
 def _bearer(req):
@@ -622,6 +625,8 @@ def _event_fields(req, style, n, layout, fmt, size, gate, qa_ok, pick_id, look, 
         f["market"] = req["market"]
     if cls:
         f["cls"] = cls
+    if req["again"]:
+        f["again"] = True
     return f
 
 
@@ -656,6 +661,8 @@ def _set_event(req, n, metas, style=None):
              "retake": req["retake"], "lang": req["lang"]}
         if req["market"]:
             f["market"] = req["market"]
+        if req["again"]:
+            f["again"] = True
         return bool(E.record("compose", _wait=0.5, **f))
     except Exception:  # noqa: a count must never cost a request
         return False
@@ -873,13 +880,19 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
 
 # ----------------------------------------------------------------------------- the help beacon
 def _help(body):
-    """One click on the manual route of the retake state (e-mail your best photos, the owner looks at them): a count and nothing else."""
-    if body.get("route") != "manual":
-        raise L.ClientError("route is manual.")
+    """One click on the manual route of the retake state (e-mail your best photos, the owner looks at them), or on the buy button of a style that opens
+    soon (route soon, with the style and the eye count: the owner sees the demand for a style before it can be bought): a count and nothing else."""
+    route = body.get("route")
+    if route not in ("manual", "soon"):
+        raise L.ClientError("route is manual or soon.")
     why = body.get("why")
     why = why if isinstance(why, str) and 1 <= len(why) <= 40 and all(c.islower() or c.isdigit() or c in "_.-" for c in why) and (why[0].islower() or why[0].isdigit()) else "unknown"
     lang = body.get("lang") if body.get("lang") in L.PAGE_LANGS else "en"
-    E.record("help", route="manual", eyes=_int(body.get("eyes"), 1, L.MULTI_MAX, 1), why=why, lang=lang, _wait=0.5)
+    f = {"route": route, "eyes": _int(body.get("eyes"), 1, L.MULTI_MAX, 1), "why": why, "lang": lang}
+    if route == "soon":
+        style = body.get("style")
+        f["style"] = style if catalogue.known(style) else "unknown"
+    E.record("help", _wait=0.5, **f)
     return {"ok": True, "counted": True}
 
 
