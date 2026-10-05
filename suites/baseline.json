@@ -86,6 +86,9 @@
   },
   "v3steps": {
    "pass": 150
+  },
+  "v3reveal": {
+   "pass": 61
   }
  }
 }

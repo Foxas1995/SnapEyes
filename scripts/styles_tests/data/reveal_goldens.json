@@ -1,0 +1,385 @@
+{
+ "about": "Reveal server half on the synthetic cases of reveal_cases.py, scratch prototype (designs/presentation.py)",
+ "cases": {
+  "amber_slit_clean": {
+   "arcs": {
+    "en": "54e311503fde1b308f02559f01f5c72f4c9fd4d4c04d9098b6b10e25f79ffe17"
+   },
+   "params": {
+    "cls": "slit",
+    "drift": 0.0,
+    "edge": [
+     0.95,
+     1.0217
+    ],
+    "lid": 0.0,
+    "ok": true,
+    "pupil": [
+     0.0,
+     -0.0001
+    ],
+    "rho": 0.1807,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "e35b2bd6a4f8b42d659bc5eb8148affe735ddbbfeb2f646e4dcb1831ae8bed1f",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9992,
+    "spread_r": 0.0001
+   }
+  },
+  "blue_clean": {
+   "arcs": {
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3",
+    "lt": "7627bd32ede857f2baafeca6a32c717440876f8307004f6a7389c3d6b6284445"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 0.3,
+    "edge": [
+     0.95,
+     1.0252
+    ],
+    "lid": 0.0,
+    "ok": true,
+    "pupil": [
+     0.0005,
+     0.0001
+    ],
+    "rho": 0.2635,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "d067b2d06c8c46ee8dda8c6c28bedb518793c7ad9affea52089e4e8305a927a5",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9992,
+    "spread_r": 1.7e-05
+   }
+  },
+  "blue_lid_clean": {
+   "arcs": {
+    "en": "7eecd6fcb729ecc60c228684c56e58d9504e58b27a520edbed4b6430afe865a0"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 0.0,
+    "edge": [
+     0.95,
+     1.0195
+    ],
+    "lid": 0.2446,
+    "ok": true,
+    "pupil": [
+     0.0,
+     0.0001
+    ],
+    "rho": 0.2638,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "b6c35085573aa0fb1a83e07bbcc9331ce120ee9d82e3e5123799389b152b9665",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9992,
+    "spread_r": 1e-05
+   }
+  },
+  "blue_rot1": {
+   "arcs": {
+    "en": "1621226cbfc12dfecb48636bbe13616dbb10d76c48324ea50914ef107cff6001"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 0.3,
+    "edge": [
+     0.95,
+     1.0278
+    ],
+    "lid": 0.0,
+    "ok": false,
+    "pupil": [
+     0.0004,
+     0.0
+    ],
+    "rho": 0.2636,
+    "shift": [
+     -0.0003,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "c3b7657318f656dc6d735a2704708459c772bd4c1edeb50e1caf15684382d77f",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9472,
+    "spread_r": 0.007912
+   }
+  },
+  "blue_scale102": {
+   "arcs": {
+    "en": "7d0768a2f5981d7ab66ec3cff8b939f1e8782c7bf08c27cce1af30622066f5eb"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 0.5,
+    "edge": [
+     0.95,
+     1.0169
+    ],
+    "lid": 0.0,
+    "ok": false,
+    "pupil": [
+     0.0002,
+     0.0001
+    ],
+    "rho": 0.2755,
+    "shift": [
+     -0.0002,
+     -0.0001
+    ],
+    "soft": false
+   },
+   "prep": "a4b91290c5e67970109206a7921a4dcd4d8d23c654e9dcad9119c3e6cc57d7cd",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9649,
+    "spread_r": 0.008395
+   }
+  },
+  "blue_shift": {
+   "arcs": {
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 0.3,
+    "edge": [
+     0.95,
+     1.0252
+    ],
+    "lid": 0.0,
+    "ok": true,
+    "pupil": [
+     0.0005,
+     0.0001
+    ],
+    "rho": 0.2635,
+    "shift": [
+     -0.0066,
+     -0.0043
+    ],
+    "soft": false
+   },
+   "prep": "d067b2d06c8c46ee8dda8c6c28bedb518793c7ad9affea52089e4e8305a927a5",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9788,
+    "spread_r": 0.000328
+   }
+  },
+  "blue_warm": {
+   "arcs": {
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 15.6,
+    "edge": [
+     0.95,
+     1.0252
+    ],
+    "lid": 0.0,
+    "ok": false,
+    "pupil": [
+     0.0005,
+     0.0001
+    ],
+    "rho": 0.2635,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "d067b2d06c8c46ee8dda8c6c28bedb518793c7ad9affea52089e4e8305a927a5",
+   "registration": {
+    "applied": true,
+    "ncc": 0.999,
+    "spread_r": 7.8e-05
+   }
+  },
+  "blue_warm_mild": {
+   "arcs": {
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 3.7,
+    "edge": [
+     0.95,
+     1.0252
+    ],
+    "lid": 0.0,
+    "ok": true,
+    "pupil": [
+     0.0005,
+     0.0001
+    ],
+    "rho": 0.2635,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "d067b2d06c8c46ee8dda8c6c28bedb518793c7ad9affea52089e4e8305a927a5",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9992,
+    "spread_r": 2e-05
+   }
+  },
+  "dark_brown_bar_clean": {
+   "arcs": {
+    "en": "d71b505409ba7f47ece694018ccdd244bddb08600b0ea9f732b0ffd3d777af6c"
+   },
+   "params": {
+    "cls": "bar",
+    "drift": 0.1,
+    "edge": [
+     0.95,
+     1.0134
+    ],
+    "lid": 0.0,
+    "ok": true,
+    "pupil": [
+     0.0005,
+     -0.0001
+    ],
+    "rho": 0.2113,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "c9c8550aae93fb7e775c56d3fbccafde220d0a8e8c81c1fbf5de33947371701f",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9991,
+    "spread_r": 5.7e-05
+   }
+  },
+  "dark_brown_clean": {
+   "arcs": {
+    "en": "323097b9ed8e35f5916f34cf75f820e54bee7e32897bd97cde0c0f37d469ebc0"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 0.0,
+    "edge": [
+     0.95,
+     1.0138
+    ],
+    "lid": 0.0,
+    "ok": true,
+    "pupil": [
+     -0.0001,
+     0.0001
+    ],
+    "rho": 0.2622,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "c502fc148aa8bc1e6cc670aa466c0b741c29d1cffb1f7c936ccf975e27a82c9b",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9992,
+    "spread_r": 4.6e-05
+   }
+  },
+  "flat": {
+   "arcs": {
+    "en": "cf9e90fd3d2239c42b1a3f681dc50cb7a94902a40b5297f1cf37d9b5f190ef98"
+   },
+   "params": {
+    "cls": null,
+    "drift": 0.0,
+    "edge": [
+     0.985,
+     1.015
+    ],
+    "lid": 0.0,
+    "ok": false,
+    "pupil": [
+     0.0,
+     0.0
+    ],
+    "rho": null,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "1d1acae0dd957a9743ff0764eca983894004d37bc53170ea2249687006aad429",
+   "registration": {
+    "applied": false,
+    "ncc": 0.0,
+    "spread_r": 0.0
+   }
+  },
+  "grey_clean": {
+   "arcs": {
+    "en": "157de05c05ed4ecfabb68a7ce61727cf7401036b44878dff4e3b70897fd51047"
+   },
+   "params": {
+    "cls": "round",
+    "drift": 0.0,
+    "edge": [
+     0.95,
+     1.0204
+    ],
+    "lid": 0.0,
+    "ok": true,
+    "pupil": [
+     0.0,
+     0.0001
+    ],
+    "rho": 0.2637,
+    "shift": [
+     0.0,
+     0.0
+    ],
+    "soft": false
+   },
+   "prep": "4281d43cd2bca3967b505ff42c4bc1da034581350c6dd9f0431bebec215415ea",
+   "registration": {
+    "applied": true,
+    "ncc": 0.9992,
+    "spread_r": 1.2e-05
+   }
+  }
+ },
+ "machine": {
+  "machine": "AMD64",
+  "numpy": "2.4.4",
+  "pillow": "12.2.0",
+  "python": "3.14.3",
+  "system": "Windows"
+ }
+}

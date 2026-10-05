@@ -11,7 +11,14 @@ The eye profile (api/_lib/styles/eye.py): measured once here on the clean previe
 restoration gates, 1 to 2 s), sealed into all three seals (preview.py, seal v2) and told to the page in "profile" (eye_id, class,
 ease, pupil class, the gate's ok per rule; reply field added, nothing else changes). Measured only when EYE.PROFILE_MIN_LEFT seconds
 are left after the model call; otherwise the seals carry the eye id alone and "profile" says unknown: true (hard styles then ask
-for the preview again). A failing measurement never costs the preview."""
+for the preview again). A failing measurement never costs the preview.
+The Reveal (api/_lib/styles/reveal.py, work package WP9): the numbers the page needs to put the customer's own photo and this restoration on one
+circle with a hard cut through the pupil ("reveal": the pupil, the registration shift of the photo layer, the restored edge, ok, soft, drift, lid;
+about 150 bytes), measured on the clean restoration and the deglared crop it was made from, and the display copy built from the restoration with its
+eyelid skin hidden and its pupil crushed to black (the sealed copies are untouched: they are the clean preview). ok false means the restored colour
+drifted from the photo or the halves do not register: the page then shows the strip without the cut and says why. Measured only with
+REVEAL_MIN_LEFT seconds left; otherwise "reveal" is absent and the display copy is the plain one (the page keeps the plain before and after slider).
+No stored wide frame, no card: the browser builds the photo's frame itself (decision C10)."""
 import os, sys, json, time, base64, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -20,6 +27,7 @@ from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
 from _lib.styles import eye as EYE   # the eye profile: measured here, sealed, read by compose, the order draft and the master
+from _lib.styles import reveal as REV   # the Reveal's numbers and its display copy (WP9)
 
 # sha256 of public/assets/sample_eye_blue_restored.jpg, the sample eye's restoration the page ships (made once by the
 # live engine, 2026-09-29). Replace the file and this changes with it; the page then falls back to the studio.
@@ -117,8 +125,14 @@ def enhance(body):
     # and master_eye's preview_sha are these bytes, as before
     clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
     prof, prof_ms = _measure(clean, pad)
-    res = {"ok": True, "mode": mode, **P.protect(out, clean, profile=prof), "profile": _public(prof, clean), "fidelity": round(fid, 3),
+    rv = REV.reveal_for(source, out)    # the Reveal's numbers (about 0.5 s) and the display copy as the Reveal shows it; {"params": None} when unmeasured
+    prot = P.protect(out, clean, profile=prof)
+    if rv["image"] is not None:
+        prot["image"] = REV.display_b64(rv["image"])    # the same watermark, over the restoration with its eyelid hidden and its pupil black
+    res = {"ok": True, "mode": mode, **prot, "profile": _public(prof, clean), "fidelity": round(fid, 3),
            "used_sr": used_sr, "fallback": fallback, "seconds": round(time.time() - t0, 1), "qa": qa}
+    if rv["params"] is not None:
+        res["reveal"] = rv["params"]
     # optional training memory (only with consent and when storage is configured)
     if body.get("consent") and body.get("session"):
         sid = L.safe_segment(body["session"])
@@ -129,7 +143,7 @@ def enhance(body):
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
     E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"],
-             **_codes(prof, prof_ms))
+             reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms))
     return res
 
 def handle(req): L.run(req, enhance)

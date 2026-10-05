@@ -25,7 +25,9 @@ The kinds (all with "ms", the time since the request started, when known):
   deglare   glare_pct, lid_pct, changed, used_sr, model_call (the reflection call to the image model)
   enhance   mode, qa_ok, ring_de00, fallback, used_sr, fidelity; and the eye profile (api/_lib/styles/eye.py): gate (ok, lid, fill,
             both, or unknown when the profile was not measured), reason (the first reason code of a failure, else none), cls (the
-            colour class: own, dark_brown, grey), pupil (round, slit, bar), profile_ms (the time it took)
+            colour class: own, dark_brown, grey), pupil (round, slit, bar), profile_ms (the time it took); and the Reveal
+            (api/_lib/styles/reveal.py, WP9): reveal (ok: the page shows the cut; colour or registration: withheld, the page shows the strip
+            without the cut; none: not measured, no time left; error), reveal_ms (the time it took, when measured)
   compose   style, eyes, layout, format, clean (unwatermarked), qa_ok; gate: the SET-level result of the request under the style's
             gate rule (ok, unknown, or the first failing eye's reason code)
   master    step (eye/compose/art), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab; and, from the master plan's steps
@@ -68,7 +70,7 @@ FIELDS = {
                 "shake_asked": "b", "lang": "c", "device": "c", "source": "c"},
     "deglare": {"glare_pct": "n", "lid_pct": "n", "changed": "b", "used_sr": "b", "model_call": "b"},
     "enhance": {"mode": "c", "qa_ok": "b", "ring_de00": "n", "fallback": "b", "used_sr": "b", "fidelity": "n",
-                "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n"},
+                "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n", "reveal": "c", "reveal_ms": "n"},
     "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c"},
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
                "rerender": "b", "existing": "b", "render_s": "n", "style": "c",
@@ -283,6 +285,8 @@ def empty():
             "deglare_lid": 0, "compose_style": {}, "compose_eyes": {}, "compose_clean": 0,
             # the restoration gate (eye profile): per eye at enhance, per request at compose; the colour and pupil classes seen
             "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
+            # the Reveal (WP9): per eye at enhance, the code of what the page shows (ok, colour, registration, none, error)
+            "enhance_reveal": {},
             "master_compose": 0, "master_review": 0, "master_rerender": 0, "master_lab": 0, "master_existing": 0,
             # the master plan's steps (kind master, step art): steps made, by style; orders held instead of made, by code (sums of peak_mb and need_s
             # are in "ms" as art_peak_mb and art_need_s with their counts, so averages need no new shape)
@@ -353,6 +357,13 @@ def add(agg, ev):
         if isinstance(pm, (int, float)) and not isinstance(pm, bool) and pm >= 0:
             cur = agg["ms"].setdefault("profile", [0, 0])
             cur[0] += pm
+            cur[1] += 1
+        if ev.get("reveal"):
+            _inc(agg["enhance_reveal"], ev["reveal"])
+        rm = ev.get("reveal_ms")
+        if isinstance(rm, (int, float)) and not isinstance(rm, bool) and rm >= 0:
+            cur = agg["ms"].setdefault("reveal", [0, 0])
+            cur[0] += rm
             cur[1] += 1
     elif kind == "compose":
         _inc(agg["compose_style"], ev.get("style") or "unknown")
