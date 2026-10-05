@@ -143,7 +143,7 @@ def _compose_engine(body, style, n, metas, raws, layouts, clean):
     spec = {"style": style, "layout": layouts[0], "eyes": n, "canvas": canvas, "names": _engine_text(body.get("names"), 60),
             "date": _engine_text(body.get("date"), 20)}
     pv = ST.preview([eye], spec, size=PREVIEW_SIZE, watermark=not clean)
-    qa = L.colour_qa("compose", graded=pv.graded[0])
+    qa = L.colour_qa("compose", graded=L.Image.fromarray(pv.graded[0]))
     E.record("compose", style=style, eyes=n, layout=layouts[0], format=word, clean=bool(clean), qa_ok=bool(qa.get("ok")),
              gate=_gate_code(style, n, metas))
     return {"ok": True, "style": style, "layout": layouts[0], "layouts": list(layouts), "format": word, "canvas": canvas,

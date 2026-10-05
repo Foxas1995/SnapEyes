@@ -316,7 +316,7 @@ eye_a = C.Iris(FIX["dark_brown_round"], "a")
 pv = ST.preview([eye_a], dict(spec, style="solo.gold", names="Anna", date="2026"), size=512, check=True)
 check("preview: the clean render as a Preview (picture, disc, graded frame, design, canvas, size, seed, class, the design's facts, times, text log, the selfcheck report that passes)",
       pv.img.size == (512, 512) and pv.design == "gold" and pv.fmt == "1:1" and pv.size == 512 and pv.cls == "dark_brown" and len(pv.discs) == 1 and pv.discs[0][2] > 100
-      and isinstance(pv.graded[0], Image.Image) and pv.selfcheck["ok"] is True and set(pv.selfcheck["checks"]) >= {"t1", "t6", "t7", "t12"} and "gold" in pv.log
+      and isinstance(pv.graded[0], np.ndarray) and pv.graded[0].shape[2] == 3 and pv.selfcheck["ok"] is True and set(pv.selfcheck["checks"]) >= {"t1", "t6", "t7", "t12"} and "gold" in pv.log
       and pv.times["total"] > 0 and [e["kind"] for e in pv.text_log] == ["names", "date"] and pv.width == 512, (pv.fmt, pv.size, pv.selfcheck))
 pw = ST.preview([eye_a], dict(spec, style="solo.gold", names="", date=""), size=512, watermark=True)
 pc_ = ST.preview([eye_a], dict(spec, style="solo.gold", names="", date=""), size=512)
@@ -443,6 +443,19 @@ check("compose.py has no path to the lab for a customer: it never imports ops, n
       not re.search(r"import ops|\bops\.\w+\(|authorization|body\.get\(.lab.\)|admin_key", read(os.path.join(API, "compose.py"))),
       re.findall(r"import ops|\bops\.\w+\(|authorization|body\.get\(.lab.\)|admin_key", read(os.path.join(API, "compose.py")))[:4])
 EVENTS.clear()
+spec_m = importlib.util.spec_from_file_location("master_compose", os.path.join(API, "master_compose.py"))
+MC = importlib.util.module_from_spec(spec_m)
+spec_m.loader.exec_module(MC)
+lab_order = "lab-260101-abcd1234"
+tk_m = L.mint_ticket(store.unlock_kind(lab_order), 900)
+mc_body = {"order": lab_order, "ticket": tk_m, "keys": [f"orders/{lab_order}/eye_1.jpg"], "layout": "single"}
+e_v3 = raises(lambda: MC.master_compose(dict(mc_body, style="solo.powder")), L.ClientError)
+e_old = raises(lambda: MC.master_compose(dict(mc_body, style="celestial_gold")), L.ClientError)
+check("master_compose draws the legacy engine's styles only: asked for a style of the v3 engine it answers 400 and draws nothing (the legacy engine would read an id it does not know as the "
+      "default style: a silent substitution after payment); a legacy id still passes the style check (it stops later: no eye is stored)",
+      isinstance(e_v3, L.ClientError) and "Choose one of the styles" in str(e_v3) and "solo." not in str(e_v3) and isinstance(e_old, L.ClientError) and "not stored yet" in str(e_old), (e_v3, e_old))
+check("the catalogue still says the engine styles are renderable for one eye (the laboratory draws them), and only the render path of the paid file refuses them until the master plan lands",
+      all(CT.renderable(i, 1) for i in SINGLES_STYLES) and not any(CT.renderable(i, 2) for i in SINGLES_STYLES))
 
 # ============================================================================================ 7. the admin laboratory
 section("7. the admin laboratory: styles_lab (no image model, nothing stored, behind the admin key)")

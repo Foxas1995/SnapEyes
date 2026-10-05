@@ -50,7 +50,7 @@ class Preview:
     """What preview() answers for one style on one canvas.
     img        the picture, a PIL RGB image (the clean render: watermarked() makes the free preview from it)
     discs      [(cx, cy, r)] the visible iris discs in canvas pixels (pixel centres at +0.5), for the watermark and the checks
-    graded     [PIL image] the studio-graded frame of each iris as the legacy engine keeps it (iris.colour_qa reads it)
+    graded     [uint8 array] the studio-graded frame of each iris (the legacy engine keeps it as an image: Image.fromarray gives iris.colour_qa its input)
     design, fmt, size, seed, cls    what was drawn: the design id of its family, the canvas, the long side, the seed, the eye colour class
     log        the engine's own facts (the plates it picked, the wind, the palette mode): small JSON-safe numbers and words
     times      seconds per stage (grade, place, effect, finish, text, total)

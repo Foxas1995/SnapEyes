@@ -115,8 +115,10 @@ def master_compose(body):
     keys = _keys(body.get("keys"), order)
     n = len(keys)
     style = body.get("style")
-    # the render path ignores stages (an order already paid for a style rolled back still renders); it needs a built engine
-    renderable = catalogue.renderable_ids(n)
+    # the render path ignores stages (an order already paid for a style rolled back still renders); it needs a built engine. This function draws
+    # with the legacy engine only: a style of the v3 engine is made by the master plan (the step runner of its own work package), and until that
+    # lands it is refused here, never drawn by the legacy engine in its place (L.compose_multi reads an id it does not know as the default style)
+    renderable = tuple(i for i in catalogue.renderable_ids(n) if catalogue.is_legacy(i))
     if not isinstance(style, str) or style not in renderable:
         raise L.ClientError("Choose one of the styles: " + ", ".join(renderable) + ".")
     layout = body.get("layout")

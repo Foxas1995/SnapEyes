@@ -154,7 +154,8 @@ def _built(style_id):
 
 def renderable(style_id, n=None):
     """Can the render path draw it? Known, its engine built, the eye count inside its range. The render path ignores stages
-    (an order already paid for a style that was rolled back still renders); only checkout reads them."""
+    (an order already paid for a style that was rolled back still renders); only checkout reads them. Which function draws it is
+    not decided here: master_compose draws the legacy engine's styles only until the master plan lands, and refuses the rest."""
     return known(style_id) and _built(style_id) and (n is None or in_range(style_id, n))
 
 

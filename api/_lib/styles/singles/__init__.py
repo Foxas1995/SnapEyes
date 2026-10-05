@@ -112,9 +112,7 @@ def preview(eyes, spec, size=1024, check=False):
     names, date = TX.lockup(spec.get("names")), TX.clean(spec.get("date"))
     r = render(design, eyes[0], fmt, size, names, date, opts=spec.get("engine_opts"))
     d = r.d
-    from PIL import Image
-    graded = Image.fromarray(d.iris.graded(d.Sd))          # the studio-graded frame, as the legacy engine keeps it for the colour check
-    pv = Preview(img=r.img, discs=[(d.cx, d.cy, d.R)], graded=[graded], design=design, fmt=fmt, size=int(size), seed=r.info["seed"], cls=r.info["class"],
+    pv = Preview(img=r.img, discs=[(d.cx, d.cy, d.R)], graded=[d.iris.graded(d.Sd)], design=design, fmt=fmt, size=int(size), seed=r.info["seed"], cls=r.info["class"],
                  log=r.ctx.log, times=r.times, text_log=r.log, ctx=r.ctx, frame=r.frame)
     if check:
         import numpy as np
