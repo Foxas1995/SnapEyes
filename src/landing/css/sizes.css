@@ -12,20 +12,20 @@
   }
   .lp-ruler { position: relative; border-radius: 18px; background: var(--bg-2); box-shadow: 0 0 0 1px var(--line); overflow: hidden; }
   .lp-ruler svg { width: 100%; height: auto; }
-  .lp-ruler .lp-lbl { position: absolute; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; pointer-events: none; transition: color .2s; text-shadow: 0 0 4px var(--bg-2), 0 0 4px var(--bg-2), 0 0 8px var(--bg-2); }
-  .lp-ruler .lp-lbl.lp-on { color: var(--gold); }
+  .lp-ruler .lp-lbl { position: absolute; transform: translateX(-50%); font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; pointer-events: none; padding: 1px 6px; border-radius: 6px; background: rgb(11 14 22 / .82); transition: color var(--d-tap) var(--ease-out); }
+  .lp-ruler .lp-lbl.lp-on { color: var(--t-1); }
   .lp-ruler .lp-lbl.lp-note { font-weight: 500; letter-spacing: .02em; }
   @media (max-width: 639px) {
     .lp-ruler .lp-lbl:not(.lp-on):not(.lp-note) { display: none; }
     .lp-ruler .lp-lbl.lp-note { font-size: 12px; }
   }
-  .lp-ruler rect.lp-sq { cursor: pointer; transition: fill .25s, stroke .25s; }
+  .lp-ruler rect.lp-sq { cursor: pointer; transition: fill var(--d-tap) var(--ease-out); }
   .lp-ruler .lp-sqg { cursor: pointer; }
   .lp-ruler .lp-hit { fill: transparent; }
   .lp-size-side .lp-pills { margin-top: 0; }
   .lp-size-card { margin-top: 26px; }
   .lp-size-card .lp-big { display: flex; align-items: baseline; gap: 12px; }
-  .lp-size-card .lp-big b { font-family: var(--display); font-size: clamp(54px, 10vw, 76px); font-weight: 600; line-height: 1; color: var(--gold); letter-spacing: .01em; }
+  .lp-size-card .lp-big b { display: block; min-inline-size: 3.2ch; font-family: var(--display); font-size: clamp(54px, 10vw, 76px); font-weight: 600; line-height: 1; color: var(--gold); letter-spacing: .01em; }
   .lp-size-card .lp-big span { font-size: 13px; line-height: 1.35; color: var(--ink-2); max-width: 9em; }
   .lp-size-card h3 { margin-top: 16px; font-size: 19px; }
   .lp-size-card p { margin-top: 8px; font-size: 15px; color: var(--ink-2); }
@@ -33,4 +33,39 @@
   .lp-size-notes p { font-size: 13.5px; line-height: 1.6; color: var(--ink-3); padding-left: 16px; position: relative; }
   .lp-size-notes p::before { content: ""; position: absolute; left: 0; top: 11px; width: 8px; height: 1px; background: var(--gold); }
   .lp-size-grid > * { min-width: 0; }
+  /* ------------------------------------------------------------------------------------------------ motion (spec 6.8)
+     Hidden states only under html.mo:not(.mo-fail) and prefers-reduced-motion: no-preference (src/motion/motion.css): without the engine, under
+     reduced motion and after the failsafe the drawing is whole and every label is there. src/landing/useInView.ts sets data-in on the figure
+     when most of it is on screen. The shapes carry pathLength 1, so a dash of 1 is the whole outline. */
+  @keyframes lp-draw { from { stroke-dashoffset: 1; } }
+  @keyframes lp-sq-in { from { opacity: 0; } }
+  .lp-ruler .lp-dr { stroke-dasharray: 1; stroke-dashoffset: 0; }
+  /* the chosen size: a gold outline that draws itself in .6 s and undraws in .3 s when another is picked (the stroke under it is the dim one every square has) */
+  .lp-ruler .lp-sq-on { fill: none; stroke: var(--gold); stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; pointer-events: none; transition: stroke-dashoffset .3s var(--ease-out); }
+  .lp-ruler .lp-sq-on[data-on] { stroke-dashoffset: 0; transition-duration: .6s; }
+  @media (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) .lp-ruler[data-draw]:not([data-in]) .lp-dr { stroke-dashoffset: 1; }
+    html.mo:not(.mo-fail) .lp-ruler[data-draw]:not([data-in]) :is(.lp-sqg, .lp-lbl) { opacity: 0; }
+    /* the sofa and the person draw (1.5 s, 100 ms apart), then the four squares and their labels fade in */
+    html.mo:not(.mo-fail) .lp-ruler[data-draw][data-in] .lp-dr { animation: lp-draw 1.5s var(--ease-out) calc(var(--k, 0) * 100ms) backwards; }
+    html.mo:not(.mo-fail) .lp-ruler[data-draw][data-in] .lp-sqg { animation: lp-sq-in .9s var(--ease-out) calc(.9s + var(--k, 0) * 100ms) backwards; }
+    html.mo:not(.mo-fail) .lp-ruler[data-draw][data-in] .lp-lbl { animation: lp-sq-in .9s var(--ease-out) calc(1s + var(--k, 0) * 100ms) backwards; }
+  }
+  /* the chips: the ring changes colour in .3 s */
+  .lp-size-side .lp-pill { transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); }
+  /* versions of one thing in one grid cell (src/landing/Stack.tsx): the one that shows is opaque, the others are clear and out of the way; the cell is
+     as large as the largest, so a change moves nothing. The figure cross-fades in .3 s, the two lines under it in .42 s. */
+  .lp-stack { display: grid; }
+  .lp-stack-i { grid-area: 1 / 1; min-width: 0; opacity: 0; visibility: hidden; transition: opacity var(--d-swap) var(--ease-out), visibility 0s var(--d-swap); }
+  .lp-stack-i[data-on] { opacity: 1; visibility: visible; transition-delay: 0s; }
+  .lp-stack-fig > .lp-stack-i { transition: opacity .3s var(--ease-out), visibility 0s .3s; }
+  .lp-stack-fig > .lp-stack-i[data-on] { transition-delay: 0s; }
+  @media (prefers-reduced-motion: reduce) {
+    .lp-stack-i, .lp-stack-fig > .lp-stack-i, .lp-ruler .lp-sq-on { transition: none; }
+  }  /* quiet details (spec 5.6): a chip is pressed to .985 and released in .3 s, its hover ring is the gold ring */
+  .lp-size-side .lp-pill { transition-property: border-color, color, background-color, scale; }
+  .lp-size-side .lp-pill:active { scale: .985; }
+  @media (hover: hover) {
+    .lp-size-side .lp-pill[aria-checked="false"]:hover { border-color: var(--ring-gold); }
+  }
 }
