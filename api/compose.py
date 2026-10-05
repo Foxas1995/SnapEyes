@@ -30,7 +30,8 @@ design_used, fallback, plan8, engine {v, reg, pv}, selfcheck, timing}. A batch: 
            /api/enhance; true, false, or null = unknown: a version 1 seal, or a profile that was not measured; null for an old page's plain irises);
            why (only for an eye that fails a rule): the reason codes of the failing rules, which the retake state turns into its two sentences and its tip
   tiles    the tiles of these eyes in the server's order, the recommended one first: {id, name, slug, group, legacy, stage (live, preview or lab),
-           available, why (gate, reseal or bar_pupil: the eyes cannot take it), layouts, eyes, price_class, looks, pick}; the tiles a batch made also
+           available, why (gate, reseal or bar_pupil: the eyes cannot take it), layouts, eyes, price_class, looks, gate (the style's policy: none,
+           advisory, hard), rule (the gate rule set it reads: lid or fill; WP11's retake state names the eye by it), pick}; the tiles a batch made also
            carry image, width, height, layout, canvas, design_used, fallback and plan8. A tile that is not available is not drawn.
   pick     {id, reason}: the recommended tile (always one the customer can buy now: live and available; null when nothing can be bought) and the key of
            its reason line (null unless the pick was made for the eyes' colour class)

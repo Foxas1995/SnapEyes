@@ -366,13 +366,17 @@ def looks_for(style_id, n, admin=False):
 
 
 def tile_row(style_id, n, profiles=None, admin=False):
-    """The tile of one style for n eyes: {id, name, slug, group, legacy, stage, available, why, layouts, eyes, price_class, looks}. available is False
-    with a why when the eyes cannot take the style (_problem); looks is {look: stage} (looks_for); eyes is n, the count the tile is for."""
+    """The tile of one style for n eyes: {id, name, slug, group, legacy, stage, available, why, layouts, eyes, price_class, looks, gate, rule}. available
+    is False with a why when the eyes cannot take the style (_problem); looks is {look: stage} (looks_for); eyes is n, the count the tile is for; gate is
+    the style's gate policy (none, advisory or hard) and rule the rule set it reads (lid or fill): the picker (src/try/picker.ts, WP11) needs them to say
+    WHICH eye to retake for a tile that is held back, and whether a failing eye only warns (advisory) or blocks (hard); the engine's own entry is Python
+    only, so the page cannot read the rule anywhere else."""
     d = STYLES[style_id]
     why = _problem(style_id, profiles)
     return {"id": style_id, "name": d["name"], "slug": d["slug"], "group": d["group"], "legacy": d["legacy"],
             "stage": stage_of(style_id, n), "available": why is None, "why": why, "layouts": list(layouts_for(style_id, n)),
-            "eyes": n, "price_class": d["price_class"], "looks": looks_for(style_id, n, admin)}
+            "eyes": n, "price_class": d["price_class"], "looks": looks_for(style_id, n, admin),
+            "gate": d["gate"], "rule": ENGINE[style_id]["gate_rules"]}
 
 
 def tiles_for(n, profiles=None, admin=False):
