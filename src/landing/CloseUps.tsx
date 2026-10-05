@@ -5,6 +5,16 @@
 //
 // On a phone the two cards sit side by side in a sideways scroller (the stylesheet); a scroller that really scrolls gets a tab
 // stop and a name (useScrollableRegion), so a keyboard user can reach it too. Importing this file brings its own stylesheet.
+//
+// Motion (motion spec 6.10, the fourth of the page's signature moments): when most of the crop is on screen the small gold square on the
+// map of the iris draws its outline (a plain closed square, 1.2 s: no corner brackets, no crosshair, no pulse), and the crop itself opens
+// from the square's own place: its clip-path grows from the square's rectangle (measured in the crop's own box, so it is right at every width)
+// to the whole panel in 1.4 s, starting .6 s after the square. The crop's pixels never scale: only the clip moves, so what opens is the
+// very square that was cut. The badge and the map are static. The polished edge below opens the way a scene plate does (a mat opening
+// from the middle, the settle 1.03 to 1) and its label, set inside the frame, is never touched.
+import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
+import { Title } from '../motion/Title';
+import { useInViewOnce } from './useInView';
 import { useCopy } from './copy/useCopy';
 import { Picture } from './ui';
 import { asset } from './assets';
@@ -34,29 +44,66 @@ export function CloseUps() {
   const cu = c.closeups;
   const { ref: railRef, props: railProps } = useScrollableRegion<HTMLDivElement>();
   const figures = { n: extent(X0, X1), src: SOURCE_PHOTO.w };
+
+  // the crop opens from the little square on the map: its rectangle in the crop's own box becomes the starting clip (--crop-from)
+  const cropBox = useRef<HTMLDivElement | null>(null);
+  const cropSeen = useInViewOnce<HTMLDivElement>(0.45);
+  const cropRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      cropBox.current = el;
+      return cropSeen(el);
+    },
+    [cropSeen],
+  );
+  const edgeRef = useInViewOnce<HTMLDivElement>(0.3);
+  // measured when the browser has laid the crop out (a ResizeObserver reports once as soon as it starts observing, and again when the crop's box
+  // changes): no read of a rectangle during the commit, which would force the layout of the whole page inside React's own task
+  useEffect(() => {
+    const box = cropBox.current;
+    const frame = box?.querySelector<HTMLElement>('.lp-cu-img');
+    const mark = box?.querySelector<SVGElement>('.lp-loc-sq');
+    if (!box || !frame || !mark) return;
+    const measure = () => {
+      const f = frame.getBoundingClientRect();
+      const m = mark.getBoundingClientRect();
+      if (!f.width) return;
+      box.style.setProperty('--crop-from', `inset(${m.top - f.top}px ${f.right - m.right}px ${f.bottom - m.bottom}px ${m.left - f.left}px)`);
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(frame);
+    return () => ro.disconnect();
+  }, []);
   return (
     <section className="lp-sec" id="closeups" aria-labelledby="cuH">
       <div className="lp-wrap">
         <div className="lp-sec-head">
-          <p className="lp-eyebrow">{cu.eyebrow}</p>
-          <h2 id="cuH">{cu.title}</h2>
+          <p className="lp-eyebrow" data-reveal="fade-s">{cu.eyebrow}</p>
+          <Title id="cuH" text={cu.title} />
           <p className="lp-intro">{t('closeups.intro', figures)}</p>
         </div>
         <div ref={railRef} className="lp-cu-grid" {...railProps(cu.title, 'group')}>
           <figure className="lp-cu-fibre">
-            <Picture asset={CROP} alt={cu.fibreAlt} chip="none" className="lp-cu-img">
-              <span className="lp-cu-badge">{t('closeups.badge', figures)}</span>
-              <div className="lp-locator" title={cu.locatorLabel}>
-                <img src={FULL.src} width={FULL.w} height={FULL.h} loading="lazy" decoding="async" alt={cu.locatorAlt} />
-                <i style={locatorBox()} />
-              </div>
-            </Picture>
+            <div className="lp-cu-open" data-open ref={cropRef}>
+              <Picture asset={CROP} alt={cu.fibreAlt} chip="none" className="lp-cu-img">
+                <span className="lp-cu-badge">{t('closeups.badge', figures)}</span>
+                <div className="lp-locator" title={cu.locatorLabel}>
+                  <img src={FULL.src} width={FULL.w} height={FULL.h} loading="lazy" decoding="async" alt={cu.locatorAlt} />
+                  {/* the square that marks the cut: a plain closed outline (pathLength 1, so one dash is the whole outline), drawn by css/closeups.css */}
+                  <svg className="lp-loc-sq" viewBox="0 0 100 100" style={locatorBox() as CSSProperties} aria-hidden="true" focusable="false">
+                    <rect className="lp-loc-back" x="2.25" y="2.25" width="95.5" height="95.5" />
+                    <rect className="lp-loc-draw" x="2.25" y="2.25" width="95.5" height="95.5" pathLength={1} />
+                  </svg>
+                </div>
+              </Picture>
+            </div>
             <figcaption className="lp-cu-cap">
               <h3>{t('closeups.fibreTitle', figures)}</h3>
             </figcaption>
           </figure>
           <figure className="lp-cu-edge">
-            <Picture asset={EDGE} alt={cu.edgeAlt} chip="vis" sizes="(min-width: 960px) 520px, calc(100vw + -32px)" className="lp-edge-img" />
+            <div className="lp-edge-open" data-open ref={edgeRef}>
+              <Picture asset={EDGE} alt={cu.edgeAlt} chip="vis" sizes="(min-width: 960px) 520px, calc(100vw + -32px)" className="lp-edge-img" />
+            </div>
             <figcaption>
               <div className="lp-edge-cap">
                 <span>{cu.edgeCaption}</span>
