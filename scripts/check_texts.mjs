@@ -24,7 +24,8 @@
 //      api/_lib/pay.py CONSENT_VERSION and src/shared/legal.ts WITHDRAWAL_CONSENT_VERSION together;
 //   9. a Lithuanian or Hungarian string is the very same words as the English or German one (untranslated), or one of
 //      the customer sentences in the Python files of those languages (api/_lib/*_lt.py, *_hu.py: the emails, the
-//      receipts, the Stripe notes, the analyze tips) holds English or German words or a dash.
+//      receipts, the Stripe notes, the analyze tips) holds English or German words or a dash; the refusals of the compose
+//      API (api/compose.py WORDS, four languages per key) go through the checks of 2 and 9 like any dictionary string.
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as the legal pack is);
 // `npm run check:texts` runs it alone. The legal pack the confirmation email carries is checked by checkPack, which the
 // build also runs on the very JSON it writes to /legal/order-mail.json (vite.config.ts legalMail), so no untranslated
@@ -216,6 +217,32 @@ function checkPyTexts(root, out) {
       for (const [line, s] of pyStrings(text)) if (s.length > 2) lint(`${rel}:${line}`, s, l, out, false);
     }
   }
+}
+
+/** The customer sentences of the compose API (api/compose.py WORDS: one sentence per refusal key in each of en, de, lt and hu), as
+ *  [lang, path, text] triples, so that they go through the checks of a dictionary string (an en or em dash, untranslated English or
+ *  German in Lithuanian or Hungarian, the typography lint, a sentence word for word the English one). Every key must have all four
+ *  languages. The rest of the file is code and error text the page never shows, and is not read as prose. */
+function composeWords(root, out) {
+  const rel = 'api/compose.py';
+  let text;
+  try { text = readFileSync(join(root, rel), 'utf8').replace(/\r\n/g, '\n'); } catch { out.push(`${rel}: not found (the text check reads it)`); return []; }
+  const from = text.indexOf('\nWORDS = {');
+  const to = from < 0 ? -1 : text.indexOf('\n}\n', from);
+  if (from < 0 || to < 0) { out.push(`${rel}: WORDS not found (the text check reads it)`); return []; }
+  const triples = [];
+  for (const row of text.slice(from, to + 2).matchAll(/^ {4}"([a-z_]+)": \{([^}]*)\}/gm)) {
+    const seen = new Set();
+    for (const m of row[2].matchAll(/"(en|de|lt|hu)":\s*"((?:[^"\\]|\\.)*)"/g)) {
+      let s;
+      try { s = JSON.parse(`"${m[2]}"`); } catch { out.push(`${rel}: WORDS.${row[1]}.${m[1]} is not a plain string`); continue; }
+      seen.add(m[1]);
+      triples.push([m[1], `${rel} WORDS.${row[1]}`, s]);
+    }
+    for (const l of LANGS) if (!seen.has(l)) out.push(`${rel}: WORDS.${row[1]} has no ${l} sentence`);
+  }
+  if (!triples.length) out.push(`${rel}: WORDS has no sentence (the text check reads it)`);
+  return triples;
 }
 
 // ------------------------------------------------------------------------------------------ walking two dictionaries
@@ -526,6 +553,8 @@ export async function checkTexts(load, root) {
       else strings[l].push([`layout words.${id}`, row[l]]);
     }
   }
+  // the refusals of the compose API (api/compose.py WORDS): the same checks as any dictionary string
+  for (const [l, p, s] of composeWords(root, out)) strings[l].push([p, s]);
   for (const l of LANGS) {
     const shared = {
       LEGAL_LABELS: legal.LEGAL_LABELS[l], WITHDRAWAL_ONLINE: legal.WITHDRAWAL_ONLINE[l], CHECKOUT_LEGAL: legal.CHECKOUT_LEGAL[l],

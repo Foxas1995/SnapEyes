@@ -231,8 +231,11 @@ with patched(public=scenario, built=("singles", "universe", "collision")):
           C.pick_for(1, bad_fill) == "solo.powder" and C.pick_for(1, [{"cls": "own"}]) == "solo.powder")
     pairs = [{"cls": "own", "gate": GATE_OK, "pupil": {"cls": "bar"}}, {"cls": "own", "gate": GATE_OK, "pupil": {"cls": "round"}}]
     d2 = {x["id"]: x for x in C.tiles_for(2, pairs, admin=True)}
-    check("the infinity designs refuse a bar pupil (bar_pupil), Kiss does not; the pair tiles carry their layouts",
-          not d2["duo.collision_infinity"]["available"] and d2["duo.collision_infinity"]["why"] == "bar_pupil" and d2["duo.kiss_collision"]["available"]
+    # WP10 review fix: the collision engine raises NotOffered for a bar pupil in EVERY design (Kiss too), so every pair tile of it says bar_pupil; this check used to
+    # say "Kiss does not" and so showed a Kiss tile that could not be drawn (the three tiles of the pair are the engine's, so the answer is the engine's)
+    check("a bar pupil refuses every pair design of the collision family (bar_pupil: Infinity, Clean Infinity, Kiss); the pair tiles carry their layouts",
+          not d2["duo.collision_infinity"]["available"] and d2["duo.collision_infinity"]["why"] == "bar_pupil"
+          and not d2["duo.kiss_collision"]["available"] and d2["duo.kiss_collision"]["why"] == "bar_pupil"
           and d2["duo.kiss_collision"]["layouts"] == ["pair"] and C.pick_for(2, [{"cls": "own", "gate": GATE_OK}] * 2) == "duo.kiss_collision",
           {k: (v["available"], v["why"]) for k, v in d2.items()})
     check("public_catalogue lists only ids at preview or live (a laboratory or planned id never reaches a customer's page)",

@@ -286,11 +286,9 @@ def anchored_alpha(text, cx, cy, r, box, rot=0.0):
     return np.asarray(src.resize((x1 - x0, y1 - y0), Image.LANCZOS, box=sbox), np.float32) / np.float32(255.0)
 
 
-def _anchored(W, H, discs, text, mask="disc"):
-    """(A, M, box) or None: the white alpha of the iris overlay (the tile's words WATERMARK_IRIS times as opaque, as iris._iris_mark) and the weight
-    of the overlay against the canvas tile, as float32 (h, w) over box = (x0, y0, x1, y1), the union of the discs' windows inside the canvas. mask
-    "disc": the weight is 1 inside the disc and fades to 0 over ANCHOR_RIM pixels at its rim (outside it the canvas tile is untouched); "window": 1
-    over the whole window (the display copy, which is nothing but the iris). Where discs overlap the disc with the larger weight wins, the first on a tie."""
+def _windows(W, H, discs):
+    """[(cx, cy, r, rot, x0, y0, x1, y1)] of the discs the overlay can mark on a W x H canvas: finite numbers, a radius of at least ANCHOR_RMIN pixels and a
+    window that reaches the canvas (a disc given as (cx, cy, r) or (cx, cy, r, rot) in canvas pixels). A disc that is not in this list is not marked."""
     wins = []
     for d in discs or ():
         try:
@@ -305,6 +303,25 @@ def _anchored(W, H, discs, text, mask="disc"):
         x1, y1 = min(int(W), int(math.ceil(cx + half))), min(int(H), int(math.ceil(cy + half)))
         if x1 > x0 and y1 > y0:
             wins.append((cx, cy, r, rot, x0, y0, x1, y1))
+    return wins
+
+
+def _cover(W, H):
+    """Discs that tile a whole W x H canvas (their windows touch), for a picture whose engine reported fewer discs than it has eyes: drawn with the
+    "window" weight they put the overlay on every pixel, at the iris strength. A fallback that fails strong: the picture is never left with the faint
+    canvas tile alone (the legacy engine's mark), which is not enough protection for an iris."""
+    u = float(min(W, H))
+    r = 0.22 * u
+    step = 2.0 * ANCHOR_WINDOW * r
+    return [((i + 0.5) * step, (j + 0.5) * step, r) for j in range(int(math.ceil(H / step))) for i in range(int(math.ceil(W / step)))]
+
+
+def _anchored(W, H, discs, text, mask="disc"):
+    """(A, M, box) or None: the white alpha of the iris overlay (the tile's words WATERMARK_IRIS times as opaque, as iris._iris_mark) and the weight
+    of the overlay against the canvas tile, as float32 (h, w) over box = (x0, y0, x1, y1), the union of the discs' windows inside the canvas. mask
+    "disc": the weight is 1 inside the disc and fades to 0 over ANCHOR_RIM pixels at its rim (outside it the canvas tile is untouched); "window": 1
+    over the whole window (the display copy, which is nothing but the iris). Where discs overlap the disc with the larger weight wins, the first on a tie."""
+    wins = _windows(W, H, discs)
     if not wins:
         return None
     X0, Y0 = min(w[4] for w in wins), min(w[5] for w in wins)
@@ -354,20 +371,28 @@ def _badge(out, accent, u, lang=None, note=None):
     return out
 
 
-def watermark(img, accent, discs, lang=None, note=None):
+def watermark(img, accent, discs, lang=None, note=None, n_eyes=None):
     """The free preview of a picture of the v3 engine: img (PIL RGB, the clean render) with the preview watermark, as a new image. Everything
     outside the discs is exactly iris._watermark's (the faint tile of words over the whole canvas, anchored to the canvas, and the badge); on each
     disc (cx, cy, r[, rot]: the visible iris disc in canvas pixels, pixel centres at +0.5) the canvas tile is replaced by the iris-anchored
-    overlay at the strength of the display copy (see the module text). An engine never draws any of it: the paid file has none."""
+    overlay at the strength of the display copy (see the module text). An engine never draws any of it: the paid file has none.
+    n_eyes: how many irises the picture holds. When fewer discs than that can be marked (an engine that reported none, or one too few: a bug of
+    that engine, never a customer's doing), the whole canvas gets the overlay at the iris strength instead of the faint canvas tile alone: a
+    picture of an iris is never left with the legacy mark. None: no check (the legacy callers and the tests of the tile itself)."""
     W, H = img.size
     u = min(W, H)
     live = [d for d in (discs or ()) if len(d) >= 3]
-    dia = max((2.0 * float(d[2]) for d in live), default=float(u))
+    wins = _windows(W, H, live)                     # the discs the overlay can mark (a disc of a few pixels or one that is not a number is not one)
+    dia = max((2.0 * w[2] for w in wins), default=float(u))
     base = L._watermark(img, accent, u, tile_u=min(float(u), L.WM_DISC * dia), note=note, lang=lang)
+    mask = "disc"
+    if n_eyes is not None and len(wins) < int(n_eyes):
+        print(f"snapeyes watermark: {len(wins)} markable discs for {int(n_eyes)} eyes, the whole canvas is marked", flush=True)
+        live, mask = _cover(W, H), "window"
     if not live:
         return base
     words = L.WATERMARK_TEXT.get(lang or L.page_lang(), L.WATERMARK_TEXT["en"])[0]
-    got = _anchored(W, H, live, words)
+    got = _anchored(W, H, live, words, mask)
     if got is None:
         return base
     A, M, box = got

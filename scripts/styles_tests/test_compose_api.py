@@ -329,13 +329,35 @@ r_lidreply = comp({"sealed": [S1_560, sealed("blue_lid", 560)], "styles": []})
 check("an eye that fails a gate rule carries the reason codes of the failing rules in the reply's eyes (why), for the retake state; an eye that passes carries no why",
       "why" not in r_lidreply["eyes"][0] and r_lidreply["eyes"][1]["gate"]["lid"] is False and r_lidreply["eyes"][1]["why"]
       and all(c in GATE.WHY["lid"] + GATE.WHY["fill"] for c in r_lidreply["eyes"][1]["why"]), r_lidreply["eyes"])
-check("pair tiles: both eyes clean: every pair style available and Soon (stage preview); an eye that fails the lid rule greys them all (why gate); a bar pupil refuses the infinity designs only (why bar_pupil, Kiss stays)",
+check("pair tiles: both eyes clean: every pair style available and Soon (stage preview); an eye that fails the lid rule greys them all (why gate); a bar pupil refuses every pair design (why bar_pupil: the engine refuses Kiss too)",
       all(t_ok[i]["available"] and t_ok[i]["stage"] == "preview" for i in PAIR) and all(t_lid[i]["available"] is False and t_lid[i]["why"] == "gate" for i in PAIR)
-      and t_bar["duo.collision_infinity"]["why"] == "bar_pupil" and t_bar["duo.clean"]["why"] == "bar_pupil" and t_bar["duo.kiss_collision"]["available"],
-      {k: (v["available"], v["why"]) for k, v in t_bar.items()})
+      and all(t_bar[i]["available"] is False and t_bar[i]["why"] == "bar_pupil" for i in PAIR), {k: (v["available"], v["why"]) for k, v in t_bar.items()})
 check("a version 1 seal (no sealed gate value) holds the hard styles back with why reseal, never a guess", all(t_v1[i]["available"] is False and t_v1[i]["why"] == "reseal" for i in PAIR))
 check("one style asked for eyes that cannot take it is 422 style_unavailable with the tile's own why (gate, reseal): the state a batch reports as a tile",
       getattr(e_gate, "status", None) == 422 and e_gate.body["why"] == "gate" and e_reseal.body["why"] == "reseal" and e_gate.body["style"] == "duo.kiss_collision", (e_gate, e_reseal))
+# WP10 review: the collision engine refuses a bar pupil in EVERY design (it raises NotOffered), but the tile list named the infinity designs only: Kiss, the Trio, the
+# Family and the Chain showed a tile that could not be drawn. Every style of the family, at every eye count it takes, says bar_pupil for a set with a bar on any eye.
+RND_P, BAR_P = dict(GOOD, pupil={"cls": "round"}), dict(GOOD, pupil={"cls": "bar"})
+bar_rows = {}
+for style_b, counts_b in (("duo.collision_infinity", (2,)), ("duo.clean", (2,)), ("duo.kiss_collision", (2,)), ("grp.collision", (3, 4, 5, 6, 7, 8)), ("grp.chain", (3, 4, 5, 6))):
+    for n_b in counts_b:
+        bar_rows[(style_b, n_b)] = tuple(CT.why_unavailable(style_b, n_b, recs_b, admin=True)
+                                         for recs_b in ([RND_P] * (n_b - 1) + [BAR_P], [BAR_P] + [RND_P] * (n_b - 1), [RND_P] * n_b))
+check("a bar pupil on any eye of the set refuses every design of the collision family at every eye count it takes (Infinity, Clean Infinity, Kiss, the Trio, the Family of four to eight, the Chain): why bar_pupil, "
+      "on the first eye or the last; round pupils leave them available",
+      all(v == ("bar_pupil", "bar_pupil", None) for v in bar_rows.values()) and len(bar_rows) == 13, {k: v for k, v in bar_rows.items() if v != ("bar_pupil", "bar_pupil", None)})
+A_B3 = sealed("blue_round", 560)
+with Show("grp.collision"):
+    t_bar3 = {t["id"]: t for t in comp({"sealed": [A_B3, sealed("green_round", 560), sealed("dark_brown_bar", 560)], "styles": []})["tiles"]}
+    t_bar4 = {t["id"]: t for t in comp({"sealed": [sealed("dark_brown_bar", 560), A_B3, sealed("green_round", 560), A_B3], "styles": []})["tiles"]}
+    t_rnd3 = {t["id"]: t for t in comp({"sealed": [A_B3, sealed("green_round", 560), A_B3], "styles": []})["tiles"]}
+check("through the endpoint: the Family Colours tile of three eyes (the Trio) and of four (the Family) with a bar pupil among the eyes says why bar_pupil, and is available for round ones",
+      t_bar3["grp.collision"]["available"] is False and t_bar3["grp.collision"]["why"] == "bar_pupil" and t_bar4["grp.collision"]["available"] is False
+      and t_bar4["grp.collision"]["why"] == "bar_pupil" and t_rnd3["grp.collision"]["available"] is True, (t_bar3["grp.collision"], t_bar4["grp.collision"]))
+with Show("duo.kiss_collision"):
+    e_bar_one = raised(lambda: comp({"sealed": [S1_560, sealed("dark_brown_bar", 560)], "style": "duo.kiss_collision"}))
+check("Kiss asked alone for a pair with a bar pupil is 422 style_unavailable with why bar_pupil and the sentence of the pupil, as a tile of a batch would say it",
+      getattr(e_bar_one, "status", None) == 422 and e_bar_one.body["why"] == "bar_pupil" and e_bar_one.body["error"] == CMP.WORDS["bar_pupil"]["en"], getattr(e_bar_one, "body", e_bar_one))
 
 
 # ============================================================================================ 4. a batch
@@ -576,6 +598,86 @@ check("the events of a batch: one per tile, each flagged tile with its style, st
 sys.modules.pop("_lib.styles.collision", None)
 CT.ENGINES_BUILT_EXTRA.discard("collision")
 
+# ============================================================================================ 6b. what the engine refuses, a render's own bug, what the ceiling counts
+section("6b. the engine's own refusal of a bar pupil the profile did not show (the real collision family), a TypeError inside a render, a daily ceiling that counts pictures")
+real_recs = CMP._recs
+
+
+def lying_recs(metas):
+    """The sealed profiles as they would be if the page's measurement had called a bar pupil round (the engine measures the pixels again)."""
+    return [dict(r, pupil={"cls": "round"}) if r else r for r in real_recs(metas)]
+
+
+BAR_PAIR = [S1_560, sealed("dark_brown_bar", 560)]
+KISS_PICK = {"stage": "live", "pick": ["own", "dark_brown", "grey"]}            # Kiss as the recommended tile of a pair, to see the pick follow a refusal
+EVENTS.clear()
+CMP._DAY.update(day=CMP._utc_day(), tiles=0)
+with mock.patch.dict(CT.STYLES["duo.kiss_collision"], KISS_PICK), mock.patch.object(CMP, "_recs", lying_recs):
+    cat_before = CT.tile_list(2, lying_recs([P.unseal_full(s)[1] for s in BAR_PAIR]))
+    e_eng1 = raised(lambda: comp({"sealed": BAR_PAIR, "style": "duo.kiss_collision"}))
+    day_after_one = CMP._DAY["tiles"]
+    r_eng = comp({"sealed": BAR_PAIR, "styles": ["duo.kiss_collision", "supernova"]})
+    ev_eng = [e[1] for e in EVENTS if e[0] == "compose"]
+rows_eng = {t["id"]: t for t in r_eng["tiles"]}
+info(f"Kiss was the pick before the engine looked: {cat_before['pick']}; after: {r_eng['pick']}; the day's count {CMP._DAY['tiles']} (one legacy tile made, the refused Kiss tile charged back)")
+check("one style whose engine refuses a bar pupil that the sealed profile did not show is 422 style_unavailable (why bar_pupil, the style, the pupil sentence), not a 400 'unreadable image'; one preview is not a tile",
+      getattr(e_eng1, "status", None) == 422 and e_eng1.body["why"] == "bar_pupil" and e_eng1.body["style"] == "duo.kiss_collision" and e_eng1.body["error"] == CMP.WORDS["bar_pupil"]["en"]
+      and day_after_one == 0, getattr(e_eng1, "body", e_eng1))
+check("in a batch the refused style is a tile that says so (available false, why bar_pupil, no image, not the pick) and the other tile of the batch is still made",
+      r_eng["batch"] is True and rows_eng["duo.kiss_collision"]["available"] is False and rows_eng["duo.kiss_collision"]["why"] == "bar_pupil" and "image" not in rows_eng["duo.kiss_collision"]
+      and rows_eng["duo.kiss_collision"]["pick"] is False and "image" in rows_eng["supernova"] and rows_eng["supernova"]["width"] == 480, rows_eng["duo.kiss_collision"])
+pick_after = r_eng["pick"]
+flags_after = [t["id"] for t in r_eng["tiles"] if t["pick"]]
+check("the recommended tile follows the refusal: Kiss was the pick of the profile's tile list; after the engine refused it the pick is another tile the customer can buy, or none, and the refused tile is never it; "
+      "at most one tile is flagged, it is the pick and it is the first",
+      cat_before["pick"] == "duo.kiss_collision" and "duo.kiss_collision" not in flags_after and (flags_after == [] if pick_after is None else
+                                                                                                     (flags_after == [pick_after["id"]] and r_eng["tiles"][0]["id"] == pick_after["id"] and rows_eng[pick_after["id"]]["available"])),
+      (cat_before["pick"], pick_after, flags_after))
+check("the ceiling keeps what was drawn: the batch asked for two tiles, one was refused by the engine and one made, the day's count is 1; the events are one tile (the made one)",
+      CMP._DAY["tiles"] == 1 and len(ev_eng) == 1 and ev_eng[0]["style"] == "supernova" and ev_eng[0]["tiles"] == 1, (CMP._DAY, ev_eng))
+# a TypeError inside a render is the render's bug: seen as such, and the picture is not drawn a second time
+with Show("solo.gold"), mock.patch.object(ST, "preview", side_effect=TypeError("a bug inside a render")) as m_te:
+    e_te = raised(lambda: comp({"sealed": S1, "style": "solo.gold"}))
+
+
+class FamCheck:
+    preview = staticmethod(lambda eyes, spec, size=1024, check=False: None)
+
+
+class FamPlain:
+    preview = staticmethod(lambda eyes, spec, size=1024: None)
+
+
+class FamKw:
+    preview = staticmethod(lambda eyes, spec, size=1024, **kw: None)
+
+
+def takes(fam):
+    with mock.patch.object(ST, "family", lambda name: fam):
+        return CMP._takes_check("solo.gold", 1)
+
+
+check("a TypeError raised inside a family's render is not swallowed and is not answered by drawing the picture again: it is the render's own error and preview() was called once",
+      isinstance(e_te, TypeError) and m_te.call_count == 1, (e_te, m_te.call_count))
+check("whether a family takes the check keyword is read from its signature: a check parameter or any keywords yes, a preview with neither no; the three real families all take it",
+      takes(FamCheck) is True and takes(FamKw) is True and takes(FamPlain) is False
+      and all(CMP._takes_check(s, n_) is True for s, n_ in (("solo.gold", 1), ("duo.kiss_collision", 2), ("solo.universe", 1))), (takes(FamCheck), takes(FamKw), takes(FamPlain)))
+# the daily ceiling counts the pictures made, not the requests tried
+CMP._DAY.update(day=CMP._utc_day(), tiles=0)
+with Show(*SINGLES), mock.patch.object(GD, "WAIT_S", 0.2):
+    e_busy = with_holder(100, 60.0, lambda: raised(lambda: comp({"sealed": S1, "styles": list(SINGLES)})))
+n_busy = CMP._DAY["tiles"]
+with Show(*SINGLES), mock.patch.object(ST, "tiles", side_effect=RuntimeError("boom")):
+    e_fail = raised(lambda: comp({"sealed": S1, "styles": ["solo.clean", "solo.gold"]}))
+n_fail = CMP._DAY["tiles"]
+with Show(*SINGLES):
+    r_two = comp({"sealed": S1, "styles": ["solo.clean", "solo.gold"]})
+n_two = CMP._DAY["tiles"]
+CMP._tiles_refund(5, "1999-01-01")
+check("a batch that was answered 503 busy_retry or that failed before a tile was drawn costs the day's ceiling nothing (it used to charge the whole batch first): 0 and 0; a batch that is made costs its tiles: 2",
+      getattr(e_busy, "status", None) == 503 and e_busy.body["reason"] == "busy_retry" and n_busy == 0 and isinstance(e_fail, RuntimeError) and n_fail == 0 and r_two["batch"] and n_two == 2
+      and CMP._DAY["tiles"] == 2 and GD.state() == {"mb": 0.0, "heavy": 0, "running": 0}, (n_busy, n_fail, n_two, CMP._DAY))
+
 # ============================================================================================ 7. the watermark
 section("7. the watermark: every tile on every disc, outside the discs the legacy one, the overlay anchored to the iris, the aligned median attack (I14)")
 ACCENT = ST.WATERMARK_ACCENT
@@ -731,6 +833,44 @@ info(f"aligned median over {len(views_new)} views of one iris: the overlay that 
 check("the aligned median attack (five tiles, two more canvases, the 1024 px preview and the 800 px display copy of one eye, aligned on the disc, per pixel median): the overlay that is left is at least 60 percent of a single view's",
       ratio_new >= 0.6, (ratio_new, single_new))
 check("... and the attack is real: the same views with the overlay the way it was drawn before (anchored to the canvas) leave less of it than the iris-anchored one does", ratio_old < ratio_new, (ratio_old, ratio_new))
+
+# WP10 review: a family that reports fewer discs than it has eyes (an engine bug, never the customer's doing) used to fall back silently to the faint canvas tile, which has no
+# 3.5 times strength on the iris. Now the whole canvas is marked at the iris strength.
+pv_g = clean_pv["solo.gold"]
+
+
+def share40(a, b):
+    return float((np.abs(np.asarray(a, np.int16) - np.asarray(b, np.int16)).max(axis=2) > 40).mean())
+
+
+def cells40(a, b):
+    d = np.abs(np.asarray(a, np.int16) - np.asarray(b, np.int16)).max(axis=2) > 40
+    h_, w_ = d.shape
+    return [float(d[j * h_ // 2:(j + 1) * h_ // 2, i * w_ // 3:(i + 1) * w_ // 3].mean()) for j in range(2) for i in range(3)]
+
+
+bug_pvs = {"no disc at all": ST.Preview(img=pv_g.img, discs=[], graded=pv_g.graded, fmt=pv_g.fmt, size=pv_g.size),
+           "one disc for two eyes": ST.Preview(img=pv_g.img, discs=list(pv_g.discs), graded=list(pv_g.graded) * 2, fmt=pv_g.fmt, size=pv_g.size),
+           "a disc of five pixels": ST.Preview(img=pv_g.img, discs=[(40.0, 40.0, 5.0)], graded=pv_g.graded, fmt=pv_g.fmt, size=pv_g.size),
+           "a disc that is not a number": ST.Preview(img=pv_g.img, discs=[(float("nan"), 10.0, 100.0)], graded=pv_g.graded, fmt=pv_g.fmt, size=pv_g.size)}
+with contextlib.redirect_stdout(io.StringIO()):
+    wm_bug = {k: ST.watermarked(v, "en") for k, v in bug_pvs.items()}
+faint = P.watermark(pv_g.img, ACCENT, [], lang="en")
+rows_bug = {k: (round(share40(v, pv_g.img) * 100, 1), round(min(cells40(v, pv_g.img)) * 100, 1)) for k, v in wm_bug.items()}
+info(f"a family that reports too few discs: % of the canvas changed by more than 40 levels (and the weakest sixth): {rows_bug}; the faint canvas tile alone: {share40(faint, pv_g.img) * 100:.1f}")
+check("a Preview with fewer markable discs than eyes (none, one for two, a disc of five pixels, a disc that is not a number) is marked over the whole canvas at the iris strength: at least 2 percent of every sixth of the canvas "
+      "changed by more than 40 levels, three times the faint canvas tile's share or more",
+      all(c >= 1.5 and s >= 2.0 and s >= 3 * share40(faint, pv_g.img) * 100 for s, c in rows_bug.values()), rows_bug)
+check("a picture whose discs are all there is marked as before, byte for byte (the guard changes nothing for a family that reports one disc per eye), with the eye count given or taken from the graded frames; "
+      "a Preview that says nothing of its eyes (no graded frame) is not checked and keeps the legacy mark when it has no disc",
+      np.array_equal(np.asarray(ST.watermarked(pv_g, "en")), np.asarray(P.watermark(pv_g.img, ACCENT, list(pv_g.discs), lang="en")))
+      and np.array_equal(np.asarray(ST.watermarked(pv_g, "en", n_eyes=1)), np.asarray(ST.watermarked(pv_g, "en")))
+      and np.array_equal(np.asarray(ST.watermarked(ST.Preview(img=pv_g.img, discs=[]), "en")), np.asarray(faint)))
+pv_g1024 = ST.Preview(img=pv_gold_1024.img, discs=[], graded=pv_gold_1024.graded, fmt=pv_gold_1024.fmt, size=1024, design="gold", log={}, times={"total": 0.0})
+with Show("solo.gold"), mock.patch.object(ST, "preview", lambda eyes, spec, size=1024, **kw: pv_g1024):
+    r_nodisc = comp({"sealed": S1, "style": "solo.gold"})
+check("through the endpoint: a family that reports no disc still answers a picture that is marked over its whole canvas (compose hands the number of eyes to the watermark)",
+      share40(img_of(r_nodisc), pv_gold_1024.img) >= 0.02 and min(cells40(img_of(r_nodisc), pv_gold_1024.img)) >= 0.015, (share40(img_of(r_nodisc), pv_gold_1024.img), cells40(img_of(r_nodisc), pv_gold_1024.img)))
 
 
 # ============================================================================================ 8. a tile against the preview

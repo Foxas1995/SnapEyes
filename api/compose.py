@@ -33,13 +33,15 @@ design_used, fallback, plan8, engine {v, reg, pv}, selfcheck, timing}. A batch: 
            its reason line (null unless the pick was made for the eyes' colour class)
 Refusals: 400 a request that is not one (unknown style, layout or option, a size that is not 1024 or 480, style and styles together); 422
 style_unavailable {why: stage, eyes, gate, reseal, bar_pupil} for a style a customer may not have (laboratory, planned, retired, wrong number of eyes,
-or eyes the style cannot take: the same one-style request that a batch reports as a tile); 422 too_many_styles {max}: the batch costs more than
+or eyes the style cannot take: the same one-style request that a batch reports as a tile; bar_pupil is also what the engine itself answers when it
+finds a bar pupil the sealed profile did not show: its tile is then marked unavailable and the other tiles of the batch are still made); 422
+too_many_styles {max}: the batch costs more than
 TILES_BUDGET_S seconds; 503 busy_retry {retry_after}: another render holds the CPU or memory of this instance, or not enough time is left in the
 call; 503 tiles_paused: this instance's ceiling of tiles for today is reached.
 A style of the v3 engine (the registry's engine module is not "legacy": api/_lib/styles) is drawn by its family; the legacy styles by
 api/_lib/iris.py as always. The words on the picture are the customer's own (names, date, family name) and nothing else; the watermark is
 drawn over the clean render here and nowhere else (api/_lib/preview.py watermark: iris-anchored on every disc)."""
-import os, sys, io, time, base64, threading
+import os, sys, io, time, base64, threading, inspect
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
@@ -435,14 +437,19 @@ _DAY = {"day": "", "tiles": 0}
 _DAY_LOCK = threading.Lock()
 
 
+def _utc_day():
+    return time.strftime("%Y-%m-%d", time.gmtime())
+
+
 def _tiles_room(k):
-    """Charge k tiles to today's ceiling of this instance; False when they do not fit (nothing is charged then)."""
+    """Charge k tiles to today's ceiling of this instance; False when they do not fit (nothing is charged then). A request that ends up drawing
+    fewer gives the rest back (_tiles_refund): the ceiling counts pictures made, not requests tried."""
     try:
         cap = int(os.environ.get("SNAPEYES_TILES_DAY_MAX", "").strip() or TILES_DAY_MAX)
     except ValueError:
         cap = TILES_DAY_MAX
     cap = max(1, min(cap, 1_000_000))
-    day = time.strftime("%Y-%m-%d", time.gmtime())
+    day = _utc_day()
     with _DAY_LOCK:
         if _DAY["day"] != day:
             _DAY["day"], _DAY["tiles"] = day, 0
@@ -450,6 +457,13 @@ def _tiles_room(k):
             return False
         _DAY["tiles"] += k
         return True
+
+
+def _tiles_refund(k, day):
+    """Give k tiles back to the ceiling of `day` (the UTC day they were charged on: after midnight the counter is another day's and is left alone)."""
+    with _DAY_LOCK:
+        if k > 0 and _DAY["day"] == day:
+            _DAY["tiles"] = max(0, _DAY["tiles"] - k)
 
 
 def _until_midnight():
@@ -507,6 +521,24 @@ def _drawn(pv, plan):
     d = (getattr(pv, "design", None) if pv is not None else None) or (plan or {}).get("design_used")
     f = ((getattr(pv, "log", None) or {}).get("fallback") if pv is not None else None) or (plan or {}).get("fallback")
     return d, (f if isinstance(f, str) and f else None)
+
+
+def _bar_refusal(e):
+    """True for an engine's refusal of eyes it does not draw: the collision family raises NotOffered (a ValueError that carries why == "bar_pupil")
+    when an iris of the set has a horizontal bar pupil, whatever the sealed profile said (a profile is the page's measurement at enhance; the engine
+    measures again on the very pixels). Told by its why, so that compose imports no family."""
+    return isinstance(e, ValueError) and getattr(e, "why", None) == "bar_pupil"
+
+
+def _takes_check(style, n):
+    """Does the family of this style take preview(check=...)? Read from its signature, never learnt by a TypeError: a TypeError raised INSIDE a render
+    is a bug that must be seen, not a reason to draw the picture a second time."""
+    from _lib import styles as ST
+    try:
+        params = inspect.signature(ST.family(catalogue.engine_for(style, n)["module"]).preview).parameters
+    except Exception:  # noqa: a family that cannot be read is drawn without the keyword (and ST.preview says what is wrong with it)
+        return False
+    return "check" in params or any(p.kind is p.VAR_KEYWORD for p in params.values())
 
 
 def _plan(style, spec, profiles):
@@ -585,17 +617,19 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
     eyes = _eyes_for(plains, metas, [style], n)
     spec = _spec(style, n, eyes, metas, req, canvas, layout, opts)
     plan = _plan(style, spec, spec["profiles"])
+    kw = {"check": True} if size >= PREVIEW_SIZE and _takes_check(style, n) else {}       # the self check of a 1024 px preview, for the families that have one
     try:
         with GUARD.slot(est_mb=mb, est_s=need, left=left):
             t_draw = time.time()
-            try:
-                pv = ST.preview(eyes, spec, size=size, check=True) if size >= PREVIEW_SIZE else ST.preview(eyes, spec, size=size)
-            except TypeError:                         # a family whose preview() takes no check keyword: no selfcheck, the picture is the same
-                pv = ST.preview(eyes, spec, size=size)
+            pv = ST.preview(eyes, spec, size=size, **kw)
             t_done = time.time()
     except GUARD.Busy as b:
         raise _refuse(503, "busy_retry", "busy_retry", True, max(2, min(20, int(-(-(b.eta_s if b.eta_s is not None else 3.0) // 1))))) from None
-    img = pv.img if clean else ST.watermarked(pv, req["lang"], note=req["title"] or None)
+    except ValueError as e:
+        if _bar_refusal(e):                           # the engine's own look at the pixels refused what the sealed profile let through: the tile's own answer
+            raise _refuse(422, "style_unavailable", "bar_pupil", False, None, why="bar_pupil", style=style) from None
+        raise
+    img = pv.img if clean else ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n)
     qa = _qa_of(pv)
     design, fallback = _drawn(pv, plan)
     canvas = pv.fmt or canvas or eng["canvases"][0]
@@ -670,9 +704,13 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
     left = L.time_left()
     if draw and need > left - 1.0:
         raise _refuse(503, "busy_retry", "busy_retry", True, 3)
-    if draw and not admin and not _tiles_room(len(draw)):
-        raise _refuse(503, "tiles_paused", "tiles_paused", True, min(3600, max(60, _until_midnight())))
-    made, timing = {}, {}
+    charged, charged_on = 0, _utc_day()
+    if draw and not admin:
+        if not _tiles_room(len(draw)):
+            raise _refuse(503, "tiles_paused", "tiles_paused", True, min(3600, max(60, _until_midnight())))
+        charged = len(draw)
+    made, timing, refused = {}, {}, set()
+    spent = 0                                         # the tiles the call really drew: the ceiling keeps only those (a busy answer or a failure draws none)
     t_eyes = time.time()
     if draw:
         legacy = [s for s in draw if catalogue.is_legacy(s)]
@@ -694,11 +732,28 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
                     if req["layout"] or req["fmt"]:
                         for s in v3:
                             per_style[s].update(layout=specs[s]["layout"], canvas=specs[s]["canvas"])
-                    pvs = ST.tiles(eyes, v3, base, size=size, per_style=per_style)
+                    # one call of styles.tiles per engine family, each with the very base and per_style dicts of the whole call (what tiles() does with them
+                    # is per family anyway): a family that refuses these eyes (the collision family, a bar pupil the profile did not show) refuses its own
+                    # tiles only, the other families' tiles of the batch are still made
+                    groups = {}
                     for s in v3:
+                        groups.setdefault(catalogue.engine_for(s, n)["module"], []).append(s)
+                    pvs = {}
+                    for ids in groups.values():
+                        try:
+                            pvs.update(ST.tiles(eyes, ids, base, size=size, per_style={s: per_style[s] for s in ids}))
+                        except ValueError as e:
+                            if not _bar_refusal(e):
+                                raise
+                            refused.update(ids)
+                            continue
+                        spent += len(ids)
+                    for s in v3:
+                        if s in refused:
+                            continue
                         t_w = time.time()
                         pv = pvs[s]
-                        made[s] = {"img": ST.watermarked(pv, req["lang"], note=req["title"] or None), "spec": specs[s], "plan": _plan(s, specs[s], specs[s]["profiles"]),
+                        made[s] = {"img": ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n), "spec": specs[s], "plan": _plan(s, specs[s], specs[s]["profiles"]),
                                    "layout": specs[s]["layout"], "canvas": pv.fmt or specs[s]["canvas"] or catalogue.engine_for(s, n)["canvases"][0], "pv": pv}
                         timing[s] = int(((pv.times or {}).get("total", 0.0) + (time.time() - t_w)) * 1000)      # the design's own render and its watermark
                 if legacy:
@@ -712,8 +767,19 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
                         made[s] = {"img": out, "spec": None, "plan": {"design_used": s, "fallback": None}, "layout": layout, "pv": None,
                                    "canvas": _choice(req["fmt"], L.FORMATS, L.FORMATS[0])}
                         timing[s] = int((time.time() - t_l) * 1000)
+                        spent += 1
         except GUARD.Busy as b:
             raise _refuse(503, "busy_retry", "busy_retry", True, max(2, min(20, int(-(-(b.eta_s if b.eta_s is not None else 3.0) // 1))))) from None
+        finally:
+            _tiles_refund(charged - spent, charged_on)    # a busy answer, a refusal by the engine or a failure before the tiles were drawn costs the day nothing
+    for s in refused:                                    # an engine's own refusal of a tile the profile let through: the tile says so, as a tile the profile held back would
+        rows[s].update(available=False, why="bar_pupil", pick=False)
+    if cat["pick"] in refused:
+        cat["pick"] = catalogue.pick_for(n, _recs(metas), skip=refused)
+        cat["reason"] = catalogue.pick_reason(cat["pick"], catalogue.set_class(_recs(metas)))
+        for r in cat["tiles"]:
+            r["pick"] = r["id"] == cat["pick"]
+        cat["tiles"].sort(key=lambda r: not r["pick"])
     for s, m in made.items():
         r = rows[s]
         design, fallback = _drawn(m["pv"], m["plan"])

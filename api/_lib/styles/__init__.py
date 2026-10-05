@@ -84,13 +84,17 @@ class Preview:
 WATERMARK_ACCENT = (245, 197, 66)       # the badge's colour on a free preview of a style that has no accent of its own (the site's gold)
 
 
-def watermarked(pv, lang=None, note=None):
+def watermarked(pv, lang=None, note=None, n_eyes=None):
     """The free-preview picture of a Preview: its clean img with the preview watermark (a faint rotated tile of words over the whole picture,
     anchored to the canvas and scaled to at most 1.33 times the disc diameter as the legacy multi-eye preview does, the badge at the top, and on
     every iris disc the words 3.5 times as strong, anchored to the IRIS: api/_lib/preview.py watermark). note: one short line under the badge for
-    a picture that draws no caption of its own (the AI-generated sample's label). Returns a new PIL image; the Preview is not changed."""
+    a picture that draws no caption of its own (the AI-generated sample's label). n_eyes: the irises the picture holds (default: one studio graded
+    frame per eye, which every family reports in pv.graded): a family that reports fewer discs than that gets the whole canvas marked at the iris
+    strength, never the faint canvas tile alone (preview.watermark). Returns a new PIL image; the Preview is not changed."""
     from .. import preview as P
-    return P.watermark(pv.img, WATERMARK_ACCENT, list(pv.discs), lang=lang, note=note)
+    if n_eyes is None and isinstance(pv.graded, (list, tuple)) and pv.graded:
+        n_eyes = len(pv.graded)
+    return P.watermark(pv.img, WATERMARK_ACCENT, list(pv.discs or ()), lang=lang, note=note, n_eyes=n_eyes)
 
 
 def _engine_of(spec):

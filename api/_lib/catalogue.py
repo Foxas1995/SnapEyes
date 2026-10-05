@@ -287,8 +287,11 @@ def set_class(profiles):
 
 def _problem(style_id, profiles):
     """Why this style cannot be used for these eyes, as the picker's code: gate (a hard rule failed), reseal (a hard style and
-    an eye without a sealed gate value), bar_pupil (the infinity designs refuse a bar pupil), or None. Reads the profile fields of
-    the engine plan: gate{lid|fill: {ok}}, pupil{cls}. No profiles at all: no information, nothing is held back."""
+    an eye without a sealed gate value), bar_pupil (the collision family refuses a bar pupil in EVERY design, Infinity, Kiss, the
+    Trio, the Family and the Chain: its engine raises NotOffered for any set that holds a horizontal bar, brief 3.1 and D17; the
+    first version of this check named the infinity designs only, so Kiss, Family and Chain showed a tile that could not be drawn),
+    or None. Reads the profile fields of the engine plan: gate{lid|fill: {ok}}, pupil{cls}. No profiles at all: no information,
+    nothing is held back."""
     if not isinstance(profiles, (list, tuple)) or not profiles:
         return None
     e = ENGINE[style_id]
@@ -301,9 +304,8 @@ def _problem(style_id, profiles):
                 return "reseal"
             if g[rule].get("ok") is not True:
                 return "gate"
-        if e["engine"].get("module") == "collision" and e["engine"].get("design") == "infinity":
-            if (p.get("pupil") or {}).get("cls") == "bar":
-                return "bar_pupil"
+        if e["engine"].get("module") == "collision" and (p.get("pupil") or {}).get("cls") == "bar":
+            return "bar_pupil"
     return None
 
 
@@ -374,11 +376,12 @@ def tile_list(n, profiles=None, admin=False):
     return {"tiles": rows, "pick": pid, "reason": pick_reason(pid, set_class(profiles))}
 
 
-def pick_for(n, profiles=None):
+def pick_for(n, profiles=None, skip=()):
     """The recommended tile: among the tiles the customer can BUY now (live and available), the first whose pick lists the set's
     colour class, else DEFAULT_STYLE if it is one of them, else the first. None when nothing can be bought. The table is
-    price blind: it reads the class and the stage, never the price."""
-    buyable = [t for t in tiles_for(n, profiles) if t["stage"] == "live" and t["available"]]
+    price blind: it reads the class and the stage, never the price. skip: ids the engine itself refused when it came to draw them (a
+    refusal the profile did not predict, api/compose.py): they are no longer buyable for these eyes."""
+    buyable = [t for t in tiles_for(n, profiles) if t["stage"] == "live" and t["available"] and t["id"] not in skip]
     cls = set_class(profiles)
     for t in buyable:
         if cls in STYLES[t["id"]]["pick"]:
