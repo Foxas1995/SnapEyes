@@ -29,7 +29,13 @@ The kinds (all with "ms", the time since the request started, when known):
             (api/_lib/styles/reveal.py, WP9): reveal (ok: the page shows the cut; colour or registration: withheld, the page shows the strip
             without the cut; none: not measured, no time left; error), reveal_ms (the time it took, when measured)
   compose   style, eyes, layout, format, clean (unwatermarked), qa_ok; gate: the SET-level result of the request under the style's
-            gate rule (ok, unknown, or the first failing eye's reason code)
+            gate rule (ok, unknown, or the first failing eye's reason code); and, from the compose API v3 (api/compose.py, WP10): size (the
+            preview's long side, 1024 or 480), tile (this event is one tile of a batch, not a preview the customer asked for), tiles (on the
+            FIRST event of a request only: how many tiles the request makes, so a request is counted once whatever its tiles), look (the
+            Universe look), pick (the style is the recommended tile), fallback (what the geometry fell back to: kiss, stack_contrast, ...),
+            stage (the effective stage of the style asked: live or preview, so that the demand for a Soon style is counted), retake (how
+            many eyes of the set the page replaced since its last compose), lang and market (page language, price market), ms (a tile: its
+            own render time)
   master    step (eye/compose/art), order, eye, count, needs_review, attempts, rerender, existing, render_s, style, lab; and, from the master plan's steps
             (api/_lib/styles/steps.py: one event per step, "art" for the artwork): part and of (the step and how many the plan has), ms (the step's
             wall time), need_s (the estimate it was planned with), cpu_s, peak_mb (the INCREASE of the process's resident size over the step, VmRSS) and
@@ -37,7 +43,9 @@ The kinds (all with "ms", the time since the request started, when known):
             design (the design drawn), d_rgb (how far the master's ring colour drifted from the preview's, levels), hold (a code: the order was held
             instead of made: style_step_too_big, engine_skew, class_changed, style_step_failed, plate_unavailable, ...)
   error     endpoint, class (the error's kind: busy/400/403/429/500/502/503), reason (the reply's reason code),
-            status. ("class", because "kind" names the event itself.)
+            status. ("class", because "kind" names the event itself.) style: the style the refused request asked for, when it said.
+  help      route (manual: the customer chose to send photos by e-mail for the owner to look at, see 1.6.2), eyes, why (the reason code the
+            retake state showed), lang: a count of clicks, nothing else (api/compose.py action help)
   exp       a price experiment's funnel (api/_lib/abtest.py; only while the owner has one running): stage (visit,
             preview, checkout, paid), exp (the experiment's key), variant, market, eyes, amount and currency (checkout
             and paid), hit (the artwork's price differs between the variants), live (paid: a real payment). No visitor
@@ -52,7 +60,8 @@ from . import store
 CRON_MIN = 16                # characters of CRON_SECRET (pay.ordering_problem and /api/health use the same rule)
 WAIT = 1.5                   # seconds a request waits for its event to be written, at most
 PUT_TIMEOUT = 1.2            # the storage call itself
-RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0)}   # events per instance per window (seconds)
+RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0), "help": (20, 60.0)}   # events per instance per window (seconds)
+HELP_DAY_MAX = 1000          # help beacons per instance per UTC day (anybody can send one without an order, so they are capped like the price test's)
 ERROR_DAY_MAX = 1500         # error events per instance per UTC day
 EXP_DAY_MAX = 5000           # price-test visit and preview beacons per instance per UTC day (they need no order, so they are capped)
 EVENTS = "ops/events"
@@ -71,12 +80,15 @@ FIELDS = {
     "deglare": {"glare_pct": "n", "lid_pct": "n", "changed": "b", "used_sr": "b", "model_call": "b"},
     "enhance": {"mode": "c", "qa_ok": "b", "ring_de00": "n", "fallback": "b", "used_sr": "b", "fidelity": "n",
                 "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n", "reveal": "c", "reveal_ms": "n"},
-    "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c"},
+    "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c",
+                "size": "n", "tiles": "n", "tile": "b", "look": "c", "pick": "b", "fallback": "c", "stage": "c", "retake": "n",
+                "lang": "c", "market": "c"},
     "master": {"step": "c", "order": "o", "eye": "n", "count": "n", "needs_review": "b", "attempts": "n",
                "rerender": "b", "existing": "b", "render_s": "n", "style": "c",
                "part": "n", "of": "n", "need_s": "n", "cpu_s": "n", "peak_mb": "n", "hwm_mb": "n", "kills": "n", "design": "c", "d_rgb": "n",
                "hold": "c"},
-    "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n"},
+    "error": {"endpoint": "c", "class": "c", "reason": "c", "status": "n", "style": "c"},
+    "help": {"route": "c", "eyes": "n", "why": "c", "lang": "c"},
     "exp": {"stage": "c", "exp": "c", "variant": "c", "market": "c", "eyes": "n", "amount": "n", "currency": "c",
             "hit": "b", "live": "b"},
 }
@@ -86,7 +98,7 @@ SOURCES = ("camera", "gallery", "live", "sample", "lab")
 
 # ----------------------------------------------------------------------------- writing
 _RATE_LOCK = threading.Lock()
-_SEEN = {"all": [], "error": [], "exp": [], "day": "", "errors_today": 0, "exp_day": "", "exp_today": 0}
+_SEEN = {"all": [], "error": [], "exp": [], "help": [], "day": "", "errors_today": 0, "exp_day": "", "exp_today": 0, "help_day": "", "help_today": 0}
 
 
 def _allow(kind, now, stage=None):
@@ -107,6 +119,18 @@ def _allow(kind, now, stage=None):
             if len(q) >= n or _SEEN["exp_today"] >= EXP_DAY_MAX:
                 return False
             _SEEN["exp_today"] += 1
+            q.append(now)
+            return True
+        if kind == "help":                  # a click on the manual route: no order behind it, so a small budget of its own (as the price test's beacons)
+            n, win = RATE["help"]
+            q = [t for t in _SEEN["help"] if now - t < win]
+            _SEEN["help"] = q
+            d = time.strftime("%Y-%m-%d", time.gmtime(now))
+            if _SEEN["help_day"] != d:
+                _SEEN["help_day"], _SEEN["help_today"] = d, 0
+            if len(q) >= n or _SEEN["help_today"] >= HELP_DAY_MAX:
+                return False
+            _SEEN["help_today"] += 1
             q.append(now)
             return True
         for name in (("all", "error") if kind == "error" else ("all",)):
@@ -217,6 +241,35 @@ def record(kind, **fields):
         return False
 
 
+def record_many(kind, rows, _wait=None):
+    """Store several events of one kind (the tiles of one batch) at once and wait for all of them together, not one after the other: a batch of six
+    tiles must not spend six storage round trips of its own time on its counts. rows: a list of field dicts, as record() takes them. The same rules as
+    record(): nothing is written without storage or the clean-up, the per-instance ceiling counts every event, a field outside FIELDS is dropped.
+    Returns how many were written in time; never raises."""
+    try:
+        if kind not in FIELDS or not rows or not store.configured() or not retention_ok():
+            return 0
+        now = time.time()
+        cap = WAIT if not isinstance(_wait, (int, float)) or isinstance(_wait, bool) else float(_wait)
+        wait = min(cap, L.time_left() - 1.0)
+        if wait < 0.2:
+            return 0
+        started = []
+        for fields in rows:
+            if not _allow(kind, now, fields.get("stage") if isinstance(fields.get("stage"), str) else None):
+                break
+            box = {}
+            th = threading.Thread(target=_put, args=(event_path(now), store.json_bytes(build(kind, dict(fields), now)), box), daemon=True)
+            th.start()
+            started.append((th, box))
+        end = time.time() + wait
+        for th, _ in started:
+            th.join(max(0.0, end - time.time()))
+        return sum(1 for _, box in started if box.get("ok"))
+    except Exception:  # noqa
+        return 0
+
+
 def device_class(device):
     """The kind of device a capture came from, from the telemetry's user agent (the user agent itself is not kept)."""
     try:
@@ -239,15 +292,15 @@ def device_source(device):
     return s if s in SOURCES else ("other" if s else "unknown")
 
 
-def error(req, kind, reason=None, status=None):
+def error(req, kind, reason=None, status=None, style=None):
     """The error event of one reply (iris.run calls it): the endpoint from the request path, the error class, the
-    reply's reason code. No message text."""
+    reply's reason code and, when the reply says which style was asked for, that style's id. No message text."""
     try:
         m = re.match(r"^/api/([a-z_]{1,24})(?:[/?]|$)", str(getattr(req, "path", "") or ""))
         endpoint = m.group(1) if m else "other"
         if status is None:
             status = 503 if kind == "busy" else (int(kind) if str(kind).isdigit() else None)
-        return record("error", endpoint=endpoint, reason=reason, status=status, **{"class": str(kind)})
+        return record("error", endpoint=endpoint, reason=reason, status=status, style=style, **{"class": str(kind)})
     except Exception:  # noqa
         return False
 
@@ -261,7 +314,7 @@ def answer(req, out):
         if not isinstance(st, int) or isinstance(st, bool) or st < 400 or not (st >= 500 or st in (403, 429)):
             return False
         reason = out.get("reason") if isinstance(out, dict) else None
-        return error(req, "busy" if reason == "model_busy" else str(st), reason, st)
+        return error(req, "busy" if reason == "model_busy" else str(st), reason, st, style=out.get("style") if isinstance(out, dict) else None)
     except Exception:  # noqa
         return False
 
@@ -283,6 +336,14 @@ def empty():
     return {"events": 0, "kinds": {}, "verdict": {}, "block_reason": {}, "blocked": 0, "locked": 0, "unlocked": 0,
             "device": {}, "source": {}, "lang": {}, "enhance_qa_fail": 0, "enhance_fallback": 0, "deglare_glare": 0,
             "deglare_lid": 0, "compose_style": {}, "compose_eyes": {}, "compose_clean": 0,
+            # the compose API v3 (WP10): tiles are counted apart from the previews the customer asked for (compose_style and compose_eyes count the
+            # previews only, as before); a request is counted once (compose_gate, compose_funnel, compose_lang, compose_market, compose_tiles: the
+            # event that carries "tiles"); compose_demand "<style>|<eyes>|<stage>|<tile or large>" counts what was looked at, so a Soon style's demand
+            # shows; compose_funnel "<eyes>|<set gate code>|<retakes 0, 1 or 2 for two or more>" is the set level gate funnel; compose_chosen counts the
+            # previews of the recommended tile against the others
+            "compose_tile_style": {}, "compose_tile_eyes": {}, "compose_demand": {}, "compose_size": {}, "compose_look": {}, "compose_fallback": {},
+            "compose_chosen": {}, "compose_funnel": {}, "compose_lang": {}, "compose_market": {}, "compose_tiles": {},
+            "help_route": {}, "help_why": {}, "help_eyes": {}, "error_style": {},
             # the restoration gate (eye profile): per eye at enhance, per request at compose; the colour and pupil classes seen
             "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
             # the Reveal (WP9): per eye at enhance, the code of what the page shows (ok, colour, registration, none, error)
@@ -366,13 +427,39 @@ def add(agg, ev):
             cur[0] += rm
             cur[1] += 1
     elif kind == "compose":
-        _inc(agg["compose_style"], ev.get("style") or "unknown")
-        _inc(agg["compose_eyes"], ev.get("eyes") or 1)
-        if ev.get("gate"):
-            _inc(agg["compose_gate"], ev["gate"])
-        if ev.get("clean"):
-            agg["compose_clean"] += 1
-        _ms(agg, "compose", ev)
+        tile = ev.get("tile") is True
+        request = (not tile) or ev.get("tiles") is not None       # a request is counted once: by its first event when it is a batch of tiles
+        style, eyes = ev.get("style") or "unknown", ev.get("eyes") or 1
+        _inc(agg["compose_tile_style" if tile else "compose_style"], style)
+        _inc(agg["compose_tile_eyes" if tile else "compose_eyes"], eyes)
+        if ev.get("stage"):
+            _inc(agg["compose_demand"], f"{style}|{eyes}|{ev['stage']}|{'tile' if tile else 'large'}")
+        if ev.get("size"):
+            _inc(agg["compose_size"], ev["size"])
+        if ev.get("look"):
+            _inc(agg["compose_look"], f"{style}|{ev['look']}")
+        if ev.get("fallback") and ev["fallback"] != "none":
+            _inc(agg["compose_fallback"], f"{style}|{ev['fallback']}")
+        if not tile and ev.get("pick") is not None:
+            _inc(agg["compose_chosen"], "pick" if ev["pick"] else "other")
+        if request:
+            if ev.get("gate"):
+                _inc(agg["compose_gate"], ev["gate"])
+                retake = ev.get("retake")
+                retake = int(retake) if isinstance(retake, (int, float)) and not isinstance(retake, bool) and retake > 0 else 0
+                _inc(agg["compose_funnel"], f"{eyes}|{ev['gate']}|{min(2, retake)}")
+            if ev.get("clean"):
+                agg["compose_clean"] += 1
+            for field, key in (("lang", "compose_lang"), ("market", "compose_market")):
+                if ev.get(field):
+                    _inc(agg[key], ev[field])
+            if ev.get("tiles") is not None:
+                _inc(agg["compose_tiles"], ev["tiles"])
+        _ms(agg, "compose_tile" if tile else "compose", ev)
+    elif kind == "help":
+        _inc(agg["help_route"], ev.get("route") or "unknown")
+        _inc(agg["help_why"], ev.get("why") or "unknown")
+        _inc(agg["help_eyes"], ev.get("eyes") or 0)
     elif kind == "master" and ev.get("step") == "art":
         if ev.get("hold"):
             _inc(agg["master_hold"], ev["hold"])
@@ -431,6 +518,8 @@ def add(agg, ev):
         _inc(agg["error_endpoint"], ev.get("endpoint") or "other")
         if ev.get("reason"):
             _inc(agg["error_reason"], ev["reason"])
+        if ev.get("style"):
+            _inc(agg["error_style"], ev["style"])
         if k == "busy":
             agg["busy"] += 1
         row = {x: ev.get(x) for x in ("t", "endpoint", "reason", "status", "ms") if ev.get(x) is not None}
