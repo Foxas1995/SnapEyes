@@ -20,9 +20,10 @@ that is not in the repository raises EngineNotBuilt (never an ImportError that r
 route to such a style (catalogue.engine_built), this is the second wall.
 
 Preview is what a family's preview() answers (below); watermarked() is the one place a preview gets its watermark, the words of the free
-preview that make a picture of a customer's iris not the product (an engine never draws it: the paid file has none). It is the legacy
-engine's own watermark (api/_lib/iris.py) laid on the picture with the discs the engine reports; the iris-anchored version of the compose
-work package replaces it here, in one place.
+preview that make a picture of a customer's iris not the product (an engine never draws it: the paid file has none). Outside the discs the
+engine reports it is the legacy engine's own watermark (api/_lib/iris.py, a tile anchored to the canvas and the badge); on each disc it is
+the iris-anchored overlay (api/_lib/preview.py watermark: the same words, angle and phase in the disc's own frame in every view of the iris,
+work package WP10).
 
 Module rule of the v3 work: every module starts with the __future__ import below (Vercel's default Python is 3.12).
 """
@@ -61,6 +62,7 @@ class Preview:
     graded     [uint8 array] the studio-graded frame of each iris (the legacy engine keeps it as an image: Image.fromarray gives iris.colour_qa its input)
     design, fmt, size, seed, cls    what was drawn: the design id of its family, the canvas, the long side, the seed, the eye colour class
     log        the engine's own facts (the plates it picked, the wind, the palette mode): small JSON-safe numbers and words
+               (discs may carry a fourth number: the rotation of the iris in degrees, counter clockwise, where a layout turns it)
     times      seconds per stage (grade, place, effect, finish, text, total)
     text_log   what the text drawer drew (selfcheck T7 reads it); selfcheck the report of selfcheck.run when asked for, else None
     """
@@ -82,14 +84,13 @@ class Preview:
 WATERMARK_ACCENT = (245, 197, 66)       # the badge's colour on a free preview of a style that has no accent of its own (the site's gold)
 
 
-def watermarked(pv, lang=None):
+def watermarked(pv, lang=None, note=None):
     """The free-preview picture of a Preview: its clean img with the preview watermark (a faint rotated tile of words over the whole picture,
-    drawn 3.5 times as strong on every iris disc, and the badge at the top). The tile is scaled to at most 1.33 times the disc diameter, as the
-    legacy multi-eye preview does. Returns a new PIL image; the Preview is not changed."""
-    from .. import iris as L
-    u = min(pv.img.size)
-    dia = max(2.0 * d[2] for d in pv.discs) if pv.discs else float(u)
-    return L._watermark(pv.img.copy(), WATERMARK_ACCENT, u, tile_u=min(float(u), L.WM_DISC * dia), lang=lang, discs=list(pv.discs))
+    anchored to the canvas and scaled to at most 1.33 times the disc diameter as the legacy multi-eye preview does, the badge at the top, and on
+    every iris disc the words 3.5 times as strong, anchored to the IRIS: api/_lib/preview.py watermark). note: one short line under the badge for
+    a picture that draws no caption of its own (the AI-generated sample's label). Returns a new PIL image; the Preview is not changed."""
+    from .. import preview as P
+    return P.watermark(pv.img, WATERMARK_ACCENT, list(pv.discs), lang=lang, note=note)
 
 
 def _engine_of(spec):
@@ -128,9 +129,22 @@ def run_step(ctx, plan, step, k=1, rerun=0, after=None):
     return steps.run_step(ctx, plan, step, k, rerun, after)
 
 
-def tiles(eyes, styles, spec, size=480):
-    """The tiles of several styles of one family on one eye preparation. Styles of different families are separate calls."""
-    modules = {_engine_of(dict(spec, style=s))["module"] for s in styles}
-    if len(modules) != 1:
-        raise EngineNotBuilt("tiles() renders the styles of one engine family at a time")
-    return family(modules.pop()).tiles(eyes, styles, spec, size=size)
+def tiles(eyes, styles, spec, size=480, per_style=None):
+    """{style id: Preview} of several styles on ONE eye preparation: the eye objects (their grade caches, ring, class and statistics) are shared by
+    every tile, so the preparation is paid once. A family renders the styles that are its own (its tiles()); styles of different families are
+    split by family and rendered one family after the other on the same eyes. per_style: {style: {spec key: value}}, what differs from spec for a
+    style (its layout, its canvas, its options): a family then draws those styles one by one (its preview()) on the same eyes. The answer is in the
+    order the styles were asked for, each Preview clean (watermarked() makes the free tile from it). A tile does not depend on the other tiles of
+    the call (test IE7)."""
+    per_style = per_style or {}
+    groups = {}
+    for s in styles:
+        groups.setdefault(_engine_of(dict(spec, style=s, **per_style.get(s, {})))["module"], []).append(s)
+    made = {}
+    for module, ids in groups.items():
+        fam = family(module)
+        if any(per_style.get(s) for s in ids):
+            made.update({s: fam.preview(eyes, dict(spec, style=s, frozen=None, **per_style.get(s, {})), size=size) for s in ids})
+        else:
+            made.update(fam.tiles(eyes, ids, spec, size=size))
+    return {s: made[s] for s in styles}

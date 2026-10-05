@@ -14,7 +14,11 @@ watermark, so a long press or a screenshot kept a clean file. Now /api/enhance r
                 The page cannot shrink a sealed iris itself, and eight 1024 px irises do not fit in one request.
 
 What /try shows of the artwork is watermarked across the irises too: /api/compose previews draw the tile's words
-iris.WATERMARK_IRIS times as strong on every iris disc (iris._watermark discs), the strength of the display copy here.
+iris.WATERMARK_IRIS times as strong on every iris disc, the strength of the display copy here. For a style of the v3 engine
+(api/_lib/styles) the words that lie on an iris are drawn in the IRIS'S OWN FRAME (watermark() below, work package WP10): the same
+words, the same angle and the same phase relative to the centre of the disc, scaled to its radius, in every tile, in the 1024 px
+preview and in the 800 px display copy, so that the many views of one iris the page can obtain all carry one overlay at one place and
+an aligned median of them keeps it (see "the iris-anchored overlay").
 
 Sealing uses the standard library only (the function bundle carries no crypto package):
   blob       = VERSION (1 byte) | KIND (1 byte) | expiry (4 bytes, unix seconds, big endian) | nonce (16 random bytes)
@@ -43,8 +47,9 @@ Sealing uses the standard library only (the function bundle carries no crypto pa
 A fresh random nonce per seal: two seals of the same image share nothing. The blob travels as standard base64 text.
 SEAL_TTL is long on purpose (48 h): a sealed iris opens only into a watermarked preview (/api/compose) or, with a
 fresh work ticket, into an order draft, so the expiry bounds how long a page may keep one, not what it can unlock."""
-import os, io, time, hmac, base64, hashlib, binascii
-from PIL import Image, ImageFilter
+import os, io, math, time, hmac, base64, hashlib, binascii
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
 from . import iris as L
 
 VERSION = 1                  # the plain envelope, what seal() writes without an eye id
@@ -65,8 +70,9 @@ _LABEL = b"snapeyes-preview-seal-v1:"
 
 DISPLAY_SIDE = 800           # the display copy's side: what the slider shows, never the file an order is made from
 DISPLAY_QUALITY = 85
-DISPLAY_TILE = 1.0           # the watermark tile's scale as a share of the side (iris.py's own scale for a square
-                             # artwork): three rows of words cross the iris disc
+DISPLAY_TILE = 1.0           # (before WP10) the watermark tile's scale as a share of the side; the display copy's words are now iris-anchored
+                             # (display_image: the tile is drawn for the iris disc, ANCHOR_TILE disc diameters wide) and this is unused
+DISPLAY_PAD = 1.12           # the crop padding every page sends (the iris radius is 1 / (2 pad) of the square): the display copy's disc
 DISPLAY_ALPHA = L.WATERMARK_IRIS   # the tile's opacity times this: iris.py draws it at 40/255 over a whole artwork,
                              # and at that strength the words vanish into the fibres of an iris alone (140/255 here,
                              # as on the iris discs of an /api/compose preview)
@@ -237,32 +243,171 @@ def refusal(e, lang=None):
     return words[0] if isinstance(e, SealExpired) else words[1]
 
 
+# ----------------------------------------------------------------------------- the iris-anchored overlay (WP10)
+# The overlay that lies on an iris is ONE picture, made once for a disc of ANCHOR_R0 px (the tile of words at the angle of the watermark,
+# iris._watermark_layer, drawn ANCHOR_TILE disc diameters wide), and resampled into every view of the iris by that view's disc (centre and radius):
+# the same words, the same angle, the same phase relative to the centre of the disc, scaled to its radius. A page can obtain many views of
+# one iris (a batch of up to six tiles, the 1024 px preview, the 800 px display copy of the Reveal) whose iris pixels are identical (T1), so
+# with the overlay in a different place on the iris in each of them, the aligned median of those views would remove it; with this overlay
+# every view has it at the same place, and a median keeps it. The tile outside the discs stays the legacy one, anchored to the canvas
+# (iris._watermark_layer): only the iris is the product. Where a layout turns an iris, the disc carries its rotation as a fourth number
+# (cx, cy, r, rot in degrees, counter clockwise) and the overlay is turned with it, so that it stays the same in the iris's frame.
+ANCHOR_R0 = 512               # the canonical overlay's disc radius, in its own pixels
+ANCHOR_WINDOW = 1.15          # the overlay covers this many disc radii around the centre (half side): the disc, its feathered rim and a little more
+ANCHOR_RMIN = 16.0            # a disc smaller than this (pixels) is not marked (the canvas tile stays); no layout draws one that small
+ANCHOR_SIDE = 2 * int(round(ANCHOR_R0 * ANCHOR_WINDOW + 5.0 * ANCHOR_R0 / ANCHOR_RMIN))   # the canonical picture: the window plus the slack of the smallest disc
+ANCHOR_TILE = L.WM_DISC       # the tile's scale as a multiple of the disc diameter (1.33, as the legacy multi-eye preview)
+ANCHOR_RIM = 4.0              # the overlay fades over this many pixels at the disc's rim (iris._iris_mark)
+_CANON = {}                   # words -> the canonical overlay (uint8, ANCHOR_SIDE square); at most one per language
+
+
+def _canon(text):
+    a = _CANON.get(text)
+    if a is None:
+        a = np.asarray(L._watermark_layer(ANCHOR_SIDE, ANCHOR_SIDE, ANCHOR_TILE * 2.0 * ANCHOR_R0, text).getchannel("A"), np.uint8)
+        while len(_CANON) >= 4:                        # four languages: a bound, not a cache that can grow
+            _CANON.pop(next(iter(_CANON)))
+        _CANON[text] = a
+    return a
+
+
+def anchored_alpha(text, cx, cy, r, box, rot=0.0):
+    """The canonical overlay as one disc's view sees it: float32 (h, w) of the tile's own opacity (0 to 1, the words at 40/255) over the integer pixel
+    box (x0, y0, x1, y1) of the view, for a disc at (cx, cy) of radius r (pixel centres at +0.5), turned rot degrees counter clockwise. A resampling of
+    the canonical picture with the box as the source region, so a disc centre between pixels moves the words by that fraction of a pixel."""
+    canon = _canon(text)
+    side = float(canon.shape[0])
+    c0, k = side / 2.0, ANCHOR_R0 / float(r)
+    x0, y0, x1, y1 = box
+    src = Image.fromarray(canon, "L")
+    if rot:
+        src = src.rotate(float(rot), resample=Image.BICUBIC)
+    sbox = tuple(min(max(v, 0.0), side) for v in (c0 + (x0 - cx) * k, c0 + (y0 - cy) * k, c0 + (x1 - cx) * k, c0 + (y1 - cy) * k))
+    return np.asarray(src.resize((x1 - x0, y1 - y0), Image.LANCZOS, box=sbox), np.float32) / np.float32(255.0)
+
+
+def _anchored(W, H, discs, text, mask="disc"):
+    """(A, M, box) or None: the white alpha of the iris overlay (the tile's words WATERMARK_IRIS times as opaque, as iris._iris_mark) and the weight
+    of the overlay against the canvas tile, as float32 (h, w) over box = (x0, y0, x1, y1), the union of the discs' windows inside the canvas. mask
+    "disc": the weight is 1 inside the disc and fades to 0 over ANCHOR_RIM pixels at its rim (outside it the canvas tile is untouched); "window": 1
+    over the whole window (the display copy, which is nothing but the iris). Where discs overlap the disc with the larger weight wins, the first on a tie."""
+    wins = []
+    for d in discs or ():
+        try:
+            cx, cy, r = float(d[0]), float(d[1]), float(d[2])
+            rot = float(d[3]) if len(d) > 3 and d[3] else 0.0
+        except (TypeError, ValueError, IndexError):
+            continue
+        if not (math.isfinite(cx) and math.isfinite(cy) and math.isfinite(rot) and math.isfinite(r) and r >= ANCHOR_RMIN):
+            continue
+        half = int(math.ceil(ANCHOR_WINDOW * r)) + 2
+        x0, y0 = max(0, int(math.floor(cx - half))), max(0, int(math.floor(cy - half)))
+        x1, y1 = min(int(W), int(math.ceil(cx + half))), min(int(H), int(math.ceil(cy + half)))
+        if x1 > x0 and y1 > y0:
+            wins.append((cx, cy, r, rot, x0, y0, x1, y1))
+    if not wins:
+        return None
+    X0, Y0 = min(w[4] for w in wins), min(w[5] for w in wins)
+    X1, Y1 = max(w[6] for w in wins), max(w[7] for w in wins)
+    A = np.zeros((Y1 - Y0, X1 - X0), np.float32)
+    M = np.zeros_like(A)
+    for cx, cy, r, rot, x0, y0, x1, y1 in wins:
+        want = np.minimum(np.float32(1.0), anchored_alpha(text, cx, cy, r, (x0, y0, x1, y1), rot) * np.float32(L.WATERMARK_IRIS))
+        if mask == "window":
+            m = np.ones_like(want)
+        else:
+            dy = (np.arange(y0, y1, dtype=np.float32) + np.float32(0.5 - cy))[:, None]
+            dx = (np.arange(x0, x1, dtype=np.float32) + np.float32(0.5 - cx))[None, :]
+            m = np.clip((np.float32(r + 2.0) - np.sqrt(dx * dx + dy * dy)) / np.float32(ANCHOR_RIM), 0, 1)
+        sl = (slice(y0 - Y0, y1 - Y0), slice(x0 - X0, x1 - X0))
+        better = m > M[sl]
+        A[sl] = np.where(better, want, A[sl])
+        M[sl] = np.maximum(M[sl], m)
+    return A, M, (X0, Y0, X1, Y1)
+
+
+def _paint(region, A, shade):
+    """The words over a region (float32 (h, w, 3), 0 to 255): a soft dark copy of them (1 px down and right, 1 px blur, WATERMARK_IRIS_SHADOW of their
+    opacity, shade being the opacity it is made from) under the white ones, as iris._iris_mark draws them."""
+    sh = np.zeros_like(A)
+    sh[1:, 1:] = shade[:-1, :-1] * np.float32(L.WATERMARK_IRIS_SHADOW)
+    sh = np.asarray(Image.fromarray(np.round(sh * 255.0).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.0)), np.float32) / np.float32(255.0)
+    out = region * (np.float32(1.0) - sh[..., None])
+    return out * (np.float32(1.0) - A[..., None]) + np.float32(255.0) * A[..., None]
+
+
+def _badge(out, accent, u, lang=None, note=None):
+    """The badge at the top centre (and the optional note under it), drawn as iris._watermark draws it, on the picture itself: a pill cut to its
+    measured text and filled opaque first, so drawing it a second time over itself gives the same pixels."""
+    badge = L.WATERMARK_TEXT.get(lang or L.page_lang(), L.WATERMARK_TEXT["en"])[1]
+    W, H = out.size
+    d = ImageDraw.Draw(out)
+    fp = L._font("PlusJakartaSans.ttf", int(u * 0.016), "Bold")
+    half = min(W / 2.0 - 2.0, d.textlength(badge, font=fp) / 2.0 + u * 0.022)
+    d.rounded_rectangle((W / 2.0 - half, u * 0.03, W / 2.0 + half, u * 0.07), radius=int(u * 0.02), fill=(0, 0, 0, 200), outline=accent)
+    d.text((W / 2, u * 0.05), badge, font=fp, fill=accent, anchor="mm")
+    if note:
+        fn, txt = L._font("PlusJakartaSans.ttf", int(u * 0.014), "Bold"), str(note).upper()
+        hn = min(W / 2.0 - 2.0, d.textlength(txt, font=fn) / 2.0 + u * 0.016)
+        d.rounded_rectangle((W / 2.0 - hn, u * 0.077, W / 2.0 + hn, u * 0.107), radius=int(u * 0.015), fill=(0, 0, 0, 200))
+        d.text((W / 2, u * 0.092), txt, font=fn, fill=accent, anchor="mm")
+    return out
+
+
+def watermark(img, accent, discs, lang=None, note=None):
+    """The free preview of a picture of the v3 engine: img (PIL RGB, the clean render) with the preview watermark, as a new image. Everything
+    outside the discs is exactly iris._watermark's (the faint tile of words over the whole canvas, anchored to the canvas, and the badge); on each
+    disc (cx, cy, r[, rot]: the visible iris disc in canvas pixels, pixel centres at +0.5) the canvas tile is replaced by the iris-anchored
+    overlay at the strength of the display copy (see the module text). An engine never draws any of it: the paid file has none."""
+    W, H = img.size
+    u = min(W, H)
+    live = [d for d in (discs or ()) if len(d) >= 3]
+    dia = max((2.0 * float(d[2]) for d in live), default=float(u))
+    base = L._watermark(img, accent, u, tile_u=min(float(u), L.WM_DISC * dia), note=note, lang=lang)
+    if not live:
+        return base
+    words = L.WATERMARK_TEXT.get(lang or L.page_lang(), L.WATERMARK_TEXT["en"])[0]
+    got = _anchored(W, H, live, words)
+    if got is None:
+        return base
+    A, M, box = got
+    painted = _paint(np.asarray(img.convert("RGB").crop(box), np.float32), A, A * M)
+    cur = np.asarray(base.crop(box), np.float32)
+    m = M[..., None]
+    region = np.where(m > 0, np.round(cur * (np.float32(1.0) - m) + painted * m), cur)
+    base.paste(Image.fromarray(np.clip(region, 0, 255).astype(np.uint8)), (box[0], box[1]))
+    return _badge(base, accent, u, lang, note)
+
+
 # ----------------------------------------------------------------------------- the display copy
-def display_image(clean, lang=None):
-    """The restored iris as the page shows it: DISPLAY_SIDE px with the preview tile (iris._watermark_layer, the words
-    of WATERMARK_TEXT in lang, the requesting page's language when not given) drawn across the whole square, iris
-    included, at DISPLAY_ALPHA its artwork strength over a soft dark shadow."""
+def display_image(clean, lang=None, pad=DISPLAY_PAD):
+    """The restored iris as the page shows it: DISPLAY_SIDE px with the iris-anchored overlay (words of WATERMARK_TEXT in lang, the requesting page's
+    language when not given) over the whole square, iris included, at the strength of the discs of a preview, over a soft dark shadow. pad is the crop
+    padding the iris was cut with (the disc has radius 1 / (2 pad) of the side, centred): the overlay is the one every tile and preview of that
+    iris carries, in the same place on the iris."""
     side = DISPLAY_SIDE
     im = clean.convert("RGB")
     if im.size != (side, side):
         im = im.resize((side, side), Image.LANCZOS)
     words = L.WATERMARK_TEXT.get(lang or L.page_lang(), L.WATERMARK_TEXT["en"])[0]
-    alpha = L._watermark_layer(side, side, side * DISPLAY_TILE, words).getchannel("A")
-    alpha = alpha.point(lambda v: min(255, int(round(v * DISPLAY_ALPHA))))
-    out = im.convert("RGBA")
-    zero = Image.new("L", (side, side), 0)
-    if DISPLAY_SHADOW:
-        shade = Image.new("L", (side, side), 0)
-        shade.paste(alpha.point(lambda v: int(round(v * DISPLAY_SHADOW))), (1, 1))
-        out = Image.alpha_composite(out, Image.merge("RGBA", (zero, zero, zero, shade.filter(ImageFilter.GaussianBlur(1.0)))))
-    white = Image.new("L", (side, side), 255)
-    out = Image.alpha_composite(out, Image.merge("RGBA", (white, white, white, alpha)))
-    return out.convert("RGB")
+    try:
+        pad = float(pad)
+        pad = pad if 1.0 <= pad <= 2.0 else DISPLAY_PAD
+    except (TypeError, ValueError):
+        pad = DISPLAY_PAD
+    got = _anchored(side, side, [(side / 2.0, side / 2.0, side * L.iris_radius_frac(pad))], words, mask="window")
+    if got is None:
+        return im
+    A, M, box = got
+    painted = _paint(np.asarray(im.crop(box), np.float32), A, A)
+    out = im.copy()
+    out.paste(Image.fromarray(np.clip(np.round(painted), 0, 255).astype(np.uint8)), (box[0], box[1]))
+    return out
 
 
-def display_b64(clean, lang=None):
+def display_b64(clean, lang=None, pad=DISPLAY_PAD):
     buf = io.BytesIO()
-    display_image(clean, lang).save(buf, "JPEG", quality=DISPLAY_QUALITY, comment=DISPLAY_MARK)
+    display_image(clean, lang, pad).save(buf, "JPEG", quality=DISPLAY_QUALITY, comment=DISPLAY_MARK)
     return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
@@ -295,10 +440,11 @@ def protect(clean_im, clean_bytes, lang=None, profile=None):
     eid = eye_id_of(clean_bytes)
     wire = _profile_wire(profile, eid) if profile is not None else b""
     wire = wire or None
+    pad = getattr(profile, "pad", None) if profile is not None else None       # the display copy's overlay is anchored to the iris disc: its padding
     sizes = {}
     for s in COMPOSE_SIDES:
         buf = io.BytesIO()
         clean_im.convert("RGB").resize((s, s), Image.LANCZOS).save(buf, "JPEG", quality=COMPOSE_QUALITY)
         sizes[str(s)] = seal(buf.getvalue(), kind=KIND_COMPOSE, eye_id=eid, profile=wire)
-    return {"image": display_b64(clean_im, lang), "sealed": seal(clean_bytes, kind=KIND_ORDER, eye_id=eid, profile=wire),
+    return {"image": display_b64(clean_im, lang, pad if isinstance(pad, float) else DISPLAY_PAD), "sealed": seal(clean_bytes, kind=KIND_ORDER, eye_id=eid, profile=wire),
             "sealed_sizes": sizes}
