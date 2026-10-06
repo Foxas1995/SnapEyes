@@ -33,7 +33,10 @@
 //   9. the byte budget: the files of api/ plus the recorded size of the Python packages stay under 235 MiB for a rendering function (the
 //      documented limit is 500 MB; 235 is the plan's own tripwire until the real size is read from a deployment);
 //  10. vercel.json names every function of api/ on its own (no catch-all glob), with one shared maxDuration, and only compose, master_compose,
-//      order and admin keep the plates and the atlases (the other seven exclude them);
+//      order and admin keep the plates and the atlases (the other seven exclude them); and the project folder never holds node_modules while Vercel
+//      bundles the Python functions: the install step does nothing and the site is built in a copy outside the folder (scripts/vercel_build.sh),
+//      because a node_modules in the folder rode into every bundle and put the four rendering functions over the size limit (Preview deployments of
+//      2026-10-06 failed that way, the same tree without it deployed);
 //  11. (not a refusal) the registry hash is printed: 12 hex digits of the sha256 of both literals in canonical form;
 //  12. provenance: no image of the repository is byte for byte one of the owner's reference works or one of the calibration irises (the deny list of
 //      hashes in scripts/hygiene_denylist.json): the originals never enter the repository;
@@ -727,6 +730,10 @@ export function checkFunctions(root, out, rendering = RENDERING) {
   let v;
   try { v = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8')); } catch (e) { out.push(`vercel.json: cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`); return; }
   const fns = isObj(v.functions) ? v.functions : {};
+  // the build (see item 10 above): no node_modules in the project folder at any time, the page is built in a copy and only dist/ comes back
+  if (v.installCommand !== 'echo skip') out.push('vercel.json: installCommand must be "echo skip": an install into the project folder puts node_modules where Vercel bundles the Python functions from, and it rides into every bundle (the rendering functions then pass the size limit and the deployment fails)');
+  if (typeof v.buildCommand !== 'string' || !/(^|[\s;&|])bash scripts\/vercel_build\.sh(\s|$)/.test(v.buildCommand)) out.push('vercel.json: buildCommand must run scripts/vercel_build.sh (it builds the page in a copy outside the project folder: npm install and npm run build in the folder itself leave node_modules in the bundles of the functions)');
+  if (v.outputDirectory !== 'dist') out.push('vercel.json: outputDirectory must be "dist" (scripts/vercel_build.sh brings the built page back there)');
   const handlers = readdirSync(join(root, 'api')).filter((n) => /^[^_.][^/]*\.py$/.test(n) && isFile(join(root, 'api', n))).map((n) => n.slice(0, -3)).sort();
   for (const h of handlers) if (!(`api/${h}.py` in fns)) out.push(`vercel.json: no functions entry for api/${h}.py (one entry per function: a catch-all glob leaves the size and the plates of each function to a rule nobody verified)`);
   for (const key of Object.keys(fns)) {

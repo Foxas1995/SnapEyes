@@ -547,6 +547,11 @@ check("vercel.json: eleven entries, one per function of api/, no glob, one maxDu
       sorted(k[4:-3] for k in vj["functions"]) == handlers and len(handlers) == 11 and len({v["maxDuration"] for v in vj["functions"].values()}) == 1
       and all(("api/_assets/plates/**" in v["excludeFiles"]) == (k[4:-3] not in ("admin", "compose", "master_compose", "order")) for k, v in vj["functions"].items())
       and all("suites/**" in v["excludeFiles"] for v in vj["functions"].values()), list(vj["functions"]))
+check("vercel.json: the install step does nothing and the page is built in a copy outside the project folder by scripts/vercel_build.sh (a node_modules in the folder rides into every function bundle: "
+      "Preview deployments of 2026-10-06 failed on it), and that script exists, is LF only and does what it says (copy without node_modules, npm ci and npm run build there, dist/ back)",
+      vj.get("installCommand") == "echo skip" and vj.get("buildCommand") == "bash scripts/vercel_build.sh" and vj.get("outputDirectory") == "dist"
+      and os.path.isfile(os.path.join(REPO, "scripts", "vercel_build.sh")) and b"\r" not in open(os.path.join(REPO, "scripts", "vercel_build.sh"), "rb").read()
+      and all(w in read("scripts/vercel_build.sh") for w in ("--exclude=./node_modules", "npm ci", "npm run build", "cp -a \"$WORK/dist\"")), vj.get("buildCommand"))
 rep = subprocess.run([NODE, "scripts/bundle_report.mjs", "--json"], cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=300)
 rj = json.loads(rep.stdout)
 byname = {r["name"]: r for r in rj["rows"]}
@@ -687,6 +692,9 @@ cases = [
     ("vercel.json: another maxDuration", vj_edit(lambda d: d["functions"]["api/analyze.py"].update({"maxDuration": 300})), "do not share one maxDuration"),
     ("vercel.json: includeFiles puts the plates back into a function that never renders", vj_edit(lambda d: d["functions"]["api/analyze.py"].update({"includeFiles": "api/_assets/plates/**"})), "api/analyze.py: includeFiles puts files back"),
     ("vercel.json: a key the check does not read (memory)", vj_edit(lambda d: d["functions"]["api/compose.py"].update({"memory": 3008})), "api/compose.py: the key \"memory\" is not one this check reads"),
+    ("vercel.json: the install step installs node_modules into the project folder", vj_edit(lambda d: d.pop("installCommand")), "installCommand must be \"echo skip\""),
+    ("vercel.json: the page is built in the project folder", vj_edit(lambda d: d.update({"buildCommand": "npm install && npm run build"})), "buildCommand must run scripts/vercel_build.sh"),
+    ("vercel.json: another output folder", vj_edit(lambda d: d.update({"outputDirectory": "build"})), "outputDirectory must be \"dist\""),
     ("vercel.json: not JSON", lambda r: open(os.path.join(r, "vercel.json"), "w").write("{"), "vercel.json: cannot be read as JSON"),
     ("a repository image that is byte for byte a reference work", lambda r: add_file(r, "public/assets/h10.png", b"\x89PNG a reference work"), "public/assets/h10.png: is byte for byte \"wave-y3/ref/H10.png\""),
     ("a calibration iris under another name and folder", lambda r: add_file(r, "src/landing/eye.png", b"\x89PNG a calibration iris"), "src/landing/eye.png: is byte for byte \"wave-g/live/out/x_2_enhanced.jpg\""),

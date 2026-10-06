@@ -1,42 +1,25 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
+  "installCommand": "echo skip",
+  "buildCommand": "bash scripts/vercel_build.sh",
+  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/assets/landing/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
       "source": "/assets/(.*).js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
       "source": "/assets/(.*).css",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
       "source": "/assets/atelier/fonts/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=604800, stale-while-revalidate=86400"
-        }
-      ]
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }]
     }
   ],
   "functions": {
@@ -90,8 +73,5 @@
       "path": "/api/order",
       "schedule": "17 3 * * *"
     }
-  ],
-  "installCommand": "echo skip",
-  "buildCommand": "bash scripts/vercel_build.sh",
-  "outputDirectory": "dist"
+  ]
 }
