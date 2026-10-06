@@ -1,10 +1,11 @@
 // The taste gate (motion spec 5.7): the patterns that make a quiet, expensive page look like a template, found in the source.
-//   npm run check:taste              report mode: prints every hit and exits 0
-//   node scripts/check_taste.mjs --strict    exits 1 when there is a hit outside the allowlist
+//   npm run check:taste              exits 1 when there is a hit outside the allowlist (the gate since /try and /order were migrated, I3)
+//   node scripts/check_taste.mjs --report    prints every hit and exits 0 (the report mode the gate had while the debt was open)
 // It reads src/**/*.ts, tsx and css except src/admin (the owner's panel keeps its own look), strips comments (the rules are quoted in comments),
 // and matches whole class tokens ("animate-pulse" does not fire on "animate-pulse-slow"). The allowlist names FILES, with a reason, in this file:
-// an effect that really needs an exception goes in there in the same commit that adds it. Report mode exists because the gate cannot pass on
-// today's code (the debt is in /try, /order and src/index.css, which the next phase migrates): the last commit of that phase flips it to --strict.
+// an effect that really needs an exception goes in there in the same commit that adds it. Until the motion of /try and /order (I3) the gate could not
+// pass on the code (the debt was in those two pages and in src/index.css) and ran in report mode; they are migrated, the utilities of the old look are
+// gone from src/index.css, so a hit now exits 1.
 //
 // What it refuses: animate-pulse, animate-spin, animate-bounce, animate-ping (loops: BR-3); text-shadow and gradient text (BR-4: no neon);
 // filter blur (AC-2, and a blur on the page's own surfaces costs frames); font-black (the display type is 500 and 600); a gold gradient fill
@@ -14,7 +15,7 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
-const strict = process.argv.includes('--strict');
+const strict = !process.argv.includes('--report');
 
 /** file (relative to the root, forward slashes) -> why it may carry a blurred surface */
 const ALLOW_BLUR = {
