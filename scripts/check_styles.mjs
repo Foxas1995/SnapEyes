@@ -11,7 +11,7 @@
 //   3. a style id is written in a file of api/, src/ or scripts/ outside the registry, the engine table of the legacy engine and
 //      the copy dictionaries the allow list below names (the "no other copy" scan check_prices.mjs does for prices; a word
 //      boundary that counts "_" as a word character, so the price keys one_eye_studio_black and one_eye_art are not style ids);
-//   4. a copy dictionary keyed by style id (the landing page's styles.desc) has other keys than the ids shown to customers
+//   4. a copy dictionary keyed by style id (any surface of the pages; the new landing words its tiles by tile id, item 15, so today none is) has other keys than the ids shown to customers
 //      (stage preview or live) in some language; and, from the work package that rewrites the texts (WP12_RULES below), a string
 //      that states a number of styles;
 //   5. the layout words (api/_lib/layout_names.py, the one table of them) are not plain JSON, lack one of the four languages for a layout
@@ -25,7 +25,7 @@
 //   7. the terms of sale name the price classes: the rows of the black class print the name of its one v3 member (the legacy ids retire at the
 //      cutover and are not named; a second member, or a rename, needs a text change and a new LEGAL_UPDATED); and, from WP12_RULES, no terms
 //      table prints a number of eyes as a maximum (neither \${MAX_EYES} nor a digit before "eyes") and the landing's art row and eye limit come
-//      from the run-time tokens ({styles}, {max});
+//      from the run-time tokens ({styles}, {max}: src/landing/copy/<lang>.json pricing.rows.art.b and pricing.rows.more.b);
 //   8. the plate library baked into api/_lib/plates_registry.py is sound (its version is the registry's, every plate is well formed, every
 //      usable plate's 1K file is in api/_assets/plates with the recorded size and sha256 and no file rides in unlisted, the two atlases
 //      likewise, the engine entries name only families and atlases that exist) and every style shown to customers (stage preview or live) has
@@ -44,6 +44,11 @@
 //      ceiling it is "preview" or "lab" (a ceiling raised in this file never makes anything orderable by itself: only the owner's recorded tick in the admin page
 //      does), and no legacy id is live (the cutover raises the ceilings and retires the six legacy ids in one change); DEFAULT_STYLE is a style of the v3 engine
 //      once the legacy ids are retired.
+//  15. the landing's tiles (the merge of the new landing with the registry): every tile of the style gallery (src/landing/assets.data.ts GALLERY) has a row
+//      in src/landing/tileStyle.ts that names a style of the registry taking that many eyes, in the group of the tile, in the price class the tile prints
+//      (an art tile of an art style, the black tile of the black one), not retired; no row names a tile the gallery does not have; and every language's
+//      styles.items has an entry for exactly the gallery's tiles. A tile is for sale only when the run-time catalogue lists that style live for that many
+//      eyes (src/landing/StyleTile.tsx): without a row it would never carry a price, and a wrong row would print the price of another style.
 // Items 8, 9, 10, 12 and 13 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
 // `npm run check:styles` runs it alone.
@@ -87,6 +92,7 @@ const PET_WORDS = ['paw', 'paws', 'bone', 'bones', 'cat', 'cats', 'dog', 'dogs',
 export const ID_ALLOW = {
   'api/_lib/iris.py': 'the legacy engine\'s own table (STYLES: background, accent, title per legacy id); item 1 keeps its keys and accents equal to the registry\'s legacy block',
   'src/landing/assets.data.ts': 'the landing\'s release gate table (ENGINE_STYLE: the legacy engine style each gallery tile could be made with, generated from scripts/landing_assets.json by scripts/build_landing_assets.py); the gate is replaced by the registry\'s own reading in the release task that follows the merge of landing-v2',
+  'src/landing/tileStyle.ts': 'the gallery\'s tile-to-style table (which registry style and how many eyes each tile of the new landing stands for); item 15 keeps it equal to the gallery and the registry',
   'api/_lib/styles/collision/scenes.py': 'the scene key of a collision artwork is the registry id of its style: it is part of the prototype\'s seed in step A (WP7A), which step B (WP7B) replaces by the plan\'s seed key',
 };
 // folders of a scan that never hold customer-facing code: the style suites (they name ids to test them) and this check's own files
@@ -534,13 +540,51 @@ export function checkTerms(root, styles, out, files = TERMS_FILES, enforce = WP1
   }
 }
 
-/** The landing's pricing rows take the list of art styles and the eye limit only from the run-time tokens (enforced from WP12_RULES). */
+/** The landing's pricing rows take the list of art styles and the eye limit only from the run-time tokens (enforced from WP12_RULES): the row of the art
+ *  class says exactly {styles} (what the catalogue lists as for sale now) and the sentence of the several-eyes row holds {max}, in every language of the
+ *  new landing's copy (src/landing/copy/<lang>.json). copy: {lang: that file's parsed JSON}. */
 export function checkRuntimeTokens(copy, out) {
   for (const [lang, c] of Object.entries(copy ?? {})) {
-    const note = c?.pricing?.artBackgroundNote;
-    if (typeof note === 'string' && !note.includes('{styles}')) out.push(`landing.${lang}.pricing.artBackgroundNote must be the token {styles} (the list of art styles comes from the run-time catalogue), not a written list`);
-    const several = c?.pricing?.severalNote;
-    if (typeof several === 'string' && !several.includes('{max}')) out.push(`landing.${lang}.pricing.severalNote must hold the token {max} (the number of eyes comes from the run-time catalogue), not a written number`);
+    const art = c?.pricing?.rows?.art?.b;
+    if (typeof art === 'string' && !art.includes('{styles}')) out.push(`landing.${lang}.pricing.rows.art.b must be the token {styles} (the list of art styles comes from the run-time catalogue), not a written list`);
+    const several = c?.pricing?.rows?.more?.b;
+    if (typeof several === 'string' && !several.includes('{max}')) out.push(`landing.${lang}.pricing.rows.more.b must hold the token {max} (the number of eyes comes from the run-time catalogue), not a written number`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------- 15. the landing's tiles
+const TILE_GROUP = { one: 'solo', two: 'duo', family: 'grp' };
+const TILE_EYES = { art: () => 1, black: () => 1, two: () => 2, n: (t) => t.n };
+
+/** Item 15: the tile table of the landing against the gallery and the registry. tileStyle: TILE_STYLE of src/landing/tileStyle.ts; gallery: GALLERY of
+ *  src/landing/assets.data.ts; styles: the registry's; copy: {lang: the landing copy JSON}. */
+export function checkLandingTiles(tileStyle, gallery, styles, copy, out) {
+  const at = 'src/landing/tileStyle.ts';
+  if (!isObj(tileStyle)) { out.push(`${at}: TILE_STYLE not found (the style check reads it)`); return; }
+  if (!isObj(gallery)) { out.push('src/landing/assets.data.ts: GALLERY not found (the style check reads it)'); return; }
+  const tiles = [];
+  for (const group of ['one', 'two', 'family']) for (const t of gallery[group] ?? []) tiles.push([group, t]);
+  const ids = new Set(tiles.map(([, t]) => t.id));
+  for (const [group, t] of tiles) {
+    const row = tileStyle[t.id];
+    if (!row) { out.push(`${at}: the tile "${t.id}" of the gallery has no row: it could never be for sale, and no price may stand beside it`); continue; }
+    const d = isObj(styles) ? styles[row.id] : undefined;
+    if (!d) { out.push(`${at}: the tile "${t.id}" names the style "${row.id}", which is not in ${STYLES_FILE}`); continue; }
+    if (!isInt(row.eyes) || row.eyes < d.eyes[0] || row.eyes > d.eyes[1]) out.push(`${at}: the tile "${t.id}" shows ${row.eyes} eyes, but "${row.id}" takes ${d.eyes[0]} to ${d.eyes[1]}`);
+    if (d.stage === 'retired') out.push(`${at}: the tile "${t.id}" names "${row.id}", which is retired (it can never be bought again)`);
+    if (d.group !== TILE_GROUP[group]) out.push(`${at}: the tile "${t.id}" is in the gallery group "${group}", "${row.id}" is a style of the group "${d.group}"`);
+    const want = TILE_EYES[t.price]?.(t);
+    if (want === undefined) out.push(`src/landing/assets.data.ts: the tile "${t.id}" has the price kind "${t.price}", which this check does not know`);
+    else if (row.eyes !== want) out.push(`${at}: the tile "${t.id}" prints the price of ${want} eye(s), its row says ${row.eyes}`);
+    if ((t.price === 'art' || t.price === 'black') && d.price_class !== t.price) out.push(`${at}: the tile "${t.id}" prints the ${t.price} one-eye price, "${row.id}" is of the price class "${d.price_class}"`);
+  }
+  for (const id of Object.keys(tileStyle)) if (!ids.has(id)) out.push(`${at}: the row "${id}" names no tile of the gallery`);
+  for (const [lang, c] of Object.entries(copy ?? {})) {
+    const items = c?.styles?.items;
+    if (!isObj(items)) { out.push(`landing.${lang}.styles.items not found`); continue; }
+    const keys = Object.keys(items);
+    for (const id of ids) if (!keys.includes(id)) out.push(`landing.${lang}.styles.items has no entry for the tile "${id}"`);
+    for (const k of keys) if (!ids.has(k)) out.push(`landing.${lang}.styles.items has the entry "${k}", which is no tile of the gallery`);
   }
 }
 
@@ -764,6 +808,16 @@ export function describePlates(root) {
   } catch { return ''; }
 }
 
+/** The new landing's words, one parsed file per language of the site (src/landing/copy/<lang>.json): {lang: JSON}; a file that is missing or not JSON is reported. */
+function readLandingCopy(root, out) {
+  const copy = {};
+  for (const lang of LAYOUT_LANGS) {
+    const rel = `src/landing/copy/${lang}.json`;
+    try { copy[lang] = JSON.parse(readFileSync(join(root, rel), 'utf8').replace(/^\ufeff/, '')); } catch (e) { out.push(`${rel}: cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`); }
+  }
+  return copy;
+}
+
 // ---------------------------------------------------------------------------------------------------- the whole check
 /** Every problem found, as sentences ([] when the registry is sound). load(path): a module of src/ through Vite's module runner
  *  (vite.config.ts); without it the checks that need the page code (the pages' reading of the registry and of the layout words, 4, 6) are left out. */
@@ -796,21 +850,24 @@ export async function checkStyles(root, load) {
   let client = null;
   let pageNames;
   if (load) {
-    const [stylesTs, layoutsTs, markets, landing, tryCopy, orderCopy] = await Promise.all([
+    const [stylesTs, layoutsTs, markets, landing, tryCopy, orderCopy, tileTs, galleryTs] = await Promise.all([
       load('./src/shared/styles.ts'), load('./src/shared/layouts.ts'), load('./src/shared/markets.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'),
-      load('./src/order/copy.ts'),
+      load('./src/order/copy.ts'), load('./src/landing/tileStyle.ts'), load('./src/landing/assets.data.ts'),
     ]);
+    const landingJson = readLandingCopy(root, out);
     client = markets;
     pageNames = layoutsTs.LAYOUT_NAMES;
     if (!sameJson(stylesTs.STYLES, reg.styles)) out.push('src/shared/styles.ts reads another STYLES than api/_lib/styles_registry.py holds');
     if (stylesTs.DEFAULT_STYLE !== reg.defaultStyle) out.push(`src/shared/styles.ts reads DEFAULT_STYLE "${stylesTs.DEFAULT_STYLE}", not "${reg.defaultStyle}"`);
     if (stylesTs.STYLES_SCHEMA !== reg.schema || stylesTs.PLATES_VERSION !== reg.platesVersion) out.push('src/shared/styles.ts reads another STYLES_SCHEMA or PLATES_VERSION');
-    surfaces = [['landing', landing.COPY], ['try', tryCopy.COPY], ['order', orderCopy.ORDER_COPY]];
+    // 'landing' is what is left of the old landing's dictionaries (the legal pages' switch label and the sentences /try repeats), 'landing page' the new landing's words
+    surfaces = [['landing', landing.COPY], ['landing page', landingJson], ['try', tryCopy.COPY], ['order', orderCopy.ORDER_COPY]];
     checkCopyDictionaries(surfaces, reg.styles, out);
     if (WP12_RULES) {
       checkNumberOfStyles(surfaces, out, indexTexts(root));
-      checkRuntimeTokens(landing.COPY, out);
+      checkRuntimeTokens(landingJson, out);
     }
+    checkLandingTiles(tileTs.TILE_STYLE, galleryTs.GALLERY, reg.styles, landingJson, out);
   }
   checkLayouts(root, reg.styles, names, out, pageNames);
   checkPriceRules(root, reg.styles, client, out);

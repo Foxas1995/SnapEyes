@@ -25,6 +25,8 @@ export interface LandingPriceModule {
   landingPrices: (list: Record<string, number>, market: string, lang: string) => {
     from: string; black: string; art: string; price: string; price2: string;
     eyes: (n: number, cls?: 'black' | 'art') => string;
+    of: (id: string, n: number) => string;
+    fromOf: (ids: readonly string[]) => string | null;
   };
 }
 

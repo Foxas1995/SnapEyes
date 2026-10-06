@@ -40,6 +40,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch, sleep } from './lib/cdp.mjs';
 import { serve } from './lib/static.mjs';
+import { checkoutAnswer } from './lib/stubapi.mjs';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -78,7 +79,7 @@ const handler = (req, res) => {
   if (skew.on && skew.hang && skew.chunk && url.pathname.includes(skew.chunk)) return true;   // a stalled connection: the request is never answered
   if (skew.on && skew.chunk && url.pathname.includes(skew.chunk)) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('gone'); return true; }
   if (url.pathname === '/api/health') { later({ stripe: true, stripe_live: false, email: false }); return true; }
-  if (url.pathname === '/api/checkout') { later({ ok: true, open: stub.open, suggest: stub.suggest }); return true; }
+  if (url.pathname === '/api/checkout') { later(checkoutAnswer(ROOT, { open: stub.open, suggest: stub.suggest })); return true; }
   if (url.pathname.startsWith('/api/')) { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{}'); return true; }
   return false;
 };
@@ -321,7 +322,8 @@ async function checkFocus() {
     else pass('focus', `language ${from} -> ${to}: focus stays on the button, the page speaks ${to} (words, html lang, address)`);
   }
   await page.close();
-  // currency
+  // currency (ordering open: the page prints a price only for a style that can be bought now, so the closed page has no price to be in euro or A$)
+  stub.open = true;
   const au = await open({ lang: 'en', query: 'm=au' });
   await au.eval("document.querySelector('#pricing .lp-cur-seg button[data-market=eu]').scrollIntoView({ block: 'center', behavior: 'instant' }); document.querySelector('#pricing .lp-cur-seg button[data-market=eu]').focus(); document.activeElement.click()");
   await sleep(900);
@@ -329,6 +331,7 @@ async function checkFocus() {
   if (cur.pressed !== 'true' || !cur.eur || cur.aud) fail('focus', `currency switch to euro: pressed ${cur.pressed}, euro ${cur.eur}, A$ left ${cur.aud}`);
   else pass('focus', 'currency A$ -> euro: focus stays on the button, every price of the pricing block is in euro');
   await au.close();
+  stub.open = false;
 }
 
 // ---------------------------------------------------------------------------------------------------- overflow

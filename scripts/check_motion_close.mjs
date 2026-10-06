@@ -39,6 +39,7 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { launch, sleep } from './lib/cdp.mjs';
 import { serve } from './lib/static.mjs';
+import { checkoutAnswer } from './lib/stubapi.mjs';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -60,7 +61,7 @@ const handler = (req, res) => {
   const json = (o) => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(o)); };
   if (url.pathname === '/api/health') { json({ stripe: true, stripe_live: false, email: false }); return true; }
   if (url.pathname === '/api/checkout') {
-    if (lateOpen) setTimeout(() => json({ ok: true, open: true, suggest: null }), lateOpen); else json({ ok: true, open: false, suggest: null });
+    if (lateOpen) setTimeout(() => json(checkoutAnswer(ROOT, { open: true })), lateOpen); else json(checkoutAnswer(ROOT, { open: false }));
     return true;
   }
   if (url.pathname.startsWith('/api/')) { res.writeHead(404); res.end('{}'); return true; }

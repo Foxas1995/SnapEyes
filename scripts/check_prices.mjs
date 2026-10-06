@@ -369,7 +369,7 @@ function checkLandingSources(root, out) {
 const LANDING_LANGS = ['en', 'de', 'lt', 'hu'];
 
 /** Every text the page can print for a ladder, with the amount it must show (in Stripe's smallest unit). */
-function landingTexts(p, L) {
+function landingTexts(p, L, styles) {
   const rows = [
     ['from', p.from, Math.min(L.one_eye_studio_black, L.one_eye_art)],
     ['black', p.black, L.one_eye_studio_black],
@@ -382,11 +382,23 @@ function landingTexts(p, L) {
     rows.push([`eyes(${n}, black)`, p.eyes(n, 'black'), ladderRule(L, n, 'black')]);
     rows.push([`eyes(${n}, art)`, p.eyes(n, 'art'), ladderRule(L, n, 'art')]);
   }
+  // the price of n eyes in a style of the registry (the gallery's tiles and the hero's "from" line ask for it by style id): by the style's price class
+  for (const id of Object.keys(styles ?? {})) {
+    for (const n of [1, 2, 3, MAX_EYES]) rows.push([`of(${id}, ${n})`, p.of(id, n), ladderRule(L, n, priceClassOf(styles, id))]);
+  }
+  // the lowest one-eye price among some styles: both classes, one class, none (no text at all)
+  const ids = Object.keys(styles ?? {});
+  const black = ids.filter((id) => priceClassOf(styles, id) === 'black'), art = ids.filter((id) => priceClassOf(styles, id) === 'art');
+  if (black.length && art.length) {
+    rows.push(['fromOf(both classes)', p.fromOf([black[0], art[0]]), Math.min(L.one_eye_studio_black, L.one_eye_art)]);
+    rows.push(['fromOf(black)', p.fromOf([black[0]]), L.one_eye_studio_black]);
+    rows.push(['fromOf(art)', p.fromOf([art[0]]), L.one_eye_art]);
+  }
   return rows;
 }
 
 /** The dynamic check above. landing: src/landing/priceText.ts as the build loaded it; client: src/shared/markets.ts. */
-export function checkLandingPrices(markets, experiments, client, landing, out) {
+export function checkLandingPrices(markets, experiments, client, landing, out, styles) {
   const at = 'src/landing/priceText.ts';
   if (typeof landing?.landingPrices !== 'function') { out.push(`${at}: landingPrices not found (the price check reads it)`); return; }
   if (typeof client?.money !== 'function') { out.push('src/shared/markets.ts: money not found (the price check reads it)'); return; }
@@ -403,11 +415,11 @@ export function checkLandingPrices(markets, experiments, client, landing, out) {
     }
     for (const lang of LANDING_LANGS) {
       let base;
-      try { base = landingTexts(landing.landingPrices(standard, m, lang), standard); } catch (e) { out.push(`${at}: landingPrices threw for market "${m}" in ${lang}: ${e instanceof Error ? e.message : String(e)}`); continue; }
+      try { base = landingTexts(landing.landingPrices(standard, m, lang), standard, styles); } catch (e) { out.push(`${at}: landingPrices threw for market "${m}" in ${lang}: ${e instanceof Error ? e.message : String(e)}`); continue; }
       for (const [label, L, every] of ladders) {
         cases++;
         let got;
-        try { got = landingTexts(landing.landingPrices(L, m, lang), L); } catch (e) { out.push(`${at}: landingPrices threw for ${label}, market "${m}" in ${lang}: ${e instanceof Error ? e.message : String(e)}`); continue; }
+        try { got = landingTexts(landing.landingPrices(L, m, lang), L, styles); } catch (e) { out.push(`${at}: landingPrices threw for ${label}, market "${m}" in ${lang}: ${e instanceof Error ? e.message : String(e)}`); continue; }
         got.forEach(([what, text, minor], i) => {
           const want = client.money(minor, def.currency, lang);
           if (text !== want) out.push(`${at}: ${what} is "${text}" for ${label}, market "${m}" in ${lang}; the ladder's price is ${want}`);
@@ -447,7 +459,10 @@ export function checkPrices(root, client, landing) {
   checkCopies(root, withVariantLadders(markets, experiments), out);
   // the new landing prints only the visitor's own ladder (source rules, then its price texts for every ladder)
   checkLandingSources(root, out);
-  if (client && landing) checkLandingPrices(markets, experiments, client, landing, out);
+  if (client && landing) {
+    checkLandingPrices(markets, experiments, client, landing, out, registry.styles);
+    if (landing.landingPrices(markets[defaultMarket].prices, defaultMarket, 'en').fromOf([]) !== null) out.push('src/landing/priceText.ts: fromOf([]) must be null (no style for sale: the line is not printed)');
+  }
   return out;
 }
 
@@ -455,10 +470,20 @@ export function checkPrices(root, client, landing) {
 // Vite's module runner, as check_texts.mjs and vite.config.ts do, for the checks that run the site's own code.
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const root = join(fileURLToPath(new URL('.', import.meta.url)), '..');
-  const require = createRequire(join(root, 'package.json'));
-  const { runnerImport } = await import(pathToFileURL(require.resolve('vite')).href);
-  const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent', root })).module;
-  const problems = checkPrices(root, await load('./src/shared/markets.ts'), await load('./src/landing/priceText.ts'));
+  // src/ is loaded through Vite for the checks that run the site's own code (the client reading of the prices, the landing's price texts). A tree without Vite (a
+  // throw-away copy of the files, made by a test) still gets every file check: only a MISSING vite is excused, with a note; any other failure stops the check.
+  let client, landing;
+  try {
+    const require = createRequire(join(root, 'package.json'));
+    const { runnerImport } = await import(pathToFileURL(require.resolve('vite')).href);
+    const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent', root })).module;
+    client = await load('./src/shared/markets.ts');
+    landing = await load('./src/landing/priceText.ts');
+  } catch (e) {
+    if (e?.code !== 'MODULE_NOT_FOUND') throw e;
+    console.error(`note: vite is not installed under ${root}, so the checks that run the site's code (src/shared/markets.ts, the landing's price texts) are skipped; the file checks run`);
+  }
+  const problems = checkPrices(root, client, landing);
   const { markets } = parseMarketsSource(readFileSync(join(root, MARKETS_FILE), 'utf8'));
   if (problems.length) {
     console.error(`price check FAILED (${problems.length}):\n  ${problems.join('\n  ')}`);
