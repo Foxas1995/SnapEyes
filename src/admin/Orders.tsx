@@ -6,6 +6,7 @@ import type { Orders, Reply } from './api';
 import type { Call } from './AdminApp';
 import { countBy } from './agg';
 import { AKYS, explain, fmtMoney, fmtTime, ltCount, STATE_LT, STATE_TONE, STYLE_LT } from './format';
+import { gateCodeLt } from './stylesView';
 import { BTN, CARD, Chip, H2, INPUT, MUTED, Notice, Spinner } from './ui';
 
 const PERIODS: [number, string][] = [[7, '7 d.'], [30, '30 d.'], [90, '90 d.'], [400, 'Visi']];
@@ -17,6 +18,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
   const [busy, setBusy] = useState(true);
   const [state, setState] = useState('');
   const [variant, setVariant] = useState('');      // '' all, 'none' no price test, else "<experiment>:<variant>"
+  const [style, setStyle] = useState('');          // '' all, 'none' no style recorded, else the style id
   const [find, setFind] = useState('');
 
   const apply = useCallback((r: Reply<Orders>) => {
@@ -41,7 +43,9 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
   const vkey = (r: Orders['orders'][number]) => (r.experiment ? `${r.experiment.key}:${r.experiment.variant}` : 'none');
   const byVariant = useMemo(() => countBy(rows, vkey), [rows]);
   const hasTests = Object.keys(byVariant).some((k) => k !== 'none');
-  const shown = rows.filter((r) => (!state || r.state === state) && (!variant || vkey(r) === variant) && (!q || r.order.includes(q)));
+  const skey = (r: Orders['orders'][number]) => r.style || 'none';
+  const byStyle = useMemo(() => countBy(rows, skey), [rows]);
+  const shown = rows.filter((r) => (!state || r.state === state) && (!variant || vkey(r) === variant) && (!style || skey(r) === style) && (!q || r.order.includes(q)));
 
   return (
     <div className="flex flex-col gap-4">
@@ -65,6 +69,19 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
             </button>
           ))}
         </div>
+        {Object.keys(byStyle).some((k) => k !== 'none') && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Stilius">
+            <span className={`text-xs self-center ${MUTED}`}>Stilius:</span>
+            <button type="button" onClick={() => setStyle('')} aria-pressed={!style}
+              className={`px-2.5 py-1 rounded-lg text-xs border ${!style ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>Visi</button>
+            {Object.keys(byStyle).sort((a, b) => (a === 'none' ? 1 : b === 'none' ? -1 : (STYLE_LT[a] || a).localeCompare(STYLE_LT[b] || b))).map((k) => (
+              <button key={k} type="button" onClick={() => setStyle(k)} aria-pressed={style === k}
+                className={`px-2.5 py-1 rounded-lg text-xs border ${style === k ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>
+                {k === 'none' ? 'Be stiliaus' : STYLE_LT[k] || k} ({byStyle[k]})
+              </button>
+            ))}
+          </div>
+        )}
         {hasTests && (
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Kainų testas">
             <span className={`text-xs self-center ${MUTED}`}>Kainų testas:</span>
@@ -107,6 +124,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
                 {r.extra_payments ? ` · papildomi mokėjimai: ${r.extra_payments}` : ''}
                 {r.withdrawal ? ' · atsisakymo pareiškimas' : ''}
                 {r.held ? ' · laukia tavo peržiūros' : ''}
+                {r.gate && r.gate !== 'ok' && r.gate !== 'unknown' ? ` · vartai nepraėjo: ${gateCodeLt(r.gate)}` : ''}
                 {r.experiment ? ` · kainų testas: ${r.experiment.variant}${r.experiment.label ? ` (${r.experiment.label})` : ''}` : ''}
               </p>
             </a>

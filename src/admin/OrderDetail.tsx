@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
 import type { EyeView, OrderDetail, Payment, Reply, StepsView } from './api';
 import { StepTable } from './StepTable';
+import { OrderStyle } from './OrderStyle';
+import { optionsText } from './stylesView';
 import { namesText } from './orderWords';
 import type { Call } from './AdminApp';
 import { actionLt, AKYS, explain, fmtBytes, fmtMoney, fmtNum, fmtTime, logResultLt, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
@@ -193,6 +195,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
               ['Kalba', s(spec.lang) || s(orderRec.lang) || '-'],
               ['Kūrinys', d.paid ? `${eyesText(spec.eyes)}, ${STYLE_LT[s(spec.style)] || s(spec.style)}, išdėstymas ${s(spec.layout) || '-'}`
                 : s(obj(checkout.spec).style) ? `mokėjimas pradėtas: ${eyesText(obj(checkout.spec).eyes)}, ${STYLE_LT[s(obj(checkout.spec).style)] || s(obj(checkout.spec).style)}` : 'neapmokėtas'],
+              ['Parinktys', d.paid ? optionsText({ opts: spec.opts, eyes: n(spec.eyes) ?? 0 }) : '-'],
               ['Vardai ant kūrinio', namesText(spec.names) || '-'],
               ['Data ant kūrinio', s(spec.date) || '-'],
               ['Pavadinimas', s(spec.title) || '-'],
@@ -330,6 +333,13 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
             <section className={`${CARD} flex flex-col gap-3`}>
               <h3 className="text-sm font-bold">Gamybos planas ir žingsniai</h3>
               <StepTable view={steps} />
+            </section>
+          )}
+
+          {steps && steps.plan && (
+            <section className={`${CARD} flex flex-col gap-3`}>
+              <h3 className="text-sm font-bold">Stilius, patikros ir peržiūra prieš failą</h3>
+              <OrderStyle d={d} steps={steps} call={call} />
             </section>
           )}
 

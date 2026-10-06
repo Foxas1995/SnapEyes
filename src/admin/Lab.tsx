@@ -14,6 +14,7 @@ import { BTN, CARD, ConfirmDialog, DANGER, ExtLink, GOLD, H2, INPUT, JsonView, M
 import type { ConfirmSpec, Tone } from './ui';
 import { DEFAULT_STYLE, LEGACY_IDS } from '../shared/styles';
 import { StyleLab } from './StyleLab';
+import { GroupLab } from './GroupLab';
 import { LabSteps } from './LabSteps';
 
 const SAMPLE = '/assets/sample_eye_blue_1789706902835.jpg';
@@ -275,6 +276,7 @@ export const LabPage: React.FC<{ call: Call }> = ({ call }) => {
         ))}
       </section>
       <StyleLab call={call} lab={lab} />
+      <GroupLab call={call} lab={lab} />
       <LabSteps call={call} lab={lab} />
       {toast && <Toast tone={toast.tone} onClose={() => setToast(null)}>{toast.text}</Toast>}
       <ConfirmDialog spec={confirm} onClose={() => setConfirm(null)} />

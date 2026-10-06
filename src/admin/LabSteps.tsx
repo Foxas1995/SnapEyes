@@ -4,10 +4,11 @@
 // and set against what the cost table said. "Tik planas" shows the plan and whether it fits this function without drawing anything.
 import { useEffect, useState } from 'react';
 import type React from 'react';
-import type { LabRow, LabStepsResult, StyleLabList } from './api';
+import type { LabRow, LabStepsResult, StepsView, StyleLabList } from './api';
 import type { Call } from './AdminApp';
 import { explain, fmtBytes, fmtSec } from './format';
 import { StepTable } from './StepTable';
+import { ArtworkFacts } from './ArtworkFacts';
 import { BTN, CARD, ExtLink, GOLD, INPUT, MUTED, Notice, Spinner } from './ui';
 
 type J = Record<string, unknown>;
@@ -21,6 +22,7 @@ export const LabSteps: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
   const [running, setRunning] = useState(false);
   const [err, setErr] = useState('');
   const [res, setRes] = useState<LabStepsResult | null>(null);
+  const [view, setView] = useState<StepsView | null>(null);       // the order's plan and the artwork's own record (order_steps): the checks T1 to T12, the memory the step added, the plates
   const orders = lab.filter((l) => l.eyes > 0);
 
   useEffect(() => {
@@ -34,10 +36,16 @@ export const LabSteps: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
   const run = async (mode: 'dry' | 'run' | 'fresh') => {
     const o = order || orders[0]?.order;
     if (!o || !style) return;
-    setErr(''); setRes(null); setRunning(true);
+    setErr(''); setRes(null); setView(null); setRunning(true);
     const r = await call<LabStepsResult>('lab_steps', { order: o, style, names, date, dry: mode === 'dry', fresh: mode === 'fresh' }, 120_000);
+    if (r.ok && r.data) {
+      setRes(r.data);
+      if (mode !== 'dry') {
+        const v = await call<StepsView>('order_steps', { order: o });
+        if (v.ok && v.data) setView(v.data);
+      }
+    } else setErr(explain(r));
     setRunning(false);
-    if (r.ok && r.data) setRes(r.data); else setErr(explain(r));
   };
 
   const art = (res?.artwork || null) as J | null;
@@ -86,6 +94,7 @@ export const LabSteps: React.FC<{ call: Call; lab: LabRow[] }> = ({ call, lab })
             {art && typeof art.bytes === 'number' ? <span className={MUTED}> {String(art.width)} x {String(art.height)} px, {fmtBytes(art.bytes)}{typeof art.seconds === 'number' ? `, ${fmtSec(art.seconds * 1000)}` : ''}</span> : null}
           </p>
           {url && <ExtLink href={url}>Atidaryti 4K kūrinį</ExtLink>}
+          {res.result !== 'dry' && <ArtworkFacts art={(view?.artwork as J | null | undefined) ?? null} done={view?.steps?.[view.steps.length - 1]?.done ?? null} />}
           <StepTable view={res} />
         </div>
       )}

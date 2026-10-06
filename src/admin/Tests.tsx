@@ -11,6 +11,7 @@ import type { ExpCompare, ExpLadder, Experiment, ExpStats, ExpWarning, Experimen
 import type { Call } from './AdminApp';
 import { actionLt, AKYS, explain, fmtMoney, fmtTime, logResultLt, ltCount, STYLE_LT } from './format';
 import { BTN, CARD, Chip, ConfirmDialog, DANGER, GOLD, H2, MUTED, Notice, Rows, Spinner, Toast } from './ui';
+import { stageLt } from './stylesView';
 import type { ConfirmSpec, Tone } from './ui';
 import { priceMinor } from '../shared/markets';
 import { classStyle } from '../shared/styles';
@@ -317,6 +318,27 @@ const logDetail = (d: string | undefined): string => {
   return ` (${key}${words.length ? `, ${words.join(', ')}` : ''})`;
 };
 
+/** The changes of the style switch made while this test ran (api/_lib/abtest.py catalogue_changes, spec 4.4 step 3): a test's result is never read without
+ *  knowing that what could be ordered changed inside its window. */
+const CatalogueChanges: React.FC<{ ex: Experiment }> = ({ ex }) => {
+  const rows = ex.catalogue || [];
+  if (!rows.length) return null;
+  return (
+    <div className="flex flex-col gap-2" role="region" aria-label="Stilių pakeitimai testo metu">
+      <h4 className="text-sm font-bold">Stilių perjungiklio pakeitimai šio testo metu</h4>
+      <Notice tone="warn">Šio testo metu keitėsi tai, kas perkama, todėl jo imtis keitėsi: rezultatą skaityk su šiais pakeitimais.</Notice>
+      <ul className="flex flex-col gap-1">
+        {rows.map((c, i) => (
+          <li key={i} className="text-xs break-words border-t border-white/5 pt-1.5">
+            {fmtTime(c.t, true)} · <b>{STYLE_LT[c.style ?? ''] || c.style}</b>
+            {Object.keys(c.after || {}).map((k) => ` · ${ltCount(Number(k), AKYS)}: iš „${stageLt((c.before || {})[k])}“ į „${stageLt((c.after || {})[k])}“`).join('')}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const ExperimentCard: React.FC<{ ex: Experiment; data: Experiments; call: Call; onChanged: () => void; setNote: (n: Note | null) => void; setConfirm: (c: ConfirmSpec | null) => void }> = ({ ex, data, call, onChanged, setNote, setConfirm }) => {
   const running = ex.state.running;
   const lines = warningLines(ex, data.costs.unit_usd_per_eye);
@@ -374,6 +396,7 @@ const ExperimentCard: React.FC<{ ex: Experiment; data: Experiments; call: Call; 
         ['Paleidimų', String(s0.runs.length)],
         ['Skaičiai', s0.since ? `skaičiuojami nuo pirmo paleidimo (${fmtTime(s0.since)}, prieš ${elapsed(s0.since, data.now)})` : 'nėra ko skaičiuoti'],
       ]} />
+      <CatalogueChanges ex={ex} />
       <div>
         <h4 className="text-sm font-bold mb-2">Kainynai</h4>
         <Ladders ex={ex} />
