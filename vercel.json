@@ -91,6 +91,7 @@
       "schedule": "17 3 * * *"
     }
   ],
-  "buildCommand": "(npm run build || true); rm -rf node_modules; mkdir -p dist; [ -f dist/index.html ] || echo x > dist/index.html",
+  "installCommand": "echo skip",
+  "buildCommand": "bash scripts/vercel_build.sh",
   "outputDirectory": "dist"
 }
