@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import type { FunnelLine, FunnelRow, OrderDetail, Reply, StepsView, StyleCatalogue, StyleChange, StyleRange, StyleRow, StylesStats } from '../../src/admin/api';
 import { ArtworkFacts } from '../../src/admin/ArtworkFacts';
 import { OrderStyle } from '../../src/admin/OrderStyle';
-import { ChosenBlock, DemandBlock, FunnelBlock, GateBlock, TimesBlock } from '../../src/admin/StyleNumbers';
+import { ChosenBlock, ConversionBlock, DemandBlock, ErrorsBlock, FallbackBlock, FunnelBlock, GateBlock, RevealBlock, TimesBlock } from '../../src/admin/StyleNumbers';
 import { RangePanel, StyleCard, type SwitchCtx } from '../../src/admin/StyleSwitch';
 import { StylesPage } from '../../src/admin/Styles';
 import { isFirstN } from '../../src/admin/groupEyes';
@@ -88,6 +88,10 @@ const lint = (raw: string): string[] => {
 export async function run(): Promise<Row[]> {
   const out: Row[] = [];
   const check = (name: string, ok: boolean, detail = '') => out.push([name, ok, detail]);
+  // React reports a missing key, an invalid attribute and the like through console.error: every render below is watched (the server render does not compare keys, so the headers of every table are checked for being distinct below: a duplicate key dropped a column once)
+  const warned: string[] = [];
+  const realError = console.error;
+  console.error = (...a: unknown[]) => { warned.push(a.map(String).join(' ').slice(0, 160)); };
 
   // ------------------------------------------------------------------------------------------------ numbers always come with their n
   check('fmtPct: a Lithuanian decimal comma, whole percents without one, nothing is "-"', fmtPct(0.65) === '65 %' && fmtPct(0.653) === '65,3 %' && fmtPct(1) === '100 %' && fmtPct(null) === '-' && fmtPct(NaN) === '-');
@@ -233,6 +237,7 @@ export async function run(): Promise<Row[]> {
   check('the panel names the range and has the two buttons; a range of several counts offers each count', tp.includes('Peržiūrėti ir patvirtinti') && html(createElement(RangePanel, { row: multi, range: multi.ranges[1], ctx: ctxOf(cc, st), onClose: noop })).includes('aria-pressed="true"'));
 
   // the numbers
+  const blocks = [FunnelBlock, DemandBlock, ChosenBlock, ConversionBlock, GateBlock, FallbackBlock, TimesBlock, ErrorsBlock, RevealBlock].map((B) => html(createElement(B as never, { s: st, cat: cc })));
   const fb = text(html(createElement(FunnelBlock, { s: st })));
   check('the funnel: per eye count the sets with n, the first photo pass as "k of n", the retake as an upper bound with n, the reasons, and the opening criterion green or red; the by-class table too',
     fb.includes('40 rinkinių') && fb.includes('26 iš 40 (65 %)') && fb.includes('95 % (iš 40)') && fb.includes('voko ar blakstienų sektoriai išorėje: 14') && fb.includes('Atidarymo kriterijus įvykdytas')
@@ -281,6 +286,9 @@ export async function run(): Promise<Row[]> {
     ...allWords(), ...stats().attention.map((a) => attentionText(a, nameOf)), auditText(ent), ...auditNumbers(ent), openingView(2, line()).text, red.text, openingView(2, null).text];
   const problems = printed.map((s) => ({ s, bad: lint(s) })).filter((x) => x.bad.length).map((x) => `${x.bad.join('+')}: ${x.s.slice(0, 90)}`);
   check('every sentence the page prints (the dictionaries, the dialog, the answers, the rendered cards, tables and blocks) passes the Lithuanian rules of the text check and holds no dash, no written price, no English word', problems.length === 0, problems.slice(0, 5).join(' | '));
+  console.error = realError;
+  const dupHeads = blocks.flatMap((h) => [...h.matchAll(/<thead[\s\S]*?<\/thead>/g)].map((m) => [...m[0].matchAll(/<th[^>]*>([^<]*)<\/th>/g)].map((x) => x[1]))).filter((hs) => new Set(hs).size !== hs.length);
+  check('every table of the numbers has distinct column headings (a duplicate key would drop a column), and rendering the cards, panels, tables, blocks and the order block raised no React warning', dupHeads.length === 0 && warned.length === 0, `${JSON.stringify(dupHeads)} ${warned.slice(0, 3).join(' | ')}`);
   check('the names of all twelve checks and every stage, class and hold code have a word in the dictionaries', CHECKS.every((c) => allWords().some((w) => w.includes(`(${c})`))) && Object.keys(stats().gate.codes).every((c) => attentionText({ kind: 'hold', code: c, n: 1 }, nameOf).length > 0));
   return out;
 }

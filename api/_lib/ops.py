@@ -781,7 +781,7 @@ def a_order_link(body, who):
     not in the audit log (the order action hands out the same links for every image of the folder)."""
     order = _order(body)
     p = body.get("path")
-    if (not isinstance(p, str) or not re.fullmatch(r"[A-Za-z0-9_./-]{3,120}", p) or p.startswith(("/", ".")) or ".." in p or "//" in p
+    if (not isinstance(p, str) or not re.fullmatch(r"[A-Za-z0-9_./-]{3,120}", p) or any(not seg or seg[0] == "." for seg in p.split("/"))
             or not p.endswith((".jpg", ".png"))):
         raise L.ClientError("path is the name of an image file in the order's folder (a .jpg or a .png).")
     full = f"orders/{order}/{p}"

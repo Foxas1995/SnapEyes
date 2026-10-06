@@ -94,7 +94,7 @@ export const ConversionBlock: React.FC<{ s: StylesStats }> = ({ s }) => (
       rows={s.conversion.rows.map((r) => [nameOf(r.style, r.name), ltCount(r.eyes, AKYS), String(r.previews), String(r.started), rateText(r.rate_started, r.previews),
         String(r.paid), rateText(r.rate_paid, r.started)])} />
     <h4 className="text-xs font-bold text-white/80">Užsakyta po vartų nesėkmės (stilius, kurio vartai tik perspėja, perkamas ir ant nepraėjusio rinkinio)</h4>
-    <Tbl label="Užsakyta po vartų nesėkmės" head={['Akys', 'Pradėta', 'Iš jų nepraėjo vartai', 'Apmokėta', 'Iš jų nepraėjo vartai', 'Dalis apmokėtų', 'Kodai']} empty="Duomenų dar nėra."
+    <Tbl label="Užsakyta po vartų nesėkmės" head={['Akys', 'Pradėta', 'Pradėta, nepraėjo vartai', 'Apmokėta', 'Apmokėta, nepraėjo vartai', 'Dalis apmokėtų', 'Kodai']} empty="Duomenų dar nėra."
       rows={s.after_failure.map((r) => [ltCount(r.eyes, AKYS), String(r.started), String(r.started_failed), String(r.paid), String(r.paid_failed),
         rateText(r.share_paid_failed, r.paid), codes(r.by_code, gateCodeLt)])} />
   </Block>

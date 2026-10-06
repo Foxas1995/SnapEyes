@@ -33,11 +33,10 @@ export const PUPIL_LT: Record<string, string> = { round: 'apvalus', slit: 'verti
 
 /** Eye counts and sets as the panel counts them (Lithuanian noun forms: 1, 21 "rinkinys"; 2 to 9 "rinkiniai"; 0, 10 to 20 "rinkinių"). */
 export const RINKINIAI: [string, string, string] = ['rinkinys', 'rinkiniai', 'rinkinių'];
-export const UZSAKYMAI: [string, string, string] = ['užsakymas', 'užsakymai', 'užsakymų'];
 
 /** The checks of a style going live (spec 4.1, L0 to L11): a name for the owner and one sentence of what it asks for. */
 export const CHECK_LT: Record<string, { name: string; hint: string }> = {
-  L0: { name: 'Nepriklausomas vertinimas (L0)', hint: 'Meno vadovo aklas vertinimas ant tikrų 4096 px meistrų, 100 % didinime: vidurkis bent 3,96 ir nė viena ašis ne žemiau 3,8; arba tavo rašytinis atsisakymas jo.' },
+  L0: { name: 'Nepriklausomas vertinimas (L0)', hint: 'Meno vadovo aklas vertinimas ant tikrų 4096 px akių (4K failų), 100 % didinime: vidurkis bent 3,96 ir nė viena ašis ne žemiau 3,8; arba tavo rašytinis atsisakymas jo.' },
   L1: { name: 'Tavo žvilgsnis į galutinius kūrinius (L1)', hint: 'Tikra grandinė, 4096 px, JPEG kaip pristatomas, bent trys tavo akių rinkiniai, tarp jų silpniausia šio stiliaus klasė.' },
   L2: { name: 'Automatiniai testai praėjo (L2)', hint: 'Testai T1 iki T7, T9, T10 iki T14, T18 ir T19 praėjo veikiančioje funkcijoje.' },
   L3: { name: '4K gamyba telpa į laiką ir atmintį (L3)', hint: 'Vienos, dviejų ir trijų akių 4K kūrinys veikiančiame serveryje telpa į biudžetą, be pakartojimų ciklo.' },
@@ -45,7 +44,7 @@ export const CHECK_LT: Record<string, { name: string; hint: string }> = {
   L5: { name: 'Vartų nesėkmių dažnis perskaitytas (L5)', hint: 'Pirmos 50 tikrų peržiūrų; dviem ir daugiau akių tai rinkinių piltuvas ir atidarymo kriterijus.' },
   L6: { name: 'Vandens ženklas išmatuotas (L6)', hint: 'Kiekvienoje stiliaus drobėje ir visomis keturiomis kalbomis.' },
   L7: { name: 'Pradžios puslapis rodo tik šiuos stilius (L7)', hint: 'Tie patys vardai, tame pačiame leidime.' },
-  L8: { name: 'Tekstus perskaitė gimtakalbiai (L8)', hint: 'Lietuvių ir vengrų kalbomis; teisinius tekstus ir teisininkas.' },
+  L8: { name: 'Tekstus perskaitė gimtakalbiai (L8)', hint: 'Lietuvių ir vengrų kalbomis; teisinius tekstus patikrino ir teisininkas.' },
   L9: { name: 'Pavadinimas patikrintas (L9)', hint: 'Prekių ženklų paieška: EUIPO TMview ir IP Australia.' },
   L10: { name: 'Sveikata ir plokštelės (L10)', hint: '/api/health rodo, kad styles ir plates_4k teisingi; stiliaus plokštelės yra pakete ir, kur reikia, saugykloje.' },
   L11: { name: 'Kainų testas (L11)', hint: 'Joks kainų testas neveikia, arba perskaitei eilutę, kad šis pakeitimas keičia jo imtį.' },
@@ -100,9 +99,9 @@ export const PLAN8_NOTE_LT: Record<string, string> = {
 
 export const HOLD_LT: Record<string, string> = {
   style_step_too_big: 'gamybos žingsnis per didelis šiam serveriui', style_not_priced: 'kainų lentelėje nėra eilutės', engine_skew: 'pasikeitė variklio versija po apmokėjimo',
-  class_changed: 'meistro spalvų klasė kita nei peržiūros', pupil_changed: 'meistro vyzdys kitoks nei peržiūros', style_step_failed: 'žingsnis žuvo tris kartus arba du kartus tą pačią klaidą',
-  plate_unavailable: 'trūksta plokštelės saugykloje', eye_changed: 'meistras padarytas iš kitos peržiūros', picture_drift: 'paveikslėlis nesutampa su planu',
-  design_changed: 'meistro akys prieštarauja planui', plan_mismatch: 'planas kito stiliaus ar akių skaičiaus', no_engine: 'šiame serveryje nėra variklio', style_rolled_back: 'stilius atšauktas ir užsakymas sulaikytas tavo peržiūrai',
+  class_changed: '4K akies spalvų klasė kita nei peržiūros', pupil_changed: '4K akies vyzdys kitoks nei peržiūros', style_step_failed: 'žingsnis žuvo tris kartus arba du kartus tą pačią klaidą',
+  plate_unavailable: 'trūksta plokštelės saugykloje', eye_changed: '4K akis padaryta iš kitos peržiūros', picture_drift: 'paveikslėlis nesutampa su planu',
+  design_changed: '4K akys prieštarauja planui', plan_mismatch: 'planas kito stiliaus ar akių skaičiaus', no_engine: 'šiame serveryje nėra variklio', style_rolled_back: 'stilius atšauktas ir užsakymas sulaikytas tavo peržiūrai',
 };
 export const holdLt = (c: string): string => HOLD_LT[c] || c;
 

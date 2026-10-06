@@ -1444,7 +1444,7 @@ lk2 = act("order_link", order=oid, path="artwork_0123456789abcdef.jpg")
 check("order_link: one signed link of one image of the order's folder, the lifetime of the page's other links, the path echoed",
       lk["ok"] and lk["url"].startswith("file:") and lk["path"] == "draft/eye_1_preview.jpg" and lk["expires_in"] == ops.SIGN_SECONDS and lk2["path"] == "artwork_0123456789abcdef.jpg", (lk, lk2))
 bad_ = [dict(path="../x.jpg"), dict(path="/draft/eye_1_preview.jpg"), dict(path="draft//eye_1_preview.jpg"), dict(path=".hidden.jpg"), dict(path="draft/eye_1.json"), dict(path="draft/eye_1_preview"),
-        dict(path="draft/eye 1.jpg"), dict(path="draft/eye_1%2e.jpg"), dict(path=5), dict(path=None), dict(path="a" * 200 + ".jpg"), dict(path="draft/..%5cx.jpg")]
+        dict(path="draft/eye 1.jpg"), dict(path="draft/eye_1%2e.jpg"), dict(path=5), dict(path=None), dict(path="a" * 200 + ".jpg"), dict(path="draft/..%5cx.jpg"), dict(path="draft/./eye_1_preview.jpg"), dict(path="draft/.x/eye_1_preview.jpg"), dict(path="draft/")]
 ref_ = [(b, refused("order_link", order=oid, **b)) for b in bad_]
 check("a path that is not an image file inside the order's folder is a 400 (a parent folder, an absolute path, a double slash, a dot file, a record, no extension, a space, an escape, not text, too long)",
       all(r and r[1] == 400 for _b, r in ref_), [(b, r) for b, r in ref_ if not (r and r[1] == 400)])

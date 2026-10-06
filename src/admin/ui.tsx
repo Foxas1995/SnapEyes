@@ -68,7 +68,7 @@ export const Tbl: React.FC<{ head: string[]; rows: React.ReactNode[][]; label: s
           <li key={i}>
             <dl className="rounded-lg border border-white/10 bg-black/20 p-2.5 grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs">
               {head.map((h, j) => (
-                <div key={h} className="contents">
+                <div key={`${j}-${h}`} className="contents">
                   <dt className="text-white/55">{h}</dt>
                   <dd className="min-w-0 break-words">{r[j]}</dd>
                 </div>
@@ -81,7 +81,7 @@ export const Tbl: React.FC<{ head: string[]; rows: React.ReactNode[][]; label: s
         <table className="w-full text-xs text-left border-collapse">
           <caption className="sr-only">{label}</caption>
           <thead className="text-white/55">
-            <tr>{head.map((h) => <th key={h} scope="col" className="py-1 pr-3 font-semibold whitespace-nowrap">{h}</th>)}</tr>
+            <tr>{head.map((h, j) => <th key={`${j}-${h}`} scope="col" className="py-1 pr-3 font-semibold whitespace-nowrap">{h}</th>)}</tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
