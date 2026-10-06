@@ -240,8 +240,9 @@ async function checkPricing() {
     expect('pricing', gate === 0, `${tag}: ${gate} prices are still held back at rest`);
     await page.close();
   }
-  // a currency switch: the prices change, nothing animates, nothing shifts
+  // a currency switch: the prices change, nothing animates, nothing shifts (ordering open: the closed page prints no price, so it has none to change)
   {
+    lateOpen = 1;
     const page = await open({ lang: 'en', width: 1280, query: 'm=au' });
     await reach(page, '#pricing .lp-cur-seg');
     await sleep(2800);
@@ -260,6 +261,7 @@ async function checkPricing() {
     expect('pricing', r.cls < 0.02, `a currency switch shifted the layout by ${r.cls} (budget .02): ${r.src.join(' | ')}`);
     console.log(`  note pricing: the switch from A$ to euro re-flowed the page by a CLS of ${r.cls.toFixed(4)} (the other market's own words and price widths; no animation)`);
     await page.close();
+    lateOpen = 0;
   }
   if (!problems.some((x) => x.startsWith('pricing'))) pass('pricing', 'no animation or transition on any price, notice, offer, statement or footnote at any frame of a full pass in en, de, au, hu; only the row hairlines draw; a currency switch animates nothing and shifts nothing');
 }
