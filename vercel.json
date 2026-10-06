@@ -42,49 +42,9 @@
     }
   ],
   "functions": {
-    "api/admin.py": {
+    "api/**/*.py": {
       "maxDuration": 60,
       "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
-    },
-    "api/analyze.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
-    },
-    "api/checkout.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
-    },
-    "api/compose.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
-    },
-    "api/deglare.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
-    },
-    "api/enhance.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
-    },
-    "api/health.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
-    },
-    "api/master_compose.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
-    },
-    "api/master_eye.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
-    },
-    "api/order.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
-    },
-    "api/stripe_webhook.py": {
-      "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
     }
   },
   "crons": [
@@ -92,6 +52,5 @@
       "path": "/api/order",
       "schedule": "17 3 * * *"
     }
-  ],
-  "installCommand": "npm install && rm -rf node_modules"
+  ]
 }
