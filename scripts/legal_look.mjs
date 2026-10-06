@@ -89,11 +89,16 @@ async function measure(dir, shotsDir) {
 function cssLeaks(dir) {
   const problems = [];
   const rules = /\.lp-[a-z]|\.lp\b|@layer landing\s*\{\s*[^}\s]/;
+  // The ONE landing rule that /try and /order are meant to carry: the shared motion tokens (src/motion/tokens.css), custom properties and nothing else, on the
+  // root of a page whose body has the class lp (the landing) or fx (the tools). It is allowed in try.html and order.html only: a legal page or /admin that
+  // carried it, or any other landing rule on any page, is still a leak.
+  const TOKENS = /@layer landing\s*\{\s*(?::is\()?:root:has\(\s*>\s*body\.lp\s*\)\s*,\s*:root:has\(\s*>\s*body\.fx\s*\)\)?\s*\{(?:\s*--[\w-]+\s*:[^;{}]+;?)+\s*\}\s*\}/g;
   for (const f of readdirSync(dir).filter((n) => n.endsWith('.html'))) {
     if (f === 'index.html') continue;
     const html = readFileSync(join(dir, f), 'utf8');
     for (const m of html.matchAll(/<link[^>]+rel="stylesheet"[^>]*href="([^"]+)"/g)) {
-      const css = readFileSync(join(dir, m[1].replace(/^\//, '')), 'utf8');
+      let css = readFileSync(join(dir, m[1].replace(/^\//, '')), 'utf8');
+      if (f === 'try.html' || f === 'order.html') css = css.replace(TOKENS, '');
       if (rules.test(css)) problems.push(`${f}: the stylesheet ${m[1]} holds landing rules`);
     }
   }

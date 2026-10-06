@@ -21,7 +21,12 @@ const dist = resolve(args.includes('--dist') ? args[args.indexOf('--dist') + 1] 
 // Re-measure it after a change of those modules: build both trees, run this script on each, take the difference.
 const MOTIONLESS = { js: 233345, css: 26921 };
 const INTEGRATION = { js: 9344, css: 727 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js, css: MOTIONLESS.css + INTEGRATION.css };
+// The shared chunk of /try and /order (checkout-*.js and checkout-*.css: what the two tools import together) is not named after a page, so this script counts it, but the
+// landing never loads it (wiring check of scripts/check_motion_flow.mjs, and src/main.tsx imports none of it). The motion of the tools (task I3: the flow stylesheet, the arc, the
+// rings, the picture that opens, the capture diagram) lives there: TOOLS is its growth, measured as that chunk's gzip size (level 6) on the commit with the motion minus the commit
+// before it (5c9054c). Re-measure it when the motion of the tools changes: build both, `gzip -6` the two checkout-* files of each, take the difference.
+const TOOLS = { js: 1358, css: 2018 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;
