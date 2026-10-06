@@ -73,8 +73,9 @@ export const DELIVERY_MAX_HOURS = 48;
 
 
 // The styles of the capture tool, in the order the page shows them (the registry's tile_order: api/_lib/styles_registry.py, read
-// through src/shared/styles.ts). Every image under /assets/atelier/ is the founder's own eye rendered by the engine
-// (api/_lib/iris.py compose), not a mockup.
+// through src/shared/styles.ts): the one-eye styles of the v3 engine whose ceiling is live (src/shared/styles.ts landingStyles). Every one-eye image
+// under /assets/atelier/ is the founder's own eye rendered by the engine of this repository (scripts/make_style_tiles.py), not a mockup; the pair and
+// Trio tiles add two photos the owner confirmed the right to publish and are not shown by this gallery.
 export const STYLES = landingStyles();
 export type StyleId = string;
 

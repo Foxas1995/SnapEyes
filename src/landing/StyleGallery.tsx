@@ -3,12 +3,13 @@ import { STYLES, styleSrc, styleSrcSet } from './config';
 import { currencyOf, money, priceMinor } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
 import { usePrices, usePricesReady } from '../shared/usePrices';
-import { useOrderingOpen } from './ordering';
+import { useCatalogue, useOrderingOpen } from './ordering';
 import { SectionHead } from './ui';
 
 export function StyleGallery() {
   const { t, lang } = useLang();
   const open = useOrderingOpen();
+  const cat = useCatalogue();                // the styles that can be ordered NOW (the server's effective stages; the build's own reading until it answers)
   const market = useMarket();
   const prices = usePrices(market);          // the visitor's own ladder while a price experiment runs for them
   const pending = !usePricesReady();         // the server's first answer is waited for (a moment) before a price is printed
@@ -25,6 +26,7 @@ export function StyleGallery() {
         <ul className="mt-12 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 md:gap-y-12">
           {STYLES.map((st) => {
             const cents = priceMinor(1, st.id, market, prices);
+            const orderable = cat.one.includes(st.id);      // a price is printed beside a style that can be bought now, never beside one that cannot yet (spec 1.8 rule 2)
             return (
               <li key={st.id}>
                 <figure>
@@ -45,7 +47,13 @@ export function StyleGallery() {
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <h3 className="font-luxury text-[15px] font-semibold tracking-[0.04em] text-white sm:text-base">{st.name}</h3>
                       <span className="text-xs text-zinc-400">
-                        {s.oneEye} · <span className={`text-zinc-300 ${pending ? 'opacity-0' : ''}`} aria-hidden={pending || undefined}>{money(cents, currencyOf(market), lang)}</span>
+                        {s.oneEye}
+                        {orderable && (
+                          <>
+                            {' · '}
+                            <span className={`text-zinc-300 ${pending ? 'opacity-0' : ''}`} aria-hidden={pending || undefined}>{money(cents, currencyOf(market), lang)}</span>
+                          </>
+                        )}
                       </span>
                     </div>
                     <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400 sm:text-sm">{s.desc[st.id]}</p>

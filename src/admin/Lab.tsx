@@ -12,13 +12,15 @@ import type { Call } from './AdminApp';
 import { DEFAULT_PRICES, explain, fmtSec, fmtUsd, STYLE_LT } from './format';
 import { BTN, CARD, ConfirmDialog, DANGER, ExtLink, GOLD, H2, INPUT, JsonView, MUTED, Notice, Spinner, Thumb, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
-import { DEFAULT_STYLE, LEGACY_IDS } from '../shared/styles';
+import { DEFAULT_STYLE, STYLE_IDS, STYLES as REGISTRY, ceilingStage } from '../shared/styles';
 import { StyleLab } from './StyleLab';
 import { GroupLab } from './GroupLab';
 import { LabSteps } from './LabSteps';
 
 const SAMPLE = '/assets/sample_eye_blue_1789706902835.jpg';
-const STYLES = LEGACY_IDS;   // the styles the legacy pipeline above draws (api/_lib/styles_registry.py); the v3 engine's styles are looked at in StyleLab below, without the image model
+// The styles the pipeline above draws: the one-eye styles of the v3 engine a customer can see (a preview or live ceiling: api/_lib/styles_registry.py), because the pipeline calls the public
+// /api/compose, which refuses the six legacy ids since the cutover (retired). The styles the pipeline cannot reach (held, planned) are looked at in StyleLab below, without the image model.
+const STYLES = STYLE_IDS.filter((id) => REGISTRY[id].legacy === 0 && REGISTRY[id].eyes[0] <= 1 && ['preview', 'live'].includes(ceilingStage(id, 1) ?? ''));
 
 type J = Record<string, unknown>;
 type Status = 'wait' | 'run' | 'ok' | 'fail' | 'skip';

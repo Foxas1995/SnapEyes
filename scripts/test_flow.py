@@ -6,7 +6,8 @@ import requests
 from PIL import Image, ImageOps
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "api"))
 from _lib import catalogue     # the style ids come from api/_lib/styles_registry.py
-STYLE_A, STYLE_B = catalogue.legacy_ids()[:2]
+# the first two one-eye styles a customer can preview (the six legacy ids are retired since the cutover and the public compose refuses them)
+STYLE_A, STYLE_B = [i for i in catalogue.ids() if not catalogue.is_legacy(i) and catalogue.previewable(i, 1)][:2]
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 photo = args[0]; base = args[1] if len(args) > 1 else "http://localhost:5050"
