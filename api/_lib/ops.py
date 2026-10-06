@@ -31,7 +31,7 @@ force, the eyes' ids, classes and gate results, the current artwork's record; re
 the registry with its ranges of eye counts, the ceiling, the owner's override, the effective stage, the ticks L0 to L11 and the waiver, the revision the page
 sends back; api/_lib/stage_overrides.py), styles_stats (the numbers of that page worked out of the usage events: the set-level gate funnel and the opening line
 per eye count, the demand for styles that cannot be bought yet, chosen against recommended, render times p50 and p95 against the estimate, errors, review,
-gate, fallbacks, the attention card; api/_lib/style_stats.py), styles_audit (the audit log of the switch).
+gate, fallbacks, the attention card; api/_lib/style_stats.py), styles_audit (the audit log of the switch) and order_link (one signed link of one image of an order, made when the owner clicks).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
 "confirm"; rerun_step and lab_steps draw a 4K master through the master plan's step runner, with the claims and guards of a paid order): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
@@ -419,7 +419,8 @@ def order_row(order):
     created_at = (rec or {}).get("created_at") if isinstance(rec, dict) else None
     lang = spec.get("lang") or (rec.get("lang") if isinstance(rec, dict) else None)
     xv = abtest.order_view(paid if is_paid else None, rec)
-    return {"order": order, "state": state,
+    gate = _code(co.get("gate"), 60) if isinstance(co, dict) else None          # ok, unknown or the failing eye's reason code (checkout.freeze_plan)
+    return {"order": order, "state": state, "gate": gate,
             "experiment": {"key": xv["key"], "variant": xv["variant"], "label": xv.get("label")} if xv else None,
             "created_at": created_at if isinstance(created_at, (int, float)) else None,
             "lang": lang if lang in pay.LANGS else None,
@@ -675,6 +676,16 @@ def _gate_of(prof):
     return {r: (g[r].get("ok") if isinstance(g, dict) and isinstance(g.get(r), dict) else None) for r in ("lid", "fill")}
 
 
+def _gate_why(prof):
+    """{lid, fill}: the reason codes of a failing sealed gate rule of an eye profile record ([] when it passed or is unknown). Codes only."""
+    g = prof.get("gate") if isinstance(prof, dict) else None
+    out = {}
+    for r in ("lid", "fill"):
+        s = g.get(r) if isinstance(g, dict) else None
+        out[r] = [c for c in (_code(w, 40) for w in (s.get("why") or [])[:8]) if c] if isinstance(s, dict) and isinstance(s.get("why"), (list, tuple)) else []
+    return out
+
+
 def _steps_view(order, st, spec=None, eyes=None):
     """What the admin needs of one order's master plan: the state SP.read_state read, the capacity at the factor in force, the claims with their age,
     the eyes' ids and sealed results. Everything is a plain number, a code or a record the order folder holds."""
@@ -709,7 +720,7 @@ def a_order_steps(body, who):
         if isinstance(r, dict):
             prof = r.get("profile") if isinstance(r.get("profile"), dict) else None
             eyes.append({"eye": i, "eye_id": r.get("eye_id"), "cls": prof.get("cls") if prof else None,
-                         "pupil": (prof.get("pupil") or {}).get("cls") if prof else None, "gate": _gate_of(prof)})
+                         "pupil": (prof.get("pupil") or {}).get("cls") if prof else None, "gate": _gate_of(prof), "gate_why": _gate_why(prof)})
     out = _steps_view(order, st, (paid or {}).get("spec"), eyes)
     done = st["done"].get((st["plan"] or {"steps": [{"name": SP.ART}]})["steps"][-1]["name"]) if st["plan"] else None
     key = ((done or {}).get("result") or {}).get("key")
@@ -761,6 +772,25 @@ def a_lab_steps(body, who):
     r = got["artwork"] or {}
     return dict(view, ok=True, order=order, result="same" if r.get("existing") else "made", artwork=r,
                 audit_detail=f"{style} {n} eyes {SP.SIZE}")
+
+
+def a_order_link(body, who):
+    """{order, path}: one signed link (SIGN_SECONDS, an hour) of one image file of an order, made when the owner asks for it (the order detail's comparison of
+    the approved preview with the delivered file: nothing is loaded until he clicks). path is relative to the order's folder (draft/eye_1_preview.jpg,
+    artwork_<digest>.jpg), a .jpg or a .png and nothing else; the link is made only for a file that exists. Read only, no image is read or changed, so it is
+    not in the audit log (the order action hands out the same links for every image of the folder)."""
+    order = _order(body)
+    p = body.get("path")
+    if (not isinstance(p, str) or not re.fullmatch(r"[A-Za-z0-9_./-]{3,120}", p) or p.startswith(("/", ".")) or ".." in p or "//" in p
+            or not p.endswith((".jpg", ".png"))):
+        raise L.ClientError("path is the name of an image file in the order's folder (a .jpg or a .png).")
+    full = f"orders/{order}/{p}"
+    if not store.exists(full):
+        raise store.Answer(404, "not_found", "No such file in this order.", False)
+    url = store.signed_url(full, SIGN_SECONDS)
+    if not isinstance(url, str):
+        raise store.busy("storage_busy", 10, "Storage did not answer. Please try again in a moment.")
+    return {"ok": True, "url": url, "expires_in": SIGN_SECONDS, "path": p}
 
 
 def a_audit(body, who):
@@ -1874,8 +1904,9 @@ def a_styles_stats(body, who):
     market, lang = body.get("market"), body.get("lang")
     if market is not None and (not isinstance(market, str) or market not in pay.MARKETS):
         raise L.ClientError("market is one of: " + ", ".join(pay.MARKETS) + ".")
-    if lang is not None and (not isinstance(lang, str) or lang not in L.PAGE_LANGS):
-        raise L.ClientError("lang is one of: " + ", ".join(L.PAGE_LANGS) + ".")
+    langs = ("en",) + tuple(L.PAGE_LANGS)       # English has no code of its own in PAGE_LANGS (the other three), but the events carry "en"
+    if lang is not None and (not isinstance(lang, str) or lang not in langs):
+        raise L.ClientError("lang is one of: " + ", ".join(langs) + ".")
     try:
         sl = SS.parse_slice(market, lang)
     except ValueError as e:
@@ -1949,7 +1980,7 @@ def act_styles_limits(body, who):
 # ----------------------------------------------------------------------------- serving
 ACTIONS = {
     "me": a_me, "summary": a_summary, "stats": a_stats, "errors": a_errors, "orders": a_orders, "order": a_order,
-    "audit": a_audit, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe, "plates_status": a_plates_status,
+    "audit": a_audit, "order_link": a_order_link, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe, "plates_status": a_plates_status,
     "styles_lab": a_styles_lab, "order_steps": a_order_steps, "styles_catalogue": a_styles_catalogue, "styles_audit": a_styles_audit,
     "styles_override": audited("styles_override", act_styles_override), "styles_stats": a_styles_stats,
     "styles_limits": audited("styles_limits", act_styles_limits),
