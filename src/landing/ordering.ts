@@ -26,6 +26,10 @@ import { fallbackCatalogue, ordersOpen, readCatalogue, type RunCatalogue } from 
 let open = false;
 let suggested: string | null = null;
 let catalogue: RunCatalogue = fallbackCatalogue();
+// what can be bought RIGHT NOW: the catalogue while this deployment takes orders (open), nothing otherwise. The page prints a price, or a count of eyes, only
+// for what is in here; a style the catalogue lists as live while ordering is closed still reads Soon, so no price stands beside "Ordering opens soon".
+const NOTHING: RunCatalogue = { max: 0, styles: [], one: [], eyes: [], by: {} };
+let sale: RunCatalogue = NOTHING;
 let started: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
@@ -68,6 +72,7 @@ function start(): Promise<void> {
     if (!v.open && v.suggest === null && v.catalogue === null) return;
     if (v.catalogue) catalogue = v.catalogue;
     open = ordersOpen(v.open, catalogue);       // the deployment takes orders AND a style can be ordered now (the build's fallback orders nothing)
+    sale = open ? catalogue : NOTHING;
     suggested = v.suggest;
     listeners.forEach((l) => l());
   });
@@ -92,10 +97,11 @@ export function useOrderingOpen(): boolean {
   return useSyncExternalStore(subscribe, () => open, () => false);
 }
 
-/** The run-time catalogue (the number of eyes and the styles that can be ordered now), or the build's ceilings until the server answers. The object
- *  changes only when an answer arrives. */
-export function useCatalogue(): RunCatalogue {
-  return useSyncExternalStore(subscribe, () => catalogue, () => catalogue);
+/** What can be bought now, as the run-time catalogue says it (the number of eyes and the styles that can be ordered now): the catalogue while this deployment
+ *  takes orders and some style can be ordered, an empty one otherwise (and until the server has answered, and when it cannot be read). The pricing rows, the
+ *  tiles and the hero line print a price only for what is in it. The object changes only when an answer arrives. */
+export function useSaleCatalogue(): RunCatalogue {
+  return useSyncExternalStore(subscribe, () => sale, () => NOTHING);
 }
 
 /** The market GET /api/checkout suggests for the visitor's country, or null (src/shared/markets.ts hintMarket decides

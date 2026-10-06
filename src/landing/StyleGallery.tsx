@@ -13,6 +13,8 @@ import { Title } from '../motion/Title';
 import { useCopy } from './copy/useCopy';
 import { DEFAULT_EYE, DEFAULT_GROUP, hasEyeSwitch, isWide, tileKey, tilesOf, type EyeId, type GalleryGroup } from './gallery';
 import { useLandingPrices } from './prices';
+import { useSaleCatalogue } from './ordering';
+import { severalMax } from '../shared/catalogue';
 import { EyeChips } from './EyeChips';
 import { StyleTabs } from './StyleTabs';
 import { StyleTile } from './StyleTile';
@@ -23,6 +25,8 @@ import './css/styles.css';
 export function StyleGallery() {
   const { c, t } = useCopy();
   const prices = useLandingPrices();
+  // the price of a further eye is printed only while the pairs (and so the ladder from two eyes) can be bought now; else the card says Soon (src/landing/PriceTable.tsx)
+  const several = severalMax(useSaleCatalogue());
   const [group, setGroup] = useState<GalleryGroup>(DEFAULT_GROUP);
   const [eye, setEye] = useState<EyeId>(DEFAULT_EYE);
   // the wall views the visitor asked for, by tile key: a key that is there has been asked for once (its picture is loaded)
@@ -72,7 +76,7 @@ export function StyleGallery() {
               <div className="lp-combo">
                 <h3>{c.styles.comboTitle}</h3>
                 <p>
-                  <PriceGate pending={prices.pending}>{t('styles.comboBody', { price: prices.price })}</PriceGate>
+                  {several >= 2 ? <PriceGate pending={prices.pending}>{t('styles.comboBody', { price: prices.price })}</PriceGate> : t('pricing.severalSoon')}
                 </p>
                 <a className="lp-btn lp-btn-line" href="#pricing">{c.nav.pricing}</a>
               </div>

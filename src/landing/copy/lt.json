@@ -485,8 +485,9 @@
   "pricing": {
     "eyebrow": "Kainos",
     "title": "Aiškios kainos už vieną skaitmeninį failą",
-    "notice": "Užsakymus pradėsime priimti netrukus. Nemokama peržiūra jau prieinama. Tai planuojamos pradinės kainos.",
+    "notice": "Užsakymus pradėsime priimti netrukus. Nemokama peržiūra jau prieinama.",
     "noticeOpen": "Pradėkite nuo nemokamos peržiūros: užsisakysite tik tada, kai rezultatas Jums patiks.",
+    "severalSoon": "Nemokama peržiūra jau dabar. Šios grupės užsakymai bus galimi netrukus.",
     "currencyLabel": "Kainų valiuta",
     "free": "Nemokamai",
     "rows": {

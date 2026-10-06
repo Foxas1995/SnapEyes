@@ -18,6 +18,7 @@
   .lp-prow small { display: block; margin-top: 3px; font-size: 13px; color: var(--ink-3); font-weight: 400; line-height: 1.5; }
   .lp-prow.lp-free .lp-pv { color: var(--gold); }
   .lp-prow .lp-pv { font-family: var(--display); font-weight: 600; font-size: 24px; color: #fff; text-align: right; white-space: nowrap; }
+  .lp-prow .lp-pv .lp-soon { font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
   .lp-prow .lp-pv em { font-style: normal; font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--ink-3); display: block; margin-top: 2px; letter-spacing: .02em; }
   .lp-incl h3 { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); font-family: var(--body); }
   .lp-incl ul { margin-top: 14px; display: grid; gap: 14px; }

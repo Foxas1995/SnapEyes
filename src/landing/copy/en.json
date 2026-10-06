@@ -485,8 +485,9 @@
   "pricing": {
     "eyebrow": "Pricing",
     "title": "Clear prices for one digital file",
-    "notice": "Ordering opens soon. The free preview is available now. These are the planned launch prices.",
+    "notice": "Ordering opens soon. The free preview is available now.",
     "noticeOpen": "Start with the free preview: you order only once you like the result.",
+    "severalSoon": "Free preview now. Ordering for this group opens soon.",
     "currencyLabel": "Prices in",
     "free": "Free",
     "rows": {

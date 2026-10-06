@@ -20,6 +20,9 @@ export interface RunCatalogue {
   one: string[];
   /** The numbers of eyes some style can be ordered for NOW, ascending (the Trio alone is [3]): the landing prints a price for a count of eyes only when it is in here. */
   eyes: number[];
+  /** For each style that can be ordered for some count NOW, the counts it can be ordered for (an id that is not a key cannot be bought at all): the gallery's
+   *  tiles ask it (liveFor) for the style and the count of eyes they show, so a Soon tile never carries a price. */
+  by: Record<string, number[]>;
 }
 
 const MAX_EYES = 8;
@@ -35,8 +38,12 @@ function artNames(live: (id: string) => boolean, nameOf: (id: string) => string)
  *  page shows until (and unless) the server answers. */
 export function fallbackCatalogue(): RunCatalogue {
   const eyes: number[] = [];
-  for (let n = 1; n <= MAX_EYES; n++) if (STYLE_IDS.some((id) => buildStage(id, n) === 'live')) eyes.push(n);
-  return { max: eyes.length ? eyes[eyes.length - 1] : 0, styles: artNames((id) => buildStage(id, 1) === 'live', (id) => STYLES[id].name), one: STYLE_IDS.filter((id) => buildStage(id, 1) === 'live'), eyes };
+  const by: Record<string, number[]> = {};
+  for (let n = 1; n <= MAX_EYES; n++) {
+    for (const id of STYLE_IDS) if (buildStage(id, n) === 'live') (by[id] ??= []).push(n);
+    if (STYLE_IDS.some((id) => buildStage(id, n) === 'live')) eyes.push(n);
+  }
+  return { max: eyes.length ? eyes[eyes.length - 1] : 0, styles: artNames((id) => buildStage(id, 1) === 'live', (id) => STYLES[id].name), one: STYLE_IDS.filter((id) => buildStage(id, 1) === 'live'), eyes, by };
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -49,12 +56,19 @@ export function readCatalogue(info: unknown): RunCatalogue | null {
   if (typeof max !== 'number' || !Number.isInteger(max) || max < 0 || max > MAX_EYES) return null;
   const liveOne = new Map<string, string>();
   const counts = new Set<number>();
+  const by: Record<string, number[]> = {};
   for (const s of info.styles) {
     if (!isObj(s) || typeof s.id !== 'string' || !isObj(s.stages)) continue;
     if (s.stages['1'] === 'live') liveOne.set(s.id, typeof s.name === 'string' && s.name ? s.name : (STYLES[s.id]?.name ?? s.id));
-    for (let n = 1; n <= MAX_EYES; n++) if (s.stages[String(n)] === 'live') counts.add(n);
+    for (let n = 1; n <= MAX_EYES; n++) if (s.stages[String(n)] === 'live') { counts.add(n); (by[s.id] ??= []).push(n); }
   }
-  return { max, styles: artNames((id) => liveOne.has(id), (id) => liveOne.get(id) ?? STYLES[id].name), one: STYLE_IDS.filter((id) => liveOne.has(id)), eyes: [...counts].sort((a, b) => a - b) };
+  return { max, styles: artNames((id) => liveOne.has(id), (id) => liveOne.get(id) ?? STYLES[id].name), one: STYLE_IDS.filter((id) => liveOne.has(id)), eyes: [...counts].sort((a, b) => a - b), by };
+}
+
+/** Can this style be ordered for n eyes NOW (the server's effective stage is live)? A gallery tile prints its price only when this is true for the style
+ *  and the number of eyes it shows; otherwise it says Soon. An id the catalogue does not know, or a count it does not list, is false. */
+export function liveFor(c: RunCatalogue, id: string, n: number): boolean {
+  return c.by?.[id]?.includes(n) === true;
 }
 
 /** May a page say that ordering is open? Only when the deployment takes orders (GET /api/checkout "open": Stripe, the e-mail and the legal texts, pay.ordering_problem())

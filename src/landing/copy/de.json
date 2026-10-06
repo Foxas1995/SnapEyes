@@ -485,8 +485,9 @@
   "pricing": {
     "eyebrow": "Preise",
     "title": "Klare Preise für eine digitale Datei",
-    "notice": "Bestellungen sind bald möglich. Die kostenlose Vorschau ist jetzt verfügbar. Dies sind die geplanten Einführungspreise.",
+    "notice": "Bestellungen sind bald möglich. Die kostenlose Vorschau ist jetzt verfügbar.",
     "noticeOpen": "Beginnen Sie mit der kostenlosen Vorschau: Sie bestellen erst, wenn Ihnen das Ergebnis gefällt.",
+    "severalSoon": "Die Vorschau ist schon jetzt kostenlos. Die Bestellung für diese Gruppe ist bald möglich.",
     "currencyLabel": "Preise in",
     "free": "Kostenlos",
     "rows": {

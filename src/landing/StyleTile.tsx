@@ -1,5 +1,8 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useCopy } from './copy/useCopy';
+import { liveFor } from '../shared/catalogue';
+import { useSaleCatalogue } from './ordering';
+import { tileStyle } from './tileStyle';
 import { artPicture, hasPhotoChip, provenance, tileCopy, tileKey, tileSizes, wallPicture, type EyeId, type GalleryGroup, type GalleryTile } from './gallery';
 import type { LandingPricesState } from './prices';
 import { ExampleChip, Picture, PriceGate, type PictureAsset } from './ui';
@@ -14,7 +17,7 @@ function WallIcon() {
 }
 
 /** The line under a tile's name: "One eye, <b>price</b>", "Two eyes, <b>price</b>" or "4 eyes, <b>price</b>". The price comes
- *  from the visitor's own ladder (src/landing/prices.ts); the sentence is the copy's. */
+ *  from the visitor's own ladder (src/landing/prices.ts); the sentence is the copy's. Only a tile that can be bought now gets it. */
 function PriceLine({ tile, prices }: { tile: GalleryTile; prices: LandingPricesState }): ReactNode {
   const { c, t, rich } = useCopy();
   if (tile.price === 'art') return rich(c.styles.priceOne, { price: <b>{prices.art}</b> });
@@ -58,6 +61,11 @@ const calm = () => typeof window.matchMedia === 'function' && window.matchMedia(
  *  wall view carries "AI visualisation" (example.vis), which is only visible while the wall is on. */
 export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices, enter, index }: StyleTileProps) {
   const { c, t } = useCopy();
+  // for sale now: ordering is open and the run-time catalogue lists the tile's style as live for the tile's number of eyes (src/landing/tileStyle.ts); else the tile
+  // says Soon and prints no price
+  const cat = useSaleCatalogue();
+  const target = tileStyle(tile);
+  const forSale = target !== null && liveFor(cat, target.id, target.eyes);
   const key = tileKey(group, tile);
   const { n: name, d: desc } = tileCopy(c, tile);
   const wide = group === 'two' || group === 'family';
@@ -149,7 +157,7 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
         <div className="lp-tile-top">
           <h3>{name}</h3>
           <PriceGate pending={prices.pending} className="lp-price">
-            <PriceLine tile={tile} prices={prices} />
+            {forSale ? <PriceLine tile={tile} prices={prices} /> : <span className="lp-soon">{c.styles.soonTag}</span>}
           </PriceGate>
         </div>
         {/* a price next to a picture of a printed piece says what the price is for (the wall view only; the flat artwork is the file) */}

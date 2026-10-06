@@ -33,6 +33,10 @@ export interface LandingPrices {
   max: number;
   /** The price of n eyes (1 to MAX_EYES) by the server's rule; the class only matters for one eye. */
   eyes: (n: number, cls?: PriceStyle) => string;
+  /** The price of n eyes in one style of the registry (its price class decides the one-eye price); the landing prints it only for a style the run-time catalogue lists as live. */
+  of: (id: string, n: number) => string;
+  /** The lowest one-eye price among these styles ("Digital file from {from}", only the styles that can be bought now), or null when there are none: the line is then not printed. */
+  fromOf: (ids: readonly string[]) => string | null;
   /** The tokens the copy asks for, ready for t() and fmt(): { from, price, price2, max }. */
   tokens: { from: string; price: string; price2: string; max: number };
 }
@@ -44,6 +48,8 @@ export function landingPrices(list: PriceList, market: Market, lang: string): La
   const fmt = (minor: number) => money(minor, currency, lang);
   // priceMinor takes a style and finds its class in the registry: a representative style of the class stands in for the class
   const eyes = (n: number, cls: PriceStyle = 'black') => fmt(priceMinor(n, classStyle(cls), market, list));
+  const of = (id: string, n: number) => fmt(priceMinor(n, id, market, list));
+  const fromOf = (ids: readonly string[]) => (ids.length ? fmt(Math.min(...ids.map((id) => priceMinor(1, id, market, list)))) : null);
   const from = fmt(Math.min(list.one_eye_studio_black, list.one_eye_art));
   const price = fmt(list.each_further_eye);
   const price2 = fmt(list.two_eyes);
@@ -59,6 +65,8 @@ export function landingPrices(list: PriceList, market: Market, lang: string): La
     price2,
     max: MAX_EYES,
     eyes,
+    of,
+    fromOf,
     tokens: { from, price, price2, max: MAX_EYES },
   };
 }
