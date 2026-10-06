@@ -50,5 +50,7 @@
       "path": "/api/order",
       "schedule": "17 3 * * *"
     }
-  ]
+  ],
+  "buildCommand": "npx tsc -b && mkdir -p dist && echo probe > dist/index.html",
+  "outputDirectory": "dist"
 }
