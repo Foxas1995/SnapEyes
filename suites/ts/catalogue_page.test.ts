@@ -2,7 +2,7 @@
 // from it: GET /api/checkout's styles and orderable_max_eyes are read, an older answer or a bad one keeps the build's fallback, the tokens {max} and {styles} are filled,
 // a style the server holds at preview is not listed, and the pricing rows of the four languages carry the tokens and no written number or list.
 // Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing.
-import { fallbackCatalogue, fillTokens, readCatalogue } from '../../src/shared/catalogue';
+import { fallbackCatalogue, fillTokens, fromOneEye, oneEyeRows, ordersOpen, readCatalogue, severalMax } from '../../src/shared/catalogue';
 import { COPY } from '../../src/landing/copy';
 import { AI_MATERIAL, AI_MATERIAL_PUBLISHED, aiBlocks, aiSentence } from '../../src/shared/aiMaterial';
 import { LEGAL_UPDATED } from '../../src/shared/legal';
@@ -20,7 +20,7 @@ export async function run(): Promise<R> {
   // stages with the registry's EFFECTIVE_DEFAULT: the ceilings of the v3 styles are live but held at preview until the owner's tick, the legacy ids are retired, so a page that
   // cannot reach the server promises nothing: no maximum, no list, no id.
   check('the fallback is the build\'s reading of the stages (the ceilings held at the registry\'s effective default): since the cutover nothing is orderable, so no eyes, no art styles, no id',
-    fb.max === 0 && fb.styles.length === 0 && fb.one.length === 0 && EFFECTIVE_DEFAULT === 'preview', JSON.stringify(fb));
+    fb.max === 0 && fb.styles.length === 0 && fb.one.length === 0 && fb.eyes.length === 0 && EFFECTIVE_DEFAULT === 'preview', JSON.stringify(fb));
   check('buildStage is the ceiling held at the effective default for a style of the v3 engine, never for a retired one: the five singles and the Trio are live ceilings and preview here, Elements stays lab, a legacy id is retired',
     buildStage('solo.clean', 1) === 'preview' && buildStage('grp.collision', 3) === 'preview' && buildStage('solo.elements', 1) === 'lab' && buildStage('studio_black', 1) === 'retired' && buildStage('solo.clean', 2) === null
     && ceilingStage('solo.clean', 1) === 'live' && landingStyles().map((s) => s.id).join() === 'solo.powder,solo.universe,solo.splash,solo.gold,solo.clean', landingStyles().map((s) => s.id).join());
@@ -42,9 +42,37 @@ export async function run(): Promise<R> {
   const rn = readCatalogue(info([{ id: gold, stages: { '1': 'live' } }, { id: 'unknown.id', stages: { '1': 'live' } }, { id: gold }, 7, null], 2));
   check('malformed entries are skipped, a style without a name takes the registry\'s, an id the registry does not know is not listed', !!rn && rn.styles.join() === goldName && rn.max === 2, JSON.stringify(rn));
 
-  const cat = { max: 3, styles: ['Powder Burst', 'Splash'], one: [] };
+  // WP18 review: the landing says "open" and prints a price only where a style can be bought NOW (ordering that takes orders while the owner has ticked nothing sells nothing)
+  const none = readCatalogue(info([live(gold, goldName, { '1': 'preview' }), live(clean, STYLES[clean].name, { '1': 'preview' })], 0))!;
+  const oneClean = readCatalogue(info([live(clean, STYLES[clean].name, { '1': 'live' }), live(gold, goldName, { '1': 'preview' })], 1))!;
+  const oneGold = readCatalogue(info([live(clean, STYLES[clean].name, { '1': 'preview' }), live(gold, goldName, { '1': 'live' })], 1))!;
+  const trio = readCatalogue(info([live(gold, goldName, { '1': 'preview', '3': 'live' })], 3))!;
+  check('ordersOpen: a deployment that takes orders is "open" for a page only with a style that can be ordered now: no tick (the cutover state, the fallback, a bad answer) is closed, one style is open, a closed deployment stays closed',
+    ordersOpen(true, none) === false && ordersOpen(true, fb) === false && ordersOpen(true, { max: 0, styles: [], one: [], eyes: [] }) === false && ordersOpen(true, oneClean) === true && ordersOpen(true, oneGold) === true
+    && ordersOpen(true, trio) === true && ordersOpen(false, oneClean) === false && ordersOpen(false, none) === false, JSON.stringify({ none, fb, oneClean }));
+  const eur = (id: string) => (STYLES[id].price_class === 'black' ? 3000 : 5000);
+  check('fromOneEye: the lowest price among the styles orderable for one eye now (the black class and the art class differ), none when nothing is, a bad price is ignored; never the price of a style that cannot be bought',
+    fromOneEye(none, eur) === null && fromOneEye(trio, eur) === null && fromOneEye(oneGold, eur) === eur(gold) && fromOneEye(oneClean, eur) === eur(clean)
+    && fromOneEye({ max: 1, styles: [], one: [gold, clean], eyes: [1] }, eur) === Math.min(eur(gold), eur(clean)) && fromOneEye({ max: 1, styles: [], one: [gold, clean], eyes: [1] }, (id) => (id === gold ? NaN : 7)) === 7
+    && fromOneEye({ max: 1, styles: [], one: [gold], eyes: [1] }, () => 0) === null, JSON.stringify([fromOneEye(oneGold, eur), eur(gold), eur(clean)]));
+  const rowsNone = oneEyeRows(none, classStyle('black'));
+  const rowsClean = oneEyeRows(oneClean, classStyle('black'));
+  const rowsGold = oneEyeRows(oneGold, classStyle('black'));
+  check('oneEyeRows: the one-eye card prints the black class row only while Clean Iris can be ordered and the "any other style" row only while an art style can: nothing ticked prints no row, Clean Iris alone only the black row, an art style alone only the art row',
+    !rowsNone.black && !rowsNone.art && rowsClean.black && !rowsClean.art && !rowsGold.black && rowsGold.art, JSON.stringify([rowsNone, rowsClean, rowsGold]));
+
+  // the counts of eyes: read from the stages of every style, so that a price is printed only for a count some style can be ordered for (the several-eyes card, the Trio alone)
+  const ladder = readCatalogue(info([live(gold, goldName, { '1': 'preview', '2': 'live', '3': 'live', '4': 'live', '5': 'preview' }), live(clean, STYLES[clean].name, { '1': 'live' })], 4))!;
+  const gap = readCatalogue(info([live(gold, goldName, { '2': 'live', '3': 'preview', '4': 'live' })], 4))!;
+  check('the catalogue lists the counts of eyes some style can be ordered for now (ascending, from every style): the fallback none, nothing ticked none, Clean Iris alone [1], the Trio alone [3], a ladder of several styles their union',
+    fb.eyes.length === 0 && none.eyes.length === 0 && oneClean.eyes.join() === '1' && trio.eyes.join() === '3' && ladder.eyes.join() === '1,2,3,4' && gap.eyes.join() === '2,4', JSON.stringify([none.eyes, oneClean.eyes, trio.eyes, ladder.eyes, gap.eyes]));
+  check('severalMax: the ladder of the several-eyes card runs from two eyes up to the count whose every smaller count can be ordered too, and is 0 when two eyes cannot: the Trio alone (three eyes, no pair) and one eye alone are 0 (free preview now, no price for two eyes), two to four is 4, a gap stops it',
+    severalMax(none) === 0 && severalMax(oneClean) === 0 && severalMax(trio) === 0 && severalMax(ladder) === 4 && severalMax(gap) === 2 && severalMax({ max: 8, styles: [], one: [], eyes: [2, 3, 4, 5, 6, 7, 8] }) === 8
+    && severalMax({ max: 2, styles: [], one: [], eyes: [2] }) === 2 && severalMax({ max: 0, styles: [], one: [], eyes: [] }) === 0, JSON.stringify([severalMax(trio), severalMax(ladder), severalMax(gap)]));
+
+  const cat = { max: 3, styles: ['Powder Burst', 'Splash'], one: [], eyes: [1, 2, 3] };
   check('fillTokens fills {max} and {styles} (a comma list), every occurrence, and never prints 0 for a number of eyes',
-    fillTokens('Two to {max} eyes: {styles}; {styles}', cat) === 'Two to 3 eyes: Powder Burst, Splash; Powder Burst, Splash' && fillTokens('{max}', { max: 0, styles: [], one: [] }) === '1'
+    fillTokens('Two to {max} eyes: {styles}; {styles}', cat) === 'Two to 3 eyes: Powder Burst, Splash; Powder Burst, Splash' && fillTokens('{max}', { max: 0, styles: [], one: [], eyes: [] }) === '1'
     && fillTokens('nothing to fill', cat) === 'nothing to fill', fillTokens('Two to {max} eyes: {styles}', cat));
 
   check('the black price class is named by its one style from the registry (the row of the landing and the terms)', styleName(classStyle('black')).length > 0 && STYLES[classStyle('black')].price_class === 'black', classStyle('black'));

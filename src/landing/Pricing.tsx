@@ -5,7 +5,7 @@ import { tryUrl } from './config';
 import { priceFootnote } from './copy';
 import { useCatalogue, useOrderingOpen } from './ordering';
 import { currencyOf, money, priceMinor } from '../shared/markets';
-import { fillTokens } from '../shared/catalogue';
+import { fillTokens, oneEyeRows, severalMax } from '../shared/catalogue';
 import { classStyle, styleName } from '../shared/styles';
 import { useMarket } from '../shared/useMarket';
 import { usePrices, usePricesReady } from '../shared/usePrices';
@@ -51,6 +51,9 @@ export function Pricing() {
   const ready = usePricesReady();
   const pending = !ready;
   const fmt = (c: number) => money(c, currency, lang);
+  const black = classStyle('black');
+  const rows = oneEyeRows(cat, black);       // a price row only for a class with a style that can be ordered for one eye now
+  const several = severalMax(cat);           // the several-eyes ladder only up to the count every smaller count of which can be ordered too (the Trio alone is none)
   return (
     <section id="pricing" className="scroll-mt-16 border-t border-white/[0.06] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -82,23 +85,27 @@ export function Pricing() {
 
           <Card title={p.oneEyeTitle}>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{p.oneEyeNote}</p>
-            <div className="mt-5">
-              <Row label={styleName(classStyle('black'))} value={fmt(prices.one_eye_studio_black)} pending={pending} />
-              <Row label={p.artBackground} value={fmt(prices.one_eye_art)} note={fillTokens(p.artBackgroundNote, cat)} pending={pending} />
-            </div>
+            {rows.black || rows.art ? (
+              <div className="mt-5">
+                {rows.black && <Row label={styleName(black)} value={fmt(prices.one_eye_studio_black)} pending={pending} />}
+                {rows.art && <Row label={p.artBackground} value={fmt(prices.one_eye_art)} note={fillTokens(p.artBackgroundNote, cat)} pending={pending} />}
+              </div>
+            ) : (
+              <p className="mt-5 text-sm leading-relaxed text-zinc-300">{p.severalSoon}</p>
+            )}
           </Card>
 
           <Card title={p.severalTitle} className="sm:col-span-2 lg:col-span-1">
-            <p className="mt-3 text-sm leading-relaxed text-zinc-400">{cat.max >= 2 ? fillTokens(p.severalNote, cat) : p.severalSoon}</p>
-            {cat.max >= 2 && (
+            <p className="mt-3 text-sm leading-relaxed text-zinc-400">{several >= 2 ? fillTokens(p.severalNote, { ...cat, max: several }) : p.severalSoon}</p>
+            {several >= 2 && (
               <>
                 <div className="mt-5">
-                  {[2, 3, 4, 5].filter((n) => n <= cat.max).map((n) => (
+                  {[2, 3, 4, 5].filter((n) => n <= several).map((n) => (
                     <Row key={n} label={p.eyes(n)} value={fmt(priceMinor(n, classStyle('black'), market, prices))} pending={pending} />
                   ))}
                 </div>
-                {cat.max > 2 && (
-                  <p className={`mt-1 text-xs leading-relaxed text-zinc-400 ${pending ? 'opacity-0' : ''}`}>{p.perEye(fmt(prices.each_further_eye), cat.max)}</p>
+                {several > 2 && (
+                  <p className={`mt-1 text-xs leading-relaxed text-zinc-400 ${pending ? 'opacity-0' : ''}`}>{p.perEye(fmt(prices.each_further_eye), several)}</p>
                 )}
               </>
             )}

@@ -13,6 +13,7 @@ const { runnerImport } = await import(pathToFileURL(require.resolve('vite')).hre
 const load = async (p) => (await runnerImport(join(root, p), { configFile: false, logLevel: 'silent', root })).module;
 const S = await load('src/shared/styles.ts');
 const CAT = await load('src/shared/catalogue.ts');
+const MKT = await load('src/shared/markets.ts');
 const CK = await load('scripts/check_styles.mjs');
 const SRC = await load('scripts/styles_source.mjs');
 const req = JSON.parse(readFileSync(0, 'utf8'));
@@ -27,6 +28,20 @@ const out = {
   fallback: CAT.fallbackCatalogue(),
   server: CAT.readCatalogue(req.server),
   guard: [],
+  // what the landing makes of a GET /api/checkout answer, by the page's own functions (src/landing/ordering.ts: ordersOpen over the deployment's "open" and the catalogue it read, the
+  // fallback when the answer has none; Hero.tsx: fromOneEye; Pricing.tsx: oneEyeRows), in the euro market with the standard ladder
+  landingReading: (req.answers ?? []).map((a) => {
+    const cat = CAT.readCatalogue(a) ?? CAT.fallbackCatalogue();
+    return {
+      deploymentOpen: a.ok !== false && a.open === true,
+      open: CAT.ordersOpen(a.ok !== false && a.open === true, cat),
+      from: CAT.fromOneEye(cat, (id) => MKT.priceMinor(1, id, 'eu')),
+      rows: CAT.oneEyeRows(cat, S.classStyle('black')),
+      max: cat.max,
+      several: CAT.severalMax(cat),
+      eyes: cat.eyes,
+    };
+  }),
 };
 for (const m of req.mutations ?? []) {
   const copy = JSON.parse(JSON.stringify(reg));

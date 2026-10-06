@@ -2,10 +2,11 @@ import type { Ref } from 'react';
 import { Check, Clock } from 'lucide-react';
 import { useLang } from './lang';
 import { BEFORE_SRC, styleSrc, styleSrcSet } from './config';
-import { currencyOf, money } from '../shared/markets';
+import { currencyOf, money, priceMinor } from '../shared/markets';
+import { fromOneEye } from '../shared/catalogue';
 import { useMarket } from '../shared/useMarket';
 import { usePrices } from '../shared/usePrices';
-import { useOrderingOpen } from './ordering';
+import { useCatalogue, useOrderingOpen } from './ordering';
 import { CtaLink, CtaNote, Eyebrow } from './ui';
 
 // Phones: headline, action, then the artwork (its centre lands on the first 390 x 844 screen), then the points.
@@ -15,6 +16,9 @@ export function Hero({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
   const market = useMarket();
   const prices = usePrices(market);          // the visitor's own ladder while a price experiment runs for them
   const open = useOrderingOpen();
+  const cat = useCatalogue();
+  // "from" is the lowest price among the styles that can be ordered for one eye now (never a price of a style that cannot be bought: spec 1.8 rule 2)
+  const from = fromOneEye(cat, (id) => priceMinor(1, id, market, prices));
   const h = t.hero;
   return (
     <section id="top" className="relative overflow-hidden pt-24 pb-20 sm:pt-36 sm:pb-28">
@@ -79,10 +83,10 @@ export function Hero({ ctaRef }: { ctaRef: Ref<HTMLAnchorElement> }) {
               <span>{p}</span>
             </li>
           ))}
-          {open ? (
+          {open && from !== null ? (
             <li className="flex items-start gap-3">
               <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#f5c542]" />
-              <span>{h.ready(money(prices.one_eye_studio_black, currencyOf(market), lang))}</span>
+              <span>{h.ready(money(from, currencyOf(market), lang))}</span>
             </li>
           ) : (
             <li className="flex items-start gap-3 text-zinc-400">

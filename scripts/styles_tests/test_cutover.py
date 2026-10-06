@@ -312,10 +312,10 @@ check("the landing's gallery lists the five live one-eye styles of the v3 engine
       probe.get("landing") == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.clean"], probe.get("landing"))
 fb = probe.get("fallback") or {}
 check("the fallback catalogue (before the server answers, and when it cannot): nothing orderable, no maximum, no list of art styles, no id for one eye",
-      fb == {"max": 0, "styles": [], "one": []}, fb)
+      fb == {"max": 0, "styles": [], "one": [], "eyes": []}, fb)
 sv = probe.get("server") or {}
 check("a server catalogue is read as before and names the ids orderable for one eye: Clean Iris (live) yes, Powder Burst (preview) no; the art list is empty (the black class is named by its own row)",
-      sv == {"max": 1, "styles": [], "one": ["solo.clean"]}, sv)
+      sv == {"max": 1, "styles": [], "one": ["solo.clean"], "eyes": [1]}, sv)
 g = {m["name"]: m["problems"] for m in probe.get("guard", [])}
 check("the build's cutover guard (check item 14): the committed registry and the state before the cutover pass, a default of lab passes",
       g.get("the committed registry") == [] and g.get("the state before the cutover") == [] and g.get("a default of lab is allowed") == [], g)
@@ -345,6 +345,7 @@ check("the tiles: six for one eye (Powder Burst first, Clean Iris last), three f
 check("the public catalogue (what a customer's page is told) lists the ten shown ids at preview only, with no held, planned or legacy id",
       sorted(c["id"] for c in CT.public_catalogue()) == sorted(LIVE1 + PREVIEW + ["grp.collision"]) and all(set(c["stages"].values()) == {"preview"} for c in CT.public_catalogue()), CT.public_catalogue()[:2])
 c_cat, j_cat = get("/api/checkout")
+ANS = {"before": j_cat}              # the answers the landing reads, kept for the check at the end of section 4 (the page's own functions through the probe)
 check("GET /api/checkout over HTTP: the same catalogue (preview only) and orderable_max_eyes 0: the landing and the buy card print 'opens soon', never a price for a style that cannot be bought",
       c_cat == 200 and j_cat.get("orderable_max_eyes") == 0 and all(set(s["stages"].values()) == {"preview"} for s in j_cat["styles"]) and len(j_cat["styles"]) == 10, (c_cat, j_cat.get("orderable_max_eyes")))
 S1 = [eye("blue_round")[2]["sealed"]]
@@ -392,6 +393,7 @@ c_cat, j_cat = get("/api/checkout")
 check("GET /api/checkout now lists Clean Iris live for one eye and the rest at preview, and orderable_max_eyes 1", c_cat == 200 and j_cat["orderable_max_eyes"] == 1
       and {s["id"]: s["stages"].get("1") for s in j_cat["styles"] if "1" in s["stages"]}["solo.clean"] == "live"
       and {s["id"]: s["stages"].get("1") for s in j_cat["styles"] if "1" in s["stages"]}["solo.powder"] == "preview", j_cat["styles"][:1])
+ANS["clean"] = j_cat
 t_now = CT.tile_list(1, [{"cls": "own"}])
 check("the recommended tile is a style the customer can buy: Clean Iris is the only one, so it is the pick (the table is price blind: it reads class and stage); with two live it follows the class",
       t_now["pick"] == "solo.clean", t_now["pick"])
@@ -451,6 +453,45 @@ check("the rollback: Clean Iris back to preview in the admin page, with no deplo
       and len(act("styles_audit", limit=50)["entries"]) >= 6 and get("/api/checkout")[1]["orderable_max_eyes"] == 0, (r["effective"], c_rb, j_rb))
 check("an order paid before the rollback still renders (the render path ignores stages): renderable, and the session of the earlier checkout is still readable by spec_from and priced",
       CT.renderable("solo.clean", 1) and pay.spec_from(H.Fake.sessions[sid]["metadata"])["style"] == "solo.clean" and pay.price_cents(1, "solo.clean", "eu") == amount, "")
+ANS["after"] = get("/api/checkout")[1]
+# what the landing makes of the server's answers (WP18 review: the deployment takes orders here, so "open" is true in every answer; the page must still say "opens soon" and print no price while
+# nothing can be ordered, and print only the prices of what can). The page's own functions run through the probe on the answers this section collected.
+act("styles_override", style="solo.powder", eyes=1, tick={"L1": True}, evidence=PASS_L0)
+act("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
+ANS["art_only"] = get("/api/checkout")[1]
+act("styles_override", style="solo.powder", eyes=1, stage="preview", confirm=True)
+act("styles_override", style="solo.clean", eyes=1, stage="live", confirm=True)
+act("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
+ANS["both"] = get("/api/checkout")[1]
+act("styles_override", style="solo.powder", eyes=1, stage="preview", confirm=True)
+act("styles_override", style="solo.clean", eyes=1, stage="preview", confirm=True)
+act("styles_override", style="grp.collision", eyes=3, tick={"L1": True}, evidence=PASS_L0)
+act("styles_override", style="grp.collision", eyes=3, stage="live", confirm=True)
+ANS["trio_only"] = get("/api/checkout")[1]
+act("styles_override", style="grp.collision", eyes=3, stage="preview", confirm=True)
+ANS["closed_again"] = get("/api/checkout")[1]
+NAMES = ["before", "clean", "art_only", "both", "trio_only", "after", "closed_again"]
+lp = run_probe({"answers": [ANS[n] for n in NAMES]})
+LR = dict(zip(NAMES, lp.get("landingReading") or []))
+EU = MK.MARKETS["eu"]["prices"]
+check("the deployment takes orders in every answer of this section (open is true: Stripe, the e-mail and the legal texts are set up in this harness), so the cutover's closed state is the CATALOGUE's, not the keys'",
+      all(ANS[n].get("open") is True for n in NAMES) and all(LR.get(n, {}).get("deploymentOpen") is True for n in NAMES), {n: ANS[n].get("open") for n in NAMES})
+check("the landing before the owner's tick: ordering open and nothing ticked is NOT open for the page: no 'from' price in the hero, no price row in the one-eye card (the page says 'opens soon', what the checkout will say with 409)",
+      LR.get("before") == {"deploymentOpen": True, "open": False, "from": None, "rows": {"black": False, "art": False}, "max": 0, "several": 0, "eyes": []}, LR.get("before"))
+check("... the same after a rollback and when the owner has taken everything back: closed again, no price",
+      all(LR.get(n) == LR.get("before") for n in ("after", "closed_again")), (LR.get("after"), LR.get("closed_again")))
+check("with Clean Iris ticked the page is open and prints only what can be bought: 'from' is the black price and only the black row (an art style is not orderable, so the art row stays off)",
+      LR.get("clean") == {"deploymentOpen": True, "open": True, "from": EU["one_eye_studio_black"], "rows": {"black": True, "art": False}, "max": 1, "several": 0, "eyes": [1]}, LR.get("clean"))
+check("with Powder Burst ticked alone only the art row and the art price (the black class is not orderable); with both ticked 'from' is the lower of the two and both rows",
+      LR.get("art_only") == {"deploymentOpen": True, "open": True, "from": EU["one_eye_art"], "rows": {"black": False, "art": True}, "max": 1, "several": 0, "eyes": [1]}
+      and LR.get("both") == {"deploymentOpen": True, "open": True, "from": min(EU["one_eye_studio_black"], EU["one_eye_art"]), "rows": {"black": True, "art": True}, "max": 1, "several": 0, "eyes": [1]}, (LR.get("art_only"), LR.get("both")))
+check("with only the Trio ticked the page is open (an order can be made) but prints no one-eye price (no style can be ordered for one eye) and no price for two eyes (the several-eyes card says 'free preview now': "
+      "its ladder starts at two eyes and no pair design is orderable in release 1)",
+      LR.get("trio_only") == {"deploymentOpen": True, "open": True, "from": None, "rows": {"black": False, "art": False}, "max": 3, "several": 0, "eyes": [3]}, LR.get("trio_only"))
+land = {f: read(f"src/landing/{f}") for f in ("ordering.ts", "Hero.tsx", "Pricing.tsx", "StyleGallery.tsx")}
+check("the landing's components use those functions and no longer print a price unconditionally: ordering.ts opens through ordersOpen, the hero prints fromOneEye (never the black price by itself), the one-eye card prints rows by oneEyeRows, the several-eyes card follows severalMax (never cat.max), the gallery prints a price only beside a style of the catalogue",
+      "ordersOpen(v.open" in land["ordering.ts"] and "fromOneEye(" in land["Hero.tsx"] and "prices.one_eye_studio_black" not in land["Hero.tsx"] and "oneEyeRows(" in land["Pricing.tsx"]
+      and "rows.black &&" in land["Pricing.tsx"] and "rows.art &&" in land["Pricing.tsx"] and "severalMax(cat)" in land["Pricing.tsx"] and "cat.max" not in land["Pricing.tsx"] and "cat.one.includes(st.id)" in land["StyleGallery.tsx"], "")
 reset()
 
 # ============================================================================================ 5. the legacy ids after the cutover
@@ -535,7 +576,8 @@ upd = re.search(r"export const LEGAL_UPDATED = '(\d{4}-\d\d-\d\d)';", legal_src)
 check("the AI-made material sentence is PUBLISHED by this deploy (AI_MATERIAL_PUBLISHED is true) and the terms take it through aiBlocks in each of the four languages (en and de in terms.ts, lt, hu)",
       "export const AI_MATERIAL_PUBLISHED = true;" in ai_src and "...aiBlocks('en')" in terms_src[""] and "...aiBlocks('de')" in terms_src[""] and "...aiBlocks('lt')" in terms_src[".lt"]
       and "...aiBlocks('hu')" in terms_src[".hu"], [t.count("...aiBlocks(") for t in terms_src.values()])
-SENT = {l: re.search(r"^  %s:\n\s+['\"](.+)['\"],?\s*$" % l, ai_src, re.M) for l in ("en", "de", "lt", "hu")}
+# (a checkout of this repository has CRLF line ends on a machine with core.autocrlf, and read() keeps them: the pattern takes either)
+SENT = {l: re.search(r"^  %s:\r?\n\s+['\"](.+)['\"],?\s*$" % l, ai_src, re.M) for l in ("en", "de", "lt", "hu")}
 docs = PACK.get("docs", {})
 check("the sentence is in the terms of the built pack (the one the confirmation e-mail quotes) in English, German, Lithuanian and Hungarian, and the pack's date is the new LEGAL_UPDATED",
       all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-10-06", (upd and upd.group(1), PACK.get("updated")))

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { noteCheckoutInfo, noteInfoUnavailable } from '../shared/pricing';
-import { fallbackCatalogue, readCatalogue, type RunCatalogue } from '../shared/catalogue';
+import { fallbackCatalogue, ordersOpen, readCatalogue, type RunCatalogue } from '../shared/catalogue';
 
 // Whether this deployment takes orders, by the capture tool's own rule (src/try/TryApp.tsx): /api/health says Stripe
 // is set up (and, with a live key, the delivery email too), then GET /api/checkout says "open". The landing page is
@@ -8,6 +8,9 @@ import { fallbackCatalogue, readCatalogue, type RunCatalogue } from '../shared/c
 // and swaps its "ordering opens soon" lines for the open ones (src/landing/copy.ts, the *Open variants).
 // Until both answers say yes, and whenever either cannot be read (offline, the Vite dev server without the API), the
 // page keeps the "soon" lines: it never promises more than /try sells. Asked once per page load, never per component.
+// WP18 (review): "open" here also needs a style that can be ordered NOW (the catalogue's orderable_max_eyes is at least 1: ordersOpen in
+// src/shared/catalogue.ts). A deployment can take orders (Stripe set up) while the owner has ticked no style, which is the state the cutover
+// leaves; every checkout is then refused with 409 style_unavailable, so the page keeps "ordering opens soon" and prints no price.
 
 // The same GET /api/checkout answer also names a market the visitor's country may suggest ("suggest", from Vercel's
 // x-vercel-ip-country): kept here for the landing page's offer of that currency (./MarketHint.tsx), never applied.
@@ -55,16 +58,16 @@ function subscribe(onChange: () => void): () => void {
     started = true;
     void check().then((v) => {
       if (!v.open && v.suggest === null && v.catalogue === null) return;
-      open = v.open;
-      suggested = v.suggest;
       if (v.catalogue) catalogue = v.catalogue;
+      open = ordersOpen(v.open, catalogue);       // the deployment takes orders AND a style can be ordered now (the build's fallback orders nothing)
+      suggested = v.suggest;
       listeners.forEach((l) => l());
     });
   }
   return () => { listeners.delete(onChange); };
 }
 
-/** true once this deployment is known to take orders; false until then (and on the server-less dev page). */
+/** true once this deployment is known to take orders AND some style can be ordered now; false until then (and on the server-less dev page, and while the owner has ticked no style). */
 export function useOrderingOpen(): boolean {
   return useSyncExternalStore(subscribe, () => open, () => false);
 }
