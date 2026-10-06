@@ -14,7 +14,14 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
 const dist = resolve(args.includes('--dist') ? args[args.indexOf('--dist') + 1] : join(ROOT, 'dist'));
 
-const BASE = { js: 233345, css: 26921 };
+// The base moved with the release integration (landing-v2 merged with the style engine): the registry text and its reader (src/shared/styles.ts), the run-time
+// catalogue (src/shared/catalogue.ts) and the price class in src/shared/markets.ts are shared modules that the landing now bundles too, and the page gates its tiles
+// and prices by them (src/landing/tileStyle.ts, StyleTile, PriceTable, ordering.ts). That is not motion: INTEGRATION is what this script measured on the merged tree
+// minus what it measured on the landing-v2 tip (4e541c6: JS 240,524 B, CSS 34,182 B, the numbers the owner accepted at +7.2 kB and +7.3 kB over the motionless page).
+// Re-measure it after a change of those modules: build both trees, run this script on each, take the difference.
+const MOTIONLESS = { js: 233345, css: 26921 };
+const INTEGRATION = { js: 9344, css: 727 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js, css: MOTIONLESS.css + INTEGRATION.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;
