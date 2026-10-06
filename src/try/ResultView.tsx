@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Check, Download, Plus, RefreshCcw, Trash2 } from 'lucide-react';
 import { CompareSlider } from './CompareSlider';
+import { ArtImage } from '../motion/ArtImage';
 import { Reveal } from '../reveal/Reveal';
 import { RevealStrip } from '../reveal/RevealStrip';
 import { withheldByColour } from '../reveal/revealMath';
@@ -33,6 +34,9 @@ interface Props {
   words: WordsModel;             // a name per eye, a date, a family name
   onStartOver: () => void;
   purchase: React.ReactNode;     // the price and the way to buy it (./BuyCard.tsx)
+  enter?: boolean;               // the screen arrives with a transition (the page changed step before: src/try/TryApp.tsx)
+  arrive?: boolean;              // the artwork has just been made: its first display opens like a diaphragm (spec 7.5); never for a restored one
+  onArrived?: () => void;        // that opening is over
 }
 
 export const ResultView: React.FC<Props> = (p) => {
@@ -117,7 +121,7 @@ export const ResultView: React.FC<Props> = (p) => {
               <button key={e.id} role="tab" aria-selected={i === idx} onClick={() => p.onSelect(e.id)} data-flagged={flagged.has(i + 1) || undefined}
                 aria-label={flagged.has(i + 1) ? T.picker.chipLabel(i + 1) : undefined}
                 className="shrink-0 flex flex-col items-center gap-1 w-16 pt-1">
-                <img {...NO_SAVE} src={e.thumb} alt="" className={`w-12 h-12 rounded-full object-cover border-2 ${flagged.has(i + 1) ? 'border-amber-400' : i === idx ? 'border-[#f5c542] ring-2 ring-[#f5c542]/40' : 'border-white/15 opacity-75'}`} />
+                <img {...NO_SAVE} src={e.thumb} alt="" className={`fx-pick w-12 h-12 rounded-full object-cover border-2 ${flagged.has(i + 1) ? 'border-amber-400' : i === idx ? 'fx-pop border-[#f5c542] ring-2 ring-[#f5c542]/40' : 'border-white/15 opacity-75'}`} />
                 <span className={`text-[10px] font-bold leading-tight text-center ${i === idx ? 'text-[#f5c542]' : 'text-zinc-300'}`}>
                   {T.result.eyeLabel(i + 1)}
                   {e.sample && <span className="block text-[9px] font-semibold text-amber-200/90">{T.result.sampleLabel}</span>}
@@ -136,7 +140,7 @@ export const ResultView: React.FC<Props> = (p) => {
         </div>
       )}
       {revealHero ?? (
-        <CompareSlider key={eye.id} before={eye.before} after={`data:image/jpeg;base64,${eye.image}`}
+        <CompareSlider key={eye.id} sweepKey={eye.id} before={eye.before} after={`data:image/jpeg;base64,${eye.image}`}
           beforeLabel={eye.sample ? T.result.samplePhoto : T.result.yourPhoto} afterLabel={T.result.after} />
       )}
       {colourWarning}
@@ -214,11 +218,14 @@ export const ResultView: React.FC<Props> = (p) => {
         </div>
       ) : (
         <>
-          <div data-testid="artwork" className="relative w-full rounded-2xl overflow-hidden border border-white/10 bg-black"
+          <div data-testid="artwork" className="fx-frame relative w-full rounded-2xl overflow-hidden border border-white/10 bg-black"
             {...NO_SAVE_BOX} style={{ ...NO_SAVE_BOX.style, aspectRatio: `${expected.w} / ${expected.h}` }}>
-            {shown && <img {...NO_SAVE} src={shown.src} alt={artAlt} className={`absolute inset-0 w-full h-full object-contain motion-safe:transition-opacity ${p.art ? '' : 'opacity-50'}`} />}
-            {!shown && composing && <div className="absolute inset-0 flex items-center justify-center text-zinc-300 text-sm">{T.result.composing}</div>}
-            {composing && <div aria-label={T.result.composing} className="absolute top-3 right-3 w-5 h-5 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full motion-safe:animate-spin" />}
+            {shown && <ArtImage {...NO_SAVE} src={shown.src} alt={artAlt} arrive={p.arrive} onOpened={p.onArrived} className={`fx-dim absolute inset-0 w-full h-full object-contain ${p.art ? '' : 'opacity-50'}`} />}
+            {/* composing: the stale picture stays, dimmed (it tells the truth), and a hairline of gold runs along the frame's top edge; a screen reader hears the state once */}
+            {composing && (shown
+              ? <span role="status" className="sr-only">{T.result.composing}</span>
+              : <div role="status" className="absolute inset-0 flex items-center justify-center text-zinc-300 text-sm">{T.result.composing}</div>)}
+            {composing && <span aria-hidden="true" className="fx-hair" />}
             {!p.art && p.composeError && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 text-center px-6">
                 <p className="text-sm text-rose-200">{T.result.composeFailed} {p.composeError}</p>
@@ -253,7 +260,7 @@ export const ResultView: React.FC<Props> = (p) => {
           <div role="radiogroup" aria-label={T.result.layout} className={`grid gap-2 ${p.layoutOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
             {p.layoutOptions.map((l) => (
               <button key={l} role="radio" aria-checked={p.layout === l} onClick={() => p.onLayout(l)}
-                className={`min-h-[44px] py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 ${p.layout === l ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
+                className={`fx-pick min-h-[44px] py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 ${p.layout === l ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
                 <LayoutGlyph layout={l} n={n} /> {layoutLabel(l)}
               </button>
             ))}
@@ -265,7 +272,7 @@ export const ResultView: React.FC<Props> = (p) => {
         <div className="mt-3 flex flex-wrap gap-2">
           {n === 2 && (
             <button type="button" data-testid="swap-places" aria-pressed={p.opts.swap} onClick={() => p.onOpts({ ...p.opts, swap: !p.opts.swap })}
-              className={`min-h-[44px] px-3 rounded-xl border text-sm font-semibold ${p.opts.swap ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-200'}`}>{T.picker.options.swap}</button>
+              className={`fx-pick min-h-[44px] px-3 rounded-xl border text-sm font-semibold ${p.opts.swap ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-200'}`}>{T.picker.options.swap}</button>
           )}
           {n === 3 && (
             <button type="button" data-testid="rotate-places" onClick={() => p.onOpts({ ...p.opts, rotate: (p.opts.rotate + 1) % 3 })}
@@ -293,7 +300,7 @@ export const ResultView: React.FC<Props> = (p) => {
   );
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className={`flex flex-col gap-6${p.enter ? ' fx-step' : ''}`}>
       {/* One eye: its before/after is the surprise, so it leads. Two or more: the artwork of all of them is
           what the couple came for, so it leads and the per-eye before/after follows. */}
       {n > 1 ? <>{artwork}{beforeAfter}</> : <>{beforeAfter}{stripSection}{artwork}</>}

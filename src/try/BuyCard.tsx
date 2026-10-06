@@ -8,6 +8,7 @@ import { currencyOf, currentMarket, money, priceMinor, type PriceList } from '..
 import { listFor } from '../shared/pricing';
 import { checkoutLegal, legalEdition } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
+import { Dot } from '../motion/Tick';
 import type { Lang } from '../shared/lang';
 
 /** The withdrawal-waiver text per language, as GET /api/checkout sends it. */
@@ -58,7 +59,8 @@ interface Props {
 // selected style can be bought as it is, nothing warns, the words are fine
 const NORMAL: BuyState = { kind: 'normal' };
 
-const CARD = 'bg-[#0b0e17] border border-[#f5c542]/25 rounded-2xl p-4';
+// fx-card: the card arrives once (src/motion/flow.css); nothing inside it (the price, the waiver, the legal links) ever moves on its own
+const CARD = 'fx-card bg-[#0b0e17] border border-[#f5c542]/25 rounded-2xl p-4';
 
 /** The price of this artwork and, where this deployment takes orders, the way to buy it: the withdrawal waiver (never
  *  ticked in advance), the legal links and the button to Stripe's page. Where it does not, today's plain "ordering
@@ -191,10 +193,8 @@ export const BuyCard: React.FC<Props> = (props) => {
       <button data-testid="buy" type="button" onClick={p.onBuy} disabled={disabled}
         className={`mt-3 w-full min-h-[48px] px-3 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 text-center ${disabled
           ? 'bg-white/5 border border-white/10 text-zinc-500 cursor-not-allowed'
-          : 'bg-gradient-to-r from-[#f5c542] to-[#d4af37] text-black shadow-lg shadow-[#f5c542]/20 active:scale-[0.98]'}`}>
-        {p.busy
-          ? <span className="w-4 h-4 shrink-0 border-2 border-zinc-500/40 border-t-zinc-300 rounded-full animate-spin" aria-hidden />
-          : <Lock className="w-4 h-4 shrink-0" />}
+          : 'fx-gold'}`}>
+        {p.busy ? <Dot /> : <Lock className="w-4 h-4 shrink-0" />}
         <span>{p.busy && p.step ? p.step : T.buy.button(fmt(cents))}</span>
       </button>
       {!p.busy && blockedBy === 'waiver' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{legal.withdrawalConsentMissing}</p>}

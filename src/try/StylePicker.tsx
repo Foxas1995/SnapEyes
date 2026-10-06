@@ -85,7 +85,7 @@ export const StylePicker: React.FC<{ model: PickerModel }> = ({ model: m }) => {
         <ul aria-label={T.picker.listLabel} aria-busy="true" data-testid="tile-list" className="mt-2 grid gap-2 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
           {[0, 1, 2, 3].map((i) => (
             <li key={i} className="rounded-xl border border-white/10 overflow-hidden" aria-hidden="true">
-              <span className="block aspect-[4/3] bg-white/5 motion-safe:animate-pulse" />
+              <span className="block aspect-[4/3] bg-white/5" />
               <span className="block h-9" />
             </li>
           ))}
@@ -123,14 +123,14 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
     } catch { /* no document: nothing to show */ }
   };
   return (
-    <li data-testid={`tile-${t.slug}`} data-state={st.kind} data-stage={t.stage} className={`rounded-xl border overflow-hidden bg-[#0b0e17] flex flex-col ${ring} ${held ? 'opacity-75' : ''}`}>
+    <li data-testid={`tile-${t.slug}`} data-state={st.kind} data-stage={t.stage} className={`fx-pick rounded-xl border overflow-hidden bg-[#0b0e17] flex flex-col ${ring} ${held ? 'opacity-75' : ''}`}>
       <button type="button" onClick={press} aria-pressed={held ? undefined : selected} aria-disabled={held || undefined} aria-busy={busy || undefined}
         className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]">
         <span className="relative block w-full aspect-[4/3] bg-black overflow-hidden">
-          {art && <img {...NO_SAVE} src={art.src} alt={T.picker.tileAlt(t.name)} className="absolute inset-0 w-full h-full object-contain" />}
+          {art && <img {...NO_SAVE} src={art.src} alt={T.picker.tileAlt(t.name)} className="fx-arrive absolute inset-0 w-full h-full object-contain" />}
           {busy && (
             <>
-              <span aria-hidden="true" className="absolute inset-0 bg-white/5 motion-safe:animate-pulse" />
+              <span aria-hidden="true" data-testid="tile-skeleton" className="absolute inset-0 bg-white/5" />
               <span className="sr-only">{T.picker.tileMaking(t.name)}</span>
             </>
           )}

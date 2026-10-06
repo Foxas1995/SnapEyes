@@ -72,7 +72,7 @@ export async function run(): Promise<Row[]> {
   const hLoad = renderToStaticMarkup(createElement(StylePicker, { model: { ...emptyPicker(1) } }));
   check('while the tile list is asked for: a busy list of skeletons, the group heading, no tile text', hLoad.includes('aria-busy="true"') && text(hLoad).includes('Just you') && !has(hLoad, 'tile-powder-burst'));
   const hLoadTile = renderToStaticMarkup(createElement(StylePicker, { model: model(1, singles, [eye(1)], { tilePicture: () => undefined, tileBusy: () => true }, 'solo.powder') }));
-  check('a tile whose picture is being made shows a skeleton and says so to a screen reader, not an accent swatch', hLoadTile.includes('animate-pulse') && text(hLoadTile).includes('Powder Burst: the preview is being made') && !hLoadTile.includes('<img'));
+  check('a tile whose picture is being made shows a still skeleton (nothing loops, BR-3) and says so to a screen reader, not an accent swatch', hLoadTile.includes('data-testid="tile-skeleton"') && !/animate-[a-z]/.test(hLoadTile) && text(hLoadTile).includes('Powder Burst: the preview is being made') && !hLoadTile.includes('<img'));
   const hErr = renderToStaticMarkup(createElement(StylePicker, { model: { ...emptyPicker(1), error: 'We are busy.' } }));
   check('a tile list that could not be had says why and offers Try again', has(hErr, 'picker-error') && text(hErr).includes('We are busy.') && text(hErr).includes('Try again'));
 
@@ -220,8 +220,8 @@ export async function run(): Promise<Row[]> {
 
   // ---- reduced motion: nothing of the picker moves unless the visitor allows motion
   const rmHtml = hLoad + hLoadTile + renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], m1, { art: undefined })));
-  check('reduced motion: every skeleton, spinner and fade of the picker is the motion-safe variant', rmHtml.includes('motion-safe:animate-pulse') && !/(^|[^:\w-])(animate-(pulse|spin)|transition-opacity)/.test(rmHtml),
-    rmHtml.match(/(^|[^:\w-])(animate-(pulse|spin)|transition-opacity)/)?.[0] ?? '');
+  check('reduced motion: nothing of the picker or the result loops or fades by a utility (no animate-*, no transition-opacity): its changes are the flow classes fx-*, which the stylesheet switches off', rmHtml.includes('fx-pick') && !/(^|[^:\w-])(animate-[a-z]+|transition-opacity)/.test(rmHtml),
+    rmHtml.match(/(^|[^:\w-])(animate-[a-z]+|transition-opacity)/)?.[0] ?? '');
 
   // ---- the four languages
   const SOON = { en: 'Soon', de: 'Bald', lt: 'Netrukus', hu: 'Hamarosan' } as Record<Lang, string>;

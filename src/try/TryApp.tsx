@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Upload, Sparkles, RefreshCcw, Check, AlertTriangle, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
+import { Camera, Upload, Sparkles, RefreshCcw, AlertTriangle, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
 import {
   type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, mapPool,
   autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf,
@@ -12,6 +12,8 @@ import { T, setCopyLang, type BlockCopy } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
 import { LANG_NAMES, marketLangs } from '../shared/lang';
 import { ResultView } from './ResultView';
+import { Working } from './Working';
+import { CaptureDiagram } from '../motion/CaptureDiagram';
 import { usePreviews } from './usePreviews';
 import { sendHelp } from './composeApi';
 import { type Opts, type ServerTile, NO_OPTS, advisoryEyes, buyState, lookOf, retakeView, showsPrice } from './picker';
@@ -199,7 +201,13 @@ const RESTORED: Eye[] = RETURN?.snap ? RETURN.snap.eyes.slice(0, MAX_EYES).map((
 
 export const TryApp: React.FC = () => {
   const [lang, setLangState] = useState<Lang>(() => T.lang);
-  const [step, setStep] = useState<Step>(RESTORED.length ? 'result' : 'capture');
+  const [step, setStepRaw] = useState<Step>(RESTORED.length ? 'result' : 'capture');
+  // Motion (src/motion/flow.css): a step fades up when it mounts, but only after the page has changed step once (the first screen is the page itself, and an
+  // artwork brought back from the payment page is simply there), and the aperture of an artwork that has just been restored opens once, on the first
+  // display after the studio finished (arriving), never on a restored or returning session and never after the customer has left the result screen.
+  const [stepped, setStepped] = useState(false);
+  const [arriving, setArriving] = useState(false);
+  const setStep = (s: Step) => { setStepRaw(s); setStepped(true); if (s !== 'result') setArriving(false); };
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [storageOn, setStorageOn] = useState(false);
@@ -727,7 +735,7 @@ export const TryApp: React.FC = () => {
     commitEyes(list); setSelectedId(eye.id);
     releasePhoto(); sampleRef.current = false;
     setAnalysis(null); setClientCrop(null);
-    setStep('result'); toTop();
+    setStep('result'); setArriving(true); toTop();
   };
 
   // ---- the result screen: the server's tile list for these eyes, the style on screen and its previews (src/try/usePreviews.ts)
@@ -896,7 +904,7 @@ export const TryApp: React.FC = () => {
       const list = [eye];
       commitEyes(list); setSelectedId(eye.id);
       releasePhoto(); setAnalysis(null); setClientCrop(null);
-      setStep('result'); toTop();
+      setStep('result'); setArriving(true); toTop();
       return;
     } catch { /* fall back to the studio below */ }
     try {
@@ -910,7 +918,7 @@ export const TryApp: React.FC = () => {
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
         {/* back to the landing page in the same language */}
-        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-semibold tracking-wider text-lg">SNAP<span className="text-[#f5c542]">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
           <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
             {STUDY && <span className="text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}
@@ -924,14 +932,14 @@ export const TryApp: React.FC = () => {
         {/* every screen after the first has its headings below this one: the page's own title for a screen reader (the first screen has its own h1) */}
         {step !== 'capture' && <h1 className="sr-only">{T.meta.title}</h1>}
         {error && (
-          <div className="mb-4 bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm rounded-xl p-3 flex gap-2">
+          <div className="fx-note mb-4 bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm rounded-xl p-3 flex gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{error}</span>
           </div>
         )}
 
         {/* back from Stripe's page without paying */}
         {((notice === 'cancelled' && step === 'result') || (notice === 'lost' && step === 'capture')) && (
-          <div role="status" data-testid="checkout-notice" className="mb-4 bg-sky-950/40 border border-sky-400/40 text-sky-100 text-sm rounded-xl p-3 flex gap-2 items-start">
+          <div role="status" data-testid="checkout-notice" className="fx-note mb-4 bg-sky-950/40 border border-sky-400/40 text-sky-100 text-sm rounded-xl p-3 flex gap-2 items-start">
             <Info className="w-4 h-4 shrink-0 mt-0.5 text-sky-300" />
             <span className="flex-1 min-w-0">{notice === 'cancelled' ? T.buy.cancelled : T.buy.cancelledLost}</span>
             <button type="button" onClick={() => setNotice(null)} aria-label={T.buy.close} className="shrink-0 -m-1 p-1 text-sky-200 hover:text-white"><X className="w-4 h-4" /></button>
@@ -950,7 +958,7 @@ export const TryApp: React.FC = () => {
           onChange={(e) => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) onFiles(fs); }} />
 
         {step === 'capture' && (
-          <section className="flex flex-col gap-5">
+          <section className={`flex flex-col gap-5${stepped ? ' fx-step' : ''}`}>
             {adding ? (
               <div className="text-center mt-2">
                 <h1 className="font-luxury text-3xl sm:text-4xl font-bold">{(replaceNo ? T.capture.retakeTitle(replaceNo) : T.capture.addTitle(eyes.length + 1)).toUpperCase()}</h1>
@@ -970,10 +978,12 @@ export const TryApp: React.FC = () => {
               </div>
             ) : (
               <div className="text-center mt-2">
-                <h1 className="font-luxury text-3xl sm:text-4xl font-bold">{T.capture.titleA}<span className="text-gold-gradient">{T.capture.titleB}</span></h1>
+                <h1 className="font-luxury text-3xl sm:text-4xl font-bold">{T.capture.titleA}<span className="text-[#f5c542]">{T.capture.titleB}</span></h1>
                 <p className="text-zinc-400 text-sm mt-2">{T.capture.lead}</p>
               </div>
             )}
+
+            <CaptureDiagram />
 
             <div className="bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {T.capture.steps.map((s) => (
@@ -985,7 +995,7 @@ export const TryApp: React.FC = () => {
             </div>
 
             {/* the first camera shot starts a fresh collection */}
-            <button onClick={() => { clearShots(); fileRef.current?.click(); }} className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#f5c542] to-[#d4af37] text-black font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#f5c542]/20 active:scale-[0.98]">
+            <button onClick={() => { clearShots(); fileRef.current?.click(); }} className="fx-gold w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
               <Camera className="w-5 h-5" /> {T.capture.takePhoto}
             </button>
 
@@ -1016,12 +1026,12 @@ export const TryApp: React.FC = () => {
         )}
 
         {step === 'analyzing' && (
-          <Working title={T.working.finding} lines={progress.length ? progress : [T.working.locating, T.working.measuringSize]} elapsed={elapsed} />
+          <Working title={T.working.finding} lines={progress.length ? progress : [T.working.locating, T.working.measuringSize]} active={progress.length ? 1 : 2} elapsed={elapsed} enter={stepped} />
         )}
 
         {step === 'quality' && analysis?.quality && shots.length > 0 && (
           <>
-            <ShotCollector shots={shots} t={targetsOf(analysis)} note={shotNote} onTakeAnother={takeAnother}
+            <ShotCollector shots={shots} t={targetsOf(analysis)} note={shotNote} onTakeAnother={takeAnother} enter={stepped}
               canUse={usable(analysis)}
               onContinue={() => imgRef.current && process(imgRef.current, analysis)} onStartOver={retake} />
             {backLink && <div className="flex justify-center mt-4">{backLink}</div>}
@@ -1029,7 +1039,7 @@ export const TryApp: React.FC = () => {
         )}
 
         {step === 'quality' && analysis?.quality && shots.length === 0 && (
-          <section className="flex flex-col gap-4">
+          <section className={`flex flex-col gap-4${stepped ? ' fx-step' : ''}`}>
             <div className="grid grid-cols-[120px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
               {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt={T.quality.detectedIris} className="w-[120px] h-[120px] rounded-full border border-[#f5c542]/40 object-cover" />}
               <div className="min-w-0">
@@ -1072,7 +1082,7 @@ export const TryApp: React.FC = () => {
 
         {step === 'processing' && (
           <Working title={working.eye > 1 ? T.working.restoringEye(working.eye) : T.working.restoring} lines={progress} elapsed={elapsed} image={clientCrop}
-            caption={working.sample ? T.working.sampleCaption : undefined}
+            caption={working.sample ? T.working.sampleCaption : undefined} enter={stepped}
             note={analysis?.quality?.pupil_reflection ? T.quality.pupilNote : undefined} />
         )}
 
@@ -1088,7 +1098,7 @@ export const TryApp: React.FC = () => {
             art={art} staleArt={previews.staleArt} composeError={previews.composeError} onRetryCompose={previews.retryCompose}
             picker={picker} layout={previews.layout} layoutOptions={selectedTile?.layouts ?? []} onLayout={setLayoutWant}
             opts={opts} onOpts={setOpts} words={words}
-            onStartOver={startOver} purchase={purchase} />
+            onStartOver={startOver} purchase={purchase} enter={stepped} arrive={arriving} onArrived={() => setArriving(false)} />
         )}
       </main>
 
@@ -1105,7 +1115,7 @@ export const TryApp: React.FC = () => {
       </footer>
 
       {step === 'result' && undo && (
-        <div role="status" className="fixed bottom-4 inset-x-4 z-40 mx-auto max-w-sm bg-zinc-900 border border-white/15 rounded-xl pl-4 pr-1 flex items-center justify-between gap-3 text-sm text-zinc-100 shadow-lg shadow-black/50">
+        <div role="status" className="fx-toast fixed bottom-4 inset-x-4 z-40 mx-auto max-w-sm bg-zinc-900 border border-white/15 rounded-xl pl-4 pr-1 flex items-center justify-between gap-3 text-sm text-zinc-100 shadow-lg shadow-black/50">
           <span>{T.result.removed(undo.index + 1)}</span>
           <button onClick={undoRemove} className="min-h-[44px] min-w-[44px] px-3 font-bold text-[#f5c542] underline underline-offset-4">{T.result.undo}</button>
         </div>
@@ -1149,7 +1159,7 @@ const DetailMeter: React.FC<{ a: Analysis; t: Targets; label?: boolean }> = ({ a
         {caption && <span className="text-[10px] text-zinc-500">{caption}</span>}
       </div>
       <div className="relative h-2 mt-1.5 rounded-full bg-white/10 overflow-hidden">
-        <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.max(d, 2)}%` }} />
+        <div className={`fx-fill h-full rounded-full ${bar}`} style={{ width: `${Math.max(d, 2)}%` }} />
         <span className="absolute inset-y-0 w-px bg-white/35" style={{ left: `${t.detail_ok}%` }} />
         <span className="absolute inset-y-0 w-px bg-white/70" style={{ left: `${t.detail_good}%` }} />
       </div>
@@ -1183,8 +1193,8 @@ const ShotNotes: React.FC<{ q: Quality; onRetake?: () => void }> = ({ q, onRetak
  *  with the best one ringed, and a way to shoot again or go on with the best at any point. */
 const ShotCollector: React.FC<{
   shots: Analysis[]; t: Targets; note: string | null;
-  onTakeAnother: () => void; onContinue: () => void; onStartOver: () => void; canUse?: boolean;
-}> = ({ shots, t, note, onTakeAnother, onContinue, onStartOver, canUse = true }) => {
+  onTakeAnother: () => void; onContinue: () => void; onStartOver: () => void; canUse?: boolean; enter?: boolean;
+}> = ({ shots, t, note, onTakeAnother, onContinue, onStartOver, canUse = true, enter = false }) => {
   const n = shots.length;
   const latest = shots[n - 1];
   const q = latest.quality;
@@ -1216,7 +1226,7 @@ const ShotCollector: React.FC<{
     : skippedForLamp ? T.collector.lampSkipped(n, bestLabel)
     : T.collector.bestIs(bestLabel);
   return (
-    <section className="flex flex-col gap-4">
+    <section className={`flex flex-col gap-4${enter ? ' fx-step' : ''}`}>
       <div className="grid grid-cols-[96px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
         {latest.preview
           ? <img src={`data:image/jpeg;base64,${latest.preview}`} alt={T.collector.shotAlt(n)} className="w-24 h-24 rounded-full border border-[#f5c542]/40 object-cover" />
@@ -1254,7 +1264,7 @@ const ShotCollector: React.FC<{
             const ring = i !== bi ? 'border-white/10' : usable(s) ? 'border-[#f5c542]' : 'border-rose-400/70';
             const ink = i !== bi ? (usable(s) ? 'text-zinc-500' : 'text-rose-300/70') : usable(s) ? 'text-[#f5c542]' : 'text-rose-300';
             return (
-              <div key={i} className="flex flex-col items-center gap-1">
+              <div key={i} className="fx-tile flex flex-col items-center gap-1">
                 {s.preview
                   ? <img src={`data:image/jpeg;base64,${s.preview}`} alt={T.collector.shotAlt(i + 1)} className={`w-11 h-11 rounded-full object-cover border-2 ${ring} ${i === bi ? '' : 'opacity-60'}`} />
                   : <span className={`w-11 h-11 rounded-full bg-white/5 border-2 ${ring}`} />}
@@ -1285,21 +1295,3 @@ const ShotCollector: React.FC<{
     </section>
   );
 };
-
-const Working: React.FC<{ title: string; lines: string[]; elapsed: number; image?: string | null; note?: string; caption?: string }> = ({ title, lines, elapsed, image, note, caption }) => (
-  <section className="flex flex-col items-center gap-5 py-6 text-center">
-    {image ? <img src={image} alt={T.working.yourIris} className="w-40 h-40 rounded-full object-cover border-2 border-[#f5c542]/40 shadow-[0_0_40px_rgba(245,197,66,0.25)] animate-pulse" /> : <div className="w-16 h-16 border-4 border-[#f5c542]/20 border-t-[#f5c542] rounded-full animate-spin" />}
-    {image && caption && <span className="-mt-3 text-[10px] uppercase tracking-widest text-amber-200/90">{caption}</span>}
-    <h2 className="font-luxury text-xl font-bold">{title}</h2>
-    <ul className="text-sm text-zinc-300 space-y-1.5">
-      {lines.map((l, i) => (
-        <li key={l} className="flex items-center gap-2 justify-center">
-          {i < lines.length - 1 ? <Check className="w-4 h-4 text-emerald-400" /> : <span className="w-3.5 h-3.5 border-2 border-[#f5c542]/30 border-t-[#f5c542] rounded-full animate-spin" />}
-          {l}
-        </li>
-      ))}
-    </ul>
-    {note && <p className="text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl px-3 py-2 max-w-sm">{note}</p>}
-    <span className="text-[11px] font-mono text-zinc-500">{T.working.elapsed(elapsed)}</span>
-  </section>
-);
