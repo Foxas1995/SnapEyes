@@ -1,9 +1,4 @@
-# Exact pins (2026-10-04, v3 engine work package WP0): the versions the guard suites and the scratch goldens ran on, with the
-# interpreter named by .python-version (3.14). The deployed versions of the last Vercel build are not in the repository, so these
-# are the pair both the development machine and a Linux build can run: PyPI lists cp314 manylinux x86_64 wheels for numpy, Pillow
-# and onnxruntime at these versions, and requests is a pure Python wheel (it runs on any interpreter).
-# Packages these pull in are not pinned here; suites/baseline.md records the full list this was run with.
-numpy==2.4.4
-Pillow==12.2.0
-requests==2.33.1
-onnxruntime==1.26.0
+numpy>=2.0
+Pillow>=10.4
+requests>=2.32
+onnxruntime>=1.20
