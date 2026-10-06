@@ -9,6 +9,7 @@ import { BTN, GOLD, INPUT, MUTED, Notice, Spinner } from './ui';
 import { SummaryPage } from './Summary';
 import { OrdersPage } from './Orders';
 import { OrderDetailPage } from './OrderDetail';
+import { StylesPage } from './Styles';
 import { LabPage } from './Lab';
 import { StatsPage } from './Stats';
 import { TestsPage } from './Tests';
@@ -16,7 +17,7 @@ import { ErrorsPage } from './Errors';
 
 export type Call = <T>(action: string, body?: Record<string, unknown>, timeoutMs?: number) => Promise<Reply<T>>;
 
-type Route = { page: 'summary' | 'orders' | 'order' | 'lab' | 'stats' | 'tests' | 'errors'; order?: string };
+type Route = { page: 'summary' | 'orders' | 'order' | 'styles' | 'lab' | 'stats' | 'tests' | 'errors'; order?: string };
 
 function readRoute(): Route {
   const raw = (typeof location !== 'undefined' ? location.hash : '').replace(/^#\/?/, '');
@@ -25,12 +26,12 @@ function readRoute(): Route {
   try { h = decodeURIComponent(raw); } catch { h = ''; }
   const m = /^order\/([a-z0-9][a-z0-9-]{3,63})$/.exec(h);
   if (m) return { page: 'order', order: m[1] };
-  if (h === 'orders' || h === 'lab' || h === 'stats' || h === 'tests' || h === 'errors') return { page: h };
+  if (h === 'orders' || h === 'styles' || h === 'lab' || h === 'stats' || h === 'tests' || h === 'errors') return { page: h };
   return { page: 'summary' };
 }
 
 const TABS: [Route['page'], string][] = [
-  ['summary', 'Suvestinė'], ['orders', 'Užsakymai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['tests', 'Kainų testai'], ['errors', 'Klaidos'],
+  ['summary', 'Suvestinė'], ['orders', 'Užsakymai'], ['styles', 'Stiliai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['tests', 'Kainų testai'], ['errors', 'Klaidos'],
 ];
 
 const Login: React.FC<{ onIn: (key: string, me: Me) => void; message: string }> = ({ onIn, message }) => {
@@ -132,7 +133,7 @@ export const AdminApp: React.FC = () => {
       <header className="border-b border-white/10 bg-[#07090e]/95 sticky top-0 z-40 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-bold"><span className="text-[#f5c542]">SnapEyes</span> administravimas</p>
+            <h1 className="text-sm font-bold"><span className="text-[#f5c542]">SnapEyes</span> administravimas</h1>
             <p className="text-[11px] text-white/50">Raktas galioja iki {fmtDate(me.expires_at)}</p>
           </div>
           <button type="button" className={BTN} onClick={() => logout('Atsijungta.')}>Atsijungti</button>
@@ -150,6 +151,7 @@ export const AdminApp: React.FC = () => {
         {route.page === 'summary' && <SummaryPage call={call} />}
         {route.page === 'orders' && <OrdersPage call={call} />}
         {route.page === 'order' && route.order && <OrderDetailPage key={route.order} call={call} order={route.order} />}
+        {route.page === 'styles' && <StylesPage call={call} />}
         {route.page === 'lab' && <LabPage call={call} />}
         {route.page === 'stats' && <StatsPage call={call} />}
         {route.page === 'tests' && <TestsPage call={call} />}

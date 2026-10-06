@@ -126,6 +126,8 @@ export interface OrderRow {
   layout: string | null; amount: number | null; currency: string; market?: string; paid: boolean; live: boolean | null; paid_at: number | null;
   email: string | null; drafts: number; made: number; files: number; delivery: boolean; held: boolean; review: boolean;
   withdrawal: boolean; extra_payments: number; mail: string | null;
+  /** the set level gate result of the style's rule at checkout: ok, unknown or the failing eye's reason code (order.json checkout.gate); null for an order that never reached the payment page */
+  gate?: string | null;
   /** the price experiment and variant the order was priced under, if any */
   experiment?: { key: string; variant: string; label?: string | null } | null;
 }
@@ -214,6 +216,8 @@ export interface Experiment {
   untokened: { orders: number; paid: number } | null;
   days: number;
   warnings: ExpWarning[];
+  /** changes of the style switch made while this test ran that changed what could be ordered (api/_lib/abtest.py catalogue_changes), newest first */
+  catalogue?: CatalogueChange[];
 }
 export interface Experiments {
   now: number; experiments: Experiment[]; partial: boolean; log: LogEntry[];
@@ -255,7 +259,7 @@ export interface StepTry { kills: number; open: boolean; plate: number; errors: 
 export interface StepRow { name: string; kind: string; eyes?: number[]; need_s?: number | null; est_mb?: number | null; done: StepDone | null; try: StepTry | null }
 /** steps.capacity(): can the plan's step run at all on this function (why: time, memory or no_cost when it cannot) */
 export interface StepCapacity { ok: boolean; why: string | null; need_s: number | null; est_mb: number | null; factor: number; budget_s: number; mem_budget_mb: number }
-export interface StepEye { eye: number; eye_id?: string | null; cls?: string | null; pupil?: string | null; gate: { lid: boolean | null; fill: boolean | null } }
+export interface StepEye { eye: number; eye_id?: string | null; cls?: string | null; pupil?: string | null; gate: { lid: boolean | null; fill: boolean | null }; gate_why?: { lid: string[]; fill: string[] } }
 export interface StepsView {
   plan: Record<string, unknown> | null; steps: StepRow[]; rerun: number; progress: { done: number; of: number; step: string | null };
   locks: Record<string, { age_s: number; stale: boolean } | null>; capacity: StepCapacity | null; factor: number; registry_hash: string; engine_v: number;
@@ -263,3 +267,91 @@ export interface StepsView {
 }
 /** lab_steps: a dry run has a plan and a capacity; a run the whole view and the artwork (with a signed link) */
 export type LabStepsResult = Partial<StepsView> & { result: string; artwork?: Record<string, unknown> | null };
+
+// ---------------------------------------------------------------------------------------------------- the style switch and its numbers (WP13)
+
+/** A change of the style switch seen from a price test's card: the effective stage of each eye count before and after. */
+export interface CatalogueChange { t?: number; iso?: string; style?: string; eyes?: number[]; stage?: string | null; before?: Record<string, string | null>; after?: Record<string, string | null> }
+
+export type StageCode = 'planned' | 'lab' | 'preview' | 'live' | 'retired';
+export type L0State = 'pass' | 'below_bar' | 'incomplete' | 'waiver' | null;
+export interface StyleMark { ticked_at: string; by: string; score?: { mean?: number; min_axis?: number }; director?: string }
+export interface StyleWaiver { at: string; by: string; text: string }
+export interface StyleRange {
+  eyes: [number, number]; ceiling: StageCode | null; override: 'lab' | 'preview' | 'live' | null; effective: StageCode | null; orderable: boolean; switchable: boolean;
+  checklist: Record<string, StyleMark>; waiver: StyleWaiver | null; missing_for_live: string[]; l0: L0State;
+}
+export interface StyleLast { by?: string | null; at?: string | null; reason?: string | null; reason_kind?: string | null }
+export interface StyleRow {
+  id: string; name: string; group: string; legacy: boolean; eyes: [number, number]; gate: string; price_class: string; built: boolean;
+  ranges: StyleRange[]; last: StyleLast | null;
+}
+export interface StyleLimits { min_n: number; error_rate: number; review_rate: number; gate_fail_rate: number }
+export interface StyleCatalogue {
+  rev: number; at: string | null; checks: string[]; limits: StyleLimits; l0_bar: { mean: number; min_axis: number };
+  default_effective: string | null; fallback_stage: string; registry_hash: string; ordering_open: boolean; price_test: string[];
+  orderable_max_eyes: number; styles: StyleRow[];
+}
+export interface StyleHeld { count: number; orders: string[]; checked: number; more: boolean; failed: string[]; unread: number; error: string | null; incomplete: boolean }
+export interface StyleChange {
+  result: 'changed' | 'ticked' | 'same'; style: string; eyes: number[]; rev: number; before: Record<string, string | null>; after: Record<string, string | null>;
+  effective: Record<string, string | null>; ceiling: Record<string, string | null>; ticked?: string[]; unticked?: string[]; waiver?: string | null;
+  l0: Record<string, L0State>; price_test?: string[]; in_flight: 'finish' | 'hold' | null; held: StyleHeld | null; audit_written?: boolean; view: StyleRow;
+}
+
+/** One row of the set level funnel: per eye count (and per colour class), always with n. */
+export interface FunnelLine { ok: boolean; n: number; need_n: number; first: number | null; need_first: number; retake: number | null; need_retake: number; why: string[] }
+export interface FunnelRow {
+  eyes: number; cls: string | null; first: number; first_pass: number; unknown: number; retake1: number; retake1_pass: number; retake2: number; retake2_pass: number;
+  fails: Record<string, number>; rate_first: number | null; rate_retake: number | null; line: FunnelLine | null;
+}
+export interface DemandRow { style: string; name: string; eyes: number; stage: string; tiles: number; large: number; soon: number; blocked: number }
+export interface PreviewRow { style: string; name: string; previews: number; tiles: number }
+export interface ConversionRow { style: string; name: string; eyes: number; previews: number; started: number; paid: number; rate_started: number | null; rate_paid: number | null }
+export interface AfterFailureRow { eyes: number; started: number; paid: number; started_failed: number; paid_failed: number; by_code: Record<string, number>; share_paid_failed: number | null }
+export interface FallbackRow { style: string; name: string; fallback: string; count: number; of: number; share: number | null }
+export interface TimeRow { what: string; style: string; name: string; eyes: number; n: number; p50_ms: number | null; p95_ms: number | null; over: number; need_s: number | null }
+export interface ErrorStyleRow { style: string; name: string; errors: number; asked: number; rate: number | null }
+export interface QaStyleRow { style: string; name: string; qa_fail: number; of: number; rate: number | null }
+export interface ReviewStyleRow { style: string; name: string; review: number; made: number; rate: number | null }
+export interface BusyRow { endpoint: string; style: string; name: string | null; count: number }
+export interface GateStyleRow { style: string; name: string; policy: string; rule: string; seen: number; failed: number; rate: number | null }
+export interface AttentionItem { kind: 'error' | 'review' | 'gate' | 'health' | 'hold'; style?: string; rate?: number; n?: number; limit?: number; key?: string; code?: string }
+export interface StylesStats {
+  days: number; partial: boolean; recording: boolean; market: string | null; lang: string | null; limits: StyleLimits; health: Record<string, boolean> | null;
+  requests: { total: number; drew_nothing: number };
+  funnel: FunnelRow[]; funnel_by_class: FunnelRow[]; opening: Record<string, FunnelLine>;
+  demand: DemandRow[]; chosen: { pick: number; other: number; share: number | null };
+  chosen_by_class: { cls: string; pick: number; other: number; n: number; share: number | null }[];
+  previews: PreviewRow[]; conversion: { recorded: boolean; rows: ConversionRow[] }; after_failure: AfterFailureRow[]; fallbacks: FallbackRow[];
+  times: TimeRow[]; busy_retry: BusyRow[]; errors: ErrorStyleRow[]; qa: QaStyleRow[]; review: ReviewStyleRow[];
+  gate: { codes: Table; reasons: Table; classes: Table; pupils: Table; by_style: GateStyleRow[] };
+  holds: Table; master: { made_by_style: Table; fallback: Table };
+  help: { routes: Table; why: Table; eyes: Table };
+  reveal: { codes: Table; n: number; ok_share: number | null; ms: number | null };
+  attention: AttentionItem[];
+  memory: { peak_mb_avg: number | null; n: number; peak_mb_is: string; hwm_is: string };
+  filter: { slice: string | null; sliced: string[]; whole: string[] };
+}
+
+/** One entry of the switch's audit log (api/_lib/stage_overrides.py audit_put). */
+export interface StyleAuditEntry {
+  kind: 'override' | 'limits' | 'hold'; t?: number; iso?: string; by?: string; style?: string; name?: string; eyes?: number[]; stage?: string | null;
+  before?: Record<string, string | null>; after?: Record<string, string | null>; effective_before?: Record<string, string | null>; effective_after?: Record<string, string | null>;
+  ceiling?: Record<string, string | null>; reason?: string; reason_kind?: string; ticked?: string[]; unticked?: string[]; waiver?: string | null; l0?: Record<string, L0State>;
+  numbers?: Record<string, { n: number; first_pass: number | null; with_retake: number | null; unknown: number; line_ok: boolean | null; why: string[]; partial?: boolean }> | null;
+  price_test?: string[]; price_test_seen?: boolean; in_flight?: string | null; held?: StyleHeld | null; rev?: number; limits?: StyleLimits;
+}
+
+/** styles_lab with eyes or order and ns: the contact sheet of a group (api/_lib/ops.py a_styles_lab_group). */
+export interface GroupGateRule { ok: boolean | null; values?: Record<string, unknown>; why?: string[] }
+export interface GroupEye { eye: number; eye_id: string | null; cls: string | null; pupil: string | null; gate: { lid: GroupGateRule | null; fill: GroupGateRule | null } }
+export interface GroupTile {
+  id: string; name: string; look: string | null; stage: StageCode | null; ceiling: StageCode | null; available: boolean; why: string | null; image: string | null;
+  width?: number; height?: number; layout?: string; canvas?: string | null; design_used?: string | null; fallback?: string | null;
+  selfcheck?: { ok: boolean | null; failed?: unknown } | null; times?: Record<string, number> | null; ms?: number; plate?: string; error?: string;
+}
+export interface GroupSheet { group: number; size: number; eyes: GroupEye[]; tiles: GroupTile[]; pick: string | null; partial: boolean; timing: { total_ms: number; eyes_ms: number } }
+
+/** order_link: one signed link of one file of an order, made when the owner asks for it. */
+export interface OrderLink { url: string; expires_in: number; path: string }

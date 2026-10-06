@@ -4,11 +4,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
 import { getHealth } from './api';
-import type { Counts, Health, OrderRow, Orders, Stats, Summary } from './api';
+import type { Counts, Health, OrderRow, Orders, Stats, StylesStats, Summary } from './api';
 import type { Call } from './AdminApp';
 import { countBy, lastDays, ordersSince, revenue, sumTable } from './agg';
-import { BLOCK_LT, DEFAULT_PRICES, explain, fmtEur, fmtMoney, fmtTime, fmtUsd, KIND_LT, spend, STATE_LT, VERDICT_LT } from './format';
-import { BTN, CARD, Chip, Flag, H2, MUTED, Notice, Spinner } from './ui';
+import { BLOCK_LT, DEFAULT_PRICES, explain, fmtEur, fmtMoney, fmtTime, fmtUsd, KIND_LT, spend, STATE_LT, STYLE_LT, VERDICT_LT } from './format';
+import { attentionText } from './stylesView';
+import { BTN, CARD, Chip, Flag, H2, MUTED, Notice, Spinner, ToneLine } from './ui';
 
 const WINDOWS: [number, string][] = [[1, 'Šiandien'], [7, '7 d.'], [30, '30 d.']];
 
@@ -22,6 +23,8 @@ export const SummaryPage: React.FC<{ call: Call }> = ({ call }) => {
   const [err, setErr] = useState<string[]>([]);
   const [busy, setBusy] = useState(true);
   const [loadedAt, setLoadedAt] = useState(0);
+  // the attention card of the styles (WP13): what crossed a limit the owner set in the last 7 days; its own call, so a slow count never holds the summary back
+  const [attn, setAttn] = useState<{ stats: StylesStats | null; err: string }>({ stats: null, err: '' });
 
   const fetchAll = useCallback(() => Promise.all([getHealth(), call<Summary>('summary'), call<Stats>('stats', { days: 30 }),
     call<Orders>('orders', { days: 30 })]), [call]);
@@ -41,7 +44,18 @@ export const SummaryPage: React.FC<{ call: Call }> = ({ call }) => {
     return () => { live = false; };
   }, [fetchAll, apply]);
 
-  const load = async () => { setBusy(true); apply(await fetchAll()); };
+  const loadAttn = useCallback(async () => {
+    const r = await call<StylesStats>('styles_stats', { days: 7 }, 90_000);
+    setAttn(r.ok && r.data ? { stats: r.data, err: '' } : { stats: null, err: explain(r) });
+  }, [call]);
+
+  useEffect(() => {
+    let live = true;
+    void call<StylesStats>('styles_stats', { days: 7 }, 90_000).then((r) => { if (live) setAttn(r.ok && r.data ? { stats: r.data, err: '' } : { stats: null, err: explain(r) }); });
+    return () => { live = false; };
+  }, [call]);
+
+  const load = async () => { setBusy(true); void loadAttn(); apply(await fetchAll()); };
 
   const now = loadedAt;
   const prices = stats?.prices_usd || sum?.prices_usd || DEFAULT_PRICES;
@@ -94,6 +108,24 @@ export const SummaryPage: React.FC<{ call: Call }> = ({ call }) => {
             ))}
           </ul>
         ) : <p className={`text-sm ${MUTED}`}>Šiuo metu joks kainų testas neveikia: visi lankytojai moka įprastas kainas.</p>}
+      </section>
+      <section className={CARD} aria-label="Stilių dėmesio kortelė">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h3 className="text-sm font-bold">Stilių dėmesio kortelė</h3>
+          <a href="#styles" className={BTN}>Atidaryti stilius</a>
+        </div>
+        {attn.err && <p className={`text-xs ${MUTED}`}>Stilių skaičių perskaityti nepavyko: {attn.err}</p>}
+        {!attn.stats && !attn.err && <Spinner />}
+        {attn.stats && attn.stats.attention.length === 0 && <p className="text-sm text-emerald-200">Per 7 dienas nei vienas stilius nekirto tavo ribų, sveikatos patikra praėjo, sulaikytų dėl stiliaus užsakymų nėra.</p>}
+        <ul className="flex flex-col gap-1.5">
+          {(attn.stats?.attention || []).map((a, i) => (
+            <li key={i}>
+              <ToneLine tone={a.kind === 'health' || a.kind === 'hold' ? 'bad' : 'warn'}>
+                {attentionText(a, (id) => STYLE_LT[id] || id)}{a.kind === 'hold' && <> <a href="#orders" className="underline underline-offset-4">Atidaryti užsakymų sąrašą</a></>}
+              </ToneLine>
+            </li>
+          ))}
+        </ul>
       </section>
       <div className="grid gap-4 md:grid-cols-2">
         <section className={CARD}>

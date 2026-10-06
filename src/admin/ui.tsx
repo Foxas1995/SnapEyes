@@ -24,6 +24,11 @@ export const Chip: React.FC<{ tone?: Tone; children: React.ReactNode }> = ({ ton
   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-semibold whitespace-nowrap ${TONES[tone]}`}>{children}</span>
 );
 
+/** A chip whose words may be long (a check's name with its numbers): it wraps and stays inside its box on a phone. */
+export const WrapChip: React.FC<{ tone?: Tone; children: React.ReactNode }> = ({ tone = 'muted', children }) => (
+  <span className={`inline-flex items-start gap-1 px-2 py-0.5 rounded-xl border text-xs font-semibold text-left break-words max-w-full ${TONES[tone]}`}>{children}</span>
+);
+
 /** A yes/no flag: a dot plus the word, never colour alone. */
 export const Flag: React.FC<{ on: boolean | undefined | null; label: string; bad?: boolean }> = ({ on, label, bad = true }) => (
   <span className="inline-flex items-center gap-2 text-sm min-w-0">
@@ -46,6 +51,50 @@ export const H2: React.FC<{ children: React.ReactNode; right?: React.ReactNode }
 export const Notice: React.FC<{ tone?: Tone; children: React.ReactNode }> = ({ tone = 'bad', children }) => (
   <div role={tone === 'bad' ? 'alert' : 'status'} className={`rounded-xl border px-3 py-2 text-sm break-words ${TONES[tone]}`}>{children}</div>
 );
+
+/** A short statement in a tone, in the page's own flow (a green or a red line: the words say the same as the colour). */
+export const ToneLine: React.FC<{ tone?: Tone; children: React.ReactNode }> = ({ tone = 'muted', children }) => (
+  <p className={`rounded-lg border px-2.5 py-1.5 text-xs break-words ${TONES[tone]}`}>{children}</p>
+);
+
+/** A small table: a table on a wide screen (it scrolls inside itself if it must), one block per row on a phone, where the numbers of a table of many columns would be hidden
+ *  behind sideways scrolling. The page itself never scrolls sideways. */
+export const Tbl: React.FC<{ head: string[]; rows: React.ReactNode[][]; label: string; empty?: string }> = ({ head, rows, label, empty = 'Nėra duomenų.' }) => {
+  if (!rows.length) return <p className="text-xs text-white/55">{empty}</p>;
+  return (
+    <>
+      <ul className="md:hidden flex flex-col gap-2" aria-label={label}>
+        {rows.map((r, i) => (
+          <li key={i}>
+            <dl className="rounded-lg border border-white/10 bg-black/20 p-2.5 grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs">
+              {head.map((h, j) => (
+                <div key={h} className="contents">
+                  <dt className="text-white/55">{h}</dt>
+                  <dd className="min-w-0 break-words">{r[j]}</dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden md:block overflow-x-auto" role="region" aria-label={label} tabIndex={0}>
+        <table className="w-full text-xs text-left border-collapse">
+          <caption className="sr-only">{label}</caption>
+          <thead className="text-white/55">
+            <tr>{head.map((h) => <th key={h} scope="col" className="py-1 pr-3 font-semibold whitespace-nowrap">{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className="border-t border-white/5 align-top">
+                {r.map((c, j) => <td key={j} className="py-1.5 pr-3 break-words">{c}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+};
 
 /** An action's result, pinned to the bottom of the screen: the button that started it may be far down a long page,
  *  so a notice at the top would not be seen. Opaque (it lies over the page), scrolls inside itself when long. */
