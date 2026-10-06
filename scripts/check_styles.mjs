@@ -51,7 +51,9 @@
 //      in src/landing/tileStyle.ts that names a style of the registry taking that many eyes, in the group of the tile, in the price class the tile prints
 //      (an art tile of an art style, the black tile of the black one), not retired; no row names a tile the gallery does not have; and every language's
 //      styles.items has an entry for exactly the gallery's tiles. A tile is for sale only when the run-time catalogue lists that style live for that many
-//      eyes (src/landing/StyleTile.tsx): without a row it would never carry a price, and a wrong row would print the price of another style.
+//      eyes (src/landing/StyleTile.tsx): without a row it would never carry a price, and a wrong row would print the price of another style. The other direction too:
+//      every style of the v3 engine the picker shows (a place in the picker's order, preview or live for some count of eyes) has a tile; and a tile's copy is its description
+//      only (the name a tile prints is the registry's, src/landing/tileState.ts).
 // Items 8, 9, 10, 12 and 13 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
 // `npm run check:styles` runs it alone.
@@ -595,6 +597,17 @@ export function checkLandingTiles(tileStyle, gallery, styles, copy, out) {
     if ((t.price === 'art' || t.price === 'black') && d.price_class !== t.price) out.push(`${at}: the tile "${t.id}" prints the ${t.price} one-eye price, "${row.id}" is of the price class "${d.price_class}"`);
   }
   for (const id of Object.keys(tileStyle)) if (!ids.has(id)) out.push(`${at}: the row "${id}" names no tile of the gallery`);
+  // the other direction: every style the picker shows (a style of the v3 engine with a place in the picker's order that is at preview or live for some count of eyes) has a tile on the
+  // landing, so a style the owner can switch on never lacks its picture there; a style that is only planned or in the laboratory needs none (its tile, if it has one, says Soon)
+  if (isObj(styles)) {
+    const stood = new Set(Object.values(tileStyle).map((r) => r?.id));
+    for (const [id, d] of Object.entries(styles)) {
+      const stages = [d.stage, ...Object.values(d.stage_by_eyes ?? {})];
+      if (d.legacy === 0 && d.tile_order > 0 && stages.some((s) => s === 'preview' || s === 'live') && !stood.has(id)) {
+        out.push(`${at}: no tile of the gallery stands for "${id}" (${d.name}), a style the picker shows (stage ${stages.join('/')}): add its tile to the gallery (scripts/landing_assets.json) and its row here`);
+      }
+    }
+  }
   for (const [lang, c] of Object.entries(copy ?? {})) {
     const items = c?.styles?.items;
     if (!isObj(items)) { out.push(`landing.${lang}.styles.items not found`); continue; }

@@ -803,8 +803,18 @@ for label, mutate, needle in [
      'landing.hu.styles.items has no entry for the tile "fam_trio"'),
     ("a number of styles in the landing's own words", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Free watermarked preview"', '"Free watermarked preview in six styles"'),
      "states a number of styles"),
-    ("a written list of art styles in the pricing row", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"b": "{styles}."', '"b": "Radiance, Powder Burst, Universe."'),
+    ("a written list of art styles in the pricing row", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"One eye in an art style",\n        "b": "{styles}."', '"One eye in an art style",\n        "b": "Radiance, Powder Burst, Universe."'),
      "landing.en.pricing.rows.art.b must be the token {styles}"),
+    ("a written list of pairs in the two-eyes row (the landing's old words)", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Two eyes",\n        "b": "{styles}."', '"Two eyes",\n        "b": "Infinity, Kiss and more."'),
+     "landing.en.pricing.rows.two.b must be the token {styles}"),
+    ("a style name written in the black row instead of the registry's", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"b": "The {name} style."', '"b": "The Clean Iris style."'),
+     "landing.en.pricing.rows.black.b must hold the token {name}"),
+    ("a tile name back in the copy (the registry names the tiles)", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"radiance": {\n        "d":', '"radiance": {\n        "n": "Radiance",\n        "d":'),
+     'landing.en.styles.items.radiance has the keys "n", "d"'),
+    ("a written number of eyes in the combo title", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Two to {max} eyes on one artwork"', '"Two to eight eyes on one artwork"'),
+     "landing.en.styles.comboTitle must hold the token {max}"),
+    ("a count in the FAQ answer that is read while ordering is closed", lambda c, r: sub(c, r, "src/landing/copy/en.json", 'and several eyes can share one artwork. Ask first, and for a child you decide as parent or guardian. You can also make it for someone else and give them the file.",', 'and up to 8 eyes share one artwork. Ask first, and for a child you decide as parent or guardian. You can also make it for someone else and give them the file.",'),
+     "landing.en.faq.items.other.a prints a number"),
     ("layouts.ts that reads another LAYOUT_NAMES than the file holds",
      lambda c, r: sub(c, r, "src/shared/layouts.ts", "return JSON.parse(src.slice(at + 'LAYOUT_NAMES = '.length)) as Record<string, LayoutWords>;",
                       "return Object.fromEntries(Object.entries(JSON.parse(src.slice(at + 'LAYOUT_NAMES = '.length))).slice(1)) as Record<string, LayoutWords>;"),
@@ -820,9 +830,10 @@ for label, mutate, needle in [
     probs = with_load(label, mutate)
     check(f"check_styles refuses: {label}", not PROBLEMS.get(label) and any(needle in p for p in probs), (PROBLEMS.get(label), needle, probs[:3]))
 
-# --- the landing's RELEASE GATE (scripts/check_landing_assets.mjs): it reads the registry and the tile table, not a legacy engine table. The I1 merge review (M1) found the gate comparing the
-# 16 tiles with the legacy engine's six ids, so a PRODUCTION build (VERCEL_ENV=production) failed for good; nothing the owner does in the admin page can change a build. These run the real script
-# on the real tree (the pictures, vercel.json and the registry of this checkout) and on synthetic registries and tile tables.
+# --- the landing's RELEASE GATE (scripts/landing_gate.mjs, run by scripts/check_landing_assets.mjs): the page must never promise what the engine cannot sell. It reads the registry, the tile table and the
+# page RENDERED in every state of the catalogue (src/landing/shell/gate.tsx), not a legacy engine table. The I1 merge review (M1) found the first gate comparing the 16 tiles with the legacy engine's six ids,
+# so a PRODUCTION build (VERCEL_ENV=production) failed for good; I2 replaced the "can every tile be ordered" question by the honest rule (a tile that cannot be bought says Soon and prints no price, a name is the
+# registry's): these run the real scripts on the real tree (the pictures, vercel.json and the registry of this checkout), on synthetic registries and tile tables, and on the real page's markup with deliberate defects.
 GATE = os.path.join(TMP, "i1_release_gate.mjs")
 with open(GATE, "w", encoding="utf-8", newline="\n") as f:
     f.write(r"""
@@ -831,6 +842,7 @@ const repo = process.argv[2];
 const req = createRequire(join(repo, 'package.json'));
 const { runnerImport } = await import(pathToFileURL(req.resolve('vite')).href);
 const G = await import(pathToFileURL(join(repo, 'scripts', 'check_landing_assets.mjs')).href);
+const L = await import(pathToFileURL(join(repo, 'scripts', 'landing_gate.mjs')).href);
 const S = await import(pathToFileURL(join(repo, 'scripts', 'styles_source.mjs')).href);
 const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent', root: repo })).module;
 const assets = await load('./src/landing/assets.ts'), data = await load('./src/landing/assets.data.ts'), tiles = await load('./src/landing/tileStyle.ts');
@@ -845,8 +857,8 @@ res.real = G.releaseGate(styles, rows, gal);
 res.expect = Object.fromEntries(ids.map((id) => [id, S.ceilingOf(styles[rows[id].id], rows[id].eyes)]));
 const blockedOf = (st, rw, gl = gal) => G.releaseGate(st, rw, gl).blocked.map((b) => `${b.tile}: ${b.reason}`);
 let m = clone(styles); m['duo.kiss_collision'].stage = 'retired'; res.retired = blockedOf(m, rows);
-m = clone(styles); m['duo.kiss_collision'].stage = 'planned'; res.planned = blockedOf(m, rows);
-m = clone(styles); m['grp.collision'].stage_by_eyes = { '3': 'live', '6': 'planned' }; res.perEye = blockedOf(m, rows);
+m = clone(styles); m['duo.kiss_collision'].stage = 'planned'; res.planned = blockedOf(m, rows); res.plannedTable = G.releaseGate(m, rows, gal).planned;
+m = clone(styles); m['grp.collision'].stage_by_eyes = { '3': 'live', '6': 'planned' }; res.perEye = blockedOf(m, rows); res.perEyeTable = G.releaseGate(m, rows, gal).planned;
 let r2 = clone(rows); delete r2.duo_kiss; res.noRow = blockedOf(styles, r2);
 r2 = clone(rows); r2.duo_kiss.id = 'duo.nope'; res.noStyle = blockedOf(styles, r2);
 r2 = clone(rows); r2.duo_kiss.id = 'constructor'; res.protoStyle = blockedOf(styles, r2);
@@ -855,11 +867,42 @@ const g2 = clone(gal); g2.one.push({ id: '__proto__' }, { id: 'constructor' }); 
 res.empty = G.releaseGate({}, {}, undefined);
 res.strict = [{}, { VERCEL_ENV: 'production' }, { VERCEL_ENV: 'preview' }, { LANDING_GATE: 'strict' }, { LANDING_GATE: 'soft' }, { VERCEL_ENV: '' }].map((e) => G.gateIsStrict(e));
 res.summary = G.gateSummary(res.real);
+// the page rendered in every state of the catalogue, and the promise read from its markup
+const rendered = await G.renderLanding(load, repo);
+const inputs = G.gateInputs(repo);
+res.inputs = inputs.map((i) => i.name);
+res.renderedErrors = rendered.errors; res.renderedPictures = rendered.pictures;
+res.promiseReal = G.promiseGate(rendered, inputs, styles, rows, gal);
+const mut = (fn) => { const c = clone(rendered); fn(c); return G.promiseGate(c, inputs, styles, rows, gal); };
+const at = (name) => inputs.findIndex((i) => i.name === name);
+const tileOf = (c, name, lang, id) => c.scenarios[at(name)].langs[lang].tiles.find((t) => t.id === id);
+res.read = {
+  tile: L.readTile('<figure class="lp-tile" data-k="onepowder" data-state="sale"><h3>Powder Burst</h3><span class="lp-price"><span>One eye, <b>€7</b></span></span></figure>'),
+  soon: L.readTile('<figure data-state="soon"><h3>Kiss Collision</h3><span class="lp-price"><span class="lp-soon">Soon</span></span></figure>'),
+  hero: [L.readHero('<ul><li class="lp-price" inert="" style="opacity:0"><a href="#pricing">x 1</a></li></ul>'), L.readHero('<ul><li class="lp-price"><a href="#pricing">x 1</a></li></ul>'), L.readHero('<ul></ul>')],
+  table: L.readTable('<div class="lp-ptable"><div class="lp-prow lp-free" data-reveal="rule"><div><b>Preview</b><small>w</small></div><div class="lp-pv">Free</div></div><div class="lp-prow" data-reveal="rule"><div><b>Two eyes</b><small>A &amp; B.</small></div><div class="lp-pv"><span class="lp-soon">Soon</span></div></div></div>'),
+};
+res.defects = {
+  priceOnSoonTile: mut((c) => { const t = tileOf(c, 'closed', 'en', 'powder'); t.html = t.html.replace(/<span class="lp-soon">Soon<\/span>/, '<span>One eye, <b>9</b></span>'); }),
+  noChip: mut((c) => { const t = tileOf(c, 'closed', 'de', 'duo_kiss'); t.html = t.html.replace(/<span class="lp-soon">[^<]*<\/span>/, ''); }),
+  foreignChip: mut((c) => { const t = tileOf(c, 'closed', 'lt', 'duo_kiss'); t.html = t.html.replace(/<span class="lp-soon">[^<]*<\/span>/, '<span class="lp-soon">Soon</span>'); }),
+  wrongName: mut((c) => { const t = tileOf(c, 'closed', 'en', 'duo_kiss'); t.html = t.html.replace('<h3>Kiss Collision</h3>', '<h3>Kiss</h3>'); }),
+  otherRegistryName: mut((c) => { const t = tileOf(c, 'closed', 'en', 'duo_kiss'); t.html = t.html.replace('<h3>Kiss Collision</h3>', '<h3>Splash</h3>'); }),
+  stateAttr: mut((c) => { const t = tileOf(c, 'closed', 'en', 'duo_kiss'); t.html = t.html.replace('data-state="soon"', 'data-state="sale"'); }),
+  tableRowPrice: mut((c) => { const t = c.scenarios[at('closed')].langs.en; t.table = t.table.replace(/(<small>[^<]*<\/small><\/div><div class="lp-pv">)<span class="lp-soon">Soon<\/span>/, '$1<span>€7</span>'); }),
+  tableNamesSoonStyle: mut((c) => { const t = c.scenarios[at('one style ticked')].langs.en; t.table = t.table.replace('Powder Burst.', 'Powder Burst, Radiance.'); }),
+  heroShown: mut((c) => { const t = c.scenarios[at('closed')].langs.en; t.hero = t.hero.replace(' inert=""', ''); }),
+  openWhileClosed: mut((c) => { c.scenarios[at('closed, every live ceiling ticked')].open = true; }),
+  lineWrong: mut((c) => { c.scenarios[at('one style ticked')].lines.one = 'soon'; }),
+  fewerStates: G.promiseGate({ scenarios: rendered.scenarios.slice(1), pictures: [] }, inputs, styles, rows, gal),
+  underSell: mut((c) => { const t = tileOf(c, 'one style ticked', 'en', 'powder'); t.html = t.html.replace(/<span class="lp-price">[\s\S]*?<\/span>/, '<span class="lp-price"><span class="lp-soon">Soon</span></span>').replace('data-state="sale"', 'data-state="soon"'); }),
+  pictures: G.promiseGate({ ...rendered, pictures: ['powder in own: boom'] }, inputs, styles, rows, gal).pictures,
+};
 // the whole check on the real tree, in the three environments a build can have
-const run = (env, tl) => {
+const run = (env, tl, rd = rendered) => {
   for (const k of ['VERCEL_ENV', 'LANDING_GATE']) delete process.env[k];
   Object.assign(process.env, env);
-  const r = G.checkLandingAssets(repo, assets, data, tl);
+  const r = G.checkLandingAssets(repo, assets, data, tl, rd);
   return { problems: r.problems, notices: r.notices, blocked: r.gate ? r.gate.blocked.length : null };
 };
 res.local = run({}, tiles);
@@ -870,6 +913,11 @@ const short = { TILE_STYLE: shortRows };
 res.productionBroken = run({ VERCEL_ENV: 'production' }, short);
 res.previewBroken = run({ VERCEL_ENV: 'preview' }, short);
 res.noTiles = run({ VERCEL_ENV: 'production' }, undefined);
+res.noRendered = run({ VERCEL_ENV: 'production' }, tiles, null);
+const badPics = clone(rendered); badPics.pictures = ['powder in own: no file'];
+res.picturesPreview = run({ VERCEL_ENV: 'preview' }, tiles, badPics);
+const badRender = clone(rendered); badRender.errors = ['the tile powder (closed, en): boom'];
+res.renderError = run({ VERCEL_ENV: 'preview' }, tiles, badRender);
 console.log(JSON.stringify(res));
 """)
 rc, so, se = run_node([GATE, REPO])
@@ -877,35 +925,130 @@ gate = last_json(so)
 check("the release gate script ran on the real tree", gate is not None, (rc, se[-500:], so[-300:]))
 if gate:
     real = gate["real"]
-    check("release gate: on the real tree every one of the 16 tiles is in exactly one of live, preview and lab by the registry's ceiling for its style and eyes, and none is blocked",
+    check("release gate: on the real tree every one of the 16 tiles is in exactly one of live, preview, lab and planned by the registry's ceiling for its style and eyes, and none is blocked",
           real["total"] == 16 and len(gate["ids"]) == 16 and real["blocked"] == []
-          and sorted(real["live"] + real["preview"] + real["lab"]) == sorted(gate["ids"])
-          and all(gate["expect"][i] == b for b in ("live", "preview", "lab") for i in real[b]), real)
-    check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of six eyes alone blocks only the six-eye tile",
-          gate["perEye"] == ['fam_6: "grp.collision" is only planned for 6 eye(s): no engine makes it yet'], gate["perEye"])
-    check("release gate: a retired style blocks its tile", gate["retired"] == ['duo_kiss: "duo.kiss_collision" is retired: it can never be bought again'], gate["retired"])
-    check("release gate: a style that is only planned blocks its tile (no engine behind the picture)",
-          gate["planned"] == ['duo_kiss: "duo.kiss_collision" is only planned for 2 eye(s): no engine makes it yet'], gate["planned"])
+          and sorted(real["live"] + real["preview"] + real["lab"] + real["planned"]) == sorted(gate["ids"])
+          and all(gate["expect"][i] == b for b in ("live", "preview", "lab", "planned") for i in real[b]), real)
+    check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of six eyes alone to planned moves only the six-eye tile to the planned list, and blocks nothing",
+          gate["perEye"] == [] and gate["perEyeTable"] == ["fam_6"], (gate["perEye"], gate["perEyeTable"]))
+    check("release gate: a retired style blocks its tile (a Soon that can never come true would be a lie)", gate["retired"] == ['duo_kiss: "duo.kiss_collision" is retired: it can never be bought again, so its tile could never say Soon honestly'], gate["retired"])
+    check("release gate: a style that is only planned (no engine yet) does NOT block its tile: the tile says Soon like every tile that cannot be bought, and the table lists it as planned",
+          gate["planned"] == [] and gate["plannedTable"] == ["duo_kiss"], (gate["planned"], gate["plannedTable"]))
     check("release gate: a tile without a row, a row that names a style the registry does not have, and a row with more eyes than the style takes each block their tile",
           gate["noRow"] == ['duo_kiss: src/landing/tileStyle.ts has no row for it'] and gate["noStyle"] == ['duo_kiss: the registry has no style "duo.nope"']
           and len(gate["eyes"]) == 1 and gate["eyes"][0].startswith('fam_6: "grp.collision" takes 3 to 8 eyes, the tile shows 9'), gate)
     check("release gate: hostile ids (a tile called __proto__ or constructor, a row naming the style constructor) block cleanly and never read the prototype",
           len(gate["protoTile"]) == 2 and all("has no row" in b for b in gate["protoTile"]) and gate["protoStyle"] == ['duo_kiss: the registry has no style "constructor"'], gate)
-    check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the three groups, and only a production deploy or LANDING_GATE=strict is strict",
+    check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups, and only a production deploy or LANDING_GATE=strict is strict",
           gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
-          and "6 with a live ceiling" in gate["summary"] and "8 at preview" in gate["summary"] and "2 in the laboratory" in gate["summary"] and "0 that the engine cannot make" in gate["summary"], (gate["strict"], gate["summary"]))
+          and "6 with a live ceiling" in gate["summary"] and "8 at preview" in gate["summary"] and "2 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
+    check("I2: the gate renders the page in six states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, the server not reachable), in four languages, with no render error and every tile picture present",
+          gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "server not reachable"]
+          and gate["renderedErrors"] == [] and gate["renderedPictures"] == [], (gate["inputs"], gate["renderedErrors"], gate["renderedPictures"]))
+    check("I2: on the real tree the page promises nothing it cannot sell in any state of the catalogue (no broken promise, no under-sell)",
+          gate["promiseReal"]["promises"] == [] and gate["promiseReal"]["underSells"] == [] and gate["promiseReal"]["pictures"] == [], gate["promiseReal"])
+    check("I2: the readers of the markup: a tile (state, name, chip, price), the hero's held line, the rows of the price table with their notes decoded",
+          gate["read"]["tile"] == {"state": "sale", "name": "Powder Burst", "chip": None, "price": True}
+          and gate["read"]["soon"] == {"state": "soon", "name": "Kiss Collision", "chip": "Soon", "price": False}
+          and gate["read"]["hero"][0]["held"] is True and gate["read"]["hero"][1]["held"] is False and gate["read"]["hero"][2] is None
+          and len(gate["read"]["table"]) == 2 and gate["read"]["table"][1] == {"title": "Two eyes", "note": "A & B.", "value": "Soon", "soon": True, "price": False}, gate["read"])
+    d = gate["defects"]
+    has = lambda lst, *words: any(all(w in p for w in words) for p in lst)  # noqa: E731
+    check("I2: a tile of a style that cannot be bought that prints a price is a broken promise (and one without the Soon chip, and one with the chip of another language, and one marked for sale)",
+          has(d["priceOnSoonTile"]["promises"], 'the tile "powder"', "cannot be bought", "prints a price")
+          and has(d["noChip"]["promises"], 'the tile "duo_kiss"', "does not say Soon")
+          and has(d["foreignChip"]["promises"], 'the tile "duo_kiss"', 'says "Soon", not "Netrukus"')
+          and has(d["stateAttr"]["promises"], 'the tile "duo_kiss"', 'is marked "sale"'), d)
+    check("I2: a name that is not the registry's is refused: the old landing word (Kiss), and the name of another style of the registry (Splash) on the Kiss Collision tile",
+          has(d["wrongName"]["promises"], 'is called "Kiss"', '"Kiss Collision"') and has(d["wrongName"]["promises"], 'no style name of the registry')
+          and has(d["otherRegistryName"]["promises"], 'is called "Splash"') and not has(d["otherRegistryName"]["promises"], 'no style name of the registry'), d)
+    check("I2: the price table: a price in a row nothing can be bought for, a row that names a style that cannot be bought, the hero's line shown while nothing can be bought for one eye, the page treating a closed deployment as open, and a group line that does not follow the tiles are broken promises",
+          has(d["tableRowPrice"]["promises"], "the price table row", "cannot be bought but prints a price")
+          and has(d["tableNamesSoonStyle"]["promises"], 'names "Radiance", a style that cannot be bought')
+          and has(d["heroShown"]["promises"], "no style can be bought for one eye but the hero says")
+          and has(d["openWhileClosed"]["promises"], "the page treats ordering as open but the catalogue says closed")
+          and has(d["lineWrong"]["promises"], 'the group "one" adds the line "soon"'), d)
+    check("I2: a page that offers LESS than it can sell is a notice, never a broken promise; a gate given another number of states than it asked for refuses; a picture error comes through",
+          d["underSell"]["promises"] == [] and has(d["underSell"]["underSells"], 'the tile "powder"', "can be bought but shows no price")
+          and has(d["fewerStates"]["promises"], "the gate rendered no state of the catalogue") and d["pictures"] == ['powder in own: boom'], d)
     check("M1 of the I1 merge review: the whole landing asset check on the real tree is green and silent in a local build, in a PRODUCTION build (VERCEL_ENV=production) and with LANDING_GATE=strict: "
-          "the gate no longer compares the tiles with the legacy engine table, so the owner's tick in the admin page is not needed for a production build",
+          "the owner's tick in the admin page is not needed for a production build, and a tile that cannot be bought yet (preview, laboratory) says Soon, which is all the gate asks",
           all(gate[k]["problems"] == [] and gate[k]["notices"] == [] and gate[k]["blocked"] == 0 for k in ("local", "production", "strictFlag")), {k: gate[k] for k in ("local", "production", "strictFlag")})
-    check("release gate: a tile of something the engine cannot make is an error in a production build and only a notice in a preview build",
-          len(gate["productionBroken"]["problems"]) == 1 and "RELEASE GATE" in gate["productionBroken"]["problems"][0] and "duo_kiss" in gate["productionBroken"]["problems"][0]
-          and "must not go live" in gate["productionBroken"]["problems"][0]
-          and gate["previewBroken"]["problems"] == [] and len(gate["previewBroken"]["notices"]) == 1 and "duo_kiss" in gate["previewBroken"]["notices"][0], (gate["productionBroken"], gate["previewBroken"]))
-    check("release gate: a caller that gives no tile table gets a problem, not a silent pass",
-          any("TILE_STYLE not found" in x for x in gate["noTiles"]["problems"]), gate["noTiles"])
+    check("release gate: a tile of something that does not exist is an error in a production build and only a notice in a preview build (a tile with no row stands for no style, so its name is wrong too: two RELEASE GATE lines)",
+          len(gate["productionBroken"]["problems"]) == 2 and all("RELEASE GATE" in p and "duo_kiss" in p and "must not go live" in p for p in gate["productionBroken"]["problems"])
+          and gate["previewBroken"]["problems"] == [] and len(gate["previewBroken"]["notices"]) == 2 and all("duo_kiss" in n for n in gate["previewBroken"]["notices"]), (gate["productionBroken"], gate["previewBroken"]))
+    check("release gate: a caller that gives no tile table, or no rendered page, gets a problem, not a silent pass",
+          any("TILE_STYLE not found" in x for x in gate["noTiles"]["problems"]) and any("was not given the rendered page" in x for x in gate["noRendered"]["problems"]), (gate["noTiles"], gate["noRendered"]))
+    check("I2: a missing tile picture and a render error are problems in EVERY build (a preview too), not matters of promises",
+          any("a tile picture is missing: powder in own: no file" in x for x in gate["picturesPreview"]["problems"]) and any("could not be rendered for the gate" in x for x in gate["renderError"]["problems"]), (gate["picturesPreview"], gate["renderError"]))
     check("the legacy engine table is gone: no ENGINE_STYLE in the landing's data, no engine key in scripts/landing_assets.json, no release_gate in the picture builder, no allow-list entry for assets.data.ts",
           "ENGINE_STYLE" not in read("src/landing/assets.data.ts") and "engine" not in json.loads(read("scripts/landing_assets.json"))
           and "release_gate" not in read("scripts/build_landing_assets.py") and "assets.data.ts" not in "\n".join(l for l in read("scripts/check_styles.mjs").split("\n") if l.startswith("  '")))
+
+# --- the deliberate defects of the gate, run for real in a throw-away copy of the tree (scripts/check_landing_gate_defects.mjs --no-build: the gate alone, with VERCEL_ENV=production). `npm run check:gate` adds the
+# real production build of each case (about 15 seconds each: not part of the suite); I2 ran it once, all 13 cases as expected (release_reports/I2-align.md).
+rc, so, se = run_node(["scripts/check_landing_gate_defects.mjs", "--no-build"], timeout=900)
+check("I2: the 13 cases of the gate's defect test behave as expected with the gate alone in production mode: the honest page and a tile of a planned style that says Soon pass; each of 10 deliberate defects "
+      "(a tile that ignores the catalogue, a tile without the Soon chip, a price row that prices or names what cannot be bought, a style that is not in the registry, a name from the copy, a missing picture, a price while "
+      "ordering is closed, a wrong group line, a hero price while nothing can be bought) fails; the same defect is only a notice in a preview build",
+      rc == 0 and "13 of 13 cases as expected" in so and so.count("\nok ") + (1 if so.startswith("ok ") else 0) == 13, (rc, so[-900:], se[-300:]))
+
+# --- I2: the pictures of the landing's tiles (the final round 2c renders of the landing team) and the pictures of the picker's tiles (public/assets/atelier, made by THIS repository's engine,
+# scripts/make_style_tiles.py) show the same designs. The seeds of the particles differ (the seed formula changed with the engine: Powder Burst, Splash, Universe and Radiance differ in their
+# grains), so the check is not a pixel match: each landing tile must be nearer to the picker's tile of ITS style than to any other style's, by a margin, on the eye the two share. Celestial Gold is the
+# approved variant A in both: its landing tile is within a few levels of the engine's tile (the old design of main, a warm halo, was 29 levels away).
+import glob as _glob
+
+
+def _tile_vec(path, width=192):
+    im = Image.open(path).convert("RGB")
+    return np.asarray(im.resize((width, round(width * im.size[1] / im.size[0])), Image.LANCZOS), dtype=np.float32)
+
+
+def _landing_tile(name):
+    files = _glob.glob(os.path.join(REPO, "public", "assets", "landing", "art", name + "_900.*.webp"))
+    return _tile_vec(files[0]) if len(files) == 1 else None
+
+
+def _atelier_tile(slug):
+    p = os.path.join(REPO, "public", "assets", "atelier", f"style-{slug}-800.webp")
+    return _tile_vec(p) if os.path.isfile(p) else None
+
+
+_SINGLES = [("clean_own", "clean-iris"), ("powder_own", "powder-burst"), ("universe_own", "universe"), ("splash_own", "splash"), ("gold_own", "celestial-gold"), ("radiance_own", "radiance")]
+_PAIRS = [("duo_infinity_by", "collision-infinity"), ("duo_kiss_bb", "kiss-collision"), ("duo_clean_by", "clean-infinity")]
+_mad = lambda a, b: float(np.abs(a - b).mean())  # noqa: E731
+
+
+def _nearest(group):
+    land = {l: _landing_tile(l) for l, _ in group}
+    eng = {a: _atelier_tile(a) for _, a in group}
+    if any(v is None for v in list(land.values()) + list(eng.values())):
+        return None
+    out = {}
+    for l, a in group:
+        d = sorted((_mad(land[l], eng[b]), b) for _, b in group)
+        own = _mad(land[l], eng[a])
+        out[l] = {"own": own, "best": d[0][1], "next": min(v for v, b in d if b != a), "want": a}
+    return out
+
+
+_s, _p = _nearest(_SINGLES), _nearest(_PAIRS)
+check("I2: every landing tile of one eye is nearer to the picker's tile of its own style than to any other style's (at least 1.25 times nearer than the next): the two sets show the same six designs",
+      _s is not None and all(v["best"] == v["want"] and v["own"] * 1.25 < v["next"] for v in _s.values()), _s)
+check("I2: the same for the three pairs (Collision Infinity, Kiss Collision, Clean Infinity): each landing pair is the picker's pair of its style",
+      _p is not None and all(v["best"] == v["want"] and v["own"] * 1.25 < v["next"] for v in _p.values()), _p)
+# the tiles of styles the picker does not show (held in the laboratory) have no picture of the engine to compare with: their landing pictures are the prototype's designs (Universe Duo variant B, the collision
+# engine's filled family), which the repository's held Universe styles do not draw yet (they draw the Echo design: the render of I2 shows both). That gap is PINNED here to exactly those two tiles, so that it
+# cannot grow unseen; the release notes say it, and the owner decides whether the two tiles stay (Soon), go (the specification 1.8 had them removed) or get an engine render from real eyes.
+import re as _re
+_rows = _re.findall(r"^  (\w+): \{ id: '([\w.]+)', eyes: (\d+) \}", read("src/landing/tileStyle.ts"), flags=_re.M)
+_slug = {i: d["slug"] for i, d in R.STYLES.items()}
+_no_engine_picture = sorted(t for t, sid, _n in _rows if not os.path.isfile(os.path.join(REPO, "public", "assets", "atelier", f"style-{_slug.get(sid, 'none')}-800.webp")))
+check("I2: every landing tile except the two of the held Universe styles has a picture of this repository's engine to be compared with (the picker's tile of its style): the gap is exactly duo_infinity_uni and fam_6_uni",
+      len(_rows) == 16 and _no_engine_picture == ["duo_infinity_uni", "fam_6_uni"], (len(_rows), _no_engine_picture))
+check("I2: Celestial Gold is the same variant (A) in the landing's tile and in the picker's tile: the two are within 8 levels of 255 on the shared eye (the old design was 29 away), and the Clean Iris tile is the same picture (under 2 levels)",
+      _s is not None and _s["gold_own"]["own"] < 8.0 and _s["clean_own"]["own"] < 2.0, _s and {k: round(_s[k]["own"], 2) for k in ("gold_own", "clean_own")})
 
 # --- the rules of items 4 and 7 that work package 12's texts meet: built, tested on synthetic files, and enforced on the real tree (WP12_RULES)
 RULES = os.path.join(TMP, "wp1_rules.mjs")
@@ -922,6 +1065,13 @@ res.numberYes = ['six styles', 'All 6 styles', 'in allen sechs Stilen', 'Alle 6 
 res.numberNo = ['any style', 'in the style you choose', 'Choose a style', 'One eye, any style', 'Two eyes (Couple Duo), jeder Stil', 'iki 8 akiu', 'Sechs Augen auf einem Kunstwerk'].map(hit);
 let out = []; M.checkNumberOfStyles([['landing', { en: { a: { b: 'All 6 styles' } } }]], out); res.numberCheck = out;
 out = []; M.checkRuntimeTokens({ en: { pricing: { rows: { art: { b: 'Celestial Gold, Deep Nebula' } } } }, de: { pricing: { rows: { art: { b: '{styles}.' }, more: { b: 'Zwei bis acht Augen' } } } } }, out); res.tokens = out;
+{
+  const mk = (...names) => ({ groups: ['one', 'two', 'family'], one: names.map((id) => ({ id, price: 'art' })), two: [], family: [] });
+  const rowsAll = { radiance: { id: 'solo.radiance', eyes: 1 }, powder: { id: 'solo.powder', eyes: 1 } };
+  const tiny = Object.fromEntries(Object.entries(styles).filter(([id]) => ['solo.radiance', 'solo.powder', 'solo.elements', 'solo.splash'].includes(id)));
+  out = []; M.checkLandingTiles(rowsAll, mk('radiance', 'powder'), tiny, {}, out); res.coverage = out;
+  out = []; M.checkLandingTiles({ ...rowsAll, splash: { id: 'solo.splash', eyes: 1 } }, mk('radiance', 'powder', 'splash'), tiny, {}, out); res.coverageFull = out;
+}
 out = []; M.checkCopyDictionaries([['x', { en: { d: { 'solo.powder': 'a', 'solo.clean': 'a', 'solo.splash': 'a', 'solo.gold': 'a', 'solo.universe': 'a', 'solo.radiance': 'a', 'duo.collision_infinity': 'a', 'duo.clean': 'a', 'duo.kiss_collision': 'a', 'grp.collision': 'a', 'solo.elements': 'x' } } }]], styles, out); res.dictExtra = out;
 out = []; M.checkCopyDictionaries([['x', { lt: { d: { 'solo.powder': 'a', 'solo.clean': 'a' } } }]], styles, out); res.dictMissing = out;
 const dir = mkdtempSync(join(process.argv[3], 'wp1-terms-')); mkdirSync(join(dir, 'src/legal/docs'), { recursive: true });
@@ -942,6 +1092,9 @@ check("... the run-time token rule flags a written list of art styles and a writ
       and not any("number of eyes" in p for p in rules["termsOff"]) and rules["enforced"] is True, rules or (rc, se[-400:]))
 check("check_styles refuses: a copy dictionary keyed by style id with an id that is not shown (the rule of item 4, on a synthetic surface: no page dictionary is keyed by style id since the new landing)",
       bool(rules) and any("x.en.d is a dictionary keyed by style id with" in p for p in rules["dictExtra"]), rules.get("dictExtra") if rules else (rc, se[-400:]))
+check("I2: item 15 asks that every style the picker shows has a tile on the landing: a style at preview or live with a place in the picker's order and no tile is refused (Splash here), a laboratory style needs none (Elements), and with the tile the problem is gone",
+      bool(rules) and len(rules["coverage"]) == 1 and 'no tile of the gallery stands for "solo.splash"' in rules["coverage"][0] and rules["coverageFull"] == [],
+      rules.get("coverage") if rules else (rc, se[-400:]))
 check("check_styles refuses: a copy dictionary that lacks a shown id in Lithuanian (item 4, synthetic surface)",
       bool(rules) and any("x.lt.d is a dictionary keyed by style id with" in p for p in rules["dictMissing"]), rules.get("dictMissing") if rules else (rc, se[-400:]))
 
