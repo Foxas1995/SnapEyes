@@ -10,30 +10,39 @@
    carries data-reveal must not also carry a rule that sets translate, scale or opacity (wrap it instead): these are the very
    properties the reveals move. Imported by src/main.tsx after the landing's own stylesheet, so it wins at equal specificity. */
 @layer theme, base, landing, components, utilities;
+@import './tokens.css';
 
 @layer landing {
-  /* ------------------------------------------------------------------------------------------------ 1. tokens */
+  /* ------------------------------------------------------------------------------------------------ 1. tokens
+     What /try and /order share with the page (the two curves, the press, swap and aperture durations, the two small rises, the darkest tones, the hover
+     gold and the frame ring, the text colours, success and warning) is in ./tokens.css, imported above: one source, read by this file and by ./flow.css.
+     What stays here is the landing's own: the long durations, the sheet tones, the glows, the radii, the mask padding, the stagger, the display type, the
+     sheets and the height animation of the FAQ. */
   :root:has(> body.lp) {
-    /* easing: two curves, used everywhere */
-    --ease-out: cubic-bezier(.16, 1, .3, 1);       /* entrances, hovers, settles */
-    --ease-inout: cubic-bezier(.76, 0, .24, 1);    /* wipes, apertures, overlays, the glint */
-
-    /* durations */
-    --d-tap: .3s;          /* press, hover colour */
+    /* durations the tools do not use */
     --d-ui: .5s;           /* tab underline, header glass, small state changes */
-    --d-swap: .42s;        /* image and text crossfades */
     --d-reveal: 1.1s;      /* fade up on scroll (blocks, cards) */
     --d-reveal-s: .8s;     /* small items: chips, eyebrows, captions, list rows */
     --d-mask: 1.3s;        /* headline phrase rise (the first screen: 1.4 s) */
     --d-draw: 1.2s;        /* hairlines and rings drawing (a full circle: 1.4 s) */
     --d-wipe: 1.3s;        /* clip reveals, mat openings */
     --d-settle: 2s;        /* plate settle, scale 1.03 to 1 */
-    --d-aperture: 1.3s;    /* result reveals */
-
-    /* distances */
-    --rise-s: 10px;        /* chips, labels, small text */
-    --rise-m: 20px;        /* fade up */
     --rise-l: 32px;        /* cards */
+
+    /* the sheets' tones, the deeper gold, the light of the cut line and of the bloom, the dimmest readable text */
+    --tone-1: #0a0d14;     /* sheet tone A and D */
+    --tone-2: #0d111a;     /* sheet tone B */
+    --gold-deep: #d4af37;
+    --glow: 0 0 16px 0 rgb(245 197 66 / .28);        /* the cut line and focus only; never above .28 */
+    --glow-soft: 0 0 40px rgb(245 197 66 / .12);     /* the static hero bloom */
+    --t-floor: rgb(240 243 250 / .5);    /* the dimmest any readable text may be, 4.91:1 */
+
+    /* radii and the frame's shadow */
+    --r-pill: 999px;
+    --r-card: 20px;
+    --r-frame: 28px;       /* hero plate, scene frames, artwork frames */
+    --sh-frame: 0 40px 120px -30px rgb(0 0 0 / .95);
+
     --mask-from: 135%;     /* start of a padded mask rise */
     --mask-top: .18em;     /* mask padding for accents above capitals (O and U with double acute) */
     --mask-bot: .12em;     /* mask padding for ogoneks below the baseline */
@@ -43,40 +52,13 @@
     --stagger-mask: 100ms;
     --stagger-card: 90ms;
 
-    /* surfaces: tonal steps instead of light and dark flips (the page's own --bg is --tone-0) */
-    --tone-abyss: #030408;
-    --tone-0: #07090e;
-    --tone-1: #0a0d14;     /* sheet tone A and D */
-    --tone-2: #0d111a;     /* sheet tone B */
-
-    /* gold: one accent, four jobs (the CTA pill, one accent word or full stop, hairlines rings and dots, focus and glow) */
-    --gold-hi: #ffd666;
-    --gold-deep: #d4af37;
     --rim: rgb(245 197 66 / .30);        /* peak of the 1 px top edge of a sheet; fades to 0 toward both ends */
-    --ring-gold: rgb(245 197 66 / .28);  /* frame ring */
-    --glow: 0 0 16px 0 rgb(245 197 66 / .28);        /* the cut line and focus only; never above .28 */
-    --glow-soft: 0 0 40px rgb(245 197 66 / .12);     /* the static hero bloom */
-
-    /* text (contrast on #07090e, measured) */
-    --t-1: #f0f3fa;                      /* headings, 17.9:1 */
-    --t-2: #c9ced8;                      /* lead, 12.6:1 */
-    --t-3: #a1a1aa;                      /* body, 7.8:1 */
-    --t-floor: rgb(240 243 250 / .5);    /* the dimmest any readable text may be, 4.91:1 */
-    --ok: #74b894;                       /* success, 8.56:1 */
-    --warn: #e0a458;                     /* warning, 9.12:1 */
 
     /* display type: ONE pair of tokens (spec D12); 600 and .004em is the earlier look */
     --w-display: 500;
     --track-display: .02em;
 
-    /* radii: one family */
-    --r-pill: 999px;
-    --r-card: 20px;
-    --r-frame: 28px;       /* hero plate, scene frames, artwork frames */
     --r-sheet: 24px;       /* phones; 32px from 1024px */
-
-    /* shadows */
-    --sh-frame: 0 40px 120px -30px rgb(0 0 0 / .95);
     --sh-sheet: 0 -24px 60px -20px rgb(0 0 0 / .6);
 
     /* rhythm */

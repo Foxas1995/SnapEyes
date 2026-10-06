@@ -1,0 +1,40 @@
+/* SnapEyes motion tokens shared by the landing (src/motion/motion.css), /try and /order (src/motion/flow.css): motion spec section 3.
+   One source for what the three read: the two easing curves, the durations of a press, an image swap and the aperture, the small and the medium rise, the
+   page's darkest tones, the gold of a hover and of a frame ring, the three text colours, the success colour and the warning colour. The landing's other
+   tokens (the long reveals, the sheets, the type scale) stay in motion.css, so the tools do not carry them. Both stylesheets import this file, so a curve, a
+   duration or the success colour is written once. The tokens are defined on the root of the pages that carry them: the landing's body has the class "lp",
+   the body of /try and /order has "fx" (try.html, order.html). The legal pages and /admin carry neither and get nothing. Everything is inside @layer
+   landing, like the rest of the page's own rules (declared in src/index.css). */
+@layer theme, base, landing, components, utilities;
+
+@layer landing {
+  :root:has(> body.lp), :root:has(> body.fx) {
+    /* easing: two curves, used everywhere */
+    --ease-out: cubic-bezier(.16, 1, .3, 1);       /* entrances, hovers, settles */
+    --ease-inout: cubic-bezier(.76, 0, .24, 1);    /* wipes, apertures, overlays, the glint */
+
+    /* durations */
+    --d-tap: .3s;          /* press, hover colour */
+    --d-swap: .42s;        /* image and text crossfades */
+    --d-aperture: 1.3s;    /* result reveals */
+
+    /* distances */
+    --rise-s: 10px;        /* chips, labels, small text */
+    --rise-m: 20px;        /* fade up */
+
+    /* surfaces: the darkest tones (the page's own --bg is --tone-0) */
+    --tone-abyss: #030408;
+    --tone-0: #07090e;
+
+    /* gold: one accent, four jobs (the CTA pill, one accent word or full stop, hairlines rings and dots, focus and glow) */
+    --gold-hi: #ffd666;
+    --ring-gold: rgb(245 197 66 / .28);  /* frame ring */
+
+    /* text (contrast on #07090e, measured) */
+    --t-1: #f0f3fa;                      /* headings, 17.9:1 */
+    --t-2: #c9ced8;                      /* lead, 12.6:1 */
+    --t-3: #a1a1aa;                      /* body, 7.8:1 */
+    --ok: #74b894;                       /* success, 8.56:1 */
+    --warn: #e0a458;                     /* warning, 9.12:1 */
+  }
+}
