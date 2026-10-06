@@ -1385,16 +1385,97 @@ check("over HTTP with the key the reply is one JSON of the tiles", c == 200 and 
 reset()
 shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
 
+# ============================================================================================ 13. the screens' data
+section("13. WP13b: the English filter, the gate flag of the order list, the reasons of a failing gate, the signed link made on click")
+reset()
+shutil.rmtree(os.path.join(STORE, "ops", "events"), ignore_errors=True)
+shutil.rmtree(os.path.join(STORE, "ops", "daily"), ignore_errors=True)
+E._SEEN["all"] = []
+for _i in range(3):
+    E.record("compose", tiles=0, eyes=2, gate="ok", cls="own", retake=0, lang="en")
+for _i in range(2):
+    E.record("compose", tiles=0, eyes=2, gate="lid_sectors_outer", cls="own", retake=0, lang="lt")
+en_ = act("styles_stats", days=1, lang="en")
+lt2_ = act("styles_stats", days=1, lang="lt")
+check("the English filter: the page sends en and the events carry it (L.PAGE_LANGS holds only the three other languages), so lang en is a slice like the others: 3 of the 5 first photos were English, 2 Lithuanian",
+      {r["eyes"]: r["first"] for r in en_["funnel"]} == {2: 3} and en_["lang"] == "en" and {r["eyes"]: r["first"] for r in lt2_["funnel"]} == {2: 2}, (en_["funnel"], lt2_["funnel"]))
+check("a language that is none of the four is still a 400, and so is a market that is not one",
+      all(says(refused("styles_stats", **b), 400, "bad_request") for b in ({"lang": "xx"}, {"lang": "EN"}, {"market": "moon"})))
+
+# the order list carries the set level gate result of the checkout
+oid = f"{pay.day()}-aabbccdd1122"
+put_json(f"orders/{oid}/order.json", {"created": pay.iso(), "created_at": time.time(), "checkout": {"spec": {"eyes": 1, "style": "solo.clean"}, "gate": "lid_sectors_outer", "amount": 100, "currency": "eur"}})
+oid2 = f"{pay.day()}-aabbccdd3344"
+put_json(f"orders/{oid2}/order.json", {"created": pay.iso(), "created_at": time.time(), "checkout": {"spec": {"eyes": 1, "style": "solo.clean"}, "gate": "ok"}})
+oid3 = f"{pay.day()}-aabbccdd5566"
+put_json(f"orders/{oid3}/order.json", {"created": pay.iso(), "created_at": time.time(), "checkout": {"spec": {"eyes": 1, "style": "solo.clean"}, "gate": "Bad Code!? " + "x" * 80}})
+oid4 = f"{pay.day()}-aabbccdd7788"
+put_json(f"orders/{oid4}/order.json", {"created": pay.iso(), "created_at": time.time()})
+rows_ = {r["order"]: r for r in act("orders", days=2)["orders"]}
+check("the order list says the set level gate result of each order's checkout (ok, a reason code, a code cleaned to the codes' alphabet and cut at 60 characters) and null for an order that never reached the payment page",
+      rows_[oid]["gate"] == "lid_sectors_outer" and rows_[oid2]["gate"] == "ok" and re.fullmatch(r"[a-z0-9_.-]{1,60}", rows_[oid3]["gate"] or "") and rows_[oid4]["gate"] is None, {k: v["gate"] for k, v in rows_.items()})
+
+# the reasons of a failing sealed gate, per eye, in the order steps
+from _lib.styles import eye as EYE_  # noqa: E402
+fail_prof = EYE_.profile_of_bytes(SI.jpeg_bytes("blue_lid"), pad=1.12)
+ok_prof = EYE_.profile_of_bytes(SI.jpeg_bytes("blue_round"), pad=1.12)
+why_lid = list(fail_prof.rec["gate"]["lid"].get("why") or [])
+put_json(f"orders/{oid}/draft/eye_1.json", {"eye_id": fail_prof.eye_id, "profile": fail_prof.rec})
+put_json(f"orders/{oid}/draft/eye_2.json", {"eye_id": ok_prof.eye_id, "profile": ok_prof.rec})
+st_ = act("order_steps", order=oid)
+e1, e2 = st_["eyes"][0], st_["eyes"][1]
+check("order_steps carries, per eye, the reason codes of a failing sealed gate rule (codes only) beside the ok flags: the failing eye has its reasons, the clean eye none",
+      e1["gate"]["lid"] is False and why_lid and e1["gate_why"]["lid"] == why_lid and e2["gate"]["lid"] is True and e2["gate_why"] == {"lid": [], "fill": []} and set(e1["gate_why"]) == {"lid", "fill"}, (e1, e2))
+check("the reason codes are cleaned to the alphabet of the codes and capped, and a profile with none is empty lists",
+      ops._gate_why({"gate": {"lid": {"ok": False, "why": ["lid_sectors_outer", "Bad Code!", 5, None]}, "fill": {"ok": True}}}) == {"lid": ["lid_sectors_outer", "badcode", "5"], "fill": []}
+      and ops._gate_why(None) == {"lid": [], "fill": []} and ops._gate_why({"gate": {"lid": {"ok": False, "why": "not a list"}}}) == {"lid": [], "fill": []}
+      and len(ops._gate_why({"gate": {"fill": {"ok": False, "why": ["a"] * 30}}})["fill"]) == 8)
+
+# one signed link of one image, made on click
+audit_dir = os.path.join(STORE, "ops", "audit")
+audit_before = sum(len(f) for _r, _d, f in os.walk(audit_dir)) if os.path.isdir(audit_dir) else 0
+os.makedirs(os.path.join(STORE, "orders", oid, "draft"), exist_ok=True)
+with open(os.path.join(STORE, "orders", oid, "draft", "eye_1_preview.jpg"), "wb") as f:
+    f.write(SI.jpeg_bytes("blue_round"))
+with open(os.path.join(STORE, "orders", oid, "artwork_0123456789abcdef.jpg"), "wb") as f:
+    f.write(SI.jpeg_bytes("blue_round"))
+lk = act("order_link", order=oid, path="draft/eye_1_preview.jpg")
+lk2 = act("order_link", order=oid, path="artwork_0123456789abcdef.jpg")
+check("order_link: one signed link of one image of the order's folder, the lifetime of the page's other links, the path echoed",
+      lk["ok"] and lk["url"].startswith("file:") and lk["path"] == "draft/eye_1_preview.jpg" and lk["expires_in"] == ops.SIGN_SECONDS and lk2["path"] == "artwork_0123456789abcdef.jpg", (lk, lk2))
+bad_ = [dict(path="../x.jpg"), dict(path="/draft/eye_1_preview.jpg"), dict(path="draft//eye_1_preview.jpg"), dict(path=".hidden.jpg"), dict(path="draft/eye_1.json"), dict(path="draft/eye_1_preview"),
+        dict(path="draft/eye 1.jpg"), dict(path="draft/eye_1%2e.jpg"), dict(path=5), dict(path=None), dict(path="a" * 200 + ".jpg"), dict(path="draft/..%5cx.jpg")]
+ref_ = [(b, refused("order_link", order=oid, **b)) for b in bad_]
+check("a path that is not an image file inside the order's folder is a 400 (a parent folder, an absolute path, a double slash, a dot file, a record, no extension, a space, an escape, not text, too long)",
+      all(r and r[1] == 400 for _b, r in ref_), [(b, r) for b, r in ref_ if not (r and r[1] == 400)])
+check("a file that does not exist is a 404 and an order id that is not one is a 400",
+      says(refused("order_link", order=oid, path="draft/eye_9_preview.jpg"), 404, "not_found") and (lambda r: r and r[1] == 400)(refused("order_link", order="..", path="a.jpg"))
+      and (lambda r: r and r[1] == 400)(refused("order_link", path="a.jpg")))
+audit_after = sum(len(f) for _r, _d, f in os.walk(audit_dir)) if os.path.isdir(audit_dir) else 0
+check("order_link is read only: no line in the admin audit log (the order action hands out the same links for every image of the folder)", audit_after == audit_before and ops.ACTIONS["order_link"] is ops.a_order_link, (audit_before, audit_after))
+c, j = http_admin("order_link", key=None, order=oid, path="draft/eye_1_preview.jpg")
+check("without the admin key order_link is 403 and makes no link", c == 403 and "url" not in j, (c, j))
+c, j = http_admin("order_link", order=oid, path="draft/eye_1_preview.jpg")
+check("over HTTP with the key it answers the link", c == 200 and j["ok"] and j["url"].startswith("file:"), (c, str(j)[:200]))
+shutil.rmtree(os.path.join(STORE, "orders"), ignore_errors=True)
+shutil.rmtree(os.path.join(STORE, "ops", "events"), ignore_errors=True)
+reset()
+
 # ============================================================================================ 11. hygiene
 section("11. what the package adds holds no dash, no written price, no secret")
 mine = ["api/_lib/stage_overrides.py", "api/_lib/style_stats.py", "api/_lib/catalogue.py", "api/_lib/events.py", "api/_lib/ops.py", "api/_lib/abtest.py", "api/compose.py", "api/_lib/cleanup.py",
-        "scripts/styles_tests/test_admin_styles.py"]
+        "scripts/styles_tests/test_admin_styles.py",
+        # WP13b: the screens
+        "src/admin/stylesView.ts", "src/admin/Styles.tsx", "src/admin/StyleSwitch.tsx", "src/admin/StyleNumbers.tsx", "src/admin/ArtworkFacts.tsx", "src/admin/OrderStyle.tsx", "src/admin/GroupLab.tsx",
+        "src/admin/groupEyes.ts", "suites/ts/admin_styles.test.ts"]
 INVIS = "[" + "".join(chr(c) for lo, hi in ((0x200b, 0x200f), (0x2028, 0x202e), (0x2060, 0x2064), (0xfeff, 0xfeff)) for c in range(lo, hi + 1)) + "]"
 texts = {f: read(os.path.join(REPO, f)) for f in mine if os.path.isfile(os.path.join(REPO, f))}
 check("no en or em dash and no invisible character in any file of the package", not [f for f, t in texts.items() if re.search(DASH, t) or re.search(INVIS, t)])
 PRICE = re.compile(r"\d+[.,]\d\d\s?(EUR|eur|A\$|Ft)|A\$\s?\d|\d\s?Ft\b")
 MODS_NEW = ("api/_lib/stage_overrides.py", "api/_lib/style_stats.py")
-check("no written price (a decimal amount with a currency, A$, Ft) in any new file", not [f for f in MODS_NEW + ("scripts/styles_tests/test_admin_styles.py",) if PRICE.search(texts.get(f, ""))])
+SCREENS = tuple(f for f in mine if f.startswith("src/admin/") or f.startswith("suites/ts/admin_styles"))
+check("no written price (a decimal amount with a currency, A$, Ft) in any new file, the screens of WP13b included", not [f for f in MODS_NEW + SCREENS + ("scripts/styles_tests/test_admin_styles.py",) if PRICE.search(texts.get(f, ""))])
+check("the screens of WP13b are all there and hold no dash and no invisible character (the Lithuanian words are scanned by the page test suites/ts/admin_styles.test.ts)", len(SCREENS) == 9 and all(f in texts for f in SCREENS), [f for f in SCREENS if f not in texts])
 check("no secret: no key-looking token in the new modules", not [f for f in MODS_NEW if re.search(r"(sk_(live|test)_|whsec_|re_[A-Za-z0-9]{8})", texts.get(f, ""))])
 check("the new modules start with the __future__ import (Python 3.12) and import no engine and no numpy",
       all(re.search(r"^from __future__ import annotations$", texts[f].replace(chr(13), ""), re.M) for f in MODS_NEW)
