@@ -22,9 +22,9 @@ export type LegalLang = Lang;
  *  e-mail quotes carries it. ONE date versions every legal page: change it whenever ANY legal text changes (2026-10-05, work package WP12: the price rows of
  *  the terms name price classes and print no number of eyes, "and the same arrangement", the delivery time, the privacy policy's lists). It is not the
  *  consent version (WITHDRAWAL_CONSENT_VERSION), which moves only when the withdrawal-waiver wording does. A change of the set of live styles needs no new
- *  date: no legal text prints a list of styles or a number of eyes (scripts/check_styles.mjs item 7 holds it). The AI-made material sentence
- *  (src/shared/aiMaterial.ts) enters the terms in the cutover deploy, which moves this date again. */
-export const LEGAL_UPDATED = '2026-10-05';
+ *  date: no legal text prints a list of styles or a number of eyes (scripts/check_styles.mjs item 7 holds it). 2026-10-06, work package WP18 (the catalogue
+ *  switch): the AI-made material sentence (src/shared/aiMaterial.ts) entered the terms of every edition and language in the cutover deploy. */
+export const LEGAL_UPDATED = '2026-10-06';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right

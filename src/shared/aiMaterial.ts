@@ -1,4 +1,5 @@
-// The sentence about AI-made material (owner decision 10, review of 2026-10-04): written here once, in the four languages, and NOT yet published.
+// The sentence about AI-made material (owner decision 10, review of 2026-10-04): written here once, in the four languages, and PUBLISHED by the catalogue
+// switch (work package WP18, 2026-10-06: AI_MATERIAL_PUBLISHED is true, it is in the terms of every edition and language and LEGAL_UPDATED moved with it).
 //
 // Why it exists. The plate styles (Powder Burst, Splash, Elements, the Vortex look of Universe) draw their powder, crowns, flames or spirals from a
 // finite library of plates, picked by the artwork's seed, so the matter around an iris is not unique to one customer: another artwork can hold the same
@@ -7,15 +8,17 @@
 // fibres by AI. This is the corrected wording: it says what is shared, what stays the customer's, and that the fibres are restored.
 //
 // When it is published. In the SAME deploy that makes the first plate style orderable (work package WP18, the catalogue switch), never earlier (before
-// that it would describe styles that cannot be bought) and never later. That deploy sets AI_MATERIAL_PUBLISHED to true; until then no page, no legal text
-// and no e-mail holds the sentence (aiBlocks and aiSentence answer nothing), and the build's text check (check_texts.mjs) holds the four wordings to the
-// same lint as every other string meanwhile, so that the flip is one line and cannot surface an untranslated or dash-bearing sentence.
+// that it would describe styles that cannot be bought) and never later. That deploy set AI_MATERIAL_PUBLISHED to true (the cutover raised the ceilings of
+// the plate styles to live; the owner's tick in the admin page is what makes the first one orderable, after this text is already in force). Before the flip
+// no page, no legal text and no e-mail held the sentence (aiBlocks and aiSentence answered nothing), and the build's text check (check_texts.mjs) held the
+// four wordings to the same lint as every other string meanwhile, so that the flip was one line and could not surface an untranslated or dash-bearing
+// sentence. Setting it back to false takes the sentence out of every terms text at once (the check refuses a terms text that disagrees with the flag).
 //
 // The wording is the owner's to confirm ("his exact words are needed"), counsel reads it, and the Lithuanian and Hungarian lines wait for a native
 // reader: all three are on the review list (README, "Texts and legal wording").
 import type { Lang } from './lang';
 
-export const AI_MATERIAL_PUBLISHED = false;
+export const AI_MATERIAL_PUBLISHED = true;
 
 export const AI_MATERIAL: Readonly<Record<Lang, string>> = {
   en:
