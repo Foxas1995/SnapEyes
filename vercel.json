@@ -92,5 +92,6 @@
       "path": "/api/order",
       "schedule": "17 3 * * *"
     }
-  ]
+  ],
+  "installCommand": "npm install && rm -rf node_modules"
 }
