@@ -6,11 +6,12 @@
 // the ticks and the refusals are the server's.
 import { useState } from 'react';
 import type React from 'react';
-import type { StyleCatalogue, StyleChange, StyleRange, StyleRow, StylesStats } from './api';
+import type { StyleCatalogue, StyleChange, StyleRange, StyleRow } from './api';
 import type { Call } from './AdminApp';
+import type { OpeningBasis } from './stylesLoad';
 import { fmtTime } from './format';
 import {
-  allowedStages, buildChange, changeNote, changeSummary, checkName, CHECK_LT, dec, eyesRangeText, failText, GATE_POLICY_LT, initialPanel, l0Text, L0_TONE, openingView, PRICE_CLASS_LT,
+  allowedStages, buildChange, changeNote, changeSummary, checkName, CHECK_LT, dec, eyesRangeText, failText, GATE_POLICY_LT, initialPanel, l0Text, L0_TONE, OPENING_BASIS_LT, openingBasisView, openingView, PRICE_CLASS_LT,
   rangeCounts, REASON_KIND_LT, STAGE_ABOUT_LT, STAGE_TONE, stageLt, type PanelState,
 } from './stylesView';
 import { BTN, CARD, GOLD, INPUT, MUTED, Notice, Rows, ToneLine, WrapChip } from './ui';
@@ -20,7 +21,7 @@ export interface SwitchNote { tone: Tone; text: string; retry?: Record<string, u
 export interface SwitchCtx {
   call: Call;
   cat: StyleCatalogue;
-  stats: StylesStats | null;
+  basis: OpeningBasis;
   onChanged: (c: StyleChange) => void;
   setConfirm: (c: ConfirmSpec | null) => void;
   report: (n: SwitchNote | null) => void;
@@ -52,18 +53,24 @@ const L0Line: React.FC<{ range: StyleRange }> = ({ range }) => {
   );
 };
 
-/** The opening criterion beside the count's switch: one green or red line per count of two or more eyes, the numbers with n. */
-const OpeningLines: React.FC<{ range: StyleRange; stats: StylesStats | null }> = ({ range, stats }) => {
+/** The opening criterion beside the count's switch: one green or red line per count of two or more eyes, the numbers with n, and each line says what it was counted over (the last 30
+ *  days, the whole market: what the audit entry of a change keeps), not the period or filter of the numbers below. */
+export const OpeningLines: React.FC<{ range: StyleRange; basis: OpeningBasis }> = ({ range, basis }) => {
   const counts = rangeCounts(range.eyes).filter((n) => n >= 2);
   if (!counts.length) return null;
-  if (!stats) return <p className={`text-xs ${MUTED}`}>Atidarymo kriterijaus skaičiai kraunami.</p>;
-  const lines = counts.map((n) => ({ n, v: openingView(n, stats.opening[String(n)]) }));
-  if (lines.length === 1) return <ToneLine tone={lines[0].v.tone}>{eyesRangeText([lines[0].n, lines[0].n])}: {lines[0].v.text}</ToneLine>;
+  if (basis === 'failed') return <p className={`text-xs ${MUTED}`}>Atidarymo kriterijaus skaičių ({OPENING_BASIS_LT}) perskaityti nepavyko: paspausk „Atnaujinti“.</p>;
+  if (!basis) return <p className={`text-xs ${MUTED}`}>Atidarymo kriterijaus skaičiai kraunami.</p>;
+  if (counts.length === 1) {
+    const v = openingBasisView(counts[0], basis.opening[String(counts[0])], basis.partial);
+    return <ToneLine tone={v.tone}>{eyesRangeText([counts[0], counts[0]])}: {v.text}</ToneLine>;
+  }
+  // several counts share one fold: its heading names the basis once, so the lines inside do not repeat it
+  const lines = counts.map((n) => ({ n, v: openingView(n, basis.opening[String(n)]) }));
   const green = lines.filter((l) => l.v.tone === 'good').length;
   return (
     <details className="rounded-lg border border-white/10 bg-black/20">
       <summary className="cursor-pointer select-none px-2.5 py-1.5 text-xs font-semibold">
-        Atidarymo kriterijus pagal akių skaičių: įvykdytas {green} iš {lines.length}
+        Atidarymo kriterijus pagal akių skaičių ({OPENING_BASIS_LT}{basis.partial ? ', dalis dienų dar neperskaityta' : ''}): įvykdytas {green} iš {lines.length}
       </summary>
       <div className="flex flex-col gap-1.5 p-2">
         {lines.map((l) => <ToneLine key={l.n} tone={l.v.tone}>{eyesRangeText([l.n, l.n])}: {l.v.text}</ToneLine>)}
@@ -224,7 +231,7 @@ const RangeRow: React.FC<{ row: StyleRow; range: StyleRange; ctx: SwitchCtx; ope
     {range.effective !== 'live' && range.missing_for_live.length > 0 && range.switchable && (
       <p className={`text-xs ${MUTED}`}>Kad taptų „Parduodamas“, dar trūksta: {range.missing_for_live.map(checkName).join('; ')}.</p>
     )}
-    <OpeningLines range={range} stats={ctx.stats} />
+    <OpeningLines range={range} basis={ctx.basis} />
     {open && <RangePanel key={`${range.eyes.join('-')}-${ctx.cat.rev}`} row={row} range={range} ctx={ctx} onClose={onToggle} />}
   </div>
 );

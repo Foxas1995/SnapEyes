@@ -6,7 +6,7 @@ import type React from 'react';
 import type { StyleCatalogue, StylesStats } from './api';
 import { AKYS, ltCount } from './format';
 import {
-  CLASS_LT, dec, ERROR_ENDPOINT_LT, fallbackLt, gateCodeLt, gateGroups, GROUP_LT, holdLt, msText, openingView, PUPIL_LT, rateText, RINKINIAI, REVEAL_LT, ROUTE_LT, shareText, WHAT_LT,
+  basisText, CLASS_LT, dec, ERROR_ENDPOINT_LT, fallbackLt, gateCodeLt, gateGroups, GROUP_LT, HIST_TOP_S, holdLt, OPENING_BASIS_LT, openingView, PUPIL_LT, rateText, RINKINIAI, REVEAL_LT, ROUTE_LT, shareText, timeText, WHAT_LT,
 } from './stylesView';
 import { CARD, MUTED, Tbl, ToneLine, WrapChip } from './ui';
 
@@ -30,7 +30,7 @@ const nameOf = (id: string, name: string | null | undefined): string => name || 
 export const FunnelBlock: React.FC<{ s: StylesStats }> = ({ s }) => (
   <Block
     title="Rinkinių piltuvas: ar rinkinys praeina vartus"
-    hint={`Rinkinys skaičiuojamas vieną kartą, pagal pirmą užklausą. „Su vienu pakartojimu“ yra viršutinė riba: puslapis nesieja vieno rinkinio dviejų užklausų, todėl pakartojimas rinkinio, kuris jau buvo praėjęs, taip pat įskaitomas, ne daugiau nei nepraėjusių. Užklausų iš viso: ${s.requests.total}, iš jų nieko nepiešusių: ${s.requests.drew_nothing}.`}
+    hint={`Rinkinys skaičiuojamas vieną kartą, pagal pirmą užklausą. „Su vienu pakartojimu“ yra viršutinė riba: puslapis nesieja vieno rinkinio dviejų užklausų, todėl pakartojimas rinkinio, kuris jau buvo praėjęs, taip pat įskaitomas, ne daugiau nei nepraėjusių. Užklausų iš viso: ${s.requests.total}, iš jų nieko nepiešusių: ${s.requests.drew_nothing}. Skaičiuota: ${basisText(s.days, s.filter.slice)}. Atidarymo kriterijaus eilutė šalia perjungiklių visada skaičiuojama pagal ${OPENING_BASIS_LT}, todėl gali skirtis nuo šios lentelės, kai pasirinkai kitą laikotarpį ar filtrą.`}
   >
     <Tbl label="Rinkinių piltuvas pagal akių skaičių"
       head={['Akys', 'Pirmos nuotraukos rinkiniai', 'Pirmą kartą praėjo', 'Su vienu pakartojimu (riba)', 'Pakartota po vieną kartą', 'Be profilio', 'Kodėl nepraėjo', 'Atidarymo kriterijus']}
@@ -126,8 +126,11 @@ export const TimesBlock: React.FC<{ s: StylesStats }> = ({ s }) => (
     hint={`p50 ir p95 yra intervalo viršutinė riba (ne daugiau kaip vienu intervalu per aukštai). „Planas“ yra kainų lentelės įvertis esamu lėtėjimo koeficientu. Atminties prieaugis yra proceso VmRSS padidėjimas per žingsnį${s.memory.peak_mb_avg !== null ? `: vidutiniškai ${dec(s.memory.peak_mb_avg)} MB (n ${s.memory.n})` : ''}; instancijos aukščiausią reikšmę (VmHWM) rodo užsakymo informacija.`}>
     <Tbl label="Piešimo laikai" head={['Kas', 'Stilius', 'Akys', 'n', 'p50', 'p95', 'Planas', 'Virš 64 s']} empty="Laikų dar nėra."
       rows={s.times.map((r) => {
-        const over = r.need_s !== null && r.p95_ms !== null && r.p95_ms / 1000 > r.need_s;
-        return [WHAT_LT[r.what] || r.what, nameOf(r.style, r.name), ltCount(r.eyes, AKYS), String(r.n), msText(r.p50_ms), over ? <WrapChip key="p" tone="bad">{msText(r.p95_ms)}, viršija planą</WrapChip> : msText(r.p95_ms),
+        const p50 = timeText(r.p50_ms, r.n), p95 = timeText(r.p95_ms, r.n);
+        // a p95 in the open bucket above the last bound has no number and is the worst case: flagged red, and over the plan whenever the plan is below that bound
+        const overPlan = p95.over ? r.need_s !== null && r.need_s < HIST_TOP_S : r.need_s !== null && r.p95_ms !== null && r.p95_ms / 1000 > r.need_s;
+        return [WHAT_LT[r.what] || r.what, nameOf(r.style, r.name), ltCount(r.eyes, AKYS), String(r.n), p50.over ? <WrapChip key="m" tone="bad">{p50.text}</WrapChip> : p50.text,
+          overPlan ? <WrapChip key="p" tone="bad">{p95.text}, viršija planą</WrapChip> : p95.over ? <WrapChip key="p" tone="bad">{p95.text}</WrapChip> : p95.text,
           r.need_s !== null ? `${dec(r.need_s)} s` : 'nėra eilutės', r.over ? String(r.over) : '0'];
       })} />
   </Block>

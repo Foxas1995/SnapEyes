@@ -3,18 +3,22 @@
 // bought yet, recommended against chosen, previews, the funnel after the preview, the restoration gate, fallbacks, render times against the estimate, errors and review, Reveal)
 // with a period, one filter at a time (a market or a language), and the audit log of the switch. The server decides and counts (api/_lib/ops.py, style_stats.py,
 // stage_overrides.py); this page asks, shows with the n behind every share, and sends the owner's confirmed changes. Lithuanian only; codes and counts, never a customer's words.
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type React from 'react';
-import type { Reply, StyleAuditEntry, StyleCatalogue, StyleChange, StyleLimits, StylesStats } from './api';
+import type { StyleAuditEntry, StyleCatalogue, StyleChange, StyleLimits, StylesStats } from './api';
 import type { Call } from './AdminApp';
 import { explain, fmtTime, STYLE_LT } from './format';
 import { StyleCard } from './StyleSwitch';
 import type { SwitchNote } from './StyleSwitch';
+import { createStylesLoader } from './stylesLoad';
+import type { OpeningBasis, ProblemKey } from './stylesLoad';
+import { SalesLoader } from './StyleSales';
 import {
   ChosenBlock, ConversionBlock, DemandBlock, ErrorsBlock, FallbackBlock, FunnelBlock, GateBlock, RevealBlock, TimesBlock,
 } from './StyleNumbers';
 import {
-  attentionText, auditNumbers, auditText, eyesRangeText, failText, filterBody, fixedIds, fmtPct, groupedStyles, heldText, HEALTH_LT, REASON_KIND_LT, SLICE_LANG_LT, SLICE_MARKET_LT, stageLt,
+  attentionText, auditNumbers, auditText, basisText, eyesRangeText, failText, fixedIds, fmtPct, groupedStyles, heldText, HEALTH_LT, OPENING_DAYS, REASON_KIND_LT, retryNote,
+  SLICE_LANG_LT, SLICE_MARKET_LT, stageLt,
 } from './stylesView';
 import { BTN, CARD, Chip, ConfirmDialog, GOLD, H2, INPUT, MUTED, Notice, Spinner, Toast, ToneLine } from './ui';
 import type { ConfirmSpec } from './ui';
@@ -90,44 +94,35 @@ const Audit: React.FC<{ entries: StyleAuditEntry[] | null }> = ({ entries }) => 
   </section>
 );
 
+const PROBLEM_LT: Record<ProblemKey, string> = { cat: 'Katalogas', stats: 'Skaičiai', audit: 'Žurnalas', basis: 'Atidarymo kriterijus' };
+
 export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
   const [days, setDays] = useState(30);
   const [filter, setFilter] = useState('');
   const [cat, setCat] = useState<StyleCatalogue | null>(null);
   const [stats, setStats] = useState<StylesStats | null>(null);
+  const [basis, setBasis] = useState<OpeningBasis>(null);
   const [audit, setAudit] = useState<StyleAuditEntry[] | null>(null);
-  const [err, setErr] = useState<string[]>([]);
+  const [errs, setErrs] = useState<Partial<Record<ProblemKey, string>>>({});
   const [busy, setBusy] = useState(true);
   const [note, setNote] = useState<SwitchNote | null>(null);
   const [confirm, setConfirm] = useState<ConfirmSpec | null>(null);
   const [retrying, setRetrying] = useState(false);
 
-  const apply = useCallback(([c, s, a]: [Reply<StyleCatalogue>, Reply<StylesStats>, Reply<{ entries: StyleAuditEntry[] }>]) => {
-    const e: string[] = [];
-    if (c.ok && c.data) setCat(c.data); else e.push(`Katalogas: ${explain(c)}`);
-    if (s.ok && s.data) setStats(s.data); else e.push(`Skaičiai: ${explain(s)}`);
-    if (a.ok && a.data) setAudit(a.data.entries); else e.push(`Žurnalas: ${explain(a)}`);
-    setErr(e); setBusy(false);
-  }, []);
+  // what is asked and which answers are used (a slow older answer never overwrites a newer one; the opening basis is its own fixed question): stylesLoad.ts
+  const loader = useMemo(() => createStylesLoader(call, {
+    cat: setCat, stats: setStats, basis: setBasis, audit: setAudit, busy: setBusy,
+    problem: (key, r) => setErrs((cur) => {
+      const next = { ...cur };
+      if (r) next[key] = `${PROBLEM_LT[key]}: ${explain(r)}`; else delete next[key];
+      return next;
+    }),
+  }), [call]);
 
-  const fetchAll = useCallback((d: number, f: string) => Promise.all([
-    call<StyleCatalogue>('styles_catalogue'), call<StylesStats>('styles_stats', { days: d, ...filterBody(f) }, 90_000), call<{ entries: StyleAuditEntry[] }>('styles_audit', { limit: 60 }),
-  ]), [call]);
+  useEffect(() => { void loader.loadAll(30, ''); }, [loader]);
 
-  useEffect(() => {
-    let live = true;
-    void fetchAll(30, '').then((x) => { if (live) apply(x); });
-    return () => { live = false; };
-  }, [fetchAll, apply]);
-
-  const reload = useCallback(async () => { setBusy(true); apply(await fetchAll(days, filter)); }, [fetchAll, apply, days, filter]);
-
-  const loadStats = async (d: number, f: string) => {
-    setBusy(true);
-    const r = await call<StylesStats>('styles_stats', { days: d, ...filterBody(f) }, 90_000);
-    setBusy(false);
-    if (r.ok && r.data) { setStats(r.data); setErr((cur) => cur.filter((x) => !x.startsWith('Skaičiai'))); } else setErr((cur) => [...cur.filter((x) => !x.startsWith('Skaičiai')), `Skaičiai: ${explain(r)}`]);
-  };
+  const reload = () => loader.loadAll(days, filter);
+  const loadStats = (d: number, f: string) => loader.loadStats(d, f);
 
   // a plain success closes itself after a while; a warning, a failure or a retry stays until closed
   useEffect(() => {
@@ -137,6 +132,7 @@ export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
   }, [note]);
 
   const onChanged = (c: StyleChange) => {
+    loader.changed();
     setCat((cur) => (cur ? { ...cur, rev: c.rev, styles: cur.styles.map((s) => (s.id === c.style ? c.view : s)) } : cur));
     void call<{ entries: StyleAuditEntry[] }>('styles_audit', { limit: 60 }).then((a) => { if (a.ok && a.data) setAudit(a.data.entries); });
   };
@@ -147,8 +143,7 @@ export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
     setRetrying(false);
     if (r.ok && r.data) {
       onChanged(r.data);
-      setNote({ tone: r.data.held && r.data.held.incomplete ? 'warn' : 'good', text: `Sulaikymas pakartotas. ${heldText(r.data.held)}${r.data.held && r.data.held.incomplete ? ' Dar ne viskas: gali pakartoti dar kartą.' : ''}`,
-        retry: r.data.held && r.data.held.incomplete ? { ...body, rev: r.data.rev } : undefined });
+      setNote(retryNote(r.data, body));
     } else setNote({ tone: 'bad', text: failText(r) });
   };
 
@@ -158,7 +153,7 @@ export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
   return (
     <div className="flex flex-col gap-4">
       <H2 right={<button type="button" className={BTN} onClick={() => void reload()} disabled={busy}>{busy && <Spinner />}Atnaujinti</button>}>Stiliai</H2>
-      {err.map((e, i) => <Notice key={i}>{e}</Notice>)}
+      {Object.entries(errs).map(([k, e]) => <Notice key={k}>{e}</Notice>)}
 
       <section className={`${CARD} flex flex-col gap-2`} aria-label="Kaip tai veikia">
         <h3 className="text-sm font-bold">Kaip čia viskas veikia</h3>
@@ -183,7 +178,7 @@ export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
         <h3 className="text-sm font-bold">Dėmesio kortelė</h3>
         {!stats && busy && <p className="flex items-center gap-2 text-sm"><Spinner />Kraunama...</p>}
         {stats && stats.attention.length === 0 && (
-          <ToneLine tone="good">Nei vienas stilius nekirto tavo ribų ({days} d.), sveikatos patikra praėjo, sulaikytų dėl stiliaus užsakymų nėra.</ToneLine>
+          <ToneLine tone="good">Nei vienas stilius nekirto tavo ribų ({stats.days} d.), sveikatos patikra praėjo, sulaikytų dėl stiliaus užsakymų nėra.</ToneLine>
         )}
         <ul className="flex flex-col gap-1.5">
           {(stats?.attention || []).map((a, i) => (
@@ -210,7 +205,7 @@ export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
           <div key={g.group} className="flex flex-col gap-3">
             <h4 className="text-sm font-semibold text-white/80 border-b border-white/10 pb-1">{g.label}</h4>
             {g.rows.map((row) => (
-              <StyleCard key={row.id} row={row} ctx={{ call, cat, stats, onChanged, setConfirm, report: setNote, reload: () => void reload() }} />
+              <StyleCard key={row.id} row={row} ctx={{ call, cat, basis, onChanged, setConfirm, report: setNote, reload: () => void reload() }} />
             ))}
             {g.fixed.length > 0 && (
               <p className={`text-xs ${MUTED} break-words`}>
@@ -247,7 +242,8 @@ export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
           Kainų testo šakos filtro čia nėra: šakų piltuvai yra puslapyje „Kainų testai“. Dienos skaičiuojamos pagal UTC.
           {stats?.partial ? ' Dalis dienų dar skaičiuojama: atnaujink po minutės.' : ''}
           {stats && !stats.recording ? ' Šiame serveryje įvykiai nerenkami (nėra CRON_SECRET), todėl skaičiai tušti.' : ''}
-          {slice ? ` Dabar rodoma: ${slice.startsWith('market:') ? `rinka ${SLICE_MARKET_LT[slice.slice(7)] || slice.slice(7)}` : `kalba ${SLICE_LANG_LT[slice.slice(5)] || slice.slice(5)}`}.` : ''}
+          {stats ? ` Rodomi skaičiai: ${basisText(stats.days, slice)}.` : ''}
+          {' '}Atidarymo kriterijus šalia perjungiklių nuo šių pasirinkimų nepriklauso: jis visada skaičiuojamas pagal {basisText(OPENING_DAYS, null)} (tie patys skaičiai įrašomi į žurnalą).
         </p>
       </section>
 
@@ -257,6 +253,7 @@ export const StylesPage: React.FC<{ call: Call }> = ({ call }) => {
           <DemandBlock s={stats} />
           <ChosenBlock s={stats} cat={cat} />
           <ConversionBlock s={stats} />
+          <SalesLoader call={call} days={stats.days} />
           <GateBlock s={stats} skip={fixedIds(cat)} />
           <FallbackBlock s={stats} />
           <TimesBlock s={stats} />

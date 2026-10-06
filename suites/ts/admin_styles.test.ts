@@ -6,17 +6,21 @@
 // scripts/run_ts_tests.mjs; returns its results.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import type { FunnelLine, FunnelRow, OrderDetail, Reply, StepsView, StyleCatalogue, StyleChange, StyleRange, StyleRow, StylesStats } from '../../src/admin/api';
+import type { FunnelLine, FunnelRow, OrderDetail, OrderRow, Reply, StepsView, StyleAuditEntry, StyleCatalogue, StyleChange, StyleRange, StyleRow, StylesStats } from '../../src/admin/api';
 import { ArtworkFacts } from '../../src/admin/ArtworkFacts';
 import { OrderStyle } from '../../src/admin/OrderStyle';
 import { ChosenBlock, ConversionBlock, DemandBlock, ErrorsBlock, FallbackBlock, FunnelBlock, GateBlock, RevealBlock, TimesBlock } from '../../src/admin/StyleNumbers';
-import { RangePanel, StyleCard, type SwitchCtx } from '../../src/admin/StyleSwitch';
+import { OpeningLines, RangePanel, StyleCard, type SwitchCtx } from '../../src/admin/StyleSwitch';
+import { SalesDetails, SalesLoader, SalesTables } from '../../src/admin/StyleSales';
+import { createStylesLoader, type OpeningBasis, type ProblemKey } from '../../src/admin/stylesLoad';
 import { StylesPage } from '../../src/admin/Styles';
 import { isFirstN } from '../../src/admin/groupEyes';
+import { fmtMoney } from '../../src/admin/format';
 import { Tbl } from '../../src/admin/ui';
 import {
-  allowedStages, allWords, attentionText, auditNumbers, auditText, buildChange, changeNote, changeSummary, edgeText, eyesRangeText, eyesText, failText, filterBody, fixedIds, fmtPct, gateGroups,
-  groupedStyles, heldText, initialPanel, missingAfter, openingView, optionsText, rateText, relPath, selfcheckRows, shareText, stageAfter, tickGroups, type PanelState,
+  allowedStages, allWords, attentionText, auditNumbers, auditText, basisText, buildChange, changeNote, changeSummary, edgeText, eyesRangeText, eyesText, failText, filterBody, fixedIds, fmtPct, gateGroups,
+  groupedStyles, heldText, initialPanel, isOpeningBasis, missingAfter, OPENING_BASIS_LT, OPENING_DAYS, openingBasisView, openingView, optionsText, periodWords, rateText, relPath, retryNote, salesMoney,
+  selfcheckRows, shareText, stageAfter, styleSales, tickGroups, timeText, type PanelState,
 } from '../../src/admin/stylesView';
 
 type Row = [string, boolean, string?];
@@ -206,7 +210,8 @@ export async function run(): Promise<Row[]> {
   check('isFirstN: the stored masters of a lab order are eyes 1 to n with no gap', isFirstN([1, 2, 3]) && isFirstN([2, 1]) && !isFirstN([1, 3]) && !isFirstN([]) && !isFirstN([2]));
 
   // ------------------------------------------------------------------------------------------------ the page as printed
-  const ctxOf = (c: StyleCatalogue, s: StylesStats | null): SwitchCtx => ({ call: (async () => reply(0, '')) as never, cat: c, stats: s, onChanged: noop, setConfirm: noop, report: noop, reload: noop });
+  const basisOf = (s: StylesStats | null): OpeningBasis => (s ? { opening: s.opening, partial: s.partial } : null);
+  const ctxOf = (c: StyleCatalogue, s: StylesStats | null): SwitchCtx => ({ call: (async () => reply(0, '')) as never, cat: c, basis: basisOf(s), onChanged: noop, setConfirm: noop, report: noop, reload: noop });
   const withPair = row('duo.kiss_collision', 'Kiss Collision', { group: 'duo', eyes: [2, 2], gate: 'hard', ranges: [range({ eyes: [2, 2], ceiling: 'preview', effective: 'preview', orderable: false, missing_for_live: ['L1', 'L0'], l0: 'below_bar',
     checklist: { L0: { ticked_at: '2026-10-05T10:00:00Z', by: 'admin-v1', score: { mean: 3.5, min_axis: 3.2 }, director: 'Vera' } } })] });
   const multi = row('grp.collision', 'Family Colours', { group: 'grp', eyes: [3, 8], gate: 'hard', ranges: [range({ eyes: [3, 3] }), range({ eyes: [4, 8], ceiling: 'preview', effective: 'preview', orderable: false })] });
@@ -222,9 +227,9 @@ export async function run(): Promise<Row[]> {
   const hPair = text(html(createElement(StyleCard, { row: withPair, ctx: ctxOf(cc, st) })));
   check('a pair\'s card: the score under the bar is shown as recorded and not counted (with the scorer and the numbers in a Lithuanian comma), what live still lacks, and the opening criterion beside the switch with its n',
     hPair.includes('vertinimas žemiau kartelės: įrašytas, bet neįskaitomas') && hPair.includes('vidurkis 3,5, silpniausia ašis 3,2, vertino Vera') && hPair.includes('Kad taptų „Parduodamas“, dar trūksta: Tavo žvilgsnis')
-    && hPair.includes('2 akys: Atidarymo kriterijus įvykdytas: 40 rinkinių') && hPair.includes('neperkamas'), hPair.slice(0, 900));
+    && hPair.includes('2 akys: Atidarymo kriterijus įvykdytas: 40 rinkinių') && hPair.includes('Imtis: paskutinės 30 d., visos rinkos ir kalbos.') && hPair.includes('neperkamas'), hPair.slice(0, 900));
   const hMulti = text(html(createElement(StyleCard, { row: multi, ctx: ctxOf(cc, st) })));
-  check('a style with two ranges has a row for each; counts above the first hold the opening lines in one fold with how many are green', hMulti.includes('3 akys') && hMulti.includes('4 iki 8 akių') && hMulti.includes('Atidarymo kriterijus pagal akių skaičių: įvykdytas 0 iš 5'), hMulti.slice(0, 900));
+  check('a style with two ranges has a row for each; counts above the first hold the opening lines in one fold with how many are green', hMulti.includes('3 akys') && hMulti.includes('4 iki 8 akių') && hMulti.includes('Atidarymo kriterijus pagal akių skaičių (paskutinės 30 d., visos rinkos ir kalbos): įvykdytas 0 iš 5'), hMulti.slice(0, 900));
   const hPlan = html(createElement(StyleCard, { row: planned, ctx: ctxOf(cc, st) }));
   check('a planned style cannot be switched: the button is disabled and the sentence says it is the registry\'s change', hPlan.includes('disabled=""') && text(hPlan).includes('Perjungti negalima: stilius suplanuotas arba išjungtas'));
   const noStats = text(html(createElement(StyleCard, { row: withPair, ctx: ctxOf(cc, null) })));
@@ -281,13 +286,164 @@ export async function run(): Promise<Row[]> {
     selfcheckRows(art).length === 4 && selfcheckRows(art)[1][1] === false && selfcheckRows(null).length === 0 && edgeText(art) === 'sąlytis 0: plona linija' && edgeText(null) === '-');
   check('ArtworkFacts without a record says so instead of an empty block', text(html(createElement(ArtworkFacts, { art: null }))).includes('Kūrinio įrašo nėra'));
 
+  // ------------------------------------------------------------------------------------------------ review fixes (WP13b): the opening basis, the order of answers, revenue by style
+  const okReply = <T,>(data: T): Reply<T> => ({ ok: true, status: 200, data, reason: '', error: '', ms: 1 });
+  check('the opening basis is fixed: the whole market over the last 30 days (what the audit entry keeps); only numbers asked for exactly that are the basis',
+    OPENING_DAYS === 30 && OPENING_BASIS_LT === 'paskutinės 30 d., visos rinkos ir kalbos' && isOpeningBasis(30, '') && !isOpeningBasis(7, '') && !isOpeningBasis(90, '') && !isOpeningBasis(30, 'lang:hu') && !isOpeningBasis(30, 'market:au')
+    && basisText(7, 'lang:hu') === 'paskutinės 7 d., kalba vengrų' && basisText(30, 'market:au') === 'paskutinės 30 d., rinka Australija' && basisText(90, null) === 'paskutinės 90 d., visos rinkos ir kalbos', OPENING_BASIS_LT);
+  const ob = openingBasisView(2, line()), obPart = openingBasisView(2, line(), true), obRed = openingBasisView(3, line({ ok: false, n: 12, first: 0.25, retake: 0.25, why: ['n_low', 'first_low'] }));
+  check('the line beside a switch says what it was counted over in the line itself (green and red alike, and a partial reading says so); one eye has no line and no basis',
+    ob.tone === 'good' && ob.text.endsWith('Imtis: paskutinės 30 d., visos rinkos ir kalbos.') && obPart.text.endsWith('Imtis: paskutinės 30 d., visos rinkos ir kalbos, dalis dienų dar neperskaityta.')
+    && obRed.tone === 'bad' && obRed.text.includes('Trūksta:') && obRed.text.endsWith('visos rinkos ir kalbos.') && openingBasisView(1, null).text === openingView(1, null).text, ob.text);
+  const rg2 = range({ eyes: [2, 2] }), rg38 = range({ eyes: [3, 5] });
+  const olNull = text(html(createElement(OpeningLines, { range: rg2, basis: null })));
+  const olFail = text(html(createElement(OpeningLines, { range: rg2, basis: 'failed' })));
+  const olOne = text(html(createElement(OpeningLines, { range: rg2, basis: { opening: { '2': line({ n: 41 }) }, partial: false } })));
+  const olMany = text(html(createElement(OpeningLines, { range: rg38, basis: { opening: { '3': line() }, partial: true } })));
+  check('OpeningLines: loading before the basis is read; a failed reading says so, names the basis and points at Refresh (no endless "loading"); a read one prints the line with its basis; one fold names the basis once',
+    olNull.includes('kraunami') && olFail.includes('perskaityti nepavyko') && olFail.includes(OPENING_BASIS_LT) && olFail.includes('Atnaujinti') && !olFail.includes('kraunami')
+    && olOne.includes('2 akys: Atidarymo kriterijus įvykdytas: 41 rinkinys') && olOne.includes('Imtis: paskutinės 30 d.')
+    && olMany.includes(`Atidarymo kriterijus pagal akių skaičių (${OPENING_BASIS_LT}, dalis dienų dar neperskaityta): įvykdytas 1 iš 3`) && (olMany.match(/Imtis:/g) || []).length === 0, `${olFail} | ${olMany}`);
+
+  // the page's questions and which answers it may use (src/admin/stylesLoad.ts), driven with a fake `call` whose answers this test holds back and releases in any order
+  type Held = { action: string; body: Record<string, unknown>; res: (r: Reply<unknown>) => void };
+  const mkLoader = () => {
+    const held: Held[] = [];
+    const asked: string[] = [];
+    const call = ((action: string, body: Record<string, unknown> = {}) => new Promise<Reply<unknown>>((res) => { held.push({ action, body, res }); asked.push(`${action}:${body.days ?? ''}:${body.lang ?? body.market ?? ''}`); })) as never;
+    const seen = { cat: null as StyleCatalogue | null, stats: [] as number[], statsNow: null as StylesStats | null, basis: null as OpeningBasis, audit: 0, busy: [] as boolean[], problems: {} as Partial<Record<ProblemKey, string | null>> };
+    const L = createStylesLoader(call, {
+      cat: (c) => { seen.cat = c; }, stats: (x) => { seen.statsNow = x; seen.stats.push(x.days); }, basis: (u) => { seen.basis = u(seen.basis); }, audit: () => { seen.audit += 1; },
+      busy: (b) => { seen.busy.push(b); }, problem: (k, r) => { seen.problems[k] = r ? 'failed' : null; },
+    });
+    const take = (action: string, pred: (b: Record<string, unknown>) => boolean = () => true): Held => {
+      const i = held.findIndex((x) => x.action === action && pred(x.body));
+      if (i < 0) throw new Error(`no pending ${action}`);
+      return held.splice(i, 1)[0];
+    };
+    return { L, seen, asked, take, held };
+  };
+  const statsFor = (days: number, o: Partial<StylesStats> = {}) => okReply(stats({ days, ...o }));
+  const entries = { entries: [] as StyleAuditEntry[] };
+  const basisN = (b: OpeningBasis): number | null => (b !== null && b !== 'failed' ? b.opening['2'].n : null);
+
+  const A = mkLoader();
+  const a7 = A.L.loadStats(7, ''), a90 = A.L.loadStats(90, '');
+  const a7r = A.take('styles_stats', (b) => b.days === 7), a90r = A.take('styles_stats', (b) => b.days === 90);
+  a90r.res(statsFor(90)); await a90;
+  a7r.res(statsFor(7)); await a7;
+  check('a slow answer to an older question does not overwrite a newer one: 7 d. asked, then 90 d.; the 90 answer comes first and the 7 answer last, and the page keeps 90 (it showed the 7 day numbers under the 90 d. button)',
+    A.seen.statsNow?.days === 90 && A.seen.stats.join() === '90' && A.seen.busy.at(-1) === false, `${A.seen.stats.join()} ${A.seen.busy.join()}`);
+  const B = mkLoader();
+  const b7 = B.L.loadStats(7, ''), b90 = B.L.loadStats(90, '');
+  const b7r = B.take('styles_stats', (b) => b.days === 7), b90r = B.take('styles_stats', (b) => b.days === 90);
+  b7r.res(statsFor(7)); await b7;
+  check('...and an older answer that comes first is dropped as well, and the page is still busy until the newest one comes', B.seen.stats.length === 0 && B.seen.busy.every((x) => x === true));
+  b90r.res(statsFor(90)); await b90;
+  check('...then the newest one is used and the page is no longer busy', B.seen.stats.join() === '90' && B.seen.busy.at(-1) === false);
+  const C = mkLoader();
+  const c7 = C.L.loadStats(7, ''), c90 = C.L.loadStats(90, '');
+  const c7r = C.take('styles_stats', (b) => b.days === 7), c90r = C.take('styles_stats', (b) => b.days === 90);
+  c90r.res(statsFor(90)); await c90;
+  c7r.res(reply(0, '')); await c7;
+  check('a stale answer that FAILS says nothing either (no red notice about a question the owner has already replaced)', C.seen.statsNow?.days === 90 && C.seen.problems.stats === null);
+
+  const D = mkLoader();
+  const d1 = D.L.loadAll(30, '');
+  D.take('styles_catalogue').res(okReply(cat([]))); D.take('styles_audit').res(okReply(entries));
+  const dBefore = D.asked.filter((x) => x.startsWith('styles_stats')).length;
+  D.take('styles_stats').res(statsFor(30, { opening: { '2': line({ n: 31 }) } })); await d1;
+  check('the numbers asked for exactly the opening basis (30 d., no filter) are the basis too: one question, not two', dBefore === 1 && D.seen.statsNow?.days === 30 && basisN(D.seen.basis) === 31);
+  const d2 = D.L.loadStats(7, 'lang:hu');
+  D.take('styles_stats').res(statsFor(7, { lang: 'hu', opening: { '2': line({ ok: false, n: 13, why: ['n_low'] }) } })); await d2;
+  check('another period and a filter change the numbers and NOT the opening basis (the line beside a switch read 13 sets, red, after the owner looked at one week of Hungarian: the audit entry keeps 31)',
+    D.seen.statsNow?.days === 7 && basisN(D.seen.basis) === 31 && D.seen.basis !== null && D.seen.basis !== 'failed' && D.seen.basis.opening['2'].ok);
+  const d3 = D.L.loadAll(7, 'lang:hu');
+  D.take('styles_catalogue').res(okReply(cat([]))); D.take('styles_audit').res(okReply(entries));
+  D.take('styles_stats', (b) => b.days === 7).res(statsFor(7, { lang: 'hu', opening: { '2': line({ ok: false, n: 14, why: ['n_low'] }) } }));
+  D.take('styles_stats', (b) => b.days === 30).res(statsFor(30, { opening: { '2': line({ n: 33 }) } })); await d3;
+  const statsAsked = D.asked.filter((x) => x.startsWith('styles_stats'));
+  check('Refresh with another period or filter asks for the basis on its own (30 d., the whole market) beside the numbers asked for, and uses each answer for what it is',
+    statsAsked.includes('styles_stats:7:hu') && statsAsked.includes('styles_stats:30:') && D.seen.statsNow?.days === 7 && basisN(D.seen.basis) === 33);
+  const d4 = D.L.loadStats(30, '');
+  D.take('styles_stats').res(statsFor(30, { opening: { '2': line({ n: 35 }) } })); await d4;
+  check('picking the basis again makes that answer the basis again', basisN(D.seen.basis) === 35);
+
+  const E = mkLoader();
+  const e1 = E.L.loadAll(7, 'lang:hu');
+  E.take('styles_catalogue').res(okReply(cat([]))); E.take('styles_audit').res(okReply(entries));
+  E.take('styles_stats', (b) => b.days === 7).res(statsFor(7, { lang: 'hu' }));
+  E.take('styles_stats', (b) => b.days === 30).res(reply(500, 'boom')); await e1;
+  check('a basis that cannot be read says so ("failed", not an endless loading line) and the page says it', E.seen.basis === 'failed' && E.seen.problems.basis === 'failed' && E.seen.statsNow?.days === 7);
+  const e2 = E.L.loadStats(30, '');
+  E.take('styles_stats').res(statsFor(30, { opening: { '2': line({ n: 32 }) } })); await e2;
+  check('...and the next good reading heals it', basisN(E.seen.basis) === 32 && E.seen.problems.basis === null);
+  const e3 = E.L.loadAll(7, 'lang:hu');
+  E.take('styles_catalogue').res(okReply(cat([]))); E.take('styles_audit').res(okReply(entries));
+  E.take('styles_stats', (b) => b.days === 7).res(statsFor(7, { lang: 'hu' }));
+  E.take('styles_stats', (b) => b.days === 30).res(reply(0, '')); await e3;
+  check('a basis reading that fails later keeps the older good one (and says so), it does not blank the lines', basisN(E.seen.basis) === 32 && E.seen.problems.basis === 'failed');
+
+  const F = mkLoader();
+  const f1 = F.L.loadAll(30, '');
+  F.L.changed();                                      // the owner changed the switch while the catalogue was on its way
+  F.take('styles_catalogue').res(okReply(cat([row('solo.clean', 'Clean Iris')]))); F.take('styles_audit').res(okReply(entries)); F.take('styles_stats').res(statsFor(30)); await f1;
+  check('a catalogue read that began before the owner\'s change is older than what the page holds and is dropped; the numbers and the log of that read are still used', F.seen.cat === null && F.seen.audit === 1 && F.seen.stats.length === 1);
+  const f2 = F.L.loadAll(30, '');
+  F.take('styles_catalogue').res(okReply(cat([row('solo.clean', 'Clean Iris')]))); F.take('styles_audit').res(okReply(entries)); F.take('styles_stats').res(statsFor(30)); await f2;
+  check('...and the next read, begun after the change, is used', F.seen.cat !== null && F.seen.audit === 2 && F.seen.stats.length === 2);
+
+  // the retry button's answer
+  const rN = retryNote(chg({ held: { ...held, incomplete: true, failed: ['c'] } }), { style: 'solo.clean', eyes: 1, stage: 'preview', rev: 8, in_flight: 'hold' });
+  const rOk = retryNote(chg(), { style: 'solo.clean', rev: 8 });
+  const rLog = retryNote(chg({ audit_written: false }), { style: 'solo.clean', rev: 8 });
+  check('the retry answer: still incomplete is a warning that keeps the button with the NEW revision; complete is green; a log line that was not written is a warning that says the change stands (it said nothing before)',
+    rN.tone === 'warn' && rN.text.includes('Dar ne viskas') && rN.retry?.rev === 9 && rN.retry?.in_flight === 'hold' && rOk.tone === 'good' && rOk.retry === undefined && rOk.text.startsWith('Sulaikymas pakartotas. Sulaikyta užsakymų: 2')
+    && rLog.tone === 'warn' && rLog.text.includes('žurnalo įrašas neįrašytas') && rLog.retry === undefined, `${rN.text} | ${rLog.text}`);
+
+  // render times above the last bound of the histogram
+  check('timeText: a number, "virš 64 s" for a time above the last bound (the server sends no number), "-" without a sample', timeText(32000, 8).text === '32 s' && !timeText(32000, 8).over && timeText(null, 5).text === 'virš 64 s' && timeText(null, 5).over && timeText(null, 0).text === '-' && !timeText(null, 0).over);
+  const tOver = text(html(createElement(TimesBlock, { s: stats({ times: [{ what: 'art', style: 'solo.gold', name: 'Celestial Gold', eyes: 1, n: 6, p50_ms: 12000, p95_ms: null, over: 2, need_s: 26.1 },
+    { what: 'art', style: 'grp.collision', name: 'Family Colours', eyes: 6, n: 3, p50_ms: 30000, p95_ms: null, over: 1, need_s: 68.3 }] }) })));
+  check('a p95 above the last bound is red and says so (it printed "-"): over the plan when the plan is below that bound, only "virš 64 s" when the plan is above it', tOver.includes('virš 64 s, viršija planą') && (tOver.match(/viršija planą/g) || []).length === 2 && (tOver.match(/virš 64 s/g) || []).length === 4 && tOver.includes('68,3 s'), tOver);
+
+  // orders, paid and revenue by style and group (PR 6.1)
+  const orow = (o: Partial<OrderRow>): OrderRow => ({ order: 'o', state: 'ready', created_at: 1, lang: 'lt', eyes: 1, style: 'solo.gold', layout: null, amount: 1000, currency: 'EUR', paid: true, live: true, paid_at: 1, email: null, drafts: 0, made: 0,
+    files: 0, delivery: true, held: false, review: false, withdrawal: false, extra_payments: 0, mail: null, ...o });
+  const orders: OrderRow[] = [orow({}), orow({ withdrawal: true }), orow({ paid: false, live: null, amount: 500, paid_at: null }), orow({ live: false, amount: 700 }), orow({ style: 'solo.clean', amount: 2000, currency: 'AUD' }),
+    orow({ style: 'duo.kiss_collision', eyes: 2, amount: 3000 }), orow({ style: 'grp.collision', eyes: 3, amount: 400000, currency: 'HUF' }), orow({ style: null, amount: 100 }), orow({ style: 'old_thing', amount: 100 }),
+    orow({ style: 'celestial_gold', amount: 1500 })];
+  const sales = styleSales(orders);
+  const gold = sales.byStyle.find((r) => r.key === 'solo.gold'), soloG = sales.byGroup.find((r) => r.group === 'solo'), noneG = sales.byGroup.find((r) => r.group === 'none');
+  check('styleSales: orders (paid or not), paid (live payments), test payments apart and never in the revenue, withdrawals among the paid, revenue per currency (euros never added to forints)',
+    !!gold && gold.orders === 4 && gold.paid === 2 && gold.test === 1 && gold.withdrawn === 1 && gold.revenue.eur === 2000 && Object.keys(gold.revenue).join() === 'eur'
+    && sales.total.orders === 10 && sales.total.paid === 8 && sales.total.test === 1 && sales.total.revenue.eur === 6700 && sales.total.revenue.aud === 2000 && sales.total.revenue.huf === 400000, JSON.stringify(sales.total));
+  check('styleSales by group: the style\'s group in the registry (the legacy six are Viena akis), an order with no style or a style the registry does not know is one group of its own, last; groups in the picker\'s order',
+    !!soloG && soloG.orders === 6 && soloG.paid === 4 && soloG.revenue.eur === 3500 && soloG.revenue.aud === 2000 && !!noneG && noneG.orders === 2 && noneG.paid === 2 && noneG.name === 'Be stiliaus arba nežinomas stilius'
+    && sales.byGroup.map((g) => g.group).join() === 'solo,duo,grp,none', sales.byGroup.map((g) => g.group).join());
+  check('styleSales: the style table is busiest first (paid, then orders) and names the "no style" row; salesMoney writes one part per currency, euros first, "-" for nothing',
+    sales.byStyle[0].key === 'solo.gold' && sales.byStyle.some((r) => r.key === 'none' && r.name === 'Be stiliaus') && sales.byStyle.find((r) => r.key === 'celestial_gold')?.name === 'Celestial Gold (senas)' && gold?.name === 'Celestial Gold' && salesMoney({ eur: 6700 }) === fmtMoney(6700, 'eur') && salesMoney({ aud: 2000, eur: 100 }) === `${fmtMoney(100, 'eur')}; ${fmtMoney(2000, 'aud')}` && salesMoney({}) === '-'
+    && styleSales([]).byStyle.length === 0 && periodWords(30) === 'paskutinės 30 d.' && periodWords(400) === 'visas laikotarpis, iki 400 d.');
+  const salesHtml = html(createElement(SalesTables, { rows: orders, more: true, days: 30 }));
+  const salesText = text(salesHtml);
+  check('the sales tables: by group and by style, with what each column is, the totals, the revenue per currency, and a sentence when the list was cut short; no refund is taken off and it says so',
+    salesText.includes('Užsakymai (paskutinės 30 d.): visi užsakymų aplankai') && salesText.includes('Pagal grupę') && salesText.includes('Pagal stilių') && salesText.includes('Viena akis') && salesText.includes('Celestial Gold') && salesText.includes('Be stiliaus')
+    && salesText.includes(fmtMoney(400000, 'huf').replace(/\s/g, ' ')) && salesText.includes('grąžinimai neatimami') && salesText.includes('atsisakymo pareiškimų tarp apmokėtų: 1') && salesText.includes('Rodoma ne viskas'), salesText.slice(0, 400));
+  const sdText = text(html(createElement(SalesDetails, { rows: orders, more: false, days: 400 })));
+  const slText = text(html(createElement(SalesLoader, { call: (async () => reply(0, '')) as never, days: 30 })));
+  check('in the order list the sales are one fold whose heading carries the totals; on the Stiliai page they load on a press (nothing is read unasked)',
+    sdText.includes('Užsakymai ir pajamos pagal stilių ir grupę: apmokėta 8, pajamos') && sdText.includes('visas laikotarpis, iki 400 d.') && slText.includes('Rodyti (paskutinės 30 d.)') && !slText.includes('Pagal grupę') && slText.includes('iš užsakymų įrašų, ne iš įvykių'), `${sdText.slice(0, 200)} | ${slText}`);
+  const strip = (t: string) => t.replace(/\d[\d\u00a0.,]*\s?(€|A\$|Ft)/g, 'SUMA').replace(/\s+/g, ' ');
+  const blocks2 = [salesHtml];
+
   // ------------------------------------------------------------------------------------------------ Lithuanian
   const printed = [text(hClean), hPair, hMulti, text(hPlan), noStats, tp, fb, dm, ch, tm, gt, page, os, sumLive, sumOk, lowText, n1.text, n2.text, n3.text, failText(reply(409, 'needs_ticks', { missing: { '3': ['L1'] } })),
-    ...allWords(), ...stats().attention.map((a) => attentionText(a, nameOf)), auditText(ent), ...auditNumbers(ent), openingView(2, line()).text, red.text, openingView(2, null).text];
+    ...allWords(), ...stats().attention.map((a) => attentionText(a, nameOf)), auditText(ent), ...auditNumbers(ent), openingView(2, line()).text, red.text, openingView(2, null).text,
+    ob.text, obPart.text, obRed.text, olNull, olFail, olOne, olMany, rN.text, rLog.text, rOk.text, tOver, strip(salesText), strip(sdText), slText];
   const problems = printed.map((s) => ({ s, bad: lint(s) })).filter((x) => x.bad.length).map((x) => `${x.bad.join('+')}: ${x.s.slice(0, 90)}`);
   check('every sentence the page prints (the dictionaries, the dialog, the answers, the rendered cards, tables and blocks) passes the Lithuanian rules of the text check and holds no dash, no written price, no English word', problems.length === 0, problems.slice(0, 5).join(' | '));
   console.error = realError;
-  const dupHeads = blocks.flatMap((h) => [...h.matchAll(/<thead[\s\S]*?<\/thead>/g)].map((m) => [...m[0].matchAll(/<th[^>]*>([^<]*)<\/th>/g)].map((x) => x[1]))).filter((hs) => new Set(hs).size !== hs.length);
+  const dupHeads = [...blocks, ...blocks2].flatMap((h) => [...h.matchAll(/<thead[\s\S]*?<\/thead>/g)].map((m) => [...m[0].matchAll(/<th[^>]*>([^<]*)<\/th>/g)].map((x) => x[1]))).filter((hs) => new Set(hs).size !== hs.length);
   check('every table of the numbers has distinct column headings (a duplicate key would drop a column), and rendering the cards, panels, tables, blocks and the order block raised no React warning', dupHeads.length === 0 && warned.length === 0, `${JSON.stringify(dupHeads)} ${warned.slice(0, 3).join(' | ')}`);
   check('the names of all twelve checks and every stage, class and hold code have a word in the dictionaries', CHECKS.every((c) => allWords().some((w) => w.includes(`(${c})`))) && Object.keys(stats().gate.codes).every((c) => attentionText({ kind: 'hold', code: c, n: 1 }, nameOf).length > 0));
   return out;

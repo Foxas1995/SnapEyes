@@ -2,9 +2,10 @@
 // test (suites/ts/admin_styles.test.ts) can read every sentence and every number the page prints. The numbers come from the server (api/_lib/style_stats.py, the actions
 // styles_catalogue, styles_stats, styles_override and styles_audit); this file only writes them down: every rate with the n behind it, never a bare percentage.
 import type {
-  AttentionItem, FunnelLine, L0State, Reply, StageCode, StyleAuditEntry, StyleCatalogue, StyleChange, StyleHeld, StyleRange, StyleRow,
+  AttentionItem, FunnelLine, L0State, OrderRow, Reply, StageCode, StyleAuditEntry, StyleCatalogue, StyleChange, StyleHeld, StyleRange, StyleRow,
 } from './api';
-import { AKYS, explain, ltCount } from './format';
+import { AKYS, explain, fmtMoney, ltCount, STYLE_LT } from './format';
+import { isStyle, STYLES } from '../shared/styles';
 
 export type ViewTone = 'good' | 'warn' | 'bad' | 'info' | 'muted';
 
@@ -162,6 +163,27 @@ export function openingView(eyes: number, line: FunnelLine | null | undefined): 
     `su vienu pakartojimu ${line.retake === null ? '-' : fmtPct(line.retake)}`;
   if (line.ok) return { tone: 'good', text: `Atidarymo kriterijus įvykdytas: ${have}.` };
   return { tone: 'bad', text: `Atidarymo kriterijus neįvykdytas: ${have}. Trūksta: ${line.why.map((w) => (WHY_LINE_LT[w] ? WHY_LINE_LT[w](line) : w)).join('; ')}.` };
+}
+
+/** What a count is counted over, in words: "paskutinės 30 d., visos rinkos ir kalbos" or "paskutinės 7 d., kalba vengrų". */
+export function basisText(days: number, slice: string | null | undefined): string {
+  const who = !slice ? 'visos rinkos ir kalbos' : slice.startsWith('market:') ? `rinka ${SLICE_MARKET_LT[slice.slice(7)] || slice.slice(7)}` : `kalba ${SLICE_LANG_LT[slice.slice(5)] || slice.slice(5)}`;
+  return `paskutinės ${days} d., ${who}`;
+}
+
+/** The basis of the opening criterion beside every switch: the whole market over the last 30 days, which is what the audit entry of a change keeps (api/_lib/ops.py _flip_numbers,
+ *  test I22), so the line the owner reads before he decides and the numbers logged when he does are one calculation. It does NOT follow the period or the filter picked for the numbers
+ *  further down the page (those answer another question: how is the last week going in Hungary). */
+export const OPENING_DAYS = 30;
+export const OPENING_BASIS_LT = basisText(OPENING_DAYS, null);
+export const isOpeningBasis = (days: number, filter: string): boolean => days === OPENING_DAYS && !filter;
+
+/** The line beside a switch: openingView, and the basis it was counted on said in the line itself (a line that does not say over what period and for which market it was counted
+ *  would turn green or red with the filter below it). partial: some day could not be read whole. */
+export function openingBasisView(eyes: number, line: FunnelLine | null | undefined, partial = false): { tone: ViewTone; text: string } {
+  const v = openingView(eyes, line);
+  if (eyes < 2) return v;
+  return { tone: v.tone, text: `${v.text} Imtis: ${OPENING_BASIS_LT}${partial ? ', dalis dienų dar neperskaityta' : ''}.` };
 }
 
 // ------------------------------------------------------------------------------------------------ the switch
@@ -445,6 +467,16 @@ export function changeNote(c: StyleChange, sent: Record<string, unknown>): Note 
   return { tone, text: parts.join(' '), retry };
 }
 
+/** What the answer of the retry button says (the same request sent again to finish a hold): the orders held now, whether anything is still left (then the retry stays, with the NEW
+ *  revision), and a log line that could not be written, as in changeNote. */
+export function retryNote(c: StyleChange, sent: Record<string, unknown>): Note {
+  const incomplete = !!(c.held && c.held.incomplete);
+  const parts = ['Sulaikymas pakartotas.', heldText(c.held)].filter(Boolean);
+  if (incomplete) parts.push('Dar ne viskas: gali pakartoti dar kartą.');
+  if (c.audit_written === false) parts.push('Pakeitimas išsaugotas, bet žurnalo įrašas neįrašytas.');
+  return { tone: incomplete || c.audit_written === false ? 'warn' : 'good', text: parts.join(' '), retry: incomplete ? { ...sent, rev: c.rev } : undefined };
+}
+
 /** The filter select's value ("market:au", "lang:lt" or "") as the request's one filter. */
 export function filterBody(v: string): Record<string, string> {
   const [k, x] = v.split(':');
@@ -497,11 +529,71 @@ export function edgeText(art: J | null): string {
   return keys.length ? keys.map((k) => `sąlytis ${k}: ${EDGE_LT[asText(em[k])] || asText(em[k])}`).join('; ') : '-';
 }
 
+// ------------------------------------------------------------------------------------------------ orders, paid and revenue by style and group (PR 6.1)
+/** The top bound of the render time histogram (api/_lib/events.py HIST_MS): a time above it has no number, only "above". */
+export const HIST_TOP_S = 64;
+
+/** A p50 or p95 of the render times: the number, or "virš 64 s" when the time is in the open bucket above the last bound (the server sends no number then), "-" when there is no sample. */
+export function timeText(ms: number | null | undefined, n: number): { text: string; over: boolean } {
+  if (typeof ms === 'number' && Number.isFinite(ms)) return { text: `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0).replace('.', ',')} s`, over: false };
+  return n > 0 ? { text: `virš ${HIST_TOP_S} s`, over: true } : { text: '-', over: false };
+}
+
+/** The period of the order list in words: the days, or everything the list holds for the longest choice (400 days). */
+export const periodWords = (days: number): string => (days >= 400 ? 'visas laikotarpis, iki 400 d.' : `paskutinės ${days} d.`);
+
+export interface SalesRow { key: string; name: string; group: string; orders: number; paid: number; test: number; withdrawn: number; revenue: Record<string, number> }
+export const SALES_NO_GROUP = 'none';
+export const SALES_NO_GROUP_LT = 'Be stiliaus arba nežinomas stilius';
+
+const blankSales = (key: string, name: string, group: string): SalesRow => ({ key, name, group, orders: 0, paid: 0, test: 0, withdrawn: 0, revenue: {} });
+
+function addSale(t: SalesRow, r: OrderRow): void {
+  t.orders += 1;
+  if (!r.paid) return;
+  if (r.live !== true) { t.test += 1; return; }                    // a test payment is counted apart and never in the revenue (as the summary does)
+  t.paid += 1;
+  if (r.withdrawal) t.withdrawn += 1;
+  if (typeof r.amount === 'number' && Number.isFinite(r.amount)) {
+    const cur = (r.currency || 'eur').toLowerCase();
+    t.revenue[cur] = (t.revenue[cur] || 0) + r.amount;             // one sum per currency: forints are never added to euros
+  }
+}
+
+const bySales = (a: SalesRow, b: SalesRow): number => b.paid - a.paid || b.orders - a.orders || a.name.localeCompare(b.name);
+
+/** Orders, paid orders and revenue by style and by group (PR 6.1), from the order rows of the chosen period (the usage events carry no amount and no order id on purpose, so this is the
+ *  one place that can say it). orders: every order folder with that style, paid or not; paid: live payments; test: test payments (not in the revenue); revenue per currency, refunds
+ *  NOT taken off (the list does not know them: withdrawn counts the paid orders that carry a withdrawal statement). The group is the style's group in the registry. */
+export function styleSales(rows: OrderRow[]): { byStyle: SalesRow[]; byGroup: SalesRow[]; total: SalesRow } {
+  const styles = new Map<string, SalesRow>();
+  const groups = new Map<string, SalesRow>();
+  const total = blankSales('all', 'Visi', 'all');
+  for (const r of rows) {
+    const key = r.style || 'none';
+    const group = isStyle(key) ? STYLES[key].group : SALES_NO_GROUP;
+    // the six legacy styles keep names the new ones share (Celestial Gold is both): the row says which it is
+    const s = styles.get(key) || blankSales(key, key === 'none' ? 'Be stiliaus' : `${STYLE_LT[key] || key}${isStyle(key) && STYLES[key].legacy === 1 ? ' (senas)' : ''}`, group);
+    const g = groups.get(group) || blankSales(group, GROUP_LT[group] || SALES_NO_GROUP_LT, group);
+    styles.set(key, s); groups.set(group, g);
+    addSale(s, r); addSale(g, r); addSale(total, r);
+  }
+  const gRank = (g: string) => (GROUP_ORDER.includes(g) ? GROUP_ORDER.indexOf(g) : GROUP_ORDER.length);
+  return { byStyle: [...styles.values()].sort(bySales), byGroup: [...groups.values()].sort((a, b) => gRank(a.group) - gRank(b.group)), total };
+}
+
+/** The revenue of a row as the panel writes it: one part per currency (euros first), "-" when nothing was paid. */
+export function salesMoney(revenue: Record<string, number>): string {
+  const curs = Object.keys(revenue).sort((a, b) => (a === 'eur' ? -1 : b === 'eur' ? 1 : a.localeCompare(b)));
+  return curs.length ? curs.map((c) => fmtMoney(revenue[c], c)).join('; ') : '-';
+}
+
 /** Every text this module holds that the page prints, for the page test's scan (the Lithuanian rules of scripts/check_texts.mjs). */
 export function allWords(): string[] {
   const out: string[] = [];
   const add = (o: Record<string, unknown>) => { for (const v of Object.values(o)) if (typeof v === 'string') out.push(v); else if (v && typeof v === 'object') add(v as Record<string, unknown>); };
   [SELFCHECK_LT, EDGE_LT, PLAN8_NOTE_LT, STAGE_LT, STAGE_ABOUT_LT, GROUP_LT, GATE_POLICY_LT, PRICE_CLASS_LT, CLASS_LT, PUPIL_LT, CHECK_LT, L0_STATE_LT, REASON_KIND_LT, GATE_CODE_LT, FALLBACK_LT, WHAT_LT, TILE_WHY_LT,
     HOLD_LT, HEALTH_LT, ROUTE_LT, ERROR_ENDPOINT_LT, REVEAL_LT, SLICE_MARKET_LT, SLICE_LANG_LT].forEach(add);
+  out.push(OPENING_BASIS_LT, SALES_NO_GROUP_LT);
   return out;
 }

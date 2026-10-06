@@ -7,6 +7,7 @@ import type { Call } from './AdminApp';
 import { countBy } from './agg';
 import { AKYS, explain, fmtMoney, fmtTime, ltCount, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { gateCodeLt } from './stylesView';
+import { SalesDetails } from './StyleSales';
 import { BTN, CARD, Chip, H2, INPUT, MUTED, Notice, Spinner } from './ui';
 
 const PERIODS: [number, string][] = [[7, '7 d.'], [30, '30 d.'], [90, '90 d.'], [400, 'Visi']];
@@ -97,6 +98,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
         )}
         <input className={INPUT} placeholder="Ieškoti pagal užsakymo numerį" value={find} onChange={(e) => setFind(e.target.value)}
           aria-label="Ieškoti pagal užsakymo numerį" spellCheck={false} />
+        {data && rows.length > 0 && <SalesDetails rows={rows} more={!!data.more} days={data.days} />}
         <p className={`text-xs ${MUTED}`}>
           Neapmokėti užsakymai ištrinami po 26 val., todėl sąraše daugiausia apmokėti ir šiandienos.
           {data?.more ? ' Rodoma ne viskas: pasirink trumpesnį laikotarpį.' : ''}

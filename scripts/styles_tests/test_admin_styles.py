@@ -1467,7 +1467,9 @@ mine = ["api/_lib/stage_overrides.py", "api/_lib/style_stats.py", "api/_lib/cata
         "scripts/styles_tests/test_admin_styles.py",
         # WP13b: the screens
         "src/admin/stylesView.ts", "src/admin/Styles.tsx", "src/admin/StyleSwitch.tsx", "src/admin/StyleNumbers.tsx", "src/admin/ArtworkFacts.tsx", "src/admin/OrderStyle.tsx", "src/admin/GroupLab.tsx",
-        "src/admin/groupEyes.ts", "suites/ts/admin_styles.test.ts"]
+        "src/admin/groupEyes.ts", "suites/ts/admin_styles.test.ts",
+        # WP13b review fixes: the loading rules of the page and the sales by style and group
+        "src/admin/stylesLoad.ts", "src/admin/StyleSales.tsx"]
 INVIS = "[" + "".join(chr(c) for lo, hi in ((0x200b, 0x200f), (0x2028, 0x202e), (0x2060, 0x2064), (0xfeff, 0xfeff)) for c in range(lo, hi + 1)) + "]"
 texts = {f: read(os.path.join(REPO, f)) for f in mine if os.path.isfile(os.path.join(REPO, f))}
 check("no en or em dash and no invisible character in any file of the package", not [f for f, t in texts.items() if re.search(DASH, t) or re.search(INVIS, t)])
@@ -1475,11 +1477,23 @@ PRICE = re.compile(r"\d+[.,]\d\d\s?(EUR|eur|A\$|Ft)|A\$\s?\d|\d\s?Ft\b")
 MODS_NEW = ("api/_lib/stage_overrides.py", "api/_lib/style_stats.py")
 SCREENS = tuple(f for f in mine if f.startswith("src/admin/") or f.startswith("suites/ts/admin_styles"))
 check("no written price (a decimal amount with a currency, A$, Ft) in any new file, the screens of WP13b included", not [f for f in MODS_NEW + SCREENS + ("scripts/styles_tests/test_admin_styles.py",) if PRICE.search(texts.get(f, ""))])
-check("the screens of WP13b are all there and hold no dash and no invisible character (the Lithuanian words are scanned by the page test suites/ts/admin_styles.test.ts)", len(SCREENS) == 9 and all(f in texts for f in SCREENS), [f for f in SCREENS if f not in texts])
+check("the screens of WP13b are all there and hold no dash and no invisible character (the Lithuanian words are scanned by the page test suites/ts/admin_styles.test.ts)", len(SCREENS) == 11 and all(f in texts for f in SCREENS), [f for f in SCREENS if f not in texts])
 check("no secret: no key-looking token in the new modules", not [f for f in MODS_NEW if re.search(r"(sk_(live|test)_|whsec_|re_[A-Za-z0-9]{8})", texts.get(f, ""))])
 check("the new modules start with the __future__ import (Python 3.12) and import no engine and no numpy",
       all(re.search(r"^from __future__ import annotations$", texts[f].replace(chr(13), ""), re.M) for f in MODS_NEW)
       and not any(re.search(r"^(import|from) (numpy|PIL)|from \.styles|import styles", texts[f], re.M) for f in MODS_NEW))
+
+# ============================================================================================ 12. the wiring of the review fixes (the page test drives the logic; this holds the page to it)
+section("12. the Stiliai page asks through its loader, hands the cards the opening basis, and the sales sit in both places")
+styles_tsx = read(os.path.join(REPO, "src/admin/Styles.tsx")).replace(chr(13), "")
+orders_tsx = read(os.path.join(REPO, "src/admin/Orders.tsx")).replace(chr(13), "")
+switch_tsx = read(os.path.join(REPO, "src/admin/StyleSwitch.tsx")).replace(chr(13), "")
+check("the Stiliai page makes no request for the numbers itself (every one goes through stylesLoad, which drops a slow answer to an older question)",
+      "createStylesLoader(" in styles_tsx and "'styles_stats'" not in styles_tsx and "loader.loadAll(" in styles_tsx and "loader.loadStats(" in styles_tsx and "loader.changed()" in styles_tsx)
+check("the cards get the opening basis (the whole market, 30 days), not the numbers of the period and filter the owner picked below",
+      re.search(r"ctx=\{\{[^}]*basis", styles_tsx) is not None and not re.search(r"ctx=\{\{[^}]*stats", styles_tsx) and "basis: OpeningBasis" in switch_tsx and "stats: StylesStats" not in switch_tsx)
+check("orders, paid and revenue by style and group (PR 6.1) are on the order list (a fold) and on the Stiliai page (a card that loads on a press)",
+      "<SalesDetails" in orders_tsx and "<SalesLoader" in styles_tsx and os.path.isfile(os.path.join(REPO, "src/admin/StyleSales.tsx")))
 
 passed = sum(RESULTS)
 print(f"\n{passed} of {len(RESULTS)} passed", flush=True)
