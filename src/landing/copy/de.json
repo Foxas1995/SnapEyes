@@ -367,67 +367,51 @@
     },
     "items": {
       "radiance": {
-        "n": "Radiance",
         "d": "Feine Lichtstrahlen in den Farben Ihrer eigenen Iris."
       },
       "powder": {
-        "n": "Powder Burst",
         "d": "Der Rand löst sich in Körner in den Farben Ihres Auges auf."
       },
       "universe": {
-        "n": "Universe",
         "d": "Ihre eigene Iris, vergrößert, füllt die ganze Fläche."
       },
       "gold": {
-        "n": "Celestial Gold",
         "d": "Ein feiner Goldring und ein Lichthof um die Iris."
       },
       "splash": {
-        "n": "Splash",
         "d": "Der Rand hebt sich zu einer Krone aus Flüssigkeit."
       },
       "clean": {
-        "n": "Clean Iris",
         "d": "Ihre restaurierte Iris allein auf reinem Schwarz."
       },
       "duo_infinity": {
-        "n": "Infinity",
         "d": "Zwei Iriden überlappen wie ein Unendlichkeitszeichen."
       },
       "duo_infinity_bb": {
-        "n": "Infinity, zwei Farben",
         "d": "Jede Iris behält dort, wo sie sich treffen, ihre eigene Farbe."
       },
       "duo_infinity_uni": {
-        "n": "Infinity Universe",
         "d": "Das Paar in einem vergrößerten Feld aus den eigenen Fasern."
       },
       "duo_kiss": {
-        "n": "Kiss",
         "d": "Zwei Iriden, die sich am Rand berühren."
       },
       "duo_clean": {
-        "n": "Clean Infinity",
         "d": "Dasselbe Paar, ohne Pulver."
       },
       "fam_trio": {
-        "n": "Trio",
         "d": "Drei Iriden im Dreieck."
       },
       "fam_4": {
-        "n": "Familie zu viert",
         "d": "Vier Iriden, mit Pulver in ihren eigenen Farben."
       },
       "fam_5": {
-        "n": "Familie zu fünft",
         "d": "Fünf Iriden in zwei Reihen."
       },
       "fam_6": {
-        "n": "Familie zu sechst",
         "d": "Sechs Iriden, jede in ihrer eigenen Farbe."
       },
       "fam_6_uni": {
-        "n": "Family Universe",
         "d": "Sechs Iriden auf einem gefüllten Feld."
       }
     },
@@ -442,9 +426,11 @@
     "wallOnAria": "{name} an einer Wand zeigen",
     "wallOffAria": "{name} flach zeigen",
     "wallFile": "Der Preis gilt für die digitale Datei. Der Druck gehört nicht zur Bestellung.",
-    "comboTitle": "Zwei bis acht Augen auf einem Kunstwerk",
+    "comboTitle": "Zwei bis {max} Augen auf einem Kunstwerk",
     "comboBody": "Ihres und die Augen der Menschen, die Sie lieben. Jedes weitere Auge kostet {price} mehr.",
-    "soonTag": "Bald"
+    "soonTag": "Bald",
+    "moreSoon": "Weitere Stile folgen bald.",
+    "comboTitleSoon": "Mehrere Augen auf einem Kunstwerk"
   },
   "how": {
     "eyebrow": "Ablauf",
@@ -497,7 +483,7 @@
       },
       "black": {
         "t": "Ein Auge auf Schwarz",
-        "b": "Der Stil Clean Iris."
+        "b": "Der Stil {name}."
       },
       "art": {
         "t": "Ein Auge in einem Kunststil",
@@ -505,7 +491,7 @@
       },
       "two": {
         "t": "Zwei Augen",
-        "b": "Infinity, Kiss und mehr."
+        "b": "{styles}."
       },
       "more": {
         "t": "Drei Augen",
@@ -649,7 +635,8 @@
       {
         "id": "other",
         "q": "Kann ich jemand anderen fotografieren?",
-        "a": "Ja: Ihren Partner, ein Kind oder Ihr anderes Auge, und bis zu acht Augen teilen sich ein Kunstwerk. Fragen Sie vorher, und bei einem Kind entscheiden Sie als Elternteil oder Sorgeberechtigter. Sie können es auch für jemand anderen machen und ihm die Datei schenken."
+        "a": "Ja: Ihren Partner, ein Kind oder Ihr anderes Auge, und mehrere Augen können sich ein Kunstwerk teilen. Fragen Sie vorher, und bei einem Kind entscheiden Sie als Elternteil oder Sorgeberechtigter. Sie können es auch für jemand anderen machen und ihm die Datei schenken.",
+        "aOpen": "Ja: Ihren Partner, ein Kind oder Ihr anderes Auge, und bis zu {max} Augen teilen sich ein Kunstwerk. Fragen Sie vorher, und bei einem Kind entscheiden Sie als Elternteil oder Sorgeberechtigter. Sie können es auch für jemand anderen machen und ihm die Datei schenken."
       },
       {
         "id": "material",

@@ -124,7 +124,14 @@ export function copyForMarket(copy: LandingCopy, market: Market): LandingCopy {
 export interface FaqEntry { id: string; q: string; a: string }
 
 /** The FAQ items as the page prints them: the plain text while ordering is not open, the "open" variant of an item (qOpen,
- *  aOpen) once it is. Items the Australian layer replaced (copyForMarket) have no open variant and stay as they are. */
-export function faqEntries(copy: LandingCopy, open: boolean): FaqEntry[] {
-  return copy.faq.items.map((it) => (open ? { id: it.id, q: it.qOpen || it.q, a: it.aOpen || it.a } : { id: it.id, q: it.q, a: it.a }));
+ *  aOpen) once it is. Items the Australian layer replaced (copyForMarket) have no open variant and stay as they are.
+ *  An open variant that holds the token {max} ("up to {max} eyes share one artwork") is used only while the run-time catalogue can sell several eyes
+ *  (eyes, the largest count some style can be ordered for, is at least 2); with one eye at most the plain, count-free text stands, so the page never
+ *  prints a number of eyes the engine cannot sell. */
+export function faqEntries(copy: LandingCopy, open: boolean, eyes = 0): FaqEntry[] {
+  return copy.faq.items.map((it) => {
+    if (!open) return { id: it.id, q: it.q, a: it.a };
+    const counted = typeof it.aOpen === 'string' && it.aOpen.includes('{max}') && eyes < 2;
+    return { id: it.id, q: it.qOpen || it.q, a: counted ? it.a : it.aOpen || it.a };
+  });
 }

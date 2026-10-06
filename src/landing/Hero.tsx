@@ -8,14 +8,13 @@ import { useLandingPrices } from './prices';
 import { useSaleCatalogue } from './ordering';
 import { useTryHref } from './links';
 import { HeroView } from './HeroView';
+import { heroPrice } from './heroPrice';
 
 export function HeroSection({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
   const { c, t } = useCopy();
   const prices = useLandingPrices();
   const tryHref = useTryHref();
-  // "from" is the lowest price among the styles that can be bought now for one eye (the run-time catalogue, while ordering is open). With none the line is held back
-  // for good, exactly like a price that is still pending (invisible, out of the accessibility tree, its words and so its space kept: the prerendered first screen has
-  // the same box and nothing moves when the server answers), so no price of a style nobody can buy is ever shown or read out
-  const from = prices.fromOf(useSaleCatalogue().one);
-  return <HeroView copy={c} tryHref={tryHref} priceLine={t('hero.fromPrice', { from: from ?? prices.from })} pricePending={prices.pending || from === null} ctaRef={ctaRef} />;
+  // the line prints the lowest price among the styles that can be bought now for one eye and is held back while there is none (./heroPrice.ts)
+  const hero = heroPrice(prices, prices.pending, useSaleCatalogue());
+  return <HeroView copy={c} tryHref={tryHref} priceLine={t('hero.fromPrice', { from: hero.from })} pricePending={hero.held} ctaRef={ctaRef} />;
 }

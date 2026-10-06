@@ -1,11 +1,12 @@
 // The style gallery's data and rules, without React: which tiles a group has, which picture is a tile in an eye colour, which
 // tiles have a wall view, which carry the "Example photo" label. The pictures come from the asset manifest (./assets), the structure
 // of the gallery from ./assets.data (generated with the pictures), the words from the copy; no text and no price is written here.
-// (The release gate, whether every tile names a style the registry can make, is not a page matter: it is checked at build time by
-// scripts/check_landing_assets.mjs from ./tileStyle.ts and the registry. What can be bought now is the run-time catalogue's: ./StyleTile.tsx.)
+// (Which style a tile stands for is ./tileStyle.ts, its name and whether it can be bought now ./tileState.ts; the build's gate, scripts/check_landing_assets.mjs,
+// holds the page to them: it renders every tile and refuses a promise the catalogue does not keep.)
 import { asset, type AssetFamily, type PictureAsset } from './assets';
 import { GALLERY, type EyeId, type GalleryGroup, type GalleryTile } from './assets.data';
 import type { LandingCopy } from './copy/types';
+import { tileName } from './tileState';
 
 export type { EyeId, GalleryGroup, GalleryTile };
 
@@ -48,9 +49,10 @@ export function tileKey(group: GalleryGroup, tile: GalleryTile): string {
 /** The id of a tile in the copy (styles.items.<id>). */
 export type TileCopyId = keyof LandingCopy['styles']['items'];
 
-/** The name and description of a tile, from the copy. */
+/** The name and description of a tile: the name is the REGISTRY's name of the style the tile stands for (./tileState.ts tileName: the copy files hold no tile name, so
+ *  there is no second list of names), the description is the copy's. */
 export function tileCopy(c: LandingCopy, tile: GalleryTile): { n: string; d: string } {
-  return c.styles.items[tile.id as TileCopyId];
+  return { n: tileName(tile.id), d: c.styles.items[tile.id as TileCopyId].d };
 }
 
 /** The flat artwork of a tile: a single-eye style in the chosen eye colour (two widths), or the fixed pair or family artwork.

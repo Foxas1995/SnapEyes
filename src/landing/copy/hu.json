@@ -367,67 +367,51 @@
     },
     "items": {
       "radiance": {
-        "n": "Radiance",
         "d": "Finom fénysugarak a saját íriszed színeiben."
       },
       "powder": {
-        "n": "Powder Burst",
         "d": "A perem szemcsékre bomlik, a szemed saját színeiben."
       },
       "universe": {
-        "n": "Universe",
         "d": "A saját íriszed felnagyítva tölti ki az egész képet."
       },
       "gold": {
-        "n": "Celestial Gold",
         "d": "Finom aranygyűrű és fénykoszorú az írisz körül."
       },
       "splash": {
-        "n": "Splash",
         "d": "A perem folyadékkoronává emelkedik."
       },
       "clean": {
-        "n": "Clean Iris",
         "d": "A helyreállított íriszed egyedül, tiszta fekete háttéren."
       },
       "duo_infinity": {
-        "n": "Infinity",
         "d": "Két írisz átfedi egymást, mint egy végtelenjel."
       },
       "duo_infinity_bb": {
-        "n": "Infinity, két színnel",
         "d": "Minden írisz megtartja a saját színét, ahol találkoznak."
       },
       "duo_infinity_uni": {
-        "n": "Infinity Universe",
         "d": "A pár a saját rostjaiból álló, felnagyított mezőben."
       },
       "duo_kiss": {
-        "n": "Kiss",
         "d": "Két írisz, amelyek a peremükön érintik egymást."
       },
       "duo_clean": {
-        "n": "Clean Infinity",
         "d": "Ugyanaz a pár, por nélkül."
       },
       "fam_trio": {
-        "n": "Trio",
         "d": "Három írisz háromszögben."
       },
       "fam_4": {
-        "n": "Négytagú család",
         "d": "Négy írisz, porral a saját színeikben."
       },
       "fam_5": {
-        "n": "Öttagú család",
         "d": "Öt írisz két sorban."
       },
       "fam_6": {
-        "n": "Hattagú család",
         "d": "Hat írisz, mindegyik a saját színében."
       },
       "fam_6_uni": {
-        "n": "Family Universe",
         "d": "Hat írisz egy kitöltött mezőn."
       }
     },
@@ -442,9 +426,11 @@
     "wallOnAria": "{name} megjelenítése a falon",
     "wallOffAria": "{name} megjelenítése fal nélkül",
     "wallFile": "Az ár a digitális fájlra vonatkozik. A nyomtatás nem része a rendelésnek.",
-    "comboTitle": "Két-nyolc szem egy alkotáson",
+    "comboTitle": "Kettőtől {max} szemig egy alkotáson",
     "comboBody": "A szemed és azoké, akiket szeretsz. Minden további szem felára: {price}.",
-    "soonTag": "Hamarosan"
+    "soonTag": "Hamarosan",
+    "moreSoon": "További stílusok hamarosan.",
+    "comboTitleSoon": "Több szem egy alkotáson"
   },
   "how": {
     "eyebrow": "Így működik",
@@ -497,7 +483,7 @@
       },
       "black": {
         "t": "Egy szem fekete háttéren",
-        "b": "A Clean Iris stílus."
+        "b": "A {name} stílus."
       },
       "art": {
         "t": "Egy szem művészi stílusban",
@@ -505,7 +491,7 @@
       },
       "two": {
         "t": "Két szem",
-        "b": "Infinity, Kiss és további stílusok."
+        "b": "{styles}."
       },
       "more": {
         "t": "Három szem",
@@ -649,7 +635,8 @@
       {
         "id": "other",
         "q": "Fotózhatok valaki mást is?",
-        "a": "Igen: a párod, a gyermeked vagy a másik szemed, és legfeljebb nyolc szem osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt."
+        "a": "Igen: a párod, a gyermeked vagy a másik szemed, és több szem is osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt.",
+        "aOpen": "Igen: a párod, a gyermeked vagy a másik szemed, és legfeljebb {max} szem osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt."
       },
       {
         "id": "material",

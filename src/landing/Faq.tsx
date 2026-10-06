@@ -6,7 +6,7 @@
 // copy's (faq.items, faqAu). Importing this file brings its own stylesheet, so it can be loaded lazily with its section.
 import { useCopy } from './copy/useCopy';
 import { faqEntries } from './copy/index';
-import { useOrderingOpen } from './ordering';
+import { useOrderingOpen, useSaleCatalogue } from './ordering';
 import { Disclosure } from './ui';
 import { Title } from '../motion/Title';
 import './css/faq.css';
@@ -14,6 +14,8 @@ import './css/faq.css';
 export function Faq() {
   const { c, fmt } = useCopy();
   const open = useOrderingOpen();
+  // the largest number of eyes some style can be ordered for now (the run-time catalogue): the answer about other people's eyes prints it only when it is more than one
+  const max = useSaleCatalogue().max;
   return (
     <section className="lp-sec" id="faq" aria-labelledby="faqH">
       <div className="lp-wrap lp-faq-grid">
@@ -23,9 +25,9 @@ export function Faq() {
         </div>
         {/* the items rise one after the other when the list comes into view (src/motion/motion.ts: a child of data-stagger is revealed on its own) */}
         <div className="lp-faq-list" data-stagger>
-          {faqEntries(c, open).map((item) => (
+          {faqEntries(c, open, max).map((item) => (
             <Disclosure key={item.id} id={`faq-${item.id}`} className="lp-qa" summary={<span>{fmt(item.q)}</span>}>
-              <p>{fmt(item.a)}</p>
+              <p>{fmt(item.a, { max })}</p>
             </Disclosure>
           ))}
         </div>

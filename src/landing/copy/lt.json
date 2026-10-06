@@ -367,67 +367,51 @@
     },
     "items": {
       "radiance": {
-        "n": "Radiance",
         "d": "Ploni šviesos spinduliai Jūsų rainelės spalvomis."
       },
       "powder": {
-        "n": "Powder Burst",
         "d": "Kraštas skyla į grūdelius Jūsų akies spalvomis."
       },
       "universe": {
-        "n": "Universe",
         "d": "Padidinta Jūsų rainelė užpildo visą kūrinio plotą."
       },
       "gold": {
-        "n": "Celestial Gold",
         "d": "Plonas auksinis žiedas ir šviesos aureolė aplink rainelę."
       },
       "splash": {
-        "n": "Splash",
         "d": "Kraštas iškyla kaip skysčio karūna."
       },
       "clean": {
-        "n": "Clean Iris",
         "d": "Tik Jūsų atkurta rainelė grynai juodame fone."
       },
       "duo_infinity": {
-        "n": "Infinity",
         "d": "Dvi rainelės persidengia kaip begalybės ženklas."
       },
       "duo_infinity_bb": {
-        "n": "Infinity, dvi spalvos",
         "d": "Kiekviena rainelė išlaiko savo spalvą ten, kur jos susitinka."
       },
       "duo_infinity_uni": {
-        "n": "Infinity Universe",
         "d": "Pora padidintame jų pačių skaidulų lauke."
       },
       "duo_kiss": {
-        "n": "Kiss",
         "d": "Dvi rainelės, besiliečiančios kraštais."
       },
       "duo_clean": {
-        "n": "Clean Infinity",
         "d": "Ta pati pora be miltelių."
       },
       "fam_trio": {
-        "n": "Trio",
         "d": "Trys rainelės trikampyje."
       },
       "fam_4": {
-        "n": "Keturių asmenų šeima",
         "d": "Keturios rainelės su milteliais jų pačių spalvomis."
       },
       "fam_5": {
-        "n": "Penkių asmenų šeima",
         "d": "Penkios rainelės dviem eilėmis."
       },
       "fam_6": {
-        "n": "Šešių asmenų šeima",
         "d": "Šešios rainelės, kiekviena savo spalvos."
       },
       "fam_6_uni": {
-        "n": "Family Universe",
         "d": "Šešios rainelės užpildytame lauke."
       }
     },
@@ -442,9 +426,11 @@
     "wallOnAria": "Rodyti ant sienos: {name}",
     "wallOffAria": "Rodyti plokščiai: {name}",
     "wallFile": "Kaina galioja skaitmeniniam failui. Spausdinimas nėra Jūsų užsakymo dalis.",
-    "comboTitle": "Nuo dviejų iki aštuonių akių viename kūrinyje",
+    "comboTitle": "Nuo dviejų iki {max} akių viename kūrinyje",
     "comboBody": "Jūsų ir Jūsų artimųjų akys. Kiekviena papildoma akis: +{price}.",
-    "soonTag": "Netrukus"
+    "soonTag": "Netrukus",
+    "moreSoon": "Daugiau stilių netrukus.",
+    "comboTitleSoon": "Kelios akys viename kūrinyje"
   },
   "how": {
     "eyebrow": "Kaip tai veikia",
@@ -497,7 +483,7 @@
       },
       "black": {
         "t": "Viena akis juodame fone",
-        "b": "Stilius Clean Iris."
+        "b": "Stilius {name}."
       },
       "art": {
         "t": "Viena akis meniniu stiliumi",
@@ -505,7 +491,7 @@
       },
       "two": {
         "t": "Dvi akys",
-        "b": "Infinity, Kiss ir kiti."
+        "b": "{styles}."
       },
       "more": {
         "t": "Trys akys",
@@ -649,7 +635,8 @@
       {
         "id": "other",
         "q": "Ar galiu fotografuoti kitą žmogų?",
-        "a": "Taip: partnerį, vaiką ar savo kitą akį, o viename kūrinyje gali būti iki aštuonių akių. Pirmiausia paklauskite, ar žmogus sutinka, o vaiko atveju sprendimą priimate kaip vienas iš tėvų, globėjas ar rūpintojas. Kūrinį galite sukurti ir kam nors kitam, o failą jam padovanoti."
+        "a": "Taip: partnerį, vaiką ar savo kitą akį, o viename kūrinyje gali būti kelios akys. Pirmiausia paklauskite, ar žmogus sutinka, o vaiko atveju sprendimą priimate kaip vienas iš tėvų, globėjas ar rūpintojas. Kūrinį galite sukurti ir kam nors kitam, o failą jam padovanoti.",
+        "aOpen": "Taip: partnerį, vaiką ar savo kitą akį, o viename kūrinyje gali būti iki {max} akių. Pirmiausia paklauskite, ar žmogus sutinka, o vaiko atveju sprendimą priimate kaip vienas iš tėvų, globėjas ar rūpintojas. Kūrinį galite sukurti ir kam nors kitam, o failą jam padovanoti."
       },
       {
         "id": "material",

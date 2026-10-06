@@ -367,67 +367,51 @@
     },
     "items": {
       "radiance": {
-        "n": "Radiance",
         "d": "Fine rays of light in the colours of your own iris."
       },
       "powder": {
-        "n": "Powder Burst",
         "d": "The rim breaks into grains in your eye's own colours."
       },
       "universe": {
-        "n": "Universe",
         "d": "Your own iris, enlarged, fills the whole canvas."
       },
       "gold": {
-        "n": "Celestial Gold",
         "d": "A fine gold ring and a halo around the iris."
       },
       "splash": {
-        "n": "Splash",
         "d": "The rim lifts into a crown of liquid."
       },
       "clean": {
-        "n": "Clean Iris",
         "d": "Your restored iris alone on pure black."
       },
       "duo_infinity": {
-        "n": "Infinity",
         "d": "Two irises overlap like an infinity sign."
       },
       "duo_infinity_bb": {
-        "n": "Infinity, two colours",
         "d": "Every iris keeps its own colour where they meet."
       },
       "duo_infinity_uni": {
-        "n": "Infinity Universe",
         "d": "The pair set in an enlarged field of their own fibres."
       },
       "duo_kiss": {
-        "n": "Kiss",
         "d": "Two irises that touch at the edge."
       },
       "duo_clean": {
-        "n": "Clean Infinity",
         "d": "The same pair, without powder."
       },
       "fam_trio": {
-        "n": "Trio",
         "d": "Three irises in a triangle."
       },
       "fam_4": {
-        "n": "Family of four",
         "d": "Four irises, with powder in their own colours."
       },
       "fam_5": {
-        "n": "Family of five",
         "d": "Five irises in two rows."
       },
       "fam_6": {
-        "n": "Family of six",
         "d": "Six irises, each in its own colour."
       },
       "fam_6_uni": {
-        "n": "Family Universe",
         "d": "Six irises on a filled field."
       }
     },
@@ -442,9 +426,11 @@
     "wallOnAria": "Show {name} on a wall",
     "wallOffAria": "Show {name} flat",
     "wallFile": "The price is for the digital file. Printing is not part of your order.",
-    "comboTitle": "Two to eight eyes on one artwork",
+    "comboTitle": "Two to {max} eyes on one artwork",
     "comboBody": "Yours and the eyes of the people you love. Each further eye adds {price}.",
-    "soonTag": "Soon"
+    "soonTag": "Soon",
+    "moreSoon": "More styles soon.",
+    "comboTitleSoon": "Several eyes on one artwork"
   },
   "how": {
     "eyebrow": "How it works",
@@ -497,7 +483,7 @@
       },
       "black": {
         "t": "One eye on black",
-        "b": "The Clean Iris style."
+        "b": "The {name} style."
       },
       "art": {
         "t": "One eye in an art style",
@@ -505,7 +491,7 @@
       },
       "two": {
         "t": "Two eyes",
-        "b": "Infinity, Kiss and more."
+        "b": "{styles}."
       },
       "more": {
         "t": "Three eyes",
@@ -649,7 +635,8 @@
       {
         "id": "other",
         "q": "Can I photograph someone else?",
-        "a": "Yes: a partner, a child or your other eye, and up to eight eyes share one artwork. Ask first, and for a child you decide as parent or guardian. You can also make it for someone else and give them the file."
+        "a": "Yes: a partner, a child or your other eye, and several eyes can share one artwork. Ask first, and for a child you decide as parent or guardian. You can also make it for someone else and give them the file.",
+        "aOpen": "Yes: a partner, a child or your other eye, and up to {max} eyes share one artwork. Ask first, and for a child you decide as parent or guardian. You can also make it for someone else and give them the file."
       },
       {
         "id": "material",

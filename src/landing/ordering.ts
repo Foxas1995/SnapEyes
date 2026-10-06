@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { noteCheckoutInfo, noteInfoUnavailable } from '../shared/pricing';
-import { fallbackCatalogue, ordersOpen, readCatalogue, type RunCatalogue } from '../shared/catalogue';
+import { NOTHING_FOR_SALE, fallbackCatalogue, ordersOpen, readCatalogue, saleCatalogue, type RunCatalogue } from '../shared/catalogue';
 
 // Whether this deployment takes orders, by the capture tool's own rule (src/try/TryApp.tsx): /api/health says Stripe
 // is set up (and, with a live key, the delivery email too), then GET /api/checkout says "open". The landing page is
@@ -28,8 +28,7 @@ let suggested: string | null = null;
 let catalogue: RunCatalogue = fallbackCatalogue();
 // what can be bought RIGHT NOW: the catalogue while this deployment takes orders (open), nothing otherwise. The page prints a price, or a count of eyes, only
 // for what is in here; a style the catalogue lists as live while ordering is closed still reads Soon, so no price stands beside "Ordering opens soon".
-const NOTHING: RunCatalogue = { max: 0, styles: [], one: [], eyes: [], by: {} };
-let sale: RunCatalogue = NOTHING;
+let sale: RunCatalogue = NOTHING_FOR_SALE;
 let started: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
@@ -72,7 +71,7 @@ function start(): Promise<void> {
     if (!v.open && v.suggest === null && v.catalogue === null) return;
     if (v.catalogue) catalogue = v.catalogue;
     open = ordersOpen(v.open, catalogue);       // the deployment takes orders AND a style can be ordered now (the build's fallback orders nothing)
-    sale = open ? catalogue : NOTHING;
+    sale = saleCatalogue(v.open, catalogue);    // the same rule, in src/shared/catalogue.ts, as the build's gate reads
     suggested = v.suggest;
     listeners.forEach((l) => l());
   });
@@ -101,7 +100,7 @@ export function useOrderingOpen(): boolean {
  *  takes orders and some style can be ordered, an empty one otherwise (and until the server has answered, and when it cannot be read). The pricing rows, the
  *  tiles and the hero line print a price only for what is in it. The object changes only when an answer arrives. */
 export function useSaleCatalogue(): RunCatalogue {
-  return useSyncExternalStore(subscribe, () => sale, () => NOTHING);
+  return useSyncExternalStore(subscribe, () => sale, () => NOTHING_FOR_SALE);
 }
 
 /** The market GET /api/checkout suggests for the visitor's country, or null (src/shared/markets.ts hintMarket decides

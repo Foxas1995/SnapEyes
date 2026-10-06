@@ -15,6 +15,7 @@ import { DEFAULT_EYE, DEFAULT_GROUP, hasEyeSwitch, isWide, tileKey, tilesOf, typ
 import { useLandingPrices } from './prices';
 import { useSaleCatalogue } from './ordering';
 import { severalMax } from '../shared/catalogue';
+import { groupLine, saleTiles } from './tileState';
 import { EyeChips } from './EyeChips';
 import { StyleTabs } from './StyleTabs';
 import { StyleTile } from './StyleTile';
@@ -25,8 +26,10 @@ import './css/styles.css';
 export function StyleGallery() {
   const { c, t } = useCopy();
   const prices = useLandingPrices();
-  // the price of a further eye is printed only while the pairs (and so the ladder from two eyes) can be bought now; else the card says Soon (src/landing/PriceTable.tsx)
-  const several = severalMax(useSaleCatalogue());
+  // what can be bought now (the run-time catalogue while ordering is open, nothing otherwise): every tile, the group's line and the combo card read this one object.
+  // The price of a further eye is printed only while the pairs (and so the ladder from two eyes) can be bought now; else the card says it opens soon (src/landing/PriceTable.tsx)
+  const sale = useSaleCatalogue();
+  const several = severalMax(sale);
   const [group, setGroup] = useState<GalleryGroup>(DEFAULT_GROUP);
   const [eye, setEye] = useState<EyeId>(DEFAULT_EYE);
   // the wall views the visitor asked for, by tile key: a key that is there has been asked for once (its picture is loaded)
@@ -41,6 +44,11 @@ export function StyleGallery() {
   const { ref: railRef, props: railProps } = useScrollableRegion<HTMLDivElement>();
   const eyeSwitch = hasEyeSwitch(group);
   const wide = isWide(group);
+  const ids = tilesOf(group).map((tile) => tile.id);
+  // under the group's intro, only while ordering is open: nothing of this group can be bought yet ("Free preview now. Ordering for this group opens soon."), or only some of it
+  // ("More styles soon."). The intro itself says what the group is, never what it costs or how many eyes it takes.
+  const line = groupLine(ids, sale);
+  const anySale = saleTiles(ids, sale).sale > 0;
   return (
     <section className="lp-sec" id="styles" aria-labelledby="stylesH">
       <div className="lp-wrap">
@@ -51,7 +59,10 @@ export function StyleGallery() {
         </div>
         <StyleTabs group={group} onPick={pickGroup} />
         <div className="lp-gpanel" id="gPanel" role="tabpanel" tabIndex={0} aria-labelledby={`gtab-${group}`}>
-          <p className="lp-group-intro lp-gintro" id="gIntro">{c.styles.groupIntro[group]}</p>
+          <p className="lp-group-intro lp-gintro" id="gIntro">
+            {c.styles.groupIntro[group]}
+            {line && <span className="lp-gline" data-line={line}>{` ${line === 'soon' ? c.pricing.severalSoon : c.styles.moreSoon}`}</span>}
+          </p>
           <p className="lp-legend">{c.styles.legend}</p>
           <EyeChips eye={eye} onPick={setEye} hidden={!eyeSwitch} />
           <div className={wide ? 'lp-grid lp-wide' : 'lp-grid'} id="gGrid" data-reveal="soft" ref={railRef} {...railProps(c.styles.title, 'group')}>
@@ -67,6 +78,7 @@ export function StyleGallery() {
                   wallAsked={key in wall}
                   onWall={(k) => setWall((w) => ({ ...w, [k]: !w[k] }))}
                   prices={prices}
+                  sale={sale}
                   enter={swapped ? 'swap' : 'reveal'}
                   index={n}
                 />
@@ -74,9 +86,9 @@ export function StyleGallery() {
             })}
             {wide && (
               <div className="lp-combo">
-                <h3>{c.styles.comboTitle}</h3>
+                <h3>{several >= 2 ? t('styles.comboTitle', { max: several }) : c.styles.comboTitleSoon}</h3>
                 <p>
-                  {several >= 2 ? <PriceGate pending={prices.pending}>{t('styles.comboBody', { price: prices.price })}</PriceGate> : t('pricing.severalSoon')}
+                  {several >= 2 ? <PriceGate pending={prices.pending}>{t('styles.comboBody', { price: prices.price })}</PriceGate> : anySale ? c.styles.moreSoon : c.pricing.severalSoon}
                 </p>
                 <a className="lp-btn lp-btn-line" href="#pricing">{c.nav.pricing}</a>
               </div>

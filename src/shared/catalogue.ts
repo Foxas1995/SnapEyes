@@ -78,6 +78,16 @@ export function ordersOpen(deploymentOpen: boolean, c: RunCatalogue): boolean {
   return deploymentOpen && c.max >= 1;
 }
 
+/** Nothing can be bought: no eyes, no style, no id. What a page prints a price from while ordering is closed. */
+export const NOTHING_FOR_SALE: RunCatalogue = { max: 0, styles: [], one: [], eyes: [], by: {} };
+
+/** What a page can SELL right now: the run-time catalogue while ordering is open (the deployment takes orders AND some style can be ordered: ordersOpen), nothing
+ *  otherwise. A page prints a price, a count of eyes or a list of styles only from this, so a style the catalogue lists as live while ordering is closed still reads
+ *  Soon and no price stands beside "Ordering opens soon". The one rule of src/landing/ordering.ts and of the build's gate (src/landing/shell/gate.tsx). */
+export function saleCatalogue(deploymentOpen: boolean, c: RunCatalogue): RunCatalogue {
+  return ordersOpen(deploymentOpen, c) ? c : NOTHING_FOR_SALE;
+}
+
 /** The lowest price among the styles that can be ordered for one eye now (the "from" of the hero line), or null when none can: the page then prints no price. */
 export function fromOneEye(c: RunCatalogue, priceOf: (id: string) => number): number | null {
   const prices = c.one.map(priceOf).filter((p) => Number.isFinite(p) && p > 0);

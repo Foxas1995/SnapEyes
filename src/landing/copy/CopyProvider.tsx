@@ -10,38 +10,13 @@
 // createRoot, so a visitor sees the shell, never half English text), and a later switch keeps the language on screen until
 // the new one is here (no flash of English on the way from German to Lithuanian). A file that cannot be fetched falls back
 // to English. Call preloadCopy(detectLang()) in the entry file to start the fetch before React renders anything.
-import { Fragment, useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { applyLandingHead, useLang } from '../lang';
 import { useMarket } from '../../shared/useMarket';
 import type { Lang } from '../../shared/lang';
-import { TOKEN_RE, fill, getPath } from './format';
-import { copyFailed, copyForMarket, copyVersion, peekCopy, preloadCopy, subscribeCopy, type LandingCopy } from './index';
-import { CopyContext, type CopyApi } from './useCopy';
-import type { CopyPath, CopyTokens } from './types';
-
-function makeApi(c: LandingCopy, lang: Lang): CopyApi {
-  const facts: Readonly<Record<string, string>> = c.facts;
-  const fmt = (text: string, tokens?: CopyTokens) => fill(text, facts, tokens);
-  const t = (key: CopyPath, tokens?: CopyTokens) => {
-    const v = getPath(c, key);
-    return typeof v === 'string' ? fill(v, facts, tokens) : '';
-  };
-  // a sentence with elements in it: the text between the tokens stays text, each token becomes its value
-  const rich = (text: string, tokens: Readonly<Record<string, ReactNode>>): ReactNode => {
-    const out: ReactNode[] = [];
-    let last = 0;
-    for (const m of text.matchAll(TOKEN_RE)) {
-      const at = m.index ?? 0;
-      if (at > last) out.push(<Fragment key={`t${last}`}>{text.slice(last, at)}</Fragment>);
-      const k = m[1];
-      out.push(<Fragment key={`k${at}`}>{k in tokens ? tokens[k] : facts[k] ?? m[0]}</Fragment>);
-      last = at + m[0].length;
-    }
-    if (last < text.length) out.push(<Fragment key={`t${last}`}>{text.slice(last)}</Fragment>);
-    return out;
-  };
-  return { c, lang, t, fmt, rich };
-}
+import { copyFailed, copyForMarket, copyVersion, peekCopy, preloadCopy, subscribeCopy } from './index';
+import { CopyContext } from './useCopy';
+import { makeApi } from './makeApi';
 
 export function CopyProvider({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
   const { lang: want, claimHead } = useLang();

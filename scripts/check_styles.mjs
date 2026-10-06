@@ -99,7 +99,7 @@ export const ID_ALLOW = {
 };
 // folders of a scan that never hold customer-facing code: the style suites (they name ids to test them) and this check's own files
 const ID_SKIP_DIRS = ['scripts/styles_tests'];
-const ID_SKIP_FILES = [STYLES_FILE, ENGINE_FILE, 'scripts/check_styles.mjs', 'scripts/styles_source.mjs', 'scripts/check_styles.d.mts'];
+const ID_SKIP_FILES = [STYLES_FILE, ENGINE_FILE, 'scripts/check_styles.mjs', 'scripts/styles_source.mjs', 'scripts/check_styles.d.mts', 'scripts/check_landing_gate_defects.mjs'];   // the last one names styles on purpose: its deliberate defects
 
 const isInt = (v) => typeof v === 'number' && Number.isInteger(v);
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -551,6 +551,20 @@ export function checkRuntimeTokens(copy, out) {
     if (typeof art === 'string' && !art.includes('{styles}')) out.push(`landing.${lang}.pricing.rows.art.b must be the token {styles} (the list of art styles comes from the run-time catalogue), not a written list`);
     const several = c?.pricing?.rows?.more?.b;
     if (typeof several === 'string' && !several.includes('{max}')) out.push(`landing.${lang}.pricing.rows.more.b must hold the token {max} (the number of eyes comes from the run-time catalogue), not a written number`);
+    // the row of two eyes lists the styles of the pairs that can be bought now (the registry's names, from the gallery's tiles), never a written list ("Infinity, Kiss and more")
+    const two = c?.pricing?.rows?.two?.b;
+    if (typeof two === 'string' && !two.includes('{styles}')) out.push(`landing.${lang}.pricing.rows.two.b must be the token {styles} (the styles of the pairs that can be bought now come from the run-time catalogue and the registry), not a written list`);
+    // the row of the black class names its style from the registry, not from the copy
+    const black = c?.pricing?.rows?.black?.b;
+    if (typeof black === 'string' && !black.includes('{name}')) out.push(`landing.${lang}.pricing.rows.black.b must hold the token {name} (the registry's name of the black style), not a written style name`);
+    // the combo card's title and the FAQ's answer about other people's eyes print a number of eyes only as the run-time token; the words for "not for sale yet" print none
+    const combo = c?.styles?.comboTitle;
+    if (typeof combo === 'string' && !combo.includes('{max}')) out.push(`landing.${lang}.styles.comboTitle must hold the token {max} (the number of eyes comes from the run-time catalogue), not a written number`);
+    const comboSoon = c?.styles?.comboTitleSoon;
+    if (typeof comboSoon === 'string' && /[0-9{]/.test(comboSoon)) out.push(`landing.${lang}.styles.comboTitleSoon prints a number or a token: it is the title while no pair can be bought, so it names no count`);
+    const other = Array.isArray(c?.faq?.items) ? c.faq.items.find((it) => it?.id === 'other') : undefined;
+    if (other && typeof other.aOpen === 'string' && !other.aOpen.includes('{max}')) out.push(`landing.${lang}.faq.items.other.aOpen must hold the token {max} (the number of eyes comes from the run-time catalogue), not a written number`);
+    if (other && typeof other.a === 'string' && /\{max\}|[0-9]/.test(other.a)) out.push(`landing.${lang}.faq.items.other.a prints a number or {max}: it is the answer while ordering is closed (or only one eye can be bought), so it names no count`);
   }
 }
 
@@ -587,6 +601,8 @@ export function checkLandingTiles(tileStyle, gallery, styles, copy, out) {
     const keys = Object.keys(items);
     for (const id of ids) if (!keys.includes(id)) out.push(`landing.${lang}.styles.items has no entry for the tile "${id}"`);
     for (const k of keys) if (!ids.has(k)) out.push(`landing.${lang}.styles.items has the entry "${k}", which is no tile of the gallery`);
+    // a tile's copy is its description only: the name a tile prints is the registry's (src/landing/tileState.ts), so no language holds a tile name that could drift from it
+    for (const k of keys) if (isObj(items[k]) && Object.keys(items[k]).join() !== 'd') out.push(`landing.${lang}.styles.items.${k} has the keys "${Object.keys(items[k]).join('", "')}": a tile's copy is its description "d" only, the name is the registry's`);
   }
 }
 

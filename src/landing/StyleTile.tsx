@@ -1,8 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useCopy } from './copy/useCopy';
-import { liveFor } from '../shared/catalogue';
-import { useSaleCatalogue } from './ordering';
-import { tileStyle } from './tileStyle';
+import type { RunCatalogue } from '../shared/catalogue';
+import { tileState } from './tileState';
 import { artPicture, hasPhotoChip, provenance, tileCopy, tileKey, tileSizes, wallPicture, type EyeId, type GalleryGroup, type GalleryTile } from './gallery';
 import type { LandingPricesState } from './prices';
 import { ExampleChip, Picture, PriceGate, type PictureAsset } from './ui';
@@ -41,6 +40,9 @@ export interface StyleTileProps {
   wallAsked: boolean;
   onWall: (key: string) => void;
   prices: LandingPricesState;
+  /** What can be bought now (src/shared/catalogue.ts saleCatalogue: the run-time catalogue while ordering is open, nothing otherwise). The tile prints its price only
+   *  when its style is in it for the tile's number of eyes (src/landing/tileState.ts); every other tile says Soon. */
+  sale: RunCatalogue;
   /** How the tile arrives: 'reveal' (the first grid: it rises when it scrolls into view) or 'swap' (after the visitor changed the group:
    *  it fades in, nothing rises). */
   enter: 'reveal' | 'swap';
@@ -59,13 +61,12 @@ const calm = () => typeof window.matchMedia === 'function' && window.matchMedia(
  *  Labels (BUILD_PLAN section 7): the flat artworks of Mantas's own eye carry no chip, the legend line under the styles intro
  *  is their label; "Example photo" (example.photo) sits in the picture of every tile that shows someone else's eye; the
  *  wall view carries "AI visualisation" (example.vis), which is only visible while the wall is on. */
-export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices, enter, index }: StyleTileProps) {
+export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices, sale, enter, index }: StyleTileProps) {
   const { c, t } = useCopy();
-  // for sale now: ordering is open and the run-time catalogue lists the tile's style as live for the tile's number of eyes (src/landing/tileStyle.ts); else the tile
-  // says Soon and prints no price
-  const cat = useSaleCatalogue();
-  const target = tileStyle(tile);
-  const forSale = target !== null && liveFor(cat, target.id, target.eyes);
+  // for sale now: ordering is open and the run-time catalogue lists the tile's style as live for the tile's number of eyes (src/landing/tileState.ts, the style is
+  // src/landing/tileStyle.ts); else the tile says Soon and prints no price. The name is the registry's.
+  const state = tileState(tile.id, sale);
+  const forSale = state.sale === 'sale';
   const key = tileKey(group, tile);
   const { n: name, d: desc } = tileCopy(c, tile);
   const wide = group === 'two' || group === 'family';
@@ -89,6 +90,7 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
     <figure
       className={`lp-tile${enter === 'swap' ? ' lp-tile-in' : ''}${on ? ' lp-on-wall' : ''}`}
       data-k={key}
+      data-state={state.sale}
       data-reveal={enter === 'reveal' ? 'fade' : undefined}
       style={{ '--i': Math.min(index, 4), '--j': Math.min(index, 5) } as CSSProperties}
     >
