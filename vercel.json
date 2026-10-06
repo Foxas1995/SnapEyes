@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx tsc -b && mkdir -p dist && echo probe > dist/index.html",
+  "buildCommand": "mkdir -p dist && echo probe > dist/index.html",
   "outputDirectory": "dist",
   "cleanUrls": true,
   "headers": [
