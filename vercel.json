@@ -40,9 +40,49 @@
     }
   ],
   "functions": {
-    "api/**/*.py": {
+    "api/admin.py": {
       "maxDuration": 60,
-      "excludeFiles": "{node_modules/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**,api/_assets/bg/**,api/_assets/models/**}"
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
+    },
+    "api/analyze.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
+    },
+    "api/checkout.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
+    },
+    "api/compose.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
+    },
+    "api/deglare.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
+    },
+    "api/enhance.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
+    },
+    "api/health.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
+    },
+    "api/master_compose.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
+    },
+    "api/master_eye.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
+    },
+    "api/order.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md}"
+    },
+    "api/stripe_webhook.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{node_modules,node_modules/**,**/node_modules/**,**/.bin/**,dist/**,public/**,src/**,assets/**,scripts/**,suites/**,.git/**,*.html,*.json,*.ts,*.md,api/_assets/plates/**,api/_assets/atlas/**}"
     }
   },
   "crons": [
@@ -51,6 +91,6 @@
       "schedule": "17 3 * * *"
     }
   ],
-  "buildCommand": "npx tsc -b && mkdir -p dist && echo probe > dist/index.html",
+  "buildCommand": "mkdir -p dist && echo probe > dist/index.html",
   "outputDirectory": "dist"
 }
