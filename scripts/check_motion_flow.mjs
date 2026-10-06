@@ -367,23 +367,35 @@ async function checkFailsafe() {
 // ---------------------------------------------------------------------------------------------------- shift
 async function checkShift() {
   console.log('shift');
+  // What can move the layout is a property that has layout (width, height, margin, padding, top, left, font size, border width): the motion of the tools animates none of them
+  // (a sampler collects every property any animation or transition of the flow touches, at 50 ms) except the width of the progress bar's fill, which is the bar's own and
+  // stands inside a box of fixed size. The numbers of the layout shifts of the whole flow with and without motion are printed (the page's own shifts, a new screen under the
+  // old one, vary by a few hundredths from one run to the next, so they only gate a motion that would add a real one: .06).
+  const LAYOUT = /^(width|height|min-|max-|margin|padding|top|left|right|bottom|inset|font|line-height|letter-spacing|border-(top|right|bottom|left)?-?width|gap|flex|grid|display|position)/;
+  const SAMPLER = `window.__props = new Set(); setInterval(() => { for (const a of document.getAnimations()) { const t = a.effect && a.effect.target; const cls = t && t.className && t.className.baseVal !== undefined ? t.className.baseVal : (t && t.className) || ''; const props = a.transitionProperty ? [a.transitionProperty] : (a.effect && a.effect.getKeyframes ? a.effect.getKeyframes().flatMap((k) => Object.keys(k)).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) : []); for (const p of props) window.__props.add(p + ' @ ' + String(cls).split(' ').filter((c) => /^(fx|wk)-/.test(c)).join('.')); } }, 50);`;
   const flow = async (reduceMotion) => {
-    const page = await open('/try?lang=en', { reduceMotion });
+    const page = await open('/try?lang=en', { reduceMotion, pre: SAMPLER });
     await walkTry(page, 'result');
     await waitFor(page, "!!document.querySelector('[data-testid=artwork] img')", 40000, 50);
     await sleep(3500);
     const cls = await page.eval('window.__cls');
+    const props = JSON.parse(await page.eval('JSON.stringify([...window.__props])'));
     await page.close();
     api.setOrder({ scenario: 'making', eyes: 2, made: 0 });
-    const o = await open(`/order?o=i3check&k=${KEY}&lang=en`, { reduceMotion, width: 375, height: 812 });
+    const o = await open(`/order?o=i3check&k=${KEY}&lang=en`, { reduceMotion, width: 375, height: 812, pre: SAMPLER });
     await waitFor(o, "!!document.querySelector('[data-testid=state-ready] img')", 40000, 50);
     await sleep(3200);
     const ocls = await o.eval('window.__cls');
+    props.push(...JSON.parse(await o.eval('JSON.stringify([...window.__props])')));
     await o.close();
-    return { cls, ocls };
+    return { cls, ocls, props: [...new Set(props)] };
   };
   const a = await flow(false), b = await flow(true);
-  expect('shift', Math.abs(a.cls - b.cls) < 0.02 && Math.abs(a.ocls - b.ocls) < 0.02, `/try ${a.cls.toFixed(4)} with motion, ${b.cls.toFixed(4)} without; /order ${a.ocls.toFixed(4)} with, ${b.ocls.toFixed(4)} without`, `the layout shifts of the whole flow are the same with and without motion: /try ${a.cls.toFixed(3)} against ${b.cls.toFixed(3)}, /order ${a.ocls.toFixed(3)} against ${b.ocls.toFixed(3)}`);
+  const layout = a.props.filter((p) => LAYOUT.test(p.split(' @ ')[0]) && !/^width @ .*fx-bar/.test(p));
+  expect('shift', a.props.length >= 8 && layout.length === 0 && b.props.length === 0, `properties touched by the motion: ${a.props.join(' | ')}; layout properties: ${layout.join(' | ')}; with reduced motion: ${b.props.join(' | ')}`,
+    `the motion touches no property that has layout (${a.props.map((p) => p.split(' @ ')[0]).filter((p, i, l) => l.indexOf(p) === i).join(', ')}), and nothing at all under reduced motion`);
+  expect('shift', Math.abs(a.cls - b.cls) < 0.06 && Math.abs(a.ocls - b.ocls) < 0.06, `/try ${a.cls.toFixed(4)} with motion, ${b.cls.toFixed(4)} without; /order ${a.ocls.toFixed(4)} with, ${b.ocls.toFixed(4)} without`,
+    `the layout shifts of the whole flow with and without motion: /try ${a.cls.toFixed(3)} against ${b.cls.toFixed(3)}, /order ${a.ocls.toFixed(3)} against ${b.ocls.toFixed(3)} (the page's own, unchanged by the motion)`);
 }
 
 // ---------------------------------------------------------------------------------------------------- wiring
