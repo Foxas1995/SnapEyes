@@ -489,13 +489,15 @@ check("with Powder Burst ticked alone only the art row and the art price (the bl
 check("with only the Trio ticked the page is open (an order can be made) but prints no one-eye price (no style can be ordered for one eye) and no price for two eyes (the several-eyes row says 'free preview now': "
       "its ladder starts at two eyes and no pair design is orderable in release 1); the one tile that is for sale is the Trio's, its price is the price of three eyes",
       all(LR.get("trio_only", {}).get(k) == v for k, v in {"deploymentOpen": True, "open": True, "from": None, "rows": {"black": False, "art": False}, "max": 3, "several": 0, "eyes": [3], "forSale": ["fam_trio"]}.items()), LR.get("trio_only"))
-land = {f: read(f"src/landing/{f}") for f in ("ordering.ts", "Hero.tsx", "PriceTable.tsx", "StyleGallery.tsx", "StyleTile.tsx")}
+land = {f: read(f"src/landing/{f}") for f in ("ordering.ts", "Hero.tsx", "PriceTable.tsx", "StyleGallery.tsx", "StyleTile.tsx", "tileState.ts", "heroPrice.ts")}
+catalogue_ts = read("src/shared/catalogue.ts")
 check("the landing's components use those functions and no longer print a price unconditionally: ordering.ts opens through ordersOpen and hands the page a sale catalogue (nothing while ordering is closed), the hero prints fromOf over the one-eye styles for sale (never the black price by itself), "
       "the price table prints a row by the classes for sale and the several-eyes row by severalMax (never cat.max), a tile prints a price only for a style the catalogue lists live for its number of eyes (liveFor), the combo card follows severalMax",
-      "ordersOpen(v.open" in land["ordering.ts"] and "sale = open ? catalogue : NOTHING" in land["ordering.ts"] and "export function useSaleCatalogue" in land["ordering.ts"]
-      and "fromOf(" in land["Hero.tsx"] and "useSaleCatalogue" in land["Hero.tsx"] and "prices.one_eye_studio_black" not in land["Hero.tsx"]
+      "ordersOpen(v.open" in land["ordering.ts"] and "sale = saleCatalogue(v.open, catalogue)" in land["ordering.ts"] and "export function useSaleCatalogue" in land["ordering.ts"]
+      and "return ordersOpen(deploymentOpen, c) ? c : NOTHING_FOR_SALE" in catalogue_ts
+      and "heroPrice(" in land["Hero.tsx"] and "useSaleCatalogue" in land["Hero.tsx"] and "prices.fromOf(sale.one)" in land["heroPrice.ts"] and "one_eye_studio_black" not in land["Hero.tsx"] + land["heroPrice.ts"]
       and "classLive('black')" in land["PriceTable.tsx"] and "classLive('art')" in land["PriceTable.tsx"] and "severalMax(cat)" in land["PriceTable.tsx"] and "cat.max" not in land["PriceTable.tsx"]
-      and "liveFor(cat, target.id, target.eyes)" in land["StyleTile.tsx"] and "severalMax(" in land["StyleGallery.tsx"] and "useSaleCatalogue" in land["StyleGallery.tsx"], "")
+      and "tileState(tile.id, sale)" in land["StyleTile.tsx"] and "liveFor(sale, style," in land["tileState.ts"] and "severalMax(" in land["StyleGallery.tsx"] and "useSaleCatalogue" in land["StyleGallery.tsx"], "")
 reset()
 
 # ============================================================================================ 5. the legacy ids after the cutover
