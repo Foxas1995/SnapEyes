@@ -304,8 +304,9 @@ export const OrderApp: React.FC = () => {
         {LINK && <p data-testid="order-no" className="text-center text-xs text-zinc-500 mt-2 break-all">{C.orderNo(LINK.o)}</p>}
         <div className="mt-6 flex flex-col gap-4">
           {/* the card that replaces another arrives with a transition (a state change of this visit; the first card is the page itself, the withdrawal form is a form and the review card holds calm
-              text only: no motion there), keyed by what the card shows so a re-render of the same card never replays it */}
-          <div key={card} className={`flex flex-col gap-4${rec.moved && !WITHDRAW_MODE && card !== 'review' ? ' fx-step' : ''}`}>{content}</div>
+              text only: no motion there), keyed by what the card shows so a re-render of the same card never replays it; the withdrawal form keeps one key, a form is never remounted
+              under the hands of the person typing in it */}
+          <div key={WITHDRAW_MODE ? 'withdraw' : card} className={`flex flex-col gap-4${rec.moved && !WITHDRAW_MODE && card !== 'review' ? ' fx-step' : ''}`}>{content}</div>
           {!WITHDRAW_MODE && LINK && st && CONTRACT_STATES.includes(st.state) && <WithdrawEntry C={C} lang={lang} link={LINK} />}
           <p className="text-center text-xs text-zinc-400 mt-2">
             {C.contact.lead}{' '}
