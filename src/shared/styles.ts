@@ -38,16 +38,18 @@ export interface StyleDef {
 
 /** The STYLES_SCHEMA, PLATES_VERSION, DEFAULT_STYLE and STYLES of api/_lib/styles_registry.py's text (the STYLES literal is plain
  *  JSON and ends the file). scripts/styles_source.mjs parses it the same way and the build compares the two readings. */
-export function parseStylesSource(src: string): { schema: number; platesVersion: number; defaultStyle: string; styles: Record<string, StyleDef> } {
+export function parseStylesSource(src: string): { schema: number; platesVersion: number; defaultStyle: string; effectiveDefault: string; styles: Record<string, StyleDef> } {
   const schema = /^STYLES_SCHEMA = (\d+)\s*$/m.exec(src);
   const pv = /^PLATES_VERSION = (\d+)\s*$/m.exec(src);
   const def = /^DEFAULT_STYLE = "([a-z][a-z0-9_.]*)"\s*$/m.exec(src);
+  const eff = /^EFFECTIVE_DEFAULT = "([a-z]*)"\s*$/m.exec(src);
   const at = src.search(/^STYLES = \{/m);
-  if (!schema || !pv || !def || at < 0) throw new Error('api/_lib/styles_registry.py: STYLES_SCHEMA, PLATES_VERSION, DEFAULT_STYLE or STYLES not found');
+  if (!schema || !pv || !def || !eff || at < 0) throw new Error('api/_lib/styles_registry.py: STYLES_SCHEMA, PLATES_VERSION, DEFAULT_STYLE, EFFECTIVE_DEFAULT or STYLES not found');
   return {
     schema: Number(schema[1]),
     platesVersion: Number(pv[1]),
     defaultStyle: def[1],
+    effectiveDefault: eff[1],
     styles: JSON.parse(src.slice(at + 'STYLES = '.length)) as Record<string, StyleDef>,
   };
 }
@@ -57,6 +59,9 @@ export const STYLES_SCHEMA: number = PARSED.schema;
 export const PLATES_VERSION: number = PARSED.platesVersion;
 /** The style a preview falls back to when a request names none the server knows. */
 export const DEFAULT_STYLE: string = PARSED.defaultStyle;
+/** The stage a style of the v3 engine has until the owner's tick says otherwise ("preview" since the cutover; "" means the ceiling alone decides).
+ *  api/_lib/catalogue.py EFFECTIVE_DEFAULT reads the same line. */
+export const EFFECTIVE_DEFAULT: Stage | '' = PARSED.effectiveDefault as Stage | '';
 export const STYLES: Readonly<Record<string, StyleDef>> = PARSED.styles;
 /** Every id, in the order of the file. */
 export const STYLE_IDS: readonly string[] = Object.keys(STYLES);
@@ -88,6 +93,17 @@ export function ceilingStage(id: string, n: number): Stage | null {
     if (lo <= n && n <= hi) return v;
   }
   return d.stage;
+}
+
+const STAGE_RANK: Readonly<Record<string, number>> = { planned: 0, lab: 1, preview: 2, live: 3 };
+
+/** The stage a page may assume for n eyes before the server has answered: the ceiling, held at EFFECTIVE_DEFAULT for a style of the v3 engine (the owner's
+ *  recorded tick, not the literal, makes a style orderable: api/_lib/catalogue.py stage_with does the same on the server). The legacy ids are never held to
+ *  it, and a retired ceiling is final. Null when the style takes no n eyes. The server's answer (src/shared/catalogue.ts) replaces this the moment it comes. */
+export function buildStage(id: string, n: number): Stage | null {
+  const c = ceilingStage(id, n);
+  if (c === null || c === 'retired' || !EFFECTIVE_DEFAULT || STYLES[id].legacy === 1) return c;
+  return STAGE_RANK[c] <= STAGE_RANK[EFFECTIVE_DEFAULT] ? c : EFFECTIVE_DEFAULT;
 }
 
 /** The layouts n eyes can take in this style, the default first (empty when it takes no n eyes). */
@@ -125,9 +141,12 @@ export function legacyStyles(): { id: string; name: string; accent: [number, num
   });
 }
 
-/** The legacy styles as the landing gallery lists them (tile_order): id, name and the slug of the images. */
+/** The styles of ONE eye as the landing gallery lists them: the ones of the v3 engine whose ceiling is live, in tile order (the registry's tile_order), with
+ *  the slug of their tile images. A style that only opens soon (ceiling preview) is not listed (INTEGRATION_SPEC 1.8 rule 1: a Soon tile stays off the landing
+ *  until the landing team and the owner accept it in writing); the six legacy ids are retired and never listed. Whether a listed style can be bought NOW is
+ *  the run-time catalogue's answer (src/shared/catalogue.ts), never this list's. */
 export function landingStyles(): { id: string; name: string; slug: string }[] {
-  return LEGACY_IDS.slice()
+  return STYLE_IDS.filter((id) => STYLES[id].legacy === 0 && STYLES[id].tile_order > 0 && STYLES[id].eyes[0] <= 1 && ceilingStage(id, 1) === 'live')
     .sort((a, b) => STYLES[a].tile_order - STYLES[b].tile_order)
     .map((id) => ({ id, name: STYLES[id].name, slug: STYLES[id].slug }));
 }

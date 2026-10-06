@@ -11,9 +11,11 @@ ignored. FAILING CLOSED where money is involved: a storage error is never read a
 (they let the storage error out: the checkout answers 503 storage_busy); stage_of without strict, the tile list, the public catalogue and
 every page-facing answer fall back to the ceiling capped at preview, never live. No storage on the deployment at all is no error: there is
 nothing to override. set_override_source(None) is "no overrides" (the literal alone); set_override_source(fn) a test's own.
-EFFECTIVE_DEFAULT is the stage a style of the v3 engine has until the owner's tick records another: None today (the ceiling alone decides);
-the cutover (WP18) raises ceilings to live and sets this to "preview", so that only the owner's recorded tick in the admin page makes a style
-orderable. The six legacy ids are never held to it. A style whose engine module is not in the repository (engine_built) is never routed to,
+EFFECTIVE_DEFAULT is the stage a style of the v3 engine has until the owner's tick records another. The cutover (WP18) raised the ceilings of the
+release-1 styles to live and set it to "preview" in the registry (api/_lib/styles_registry.py EFFECTIVE_DEFAULT, one line, read by the pages too), so
+that only the owner's recorded tick in the admin page (L1, then L0 or its waiver, then live) makes a style orderable: raising a ceiling alone never
+does. The ceiling literal is never what a customer meets; rolling a style back is the admin page too and needs no deploy. The six legacy ids are
+retired (a ceiling of retired is final: they render for the orders already made and are never offered) and are never held to the default. A style whose engine module is not in the repository (engine_built) is never routed to,
 whatever its stage says: a planned or laboratory id can exist before its engine does.
 
 The price class (black or art) is ONE predicate, is_black(style): pay.price_cents, abtest.ladder_price, src/shared/markets.ts
@@ -45,7 +47,7 @@ EYE_CLASSES = ("own", "dark_brown", "grey")
 MAX_EYES = max(d["eyes"][1] for d in STYLES.values())     # 8
 
 ENGINES_BUILT_EXTRA = set()        # tests only: engine modules to treat as built
-EFFECTIVE_DEFAULT = None           # the stage a v3 style has until the owner's tick records another (None: the ceiling decides; WP18 sets "preview")
+EFFECTIVE_DEFAULT = R.EFFECTIVE_DEFAULT or None   # the stage a v3 style has until the owner's tick records another ("preview" since WP18; None: the ceiling decides)
 FALLBACK_STAGE = "preview"         # what a style is capped at when the owner's overrides cannot be read (never live)
 _BUILT = {}
 
@@ -516,8 +518,8 @@ def public_catalogue():
 def canonical():
     """The text the registry hash is made of: both literals and the constants, JSON with sorted keys and no spaces (ASCII only,
     whole numbers only, so scripts/styles_source.mjs makes the very same text)."""
-    return json.dumps({"schema": R.STYLES_SCHEMA, "pv": R.PLATES_VERSION, "default": R.DEFAULT_STYLE, "styles": R.STYLES,
-                       "engine": X.ENGINE}, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return json.dumps({"schema": R.STYLES_SCHEMA, "pv": R.PLATES_VERSION, "default": R.DEFAULT_STYLE, "effective_default": R.EFFECTIVE_DEFAULT,
+                       "styles": R.STYLES, "engine": X.ENGINE}, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
 def registry_hash():

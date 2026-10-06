@@ -19,13 +19,15 @@ export function parseLiteral(src, name, file) {
   return JSON.parse(src.slice(at + `${name} = `.length));
 }
 
-/** {schema, platesVersion, defaultStyle, styles} of styles_registry.py's text. */
+/** {schema, platesVersion, defaultStyle, effectiveDefault, styles} of styles_registry.py's text. effectiveDefault is the stage a v3 style has until the
+ *  owner's tick ("preview" since the cutover, "" for the ceiling alone). */
 export function parseRegistrySource(src) {
   const schema = /^STYLES_SCHEMA = (\d+)\s*$/m.exec(src);
   const pv = /^PLATES_VERSION = (\d+)\s*$/m.exec(src);
   const def = /^DEFAULT_STYLE = "([a-z][a-z0-9_.]*)"\s*$/m.exec(src);
-  if (!schema || !pv || !def) throw new Error(`${STYLES_FILE}: STYLES_SCHEMA, PLATES_VERSION or DEFAULT_STYLE not found (one line each: NAME = value)`);
-  return { schema: Number(schema[1]), platesVersion: Number(pv[1]), defaultStyle: def[1], styles: parseLiteral(src, 'STYLES', STYLES_FILE) };
+  const eff = /^EFFECTIVE_DEFAULT = "([a-z]*)"\s*$/m.exec(src);
+  if (!schema || !pv || !def || !eff) throw new Error(`${STYLES_FILE}: STYLES_SCHEMA, PLATES_VERSION, DEFAULT_STYLE or EFFECTIVE_DEFAULT not found (one line each: NAME = value)`);
+  return { schema: Number(schema[1]), platesVersion: Number(pv[1]), defaultStyle: def[1], effectiveDefault: eff[1], styles: parseLiteral(src, 'STYLES', STYLES_FILE) };
 }
 
 /** The ENGINE literal of styles_engine.py's text. */
@@ -70,7 +72,7 @@ export function canon(v) {
 
 /** The registry hash: 12 hex digits of the sha256 of both literals and the constants in canonical form (catalogue.registry_hash). */
 export function registryHash(registry, engine) {
-  const text = canon({ schema: registry.schema, pv: registry.platesVersion, default: registry.defaultStyle, styles: registry.styles, engine });
+  const text = canon({ schema: registry.schema, pv: registry.platesVersion, default: registry.defaultStyle, effective_default: registry.effectiveDefault, styles: registry.styles, engine });
   return createHash('sha256').update(text, 'ascii').digest('hex').slice(0, 12);
 }
 

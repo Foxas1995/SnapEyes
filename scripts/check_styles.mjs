@@ -40,6 +40,10 @@
 //  13. the one duration constant: every maxDuration of vercel.json equals DURATION_S of api/_lib/duration.py, from which the work budget, the leases of
 //      every claim and the waits of the server's own chain derive (raising the limit is one coordinated change, never one number in one file: a longer
 //      function with the old lease lets a second caller take over a render that is still alive).
+//  14. the cutover guard (WP18): EFFECTIVE_DEFAULT is "", "lab" or "preview" (never "live", "retired" or "planned"); while any style of the v3 engine has a live
+//      ceiling it is "preview" or "lab" (a ceiling raised in this file never makes anything orderable by itself: only the owner's recorded tick in the admin page
+//      does), and no legacy id is live (the cutover raises the ceilings and retires the six legacy ids in one change); DEFAULT_STYLE is a style of the v3 engine
+//      once the legacy ids are retired.
 // Items 8, 9, 10, 12 and 13 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
 // `npm run check:styles` runs it alone.
@@ -231,6 +235,24 @@ function checkPublic(reg, out, layoutIds) {
   const def = styles[reg.defaultStyle];
   if (!def) out.push(`${at0}: DEFAULT_STYLE "${reg.defaultStyle}" is not a style of the registry`);
   else if (!['preview', 'live'].includes(ceilingOf(def, 1))) out.push(`${at0}: DEFAULT_STYLE "${reg.defaultStyle}" must be a style of one eye at preview or live`);
+  checkCutover(reg, out);
+}
+
+/** Item 14: the cutover guard. The owner's tick, not a ceiling in this file, makes a style of the v3 engine orderable. */
+export function checkCutover(reg, out) {
+  const at0 = STYLES_FILE;
+  const styles = reg.styles;
+  const eff = reg.effectiveDefault;
+  if (!['', 'lab', 'preview'].includes(eff)) out.push(`${at0}: EFFECTIVE_DEFAULT "${eff}" must be "", "lab" or "preview" (a default of live would make every live ceiling orderable without the owner's tick)`);
+  const liveOf = (d) => [d.stage, ...Object.values(isObj(d.stage_by_eyes) ? d.stage_by_eyes : {})].includes('live');
+  const v3live = Object.entries(styles).filter(([, d]) => isObj(d) && d.legacy === 0 && liveOf(d)).map(([id]) => id);
+  if (v3live.length) {
+    if (!['lab', 'preview'].includes(eff)) out.push(`${at0}: ${v3live.length} style(s) of the v3 engine have a live ceiling (${v3live.join(', ')}) and EFFECTIVE_DEFAULT is "${eff}": it must be "preview" so that only the owner's recorded tick in the admin page makes a style orderable`);
+    const legacyLive = Object.entries(styles).filter(([, d]) => isObj(d) && d.legacy === 1 && liveOf(d)).map(([id]) => id);
+    if (legacyLive.length) out.push(`${at0}: the legacy style(s) ${legacyLive.join(', ')} are still live beside live v3 styles: the cutover raises the ceilings and retires the six legacy ids in one change`);
+    const def = styles[reg.defaultStyle];
+    if (isObj(def) && def.legacy === 1) out.push(`${at0}: DEFAULT_STYLE "${reg.defaultStyle}" is a legacy style and the v3 styles are live: the default is a style of the v3 engine`);
+  }
 }
 
 /** 1 for the engine literal, against the public one. */

@@ -24,10 +24,15 @@ Rules for the literal (JSON inside Python): double quotes only, no trailing comm
 are single lines of the form NAME = value.
   STYLES_SCHEMA   1: the shape of an entry (this list of fields)
   PLATES_VERSION  the version of the plate library a render may pick from (a plate added later never changes an older pick)
-  DEFAULT_STYLE   the style a preview falls back to when a request names none the server knows
+  DEFAULT_STYLE   the style a preview falls back to when a request names none the server knows (a style of one eye the customer can see:
+                  since the cutover a v3 style, Powder Burst; the recommended tile for grey eyes is Radiance once it is live, until then this one)
+  EFFECTIVE_DEFAULT  the stage a style of the v3 engine has until the owner's recorded tick in the admin page says otherwise: "preview" since the
+                  cutover, so that raising a ceiling to live in this file never makes anything orderable by itself (the owner's L0 and L1 ticks and
+                  his switch do, api/_lib/stage_overrides.py); "" means the ceiling alone decides (the state before the cutover). The six legacy
+                  ids are never held to it. The build refuses "" or "live" while any v3 style has a live ceiling (scripts/check_styles.mjs, item 14)
 Fields of an entry (all are required):
   id           the key. A v3 id is group.name (solo.powder, duo.kiss_collision, grp.collision); the six styles of today keep their
-               bare ids (celestial_gold, studio_black, ...), carry legacy 1, and leave at the v3 cutover (stage retired). Legacy ids
+               bare ids (celestial_gold, studio_black, ...), carry legacy 1, and left at the v3 cutover (stage retired since WP18). Legacy ids
                are read by old orders and stay separate ids: no aliasing of engines
   group        solo | duo | grp | pet  (the tab of the picker: one eye, two eyes, three or more eyes; pet only reserves a group)
   slug         file name part of tile images and download names (letters, digits and hyphens). Unique, except that a legacy id and a
@@ -55,7 +60,8 @@ Fields of an entry (all are required):
 """
 STYLES_SCHEMA = 1
 PLATES_VERSION = 1
-DEFAULT_STYLE = "celestial_gold"
+DEFAULT_STYLE = "solo.powder"
+EFFECTIVE_DEFAULT = "preview"
 STYLES = {
     "solo.clean": {
         "group": "solo",
@@ -64,7 +70,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [1, 1],
         "layouts": {"1": ["single"]},
-        "stage": "lab",
+        "stage": "live",
         "stage_by_eyes": {},
         "price_class": "black",
         "gate": "advisory",
@@ -81,7 +87,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [1, 1],
         "layouts": {"1": ["single"]},
-        "stage": "lab",
+        "stage": "live",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "advisory",
@@ -98,7 +104,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [1, 1],
         "layouts": {"1": ["single"]},
-        "stage": "lab",
+        "stage": "live",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "hard",
@@ -115,7 +121,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [1, 1],
         "layouts": {"1": ["single"]},
-        "stage": "lab",
+        "stage": "live",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "advisory",
@@ -149,7 +155,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [1, 1],
         "layouts": {"1": ["single"]},
-        "stage": "lab",
+        "stage": "preview",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "advisory",
@@ -166,7 +172,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [1, 1],
         "layouts": {"1": ["single"]},
-        "stage": "lab",
+        "stage": "live",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "advisory",
@@ -183,7 +189,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [2, 2],
         "layouts": {"2": ["pair"]},
-        "stage": "lab",
+        "stage": "preview",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "hard",
@@ -200,7 +206,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [2, 2],
         "layouts": {"2": ["pair"]},
-        "stage": "lab",
+        "stage": "preview",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "hard",
@@ -217,7 +223,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [2, 2],
         "layouts": {"2": ["pair"]},
-        "stage": "lab",
+        "stage": "preview",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "hard",
@@ -302,8 +308,8 @@ STYLES = {
         "legacy": 0,
         "eyes": [3, 8],
         "layouts": {"3": ["trio", "diag"], "4": ["zigzag", "cluster", "ring"], "5": ["brick", "ring", "flower"], "6": ["brick", "ring"], "7": ["ring", "flower", "brick"], "8": ["ring", "brick"]},
-        "stage": "lab",
-        "stage_by_eyes": {},
+        "stage": "preview",
+        "stage_by_eyes": {"3": "live"},
         "price_class": "art",
         "gate": "hard",
         "pick": ["own", "dark_brown", "grey"],
@@ -438,7 +444,7 @@ STYLES = {
         "legacy": 1,
         "eyes": [1, 8],
         "layouts": {"1": ["single"], "2": ["duo", "fusion"], "3": ["triangle", "row"], "4": ["grid", "row"], "5": ["galaxy"], "6": ["galaxy"], "7": ["galaxy"], "8": ["galaxy"]},
-        "stage": "live",
+        "stage": "retired",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "none",
@@ -455,7 +461,7 @@ STYLES = {
         "legacy": 1,
         "eyes": [1, 8],
         "layouts": {"1": ["single"], "2": ["duo", "fusion"], "3": ["triangle", "row"], "4": ["grid", "row"], "5": ["galaxy"], "6": ["galaxy"], "7": ["galaxy"], "8": ["galaxy"]},
-        "stage": "live",
+        "stage": "retired",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "none",
@@ -472,7 +478,7 @@ STYLES = {
         "legacy": 1,
         "eyes": [1, 8],
         "layouts": {"1": ["single"], "2": ["duo", "fusion"], "3": ["triangle", "row"], "4": ["grid", "row"], "5": ["galaxy"], "6": ["galaxy"], "7": ["galaxy"], "8": ["galaxy"]},
-        "stage": "live",
+        "stage": "retired",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "none",
@@ -489,7 +495,7 @@ STYLES = {
         "legacy": 1,
         "eyes": [1, 8],
         "layouts": {"1": ["single"], "2": ["duo", "fusion"], "3": ["triangle", "row"], "4": ["grid", "row"], "5": ["galaxy"], "6": ["galaxy"], "7": ["galaxy"], "8": ["galaxy"]},
-        "stage": "live",
+        "stage": "retired",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "none",
@@ -506,7 +512,7 @@ STYLES = {
         "legacy": 1,
         "eyes": [1, 8],
         "layouts": {"1": ["single"], "2": ["duo", "fusion"], "3": ["triangle", "row"], "4": ["grid", "row"], "5": ["galaxy"], "6": ["galaxy"], "7": ["galaxy"], "8": ["galaxy"]},
-        "stage": "live",
+        "stage": "retired",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "none",
@@ -523,7 +529,7 @@ STYLES = {
         "legacy": 1,
         "eyes": [1, 8],
         "layouts": {"1": ["single"], "2": ["duo", "fusion"], "3": ["triangle", "row"], "4": ["grid", "row"], "5": ["galaxy"], "6": ["galaxy"], "7": ["galaxy"], "8": ["galaxy"]},
-        "stage": "live",
+        "stage": "retired",
         "stage_by_eyes": {},
         "price_class": "black",
         "gate": "none",

@@ -52,6 +52,9 @@ STYLES = {
 }
 if tuple(STYLES) != catalogue.legacy_ids():
     raise RuntimeError(f"iris.STYLES {tuple(STYLES)} is not the legacy block of api/_lib/styles_registry.py {catalogue.legacy_ids()}")
+# the legacy engine's own fallback for an id it does not know (not catalogue.DEFAULT_STYLE: since the v3 cutover that is a style of the v3 engine, which this table
+# has no entry for)
+LEGACY_DEFAULT = catalogue.legacy_ids()[0]
 # the bare print (pure black, nothing else in the picture): the legacy styles the registry gives no accent colour
 BARE_STYLES = frozenset(i for i in catalogue.legacy_ids() if not catalogue.STYLES[i]["accent"])
 
@@ -4403,13 +4406,13 @@ def _paste_disk(canvas, r0, r1, g8, Sd, Rg, x0, y0, feather, acc):
     mixed += arr * alpha
     canvas[d0 - r0:d1 - r0, x0:x0 + Sd] = mixed
 
-def compose(iris, style=catalogue.DEFAULT_STYLE, title=None, names="", watermark=True, r_frac=None, size=1024, keep=None):
+def compose(iris, style=LEGACY_DEFAULT, title=None, names="", watermark=True, r_frac=None, size=1024, keep=None):
     """The single-eye artwork: a size x size square. The canvas is rendered in row bands with the same
     per-pixel expressions as the whole-canvas version, so the banding itself changes no pixel at any size; the
     float64 canvas and its glow planes (~2 GB at 4096 px) are never held whole. studio_grade is exact for every
     preview-sized disc (see PALE_MAP_MAX). Above BG_4K_FROM px the background comes from the 4096 px file
     (_style_bg)."""
-    st = STYLES.get(style, STYLES[catalogue.DEFAULT_STYLE])
+    st = STYLES.get(style, STYLES[LEGACY_DEFAULT])
     bg8 = _style_bg(st, size, size)
     r_frac = r_frac or iris_radius_frac()
     # iris disk with feathered edge; the iris square is assumed centred with radius r_frac*side
@@ -4702,7 +4705,7 @@ def _glow_band(canvas, r0, r1, discs, acc):
     canvas *= 1.0 - g
     canvas += acc * g
 
-def compose_multi(irises, style=catalogue.DEFAULT_STYLE, names="", title=None, watermark=True, r_frac=None, size=1024,
+def compose_multi(irises, style=LEGACY_DEFAULT, names="", title=None, watermark=True, r_frac=None, size=1024,
                   layout=None, fmt=None, keep=None):
     """The artwork for 1-8 eyes. irises: masked iris squares, the input compose() takes, in the order they go on
     the canvas. One eye as an "artwork" is exactly compose(). More eyes: each is graded on its own
@@ -4720,7 +4723,7 @@ def compose_multi(irises, style=catalogue.DEFAULT_STYLE, names="", title=None, w
     if n == 1 and not wall:
         return compose(irises[0], style=style, title=title, names=names, watermark=watermark, r_frac=r_frac,
                        size=size, keep=keep)
-    st = STYLES.get(style, STYLES[catalogue.DEFAULT_STYLE])
+    st = STYLES.get(style, STYLES[LEGACY_DEFAULT])
     bare = style in BARE_STYLES
     r_frac = r_frac or iris_radius_frac()
     W, H = multi_canvas(n, layout, size, fmt)
