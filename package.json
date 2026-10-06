@@ -17,6 +17,7 @@
     "check:landing": "node scripts/check_landing.mjs",
     "check:motion": "node scripts/check_motion.mjs",
     "check:motion:close": "node scripts/check_motion_close.mjs",
+    "check:motion:flow": "node scripts/check_motion_flow.mjs",
     "check:taste": "node scripts/check_taste.mjs",
     "check:budget": "node scripts/check_budget.mjs",
     "check:slots": "node scripts/measure_slots.mjs --check",
