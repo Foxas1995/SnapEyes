@@ -23,7 +23,6 @@ LIST = os.path.join(ROOT, "scripts", "landing_assets.json")
 OUT_DEFAULT = os.path.join(ROOT, "public", "assets", "landing")
 TS_FILES = os.path.join(ROOT, "src", "landing", "assets.ts")
 TS_DATA = os.path.join(ROOT, "src", "landing", "assets.data.ts")
-IRIS = os.path.join(ROOT, "api", "_lib", "iris.py")
 BASE_URL = "/assets/landing/"
 HASH_LEN = 10
 WIDTH_RE = re.compile(r"^(.*)_(\d+)$")
@@ -96,31 +95,6 @@ def scan_src(src):
             if f.endswith(".webp"):
                 found[f"{d}/{f[:-5]}"] = os.path.join(base, f)
     return found
-
-
-def live_engine_styles():
-    """The styles api/_lib/iris.py can make today (the keys of STYLES)."""
-    try:
-        text = open(IRIS, encoding="utf-8").read()
-        body = text[text.index("STYLES = {"):]
-        body = body[:body.index("\n}\n")]
-        return sorted(set(re.findall(r'^[ ]{4}"([a-z_]+)":[ ]*\{', body, re.M)))
-    except (OSError, ValueError):
-        return []
-
-
-def release_gate(spec):
-    """One row per tile: can the order flow make what the tile shows, today? It can when the engine has the style (STYLES of iris.py),
-    the style LOOKS like the tile (look) and the terms of sale, /try and the order e-mail call it by the tile's name (name). A style
-    that shares only a name with a tile, or only a look, does not count."""
-    live = live_engine_styles()
-    rows = []
-    for grp in spec["gallery"]["groups"]:
-        for it in spec["gallery"][grp]:
-            eng = spec["engine"].get(it["id"])
-            ok = bool(eng and eng["style"] in live and eng["look"] and eng["name"])
-            rows.append({"tile": it["id"], "group": grp, "engine_style": eng["style"] if eng else None, "in_engine_today": ok})
-    return live, rows
 
 
 def ts_literal(v, indent=0):
@@ -267,14 +241,6 @@ export const WALL_THUMBS: Readonly<Record<WallArt, AssetFile>> = {ts_literal(spe
 
 /** The close-up: a square of crop_px = [left, top, right, bottom] cut from the 4096 px file. */
 export const FIBRE: {{ readonly crop_px: readonly [number, number, number, number]; readonly of: number }} = {ts_literal(spec["fibre"])};
-
-/** The gallery tile -> the engine style that could make it today. The release gate (scripts/check_landing_assets.mjs) counts a tile as
- *  orderable only when ALL of these hold: the engine really has the style (STYLES of api/_lib/iris.py), the style looks like the tile
- *  (look), and the terms of sale, /try and the order e-mail call it by the tile's name (name). A tile that is not in this table, or
- *  whose style shares only a name or only a look with it, cannot be ordered yet. Update it in scripts/landing_assets.json, in the
- *  same change that ships the engine styles (BUILD_PLAN section 3, item 1). */
-export interface EngineStyle {{ style: string; look: boolean; name: boolean }}
-export const ENGINE_STYLE: Readonly<Record<string, EngineStyle>> = {ts_literal(spec["engine"])};
 """
     open(ts_data_path, "w", encoding="utf-8", newline="\n").write(data)
 
@@ -351,9 +317,6 @@ def main():
     write_manifest(spec, files, TS_FILES, TS_DATA)
     total = sum(f["bytes"] for f in files.values())
     print(f"{len(files)} files, {total / 1e6:.2f} MB into {os.path.relpath(args.out, ROOT)} ({removed} stale removed); manifest in src/landing/assets.ts and assets.data.ts")
-    live, rows = release_gate(spec)
-    not_live = [r["tile"] for r in rows if not r["in_engine_today"]]
-    print(f"RELEASE GATE: the engine makes {live} today; tiles it cannot make yet: {len(not_live)} of {len(rows)} ({', '.join(not_live)})")
     return 0
 
 

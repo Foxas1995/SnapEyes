@@ -345,22 +345,3 @@ export const FIBRE: { readonly crop_px: readonly [number, number, number, number
   ],
   "of": 4096
 };
-
-/** The gallery tile -> the engine style that could make it today. The release gate (scripts/check_landing_assets.mjs) counts a tile as
- *  orderable only when ALL of these hold: the engine really has the style (STYLES of api/_lib/iris.py), the style looks like the tile
- *  (look), and the terms of sale, /try and the order e-mail call it by the tile's name (name). A tile that is not in this table, or
- *  whose style shares only a name or only a look with it, cannot be ordered yet. Update it in scripts/landing_assets.json, in the
- *  same change that ships the engine styles (BUILD_PLAN section 3, item 1). */
-export interface EngineStyle { style: string; look: boolean; name: boolean }
-export const ENGINE_STYLE: Readonly<Record<string, EngineStyle>> = {
-  "gold": {
-    "style": "celestial_gold",
-    "look": false,
-    "name": true
-  },
-  "clean": {
-    "style": "studio_black",
-    "look": true,
-    "name": false
-  }
-};

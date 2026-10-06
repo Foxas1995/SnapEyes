@@ -315,17 +315,5 @@
   "reveal/disc_own_420",
   "ui/before-phone-crop-315",
   "ui/preview_wm_360"
- ],
- "engine": {
-  "gold": {
-   "style": "celestial_gold",
-   "look": false,
-   "name": true
-  },
-  "clean": {
-   "style": "studio_black",
-   "look": true,
-   "name": false
-  }
- }
+ ]
 }

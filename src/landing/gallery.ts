@@ -1,8 +1,8 @@
 // The style gallery's data and rules, without React: which tiles a group has, which picture is a tile in an eye colour, which
 // tiles have a wall view, which carry the "Example photo" label. The pictures come from the asset manifest (./assets), the structure
 // of the gallery from ./assets.data (generated with the pictures), the words from the copy; no text and no price is written here.
-// (The release gate, which tile the order flow can make today, is not a page matter: it is checked at build time by
-// scripts/check_landing_assets.mjs from ENGINE_STYLE in ./assets.data.)
+// (The release gate, whether every tile names a style the registry can make, is not a page matter: it is checked at build time by
+// scripts/check_landing_assets.mjs from ./tileStyle.ts and the registry. What can be bought now is the run-time catalogue's: ./StyleTile.tsx.)
 import { asset, type AssetFamily, type PictureAsset } from './assets';
 import { GALLERY, type EyeId, type GalleryGroup, type GalleryTile } from './assets.data';
 import type { LandingCopy } from './copy/types';

@@ -820,6 +820,93 @@ for label, mutate, needle in [
     probs = with_load(label, mutate)
     check(f"check_styles refuses: {label}", not PROBLEMS.get(label) and any(needle in p for p in probs), (PROBLEMS.get(label), needle, probs[:3]))
 
+# --- the landing's RELEASE GATE (scripts/check_landing_assets.mjs): it reads the registry and the tile table, not a legacy engine table. The I1 merge review (M1) found the gate comparing the
+# 16 tiles with the legacy engine's six ids, so a PRODUCTION build (VERCEL_ENV=production) failed for good; nothing the owner does in the admin page can change a build. These run the real script
+# on the real tree (the pictures, vercel.json and the registry of this checkout) and on synthetic registries and tile tables.
+GATE = os.path.join(TMP, "i1_release_gate.mjs")
+with open(GATE, "w", encoding="utf-8", newline="\n") as f:
+    f.write(r"""
+import { createRequire } from 'node:module'; import { join } from 'node:path'; import { pathToFileURL } from 'node:url';
+const repo = process.argv[2];
+const req = createRequire(join(repo, 'package.json'));
+const { runnerImport } = await import(pathToFileURL(req.resolve('vite')).href);
+const G = await import(pathToFileURL(join(repo, 'scripts', 'check_landing_assets.mjs')).href);
+const S = await import(pathToFileURL(join(repo, 'scripts', 'styles_source.mjs')).href);
+const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent', root: repo })).module;
+const assets = await load('./src/landing/assets.ts'), data = await load('./src/landing/assets.data.ts'), tiles = await load('./src/landing/tileStyle.ts');
+const clone = (v) => JSON.parse(JSON.stringify(v));
+const styles = S.loadRegistry(repo).styles;
+const rows = clone(tiles.TILE_STYLE);
+const gal = data.GALLERY;
+const res = {};
+const ids = gal.groups.flatMap((g) => gal[g].map((t) => t.id));
+res.ids = ids;
+res.real = G.releaseGate(styles, rows, gal);
+res.expect = Object.fromEntries(ids.map((id) => [id, S.ceilingOf(styles[rows[id].id], rows[id].eyes)]));
+const blockedOf = (st, rw, gl = gal) => G.releaseGate(st, rw, gl).blocked.map((b) => `${b.tile}: ${b.reason}`);
+let m = clone(styles); m['duo.kiss_collision'].stage = 'retired'; res.retired = blockedOf(m, rows);
+m = clone(styles); m['duo.kiss_collision'].stage = 'planned'; res.planned = blockedOf(m, rows);
+m = clone(styles); m['grp.collision'].stage_by_eyes = { '3': 'live', '6': 'planned' }; res.perEye = blockedOf(m, rows);
+let r2 = clone(rows); delete r2.duo_kiss; res.noRow = blockedOf(styles, r2);
+r2 = clone(rows); r2.duo_kiss.id = 'duo.nope'; res.noStyle = blockedOf(styles, r2);
+r2 = clone(rows); r2.duo_kiss.id = 'constructor'; res.protoStyle = blockedOf(styles, r2);
+r2 = clone(rows); r2.fam_6.eyes = 9; res.eyes = blockedOf(styles, r2);
+const g2 = clone(gal); g2.one.push({ id: '__proto__' }, { id: 'constructor' }); res.protoTile = blockedOf(styles, rows, g2);
+res.empty = G.releaseGate({}, {}, undefined);
+res.strict = [{}, { VERCEL_ENV: 'production' }, { VERCEL_ENV: 'preview' }, { LANDING_GATE: 'strict' }, { LANDING_GATE: 'soft' }, { VERCEL_ENV: '' }].map((e) => G.gateIsStrict(e));
+res.summary = G.gateSummary(res.real);
+// the whole check on the real tree, in the three environments a build can have
+const run = (env, tl) => {
+  for (const k of ['VERCEL_ENV', 'LANDING_GATE']) delete process.env[k];
+  Object.assign(process.env, env);
+  const r = G.checkLandingAssets(repo, assets, data, tl);
+  return { problems: r.problems, notices: r.notices, blocked: r.gate ? r.gate.blocked.length : null };
+};
+res.local = run({}, tiles);
+res.production = run({ VERCEL_ENV: 'production' }, tiles);
+res.strictFlag = run({ LANDING_GATE: 'strict' }, tiles);
+const shortRows = clone(rows); delete shortRows.duo_kiss;
+const short = { TILE_STYLE: shortRows };
+res.productionBroken = run({ VERCEL_ENV: 'production' }, short);
+res.previewBroken = run({ VERCEL_ENV: 'preview' }, short);
+res.noTiles = run({ VERCEL_ENV: 'production' }, undefined);
+console.log(JSON.stringify(res));
+""")
+rc, so, se = run_node([GATE, REPO])
+gate = last_json(so)
+check("the release gate script ran on the real tree", gate is not None, (rc, se[-500:], so[-300:]))
+if gate:
+    real = gate["real"]
+    check("release gate: on the real tree every one of the 16 tiles is in exactly one of live, preview and lab by the registry's ceiling for its style and eyes, and none is blocked",
+          real["total"] == 16 and len(gate["ids"]) == 16 and real["blocked"] == []
+          and sorted(real["live"] + real["preview"] + real["lab"]) == sorted(gate["ids"])
+          and all(gate["expect"][i] == b for b in ("live", "preview", "lab") for i in real[b]), real)
+    check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of six eyes alone blocks only the six-eye tile",
+          gate["perEye"] == ['fam_6: "grp.collision" is only planned for 6 eye(s): no engine makes it yet'], gate["perEye"])
+    check("release gate: a retired style blocks its tile", gate["retired"] == ['duo_kiss: "duo.kiss_collision" is retired: it can never be bought again'], gate["retired"])
+    check("release gate: a style that is only planned blocks its tile (no engine behind the picture)",
+          gate["planned"] == ['duo_kiss: "duo.kiss_collision" is only planned for 2 eye(s): no engine makes it yet'], gate["planned"])
+    check("release gate: a tile without a row, a row that names a style the registry does not have, and a row with more eyes than the style takes each block their tile",
+          gate["noRow"] == ['duo_kiss: src/landing/tileStyle.ts has no row for it'] and gate["noStyle"] == ['duo_kiss: the registry has no style "duo.nope"']
+          and len(gate["eyes"]) == 1 and gate["eyes"][0].startswith('fam_6: "grp.collision" takes 3 to 8 eyes, the tile shows 9'), gate)
+    check("release gate: hostile ids (a tile called __proto__ or constructor, a row naming the style constructor) block cleanly and never read the prototype",
+          len(gate["protoTile"]) == 2 and all("has no row" in b for b in gate["protoTile"]) and gate["protoStyle"] == ['duo_kiss: the registry has no style "constructor"'], gate)
+    check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the three groups, and only a production deploy or LANDING_GATE=strict is strict",
+          gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
+          and "6 with a live ceiling" in gate["summary"] and "8 at preview" in gate["summary"] and "2 in the laboratory" in gate["summary"] and "0 that the engine cannot make" in gate["summary"], (gate["strict"], gate["summary"]))
+    check("M1 of the I1 merge review: the whole landing asset check on the real tree is green and silent in a local build, in a PRODUCTION build (VERCEL_ENV=production) and with LANDING_GATE=strict: "
+          "the gate no longer compares the tiles with the legacy engine table, so the owner's tick in the admin page is not needed for a production build",
+          all(gate[k]["problems"] == [] and gate[k]["notices"] == [] and gate[k]["blocked"] == 0 for k in ("local", "production", "strictFlag")), {k: gate[k] for k in ("local", "production", "strictFlag")})
+    check("release gate: a tile of something the engine cannot make is an error in a production build and only a notice in a preview build",
+          len(gate["productionBroken"]["problems"]) == 1 and "RELEASE GATE" in gate["productionBroken"]["problems"][0] and "duo_kiss" in gate["productionBroken"]["problems"][0]
+          and "must not go live" in gate["productionBroken"]["problems"][0]
+          and gate["previewBroken"]["problems"] == [] and len(gate["previewBroken"]["notices"]) == 1 and "duo_kiss" in gate["previewBroken"]["notices"][0], (gate["productionBroken"], gate["previewBroken"]))
+    check("release gate: a caller that gives no tile table gets a problem, not a silent pass",
+          any("TILE_STYLE not found" in x for x in gate["noTiles"]["problems"]), gate["noTiles"])
+    check("the legacy engine table is gone: no ENGINE_STYLE in the landing's data, no engine key in scripts/landing_assets.json, no release_gate in the picture builder, no allow-list entry for assets.data.ts",
+          "ENGINE_STYLE" not in read("src/landing/assets.data.ts") and "engine" not in json.loads(read("scripts/landing_assets.json"))
+          and "release_gate" not in read("scripts/build_landing_assets.py") and "assets.data.ts" not in "\n".join(l for l in read("scripts/check_styles.mjs").split("\n") if l.startswith("  '")))
+
 # --- the rules of items 4 and 7 that work package 12's texts meet: built, tested on synthetic files, and enforced on the real tree (WP12_RULES)
 RULES = os.path.join(TMP, "wp1_rules.mjs")
 with open(RULES, "w", encoding="utf-8", newline="\n") as f:

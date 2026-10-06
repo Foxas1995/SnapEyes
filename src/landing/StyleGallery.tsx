@@ -1,8 +1,8 @@
 // The styles chapter (BUILD_PLAN section 2, "Styles"): group tabs, the eye colour dots, the legend, the tiles. The composition
-// only: the tabs are ./StyleTabs.tsx, the dots ./EyeChips.tsx, a tile ./StyleTile.tsx, the data and the release gate
-// ./gallery.ts, the look css/styles.css. Words come from the copy layer, prices from the visitor's own ladder, pictures from
-// the asset manifest; nothing is written here. Importing this file brings its own stylesheet, so it can be loaded lazily
-// with its section.
+// only: the tabs are ./StyleTabs.tsx, the dots ./EyeChips.tsx, a tile ./StyleTile.tsx, the data ./gallery.ts, which registry
+// style a tile stands for ./tileStyle.ts (the build's release gate reads it), the look css/styles.css. Words come from the copy
+// layer, prices from the visitor's own ladder, pictures from the asset manifest; nothing is written here. Importing this file
+// brings its own stylesheet, so it can be loaded lazily with its section.
 //
 // Motion (motion spec 6.6): the title rises out of its mask; the tiles rise one after the other the first time the grid comes into view
 // (fade up, 90 ms apart, the index capped at 4: tiles are artworks, so no scale, no blur, no tilt); a change of group is a repeated

@@ -84,14 +84,15 @@ function styleCheck(): Plugin {
 // The landing page's pictures (public/assets/landing, written by scripts/build_landing_assets.py) against their manifest
 // (src/landing/assets.ts): content hashes, sizes, nothing unused or missing, the byte budgets, the immutable cache headers of
 // vercel.json (scripts/check_landing_assets.mjs; `npm run check:assets` runs it alone). The release gate (which tiles of the
-// style gallery the engine can make today) is a notice, an error only with LANDING_GATE=strict. Any problem stops the build.
+// style gallery name a style the registry can make) is a notice, an error for a production build (VERCEL_ENV=production) or with
+// LANDING_GATE=strict. Any problem stops the build.
 function assetCheck(): Plugin {
   return {
     name: 'snapeyes-landing-assets-check',
     apply: 'build',
     async buildStart() {
       const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
-      const { problems, notices } = checkLandingAssets(process.cwd(), await load('./src/landing/assets.ts'), await load('./src/landing/assets.data.ts'))
+      const { problems, notices } = checkLandingAssets(process.cwd(), await load('./src/landing/assets.ts'), await load('./src/landing/assets.data.ts'), await load('./src/landing/tileStyle.ts'))
       for (const n of notices) this.warn(n)
       if (problems.length) this.error(`landing assets check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
     },
