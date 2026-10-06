@@ -303,9 +303,9 @@ export const OrderApp: React.FC = () => {
         <h1 className="font-luxury text-3xl sm:text-4xl font-bold text-center mt-2">{C.title}</h1>
         {LINK && <p data-testid="order-no" className="text-center text-xs text-zinc-500 mt-2 break-all">{C.orderNo(LINK.o)}</p>}
         <div className="mt-6 flex flex-col gap-4">
-          {/* the card that replaces another arrives with a transition (a state change of this visit; the first card is the page itself, and the withdrawal form
-              is a form: no motion there), keyed by what the card shows so a re-render of the same card never replays it */}
-          <div key={card} className={`flex flex-col gap-4${rec.moved && !WITHDRAW_MODE ? ' fx-step' : ''}`}>{content}</div>
+          {/* the card that replaces another arrives with a transition (a state change of this visit; the first card is the page itself, the withdrawal form is a form and the review card holds calm
+              text only: no motion there), keyed by what the card shows so a re-render of the same card never replays it */}
+          <div key={card} className={`flex flex-col gap-4${rec.moved && !WITHDRAW_MODE && card !== 'review' ? ' fx-step' : ''}`}>{content}</div>
           {!WITHDRAW_MODE && LINK && st && CONTRACT_STATES.includes(st.state) && <WithdrawEntry C={C} lang={lang} link={LINK} />}
           <p className="text-center text-xs text-zinc-400 mt-2">
             {C.contact.lead}{' '}
@@ -385,19 +385,19 @@ const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: 
             <li key={e.eye} data-testid={`eye-${e.eye}`} className="w-[72px] flex flex-col items-center gap-1 text-center">
               <EyeRing made={!!e.made} busy={busy} thumb={e.preview_url} />
               <span className="text-[10px] font-bold text-zinc-300 leading-tight">{C.making.eye(e.eye)}</span>
-              <span className={`text-[10px] leading-tight ${e.made ? 'text-[var(--ok)]' : busy ? 'text-[#f5c542]' : 'text-zinc-500'}`}>
+              <span className={`text-[10px] leading-tight ${e.made ? 'text-[var(--ok)]' : busy ? 'text-[#f5c542]' : 'text-zinc-400'}`}>
                 {e.made ? C.making.done : busy ? C.making.working : C.making.waiting}
               </span>
             </li>
           );
         })}
       </ul>
-      <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+      <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-label={line} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
         <div className="fx-bar h-full rounded-full bg-[#f5c542]" style={{ width: `${Math.max(pct, 4)}%` }} />
       </div>
       <div className="flex items-start justify-between gap-3 mt-2">
         <p data-testid="making-line" className="text-xs text-zinc-300 flex items-center gap-2 min-w-0">{(view.making.length > 0 || view.composing) && !w && <Dot />}<span>{line}</span></p>
-        {since !== null && <span className="shrink-0 text-[11px] font-mono text-zinc-500">{C.making.elapsed(Math.max(0, Math.round((clock - since) / 1000)))}</span>}
+        {since !== null && <span className="shrink-0 text-[11px] font-mono tabular-nums text-zinc-400">{C.making.elapsed(Math.max(0, Math.round((clock - since) / 1000)))}</span>}
       </div>
       {view.server ? (
         // the server makes it by itself (api/_lib/maker.py): the page may be closed

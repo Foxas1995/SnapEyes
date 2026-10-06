@@ -27,7 +27,7 @@ export const Working: React.FC<Props> = ({ title, lines, active = 1, elapsed, im
       {image ? <span className="crop"><img src={image} alt={T.working.yourIris} /></span> : null}
       <Arc />
     </div>
-    {image && caption && <span className="-mt-3 text-[10px] uppercase tracking-widest text-amber-200/90">{caption}</span>}
+    {image && caption && <span className="fx-note -mt-3 text-[10px] uppercase tracking-widest text-amber-200/90">{caption}</span>}
     <h2 className="font-luxury text-xl font-bold">{title}</h2>
     {/* a real list that a screen reader announces as it grows: each finished step is heard once (the spec's role="status" on a ul would take the list roles away) */}
     <ul aria-live="polite" className="text-sm text-zinc-300 space-y-1.5">
@@ -40,6 +40,6 @@ export const Working: React.FC<Props> = ({ title, lines, active = 1, elapsed, im
       ))}
     </ul>
     {note && <p className="fx-note text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl px-3 py-2 max-w-sm">{note}</p>}
-    <span className="text-[11px] font-mono tabular-nums text-zinc-500">{T.working.elapsed(elapsed)}</span>
+    <span className="text-[11px] font-mono tabular-nums text-zinc-400">{T.working.elapsed(elapsed)}</span>
   </section>
 );
