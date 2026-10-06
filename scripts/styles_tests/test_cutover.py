@@ -312,10 +312,10 @@ check("the landing's gallery lists the five live one-eye styles of the v3 engine
       probe.get("landing") == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.clean"], probe.get("landing"))
 fb = probe.get("fallback") or {}
 check("the fallback catalogue (before the server answers, and when it cannot): nothing orderable, no maximum, no list of art styles, no id for one eye",
-      fb == {"max": 0, "styles": [], "one": [], "eyes": []}, fb)
+      fb == {"max": 0, "styles": [], "one": [], "eyes": [], "by": {}}, fb)
 sv = probe.get("server") or {}
 check("a server catalogue is read as before and names the ids orderable for one eye: Clean Iris (live) yes, Powder Burst (preview) no; the art list is empty (the black class is named by its own row)",
-      sv == {"max": 1, "styles": [], "one": ["solo.clean"], "eyes": [1]}, sv)
+      sv == {"max": 1, "styles": [], "one": ["solo.clean"], "eyes": [1], "by": {"solo.clean": [1]}}, sv)
 g = {m["name"]: m["problems"] for m in probe.get("guard", [])}
 check("the build's cutover guard (check item 14): the committed registry and the state before the cutover pass, a default of lab passes",
       g.get("the committed registry") == [] and g.get("the state before the cutover") == [] and g.get("a default of lab is allowed") == [], g)

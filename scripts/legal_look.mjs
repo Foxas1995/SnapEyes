@@ -150,7 +150,7 @@ if (mode === 'save') {
 } else {
   const problems = [...leaks, ...diff(JSON.parse(readFileSync(file, 'utf8')), now)];
   if (problems.length) {
-    console.error(`legal look CHANGED (${problems.length}):\n  ${problems.slice(0, 40).join('\n  ')}`);
+    console.error(`legal look CHANGED (${problems.length}):\n  ${problems.slice(0, Number(process.env.LEGAL_LOOK_SHOW) || 40).join('\n  ')}`);
     process.exit(1);
   }
   console.log(`legal look identical: ${Object.keys(now).length} pages (pixels, every element's box and computed styles, text), no landing rule in any legal, /try, /order or /admin stylesheet`);
