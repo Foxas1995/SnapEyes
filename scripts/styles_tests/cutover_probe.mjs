@@ -16,6 +16,9 @@ const CAT = await load('src/shared/catalogue.ts');
 const MKT = await load('src/shared/markets.ts');
 const CK = await load('scripts/check_styles.mjs');
 const SRC = await load('scripts/styles_source.mjs');
+const LP = await load('src/landing/priceText.ts');
+const TILES = await load('src/landing/tileStyle.ts');
+const GAL = await load('src/landing/assets.data.ts');
 const req = JSON.parse(readFileSync(0, 'utf8'));
 
 const reg = SRC.parseRegistrySource(readFileSync(join(root, 'api', '_lib', 'styles_registry.py'), 'utf8'));
@@ -29,17 +32,25 @@ const out = {
   server: CAT.readCatalogue(req.server),
   guard: [],
   // what the landing makes of a GET /api/checkout answer, by the page's own functions (src/landing/ordering.ts: ordersOpen over the deployment's "open" and the catalogue it read, the
-  // fallback when the answer has none; Hero.tsx: fromOneEye; Pricing.tsx: oneEyeRows), in the euro market with the standard ladder
+  // fallback when the answer has none, and the SALE catalogue, which is empty while ordering is closed; Hero.tsx: fromOf over the one-eye styles for sale; PriceTable.tsx: the class rows
+  // and severalMax; StyleTile.tsx: liveFor by the tile table), in the euro market with the standard ladder
   landingReading: (req.answers ?? []).map((a) => {
     const cat = CAT.readCatalogue(a) ?? CAT.fallbackCatalogue();
+    const deploymentOpen = a.ok !== false && a.open === true;
+    const open = CAT.ordersOpen(deploymentOpen, cat);
+    const sale = open ? cat : { max: 0, styles: [], one: [], eyes: [], by: {} };      // src/landing/ordering.ts: what can be bought right now
+    const lp = LP.landingPrices(MKT.priceList('eu'), 'eu', 'en');
+    const tiles = [...GAL.GALLERY.one, ...GAL.GALLERY.two, ...GAL.GALLERY.family];
     return {
-      deploymentOpen: a.ok !== false && a.open === true,
-      open: CAT.ordersOpen(a.ok !== false && a.open === true, cat),
-      from: CAT.fromOneEye(cat, (id) => MKT.priceMinor(1, id, 'eu')),
-      rows: CAT.oneEyeRows(cat, S.classStyle('black')),
+      deploymentOpen,
+      open,
+      from: lp.fromOf(sale.one),
+      rows: { black: sale.one.some((id) => S.priceClass(id) === 'black'), art: sale.one.some((id) => S.priceClass(id) === 'art') },
       max: cat.max,
-      several: CAT.severalMax(cat),
-      eyes: cat.eyes,
+      several: CAT.severalMax(sale),
+      eyes: sale.eyes,
+      forSale: tiles.filter((t) => CAT.liveFor(sale, TILES.TILE_STYLE[t.id].id, TILES.TILE_STYLE[t.id].eyes)).map((t) => t.id),
+      texts: { black: lp.black, art: lp.art, from: lp.from },
     };
   }),
 };

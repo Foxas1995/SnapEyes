@@ -477,21 +477,25 @@ EU = MK.MARKETS["eu"]["prices"]
 check("the deployment takes orders in every answer of this section (open is true: Stripe, the e-mail and the legal texts are set up in this harness), so the cutover's closed state is the CATALOGUE's, not the keys'",
       all(ANS[n].get("open") is True for n in NAMES) and all(LR.get(n, {}).get("deploymentOpen") is True for n in NAMES), {n: ANS[n].get("open") for n in NAMES})
 check("the landing before the owner's tick: ordering open and nothing ticked is NOT open for the page: no 'from' price in the hero, no price row in the one-eye card (the page says 'opens soon', what the checkout will say with 409)",
-      LR.get("before") == {"deploymentOpen": True, "open": False, "from": None, "rows": {"black": False, "art": False}, "max": 0, "several": 0, "eyes": []}, LR.get("before"))
+      all(LR.get("before", {}).get(k) == v for k, v in {"deploymentOpen": True, "open": False, "from": None, "rows": {"black": False, "art": False}, "max": 0, "several": 0, "eyes": [], "forSale": []}.items()), LR.get("before"))
 check("... the same after a rollback and when the owner has taken everything back: closed again, no price",
       all(LR.get(n) == LR.get("before") for n in ("after", "closed_again")), (LR.get("after"), LR.get("closed_again")))
 check("with Clean Iris ticked the page is open and prints only what can be bought: 'from' is the black price and only the black row (an art style is not orderable, so the art row stays off)",
-      LR.get("clean") == {"deploymentOpen": True, "open": True, "from": EU["one_eye_studio_black"], "rows": {"black": True, "art": False}, "max": 1, "several": 0, "eyes": [1]}, LR.get("clean"))
+      all(LR.get("clean", {}).get(k) == v for k, v in {"deploymentOpen": True, "open": True, "from": LR["clean"]["texts"]["black"], "rows": {"black": True, "art": False}, "max": 1, "several": 0, "eyes": [1], "forSale": ["clean"]}.items()), LR.get("clean"))
 check("with Powder Burst ticked alone only the art row and the art price (the black class is not orderable); with both ticked 'from' is the lower of the two and both rows",
-      LR.get("art_only") == {"deploymentOpen": True, "open": True, "from": EU["one_eye_art"], "rows": {"black": False, "art": True}, "max": 1, "several": 0, "eyes": [1]}
-      and LR.get("both") == {"deploymentOpen": True, "open": True, "from": min(EU["one_eye_studio_black"], EU["one_eye_art"]), "rows": {"black": True, "art": True}, "max": 1, "several": 0, "eyes": [1]}, (LR.get("art_only"), LR.get("both")))
-check("with only the Trio ticked the page is open (an order can be made) but prints no one-eye price (no style can be ordered for one eye) and no price for two eyes (the several-eyes card says 'free preview now': "
-      "its ladder starts at two eyes and no pair design is orderable in release 1)",
-      LR.get("trio_only") == {"deploymentOpen": True, "open": True, "from": None, "rows": {"black": False, "art": False}, "max": 3, "several": 0, "eyes": [3]}, LR.get("trio_only"))
-land = {f: read(f"src/landing/{f}") for f in ("ordering.ts", "Hero.tsx", "Pricing.tsx", "StyleGallery.tsx")}
-check("the landing's components use those functions and no longer print a price unconditionally: ordering.ts opens through ordersOpen, the hero prints fromOneEye (never the black price by itself), the one-eye card prints rows by oneEyeRows, the several-eyes card follows severalMax (never cat.max), the gallery prints a price only beside a style of the catalogue",
-      "ordersOpen(v.open" in land["ordering.ts"] and "fromOneEye(" in land["Hero.tsx"] and "prices.one_eye_studio_black" not in land["Hero.tsx"] and "oneEyeRows(" in land["Pricing.tsx"]
-      and "rows.black &&" in land["Pricing.tsx"] and "rows.art &&" in land["Pricing.tsx"] and "severalMax(cat)" in land["Pricing.tsx"] and "cat.max" not in land["Pricing.tsx"] and "cat.one.includes(st.id)" in land["StyleGallery.tsx"], "")
+      all(LR.get("art_only", {}).get(k) == v for k, v in {"deploymentOpen": True, "open": True, "from": LR["art_only"]["texts"]["art"], "rows": {"black": False, "art": True}, "max": 1, "several": 0, "eyes": [1], "forSale": ["powder"]}.items())
+      and all(LR.get("both", {}).get(k) == v for k, v in {"deploymentOpen": True, "open": True, "from": LR["both"]["texts"]["from"], "rows": {"black": True, "art": True}, "max": 1, "several": 0, "eyes": [1], "forSale": ["powder", "clean"]}.items())
+      and LR["art_only"]["texts"]["art"] != LR["art_only"]["texts"]["black"], (LR.get("art_only"), LR.get("both")))
+check("with only the Trio ticked the page is open (an order can be made) but prints no one-eye price (no style can be ordered for one eye) and no price for two eyes (the several-eyes row says 'free preview now': "
+      "its ladder starts at two eyes and no pair design is orderable in release 1); the one tile that is for sale is the Trio's, its price is the price of three eyes",
+      all(LR.get("trio_only", {}).get(k) == v for k, v in {"deploymentOpen": True, "open": True, "from": None, "rows": {"black": False, "art": False}, "max": 3, "several": 0, "eyes": [3], "forSale": ["fam_trio"]}.items()), LR.get("trio_only"))
+land = {f: read(f"src/landing/{f}") for f in ("ordering.ts", "Hero.tsx", "PriceTable.tsx", "StyleGallery.tsx", "StyleTile.tsx")}
+check("the landing's components use those functions and no longer print a price unconditionally: ordering.ts opens through ordersOpen and hands the page a sale catalogue (nothing while ordering is closed), the hero prints fromOf over the one-eye styles for sale (never the black price by itself), "
+      "the price table prints a row by the classes for sale and the several-eyes row by severalMax (never cat.max), a tile prints a price only for a style the catalogue lists live for its number of eyes (liveFor), the combo card follows severalMax",
+      "ordersOpen(v.open" in land["ordering.ts"] and "sale = open ? catalogue : NOTHING" in land["ordering.ts"] and "export function useSaleCatalogue" in land["ordering.ts"]
+      and "fromOf(" in land["Hero.tsx"] and "useSaleCatalogue" in land["Hero.tsx"] and "prices.one_eye_studio_black" not in land["Hero.tsx"]
+      and "classLive('black')" in land["PriceTable.tsx"] and "classLive('art')" in land["PriceTable.tsx"] and "severalMax(cat)" in land["PriceTable.tsx"] and "cat.max" not in land["PriceTable.tsx"]
+      and "liveFor(cat, target.id, target.eyes)" in land["StyleTile.tsx"] and "severalMax(" in land["StyleGallery.tsx"] and "useSaleCatalogue" in land["StyleGallery.tsx"], "")
 reset()
 
 # ============================================================================================ 5. the legacy ids after the cutover

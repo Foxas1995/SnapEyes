@@ -2,8 +2,15 @@
 // from it: GET /api/checkout's styles and orderable_max_eyes are read, an older answer or a bad one keeps the build's fallback, the tokens {max} and {styles} are filled,
 // a style the server holds at preview is not listed, and the pricing rows of the four languages carry the tokens and no written number or list.
 // Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing.
-import { fallbackCatalogue, fillTokens, fromOneEye, oneEyeRows, ordersOpen, readCatalogue, severalMax } from '../../src/shared/catalogue';
-import { COPY } from '../../src/landing/copy';
+import { fallbackCatalogue, fillTokens, fromOneEye, liveFor, oneEyeRows, ordersOpen, readCatalogue, severalMax } from '../../src/shared/catalogue';
+import en from '../../src/landing/copy/en.json';
+import de from '../../src/landing/copy/de.json';
+import lt from '../../src/landing/copy/lt.json';
+import hu from '../../src/landing/copy/hu.json';
+import { GALLERY } from '../../src/landing/assets.data';
+import { TILE_STYLE } from '../../src/landing/tileStyle';
+import { landingPrices } from '../../src/landing/priceText';
+import { priceList } from '../../src/shared/markets';
 import { AI_MATERIAL, AI_MATERIAL_PUBLISHED, aiBlocks, aiSentence } from '../../src/shared/aiMaterial';
 import { LEGAL_UPDATED } from '../../src/shared/legal';
 import { STYLES, styleName, classStyle, EFFECTIVE_DEFAULT, buildStage, ceilingStage, landingStyles } from '../../src/shared/styles';
@@ -76,17 +83,37 @@ export async function run(): Promise<R> {
     && fillTokens('nothing to fill', cat) === 'nothing to fill', fillTokens('Two to {max} eyes: {styles}', cat));
 
   check('the black price class is named by its one style from the registry (the row of the landing and the terms)', styleName(classStyle('black')).length > 0 && STYLES[classStyle('black')].price_class === 'black', classStyle('black'));
+  // the new landing (src/landing/copy/<lang>.json, merged with the registry): its pricing rows take the list of art styles and the number of eyes from the run-time tokens
+  const LANDING = { en, de, lt, hu };
   for (const lang of ['en', 'de', 'lt', 'hu'] as const) {
-    const p = COPY[lang].pricing;
-    check(`landing pricing (${lang}): the art row's note is the token {styles}, the group sentence holds {max}, the soon sentence exists, no written list and no written number of eyes`,
-      p.artBackgroundNote === '{styles}' && p.severalNote.includes('{max}') && p.severalSoon.length > 20 && !/\d/.test(p.severalNote.replace('{max}', ''))
-      && !/Studio Black|Couple Duo|Celestial|Deep Nebula/.test(JSON.stringify(p)) && !('studioBlack' in p) && !('duoLabel' in p) && !DASH.test(JSON.stringify(p)), JSON.stringify(p).slice(0, 300));
-    check(`landing pricing (${lang}): the per-eye line prints the maximum it is given, not a written one (perEye(price, 3) holds a 3, perEye(price, 8) an 8)`,
-      p.perEye('X', 3).includes('3') && !p.perEye('X', 3).includes('8') && p.perEye('X', 8).includes('8'), `${p.perEye('X', 3)} | ${p.perEye('X', 8)}`);
-    const all = JSON.stringify(COPY[lang]);
+    const p = LANDING[lang].pricing;
+    check(`landing pricing (${lang}): the art row's note is the token {styles}, the several-eyes row holds {max}, the soon sentence exists, no written list and no old class label`,
+      p.rows.art.b.startsWith('{styles}') && p.rows.more.b.includes('{max}') && p.severalSoon.length > 20
+      && !/Studio Black|Couple Duo|Celestial|Deep Nebula/.test(JSON.stringify(p)) && !DASH.test(JSON.stringify(p)), JSON.stringify(p.rows).slice(0, 300));
+    check(`landing pricing (${lang}): the several-eyes row prints the maximum it is given ({max}), no written number of eyes, and the notice promises no price (no "planned prices" sentence)`,
+      !/\d/.test(p.rows.more.b.replace(/\{[a-zA-Z0-9]+\}/g, '')) && p.notice.length > 20 && !/planned|geplant|planuoj|tervezett/i.test(p.notice), `${p.rows.more.b} | ${p.notice}`);
+    const all = JSON.stringify(LANDING[lang]);
     check(`the landing page (${lang}) states no number of styles ("six styles", "6 styles") and names no style it cannot sell in its head lines`,
       !/(\b(six|sechs|šeši|hat)\b|\b6\b)\s+(styles?|stile[ns]?|stili\w*|stíl\w*)/i.test(all) && !/in six|in allen sechs|visais šešiais|mind a hat/i.test(all), '');
   }
+
+  // the gallery's tiles and the run-time catalogue (src/landing/tileStyle.ts, src/landing/StyleTile.tsx): a tile carries a price only when its style is LIVE for its number of eyes
+  const tiles = [...GALLERY.one, ...GALLERY.two, ...GALLERY.family];
+  check('every tile of the style gallery has a row of the tile table and every row has a tile (the build check item 15 says the same about the registry)',
+    tiles.length === Object.keys(TILE_STYLE).length && tiles.every((t) => TILE_STYLE[t.id] && STYLES[TILE_STYLE[t.id].id]), tiles.map((t) => t.id).join());
+  const trioLive = readCatalogue(info([live('grp.collision', 'Family Colours', { '3': 'live', '4': 'preview' }), live('solo.clean', STYLES['solo.clean'].name, { '1': 'live' })], 3))!;
+  check('liveFor: a style is for sale for exactly the counts the server lists as live (the Trio is live at three eyes and only there), unknown ids and counts are not',
+    liveFor(trioLive, 'grp.collision', 3) && !liveFor(trioLive, 'grp.collision', 4) && !liveFor(trioLive, 'grp.collision', 2) && liveFor(trioLive, 'solo.clean', 1)
+    && !liveFor(trioLive, 'solo.powder', 1) && !liveFor(trioLive, 'nope', 1) && !liveFor(fallbackCatalogue(), 'solo.clean', 1) && !liveFor({ max: 0, styles: [], one: [], eyes: [] } as never, 'solo.clean', 1),
+    JSON.stringify(trioLive.by));
+  const forSale = (cat: typeof trioLive) => tiles.filter((t) => liveFor(cat, TILE_STYLE[t.id].id, TILE_STYLE[t.id].eyes)).map((t) => t.id).join();
+  check('the tiles for sale: with the Trio and Clean Iris live only the Clean Iris tile and the Trio tile are, every other tile (all five pairs, the four other families, five singles) is Soon',
+    forSale(trioLive) === 'clean,fam_trio' && forSale(fallbackCatalogue()) === '', forSale(trioLive));
+  const ladderList = priceList('eu');
+  const lp = landingPrices(ladderList, 'eu', 'en');
+  check('landingPrices of / fromOf: the price of a style is by its price class, "from" is the lowest of the styles given and none at all for none',
+    lp.of('solo.clean', 1) === lp.black && lp.of('solo.powder', 1) === lp.art && lp.of('grp.collision', 3) === lp.eyes(3) && lp.fromOf([]) === null
+    && lp.fromOf(['solo.powder']) === lp.art && lp.fromOf(['solo.clean', 'solo.powder']) === lp.from && lp.eyes(1, 'black') === lp.black && lp.eyes(1, 'art') === lp.art, JSON.stringify([lp.black, lp.art, lp.from]));
 
   // WP18: published by the cutover: every language gives one block and a sentence that ends with it
   check('the AI-made material sentence is written in four languages and PUBLISHED by the cutover (WP18): one block and the sentence for the end of a line, in every language',

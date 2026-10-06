@@ -752,11 +752,11 @@ def sub(root, rel, old, new, count=1):
 
 
 MUT = [
-    ("a claim in an English landing line", "src/landing/copy.ts", "'About a minute, no sign-up'", "'Every artwork is unique'", "the claim"),
-    ("a claim in a German landing line", "src/landing/copy.ts", "'Etwa eine Minute, ohne Anmeldung'", "'Jedes Kunstwerk ist einzigartig'", "the claim"),
-    ("a claim in a Lithuanian landing line", "src/landing/copy.lt.ts", "'Maždaug minutė, be registracijos'", "'Rankų darbo kūrinys'", "the claim"),
-    ("a claim in a Hungarian landing line", "src/landing/copy.hu.ts", "'Kb. egy perc, regisztráció nélkül'", "'Egyedülálló alkotás'", "the claim"),
-    ("a claim in the head of index.html", "index.html", "The watermarked preview is free.\" />\n    <!-- rel=canonical", "The watermarked preview is free. Handmade.\" />\n    <!-- rel=canonical", "the claim"),
+    ("a claim in an English landing line", "src/landing/copy/en.json", '"Preview in about a minute"', '"Every artwork is unique"', "the claim"),
+    ("a claim in a German landing line", "src/landing/copy/de.json", '"Vorschau in etwa einer Minute"', '"Jedes Kunstwerk ist einzigartig"', "the claim"),
+    ("a claim in a Lithuanian landing line", "src/landing/copy/lt.json", '"Peržiūra maždaug per minutę"', '"Rankų darbo kūrinys"', "the claim"),
+    ("a claim in a Hungarian landing line", "src/landing/copy/hu.json", '"Előnézet kb. egy perc alatt"', '"Egyedülálló alkotás"', "the claim"),
+    ("a claim in the head of index.html", "index.html", 'Free watermarked preview, then a digital file to print anywhere." />', 'Free watermarked preview, then a digital file to print anywhere. Handmade." />', "the claim"),
     ("a claim in a legal text (the terms)", "src/legal/docs/terms.ts", "A preview of five to eight eyes is made from smaller copies of your photos", "Your artwork is unique. A preview of five to eight eyes is made from smaller copies of your photos", "the claim"),
     ("a claim in a Lithuanian e-mail sentence", "api/_lib/pay_lt.py", '"questions": "Turite klausimų? Tiesiog atsakykite į šį el. laišką.",\n    "sign": "Pagarbiai\\nSnapEyes",\n}\n\n\ndef confirmation_rows_lt',
      '"questions": "Turite klausimų? Tiesiog atsakykite į šį el. laišką. Unikalus kūrinys.",\n    "sign": "Pagarbiai\\nSnapEyes",\n}\n\n\ndef confirmation_rows_lt', "the claim"),
@@ -787,7 +787,7 @@ sub(root, "src/legal/docs/terms.ts", "['Each further eye', `+${eur(PRICE_CENTS.e
 check("check_styles refuses a number of eyes printed in the terms again (up to 8 eyes)", any("prints a number of eyes" in p for p in text_probs(root, "styles")), text_probs(root, "styles")[:3])
 root = os.path.join(TMP, "mut_six")
 copy_repo(root)
-sub(root, "src/landing/copy.ts", "'Every style', 'With watermark'", "'All 6 styles', 'With watermark'")
+sub(root, "src/landing/copy/en.json", '"Free watermarked preview"', '"All 6 styles"')
 check("check_styles refuses a number of styles in a string again (All 6 styles)", any("states a number of styles" in p for p in text_probs(root, "styles")), text_probs(root, "styles")[:3])
 
 check("no file of this work holds a dash, an invisible character or a written price (the guard checks scan scripts/ and src/ too: this is the part they do not read)",

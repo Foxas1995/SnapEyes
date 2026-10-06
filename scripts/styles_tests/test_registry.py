@@ -785,13 +785,26 @@ def with_load(label, mutate):
 
 probs0 = with_load("untouched", lambda c, r: None)
 check("with the page code loaded (styles.ts, markets.ts, the copy dictionaries) an untouched copy passes", probs0 == [], probs0[:4])
-LT_LINE = "      'duo.clean': 'Ta pati pora be miltelių.',\n"
+# the merge of the new landing: its tiles are keyed by tile id and the table src/landing/tileStyle.ts says which registry style each stands for (check item 15); these are the refusals of
+# that item on a real copy of the tree
+TILE_ROW = "  duo_kiss: { id: 'duo.kiss_collision', eyes: 2 },\n"
 for label, mutate, needle in [
-    ("a copy dictionary keyed by style id with an id that is not shown",
-     lambda c, r: sub(c, r, "src/landing/copy.ts", "      'solo.powder': \"The rim breaks into grains in your eye's own colours.\",", "      'solo.elements': 'x',\n      'solo.powder': \"The rim breaks into grains in your eye's own colours.\","),
-     "landing.en.styles.desc is a dictionary keyed by style id with"),
-    ("a copy dictionary that lacks a shown id in Lithuanian", lambda c, r: sub(c, r, "src/landing/copy.lt.ts", LT_LINE, ""),
-     "landing.lt.styles.desc is a dictionary keyed by style id with"),
+    ("a gallery tile without a row of the tile table", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", TILE_ROW, ""),
+     'the tile "duo_kiss" of the gallery has no row'),
+    ("a tile row that names a style the registry does not have", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", "id: 'duo.kiss_collision'", "id: 'duo.kiss'"),
+     'the tile "duo_kiss" names the style "duo.kiss"'),
+    ("a tile row with more eyes than its style takes", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", "fam_6: { id: 'grp.collision', eyes: 6 }", "fam_6: { id: 'grp.collision', eyes: 9 }"),
+     'the tile "fam_6" shows 9 eyes'),
+    ("a one-eye tile whose style is of the other price class", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", "clean: { id: 'solo.clean', eyes: 1 }", "clean: { id: 'solo.powder', eyes: 1 }"),
+     'the tile "clean" prints the black one-eye price'),
+    ("a row for a tile the gallery does not have", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", TILE_ROW, TILE_ROW + "  duo_ghost: { id: 'duo.clean', eyes: 2 },\n"),
+     'the row "duo_ghost" names no tile of the gallery'),
+    ("a language whose tile copy lacks a tile", lambda c, r: sub(c, r, "src/landing/copy/hu.json", '"fam_trio": {', '"fam_trio_x": {'),
+     'landing.hu.styles.items has no entry for the tile "fam_trio"'),
+    ("a number of styles in the landing's own words", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Free watermarked preview"', '"Free watermarked preview in six styles"'),
+     "states a number of styles"),
+    ("a written list of art styles in the pricing row", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"b": "{styles}."', '"b": "Radiance, Powder Burst, Universe."'),
+     "landing.en.pricing.rows.art.b must be the token {styles}"),
     ("layouts.ts that reads another LAYOUT_NAMES than the file holds",
      lambda c, r: sub(c, r, "src/shared/layouts.ts", "return JSON.parse(src.slice(at + 'LAYOUT_NAMES = '.length)) as Record<string, LayoutWords>;",
                       "return Object.fromEntries(Object.entries(JSON.parse(src.slice(at + 'LAYOUT_NAMES = '.length))).slice(1)) as Record<string, LayoutWords>;"),
@@ -821,7 +834,9 @@ const hit = (s) => M.NUMBER_OF_STYLES.test(s);
 res.numberYes = ['six styles', 'All 6 styles', 'in allen sechs Stilen', 'Alle 6 Stile', 'Nemokama peržiūra 6 stiliais', 'Visi 6 stiliai', 'hat stílusban', '6 stílusban', 'in six styles. The watermarked', 'seven styles'].map(hit);
 res.numberNo = ['any style', 'in the style you choose', 'Choose a style', 'One eye, any style', 'Two eyes (Couple Duo), jeder Stil', 'iki 8 akiu', 'Sechs Augen auf einem Kunstwerk'].map(hit);
 let out = []; M.checkNumberOfStyles([['landing', { en: { a: { b: 'All 6 styles' } } }]], out); res.numberCheck = out;
-out = []; M.checkRuntimeTokens({ en: { pricing: { artBackgroundNote: 'Celestial Gold, Deep Nebula' } }, de: { pricing: { artBackgroundNote: '{styles}', severalNote: 'Zwei bis acht Augen' } } }, out); res.tokens = out;
+out = []; M.checkRuntimeTokens({ en: { pricing: { rows: { art: { b: 'Celestial Gold, Deep Nebula' } } } }, de: { pricing: { rows: { art: { b: '{styles}.' }, more: { b: 'Zwei bis acht Augen' } } } } }, out); res.tokens = out;
+out = []; M.checkCopyDictionaries([['x', { en: { d: { 'solo.powder': 'a', 'solo.clean': 'a', 'solo.splash': 'a', 'solo.gold': 'a', 'solo.universe': 'a', 'solo.radiance': 'a', 'duo.collision_infinity': 'a', 'duo.clean': 'a', 'duo.kiss_collision': 'a', 'grp.collision': 'a', 'solo.elements': 'x' } } }]], styles, out); res.dictExtra = out;
+out = []; M.checkCopyDictionaries([['x', { lt: { d: { 'solo.powder': 'a', 'solo.clean': 'a' } } }]], styles, out); res.dictMissing = out;
 const dir = mkdtempSync(join(process.argv[3], 'wp1-terms-')); mkdirSync(join(dir, 'src/legal/docs'), { recursive: true });
 writeFileSync(join(dir, 'src/legal/docs/terms.ts'), "const rows = [['One eye, Clean Iris', eur(PRICE_CENTS.studioBlack, 'en')], ['Each further eye', `+${eur(1, 'en')}, up to ${MAX_EYES} eyes on one artwork`], ['x', 'up to 8 eyes']];\n");
 out = []; M.checkTerms(dir, styles, out, ['src/legal/docs/terms.ts'], true); res.termsOn = out;
@@ -835,9 +850,13 @@ check("the rules of items 4 and 7 (WP12) are built: the number-of-styles pattern
       rules or (rc, se[-400:]))
 check("... the run-time token rule flags a written list of art styles and a written number of eyes and accepts {styles}; the count-free terms rule flags the printed maximum "
       "(the constant and a digit before eyes) only when enforced; it IS enforced now (WP12_RULES)",
-      bool(rules) and len(rules["tokens"]) == 2 and "landing.en.pricing.artBackgroundNote" in rules["tokens"][0] and "landing.de.pricing.severalNote" in rules["tokens"][1]
+      bool(rules) and len(rules["tokens"]) == 2 and "landing.en.pricing.rows.art.b" in rules["tokens"][0] and "landing.de.pricing.rows.more.b" in rules["tokens"][1]
       and any("prints the maximum number of eyes" in p for p in rules["termsOn"]) and any('prints a number of eyes ("8 eyes")' in p for p in rules["termsOn"])
       and not any("number of eyes" in p for p in rules["termsOff"]) and rules["enforced"] is True, rules or (rc, se[-400:]))
+check("check_styles refuses: a copy dictionary keyed by style id with an id that is not shown (the rule of item 4, on a synthetic surface: no page dictionary is keyed by style id since the new landing)",
+      bool(rules) and any("x.en.d is a dictionary keyed by style id with" in p for p in rules["dictExtra"]), rules.get("dictExtra") if rules else (rc, se[-400:]))
+check("check_styles refuses: a copy dictionary that lacks a shown id in Lithuanian (item 4, synthetic surface)",
+      bool(rules) and any("x.lt.d is a dictionary keyed by style id with" in p for p in rules["dictMissing"]), rules.get("dictMissing") if rules else (rc, se[-400:]))
 
 # ============================================================================================ 6. build-check hazards (IE1) that apply to WP1
 section("6. build-check hazards: a decimal price in a test file, a function without samples, a brand name equal in two languages")

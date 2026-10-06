@@ -5,6 +5,7 @@
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 const req = createRequire(join(process.cwd(), 'package.json'));
 const { runnerImport } = await import(pathToFileURL(req.resolve('vite')).href);
@@ -13,7 +14,8 @@ const opt = { configFile: false, logLevel: 'silent' };
 const { module: ED } = await runnerImport('./src/legal/editions.ts', opt);
 const { module: L } = await runnerImport('./src/shared/legal.ts', opt);
 const { module: M } = await runnerImport('./src/shared/markets.ts', opt);
-const { module: C } = await runnerImport('./src/landing/copy.ts', opt);
+const { module: C } = await runnerImport('./src/landing/copy/index.ts', opt);
+const DE = JSON.parse(readFileSync('./src/landing/copy/de.json', 'utf8'));
 const { module: P } = await runnerImport('./src/legal/plain.ts', opt);
 const { module: O } = await runnerImport('./src/order/copy.ts', opt);
 
@@ -36,8 +38,8 @@ const out = {
   },
   auPrices: M.priceList('au'),
   money: { a39: M.money(M.priceList('au').one_eye_studio_black, 'aud', 'en') },
-  copy: { eu: C.copyFor('en', 'eu'), lt: C.copyFor('de', 'lt'), auEn: C.copyFor('en', 'au'), auDe: C.copyFor('de', 'au') },
-  copySame: { euEn: C.copyFor('en', 'eu') === C.COPY.en, euDe: C.copyFor('de', 'eu') === C.COPY.de, ltEn: C.copyFor('en', 'lt') === C.COPY.en },
+  copy: { eu: C.copyForMarket(C.COPY_EN, 'eu'), lt: C.copyForMarket(DE, 'lt'), auEn: C.copyForMarket(C.COPY_EN, 'au'), auDe: C.copyForMarket(DE, 'au') },
+  copySame: { euEn: C.copyForMarket(C.COPY_EN, 'eu') === C.COPY_EN, euDe: C.copyForMarket(DE, 'eu') === DE, ltEn: C.copyForMarket(C.COPY_EN, 'lt') === C.COPY_EN },
   plainAuTerms: P.legalPlainText('terms', ED.EDITIONS.au.terms.en, 'en', 'au'),
   pack: P.legalMailPack(),
   orderAcl: null,
