@@ -2,7 +2,7 @@
 // (dist/) served the way Vercel serves it, with the API of the tools stood in for (scripts/lib/flowstub.mjs: the models are stubbed, nothing leaves this machine,
 // every answer takes a moment so that the waiting screens can be looked at). Not part of `vite build` (it needs Chrome and a few minutes); run it after a build:
 //   npm run build && npm run check:motion:flow
-//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,failsafe,shift,wiring,bundle] [--mutate-css "from@@to"]
+//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,slider,arrival,failsafe,shift,wiring,bundle] [--mutate-css "from@@to"]
 // --mutate-css changes every stylesheet of the build on its way to the browser (every occurrence of `from` becomes `to`): a deliberate defect, to see that a check
 // really fails. Example: replacing the reduced-motion clamp of the first rule (`:root:has(>body.fx) *{scroll-behavior:auto!important;transition-duration:.01ms!important;transition-delay:0s!important;animation:none!important}`) with
 // `.wk-arc{animation:wk-rot 3.2s linear infinite}` takes the safety net away and leaks a loop into reduced motion: the `reduced` check must fail on the arc.
@@ -20,6 +20,11 @@
 //   order      /order: a ring per eye (dim, the arc, closed in the success colour with its check), the status dot (no spinner), the waiting hairline, the ready reveal
 //              (the aperture after the picture has decoded, the hairline that passes once around the button), a page opened already ready (the picture there at the
 //              first frame, never faded, only the words fade; the largest paint is the picture)
+//   slider     the plain before and after slider sweeps once in every shape of window a customer really has (a phone upright and held sideways, a page zoomed to 200
+//              percent, a short window): where the slider is taller than the window the window need only show 60 percent of what it can; a slider that is only part in
+//              the window counts as seen after 3.5 s, one that is not in the window waits (review I3, M1)
+//   arrival    the aperture is an event that is spent: it runs once, and a style chosen while it runs spends it too, so that the frame never opens again (review I3, m4);
+//              a slow decode leaves the frame the composing status and hairline, never a black frame with nothing in it (m1)
 //   failsafe   a decode that never comes, a browser that blocks every animation, an IntersectionObserver that never reports, a hidden tab: the picture is there
 //              within 3.5 s, the slider is not left half hidden, nothing stays hidden, nothing stays clipped
 //   shift      the layout shifts of the whole flow with motion are the same as with reduced motion (motion adds none: it moves transform, opacity and clip only)
@@ -205,9 +210,9 @@ async function checkTryWithMotion() {
   const comp = R.filter((r) => !r[1].img);
   const withImg = R.filter((r) => r[1].img);
   const composing = comp.filter((r) => r[1].hair), gap = comp.filter((r) => !r[1].hair);
-  expect('loops', composing.length > 5 && composing.every((r) => r[1].status.length === 1 && r[1].status[0].length > 0) && gap.length <= 15 && gap.every((r) => r[1].status.length === 0),
-    `composing frames: ${composing.length} with the hairline, ${gap.length} without (the picture decoding): ${[...new Set(comp.map((r) => JSON.stringify([r[1].hair, r[1].status])))].join(' ; ')}`,
-    `composing: the hairline and one status line for a screen reader in ${composing.length} frames; the picture then takes ${gap.length} frames to decode (the frame is black, then it opens)`);
+  expect('loops', composing.length > 5 && composing.every((r) => r[1].status.length === 1 && r[1].status[0].length > 0) && gap.length === 0,
+    `composing frames: ${composing.length} with the hairline, ${gap.length} without (a black frame with no status while the picture decodes): ${[...new Set(comp.map((r) => JSON.stringify([r[1].hair, r[1].status])))].join(' ; ')}`,
+    `composing: the hairline and one status line for a screen reader in all ${composing.length} frames before the picture, the decode of the picture included (the frame is never black and mute); then it opens`);
   const clips = withImg.map((r) => parseFloat((/circle\(([\d.]+)%/.exec(r[1].img[0]) || [])[1] ?? NaN)).filter((x) => !Number.isNaN(x));
   const first = withImg[0];
   const opening = withImg.filter((r) => /circle/.test(r[1].img[0]));
@@ -316,6 +321,127 @@ async function checkOrder() {
   await p4.close();
 }
 
+// ---------------------------------------------------------------------------------------------------- slider
+// The plain before and after slider of the result rests at 92 (the customer's photo) and sweeps once to 50 when it has been SEEN. Seen is 60 percent of the slider in
+// the window, or, where the slider is taller than the window (it is a square as wide as the page: a phone held sideways, a page zoomed to 200 percent, a short
+// window), 60 percent of what the window can show of it. Review I3, M1: the observer was asked for 60 percent of the slider flat, which such a window can never show,
+// and the handle stayed at 92 for ever, the restored picture hidden under the photo.
+async function checkSlider() {
+  console.log('slider');
+  const CLIP = `(() => { const s = document.querySelector('.cursor-ew-resize'); return s ? s.querySelectorAll('img')[1].style.clipPath : null; })()`;
+  const pct = (c) => { const m = /(\d+(?:\.\d+)?)%/.exec(c || ''); return m ? Number(m[1]) : Number.NaN; };
+  // 1. every shape of window a customer really has: in the end the handle rests at 50, and where the slider is in the window at once nothing needs scrolling
+  for (const [w, h, label, atOnce] of [[375, 812, 'a phone upright', true], [667, 375, 'a phone held sideways', true], [844, 390, 'a large phone held sideways', true], [640, 360, 'a desktop page zoomed to 200 percent', true], [1280, 500, 'a short laptop window', false], [320, 568, 'a small phone upright', true]]) {
+    const page = await open('/try?lang=en', { width: w, height: h });
+    const came = (await walkTry(page, 'result')) && (await waitFor(page, "!!document.querySelector('.cursor-ew-resize')", 40000, 50));
+    expect('slider', came, `${label}: the slider did not come`);
+    if (!came) { await page.close(); continue; }
+    const geo = JSON.parse(await page.eval(`JSON.stringify((() => { const r = document.querySelector('.cursor-ew-resize').getBoundingClientRect(); return { h: Math.round(r.height), top: Math.round(r.top), vh: innerHeight }; })())`));
+    await sleep(2400);   // 400 ms to wait, 1 s to sweep, and a margin
+    const at = pct(await page.eval(CLIP));
+    if (atOnce) expect('slider', at === 50, `${label} (${w}x${h}, slider ${geo.h} px tall, its top at ${geo.top}, window ${geo.vh}): the handle is at ${at} 2.4 s after the slider came, with no scrolling`, `${label} (${w}x${h}, slider ${geo.h} px in a window ${geo.vh} px tall): it sweeps by itself and rests at 50`);
+    // the customer scrolls the slider into the middle of the window and looks at it: it rests at 50 (it never stays at 92)
+    await page.eval(`document.querySelector('.cursor-ew-resize').scrollIntoView({ block: 'center' })`);
+    const rests = await waitFor(page, `(() => { const s = document.querySelector('.cursor-ew-resize'); return !!s && /(^|[^0-9.])50%/.test(s.querySelectorAll('img')[1].style.clipPath); })()`, 6000, 100);
+    expect('slider', rests, `${label}: the handle is at ${pct(await page.eval(CLIP))} six seconds after the slider was scrolled into the middle of the window`, atOnce ? '' : `${label} (${w}x${h}, slider ${geo.h} px in a window ${geo.vh} px tall): scrolled into view it sweeps and rests at 50`);
+    expect('slider', (errorsOf.get(page) || []).length === 0, `console errors: ${(errorsOf.get(page) || []).join(' | ')}`);
+    await page.close();
+  }
+  // 2. an observer that reports a slider that is only PART in the window (a bar over it, a browser that reports another height): it counts as seen after 3.5 s; one that is
+  // out of the window altogether is not seen, and waits for the customer
+  const fake = (ratio, inter) => `window.IntersectionObserver = class { constructor(cb) { this.cb = cb; } observe(el) { setTimeout(() => this.cb([{ target: el, isIntersecting: ${inter}, intersectionRatio: ${ratio} }], this), 60); } unobserve() {} disconnect() {} takeRecords() { return []; } };`;
+  for (const [ratio, inter, label] of [[0.4, true, 'part of the slider in the window (40 percent where 60 are needed)'], [0.1, true, 'a few pixels of the slider in the window (10 percent)'], [0, false, 'the slider outside the window']]) {
+    const page = await open('/try?lang=en', { pre: fake(ratio, inter) });
+    await walkTry(page, 'result');
+    expect('slider', await waitFor(page, "!!document.querySelector('.cursor-ew-resize')", 40000, 50), `${label}: the slider did not come`);
+    await sleep(2200);
+    const early = pct(await page.eval(CLIP));
+    await sleep(5000);
+    const late = pct(await page.eval(CLIP));
+    if (ratio >= 0.3) expect('slider', early === 92 && late === 50, `${label}: ${early} after 2.2 s, ${late} after 7.2 s`, `${label}: the handle waits at 92 for 3.5 s, then the slider counts as seen and sweeps to 50 (${early} then ${late})`);
+    else expect('slider', early === 92 && late === 92, `${label}: ${early} after 2.2 s, ${late} after 7.2 s`, `${label}: nothing sweeps that nobody looks at (${early} then ${late})`);
+    await page.close();
+  }
+  // 3. a window that GROWS: at 375x220 the slider is only part in the window (about 30 percent of it where 38 percent are needed), so by the part-visible rule alone it would
+  // count as seen after 3.5 s and sweep at 4.9 s; a window that grows to a phone upright shows all of it and it sweeps at once
+  {
+    const page = await open('/try?lang=en', { width: 375, height: 220 });
+    await walkTry(page, 'result');
+    expect('slider', await waitFor(page, "!!document.querySelector('.cursor-ew-resize')", 40000, 50), 'the small window: the slider did not come');
+    await sleep(300);
+    const small = pct(await page.eval(CLIP));
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 375, height: 812, deviceScaleFactor: 1, mobile: true });
+    await sleep(2200);
+    const grown = pct(await page.eval(CLIP));
+    expect('slider', small === 92 && grown === 50, `a window that grows: ${small} in the small window, ${grown} 2.2 s after it grew`, `a window that grows shows the slider at once: ${small} in the small window, ${grown} 2.2 s after it grew (not after 3.5 s)`);
+    await page.close();
+  }
+  // 4. a phone turned sideways BEFORE the slider was seen (it was out of the window, a spacer of 2000 px over the page keeps it there): the threshold the observer was given for
+  // the upright window (60 percent of the slider) can never be reached in the sideways one (the slider is taller than the window), so only the new threshold lets it
+  // count as seen when it is scrolled into the middle: within 2.4 s, long before the part-visible rule (3.5 s) could do it
+  {
+    const spacer = `document.addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = 'body::before{content:"";display:block;height:2000px}'; document.head.appendChild(s); });`;
+    const page = await open('/try?lang=en', { width: 375, height: 812, pre: spacer });
+    await walkTry(page, 'result');
+    expect('slider', await waitFor(page, "!!document.querySelector('.cursor-ew-resize')", 40000, 50), 'the turned phone: the slider did not come');
+    await sleep(900);
+    const upright = pct(await page.eval(CLIP));
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 667, height: 375, deviceScaleFactor: 1, mobile: true });
+    await sleep(300);
+    await page.eval(`document.querySelector('.cursor-ew-resize').scrollIntoView({ block: 'center' })`);
+    await sleep(2400);
+    const turned = pct(await page.eval(CLIP));
+    expect('slider', upright === 92 && turned === 50, `a phone turned before the slider was seen: ${upright} while out of the window, ${turned} 2.4 s after it was scrolled into the middle of the sideways window`, `a phone turned sideways before the slider was seen: it waits at ${upright}, and the new window's threshold lets it count as seen (${turned} 2.4 s after it was scrolled into the middle)`);
+    await page.close();
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------- arrival
+// The aperture is an EVENT of one arrival. It runs once and the arrival is then spent (TryApp `arriving`, ArtImage `arrive`), however it ends: by its own animationend, by
+// a style chosen while it runs (the end event never comes: review I3, m4, the next mount of the frame would open again), by a decode that came late. And the frame
+// is never black and mute while a large picture decodes (m1).
+async function checkArrival() {
+  console.log('arrival');
+  // what ResultView told ArtImage: the `arrive` prop of the component that holds the picture of the frame (React keeps its props on the fibre, also in a production build)
+  const ARRIVE = `(() => { const img = document.querySelector('[data-testid=artwork] img'); if (!img) return null; const k = Object.keys(img).find((x) => x.startsWith('__reactFiber$')); for (let f = k ? img[k] : null; f; f = f.return) { const p = f.memoizedProps; if (p && typeof p === 'object' && 'arrive' in p && 'onOpened' in p) return p.arrive; } return null; })()`;
+  // 1. the opening runs to its end
+  let page = await open('/try?lang=en');
+  await walkTry(page, 'result');
+  expect('arrival', await waitFor(page, "!!document.querySelector('[data-testid=artwork] img')", 40000, 20), 'the artwork did not come');
+  const during = await page.eval(ARRIVE);
+  await sleep(2800);
+  const after = await page.eval(ARRIVE);
+  expect('arrival', during === true && after === false, `the arrival while the aperture runs: ${during}, 2.8 s later: ${after}`, 'the arrival is true while the aperture opens and spent when it has ended');
+  await page.close();
+  // 2. a style chosen while the aperture runs: the arrival is spent all the same, one picture is left, nothing is clipped
+  page = await open('/try?lang=en');
+  await walkTry(page, 'result');
+  expect('arrival', await waitFor(page, "!!document.querySelector('[data-testid=artwork] img')", 40000, 20), 'the artwork did not come');
+  await sleep(250);
+  const cutAt = await page.eval(`getComputedStyle(document.querySelector('[data-testid=artwork] img')).clipPath`);
+  await page.eval(`document.querySelector('[data-testid=tile-${api.slugs.second}] button').click()`);
+  await sleep(3200);
+  const end = JSON.parse(await page.eval(`JSON.stringify({ arrive: ${ARRIVE}, imgs: document.querySelectorAll('[data-testid=artwork] img').length, cls: document.querySelector('[data-testid=artwork] img').className, clip: getComputedStyle(document.querySelector('[data-testid=artwork] img')).clipPath })`));
+  expect('arrival', /circle/.test(cutAt) && end.arrive === false && end.imgs === 1 && !/fx-open|fx-xfade/.test(end.cls) && end.clip === 'none',
+    `a style chosen while the aperture ran (clip then ${cutAt}): ${JSON.stringify(end)}`, 'a style chosen while the aperture runs spends the arrival (its end event never comes): one picture, no clip, the frame will not open again');
+  expect('arrival', (errorsOf.get(page) || []).length === 0, `console errors: ${(errorsOf.get(page) || []).join(' | ')}`);
+  await page.close();
+  // 3. a slow decode (1.8 s): until the picture is in, the frame keeps the composing status and the hairline, never a black frame with nothing in it
+  page = await open('/try?lang=en', { pre: 'const d = HTMLImageElement.prototype.decode; HTMLImageElement.prototype.decode = function () { return new Promise((res, rej) => setTimeout(() => d.call(this).then(res, rej), 1800)); };' });
+  await startRec(page, `(() => { const f = document.querySelector('[data-testid=artwork]'); if (!f) return null; return { imgs: f.querySelectorAll('img').length, hair: !!f.querySelector('.fx-hair'), status: [...f.querySelectorAll('[role=status]')].length }; })()`, 2400);
+  await walkTry(page, 'result');
+  expect('arrival', await waitFor(page, "!!document.querySelector('[data-testid=artwork] img')", 40000, 20), 'the artwork did not come with a slow decode');
+  await sleep(2000);
+  const F = (await rec(page)).filter((r) => r[1]);
+  const empty = F.filter((r) => r[1].imgs === 0);
+  const bare = empty.filter((r) => !r[1].hair || r[1].status !== 1);
+  const span = empty.length ? empty.at(-1)[0] - empty[0][0] : 0;
+  expect('arrival', empty.length > 60 && bare.length === 0 && span > 2000, `frames of the frame with no picture: ${empty.length} over ${span} ms, ${bare.length} of them without the hairline or without exactly one status: ${JSON.stringify(bare.slice(0, 3))}`,
+    `a decode of 1.8 s: the frame keeps the hairline and one status line in all ${empty.length} frames without a picture (${span} ms), never black and mute`);
+  expect('arrival', F.at(-1)[1].imgs === 1 && F.at(-1)[1].status === 0 && !F.at(-1)[1].hair, `at the end: ${JSON.stringify(F.at(-1)[1])}`, 'when the picture is in, the status and the hairline are gone');
+  await page.close();
+}
+
 // ---------------------------------------------------------------------------------------------------- failsafe
 async function checkFailsafe() {
   console.log('failsafe');
@@ -367,12 +493,15 @@ async function checkFailsafe() {
 // ---------------------------------------------------------------------------------------------------- shift
 async function checkShift() {
   console.log('shift');
+  // The clamp of the reduced-motion rule gives every transition .01 ms: a style change of an element (the buy card's link when the preview arrives, a line of text that
+  // changes class) starts one that ends in the frame it starts in. Whether the sampler's tick (getAnimations() flushes the style) lands in that frame is chance, so
+  // the sampler leaves out what lasts 1 ms or less (review I3 fix: the gate failed on a build that changed nothing about reduced motion, and passed on its parent).
   // What can move the layout is a property that has layout (width, height, margin, padding, top, left, font size, border width): the motion of the tools animates none of them
   // (a sampler collects every property any animation or transition of the flow touches, at 50 ms) except the width of the progress bar's fill, which is the bar's own and
   // stands inside a box of fixed size. The numbers of the layout shifts of the whole flow with and without motion are printed (the page's own shifts, a new screen under the
   // old one, vary by a few hundredths from one run to the next, so they only gate a motion that would add a real one: .06).
   const LAYOUT = /^(width|height|min-|max-|margin|padding|top|left|right|bottom|inset|font|line-height|letter-spacing|border-(top|right|bottom|left)?-?width|gap|flex|grid|display|position)/;
-  const SAMPLER = `window.__props = new Set(); setInterval(() => { for (const a of document.getAnimations()) { const t = a.effect && a.effect.target; const cls = t && t.className && t.className.baseVal !== undefined ? t.className.baseVal : (t && t.className) || ''; const props = a.transitionProperty ? [a.transitionProperty] : (a.effect && a.effect.getKeyframes ? a.effect.getKeyframes().flatMap((k) => Object.keys(k)).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) : []); for (const p of props) window.__props.add(p + ' @ ' + String(cls).split(' ').filter((c) => /^(fx|wk)-/.test(c)).join('.')); } }, 50);`;
+  const SAMPLER = `window.__props = new Set(); setInterval(() => { for (const a of document.getAnimations()) { if (a.effect && a.effect.getComputedTiming().duration <= 1) continue; const t = a.effect && a.effect.target; const cls = t && t.className && t.className.baseVal !== undefined ? t.className.baseVal : (t && t.className) || ''; const props = a.transitionProperty ? [a.transitionProperty] : (a.effect && a.effect.getKeyframes ? a.effect.getKeyframes().flatMap((k) => Object.keys(k)).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) : []); for (const p of props) window.__props.add(p + ' @ ' + String(cls).split(' ').filter((c) => /^(fx|wk)-/.test(c)).join('.')); } }, 50);`;
   const flow = async (reduceMotion) => {
     const page = await open('/try?lang=en', { reduceMotion, pre: SAMPLER });
     await walkTry(page, 'result');
@@ -452,6 +581,8 @@ try {
   if (wants('reduced')) await checkReduced();
   if (wants('loops') || wants('arc') || wants('aperture') || wants('crossfade')) { await checkTryWithMotion(); await checkLoopsAcrossFlow(); }
   if (wants('order')) await checkOrder();
+  if (wants('slider')) await checkSlider();
+  if (wants('arrival')) await checkArrival();
   if (wants('failsafe')) await checkFailsafe();
   if (wants('shift')) await checkShift();
   if (wants('wiring')) await checkWiring();

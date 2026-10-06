@@ -25,7 +25,7 @@ const INTEGRATION = { js: 9344, css: 727 };
 // landing never loads it (wiring check of scripts/check_motion_flow.mjs, and src/main.tsx imports none of it). The motion of the tools (task I3: the flow stylesheet, the arc, the
 // rings, the picture that opens, the capture diagram) lives there: TOOLS is its growth, measured as that chunk's gzip size (level 6) on the commit with the motion minus the commit
 // before it (5c9054c). Re-measure it when the motion of the tools changes: build both, `gzip -6` the two checkout-* files of each, take the difference.
-const TOOLS = { js: 1358, css: 2018 };
+const TOOLS = { js: 1515, css: 2008 };   // the review fix of the motion changed the shared chunk by +157 B JS (the slider's in-view rule, the arrival that is spent, the frame's waiting marks) and -10 B CSS (the tile fade left); measured on the two builds
 const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };

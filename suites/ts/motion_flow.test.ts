@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { SWEEP, cardOf, hasSwept, intoReady, markSwept, moved, sweepAt } from '../../src/motion/flowLogic';
+import { SWEEP, SWEEP_PARTIAL_MS, SWEEP_SEEN, arrivalSpent, cardOf, hasSwept, intoReady, markSwept, moved, sweepAt, sweepNeed, sweepPart, sweepSeen, type Layer } from '../../src/motion/flowLogic';
 import { Arc, Dot, Tick, Waiting } from '../../src/motion/Tick';
 import { EyeRing } from '../../src/motion/EyeRing';
 import { ArtImage } from '../../src/motion/ArtImage';
@@ -71,6 +71,35 @@ export async function run(): Promise<R> {
   check('an eye that has swept never sweeps again in this tab (the slider is keyed by the eye and remounts when the customer comes back to it)',
     !hasSwept('e-motion-1') && (markSwept('e-motion-1'), hasSwept('e-motion-1')) && !hasSwept('e-motion-2'));
 
+  // ---- /try: when the slider counts as seen (review I3, M1: asking 60 percent of a slider that is taller than the window left the handle at 92 for ever on a phone
+  // held sideways and in a page zoomed to 200 percent)
+  const grid = [100, 200, 280, 360, 375, 500, 600, 640, 736, 812, 900, 1200, 2000].flatMap((h) => [100, 200, 280, 360, 375, 500, 600, 640, 736, 812, 900, 1200, 2000].map((vh) => [h, vh] as const));
+  check('the slider needs 60 percent of itself in the window, or 60 percent of what the window can show of it when it is taller than the window (a phone held sideways, a page zoomed to 200 percent); with no size it asks the plain 60 percent',
+    SWEEP_SEEN === 0.6 && sweepNeed(343, 812) === SWEEP_SEEN && sweepNeed(736, 900) === SWEEP_SEEN && Math.abs(sweepNeed(635, 375) - (0.6 * 375) / 635) < 1e-9 && Math.abs(sweepNeed(608, 360) - (0.6 * 360) / 608) < 1e-9
+    && sweepNeed(0, 800) === SWEEP_SEEN && sweepNeed(400, 0) === SWEEP_SEEN && sweepNeed(Number.NaN, 800) === SWEEP_SEEN, [sweepNeed(635, 375), sweepNeed(608, 360)].join());
+  const stuck = grid.filter(([h, vh]) => !sweepSeen(Math.min(1, vh / h), sweepNeed(h, vh)));
+  const oldRule = grid.filter(([h, vh]) => Math.min(1, vh / h) < SWEEP_SEEN).length;
+  check('the most a window can show of a slider is always enough, for every shape of slider and window: the handle is never left at 92 for ever (the old rule, 60 percent of the slider, fails for a slider taller than 5/3 of the window)',
+    stuck.length === 0 && oldRule > 30, `stuck: ${stuck.map((g) => g.join('x')).join(' ')}; shapes the old rule could not satisfy: ${oldRule}`);
+  check('a slider mostly out of the window does not count as seen (a quarter of an upright slider, a tenth of a sideways one), and the need is never above 60 percent and never nothing',
+    !sweepSeen(0.25, sweepNeed(343, 812)) && !sweepSeen(0.1, sweepNeed(635, 375)) && sweepSeen(0.6, sweepNeed(343, 812)) && sweepSeen(375 / 635, sweepNeed(635, 375))
+    && grid.every(([h, vh]) => sweepNeed(h, vh) > 0 && sweepNeed(h, vh) <= SWEEP_SEEN));
+  check('a slider counts as part in the window from half of what it needs (half of 60 percent upright, half of 35 percent sideways): a slider that peeks in by a few pixels does not, so its one sweep is not spent on nobody',
+    sweepPart(0.3, sweepNeed(343, 812)) && !sweepPart(0.1, sweepNeed(343, 812)) && sweepPart(0.18, sweepNeed(635, 375)) && !sweepPart(0.03, sweepNeed(635, 375)) && !sweepPart(0, SWEEP_SEEN) && grid.every(([h, vh]) => sweepPart(sweepNeed(h, vh), sweepNeed(h, vh))));
+  const slider = read('src/try/CompareSlider.tsx');
+  check('the slider asks the observer for the threshold it needs in this window ([0, need / 2, need]), asks again when the window changes size, counts a slider with half of that in the window after 3.5 s, and keeps the failsafe of an observer that never reports',
+    /sweepNeed\(el\.getBoundingClientRect\(\)\.height, window\.innerHeight\)/.test(slider) && /threshold: \[0, need \/ 2, need\]/.test(slider) && !/threshold: 0\.6/.test(slider) && /addEventListener\('resize', watch\)/.test(slider) && /removeEventListener\('resize', watch\)/.test(slider)
+    && SWEEP_PARTIAL_MS === 3500 && /sweepPart\(e\.intersectionRatio, need\)\) partial = window\.setTimeout\(seen, SWEEP_PARTIAL_MS\)/.test(slider) && /failsafe = window\.setTimeout\(\(\) => \{ stop\(\); setPos\(SWEEP\.to\); \}, 3500\)/.test(slider));
+
+  // ---- /try: an arrival that no animationend ends (review I3, m4)
+  const lay = (id: number, mode: Layer['mode']): Layer => ({ id, src: `s${id}`, mode });
+  check('an arrival is spent when the picture that was opening is replaced by another (its end event never comes) and when the first picture comes in plain (a late decode, reduced motion), and by nothing else',
+    arrivalSpent(lay(1, 'open'), lay(2, 'fade')) && arrivalSpent(null, lay(1, 'plain')) && !arrivalSpent(null, lay(1, 'open')) && !arrivalSpent(null, null) && !arrivalSpent(lay(1, 'open'), lay(1, 'plain'))
+    && !arrivalSpent(lay(1, 'plain'), lay(2, 'fade')) && !arrivalSpent(lay(1, 'open'), null) && !arrivalSpent(lay(1, 'fade'), lay(2, 'fade')));
+  const artImage = read('src/motion/ArtImage.tsx');
+  check('ArtImage spends the arrival of the mount that was an arrival through arrivalSpent, in an effect on the top picture (no side effect inside a state updater)',
+    /const \[arrival\] = useState\(arrive\)/.test(artImage) && /if \(arrival && arrivalSpent\(before\.current, last\)\) opened\.current\?\.\(\)/.test(artImage) && /\}, \[arrival, last\]\)/.test(artImage));
+
   // ---- the pieces
   const tick = html(createElement(Tick));
   check('the drawn check has pathLength 1 on its path (lucide\'s Check has none: a dash of 1 would draw dots), is hidden from assistive technology and has no label of its own',
@@ -91,6 +120,17 @@ export async function run(): Promise<R> {
   const arriving = html(createElement(ArtImage, { src: 'data:image/jpeg;base64,AAAA', alt: 'Your artwork', arrive: true }));
   check('a picture that was there at the start is in the first render, untouched; an arriving one is put in only after it has decoded (never a flash of the whole picture before its opening)',
     art.includes('<img') && art.includes('alt="Your artwork"') && !art.includes('fx-open') && arriving === '');
+
+  // the frame of an arriving picture is not left black and mute while the picture decodes (review I3, m1)
+  const mark = createElement('span', { role: 'status' }, 'Composing');
+  check('an arriving frame shows what it is given while its first picture decodes (a status and a hairline), a picture that is there at once shows none of it, and the picture is never covered by it',
+    html(createElement(ArtImage, { src: 'data:image/jpeg;base64,AAAA', alt: 'Your artwork', arrive: true, waiting: mark })) === '<span role="status">Composing</span>'
+    && !html(createElement(ArtImage, { src: 'data:image/jpeg;base64,AAAA', alt: 'Your artwork', waiting: mark })).includes('role="status"') && /\{drawn\.length === 0 && waiting\}/.test(artImage));
+  const resultView = read('src/try/ResultView.tsx');
+  check('the result gives the frame the composing marks (the status for a screen reader and the hairline) for the decode of the first picture, and only when it is not composing already (one status, one hairline)',
+    /waiting=\{composing \? null : waitingMarks\}/.test(resultView) && /const waitingMarks = \(\s*<>\s*<span role="status" className="sr-only">\{T\.result\.composing\}<\/span>\s*<span aria-hidden="true" className="fx-hair" \/>\s*<\/>\s*\);/.test(resultView));
+  check('the style tiles carry no fade of their own (it is in no row of the spec table 7.5 and fades a picture of the page up from nothing, AC-1, AC-4): no fx-arrive anywhere',
+    ![read('src/motion/flow.css'), read('src/try/StylePicker.tsx'), resultView, slider].some((t) => t.includes('fx-arrive')));
 
   // ---- the waiting screen
   setCopyLang('en');

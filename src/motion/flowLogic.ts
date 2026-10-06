@@ -24,6 +24,37 @@ export function sweepAt(ms: number): number {
   return SWEEP.from + (SWEEP.to - SWEEP.from) * e;
 }
 
+/** How much of the slider must be in the window before it counts as seen (the sweep starts 400 ms after that): 60 percent of the slider. */
+export const SWEEP_SEEN = 0.6;
+
+/** How long a slider that is only PART in the window (at least half of what it needs, less than all of it) may wait before it counts as seen anyway. A bar over it, a window it
+ *  hardly fits, a browser that reports another height than the one the customer sees: the handle is never left at 92 (the customer's photo, the picture hidden). */
+export const SWEEP_PARTIAL_MS = 3500;
+
+/** The share of the slider (its height) that must be in the window for the sweep: SWEEP_SEEN of the slider, or, when the slider is taller than the window (a
+ *  phone held sideways, a page zoomed to 200 percent, a short window: the slider is a square as wide as the page), SWEEP_SEEN of what the window can show of it.
+ *  Asking 60 percent of a slider that cannot be shown to 60 percent left the handle at 92 for ever (review I3, M1). */
+export function sweepNeed(boxH: number, viewH: number): number {
+  if (!(boxH > 0) || !(viewH > 0)) return SWEEP_SEEN;
+  return SWEEP_SEEN * Math.min(1, viewH / boxH);
+}
+
+/** Is `ratio` (the observer's share of the slider in the window) enough? A hair of tolerance: the observer's ratio and the threshold are floats of two kinds. */
+export const sweepSeen = (ratio: number, need: number): boolean => ratio >= need - 0.005;
+
+/** Is `ratio` at least half of what is needed? Only such a slider counts as part in the window (SWEEP_PARTIAL_MS): one that peeks into the window by a few pixels
+ *  is not looked at, and its sweep, which happens once per eye, must not be spent on nobody. */
+export const sweepPart = (ratio: number, need: number): boolean => ratio >= need / 2 - 0.005;
+
+/** A picture of an artwork frame (src/motion/ArtImage.tsx): the motion it comes in with. */
+export interface Layer { id: number; src: string; mode: 'plain' | 'open' | 'fade' }
+
+/** Is the arrival of a frame spent by this change of its top picture (`prev` to `next`)? Two changes spend it without the opening's own `animationend`: the
+ *  picture that was opening was replaced by another (the customer chose another style within the 1.3 s: the end event never comes), and the first picture came in
+ *  plain (a decode that came late, or reduced motion: no opening will run). An arrival that stays unspent opens again at the next mount of the frame, for
+ *  instance when an eye is taken away (review I3, m4). The ordinary end of the opening is `settle` in ArtImage. */
+export const arrivalSpent = (prev: Layer | null, next: Layer | null): boolean => !!next && ((!!prev && prev.mode === 'open' && next.id !== prev.id) || (prev === null && next.mode === 'plain'));
+
 /** The eyes whose slider has already swept in this tab: it never plays twice for one eye (the slider is keyed by the eye, so it remounts when the customer
  *  switches eyes and comes back). A module-level set, as the spec asks. */
 const swept = new Set<string>();

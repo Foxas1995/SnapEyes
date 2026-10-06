@@ -47,6 +47,14 @@ export const ResultView: React.FC<Props> = (p) => {
   const sel = p.picker.selected;
   const shown = p.art ?? p.staleArt;
   const composing = !p.art && !p.composeError;
+  // the frame of an artwork that has just been made is empty until its picture has decoded (src/motion/ArtImage.tsx): it keeps the composing marks meanwhile,
+  // the status for a screen reader and the hairline, so that it is never black and mute for the second a large picture takes
+  const waitingMarks = (
+    <>
+      <span role="status" className="sr-only">{T.result.composing}</span>
+      <span aria-hidden="true" className="fx-hair" />
+    </>
+  );
   const samples = p.eyes.filter((e) => e.sample).length;
   const allSample = samples > 0 && samples === n;
   if (!eye) return null;
@@ -220,7 +228,7 @@ export const ResultView: React.FC<Props> = (p) => {
         <>
           <div data-testid="artwork" className="fx-frame relative w-full rounded-2xl overflow-hidden border border-white/10 bg-black"
             {...NO_SAVE_BOX} style={{ ...NO_SAVE_BOX.style, aspectRatio: `${expected.w} / ${expected.h}` }}>
-            {shown && <ArtImage {...NO_SAVE} src={shown.src} alt={artAlt} arrive={p.arrive} onOpened={p.onArrived} className={`fx-dim absolute inset-0 w-full h-full object-contain ${p.art ? '' : 'opacity-50'}`} />}
+            {shown && <ArtImage {...NO_SAVE} src={shown.src} alt={artAlt} arrive={p.arrive} onOpened={p.onArrived} waiting={composing ? null : waitingMarks} className={`fx-dim absolute inset-0 w-full h-full object-contain ${p.art ? '' : 'opacity-50'}`} />}
             {/* composing: the stale picture stays, dimmed (it tells the truth), and a hairline of gold runs along the frame's top edge; a screen reader hears the state once */}
             {composing && (shown
               ? <span role="status" className="sr-only">{T.result.composing}</span>

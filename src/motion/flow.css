@@ -108,7 +108,6 @@
     /* a new preview over the old one: opacity only, no scale, no blur (AC-4) */
     .fx-xfade { animation: fx-fade var(--d-swap) var(--ease-out) backwards; }
     .fx-dim { transition: opacity var(--d-swap) var(--ease-out); }
-    .fx-arrive { animation: fx-fade .5s var(--ease-out) backwards; }
     .fx-pick { transition-duration: var(--d-tap); transition-timing-function: var(--ease-out); }
     .fx-pop { animation: fx-pop var(--d-tap) var(--ease-out) backwards; }
     /* the buy card arrives once; nothing inside it (the price, the waiver, the legal links) ever moves on its own */

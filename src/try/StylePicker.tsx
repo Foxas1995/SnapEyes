@@ -127,7 +127,7 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
       <button type="button" onClick={press} aria-pressed={held ? undefined : selected} aria-disabled={held || undefined} aria-busy={busy || undefined}
         className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]">
         <span className="relative block w-full aspect-[4/3] bg-black overflow-hidden">
-          {art && <img {...NO_SAVE} src={art.src} alt={T.picker.tileAlt(t.name)} className="fx-arrive absolute inset-0 w-full h-full object-contain" />}
+          {art && <img {...NO_SAVE} src={art.src} alt={T.picker.tileAlt(t.name)} className="absolute inset-0 w-full h-full object-contain" />}
           {busy && (
             <>
               <span aria-hidden="true" data-testid="tile-skeleton" className="absolute inset-0 bg-white/5" />
