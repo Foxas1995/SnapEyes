@@ -7,20 +7,32 @@
 //   3. the budgets: the whole folder, the biggest file, the LCP picture of the first screen (phone, slow 4G: BUILD_PLAN section 5);
 //   4. the cache headers: vercel.json gives every picture of the folder and every hashed script and stylesheet of the build
 //      "immutable" for a year, and gives nothing that is not hashed (the pages, the pictures of /assets/atelier, the fonts) that;
-// and the RELEASE GATE: whether the page can sell what its gallery shows. Each of the 16 tiles of the style gallery stands for a style of the
-// registry (api/_lib/styles_registry.py, the one place for style ids and stages) and a number of eyes (src/landing/tileStyle.ts TILE_STYLE); a
-// tile is blocked when the engine could never make it: no row, a style the registry does not have, a retired style, an eye count the style does
-// not take, or a style that is only planned (no engine behind it). Every other tile is fine whatever its stage: what can be BOUGHT is decided at
-// run time (the registry's ceiling per eye count, then the owner's tick in the admin page; src/landing/StyleTile.tsx shows a tile that cannot be
-// bought as Soon and prints no price beside it), so the owner's ticks never touch the build. While a tile is blocked the build prints a notice,
-// and the build of a PRODUCTION deploy (VERCEL_ENV=production, or LANDING_GATE=strict anywhere) fails: the page must not go live with a tile
-// of something the engine cannot make.
+// and the RELEASE GATE (scripts/landing_gate.mjs): the page must never promise what the engine cannot sell. Each of the 16 tiles of the style gallery stands for a style
+// of the registry (api/_lib/styles_registry.py, the one place for style ids, names and stages) and a number of eyes (src/landing/tileStyle.ts TILE_STYLE). What can be BOUGHT
+// is decided at run time (the registry's ceiling per number of eyes, then the owner's tick in the admin page: no build ever sees it), so the gate does not ask that
+// tiles can be bought; it renders the page (src/landing/shell/gate.tsx) in every state of the catalogue a visitor can meet and refuses a promise: a tile of a style that is
+// not live without its Soon chip, a price for a style that is not live, a style name that is not the registry's, a price row that names or prices what cannot be bought,
+// a tile of something that does not exist (no row, a style the registry does not have, a retired style, a wrong number of eyes), and, in every build, a missing tile picture.
+// The tiles that stand for a style that is only planned (no engine yet), in the laboratory or at preview are fine: they say Soon. While a promise is broken the build prints a
+// notice, and the build of a PRODUCTION deploy (VERCEL_ENV=production, or LANDING_GATE=strict anywhere) fails.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { headersFor } from './lib/static.mjs';
-import { loadRegistry, ceilingOf } from './styles_source.mjs';
+import { loadRegistry } from './styles_source.mjs';
+import { gateInputs, gateIsStrict, gateSummary, promiseGate, releaseGate } from './landing_gate.mjs';
+
+export { gateInputs, gateIsStrict, gateSummary, promiseGate, releaseGate };
+
+/** The page rendered for the gate in every state of the catalogue (src/landing/shell/gate.tsx renderGate): load(path) is Vite's module runner. The price texts of each
+ *  language come from the default market's ladder, read here as vite.config.ts reads it for the first screen (no file of the landing reads the ladder itself). */
+export async function renderLanding(load, root) {
+  const markets = await load('./src/shared/markets.ts');
+  const priceText = await load('./src/landing/priceText.ts');
+  const pricesFor = (lang) => priceText.landingPrices(markets.priceList(markets.DEFAULT_MARKET), markets.DEFAULT_MARKET, lang);
+  return (await load('./src/landing/shell/gate.tsx')).renderGate(gateInputs(root), pricesFor);
+}
 
 export const LANDING_DIR = 'public/assets/landing';
 const HASH_LEN = 10;
@@ -87,52 +99,9 @@ export function usedNames(spec, available) {
   return { used, missing };
 }
 
-/** Is the release gate an error in this environment? A production deploy (Vercel sets VERCEL_ENV=production) or an explicit
- *  LANDING_GATE=strict: yes. A local build, a preview deploy: a notice only. There is deliberately no switch that turns a production
- *  gate off: the way to a production build is to make the gate empty. */
-export function gateIsStrict(env) {
-  return env.LANDING_GATE === 'strict' || env.VERCEL_ENV === 'production';
-}
-
-/** The gate table against the registry: { total, live, preview, lab, blocked: [{ tile, reason }] }. One row per tile of the gallery; live, preview and lab
- *  list the tile ids by the registry's CEILING for the tile's style and number of eyes (the most the owner can ever switch on: live means he can tick it
- *  live in the admin page, preview and lab mean the page shows it as Soon until the ceiling is raised in the registry); blocked lists the tiles the
- *  engine could never make, with the reason. styles: the registry's STYLES; tileStyle: TILE_STYLE of src/landing/tileStyle.ts; gallery: GALLERY of
- *  src/landing/assets.data.ts. Pure: it reads nothing. */
-export function releaseGate(styles, tileStyle, gallery) {
-  const has = (o, k) => o !== null && typeof o === 'object' && Object.prototype.hasOwnProperty.call(o, k);
-  const gate = { total: 0, live: [], preview: [], lab: [], blocked: [] };
-  for (const g of gallery?.groups ?? []) {
-    for (const it of gallery[g] ?? []) {
-      gate.total += 1;
-      const row = has(tileStyle, it.id) ? tileStyle[it.id] : undefined;
-      const d = row && has(styles, row.id) ? styles[row.id] : undefined;
-      let reason = '';
-      if (!row) reason = 'src/landing/tileStyle.ts has no row for it';
-      else if (!d) reason = `the registry has no style "${row.id}"`;
-      else {
-        const ceiling = ceilingOf(d, row.eyes);
-        if (ceiling === null) reason = `"${row.id}" takes ${d.eyes[0]} to ${d.eyes[1]} eyes, the tile shows ${row.eyes}`;
-        else if (ceiling === 'retired') reason = `"${row.id}" is retired: it can never be bought again`;
-        else if (ceiling === 'planned') reason = `"${row.id}" is only planned for ${row.eyes} eye(s): no engine makes it yet`;
-        else if (ceiling === 'live' || ceiling === 'preview' || ceiling === 'lab') gate[ceiling].push(it.id);
-        else reason = `"${row.id}" has the stage "${ceiling}", which this check does not know`;
-      }
-      if (reason) gate.blocked.push({ tile: it.id, reason });
-    }
-  }
-  return gate;
-}
-
-/** One line for the CLI: what the page can sell in principle, by the registry's ceilings. */
-export function gateSummary(gate) {
-  const part = (name, ids) => `${ids.length} ${name}${ids.length ? ` (${ids.join(', ')})` : ''}`;
-  return `${gate.total} tiles: ${part('with a live ceiling', gate.live)}, ${part('at preview', gate.preview)}, ${part('in the laboratory', gate.lab)}, ${gate.blocked.length} that the engine cannot make`;
-}
-
 /** { problems, notices, gate } for the committed pictures. assets: src/landing/assets.ts, data: src/landing/assets.data.ts, tiles: src/landing/tileStyle.ts
- *  (as the build loaded them). */
-export function checkLandingAssets(root, assets, data, tiles) {
+ *  (as the build loaded them), rendered: what src/landing/shell/gate.tsx renderGate(gateInputs(root)) gave for the page (the gate reads the markup). */
+export function checkLandingAssets(root, assets, data, tiles, rendered) {
   const problems = [];
   const notices = [];
   const dir = join(root, LANDING_DIR);
@@ -202,7 +171,7 @@ export function checkLandingAssets(root, assets, data, tiles) {
     }
   }
 
-  // the release gate (a notice, an error for a production build: see the top)
+  // the release gate (a notice, an error for a production build: see the top and scripts/landing_gate.mjs)
   let gate = null;
   let styles = null;
   try { styles = loadRegistry(root).styles; } catch (e) { problems.push(`the release gate cannot read the registry: ${e instanceof Error ? e.message : String(e)}`); }
@@ -210,24 +179,37 @@ export function checkLandingAssets(root, assets, data, tiles) {
   else if (styles) {
     gate = releaseGate(styles, tiles.TILE_STYLE, data?.GALLERY);
     if (!gate.total) problems.push('src/landing/assets.data.ts: GALLERY has no tiles (the release gate reads it)');
+    const broken = [];
     if (gate.blocked.length) {
       const why = gate.blocked.map((b) => `${b.tile} (${b.reason})`).join('; ');
-      const line = `RELEASE GATE: ${gate.blocked.length} of ${gate.total} tiles of the style gallery are of something the engine cannot make: ${why}. Give each tile a row in src/landing/tileStyle.ts that names a style of the registry (api/_lib/styles_registry.py) which takes that many eyes and is not retired or only planned, or cut the tile from the gallery (scripts/landing_assets.json).`;
-      if (gateIsStrict(process.env)) problems.push(`${line} This is a production build (VERCEL_ENV=production or LANDING_GATE=strict): it must not go live before the gate is empty.`);
-      else notices.push(line);
+      broken.push(`${gate.blocked.length} of ${gate.total} tiles of the style gallery stand for something that does not exist: ${why}. Give each tile a row in src/landing/tileStyle.ts that names a style of the registry (api/_lib/styles_registry.py) which takes that many eyes and is not retired, or cut the tile from the gallery (scripts/landing_assets.json)`);
+    }
+    if (!rendered) problems.push('the release gate was not given the rendered page (src/landing/shell/gate.tsx renderGate): it cannot tell what the page promises');
+    else {
+      const inputs = gateInputs(root);
+      const { promises, underSells, pictures } = promiseGate(rendered, inputs, styles, tiles.TILE_STYLE, data?.GALLERY);
+      for (const p of pictures) problems.push(`a tile picture is missing: ${p}`);
+      for (const e of rendered.errors ?? []) problems.push(`the page could not be rendered for the gate: ${e}`);
+      if (promises.length) broken.push(`the page promises what the engine cannot sell (${promises.length}): ${promises.join('; ')}. A tile that cannot be bought says Soon and prints no price; a name is the registry's; a price row names and prices only what the run-time catalogue lists live`);
+      for (const u of underSells) notices.push(`the page offers less than it can sell: ${u}`);
+    }
+    for (const line of broken) {
+      if (gateIsStrict(process.env)) problems.push(`RELEASE GATE: ${line}. This is a production build (VERCEL_ENV=production or LANDING_GATE=strict): it must not go live while the page promises what it cannot sell.`);
+      else notices.push(`RELEASE GATE: ${line}`);
     }
   }
   return { problems, notices, gate };
 }
 
-// `node scripts/check_landing_assets.mjs` (npm run check:assets): loads the two manifests through Vite's module runner
+// `node scripts/check_landing_assets.mjs` (npm run check:assets): loads the manifests and the gate's view of the page through Vite's module runner
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { runnerImport } = await import('vite');
   const root = join(fileURLToPath(new URL('.', import.meta.url)), '..');
-  const load = async (p) => (await runnerImport(p, { root, configFile: false, logLevel: 'silent' })).module;
-  const { problems, notices, gate } = checkLandingAssets(root, await load('./src/landing/assets.ts'), await load('./src/landing/assets.data.ts'), await load('./src/landing/tileStyle.ts'));
+  const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent' })).module;
+  const rendered = await renderLanding(load, root);
+  const { problems, notices, gate } = checkLandingAssets(root, await load('./src/landing/assets.ts'), await load('./src/landing/assets.data.ts'), await load('./src/landing/tileStyle.ts'), rendered);
   for (const n of notices) console.log(n);
-  if (gate) console.log(`release gate: ${gateSummary(gate)}`);
+  if (gate) console.log(`release gate: ${gateSummary(gate)}; ${rendered.scenarios.length} states of the catalogue rendered in ${Object.keys(rendered.scenarios[0]?.langs ?? {}).length} languages`);
   if (problems.length) {
     console.error(`landing assets check FAILED (${problems.length}):\n  ${problems.join('\n  ')}`);
     process.exit(1);

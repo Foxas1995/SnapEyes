@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { checkPrices, type ClientMarkets, type LandingPriceModule } from './scripts/check_prices.mjs'
 import { checkPack, checkTexts } from './scripts/check_texts.mjs'
 import { checkStyles, describeRegistry, describePlates } from './scripts/check_styles.mjs'
-import { checkLandingAssets } from './scripts/check_landing_assets.mjs'
+import { checkLandingAssets, renderLanding } from './scripts/check_landing_assets.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
 // withdrawal information with the model form, per language, plus the seller's contact facts). Built from the same
@@ -83,16 +83,18 @@ function styleCheck(): Plugin {
 
 // The landing page's pictures (public/assets/landing, written by scripts/build_landing_assets.py) against their manifest
 // (src/landing/assets.ts): content hashes, sizes, nothing unused or missing, the byte budgets, the immutable cache headers of
-// vercel.json (scripts/check_landing_assets.mjs; `npm run check:assets` runs it alone). The release gate (which tiles of the
-// style gallery name a style the registry can make) is a notice, an error for a production build (VERCEL_ENV=production) or with
-// LANDING_GATE=strict. Any problem stops the build.
+// vercel.json (scripts/check_landing_assets.mjs; `npm run check:assets` runs it alone). The release gate (scripts/landing_gate.mjs: the page must never promise what
+// the engine cannot sell) renders the style gallery and the price table in every state of the run-time catalogue (src/landing/shell/gate.tsx) and reads the markup against
+// the registry: a promise it finds broken is a notice, an error for a production build (VERCEL_ENV=production) or with LANDING_GATE=strict. A missing tile picture and
+// any other problem stop every build.
 function assetCheck(): Plugin {
   return {
     name: 'snapeyes-landing-assets-check',
     apply: 'build',
     async buildStart() {
       const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
-      const { problems, notices } = checkLandingAssets(process.cwd(), await load('./src/landing/assets.ts'), await load('./src/landing/assets.data.ts'), await load('./src/landing/tileStyle.ts'))
+      const rendered = await renderLanding(load, process.cwd())
+      const { problems, notices } = checkLandingAssets(process.cwd(), await load('./src/landing/assets.ts'), await load('./src/landing/assets.data.ts'), await load('./src/landing/tileStyle.ts'), rendered)
       for (const n of notices) this.warn(n)
       if (problems.length) this.error(`landing assets check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
     },
