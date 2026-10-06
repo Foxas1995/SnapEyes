@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Check, Clock, Download, ExternalLink, Mail, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Clock, Download, ExternalLink, Mail, RefreshCcw } from 'lucide-react';
 import { ORDER_COPY, mbOf, type OrderCopy } from './copy';
 import { adoptMarket, money, withMarket } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
 import { EMPTY_VIEW, REAL_DEPS, driveOrder, stopOf, type DriveView, type OrderLink } from './driver';
 import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPath, type OrderState, type OrderStatus } from './api';
 import { WithdrawEntry, WithdrawForm, WithdrawnCard } from './WithdrawPanel';
-import { CARD, GOLD_BTN, PLAIN_BTN, Spinner } from './ui';
+import { CARD, GOLD_BTN, PLAIN_BTN } from './ui';
+import { Dot, Waiting } from '../motion/Tick';
+import { EyeRing } from '../motion/EyeRing';
+import { ArtImage } from '../motion/ArtImage';
+import { cardOf, intoReady, moved } from '../motion/flowLogic';
 import { detectLang, rememberLang, type Lang } from '../try/lang';
 import { LANG_NAMES, langFor, marketLangs } from '../shared/lang';
 import { clearCheckoutStorage } from '../try/checkout';
@@ -119,6 +123,16 @@ export const OrderApp: React.FC = () => {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [view.stop]);
 
+  // Motion (src/motion/flow.css, spec 8): which card is on screen, whether this visit has moved from one card to another, and whether the file became ready
+  // WHILE this visit was open (a visit that opens in ready, from the e-mail link, has no previous state: no reveal, the page is simply there)
+  const card = cardOf(view.status?.state, view.stop);
+  const [rec, setRec] = useState({ card: 'load', state: null as string | null, moved: false, reveal: false });
+  const real = view.status?.state ?? null;
+  if (card !== rec.card || (real !== null && real !== rec.state)) {
+    const changed = real !== null && real !== rec.state;
+    setRec({ card, state: changed ? real : rec.state, moved: rec.moved || moved(rec.card, card), reveal: card === 'ready' && (changed ? intoReady(rec.state, real) : rec.reveal) });
+  }
+
   // a paid order: this tab's order and the artwork kept for the way back from Stripe are done with
   const state = view.status?.state;
   useEffect(() => {
@@ -147,7 +161,7 @@ export const OrderApp: React.FC = () => {
     if (LINK && !st && !view.stop) {
       content = (
         <section className={`${CARD} flex items-center gap-3`} aria-busy="true">
-          <Spinner /> <span className="text-sm text-zinc-300">{C.loading}</span>
+          <Dot /> <span className="text-sm text-zinc-300">{C.loading}</span>
         </section>
       );
     } else if (view.stop === 'bad_link') {
@@ -189,7 +203,7 @@ export const OrderApp: React.FC = () => {
   } else if (!st) {
     content = (
       <section className={`${CARD} flex items-center gap-3`} aria-busy="true">
-        <Spinner /> <span className="text-sm text-zinc-300">{C.loading}</span>
+        <Waiting /> <span className="text-sm text-zinc-300">{C.loading}</span>
       </section>
     );
   } else if (st.state === 'unpaid') {
@@ -199,7 +213,7 @@ export const OrderApp: React.FC = () => {
       <section data-testid="state-unpaid" className={CARD}>
         <h2 className="font-luxury text-xl font-bold">{C.unpaid.title}</h2>
         {checking ? (
-          <p className="text-sm text-zinc-300 mt-2 flex items-center gap-2"><Spinner /> {C.unpaid.confirming}</p>
+          <p className="text-sm text-zinc-300 mt-2 flex items-center gap-2"><Waiting /> {C.unpaid.confirming}</p>
         ) : (
           <>
             <p className="text-sm text-zinc-300 mt-2">{C.unpaid.body}</p>
@@ -218,7 +232,8 @@ export const OrderApp: React.FC = () => {
     content = (
       <>
         {mailing && <Summary C={C} st={st} lang={lang} />}
-        <section data-testid="state-pending" data-waiting={st.waiting_for || ''} className={CARD}>
+        <section data-testid="state-pending" data-waiting={st.waiting_for || ''} className={`${CARD} fx-edge`}>
+          <span aria-hidden="true" className="fx-hair" />
           <h2 className="font-luxury text-xl font-bold">{mailing ? C.pending.mailTitle : C.pending.title}</h2>
           <p className="text-sm text-zinc-300 mt-2">{mailing ? C.pending.mailBody : C.pending.body}</p>
           {view.wait && <p className="text-xs text-zinc-500 mt-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {C.wait.confirming(secondsLeft(view.wait.until, clock))}</p>}
@@ -254,7 +269,7 @@ export const OrderApp: React.FC = () => {
   } else if (st.state === 'ready' && st.download) {
     content = (
       <>
-        <Ready C={C} st={st} lang={lang} email={email} />
+        <Ready C={C} st={st} lang={lang} email={email} reveal={rec.reveal} />
         <Summary C={C} st={st} lang={lang} />
       </>
     );
@@ -277,7 +292,7 @@ export const OrderApp: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-2xl mx-auto">
-        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-black tracking-wider text-lg">SNAP<span className="text-gold-gradient">EYES</span></a>
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-semibold tracking-wider text-lg">SNAP<span className="text-[#f5c542]">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
           <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-500 text-right">{C.tag}</span>
           <LangSwitch C={C} lang={lang} langs={langs} onSwitch={switchLang} />
@@ -288,7 +303,9 @@ export const OrderApp: React.FC = () => {
         <h1 className="font-luxury text-3xl sm:text-4xl font-bold text-center mt-2">{C.title}</h1>
         {LINK && <p data-testid="order-no" className="text-center text-xs text-zinc-500 mt-2 break-all">{C.orderNo(LINK.o)}</p>}
         <div className="mt-6 flex flex-col gap-4">
-          {content}
+          {/* the card that replaces another arrives with a transition (a state change of this visit; the first card is the page itself, and the withdrawal form
+              is a form: no motion there), keyed by what the card shows so a re-render of the same card never replays it */}
+          <div key={card} className={`flex flex-col gap-4${rec.moved && !WITHDRAW_MODE ? ' fx-step' : ''}`}>{content}</div>
           {!WITHDRAW_MODE && LINK && st && CONTRACT_STATES.includes(st.state) && <WithdrawEntry C={C} lang={lang} link={LINK} />}
           <p className="text-center text-xs text-zinc-400 mt-2">
             {C.contact.lead}{' '}
@@ -320,7 +337,7 @@ export const OrderApp: React.FC = () => {
 };
 
 const Problem: React.FC<{ C: OrderCopy; text: string; onRetry?: () => void }> = ({ C, text, onRetry }) => (
-  <section role="alert" data-testid="state-error" className="bg-rose-950/30 border border-rose-500/40 rounded-2xl p-4 sm:p-5">
+  <section role="alert" data-testid="state-error" className="fx-note bg-rose-950/30 border border-rose-500/40 rounded-2xl p-4 sm:p-5">
     <h2 className="font-luxury text-lg font-bold text-rose-100 flex items-center gap-2"><AlertTriangle className="w-5 h-5 shrink-0 text-rose-300" /> {C.errors.title}</h2>
     <p className="text-sm text-rose-100/90 mt-2">{text}</p>
     {onRetry && (
@@ -357,21 +374,18 @@ const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: 
     : view.composing ? (parts > 1 ? C.making.part(part, parts) : C.making.composing)
     : C.making.progress(done, n);
   return (
-    <section data-testid="state-making" className={CARD} aria-busy="true">
+    <section data-testid="state-making" className={`${CARD}${w ? ' fx-edge' : ''}`} aria-busy="true">
+      {w && <span aria-hidden="true" className="fx-hair" />}
       <h2 className="font-luxury text-xl font-bold">{C.making.title}</h2>
       <p className="text-sm text-zinc-300 mt-2">{C.making.lead}</p>
       <ul className="flex flex-wrap gap-x-3 gap-y-3 mt-4">
         {st.eyes.map((e) => {
           const busy = view.making.includes(e.eye);
-          const ring = e.made ? 'border-emerald-400' : busy ? 'border-[#f5c542] animate-pulse' : 'border-white/15 opacity-60';
           return (
             <li key={e.eye} data-testid={`eye-${e.eye}`} className="w-[72px] flex flex-col items-center gap-1 text-center">
-              <span className={`relative w-14 h-14 rounded-full border-2 overflow-hidden bg-white/5 ${ring}`}>
-                {e.preview_url && <img src={e.preview_url} alt="" className="w-full h-full object-cover" />}
-                {e.made && <span className="absolute inset-0 flex items-center justify-center bg-black/35"><Check className="w-5 h-5 text-emerald-300" /></span>}
-              </span>
+              <EyeRing made={!!e.made} busy={busy} thumb={e.preview_url} />
               <span className="text-[10px] font-bold text-zinc-300 leading-tight">{C.making.eye(e.eye)}</span>
-              <span className={`text-[10px] leading-tight ${e.made ? 'text-emerald-300' : busy ? 'text-[#f5c542]' : 'text-zinc-500'}`}>
+              <span className={`text-[10px] leading-tight ${e.made ? 'text-[var(--ok)]' : busy ? 'text-[#f5c542]' : 'text-zinc-500'}`}>
                 {e.made ? C.making.done : busy ? C.making.working : C.making.waiting}
               </span>
             </li>
@@ -379,10 +393,10 @@ const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: 
         })}
       </ul>
       <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-        <div className="h-full rounded-full bg-gradient-to-r from-[#f5c542] to-[#d4af37] transition-all duration-700" style={{ width: `${Math.max(pct, 4)}%` }} />
+        <div className="fx-bar h-full rounded-full bg-[#f5c542]" style={{ width: `${Math.max(pct, 4)}%` }} />
       </div>
       <div className="flex items-start justify-between gap-3 mt-2">
-        <p data-testid="making-line" className="text-xs text-zinc-300 flex items-center gap-2 min-w-0">{(view.making.length > 0 || view.composing) && !w && <Spinner />}<span>{line}</span></p>
+        <p data-testid="making-line" className="text-xs text-zinc-300 flex items-center gap-2 min-w-0">{(view.making.length > 0 || view.composing) && !w && <Dot />}<span>{line}</span></p>
         {since !== null && <span className="shrink-0 text-[11px] font-mono text-zinc-500">{C.making.elapsed(Math.max(0, Math.round((clock - since) / 1000)))}</span>}
       </div>
       {view.server ? (
@@ -399,25 +413,29 @@ const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: 
   );
 };
 
-const Ready: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang; email: boolean }> = ({ C, st, lang, email }) => {
+const Ready: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang; email: boolean; reveal: boolean }> = ({ C, st, lang, email, reveal }) => {
   const d = st.download!;
   const w = typeof d.width === 'number' ? d.width : null;
   const h = typeof d.height === 'number' ? d.height : null;
+  // The file became ready while this visit was open: the picture opens like a diaphragm once it has decoded (a clip, 1.3 s), and a hairline passes once around
+  // the download button after it. A page opened already in ready (the e-mail link) shows the picture at once, untouched (a picture painted at load is never
+  // faded: it is the largest paint of the page, Artwork Charter AC-1), and only the words and the button around it fade in, gently.
+  const soft = reveal ? '' : ' fx-soft';
   return (
     <section data-testid="state-ready" className={CARD}>
-      <h2 className="font-luxury text-xl font-bold">{C.ready.title}</h2>
-      <div className="mt-4 rounded-2xl overflow-hidden border border-white/10 bg-black" style={w && h ? { aspectRatio: `${w} / ${h}` } : undefined}>
-        <img src={d.url} alt={C.ready.alt} decoding="async" className="w-full h-full object-contain" />
+      <h2 className={`font-luxury text-xl font-bold${soft}`}>{C.ready.title}</h2>
+      <div className="mt-4 rounded-2xl overflow-hidden border border-white/10 bg-black" style={w && h ? { aspectRatio: `${w} / ${h}` } : reveal ? { minHeight: 240 } : undefined}>
+        <ArtImage src={d.url} alt={C.ready.alt} decoding="async" arrive={reveal} className="w-full h-full object-contain" />
       </div>
-      <a data-testid="download" href={d.download_url} className={`${GOLD_BTN} mt-4`}><Download className="w-4 h-4 shrink-0" /> {C.ready.download}</a>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mt-3">
+      <a data-testid="download" href={d.download_url} className={`${GOLD_BTN} mt-4${reveal ? ' fx-pass' : soft}`}><Download className="w-4 h-4 shrink-0" /> {C.ready.download}</a>
+      <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mt-3${soft}`}>
         <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-300 underline underline-offset-4 decoration-white/30 hover:text-white inline-flex items-center gap-1">
           <ExternalLink className="w-3.5 h-3.5" /> {C.ready.open}
         </a>
         {w && h && typeof d.bytes === 'number' && <span className="text-[11px] text-zinc-500">{C.ready.details(w, h, mbOf(d.bytes, lang))}</span>}
       </div>
-      <p className="text-xs text-zinc-300 mt-4">{C.ready.link}</p>
-      <p className="text-xs text-zinc-400 mt-1">{email ? C.ready.email : C.ready.bookmark}</p>
+      <p className={`text-xs text-zinc-300 mt-4${soft}`}>{C.ready.link}</p>
+      <p className={`text-xs text-zinc-400 mt-1${soft}`}>{email ? C.ready.email : C.ready.bookmark}</p>
     </section>
   );
 };
