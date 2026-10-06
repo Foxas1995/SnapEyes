@@ -14,6 +14,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runnerImport } from 'vite';
+import { cssStub } from './lib/cssstub.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SEARCH = ['src', path.join('suites', 'ts')];
@@ -66,7 +67,7 @@ for (const file of files) {
     continue;
   }
   try {
-    const { module } = await runnerImport(file, { configFile: false, logLevel: 'silent' });
+    const { module } = await runnerImport(file, { configFile: false, logLevel: 'silent', plugins: [cssStub()] });
     if (typeof module.run !== 'function') { line(false, rel(file), 'exports no run()'); continue; }
     for (const [name, ok, detail] of await module.run()) line(Boolean(ok), name, detail);
   } catch (e) {

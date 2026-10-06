@@ -86,8 +86,9 @@ const LangContext = createContext<LangState | null>(null);
 
 // applyHead: the legal pages set their own title, description and canonical. The landing writes its head from its copy
 // (CopyProvider claims it); a page with neither leaves the head as its HTML has it.
-export function LangProvider({ children, applyHead }: { children: ReactNode; applyHead?: (lang: Lang) => void }) {
-  const [chosen, setChosen] = useState<Lang>(() => detectLang(currentMarket()));
+// initial: the language to start in instead of the visitor's (the build's gate renders the page in each language: src/landing/shell/gate.tsx)
+export function LangProvider({ children, applyHead, initial }: { children: ReactNode; applyHead?: (lang: Lang) => void; initial?: Lang }) {
+  const [chosen, setChosen] = useState<Lang>(() => initial ?? detectLang(currentMarket()));
   // the language the page shows: the visitor's, unless the market has no texts in it (the Australian market: English
   // and German only); the choice itself is kept, so going back to a market that has it shows it again
   const market = useMarket();

@@ -9,7 +9,9 @@
 //                         page prints prices (src/landing/ordering.ts: open needs the deployment to take orders AND a style that can be ordered now).
 //   ticked                which styles the owner has switched on: true (every live ceiling), false (none) or a list of registry ids (only those, each up to its
 //                         ceiling). The default follows `open`, so the two states above are what they always were; the states "ordering open, nothing ticked" and
-//                         "one style ticked" are { open: true, ticked: false } and { open: true, ticked: [id] }.
+//                         "one style ticked" are { open: true, ticked: false } and { open: true, ticked: [id] }. 'beyond' is a state no server answers today: every style the
+//                         registry has, live for every number of eyes it takes (a registry whose ceilings were all raised). The page must tell the truth there too, so the
+//                         build's gate renders it: the several-eyes ladder, the combo card's price and the price rows are only ever printed in states like this one.
 //
 // No price is written here and no style id: the registry is read.
 import { join } from 'node:path';
@@ -19,7 +21,7 @@ const RANK = { planned: 0, lab: 1, preview: 2, live: 3 };
 const MAX_EYES = 8;
 
 /** The public catalogue ({styles, orderable_max_eyes}) of a state: ticked = true switches the live ceilings on, a list of ids switches those on, false (or an id that
- *  is not listed) holds the style at the effective default. */
+ *  is not listed) holds the style at the effective default, 'beyond' makes every style live for every number of eyes it takes (retired counts stay out). */
 export function catalogueAnswer(root, ticked) {
   const reg = loadRegistry(root);
   const hold = reg.effectiveDefault || 'live';
@@ -32,7 +34,7 @@ export function catalogueAnswer(root, ticked) {
     for (let n = d.eyes[0]; n <= d.eyes[1]; n++) {
       const c = ceilingOf(d, n);
       if (c === null || c === 'retired') continue;
-      const s = on(id) || RANK[c] <= RANK[hold] ? c : hold;
+      const s = ticked === 'beyond' ? 'live' : on(id) || RANK[c] <= RANK[hold] ? c : hold;
       if (s === 'preview' || s === 'live') stages[String(n)] = s;
       if (s === 'live' && n > max) max = n;
     }

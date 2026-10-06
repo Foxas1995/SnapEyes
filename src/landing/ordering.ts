@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { createContext, useContext, useSyncExternalStore } from 'react';
 import { noteCheckoutInfo, noteInfoUnavailable } from '../shared/pricing';
 import { NOTHING_FOR_SALE, fallbackCatalogue, ordersOpen, readCatalogue, saleCatalogue, type RunCatalogue } from '../shared/catalogue';
 
@@ -23,14 +23,27 @@ import { NOTHING_FOR_SALE, fallbackCatalogue, ordersOpen, readCatalogue, saleCat
 // The same answer holds the run-time catalogue (its "styles" at their effective stage, and orderable_max_eyes: src/shared/catalogue.ts): the number of
 // eyes, the list of styles a price may stand beside and the several-eyes ladder come from it, never from a text, so that a style the owner takes back in
 // the admin page leaves the page without a deploy. Until it is read (and whenever it cannot be) the build-time registry's ceilings stand in for it.
-let open = false;
-let suggested: string | null = null;
-let catalogue: RunCatalogue = fallbackCatalogue();
-// what can be bought RIGHT NOW: the catalogue while this deployment takes orders (open), nothing otherwise. The page prints a price, or a count of eyes, only
-// for what is in here; a style the catalogue lists as live while ordering is closed still reads Soon, so no price stands beside "Ordering opens soon".
-let sale: RunCatalogue = NOTHING_FOR_SALE;
-let started: Promise<void> | null = null;
-const listeners = new Set<() => void>();
+
+/** What the page knows about ordering and how it learns it: ONE store per page (`ordering`, below, asking the real server). It is made by a function so that the
+ *  build's gate (src/landing/shell/gate.tsx) can make its own with the answers of a state of the catalogue and hand it to the very components it renders
+ *  (OrderingContext): the gate then runs THIS asking code, not a copy of its rule, and the components read it through the same hooks the live page uses. */
+export interface Ordering {
+  /** Ask (once) and apply the answers. */
+  start: () => Promise<void>;
+  subscribe: (onChange: () => void) => () => void;
+  /** This deployment takes orders AND some style can be ordered now. */
+  open: () => boolean;
+  /** What can be bought RIGHT NOW: the catalogue while this deployment takes orders (open), nothing otherwise. The page prints a price, or a count of eyes, only
+   *  for what is in here; a style the catalogue lists as live while ordering is closed still reads Soon, so no price stands beside "Ordering opens soon". */
+  sale: () => RunCatalogue;
+  suggested: () => string | null;
+  /** A render without a browser (the prerender, hydration) reads the closed page, so the first paint is the same everywhere; the gate's store reads its answers
+   *  there too (settled), which is how the build's own render sees a state of the catalogue. */
+  settled: boolean;
+}
+
+/** One question to the server: the request the head of index.html already made for this path, once (a body can be read once), else a fresh one. */
+export type Ask = (path: string, signal?: AbortSignal) => Promise<Response>;
 
 // the request the head of index.html already made for this path, once (a body can be read once)
 function takeEarly(path: string): Promise<Response> | undefined {
@@ -40,71 +53,92 @@ function takeEarly(path: string): Promise<Response> | undefined {
   return p;
 }
 
-async function getJson(path: string, needOk: boolean): Promise<Record<string, unknown> | null> {
-  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timer = ctrl ? setTimeout(() => ctrl.abort(), 15_000) : null;
-  try {
-    const r = await (takeEarly(path) ?? fetch(path, { headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin', signal: ctrl?.signal }));
-    if (needOk && !r.ok) return null;
-    const j: unknown = await r.json();
-    return j && typeof j === 'object' && !Array.isArray(j) ? (j as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  } finally {
-    if (timer) clearTimeout(timer);
+const askServer: Ask = (path, signal) => takeEarly(path) ?? fetch(path, { headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin', signal });
+
+export function createOrdering(ask: Ask, settled = false): Ordering {
+  let open = false;
+  let suggested: string | null = null;
+  let catalogue: RunCatalogue = fallbackCatalogue();
+  let sale: RunCatalogue = NOTHING_FOR_SALE;
+  let started: Promise<void> | null = null;
+  const listeners = new Set<() => void>();
+
+  async function getJson(path: string, needOk: boolean): Promise<Record<string, unknown> | null> {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 15_000) : null;
+    try {
+      const r = await ask(path, ctrl?.signal);
+      if (needOk && !r.ok) return null;
+      const j: unknown = await r.json();
+      return j && typeof j === 'object' && !Array.isArray(j) ? (j as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
+
+  async function check(): Promise<{ open: boolean; suggest: string | null; catalogue: RunCatalogue | null }> {
+    const none = { open: false, suggest: null, catalogue: null };
+    const h = await getJson('/api/health', false);
+    if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) { noteInfoUnavailable(); return none; }
+    const plain = await getJson('/api/checkout', true);
+    if (!plain) { noteInfoUnavailable(); return none; }
+    const c = ((await noteCheckoutInfo(plain)) ?? plain) as Record<string, unknown>;
+    // the catalogue is read from the plain answer (the one without a visitor id), whatever a price test adds to the second one
+    return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null, catalogue: readCatalogue(plain) };
+  }
+
+  function start(): Promise<void> {
+    started ??= check().then((v) => {
+      if (!v.open && v.suggest === null && v.catalogue === null) return;
+      if (v.catalogue) catalogue = v.catalogue;
+      open = ordersOpen(v.open, catalogue);       // the deployment takes orders AND a style can be ordered now (the build's fallback orders nothing)
+      sale = saleCatalogue(v.open, catalogue);    // the same rule, in src/shared/catalogue.ts, as the build's gate reads
+      suggested = v.suggest;
+      listeners.forEach((l) => l());
+    });
+    return started;
+  }
+
+  function subscribe(onChange: () => void): () => void {
+    listeners.add(onChange);
+    void start();
+    return () => { listeners.delete(onChange); };
+  }
+
+  return { start, subscribe, open: () => open, sale: () => sale, suggested: () => suggested, settled };
 }
 
-async function check(): Promise<{ open: boolean; suggest: string | null; catalogue: RunCatalogue | null }> {
-  const none = { open: false, suggest: null, catalogue: null };
-  const h = await getJson('/api/health', false);
-  if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) { noteInfoUnavailable(); return none; }
-  const plain = await getJson('/api/checkout', true);
-  if (!plain) { noteInfoUnavailable(); return none; }
-  const c = ((await noteCheckoutInfo(plain)) ?? plain) as Record<string, unknown>;
-  // the catalogue is read from the plain answer (the one without a visitor id), whatever a price test adds to the second one
-  return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null, catalogue: readCatalogue(plain) };
-}
+const ordering = createOrdering(askServer);
 
-function start(): Promise<void> {
-  started ??= check().then((v) => {
-    if (!v.open && v.suggest === null && v.catalogue === null) return;
-    if (v.catalogue) catalogue = v.catalogue;
-    open = ordersOpen(v.open, catalogue);       // the deployment takes orders AND a style can be ordered now (the build's fallback orders nothing)
-    sale = saleCatalogue(v.open, catalogue);    // the same rule, in src/shared/catalogue.ts, as the build's gate reads
-    suggested = v.suggest;
-    listeners.forEach((l) => l());
-  });
-  return started;
-}
+/** The store the components read: the page's own, unless the build's gate gives them another (src/landing/shell/gate.tsx). */
+export const OrderingContext = createContext<Ordering>(ordering);
 
 /** Ask now (once per page load) and resolve when the answers are in or could not be had. src/main.tsx waits for it, for a moment
  *  at most, before the first render. */
 export function startOrdering(): Promise<void> {
-  return start();
-}
-
-function subscribe(onChange: () => void): () => void {
-  listeners.add(onChange);
-  void start();
-  return () => { listeners.delete(onChange); };
+  return ordering.start();
 }
 
 /** true once this deployment is known to take orders AND some style can be ordered now; false until then (and on the server-less dev page, and while the
  *  owner has ticked no style). */
 export function useOrderingOpen(): boolean {
-  return useSyncExternalStore(subscribe, () => open, () => false);
+  const o = useContext(OrderingContext);
+  return useSyncExternalStore(o.subscribe, o.open, () => o.settled && o.open());
 }
 
 /** What can be bought now, as the run-time catalogue says it (the number of eyes and the styles that can be ordered now): the catalogue while this deployment
  *  takes orders and some style can be ordered, an empty one otherwise (and until the server has answered, and when it cannot be read). The pricing rows, the
  *  tiles and the hero line print a price only for what is in it. The object changes only when an answer arrives. */
 export function useSaleCatalogue(): RunCatalogue {
-  return useSyncExternalStore(subscribe, () => sale, () => NOTHING_FOR_SALE);
+  const o = useContext(OrderingContext);
+  return useSyncExternalStore(o.subscribe, o.sale, () => (o.settled ? o.sale() : NOTHING_FOR_SALE));
 }
 
 /** The market GET /api/checkout suggests for the visitor's country, or null (src/shared/markets.ts hintMarket decides
  *  whether it may be offered). */
 export function useSuggestedMarket(): string | null {
-  return useSyncExternalStore(subscribe, () => suggested, () => null);
+  const o = useContext(OrderingContext);
+  return useSyncExternalStore(o.subscribe, o.suggested, () => (o.settled ? o.suggested() : null));
 }

@@ -23,14 +23,15 @@ import { PriceGate } from './ui';
 import { useScrollableRegion } from './useScrollableRegion';
 import './css/styles.css';
 
-export function StyleGallery() {
+// initialGroup: the group shown first (the build's gate renders each group: src/landing/shell/gate.tsx); the visitor's page starts at the default
+export function StyleGallery({ initialGroup = DEFAULT_GROUP }: { initialGroup?: GalleryGroup } = {}) {
   const { c, t } = useCopy();
   const prices = useLandingPrices();
   // what can be bought now (the run-time catalogue while ordering is open, nothing otherwise): every tile, the group's line and the combo card read this one object.
   // The price of a further eye is printed only while the pairs (and so the ladder from two eyes) can be bought now; else the card says it opens soon (src/landing/PriceTable.tsx)
   const sale = useSaleCatalogue();
   const several = severalMax(sale);
-  const [group, setGroup] = useState<GalleryGroup>(DEFAULT_GROUP);
+  const [group, setGroup] = useState<GalleryGroup>(initialGroup);
   const [eye, setEye] = useState<EyeId>(DEFAULT_EYE);
   // the wall views the visitor asked for, by tile key: a key that is there has been asked for once (its picture is loaded)
   // false until the visitor has changed the group once: the first grid is revealed by scrolling, the later ones fade in on their own

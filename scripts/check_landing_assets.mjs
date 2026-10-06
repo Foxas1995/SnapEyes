@@ -20,18 +20,46 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { headersFor } from './lib/static.mjs';
+import { cssStub } from './lib/cssstub.mjs';
 import { loadRegistry } from './styles_source.mjs';
 import { gateInputs, gateIsStrict, gateSummary, promiseGate, releaseGate } from './landing_gate.mjs';
 
 export { gateInputs, gateIsStrict, gateSummary, promiseGate, releaseGate };
 
-/** The page rendered for the gate in every state of the catalogue (src/landing/shell/gate.tsx renderGate): load(path) is Vite's module runner. The price texts of each
- *  language come from the default market's ladder, read here as vite.config.ts reads it for the first screen (no file of the landing reads the ladder itself). */
+/** What every price the page prints must say, from the SERVER's own price rule (src/shared/markets.ts priceMinor, the rule api/_lib/pay.py applies) and the registry's price class of
+ *  each style: { [lang]: { price: { [style id]: { [eyes]: { minor, text } } }, further: { minor, text } | null } } for the default market's ladder, in each language's money.
+ *  `further` is what each eye after the second adds (the step of the ladder). The landing's own price helpers (src/landing/priceText.ts, the gallery's price kinds) are not used, so
+ *  a tile or a row that reads the wrong class or the wrong count of eyes is held to the value the server charges. Plain data (it survives a JSON copy). */
+export function expectedPrices(markets, styles, langs) {
+  const market = markets.DEFAULT_MARKET;
+  const list = markets.priceList(market);
+  const currency = markets.currencyOf(market);
+  const ids = Object.entries(styles).filter(([, d]) => d.legacy !== 1);
+  const steppable = ids.find(([, d]) => d.eyes[0] <= 3 && 4 <= d.eyes[1])?.[0] ?? null;
+  const out = {};
+  for (const lang of langs) {
+    const cell = (minor) => ({ minor, text: markets.money(minor, currency, lang) });
+    const price = {};
+    for (const [id, d] of ids) {
+      price[id] = {};
+      for (let n = d.eyes[0]; n <= d.eyes[1]; n++) price[id][String(n)] = cell(markets.priceMinor(n, id, market, list));
+    }
+    out[lang] = { price, further: steppable ? cell(markets.priceMinor(4, steppable, market, list) - markets.priceMinor(3, steppable, market, list)) : null };
+  }
+  return out;
+}
+
+/** The page rendered for the gate in every state of the catalogue (src/landing/shell/gate.tsx renderGate: the styles chapter, the price table, the hero and the FAQ, wired as the
+ *  live page is), with the prices it must print worked out beside it (expectedPrices): load(path) is Vite's module runner. */
 export async function renderLanding(load, root) {
   const markets = await load('./src/shared/markets.ts');
-  const priceText = await load('./src/landing/priceText.ts');
-  const pricesFor = (lang) => priceText.landingPrices(markets.priceList(markets.DEFAULT_MARKET), markets.DEFAULT_MARKET, lang);
-  return (await load('./src/landing/shell/gate.tsx')).renderGate(gateInputs(root), pricesFor);
+  const { LANGS } = await load('./src/shared/lang.ts');
+  // the chapter's components import their own stylesheet: the gate's own runner stubs the stylesheets (scripts/lib/cssstub.mjs)
+  const { runnerImport } = await import('vite');
+  const gate = (await runnerImport('./src/landing/shell/gate.tsx', { configFile: false, logLevel: 'silent', root, plugins: [cssStub()] })).module;
+  const rendered = await gate.renderGate(gateInputs(root));
+  rendered.expect = expectedPrices(markets, loadRegistry(root).styles, LANGS);
+  return rendered;
 }
 
 export const LANDING_DIR = 'public/assets/landing';

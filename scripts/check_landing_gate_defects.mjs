@@ -8,6 +8,8 @@
 //   1. the gate alone (`node scripts/check_landing_assets.mjs` in the copy) runs with VERCEL_ENV=production: the case says whether it must pass or fail and which words its message
 //      must hold, so a defect is caught by the RIGHT rule and not by some other check of the build;
 //   2. the real production build (`vite build`, VERCEL_ENV=production, into a scratch folder outside the project) runs: it must fail for a defect, pass for an honest page.
+// The cases of the second kind plant a defect in the WIRING of the page (the line that hands a component the catalogue, the line that makes it the page's) or in the VALUE of
+// a price (right place, wrong amount); the gate renders the whole wired chapter, the table, the hero and the FAQ, and reads the prices against the server's own rule.
 // A last case shows the other half of the policy: the same defect in a PREVIEW build is only a notice (exit 0).
 // It is not part of `npm run build` (a build per case, about 15 seconds each, three at a time never) and not of the guard suites; run it when the gate, the tile
 // component, the price table or the tile table change. Everything is local: no network, no key, no model.
@@ -27,6 +29,13 @@ const jsonOut = opt('--json');
 const TILES = 'src/landing/tileStyle.ts';
 const TILE = 'src/landing/StyleTile.tsx';
 const TABLE = 'src/landing/PriceTable.tsx';
+const HERO = 'src/landing/Hero.tsx';
+const FAQ = 'src/landing/Faq.tsx';
+const GALLERY = 'src/landing/StyleGallery.tsx';
+const ORDERING = 'src/landing/ordering.ts';
+const TOP = 'src/landing/SiteTop.tsx';
+const PRICING = 'src/landing/Pricing.tsx';
+const HOW = 'src/landing/HowItWorks.tsx';
 
 /** A case: edits (file, from, to; `from` must be in the file exactly once), what the gate must do (pass or fail, with the words its message holds) and what the build must do. */
 const CASES = [
@@ -96,6 +105,93 @@ const CASES = [
     note: 'the hero prints "Digital file from ..." although no style can be bought for one eye',
     edits: [{ file: 'src/landing/heroPrice.ts', from: 'held: pending || lowest === null', to: 'held: pending' }],
     gate: 'fail', words: ['no style can be bought for one eye but the hero says'], build: 'fail',
+  },
+  // the WIRING of the page (the components that read the catalogue through the hooks of the live page, and the asking code that makes the catalogue the page's): each of these
+  // keeps every view component and every helper right and breaks only the line that connects them, which a gate that renders views handed a catalogue cannot see
+  {
+    name: 'wiring: the hero line is always shown',
+    note: 'Hero.tsx hands the view pricePending false: "Digital file from" is printed while nothing can be bought',
+    edits: [{ file: HERO, from: 'pricePending={hero.held}', to: 'pricePending={false}' }],
+    gate: 'fail', words: ['no style can be bought for one eye but the hero says'], build: 'fail',
+  },
+  {
+    name: 'wiring: the hero line is the ladder\'s lowest',
+    note: 'the hero prints the lowest price of the ladder, not the lowest among the styles that can be bought for one eye',
+    edits: [{ file: 'src/landing/heroPrice.ts', from: 'const lowest = prices.fromOf(sale.one);', to: 'const lowest = sale.one.length ? prices.from : null;' }],
+    gate: 'fail', words: ['the lowest price among the styles that can be bought for one eye is'], build: 'fail',
+  },
+  {
+    name: 'wiring: the FAQ counts eyes nobody can buy',
+    note: 'Faq.tsx asks faqEntries for eight eyes whatever the catalogue says: "up to 1 eyes share one artwork"',
+    edits: [{ file: FAQ, from: 'faqEntries(c, open, max)', to: 'faqEntries(c, open, 8)' }],
+    gate: 'fail', words: ['the FAQ answer "other"', 'one eye at most can be bought'], build: 'fail',
+  },
+  {
+    name: 'wiring: the FAQ speaks as if ordering were open',
+    note: 'Faq.tsx takes the open wording while ordering is closed',
+    edits: [{ file: FAQ, from: 'const open = useOrderingOpen();', to: 'const open = true;' }],
+    gate: 'fail', words: ['the FAQ', 'ordering is not open'], build: 'fail',
+  },
+  {
+    name: 'wiring: the group line has no guard',
+    note: 'StyleGallery.tsx prints the group line whether or not there is one',
+    edits: [{ file: GALLERY, from: '{line && <span className="lp-gline" data-line={line}>', to: '{<span className="lp-gline" data-line={line}>' }],
+    gate: 'fail', words: ['adds the line'], build: 'fail',
+  },
+  {
+    name: 'wiring: the several-eyes card prints a price',
+    note: 'StyleGallery.tsx reads three as the count of eyes some style can be bought for, whatever the catalogue says',
+    edits: [{ file: GALLERY, from: 'const several = severalMax(sale);', to: 'const several = 3;' }],
+    gate: 'fail', words: ['the several-eyes card'], build: 'fail',
+  },
+  {
+    name: 'wiring: the price table is widened to three eyes',
+    note: 'the PriceTable wrapper hands the table a sale that can be bought for two and three eyes',
+    edits: [{ file: TABLE, from: 'return <PriceTableView p={p} sale={sale} />;', to: 'return <PriceTableView p={p} sale={{ ...sale, eyes: [1, 2, 3], max: 3 }} />;' }],
+    gate: 'fail', words: ['the price table row', 'cannot be bought but prints a price'], build: 'fail',
+  },
+  {
+    name: 'wiring: ordering hands the page the whole catalogue',
+    note: 'ordering.ts keeps the catalogue as the sale while the deployment takes no orders: a price beside "Ordering opens soon"',
+    edits: [{ file: ORDERING, from: 'sale = saleCatalogue(v.open, catalogue);', to: 'sale = catalogue;' }],
+    gate: 'fail', words: ['cannot be bought (ordering is closed)'], build: 'fail',
+  },
+  {
+    name: 'wiring: the notice bar says ordering is open',
+    note: 'SiteTop.tsx prints the open sentence of the bar while ordering is closed',
+    edits: [{ file: TOP, from: 'const barText = open ? c.bar.open : c.bar.soon;', to: 'const barText = c.bar.open;' }],
+    gate: 'fail', words: ['the notice bar says', 'not open'], build: 'fail',
+  },
+  {
+    name: 'wiring: the pricing notice says ordering is open',
+    note: 'Pricing.tsx prints the open notice while ordering is closed',
+    edits: [{ file: PRICING, from: '{p.open ? pr.noticeOpen : pr.notice}', to: '{pr.noticeOpen}' }],
+    gate: 'fail', words: ['the pricing notice says', 'not open'], build: 'fail',
+  },
+  {
+    name: 'wiring: the third step says pay through Stripe',
+    note: 'HowItWorks.tsx takes the open wording of the steps while ordering is closed',
+    edits: [{ file: HOW, from: 'const open = useOrderingOpen();', to: 'const open = true;' }],
+    gate: 'fail', words: ['the third step says', 'not open'], build: 'fail',
+  },
+  // the VALUE of a price: right place, wrong amount
+  {
+    name: 'value: the black tile prints the art price',
+    note: 'Clean Iris is on black, its price is the black price; the tile prints the art one',
+    edits: [{ file: TILE, from: "if (tile.price === 'black') return rich(c.styles.priceOne, { price: <b>{prices.black}</b> });", to: "if (tile.price === 'black') return rich(c.styles.priceOne, { price: <b>{prices.art}</b> });" }],
+    gate: 'fail', words: ['prints the price', 'the server charges'], build: 'fail',
+  },
+  {
+    name: 'value: the black row prints the art price',
+    note: 'the one eye on black row of the price table prints the art price',
+    edits: [{ file: TABLE, from: "value={classLive('black') ? gate(p.black) : soon}", to: "value={classLive('black') ? gate(p.art) : soon}" }],
+    gate: 'fail', words: ['the price table row', 'the server charges'], build: 'fail',
+  },
+  {
+    name: 'value: the trio prints the price of two eyes',
+    note: 'the tile of three eyes prints the price of two',
+    edits: [{ file: TILE, from: '{t(\'pricing.eyes\', { n })}, <b>{prices.eyes(n)}</b>', to: '{t(\'pricing.eyes\', { n })}, <b>{prices.eyes(2)}</b>' }],
+    gate: 'fail', words: ['prints the price', 'the server charges'], build: 'fail',
   },
   {
     name: 'the same defect in a preview build',

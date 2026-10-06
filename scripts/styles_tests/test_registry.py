@@ -881,6 +881,13 @@ res.read = {
   soon: L.readTile('<figure data-state="soon"><h3>Kiss Collision</h3><span class="lp-price"><span class="lp-soon">Soon</span></span></figure>'),
   hero: [L.readHero('<ul><li class="lp-price" inert="" style="opacity:0"><a href="#pricing">x 1</a></li></ul>'), L.readHero('<ul><li class="lp-price"><a href="#pricing">x 1</a></li></ul>'), L.readHero('<ul></ul>')],
   table: L.readTable('<div class="lp-ptable"><div class="lp-prow lp-free" data-reveal="rule"><div><b>Preview</b><small>w</small></div><div class="lp-pv">Free</div></div><div class="lp-prow" data-reveal="rule"><div><b>Two eyes</b><small>A &amp; B.</small></div><div class="lp-pv"><span class="lp-soon">Soon</span></div></div></div>'),
+  bar: L.readBar('<div><span id="barText">Soon &amp; so.</span></div>'),
+  notice: [L.readNotice('<p class="lp-notice" role="note">N</p><p class="lp-pay-open">P</p>'), L.readNotice('<p>x</p>')],
+  steps: L.readSteps('<ol><li><div class="lp-step-body"><span class="lp-num">01</span><h3>A</h3><p>One.</p></div></li><li><div class="lp-step-body"><span class="lp-num">02</span><h3>B</h3><p>Two.</p></div></li></ol>'),
+  price: [L.readTilePrice('<figure><b>€7</b></figure>'), L.readTilePrice('<figure><span class="lp-soon">Soon</span></figure>')],
+  line: [L.readLine('<p>Intro<span class="lp-gline" data-line="more"> More styles soon.</span></p>'), L.readLine('<p>Intro<span class="lp-gline"> x</span></p>'), L.readLine('<p>Intro</p>')],
+  combo: [L.readCombo('<div class="lp-combo"><h3>Two to 4 eyes</h3><p><span>Each adds &amp; 1.</span></p><a>x</a></div>'), L.readCombo('<div class="lp-grid"></div>')],
+  faq: L.readFaq('<div><details id="faq-a" class="lp-qa"><summary><span>Q&#x27;s?</span><svg></svg></summary><p>Yes, 4 eyes.</p></details><details id="faq-b"><summary><span>R?</span></summary><p>No.</p></details></div>'),
 };
 res.defects = {
   priceOnSoonTile: mut((c) => { const t = tileOf(c, 'closed', 'en', 'powder'); t.html = t.html.replace(/<span class="lp-soon">Soon<\/span>/, '<span>One eye, <b>9</b></span>'); }),
@@ -893,7 +900,22 @@ res.defects = {
   tableNamesSoonStyle: mut((c) => { const t = c.scenarios[at('one style ticked')].langs.en; t.table = t.table.replace('Powder Burst.', 'Powder Burst, Radiance.'); }),
   heroShown: mut((c) => { const t = c.scenarios[at('closed')].langs.en; t.hero = t.hero.replace(' inert=""', ''); }),
   openWhileClosed: mut((c) => { c.scenarios[at('closed, every live ceiling ticked')].open = true; }),
-  lineWrong: mut((c) => { c.scenarios[at('one style ticked')].lines.one = 'soon'; }),
+  lineWrong: mut((c) => { const v = c.scenarios[at('one style ticked')].langs.en; v.groups.one = v.groups.one.replace('data-line="more"', 'data-line="soon"'); }),
+  lineNoGuard: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.groups.one = v.groups.one.replace('</p><p class="lp-legend"', '<span class="lp-gline"> More styles soon.</span></p><p class="lp-legend"'); }),
+  lineWords: mut((c) => { const v = c.scenarios[at('one style ticked')].langs.en; v.groups.one = v.groups.one.replace(/(data-line="more">)[^<]*/, '$1 Everything is for sale.'); }),
+  tilePriceValue: mut((c) => { const t = tileOf(c, 'every live ceiling ticked', 'en', 'clean'); t.html = t.html.replace(/<b>[^<]*<\/b>/, '<b>' + (c.expect.en.price['solo.powder']['1'].text) + '</b>'); }),
+  tilePriceValueDe: mut((c) => { const t = tileOf(c, 'every live ceiling ticked', 'de', 'fam_trio'); t.html = t.html.replace(/<b>[^<]*<\/b>/, '<b>' + (c.expect.de.price['grp.collision']['4'].text) + '</b>'); }),
+  tableValue: mut((c) => { const v = c.scenarios[at('every live ceiling ticked')].langs.en; const art = c.expect.en.price['solo.powder']['1'].text; v.table = v.table.replace(/(<b>One eye on black<\/b><small>[^<]*<\/small><\/div><div class="lp-pv"><span>)[^<]*/, '$1' + art); }),
+  heroValue: mut((c) => { const v = c.scenarios[at('one style ticked')].langs.en; v.hero = v.hero.replace(/Digital file from [^<]*/, 'Digital file from ' + c.expect.en.price['solo.clean']['1'].text); }),
+  comboShown: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.groups.two = v.groups.two.replace(/(<div class="lp-combo"><h3>)[^<]*/, '$1Two to 3 eyes on one artwork'); }),
+  comboFurther: mut((c) => { const v = c.scenarios[at('every style live, beyond the ceilings')].langs.en; v.groups.two = v.groups.two.replace(/Each further eye adds [^<]*/, 'Each further eye adds ' + c.expect.en.price['solo.powder']['1'].text + '.'); }),
+  faqCount: mut((c) => { const v = c.scenarios[at('one style ticked')].langs.en; v.faq = v.faq.replace('and several eyes can share one artwork.', 'and up to 1 eyes share one artwork.'); }),
+  faqOpenWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.faq = v.faq.replace('When can I order?', 'How do I order?'); }),
+  barOpenWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.top = v.top.replace(/(<span id="barText">)[^<]*/, '$1' + v.words.barOpen); }),
+  noticeOpenWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.pricing = v.pricing.replace(/(<p class="lp-notice"[^>]*>)[^<]*/, '$1' + v.words.noticeOpen); }),
+  payLineWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.pricing += '<p class="lp-pay-open">' + v.words.payOpen + '</p>'; }),
+  stepsPayWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.how = v.how.replace('Choose a style and receive', 'Choose a style, pay through Stripe and receive'); }),
+  barClosedWhileOpen: mut((c) => { const v = c.scenarios[at('one style ticked')].langs.en; v.top = v.top.replace(/(<span id="barText">)[^<]*/, '$1' + v.words.barSoon); }),
   fewerStates: G.promiseGate({ scenarios: rendered.scenarios.slice(1), pictures: [] }, inputs, styles, rows, gal),
   underSell: mut((c) => { const t = tileOf(c, 'one style ticked', 'en', 'powder'); t.html = t.html.replace(/<span class="lp-price">[\s\S]*?<\/span>/, '<span class="lp-price"><span class="lp-soon">Soon</span></span>').replace('data-state="sale"', 'data-state="soon"'); }),
   pictures: G.promiseGate({ ...rendered, pictures: ['powder in own: boom'] }, inputs, styles, rows, gal).pictures,
@@ -942,8 +964,8 @@ if gate:
     check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups, and only a production deploy or LANDING_GATE=strict is strict",
           gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
           and "6 with a live ceiling" in gate["summary"] and "8 at preview" in gate["summary"] and "2 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
-    check("I2: the gate renders the page in six states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, the server not reachable), in four languages, with no render error and every tile picture present",
-          gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "server not reachable"]
+    check("I2: the gate renders the page in seven states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, every style live beyond the ceilings, the server not reachable), in four languages, with no render error and every tile picture present",
+          gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "every style live, beyond the ceilings", "server not reachable"]
           and gate["renderedErrors"] == [] and gate["renderedPictures"] == [], (gate["inputs"], gate["renderedErrors"], gate["renderedPictures"]))
     check("I2: on the real tree the page promises nothing it cannot sell in any state of the catalogue (no broken promise, no under-sell)",
           gate["promiseReal"]["promises"] == [] and gate["promiseReal"]["underSells"] == [] and gate["promiseReal"]["pictures"] == [], gate["promiseReal"])
@@ -968,6 +990,34 @@ if gate:
           and has(d["heroShown"]["promises"], "no style can be bought for one eye but the hero says")
           and has(d["openWhileClosed"]["promises"], "the page treats ordering as open but the catalogue says closed")
           and has(d["lineWrong"]["promises"], 'the group "one" adds the line "soon"'), d)
+    check("review of I2 (M1): the new readers: the price a tile prints, the group line (a span with no kind has the kind ''), the several-eyes card, the FAQ's questions with their ids",
+          gate["read"]["price"] == ["€7", None]
+          and gate["read"]["line"][0] == {"kind": "more", "text": "More styles soon."} and gate["read"]["line"][1] == {"kind": "", "text": "x"} and gate["read"]["line"][2] is None
+          and gate["read"]["combo"][0] == {"title": "Two to 4 eyes", "body": "Each adds & 1."} and gate["read"]["combo"][1] is None
+          and gate["read"]["faq"] == [{"id": "a", "q": "Q's?", "a": "Yes, 4 eyes."}, {"id": "b", "q": "R?", "a": "No."}], gate["read"])
+    check("review of I2 (M1): the VALUE of a price is held to the server's rule: a tile of Clean Iris that prints the art price, the Trio that prints the price of four eyes, a row of the table, the hero's line and the "
+          "further-eye price of the several-eyes card are broken promises when the amount is wrong, in any language",
+          has(d["tilePriceValue"]["promises"], 'the tile "clean"', "prints the price", "the server charges")
+          and has(d["tilePriceValueDe"]["promises"], 'the tile "fam_trio"', "(de)")
+          and has(d["tableValue"]["promises"], "the price table row", "(black)", "the server charges")
+          and has(d["heroValue"]["promises"], "the hero says", "the lowest price among the styles that can be bought for one eye is")
+          and has(d["comboFurther"]["promises"], "the several-eyes card", "each further eye adds"), d)
+    check("review of I2 (M1): the wiring of the chapter is read from its markup: a group line without its guard (a span where there is no line), a line with other words, a several-eyes card that names a count "
+          "while none can be bought, an FAQ answer that prints a count the engine cannot sell and a question in its open wording while ordering is closed are broken promises",
+          has(d["lineNoGuard"]["promises"], 'the group "one" adds the line ""')
+          and has(d["lineWords"]["promises"], 'the group "one" says', "Everything is for sale.")
+          and has(d["comboShown"]["promises"], "the several-eyes card", "says")
+          and has(d["faqCount"]["promises"], 'the FAQ answer "other"', "one eye at most can be bought")
+          and has(d["faqOpenWhileClosed"]["promises"], 'the FAQ question "order"', "not open"), d)
+    check("review of I2 (M1): the other places that say whether ordering is open are read too: the notice bar, the pricing notice, its payment line and the third step in the open wording while ordering is closed (and the "
+          "bar in the closed wording while it is open) are broken promises; the readers of the bar, the notice and the steps",
+          has(d["barOpenWhileClosed"]["promises"], "the notice bar says", "not open")
+          and has(d["noticeOpenWhileClosed"]["promises"], "the pricing notice says", "not open")
+          and has(d["payLineWhileClosed"]["promises"], "the pricing block says", "not open")
+          and has(d["stepsPayWhileClosed"]["promises"], "the third step says", "not open")
+          and has(d["barClosedWhileOpen"]["promises"], "the notice bar says", "ordering is open")
+          and gate["read"]["bar"] == "Soon & so." and gate["read"]["notice"] == [{"notice": "N", "pay": "P"}, {"notice": None, "pay": None}]
+          and gate["read"]["steps"] == ["One.", "Two."], d)
     check("I2: a page that offers LESS than it can sell is a notice, never a broken promise; a gate given another number of states than it asked for refuses; a picture error comes through",
           d["underSell"]["promises"] == [] and has(d["underSell"]["underSells"], 'the tile "powder"', "can be bought but shows no price")
           and has(d["fewerStates"]["promises"], "the gate rendered no state of the catalogue") and d["pictures"] == ['powder in own: boom'], d)
@@ -986,12 +1036,14 @@ if gate:
           and "release_gate" not in read("scripts/build_landing_assets.py") and "assets.data.ts" not in "\n".join(l for l in read("scripts/check_styles.mjs").split("\n") if l.startswith("  '")))
 
 # --- the deliberate defects of the gate, run for real in a throw-away copy of the tree (scripts/check_landing_gate_defects.mjs --no-build: the gate alone, with VERCEL_ENV=production). `npm run check:gate` adds the
-# real production build of each case (about 15 seconds each: not part of the suite); I2 ran it once, all 13 cases as expected (release_reports/I2-align.md).
+# real production build of each case (about 15 seconds each: not part of the suite); I2 ran it once, all 13 cases as expected (release_reports/I2-align.md); the review of I2 (M1) added
+# 14 cases for the wiring of the page and the value of a price, 27 in all (release_reports/I2-align.md, section 11).
 rc, so, se = run_node(["scripts/check_landing_gate_defects.mjs", "--no-build"], timeout=900)
-check("I2: the 13 cases of the gate's defect test behave as expected with the gate alone in production mode: the honest page and a tile of a planned style that says Soon pass; each of 10 deliberate defects "
+check("I2: the 27 cases of the gate's defect test behave as expected with the gate alone in production mode: the honest page and a tile of a planned style that says Soon pass; each of 10 deliberate defects "
       "(a tile that ignores the catalogue, a tile without the Soon chip, a price row that prices or names what cannot be bought, a style that is not in the registry, a name from the copy, a missing picture, a price while "
-      "ordering is closed, a wrong group line, a hero price while nothing can be bought) fails; the same defect is only a notice in a preview build",
-      rc == 0 and "13 of 13 cases as expected" in so and so.count("\nok ") + (1 if so.startswith("ok ") else 0) == 13, (rc, so[-900:], se[-300:]))
+      "ordering is closed, a wrong group line, a hero price while nothing can be bought) fails; so does each of 11 defects of the wiring of the page (the hero, the FAQ, the group line, the several-eyes card, the price "
+      "table's sale, ordering's sale, the notice bar, the pricing notice, the steps) and each of 3 of the value of a price (the black tile and row, the Trio); the same defect is only a notice in a preview build",
+      rc == 0 and "27 of 27 cases as expected" in so and so.count("\nok ") + (1 if so.startswith("ok ") else 0) == 27, (rc, so[-900:], se[-300:]))
 
 # --- I2: the pictures of the landing's tiles (the final round 2c renders of the landing team) and the pictures of the picker's tiles (public/assets/atelier, made by THIS repository's engine,
 # scripts/make_style_tiles.py) show the same designs. The seeds of the particles differ (the seed formula changed with the engine: Powder Burst, Splash, Universe and Radiance differ in their
