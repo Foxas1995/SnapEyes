@@ -10,6 +10,8 @@
     "check:texts": "node scripts/check_texts.mjs",
     "check:styles": "node scripts/check_styles.mjs",
     "check:assets": "node scripts/check_landing_assets.mjs",
+    "check:gate": "node scripts/check_landing_gate_defects.mjs",
+    "check:states": "node scripts/check_landing_states.mjs",
     "check:shell": "node scripts/check_shell.mjs",
     "check:legal": "node scripts/legal_look.mjs",
     "check:landing": "node scripts/check_landing.mjs",
