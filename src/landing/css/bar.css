@@ -1,0 +1,27 @@
+/* SnapEyes landing v2: The notice bar above the header.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-topbar { position: relative; z-index: 60; min-height: 34px; padding-block: 6px; display: flex; align-items: center; justify-content: center; padding-inline: var(--gut); background: #0b0e16; border-bottom: 1px solid var(--line); text-align: center; font-size: 12px; letter-spacing: .03em; color: var(--t-2); }
+  .lp-topbar span { display: inline-flex; align-items: center; gap: 10px; line-height: 1.35; text-align: left; }
+  .lp-topbar span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex: none; }
+  @media (max-width: 420px) {
+    .lp-topbar { font-size: 12px; letter-spacing: 0; }
+    .lp-topbar span::before { align-self: flex-start; margin-top: 5px; }
+  }
+  /* The offer of the visitor's own currency (src/landing/MarketHint.tsx): in the page's flow at the top of <main>, below the fixed header
+     (padding-top is the header's height, the negative margin gives that height back to the hero, whose own top padding already clears
+     the header), above the hero's glow. It is not in the prototype; it is a fact of the live site. */
+  .lp-market { position: relative; z-index: 10; padding-top: var(--hdr-h); margin-bottom: calc(-1 * var(--hdr-h)); }
+  .lp-market section { background: var(--bg-2); border-bottom: 1px solid var(--line); }
+  .lp-market-in { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 20px; padding-block: 8px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+  .lp-market-in p { flex: 1 1 16rem; min-width: 0; }
+  .lp-market-btns { display: flex; align-items: center; gap: 8px; }
+  .lp-market-btns button { min-height: 44px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: background-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out); }
+  .lp-market-show { border: 1px solid var(--gold-line); color: var(--gold); }
+  .lp-market-show:hover { background: var(--gold); color: #07090e; }
+  .lp-market-close { color: var(--ink-3); }
+  .lp-market-close:hover { color: #fff; }
+}

@@ -1,0 +1,84 @@
+{
+ "note": "Where every image family on the page comes from and how it must be labelled. Source ids are those of the SnapEyes design waves (wave-y, wave-y3) and C:/kuriam/snapeyes-parodomieji/LICENCIJOS.csv. Nothing here is a customer work: the page never calls an example a customer. Fix round 2026-09-30: two labels only. 'Example' (copy example.chip) for real engine artwork, 'AI visualisation' (copy example.vis) for every mock-up; the eyes that are not Mantas's are called 'Example photo, not a customer' (copy example.photoFull), which claims no licence type.",
+ "labels": {
+  "own": "copy styles.own and example.mantas (Mantas's own eye)",
+  "licensed": "copy styles.licensed = example.photoFull (Example photo, not a customer); the chip on a tile reads example.photo",
+  "mixed": "copy styles.mixed (Mantas's eye and example photos, not customers)",
+  "visualisation": "copy example.vis (AI visualisation) on every mock-up picture, plus wall.footnote (rooms, hands and objects are AI-generated images, not photographs)"
+ },
+ "families": {
+  "art/*_own_*, reveal/own_*, ui/before-phone-crop-315.webp, fibre_*": {
+   "eye": "own215120 (the owner's own eye, phone photo 2026-09-22)",
+   "rights": "the owner's own eye; stays on the page",
+   "label": "own"
+  },
+  "art/*_yg_* (eye chip Yellow green)": {
+   "eye": "drv_w04 = 4_drive_nuotraukos/w04_shutterstock_1656061267.webp",
+   "rights": "owner confirmed the right to use and publish on 2026-09-29 (LICENCIJOS.csv w04). It is a stock image file: show only as an example, never as a customer",
+   "label": "licensed"
+  },
+  "art/*_br_* (eye chip Brown)": {
+   "eye": "drv_w06 = 4_drive_nuotraukos/w06_Screenshot_24.jpg (since 2026-10-04; the chip showed w03 before, which fails the round 2c input gate: pink eyelid skin at the top of the iris and a red pupil)",
+   "rights": "owner confirmed 2026-09-29 (LICENCIJOS.csv w06)",
+   "label": "licensed"
+  },
+  "art/*_gr_* (eye chip Grey)": {
+   "eye": "drv_d01 = 4_drive_nuotraukos/d01_IMG_20260926_153816.jpg (since 2026-10-04; the chip showed w08 before, which fails the round 2c input gate: eyelid and lashes inside the iris). Same eye as the Reveal's grey green one",
+   "rights": "owner confirmed 2026-09-29 (LICENCIJOS.csv d01)",
+   "label": "licensed"
+  },
+  "reveal/gd_*, art/radiance_gd_* (Grey green, reflection removed)": {
+   "eye": "drv_d01 = 4_drive_nuotraukos/d01_IMG_20260926_153816.jpg",
+   "rights": "owner confirmed 2026-09-29 (LICENCIJOS.csv d01)",
+   "label": "licensed"
+  },
+  "art/duo_infinity_by_*, duo_clean_by_*": {
+   "eyes": "own215120 + drv_w04",
+   "rights": "as above",
+   "label": "mixed"
+  },
+  "art/duo_infinity_bb_*, duo_infinity_bb_uni_*, duo_kiss_bb_*": {
+   "eyes": "own215120 + drv_w06 (round 2c collision engine; Infinity Universe is the Universe Duo variant B; the render script is kept outside this repository, with the picture sources)",
+   "rights": "as above",
+   "label": "mixed"
+  },
+  "art/fam_*": {
+   "eyes": "trio: own215120, drv_w04, drv_w06. Family 4 to 6 and Family Universe: own215120, drv_w04, drv_w06, drv_d01, then lid19h (photo 19, Ojo-retina.jpg, Public domain, no conditions, LICENCIJOS.csv 19) as the fifth eye and drv_w09 (owner confirmed) as the sixth. The round 2c boards use p05i, p08f and p09f, which are CC BY-SA, so they were NOT used",
+   "rights": "owner confirmed for every Drive photo, Public domain for lid19h; all shown only as 'Example photo, not a customer'",
+   "label": "mixed"
+  },
+  "m/* (rooms, hands, desk, phone, macro)": {
+   "what": "AI-generated room plates (Gemini, generated 2026-09-30 on the owner's account, 80 plates screened; no model call was made for this page) with SnapEyes artwork composed in locally with numpy and PIL: plate mode of mockups/mock.py, the canvas and aluminium looks of mock_fx.py, the 11 scenes of landing assets V3 (assets_v3/rooms: author.py, build_scenes_v3.py, build_rooms.py) plus the older hands, shelf, oblique gallery, desk, phone, macro and hero plates re-composited with the final artworks. Fix round 2026-10-04: the stage pictures are room crops (the furniture is part of the picture), the hands picture has the skin occluder computed on the ungraded plate, the study plate has a retouched strip (a clear acrylic overhang that read as a ghost panel), the office 3:2 plate has the maker's logo of the laptop painted out, the lock screens carry only a clock (no date in any language)",
+   "rooms per material": "acrylic: living room; aluminium: home office; canvas: sunlit hall; framed: sand room. Each of these has a square plate (one eye) and a 3:2 plate of the same room (pair, family). Block and phone: desk. Hero: lounge. More ways to see it: pair (walnut cafe), group (white gallery wall, framed), hands, gallery angle (pair), shelf. Closing scene: dusk study on acrylic. Edge close-up: macro corner",
+   "grade": "daylight plates (living, office, hall, hotel, gallery, and the older hands, shelf, oblique gallery and desk) share mock_fx.grade with the wall next to the piece at sRGB luminance 0.70, except the office (0.66) and with two colours of light (the living room warm, the office cool: wall delta E 7.7 between the two); the dusk plates (study, cafe) keep their lamp light; hero, phone and macro as before",
+   "artworks": "eye = Radiance single of own215120 (final round 2c, 4096 px); universe = Universe, Echo look, of own215120 (final, 4096 px); collision = Collision Infinity of own215120 + drv_w04 (4096 px); family4 = FAMILY COLOURS of four, own215120 + drv_w04 + drv_w06 + drv_d01 (3:2, 1024 px), the very file of the gallery tile fam_4 (tiles/raw/fam_4.png), padded on black where the plate is square. The Infinity Chain with w03 it replaced is gone from the page",
+   "sizes": "a size caption (about 50 cm) only where the drawn size was estimated at 40 to 55 cm: hero, canvas pair and family (hall 3:2), framed single and Universe (hotel). Estimated on a gridded copy against objects of known size, plus or minus 15 to 25 percent; every anchor is in the scene registry",
+   "rights": "artworks as above; plates generated by the owner's Gemini account, the hands plate shows a generic person (no face)",
+   "label": "visualisation"
+  },
+  "ui/preview_wm_360.webp": {
+   "what": "the watermarked free preview of own215120 as /try renders it",
+   "label": "own"
+  },
+  "m/lounge_acrylic__eye__tight_{600,900,1200} (the hero)": {
+   "what": "the lounge plate with the final Radiance of own215120; the three widths the first screen offers are derived from the 2000 px composite (WebP quality 80, method 6) so that the 900 px LCP picture stays near 35 kB (check:assets budget 38 kB); the 2000 px file of the picture library is not used by the page",
+   "label": "visualisation"
+  },
+  "reveal/* (only grey green and Mantas's eye)": {
+   "note": "Landing assets V3 fix round 2026-10-04: the Reveal shows two eyes. The brown eye (drv_w03) was removed from the Reveal: the photo fails the round 2c input gate (pink eyelid skin at the top of the iris and a red pupil) and its restored iris showed eyelid skin, against the sentence 'Lids and lashes stay in the photo half'. A brown Reveal needs a restoration line for drv_w06, whose source (a 590 px screenshot, an 85 px iris) did not register with its restored iris (the engine's own check said no). The gallery's brown chip is drv_w06 and is unchanged",
+   "label": "none"
+  }
+ },
+ "never_used": [
+  "p05i and p09f (Wikimedia CC BY-SA irises, share alike and credit needed)",
+  "st_* generated animal stand-ins",
+  "any competitor image",
+  "any Etsy image"
+ ],
+ "art_tiles": {
+  "what": "the 74 tile files art/<design>_<eye>_{480,900}, the pair and family files and the 64 px eye dots: the FINAL round 2c designs (wave-y3 board, approved by the owner 2026-10-04) rendered by the engine code of that round; Celestial Gold is the approved variant A (wave-cg2). Real engine artwork, so the chip is 'Example' (copy example.chip)",
+  "text on pictures": "none (the engine's draw log is empty for every render, no name and no date is drawn)",
+  "iris": "the iris pixels are the graded iris untouched (max absolute difference 0 on 8,271,297 visible iris pixels of 36 renders at 1024 px)",
+  "source": "wave-lp/assets_v3/tiles (TILES.md, gate_v3.json, render_tiles.py)"
+ }
+}

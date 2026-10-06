@@ -1,0 +1,735 @@
+{
+  "meta": {
+    "title": "SnapEyes Private Atelier: Jūsų tikroji rainelė kaip meno kūrinys",
+    "description": "Nufotografuokite vieną akį telefonu ir pamatykite savo rainelę kaip meno kūrinį, atkurtą, o ne perpieštą. Nemokama peržiūra su vandens ženklu, tuomet gausite skaitmeninį failą, kurį galėsite atspausdinti bet kur.",
+    "shareDescription": "Nufotografuokite vieną akį telefonu ir pamatykite savo rainelę kaip meno kūrinį. Peržiūra su vandens ženklu nemokama.",
+    "locale": "lt_LT"
+  },
+  "facts": {
+    "px": "4096 px",
+    "square": "4096 × 4096 px",
+    "printMax": "50 × 50 cm",
+    "printMaxCm": "50 cm",
+    "email": "info@snapeyes.com",
+    "hours": "48"
+  },
+  "langName": "Lietuvių",
+  "switchLabel": "Kalba",
+  "brandTag": "Private Atelier",
+  "skip": "Pereiti prie turinio",
+  "nav": {
+    "reveal": "Prieš ir po",
+    "wall": "Jūsų siena",
+    "styles": "Stiliai",
+    "how": "Kaip tai veikia",
+    "pricing": "Kainos",
+    "faq": "Klausimai",
+    "privacy": "Privatumas"
+  },
+  "navLabels": {
+    "main": "Pagrindinė navigacija",
+    "footer": "Poraštė",
+    "menu": "Meniu"
+  },
+  "cta": "Sukurti nemokamą peržiūrą",
+  "ctaShort": "Nemokama peržiūra",
+  "ctaNote": "",
+  "bar": {
+    "label": "Pastaba",
+    "soon": "Užsakymus pradėsime priimti netrukus. Nemokama peržiūra jau prieinama.",
+    "open": "Pradėkite nuo nemokamos peržiūros. Užsakykite, tik jei patiks."
+  },
+  "example": {
+    "chip": "Pavyzdys",
+    "vis": "DI vizualizacija",
+    "photo": "Pavyzdinė nuotrauka",
+    "photoFull": "Pavyzdinė nuotrauka, ne kliento",
+    "mantas": "Paties Manto akis"
+  },
+  "hero": {
+    "eyebrow": "SnapEyes Private Atelier",
+    "title": "Jūsų tikroji rainelė, paversta menu.",
+    "lead": "Nufotografuokite vieną akį telefonu. Atkursime Jūsų tikrąją rainelę ir perteiksime ją Jūsų pasirinktu stiliumi. Gausite skaitmeninį failą ({px}), skirtą spausdinti iki {printMax} dydžio. Spausdinimas neįskaičiuotas.",
+    "micro": [
+      "Nemokama peržiūra su vandens ženklu",
+      "Peržiūra maždaug per minutę",
+      "Išbandyti galima be registracijos"
+    ],
+    "fromPrice": "Skaitmeninis failas nuo {from}",
+    "computerHint": "Naršote kompiuteriu? Atidarykite snapeyes.com telefone ir nufotografuokite akį arba pasirinkite jau turimas nuotraukas.",
+    "ready": "Jūsų failas nuo {from}",
+    "secondary": "Pamatykite tikros telefonu darytos nuotraukos vaizdą prieš ir po",
+    "imageAlt": "DI vizualizacija: paties Manto rainelė kaip blizgus Radiance stiliaus spaudinys ant akrilo, pakabintas ant sienos. Ji rodo, kaip skaitmeninis failas gali atrodyti atspausdintas.",
+    "chipTitle": "DI vizualizacija",
+    "chipBody": "Gausite skaitmeninį failą. Spausdinimas neįskaičiuotas.",
+    "caption": "Jūsų failas ant akrilo, apie 50 cm. Spausdinimas neįskaičiuotas.",
+    "discAlt": "Manto akis, padalyta per vyzdį: kairėje jo telefonu daryta nuotrauka, dešinėje atkurta rainelė.",
+    "discLabel": "Paties Manto akis, prieš ir po",
+    "discLink": "Paties Manto akis: tikra nuotrauka telefonu, atkurta rainelė. Pereiti prie vaizdo prieš ir po."
+  },
+  "reveal": {
+    "eyebrow": "Atskleidimas",
+    "title": "Nuotrauka kairėje. Rainelė dešinėje.",
+    "intro": "Kairė pusė yra telefono nuotrauka, dešinė pusė yra ta pati atkurta rainelė. Pjūvis eina per vyzdį: sekite vieną vagelę ar spalvos dėmę iš vienos pusės į kitą.",
+    "hint": "Tempkite ir palyginkite",
+    "sliderLabel": "Palyginkite nuotrauką telefonu ir atkurtą rainelę",
+    "valueText": "nuotrauka {n} %",
+    "before": "Nuotrauka telefonu",
+    "after": "Atkurta rainelė",
+    "scale": "Nuotrauka telefonu: {n} px. Atkurtas failas: {px}.",
+    "beforeWeb": "Nuotrauka",
+    "scaleWeb": "Nuotrauka: {n} px. Atkurtas failas: {px}.",
+    "introWeb": "Kairė pusė yra pradinė nuotrauka, dešinė pusė yra ta pati atkurta rainelė. Pjūvis eina per vyzdį: sekite vieną vagelę ar spalvos dėmę iš vienos pusės į kitą.",
+    "sliderLabelWeb": "Palyginkite nuotrauką ir atkurtą rainelę",
+    "eyes": [
+      {
+        "id": "gd",
+        "label": "Pilkai žalia akis",
+        "n": 380,
+        "note": "Pavyzdinė nuotrauka, ne kliento. Lango atspindys nuotraukoje pašalintas.",
+        "photoAlt": "Pavyzdinė pilkai žalios akies nuotrauka su lango atspindžiu, kairioji kadro pusė",
+        "irisAlt": "Ta pati pilkai žalia rainelė, atkurta, be atspindžio",
+        "artAlt": "Atkurta pilkai žalia rainelė kaip kūrinys Radiance stiliumi"
+      },
+      {
+        "id": "own",
+        "label": "Manto akis",
+        "n": 315,
+        "note": "Jo paties akis, nufotografuota namuose. Nuotrauka apkirpta iki rainelės.",
+        "photoAlt": "Paties Manto akies nuotrauka telefonu, kairioji kadro pusė",
+        "irisAlt": "Ta pati rainelė, atkurta, juodame fone",
+        "artAlt": "Atkurta rainelė kaip kūrinys Radiance stiliumi"
+      }
+    ],
+    "eyeGroup": "Pasirinkite pavyzdinę akį",
+    "strip": {
+      "photo": "Jūsų nuotrauka",
+      "iris": "Jūsų rainelė",
+      "art": "Jūsų kūrinys"
+    },
+    "never": "Atkurta, niekada neperpiešta: niekada nekeičiame Jūsų rainelės spalvos ir nepakeičiame jos kita akimi.",
+    "aiTitle": "Kas paimta iš Jūsų, o ką prideda DI",
+    "ai": [
+      {
+        "t": "Iš Jūsų nuotraukos",
+        "b": "Jūsų rainelės spalva, raštas ir išdėstymas. Kiekviena vagelė, kiekvienas žiedas ir kiekviena dėmė yra ten pat, kur Jūsų akyje."
+      },
+      {
+        "t": "Atkurta mūsų DI",
+        "b": "Smulkios detalės, kurių Jūsų telefonas nepajėgė užfiksuoti, atkurtos taip, kad atitiktų Jūsų nuotrauką. Atspindžiai pašalinami. Pačios smulkiausios plaukelio storio linijos yra rekonstrukcija, o ne mikroskopu užfiksuotas vaizdas."
+      },
+      {
+        "t": "Niekada",
+        "b": "Spalva nekeičiama ir akis nekeičiama kita akimi."
+      }
+    ],
+    "note": "Šie pavyzdžiai sukurti iš kruopščiai padarytų nuotraukų. Rezultatas priklauso nuo Jūsų nuotraukos, o nemokama peržiūra jį parodo dar prieš mokėjimą.",
+    "yourTurn": "Dabar Jūsų eilė. Savo rainelę taip pamatysite nemokamai, maždaug per minutę."
+  },
+  "wall": {
+    "eyebrow": "Jūsų failas, Jūsų siena",
+    "title": "Pamatykite savo failą ant sienos",
+    "intro": "Gausite skaitmeninį failą. Šie vaizdai rodo, kaip jis gali atrodyti, kai jį atspausdinsite. Spausdinimas nėra Jūsų užsakymo dalis.",
+    "varies": "Medžiagos ir rezultatai priklauso nuo spaustuvės ir nuo šviesos Jūsų kambaryje.",
+    "stageLabel": "Atspausdinto Jūsų failo DI vizualizacijos",
+    "materialsLabel": "Medžiaga",
+    "artLabel": "Kūrinys",
+    "materials": {
+      "acrylic": {
+        "n": "Akrilas",
+        "tag": "Blizgus ir gilus",
+        "facts": [
+          "Fotopopierius arba tiesioginė spauda už skaidrios plokštės, dažnai nuo 3 iki 6 mm storio.",
+          "Nuo sienos atitraukta nedideliais atstumo laikikliais.",
+          "Juoda spalva čia dažnai atrodo giliausia, todėl tinka tamsiems kūriniams.",
+          "Kabinkite taip, kad tiesioginė lango šviesa neatsispindėtų."
+        ]
+      },
+      "metal": {
+        "n": "Aliuminis",
+        "tag": "Ryškus, plonas, modernus",
+        "facts": [
+          "Vaizdas atspausdinamas ant aliuminio, dažnai nuo 1 iki 3 mm storio.",
+          "Kabo prie pat sienos ant paslėpto tvirtinimo.",
+          "Blizgus arba pusiau matinis paviršius. Juoda spalva išlieka gili.",
+          "Sveria nedaug."
+        ]
+      },
+      "canvas": {
+        "n": "Drobė",
+        "tag": "Minkšta ir šilta, mažiau atspindžių",
+        "facts": [
+          "Medvilninė drobė ant medinio porėmio, dažnai nuo 2 iki 4 cm storio.",
+          "Audinio faktūra sušvelnina pačias smulkiausias skaidulas ir praskaidrina juodus tonus.",
+          "Stiklo nėra, todėl atspindžių kur kas mažiau.",
+          "Rėmelio nereikia."
+        ]
+      },
+      "framed": {
+        "n": "Įrėmintas spaudinys",
+        "tag": "Klasikinis ir ramus",
+        "facts": [
+          "Fotopopierius po stiklu, su baltu paspartu.",
+          "Rėmelio plotis dažnai apie 2 cm.",
+          "Lengva pakabinti ir transportuoti."
+        ]
+      },
+      "block": {
+        "n": "Akrilo blokas",
+        "tag": "Nedidelis objektas lentynai ar darbo stalui",
+        "facts": [
+          "Masyvus skaidrus akrilas, dažnai nuo 2 iki 4 cm storio.",
+          "Stovi savaime, nieko kabinti nereikia.",
+          "Nupoliruoti kraštai atspindi šviesą.",
+          "Įprasti dydžiai: nuo 10 iki 20 cm."
+        ]
+      },
+      "phone": {
+        "n": "Telefonas",
+        "tag": "Jūsų kūrinys užrakinimo ekrane",
+        "facts": [
+          "Jūsų failas kvadratinis, o telefono ekranas aukštas, todėl bet kurioje nuotraukų redagavimo programoje pridėkite aplink jį juodus kraštus, tada nustatykite jį kaip ekrano foną.",
+          "Ekranas pats apšviečia kūrinį, todėl jis švyti.",
+          "Nereikia laukti spausdinimo."
+        ]
+      }
+    },
+    "typical": "Įprasta spaustuvėse. Detalės gali skirtis.",
+    "arts": {
+      "eye": "Radiance",
+      "universe": "Universe",
+      "family4": "Šeima",
+      "collision": "Jūs dviese"
+    },
+    "eyesNote": "Akys: Manto ir pavyzdinių nuotraukų, ne klientų.",
+    "captions": {
+      "acrylic": "Jūsų failas, atspausdintas ant akrilo.",
+      "metal": "Jūsų failas, atspausdintas ant aliuminio.",
+      "canvas": "Jūsų failas, atspausdintas ant drobės.",
+      "framed": "Jūsų failas, įrėmintas.",
+      "block": "Jūsų failas kaip akrilo blokas.",
+      "phone": "Jūsų kūrinys telefono užrakinimo ekrane."
+    },
+    "captionsSize": {
+      "acrylic": "Jūsų failas, atspausdintas ant akrilo, maždaug {size}.",
+      "metal": "Jūsų failas, atspausdintas ant aliuminio, maždaug {size}.",
+      "canvas": "Jūsų failas, atspausdintas ant drobės, maždaug {size}.",
+      "framed": "Jūsų failas, įrėmintas, maždaug {size}."
+    },
+    "footnote": "DI vizualizacija. Kūrinys yra tikras SnapEyes failas. Kambariai, rankos ir daiktai yra DI sugeneruoti vaizdai, o ne nuotraukos; tikras spaudinys atrodo kitaip. Spaudinio spalvos gali skirtis nuo Jūsų ekrane matomų spalvų.",
+    "cta": "Jūsų failas, atspausdintas taip, kaip norite. Pradėkite nuo nemokamos peržiūros.",
+    "compareTitle": "Palyginkite keturias paveikslų medžiagas",
+    "compareCorner": "Medžiaga",
+    "compare": {
+      "cols": [
+        "Akrilas",
+        "Aliuminis",
+        "Drobė",
+        "Įrėmintas spaudinys"
+      ],
+      "rows": [
+        {
+          "h": "Išvaizda",
+          "v": [
+            "Blizgus, su gylio efektu",
+            "Ryškus, plonas",
+            "Švelnus, faktūringas",
+            "Klasikinis, ramus"
+          ]
+        },
+        {
+          "h": "Juoda",
+          "v": [
+            "Gili",
+            "Gili",
+            "Švelnesnė",
+            "Gili, su baltu paspartu"
+          ]
+        },
+        {
+          "h": "Atspindžiai",
+          "v": [
+            "Šiek tiek, šviesiame kambaryje",
+            "Šiek tiek, mažiau su pusiau matiniu paviršiumi",
+            "Labai mažai",
+            "Šiek tiek, mažiau su antirefleksiniu stiklu"
+          ]
+        },
+        {
+          "h": "Ant sienos",
+          "v": [
+            "Sklando priešais sieną",
+            "Plonas ir lengvas",
+            "Šiltas ir neformalus",
+            "Formalus ir tradicinis"
+          ]
+        }
+      ],
+      "note": "Bendra apžvalga, ką siūlo spaustuvės; tai ne mūsų produktų aprašymas."
+    }
+  },
+  "sizes": {
+    "eyebrow": "Dydžių vadovas",
+    "title": "Pakanka pikselių {printMax} spaudiniui",
+    "intro": "Jūsų failo ilgoji kraštinė yra {px}. Piešinyje išlaikytas mastelis: 220 cm sofa, žmogus ir keturi dydžiai ant sienos.",
+    "svgLabel": "Mastelį išlaikantis piešinys: keturi spaudinio dydžiai ant sienos su sofa ir žmogumi masteliui palyginti",
+    "sofa": "Sofa, 220 cm",
+    "person": "Žmogus, 175 cm",
+    "chips": "Spaudinio dydis",
+    "cm": "{n} cm",
+    "ppi": "pikselių colyje",
+    "rungs": [
+      {
+        "cm": 20,
+        "t": "Darbo stalas ir lentyna",
+        "b": "Daugiau, nei paprastai reikalauja spaustuvės."
+      },
+      {
+        "cm": 30,
+        "t": "Virš komodos",
+        "b": "Daugiau nei įprastas diapazonas nuo 150 iki 300."
+      },
+      {
+        "cm": 40,
+        "t": "Kūrinys sienai",
+        "b": "Įprastame diapazone."
+      },
+      {
+        "cm": 50,
+        "t": "Didžiausias, kurį siūlome",
+        "b": "Įprastame diapazone, o kartu ir mūsų viršutinė riba."
+      }
+    ],
+    "several": "Kelios akys: failo ilgoji kraštinė yra {px}, todėl spaudinio ilgoji kraštinė gali būti iki {printMaxCm}.",
+    "above": "Spausdinti didesniu nei {printMaxCm} formatu galima, tačiau failas dar labiau ištempiamas, todėl to nežadame.",
+    "rule": "Spaustuvės paprastai reikalauja maždaug nuo 150 iki 300 pikselių colyje. Rezultatas priklauso ir nuo Jūsų nuotraukos: nemokama peržiūra tai parodo dar prieš Jums sumokant. Paprašykite spaustuvės bandomojo atspaudo arba pavyzdžio."
+  },
+  "more": {
+    "title": "Daugiau vaizdų",
+    "intro": "Kiti kambariai, dvi rankos ir nupoliruotas kraštas. Visa tai yra DI vizualizacijos.",
+    "railLabel": "Daugiau DI vizualizacijų",
+    "prev": "Ankstesnis vaizdas",
+    "next": "Kitas vaizdas",
+    "scenes": [
+      {
+        "id": "pair",
+        "t": "Jūs dviese, ant tamsaus riešutmedžio",
+        "c": "Jūsų failas, atspausdintas ant akrilo. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+      },
+      {
+        "id": "group",
+        "t": "Jūs keturiese, rėme",
+        "c": "Jūsų failas, įrėmintas. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+      },
+      {
+        "id": "hands",
+        "t": "Jūsų rankose",
+        "c": "Jūsų failas, atspausdintas ant akrilo."
+      },
+      {
+        "id": "gallery",
+        "t": "Žvelgiant iš šono",
+        "c": "Jūsų failas ant akrilo su atstumo laikikliais. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+      },
+      {
+        "id": "shelf",
+        "t": "Lentynoje",
+        "c": "Jūsų failas, atspausdintas ant akrilo."
+      }
+    ]
+  },
+  "styles": {
+    "eyebrow": "Stiliai",
+    "title": "Viena rainelė, daug būdų ją pamatyti",
+    "intro": "Kiekvienas toliau pateiktas kūrinys yra pavyzdys. Jūsų kūrinyje bus Jūsų pačių spalvos ir Jūsų pačių skaidulos.",
+    "legend": "Pavyzdžiai sukurti naudojant SnapEyes programą. Pavyzdžiuose naudojama paties Manto akis, jei kortelėje nenurodyta kitaip.",
+    "groups": {
+      "one": "Tik Jūs",
+      "two": "Jūs dviese",
+      "family": "Šeima"
+    },
+    "groupIntro": {
+      "one": "Viena rainelė, viena juodame fone arba savo pačios visatoje.",
+      "two": "Partneriui: dvi rainelės, kurios susitinka.",
+      "family": "Šeimai: kiekviena rainelė išlaiko savo spalvą."
+    },
+    "tabsLabel": "Stilių grupės",
+    "eyeLabel": "Išbandykite kitą akių spalvą",
+    "eyes": {
+      "own": "Melsvai žalia",
+      "yg": "Gelsvai žalia",
+      "br": "Ruda",
+      "gr": "Pilka"
+    },
+    "eyeNote": {
+      "own": "Paties Manto akis",
+      "other": "Pavyzdinė nuotrauka, ne kliento"
+    },
+    "items": {
+      "radiance": {
+        "n": "Radiance",
+        "d": "Ploni šviesos spinduliai Jūsų rainelės spalvomis."
+      },
+      "powder": {
+        "n": "Powder Burst",
+        "d": "Kraštas skyla į grūdelius Jūsų akies spalvomis."
+      },
+      "universe": {
+        "n": "Universe",
+        "d": "Padidinta Jūsų rainelė užpildo visą kūrinio plotą."
+      },
+      "gold": {
+        "n": "Celestial Gold",
+        "d": "Plonas auksinis žiedas ir šviesos aureolė aplink rainelę."
+      },
+      "splash": {
+        "n": "Splash",
+        "d": "Kraštas iškyla kaip skysčio karūna."
+      },
+      "clean": {
+        "n": "Clean Iris",
+        "d": "Tik Jūsų atkurta rainelė grynai juodame fone."
+      },
+      "duo_infinity": {
+        "n": "Infinity",
+        "d": "Dvi rainelės persidengia kaip begalybės ženklas."
+      },
+      "duo_infinity_bb": {
+        "n": "Infinity, dvi spalvos",
+        "d": "Kiekviena rainelė išlaiko savo spalvą ten, kur jos susitinka."
+      },
+      "duo_infinity_uni": {
+        "n": "Infinity Universe",
+        "d": "Pora padidintame jų pačių skaidulų lauke."
+      },
+      "duo_kiss": {
+        "n": "Kiss",
+        "d": "Dvi rainelės, besiliečiančios kraštais."
+      },
+      "duo_clean": {
+        "n": "Clean Infinity",
+        "d": "Ta pati pora be miltelių."
+      },
+      "fam_trio": {
+        "n": "Trio",
+        "d": "Trys rainelės trikampyje."
+      },
+      "fam_4": {
+        "n": "Keturių asmenų šeima",
+        "d": "Keturios rainelės su milteliais jų pačių spalvomis."
+      },
+      "fam_5": {
+        "n": "Penkių asmenų šeima",
+        "d": "Penkios rainelės dviem eilėmis."
+      },
+      "fam_6": {
+        "n": "Šešių asmenų šeima",
+        "d": "Šešios rainelės, kiekviena savo spalvos."
+      },
+      "fam_6_uni": {
+        "n": "Family Universe",
+        "d": "Šešios rainelės užpildytame lauke."
+      }
+    },
+    "own": "Manto akis",
+    "licensed": "Pavyzdinė nuotrauka, ne kliento",
+    "mixed": "Manto akis ir pavyzdinės nuotraukos, ne klientų",
+    "priceOne": "Viena akis: {price}",
+    "priceTwo": "Dvi akys: {price}",
+    "priceFrom": "Nuo {price}",
+    "wallOn": "Ant sienos",
+    "wallOff": "Plokščias vaizdas",
+    "wallOnAria": "Rodyti ant sienos: {name}",
+    "wallOffAria": "Rodyti plokščiai: {name}",
+    "wallFile": "Kaina galioja skaitmeniniam failui. Spausdinimas nėra Jūsų užsakymo dalis.",
+    "comboTitle": "Nuo dviejų iki aštuonių akių viename kūrinyje",
+    "comboBody": "Jūsų ir Jūsų artimųjų akys. Kiekviena papildoma akis: +{price}.",
+    "soonTag": "Netrukus"
+  },
+  "how": {
+    "eyebrow": "Kaip tai veikia",
+    "title": "Trys žingsniai, jokios studijos",
+    "steps": [
+      {
+        "t": "Padarykite vieną nuotrauką",
+        "b": "Naudokite galinę kamerą su 2x priartinimu, maždaug 10 cm nuo akies, dienos šviesoje pro langą, iš šono. Padarykite nuo trijų iki penkių kadrų arba pasirinkite juos iš galerijos. Kiekvieną kadrą įvertiname ir panaudojame geriausią.",
+        "v": "Galinė kamera, dienos šviesa, viena akis"
+      },
+      {
+        "t": "Pamatykite nemokamą peržiūrą",
+        "b": "Maždaug per minutę Jūsų rainelė atvaizduojama keliais stiliais, su vandens ženklu. Be registracijos, nieko mokėti nereikia. Nemokamos peržiūros nesaugomos.",
+        "v": "Jūsų nemokama peržiūra, su vandens ženklu"
+      },
+      {
+        "t": "Gaukite skaitmeninį failą",
+        "b": "Pasirinkite stilių ir gaukite savo kūrinį kaip skaitmeninį failą ({px}), sukurtą visa raiška.",
+        "bOpen": "Pasirinkite stilių, sumokėkite per Stripe ir gaukite savo kūrinį skaitmeniniu failu ({px}), sukurtą visa raiška, kai tik bus patvirtintas Jūsų užsakymas.",
+        "v": "Jūsų skaitmeninis failas"
+      }
+    ],
+    "tipsTitle": "Patarimai ryškiam kadrui",
+    "tips": [
+      "Galinė kamera su 2x priartinimu, maždaug 10 cm nuo akies.",
+      "Dienos šviesa pro langą, iš šono. Ne lempa ir ne blykstė.",
+      "Bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai. Plačiai atmerkite akį, kad nei vokas, nei blakstienos nedengtų rainelės, ir nusiimkite akinius.",
+      "Padarykite nuo trijų iki penkių kadrų. Realiame bandyme geriausias kadras turėjo 3,7 karto daugiau detalių nei prasčiausias, o mes naudojame ryškiausią."
+    ],
+    "phoneZoom": "2x",
+    "previewTitle": "Jūsų peržiūra",
+    "previewButton": "Pereiti prie apmokėjimo",
+    "previewSoon": "Toliau: Jūsų failas",
+    "fileName": "snapeyes-artwork.jpg",
+    "fileMeta": "{square}, JPEG",
+    "fileTag": "Skaitmeninis failas"
+  },
+  "pricing": {
+    "eyebrow": "Kainos",
+    "title": "Aiškios kainos už vieną skaitmeninį failą",
+    "notice": "Užsakymus pradėsime priimti netrukus. Nemokama peržiūra jau prieinama. Tai planuojamos pradinės kainos.",
+    "noticeOpen": "Pradėkite nuo nemokamos peržiūros: užsisakysite tik tada, kai rezultatas Jums patiks.",
+    "currencyLabel": "Kainų valiuta",
+    "free": "Nemokamai",
+    "rows": {
+      "free": {
+        "t": "Peržiūra",
+        "b": "Su vandens ženklu, maždaug per minutę, be registracijos."
+      },
+      "black": {
+        "t": "Viena akis juodame fone",
+        "b": "Stilius Clean Iris."
+      },
+      "art": {
+        "t": "Viena akis meniniu stiliumi",
+        "b": "{styles}."
+      },
+      "two": {
+        "t": "Dvi akys",
+        "b": "Infinity, Kiss ir kiti."
+      },
+      "more": {
+        "t": "Trys akys",
+        "b": "Dvi akys kainuoja {price2}. Kiekviena papildoma akis: +{price}, iki {max} akių."
+      }
+    },
+    "ladderTitle": "Akių skaičius",
+    "eyes": "{n} akys",
+    "includesTitle": "Ką gausite",
+    "includes": [
+      "Vienas skaitmeninis failas be vandens ženklo, kurio ilgoji kraštinė yra {px} (vienos akies: {square})",
+      "Sukurtas visa raiška pagal Jūsų patvirtintą peržiūrą, kad galėtumėte atsispausdinti, kur tik norite",
+      "Failus galėsite atsisiųsti 12 mėnesių",
+      "Pirmiausia nemokama peržiūra, kad prieš mokėdami pamatytumėte savo akį ir stilių. Visos raiškos failas išryškina smulkesnes skaidulų detales.",
+      "Asmeninė licencija: galite atsispausdinti sau arba dovanai. Teisė parduoti kūrinį ar spaudinius nesuteikiama (žr. pardavimo sąlygas)."
+    ],
+    "notIncludes": "Spausdinimas nėra Jūsų užsakymo dalis. Spaustuvė už jį ima atskirą mokestį, o jo kaina priklauso nuo spaustuvės, dydžio ir medžiagos.",
+    "payOpen": "Saugus mokėjimas kortele per Stripe.",
+    "termsLink": "Pardavimo sąlygos",
+    "auLine": "Parduoda MB „Portretizuokis“, Kaunas, Lietuva. Mokėjimas kortele Australijos doleriais (A$) per Stripe. Tai skaitmeninis failas, todėl paštu nieko nesiunčiama.",
+    "footnote": "Kiekvienas užsakymas yra vienas skaitmeninis failas be vandens ženklo. Kainos nurodytos eurais. Tai galutinės kainos: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.",
+    "footnoteAud": "Kiekvienas užsakymas yra vienas skaitmeninis failas be vandens ženklo. Kainos nurodytos Australijos doleriais (A$). Tai galutinės kainos: GST netaikomas.",
+    "footnoteHuf": "Kiekvienas užsakymas yra vienas skaitmeninis failas be vandens ženklo. Kainos nurodytos Vengrijos forintais (Ft). Tai galutinės kainos: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas."
+  },
+  "closeups": {
+    "eyebrow": "Iš arčiau",
+    "title": "Iškirpta tiesiai iš failo",
+    "intro": "{n} px kvadratas, iškirptas iš {px} failo, nekeičiant dydžio (Jūsų ekranas gali pakeisti jo mastelį, kad tilptų). Nuotrauka, iš kurios sukurtas šis pavyzdys, buvo {src} px pločio, todėl smulkios skaidulos, kurias čia matote, yra mūsų DI rekonstrukcija.",
+    "badge": "{n} px fragmentas",
+    "fibreTitle": "Kvadratas, iškirptas tiesiai iš failo",
+    "fibreAlt": "Manto atkurtos rainelės vaizdas iš arti, iškirptas iš 4096 px failo: spindulinės skaidulos, auksinė apykaklė ir vyzdžio kraštas.",
+    "locatorAlt": "Visa atkurta rainelė, kvadratu pažymėta vieta, iš kurios iškirptas fragmentas",
+    "locatorLabel": "Iškirpimo vieta",
+    "edgeTitle": "Spaudinio ant akrilo kraštas",
+    "edgeBody": "DI sugeneruotas spaudinio ant akrilo kampo vaizdas iš arti: nupoliruotas kraštas, atstumo laikiklis ir lango atspindys. Tikras spaudinys gali atrodyti kitaip: tai priklauso nuo spaustuvės ir šviesos Jūsų kambaryje.",
+    "edgeAlt": "DI vizualizacija: spaudinio ant akrilo kampas su nupoliruotu skaidriu kraštu, plieniniu atstumo laikikliu ir švelniu lango atspindžiu.",
+    "edgeCaption": "Nupoliruotas spaudinio ant akrilo kraštas. Spausdinimas nėra Jūsų užsakymo dalis."
+  },
+  "trust": {
+    "eyebrow": "Ko niekada nedarome",
+    "title": "Nedideli pažadai, kuriuos tesime",
+    "items": [
+      {
+        "t": "Niekada neperpiešiame Jūsų rainelės",
+        "b": "Atkuriame smulkias detales. Spalva, raštas ir išdėstymas lieka Jūsų. Niekada nekeičiame jos spalvos ir nepakeičiame jos kita akimi."
+      },
+      {
+        "t": "Niekada nepristatome pavyzdžių kaip klientų nuotraukų",
+        "b": "Kiekvienas pavyzdinis vaizdas pažymėtas arba turi parašą. Manto akis yra jo paties. Kitos akys yra pavyzdinės nuotraukos, o ne klientų."
+      },
+      {
+        "t": "Niekada neslėpame, ką daro DI",
+        "b": "Mūsų DI atkuria smulkias detales ir pašalina atspindžius. Jis niekada nepakeičia Jūsų rainelės kita."
+      },
+      {
+        "t": "Niekada nekuriame dirbtinio skubumo",
+        "b": "Jokių atgalinių laikmačių, jokių perbrauktų kainų, jokių netikrų nuolaidų. Kaina, kurią matote, yra kaina, kurią mokate."
+      }
+    ],
+    "idLine": "MB „Portretizuokis“, įmonės kodas 305605052, Kaunas, Lietuva.",
+    "curatorEyebrow": "Įkūrėjas",
+    "curatorTitle": "Kas kuria SnapEyes",
+    "curatorRole": "Įkūrėjas",
+    "curatorNote": "Akis, kurią šiame puslapyje rodau dažniausiai, yra mano, nufotografuota namuose mano telefonu. Peržiūra nemokama, kad rezultatą galėtumėte įvertinti savo akimis prieš ką nors mokėdami.",
+    "curatorPhotoAlt": "Paties Manto rainelė",
+    "offer": "Nepavyksta padaryti ryškaus kadro? Atsiųskite man geriausias savo nuotraukas: asmeniškai jas peržiūrėsiu, paprastai per vieną ar dvi darbo dienas.",
+    "offerCta": "Rašyti Mantui",
+    "privacyEyebrow": "Jūsų nuotrauka",
+    "privacyTitle": "Pažadas dėl Jūsų akies",
+    "privacy": [
+      {
+        "t": "Tik Jūsų kūriniui",
+        "b": "Jūsų nuotrauka naudojama tik Jūsų kūriniui sukurti. Iš kiekvieno kadro fiksuojame kelis matavimus, bet niekada paties vaizdo, kad tobulintume fotografavimo patarimus."
+      },
+      {
+        "t": "Niekada tapatybei nustatyti",
+        "b": "Ji niekada nenaudojama kieno nors tapatybei nustatyti, niekada neparduodama ir nenaudojama DI mokyti."
+      },
+      {
+        "t": "Nemokamos peržiūros nesaugomos",
+        "b": "Nemokamos peržiūros nesaugome. Rainelės iškarpą ir peržiūrą saugome tik tada, kai pradedate užsakymą. Jei užsisakote, Jūsų užsakymo failus (ne Jūsų telefono nuotrauką) saugome 12 mėnesių, kad galėtumėte juos atsisiųsti."
+      },
+      {
+        "t": "Keletas išorinių paslaugų",
+        "b": "Puslapį ir peržiūrą palaiko Vercel, atkūrimą atlieka Google Gemini API (Google užklausų žurnalus saugo ribotą laiką). Užsakymams taip pat naudojame Stripe mokėjimams ir privačią Supabase saugyklą ES."
+      }
+    ],
+    "controller": "Už Jūsų duomenis atsako MB „Portretizuokis“, Kaunas, Lietuva (visi rekvizitai pateikti šio puslapio apačioje).",
+    "rights": "Galite paprašyti informacijos, kokius Jūsų duomenis turime, juos ištaisyti ar ištrinti, taip pat pateikti skundą duomenų apsaugos priežiūros institucijai.",
+    "policyLink": "Skaityti visą privatumo politiką"
+  },
+  "faq": {
+    "eyebrow": "Klausimai",
+    "title": "Prieš pradedant",
+    "items": [
+      {
+        "id": "receive",
+        "q": "Ką gausiu?",
+        "a": "Vieną skaitmeninį failą be vandens ženklo: JPEG sRGB spalvų erdvėje. Vienos akies kūrinio dydis yra {square}, o kelių akių kūrinio ilgoji kraštinė yra {px}. Jums sumokėjus atsidaro Jūsų užsakymo puslapis, o jo nuorodą gausite el. paštu. Paprastai failas paruošiamas per kelias minutes; jei kada nors užsakymą sulaikome patikrai, pažadame jį paruošti ne vėliau kaip per {hours} val. Failą galėsite atsisiųsti 12 mėnesių."
+      },
+      {
+        "id": "print",
+        "q": "Ar spausdinate ir siunčiate kūrinį?",
+        "a": "Ne. Gausite skaitmeninį failą, o spausdinimas nėra Jūsų užsakymo dalis. Jei kada nors pradėsime siūlyti spausdinimą, pranešime apie tai šiame puslapyje."
+      },
+      {
+        "id": "printit",
+        "q": "Ar galiu jį atsispausdinti, o jei taip, kokio dydžio?",
+        "a": "Taip. Pasirinkite spaustuvę, kvadratinį dydį, pavyzdžiui, 20, 30, 40 arba 50 cm, ir įkelkite JPEG failą. Kitokios formos kūriniui paprašykite spaustuvės jį apkarpyti arba pridėti paraštes, taip pat paprašykite bandomojo atspaudo arba pavyzdžio. Mes nespausdiname ir nesiunčiame: spaudinys yra spaustuvės darbas, už kurį mokate jai. Vienos akies kūriniui rekomenduojame iki {printMax}: tai apie 208 ppi (pikselių colyje), o pasirinkus 30 cm dydį, apie 347. Spaustuvės paprastai reikalauja maždaug nuo 150 iki 300 ppi. Kelių akių kūrinio ilgoji kraštinė gali būti iki {printMaxCm}."
+      },
+      {
+        "id": "look",
+        "q": "Ar mano spaudinys atrodys kaip šie vaizdai?",
+        "a": "Vaizdai yra DI vizualizacijos, rodančios, kaip failas gali atrodyti atspausdintas. Tikras spaudinys gali atrodyti kitaip: tai priklauso nuo spaustuvės, medžiagos ir šviesos Jūsų kambaryje, panašiai kaip ekranas skiriasi nuo sienos. Paprašykite spaustuvės bandomojo atspaudo arba pavyzdžio."
+      },
+      {
+        "id": "real",
+        "q": "Ar tai tikrai mano akis?",
+        "a": "Taip. Spalva ir raštas paimti iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI, todėl pačios smulkiausios detalės yra rekonstrukcija, o ne mikroskopu užfiksuotas vaizdas. Nemokama peržiūra leidžia įvertinti rezultatą dar prieš bet kokį mokėjimą."
+      },
+      {
+        "id": "bad",
+        "q": "Kas, jei mano nuotrauka prasta?",
+        "a": "Prieš mokėjimą peržiūra praneša, jei kadras per neryškus, per tamsus arba vyzdys per platus, ir parodo, kaip jį nufotografuoti iš naujo. Vis dar nepavyksta? Atsiųskite geriausias savo nuotraukas adresu {email}, ir Mantas jas peržiūrės."
+      },
+      {
+        "id": "unhappy",
+        "q": "Kas, jei rezultatas man nepatiks?",
+        "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums: sukursime jį iš naujo arba grąžinsime pinigus. Išsamiau apie sutarties atsisakymą rašoma toliau."
+      },
+      {
+        "id": "phone",
+        "q": "Kokį telefoną ir kamerą naudoti?",
+        "a": "Tinka bet kuris naujesnis išmanusis telefonas su gera galine kamera. Naudokite galinę kamerą su 2x arba 3x priartinimu, ne priekinę kamerą. Fotografuokite dienos šviesoje pro langą, iš šono, ne su lempa ir ne su blykste. Laikykite telefoną maždaug 10 cm nuo akies, bakstelėkite rainelę, kad kamera ją sufokusuotų, nusiimkite akinius ir padarykite nuo trijų iki penkių kadrų."
+      },
+      {
+        "id": "colour",
+        "q": "Ar spalva atitiks mano akį?",
+        "a": "Spalva paimta iš Jūsų nuotraukos, o telefonas spalvas užfiksuoja skirtingai, kai fotografuojama su lempa, su blykste ar pavėsyje. Mes niekada nekeičiame rainelės spalvos, todėl jei nuotrauka atrodo nuspalvinta, nufotografuokite iš naujo dienos šviesoje pro langą."
+      },
+      {
+        "id": "other",
+        "q": "Ar galiu fotografuoti kitą žmogų?",
+        "a": "Taip: partnerį, vaiką ar savo kitą akį, o viename kūrinyje gali būti iki aštuonių akių. Pirmiausia paklauskite, ar žmogus sutinka, o vaiko atveju sprendimą priimate kaip vienas iš tėvų, globėjas ar rūpintojas. Kūrinį galite sukurti ir kam nors kitam, o failą jam padovanoti."
+      },
+      {
+        "id": "material",
+        "q": "Kokią medžiagą rinktis?",
+        "a": "Akrilas blizgus ir gilus. Aliuminis ryškus ir modernus. Drobė minkšta, atspindžių joje mažiau, bet jos audinio faktūra sušvelnina pačias smulkiausias skaidulas. Įrėmintas spaudinys yra klasikinis pasirinkimas. Akrilo blokas stovi ant lentynos. Paprašykite pavyzdžio spaustuvėje."
+      },
+      {
+        "id": "time",
+        "q": "Kiek tai užtrunka?",
+        "a": "Nemokama peržiūra užtrunka maždaug minutę. Kai pradėsime priimti užsakymus, Jūsų failas, Jums patvirtinus peržiūrą, bus sukurtas visa raiška, paprastai per kelias minutes, o vėliausiai per {hours} val.",
+        "aOpen": "Nemokama peržiūra užtrunka maždaug minutę. Jums sumokėjus, failas sukuriamas visa raiška, paprastai per kelias minutes, o vėliausiai per {hours} val."
+      },
+      {
+        "id": "photo",
+        "q": "Kas nutinka mano nuotraukai?",
+        "a": "Nemokamos peržiūros nesaugome. Rainelės iškarpą ir peržiūrą saugome tik tada, kai pradedate užsakymą. Jei užsisakote, Jūsų užsakymo failus (ne Jūsų telefono nuotrauką) saugome 12 mėnesių, kad galėtumėte juos vėl atsisiųsti, o tada ištriname. Jūsų rainelė niekada nenaudojama tapatybei nustatyti ar DI mokyti. Išsamiau apie tai rašoma mūsų privatumo politikoje, kurios nuoroda yra šio puslapio apačioje."
+      },
+      {
+        "id": "withdraw",
+        "q": "Ar galiu atsisakyti užsakymo?",
+        "a": "Jūsų failą pradedame kurti, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo. Prieš mokėjimą Jūs sutinkate, kad pradėtume iš karto, todėl 14 dienų teisė atsisakyti sutarties baigiasi, kai tik pradedame kurti Jūsų failą. Iki tol sutarties galite atsisakyti el. paštu arba internetu mygtuku „Atsisakyti sutarties čia“, kurį rasite šio puslapio apačioje, arba per sutarties atsisakymo nuorodą užsakymo patvirtinimo el. laiške. Jei Jūsų failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums: sukursime jį iš naujo arba grąžinsime pinigus. Išsamiau apie tai rašoma mūsų pardavimo sąlygose ir informacijoje apie teisę atsisakyti sutarties, kurių nuorodos yra šio puslapio apačioje."
+      },
+      {
+        "id": "order",
+        "q": "Kada galėsiu užsisakyti?",
+        "a": "Užsakymus pradėsime priimti netrukus. Iki tol galima nemokama peržiūra. Užsisakyti reikia tik el. pašto adreso.",
+        "qOpen": "Kaip užsisakyti?",
+        "aOpen": "Iš karto po nemokamos peržiūros, tame pačiame puslapyje: pasirinkite stilių, pažymėkite langelį dėl skaitmeninio failo ir pereikite į „Stripe“ mokėjimo puslapį, kuriame sumokėsite. Iš karto atsidarys Jūsų užsakymo puslapis, o jo nuorodą gausite el. paštu. Reikia tik el. pašto adreso."
+      },
+      {
+        "id": "pets",
+        "q": "Ar galiu sukurti tokį kūrinį savo augintiniui?",
+        "a": "Kol kas ne. Kai galėsime, pranešime apie tai čia."
+      }
+    ]
+  },
+  "faqAu": {
+    "unhappy": {
+      "q": "Kas, jei rezultatas man nepatiks?",
+      "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus, failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums. Mūsų paslaugoms taikomos garantijos, kurių pagal Australijos vartotojų įstatymą (Australian Consumer Law) negalima panaikinti. Išsamiau apie atšaukimą rašoma toliau."
+    },
+    "withdraw": {
+      "q": "Ar galiu atšaukti užsakymą?",
+      "a": "Jūsų failą pradedame kurti, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo. Prieš mokėjimą Jūs sutinkate, kad pradėtume iš karto, todėl 14 dienų teisė atsisakyti sutarties pagal ES vartotojų teisės aktus, kuri taikoma Jūsų užsakymui, baigiasi, kai tik pradedame kurti Jūsų failą. Iki tol galite užsakymą atšaukti el. paštu arba internetu mygtuku „Atsisakyti sutarties čia“, kurį rasite šio puslapio apačioje, arba per sutarties atsisakymo nuorodą užsakymo patvirtinimo el. laiške, ir mes grąžinsime Jums visą sumą. Tai susiję tik su apsigalvojimu: mūsų paslaugoms taikomos garantijos, kurių pagal Australijos vartotojų įstatymą (Australian Consumer Law) negalima panaikinti, todėl jei Jūsų failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums. Išsamiau apie tai rašoma mūsų pardavimo sąlygose („Jūsų teisės Australijoje“) ir informacijoje apie teisę atsisakyti sutarties, kurių nuorodos yra šio puslapio apačioje."
+    }
+  },
+  "final": {
+    "title": "Pamatykite savo rainelę",
+    "body": "Tereikia telefono, geros šviesos ir maždaug minutės.",
+    "small": "Gausite skaitmeninį failą. Spausdinimas nėra Jūsų užsakymo dalis.",
+    "imageAlt": "DI vizualizacija: tamsus kabinetas prieblandoje, ant sienos Manto rainelė, atspausdinta ant akrilo.",
+    "chip": "DI vizualizacija"
+  },
+  "footer": {
+    "operatedBy": "SnapEyes paslaugą teikia",
+    "company": "MB „Portretizuokis“",
+    "companyCode": "Įmonės kodas",
+    "country": "Lietuva",
+    "contact": "Kontaktai",
+    "representedBy": "Atstovauja",
+    "rights": "SnapEyes",
+    "currency": "Kainų valiuta",
+    "legalNav": "Teisinė informacija",
+    "legal": {
+      "privacy": "Privatumo politika",
+      "terms": "Pardavimo sąlygos",
+      "withdrawal": "Teisė atsisakyti sutarties",
+      "imprint": "Rekvizitai",
+      "withdrawFn": "Atsisakyti sutarties čia"
+    }
+  },
+  "marketHint": {
+    "label": "Kainos Jūsų valiuta",
+    "close": "Ne, ačiū",
+    "huf": {
+      "text": "Perkate iš Vengrijos? Peržiūrėkite mūsų kainas Vengrijos forintais (Ft).",
+      "show": "Rodyti kainas forintais"
+    }
+  },
+  "ui": {
+    "close": "Uždaryti",
+    "scrollHint": "Slinkite į šoną norėdami pamatyti daugiau"
+  }
+}

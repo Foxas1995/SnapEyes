@@ -86,9 +86,7 @@ const PET_WORDS = ['paw', 'paws', 'bone', 'bones', 'cat', 'cats', 'dog', 'dogs',
 /** Files outside the registry that may write a style id, and why. Everything else reads the registry. */
 export const ID_ALLOW = {
   'api/_lib/iris.py': 'the legacy engine\'s own table (STYLES: background, accent, title per legacy id); item 1 keeps its keys and accents equal to the registry\'s legacy block',
-  'src/landing/copy.ts': 'copy dictionary keyed by style id (styles.desc), item 4 keeps its keys equal to the shown ids',
-  'src/landing/copy.lt.ts': 'copy dictionary keyed by style id (styles.desc), item 4',
-  'src/landing/copy.hu.ts': 'copy dictionary keyed by style id (styles.desc), item 4',
+  'src/landing/assets.data.ts': 'the landing\'s release gate table (ENGINE_STYLE: the legacy engine style each gallery tile could be made with, generated from scripts/landing_assets.json by scripts/build_landing_assets.py); the gate is replaced by the registry\'s own reading in the release task that follows the merge of landing-v2',
   'api/_lib/styles/collision/scenes.py': 'the scene key of a collision artwork is the registry id of its style: it is part of the prototype\'s seed in step A (WP7A), which step B (WP7B) replaces by the plan\'s seed key',
 };
 // folders of a scan that never hold customer-facing code: the style suites (they name ids to test them) and this check's own files

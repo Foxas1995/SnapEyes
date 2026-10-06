@@ -1,0 +1,17 @@
+/* SnapEyes landing v2: The sticky call to action on phones.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; padding: 12px var(--gut) calc(12px + env(safe-area-inset-bottom)); background: rgba(7, 9, 14, .92); border-top: 1px solid var(--line-2); backdrop-filter: blur(16px); transform: translateY(110%); visibility: hidden; transition: transform var(--d-ui) var(--ease-out), visibility var(--d-ui); }
+  .lp-sticky.lp-show { transform: none; visibility: visible; }
+  .lp-sticky .lp-btn { width: 100%; }
+  @media (min-width: 768px) {
+    .lp-sticky { display: none; }
+  }
+  /* a phone on its side, or a page zoomed to 400 percent: the fixed bar and header already take a third of the screen */
+  @media (max-height: 480px) {
+    .lp-sticky { display: none; }
+  }
+}

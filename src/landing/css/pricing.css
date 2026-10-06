@@ -1,0 +1,42 @@
+/* SnapEyes landing v2: Pricing: notice, currency switch, price table, what is included.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-notice { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-size: 14.5px; font-weight: 600; color: var(--t-2); }
+  .lp-notice::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex: none; box-shadow: 0 0 0 4px rgba(245, 197, 66, .15); }
+  .lp-price-grid { display: grid; gap: 44px; margin-top: 40px; }
+  @media (min-width: 960px) {
+    .lp-price-grid { grid-template-columns: 1.25fr .75fr; gap: 80px; align-items: start; }
+  }
+  .lp-ptable { border-top: 1px solid var(--line-2); }
+  /* the hairline under each row is a line of its own (the border stays, transparent, so nothing moves): it draws from the left when the table comes into view */
+  .lp-prow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; align-items: baseline; padding: 20px 0; border-bottom: 1px solid transparent; }
+  .lp-prow::after { content: ""; position: absolute; inset: auto 0 -1px; height: 1px; background: var(--line); transform-origin: left center; }
+  .lp-prow b { font-weight: 600; color: #fff; font-size: 16px; }
+  .lp-prow small { display: block; margin-top: 3px; font-size: 13px; color: var(--ink-3); font-weight: 400; line-height: 1.5; }
+  .lp-prow.lp-free .lp-pv { color: var(--gold); }
+  .lp-prow .lp-pv { font-family: var(--display); font-weight: 600; font-size: 24px; color: #fff; text-align: right; white-space: nowrap; }
+  .lp-prow .lp-pv em { font-style: normal; font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--ink-3); display: block; margin-top: 2px; letter-spacing: .02em; }
+  .lp-incl h3 { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); font-family: var(--body); }
+  .lp-incl ul { margin-top: 14px; display: grid; gap: 14px; }
+  .lp-incl li { position: relative; padding-left: 26px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+  .lp-incl li::before { content: ""; position: absolute; left: 0; top: 7px; width: 12px; height: 7px; border-left: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(-45deg) scale(.9); }
+  .lp-incl .lp-not { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 14px; font-weight: 600; color: #fff; }
+  .lp-incl .lp-pay-open, .lp-incl .lp-au-line { margin-top: 10px; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+  .lp-incl .lp-btn { margin-top: 26px; width: 100%; }
+  .lp-foot-price { margin-top: 34px; font-size: 13px; line-height: 1.65; color: var(--ink-3); max-width: 58em; }
+  /* a text link: the underline turns from a hairline white to gold and tightens by a pixel; the text stays put (gold is never link text) */
+  .lp-foot-price a { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 5px; transition: text-decoration-color var(--d-tap) var(--ease-out), text-underline-offset var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out); }
+  @media (hover: hover) {
+    .lp-foot-price a:hover { color: var(--t-1); text-decoration-color: var(--gold); text-underline-offset: 4px; }
+  }
+  .lp-price-grid > * { min-width: 0; }
+  /* ---- motion (spec 6.12): only the hairlines between the rows of the table draw (1.2 s, .12 s apart); no price, no sentence that holds one and no
+     word of the offer moves. The hidden state exists only while the engine is on (html.mo, not mo-fail) and motion is allowed. */
+  @media screen and (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) .lp-prow:not([data-in])::after { scale: 0 1; }
+    html.mo:not(.mo-fail) .lp-prow[data-in]::after { animation: lp-rv-line var(--d-draw) var(--ease-out) calc(var(--i, 0) * .12s) backwards; }
+  }
+}

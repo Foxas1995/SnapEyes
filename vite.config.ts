@@ -1,9 +1,10 @@
 import { defineConfig, runnerImport, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { checkPrices, type ClientMarkets } from './scripts/check_prices.mjs'
+import { checkPrices, type ClientMarkets, type LandingPriceModule } from './scripts/check_prices.mjs'
 import { checkPack, checkTexts } from './scripts/check_texts.mjs'
 import { checkStyles, describeRegistry, describePlates } from './scripts/check_styles.mjs'
+import { checkLandingAssets } from './scripts/check_landing_assets.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
 // withdrawal information with the model form, per language, plus the seller's contact facts). Built from the same
@@ -29,14 +30,17 @@ function legalMail(): Plugin {
 // Every price lives in api/_lib/markets.py (the server charges from it; src/shared/markets.ts reads it for every page).
 // Before a build: that file is sound, the site's own reading of it (loaded through Vite's module runner, as the legal
 // pack is) gives the server's prices for every market, eye count and style, and no other file holds a price of its
-// own (scripts/check_prices.mjs; `npm run check:prices` runs the file checks alone). Any problem stops the build.
+// own, and the new landing prints only the visitor's own ladder (scripts/check_prices.mjs; `npm run check:prices` runs the
+// same checks alone). Any problem stops the build.
 function priceCheck(): Plugin {
   return {
     name: 'snapeyes-price-check',
     apply: 'build',
     async buildStart() {
       const { module } = await runnerImport<ClientMarkets>('./src/shared/markets.ts', { configFile: false, logLevel: 'silent' })
-      const problems = checkPrices(process.cwd(), module)
+      // the new landing's price texts (src/landing/priceText.ts) are run against every price ladder, variants included
+      const landing = (await runnerImport<LandingPriceModule>('./src/landing/priceText.ts', { configFile: false, logLevel: 'silent' })).module
+      const problems = checkPrices(process.cwd(), module, landing)
       if (problems.length) this.error(`price check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
     },
   }
@@ -77,6 +81,140 @@ function styleCheck(): Plugin {
   }
 }
 
+// The landing page's pictures (public/assets/landing, written by scripts/build_landing_assets.py) against their manifest
+// (src/landing/assets.ts): content hashes, sizes, nothing unused or missing, the byte budgets, the immutable cache headers of
+// vercel.json (scripts/check_landing_assets.mjs; `npm run check:assets` runs it alone). The release gate (which tiles of the
+// style gallery the engine can make today) is a notice, an error only with LANDING_GATE=strict. Any problem stops the build.
+function assetCheck(): Plugin {
+  return {
+    name: 'snapeyes-landing-assets-check',
+    apply: 'build',
+    async buildStart() {
+      const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
+      const { problems, notices } = checkLandingAssets(process.cwd(), await load('./src/landing/assets.ts'), await load('./src/landing/assets.data.ts'))
+      for (const n of notices) this.warn(n)
+      if (problems.length) this.error(`landing assets check failed (${problems.length}):\n  ${problems.join('\n  ')}`)
+    },
+  }
+}
+
+// The landing page's first screen, prerendered into index.html (BUILD_PLAN section 4, step 1). Without it the first paint waits for
+// the whole React bundle (about 2 s of LCP on a phone over slow 4G instead of about 1.3 s): with it the browser paints the notice
+// bar, the header and the hero, with the LCP picture already preloaded, before a line of script has run.
+//   * lp:shell (body): the first screen of the default market, rendered by the very components the live page uses
+//     (src/landing/SiteTopView.tsx, HeroView.tsx, called by src/landing/shell/render.tsx), inside <div id="shell">, in English; the
+//     German, Lithuanian and Hungarian ones follow as <template id="tpl-xx"> and a swap script puts the visitor's language in place
+//     before the first paint. src/main.tsx takes the shell away the moment React has put the page in its place (createRoot, not
+//     hydrateRoot: the live page renders more than the first screen, so there is nothing to hydrate against). The prices in it are
+//     held back (invisible) like every price of the page until the server has answered.
+//   * lp:head: (1) the decision script (src/landing/shell/scripts.ts): which language and market will this visitor read, written from
+//     the tables of src/shared/lang.ts and src/shared/markets.ts and proven equal to detectLang and detectMarket by
+//     scripts/check_shell.mjs. (2) The preload of the new hero picture.
+//     (3) The early ask of the two API answers the page needs (scripts.ts prefetchScript), so the offer of another currency, when the
+//     server suggests one, is part of the first render and pushes nothing down.
+//   * the title, description and share texts come from the English copy (src/landing/copy/en.json meta), as they do at run time.
+// Loaded through Vite's module runner, like the other build steps, so this file imports no app code itself.
+function heroShell(): Plugin {
+  type Parts = { html: string; templates: Record<string, string>; preload: string; decision: string; swap: string; prefetch: string; bar: string; menu: string; meta: { title: string; description: string; shareDescription: string } }
+  let built: Promise<Parts> | null = null
+  const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
+  async function make(): Promise<Parts> {
+    const markets = await load('./src/shared/markets.ts')
+    const lang = await load('./src/shared/lang.ts')
+    const priceText = await load('./src/landing/priceText.ts')
+    const shell = await load('./src/landing/shell/render.tsx')
+    const scripts = await load('./src/landing/shell/scripts.ts')
+    const market: string = markets.DEFAULT_MARKET
+    const all = Object.keys(markets.MARKETS)
+    const rule = {
+      defaultMarket: market,
+      selectable: markets.SELECTABLE,
+      allowed: Object.fromEntries(all.map((m) => [m, lang.marketLangs(m)])),
+      own: Object.fromEntries(all.map((m) => [m, lang.marketDefaultLang(m)])),
+    }
+    // the price of the micro line in each language: the ladder the shells are made from (held back in the markup, see src/landing/HeroView.tsx)
+    const prices = Object.fromEntries(lang.LANGS.map((l: string) => [l, priceText.landingPrices(markets.priceList(market), market, l).from]))
+    const langs = lang.LANGS.filter((l: string) => lang.langAllowed(l, market))
+    const out = shell.renderShell({ prices, langs })
+    return {
+      html: out.html,
+      templates: out.templates,
+      preload: out.preload,
+      decision: scripts.decisionScript(rule),
+      // the markets whose edition has fewer languages than the site (the Australian one): the swap keeps only their language buttons
+      swap: scripts.swapScript(market, Object.fromEntries(all.filter((m) => lang.marketLangs(m).length < lang.LANGS.length).map((m) => [m, lang.marketLangs(m)]))),
+      prefetch: scripts.prefetchScript,
+      bar: scripts.barScript,
+      menu: scripts.menuScript,
+      meta: out.meta,
+    }
+  }
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return {
+    name: 'snapeyes-hero-shell',
+    configureServer(server) {
+      // the shell follows the files it is made from while the dev server runs
+      server.watcher.on('change', (f) => {
+        if (/\/src\/(landing|shared)\/|markets\.py$/.test(f.split('\\').join('/'))) built = null
+      })
+    },
+    async transformIndexHtml(html, ctx) {
+      if (ctx.path !== '/index.html') return html
+      built ??= make()
+      const p = await built.catch((e) => {
+        built = null
+        throw e
+      })
+      if (!html.includes('<!-- lp:head -->') || !html.includes('<!-- lp:shell -->')) throw new Error('index.html lost its lp:head or lp:shell marker')
+      return html
+        .replace(/<title>[\s\S]*?<\/title>/, () => `<title>${esc(p.meta.title)}</title>`)
+        .replace(/(<meta name="description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.description)}${b}`)
+        .replace(/(<meta property="og:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.title)}${b}`)
+        .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
+        .replace(/(<meta name="twitter:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.title)}${b}`)
+        .replace(/(<meta name="twitter:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
+        .replace('<!-- lp:head -->', () => `<script>${p.decision}</script>\n    <script>${p.prefetch}</script>\n    ${p.preload}`)
+        .replace('<!-- lp:shell -->', () => {
+          const templates = Object.entries(p.templates).map(([l, h]) => `<template id="tpl-${l}">${h}</template>`).join('\n    ')
+          return `<div id="shell" class="lp-shell">${p.html}</div>\n    ${templates}\n    <script>${p.swap}</script>\n    <script>${p.bar}</script>\n    <script>${p.menu}</script>`
+        })
+    },
+  }
+}
+
+// The page's own script starts after the LCP picture (build only, BUILD_PLAN section 5). Left in the head, the module script and its 8
+// modulepreload links (React, the old sections: about 120 kB on the wire) compete with the picture for the phone's 1.6 Mbit/s: measured
+// over slow 4G the picture arrived at about 1.5 s with them and about 0.9 s without. The first screen is static and needs no script, so
+// this takes them out of the final HTML and adds an inline loader (src/landing/shell/scripts.ts loaderScript) that starts them as soon as
+// the hero picture has loaded. A visitor the shell is not for loads them at once.
+function lateMainScript(): Plugin {
+  return {
+    name: 'snapeyes-late-main-script',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      async handler(html, ctx) {
+        if (ctx.path !== '/index.html' || !ctx.bundle) return html
+        const main = /<script type="module"[^>]*\ssrc="([^"]+)"[^>]*><\/script>\s*/.exec(html)
+        if (!main) throw new Error('dist index.html: the module script was not found')
+        const preloads = [...html.matchAll(/<link rel="modulepreload"[^>]*\shref="([^"]+)"[^>]*>\s*/g)].map((m) => m[1])
+        // the chunk of each language's words (src/landing/copy/<lang>.json, loaded by the page on demand): the loader starts the visitor's own
+        // one together with the page's script, instead of when the page's script asks for it a round trip later
+        const langChunks: Record<string, string> = {}
+        for (const l of ['de', 'lt', 'hu']) {
+          const chunk = Object.values(ctx.bundle).find((c) => c.type === 'chunk' && (c.facadeModuleId ?? '').split('\\').join('/').endsWith(`/landing/copy/${l}.json`))
+          if (chunk) langChunks[l] = `/${chunk.fileName}`
+        }
+        const scripts = await runnerImport<any>('./src/landing/shell/scripts.ts', { configFile: false, logLevel: 'silent' })
+        return html
+          .replace(main[0], '')
+          .replace(/<link rel="modulepreload"[^>]*>\s*/g, '')
+          .replace('<div id="root"></div>', () => `<div id="root"></div>\n    <script>${scripts.module.loaderScript(main[1], preloads, langChunks)}</script>`)
+      },
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -85,7 +223,10 @@ export default defineConfig({
     priceCheck(),
     textCheck(),
     styleCheck(),
+    assetCheck(),
     legalMail(),
+    heroShell(),
+    lateMainScript(),
   ],
   build: {
     rollupOptions: {

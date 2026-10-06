@@ -1,87 +1,51 @@
-import { ArrowRight, Ban, Clock, Lock, Mail, Trash2 } from 'lucide-react';
-import { useLang } from './lang';
-import { CONTACT_EMAIL, styleSrc } from './config';
-import { SectionHead } from './ui';
-import { legalHref } from '../shared/legal';
+// The trust section of the new landing (BUILD_PLAN section 2, "Trust"): the four promises, the identity line of the seller, the
+// founder with his note, and the privacy promise with the link to the privacy policy (the full notice is /privacy, through
+// legalHref, so it carries ?lang= and the market's edition). The #privacy anchor of the footer's navigation is the block that
+// holds the founder and the privacy promise. The promises must stay true to the privacy policy (src/legal/docs/privacy.ts):
+// free previews are not stored, paid orders keep their files (not the phone photo) for 12 months. Importing this file brings
+// its own stylesheet, so it can be loaded lazily with its section.
+// Motion (motion spec 6.11): the headings rise out of their masks, the four promises appear one by one (the hairline above each draws, then its words
+// rise), a thin gold ring draws itself around the founder's portrait (the portrait never moves) and his words rise after it, the privacy items rise one
+// after the other. The seller's identity line, the privacy footer and the link to the policy never move (src/landing/Never.tsx, Curator.tsx,
+// PrivacyList.tsx, css/trust.css).
+import { useCopy } from './copy/useCopy';
+import { useLegalHref } from './links';
+import { Never } from './Never';
+import { Curator } from './Curator';
+import { PrivacyList } from './PrivacyList';
+import { Title } from '../motion/Title';
+import './css/trust.css';
 
-const PRIVACY_ICONS = [Lock, Ban, Trash2, Clock];
-
-// Curator note and privacy promise. The personal "send me your photos" offer only renders when
-// CONTACT_EMAIL is set. The promise must match the privacy policy (src/legal/docs/privacy.ts): free previews are
-// not stored; paid orders keep their files (not the phone photo) for 12 months.
 export function Trust() {
-  const { t, lang } = useLang();
-  const c = t.curator;
-  const pv = t.privacy;
+  const { c } = useCopy();
+  const tr = c.trust;
+  const privacyHref = useLegalHref('privacy');
   return (
-    <section className="border-t border-white/[0.06] py-20 sm:py-28">
-      <div className="mx-auto grid max-w-6xl gap-14 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
-        <div>
-          <SectionHead eyebrow={c.eyebrow} title={c.title} />
-          <figure className="mt-8 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-8">
-            <div className="flex items-center gap-4">
-              <img
-                src={styleSrc('studio-black', 480)}
-                width={480}
-                height={480}
-                loading="lazy"
-                decoding="async"
-                alt={c.photoAlt}
-                className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-[#f5c542]/40"
-              />
-              <div>
-                <p className="font-luxury text-xl font-semibold text-white">Mantas</p>
-                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f5c542]">{c.role}</p>
-              </div>
-            </div>
-            <blockquote className="mt-6 text-[17px] leading-relaxed text-zinc-200">{c.note}</blockquote>
-            {CONTACT_EMAIL && (
-              <div className="mt-6 border-t border-white/[0.06] pt-6">
-                <p className="text-[15px] leading-relaxed text-zinc-300">{c.offer}</p>
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="mt-4 inline-flex h-11 items-center gap-2 rounded-full border border-white/15 px-5 text-sm font-semibold text-white transition-colors hover:border-[#f5c542]/60 hover:text-[#f5c542] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]"
-                >
-                  <Mail aria-hidden="true" className="h-4 w-4" />
-                  {c.offerCta}
-                </a>
-              </div>
-            )}
-          </figure>
+    <section className="lp-sec" id="trust" aria-labelledby="trustH">
+      <div className="lp-wrap">
+        <div className="lp-sec-head">
+          <p className="lp-eyebrow" data-reveal="fade-s">{tr.eyebrow}</p>
+          <Title id="trustH" text={tr.title} />
         </div>
+        <Never />
+        <p className="lp-id-line">{tr.idLine}</p>
 
-        <div id="privacy" className="scroll-mt-16">
-          <SectionHead eyebrow={pv.eyebrow} title={pv.title} />
-          <ul className="mt-8 grid gap-x-6 gap-y-7 sm:grid-cols-2">
-            {pv.items.map((it, i) => {
-              const Icon = PRIVACY_ICONS[i];
-              return (
-                <li key={it.title} className="flex gap-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10">
-                    <Icon aria-hidden="true" className="h-4 w-4 text-[#f5c542]" strokeWidth={1.6} />
-                  </span>
-                  <div>
-                    <h3 className="font-body text-[15px] font-semibold text-white">{it.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-zinc-400">{it.body}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          {/* who is responsible and the rights every visitor has; the full notice is the privacy policy (/privacy) */}
-          <div className="mt-8 border-t border-white/[0.06] pt-6 text-sm leading-relaxed text-zinc-400">
-            <p>{pv.controller}</p>
-            <p className="mt-2">{pv.rights}</p>
-            <a
-              href={legalHref('privacy', lang)}
-              className="mt-4 inline-flex items-center gap-2 font-semibold text-zinc-200 underline decoration-[#f5c542]/50 underline-offset-4 hover:text-[#f5c542] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm"
-            >
-              {pv.policyLink}
-              <ArrowRight aria-hidden="true" className="h-4 w-4" />
-            </a>
+        <div className="lp-cur-priv" id="privacy">
+          <Curator />
+          <div>
+            <p className="lp-eyebrow" data-reveal="fade-s">{tr.privacyEyebrow}</p>
+            <Title text={tr.privacyTitle} />
+            <PrivacyList />
+            <div className="lp-priv-foot">
+              <p>{tr.controller}</p>
+              <p>{tr.rights}</p>
+              <a href={privacyHref}>{tr.policyLink}</a>
+            </div>
           </div>
         </div>
       </div>
     </section>
   );
 }
+
+export default Trust;

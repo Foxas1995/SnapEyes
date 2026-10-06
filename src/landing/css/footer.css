@@ -1,0 +1,54 @@
+/* SnapEyes landing v2: The footer (part of the first render of the page).
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-ftr { --ftr-bg: #020306; border-top: 1px solid var(--line); background: var(--ftr-bg); padding: 56px 0 120px; font-size: 14px; color: var(--ink-3); overflow-x: clip; }
+  @media (min-width: 768px) {
+    .lp-ftr { padding-bottom: 56px; }
+  }
+  .lp-ftr-grid { display: grid; gap: 34px; }
+  @media (min-width: 768px) {
+    .lp-ftr-grid { grid-template-columns: 1fr 1.2fr .8fr; }
+  }
+  .lp-ftr address { font-style: normal; line-height: 1.75; }
+  .lp-ftr address b { color: var(--ink); font-weight: 500; }
+  /* the quiet text link: the underline turns from a hairline white to gold and tightens by a pixel; the list rows of the navigation turn from grey to white */
+  .lp-ftr address a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 5px; transition: text-decoration-color var(--d-tap) var(--ease-out), text-underline-offset var(--d-tap) var(--ease-out); }
+  .lp-ftr address .lp-ftr-by { display: block; }
+  .lp-ftr address .lp-ftr-line { display: block; margin-top: 10px; }
+  @media (hover: hover) {
+    .lp-ftr address a:hover { text-decoration-color: var(--gold); text-underline-offset: 4px; }
+    .lp-ftr nav a:hover { color: var(--t-1); }
+  }
+  .lp-ftr nav { display: flex; flex-direction: column; gap: 10px; }
+  .lp-ftr nav a { text-decoration: none; padding: 9px 0; min-height: 44px; display: inline-flex; align-items: center; transition: color var(--d-tap) var(--ease-out); }
+  .lp-ftr-bottom { margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 18px; font-size: 12.5px; }
+  @media (min-width: 768px) {
+    .lp-ftr-bottom { flex-direction: row; justify-content: space-between; align-items: center; }
+  }
+  .lp-ftr-bottom nav { flex-direction: row; flex-wrap: wrap; gap: 8px 20px; }
+  .lp-ftr-l { display: flex; flex-direction: column; gap: 12px; }
+  @media (min-width: 640px) {
+    .lp-ftr-l { flex-direction: row; align-items: center; gap: 26px; }
+  }
+  /* the giant outline wordmark (spec 6.15, D9). Cinzel's capitals are made of overlapping contours, so a plain text stroke would draw every seam: the stroke
+     is painted first and the fill, the footer's own colour, over it (paint-order), which leaves a clean outline. The word is 5.37 em wide with its tracking,
+     so 17.5vw spans 94 percent of the screen at every width (and stops growing at 22 rem). The mask is padded .18 em above and .12 em below. It is not text
+     (its letters come from the stylesheet) and it takes no clicks. A browser that cannot paint the stroke under the fill gets no wordmark at all. */
+  .lp-ftr-mark { display: none; }
+  @supports (paint-order: stroke fill) {
+    .lp-ftr-mark { display: block; margin: 48px 0 0; padding-block: .18em .12em; font-family: var(--display); font-weight: 600; font-size: min(17.5vw, 22rem); line-height: .8; letter-spacing: .02em; text-align: center; white-space: nowrap; clip-path: inset(0 -1em); pointer-events: none; user-select: none; }
+    .lp-ftr-mark > span { display: block; }
+    .lp-ftr-mark > span::before { content: "SNAPEYES"; color: var(--ftr-bg); -webkit-text-stroke: clamp(1.5px, .4vw, 2px) rgb(245 197 66 / .22); paint-order: stroke fill; }
+    @media screen and (prefers-reduced-motion: no-preference) {
+      html.mo:not(.mo-fail) .lp-ftr-mark:not([data-in]) > span { translate: 0 var(--mask-from); }
+      html.mo:not(.mo-fail) .lp-ftr-mark[data-in] > span { animation: lp-rv-mask var(--d-mask) var(--ease-out) backwards; }
+    }
+    /* forced colours would paint the letters solid in the system text colour, and a printed page has no use for a giant decoration */
+    @media (forced-colors: active), print {
+      .lp-ftr-mark { display: none; }
+    }
+  }
+}

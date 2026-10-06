@@ -1,68 +1,84 @@
-import { useLang } from './lang';
-import { STYLES, styleSrc, styleSrcSet } from './config';
-import { currencyOf, money, priceMinor } from '../shared/markets';
-import { useMarket } from '../shared/useMarket';
-import { usePrices, usePricesReady } from '../shared/usePrices';
-import { useCatalogue, useOrderingOpen } from './ordering';
-import { SectionHead } from './ui';
+// The styles chapter (BUILD_PLAN section 2, "Styles"): group tabs, the eye colour dots, the legend, the tiles. The composition
+// only: the tabs are ./StyleTabs.tsx, the dots ./EyeChips.tsx, a tile ./StyleTile.tsx, the data and the release gate
+// ./gallery.ts, the look css/styles.css. Words come from the copy layer, prices from the visitor's own ladder, pictures from
+// the asset manifest; nothing is written here. Importing this file brings its own stylesheet, so it can be loaded lazily
+// with its section.
+//
+// Motion (motion spec 6.6): the title rises out of its mask; the tiles rise one after the other the first time the grid comes into view
+// (fade up, 90 ms apart, the index capped at 4: tiles are artworks, so no scale, no blur, no tilt); a change of group is a repeated
+// action and stays quiet: the new tiles only fade in, 300 ms, 40 ms apart, no rise. On a phone the tiles are a swipe rail, which appears
+// as one piece. A tile's picture cross-fades when the eye colour changes (StyleTile.tsx).
+import { useState } from 'react';
+import { Title } from '../motion/Title';
+import { useCopy } from './copy/useCopy';
+import { DEFAULT_EYE, DEFAULT_GROUP, hasEyeSwitch, isWide, tileKey, tilesOf, type EyeId, type GalleryGroup } from './gallery';
+import { useLandingPrices } from './prices';
+import { EyeChips } from './EyeChips';
+import { StyleTabs } from './StyleTabs';
+import { StyleTile } from './StyleTile';
+import { PriceGate } from './ui';
+import { useScrollableRegion } from './useScrollableRegion';
+import './css/styles.css';
 
 export function StyleGallery() {
-  const { t, lang } = useLang();
-  const open = useOrderingOpen();
-  const cat = useCatalogue();                // the styles that can be ordered NOW (the server's effective stages; the build's own reading until it answers)
-  const market = useMarket();
-  const prices = usePrices(market);          // the visitor's own ladder while a price experiment runs for them
-  const pending = !usePricesReady();         // the server's first answer is waited for (a moment) before a price is printed
-  const s = t.styles;
+  const { c, t } = useCopy();
+  const prices = useLandingPrices();
+  const [group, setGroup] = useState<GalleryGroup>(DEFAULT_GROUP);
+  const [eye, setEye] = useState<EyeId>(DEFAULT_EYE);
+  // the wall views the visitor asked for, by tile key: a key that is there has been asked for once (its picture is loaded)
+  // false until the visitor has changed the group once: the first grid is revealed by scrolling, the later ones fade in on their own
+  const [swapped, setSwapped] = useState(false);
+  const pickGroup = (next: GalleryGroup) => {
+    if (next === group) return;
+    setSwapped(true);
+    setGroup(next);
+  };
+  const [wall, setWall] = useState<Readonly<Record<string, boolean>>>({});
+  const { ref: railRef, props: railProps } = useScrollableRegion<HTMLDivElement>();
+  const eyeSwitch = hasEyeSwitch(group);
+  const wide = isWide(group);
   return (
-    <section id="styles" className="scroll-mt-16 border-t border-white/[0.06] py-20 sm:py-28">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHead eyebrow={s.eyebrow} title={s.title} intro={s.intro} />
-        {/* prices appear below, so the pricing notice ("ordering opens soon", or its open wording) sits right here too (owner decision 2) */}
-        <p role="note" className="mt-5 flex items-start gap-2.5 text-sm font-medium text-[#f7d77a]">
-          <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#f5c542]" />
-          <span>{open ? t.pricing.noticeOpen : t.pricing.notice}</span>
-        </p>
-        <ul className="mt-12 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 md:gap-y-12">
-          {STYLES.map((st) => {
-            const cents = priceMinor(1, st.id, market, prices);
-            const orderable = cat.one.includes(st.id);      // a price is printed beside a style that can be bought now, never beside one that cannot yet (spec 1.8 rule 2)
-            return (
-              <li key={st.id}>
-                <figure>
-                  <div className="aspect-square overflow-hidden rounded-2xl bg-black ring-1 ring-white/[0.08]">
-                    <img
-                      src={styleSrc(st.slug, 800)}
-                      srcSet={styleSrcSet(st.slug)}
-                      sizes="(min-width: 1152px) 355px, (min-width: 768px) 30vw, calc(50vw - 22px)"
-                      width={800}
-                      height={800}
-                      loading="lazy"
-                      decoding="async"
-                      alt={s.alt(st.name)}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <figcaption className="mt-4">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <h3 className="font-luxury text-[15px] font-semibold tracking-[0.04em] text-white sm:text-base">{st.name}</h3>
-                      <span className="text-xs text-zinc-400">
-                        {s.oneEye}
-                        {orderable && (
-                          <>
-                            {' · '}
-                            <span className={`text-zinc-300 ${pending ? 'opacity-0' : ''}`} aria-hidden={pending || undefined}>{money(cents, currencyOf(market), lang)}</span>
-                          </>
-                        )}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400 sm:text-sm">{s.desc[st.id]}</p>
-                  </figcaption>
-                </figure>
-              </li>
-            );
-          })}
-        </ul>
+    <section className="lp-sec" id="styles" aria-labelledby="stylesH">
+      <div className="lp-wrap">
+        <div className="lp-sec-head">
+          <p className="lp-eyebrow">{c.styles.eyebrow}</p>
+          <Title id="stylesH" text={c.styles.title} />
+          <p className="lp-intro">{c.styles.intro}</p>
+        </div>
+        <StyleTabs group={group} onPick={pickGroup} />
+        <div className="lp-gpanel" id="gPanel" role="tabpanel" tabIndex={0} aria-labelledby={`gtab-${group}`}>
+          <p className="lp-group-intro lp-gintro" id="gIntro">{c.styles.groupIntro[group]}</p>
+          <p className="lp-legend">{c.styles.legend}</p>
+          <EyeChips eye={eye} onPick={setEye} hidden={!eyeSwitch} />
+          <div className={wide ? 'lp-grid lp-wide' : 'lp-grid'} id="gGrid" data-reveal="soft" ref={railRef} {...railProps(c.styles.title, 'group')}>
+            {tilesOf(group).map((tile, n) => {
+              const key = tileKey(group, tile);
+              return (
+                <StyleTile
+                  key={key}
+                  tile={tile}
+                  group={group}
+                  eye={eye}
+                  wallOn={!!wall[key]}
+                  wallAsked={key in wall}
+                  onWall={(k) => setWall((w) => ({ ...w, [k]: !w[k] }))}
+                  prices={prices}
+                  enter={swapped ? 'swap' : 'reveal'}
+                  index={n}
+                />
+              );
+            })}
+            {wide && (
+              <div className="lp-combo">
+                <h3>{c.styles.comboTitle}</h3>
+                <p>
+                  <PriceGate pending={prices.pending}>{t('styles.comboBody', { price: prices.price })}</PriceGate>
+                </p>
+                <a className="lp-btn lp-btn-line" href="#pricing">{c.nav.pricing}</a>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );

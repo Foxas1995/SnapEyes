@@ -1,5 +1,19 @@
 /* Legal pages only (src/legal/main.tsx). The page is dark on screen; on paper (or "save as PDF") it prints as
    black text on white, without the header, the language switch and the contents list. */
+
+/* What these pages always got from the landing's old stylesheet (src/landing/landing.css): the dark page colour and colour
+   scheme on the root, and smooth scrolling to the contents list. They do not load the new landing's CSS (src/landing/css),
+   so the two rules live here, unchanged. */
+html {
+  background-color: #030408;
+  color-scheme: dark;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @media print {
   html,
   body {

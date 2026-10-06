@@ -9,6 +9,9 @@
          So no referrer, and no third-party script or font here (no analytics, no pixel). -->
     <meta name="referrer" content="no-referrer" />
     <meta name="robots" content="noindex, nofollow" />
+    <!-- The page transition (src/motion/transition.css) never covers an order, a payment or a form: this page arrives without it when its address names
+         an order (o, k, s), a payment (checkout, session_id) or the online withdrawal function (withdraw). The address is read while the head is parsed: the page's own script may already have tidied it (a return from payment is cleaned) when the page is revealed. -->
+    <script>(function(q){addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v&&/[?&](o|k|s|checkout|session_id|withdraw)=/.test(q))v.skipTransition()})})(location.search)</script>
     <title>Your order | SnapEyes</title>
     <meta name="description" content="Your SnapEyes order: your iris artwork is made here and ready to download." />
     <link rel="preload" as="font" type="font/woff2" href="/assets/atelier/fonts/cinzel-var.woff2" crossorigin />

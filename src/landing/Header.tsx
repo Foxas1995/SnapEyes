@@ -1,79 +1,91 @@
-import { useEffect, useState } from 'react';
-import { useLang } from './lang';
-import { tryUrl } from './config';
-import { Logo } from './ui';
-import { LANG_NAMES, marketLangs } from '../shared/lang';
-import { useMarket } from '../shared/useMarket';
+// The fixed header of the new landing: logo, navigation, language switch and the short call to action (prototype: #hdr). A PURE
+// component (props in, markup out, no hook and no window), so the same markup can be rendered to static HTML at build time
+// (src/landing/shell) and live (./SiteTop.tsx, which also gives it its behaviour: it sits under the notice bar and follows it up
+// as the page scrolls, goes solid after 24 px).
+//
+// It imports nothing that carries the landing's words or pictures: types only, plus the language names (the legal pages have
+// their own language switch, src/legal/LangSwitch.tsx).
+import type { CSSProperties, Ref } from 'react';
+import { LANG_NAMES, type Lang } from '../shared/lang';
+import type { LandingCopy } from './copy/types';
+import { NAV_KEYS } from './navKeys';
 
-/** One button per language the visitor's market can be read in (English, German, Lithuanian and Hungarian; the
- *  Australian market: English and German, src/shared/legal.ts EDITION_LANGS). Below 340 px wide (the smallest phones)
- *  the buttons are narrower, so four of them still fit beside the logo and none is pushed off the screen. */
-export function LangSwitch() {
-  const { lang, setLang, t } = useLang();
-  const options = marketLangs(useMarket());
+
+export function LogoMark() {
   return (
-    <div role="group" aria-label={t.switchLabel} className="flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
-      {options.map((l) => (
-        <button
-          key={l}
-          type="button"
-          onClick={() => setLang(l)}
-          aria-pressed={lang === l}
-          lang={l}
-          title={LANG_NAMES[l]}
-          className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${
-            lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'
-          }`}
-        >
-          {l}
-        </button>
-      ))}
-    </div>
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="15" fill="none" stroke="#f5c542" strokeOpacity=".55" />
+      <circle cx="16" cy="16" r="9.5" fill="none" stroke="#f5c542" strokeWidth="1.4" />
+      <circle cx="16" cy="16" r="4" fill="#f5c542" />
+    </svg>
   );
 }
 
-export function Header() {
-  const { t, lang } = useLang();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const links: Array<[string, string]> = [
-    ['#before-after', t.nav.beforeAfter],
-    ['#how', t.nav.how],
-    ['#styles', t.nav.styles],
-    ['#pricing', t.nav.pricing],
-    ['#faq', t.nav.faq],
-  ];
-
+/** The logo link: the mark, SNAPEYES and the brand tag under it. It goes to the top of the page; the header and the footer use it. */
+export function SiteLogo({ brandTag }: { brandTag: string }) {
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
-        scrolled ? 'border-b border-white/[0.06] bg-[#030408]/85 backdrop-blur-xl' : 'border-b border-transparent bg-transparent'
-      }`}
-    >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 max-[340px]:gap-2 sm:px-6">
-        <Logo tag={t.brandTag} />
-        <nav aria-label={t.navLabels.main} className="hidden items-center gap-7 text-[13px] text-zinc-400 lg:flex">
-          {links.map(([href, label]) => (
-            <a key={href} href={href} className="transition-colors hover:text-white">
-              {label}
-            </a>
+    <a className="lp-logo" href="#top" aria-label={`SnapEyes ${brandTag}`}>
+      <LogoMark />
+      <span>
+        <b>SNAPEYES</b>
+        <small>{brandTag}</small>
+      </span>
+    </a>
+  );
+}
+
+export interface SiteHeaderViewProps {
+  copy: LandingCopy;
+  lang: Lang;
+  /** The language buttons: the languages the new landing speaks in the visitor's market. */
+  langs: readonly Lang[];
+  tryHref: string;
+  /** Only the live page gives these: the static shell has no handlers and no refs. */
+  onLang?: (l: Lang) => void;
+  /** The visitor is about to press a language button (pointer over it, finger down, focus): the live page starts fetching that
+   *  language's words, so the first switch does not wait for the file after the press. */
+  onLangIntent?: (l: Lang) => void;
+  headerRef?: Ref<HTMLElement>;
+}
+
+export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangIntent, headerRef }: SiteHeaderViewProps) {
+  return (
+    <header className="lp-hdr" id="hdr" ref={headerRef}>
+      <div className="lp-wrap">
+        <SiteLogo brandTag={copy.brandTag} />
+        <nav className="lp-nav" id="nav" aria-label={copy.navLabels.main}>
+          {NAV_KEYS.map((k) => (
+            <a key={k} href={`#${k}`}>{copy.nav[k]}</a>
           ))}
+          {/* the one gold hairline that slides under the link of the section being read (src/landing/shell/navMark.ts; decorative) */}
+          <i className="lp-nav-mark" aria-hidden="true" />
         </nav>
-        <div className="flex items-center gap-3">
-          <LangSwitch />
-          <a
-            href={tryUrl(lang)}
-            className="hidden h-9 items-center rounded-full border border-[#f5c542]/50 px-4 text-[13px] font-semibold text-[#f5c542] transition-colors hover:bg-[#f5c542] hover:text-[#030408] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] sm:inline-flex"
-          >
-            {t.ctaShort}
-          </a>
+        <div className="lp-hdr-r">
+          {/* --n is the pressed button's place: the one pressed background slides to it in .3 s (css/header.css); the words change at once */}
+          <div className="lp-seg" role="group" id="langSeg" aria-label={copy.switchLabel} style={{ '--n': Math.max(0, langs.indexOf(lang)) } as CSSProperties}>
+            <span className="lp-seg-ind" aria-hidden="true" />
+            {langs.map((l) => (
+              <button
+                key={l}
+                type="button"
+                lang={l}
+                aria-pressed={lang === l}
+                title={LANG_NAMES[l]}
+                onClick={onLang ? () => onLang(l) : undefined}
+                onPointerEnter={onLangIntent ? () => onLangIntent(l) : undefined}
+                onTouchStart={onLangIntent ? () => onLangIntent(l) : undefined}
+                onFocus={onLangIntent ? () => onLangIntent(l) : undefined}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <a className="lp-btn lp-btn-line" href={tryHref}>{copy.ctaShort}</a>
+          {/* phones and tablets: the page's links in a real dialog (showModal: focus kept inside, the page behind inert, Escape closes it).
+              It works before React has started too: one delegated handler (src/landing/shell/scripts.ts menuScript) opens and closes it. */}
+          <button type="button" className="lp-menu-btn" id="menuBtn" aria-haspopup="dialog" aria-controls="menu" aria-expanded="false" aria-label={copy.navLabels.menu}>
+            <span aria-hidden="true" />
+          </button>
         </div>
       </div>
     </header>

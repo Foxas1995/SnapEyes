@@ -16,10 +16,20 @@ export interface ClientMarkets {
   DEFAULT_MARKET: string;
   MARKETS: unknown;
   priceMinor: (n: number, style: string, market: string, list?: Partial<Record<string, number>>) => number;
+  /** A price as the site writes it (src/shared/markets.ts money): the check compares the landing's texts with it. */
+  money?: (minor: number, currency: string, lang?: string) => string;
+}
+
+/** src/landing/priceText.ts as the build loaded it: every price text of the new landing for a ladder, a market and a language. */
+export interface LandingPriceModule {
+  landingPrices: (list: Record<string, number>, market: string, lang: string) => {
+    from: string; black: string; art: string; price: string; price2: string;
+    eyes: (n: number, cls?: 'black' | 'art') => string;
+  };
 }
 
 export const MARKETS_FILE: string;
 export function parseMarketsSource(src: string): MarketsSource;
 /** The price of n eyes by the price class ("black" or "art") of the style: one eye by its class, then the same amount per further eye. */
 export function priceRule(markets: MarketsSource['markets'], market: string, eyes: number, cls: string): number;
-export function checkPrices(root: string, client?: ClientMarkets): string[];
+export function checkPrices(root: string, client?: ClientMarkets, landing?: LandingPriceModule): string[];

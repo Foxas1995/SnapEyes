@@ -1,0 +1,735 @@
+{
+  "meta": {
+    "title": "SnapEyes Private Atelier: A valódi íriszed műalkotásként",
+    "description": "Fotózd le az egyik szemed a telefonoddal, és lásd az íriszed műalkotásként: helyreállítva, soha át nem festve. Ingyenes vízjeles előnézet, majd egy digitális fájl, amelyet bárhol kinyomtathatsz.",
+    "shareDescription": "Fotózd le az egyik szemed a telefonoddal, és nézd meg a saját íriszed műalkotásként. A vízjeles előnézet ingyenes.",
+    "locale": "hu_HU"
+  },
+  "facts": {
+    "px": "4096 px",
+    "square": "4096 × 4096 px",
+    "printMax": "50 × 50 cm",
+    "printMaxCm": "50 cm",
+    "email": "info@snapeyes.com",
+    "hours": "48"
+  },
+  "langName": "Magyar",
+  "switchLabel": "Nyelv",
+  "brandTag": "Private Atelier",
+  "skip": "Ugrás a tartalomra",
+  "nav": {
+    "reveal": "Előtte és utána",
+    "wall": "A falad",
+    "styles": "Stílusok",
+    "how": "Így működik",
+    "pricing": "Árak",
+    "faq": "GYIK",
+    "privacy": "Adatvédelem"
+  },
+  "navLabels": {
+    "main": "Fő navigáció",
+    "footer": "Lábléc",
+    "menu": "Menü"
+  },
+  "cta": "Ingyenes előnézetet kérek",
+  "ctaShort": "Ingyenes előnézet",
+  "ctaNote": "",
+  "bar": {
+    "label": "Tájékoztatás",
+    "soon": "A rendelés hamarosan indul. Az ingyenes előnézet már most elérhető.",
+    "open": "Kezdd az ingyenes előnézettel. Csak akkor rendelj, ha tetszik."
+  },
+  "example": {
+    "chip": "Példa",
+    "vis": "MI-vizualizáció",
+    "photo": "Példafotó",
+    "photoFull": "Példafotó, nem vásárló",
+    "mantas": "Mantas saját szeme"
+  },
+  "hero": {
+    "eyebrow": "SnapEyes Private Atelier",
+    "title": "A valódi íriszed műalkotásként.",
+    "lead": "Fotózd le az egyik szemedet a telefonoddal. Helyreállítjuk a valódi íriszedet, és a választott stílusban műalkotássá formáljuk. Digitális fájlt kapsz ({px}), amely legfeljebb {printMax} méretű nyomtatásra készült. A nyomtatást nem tartalmazza.",
+    "micro": [
+      "Ingyenes vízjeles előnézet",
+      "Előnézet kb. egy perc alatt",
+      "Kipróbálás regisztráció nélkül"
+    ],
+    "fromPrice": "Digitális fájl, induló ár: {from}",
+    "computerHint": "Számítógépen olvasod? Nyisd meg a snapeyes.com oldalt a telefonodon, és ott fotózz, vagy válassz a már meglévő fotóid közül.",
+    "ready": "A fájlod, induló ár: {from}",
+    "secondary": "Nézd meg egy valódi telefonos fotó előtte-utána képét",
+    "imageAlt": "MI-vizualizáció: Mantas saját írisze fényes akrilnyomatként egy falon, Radiance stílusban. Megmutatja, hogyan nézhet ki a digitális fájl kinyomtatva.",
+    "chipTitle": "MI-vizualizáció",
+    "chipBody": "A digitális fájlt kapod meg. A nyomtatást nem tartalmazza.",
+    "caption": "A fájlod akrilra nyomtatva, kb. 50 cm. A nyomtatás nem része a rendelésnek.",
+    "discAlt": "Mantas szeme a pupillán keresztül kettéosztva: balra a telefonos fotója, jobbra a helyreállított írisz.",
+    "discLabel": "Mantas saját szeme, előtte és utána",
+    "discLink": "Mantas saját szeme: valódi telefonos fotó, helyreállított írisz. Ugrás az előtte-utána képhez."
+  },
+  "reveal": {
+    "eyebrow": "A leleplezés",
+    "title": "Balra fotó, jobbra írisz.",
+    "intro": "A kép bal fele telefonos fotó, a jobb fele ugyanaz az írisz, helyreállítva. A vágás a pupillán halad át: kövess egy barázdát vagy egy színfoltot az egyik oldalról a másikra.",
+    "hint": "Húzd az összehasonlításhoz",
+    "sliderLabel": "Hasonlítsd össze a telefonos fotót és a helyreállított íriszt",
+    "valueText": "fotó {n} százalék",
+    "before": "Telefonos fotó",
+    "after": "Helyreállított írisz",
+    "scale": "Telefonos fotó: {n} px. A helyreállított fájl: {px}.",
+    "beforeWeb": "Fotó",
+    "scaleWeb": "Fotó: {n} px. A helyreállított fájl: {px}.",
+    "introWeb": "A kép bal fele az eredeti fotó, a jobb fele ugyanaz az írisz, helyreállítva. A vágás a pupillán halad át: kövess egy barázdát vagy egy színfoltot az egyik oldalról a másikra.",
+    "sliderLabelWeb": "Hasonlítsd össze a fotót és a helyreállított íriszt",
+    "eyes": [
+      {
+        "id": "gd",
+        "label": "Szürkészöld szem",
+        "n": 380,
+        "note": "Példafotó, nem vásárló. A fotón látszó ablaktükröződést eltávolítottuk.",
+        "photoAlt": "Példafotó egy szürkészöld szemről ablaktükröződéssel, a kép bal fele",
+        "irisAlt": "Ugyanaz a szürkészöld írisz helyreállítva, tükröződés nélkül",
+        "artAlt": "A helyreállított szürkészöld írisz műalkotásként, Radiance stílusban"
+      },
+      {
+        "id": "own",
+        "label": "Mantas szeme",
+        "n": 315,
+        "note": "Saját szeme, otthon fotózva. A fotót az íriszre vágtuk.",
+        "photoAlt": "Mantas telefonos fotója a saját szeméről, a kép bal fele",
+        "irisAlt": "Ugyanaz az írisz helyreállítva, fekete háttéren",
+        "artAlt": "A helyreállított írisz műalkotásként, Radiance stílusban"
+      }
+    ],
+    "eyeGroup": "Válassz egy példaszemet",
+    "strip": {
+      "photo": "A fotód",
+      "iris": "Az íriszed",
+      "art": "Az alkotásod"
+    },
+    "never": "Helyreállítva, soha át nem festve: az íriszedet sosem színezzük át, és sosem cseréljük le másik szemre.",
+    "aiTitle": "Mi származik tőled, és mit ad hozzá a mesterséges intelligencia",
+    "ai": [
+      {
+        "t": "A fotódból",
+        "b": "Az íriszed színe, mintázata és elrendeződése. Minden barázda, gyűrű és folt pontosan ott van, ahol a szemedben is."
+      },
+      {
+        "t": "A mesterséges intelligenciánk állítja helyre",
+        "b": "Finom részletek, amelyeket a telefonod nem tudott rögzíteni, a fotódhoz illeszkedően újraépítve. A tükröződéseket eltávolítjuk. A legfinomabb hajszálvonalak rekonstrukciók, nem mikroszkópos felvételek."
+      },
+      {
+        "t": "Soha",
+        "b": "Átszínezve vagy másik szemre cserélve."
+      }
+    ],
+    "note": "Ezek a példák gondosan elkészített fotókból származnak. Az eredményed a fotódtól függ, az ingyenes előnézet pedig még fizetés előtt megmutatja.",
+    "yourTurn": "Most te jössz. Nézd meg így a saját íriszed, ingyen, kb. egy perc alatt."
+  },
+  "wall": {
+    "eyebrow": "A fájlod, a falad",
+    "title": "Nézd meg a fájlod a falon",
+    "intro": "Digitális fájlt kapsz. Ezek a képek megmutatják, hogyan nézhet ki kinyomtatva. A nyomtatás nem része a rendelésnek.",
+    "varies": "Az anyagok és az eredmények nyomdánként eltérnek, és függnek a szobád fényviszonyaitól.",
+    "stageLabel": "A fájlod MI-vizualizációi, kinyomtatva",
+    "materialsLabel": "Anyag",
+    "artLabel": "Alkotás",
+    "materials": {
+      "acrylic": {
+        "n": "Akril",
+        "tag": "Fényes és mély",
+        "facts": [
+          "Fotópapír vagy közvetlen nyomat átlátszó lap mögött; a lap vastagsága gyakran 3 és 6 mm közötti.",
+          "Kis távtartókkal tartják el a faltól.",
+          "A fekete itt gyakran a legmélyebbnek látszik, ezért sötét alkotásokhoz illik.",
+          "Ne akaszd közvetlen ablakfény útjába."
+        ]
+      },
+      "metal": {
+        "n": "Alumínium",
+        "tag": "Letisztult, vékony, modern",
+        "facts": [
+          "A képet alumíniumra nyomtatják, amely gyakran 1 és 3 mm közötti vastagságú.",
+          "Rejtett, lebegő függesztéssel lóg a falhoz közel.",
+          "Fényes vagy selyemmatt felület. A fekete mély marad.",
+          "Könnyű, a falat alig terheli."
+        ]
+      },
+      "canvas": {
+        "n": "Vászon",
+        "tag": "Lágy és meleg, kevesebb tükröződés",
+        "facts": [
+          "Pamutvászon fa feszítőkereten, amely gyakran 2 és 4 cm vastag.",
+          "A vászon szövése lágyítja a legfinomabb rostokat, és világosabbá teszi a feketéket.",
+          "Nincs üveg, ezért sokkal kevesebb a tükröződés.",
+          "Keretre nincs szükség."
+        ]
+      },
+      "framed": {
+        "n": "Keretezett nyomat",
+        "tag": "Klasszikus és nyugodt",
+        "facts": [
+          "Fotópapír üveg mögött, fehér paszpartuval.",
+          "A keret gyakran kb. 2 cm széles.",
+          "Könnyen felakasztható és szállítható."
+        ]
+      },
+      "block": {
+        "n": "Akrilblokk",
+        "tag": "Kis tárgy polcra vagy íróasztalra",
+        "facts": [
+          "Tömör, átlátszó akril, gyakran 2 és 4 cm vastag.",
+          "Magától megáll, nem kell felakasztani.",
+          "A polírozott éleken megcsillan a fény.",
+          "Jellemző méretek: 10 és 20 cm között."
+        ]
+      },
+      "phone": {
+        "n": "Telefon",
+        "tag": "Az alkotásod a zárképernyőn",
+        "facts": [
+          "A fájlod négyzet alakú, a telefon képernyője pedig magas, ezért egy tetszőleges fotószerkesztőben adj köré fekete margót, majd állítsd be háttérképnek.",
+          "A képernyő maga a fényforrás, ezért az alkotás ragyog.",
+          "Nem kell nyomtatásra várnod."
+        ]
+      }
+    },
+    "typical": "Nyomdáknál szokásos jellemzők. A részletek eltérhetnek.",
+    "arts": {
+      "eye": "Radiance",
+      "universe": "Universe",
+      "family4": "Család",
+      "collision": "Ti ketten"
+    },
+    "eyesNote": "Szemek: Mantas és példafotók, nem vásárlók.",
+    "captions": {
+      "acrylic": "A fájlod akrilra nyomtatva.",
+      "metal": "A fájlod alumíniumra nyomtatva.",
+      "canvas": "A fájlod vászonra nyomtatva.",
+      "framed": "A fájlod, keretezve.",
+      "block": "A fájlod akrilblokk-ként.",
+      "phone": "Az alkotásod egy telefon zárképernyőjén."
+    },
+    "captionsSize": {
+      "acrylic": "A fájlod akrilra nyomtatva, kb. {size}.",
+      "metal": "A fájlod alumíniumra nyomtatva, kb. {size}.",
+      "canvas": "A fájlod vászonra nyomtatva, kb. {size}.",
+      "framed": "A fájlod, keretezve, kb. {size}."
+    },
+    "footnote": "MI-vizualizáció. Az alkotás egy valódi SnapEyes-fájl. A helyiségek, a kezek és a tárgyak MI által generált képek, nem fényképek, és egy valódi nyomat másképp néz ki. A nyomaton a színek eltérhetnek a képernyőn látottaktól.",
+    "cta": "Nyomtasd ki a fájlodat úgy, ahogyan szeretnéd. Kezdd az ingyenes előnézettel.",
+    "compareTitle": "A négy falra szánt anyag összehasonlítása",
+    "compareCorner": "Anyag",
+    "compare": {
+      "cols": [
+        "Akril",
+        "Alumínium",
+        "Vászon",
+        "Keretezett nyomat"
+      ],
+      "rows": [
+        {
+          "h": "Megjelenés",
+          "v": [
+            "Fényes, mély hatású",
+            "Éles, karcsú",
+            "Lágy, texturált",
+            "Klasszikus, nyugodt"
+          ]
+        },
+        {
+          "h": "Fekete",
+          "v": [
+            "Mély",
+            "Mély",
+            "Lágyabb",
+            "Mély, fehér paszpartuval"
+          ]
+        },
+        {
+          "h": "Tükröződések",
+          "v": [
+            "Valamennyi, világos helyiségben",
+            "Valamennyi, selyemmatt esetén kevesebb",
+            "Nagyon kevés",
+            "Valamennyi, tükröződésmentes üveggel kevesebb"
+          ]
+        },
+        {
+          "h": "A falon",
+          "v": [
+            "A fal előtt lebeg",
+            "Vékony és könnyű",
+            "Meleg és könnyed",
+            "Formális és hagyományos"
+          ]
+        }
+      ],
+      "note": "Általános áttekintés arról, amit a nyomdák kínálnak, nem a termékeink leírása."
+    }
+  },
+  "sizes": {
+    "eyebrow": "Méretútmutató",
+    "title": "Elég pixel {printMax} méretig",
+    "intro": "A fájlod hosszabbik oldala {px}. A rajz méretarányos: egy 220 cm-es kanapé, egy ember és négy méret egy falon.",
+    "svgLabel": "Méretarányos rajz négy nyomtatási méretről egy falon, egy kanapéval és egy emberrel a méretarány érzékeltetésére",
+    "sofa": "Kanapé, 220 cm",
+    "person": "Ember, 175 cm",
+    "chips": "Nyomtatási méret",
+    "cm": "{n} cm",
+    "ppi": "pixel/hüvelyk",
+    "rungs": [
+      {
+        "cm": 20,
+        "t": "Íróasztal és polc",
+        "b": "Több, mint amit a nyomdák általában kérnek."
+      },
+      {
+        "cm": 30,
+        "t": "Komód fölött",
+        "b": "A szokásos 150 és 300 közötti sáv fölött."
+      },
+      {
+        "cm": 40,
+        "t": "Falikép",
+        "b": "A szokásos tartományon belül."
+      },
+      {
+        "cm": 50,
+        "t": "A legnagyobb javasolt méret",
+        "b": "A szokásos tartományon belül, és egyben a mi felső határunk."
+      }
+    ],
+    "several": "Több szem esetén: a fájl hosszabbik oldala {px}, így a hosszabbik élen legfeljebb {printMaxCm} méretig van elég pixel.",
+    "above": "{printMaxCm} fölött is lehetséges a nyomtatás, de ez még jobban megnyújtja a fájlt, ezért ezt nem garantáljuk.",
+    "rule": "A nyomdák általában körülbelül 150 és 300 pixel közötti felbontást kérnek hüvelykenként. Az eredmény a fotódtól is függ: az ingyenes előnézet még a fizetés előtt megmutatja. Kérj a nyomdától próbanyomatot vagy mintát."
+  },
+  "more": {
+    "title": "További nézetek",
+    "intro": "További helyiségek, két kéz és egy polírozott él. Mindegyik MI-vizualizáció.",
+    "railLabel": "További MI-vizualizációk",
+    "prev": "Előző kép",
+    "next": "Következő kép",
+    "scenes": [
+      {
+        "id": "pair",
+        "t": "Ti ketten, sötét diófán",
+        "c": "A fájlod akrilra nyomtatva. Szemek: Mantasé és egy példafotó, nem vásárlóké."
+      },
+      {
+        "id": "group",
+        "t": "Ti négyen, keretben",
+        "c": "A fájlod, keretezve. Szemek: Mantasé és példafotók, nem vásárlóké."
+      },
+      {
+        "id": "hands",
+        "t": "A kezedben",
+        "c": "A fájlod akrilra nyomtatva."
+      },
+      {
+        "id": "gallery",
+        "t": "Ferde szögből nézve",
+        "c": "A fájlod akrilon, távtartókkal. Szemek: Mantasé és egy példafotó, nem vásárlóké."
+      },
+      {
+        "id": "shelf",
+        "t": "Polcon",
+        "c": "A fájlod akrilra nyomtatva."
+      }
+    ]
+  },
+  "styles": {
+    "eyebrow": "Stílusok",
+    "title": "Egy írisz, sokféle látásmód",
+    "intro": "Az alábbi alkotások mind példák. A tiéd a saját színeidet és a saját rostjaidat hordozza majd.",
+    "legend": "A SnapEyes-motorral készült példák. Mantas saját szemén láthatók, hacsak az adott kártya mást nem jelez.",
+    "groups": {
+      "one": "Csak te",
+      "two": "Ti ketten",
+      "family": "Család"
+    },
+    "groupIntro": {
+      "one": "Egy írisz, egyedül fekete háttéren, vagy egy saját univerzumba ágyazva.",
+      "two": "A párodnak: két írisz, amelyek találkoznak.",
+      "family": "A családodnak: minden írisz megtartja a saját színét."
+    },
+    "tabsLabel": "Stíluscsoportok",
+    "eyeLabel": "Próbálj ki másik szemszínt",
+    "eyes": {
+      "own": "Kékeszöld",
+      "yg": "Sárgászöld",
+      "br": "Barna",
+      "gr": "Szürke"
+    },
+    "eyeNote": {
+      "own": "Mantas saját szeme",
+      "other": "Példafotó, nem vásárló"
+    },
+    "items": {
+      "radiance": {
+        "n": "Radiance",
+        "d": "Finom fénysugarak a saját íriszed színeiben."
+      },
+      "powder": {
+        "n": "Powder Burst",
+        "d": "A perem szemcsékre bomlik, a szemed saját színeiben."
+      },
+      "universe": {
+        "n": "Universe",
+        "d": "A saját íriszed felnagyítva tölti ki az egész képet."
+      },
+      "gold": {
+        "n": "Celestial Gold",
+        "d": "Finom aranygyűrű és fénykoszorú az írisz körül."
+      },
+      "splash": {
+        "n": "Splash",
+        "d": "A perem folyadékkoronává emelkedik."
+      },
+      "clean": {
+        "n": "Clean Iris",
+        "d": "A helyreállított íriszed egyedül, tiszta fekete háttéren."
+      },
+      "duo_infinity": {
+        "n": "Infinity",
+        "d": "Két írisz átfedi egymást, mint egy végtelenjel."
+      },
+      "duo_infinity_bb": {
+        "n": "Infinity, két színnel",
+        "d": "Minden írisz megtartja a saját színét, ahol találkoznak."
+      },
+      "duo_infinity_uni": {
+        "n": "Infinity Universe",
+        "d": "A pár a saját rostjaiból álló, felnagyított mezőben."
+      },
+      "duo_kiss": {
+        "n": "Kiss",
+        "d": "Két írisz, amelyek a peremükön érintik egymást."
+      },
+      "duo_clean": {
+        "n": "Clean Infinity",
+        "d": "Ugyanaz a pár, por nélkül."
+      },
+      "fam_trio": {
+        "n": "Trio",
+        "d": "Három írisz háromszögben."
+      },
+      "fam_4": {
+        "n": "Négytagú család",
+        "d": "Négy írisz, porral a saját színeikben."
+      },
+      "fam_5": {
+        "n": "Öttagú család",
+        "d": "Öt írisz két sorban."
+      },
+      "fam_6": {
+        "n": "Hattagú család",
+        "d": "Hat írisz, mindegyik a saját színében."
+      },
+      "fam_6_uni": {
+        "n": "Family Universe",
+        "d": "Hat írisz egy kitöltött mezőn."
+      }
+    },
+    "own": "Mantas szeme",
+    "licensed": "Példafotó, nem vásárló",
+    "mixed": "Mantas szeme és példafotók, nem vásárlók",
+    "priceOne": "Egy szem, {price}",
+    "priceTwo": "Két szem, {price}",
+    "priceFrom": "Induló ár: {price}",
+    "wallOn": "Falon",
+    "wallOff": "Fal nélkül",
+    "wallOnAria": "{name} megjelenítése a falon",
+    "wallOffAria": "{name} megjelenítése fal nélkül",
+    "wallFile": "Az ár a digitális fájlra vonatkozik. A nyomtatás nem része a rendelésnek.",
+    "comboTitle": "Két-nyolc szem egy alkotáson",
+    "comboBody": "A szemed és azoké, akiket szeretsz. Minden további szem felára: {price}.",
+    "soonTag": "Hamarosan"
+  },
+  "how": {
+    "eyebrow": "Így működik",
+    "title": "Három lépés, stúdió nélkül",
+    "steps": [
+      {
+        "t": "Készíts egy fotót",
+        "b": "Használd a hátsó kamerát 2x-es zoommal, kb. 10 cm-re a szemtől, egy ablakból oldalról érkező nappali fényben. Készíts három-öt felvételt, vagy válaszd ki őket a galériádból. Mindegyik felvételt kielemezzük, és a legjobbat használjuk.",
+        "v": "Hátsó kamera, nappali fény, egy szem"
+      },
+      {
+        "t": "Nézd meg az ingyenes előnézeted",
+        "b": "Körülbelül egy perc alatt megjelenik az íriszed több stílusban, vízjellel. Regisztráció és fizetés nélkül. Az ingyenes előnézeteket nem tároljuk.",
+        "v": "Az ingyenes előnézeted, vízjellel"
+      },
+      {
+        "t": "Töltsd le a digitális fájlt",
+        "b": "Válassz stílust, és töltsd le az alkotásodat digitális fájlként ({px}), teljes felbontásban elkészítve.",
+        "bOpen": "Válassz stílust, fizess a Stripe-on keresztül, és töltsd le az alkotásodat digitális fájlként ({px}), teljes felbontásban elkészítve, amint visszaigazoltuk a rendelésedet.",
+        "v": "A digitális fájlod"
+      }
+    ],
+    "tipsTitle": "Tippek az éles felvételhez",
+    "tips": [
+      "Hátsó kamera 2x-es zoommal, kb. 10 cm-re a szemtől.",
+      "Nappali fény egy ablakból, oldalról. Se lámpa, se vaku.",
+      "Az élességállításhoz koppints az íriszre, és tartsd stabilan a telefont. Tartsd tágra nyitva a szemedet, hogy se a szemhéj, se a szempillák ne takarják az íriszt, és vedd le a szemüvegedet.",
+      "Készíts három-öt felvételt. Egy valódi teszten a legjobb felvételen 3,7-szer annyi részlet volt, mint a legrosszabbon, mi pedig a legélesebbet használjuk."
+    ],
+    "phoneZoom": "2x",
+    "previewTitle": "Az előnézeted",
+    "previewButton": "Megrendelés fizetési kötelezettséggel",
+    "previewSoon": "Következik: a fájlod",
+    "fileName": "snapeyes-artwork.jpg",
+    "fileMeta": "{square}, JPEG",
+    "fileTag": "Digitális fájl"
+  },
+  "pricing": {
+    "eyebrow": "Árak",
+    "title": "Átlátható árak egy digitális fájlért",
+    "notice": "A rendelés hamarosan indul. Az ingyenes előnézet már most elérhető. Ezek a tervezett induló árak.",
+    "noticeOpen": "Kezdd az ingyenes előnézettel: csak akkor rendelsz, ha tetszik az eredmény.",
+    "currencyLabel": "Árak pénzneme",
+    "free": "Ingyenes",
+    "rows": {
+      "free": {
+        "t": "Előnézet",
+        "b": "Vízjellel, kb. egy perc alatt, regisztráció nélkül."
+      },
+      "black": {
+        "t": "Egy szem fekete háttéren",
+        "b": "A Clean Iris stílus."
+      },
+      "art": {
+        "t": "Egy szem művészi stílusban",
+        "b": "{styles}."
+      },
+      "two": {
+        "t": "Két szem",
+        "b": "Infinity, Kiss és további stílusok."
+      },
+      "more": {
+        "t": "Három szem",
+        "b": "Két szem ára: {price2}. Minden további szem ára: {price}, legfeljebb {max} szemig."
+      }
+    },
+    "ladderTitle": "Szemek száma",
+    "eyes": "{n} szem",
+    "includesTitle": "Mit kapsz",
+    "includes": [
+      "Egy vízjel nélküli digitális fájl, a hosszabbik oldalán {px} (egy szem esetén {square})",
+      "Az általad jóváhagyott előnézetből készül, teljes felbontásban, hogy ott nyomtathasd ki, ahol szeretnéd",
+      "A fájljaidat 12 hónapig letöltheted",
+      "Először az ingyenes előnézet, hogy fizetés előtt lásd a saját szemedet a választott stílusban. A teljes felbontású fájl finomabb rostrészleteket is tartalmaz.",
+      "Személyes felhasználási jog: kinyomtathatod saját magadnak vagy ajándékba. A felhasználási jog nem terjed ki az alkotás vagy a nyomatok értékesítésére (lásd az ÁSZF-et)."
+    ],
+    "notIncludes": "A nyomtatás nem része a rendelésnek. A nyomda külön díjat számít fel érte, és ennek összege a nyomdától, a mérettől és az anyagtól függ.",
+    "payOpen": "Biztonságos kártyás fizetés a Stripe-on keresztül.",
+    "termsLink": "ÁSZF",
+    "auLine": "Eladó: MB Portretizuokis, Kaunas, Litvánia. Kártyás fizetés ausztrál dollárban (A$) a Stripe-on keresztül. Digitális fájl, ezért nem postázunk semmit.",
+    "footnote": "Minden rendelés egy vízjel nélküli digitális fájl. Az árak euróban értendők. Ezek végső árak: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.",
+    "footnoteAud": "Minden rendelés egy vízjel nélküli digitális fájl. Az árak ausztrál dollárban (A$) értendők. Minden ár teljes ár: GST-t nem számítunk fel.",
+    "footnoteHuf": "Minden rendelés egy vízjel nélküli digitális fájl. Az árak forintban (Ft) értendők. Ezek végső árak: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel."
+  },
+  "closeups": {
+    "eyebrow": "Nézd közelebbről",
+    "title": "Közvetlenül a fájlból kivágva",
+    "intro": "A fájl ({px}) egy {n} px-es négyzete, átméretezés nélkül kivágva (a képernyőd a megjelenítéshez átméretezheti). A példa mögötti fotó {src} px széles volt, ezért az itt látható finom rostok a mesterséges intelligenciánk rekonstrukciói.",
+    "badge": "{n} px-es kivágás",
+    "fibreTitle": "Közvetlenül a fájlból kivágott négyzet",
+    "fibreAlt": "Közelkép Mantas helyreállított íriszéről, a 4096 px-es fájlból kivágva: sugárirányú rostok, aranyszínű íriszgallér és a pupilla széle.",
+    "locatorAlt": "A teljes helyreállított írisz, egy négyzet jelöli, hol vágtuk ki a közelképet",
+    "locatorLabel": "A kivágás helye",
+    "edgeTitle": "Az akrilnyomat éle",
+    "edgeBody": "Egy MI által generált közelkép egy akrilnyomat sarkáról: polírozott él, távtartó és ablaktükröződés. Egy valódi nyomat a nyomdától és a szobád fényviszonyaitól függően eltér ettől.",
+    "edgeAlt": "Egy akrilnyomat sarkának MI-vizualizációja: polírozott, átlátszó él, egy acél távtartó és lágy ablaktükröződés.",
+    "edgeCaption": "Egy akrilnyomat polírozott éle. A nyomtatás nem része a rendelésnek."
+  },
+  "trust": {
+    "eyebrow": "Amit sosem teszünk",
+    "title": "Apró ígéretek, betartva",
+    "items": [
+      {
+        "t": "Soha nem festjük át az íriszedet",
+        "b": "A finom részleteket helyreállítjuk. A szín, a mintázat és az elrendeződés a tiéd marad. Soha nem színezzük át, és nem cseréljük le másik szemre."
+      },
+      {
+        "t": "Soha nem tüntetünk fel példákat vásárlóinkként",
+        "b": "Minden példaként mutatott képet megjelölünk vagy felirattal látunk el. Mantas szeme a sajátja. A többi szem példafotó: soha nem vásárlók szeme."
+      },
+      {
+        "t": "Soha nem titkoljuk, mit tesz az MI",
+        "b": "A mesterséges intelligenciánk helyreállítja a finom részleteket, és eltávolítja a tükröződéseket. Soha nem cseréli le az íriszedet egy másikra."
+      },
+      {
+        "t": "Soha nem keltünk hamis sürgősségérzetet",
+        "b": "Nincs visszaszámláló, nincs áthúzott ár, nincs látszatkedvezmény. A látott ár a fizetendő ár."
+      }
+    ],
+    "idLine": "MB Portretizuokis, cégazonosító szám 305605052, Kaunas, Litvánia.",
+    "curatorEyebrow": "Az alapító",
+    "curatorTitle": "A SnapEyes mögött",
+    "curatorRole": "Alapító",
+    "curatorNote": "Az a szem, amelyet ezen az oldalon a legtöbbször mutatok, az enyém, otthon fotóztam a telefonommal. Az előnézet azért ingyenes, hogy a saját szemeddel ítélhesd meg az eredményt, mielőtt bármit is fizetnél.",
+    "curatorPhotoAlt": "Mantas saját írisze",
+    "offer": "Nem sikerül éles felvételt készítened? Küldd el nekem a legjobb fotóidat, és személyesen megnézem őket, általában egy-két munkanapon belül.",
+    "offerCta": "Írj Mantasnak",
+    "privacyEyebrow": "A fotód",
+    "privacyTitle": "Ígéretünk a szemeddel kapcsolatban",
+    "privacy": [
+      {
+        "t": "Csak az alkotásodhoz",
+        "b": "A fotódat kizárólag az alkotásod elkészítéséhez használjuk. Minden felvételből néhány mérési adatot naplózunk, a képet soha, hogy javítsuk a fotózási útmutatót."
+      },
+      {
+        "t": "Soha nem azonosításra",
+        "b": "Soha nem használjuk senki azonosítására, soha nem adjuk el, és mesterséges intelligencia tanítására sem használjuk."
+      },
+      {
+        "t": "Az ingyenes előnézeteket nem őrizzük meg",
+        "b": "Az ingyenes előnézetedet nem tároljuk. Csak ha rendelést indítasz, őrizzük meg az íriszkivágást és az előnézetet. Ha rendelsz, a rendelésed fájljait (a telefonos fotódat nem) 12 hónapig megőrizzük a letöltésekhez."
+      },
+      {
+        "t": "Néhány külső szolgáltatás",
+        "b": "Az oldalt és az előnézetet a Vercel futtatja, a helyreállítást a Google Gemini API-ja végzi (a Google a kéréseket korlátozott ideig naplózza). Rendeléskor a fizetéshez a Stripe-ot, a tároláshoz pedig egy privát, EU-ban található Supabase-tárhelyet használunk."
+      }
+    ],
+    "controller": "Az adataidért felelős: MB „Portretizuokis”, Kaunas, Litvánia (a részletes adatokat az oldal alján találod).",
+    "rights": "Megkérdezheted, milyen adatokat tárolunk rólad, kérheted a helyesbítésüket vagy a törlésüket, és panaszt tehetsz egy adatvédelmi hatóságnál.",
+    "policyLink": "Olvasd el a teljes adatkezelési tájékoztatót"
+  },
+  "faq": {
+    "eyebrow": "Kérdések",
+    "title": "Mielőtt belekezdesz",
+    "items": [
+      {
+        "id": "receive",
+        "q": "Mit kapok?",
+        "a": "Egy vízjel nélküli digitális fájlt: egy sRGB színterű JPEG-et, egy szem esetén {square} méretben, több szem esetén a hosszabbik oldalon {px} méretben. Fizetés után megnyílik a rendelési oldalad, a linkjét pedig e-mailben is megkapod. A fájl általában néhány percen belül elkészül; ha egy rendelést esetleg ellenőrzés miatt visszatartunk, legkésőbb akkor is {hours} órán belüli elkészülést vállalunk. A fájl 12 hónapig letölthető marad."
+      },
+      {
+        "id": "print",
+        "q": "Kinyomtatjátok és postázzátok is?",
+        "a": "Nem. A digitális fájlt kapod meg, a nyomtatás nem része a rendelésnek. Ha valaha nyomtatást is kínálunk, ezt ezen az oldalon közöljük."
+      },
+      {
+        "id": "printit",
+        "q": "Kinyomtathatom, és mekkora méretben?",
+        "a": "Igen. Válassz egy nyomdát és egy négyzetes méretet (például 20, 30, 40 vagy 50 cm), majd töltsd fel a JPEG-fájlt. Más képarány esetén kérd meg a nyomdát, hogy vágja méretre a képet, vagy adjon hozzá szegélyt, és kérj próbanyomatot vagy mintát. Mi nem nyomtatunk és nem postázunk: a nyomtatás a nyomda feladata, és az árat is ők szabják meg. Egy szem esetén legfeljebb {printMax} méretet ajánlunk, ami kb. 208 pixel hüvelykenként (30 cm-nél kb. 347). A nyomdák általában 150 és 300 közötti értéket kérnek. Több szem esetén a hosszabbik oldal akár {printMaxCm} is lehet."
+      },
+      {
+        "id": "look",
+        "q": "Olyan lesz a nyomatom, mint a képeken?",
+        "a": "A képek MI-vizualizációk arról, hogyan nézhet ki egy fájl kinyomtatva. A valódi nyomat a nyomdától, az anyagtól és a szobád fényétől függően eltér ezektől a képektől, ahogyan a képernyő is másként mutat, mint a fal. Kérj a nyomdától próbanyomatot vagy mintát."
+      },
+      {
+        "id": "real",
+        "q": "Tényleg az én szemem lesz?",
+        "a": "Igen. A szín és a mintázat a saját fotódból származik. Ahol a telefonod nem tudta rögzíteni a legfinomabb rostokat, ott a mesterséges intelligenciánk állítja helyre őket, így a legfinomabb részletek rekonstrukciók, nem mikroszkópos felvételek. Az ingyenes előnézettel fizetés előtt megítélheted az eredményt."
+      },
+      {
+        "id": "bad",
+        "q": "Mi történik, ha rossz a fotóm?",
+        "a": "Fizetés előtt az előnézet jelzi, ha egy felvétel túl elmosódott, túl sötét, vagy a pupilla túl tág, és megmutatja, hogyan fotózhatod újra. Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {email}. Mantas megnézi őket."
+      },
+      {
+        "id": "unhappy",
+        "q": "Mi történik, ha nem tetszik az eredmény?",
+        "a": "A saját előnézetedet fizetés előtt ingyen láthatod, a fizetés után pedig azonnal megkezdjük a fájl elkészítését. Ha a fájl hibás, vagy egyértelműen eltér az általad jóváhagyott előnézettől, írj nekünk: újra elkészítjük, vagy visszatérítjük az árát. Az elállás részleteit alább találod."
+      },
+      {
+        "id": "phone",
+        "q": "Milyen telefont és kamerát használjak?",
+        "a": "Bármilyen újabb okostelefon megfelel, amelynek jó a hátlapi kamerája. A hátlapi kamerát használd 2x-es vagy 3x-os zoommal, ne a szelfikamerát. Használj ablakból érkező, oldalról eső nappali fényt, ne lámpát vagy vakut. Tartsd a telefont kb. 10 cm-re a szemedtől, koppints az íriszre az élességállításhoz, vedd le a szemüvegedet, és készíts három-öt felvételt."
+      },
+      {
+        "id": "colour",
+        "q": "Egyezik a szín a szemem színével?",
+        "a": "A szín a fotódból származik, a telefon pedig másként rögzíti a színeket lámpafényben, vakuval vagy árnyékban. Az íriszt soha nem színezzük át, ezért ha egy fotón színeltolódás látszik, fotózd újra ablakból érkező nappali fényben."
+      },
+      {
+        "id": "other",
+        "q": "Fotózhatok valaki mást is?",
+        "a": "Igen: a párod, a gyermeked vagy a másik szemed, és legfeljebb nyolc szem osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt."
+      },
+      {
+        "id": "material",
+        "q": "Melyik anyagot válasszam?",
+        "a": "Az akril fényes és mély. Az alumínium éles és modern. A vászon lágy, kevésbé tükröződik, de a szövése lágyítja a legfinomabb rostokat. A keretezett nyomat klasszikus. Az akrilblokk egy polcon áll. Kérj mintát a nyomdától."
+      },
+      {
+        "id": "time",
+        "q": "Mennyi ideig tart?",
+        "a": "Az ingyenes előnézet kb. egy percig tart. Amint a rendelés elindul, a fájlt a jóváhagyásod után készítjük el teljes felbontásban, általában néhány percen belül, legkésőbb {hours} órán belül.",
+        "aOpen": "Az ingyenes előnézet kb. egy percig tart. A fizetés után a fájlt teljes felbontásban készítjük el, általában néhány percen belül, legkésőbb {hours} órán belül."
+      },
+      {
+        "id": "photo",
+        "q": "Mi történik a fotómmal?",
+        "a": "Az ingyenes előnézetedet nem tároljuk. Csak ha rendelést indítasz, őrizzük meg az íriszkivágást és az előnézetet. Ha rendelsz, a rendelésed fájljait (a telefonos fotódat nem) 12 hónapig megőrizzük, hogy újra letölthesd őket, azután töröljük. Az íriszedet soha nem használjuk senki azonosítására, sem mesterséges intelligencia tanítására. A részleteket az adatkezelési tájékoztatóban találod, az oldal alján."
+      },
+      {
+        "id": "withdraw",
+        "q": "Elállhatok a rendeléstől?",
+        "a": "A fájlod elkészítését akkor kezdjük meg, amikor elment a rendelésed visszaigazoló e-mailje, ez általában a fizetés után egy percen belül megtörténik. Fizetés előtt hozzájárulsz, hogy azonnal elkezdjük, ezért a 14 napos elállási jog megszűnik, amint megkezdtük a fájlod elkészítését. Addig e-mailben vagy online, az „Elállás a szerződéstől” funkcióval állhatsz el: megtalálod az oldal alján, és a visszaigazoló e-mailben kapott elállási link is oda vezet. Ha a fájlod hibás, vagy egyértelműen eltér a jóváhagyott előnézettől, írj nekünk: újra elkészítjük, vagy visszatérítjük az árát. A részleteket az ÁSZF-ben és az elállási tájékoztatóban találod, az oldal alján."
+      },
+      {
+        "id": "order",
+        "q": "Mikor rendelhetek?",
+        "a": "A rendelés hamarosan indul. Addig az ingyenes előnézet elérhető. A rendeléshez csak egy e-mail-címre van szükséged.",
+        "qOpen": "Hogyan rendelhetek?",
+        "aOpen": "Közvetlenül az ingyenes előnézeted után, ugyanazon az oldalon: válaszd ki a stílust, jelöld be a digitális fájlra vonatkozó négyzetet, és lépj tovább a Stripe fizetési oldalára, ahol fizetsz. A rendelési oldalad azonnal megnyílik, a linkjét pedig e-mailben is elküldjük. Csak egy e-mail-címre van szükséged."
+      },
+      {
+        "id": "pets",
+        "q": "Készíthetek ilyet a háziállatomról?",
+        "a": "Még nem. Amint lehetséges lesz, itt közöljük."
+      }
+    ]
+  },
+  "faqAu": {
+    "unhappy": {
+      "q": "Mi történik, ha nem tetszik az eredmény?",
+      "a": "A saját előnézetedet fizetés előtt ingyen láthatod, a fizetés után pedig azonnal megkezdjük a fájl elkészítését. Ha a fájl hibás, vagy egyértelműen eltér az általad jóváhagyott előnézettől, írj nekünk. Szolgáltatásainkra olyan garanciák vonatkoznak, amelyek az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) értelmében nem zárhatók ki. A lemondás részleteit alább találod."
+    },
+    "withdraw": {
+      "q": "Lemondhatom a rendelést?",
+      "a": "A fájlod elkészítését akkor kezdjük meg, amikor elment a rendelésed visszaigazoló e-mailje, ez általában a fizetés után egy percen belül megtörténik. Fizetés előtt hozzájárulsz, hogy azonnal elkezdjük, ezért a 14 napos elállási jog (az uniós fogyasztóvédelmi jog szerint, amely a rendelésedre vonatkozik) megszűnik, amint megkezdtük a fájlod elkészítését. Addig e-mailben vagy online, az „Elállás a szerződéstől” funkcióval mondhatod le a rendelést: megtalálod az oldal alján, és a visszaigazoló e-mailben kapott elállási link is oda vezet. Ilyenkor a teljes árat visszatérítjük. Ez csak arra az esetre vonatkozik, ha meggondolod magad: szolgáltatásainkra olyan garanciák vonatkoznak, amelyek az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) értelmében nem zárhatók ki, ezért ha a fájlod hibás, vagy egyértelműen eltér a jóváhagyott előnézettől, írj nekünk. A részleteket az ÁSZF (A jogaid Ausztráliában) és az elállási tájékoztató tartalmazza, az oldal alján."
+    }
+  },
+  "final": {
+    "title": "Nézd meg a saját íriszed",
+    "body": "Csak a telefonodra, jó fényre és kb. egy percre van szükséged.",
+    "small": "Digitális fájlt kapsz. A nyomtatás nem része a rendelésnek.",
+    "imageAlt": "MI-vizualizáció: egy sötét dolgozószoba alkonyatkor, amelynek falán Mantas írisze látható akrilra nyomtatva.",
+    "chip": "MI-vizualizáció"
+  },
+  "footer": {
+    "operatedBy": "A SnapEyes üzemeltetője",
+    "company": "MB „Portretizuokis”",
+    "companyCode": "Cégazonosító szám",
+    "country": "Litvánia",
+    "contact": "Kapcsolat",
+    "representedBy": "Képviseli",
+    "rights": "SnapEyes",
+    "currency": "Árak pénzneme",
+    "legalNav": "Jogi információk",
+    "legal": {
+      "privacy": "Adatkezelési tájékoztató",
+      "terms": "ÁSZF",
+      "withdrawal": "Elállási tájékoztató",
+      "imprint": "Impresszum",
+      "withdrawFn": "Elállás a szerződéstől"
+    }
+  },
+  "marketHint": {
+    "label": "Árak a saját pénznemedben",
+    "close": "Nem, köszönöm",
+    "huf": {
+      "text": "Magyarországról vásárolsz? Nézd meg az árainkat forintban (Ft).",
+      "show": "Árak megjelenítése Ft-ban"
+    }
+  },
+  "ui": {
+    "close": "Bezárás",
+    "scrollHint": "Görgess oldalra a továbbiakért"
+  }
+}

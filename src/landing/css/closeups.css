@@ -1,0 +1,55 @@
+/* SnapEyes landing v2: Close-ups: the 1200 px crop with its locator and the polished edge.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-cu-grid { display: grid; gap: 36px; margin-top: 48px; }
+  @media (min-width: 960px) {
+    .lp-cu-grid { grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: start; }
+  }
+  .lp-cu-fibre .lp-cu-img { position: relative; aspect-ratio: 1; border-radius: var(--r); overflow: hidden; background: #000; box-shadow: var(--ring); }
+  .lp-cu-fibre .lp-cu-img > img { width: 100%; height: 100%; object-fit: cover; }
+  .lp-cu-badge { position: absolute; left: 14px; top: 14px; padding: 5px 11px; border-radius: 99px; background: rgba(7, 9, 14, .8); box-shadow: 0 0 0 1px var(--gold-line); color: var(--t-1); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .lp-locator { position: absolute; right: 14px; bottom: 14px; width: 26%; max-width: 130px; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 14px 30px -6px rgba(0, 0, 0, .8); }
+  .lp-locator img { width: 100%; height: 100%; object-fit: cover; }
+  /* the square that marks the cut: an SVG laid over the map at the crop's own box (src/landing/CloseUps.tsx); its stroke is in the SVG's own units, about 1 px at every width */
+  .lp-loc-sq { position: absolute; overflow: visible; }
+  .lp-loc-sq rect { fill: none; }
+  .lp-loc-back { stroke: rgb(0 0 0 / .5); stroke-width: 8; }
+  .lp-loc-draw { stroke: var(--gold); stroke-width: 4.5; stroke-dasharray: 1; stroke-dashoffset: 0; }
+  .lp-cu-cap h3 { margin-top: 18px; font-size: 17px; }
+  .lp-cu-cap p { margin-top: 6px; font-size: 14.5px; color: var(--ink-2); max-width: 36em; }
+  .lp-cu-edge .lp-edge-img { position: relative; aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden; background: #111; box-shadow: var(--ring); }
+  .lp-cu-edge .lp-edge-img img { width: 100%; height: 100%; object-fit: cover; }
+  .lp-edge-cap { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: flex-start; margin: 14px auto 0 0; max-width: 540px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
+  @media (max-width: 639px) {
+    .lp-cu-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; margin: 32px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 12px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
+    .lp-cu-grid::-webkit-scrollbar { display: none; }
+    .lp-cu-grid > figure { flex: 0 0 88%; scroll-snap-align: start; }
+  }
+  .lp-cu-grid > * { min-width: 0; }
+  /* ------------------------------------------------------------------------------------------------ motion (spec 6.10)
+     Hidden states only under html.mo:not(.mo-fail) and prefers-reduced-motion: no-preference (src/motion/motion.css): without the engine, under
+     reduced motion and after the failsafe the crop is whole and the square is drawn. src/landing/useInView.ts sets data-in on the wrapper when
+     most of the picture is on screen. The wrappers are plain blocks: they change no layout. */
+  .lp-cu-open, .lp-edge-open { display: block; }
+  @keyframes lp-loc-draw { from { stroke-dashoffset: 1; } }
+  /* the edge's clip has the frame's own radius (--r), so at rest it coincides with the frame's clip and the corners are those of the static page */
+  @keyframes lp-edge-plate { from { clip-path: inset(7% round var(--r)); } }
+  @keyframes lp-crop-open { from { clip-path: var(--crop-from, inset(0)); } }
+  @media (prefers-reduced-motion: no-preference) {
+    /* the square draws its outline (1.2 s); the crop then opens from the square's rectangle (--crop-from, measured in the crop's own box) to the
+       whole panel, 1.4 s on a short in out curve (a long dead start left the panel black for a second), .3 s after the square starts. Both ends of the clip are inset() shapes, so it interpolates. The
+       picture's pixels are never scaled; the badge and the map are never touched. */
+    html.mo:not(.mo-fail) .lp-cu-open[data-open] .lp-cu-img > img { clip-path: inset(0); }
+    html.mo:not(.mo-fail) .lp-cu-open[data-open]:not([data-in]) .lp-cu-img > img { clip-path: var(--crop-from, inset(0)); }
+    html.mo:not(.mo-fail) .lp-cu-open[data-open][data-in] .lp-cu-img > img { animation: lp-crop-open 1.4s cubic-bezier(.5, 0, .1, 1) .3s backwards; }
+    html.mo:not(.mo-fail) .lp-cu-open[data-open]:not([data-in]) .lp-loc-draw { stroke-dashoffset: 1; }
+    html.mo:not(.mo-fail) .lp-cu-open[data-open][data-in] .lp-loc-draw { animation: lp-loc-draw 1.2s var(--ease-out) backwards; }
+    /* the polished edge: a scene plate, a mat opening from the middle with the settle 1.03 to 1 on the picture; the frame, its ring and its label stay put */
+    html.mo:not(.mo-fail) .lp-edge-open[data-open] .lp-edge-img > img { clip-path: inset(0 round var(--r)); }
+    html.mo:not(.mo-fail) .lp-edge-open[data-open]:not([data-in]) .lp-edge-img > img { clip-path: inset(7% round var(--r)); scale: 1.03; }
+    html.mo:not(.mo-fail) .lp-edge-open[data-open][data-in] .lp-edge-img > img { animation: lp-edge-plate var(--d-wipe) var(--ease-inout) backwards, lp-rv-settle var(--d-settle) var(--ease-out) backwards; }
+  }  .lp-cu-grid { overscroll-behavior-x: contain; }
+}

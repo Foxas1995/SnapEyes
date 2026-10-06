@@ -32,6 +32,14 @@
 //      the customer sentences in the Python files of those languages (api/_lib/*_lt.py, *_hu.py: the emails, the
 //      receipts, the Stripe notes, the analyze tips) holds English or German words or a dash; the refusals of the compose
 //      API (api/compose.py WORDS, four languages per key) go through the checks of 2 and 9 like any dictionary string.
+//  11. the copy of the NEW landing (src/landing/copy/<lang>.json, one file per language of src/shared/lang.ts LANGS): every
+//      language has its file, with the keys, the value kinds, the list lengths, the numbers and the {tokens} of en.json, only
+//      tokens the page knows (src/landing/copy/format.ts TOKENS), no dash and no spaced hyphen, none of the banned claims
+//      ("ready to print", "100 percent", "museum glass"), the honesty lines where the prototype has them (the labels, "Printing
+//      is not part of your order", "Ordering opens soon" in exactly three places), the legal labels and the withdrawal button of
+//      src/shared/legal.ts, the facts of src/landing/config.ts, the FAQ ids in the same order and the Australian FAQ answers for
+//      ids that exist. Every language has its real translation (no English stand-ins any more), so all four files are
+//      linted like every other dictionary.
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as the legal pack is);
 // `npm run check:texts` runs it alone. The legal pack the confirmation email carries is checked by checkPack, which the
 // build also runs on the very JSON it writes to /legal/order-mail.json (vite.config.ts legalMail), so no untranslated
@@ -54,8 +62,6 @@ const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015
 // page passes them.
 const W = '2026-09-29 13:15';
 export const SAMPLES = {
-  'hero.ready': [['6 990 Ft'], ['19,97 €']], 'styles.alt': [['Celestial Gold']], 'pricing.eyes': [[3], [10], [21]],
-  'pricing.perEye': [['4 990 Ft', 8], ['15,00 €', 8]],
   dec1: [[3.7], [4]], 'errors.requestFailed': [[500]], 'capture.addTitle': [[2]], 'capture.retakeTitle': [[2]],
   'capture.back': [[1], [3], [5]], 'capture.thumbLabel': [[1]], 'working.checking': [[5, 2], [1, 0]],
   'working.measuringShot': [[2, 5]], 'working.restoringEye': [[2]], 'working.composing': [[1], [3]], 'working.elapsed': [[12]],
@@ -146,6 +152,8 @@ const ENGLISH_OK = new RegExp([
   '\\.jpg', '\\.png', 'info@snapeyes\\.com', 'example\\.com', 'doc:\\S+', 'Australian Consumer Law', 'GST', 'Stripe', 'Resend',
   'Vercel', 'Supabase', 'Hostinger', 'Apple Pay', 'Google Pay', 'Link', 'PayPal', 'Revolut Pay', 'JPEG', 'PNG', 'PDF', 'px', 'AI',
   'Art\\. 5', 'GDPR', 'Directive', 'Regulation', 'Mantas Bakšys', 'Portretizuokis', 'Global Privacy Control',
+  // the style names of the landing's gallery are brand names in every language (longer ones first)
+  'Powder Burst', 'Infinity Universe', 'Clean Infinity', 'Family Universe', 'Clean Iris', 'Radiance', 'Splash', 'Universe', 'Infinity', 'Kiss', 'Trio',
 ].join('|'), 'g');
 const LT_LETTERS = 'A-Za-zĄČĘĖĮŠŲŪŽąčęėįšųūž';
 const LT_LOWER_JUS = new RegExp(`(^|[^${LT_LETTERS}])(jūs|jūsų|jums|jus|jumis)(?![${LT_LETTERS}])`, 'u');
@@ -566,14 +574,172 @@ export function checkServerTexts(root, legal, orderCopy) {
   return out;
 }
 
+// ------------------------------------------------------------------------------------------ the new landing's copy
+const COPY_DIR = 'src/landing/copy';
+// a spaced hyphen (a hyphen between two spaces) is a dash in disguise (owner rule: no dash anywhere)
+const SPACED_HYPHEN = /(^|[  ])-([  ]|$)/;
+// claims the page must never make (hard rule of the landing v2 port): phrases, in the languages the copy is checked in
+const BANNED_CLAIMS = /ready to print|print[- ]ready|druckfertig|druckbereit|100 ?(percent|%|prozent)|museum[- ]?glass|museumsglas/i;
+// Lines that must stay where the prototype has them, per language: the words of the line in that language, and the copy
+// paths (keys) that hold it. Lithuanian hero.caption says "neįskaičiuotas" (not included, as hero.lead and hero.chipBody do in
+// every language) where the others say "not part of your order": the same promise in a shorter caption, so `alt` names the
+// strings that must hold the other wording instead.
+// The strings that say "Printing is not part of your order", and no others do: the hero caption, the sentence under the wall title, the
+// pricing block, the FAQ answer about printing, the closing scene, and (fix round: a price or a picture of a printed piece must not
+// stand without it) the line under a tile that is shown on a wall (styles.wallFile) and the caption of the polished edge.
+const PRINTING_KEYS = ['hero.caption', 'wall.intro', 'pricing.notIncludes', 'faq.items.1.a', 'final.small', 'styles.wallFile', 'closeups.edgeCaption'];
+const HONESTY = {
+  en: {
+    chips: { 'example.chip': 'Example', 'example.vis': 'AI visualisation' },
+    printing: { re: /Printing is not part of your order/i, keys: PRINTING_KEYS },
+    soon: { re: /Ordering opens soon/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+  de: {
+    chips: { 'example.chip': 'Beispiel', 'example.vis': 'KI-Visualisierung' },
+    printing: { re: /Der Druck gehört nicht zur Bestellung/i, keys: PRINTING_KEYS },
+    soon: { re: /Bestellungen sind bald möglich/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+  lt: {
+    chips: { 'example.chip': 'Pavyzdys', 'example.vis': 'DI vizualizacija' },
+    printing: { re: /Spausdinimas nėra Jūsų užsakymo dalis/i, keys: PRINTING_KEYS.filter((k) => k !== 'hero.caption'), alt: { 'hero.caption': /Spausdinimas neįskaičiuotas/i } },
+    soon: { re: /Užsakymus pradėsime priimti netrukus/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+  hu: {
+    chips: { 'example.chip': 'Példa', 'example.vis': 'MI-vizualizáció' },
+    printing: { re: /A nyomtatás nem része a rendelésnek/i, keys: PRINTING_KEYS },
+    soon: { re: /A rendelés hamarosan indul/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+};
+// the question of the FAQ item "withdraw" is pinned to the words of src/landing/copy.ts WITHDRAW_Q (the old landing keyed its
+// Australian override on them; the landing replaces by id now, but the words are not to drift)
+
+// copy paths whose value is an identifier or a file name, not a sentence: the FAQ item ids (faq.items.N.id), the demo file name
+const NOT_PROSE = /(^|\.)id$|^how\.fileName$/;
+
+const tokensOf = (s) => [...String(s).matchAll(/\{([a-zA-Z0-9]+)\}/g)].map((m) => m[1]);
+const blankTokens = (s) => s.replace(/\{[a-zA-Z0-9]+\}/g, '0');
+const dig = (o, path) => path.split('.').reduce((v, k) => (v == null ? v : v[k]), o);
+
+function leafPaths(o, path = '', out = []) {
+  if (Array.isArray(o)) o.forEach((v, i) => leafPaths(v, path ? `${path}.${i}` : String(i), out));
+  else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) leafPaths(v, path ? `${path}.${k}` : k, out);
+  else out.push([path, o]);
+  return out;
+}
+
+/** Compare a language file with en.json: same keys, same kinds, same list lengths, same numbers, same {tokens} in every string. */
+function walkCopyJson(en, x, path, at, out) {
+  const tag = `${at}${path ? `.${path}` : ''}`;
+  const kind = (v) => (v === null ? 'null' : Array.isArray(v) ? 'list' : typeof v);
+  if (kind(en) !== kind(x)) { out.push(`${tag}: a ${kind(x)} where en.json has a ${kind(en)}`); return; }
+  if (typeof en === 'string') {
+    const a = tokensOf(en).sort(), b = tokensOf(x).sort();
+    if (a.join() !== b.join()) out.push(`${tag}: the tokens are {${b.join('}, {')}}, en.json has {${a.join('}, {')}}: ${x.slice(0, 90)}`);
+    return;
+  }
+  if (Array.isArray(en)) {
+    if (en.length !== x.length) out.push(`${tag}: ${x.length} items, en.json has ${en.length}`);
+    en.forEach((v, i) => { if (i < x.length) walkCopyJson(v, x[i], path ? `${path}.${i}` : String(i), at, out); });
+    return;
+  }
+  if (en && typeof en === 'object') {
+    const a = Object.keys(en), b = Object.keys(x);
+    const missing = a.filter((k) => !b.includes(k)), extra = b.filter((k) => !a.includes(k));
+    if (missing.length) out.push(`${tag}: lacks ${missing.join(', ')} (en.json has it)`);
+    if (extra.length) out.push(`${tag}: has ${extra.join(', ')}, which en.json lacks`);
+    for (const k of a) if (k in x) walkCopyJson(en[k], x[k], path ? `${path}.${k}` : k, at, out);
+    return;
+  }
+  if (en !== x) out.push(`${tag}: ${String(x)} where en.json has ${String(en)}`);
+}
+
+/** The copy files of the new landing: every problem as a sentence. strings: the per language lists of the lint (every
+ *  string of en, de and of every translated lt or hu file joins them, so the dash, the typography, the untranslated English
+ *  and the word for word checks treat them like every other dictionary). */
+function checkLandingCopy(root, mods, strings, out) {
+  const { lang, legal, config, format, oldCopy } = mods;
+  const WITHDRAW_Q = oldCopy.WITHDRAW_Q;
+  const read = (rel) => { try { return readFileSync(join(root, rel), 'utf8').replace(/^﻿/, ''); } catch { return null; } };
+  const files = {};
+  for (const l of lang.LANGS) {
+    const rel = `${COPY_DIR}/${l}.json`;
+    const text = read(rel);
+    if (text === null) {
+      out.push(`${rel}: missing. ${l} is a language of the site (src/shared/lang.ts LANGS), so the new landing needs its copy: drop the translation here with the keys and {tokens} of en.json`);
+      continue;
+    }
+    try { files[l] = JSON.parse(text); } catch (e) { out.push(`${rel}: not valid JSON (${e instanceof Error ? e.message : String(e)})`); }
+  }
+  const en = files.en;
+  if (!en) return;
+  for (const l of lang.LANGS) {
+    const x = files[l];
+    if (!x) continue;
+    const rel = `${COPY_DIR}/${l}.json`;
+    if (l !== 'en') {
+      // the offer of Australian dollars (marketHint.aud) belongs to the languages of the Australian edition (English and German) and to
+      // no other: a Lithuanian or Hungarian visitor who took it would land on a page in English (src/landing/MarketHint.tsx offers a
+      // market only in a language its edition has, and this keeps the words from existing where they could never be shown)
+      const auOk = lang.langAllowed(l, 'au');
+      const hasAud = x.marketHint && 'aud' in x.marketHint;
+      if (hasAud && !auOk) out.push(`${rel}: marketHint.aud must not exist: the Australian edition has no texts in ${l} (src/shared/legal.ts EDITION_LANGS), so a visitor could never be offered it in ${l}`);
+      const without = (o) => (o.marketHint ? { ...o, marketHint: Object.fromEntries(Object.entries(o.marketHint).filter(([k]) => k !== 'aud')) } : o);
+      walkCopyJson(auOk ? en : without(en), auOk ? x : without(x), '', rel, out);
+    }
+    const leaves = leafPaths(x);
+    // every string of every language: the tokens exist, no spaced hyphen, none of the banned claims
+    for (const [p, v] of leaves) {
+      if (typeof v !== 'string') continue;
+      for (const k of tokensOf(v)) if (!format.TOKENS.includes(k)) out.push(`${rel}: ${p} holds the token {${k}}, which the page does not know (src/landing/copy/format.ts TOKENS)`);
+      if (SPACED_HYPHEN.test(v)) out.push(`${rel}: ${p} holds a spaced hyphen (a dash in disguise; owner rule: none): ${v.slice(0, 90)}`);
+      if (BANNED_CLAIMS.test(v)) out.push(`${rel}: ${p} makes a claim the page must not make ("${BANNED_CLAIMS.exec(v)[0]}"): ${v.slice(0, 90)}`);
+    }
+    // what a language says about itself, and the facts, against the single sources
+    if (x.meta?.locale !== lang.LOCALES[l].og) out.push(`${rel}: meta.locale is "${x.meta?.locale}", src/shared/lang.ts LOCALES.${l}.og is "${lang.LOCALES[l].og}"`);
+    if (x.langName !== lang.LANG_NAMES[l]) out.push(`${rel}: langName is "${x.langName}", src/shared/lang.ts LANG_NAMES.${l} is "${lang.LANG_NAMES[l]}"`);
+    if (x.facts?.email !== config.CONTACT_EMAIL) out.push(`${rel}: facts.email is "${x.facts?.email}", src/landing/config.ts CONTACT_EMAIL is "${config.CONTACT_EMAIL}"`);
+    if (x.facts?.hours !== String(config.DELIVERY_MAX_HOURS)) out.push(`${rel}: facts.hours is "${x.facts?.hours}", the delivery promise DELIVERY_MAX_HOURS (src/landing/config.ts) is ${config.DELIVERY_MAX_HOURS}`);
+    // the faq: the same ids in the same order, and the Australian answers belong to ids that exist
+    const ids = (f) => (f?.faq?.items ?? []).map((it) => it.id);
+    if (ids(x).join() !== ids(en).join()) out.push(`${rel}: faq.items has the ids ${ids(x).join(', ')}, en.json has ${ids(en).join(', ')} (same ids, same order)`);
+    for (const k of Object.keys(x.faqAu ?? {})) if (!ids(x).includes(k)) out.push(`${rel}: faqAu.${k} replaces no faq item (no item has that id)`);
+    // the statutory words of the legal links, and the online withdrawal button inside the withdrawal answers
+    const labels = legal.LEGAL_LABELS[l], online = legal.WITHDRAWAL_ONLINE[l];
+    for (const d of ['privacy', 'terms', 'withdrawal', 'imprint']) if (x.footer?.legal?.[d] !== labels[d]) out.push(`${rel}: footer.legal.${d} is "${x.footer?.legal?.[d]}", src/shared/legal.ts LEGAL_LABELS.${l}.${d} is "${labels[d]}"`);
+    if (x.footer?.legalNav !== labels.nav) out.push(`${rel}: footer.legalNav is "${x.footer?.legalNav}", LEGAL_LABELS.${l}.nav is "${labels.nav}"`);
+    if (x.footer?.legal?.withdrawFn !== online.button) out.push(`${rel}: footer.legal.withdrawFn is "${x.footer?.legal?.withdrawFn}", WITHDRAWAL_ONLINE.${l}.button is "${online.button}"`);
+    const w = (x.faq?.items ?? []).find((it) => it.id === 'withdraw');
+    if (w && !w.a.includes(online.button)) out.push(`${rel}: the faq answer "withdraw" does not name the online withdrawal button "${online.button}" (src/shared/legal.ts WITHDRAWAL_ONLINE.${l}.button)`);
+    // the button of the phone picture in step 2 (shown once ordering is open) is the real checkout button of /try: its statutory label
+    // (in Hungary the one that says the order carries an obligation to pay), not a friendlier one
+    if (x.how?.previewButton !== legal.CHECKOUT_LEGAL[l].continueButton) out.push(`${rel}: how.previewButton is "${x.how?.previewButton}", the checkout button of /try says "${legal.CHECKOUT_LEGAL[l].continueButton}" (src/shared/legal.ts CHECKOUT_LEGAL.${l}.continueButton)`);
+    if (x.faqAu?.withdraw && !x.faqAu.withdraw.a.includes(online.button)) out.push(`${rel}: faqAu.withdraw.a does not name the online withdrawal button "${online.button}"`);
+    if (WITHDRAW_Q[l] !== undefined && w?.q !== WITHDRAW_Q[l]) out.push(`${rel}: the faq question "withdraw" is "${w?.q}", it must stay "${WITHDRAW_Q[l]}" word for word`);
+    // the honesty lines, where the prototype has them
+    const h = HONESTY[l];
+    if (h) {
+      for (const [p, want] of Object.entries(h.chips)) if (dig(x, p) !== want) out.push(`${rel}: ${p} is "${dig(x, p)}", the label must read "${want}" word for word`);
+      for (const p of ['hero.chipTitle', 'final.chip']) if (dig(x, p) !== x.example?.vis) out.push(`${rel}: ${p} ("${dig(x, p)}") must be the same label as example.vis ("${x.example?.vis}")`);
+      for (const [p, re] of Object.entries(h.printing.alt ?? {})) if (!re.test(dig(x, p) ?? '')) out.push(`${rel}: ${p} must say that printing is not part of the order in the words ${re} (the caption's own wording)`);
+      for (const [what, rule] of Object.entries({ 'the line "printing is not part of your order"': h.printing, 'the line "ordering opens soon"': h.soon })) {
+        const where = leaves.filter(([, v]) => typeof v === 'string' && rule.re.test(v)).map(([p]) => p).sort();
+        if (where.join() !== [...rule.keys].sort().join()) out.push(`${rel}: ${what} must be in exactly ${rule.keys.join(', ')}; it is in ${where.join(', ') || 'no string'}`);
+      }
+    }
+    // the words join the lint lists of every other dictionary (dash, typography, untranslated English, word for word);
+    // not the values that are no prose: the FAQ ids (anchors and keys, English in every language) and the demo file name
+    for (const [p, v] of leaves) if (typeof v === 'string' && v !== '' && !NOT_PROSE.test(p)) strings[l].push([`landing copy ${l}.${p}`, blankTokens(v)]);
+  }
+}
+
 /** Every problem found, as sentences ([] when the texts are sound). load(path): a module of src/ through Vite's module
  *  runner (vite.config.ts); root: the repository. */
 export async function checkTexts(load, root) {
   const out = [];
-  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets, layouts, aiMaterial] = await Promise.all([
+  const [lang, legal, landing, tryCopy, orderCopy, editions, plain, markets, layouts, aiMaterial, config, format] = await Promise.all([
     load('./src/shared/lang.ts'), load('./src/shared/legal.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'),
     load('./src/order/copy.ts'), load('./src/legal/editions.ts'), load('./src/legal/plain.ts'), load('./src/shared/markets.ts'),
-    load('./src/shared/layouts.ts'), load('./src/shared/aiMaterial.ts'),
+    load('./src/shared/layouts.ts'), load('./src/shared/aiMaterial.ts'), load('./src/landing/config.ts'), load('./src/landing/copy/format.ts'),
   ]);
   if (lang.LANGS.join() !== LANGS.join()) out.push(`src/shared/lang.ts LANGS is ${lang.LANGS.join()}, this check knows ${LANGS.join()}: update scripts/check_texts.mjs`);
 
@@ -607,6 +773,9 @@ export async function checkTexts(load, root) {
     walk({ LEGAL_LABELS: legal.LEGAL_LABELS.en, WITHDRAWAL_ONLINE: legal.WITHDRAWAL_ONLINE.en, CHECKOUT_LEGAL: legal.CHECKOUT_LEGAL.en },
       shared, '', l, 'legal.shared', NEW_LANGS.includes(l) ? out : [], strings[l]);
   }
+
+  // 10. the copy of the new landing (src/landing/copy/*.json)
+  checkLandingCopy(root, { lang, legal, config, format, oldCopy: landing }, strings, out);
 
   // 3. the legal pages of every edition, in every language the edition has
   for (const [edition, langs] of Object.entries(legal.EDITION_LANGS)) {

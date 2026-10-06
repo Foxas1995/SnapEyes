@@ -1,0 +1,146 @@
+/* SnapEyes landing v2: The style gallery: group tabs, eye colour chips, tiles.
+   Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
+   the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
+   .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
+   no specificity. */
+@layer landing {
+  .lp-tabs { position: relative; display: flex; gap: 6px; margin-top: 40px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 1px; background: linear-gradient(var(--line), var(--line)) 0 100% / 100% 1px no-repeat local; }
+  .lp-tabs::-webkit-scrollbar { display: none; }
+  .lp-tab { position: relative; flex: none; min-height: 48px; padding: 10px 18px; font-size: 14.5px; font-weight: 600; color: var(--ink-3); transition: color var(--d-tap) var(--ease-out); white-space: nowrap; }
+  /* the plain underline of the selected tab: the mark until the sliding line below has been measured (and the only mark when it cannot be) */
+  .lp-tab::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 1px; background: var(--gold); transform: scaleX(0); }
+  .lp-tabs[data-bar] .lp-tab::after { display: none; }
+  /* the sliding line: one gold hairline, placed by translate and scale from the selected tab's box (src/landing/StyleTabs.tsx) */
+  .lp-tabs-bar { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; background: var(--gold); transform-origin: 0 0; translate: 0 0; scale: 0 1; pointer-events: none; transition: translate .4s var(--ease-out), scale .4s var(--ease-out); }
+  .lp-tabs:not([data-bar]) .lp-tabs-bar { display: none; }
+  /* the tab list scrolls (overflow-x), which clips an outline drawn outside the first tab: the ring sits inside (WCAG 2.4.7) */
+  .lp-tab:focus-visible { outline-offset: -4px; }
+  .lp-tab:hover { color: #fff; }
+  .lp-tab[aria-selected="true"] { color: #fff; }
+  .lp-tab[aria-selected="true"]::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: reduce) {
+    .lp-tabs-bar { transition: none; }
+  }
+  .lp-group-intro { margin-top: 22px; color: var(--ink-2); font-size: 16px; max-width: 40em; }
+  .lp-legend { margin-top: 10px; font-size: 13px; line-height: 1.55; color: var(--ink-3); max-width: 46em; }
+  .lp-eyepick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 20px; }
+  .lp-eyechips { display: contents; }
+  .lp-eyedot { display: block; width: 32px; height: 32px; border-radius: 50%; flex: none; }
+  .lp-eyepick .lp-lab { font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--ink-3); margin-right: 4px; }
+  .lp-eyechip { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 5px 16px 5px 6px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); }
+  .lp-eyechip[aria-checked="true"] { border-color: var(--gold); color: var(--t-1); background: rgba(245, 197, 66, .07); }
+  .lp-eyechip:hover { color: #fff; }
+  .lp-eyenote { margin-top: 10px; font-size: 13px; color: var(--ink-3); }
+  .lp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px 12px; margin-top: 30px; }
+  @media (min-width: 640px) {
+    .lp-grid { gap: 40px 22px; }
+  }
+  @media (min-width: 960px) {
+    .lp-grid { grid-template-columns: repeat(3, 1fr); gap: 52px 28px; }
+  }
+  .lp-grid.lp-wide { grid-template-columns: 1fr; }
+  @media (min-width: 640px) {
+    .lp-grid.lp-wide { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 960px) {
+    .lp-grid.lp-wide { grid-template-columns: repeat(3, 1fr); }
+  }
+  .lp-tile { min-width: 0; }
+  .lp-tile-img { position: relative; aspect-ratio: 1; border-radius: 16px; overflow: hidden; background: #020204; box-shadow: 0 0 0 1px rgba(255, 255, 255, .07); }
+  .lp-wide .lp-tile-img { aspect-ratio: 3 / 2; }
+  .lp-tile-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity var(--d-swap) var(--ease-out); }
+  .lp-wide .lp-tile-img img.lp-art { object-fit: contain; }
+  /* the hover zoom: 1.02 at most, inside the clipped frame, only where there is a real hover (spec 6.6, charter AC-3) */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .lp-tile-img img.lp-art { transition: opacity var(--d-swap) var(--ease-out), transform 1.2s var(--ease-out); }
+    .lp-tile:hover .lp-tile-img img.lp-art { transform: scale(1.02); }
+  }
+  /* the picture the tile had before the eye colour changed stays on top until the new one is in, then fades out over it (src/landing/StyleTile.tsx) */
+  .lp-tile-img img.lp-ghost { z-index: 1; transition: none; }
+  .lp-tile-img img.lp-ghost.lp-out { animation: lp-ghost-out var(--d-swap) var(--ease-out) forwards; }
+  @keyframes lp-ghost-out { to { opacity: 0; } }
+  .lp-tile-img img.lp-wall { opacity: 0; }
+  .lp-tile.lp-on-wall img.lp-wall { opacity: 1; }
+  .lp-tile.lp-on-wall img.lp-art { opacity: 0; }
+  .lp-tile-img .lp-chip-ex { position: absolute; left: 10px; top: 10px; z-index: 2; }
+  /* a label that is not showing is not in the accessibility tree either (visibility): a screen reader never hears "AI visualisation"
+     after a flat artwork, or "Example photo" after a wall view; the fade keeps its .45 s, visibility flips after it on the way out */
+  .lp-tile-img .lp-vis-chip { left: 10px; top: 10px; opacity: 0; visibility: hidden; transition: opacity var(--d-swap) var(--ease-out), visibility 0s var(--d-swap); }
+  .lp-tile.lp-on-wall .lp-vis-chip { opacity: 1; visibility: visible; transition-delay: 0s; }
+  .lp-tile.lp-on-wall .lp-chip-ex.lp-photo { opacity: 0; visibility: hidden; }
+  .lp-wallbtn { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: rgb(3 4 8 / .82); color: #fff; font-size: 12.5px; font-weight: 600; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); transition: opacity var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), box-shadow var(--d-tap) var(--ease-out); }
+  /* with a mouse the button fades in when the tile is hovered or holds the focus (and stays while the wall is on); on a touch screen it is always there */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .lp-wallbtn:not([aria-pressed="true"]) { opacity: 0; }
+    .lp-tile:is(:hover, :focus-within) .lp-wallbtn { opacity: 1; }
+  }
+  .lp-wallbtn:hover { box-shadow: 0 0 0 1px var(--gold); color: #fff; }
+  .lp-wallbtn svg { width: 15px; height: 15px; }
+  .lp-tile figcaption { margin-top: 14px; }
+  .lp-tile-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; }
+  .lp-tile h3 { font-family: var(--display); font-size: 15.5px; letter-spacing: .04em; }
+  .lp-tile .lp-price { font-size: 12.5px; color: var(--ink-3); }
+  .lp-tile .lp-price b { font-weight: 600; color: var(--ink-2); }
+  .lp-tile .lp-file { margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+  .lp-tile p { margin-top: 6px; font-size: 13.5px; line-height: 1.55; color: var(--ink-3); }
+  .lp-tile .lp-src { margin-top: 8px; font-size: 12px; line-height: 1.45; color: var(--ink-3); display: flex; gap: 7px; align-items: flex-start; opacity: .92; }
+  .lp-tile .lp-src::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin-top: 7px; flex: none; }
+  .lp-combo { grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 26px 24px; border-radius: 16px; border: 1px solid var(--gold-line); background: linear-gradient(160deg, rgba(245, 197, 66, .08), rgba(245, 197, 66, .015)); }
+  @media (min-width: 960px) {
+    .lp-combo { grid-column: auto; align-self: stretch; }
+  }
+  .lp-combo h3 { font-family: var(--display); font-size: 18px; color: var(--t-1); line-height: 1.3; }
+  .lp-combo p { font-size: 14px; color: var(--ink-2); }
+  .lp-combo .lp-btn-line { align-self: flex-start; margin-top: 6px; }
+  @media (max-width: 639px) {
+    .lp-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 26px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 10px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
+    .lp-grid::-webkit-scrollbar { display: none; }
+    .lp-tile { flex: 0 0 72%; scroll-snap-align: start; }
+    .lp-grid.lp-wide .lp-tile { flex-basis: 86%; }
+    .lp-combo { flex: 0 0 80%; scroll-snap-align: start; aspect-ratio: auto; }
+  }
+  .lp-tabs { scroll-padding-inline: var(--gut); }
+  @media (max-width: 959px) {
+    .lp-tabs { -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent); mask-image: linear-gradient(90deg, #000 90%, transparent); }
+  }
+  @media (max-width: 639px) {
+    .lp-gpanel { display: flex; flex-direction: column; }
+    .lp-gintro { order: 1; margin-top: 16px; font-size: 15px; }
+    .lp-legend { order: 2; }
+    .lp-grid { order: 3; }
+    .lp-eyepick { order: 4; margin-top: 12px; flex-wrap: nowrap; }
+    .lp-eyepick .lp-lab { display: none; }
+    .lp-eyenote { order: 5; }
+    .lp-eyechip { padding-right: 6px; }
+    .lp-eyechip:not([aria-checked="true"]) .lp-en { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .lp-eyechip[aria-checked="true"] { padding-right: 14px; }
+  }
+  @media (max-width: 340px) {
+    .lp-eyepick { flex-wrap: wrap !important; }
+  }
+  /* ------------------------------------------------------------------------------------------------ motion (spec 6.6)
+     Hidden states only under html.mo:not(.mo-fail) and prefers-reduced-motion: no-preference (src/motion/motion.css), so every tile is there
+     without the engine, under reduced motion and after the failsafe. The tiles are artworks: nothing scales, blurs or tilts on arrival. */
+  @keyframes lp-tile-in { from { opacity: 0; } }
+  @media (prefers-reduced-motion: no-preference) {
+    /* a changed group: the new tiles fade in, 300 ms, 40 ms apart, no rise (a repeated action stays quiet) */
+    .lp-tile-in { animation: lp-tile-in .3s var(--ease-out) calc(var(--j, 0) * 40ms) backwards; }
+    /* the first grid, two or three columns: each tile rises, 90 ms apart (the index stops at 4); the grid does not fade as well */
+    @media (min-width: 640px) {
+      html.mo:not(.mo-fail) .lp-grid[data-reveal="soft"]:not([data-in]) { opacity: 1; }
+      html.mo:not(.mo-fail) .lp-grid[data-reveal="soft"][data-in] { animation: none; }
+      html.mo:not(.mo-fail) .lp-tile[data-reveal][data-in] { animation-delay: calc(var(--i, 0) * var(--stagger-card)); }
+    }
+    /* the swipe rail of a phone appears as one piece; the tiles stay put while it is swiped */
+    @media (max-width: 639px) {
+      html.mo:not(.mo-fail) .lp-grid > .lp-tile[data-reveal]:not([data-in]) { opacity: 1; translate: none; }
+      html.mo:not(.mo-fail) .lp-grid > .lp-tile[data-reveal][data-in] { animation: none; }
+    }
+  }  /* quiet details (spec 5.6): a chip is pressed to .985 and released in .3 s, its hover ring is the gold ring; a rail never takes a swipe for "back" */
+  .lp-eyechip { transition-property: border-color, color, background-color, scale; }
+  .lp-eyechip:active { scale: .985; }
+  @media (hover: hover) {
+    .lp-eyechip:not([aria-checked="true"]):hover { border-color: var(--ring-gold); }
+  }
+  .lp-tabs, .lp-grid { overscroll-behavior-x: contain; }
+}

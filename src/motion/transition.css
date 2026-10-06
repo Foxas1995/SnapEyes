@@ -1,0 +1,38 @@
+/* The page transition between the landing, /try and /order (motion spec 6.17): a native cross-document view transition, opacity only, about .65 s in all.
+   The old page dissolves into the page's own dark in .25 s and the new page comes up out of it in .4 s. (First built at .4 s and .6 s, a full second
+   of dip on the click that matters most; the taste review set it back to about the ledger's numbers.) The page's dark is the background that the new
+   page's first paint already has, so a page that is still being built by its script (/try and /order are client rendered) fills the dip and is the
+   picture the visitor sees come up. Nothing slides, scales or blurs.
+
+   Which pages take part: a cross-document view transition needs BOTH pages to opt in (the rule below), and the pages that carry this file are the landing
+   (imported by src/landing/css/index.css, so it is part of the landing's own stylesheet), /try and /order (src/try/main.tsx, src/order/main.tsx). The legal
+   pages and /admin never carry it, so none of them is ever part of a transition. A navigation to /try or /order that carries an order, a payment or the
+   online withdrawal function (o, k, s, checkout, session_id, withdraw in the address) is skipped by a one line script in the head of try.html and order.html,
+   which runs as the page is revealed, before its first frame. A browser without cross-document view transitions ignores this whole file, and under reduced
+   motion the opt-in itself is off: the page simply changes.
+
+   Outside @layer on purpose: these rules style the browser's pseudo elements of the transition, which no layer of the page reaches. The curve is the page's own
+   expo curve, written out because /try and /order do not define the landing's tokens. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  /* the page underneath is live, so it takes clicks while the dissolve plays (by default the transition's own layer catches them) */
+  ::view-transition {
+    pointer-events: none;
+  }
+  ::view-transition-old(root) {
+    animation: pt-out .25s cubic-bezier(.16, 1, .3, 1) both;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-new(root) {
+    animation: pt-in .4s cubic-bezier(.16, 1, .3, 1) .25s both;
+    mix-blend-mode: normal;
+  }
+}
+@keyframes pt-out {
+  to { opacity: 0; }
+}
+@keyframes pt-in {
+  from { opacity: 0; }
+}

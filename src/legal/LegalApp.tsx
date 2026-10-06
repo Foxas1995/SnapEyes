@@ -7,7 +7,7 @@
 import { useCallback, useEffect } from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { LangProvider, setCanonical, setMeta, useLang } from '../landing/lang';
-import { LangSwitch } from '../landing/Header';
+import { LangSwitch } from './LangSwitch';
 import { Logo } from '../landing/ui';
 import { langQuery, type Lang } from '../shared/lang';
 import {

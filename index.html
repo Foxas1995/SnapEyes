@@ -5,12 +5,13 @@
     <!-- no maximum-scale / user-scalable=no: blocking pinch zoom is an accessibility failure -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#030408" />
-    <title>SnapEyes Private Atelier - Precision Iris Art from Your Smartphone</title>
-    <!-- Search and share copy must stay strictly true: same rules as src/landing/copy.ts. It is read before the page
-         knows whether ordering is open (src/landing/ordering.ts), so it says nothing about ordering: the same words as
-         copy.ts en.meta.description, true before and after ordering opens. -->
-    <meta name="description" content="Photograph one eye with your phone's back camera and see your own iris as fine art in a choice of styles. The watermarked preview is free." />
+    <meta name="theme-color" content="#07090e" />
+    <title>SnapEyes Private Atelier: Your Real Iris as Art</title>
+    <!-- Search and share copy must stay strictly true. The title, description and share texts below are the English copy's
+         (src/landing/copy/en.json, meta); the heroShell plugin of vite.config.ts writes them again at build time, so they
+         cannot drift. They are read before the page knows whether ordering is open (src/landing/ordering.ts), so they say
+         nothing about ordering: true before and after it opens. -->
+    <meta name="description" content="Photograph one eye with your phone and see your iris as art, restored, never repainted. Free watermarked preview, then a digital file to print anywhere." />
     <!-- rel=canonical is injected once by src/landing/lang.tsx (self-referencing: / for English, /?lang=de for
          German), so the German URL is not canonicalised to the English one. Do not add a static canonical here. -->
     <link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
@@ -25,29 +26,31 @@
     <meta property="og:locale:alternate" content="de_DE" />
     <meta property="og:locale:alternate" content="lt_LT" />
     <meta property="og:locale:alternate" content="hu_HU" />
-    <meta property="og:title" content="SnapEyes Private Atelier - Precision Iris Art from Your Smartphone" />
-    <meta property="og:description" content="Photograph one eye with your phone and see your own iris as fine art in a choice of styles. The watermarked preview is free." />
+    <meta property="og:title" content="SnapEyes Private Atelier: Your Real Iris as Art" />
+    <meta property="og:description" content="Photograph one eye with your phone and see your own iris as art. The watermarked preview is free." />
     <!-- The share image is the founder's own eye (phone photo rendered in the Clean Iris look), labelled on the card. -->
     <meta property="og:image" content="https://snapeyes.com/assets/atelier/og-founder-eye.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Mantas, founder: his own iris, photographed at home with a phone and rendered in Clean Iris" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="SnapEyes Private Atelier - Precision Iris Art from Your Smartphone" />
-    <meta name="twitter:description" content="Photograph one eye with your phone and see your own iris as fine art in a choice of styles. The watermarked preview is free." />
+    <meta name="twitter:title" content="SnapEyes Private Atelier: Your Real Iris as Art" />
+    <meta name="twitter:description" content="Photograph one eye with your phone and see your own iris as art. The watermarked preview is free." />
     <meta name="twitter:image" content="https://snapeyes.com/assets/atelier/og-founder-eye.jpg" />
-    <link rel="preload" as="image" type="image/webp" href="/assets/atelier/style-celestial-gold-800.webp"
-      imagesrcset="/assets/atelier/style-celestial-gold-480.webp 480w, /assets/atelier/style-celestial-gold-800.webp 800w"
-      imagesizes="(min-width: 640px) 520px, calc(100vw - 32px)" fetchpriority="high" />
+    <!-- lp:head -->
+    <!-- vite.config.ts heroShell fills lp:head and lp:shell and writes the title and share texts from src/landing/copy/en.json -->
     <!-- fonts are self-hosted (@font-face in src/index.css): nothing is loaded from Google Fonts -->
     <link rel="preload" as="font" type="font/woff2" href="/assets/atelier/fonts/cinzel-var.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/assets/atelier/fonts/plus-jakarta-sans-var.woff2" crossorigin />
   </head>
-  <body class="bg-[#030408] text-[#f0f3fa] selection:bg-[#f5c542] selection:text-black antialiased overflow-x-hidden">
-    <noscript>
-      <p style="padding:24px;font-family:sans-serif;color:#f0f3fa">SnapEyes Private Atelier: precision iris art from your smartphone. Please enable JavaScript to see this page.</p>
-    </noscript>
+  <body class="lp">
+    <!-- lp:shell -->
     <div id="root"></div>
+    <!-- without JavaScript the page is the static first screen above; this line is its footnote (styled in src/landing/css/base.css; it used to
+         come first and printed over the fixed header) -->
+    <noscript>
+      <p class="lp-noscript">SnapEyes Private Atelier: precision iris art from your smartphone. Please enable JavaScript to see the whole page.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
