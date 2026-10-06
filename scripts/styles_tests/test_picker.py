@@ -141,6 +141,9 @@ def scenario(name):
     whose non-default looks only preview, a live registry whose DEFAULT look only previews (the look a request that names none draws)."""
     if name == "literal":
         return
+    # WP18: since the cutover the registry's EFFECTIVE_DEFAULT holds every style of the v3 engine at preview until the owner's tick, so "a live registry" means one
+    # the owner has ticked: the default is lifted for these scenarios (and put back below), which is what the owner's flip to live does for the styles he ticks
+    C.EFFECTIVE_DEFAULT = None
     for sid, d in R.STYLES.items():
         d["stage"] = "live"
         d["stage_by_eyes"] = {k: "live" for k in d["stage_by_eyes"]}
@@ -158,7 +161,7 @@ def scenario(name):
 
 cases, expect, where = [], [], []
 for sc in ("literal", "all_live", "extra_looks_preview", "default_look_preview"):
-    saved_styles, saved_engine = copy.deepcopy(dict(R.STYLES)), copy.deepcopy(dict(X.ENGINE))
+    saved_styles, saved_engine, saved_default = copy.deepcopy(dict(R.STYLES)), copy.deepcopy(dict(X.ENGINE)), C.EFFECTIVE_DEFAULT
     try:
         scenario(sc)
         for sid, d in R.STYLES.items():
@@ -176,6 +179,7 @@ for sc in ("literal", "all_live", "extra_looks_preview", "default_look_preview")
     finally:
         R.STYLES.clear(); R.STYLES.update(saved_styles)
         X.ENGINE.clear(); X.ENGINE.update(saved_engine)
+        C.EFFECTIVE_DEFAULT = saved_default
 kinds = node("picker_probe.mjs", {"cases": cases})["kinds"]
 wrong = [(where[i], kinds[i], expect[i]) for i in range(len(cases)) if (kinds[i] == "normal") != expect[i]]
 check(f"the page's buy state is normal exactly when checkout accepts the style and its look, for {len(cases)} cases (every style and eye count, every look and the default, four stage assignments)",

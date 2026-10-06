@@ -1,0 +1,1254 @@
+{
+ "_about": "The EXACT pin of the EU edition (terms, withdrawal, privacy, imprint in en and de; the checkout wording in four languages; the built pack) as of the catalogue switch (WP18, 2026-10-06): the pin of WP12 plus the AI-made material sentence in the terms (one block of the terms 'licence' section per language) and the date 2026-10-06 in the pack. Made by snap_eu.mjs and cut to the languages the older pins hold.",
+ "commit": "wp18",
+ "terms": {
+  "en": {
+   "title": "Terms of sale",
+   "description": "The terms for ordering a SnapEyes digital iris artwork: the product, prices, payment, delivery, your licence, the right of withdrawal and complaints.",
+   "lead": "These terms apply to every order placed on snapeyes.com. Please read them before you order. The free preview is offered without any obligation.",
+   "toc": true,
+   "numbered": true,
+   "sections": [
+    {
+     "id": "parties",
+     "title": "Who you contract with",
+     "blocks": [
+      "Your contract is with MB \"Portretizuokis\", a small partnership under Lithuanian law (mažoji bendrija), represented by Mantas Bakšys, company code 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania, email [info@snapeyes.com](mailto:info@snapeyes.com) (\"we\", \"SnapEyes\"). All details are in our [Legal notice](doc:imprint).",
+      "Our offer is made to consumers. If you are under 18, please ask a parent or guardian to order for you."
+     ]
+    },
+    {
+     "id": "product",
+     "title": "What you buy",
+     "blocks": [
+      "A personalised digital artwork made from your own photo of an eye (or of several eyes), in the style, layout and inscription you choose. You receive one image file (JPEG) without watermark: 4096 × 4096 px for one eye, 4096 px on the longest side for several eyes. The artwork is delivered only as a digital file, by download. We do not sell prints, frames or any other physical product.",
+      "Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them. The artwork is therefore an artistic restoration, not a medical or microscope image, and it is not suitable for any medical purpose or for identifying a person.",
+      "In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer's artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above."
+     ]
+    },
+    {
+     "id": "preview",
+     "title": "Your preview and your file",
+     "blocks": [
+      "Before you order, you see a free preview with a watermark and approve it. Your file follows the preview you approved: the same eye, style, layout, arrangement of the eyes and inscription, with the same colour and tone, rendered once in full resolution. At full size our AI adds the fine fibre detail that the preview is too small to show, so the very finest details can differ slightly from the preview. A preview of five to eight eyes is made from smaller copies of your photos, so it is coarser than your file.",
+      "If your file clearly differs from the preview you approved (for example in colour, brightness or the pupil), that is a defect: see [Complaints and defects](#defects)."
+     ]
+    },
+    {
+     "id": "contract",
+     "title": "How the contract is made",
+     "blocks": [
+      "The previews and prices on our website are not yet a binding offer. Before you pay, you can check your eyes, style, layout and inscription and correct any input by going back or retaking a photo. You then open the payment page of our payment provider Stripe with our button \"Continue to payment\"; this button does not yet place an order. On that page you enter your email address and payment details and can correct them. You place a binding order when you confirm the payment there with the pay button.",
+      "The contract is concluded when your payment is confirmed. Your order page then opens, and we email you its link with your order confirmation. We start making your file there as soon as that email has gone out.",
+      "The contract languages are English, German, Lithuanian and Hungarian.",
+      "We store your order with the details of the contract: the artwork you ordered, the price, the date, your email address and your consent to the immediate start. Your order page shows these details for as long as we keep your order. We do not keep a separate copy of these terms for each order. Instead, your order confirmation email contains, as text, your order details, these terms and the withdrawal information with the model withdrawal form, in the version in force when you ordered: please keep that email. You can also save or print this page at any time."
+     ]
+    },
+    {
+     "id": "prices",
+     "title": "Prices and payment",
+     "blocks": [
+      {
+       "dl": [
+        [
+         "One eye, Clean Iris",
+         "€19.97"
+        ],
+        [
+         "One eye, any other style",
+         "€24.97"
+        ],
+        [
+         "Two eyes, any style",
+         "€39.97"
+        ],
+        [
+         "Each further eye",
+         "+€15.00"
+        ]
+       ]
+      },
+      "All prices are final prices in euros. We are not registered for VAT, so no VAT is charged or shown. There are no delivery costs.",
+      "The table above is our standard price list. From time to time, for a limited period, we try other price lists on some visitors, chosen at random. You are always charged the prices shown to you on the artwork page before you pay and on the payment page, and your order confirmation email names the price list that applied to your order. Which price list you see never depends on the country you live in, only on the market (currency) you choose.",
+      "You pay in advance through our payment provider Stripe, with the payment methods shown on the payment page."
+     ]
+    },
+    {
+     "id": "delivery",
+     "title": "Delivery",
+     "blocks": [
+      "Your order page makes your file as soon as your order confirmation email has gone out, normally within a minute of your payment; making it usually takes a few minutes. If you close the page before your file is finished, it carries on when you open it again from the link in the email. If our automatic quality check flags a file, we look at it ourselves before we release it, and we email you when it is ready. **At the latest, your file is ready for download on your order page within 48 hours after your payment is confirmed.** From your order page you can download your file at any time while we keep it: 12 months from your payment (see our [Privacy policy](doc:privacy)). Each download link it creates is valid for 7 days; the page makes a new one whenever you open it. If you lose the email, write to us.",
+      "The link to your order page contains a private key: anyone who has it can download your artwork, so please keep it to yourself. Please download your file and keep a copy. After 12 months it is deleted and cannot be restored."
+     ]
+    },
+    {
+     "id": "withdrawal",
+     "title": "Right of withdrawal",
+     "blocks": [
+      "As a consumer you generally have a 14-day right of withdrawal. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open. This applies even while the file is still being made or is waiting for our quality check. If we have not started, it ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button \"Withdraw from contract here\"; the withdrawal link in your order confirmation email opens it for your order without starting to make your file. The full information, the online function and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page."
+     ]
+    },
+    {
+     "id": "photos",
+     "title": "Your photos",
+     "blocks": [
+      "Only upload photos of your own eye, or of the eye of someone who has agreed to it (for a child: a parent or guardian). By uploading a photo you confirm that you may use it for this purpose.",
+      "The rights in your photo remain yours. We use it only to make your preview and your artwork, as described in our [Privacy policy](doc:privacy).",
+      "We may refuse an order, and refund any payment in full, if a photo clearly breaks these rules."
+     ]
+    },
+    {
+     "id": "licence",
+     "title": "What you may do with your artwork",
+     "blocks": [
+      "You receive a non-exclusive, permanent licence to use your artwork for personal, non-commercial purposes. You may, for example, print it for yourself (at home or through a print shop), frame it, give it as a gift, use it as a background on your devices and share it on your personal social media.",
+      "Without our permission (an email is enough) you may not sell the artwork or products made from it, grant others rights to it, or use it for advertising or other commercial purposes.",
+      "The styles, backgrounds, layouts and the SnapEyes design remain ours, including any copyright in them. The same applies to the watermarked previews."
+     ]
+    },
+    {
+     "id": "defects",
+     "title": "Complaints and defects",
+     "blocks": [
+      "Your statutory rights for digital content that does not conform to the contract apply in full. If your file is defective, for example it cannot be downloaded or opened, is damaged, is smaller than promised or clearly differs from the preview you approved, please write to [info@snapeyes.com](mailto:info@snapeyes.com) with your order number. We will render the file again free of charge or, if that does not fix it, refund you."
+     ]
+    },
+    {
+     "id": "liability",
+     "title": "Liability",
+     "blocks": [
+      "We are liable without limitation for intent and gross negligence, for injury to life, body or health, and wherever mandatory law provides for it. Otherwise, for slight negligence we are liable only for the breach of essential contractual obligations, and only for the damage that is typical and foreseeable for this kind of contract. The free preview is offered as it is, without any claim to its availability."
+     ]
+    },
+    {
+     "id": "disputes",
+     "title": "Disputes and applicable law",
+     "blocks": [
+      "If something is wrong, please write to us first: most problems are solved quickly by email.",
+      "If we cannot agree, consumers can turn to the Lithuanian State Consumer Rights Protection Authority (Valstybinė vartotojų teisių apsaugos tarnyba, [vvtat.lt](https://vvtat.lt)), which settles consumer disputes out of court, or to the consumer bodies and courts of their own country.",
+      "Lithuanian law applies. If you are a consumer living in another EU country, you keep the protection of the mandatory consumer law of that country."
+     ]
+    },
+    {
+     "id": "changes",
+     "title": "Changes to these terms",
+     "blocks": [
+      "The terms in force when you place your order apply to that order."
+     ]
+    }
+   ]
+  },
+  "de": {
+   "title": "Allgemeine Geschäfts­bedingungen (AGB)",
+   "description": "Die Bedingungen für die Bestellung eines digitalen Iris-Kunstwerks bei SnapEyes: Produkt, Preise, Zahlung, Lieferung, Nutzungsrecht, Widerrufsrecht und Reklamationen.",
+   "lead": "Diese Bedingungen gelten für jede Bestellung auf snapeyes.com. Bitte lesen Sie sie, bevor Sie bestellen. Die kostenlose Vorschau ist unverbindlich.",
+   "toc": true,
+   "numbered": true,
+   "sections": [
+    {
+     "id": "parties",
+     "title": "Ihr Vertragspartner",
+     "blocks": [
+      "Ihr Vertrag kommt zustande mit MB „Portretizuokis“, einer Kleingesellschaft nach litauischem Recht (mažoji bendrija), vertreten durch Mantas Bakšys, Unternehmenscode 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen, E-Mail [info@snapeyes.com](mailto:info@snapeyes.com) („wir“, „SnapEyes“). Alle Angaben finden Sie im [Impressum](doc:imprint).",
+      "Unser Angebot richtet sich an Verbraucher. Wenn Sie jünger als 18 Jahre sind, bitten Sie einen Elternteil oder eine sorgeberechtigte Person, für Sie zu bestellen."
+     ]
+    },
+    {
+     "id": "product",
+     "title": "Was Sie kaufen",
+     "blocks": [
+      "Ein personalisiertes digitales Kunstwerk aus Ihrem eigenen Foto eines Auges (oder mehrerer Augen), im Stil, in der Anordnung und mit der Widmung Ihrer Wahl. Sie erhalten eine Bilddatei (JPEG) ohne Wasserzeichen: 4096 × 4096 px bei einem Auge, bei mehreren Augen 4096 px an der längsten Seite. Das Kunstwerk wird ausschließlich als digitale Datei zum Download geliefert. Drucke, Rahmen oder andere physische Produkte verkaufen wir nicht.",
+      "Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her. Das Kunstwerk ist daher eine künstlerische Restaurierung, keine medizinische Aufnahme und keine Mikroskopaufnahme, und es eignet sich weder für medizinische Zwecke noch zur Identifizierung einer Person.",
+      "Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt."
+     ]
+    },
+    {
+     "id": "preview",
+     "title": "Ihre Vorschau und Ihre Datei",
+     "blocks": [
+      "Vor der Bestellung sehen Sie eine kostenlose Vorschau mit Wasserzeichen und geben sie frei. Ihre Datei folgt der freigegebenen Vorschau: dasselbe Auge, derselbe Stil, dieselbe Anordnung, dieselbe Reihenfolge der Augen und dieselbe Widmung, mit derselben Farbe und Tonalität, einmalig in voller Auflösung erstellt. In voller Größe ergänzt unsere KI die feinen Faserdetails, für die die Vorschau zu klein ist; die allerfeinsten Details können daher leicht von der Vorschau abweichen. Eine Vorschau mit fünf bis acht Augen wird aus kleineren Kopien Ihrer Fotos erstellt und ist daher gröber als Ihre Datei.",
+      "Weicht Ihre Datei deutlich von der freigegebenen Vorschau ab (zum Beispiel in Farbe, Helligkeit oder bei der Pupille), ist das ein Mangel: siehe [Reklamationen und Mängel](#defects)."
+     ]
+    },
+    {
+     "id": "contract",
+     "title": "Vertragsschluss",
+     "blocks": [
+      "Die Vorschauen und Preise auf unserer Website sind noch kein verbindliches Angebot. Vor der Zahlung können Sie Ihre Augen, den Stil, die Anordnung und die Widmung prüfen und Eingaben korrigieren, indem Sie zurückgehen oder ein Foto neu aufnehmen. Danach öffnen Sie mit unserer Schaltfläche „Weiter zur Zahlung“ die Zahlungsseite unseres Zahlungsdienstleisters Stripe; diese Schaltfläche löst noch keine Bestellung aus. Auf dieser Seite geben Sie Ihre E-Mail-Adresse und Zahlungsangaben ein und können sie korrigieren. Eine verbindliche Bestellung geben Sie ab, wenn Sie dort die Zahlung mit der Zahlungsschaltfläche bestätigen.",
+      "Der Vertrag kommt zustande, sobald Ihre Zahlung bestätigt ist. Dann öffnet sich Ihre Bestellseite, und wir senden Ihnen deren Link mit Ihrer Bestellbestätigung per E-Mail. Sobald diese E-Mail versandt ist, beginnen wir dort mit Ihrer Datei.",
+      "Vertragssprachen sind Deutsch, Englisch, Litauisch und Ungarisch.",
+      "Wir speichern Ihre Bestellung mit den Vertragsdaten: das bestellte Kunstwerk, den Preis, das Datum, Ihre E-Mail-Adresse und Ihre Zustimmung zum sofortigen Beginn. Ihre Bestellseite zeigt diese Angaben, solange wir Ihre Bestellung aufbewahren. Eine eigene Kopie dieser Bedingungen je Bestellung bewahren wir nicht auf. Stattdessen enthält Ihre Bestellbestätigung per E-Mail als Text Ihre Bestelldaten, diese Bedingungen und die Widerrufsbelehrung mit dem Muster-Widerrufsformular, in der bei Ihrer Bestellung gültigen Fassung: Bitte bewahren Sie diese E-Mail auf. Sie können diese Seite außerdem jederzeit speichern oder ausdrucken."
+     ]
+    },
+    {
+     "id": "prices",
+     "title": "Preise und Zahlung",
+     "blocks": [
+      {
+       "dl": [
+        [
+         "Ein Auge, Clean Iris",
+         "19,97 €"
+        ],
+        [
+         "Ein Auge, jeder andere Stil",
+         "24,97 €"
+        ],
+        [
+         "Zwei Augen, jeder Stil",
+         "39,97 €"
+        ],
+        [
+         "Jedes weitere Auge",
+         "+15,00 €"
+        ]
+       ]
+      },
+      "Alle Preise sind Endpreise in Euro. Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet oder ausgewiesen. Versandkosten fallen nicht an.",
+      "Die obige Tabelle ist unsere Standardpreisliste. Von Zeit zu Zeit erproben wir für einen begrenzten Zeitraum andere Preislisten bei einzelnen, zufällig ausgewählten Besuchern. Berechnet werden Ihnen immer die Preise, die Ihnen vor der Zahlung auf der Kunstwerk-Seite und auf der Zahlungsseite angezeigt werden, und Ihre Bestellbestätigung per E-Mail nennt die Preisliste, die für Ihre Bestellung galt. Welche Preisliste Sie sehen, hängt nie vom Land ab, in dem Sie wohnen, sondern nur vom Markt (der Währung), den Sie wählen.",
+      "Sie zahlen im Voraus über unseren Zahlungsdienstleister Stripe, mit den auf der Zahlungsseite angezeigten Zahlungsarten."
+     ]
+    },
+    {
+     "id": "delivery",
+     "title": "Lieferung",
+     "blocks": [
+      "Ihre Bestellseite erstellt Ihre Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung; die Erstellung dauert meist wenige Minuten. Schließen Sie die Seite, bevor Ihre Datei fertig ist, macht sie weiter, wenn Sie sie über den Link in der E-Mail wieder öffnen. Meldet unsere automatische Qualitätsprüfung eine Datei, sehen wir sie uns vor der Freigabe selbst an und benachrichtigen Sie per E-Mail, sobald sie fertig ist. **Spätestens 48 Stunden nach der Bestätigung Ihrer Zahlung steht Ihre Datei auf Ihrer Bestellseite zum Download bereit.** Über Ihre Bestellseite können Sie Ihre Datei jederzeit herunterladen, solange wir sie aufbewahren: 12 Monate ab Ihrer Zahlung (siehe [Datenschutzerklärung](doc:privacy)). Jeder Download-Link, den die Seite erzeugt, ist 7 Tage gültig; beim nächsten Öffnen erzeugt sie einen neuen. Haben Sie die E-Mail verloren, schreiben Sie uns.",
+      "Der Link zu Ihrer Bestellseite enthält einen privaten Schlüssel: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen. Bitte geben Sie ihn nicht weiter. Laden Sie Ihre Datei herunter und bewahren Sie eine Kopie auf. Nach 12 Monaten wird sie gelöscht und kann nicht wiederhergestellt werden."
+     ]
+    },
+    {
+     "id": "withdrawal",
+     "title": "Widerrufsrecht",
+     "blocks": [
+      "Als Verbraucher haben Sie grundsätzlich ein 14-tägiges Widerrufsrecht. Bei einer digitalen Datei erlischt es vorzeitig: Vor der Zahlung bitten wir Sie, zuzustimmen, dass wir sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung Ihrer Datei beginnen, und zu bestätigen, dass Ihnen bekannt ist, dass Sie dadurch Ihr Widerrufsrecht verlieren, sobald damit begonnen wurde. Es erlischt daher, sobald wir mit der Erstellung Ihrer Datei (der Vertragserfüllung) begonnen haben; damit beginnen wir erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist. Das gilt auch, solange die Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir noch nicht begonnen, erlischt es mit Ablauf der 14-tägigen Widerrufsfrist: Der Tag Ihrer Zahlung wird nicht mitgezählt, und fällt der letzte Tag der Frist auf einen Samstag, einen Sonntag oder einen gesetzlichen Feiertag, endet die Frist mit Ablauf des nächsten Arbeitstags. Solange Ihr Widerrufsrecht besteht, können Sie per E-Mail, per Post oder online mit der Schaltfläche „Vertrag hier widerrufen“ widerrufen; der Widerrufslink in Ihrer Bestellbestätigung per E-Mail öffnet sie für Ihre Bestellung, ohne dass wir mit der Erstellung Ihrer Datei beginnen. Alle Einzelheiten, die Online-Funktion und ein Muster-Widerrufsformular finden Sie in unserer [Widerrufsbelehrung](doc:withdrawal)."
+     ]
+    },
+    {
+     "id": "photos",
+     "title": "Ihre Fotos",
+     "blocks": [
+      "Laden Sie nur Fotos Ihres eigenen Auges hoch oder des Auges einer Person, die damit einverstanden ist (bei einem Kind: ein Elternteil oder eine sorgeberechtigte Person). Mit dem Hochladen bestätigen Sie, dass Sie das Foto für diesen Zweck verwenden dürfen.",
+      "Die Rechte an Ihrem Foto bleiben bei Ihnen. Wir verwenden es nur, um Ihre Vorschau und Ihr Kunstwerk zu erstellen, wie in unserer [Datenschutzerklärung](doc:privacy) beschrieben.",
+      "Wir können eine Bestellung ablehnen und eine bereits geleistete Zahlung vollständig erstatten, wenn ein Foto offensichtlich gegen diese Regeln verstößt."
+     ]
+    },
+    {
+     "id": "licence",
+     "title": "Was Sie mit Ihrem Kunstwerk tun dürfen",
+     "blocks": [
+      "Sie erhalten ein einfaches, zeitlich unbegrenztes Nutzungsrecht an Ihrem Kunstwerk für private, nicht kommerzielle Zwecke. Sie dürfen es zum Beispiel für sich ausdrucken (zu Hause oder in einer Druckerei), rahmen, verschenken, als Hintergrundbild auf Ihren Geräten nutzen und in Ihren privaten sozialen Netzwerken teilen.",
+      "Ohne unsere Zustimmung (eine E-Mail genügt) dürfen Sie das Kunstwerk oder daraus hergestellte Produkte nicht verkaufen, Dritten Rechte daran einräumen oder es für Werbung oder andere kommerzielle Zwecke verwenden.",
+      "Die Stile, Hintergründe, Anordnungen und das Design von SnapEyes bleiben unser Eigentum, einschließlich etwaiger Urheberrechte daran. Das gilt auch für die Vorschauen mit Wasserzeichen."
+     ]
+    },
+    {
+     "id": "defects",
+     "title": "Reklamationen und Mängel",
+     "blocks": [
+      "Ihre gesetzlichen Rechte bei digitalen Inhalten, die nicht vertragsgemäß sind, gelten uneingeschränkt. Ist Ihre Datei mangelhaft, lässt sie sich zum Beispiel nicht herunterladen oder öffnen, ist sie beschädigt, kleiner als zugesagt oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie bitte mit Ihrer Bestellnummer an [info@snapeyes.com](mailto:info@snapeyes.com). Wir erstellen die Datei kostenlos neu oder erstatten Ihnen den Preis, wenn das den Mangel nicht behebt."
+     ]
+    },
+    {
+     "id": "liability",
+     "title": "Haftung",
+     "blocks": [
+      "Wir haften unbeschränkt bei Vorsatz und grober Fahrlässigkeit, bei Verletzung von Leben, Körper oder Gesundheit und soweit zwingendes Recht es vorsieht. Im Übrigen haften wir bei leichter Fahrlässigkeit nur für die Verletzung wesentlicher Vertragspflichten und nur für den vertragstypischen, vorhersehbaren Schaden. Die kostenlose Vorschau wird so angeboten, wie sie ist, ohne Anspruch auf ihre Verfügbarkeit."
+     ]
+    },
+    {
+     "id": "disputes",
+     "title": "Streitigkeiten und anwendbares Recht",
+     "blocks": [
+      "Wenn etwas nicht stimmt, schreiben Sie uns bitte zuerst: Die meisten Probleme lassen sich schnell per E-Mail lösen.",
+      "Können wir uns nicht einigen, können sich Verbraucher an die litauische Staatliche Verbraucherschutzbehörde (Valstybinė vartotojų teisių apsaugos tarnyba, [vvtat.lt](https://vvtat.lt)) wenden, die Verbraucherstreitigkeiten außergerichtlich beilegt, oder an die Verbraucherschutzstellen und Gerichte ihres eigenen Landes.",
+      "Es gilt litauisches Recht. Wenn Sie als Verbraucher in einem anderen EU-Land leben, behalten Sie den Schutz der zwingenden Verbraucherschutzvorschriften dieses Landes."
+     ]
+    },
+    {
+     "id": "changes",
+     "title": "Änderungen dieser Bedingungen",
+     "blocks": [
+      "Für Ihre Bestellung gelten die Bedingungen, die zum Zeitpunkt Ihrer Bestellung gültig sind."
+     ]
+    }
+   ]
+  }
+ },
+ "withdrawal": {
+  "en": {
+   "title": "Right of withdrawal",
+   "description": "Withdrawal information for SnapEyes digital files: the 14-day right of withdrawal, when it ends early, and a model withdrawal form.",
+   "lead": "Consumers in the EU have a right of withdrawal for purchases made online. For a digital file like ours, it ends early once we start making your file with your consent. Here is the full information.",
+   "sections": [
+    {
+     "id": "right",
+     "title": "Right of withdrawal",
+     "blocks": [
+      "You have the right to withdraw from this contract within 14 days without giving any reason.",
+      "The withdrawal period will expire after 14 days from the day of the conclusion of the contract.",
+      "To exercise the right of withdrawal, you must inform us (MB \"Portretizuokis\", Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania, email: info@snapeyes.com) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or email). You may use the attached model withdrawal form, but it is not obligatory. You can also exercise your right of withdrawal online at [snapeyes.com/order?withdraw=1&lang=en](/order?withdraw=1&lang=en) (the button \"Withdraw from contract here\"). If you use this online feature, we will send you an acknowledgement of receipt of the withdrawal on a durable medium (e.g. by email), including its content and the date and time of its submission, without undue delay.",
+      "To meet the withdrawal deadline, it is sufficient for you to send your communication concerning your exercise of the right of withdrawal before the withdrawal period has expired."
+     ]
+    },
+    {
+     "id": "effects",
+     "title": "Effects of withdrawal",
+     "blocks": [
+      "If you withdraw from this contract, we shall reimburse to you all payments received from you, including the costs of delivery (with the exception of the supplementary costs resulting from your choice of a type of delivery other than the least expensive type of standard delivery offered by us), without undue delay and in any event not later than 14 days from the day on which we are informed about your decision to withdraw from this contract. We will carry out such reimbursement using the same means of payment as you used for the initial transaction, unless you have expressly agreed otherwise; in any event, you will not incur any fees as a result of such reimbursement."
+     ]
+    },
+    {
+     "id": "expiry",
+     "title": "When the right of withdrawal ends early",
+     "blocks": [
+      "**Your right of withdrawal ends early** once we have begun the performance of the contract, that is, once we have started making your file, if (1) you expressly agreed that we begin the performance before the withdrawal period ends, (2) you acknowledged that you thereby lose your right of withdrawal once we have begun, and (3) we have confirmed this to you on a durable medium (we do so in the order confirmation email, which goes out before we start). This follows from Art. 16(m) of Directive 2011/83/EU.",
+      "Before you pay, you give this consent by ticking this box:",
+      {
+       "box": [
+        "I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period ends. I know that I lose my right of withdrawal once this has started."
+       ],
+       "label": "The checkbox at checkout"
+      },
+      "In practice your right of withdrawal therefore ends at the moment we start making your file. We start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open: the payment page takes you straight there. If you are not on your order page by then, we start when you open it again with the order page link in that email. The withdrawal link in the same email opens the online withdrawal function for your order without starting anything. From the moment we start, your right of withdrawal has ended, even while your file is still being made or is waiting for our quality check. If we have not started making your file, your right of withdrawal ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. Your statutory rights for a defective file are not affected: see [Complaints and defects](doc:terms#defects) in our terms of sale."
+     ]
+    },
+    {
+     "id": "online",
+     "title": "Withdraw online",
+     "blocks": [
+      "While your right of withdrawal lasts, you can withdraw online at any time with the function [\"Withdraw from contract here\"](/order?withdraw=1&lang=en). You find it at the foot of our home page and of our legal pages, on your order page, and behind the withdrawal link in your order confirmation email. That link opens the function for your order without starting anything. Opening your order page itself starts making your file once your order confirmation email has gone out, and that ends your right of withdrawal (see [When the right of withdrawal ends early](#expiry)).",
+      "How it works: enter your name, your order number (it is filled in when you come from your order page or through the withdrawal link) and the email address for the acknowledgement, then send your withdrawal with the button \"Confirm withdrawal\". If you come without one of these links, please give the email address you paid with, so that we can match your order. If the details match none of our orders, the page tells you so; we still keep your statement, check it by hand and email you an acknowledgement of receipt. To prevent misuse of our emails, acknowledgements of receipt are limited: for statements that match none of our orders, to two a day and four a month to the same address; for an order, to three in all to addresses other than the one it was paid with (further ones go to the address you paid with); and for a repeated statement about an order we have already answered, to one a day for that order and five a day for all orders together. If the page cannot take your statement, for example because of a technical fault or because unusually many statements are arriving, it tells you so: please then send us your withdrawal by email; an email is just as valid.",
+      "What happens then: we record your statement with the date and time it reached us. If your order is paid, we have not started making your file and the 14-day withdrawal period is not over, your withdrawal takes effect: we stop your order, so nothing is made, and we refund you as described under [Effects of withdrawal](#effects). If your payment was still being processed when you withdrew, nothing is made either, and if the payment reaches us, we refund it in full. Without delay we email you an acknowledgement of receipt with the content of your withdrawal and its date and time.",
+      "If we had already started making your file with your consent, or the 14-day withdrawal period was over, your right of withdrawal had already ended (see [When the right of withdrawal ends early](#expiry)): the page and the acknowledgement of receipt tell you so, and we still look at your statement personally. If your order was never paid, there is no contract to withdraw from: the page tells you so, and nothing was charged. Your rights for a defective file are not affected."
+     ]
+    },
+    {
+     "id": "form",
+     "title": "Model withdrawal form",
+     "blocks": [
+      "(Complete and return this form only if you wish to withdraw from the contract.)",
+      {
+       "box": [
+        "To: MB \"Portretizuokis\", Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania, email: info@snapeyes.com",
+        "I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract of sale of the following goods (*)/for the provision of the following service (*):",
+        "Ordered on (*)/received on (*):",
+        "Name of consumer(s):",
+        "Address of consumer(s):",
+        "Signature of consumer(s) (only if this form is notified on paper):",
+        "Date:",
+        "(*) Delete as appropriate."
+       ]
+      },
+      "By email, simply send the completed form, or your own statement, to [info@snapeyes.com](mailto:info@snapeyes.com?subject=Withdrawal). Please add your order number if you have it. Online, use the function [\"Withdraw from contract here\"](/order?withdraw=1&lang=en) described above."
+     ]
+    }
+   ]
+  },
+  "de": {
+   "title": "Widerrufs­belehrung",
+   "description": "Widerrufsbelehrung für digitale Dateien von SnapEyes: das 14-tägige Widerrufsrecht, wann es vorzeitig erlischt, und ein Muster-Widerrufsformular.",
+   "lead": "Verbraucher in der EU haben bei Online-Käufen ein Widerrufsrecht. Bei einer digitalen Datei wie unserer erlischt es vorzeitig, sobald wir mit Ihrer Zustimmung mit der Erstellung Ihrer Datei beginnen. Hier finden Sie alle Informationen.",
+   "sections": [
+    {
+     "id": "right",
+     "title": "Widerrufsrecht",
+     "blocks": [
+      "Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.",
+      "Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.",
+      "Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen, E-Mail: info@snapeyes.com) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist. Sie können Ihr Widerrufsrecht auch online unter [snapeyes.com/order?withdraw=1&lang=de](/order?withdraw=1&lang=de) (Schaltfläche „Vertrag hier widerrufen“) ausüben. Wenn Sie diese Online-Funktion nutzen, übermitteln wir Ihnen auf einem dauerhaften Datenträger (z. B. durch eine E-Mail) unverzüglich eine Eingangsbestätigung mit Informationen zum Inhalt der Widerrufserklärung sowie dem Datum und der Uhrzeit ihres Eingangs.",
+      "Zur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der Widerrufsfrist absenden."
+     ]
+    },
+    {
+     "id": "effects",
+     "title": "Folgen des Widerrufs",
+     "blocks": [
+      "Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, einschließlich der Lieferkosten (mit Ausnahme der zusätzlichen Kosten, die sich daraus ergeben, dass Sie eine andere Art der Lieferung als die von uns angebotene, günstigste Standardlieferung gewählt haben), unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf dieses Vertrags bei uns eingegangen ist. Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet."
+     ]
+    },
+    {
+     "id": "expiry",
+     "title": "Vorzeitiges Erlöschen des Widerrufsrechts",
+     "blocks": [
+      "**Ihr Widerrufsrecht erlischt vorzeitig**, sobald wir mit der Vertragserfüllung begonnen haben, also mit der Erstellung Ihrer Datei, wenn Sie (1) ausdrücklich zugestimmt haben, dass wir vor Ablauf der Widerrufsfrist mit der Vertragserfüllung beginnen, (2) Ihre Kenntnis davon bestätigt haben, dass Sie durch Ihre Zustimmung mit Beginn der Vertragserfüllung Ihr Widerrufsrecht verlieren, und (3) wir Ihnen dies auf einem dauerhaften Datenträger bestätigt haben (das tun wir mit der Bestellbestätigung per E-Mail, die versandt wird, bevor wir beginnen). Das ergibt sich aus § 356 Abs. 5 BGB und Art. 16 Buchst. m der Richtlinie 2011/83/EU.",
+      "Vor der Zahlung geben Sie diese Zustimmung, indem Sie in diesem Kästchen das Häkchen setzen:",
+      {
+       "box": [
+        "Ich stimme ausdrücklich zu, dass SnapEyes sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung meines digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere, sobald damit begonnen wurde."
+       ],
+       "label": "Das Kästchen im Bestellvorgang"
+      },
+      "In der Praxis erlischt Ihr Widerrufsrecht daher in dem Moment, in dem wir mit der Erstellung Ihrer Datei beginnen. Wir beginnen erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist: Die Zahlungsseite führt Sie direkt dorthin. Sind Sie bis dahin nicht auf Ihrer Bestellseite, beginnen wir, wenn Sie sie mit dem Link zu Ihrer Bestellseite aus dieser E-Mail wieder öffnen. Der Widerrufslink in derselben E-Mail öffnet die Online-Widerrufsfunktion für Ihre Bestellung, ohne etwas zu starten. Ab dem Moment, in dem wir beginnen, ist Ihr Widerrufsrecht erloschen, auch wenn Ihre Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir mit Ihrer Datei noch nicht begonnen, erlischt Ihr Widerrufsrecht mit Ablauf der 14-tägigen Widerrufsfrist: Der Tag Ihrer Zahlung wird nicht mitgezählt, und fällt der letzte Tag der Frist auf einen Samstag, einen Sonntag oder einen gesetzlichen Feiertag, endet die Frist mit Ablauf des nächsten Arbeitstags. Ihre gesetzlichen Rechte bei einer mangelhaften Datei bleiben davon unberührt: siehe [Reklamationen und Mängel](doc:terms#defects) in unseren AGB."
+     ]
+    },
+    {
+     "id": "online",
+     "title": "Online widerrufen",
+     "blocks": [
+      "Solange Ihr Widerrufsrecht besteht, können Sie jederzeit online mit der Funktion [„Vertrag hier widerrufen“](/order?withdraw=1&lang=de) widerrufen. Sie finden sie am Ende unserer Startseite und unserer Rechtstexte, auf Ihrer Bestellseite und hinter dem Widerrufslink in Ihrer Bestellbestätigung per E-Mail. Dieser Link öffnet die Funktion für Ihre Bestellung, ohne etwas zu starten. Das Öffnen Ihrer Bestellseite selbst startet die Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, und damit erlischt Ihr Widerrufsrecht (siehe [Vorzeitiges Erlöschen des Widerrufsrechts](#expiry)).",
+      "So geht es: Geben Sie Ihren Namen, Ihre Bestellnummer (sie ist bereits eingetragen, wenn Sie von Ihrer Bestellseite oder über den Widerrufslink kommen) und die E-Mail-Adresse für die Eingangsbestätigung ein und senden Sie Ihren Widerruf mit der Schaltfläche „Widerruf bestätigen“ ab. Kommen Sie ohne einen dieser Links, geben Sie bitte die E-Mail-Adresse an, mit der Sie bezahlt haben, damit wir Ihre Bestellung zuordnen können. Passen die Angaben zu keiner unserer Bestellungen, zeigt die Seite das an; Ihre Erklärung bewahren wir trotzdem auf, prüfen sie selbst und senden Ihnen eine Eingangsbestätigung per E-Mail. Um Missbrauch unserer E-Mails zu verhindern, sind Eingangsbestätigungen begrenzt: bei Erklärungen, die zu keiner unserer Bestellungen passen, auf zwei am Tag und vier im Monat an dieselbe Adresse; je Bestellung auf insgesamt drei an andere Adressen als die, mit der bezahlt wurde (weitere gehen an die Adresse, mit der Sie bezahlt haben); und bei einer wiederholten Erklärung zu einer Bestellung, die wir bereits beantwortet haben, auf eine am Tag für diese Bestellung und fünf am Tag für alle Bestellungen zusammen. Kann die Seite Ihre Erklärung nicht annehmen, etwa wegen einer technischen Störung oder weil ungewöhnlich viele Erklärungen eingehen, zeigt sie das an: Senden Sie uns Ihren Widerruf dann bitte per E-Mail; eine E-Mail ist genauso wirksam.",
+      "Was dann geschieht: Wir erfassen Ihre Erklärung mit Datum und Uhrzeit ihres Eingangs. Ist Ihre Bestellung bezahlt, haben wir mit Ihrer Datei noch nicht begonnen und ist die 14-tägige Widerrufsfrist nicht abgelaufen, ist Ihr Widerruf wirksam: Wir halten Ihre Bestellung an, sodass nichts erstellt wird, und erstatten Ihnen Ihre Zahlung, wie unter [Folgen des Widerrufs](#effects) beschrieben. War Ihre Zahlung bei Ihrem Widerruf noch in Bearbeitung, wird ebenfalls nichts erstellt, und geht die Zahlung bei uns ein, erstatten wir sie vollständig. Wir senden Ihnen unverzüglich eine Eingangsbestätigung mit dem Inhalt Ihres Widerrufs sowie Datum und Uhrzeit per E-Mail.",
+      "Hatten wir mit Ihrer Zustimmung bereits mit Ihrer Datei begonnen oder war die 14-tägige Widerrufsfrist abgelaufen, war Ihr Widerrufsrecht schon erloschen (siehe [Vorzeitiges Erlöschen des Widerrufsrechts](#expiry)): Die Seite und die Eingangsbestätigung teilen Ihnen das mit, und wir sehen uns Ihre Erklärung trotzdem persönlich an. Wurde Ihre Bestellung nie bezahlt, gibt es keinen Vertrag, den Sie widerrufen könnten: Die Seite zeigt das an, und es wurde nichts berechnet. Ihre Rechte bei einer mangelhaften Datei bleiben davon unberührt."
+     ]
+    },
+    {
+     "id": "form",
+     "title": "Muster-Widerrufsformular",
+     "blocks": [
+      "(Wenn Sie den Vertrag widerrufen wollen, dann füllen Sie bitte dieses Formular aus und senden Sie es zurück.)",
+      {
+       "box": [
+        "An: MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen, E-Mail: info@snapeyes.com",
+        "Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über den Kauf der folgenden Waren (*)/die Erbringung der folgenden Dienstleistung (*):",
+        "Bestellt am (*)/erhalten am (*):",
+        "Name des/der Verbraucher(s):",
+        "Anschrift des/der Verbraucher(s):",
+        "Unterschrift des/der Verbraucher(s) (nur bei Mitteilung auf Papier):",
+        "Datum:",
+        "(*) Unzutreffendes streichen."
+       ]
+      },
+      "Per E-Mail senden Sie einfach das ausgefüllte Formular oder Ihre eigene Erklärung an [info@snapeyes.com](mailto:info@snapeyes.com?subject=Widerruf). Bitte geben Sie, falls vorhanden, Ihre Bestellnummer an. Online nutzen Sie die oben beschriebene Funktion [„Vertrag hier widerrufen“](/order?withdraw=1&lang=de)."
+     ]
+    }
+   ]
+  }
+ },
+ "privacy": {
+  "en": {
+   "title": "Privacy policy",
+   "description": "How SnapEyes handles your eye photo, your preview and, when you order, your order data: what we process, why, with which services, for how long, and your rights.",
+   "lead": "This policy explains what happens to your data when you use snapeyes.com: the free preview and, when you order, your digital artwork. In short: your photo is used only to make your artwork, never to identify anyone and never to train AI. We do not store free previews. The files of paid orders are kept for 12 months so you can download them again, then deleted.",
+   "toc": true,
+   "numbered": true,
+   "sections": [
+    {
+     "id": "controller",
+     "title": "Who is responsible",
+     "blocks": [
+      "The controller for your data is MB \"Portretizuokis\" (company code 305605052), Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania. SnapEyes is its brand. It is represented by Mantas Bakšys.",
+      "For every privacy question, and to use any of your rights, write to [info@snapeyes.com](mailto:info@snapeyes.com). We have not appointed a data protection officer."
+     ]
+    },
+    {
+     "id": "website",
+     "title": "When you visit the website",
+     "blocks": [
+      "When you open a page of snapeyes.com, your browser sends technical data to our hosting provider Vercel, such as your IP address, the date and time, the page requested and your browser type (user agent). Vercel needs this data to deliver the page and to protect the service against attacks. It is kept in server logs for a short time and then deleted.",
+      "To be able to suggest prices in your own currency, our server can also read the country that Vercel derives from your IP address (for example \"AU\"). It is used only for that suggestion, never changes the prices you see, and is not stored.",
+      "Legal basis: our legitimate interest in a secure, working website (Art. 6(1)(f) GDPR).",
+      "Our fonts are served from our own server, so no data goes to Google Fonts or any other font service. We do not use analytics, advertising or tracking tools of other companies on this website, and nothing follows you from page to page or across websites. Our own anonymous service statistics are described under [Service statistics and our admin log](#operations)."
+     ]
+    },
+    {
+     "id": "preview",
+     "title": "Your free preview",
+     "blocks": [
+      "To make your preview, you send one or more photos of an eye from your browser to our server functions. There the photo is processed in memory: we find the iris, cut it out, check whether it is sharp and bright enough, remove reflections, restore the fine fibres with Google's Gemini API and set the iris in the styles you see. The result goes back to your browser. Every transfer is encrypted (HTTPS).",
+      "**We do not store your photo, the iris crop or the preview on our servers.** They are discarded when the request ends. The preview stays in your browser until you close the page (while you are on the payment page, in the session storage of your browser tab: see [Cookies and local storage](#storage)), unless you save it yourself. Only when you start an order do we keep the iris crop and the preview you approved: see [When you order](#orders).",
+      "Google processes the image to make the restoration. We use Google's paid API service, under whose terms Google does not use the images to improve its products or to train its models. Google may keep requests for a limited period, solely to detect misuse and for disclosures the law requires.",
+      "Legal basis: you ask us to make your preview, and the photo is needed for it (Art. 6(1)(b) GDPR, steps taken at your request).",
+      "Our software decides automatically whether a photo can be used (for example when it is too blurry or too dark). This decision has no legal or similarly significant effect on you: you can simply take another photo."
+     ]
+    },
+    {
+     "id": "iris",
+     "title": "Your iris is never used to identify anyone",
+     "blocks": [
+      "An iris can, in principle, be used to recognise a person. We do not do that. We never create, compare or store an iris template or any other biometric identifier, we never use your images to identify or verify anyone, we never sell them, and we never use them to train AI, neither our own nor anyone else's.",
+      "Please only use your own eye, or the eye of someone who has agreed to it. For a child, a parent or guardian must agree.",
+      "If you add the eyes of other people (for example for a pair), we process their images only to make the artwork they agreed to. Legal basis: your and our legitimate interest in making that artwork (Art. 6(1)(f) GDPR). Please show them this policy."
+     ]
+    },
+    {
+     "id": "measurements",
+     "title": "Technical measurements (no images)",
+     "blocks": [
+      "With each photo, our server writes one line to its logs so that we can improve the capture guide and the quality of the service. It holds measurements of the photo (for example the size of the iris in pixels, sharpness, brightness, a colour cast of the light and whether the photo could be used), technical facts about your device (browser type and version, screen size, whether the photo came from the camera or the gallery) and, if you answer our optional questions about a shot, your answers. It holds no image, no name and no contact details.",
+      "These log lines are kept by our hosting provider for a short time and then deleted. Legal basis: our legitimate interest in improving the service (Art. 6(1)(f) GDPR). You may object at any time (see [Your rights](#rights))."
+     ]
+    },
+    {
+     "id": "operations",
+     "title": "Service statistics and our admin log",
+     "blocks": [
+      "To see whether the service works, how fast it is and what it costs, our server records small technical events in our private storage at Supabase in the EU. For example: that a photo was checked (with the result, such as \"no eye found\", the kind of device, such as iPhone, Android or computer, whether the photo came from the camera or the gallery, and the page language), that reflections were removed, that a preview or an ordered file was made and how long it took, or that a request failed (with its error code). While we test prices, the events also say which price list (a short code) was shown, previewed, opened for payment or paid, with the amount of a paid order. Our admin panel shows them to us, mostly as counts per day.",
+      "**These events hold no image, no text you typed, no name, no email address, no IP address, no browser identification (user agent) and no link.** Events from the free preview cannot be traced back to you. Only the events about making the file of a paid order also hold its order number, so that we can find a slow or failed rendering; through our order records, that number relates to your order.",
+      "Legal basis: our legitimate interest in running the service reliably, finding faults and keeping its costs under control (Art. 6(1)(f) GDPR). The events, and the daily counts made from them, are deleted automatically after 12 months. You may object at any time (see [Your rights](#rights)).",
+      "When we handle an order in our admin panel, for example release a file after our quality check, send an email again, make a refund or delete files, the panel writes an entry to our admin log: what was done, when, for which order number and how it ended. The admin log holds no images, no email addresses and no links. Legal basis: our legitimate interest in handling orders securely and traceably (Art. 6(1)(f) GDPR). It is deleted automatically after 24 months; the entries about an order are also kept with that order's record, for as long as the record is kept (see [How long we keep your data](#retention)).",
+      "Our admin panel is only for us. To stop anyone guessing its key, a failed sign-in stores a hash of the IP address it came from, made with a secret key, never the address itself, and this is deleted automatically after 2 days. Legal basis: our legitimate interest in keeping our systems secure (Art. 6(1)(f) GDPR)."
+     ]
+    },
+    {
+     "id": "orders",
+     "title": "When you order",
+     "blocks": [
+      "When you start an order, two images of each eye are uploaded to our private storage, so that your file is made from exactly what you saw: the square around your iris cut from your photo (with reflections removed) and the preview you approved. With them we keep a short record of measurements made from that preview (the colours around your iris, a colour class, the shape of the pupil, two quality values and a code that identifies the preview). It holds no image and is deleted together with the images. **Your full phone photo is not stored, not even for an order.** An order that is not paid within 24 hours can no longer be paid. An automatic clean-up that runs once a day then deletes its images and records, normally within two days of the order and at the latest within 30 days.",
+      "To keep uploads within limits, our server also writes a small marker for each upload (its size, the day and the order number, no image). These markers are deleted automatically after a few days.",
+      "To sell and deliver your artwork, we process: the order (order number, date, eyes, style, layout, the order of the eyes, any names, date or inscription you add, language, price), your email address (you enter it on the payment page), the payment status we receive from Stripe, your consent to the immediate start (see [Right of withdrawal](doc:withdrawal)), and the files of your order: the two images of each eye named above, the 4096 px rendering of each eye and the finished artwork, with technical quality records.",
+      "We keep these files in a private storage bucket at Supabase, located in the EU. You reach them through your order page, whose link we email to you; it contains a private key, so anyone with the link can download your artwork. Each download link it creates expires after 7 days.",
+      "We may look at the files of your order to check their quality, for example when our automatic check reports a difference from the preview you approved.",
+      "Legal basis: the contract with you (Art. 6(1)(b) GDPR); for accounting records, our legal obligations (Art. 6(1)(c) GDPR).",
+      "When you continue to the payment page, we pass the order details to Stripe with your payment: the order number, the price (and, when a price test applied, its name, the code of your price list and the prices of that list), the number of eyes, the style (and its look), the layout, the order of the eyes, the language, any names, date or inscription you added, a short code that identifies the plan of the artwork and the version of our software that makes it, and the version and time of your consent. Stripe keeps them with the payment record, and we read them back from there to make exactly the artwork you paid for.",
+      "Payment: Stripe processes your payment. We never see your full card number. Stripe also processes payment data under its own privacy policy, for fraud prevention and for its own legal duties.",
+      "We need your email address to send you the link to your order page and the order confirmation. Without it you could lose access to your file."
+     ]
+    },
+    {
+     "id": "email",
+     "title": "When you write to us",
+     "blocks": [
+      "If you email us, we use your address and your message to answer you and, where it concerns an order, to handle that order. Legal basis: Art. 6(1)(b) GDPR for orders, otherwise our legitimate interest in answering you (Art. 6(1)(f) GDPR). If you send us photos, for example of your eye so that we can advise you on a better shot, we use them only for your request. We keep your emails, with any photos, for as long as we need them for your request and any follow-up."
+     ]
+    },
+    {
+     "id": "withdrawal",
+     "title": "When you withdraw from an order online",
+     "blocks": [
+      "If you withdraw from an order with our online function (the button \"Withdraw from contract here\", see [Right of withdrawal](doc:withdrawal#online)), we store your withdrawal statement with your order: your name, your email address, the order number, its wording and the date and time it reached us. We use it to stop work on your file if we have not started yet, to email you an acknowledgement of receipt with its content, date and time, and to refund you. We also receive every statement by email: one by one, or, for statements that match none of our orders and those about orders that were never paid, in one summary a day. If your withdrawal takes effect, the images of your order are deleted automatically by our daily clean-up once 14 days have passed since your withdrawal (if your payment was still being processed, only once it has been settled); the order record with your statement stays (see [How long we keep your data](#retention)). If the details you give match none of our orders (without the link from your order page or the withdrawal link in your order confirmation email, the email address must be the one you paid with), we keep the statement separately, check it by hand, email you an acknowledgement of receipt all the same (within the limits against misuse set out under [Withdraw online](doc:withdrawal#online)) and delete it automatically about 13 months after the end of the month in which it reached us.",
+      "Legal basis: our legal obligation to accept your withdrawal and to confirm it to you (Art. 6(1)(c) GDPR) and the contract with you (Art. 6(1)(b) GDPR). We keep the statement with your order record, as proof, for as long as that record is kept (see [How long we keep your data](#retention))."
+     ]
+    },
+    {
+     "id": "services",
+     "title": "Services we use",
+     "blocks": [
+      "We use these services to run SnapEyes:",
+      {
+       "ul": [
+        "Vercel: hosting of the website and of the server functions that make your preview and your file. Vercel's data centres may be outside the EU, for example in the USA.",
+        "Google (Gemini API): the AI restoration of the iris and the checks of your photo. Google's servers may be outside the EU.",
+        "Supabase: private storage of the files of orders, in an EU region.",
+        "Stripe: payment processing, with the order details named in [When you order](#orders).",
+        "Hostinger: our mailbox info@snapeyes.com.",
+        "Resend: sending the emails about your order (the link to your order page, the order confirmation and, if you withdraw, the acknowledgement of receipt). Its servers may be outside the EU."
+       ]
+      },
+      "These providers process your data on our behalf and on our instructions (Stripe partly as an independent controller, see [When you order](#orders)). Where data is transferred outside the EU or EEA, this happens under the safeguards the providers offer, such as the European Commission's standard contractual clauses or the EU-US Data Privacy Framework. You can ask us for a copy of these safeguards at [info@snapeyes.com](mailto:info@snapeyes.com).",
+      "We do not sell your data and we do not pass it on to anyone else, unless the law obliges us to."
+     ]
+    },
+    {
+     "id": "retention",
+     "title": "How long we keep your data",
+     "blocks": [
+      {
+       "dl": [
+        [
+         "Free previews",
+         "Not stored by us. They are discarded when the request ends."
+        ],
+        [
+         "Unpaid orders",
+         "An order that is not paid within 24 hours can no longer be paid. Our daily automatic clean-up deletes its images and records, normally within two days of the order and at the latest within 30 days."
+        ],
+        [
+         "Upload and statement markers",
+         "Small counters without images, names or email addresses (a counter of acknowledgements of receipt holds only a short hash of the email address), deleted automatically after a few days; the monthly counters of acknowledgements about 40 days after the end of their month."
+        ],
+        [
+         "Paid orders",
+         "The files of your order are kept for 12 months from your payment, so that you can download them again from your order page, and then deleted by our daily automatic clean-up. On request we delete them earlier; after that your order page can no longer deliver the file."
+        ],
+        [
+         "Withdrawn orders",
+         "If the withdrawal takes effect, our daily clean-up deletes the images of the order once 14 days have passed since the withdrawal (if the payment was still being processed, once it has been settled)."
+        ],
+        [
+         "Withdrawal statements that match no order",
+         "Kept separately, checked by hand and deleted automatically about 13 months after the end of the month in which they reached us."
+        ],
+        [
+         "Order records",
+         "When the files are deleted (after 12 months, after a withdrawal or on request), we keep the record of a paid order: order number, date, price, payment and any refund, your email address, the details of the artwork you ordered (which can include names, a date or an inscription you added, and a short summary of the measurements made from your previews: the colour class, the average ring colour and the pupil shape of each eye), your consent to the immediate start, if you withdrew, your withdrawal statement, and the entries of our admin log about your order. No images. We keep it as proof of the contract and for accounting, for as long as Lithuanian accounting and tax law requires."
+        ],
+        [
+         "Server logs and measurements",
+         "Kept by our hosting provider for a short time, then deleted."
+        ],
+        [
+         "Service statistics",
+         "The technical events and their daily counts (see [Service statistics and our admin log](#operations)): deleted automatically after 12 months."
+        ],
+        [
+         "Admin log",
+         "What we did with an order in our admin panel: deleted automatically after 24 months; the entries about an order stay with its order record."
+        ],
+        [
+         "Failed sign-ins to our admin panel",
+         "A hash of the IP address, made with a secret key, deleted automatically after 2 days."
+        ],
+        [
+         "Emails",
+         "For as long as we need them for your request and any follow-up."
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "id": "rights",
+     "title": "Your rights",
+     "blocks": [
+      "You have these rights at any time:",
+      {
+       "ul": [
+        "Access: to learn which data we hold about you and to receive a copy (Art. 15 GDPR).",
+        "Rectification: to have wrong data corrected (Art. 16 GDPR).",
+        "Erasure: to have your data deleted, for example the files of your order before the 12 months are over (Art. 17 GDPR).",
+        "Restriction: to have the processing limited while a question is being clarified (Art. 18 GDPR).",
+        "Data portability: to receive the data you gave us in a common, machine-readable format (Art. 20 GDPR).",
+        "Objection: to object at any time, on grounds relating to your particular situation, to processing based on our legitimate interests (Art. 21 GDPR)."
+       ]
+      },
+      "To use any of these rights, write to [info@snapeyes.com](mailto:info@snapeyes.com). We answer within one month.",
+      "You also have the right to lodge a complaint with a supervisory authority. Ours is the Lithuanian State Data Protection Inspectorate (Valstybinė duomenų apsaugos inspekcija, VDAI) in Vilnius, [vdai.lrv.lt](https://vdai.lrv.lt). You can also turn to the authority of the EU country where you live or work."
+     ]
+    },
+    {
+     "id": "storage",
+     "title": "Cookies and local storage",
+     "blocks": [
+      "This website sets no cookies. It uses no analytics, advertising or tracking tools of other companies.",
+      "When you choose a language with the language switch, your browser remembers the choice in its local storage under the key \"snapeyes.lang\" (the value is the language code, for example \"lt\"). It is never sent to us, and you can delete it at any time in your browser settings. It is strictly necessary for a function you asked for, so it needs no consent (Art. 5(3) ePrivacy Directive).",
+      "If you come to us through a link with prices in another currency (for example in Australian dollars), or choose a currency with our currency switch or in our offer of prices in your own currency, your browser also remembers that choice in its local storage under the key \"snapeyes.market\" (for example \"au\", or \"eu\" once you have declined that offer), so that the site keeps showing you the same prices. Our pages carry it in their links (m=au) and send it with an order, so that you are charged the prices you saw. You can delete it at any time in your browser settings; it is strictly necessary for a function you asked for, so it needs no consent either (Art. 5(3) ePrivacy Directive).",
+      "When we test prices (only now and then, for a limited time), your browser may keep a random anonymous visitor number in its local storage under the key \"snapeyes.vid\". It is made only while a price test is running for the market (currency) you are viewing, and it is deleted again as soon as no test runs; at the latest it is replaced after 90 days. It consists of 32 random characters and the day it was made: it is not derived from you, holds no name, email address or device data, and is never linked to an order. Your browser sends it to our server in a request header (never in the address of a page) when it asks for the prices; our application uses it only to work out, the same way every time, which of the test's price lists you see, and does not store it: we keep no list of visitor numbers. The server answers with a signed note of your price list, which your browser sends back when you go to the payment page, so that you are charged exactly the prices you were shown (a price or price list sent by a browser is never used). For the statistics our server records anonymous counts per price list: that a price list was shown, that a preview was made, that the payment page was opened and that an order was paid (see [Service statistics and our admin log](#operations)); these counts hold no visitor number. Your browser also remembers in local storage which of these counts it has already sent (\"snapeyes.expseen\") and your last price list (\"snapeyes.pricing\"), so that the same prices show at once. Which price list you see never depends on where you live beyond the market (currency) you choose, and the price you pay is always the one shown to you before you pay; your order confirmation names the price list that applied. We use these entries only for this price test, never for advertising and never to follow you across other websites. If you would rather not take part, [open this link](/?pricetest=off&lang=en): your browser then keeps only the note \"snapeyes.notest\", deletes the visitor number and the other entries named here, and shows and charges the standard prices; [this link](/?pricetest=on&lang=en) takes part again. If your browser sends the \"Global Privacy Control\" signal, that counts as this choice as well. You can also delete all these entries at any time in your browser settings (you then get a new random draw). Legal basis: our legitimate interest in setting fair prices (Art. 6(1)(f) GDPR). You may object at any time (see [Your rights](#rights)).",
+      "When you order, the page also keeps two entries in the session storage of your browser tab. Session storage belongs to that one tab and is deleted when you close it:",
+      {
+       "ul": [
+        "\"snapeyes.order\": the number of the order you are building and its private key, so that the page can continue your order, for example when you come back from the payment page. It is removed when the page of your paid order opens in that tab, and replaced when you start a new order.",
+        "\"snapeyes.checkout\": only while you are on the payment page, your artwork as you left it (the iris crops from your photos, the previews, a few numbers measured from them, the style and its look, the layout, the order of the eyes, and any names and date), so that going back from the payment page shows it again. It is removed as soon as you come back, or when the page of your paid order opens in that tab."
+       ]
+      },
+      "The page uses them only for your order, and they are strictly necessary for it, so they need no consent either (Art. 5(3) ePrivacy Directive).",
+      "When you pay, Stripe's payment page may use its own cookies that are needed for secure payment and fraud prevention; Stripe's own privacy and cookie policy applies there."
+     ]
+    },
+    {
+     "id": "required",
+     "title": "Do you have to give us data?",
+     "blocks": [
+      "No. But without a photo we cannot make a preview, and without an email address and payment we cannot deliver an order."
+     ]
+    },
+    {
+     "id": "changes",
+     "title": "Changes to this policy",
+     "blocks": [
+      "We update this policy when our service or the law changes. The date at the top shows the current version."
+     ]
+    }
+   ]
+  },
+  "de": {
+   "title": "Datenschutz­erklärung",
+   "description": "Wie SnapEyes mit Ihrem Augenfoto, Ihrer Vorschau und bei Bestellungen mit Ihren Bestelldaten umgeht: was wir verarbeiten, warum, mit welchen Diensten, wie lange, und welche Rechte Sie haben.",
+   "lead": "Diese Erklärung beschreibt, was mit Ihren Daten geschieht, wenn Sie snapeyes.com nutzen: die kostenlose Vorschau und, wenn Sie bestellen, Ihr digitales Kunstwerk. Kurz gesagt: Ihr Foto dient nur dazu, Ihr Kunstwerk zu erstellen, nie dazu, jemanden zu identifizieren, und nie zum Training von KI. Kostenlose Vorschauen speichern wir nicht. Die Dateien bezahlter Bestellungen bewahren wir 12 Monate auf, damit Sie sie erneut herunterladen können, danach werden sie gelöscht.",
+   "toc": true,
+   "numbered": true,
+   "sections": [
+    {
+     "id": "controller",
+     "title": "Verantwortlicher",
+     "blocks": [
+      "Verantwortlich für Ihre Daten ist MB „Portretizuokis“ (Unternehmenscode 305605052), Gedimino g. 22A-14, LT-44319 Kaunas, Litauen. SnapEyes ist eine Marke dieses Unternehmens. Vertreten durch Mantas Bakšys.",
+      "Für alle Fragen zum Datenschutz und um Ihre Rechte auszuüben, schreiben Sie an [info@snapeyes.com](mailto:info@snapeyes.com). Einen Datenschutzbeauftragten haben wir nicht benannt."
+     ]
+    },
+    {
+     "id": "website",
+     "title": "Beim Besuch der Website",
+     "blocks": [
+      "Wenn Sie eine Seite von snapeyes.com aufrufen, sendet Ihr Browser technische Daten an unseren Hosting-Anbieter Vercel, etwa Ihre IP-Adresse, Datum und Uhrzeit, die aufgerufene Seite und Ihren Browsertyp (User-Agent). Vercel braucht diese Daten, um die Seite auszuliefern und den Dienst vor Angriffen zu schützen. Sie werden für kurze Zeit in Server-Protokollen gespeichert und dann gelöscht.",
+      "Um Ihnen Preise in Ihrer eigenen Währung vorschlagen zu können, kann unser Server außerdem das Land lesen, das Vercel aus Ihrer IP-Adresse ableitet (zum Beispiel „AU“). Es dient nur diesem Vorschlag, ändert nie die angezeigten Preise und wird nicht gespeichert.",
+      "Rechtsgrundlage: unser berechtigtes Interesse an einer sicheren, funktionierenden Website (Art. 6 Abs. 1 lit. f DSGVO).",
+      "Unsere Schriftarten kommen von unserem eigenen Server, es werden also keine Daten an Google Fonts oder andere Schriftdienste übertragen. Wir setzen auf dieser Website keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen ein, und nichts verfolgt Sie von Seite zu Seite oder über Websites hinweg. Unsere eigene anonyme Betriebsstatistik ist unter [Betriebsstatistik und Admin-Protokoll](#operations) beschrieben."
+     ]
+    },
+    {
+     "id": "preview",
+     "title": "Ihre kostenlose Vorschau",
+     "blocks": [
+      "Für Ihre Vorschau senden Sie ein oder mehrere Fotos eines Auges aus Ihrem Browser an unsere Server-Funktionen. Dort wird das Foto im Arbeitsspeicher verarbeitet: Wir finden die Iris, schneiden sie aus, prüfen, ob sie scharf und hell genug ist, entfernen Spiegelungen, stellen die feinen Fasern mit der Gemini-API von Google wieder her und setzen die Iris in die Stile, die Sie sehen. Das Ergebnis geht an Ihren Browser zurück. Jede Übertragung ist verschlüsselt (HTTPS).",
+      "**Ihr Foto, den Iris-Ausschnitt und die Vorschau speichern wir nicht auf unseren Servern.** Sie werden verworfen, sobald die Anfrage abgeschlossen ist. Die Vorschau bleibt in Ihrem Browser, bis Sie die Seite schließen (während Sie auf der Zahlungsseite sind, im Sitzungsspeicher des Tabs: siehe [Cookies und lokaler Speicher](#storage)), es sei denn, Sie speichern sie selbst. Nur wenn Sie eine Bestellung beginnen, bewahren wir den Iris-Ausschnitt und die freigegebene Vorschau auf: siehe [Wenn Sie bestellen](#orders).",
+      "Google verarbeitet das Bild, um die Restaurierung zu erstellen. Wir nutzen den kostenpflichtigen API-Dienst von Google; nach dessen Bedingungen verwendet Google die Bilder weder zur Verbesserung seiner Produkte noch zum Training seiner Modelle. Google kann Anfragen für begrenzte Zeit speichern, ausschließlich um Missbrauch zu erkennen und gesetzlich vorgeschriebene Offenlegungen zu erfüllen.",
+      "Rechtsgrundlage: Sie bitten uns, Ihre Vorschau zu erstellen, und dafür wird das Foto benötigt (Art. 6 Abs. 1 lit. b DSGVO, Maßnahmen auf Ihre Anfrage).",
+      "Unsere Software entscheidet automatisch, ob ein Foto verwendbar ist (zum Beispiel, wenn es zu unscharf oder zu dunkel ist). Diese Entscheidung hat für Sie keine rechtliche oder ähnlich erhebliche Wirkung: Sie können einfach ein neues Foto aufnehmen."
+     ]
+    },
+    {
+     "id": "iris",
+     "title": "Ihre Iris dient nie zur Identifizierung",
+     "blocks": [
+      "Eine Iris kann grundsätzlich dazu dienen, einen Menschen wiederzuerkennen. Das tun wir nicht. Wir erstellen, vergleichen oder speichern keine Iris-Merkmalsvorlage und keine anderen biometrischen Kennungen, wir nutzen Ihre Bilder nie, um jemanden zu identifizieren oder zu verifizieren, wir verkaufen sie nie, und wir verwenden sie nie zum Training von KI, weder unserer eigenen noch der anderer.",
+      "Bitte verwenden Sie nur Ihr eigenes Auge oder das Auge einer Person, die damit einverstanden ist. Bei einem Kind muss ein Elternteil oder eine sorgeberechtigte Person einverstanden sein.",
+      "Wenn Sie Augen anderer Personen hinzufügen (zum Beispiel für ein Paar), verarbeiten wir deren Bilder nur, um das Kunstwerk zu erstellen, dem diese Personen zugestimmt haben. Rechtsgrundlage: Ihr und unser berechtigtes Interesse an diesem Kunstwerk (Art. 6 Abs. 1 lit. f DSGVO). Bitte zeigen Sie ihnen diese Erklärung."
+     ]
+    },
+    {
+     "id": "measurements",
+     "title": "Technische Messwerte (ohne Bilder)",
+     "blocks": [
+      "Zu jedem Foto schreibt unser Server eine Zeile in seine Protokolle, damit wir die Aufnahmeanleitung und die Qualität des Dienstes verbessern können. Sie enthält Messwerte des Fotos (zum Beispiel die Größe der Iris in Pixeln, Schärfe, Helligkeit, einen Farbstich des Lichts und ob das Foto verwendbar war), technische Angaben zu Ihrem Gerät (Browsertyp und -version, Bildschirmgröße, ob das Foto von der Kamera oder aus der Galerie stammt) und, falls Sie unsere freiwilligen Fragen zu einer Aufnahme beantworten, Ihre Antworten. Sie enthält kein Bild, keinen Namen und keine Kontaktdaten.",
+      "Diese Protokollzeilen werden bei unserem Hosting-Anbieter für kurze Zeit gespeichert und dann gelöscht. Rechtsgrundlage: unser berechtigtes Interesse an der Verbesserung des Dienstes (Art. 6 Abs. 1 lit. f DSGVO). Sie können jederzeit widersprechen (siehe [Ihre Rechte](#rights))."
+     ]
+    },
+    {
+     "id": "operations",
+     "title": "Betriebsstatistik und Admin-Protokoll",
+     "blocks": [
+      "Um zu sehen, ob der Dienst funktioniert, wie schnell er ist und was er kostet, legt unser Server kleine technische Ereignisse in unserem privaten Speicher bei Supabase in der EU ab. Zum Beispiel: dass ein Foto geprüft wurde (mit dem Ergebnis, etwa „kein Auge gefunden“, der Art des Geräts, etwa iPhone, Android oder Computer, ob das Foto von der Kamera oder aus der Galerie stammt, und der Sprache der Seite), dass Spiegelungen entfernt wurden, dass eine Vorschau oder eine bestellte Datei erstellt wurde und wie lange das dauerte, oder dass eine Anfrage fehlschlug (mit ihrem Fehlercode). Solange wir Preise testen, sagen die Ereignisse außerdem, welche Preisliste (ein kurzer Code) angezeigt, in der Vorschau gesehen, zur Zahlung geöffnet oder bezahlt wurde, bei einer bezahlten Bestellung mit dem Betrag. Unser Admin-Bereich zeigt sie uns, meist als Zahlen pro Tag.",
+      "**Diese Ereignisse enthalten kein Bild, keinen von Ihnen eingegebenen Text, keinen Namen, keine E-Mail-Adresse, keine IP-Adresse, keine Browserkennung (User-Agent) und keinen Link.** Ereignisse aus der kostenlosen Vorschau lassen sich nicht auf Sie zurückführen. Nur die Ereignisse zur Erstellung der Datei einer bezahlten Bestellung enthalten auch deren Bestellnummer, damit wir eine langsame oder fehlgeschlagene Erstellung finden können; über unsere Bestelldatensätze gehört diese Nummer zu Ihrer Bestellung.",
+      "Rechtsgrundlage: unser berechtigtes Interesse, den Dienst zuverlässig zu betreiben, Fehler zu finden und seine Kosten im Griff zu behalten (Art. 6 Abs. 1 lit. f DSGVO). Die Ereignisse und die daraus gebildeten Tageszahlen werden nach 12 Monaten automatisch gelöscht. Sie können jederzeit widersprechen (siehe [Ihre Rechte](#rights)).",
+      "Wenn wir eine Bestellung in unserem Admin-Bereich bearbeiten, etwa eine Datei nach unserer Qualitätsprüfung freigeben, eine E-Mail erneut senden, eine Erstattung vornehmen oder Dateien löschen, schreibt der Admin-Bereich einen Eintrag in unser Admin-Protokoll: was getan wurde, wann, für welche Bestellnummer und mit welchem Ergebnis. Das Admin-Protokoll enthält keine Bilder, keine E-Mail-Adressen und keine Links. Rechtsgrundlage: unser berechtigtes Interesse an einer sicheren und nachvollziehbaren Bearbeitung von Bestellungen (Art. 6 Abs. 1 lit. f DSGVO). Es wird nach 24 Monaten automatisch gelöscht; die Einträge zu einer Bestellung bleiben außerdem beim Datensatz dieser Bestellung, solange dieser aufbewahrt wird (siehe [Wie lange wir Ihre Daten speichern](#retention)).",
+      "Unser Admin-Bereich ist nur für uns. Damit niemand seinen Schlüssel erraten kann, speichert eine fehlgeschlagene Anmeldung einen mit einem geheimen Schlüssel gebildeten Hashwert der IP-Adresse, von der sie kam, nie die Adresse selbst; er wird nach 2 Tagen automatisch gelöscht. Rechtsgrundlage: unser berechtigtes Interesse an der Sicherheit unserer Systeme (Art. 6 Abs. 1 lit. f DSGVO)."
+     ]
+    },
+    {
+     "id": "orders",
+     "title": "Wenn Sie bestellen",
+     "blocks": [
+      "Wenn Sie eine Bestellung beginnen, werden von jedem Auge zwei Bilder in unseren privaten Speicher hochgeladen, damit Ihre Datei genau aus dem entsteht, was Sie gesehen haben: das Quadrat um Ihre Iris, aus Ihrem Foto ausgeschnitten (ohne Spiegelungen), und die von Ihnen freigegebene Vorschau. Dazu speichern wir eine kurze Aufzeichnung von Messwerten, die aus dieser Vorschau gewonnen wurden (die Farben rund um Ihre Iris, eine Farbklasse, die Form der Pupille, zwei Qualitätswerte und eine Kennung der Vorschau). Sie enthält kein Bild und wird zusammen mit den Bildern gelöscht. **Ihr vollständiges Smartphone-Foto wird nicht gespeichert, auch nicht bei einer Bestellung.** Eine Bestellung, die nicht innerhalb von 24 Stunden bezahlt wird, kann nicht mehr bezahlt werden. Eine automatische Bereinigung, die einmal täglich läuft, löscht dann ihre Bilder und Aufzeichnungen, normalerweise innerhalb von zwei Tagen nach der Bestellung und spätestens innerhalb von 30 Tagen.",
+      "Damit die Uploads in Grenzen bleiben, legt unser Server außerdem zu jedem Upload eine kleine Markierung an (Größe, Tag und Bestellnummer, kein Bild). Diese Markierungen werden nach wenigen Tagen automatisch gelöscht.",
+      "Um Ihr Kunstwerk zu verkaufen und zu liefern, verarbeiten wir: die Bestellung (Bestellnummer, Datum, Augen, Stil, Anordnung, Reihenfolge der Augen, von Ihnen eingegebene Namen, Datum oder Widmung, Sprache, Preis), Ihre E-Mail-Adresse (Sie geben sie auf der Zahlungsseite ein), den Zahlungsstatus, den wir von Stripe erhalten, Ihre Zustimmung zum sofortigen Beginn (siehe [Widerrufsbelehrung](doc:withdrawal)) und die Dateien Ihrer Bestellung: die beiden oben genannten Bilder jedes Auges, die 4096-px-Fassung jedes Auges und das fertige Kunstwerk, mit technischen Qualitätsprotokollen.",
+      "Diese Dateien bewahren wir in einem privaten Speicher bei Supabase in der EU auf. Sie erreichen sie über Ihre Bestellseite, deren Link wir Ihnen per E-Mail senden; er enthält einen privaten Schlüssel, daher kann jede Person mit diesem Link Ihr Kunstwerk herunterladen. Jeder Download-Link, den die Seite erzeugt, läuft nach 7 Tagen ab.",
+      "Wir können die Dateien Ihrer Bestellung ansehen, um ihre Qualität zu prüfen, etwa wenn unsere automatische Prüfung eine Abweichung von der freigegebenen Vorschau meldet.",
+      "Rechtsgrundlage: der Vertrag mit Ihnen (Art. 6 Abs. 1 lit. b DSGVO); für Buchhaltungsunterlagen unsere gesetzlichen Pflichten (Art. 6 Abs. 1 lit. c DSGVO).",
+      "Wenn Sie zur Zahlungsseite weitergehen, übermitteln wir Stripe mit Ihrer Zahlung die Bestelldaten: Bestellnummer, Preis (und, wenn ein Preistest galt, dessen Name, die Kennung Ihrer Preisliste und deren Preise), Anzahl der Augen, Stil (und gegebenenfalls seine Variante), Anordnung, Reihenfolge der Augen, Sprache, von Ihnen eingegebene Namen, Datum oder Widmung, eine kurze Kennung des Plans des Kunstwerks und die Version unserer Software, die es erstellt, sowie Fassung und Zeitpunkt Ihrer Zustimmung. Stripe speichert sie mit dem Zahlungsdatensatz, und wir lesen sie von dort wieder aus, um genau das Kunstwerk zu erstellen, das Sie bezahlt haben.",
+      "Zahlung: Stripe wickelt Ihre Zahlung ab. Ihre vollständige Kartennummer sehen wir nie. Stripe verarbeitet Zahlungsdaten außerdem nach seiner eigenen Datenschutzerklärung, zur Betrugsvorbeugung und für seine eigenen gesetzlichen Pflichten.",
+      "Ihre E-Mail-Adresse brauchen wir, um Ihnen den Link zu Ihrer Bestellseite und die Bestellbestätigung zu senden. Ohne sie könnten Sie den Zugang zu Ihrer Datei verlieren."
+     ]
+    },
+    {
+     "id": "email",
+     "title": "Wenn Sie uns schreiben",
+     "blocks": [
+      "Wenn Sie uns eine E-Mail senden, nutzen wir Ihre Adresse und Ihre Nachricht, um Ihnen zu antworten und, falls es um eine Bestellung geht, diese abzuwickeln. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO bei Bestellungen, sonst unser berechtigtes Interesse, Ihnen zu antworten (Art. 6 Abs. 1 lit. f DSGVO). Wenn Sie uns Fotos senden, etwa von Ihrem Auge, damit wir Sie zu einer besseren Aufnahme beraten, verwenden wir sie nur für Ihr Anliegen. Wir bewahren Ihre E-Mails samt Fotos so lange auf, wie wir sie für Ihr Anliegen und etwaige Rückfragen brauchen."
+     ]
+    },
+    {
+     "id": "withdrawal",
+     "title": "Wenn Sie online widerrufen",
+     "blocks": [
+      "Wenn Sie eine Bestellung mit unserer Online-Funktion widerrufen (Schaltfläche „Vertrag hier widerrufen“, siehe [Widerrufsbelehrung](doc:withdrawal#online)), speichern wir Ihre Widerrufserklärung bei Ihrer Bestellung: Ihren Namen, Ihre E-Mail-Adresse, die Bestellnummer, ihren Wortlaut sowie Datum und Uhrzeit ihres Eingangs. Wir verwenden sie, um die Arbeit an Ihrer Datei anzuhalten, falls wir noch nicht begonnen haben, um Ihnen eine Eingangsbestätigung mit Inhalt, Datum und Uhrzeit per E-Mail zu senden und um Ihnen den Preis zu erstatten. Jede Erklärung erhalten wir außerdem per E-Mail: einzeln oder, bei Erklärungen, die zu keiner unserer Bestellungen passen, und bei solchen zu nie bezahlten Bestellungen, in einer Zusammenfassung pro Tag. Wird Ihr Widerruf wirksam, löscht unsere tägliche automatische Bereinigung die Bilder Ihrer Bestellung, sobald 14 Tage seit Ihrem Widerruf vergangen sind (war Ihre Zahlung noch in Bearbeitung, erst wenn sie abgeschlossen ist); der Bestelldatensatz mit Ihrer Erklärung bleibt (siehe [Wie lange wir Ihre Daten speichern](#retention)). Passen Ihre Angaben zu keiner unserer Bestellungen (ohne den Link von Ihrer Bestellseite oder den Widerrufslink in Ihrer Bestellbestätigung muss die E-Mail-Adresse die sein, mit der Sie bezahlt haben), bewahren wir die Erklärung gesondert auf, prüfen sie selbst, senden Ihnen trotzdem eine Eingangsbestätigung per E-Mail (in den unter [Online widerrufen](doc:withdrawal#online) genannten Grenzen gegen Missbrauch) und löschen sie automatisch rund 13 Monate nach Ende des Monats, in dem sie eingegangen ist.",
+      "Rechtsgrundlage: unsere gesetzliche Pflicht, Ihren Widerruf entgegenzunehmen und Ihnen zu bestätigen (Art. 6 Abs. 1 lit. c DSGVO), und der Vertrag mit Ihnen (Art. 6 Abs. 1 lit. b DSGVO). Die Erklärung bleibt als Nachweis bei Ihrem Bestelldatensatz, solange dieser aufbewahrt wird (siehe [Wie lange wir Ihre Daten speichern](#retention))."
+     ]
+    },
+    {
+     "id": "services",
+     "title": "Dienste, die wir nutzen",
+     "blocks": [
+      "Für den Betrieb von SnapEyes nutzen wir diese Dienste:",
+      {
+       "ul": [
+        "Vercel: Hosting der Website und der Server-Funktionen, die Ihre Vorschau und Ihre Datei erstellen. Die Rechenzentren von Vercel können außerhalb der EU liegen, zum Beispiel in den USA.",
+        "Google (Gemini-API): die KI-Restaurierung der Iris und die Prüfung Ihres Fotos. Die Server von Google können außerhalb der EU liegen.",
+        "Supabase: privater Speicher für die Dateien von Bestellungen, in einer EU-Region.",
+        "Stripe: Zahlungsabwicklung, mit den unter [Wenn Sie bestellen](#orders) genannten Bestelldaten.",
+        "Hostinger: unser Postfach info@snapeyes.com.",
+        "Resend: Versand der E-Mails zu Ihrer Bestellung (Link zu Ihrer Bestellseite, Bestellbestätigung und, falls Sie widerrufen, Eingangsbestätigung). Die Server können außerhalb der EU liegen."
+       ]
+      },
+      "Diese Anbieter verarbeiten Ihre Daten in unserem Auftrag und nach unseren Weisungen (Stripe teilweise als eigenständig Verantwortlicher, siehe [Wenn Sie bestellen](#orders)). Werden Daten außerhalb der EU oder des EWR übermittelt, geschieht dies auf Grundlage der Garantien, die die Anbieter bieten, etwa der Standardvertragsklauseln der EU-Kommission oder des EU-US Data Privacy Framework. Eine Kopie dieser Garantien erhalten Sie auf Anfrage unter [info@snapeyes.com](mailto:info@snapeyes.com).",
+      "Wir verkaufen Ihre Daten nicht und geben sie an niemanden sonst weiter, es sei denn, wir sind gesetzlich dazu verpflichtet."
+     ]
+    },
+    {
+     "id": "retention",
+     "title": "Wie lange wir Ihre Daten speichern",
+     "blocks": [
+      {
+       "dl": [
+        [
+         "Kostenlose Vorschauen",
+         "Werden von uns nicht gespeichert. Sie werden verworfen, sobald die Anfrage abgeschlossen ist."
+        ],
+        [
+         "Unbezahlte Bestellungen",
+         "Eine Bestellung, die nicht innerhalb von 24 Stunden bezahlt wird, kann nicht mehr bezahlt werden. Unsere tägliche automatische Bereinigung löscht ihre Bilder und Aufzeichnungen, normalerweise innerhalb von zwei Tagen nach der Bestellung und spätestens innerhalb von 30 Tagen."
+        ],
+        [
+         "Upload- und Erklärungsmarkierungen",
+         "Kleine Zähler ohne Bilder, Namen oder E-Mail-Adressen (ein Zähler für Eingangsbestätigungen enthält nur einen kurzen Hashwert der E-Mail-Adresse), die nach wenigen Tagen automatisch gelöscht werden; die monatlichen Zähler für Eingangsbestätigungen rund 40 Tage nach Ende ihres Monats."
+        ],
+        [
+         "Bezahlte Bestellungen",
+         "Die Dateien Ihrer Bestellung bewahren wir 12 Monate ab Ihrer Zahlung auf, damit Sie sie über Ihre Bestellseite erneut herunterladen können; danach löscht sie unsere tägliche automatische Bereinigung. Auf Wunsch löschen wir sie früher; danach kann Ihre Bestellseite die Datei nicht mehr liefern."
+        ],
+        [
+         "Widerrufene Bestellungen",
+         "Wird der Widerruf wirksam, löscht unsere tägliche Bereinigung die Bilder der Bestellung, sobald 14 Tage seit dem Widerruf vergangen sind (war die Zahlung noch in Bearbeitung, sobald sie abgeschlossen ist)."
+        ],
+        [
+         "Widerrufserklärungen ohne passende Bestellung",
+         "Werden gesondert aufbewahrt, von uns geprüft und rund 13 Monate nach Ende des Monats, in dem sie eingegangen sind, automatisch gelöscht."
+        ],
+        [
+         "Bestelldatensätze",
+         "Wenn die Dateien gelöscht sind (nach 12 Monaten, nach einem Widerruf oder auf Wunsch), bewahren wir den Datensatz einer bezahlten Bestellung auf: Bestellnummer, Datum, Preis, Zahlung und gegebenenfalls Erstattung, Ihre E-Mail-Adresse, die Angaben zum bestellten Kunstwerk (darunter gegebenenfalls von Ihnen eingegebene Namen, ein Datum oder eine Widmung sowie eine kurze Zusammenfassung der aus Ihren Vorschauen gewonnenen Messwerte: Farbklasse, durchschnittliche Ringfarbe und Pupillenform jedes Auges), Ihre Zustimmung zum sofortigen Beginn, falls Sie widerrufen haben, Ihre Widerrufserklärung, und die Einträge unseres Admin-Protokolls zu Ihrer Bestellung. Keine Bilder. Wir bewahren ihn als Nachweis des Vertrags und für die Buchhaltung so lange auf, wie es das litauische Buchführungs- und Steuerrecht verlangt."
+        ],
+        [
+         "Server-Protokolle und Messwerte",
+         "Werden bei unserem Hosting-Anbieter für kurze Zeit gespeichert und dann gelöscht."
+        ],
+        [
+         "Betriebsstatistik",
+         "Die technischen Ereignisse und ihre Tageszahlen (siehe [Betriebsstatistik und Admin-Protokoll](#operations)): werden nach 12 Monaten automatisch gelöscht."
+        ],
+        [
+         "Admin-Protokoll",
+         "Was wir in unserem Admin-Bereich mit einer Bestellung getan haben: wird nach 24 Monaten automatisch gelöscht; die Einträge zu einer Bestellung bleiben bei ihrem Bestelldatensatz."
+        ],
+        [
+         "Fehlgeschlagene Anmeldungen im Admin-Bereich",
+         "Ein mit einem geheimen Schlüssel gebildeter Hashwert der IP-Adresse, nach 2 Tagen automatisch gelöscht."
+        ],
+        [
+         "E-Mails",
+         "So lange, wie wir sie für Ihr Anliegen und etwaige Rückfragen brauchen."
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "id": "rights",
+     "title": "Ihre Rechte",
+     "blocks": [
+      "Sie haben jederzeit folgende Rechte:",
+      {
+       "ul": [
+        "Auskunft: zu erfahren, welche Daten wir über Sie gespeichert haben, und eine Kopie zu erhalten (Art. 15 DSGVO).",
+        "Berichtigung: falsche Daten korrigieren zu lassen (Art. 16 DSGVO).",
+        "Löschung: Ihre Daten löschen zu lassen, zum Beispiel die Dateien Ihrer Bestellung vor Ablauf der 12 Monate (Art. 17 DSGVO).",
+        "Einschränkung: die Verarbeitung einschränken zu lassen, solange eine Frage geklärt wird (Art. 18 DSGVO).",
+        "Datenübertragbarkeit: die Daten, die Sie uns gegeben haben, in einem gängigen, maschinenlesbaren Format zu erhalten (Art. 20 DSGVO).",
+        "Widerspruch: einer Verarbeitung auf Grundlage unserer berechtigten Interessen jederzeit aus Gründen, die sich aus Ihrer besonderen Situation ergeben, zu widersprechen (Art. 21 DSGVO)."
+       ]
+      },
+      "Um eines dieser Rechte auszuüben, schreiben Sie an [info@snapeyes.com](mailto:info@snapeyes.com). Wir antworten innerhalb eines Monats.",
+      "Sie haben außerdem das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Für uns zuständig ist die litauische Staatliche Datenschutzinspektion (Valstybinė duomenų apsaugos inspekcija, VDAI) in Vilnius, [vdai.lrv.lt](https://vdai.lrv.lt). Sie können sich auch an die Aufsichtsbehörde des EU-Landes wenden, in dem Sie leben oder arbeiten."
+     ]
+    },
+    {
+     "id": "storage",
+     "title": "Cookies und lokaler Speicher",
+     "blocks": [
+      "Diese Website setzt keine Cookies. Sie nutzt keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen.",
+      "Wenn Sie mit dem Sprachschalter eine Sprache wählen, merkt sich Ihr Browser diese Wahl in seinem lokalen Speicher unter dem Schlüssel „snapeyes.lang“ (der Wert ist der Sprachcode, zum Beispiel „lt“). Dieser Eintrag wird nie an uns übertragen, und Sie können ihn jederzeit in Ihren Browsereinstellungen löschen. Er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).",
+      "Wenn Sie über einen Link mit Preisen in einer anderen Währung zu uns kommen (zum Beispiel in australischen Dollar) oder mit unserem Währungsschalter oder in unserem Angebot von Preisen in Ihrer eigenen Währung eine Währung wählen, merkt sich Ihr Browser diese Wahl außerdem in seinem lokalen Speicher unter dem Schlüssel „snapeyes.market“ (zum Beispiel „au“, oder „eu“, wenn Sie dieses Angebot abgelehnt haben), damit die Website Ihnen weiter dieselben Preise zeigt. Unsere Seiten tragen sie in ihren Links (m=au) und senden sie mit einer Bestellung, damit Ihnen die Preise berechnet werden, die Sie gesehen haben. Sie können den Eintrag jederzeit in Ihren Browsereinstellungen löschen; er ist für eine von Ihnen gewünschte Funktion unbedingt erforderlich und braucht daher ebenfalls keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).",
+      "Wenn wir Preise testen (nur gelegentlich und für begrenzte Zeit), speichert Ihr Browser gegebenenfalls eine zufällige anonyme Besuchernummer in seinem lokalen Speicher unter dem Schlüssel „snapeyes.vid“. Sie wird nur angelegt, solange für den Markt (die Währung), den Sie gerade ansehen, ein Preistest läuft, und wieder gelöscht, sobald kein Test mehr läuft; spätestens nach 90 Tagen wird sie ersetzt. Sie besteht aus 32 zufälligen Zeichen und dem Tag der Erstellung: Sie wird nicht aus Ihnen abgeleitet, enthält keinen Namen, keine E-Mail-Adresse und keine Gerätedaten und wird nie mit einer Bestellung verknüpft. Ihr Browser sendet sie in einem Anfrage-Header (nie in der Adresse einer Seite) an unseren Server, wenn er die Preise abfragt; unsere Anwendung verwendet sie nur, um jedes Mal auf dieselbe Weise zu bestimmen, welche der Preislisten des Tests Sie sehen, und speichert sie nicht: Wir führen keine Liste von Besuchernummern. Der Server antwortet mit einem signierten Vermerk Ihrer Preisliste, den Ihr Browser beim Wechsel zur Zahlungsseite zurücksendet, damit Ihnen genau die Preise berechnet werden, die Ihnen gezeigt wurden (ein vom Browser gesendeter Preis oder eine gesendete Preisliste wird nie verwendet). Für die Statistik erfasst unser Server anonyme Zählungen je Preisliste: dass eine Preisliste angezeigt wurde, dass eine Vorschau erstellt wurde, dass die Zahlungsseite geöffnet wurde und dass eine Bestellung bezahlt wurde (siehe [Statistiken zum Betrieb und unser Admin-Protokoll](#operations)); diese Zählungen enthalten keine Besuchernummer. Ihr Browser merkt sich im lokalen Speicher außerdem, welche dieser Zählungen er schon gesendet hat („snapeyes.expseen“), und Ihre letzte Preisliste („snapeyes.pricing“), damit sofort dieselben Preise erscheinen. Welche Preisliste Sie sehen, hängt nie davon ab, wo Sie wohnen, sondern nur vom Markt (der Währung), den Sie gewählt haben, und der Preis, den Sie zahlen, ist immer der, der Ihnen vor der Zahlung angezeigt wurde; Ihre Bestellbestätigung nennt die Preisliste, die galt. Wir verwenden diese Einträge nur für diesen Preistest, nie für Werbung und nie, um Sie über andere Websites zu verfolgen. Wenn Sie lieber nicht teilnehmen möchten, [öffnen Sie diesen Link](/?pricetest=off&lang=de): Ihr Browser behält dann nur den Vermerk „snapeyes.notest“, löscht die Besuchernummer und die übrigen hier genannten Einträge und zeigt und berechnet die Standardpreise; mit [diesem Link](/?pricetest=on&lang=de) nehmen Sie wieder teil. Sendet Ihr Browser das Signal „Global Privacy Control“, gilt auch das als diese Entscheidung. Sie können alle diese Einträge auch jederzeit in Ihren Browsereinstellungen löschen (Sie erhalten dann eine neue Zufallsauswahl). Rechtsgrundlage: unser berechtigtes Interesse an fairen Preisen (Art. 6 Abs. 1 lit. f DSGVO). Sie können jederzeit widersprechen (siehe [Ihre Rechte](#rights)).",
+      "Wenn Sie bestellen, legt die Seite außerdem zwei Einträge im Sitzungsspeicher (Session Storage) Ihres Browser-Tabs an. Der Sitzungsspeicher gehört nur zu diesem einen Tab und wird gelöscht, wenn Sie ihn schließen:",
+      {
+       "ul": [
+        "„snapeyes.order“: die Nummer der Bestellung, die Sie gerade anlegen, und ihr privater Schlüssel, damit die Seite Ihre Bestellung fortsetzen kann, etwa wenn Sie von der Zahlungsseite zurückkommen. Der Eintrag wird entfernt, wenn sich in diesem Tab die Seite Ihrer bezahlten Bestellung öffnet, und ersetzt, wenn Sie eine neue Bestellung beginnen.",
+        "„snapeyes.checkout“: nur während Sie auf der Zahlungsseite sind, Ihr Kunstwerk so, wie Sie es verlassen haben (die Iris-Ausschnitte aus Ihren Fotos, die Vorschauen, einige daraus gemessene Zahlen, der Stil und seine Variante, die Anordnung, die Reihenfolge der Augen und gegebenenfalls Namen und ein Datum), damit es beim Zurückgehen von der Zahlungsseite wieder erscheint. Der Eintrag wird entfernt, sobald Sie zurückkommen oder sich in diesem Tab die Seite Ihrer bezahlten Bestellung öffnet."
+       ]
+      },
+      "Die Seite nutzt sie nur für Ihre Bestellung, und sie sind dafür unbedingt erforderlich; auch sie brauchen daher keine Einwilligung (§ 25 Abs. 2 Nr. 2 TDDDG, Art. 5 Abs. 3 ePrivacy-Richtlinie).",
+      "Wenn Sie bezahlen, kann die Zahlungsseite von Stripe eigene Cookies verwenden, die für eine sichere Zahlung und zur Betrugsvorbeugung nötig sind; dort gilt die Datenschutz- und Cookie-Richtlinie von Stripe."
+     ]
+    },
+    {
+     "id": "required",
+     "title": "Müssen Sie uns Daten geben?",
+     "blocks": [
+      "Nein. Ohne Foto können wir aber keine Vorschau erstellen, und ohne E-Mail-Adresse und Zahlung keine Bestellung liefern."
+     ]
+    },
+    {
+     "id": "changes",
+     "title": "Änderungen dieser Erklärung",
+     "blocks": [
+      "Wir passen diese Erklärung an, wenn sich unser Dienst oder die Rechtslage ändert. Das Datum oben zeigt die aktuelle Fassung."
+     ]
+    }
+   ]
+  }
+ },
+ "imprint": {
+  "en": {
+   "title": "Legal notice",
+   "description": "Who runs SnapEyes: MB \"Portretizuokis\", Kaunas, Lithuania. Company details, register, contact.",
+   "sections": [
+    {
+     "id": "provider",
+     "title": "Service provider",
+     "blocks": [
+      "snapeyes.com and the SnapEyes brand are run by MB \"Portretizuokis\".",
+      {
+       "dl": [
+        [
+         "Provider",
+         "MB \"Portretizuokis\""
+        ],
+        [
+         "Legal form",
+         "mažoji bendrija (MB), a small partnership under Lithuanian law"
+        ],
+        [
+         "Address",
+         "Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania"
+        ],
+        [
+         "Represented by",
+         "Mantas Bakšys"
+        ],
+        [
+         "Email",
+         "[info@snapeyes.com](mailto:info@snapeyes.com)"
+        ],
+        [
+         "Register",
+         "Register of Legal Entities of the Republic of Lithuania (Juridinių asmenų registras), kept by the State Enterprise Centre of Registers (Registrų centras)"
+        ],
+        [
+         "Company code (register number)",
+         "305605052"
+        ],
+        [
+         "VAT",
+         "Not registered for VAT, so there is no VAT number."
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "id": "contact",
+     "title": "Contact",
+     "blocks": [
+      "The quickest way to reach us is by email: [info@snapeyes.com](mailto:info@snapeyes.com).",
+      "To withdraw from an order, you can also use our online function [\"Withdraw from contract here\"](/order?withdraw=1&lang=en)."
+     ]
+    },
+    {
+     "id": "images",
+     "title": "About the images",
+     "blocks": [
+      "The example images on our home page show the founder's own eye, photographed with a phone and rendered by our software. The sample eye you can try in the preview tool is AI-generated and always labelled as such."
+     ]
+    },
+    {
+     "id": "more",
+     "title": "More legal information",
+     "blocks": [
+      "How we handle your data: [Privacy policy](doc:privacy). Buying a file: [Terms of sale](doc:terms) and [Right of withdrawal](doc:withdrawal). Consumer disputes: [Disputes and applicable law](doc:terms#disputes)."
+     ]
+    }
+   ]
+  },
+  "de": {
+   "title": "Impressum",
+   "description": "Wer SnapEyes betreibt: MB „Portretizuokis“, Kaunas, Litauen. Unternehmensangaben, Register, Kontakt.",
+   "sections": [
+    {
+     "id": "provider",
+     "title": "Anbieter",
+     "blocks": [
+      "snapeyes.com und die Marke SnapEyes werden betrieben von MB „Portretizuokis“.",
+      {
+       "dl": [
+        [
+         "Anbieter",
+         "MB „Portretizuokis“"
+        ],
+        [
+         "Rechtsform",
+         "mažoji bendrija (MB), Kleingesellschaft nach litauischem Recht"
+        ],
+        [
+         "Anschrift",
+         "Gedimino g. 22A-14, LT-44319 Kaunas, Litauen"
+        ],
+        [
+         "Vertreten durch",
+         "Mantas Bakšys"
+        ],
+        [
+         "E-Mail",
+         "[info@snapeyes.com](mailto:info@snapeyes.com)"
+        ],
+        [
+         "Register",
+         "Register der juristischen Personen der Republik Litauen (Juridinių asmenų registras), geführt vom staatlichen Unternehmen Registrų centras"
+        ],
+        [
+         "Unternehmenscode (Registernummer)",
+         "305605052"
+        ],
+        [
+         "Umsatzsteuer",
+         "Nicht umsatzsteuerlich registriert, daher keine USt-IdNr."
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "id": "contact",
+     "title": "Kontakt",
+     "blocks": [
+      "Am schnellsten erreichen Sie uns per E-Mail: [info@snapeyes.com](mailto:info@snapeyes.com).",
+      "Um eine Bestellung zu widerrufen, können Sie auch unsere Online-Funktion [„Vertrag hier widerrufen“](/order?withdraw=1&lang=de) nutzen."
+     ]
+    },
+    {
+     "id": "images",
+     "title": "Zu den Bildern",
+     "blocks": [
+      "Die Beispielbilder auf unserer Startseite zeigen das eigene Auge des Gründers, mit dem Smartphone fotografiert und von unserer Software gerendert. Das Beispielauge, das Sie in der Vorschau-App ausprobieren können, ist KI-generiert und immer als solches gekennzeichnet."
+     ]
+    },
+    {
+     "id": "more",
+     "title": "Weitere rechtliche Informationen",
+     "blocks": [
+      "Wie wir mit Ihren Daten umgehen: [Datenschutzerklärung](doc:privacy). Kauf einer Datei: [AGB](doc:terms) und [Widerrufsbelehrung](doc:withdrawal). Verbraucherstreitigkeiten: [Streitigkeiten und anwendbares Recht](doc:terms#disputes)."
+     ]
+    }
+   ]
+  }
+ },
+ "checkout": {
+  "en": {
+   "withdrawalConsent": "I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period ends. I know that I lose my right of withdrawal once this has started.",
+   "withdrawalConsentMissing": "Please tick the box above: we can only start on your artwork once you agree.",
+   "acceptance": [
+    {
+     "text": "By ordering you accept our "
+    },
+    {
+     "text": "Terms of sale",
+     "doc": "terms"
+    },
+    {
+     "text": ". Please also read our "
+    },
+    {
+     "text": "Privacy policy",
+     "doc": "privacy"
+    },
+    {
+     "text": " and the "
+    },
+    {
+     "text": "information on the right of withdrawal",
+     "doc": "withdrawal"
+    },
+    {
+     "text": "."
+    }
+   ],
+   "continueButton": "Continue to payment",
+   "photoNotice": [
+    {
+     "text": "Only photograph your own eye, or the eye of someone who has agreed to it (for a child: a parent or guardian). Your photo is used only to make your artwork. "
+    },
+    {
+     "text": "Privacy policy",
+     "doc": "privacy"
+    }
+   ]
+  },
+  "de": {
+   "withdrawalConsent": "Ich stimme ausdrücklich zu, dass SnapEyes sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung meines digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere, sobald damit begonnen wurde.",
+   "withdrawalConsentMissing": "Bitte setzen Sie oben das Häkchen: Wir können mit Ihrem Kunstwerk erst beginnen, wenn Sie zustimmen.",
+   "acceptance": [
+    {
+     "text": "Mit Ihrer Bestellung akzeptieren Sie unsere "
+    },
+    {
+     "text": "AGB",
+     "doc": "terms"
+    },
+    {
+     "text": ". Bitte beachten Sie auch unsere "
+    },
+    {
+     "text": "Datenschutzerklärung",
+     "doc": "privacy"
+    },
+    {
+     "text": " und die "
+    },
+    {
+     "text": "Widerrufsbelehrung",
+     "doc": "withdrawal"
+    },
+    {
+     "text": "."
+    }
+   ],
+   "continueButton": "Weiter zur Zahlung",
+   "photoNotice": [
+    {
+     "text": "Fotografieren Sie nur Ihr eigenes Auge oder das Auge einer Person, die damit einverstanden ist (bei einem Kind: ein Elternteil oder eine sorgeberechtigte Person). Ihr Foto dient nur dazu, Ihr Kunstwerk zu erstellen. "
+    },
+    {
+     "text": "Datenschutzerklärung",
+     "doc": "privacy"
+    }
+   ]
+  },
+  "lt": {
+   "withdrawalConsent": "Aiškiai sutinku, kad SnapEyes pradėtų kurti mano skaitmeninį kūrinį iš karto, dar nepasibaigus sutarties atsisakymo terminui. Pripažįstu, kad pradėjus kurti kūrinį neteksiu teisės atsisakyti sutarties.",
+   "withdrawalConsentMissing": "Pažymėkite langelį aukščiau: Jūsų kūrinį pradėti kurti galime tik gavę Jūsų sutikimą.",
+   "acceptance": [
+    {
+     "text": "Užsakydami sutinkate su mūsų "
+    },
+    {
+     "text": "pardavimo sąlygomis",
+     "doc": "terms"
+    },
+    {
+     "text": ". Taip pat perskaitykite mūsų "
+    },
+    {
+     "text": "privatumo politiką",
+     "doc": "privacy"
+    },
+    {
+     "text": " ir "
+    },
+    {
+     "text": "informaciją apie teisę atsisakyti sutarties",
+     "doc": "withdrawal"
+    },
+    {
+     "text": "."
+    }
+   ],
+   "continueButton": "Pereiti prie apmokėjimo",
+   "photoNotice": [
+    {
+     "text": "Fotografuokite tik savo akį arba kito žmogaus akį, jei jis su tuo sutiko (vaiko atveju sutikti turi vienas iš tėvų, globėjas ar rūpintojas). Jūsų nuotrauka naudojama tik Jūsų kūriniui sukurti. "
+    },
+    {
+     "text": "Privatumo politika",
+     "doc": "privacy"
+    }
+   ]
+  },
+  "hu": {
+   "withdrawalConsent": "Kifejezetten hozzájárulok ahhoz, hogy a SnapEyes még az elállási határidő lejárta előtt azonnal megkezdje a digitális alkotásom elkészítését. Tudomásul veszem, hogy a teljesítés megkezdését követően elveszítem az elállási jogomat.",
+   "withdrawalConsentMissing": "Kérjük, jelöld be a fenti négyzetet: az alkotásod elkészítését csak a hozzájárulásoddal kezdhetjük meg.",
+   "acceptance": [
+    {
+     "text": "A megrendeléssel elfogadod az "
+    },
+    {
+     "text": "ÁSZF-et",
+     "doc": "terms"
+    },
+    {
+     "text": ". Kérjük, olvasd el az "
+    },
+    {
+     "text": "adatkezelési tájékoztatót",
+     "doc": "privacy"
+    },
+    {
+     "text": " és az "
+    },
+    {
+     "text": "elállási tájékoztatót",
+     "doc": "withdrawal"
+    },
+    {
+     "text": " is."
+    }
+   ],
+   "continueButton": "Megrendelés fizetési kötelezettséggel",
+   "photoNotice": [
+    {
+     "text": "Csak a saját szemedet fotózd le, vagy olyan személy szemét, aki ehhez hozzájárult (gyermek esetén a szülő vagy a gondviselő). A fotódat kizárólag az alkotásod elkészítéséhez használjuk. "
+    },
+    {
+     "text": "Adatkezelési tájékoztató",
+     "doc": "privacy"
+    }
+   ]
+  }
+ },
+ "pack": {
+  "updated": "2026-10-06",
+  "seller": {
+   "name": "Portretizuokis",
+   "code": "305605052",
+   "email": "info@snapeyes.com",
+   "phone": "",
+   "representative": "Mantas Bakšys",
+   "company": {
+    "en": "MB \"Portretizuokis\"",
+    "de": "MB „Portretizuokis“",
+    "lt": "MB „Portretizuokis“",
+    "hu": "MB „Portretizuokis”"
+   },
+   "address": {
+    "en": "Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania",
+    "de": "Gedimino g. 22A-14, LT-44319 Kaunas, Litauen",
+    "lt": "Gedimino g. 22A-14, LT-44319 Kaunas, Lietuva",
+    "hu": "Gedimino g. 22A-14, LT-44319 Kaunas, Litvánia"
+   },
+   "contact": {
+    "en": "MB \"Portretizuokis\", Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania, email: info@snapeyes.com",
+    "de": "MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen, E-Mail: info@snapeyes.com",
+    "lt": "MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Lietuva, el. paštas: info@snapeyes.com",
+    "hu": "MB „Portretizuokis”, Gedimino g. 22A-14, LT-44319 Kaunas, Litvánia, e-mail: info@snapeyes.com"
+   }
+  },
+  "docs": {
+   "en": {
+    "withdrawal": {
+     "title": "Right of withdrawal",
+     "url": "https://snapeyes.com/withdrawal?lang=en",
+     "text": "RIGHT OF WITHDRAWAL\n\nLast updated: 2026-10-06 · https://snapeyes.com/withdrawal?lang=en\n\nConsumers in the EU have a right of withdrawal for purchases made online. For a digital file like ours, it ends early once we start making your file with your consent. Here is the full information.\n\nRight of withdrawal\n\nYou have the right to withdraw from this contract within 14 days without giving any reason.\n\nThe withdrawal period will expire after 14 days from the day of the conclusion of the contract.\n\nTo exercise the right of withdrawal, you must inform us (MB \"Portretizuokis\", Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania, email: info@snapeyes.com) of your decision to withdraw from this contract by an unequivocal statement (e.g. a letter sent by post or email). You may use the attached model withdrawal form, but it is not obligatory. You can also exercise your right of withdrawal online at https://snapeyes.com/order?withdraw=1&lang=en (the button \"Withdraw from contract here\"). If you use this online feature, we will send you an acknowledgement of receipt of the withdrawal on a durable medium (e.g. by email), including its content and the date and time of its submission, without undue delay.\n\nTo meet the withdrawal deadline, it is sufficient for you to send your communication concerning your exercise of the right of withdrawal before the withdrawal period has expired.\n\nEffects of withdrawal\n\nIf you withdraw from this contract, we shall reimburse to you all payments received from you, including the costs of delivery (with the exception of the supplementary costs resulting from your choice of a type of delivery other than the least expensive type of standard delivery offered by us), without undue delay and in any event not later than 14 days from the day on which we are informed about your decision to withdraw from this contract. We will carry out such reimbursement using the same means of payment as you used for the initial transaction, unless you have expressly agreed otherwise; in any event, you will not incur any fees as a result of such reimbursement.\n\nWhen the right of withdrawal ends early\n\nYour right of withdrawal ends early once we have begun the performance of the contract, that is, once we have started making your file, if (1) you expressly agreed that we begin the performance before the withdrawal period ends, (2) you acknowledged that you thereby lose your right of withdrawal once we have begun, and (3) we have confirmed this to you on a durable medium (we do so in the order confirmation email, which goes out before we start). This follows from Art. 16(m) of Directive 2011/83/EU.\n\nBefore you pay, you give this consent by ticking this box:\n\nThe checkbox at checkout:\n    I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period ends. I know that I lose my right of withdrawal once this has started.\n\nIn practice your right of withdrawal therefore ends at the moment we start making your file. We start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open: the payment page takes you straight there. If you are not on your order page by then, we start when you open it again with the order page link in that email. The withdrawal link in the same email opens the online withdrawal function for your order without starting anything. From the moment we start, your right of withdrawal has ended, even while your file is still being made or is waiting for our quality check. If we have not started making your file, your right of withdrawal ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. Your statutory rights for a defective file are not affected: see Complaints and defects (https://snapeyes.com/terms?lang=en#defects) in our terms of sale.\n\nWithdraw online\n\nWhile your right of withdrawal lasts, you can withdraw online at any time with the function \"Withdraw from contract here\" (https://snapeyes.com/order?withdraw=1&lang=en). You find it at the foot of our home page and of our legal pages, on your order page, and behind the withdrawal link in your order confirmation email. That link opens the function for your order without starting anything. Opening your order page itself starts making your file once your order confirmation email has gone out, and that ends your right of withdrawal (see When the right of withdrawal ends early (https://snapeyes.com/withdrawal?lang=en#expiry)).\n\nHow it works: enter your name, your order number (it is filled in when you come from your order page or through the withdrawal link) and the email address for the acknowledgement, then send your withdrawal with the button \"Confirm withdrawal\". If you come without one of these links, please give the email address you paid with, so that we can match your order. If the details match none of our orders, the page tells you so; we still keep your statement, check it by hand and email you an acknowledgement of receipt. To prevent misuse of our emails, acknowledgements of receipt are limited: for statements that match none of our orders, to two a day and four a month to the same address; for an order, to three in all to addresses other than the one it was paid with (further ones go to the address you paid with); and for a repeated statement about an order we have already answered, to one a day for that order and five a day for all orders together. If the page cannot take your statement, for example because of a technical fault or because unusually many statements are arriving, it tells you so: please then send us your withdrawal by email; an email is just as valid.\n\nWhat happens then: we record your statement with the date and time it reached us. If your order is paid, we have not started making your file and the 14-day withdrawal period is not over, your withdrawal takes effect: we stop your order, so nothing is made, and we refund you as described under Effects of withdrawal (https://snapeyes.com/withdrawal?lang=en#effects). If your payment was still being processed when you withdrew, nothing is made either, and if the payment reaches us, we refund it in full. Without delay we email you an acknowledgement of receipt with the content of your withdrawal and its date and time.\n\nIf we had already started making your file with your consent, or the 14-day withdrawal period was over, your right of withdrawal had already ended (see When the right of withdrawal ends early (https://snapeyes.com/withdrawal?lang=en#expiry)): the page and the acknowledgement of receipt tell you so, and we still look at your statement personally. If your order was never paid, there is no contract to withdraw from: the page tells you so, and nothing was charged. Your rights for a defective file are not affected.\n\nModel withdrawal form\n\n(Complete and return this form only if you wish to withdraw from the contract.)\n\n    To: MB \"Portretizuokis\", Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania, email: info@snapeyes.com\n    I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract of sale of the following goods (*)/for the provision of the following service (*):\n    Ordered on (*)/received on (*):\n    Name of consumer(s):\n    Address of consumer(s):\n    Signature of consumer(s) (only if this form is notified on paper):\n    Date:\n    (*) Delete as appropriate.\n\nBy email, simply send the completed form, or your own statement, to info@snapeyes.com. Please add your order number if you have it. Online, use the function \"Withdraw from contract here\" (https://snapeyes.com/order?withdraw=1&lang=en) described above."
+    },
+    "terms": {
+     "title": "Terms of sale",
+     "url": "https://snapeyes.com/terms?lang=en",
+     "text": "TERMS OF SALE\n\nLast updated: 2026-10-06 · https://snapeyes.com/terms?lang=en\n\nThese terms apply to every order placed on snapeyes.com. Please read them before you order. The free preview is offered without any obligation.\n\n1. Who you contract with\n\nYour contract is with MB \"Portretizuokis\", a small partnership under Lithuanian law (mažoji bendrija), represented by Mantas Bakšys, company code 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania, email info@snapeyes.com (\"we\", \"SnapEyes\"). All details are in our Legal notice (https://snapeyes.com/imprint?lang=en).\n\nOur offer is made to consumers. If you are under 18, please ask a parent or guardian to order for you.\n\n2. What you buy\n\nA personalised digital artwork made from your own photo of an eye (or of several eyes), in the style, layout and inscription you choose. You receive one image file (JPEG) without watermark: 4096 × 4096 px for one eye, 4096 px on the longest side for several eyes. The artwork is delivered only as a digital file, by download. We do not sell prints, frames or any other physical product.\n\nColour from your own photo. Where your phone could not capture the finest fibres, our AI restores them. The artwork is therefore an artistic restoration, not a medical or microscope image, and it is not suitable for any medical purpose or for identifying a person.\n\nIn some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer's artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above.\n\n3. Your preview and your file\n\nBefore you order, you see a free preview with a watermark and approve it. Your file follows the preview you approved: the same eye, style, layout, arrangement of the eyes and inscription, with the same colour and tone, rendered once in full resolution. At full size our AI adds the fine fibre detail that the preview is too small to show, so the very finest details can differ slightly from the preview. A preview of five to eight eyes is made from smaller copies of your photos, so it is coarser than your file.\n\nIf your file clearly differs from the preview you approved (for example in colour, brightness or the pupil), that is a defect: see Complaints and defects (https://snapeyes.com/terms?lang=en#defects).\n\n4. How the contract is made\n\nThe previews and prices on our website are not yet a binding offer. Before you pay, you can check your eyes, style, layout and inscription and correct any input by going back or retaking a photo. You then open the payment page of our payment provider Stripe with our button \"Continue to payment\"; this button does not yet place an order. On that page you enter your email address and payment details and can correct them. You place a binding order when you confirm the payment there with the pay button.\n\nThe contract is concluded when your payment is confirmed. Your order page then opens, and we email you its link with your order confirmation. We start making your file there as soon as that email has gone out.\n\nThe contract languages are English, German, Lithuanian and Hungarian.\n\nWe store your order with the details of the contract: the artwork you ordered, the price, the date, your email address and your consent to the immediate start. Your order page shows these details for as long as we keep your order. We do not keep a separate copy of these terms for each order. Instead, your order confirmation email contains, as text, your order details, these terms and the withdrawal information with the model withdrawal form, in the version in force when you ordered: please keep that email. You can also save or print this page at any time.\n\n5. Prices and payment\n\nOne eye, Clean Iris: €19.97\nOne eye, any other style: €24.97\nTwo eyes, any style: €39.97\nEach further eye: +€15.00\n\nAll prices are final prices in euros. We are not registered for VAT, so no VAT is charged or shown. There are no delivery costs.\n\nThe table above is our standard price list. From time to time, for a limited period, we try other price lists on some visitors, chosen at random. You are always charged the prices shown to you on the artwork page before you pay and on the payment page, and your order confirmation email names the price list that applied to your order. Which price list you see never depends on the country you live in, only on the market (currency) you choose.\n\nYou pay in advance through our payment provider Stripe, with the payment methods shown on the payment page.\n\n6. Delivery\n\nYour order page makes your file as soon as your order confirmation email has gone out, normally within a minute of your payment; making it usually takes a few minutes. If you close the page before your file is finished, it carries on when you open it again from the link in the email. If our automatic quality check flags a file, we look at it ourselves before we release it, and we email you when it is ready. At the latest, your file is ready for download on your order page within 48 hours after your payment is confirmed. From your order page you can download your file at any time while we keep it: 12 months from your payment (see our Privacy policy (https://snapeyes.com/privacy?lang=en)). Each download link it creates is valid for 7 days; the page makes a new one whenever you open it. If you lose the email, write to us.\n\nThe link to your order page contains a private key: anyone who has it can download your artwork, so please keep it to yourself. Please download your file and keep a copy. After 12 months it is deleted and cannot be restored.\n\n7. Right of withdrawal\n\nAs a consumer you generally have a 14-day right of withdrawal. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open. This applies even while the file is still being made or is waiting for our quality check. If we have not started, it ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button \"Withdraw from contract here\"; the withdrawal link in your order confirmation email opens it for your order without starting to make your file. The full information, the online function and a model withdrawal form are on our Right of withdrawal (https://snapeyes.com/withdrawal?lang=en) page.\n\n8. Your photos\n\nOnly upload photos of your own eye, or of the eye of someone who has agreed to it (for a child: a parent or guardian). By uploading a photo you confirm that you may use it for this purpose.\n\nThe rights in your photo remain yours. We use it only to make your preview and your artwork, as described in our Privacy policy (https://snapeyes.com/privacy?lang=en).\n\nWe may refuse an order, and refund any payment in full, if a photo clearly breaks these rules.\n\n9. What you may do with your artwork\n\nYou receive a non-exclusive, permanent licence to use your artwork for personal, non-commercial purposes. You may, for example, print it for yourself (at home or through a print shop), frame it, give it as a gift, use it as a background on your devices and share it on your personal social media.\n\nWithout our permission (an email is enough) you may not sell the artwork or products made from it, grant others rights to it, or use it for advertising or other commercial purposes.\n\nThe styles, backgrounds, layouts and the SnapEyes design remain ours, including any copyright in them. The same applies to the watermarked previews.\n\n10. Complaints and defects\n\nYour statutory rights for digital content that does not conform to the contract apply in full. If your file is defective, for example it cannot be downloaded or opened, is damaged, is smaller than promised or clearly differs from the preview you approved, please write to info@snapeyes.com with your order number. We will render the file again free of charge or, if that does not fix it, refund you.\n\n11. Liability\n\nWe are liable without limitation for intent and gross negligence, for injury to life, body or health, and wherever mandatory law provides for it. Otherwise, for slight negligence we are liable only for the breach of essential contractual obligations, and only for the damage that is typical and foreseeable for this kind of contract. The free preview is offered as it is, without any claim to its availability.\n\n12. Disputes and applicable law\n\nIf something is wrong, please write to us first: most problems are solved quickly by email.\n\nIf we cannot agree, consumers can turn to the Lithuanian State Consumer Rights Protection Authority (Valstybinė vartotojų teisių apsaugos tarnyba, https://vvtat.lt), which settles consumer disputes out of court, or to the consumer bodies and courts of their own country.\n\nLithuanian law applies. If you are a consumer living in another EU country, you keep the protection of the mandatory consumer law of that country.\n\n13. Changes to these terms\n\nThe terms in force when you place your order apply to that order."
+    }
+   },
+   "de": {
+    "withdrawal": {
+     "title": "Widerrufsbelehrung",
+     "url": "https://snapeyes.com/withdrawal?lang=de",
+     "text": "WIDERRUFSBELEHRUNG\n\nStand: 06.10.2026 · https://snapeyes.com/withdrawal?lang=de\n\nVerbraucher in der EU haben bei Online-Käufen ein Widerrufsrecht. Bei einer digitalen Datei wie unserer erlischt es vorzeitig, sobald wir mit Ihrer Zustimmung mit der Erstellung Ihrer Datei beginnen. Hier finden Sie alle Informationen.\n\nWiderrufsrecht\n\nSie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.\n\nDie Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsabschlusses.\n\nUm Ihr Widerrufsrecht auszuüben, müssen Sie uns (MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen, E-Mail: info@snapeyes.com) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder eine E-Mail) über Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist. Sie können Ihr Widerrufsrecht auch online unter https://snapeyes.com/order?withdraw=1&lang=de (Schaltfläche „Vertrag hier widerrufen“) ausüben. Wenn Sie diese Online-Funktion nutzen, übermitteln wir Ihnen auf einem dauerhaften Datenträger (z. B. durch eine E-Mail) unverzüglich eine Eingangsbestätigung mit Informationen zum Inhalt der Widerrufserklärung sowie dem Datum und der Uhrzeit ihres Eingangs.\n\nZur Wahrung der Widerrufsfrist reicht es aus, dass Sie die Mitteilung über die Ausübung des Widerrufsrechts vor Ablauf der Widerrufsfrist absenden.\n\nFolgen des Widerrufs\n\nWenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, einschließlich der Lieferkosten (mit Ausnahme der zusätzlichen Kosten, die sich daraus ergeben, dass Sie eine andere Art der Lieferung als die von uns angebotene, günstigste Standardlieferung gewählt haben), unverzüglich und spätestens binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren Widerruf dieses Vertrags bei uns eingegangen ist. Für diese Rückzahlung verwenden wir dasselbe Zahlungsmittel, das Sie bei der ursprünglichen Transaktion eingesetzt haben, es sei denn, mit Ihnen wurde ausdrücklich etwas anderes vereinbart; in keinem Fall werden Ihnen wegen dieser Rückzahlung Entgelte berechnet.\n\nVorzeitiges Erlöschen des Widerrufsrechts\n\nIhr Widerrufsrecht erlischt vorzeitig, sobald wir mit der Vertragserfüllung begonnen haben, also mit der Erstellung Ihrer Datei, wenn Sie (1) ausdrücklich zugestimmt haben, dass wir vor Ablauf der Widerrufsfrist mit der Vertragserfüllung beginnen, (2) Ihre Kenntnis davon bestätigt haben, dass Sie durch Ihre Zustimmung mit Beginn der Vertragserfüllung Ihr Widerrufsrecht verlieren, und (3) wir Ihnen dies auf einem dauerhaften Datenträger bestätigt haben (das tun wir mit der Bestellbestätigung per E-Mail, die versandt wird, bevor wir beginnen). Das ergibt sich aus § 356 Abs. 5 BGB und Art. 16 Buchst. m der Richtlinie 2011/83/EU.\n\nVor der Zahlung geben Sie diese Zustimmung, indem Sie in diesem Kästchen das Häkchen setzen:\n\nDas Kästchen im Bestellvorgang:\n    Ich stimme ausdrücklich zu, dass SnapEyes sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung meines digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere, sobald damit begonnen wurde.\n\nIn der Praxis erlischt Ihr Widerrufsrecht daher in dem Moment, in dem wir mit der Erstellung Ihrer Datei beginnen. Wir beginnen erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist: Die Zahlungsseite führt Sie direkt dorthin. Sind Sie bis dahin nicht auf Ihrer Bestellseite, beginnen wir, wenn Sie sie mit dem Link zu Ihrer Bestellseite aus dieser E-Mail wieder öffnen. Der Widerrufslink in derselben E-Mail öffnet die Online-Widerrufsfunktion für Ihre Bestellung, ohne etwas zu starten. Ab dem Moment, in dem wir beginnen, ist Ihr Widerrufsrecht erloschen, auch wenn Ihre Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir mit Ihrer Datei noch nicht begonnen, erlischt Ihr Widerrufsrecht mit Ablauf der 14-tägigen Widerrufsfrist: Der Tag Ihrer Zahlung wird nicht mitgezählt, und fällt der letzte Tag der Frist auf einen Samstag, einen Sonntag oder einen gesetzlichen Feiertag, endet die Frist mit Ablauf des nächsten Arbeitstags. Ihre gesetzlichen Rechte bei einer mangelhaften Datei bleiben davon unberührt: siehe Reklamationen und Mängel (https://snapeyes.com/terms?lang=de#defects) in unseren AGB.\n\nOnline widerrufen\n\nSolange Ihr Widerrufsrecht besteht, können Sie jederzeit online mit der Funktion „Vertrag hier widerrufen“ (https://snapeyes.com/order?withdraw=1&lang=de) widerrufen. Sie finden sie am Ende unserer Startseite und unserer Rechtstexte, auf Ihrer Bestellseite und hinter dem Widerrufslink in Ihrer Bestellbestätigung per E-Mail. Dieser Link öffnet die Funktion für Ihre Bestellung, ohne etwas zu starten. Das Öffnen Ihrer Bestellseite selbst startet die Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, und damit erlischt Ihr Widerrufsrecht (siehe Vorzeitiges Erlöschen des Widerrufsrechts (https://snapeyes.com/withdrawal?lang=de#expiry)).\n\nSo geht es: Geben Sie Ihren Namen, Ihre Bestellnummer (sie ist bereits eingetragen, wenn Sie von Ihrer Bestellseite oder über den Widerrufslink kommen) und die E-Mail-Adresse für die Eingangsbestätigung ein und senden Sie Ihren Widerruf mit der Schaltfläche „Widerruf bestätigen“ ab. Kommen Sie ohne einen dieser Links, geben Sie bitte die E-Mail-Adresse an, mit der Sie bezahlt haben, damit wir Ihre Bestellung zuordnen können. Passen die Angaben zu keiner unserer Bestellungen, zeigt die Seite das an; Ihre Erklärung bewahren wir trotzdem auf, prüfen sie selbst und senden Ihnen eine Eingangsbestätigung per E-Mail. Um Missbrauch unserer E-Mails zu verhindern, sind Eingangsbestätigungen begrenzt: bei Erklärungen, die zu keiner unserer Bestellungen passen, auf zwei am Tag und vier im Monat an dieselbe Adresse; je Bestellung auf insgesamt drei an andere Adressen als die, mit der bezahlt wurde (weitere gehen an die Adresse, mit der Sie bezahlt haben); und bei einer wiederholten Erklärung zu einer Bestellung, die wir bereits beantwortet haben, auf eine am Tag für diese Bestellung und fünf am Tag für alle Bestellungen zusammen. Kann die Seite Ihre Erklärung nicht annehmen, etwa wegen einer technischen Störung oder weil ungewöhnlich viele Erklärungen eingehen, zeigt sie das an: Senden Sie uns Ihren Widerruf dann bitte per E-Mail; eine E-Mail ist genauso wirksam.\n\nWas dann geschieht: Wir erfassen Ihre Erklärung mit Datum und Uhrzeit ihres Eingangs. Ist Ihre Bestellung bezahlt, haben wir mit Ihrer Datei noch nicht begonnen und ist die 14-tägige Widerrufsfrist nicht abgelaufen, ist Ihr Widerruf wirksam: Wir halten Ihre Bestellung an, sodass nichts erstellt wird, und erstatten Ihnen Ihre Zahlung, wie unter Folgen des Widerrufs (https://snapeyes.com/withdrawal?lang=de#effects) beschrieben. War Ihre Zahlung bei Ihrem Widerruf noch in Bearbeitung, wird ebenfalls nichts erstellt, und geht die Zahlung bei uns ein, erstatten wir sie vollständig. Wir senden Ihnen unverzüglich eine Eingangsbestätigung mit dem Inhalt Ihres Widerrufs sowie Datum und Uhrzeit per E-Mail.\n\nHatten wir mit Ihrer Zustimmung bereits mit Ihrer Datei begonnen oder war die 14-tägige Widerrufsfrist abgelaufen, war Ihr Widerrufsrecht schon erloschen (siehe Vorzeitiges Erlöschen des Widerrufsrechts (https://snapeyes.com/withdrawal?lang=de#expiry)): Die Seite und die Eingangsbestätigung teilen Ihnen das mit, und wir sehen uns Ihre Erklärung trotzdem persönlich an. Wurde Ihre Bestellung nie bezahlt, gibt es keinen Vertrag, den Sie widerrufen könnten: Die Seite zeigt das an, und es wurde nichts berechnet. Ihre Rechte bei einer mangelhaften Datei bleiben davon unberührt.\n\nMuster-Widerrufsformular\n\n(Wenn Sie den Vertrag widerrufen wollen, dann füllen Sie bitte dieses Formular aus und senden Sie es zurück.)\n\n    An: MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen, E-Mail: info@snapeyes.com\n    Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über den Kauf der folgenden Waren (*)/die Erbringung der folgenden Dienstleistung (*):\n    Bestellt am (*)/erhalten am (*):\n    Name des/der Verbraucher(s):\n    Anschrift des/der Verbraucher(s):\n    Unterschrift des/der Verbraucher(s) (nur bei Mitteilung auf Papier):\n    Datum:\n    (*) Unzutreffendes streichen.\n\nPer E-Mail senden Sie einfach das ausgefüllte Formular oder Ihre eigene Erklärung an info@snapeyes.com. Bitte geben Sie, falls vorhanden, Ihre Bestellnummer an. Online nutzen Sie die oben beschriebene Funktion „Vertrag hier widerrufen“ (https://snapeyes.com/order?withdraw=1&lang=de)."
+    },
+    "terms": {
+     "title": "Allgemeine Geschäftsbedingungen (AGB)",
+     "url": "https://snapeyes.com/terms?lang=de",
+     "text": "ALLGEMEINE GESCHÄFTSBEDINGUNGEN (AGB)\n\nStand: 06.10.2026 · https://snapeyes.com/terms?lang=de\n\nDiese Bedingungen gelten für jede Bestellung auf snapeyes.com. Bitte lesen Sie sie, bevor Sie bestellen. Die kostenlose Vorschau ist unverbindlich.\n\n1. Ihr Vertragspartner\n\nIhr Vertrag kommt zustande mit MB „Portretizuokis“, einer Kleingesellschaft nach litauischem Recht (mažoji bendrija), vertreten durch Mantas Bakšys, Unternehmenscode 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen, E-Mail info@snapeyes.com („wir“, „SnapEyes“). Alle Angaben finden Sie im Impressum (https://snapeyes.com/imprint?lang=de).\n\nUnser Angebot richtet sich an Verbraucher. Wenn Sie jünger als 18 Jahre sind, bitten Sie einen Elternteil oder eine sorgeberechtigte Person, für Sie zu bestellen.\n\n2. Was Sie kaufen\n\nEin personalisiertes digitales Kunstwerk aus Ihrem eigenen Foto eines Auges (oder mehrerer Augen), im Stil, in der Anordnung und mit der Widmung Ihrer Wahl. Sie erhalten eine Bilddatei (JPEG) ohne Wasserzeichen: 4096 × 4096 px bei einem Auge, bei mehreren Augen 4096 px an der längsten Seite. Das Kunstwerk wird ausschließlich als digitale Datei zum Download geliefert. Drucke, Rahmen oder andere physische Produkte verkaufen wir nicht.\n\nDie Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her. Das Kunstwerk ist daher eine künstlerische Restaurierung, keine medizinische Aufnahme und keine Mikroskopaufnahme, und es eignet sich weder für medizinische Zwecke noch zur Identifizierung einer Person.\n\nBei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt.\n\n3. Ihre Vorschau und Ihre Datei\n\nVor der Bestellung sehen Sie eine kostenlose Vorschau mit Wasserzeichen und geben sie frei. Ihre Datei folgt der freigegebenen Vorschau: dasselbe Auge, derselbe Stil, dieselbe Anordnung, dieselbe Reihenfolge der Augen und dieselbe Widmung, mit derselben Farbe und Tonalität, einmalig in voller Auflösung erstellt. In voller Größe ergänzt unsere KI die feinen Faserdetails, für die die Vorschau zu klein ist; die allerfeinsten Details können daher leicht von der Vorschau abweichen. Eine Vorschau mit fünf bis acht Augen wird aus kleineren Kopien Ihrer Fotos erstellt und ist daher gröber als Ihre Datei.\n\nWeicht Ihre Datei deutlich von der freigegebenen Vorschau ab (zum Beispiel in Farbe, Helligkeit oder bei der Pupille), ist das ein Mangel: siehe Reklamationen und Mängel (https://snapeyes.com/terms?lang=de#defects).\n\n4. Vertragsschluss\n\nDie Vorschauen und Preise auf unserer Website sind noch kein verbindliches Angebot. Vor der Zahlung können Sie Ihre Augen, den Stil, die Anordnung und die Widmung prüfen und Eingaben korrigieren, indem Sie zurückgehen oder ein Foto neu aufnehmen. Danach öffnen Sie mit unserer Schaltfläche „Weiter zur Zahlung“ die Zahlungsseite unseres Zahlungsdienstleisters Stripe; diese Schaltfläche löst noch keine Bestellung aus. Auf dieser Seite geben Sie Ihre E-Mail-Adresse und Zahlungsangaben ein und können sie korrigieren. Eine verbindliche Bestellung geben Sie ab, wenn Sie dort die Zahlung mit der Zahlungsschaltfläche bestätigen.\n\nDer Vertrag kommt zustande, sobald Ihre Zahlung bestätigt ist. Dann öffnet sich Ihre Bestellseite, und wir senden Ihnen deren Link mit Ihrer Bestellbestätigung per E-Mail. Sobald diese E-Mail versandt ist, beginnen wir dort mit Ihrer Datei.\n\nVertragssprachen sind Deutsch, Englisch, Litauisch und Ungarisch.\n\nWir speichern Ihre Bestellung mit den Vertragsdaten: das bestellte Kunstwerk, den Preis, das Datum, Ihre E-Mail-Adresse und Ihre Zustimmung zum sofortigen Beginn. Ihre Bestellseite zeigt diese Angaben, solange wir Ihre Bestellung aufbewahren. Eine eigene Kopie dieser Bedingungen je Bestellung bewahren wir nicht auf. Stattdessen enthält Ihre Bestellbestätigung per E-Mail als Text Ihre Bestelldaten, diese Bedingungen und die Widerrufsbelehrung mit dem Muster-Widerrufsformular, in der bei Ihrer Bestellung gültigen Fassung: Bitte bewahren Sie diese E-Mail auf. Sie können diese Seite außerdem jederzeit speichern oder ausdrucken.\n\n5. Preise und Zahlung\n\nEin Auge, Clean Iris: 19,97 €\nEin Auge, jeder andere Stil: 24,97 €\nZwei Augen, jeder Stil: 39,97 €\nJedes weitere Auge: +15,00 €\n\nAlle Preise sind Endpreise in Euro. Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet oder ausgewiesen. Versandkosten fallen nicht an.\n\nDie obige Tabelle ist unsere Standardpreisliste. Von Zeit zu Zeit erproben wir für einen begrenzten Zeitraum andere Preislisten bei einzelnen, zufällig ausgewählten Besuchern. Berechnet werden Ihnen immer die Preise, die Ihnen vor der Zahlung auf der Kunstwerk-Seite und auf der Zahlungsseite angezeigt werden, und Ihre Bestellbestätigung per E-Mail nennt die Preisliste, die für Ihre Bestellung galt. Welche Preisliste Sie sehen, hängt nie vom Land ab, in dem Sie wohnen, sondern nur vom Markt (der Währung), den Sie wählen.\n\nSie zahlen im Voraus über unseren Zahlungsdienstleister Stripe, mit den auf der Zahlungsseite angezeigten Zahlungsarten.\n\n6. Lieferung\n\nIhre Bestellseite erstellt Ihre Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung; die Erstellung dauert meist wenige Minuten. Schließen Sie die Seite, bevor Ihre Datei fertig ist, macht sie weiter, wenn Sie sie über den Link in der E-Mail wieder öffnen. Meldet unsere automatische Qualitätsprüfung eine Datei, sehen wir sie uns vor der Freigabe selbst an und benachrichtigen Sie per E-Mail, sobald sie fertig ist. Spätestens 48 Stunden nach der Bestätigung Ihrer Zahlung steht Ihre Datei auf Ihrer Bestellseite zum Download bereit. Über Ihre Bestellseite können Sie Ihre Datei jederzeit herunterladen, solange wir sie aufbewahren: 12 Monate ab Ihrer Zahlung (siehe Datenschutzerklärung (https://snapeyes.com/privacy?lang=de)). Jeder Download-Link, den die Seite erzeugt, ist 7 Tage gültig; beim nächsten Öffnen erzeugt sie einen neuen. Haben Sie die E-Mail verloren, schreiben Sie uns.\n\nDer Link zu Ihrer Bestellseite enthält einen privaten Schlüssel: Jede Person, die ihn hat, kann Ihr Kunstwerk herunterladen. Bitte geben Sie ihn nicht weiter. Laden Sie Ihre Datei herunter und bewahren Sie eine Kopie auf. Nach 12 Monaten wird sie gelöscht und kann nicht wiederhergestellt werden.\n\n7. Widerrufsrecht\n\nAls Verbraucher haben Sie grundsätzlich ein 14-tägiges Widerrufsrecht. Bei einer digitalen Datei erlischt es vorzeitig: Vor der Zahlung bitten wir Sie, zuzustimmen, dass wir sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung Ihrer Datei beginnen, und zu bestätigen, dass Ihnen bekannt ist, dass Sie dadurch Ihr Widerrufsrecht verlieren, sobald damit begonnen wurde. Es erlischt daher, sobald wir mit der Erstellung Ihrer Datei (der Vertragserfüllung) begonnen haben; damit beginnen wir erst, nachdem Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, während Ihre Bestellseite geöffnet ist. Das gilt auch, solange die Datei noch erstellt wird oder auf unsere Qualitätsprüfung wartet. Haben wir noch nicht begonnen, erlischt es mit Ablauf der 14-tägigen Widerrufsfrist: Der Tag Ihrer Zahlung wird nicht mitgezählt, und fällt der letzte Tag der Frist auf einen Samstag, einen Sonntag oder einen gesetzlichen Feiertag, endet die Frist mit Ablauf des nächsten Arbeitstags. Solange Ihr Widerrufsrecht besteht, können Sie per E-Mail, per Post oder online mit der Schaltfläche „Vertrag hier widerrufen“ widerrufen; der Widerrufslink in Ihrer Bestellbestätigung per E-Mail öffnet sie für Ihre Bestellung, ohne dass wir mit der Erstellung Ihrer Datei beginnen. Alle Einzelheiten, die Online-Funktion und ein Muster-Widerrufsformular finden Sie in unserer Widerrufsbelehrung (https://snapeyes.com/withdrawal?lang=de).\n\n8. Ihre Fotos\n\nLaden Sie nur Fotos Ihres eigenen Auges hoch oder des Auges einer Person, die damit einverstanden ist (bei einem Kind: ein Elternteil oder eine sorgeberechtigte Person). Mit dem Hochladen bestätigen Sie, dass Sie das Foto für diesen Zweck verwenden dürfen.\n\nDie Rechte an Ihrem Foto bleiben bei Ihnen. Wir verwenden es nur, um Ihre Vorschau und Ihr Kunstwerk zu erstellen, wie in unserer Datenschutzerklärung (https://snapeyes.com/privacy?lang=de) beschrieben.\n\nWir können eine Bestellung ablehnen und eine bereits geleistete Zahlung vollständig erstatten, wenn ein Foto offensichtlich gegen diese Regeln verstößt.\n\n9. Was Sie mit Ihrem Kunstwerk tun dürfen\n\nSie erhalten ein einfaches, zeitlich unbegrenztes Nutzungsrecht an Ihrem Kunstwerk für private, nicht kommerzielle Zwecke. Sie dürfen es zum Beispiel für sich ausdrucken (zu Hause oder in einer Druckerei), rahmen, verschenken, als Hintergrundbild auf Ihren Geräten nutzen und in Ihren privaten sozialen Netzwerken teilen.\n\nOhne unsere Zustimmung (eine E-Mail genügt) dürfen Sie das Kunstwerk oder daraus hergestellte Produkte nicht verkaufen, Dritten Rechte daran einräumen oder es für Werbung oder andere kommerzielle Zwecke verwenden.\n\nDie Stile, Hintergründe, Anordnungen und das Design von SnapEyes bleiben unser Eigentum, einschließlich etwaiger Urheberrechte daran. Das gilt auch für die Vorschauen mit Wasserzeichen.\n\n10. Reklamationen und Mängel\n\nIhre gesetzlichen Rechte bei digitalen Inhalten, die nicht vertragsgemäß sind, gelten uneingeschränkt. Ist Ihre Datei mangelhaft, lässt sie sich zum Beispiel nicht herunterladen oder öffnen, ist sie beschädigt, kleiner als zugesagt oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie bitte mit Ihrer Bestellnummer an info@snapeyes.com. Wir erstellen die Datei kostenlos neu oder erstatten Ihnen den Preis, wenn das den Mangel nicht behebt.\n\n11. Haftung\n\nWir haften unbeschränkt bei Vorsatz und grober Fahrlässigkeit, bei Verletzung von Leben, Körper oder Gesundheit und soweit zwingendes Recht es vorsieht. Im Übrigen haften wir bei leichter Fahrlässigkeit nur für die Verletzung wesentlicher Vertragspflichten und nur für den vertragstypischen, vorhersehbaren Schaden. Die kostenlose Vorschau wird so angeboten, wie sie ist, ohne Anspruch auf ihre Verfügbarkeit.\n\n12. Streitigkeiten und anwendbares Recht\n\nWenn etwas nicht stimmt, schreiben Sie uns bitte zuerst: Die meisten Probleme lassen sich schnell per E-Mail lösen.\n\nKönnen wir uns nicht einigen, können sich Verbraucher an die litauische Staatliche Verbraucherschutzbehörde (Valstybinė vartotojų teisių apsaugos tarnyba, https://vvtat.lt) wenden, die Verbraucherstreitigkeiten außergerichtlich beilegt, oder an die Verbraucherschutzstellen und Gerichte ihres eigenen Landes.\n\nEs gilt litauisches Recht. Wenn Sie als Verbraucher in einem anderen EU-Land leben, behalten Sie den Schutz der zwingenden Verbraucherschutzvorschriften dieses Landes.\n\n13. Änderungen dieser Bedingungen\n\nFür Ihre Bestellung gelten die Bedingungen, die zum Zeitpunkt Ihrer Bestellung gültig sind."
+    }
+   },
+   "lt": {
+    "withdrawal": {
+     "title": "Teisė atsisakyti sutarties",
+     "url": "https://snapeyes.com/withdrawal?lang=lt",
+     "text": "TEISĖ ATSISAKYTI SUTARTIES\n\nAtnaujinta: 2026-10-06 · https://snapeyes.com/withdrawal?lang=lt\n\nES vartotojai, pirkdami internetu, turi teisę atsisakyti sutarties. Kai perkamas skaitmeninis failas, toks kaip mūsų, ši teisė baigiasi anksčiau: kai tik, Jums sutikus, pradedame kurti Jūsų failą. Čia pateikiame visą informaciją.\n\nTeisė atsisakyti sutarties\n\nJūs turite teisę atsisakyti šios sutarties per 14 dienų nenurodydamas jokios priežasties.\n\nSutarties atsisakymo laikotarpis baigsis praėjus 14 dienų nuo dienos, kurią sudaryta sutartis.\n\nNorėdamas pasinaudoti teise atsisakyti šios sutarties Jūs turite mums (MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Lietuva, el. paštas: info@snapeyes.com) pranešti apie savo sprendimą atsisakyti šios sutarties pateikdamas nedviprasmišką pareiškimą (pvz., paštu ar elektroniniu laišku). Galite pasinaudoti pridedama pavyzdine forma, bet tai nėra privaloma. Be to, galite pasinaudoti savo teise atsisakyti sutarties internetu https://snapeyes.com/order?withdraw=1&lang=lt (mygtukas „Atsisakyti sutarties čia“). Jeigu pasinaudosite šia internetine funkcija, nepagrįstai nedelsdami Jums patvariojoje laikmenoje (pvz., elektroniniu paštu) išsiųsime sutarties atsisakymo gavimo patvirtinimą, įskaitant sutarties atsisakymo turinį ir jo pateikimo datą bei laiką.\n\nKad būtų laikomasi atsisakymo termino, pakanka, jog Jūs nusiųstumėte pranešimą apie tai, kad pasinaudojate savo teise atsisakyti šios sutarties prieš pasibaigiant atsisakymo laikotarpiui.\n\nSutarties atsisakymo pasekmės\n\nJei Jūs atsisakote šios sutarties, mes nedelsdami ir bet kuriuo atveju ne vėliau kaip per 14 dienų nuo tos dienos, kai pranešėte apie savo sprendimą atsisakyti šios sutarties, grąžinsime Jums iš Jūsų gautus pinigus, įskaitant pristatymo išlaidas (išskyrus papildomas išlaidas, patirtas Jums pasirinkus ne mūsų pasiūlytą pigiausią standartinio pristatymo būdą, o kitą pristatymo būdą). Atliksime tokį grąžinimą naudodami tokį patį mokėjimo būdą, kokį Jūs naudojote atlikdamas pradinę mokėjimo operaciją, nebent Jūs aiškiai sutikote su kitu būdu; bet kuriuo atveju Jūs neturėsite mokėti jokių su tokiu grąžinimu susijusių mokesčių.\n\nKada teisė atsisakyti sutarties baigiasi anksčiau\n\nJūsų teisė atsisakyti sutarties baigiasi anksčiau, kai tik pradedame vykdyti sutartį, tai yra pradedame kurti Jūsų failą, jeigu (1) aiškiai iš anksto sutikote, kad sutartį pradėtume vykdyti nepasibaigus sutarties atsisakymo terminui, (2) pripažinote, kad todėl, kai tik pradėsime, neteksite teisės atsisakyti sutarties, ir (3) mes Jums tai patvirtinome patvariojoje laikmenoje (tai darome užsakymo patvirtinimo el. laiške, kuris išsiunčiamas prieš mums pradedant). Tai numatyta Lietuvos Respublikos civilinio kodekso 6.228(10) straipsnio 2 dalies 13 punkte ir Direktyvos 2011/83/ES 16 straipsnio m punkte.\n\nPrieš mokėjimą šį sutikimą duodate pažymėdami šį langelį:\n\nLangelis užsakymo metu:\n    Aiškiai sutinku, kad SnapEyes pradėtų kurti mano skaitmeninį kūrinį iš karto, dar nepasibaigus sutarties atsisakymo terminui. Pripažįstu, kad pradėjus kurti kūrinį neteksiu teisės atsisakyti sutarties.\n\nTodėl praktiškai Jūsų teisė atsisakyti sutarties baigiasi tą akimirką, kai pradedame kurti Jūsų failą. Pradedame tik po to, kai išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo, kol Jūsų užsakymo puslapis atidarytas: mokėjimo puslapis Jus tiesiai ten nukreipia. Jei tuo metu nesate savo užsakymo puslapyje, pradedame, kai jį vėl atidarote per tame el. laiške esančią užsakymo puslapio nuorodą. Tame pačiame el. laiške esanti sutarties atsisakymo nuoroda atidaro internetinę sutarties atsisakymo funkciją Jūsų užsakymui, nieko nepradėdama. Nuo tos akimirkos, kai pradedame, Jūsų teisė atsisakyti sutarties yra pasibaigusi, net jei Jūsų failas dar kuriamas arba laukia mūsų kokybės patikros. Jei Jūsų failo dar nepradėjome kurti, Jūsų teisė atsisakyti sutarties baigiasi pasibaigus 14 dienų sutarties atsisakymo terminui: Jūsų mokėjimo diena neskaičiuojama, o jei paskutinė termino diena yra šeštadienis, sekmadienis arba oficiali šventės diena, terminas baigiasi kitos darbo dienos pabaigoje. Tai neturi įtakos Jūsų įstatymų numatytoms teisėms, jei failas turi trūkumų: žr. mūsų pardavimo sąlygų skyrių Pretenzijos ir trūkumai (https://snapeyes.com/terms?lang=lt#defects).\n\nSutarties atsisakymas internetu\n\nKol turite teisę atsisakyti sutarties, bet kada galite tai padaryti internetu, funkcija „Atsisakyti sutarties čia“ (https://snapeyes.com/order?withdraw=1&lang=lt). Ją rasite mūsų pagrindinio puslapio ir teisinės informacijos puslapių apačioje, savo užsakymo puslapyje ir per sutarties atsisakymo nuorodą užsakymo patvirtinimo el. laiške. Ta nuoroda atidaro funkciją Jūsų užsakymui, nieko nepradėdama. O pats užsakymo puslapio atidarymas pradeda kurti Jūsų failą, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, ir tada Jūsų teisė atsisakyti sutarties baigiasi (žr. Kada teisė atsisakyti sutarties baigiasi anksčiau (https://snapeyes.com/withdrawal?lang=lt#expiry)).\n\nKaip tai veikia: įveskite savo vardą ir pavardę, užsakymo numerį (jis jau įrašytas, jei atėjote iš savo užsakymo puslapio ar per sutarties atsisakymo nuorodą) ir el. pašto adresą gavimo patvirtinimui, tada išsiųskite pareiškimą mygtuku „Patvirtinti sutarties atsisakymą“. Jei atėjote be šių nuorodų, įveskite el. pašto adresą, kurį nurodėte mokėdami, kad galėtume rasti Jūsų užsakymą. Jei duomenys neatitinka nė vieno mūsų užsakymo, puslapis apie tai praneša; Jūsų pareiškimą vis tiek išsaugome, patikriname rankiniu būdu ir el. paštu atsiunčiame Jums gavimo patvirtinimą. Kad būtų išvengta piktnaudžiavimo mūsų el. laiškais, gavimo patvirtinimų skaičius ribojamas: pareiškimams, neatitinkantiems nė vieno mūsų užsakymo, iki dviejų per dieną ir keturių per mėnesį tuo pačiu adresu; vienam užsakymui iš viso iki trijų kitais adresais nei tas, kurį nurodėte apmokėjimo metu (tolesni siunčiami adresu, kurį nurodėte apmokėjimo metu); o pakartotiniam pareiškimui dėl užsakymo, į kurį jau atsakėme, iki vieno per dieną tam užsakymui ir penkių per dieną visiems užsakymams kartu. Jei puslapis negali priimti Jūsų pareiškimo, pavyzdžiui, dėl techninio gedimo arba todėl, kad gaunama neįprastai daug pareiškimų, jis apie tai praneša: tada atsiųskite mums pareiškimą el. paštu; el. laiškas galioja lygiai taip pat.\n\nKas vyksta toliau: Jūsų pareiškimą užregistruojame su data ir laiku, kada jis mus pasiekė. Jei Jūsų užsakymas apmokėtas, Jūsų failo dar nepradėjome kurti ir 14 dienų sutarties atsisakymo terminas nepasibaigęs, Jūsų sutarties atsisakymas įsigalioja: sustabdome Jūsų užsakymą, todėl nieko nekuriama, ir grąžiname pinigus, kaip aprašyta skyriuje Sutarties atsisakymo pasekmės (https://snapeyes.com/withdrawal?lang=lt#effects). Jei atsisakant sutarties Jūsų mokėjimas dar buvo apdorojamas, taip pat nieko nekuriama, o jei mokėjimas mus pasiekia, grąžiname visą sumą. Nedelsdami el. paštu atsiunčiame Jums gavimo patvirtinimą su Jūsų sutarties atsisakymo turiniu, data ir laiku.\n\nJei Jums sutikus jau buvome pradėję kurti Jūsų failą arba 14 dienų sutarties atsisakymo terminas buvo pasibaigęs, Jūsų teisė atsisakyti sutarties jau buvo pasibaigusi (žr. Kada teisė atsisakyti sutarties baigiasi anksčiau (https://snapeyes.com/withdrawal?lang=lt#expiry)): puslapis ir gavimo patvirtinimas Jums tai praneša, o Jūsų pareiškimą vis tiek peržiūrime asmeniškai. Jei Jūsų užsakymas niekada nebuvo apmokėtas, nėra sutarties, kurios būtų galima atsisakyti: puslapis apie tai praneša ir pinigai nenuskaityti. Tai neturi įtakos Jūsų teisėms, jei failas turi trūkumų.\n\nPavyzdinė sutarties atsisakymo forma\n\n(Šią formą užpildykite ir grąžinkite tik tuo atveju, jei norite atsisakyti sutarties)\n\n    Kam: MB „Portretizuokis“, Gedimino g. 22A-14, LT-44319 Kaunas, Lietuva, el. paštas: info@snapeyes.com\n    Aš / Mes* pranešu (-ame), kad atsisakau (-ome) pirkimo-pardavimo sutarties dėl šių prekių* / šių paslaugų teikimo sutarties*:\n    Užsakytų* / gautų* [data]:\n    Vartotojo (-ų) vardas, pavardė:\n    Vartotojo (-ų) adresas:\n    Vartotojo (-ų) parašas (-ai) (tik jei ši forma pateikiama popierine forma):\n    Data:\n    (*) Išbraukti, kas nereikalinga.\n\nEl. paštu tiesiog atsiųskite užpildytą formą arba savo pareiškimą adresu info@snapeyes.com. Jei žinote užsakymo numerį, jį nurodykite. Internetu naudokitės aukščiau aprašyta funkcija „Atsisakyti sutarties čia“ (https://snapeyes.com/order?withdraw=1&lang=lt)."
+    },
+    "terms": {
+     "title": "Pardavimo sąlygos",
+     "url": "https://snapeyes.com/terms?lang=lt",
+     "text": "PARDAVIMO SĄLYGOS\n\nAtnaujinta: 2026-10-06 · https://snapeyes.com/terms?lang=lt\n\nŠios sąlygos taikomos kiekvienam užsakymui, pateiktam svetainėje snapeyes.com. Prieš užsisakant perskaitykite jas. Nemokama peržiūra siūloma be jokių įsipareigojimų.\n\n1. Su kuo sudarote sutartį\n\nSutartį sudarote su MB „Portretizuokis“, mažąja bendrija pagal Lietuvos Respublikos teisę, kuriai atstovauja Mantas Bakšys, įmonės kodas 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Lietuva, el. paštas info@snapeyes.com (toliau vadinama „mes“ arba „SnapEyes“). Visi rekvizitai pateikti puslapyje Rekvizitai (https://snapeyes.com/imprint?lang=lt).\n\nMūsų pasiūlymas skirtas vartotojams. Jei Jums dar nėra 18 metų, paprašykite, kad užsakymą už Jus pateiktų vienas iš tėvų, globėjas ar rūpintojas.\n\n2. Ką perkate\n\nPersonalizuotą skaitmeninį kūrinį, sukurtą iš Jūsų pačių akies (arba kelių akių) nuotraukos, Jūsų pasirinktu stiliumi, išdėstymu ir su Jūsų pasirinktu užrašu. Gausite vieną vaizdo failą (JPEG) be vandens ženklo: vienos akies kūrinys yra 4096 × 4096 px, kelių akių kūrinio ilgoji kraštinė yra 4096 px. Kūrinys pateikiamas tik kaip skaitmeninis failas, jį atsisiunčiant. Spaudinių, rėmelių ar kitų fizinių produktų neparduodame.\n\nSpalva paimta iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI. Todėl kūrinys yra meninis atkūrimas, o ne medicininis ar mikroskopinis vaizdas, ir jis netinka jokiems medicininiams tikslams ar asmens tapatybei nustatyti.\n\nKai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos, todėl kito kliento kūrinyje gali būti tas pats elementas. Jūsų rainelė išlaiko Jūsų nuotraukos spalvas, raštą ir išdėstymą; smulkiausias skaidulas, kaip aprašyta aukščiau, atkuria DI.\n\n3. Jūsų peržiūra ir Jūsų failas\n\nPrieš užsakymą matote nemokamą peržiūrą su vandens ženklu ir ją patvirtinate. Jūsų failas atitinka patvirtintą peržiūrą: ta pati akis, stilius, išdėstymas, akių tvarka ir užrašas, tos pačios spalvos ir tonai, vieną kartą sukurta visa raiška. Visu dydžiu mūsų DI prideda smulkias skaidulų detales, kurių peržiūra dėl mažo dydžio parodyti negali, todėl pačios smulkiausios detalės gali šiek tiek skirtis nuo peržiūros. Peržiūra, kurioje yra nuo penkių iki aštuonių akių, kuriama iš mažesnių Jūsų nuotraukų kopijų, todėl ji grubesnė už Jūsų failą.\n\nJei Jūsų failas aiškiai skiriasi nuo patvirtintos peržiūros (pavyzdžiui, spalva, šviesumu ar vyzdžiu), tai yra trūkumas: žr. Pretenzijos ir trūkumai (https://snapeyes.com/terms?lang=lt#defects).\n\n4. Kaip sudaroma sutartis\n\nMūsų svetainėje pateiktos peržiūros ir kainos dar nėra oferta (pasiūlymas sudaryti sutartį). Prieš mokėjimą galite patikrinti savo akis, stilių, išdėstymą ir užrašą ir ištaisyti bet kokias įvesties klaidas, grįždami atgal arba iš naujo fotografuodami. Tada mūsų mygtuku „Pereiti prie apmokėjimo“ atidarote mūsų mokėjimo paslaugų teikėjo Stripe mokėjimo puslapį; šis mygtukas dar nepateikia užsakymo. Tame puslapyje įvedate savo el. pašto adresą ir mokėjimo duomenis ir galite juos pataisyti. Užsakymą su prievole sumokėti pateikiate, kai ten patvirtinate mokėjimą mokėjimo mygtuku.\n\nSutartis sudaroma, kai patvirtinamas Jūsų mokėjimas. Tada atsidaro Jūsų užsakymo puslapis, o jo nuorodą kartu su užsakymo patvirtinimu atsiunčiame Jums el. paštu. Kai tik tas el. laiškas išsiųstas, ten pradedame kurti Jūsų failą.\n\nSutarties kalbos: lietuvių, anglų, vokiečių ir vengrų.\n\nJūsų užsakymą saugome su sutarties duomenimis: užsakytas kūrinys, kaina, data, Jūsų el. pašto adresas ir Jūsų sutikimas, kad pradėtume iš karto. Jūsų užsakymo puslapyje šie duomenys matomi tol, kol saugome Jūsų užsakymą. Atskiros šių sąlygų kopijos kiekvienam užsakymui nesaugome. Vietoj to Jūsų užsakymo patvirtinimo el. laiške tekstu pateikiami Jūsų užsakymo duomenys, šios sąlygos ir informacija apie teisę atsisakyti sutarties su pavyzdine sutarties atsisakymo forma, užsakymo metu galiojusios redakcijos: išsaugokite tą el. laišką. Šį puslapį taip pat bet kada galite išsaugoti arba atsispausdinti.\n\n5. Kainos ir apmokėjimas\n\nViena akis, Clean Iris: 19,97 €\nViena akis, bet kuris kitas stilius: 24,97 €\nDvi akys, bet kuris stilius: 39,97 €\nKiekviena papildoma akis: +15,00 €\n\nVisos kainos yra galutinės ir nurodytos eurais. MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas. Pristatymo išlaidų nėra.\n\nPirmiau pateikta lentelė yra mūsų standartinis kainoraštis. Kartkartėmis ribotą laiką kai kuriems atsitiktinai parinktiems lankytojams išbandome kitus kainoraščius. Visada mokate kainas, kurios Jums parodytos kūrinio puslapyje prieš apmokėjimą ir mokėjimo puslapyje, o Jūsų užsakymo patvirtinimo el. laiške nurodomas kainoraštis, kuris taikytas Jūsų užsakymui. Koks kainoraštis Jums rodomas, niekada nepriklauso nuo šalies, kurioje gyvenate, o tik nuo Jūsų pasirinktos rinkos (valiutos).\n\nMokate iš anksto per mūsų mokėjimo paslaugų teikėją Stripe, mokėjimo puslapyje rodomais mokėjimo būdais.\n\n6. Pristatymas\n\nJūsų užsakymo puslapis sukuria Jūsų failą, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo; kūrimas paprastai užtrunka kelias minutes. Jei uždarote puslapį, kol failas dar nebaigtas, kūrimas tęsiamas, kai vėl jį atidarote per el. laiške esančią nuorodą. Jei mūsų automatinė kokybės patikra pažymi failą, prieš jį pateikdami patys jį peržiūrime ir, kai jis paruoštas, parašome Jums el. laišką. Vėliausiai per 48 valandas nuo Jūsų mokėjimo patvirtinimo Jūsų failą galėsite atsisiųsti savo užsakymo puslapyje. Užsakymo puslapyje failą galite atsisiųsti bet kada, kol jį saugome: 12 mėnesių nuo apmokėjimo (žr. privatumo politiką (https://snapeyes.com/privacy?lang=lt)). Kiekviena ten sukurta atsisiuntimo nuoroda galioja 7 dienas; kaskart atidarius puslapį sukuriama nauja. Jei el. laišką praradote, parašykite mums.\n\nJūsų užsakymo puslapio nuorodoje yra privatus raktas: kiekvienas, kas ją turi, gali atsisiųsti Jūsų kūrinį, todėl niekam jos neperduokite. Atsisiųskite savo failą ir pasilikite kopiją. Po 12 mėnesių jis ištrinamas ir jo atkurti nebeįmanoma.\n\n7. Teisė atsisakyti sutarties\n\nVartotojai paprastai turi teisę per 14 dienų atsisakyti sutarties. Skaitmeninio failo atveju ši teisė baigiasi anksčiau: prieš mokėjimą paprašome Jūsų sutikti, kad Jūsų failą pradėtume kurti iš karto, dar nepasibaigus sutarties atsisakymo terminui, ir pripažinti, kad pradėjus kurti netenkate teisės atsisakyti sutarties. Todėl ši teisė baigiasi, kai tik pradedame kurti Jūsų failą (vykdyti sutartį); pradedame tik po to, kai išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo, kol Jūsų užsakymo puslapis atidarytas. Tai galioja ir tada, kai failas dar kuriamas arba laukia mūsų kokybės patikros. Jei dar nepradėjome, teisė baigiasi pasibaigus 14 dienų sutarties atsisakymo terminui: Jūsų mokėjimo diena neskaičiuojama, o jei paskutinė termino diena yra šeštadienis, sekmadienis arba oficiali šventės diena, terminas baigiasi kitos darbo dienos pabaigoje. Kol turite teisę atsisakyti sutarties, galite tai padaryti el. paštu, paštu arba internetu, mygtuku „Atsisakyti sutarties čia“; užsakymo patvirtinimo el. laiške esanti sutarties atsisakymo nuoroda atidaro šią funkciją Jūsų užsakymui, nepradėdama kurti Jūsų failo. Visa informacija, internetinė funkcija ir pavyzdinė sutarties atsisakymo forma pateiktos puslapyje Teisė atsisakyti sutarties (https://snapeyes.com/withdrawal?lang=lt).\n\n8. Jūsų nuotraukos\n\nĮkelkite tik savo arba kito žmogaus akies nuotraukas, jei tas žmogus su tuo sutiko (vaiko atveju sutikti turi vienas iš tėvų, globėjas ar rūpintojas). Įkeldami nuotrauką patvirtinate, kad galite ją naudoti šiam tikslui.\n\nTeisės į Jūsų nuotrauką lieka Jums. Ją naudojame tik Jūsų peržiūrai ir kūriniui sukurti, kaip aprašyta mūsų privatumo politikoje (https://snapeyes.com/privacy?lang=lt).\n\nGalime atsisakyti vykdyti užsakymą ir grąžinti visą sumokėtą sumą, jei nuotrauka akivaizdžiai pažeidžia šias taisykles.\n\n9. Ką galite daryti su savo kūriniu\n\nGaunate neišimtinę, neterminuotą licenciją naudoti savo kūrinį asmeniniais, nekomerciniais tikslais. Pavyzdžiui, galite jį atsispausdinti sau (namuose arba spaustuvėje), įrėminti, padovanoti, naudoti kaip ekrano foną savo įrenginiuose ir dalytis juo savo asmeninėse socialinių tinklų paskyrose.\n\nBe mūsų leidimo (pakanka el. laiško) negalite parduoti kūrinio ar iš jo pagamintų produktų, suteikti į jį teisių kitiems asmenims ar naudoti jo reklamai ar kitiems komerciniams tikslams.\n\nStiliai, fonai, išdėstymai ir SnapEyes dizainas lieka mūsų, įskaitant bet kokias autorių teises į juos. Tai taikoma ir peržiūroms su vandens ženklu.\n\n10. Pretenzijos ir trūkumai\n\nVisa apimtimi taikomos įstatymų Jums suteikiamos teisės, kai skaitmeninis turinys neatitinka sutarties sąlygų. Jei Jūsų failas turi trūkumų, pavyzdžiui, jo nepavyksta atsisiųsti ar atidaryti, jis sugadintas, mažesnis nei žadėta arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums adresu info@snapeyes.com ir nurodykite užsakymo numerį. Failą nemokamai sukursime iš naujo arba, jei tai trūkumo nepašalins, grąžinsime pinigus.\n\n11. Atsakomybė\n\nBe apribojimų atsakome už žalą, padarytą tyčia arba dėl didelio neatsargumo, už žalą asmens gyvybei ar sveikatai ir visais atvejais, kai tai numato imperatyviosios teisės normos. Kitais atvejais už žalą, padarytą dėl paprasto neatsargumo, atsakome tik tada, kai pažeidžiamos esminės sutartinės prievolės, ir tik už tokio pobūdžio sutarčiai būdingą ir protingai numatomą žalą. Nemokama peržiūra teikiama tokia, kokia yra, be jokių garantijų dėl jos prieinamumo.\n\n12. Ginčai ir taikytina teisė\n\nJei kas nors ne taip, pirmiausia parašykite mums: dauguma problemų greitai išsprendžiamos el. paštu.\n\nJei nepavyksta susitarti, vartotojai gali kreiptis į Valstybinę vartotojų teisių apsaugos tarnybą (https://vvtat.lt), kuri vartojimo ginčus sprendžia ne teismo tvarka, arba į savo šalies vartotojų teisių apsaugos institucijas ir teismus.\n\nTaikoma Lietuvos Respublikos teisė. Vartotojams, gyvenantiems kitoje ES šalyje, išlieka tos šalies imperatyviųjų vartotojų teisių apsaugos normų suteikiama apsauga.\n\n13. Šių sąlygų pakeitimai\n\nJūsų užsakymui taikomos sąlygos, galiojusios užsakymo pateikimo metu."
+    }
+   },
+   "hu": {
+    "withdrawal": {
+     "title": "Elállási tájékoztató",
+     "url": "https://snapeyes.com/withdrawal?lang=hu",
+     "text": "ELÁLLÁSI TÁJÉKOZTATÓ\n\nUtolsó frissítés: 2026. 10. 06. · https://snapeyes.com/withdrawal?lang=hu\n\nAz EU-ban a fogyasztókat az online vásárlásoknál elállási jog illeti meg. A miénkhez hasonló digitális fájl esetén ez korábban megszűnik, amint az Ön hozzájárulásával megkezdjük a fájl elkészítését. Alább a teljes tájékoztatót találja.\n\nElállási jog\n\nÖn 14 napon belül jogosult indokolás nélkül elállni e szerződéstől.\n\nAz elállási határidő a szerződés megkötésének napjától számított 14 nap elteltével jár le.\n\nHa Ön elállási jogával élni kíván, elállási szándékát tartalmazó egyértelmű nyilatkozatát köteles eljuttatni (például postán vagy elektronikus úton küldött levél útján) az alábbi címre: MB „Portretizuokis”, Gedimino g. 22A-14, LT-44319 Kaunas, Litvánia, e-mail: info@snapeyes.com. Ebből a célból felhasználhatja a mellékelt elállási nyilatkozat-mintát is. Az elállási jogát Ön online is gyakorolhatja a következő címen: https://snapeyes.com/order?withdraw=1&lang=hu (az „Elállás a szerződéstől” gomb). Ha ezt az online funkciót veszi igénybe, az elállás megérkezését - az elállás tartalmát, valamint napját és időpontját is feltüntetve - tartós adathordozón (például elektronikus levélben) haladéktalanul visszaigazoljuk Önnek.\n\nÖn határidőben gyakorolja elállási jogát, ha a fent megjelölt határidő lejárta előtt elküldi elállási nyilatkozatát.\n\nAz elállás joghatásai\n\nHa Ön eláll ettől a szerződéstől, haladéktalanul, de legkésőbb az Ön elállási nyilatkozatának kézhezvételétől számított 14 napon belül visszatérítjük az Ön által teljesített valamennyi ellenszolgáltatást, ideértve a fuvarozási költséget is (kivéve azokat a többletköltségeket, amelyek amiatt merültek fel, hogy Ön az általunk felkínált, legolcsóbb szokásos fuvarozási módtól eltérő fuvarozási módot választott.) A visszatérítés során az eredeti ügylet során alkalmazott fizetési móddal egyező fizetési módot alkalmazunk, kivéve, ha Ön más fizetési mód igénybevételéhez kifejezetten a hozzájárulását adja; e visszatérítési mód alkalmazásából kifolyólag Önt semmilyen többletköltség nem terheli.\n\nMikor szűnik meg korábban az elállási jog\n\nAz elállási joga korábban megszűnik, amint megkezdtük a szerződés teljesítését, vagyis a fájl elkészítését, ha (1) Ön kifejezetten hozzájárult ahhoz, hogy a teljesítést az elállási határidő lejárta előtt megkezdjük, (2) egyúttal tudomásul vette, hogy a teljesítés megkezdését követően elveszíti az elállási jogát, és (3) ezt tartós adathordozón visszaigazoltuk Önnek (ezt a megrendelés visszaigazolását tartalmazó e-mailben tesszük meg, amely még a kezdés előtt elmegy). Ez a 45/2014. (II. 26.) Korm. rendelet 29. § (1) bekezdés m) pontjából és a 2011/83/EU irányelv 16. cikk m) pontjából következik.\n\nFizetés előtt ezt a hozzájárulást ennek a négyzetnek a bejelölésével adja meg:\n\nA jelölőnégyzet a megrendeléskor:\n    Kifejezetten hozzájárulok ahhoz, hogy a SnapEyes még az elállási határidő lejárta előtt azonnal megkezdje a digitális alkotásom elkészítését. Tudomásul veszem, hogy a teljesítés megkezdését követően elveszítem az elállási jogomat.\n\nA gyakorlatban ezért az elállási joga abban a pillanatban szűnik meg, amikor megkezdjük a fájl elkészítését. Ezt csak azután kezdjük meg, hogy elment a megrendelés visszaigazolását tartalmazó e-mail, ez általában a fizetés után egy percen belül megtörténik, amíg a rendelési oldala nyitva van: a fizetési oldal egyenesen oda vezeti. Ha addig nincs a rendelési oldalán, akkor kezdjük meg, amikor az e-mailben kapott, a rendelési oldalára vezető linkkel újra megnyitja. Ugyanebben az e-mailben az elállási link a megrendeléséhez nyitja meg az online elállási funkciót, anélkül, hogy bármit elindítana. A kezdés pillanatától az elállási joga megszűnt, akkor is, ha a fájl még készül, vagy a minőségellenőrzésünkre vár. Ha még nem kezdtük meg a fájl elkészítését, az elállási joga a 14 napos elállási határidő leteltével szűnik meg: a fizetés napja nem számít bele, és ha a határidő utolsó napja szombatra, vasárnapra vagy munkaszüneti napra esik, a határidő a következő munkanap végén jár le. Hibás fájl esetén a jogszabályon alapuló jogait ez nem érinti: lásd az ÁSZF Kellékszavatosság és hibás teljesítés (https://snapeyes.com/terms?lang=hu#defects) pontját.\n\nOnline elállás\n\nAmíg az elállási joga fennáll, bármikor elállhat online, az „Elállás a szerződéstől” (https://snapeyes.com/order?withdraw=1&lang=hu) funkcióval. Megtalálja a kezdőlapunk és a jogi oldalaink alján, a rendelési oldalán, valamint a megrendelés visszaigazolását tartalmazó e-mailben kapott elállási link mögött. Ez a link a megrendeléséhez nyitja meg a funkciót, anélkül, hogy bármit elindítana. Maga a rendelési oldal megnyitása viszont elindítja a fájl elkészítését, amint elment a visszaigazoló e-mail, és ezzel megszűnik az elállási joga (lásd: Mikor szűnik meg korábban az elállási jog (https://snapeyes.com/withdrawal?lang=hu#expiry)).\n\nÍgy működik: adja meg a nevét, a rendelésszámát (ez már ki van töltve, ha a rendelési oldaláról vagy az elállási linkről érkezik) és azt az e-mail-címet, ahová az átvételi elismervényt kéri, majd küldje el az elállását az „Elállás megerősítése” gombbal. Ha nem e linkek valamelyikén keresztül érkezik, kérjük, azt az e-mail-címet adja meg, amellyel fizetett, hogy a megrendeléséhez tudjuk rendelni. Ha az adatok egyik megrendelésünkkel sem egyeznek, az oldal ezt jelzi; a nyilatkozatát ennek ellenére megőrizzük, kézzel ellenőrizzük, és e-mailben átvételi elismervényt küldünk. Hogy e-mailjeinkkel ne lehessen visszaélni, az átvételi elismervények száma korlátozott: az egyik megrendelésünkkel sem egyező nyilatkozatoknál ugyanarra a címre naponta kettő és havonta négy; egy megrendeléshez összesen három mehet más címre, mint amellyel fizettek (a továbbiak arra a címre mennek, amellyel Ön fizetett); egy már megválaszolt megrendelésről ismételten küldött nyilatkozatnál pedig az adott megrendeléshez naponta egy, az összes megrendeléshez együtt naponta öt. Ha az oldal nem tudja fogadni a nyilatkozatát, például műszaki hiba miatt vagy mert szokatlanul sok nyilatkozat érkezik, ezt jelzi: ilyenkor kérjük, e-mailben küldje el nekünk az elállását; az e-mail ugyanolyan érvényes.\n\nMi történik ezután: a nyilatkozatát a beérkezés dátumával és időpontjával rögzítjük. Ha a megrendelése ki van fizetve, még nem kezdtük meg a fájl elkészítését, és a 14 napos elállási határidő nem járt le, az elállása hatályos: leállítjuk a megrendelést, így semmi nem készül el, és a kifizetett összeget visszatérítjük (lásd: Az elállás joghatásai (https://snapeyes.com/withdrawal?lang=hu#effects)). Ha az elálláskor a fizetése még feldolgozás alatt állt, szintén semmi nem készül el, és ha a fizetés megérkezik hozzánk, teljes egészében visszatérítjük. Indokolatlan késedelem nélkül e-mailben átvételi elismervényt küldünk Önnek az elállás tartalmával, valamint napjával és időpontjával.\n\nHa az Ön hozzájárulásával már megkezdtük a fájl elkészítését, vagy a 14 napos elállási határidő lejárt, az elállási joga már megszűnt (lásd: Mikor szűnik meg korábban az elállási jog (https://snapeyes.com/withdrawal?lang=hu#expiry)): az oldal és az átvételi elismervény ezt közli Önnel, a nyilatkozatát pedig ennek ellenére személyesen is megnézzük. Ha a megrendelést soha nem fizették ki, nincs szerződés, amelytől el lehetne állni: az oldal ezt jelzi, és terhelés nem történt. Hibás fájl esetén az Önt megillető jogokat ez nem érinti.\n\nElállásinyilatkozat-minta\n\n(csak a szerződéstől való elállási szándék esetén töltse ki és juttassa vissza)\n\n    Címzett: MB „Portretizuokis”, Gedimino g. 22A-14, LT-44319 Kaunas, Litvánia, e-mail: info@snapeyes.com\n    Alulírott(ak) kijelenti(k), hogy gyakorlom/gyakoroljuk elállási/felmondási jogomat/jogunkat az alábbi áru(k) adásvételére vagy az alábbi szolgáltatás nyújtására irányuló szerződés tekintetében:\n    Szerződéskötés időpontja/átvétel időpontja:\n    Fogyasztó(k) neve:\n    Fogyasztó(k) címe:\n    A fogyasztó(k) aláírása (kizárólag papír alapon tett nyilatkozat esetén):\n    Kelt\n\nE-mailben egyszerűen küldje el a kitöltött nyilatkozatmintát vagy a saját nyilatkozatát az info@snapeyes.com címre. Ha megvan, kérjük, adja meg a rendelésszámát is. Online használja a fent leírt „Elállás a szerződéstől” (https://snapeyes.com/order?withdraw=1&lang=hu) funkciót."
+    },
+    "terms": {
+     "title": "Általános Szerződési Feltételek (ÁSZF)",
+     "url": "https://snapeyes.com/terms?lang=hu",
+     "text": "ÁLTALÁNOS SZERZŐDÉSI FELTÉTELEK (ÁSZF)\n\nUtolsó frissítés: 2026. 10. 06. · https://snapeyes.com/terms?lang=hu\n\nEzek a feltételek a snapeyes.com oldalon leadott minden megrendelésre vonatkoznak. Kérjük, rendelés előtt olvassa el őket. Az ingyenes előnézet semmilyen kötelezettséggel nem jár.\n\n1. Kivel köt szerződést\n\nSzerződése az MB „Portretizuokis” vállalkozással jön létre, amely litván jog szerinti kis társaság (mažoji bendrija), képviseli: Mantas Bakšys; cégazonosító szám: 305605052, székhely: Gedimino g. 22A-14, LT-44319 Kaunas, Litvánia, e-mail: info@snapeyes.com (a továbbiakban: „mi”, „SnapEyes”). Minden adatunkat megtalálja az Impresszumban (https://snapeyes.com/imprint?lang=hu).\n\nAjánlatunk fogyasztóknak szól. Ha Ön még nem töltötte be a 18. életévét, kérje meg a szülőjét vagy a gondviselőjét, hogy rendeljen Ön helyett.\n\n2. Mit vásárol\n\nEgy személyre szabott digitális alkotást, amely az Ön által egy szemről (vagy több szemről) készített fotóból készül, az Ön által választott stílusban, elrendezésben és felirattal. Egy vízjel nélküli képfájlt (JPEG) kap: egy szem esetén 4096 × 4096 px, több szem esetén a hosszabbik oldalán 4096 px méretben. Az alkotást kizárólag digitális fájlként, letöltéssel szolgáltatjuk. Nyomatot, keretet vagy más fizikai terméket nem árusítunk.\n\nA szín az Ön saját fotójából származik. Ahol a telefonja nem tudta rögzíteni a legfinomabb rostokat, ott a mesterséges intelligenciánk állítja helyre őket. Az alkotás ezért művészi helyreállítás, nem orvosi, nem mikroszkópos és nem stúdiós makrofelvétel, és nem alkalmas sem orvosi célra, sem személyek azonosítására.\n\nEgyes stílusoknál az Ön íriszét körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az Ön íriszének megmaradnak a fotója színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.\n\nA fájl szabványos JPEG kép, amely bármely szokásos számítógépen, telefonon vagy táblagépen megnyitható és kinyomtatható; külön program nem kell hozzá. Nem tartalmaz másolásvédelmet vagy más műszaki védelmi intézkedést, és frissítést nem igényel.\n\n3. Az előnézet és a fájl\n\nRendelés előtt egy ingyenes, vízjeles előnézetet lát, és azt jóváhagyja. A fájl a jóváhagyott előnézetet követi: ugyanaz a szem, stílus, elrendezés, a szemek ugyanolyan sorrendje és ugyanaz a felirat, ugyanazzal a színnel és tónussal, egyszer, teljes felbontásban elkészítve. Teljes méretben a mesterséges intelligenciánk hozzáadja azokat a finom rostrészleteket, amelyeket az előnézet a kis mérete miatt nem tud megmutatni, ezért a legapróbb részletek kissé eltérhetnek az előnézettől. Az öt-nyolc szemes előnézet a fotóid kisebb másolataiból készül, ezért durvább, mint a fájl.\n\nHa a fájl egyértelműen eltér a jóváhagyott előnézettől (például a színben, a világosságban vagy a pupillában), az hibás teljesítés: lásd a Kellékszavatosság és hibás teljesítés (https://snapeyes.com/terms?lang=hu#defects) pontot.\n\n4. Hogyan jön létre a szerződés\n\nA weboldalunkon látható előnézetek és árak még nem kötelező erejű ajánlatok. Fizetés előtt ellenőrizheti a szemeket, a stílust, az elrendezést és a feliratot, és bármely adatot kijavíthat, ha visszalép vagy újrafotóz egy szemet. Ezután a „Megrendelés fizetési kötelezettséggel” gombbal a fizetési szolgáltatónk, a Stripe fizetési oldalára lép. Ott megadja e-mail-címét és fizetési adatait, és kijavíthatja azokat. Kötelező erejű megrendelését akkor adja le, amikor ott a fizetési gombbal jóváhagyja a fizetést; a megrendelés fizetési kötelezettséggel jár.\n\nA szerződés akkor jön létre, amikor a fizetését megerősítették. Ekkor megnyílik a rendelési oldala, és e-mailben, a megrendelés visszaigazolásával együtt elküldjük Önnek a linkjét. A fájl elkészítését ott akkor kezdjük meg, amikor ez az e-mail elment.\n\nA szerződés nyelve magyar, angol, német vagy litván: az, amelyiken Ön megrendel.\n\nA megrendelését a szerződés adataival együtt tároljuk: a megrendelt alkotás, az ár, a dátum, az e-mail-címe és az azonnali kezdéshez adott hozzájárulása. A rendelési oldala addig mutatja ezeket az adatokat, ameddig a megrendelését megőrizzük. E feltételekről nem őrzünk külön példányt minden megrendeléshez. Ehelyett a megrendelés visszaigazolását tartalmazó e-mail szövegként tartalmazza a rendelés adatait, ezeket a feltételeket és az elállási tájékoztatót az elállásinyilatkozat-mintával, a megrendeléskor hatályos változatban: kérjük, őrizze meg ezt az e-mailt. Ezt az oldalt is bármikor elmentheti vagy kinyomtathatja.\n\n5. Árak és fizetés\n\nEgy szem, Clean Iris: 19,97 €\nEgy szem, bármely más stílus: 24,97 €\nKét szem, bármely stílus: 39,97 €\nMinden további szem: +15,00 €\n\nMinden ár euróban értendő végső ár, amely minden adót és díjat tartalmaz. Nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel és nem tüntetünk fel. Szállítási költség nincs.\n\nA fenti táblázat a mi általános árlistánk. Időről időre, korlátozott ideig más árlistákat is kipróbálunk néhány, véletlenszerűen kiválasztott látogatón. Mindig azokat az árakat fizeti, amelyeket a fizetés előtt a műalkotás oldalán és a fizetési oldalon mutattunk Önnek, és a megrendelés visszaigazoló e-mailje megnevezi a megrendelésére alkalmazott árlistát. Az, hogy melyik árlistát látja, sosem függ attól, melyik országban él, csak az Ön által választott piactól (pénznemtől).\n\nElőre fizet, a fizetési szolgáltatónkon, a Stripe-on keresztül, a fizetési oldalon feltüntetett fizetési módok egyikével.\n\n6. Teljesítés\n\nA rendelési oldala akkor készíti el a fájlt, amikor elment a megrendelés visszaigazolását tartalmazó e-mail, ez általában a fizetés után egy percen belül megtörténik; az elkészítés rendszerint néhány percig tart. Ha a fájl elkészülte előtt bezárja az oldalt, az elkészítés folytatódik, amikor az e-mailben kapott linkkel újra megnyitja. Ha az automatikus minőségellenőrzésünk megjelöl egy fájlt, azt átadás előtt magunk is megnézzük, és e-mailt küldünk, amikor elkészült. A fájl legkésőbb a fizetés megerősítését követő 48 órán belül letölthető a rendelési oldalán. A rendelési oldaláról a fájlt addig töltheti le bármikor, ameddig megőrizzük: a fizetéstől számított 12 hónapig (lásd az Adatkezelési tájékoztatót (https://snapeyes.com/privacy?lang=hu)). Az oldal által létrehozott minden letöltési link 7 napig érvényes; az oldal minden megnyitáskor újat készít. Ha az e-mail elveszett, írjon nekünk.\n\nA rendelési oldal linkje egy privát kulcsot tartalmaz: aki ismeri, letöltheti az alkotását, ezért kérjük, ne adja tovább. Kérjük, töltse le a fájlt, és őrizzen meg róla egy másolatot. 12 hónap elteltével töröljük, és utána nem állítható helyre.\n\n7. Elállási jog\n\nFogyasztóként főszabály szerint 14 napos elállási jog illeti meg. Digitális fájl esetén ez korábban megszűnik: fizetés előtt arra kérjük, hogy járuljon hozzá, hogy a fájl elkészítését még az elállási határidő lejárta előtt azonnal megkezdjük, és erősítse meg, hogy tudomásul veszi: a teljesítés megkezdését követően elveszíti az elállási jogát. Az elállási jog ezért megszűnik, amint megkezdtük a fájl elkészítését (a szerződés teljesítését); ezt csak azután kezdjük meg, hogy elment a megrendelés visszaigazolását tartalmazó e-mail, ez általában a fizetés után egy percen belül megtörténik, amíg a rendelési oldala nyitva van. Ez akkor is így van, ha a fájl még készül, vagy a minőségellenőrzésünkre vár. Ha még nem kezdtük meg, az elállási jog a 14 napos elállási határidő leteltével szűnik meg: a fizetés napja nem számít bele, és ha a határidő utolsó napja szombatra, vasárnapra vagy munkaszüneti napra esik, a határidő a következő munkanap végén jár le. Amíg az elállási joga fennáll, e-mailben, postai úton vagy online, az „Elállás a szerződéstől” gombbal állhat el; a visszaigazoló e-mailben kapott elállási link ezt a funkciót a megrendeléséhez nyitja meg anélkül, hogy megkezdenénk a fájl elkészítését. A teljes tájékoztatót, az online funkciót és az elállásinyilatkozat-mintát az Elállási tájékoztató (https://snapeyes.com/withdrawal?lang=hu) oldalunkon találja.\n\n8. Az Ön fotói\n\nCsak a saját szeméről töltsön fel fotót, vagy olyan személy szeméről, aki ehhez hozzájárult (gyermek esetén a szülő vagy a gondviselő). A feltöltéssel megerősíti, hogy a fotót erre a célra felhasználhatja.\n\nA fotóhoz fűződő jogok Önnél maradnak. Kizárólag az előnézet és az alkotás elkészítéséhez használjuk, az Adatkezelési tájékoztatóban (https://snapeyes.com/privacy?lang=hu) leírtak szerint.\n\nMegtagadhatunk egy megrendelést, és a már kifizetett összeget teljes egészében visszatérítjük, ha egy fotó nyilvánvalóan sérti ezeket a szabályokat.\n\n9. Mit tehet az alkotásával\n\nNem kizárólagos, időben korlátlan felhasználási jogot kap az alkotásához, személyes, nem kereskedelmi célra. Például kinyomtathatja magának (otthon vagy nyomdában), bekeretezheti, ajándékba adhatja, háttérképként használhatja az eszközein, és megoszthatja a személyes közösségimédia-oldalain.\n\nEngedélyünk nélkül (egy e-mail elég) nem adhatja el az alkotást vagy az abból készült termékeket, harmadik személynek nem adhat hozzá felhasználási jogot, és nem használhatja reklámra vagy más kereskedelmi célra.\n\nA stílusok, a hátterek, az elrendezések és a SnapEyes arculata a miénk maradnak, a hozzájuk fűződő esetleges szerzői jogokkal együtt. Ugyanez vonatkozik a vízjeles előnézetekre.\n\n10. Kellékszavatosság és hibás teljesítés\n\nA nem szerződésszerű digitális tartalomra vonatkozó, jogszabályon alapuló jogai teljes körűen megilletik. Ha a fájl hibás, például nem tölthető le vagy nem nyitható meg, sérült, kisebb a vállaltnál, vagy egyértelműen eltér a jóváhagyott előnézettől, kérjük, írjon a rendelésszámával az info@snapeyes.com címre. A fájlt díjmentesen újra elkészítjük, vagy ha ez nem szünteti meg a hibát, visszatérítjük az árát.\n\nMivel a fájlt egyszer szolgáltatjuk, azért a hibáért felelünk, amely a szolgáltatás időpontjában fennáll. Az ellenkező bizonyításáig vélelmezni kell, hogy a szolgáltatástól számított egy éven belül felismert hiba már a szolgáltatáskor is megvolt (373/2021. (VI. 30.) Korm. rendelet 21. § (3) bekezdés). Kellékszavatossági jogai alapján kérheti a fájl szerződésszerűvé tételét (nálunk: díjmentes újbóli elkészítését). Az ár arányos leszállítását kérheti, vagy megszüntetheti a szerződést, ha a szerződésszerűvé tétel lehetetlen, vagy az nekünk aránytalan többletköltséget okozna; ha azt a hiba közlésétől számított észszerű időn belül nem végezzük el; ha a hiba ismételten jelentkezik, annak ellenére, hogy megkíséreltük a fájl szerződésszerűvé tételét; ha a hiba olyan súlyú, hogy azonnali árleszállítást vagy a szerződés azonnali megszüntetését teszi indokolttá; vagy ha nem vállaljuk a fájl szerződésszerűvé tételét, illetve a körülményekből nyilvánvaló, hogy azt észszerű határidőn belül vagy az Önnek okozott jelentős érdeksérelem nélkül nem fogjuk elvégezni. A szerződés megszüntetésekor a kifizetett összeget, árleszállításkor a különbözetet legkésőbb 14 napon belül visszatérítjük.\n\nKérjük, a hibát felfedezése után haladéktalanul közölje velünk; a felfedezéstől számított két hónapon belül közölt hibát késedelem nélkül közöltnek kell tekinteni. A teljesítéstől számított két év elteltével kellékszavatossági igényét már nem érvényesítheti.\n\nHa a fájl az Ön eszközén nem nyílik meg, kérjük, működjön együtt velünk annak megállapításában, hogy a hiba oka az Ön digitális környezete-e: írja meg, milyen eszközzel és programmal próbálta megnyitni. Ennél többet nem kérünk.\n\nTermékszavatosság csak ingó dologra (termékre) vonatkozik, digitális fájlra nem. Önkéntes jótállást nem vállalunk; ez a jogszabályon alapuló jogait nem érinti.\n\n11. Felelősség\n\nKorlátozás nélkül felelünk a szándékosan vagy súlyos gondatlansággal okozott károkért, az életet, testi épséget vagy egészséget megkárosító szerződésszegésért, valamint minden olyan esetben, amikor ezt kötelező jogszabály írja elő. Ezen túlmenően enyhe gondatlanság esetén csak a lényeges szerződéses kötelezettségek megszegéséért felelünk, és csak az ilyen szerződésnél jellemző, előre látható kárért. Az ingyenes előnézetet a mindenkori állapotában kínáljuk; folyamatos elérhetőségét nem vállaljuk.\n\n12. Panaszkezelés, jogviták és alkalmazandó jog\n\nHa valami nem stimmel, kérjük, először nekünk írjon az info@snapeyes.com címre: a legtöbb problémát gyorsan megoldjuk e-mailben. Minden panaszra írásban, e-mailben válaszolunk, legkésőbb 30 napon belül.\n\nHa nem jutunk megegyezésre, fogyasztóként a litván Állami Fogyasztóvédelmi Hatósághoz (Valstybinė vartotojų teisių apsaugos tarnyba, Vilniaus g. 25, LT-01402 Vilnius, Litvánia, https://vvtat.lt) fordulhat, amely bíróságon kívül rendezi a fogyasztói jogvitákat, vagy a saját országa fogyasztóvédelmi szerveihez és bíróságaihoz. Határon átnyúló panaszában az Európai Fogyasztói Központ Magyarország (magyarefk.hu (https://www.magyarefk.hu/hu/)) is ingyenesen segít.\n\nMagatartási kódexnek nem vetettük alá magunkat.\n\nA szerződésre a litván jog az irányadó. Ha Ön egy másik EU-országban élő fogyasztó, megmarad az ottani kötelező fogyasztóvédelmi szabályok által nyújtott védelme.\n\n13. A feltételek módosítása\n\nMinden megrendelésre a leadásakor hatályos feltételek vonatkoznak."
+    }
+   }
+  }
+ }
+}

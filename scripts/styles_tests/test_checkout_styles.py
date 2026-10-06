@@ -650,8 +650,10 @@ check("the four terms files carry the price rows by class in the four languages:
                                    "'Viena akis, bet kuris kitas stilius'", "'Dvi akys, bet kuris stilius'", "'Egy szem, bármely más stílus'", "'Két szem, bármely stílus'")), "")
 legal_ts = read("src/shared/legal.ts")
 upd = re.search(r"export const LEGAL_UPDATED = '(\d{4}-\d{2}-\d{2})'", legal_ts).group(1)
-check("one LEGAL_UPDATED versions every legal page and the pack the confirmation quotes: the built pack's date is that date, it is not in the future, and it moved on this work (2026-10-05)",
-      PACK["updated"] == upd == "2026-10-05" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
+# WP18 (the catalogue switch): the date moved from 2026-10-05 (WP12) to 2026-10-06 with the publication of the AI-made material sentence
+check("one LEGAL_UPDATED versions every legal page and the pack the confirmation quotes: the built pack's date is that date, it is not in the future, and it moved on the last work "
+      "that changed a legal text (2026-10-06, WP18: the AI-made material sentence; it was 2026-10-05 at WP12)",
+      PACK["updated"] == upd == "2026-10-06" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
 terms_en = PACK["docs"]["en"]["terms"]["text"]
 check("the pack's English terms (what the e-mail quotes) print the new rows and the arrangement clause, say that a preview of five to eight eyes is coarser, and no longer promise half a minute "
       "per eye", "One eye, Clean Iris" in terms_en and "One eye, any other style" in terms_en and "arrangement of the eyes" in terms_en and "five to eight eyes is made from smaller copies" in terms_en
@@ -759,21 +761,26 @@ MUT = [
     ("a claim in a Lithuanian e-mail sentence", "api/_lib/pay_lt.py", '"questions": "Turite klausimų? Tiesiog atsakykite į šį el. laišką.",\n    "sign": "Pagarbiai\\nSnapEyes",\n}\n\n\ndef confirmation_rows_lt',
      '"questions": "Turite klausimų? Tiesiog atsakykite į šį el. laišką. Unikalus kūrinys.",\n    "sign": "Pagarbiai\\nSnapEyes",\n}\n\n\ndef confirmation_rows_lt', "the claim"),
     ("the AI sentence hard-coded in the terms before the cutover publishes it", "src/legal/docs/terms.ts", "...aiBlocks('en'),", "'In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer\\'s artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above.',", "before the cutover publishes it"),
-    ("the AI sentence published but left out of the terms", "src/shared/aiMaterial.ts", "export const AI_MATERIAL_PUBLISHED = false;", "export const AI_MATERIAL_PUBLISHED = true;", "is published"),
+    ("the AI sentence published but left out of the terms", "src/legal/docs/terms.ts", "...aiBlocks('en'),", "", "is published"),
 ]
 for label, rel, old, new, needle in MUT:
     root = os.path.join(TMP, "mut_" + re.sub(r"[^a-z0-9]+", "_", label.lower())[:40])
     copy_repo(root)
     applied = sub(root, rel, old, new)
-    if label.startswith("the AI sentence published"):
-        applied = applied and sub(root, "src/legal/docs/terms.ts", "...aiBlocks('en'),", "")
+    if label.startswith("the AI sentence hard-coded"):          # WP18: the sentence is published now; "before the cutover" is the flag set back to false in the same copy
+        applied = applied and sub(root, "src/shared/aiMaterial.ts", "export const AI_MATERIAL_PUBLISHED = true;", "export const AI_MATERIAL_PUBLISHED = false;")
     probs = text_probs(root) if applied else ["PREMISE NOT FOUND"]
     check(f"check_texts refuses: {label}", applied and any(needle in p for p in probs), (applied, needle, probs[:3]))
 root = os.path.join(TMP, "mut_published_ok")
 copy_repo(root)
-sub(root, "src/shared/aiMaterial.ts", "export const AI_MATERIAL_PUBLISHED = false;", "export const AI_MATERIAL_PUBLISHED = true;")
 probs = text_probs(root)
-check("... and the cutover's one-line flip (AI_MATERIAL_PUBLISHED true) is clean: the sentence is then in the terms of every edition and language, no string fails the lint", probs == [], probs[:3])
+check("... and the committed state (AI_MATERIAL_PUBLISHED true since the cutover, WP18) is clean: the sentence is in the terms of every edition and language, no string fails the lint", probs == [], probs[:3])
+root = os.path.join(TMP, "mut_unpublished_ok")
+copy_repo(root)
+flag_back = sub(root, "src/shared/aiMaterial.ts", "export const AI_MATERIAL_PUBLISHED = true;", "export const AI_MATERIAL_PUBLISHED = false;")
+probs_back = text_probs(root)
+check("... and the flag set back to false (the rollback of the legal flip) is clean too: one line takes the sentence out of every terms text, none is left behind",
+      flag_back and probs_back == [], probs_back[:3])
 root = os.path.join(TMP, "mut_count")
 copy_repo(root)
 sub(root, "src/legal/docs/terms.ts", "['Each further eye', `+${eur(PRICE_CENTS.extraEye, 'en')}`],", "['Each further eye', `+${eur(PRICE_CENTS.extraEye, 'en')}, up to 8 eyes on one artwork`],")

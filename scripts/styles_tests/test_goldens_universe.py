@@ -212,10 +212,16 @@ check("the fill is cut from a graded copy of the eye of 1024 px for one or two e
 check("every cost row the family needs exists: a preview row and a master row for Echo (1 to 6 eyes) and for each of the three looks of one eye",
       all(CO.known("universe.echo", n) and n in CO.PREVIEW["universe.echo"] for n in range(1, 7))
       and all(CO.known(f"universe.{lk}", 1) and 1 in CO.PREVIEW[f"universe.{lk}"] for lk in ("vortex", "deepfield", "starfield")))
-check("no stage was raised: every universe style is still at the laboratory ceiling and so is every look, a customer can neither order nor preview one, and the admin can look at all three",
-      all(CT.ceiling(i, n) == "lab" and not CT.orderable(i, n) and not CT.previewable(i, n) and CT.previewable(i, n, admin=True)
-          for i, n in (("solo.universe", 1), ("duo.universe", 2), ("grp.universe", 4)))
-      and all(v == "lab" for v in LOOKS_REG["solo.universe"].values()) and not any(t["id"] in UNIVERSE_STYLES for t in CT.tiles_for(1)), [(i, CT.ceiling(i, 1)) for i in UNIVERSE_STYLES])
+# WP18 (the catalogue switch): this check said that no stage was raised (every universe style and every look in the laboratory). The cutover raised the one-eye style to a
+# live ceiling with Echo and Vortex live and Deep Field and Starfield in the laboratory; the pair and the group stay in the laboratory; the registry's EFFECTIVE_DEFAULT holds
+# the one-eye style at preview until the owner's tick.
+check("the stages are the cutover's: the one-eye Universe has a live ceiling with Echo and Vortex live and Deep Field and Starfield in the laboratory, the pair and the group stay in the "
+      "laboratory; the default holds Universe at preview, so a customer can preview it and order nothing, and the admin can look at all three",
+      CT.ceiling("solo.universe", 1) == "live" and CT.stage_with("solo.universe", 1, None) == "preview" and not CT.orderable("solo.universe", 1, strict=False) and CT.previewable("solo.universe", 1)
+      and all(CT.ceiling(i, n) == "lab" and not CT.orderable(i, n, strict=False) and not CT.previewable(i, n) for i, n in (("duo.universe", 2), ("grp.universe", 4)))
+      and all(CT.previewable(i, n, admin=True) for i, n in (("solo.universe", 1), ("duo.universe", 2), ("grp.universe", 4)))
+      and LOOKS_REG["solo.universe"] == {"echo": "live", "vortex": "live", "deepfield": "lab", "starfield": "lab"}
+      and CT.looks_for("solo.universe", 1) == {"echo": "preview", "vortex": "preview"} and any(t["id"] == "solo.universe" for t in CT.tiles_for(1)), [(i, CT.ceiling(i, 1)) for i in UNIVERSE_STYLES])
 check("the catalogue says the universe styles are renderable for their own eye counts (one; two; three to six) and for no other",
       CT.renderable("solo.universe", 1) and not CT.renderable("solo.universe", 2) and CT.renderable("duo.universe", 2) and not CT.renderable("duo.universe", 3)
       and all(CT.renderable("grp.universe", n) for n in (3, 4, 5, 6)) and not CT.renderable("grp.universe", 7))
@@ -1470,9 +1476,11 @@ def ask(**kw):
         return e
 
 
-r_lab = ask(style="solo.universe")
-check("a laboratory style asked by a customer is not drawn by the engine (it falls to the default style or is refused as unavailable, whichever the compose API of the day does)",
-      not (isinstance(r_lab, dict) and r_lab.get("style") == "solo.universe" and "canvas" in r_lab), r_lab if not isinstance(r_lab, dict) else r_lab.get("style"))
+# WP18: the one-eye Universe is previewable now (a live ceiling held at preview); what a customer still cannot ask for is a LOOK of the laboratory (Deep Field, Starfield)
+r_lab = ask(style="solo.universe", opts={"look": "deepfield"})
+check("a laboratory look asked by a customer is not drawn by the engine (422 style_unavailable, why stage): Deep Field is in the laboratory, Echo and Vortex are the looks of the first release",
+      getattr(r_lab, "status", None) == 422 and r_lab.body.get("why") == "stage" and not (isinstance(r_lab, dict) and r_lab.get("style") == "solo.universe" and "canvas" in r_lab),
+      r_lab if not isinstance(r_lab, dict) else r_lab.get("style"))
 with Show("solo.universe"):
     r_u = ask(style="solo.universe", names="Anna;Max", date="12 May 2026")
     ids_shown = list(CT.previewable_ids(1))
@@ -1492,7 +1500,8 @@ LAB_EYE = b64(SI.jpeg_bytes("blue_round"))
 lst = ops.a_styles_lab({}, "t")
 row_u = [r for r in lst["styles"] if r["id"] == "solo.universe"]
 check("styles_lab lists the Universe style with its stage, its four looks, its canvases and the plate families (the page builds its menus from it)",
-      len(row_u) == 1 and row_u[0]["module"] == "universe" and row_u[0]["stage"] == "lab" and sorted(row_u[0]["looks"]) == sorted(U.LOOKS) and row_u[0]["canvases"] == ["1:1", "4:5", "9:19.5"]
+      len(row_u) == 1 and row_u[0]["module"] == "universe" and row_u[0]["ceiling"] == "live" and row_u[0]["stage"] == "preview" and sorted(row_u[0]["looks"]) == sorted(U.LOOKS)
+      and row_u[0]["canvases"] == ["1:1", "4:5", "9:19.5"]
       and row_u[0]["plates"] == ["P-DN-SPIRAL", "P-UV-DUST", "P-UV-MILKY"] and all("looks" in r for r in lst["styles"]), row_u)
 rows_ = {}
 for lk in U.LOOKS:

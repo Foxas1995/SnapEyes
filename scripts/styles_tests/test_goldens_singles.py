@@ -167,11 +167,18 @@ check("the prototype's recommend and PICK are the registry's pick: own colours P
       and all(CT.STYLES[i]["reason"].keys() == set(CT.STYLES[i]["pick"]) for i in SINGLES_STYLES if CT.STYLES[i]["pick"]) and not hasattr(S, "recommend") and not hasattr(S, "PICK"))
 check("every cost row the family needs exists: a preview row and a master row for each of the six designs",
       all(CO.known(f"singles.{d}", 1) and 1 in CO.PREVIEW[f"singles.{d}"] for d in S.DESIGNS))
-check("no stage was raised: every single style of the engine is still at the laboratory ceiling, so a customer can neither order nor preview one, and the admin can look at all six",
-      all(CT.ceiling(i, 1) == "lab" and not CT.orderable(i, 1) and not CT.previewable(i, 1) and CT.previewable(i, 1, admin=True) for i in SINGLES_STYLES)
-      and not any(t["id"] in SINGLES_STYLES for t in CT.tiles_for(1))
-      and {t["id"] for t in CT.tiles_for(1, admin=True)} >= {i for i in SINGLES_STYLES if CT.STYLES[i]["tile_order"] > 0} and CT.STYLES["solo.elements"]["tile_order"] == 0,
-      [(i, CT.ceiling(i, 1)) for i in SINGLES_STYLES])
+# WP18 (the catalogue switch): this check said that no stage was raised (every single style at the laboratory ceiling). The cutover raised the ceilings of the release-1
+# singles (Clean Iris, Powder Burst, Splash, Celestial Gold to live, Radiance to preview; Elements stays in the laboratory) and the registry's EFFECTIVE_DEFAULT holds every
+# one at preview until the owner's tick, so it now says the cutover's state: nothing is orderable, the shown ones can be previewed, Elements only by the admin.
+check("the stages are the cutover's: Clean Iris, Powder Burst, Splash and Celestial Gold have a live ceiling, Radiance a preview one, Elements stays in the laboratory; the registry's default holds them "
+      "at preview, so a customer can preview five of them and order none, and only the admin can look at Elements",
+      {i: CT.ceiling(i, 1) for i in SINGLES_STYLES} == {"solo.clean": "live", "solo.powder": "live", "solo.splash": "live", "solo.elements": "lab", "solo.radiance": "preview", "solo.gold": "live"}
+      and all(CT.stage_with(i, 1, None) == ("lab" if i == "solo.elements" else "preview") for i in SINGLES_STYLES)
+      and all(not CT.orderable(i, 1, strict=False) for i in SINGLES_STYLES) and all(CT.previewable(i, 1, admin=True) for i in SINGLES_STYLES)
+      and not CT.previewable("solo.elements", 1) and all(CT.previewable(i, 1) for i in SINGLES_STYLES if i != "solo.elements")
+      and not any(t["id"] == "solo.elements" for t in CT.tiles_for(1)) and {t["id"] for t in CT.tiles_for(1)} >= {i for i in SINGLES_STYLES if i != "solo.elements"}
+      and CT.STYLES["solo.elements"]["tile_order"] == 0,
+      [(i, CT.ceiling(i, 1), CT.stage_with(i, 1, None)) for i in SINGLES_STYLES])
 
 # ============================================================================================ 2. the golden replay
 section("2. the golden replay: this code's recorded pictures, and the step A recording with the old seed")
@@ -445,17 +452,18 @@ class Show:
 
 
 ids_before = list(CT.previewable_ids(1))
-check("before anything is raised the customer's list of styles for one eye holds the legacy six and no style of the engine",
-      not any(i in ids_before for i in SINGLES_STYLES) and len(ids_before) == 6, ids_before)
+# WP18: the list of a customer for one eye is the cutover's (the six shown styles of the engine, no legacy id: they are retired); it said the legacy six before
+check("the customer's list of styles for one eye is the cutover's: the six shown styles of the engine (Elements is not among them) and no legacy id",
+      sorted(ids_before) == sorted([i for i in SINGLES_STYLES if i != "solo.elements"] + ["solo.universe"]) and not any(CT.is_legacy(i) for i in ids_before) and len(ids_before) == 6, ids_before)
 try:
-    CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12})
+    CMP.compose({"sealed": [sealed], "style": "solo.elements", "pad": 1.12})      # WP18: Celestial Gold is previewable now; Elements is the laboratory style left
     e_lab = None
 except Exception as e_:  # noqa
     e_lab = e_
 # WP10 (compose API v3): the old check said that a laboratory style falls to the default style; the contract says 422 style_unavailable, and never a render
 check("a laboratory style asked by a customer is not drawn by the engine: 422 style_unavailable (why stage), nothing is rendered; no compose event names it",
       getattr(e_lab, "status", None) == 422 and e_lab.body["reason"] == "style_unavailable" and e_lab.body["why"] == "stage"
-      and all(e[1].get("style") != "solo.gold" for e in EVENTS), (e_lab, EVENTS[-1:]))
+      and all(e[1].get("style") != "solo.elements" for e in EVENTS), (e_lab, EVENTS[-1:]))
 EVENTS.clear()
 with Show("solo.gold"), mock.patch.object(L, "colour_qa", wraps=L.colour_qa) as qa_spy:
     r_g = CMP.compose({"sealed": [sealed], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026", "lang": "en"})
@@ -550,9 +558,11 @@ with Show("solo.gold"):
 # WP10 (compose API v3): the old check said that two eyes asked for a one-eye style fall back to a style that takes two; the contract says 422 style_unavailable (why eyes)
 check("two eyes asked for a one-eye style are not drawn by it: 422 style_unavailable (why eyes), nothing is rendered",
       getattr(e_two, "status", None) == 422 and e_two.body["reason"] == "style_unavailable" and e_two.body["why"] == "eyes", e_two)
-with Show("solo.gold"):
+with Show("celestial_gold", "live"):      # WP18: the legacy ids are retired (a customer is refused them); the legacy engine itself is what this check is about
     r_legacy = CMP.compose({"sealed": [sealed], "style": "celestial_gold", "pad": 1.12})
 check("a legacy style is still drawn by the legacy engine, with none of the engine's fields", r_legacy["style"] == "celestial_gold" and "canvas" not in r_legacy and r_legacy["format"] == "artwork")
+e_ret = raises(lambda: CMP.compose({"sealed": [sealed], "style": "celestial_gold", "pad": 1.12}), Exception)
+check("since the cutover a customer cannot ask for a legacy style: retired, 422 style_unavailable (why stage), nothing is drawn", getattr(e_ret, "status", None) == 422 and e_ret.body.get("why") == "stage", e_ret)
 with Show("solo.gold", "lab"):
     e_lab1 = raises(lambda: CMP.compose({"sealed": [sealed], "style": "solo.gold", "lab": True, "pad": 1.12}), Exception)
     e_lab2 = raises(lambda: CMP.compose({"sealed": [sealed], "style": "solo.gold", "lab": True, "pad": 1.12}, "admin-1.2.3"), Exception)
@@ -584,7 +594,8 @@ SAMPLE = open(os.path.join(REPO, "public", "assets", "sample_eye_blue_restored.j
 lst = ops.a_styles_lab({}, "t")
 lst_s = [r for r in lst["styles"] if r["module"] == "singles"]        # the list holds every one-eye style of every family built (the universe family joined it: its rows carry looks)
 check("without a style styles_lab lists what the page builds its menu from: the six styles of the singles engine (and those of the other families built), with their stage, canvases, plates and the sizes",
-      lst["ok"] and sorted(r["id"] for r in lst_s) == sorted(SINGLES_STYLES) and all(r["stage"] == "lab" and r["ceiling"] == "lab" and r["canvases"] == list(S.FORMATS) and r["looks"] == [] for r in lst_s)
+      lst["ok"] and sorted(r["id"] for r in lst_s) == sorted(SINGLES_STYLES)
+      and all(r["stage"] == CT.stage_of(r["id"], 1) and r["ceiling"] == CT.ceiling(r["id"], 1) and r["canvases"] == list(S.FORMATS) and r["looks"] == [] for r in lst_s)      # WP18: the cutover's stages
       and lst["sizes"] == [480, 1024, 2048, 4096] and {r["name"] for r in lst["styles"]} >= {"Clean Iris", "Powder Burst", "Celestial Gold"}, lst)
 ok_all = True
 rows_ = []

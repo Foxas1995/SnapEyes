@@ -80,6 +80,7 @@ from PIL import Image  # noqa: E402
 import synth_iris as SI  # noqa: E402
 from _lib import iris as L  # noqa: E402
 from _lib import catalogue as CT  # noqa: E402
+REGISTRY_HASH_AT_START = CT.registry_hash()      # WP18: what this process starts with (the pre-cutover world of this suite changes the registry in memory, so the hash is not the build's)
 from _lib import store  # noqa: E402
 from _lib import words as WORDS_M  # noqa: E402
 from _lib.styles import plates as PL_M  # noqa: E402
@@ -448,7 +449,7 @@ try:
 finally:
     CT.ENGINE["grp.collision"]["steps"] = saved8
 check("... and PROBE_HOPS follows: a three step plan for eight eyes makes the longest chain 12 and the probe 16", chain8 == 12 and min(M.MAX_HOPS, chain8 + 4) == 16, chain8)
-check("the registry hash did not move while the test edited and restored an entry (the literal is the test's own copy in this process)", CT.registry_hash() == "7b1b4069399b", CT.registry_hash())
+check("the registry hash did not move while the test edited and restored an entry (the literal is the test's own copy in this process)", CT.registry_hash() == REGISTRY_HASH_AT_START, CT.registry_hash())
 
 # ============================================================================================ 3. the words
 section("3. the customer's words: the paid file draws what the preview draws")

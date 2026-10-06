@@ -210,9 +210,20 @@ check("the cost table is honest about the Trio (review of WP7A) and WP7B caps it
       and trio2["ok"] and 39.0 < trio2["need_s"] < 41.0 and 1000 < trio4["est_mb"] < CO.MEM_BUDGET_MB
       and all(CO.measured(k, n, sd) is None for k, n, sd in (("collision.family", 8, 2048), ("collision.infinity", 2, 2048), ("singles.powder", 1, 4096), ("collision.trio", 3, None)))
       and CO.cpu("collision.family", 8, 2048) == 16.8, (trio4, trio2))
-check("no stage was raised: every collision style of the engine is still at the laboratory ceiling, so a customer can neither order nor preview one, and the admin can look at all five",
-      all(CT.ceiling(i, n) == "lab" and not CT.orderable(i, n) and not CT.previewable(i, n) and CT.previewable(i, n, admin=True)
-          for i in COLLISION_STYLES for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1)), [(i, CT.ceiling(i, 2)) for i in COLLISION_STYLES])
+# WP18 (the catalogue switch): this check said that no stage was raised (every collision style at the laboratory ceiling). The cutover raised Family Colours to a live
+# ceiling for three eyes and to preview for four to eight, the three pair designs to preview; the chain stays in the laboratory; the registry's EFFECTIVE_DEFAULT holds
+# everything at preview until the owner's tick.
+check("the stages are the cutover's: the three pair designs and Family Colours from four eyes are at preview, Family Colours for three eyes has a live ceiling, the chain stays in the laboratory; "
+      "the default holds them at preview, so a customer can preview all but the chain and order none, and the admin can look at all five",
+      all(CT.ceiling(i, 2) == "preview" for i in ("duo.collision_infinity", "duo.clean", "duo.kiss_collision"))
+      and [CT.ceiling("grp.collision", n) for n in range(3, 9)] == ["live", "preview", "preview", "preview", "preview", "preview"]
+      and all(CT.ceiling("grp.chain", n) == "lab" for n in range(3, 7))
+      and all(not CT.orderable(i, n, strict=False) for i in COLLISION_STYLES for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1))
+      and all(CT.stage_with(i, n, None) == ("lab" if i == "grp.chain" else "preview") for i in COLLISION_STYLES for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1))
+      and all(CT.previewable(i, n) for i in COLLISION_STYLES if i != "grp.chain" for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1))
+      and not any(CT.previewable("grp.chain", n) for n in range(3, 7))
+      and all(CT.previewable(i, n, admin=True) for i in COLLISION_STYLES for n in range(CT.eyes_range(i)[0], CT.eyes_range(i)[1] + 1)),
+      [(i, CT.ceiling(i, 3 if i.startswith("grp") else 2), CT.stage_with(i, 3 if i.startswith("grp") else 2, None)) for i in COLLISION_STYLES])
 check("the family is the only place that writes the scene keys: they are the registry's ids (part of the prototype's seed, which only opts seed_mode legacy still uses), and scripts/check_styles.mjs allows exactly that file",
       "api/_lib/styles/collision/scenes.py" in read(os.path.join(REPO, "scripts", "check_styles.mjs")) and re.search(r"duo\.clean|grp\.chain", read(os.path.join(FAMILY, "scenes.py")))
       and not any(re.search(r"\b(solo|duo|grp)\.[a-z_]+", read(os.path.join(FAMILY, f))) for f in FAMILY_FILES if f not in ("scenes.py",)))

@@ -558,7 +558,9 @@ check("bundle_report reads the new entries: the four rendering functions carry t
 
 def make_tree(dst):
     """A small deployment tree: the real api (code, no assets), a synthetic plate library (three plates, two atlases, tiny files with true hashes), the tile images
-    of the six live styles as empty files, the real vercel.json and a deny list that holds the hash of one image the tree does not have."""
+    of every style the copied registry shows to customers (preview or live) as empty files, the real vercel.json and a deny list that holds the hash of one image
+    the tree does not have. WP18: the styles are read from the registry FILE that was copied (the literal), not from the module in this process, which the pre-cutover
+    world of this suite has put back the way it was before the switch."""
     if os.path.isdir(dst):
         shutil.rmtree(dst)
     for d, ign in (("api", ("__pycache__", "_assets")), ("src", ("assets", "__pycache__")), ("scripts", ("__pycache__", "styles_tests"))):
@@ -569,13 +571,16 @@ def make_tree(dst):
         shutil.copytree(os.path.join(REPO, *rel.split("/")), os.path.join(dst, *rel.split("/")))
     atel = os.path.join(dst, "public", "assets", "atelier")
     os.makedirs(atel)
-    for d in SR.STYLES.values():
-        if d["stage"] == "live":
+    reg_text = open(os.path.join(dst, "api", "_lib", "styles_registry.py"), encoding="utf-8").read()
+    for d in json.loads(reg_text[reg_text.index("\nSTYLES = {") + len("\nSTYLES = "):]).values():
+        if any(s in ("preview", "live") for s in [d["stage"], *d["stage_by_eyes"].values()]):
             for w in (480, 800):
                 open(os.path.join(atel, f"style-{d['slug']}-{w}.webp"), "wb").write(b"")
     plates, files_ = {}, []
     rng = np.random.default_rng(1)
-    for fam, n, ext, mono in (("P-SN-CLOUD", 2, "webp", 1), ("P-SP-CROWN", 1, "webp", 0), ("P-CX-JET", 1, "png", 1)):
+    # WP18: every plate family a style shown to customers reads has a plate in the small tree (Universe reads SPIRAL, DUST and MILKY, the pair designs JET and RIVER)
+    for fam, n, ext, mono in (("P-SN-CLOUD", 2, "webp", 1), ("P-SP-CROWN", 1, "webp", 0), ("P-CX-JET", 1, "png", 1), ("P-CX-RIVER", 1, "png", 1),
+                              ("P-DN-SPIRAL", 1, "webp", 1), ("P-UV-DUST", 1, "webp", 1), ("P-UV-MILKY", 1, "webp", 1)):
         d = os.path.join(dst, "api", "_assets", "plates", fam)
         os.makedirs(d)
         for k in range(n):
@@ -586,7 +591,7 @@ def make_tree(dst):
             open(os.path.join(d, pid + "." + ext), "wb").write(data)
             rec = {"family": fam, "since": 1, "until": 0, "usable": 1, "mono": mono, "kind": "radial", "variables": {}, "score": 1.0,
                    "k1": {"file": pid + "." + ext, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "px": 1024}, "k4": {}}
-            if fam != "P-CX-JET" and k == 0:
+            if fam not in ("P-CX-JET", "P-CX-RIVER") and k == 0:
                 rec["k4"] = {"file": pid + "4k." + ext, "bytes": 1000, "sha256": "a" * 64, "px": 4096}
             plates[pid] = rec
     plates["P-SN-CLOUD__gone"] = {"family": "P-SN-CLOUD", "since": 1, "until": 0, "usable": 0, "mono": 1, "kind": "radial", "variables": {}, "score": 0.0, "k1": {}, "k4": {}}
@@ -670,7 +675,7 @@ cases = [
     ("a non ASCII word in the library", lambda r: edit_registry(r, lambda L_: L_["plates"]["P-SN-CLOUD__mini0"]["variables"].update({"x": "café"})), "ASCII only"),
     ("an engine entry that names a plate family the library lacks", lambda r: sub_file(r, "api/_lib/styles_engine.py", '"plates": ["P-SN-CLOUD"],', '"plates": ["P-SN-NOPE"],'), "reads the plate family \"P-SN-NOPE\""),
     ("an engine entry that names an atlas that is not one (item 1 of the engine literal)", lambda r: sub_first(r, "api/_lib/styles_engine.py", '"atlas": ["drops"],', '"atlas": ["drops", "nope"],'), "atlas must list chips, drops"),
-    ("a style shown to customers without a tile image", lambda r: os.remove(os.path.join(r, "public", "assets", "atelier", "style-supernova-800.webp")), "style-supernova-800.webp: the style \"supernova\" is shown to customers and has no tile image at 800 px"),
+    ("a style shown to customers without a tile image", lambda r: os.remove(os.path.join(r, "public", "assets", "atelier", "style-powder-burst-800.webp")), "style-powder-burst-800.webp: the style \"solo.powder\" is shown to customers and has no tile image at 800 px"),
     ("the Python packages recorded at 234 MiB (over the budget with the files of api/)", lambda r: (sub_file(r, "api/_lib/plates_registry.py", "DEPENDENCIES_MIB = 126", "DEPENDENCIES_MIB = 234"), add_file(r, "api/_assets/pad.bin", b"\0" * (2 << 20))), "over the 235 MiB budget"),
     ("a dependency size of zero", lambda r: sub_file(r, "api/_lib/plates_registry.py", "DEPENDENCIES_MIB = 126", "DEPENDENCIES_MIB = 0"), "DEPENDENCIES_MIB 0 must be"),
     ("vercel.json: a function without its own entry", vj_edit(lambda d: d["functions"].pop("api/enhance.py")), "no functions entry for api/enhance.py"),

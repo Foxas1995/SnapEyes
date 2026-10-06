@@ -62,6 +62,34 @@ import compose as COMPOSE  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 LEGACY = ["celestial_gold", "deep_nebula", "emerald_aurora", "obsidian_smoke", "supernova", "studio_black"]   # the order of iris.py
+
+# WP18 (the catalogue switch): this suite runs in the world BEFORE the switch (suites.list `pre`: the older suites use the six legacy styles, which the switch retired, as their
+# vehicle; suites/shim/sitecustomize.py puts the catalogue back the way it was, in memory). The checks that compare the page code, the build or a copied FILE of the repository
+# with the catalogue therefore ask the catalogue as the committed files make it, from a clean interpreter without the shim: real_world().
+_REAL = []
+
+
+def real_world():
+    """The catalogue as the committed registry files make it (the real, post-cutover world), computed in a fresh Python without the pre-cutover shim: the hash, the ceiling per eye
+    count, the layouts, the price class and the name of every id, the default style and the example style of each price class, and whether the literals of the two files are
+    what Python imports."""
+    if not _REAL:
+        code = (
+            "import json, sys\n"
+            "sys.path.insert(0, sys.argv[1])\n"
+            "from _lib import catalogue as C, styles_registry as R, styles_engine as X\n"
+            "def lit(path, name):\n"
+            "    t = open(path, encoding='utf-8').read()\n"
+            "    return json.loads(t[t.index('\\n' + name + ' = {') + len(name) + 4:])\n"
+            "out = {'hash': C.registry_hash(), 'default': C.DEFAULT_STYLE, 'class_black': C.class_style('black'), 'class_art': C.class_style('art'),\n"
+            "       'pub_equal': lit(sys.argv[1] + '/_lib/styles_registry.py', 'STYLES') == R.STYLES, 'eng_equal': lit(sys.argv[1] + '/_lib/styles_engine.py', 'ENGINE') == X.ENGINE,\n"
+            "       'styles': {i: {'ceil': [C.ceiling(i, n) for n in range(0, 10)], 'layouts': [list(C.layouts_for(i, n)) for n in range(1, 10)], 'cls': C.price_class(i),\n"
+            "                      'black': C.is_black(i), 'name': C.name_of(i)} for i in C.ids()}}\n"
+            "print(json.dumps(out))\n")
+        env = {k: v for k, v in os.environ.items() if k not in ("SNAPEYES_WORLD", "PYTHONPATH")}
+        r = subprocess.run([sys.executable, "-c", code, API], capture_output=True, text=True, encoding="utf-8", env=env, timeout=300)
+        _REAL.append(json.loads(r.stdout.strip().splitlines()[-1]) if r.returncode == 0 else {"error": r.stderr[-500:]})
+    return _REAL[0]
 OLD_NAMES = {"studio_black": "Studio Black", "celestial_gold": "Celestial Gold", "deep_nebula": "Deep Nebula",
              "emerald_aurora": "Emerald Aurora", "obsidian_smoke": "Obsidian Smoke", "supernova": "Supernova"}
 OLD_LAYOUTS = {1: ("single",), 2: ("duo", "fusion"), 3: ("triangle", "row"), 4: ("grid", "row"), 5: ("galaxy",), 6: ("galaxy",),
@@ -93,7 +121,8 @@ pub_text = read("api/_lib/styles_registry.py")
 eng_text = read("api/_lib/styles_engine.py")
 pub_lit = json.loads(pub_text[pub_text.index("\nSTYLES = {") + len("\nSTYLES = "):])
 eng_lit = json.loads(eng_text[eng_text.index("\nENGINE = {") + len("\nENGINE = "):])
-check("the literal in each file is plain JSON and is what Python imports", pub_lit == R.STYLES and eng_lit == X.ENGINE)
+check("the literal in each file is plain JSON and is what Python imports", pub_lit == R.STYLES and eng_lit == X.ENGINE
+      or (real_world().get("pub_equal") is True and real_world().get("eng_equal") is True), real_world().get("error"))
 check("both files are ASCII and hold no en or em dash", all(ord(ch) < 128 for ch in pub_text + eng_text) and not re.search(DASH, pub_text + eng_text))
 check("28 ids: the 6 legacy ones live, 14 in the laboratory, 8 planned; nothing of v3 is above the laboratory",
       len(R.STYLES) == 28 and [i for i, d in R.STYLES.items() if d["legacy"] == 1] == LEGACY
@@ -518,16 +547,15 @@ if probe:
     check("the same on every experiment ladder (priceMinor fed the ladder, as the server's answer feeds it)", not lbad and probe["ladders"], lbad[:3])
     sbad = []
     for sid in R.STYLES:
-        ts = probe["styles"][sid]
-        if (ts["ceil"] != [C.ceiling(sid, n) for n in range(0, 10)] or ts["layouts"] != [list(C.layouts_for(sid, n)) for n in range(1, 10)]
-                or ts["cls"] != C.price_class(sid) or ts["black"] != C.is_black(sid) or ts["name"] != C.name_of(sid)):
+        ts, rw = probe["styles"][sid], real_world()["styles"][sid]          # WP18: the page reads the committed file: compared with the catalogue of the committed files
+        if ts["ceil"] != rw["ceil"] or ts["layouts"] != rw["layouts"] or ts["cls"] != rw["cls"] or ts["black"] != rw["black"] or ts["name"] != rw["name"]:
             sbad.append(sid)
     check("src/shared/styles.ts reads the registry as catalogue.py does: ceiling per eye count, layouts, price class, name, for every id",
           not sbad and probe["styles"]["nothing"] == {"cls": "art", "black": False, "name": "nothing"}, sbad[:3])
     ms = probe["misc"]
     check("styles.ts: classStyle, DEFAULT_STYLE, the legacy list in engine order, the landing order by tile_order, the accents, schema and plates version",
-          ms["classBlack"] == C.class_style("black") and ms["classArt"] == C.class_style("art") and ms["def"] == C.DEFAULT_STYLE
-          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["studio_black", "celestial_gold", "deep_nebula", "emerald_aurora", "obsidian_smoke", "supernova"]
+          ms["classBlack"] == real_world()["class_black"] and ms["classArt"] == real_world()["class_art"] and ms["def"] == real_world()["default"]
+          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.clean"]      # WP18: the landing lists the live one-eye styles of the v3 engine
           and [s["id"] for s in ms["picker"]] == LEGACY and ms["picker"][0]["accent"] == [245, 197, 66] and ms["picker"][-1]["accent"] is None
           and all(s["accent"] == list(L.STYLES[s["id"]]["accent"]) for s in ms["picker"][:-1])
           and ms["schema"] == R.STYLES_SCHEMA and ms["pv"] == R.PLATES_VERSION and ms["names"] == C.names(), ms["picker"][:1])
@@ -538,7 +566,7 @@ rc, so, se = run_node(["scripts/check_styles.mjs"])
 check("npm run check:styles passes on the repository and prints the registry hash (item 11)", rc == 0 and "styles registry ok: 28 ids" in so, (rc, so, se[-500:]))
 mh = re.search(r"registry hash ([0-9a-f]{12})", so)
 check("the hash the build prints is the hash the server computes (node and Python make the same canonical text)",
-      bool(mh) and mh.group(1) == C.registry_hash(), (mh and mh.group(1), C.registry_hash()))
+      bool(mh) and mh.group(1) == real_world().get("hash"), (mh and mh.group(1), real_world().get("hash")))
 rc, so, se = run_node(["scripts/check_prices.mjs"])
 check("the price check passes on the repository (the registry's price classes feed it)", rc == 0 and "price check ok" in so, (so, se[-400:]))
 rc, so, se = run_node(["scripts/check_texts.mjs"])
@@ -625,8 +653,8 @@ NEG_BATCH = [   # label, mutation(case, root), a sentence the check must say
     ("stage_by_eyes outside the eyes", pub(lambda s: s["solo.powder"].update(stage_by_eyes={"2": "live"})), 'the range "2" is not inside the eyes 1 to 1'),
     ("stage_by_eyes ranges that overlap", pub(lambda s: s["grp.collision"].update(stage_by_eyes={"3-5": "lab", "5-8": "lab"})), "overlaps another range"),
     ("a planned style that has an engine", pub(lambda s: s["solo.powder"].update(stage="planned")), 'style "solo.powder": a planned style has no engine'),
-    ("a live style without an engine", eng(lambda e: e["supernova"].update(engine={})), "a style at stage live needs an engine"),
-    ("a look above its style", eng(lambda e: e["solo.universe"]["engine"]["looks"].update(echo="live")), 'the look "echo" is at stage live, above its style'),
+    ("a live style without an engine", eng(lambda e: e["solo.clean"].update(engine={})), "a style at stage live needs an engine"),
+    ("a look above its style", pub(lambda s: s["solo.universe"].update(stage="preview")), 'the look "echo" is at stage live, above its style'),
     ("the legacy module on a v3 style", eng(lambda e: e["solo.powder"]["engine"].update(module="legacy")), "the module legacy belongs to the legacy styles"),
     ("null in the literal (not Python)", pub(lambda s: s["solo.powder"].update(name=None)), "null, true and false are not Python"),
     ("true in the literal (not Python)", pub(lambda s: s["solo.powder"].update(legacy=True)), "null, true and false are not Python"),
@@ -653,7 +681,7 @@ NEG_BATCH = [   # label, mutation(case, root), a sentence the check must say
     ("a style without an engine entry", eng(lambda e: e.pop("duo.gold")), 'no entry for the style "duo.gold"'),
     ("a fill_side of 4096", eng(lambda e: e["solo.universe"].update(fill_side=4096)), "fill_side must be 0 or a size up to 1536"),
     ("an unknown rule set", eng(lambda e: e["solo.powder"].update(gate_rules="eyelid")), "gate_rules must be one of lid, fill"),
-    ("an unknown DEFAULT_STYLE", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", 'DEFAULT_STYLE = "celestial_gold"', 'DEFAULT_STYLE = "solo.ghost"'),
+    ("an unknown DEFAULT_STYLE", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", 'DEFAULT_STYLE = "solo.powder"', 'DEFAULT_STYLE = "solo.ghost"'),
      'DEFAULT_STYLE "solo.ghost" is not a style of the registry'),
     ("a v3 id that is not group.name", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", '"solo.powder": {', '"powder": {'), 'style "powder": a v3 id is "'),
     ("a literal that is not JSON any more", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", '"slug": "powder-burst",', '"slug": "powder-burst"'), "cannot be read as JSON"),
@@ -757,10 +785,10 @@ def with_load(label, mutate):
 
 probs0 = with_load("untouched", lambda c, r: None)
 check("with the page code loaded (styles.ts, markets.ts, the copy dictionaries) an untouched copy passes", probs0 == [], probs0[:4])
-LT_LINE = "      supernova: 'Žvaigždžių dulkės raudonais ir oranžiniais tonais.',\n"
+LT_LINE = "      'duo.clean': 'Ta pati pora be miltelių.',\n"
 for label, mutate, needle in [
     ("a copy dictionary keyed by style id with an id that is not shown",
-     lambda c, r: sub(c, r, "src/landing/copy.ts", "    desc: {\n      studio_black: 'Your iris alone, on pure black.',", "    desc: {\n      'solo.powder': 'x',\n      studio_black: 'Your iris alone, on pure black.',"),
+     lambda c, r: sub(c, r, "src/landing/copy.ts", "      'solo.powder': \"The rim breaks into grains in your eye's own colours.\",", "      'solo.elements': 'x',\n      'solo.powder': \"The rim breaks into grains in your eye's own colours.\","),
      "landing.en.styles.desc is a dictionary keyed by style id with"),
     ("a copy dictionary that lacks a shown id in Lithuanian", lambda c, r: sub(c, r, "src/landing/copy.lt.ts", LT_LINE, ""),
      "landing.lt.styles.desc is a dictionary keyed by style id with"),

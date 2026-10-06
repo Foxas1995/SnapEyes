@@ -30,6 +30,13 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 #   privacy: "iris" (the example names no style), "orders" (the order of the eyes, the date, the look, the derived eye profile, the plan code to Stripe),
 #            "retention" and "storage" (the same facts in the lists); one LEGAL_UPDATED (2026-10-05) for every page and the pack; the consent
 #            version and the checkbox texts are untouched.
+# 1006 refresh (2026-10-06, WP18 of the v3 engine build: the catalogue switch). The cutover publishes the AI-made material sentence (src/shared/aiMaterial.ts) in the
+# terms of every language and moves LEGAL_UPDATED to 2026-10-06. A1, B1, B3 and E8 (pins of the date and of the terms text, none a defect) moved to the new text, each
+# keeping its id and the older names, with " - 1006:" added. eu_wp18.json is the EXACT pin of the EU edition as of that work (same layout as eu_wp12.json, which stays
+# as the base: the 1005 differences from eu_1acef38.json are still checked on it, and the 1006 difference from it is ONE block of the terms ("product": the sentence,
+# in en and de) and one paragraph of the pack's terms; the withdrawal page, the privacy policy, the imprint, the checkbox wording and the seller are equal to the pin of WP12):
+#   terms:   "product" gains the sentence about AI-made material from a shared library (decision 10 of the specification, published with the first plate style)
+#   one LEGAL_UPDATED (2026-10-06) for every page and the pack; the consent version and the checkbox texts are untouched.
 import os, sys, json, time, re, subprocess, importlib.util
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -184,8 +191,9 @@ PACK = json.load(open(os.path.join(H.REPO, "dist", "legal", "order-mail.json"), 
 PACK_AUTO = dict(PACK, making_start="after_confirmation")
 EU_BEFORE = json.load(open(os.path.join(HERE, "eu_before.json"), encoding="utf-8"))
 EU_1ACEF = json.load(open(os.path.join(HERE, "eu_1acef38.json"), encoding="utf-8"))   # 0930 refresh: the EU edition as of 1acef38 (the base of the 1005 refresh)
-EU_NOW = json.load(open(os.path.join(HERE, "eu_wp12.json"), encoding="utf-8"))   # 1005 refresh: the EU edition as of WP12
-LEGAL_NOW = "2026-10-05"        # 1005 refresh: LEGAL_UPDATED, one date for every legal page and the pack (it was 2026-09-30)
+EU_WP12 = json.load(open(os.path.join(HERE, "eu_wp12.json"), encoding="utf-8"))   # 1005 refresh: the EU edition as of WP12 (the base of the 1006 refresh)
+EU_NOW = json.load(open(os.path.join(HERE, "eu_wp18.json"), encoding="utf-8"))   # 1006 refresh: the EU edition as of WP18 (the catalogue switch)
+LEGAL_NOW = "2026-10-06"        # 1006 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-05 since WP12, 2026-09-30 before)
 CONSENT_NOW = "2026-09-30.2"    # 0930 refresh: the consent version since 30efee7 (the lt and hu texts added; en, de, AU as of .1)
 LANG2 = ("en", "de")            # the two languages the snapshots of before the Lithuanian and Hungarian work have
 set_pack(PACK)
@@ -204,7 +212,8 @@ EDI = CL["editions"]
 # ---------------------------------------------------------------------------------------------- A. one wording, two sides
 check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED 2026-09-30 = pack updated"
       " - 0930: bumped again by 30efee7 (lt and hu texts), now 2026-09-30.2; 2026-09-30.1 is still quoted (A3, H1)"
-      " - 1005: LEGAL_UPDATED is 2026-10-05 (WP12), the consent version is not bumped",
+      " - 1005: LEGAL_UPDATED is 2026-10-05 (WP12), the consent version is not bumped"
+      " - 1006: LEGAL_UPDATED is 2026-10-06 (WP18: the AI-made material sentence), the consent version is still not bumped",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
       and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
@@ -351,16 +360,22 @@ PRIV12 = {
            "retention": (1, 1, ["Zusammenfassung der aus Ihren Vorschauen"], [], []),
            "storage": (1, 1, ["einige daraus gemessene Zahlen"], [], [])},
 }
-terms12 = {l: doc_diff(EDI["eu"]["terms"][l], EU_1ACEF["terms"][l]) for l in LANG2}
+terms12 = {l: doc_diff(EU_WP12["terms"][l], EU_1ACEF["terms"][l]) for l in LANG2}      # 1006: the 1005 step, between the two pins
 terms12_ok = all(fr and wp12_ok(d, TERMS12[l]) for l, (fr, d) in terms12.items())
+# 1006 refresh: what WP18 changed in the EU terms on purpose: ONE block of "product" holding the AI-made material sentence, nothing removed
+TERMS18 = {"en": {"product": (1, 0, ["AI-made material from a shared library", "another customer's artwork can contain the same piece"], [], [])},
+           "de": {"product": (1, 0, ["KI-erzeugtes Material aus einer gemeinsamen Bibliothek", "Kunstwerk einer anderen Person"], [], [])}}
+terms18 = {l: doc_diff(EDI["eu"]["terms"][l], EU_WP12["terms"][l]) for l in LANG2}
+terms18_ok = all(fr and wp12_ok(d, TERMS18[l]) for l, (fr, d) in terms18.items())
 pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 0930: the terms differ from before by exactly the contract languages sentence (30efee7) and the price list sentence "
       "(1acef38); all pinned to eu_1acef38.json; lt and hu editions present"
-      " - 1005: the pin is eu_wp12.json, and the terms differ from the pin of 1acef38 by exactly the three blocks of TERMS12 (preview, prices, delivery)",
-      all(same.values()) and terms12_ok and all(pinned.values()) and all(v == ["de", "en", "hu", "lt"] for v in editions4.values()),
-      (same, terms12_ok, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms12.items()}))
+      " - 1005: the pin is eu_wp12.json, and the terms differ from the pin of 1acef38 by exactly the three blocks of TERMS12 (preview, prices, delivery)"
+      " - 1006: the pin is eu_wp18.json, and the terms differ from the pin of WP12 by exactly the one block of TERMS18 (the AI-made material sentence)",
+      all(same.values()) and terms12_ok and terms18_ok and all(pinned.values()) and all(v == ["de", "en", "hu", "lt"] for v in editions4.values()),
+      (same, terms12_ok, terms18_ok, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
@@ -380,7 +395,8 @@ check("B2 EU privacy policy: only two sentences added per language (the market k
 
 def _norm(t):
     """The pack's text without its date line (the date changes with every legal change)."""
-    return t.replace("2026-09-30", "X").replace("30.09.2026", "X").replace("2026-10-05", "X").replace("05.10.2026", "X")   # 1005: and the date of WP12
+    return (t.replace("2026-09-30", "X").replace("30.09.2026", "X").replace("2026-10-05", "X").replace("05.10.2026", "X")      # 1005: and the date of WP12
+             .replace("2026-10-06", "X").replace("06.10.2026", "X"))                                                              # 1006: and the date of WP18
 
 
 def _terms_pack_ok(l, pack=None):
@@ -394,13 +410,23 @@ def _terms_pack_ok(l, pack=None):
 
 
 def _terms_pack_12(l):
-    """1005: the pack's EU terms as they are now = the pin of 1acef38 (date aside) with exactly the three paragraphs of the changed blocks replaced: the
-    preview paragraph, the price rows, the delivery paragraph; and the pinned pack of WP12 holds the same text."""
-    now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
+    """1005: the pack's EU terms of the pin of WP12 = the pin of 1acef38 (date aside) with exactly the three paragraphs of the changed blocks replaced: the
+    preview paragraph, the price rows, the delivery paragraph. 1006: this is checked between the two pins; _terms_pack_18 checks the pack as it is now."""
+    now = _norm(EU_WP12["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
     was = _norm(EU_1ACEF["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
     add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
     return (len(now) == len(was) and len(add) == 3 == len(rem) and any("Clean Iris" in p for p in add) and any("Studio Black" in p for p in rem)
             and not any("Studio Black" in p or "Couple Duo" in p for p in now)
+            )
+
+
+def _terms_pack_18(l):
+    """1006: the pack's EU terms as they are now = the pin of WP12 (date aside) plus exactly one paragraph, the AI-made material sentence, and nothing removed; and
+    the pinned pack of WP18 holds the same text."""
+    now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
+    was = _norm(EU_WP12["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
+    add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
+    return (len(now) == len(was) + 1 and len(add) == 1 and not rem and any(k in add[0] for k in ("AI-made material from a shared library", "KI-erzeugtes Material aus einer gemeinsamen Bibliothek"))
             and _norm(PACK["docs"][l]["terms"]["text"]) == _norm(EU_NOW["pack"]["docs"][l]["terms"]["text"]))
 
 
@@ -408,7 +434,7 @@ seller_en_de = {k: ({l: v[l] for l in LANG2} if isinstance(v, dict) else v) for 
 pack_docs_eq = lambda a, b, l, d: (_norm(a[l][d]["text"]) == _norm(b[l][d]["text"]) and a[l][d]["url"] == b[l][d]["url"]
                                     and a[l][d]["title"] == b[l][d]["title"])
 eu_pack_same = (
-    all(_terms_pack_ok(l) for l in LANG2) and all(_terms_pack_12(l) for l in LANG2)
+    all(_terms_pack_ok(l) for l in LANG2) and all(_terms_pack_12(l) for l in LANG2) and all(_terms_pack_18(l) for l in LANG2)
     and all(pack_docs_eq(PACK["docs"], EU_BEFORE["pack"]["docs"], l, "withdrawal") for l in LANG2)
     and all(PACK["docs"][l]["terms"]["url"] == EU_BEFORE["pack"]["docs"][l]["terms"]["url"] for l in LANG2)
     and all(pack_docs_eq(PACK["docs"], EU_NOW["pack"]["docs"], l, d) for l in LANG2 for d in ("terms", "withdrawal"))
@@ -417,9 +443,10 @@ seller_same = (seller_en_de == EU_BEFORE["pack"]["seller"] and PACK["seller"] ==
                and all(sorted(PACK["seller"][k]) == ["de", "en", "hu", "lt"] for k in ("company", "address", "contact")))
 check("B3 the built pack's EU texts are the same as before (the date line aside), links without m="
       " - 0930: the terms by exactly the two sentences of 30efee7 and 1acef38, the seller with its lt and hu lines; "
-      "all pinned to eu_1acef38.json - 1005: pinned to eu_wp12.json, the terms by exactly the three paragraphs of the changed blocks (_terms_pack_12)",
+      "all pinned to eu_1acef38.json - 1005: pinned to eu_wp12.json, the terms by exactly the three paragraphs of the changed blocks (_terms_pack_12)"
+      " - 1006: pinned to eu_wp18.json, the terms by exactly one more paragraph, the AI-made material sentence (_terms_pack_18)",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
-      (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2]))
+      (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",
       CL["copySame"] == {"euEn": True, "euDe": True, "ltEn": True}, CL["copySame"])
 
@@ -616,7 +643,7 @@ check("E6 the full AU withdrawal information and AU terms are attached (not the 
 check("E7 the AU email: no 'no refunds' wording, no en or em dash", not bad_words(t) and not any(d in t for d in DASHES), bad_words(t))
 md = read_json(f"orders/{oE}/mail_delivery.json")
 check("E8 mail_delivery.json sent with the new consent version and the pack date"
-      " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12)", md.get("state") == "sent"
+      " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12) - 1006: the pack date is 2026-10-06 (WP18)", md.get("state") == "sent"
       and md.get("consent") == CONSENT_NOW and md.get("legal") == LEGAL_NOW, md)
 with open(os.path.join(HERE, "sample_au_confirmation_en.txt"), "w", encoding="utf-8") as f:
     f.write(head)

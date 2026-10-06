@@ -1,4 +1,6 @@
-# name:dir:script[:needs]       dir is relative to the prepared tree (mksp.py), script runs there; a suite is green when it exits 0.
+# name:dir:script[:needs[:pre]]  dir is relative to the prepared tree (mksp.py), script runs there; a suite is green when it exits 0.
+# pre = the suite runs in the world before the v3 catalogue switch (run_all.sh, suites/shim/sitecustomize.py): the older suites use the six legacy styles, which
+#       the switch retired, as the vehicle of what they guard (payments, chain, refunds, admin, markets, price tests, texts); the v3 suites run in the real world.
 # needs = fixtures: the private image fixtures (suites/private/fixtures, never in git); skipped (exit 77) when they are missing.
 # New suites of the v3 work (suites/README.md, section "Adding a suite") are appended at the end, with the same format:
 #   v3reg:scripts/styles_tests:test_registry.py          (a suite in the repository itself, copied from REPO_DIRS by mksp.py)
@@ -9,37 +11,42 @@
 # check of the port's edits, SNAPEYES_CALIB for the real calibration eyes: LOCAL lines, not counted), v3steps (WP6a: the master plan, its steps and
 # state machine, the guards, the one duration constant, the watchdog, the admin actions and the clean-up of the style folder, over HTTP with a stub for the
 # image model; about two minutes).
-r2:wave-r-back/pb/r2:test_round2.py
-r3:wave-r-back/pb/r3:test_round3.py
-r4:wave-r-back/pb/r4:test_round4.py
-r5:wave-r-back/pb/r5:test_round5.py
-fix:wave-r-back/pb/fix:test_fixes.py
-admin:wave-pv/tests/admin:test_admin.py:fixtures
-pay:wave-pv/tests:test_pay.py
-advance:wave-pv/tests:test_advance.py
-refund:wave-pv/tests:test_refund_stop.py
-preview:wave-pv/tests:test_preview.py
-review:wave-s/review:test_review.py
-fixmk:wave-s/fixmk:test_fixmk.py
-markets:wave-z/markets:test_markets.py
-au:wave-z/au:test_au.py
-payrev:wave-z/payrev/adv:test_payrev.py
-fixer:wave-z/fixer:test_fixer.py
-oldpay:wave-r-back/pb:test_pay.py
-oldadv:wave-s/advance:test_advance.py
-oldadmin:wave-q/admin:test_admin.py:fixtures
-exp:wave-exp/suite:test_experiments.py
+# v3cutover (WP18: the catalogue switch, in the REAL world: the table of ceilings, the registry's effective default and the pages' reading of it, nothing orderable before the owner's
+# tick, the tick, the rollback, the retired legacy ids and a session that crosses the cutover, the tile images, the AI-made material sentence and one LEGAL_UPDATED, health and prices;
+# set SNAPEYES_CALIB to also check that the committed tile images are what scripts/make_style_tiles.py makes of the owner's eyes: a LOCAL line, not counted; about 15 seconds).
+# The entries that end in :pre run in the world before the switch (suites/README.md, The two worlds).
+r2:wave-r-back/pb/r2:test_round2.py::pre
+r3:wave-r-back/pb/r3:test_round3.py::pre
+r4:wave-r-back/pb/r4:test_round4.py::pre
+r5:wave-r-back/pb/r5:test_round5.py::pre
+fix:wave-r-back/pb/fix:test_fixes.py::pre
+admin:wave-pv/tests/admin:test_admin.py:fixtures:pre
+pay:wave-pv/tests:test_pay.py::pre
+advance:wave-pv/tests:test_advance.py::pre
+refund:wave-pv/tests:test_refund_stop.py::pre
+preview:wave-pv/tests:test_preview.py::pre
+review:wave-s/review:test_review.py::pre
+fixmk:wave-s/fixmk:test_fixmk.py::pre
+markets:wave-z/markets:test_markets.py::pre
+au:wave-z/au:test_au.py::pre
+payrev:wave-z/payrev/adv:test_payrev.py::pre
+fixer:wave-z/fixer:test_fixer.py::pre
+oldpay:wave-r-back/pb:test_pay.py::pre
+oldadv:wave-s/advance:test_advance.py::pre
+oldadmin:wave-q/admin:test_admin.py:fixtures:pre
+exp:wave-exp/suite:test_experiments.py::pre
 v3wp0:scripts/styles_tests:test_wp0.py
-v3reg:scripts/styles_tests:test_registry.py
-v3gate:scripts/styles_tests:test_gate_seal.py
+v3reg:scripts/styles_tests:test_registry.py::pre
+v3gate:scripts/styles_tests:test_gate_seal.py::pre
 v3core:scripts/styles_tests:test_engine_core.py
-v3plates:scripts/styles_tests:test_plates.py
+v3plates:scripts/styles_tests:test_plates.py::pre
 v3single:scripts/styles_tests:test_goldens_singles.py
-v3steps:scripts/styles_tests:test_steps.py
+v3steps:scripts/styles_tests:test_steps.py::pre
 v3reveal:scripts/styles_tests:test_reveal.py
 v3coll:scripts/styles_tests:test_goldens_collision.py
-v3compose:scripts/styles_tests:test_compose_api.py
+v3compose:scripts/styles_tests:test_compose_api.py::pre
 v3uni:scripts/styles_tests:test_goldens_universe.py
-v3admin:scripts/styles_tests:test_admin_styles.py
+v3admin:scripts/styles_tests:test_admin_styles.py::pre
 v3picker:scripts/styles_tests:test_picker.py
-v3checkout:scripts/styles_tests:test_checkout_styles.py
+v3checkout:scripts/styles_tests:test_checkout_styles.py::pre
+v3cutover:scripts/styles_tests:test_cutover.py

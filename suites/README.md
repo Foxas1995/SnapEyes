@@ -23,7 +23,8 @@ before it is stopped.
 | Path | What |
 |---|---|
 | `run_main.sh`, `run_all.sh` | the runner: prepare, run three at a time, then the page-code tests |
-| `suites.list` | one `name:dir:script[:needs]` line per suite; a new suite is one more line |
+| `suites.list` | one `name:dir:script[:needs[:pre]]` line per suite; a new suite is one more line. `pre` runs the suite in the world before the v3 catalogue switch (below) |
+| `shim/sitecustomize.py` | the pre-cutover world of the `:pre` suites: Python imports it on its own when `suites/shim` is on `PYTHONPATH`, and with `SNAPEYES_WORLD=pre-cutover` it puts the catalogue back the way it was, in memory, the moment `api/_lib/catalogue.py` is imported |
 | `mksp.py` | prepares one run: copies `tree/`, the repository's own `scripts/styles_tests/`, the private fixtures and the built legal pack |
 | `tree/` | the suite sources, in the folder names the suites use among themselves (`wave-pv/tests/harness.py` is the harness of the fake Stripe and Resend). The names are the historic scratch names: renaming them would break the suites' relative references |
 | `ts/` | the page-code tests (`*.test.ts`, run by `scripts/run_ts_tests.mjs` together with any `src/**/*.test.ts`) |
@@ -44,6 +45,10 @@ so that a gate reading the exit code of `run_main.sh` in a fresh clone cannot ta
 one. A machine that cannot have the fixtures says so on purpose: `--allow-skipped` for `summary.py`, or `SNAPEYES_ALLOW_SKIPPED=1`
 for `run_main.sh` (the last lines still name what did not run). The v3 style suites use a synthetic iris generator (work package WP4) and need none.
 Keep a copy of `suites/private/` somewhere safe outside the repository: the only other copy is in a session scratch folder.
+
+## The two worlds (the catalogue switch, WP18)
+
+Since the cutover (2026-10-06) the six legacy styles are retired and every style of the v3 engine waits for the owner's tick, so a checkout or a preview of a legacy id is a refusal. The twenty older suites and seven of the v3 suites (`v3reg`, `v3gate`, `v3plates`, `v3steps`, `v3compose`, `v3admin`, `v3checkout`) were written with the legacy styles as the vehicle of what they guard (payments, the chain, refunds, the admin panel, markets, price tests, the registry and the compose contract), so their entries end in `:pre`: `run_all.sh` sets `SNAPEYES_WORLD=pre-cutover` and `PYTHONPATH` to `suites/shim` for them, and the shim restores the catalogue of the day before the switch in memory (legacy ids live, the v3 ids in the laboratory, no effective default). Nothing in `api/` reads the variable and a deployment never has the folder on its path. A suite that runs by hand needs both variables to be in the old world. The suites without `:pre` run in the real world: `v3wp0`, `v3core`, `v3reveal`, `v3single`, `v3coll`, `v3uni`, `v3picker`, `ts` and **`v3cutover`**, which proves the switch itself (the table of ceilings, the defaults, nothing orderable before the owner's tick, the tick, the rollback, the retired ids and a session that crosses the cutover, the tile images, the texts, health and prices). A `pre` suite that must compare the catalogue with a file of the repository asks a clean interpreter for the real catalogue (`real_world()` in `test_registry.py`); a new suite does not need `pre` unless it sells or previews a legacy style.
 
 ## Adding a suite
 

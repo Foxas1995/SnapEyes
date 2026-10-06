@@ -6,7 +6,7 @@ import { fallbackCatalogue, fillTokens, readCatalogue } from '../../src/shared/c
 import { COPY } from '../../src/landing/copy';
 import { AI_MATERIAL, AI_MATERIAL_PUBLISHED, aiBlocks, aiSentence } from '../../src/shared/aiMaterial';
 import { LEGAL_UPDATED } from '../../src/shared/legal';
-import { STYLES, styleName, classStyle } from '../../src/shared/styles';
+import { STYLES, styleName, classStyle, EFFECTIVE_DEFAULT, buildStage, ceilingStage, landingStyles } from '../../src/shared/styles';
 
 type R = Array<[string, boolean, string?]>;
 
@@ -16,8 +16,14 @@ export async function run(): Promise<R> {
   const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']');
 
   const fb = fallbackCatalogue();
-  check('the fallback is the build\'s ceilings: while the legacy styles are live, eight eyes and the five art styles in the registry\'s tile order',
-    fb.max === 8 && fb.styles.join(', ') === 'Celestial Gold, Deep Nebula, Emerald Aurora, Obsidian Smoke, Supernova', JSON.stringify(fb));
+  // WP18: the fallback was "the build's ceilings" (while the legacy styles were live: eight eyes and five art styles). Since the cutover it is the build's reading of the
+  // stages with the registry's EFFECTIVE_DEFAULT: the ceilings of the v3 styles are live but held at preview until the owner's tick, the legacy ids are retired, so a page that
+  // cannot reach the server promises nothing: no maximum, no list, no id.
+  check('the fallback is the build\'s reading of the stages (the ceilings held at the registry\'s effective default): since the cutover nothing is orderable, so no eyes, no art styles, no id',
+    fb.max === 0 && fb.styles.length === 0 && fb.one.length === 0 && EFFECTIVE_DEFAULT === 'preview', JSON.stringify(fb));
+  check('buildStage is the ceiling held at the effective default for a style of the v3 engine, never for a retired one: the five singles and the Trio are live ceilings and preview here, Elements stays lab, a legacy id is retired',
+    buildStage('solo.clean', 1) === 'preview' && buildStage('grp.collision', 3) === 'preview' && buildStage('solo.elements', 1) === 'lab' && buildStage('studio_black', 1) === 'retired' && buildStage('solo.clean', 2) === null
+    && ceilingStage('solo.clean', 1) === 'live' && landingStyles().map((s) => s.id).join() === 'solo.powder,solo.universe,solo.splash,solo.gold,solo.clean', landingStyles().map((s) => s.id).join());
 
   const info = (styles: unknown, max: unknown) => ({ ok: true, open: true, styles, orderable_max_eyes: max });
   const live = (id: string, name: string, stages: Record<string, string>) => ({ id, name, slug: id, group: 'solo', eyes: [1, 8], stages });
@@ -36,9 +42,9 @@ export async function run(): Promise<R> {
   const rn = readCatalogue(info([{ id: gold, stages: { '1': 'live' } }, { id: 'unknown.id', stages: { '1': 'live' } }, { id: gold }, 7, null], 2));
   check('malformed entries are skipped, a style without a name takes the registry\'s, an id the registry does not know is not listed', !!rn && rn.styles.join() === goldName && rn.max === 2, JSON.stringify(rn));
 
-  const cat = { max: 3, styles: ['Powder Burst', 'Splash'] };
+  const cat = { max: 3, styles: ['Powder Burst', 'Splash'], one: [] };
   check('fillTokens fills {max} and {styles} (a comma list), every occurrence, and never prints 0 for a number of eyes',
-    fillTokens('Two to {max} eyes: {styles}; {styles}', cat) === 'Two to 3 eyes: Powder Burst, Splash; Powder Burst, Splash' && fillTokens('{max}', { max: 0, styles: [] }) === '1'
+    fillTokens('Two to {max} eyes: {styles}; {styles}', cat) === 'Two to 3 eyes: Powder Burst, Splash; Powder Burst, Splash' && fillTokens('{max}', { max: 0, styles: [], one: [] }) === '1'
     && fillTokens('nothing to fill', cat) === 'nothing to fill', fillTokens('Two to {max} eyes: {styles}', cat));
 
   check('the black price class is named by its one style from the registry (the row of the landing and the terms)', styleName(classStyle('black')).length > 0 && STYLES[classStyle('black')].price_class === 'black', classStyle('black'));
@@ -54,9 +60,11 @@ export async function run(): Promise<R> {
       !/(\b(six|sechs|šeši|hat)\b|\b6\b)\s+(styles?|stile[ns]?|stili\w*|stíl\w*)/i.test(all) && !/in six|in allen sechs|visais šešiais|mind a hat/i.test(all), '');
   }
 
-  check('the AI-made material sentence is written in four languages, unpublished until the cutover: no block and no sentence is produced while the flag is false',
-    ['en', 'de', 'lt', 'hu'].every((l) => typeof (AI_MATERIAL as Record<string, string>)[l] === 'string' && (AI_MATERIAL as Record<string, string>)[l].length > 150)
-    && AI_MATERIAL_PUBLISHED === false && aiBlocks('en').length === 0 && aiSentence('de') === '' && !DASH.test(JSON.stringify(AI_MATERIAL)), '');
-  check('one LEGAL_UPDATED moved with this work (2026-10-05)', LEGAL_UPDATED === '2026-10-05', LEGAL_UPDATED);
+  // WP18: published by the cutover: every language gives one block and a sentence that ends with it
+  check('the AI-made material sentence is written in four languages and PUBLISHED by the cutover (WP18): one block and the sentence for the end of a line, in every language',
+    ['en', 'de', 'lt', 'hu'].every((l) => typeof (AI_MATERIAL as Record<string, string>)[l] === 'string' && (AI_MATERIAL as Record<string, string>)[l].length > 150
+      && aiBlocks(l as 'en').length === 1 && aiBlocks(l as 'en')[0] === (AI_MATERIAL as Record<string, string>)[l] && aiSentence(l as 'en') === ` ${(AI_MATERIAL as Record<string, string>)[l]}`)
+    && AI_MATERIAL_PUBLISHED === true && !DASH.test(JSON.stringify(AI_MATERIAL)), '');
+  check('one LEGAL_UPDATED moved with this work (2026-10-06, WP18: the AI-made material sentence entered the terms; it was 2026-10-05 at WP12)', LEGAL_UPDATED === '2026-10-06', LEGAL_UPDATED);
   return out;
 }
