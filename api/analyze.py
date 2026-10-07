@@ -635,7 +635,7 @@ def analyze(body):
         """The sentence for the request's language: TEXTS[lang][key] (filled with kw) for "de", "lt" and "hu", else en
         as it is."""
         return TEXTS[lang][key].format(**kw) if lang in TEXTS else en
-    im = L.b64_to_pil(body["image"])
+    im = L.b64_to_pil(body.get("image"))
     W, H = im.size
     ow, oh = int(body.get("origWidth") or W), int(body.get("origHeight") or H)
     scale = ow / float(W)

@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>SnapEyes Studio - Turn your eye photo into iris art</title>
-    <meta name="description" content="Take a photo of your eye with your phone and see your own iris restored and turned into cosmic art in about a minute." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07090e" />
+    <meta name="description" content="Take a photo of your eye with your phone and see your own iris restored and set in the style you choose in about a minute." />
     <meta name="robots" content="noindex" />
     <!-- The page transition (src/motion/transition.css) never covers an order, a payment or a form: this page arrives without it when its address names
          an order (o, k, s), a payment (checkout, session_id) or the online withdrawal function (withdraw). The address is read while the head is parsed: the page's own script may already have tidied it (a return from payment is cleaned) when the page is revealed. -->
@@ -12,7 +15,62 @@
     <!-- fonts are self-hosted through src/index.css: no visitor IP goes to Google before any consent -->
   </head>
   <body class="fx bg-[#07090e] text-[#f0f3fa] antialiased overflow-x-hidden">
+    <noscript>
+      <div style="padding:24px;font-family:sans-serif;color:#f0f3fa;line-height:1.6">
+        <p>SnapEyes Studio needs JavaScript to take your eye photo and show your preview. Please enable it.</p>
+        <p>Questions: <a href="mailto:info@snapeyes.com" style="color:#f5c542">info@snapeyes.com</a></p>
+      </div>
+    </noscript>
     <div id="root"></div>
+    <!-- Fail open (release review, perf-a11y M2): when this page's script cannot be loaded (a flaky network, a content blocker, a deploy while the page was open) or never comes,
+         the visitor gets a plain message with a way out instead of a blank page. A page that renders replaces it (React clears #root first), a late one too. The words are in the
+         visitor's language (?lang=, else the browser's), the same four as the site. -->
+    <script>
+      (function () {
+        var words = {
+          en: ['This page could not be loaded, or it is taking very long.', 'Please reload it. If it keeps failing, write to', 'Reload'],
+          de: ['Diese Seite konnte nicht geladen werden oder braucht sehr lange.', 'Bitte laden Sie sie neu. Klappt es weiter nicht, schreiben Sie an', 'Neu laden'],
+          lt: ['Šio puslapio nepavyko įkelti arba jis kraunasi labai ilgai.', 'Perkraukite jį. Jei vis tiek nepavyksta, rašykite adresu', 'Perkrauti'],
+          hu: ['Az oldal nem töltődött be, vagy nagyon sokáig tart.', 'Töltsd újra. Ha továbbra sem megy, írj erre a címre:', 'Újratöltés']
+        };
+        var shown = false;
+        function show() {
+          var root = document.getElementById('root');
+          if (shown || !root || root.childNodes.length) return;
+          shown = true;
+          var m = /[?&]lang=(en|de|lt|hu)(?:&|$)/.exec(location.search);
+          var l = m ? m[1] : String(navigator.language || 'en').slice(0, 2).toLowerCase();
+          var w = words[l] || words.en;
+          var box = document.createElement('div');
+          box.setAttribute('role', 'alert');
+          box.style.cssText = 'min-height:100vh;box-sizing:border-box;padding:24px;background:#07090e;color:#f0f3fa;font:16px/1.6 system-ui,sans-serif';
+          var p = document.createElement('p');
+          p.textContent = w[0] + ' ' + w[1] + ' ';
+          var a = document.createElement('a');
+          a.href = 'mailto:info@snapeyes.com';
+          a.textContent = 'info@snapeyes.com';
+          a.style.color = '#f5c542';
+          p.appendChild(a);
+          p.appendChild(document.createTextNode('.'));
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = w[2];
+          b.style.cssText = 'margin-top:12px;min-height:44px;padding:0 20px;border-radius:999px;border:1px solid #f5c542;background:transparent;color:#f5c542;font:inherit;cursor:pointer';
+          b.onclick = function () { location.reload(); };
+          box.appendChild(p);
+          box.appendChild(b);
+          root.appendChild(box);
+        }
+        addEventListener('error', function (e) { var t = e.target; if (t && t.tagName === 'SCRIPT' && t.type === 'module') show(); }, true);
+        setTimeout(show, 10000);
+        addEventListener('vite:preloadError', function (e) {
+          try {
+            var k = 'snapeyes.skewReload', last = Number(sessionStorage.getItem(k) || 0);
+            if (Date.now() - last > 60000) { sessionStorage.setItem(k, String(Date.now())); e.preventDefault(); location.reload(); }
+          } catch (x) { /* storage blocked: no reload, the message above still stands */ }
+        });
+      })();
+    </script>
     <script type="module" src="/src/try/main.tsx"></script>
   </body>
 </html>

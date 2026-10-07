@@ -32,6 +32,8 @@ ERRORS_HU = {
     "unreadable": "Ezt a képet nem tudtuk beolvasni. Kérjük, próbáld egy másik fotóval.",
     # ModelBusy
     "busy": "A stúdiónk most nagyon leterhelt. Kérjük, próbáld újra egy perc múlva.",
+    # ModelDenied: the model refused our key
+    "denied": "A stúdiónk egy időre zárva van. Kérjük, próbáld újra később.",
     # anything else
     "failed": "Hiba történt nálunk. Kérjük, próbáld újra.",
 }

@@ -5,7 +5,8 @@ Idempotent, never deletes, verifies every hash. A DRY RUN unless --yes is given:
     python scripts/upload_plates.py --y2 <wave-y2/plates> --y3 <wave-y3> [--families P-SN-CLOUD ...] [--release1] [--yes] [--local-dir DIR]
 
   what is uploaded  the plates the registry gives a 4K file (k4) in the families named (--release1: the families a style of the first release
-                    fetches: Powder Burst's CLOUD, Splash's CROWN, Vortex's SPIRAL; nothing is chosen by default: name the families). The source
+                    fetches: P-SN-CLOUD (Powder Burst), P-SP-CROWN (Splash), P-DN-SPIRAL (the Vortex look of Universe) and P-UV-DUST (the dust of the
+                    collision family and of Universe): 109 plates; nothing is chosen by default: name the families). The source
                     file is found under --y2 (plates_4k/<family>/<file>) or --y3 (plates_uv/plates_4k/<family>/<file>) and must have the exact
                     size and sha256 the registry records, else the plate is refused (the registry names a file, not "a file like it")
   where             plates/v1/<family>/<file> in the private bucket (api/_lib/store.py: the service key and the bucket come from the environment as
@@ -16,8 +17,13 @@ Idempotent, never deletes, verifies every hash. A DRY RUN unless --yes is given:
   the end           the counts and the bytes per family (the storage figure V6 of the plan asks for), and the exit code: 0 when every plate asked for is
                     present (or would be uploaded, in a dry run), 1 when a source is missing or wrong or a stored object is wrong
 
-The size to expect (MiB of 4K files, from the registry): see scripts/bake_plates_registry.py's table; the first release's three families are
-about 370 MiB of the free tier's 1 GB, to be read against the project's real storage plan before this runs with --yes (V6).
+The size to expect (MiB of 4K files, from the registry): the first release's four families are 413.5 MiB (CLOUD 237.6, SPIRAL 72.5, CROWN 59.7,
+DUST 43.7) of the free tier's 1 GB, to be read against the project's real storage plan before this runs with --yes (V6).
+
+The sources are the two scratch folders the plates were made in, which are not in git and may be cleaned: scripts/stage_release1_plates.py copies the 109 files (after
+checking every size and sha256 against the registry) to a permanent folder first, and scripts/upload_release1_plates.ps1 does the dry run, the upload and the read-back on
+the owner's machine without ever writing the service key to a file (README, "Uploading the plates"). The last pass of this script (the same command again with --yes)
+downloads every plate and compares its sha256: that, and not /api/health plates_4k (the first and the last plate of every family), is the proof that every plate is there.
 """
 from __future__ import annotations
 
@@ -101,7 +107,12 @@ def run(rows, store, yes=False, out=print):
             continue
         with open(r["source"], "rb") as f:
             data = f.read()
-        store.put(r["path"], data, TYPES[os.path.splitext(r["path"])[1]], upsert=False)
+        try:
+            store.put(r["path"], data, TYPES[os.path.splitext(r["path"])[1]], upsert=False)
+        except Exception as e:  # noqa: a timeout or a dropped connection ends the run with a sentence, not a traceback; the same command continues where it stopped
+            tot["failed"] = tot.get("failed", 0) + 1
+            out(f"FAILED    {r['path']}: {type(e).__name__}: run the same command again, it continues where it stopped (an object that is already there is compared, never overwritten)")
+            return tot
         tot["uploaded"] += 1
         tot["bytes_by_family"][r["family"]] = tot["bytes_by_family"].get(r["family"], 0) + r["bytes"]
         out(f"uploaded  {r['path']} ({r['bytes'] / MIB:.2f} MiB)")
@@ -137,7 +148,7 @@ def main(argv=None):
     for fam, b in sorted(tot["bytes_by_family"].items()):
         print(f"  {fam:14s} {b / MIB:8.2f} MiB")
     print(f"  {'total':14s} {sum(tot['bytes_by_family'].values()) / MIB:8.2f} MiB" + ("" if a.yes else "   (dry run: nothing was written; --yes uploads)"))
-    return 1 if (tot["wrong"] or tot["bad_source"]) else 0
+    return 1 if (tot["wrong"] or tot["bad_source"] or tot.get("failed")) else 0
 
 
 if __name__ == "__main__":

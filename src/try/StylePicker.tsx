@@ -144,7 +144,7 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
         </span>
         <span className="block px-2 py-1.5">
           <span className="flex items-baseline justify-between gap-2">
-            <span className="text-xs font-bold text-zinc-100 min-w-0 truncate">{t.name}</span>
+            <span className="text-xs font-bold text-zinc-100 min-w-0 break-words leading-tight">{t.name}</span>
             {price && <span data-testid="tile-price" className="shrink-0 text-xs font-semibold text-[#f5c542] whitespace-nowrap">{price}</span>}
             {!allSoon && isSoon(t) && !held && (
               <span data-testid="soon" className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-amber-200 border border-amber-400/40 rounded-full px-1.5 py-px">{T.picker.soon}</span>

@@ -134,6 +134,32 @@ class ClientError(ValueError):
 class ModelBusy(RuntimeError):
     """The Gemini model answered 429/500/503 (overloaded) on every attempt. run() answers 503 with a try-again line."""
 
+class ModelDenied(ModelBusy):
+    """The Gemini API refused our key (401 or 403, PERMISSION_DENIED, API_KEY_INVALID, a key "reported as leaked", a blocked project): nothing a retry can fix. It is a ModelBusy, so every
+    place that answers a busy studio answers it too (a 503 with a sentence, never a bare 500); run() gives it its own sentence and the reason model_denied, and model_state() lets
+    /api/health say "denied" (release review, production M5: the owner's key was blocked and every free preview answered a generic 500)."""
+
+# What this instance last saw of the model: the time of the last good answer and of the last refusal of our key. model_state() reads it for /api/health.
+_MODEL = {"ok": 0.0, "denied": 0.0}
+MODEL_STATE_SECONDS = 900.0
+
+def model_state():
+    """"denied" when the last thing this instance saw of the model, in the last 15 minutes, was a refusal of our key; "ok" when it was a good answer; else "unknown" (nothing
+    asked since this instance started, or a long time ago). Per instance, in memory: a deployment with several instances may say "unknown" on one and "denied" on another."""
+    now = time.time()
+    ok, denied = _MODEL["ok"], _MODEL["denied"]
+    if denied and now - denied < MODEL_STATE_SECONDS and denied > ok:
+        return "denied"
+    if ok and now - ok < MODEL_STATE_SECONDS:
+        return "ok"
+    return "unknown"
+
+def _key_denied(r):
+    """Did the Gemini API refuse our key (not a busy model, not a bad request)? A 401 or 403, or the 400 Google answers an invalid or expired key with."""
+    if r.status_code in (401, 403):
+        return True
+    return r.status_code == 400 and any(s in r.text for s in ("API_KEY_INVALID", "API key not valid", "API key expired"))
+
 class UnlockError(PermissionError):
     """A paid endpoint got no valid unlock ticket for this order. run() answers 403 with a sentence for a buyer,
     not the free preview's "take the photo again"."""
@@ -237,6 +263,7 @@ RUN_ERRORS = {
         "session": "Diese Sitzung ist abgelaufen. Bitte fotografieren Sie Ihr Auge erneut.",
         "unreadable": "Wir konnten dieses Bild nicht lesen. Bitte versuchen Sie es mit einem anderen Foto.",
         "busy": "Unser Studio ist gerade sehr ausgelastet. Bitte versuchen Sie es in einer Minute erneut.",
+        "denied": "Unser Studio ist für einen Moment geschlossen. Bitte versuchen Sie es später erneut.",
         "failed": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.",
     },
     "lt": iris_lt.RUN_ERRORS_LT,
@@ -288,6 +315,16 @@ def run(req, fn, gate=True):
         send_json(req, 400, {"ok": False, "error": _say(lang, "unreadable", "We could not read that image. Try another photo."),
                              "ms": int((time.time() - t0) * 1000)})
         _event(req, "400")
+    except ModelDenied as e:
+        print("snapeyes model denied:", _scrub(repr(e))[:300], flush=True)
+        send_json(req, 503, {"ok": False, "reason": "model_denied",
+                             "error": _say(lang, "denied", "Our studio is closed for a moment. Please try again later."),
+                             "ms": int((time.time() - t0) * 1000)})
+        try:
+            from . import events
+            events.error(req, "busy", "model_denied", 503)
+        except Exception:  # noqa
+            pass
     except ModelBusy as e:
         print("snapeyes model busy:", _scrub(repr(e))[:300], flush=True)
         send_json(req, 503, {"ok": False, "error": _say(lang, "busy", "Our studio is very busy right now. Please try again in a minute."),
@@ -448,7 +485,10 @@ def fibre_score(crop, r_frac=None, size=768, boxes=None):
 # ----------------------------------------------------------------------------- gemini
 def _key():
     k = os.environ.get("GEMINI_API_KEY", "").strip()
-    if not k:
+    # The developer's key file is read ONLY when SNAPEYES_DEV_KEYFILE=1 is set on purpose (the owner's own machine, `python
+    # scripts/dev_api.py` for a real model run). No suite, no Preview and no Vercel function sets it: a test that forgot to stub the
+    # model must fail with "not configured", not spend money (release review, security M2: a probe once spent one real 4K call this way).
+    if not k and os.environ.get("SNAPEYES_DEV_KEYFILE", "").strip() == "1":
         p = r"C:\kuriam\.gemini-key"
         if os.path.exists(p): k = open(p, encoding="utf-8").read().strip()
     if not k: raise RuntimeError("GEMINI_API_KEY is not configured")
@@ -465,8 +505,13 @@ def gemini(model, parts, gen_cfg, timeout=55, retries=1):
         # the key goes in a header, never in the URL: a requests exception stringifies the URL
         r = requests.post(f"{BASE}/models/{model}:generateContent", json=body, timeout=t,
                           headers={"x-goog-api-key": _key()})
-        if r.status_code == 200: return r.json()
+        if r.status_code == 200:
+            _MODEL["ok"] = time.time()
+            return r.json()
         last = f"{model} HTTP {r.status_code}: {r.text[:200]}"
+        if _key_denied(r):
+            _MODEL["denied"] = time.time()
+            raise ModelDenied(last)
         # each key is removed from gen_cfg, so each repair can happen at most once -> the loop always terminates.
         # An explicit imageSize is never dropped: without imageConfig the model answers at its 1K default, so a
         # 4K order would quietly come back at 1K. That case falls through and raises instead.

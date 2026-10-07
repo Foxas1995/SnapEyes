@@ -458,13 +458,25 @@ with Show(*SINGLES):
     r_d1 = comp({"sealed": S1, "styles": ["solo.clean", "solo.gold"]})
     e_day = raised(lambda: comp({"sealed": S1, "styles": ["solo.clean", "solo.gold"]}))
     r_d2 = comp({"sealed": S1, "style": "solo.gold"})
-    r_d3 = comp({"sealed": S1, "styles": ["solo.clean"]})
     e_day2 = raised(lambda: comp({"sealed": S1, "styles": ["solo.clean"]}))
+    e_day3 = raised(lambda: comp({"sealed": S1, "style": "solo.clean"}))
     r_none = comp({"sealed": S1, "styles": []})
 del os.environ["SNAPEYES_TILES_DAY_MAX"]
-check("this instance's daily ceiling of tiles: a batch that does not fit is 503 tiles_paused (retry true, a back-off of 60 s to 1 hour: the time to 00:00 UTC), nothing is charged for it; one preview and the tile list are not tiles",
+check("this instance's daily ceiling of pictures: a batch that does not fit is 503 tiles_paused (retry true, a back-off of 60 s to 1 hour: the time to 00:00 UTC), nothing is charged for it; a single preview is one picture like a tile (release review, regression-security M1), and the tile list is none",
       r_d1["batch"] and getattr(e_day, "status", None) == 503 and e_day.body["reason"] == "tiles_paused" and e_day.body["retry"] is True and 60 <= e_day.body["retry_after"] <= 3600
-      and e_day.body["error"] == CMP.WORDS["tiles_paused"]["en"] and r_d2["ok"] and r_d3["batch"] and getattr(e_day2, "status", None) == 503 and r_none["batch"] and CMP._DAY["tiles"] == 3, (CMP._DAY, getattr(e_day, "body", e_day)))
+      and e_day.body["error"] == CMP.WORDS["tiles_paused"]["en"] and r_d2["ok"] and getattr(e_day2, "status", None) == 503 and e_day2.body["reason"] == "tiles_paused"
+      and getattr(e_day3, "status", None) == 503 and e_day3.body["reason"] == "tiles_paused" and r_none["batch"] and CMP._DAY["tiles"] == 3, (CMP._DAY, getattr(e_day, "body", e_day), getattr(e_day3, "body", e_day3)))
+os.environ["SNAPEYES_TILES_DAY_MAX"] = "2"
+CMP._DAY.update(day="", tiles=0)
+with Show(*SINGLES), mock.patch.object(ST, "preview", side_effect=RuntimeError("boom")):
+    e_fail = [raised(lambda: comp({"sealed": S1, "style": "solo.gold"})) for _ in range(3)]
+left_after_fail = CMP._DAY["tiles"]
+with Show(*SINGLES):
+    r_after = comp({"sealed": S1, "style": "solo.gold"})
+del os.environ["SNAPEYES_TILES_DAY_MAX"]
+check("a single preview that fails (the engine raises) gives its picture back: three failures in a row at a ceiling of two charge nothing, and the next preview is made",
+      all(isinstance(e, RuntimeError) for e in e_fail) and left_after_fail == 0 and r_after["ok"] and CMP._DAY["tiles"] == 1, (e_fail, left_after_fail, CMP._DAY))
+check("the default ceiling is 2000 pictures a day and an instance (800 counted batches alone)", CMP.TILES_DAY_MAX == 2000, CMP.TILES_DAY_MAX)
 check("the ceiling counts a day: a new UTC day starts again from zero", (lambda: (CMP._DAY.update(day="1999-01-01"), CMP._tiles_room(1))[1])() is True and CMP._DAY["day"] != "1999-01-01")
 
 # ============================================================================================ 5. the replies

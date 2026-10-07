@@ -619,6 +619,36 @@ export function checkLandingTiles(tileStyle, gallery, styles, copy, out) {
   }
 }
 
+// ---------------------------------------------------------------------------------------------------- 16. the landing's picture labels
+/** The places of the landing's copy that label a PICTURE: an alt text, a caption, the name of a scene or of the wall's artwork (dotted keys; arrays count their items, a
+ *  key names the string or the whole object below it). A picture shows a look, so a label that names a style nobody can buy yet ("in the Radiance style") sells that style,
+ *  and a label has no Soon chip to take it back: it names no style that is not live (release review H-M2; the tiles are different, they carry their state). */
+export const PICTURE_LABELS = [
+  'hero.imageAlt', 'hero.caption', 'hero.discAlt', 'reveal.eyes', 'wall.arts', 'wall.captions', 'wall.captionsSize', 'more.scenes',
+  'closeups.fibreAlt', 'closeups.locatorAlt', 'closeups.edgeAlt', 'closeups.edgeCaption', 'final.imageAlt', 'final.chip',
+];
+
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Item 16: no picture label of any language names a style of the registry that customers see but cannot buy (stage preview: the tiles say Soon). A planned style is seen by nobody,
+ *  and its name may be an ordinary word (Reflection); a name a live style has too, like Celestial Gold, is fine. */
+export function checkPictureLabels(styles, copy, out) {
+  if (!isObj(styles)) return;
+  const live = new Set(Object.values(styles).filter((d) => d.stage === 'live').map((d) => d.name));
+  const held = [...new Set(Object.values(styles).filter((d) => d.stage === 'preview' && typeof d.name === 'string' && d.name && !live.has(d.name)).map((d) => d.name))];
+  for (const [lang, c] of Object.entries(copy ?? {})) {
+    for (const key of PICTURE_LABELS) {
+      const v = key.split('.').reduce((o, k) => (o === null || o === undefined ? o : o[k]), c);
+      walkStrings(v, key, (s, path) => {
+        for (const name of held) {
+          const re = new RegExp(`(?<![\\p{L}\\d])${escapeRe(name)}(?![\\p{L}\\d])`, 'iu');
+          if (re.test(s)) out.push(`landing.${lang}.${path}: the label of a picture names the style "${name}", which is not live: a picture label cannot say Soon, so it names no style that cannot be bought (say "an artwork" or the group)`);
+        }
+      });
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------- 8. plates, 9. byte budget, 10. function entries, 12. provenance
 // These read the deployment tree (the plate files, vercel.json, the tile images, the reference-image deny list). A copy of the repository that
 // has no vercel.json is not a deployment tree (the mutation copies of the registry suite carry api/, src/ and scripts/ only): they are skipped there.
@@ -903,6 +933,7 @@ export async function checkStyles(root, load) {
       checkRuntimeTokens(landingJson, out);
     }
     checkLandingTiles(tileTs.TILE_STYLE, galleryTs.GALLERY, reg.styles, landingJson, out);
+    checkPictureLabels(reg.styles, landingJson, out);
   }
   checkLayouts(root, reg.styles, names, out, pageNames);
   checkPriceRules(root, reg.styles, client, out);

@@ -455,9 +455,13 @@ with local_store(), mock.patch.object(P, "expected_families", return_value={"P-E
     flame = next(iter(P.storage_ids(["P-EL-FLAME"])))
     nm = P.storage_path(sorted(P.storage_ids(["P-EL-FLAME"]))[0])
     stored(b"x", nm)
+    hfirst = P.health()
+    for _pid in P.health_samples(["P-EL-FLAME"]):
+        stored(b"x", P.storage_path(_pid))
     h1 = P.health()
-check("health(): with a visible style that fetches FLAME plates, plates_4k is false while the sample is not in storage and true once it is (one existence request)",
-      h0 == {"styles": True, "plates_4k": False} and h1 == {"styles": True, "plates_4k": True}, (h0, h1))
+check("health(): with a visible style that fetches FLAME plates, plates_4k is false while the samples are not in storage, still false with only the FIRST plate there (a half finished upload must not look healthy: release review, production M3), and true once the first and the last plate of the family are (two existence requests)",
+      h0 == {"styles": True, "plates_4k": False} and hfirst == {"styles": True, "plates_4k": False} and h1 == {"styles": True, "plates_4k": True}
+      and len(P.health_samples(["P-EL-FLAME"])) == 2 and P.health_samples(["P-EL-FLAME"])[0] == sorted(P.storage_ids(["P-EL-FLAME"]))[0] and P.health_samples(["P-EL-FLAME"])[1] == sorted(P.storage_ids(["P-EL-FLAME"]))[-1], (h0, hfirst, h1))
 with mock.patch.object(P, "expected_families", return_value={"P-EL-FLAME"}):
     check("health(): storage not configured is false for plates_4k, and a broken storage never raises", P.health()["plates_4k"] is False
           and P.health(store=mock.Mock(configured=lambda: True, exists=mock.Mock(side_effect=RuntimeError("boom"))))["plates_4k"] is False)

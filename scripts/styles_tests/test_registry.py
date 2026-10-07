@@ -803,6 +803,13 @@ for label, mutate, needle in [
      'landing.hu.styles.items has no entry for the tile "fam_trio"'),
     ("a number of styles in the landing's own words", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Free watermarked preview"', '"Free watermarked preview in six styles"'),
      "states a number of styles"),
+    # release review H-M2 (check item 16): a picture's label names no style that customers see and cannot buy (the tiles say Soon, a label cannot)
+    ("a picture label that names a style nobody can buy yet (the hero's alt text)", lambda c, r: sub(c, r, "src/landing/copy/en.json", "on a wall. It shows", "on a wall, in the Radiance style. It shows"),
+     'landing.en.hero.imageAlt: the label of a picture names the style "Radiance"'),
+    ("a picture label in another language names one too (a German artwork alt text names Kiss Collision)", lambda c, r: sub(c, r, "src/landing/copy/de.json", '"Die restaurierte Iris als Kunstwerk"', '"Die restaurierte Iris als Kunstwerk im Stil Kiss Collision"'),
+     'landing.de.reveal.eyes[1].artAlt: the label of a picture names the style "Kiss Collision"'),
+    ("the wall's artwork button named after a style that is not live (Family Colours)", lambda c, r: sub(c, r, "src/landing/copy/lt.json", '"eye": "Viena akis",', '"eye": "Family Colours",'),
+     'landing.lt.wall.arts.eye: the label of a picture names the style "Family Colours"'),
     ("a written list of art styles in the pricing row", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"One eye in an art style",\n        "b": "{styles}."', '"One eye in an art style",\n        "b": "Radiance, Powder Burst, Universe."'),
      "landing.en.pricing.rows.art.b must be the token {styles}"),
     ("a written list of pairs in the two-eyes row (the landing's old words)", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Two eyes",\n        "b": "{styles}."', '"Two eyes",\n        "b": "Infinity, Kiss and more."'),
@@ -947,8 +954,8 @@ gate = last_json(so)
 check("the release gate script ran on the real tree", gate is not None, (rc, se[-500:], so[-300:]))
 if gate:
     real = gate["real"]
-    check("release gate: on the real tree every one of the 16 tiles is in exactly one of live, preview, lab and planned by the registry's ceiling for its style and eyes, and none is blocked",
-          real["total"] == 16 and len(gate["ids"]) == 16 and real["blocked"] == []
+    check("release gate: on the real tree every one of the 14 tiles is in exactly one of live, preview, lab and planned by the registry's ceiling for its style and eyes, and none is blocked",
+          real["total"] == 14 and len(gate["ids"]) == 14 and real["blocked"] == []
           and sorted(real["live"] + real["preview"] + real["lab"] + real["planned"]) == sorted(gate["ids"])
           and all(gate["expect"][i] == b for b in ("live", "preview", "lab", "planned") for i in real[b]), real)
     check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of six eyes alone to planned moves only the six-eye tile to the planned list, and blocks nothing",
@@ -963,7 +970,7 @@ if gate:
           len(gate["protoTile"]) == 2 and all("has no row" in b for b in gate["protoTile"]) and gate["protoStyle"] == ['duo_kiss: the registry has no style "constructor"'], gate)
     check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups, and only a production deploy or LANDING_GATE=strict is strict",
           gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
-          and "6 with a live ceiling" in gate["summary"] and "8 at preview" in gate["summary"] and "2 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
+          and "6 with a live ceiling" in gate["summary"] and "8 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
     check("I2: the gate renders the page in seven states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, every style live beyond the ceilings, the server not reachable), in four languages, with no render error and every tile picture present",
           gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "every style live, beyond the ceilings", "server not reachable"]
           and gate["renderedErrors"] == [] and gate["renderedPictures"] == [], (gate["inputs"], gate["renderedErrors"], gate["renderedPictures"]))
@@ -1090,15 +1097,15 @@ check("I2: every landing tile of one eye is nearer to the picker's tile of its o
       _s is not None and all(v["best"] == v["want"] and v["own"] * 1.25 < v["next"] for v in _s.values()), _s)
 check("I2: the same for the three pairs (Collision Infinity, Kiss Collision, Clean Infinity): each landing pair is the picker's pair of its style",
       _p is not None and all(v["best"] == v["want"] and v["own"] * 1.25 < v["next"] for v in _p.values()), _p)
-# the tiles of styles the picker does not show (held in the laboratory) have no picture of the engine to compare with: their landing pictures are the prototype's designs (Universe Duo variant B, the collision
-# engine's filled family), which the repository's held Universe styles do not draw yet (they draw the Echo design: the render of I2 shows both). That gap is PINNED here to exactly those two tiles, so that it
-# cannot grow unseen; the release notes say it, and the owner decides whether the two tiles stay (Soon), go (the specification 1.8 had them removed) or get an engine render from real eyes.
+# a tile whose style the picker does not show (held in the laboratory) has no picture of the engine to compare with, so its landing picture would be a design the engine does not make. The two tiles of the
+# held Universe styles (the pair and the family of six) were exactly that (prototype designs: Universe Duo variant B, the collision engine's filled family), and a Soon chip promises the look it sits on:
+# the release review (H-M3) took them off the landing. The gap is PINNED at none, so that a tile without a picture of the engine cannot come back unseen.
 import re as _re
 _rows = _re.findall(r"^  (\w+): \{ id: '([\w.]+)', eyes: (\d+) \}", read("src/landing/tileStyle.ts"), flags=_re.M)
 _slug = {i: d["slug"] for i, d in R.STYLES.items()}
 _no_engine_picture = sorted(t for t, sid, _n in _rows if not os.path.isfile(os.path.join(REPO, "public", "assets", "atelier", f"style-{_slug.get(sid, 'none')}-800.webp")))
-check("I2: every landing tile except the two of the held Universe styles has a picture of this repository's engine to be compared with (the picker's tile of its style): the gap is exactly duo_infinity_uni and fam_6_uni",
-      len(_rows) == 16 and _no_engine_picture == ["duo_infinity_uni", "fam_6_uni"], (len(_rows), _no_engine_picture))
+check("I2: every one of the 14 landing tiles has a picture of this repository's engine to be compared with (the picker's tile of its style): no tile stands for a look the engine does not make (the two held Universe tiles are gone)",
+      len(_rows) == 14 and _no_engine_picture == [], (len(_rows), _no_engine_picture))
 check("I2: Celestial Gold is the same variant (A) in the landing's tile and in the picker's tile: the two are within 8 levels of 255 on the shared eye (the old design was 29 away), and the Clean Iris tile is the same picture (under 2 levels)",
       _s is not None and _s["gold_own"]["own"] < 8.0 and _s["clean_own"]["own"] < 2.0, _s and {k: round(_s[k]["own"], 2) for k in ("gold_own", "clean_own")})
 

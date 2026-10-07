@@ -2,7 +2,7 @@
 // (dist/) served the way Vercel serves it, with the API of the tools stood in for (scripts/lib/flowstub.mjs: the models are stubbed, nothing leaves this machine,
 // every answer takes a moment so that the waiting screens can be looked at). Not part of `vite build` (it needs Chrome and a few minutes); run it after a build:
 //   npm run build && npm run check:motion:flow
-//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,slider,arrival,failsafe,shift,wiring,bundle] [--mutate-css "from@@to"]
+//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,slider,arrival,failsafe,failopen,shift,wiring,bundle] [--mutate-css "from@@to"]
 // --mutate-css changes every stylesheet of the build on its way to the browser (every occurrence of `from` becomes `to`): a deliberate defect, to see that a check
 // really fails. Example: replacing the reduced-motion clamp of the first rule (`:root:has(>body.fx) *{scroll-behavior:auto!important;transition-duration:.01ms!important;transition-delay:0s!important;animation:none!important}`) with
 // `.wk-arc{animation:wk-rot 3.2s linear infinite}` takes the safety net away and leaks a loop into reduced motion: the `reduced` check must fail on the arc.
@@ -27,6 +27,8 @@
 //              a slow decode leaves the frame the composing status and hairline, never a black frame with nothing in it (m1)
 //   failsafe   a decode that never comes, a browser that blocks every animation, an IntersectionObserver that never reports, a hidden tab: the picture is there
 //              within 3.5 s, the slider is not left half hidden, nothing stays hidden, nothing stays clipped
+//   failopen   /try and /order whose own script cannot be loaded (a flaky network, a content blocker, a deploy while the page was open): a message with a way out in
+//              the visitor's language (a role=alert box in #root with the support address and a reload button), never a blank page (release review, perf-a11y M2)
 //   shift      the layout shifts of the whole flow with motion are the same as with reduced motion (motion adds none: it moves transform, opacity and clip only)
 //   wiring     the head script that skips the page transition for an order, a payment or the withdrawal form is in both pages; no html.mo (nothing is hidden until
 //              a script reveals it); the landing's engine is not loaded by the tools
@@ -490,6 +492,29 @@ async function checkFailsafe() {
   await page.close();
 }
 
+// ---------------------------------------------------------------------------------------------------- failopen
+async function checkFailOpen() {
+  console.log('failopen');
+  const cases = [['/try?lang=de', '*/assets/try-*.js', 'Diese Seite konnte nicht geladen werden'], [`/order?o=i3check&k=${KEY}&lang=lt`, '*/assets/order-*.js', 'Šio puslapio nepavyko įkelti'],
+    ['/try?lang=hu', '*/assets/try-*.js', 'Az oldal nem töltődött be'], ['/order?o=i3check&k=' + KEY + '&lang=en', '*/assets/order-*.js', 'This page could not be loaded']];
+  for (const [path, block, words] of cases) {
+    const page = await chrome.page({ width: 375, height: 812, mobile: true, dpr: 1 });
+    // the browser has fetched these files before in this run: a cached one is never asked for again and the block would not touch it
+    await page.send('Network.setCacheDisabled', { cacheDisabled: true });
+    await page.send('Network.setBlockedURLs', { urls: [block] });
+    const stopped = [];
+    page.on((e) => { if (e.method === 'Network.loadingFailed' && e.params.blockedReason) stopped.push(e.params.requestId); });
+    await page.goto(`${origin}${path}`);
+    await page.loaded();
+    const came = await waitFor(page, "!!document.querySelector('#root [role=alert]')", 15000, 100);
+    const info = came ? JSON.parse(await page.eval(`JSON.stringify((() => { const a = document.querySelector('#root [role=alert]'); const b = a.querySelector('button'); const r = b.getBoundingClientRect(); return { text: a.innerText, mail: !!a.querySelector('a[href="mailto:info@snapeyes.com"]'), button: b.innerText, h: Math.round(r.height), vis: getComputedStyle(a).color } })())`)) : null;
+    expect('failopen', stopped.length > 0, `${path}: the block stopped no request, so this proves nothing`);
+    expect('failopen', came && info.text.includes(words) && info.mail && info.button.length > 2 && info.h >= 44, `${path} with ${block} blocked: ${came ? JSON.stringify(info) : 'no message after 15 s (a blank page)'}`,
+      `${path} with its script blocked: "${info?.text?.slice(0, 60)}" with the support address and a ${info?.h} px reload button`);
+    await page.close();
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------- shift
 async function checkShift() {
   console.log('shift');
@@ -550,7 +575,9 @@ async function checkWiring() {
 // The first-load bytes of the two pages (gzip level 6: the html's scripts and stylesheets and their static imports) on the commit before the motion of the tools
 // (5c9054c, measured the same way). The budget is the spec's (section 10: CSS +2 kB each for /try and /order); the JS has no number in the spec, so this gate says
 // +4 kB. A change of a module that /try and /order share with other work (src/shared) moves the base: re-measure it on the commit before, as scripts/check_budget.mjs says.
-const BEFORE = { try: { js: 152765, css: 10975 }, order: { js: 108723, css: 10975 } };
+// The release review fixes of /try (2026-10-07: the focus that follows the step, the alert for an error, the keyboard slider, the plain message when the script cannot load, the
+// contrast classes) moved the base of /try by +1,961 B JS; the motion keeps the +2,598 B it had.
+const BEFORE = { try: { js: 152765 + 1961, css: 10975 }, order: { js: 108723, css: 10975 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();
@@ -584,6 +611,7 @@ try {
   if (wants('slider')) await checkSlider();
   if (wants('arrival')) await checkArrival();
   if (wants('failsafe')) await checkFailsafe();
+  if (wants('failopen')) await checkFailOpen();
   if (wants('shift')) await checkShift();
   if (wants('wiring')) await checkWiring();
   if (wants('bundle')) checkBundle();

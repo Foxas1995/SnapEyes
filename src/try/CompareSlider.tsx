@@ -80,6 +80,17 @@ export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = T.
     return stop;
   }, [waits, sweepKey]);
 
+  // by keyboard too (WCAG 2.1.1): the frame is the slider, with a name and a spoken value; the arrows move the cut by 5 percent, the page keys by 10, Home and End to the
+  // two ends; a key press ends the sweep like a touch does (release review, perf-a11y M5)
+  const onKey = (e: React.KeyboardEvent) => {
+    const step = e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -5 : e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 5 : e.key === 'PageDown' ? -10 : e.key === 'PageUp' ? 10 : 0;
+    const to = e.key === 'Home' ? 0 : e.key === 'End' ? 100 : step ? pos + step : null;
+    if (to === null) return;
+    e.preventDefault();
+    stopSweep.current();
+    setPos(Math.max(0, Math.min(100, to)));
+  };
+
   const update = (clientX: number) => {
     const el = box.current;
     if (!el) return;
@@ -91,7 +102,15 @@ export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = T.
   return (
     <div
       ref={box}
-      className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black border border-white/10 select-none touch-none cursor-ew-resize"
+      role="slider"
+      tabIndex={0}
+      aria-label={T.result.sliderLabel}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(pos)}
+      aria-valuetext={T.result.sliderValue.replace('{n}', String(Math.round(pos)))}
+      onKeyDown={onKey}
+      className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black border border-white/10 select-none touch-none cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]"
       {...NO_SAVE_BOX}
       onPointerDown={(e) => { stopSweep.current(); setDragging(true); (e.target as Element).setPointerCapture?.(e.pointerId); update(e.clientX); }}
       onPointerMove={(e) => { if (dragging) update(e.clientX); }}

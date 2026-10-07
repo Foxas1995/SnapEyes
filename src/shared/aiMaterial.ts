@@ -31,6 +31,19 @@ export const AI_MATERIAL: Readonly<Record<Lang, string>> = {
     'Egyes stílusoknál az Ön íriszét körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az Ön íriszének megmaradnak a fotója színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
 };
 
+/** The same sentence in the register of the PAGES (the landing's Reveal box and the result of /try, release review H-M1: the page said "we never hide what the AI
+ *  does" and the shared library was named only in the terms). English, German and Lithuanian address the visitor the same way on a page as in a legal text, so
+ *  those three are the legal sentence itself; the Hungarian pages say "te" (the legal texts say "Ön"), so the Hungarian page sentence is its own wording.
+ *  Nothing at run time reads this table: each page carries the words in its own dictionary (the landing's src/landing/copy/<lang>.json, /try's src/try/copy*.ts),
+ *  and scripts/check_texts.mjs (item 12) holds those words equal to it while AI_MATERIAL_PUBLISHED is true. */
+export const AI_MATERIAL_PAGE: Readonly<Record<Lang, string>> = {
+  en: AI_MATERIAL.en,
+  de: AI_MATERIAL.de,
+  lt: AI_MATERIAL.lt,
+  hu:
+    'Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
+};
+
 /** The sentence as a block of a legal text: [] until it is published. */
 export const aiBlocks = (lang: Lang): string[] => (AI_MATERIAL_PUBLISHED ? [AI_MATERIAL[lang]] : []);
 

@@ -19,17 +19,17 @@ def refund_record(o, pi):
     wj(path, {"refund": "re_test", "status": "succeeded", "payment_intent": pi, "by": "admin"})
     return path
 
-# R1: refunded in the Stripe Dashboard (refunded.json) before the page made eye 1: the page's make still renders
-# eye 1 (the page path is not gated), the server's step after it stops 'refunded': no eye 2, no artwork, no email
+# R1: refunded in the Stripe Dashboard (refunded.json) before the page made eye 1: the page's own make is refused 'refunded' (409) at once, like the server's
+# steps (release review, regression m1: a refund used to stop only the server's chain, the page could still make and show the eyes): no eye, no artwork, no email
 gate(False)
 n0 = len(H.Fake.emails)
 o1, k1, _ = new_order(2, "en", "rita@example.com")
 wj(f"orders/{o1}/refunded.json", {"by": "admin", "note": "test"})
 c, j = post("/api/order", {"action": "make", "order": o1, "k": k1, "eye": 1})
-done = wait_for(lambda: stopped(o1), 20)
-check("R1 refunded.json: the server stops 'refunded' after the page's eye 1, no eye 2, no artwork, no 'ready' email",
-      c == 200 and bool(done) and done.get("why") == "refunded" and renders(o1) == [1] and COMPOSES.count(o1) == 0
-      and not mails("rita@example.com", READY_EN, n0) and not exists(f"cleanup/making/{o1}.json"), (c, j, done, renders(o1)))
+# (the order stays in the index of paid orders nobody finished until the daily run drops it: maker._verdict says "drop" for a refunded order, so the marker is no part of this check)
+check("R1 refunded.json: the page's make is refused 'refunded' (409) before any eye is made: no eye, no artwork, no 'ready' email",
+      c == 409 and j.get("reason") == "refunded" and j.get("retry") is False and renders(o1) == [] and COMPOSES.count(o1) == 0
+      and not mails("rita@example.com", READY_EN, n0), (c, j, renders(o1)))
 
 # R2: the admin panel's own refund of the order's payment (ops/refunds/<order>/<sha(pi)>.json)
 n0 = len(H.Fake.emails)
@@ -37,9 +37,8 @@ o2, k2, _ = new_order(2, "en", "sven@example.com")
 pi = (pay.get_paid(o2) or {}).get("payment_intent")
 refund_record(o2, pi or "pi_missing")
 c, j = post("/api/order", {"action": "make", "order": o2, "k": k2, "eye": 1})
-done = wait_for(lambda: stopped(o2), 20)
-check("R2 the panel's refund of the order's payment: the server stops 'refunded'", bool(pi) and c == 200 and bool(done)
-      and done.get("why") == "refunded" and renders(o2) == [1] and not mails("sven@example.com", READY_EN, n0), (pi, done))
+check("R2 the panel's refund of the order's payment: the page's make is refused 'refunded' (409), no eye, no 'ready' email", bool(pi) and c == 409
+      and j.get("reason") == "refunded" and renders(o2) == [] and not mails("sven@example.com", READY_EN, n0), (pi, c, j))
 
 # R3: a refund of another (duplicate) payment is not a refund of the order: it is finished as usual
 n0 = len(H.Fake.emails)

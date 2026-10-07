@@ -45,7 +45,7 @@ const en = {
   lang: 'en' as Lang,
   meta: {
     title: 'SnapEyes Studio - Turn your eye photo into iris art',
-    description: 'Take a photo of your eye with your phone and see your own iris restored and turned into cosmic art in about a minute.',
+    description: 'Take a photo of your eye with your phone and see your own iris restored and set in the style you choose in about a minute.',
   },
   switchLabel: 'Language',
   /** One decimal, as this language writes it (3.7 / 3,7). */
@@ -258,8 +258,14 @@ const en = {
     // CompareSlider's own labels, when a caller passes none
     sliderBefore: 'Your photo',
     sliderAfter: 'Restored',
+    sliderLabel: 'Compare your photo and the restored iris',
+    sliderValue: 'photo {n} percent',
+    // announced once, by a polite live region, when the studio has made the preview (release review, perf-a11y M3)
+    previewReady: 'Your preview is ready. Choose a style below.',
     // owner decision 5, word for word. Shown for a real eye only: the sample has no photo of its own.
     transparency: 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.',
+    // the shared library of plates (src/shared/aiMaterial.ts AI_MATERIAL_PAGE, held word for word by scripts/check_texts.mjs item 12), shown under the line above while it is published
+    aiMaterial: 'In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer\'s artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above.',
     sampleNote: 'This eye is the AI-generated sample, not a real photo. With your own photo, the colour comes from your photo.',
     // the engine's colour check (api/enhance qa) failed for this eye: say so next to the promise above
     colourOff: 'Our colour check says this restoration drifted from your photo: it may look lighter or darker than your eye. A retake in soft daylight usually fixes it.',
@@ -530,7 +536,7 @@ const de: TryCopy = {
   lang: 'de',
   meta: {
     title: 'SnapEyes Studio - Ihr Augenfoto als Iris-Kunst',
-    description: 'Fotografieren Sie Ihr Auge mit dem Smartphone und sehen Sie Ihre eigene Iris in etwa einer Minute restauriert und als kosmisches Kunstwerk.',
+    description: 'Fotografieren Sie Ihr Auge mit dem Smartphone und sehen Sie Ihre eigene Iris in etwa einer Minute restauriert und im Stil Ihrer Wahl.',
   },
   switchLabel: 'Sprache',
   dec1: (v: number) => DE_DECIMAL.format(v),
@@ -720,8 +726,13 @@ const de: TryCopy = {
     after: 'Studio-Makro',
     sliderBefore: 'Ihr Foto',
     sliderAfter: 'Restauriert',
+    sliderLabel: 'Ihr Foto und die restaurierte Iris vergleichen',
+    sliderValue: 'Foto {n} Prozent',
+    // announced once, by a polite live region, when the studio has made the preview (release review, perf-a11y M3)
+    previewReady: 'Ihre Vorschau ist fertig. Wählen Sie unten einen Stil.',
     // src/landing/copy.ts TRANSPARENCY_DE, word for word
     transparency: 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.',
+    aiMaterial: 'Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt.',
     sampleNote: 'Dieses Auge ist das KI-generierte Beispiel, kein echtes Foto. Mit Ihrem eigenen Foto stammt die Farbe aus Ihrem Foto.',
     colourOff: 'Unsere Farbprüfung zeigt, dass diese Restaurierung von Ihrem Foto abweicht: Sie kann heller oder dunkler wirken als Ihr Auge. Eine neue Aufnahme bei weichem Tageslicht behebt das meist.',
     retakeEye: (i: number) => `Auge ${i} neu aufnehmen`,

@@ -20,7 +20,7 @@ import { useMarket } from '../shared/useMarket';
 import type { Lang } from '../try/lang';
 import { CARD, LINK, PLAIN_BTN, Spinner } from './ui';
 
-const FIELD = 'mt-1 w-full min-h-[44px] rounded-xl bg-black/40 border px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-[#f5c542]/70';
+const FIELD = 'mt-1 w-full min-h-[44px] rounded-xl bg-black/40 border px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#f5c542]/70';
 const CONFIRM_BTN = 'min-h-[48px] px-4 py-3 rounded-xl bg-[#f0f3fa] text-black text-sm font-bold flex items-center justify-center gap-2 text-center active:scale-[0.98] disabled:opacity-60';
 
 /** An order of the Australian market (the page adopts its order's market): the line that keeps the Australian
@@ -128,7 +128,7 @@ export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder 
           <input ref={refs.email} data-testid="withdraw-email" type="email" name="email" autoComplete="email" inputMode="email" maxLength={EMAIL_MAX}
             value={email} onChange={(ev) => setEmail(ev.target.value)} disabled={sending} aria-invalid={invalid('email') || undefined}
             aria-describedby={`withdraw-email-hint${invalid('email') ? ' withdraw-email-err' : ''}`} className={`${FIELD} ${border('email')}`} />
-          <span id="withdraw-email-hint" className="block mt-1 text-[11px] font-normal text-zinc-500">{link ? W.emailHint : W.emailHintNoLink}</span>
+          <span id="withdraw-email-hint" className="block mt-1 text-[11px] font-normal text-zinc-400">{link ? W.emailHint : W.emailHintNoLink}</span>
           {invalid('email') && <span id="withdraw-email-err" className="block mt-1 text-[11px] font-normal text-rose-200">{W.invalid.email}</span>}
         </label>
         <label className="block text-xs font-semibold text-zinc-300">
@@ -142,7 +142,7 @@ export const WithdrawForm: React.FC<FormProps> = ({ C, lang, link, initialOrder 
                 maxLength={64} value={order} onChange={(ev) => setOrder(ev.target.value)} disabled={sending}
                 aria-invalid={invalid('order') || undefined} aria-describedby={`withdraw-order-hint${invalid('order') ? ' withdraw-order-err' : ''}`}
                 className={`${FIELD} ${border('order')} font-mono`} />
-              <span id="withdraw-order-hint" className="block mt-1 text-[11px] font-normal text-zinc-500">{W.orderHint}</span>
+              <span id="withdraw-order-hint" className="block mt-1 text-[11px] font-normal text-zinc-400">{W.orderHint}</span>
               {invalid('order') && <span id="withdraw-order-err" className="block mt-1 text-[11px] font-normal text-rose-200">{W.invalid.order}</span>}
             </>
           )}

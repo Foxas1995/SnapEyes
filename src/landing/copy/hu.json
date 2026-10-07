@@ -59,7 +59,7 @@
     "computerHint": "Számítógépen olvasod? Nyisd meg a snapeyes.com oldalt a telefonodon, és ott fotózz, vagy válassz a már meglévő fotóid közül.",
     "ready": "A fájlod, induló ár: {from}",
     "secondary": "Nézd meg egy valódi telefonos fotó előtte-utána képét",
-    "imageAlt": "MI-vizualizáció: Mantas saját írisze fényes akrilnyomatként egy falon, Radiance stílusban. Megmutatja, hogyan nézhet ki a digitális fájl kinyomtatva.",
+    "imageAlt": "MI-vizualizáció: Mantas saját írisze fényes akrilnyomatként egy falon. Megmutatja, hogyan nézhet ki a digitális fájl kinyomtatva.",
     "chipTitle": "MI-vizualizáció",
     "chipBody": "A digitális fájlt kapod meg. A nyomtatást nem tartalmazza.",
     "caption": "A fájlod akrilra nyomtatva, kb. 50 cm. A nyomtatás nem része a rendelésnek.",
@@ -89,7 +89,7 @@
         "note": "Példafotó, nem vásárló. A fotón látszó ablaktükröződést eltávolítottuk.",
         "photoAlt": "Példafotó egy szürkészöld szemről ablaktükröződéssel, a kép bal fele",
         "irisAlt": "Ugyanaz a szürkészöld írisz helyreállítva, tükröződés nélkül",
-        "artAlt": "A helyreállított szürkészöld írisz műalkotásként, Radiance stílusban"
+        "artAlt": "A helyreállított szürkészöld írisz műalkotásként"
       },
       {
         "id": "own",
@@ -98,25 +98,29 @@
         "note": "Saját szeme, otthon fotózva. A fotót az íriszre vágtuk.",
         "photoAlt": "Mantas telefonos fotója a saját szeméről, a kép bal fele",
         "irisAlt": "Ugyanaz az írisz helyreállítva, fekete háttéren",
-        "artAlt": "A helyreállított írisz műalkotásként, Radiance stílusban"
+        "artAlt": "A helyreállított írisz műalkotásként"
       }
     ],
     "eyeGroup": "Válassz egy példaszemet",
     "strip": {
-      "photo": "A fotód",
-      "iris": "Az íriszed",
-      "art": "Az alkotásod"
+      "photo": "Fotó",
+      "iris": "Írisz",
+      "art": "Alkotás"
     },
     "never": "Helyreállítva, soha át nem festve: az íriszedet sosem színezzük át, és sosem cseréljük le másik szemre.",
     "aiTitle": "Mi származik tőled, és mit ad hozzá a mesterséges intelligencia",
     "ai": [
       {
         "t": "A fotódból",
-        "b": "Az íriszed színe, mintázata és elrendeződése. Minden barázda, gyűrű és folt pontosan ott van, ahol a szemedben is."
+        "b": "Az íriszed színe, mintázata és elrendeződése úgy marad, ahogyan a fotódon van."
       },
       {
         "t": "A mesterséges intelligenciánk állítja helyre",
         "b": "Finom részletek, amelyeket a telefonod nem tudott rögzíteni, a fotódhoz illeszkedően újraépítve. A tükröződéseket eltávolítjuk. A legfinomabb hajszálvonalak rekonstrukciók, nem mikroszkópos felvételek."
+      },
+      {
+        "t": "Mesterséges intelligenciával készített anyag egyes stílusoknál",
+        "b": "Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre."
       },
       {
         "t": "Soha",
@@ -196,7 +200,7 @@
     },
     "typical": "Nyomdáknál szokásos jellemzők. A részletek eltérhetnek.",
     "arts": {
-      "eye": "Radiance",
+      "eye": "Egy szem",
       "universe": "Universe",
       "family4": "Család",
       "collision": "Ti ketten"
@@ -216,8 +220,8 @@
       "canvas": "A fájlod vászonra nyomtatva, kb. {size}.",
       "framed": "A fájlod, keretezve, kb. {size}."
     },
-    "footnote": "MI-vizualizáció. Az alkotás egy valódi SnapEyes-fájl. A helyiségek, a kezek és a tárgyak MI által generált képek, nem fényképek, és egy valódi nyomat másképp néz ki. A nyomaton a színek eltérhetnek a képernyőn látottaktól.",
-    "cta": "Nyomtasd ki a fájlodat úgy, ahogyan szeretnéd. Kezdd az ingyenes előnézettel.",
+    "footnote": "MI-vizualizáció. Az alkotás egy valódi SnapEyes-fájl. A helyiségek, a kezek és a tárgyak MI által generált képek, nem fényképek, és egy valódi nyomat másképp néz ki. A nyomaton a színek eltérhetnek a képernyőn látottaktól. A képeken látható stílusok egy része hamarosan elérhető lesz. A képeken látható méretek szemléltető jellegűek; legfeljebb {printMaxCm} méretet javasolunk.",
+    "cta": "A fájlodat az általad választott nyomda nyomtatja ki. Kezdd az ingyenes előnézettel.",
     "compareTitle": "A négy falra szánt anyag összehasonlítása",
     "compareCorner": "Anyag",
     "compare": {
@@ -341,8 +345,8 @@
   "styles": {
     "eyebrow": "Stílusok",
     "title": "Egy írisz, sokféle látásmód",
-    "intro": "Az alábbi alkotások mind példák. A tiéd a saját színeidet és a saját rostjaidat hordozza majd.",
-    "legend": "A SnapEyes-motorral készült példák. Mantas saját szemén láthatók, hacsak az adott kártya mást nem jelez.",
+    "intro": "Az alábbi alkotások mind példák. A tiéd a saját színeidet és a saját mintázatodat hordozza majd.",
+    "legend": "A SnapEyes-motorral készült példák. Mantas saját szemén láthatók, hacsak az adott kártya mást nem jelez. A Hamarosan jelölésű stílus még nem rendelhető.",
     "groups": {
       "one": "Csak te",
       "two": "Ti ketten",
@@ -390,9 +394,6 @@
       "duo_infinity_bb": {
         "d": "Minden írisz megtartja a saját színét, ahol találkoznak."
       },
-      "duo_infinity_uni": {
-        "d": "A pár a saját rostjaiból álló, felnagyított mezőben."
-      },
       "duo_kiss": {
         "d": "Két írisz, amelyek a peremükön érintik egymást."
       },
@@ -410,9 +411,6 @@
       },
       "fam_6": {
         "d": "Hat írisz, mindegyik a saját színében."
-      },
-      "fam_6_uni": {
-        "d": "Hat írisz egy kitöltött mezőn."
       }
     },
     "own": "Mantas szeme",
@@ -444,7 +442,7 @@
       {
         "t": "Nézd meg az ingyenes előnézeted",
         "b": "Körülbelül egy perc alatt megjelenik az íriszed több stílusban, vízjellel. Regisztráció és fizetés nélkül. Az ingyenes előnézeteket nem tároljuk.",
-        "v": "Az ingyenes előnézeted, vízjellel"
+        "v": "Példa előnézet, vízjellel"
       },
       {
         "t": "Töltsd le a digitális fájlt",
@@ -544,7 +542,7 @@
       },
       {
         "t": "Soha nem titkoljuk, mit tesz az MI",
-        "b": "A mesterséges intelligenciánk helyreállítja a finom részleteket, és eltávolítja a tükröződéseket. Soha nem cseréli le az íriszedet egy másikra."
+        "b": "A mesterséges intelligenciánk helyreállítja a finom részleteket, és eltávolítja a tükröződéseket. Egyes stílusoknál az íriszed körüli púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag. Soha nem cseréli le az íriszedet egy másikra."
       },
       {
         "t": "Soha nem keltünk hamis sürgősségérzetet",

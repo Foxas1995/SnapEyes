@@ -13,7 +13,7 @@ import { STYLES, styleName } from '../../src/shared/styles';
 import { GALLERY } from '../../src/landing/assets.data';
 import { groupLine, saleTiles, tileName, tileRow, tileState } from '../../src/landing/tileState';
 import { tileCopy } from '../../src/landing/gallery';
-import { heroPrice } from '../../src/landing/heroPrice';
+import { HELD_PRICE, heroPrice } from '../../src/landing/heroPrice';
 import { faqEntries } from '../../src/landing/copy/index';
 import { landingPrices } from '../../src/landing/priceText';
 import { priceList } from '../../src/shared/markets';
@@ -45,8 +45,8 @@ export async function run(): Promise<R> {
   // --- names: the registry's, and no tile name in any language of the copy
   check('every tile prints the registry\'s name of the style it stands for (tileName), and the name is one of the registry\'s',
     ids.every((id) => { const r = tileRow(id); return !!r && tileName(id) === STYLES[r.id].name && tileName(id) === styleName(r.id); }), ids.map((id) => `${id}=${tileName(id)}`).join());
-  check('the names of the 16 tiles: Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity twice, Universe (the pair), Kiss Collision, Clean Infinity, Family Colours four times, Universe (the family)',
-    ids.map(tileName).join(', ') === 'Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity, Collision Infinity, Universe, Kiss Collision, Clean Infinity, Family Colours, Family Colours, Family Colours, Family Colours, Universe',
+  check('the names of the 14 tiles: Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity twice, Kiss Collision, Clean Infinity, Family Colours four times (no tile for the held Universe pair and family: release review H-M3)',
+    ids.map(tileName).join(', ') === 'Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity, Collision Infinity, Kiss Collision, Clean Infinity, Family Colours, Family Colours, Family Colours, Family Colours',
     ids.map(tileName).join(', '));
   check('a tile id the table does not know (or a hostile one: constructor, __proto__) has no row, no name, and is never for sale',
     ['nope', 'constructor', '__proto__', 'toString', ''].every((id) => tileRow(id) === null && tileName(id) === '' && tileState(id, trio).sale === 'soon' && tileState(id, trio).style === null), '');
@@ -64,16 +64,16 @@ export async function run(): Promise<R> {
   check('tileState: one style ticked is one tile; nothing ticked, the closed page (NOTHING_FOR_SALE) and the fallback are none; a style live for one count is not for sale at another (the Trio\'s style at four eyes)',
     ids.filter((id) => tileState(id, oneStyle).sale === 'sale').join() === 'powder' && ids.every((id) => tileState(id, nothing).sale === 'soon' && tileState(id, NOTHING_FOR_SALE).sale === 'soon' && tileState(id, fallbackCatalogue()).sale === 'soon')
     && tileState('fam_4', trio).sale === 'soon' && tileState('fam_trio', trio).sale === 'sale' && liveFor(trio, 'grp.collision', 3) && !liveFor(trio, 'grp.collision', 4), '');
-  check('a tile reads the catalogue for ITS style: with the Kiss and Clean pairs live the Clean Infinity tile is for sale and the Collision Infinity, Universe (laboratory) tiles of the same group stay Soon',
+  check('a tile reads the catalogue for ITS style: with the Kiss and Clean pairs live the Clean Infinity tile is for sale and the Collision Infinity tiles of the same group stay Soon',
     (() => {
       const s = tileState('duo_clean', pairs);
-      return s.style === 'duo.clean' && s.sale === 'sale' && tileState('duo_infinity_uni', pairs).sale === 'soon' && tileState('duo_infinity', pairs).sale === 'soon';
+      return s.style === 'duo.clean' && s.sale === 'sale' && tileState('duo_infinity_bb', pairs).sale === 'soon' && tileState('duo_infinity', pairs).sale === 'soon';
     })(), '');
   check('saleTiles: the registry names of the tiles for sale in tile order, each name once, with how many tiles of the list can be bought (two Collision Infinity tiles name it once)',
     JSON.stringify(saleTiles(idsOf('one'), trio)) === JSON.stringify({ names: ['Powder Burst', 'Clean Iris'], sale: 2, total: 6 })
-    && JSON.stringify(saleTiles(idsOf('two'), pairs)) === JSON.stringify({ names: ['Kiss Collision', 'Clean Infinity'], sale: 2, total: 5 })
+    && JSON.stringify(saleTiles(idsOf('two'), pairs)) === JSON.stringify({ names: ['Kiss Collision', 'Clean Infinity'], sale: 2, total: 4 })
     && JSON.stringify(saleTiles(['duo_infinity', 'duo_infinity_bb'], readCatalogue(answer({ 'duo.collision_infinity': { '2': 'live' } }, 2))!)) === JSON.stringify({ names: ['Collision Infinity'], sale: 2, total: 2 })
-    && JSON.stringify(saleTiles(idsOf('two'), nothing)) === JSON.stringify({ names: [], sale: 0, total: 5 }), JSON.stringify(saleTiles(idsOf('one'), trio)));
+    && JSON.stringify(saleTiles(idsOf('two'), nothing)) === JSON.stringify({ names: [], sale: 0, total: 4 }), JSON.stringify(saleTiles(idsOf('one'), trio)));
 
   // --- the line under a group's intro
   check('groupLine: only while ordering is open; nothing of the group for sale is "soon", some is "more", all is none',
@@ -92,7 +92,9 @@ export async function run(): Promise<R> {
     (() => {
       const a = heroPrice(lp, false, oneStyle), b = heroPrice(lp, false, trio), c = heroPrice(lp, false, nothing), d = heroPrice(lp, false, NOTHING_FOR_SALE), e = heroPrice(lp, true, oneStyle);
       const onlyTrio = readCatalogue(answer({ 'grp.collision': { '3': 'live' } }, 3))!;
-      return a.from === lp.art && !a.held && b.from === lp.from && !b.held && c.held && d.held && e.held && heroPrice(lp, false, onlyTrio).held;
+      // a held line carries no price at all (release review H-m6): HELD_PRICE stands where the number would be, a price only when the line is shown
+      return a.from === lp.art && !a.held && b.from === lp.from && !b.held && c.held && d.held && e.held && heroPrice(lp, false, onlyTrio).held
+        && c.from === HELD_PRICE && d.from === HELD_PRICE && e.from === HELD_PRICE && heroPrice(lp, false, onlyTrio).from === HELD_PRICE && !/[0-9]/.test(HELD_PRICE) && HELD_PRICE.length === 6;
     })(), '');
 
   // --- the FAQ answer about other people's eyes
@@ -123,14 +125,14 @@ export async function run(): Promise<R> {
   const rendered = await renderGate(states);
   const tileHtml = (si: number, lang: 'en' | 'de' | 'lt' | 'hu', id: string) => rendered.scenarios[si].langs[lang]!.tiles.find((t) => t.id === id)!.html;
   const shows = (html: string) => ({ chip: /class="lp-soon"/.test(html), price: /<b>/.test(html), state: /data-state="(\w+)"/.exec(html)?.[1] });
-  check('rendered: closed, every tile of the page says Soon in its own language and prints no price; the open page with one style ticked prints a price on that one tile only and Soon on the 15 others; open with nothing ticked is as closed',
+  check('rendered: closed, every tile of the page says Soon in its own language and prints no price; the open page with one style ticked prints a price on that one tile only and Soon on the 13 others; open with nothing ticked is as closed',
     rendered.errors.length === 0 && rendered.pictures.length === 0
     && (['en', 'de', 'lt', 'hu'] as const).every((lang) => {
       const soon = rendered.scenarios[0].langs[lang]!.soon;
       return rendered.scenarios[0].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price && t.html.includes(`>${soon}</span>`))
         && rendered.scenarios[2].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price)
         && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).price).map((t) => t.id).join() === 'powder'
-        && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).chip).length === 15;
+        && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).chip).length === 13;
     }), JSON.stringify([rendered.errors, rendered.pictures]));
   check('rendered: a tile for sale is marked "sale" and shows no Soon chip, a tile that cannot be bought is marked "soon", and the tile heading is the registry\'s name',
     shows(tileHtml(1, 'en', 'powder')).state === 'sale' && !shows(tileHtml(1, 'en', 'powder')).chip && shows(tileHtml(1, 'en', 'duo_kiss')).state === 'soon' && tileHtml(1, 'en', 'duo_kiss').includes('<h3>Kiss Collision</h3>')
@@ -174,10 +176,11 @@ export async function run(): Promise<R> {
       return closed.every((si) => bar(si) === en.bar.soon && notice(si) === en.pricing.notice && pay(si) === undefined && !stripe(si))
         && open.every((si) => bar(si) === en.bar.open && notice(si) === en.pricing.noticeOpen && pay(si) === en.pricing.payOpen && stripe(si));
     })(), '');
-  check('rendered: the hero\'s line is the price of the styles for sale: the black price is not on it while only an art style is for sale, and the line is the same in the closed state as the ladder\'s lowest (held back)',
+  check('rendered: the hero\'s line is the price of the styles for sale: the black price is not on it while only an art style is for sale, and the line is held back in the closed state and carries no price at all (figure spaces where the number would be)',
     (() => {
       const text = (si: number) => rendered.scenarios[si].langs.en!.hero.replace(/<[^>]*>/g, ' ');
-      return text(1).includes(lp.art) && !text(1).includes(lp.black) && /<li class="lp-price" inert/.test(rendered.scenarios[0].langs.en!.hero) && text(0).includes(lp.from);
+      const held = /<li class="lp-price" inert[^>]*>([\s\S]*?)<\/li>/.exec(rendered.scenarios[0].langs.en!.hero)?.[1] ?? '';
+      return text(1).includes(lp.art) && !text(1).includes(lp.black) && held !== '' && !text(0).includes(lp.from) && !/[0-9]/.test(held) && held.includes('Digital file from') && held.includes(HELD_PRICE);
     })(), '');
   const unused: RunCatalogue = severalMax(pairs) >= 2 ? pairs : pairs;
   check('severalMax with the pairs and the Trio and four eyes live is 4 and with the Trio alone 0 (the combo card prints its title with {max} only from two eyes)', severalMax(unused) === 4 && severalMax(trio) === 0, `${severalMax(unused)} ${severalMax(trio)}`);
@@ -213,8 +216,8 @@ export async function run(): Promise<R> {
   const a10 = await ask(server(stripeOn, { ok: true, open: true, suggest: 'au', styles: [] }));
   check('createOrdering: an answer that holds no catalogue (an older server) but is open: the market it suggests is kept, the sale is the build\'s fallback, which sells nothing', a10.suggested() === 'au' && !a10.open() && a10.sale() === NOTHING_FOR_SALE, JSON.stringify([a10.suggested(), a10.sale()]));
   // what a render without a browser reads: the closed page (the prerender and a hydration see the same first paint everywhere), except for the store the gate makes settled
-  const probe = () => { const o = useOrderingOpen(); const s = useSaleCatalogue(); const m = useSuggestedMarket(); return createElement('i', null, `${o}|${s.max}|${s.one.join(',')}|${m}`); };
-  const seen = (o: Awaited<ReturnType<typeof ask>>) => renderToStaticMarkup(createElement(OrderingContext.Provider, { value: o }, createElement(probe)));
+  const Probe = () => { const o = useOrderingOpen(); const s = useSaleCatalogue(); const m = useSuggestedMarket(); return createElement('i', null, `${o}|${s.max}|${s.one.join(',')}|${m}`); };
+  const seen = (o: Awaited<ReturnType<typeof ask>>) => renderToStaticMarkup(createElement(OrderingContext.Provider, { value: o }, createElement(Probe)));
   const unsettled = await ask(server(stripeOn, { ...live, suggest: 'au' }), false);
   const settled = await ask(server(stripeOn, { ...live, suggest: 'au' }), true);
   check('the hooks of the page: a store that is not settled reads the closed page in a render without a browser although it holds answers; the gate\'s settled store reads them (open, the sale, the market it suggests)',

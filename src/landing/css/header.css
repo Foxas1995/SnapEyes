@@ -50,6 +50,10 @@
   .lp-menu-btn span::before, .lp-menu-btn span::after { content: ""; position: absolute; left: 0; width: 100%; height: 1.5px; background: currentColor; }
   .lp-menu-btn span::before { top: -6px; }
   .lp-menu-btn span::after { top: 6px; }
+  /* forced colours (a Windows contrast theme): a bar drawn with currentColor takes the colour of a button the system repaints and vanishes on the canvas; the page's text colour stays visible */
+  @media (forced-colors: active) {
+    .lp-menu-btn span, .lp-menu-btn span::before, .lp-menu-btn span::after { background: CanvasText; }
+  }
   @media (max-width: 959px) {
     .lp-menu-btn { display: inline-flex; }
   }

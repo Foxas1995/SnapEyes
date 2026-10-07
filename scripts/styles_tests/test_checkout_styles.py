@@ -484,8 +484,11 @@ with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
     # Universe: the look is part of the order and the fill gate is hard
     o, k = new_order(["blue_round"])
     c0, j0 = co(o, k, "solo.universe", 1, opts={"look": "vortex"})
-    for pid in j0.get("plates") or []:                   # the Vortex look draws from a 4K spiral plate: it must be in storage before the customer pays
-        store.put(PL.storage_path(pid), b"plate", "image/png", upsert=True)
+    # the Vortex look draws from a 4K spiral plate: it must be in storage before the customer pays (the 409 names no plate id any more: the plan of the order says which)
+    need0 = SP.make_plan({"style": "solo.universe", "layout": "single", "eyes": 1, "opts": {"look": "vortex"}},
+                         [{"eye_id": rj(f"orders/{o}/draft/eye_1.json")["eye_id"], "profile": rj(f"orders/{o}/draft/eye_1.json")["profile"]}])
+    for x in need0.get("plates_needed") or []:
+        store.put(x["path"], b"plate", "image/png", upsert=True)
     c, j = co(o, k, "solo.universe", 1, opts={"look": "vortex"})
     p, _ = H.Fake.creates[-1] if c == 200 else ({}, 0)
     check("Universe with the Vortex look: ordered, the option is in the plan and the metadata, the line item says Universe, Vortex",
@@ -498,8 +501,8 @@ with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
     need = SP.make_plan({"style": "solo.powder", "layout": "single", "eyes": 1, "opts": {}},
                         [{"eye_id": rj(f"orders/{o}/draft/eye_1.json")["eye_id"], "profile": rj(f"orders/{o}/draft/eye_1.json")["profile"]}])
     pids = [x["id"] for x in need.get("plates_needed") or []]
-    check("IE8: a style that draws from a 4K plate that is not in storage is 409 style_unavailable, why plates, the plate ids named, found before the customer pays",
-          c_miss == 409 and j_miss["why"] == "plates" and j_miss["plates"] and sorted(j_miss["plates"]) == sorted(pids) and pids, (c_miss, j_miss, pids))
+    check("IE8: a style that draws from a 4K plate that is not in storage is 409 style_unavailable, why plates, found before the customer pays; the answer names the style and the reason, never a plate id (release review, regression-security m5)",
+          c_miss == 409 and j_miss["why"] == "plates" and "plates" not in j_miss and pids and not any(p in json.dumps(j_miss) for p in pids), (c_miss, j_miss, pids))
     for x in need["plates_needed"]:
         store.put(x["path"], b"plate", "image/png", upsert=True)
     c_have, j_have = co(o, k, "solo.powder", 1)
@@ -762,6 +765,11 @@ MUT = [
      '"questions": "Turite klausimų? Tiesiog atsakykite į šį el. laišką. Unikalus kūrinys.",\n    "sign": "Pagarbiai\\nSnapEyes",\n}\n\n\ndef confirmation_rows_lt', "the claim"),
     ("the AI sentence hard-coded in the terms before the cutover publishes it", "src/legal/docs/terms.ts", "...aiBlocks('en'),", "'In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer\\'s artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above.',", "before the cutover publishes it"),
     ("the AI sentence published but left out of the terms", "src/legal/docs/terms.ts", "...aiBlocks('en'),", "", "is published"),
+    # release review H-M1: the pages say "we never hide what the AI does", so the sentence is on the landing and in the result of /try, word for word
+    ("the Reveal box of the English landing without the sentence about AI-made material word for word", "src/landing/copy/en.json", "the finest fibres are restored by AI, as described above.", "the finest fibres are restored by AI.", "does not hold the sentence about AI-made material word for word"),
+    ("the Reveal box of the Hungarian landing with another sentence than the page register", "src/landing/copy/hu.json", "Az íriszednek megmaradnak a fotód színei", "Az Ön íriszének megmaradnak a fotója színei", "does not hold the sentence about AI-made material word for word"),
+    ("the result of /try (German) with another sentence than the page register", "src/try/copy.ts", "wie oben beschrieben, durch KI wiederhergestellt.',", "wie oben beschrieben, durch KI wiederhergestellt!',", "result.aiMaterial is not the sentence about AI-made material word for word"),
+    ("a page sentence (English) that is not the legal one", "src/shared/aiMaterial.ts", "  en: AI_MATERIAL.en,", "  en: 'In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer\\'s artwork can contain the same piece.',", "the en page sentence differs from the legal one"),
 ]
 for label, rel, old, new, needle in MUT:
     root = os.path.join(TMP, "mut_" + re.sub(r"[^a-z0-9]+", "_", label.lower())[:40])

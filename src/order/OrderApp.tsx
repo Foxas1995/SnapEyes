@@ -236,7 +236,7 @@ export const OrderApp: React.FC = () => {
           <span aria-hidden="true" className="fx-hair" />
           <h2 className="font-luxury text-xl font-bold">{mailing ? C.pending.mailTitle : C.pending.title}</h2>
           <p className="text-sm text-zinc-300 mt-2">{mailing ? C.pending.mailBody : C.pending.body}</p>
-          {view.wait && <p className="text-xs text-zinc-500 mt-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {C.wait.confirming(secondsLeft(view.wait.until, clock))}</p>}
+          {view.wait && <p className="text-xs text-zinc-400 mt-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {C.wait.confirming(secondsLeft(view.wait.until, clock))}</p>}
           {/* the email with this page's link has not gone out yet: never say it is in the email */}
           <p className="text-xs text-zinc-400 mt-3">{email && !mailing ? C.ready.email : C.ready.bookmark}</p>
         </section>
@@ -294,14 +294,14 @@ export const OrderApp: React.FC = () => {
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-2xl mx-auto">
         <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-semibold tracking-wider text-lg">SNAP<span className="text-[#f5c542]">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
-          <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-500 text-right">{C.tag}</span>
+          <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right">{C.tag}</span>
           <LangSwitch C={C} lang={lang} langs={langs} onSwitch={switchLang} />
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 pb-10">
         <h1 className="font-luxury text-3xl sm:text-4xl font-bold text-center mt-2">{C.title}</h1>
-        {LINK && <p data-testid="order-no" className="text-center text-xs text-zinc-500 mt-2 break-all">{C.orderNo(LINK.o)}</p>}
+        {LINK && <p data-testid="order-no" className="text-center text-xs text-zinc-400 mt-2 break-all">{C.orderNo(LINK.o)}</p>}
         <div className="mt-6 flex flex-col gap-4">
           {/* the card that replaces another arrives with a transition (a state change of this visit; the first card is the page itself, the withdrawal form is a form and the review card holds calm
               text only: no motion there), keyed by what the card shows so a re-render of the same card never replays it; the withdrawal form keeps one key, a form is never remounted
@@ -426,14 +426,15 @@ const Ready: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang; email: boolea
     <section data-testid="state-ready" className={CARD}>
       <h2 className={`font-luxury text-xl font-bold${soft}`}>{C.ready.title}</h2>
       <div className="mt-4 rounded-2xl overflow-hidden border border-white/10 bg-black" style={w && h ? { aspectRatio: `${w} / ${h}` } : reveal ? { minHeight: 240 } : undefined}>
-        <ArtImage src={d.url} alt={C.ready.alt} decoding="async" arrive={reveal} className="w-full h-full object-contain" />
+        {/* the copy made for the screen when there is one (the file is 4096 px, 3 to 5 MB: release review, perf-a11y M1); the file itself stays behind the download button and the link */}
+        <ArtImage src={d.display_url ?? d.url} alt={C.ready.alt} decoding="async" arrive={reveal} className="w-full h-full object-contain" />
       </div>
       <a data-testid="download" href={d.download_url} className={`${GOLD_BTN} mt-4${reveal ? ' fx-pass' : soft}`}><Download className="w-4 h-4 shrink-0" /> {C.ready.download}</a>
       <div className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mt-3${soft}`}>
         <a href={d.url} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-300 underline underline-offset-4 decoration-white/30 hover:text-white inline-flex items-center gap-1">
           <ExternalLink className="w-3.5 h-3.5" /> {C.ready.open}
         </a>
-        {w && h && typeof d.bytes === 'number' && <span className="text-[11px] text-zinc-500">{C.ready.details(w, h, mbOf(d.bytes, lang))}</span>}
+        {w && h && typeof d.bytes === 'number' && <span className="text-[11px] text-zinc-400">{C.ready.details(w, h, mbOf(d.bytes, lang))}</span>}
       </div>
       <p className={`text-xs text-zinc-300 mt-4${soft}`}>{C.ready.link}</p>
       <p className={`text-xs text-zinc-400 mt-1${soft}`}>{email ? C.ready.email : C.ready.bookmark}</p>

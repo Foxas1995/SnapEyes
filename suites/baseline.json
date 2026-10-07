@@ -1,7 +1,7 @@
 {
  "commit": "1d58fbf",
  "recorded": "2026-10-04",
- "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch; v3wp0 is 93 after the review fixes of baseline.md section 7, it was 61). A change lowers a number only with a reason in the commit message. Every suite is expected green in EVERY run: the fix suite's Windows race in the local store was fixed (baseline.md section 7), a suite that goes red once is investigated, not rerun until green.",
+ "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch; v3wp0 is 93 after the review fixes of baseline.md section 7, it was 61). A change lowers a number only with a reason in the commit message. Every suite is expected green in EVERY run: the fix suite's Windows race in the local store was fixed (baseline.md section 7), a suite that goes red once is investigated, not rerun until green. 2026-10-07 (release review fixes, baseline.md section 31): ts 452 to 470, v3checkout 128 to 132, v3compose 114 to 116, v3cutover 74 to 75, v3reg 216 to 219, and the new suite v3rel with 41; none lowered.",
  "suites": {
   "r2": {
    "pass": 105
@@ -64,13 +64,13 @@
    "pass": 349
   },
   "ts": {
-   "pass": 452
+   "pass": 470
   },
   "v3wp0": {
    "pass": 93
   },
   "v3reg": {
-   "pass": 216
+   "pass": 219
   },
   "v3gate": {
    "pass": 97
@@ -94,7 +94,7 @@
    "pass": 111
   },
   "v3compose": {
-   "pass": 114
+   "pass": 116
   },
   "v3uni": {
    "pass": 142
@@ -106,10 +106,13 @@
    "pass": 30
   },
   "v3checkout": {
-   "pass": 128
+   "pass": 132
   },
   "v3cutover": {
-   "pass": 74
+   "pass": 75
+  },
+  "v3rel": {
+   "pass": 41
   }
  }
 }

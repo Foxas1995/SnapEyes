@@ -96,7 +96,11 @@ export type OrderState = 'unpaid' | 'pending' | 'paid' | 'making' | 'review' | '
 
 export interface OrderEye { eye: number; made?: boolean; uploaded?: boolean; ref?: string | null; preview_url?: string | null }
 
-export interface Download { url: string; download_url: string; expires_in?: number; width?: number | null; height?: number | null; bytes?: number | null }
+export interface Download {
+  url: string; download_url: string; expires_in?: number; width?: number | null; height?: number | null; bytes?: number | null;
+  /** the copy of the artwork made for the screen (1600 px, a few hundred KB): what the page shows; the file itself (url) stays behind the download button (release review, perf-a11y M1) */
+  display_url?: string; display_width?: number | null; display_height?: number | null;
+}
 
 /** The server's own making of a paid order (api/_lib/maker.py), as the status of a "paid" or "making" order says it:
  *  while `active`, the server makes the order without this page (the page only watches), `step` "eye" (with `eye`)

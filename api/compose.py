@@ -83,8 +83,12 @@ MAX_TOTAL_B64 = 4_400_000    # Vercel refuses a request body over 4.5 MB before 
 
 TILES_MAX = 8                # styles in one batch
 TILES_BUDGET_S = 40.0        # a batch whose estimated seconds (prep plus the tiles, at the slow factor) pass this is refused: 422 too_many_styles
-TILES_DAY_MAX = 800          # tiles one instance makes per UTC day (SNAPEYES_TILES_DAY_MAX): a batch is up to 30 times the work of an old compose and
-                             # the Hobby plan allows 4 hours of CPU a month (decision 23); past it 503 tiles_paused until 00:00 UTC
+TILES_DAY_MAX = 2000         # pictures one instance makes per UTC day (SNAPEYES_TILES_DAY_MAX): a tile of a batch counts one, a single preview (the 1024 px picture of one style) counts one
+                             # too (release review, regression-security M1: only batches were counted, so a loop of single previews was never stopped); a batch is up to 30 times the
+                             # work of an old compose and the Hobby plan allows 4 hours of CPU a month (decision 23); past the ceiling 503 tiles_paused until 00:00 UTC. The default was
+                             # 800 for batches alone: it is 2000 now that singles count, so that a day of honest visitors (about six tiles and a few single previews each) is paused no
+                             # sooner than before. It is a per-instance counter: it bounds what one instance spends and nothing more. What stops a stranger is a Firewall rate-limit
+                             # rule per IP on /api/compose, /api/analyze, /api/enhance and /api/deglare (README, "Before ordering opens")
 TILE_FALLBACK_S = 4.0        # the estimate of one tile whose cost table has no row (a style the table cannot price is a style to be careful with)
 LEGACY_PREVIEW_S = 1.3       # the legacy engine's own 1024 px preview, warm (the plan, section 2.8): it has no row in the cost table
 LEGACY_TILE_S = 0.6          # and a 480 px tile of it
@@ -943,9 +947,18 @@ def compose(body, bearer=""):
     if req["batch"]:
         return _batch(req, styles, n, body, (raw, metas, plains), cat, admin, t0)
     style = styles[0]
-    if catalogue.is_legacy(style):
-        return _one_legacy(req, style, n, body, (raw, metas, plains), metas, cat, admin, clean, t0)
-    return _one_engine(req, style, n, _plains(raw, plains), metas, cat, admin, clean, t0)
+    # a single preview is a picture made like a tile: charged before it is drawn, given back when it is not (a busy answer, a refusal, a failure); the owner's lab is not counted
+    day = _utc_day()
+    if not admin and not _tiles_room(1):
+        raise _refuse(503, "tiles_paused", "tiles_paused", True, min(3600, max(60, _until_midnight())))
+    try:
+        if catalogue.is_legacy(style):
+            return _one_legacy(req, style, n, body, (raw, metas, plains), metas, cat, admin, clean, t0)
+        return _one_engine(req, style, n, _plains(raw, plains), metas, cat, admin, clean, t0)
+    except BaseException:
+        if not admin:
+            _tiles_refund(1, day)
+        raise
 
 
 def handle(req):

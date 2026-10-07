@@ -61,7 +61,7 @@ export const hu: TryCopy = {
   lang: 'hu',
   meta: {
     title: 'SnapEyes Studio - Íriszalkotás a szemfotódból',
-    description: 'Fotózd le a szemed a telefonoddal, és kb. egy perc alatt meglátod a saját íriszedet helyreállítva, kozmikus műalkotásként.',
+    description: 'Fotózd le a szemed a telefonoddal, és kb. egy perc alatt meglátod a saját íriszedet helyreállítva, a választott stílusban.',
   },
   switchLabel: 'Nyelv',
   dec1: (v: number) => HU_DECIMAL.format(v),
@@ -253,8 +253,13 @@ export const hu: TryCopy = {
     after: 'Helyreállítva',
     sliderBefore: 'A fotód',
     sliderAfter: 'Helyreállítva',
+    sliderLabel: 'Hasonlítsd össze a fotódat és a helyreállított íriszt',
+    sliderValue: 'fotó {n} százalék',
+    // announced once, by a polite live region, when the studio has made the preview (release review, perf-a11y M3)
+    previewReady: 'Az előnézeted elkészült. Válaszd ki lent a stílust.',
     // src/landing/copy.hu.ts TRANSPARENCY_HU, word for word
     transparency: TRANSPARENCY_HU,
+    aiMaterial: 'Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
     sampleNote: 'Ez a szem az MI által generált minta, nem valódi fotó. A saját fotóddal a szín a te fotódból származik.',
     colourOff: 'A színellenőrzésünk szerint ez a helyreállítás eltért a fotódtól: világosabbnak vagy sötétebbnek tűnhet, mint a szemed. Egy újrafotózás lágy nappali fényben általában megoldja.',
     retakeEye: (i: number) => `${i}. szem újrafotózása`,

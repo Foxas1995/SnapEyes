@@ -50,3 +50,4 @@ v3admin:scripts/styles_tests:test_admin_styles.py::pre
 v3picker:scripts/styles_tests:test_picker.py
 v3checkout:scripts/styles_tests:test_checkout_styles.py::pre
 v3cutover:scripts/styles_tests:test_cutover.py
+v3rel:scripts/styles_tests:test_release_fixes.py

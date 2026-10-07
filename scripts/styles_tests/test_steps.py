@@ -218,8 +218,8 @@ def new_order(eyes=1, style="studio_black", email="kunde@example.com", pay_it=Tr
     if layout:
         body["layout"] = layout
     c, j = post("/api/checkout", body)
-    if c == 409 and j.get("why") == "plates":     # WP12: a style that draws from a 4K plate is refused (409 plates) while the plate is not in storage: put the ones named, ask again
-        for pid in j["plates"]:
+    if c == 409 and j.get("why") == "plates":     # WP12: a style that draws from a 4K plate is refused (409 plates) while the plate is not in storage (the answer names no plate id: release review m5): put the families the style reads, whole, ask again
+        for pid in PL_M.storage_ids(CT.ENGINE[style]["plates"]):
             store.put(PL_M.storage_path(pid), b"plate", "image/png", upsert=True)
         c, j = post("/api/checkout", body)
     assert c == 200, (c, j)

@@ -162,8 +162,9 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
             {forSale ? <PriceLine tile={tile} prices={prices} /> : <span className="lp-soon">{c.styles.soonTag}</span>}
           </PriceGate>
         </div>
-        {/* a price next to a picture of a printed piece says what the price is for (the wall view only; the flat artwork is the file) */}
-        {on && <p className="lp-file">{t('styles.wallFile')}</p>}
+        {/* a price next to a picture of a printed piece says what the price is for (the wall view only; the flat artwork is the file); a tile with no price (it says Soon) has
+            nothing to explain (release review H-m8) */}
+        {on && forSale && <p className="lp-file">{t('styles.wallFile')}</p>}
         <p>{desc}</p>
         <p className="lp-src">{c.styles[prov]}</p>
       </figcaption>

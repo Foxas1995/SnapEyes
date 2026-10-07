@@ -7,8 +7,14 @@
 import type { RunCatalogue } from '../shared/catalogue';
 import type { LandingPrices } from './priceText';
 
+/** What stands where the number would be while the line is held back: six figure spaces (U+2007, the width of a digit), about the width of a price
+ *  (the line keeps its words and its box, so the prerendered first screen and the live one occupy the same space and nothing moves when a price arrives). The line is
+ *  invisible and inert while it is held, and it also CARRIES no price: a crawler or a text extractor that reads the markup of a page that sells nothing yet finds
+ *  "Digital file from" and nothing after it (release review H-m6, P-m5). Built from its code so that no invisible character sits in the source. */
+export const HELD_PRICE = String.fromCharCode(0x2007).repeat(6);
+
 export interface HeroPrice {
-  /** The price text for {from}: the lowest among what can be bought now, else the ladder's own lowest (held back, so never shown). */
+  /** The price text for {from}: the lowest among what can be bought now; HELD_PRICE (no price at all) while the line is held back. */
   from: string;
   /** The line is invisible and inert: the prices have not arrived, or nothing can be bought for one eye. */
   held: boolean;
@@ -16,5 +22,6 @@ export interface HeroPrice {
 
 export function heroPrice(prices: LandingPrices, pending: boolean, sale: RunCatalogue): HeroPrice {
   const lowest = prices.fromOf(sale.one);
-  return { from: lowest ?? prices.from, held: pending || lowest === null };
+  const held = pending || lowest === null;
+  return { from: held || lowest === null ? HELD_PRICE : lowest, held };
 }

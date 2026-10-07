@@ -124,7 +124,6 @@ function heroShell(): Plugin {
   async function make(): Promise<Parts> {
     const markets = await load('./src/shared/markets.ts')
     const lang = await load('./src/shared/lang.ts')
-    const priceText = await load('./src/landing/priceText.ts')
     const shell = await load('./src/landing/shell/render.tsx')
     const scripts = await load('./src/landing/shell/scripts.ts')
     const market: string = markets.DEFAULT_MARKET
@@ -135,10 +134,8 @@ function heroShell(): Plugin {
       allowed: Object.fromEntries(all.map((m) => [m, lang.marketLangs(m)])),
       own: Object.fromEntries(all.map((m) => [m, lang.marketDefaultLang(m)])),
     }
-    // the price of the micro line in each language: the ladder the shells are made from (held back in the markup, see src/landing/HeroView.tsx)
-    const prices = Object.fromEntries(lang.LANGS.map((l: string) => [l, priceText.landingPrices(markets.priceList(market), market, l).from]))
     const langs = lang.LANGS.filter((l: string) => lang.langAllowed(l, market))
-    const out = shell.renderShell({ prices, langs })
+    const out = shell.renderShell({ langs })
     return {
       html: out.html,
       templates: out.templates,

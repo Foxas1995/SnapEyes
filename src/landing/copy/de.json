@@ -59,7 +59,7 @@
     "computerHint": "Sie lesen am Computer? Öffnen Sie snapeyes.com auf Ihrem Smartphone, um das Foto aufzunehmen, oder wählen Sie Fotos, die Sie schon haben.",
     "ready": "Ihre Datei ab {from}",
     "secondary": "Vorher und Nachher eines echten Smartphone-Fotos ansehen",
-    "imageAlt": "Eine KI-Visualisierung: die Iris von Mantas als glänzender Acryldruck an einer Wand, im Stil Radiance. Sie zeigt, wie die digitale Datei gedruckt aussehen kann.",
+    "imageAlt": "Eine KI-Visualisierung: die Iris von Mantas als glänzender Acryldruck an einer Wand. Sie zeigt, wie die digitale Datei gedruckt aussehen kann.",
     "chipTitle": "KI-Visualisierung",
     "chipBody": "Sie erhalten die digitale Datei. Der Druck ist nicht enthalten.",
     "caption": "Ihre Datei auf Acryl, etwa 50 cm. Der Druck gehört nicht zur Bestellung.",
@@ -89,7 +89,7 @@
         "note": "Beispielfoto, kein Kunde. Die Fensterspiegelung im Foto ist entfernt.",
         "photoAlt": "Ein Beispielfoto eines graugrünen Auges mit Fensterspiegelung, linke Bildhälfte",
         "irisAlt": "Dieselbe graugrüne Iris restauriert, ohne die Spiegelung",
-        "artAlt": "Die restaurierte graugrüne Iris als Kunstwerk im Stil Radiance"
+        "artAlt": "Die restaurierte graugrüne Iris als Kunstwerk"
       },
       {
         "id": "own",
@@ -98,25 +98,29 @@
         "note": "Sein eigenes Auge, zu Hause fotografiert. Das Foto ist auf die Iris zugeschnitten.",
         "photoAlt": "Das Smartphone-Foto von Mantas von seinem eigenen Auge, linke Bildhälfte",
         "irisAlt": "Dieselbe Iris restauriert, auf Schwarz",
-        "artAlt": "Die restaurierte Iris als Kunstwerk im Stil Radiance"
+        "artAlt": "Die restaurierte Iris als Kunstwerk"
       }
     ],
     "eyeGroup": "Beispielauge wählen",
     "strip": {
-      "photo": "Ihr Foto",
-      "iris": "Ihre Iris",
-      "art": "Ihr Kunstwerk"
+      "photo": "Foto",
+      "iris": "Iris",
+      "art": "Kunstwerk"
     },
     "never": "Restauriert, nie neu gemalt: Wir färben Ihre Iris nie um und tauschen sie nie gegen ein anderes Auge.",
     "aiTitle": "Was von Ihnen stammt und was die KI ergänzt",
     "ai": [
       {
         "t": "Aus Ihrem Foto",
-        "b": "Die Farbe, das Muster und die Anordnung Ihrer Iris. Jede Furche, jeder Ring und jeder Fleck sitzt dort, wo er in Ihrem Auge sitzt."
+        "b": "Die Farbe, das Muster und die Anordnung Ihrer Iris bleiben so, wie sie in Ihrem Foto sind."
       },
       {
         "t": "Von unserer KI wiederhergestellt",
         "b": "Feinste Details, die Ihr Smartphone zu klein aufgenommen hat, passend zu Ihrem Foto neu aufgebaut. Spiegelungen werden entfernt. Die allerfeinsten Härchen sind eine Rekonstruktion, keine Mikroskopaufnahme."
+      },
+      {
+        "t": "KI-erzeugtes Material bei einigen Stilen",
+        "b": "Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt."
       },
       {
         "t": "Nie",
@@ -196,7 +200,7 @@
     },
     "typical": "Üblich bei Druckereien. Einzelheiten können abweichen.",
     "arts": {
-      "eye": "Radiance",
+      "eye": "Ein Auge",
       "universe": "Universe",
       "family4": "Familie",
       "collision": "Sie zu zweit"
@@ -216,8 +220,8 @@
       "canvas": "Ihre Datei auf Leinwand gedruckt, etwa {size}.",
       "framed": "Ihre Datei, gerahmt, etwa {size}."
     },
-    "footnote": "KI-Visualisierung. Das Kunstwerk ist eine echte SnapEyes-Datei. Räume, Hände und Gegenstände sind KI-generierte Bilder, keine Fotos, und ein echter Druck sieht anders aus. Farben im Druck können vom Bildschirm abweichen.",
-    "cta": "Ihre Datei, gedruckt, wie Sie möchten. Beginnen Sie mit der kostenlosen Vorschau.",
+    "footnote": "KI-Visualisierung. Das Kunstwerk ist eine echte SnapEyes-Datei. Räume, Hände und Gegenstände sind KI-generierte Bilder, keine Fotos, und ein echter Druck sieht anders aus. Farben im Druck können vom Bildschirm abweichen. Einige Stile in diesen Bildern folgen bald. Die Größen in den Bildern sind beispielhaft; wir empfehlen bis zu {printMaxCm}.",
+    "cta": "Ihre Datei, gedruckt von der Druckerei Ihrer Wahl. Beginnen Sie mit der kostenlosen Vorschau.",
     "compareTitle": "Die vier Wandmaterialien im Vergleich",
     "compareCorner": "Material",
     "compare": {
@@ -341,8 +345,8 @@
   "styles": {
     "eyebrow": "Stile",
     "title": "Eine Iris, viele Sichtweisen",
-    "intro": "Jedes Stück hier ist ein Beispiel. Ihres trägt Ihre eigenen Farben und Ihre eigenen Fasern.",
-    "legend": "Beispiele, erstellt mit der SnapEyes-Engine. Gezeigt am Auge von Mantas, sofern eine Kachel nichts anderes sagt.",
+    "intro": "Jedes Stück hier ist ein Beispiel. Ihres trägt Ihre eigenen Farben und Ihr eigenes Muster.",
+    "legend": "Beispiele, erstellt mit der SnapEyes-Engine. Gezeigt am Auge von Mantas, sofern eine Kachel nichts anderes sagt. Ein Stil mit dem Hinweis Bald kann noch nicht bestellt werden.",
     "groups": {
       "one": "Nur Sie",
       "two": "Sie zu zweit",
@@ -390,9 +394,6 @@
       "duo_infinity_bb": {
         "d": "Jede Iris behält dort, wo sie sich treffen, ihre eigene Farbe."
       },
-      "duo_infinity_uni": {
-        "d": "Das Paar in einem vergrößerten Feld aus den eigenen Fasern."
-      },
       "duo_kiss": {
         "d": "Zwei Iriden, die sich am Rand berühren."
       },
@@ -410,9 +411,6 @@
       },
       "fam_6": {
         "d": "Sechs Iriden, jede in ihrer eigenen Farbe."
-      },
-      "fam_6_uni": {
-        "d": "Sechs Iriden auf einem gefüllten Feld."
       }
     },
     "own": "Das Auge von Mantas",
@@ -444,7 +442,7 @@
       {
         "t": "Kostenlose Vorschau ansehen",
         "b": "Nach etwa einer Minute sehen Sie Ihre Iris in mehreren Stilen, mit Wasserzeichen. Ohne Anmeldung und ohne Kosten. Kostenlose Vorschauen werden nicht gespeichert.",
-        "v": "Ihre kostenlose Vorschau, mit Wasserzeichen"
+        "v": "Beispielvorschau, mit Wasserzeichen"
       },
       {
         "t": "Digitale Datei erhalten",
@@ -544,7 +542,7 @@
       },
       {
         "t": "Wir verschweigen nie, was die KI tut",
-        "b": "Unsere KI stellt feine Details wieder her und entfernt Spiegelungen. Sie ersetzt Ihre Iris nie durch eine andere."
+        "b": "Unsere KI stellt feine Details wieder her und entfernt Spiegelungen. Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek. Sie ersetzt Ihre Iris nie durch eine andere."
       },
       {
         "t": "Wir erzeugen nie falschen Zeitdruck",

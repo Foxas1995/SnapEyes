@@ -147,6 +147,13 @@
 @keyframes fx-pop { from { scale: .97; } }
 @keyframes fx-pass { 0% { --fx-a: 0deg; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { --fx-a: 360deg; opacity: 0; } }
 
+/* forced colours (a Windows contrast theme) override backgrounds: a flat gold button (border 0) would be bare text, and a pressed language button would look like the others.
+   A border keeps the first a button, an outline marks the second. The colours are the system's own. */
+@media (forced-colors: active) {
+  .fx-gold { border: 1px solid ButtonText; }
+  :root:has(> body.fx) [aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: -2px; }
+}
+
 /* the one safety net: under reduced motion nothing animates, whatever a component forgot. The resting look of every element is its finished look. */
 @media (prefers-reduced-motion: reduce) {
   :root:has(> body.fx) *, :root:has(> body.fx) *::before, :root:has(> body.fx) *::after { animation: none !important; transition-duration: .01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }

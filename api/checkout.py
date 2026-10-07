@@ -170,7 +170,9 @@ def freeze_plan(order, rec, spec, body, drafts):
         have = pay.parallel([lambda x=x: store.exists(x["path"], timeout=8.0) for x in need])
         lost = [x["id"] for x, ok in zip(need, have) if not ok]
         if lost:
-            raise pay.unavailable(style, n, "plates", plates=lost[:4])
+            # the ids of the plates are the owner's to know (the log), not the customer's: the answer names the style and the reason only (release review, regression-security m5)
+            pay.log(f"checkout {order}: {style} for {n} eye(s): {len(lost)} plate(s) not in storage, first {lost[:4]}")
+            raise pay.unavailable(style, n, "plates")
     cap = SP.capacity(plan)
     if not cap["ok"]:
         raise pay.unavailable(style, n, "capacity", capacity=cap["why"])

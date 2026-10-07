@@ -32,7 +32,7 @@ DEGLARE_MODEL = (os.environ.get("SNAPEYES_DEGLARE_MODEL") or "off").strip().lstr
 def deglare(body):
     if not L.check_ticket(body.get("ticket")):
         raise PermissionError("expired_or_missing_ticket")
-    crop = L.b64_to_pil(body["crop"])
+    crop = L.b64_to_pil(body.get("crop"))
     if crop.size[0] != crop.size[1]:
         s = min(crop.size); crop = crop.crop((0, 0, s, s))
     if crop.size[0] > L.WORK: crop = crop.resize((L.WORK, L.WORK), Image.LANCZOS)

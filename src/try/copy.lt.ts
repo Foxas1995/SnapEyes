@@ -26,7 +26,7 @@ export const lt: TryCopy = {
   lang: 'lt',
   meta: {
     title: 'SnapEyes Studio - rainelės menas iš Jūsų akies nuotraukos',
-    description: 'Nufotografuokite savo akį telefonu ir maždaug per minutę pamatykite savo rainelę atkurtą ir paverstą kosminiu meno kūriniu.',
+    description: 'Nufotografuokite savo akį telefonu ir maždaug per minutę pamatykite savo rainelę, atkurtą ir pateiktą Jūsų pasirinktu stiliumi.',
   },
   switchLabel: 'Kalba',
   /** One decimal, as Lithuanian writes it (3,7). */
@@ -225,8 +225,13 @@ export const lt: TryCopy = {
     after: 'Studijinis makro',
     sliderBefore: 'Jūsų nuotrauka',
     sliderAfter: 'Atkurta',
+    sliderLabel: 'Palyginkite savo nuotrauką ir atkurtą rainelę',
+    sliderValue: 'nuotrauka {n} %',
+    // announced once, by a polite live region, when the studio has made the preview (release review, perf-a11y M3)
+    previewReady: 'Jūsų peržiūra paruošta. Žemiau pasirinkite stilių.',
     // src/landing/copy.lt.ts TRANSPARENCY_LT, word for word. Shown for a real eye only.
     transparency: 'Spalva paimta iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI.',
+    aiMaterial: 'Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos, todėl kito kliento kūrinyje gali būti tas pats elementas. Jūsų rainelė išlaiko Jūsų nuotraukos spalvas, raštą ir išdėstymą; smulkiausias skaidulas, kaip aprašyta aukščiau, atkuria DI.',
     sampleNote: 'Ši akis yra DI sugeneruotas pavyzdys, ne tikra nuotrauka. Su Jūsų nuotrauka spalva paimama iš Jūsų nuotraukos.',
     colourOff: 'Mūsų spalvų patikra rodo, kad šis atkūrimas nukrypo nuo Jūsų nuotraukos: jis gali atrodyti šviesesnis arba tamsesnis nei Jūsų akis. Paprastai padeda naujas kadras švelnioje dienos šviesoje.',
     retakeEye: (i: number) => `Fotografuoti akį ${i} iš naujo`,

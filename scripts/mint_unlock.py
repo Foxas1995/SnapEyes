@@ -18,7 +18,7 @@ Kinds:
                  endpoint.
 
 The secret decides where the ticket works. Both sides derive it the same way: SNAPEYES_TICKET_SECRET if it is
-set, otherwise the Gemini key (GEMINI_API_KEY, or C:\\kuriam\\.gemini-key on this machine). A ticket minted here
+set, otherwise the Gemini key (GEMINI_API_KEY, or C:\\kuriam\\.gemini-key when SNAPEYES_DEV_KEYFILE=1 is set on this machine). A ticket minted here
 works on a deployment only when that deployment derives the same secret: set the same SNAPEYES_TICKET_SECRET in
 both places, or leave it unset in both (then both use the same Gemini key).
 

@@ -59,7 +59,7 @@
     "computerHint": "Reading on a computer? Open snapeyes.com on your phone to take the photo, or choose photos you already have.",
     "ready": "Your file from {from}",
     "secondary": "See a before and after of a real phone photo",
-    "imageAlt": "An AI visualisation: Mantas's own iris as a glossy acrylic print on a wall, in the Radiance style. It shows how the digital file can look once printed.",
+    "imageAlt": "An AI visualisation: Mantas's own iris as a glossy acrylic print on a wall. It shows how the digital file can look once printed.",
     "chipTitle": "AI visualisation",
     "chipBody": "You receive the digital file. Printing is not included.",
     "caption": "Your file on acrylic, about 50 cm. Printing is not part of your order.",
@@ -89,7 +89,7 @@
         "note": "Example photo, not a customer. The window reflection in the photo is cleared away.",
         "photoAlt": "An example photo of a grey green eye with a window reflection, left half of the frame",
         "irisAlt": "The same grey green iris restored, without the reflection",
-        "artAlt": "The restored grey green iris as a Radiance artwork"
+        "artAlt": "The restored grey green iris as an artwork"
       },
       {
         "id": "own",
@@ -98,25 +98,29 @@
         "note": "His own eye, photographed at home. The photo is cropped to the iris.",
         "photoAlt": "Mantas's phone photo of his own eye, left half of the frame",
         "irisAlt": "The same iris restored, on black",
-        "artAlt": "The restored iris as a Radiance artwork"
+        "artAlt": "The restored iris as an artwork"
       }
     ],
     "eyeGroup": "Choose an example eye",
     "strip": {
-      "photo": "Your photo",
-      "iris": "Your iris",
-      "art": "Your art"
+      "photo": "Photo",
+      "iris": "Iris",
+      "art": "Art"
     },
     "never": "Restored, never repainted: we never recolour your iris or swap it for another eye.",
     "aiTitle": "What comes from you, and what the AI adds",
     "ai": [
       {
         "t": "From your photo",
-        "b": "The colour, the pattern and the layout of your iris. Every furrow, ring and patch sits where it sits in your eye."
+        "b": "The colour, the pattern and the layout of your iris stay as they are in your photo."
       },
       {
         "t": "Restored by our AI",
         "b": "Fine detail your phone was too small to record, rebuilt to match your photo. Reflections are cleared away. The very finest hairlines are a reconstruction, not a microscope photograph."
+      },
+      {
+        "t": "AI-made material in some styles",
+        "b": "In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer's artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above."
       },
       {
         "t": "Never",
@@ -196,7 +200,7 @@
     },
     "typical": "Typical for print shops. Details vary.",
     "arts": {
-      "eye": "Radiance",
+      "eye": "One eye",
       "universe": "Universe",
       "family4": "Family",
       "collision": "Two of you"
@@ -216,8 +220,8 @@
       "canvas": "Your file printed on canvas, about {size}.",
       "framed": "Your file, framed, about {size}."
     },
-    "footnote": "AI visualisation. The artwork is a real SnapEyes file. The rooms, hands and objects are AI-generated images, not photographs, and a real print looks different. Colours on a print can look different from your screen.",
-    "cta": "Your file, printed your way. Start with the free preview.",
+    "footnote": "AI visualisation. The artwork is a real SnapEyes file. The rooms, hands and objects are AI-generated images, not photographs, and a real print looks different. Colours on a print can look different from your screen. Some styles in these pictures open soon. Sizes in the pictures are illustrative; we suggest up to {printMaxCm}.",
+    "cta": "Your file, printed by the print shop you choose. Start with the free preview.",
     "compareTitle": "Compare the four wall materials",
     "compareCorner": "Material",
     "compare": {
@@ -341,8 +345,8 @@
   "styles": {
     "eyebrow": "Styles",
     "title": "One iris, many ways to see it",
-    "intro": "Every piece below is an example. Yours will carry your own colours and your own fibres.",
-    "legend": "Examples made with the SnapEyes engine. Shown in Mantas's own eye unless a tile says otherwise.",
+    "intro": "Every piece below is an example. Yours will carry your own colours and your own pattern.",
+    "legend": "Examples made with the SnapEyes engine. Shown in Mantas's own eye unless a tile says otherwise. A style marked Soon cannot be ordered yet.",
     "groups": {
       "one": "Just you",
       "two": "Two of you",
@@ -390,9 +394,6 @@
       "duo_infinity_bb": {
         "d": "Every iris keeps its own colour where they meet."
       },
-      "duo_infinity_uni": {
-        "d": "The pair set in an enlarged field of their own fibres."
-      },
       "duo_kiss": {
         "d": "Two irises that touch at the edge."
       },
@@ -410,9 +411,6 @@
       },
       "fam_6": {
         "d": "Six irises, each in its own colour."
-      },
-      "fam_6_uni": {
-        "d": "Six irises on a filled field."
       }
     },
     "own": "Mantas's eye",
@@ -444,7 +442,7 @@
       {
         "t": "See your free preview",
         "b": "In about a minute your iris appears in several styles, with a watermark. No sign-up, nothing to pay. Free previews are not stored.",
-        "v": "Your free preview, with watermark"
+        "v": "Example preview, with watermark"
       },
       {
         "t": "Get your digital file",
@@ -544,7 +542,7 @@
       },
       {
         "t": "We never hide what the AI does",
-        "b": "Our AI restores fine detail and clears reflections. It never replaces your iris with another one."
+        "b": "Our AI restores fine detail and clears reflections. In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library. It never replaces your iris with another one."
       },
       {
         "t": "We never add false urgency",

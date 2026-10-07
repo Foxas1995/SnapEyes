@@ -223,12 +223,6 @@ export const GALLERY: {
       "src": "mixed"
     },
     {
-      "id": "duo_infinity_uni",
-      "file": "duo_infinity_bb_uni",
-      "price": "two",
-      "src": "mixed"
-    },
-    {
       "id": "duo_kiss",
       "file": "duo_kiss_bb",
       "price": "two",
@@ -267,13 +261,6 @@ export const GALLERY: {
     {
       "id": "fam_6",
       "file": "fam_6",
-      "price": "n",
-      "n": 6,
-      "src": "mixed"
-    },
-    {
-      "id": "fam_6_uni",
-      "file": "fam_6_uni",
       "price": "n",
       "n": 6,
       "src": "mixed"

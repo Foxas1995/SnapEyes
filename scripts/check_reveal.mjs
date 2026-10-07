@@ -235,7 +235,7 @@ async function checkKeyboard() {
   await key('Tab');
   await sleep(450);
   const ring2 = await page.eval(`(() => { const a = document.activeElement, c = getComputedStyle(a); return (a.textContent || '').trim().slice(0, 12) + ' | ' + c.outlineStyle + ' ' + c.outlineWidth + ' ' + c.outlineColor; })()`);
-  expect('keyboard', /Your art \| solid 2px rgb\(245, 197, 66\)/.test(ring2), `two Tabs from the first row reach "${ring2}" (want the third row with the page's 2 px gold ring)`);
+  expect('keyboard', /Art \| solid 2px rgb\(245, 197, 66\)/.test(ring2), `two Tabs from the first row reach "${ring2}" (want the third row with the page's 2 px gold ring)`);
   await key('Enter');
   await sleep(2200);
   let s = await frameState(page);

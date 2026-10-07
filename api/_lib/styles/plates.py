@@ -29,6 +29,7 @@ import math
 import os
 import tempfile
 import threading
+import time
 import uuid
 
 import numpy as np
@@ -554,14 +555,33 @@ def expected_families():
     return out
 
 
+HEALTH_CACHE_S = 60.0
+_HEALTH = BoundedCache(1)   # one entry, "until": when a good storage answer stops being kept (a BoundedCache, not a dict: the foundation rule of v3core)
+
+
+def health_samples(fams):
+    """The plates health() asks storage about: of every family, its first and its last storage id (sorted), or its only one."""
+    out = []
+    for f in sorted(fams):
+        ids = sorted(storage_ids([f]))
+        if ids:
+            out.append(ids[0])
+            if len(ids) > 1:
+                out.append(ids[-1])
+    return out
+
+
 def health(store=None):
     """{styles, plates_4k}: two booleans and nothing else, for the public health endpoint.
     styles     the style registry reads (its hash is made), the baked library is the plates version the registry names, and every plate family
                and atlas an engine entry names is in the baked library. The health function does not carry the plates (the seven functions
                that never render exclude them: scripts/check_styles.mjs item 10), so whether the FILES are in the bundle of compose,
                master_compose and order is the build's check (item 8) and the admin action plates_status, which runs in a rendering function.
-    plates_4k  storage is reachable and holds one sample of the 4K plates the visible styles fetch (one existence request; the hash of a downloaded
-               sample is plates_status's). True with no request at all while no visible style fetches a 4K plate."""
+    plates_4k  storage is reachable and holds the FIRST AND THE LAST 4K plate (by id) of every family the visible styles fetch: one existence request each, so a half
+               finished upload of a family (the upload tool goes through a family in order) does not look healthy, which a single sample did (release review, production
+               M3). It is still not the proof that all of them are there and right: that is the upload tool's last pass (it downloads every plate and compares the hash) and
+               the admin action plates_status. True with no request at all while no visible style fetches a 4K plate. A good answer of the default store is kept
+               HEALTH_CACHE_S seconds per instance (the landing asks on every page view, release review, regression S-m2); a bad one is never kept, so an upload shows at once."""
     try:
         from .. import catalogue as CT
         CT.registry_hash()
@@ -574,11 +594,18 @@ def health(store=None):
     if not fams:
         return {"styles": bool(ok_styles), "plates_4k": True}
     try:
+        cached = store is None
         if store is None:
             from .. import store as _store
             store = _store
-        sample = sorted(storage_ids(fams))[0]
-        ok4 = bool(store.configured() and store.exists(storage_path(sample)))
+        if not store.configured():
+            ok4 = False
+        elif cached and time.time() < _HEALTH.get("until", 0.0):
+            ok4 = True
+        else:
+            ok4 = all(bool(store.exists(storage_path(s))) for s in health_samples(fams))
+            if cached and ok4:
+                _HEALTH.put("until", time.time() + HEALTH_CACHE_S)
     except Exception:  # noqa: BLE001
         ok4 = False
     return {"styles": bool(ok_styles), "plates_4k": ok4}

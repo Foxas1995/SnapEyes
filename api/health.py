@@ -15,6 +15,14 @@ def handle(req):
     pay.start_clock()             # this handler does not go through L.run: the legal pack fetch needs a deadline
     info = {"ok": True, "commit": os.environ.get("VERCEL_GIT_COMMIT_SHA", "")[:7],
             "gemini_key": bool(os.environ.get("GEMINI_API_KEY", "").strip()),
+            # what THIS instance last saw of the model: "ok", "denied" (our key was refused: a blocked or leaked key, no credit) or "unknown" (nothing asked lately).
+            # gemini_key above only says that a key is set; a refused key looks the same there (release review, production M5)
+            "model": L.model_state(),
+            # the two secrets the cutover needs, as booleans: SNAPEYES_TICKET_SECRET (16 or more characters: the order links, the tickets and the price-test variants are made
+            # from it, and without it they are made from the Gemini key, so changing that key would void them) and the admin secret (SNAPEYES_ADMIN_SECRET, or a ticket
+            # secret of 32 or more characters when that one is not set, api/_lib/ops.py _admin_raw). Release review, production m8.
+            "ticket_secret": len(pay._env("SNAPEYES_TICKET_SECRET")) >= 16,
+            "admin": len(pay._env("SNAPEYES_ADMIN_SECRET")) >= 32 if pay._env("SNAPEYES_ADMIN_SECRET") else len(pay._env("SNAPEYES_TICKET_SECRET")) >= 32,
             "blob_store": bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()),
             # the private Supabase store for paid 4K files (env only, no network call). Separate from blob_store,
             # which /try reads to decide whether to offer the training-memory opt-in: that must stay off.

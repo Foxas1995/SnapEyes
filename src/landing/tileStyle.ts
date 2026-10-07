@@ -7,11 +7,11 @@
 //
 // Where the picture's own id and the registry's name differ the table says which tile is which style (the registry's name is what the page prints):
 //   duo_infinity, duo_infinity_bb    -> Collision Infinity (two eyes; the second shows the pair of two eye colours)
-//   duo_infinity_uni                 -> Universe, the pair (two eyes, held in the laboratory)
 //   duo_kiss                         -> Kiss Collision
 //   duo_clean                        -> Clean Infinity
 //   fam_trio, fam_4, fam_5, fam_6    -> Family Colours at three, four, five and six eyes (the Trio is its three-eye layout)
-//   fam_6_uni                        -> Universe, the family (held in the laboratory)
+// The Universe pair and the Universe family (held in the laboratory) have NO tile: the pictures the prototype had for them were designs the engine does not make, and a tile
+// that says Soon promises its look (release review H-M3). When the engine draws them, add their tiles with pictures made by the engine.
 // scripts/check_styles.mjs (item 15) keeps this table equal to the gallery: every tile has a row, every row names a style of the registry that takes
 // this many eyes, and the price class of a one-eye tile is the registry's; scripts/check_landing_assets.mjs (the gate) renders every tile and refuses
 // a name that is not the registry's and a tile that would promise what the catalogue does not sell.
@@ -32,12 +32,10 @@ export const TILE_STYLE: Readonly<Record<string, TileStyle>> = {
   clean: { id: 'solo.clean', eyes: 1 },
   duo_infinity: { id: 'duo.collision_infinity', eyes: 2 },
   duo_infinity_bb: { id: 'duo.collision_infinity', eyes: 2 },
-  duo_infinity_uni: { id: 'duo.universe', eyes: 2 },
   duo_kiss: { id: 'duo.kiss_collision', eyes: 2 },
   duo_clean: { id: 'duo.clean', eyes: 2 },
   fam_trio: { id: 'grp.collision', eyes: 3 },
   fam_4: { id: 'grp.collision', eyes: 4 },
   fam_5: { id: 'grp.collision', eyes: 5 },
   fam_6: { id: 'grp.collision', eyes: 6 },
-  fam_6_uni: { id: 'grp.universe', eyes: 6 },
 };

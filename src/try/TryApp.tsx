@@ -208,6 +208,15 @@ export const TryApp: React.FC = () => {
   const [stepped, setStepped] = useState(false);
   const [arriving, setArriving] = useState(false);
   const setStep = (s: Step) => { setStepRaw(s); setStepped(true); if (s !== 'result') setArriving(false); };
+  // A screen that is replaced must not leave a keyboard or screen-reader user on <body> (WCAG 2.4.3): after the page has changed step once (the first screen is the page itself),
+  // focus moves to the new step's heading (one h1 is on screen at a time: the capture screen's own, or the page title every other screen has). An error is announced (role="alert" on
+  // the banner) and the arrival of the preview is announced by a polite live region that is always there (release review, perf-a11y M3).
+  const stepHead = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (stepped) stepHead.current?.focus({ preventScroll: true });
+  }, [step, stepped]);
+  const [announce, setAnnounce] = useState('');
+  useEffect(() => { setAnnounce(arriving ? T.result.previewReady : ''); }, [arriving]);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [storageOn, setStorageOn] = useState(false);
@@ -930,9 +939,10 @@ export const TryApp: React.FC = () => {
 
       <main className="max-w-3xl mx-auto px-4 pb-12">
         {/* every screen after the first has its headings below this one: the page's own title for a screen reader (the first screen has its own h1) */}
-        {step !== 'capture' && <h1 className="sr-only">{T.meta.title}</h1>}
+        {step !== 'capture' && <h1 ref={stepHead} tabIndex={-1} className="sr-only focus:outline-none">{T.meta.title}</h1>}
+        <p role="status" data-testid="announce" className="sr-only">{announce}</p>
         {error && (
-          <div className="fx-note mb-4 bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm rounded-xl p-3 flex gap-2">
+          <div role="alert" className="fx-note mb-4 bg-rose-950/40 border border-rose-500/40 text-rose-200 text-sm rounded-xl p-3 flex gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /> <span>{error}</span>
           </div>
         )}
@@ -961,13 +971,13 @@ export const TryApp: React.FC = () => {
           <section className={`flex flex-col gap-5${stepped ? ' fx-step' : ''}`}>
             {adding ? (
               <div className="text-center mt-2">
-                <h1 className="font-luxury text-3xl sm:text-4xl font-bold">{(replaceNo ? T.capture.retakeTitle(replaceNo) : T.capture.addTitle(eyes.length + 1)).toUpperCase()}</h1>
+                <h1 ref={stepHead} tabIndex={-1} className="font-luxury text-3xl sm:text-4xl font-bold focus:outline-none">{(replaceNo ? T.capture.retakeTitle(replaceNo) : T.capture.addTitle(eyes.length + 1)).toUpperCase()}</h1>
                 <p className="text-zinc-400 text-sm mt-2">{replaceNo ? T.capture.retakeLead : T.capture.addLead}</p>
                 <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 mt-3">
                   {eyes.map((e, i) => (
                     <span key={e.id} className="flex flex-col items-center gap-0.5 w-16">
                       <img {...NO_SAVE} src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-[#f5c542]/70 opacity-50' : 'border border-[#f5c542]/40'}`} />
-                      <span className={`text-[8px] leading-tight text-center ${e.sample ? 'font-semibold text-amber-200/90' : 'text-zinc-500'}`}>
+                      <span className={`text-[8px] leading-tight text-center ${e.sample ? 'font-semibold text-amber-200/90' : 'text-zinc-400'}`}>
                         {e.sample ? T.capture.sampleThumb : T.capture.thumbLabel(i + 1)}
                       </span>
                     </span>
@@ -978,7 +988,7 @@ export const TryApp: React.FC = () => {
               </div>
             ) : (
               <div className="text-center mt-2">
-                <h1 className="font-luxury text-3xl sm:text-4xl font-bold">{T.capture.titleA}<span className="text-[#f5c542]">{T.capture.titleB}</span></h1>
+                <h1 ref={stepHead} tabIndex={-1} className="font-luxury text-3xl sm:text-4xl font-bold focus:outline-none">{T.capture.titleA}<span className="text-[#f5c542]">{T.capture.titleB}</span></h1>
                 <p className="text-zinc-400 text-sm mt-2">{T.capture.lead}</p>
               </div>
             )}
@@ -1011,7 +1021,7 @@ export const TryApp: React.FC = () => {
             </div>
 
             {/* whose eye may be photographed (the terms of sale), and where the photo goes */}
-            <p data-testid="photo-notice" className="text-[11px] leading-relaxed text-zinc-500 text-center">
+            <p data-testid="photo-notice" className="text-[11px] leading-relaxed text-zinc-400 text-center">
               <LegalParts parts={CHECKOUT_LEGAL[lang].photoNotice} lang={lang} />
             </p>
 
@@ -1155,8 +1165,8 @@ const DetailMeter: React.FC<{ a: Analysis; t: Targets; label?: boolean }> = ({ a
   return (
     <div className="mt-3" role="meter" aria-label={T.quality.detail} aria-valuemin={0} aria-valuemax={100} aria-valuenow={d}>
       <div className="flex items-baseline justify-between gap-2 text-xs">
-        {label ? <span className="font-bold text-zinc-200">{T.quality.detail} <span className={text}>{d}</span><span className="text-zinc-500">/100</span></span> : <span />}
-        {caption && <span className="text-[10px] text-zinc-500">{caption}</span>}
+        {label ? <span className="font-bold text-zinc-200">{T.quality.detail} <span className={text}>{d}</span><span className="text-zinc-400">/100</span></span> : <span />}
+        {caption && <span className="text-[10px] text-zinc-400">{caption}</span>}
       </div>
       <div className="relative h-2 mt-1.5 rounded-full bg-white/10 overflow-hidden">
         <div className={`fx-fill h-full rounded-full ${bar}`} style={{ width: `${Math.max(d, 2)}%` }} />
@@ -1262,7 +1272,7 @@ const ShotCollector: React.FC<{
             const sd = blockOf(s)?.thumb ?? shownDetail(s);
             // the best shot is ringed in gold only when it is one we would really use
             const ring = i !== bi ? 'border-white/10' : usable(s) ? 'border-[#f5c542]' : 'border-rose-400/70';
-            const ink = i !== bi ? (usable(s) ? 'text-zinc-500' : 'text-rose-300/70') : usable(s) ? 'text-[#f5c542]' : 'text-rose-300';
+            const ink = i !== bi ? (usable(s) ? 'text-zinc-400' : 'text-rose-300/70') : usable(s) ? 'text-[#f5c542]' : 'text-rose-300';
             return (
               <div key={i} className="fx-tile flex flex-col items-center gap-1">
                 {s.preview
@@ -1276,7 +1286,7 @@ const ShotCollector: React.FC<{
             <span key={`slot-${i}`} className="w-11 h-11 rounded-full border-2 border-dashed border-white/10" aria-hidden />
           ))}
         </div>
-        <p className="text-[11px] text-zinc-500 mt-2">{summary}</p>
+        <p className="text-[11px] text-zinc-400 mt-2">{summary}</p>
       </div>
 
       <div className={`grid gap-3 ${canTakeMore && use ? 'grid-cols-2' : 'grid-cols-1'}`}>

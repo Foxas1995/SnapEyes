@@ -34,6 +34,8 @@ RUN_ERRORS_LT = {
     "unreadable": "Nepavyko nuskaityti šio vaizdo. Pabandykite su kita nuotrauka.",
     # ModelBusy
     "busy": "Mūsų studija šiuo metu labai užimta. Po minutės bandykite dar kartą.",
+    # ModelDenied: the model refused our key
+    "denied": "Mūsų studija trumpam uždaryta. Bandykite dar kartą vėliau.",
     # anything else (500)
     "failed": "Mūsų pusėje kažkas nepavyko. Bandykite dar kartą.",
 }

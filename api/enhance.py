@@ -89,7 +89,7 @@ def enhance(body):
         return sample(body)
     if not L.check_ticket(body.get("ticket")):
         raise PermissionError("expired_or_missing_ticket")
-    crop = L.b64_to_pil(body["crop"])
+    crop = L.b64_to_pil(body.get("crop"))
     s = min(crop.size); crop = crop.crop((0, 0, s, s))
     if s < 48: raise ValueError("crop too small")
     if s > L.WORK:                      # mask and model both work at WORK; do not allocate more than that

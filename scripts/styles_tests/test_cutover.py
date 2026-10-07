@@ -428,9 +428,9 @@ act("styles_override", style="solo.powder", eyes=1, tick={"L1": True}, evidence=
 act("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
 o, k = new_order(["blue_round"])
 c_pl, j_pl = co(o, k, "solo.powder", 1)
-check("a plate style the owner has switched on is refused at checkout until its 4K plates are in storage (409 plates, the plate ids named): upload first, tick second (the runbook)",
-      c_pl == 409 and j_pl.get("why") == "plates" and j_pl.get("plates"), (c_pl, j_pl))
-for pid in j_pl.get("plates") or []:
+check("a plate style the owner has switched on is refused at checkout until its 4K plates are in storage (409 plates; the answer names the style and the reason, never a plate id: release review m5): upload first, tick second (the runbook)",
+      c_pl == 409 and j_pl.get("why") == "plates" and "plates" not in j_pl and not any("P-SN-CLOUD" in str(v) for v in j_pl.values()), (c_pl, j_pl))
+for pid in PL.storage_ids(CT.ENGINE["solo.powder"]["plates"]):          # the families Powder Burst reads, whole (the 409 no longer lists the plates the order needs)
     store.put(PL.storage_path(pid), b"plate", "image/png", upsert=True)
 c_pl2, j_pl2 = co(o, k, "solo.powder", 1)
 check("... with the plates in storage the same order is accepted", c_pl2 == 200, (c_pl2, j_pl2))
@@ -600,9 +600,14 @@ check("the registries read (health.styles true) and the visible styles now expec
       h0["styles"] is True and {"P-SN-CLOUD", "P-SP-CROWN", "P-DN-SPIRAL", "P-UV-DUST"} <= set(fams), (h0, sorted(fams)))
 check("with an empty storage plates_4k is false (the admin's attention card says so and the checkout answers 409 plates): the plates are uploaded BEFORE the owner ticks a plate style",
       h0["plates_4k"] is False or any(store.exists(PL.storage_path(p)) for p in sorted(PL.storage_ids([f for f in fams if PL._FAMILIES.get(f, {}).get("store4k")]))[:1]), h0)
-sample = sorted(PL.storage_ids([f for f in fams if PL._FAMILIES.get(f, {}).get("store4k")]))[0]
+fam4 = [f for f in fams if PL._FAMILIES.get(f, {}).get("store4k")]
+sample = sorted(PL.storage_ids(fam4))[0]
 store.put(PL.storage_path(sample), b"plate", "image/png", upsert=True)
-check("... and with the sample plate stored it is true (the probe asks storage for one sample of the visible styles' plates)", PL.health()["plates_4k"] is True, PL.health())
+check("... ONE plate stored is not enough: plates_4k stays false until the first and the last plate of every family are there (release review, production M3: a half finished upload must not look healthy)",
+      PL.health()["plates_4k"] is False and len(PL.health_samples(fam4)) > len(fam4), PL.health())
+for _p in PL.health_samples(fam4):
+    store.put(PL.storage_path(_p), b"plate", "image/png", upsert=True)
+check("... and with the first and the last plate of every family stored it is true (the probe asks storage for those plates of the visible styles; the upload tool's last pass is the proof of all of them)", PL.health()["plates_4k"] is True, PL.health())
 gold = {m: {k: MK.MARKETS[m]["prices"][k] for k in MK.MARKETS[m]["prices"]} for m in MK.MARKETS}
 check("the cutover changed no price: the ladders of every market are the keys' four numbers, and the price of every id for 1 to 8 eyes follows the class (black or art) then the ladder, both ways",
       all(pay.price_cents(n, i, m) == (gold[m]["one_eye_studio_black"] if CT.is_black(i) else gold[m]["one_eye_art"]) if n == 1 else pay.price_cents(n, i, m) == pay.price_cents(n, "solo.gold", m)

@@ -9,6 +9,12 @@
 # (suites/shim/sitecustomize.py puts the catalogue back the way it was, in memory, the moment it is imported; the file explains what that proves). The v3 suites
 # have no `pre`: they run in the real world.
 export PYTHONIOENCODING=utf-8
+# Second line against a real model call (release review, security M2; the first line is iris._key(), which no longer reads the developer's key file): no suite may reach a
+# real service. Every request to a host other than this machine goes to a closed local port and fails at once (ProxyError); the local servers some suites start stay reachable.
+# Every suite stubs the model and the payment service; a path that forgot to is stopped here instead of costing money.
+export HTTPS_PROXY=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9 ALL_PROXY=http://127.0.0.1:9 NO_PROXY=127.0.0.1,localhost,::1
+export https_proxy=$HTTPS_PROXY http_proxy=$HTTP_PROXY all_proxy=$ALL_PROXY no_proxy=$NO_PROXY
+unset GEMINI_API_KEY GOOGLE_API_KEY SNAPEYES_DEV_KEYFILE
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ $# -lt 3 ] || [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
   echo "usage: run_all.sh <spdir> <repo> <outdir> [name ...]   (suites/run_main.sh calls it with all three)" >&2; exit 2

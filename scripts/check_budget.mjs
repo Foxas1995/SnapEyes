@@ -20,7 +20,9 @@ const dist = resolve(args.includes('--dist') ? args[args.indexOf('--dist') + 1] 
 // minus what it measured on the landing-v2 tip (4e541c6: JS 240,524 B, CSS 34,182 B, the numbers the owner accepted at +7.2 kB and +7.3 kB over the motionless page).
 // Re-measure it after a change of those modules: build both trees, run this script on each, take the difference.
 const MOTIONLESS = { js: 233345, css: 26921 };
-const INTEGRATION = { js: 9344, css: 727 };
+// The release review fixes (2026-10-07) moved it by +827 B JS and +90 B CSS: the sentence about the shared plate library and the other honesty wordings in four languages
+// (src/landing/copy), the price line that carries no price while it is held (heroPrice.ts), the forced-colours rules. Not motion either; the motion still has the room it had.
+const INTEGRATION = { js: 9344 + 827, css: 727 + 90 };
 // The shared chunk of /try and /order (checkout-*.js and checkout-*.css: what the two tools import together) is not named after a page, so this script counts it, but the
 // landing never loads it (wiring check of scripts/check_motion_flow.mjs, and src/main.tsx imports none of it). The motion of the tools (task I3: the flow stylesheet, the arc, the
 // rings, the picture that opens, the capture diagram) lives there: TOOLS is its growth, measured as that chunk's gzip size (level 6) on the commit with the motion minus the commit

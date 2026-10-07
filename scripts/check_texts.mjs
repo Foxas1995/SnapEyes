@@ -40,6 +40,10 @@
 //      src/shared/legal.ts, the facts of src/landing/config.ts, the FAQ ids in the same order and the Australian FAQ answers for
 //      ids that exist. Every language has its real translation (no English stand-ins any more), so all four files are
 //      linted like every other dictionary.
+//  12. the sentence about AI-made material on the PAGES (src/shared/aiMaterial.ts AI_MATERIAL_PAGE): the landing's Reveal box (reveal.ai) and the result of /try
+//      (result.aiMaterial) hold it word for word while it is published (the page says "we never hide what the AI does", so the shared library of plates has to be
+//      on the page as well as in the terms; release review H-M1). English, German and Lithuanian pages use the legal sentence itself, Hungarian pages say "te" and have
+//      their own wording. Setting the flag back to false stays one line: /try then stops showing it, and the landing may keep a disclosure the terms no longer hold.
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as the legal pack is);
 // `npm run check:texts` runs it alone. The legal pack the confirmation email carries is checked by checkPack, which the
 // build also runs on the very JSON it writes to /legal/order-mail.json (vite.config.ts legalMail), so no untranslated
@@ -809,6 +813,23 @@ export async function checkTexts(load, root) {
       const has = text.includes(JSON.stringify(sentence).slice(1, -1));
       if (aiMaterial.AI_MATERIAL_PUBLISHED && !has) out.push(`legal ${edition}.terms (${l}): the sentence about AI-made material is published (src/shared/aiMaterial.ts) but not in the terms`);
       if (!aiMaterial.AI_MATERIAL_PUBLISHED && has) out.push(`legal ${edition}.terms (${l}): holds the sentence about AI-made material before the cutover publishes it (AI_MATERIAL_PUBLISHED is false)`);
+    }
+  }
+
+  // 12. the sentence about AI-made material on the pages: in the page register of each language (src/shared/aiMaterial.ts AI_MATERIAL_PAGE), word for word in the landing's Reveal
+  // box and in the result of /try while it is published (release review H-M1: the landing said "we never hide what the AI does" and named the shared library only in the terms)
+  for (const l of LANGS) {
+    const page = aiMaterial.AI_MATERIAL_PAGE?.[l];
+    if (typeof page !== 'string' || page.length < 80) { out.push(`src/shared/aiMaterial.ts: no ${l} page sentence about AI-made material (AI_MATERIAL_PAGE)`); continue; }
+    if (l !== 'hu' && page !== aiMaterial.AI_MATERIAL[l]) out.push(`src/shared/aiMaterial.ts: the ${l} page sentence differs from the legal one (only Hungarian has its own register)`);
+    lint(`aiMaterial.page.${l}`, page, l, out);
+    let rows = [];
+    try { rows = JSON.parse(readFileSync(join(root, 'src/landing/copy', `${l}.json`), 'utf8').replace(/^\ufeff/, '')).reveal.ai; } catch { out.push(`src/landing/copy/${l}.json: the Reveal box (reveal.ai) cannot be read`); }
+    const onLanding = Array.isArray(rows) && rows.some((r) => r && r.b === page);
+    const onTry = tryCopy.COPY?.[l]?.result?.aiMaterial === page;
+    if (aiMaterial.AI_MATERIAL_PUBLISHED) {
+      if (!onLanding) out.push(`landing ${l}: the Reveal box (reveal.ai) does not hold the sentence about AI-made material word for word (src/shared/aiMaterial.ts AI_MATERIAL_PAGE): the page says "we never hide what the AI does", so the shared library has to be on the page too`);
+      if (!onTry) out.push(`try ${l}: result.aiMaterial is not the sentence about AI-made material word for word (src/shared/aiMaterial.ts AI_MATERIAL_PAGE)`);
     }
   }
 

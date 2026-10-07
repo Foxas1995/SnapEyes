@@ -6,6 +6,7 @@ import { Reveal } from '../reveal/Reveal';
 import { RevealStrip } from '../reveal/RevealStrip';
 import { withheldByColour } from '../reveal/revealMath';
 import { useRevealFrame } from '../reveal/useRevealFrame';
+import { AI_MATERIAL_PUBLISHED } from '../shared/aiMaterial';
 import { T, layoutLabel } from './copy';
 import { NO_SAVE, NO_SAVE_BOX } from './noSave';
 import { type Art, type Eye, MAX_EYES, canvasSize } from './multi';
@@ -156,6 +157,9 @@ export const ResultView: React.FC<Props> = (p) => {
       {eye.sample
         ? <p className="text-xs text-amber-100 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">{T.result.sampleNote}</p>
         : <p data-testid="transparency" className="text-xs text-zinc-200 mt-3 bg-white/5 border border-white/10 rounded-xl p-3">{T.result.transparency}</p>}
+      {/* the shared library of plates (release review H-M1): the page says "we never hide what the AI does", so the sentence the terms carry is here too, under the line above,
+          for the customer's own photo (the sample has no style of its own to sell) */}
+      {!eye.sample && AI_MATERIAL_PUBLISHED && <p data-testid="ai-material" className="text-xs text-zinc-300 mt-2">{T.result.aiMaterial}</p>}
       {revealHero && !colourNote && <p data-testid="promise" className="text-xs text-zinc-300 mt-2">{R.promise}</p>}
       <p className="text-[11px] text-zinc-400 mt-2">
         {[

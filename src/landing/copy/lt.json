@@ -59,7 +59,7 @@
     "computerHint": "Naršote kompiuteriu? Atidarykite snapeyes.com telefone ir nufotografuokite akį arba pasirinkite jau turimas nuotraukas.",
     "ready": "Jūsų failas nuo {from}",
     "secondary": "Pamatykite tikros telefonu darytos nuotraukos vaizdą prieš ir po",
-    "imageAlt": "DI vizualizacija: paties Manto rainelė kaip blizgus Radiance stiliaus spaudinys ant akrilo, pakabintas ant sienos. Ji rodo, kaip skaitmeninis failas gali atrodyti atspausdintas.",
+    "imageAlt": "DI vizualizacija: paties Manto rainelė kaip blizgus spaudinys ant akrilo, pakabintas ant sienos. Ji rodo, kaip skaitmeninis failas gali atrodyti atspausdintas.",
     "chipTitle": "DI vizualizacija",
     "chipBody": "Gausite skaitmeninį failą. Spausdinimas neįskaičiuotas.",
     "caption": "Jūsų failas ant akrilo, apie 50 cm. Spausdinimas neįskaičiuotas.",
@@ -89,7 +89,7 @@
         "note": "Pavyzdinė nuotrauka, ne kliento. Lango atspindys nuotraukoje pašalintas.",
         "photoAlt": "Pavyzdinė pilkai žalios akies nuotrauka su lango atspindžiu, kairioji kadro pusė",
         "irisAlt": "Ta pati pilkai žalia rainelė, atkurta, be atspindžio",
-        "artAlt": "Atkurta pilkai žalia rainelė kaip kūrinys Radiance stiliumi"
+        "artAlt": "Atkurta pilkai žalia rainelė kaip kūrinys"
       },
       {
         "id": "own",
@@ -98,25 +98,29 @@
         "note": "Jo paties akis, nufotografuota namuose. Nuotrauka apkirpta iki rainelės.",
         "photoAlt": "Paties Manto akies nuotrauka telefonu, kairioji kadro pusė",
         "irisAlt": "Ta pati rainelė, atkurta, juodame fone",
-        "artAlt": "Atkurta rainelė kaip kūrinys Radiance stiliumi"
+        "artAlt": "Atkurta rainelė kaip kūrinys"
       }
     ],
     "eyeGroup": "Pasirinkite pavyzdinę akį",
     "strip": {
-      "photo": "Jūsų nuotrauka",
-      "iris": "Jūsų rainelė",
-      "art": "Jūsų kūrinys"
+      "photo": "Nuotrauka",
+      "iris": "Rainelė",
+      "art": "Kūrinys"
     },
     "never": "Atkurta, niekada neperpiešta: niekada nekeičiame Jūsų rainelės spalvos ir nepakeičiame jos kita akimi.",
     "aiTitle": "Kas paimta iš Jūsų, o ką prideda DI",
     "ai": [
       {
         "t": "Iš Jūsų nuotraukos",
-        "b": "Jūsų rainelės spalva, raštas ir išdėstymas. Kiekviena vagelė, kiekvienas žiedas ir kiekviena dėmė yra ten pat, kur Jūsų akyje."
+        "b": "Jūsų rainelės spalva, raštas ir išdėstymas lieka tokie, kokie yra Jūsų nuotraukoje."
       },
       {
         "t": "Atkurta mūsų DI",
         "b": "Smulkios detalės, kurių Jūsų telefonas nepajėgė užfiksuoti, atkurtos taip, kad atitiktų Jūsų nuotrauką. Atspindžiai pašalinami. Pačios smulkiausios plaukelio storio linijos yra rekonstrukcija, o ne mikroskopu užfiksuotas vaizdas."
+      },
+      {
+        "t": "DI sukurta medžiaga kai kuriuose stiliuose",
+        "b": "Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos, todėl kito kliento kūrinyje gali būti tas pats elementas. Jūsų rainelė išlaiko Jūsų nuotraukos spalvas, raštą ir išdėstymą; smulkiausias skaidulas, kaip aprašyta aukščiau, atkuria DI."
       },
       {
         "t": "Niekada",
@@ -196,7 +200,7 @@
     },
     "typical": "Įprasta spaustuvėse. Detalės gali skirtis.",
     "arts": {
-      "eye": "Radiance",
+      "eye": "Viena akis",
       "universe": "Universe",
       "family4": "Šeima",
       "collision": "Jūs dviese"
@@ -216,8 +220,8 @@
       "canvas": "Jūsų failas, atspausdintas ant drobės, maždaug {size}.",
       "framed": "Jūsų failas, įrėmintas, maždaug {size}."
     },
-    "footnote": "DI vizualizacija. Kūrinys yra tikras SnapEyes failas. Kambariai, rankos ir daiktai yra DI sugeneruoti vaizdai, o ne nuotraukos; tikras spaudinys atrodo kitaip. Spaudinio spalvos gali skirtis nuo Jūsų ekrane matomų spalvų.",
-    "cta": "Jūsų failas, atspausdintas taip, kaip norite. Pradėkite nuo nemokamos peržiūros.",
+    "footnote": "DI vizualizacija. Kūrinys yra tikras SnapEyes failas. Kambariai, rankos ir daiktai yra DI sugeneruoti vaizdai, o ne nuotraukos; tikras spaudinys atrodo kitaip. Spaudinio spalvos gali skirtis nuo Jūsų ekrane matomų spalvų. Kai kurie šiuose paveiksluose rodomi stiliai bus pasiekiami netrukus. Paveiksluose parodyti dydžiai yra iliustraciniai; rekomenduojame iki {printMaxCm}.",
+    "cta": "Jūsų failas, atspausdintas Jūsų pasirinktoje spaustuvėje. Pradėkite nuo nemokamos peržiūros.",
     "compareTitle": "Palyginkite keturias paveikslų medžiagas",
     "compareCorner": "Medžiaga",
     "compare": {
@@ -341,8 +345,8 @@
   "styles": {
     "eyebrow": "Stiliai",
     "title": "Viena rainelė, daug būdų ją pamatyti",
-    "intro": "Kiekvienas toliau pateiktas kūrinys yra pavyzdys. Jūsų kūrinyje bus Jūsų pačių spalvos ir Jūsų pačių skaidulos.",
-    "legend": "Pavyzdžiai sukurti naudojant SnapEyes programą. Pavyzdžiuose naudojama paties Manto akis, jei kortelėje nenurodyta kitaip.",
+    "intro": "Kiekvienas toliau pateiktas kūrinys yra pavyzdys. Jūsų kūrinyje bus Jūsų pačių spalvos ir Jūsų pačių raštas.",
+    "legend": "Pavyzdžiai sukurti naudojant SnapEyes programą. Pavyzdžiuose naudojama paties Manto akis, jei kortelėje nenurodyta kitaip. Stiliaus, pažymėto žyma Netrukus, dar negalima užsisakyti.",
     "groups": {
       "one": "Tik Jūs",
       "two": "Jūs dviese",
@@ -390,9 +394,6 @@
       "duo_infinity_bb": {
         "d": "Kiekviena rainelė išlaiko savo spalvą ten, kur jos susitinka."
       },
-      "duo_infinity_uni": {
-        "d": "Pora padidintame jų pačių skaidulų lauke."
-      },
       "duo_kiss": {
         "d": "Dvi rainelės, besiliečiančios kraštais."
       },
@@ -410,9 +411,6 @@
       },
       "fam_6": {
         "d": "Šešios rainelės, kiekviena savo spalvos."
-      },
-      "fam_6_uni": {
-        "d": "Šešios rainelės užpildytame lauke."
       }
     },
     "own": "Manto akis",
@@ -444,7 +442,7 @@
       {
         "t": "Pamatykite nemokamą peržiūrą",
         "b": "Maždaug per minutę Jūsų rainelė atvaizduojama keliais stiliais, su vandens ženklu. Be registracijos, nieko mokėti nereikia. Nemokamos peržiūros nesaugomos.",
-        "v": "Jūsų nemokama peržiūra, su vandens ženklu"
+        "v": "Pavyzdinė peržiūra su vandens ženklu"
       },
       {
         "t": "Gaukite skaitmeninį failą",
@@ -544,7 +542,7 @@
       },
       {
         "t": "Niekada neslėpame, ką daro DI",
-        "b": "Mūsų DI atkuria smulkias detales ir pašalina atspindžius. Jis niekada nepakeičia Jūsų rainelės kita."
+        "b": "Mūsų DI atkuria smulkias detales ir pašalina atspindžius. Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos. Jis niekada nepakeičia Jūsų rainelės kita."
       },
       {
         "t": "Niekada nekuriame dirbtinio skubumo",

@@ -43,7 +43,7 @@ const CASES = [
   {
     name: 'planned-style tile says Soon',
     note: 'a tile that stands for a style with no engine yet (Reflection for six eyes, planned) is fine while it says Soon: the production build passes',
-    edits: [{ file: TILES, from: "fam_6_uni: { id: 'grp.universe', eyes: 6 }", to: "fam_6_uni: { id: 'grp.reflection', eyes: 6 }" }],
+    edits: [{ file: TILES, from: "fam_6: { id: 'grp.collision', eyes: 6 }", to: "fam_6: { id: 'grp.reflection', eyes: 6 }" }],
     gate: 'pass', build: 'pass',
   },
   {
@@ -103,7 +103,7 @@ const CASES = [
   {
     name: 'hero price while nothing can be bought',
     note: 'the hero prints "Digital file from ..." although no style can be bought for one eye',
-    edits: [{ file: 'src/landing/heroPrice.ts', from: 'held: pending || lowest === null', to: 'held: pending' }],
+    edits: [{ file: 'src/landing/heroPrice.ts', from: 'const held = pending || lowest === null;', to: 'const held = pending;' }],
     gate: 'fail', words: ['no style can be bought for one eye but the hero says'], build: 'fail',
   },
   // the WIRING of the page (the components that read the catalogue through the hooks of the live page, and the asking code that makes the catalogue the page's): each of these

@@ -40,7 +40,10 @@ arrange: re-maps the uploaded eyes after the customer removed or reordered one, 
   (the work ticket that proved them lives 15 minutes). Unlisted slots are dropped with their files.
 status: unpaid / pending / paid / making / review / ready / withdrawn / deleted, the eyes, and when ready a fresh
   signed download link
-  (7 days). Before the webhook has arrived, the payment is confirmed with Stripe (the session id s from the success
+  (7 days) and, for an artwork larger than DISPLAY_FROM px, a display copy for the screen (download.display_url, display_width, display_height:
+  orders/<order>/display.jpg, DISPLAY_SIDE px, progressive, a few hundred KB; made by the first call that finds the file ready, never by the
+  making; the page shows it and keeps the file itself behind the download button, because a 4096 px file of 3 to 5 MB took 15 s to appear on
+  a phone on slow 4G; release review, perf-a11y M1). Before the webhook has arrived, the payment is confirmed with Stripe (the session id s from the success
   page, or the order's latest one). A paid order says "paid" only once its order confirmation email went out: until
   then "pending" with waiting_for "confirmation_email" (this call sends it when nobody has), and "review" when it
   cannot go out (the owner was told). A Stripe TEST payment counts only where test orders are allowed (never on
@@ -111,6 +114,10 @@ FORMATS = {"JPEG": ("jpg", "image/jpeg"), "PNG": ("png", "image/png")}
 FILE_MAX = 8 << 20           # a stored draft file larger than this is not one we stored
 PREVIEW_LINK = 3600          # the order page's thumbnails of the approved previews
 LINK_SECONDS = MC.LINK_SECONDS
+DISPLAY_SIDE = 1600          # the longest side of the copy of the artwork the order PAGE shows (the file itself is 4096 px: 3 to 5 MB)
+DISPLAY_FROM = 1800          # an artwork whose longest side is not longer than this is shown as it is (no copy)
+DISPLAY_QUALITY = 84         # progressive JPEG: a first rough picture arrives early
+DISPLAY_TIME = 14.0          # seconds a call must still have before it makes the copy (a read of the file, a decode, an encode, a write)
 LOST_MAX = 2                 # paid renders an order may lose (master_eye failed after the model call), then it is held
                              # for a person (_render_lost): one automatic retry, never a loop of paid ones
 
@@ -225,6 +232,10 @@ def _require_paid(order, rec, s):
         raise store.Answer(402, "test_payment", "This order was paid in Stripe's test mode, so no file is made for it "
                            "here.", False)
     if paid:
+        # a refund ends the making by the page as it ends the server's own chain (maker._step reads the same marks): refunded.json, or the admin panel's refund of the payment.
+        # Before, a refund stopped only the server's chain and the customer's open page went on drawing (release review, regression-security m1).
+        if any(store.exists(p, timeout=5.0, retry=False) for p in M.refund_marks(order, paid)):
+            raise store.Answer(409, "refunded", "This order was refunded, so nothing more is made for it.", False)
         return paid
     if pending:
         raise store.Answer(402, "payment_processing", "Your payment is still being confirmed. We start as soon as it "
@@ -232,11 +243,56 @@ def _require_paid(order, rec, s):
     raise store.Answer(402, "not_paid", "This order is not paid yet.", False)
 
 
+def _display_size(dl):
+    """(width, height) of the display copy of a delivered artwork, or None when the artwork is shown as it is (its longest side is DISPLAY_FROM px or
+    less, or its size is not known)."""
+    w, h = dl.get("width"), dl.get("height")
+    if not (isinstance(w, int) and isinstance(h, int) and not isinstance(w, bool) and not isinstance(h, bool) and w > 0 and h > 0) or max(w, h) <= DISPLAY_FROM:
+        return None
+    k = DISPLAY_SIDE / max(w, h)
+    return max(1, round(w * k)), max(1, round(h * k))
+
+
+def _display(order, key, dl):
+    """The picture the order page shows once the file is ready: {"url", "width", "height"} of orders/<order>/display.jpg, or None (the page then shows the
+    file itself, as before). The copy is made from the delivered file by the first call that finds it missing (the JPEG decoder reads the 4096 px file at
+    half its size: fast), stored beside it (every file of an order folder goes with the order: pay.erase_files) and signed like the file. It is a courtesy
+    of the page: a call with little time left skips it, and whatever goes wrong (the file cannot be read, the storage is slow) leaves the page with the
+    file itself and costs the order nothing."""
+    size = _display_size(dl)
+    if size is None:
+        return None
+    path = f"orders/{order}/display.jpg"
+    try:
+        if not store.exists(path, timeout=5.0, retry=False):
+            if L.time_left(99.0) < DISPLAY_TIME:
+                return None
+            raw = store.get(key, timeout=20.0)
+            if not raw:
+                return None
+            im = Image.open(io.BytesIO(raw))
+            im.draft("RGB", (DISPLAY_SIDE, DISPLAY_SIDE))
+            im = im.convert("RGB")
+            im.thumbnail((DISPLAY_SIDE, DISPLAY_SIDE), Image.LANCZOS)
+            out = io.BytesIO()
+            im.save(out, "JPEG", quality=DISPLAY_QUALITY, optimize=True, progressive=True)
+            store.put(path, out.getvalue(), "image/jpeg", upsert=True, timeout=20.0)
+            size = im.size
+        return {"url": store.signed_url(path, LINK_SECONDS), "width": size[0], "height": size[1]}
+    except Exception as e:  # noqa: the copy is a courtesy; a broken one never fails the status
+        pay.log(f"order {order}: display copy not made: {type(e).__name__}")
+        return None
+
+
 def _download(order, key, dl, url=None):
     url = url or store.signed_url(key, LINK_SECONDS)
     sep = "&" if "?" in url else "?"
-    return {"url": url, "download_url": f"{url}{sep}download=SnapEyes-{order}.jpg", "expires_in": LINK_SECONDS,
-            "width": dl.get("width"), "height": dl.get("height"), "bytes": dl.get("bytes")}
+    out = {"url": url, "download_url": f"{url}{sep}download=SnapEyes-{order}.jpg", "expires_in": LINK_SECONDS,
+           "width": dl.get("width"), "height": dl.get("height"), "bytes": dl.get("bytes")}
+    disp = _display(order, key, dl)
+    if disp:
+        out.update({"display_url": disp["url"], "display_width": disp["width"], "display_height": disp["height"]})
+    return out
 
 
 # ----------------------------------------------------------------------------- draft
@@ -297,6 +353,14 @@ def draft(body):
                     store.delete(p, timeout=5.0, retry=False)
                 except store.StorageError as e:
                     pay.log(f"order {order}: old draft file not removed: {e}")
+    if not created and pay.order_sessions(rec):
+        # the order already went to Stripe once: its checkout page, still open in another tab, would take a payment for the eyes as they were, and the order would end held for the
+        # owner (the plan froze the old eye). The earlier sessions are closed now, as a new checkout closes them (release review, regression-security m3); a customer who goes on
+        # asks for a new one. Best effort: Stripe being slow must not lose the upload.
+        try:
+            pay.close_open_sessions(order, rec)
+        except Exception as e:  # noqa
+            pay.log(f"order {order}: earlier checkout not closed after a new eye: {type(e).__name__}")
     return {"ok": True, "order": order, "k": k, "eye": eye, "created": created, "expires_at": pay.expires_at(rec)}
 
 
