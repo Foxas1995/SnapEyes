@@ -1,8 +1,8 @@
 {
   "meta": {
     "title": "SnapEyes Private Atelier: A valódi íriszed műalkotásként",
-    "description": "Fotózd le az egyik szemed a telefonoddal, és lásd az íriszed műalkotásként: helyreállítva, soha át nem festve. Ingyenes vízjeles előnézet, majd egy digitális fájl, amelyet bárhol kinyomtathatsz.",
-    "shareDescription": "Fotózd le az egyik szemed a telefonoddal, és nézd meg a saját íriszed műalkotásként. A vízjeles előnézet ingyenes.",
+    "description": "Fotózd le az egyik szemedet a telefonoddal, és lásd az íriszedet műalkotásként: helyreállítva, soha át nem festve. Ingyenes vízjeles előnézet, majd egy digitális fájl, amelyet bárhol kinyomtathatsz.",
+    "shareDescription": "Fotózd le az egyik szemedet a telefonoddal, és nézd meg a saját íriszedet műalkotásként. A vízjeles előnézet ingyenes.",
     "locale": "hu_HU"
   },
   "facts": {
@@ -49,7 +49,7 @@
   "hero": {
     "eyebrow": "SnapEyes Private Atelier",
     "title": "A valódi íriszed műalkotásként.",
-    "lead": "Fotózd le az egyik szemedet a telefonoddal. Helyreállítjuk a valódi íriszedet, és a választott stílusban műalkotássá formáljuk. Digitális fájlt kapsz ({px}), amely legfeljebb {printMax} méretű nyomtatásra készült. A nyomtatást nem tartalmazza.",
+    "lead": "Fotózd le az egyik szemedet a telefonoddal. Helyreállítjuk a valódi íriszedet, és a választott stílusban műalkotássá formáljuk. Digitális fájlt kapsz ({px}), amely legfeljebb {printMax} méretű nyomtatásra készült. Az ár nem tartalmazza a nyomtatást.",
     "micro": [
       "Ingyenes vízjeles előnézet",
       "Előnézet kb. egy perc alatt",
@@ -61,7 +61,7 @@
     "secondary": "Nézd meg egy valódi telefonos fotó előtte-utána képét",
     "imageAlt": "MI-vizualizáció: Mantas saját írisze fényes akrilnyomatként egy falon. Megmutatja, hogyan nézhet ki a digitális fájl kinyomtatva.",
     "chipTitle": "MI-vizualizáció",
-    "chipBody": "A digitális fájlt kapod meg. A nyomtatást nem tartalmazza.",
+    "chipBody": "A digitális fájlt kapod meg. Az ár nem tartalmazza a nyomtatást.",
     "caption": "A fájlod akrilra nyomtatva, kb. 50 cm. A nyomtatás nem része a rendelésnek.",
     "discAlt": "Mantas szeme a pupillán keresztül kettéosztva: balra a telefonos fotója, jobbra a helyreállított írisz.",
     "discLabel": "Mantas saját szeme, előtte és utána",
@@ -128,11 +128,11 @@
       }
     ],
     "note": "Ezek a példák gondosan elkészített fotókból származnak. Az eredményed a fotódtól függ, az ingyenes előnézet pedig még fizetés előtt megmutatja.",
-    "yourTurn": "Most te jössz. Nézd meg így a saját íriszed, ingyen, kb. egy perc alatt."
+    "yourTurn": "Most te jössz. Nézd meg így a saját íriszedet, ingyen, kb. egy perc alatt."
   },
   "wall": {
     "eyebrow": "A fájlod, a falad",
-    "title": "Nézd meg a fájlod a falon",
+    "title": "Nézd meg a fájlodat a falon",
     "intro": "Digitális fájlt kapsz. Ezek a képek megmutatják, hogyan nézhet ki kinyomtatva. A nyomtatás nem része a rendelésnek.",
     "varies": "Az anyagok és az eredmények nyomdánként eltérnek, és függnek a szobád fényviszonyaitól.",
     "stageLabel": "A fájlod MI-vizualizációi, kinyomtatva",
@@ -163,7 +163,7 @@
         "n": "Vászon",
         "tag": "Lágy és meleg, kevesebb tükröződés",
         "facts": [
-          "Pamutvászon fa feszítőkereten, amely gyakran 2 és 4 cm vastag.",
+          "Pamutvászon fa feszítőkereten, amely gyakran 2 és 4 cm közötti vastagságú.",
           "A vászon szövése lágyítja a legfinomabb rostokat, és világosabbá teszi a feketéket.",
           "Nincs üveg, ezért sokkal kevesebb a tükröződés.",
           "Keretre nincs szükség."
@@ -182,7 +182,7 @@
         "n": "Akrilblokk",
         "tag": "Kis tárgy polcra vagy íróasztalra",
         "facts": [
-          "Tömör, átlátszó akril, gyakran 2 és 4 cm vastag.",
+          "Tömör, átlátszó akril, gyakran 2 és 4 cm közötti vastagságú.",
           "Magától megáll, nem kell felakasztani.",
           "A polírozott éleken megcsillan a fény.",
           "Jellemző méretek: 10 és 20 cm között."
@@ -205,13 +205,13 @@
       "family4": "Család",
       "collision": "Ti ketten"
     },
-    "eyesNote": "Szemek: Mantas és példafotók, nem vásárlók.",
+    "eyesNote": "Szemek: Mantasé és példafotók, nem vásárlóké.",
     "captions": {
       "acrylic": "A fájlod akrilra nyomtatva.",
       "metal": "A fájlod alumíniumra nyomtatva.",
       "canvas": "A fájlod vászonra nyomtatva.",
       "framed": "A fájlod, keretezve.",
-      "block": "A fájlod akrilblokk-ként.",
+      "block": "A fájlod akrilblokk formájában.",
       "phone": "Az alkotásod egy telefon zárképernyőjén."
     },
     "captionsSize": {
@@ -253,10 +253,10 @@
         {
           "h": "Tükröződések",
           "v": [
-            "Valamennyi, világos helyiségben",
-            "Valamennyi, selyemmatt esetén kevesebb",
+            "Van némi, világos helyiségben",
+            "Van némi, selyemmatt esetén kevesebb",
             "Nagyon kevés",
-            "Valamennyi, tükröződésmentes üveggel kevesebb"
+            "Van némi, tükröződésmentes üveggel kevesebb"
           ]
         },
         {
@@ -306,7 +306,7 @@
     ],
     "several": "Több szem esetén: a fájl hosszabbik oldala {px}, így a hosszabbik élen legfeljebb {printMaxCm} méretig van elég pixel.",
     "above": "{printMaxCm} fölött is lehetséges a nyomtatás, de ez még jobban megnyújtja a fájlt, ezért ezt nem garantáljuk.",
-    "rule": "A nyomdák általában körülbelül 150 és 300 pixel közötti felbontást kérnek hüvelykenként. Az eredmény a fotódtól is függ: az ingyenes előnézet még a fizetés előtt megmutatja. Kérj a nyomdától próbanyomatot vagy mintát."
+    "rule": "A nyomdák általában körülbelül 150 és 300 pixel/hüvelyk közötti felbontást kérnek. Az eredmény a fotódtól is függ: az ingyenes előnézet még a fizetés előtt megmutatja. Kérj a nyomdától próbanyomatot vagy mintát."
   },
   "more": {
     "title": "További nézetek",
@@ -440,9 +440,9 @@
         "v": "Hátsó kamera, nappali fény, egy szem"
       },
       {
-        "t": "Nézd meg az ingyenes előnézeted",
+        "t": "Nézd meg az ingyenes előnézetedet",
         "b": "Körülbelül egy perc alatt megjelenik az íriszed több stílusban, vízjellel. Regisztráció és fizetés nélkül. Az ingyenes előnézeteket nem tároljuk.",
-        "v": "Példa előnézet, vízjellel"
+        "v": "Példaelőnézet, vízjellel"
       },
       {
         "t": "Töltsd le a digitális fájlt",
@@ -517,7 +517,7 @@
   "closeups": {
     "eyebrow": "Nézd közelebbről",
     "title": "Közvetlenül a fájlból kivágva",
-    "intro": "A fájl ({px}) egy {n} px-es négyzete, átméretezés nélkül kivágva (a képernyőd a megjelenítéshez átméretezheti). A példa mögötti fotó {src} px széles volt, ezért az itt látható finom rostok a mesterséges intelligenciánk rekonstrukciói.",
+    "intro": "A fájl ({px}) egy {n} px-es négyzete, átméretezés nélkül kivágva (a képernyőd a megjelenítéshez átméretezheti). A példához használt fotó {src} px széles volt, ezért az itt látható finom rostok a mesterséges intelligenciánk rekonstrukciói.",
     "badge": "{n} px-es kivágás",
     "fibreTitle": "Közvetlenül a fájlból kivágott négyzet",
     "fibreAlt": "Közelkép Mantas helyreállított íriszéről, a 4096 px-es fájlból kivágva: sugárirányú rostok, aranyszínű íriszgallér és a pupilla széle.",
@@ -623,7 +623,7 @@
       {
         "id": "phone",
         "q": "Milyen telefont és kamerát használjak?",
-        "a": "Bármilyen újabb okostelefon megfelel, amelynek jó a hátlapi kamerája. A hátlapi kamerát használd 2x-es vagy 3x-os zoommal, ne a szelfikamerát. Használj ablakból érkező, oldalról eső nappali fényt, ne lámpát vagy vakut. Tartsd a telefont kb. 10 cm-re a szemedtől, koppints az íriszre az élességállításhoz, vedd le a szemüvegedet, és készíts három-öt felvételt."
+        "a": "Bármilyen újabb okostelefon megfelel, amelynek jó a hátsó kamerája. A hátsó kamerát használd 2x-es vagy 3x-os zoommal, ne a szelfikamerát. Használj ablakból érkező, oldalról eső nappali fényt, ne lámpát vagy vakut. Tartsd a telefont kb. 10 cm-re a szemedtől, koppints az íriszre az élességállításhoz, vedd le a szemüvegedet, és készíts három-öt felvételt."
       },
       {
         "id": "colour",
@@ -633,8 +633,8 @@
       {
         "id": "other",
         "q": "Fotózhatok valaki mást is?",
-        "a": "Igen: a párod, a gyermeked vagy a másik szemed, és több szem is osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt.",
-        "aOpen": "Igen: a párod, a gyermeked vagy a másik szemed, és legfeljebb {max} szem osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt."
+        "a": "Igen: a párodat, a gyermekedet vagy a másik szemedet, és több szem is osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt.",
+        "aOpen": "Igen: a párodat, a gyermekedet vagy a másik szemedet, és legfeljebb {max} szem osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt."
       },
       {
         "id": "material",
@@ -682,7 +682,7 @@
     }
   },
   "final": {
-    "title": "Nézd meg a saját íriszed",
+    "title": "Nézd meg a saját íriszedet",
     "body": "Csak a telefonodra, jó fényre és kb. egy percre van szükséged.",
     "small": "Digitális fájlt kapsz. A nyomtatás nem része a rendelésnek.",
     "imageAlt": "MI-vizualizáció: egy sötét dolgozószoba alkonyatkor, amelynek falán Mantas írisze látható akrilra nyomtatva.",

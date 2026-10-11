@@ -106,7 +106,7 @@ export const lt: TryCopy = {
       too_blurry: {
         badge: 'Per neryški',
         title: 'Nuotrauka per neryški, kad atkurtume Jūsų rainelę',
-        reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl jos nenaudojame.',
+        reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl šios nuotraukos nenaudojame.',
         error: 'Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
         retakeLine: 'Šis kadras per neryškus, kad atkurtume Jūsų rainelę. Fotografuokite iš naujo dienos šviesoje prie lango iš šono, galine kamera su 2x priartinimu: bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai.',
         thumb: 'neryški',
@@ -124,7 +124,7 @@ export const lt: TryCopy = {
       pupil_too_large: {
         badge: 'Per platus vyzdys',
         title: 'Vyzdys per platus, kad atkurtume Jūsų rainelę',
-        reason: 'Šioje nuotraukoje Jūsų vyzdys taip išsiplėtęs, kad aplink jį matyti per mažai rainelės, todėl jos nenaudojame.',
+        reason: 'Šioje nuotraukoje Jūsų vyzdys taip išsiplėtęs, kad aplink jį matyti per mažai rainelės, todėl šios nuotraukos nenaudojame.',
         error: 'Šioje nuotraukoje Jūsų vyzdys per platus, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
         retakeLine: 'Šiame kadre Jūsų vyzdys per platus. Daugiau šviesos jį sumažina: fotografuokite iš naujo arti šviesaus lango dienos šviesoje, ne su blykste.',
         thumb: 'vyzdys',
@@ -154,7 +154,7 @@ export const lt: TryCopy = {
       eyelid: {
         badge: 'Vokas dengia rainelę',
         title: 'Vokas dengia dalį Jūsų rainelės',
-        reason: 'Šioje nuotraukoje dalį Jūsų rainelės dengia vokas arba blakstienos, todėl jos nenaudojame.',
+        reason: 'Šioje nuotraukoje dalį Jūsų rainelės dengia vokas arba blakstienos, todėl šios nuotraukos nenaudojame.',
         error: 'Šioje nuotraukoje vokas dengia dalį Jūsų rainelės. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
         retakeLine: 'Šiame kadre vokas dengia dalį Jūsų rainelės. Žiūrėkite tiesiai į kamerą, plačiai atmerkite akį ir piršto galiuku švelniai pakelkite viršutinį voką.',
         thumb: 'vokas',
@@ -170,7 +170,7 @@ export const lt: TryCopy = {
     blockedOther: {
       badge: 'Per mažai detalių',
       title: 'Per mažai detalių, kad atkurtume Jūsų rainelę',
-      reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl jos nenaudojame.',
+      reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl šios nuotraukos nenaudojame.',
       error: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės, kad ją atkurtume. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
       retakeLine: 'Šiame kadre matyti per mažai Jūsų rainelės, kad ją atkurtume. Padarykite kitą kadrą pagal fotografavimo patarimus.',
       thumb: 'iš naujo',
@@ -256,8 +256,8 @@ export const lt: TryCopy = {
     composeFailed: 'Nepavyko sukurti šios peržiūros.',
     previewReduced: 'Peržiūra sumažinta ir su vandens ženklu.',
     previewFile: (square: boolean): string => (square
-      ? 'Jūsų failas: 4096 px, pakankamai ryškus spausdinti iki 50 x 50 cm.'
-      : 'Jūsų failas: 4096 px ilgiausioje kraštinėje, pakankamai ryškus spaudai, kurios ilgiausia kraštinė iki 50 cm.'),
+      ? 'Jūsų failas: 4096 px, pakankamai ryškus spaudiniui iki 50 x 50 cm.'
+      : 'Jūsų failas: 4096 px ilgiausioje kraštinėje, pakankamai ryškus spaudiniui, kurio ilgiausia kraštinė iki 50 cm.'),
     retry: 'Bandyti dar kartą',
     layout: 'Išdėstymas',
     style: 'Stilius',
@@ -310,7 +310,7 @@ export const lt: TryCopy = {
     recommended: 'Rekomenduojama',
     reasons: {
       'reason.solo_powder.own': 'Jūsų pačių spalvos, paverstos milteliais',
-      'reason.solo_gold.dark_brown': 'Auksas priverčia tamsiai rudas akis švytėti',
+      'reason.solo_gold.dark_brown': 'Su auksu tamsiai rudos akys švyti',
       'reason.solo_radiance.grey': 'Sidabrinė šviesa pilkoms akims',
       'reason.duo_collision_infinity.own': 'Dvi rainelės, viena begalybė',
       'reason.duo_kiss_collision.own': 'Du pasauliai, vienas sprogimas',
@@ -328,7 +328,7 @@ export const lt: TryCopy = {
     tileFailed: 'Peržiūra nesukurta',
     changed: {
       eyes: (from: string, to: string, n: number) => `${from} nekuriamas ${n} ${akiuWord(n)} kūriniui, todėl pasirinkome ${to}.`,
-      gate: (from: string, to: string, i: number) => `${from} reikia švaresnės rainelės, todėl kol kas pasirinkome ${to}. Nufotografuokite akį ${i} iš naujo, jei norite naudoti ${from}.`,
+      gate: (from: string, to: string, i: number) => `Stiliui ${from} reikia švaresnės rainelės, todėl kol kas pasirinkome ${to}. Nufotografuokite akį ${i} iš naujo, jei norite naudoti ${from}.`,
       reseal: (from: string, to: string, i: number) => `Norėdami naudoti ${from}, sukurkite akies ${i} peržiūrą iš naujo. Kol kas pasirinkome ${to}.`,
       pupil: (from: string, to: string) => `${from} netinka šiai vyzdžio formai, todėl pasirinkome ${to}.`,
     },
@@ -346,7 +346,7 @@ export const lt: TryCopy = {
         : `${list.length === 1 ? `Akies ${list[0]} peržiūra sukurta` : `Akių ${andList(list, 'ir')} peržiūros sukurtos`} senesne puslapio versija. Norėdami tęsti, nufotografuokite ${list.length === 1 ? 'ją' : 'jas'} iš naujo.`),
       held: 'Stiliai, kuriems reikia švaresnės rainelės, kol kas pilki.',
       tips: {
-        open: 'Plačiai atmerkite akį, žiūrėkite tiesiai į objektyvą ir švelniai pirštų galiuku pakelkite viršutinį voką.',
+        open: 'Plačiai atmerkite akį, žiūrėkite tiesiai į objektyvą ir švelniai piršto galiuku pakelkite viršutinį voką.',
         light: 'Naudokite dienos šviesą pro langą, iš šono. Ne blykstę ir ne lempą.',
         grey: 'Pilka rainelė turi minkštą kraštą ir geriausiai atrodo vienodoje dienos šviesoje: atsistokite arti lango, kad langas būtų iš šono, ir laikykite akį plačiai atmerktą.',
       },
@@ -373,11 +373,11 @@ export const lt: TryCopy = {
       datePlaceholder: 'Pavyzdžiui, 2026 m. birželio 14 d.',
       family: 'Šeimos pavardė (nebūtina)',
       problem: {
-        nameLong: (i: number, max: number) => `Akies ${i} vardas per ilgas: daugiausia ${max} raidžių.`,
-        namesLong: (max: number) => `Vardai kartu per ilgi: daugiausia ${max} raidžių.`,
+        nameLong: (i: number, max: number) => `Akies ${i} vardas per ilgas: daugiausia ${max} ${ltForm(max, 'raidė', 'raidės', 'raidžių')}.`,
+        namesLong: (max: number) => `Vardai kartu per ilgi: daugiausia ${max} ${ltForm(max, 'raidė', 'raidės', 'raidžių')}.`,
         glyph: (chars: string) => `Kūrinio šriftas negali pavaizduoti ${chars}. Naudokite kitą raidę.`,
         dateLong: (max: number) => `Data per ilga: daugiausia ${max} ženklų.`,
-        familyLong: (max: number) => `Šeimos pavardė per ilga: daugiausia ${max} raidžių.`,
+        familyLong: (max: number) => `Šeimos pavardė per ilga: daugiausia ${max} ${ltForm(max, 'raidė', 'raidės', 'raidžių')}.`,
       },
     },
   },

@@ -57,7 +57,7 @@ export const lt: LegalDoc = {
       id: 'product',
       title: 'Ką perkate',
       blocks: [
-        `Personalizuotą skaitmeninį kūrinį, sukurtą iš Jūsų pačių akies (arba kelių akių) nuotraukos, Jūsų pasirinktu stiliumi, išdėstymu ir su Jūsų pasirinktu užrašu. Gausite vieną vaizdo failą (JPEG) be vandens ženklo: vienos akies kūrinys yra ${SQUARE}, kelių akių kūrinio ilgoji kraštinė yra ${PX}. Kūrinys pateikiamas tik kaip skaitmeninis failas, jį atsisiunčiant. Spaudinių, rėmelių ar kitų fizinių produktų neparduodame.`,
+        `Personalizuotą skaitmeninį kūrinį, sukurtą iš Jūsų pačių padarytos akies (arba kelių akių) nuotraukos, Jūsų pasirinktu stiliumi, išdėstymu ir su Jūsų pasirinktu užrašu. Gausite vieną vaizdo failą (JPEG) be vandens ženklo: vienos akies kūrinys yra ${SQUARE}, kelių akių kūrinio ilgoji kraštinė yra ${PX}. Kūrinys pateikiamas tik kaip skaitmeninis failas, jį atsisiunčiant. Spaudinių, rėmelių ar kitų fizinių produktų neparduodame.`,
         `${TRANSPARENCY_LT} Todėl kūrinys yra meninis atkūrimas, o ne medicininis ar mikroskopinis vaizdas, ir jis netinka jokiems medicininiams tikslams ar asmens tapatybei nustatyti.`,
         ...aiBlocks('lt'),
       ],
@@ -66,7 +66,7 @@ export const lt: LegalDoc = {
       id: 'preview',
       title: 'Jūsų peržiūra ir Jūsų failas',
       blocks: [
-        'Prieš užsakymą matote nemokamą peržiūrą su vandens ženklu ir ją patvirtinate. Jūsų failas atitinka patvirtintą peržiūrą: ta pati akis, stilius, išdėstymas, akių tvarka ir užrašas, tos pačios spalvos ir tonai, vieną kartą sukurta visa raiška. Visu dydžiu mūsų DI prideda smulkias skaidulų detales, kurių peržiūra dėl mažo dydžio parodyti negali, todėl pačios smulkiausios detalės gali šiek tiek skirtis nuo peržiūros. Peržiūra, kurioje yra nuo penkių iki aštuonių akių, kuriama iš mažesnių Jūsų nuotraukų kopijų, todėl ji grubesnė už Jūsų failą.',
+        'Prieš užsakymą matote nemokamą peržiūrą su vandens ženklu ir ją patvirtinate. Jūsų failas atitinka patvirtintą peržiūrą: ta pati akis, stilius, išdėstymas, akių tvarka ir užrašas, tos pačios spalvos ir tonai. Failas vieną kartą sukuriamas visa raiška. Visu dydžiu mūsų DI prideda smulkias skaidulų detales, kurių peržiūra dėl mažo dydžio parodyti negali, todėl pačios smulkiausios detalės gali šiek tiek skirtis nuo peržiūros. Peržiūra, kurioje yra nuo penkių iki aštuonių akių, kuriama iš mažesnių Jūsų nuotraukų kopijų, todėl ji grubesnė už Jūsų failą.',
         'Jei Jūsų failas aiškiai skiriasi nuo patvirtintos peržiūros (pavyzdžiui, spalva, šviesumu ar vyzdžiu), tai yra trūkumas: žr. [Pretenzijos ir trūkumai](#defects).',
       ],
     },

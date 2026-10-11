@@ -46,7 +46,7 @@ export const hu: OrderCopy = {
     keepOpen: 'Kérjük, hagyd nyitva ezt az oldalt, amíg elkészül a letöltés.',
     closeEmail: 'Ha bezárod, a folytatáshoz nyisd meg az e-mailben kapott linket.',
     closeNoEmail: 'Ha bezárod, a folytatáshoz nyisd meg újra ezt az oldalt ugyanazon a címen.',
-    serverOn: 'Az alkotásodat a mi oldalunkon készítjük, így bezárhatod ezt az oldalt.',
+    serverOn: 'Az alkotásodat a szerverünkön készítjük, így bezárhatod ezt az oldalt.',
     serverEmail: 'E-mailt küldünk, amikor elkészült.',
     serverNoEmail: 'A letöltéshez később nyisd meg újra ezt az oldalt ugyanazon a címen.',
     eye: (i: number) => `${i}. szem`,
@@ -94,7 +94,7 @@ export const hu: OrderCopy = {
   withdraw: {
     heading: 'Elállás a szerződéstől',
     lead: 'A rendeléskor hozzájárultál, hogy azonnal megkezdjük a fájlod elkészítését. Amíg nem kezdtük el, itt elállhatsz ettől a szerződéstől. Amint az elkészítés megkezdődik, az elállási jogod megszűnik.',
-    acl: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel meggondolás esetén állhatsz el a szerződéstől. Az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) szerinti jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
+    acl: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel akkor állhatsz el a szerződéstől, ha meggondolod magad. Az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) szerinti jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
     info: 'Elállási tájékoztató',
     formLead: (confirm: string) => `Kérjük, ellenőrizd az adataidat. Az „${confirm}” gombbal ezt a nyilatkozatot küldöd el nekünk:`,
     statement: (o: string) => `Alulírott kijelentem, hogy gyakorlom elállási jogomat az alábbi digitális tartalom szolgáltatására irányuló szerződés tekintetében: SnapEyes-alkotás, rendelésszám: ${o}.`,
@@ -109,7 +109,7 @@ export const hu: OrderCopy = {
     cancel: 'Mégse',
     back: 'Vissza a rendelésedhez',
     invalid: {
-      name: 'Kérjük, add meg a neved.',
+      name: 'Kérjük, add meg a nevedet.',
       email: 'Kérjük, érvényes e-mail-címet adj meg.',
       order: 'Kérjük, úgy add meg a rendelésszámot, ahogy az e-mailben szerepel.',
     },
@@ -120,7 +120,7 @@ export const hu: OrderCopy = {
       // api/_lib/withdraw.py 409 no_order: nothing was stored, so nothing here may say it was kept
       no_order: `Nem találtunk ilyen számú rendelést; semmit nem rögzítettünk. Ellenőrizd a számot, vagy írj nekünk: ${CONTACT_EMAIL}.`,
       not_paid: 'Ezt a rendelést soha nem fizették ki, így nincs szerződés, amelytől el lehetne állni. Nem történt terhelés.',
-      invalid: 'Kérjük, ellenőrizd a neved és az e-mail-címed, és próbáld újra.',
+      invalid: 'Kérjük, ellenőrizd a nevedet és az e-mail-címedet, és próbáld újra.',
       paused: `Online elállást most nem tudunk fogadni. Kérjük, írd meg az elállásodat e-mailben: ${CONTACT_EMAIL}. Az e-mail ugyanolyan érvényes.`,
       too_many: `Ehhez a rendeléshez ma már több elállási nyilatkozat is érkezett. Ha valami hiányzik, kérjük, írj nekünk: ${CONTACT_EMAIL}.`,
       failed: `Az elállásodat nem sikerült elküldeni. Kérjük, próbáld újra, vagy írd meg az elállásodat e-mailben: ${CONTACT_EMAIL}. Az e-mail ugyanolyan érvényes.`,

@@ -41,7 +41,7 @@ export const lt: LegalDoc = {
       id: 'contact',
       title: 'Kontaktai',
       blocks: [
-        SELLER.phone ? `Greičiausiai su mumis susisieksite el. paštu: ${MAIL}. Telefonu: ${SELLER.phone}.` : `Greičiausiai su mumis susisieksite el. paštu: ${MAIL}.`,
+        SELLER.phone ? `Greičiausias būdas susisiekti su mumis yra el. paštas: ${MAIL}. Telefonu: ${SELLER.phone}.` : `Greičiausias būdas susisiekti su mumis yra el. paštas: ${MAIL}.`,
         `Sutarties atsisakyti taip pat galite mūsų internetine funkcija [„${WITHDRAWAL_ONLINE_LT.button}“](${withdrawFunctionHrefLt()}).`,
       ],
     },
