@@ -16,6 +16,7 @@ from PIL import Image
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import coverage as CV   # how much of the iris an eyelid covers, measured on the photo
+from _lib import lashblock as LB  # a dark lash curtain over the iris with a lid margin behind it, measured on the photo
 from _lib.analyze_lt import TEXT_LT
 from _lib.analyze_hu import TEXT_HU
 
@@ -490,8 +491,10 @@ BLOCK_MESSAGES["too_small"] = BLOCK_SMALL_MESSAGE
 # other one 7.3 or less (the owner's four 0-1.9, the owner's showcase 30: 2.6). The lids read 12.5 and up: 12.7-14.3
 # (d02, d04, d05: the owner's angled lid wedge), 12.5 (w08), 14.5-20.7 (06, 19, 21, 27, w02, w03, w10). The line sits
 # in the empty band between the two: 10 of the 20 labelled lids read over it (w08 is too small first) and 0 of the 30
-# clean photos; with the other blocks 15 of the 20 get no ticket. Not caught: a curtain of dark lashes or mascara with
-# little lid skin inside the circle (09 reads 8.6; 11, 25, 29 and w12 0-7.3) and 26's hooded lid (9.9). On the circles
+# clean photos; with the other blocks 15 of the 20 get no ticket. Not caught here: a curtain of dark lashes or mascara with
+# little lid skin inside the circle (09 reads 8.6; 11, 25, 29 and w12 0-7.3) and 26's hooded lid (9.9): 09 and 26 (29 only on part
+# of the circles) are read by _lib/lashblock.py below (the lid margin behind the curtain), 11 is repaired in /api/deglare
+# (_lib/lashfill.py) when the circle lands as in the calibration, 25 is not. On the circles
 # the live refinement locks (a 3-10 % move) w10 reads 11.3 and passes; the clean photos read at most 10.0 there.
 # Bars (wave-lid/fx/h.py, the 23 clean passing photos, the circle pinned): window, sky and warm-lamp reflections 3 of
 # 414 blocked (30 under a warm lamp, 22 beside a side window), light ramps, caustics, veils and arcus 3 of 460,
@@ -759,6 +762,18 @@ def analyze(body):
         print("snapeyes lid_cover " + json.dumps({"error": L._scrub(repr(e))[:160]}), flush=True)
     if cover is not None and not blocked and cover["wedge_pct"] >= EYELID_BLOCK_PCT:
         blocked, block_by, reason = True, "eyelid", "eyelid"
+    # a dark curtain of lashes and lid shadow with a lid margin behind it (_lib/lashblock.py: lid_geometry's own margins, read before
+    # its weak-margin rule drops them; 29, 09, 26): nothing under it to repair it from, so the same retake as a lid. Only read where
+    # a big dark shape hangs deep into the iris, so a photo without one pays about 50 ms. A failure blocks nothing
+    lash = None
+    if locked and not blocked:
+        try:
+            lash_block, lash = LB.eyelid_block(im, cx, cy, r, pad, pupil_r, crop)
+        except Exception as e:  # noqa
+            lash_block = False
+            print("snapeyes lash_block " + json.dumps({"error": L._scrub(repr(e))[:160]}), flush=True)
+        if lash_block:
+            blocked, block_by, reason = True, "eyelid", "eyelid"
     # a curved hand-shake no line sees: asked only of a locked photo nothing above blocked, under 'ok' (SHAKE_CONF)
     shake = shake_seen(im, cx, cy, r) if locked and not blocked and basis < FIBRE_OK else None
     if shake is not None and shake[0] and shake[1] >= SHAKE_CONF:
@@ -826,6 +841,7 @@ def analyze(body):
                "covered_pct": None if cover is None else cover["covered_pct"],
                "lid_wedge_pct": None if cover is None else cover["wedge_pct"],
                "lid_side": None if cover is None else cover["side"], "lid_tilt": None if cover is None else cover["tilt"]}
+    if lash is not None: capture["curtain"] = lash
     if device is not None: capture["device"] = device
     if study is not None: capture["study"] = study
     print("snapeyes capture " + json.dumps(capture), flush=True)

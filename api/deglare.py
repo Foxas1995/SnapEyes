@@ -8,9 +8,12 @@ the whole disc in one pass and restores the fibres over the fill without a seam.
 Last, a veil (a wide, soft reflection of a window or the sky over part of the iris, L.veil_fix) loses the light it
 added, so the render and its colour lock no longer paint it as blue-grey fibres; with no veil found (veil_pct 0) the
 crop is exactly the one before.
-Reply: {ok, glare_pct, lid_pct, veil_pct, changed, used_sr, pupil_overlap, crop}. glare_pct and lid_pct are shares of
-the iris disk, measured separately, veil_pct a share of the fibre ring; with no eyelid found (lid_pct 0) the result is
-exactly the glare-only one."""
+Then a dark lash curtain over the iris (lash shadow and fringe the eyelid gate does not see, _lib/lashfill.py): measured
+on the finished crop, and only where the measurement arms it the thin dark strokes are filled from the same iris at the
+same radius; a quiet gate returns the crop untouched and adds no key to the reply.
+Reply: {ok, glare_pct, lid_pct, veil_pct, changed, used_sr, pupil_overlap, crop[, curtain]}. glare_pct and lid_pct are
+shares of the iris disk, measured separately, veil_pct a share of the fibre ring; with no eyelid found (lid_pct 0) the
+result is exactly the glare-only one. curtain (only when the gate armed): {verdict, ...}, see lashfill.py."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -18,6 +21,7 @@ import numpy as np
 from PIL import Image
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
+from _lib import lashfill as LF   # a dark lash curtain over the iris: measured, then repaired from the iris itself
 
 # The reflection call to the image model (PROMPT_DEGLARE) is a switch, OFF by default since 2026-09-29: the
 # reflection holes keep glare_fill's same-radius fill (the model's input), exactly what they got when the call failed
@@ -87,11 +91,13 @@ def deglare(body):
             base = L.lid_composite(crop, filled, lid_hard, lid_feather, r_px, prho, glare_hard=hard)
         # a veil (L.veil_fix) loses the light it added; none found: base itself comes back
         base, veil = L.veil_fix(base, r_px, pr / L.iris_radius_frac(pad) if pupil_ok else None)
-        changed = bool(pupil_changed or lid_pct > 0 or veil > 0)
+        base, curtain = LF.curtain_fix(base, pad, pr / L.iris_radius_frac(pad) if pupil_ok else None, lid_pct, raw, hard)
+        changed = bool(pupil_changed or lid_pct > 0 or veil > 0 or (curtain or {}).get("verdict") == "fill")
         E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=changed, used_sr=used_sr, model_call=False)
         return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
                 "changed": changed, "used_sr": used_sr,
-                "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95)}
+                "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95),
+                **({"curtain": curtain} if curtain else {})}
     # the reflection holes: the whole glint with its halo, outline ring and soft shoulder (glare_extent), never less than
     # glare_mask's. The gate above and every lid and pupil decision still read glare_mask's, so a crop below the gate is
     # exactly as before. The holes get the lid path's kind of fill (glare_fill: the tone of the iris round them, single
@@ -133,10 +139,12 @@ def deglare(body):
     # last, as above: a veil loses the light it added (the fills already in place, so a hole inside a veil is treated
     # as the veil round it); none found: clean itself comes back
     clean, veil = L.veil_fix(clean, r_px, prho)
+    clean, curtain = LF.curtain_fix(clean, pad, prho, lid_pct, raw, lid_glare)
     E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=True, used_sr=used_sr, model_call=DEGLARE_MODEL)
     return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
             "changed": True, "used_sr": used_sr,
-            "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95)}
+            "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95),
+            **({"curtain": curtain} if curtain else {})}
 
 def handle(req): L.run(req, deglare)
 
