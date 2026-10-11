@@ -588,7 +588,7 @@
       {
         "id": "receive",
         "q": "Ką gausiu?",
-        "a": "Vieną skaitmeninį failą be vandens ženklo: JPEG sRGB spalvų erdvėje. Vienos akies kūrinio dydis yra {square}, o kelių akių kūrinio ilgoji kraštinė yra {px}. Jums sumokėjus atsidaro Jūsų užsakymo puslapis, o jo nuorodą gausite el. paštu. Paprastai failas paruošiamas per kelias minutes; jei kada nors užsakymą sulaikome patikrai, pažadame jį paruošti ne vėliau kaip per {hours} val. Failą galėsite atsisiųsti 12 mėnesių."
+        "a": "Vieną skaitmeninį failą be vandens ženklo: JPEG sRGB spalvų erdvėje. Vienos akies kūrinio dydis yra {square}, o kelių akių kūrinio ilgoji kraštinė yra {px}. Jums sumokėjus, atsidaro Jūsų užsakymo puslapis, o jo nuorodą gausite el. paštu. Paprastai failas paruošiamas per kelias minutes; jei kada nors užsakymą sulaikome patikrai, pažadame jį paruošti ne vėliau kaip per {hours} val. Failą galėsite atsisiųsti 12 mėnesių."
       },
       {
         "id": "print",
@@ -618,7 +618,7 @@
       {
         "id": "unhappy",
         "q": "Kas, jei rezultatas man nepatiks?",
-        "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums: sukursime jį iš naujo arba grąžinsime pinigus. Išsamiau apie sutarties atsisakymą rašoma toliau."
+        "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus, failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums: sukursime jį iš naujo arba grąžinsime pinigus. Išsamiau apie sutarties atsisakymą rašoma toliau."
       },
       {
         "id": "phone",

@@ -346,7 +346,7 @@ export const lt: TryCopy = {
         : `${list.length === 1 ? `Akies ${list[0]} peržiūra sukurta` : `Akių ${andList(list, 'ir')} peržiūros sukurtos`} senesne puslapio versija. Norėdami tęsti, nufotografuokite ${list.length === 1 ? 'ją' : 'jas'} iš naujo.`),
       held: 'Stiliai, kuriems reikia švaresnės rainelės, kol kas pilki.',
       tips: {
-        open: 'Plačiai atmerkite akį, žiūrėkite tiesiai į objektyvą ir švelniai pirštų galiuku pakelkite viršutinį voką.',
+        open: 'Plačiai atmerkite akį, žiūrėkite tiesiai į objektyvą ir švelniai piršto galiuku pakelkite viršutinį voką.',
         light: 'Naudokite dienos šviesą pro langą, iš šono. Ne blykstę ir ne lempą.',
         grey: 'Pilka rainelė turi minkštą kraštą ir geriausiai atrodo vienodoje dienos šviesoje: atsistokite arti lango, kad langas būtų iš šono, ir laikykite akį plačiai atmerktą.',
       },
@@ -373,11 +373,11 @@ export const lt: TryCopy = {
       datePlaceholder: 'Pavyzdžiui, 2026 m. birželio 14 d.',
       family: 'Šeimos pavardė (nebūtina)',
       problem: {
-        nameLong: (i: number, max: number) => `Akies ${i} vardas per ilgas: daugiausia ${max} raidžių.`,
-        namesLong: (max: number) => `Vardai kartu per ilgi: daugiausia ${max} raidžių.`,
+        nameLong: (i: number, max: number) => `Akies ${i} vardas per ilgas: daugiausia ${max} ${ltForm(max, 'raidė', 'raidės', 'raidžių')}.`,
+        namesLong: (max: number) => `Vardai kartu per ilgi: daugiausia ${max} ${ltForm(max, 'raidė', 'raidės', 'raidžių')}.`,
         glyph: (chars: string) => `Kūrinio šriftas negali pavaizduoti ${chars}. Naudokite kitą raidę.`,
         dateLong: (max: number) => `Data per ilga: daugiausia ${max} ženklų.`,
-        familyLong: (max: number) => `Šeimos pavardė per ilga: daugiausia ${max} raidžių.`,
+        familyLong: (max: number) => `Šeimos pavardė per ilga: daugiausia ${max} ${ltForm(max, 'raidė', 'raidės', 'raidžių')}.`,
       },
     },
   },
