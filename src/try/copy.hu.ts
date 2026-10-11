@@ -313,7 +313,7 @@ export const hu: TryCopy = {
       stripIntro: 'Ugyanaz a szem háromszor: ahogy lefotóztad, helyreállítva, és az alkotásként, amit javaslunk hozzá.',
       stripIntroPair: 'Ugyanaz a szem kétszer: ahogy lefotóztad, és helyreállítva.',
       noCut: 'Ennél a szemnél nem tudtuk megmutatni a vágást, ezért a fotód és a helyreállított írisz egymás mellett látható.',
-      softTip: 'A fotód kicsi, ezért a fele lágynak tűnik. Menj közelebb, vagy használj 2x nagyítást az élesebb összehasonlításhoz.',
+      softTip: 'A fotód kicsi, ezért a fele lágynak tűnik. Menj közelebb, vagy használj 2x-es zoomot az élesebb összehasonlításhoz.',
       frameWide: 'Széles kivágás',
       frameTight: 'Szoros kivágás: a fotód szoros kivágás, az írisz körül semmit nem találunk ki',
     },
@@ -376,7 +376,7 @@ export const hu: TryCopy = {
       tips: {
         open: 'Nyisd tágra a szemedet, nézz egyenesen a lencsébe, és egy ujjheggyel óvatosan emeld meg a felső szemhéjat.',
         light: 'Használj nappali fényt egy ablakból, oldalról. Se vaku, se lámpa.',
-        grey: 'A szürke írisznek lágy a széle, és egyenletes nappali fényben mutat a legjobban: állj közel egy ablakhoz úgy, hogy az ablak oldalt legyen, és tartsd tágra a szemedet.',
+        grey: 'A szürke írisznek lágy a széle, és egyenletes nappali fényben mutat a legjobban: állj közel egy ablakhoz úgy, hogy az ablak oldalt legyen, és tartsd tágra nyitva a szemedet.',
       },
       manual: 'Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {link}. Mantas megnézi őket.',
       noPreview: 'Ezekről a szemekről még nem tudunk előnézetet mutatni. Lent látod, mit érdemes módosítani.',
@@ -384,7 +384,7 @@ export const hu: TryCopy = {
       noStyles: 'Ennyi szemhez még egyetlen stílust sem tudunk mutatni. Távolíts el egy szemet, vagy írj nekünk.',
     },
     stack: 'A két íriszed színe erősen eltér, ezért az egyik a másik előtt van.',
-    widePupil: 'A pupilláid tágak, ezért az íriszek összeérnek, ahelyett hogy átfednék egymást.',
+    widePupil: 'A pupilláid tágak, ezért az íriszek összeérnek, ahelyett, hogy átfednék egymást.',
     options: {
       swap: 'Helycsere',
       rotate: 'Helyek forgatása',
