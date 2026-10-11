@@ -22,6 +22,7 @@ from PIL import Image
 from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import lashfill as LF   # a dark lash curtain over the iris: measured, then repaired from the iris itself
+from _lib import rimfix as RF   # the black where the circle left the photo filled (22), a lid fill's highlight and shadow remnant filled (26)
 
 # The reflection call to the image model (PROMPT_DEGLARE) is a switch, OFF by default since 2026-09-29: the
 # reflection holes keep glare_fill's same-radius fill (the model's input), exactly what they got when the call failed
@@ -91,13 +92,20 @@ def deglare(body):
             base = L.lid_composite(crop, filled, lid_hard, lid_feather, r_px, prho, glare_hard=hard)
         # a veil (L.veil_fix) loses the light it added; none found: base itself comes back
         base, veil = L.veil_fix(base, r_px, pr / L.iris_radius_frac(pad) if pupil_ok else None)
+        # where the circle left the photo the square is black, and a lid fill can leave a highlight and its shadow just
+        # outside it: filled from this iris' own tone (none found: base itself, byte for byte)
+        base, void = RF.fill_void(base, pad, raw)
+        rem = 0.0
+        if lid_pct > 0:
+            base, rem = RF.lid_remnant(base, lid_hard, pad, pr / L.iris_radius_frac(pad) if pupil_ok else None)
         base, curtain = LF.curtain_fix(base, pad, pr / L.iris_radius_frac(pad) if pupil_ok else None, lid_pct, raw, hard)
-        changed = bool(pupil_changed or lid_pct > 0 or veil > 0 or (curtain or {}).get("verdict") == "fill")
+        changed = bool(pupil_changed or lid_pct > 0 or veil > 0 or void > 0 or rem > 0 or (curtain or {}).get("verdict") == "fill")
+        RF.log(void, rem)
         E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=changed, used_sr=used_sr, model_call=False)
-        return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
-                "changed": changed, "used_sr": used_sr,
-                "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95),
-                **({"curtain": curtain} if curtain else {})}
+        return RF.tag({"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
+                       "changed": changed, "used_sr": used_sr,
+                       "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95),
+                       **({"curtain": curtain} if curtain else {})}, void, rem)
     # the reflection holes: the whole glint with its halo, outline ring and soft shoulder (glare_extent), never less than
     # glare_mask's. The gate above and every lid and pupil decision still read glare_mask's, so a crop below the gate is
     # exactly as before. The holes get the lid path's kind of fill (glare_fill: the tone of the iris round them, single
@@ -139,12 +147,17 @@ def deglare(body):
     # last, as above: a veil loses the light it added (the fills already in place, so a hole inside a veil is treated
     # as the veil round it); none found: clean itself comes back
     clean, veil = L.veil_fix(clean, r_px, prho)
+    clean, void = RF.fill_void(clean, pad, raw)    # the black where the circle left the photo (none: clean itself)
+    rem = 0.0
+    if lid_pct > 0:                         # a lid fill: the highlight and shadow just outside its mask (none: clean itself)
+        clean, rem = RF.lid_remnant(clean, lid_hard, pad, prho)
     clean, curtain = LF.curtain_fix(clean, pad, prho, lid_pct, raw, lid_glare)
+    RF.log(void, rem)
     E.record("deglare", glare_pct=round(pct, 2), lid_pct=round(lid_pct, 2), changed=True, used_sr=used_sr, model_call=DEGLARE_MODEL)
-    return {"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
-            "changed": True, "used_sr": used_sr,
-            "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95),
-            **({"curtain": curtain} if curtain else {})}
+    return RF.tag({"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
+                   "changed": True, "used_sr": used_sr,
+                   "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95),
+                   **({"curtain": curtain} if curtain else {})}, void, rem)
 
 def handle(req): L.run(req, deglare)
 

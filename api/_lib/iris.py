@@ -552,13 +552,14 @@ def gemini_image(prompt, im, size=None, thinking=None, model=None):
     raise RuntimeError("image model returned no image")
 
 # ----------------------------------------------------------------------------- iris geometry
-def refine_circle(gray, cx, cy, r0):
+def refine_circle(gray, cx, cy, r0, hi=1.22):
     """Daugman-style limbus fit: maximise the radial intensity gradient (dark iris -> bright sclera) on the left and
-    right sectors, ignoring the eyelid sectors. gray is float32 HxW, coordinates in its pixels."""
+    right sectors, ignoring the eyelid sectors. gray is float32 HxW, coordinates in its pixels. hi: the radius search
+    ends at hi x r0 (analyze's overshoot guard, _lib/overshoot.py, refits with a smaller one)."""
     H, W = gray.shape
     ang = np.deg2rad(np.concatenate([np.arange(-55, 56, 3), np.arange(125, 236, 3)]))
     ca, sa = np.cos(ang), np.sin(ang)
-    radii = np.arange(max(6.0, r0 * 0.82), r0 * 1.22, max(1.0, r0 / 120))
+    radii = np.arange(max(6.0, r0 * 0.82), r0 * hi, max(1.0, r0 / 120))
     best = (cx, cy, r0, -1e9)
     for dx in np.linspace(-0.1 * r0, 0.1 * r0, 7):
         for dy in np.linspace(-0.1 * r0, 0.1 * r0, 7):

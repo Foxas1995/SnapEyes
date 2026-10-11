@@ -17,6 +17,7 @@ from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import coverage as CV   # how much of the iris an eyelid covers, measured on the photo
 from _lib import lashblock as LB  # a dark lash curtain over the iris with a lid margin behind it, measured on the photo
+from _lib import overshoot as OS   # a limbus fit that runs off the photo is refitted inside a sane radius
 from _lib.analyze_lt import TEXT_LT
 from _lib.analyze_hu import TEXT_HU
 
@@ -665,6 +666,7 @@ def analyze(body):
                and all(isinstance(c, (int, float)) and c == c for c in pbox)
                and pbox[2] > pbox[0] and pbox[3] > pbox[1])
     best = None
+    guarded = {}   # swap -> what the overshoot guard did to that reading's circle (only when it fired)
     for swap in (False, True):
         sw = (lambda b: (b[1], b[0], b[3], b[2])) if swap else (lambda b: tuple(b))
         x1, y1, x2, y2 = sw(box)
@@ -684,6 +686,7 @@ def analyze(body):
         f = min(1.0, 120.0 / max(r0, 1))
         g = L.to_gray(im.resize((max(8, int(W * f)), max(8, int(H * f))), Image.LANCZOS))
         rcx, rcy, rr = L.refine_circle(g, ccx * f, ccy * f, r0 * f)
+        rcx, rcy, rr, guarded[swap] = OS.guard(L, g, (ccx * f, ccy * f, r0 * f), (rcx, rcy, rr))
         ok, step = L.iris_lock_score(g, rcx, rcy, rr)
         cand = (ok, step, swap, rcx / f, rcy / f, rr / f)
         if best is None or (ok and (not best[0] or step > best[1])): best = cand
@@ -842,6 +845,7 @@ def analyze(body):
                "lid_wedge_pct": None if cover is None else cover["wedge_pct"],
                "lid_side": None if cover is None else cover["side"], "lid_tilt": None if cover is None else cover["tilt"]}
     if lash is not None: capture["curtain"] = lash
+    if guarded.get(swapped_boxes): capture["circle_guard"] = guarded[swapped_boxes]
     if device is not None: capture["device"] = device
     if study is not None: capture["study"] = study
     print("snapeyes capture " + json.dumps(capture), flush=True)
