@@ -1,8 +1,8 @@
 {
   "meta": {
     "title": "SnapEyes Private Atelier: A valódi íriszed műalkotásként",
-    "description": "Fotózd le az egyik szemed a telefonoddal, és lásd az íriszed műalkotásként: helyreállítva, soha át nem festve. Ingyenes vízjeles előnézet, majd egy digitális fájl, amelyet bárhol kinyomtathatsz.",
-    "shareDescription": "Fotózd le az egyik szemed a telefonoddal, és nézd meg a saját íriszed műalkotásként. A vízjeles előnézet ingyenes.",
+    "description": "Fotózd le az egyik szemedet a telefonoddal, és lásd az íriszedet műalkotásként: helyreállítva, soha át nem festve. Ingyenes vízjeles előnézet, majd egy digitális fájl, amelyet bárhol kinyomtathatsz.",
+    "shareDescription": "Fotózd le az egyik szemedet a telefonoddal, és nézd meg a saját íriszedet műalkotásként. A vízjeles előnézet ingyenes.",
     "locale": "hu_HU"
   },
   "facts": {
@@ -128,11 +128,11 @@
       }
     ],
     "note": "Ezek a példák gondosan elkészített fotókból származnak. Az eredményed a fotódtól függ, az ingyenes előnézet pedig még fizetés előtt megmutatja.",
-    "yourTurn": "Most te jössz. Nézd meg így a saját íriszed, ingyen, kb. egy perc alatt."
+    "yourTurn": "Most te jössz. Nézd meg így a saját íriszedet, ingyen, kb. egy perc alatt."
   },
   "wall": {
     "eyebrow": "A fájlod, a falad",
-    "title": "Nézd meg a fájlod a falon",
+    "title": "Nézd meg a fájlodat a falon",
     "intro": "Digitális fájlt kapsz. Ezek a képek megmutatják, hogyan nézhet ki kinyomtatva. A nyomtatás nem része a rendelésnek.",
     "varies": "Az anyagok és az eredmények nyomdánként eltérnek, és függnek a szobád fényviszonyaitól.",
     "stageLabel": "A fájlod MI-vizualizációi, kinyomtatva",
@@ -205,7 +205,7 @@
       "family4": "Család",
       "collision": "Ti ketten"
     },
-    "eyesNote": "Szemek: Mantas és példafotók, nem vásárlók.",
+    "eyesNote": "Szemek: Mantasé és példafotók, nem vásárlóké.",
     "captions": {
       "acrylic": "A fájlod akrilra nyomtatva.",
       "metal": "A fájlod alumíniumra nyomtatva.",
@@ -440,7 +440,7 @@
         "v": "Hátsó kamera, nappali fény, egy szem"
       },
       {
-        "t": "Nézd meg az ingyenes előnézeted",
+        "t": "Nézd meg az ingyenes előnézetedet",
         "b": "Körülbelül egy perc alatt megjelenik az íriszed több stílusban, vízjellel. Regisztráció és fizetés nélkül. Az ingyenes előnézeteket nem tároljuk.",
         "v": "Példa előnézet, vízjellel"
       },
@@ -623,7 +623,7 @@
       {
         "id": "phone",
         "q": "Milyen telefont és kamerát használjak?",
-        "a": "Bármilyen újabb okostelefon megfelel, amelynek jó a hátlapi kamerája. A hátlapi kamerát használd 2x-es vagy 3x-os zoommal, ne a szelfikamerát. Használj ablakból érkező, oldalról eső nappali fényt, ne lámpát vagy vakut. Tartsd a telefont kb. 10 cm-re a szemedtől, koppints az íriszre az élességállításhoz, vedd le a szemüvegedet, és készíts három-öt felvételt."
+        "a": "Bármilyen újabb okostelefon megfelel, amelynek jó a hátsó kamerája. A hátsó kamerát használd 2x-es vagy 3x-os zoommal, ne a szelfikamerát. Használj ablakból érkező, oldalról eső nappali fényt, ne lámpát vagy vakut. Tartsd a telefont kb. 10 cm-re a szemedtől, koppints az íriszre az élességállításhoz, vedd le a szemüvegedet, és készíts három-öt felvételt."
       },
       {
         "id": "colour",
@@ -633,8 +633,8 @@
       {
         "id": "other",
         "q": "Fotózhatok valaki mást is?",
-        "a": "Igen: a párod, a gyermeked vagy a másik szemed, és több szem is osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt.",
-        "aOpen": "Igen: a párod, a gyermeked vagy a másik szemed, és legfeljebb {max} szem osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt."
+        "a": "Igen: a párodat, a gyermekedet vagy a másik szemedet, és több szem is osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt.",
+        "aOpen": "Igen: a párodat, a gyermekedet vagy a másik szemedet, és legfeljebb {max} szem osztozhat egy alkotáson. Előbb kérdezd meg az illetőt, gyermek esetén pedig te döntesz szülőként vagy gondviselőként. Az alkotást elkészítheted másnak is, és neki ajándékozhatod a fájlt."
       },
       {
         "id": "material",
@@ -682,7 +682,7 @@
     }
   },
   "final": {
-    "title": "Nézd meg a saját íriszed",
+    "title": "Nézd meg a saját íriszedet",
     "body": "Csak a telefonodra, jó fényre és kb. egy percre van szükséged.",
     "small": "Digitális fájlt kapsz. A nyomtatás nem része a rendelésnek.",
     "imageAlt": "MI-vizualizáció: egy sötét dolgozószoba alkonyatkor, amelynek falán Mantas írisze látható akrilra nyomtatva.",
