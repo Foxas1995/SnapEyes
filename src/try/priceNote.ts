@@ -6,7 +6,7 @@ const NOTE: Record<string, (price: string) => string> = {
   en: (price) => `The price has changed while you were looking. It is now ${price}. Please check it and press the button again if you would like to continue.`,
   de: (price) => `Der Preis hat sich geändert, während Sie die Seite angesehen haben. Er beträgt jetzt ${price}. Bitte prüfen Sie ihn und drücken Sie den Knopf erneut, wenn Sie fortfahren möchten.`,
   lt: (price) => `Kaina pasikeitė, kol žiūrėjote. Dabar ji yra ${price}. Patikrinkite ją ir, jei norite tęsti, dar kartą paspauskite mygtuką.`,
-  hu: (price) => `Az ár megváltozott, amíg nézelődött. Most ${price}. Kérjük, ellenőrizze, és ha folytatni szeretné, nyomja meg újra a gombot.`,
+  hu: (price) => `Az ár megváltozott, amíg nézelődtél. Most ${price}. Kérjük, ellenőrizd, és ha folytatni szeretnéd, nyomd meg újra a gombot.`,
 };
 
 export function priceChangedNote(lang: string, price: string): string {

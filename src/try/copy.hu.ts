@@ -61,7 +61,7 @@ export const hu: TryCopy = {
   lang: 'hu',
   meta: {
     title: 'SnapEyes Studio - Íriszalkotás a szemfotódból',
-    description: 'Fotózd le a szemed a telefonoddal, és kb. egy perc alatt meglátod a saját íriszedet helyreállítva, a választott stílusban.',
+    description: 'Fotózd le a szemedet a telefonoddal, és kb. egy perc alatt meglátod a saját íriszedet helyreállítva, a választott stílusban.',
   },
   switchLabel: 'Nyelv',
   dec1: (v: number) => HU_DECIMAL.format(v),
@@ -86,7 +86,7 @@ export const hu: TryCopy = {
   capture: {
     titleA: 'A TE SZEMED, ',
     titleB: 'TÉNYLEG.',
-    lead: 'Fotózd le az egyik szemed. Megkeressük az íriszt, eltávolítjuk a tükröződéseket, helyreállítjuk a rostokat, és műalkotássá formáljuk. Kb. egy perc.',
+    lead: 'Fotózd le az egyik szemedet. Megkeressük az íriszt, eltávolítjuk a tükröződéseket, helyreállítjuk a rostokat, és műalkotássá formáljuk. Kb. egy perc.',
     addTitle: (n: number) => `${n}. szem hozzáadása`,
     addLead: 'A párod, a gyermeked vagy a másik szemed. Ugyanazok a lépések, mint az előbb: készíts néhány felvételt, és a legjobbat megtartjuk.',
     takeTurns: 'Egymást fotózzátok? Felváltva csináljátok: az egyik tartja a telefont, a másik egyenesen előre néz. Aztán cseréljetek.',
@@ -114,7 +114,7 @@ export const hu: TryCopy = {
   },
 
   working: {
-    finding: 'Keressük az íriszed…',
+    finding: 'Keressük az íriszedet…',
     locating: 'Az írisz és a pupilla megkeresése',
     measuringSize: 'Méret és élesség mérése',
     checking: (n: number, done: number) => `${n} fotó ellenőrzése: ${done}/${n} kész`,
@@ -188,11 +188,11 @@ export const hu: TryCopy = {
         title: 'A szemhéjad eltakarja az íriszed egy részét',
         reason: 'Ezen a fotón az íriszed egy részét a szemhéjad vagy a szempilláid takarják, ezért nem használjuk.',
         error: 'A szemhéjad ezen a fotón eltakarja az íriszed egy részét. Kérjük, fotózd újra az alábbi lépések szerint.',
-        retakeLine: 'A szemhéjad ezen a felvételen eltakarja az íriszed egy részét. Nézz egyenesen a kamerába, nyisd tágra a szemed, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat.',
+        retakeLine: 'A szemhéjad ezen a felvételen eltakarja az íriszed egy részét. Nézz egyenesen a kamerába, nyisd tágra a szemedet, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat.',
         thumb: 'szemhéj',
         steps: [
           'Nézz egyenesen a kamerába, ne ferdén: oldalra nézve a felső szemhéj rácsúszik az íriszre.',
-          'Nyisd tágra a szemed, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se bőr, se szempilla, se szempillaspirál ne lógjon az íriszre.',
+          'Nyisd tágra a szemedet, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se bőr, se szempilla, se szempillaspirál ne lógjon az íriszre.',
           CAMERA,
           'Koppints az íriszre a képernyőn az élességállításhoz, tartsd stabilan a telefont, és készíts 3-5 felvételt.',
         ],
@@ -264,7 +264,7 @@ export const hu: TryCopy = {
     colourOff: 'A színellenőrzésünk szerint ez a helyreállítás eltért a fotódtól: világosabbnak vagy sötétebbnek tűnhet, mint a szemed. Egy újrafotózás lágy nappali fényben általában megoldja.',
     retakeEye: (i: number) => `${i}. szem újrafotózása`,
     retakeOnly: 'A szem újrafotózása',
-    replaceSample: 'Használd inkább a saját szemed',
+    replaceSample: 'Használd inkább a saját szemedet',
     removed: (i: number) => `${i}. szem eltávolítva.`,
     undo: 'Visszavonás',
     sampleArtwork: 'Mintaalkotás',
@@ -374,9 +374,9 @@ export const hu: TryCopy = {
         : `${Az(list[0] ?? 0)} ${ordList(list)} szem előnézete az oldal egy régebbi változatából származik. A folytatáshoz fotózd újra ${list.length === 1 ? 'azt' : 'azokat'}.`),
       held: 'A tisztább íriszt igénylő stílusok addig szürkék.',
       tips: {
-        open: 'Nyisd tágra a szemed, nézz egyenesen a lencsébe, és egy ujjheggyel óvatosan emeld meg a felső szemhéjat.',
+        open: 'Nyisd tágra a szemedet, nézz egyenesen a lencsébe, és egy ujjheggyel óvatosan emeld meg a felső szemhéjat.',
         light: 'Használj nappali fényt egy ablakból, oldalról. Se vaku, se lámpa.',
-        grey: 'A szürke írisznek lágy a széle, és egyenletes nappali fényben mutat a legjobban: állj közel egy ablakhoz úgy, hogy az ablak oldalt legyen, és tartsd tágra a szemed.',
+        grey: 'A szürke írisznek lágy a széle, és egyenletes nappali fényben mutat a legjobban: állj közel egy ablakhoz úgy, hogy az ablak oldalt legyen, és tartsd tágra a szemedet.',
       },
       manual: 'Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {link}. Mantas megnézi őket.',
       noPreview: 'Ezekről a szemekről még nem tudunk előnézetet mutatni. Lent látod, mit érdemes módosítani.',
@@ -430,7 +430,7 @@ export const hu: TryCopy = {
   buy: {
     // the label alone (see the header); the price stays in the card's head
     button: (_price: string) => CHECKOUT_LEGAL.hu.continueButton,
-    next: `A „${CHECKOUT_LEGAL.hu.continueButton}” gomb a Stripe biztonságos fizetési oldalára visz. Ott megadod az e-mail-címed, és amikor a fizetési gombbal jóváhagyod a fizetést, a megrendelésed kötelező érvényűvé válik. A fájlod elkészítését azután kezdjük meg, hogy elküldtük a rendelésed visszaigazoló e-mailjét, ez általában a fizetés után egy percen belül megtörténik.`,
+    next: `A „${CHECKOUT_LEGAL.hu.continueButton}” gomb a Stripe biztonságos fizetési oldalára visz. Ott megadod az e-mail-címedet, és amikor a fizetési gombbal jóváhagyod a fizetést, a megrendelésed kötelező érvényűvé válik. A fájlod elkészítését azután kezdjük meg, hogy elküldtük a rendelésed visszaigazoló e-mailjét, ez általában a fizetés után egy percen belül megtörténik.`,
     waitPreview: 'Ennek a választásnak az előnézete még készül. Amint látod, rendelhetsz.',
     previewFailed: 'Kérjük, előbb töltsd be ennek a választásnak az előnézetét (fent: „Próbáld újra”), hogy lásd, mit rendelsz.',
     steps: {
