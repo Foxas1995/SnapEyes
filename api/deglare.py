@@ -69,12 +69,16 @@ def deglare(body):
                                                     size=S, pupil_rho=pr / L.iris_radius_frac(pad))
     # a reflection on the pupil is not recoverable iris detail; rebuild that part as darkness ourselves and
     # keep it out of the model's mask, or it paints window frames inside the eye
-    pupil_overlap, pupil_changed = 0.0, False
+    pupil_overlap, pupil_changed, disc = 0.0, False, None
     if pupil_ok:
         pr_px = pr * S
-        dark, pupil_overlap = L.pupil_fill(crop, pr_px, hard, r_frac=L.iris_radius_frac(pad))
+        # the fill paints the vision pupil (a disc on the frame centre); where the photo's own pupil is confirmed and the
+        # two discs differ in what they do to the bright pixels, the fill is the photo's own pupil (None: as before)
+        from _lib import pupilgeo as PG   # here, not with the imports: other fixes extend that block, and a patch must not clash with them
+        disc = PG.pupil_disc(crop, pr_px, hard, L.iris_radius_frac(pad))
+        dark, pupil_overlap = L.pupil_fill(crop, pr_px, hard, r_frac=L.iris_radius_frac(pad), disc=disc)
         pupil_changed, crop = dark is not crop, dark     # a glint on the pupil, or a haze over all of it
-        hard, feather = L.drop_pupil(hard, feather, pr_px)
+        hard, feather = L.drop_pupil(hard, feather, pr_px, disc)
         pct = 100.0 * float((hard > 0).sum()) / max(1.0, float((hard.size)))
         pct = round(pct * (S * S) / max(1.0, 3.1416 * r_px * r_px), 2)
     base = crop
@@ -115,7 +119,7 @@ def deglare(body):
     hard, feather, _ = L.glare_extent(mask_src, r_px, boxes, pupil_px=pr * S if pupil_ok else 0.0,
                                       avoid=lid_hard if lid_pct > 0 else None, parts=parts)
     if pupil_ok:
-        hard, feather = L.drop_pupil(hard, feather, pr * S)
+        hard, feather = L.drop_pupil(hard, feather, pr * S, disc)
     if lid_pct <= 0:
         prefilled = L.glare_fill(crop, feather, hard, r_px, prho)
         clean = prefilled                       # the switch off, a failed call or a new iris: the fill stays

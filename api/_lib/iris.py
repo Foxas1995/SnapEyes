@@ -1704,7 +1704,10 @@ def _haze_chroma(arr, fill, a, rho, edge, haze, ring, g):
     a = a.copy(); a[reg] = 1.0
     return fill, a
 
-def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
+PUPIL_DISC_FEATHER = 0.04       # pupil_fill's edge, as a share of the disc's radius, when the disc is the measured pupil (vision disc: 0.22)
+
+
+def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None, disc=None):
     """Rebuild the pupil as smooth darkness. A pupil reflects the room, so whatever a reflection covers there is
     not iris detail waiting to be restored - it is a hole, and the honest reconstruction is the dark it hid.
     The fill covers the vision pupil (pr_px, centred on the frame) and, when the brightness finds no pupil edge
@@ -1721,15 +1724,23 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     size and lift tests and within PUPIL_HAZE_FAR of the centre: centred on it, out to its own edge and the haze's rim
     past it (_haze_rim), in the iris' hue (_haze_chroma). The model kept such a pupil dark blue, and the grade, which
     darkens a pupil centred on the frame, left a blue crescent where the pupil sits off centre (live 09).
+    disc = (dx, dy, radius, limit), in pixels from the frame centre: the pupil's own circle (pupilgeo.pupil_disc, measured
+    on this photo) instead of the vision pupil's, which is centred on the frame, with an edge of PUPIL_DISC_FEATHER of its
+    radius: the circle is measured, so the window on its rim is painted over, where the vision disc's 22% fade left it lit.
+    The fill is then always the plain one (no haze or colour-pupil branch): it only replaces a fill that would have been
+    applied anyway.
     Returns (image, how much of the pupil the reflection covered)."""
     S = crop.size[0]
     yy, xx = np.mgrid[0:S, 0:S]
-    d = np.sqrt((xx - S / 2 + 0.5) ** 2 + (yy - S / 2 + 0.5) ** 2)
+    ox, oy = (0.0, 0.0) if disc is None else (float(disc[0]), float(disc[1]))
+    if disc is not None: pr_px = float(disc[2])
+    d = np.sqrt((xx - S / 2 + 0.5 - ox) ** 2 + (yy - S / 2 + 0.5 - oy) ** 2)
     inside = d < pr_px
     if pr_px < 4 or not inside.any(): return crop, 0.0
     g = (glare_hard > 0) if glare_hard is not None else np.zeros_like(inside)
     overlap = float(g[inside].mean())
-    haze = overlap < 0.04
+    haze = overlap < 0.04 and disc is None
+    if disc is not None: feather = min(feather, PUPIL_DISC_FEATHER)
     if haze:
         core = (d < 0.6 * pr_px) & ~g
         px = np.asarray(crop)[core] if int(core.sum()) > 60 else None
@@ -1754,7 +1765,7 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     fill = base[None, None, :] * (0.40 + 0.60 * t[..., None] ** 2)   # deepest in the centre, lifting towards the rim
     a = np.zeros((S, S)) if haze else np.clip((pr_px - d) / max(pr_px * feather, 1.0), 0, 1)   # a haze: no vision disk
     R = (r_frac or iris_radius_frac()) * S
-    pc = pupil_circle_chroma(crop, R / S) if haze or pupil_circle(crop, R / S) is None else None
+    pc = pupil_circle_chroma(crop, R / S) if disc is None and (haze or pupil_circle(crop, R / S) is None) else None
     if (pc is not None and PUPIL_HAZE_SIZE[0] <= pc[3] * R / pr_px <= PUPIL_HAZE_SIZE[1]
             and math.hypot(pc[0], pc[1]) <= (PUPIL_HAZE_FAR if haze else PUPIL_HAZE_SHIFT)):
         d2 = np.sqrt((xx - S / 2 + 0.5 - pc[0] * R) ** 2 + (yy - S / 2 + 0.5 - pc[1] * R) ** 2)
@@ -1775,11 +1786,15 @@ def pupil_fill(crop, pr_px, glare_hard=None, feather=0.22, r_frac=None):
     a = a[..., None]
     return Image.fromarray(np.clip(arr * (1 - a) + fill * a, 0, 255).astype(np.uint8)), overlap
 
-def drop_pupil(mask_hard, mask_soft, pr_px):
-    """Take the pupil disk out of a glare mask, so the image model is only ever asked to rebuild iris."""
+def drop_pupil(mask_hard, mask_soft, pr_px, disc=None):
+    """Take the pupil disk out of a glare mask, so the image model is only ever asked to rebuild iris. disc: as in
+    pupil_fill, the pupil's own circle (dx, dy, fill radius, radius of the disk taken out: all in pixels, the first two
+    from the frame centre) when one was measured."""
     S = mask_hard.shape[0]
     yy, xx = np.mgrid[0:S, 0:S]
-    keep = np.sqrt((xx - S / 2 + 0.5) ** 2 + (yy - S / 2 + 0.5) ** 2) > pr_px * 1.04
+    ox, oy = (0.0, 0.0) if disc is None else (float(disc[0]), float(disc[1]))
+    lim = pr_px * 1.04 if disc is None else float(disc[-1])        # a measured disc carries its own limit: (dx, dy, fill radius, limit)
+    keep = np.sqrt((xx - S / 2 + 0.5 - ox) ** 2 + (yy - S / 2 + 0.5 - oy) ** 2) > lim
     return (mask_hard * keep).astype(np.uint8), mask_soft * keep
 
 def composite(base, patch, alpha):
@@ -3579,11 +3594,16 @@ def _pupil_apply(arr, rr, tone, pp):
     return arr * (1.0 - w) + lum[..., None] * w
 
 
-def _grade_pupil_centre(lum, R, S, w0):
-    """(cx, cy, edge) of the render's own pupil in iris radii from the frame centre, read by pupil_circle from the
+def _pupilgeo():
+    """pupilgeo imports this module, so it is imported where it is used."""
+    from . import pupilgeo
+    return pupilgeo
+
+
+def _grade_pupil_circle(lum, R, S, w0):
+    """(cx, cy, rho, edge) of the render's own pupil in iris radii from the frame centre, read by pupil_circle from the
     luma of the grade's window before sculpting (lum, starting at frame index w0 on both axes; the sculpting darkens a
-    shaded collarette until it joins the pupil), when it lies PUPIL_GRADE_SHIFT or more off the frame centre; else
-    None (the grade keeps its frame-centred pupil)."""
+    shaded collarette until it joins the pupil), or None."""
     n = lum.shape[0]
     m = min(n, PUPIL_LOCK_SIDE)
     small = np.asarray(Image.fromarray(lum.astype(np.float32), mode="F").resize((m, m), Image.BOX), dtype=np.float32)
@@ -3591,8 +3611,14 @@ def _grade_pupil_centre(lum, R, S, w0):
     if pc is None:
         return None
     d = (w0 + n / 2.0 - S / 2.0) / R          # the window's centre against the frame's (at most half a pixel)
-    cx, cy = pc[0] + d, pc[1] + d
-    return (cx, cy, pc[3]) if math.hypot(cx, cy) >= PUPIL_GRADE_SHIFT else None
+    return pc[0] + d, pc[1] + d, pc[2], pc[3]
+
+
+def _grade_pupil_centre(lum, R, S, w0):
+    """(cx, cy, edge) of that circle when it lies PUPIL_GRADE_SHIFT or more off the frame centre; else None (the grade
+    keeps its frame-centred pupil)."""
+    pc = _grade_pupil_circle(lum, R, S, w0)
+    return (pc[0], pc[1], pc[3]) if pc is not None and math.hypot(pc[0], pc[1]) >= PUPIL_GRADE_SHIFT else None
 
 
 def studio_ease(im, r_frac):
@@ -3697,7 +3723,8 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     tone = sculpted[..., 0]
     rr = np.sqrt(ax[None, w0:w1] + ax[w0:w1, None]) / R
     pcx = pcy = 0.0
-    centre = _grade_pupil_centre(lum_all[..., 0], R, S, w0)
+    circ = _grade_pupil_circle(lum_all[..., 0], R, S, w0)
+    centre = (circ[0], circ[1], circ[3]) if circ is not None and math.hypot(circ[0], circ[1]) >= PUPIL_GRADE_SHIFT else None
     if centre is not None:                                   # an off-centre pupil: its own centre, not the frame's
         pcx, pcy = centre[0], centre[1]
         xs = (np.arange(w0, w1) - S / 2 + 0.5) / R
@@ -3705,6 +3732,13 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
     pp = _pupil_params(tone, rr)
     if centre is not None and pp is not None and pp[0] > centre[2]:
         pp = (centre[2],) + pp[1:]                           # and never wider than that pupil's own edge
+    wide = None if pp is None else _pupilgeo().grade_pupil(circ, lum_all[..., 0], R, S, w0, pp[0])
+    if wide is not None:                                     # a scene lit inside the pupil: the radial median stopped short of its edge
+        pcx, pcy = wide[0], wide[1]
+        xs = (np.arange(w0, w1) - S / 2 + 0.5) / R
+        rr = np.sqrt((xs[None, :] - pcx) ** 2 + (xs[:, None] - pcy) ** 2)
+        pp2 = _pupil_params(tone, rr)
+        pp = pp if pp2 is None else (wide[2],) + pp2[1:]
     box = None
     if pp is not None:
         pos = np.arange(w0, w1) - S / 2 + 0.5

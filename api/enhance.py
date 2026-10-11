@@ -26,6 +26,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from PIL import Image
 from _lib import iris as L
+from _lib import pupilgeo as PG   # pupil repairs that start from a measurement of the render or of the photo
+from _lib import pupil_seal as PS   # the render's pupil: a halo round it, a colour zone on a photo that is black there
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
 from _lib.styles import eye as EYE   # the eye profile: measured here, sealed, read by compose, the order draft and the master
@@ -106,20 +108,26 @@ def enhance(body):
     base = crop.resize((L.WORK, L.WORK), Image.LANCZOS)
     fallback = False
     if mode == "artistic":
-        out = L.gemini_image(L.PROMPT_ARTISTIC, base)
+        out = raw = L.gemini_image(L.PROMPT_ARTISTIC, base)
         # this is the product now, so the colour is locked all the way to the client's own photo:
         # the model may sculpt structure and light, it may not decide what colour their eye is
         out = L.chroma_lock(out, base)
         out = L.pupil_lock(out, base, r_frac)   # nor how wide their pupil is: no iris where the photo shows none
         fid = L.ssim_lowfreq(base, out, r_frac)
     else:
-        out = L.gemini_image(L.PROMPT_ENHANCE, base, thinking="high")
+        out = raw = L.gemini_image(L.PROMPT_ENHANCE, base, thinking="high")
         out = L.chroma_lock(out, base)   # the model restores structure; the colour stays the client's own
         out = L.pupil_lock(out, base, r_frac)
         fid = L.ssim_lowfreq(base, out, r_frac)
         if fid < L.FIDELITY_FLOOR:
             out, fallback = base, True
     out = out.resize((L.WORK, L.WORK), Image.LANCZOS)
+    if not fallback:
+        # the last look at the render's pupil: each repair is measured on the render and returns the very same object when it
+        # finds nothing, so a right pupil comes back untouched (api/_lib/pupilgeo.py, api/_lib/pupil_seal.py; SNAPEYES_PUPIL=off)
+        out = PG.tone_guard(out, base, r_frac)   # a pupil the model drew grey goes back to the photo's dark
+        out = PS.seal(out, raw, base, r_frac)    # a smooth halo round a pupil drawn too small; a blue-grey zone on a photo that is black there
+        out = PG.edge_guard(out, r_frac)         # blue light on the rim of a warm iris is a window, not the eye
     # colour QA: how far the render moved the iris colour from the deglared crop it was made from. The pupil
     # is only made neutral later, by the grade in /api/compose, so it is checked there. Logged, never blocking.
     qa = L.colour_qa("enhance", result=out, source=source, r_frac=r_frac)
