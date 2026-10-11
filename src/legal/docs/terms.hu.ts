@@ -69,7 +69,7 @@ export const hu: LegalDoc = {
       id: 'preview',
       title: 'Az előnézet és a fájl',
       blocks: [
-        'Rendelés előtt egy ingyenes, vízjeles előnézetet lát, és azt jóváhagyja. A fájl a jóváhagyott előnézetet követi: ugyanaz a szem, stílus, elrendezés, a szemek ugyanolyan sorrendje és ugyanaz a felirat, ugyanazzal a színnel és tónussal, egyszer, teljes felbontásban elkészítve. Teljes méretben a mesterséges intelligenciánk hozzáadja azokat a finom rostrészleteket, amelyeket az előnézet a kis mérete miatt nem tud megmutatni, ezért a legapróbb részletek kissé eltérhetnek az előnézettől. Az öt-nyolc szemes előnézet a fotóid kisebb másolataiból készül, ezért durvább, mint a fájl.',
+        'Rendelés előtt egy ingyenes, vízjeles előnézetet lát, és azt jóváhagyja. A fájl a jóváhagyott előnézetet követi: ugyanaz a szem, stílus, elrendezés, a szemek ugyanolyan sorrendje és ugyanaz a felirat, ugyanazzal a színnel és tónussal, egyszer, teljes felbontásban elkészítve. Teljes méretben a mesterséges intelligenciánk hozzáadja azokat a finom rostrészleteket, amelyeket az előnézet a kis mérete miatt nem tud megmutatni, ezért a legapróbb részletek kissé eltérhetnek az előnézettől. Az öt-nyolc szemes előnézet az Ön fotóinak kisebb másolataiból készül, ezért durvább, mint a fájl.',
         'Ha a fájl egyértelműen eltér a jóváhagyott előnézettől (például a színben, a világosságban vagy a pupillában), az hibás teljesítés: lásd a [Kellékszavatosság és hibás teljesítés](#defects) pontot.',
       ],
     },
