@@ -237,7 +237,7 @@
           "v": [
             "Blizgus, su gylio efektu",
             "Ryškus, plonas",
-            "Švelnus, faktūringas",
+            "Švelni, faktūringa",
             "Klasikinis, ramus"
           ]
         },
@@ -264,7 +264,7 @@
           "v": [
             "Sklando priešais sieną",
             "Plonas ir lengvas",
-            "Šiltas ir neformalus",
+            "Šilta ir neformali",
             "Formalus ir tradicinis"
           ]
         }
@@ -503,7 +503,7 @@
       "Vienas skaitmeninis failas be vandens ženklo, kurio ilgoji kraštinė yra {px} (vienos akies: {square})",
       "Sukurtas visa raiška pagal Jūsų patvirtintą peržiūrą, kad galėtumėte atsispausdinti, kur tik norite",
       "Failus galėsite atsisiųsti 12 mėnesių",
-      "Pirmiausia nemokama peržiūra, kad prieš mokėdami pamatytumėte savo akį ir stilių. Visos raiškos failas išryškina smulkesnes skaidulų detales.",
+      "Pirmiausia nemokama peržiūra, kad prieš mokėdami pamatytumėte savo akį ir stilių. Visos raiškos failas prideda smulkesnes skaidulų detales.",
       "Asmeninė licencija: galite atsispausdinti sau arba dovanai. Teisė parduoti kūrinį ar spaudinius nesuteikiama (žr. pardavimo sąlygas)."
     ],
     "notIncludes": "Spausdinimas nėra Jūsų užsakymo dalis. Spaustuvė už jį ima atskirą mokestį, o jo kaina priklauso nuo spaustuvės, dydžio ir medžiagos.",
@@ -541,7 +541,7 @@
         "b": "Kiekvienas pavyzdinis vaizdas pažymėtas arba turi parašą. Manto akis yra jo paties. Kitos akys yra pavyzdinės nuotraukos, o ne klientų."
       },
       {
-        "t": "Niekada neslėpame, ką daro DI",
+        "t": "Niekada neslepiame, ką daro DI",
         "b": "Mūsų DI atkuria smulkias detales ir pašalina atspindžius. Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos. Jis niekada nepakeičia Jūsų rainelės kita."
       },
       {
@@ -666,7 +666,7 @@
       },
       {
         "id": "pets",
-        "q": "Ar galiu sukurti tokį kūrinį savo augintiniui?",
+        "q": "Ar galiu sukurti tokį kūrinį iš savo augintinio akies?",
         "a": "Kol kas ne. Kai galėsime, pranešime apie tai čia."
       }
     ]
