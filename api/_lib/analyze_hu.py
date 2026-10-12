@@ -36,12 +36,12 @@ TEXT_HU = {
                  "kép kb. harmadát kitöltse, koppints az íriszre az élességállításhoz, és fotózz újra.",
     "eyelid": "A szemhéjad ezen a fotón eltakarja az íriszed egy részét, ezért nem használtuk: a stúdiónak az íriszt a "
               "szemhéjra kellene festenie, és ez hamisnak tűnik. Kérjük, fotózd újra: nézz egyenesen a kamerába, ne "
-              "ferdén, nyisd tágra a szemed, egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, és ügyelj rá, hogy "
+              "ferdén, nyisd tágra a szemedet, egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, és ügyelj rá, hogy "
               "a szempillák és a szempillaspirál ne lógjanak az íriszre.",
     "closer": "Menj közelebb, vagy használd a 2x-es zoomot: az írisz {px} px, nekünk legalább {good} px kell.",
     "fibres": "A rostok még nem vehetők ki élesen. Koppints a képernyőn az íriszre, hogy a kamera arra állítsa az "
               "élességet, támaszd a telefont valami stabilhoz, és fotózz újra.",
-    "open": "Nyisd tágra a szemed: nézz egyenesen előre, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se "
+    "open": "Nyisd tágra a szemedet: nézz egyenesen előre, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se "
             "a szemhéj, se a szempillák ne takarják az íriszt. Az íriszen átlógó szempillák sötét csíkként jelennek meg az "
             "alkotáson.",
     "on_pupil": "A tükröződés a pupilládon van. Döntsd meg a fejed, vagy vidd oldalra a fényt, különben a pupillát "
@@ -51,7 +51,7 @@ TEXT_HU = {
              "az ablak vagy a lámpa oldalt legyen, ne közvetlenül előtted.",
     "soft": "Ez kissé életlen lett. Használd a hátsó kamerát 2x-es zoommal, koppints az íriszre az élességállításhoz, és "
             "tartsd stabilan a telefont; az előlapi kamerák erről a távolságról egyáltalán nem tudnak élesre állni.",
-    "no_lock": "Nem tudtuk biztosan megtalálni az íriszed kerek szélét. Helyezd az egyik szemed a kép közepére, egy kis "
+    "no_lock": "Nem tudtuk biztosan megtalálni az íriszed kerek szélét. Helyezd az egyik szemedet a kép közepére, egy kis "
                "hellyel körülötte, és a szemhéjad ne lógjon bele.",
     "good": "Remek felvétel. A saját rostjaid elég élesek a teljes méretű alkotáshoz.",
     "ok": "Ebből szép alkotás lesz. Egy közelebbi vagy stabilabb felvétel több részletet őrizne meg a saját rostjaidból.",

@@ -27,7 +27,7 @@ ERRORS_HU = {
     "unlock": ("Ez a letöltési link lejárt, vagy nem ehhez a rendeléshez tartozik. Kérjük, nyisd meg újra a "
                "rendelésedben kapott linket, vagy írj nekünk: info@snapeyes.com."),
     # any other PermissionError: the photo's work ticket expired
-    "session": "Ez a munkamenet lejárt. Kérjük, fotózd le újra a szemed.",
+    "session": "Ez a munkamenet lejárt. Kérjük, fotózd le újra a szemedet.",
     # ValueError: an image that cannot be read
     "unreadable": "Ezt a képet nem tudtuk beolvasni. Kérjük, próbáld egy másik fotóval.",
     # ModelBusy
