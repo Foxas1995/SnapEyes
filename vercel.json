@@ -4,6 +4,7 @@
   "installCommand": "echo skip",
   "buildCommand": "bash scripts/vercel_build.sh",
   "outputDirectory": "dist",
+  "regions": ["fra1"],
   "headers": [
     {
       "source": "/(.*)",
