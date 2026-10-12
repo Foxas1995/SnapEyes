@@ -23,7 +23,7 @@ const after = (steps: number) => ({ '--i': steps }) as CSSProperties;
 export function ClosingScene({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
   const { c } = useCopy();
   const tryHref = useTryHref();
-  const pic = asset('m/study_acrylic_3x2__eye__wide', { pick: 2000 });
+  const pic = asset('m/study_acrylic_3x2__gold__wide', { pick: 2000 });
   return (
     <section className="lp-final" id="final" aria-labelledby="finalH">
       {/* the cue: a one pixel mark at a third of the scene's height, observed by the engine like any reveal; the picture opens when it is on

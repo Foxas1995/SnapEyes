@@ -1,7 +1,7 @@
 // The size guide (#sizes): a drawing to scale of four print sizes on a wall next to a sofa and a person, four size chips, and a
 // card with the one number that matters, the pixels per inch of the 4096 px file at that size, with the plain statement of
 // what print shops usually ask for. Pick a size with a chip or by clicking the square in the drawing. The drawing is an SVG
-// (the pieces are the owner's Radiance artwork); its text labels are HTML laid over it by percent, so they stay crisp.
+// (the pieces are the owner's own eye as an artwork); its text labels are HTML laid over it by percent, so they stay crisp.
 // On a phone the view box is cropped so the four squares stay large, and only the picked size keeps its label.
 //
 // Motion (motion spec 6.8, the third of the page's signature moments): when most of the drawing is on screen the sofa and the person
@@ -19,7 +19,7 @@ import { DEFAULT_SIZE, FLOOR, SCENE, SIZES, labelSpots, person, ppi, sofaRects, 
 import { Pill, useKeepFocus, useMediaQuery, useRoving } from './ui';
 import './css/sizes.css';
 
-const ART = assetUrl('art/radiance_own_480');
+const ART = assetUrl('art/gold_own_480');
 
 export function SizeGuide() {
   const { c, t } = useCopy();

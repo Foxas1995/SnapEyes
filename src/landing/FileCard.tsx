@@ -6,7 +6,7 @@ import { useCopy } from './copy/useCopy';
  *  screen reader because they describe the product (the size and the format). */
 export function FileCard() {
   const { c, fmt } = useCopy();
-  const pic = asset('art/radiance_own_480');
+  const pic = asset('art/gold_own_480');
   return (
     <div className="lp-filecard">
       <img src={pic.src} width={pic.w} height={pic.h} loading="lazy" decoding="async" alt="" />
