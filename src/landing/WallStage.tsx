@@ -40,7 +40,7 @@ function useNearViewport(ref: RefObject<Element | null>, margin: string): boolea
 export interface WallStageProps {
   /** The picture that should be on the stage now (null: the material has none for this artwork). */
   picture: StagePicture | null;
-  /** The words of the picture for a screen reader ("AI visualisation. Your file printed on aluminium, about 50 cm. Radiance."). */
+  /** The words of the picture for a screen reader ("AI visualisation. Your file printed on aluminium, about 50 cm. One eye."). */
   alt: string;
   /** The sweep of light on a polished surface (acrylic), or null: the box of the print's face, in percent of the stage. The span is
    *  always in the markup and gets the box only while the picture it belongs to is the one in front. */

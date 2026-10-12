@@ -13,7 +13,7 @@ export const MATERIALS: readonly Material[] = ['acrylic', 'metal', 'canvas', 'fr
 /** The artworks in the order of the chips. */
 export const ARTS: readonly WallArt[] = ['eye', 'universe', 'family4', 'collision'];
 
-/** The wall opens on aluminium in the home office with the Radiance artwork, not on the hero picture. */
+/** The wall opens on aluminium in the home office with the one-eye artwork, not on the hero picture. */
 export const DEFAULT_MATERIAL: Material = 'metal';
 export const DEFAULT_ART: WallArt = 'eye';
 
@@ -47,7 +47,7 @@ export interface StagePicture {
   sizeOk: boolean;
 }
 
-/** The picture of a material with an artwork; the phone scene with the Radiance artwork has a German version (its text is in
+/** The picture of a material with an artwork; the phone scene with the one-eye artwork has a German version (its text is in
  *  the picture). Null if the material has none for that artwork. */
 export function stagePicture(mat: Material, art: WallArt, lang: Lang): StagePicture | null {
   const s: StageScene | undefined = STAGE[mat][art];
@@ -72,7 +72,7 @@ export function glintFor(mat: Material, art: WallArt): GlintBox | null {
 // module level set, because the pictures are the browser's cache, which outlives any one mount of the section.
 const warmed = new Set<string>();
 
-/** Start loading the stage picture of a material (with the artwork on the stage, or Radiance where the material lacks it). */
+/** Start loading the stage picture of a material (with the artwork on the stage, or the one-eye artwork where the material lacks it). */
 export function warm(mat: Material, art: WallArt, lang: Lang): void {
   if (typeof Image === 'undefined') return;
   const p = stagePicture(mat, art, lang) ?? stagePicture(mat, DEFAULT_ART, lang);

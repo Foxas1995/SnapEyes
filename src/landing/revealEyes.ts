@@ -25,7 +25,7 @@ export interface RevealEye {
    *  with a 900 and a 1200 px file (a srcset). */
   photo: PictureAsset;
   iris: PictureAsset;
-  /** The same two layers as single 900 px files, and the Radiance artwork, for the three up strip. */
+  /** The same two layers as single 900 px files, and the artwork of the strip's third picture. */
   stripPhoto: PictureAsset;
   stripIris: PictureAsset;
   art: PictureAsset;
