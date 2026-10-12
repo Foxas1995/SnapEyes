@@ -27,7 +27,11 @@ The kinds (all with "ms", the time since the request started, when known):
             both, or unknown when the profile was not measured), reason (the first reason code of a failure, else none), cls (the
             colour class: own, dark_brown, grey), pupil (round, slit, bar), profile_ms (the time it took); and the Reveal
             (api/_lib/styles/reveal.py, WP9): reveal (ok: the page shows the cut; colour or registration: withheld, the page shows the strip
-            without the cut; none: not measured, no time left; error), reveal_ms (the time it took, when measured)
+            without the cut; none: not measured, no time left; error), reveal_ms (the time it took, when measured); and, only when a rule
+            of the first restoration failed (api/enhance.py, the conditional second restoration): retry (kept2: the second restoration
+            was made and kept; kept1: made, the first kept; time: no time left for it; error: it could not be made or measured), gate1
+            (the first restoration's gate code, as gate), sev1 and sev2 (the two restorations' severity, api/_lib/styles/gate.py severity;
+            0 is a pass), retry_ms (what the second took). gate, reason, cls and pupil describe the restoration that was kept
   compose   style, eyes, layout, format, clean (unwatermarked), qa_ok; gate: the SET-level result of the request under the style's
             gate rule (ok, unknown, or the first failing eye's reason code); and, from the compose API v3 (api/compose.py, WP10): size (the
             preview's long side, 1024 or 480), tile (this event is one tile of a batch, not a preview the customer asked for), tiles (on the
@@ -91,7 +95,8 @@ FIELDS = {
                 "shake_asked": "b", "lang": "c", "device": "c", "source": "c"},
     "deglare": {"glare_pct": "n", "lid_pct": "n", "changed": "b", "used_sr": "b", "model_call": "b"},
     "enhance": {"mode": "c", "qa_ok": "b", "ring_de00": "n", "fallback": "b", "used_sr": "b", "fidelity": "n",
-                "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n", "reveal": "c", "reveal_ms": "n"},
+                "gate": "c", "reason": "c", "cls": "c", "pupil": "c", "profile_ms": "n", "reveal": "c", "reveal_ms": "n",
+                "retry": "c", "gate1": "c", "sev1": "n", "sev2": "n", "retry_ms": "n"},
     "compose": {"style": "c", "eyes": "n", "layout": "c", "format": "c", "clean": "b", "qa_ok": "b", "gate": "c",
                 "size": "n", "tiles": "n", "tile": "b", "look": "c", "pick": "b", "fallback": "c", "stage": "c", "retake": "n",
                 "lang": "c", "market": "c", "cls": "c", "again": "b"},
@@ -381,6 +386,8 @@ def empty():
             "enhance_gate": {}, "enhance_reason": {}, "enhance_class": {}, "enhance_pupil": {}, "compose_gate": {}, "master_eye": 0,
             # the Reveal (WP9): per eye at enhance, the code of what the page shows (ok, colour, registration, none, error)
             "enhance_reveal": {},
+            # the conditional second restoration (api/enhance.py), per eye whose first restoration failed a rule: the code of what happened (kept2, kept1, time, error)
+            "enhance_retry": {},
             "master_compose": 0, "master_review": 0, "master_rerender": 0, "master_lab": 0, "master_existing": 0,
             # the master plan's steps (kind master, step art): steps made, by style; orders held instead of made, by code (sums of peak_mb and need_s
             # are in "ms" as art_peak_mb and art_need_s with their counts, so averages need no new shape)
@@ -489,7 +496,7 @@ def add(agg, ev):
             agg["enhance_qa_fail"] += 1
         if ev.get("fallback"):
             agg["enhance_fallback"] += 1
-        g["image_1k"] += 1
+        g["image_1k"] += 2 if ev.get("retry_ms") is not None else 1       # a second restoration (retry_ms says it was made) is a second image call
         _ms(agg, "enhance", ev)
         for field, key in (("gate", "enhance_gate"), ("cls", "enhance_class"), ("pupil", "enhance_pupil")):
             if ev.get(field):
@@ -500,6 +507,13 @@ def add(agg, ev):
         if isinstance(pm, (int, float)) and not isinstance(pm, bool) and pm >= 0:
             cur = agg["ms"].setdefault("profile", [0, 0])
             cur[0] += pm
+            cur[1] += 1
+        if ev.get("retry"):
+            _inc(agg["enhance_retry"], ev["retry"])
+        rt = ev.get("retry_ms")
+        if isinstance(rt, (int, float)) and not isinstance(rt, bool) and rt >= 0:
+            cur = agg["ms"].setdefault("retry", [0, 0])
+            cur[0] += rt
             cur[1] += 1
         if ev.get("reveal"):
             _inc(agg["enhance_reveal"], ev["reveal"])

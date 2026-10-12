@@ -282,3 +282,24 @@ def set_result(profiles, rules="lid"):
         elif g["ok"] is None:
             unknown = True
     return {"ok": False if first else (None if unknown else True), "eyes": len(profiles), "first": first}
+
+
+def severity(profile):
+    """How far past the gate an eye is, from the numbers its profile stores: 0.0 when every rule passes. A rule that fails costs its worst
+    arm (a number over the threshold it crossed: 1.0 is on the line) and at least 1.0; a rule that passes costs nothing. The arms are
+    those of lid() and fill(): lid70 / 3, lid88 / 4, outlier_bins / 40, outlier_bins / 20 with (lid70 + lid88) / 2, maxdev70 / 22 with
+    lid70 / 2; run18 / 12 with n_step / 55, run18 / 60, n_step / 120, catch / 0.02. An arm of two conditions fires only when both are
+    met, so it counts as the smaller of its two ratios. /api/enhance compares two restorations of one eye with it; no rule changes."""
+    total = 0.0
+    for rule in RULES:
+        g = gate(profile, rule)
+        if g["ok"] is not False:
+            continue
+        v = g["values"]
+        if rule == "lid":
+            arms = (v["lid70"] / LID70_MAX, v["lid88"] / LID88_MAX, v["outlier_bins"] / OUTLIER_MAX,
+                    min(v["outlier_bins"] / 20.0, (v["lid70"] + v["lid88"]) / 2.0), min(v["maxdev70"] / 22.0, v["lid70"] / 2.0))
+        else:
+            arms = (min(v["run18"] / R1_RUN, v["n_step"] / R1_STEP), v["run18"] / R2_RUN, v["n_step"] / R3_STEP, v["catch"] / R4_CATCH)
+        total += max(1.0, *arms)
+    return round(total, 3)

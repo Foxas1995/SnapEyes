@@ -20,8 +20,14 @@ drifted from the photo or the halves do not register: the page then shows the st
 REVEAL_MIN_LEFT seconds left and for the site's crop padding (the body's "pad" may be anywhere in 1 to 2, and the Reveal's measurements are made at 1.12);
 otherwise "reveal" is absent and the display copy is the plain one (the page keeps the plain before and after slider). Either way the display copy's
 watermark sits on the iris disc of the request's padding, the one the profile and the seals carry.
-No stored wide frame, no card: the browser builds the photo's frame itself (decision C10)."""
-import os, sys, json, time, base64, hashlib
+No stored wide frame, no card: the browser builds the photo's frame itself (decision C10).
+The conditional second restoration (2026-10-12, the owner allowed it for the preview only: the paid 4K master never runs twice): when the first
+restoration fails a gate rule of RETRY_RULES and the invocation has RETRY_MIN_LEFT seconds left, the model is asked once more (it is not seeded:
+every call is a new draw), the second restoration goes through the same steps and the same profile, and the better of the two is kept: the second
+when it fails no rule the first passed and its severity (api/_lib/styles/gate.py severity) is at most RETRY_CLEAR of the first's, else the first.
+A passing eye makes no second call and comes back exactly as before, and so does every eye with SNAPEYES_RETRY2=off. Only when a rule failed, the
+reply gets "retry" (ran, kept, code, gate1, sev1, sev2, ms) and the event gets retry, gate1, sev1, sev2, retry_ms."""
+import os, sys, json, time, base64, hashlib, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from PIL import Image
@@ -31,6 +37,7 @@ from _lib import pupil_seal as PS   # the render's pupil: a halo round it, a col
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
 from _lib.styles import eye as EYE   # the eye profile: measured here, sealed, read by compose, the order draft and the master
+from _lib.styles import gate as GATE   # the gate's severity: how far past its rules an eye is (the second restoration)
 from _lib.styles import reveal as REV   # the Reveal's numbers and its display copy (WP9)
 
 # sha256 of public/assets/sample_eye_blue_restored.jpg, the sample eye's restoration the page ships (made once by the
@@ -67,6 +74,87 @@ def _codes(prof, ms):
     why = next((c for r in failed for c in g[r]["why"]), None)
     return {"gate": ("both" if len(failed) == 2 else failed[0]) if failed else ("unknown" if any(x["ok"] is None for x in g.values()) else "ok"),
             "reason": why or "none", "cls": prof.cls, "pupil": prof.pupil_cls, "profile_ms": ms}
+
+
+# The conditional second restoration (module text). SNAPEYES_RETRY2=off, 0, false or no switches it off (read once at import, BOM safe).
+RETRY_ON = (os.environ.get("SNAPEYES_RETRY2") or "on").strip().lstrip("\ufeff").lower() not in ("off", "0", "false", "no")
+RETRY_RULES = ("lid",)       # the gate rules whose failure asks for it. The seal carries "lid" (read by every style but the three Universe ones: singles, pairs,
+                             # groups) and "fill" (the Universe styles). A new draw mends a failed lid rule in 4 of 9 live cases (15 of 31 on the stored bake-off
+                             # numbers) and a failed fill rule in 0 of 4 (3 of 20)
+RETRY_MIN_LEFT = 32.0        # seconds left in the invocation (after the first profile) that a second restoration needs: the slowest model call of the
+                             # 118 flash calls of the bake-off (20.2 s; p90 16.1, p99 19.2), what a draw does after the call (locks, repairs, JPEG, the
+                             # profile: 2.3 s at most measured here, 3.8 s at Vercel's slow factor of 1.67), the Reveal and the seals (1.0 s there) and 7 s
+                             # of safety. The budget is 52 s and the p90 of a whole enhance about 17 s: a retry starts unless the first draw took over 20 s
+RETRY_CLEAR = 0.8            # when both fail, the second is kept only when its severity is at most this share of the first's
+
+Draw = collections.namedtuple("Draw", "out clean prof ms fid fallback qa")   # one restoration, from the model call to the measured profile
+
+
+def _draw(mode, base, source, r_frac, pad):
+    """One restoration of the deglared crop: the model call, the locks, the pupil repairs, the colour QA, the clean JPEG and its profile.
+    The steps /api/enhance has always had; a second restoration makes them again on the same crop."""
+    fallback = False
+    if mode == "artistic":
+        out = raw = L.gemini_image(L.PROMPT_ARTISTIC, base)
+        # this is the product now, so the colour is locked all the way to the client's own photo:
+        # the model may sculpt structure and light, it may not decide what colour their eye is
+        out = L.chroma_lock(out, base)
+        out = L.pupil_lock(out, base, r_frac)   # nor how wide their pupil is: no iris where the photo shows none
+        fid = L.ssim_lowfreq(base, out, r_frac)
+    else:
+        out = raw = L.gemini_image(L.PROMPT_ENHANCE, base, thinking="high")
+        out = L.chroma_lock(out, base)   # the model restores structure; the colour stays the client's own
+        out = L.pupil_lock(out, base, r_frac)
+        fid = L.ssim_lowfreq(base, out, r_frac)
+        if fid < L.FIDELITY_FLOOR:
+            out, fallback = base, True
+    out = out.resize((L.WORK, L.WORK), Image.LANCZOS)
+    if not fallback:
+        # the last look at the render's pupil: each repair is measured on the render and returns the very same object when it
+        # finds nothing, so a right pupil comes back untouched (api/_lib/pupilgeo.py, api/_lib/pupil_seal.py; SNAPEYES_PUPIL=off)
+        out = PG.tone_guard(out, base, r_frac)   # a pupil the model drew grey goes back to the photo's dark
+        out = PS.seal(out, raw, base, r_frac)    # a smooth halo round a pupil drawn too small; a blue-grey zone on a photo that is black there
+        out = PG.edge_guard(out, r_frac)         # blue light on the rim of a warm iris is a window, not the eye
+    # colour QA: how far the render moved the iris colour from the deglared crop it was made from. The pupil
+    # is only made neutral later, by the grade in /api/compose, so it is checked there. Logged, never blocking.
+    qa = L.colour_qa("enhance", result=out, source=source, r_frac=r_frac)
+    # the clean restoration exactly as the page used to receive it (JPEG q93): sealed, never shown. The order's preview
+    # and master_eye's preview_sha are these bytes, as before
+    clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
+    prof, prof_ms = _measure(clean, pad)
+    return Draw(out, clean, prof, prof_ms, fid, fallback, qa)
+
+
+def _failing(prof):
+    """The gate rules a profile fails."""
+    return {r for r in GATE.RULES if prof.gate(r)["ok"] is False}
+
+
+def _retry(first, mode, base, source, r_frac, pad):
+    """The first restoration fails a rule of RETRY_RULES: (the Draw to use, the note of the retry). With RETRY_MIN_LEFT seconds left the model is
+    asked once more and the second restoration is kept when it fails no rule the first passed and its severity is at most RETRY_CLEAR of the
+    first's (a restoration that passes is 0.0); otherwise the first stays. A second restoration that fails or cannot be measured costs nothing:
+    the first is kept. The note: code (kept1, kept2, time, error), gate1 (the first draw's gate code), sev1, sev2 and ms (what the second took)."""
+    note = {"gate1": _codes(first.prof, first.ms)["gate"], "sev1": GATE.severity(first.prof)}
+    if L.time_left() < RETRY_MIN_LEFT:
+        return first, {**note, "code": "time"}
+    t1 = time.time()
+    try:
+        second = _draw(mode, base, source, r_frac, pad)
+    except Exception as e:  # noqa: the page gets the first restoration
+        print("snapeyes enhance: second restoration not made:", L._scrub(repr(e))[:200], flush=True)
+        return first, {**note, "code": "error"}
+    note["ms"] = int((time.time() - t1) * 1000)
+    if second.prof is None:                         # no time left to measure it, or the measurement failed: it cannot be judged
+        return first, {**note, "code": "error"}
+    note["sev2"] = GATE.severity(second.prof)
+    keep = _failing(second.prof) <= _failing(first.prof) and note["sev2"] <= RETRY_CLEAR * note["sev1"]
+    return (second if keep else first), {**note, "code": "kept2" if keep else "kept1"}
+
+
+def _retry_codes(note):
+    """The event fields of a retry note (codes and numbers only); none when no rule failed."""
+    return {"retry": note["code"], "gate1": note["gate1"], "sev1": note["sev1"], "sev2": note.get("sev2"), "retry_ms": note.get("ms")} if note else {}
 
 
 def sample(body):
@@ -106,35 +194,10 @@ def enhance(body):
     if s < L.SR_MAX_SIDE:
         crop = L.sr_x4(crop); used_sr = True
     base = crop.resize((L.WORK, L.WORK), Image.LANCZOS)
-    fallback = False
-    if mode == "artistic":
-        out = raw = L.gemini_image(L.PROMPT_ARTISTIC, base)
-        # this is the product now, so the colour is locked all the way to the client's own photo:
-        # the model may sculpt structure and light, it may not decide what colour their eye is
-        out = L.chroma_lock(out, base)
-        out = L.pupil_lock(out, base, r_frac)   # nor how wide their pupil is: no iris where the photo shows none
-        fid = L.ssim_lowfreq(base, out, r_frac)
-    else:
-        out = raw = L.gemini_image(L.PROMPT_ENHANCE, base, thinking="high")
-        out = L.chroma_lock(out, base)   # the model restores structure; the colour stays the client's own
-        out = L.pupil_lock(out, base, r_frac)
-        fid = L.ssim_lowfreq(base, out, r_frac)
-        if fid < L.FIDELITY_FLOOR:
-            out, fallback = base, True
-    out = out.resize((L.WORK, L.WORK), Image.LANCZOS)
-    if not fallback:
-        # the last look at the render's pupil: each repair is measured on the render and returns the very same object when it
-        # finds nothing, so a right pupil comes back untouched (api/_lib/pupilgeo.py, api/_lib/pupil_seal.py; SNAPEYES_PUPIL=off)
-        out = PG.tone_guard(out, base, r_frac)   # a pupil the model drew grey goes back to the photo's dark
-        out = PS.seal(out, raw, base, r_frac)    # a smooth halo round a pupil drawn too small; a blue-grey zone on a photo that is black there
-        out = PG.edge_guard(out, r_frac)         # blue light on the rim of a warm iris is a window, not the eye
-    # colour QA: how far the render moved the iris colour from the deglared crop it was made from. The pupil
-    # is only made neutral later, by the grade in /api/compose, so it is checked there. Logged, never blocking.
-    qa = L.colour_qa("enhance", result=out, source=source, r_frac=r_frac)
-    # the clean restoration exactly as the page used to receive it (JPEG q93): sealed, never shown. The order's preview
-    # and master_eye's preview_sha are these bytes, as before
-    clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
-    prof, prof_ms = _measure(clean, pad)
+    draw, retry = _draw(mode, base, source, r_frac, pad), {}
+    if RETRY_ON and draw.prof is not None and _failing(draw.prof) & set(RETRY_RULES):
+        draw, retry = _retry(draw, mode, base, source, r_frac, pad)
+    out, clean, prof, prof_ms, fid, fallback, qa = draw
     rv = REV.reveal_for(source, out, pad=pad)    # the Reveal's numbers (about 0.5 s) and the display copy as the Reveal shows it, its watermark on this padding's iris disc; {"params": None} when unmeasured
     prot = P.protect(out, clean, profile=prof)
     if rv["image"] is not None:
@@ -143,6 +206,8 @@ def enhance(body):
            "used_sr": used_sr, "fallback": fallback, "seconds": round(time.time() - t0, 1), "qa": qa}
     if rv["params"] is not None:
         res["reveal"] = rv["params"]
+    if retry:                           # only when a rule failed: ran (a second restoration was made and compared), kept (which one), the note's codes and numbers
+        res["retry"] = {"ran": retry["code"] in ("kept1", "kept2"), "kept": "second" if retry["code"] == "kept2" else "first", **retry}
     # optional training memory (only with consent and when storage is configured)
     if body.get("consent") and body.get("session"):
         sid = L.safe_segment(body["session"])
@@ -153,7 +218,7 @@ def enhance(body):
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
     E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"],
-             reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms))
+             reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms), **_retry_codes(retry))
     return res
 
 def handle(req): L.run(req, enhance)
