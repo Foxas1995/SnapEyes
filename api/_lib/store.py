@@ -532,7 +532,7 @@ def check_order(v):
 
 def unlock_kind(order):
     """The ticket kind that opens the paid endpoints for this one order: "unlock-<order>". An order id holds no
-    dot, so it cannot reach into the ticket's expiry or signature fields. A plain "unlock" ticket (the clean
+    dot, so it cannot reach into the ticket's expiry, nonce or signature fields. A plain "unlock" ticket (the clean
     /api/compose preview) opens neither paid endpoint, and a ticket for one order opens no other order."""
     return "unlock-" + check_order(order)
 

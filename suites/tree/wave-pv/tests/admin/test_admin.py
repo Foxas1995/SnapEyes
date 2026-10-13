@@ -3,7 +3,7 @@
 hooks, scripts/mint_admin.py), against a local store folder, a fake Stripe + Resend + legal-pack stub and the real
 handlers served over HTTP in this process. No real key, no Gemini call: every model call is replaced (a 4K "render" is
 the preview scaled up). Usage: python test_admin.py [filter]"""
-import os, sys, io, re, json, time, base64, shutil, hashlib, secrets, threading, subprocess
+import os, sys, io, re, json, time, base64, shutil, hmac, hashlib, secrets, threading, subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -143,6 +143,14 @@ KEY = admin_key()
 IP = {"x-real-ip": "203.0.113.7"}
 
 
+def legacy_ticket(kind, ttl):
+    """A ticket of the old scheme, built by hand: kind.expiry.signature, the signature an HMAC over "kind.expiry" under the ticket secret. It has the
+    shape of an admin key (kind.expiry.32 hex), which is what the checks below need: the tickets mint_ticket makes now carry a nonce (four fields),
+    so the key's shape check alone would refuse them and the signature would never be looked at. check_ticket still takes this form."""
+    msg = f"{kind}.{int(time.time()) + int(ttl)}"
+    return msg + "." + hmac.new(L._ticket_secret(), msg.encode(), hashlib.sha256).hexdigest()[:32]
+
+
 def adm(action, key=None, ip=IP, **body):
     h = dict(ip)
     if key is not False:
@@ -268,7 +276,7 @@ if section("auth"):
     # the admin secret (review finding: keys used to fall back to a secret derived from the Gemini key)
     reset_limits()
     check("an admin-v1 ticket signed with the ticket secret (the old scheme) is no admin key: 403",
-          adm("me", key=L.mint_ticket("admin-v1", 3600), ip={"x-real-ip": "198.51.100.40"}).status_code == 403)
+          adm("me", key=legacy_ticket("admin-v1", 3600), ip={"x-real-ip": "198.51.100.40"}).status_code == 403)
     check("an admin key is no admin-v1 ticket of the ticket secret either", not L.check_ticket(KEY, kind="admin-v1"))
     r = adm("summary")
     check("summary says which secret signs the admin keys", r.json().get("admin", {}).get("secret") == "SNAPEYES_ADMIN_SECRET", r.text[:200])
@@ -280,7 +288,7 @@ if section("auth"):
     check("no admin secret (ticket secret under 32 characters): 503 admin_not_configured, even for a once-good key",
           r.status_code == 503 and r.json().get("reason") == "admin_not_configured", r.text[:200])
     os.environ.pop("SNAPEYES_TICKET_SECRET")
-    gem_key = L.mint_ticket("admin-v1", 3600)                                   # the old fallback: Gemini-derived secret
+    gem_key = legacy_ticket("admin-v1", 3600)                                   # the old fallback: Gemini-derived secret
     r = adm("me", key=gem_key)
     check("only the Gemini key set: 503 admin_not_configured, a key minted from the Gemini key is refused",
           r.status_code == 503 and r.json().get("reason") == "admin_not_configured", r.text[:200])
@@ -297,7 +305,7 @@ if section("auth"):
     r = adm("me", key=kt)
     check("SNAPEYES_ADMIN_SECRET unset, SNAPEYES_TICKET_SECRET of 32+ characters: its admin keys work", r.status_code == 200, r.text[:200])
     check("that fallback key is signed under its own label: it is no ticket of the same secret",
-          not L.check_ticket(kt, kind="admin-v1") and adm("me", key=L.mint_ticket("admin-v1", 3600), ip={"x-real-ip": "198.51.100.41"}).status_code == 403)
+          not L.check_ticket(kt, kind="admin-v1") and adm("me", key=legacy_ticket("admin-v1", 3600), ip={"x-real-ip": "198.51.100.41"}).status_code == 403)
     check("summary names the fallback", adm("summary", key=kt).json().get("admin", {}).get("secret") == "SNAPEYES_TICKET_SECRET")
     os.environ["SNAPEYES_ADMIN_SECRET"] = "too-short-admin-secret"
     check("SNAPEYES_ADMIN_SECRET set but short: 503 (no silent fallback to the ticket secret)",

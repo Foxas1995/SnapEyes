@@ -7,7 +7,8 @@
     python scripts/mint_unlock.py --preview                       # a plain "unlock" ticket for /api/compose only
 
 What it does: calls the server's own L.mint_ticket(kind, ttl) from api/_lib/iris.py, so the ticket is signed exactly
-as the server signs and checks it (HMAC-SHA256 over "<kind>.<expiry>" with the ticket secret).
+as the server signs and checks it: "<kind>.<expiry>.<nonce>.<signature>", the signature an HMAC-SHA256 over the three
+fields before it with the ticket secret. --check takes that form and the older "<kind>.<expiry>.<signature>" too.
 
 Kinds:
   --order ORDER  kind "unlock-<order>" (store.unlock_kind). It opens /api/master_eye (4K renders, about $0.15 each,

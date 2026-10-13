@@ -115,17 +115,14 @@ class StubHandler(BaseHTTPRequestHandler):
         self._send(404, {})
 
 
-_TICKETS = [0, int(time.time())]
-
-
 def fresh_ticket():
-    """A work ticket no other call used: one ticket makes at most one order now. A ticket is exact to the second
-    (work.<expiry>.<hmac>), so each one gets its own expiry, counted down from the start of the run."""
+    """A work ticket no other call used: one ticket makes at most one order. The server's own mint_ticket makes it
+    (work.<expiry>.<nonce>.<hmac>): the random nonce keeps two tickets of one second apart. Before the nonce this built
+    the three-field form (work.<expiry>.<hmac>) by hand, each with its own expiry counted down from the start of the run;
+    check_ticket still takes that form, and scripts/styles_tests/test_ticket_nonce.py (v3nonce) builds it itself."""
     sys.path.insert(0, API)
     from _lib import iris as L
-    _TICKETS[0] += 1
-    msg = f"work.{_TICKETS[1] + 900 - _TICKETS[0]}"
-    return msg + "." + hmac.new(L._ticket_secret(), msg.encode(), hashlib.sha256).hexdigest()[:32]
+    return L.mint_ticket("work")
 
 
 def pay_session(sid, email="kunde@example.com"):

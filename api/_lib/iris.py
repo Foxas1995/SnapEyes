@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """SnapEyes iris engine: detection, crop, glare removal, faithful enhancement, composition, storage.
 Runs on Vercel Python functions (CPU) and locally. All Gemini calls go through generateContent REST."""
-import os, io, json, base64, time, math, re, uuid, hmac, hashlib, threading
+import os, io, json, base64, time, math, re, uuid, hmac, hashlib, secrets, threading
 import numpy as np
 import requests
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
@@ -186,23 +186,44 @@ def time_left(default=BUDGET):
 # ----------------------------------------------------------------------------- access control
 ALLOWED_HOSTS = ("snapeyes.com", "www.snapeyes.com", "localhost", "127.0.0.1")
 TICKET_TTL = 900             # a ticket minted by /api/analyze is good for 15 minutes
+TICKET_NONCE_BYTES = 8       # the random part of a ticket: 16 hex characters (64 bits)
+_NONCE_RE = re.compile("[0-9a-fA-F]{1,64}")    # what check_ticket takes as a nonce: any hex up to 64 characters (the signature is what makes it good)
 
 def _ticket_secret():
     """Server-only secret; never leaves the process and never appears in a response."""
     raw = os.environ.get("SNAPEYES_TICKET_SECRET", "").strip() or _key()
     return hashlib.sha256(("snapeyes-ticket-v1:" + raw).encode("utf-8")).digest()
 
+def _ticket_sig(msg):
+    """The signature of a ticket: HMAC-SHA256 of the text before it under the ticket secret, 32 hex characters."""
+    return hmac.new(_ticket_secret(), msg.encode(), hashlib.sha256).hexdigest()[:32]
+
 def mint_ticket(kind="work", ttl=TICKET_TTL):
-    exp = int(time.time()) + int(ttl)
-    msg = kind + "." + str(exp)
-    return msg + "." + hmac.new(_ticket_secret(), msg.encode(), hashlib.sha256).hexdigest()[:32]
+    """A signed ticket "<kind>.<expiry>.<nonce>.<signature>": the expiry in whole seconds, a random nonce (TICKET_NONCE_BYTES from secrets,
+    16 hex characters) and the HMAC of the three fields before it. Only letters, digits, "." and "-" (it travels in JSON and in links as it
+    is). The nonce makes every ticket its own string: two of one kind minted in the same second used to be identical, and pay.order_for_ticket
+    (one ticket, at most one unpaid order, its marker named by the ticket's hash) then gave two customers the same order and key."""
+    msg = kind + "." + str(int(time.time()) + int(ttl)) + "." + secrets.token_hex(TICKET_NONCE_BYTES)
+    return msg + "." + _ticket_sig(msg)
 
 def check_ticket(tok, kind="work"):
+    """Is tok an unexpired ticket of this kind, signed with this deployment's ticket secret? Constant-time compare. Two forms are good, by the
+    same rules: the four fields of mint_ticket, and the three of before the nonce, "<kind>.<expiry>.<signature>" (the HMAC of "<kind>.<expiry>"),
+    which tickets minted before that deploy still are for their 15 minutes (the self-calls' internal ones for 5). The number of fields decides
+    the form, and the signature covers every field before it, so a new ticket does not pass as an old one by losing its nonce, nor the other
+    way round. A nonce that is empty, longer than 64 characters or not hex, or any other number of fields, is no ticket."""
     try:
-        k, exp_s, sig = str(tok or "").split(".", 2)
+        if not isinstance(tok, str):
+            return False
+        f = tok.split(".")
+        if len(f) == 4 and _NONCE_RE.fullmatch(f[2]):
+            k, exp_s, sig, msg = f[0], f[1], f[3], ".".join(f[:3])
+        elif len(f) == 3:
+            k, exp_s, sig, msg = f[0], f[1], f[2], ".".join(f[:2])
+        else:
+            return False
         if k != kind or int(exp_s) < time.time(): return False
-        want = hmac.new(_ticket_secret(), (k + "." + exp_s).encode(), hashlib.sha256).hexdigest()[:32]
-        return hmac.compare_digest(sig, want)
+        return hmac.compare_digest(sig, _ticket_sig(msg))
     except Exception:
         return False
 

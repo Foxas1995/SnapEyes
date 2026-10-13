@@ -969,7 +969,9 @@ def day(ts=None):
 
 
 def ticket_path(ticket):
-    """Where the one order a work ticket made is written down: ticketuse/<the day the ticket expires>/<digest>."""
+    """Where the one order a work ticket made is written down: ticketuse/<the day the ticket expires>/<digest>. The expiry is the second
+    field of "<kind>.<expiry>.<nonce>.<signature>" (and of the three-field form from before the nonce, which iris.check_ticket still takes); the
+    digest is of the whole string, so the nonce gives every ticket its own marker (two minted in the same second used to share one)."""
     try:
         exp = int(str(ticket).split(".")[1])
     except (IndexError, ValueError):
