@@ -443,6 +443,22 @@ act("styles_override", style="solo.universe", eyes=1, stage="live", confirm=True
 check("Universe live: Echo and Vortex are the looks a customer may buy (live), Deep Field and Starfield are never offered; an order for a held look is refused",
       CT.looks_for("solo.universe", 1) == {"echo": "live", "vortex": "live"} and CT.look_orderable("solo.universe", 1, {"look": "vortex"}) and CT.look_orderable("solo.universe", 1, {})
       and not CT.look_orderable("solo.universe", 1, {"look": "deepfield"}) and CT.looks_for("solo.universe", 1, admin=True)["deepfield"] == "lab", CT.looks_for("solo.universe", 1))
+# the checkout verifies the plates of the order's OWN plan (plan["plates_needed"]), not the families the health probe expects (A12 triage, finding 1): Echo draws no plate on the square canvas, Vortex one spiral
+from _lib.styles import steps as SPS  # noqa: E402
+o, k = new_order(["blue_round"])
+c_echo, j_echo = co(o, k, "solo.universe", 1)
+o, k = new_order(["blue_round"])
+c_vor0, j_vor0 = co(o, k, "solo.universe", 1, opts={"look": "vortex"})
+d_vor = rj(f"orders/{o}/draft/eye_1.json")
+plan_vor = SPS.make_plan({"style": "solo.universe", "layout": "single", "eyes": 1, "opts": {"look": "vortex"}}, [{"eye_id": d_vor["eye_id"], "profile": d_vor["profile"]}])
+need_vor = plan_vor.get("plates_needed") or []
+for x in need_vor:
+    store.put(x["path"], b"plate", "image/png", upsert=True)
+c_vor1, j_vor1 = co(o, k, "solo.universe", 1, opts={"look": "vortex"})
+check("Universe live: an Echo checkout needs no plate (accepted with none of its families in storage), a Vortex checkout is refused 409 plates until the ONE spiral plate of its plan is stored and then accepted "
+      "(the plan's plates_needed, not the families of the health probe; Starfield's MILKY plates play no part)",
+      c_echo == 200 and c_vor0 == 409 and j_vor0.get("why") == "plates" and len(need_vor) == 1 and need_vor[0]["family"] == "P-DN-SPIRAL" and c_vor1 == 200
+      and not any(store.exists(PL.storage_path(i)) for i in PL.storage_ids(["P-UV-MILKY"])), (c_echo, c_vor0, j_vor0, c_vor1, need_vor))
 act("styles_override", style="solo.universe", eyes=1, stage="preview", confirm=True)
 # the rollback
 r = act("styles_override", style="solo.clean", eyes=1, stage="preview", confirm=True, reason="rolled back", reason_kind="quality", in_flight="finish")
@@ -598,6 +614,22 @@ h0 = PL.health()
 fams = PL.expected_families()
 check("the registries read (health.styles true) and the visible styles now expect their 4K plates: CLOUD, CROWN, SPIRAL and DUST are expected (Radiance and the pair designs need none of their own)",
       h0["styles"] is True and {"P-SN-CLOUD", "P-SP-CROWN", "P-DN-SPIRAL", "P-UV-DUST"} <= set(fams), (h0, sorted(fams)))
+import types  # noqa: E402
+import unittest.mock as mock  # noqa: E402
+REL1_FAMS = {f for f, d in PL._FAMILIES.items() if d["release1"] and d["store4k"]}
+REL1_IDS = PL.storage_ids(sorted(REL1_FAMS))
+REL1_PATHS = {PL.storage_path(i) for i in REL1_IDS}
+HAVE = lambda paths: types.SimpleNamespace(configured=lambda: True, exists=lambda p, **k: p in paths)      # noqa: E731
+check("... and nothing of the 4K families beyond them: the families of the laboratory looks (Starfield's MILKY) and of Elements (FLAME) are not expected, so what the probe asks storage about is exactly the four "
+      "families of release 1 that the upload tool puts there (A12 triage: MILKY was expected, never uploaded, and plates_4k stayed false after all 109 plates)",
+      {f for f in fams if PL._FAMILIES.get(f, {}).get("store4k")} == REL1_FAMS == {"P-SN-CLOUD", "P-SP-CROWN", "P-DN-SPIRAL", "P-UV-DUST"} and "P-UV-MILKY" not in fams and "P-EL-FLAME" not in fams, sorted(fams))
+with mock.patch.dict(CT.ENGINE["solo.universe"]["engine"]["looks"], {"starfield": "preview"}):
+    h_star = PL.health(store=HAVE(REL1_PATHS))["plates_4k"]
+last_spiral = PL.storage_path(sorted(PL.storage_ids(["P-DN-SPIRAL"]))[-1])
+check("the runbook's end state: with the 109 release-1 plates and no other in storage /api/health says plates_4k true; the last SPIRAL plate missing makes it false again; Starfield put at preview makes the "
+      "probe ask for the MILKY plates (false until they are uploaded)",
+      len(REL1_IDS) == 109 and PL.health(store=HAVE(REL1_PATHS)) == {"styles": True, "plates_4k": True} and PL.health(store=HAVE(REL1_PATHS - {last_spiral}))["plates_4k"] is False
+      and PL.health(store=HAVE(set()))["plates_4k"] is False and h_star is False, (len(REL1_IDS), h_star))
 check("with an empty storage plates_4k is false (the admin's attention card says so and the checkout answers 409 plates): the plates are uploaded BEFORE the owner ticks a plate style",
       h0["plates_4k"] is False or any(store.exists(PL.storage_path(p)) for p in sorted(PL.storage_ids([f for f in fams if PL._FAMILIES.get(f, {}).get("store4k")]))[:1]), h0)
 fam4 = [f for f in fams if PL._FAMILIES.get(f, {}).get("store4k")]

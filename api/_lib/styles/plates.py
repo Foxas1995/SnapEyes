@@ -541,17 +541,52 @@ def storage_status(families=None, store=None, deep=True):
 
 
 # ----------------------------------------------------------------------------- the health probe (api/health.py)
+# The plate families each LOOK of a style reads at 4K, by engine module: what the engine's own plate pick (universe.plates_for) can return for that look on any canvas
+# the engine draws. The registry lists one `plates` row per STYLE, which for the Universe is the union of its four looks (Starfield's family included), so a style whose
+# only visible looks are Echo and Vortex still "reads" a family that no customer's picture draws from. expected_families() asks this table for a style with looks and
+# the style's whole list for every other. scripts/styles_tests/test_plates.py ties the table to plates_for() (every pick of every look is in its row, and every row is
+# reached) and to the registry (every look has a row, and the rows' union is the style's list), so a new look or a new plate cannot be added to one side only.
+LOOK_FAMILIES = {
+    "universe": {
+        "echo": ("P-UV-DUST",),             # Echo reads a plate only on the wall canvas (9:19.5): the dust accent in the lower third
+        "vortex": ("P-DN-SPIRAL",),
+        "deepfield": ("P-UV-DUST",),
+        "starfield": ("P-UV-MILKY",),
+    },
+}
+VISIBLE_STAGES = ("preview", "live")
+
+
+def look_families(module, look):
+    """The plate families a look of an engine module can fetch at 4K, or None when the table has no row for it (the caller then expects the style's whole list)."""
+    row = LOOK_FAMILIES.get(module, {}).get(look)
+    return None if row is None else tuple(row)
+
+
 def expected_families():
-    """The plate families a style that customers can see (ceiling preview or live) reads, from the registries (the literal ceiling: no storage
-    read here). Empty while every v3 style is in the laboratory or planned: then nothing is expected of the bundle or of storage."""
+    """The plate families a style that customers can see (ceiling preview or live) reads, from the registries (the literal ceiling: no storage read here). A style
+    with looks (the Universe) counts only the families of its looks that are visible themselves: a look has the lower of its own stage and its style's (catalogue.looks_for),
+    so Deep Field and Starfield, which are in the laboratory, do not make the health ask for their plates, while Echo and Vortex do. Empty while every v3 style is in
+    the laboratory or planned: then nothing is expected of the bundle or of storage. The checkout does not use this: it verifies the plates of the order's own plan
+    (plan["plates_needed"]), which are the ones its look draws."""
     from .. import catalogue as CT
     out = set()
     for sid, e in CT.ENGINE.items():
-        if not e["engine"] or e["engine"].get("module") == "legacy" or not CT._built(sid):
+        eng = e["engine"]
+        if not eng or eng.get("module") == "legacy" or not CT._built(sid):
             continue
         lo, hi = CT.eyes_range(sid)
-        if any(CT.ceiling(sid, n) in ("preview", "live") for n in range(lo, hi + 1)):
+        ceils = [CT.ceiling(sid, n) for n in range(lo, hi + 1)]
+        if not any(c in VISIBLE_STAGES for c in ceils):
+            continue
+        looks = eng.get("looks")
+        if not looks:
             out.update(e["plates"])
+            continue
+        for look, stage in looks.items():
+            if any(CT.effective_stage(c, stage) in VISIBLE_STAGES for c in ceils):
+                fams = look_families(eng.get("module"), look)
+                out.update(e["plates"] if fams is None else fams)
     return out
 
 

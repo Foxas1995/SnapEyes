@@ -489,6 +489,67 @@ check("plates_status refuses a family that is not one (400 through L.ClientError
       raises(lambda: ops.ACTIONS["plates_status"]({"storage": True, "families": ["P-ZZ-NOPE"]}, "admin"), L.ClientError) is not False
       and "plates_status" in ops.ACTIONS and ops.ACTIONS["plates_status"].__name__ == "a_plates_status")
 
+# ---- what the health probe expects is what the VISIBLE LOOKS of a style draw from (A12 triage, finding 1: the Universe entry lists the families of all four of its looks, the
+# laboratory look Starfield reads P-UV-MILKY, that family was never part of release 1, so plates_4k stayed false after all 109 release-1 plates were uploaded)
+import importlib  # noqa: E402
+import types  # noqa: E402
+UNI = importlib.import_module("_lib.styles.universe")
+LF = P.LOOK_FAMILIES["universe"]
+UE = CT.ENGINE["solo.universe"]
+UNI_FAMS = set(UE["plates"])
+check("the per-look table has one row for every look of the Universe entry of the registry and the rows together are the entry's plates list (the registry's list per style and the table cannot drift apart); "
+      "an unknown look or module has no row",
+      set(LF) == set(UE["engine"]["looks"]) and set().union(*map(set, LF.values())) == UNI_FAMS and all(P.look_families("universe", k) == tuple(v) for k, v in LF.items())
+      and P.look_families("universe", "nolook") is None and P.look_families("singles", "echo") is None, (sorted(LF), UE["plates"]))
+seen, off = {k: set() for k in LF}, []
+for _look in LF:
+    for _wall in (False, True):
+        for _seed in range(400):
+            for _pid in UNI.plates_for(_look, _wall, _seed, CT.PLATES_VERSION):
+                seen[_look].add(TABLE[_pid]["family"])
+                if TABLE[_pid]["family"] not in LF[_look]:
+                    off.append((_look, _wall, _seed, _pid))
+check("the table is what the engine draws: every plate plates_for() picks for a look (400 seeds, the square and the wall canvas, no pixel drawn) is of a family of that look's row, every family of a row is "
+      "reached by some pick, and Echo reads a plate on the wall canvas only (DUST) and none off it",
+      not off and all(seen[k] == set(LF[k]) for k in LF) and UNI.plates_for("echo", False, 7, CT.PLATES_VERSION) == [] and seen["echo"] == {"P-UV-DUST"}, (off[:2], seen))
+
+
+def uni_fams(style_stage, looks, by_eyes=None):
+    """What expected_families() says of the Universe's families when the entry has this stage and these looks (the other styles of this world contribute none of the three)."""
+    with mock.patch.dict(CT.STYLES["solo.universe"], {"stage": style_stage, "stage_by_eyes": by_eyes or {}}), mock.patch.dict(UE["engine"], {"looks": looks}):
+        return P.expected_families() & UNI_FAMS
+
+
+LIVE_LOOKS = {"echo": "live", "vortex": "live", "deepfield": "lab", "starfield": "lab"}
+check("the Universe at live with Echo and Vortex live and Deep Field and Starfield in the laboratory (the table of the real registry): DUST (the Echo wall accent) and SPIRAL (Vortex) are expected, "
+      "MILKY (Starfield) is not",
+      uni_fams("live", LIVE_LOOKS) == {"P-UV-DUST", "P-DN-SPIRAL"}, uni_fams("live", LIVE_LOOKS))
+check("a look counts at the lower of its own stage and its style's: Starfield at preview makes MILKY expected (upload first, tick second), a style in the laboratory expects nothing whatever its looks say, a style at "
+      "preview with live looks expects them (a look is never above its style), Deep Field alone expects DUST and no SPIRAL",
+      uni_fams("live", dict(LIVE_LOOKS, starfield="preview")) == UNI_FAMS and uni_fams("lab", LIVE_LOOKS) == set() and uni_fams("preview", LIVE_LOOKS) == {"P-UV-DUST", "P-DN-SPIRAL"}
+      and uni_fams("live", {"echo": "lab", "vortex": "lab", "deepfield": "live", "starfield": "lab"}) == {"P-UV-DUST"}, "")
+check("a look the table has no row for expects the whole list of its style (the safe side: more is asked of storage, never less)", uni_fams("live", {"echo": "live", "newlook": "live"}) == UNI_FAMS, uni_fams("live", {"echo": "live", "newlook": "live"}))
+REL1 = {f for f, d in FAMS.items() if d["release1"]}
+REL1_PATHS = {P.storage_path(i) for i in P.storage_ids(sorted(REL1))}
+HAVE = lambda paths: types.SimpleNamespace(configured=lambda: True, exists=lambda p, **k: p in paths)      # noqa: E731
+with mock.patch.dict(CT.STYLES["solo.universe"], {"stage": "live", "stage_by_eyes": {}}), mock.patch.dict(UE["engine"], {"looks": LIVE_LOOKS}):
+    h_rel1 = P.health(store=HAVE(REL1_PATHS))
+    h_none = P.health(store=HAVE(set()))
+    h_less = P.health(store=HAVE(REL1_PATHS - {P.storage_path(sorted(P.storage_ids(["P-DN-SPIRAL"]))[-1])}))
+with mock.patch.dict(CT.STYLES["solo.universe"], {"stage": "live", "stage_by_eyes": {}}), mock.patch.dict(UE["engine"], {"looks": dict(LIVE_LOOKS, starfield="preview")}):
+    h_star0 = P.health(store=HAVE(REL1_PATHS))
+    h_star1 = P.health(store=HAVE(REL1_PATHS | {P.storage_path(i) for i in P.storage_ids(["P-UV-MILKY"])}))
+check("with exactly the release-1 plates in storage (CLOUD, CROWN, SPIRAL, DUST: 109 of them) the probe is true while the Universe is live with Echo and Vortex, false with an empty storage and false when the last SPIRAL "
+      "plate is missing; Starfield put at preview turns it false until the MILKY plates are uploaded, then true",
+      len(REL1_PATHS) == 109 and h_rel1 == {"styles": True, "plates_4k": True} and h_none["plates_4k"] is False and h_less["plates_4k"] is False
+      and h_star0["plates_4k"] is False and h_star1["plates_4k"] is True, (len(REL1_PATHS), h_rel1, h_none, h_less, h_star0, h_star1))
+with local_store(), mock.patch.dict(CT.STYLES["solo.universe"], {"stage": "live", "stage_by_eyes": {}}), mock.patch.dict(UE["engine"], {"looks": dict(LIVE_LOOKS, starfield="preview")}):
+    clean_state()
+    st_look = ops.ACTIONS["plates_status"]({"storage": True}, "admin")
+n_rel1 = sum(1 for r in k4.values() if FAMS[r["family"]]["release1"])
+check("plates_status without families asks about the first release's families and every family the health probe expects, so the two reports cannot disagree: a visible Starfield adds its four MILKY plates",
+      st_look["storage"]["checked"] == n_rel1 + len(P.storage_ids(["P-UV-MILKY"])) == 113 and len(st_look["storage"]["missing"]) == 113, (st_look["storage"]["checked"], n_rel1))
+
 # ============================================================================================ 6. upload_plates.py
 section("6. scripts/upload_plates.py: dry run, upload, idempotence, a wrong object, a bad source")
 import importlib.util  # noqa: E402

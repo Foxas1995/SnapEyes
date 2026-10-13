@@ -1320,7 +1320,8 @@ def a_plates_status(body, who):
     """{deep: bool, storage: bool, families: [family ids]}: the plate library as this function sees it. bundle: every usable plate's 1K
     file in api/_assets/plates with the size the baked registry records (deep: and its sha256), the two atlases; registry: the style
     registry's hash and plates version, the plates version of the baked library, the number of plates; storage (only when asked: one
-    request per plate, so it is bounded to the families named, default the families of the first release): the 4K plates in private
+    request per plate, so it is bounded to the families named, default the families of the first release and every family the health probe
+    expects, PL.expected_families, so that this report and plates_4k of /api/health never disagree about what must be there): the 4K plates in private
     storage, with a downloaded and hashed sample. Reads and changes nothing (no write, no audit line); this function is a rendering
     one, so its bundle is the bundle of compose, master_compose and order."""
     from . import catalogue as CT
@@ -1336,7 +1337,8 @@ def a_plates_status(body, who):
     if body.get("storage"):
         fams = body.get("families")
         if fams is None:
-            fams = [f for f, d in PR.PLATES_REGISTRY["families"].items() if d["release1"]]
+            known = PR.PLATES_REGISTRY["families"]
+            fams = sorted({f for f, d in known.items() if d["release1"]} | {f for f in PL.expected_families() if known.get(f, {}).get("store4k")})
         if not isinstance(fams, list) or not all(isinstance(f, str) and f in PR.PLATES_REGISTRY["families"] for f in fams):
             raise L.ClientError("families must be a list of plate family ids")
         out["storage"] = PL.storage_status(fams, deep=True)
