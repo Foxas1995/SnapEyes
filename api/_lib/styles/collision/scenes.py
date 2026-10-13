@@ -6,7 +6,7 @@ re-reads the exact snapped discs), the overlap plan (Rule per contact: S weave o
 list (outer notches carry a plume weight), the text lines and the union box.
 
 All numbers are the brief's section 0.6 numbers (NOT the pre-addendum draft): Collision Infinity d = R + r_p + 0.015 R
-(clamp 1.22-1.50), Kiss 1.70 R, Trio = the measured H24 isosceles (base 1.53 R, flanks 1.71 R), Family contacts 1.65 R,
+(clamp 1.22-1.50), Kiss 1.70 R, Trio = the measured H24 isosceles (base 1.53 R, flanks 1.71 R, opened further only for a wide pupil: trio_distances), Family contacts 1.65 R,
 Infinity Chain 1.40 R.
 
 Units: R = iris radius (px), S = short side. Screen frame: x right, y DOWN. The brief's axis angles are counter-clockwise
@@ -30,6 +30,8 @@ D_KISS = 1.70                 # R2 / D18
 D_FAMILY = 1.65               # R8
 D_CHAIN = 1.40                # R8
 TRIO_BASE, TRIO_FLANK = 1.53, 1.71      # R7 (measured H24)
+TRIO_APEX_H = math.sqrt(TRIO_FLANK ** 2 - (TRIO_BASE / 2.0) ** 2)      # the apex height of that isosceles, in R
+TRIO_D_MAX = 1.90                       # the largest contact distance a Trio is opened to for a wide pupil (the family layouts stop looking for contacts at the same 1.90 R)
 
 
 def canvas_size(fmt, size=1024):
@@ -259,9 +261,33 @@ def pair_scene(fmt="3:2", size=1024, d_over_R=1.275, names=False, has_date=False
 
 
 # ----------------------------------------------------------------------------- trio (owner's H24, measured isosceles)
-def trio_scene(fmt="1:1", size=1024, names=False, has_date=False, rotate=0, key="grp.collision.trio", base_mode="crumble"):
+def trio_distances(reach, rotate=0):
+    """(base, flank): the centre distances of a Trio in R. The owner's measured isosceles (TRIO_BASE, TRIO_FLANK) is the floor; a contact is opened further only when the pupils that meet there
+    need it, by the rule of the pair designs (solve_infinity_d): d = 1 + the reach of the widest pupil toward the partner + D_INF_MARGIN, so that the partner's limb (d - 1 from the centre) lies
+    clear of the pupil grown by the 0.01 R that no other iris may touch (the compositor hides the front iris over that pupil: with a limb inside it the front iris is cut and T1/T6 of the
+    selfcheck count the cut as matter on the iris). The measured isosceles fits a pupil whose reach is at most 0.505 R toward the base partner and 0.685 R toward the apex or a flank
+    partner; a wider pupil (a dark brown eye photographed with a wide pupil: A12, 2026-10-12, reach 0.5993 R) opens the base and, when it is that wide, the flanks. The answer is never
+    below the floor and never above TRIO_D_MAX, and it is the floor itself for every pupil that fits, so those pictures do not move by a pixel.
+    reach(i, u): the reach of the pupil of iris i along the unit vector u (screen x right, y down), in R, from the iris centre (styles.pupil.reach). rotate: as trio_scene (the iris i stands at
+    the place (i + rotate) % 3 of the apex, the base left and the base right)."""
+    role = {(i + rotate) % 3: i for i in range(3)}
+    ia, bl, br = role[0], role[1], role[2]
+    base = min(max(TRIO_BASE, 1.0 + max(reach(bl, (1.0, 0.0)), reach(br, (-1.0, 0.0))) + D_INF_MARGIN), TRIO_D_MAX)
+    flank = TRIO_FLANK
+    for _ in range(4):                       # the flank axes lean with the base and the flank: a few passes settle it far below a pixel
+        h = math.sqrt(max(flank * flank - base * base / 4.0, 1e-6))
+        ul, ur = (-base / 2.0 / flank, h / flank), (base / 2.0 / flank, h / flank)      # apex -> base left, apex -> base right
+        need = 1.0 + max(reach(ia, ul), reach(bl, (-ul[0], -ul[1])), reach(ia, ur), reach(br, (-ur[0], -ur[1]))) + D_INF_MARGIN
+        new = min(max(TRIO_FLANK, need), TRIO_D_MAX)
+        if abs(new - flank) < 1e-9:
+            break
+        flank = new
+    return base, flank
+
+
+def trio_scene(fmt="1:1", size=1024, names=False, has_date=False, rotate=0, key="grp.collision.trio", base_mode="crumble", reach=None):
     """Apex (first named) on top, base left / right. Base centres (+-0.765 R, 0), apex (0, -1.529 R) from the base midpoint.
-    rotate cycles the roles (new seed)."""
+    rotate cycles the roles (new seed). reach: the pupils' reach callable of trio_distances (None: the measured isosceles as it is)."""
     W, H = canvas_size(fmt, size)
     S = min(W, H)
     wall = fmt == "9:19.5"
@@ -274,11 +300,11 @@ def trio_scene(fmt="1:1", size=1024, names=False, has_date=False, rotate=0, key=
     else:   # wallpaper
         Rr, cyf = (0.19 * 0.94 if names else 0.19) * W, 0.42
     cx = 0.5 * W
-    # box centre relative to the base midpoint M: y_c = -0.7645 R
-    ymid = cyf * H + 0.7645 * Rr
-    base = TRIO_BASE
+    base, flank = (TRIO_BASE, TRIO_FLANK) if reach is None else trio_distances(reach, rotate)
     hb = base / 2.0
-    apex_h = math.sqrt(TRIO_FLANK ** 2 - hb ** 2)
+    apex_h = math.sqrt(flank ** 2 - hb ** 2)
+    # box centre relative to the base midpoint M: y_c = -0.7645 R (half the apex height of the measured isosceles; it follows the apex height when a wide pupil has opened the contacts)
+    ymid = cyf * H + 0.7645 * (apex_h / TRIO_APEX_H) * Rr
     pts = [(0.0, -apex_h), (-hb, 0.0), (hb, 0.0)]         # apex, base left, base right (R units)
     order3 = [pts[(i + rotate) % 3] for i in range(3)]
     centres = [(cx + p[0] * Rr, ymid + p[1] * Rr) for p in order3]
@@ -295,7 +321,7 @@ def trio_scene(fmt="1:1", size=1024, names=False, has_date=False, rotate=0, key=
         dn = math.hypot(dx, dy)
         rules.append(Rule(ia, b, "front_a", dx / dn, dy / dn, dn, crumble=True))
     order = [(bl, []), (br, [(bl, 0)]), (ia, [(bl, 1), (br, 2)])]
-    sc = Scene(key, fmt, W, H, S, [Rr] * 3, centres, rules, order, d_over_R=TRIO_FLANK, names=names)
+    sc = Scene(key, fmt, W, H, S, [Rr] * 3, centres, rules, order, d_over_R=flank, names=names)
     sc.text_lines = _text_lines(W, H, S, "group", names, has_date, fmt, wall)
     sc.info.update(apex=ia, base_left=bl, base_right=br, wall=wall, layout="trio", rotate=rotate)
     sc.notches = build_notches(sc)

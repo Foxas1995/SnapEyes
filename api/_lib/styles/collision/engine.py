@@ -523,7 +523,9 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
             d_over_R = o.get("kiss_d", CL.D_KISS)
         build = lambda sz: CL.pair_scene(fmt, sz, d_over_R, has_names, bool(date), kind)
     elif design == "trio":
-        build = lambda sz: CL.trio_scene(fmt or "1:1", sz, has_names, bool(date), rotate=o.get("rotate", 0), base_mode=o.get("trio_base", "crumble"))
+        # the contacts of the measured isosceles are opened only as far as the pupils need (CL.trio_distances): a pupil that reaches into the partner's limb would have the front iris cut
+        build = lambda sz: CL.trio_scene(fmt or "1:1", sz, has_names, bool(date), rotate=o.get("rotate", 0), base_mode=o.get("trio_base", "crumble"),
+                                         reach=lambda i, u: PUPM.reach(pups[i], u))
     elif design == "family":
         build = lambda sz: CL.family_scene(n, layout, fmt, sz, has_names, bool(date))
     elif design == "chain":

@@ -493,6 +493,56 @@ check("T13, the overlap solver: the distance is deterministic; a pupil that reac
       "logged, d 1.70 R); and the same fallback from the pixels of a wide pupil (the fixture) is in the recording",
       d1 == d2 and rf.info.get("overlap_fallback") is True and rf.info["design_used"] == "kiss" and abs(rf.info["d_over_R"][0] - CL.D_KISS) < 0.02
       and G["infinity.wide+green.3:2.1024"]["facts"]["design_used"] == "kiss" and G["infinity.wide+green.3:2.1024"]["facts"]["overlap_fallback"] is True, (d1, d2, rf.info.get("d_raw")))
+
+
+def painted_wide(r, kind="dark_brown", seed=51):
+    """A synthetic restored iris whose pupil is painted r R wide (the recipe of collision_cases.fixture_bytes for the 0.52 R fixture, any radius): PNG bytes."""
+    a = np.asarray(SI.make(kind=kind, pupil="round", seed=seed), np.float32).copy()
+    n_ = a.shape[0]
+    ax_ = np.arange(n_, dtype=np.float32) + 0.5 - n_ / 2.0
+    rr_ = np.sqrt(ax_[None, :] ** 2 + ax_[:, None] ** 2) / np.float32(SI.R_FRAC * n_)
+    w_ = np.clip((r - rr_) / 0.02 + 0.5, 0.0, 1.0)[..., None]
+    b_ = io.BytesIO()
+    Image.fromarray(np.clip(a * (1 - w_) + np.asarray((7, 7, 9), np.float32) * w_ + 0.5, 0, 255).astype(np.uint8), "RGB").save(b_, "PNG", compress_level=3)
+    return b_.getvalue()
+
+
+# the Trio keeps the owner's measured isosceles unless the pupils that meet need more room (A12 triage, finding 2: a dark brown eye with a pupil 0.60 R wide at the base, the front iris
+# was cut by the compositor's rule that no pupil is ever covered, T1 and T6 counted 3458 pixels, the master was held for review)
+reach_const = lambda r_: (lambda i_, u_: r_)      # noqa: E731
+rot_reach = lambda i_, u_: {0: 0.60}.get(i_, 0.30)      # noqa: E731
+check("Trio distances: every pupil that fits keeps the measured isosceles (1.53 R and 1.71 R: a reach of up to 0.505 R toward the base partner, 0.685 R toward a flank partner), a wider one opens "
+      "the base by the rule of the pair designs (1 + reach + 0.025), a very wide one the flanks too, never above 1.90 R, and the iris that is the base left or right depends on the rotation",
+      CL.trio_distances(reach_const(0.30)) == (CL.TRIO_BASE, CL.TRIO_FLANK) and CL.trio_distances(reach_const(0.50)) == (CL.TRIO_BASE, CL.TRIO_FLANK)
+      and CL.trio_distances(reach_const(0.504)) == (CL.TRIO_BASE, CL.TRIO_FLANK) and abs(CL.trio_distances(reach_const(0.51))[0] - 1.535) < 1e-9
+      and CL.trio_distances(reach_const(0.51))[1] == CL.TRIO_FLANK and abs(CL.trio_distances(reach_const(0.60))[0] - 1.625) < 1e-9 and CL.trio_distances(reach_const(0.60))[1] == CL.TRIO_FLANK
+      and all(abs(v_ - 1.725) < 1e-9 for v_ in CL.trio_distances(reach_const(0.70))) and CL.trio_distances(reach_const(0.95)) == (CL.TRIO_D_MAX, CL.TRIO_D_MAX)
+      and CL.trio_distances(rot_reach, 0) == (CL.TRIO_BASE, CL.TRIO_FLANK) and abs(CL.trio_distances(rot_reach, 1)[0] - 1.625) < 1e-9 and abs(CL.trio_distances(rot_reach, 2)[0] - 1.625) < 1e-9,
+      (CL.trio_distances(reach_const(0.60)), CL.trio_distances(reach_const(0.70)), CL.trio_distances(rot_reach, 0), CL.trio_distances(rot_reach, 1), CL.trio_distances(rot_reach, 2)))
+sc_d, sc_w = CL.trio_scene("1:1", 512), CL.trio_scene("1:1", 512, reach=reach_const(0.30))
+sc_o = CL.trio_scene("1:1", 512, reach=reach_const(0.60))
+check("a Trio scene built with pupils that fit is the scene without them (the same centres, radii, rules and notches: no picture of an ordinary eye moves), and one built with a wide pupil is opened "
+      "to the distance of the rule on the base, lower in the box by what the apex lost, and still inside the canvas",
+      sc_d.centres == sc_w.centres and sc_d.R == sc_w.R and [(r.a, r.b, r.mode, r.d) for r in sc_d.rules] == [(r.a, r.b, r.mode, r.d) for r in sc_w.rules] and sc_d.box == sc_w.box
+      and abs(sc_o.rules[0].d / sc_o.R[0] - 1.625) < 1e-9 and sc_o.rules[1].d / sc_o.R[0] < CL.TRIO_FLANK + 1e-9 and CL.check(sc_o), (sc_o.rules[0].d / sc_o.R[0], sc_o.rules[1].d / sc_o.R[0]))
+eyes_tw = [C.Iris(FIX["green"], "tw0", eye_id="0" * 15 + "1"), C.Iris(FIX["blue"], "tw1", eye_id="0" * 15 + "2"), C.Iris(painted_wide(0.60), "tw2", eye_id="0" * 15 + "3")]
+reach_tw = PUPM.reach(K.pupil(eyes_tw[2]), (-1.0, 0.0))
+spec_tw = {"style": "grp.collision", "eyes": 3, "layout": "trio", "frozen": {"fronts": {"0": "front_a"}, "hairline": []}}      # the base left (the blue eye) in front of the wide pupil
+pv_tw = CX.preview(eyes_tw, spec_tw, size=1024, check=True)
+ck_tw = pv_tw.selfcheck["checks"]
+dR_tw = pv_tw.log["d_over_R"]
+check("a Trio whose base right iris has a pupil 0.60 R wide (measured %.3f R) behind the base left iris: the contacts are opened (the base is %.3f R, not 1.53), the front iris is not cut (T1 and T6: "
+      "no pixel of its zone A is another iris's), the pupil is not covered (T2), and the whole self check is green; with the measured isosceles the same eyes fail T1 and T6 by the cut"
+      % (reach_tw, dR_tw[0]),
+      0.58 < reach_tw < 0.70 and dR_tw[0] > 1.60 and ck_tw["t1"]["ok"] and ck_tw["t1"]["bad"] == 0 and ck_tw["t6"]["ok"] and ck_tw["t2"]["ok"] and pv_tw.selfcheck["ok"], (reach_tw, dR_tw, ck_tw["t1"], ck_tw["t2"]))
+with mock.patch.object(CL, "trio_distances", lambda reach_, rotate=0: (CL.TRIO_BASE, CL.TRIO_FLANK)):
+    pv_tf = CX.preview([C.Iris(FIX["green"], "tw0", eye_id="0" * 15 + "1"), C.Iris(FIX["blue"], "tw1", eye_id="0" * 15 + "2"), C.Iris(painted_wide(0.60), "tw2", eye_id="0" * 15 + "3")],
+                       spec_tw, size=1024, check=True)
+check("... and that is what the opening is for: without it (the distances of the measured isosceles forced) the same render is cut and the check says so (T1 and T6 count the same pixels, "
+      "not zero), so the test above would fail on the old geometry",
+      not pv_tf.selfcheck["checks"]["t1"]["ok"] and pv_tf.selfcheck["checks"]["t1"]["bad"] > 100 and pv_tf.selfcheck["checks"]["t1"]["bad"] == pv_tf.selfcheck["checks"]["t6"]["count"], pv_tf.selfcheck["checks"]["t1"])
+del eyes_tw, pv_tw, pv_tf
+gc.collect()
 rows18 = []
 for n in range(3, 9):
     sc = CL.family_scene(n, None, None, 1024)

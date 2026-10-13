@@ -9,7 +9,8 @@ not in a seam band or a contact strip IS the graded iris, byte for byte).
                                   (design_used "stack", fallback "stack_contrast"); a pair with a wide pupil falls back to the Kiss geometry
                                   (design_used "kiss", fallback "overlap_fallback")
   kiss       Kiss Collision       d 1.70 R on a diagonal, one iris in front, a crumbling contact, a burst of powder through the contact
-  trio       Family Colours, 3    the measured isosceles of the owner's reference (base 1.53 R, flanks 1.71 R), crumbling contacts
+  trio       Family Colours, 3    the measured isosceles of the owner's reference (base 1.53 R, flanks 1.71 R), crumbling contacts; a contact is opened only as far as the pupils
+                                  that meet there need (scenes.trio_distances: a pupil 0.60 R wide at the base would otherwise have the front iris cut)
   family     Family Colours, 4-8  zigzag, brick, ring, flower, cluster (a diagonal of three is the same engine), crumbling contacts, d 1.65 R
   chain      Infinity Chain       an S weave on every link of a chain of three to six, d 1.40 R (held: the laboratory only)
 
