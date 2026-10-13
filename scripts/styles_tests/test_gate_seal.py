@@ -817,6 +817,69 @@ finally:
 check("the master's eye record carries eye_id: the preview's id, next to preview_sha (the approved preview and the master share one id)",
       r_me["ok"] and me_rec.get("eye_id") == me_e["eye_id"] and me_rec.get("preview_sha") and me_rec["input"] == "preview", me_rec)
 
+# master_eye's colour check of a master made from the approved preview (A12 triage, finding 4): the lift the studio look gives the tone is not held against the photo
+import unittest.mock as mock  # noqa: E402
+RF = L.iris_radius_frac(1.12)
+crop_sq = Image.open(io.BytesIO(CROP_RAW)).convert("RGB").resize((1024, 1024), Image.LANCZOS)
+
+
+def tone_variant(gamma=None, swap=False):
+    """The sample crop with its tone lifted by a gamma (the studio look: the same colour, lighter) or with red and blue exchanged (a colour that moved), as JPEG bytes."""
+    a = np.asarray(crop_sq, np.float32)
+    a = np.stack([a[..., 2], a[..., 1], a[..., 0]], -1) if swap else (a / 255.0) ** gamma * 255.0
+    b = io.BytesIO()
+    Image.fromarray(np.clip(a + 0.5, 0, 255).astype(np.uint8)).save(b, "JPEG", quality=95, subsampling=0)
+    return b.getvalue()
+
+
+def numbers(jpeg):
+    """(full dE00, colour-only dE00, L* shift) of a preview against the photo crop, as master_eye measures them."""
+    base_ = ME._base(b64(CROP_RAW), 1.12)[0]
+    return L.qa_colour(ME._preview(b64(jpeg), 1.12), base_, RF, parts=True)
+
+
+def master_of(order, preview_jpeg, tone_on=True):
+    """/api/master_eye's own function on the sample crop and this preview, the image model stubbed to follow the preview (as it does: preview_qa says follow 0.95 to 0.96), the tone switch as given."""
+    real = ME._render_4k
+    ME._render_4k = lambda base_, order_, eye_, prompt=None: (Image.open(io.BytesIO(preview_jpeg)).convert("RGB").resize((1024, 1024), Image.LANCZOS), 1, {"prompt": 0, "output": 0})
+    try:
+        with mock.patch.object(L, "QA_TONE_ON", tone_on):
+            r_ = ME.master_eye({"crop": b64(CROP_RAW), "preview": b64(preview_jpeg), "pad": 1.12, "order": order, "eye": 1, "ticket": L.mint_ticket(store.unlock_kind(order))})
+    finally:
+        ME._render_4k = real
+    return r_, store.get_json(f"orders/{order}/eye_1.json")
+
+
+pv_lift, pv_wild, pv_swap = tone_variant(0.6), tone_variant(0.4), tone_variant(swap=True)
+n_lift, n_wild, n_swap = numbers(pv_lift), numbers(pv_wild), numbers(pv_swap)
+base_img = ME._base(b64(CROP_RAW), 1.12)[0]
+lift_img, wild_img, swap_img = (ME._preview(b64(j), 1.12) for j in (pv_lift, pv_wild, pv_swap))
+q_old, q_new = L.colour_qa("t", result=lift_img, source=base_img, r_frac=RF), L.colour_qa("t", result=lift_img, source=base_img, r_frac=RF, tone=True)
+q_wild, q_swap = L.colour_qa("t", result=wild_img, source=base_img, r_frac=RF, tone=True), L.colour_qa("t", result=swap_img, source=base_img, r_frac=RF, tone=True)
+with mock.patch.object(L, "QA_TONE_ON", False):
+    q_off = L.colour_qa("t", result=lift_img, source=base_img, r_frac=RF, tone=True)
+check("the colour check of a preview master: a tone lifted by the studio look (the d01 case: dE00 %.1f of which colour only %.1f, L* %+.1f, as the owner's d01 read 14.7, 1.2, +16.6) fails the full limit and passes "
+      "with tone, a tone moved by %+.1f L* or a colour that moved (colour-only dE00 %.1f) fails with tone too, the switch off gives back the full limit, and the tone record carries the two numbers"
+      % (n_lift[0], n_lift[1], n_lift[2], n_wild[2], n_swap[1]),
+      n_lift[0] > L.QA_RING_DE00_MAX and n_lift[1] < 4.0 and 14.0 < n_lift[2] < L.QA_TONE_DL_MAX and n_wild[2] > L.QA_TONE_DL_MAX and n_swap[1] > L.QA_RING_DE00_MAX
+      and q_old["ok"] is False and q_new["ok"] is True and q_wild["ok"] is False and q_swap["ok"] is False and q_off["ok"] is False
+      and q_new["hue_de00"] == round(n_lift[1], 2) and q_new["dl"] == round(n_lift[2], 2) and "dl" not in q_old and q_old["ring_de00"] == q_new["ring_de00"], (n_lift, n_wild, n_swap, q_old, q_new))
+r_lift, rec_lift = master_of("lab-20261013-tone-lift", pv_lift)
+r_off, rec_off = master_of("lab-20261013-tone-off", pv_lift, tone_on=False)
+check("/api/master_eye on a preview lighter than the photo by the studio look (L* %+.1f): the master follows the preview (preview check ok, L* %+.2f against it), its photo check is ok with the tone numbers "
+      "recorded and the order is not held; with the switch off the same master is held for the lightness alone (qa not ok, needs_review), as before"
+      % (n_lift[2], (rec_lift.get("preview") or {}).get("dl") or 0.0),
+      r_lift["ok"] and rec_lift["preview"]["ok"] is True and rec_lift["qa"]["ok"] is True and rec_lift["qa"].get("dl") is not None and r_lift["needs_review"] is False and not store.needs_review(rec_lift)
+      and rec_off["preview"]["ok"] is True and rec_off["qa"]["ok"] is False and r_off["needs_review"] is True and "dl" not in rec_off["qa"], (rec_lift, rec_off))
+r_wild, rec_wild = master_of("lab-20261013-tone-wild", pv_wild)
+r_swap, rec_swap = master_of("lab-20261013-tone-swap", pv_swap)
+check("... a preview lifted past what the studio look does (L* %+.1f) and a preview whose colour moved (colour-only dE00 %.1f) are still held for a person" % (n_wild[2], n_swap[1]),
+      rec_wild["qa"]["ok"] is False and r_wild["needs_review"] is True and r_swap["needs_review"] is True and rec_swap["qa"]["ok"] is False, (rec_wild["qa"], rec_swap["qa"]))
+callers = {f: [ln for ln in open(os.path.join(REPO, *f.split("/")), encoding="utf-8").read().splitlines() if "colour_qa(" in ln and "tone=" in ln]
+           for f in ("api/master_eye.py", "api/enhance.py", "api/compose.py", "api/master_compose.py", "api/_lib/styles/steps.py")}
+check("only master_eye asks for the tone rule, and only for a master made from a preview (tone=pv is not None): the preview of /api/enhance, the compose steps and the art step read the colour as before",
+      len(callers["api/master_eye.py"]) == 1 and "tone=pv is not None" in callers["api/master_eye.py"][0] and not any(callers[f] for f in callers if f != "api/master_eye.py"), callers)
+
 # ============================================================================================ 11. the other readers still work
 section("11. nothing else changed")
 check("no module of the new package writes a file, no secret is in the new files (no key, no token, no ticket value)",

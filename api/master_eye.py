@@ -407,7 +407,7 @@ def _master_eye(body, stage):
                 tone["pupil"] = pupil
             pqa = L.preview_qa(f"master {folder} eye {eye}", out, pv, photo=base, r_frac=r_frac, follow=follow,
                                reg=reg, lock=tone)
-        qa = L.colour_qa(f"master {folder} eye {eye}", result=out, source=base, r_frac=r_frac)
+        qa = L.colour_qa(f"master {folder} eye {eye}", result=out, source=base, r_frac=r_frac, tone=pv is not None)       # a master of the approved preview: its tone is the preview's (L.QA_TONE_*)
         fid = L.ssim_lowfreq(base, out, r_frac)
         data = store.jpeg_bytes(out, 95)
         del out

@@ -3815,6 +3815,14 @@ QA_RING_DE00_MAX = 10.0      # median ring dE00 above this = the render no longe
                              # after chroma_lock is within 0.6-1.3 of its source (3.2-5.9 before the lock), so
                              # what is left is the model relighting the iris: 215120 moved L* -1.6 (2.8, reads
                              # true), 215102 +13.9 (13.2) and 215208 +18.0 (16.0) came back visibly paler
+# A master made from the approved preview is the preview at full size (preview_lock gives it the preview's tone: -0.43 to -0.49 L* on the four masters of the A12 run, 2026-10-12) and preview_qa
+# checks exactly that, so the check of such a master against the PHOTO reads what the studio look did to the photo, which the customer saw and approved. That look lifts the iris ring: +9.6 L*
+# on the median of 22 screened eyes (-3.1 to +17.0, one photo +30.8), so the full dE00 limit above held 7 of the 22 for lightness alone, among them the owner's own d01 (colour-only dE00 1.2,
+# L* +16.6, held). With QA_TONE on, a master made from a preview fails this check for a COLOUR that moved (the colour-only dE00 against the photo above QA_RING_DE00_MAX) or a TONE that moved
+# further than the studio look moves one (more than QA_TONE_DL_MAX L*: 20 against 17.0 at most on 21 of the 22 eyes, the 22nd at 30.8); a master made without a preview keeps the full limit
+# (it is the model's own second opinion of the photo, as above). SNAPEYES_QATONE=off (or 0 / false / no) restores the full limit everywhere. Read once at import.
+QA_TONE_DL_MAX = 20.0
+QA_TONE_ON = (os.environ.get("SNAPEYES_QATONE") or "on").strip().lstrip("\ufeff").lower() not in ("off", "0", "false", "no")
 PUPIL_NEUTRAL_MAX = 1.5      # |Cb| and |Cr| of the pupil core: every professional print measured sits inside this
 PUPIL_QA_DARK = 8.0          # an off-centre pupil's core is centred on its pixels this close to its darkest (grey
                              # levels)
@@ -3922,18 +3930,26 @@ def pupil_neutral(graded, fill=None, trim=None):
     c = pupil_core_chroma(graded, fill, trim)
     return None if c is None else bool(abs(c[1]) <= PUPIL_NEUTRAL_MAX and abs(c[2]) <= PUPIL_NEUTRAL_MAX)
 
-def colour_qa(stage, result=None, source=None, r_frac=None, graded=None):
+def colour_qa(stage, result=None, source=None, r_frac=None, graded=None, tone=False):
     """Colour QA for one stage of the chain: logged and returned, never raised and never blocking, because
-    there are no orders to hold yet. ok is true only when something was measured and nothing measured failed."""
+    there are no orders to hold yet. ok is true only when something was measured and nothing measured failed.
+    tone: the result is a master made from the approved preview (QA_TONE_*): the lightness the studio look gave it is not held
+    against the photo, only a colour that moved or a tone that moved further than that look does; the record then also says
+    the two numbers it was judged on (hue_de00, dl)."""
     try:
-        de, note = None, ""
+        de, note, colour_ok, extra = None, "", None, {}
         if result is not None and source is not None:
             de, hue_only, dl = qa_colour(result, source, r_frac, parts=True)
             note += f" colour-only dE00 {hue_only:.2f} lightness shift {dl:+.1f}"
+            if tone and QA_TONE_ON:
+                colour_ok = hue_only <= QA_RING_DE00_MAX and abs(dl) <= QA_TONE_DL_MAX
+                extra = {"hue_de00": round(hue_only, 2), "dl": round(dl, 2)}
+            else:
+                colour_ok = de <= QA_RING_DE00_MAX
         core = None if graded is None else pupil_core_chroma(graded)
         pn = None if core is None else bool(abs(core[1]) <= PUPIL_NEUTRAL_MAX and abs(core[2]) <= PUPIL_NEUTRAL_MAX)
-        ok = (de is not None or pn is not None) and (de is None or de <= QA_RING_DE00_MAX) and pn is not False
-        qa = {"ring_de00": None if de is None else round(de, 2), "pupil_neutral": pn, "ok": bool(ok)}
+        ok = (de is not None or pn is not None) and colour_ok is not False and pn is not False
+        qa = {"ring_de00": None if de is None else round(de, 2), "pupil_neutral": pn, "ok": bool(ok), **extra}
         if core is not None:
             note += f" pupil core Y {core[0]:.1f} Cb {core[1]:+.2f} Cr {core[2]:+.2f}"
     except Exception as e:  # noqa: a QA fault must never cost the customer their picture
