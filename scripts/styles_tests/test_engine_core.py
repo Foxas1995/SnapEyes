@@ -130,7 +130,7 @@ def module_level_growers(path, allow=()):
             out += [t.id for t in targets if isinstance(t, ast.Name) and t.id not in allow]
     return out
 OWN = ["__init__.py", "core.py", "layouts.py", "text.py", "plates.py", "atlas.py", "costs.py", "selfcheck.py", "matter.py"]    # this package's; each later one adds its own checks (the singles family: test_goldens_singles.py)
-growers = {m: module_level_growers(os.path.join(STYLES, m), allow={"MASTER", "CAPPED", "PREVIEW", "ASPECTS", "N_RANGE", "DEFAULT_CAPTION", "_FAMILY_FN", "TEXT_KINDS"})
+growers = {m: module_level_growers(os.path.join(STYLES, m), allow={"MASTER", "CAPPED", "PREVIEW", "ASPECTS", "N_RANGE", "DEFAULT_CAPTION", "_FAMILY_FN", "TEXT_KINDS", "LOOK_FAMILIES"})
            for m in OWN}
 check("no foundation module (core, layouts, text, plates, atlas, costs, selfcheck, matter) keeps a module level dict, list or set that can grow (the baked cost "
       "table and the constant tables aside): caches are BoundedCache, so a warm instance cannot leak (rule c of the Eng review)", not any(growers.values()), {m: g for m, g in growers.items() if g})
