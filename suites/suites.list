@@ -53,3 +53,4 @@ v3cutover:scripts/styles_tests:test_cutover.py
 v3rel:scripts/styles_tests:test_release_fixes.py
 v3retry2:scripts/styles_tests:test_retry2.py
 v3nonce:scripts/styles_tests:test_ticket_nonce.py
+v3gate2:scripts/styles_tests:test_gate2.py

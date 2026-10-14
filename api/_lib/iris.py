@@ -3844,6 +3844,10 @@ QA_RING_DE00_MAX = 10.0      # median ring dE00 above this = the render no longe
 # (it is the model's own second opinion of the photo, as above). SNAPEYES_QATONE=off (or 0 / false / no) restores the full limit everywhere. Read once at import.
 QA_TONE_DL_MAX = 20.0
 QA_TONE_ON = (os.environ.get("SNAPEYES_QATONE") or "on").strip().lstrip("\ufeff").lower() not in ("off", "0", "false", "no")
+# SNAPEYES_GATE2 (DG6 step 2a, 2026-10-13): the three added detectors of the lid rule of the restoration gate (api/_lib/styles/gate.py lid_extra: lid_colour_wedge, lid_lash_lines,
+# lid_ring_structure). PREPARED, OFF BY DEFAULT: unset, empty, off, 0, false and no are off; on, 1, yes or true turns them on. Read once at import (BOM safe). It is read here and not in
+# gate.py because the style package reads no environment (no os in its modules, test_gate_seal.py); gate.lid asks L.GATE2_ON when it runs, so every path that measures a profile agrees.
+GATE2_ON = (os.environ.get("SNAPEYES_GATE2") or "").strip().lstrip("\ufeff").strip().lower() not in ("", "off", "0", "false", "no")
 PUPIL_NEUTRAL_MAX = 1.5      # |Cb| and |Cr| of the pupil core: every professional print measured sits inside this
 PUPIL_QA_DARK = 8.0          # an off-centre pupil's core is centred on its pixels this close to its darkest (grey
                              # levels)
