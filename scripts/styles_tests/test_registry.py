@@ -274,13 +274,80 @@ with patched(public=scenario, built=("singles", "universe", "collision")):
           {e["id"] for e in C.public_catalogue()} == {"solo.powder", "solo.universe", "solo.gold", "solo.radiance", "duo.kiss_collision", "duo.collision_infinity", "solo.elements", *LEGACY}
           and all(set(e["stages"].values()) <= {"preview", "live"} for e in C.public_catalogue())
           and not any(e["id"] in ("duo.universe", "duo.reflection", "grp.collision", "pet.solo") for e in C.public_catalogue()))
+POLICY_TABLE = {         # the gate policy of every id of the registry after the change of 2026-10-14 (the owner's decision: Clean Iris and Celestial Gold, advisory before, are the only two that moved)
+    "solo.clean": "hard", "solo.powder": "advisory", "solo.universe": "hard", "solo.splash": "advisory", "solo.elements": "advisory", "solo.radiance": "advisory", "solo.gold": "hard",
+    "duo.collision_infinity": "hard", "duo.clean": "hard", "duo.kiss_collision": "hard", "duo.universe": "hard", "duo.reflection": "hard", "duo.radiance": "advisory", "duo.gold": "advisory",
+    "grp.collision": "hard", "grp.chain": "hard", "grp.universe": "hard", "grp.reflection": "hard", "grp.radiance": "advisory", "grp.clean": "hard", "pet.solo": "hard", "pet.clean": "hard",
+    **{i: "none" for i in LEGACY},
+}
+check("the gate policy of every id of the registry is the table: only Clean Iris and Celestial Gold moved (advisory to hard, 2026-10-14); Universe, the pairs, the families and the pet ids are hard as before, "
+      "Powder Burst, Splash, Elements, Radiance and the two planned advisory pairs and groups still only warn, the six legacy ids have none",
+      {i: d["gate"] for i, d in R.STYLES.items()} == POLICY_TABLE and len(POLICY_TABLE) == len(R.STYLES) == 28, {i: d["gate"] for i, d in R.STYLES.items() if POLICY_TABLE.get(i) != d["gate"]})
+# 2026-10-14, the owner's decision: Clean Iris and Celestial Gold are HARD (they were advisory: a failing eye only warned and the set could still be bought, so a delivered file kept
+# lashes and lid skin at the rim). The rule is the same for every hard style (catalogue._problem); what is new is who it holds back: a one-eye set whose eye fails the lid rule.
+# Powder Burst, Splash and Radiance stay advisory, Universe stays hard with the fill rule.
+def scenario_lid(s):
+    for sid in ("solo.clean", "solo.powder", "solo.splash", "solo.gold", "solo.universe"):
+        s[sid]["stage"] = "live"
+    s["solo.radiance"]["stage"] = "preview"
+    for sid in LEGACY:                      # the world after the cutover: the six old ids are not offered (the pre-cutover shim of this suite keeps them live)
+        s[sid]["stage"] = "retired"
+
+
+def scenario_prod(s):
+    # the production catalogue today: the two hard styles are the only ones that can be bought (the 4K plates of Powder Burst and Splash are not in storage, so the owner has not ticked them)
+    for sid in ("solo.clean", "solo.gold"):
+        s[sid]["stage"] = "live"
+    for sid in ("solo.powder", "solo.splash", "solo.radiance"):
+        s[sid]["stage"] = "preview"
+    for sid in LEGACY:
+        s[sid]["stage"] = "retired"
+
+
+LID_FAIL = [{"cls": "own", "gate": {"lid": {"ok": False, "why": ["lid_sectors_inner"]}, "fill": {"ok": True}}}]
+LID_FAIL_BROWN = [{"cls": "dark_brown", "gate": {"lid": {"ok": False, "why": ["lid_ring_outliers"]}, "fill": {"ok": True}}}]
+PASS_BROWN = [{"cls": "dark_brown", "gate": GATE_OK}]
+with patched(public=scenario_lid, built=("singles", "universe")):
+    t_pass = {x["id"]: x for x in C.tiles_for(1, [{"cls": "own", "gate": GATE_OK}])}
+    t_lid = {x["id"]: x for x in C.tiles_for(1, LID_FAIL)}
+    check("the registry says hard for Clean Iris and Celestial Gold and advisory for Powder Burst, Splash and Radiance; Universe stays hard with the fill rule, and the tile rows carry both",
+          all(R.STYLES[i]["gate"] == "hard" for i in ("solo.clean", "solo.gold", "solo.universe")) and all(R.STYLES[i]["gate"] == "advisory" for i in ("solo.powder", "solo.splash", "solo.radiance"))
+          and (t_lid["solo.clean"]["gate"], t_lid["solo.clean"]["rule"], t_lid["solo.gold"]["gate"], t_lid["solo.gold"]["rule"]) == ("hard", "lid", "hard", "lid")
+          and (t_lid["solo.universe"]["gate"], t_lid["solo.universe"]["rule"]) == ("hard", "fill") and (t_lid["solo.powder"]["gate"], t_lid["solo.splash"]["gate"]) == ("advisory", "advisory"),
+          {k: (v["gate"], v["rule"]) for k, v in t_lid.items()})
+    check("a one-eye set whose eye fails the lid rule: Clean Iris and Celestial Gold are held back with the reason gate; Powder Burst, Splash and Universe (it reads the fill rule, which passes) and the Soon Radiance "
+          "stay available",
+          all(not t_lid[i]["available"] and t_lid[i]["why"] == "gate" for i in ("solo.clean", "solo.gold"))
+          and all(t_lid[i]["available"] and t_lid[i]["why"] is None for i in ("solo.powder", "solo.splash", "solo.universe", "solo.radiance")),
+          {k: (v["available"], v["why"]) for k, v in t_lid.items()})
+    check("a one-eye set that passes the lid rule holds nothing back (the same two tiles are available, as before the change), and an eye that fails only the fill rule still holds only Universe",
+          all(t_pass[i]["available"] and t_pass[i]["why"] is None for i in ("solo.clean", "solo.gold", "solo.powder", "solo.splash", "solo.universe"))
+          and {k: v["why"] for k, v in {x["id"]: x for x in C.tiles_for(1, bad_fill)}.items() if not v["available"]} == {"solo.universe": "gate"})
+    check("an eye with no sealed gate value (a version 1 seal) is held back from Clean Iris and Celestial Gold too, with the reason reseal; the advisory styles are not held for it",
+          {x["id"]: x["why"] for x in C.tiles_for(1, [{"cls": "own"}])} == {"solo.powder": None, "solo.universe": "reseal", "solo.splash": None, "solo.gold": "reseal", "solo.radiance": None, "solo.clean": "reseal"}
+          and C.why_unavailable("solo.clean", 1, LID_FAIL) == "gate" and C.why_unavailable("solo.gold", 1, LID_FAIL_BROWN) == "gate" and C.why_unavailable("solo.powder", 1, LID_FAIL) is None
+          and C.why_unavailable("solo.splash", 1, LID_FAIL) is None and C.why_unavailable("solo.clean", 1, [{"cls": "own", "gate": GATE_OK}]) is None and C.why_unavailable("solo.clean", 1) is None)
+    p_brown_ok, p_brown_lid = C.tile_list(1, PASS_BROWN), C.tile_list(1, LID_FAIL_BROWN)
+    check("the recommended tile for dark brown eyes is Celestial Gold while the eye passes and moves on when the eye fails the lid rule (never a held tile, no reason line from the pick table of a style that was "
+          "not picked): the first buyable tile, Powder Burst",
+          (p_brown_ok["pick"], p_brown_ok["reason"]) == ("solo.gold", "reason.solo_gold.dark_brown") and (p_brown_lid["pick"], p_brown_lid["reason"]) == ("solo.powder", None)
+          and C.pick_for(1, LID_FAIL) == "solo.powder", (p_brown_lid["pick"], p_brown_lid["reason"]))
+with patched(public=scenario_prod, built=("singles",)):
+    t_prod = C.tile_list(1, LID_FAIL)
+    row_prod = {x["id"]: x for x in t_prod["tiles"]}
+    check("production today (only Clean Iris and Celestial Gold live, the advisory styles Soon): an eye that fails the lid rule has NO style it can buy: the pick is null, both live tiles are held back with the reason "
+          "gate and the Soon ones are still drawn (available), so the page can show a free preview and the retake state; a passing eye is recommended Celestial Gold, as before",
+          t_prod["pick"] is None and t_prod["reason"] is None and not row_prod["solo.clean"]["available"] and not row_prod["solo.gold"]["available"]
+          and row_prod["solo.clean"]["stage"] == row_prod["solo.gold"]["stage"] == "live" and all(row_prod[i]["available"] and row_prod[i]["stage"] == "preview" for i in ("solo.powder", "solo.splash", "solo.radiance"))
+          and C.tile_list(1, PASS_BROWN)["pick"] == "solo.gold" and C.tile_list(1, [{"cls": "own", "gate": GATE_OK}])["pick"] == "solo.gold", (t_prod["pick"], {k: (v["stage"], v["available"]) for k, v in row_prod.items()}))
 with patched(public=lambda s: s["solo.powder"].update(stage="live"), built=("singles",)):
     check("engine_for: module, design, looks, clean, gate rules, plates, atlas, canvases, the default plan of one art step, fill and work sizes",
           C.engine_for("solo.powder", 1) == {"module": "singles", "design": "powder", "looks": {}, "clean": 0, "gate_rules": "lid", "plates": ["P-SN-CLOUD"],
                                              "atlas": ["chips"], "canvases": ["1:1", "4:5", "9:19.5"], "steps": ["art"], "fill_side": 0, "work_side": 4096}
           and C.engine_for("solo.powder", 2) is None and C.engine_for("duo.reflection", 2) is None and C.engine_for("nothing", 1) is None
           and C.engine_for("solo.universe", 1)["looks"]["vortex"] == "lab" and C.engine_for("duo.clean", 2)["clean"] == 1
-          and C.gate_policy("solo.universe") == "hard" and C.gate_policy("solo.clean") == "advisory" and C.gate_policy("studio_black") == "none"
+          and C.gate_policy("solo.universe") == "hard" and C.gate_policy("solo.clean") == "hard" and C.gate_policy("solo.gold") == "hard" and C.gate_policy("solo.powder") == "advisory"
+          and C.gate_policy("studio_black") == "none"
           and C.gate_policy("nothing") is None)
 check("class_style: the first live style of a class (studio_black, celestial_gold)", C.class_style("black") == "studio_black" and C.class_style("art") == "celestial_gold")
 with patched(public=lambda s: [s[i].update(stage="retired") for i in LEGACY]):

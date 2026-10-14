@@ -11,7 +11,7 @@ import { StylePicker, RetakePanel, emptyPicker, type PickerModel } from '../../s
 import { ResultView, glyphPoints } from '../../src/try/ResultView';
 import { BuyCard } from '../../src/try/BuyCard';
 import { Words, emptyWords } from '../../src/try/Words';
-import { NO_OPTS, buyState, retakeView, advisoryEyes, type Catalog, type ServerEye, type ServerTile } from '../../src/try/picker';
+import { NO_OPTS, buyState, retakeView, advisoryEyes, showsPrice, type Catalog, type ServerEye, type ServerTile } from '../../src/try/picker';
 import { LAYOUT_IDS } from '../../src/shared/layouts';
 import type { Art, Eye } from '../../src/try/multi';
 
@@ -47,7 +47,7 @@ export async function run(): Promise<Row[]> {
   // ---- one eye: the release 1 singles
   const singles = [
     tile('solo.powder', { name: 'Powder Burst', slug: 'powder-burst' }), tile('solo.universe', { name: 'Universe', slug: 'universe', gate: 'hard', rule: 'fill', looks: { echo: 'live', vortex: 'live' } }),
-    tile('solo.radiance', { name: 'Radiance', slug: 'radiance', stage: 'preview' }), tile('solo.clean', { name: 'Clean Iris', slug: 'clean-iris', price_class: 'black' }),
+    tile('solo.radiance', { name: 'Radiance', slug: 'radiance', stage: 'preview' }), tile('solo.clean', { name: 'Clean Iris', slug: 'clean-iris', price_class: 'black', gate: 'hard' }),   // hard since 2026-10-14, as the registry says
   ];
   const priceOf = (t: ServerTile) => (t.stage === 'live' ? (t.price_class === 'black' ? 'P-BLACK' : 'P-ART') : null);
   const m1 = model(1, singles, [eye(1)], { priceOf, look: 'echo' }, 'solo.powder', 'reason.solo_powder.own');
@@ -129,6 +129,48 @@ export async function run(): Promise<Row[]> {
   const hw = buy({ wordsBlocked: true, waiver: true });
   check('a word the artwork font cannot draw shuts the button and says why', /data-testid="buy"[^>]*disabled/.test(hw) && text(hw).includes('Please fix the words on the artwork first'));
   check('while the tile list is asked for the card waits and says so; with nothing to select and nothing loading it is not shown at all', has(buy({ loading: true, state: { kind: 'none' } }), 'buy-wait') && buy({ state: { kind: 'none' } }) === '');
+
+  // ---- 2026-10-14: ONE eye that fails the lid rule while Clean Iris and Celestial Gold are hard. In production those two are live and the advisory styles (Powder Burst,
+  // Splash) open soon until their 4K plates are in storage, so the eye is held back from every style that can be bought: the page must say what to do and must not offer
+  // a way that is false ("choose another", "buy anyway"). The server's tile list is stood in for by the tiles it sends for such an eye (api/_lib/catalogue.py tile_row).
+  const liOf = (h: string, slug: string) => { const at = h.indexOf(`data-testid="tile-${slug}"`); return at < 0 ? '' : h.slice(at, h.indexOf('</li>', at)); };
+  const priceOfReal = (t: ServerTile) => (showsPrice(1, t) ? (t.price_class === 'black' ? 'P-BLACK' : 'P-ART') : null);      // the page's own rule: a price only on a tile that can be bought now
+  const goldHeld = tile('solo.gold', { name: 'Celestial Gold', slug: 'celestial-gold', gate: 'hard', available: false, why: 'gate' });
+  const cleanHeld = { ...singles[3], available: false, why: 'gate' } as ServerTile;
+  const failEye = [bad(1, ['lid_lash_lines'])];
+  const soonList = [tile('solo.powder', { name: 'Powder Burst', slug: 'powder-burst', stage: 'preview' }), tile('solo.splash', { name: 'Splash', slug: 'splash', stage: 'preview' }), goldHeld, singles[2], cleanHeld];
+  const mLid = model(1, soonList, failEye);
+  const hLid = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mLid)));
+  const hLidBuy = buy({ state: buyState({ n: 1, tiles: soonList, selected: mLid.selected }), styleName: 'Powder Burst', advisory: [1] });
+  const tLid = text(hLid + hLidBuy);
+  check('a single eye that fails the lid rule: Clean Iris and Celestial Gold are held ("Retake eye 1 first", no picture, no choice), Powder Burst, Splash and Radiance are drawn with the Soon chip, nothing is recommended and no group line says the group opens soon',
+    (hLid.match(/data-state="gate"/g) ?? []).length === 2 && (tLid.match(/Retake eye 1 first/g) ?? []).length === 2 && (hLid.match(/data-state="soon"/g) ?? []).length === 3 && (hLid.match(/data-testid="soon"/g) ?? []).length === 3
+    && !has(hLid, 'recommended') && !has(hLid, 'group-soon') && ['clean-iris', 'celestial-gold'].every((slug) => { const li = liOf(hLid, slug); return li.includes('aria-disabled="true"') && !li.includes('aria-pressed') && !li.includes('<img'); }), hLid.slice(0, 200));
+  check('... the way out is on the page: the retake state names the eye, says what is in the ring, gives the tip and one retake button, says the greyed styles wait for a cleaner iris, and (nothing can be bought) offers the e-mail',
+    has(hLid, 'retake-state') && tLid.includes('Your eye needs a retake') && tLid.includes('An eyelid, a lash or skin is still inside the ring of the iris.') && tLid.includes('lift the upper lid gently') && has(hLid, 'retake-eye-1')
+    && tLid.includes('Retake this eye') && tLid.includes('Styles that need a cleaner iris are greyed out until then.') && has(hLid, 'manual-route') && /href="mailto:info@snapeyes.com"/.test(hLid));
+  check('... the free preview on screen is a Soon style and says so; the warning of the advisory style stays under the picture',
+    has(hLid, 'artwork') && tLid.includes('Preview reduced and watermarked. This style opens soon.') && has(hLid, 'advisory-note') && tLid.includes('An eyelid or lash is still in the ring of your iris. Retake it for a cleaner result.'));
+  check('... the buy card sends the customer to the retake state: one line, no price, no waiver, no button, and it is not the "choose another" line (every other style that can be ordered is greyed out)',
+    has(hLidBuy, 'buy-retake') && text(hLidBuy).includes(COPY.en.picker.retakeBuy(1)) && !has(hLidBuy, 'buy') && !has(hLidBuy, 'waiver') && !has(hLidBuy, 'price') && !has(hLidBuy, 'buy-soon') && !text(hLidBuy).includes(COPY.en.picker.soonBuy)
+    && !/\d{4}|€|\d[,.]\d\d/.test(text(hLidBuy).replace('Price for this artwork', '')), text(hLidBuy));
+  check('... nothing on the page offers a way that is false: no "choose another", no "buy anyway", no "order now" for a set that cannot order, and no price is printed on any tile',
+    !/choose another|buy anyway|order anyway|order now|to order now/i.test(tLid.replace(COPY.en.picker.retakeBuy(1), '')) && !has(hLid, 'tile-price'), tLid.match(/choose another|buy anyway|order anyway|order now/i)?.[0] ?? '');
+  // the same eye once Powder Burst and Splash are live and ticked: they warn and sell, the hard two stay greyed, nothing is a dead end
+  const sellList = [tile('solo.powder', { name: 'Powder Burst', slug: 'powder-burst' }), tile('solo.splash', { name: 'Splash', slug: 'splash' }), goldHeld, singles[2], cleanHeld];
+  const mSell = model(1, sellList, failEye, { priceOf: priceOfReal }, 'solo.powder', 'reason.solo_powder.own');
+  const hSell = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mSell)));
+  const hSellBuy = buy({ state: buyState({ n: 1, tiles: sellList, selected: mSell.selected }), advisory: [1] });
+  check('a single eye that fails the lid rule with Powder Burst and Splash live: they warn and sell (the warning is above the waiver, the button is there), Clean Iris and Celestial Gold stay greyed, the e-mail is not offered (no dead end), and the card does not say retake',
+    has(hSell, 'recommended') && (text(hSell).match(/Retake eye 1 first/g) ?? []).length === 2 && has(hSell, 'retake-state') && !has(hSell, 'manual-route') && has(hSell, 'advisory-note')
+    && has(hSellBuy, 'buy') && has(hSellBuy, 'waiver') && hSellBuy.indexOf('data-testid="buy-advisory"') > 0 && hSellBuy.indexOf('data-testid="buy-advisory"') < hSellBuy.indexOf('data-testid="waiver"') && !has(hSellBuy, 'buy-retake'));
+  // a set that passes: the policy changes nothing for it
+  const passList = [tile('solo.powder', { name: 'Powder Burst', slug: 'powder-burst' }), tile('solo.gold', { name: 'Celestial Gold', slug: 'celestial-gold', gate: 'hard' }), { ...singles[3] } as ServerTile];
+  const mPass = model(1, passList, [eye(1)], { priceOf: priceOfReal }, 'solo.powder');
+  const hPass = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mPass)));
+  check('a set that passes the lid rule: nothing is held back or warned, the two hard styles are ready and carry their price, no retake state and no manual route',
+    !has(hPass, 'retake-state') && !has(hPass, 'advisory-note') && !has(hPass, 'manual-route') && (hPass.match(/data-state="ready"/g) ?? []).length === 3 && (hPass.match(/data-testid="tile-price"/g) ?? []).length === 3
+    && !has(buy({ state: buyState({ n: 1, tiles: passList, selected: mPass.selected }) }), 'buy-retake'));
 
   // ---- the notes under the picture: what the server said about the picture it drew
   const stackArt: Art = { ...art(), fallback: 'stack_contrast' };
@@ -261,6 +303,23 @@ export async function run(): Promise<Row[]> {
           && !/read as round|made for round/.test(pupilRender)));
       })());
     check(`${lang}: the held tile, the Soon note and the changed lines are written out`, P.retakeFirst(3).includes('3') && P.soonBuy.length > 20 && P.countSoon(2).includes('2') && P.changed.eyes('A', 'B', 3).includes('A') && P.changed.gate('A', 'B', 2).includes('B') && P.advisory([1, 3], 4).includes('3') && P.retake.title([2, 3], 6).includes('3'));
+    check(`${lang}: the buy card of a single eye held back from every style it could buy (retake) is written out for one eye and for more, is not the "choose another" line, and speaks this language`,
+      (() => {
+        const en = COPY.en.picker;
+        const rb1 = P.retakeBuy(1), rb3 = P.retakeBuy(3);
+        const card = text(buy({ state: { kind: 'retake' }, eyes: [eyeObj('a')] }));
+        const card3 = text(buy({ state: { kind: 'retake' }, eyes: [eyeObj('a'), eyeObj('b'), eyeObj('c')] }));
+        const base = rb1.length > 40 && rb3.length > 40 && rb1 !== rb3 && rb1 !== P.soonBuy && rb3 !== P.soonBuy && card.includes(rb1) && card3.includes(rb3) && !card.includes(P.soonBuy);
+        return base && (lang === 'en' || (rb1 !== en.retakeBuy(1) && rb3 !== en.retakeBuy(3) && !/Nothing can be|To order|retake/i.test(card + card3)));
+      })());
+    check(`${lang}: the reseal sentence (an eye with no sealed gate value: an unmeasured profile as well as an older seal, which Clean Iris and Celestial Gold now hold back too) names no cause: it says the preview could not be checked and to retake, for one eye and for more`,
+      (() => {
+        const r1 = P.retake.reseal([1], 1), r2 = P.retake.reseal([2], 3), r3 = P.retake.reseal([1, 3], 4);
+        const view = retakeView({ tiles: [tile('solo.clean', { gate: 'hard', available: false, why: 'reseal' })], eyes: [eye(1, { gate: { lid: null, fill: null } })], selected: undefined })!;
+        const panel = text(renderToStaticMarkup(createElement(RetakePanel, { view, total: 1, onRetake: noop, onManual: noop })));
+        return r1.length > 25 && r2.length > 25 && r3.length > 25 && r1 !== r2 && r2 !== r3 && panel.includes(r1) && has(renderToStaticMarkup(createElement(RetakePanel, { view, total: 1, onRetake: noop, onManual: noop })), 'retake-reseal')
+          && !/older version|ältere|älteren|senesn|régebbi/i.test(r1 + r2 + r3);
+      })());
     check(`${lang}: the same twelve option and word labels exist and none is empty`, [P.options.swap, P.options.rotate, P.options.earlier, P.options.later, P.options.look, P.names.title, P.names.date, P.names.family, P.names.datePlaceholder, P.stack, P.widePupil, P.groupSoon].every((s) => s.trim().length > 2));
   }
   setCopyLang('en');

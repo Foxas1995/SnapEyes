@@ -18,8 +18,10 @@ the set) the funnel gives, always with n:
     unknown        sets whose gate was unknown (not in a rate)
 The opening line of a count of two or more eyes (the owner's criterion, 1.6.2 rule 2): at least OPEN_MIN_SETS first-photo sets, first-photo pass at least
 OPEN_FIRST, at least OPEN_RETAKE counting one retake; green only when all three hold, and it says which does not (n_low, first_low, retake_low). One eye has
-no line: a one eye set always has an advisory style to buy. The owner may open earlier knowingly: the numbers stand beside the switch and the audit entry
-keeps them.
+no line: its criterion was that a one eye set always has an advisory style to buy. Since 2026-10-14 Clean Iris and Celestial Gold are hard like the other
+styles, so a one eye set that fails the lid rule is held back from them and has only the advisory styles (Powder Burst, Splash) to buy once those are live: the
+line stays absent (a criterion for one eye is the owner's to set), and the funnel rows of one eye (first, first_pass, rate_retake) are the numbers to read beside it. The owner may open
+earlier knowingly: the numbers stand beside the switch and the audit entry keeps them.
 
 Module rule: from __future__ import annotations (Vercel's default Python is 3.12)."""
 from __future__ import annotations

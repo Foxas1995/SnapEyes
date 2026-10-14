@@ -347,6 +347,10 @@ const en = {
     // the buy card when no style of this many eyes can be bought yet, and when the selected style opens soon: one line, no price, no date
     countSoon: (n: number) => `Ordering for ${eyes(n)} opens soon.`,
     soonBuy: 'This style opens soon. Choose another to order now.',
+    // the buy card when the style on screen opens soon and every style that can be bought is held back by the eyes (the greyed tiles): no "choose another", the retake card above says what to change
+    retakeBuy: (total: number): string => (total === 1
+      ? 'Nothing can be ordered with this photo yet. To order, retake your eye (see above).'
+      : 'Nothing can be ordered with these photos yet. To order, retake the eyes named above.'),
     soonNote: 'This style opens soon.',
     // a style that can be bought whose look on screen opens soon (Universe: Vortex): the same line, naming the look (the look names are English in every language)
     soonLookBuy: (look: string) => `The ${look} look opens soon. Choose another look or style to order now.`,
@@ -391,8 +395,8 @@ const en = {
       lid: 'An eyelid, a lash or skin is still inside the ring of the iris.',
       reflection: 'A reflection is still left in the iris.',
       reseal: (list: number[], total: number) => (total === 1
-        ? 'This preview is from an older version of the page. Please retake the eye to go on.'
-        : `${list.length === 1 ? `The preview of eye ${list[0]} is` : `The previews of eyes ${andList(list, 'and')} are`} from an older version of the page. Please retake ${list.length === 1 ? 'it' : 'them'} to go on.`),
+        ? 'We could not check this preview. Please retake the eye to go on.'
+        : `We could not check ${list.length === 1 ? `the preview of eye ${list[0]}` : `the previews of eyes ${andList(list, 'and')}`}. Please retake ${list.length === 1 ? 'it' : 'them'} to go on.`),
       held: 'Styles that need a cleaner iris are greyed out until then.',
       tips: {
         open: 'Open the eye wide, look straight into the lens and lift the upper lid gently with a fingertip.',
@@ -800,6 +804,9 @@ const de: TryCopy = {
     groupSoon: 'Die Vorschau ist jetzt kostenlos. Bestellungen für diese Gruppe sind bald möglich.',
     countSoon: (n: number) => `Bestellungen für ${augen(n)} sind bald möglich.`,
     soonBuy: 'Dieser Stil ist bald erhältlich. Wählen Sie einen anderen, um jetzt zu bestellen.',
+    retakeBuy: (total: number) => (total === 1
+      ? 'Mit diesem Foto lässt sich noch nichts bestellen. Zum Bestellen nehmen Sie Ihr Auge neu auf (siehe oben).'
+      : 'Mit diesen Fotos lässt sich noch nichts bestellen. Zum Bestellen nehmen Sie die oben genannten Augen neu auf.'),
     soonNote: 'Dieser Stil ist bald erhältlich.',
     soonLookBuy: (look: string) => `Die Variante ${look} ist bald erhältlich. Wählen Sie eine andere Variante oder einen anderen Stil, um jetzt zu bestellen.`,
     soonLookNote: (look: string) => `Die Variante ${look} ist bald erhältlich.`,
@@ -840,8 +847,8 @@ const de: TryCopy = {
       lid: 'Ein Augenlid, eine Wimper oder Haut liegt noch im Ring der Iris.',
       reflection: 'In der Iris ist noch eine Spiegelung übrig.',
       reseal: (list: number[], total: number) => (total === 1
-        ? 'Diese Vorschau stammt aus einer älteren Version der Seite. Bitte nehmen Sie das Auge neu auf, um fortzufahren.'
-        : `${list.length === 1 ? `Die Vorschau von Auge ${list[0]} stammt` : `Die Vorschauen der Augen ${andList(list, 'und')} stammen`} aus einer älteren Version der Seite. Bitte nehmen Sie ${list.length === 1 ? 'es' : 'sie'} neu auf, um fortzufahren.`),
+        ? 'Diese Vorschau konnten wir nicht prüfen. Bitte nehmen Sie das Auge neu auf, um fortzufahren.'
+        : `${list.length === 1 ? `Die Vorschau von Auge ${list[0]}` : `Die Vorschauen der Augen ${andList(list, 'und')}`} konnten wir nicht prüfen. Bitte nehmen Sie ${list.length === 1 ? 'es' : 'sie'} neu auf, um fortzufahren.`),
       held: 'Stile, die eine sauberere Iris brauchen, sind bis dahin ausgegraut.',
       tips: {
         open: 'Öffnen Sie das Auge weit, schauen Sie gerade in die Kamera und heben Sie das Oberlid sanft mit einer Fingerspitze an.',

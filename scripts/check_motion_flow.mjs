@@ -2,7 +2,7 @@
 // (dist/) served the way Vercel serves it, with the API of the tools stood in for (scripts/lib/flowstub.mjs: the models are stubbed, nothing leaves this machine,
 // every answer takes a moment so that the waiting screens can be looked at). Not part of `vite build` (it needs Chrome and a few minutes); run it after a build:
 //   npm run build && npm run check:motion:flow
-//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,slider,arrival,failsafe,failopen,shift,wiring,bundle] [--mutate-css "from@@to"]
+//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,slider,arrival,failsafe,failopen,shift,wiring,bundle,retake] [--mutate-css "from@@to"]
 // --mutate-css changes every stylesheet of the build on its way to the browser (every occurrence of `from` becomes `to`): a deliberate defect, to see that a check
 // really fails. Example: replacing the reduced-motion clamp of the first rule (`:root:has(>body.fx) *{scroll-behavior:auto!important;transition-duration:.01ms!important;transition-delay:0s!important;animation:none!important}`) with
 // `.wk-arc{animation:wk-rot 3.2s linear infinite}` takes the safety net away and leaks a loop into reduced motion: the `reduced` check must fail on the arc.
@@ -33,6 +33,8 @@
 //   wiring     the head script that skips the page transition for an order, a payment or the withdrawal form is in both pages; no html.mo (nothing is hidden until
 //              a script reveals it); the landing's engine is not loaded by the tools
 //   bundle     the first-load bytes of /try and /order (gzip): the motion adds at most the budget of the spec (CSS +2 kB each) and the numbers are printed
+//   retake     (2026-10-14) a single eye that fails the lid rule while the styles that can be bought are hard: what the visitor reads (the held tiles, the retake card, the buy card, the e-mail) and
+//              that the way out works: no price, no waiver, no button, no "choose another", and the retake button opens the capture screen. Not about motion: the stand-in's `lid` eye
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -160,6 +162,43 @@ async function checkReduced() {
   expect('reduced', fr.length > 10 && fr.every((f) => f.startsWith('none|') && f.endsWith('|1')) && (await o.eval('document.getAnimations().length')) === 0, `the picture frames: ${[...new Set(fr)].join(' ; ')}`, 'ready: the picture is there at the first frame, never clipped, nothing animates, no ring passes');
   expect('reduced', (errorsOf.get(o) || []).length === 0, `console errors: ${(errorsOf.get(o) || []).join(' | ')}`);
   await o.close();
+}
+
+// ---------------------------------------------------------------------------------------------------- retake: one eye that fails the lid rule, every style that can be bought is held back
+async function checkRetake() {
+  console.log('retake');
+  api.setEye('lid');
+  try {
+    const page = await open('/try?lang=en', { reduceMotion: true });
+    expect('retake', await walkTry(page, 'result'), 'the artwork did not come');
+    expect('retake', await waitFor(page, "!!document.querySelector('[data-testid=retake-state]') && !!document.querySelector('[data-testid=buy-retake]')", 20000), 'the retake card and the buy card did not come');
+    const facts = () => {
+      const q = (s) => document.querySelector(s);
+      const all = (s) => [...document.querySelectorAll(s)];
+      const txt = (el) => (el ? el.textContent.split(/\s+/).filter(Boolean).join(' ') : '');
+      return {
+        held: all('[data-state=gate]').map((li) => txt(li.querySelector('[data-testid=held-label]'))),
+        heldPressable: all('[data-state=gate] [aria-pressed]').length, soon: all('[data-state=soon]').length, recommended: !!q('[data-testid=recommended]'),
+        title: txt(q('#retake-title')), lid: txt(q('[data-testid=retake-lid]')), tip: txt(q('[data-testid^=retake-tip]')), mail: ((q('[data-testid=manual-route] a') || {}).href || ''),
+        retakeButton: txt(q('[data-testid=retake-eye-1]')), buyLine: txt(q('[data-testid=buy-retake-line]')), buyButton: !!q('[data-testid=buy]'), waiver: !!q('[data-testid=waiver]'),
+        price: !!q('[data-testid=price]') || !!q('[data-testid=tile-price]'), text: txt(document.body),
+      };
+    };
+    const f = JSON.parse(await page.eval(`JSON.stringify((${facts.toString()})())`));
+    expect('retake', f.held.length === 1 && f.held[0] === 'Retake eye 1 first' && f.heldPressable === 0 && f.soon >= 2 && !f.recommended, `the tiles: ${JSON.stringify([f.held, f.heldPressable, f.soon, f.recommended])}`,
+      'the held tile says "Retake eye 1 first" and cannot be chosen, the plate styles are drawn with the Soon chip, nothing is recommended');
+    expect('retake', f.title === 'Your eye needs a retake' && /still inside the ring/.test(f.lid) && /lift the upper lid/.test(f.tip) && /^mailto:/.test(f.mail) && f.retakeButton === 'Retake this eye',
+      `the retake card: ${JSON.stringify([f.title, f.lid, f.tip, f.mail, f.retakeButton])}`, 'the retake card names the eye, says what is in the ring, gives the tip, the retake button and the e-mail');
+    expect('retake', /^Nothing can be ordered with this photo yet\./.test(f.buyLine) && !f.buyButton && !f.waiver && !f.price && !/choose another|buy anyway|order anyway/i.test(f.text),
+      `the buy card: ${JSON.stringify([f.buyLine, f.buyButton, f.waiver, f.price])}`, 'the buy card sends the customer to the retake card: no price, no waiver, no button, no "choose another"');
+    if (process.env.SNAPEYES_SHOTS) { const fs = await import('node:fs'); fs.mkdirSync(process.env.SNAPEYES_SHOTS, { recursive: true }); let i = 0; for (const b of await page.fullShots()) fs.writeFileSync(join(process.env.SNAPEYES_SHOTS, `retake-${++i}.png`), b); }
+    await page.eval("document.querySelector('[data-testid=retake-eye-1]').click()");
+    expect('retake', await waitFor(page, "!!document.querySelector('input[type=file][multiple]')", 10000), 'the retake button did not open the capture screen', 'the retake button opens the capture screen for the eye');
+    expect('retake', (errorsOf.get(page) || []).length === 0, `console errors: ${(errorsOf.get(page) || []).join(' | ')}`);
+    await page.close();
+  } finally {
+    api.setEye('ok');
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------- loops, arc, aperture, crossfade (one flow with motion)
@@ -615,6 +654,7 @@ try {
   if (wants('shift')) await checkShift();
   if (wants('wiring')) await checkWiring();
   if (wants('bundle')) checkBundle();
+  if (wants('retake')) await checkRetake();
 } finally {
   await chrome.close();
   await site.close();

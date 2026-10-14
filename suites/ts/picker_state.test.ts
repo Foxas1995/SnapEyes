@@ -3,7 +3,7 @@
 // it returns its results and prints nothing. The rendered picker (tiles, states, buy card, four languages, claims) is suites/ts/picker_page.test.ts.
 import {
   type Catalog, type ServerEye, type ServerTile,
-  advisoryEyes, buyState, defaultLook, groupAllSoon, groupOf, layoutOf, lookOf, looksOf, lookName, nextTiles, parseCatalog, reasonOf, resolveStyle, retakeView,
+  advisoryEyes, buyState, defaultLook, groupAllSoon, groupOf, layoutOf, lookOf, looksOf, lookName, nextTiles, onlyHeldLive, parseCatalog, reasonOf, resolveStyle, retakeView,
   setKey, showsPrice, soonChoice, tileState, wireOpts, NO_OPTS, artKey, drawable, isLive, isSoon,
 } from '../../src/try/picker';
 import {
@@ -139,8 +139,51 @@ export async function run(): Promise<Row[]> {
   check('retakeView: an eye without a sealed value is "make the preview again", not a lid', !!rvr && JSON.stringify(rvr.reseal) === '[2]' && rvr.eyes.length === 0 && rvr.reasons.length === 0 && rvr.holds === false);
   check('advisoryEyes: only an advisory style warns, on the eyes that fail ITS rule; a hard style (it is held back instead) and the old styles never warn',
     JSON.stringify(advisoryEyes(adv, [eye(1), bad(2)])) === '[2]' && advisoryEyes(tile('h', { gate: 'hard' }), [bad(1)]).length === 0 && advisoryEyes(tile('l', { gate: 'none', legacy: 1 }), [bad(1)]).length === 0 && advisoryEyes(undefined, [bad(1)]).length === 0);
-  check('a one-eye set always has a style it can buy: the Universe (hard, fill) held back never leaves a dead end while an advisory style is live',
+  // (2026-10-14: the registry no longer promises a one-eye set a style it can buy, because Clean Iris and Celestial Gold are hard now; this holds only while an advisory
+  //  style is live and available, which is what the arguments here say. The set where none is has its own checks below.)
+  check('a one-eye set with an advisory style that is live and available has no dead end: the Universe (hard, fill) held back leaves the advisory style to buy',
     retakeView({ tiles: [adv, uni], eyes: [eye(1, { gate: { lid: false, fill: false }, why: ['lid_sectors_outer', 'fill_rim_sector'] })], selected: adv })!.deadEnd === false);
+
+  // ---- 2026-10-14: Clean Iris and Celestial Gold are hard. A single eye that fails the lid rule is held back from both, and the advisory styles may still open soon
+  // (production: the 4K plates of Powder Burst and Splash are not in storage, so both are Soon): no style can be bought, and the page must say what to do, not "choose another"
+  const heldClean = tile('solo.clean', { gate: 'hard', rule: 'lid', price_class: 'black', available: false, why: 'gate' });
+  const heldGold = tile('solo.gold', { gate: 'hard', rule: 'lid', available: false, why: 'gate' });
+  const soonPowder = tile('solo.powder', { stage: 'preview' });
+  const soonSplash = tile('solo.splash', { stage: 'preview' });
+  const soonRadiance = tile('solo.radiance', { stage: 'preview' });
+  const failOne = [bad(1, ['lid_colour_wedge'])];
+  const soonList = [soonPowder, soonSplash, heldGold, soonRadiance, heldClean];
+  const noBuy = retakeView({ tiles: soonList, eyes: failOne, selected: soonPowder })!;
+  check('one eye fails the lid rule, Clean Iris and Celestial Gold are held (gate, eye 1) and the others only open soon: the retake state names eye 1 with the lid sentence, holds, and is a dead end that the manual route answers',
+    JSON.stringify(noBuy.eyes) === '[1]' && JSON.stringify(noBuy.reasons) === '["lid"]' && noBuy.tip === 'open' && noBuy.holds === true && noBuy.deadEnd === true && noBuy.why === 'lid_colour_wedge'
+    && JSON.stringify(tileState(heldClean, failOne)) === '{"kind":"gate","eye":1}' && JSON.stringify(tileState(heldGold, failOne)) === '{"kind":"gate","eye":1}' && tileState(soonPowder, failOne).kind === 'soon');
+  check('... the style on screen is the first Soon tile (a free preview is drawn), nothing is recommended, and a saved choice of Clean Iris gives way to it with the line that names eye 1',
+    JSON.stringify(res(null, soonList, null, 1, failOne)) === '{"style":"solo.powder","changed":null}'
+    && JSON.stringify(res('solo.clean', soonList, null, 1, failOne)) === '{"style":"solo.powder","changed":{"kind":"gate","from":"solo.clean","to":"solo.powder","eye":1}}'
+    && !drawable(heldClean) && !drawable(heldGold) && drawable(soonPowder));
+  check('... the buy card says retake, not "choose another" (the other styles that can be ordered are greyed out): kind retake, no price and no button; the same list with a live advisory style to choose says soon',
+    JSON.stringify(buyState({ n: 1, tiles: soonList, selected: soonPowder })) === '{"kind":"retake"}'
+    && JSON.stringify(buyState({ n: 1, tiles: [tile('solo.splash'), ...soonList.filter((t) => t.id !== 'solo.splash')], selected: soonPowder })) === '{"kind":"soon"}'
+    && onlyHeldLive(soonList) && !onlyHeldLive([tile('solo.splash'), ...soonList]) && !onlyHeldLive([soonPowder, soonSplash]) && !onlyHeldLive([]));
+  check('... an eye with no sealed value (reseal) or a pupil the live styles refuse is the same: the card sends the customer to the retake state; a live style the eyes take is bought as it is',
+    JSON.stringify(buyState({ n: 1, tiles: [soonPowder, tile('solo.clean', { gate: 'hard', available: false, why: 'reseal' })], selected: soonPowder })) === '{"kind":"retake"}'
+    && JSON.stringify(buyState({ n: 3, tiles: [soonPowder, tile('grp.fam', { group: 'grp', gate: 'hard', available: false, why: 'bar_pupil', eyes: 3 })], selected: soonPowder })) === '{"kind":"retake"}'
+    && buyState({ n: 1, tiles: [tile('solo.powder'), heldClean, heldGold], selected: tile('solo.powder') }).kind === 'normal');
+  check('... nothing selected stays none and a group with no live tile stays countSoon: the new state is only for a Soon style on screen beside held live ones',
+    buyState({ n: 1, tiles: soonList, selected: undefined }).kind === 'none' && JSON.stringify(buyState({ n: 2, tiles: tilesPair, selected: tilesPair[0] })) === '{"kind":"countSoon","n":2}'
+    && buyState({ n: 1, tiles: [heldClean, heldGold], selected: undefined }).kind === 'none');
+  // the same eye once Powder Burst and Splash are live: they warn and sell, the two hard styles stay greyed, and there is no dead end
+  const livePowder = tile('solo.powder', { pick: true });
+  const sellList = [livePowder, tile('solo.splash'), heldGold, soonRadiance, heldClean];
+  const sell = retakeView({ tiles: sellList, eyes: failOne, selected: livePowder })!;
+  check('... with Powder Burst and Splash live the same eye warns on them (advisory), holds Clean Iris and Celestial Gold, and is no dead end: the card sells the advisory style',
+    JSON.stringify(sell.eyes) === '[1]' && sell.holds === true && sell.deadEnd === false && JSON.stringify(advisoryEyes(livePowder, failOne)) === '[1]'
+    && JSON.stringify(buyState({ n: 1, tiles: sellList, selected: livePowder })) === '{"kind":"normal"}' && JSON.stringify(res(null, sellList, 'solo.powder', 1, failOne)) === '{"style":"solo.powder","changed":null}');
+  // a set that passes is unchanged by the policy: nothing held, nothing warned, the two styles are bought as they were
+  const passList = [livePowder, tile('solo.gold', { gate: 'hard' }), tile('solo.clean', { gate: 'hard', price_class: 'black' })];
+  check('... an eye that passes the lid rule holds nothing back: no retake state, both hard styles are ready and bought as they were, no warning',
+    retakeView({ tiles: passList, eyes: [eye(1)], selected: passList[1] }) === null && passList.every((t) => tileState(t, [eye(1)]).kind === 'ready') && advisoryEyes(passList[1], [eye(1)]).length === 0
+    && JSON.stringify(buyState({ n: 1, tiles: passList, selected: passList[1] })) === '{"kind":"normal"}' && JSON.stringify(res('solo.gold', passList, 'solo.powder', 1, [eye(1)])) === '{"style":"solo.gold","changed":null}');
 
   // ---- every tile held for the pupil (review of WP11, M2): no eye fails a rule and nothing can be drawn, yet the state must exist (no dead end)
   const barHeld = (ids: string[], o: Partial<ServerTile> = {}) => ids.map((id) => tile(id, { group: 'duo', gate: 'hard', available: false, why: 'bar_pupil', ...o }));

@@ -435,7 +435,28 @@ EVENTS = []
 E.record = lambda kind, **f: EVENTS.append((kind, dict(f))) or False
 jpeg = SI.jpeg_bytes("dark_brown_round")
 im_j = Image.open(io.BytesIO(jpeg)).convert("RGB")
-sealed = P.protect(im_j, jpeg)["sealed"]
+# 2026-10-14 (the owner's decision): Celestial Gold and Clean Iris are HARD, and a hard style needs the sealed gate value of the eye (a seal with none is held back: reseal). So the eye of the compose
+# checks below is sealed WITH its profile, exactly as /api/enhance seals it; `sealed_bare` is the seal of an older page (no profile, the gate unknown) for the checks that are about such an eye.
+prof_c = EYE.profile_of_bytes(jpeg, rules=("lid",))
+sealed = P.protect(im_j, jpeg, profile=prof_c)["sealed"]
+sealed_bare = P.protect(im_j, jpeg)["sealed"]
+
+
+class Advisory:
+    """A style's gate policy made advisory for the length of a block (like Show for a stage). Celestial Gold and Clean Iris are hard since 2026-10-14, and an old page's plain iris has no sealed gate value,
+    so a hard style refuses it (reseal). The checks that use this are about the plain-iris path itself (the same bytes, the camera orientation), not about the policy; the policy as shipped is held by
+    the checks that precede them and by section 6 of test_compose_api.py."""
+    def __init__(self, *styles):
+        self.styles = styles
+
+    def __enter__(self):
+        self.old = {s_: CT.STYLES[s_]["gate"] for s_ in self.styles}
+        for s_ in self.styles:
+            CT.STYLES[s_]["gate"] = "advisory"
+
+    def __exit__(self, *a):
+        for s_, g_ in self.old.items():
+            CT.STYLES[s_]["gate"] = g_
 
 
 class Show:
@@ -501,9 +522,18 @@ exp_clean = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye
 check("a valid unlock ticket gives the clean render and nothing else does (a ticket that is not valid leaves the watermark)",
       r_clean["image"] == L.pil_to_b64(exp_clean.img, "JPEG", 90) and r_noclean["image"] != r_clean["image"])
 with Show("solo.gold"):
+    e_plain_gold = raises(lambda: CMP.compose({"irises": [b64(jpeg)], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026"}), Exception)
+    e_bare_gold = raises(lambda: CMP.compose({"sealed": [sealed_bare], "style": "solo.gold", "pad": 1.12}), Exception)
+check("Celestial Gold is hard (2026-10-14): an old page's plain iris and a seal with no profile have no sealed gate value, so the style is held back for them, 422 style_unavailable, why reseal, nothing drawn "
+      "(the page makes the preview again)",
+      all(getattr(e, "status", None) == 422 and e.body["reason"] == "style_unavailable" and e.body["why"] == "reseal" and e.body["style"] == "solo.gold" for e in (e_plain_gold, e_bare_gold)), (e_plain_gold, e_bare_gold))
+with Show("solo.gold"), Advisory("solo.gold"):
     r_plain = CMP.compose({"irises": [b64(jpeg)], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026"})
-check("an old page's plain iris gives the same picture as the sealed one (the same bytes, the same seed), with unknown gates and no eye id",
-      r_plain["image"] == r_g["image"] and r_plain["eyes"][0]["eye_id"] is None and r_plain["eyes"][0]["gate"] == {"lid": None, "fill": None})
+    r_bare = CMP.compose({"sealed": [sealed_bare], "style": "solo.gold", "pad": 1.12, "names": "Anna;Max", "date": "12 May 2026", "lang": "en"})
+check("an old page's plain iris gives the same picture as the sealed one (the same bytes, the same seed), with unknown gates and no eye id (the gate policy of the style set to advisory for this check: it is about the plain-iris path)",
+      r_plain["image"] == r_bare["image"] and r_plain["eyes"][0]["eye_id"] is None and r_plain["eyes"][0]["gate"] == {"lid": None, "fill": None})
+check("... and the sealed copy with its profile draws the same picture as the one without (Celestial Gold reads no frozen choice of the profile): the gate is the policy's input, never the picture's",
+      r_g["image"] == r_bare["image"], r_g["image"] == r_bare["image"])
 
 
 def exif_jpeg(orientation, junk=None):
@@ -530,7 +560,7 @@ im_up = Image.open(io.BytesIO(jpeg)).convert("RGB")
 check("a file with no orientation, orientation 1 or a damaged EXIF block is read as before: the pixels are the file's own (a damaged block never refuses a picture)",
       np.array_equal(np.asarray(C.Iris(jpeg).src), np.asarray(im_up.crop((0, 0, min(im_up.size), min(im_up.size)))))
       and C.Iris(exif_jpeg(1)).src.size == (1024, 1024) and C.Iris(exif_jpeg(1, junk=b"Exif\x00\x00MM\x00*\xff\xff\xff\xff\x00\x01")).src.size == (1024, 1024))
-with Show("solo.clean"):
+with Show("solo.clean"), Advisory("solo.clean"):       # Clean Iris is hard since 2026-10-14 and a plain iris has no sealed gate value: the check is about the camera orientation, so the policy is set aside for it
     r_exif = CMP.compose({"irises": [b64(raw_x)], "style": "solo.clean", "pad": 1.12})
     r_upright = CMP.compose({"irises": [b64(up_png.getvalue())], "style": "solo.clean", "pad": 1.12})
 check("end to end, a phone photo with an orientation gives the picture of the same photo upright (Clean Iris has no seed to tell the two files apart)",
@@ -862,7 +892,7 @@ meta_p = P.unseal_full(sealed_p)[1]
 with Show("solo.splash"), Show("solo.powder"):
     r_sp = CMP.compose({"sealed": [sealed_p], "style": "solo.splash", "pad": 1.12})
     r_pw = CMP.compose({"sealed": [sealed_p], "style": "solo.powder", "pad": 1.12})
-    r_pl = CMP.compose({"sealed": [sealed], "style": "solo.splash", "pad": 1.12})
+    r_pl = CMP.compose({"sealed": [sealed_bare], "style": "solo.splash", "pad": 1.12})
 plan_p = ST.resolve({"style": "solo.splash", "eyes": 1, "eye_ids": [meta_p["eye_id"]]}, [meta_p["profile"]])
 plan_w = ST.resolve({"style": "solo.powder", "eyes": 1, "eye_ids": [meta_p["eye_id"]]}, None)
 exp_sp = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_p["eye_id"])], {"style": "solo.splash", "eyes": 1, "canvas": "1:1", "frozen": plan_p["frozen"]}, size=1024, watermark=True)

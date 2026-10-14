@@ -85,6 +85,16 @@ export const BuyCard: React.FC<Props> = (props) => {
   }
 
   const n = billable;
+  // the styles that can be bought are all held back by the eyes and the one on screen only opens soon: one line that sends the customer to the retake card above,
+  // never "choose another" (the others are greyed out), no price, no button
+  if (p.state.kind === 'retake') {
+    return (
+      <section aria-label={T.price.title} data-testid="buy-retake" className={CARD}>
+        <p className="text-[10px] uppercase tracking-widest text-zinc-300">{T.price.title}</p>
+        <p data-testid="buy-retake-line" className="text-sm font-semibold text-amber-200 mt-1.5">{T.picker.retakeBuy(p.eyes.length)}</p>
+      </section>
+    );
+  }
   // a style that opens soon, or an eye count no style of can be bought yet: one line, no price, no button, no date (INTEGRATION_SPEC 1.8 rule 2)
   if (p.state.kind === 'soon' || p.state.kind === 'countSoon') {
     return (

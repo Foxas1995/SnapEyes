@@ -179,6 +179,23 @@ class Show:
         CT.STYLES[self.style]["stage"] = self.old
 
 
+class Advisory:
+    """A style's gate policy made advisory for the length of a block (like Show for a stage). Clean Iris and Celestial Gold are HARD since 2026-10-14 (the owner's decision), and a hard style needs the sealed gate
+    value of the eye at checkout (reseal). This suite makes most of its orders for those two from plain drafts, because its subject is the master plan, its steps and the chain, which never judge the gate again
+    (the plan is frozen at checkout); the policy as shipped is held by v3reg, v3compose, v3checkout and v3cutover."""
+    def __init__(self, *styles):
+        self.styles = styles
+
+    def __enter__(self):
+        self.old = {s_: CT.STYLES[s_]["gate"] for s_ in self.styles}
+        for s_ in self.styles:
+            CT.STYLES[s_]["gate"] = "advisory"
+
+    def __exit__(self, *a):
+        for s_, g_ in self.old.items():
+            CT.STYLES[s_]["gate"] = g_
+
+
 _SEALED = {}
 
 
@@ -217,11 +234,13 @@ def new_order(eyes=1, style="studio_black", email="kunde@example.com", pay_it=Tr
     body = {"order": o, "k": k, "eyes": eyes, "style": style, "names": "Ona", "title": "", "lang": lang, "consent_digital": True}
     if layout:
         body["layout"] = layout
-    c, j = post("/api/checkout", body)
-    if c == 409 and j.get("why") == "plates":     # WP12: a style that draws from a 4K plate is refused (409 plates) while the plate is not in storage (the answer names no plate id: release review m5): put the families the style reads, whole, ask again
-        for pid in PL_M.storage_ids(CT.ENGINE[style]["plates"]):
-            store.put(PL_M.storage_path(pid), b"plate", "image/png", upsert=True)
+    plain_hard = [style] if style in ("solo.clean", "solo.gold") and sealed is None else []      # a plain draft carries no sealed gate value (see Advisory)
+    with Advisory(*plain_hard):
         c, j = post("/api/checkout", body)
+        if c == 409 and j.get("why") == "plates":     # WP12: a style that draws from a 4K plate is refused (409 plates) while the plate is not in storage (the answer names no plate id: release review m5): put the families the style reads, whole, ask again
+            for pid in PL_M.storage_ids(CT.ENGINE[style]["plates"]):
+                store.put(PL_M.storage_path(pid), b"plate", "image/png", upsert=True)
+            c, j = post("/api/checkout", body)
     assert c == 200, (c, j)
     sid = rj(f"orders/{o}/order.json")["checkout"]["session_id"]
     if pay_it:

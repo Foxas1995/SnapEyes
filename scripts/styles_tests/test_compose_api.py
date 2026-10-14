@@ -363,6 +363,73 @@ check("Kiss asked alone for a pair with a bar pupil is 422 style_unavailable wit
       getattr(e_bar_one, "status", None) == 422 and e_bar_one.body["why"] == "bar_pupil" and e_bar_one.body["error"] == CMP.WORDS["bar_pupil"]["en"], getattr(e_bar_one, "body", e_bar_one))
 
 
+# ============================================================================================ 3b. one eye that fails the lid rule
+section("3b. one eye that fails the lid rule (2026-10-14): Clean Iris and Celestial Gold are hard, the other singles only warn")
+# The owner's decision of 2026-10-14: Clean Iris and Celestial Gold changed from advisory to hard (a delivered file kept lashes and lid skin at the rim, and an advisory style only warned, so the failing
+# set could still be bought). Every pair, family and Universe tile was hard already; what is new is the one-eye group: this section holds who is held back for a single failing eye, who is not, that
+# the pictures that ARE drawn are the engine's own bytes, and that a passing eye is untouched.
+LID1, BROWN_LID1, BROWN_OK1 = [sealed("blue_lid", 560)], [sealed("dark_brown_lid", 560)], [sealed("dark_brown_round", 560)]
+EVENTS.clear()
+with Show(*SINGLES, stage="live"), Show(*LEGACY, stage="retired"):         # the world after the cutover: the six old ids are not offered (this suite runs before it: the shim keeps them live)
+    r_fail = comp({"sealed": LID1, "styles": []})
+    r_brown_fail = comp({"sealed": BROWN_LID1, "styles": []})
+    r_brown_ok = comp({"sealed": BROWN_OK1, "styles": []})
+    r_pass = comp({"sealed": S1, "styles": []})
+    e_clean = raised(lambda: comp({"sealed": LID1, "style": "solo.clean"}))
+    e_gold = raised(lambda: comp({"sealed": BROWN_LID1, "style": "solo.gold", "size": 480}))
+    e_batch_one = raised(lambda: comp({"sealed": LID1, "styles": ["solo.gold"]}))
+    batch_only_held = comp({"sealed": LID1, "styles": ["solo.gold", "solo.clean"]})
+    one_powder = comp({"sealed": LID1, "style": "solo.powder", "size": 480})
+    one_pick = comp({"sealed": LID1, "style": "pick", "size": 480})
+    batch_fail = comp({"sealed": LID1, "styles": list(SINGLES)})
+    batch_pass = comp({"sealed": S1, "styles": list(SINGLES)})
+d_fail, d_pass = ({t["id"]: t for t in r["tiles"]} for r in (r_fail, r_pass))
+check("one eye that fails the lid rule: the tiles of Clean Iris and Celestial Gold say available false, why gate, policy hard and the lid rule; Powder Burst, Splash and Radiance stay available with policy advisory; "
+      "the eye carries its gate result and the reason codes the retake state turns into sentences",
+      all(not d_fail[i]["available"] and d_fail[i]["why"] == "gate" and d_fail[i]["gate"] == "hard" and d_fail[i]["rule"] == "lid" for i in ("solo.clean", "solo.gold"))
+      and all(d_fail[i]["available"] and d_fail[i]["why"] is None and d_fail[i]["gate"] == "advisory" for i in ("solo.powder", "solo.splash", "solo.radiance"))
+      and r_fail["eyes"][0]["gate"]["lid"] is False and r_fail["eyes"][0]["why"] and all(c in GATE.WHY["lid"] + GATE.WHY["fill"] for c in r_fail["eyes"][0]["why"]), {k: (v["available"], v["why"], v["gate"]) for k, v in d_fail.items()})
+check("a set that passes is untouched: every single is available, the policy of the two is hard and they are drawn as before (the pictures: the checks of section 4 hold the five pictures of a passing eye equal to the engine's)",
+      all(d_pass[i]["available"] and d_pass[i]["why"] is None for i in SINGLES) and (d_pass["solo.clean"]["gate"], d_pass["solo.gold"]["gate"]) == ("hard", "hard")
+      and all("image" in t for t in batch_pass["tiles"] if t["id"] in SINGLES), {k: (v["available"], v["why"]) for k, v in d_pass.items()})
+check("the recommended tile is never a held one: a failing own-colour eye is recommended Powder Burst, a failing dark brown eye (the colour Celestial Gold is recommended for) is not recommended Gold and gets no "
+      "reason line, and a passing dark brown eye is still recommended Celestial Gold with its reason",
+      r_fail["pick"]["id"] == "solo.powder" and r_brown_fail["pick"]["id"] == "solo.powder" and r_brown_fail["pick"]["reason"] is None
+      and (r_brown_ok["pick"]["id"], r_brown_ok["pick"]["reason"]) == ("solo.gold", "reason.solo_gold.dark_brown") and one_pick["style"] == "solo.powder",
+      (r_fail["pick"], r_brown_fail["pick"], r_brown_ok["pick"], one_pick.get("style")))
+check("asked alone, Clean Iris or Celestial Gold for the failing eye is 422 style_unavailable, why gate, the style named, the sentence of the gate, no retry; Powder Burst for the same eye is drawn",
+      all(getattr(e, "status", None) == 422 and e.body["reason"] == "style_unavailable" and e.body["why"] == "gate" and e.body["retry"] is False and e.body["error"] == CMP.WORDS["gate"]["en"] for e in (e_clean, e_gold))
+      and (e_clean.body["style"], e_gold.body["style"]) == ("solo.clean", "solo.gold") and one_powder["ok"] and one_powder["style"] == "solo.powder" and "image" in one_powder,
+      (getattr(e_clean, "body", e_clean), getattr(e_gold, "body", e_gold)))
+check("in a batch the two are tiles that are not drawn, not a refusal: a batch of Celestial Gold alone, or of the two held styles, answers 200 with the tile list and no image (the page never asks for a held tile, "
+      "but a stale one costs nothing)",
+      e_batch_one is None and batch_only_held["batch"] is True and all("image" not in t for t in batch_only_held["tiles"]) and not d_fail["solo.gold"]["available"], (e_batch_one, [t["id"] for t in batch_only_held["tiles"]]))
+t_bf = {t["id"]: t for t in batch_fail["tiles"]}
+check("a batch of the five singles for the failing eye draws three tiles and holds two back: no image for Clean Iris and Celestial Gold (a tile that is not available is not drawn), an image of 480 px for "
+      "Powder Burst, Splash and Radiance",
+      all("image" not in t_bf[i] and not t_bf[i]["available"] for i in ("solo.clean", "solo.gold")) and all("image" in t_bf[i] and t_bf[i]["width"] == 480 for i in ("solo.powder", "solo.splash", "solo.radiance")), {k: ("image" in v) for k, v in t_bf.items()})
+direct_bad_f = []
+with Show(*SINGLES, stage="live"):
+    meta_f = P.unseal_full(LID1[0])[1]
+    for s_f in ("solo.powder", "solo.splash", "solo.radiance"):
+        req_f = CMP._request({"styles": [s_f], "lang": "en"})
+        spec_f = CMP._spec(s_f, 1, [C.Iris(P.unseal(LID1[0]), "y", max_side=2048, eye_id=meta_f["eye_id"])], [meta_f], req_f, "1:1", "single", {})
+        direct_f = ST.watermarked(ST.preview([C.Iris(P.unseal(LID1[0]), "y", max_side=2048, eye_id=meta_f["eye_id"])], spec_f, size=480), "en")
+        if L.pil_to_b64(direct_f, "JPEG", 90) != t_bf[s_f]["image"]:
+            direct_bad_f.append(s_f)
+check("the pictures that ARE drawn for the failing eye are byte for byte what a fresh eye and a plain preview() make of the same spec: the policy decides who is drawn, never how", not direct_bad_f, direct_bad_f)
+check("a request the eyes' gate refused counts as a set seen: a compose event with tiles 0 and the failing reason code for each one-style refusal (no picture was drawn for them)",
+      sum(1 for k, f in EVENTS if k == "compose" and f.get("tiles") == 0 and f.get("eyes") == 1 and f.get("gate") in GATE.WHY["lid"]) >= 2, [(k, f.get("tiles"), f.get("gate")) for k, f in EVENTS][:8])
+SAMPLE_RAW = open(os.path.join(REPO, "public", "assets", "sample_eye_blue_restored.jpg"), "rb").read()
+sample_rows = {}
+for gate2 in (False, True):
+    with mock.patch.object(L, "GATE2_ON", gate2):
+        prof_sample = EYE.profile_of_bytes(SAMPLE_RAW, pad=1.12)
+    with Show("solo.clean", "solo.gold", stage="live"):
+        sample_rows[gate2] = (prof_sample.gate("lid")["ok"], CT.why_unavailable("solo.clean", 1, [prof_sample.rec]), CT.why_unavailable("solo.gold", 1, [prof_sample.rec]))
+check("the site's own AI-generated sample eye (the demo of /try) passes the lid rule with the added detectors off and on (as in production), so the demo still shows Clean Iris and Celestial Gold",
+      sample_rows == {False: (True, None, None), True: (True, None, None)}, sample_rows)
+
 # ============================================================================================ 4. a batch
 section("4. a batch: one call, the tile order, a tile alone against the tile in a batch (IE7), the cost guard, the slot, the daily ceiling")
 SIX = list(SINGLES) + ["celestial_gold"]                  # five styles of the engine and one legacy tile: six tiles in one call

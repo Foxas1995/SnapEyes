@@ -1004,7 +1004,9 @@ rowsf = {r["eyes"]: r for r in SS.funnel(SS.table(agg, "compose_funnel"))}
 check("rate_retake is (first pass + the failed sets that passed after one retake, at most the failed ones) over the first-photo sets, and never above 1",
       all(r["first"] == 0 or abs(r["rate_retake"] - (r["first_pass"] + min(r["first"] - r["first_pass"], r["retake1_pass"])) / r["first"]) < 1e-4 and r["rate_retake"] <= 1
           for r in rowsf.values()) and rowsf[2]["rate_first"] == round(rowsf[2]["first_pass"] / rowsf[2]["first"], 4))
-check("one eye has no opening line (a set of one eye always has an advisory style); two or more have one", rowsf[1]["line"] is None and rowsf[2]["line"] is not None and rowsf[3]["line"] is not None)
+check("one eye has no opening line (its criterion was that a one eye set always has an advisory style; since 2026-10-14 Clean Iris and Celestial Gold are hard too, so the line stays absent as a "
+      "criterion the owner has not set, and the one eye funnel row carries the numbers); two or more have one",
+      rowsf[1]["line"] is None and rowsf[2]["line"] is not None and rowsf[3]["line"] is not None and rowsf[1]["first"] > 0 and rowsf[1]["rate_first"] is not None and rowsf[1]["rate_retake"] is not None)
 
 section("8c. the opening line (spec 1.6.2 rule 2) is one function")
 base = {"eyes": 2, "first": 40, "first_pass": 26, "rate_first": 0.65, "rate_retake": 0.95}
@@ -1081,7 +1083,8 @@ check("the stack's share per pair design: 3 of 12 pictures of Collision Infinity
 gbs = {r["style"]: r for r in SS.gate_by_style(a4)}
 check("the gate per style is measured per eye at enhance under each style's own rule: the lid rule fails lid and both (4 of 10 known eyes), the fill rule fill and both (2 of 10); styles with no gate have no row",
       gbs["duo.kiss_collision"]["failed"] == 4 and gbs["duo.kiss_collision"]["seen"] == 10 and gbs["duo.kiss_collision"]["rate"] == 0.4 and gbs["solo.universe"]["failed"] == 2
-      and gbs["solo.clean"]["policy"] == "advisory" and "studio_black" not in gbs and gbs["solo.clean"]["rule"] == CT.ENGINE["solo.clean"]["gate_rules"], gbs.get("solo.clean"))
+      and gbs["solo.clean"]["policy"] == "hard" and gbs["solo.gold"]["policy"] == "hard" and gbs["solo.powder"]["policy"] == gbs["solo.splash"]["policy"] == "advisory"
+      and gbs["solo.clean"]["failed"] == gbs["solo.powder"]["failed"] == 4 and "studio_black" not in gbs and gbs["solo.clean"]["rule"] == CT.ENGINE["solo.clean"]["gate_rules"], gbs.get("solo.clean"))
 att = SS.attention(a4, {"min_n": 2, "error_rate": 0.05, "review_rate": 0.1, "gate_fail_rate": 0.35}, {"styles": True, "plates_4k": False})
 check("the attention card: the errors of solo.gold (2 asks of 2), the gate of the lid-rule styles (0.4 over 0.35), a failing health boolean; a limit with too few events behind it is silent",
       any(a["kind"] == "error" and a["style"] == "solo.gold" for a in att) and any(a["kind"] == "gate" and a["style"] == "duo.kiss_collision" for a in att)

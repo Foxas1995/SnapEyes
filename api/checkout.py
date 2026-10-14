@@ -127,7 +127,9 @@ def freeze_plan(order, rec, spec, body, drafts):
     before it. drafts: the order's draft eye records, which carry the eye id and the sealed profile of each eye (written from the seal, never from the page).
 
       1. the gate and the pupil of the SEALED profile decide for a hard style (catalogue.why_unavailable: gate, reseal, bar_pupil); nothing is measured
-         again. An advisory style is bought on a failing eye: that is recorded (gate, "ordered after failure"), not refused;
+         again. An advisory style is bought on a failing eye: that is recorded (gate, "ordered after failure"), not refused. Hard styles are Universe, the
+         pairs, the families and, since 2026-10-14, Clean Iris and Celestial Gold (styles_registry.py gate): a set whose eye fails the lid rule is refused
+         for them here, 409 style_unavailable, why gate, before anything is closed or created;
       2. make_plan recomputes the plan from those records (the collision family from the pixels of the approved previews: a plan made without them is
          refused as reseal, because nothing would freeze what the preview showed; a bar pupil the profile did not show is bar_pupil);
       3. the page's plan8, when it sends one, must be the server's (409 plan_changed: the page shows the preview again), except that a family that decides from

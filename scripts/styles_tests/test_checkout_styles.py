@@ -202,6 +202,15 @@ def new_order(names_eyes, lang="en", plain=False):
     return o, k
 
 
+def settled(pred, tries=40):
+    """events.answer records the demand AFTER the reply has been sent (L.run), so a reader that looks at once can find nothing yet: wait for it, two seconds at most, then judge."""
+    for _ in range(tries):
+        if pred():
+            return True
+        time.sleep(0.05)
+    return bool(pred())
+
+
 def co(o, k, style, n, **kw):
     body = {"order": o, "k": k, "eyes": n, "style": style, "names": kw.pop("names", ""), "title": "", "lang": kw.pop("lang", "en"), "consent_digital": True}
     body.update(kw)
@@ -473,14 +482,32 @@ with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
           "line item names the layout (Kiss Collision, Pair)",
           c == 200 and rec["plan"]["decided"] is True and rec["plan"]["frozen"] and rec["plan"]["opts"].get("swap") is True and p["metadata[opts]"] == '{"swap":true}'
           and ", Kiss Collision, Pair, 4096 px digital file" in p["line_items[0][price_data][product_data][name]"] and rec["gate"] == "ok", (c, j, rec.get("plan", {}).keys()))
-    # an advisory style is bought on a failing eye and the failure is recorded (ordered after failure)
-    with Show("solo.gold", stage="live"):
-        o, k = new_order(["blue_lid"])
-        EVENTS.clear()
+    # 2026-10-14, the owner's decision: Clean Iris and Celestial Gold are HARD (they were the vehicle of the advisory check that stood here: a failing eye bought Celestial Gold and the failure was
+    # recorded). A set whose eye fails the lid rule is now REFUSED for both, at checkout, from the sealed profile of the draft, before a session is closed or created; the advisory check moved to
+    # Powder Burst below (it needs its 4K plate in storage), and the passing set, Universe, the pairs and the families are unchanged (the checks around this one).
+    with Show("solo.gold", "solo.clean", stage="live"):
+        for style_h, price_key in (("solo.gold", "one_eye_art"), ("solo.clean", "one_eye_studio_black")):
+            o, k = new_order(["blue_lid"])
+            n_creates_h = len(H.Fake.creates)
+            EVENTS.clear()
+            c, j = co(o, k, style_h, 1)
+            check(f"{style_h} is HARD: on an eye that fails the lid rule checkout is refused, 409 style_unavailable, why gate, the style and the count named; nothing was created or closed (no Stripe session, no checkout "
+                  "block in order.json), and the refusal is counted as a blocked help event",
+                  c == 409 and j["reason"] == "style_unavailable" and j["why"] == "gate" and j["style"] == style_h and j["eyes"] == 1 and len(H.Fake.creates) == n_creates_h
+                  and "checkout" not in (rj(f"orders/{o}/order.json") or {})
+                  and settled(lambda: any(kind == "help" and f.get("route") == "blocked" and f.get("style") == style_h and f.get("eyes") == 1 and f.get("why") == "gate" for kind, f in EVENTS)), (c, j, EVENTS[-2:]))
+            # the refusal is the SEALED value's: the same order, its eye retaken as a passing one, is accepted (the customer's way out is a new photo, not a new order)
+            o2, k2 = new_order(["blue_round"])
+            c2, j2 = co(o2, k2, style_h, 1)
+            p2, _ = H.Fake.creates[-1] if c2 == 200 else ({}, 0)
+            check(f"... and {style_h} on an eye that passes is ordered as before: 200, the price of its class, the gate recorded as ok",
+                  c2 == 200 and rj(f"orders/{o2}/order.json")["checkout"]["gate"] == "ok" and int(p2.get("line_items[0][price_data][unit_amount]", 0)) == MK.MARKETS["eu"]["prices"][price_key], (c2, j2))
+            o3, k3 = new_order(["blue_round"], plain=True)
+            c3, j3 = co(o3, k3, style_h, 1)
+            check(f"... and {style_h} on an eye with no sealed profile (an old page's plain preview) is held back too: why reseal, the preview must be made again", c3 == 409 and j3["why"] == "reseal", (c3, j3))
+        o, k = new_order(["dark_brown_lid"])
         c, j = co(o, k, "solo.gold", 1)
-        check("an ADVISORY style is bought on a failing eye (the warning is the picker's): 200, the set level gate result is the failing reason, recorded for the 'ordered after failure' count",
-              c == 200 and rj(f"orders/{o}/order.json")["checkout"]["gate"] not in ("ok", "unknown")
-              and any(kind == "checkout" and f.get("stage") == "start" and f.get("gate") == rj(f"orders/{o}/order.json")["checkout"]["gate"] for kind, f in EVENTS), (c, j, EVENTS[-2:]))
+        check("... a dark brown eye that fails (the colour class Celestial Gold is recommended for) is refused the same way", c == 409 and j["why"] == "gate", (c, j))
     # Universe: the look is part of the order and the fill gate is hard
     o, k = new_order(["blue_round"])
     c0, j0 = co(o, k, "solo.universe", 1, opts={"look": "vortex"})
@@ -508,6 +535,17 @@ with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
     c_have, j_have = co(o, k, "solo.powder", 1)
     check("... with the plate in storage the same order is accepted, and the plan names it (plates_needed: id, path, sha256, bytes)",
           c_have == 200 and rj(f"orders/{o}/order.json")["checkout"]["plan"]["plates_needed"][0]["id"] == pids[0], (c_have, j_have))
+    # an ADVISORY style is bought on a failing eye and the failure is recorded (ordered after failure): Powder Burst, now that its plate is in storage (it was Celestial Gold before 2026-10-14)
+    o, k = new_order(["blue_lid"])
+    need_l = SP.make_plan({"style": "solo.powder", "layout": "single", "eyes": 1, "opts": {}},
+                          [{"eye_id": rj(f"orders/{o}/draft/eye_1.json")["eye_id"], "profile": rj(f"orders/{o}/draft/eye_1.json")["profile"]}])
+    for x in need_l["plates_needed"]:                  # the plate of THIS eye's plan (the pick depends on the eye id)
+        store.put(x["path"], b"plate", "image/png", upsert=True)
+    EVENTS.clear()
+    c, j = co(o, k, "solo.powder", 1)
+    check("an ADVISORY style (Powder Burst) is bought on a failing eye (the warning is the picker's): 200, the set level gate result is the failing reason, recorded for the 'ordered after failure' count",
+          c == 200 and rj(f"orders/{o}/order.json")["checkout"]["gate"] not in ("ok", "unknown")
+          and any(kind == "checkout" and f.get("stage") == "start" and f.get("style") == "solo.powder" and f.get("gate") == rj(f"orders/{o}/order.json")["checkout"]["gate"] for kind, f in EVENTS), (c, j, EVENTS[-2:]))
     # the capacity: a plan that can never fit one call is refused before payment
     o, k = new_order(["blue_round"])
     os.environ["STYLE_SLOW_CPU"] = "6"

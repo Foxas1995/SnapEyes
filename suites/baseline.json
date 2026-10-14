@@ -1,7 +1,7 @@
 {
  "commit": "1d58fbf",
  "recorded": "2026-10-04",
- "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch; v3wp0 is 93 after the review fixes of baseline.md section 7, it was 61). A change lowers a number only with a reason in the commit message. Every suite is expected green in EVERY run: the fix suite's Windows race in the local store was fixed (baseline.md section 7), a suite that goes red once is investigated, not rerun until green. 2026-10-07 (release review fixes, baseline.md section 31): ts 452 to 470, v3checkout 128 to 132, v3compose 114 to 116, v3cutover 74 to 75, v3reg 216 to 219, and the new suite v3rel with 41; none lowered. 2026-10-12 (the conditional second restoration, baseline.md section 32): the new suite v3retry2 with 70; none moved. 2026-10-13 (the nonce in the work ticket, baseline.md section 33): the new suite v3nonce with 49; none moved. 2026-10-14 (pairs design phase 1, baseline.md section 34): v3coll 115 to 122 (seven new checks, seven adapted); none lowered. 2026-10-14 (the added lid detectors behind SNAPEYES_GATE2, off by default, baseline.md section 35): the new suite v3gate2 with 48; none moved. 2026-10-14 (the texture seam, baseline.md section 37): v3coll 123 to 129 (six new checks); none lowered. 2026-10-14 (pairs design phase 2, baseline.md section 36): v3coll 122 to 123 (one new check, two adapted); none lowered.",
+ "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch; v3wp0 is 93 after the review fixes of baseline.md section 7, it was 61). A change lowers a number only with a reason in the commit message. Every suite is expected green in EVERY run: the fix suite's Windows race in the local store was fixed (baseline.md section 7), a suite that goes red once is investigated, not rerun until green. 2026-10-07 (release review fixes, baseline.md section 31): ts 452 to 470, v3checkout 128 to 132, v3compose 114 to 116, v3cutover 74 to 75, v3reg 216 to 219, and the new suite v3rel with 41; none lowered. 2026-10-12 (the conditional second restoration, baseline.md section 32): the new suite v3retry2 with 70; none moved. 2026-10-13 (the nonce in the work ticket, baseline.md section 33): the new suite v3nonce with 49; none moved. 2026-10-14 (pairs design phase 1, baseline.md section 34): v3coll 115 to 122 (seven new checks, seven adapted); none lowered. 2026-10-14 (the added lid detectors behind SNAPEYES_GATE2, off by default, baseline.md section 35): the new suite v3gate2 with 48; none moved. 2026-10-14 (the texture seam, baseline.md section 37): v3coll 123 to 129 (six new checks); none lowered. 2026-10-14 (pairs design phase 2, baseline.md section 36): v3coll 122 to 123 (one new check, two adapted); none lowered. 2026-10-14 (Clean Iris and Celestial Gold made hard, baseline.md section 38): ts 470 to 492, v3reg 219 to 226, v3cutover 78 to 79, v3compose 116 to 125, v3checkout 132 to 139, v3single 116 to 118; none lowered.",
  "suites": {
   "r2": {
    "pass": 105
@@ -64,13 +64,13 @@
    "pass": 349
   },
   "ts": {
-   "pass": 470
+   "pass": 492
   },
   "v3wp0": {
    "pass": 93
   },
   "v3reg": {
-   "pass": 219
+   "pass": 226
   },
   "v3gate": {
    "pass": 101
@@ -82,7 +82,7 @@
    "pass": 119
   },
   "v3single": {
-   "pass": 116
+   "pass": 118
   },
   "v3steps": {
    "pass": 152
@@ -94,7 +94,7 @@
    "pass": 129
   },
   "v3compose": {
-   "pass": 116
+   "pass": 125
   },
   "v3uni": {
    "pass": 142
@@ -106,10 +106,10 @@
    "pass": 30
   },
   "v3checkout": {
-   "pass": 132
+   "pass": 139
   },
   "v3cutover": {
-   "pass": 78
+   "pass": 79
   },
   "v3rel": {
    "pass": 41

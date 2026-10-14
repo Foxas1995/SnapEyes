@@ -53,7 +53,8 @@ const stats = (o: Partial<StylesStats> = {}): StylesStats => ({
   times: [{ what: 'art', style: 'solo.gold', name: 'Celestial Gold', eyes: 1, n: 8, p50_ms: 12000, p95_ms: 32000, over: 0, need_s: 26.1 }],
   busy_retry: [], errors: [{ style: 'solo.gold', name: 'Celestial Gold', errors: 2, asked: 40, rate: 0.05 }], qa: [], review: [{ style: 'solo.gold', name: 'Celestial Gold', review: 1, made: 8, rate: 0.125 }],
   gate: { codes: { ok: 20, lid: 4 }, reasons: { lid_sectors_outer: 4 }, classes: { own: 10, grey: 14 }, pupils: { round: 20, bar: 4 }, by_style: [
-    { style: 'solo.clean', name: 'Clean Iris', policy: 'advisory', rule: 'lid', seen: 24, failed: 4, rate: 0.1667 }, { style: 'solo.gold', name: 'Celestial Gold', policy: 'advisory', rule: 'lid', seen: 24, failed: 4, rate: 0.1667 },
+    { style: 'solo.clean', name: 'Clean Iris', policy: 'hard', rule: 'lid', seen: 24, failed: 4, rate: 0.1667 }, { style: 'solo.gold', name: 'Celestial Gold', policy: 'hard', rule: 'lid', seen: 24, failed: 4, rate: 0.1667 },
+    { style: 'solo.powder', name: 'Powder Burst', policy: 'advisory', rule: 'lid', seen: 24, failed: 4, rate: 0.1667 },
     { style: 'duo.universe', name: 'Universe Duo', policy: 'hard', rule: 'fill', seen: 24, failed: 2, rate: 0.0833 }] },
   holds: { style_step_too_big: 1 }, master: { made_by_style: {}, fallback: {} }, help: { routes: { manual: 2, soon: 3 }, why: { bar_pupil: 2 }, eyes: { '2': 2 } },
   reveal: { codes: { ok: 6, colour: 2 }, n: 8, ok_share: 0.75, ms: 140.5 }, attention: [], memory: { peak_mb_avg: 481.6, n: 20, peak_mb_is: 'vmrss_increase_over_the_step', hwm_is: 'x' },
@@ -204,7 +205,9 @@ export async function run(): Promise<Row[]> {
     gr.length === 2 && gr[0].group === 'solo' && gr[0].rows.length === 1 && gr[0].fixed.length === 0 && gr[1].group === 'duo' && gr[1].rows.length === 0 && gr[1].fixed[0].id === 'duo.reflection'
     && fixedIds(c2).has('duo.reflection') && !fixedIds(c2).has('solo.clean'));
   const gg = gateGroups(stats().gate.by_style, new Set(['duo.universe']));
-  check('gateGroups: styles with the same rule, policy and numbers are one row, and a style the registry only plans is left out', gg.length === 1 && gg[0].styles.join() === 'Clean Iris,Celestial Gold' && gateGroups(stats().gate.by_style).length === 2);
+  // (2026-10-14: the server says hard for Clean Iris and Celestial Gold and advisory for Powder Burst: the same rule and the same numbers, so the policy alone keeps them in two rows)
+  check('gateGroups: styles with the same rule, policy and numbers are one row, the policy alone splits otherwise equal rows, and a style the registry only plans is left out',
+    gg.length === 2 && gg[0].styles.join() === 'Clean Iris,Celestial Gold' && gg[0].policy === 'hard' && gg[1].styles.join() === 'Powder Burst' && gg[1].policy === 'advisory' && gateGroups(stats().gate.by_style).length === 3);
   check('filterBody: one filter at a time, a market or a language, nothing for the empty one or a malformed one',
     JSON.stringify(filterBody('market:au')) === '{"market":"au"}' && JSON.stringify(filterBody('lang:en')) === '{"lang":"en"}' && JSON.stringify(filterBody('')) === '{}' && JSON.stringify(filterBody('moon:x')) === '{}');
   check('isFirstN: the stored masters of a lab order are eyes 1 to n with no gap', isFirstN([1, 2, 3]) && isFirstN([2, 1]) && !isFirstN([1, 3]) && !isFirstN([]) && !isFirstN([2]));

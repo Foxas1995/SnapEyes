@@ -302,6 +302,9 @@ export const lt: TryCopy = {
     groupSoon: 'Peržiūra jau dabar nemokama. Šios grupės užsakymus pradėsime priimti netrukus.',
     countSoon: (n: number) => `Užsakymus kūriniams iš ${n} ${akiuWord(n)} pradėsime priimti netrukus.`,
     soonBuy: 'Šis stilius netrukus bus prieinamas. Pasirinkite kitą, jei norite užsisakyti dabar.',
+    retakeBuy: (total: number) => (total === 1
+      ? 'Su šia nuotrauka kol kas nieko užsisakyti negalima. Norėdami užsisakyti, nufotografuokite akį iš naujo (žr. aukščiau).'
+      : 'Su šiomis nuotraukomis kol kas nieko užsisakyti negalima. Norėdami užsisakyti, nufotografuokite aukščiau nurodytas akis iš naujo.'),
     soonNote: 'Šis stilius netrukus bus prieinamas.',
     soonLookBuy: (look: string) => `Variantas ${look} netrukus bus prieinamas. Pasirinkite kitą variantą arba stilių, jei norite užsisakyti dabar.`,
     soonLookNote: (look: string) => `Variantas ${look} netrukus bus prieinamas.`,
@@ -342,8 +345,8 @@ export const lt: TryCopy = {
       lid: 'Rainelės žiede dar yra voko, blakstienų arba odos.',
       reflection: 'Rainelėje dar liko atspindys.',
       reseal: (list: number[], total: number) => (total === 1
-        ? 'Ši peržiūra sukurta senesne puslapio versija. Norėdami tęsti, nufotografuokite akį iš naujo.'
-        : `${list.length === 1 ? `Akies ${list[0]} peržiūra sukurta` : `Akių ${andList(list, 'ir')} peržiūros sukurtos`} senesne puslapio versija. Norėdami tęsti, nufotografuokite ${list.length === 1 ? 'ją' : 'jas'} iš naujo.`),
+        ? 'Šios peržiūros patikrinti nepavyko. Norėdami tęsti, nufotografuokite akį iš naujo.'
+        : `${list.length === 1 ? `Akies ${list[0]} peržiūros` : `Akių ${andList(list, 'ir')} peržiūrų`} patikrinti nepavyko. Norėdami tęsti, nufotografuokite ${list.length === 1 ? 'ją' : 'jas'} iš naujo.`),
       held: 'Stiliai, kuriems reikia švaresnės rainelės, kol kas pilki.',
       tips: {
         open: 'Plačiai atmerkite akį, žiūrėkite tiesiai į objektyvą ir švelniai piršto galiuku pakelkite viršutinį voką.',

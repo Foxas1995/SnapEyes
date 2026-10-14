@@ -7,7 +7,8 @@
 //   POST /api/analyze     one good shot, the iris in the middle, a work ticket
 //   POST /api/deglare     the crop back, nothing changed
 //   POST /api/enhance     the restored picture (the display copy: the stub does not draw a watermark, the check says so where it matters)
-//   POST /api/compose     the tile list of one eye (a live style, a second one, one that opens soon), the large preview, the 480 px tiles
+//   POST /api/compose     the tile list of one eye (a live style, a second one, one that opens soon), the large preview, the 480 px tiles. api.setEye('lid') makes the eye fail the lid rule
+//                         (2026-10-14: Clean Iris and Celestial Gold are hard): the hard tiles are held back (gate), the plate styles open soon, nothing is recommended, as the real server answers
 //   GET  /api/order       the scripted order: states making, pending, ready, review (api.setOrder), its eyes made one at a time
 //   POST /api/order       action make (one eye) and compose (the artwork): each takes `make` ms, then the order is one step on
 //   GET  /api/checkout, /api/health   the same stand-in as scripts/lib/stubapi.mjs (ordering closed)
@@ -26,6 +27,7 @@ export function flowApi(root, { wait = {} } = {}) {
   const restored = file('sample_eye_blue_restored.jpg');   // the display picture of the eye and of the first style
   const second = file('sample_eye_blue_before.jpg');       // another picture, so that a second style is a different picture
   const stats = { calls: [], model: 0 };
+  let eyeKind = 'ok';      // 'ok': the eye passes every rule; 'lid': it fails the lid rule (api.setEye)
   // the styles of one eye, read from the registry (api/_lib/styles_registry.py, the one place for ids, names and stages; no id is written here): the first style that
   // can be bought now and is plain black, the first live art style, and one that opens soon
   const reg = loadRegistry(root);
@@ -46,8 +48,15 @@ export function flowApi(root, { wait = {} } = {}) {
     return st;
   };
 
-  const tile = ([id, d], stage, isPick) => ({ id, name: d.name, slug: d.slug, group: d.group, legacy: 0, stage, available: true, why: null, layouts: (d.layouts['1'] || ['single']).slice(0, 1), eyes: 1, price_class: d.price_class, looks: {}, gate: 'advisory', rule: 'lid', pick: isPick });
-  const tiles = () => [tile(first, 'live', true), tile(second_, 'live', false), tile(soon, 'preview', false)];
+  // the policy of a tile is the registry's (api/_lib/styles_registry.py gate), as the real server sends it; a hard tile is held back (available false, why gate) for an eye that fails the lid rule
+  const tile = ([id, d], stage, isPick, held = false) => ({ id, name: d.name, slug: d.slug, group: d.group, legacy: 0, stage, available: !held, why: held ? 'gate' : null, layouts: (d.layouts['1'] || ['single']).slice(0, 1), eyes: 1, price_class: d.price_class, looks: {}, gate: d.gate, rule: 'lid', pick: isPick });
+  // 'lid' is the catalogue of production while the 4K plates are not in storage: the plain style is live and held back, the plate style and the third open soon, nothing is recommended
+  const tiles = () => (eyeKind === 'lid'
+    ? [tile(second_, 'preview', false), tile(soon, 'preview', false), tile(first, 'live', false, first[1].gate === 'hard')]
+    : [tile(first, 'live', true), tile(second_, 'live', false), tile(soon, 'preview', false)]);
+  const eyesReply = () => [eyeKind === 'lid'
+    ? { eye: 1, eye_id: 'i3eye', cls: 'own', pupil: 'round', gate: { lid: false, fill: true }, why: ['lid_sectors_inner'] }
+    : { eye: 1, eye_id: 'i3eye', cls: 'own', pupil: 'round', gate: { lid: true, fill: true } }];
   const pic = (id) => ({ image: id === ids.second ? second : restored, width: 1024, height: 1024, layout: 'single', canvas: null, design_used: id, fallback: null, plan8: null });
 
   const handler = (req, res) => {
@@ -77,7 +86,7 @@ export function flowApi(root, { wait = {} } = {}) {
         if (b.action === 'help') { json({ ok: true }); return; }
         const list = Array.isArray(b.styles) ? b.styles : null;
         if (list && list.length === 0) {
-          json({ ok: true, batch: true, count: 1, size: 480, tiles: tiles(), pick: { id: ids.first, reason: Object.values(first[1].reason || {})[0] || '' }, eyes: [{ eye: 1, eye_id: 'i3eye', cls: 'own', pupil: 'round', gate: { lid: true, fill: true } }] });
+          json({ ok: true, batch: true, count: 1, size: 480, tiles: tiles(), pick: eyeKind === 'lid' ? null : { id: ids.first, reason: Object.values(first[1].reason || {})[0] || '' }, eyes: eyesReply() });
         } else if (list) {
           await sleep(w.tile);
           json({ ok: true, batch: true, count: 1, size: 480, tiles: list.map((id) => ({ id, ...pic(id) })) });
@@ -103,6 +112,8 @@ export function flowApi(root, { wait = {} } = {}) {
       order.state = scenario; order.eyes = eyes; order.made = new Set(Array.from({ length: made }, (_, i) => i + 1)); order.pendingUntil = Date.now() + pendingMs;
       if (scenario === 'ready') order.made = new Set(Array.from({ length: eyes }, (_, i) => i + 1));
     },
+    /** the eye the stand-in judges: 'ok' (it passes every rule) or 'lid' (it fails the lid rule: the hard tiles are held back) */
+    setEye(kind) { eyeKind = kind === 'lid' ? 'lid' : 'ok'; },
     /** the picture the stand-in sends as the display copy of the first style, as a data URL (to see that the page shows that picture and no other) */
     restoredDataUrl: `data:image/jpeg;base64,${restored}`,
     secondDataUrl: `data:image/jpeg;base64,${second}`,

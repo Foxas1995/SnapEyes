@@ -330,6 +330,9 @@ export const hu: TryCopy = {
     groupSoon: 'Az előnézet már most ingyenes. Ennek a csoportnak a rendelése hamarosan indul.',
     countSoon: (n: number) => `${n} szem rendelése hamarosan indul.`,
     soonBuy: 'Ez a stílus hamarosan elérhető lesz. Válassz egy másikat, ha most szeretnél rendelni.',
+    retakeBuy: (total: number) => (total === 1
+      ? 'Ezzel a fotóval egyelőre semmit sem lehet rendelni. A rendeléshez fotózd újra a szemedet (lásd fent).'
+      : 'Ezekkel a fotókkal egyelőre semmit sem lehet rendelni. A rendeléshez fotózd újra a fent megnevezett szemeket.'),
     soonNote: 'Ez a stílus hamarosan elérhető lesz.',
     soonLookBuy: (look: string) => `${look} változat: hamarosan elérhető lesz. Válassz másik változatot vagy stílust, ha most szeretnél rendelni.`,
     soonLookNote: (look: string) => `${look} változat: hamarosan elérhető lesz.`,
@@ -370,8 +373,8 @@ export const hu: TryCopy = {
       lid: 'Az írisz gyűrűjében még szemhéj, szempilla vagy bőr van.',
       reflection: 'Az íriszben még maradt egy tükröződés.',
       reseal: (list: number[], total: number) => (total === 1
-        ? 'Ez az előnézet az oldal egy régebbi változatából származik. A folytatáshoz fotózd újra a szemet.'
-        : `${Az(list[0] ?? 0)} ${ordList(list)} szem előnézete az oldal egy régebbi változatából származik. A folytatáshoz fotózd újra ${list.length === 1 ? 'azt' : 'azokat'}.`),
+        ? 'Ezt az előnézetet nem tudtuk ellenőrizni. A folytatáshoz fotózd újra a szemet.'
+        : `${Az(list[0] ?? 0)} ${ordList(list)} szem előnézetét nem tudtuk ellenőrizni. A folytatáshoz fotózd újra ${list.length === 1 ? 'azt' : 'azokat'}.`),
       held: 'A tisztább íriszt igénylő stílusok addig szürkék.',
       tips: {
         open: 'Nyisd tágra a szemedet, nézz egyenesen a lencsébe, és egy ujjheggyel óvatosan emeld meg a felső szemhéjat.',

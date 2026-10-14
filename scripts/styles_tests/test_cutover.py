@@ -394,9 +394,18 @@ check("GET /api/checkout now lists Clean Iris live for one eye and the rest at p
       and {s["id"]: s["stages"].get("1") for s in j_cat["styles"] if "1" in s["stages"]}["solo.clean"] == "live"
       and {s["id"]: s["stages"].get("1") for s in j_cat["styles"] if "1" in s["stages"]}["solo.powder"] == "preview", j_cat["styles"][:1])
 ANS["clean"] = j_cat
-t_now = CT.tile_list(1, [{"cls": "own"}])
+GATE_PASS = {"lid": {"ok": True}, "fill": {"ok": True}}
+t_now = CT.tile_list(1, [{"cls": "own", "gate": GATE_PASS}])      # a sealed profile that passes: Clean Iris is hard since 2026-10-14, and a hard style needs a sealed gate value
 check("the recommended tile is a style the customer can buy: Clean Iris is the only one, so it is the pick (the table is price blind: it reads class and stage); with two live it follows the class",
       t_now["pick"] == "solo.clean", t_now["pick"])
+t_lid = CT.tile_list(1, [{"cls": "own", "gate": {"lid": {"ok": False, "why": ["lid_sectors_inner"]}, "fill": {"ok": True}}}])
+t_none = CT.tile_list(1, [{"cls": "own"}])
+check("2026-10-14: Clean Iris is hard, so when the one eye fails the lid rule the only style that is live is held back (why gate), and with no sealed gate value (a version 1 seal) why reseal: "
+      "nothing can be bought, the pick and its reason are null, and the Soon styles are still listed and drawn",
+      t_lid["pick"] is None and t_lid["reason"] is None and {t["id"]: (t["available"], t["why"]) for t in t_lid["tiles"]}["solo.clean"] == (False, "gate")
+      and t_none["pick"] is None and {t["id"]: (t["available"], t["why"]) for t in t_none["tiles"]}["solo.clean"] == (False, "reseal")
+      and all(t["available"] for t in t_lid["tiles"] if t["id"] != "solo.clean" and t["gate"] != "hard") and {t["id"] for t in t_lid["tiles"]} >= {"solo.powder", "solo.splash", "solo.gold", "solo.clean"},
+      (t_lid["pick"], [(t["id"], t["available"], t["why"]) for t in t_lid["tiles"]]))
 o, k = new_order(["blue_round"])
 n_before = len(H.Fake.creates)
 c, j = co(o, k, "solo.clean", 1, names="Ona")
