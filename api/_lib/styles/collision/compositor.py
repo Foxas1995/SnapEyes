@@ -55,7 +55,7 @@ PRESETS = {
     # calibrated on the owner's H10 (measured along the front limb): black valley 0.02-0.03 R wide, back iris recovers by 0.05 R.
     # Stronger than the brief's caps (needs the owner's word: D8 strength).
     "ref": dict(a_in=0.78, r0=0.955, zc_a=0.96, zc_l=0.0, zc_cut=0.050, zc_plateau=0.014),
-    # pairs phase 1: the same edge with the valley of the owner's H11 (Collision Infinity only, engine.VALLEY_DEEP_STYLES): the back iris is darkened to 0.02 of itself at the limb
+    # pairs phase 1 and 2: the same edge with the valley of the owner's H11 and H10 (Collision Infinity and Clean Infinity, engine.VALLEY_DEEP_STYLES): the back iris is darkened to 0.02 of itself at the limb
     # (the references' valley is 0.017 to 0.026 of the back iris, the shared "ref" leaves 0.04 to 0.05), the same width, the same fall inside the front iris
     "ref_deep": dict(a_in=0.78, r0=0.955, zc_a=0.98, zc_l=0.0, zc_cut=0.050, zc_plateau=0.014),
 }

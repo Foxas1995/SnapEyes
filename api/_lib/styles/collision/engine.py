@@ -51,7 +51,7 @@ STYLE = "collision"
 # Pairs phase 1 (2026-10-14): the options of the finish of the two-iris designs. They reach a render only when the design drawn is infinity or kiss (a fallen back infinity
 # is a kiss), so the trio, the families and the chain keep their pictures; every default is the prototype's look and collision.PRODUCTION names what production turns on.
 PAIR_DESIGNS = ("infinity", "kiss")
-VALLEY_DEEP_STYLES = (("infinity", False),)          # (design drawn, clean flag) that take the deeper valley of the owner's H11 when option valley is "deep": Collision Infinity only
+VALLEY_DEEP_STYLES = (("infinity", False), ("infinity", True))          # (design drawn, clean flag) that take the deeper valley (the owner's H11, H10) when option valley is "deep": Collision Infinity (phase 1) and Clean Infinity (phase 2)
 PAIR_CFG_KEYS = ("crumble_aa",)
 # where a pair still draws the hairline (both bands dark, option rim "both") it is a soft rim light and not the razor line of the prototype: alpha 0.70 -> 0.34, the Gaussian
 # 0.012 R -> 0.024 R wide, its centre 0.004 R inside the limb, the colour L* 70 -> 56 (option hair overrides, the laboratory's)

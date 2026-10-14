@@ -74,8 +74,8 @@ MIX_MAX = 0.03                                                              # ..
 # The last four are the finish of the two-iris designs (pairs design phase 1, 2026-10-14) and reach a pair only (engine.PAIR_DESIGNS: Kiss, Collision Infinity, Clean Infinity
 # and an infinity that fell back to the Kiss geometry); the trio, the families and the chain draw as before. rim "both": a contact is drawn as the bright hairline only where
 # BOTH bands are dark (the prototype: where the back band is). crumble_aa: the crumbling contact of the Kiss geometry is antialiased (2.2 px) instead of cut at hard thresholds.
-# dust "fine": the same powder drawn as smaller, rounder, softer flakes (engine.PAIR_DUST). valley "deep": Collision Infinity only (engine.VALLEY_DEEP_STYLES), the black
-# valley of the contact edge at 0.02 of the back iris, as in the owner's H11 (0.04 to 0.05 with the shared "ref" edge).
+# dust "fine": the same powder drawn as smaller, rounder, softer flakes (engine.PAIR_DUST). valley "deep": Collision Infinity and Clean Infinity (engine.VALLEY_DEEP_STYLES), the
+# black valley of the contact edge at 0.02 to 0.03 of the back iris, as in the owner's H11 and H10 (0.04 to 0.05 with the shared "ref" edge).
 PAIR_FINISH = {"rim": "both", "crumble_aa": 2.2, "dust": "fine", "valley": "deep"}
 PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble", **PAIR_FINISH}
 OPT_KEYS = frozenset(("edge", "zone_c", "seam", "seam_dust", "kiss_d", "hairline", "plates", "breakup", "rotate", "trio_base", "lens_mode", "plan_mode", "beta", "seed_mode",

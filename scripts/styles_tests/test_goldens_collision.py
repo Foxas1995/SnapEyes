@@ -322,10 +322,10 @@ for design in CX.DESIGNS:
 print(f"   (step A replayed in {time.time() - t0:.0f} s, {n_a} cases)", flush=True)
 # pairs phase 1 (2026-10-14): the recording is step B plus the finish of the pairs, which draws the hairline only where BOTH bands are dark: the clean infinity of a blue iris and a dark brown one
 # (a hairline in step A, a dark contour now) moved, and the edge modes of the pairs may only have LOST a hairline since step A, never gained one
-check("step B really changed the pictures (the replay of step A is not the replay of step B): most cases moved, and the pictures that did not are the clean infinity's, whose seed only dithers pure black "
-      "(the reviewed diff is diff_goldens_collision.py; the one clean pair that moved is the blue and dark brown one, whose hairline the finish of the pairs took away)",
-      sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]) >= 50 and all(G[k]["sha"] == G_A[k]["sha"] for k in G if k.startswith("infinity.clean.") and not k.endswith(".stack")
-      and ".text" not in k and ".1:1." not in k and "blue+brown" not in k)
+# pairs phase 2 (2026-10-14): the clean infinity takes the deeper valley of H10 as well, so every clean infinity picture of the recording that draws the weave moved since step A, too
+check("step B really changed the pictures (the replay of step A is not the replay of step B): most cases moved, the clean infinity's among them (the seed dithers pure black; the finish of the pairs "
+      "took the hairline of the blue and dark brown pair away and gave the weave the deeper valley of H10), and the facts of every case (design, lens, fronts, fallbacks) are the same",
+      sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]) >= 57 and all(G[k]["sha"] != G_A[k]["sha"] for k in G if k.startswith("infinity.clean."))
       and all(G[k]["facts"].get(c) == G_A[k]["facts"].get(c) for k in G for c in ("design_used", "lens_mode", "lens_K", "overlap_fallback", "fallback", "rules", "d_over_R", "gate_fail", "auto_hairline"))
       and all(set(G[k]["facts"]["edge_modes"]) <= set(G_A[k]["facts"]["edge_modes"]) and (G[k]["facts"]["edge_modes"] == G_A[k]["facts"]["edge_modes"] or k.split(".")[0] in ("infinity", "kiss")) for k in G),
       sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]))
@@ -1218,10 +1218,45 @@ check("the crumble's broken edge field at 4096 px: the prototype's threshold jum
       jumps_(rag_hard, 0.6) > 5000 and jumps_(rag_soft, 0.6) == 0 and 10 * jumps_(rag_soft, 0.3) < jumps_(rag_hard, 0.3) and abs(float(rag_soft.mean()) - float(rag_hard.mean())) < 0.05,
       (jumps_(rag_hard, 0.6), jumps_(rag_soft, 0.6), jumps_(rag_hard, 0.3), jumps_(rag_soft, 0.3), float(rag_hard.mean()), float(rag_soft.mean())))
 inf_ci, inf_cl, kiss_ = finish_render("infinity", ("blue", "green"), "3:2", 384, {}), finish_render("infinity", ("blue", "green"), "3:2", 384, {}, clean=True), finish_render("kiss", ("blue", "green"), "3:2", 384, {})
-check("the deeper valley is Collision Infinity's alone: its compositor takes the ref_deep edge (the back iris darkened to 0.02 at the limb), Clean Infinity, the Kiss and the families the shared ref edge, "
-      "and the shared ref preset is what it was (a_in 0.78, zc_a 0.96)", inf_ci.cfg.preset == "ref_deep" and inf_cl.cfg.preset == "ref" and kiss_.cfg.preset == "ref" and CMP.PRESETS["ref"]["zc_a"] == 0.96
+check("the deeper valley is the two infinities' alone (phase 1: Collision Infinity, phase 2: Clean Infinity): their compositors take the ref_deep edge (the back iris darkened to 0.02 at the limb), the Kiss and the "
+      "families the shared ref edge, and the shared ref preset is what it was (a_in 0.78, zc_a 0.96)", inf_ci.cfg.preset == "ref_deep" and inf_cl.cfg.preset == "ref_deep" and kiss_.cfg.preset == "ref" and CMP.PRESETS["ref"]["zc_a"] == 0.96
       and CMP.PRESETS["ref"]["a_in"] == 0.78 and CMP.PRESETS["ref_deep"]["zc_a"] == 0.98 and {k: v for k, v in CMP.PRESETS["ref_deep"].items() if k != "zc_a"} == {k: v for k, v in CMP.PRESETS["ref"].items() if k != "zc_a"}
-      and E.VALLEY_DEEP_STYLES == (("infinity", False),), (inf_ci.cfg.preset, inf_cl.cfg.preset, kiss_.cfg.preset))
+      and E.VALLEY_DEEP_STYLES == (("infinity", False), ("infinity", True)), (inf_ci.cfg.preset, inf_cl.cfg.preset, kiss_.cfg.preset))
+vl_on, vl_off = finish_render("infinity", ("blue", "green"), "3:2", 512, {}, clean=True), finish_render("infinity", ("blue", "green"), "3:2", 512, {"valley": "ref"}, clean=True)
+vl_kiss_on, vl_kiss_off = finish_render("kiss", ("blue", "green"), "3:2", 512, {}), finish_render("kiss", ("blue", "green"), "3:2", 512, {"valley": "ref"})
+
+
+def limb_dark(r):
+    """The darkest point of the valley across the visible front limbs of the weave lens: the luminance across the limb (0.97 to 1.06 R of the front iris's centre) averaged over the angles where the
+    front iris is shown just inside the limb and the other iris just outside it, and the smallest value of that profile."""
+    Y = np.asarray(r.img.convert("L"), np.float32)
+    occ = r.comp.occ
+    bx0, by0 = r.comp.box[0], r.comp.box[1]
+    mins = []
+    for k, d in enumerate(r.discs):
+        o = 1 - k
+        rows = []
+        for th in np.deg2rad(np.arange(0.0, 360.0, 1.0)):
+            ux, uy = math.cos(th), math.sin(th)
+            pi_, po_ = (d.cx + 0.97 * d.R * ux, d.cy + 0.97 * d.R * uy), (d.cx + 1.03 * d.R * ux, d.cy + 1.03 * d.R * uy)
+            try:
+                if occ[int(pi_[1]) - by0, int(pi_[0]) - bx0] != k or occ[int(po_[1]) - by0, int(po_[0]) - bx0] != o:
+                    continue
+            except IndexError:
+                continue
+            if math.hypot(po_[0] - r.discs[o].cx, po_[1] - r.discs[o].cy) > 0.80 * r.discs[o].R:
+                continue
+            u = np.arange(0.97, 1.06, 0.002)
+            xs_, ys_ = d.cx + u * d.R * ux, d.cy + u * d.R * uy
+            rows.append(Y[np.clip(ys_.astype(int), 0, Y.shape[0] - 1), np.clip(xs_.astype(int), 0, Y.shape[1] - 1)])
+        if len(rows) >= 20:
+            mins.append(float(np.median(np.array(rows), axis=0).min()))
+    return float(np.mean(mins)) if mins else None
+
+
+check("Clean Infinity with the deeper valley: a darker valley on the back iris just outside the front limb than with the shared ref edge (the same picture otherwise: same design, same seed, same plan "
+      "of the weave), and the Kiss pair does not move with the valley option", pix_sha(vl_on) != pix_sha(vl_off) and limb_dark(vl_on) is not None and limb_dark(vl_off) is not None and limb_dark(vl_on) < 0.85 * limb_dark(vl_off)
+      and vl_on.seed == vl_off.seed and vl_on.info["rules"] == vl_off.info["rules"] and pix_sha(vl_kiss_on) == pix_sha(vl_kiss_off), (limb_dark(vl_on), limb_dark(vl_off)))
 hl_light = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, None, eyes=[EYEOBJ["blue"], EYEOBJ["brown"]])["frozen"]["hairline"]
 hl_dark = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, None, eyes=[EYEOBJ["brown"], EYEOBJ["brown2"]])["frozen"]["hairline"]
 hl_old = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair", "engine_opts": CC.PROTOTYPE_FINISH}, None, eyes=[EYEOBJ["blue"], EYEOBJ["brown"]])["frozen"]["hairline"]

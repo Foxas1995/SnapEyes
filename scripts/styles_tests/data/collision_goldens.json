@@ -2517,7 +2517,7 @@
    },
    "h": 683,
    "seed": 710031947880338962,
-   "sha": "6ac3e162fa2626208307a5319b096912e5b3abb8a85a6b37ab512c7f3f8cb7f8",
+   "sha": "6029e42d0018ac280387ec5e5910542a7ff2da38dc4c0ea14b63ff41ac9e7b80",
    "w": 1024
   },
   "infinity.clean.blue+green.3:2.1024": {
@@ -2554,7 +2554,7 @@
    },
    "h": 683,
    "seed": 7751628645936132249,
-   "sha": "372830ec3d0df58ef2cb02a4483e8e5e57b9b50a1a4b5398aba51451568ff018",
+   "sha": "4571b539fe28a1bab7480dde9370f14d7ef18e247abda1bd4bdef9d4a867a7a2",
    "w": 1024
   },
   "infinity.clean.blue+green.3:2.4096": {
@@ -2591,7 +2591,7 @@
    },
    "h": 2732,
    "seed": 7751628645936132249,
-   "sha": "0ea57f6c75b87dad43c0044db7a5f0361ff2162afe1515a1df9dbf1cfeac508d",
+   "sha": "f8021b9f5a3f2a8a8cf38030048270105ed6434e6dee6fe391b39dbee5c2d2b5",
    "w": 4096
   },
   "infinity.clean.grey+amber.1:1.512": {
@@ -2628,7 +2628,7 @@
    },
    "h": 512,
    "seed": 4911029047995108003,
-   "sha": "011f6af4e212a14d6c0bc190879da1bd0ad45ded693b1485ebd6e8a568359364",
+   "sha": "6da29ac44e4ae840be33e1fb9a2671af83003377670f912c727753edc2707bd7",
    "w": 512
   },
   "infinity.clean.grey+amber.1:1.512.text": {
@@ -2665,7 +2665,7 @@
    },
    "h": 512,
    "seed": 4911029047995108003,
-   "sha": "4d3f12cef6cbd69ac49c15e42c80602b23ec2718aa9390895947f1f41a95dce5",
+   "sha": "390d19a335dfb27d4693261015c10ea76f7930163f27ef12751e60be0c8b8c29",
    "w": 512
   },
   "infinity.clean.grey+amber.3:2.1024": {
@@ -2702,7 +2702,7 @@
    },
    "h": 683,
    "seed": 4911029047995108003,
-   "sha": "60ada7157da05acda44819ae96eff7cee49331d03c97dd805d774fca3a7af115",
+   "sha": "7f6f2ce1132d2dea6c374102343c2660296a23d0dd887e6e7debd2e041c7cbf2",
    "w": 1024
   },
   "infinity.clean.grey+amber.3:2.512.stack": {
@@ -2741,7 +2741,7 @@
    },
    "h": 341,
    "seed": 8198922585224965242,
-   "sha": "fd0e0e35d536daaa8a7c030396fae25fcebe11da12d1c6bee4e99c4a2d5c54d1",
+   "sha": "ce72d58c61035786648d0da2d06aa437a9f49dd5c3428525d42f525649da9d93",
    "w": 512
   },
   "infinity.grey+amber.3:2.1024": {
