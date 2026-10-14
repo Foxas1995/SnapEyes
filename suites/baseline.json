@@ -1,7 +1,7 @@
 {
  "commit": "1d58fbf",
  "recorded": "2026-10-04",
- "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch; v3wp0 is 93 after the review fixes of baseline.md section 7, it was 61). A change lowers a number only with a reason in the commit message. Every suite is expected green in EVERY run: the fix suite's Windows race in the local store was fixed (baseline.md section 7), a suite that goes red once is investigated, not rerun until green. 2026-10-07 (release review fixes, baseline.md section 31): ts 452 to 470, v3checkout 128 to 132, v3compose 114 to 116, v3cutover 74 to 75, v3reg 216 to 219, and the new suite v3rel with 41; none lowered. 2026-10-12 (the conditional second restoration, baseline.md section 32): the new suite v3retry2 with 70; none moved. 2026-10-13 (the nonce in the work ticket, baseline.md section 33): the new suite v3nonce with 49; none moved.",
+ "note": "PASS lines per suite on main 1d58fbf (v3wp0 and the page-code tests 'ts' counted on the WP0 branch; v3wp0 is 93 after the review fixes of baseline.md section 7, it was 61). A change lowers a number only with a reason in the commit message. Every suite is expected green in EVERY run: the fix suite's Windows race in the local store was fixed (baseline.md section 7), a suite that goes red once is investigated, not rerun until green. 2026-10-07 (release review fixes, baseline.md section 31): ts 452 to 470, v3checkout 128 to 132, v3compose 114 to 116, v3cutover 74 to 75, v3reg 216 to 219, and the new suite v3rel with 41; none lowered. 2026-10-12 (the conditional second restoration, baseline.md section 32): the new suite v3retry2 with 70; none moved. 2026-10-13 (the nonce in the work ticket, baseline.md section 33): the new suite v3nonce with 49; none moved. 2026-10-14 (pairs design phase 1, baseline.md section 34): v3coll 115 to 122 (seven new checks, seven adapted); none lowered.",
  "suites": {
   "r2": {
    "pass": 105
@@ -91,7 +91,7 @@
    "pass": 72
   },
   "v3coll": {
-   "pass": 115
+   "pass": 122
   },
   "v3compose": {
    "pass": 116

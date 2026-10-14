@@ -1962,9 +1962,7 @@
      1.3152
     ],
     "design_used": "infinity",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_K": 40.99,
@@ -1986,14 +1984,12 @@
    "frozen": {
     "fallback": null,
     "fronts": {},
-    "hairline": [
-     0
-    ],
+    "hairline": [],
     "lens": "weave"
    },
    "h": 683,
    "seed": 2090817723077080254,
-   "sha": "b4fcc427ec4978d4c89e1b8d67d7ead41d9c82bc651c17340f8b1b439fe36c47",
+   "sha": "3c564123e6d07a8b2871adac87624e0aae146bcad5e2f407e01524efc4856c7f",
    "w": 1024
   },
   "infinity.blue+brown.3:2.1024.stack": {
@@ -2006,9 +2002,7 @@
      1.5761
     ],
     "design_used": "stack",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": "stack_contrast",
     "gate_fail": [],
     "lens_K": 40.99,
@@ -2032,14 +2026,12 @@
     "fronts": {
      "0": "front_a"
     },
-    "hairline": [
-     0
-    ],
+    "hairline": [],
     "lens": "stack"
    },
    "h": 683,
    "seed": 1159238015739245995,
-   "sha": "3a68f1dd72bb59194312a0307fda5daf377b029f20c1119139bf59a48fdb5c81",
+   "sha": "1f9adb3a8de1a985edb429e4c6a958f0e97e626c999384cfa64905bd93d6ad65",
    "w": 1024
   },
   "infinity.blue+brown.3:2.1024.text": {
@@ -2052,9 +2044,7 @@
      1.3199
     ],
     "design_used": "infinity",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_K": 40.99,
@@ -2076,14 +2066,12 @@
    "frozen": {
     "fallback": null,
     "fronts": {},
-    "hairline": [
-     0
-    ],
+    "hairline": [],
     "lens": "weave"
    },
    "h": 683,
    "seed": 2090817723077080254,
-   "sha": "29ef0fe9d0b5a3b560274b2bfff5878a45b97cce142bdff628f51ca64c686592",
+   "sha": "f7fb515f9ee4aa3c33bcc857adea9b3d82d40679d3d46cc09212cf2a669df45e",
    "w": 1024
   },
   "infinity.blue+brown.3:2.4096": {
@@ -2096,9 +2084,7 @@
      1.3152
     ],
     "design_used": "infinity",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_K": 40.99,
@@ -2120,14 +2106,12 @@
    "frozen": {
     "fallback": null,
     "fronts": {},
-    "hairline": [
-     0
-    ],
+    "hairline": [],
     "lens": "weave"
    },
    "h": 2732,
    "seed": 2090817723077080254,
-   "sha": "7aa099d32a281659eed81327a0d73a52a11e9a1ffcec342e2ad212a2f96abf65",
+   "sha": "ef08090d15ecf0ae4f148b27cf4d1be318d85ff16e3fcd5f2fb9bbe6116350ff",
    "w": 4096
   },
   "infinity.blue+brown.3:2.512": {
@@ -2140,9 +2124,7 @@
      1.3261
     ],
     "design_used": "infinity",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_K": 40.99,
@@ -2164,14 +2146,12 @@
    "frozen": {
     "fallback": null,
     "fronts": {},
-    "hairline": [
-     0
-    ],
+    "hairline": [],
     "lens": "weave"
    },
    "h": 341,
    "seed": 2090817723077080254,
-   "sha": "4c1672d5fc5b991948f1300bb315534f8ce9bf4c09a71bc95cde154ab1a99cac",
+   "sha": "4c459345b011ee047a5c395102ebca5ca34823738e9cfa2c584f0330dc46bf36",
    "w": 512
   },
   "infinity.blue+green.1:1.512": {
@@ -2211,7 +2191,7 @@
    },
    "h": 512,
    "seed": 4619706771036275121,
-   "sha": "1277f8c9849b1f9c351ff3ad8191d59e9d4b5dfeb3cb97d0227bd3f74b54d727",
+   "sha": "119e6aa3ae966379125aca4489c7b874d13ab59aebea779fa9a0d0a65a5cc9fb",
    "w": 512
   },
   "infinity.blue+green.3:2.1024": {
@@ -2251,7 +2231,7 @@
    },
    "h": 683,
    "seed": 4619706771036275121,
-   "sha": "fa15f60bfeb78dc5c8420bd4b354ec3f34cb3805d69cedf6644b0122ad6d8eeb",
+   "sha": "c9e4abbb57922b5a3741a248d018a75e7ada8ec812bda899276f1523c63df9f4",
    "w": 1024
   },
   "infinity.blue+green.3:2.512.brief": {
@@ -2296,7 +2276,7 @@
    },
    "h": 341,
    "seed": 4619706771036275121,
-   "sha": "3951d881eba3c2e52a971f62ed858875e338fb234733dc558b1a88431d10c831",
+   "sha": "ef8563a7a44a0226838357c453e797235ac16c4d448af3d443f6a4a51b371066",
    "w": 512
   },
   "infinity.blue+green.3:2.512.hard": {
@@ -2336,7 +2316,7 @@
    },
    "h": 341,
    "seed": 4619706771036275121,
-   "sha": "8e503b011d2c03c8e8d09ce45e367f0059f944c44034821a9a3e92af649f6b49",
+   "sha": "e932bcd80c5a433af2cba81207d11061febee9e4297de76c544b28e8e6f387b1",
    "w": 512
   },
   "infinity.blue+green.4:5.512": {
@@ -2376,7 +2356,7 @@
    },
    "h": 512,
    "seed": 4619706771036275121,
-   "sha": "34875a4436e4e6a54d6eca3cebe33fdde7bcd0c8dae17cf593eb1a21edc3f473",
+   "sha": "679d8299674f76ba106eba9aa73ff13611b7f02eb68be6dc1ea973749d3bfaa7",
    "w": 410
   },
   "infinity.blue+green.5:4.512": {
@@ -2416,7 +2396,7 @@
    },
    "h": 410,
    "seed": 4619706771036275121,
-   "sha": "27f60fca08d9c80a9b675bf8db9c9f40fcd1735742cf44c1e099573124577789",
+   "sha": "5ff6af7d03c2cb735be186015ba5bec4851f5ddbc4ce03189a49d63005c983f0",
    "w": 512
   },
   "infinity.blue+green.9:19.5.512": {
@@ -2456,7 +2436,7 @@
    },
    "h": 512,
    "seed": 4619706771036275121,
-   "sha": "b548c4f5edadb500f12497daa862caacb7b26a9f941831146b2f60a73fd5e464",
+   "sha": "49193f86d5e2ae46526445b7f9bbab2615ae3878c0ac6ef204722e08609d2da1",
    "w": 236
   },
   "infinity.brown+brown2.3:2.1024": {
@@ -2500,7 +2480,7 @@
    },
    "h": 683,
    "seed": 4781454894810119596,
-   "sha": "4986c1cd6fad644a40a8aa2d52e17e3f9c3cd2caa3f8309a98d822144f1a75f3",
+   "sha": "4a04538131f5598bddcdccf6eccb4d788ee5c4a8f2d147a014f0c1a113289d89",
    "w": 1024
   },
   "infinity.clean.blue+brown.3:2.1024": {
@@ -2510,9 +2490,7 @@
      1.3132
     ],
     "design_used": "infinity",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_K": 40.99,
@@ -2534,14 +2512,12 @@
    "frozen": {
     "fallback": null,
     "fronts": {},
-    "hairline": [
-     0
-    ],
+    "hairline": [],
     "lens": "weave"
    },
    "h": 683,
    "seed": 710031947880338962,
-   "sha": "89e7c2b0eee964c84b0be2f7c2abb37b4ef534afe7b327d0a528c4c2eb290e07",
+   "sha": "6ac3e162fa2626208307a5319b096912e5b3abb8a85a6b37ab512c7f3f8cb7f8",
    "w": 1024
   },
   "infinity.clean.blue+green.3:2.1024": {
@@ -2805,7 +2781,7 @@
    },
    "h": 683,
    "seed": 17178513562967351841,
-   "sha": "1fb29082cfd912101c2fda91a3eae2b156ea2875d16c0986f234b4d2d7d80e6a",
+   "sha": "1e21824c10068ed0683bc02022cfe59b9763d944e7214f1bd1c313fab67e4a17",
    "w": 1024
   },
   "infinity.wide+green.3:2.1024": {
@@ -2829,8 +2805,8 @@
      ]
     ],
     "vis": [
-     0.9947,
-     0.9385
+     0.995,
+     0.9382
     ]
    },
    "frozen": {
@@ -2842,7 +2818,7 @@
    },
    "h": 683,
    "seed": 5061845886672389849,
-   "sha": "f5c7cb539fdca50c599c2fa038b873db01bd9079eae27ae1eac0f215ae929f80",
+   "sha": "41137f14bb03d86de1b76f566bb799d40a26ae110c7c84012e53f54b4dd3be38",
    "w": 1024
   },
   "kiss.blue+brown.3:2.1024": {
@@ -2852,9 +2828,43 @@
      1.7043
     ],
     "design_used": "kiss",
-    "edge_modes": {
-     "0": "hairline"
+    "edge_modes": {},
+    "fallback": null,
+    "gate_fail": [],
+    "lens_mode": null,
+    "n_particles": 8806,
+    "overlap_fallback": false,
+    "rules": [
+     [
+      0,
+      1,
+      "front_a"
+     ]
+    ],
+    "vis": [
+     0.9952,
+     0.9381
+    ]
+   },
+   "frozen": {
+    "fronts": {
+     "0": "front_a"
     },
+    "hairline": []
+   },
+   "h": 683,
+   "seed": 12508154221632408229,
+   "sha": "f41994de5dc5e4b1232ebb6f51fe82b5a3275a080d89aa06b2ba710a724c6946",
+   "w": 1024
+  },
+  "kiss.blue+brown.3:2.4096": {
+   "facts": {
+    "cloud": [],
+    "d_over_R": [
+     1.7043
+    ],
+    "design_used": "kiss",
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_mode": null,
@@ -2876,53 +2886,11 @@
     "fronts": {
      "0": "front_a"
     },
-    "hairline": [
-     0
-    ]
-   },
-   "h": 683,
-   "seed": 12508154221632408229,
-   "sha": "c3a54de4977c929f28baa2ceaf2237cacb5afbde5291d5065052fe4896ab90b5",
-   "w": 1024
-  },
-  "kiss.blue+brown.3:2.4096": {
-   "facts": {
-    "cloud": [],
-    "d_over_R": [
-     1.7043
-    ],
-    "design_used": "kiss",
-    "edge_modes": {
-     "0": "hairline"
-    },
-    "fallback": null,
-    "gate_fail": [],
-    "lens_mode": null,
-    "n_particles": 8806,
-    "overlap_fallback": false,
-    "rules": [
-     [
-      0,
-      1,
-      "front_a"
-     ]
-    ],
-    "vis": [
-     0.9949,
-     0.9383
-    ]
-   },
-   "frozen": {
-    "fronts": {
-     "0": "front_a"
-    },
-    "hairline": [
-     0
-    ]
+    "hairline": []
    },
    "h": 2732,
    "seed": 12508154221632408229,
-   "sha": "daf970486fd4f921321a854bfbbd564da7fafdf3708d26d010a7627b2ec1f39f",
+   "sha": "3b0c63f78f79332014c42c9ae7012d0067f0520e0981bcbea27a02f12e56f308",
    "w": 4096
   },
   "kiss.blue+brown.3:2.512.dust": {
@@ -2932,9 +2900,7 @@
      1.7067
     ],
     "design_used": "kiss",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_mode": null,
@@ -2948,21 +2914,19 @@
      ]
     ],
     "vis": [
-     0.9946,
-     0.9391
+     0.9953,
+     0.9383
     ]
    },
    "frozen": {
     "fronts": {
      "0": "front_a"
     },
-    "hairline": [
-     0
-    ]
+    "hairline": []
    },
    "h": 341,
    "seed": 12508154221632408229,
-   "sha": "b480bc82bc5d57bf73a5902f7581bd7464b16a47f9947467adfdd57555cf76a7",
+   "sha": "5d206fa4e28e7b04fe89707cd941f1d6a38cb14f871bbc44fc8bf4f665f47c46",
    "w": 512
   },
   "kiss.blue+brown.3:2.512.universe": {
@@ -2972,9 +2936,7 @@
      1.7067
     ],
     "design_used": "kiss",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_mode": null,
@@ -2988,21 +2950,19 @@
      ]
     ],
     "vis": [
-     0.9945,
-     0.9392
+     0.9948,
+     0.9389
     ]
    },
    "frozen": {
     "fronts": {
      "0": "front_a"
     },
-    "hairline": [
-     0
-    ]
+    "hairline": []
    },
    "h": 341,
    "seed": 1091913157499577151,
-   "sha": "7d756124606a604882465668847e3c42ee428ad12461ae0bf996adb6c9c4dad7",
+   "sha": "bd9125e5b80e91165974a92413c566f99b28fba19361583f2bec8378a97269c8",
    "w": 512
   },
   "kiss.blue+brown.4:5.512": {
@@ -3012,9 +2972,7 @@
      1.7081
     ],
     "design_used": "kiss",
-    "edge_modes": {
-     "0": "hairline"
-    },
+    "edge_modes": {},
     "fallback": null,
     "gate_fail": [],
     "lens_mode": null,
@@ -3028,21 +2986,19 @@
      ]
     ],
     "vis": [
-     0.995,
-     0.9393
+     0.9954,
+     0.9388
     ]
    },
    "frozen": {
     "fronts": {
      "0": "front_a"
     },
-    "hairline": [
-     0
-    ]
+    "hairline": []
    },
    "h": 512,
    "seed": 12508154221632408229,
-   "sha": "591019e911814aa6c156b1c78467d17e485415a9b5fb3e981268c899e5f989fc",
+   "sha": "f94c764fdac04ff2596e3bbf16d785fa34dae7b93d89b757738a4bc5abe1648d",
    "w": 410
   },
   "kiss.blue+green.3:2.1024": {
@@ -3066,8 +3022,8 @@
      ]
     ],
     "vis": [
-     0.9945,
-     0.9387
+     0.995,
+     0.9382
     ]
    },
    "frozen": {
@@ -3078,7 +3034,7 @@
    },
    "h": 683,
    "seed": 13818222763024693742,
-   "sha": "557c4d3b448384f8702ba3003ab96b953d1b8a2b6073159584762d694afd9824",
+   "sha": "6f2f99a36130b05794ba71b61934c2b98ac72dfd8570484a5c29861d550ed8ce",
    "w": 1024
   },
   "kiss.blue+green.3:2.1024.text": {
@@ -3102,8 +3058,8 @@
      ]
     ],
     "vis": [
-     0.9944,
-     0.937
+     0.9948,
+     0.9366
     ]
    },
    "frozen": {
@@ -3114,7 +3070,7 @@
    },
    "h": 683,
    "seed": 13818222763024693742,
-   "sha": "a55ec280ddf106249a695c804a8dd05bd0a0d1633ef562ee4a2ddeeb0536e501",
+   "sha": "e4d3dbe13de6cd76d98b7ac225c29d072d7a6a5f7fc4c7a8562a95d3fa3f5e3f",
    "w": 1024
   },
   "kiss.grey+amber.3:2.1024": {
@@ -3138,8 +3094,8 @@
      ]
     ],
     "vis": [
-     0.9946,
-     0.9386
+     0.9951,
+     0.9381
     ]
    },
    "frozen": {
@@ -3150,7 +3106,7 @@
    },
    "h": 683,
    "seed": 3206716244005439876,
-   "sha": "45f8ef7bd4773f7b47e9260a1cfaa894c267216113df8548ebe8a8999db55b6c",
+   "sha": "abd22e2a4fef8a9e2327a5004fc25f4101c6ed236c41070b742e7454cfaafa9c",
    "w": 1024
   },
   "kiss.grey+amber.9:19.5.512": {
@@ -3174,8 +3130,8 @@
      ]
     ],
     "vis": [
-     0.9946,
-     0.9318
+     0.9951,
+     0.9313
     ]
    },
    "frozen": {
@@ -3186,7 +3142,7 @@
    },
    "h": 512,
    "seed": 3206716244005439876,
-   "sha": "f8b9cd980ebfba5fa4e2299554f7deed92802613b7087b14546182b717718058",
+   "sha": "cf8ff62b404bf78c7f636a063270e0741045f3d3e232b766b565529ab788ba25",
    "w": 236
   },
   "trio.blue+brown+green.1:1.1024": {

@@ -542,9 +542,14 @@ def rasterise(cv, geo, pals, discs, d, rnd, atlas, prm, wind_streaks=True, mask_
     px = d["d"]
     gf = d["gain"]
     stats = {}
+    # pairs phase 1 (prm from engine.PAIR_DUST, pair designs only): the sizes of the three coarse classes are scaled AFTER the particles are drawn (no random stream moves: the same
+    # cloud of dust, finer), the chips are rounder, softer and not dimmer than a floor
+    if any(k_ in prm for k_ in ("size_grain", "size_chunk", "size_big")):
+        px = px * np.where(cls == CLS_GRAIN, prm.get("size_grain", 1.0), np.where(cls == CLS_CHUNK, prm.get("size_chunk", 1.0), np.where(cls == CLS_BIG, prm.get("size_big", 1.0), 1.0)))
     Rm = geo.Rm                      # every size threshold is relative to R, never to pixels: 4096 == 1024
     depth = _depth(d["e"]).astype(np.float32)
-    lf = (0.22 + 0.78 * RT[:, 19] ** 2.0).astype(np.float32)          # per-chip luminance factor 0.22-1.0 (dim brown dust to bright chips)
+    fl = prm.get("chip_floor")
+    lf = ((0.22 + 0.78 * RT[:, 19] ** 2.0) if fl is None else (fl + (1.0 - fl) * RT[:, 19] ** 2.0)).astype(np.float32)          # per-chip luminance factor 0.22-1.0 (dim brown dust to bright chips)
     lf = np.where(RT[:, 21] < 0.08, lf * 1.35, lf).astype(np.float32)                   # about 8 % of the chips catch the light (the colours stay below the tone-map knee)
     lf = np.where(cls == CLS_DUST, 0.45 + 0.55 * RT[:, 19] ** 1.3, lf).astype(np.float32)
     dof = (cls == 1) & (RT[:, 0] < 0.03)                      # micro-depth: 3 % of the grains are defocused
@@ -561,7 +566,8 @@ def rasterise(cv, geo, pals, discs, d, rnd, atlas, prm, wind_streaks=True, mask_
         rot = RT[gg, 1] * 2 * math.pi
         facet = RT[gg, 18] < 0.15
         RS.chip_polys(cv, d["x"][gg], d["y"][gg], np.maximum(px[gg], 0.0074 * Rm), rot, asp, nv, rgb[gg] * (lf[gg] * depth[gg])[:, None],
-                      gf[gg] * prm.get("gain_grain", 1.0), RT[gg], facet)
+                      gf[gg] * prm.get("gain_grain", 1.0), RT[gg], facet, prm.get("chip_round", 0.15), prm.get("chip_edge_px", 1.0), prm.get("chip_lit", 0.20),
+                      prm.get("facet_gain", 0.55), prm.get("chip_jit", 0.62))
     di = np.nonzero(dof)[0]
     if len(di):
         RS.gauss_stamps(cv, d["x"][di], d["y"][di], np.maximum(px[di] * 0.55, 0.0042 * Rm), rgb[di], np.minimum(0.30 * gf[di] * depth[di] * prm.get("gain_grain", 1.0), 0.8))
@@ -598,8 +604,8 @@ def rasterise(cv, geo, pals, discs, d, rnd, atlas, prm, wind_streaks=True, mask_
         gauss = np.sqrt(-2.0 * np.log(np.maximum(1.0 - RT[cc, 10], 1e-9))) * np.cos(2 * math.pi * RT[cc, 11])
         rotc = np.where(irism, d["phi"][cc] + 0.5 * gauss, rotc)        # iris chips fly along the emission direction
         RS.chunk_stamps(cv, atlas, d["x"][cc], d["y"][cc], np.maximum(px[cc], 0.028 * Rm), rotc, sidx, patch_fn, rgb[cc],
-                        (0.55 + 0.45 * lf[cc]) * depth[cc] * gf[cc] * prm.get("gain_chunk", 1.0), 0.0, flipc, irism, asp,
-                        (RT[cc, 12] * 1e9).astype(np.int64))
+                        (0.55 + 0.45 * lf[cc]) * depth[cc] * gf[cc] * prm.get("gain_chunk", 1.0), prm.get("big_defocus", 0.0), flipc, irism, asp,
+                        (RT[cc, 12] * 1e9).astype(np.int64), None, prm.get("big_shade", 1.0))
     fgi = np.nonzero(cls == CLS_FG)[0]
     if len(fgi) and atlas is not None:
         RS.chunk_stamps(cv, atlas, d["x"][fgi], d["y"][fgi], np.maximum(px[fgi], 0.023 * Rm), RT[fgi, 17] * 6.283,

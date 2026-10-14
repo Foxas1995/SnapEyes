@@ -173,9 +173,10 @@ def _bilinear(a, x, y):
     return (a[y0, x0] * (1 - fx) * (1 - fy) + a[y0, x0 + 1] * fx * (1 - fy) + a[y0 + 1, x0] * (1 - fx) * fy + a[y0 + 1, x0 + 1] * fx * fy)
 
 
-def chunk_stamps(layer, atlas, xs, ys, size_px, rot, sprite_idx, patch_fn, tint, gain, defocus_px=0.0, flip=None, iris_mode=None, aspect=None, seeds=None, curl=None):
+def chunk_stamps(layer, atlas, xs, ys, size_px, rot, sprite_idx, patch_fn, tint, gain, defocus_px=0.0, flip=None, iris_mode=None, aspect=None, seeds=None, curl=None, shade_flat=1.0):
     """size_px: chunk diameter px. patch_fn(i, K, rot) -> (K, K, 3) float 0..1 patch of the iris band (or None). tint: (n, 3) palette
-    colour of the chip. The chip colour = 0.55 patch (lifted, real fibres) + 0.45 palette, shaded by the sprite luminance."""
+    colour of the chip. The chip colour = 0.55 patch (lifted, real fibres) + 0.45 palette, shaded by the sprite luminance (shade_flat < 1 pulls that shading toward flat:
+    the facets of a photographed shard are softer)."""
     n = len(xs)
     H, W = layer.shape[:2]
     for i in range(n):
@@ -225,6 +226,8 @@ def chunk_stamps(layer, atlas, xs, ys, size_px, rot, sprite_idx, patch_fn, tint,
             mval = atlas.mask[k] > 0.5
             mean = float(atlas.lum[k][mval].mean()) if mval.any() else 0.5
             shade = np.clip(lum / max(mean, 1e-3), 0.2, 2.2)
+            if shade_flat != 1.0:
+                shade = 1.0 + shade_flat * (shade - 1.0)
         patch = patch_fn(i, xb - xa, yb - ya, rot[i]) if patch_fn is not None else None
         t = np.asarray(tint[i], np.float32)
         if patch is not None:
@@ -271,13 +274,15 @@ def streak_stamps(layer, xs, ys, length_px, width_px, ang, rgb, gain):
 
 
 # ----------------------------------------------------------------------------- chips v2 (round 2c): small irregular convex chips
-def chip_polys(layer, xs, ys, size_px, rot, aspect, nv, rgb, gain, rt, facet=None):
+def chip_polys(layer, xs, ys, size_px, rot, aspect, nv, rgb, gain, rt, facet=None, round_c=0.15, edge_px=1.0, lit_k=0.20, facet_gain=0.55, jit_amp=0.62):
     """Small chips as rounded CONVEX polygons (round 2c AD fix: 5-8 vertices, corner rounding 15 % of the size, aspect at most 2.2 : 1, flat
     opaque colour, NO regular texture inside). Geometry comes from R units (size_px is the equivalent diameter in canvas px) plus a per-chip
     table rt (n, >= 12) drawn before any culling, so a chip looks the same at 1024 and 4096; coverage is the signed-distance ramp of the exact
     rounded polygon (box-filter coverage, no pre-baked bitmap, nothing tiled).
     xs, ys: centres px; size_px: equivalent diameter px; rot: rad; aspect: length : width (>= 1, <= 2.2); nv: 5..8; rgb (n, 3): chip colour
-    (already lit by its own luminance factor); gain (n,): opacity-like multiplier; facet (n,) bool: a thin lit edge (15 % of the chips)."""
+    (already lit by its own luminance factor); gain (n,): opacity-like multiplier; facet (n,) bool: a thin lit edge (15 % of the chips).
+    Pairs phase 1: round_c (corner rounding, unit frame), edge_px (width of the coverage ramp in px), lit_k (light and shadow side of a chip), facet_gain (the lit edge of a
+    faceted chip) and jit_amp (vertex jitter) default to the round 2c values; a larger round_c and edge_px and a smaller lit_k give soft rounded flakes instead of cut chips."""
     n = len(xs)
     if n == 0:
         return
@@ -295,7 +300,7 @@ def chip_polys(layer, xs, ys, size_px, rot, aspect, nv, rgb, gain, rt, facet=Non
     MAXV = 8
     idx = np.arange(MAXV, dtype=np.float32)[None, :]
     step = (2.0 * math.pi / nvv).astype(np.float32)[:, None]
-    jit = (np.asarray(rt[:, 0:MAXV], np.float32) - 0.5) * 0.62
+    jit = (np.asarray(rt[:, 0:MAXV], np.float32) - 0.5) * np.float32(jit_amp)
     ang = (idx + jit) * step + np.asarray(rt[:, 8:9], np.float32) * 2.0 * math.pi
     valid = idx < nvv[:, None]
     hap = 0.80 + 0.20 * np.asarray(rt[:, 9:9 + MAXV] if rt.shape[1] >= 9 + MAXV else np.roll(rt[:, 0:MAXV], 3, axis=1), np.float32)
@@ -325,7 +330,7 @@ def chip_polys(layer, xs, ys, size_px, rot, aspect, nv, rgb, gain, rt, facet=Non
             dy = np.broadcast_to(dy, (m, K, K))
             u = (dx * cr[jj][:, None, None] + dy * sr[jj][:, None, None]) / a_ax[jj][:, None, None]       # unit-disc frame (a, b scaled out)
             v = (-dx * sr[jj][:, None, None] + dy * cr[jj][:, None, None]) / b_ax[jj][:, None, None]
-            rho_c = 0.15 * np.float32(1.0)
+            rho_c = np.float32(round_c)
             pos2 = np.zeros((m, K, K), np.float32)
             smax = np.full((m, K, K), -1e9, np.float32)
             lit_star = np.zeros((m, K, K), np.float32)
@@ -341,18 +346,18 @@ def chip_polys(layer, xs, ys, size_px, rot, aspect, nv, rgb, gain, rt, facet=Non
                 pos2 += np.maximum(s_i, 0.0) ** 2
             sdf_u = np.sqrt(pos2) + np.minimum(smax, 0.0) - rho_c                    # rounded convex polygon distance in the unit frame
             sdf = sdf_u * (0.5 * (a_ax[jj] + b_ax[jj]))[:, None, None]
-            cov = np.clip(0.5 - (sdf - 0.04), 0.0, 1.0)
+            cov = np.clip(0.5 - (sdf - 0.04) / np.float32(edge_px), 0.0, 1.0)
             val = cov * gn[jj][:, None, None]
             px = i0x[:, None, None] + np.arange(K)[None, None, :]
             py = i0y[:, None, None] + np.arange(K)[None, :, None]
             col = np.broadcast_to(rgbf[jj][:, None, None, :], (m, K, K, 3))
             # a flat chip lit from the upper left: its lit side a little brighter, its shadow side darker (no texture)
             proj = (dx * lit_dir[0] + dy * lit_dir[1]) / np.maximum(Rc[jj], 0.5)[:, None, None]
-            col = col * (1.0 + 0.20 * np.clip(proj, -1.0, 1.0))[..., None]
+            col = col * (1.0 + lit_k * np.clip(proj, -1.0, 1.0))[..., None]
             if facet is not None and facet[jj].any():
                 fm = np.asarray(facet[jj], np.float32)[:, None, None]
                 depth = np.clip(-sdf / (0.45 * np.maximum(Rc[jj], 0.5)[:, None, None]), 0.0, 3.0)
-                hl = fm * 0.55 * np.maximum(lit_star, 0.0) ** 2 * np.exp(-depth * 2.6)
+                hl = fm * facet_gain * np.maximum(lit_star, 0.0) ** 2 * np.exp(-depth * 2.6)
                 col = col + hl[..., None] * (1.0 - col) * 0.8
             col = np.minimum(col, 0.80)                   # below the tone-map knee (0.8): the shoulder is non-linear, so a chip brighter than it would
                                                           # lose energy differently at 1024 and 4096 (box-reduced) and T9 would drop

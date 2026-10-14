@@ -35,7 +35,11 @@ EYE_SPECS = {
     "brown2": dict(kind="dark_brown", pupil="round", seed=34),
 }
 WIDE_PUPIL = "wide"                      # a blue iris whose pupil is 0.52 R wide: the placement rule falls back to the Kiss geometry
-PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble"}
+# the finish of the two-iris designs (pairs design phase 1, 2026-10-14; collision.PAIR_FINISH): it reaches the pair designs only, and PROTOTYPE_FINISH is the same four options
+# switched off, which is what the step A replay (the scratch prototype's own pictures) passes
+PAIR_FINISH = {"rim": "both", "crumble_aa": 2.2, "dust": "fine", "valley": "deep"}
+PROTOTYPE_FINISH = {"rim": "line", "crumble_aa": 0.0, "dust": "round2c", "valley": "ref"}
+PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble", **PAIR_FINISH}
 TEXT = {"names": ["Anna", "Max"], "date": "12 MAY 2026"}
 
 

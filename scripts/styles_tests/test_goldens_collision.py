@@ -254,7 +254,7 @@ def port_render(design, eyes, fmt, size, names, date, bg, clean, opts, layout):
 
 def legacy_render(design, eyes, fmt, size, names, date, bg, clean, opts, layout):
     """Step A's pictures: the prototype's seed (the bytes of the irises, the design, the scene key and the names), the decisions made in the place and way the prototype made them."""
-    return CX.render(design, eyes, fmt, size, names, date, bg, clean, dict(opts or {}, seed_mode="legacy"), layout)
+    return CX.render(design, eyes, fmt, size, names, date, bg, clean, dict(opts or {}, seed_mode="legacy", **CC.PROTOTYPE_FINISH), layout)
 
 
 def replay(cases, with_checks=True, golden=None, render=None, with_frozen=True):
@@ -303,7 +303,7 @@ check(f"{len(big)} masters at 4096 px (a pair in the three builds, the trio, a f
       "sample for sample)", len(rows) == len(big) and not bad, str(bad) + NOTE)
 print(f"   (replayed in {time.time() - t0:.0f} s, {len(ALL)} cases)", flush=True)
 check("the recording holds exactly the cases of the list and no other", sorted(G) == sorted(c["key"] for c in ALL), sorted(set(G) ^ {c["key"] for c in ALL})[:5])
-with mock.patch.dict(CMP.PRESETS["ref"], {"a_in": 0.70}):
+with mock.patch.dict(CMP.PRESETS["ref"], {"a_in": 0.70}), mock.patch.dict(CMP.PRESETS["ref_deep"], {"a_in": 0.70}):          # Collision Infinity draws the ref_deep edge since pairs phase 1
     moved = CC.render_case(port_render, C.Iris, FIX, [c for c in ALL if c["key"] == "infinity.blue+green.3:2.1024"][0], {})
 check("the replay can fail: a change of the strength of the contact edge moves the hash of a pair", moved["sha"] != G["infinity.blue+green.3:2.1024"]["sha"])
 check("the production switches of the family are what the recording passed: the contact edge of the owner's reference and the prototype's own defaults for everything else",
@@ -320,9 +320,14 @@ for design in CX.DESIGNS:
     check(f"step A, {design}: the {len(rows)} cases (sizes 512, 1024 and 4096, the other canvases, the words, the switches, the layouts) with the prototype's seed give the scratch prototype's pictures, "
           "seeds, fronts, edge modes, fallbacks and plates, byte for byte", rows and not bad, str(bad[:4]) + NOTE)
 print(f"   (step A replayed in {time.time() - t0:.0f} s, {n_a} cases)", flush=True)
+# pairs phase 1 (2026-10-14): the recording is step B plus the finish of the pairs, which draws the hairline only where BOTH bands are dark: the clean infinity of a blue iris and a dark brown one
+# (a hairline in step A, a dark contour now) moved, and the edge modes of the pairs may only have LOST a hairline since step A, never gained one
 check("step B really changed the pictures (the replay of step A is not the replay of step B): most cases moved, and the pictures that did not are the clean infinity's, whose seed only dithers pure black "
-      "(the reviewed diff is diff_goldens_collision.py)", sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]) >= 50 and all(G[k]["sha"] == G_A[k]["sha"] for k in G if k.startswith("infinity.clean.") and not k.endswith(".stack")
-      and ".text" not in k and ".1:1." not in k) and all(G[k]["facts"].get(c) == G_A[k]["facts"].get(c) for k in G for c in ("design_used", "lens_mode", "lens_K", "overlap_fallback", "fallback", "rules", "d_over_R", "edge_modes", "gate_fail", "auto_hairline")),
+      "(the reviewed diff is diff_goldens_collision.py; the one clean pair that moved is the blue and dark brown one, whose hairline the finish of the pairs took away)",
+      sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]) >= 50 and all(G[k]["sha"] == G_A[k]["sha"] for k in G if k.startswith("infinity.clean.") and not k.endswith(".stack")
+      and ".text" not in k and ".1:1." not in k and "blue+brown" not in k)
+      and all(G[k]["facts"].get(c) == G_A[k]["facts"].get(c) for k in G for c in ("design_used", "lens_mode", "lens_K", "overlap_fallback", "fallback", "rules", "d_over_R", "gate_fail", "auto_hairline"))
+      and all(set(G[k]["facts"]["edge_modes"]) <= set(G_A[k]["facts"]["edge_modes"]) and (G[k]["facts"]["edge_modes"] == G_A[k]["facts"]["edge_modes"] or k.split(".")[0] in ("infinity", "kiss")) for k in G),
       sum(1 for k in G if G[k]["sha"] != G_A[k]["sha"]))
 
 # ============================================================================================ 3. the hard rules
@@ -464,8 +469,8 @@ check("... and the check reads the draw log: the names and the date pass T7, a l
       rep_w["checks"]["t7"]["ok"] and rep_w["checks"]["t7"]["drawn"] == 2 and not SCK.t7_text([{"kind": "names", "text": "THE STUDIO", "px": 9, "baseline": 1}],
                                                                                            CX.customer_strings(["Anna"], ""))["ok"], rep_w["checks"]["t7"])
 dk = {k: G[k]["facts"] for k in G if k == "infinity.brown+brown2.3:2.1024"}
-check("T10, the contact edge reads: a pair whose back iris is dark (two dark browns) falls back to the hairline contact (edge mode hairline, the back band L* under 26), and the "
-      "pairs with light irises keep the dark edge", dk["infinity.brown+brown2.3:2.1024"]["edge_modes"] == {"0": "hairline"}
+check("T10, the contact edge reads: a pair whose two bands are dark (two dark browns) falls back to the hairline contact (edge mode hairline, both band L* under 26), and the "
+      "pairs with a light iris keep the dark edge", dk["infinity.brown+brown2.3:2.1024"]["edge_modes"] == {"0": "hairline"}
       and G["infinity.blue+green.3:2.1024"]["facts"]["edge_modes"] == {}, (dk, G["infinity.blue+green.3:2.1024"]["facts"]["edge_modes"]))
 check("T10, the hairline retry still fires: with the brief's own edge preset a contact whose edge does not read at 320 px (a step of L* under 8 against the back iris) is drawn again in "
       "hairline mode (info auto_hairline), as the recording says and the replay of that picture reproduced",
@@ -758,10 +763,10 @@ check("a master of Kiss Collision through the master plan from two stored 4096 c
 print(f"   (the master took {time.time() - t0:.0f} s)", flush=True)
 plan_k = json.load(open(os.path.join(STORE, "orders", order, "style", "plan.json"), encoding="utf-8"))
 check("a plan made with no pixels to read (this test order has no draft: the paid order's eyes are read from the draft's clean previews) is the plan of the profiles alone: decided False, "
-      "nothing frozen, no seed for want of eye ids; the master then decides, and the artwork's record says what it decided (facts.frozen: the front of the one contact, the hairline "
-      "contact of the dark back band) and the seed it drew from",
+      "nothing frozen, no seed for want of eye ids; the master then decides, and the artwork's record says what it decided (facts.frozen: the front of the one contact, no hairline: "
+      "one of the two bands is light) and the seed it drew from",
       plan_k["decided"] is False and plan_k["frozen"] == {} and plan_k["seed"] is None and plan_k["design_used"] == "kiss" and plan_k["work_side"] == 2048
-      and rec_["facts"]["frozen"] == {"fronts": {"0": rec_["facts"]["frozen"]["fronts"]["0"]}, "hairline": [0]} and isinstance(rec_["seed"], str) and rec_["plan8"] == plan_k["plan8"],
+      and rec_["facts"]["frozen"] == {"fronts": {"0": rec_["facts"]["frozen"]["fronts"]["0"]}, "hairline": []} and isinstance(rec_["seed"], str) and rec_["plan8"] == plan_k["plan8"],
       (plan_k.get("frozen"), rec_["facts"].get("frozen")))
 STP.advance(STP.Ctx(order, {"eyes": 2, "style": "duo.kiss_collision", "layout": "pair", "names": "Anna \u00b7 Max", "title": ""}, by="test", finish=fin), "rerun")
 del jpg
@@ -839,7 +844,7 @@ check(f"resolve() with the eyes is what the render decides, on {len(PV_CASES)} s
       all(not b for b, _ in rows_pv.values()), {k: b for k, (b, _) in rows_pv.items() if b})
 pl = {k: p for k, (_, p) in rows_pv.items()}
 check("what the plan froze, by case: the wide pupil is the Kiss geometry (fallback overlap_fallback), the forced stack lens is design stack with the fallback stack_contrast and one front, "
-      "the pair on two dark browns and the pair with a dark back band draw a hairline contact, the family fixes a front for every contact the scene leaves open",
+      "the pair on two dark browns draws a hairline contact (a pair with one light band does not), the family fixes a front for every contact the scene leaves open",
       pl["infinity, a wide pupil"]["design_used"] == "kiss" and pl["infinity, a wide pupil"]["fallback"] == "overlap_fallback"
       and pl["infinity forced to the stack lens"]["design_used"] == "stack" and pl["infinity forced to the stack lens"]["fallback"] == "stack_contrast"
       and list(pl["infinity forced to the stack lens"]["frozen"]["fronts"]) == ["0"] and pl["infinity, two dark browns"]["frozen"]["hairline"] == [0]
@@ -1003,7 +1008,7 @@ plan4_for = STP.plan_for(STP.Ctx(order4, spec4, eyes_from="draft"))
 check("a paid order's plan is made from its draft: the clean previews (their sha256 checked, the sealed id the eye's id) are the eyes of the plan pass, so the plan is decided and equals "
       "resolve() of the very same bytes (the choices, the seed, the eye ids); a preview whose hash is not the draft's is not read at all: the plan is the profiles' alone (decided False), "
       "never an error and never a plan from other pixels; steps.plan_for(ctx) is that plan without storing it (the interface the checkout freezes)",
-      plan4["decided"] is True and plan4["frozen"] == ref4["frozen"] and plan4["seed"] == ref4["seed"] and plan4["eye_ids"] == eids4 and plan4["frozen"]["hairline"] == [0]
+      plan4["decided"] is True and plan4["frozen"] == ref4["frozen"] and plan4["seed"] == ref4["seed"] and plan4["eye_ids"] == eids4 and plan4["frozen"]["hairline"] == []
       and plan5["decided"] is False and plan5["frozen"] == {} and plan5["seed"] is None and plan5["eye_ids"] == eids4
       and {k: v for k, v in plan4.items() if k != "created_at"} == plan4_for, (plan4.get("frozen"), ref4["frozen"], plan5.get("decided")))
 
@@ -1147,10 +1152,10 @@ ctx3 = STP.Ctx(order3, {"eyes": 2, "style": "duo.kiss_collision", "layout": "pai
 got3 = STP.advance(ctx3)
 plan3 = json.load(open(os.path.join(STORE, "orders", order3, "style", "plan.json"), encoding="utf-8"))
 rec3 = json.load(open(os.path.join(STORE, "orders", order3, got3["artwork"]["key"].split("/")[-1][:-4] + ".json"), encoding="utf-8"))
-check("a plan made from the stored masters (their shrink to the preview's size) is the WHOLE plan: decided, the choices frozen (the front of the one contact, the hairline contact of the "
-      "dark back band), the seed from the eye ids the masters carry; the master obeys it: the artwork's record says what was drawn and it is the plan's (facts.frozen equals plan.frozen, "
+check("a plan made from the stored masters (their shrink to the preview's size) is the WHOLE plan: decided, the choices frozen (the front of the one contact, no hairline: one band "
+      "is light), the seed from the eye ids the masters carry; the master obeys it: the artwork's record says what was drawn and it is the plan's (facts.frozen equals plan.frozen, "
       "the seed equals the plan's, the design and the plan8 too)",
-      plan3["decided"] is True and plan3["frozen"] and plan3["frozen"]["hairline"] == [0] and plan3["frozen"] == rec3["facts"]["frozen"] and plan3["seed"] == rec3["seed"]
+      plan3["decided"] is True and plan3["frozen"] and plan3["frozen"]["hairline"] == [] and plan3["frozen"] == rec3["facts"]["frozen"] and plan3["seed"] == rec3["seed"]
       and plan3["seed_from"] == "eye_id" and plan3["eye_ids"] == ["03" * 8, "04" * 8] and plan3["design_used"] == "kiss" and plan3["work_side"] == 2048
       and rec3["plan8"] == plan3["plan8"] and rec3["design_used"] == "kiss" and got3["final"] and got3["fallback"] is None and not got3["artwork"]["needs_review"],
       (plan3.get("frozen"), rec3["facts"].get("frozen"), plan3.get("seed"), rec3.get("seed")))
@@ -1176,6 +1181,57 @@ check("a master whose pupils contradict the frozen plan (the plan draws the infi
       plan2["decided"] is True and plan2["design_used"] == "infinity" and plan2["frozen"]["fallback"] is None and isinstance(held_, STP.Hold) and held_.reason == "design_changed"
       and len(DELIVERED) == n_deliv and STP.hold_text("design_changed", order2) and not [f for f in os.listdir(os.path.join(STORE, "orders", order2)) if f.startswith("artwork_")],
       (held_, plan2.get("frozen")))
+
+# ============================================================================================ 10. pairs design phase 1
+section("10. pairs design phase 1 (2026-10-14): the finish of the two-iris designs (antialiased crumble, the hairline only where both bands are dark, finer powder, the deeper valley of Collision Infinity)")
+
+
+def finish_render(design, names_, fmt, size, opts, clean=False, layout=None):
+    return CX.render(design, [EYEOBJ[n] for n in names_], fmt, size, None, None, "dark", clean, dict(CC.PRODUCTION, **opts), layout)
+
+
+def pix_sha(r):
+    return hashlib.sha256(np.asarray(r.img.convert("RGB")).tobytes()).hexdigest()
+
+
+OTHERS = [("trio", ("blue", "brown", "green"), "1:1", 384, None), ("family", e4_, "3:2", 384, "zigzag"), ("chain", ("blue", "brown", "green"), "3:2", 384, None)]
+check("the finish of the pairs reaches the pair designs only: a trio, a family of four and a chain drawn with the production switches and with the finish switched off (PROTOTYPE_FINISH) "
+      "are the same picture, byte for byte", all(pix_sha(finish_render(d, n, f, s, {}, layout=l)) == pix_sha(finish_render(d, n, f, s, CC.PROTOTYPE_FINISH, layout=l)) for d, n, f, s, l in OTHERS),
+      [d for d, n, f, s, l in OTHERS if pix_sha(finish_render(d, n, f, s, {}, layout=l)) != pix_sha(finish_render(d, n, f, s, CC.PROTOTYPE_FINISH, layout=l))])
+fk_on, fk_off = finish_render("kiss", ("blue", "brown"), "3:2", 512, {}), finish_render("kiss", ("blue", "brown"), "3:2", 512, CC.PROTOTYPE_FINISH)
+check("a Kiss pair drawn with the finish is another picture than the prototype's, with the same particles: no random stream moved (the same count of particles, the same design, front and seed)",
+      pix_sha(fk_on) != pix_sha(fk_off) and fk_on.info["counts"]["n"] == fk_off.info["counts"]["n"] and fk_on.info["rules"] == fk_off.info["rules"] and fk_on.seed == fk_off.seed
+      and fk_on.cfg.crumble_aa == 2.2 and fk_off.cfg.crumble_aa == 0.0, (fk_on.info["counts"], fk_off.info["counts"]))
+gx_ = np.tile(np.arange(48, dtype=np.float32) - 23.5, (6, 1))
+cov_ = CMP.aa_cover(gx_, 2.2)[2]
+cov_steep = CMP.aa_cover(gx_ * 60.0, 2.2)[2]
+mid_ = int(((cov_ > 0.02) & (cov_ < 0.98)).sum())
+check("aa_cover: an edge drawn from a field is as wide as asked however steep the field is (a ramp of 2 to 3 pixels, the same for a field 60 times steeper), 0 and 1 away from it, "
+      "and the pure side of the edge is on the side of the positive field", 2 <= mid_ <= 3 and np.allclose(cov_, cov_steep, atol=2e-3) and cov_[0] == 0.0 and cov_[-1] == 1.0 and abs(float(cov_[23] + cov_[24]) - 1.0) < 1e-3,
+      (mid_, cov_[20:28]))
+xs_ = (np.arange(520, dtype=np.float32) + 0.5)[None, :] / 736.0
+ys_ = (np.arange(520, dtype=np.float32) + 0.5)[:, None] / 736.0
+rag_hard, rag_soft = CMP.ragged_field(xs_, ys_, 7, 0.30), CMP.ragged_field(xs_, ys_, 7, 0.30, 8.8)
+jumps_ = lambda a, t: int((np.abs(np.diff(a, axis=0)) > t).sum() + (np.abs(np.diff(a, axis=1)) > t).sum())
+check("the crumble's broken edge field at 4096 px: the prototype's threshold jumps by more than 0.6 between two neighbouring pixels at thousands of places (the stair steps of the Kiss "
+      "edge), the antialiased one nowhere and by more than 0.3 at least ten times less often; the share of the arc that is broken is the same (30 percent, within 5 points)",
+      jumps_(rag_hard, 0.6) > 5000 and jumps_(rag_soft, 0.6) == 0 and 10 * jumps_(rag_soft, 0.3) < jumps_(rag_hard, 0.3) and abs(float(rag_soft.mean()) - float(rag_hard.mean())) < 0.05,
+      (jumps_(rag_hard, 0.6), jumps_(rag_soft, 0.6), jumps_(rag_hard, 0.3), jumps_(rag_soft, 0.3), float(rag_hard.mean()), float(rag_soft.mean())))
+inf_ci, inf_cl, kiss_ = finish_render("infinity", ("blue", "green"), "3:2", 384, {}), finish_render("infinity", ("blue", "green"), "3:2", 384, {}, clean=True), finish_render("kiss", ("blue", "green"), "3:2", 384, {})
+check("the deeper valley is Collision Infinity's alone: its compositor takes the ref_deep edge (the back iris darkened to 0.02 at the limb), Clean Infinity, the Kiss and the families the shared ref edge, "
+      "and the shared ref preset is what it was (a_in 0.78, zc_a 0.96)", inf_ci.cfg.preset == "ref_deep" and inf_cl.cfg.preset == "ref" and kiss_.cfg.preset == "ref" and CMP.PRESETS["ref"]["zc_a"] == 0.96
+      and CMP.PRESETS["ref"]["a_in"] == 0.78 and CMP.PRESETS["ref_deep"]["zc_a"] == 0.98 and {k: v for k, v in CMP.PRESETS["ref_deep"].items() if k != "zc_a"} == {k: v for k, v in CMP.PRESETS["ref"].items() if k != "zc_a"}
+      and E.VALLEY_DEEP_STYLES == (("infinity", False),), (inf_ci.cfg.preset, inf_cl.cfg.preset, kiss_.cfg.preset))
+hl_light = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, None, eyes=[EYEOBJ["blue"], EYEOBJ["brown"]])["frozen"]["hairline"]
+hl_dark = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair"}, None, eyes=[EYEOBJ["brown"], EYEOBJ["brown2"]])["frozen"]["hairline"]
+hl_old = CX.resolve({"style": "duo.collision_infinity", "eyes": 2, "layout": "pair", "engine_opts": CC.PROTOTYPE_FINISH}, None, eyes=[EYEOBJ["blue"], EYEOBJ["brown"]])["frozen"]["hairline"]
+check("the bright hairline is drawn only where both bands of a contact are dark: a blue iris and a dark brown one keep the dark contour (no hairline; the prototype drew one because the back band "
+      "is dark), two dark browns keep the hairline", hl_light == [] and hl_dark == [0] and hl_old == [0], (hl_light, hl_dark, hl_old))
+fd_on, fd_off = finish_render("infinity", ("blue", "green"), "3:2", 512, {}), finish_render("infinity", ("blue", "green"), "3:2", 512, {"dust": "round2c"})
+ydust = lambda r: float(np.asarray(r.img.convert("L"), np.float32)[:60].mean())
+check("the finer powder keeps the same particles (the same count, the same seed) and does not dim the picture: the mean light of the top strip, where only powder lies, is within 25 percent",
+      fd_on.info["counts"]["n"] == fd_off.info["counts"]["n"] and pix_sha(fd_on) != pix_sha(fd_off) and 0.75 * ydust(fd_off) <= ydust(fd_on) <= 1.25 * ydust(fd_off),
+      (fd_on.info["counts"], fd_off.info["counts"], ydust(fd_on), ydust(fd_off)))
 
 # ============================================================================================ 8. real eyes and the scratch tree (LOCAL)
 section("9. LOCAL: the real calibration eyes and the port as the scratch plus its edits")

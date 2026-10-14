@@ -55,6 +55,9 @@ PRESETS = {
     # calibrated on the owner's H10 (measured along the front limb): black valley 0.02-0.03 R wide, back iris recovers by 0.05 R.
     # Stronger than the brief's caps (needs the owner's word: D8 strength).
     "ref": dict(a_in=0.78, r0=0.955, zc_a=0.96, zc_l=0.0, zc_cut=0.050, zc_plateau=0.014),
+    # pairs phase 1: the same edge with the valley of the owner's H11 (Collision Infinity only, engine.VALLEY_DEEP_STYLES): the back iris is darkened to 0.02 of itself at the limb
+    # (the references' valley is 0.017 to 0.026 of the back iris, the shared "ref" leaves 0.04 to 0.05), the same width, the same fall inside the front iris
+    "ref_deep": dict(a_in=0.78, r0=0.955, zc_a=0.98, zc_l=0.0, zc_cut=0.050, zc_plateau=0.014),
 }
 
 
@@ -91,6 +94,10 @@ class Cfg:
     beta: float = 0.70                # share of the linear ramp in the blend profile (blend_w); DG1 judge: 0.70 with the support budget of seam_plan (SUPPORT_BUDGET)
     dp_sigma: float = 0.025           # blend 'oklab_dp': scale (R) that splits colour and tone from detail
     dp_rho: float = 0.40              # blend 'oklab_dp': the detail layer switches over w = 0.5 +- dp_rho
+    # Pairs phase 1 (2026-10-14): the finish of the pair styles. The default below is the prototype's look (nothing moves unless the engine passes a value: collision.PRODUCTION
+    # turns it on for the pair designs only).
+    crumble_aa: float = 0.0           # px: > 0 draws the crumble contact (erosion of the front limb, broken edge strength) with antialiased edges of about this width
+    hair_shift: float = 0.0           # R: the hairline's centre sits this far outside (+) or inside (-) the limb
 
     @property
     def p(self):
@@ -183,9 +190,17 @@ def seam_field(cfg, rule, ta, tb, xs, ys, ri, fine=True):
     return tp, hw
 
 
-def ragged_field(xr, yr, seed, share=0.30):
+def aa_cover(g, w_px):
+    """Coverage 0..1 of the side g > 0 of the edge g = 0, from the field g itself: the signed distance in pixels (first order: g over its gradient) through a smoothstep
+    of width w_px. The edge is w_px wide however steep g is (a threshold of a noise field is a hard cut wherever the field is steep: stair steps), and where g is flat
+    the distance is large, so the coverage stays 0 or 1. g: 2-D array on the pixel grid."""
+    gy, gx = np.gradient(g)
+    return smooth(-0.5 * w_px, 0.5 * w_px, g / (np.hypot(gx, gy) + np.float32(1e-6)))
+
+
+def ragged_field(xr, yr, seed, share=0.30, soft_px=0.0):
     """1 where the edge is broken (holes 0.006-0.02 R, about `share` of the arc), smooth 0..1 elsewhere. xr, yr: pixel coordinates in
-    units of R."""
+    units of R. soft_px > 0: the threshold is antialiased to that many pixels (aa_cover) instead of the fixed 0.06 of the noise range."""
     n = 0.62 * value_noise(xr / 0.020, yr / 0.020, seed) + 0.38 * value_noise(xr / 0.008 + 17.0, yr / 0.008 + 31.0, seed + 7)
     thr = _RAG_THR.get(round(share, 3))
     if thr is None:
@@ -193,6 +208,8 @@ def ragged_field(xr, yr, seed, share=0.30):
         rr = 0.62 * value_noise(g * 0.0137, g * 0.0091 + 3, 99) + 0.38 * value_noise(g * 0.0311 + 17.0, g * 0.0219 + 31.0, 106)
         thr = float(np.quantile(rr, 1.0 - share))
         _RAG_THR.put(round(share, 3), thr)
+    if soft_px > 0 and n.ndim == 2:
+        return aa_cover(n - np.float32(thr), soft_px)
     return smooth(thr - 0.03, thr + 0.03, n)
 
 
@@ -334,7 +351,7 @@ class Compositor:
             if rule.crumble:
                 xr = (xs - ta.cx) / ta.R
                 yr = (ys - ta.cy) / ta.R
-                hole = 1.0 - ragged_field(xr, yr, cfg.seed * 31 + ri, cfg.hole_share)
+                hole = 1.0 - ragged_field(xr, yr, cfg.seed * 31 + ri, cfg.hole_share, 4.0 * cfg.crumble_aa)
                 ga = ga * hole
                 gb = gb * hole
             zca, zcb = one, other
@@ -369,8 +386,8 @@ class Compositor:
             in_b = np.ones_like(rb)
             kz = 0.5
             wl = cfg.hair_w / 2.0
-            hair_a = np.exp(-0.5 * ((ra - 1.0) / wl) ** 2) * ga * ins_b
-            hair_b = np.exp(-0.5 * ((rb - 1.0) / wl) ** 2) * gb * ins_a
+            hair_a = np.exp(-0.5 * ((ra - 1.0 - cfg.hair_shift) / wl) ** 2) * ga * ins_b
+            hair_b = np.exp(-0.5 * ((rb - 1.0 - cfg.hair_shift) / wl) ** 2) * gb * ins_a
         if cfg.zone_c:
             cut = p["zc_cut"] + 0.004
             sh_b = zone_c_profile(ua, cfg) * ((ua > -F3_IN + 0.0) & (ua <= cut)) * zca * kz * k_zc * s
@@ -434,11 +451,14 @@ class Compositor:
         sd = cfg.seed * 37 + ri * 11
         n1 = value_noise(xr / 0.055, yr / 0.055, sd)
         n2 = value_noise(xr / 0.020 + 13.0, yr / 0.020 + 7.0, sd + 9)
-        hole = 1.0 - ragged_field(xr, yr, sd + 3, cfg.hole_share)
+        hole = 1.0 - ragged_field(xr, yr, sd + 3, cfg.hole_share, 4.0 * cfg.crumble_aa)
         a0, a1 = cfg.erode_amp
         amp = a0 + (a1 - a0) * n1
         depth = amp * (0.30 * n2 + 0.70 * hole) + 0.004 * n2
-        er = smooth(1.0 - depth - 0.0025, 1.0 - depth + 0.0025, rf)
+        if cfg.crumble_aa > 0 and rf.ndim == 2:
+            er = aa_cover(rf - (np.float32(1.0) - depth), cfg.crumble_aa)         # the edge is crumble_aa px wide wherever depth is steep (no stair steps)
+        else:
+            er = smooth(1.0 - depth - 0.0025, 1.0 - depth + 0.0025, rf)
         inside_back = 1.0 - smooth(0.985, 1.0, rbk)
         return (er * inside_back).astype(np.float32)
 

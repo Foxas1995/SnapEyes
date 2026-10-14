@@ -71,10 +71,17 @@ SIZES = (64, 4096)                                                          # th
 NAMES_MAX = 8
 E1_BAND_MAX = 0.04                                                          # the owner's budget: the seam band (support of the blend, as T1 pads it) per iris
 MIX_MAX = 0.03                                                              # ... and the pixels that are really mixed (0.02 < w < 0.98): about 3 percent
-PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble"}
+# The last four are the finish of the two-iris designs (pairs design phase 1, 2026-10-14) and reach a pair only (engine.PAIR_DESIGNS: Kiss, Collision Infinity, Clean Infinity
+# and an infinity that fell back to the Kiss geometry); the trio, the families and the chain draw as before. rim "both": a contact is drawn as the bright hairline only where
+# BOTH bands are dark (the prototype: where the back band is). crumble_aa: the crumbling contact of the Kiss geometry is antialiased (2.2 px) instead of cut at hard thresholds.
+# dust "fine": the same powder drawn as smaller, rounder, softer flakes (engine.PAIR_DUST). valley "deep": Collision Infinity only (engine.VALLEY_DEEP_STYLES), the black
+# valley of the contact edge at 0.02 of the back iris, as in the owner's H11 (0.04 to 0.05 with the shared "ref" edge).
+PAIR_FINISH = {"rim": "both", "crumble_aa": 2.2, "dust": "fine", "valley": "deep"}
+PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble", **PAIR_FINISH}
 OPT_KEYS = frozenset(("edge", "zone_c", "seam", "seam_dust", "kiss_d", "hairline", "plates", "breakup", "rotate", "trio_base", "lens_mode", "plan_mode", "beta", "seed_mode",
                       "support_budget", "strict_gate", "allow_bar", "exact_scale", "auto_hairline", "mem", "prm", "fill", "keep_cv", "flood", "seam_hw",
-                      "seam_amp", "seam_lam", "seam_bend", "seam_fine", "seam_wave", "blend", "pad", "dp_sigma", "dp_rho"))
+                      "seam_amp", "seam_lam", "seam_bend", "seam_fine", "seam_wave", "blend", "pad", "dp_sigma", "dp_rho",
+                      "rim", "crumble_aa", "dust", "valley", "hair"))
 T3_TOL = 0.004                                                              # the visible share is measured on pixels: a margin of 0.4 point
 T3_ZONE = 0.985                                                             # ... inside this share of R (the brief's definition: the feather of the disc is not the iris)
 SEPARATORS = (" ∞ ", " & ", " · ")                               # what layout_text puts between names (an infinity, an ampersand, a middle dot)

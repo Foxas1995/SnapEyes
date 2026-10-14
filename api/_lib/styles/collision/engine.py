@@ -48,6 +48,19 @@ BG_CLEAN = (0, 0, 0)
 DARK_EDGE_L = 26.0
 WIND_SET = (0.0, 25.0, 50.0, 130.0, 155.0, 180.0)      # brief 3.1: CCW degrees, y up
 STYLE = "collision"
+# Pairs phase 1 (2026-10-14): the options of the finish of the two-iris designs. They reach a render only when the design drawn is infinity or kiss (a fallen back infinity
+# is a kiss), so the trio, the families and the chain keep their pictures; every default is the prototype's look and collision.PRODUCTION names what production turns on.
+PAIR_DESIGNS = ("infinity", "kiss")
+VALLEY_DEEP_STYLES = (("infinity", False),)          # (design drawn, clean flag) that take the deeper valley of the owner's H11 when option valley is "deep": Collision Infinity only
+PAIR_CFG_KEYS = ("crumble_aa",)
+# where a pair still draws the hairline (both bands dark, option rim "both") it is a soft rim light and not the razor line of the prototype: alpha 0.70 -> 0.34, the Gaussian
+# 0.012 R -> 0.024 R wide, its centre 0.004 R inside the limb, the colour L* 70 -> 56 (option hair overrides, the laboratory's)
+PAIR_HAIR = {"alpha": 0.34, "w": 0.024, "shift": -0.004, "L": 56.0}
+# the powder of a pair, finer (option dust "fine"): the same particles drawn smaller (grain 0.9, chunk 0.78, atlas chip 0.70 of their size), as rounded soft flakes (corner
+# rounding 0.42, an edge of 2.2 px, a quiet light side) with no dim pebbles (luminance floor 0.40), the atlas chips slightly out of focus (0.8 px) and their shards less faceted
+# (shading pulled 55 percent toward flat); gain_grain 1.55 (1.35 in params) gives back the light the smaller flakes lose: the ring of powder keeps about 96 percent of its light
+PAIR_DUST = {"size_grain": 0.90, "size_chunk": 0.78, "size_big": 0.70, "chip_round": 0.42, "chip_edge_px": 2.2, "chip_lit": 0.12, "facet_gain": 0.30, "chip_jit": 0.40,
+             "chip_floor": 0.40, "big_defocus": 0.8, "big_shade": 0.45, "gain_grain": 1.55}
 
 
 class Result:
@@ -447,7 +460,12 @@ def decisions(sc_can, irises, design, design0, info, o, frozen):
             la = band_lstar(irises[r.a], pa)
             lb = band_lstar(irises[r.b], pa + math.pi)
             back_L = min(la, lb) if r.mode == "weave" else (lb if r.mode == "front_a" else la)
-            if back_L < DARK_EDGE_L:
+            if design in PAIR_DESIGNS and o.get("rim") == "both":
+                # pairs phase 1: a contact reads as a dark contour as long as ONE of its two sides is light (the limb of a light front iris is darkened inside, the valley on a
+                # light back iris shows): the bright hairline stays only where both bands are dark
+                if max(la, lb) < DARK_EDGE_L:
+                    natural.append(ri)
+            elif back_L < DARK_EDGE_L:
                 natural.append(ri)
     out = {"fronts": {str(i): m for i, m in sorted(fronts.items())}, "hairline": natural}
     if design0 == "infinity":
@@ -595,12 +613,18 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
     # -- tiles, edge modes ---------------------------------------------------------------------
     tiles = [CC.iris_tile(d, i) for i, d in enumerate(discs)]
     edge_modes, hair_cols = {ri: "hairline" for ri in dec["hairline"]}, {}
+    hair = dict(PAIR_HAIR, **(o.get("hair") or {})) if (design in PAIR_DESIGNS and o.get("rim") == "both") else {}
     for k in range(n):
         Lh, Ch, hh = C.lch(pals[k].ring.mean(0))
-        hair_cols[k] = np.asarray(C.from_lch(70.0, min(float(Ch) * 1.1, 60.0), float(hh)), np.float32) * 255.0
+        hair_cols[k] = np.asarray(C.from_lch(hair.get("L", 70.0), min(float(Ch) * 1.1, 60.0), float(hh)), np.float32) * 255.0
     seam_mode = o.get("seam", "plan")
-    cfg = CC.Cfg(preset=o.get("edge", "brief"), zone_c=o.get("zone_c", True), band=(0.01 if seam_mode == "hard" else 0.04), seam=seam_mode,
-                 seed=int(seed % 100003), **{k_: o[k_] for k_ in ("seam_hw", "seam_amp", "seam_lam", "seam_bend", "seam_fine", "seam_wave", "blend", "pad", "dp_sigma", "dp_rho", "beta") if k_ in o})
+    edge_preset = o.get("edge", "brief")
+    if edge_preset == "ref" and o.get("valley") == "deep" and (design, bool(clean)) in VALLEY_DEEP_STYLES:
+        edge_preset = "ref_deep"
+    cfg = CC.Cfg(preset=edge_preset, zone_c=o.get("zone_c", True), band=(0.01 if seam_mode == "hard" else 0.04), seam=seam_mode,
+                 seed=int(seed % 100003), **{k_: o[k_] for k_ in ("seam_hw", "seam_amp", "seam_lam", "seam_bend", "seam_fine", "seam_wave", "blend", "pad", "dp_sigma", "dp_rho", "beta") if k_ in o},
+                 **({k_: o[k_] for k_ in PAIR_CFG_KEYS if k_ in o} if design in PAIR_DESIGNS else {}),
+                 **({"hair_alpha": hair["alpha"], "hair_w": hair["w"], "hair_shift": hair["shift"]} if hair else {}))
     t_plan = time.perf_counter()
     if seam_mode == "plan":
         cfg.plans = {}
@@ -631,6 +655,8 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
         cv = C.canvas(W, H, BG_CLEAN if clean else BG_DARK)
     if not clean:
         prm = params(design, sc, n, clean, universe)
+        if design in PAIR_DESIGNS and o.get("dust") == "fine":
+            prm.update(PAIR_DUST)
         prm.update(o.get("prm", {}))
         prm["pv"] = (key or {}).get("pv")                        # the plates version of the spec reaches the haze's plate pick
         prm["plate_jets"] = bool(o.get("plates", True)) and prm.get("plate_jets", True)
