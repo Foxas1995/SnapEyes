@@ -640,6 +640,15 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
             else:
                 cfg.plans[ri] = SP.plan_seam(irises[r.a], irises[r.b], dR, rc.ux, rc.uy, pups[r.a], pups[r.b], C, mode=o.get("plan_mode", "plan"), beta=cfg.beta,
                                                 support_budget=o.get("support_budget", SP.SUPPORT_BUDGET))
+            if design in PAIR_DESIGNS and o.get("seam_follow") == "texture" and o.get("plan_fn") is None:
+                # pairs phase 2: the crossfade follows the texture of the two irises (the plan's band, line and budgets are kept: seam_plan.texture_plan); the colours cross over the weight of the
+                # plan, the detail layers over the weight of the texture (blend 'oklab_tx')
+                cfg.plans[ri] = SP.texture_plan(cfg.plans[ri], irises[r.a], irises[r.b], dR, rc.ux, rc.uy, C, o.get("seam_tex"), o.get("mix_budget", SP.MIX_BUDGET),
+                                                o.get("support_budget", SP.SUPPORT_BUDGET))
+        if any(getattr(p_, "tex_f", None) is not None for p_ in cfg.plans.values()):
+            cfg.blend, cfg.beta_f = "oklab_tx", SP.TEXTURE_SEAM["beta_f"]
+            if "dp_sigma" not in o:
+                cfg.dp_sigma = SP.TEXTURE_SEAM["split"]
     info["plan_s"] = round(time.perf_counter() - t_plan, 3)
     pupil_fns = {k: _pupil_fn(discs[k], pups[k]) for k in range(n)}
     comp = CC.Compositor(sc, tiles, cfg, edge_modes, hair_cols, pupil_fns)

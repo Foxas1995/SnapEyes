@@ -98,6 +98,8 @@ class Cfg:
     # turns it on for the pair designs only).
     crumble_aa: float = 0.0           # px: > 0 draws the crumble contact (erosion of the front limb, broken edge strength) with antialiased edges of about this width
     hair_shift: float = 0.0           # R: the hairline's centre sits this far outside (+) or inside (-) the limb
+    # Pairs phase 2 (2026-10-14): the crossfade that follows the texture (seam_plan.texture_plan; engine.render turns blend 'oklab_tx' on for a woven pair whose plan has the texture)
+    beta_f: float = 0.30              # blend 'oklab_tx': the linear share of the ramp of the fibre switch (blend_w)
 
     @property
     def p(self):
@@ -161,8 +163,7 @@ def seam_field(cfg, rule, ta, tb, xs, ys, ri, fine=True):
             plan = cfg.plans_fallback = getattr(cfg, "plans_fallback", None) or SP.straight_plan(rule.d / ta.R, hw=0.06)
         mx, my = 0.5 * (ta.cx + tb.cx), 0.5 * (ta.cy + tb.cy)
         s = ((xs - mx) * rule.ux + (ys - my) * rule.uy) / np.float32(Ra)
-        Cc, hw = plan.eval(s)
-        return t - Cc, hw
+        return plan.tp_hw(s, t, fine)
     if cfg.seam != "soft_s":
         return t, np.float32(cfg.band)
     mx, my = 0.5 * (ta.cx + tb.cx), 0.5 * (ta.cy + tb.cy)
@@ -327,6 +328,23 @@ class Compositor:
             return np.full_like(t, 1.0 if k == rule.a else 0.0)
         return np.full_like(t, 1.0 if k == rule.b else 0.0)
 
+    def _front_w_fibres(self, rule, k, ri, ta, tb, xs, ys, fallback):
+        """The weight that iris k is in front for the FIBRES (blend 'oklab_tx'): the switch of the plan's texture, inside the band of the colours; the weight of the colours (fallback) for a
+        rule without one."""
+        if rule.mode != "weave" or self.cfg.blend != "oklab_tx" or self.cfg.seam != "plan":
+            return fallback
+        plan = (self.cfg.plans or {}).get(ri)
+        if plan is None or plan.tex_f is None:
+            return fallback
+        Ra = ta.R
+        vx, vy = rule.uy, -rule.ux
+        t = ((xs - ta.cx) * vx + (ys - ta.cy) * vy) / np.float32(Ra)
+        mx, my = 0.5 * (ta.cx + tb.cx), 0.5 * (ta.cy + tb.cy)
+        s = ((xs - mx) * rule.ux + (ys - my) * rule.uy) / np.float32(Ra)
+        tph, hwh = plan.tp_hf(s, t)
+        wa = blend_w(tph, hwh, self.cfg.beta_f)
+        return wa if k == rule.a else 1.0 - wa
+
     def _fades(self, rule, t, ta, tb, xs, ys, ri):
         cfg = self.cfg
         if rule.mode == "weave":
@@ -431,7 +449,7 @@ class Compositor:
                 wx1 = min(max(w[2] for w in wins), roi[2])
                 wy1 = min(max(w[3] for w in wins), roi[3])
                 if wx0 < wx1 and wy0 < wy1:
-                    step_rows = (wy1 - wy0) if self.cfg.blend == "oklab_dp" else BAND_ROWS          # the detail split needs the whole band in one window
+                    step_rows = (wy1 - wy0) if self.cfg.blend in ("oklab_dp", "oklab_tx") else BAND_ROWS          # the detail split needs the whole band in one window
                     for r0 in range(wy0, wy1, step_rows):
                         r1 = min(wy1, r0 + step_rows)
                         self._merge_window(j, tj, partners, (wx0, r0, wx1, r1), Xp0, AX0, occ0, newP, newA, newocc, roi)
@@ -497,6 +515,7 @@ class Compositor:
         mult_x = None
         mult_b = None
         front_sum = np.zeros(AX.shape, np.float32)          # weight that j is in front of the occupant, summed over the partners
+        front_sum_f = np.zeros(AX.shape, np.float32) if self.cfg.blend == "oklab_tx" else None          # the same for the fibres of a textured seam
         hairs = []
         erB = erX = None
         cfg_erode = self.cfg.erode
@@ -518,6 +537,8 @@ class Compositor:
                     fx_ = 1.0 - er * present
                     erX = fx_ if erX is None else erX * fx_
             front_sum += present * wj
+            if front_sum_f is not None:
+                front_sum_f += present * self._front_w_fibres(rule, j, ri, ta, tb, xs, ys, wj)
             one = np.float32(1.0)
             mx_eff = one - present * (one - mxk)          # X's edge terms of this rule only where X's occupant is the partner iris k
             mult_x = mx_eff if mult_x is None else mult_x * mx_eff
@@ -536,8 +557,8 @@ class Compositor:
         wx = 1.0 - (1.0 - wX) * aB
         wb = 1.0 - wX * AX
         out = Xm * wx[..., None] + Bm * wb[..., None]
-        if self.cfg.blend in ("oklab", "oklab_dp"):
-            self._blend_band(out, Xm, Bm, wX, AX, aB, tj)
+        if self.cfg.blend in ("oklab", "oklab_dp", "oklab_tx"):
+            self._blend_band(out, Xm, Bm, wX, AX, aB, tj, None if front_sum_f is None else np.clip(1.0 - front_sum_f, 0.0, 1.0))
         aout = AX + aB - AX * aB
         front_j = ((1.0 - wX) > 0.5) & (aB > 0.5) & (AX > 0.01)
         o = newocc[ys_, xs_]
@@ -552,10 +573,11 @@ class Compositor:
         newA[ys_, xs_] = aout
         newocc[ys_, xs_] = o_new
 
-    def _blend_band(self, out, Xm, Bm, wX, AX, aB, tj):
+    def _blend_band(self, out, Xm, Bm, wX, AX, aB, tj, wF=None):
         """The crossfade of a weave band, in place on `out`. 'oklab': the two irises' pixels mixed in OKLab with weight wX (perceptually even, no muddy mid
         tones). 'oklab_dp' (detail preserving): the low frequencies (colour and tone, sigma `dp_sigma` R) are mixed with the wide weight wX, the detail layer
-        (fibres) with a steeper weight, so the band keeps its fibres instead of a milky double exposure. Only where both irises are opaque."""
+        (fibres) with a steeper weight, so the band keeps its fibres instead of a milky double exposure. 'oklab_tx' (pairs phase 2): the same split, the detail layers cross over
+        wF, the weight of the plan's fibre switch (it follows the texture and lies inside the band of the colours: no pixel outside the band is touched). Only where both irises are opaque."""
         cfg = self.cfg
         both = (AX > 0.999) & (aB > 0.999)
         bandm = (wX > 0.0) & (wX < 1.0) & both
@@ -583,8 +605,11 @@ class Compositor:
             return num / den[..., None]
         lfX, lfB = lf(labX), lf(labB)
         wl = wX[sub][..., None]
-        rho = cfg.dp_rho
-        wh = SP.smooth(0.5 - rho, 0.5 + rho, wX[sub])[..., None]
+        if cfg.blend == "oklab_tx":
+            wh = (wX if wF is None else wF)[sub][..., None]
+        else:
+            rho = cfg.dp_rho
+            wh = SP.smooth(0.5 - rho, 0.5 + rho, wX[sub])[..., None]
         lab = (wl * lfX + (1.0 - wl) * lfB) + (wh * (labX - lfX) + (1.0 - wh) * (labB - lfB))
         bm = bandm[sub]
         res = out[sub]

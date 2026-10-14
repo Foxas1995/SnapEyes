@@ -1268,6 +1268,60 @@ check("the finer powder keeps the same particles (the same count, the same seed)
       fd_on.info["counts"]["n"] == fd_off.info["counts"]["n"] and pix_sha(fd_on) != pix_sha(fd_off) and 0.75 * ydust(fd_off) <= ydust(fd_on) <= 1.25 * ydust(fd_off),
       (fd_on.info["counts"], fd_off.info["counts"], ydust(fd_on), ydust(fd_off)))
 
+# ============================================================================================ 11. the crossfade that follows the texture (pairs design phase 2)
+section("11. pairs design phase 2 (2026-10-14): the crossfade of the woven lens follows the texture (collision.PAIR_FINISH seam_follow, seam_plan.texture_plan, blend oklab_tx)")
+TEXON, TEXOFF = {}, {"seam_follow": "line"}
+OTHERS2 = OTHERS + [("kiss", ("blue", "brown"), "3:2", 384, None), ("infinity", (CC.WIDE_PUPIL, "green"), "3:2", 384, None)]
+same_ = [pix_sha(finish_render(d, n, f, s_, TEXON, layout=l)) == pix_sha(finish_render(d, n, f, s_, TEXOFF, layout=l)) for d, n, f, s_, l in OTHERS2]
+stk_on, stk_off = finish_render("infinity", ("blue", "green"), "3:2", 384, {"lens_mode": "stack"}, clean=True), finish_render("infinity", ("blue", "green"), "3:2", 384, {"lens_mode": "stack", **TEXOFF}, clean=True)
+check("the texture seam reaches the woven lens only: a trio, a family of four, a chain, a Kiss pair, an infinity that fell back to the Kiss geometry (a wide pupil) and the stack lens are the same "
+      "picture with it on and off, byte for byte", all(same_) and pix_sha(stk_on) == pix_sha(stk_off), (same_, pix_sha(stk_on) == pix_sha(stk_off)))
+tx_on, tx_off = finish_render("infinity", ("blue", "brown"), "3:2", 512, TEXON, clean=True), finish_render("infinity", ("blue", "brown"), "3:2", 512, TEXOFF, clean=True)
+pl_on, pl_off = tx_on.cfg.plans[0], tx_off.cfg.plans[0]
+check("on a woven pair the switch changes the picture and only the seam plan: the same design, front, seed, lens and distance; off is the straight band (no texture in the plan, the plain cross-fade of "
+      "the colours) and on is the texture (blend oklab_tx, both fields in the plan, its band re-fitted)",
+      pix_sha(tx_on) != pix_sha(tx_off) and tx_on.seed == tx_off.seed and tx_on.info["rules"] == tx_off.info["rules"] and tx_on.info["d_over_R"] == tx_off.info["d_over_R"]
+      and tx_on.info["lens_mode_used"] == tx_off.info["lens_mode_used"] == "weave" and pl_off.tex_c is None and pl_off.tex_f is None and tx_off.cfg.blend == "oklab"
+      and pl_on.tex_c is not None and pl_on.tex_f is not None and tx_on.cfg.blend == "oklab_tx" and pl_on.info.get("texture") is True and pl_on.a == pl_off.a, (pl_on.info.get("texture"), tx_on.cfg.blend))
+a_on, a_off = np.asarray(tx_on.img.convert("RGB")).astype(np.int16), np.asarray(tx_off.img.convert("RGB")).astype(np.int16)
+dpx = np.argwhere(np.abs(a_on - a_off).max(axis=2) > 0)
+rule0, ta0, tb0 = tx_on.scene.rules[0], tx_on.tiles[0], tx_on.tiles[1]
+vx0, vy0 = rule0.uy, -rule0.ux
+xs0, ys0 = dpx[:, 1].astype(np.float32) + 0.5, dpx[:, 0].astype(np.float32) + 0.5
+t0_ = ((xs0 - ta0.cx) * vx0 + (ys0 - ta0.cy) * vy0) / ta0.R
+s0_ = ((xs0 - 0.5 * (ta0.cx + tb0.cx)) * rule0.ux + (ys0 - 0.5 * (ta0.cy + tb0.cy)) * rule0.uy) / ta0.R
+reach_ = max(float(pl_on.hw_k.max()) + pl_on.tex_c_amp, float(pl_off.hw_k.max())) + 0.02
+inlens_ = (np.hypot(xs0 - ta0.cx, ys0 - ta0.cy) <= 1.02 * ta0.R) & (np.hypot(xs0 - tb0.cx, ys0 - tb0.cy) <= 1.02 * tb0.R)          # the lens with the feather of the two discs (F3 reaches 1.015 R)
+check("the texture changes nothing outside the seam: every pixel that differs between the straight band and the texture lies inside the lens (with the feather of its two discs) and within the reach of "
+      "the band of the colours (its half width and the displacement of the colours) of the line of the plan; the pupils and the limbs outside are untouched",
+      len(dpx) > 1000 and bool(inlens_.all()) and bool((np.abs(t0_ - pl_on.line(s0_)) <= reach_).all()), (len(dpx), int((~inlens_).sum()), float(np.abs(t0_ - pl_on.line(s0_)).max()), reach_))
+rep_on = CX.selfcheck(tx_on, "infinity", ["duo.clean", "infinity", "pair"], None, None)
+check("the budgets of the owner's reading A hold with the texture: the mixed share and the support of the band of the colours at most 3 percent of an iris (the plan's own numbers, re-fitted), the "
+      "seam band of T1 at most 4, and every check of the self check passes (T1 and T6: every pixel outside the band is the graded iris; T2: the pupils; T3; T19)",
+      rep_on["ok"] and rep_on["checks"]["seam"]["ok"] and pl_on.info["mixed_share"] <= SP.MIX_BUDGET + 1e-6 and pl_on.info["support_share"] <= SP.SUPPORT_BUDGET + 1e-6
+      and rep_on["checks"]["seam"]["e1"] <= CX.E1_BAND_MAX, {k: v for k, v in rep_on["checks"].items() if not v.get("ok", True)})
+ds_ = 0.005
+d_pl = tx_on.info["d_over_R"][0]
+L_pl = 1.0 - d_pl / 2.0
+S_g, T_g = np.meshgrid(np.arange(-L_pl, L_pl, ds_, dtype=np.float32), np.arange(-0.4, 0.4, ds_, dtype=np.float32))
+tpc_, hwc_ = pl_on.tp_hw(S_g, T_g)
+tph_, hwh_ = pl_on.tp_hf(S_g, T_g)
+wl_, wh_ = CMP.blend_w(tpc_, hwc_, pl_on.beta), CMP.blend_w(tph_, hwh_, CMP.Cfg.beta_f)
+lens_g = (np.hypot(S_g + d_pl / 2.0, T_g) <= 1.0) & (np.hypot(S_g - d_pl / 2.0, T_g) <= 1.0)
+sup_l, sup_h = (wl_ > 0.0) & (wl_ < 1.0) & lens_g, (wh_ > 0.0) & (wh_ < 1.0) & lens_g
+gh_l, gh_h = ((wl_ > 0.2) & (wl_ < 0.8) & lens_g).sum(), ((wh_ > 0.2) & (wh_ < 0.8) & lens_g).sum()
+check("the fibres switch inside the band of the colours (no pixel of the support of the fibre switch is outside the support of the colours: a pixel outside the band is never touched), and the "
+      "switch is sharper than the cross-fade: 2 times fewer lens pixels with both irises' fibres at a weight between 0.2 and 0.8 than with both colours", not bool((sup_h & ~sup_l).any()) and gh_l > 2 * gh_h and sup_h.any(),
+      (int((sup_h & ~sup_l).sum()), int(gh_l), int(gh_h)))
+ea_, eb_ = EYEOBJ["blue"], EYEOBJ["brown"]
+pp_a = SP.plan_seam(ea_, eb_, d_pl, 1.0, 0.0, K.pupil(ea_), K.pupil(eb_), C)
+tp_a = SP.texture_plan(pp_a, ea_, eb_, d_pl, 1.0, 0.0, C)
+tp_b = SP.texture_plan(pp_a, ea_, eb_, d_pl, 1.0, 0.0, C)
+tp_s = finish_render("infinity", ("blue", "brown"), "3:2", 256, TEXON, clean=True).cfg.plans[0]
+check("the texture plan is a function of the two irises and the geometry alone: planning twice gives the same fields and half width (no random number, no clock), it does not change the plan it was "
+      "made from, the size of the render does not enter (the fields of a 256 px and of a 512 px render are the same), and the colour band keeps the plan's line",
+      np.array_equal(tp_a.tex_c.arr, tp_b.tex_c.arr) and np.array_equal(tp_a.tex_f.arr, tp_b.tex_f.arr) and np.array_equal(tp_a.hw_k, tp_b.hw_k) and pp_a.tex_c is None and pp_a.tex_f is None
+      and np.array_equal(tp_s.tex_c.arr, pl_on.tex_c.arr) and tp_a.a == pp_a.a and float(np.abs(tp_a.tex_c.arr).max()) <= 1.0 and float(np.abs(tp_a.tex_f.arr).max()) <= 1.0, "")
 # ============================================================================================ 8. real eyes and the scratch tree (LOCAL)
 section("9. LOCAL: the real calibration eyes and the port as the scratch plus its edits")
 if CALIB and os.path.isdir(CALIB) and os.path.exists(os.path.join(HERE, "data", "collision_goldens_real.json")):

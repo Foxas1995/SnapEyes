@@ -167,6 +167,11 @@ class SeamPlan:
     hw_k: np.ndarray
     info: dict = field(default_factory=dict)
     beta: float = 0.0
+    # pairs design phase 2 (texture_plan): the crossfade follows the texture of the two irises. None / 0: the plain band, as before.
+    tex_c: object = None                # a TexField (unit, -1 to 1): the crossfade of the COLOURS follows the larger structures of the irises
+    tex_c_amp: float = 0.0              # R: how far the colour seam moves where tex_c is +-1
+    tex_f: object = None                # a TexField (unit): the switch of the FIBRES (the detail layers of the two irises, blend 'oklab_tx') inside the band of the colours
+    tex_f_alpha: float = 0.0            # the share of the colour band's half width by which the fibre switch moves where tex_f is +-1 (its own half width is 1 minus this)
 
     def line(self, s):
         x = np.clip(s / np.float32(self.L), -1.15, 1.15)
@@ -178,6 +183,24 @@ class SeamPlan:
 
     def eval(self, s):
         return self.line(s), self.hw(s)
+
+    def tp_hw(self, s, t, fine=True):
+        """The signed position of a point of the lens frame relative to the seam, tp, and the half width of the blend there (w = blend_w(tp, hw)). Without a texture tp = t - C(s) (the
+        plain band). fine False: the line alone, without the texture (what the fade of the dark edge along the limbs is measured from)."""
+        cc, hw = self.line(s), self.hw(s)
+        tp = t - cc
+        if fine and self.tex_c is not None:
+            tp = _displace(tp, s, t, np.float32(self.tex_c_amp), self.tex_c, hw + np.float32(self.tex_c_amp))
+        return tp, hw
+
+    def tp_hf(self, s, t):
+        """The same for the FIBRES (blend 'oklab_tx'): the switch of the two irises' detail layers, displaced by the texture inside the band of the colours, so that its support (|tp| < hw
+        of the returned pair) lies inside the support of the colours. None for the plain band."""
+        if self.tex_f is None:
+            return None
+        tpc, hwc = self.tp_hw(s, t)
+        a = np.float32(self.tex_f_alpha)
+        return _displace(tpc, s, t, a * hwc, self.tex_f, hwc), (np.float32(1.0) - a) * hwc
 
 
 def straight_plan(d_over_R, hw=0.085, lean=0.0):
@@ -356,8 +379,8 @@ def mixed_share(plan, d, step=0.006):
     t = np.arange(-0.5, 0.5, step, dtype=np.float32) + step / 2
     S, Tt = np.meshgrid(s, t)
     inside = (np.hypot(S + d / 2.0, Tt) <= 1.0) & (np.hypot(S - d / 2.0, Tt) <= 1.0)
-    Cc, hw = plan.eval(S)
-    w = blend_w(Tt - Cc, hw, plan.beta)
+    tp, hw = plan.tp_hw(S, Tt)
+    w = blend_w(tp, hw, plan.beta)
     mixed = inside & (w > 0.02) & (w < 0.98)
     return float(mixed.sum()) * step * step / math.pi
 
@@ -370,6 +393,157 @@ def support_share(plan, d, step=0.006):
     t = np.arange(-0.5, 0.5, step, dtype=np.float32) + step / 2
     S, Tt = np.meshgrid(s, t)
     inside = (np.hypot(S + d / 2.0, Tt) <= 1.0) & (np.hypot(S - d / 2.0, Tt) <= 1.0)
-    Cc, hw = plan.eval(S)
-    sup = inside & (np.abs(Tt - Cc) < hw)
+    tp, hw = plan.tp_hw(S, Tt)
+    sup = inside & (np.abs(tp) < hw)
     return float(sup.sum()) * step * step / math.pi
+
+
+# ----------------------------------------------------------------------------- pairs design phase 2: a crossfade that follows the texture
+# The plan above crosses the two irises over a straight band: both irises' fibres are mixed at the same weight (a ghost of two fibre fields: the owner's "frosted") and the colours change along a
+# line that runs through the lens like a ruler. The owner's H10 and H11 join along the texture. texture_plan keeps the plan (its line, its half width, its budgets) and adds two displacements of
+# the weight, both read from the two irises in the lens on the canonical grade (so the same at every size, no random number, a pure function of the two irises and the geometry):
+#   tex_c   the crossfade of the COLOURS moves by up to c_amp R along the larger structures of the irises: tongues of one iris reach into the other along the fibres (a coarse key: c_hp)
+#   tex_f   the switch of the FIBRES (blend 'oklab_tx': the colours of the two irises cross over the weight of tex_c, their detail layers over this one) at the scale of a fibre (f_hp), nested in
+#           the band of the colours (the displacement is a share f_alpha of its half width, the ramp the rest), so the fibres of one iris go on into the other where the colours are already mixed
+# The key: where the detail of iris A (the high pass of L*) is stronger and brighter than B's, relative to the local contrast, the weight goes to A, where B's is, to B. The key is smoothed along
+# the local direction of the fibres (the structure tensors of both irises, a line integral convolution of c_along / f_along R along it and c_across / f_across R across it), so the tongues
+# are fibres and not blobs. The colour band is re-fitted: the largest half width up to c_grow of the plan's that keeps the mixed share and the support under the budgets (D13).
+TEXTURE_SEAM = {"ds": 0.005, "T": 0.32, "eps": 0.35, "st_sig": 0.03, "edge": 0.14,
+                "f_alpha": 0.6, "f_hp": 0.012, "f_gain": 2.5, "f_along": 0.05, "f_across": 0.004,
+                "c_amp": 0.065, "c_hp": 0.02, "c_gain": 2.5, "c_along": 0.07, "c_across": 0.009, "c_grow": 0.8,
+                "split": 0.010, "beta_f": 0.30}
+
+
+class TexField:
+    """A unit field (values -1 to 1) on the lens frame: a grid of step ds R from (s0, t0), bilinear, zero outside the grid."""
+    __slots__ = ("s0", "t0", "ds", "arr")
+
+    def __init__(self, s0, t0, ds, arr):
+        self.s0, self.t0, self.ds, self.arr = float(s0), float(t0), float(ds), np.asarray(arr, np.float32)
+
+    def at(self, s, t):
+        nt, ns = self.arr.shape
+        fx = (s - np.float32(self.s0)) / np.float32(self.ds)
+        fy = (t - np.float32(self.t0)) / np.float32(self.ds)
+        x0 = np.floor(fx)
+        y0 = np.floor(fy)
+        ax = (fx - x0).astype(np.float32)
+        ay = (fy - y0).astype(np.float32)
+        x0 = x0.astype(np.int64)
+        y0 = y0.astype(np.int64)
+        out = np.zeros(np.broadcast(fx, fy).shape, np.float32)
+        for dy, wy in ((0, np.float32(1.0) - ay), (1, ay)):
+            for dx, wx in ((0, np.float32(1.0) - ax), (1, ax)):
+                xi, yi = x0 + dx, y0 + dy
+                ok = (xi >= 0) & (xi < ns) & (yi >= 0) & (yi < nt)
+                out += np.where(ok, self.arr[np.clip(yi, 0, nt - 1), np.clip(xi, 0, ns - 1)], np.float32(0.0)) * (wy * wx).astype(np.float32)
+        return out
+
+
+def _displace(tp, s, t, amp, fld, reach):
+    """tp - amp * fld(s, t), where it can matter: a weight is exactly 0 or 1 once |tp| >= reach (amp * |fld| <= amp is what the half width leaves), so the field is sampled only
+    inside that reach and the rest of the window (most of it) keeps tp."""
+    m = np.abs(tp) < reach
+    if not m.any():
+        return tp
+    out = tp.copy()
+    amp_m = np.broadcast_to(amp, tp.shape)[m] if np.ndim(amp) else amp
+    out[m] = tp[m] - amp_m * fld.at(np.broadcast_to(s, tp.shape)[m], np.broadcast_to(t, tp.shape)[m])
+    return out
+
+
+def _lowpass(x, val, sg):
+    """Gaussian low pass of x over the valid pixels only (normalised convolution), sg in grid samples."""
+    num = blur2(x * val, sg)
+    den = np.maximum(blur2(val, sg), np.float32(1e-3))
+    return (num / den).astype(np.float32)
+
+
+def _gather(a, fx, fy):
+    """Bilinear sample of the 2-D array a at fractional (column fx, row fy), edge replicated."""
+    nt, ns = a.shape
+    fx = np.clip(fx, 0, ns - 1.001)
+    fy = np.clip(fy, 0, nt - 1.001)
+    x0 = np.floor(fx).astype(np.int64)
+    y0 = np.floor(fy).astype(np.int64)
+    ax = (fx - x0).astype(np.float32)
+    ay = (fy - y0).astype(np.float32)
+    return a[y0, x0] * (1 - ax) * (1 - ay) + a[y0, x0 + 1] * ax * (1 - ay) + a[y0 + 1, x0] * (1 - ax) * ay + a[y0 + 1, x0 + 1] * ax * ay
+
+
+def _orientation(L, val, st_px):
+    """The direction of the structure on the grid (radians from the +s axis toward +t, along the fibres: where L changes least) and its coherence 0..1, from the structure tensor of L
+    smoothed at st_px grid samples."""
+    gy, gx = np.gradient(L)
+    jxx, jyy, jxy = _lowpass(gx * gx, val, st_px), _lowpass(gy * gy, val, st_px), _lowpass(gx * gy, val, st_px)
+    ang = 0.5 * np.arctan2(2.0 * jxy, jxx - jyy) + 0.5 * np.pi
+    coh = np.sqrt((jxx - jyy) ** 2 + 4.0 * jxy ** 2) / (jxx + jyy + 1e-6)
+    return ang.astype(np.float32), coh.astype(np.float32)
+
+
+def _along(a, ang, along_px, across_px):
+    """a smoothed along the direction ang (per sample) by Gaussian taps of along_px, then by across_px in every direction."""
+    nt, ns = a.shape
+    jj, ii = np.mgrid[0:nt, 0:ns].astype(np.float32)
+    c, s_ = np.cos(ang), np.sin(ang)
+    k = max(1, int(round(2.0 * along_px)))
+    acc = np.zeros_like(a)
+    wsum = 0.0
+    for q in range(-(3 * k) // 2, 3 * k // 2 + 1):
+        d = q * (along_px / k)
+        w = math.exp(-0.5 * (d / along_px) ** 2)
+        acc += np.float32(w) * _gather(a, ii + d * c, jj + d * s_)
+        wsum += w
+    out = acc / np.float32(wsum)
+    return blur2(out, across_px) if across_px > 0.3 else out
+
+
+def texture_plan(plan, ir_a, ir_b, d, ux, uy, C, params=None, mix_budget=MIX_BUDGET, support_budget=SUPPORT_BUDGET):
+    """The plan with the crossfade that follows the texture (see above). plan: the SeamPlan of plan_seam (not changed: a copy is returned); the rest as plan_seam. params overrides TEXTURE_SEAM
+    (the laboratory's engine option seam_tex). The band of the colours is the plan's, re-fitted to the budgets with the texture in it; info gets the new shares and the scale."""
+    import dataclasses
+    q = dict(TEXTURE_SEAM, **(params or {}))
+    ds = q["ds"]
+    m = lens_maps(ir_a, ir_b, d, ux, uy, C, ds=ds, T=q["T"])
+    s, t = m["s"], m["t"]
+    val = m["valid"].astype(np.float32)
+    La = srgb_to_lab(m["rgbA"])[..., 0]
+    Lb = srgb_to_lab(m["rgbB"])[..., 0]
+
+    def key(hp):
+        """Where A's detail is the stronger and brighter: (hA - hB) over the local contrast, about -1 to 1."""
+        sg = hp / ds
+        hA = La - _lowpass(La, val, sg)
+        hB = Lb - _lowpass(Lb, val, sg)
+        den = np.sqrt(_lowpass(hA * hA, val, 3 * sg)) + np.sqrt(_lowpass(hB * hB, val, 3 * sg))
+        return (hA - hB) / (den + q["eps"] * float(np.median(den[val > 0.5])))
+    angA, cohA = _orientation(La, val, q["st_sig"] / ds)
+    angB, cohB = _orientation(Lb, val, q["st_sig"] / ds)
+    ang = 0.5 * np.arctan2(cohA * np.sin(2 * angA) + cohB * np.sin(2 * angB), cohA * np.cos(2 * angA) + cohB * np.cos(2 * angB))     # the fibres of both irises
+    vx, vy = uy, -ux
+    S, Tt = np.meshgrid(s, t)
+    rA = np.hypot((S + d / 2.0) * ux + Tt * vx, (S + d / 2.0) * uy + Tt * vy)
+    rB = np.hypot((S - d / 2.0) * ux + Tt * vx, (S - d / 2.0) * uy + Tt * vy)
+    fade = smooth(0.0, q["edge"], 1.0 - np.maximum(rA, rB))            # at the limbs the seam is the plan's: the displacements fade out toward the boundary of the lens
+
+    def unit(hp, along, across, gain):
+        u = np.tanh(gain * _along(key(hp), ang, along / ds, across / ds)) * fade
+        return TexField(s[0], t[0], ds, np.where(val > 0.5, u, 0.0).astype(np.float32))
+    out = dataclasses.replace(plan, tex_c=unit(q["c_hp"], q["c_along"], q["c_across"], q["c_gain"]), tex_c_amp=float(q["c_amp"]),
+                              tex_f=unit(q["f_hp"], q["f_along"], q["f_across"], q["f_gain"]), tex_f_alpha=float(q["f_alpha"]), info=dict(plan.info))
+    hw0 = plan.hw_k.copy()
+    lo_, hi_ = 0.25, float(q["c_grow"])
+    out.hw_k = (hw0 * np.float32(hi_)).astype(np.float32)
+    if mixed_share(out, d) <= mix_budget and support_share(out, d) <= support_budget:
+        lo_ = hi_
+    else:
+        for _ in range(24):
+            mid = 0.5 * (lo_ + hi_)
+            out.hw_k = (hw0 * np.float32(mid)).astype(np.float32)
+            if mixed_share(out, d) <= mix_budget and support_share(out, d) <= support_budget:
+                lo_ = mid
+            else:
+                hi_ = mid
+    out.hw_k = (hw0 * np.float32(lo_)).astype(np.float32)
+    out.info.update(mixed_share=mixed_share(out, d), support_share=support_share(out, d), texture_scale=float(lo_), texture=True)
+    return out
