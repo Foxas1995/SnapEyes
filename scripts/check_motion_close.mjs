@@ -349,6 +349,16 @@ async function checkFinal() {
     expect('final', /inset\(/.test(pre.clip) && pre.scale === '1.03', `${tag}: the closing picture is not in its framed state before it is reached (${pre.clip}, scale ${pre.scale}): the test would see nothing`);
     // 86 percent is the linear extent of the plate (7 percent off every side): the area is .86 squared
     expect('final', Math.sqrt(share(pre.clip, pre.w, pre.h)) >= 0.855 && pre.op === '1' && pre.img === '1', `${tag}: before it opens the picture shows only ${(100 * Math.sqrt(share(pre.clip, pre.w, pre.h))).toFixed(1)} percent of the band's width and height (spec: 86) or is faded (${pre.op}, ${pre.img})`);
+    if (width < 768) {
+      // a phone with the engine opens the picture with the scroll, not with the clock (the owner's request of 2026-10-17; scripts/check_motion_phone.mjs checks it step by step): scrolled to the
+      // end of its crossing the picture is the whole band, with no clip and no scale left, and nothing of the clock is running
+      await page.eval(`window.scrollTo({ top: document.querySelector('.lp-final').getBoundingClientRect().top + scrollY - 100, behavior: 'instant' })`);
+      await sleep(2600);
+      const e = J(await page.eval(`JSON.stringify((() => { const b = document.querySelector('.lp-final .lp-bg'); return { clip: getComputedStyle(b).clipPath, scale: getComputedStyle(b.querySelector('img')).scale, left: ${ANIMS}.filter((a) => /lp-open|lp-rv/.test(a)).length }; })())`));
+      expect('final', e.clip === 'none' && e.scale === 'none' && e.left === 0, `${tag}: scrolled to the end of its crossing the closing picture is not the whole band (clip ${e.clip}, scale ${e.scale}, ${e.left} animations of the clock)`);
+      await page.close();
+      continue;
+    }
     // the scene comes into view: the picture opens
     await page.eval(`window.scrollTo({ top: document.querySelector('.lp-final').getBoundingClientRect().top + scrollY - innerHeight * 0.45, behavior: 'instant' })`);
     const f = await frames(page, 2600, `const b = document.querySelector('.lp-final .lp-bg'), r = b.getBoundingClientRect(), img = b.querySelector('img'), ci = getComputedStyle(img);
@@ -388,7 +398,8 @@ async function checkFinal() {
       await page.eval(NO_SKIP);
       await walk(page, '.lp-final');
       await page.eval(`document.body.style.paddingTop = ${lift} + 'px'`);   // above everything: the sheet's soft shadow over the band's top edge stays as it is
-      await page.eval(`window.scrollTo({ top: document.querySelector('.lp-final').getBoundingClientRect().top + scrollY - innerHeight * 0.3, behavior: 'instant' })`);
+      // on a phone the picture opens with the scroll: it is at rest (whole) once its top is near the top of the screen, so it is photographed there, 100 px down: under the 64 px header, whose glass would otherwise lie over its first rows (a desktop: 30 percent of the screen)
+      await page.eval(`window.scrollTo({ top: document.querySelector('.lp-final').getBoundingClientRect().top + scrollY - ${width < 800 ? 100 : 'innerHeight * 0.3'}, behavior: 'instant' })`);
       for (let i = 0; i < 40 && !(await page.eval("document.querySelector('.lp-final .lp-bg img').complete")); i++) await sleep(100);
       await sleep(4500);
       await page.eval("document.querySelectorAll('.lp-ftr, .lp-sticky').forEach((e) => { e.style.visibility = 'hidden'; })");

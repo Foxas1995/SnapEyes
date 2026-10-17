@@ -85,6 +85,11 @@
   @media (min-width: 640px) and (max-width: 767px) {
     #reveal.lp-slot { min-height: var(--slot-p); }
   }
+  /* and a phone with motion allowed has a scene of its own (src/landing/RevealScene.tsx with `phone`): its stage (about 490 px) and one screen of scrolling on top of the flat
+     layout whose height slots.ts holds (scripts/measure_slots.mjs measures a phone under reduced motion, which is that layout) */
+  @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) #reveal.lp-slot { min-height: calc(var(--slot-p) + 100vh + 490px); min-height: calc(var(--slot-p) + 100svh + 490px); }
+  }
   /* The chapters below the first screen skip style, layout and paint until they are near the screen. They mount one by one while the visitor is still
      on the first screen, and what they add (about 80 reveal nodes, boxes for the pictures, their stylesheets) used to be styled and laid out at once:
      +130 ms of blocking time over the page without motion at CPU x4 (motion review, nine interleaved runs). A skipped section is as tall as its slot was

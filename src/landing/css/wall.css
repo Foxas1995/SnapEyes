@@ -91,7 +91,6 @@
      hidden without the engine (html.mo), under reduced motion, or after the failsafe. The photograph never moves, scales or blurs; the chip, the
      captions and the words about printing are never touched. */
   @keyframes lp-spec-in { from { opacity: 0; } }
-  @keyframes lp-sweep { 0% { opacity: 0; translate: -45% 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; translate: 45% 0; } }
   @media (prefers-reduced-motion: no-preference) {
     /* a pick of a material: its title, its facts and the line "Typical for print shops" fade in (opacity only, 350 ms, 50 ms apart) */
     .lp-specs-in[data-swap] :is(h3, li, .lp-typ) { animation: lp-spec-in .35s var(--ease-out) calc(var(--n, 0) * 50ms) backwards; }
@@ -104,9 +103,8 @@
   /* it fades in when the acrylic picture has finished fading in (.42 s), never over the picture it is replacing */
   html.mo .lp-stage .lp-glint[data-shine]::after { opacity: 1; animation: lp-spec-in .5s var(--ease-out) var(--d-swap) backwards; }
   @media (max-width: 767px) {
-    /* a phone has no walking past: one sweep, 1.6 s, when acrylic is picked (data-sweep is set and removed by WallStage.tsx) */
+    /* a phone shows the band only while the scene of the phone is running (the last block of this file: data-scrub on the stage) */
     html.mo .lp-stage .lp-glint[data-shine]::after { opacity: 0; animation: none; }
-    html.mo .lp-stage .lp-glint[data-sweep]::after { animation: lp-sweep 1.6s var(--ease-inout) var(--d-swap) 1 both; }
   }
   /* the comparison table opens in .5 s, like the FAQ (the height is animated through ::details-content) */
   .lp-compare::details-content { block-size: 0; overflow: clip; transition: block-size var(--d-ui) var(--ease-out), content-visibility var(--d-ui) allow-discrete; }
@@ -120,4 +118,16 @@
     .lp-mat[aria-selected="false"]:hover { border-color: var(--ring-gold); }
   }
   .lp-mats, .lp-tbl-wrap { overscroll-behavior-x: contain; }
+
+  /* ---------------------------------------------------------------------------------------------- the phone's scrolled plate (WallStage.tsx)
+     The owner's request of 2026-10-17. While the stage crosses a phone's screen, src/landing/WallStage.tsx writes --ps (0 to 1, over the first 45 percent of the
+     crossing) and --gx (the glint's place, -40 to 40 percent) on the stage and marks it data-scrub (the band's mark) and, while the plate is still settling, data-run. The plate then opens like a mat and settles (the entry of every
+     scene plate, charter AC-1 and AC-3: an inset of 7 percent with rounded corners and a scale of 1.03, to the whole frame and exactly 1; the picture never moves inside
+     its frame, and the frame, its ring and its label are never clipped), and the light on a polished face passes over the print with the scroll, as it does from 768 px, in
+     place of the single sweep that a phone used to get when acrylic was picked. At --ps 1 data-run is gone, so the plate carries no clip and no scale at all: it is the static plate. Only under the phone condition, with the
+     engine running and not given up. */
+  @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) .lp-stage[data-run] img { clip-path: inset(calc(7% * (1 - var(--ps, 1))) round calc(var(--r) * (1 - var(--ps, 1)))); scale: calc(1 + .03 * (1 - var(--ps, 1))); }
+    html.mo:not(.mo-fail) .lp-stage[data-scrub] .lp-glint[data-shine]::after { opacity: 1; animation: lp-spec-in .5s var(--ease-out) var(--d-swap) backwards; }
+  }
 }

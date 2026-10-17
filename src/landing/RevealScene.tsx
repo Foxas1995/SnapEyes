@@ -10,18 +10,25 @@
 // ring is an SVG circle whose radius is set directly, because its 1 px stroke must not scale with it. The three step rows are real buttons that scroll to their state, so a keyboard has a way to every state. The step rows are never in a hidden entrance state: the stage is on screen from the first frame of the pin, and a row that waited for an observer never came in a short, narrow window. The honesty lines
 // (whose eye it is, the photo's size) are static text under the frame. Below 768 px, under reduced motion and when the window is too short,
 // Reveal.tsx renders the static layout instead of this one (./useScenePinned.ts): the same words, the pictures in a row, the slider.
+//
+// The phone has a shorter scene of its own (`phone`, the owner's request of 2026-10-17): the same frame, the same script and the same three step
+// buttons, but no copy beside the frame (the heading and the sentence stay above it, in the section's own head) and a stage that is just the frame, its
+// two honesty lines and the steps as one row of three. The wrapper is that stage plus one screen of scrolling (100svh, so the page's length never follows
+// the browser's toolbar), the stage sticks under the header, and the sticky button bar at the foot of the screen is left clear (css/reveal.css). The
+// artwork layer is asked for when the scene is within 300 px of the screen, not when the section mounts: a phone has no use for its 48 kB before then, and the aperture
+// that shows it is more than a screen of scrolling away from that moment.
 import { useEffect, useRef, useState } from 'react';
 import { useCopy } from './copy/useCopy';
 import { ExampleChip } from './ui';
-import type { RevealEye } from './revealEyes';
+import { REVEAL_SIZES, type RevealEye } from './revealEyes';
 import { sceneState, STEP_GOTO, type Chip } from './revealScript';
 import { Title } from '../motion/Title';
-import { track } from '../motion/motion';
+import { track, whenNear } from '../motion/motion';
 
 /** What the frame says about its width: a 540 px frame from 960 px, else about 46 percent of the screen (css/reveal.css). */
 const SCENE_SIZES = '(min-width: 960px) 540px, 46vw';
 
-export function RevealScene({ eye }: { eye: RevealEye }) {
+export function RevealScene({ eye, phone = false }: { eye: RevealEye; phone?: boolean }) {
   const { c, t } = useCopy();
   const r = c.reveal;
   const wrap = useRef<HTMLDivElement>(null);
@@ -29,6 +36,9 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
   const frame = useRef<HTMLDivElement>(null);
   const ring = useRef<SVGCircleElement>(null);
   const [step, setStep] = useState(0);
+  // the artwork layer is clipped to nothing until the aperture opens, so a lazy loader never fetches it: it gets its address by hand (from the first render on a
+  // desktop, which has the room; on a phone when the scene is near)
+  const [artNear, setArtNear] = useState(!phone);
 
   useEffect(() => {
     const w = wrap.current, s = stage.current, f = frame.current, ap = ring.current;
@@ -57,6 +67,11 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
     );
   }, []);
 
+  useEffect(() => {
+    const w = wrap.current;
+    return phone && w ? whenNear(w, () => setArtNear(true), '300px') : undefined;
+  }, [phone]);
+
   /** A click on a step row scrolls to that state: the wrapper's position plus the share of the pin's length. */
   const go = (i: number) => {
     const w = wrap.current, s = stage.current;
@@ -68,6 +83,51 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
 
   const names = [r.strip.photo, r.strip.iris, r.strip.art];
   const label: Record<Chip, string> = { photo: eye.phone ? r.before : r.beforeWeb, iris: r.after, art: r.strip.art };
+  const sizes = phone ? REVEAL_SIZES : SCENE_SIZES;
+  const steps = (
+    <ol className={phone ? 'lp-rv-steps lp-rvp-steps' : 'lp-rv-steps'}>
+      {names.map((name, i) => (
+        <li key={i}>
+          <button type="button" className="lp-rv-step" aria-current={step === i ? 'step' : undefined} onClick={() => go(i)}>
+            <i aria-hidden="true">{`0${i + 1}`}</i>
+            <span>{name}</span>
+          </button>
+        </li>
+      ))}
+    </ol>
+  );
+  const picture = (
+    <>
+      <div ref={frame} className="lp-rv-frame" data-c="photo">
+        <img className="lp-rv-iris" src={eye.iris.src} srcSet={eye.iris.srcset} sizes={sizes} width={eye.iris.w} height={eye.iris.h} loading="lazy" decoding="async" alt={eye.irisAlt} />
+        <img className="lp-rv-photo" src={eye.photo.src} srcSet={eye.photo.srcset} sizes={sizes} width={eye.photo.w} height={eye.photo.h} loading="lazy" decoding="async" alt={eye.photoAlt} />
+        <img className="lp-rv-art" src={artNear ? eye.art.src : undefined} width={eye.art.w} height={eye.art.h} loading="eager" fetchPriority="low" decoding="async" alt={eye.artAlt} />
+        <svg className="lp-rv-ap" viewBox="0 0 100 100" aria-hidden="true">
+          <circle ref={ring} cx="50" cy="50" r="0" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <span className="lp-rv-line" aria-hidden="true" />
+        {(['photo', 'iris', 'art'] as const).map((k) => (
+          <span key={k} className="lp-rv-chip" data-k={k} aria-hidden="true">{label[k]}</span>
+        ))}
+        <ExampleChip variant="example" label={c.example.mantas} className="lp-rv-who" />
+      </div>
+      <figcaption className="lp-rv-cap">
+        <span>{eye.note}</span>
+        <span className="lp-rv-scale">{t(eye.phone ? 'reveal.scale' : 'reveal.scaleWeb', { n: eye.n })}</span>
+      </figcaption>
+    </>
+  );
+
+  if (phone) {
+    return (
+      <div ref={wrap} className="lp-rvp">
+        <div ref={stage} className="lp-rvp-stage">
+          <figure className="lp-rvp-fig">{picture}</figure>
+          {steps}
+        </div>
+      </div>
+    );
+  }
   return (
     <div ref={wrap} className="lp-rv-scene">
       <div ref={stage} className="lp-rv-stage">
@@ -78,36 +138,9 @@ export function RevealScene({ eye }: { eye: RevealEye }) {
               <Title id="revealH" text={r.title} />
               <p className="lp-intro" data-reveal="fade">{eye.phone ? r.intro : r.introWeb}</p>
             </div>
-            <ol className="lp-rv-steps">
-              {names.map((name, i) => (
-                <li key={i}>
-                  <button type="button" className="lp-rv-step" aria-current={step === i ? 'step' : undefined} onClick={() => go(i)}>
-                    <i aria-hidden="true">{`0${i + 1}`}</i>
-                    <span>{name}</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
+            {steps}
           </div>
-          <figure className="lp-rv-fig">
-            <div ref={frame} className="lp-rv-frame" data-c="photo">
-              <img className="lp-rv-iris" src={eye.iris.src} srcSet={eye.iris.srcset} sizes={SCENE_SIZES} width={eye.iris.w} height={eye.iris.h} loading="lazy" decoding="async" alt={eye.irisAlt} />
-              <img className="lp-rv-photo" src={eye.photo.src} srcSet={eye.photo.srcset} sizes={SCENE_SIZES} width={eye.photo.w} height={eye.photo.h} loading="lazy" decoding="async" alt={eye.photoAlt} />
-              <img className="lp-rv-art" src={eye.art.src} width={eye.art.w} height={eye.art.h} loading="eager" fetchPriority="low" decoding="async" alt={eye.artAlt} />
-              <svg className="lp-rv-ap" viewBox="0 0 100 100" aria-hidden="true">
-                <circle ref={ring} cx="50" cy="50" r="0" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-              </svg>
-              <span className="lp-rv-line" aria-hidden="true" />
-              {(['photo', 'iris', 'art'] as const).map((k) => (
-                <span key={k} className="lp-rv-chip" data-k={k} aria-hidden="true">{label[k]}</span>
-              ))}
-              <ExampleChip variant="example" label={c.example.mantas} className="lp-rv-who" />
-            </div>
-            <figcaption className="lp-rv-cap">
-              <span>{eye.note}</span>
-              <span className="lp-rv-scale">{t(eye.phone ? 'reveal.scale' : 'reveal.scaleWeb', { n: eye.n })}</span>
-            </figcaption>
-          </figure>
+          <figure className="lp-rv-fig">{picture}</figure>
         </div>
       </div>
     </div>

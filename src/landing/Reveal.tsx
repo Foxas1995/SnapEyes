@@ -8,15 +8,17 @@
 // Two layouts with the same words (motion spec 6.4). Where a scene can be pinned (768 px and up, motion allowed, a window tall enough,
 // the engine running: ./useScenePinned.ts) the section opens with the pinned scene (./RevealScene.tsx: one frame, three states of the
 // founder's own eye, scroll drives it), and under it, in normal flow, come the table of what is yours and what the AI adds and the slider
-// with its eye pills and the strip. On a phone, under reduced motion and in a short window there is no scene: the heading, the slider with
-// its pills, the table and the strip, as before.
+// with its eye pills and the strip. Under reduced motion and in a short window there is no scene: the heading, the slider with its pills,
+// the table and the strip, as before. A phone with motion allowed (a window up to 767 px, the engine running) gets a scene of its own between
+// the section's head and the slider: the same frame and the same three states over one screen of scrolling (./RevealScene.tsx with `phone`,
+// css/reveal.css). The slider stays under it for the hand, the keyboard and the other eyes, as on a desktop.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCopy } from './copy/useCopy';
 import { Pill, useKeepFocus, useRoving } from './ui';
 import { RevealSlider } from './RevealSlider';
 import { RevealStrip } from './RevealStrip';
 import { RevealScene } from './RevealScene';
-import { useScenePinned } from './useScenePinned';
+import { usePhoneScene, useScenePinned } from './useScenePinned';
 import { Title } from '../motion/Title';
 import { REVEAL_SIZES, revealEyes, type RevealEye } from './revealEyes';
 import type { PictureAsset } from './assets';
@@ -78,6 +80,7 @@ export function Reveal() {
   const roving = useRoving<HTMLDivElement>((el) => pick(el.dataset.eye ?? ''));
 
   const pinned = useScenePinned();
+  const phoneScene = usePhoneScene();
   const sceneEye = eyes.find((e) => e.id === SCENE_EYE) ?? eyes[0];
 
   const ai = (
@@ -127,6 +130,7 @@ export function Reveal() {
             </div>
             {ai}
           </div>
+          {phoneScene && <RevealScene eye={sceneEye} phone />}
           {compare}
         </div>
       )}

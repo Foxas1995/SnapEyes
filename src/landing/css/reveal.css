@@ -126,4 +126,24 @@
     .lp-rv-scene { height: auto; }
     .lp-rv-stage { position: static; height: auto; }
   }
+
+  /* ---------------------------------------------------------------------------------------------- the phone's scene (RevealScene.tsx with `phone`)
+     The owner's request of 2026-10-17. The same frame, script and steps as the pinned scene above, in a shorter composition: the section's head stays
+     above, the stage is the frame, its two honesty lines and the three steps as one row, and the wrapper is that stage plus ONE screen of scrolling (100svh:
+     the page's length never follows the toolbar of the browser; 100vh is the fallback). The stage sticks under the header (--hdr-h and 12 px, or lower when the screen is tall: it sits in the middle of what is left between the header and the sticky button bar, 569 px being
+     its own 485 and the bar's 84), the frame is
+     as wide as the column but never taller than what the screen leaves between the header and the sticky button bar (about 84 px), and nothing but this block
+     styles it. Every rule is under the phone condition: a window up to 767 px, motion allowed, the engine running and not given up. */
+  @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) .lp-rvp { order: 1; position: relative; }
+    html.mo:not(.mo-fail) .lp-rvp::after { content: ""; display: block; height: 100vh; height: 100svh; }
+    html.mo:not(.mo-fail) .lp-rvp-stage { position: sticky; top: calc(var(--hdr-h) + 12px); top: max(calc(var(--hdr-h) + 12px), calc(var(--hdr-h) + (100svh - var(--hdr-h) - 569px) / 2)); }
+    html.mo:not(.mo-fail) .lp-rvp-fig { width: min(100%, calc(100vh - 300px)); width: min(100%, calc(100svh - 300px)); margin-inline: auto; }
+    html.mo:not(.mo-fail) .lp-rvp .lp-rv-cap { margin-top: 10px; font-size: 12.5px; line-height: 1.45; }
+    html.mo:not(.mo-fail) .lp-rvp-steps { display: grid; grid-template-columns: repeat(3, 1fr); max-width: none; margin-top: 8px; border-top: 0; }
+    html.mo:not(.mo-fail) .lp-rvp-steps li { border-bottom: 0; }
+    html.mo:not(.mo-fail) .lp-rvp-steps .lp-rv-step { display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 52px; padding: 6px 2px; text-align: center; box-shadow: inset 0 -1px 0 transparent; transition: box-shadow .4s var(--ease-out); }
+    html.mo:not(.mo-fail) .lp-rvp-steps .lp-rv-step[aria-current="step"] { box-shadow: inset 0 -1px 0 var(--gold); }
+    html.mo:not(.mo-fail) .lp-rvp-steps .lp-rv-step span { font-size: clamp(11px, 3.6vw, 14px); line-height: 1.2; max-width: 100%; text-wrap: balance; overflow-wrap: anywhere; }
+  }
 }

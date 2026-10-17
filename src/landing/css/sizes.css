@@ -70,4 +70,17 @@
   @media (hover: hover) {
     .lp-size-side .lp-pill[aria-checked="false"]:hover { border-color: var(--ring-gold); }
   }
+
+  /* ---------------------------------------------------------------------------------------------- the phone's scrolled drawing (SizeGuide.tsx)
+     The owner's request of 2026-10-17. While the figure crosses a phone's screen, src/landing/SizeGuide.tsx writes --dp (0 to 1) on it and marks it data-scrub (the clock's animations are off from then on) and, while the
+     drawing is under way, data-run, and the drawing is made by the scroll instead of the clock: each of the eight outlines draws over 32 percent of the way, 6 percent after the one before
+     (--k is its place), then the four squares fade in from 45 percent and their labels from 50, each over 20 percent. All of it is done by 88 percent; at the end of the crossing data-run is gone and the
+     figure carries none of the scene's styles: it is the static one. Only under the
+     phone condition, with the engine running and not given up; equal in weight to the rules of the clock above, which these come after. */
+  @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) .lp-ruler[data-draw][data-scrub] :is(.lp-dr, .lp-sqg, .lp-lbl) { animation: none; }
+    html.mo:not(.mo-fail) .lp-ruler[data-draw][data-run] .lp-dr { stroke-dashoffset: calc(1px * (1 - clamp(0, (var(--dp) - var(--k, 0) * .06) * 3.125, 1))); }
+    html.mo:not(.mo-fail) .lp-ruler[data-draw][data-run] .lp-sqg { opacity: clamp(0, (var(--dp) - .45 - var(--k, 0) * .06) * 5, 1); }
+    html.mo:not(.mo-fail) .lp-ruler[data-draw][data-run] .lp-lbl { opacity: clamp(0, (var(--dp) - .5 - var(--k, 0) * .06) * 5, 1); }
+  }
 }

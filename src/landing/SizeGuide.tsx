@@ -9,8 +9,10 @@
 // their labels. A pick of a size draws the chosen square's gold outline (.6 s), the others keep a dimmer stroke, and the number of pixels
 // per inch and the two lines under it CROSS-FADE (.3 s and .42 s): all four versions are in the page, stacked in one cell (Stack.tsx), so
 // no figure is ever tweened through a false in-between value and nothing moves when the text changes. Every number is real text.
-import { Fragment, useState, type CSSProperties } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Title } from '../motion/Title';
+import { traverse } from '../motion/motion';
+import { put, whenPhone } from '../motion/phone';
 import { Stack } from './Stack';
 import { useInViewOnce } from './useInView';
 import { assetUrl } from './assets';
@@ -38,6 +40,14 @@ export function SizeGuide() {
   const picked = SIZES.indexOf(size);
   const rungs = SIZES.map((cm) => s.rungs.find((r) => r.cm === cm) ?? s.rungs[s.rungs.length - 1]);
   const drawn = useInViewOnce<HTMLElement>(0.4);
+  // on a phone with the engine running (the owner's request of 2026-10-17) the drawing is drawn by the scroll instead of by the clock: --dp, 0 to 1 while the
+  // figure crosses the middle of the screen, is written on the figure and the stylesheet draws each line, then fades the squares and their labels in, from it
+  // (css/sizes.css; src/motion/phone.ts)
+  const fig = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = fig.current;
+    return el ? whenPhone(() => traverse(el, (p) => put(el, { '--dp': p.toFixed(3) }, p), { start: 0.9, end: 0.5 })) : undefined;
+  }, []);
 
   return (
     <div className="lp-sizes-blk" id="sizes">
@@ -47,7 +57,7 @@ export function SizeGuide() {
         <p className="lp-intro">{t('sizes.intro')}</p>
       </div>
       <div className="lp-size-grid">
-        <figure className="lp-ruler" id="ruler" role="img" aria-label={s.svgLabel} data-draw ref={drawn}>
+        <figure className="lp-ruler" id="ruler" role="img" aria-label={s.svgLabel} data-draw ref={(el) => { fig.current = el; return drawn(el); }}>
           <svg viewBox={vb.join(' ')} xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
             <rect x="0" y="0" width={SCENE.w} height={SCENE.h} fill="#0b0e16" />
             <line x1="0" x2={SCENE.w} y1={FLOOR} y2={FLOOR} stroke="rgba(255,255,255,.2)" />

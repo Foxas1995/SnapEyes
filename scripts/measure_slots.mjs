@@ -1,6 +1,6 @@
 // The heights of the empty slots that hold the place of the lazy sections (src/landing/slots.ts), measured on a build in real Chrome.
 //   node scripts/measure_slots.mjs [--dist dist] [--write | --check]
-// It opens the page in English, German, Lithuanian and Hungarian at 375 px (phone), 768 px (tablet) and 1280 px (desktop), waits until
+// It opens the page in English, German, Lithuanian and Hungarian at 375 px (phone, under reduced motion: the flat layout), 768 px (tablet) and 1280 px (desktop), waits until
 // every section is mounted, and reads the height of each section. Without a flag it prints the table; --write rewrites
 // src/landing/slots.ts from it; --check exits 1 when a slot in slots.ts is more than 12 percent away from the real section (a section
 // that grew or shrank after a copy change: the page then jumps by the difference when the section arrives, in a browser without scroll
@@ -45,7 +45,8 @@ async function measure() {
         await wipe.loaded();
         await wipe.send('Storage.clearDataForOrigin', { origin, storageTypes: 'all' }).catch(() => undefined);
         await wipe.close();
-        const page = await chrome.page({ width, height: 900, mobile: width < 800, dpr: 1 });
+        // the phone column is the flat layout: under reduced motion a phone has no scene (a phone with motion has one, whose stage and screen of scrolling the stylesheet adds to the Reveal's slot: css/base.css)
+        const page = await chrome.page({ width, height: 900, mobile: width < 800, dpr: 1, reduceMotion: width < 768 });
         await page.goto(`${origin}/?lang=${lang}`);
         await page.loaded();
         // a section that is skipped (content-visibility, css/base.css) reports the height its slot gave it, which would make the check measure itself

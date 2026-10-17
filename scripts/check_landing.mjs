@@ -138,7 +138,7 @@ async function checkLabels() {
     const r = JSON.parse(await page.eval(`(() => {
       const AREAS = [['hero', '.lp-hero-frame', '.lp-frame-chip', 1], ['stage', '#stage', '.lp-vis-chip', 1], ['rooms', '#rail figure > div', '.lp-vis-chip', 4],
         ['edge', '.lp-edge-img', '.lp-vis-chip', 1], ['crop', '.lp-cu-img', '.lp-cu-badge', 1], ['final', '.lp-final', '.lp-final-chip', 1],
-        ...(innerWidth >= 768 ? [['reveal', '.lp-rv-frame', '.lp-rv-who', 1]] : [])];
+        ['reveal', '.lp-rv-frame', '.lp-rv-who', 1]];   // the pinned scene's frame (768 px and up) and the phone's own (up to 767 px): both are here with motion allowed
       const out = { miss: [], texts: {}, imgs: [], tiles: 0, tilesWithPhotoChip: 0, legend: !!document.querySelector('.lp-legend') };
       for (const [name, sel, chip, n] of AREAS) {
         const boxes = [...document.querySelectorAll(sel)];
@@ -159,9 +159,9 @@ async function checkLabels() {
     const problemsHere = [...r.miss, ...r.imgs.slice(0, 5)];
     const wantVis = c.example.vis;
     for (const name of ['hero', 'stage', 'rooms', 'edge', 'final']) for (const t of r.texts[name] || []) if (t !== wantVis) problemsHere.push(`${name} label "${t}", the language says "${wantVis}"`);
-    // the pinned scene's frame is the founder's own eye and says so in the picture (charter AC-8), whatever the chips are doing
+    // the pinned scene's frame (the desktop's, the phone's own) is the founder's own eye and says so in the picture (charter AC-8), whatever the chips are doing
     for (const t of r.texts.reveal || []) if (t !== c.example.mantas) problemsHere.push(`reveal frame label "${t}", the language says "${c.example.mantas}"`);
-    if (width >= 768 && !(r.texts.reveal || []).length) problemsHere.push('the pinned scene has no label of whose eye it is');
+    if (!(r.texts.reveal || []).length) problemsHere.push('the pinned scene has no label of whose eye it is');
     if (!r.legend) problemsHere.push('the styles legend line is missing (it is the label of the flat artworks)');
     // the other people's eyes carry "Example photo": pick the brown eye of the first group, every tile of it shows a chip
     const chips = await page.eval(`(async () => {

@@ -90,7 +90,6 @@ export function Wall() {
               picture={pic}
               alt={alt}
               glint={glintFor(mat, art)}
-              material={mat}
               label={w.stageLabel}
               caption={caption}
               eyesNote={art === 'family4' || art === 'collision' ? w.eyesNote : undefined}

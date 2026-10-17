@@ -53,4 +53,14 @@
     .lp-final .lp-bg img { object-position: 50% 14%; }
     .lp-final .lp-wrap { padding-block: 360px 44px; }
   }
+
+  /* ---------------------------------------------------------------------------------------------- the phone's scrolled opening (ClosingScene.tsx)
+     The owner's request of 2026-10-17. On a phone with the engine running the mat opens with the scroll instead of the clock: ClosingScene.tsx writes --op (0 to 1)
+     on the picture's frame and marks it data-scrub (the clock's opening is off from then on) and, while the mat is still opening, data-run, and the inset, the corners and the settle follow it (the same two ends as the clock's opening above: an inset of
+     7 percent with rounded corners and a scale of 1.03, to the full band and exactly 1: at 1 data-run is gone and the band carries no clip and no scale, it is the static one). Only under the phone condition, with the engine running and not given up. */
+  @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) .lp-final .lp-bg[data-scrub], html.mo:not(.mo-fail) .lp-final .lp-bg[data-scrub] img { animation: none; }
+    html.mo:not(.mo-fail) .lp-final .lp-bg[data-run] { clip-path: inset(calc(7% * (1 - var(--op))) round calc(var(--r-frame) * (1 - var(--op)))); }
+    html.mo:not(.mo-fail) .lp-final .lp-bg[data-run] img { scale: calc(1 + .03 * (1 - var(--op))); }
+  }
 }

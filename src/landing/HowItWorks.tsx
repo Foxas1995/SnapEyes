@@ -11,6 +11,7 @@
 // others at the dimmest legible tone). Nothing here moves a picture.
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Title } from '../motion/Title';
+import { put, scrub } from '../motion/phone';
 import { useCopy } from './copy/useCopy';
 import { FileCard } from './FileCard';
 import { useTryHref } from './links';
@@ -54,6 +55,13 @@ export function HowItWorks() {
     steps.forEach((li) => io.observe(li));
     return () => io.disconnect();
   }, [railRef, scrolls]);
+  // on a phone with the engine running (the owner's request of 2026-10-17) the line through the numerals is drawn by the scroll as the rail crosses the screen: --sp, 0 to 1,
+  // is written on the rail and the stylesheet draws one step's hairline after the other from it (css/how.css; src/motion/phone.ts). The steps themselves never move. The engine
+  // is not imported here: the release gate renders this section on the server (src/landing/shell/gate.tsx), where the engine cannot be loaded; the entry lends it to phone.ts.
+  useEffect(() => {
+    const rail = railRef.current;
+    return rail ? scrub(rail, (p) => put(rail, { '--sp': p.toFixed(3) }, p), { start: 0.85, end: 0.5 }) : undefined;
+  }, [railRef]);
   return (
     <section className="lp-sec" id="how" aria-labelledby="howH">
       <div className="lp-wrap">

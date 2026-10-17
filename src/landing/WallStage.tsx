@@ -8,11 +8,13 @@
 // of the print's width and at most 10 percent white, moves across it as the visitor scrolls past (from 768 px, motion allowed): it is
 // placed by the progress of the wall chapter through the screen, so it moves the way a reflection does when you walk by, and never
 // follows the pointer. It is clipped to the print face (the span's box), decorative (aria-hidden) and exists only while the acrylic
-// picture is the one on screen. On a phone there is no scrolling to walk past: one sweep plays when the visitor picks acrylic.
+// picture is the one on screen. On a phone the same band follows the scroll of the plate across the screen (the effect below, the owner's request of 2026-10-17); it
+// replaces the single sweep that a phone used to get when the visitor picked acrylic (a phone with reduced motion or without the engine has no band at all).
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
-import { motionOk, traverse, whenPinned } from '../motion/motion';
+import { traverse, whenPinned } from '../motion/motion';
+import { put, whenPhone } from '../motion/phone';
 import { ExampleChip, type PictureAsset } from './ui';
-import { STAGE_SIZES, type GlintBox, type Material, type StagePicture } from './wallScenes';
+import { STAGE_SIZES, type GlintBox, type StagePicture } from './wallScenes';
 
 interface Slot { key: string; asset: PictureAsset }
 type Slots = readonly [Slot | null, Slot | null];
@@ -45,8 +47,6 @@ export interface WallStageProps {
   /** The sweep of light on a polished surface (acrylic), or null: the box of the print's face, in percent of the stage. The span is
    *  always in the markup and gets the box only while the picture it belongs to is the one in front. */
   glint: GlintBox | null;
-  /** The material on the stage: a phone's single sweep plays once per pick of the material. */
-  material: Material;
   /** The group's name (wall.stageLabel). */
   label: string;
   /** The line under the stage, in a live region. */
@@ -55,7 +55,7 @@ export interface WallStageProps {
   eyesNote?: string;
 }
 
-export function WallStage({ picture, alt, glint, material, label, caption, eyesNote }: WallStageProps) {
+export function WallStage({ picture, alt, glint, label, caption, eyesNote }: WallStageProps) {
   const frame = useRef<HTMLDivElement>(null);
   const near = useNearViewport(frame, '900px 0px');
   const want = near ? picture : null;
@@ -110,24 +110,13 @@ export function WallStage({ picture, alt, glint, material, label, caption, eyesN
     return whenPinned(() => traverse(chapter, (p) => el.style.setProperty('--gx', `${(p * 80 - 40).toFixed(2)}%`), { start: 0.9, end: 0.1 }));
   }, [shine]);
 
-  // on a phone: one sweep (1.6 s) when the visitor picks the polished material, not again for another artwork of the same material
-  const swept = useRef<Material | null>(null);
+  // on a phone with the engine running (the owner's request of 2026-10-17): the plate opens like a mat and settles from a scale of 1.03 to exactly 1 while it arrives
+  // (over the first 45 percent of its crossing of the screen), and the light on a polished face passes over the print with the scroll, as it does from 768 px (the
+  // stylesheet shows both only once data-scrub is on the frame: css/wall.css). Both values are written on the frame (--ps, --gx); the glint inherits --gx.
   useEffect(() => {
-    const el = glintEl.current;
-    if (!shine) {
-      if (swept.current && swept.current !== material) swept.current = null;
-      return;
-    }
-    if (!el || swept.current === material || !motionOk() || !window.matchMedia('(max-width: 767px)').matches) return;
-    swept.current = material;
-    el.dataset.sweep = '';
-    const done = () => delete el.dataset.sweep;
-    el.addEventListener('animationend', done, { once: true });
-    return () => {
-      el.removeEventListener('animationend', done);
-      done();
-    };
-  }, [shine, material]);
+    const el = frame.current;
+    return el ? whenPhone(() => traverse(el, (p) => { const ps = Math.min(1, p / 0.45); put(el, { '--ps': ps.toFixed(3), '--gx': `${(p * 80 - 40).toFixed(3)}%` }, ps); }, { start: 1, end: 0 })) : undefined;
+  }, []);
 
   return (
     <figure>

@@ -9,7 +9,8 @@ import { currentMarket } from './shared/markets'
 import { preloadCopy } from './landing/copy/index'
 import { startOrdering } from './landing/ordering'
 import { watchPreloadErrors } from './landing/lazy'
-import { boot, reveals } from './motion/motion'
+import { boot, reveals, traverse } from './motion/motion'
+import { lend } from './motion/phone'
 import { adoptIntro } from './motion/handoff'
 
 // The landing entry. index.html already holds the first screen as static HTML (<div id="shell">, written at build time by the
@@ -25,6 +26,7 @@ import { adoptIntro } from './motion/handoff'
 // sections. Nothing is hidden before this runs: the first screen's entrance is pure CSS and plays from the prerendered markup.
 boot()
 reveals()
+lend(traverse)   // the phone's scenes (src/motion/phone.ts) use the engine's traverse through this
 
 const root = document.getElementById('root')!
 const shell = document.getElementById('shell')

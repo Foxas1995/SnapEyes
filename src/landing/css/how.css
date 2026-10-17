@@ -101,4 +101,14 @@
     }
   }
   @keyframes lp-numlit { from { color: var(--t-floor); } }  .lp-steps { overscroll-behavior-x: contain; }
+
+  /* ---------------------------------------------------------------------------------------------- the phone's drawn line (HowItWorks.tsx)
+     The owner's request of 2026-10-17. While the swipe rail crosses a phone's screen, src/landing/HowItWorks.tsx writes --sp (0 to 1) on it and marks it data-scrub, and the
+     hairline that runs from each numeral is drawn by the scroll, from the left, one step after the other (--i is the step's place: each over 45 percent of the way, 18 percent
+     after the one before, all of it done by 81 percent), as the three columns of a desktop draw theirs on arrival. The steps, their pictures and their words never move; the
+     numerals keep the tones the rail gives them. At the end of the crossing every line is whole, as the static page has it. Only under the phone condition, with the engine
+     running and not given up. */
+  @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+    html.mo:not(.mo-fail) .lp-steps[data-run] .lp-num::after { transform-origin: left center; scale: clamp(0, (var(--sp) - var(--i, 0) * .18) * 2.22, 1) 1; }
+  }
 }

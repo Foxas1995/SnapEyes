@@ -12,8 +12,9 @@
 //             scaled or moved and the frame never changes size (Artwork Charter AC-2, AC-3)
 //   pixels    at rest (p = 0, .56, 1) the frame is pixel for pixel the photo, the iris, the artwork alone: no veil, line or glow lies over a resting state
 //   keyboard  the step rows are real buttons in the tab order: Enter scrolls to their state, aria-current follows, focus stays, Tab leaves the stage
-//   static    reduced motion at 1280, a phone at 375 and a window at 767: no scene, no pin, the three pictures in a row, the slider (one native range),
-//             nothing hidden after the engine has had its turn
+//   static    reduced motion at 1280, 375 and 767 px and a short window: no scene, no pin, the three pictures in a row, the slider (one native range),
+//             nothing hidden after the engine has had its turn; a phone with motion (375, 767 px): no scene of the desktop, the phone's own pinned scene (its own checks:
+//             scripts/check_motion_phone.mjs), the slider and the strip under it
 //   fit       en de lt hu at 1280 x 800, 1366 x 650, 768 x 1024 and 768 x 600: the stage holds its content, no heading wider than its box, no step row
 //             wider than itself, no horizontal scroll
 //   sheet     no ancestor of the stage sets an overflow that would stop it sticking; the stage sticks inside its sheet
@@ -263,12 +264,16 @@ async function checkKeyboard() {
 // ---------------------------------------------------------------------------------------------------- static
 async function checkStatic() {
   console.log('static');
-  for (const [tag, o] of [['reduced motion 1280', { width: 1280, height: 800, reduceMotion: true }], ['phone 375', { width: 375, height: 812 }], ['window 767', { width: 767, height: 900 }], ['short window 1280 x 540', { width: 1280, height: 540 }]]) {
+  // the flat layout: reduced motion at any width and a short window. A phone (a window up to 767 px) with motion allowed has the scene of its own (src/landing/RevealScene.tsx
+  // with `phone`, checked by scripts/check_motion_phone.mjs): here it must have no scene of the DESKTOP (no .lp-rv-scene, no pin of 768 px and up) and keeps the slider, the
+  // strip and the table under its own.
+  for (const [tag, o, phone] of [['reduced motion 1280', { width: 1280, height: 800, reduceMotion: true }, false], ['reduced motion phone 375', { width: 375, height: 812, reduceMotion: true }, false], ['reduced motion window 767', { width: 767, height: 900, reduceMotion: true }, false],
+    ['short window 1280 x 540', { width: 1280, height: 540 }, false], ['phone 375', { width: 375, height: 812 }, true], ['window 767', { width: 767, height: 900 }, true]]) {
     const page = await open({ lang: 'en', ...o });
     const r = JSON.parse(await page.eval(`JSON.stringify((() => { const strip = [...document.querySelectorAll('.lp-strip li')].map((e) => e.getBoundingClientRect());
-      return { scene: !!document.querySelector('.lp-rv-scene, .lp-rv-pin, .lp-rv-step'), ranges: document.querySelectorAll('.lp-cmp-range').length, strip: strip.length, row: strip.length === 3 && strip.every((b) => Math.abs(b.top - strip[0].top) < 2) && strip[0].left < strip[1].left && strip[1].left < strip[2].left,
+      return { scene: !!document.querySelector('.lp-rv-scene, .lp-rv-pin'), steps: document.querySelectorAll('.lp-rv-step').length, own: !!document.querySelector('.lp-rvp'), ranges: document.querySelectorAll('.lp-cmp-range').length, strip: strip.length, row: strip.length === 3 && strip.every((b) => Math.abs(b.top - strip[0].top) < 2) && strip.every((b) => b.width > 40),
         h2: document.querySelectorAll('#revealH').length, sticky: [...document.querySelectorAll('#reveal *')].filter((e) => getComputedStyle(e).position === 'sticky').length }; })())`));
-    expect('static', !r.scene && r.sticky === 0, `${tag}: there is a pinned scene, a step row or a sticky element (scene ${r.scene}, sticky ${r.sticky})`);
+    expect('static', !r.scene && (phone ? r.own && r.steps === 3 && r.sticky === 1 : !r.own && r.steps === 0 && r.sticky === 0), `${tag}: the scene of the desktop is there (${r.scene}), or the phone's scene is not as it should be (scene ${r.own}, ${r.steps} step rows, ${r.sticky} sticky elements; a phone with motion has one, anything else none)`);
     expect('static', r.ranges === 1 && r.h2 === 1, `${tag}: ${r.ranges} sliders and ${r.h2} headings (want 1 and 1)`);
     expect('static', r.row, `${tag}: the three pictures of the strip are not in a row`);
     // the strip's pictures are shown once the engine has seen them (or at once without it)
@@ -278,7 +283,7 @@ async function checkStatic() {
     expect('static', shown.every((o) => o === 1), `${tag}: after being on screen the strip's parts have opacities ${shown.join(', ')} (want 1)`);
     await page.close();
   }
-  if (!problems.some((x) => x.startsWith('static'))) pass('static', 'reduced motion, a phone, a window of 767 px and a short window: no scene or pin, the slider and the three pictures in a row, everything shown');
+  if (!problems.some((x) => x.startsWith('static'))) pass('static', 'reduced motion at 1280, 375 and 767 px and a short window: no scene or pin, the slider and the three pictures in a row, everything shown; a phone with motion: no desktop scene, its own scene, the slider and the strip under it');
 }
 
 // ---------------------------------------------------------------------------------------------------- fit

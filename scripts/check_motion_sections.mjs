@@ -14,9 +14,9 @@
 //             button is hidden at rest with a mouse and always there on a touch screen; the labels never fade
 //   wall      a pick cross-fades the stage (the two layers sum to one), the facts fade in on a pick and not on a language switch, the glint exists only on
 //             the acrylic picture, is bound to the print face, white at 10 percent at most, screen blended, follows the scroll and ignores the pointer, and
-//             on a phone is one sweep per pick
-//   sizes     the drawing draws (offsets fall to 0, squares and labels fade in after), a pick draws the gold outline of that size, the figure and the lines
-//             cross-fade with exactly one version in the accessibility tree, and the card never changes size
+//             on a phone follows the scroll of the plate too (no single sweep any more; the scenes of the phone: scripts/check_motion_phone.mjs)
+//   sizes     the drawing draws (offsets fall to 0, squares and labels fade in after; on a phone by the scroll, whole at the end of the crossing), a pick draws the gold
+//             outline of that size, the figure and the lines cross-fade with exactly one version in the accessibility tree, and the card never changes size
 //   more      the counter, the line, the full-tone picture and the arrow buttons follow the rail; the buttons scroll by one picture, are aria-disabled at the
 //             ends and are not there below 768 px
 //   closeups  the square draws, the crop opens from the square's rectangle to the whole panel without ever being scaled, the chip, the map and the label
@@ -389,25 +389,18 @@ async function checkWall() {
   expect('wall', page.errors.length === 0, `script errors: ${page.errors.join(' | ')}`);
   await page.close();
 
-  // a phone: no scroll driven band, one sweep per pick of acrylic
+  // a phone with the engine (the owner's request of 2026-10-17): the band follows the scroll of the plate, as it does from 768 px, and there is no single sweep after a pick any more
+  // (the scenes of the phone have their own checks: scripts/check_motion_phone.mjs)
   page = await open({ width: 375, height: 812 });
   await scrollTo(page, '#mats', 80); await sleep(1200);
   await page.eval("document.getElementById('mat-acrylic').click()");
-  let seen = null;
-  for (let i = 0; i < 40 && !seen; i++) { await sleep(60); const g = JSON.parse(await page.eval(GL)); if (g.sweep) seen = g; }
-  expect('wall', !!seen && seen.anim === 'lp-sweep', `a phone: no sweep after picking acrylic (${JSON.stringify(seen)})`);
-  const sweep = await frames(page, ['#stGlint::after'], ['opacity', 'translate'], 2600);
-  const op = col(sweep['#stGlint::after'], 1).map(num);
-  expect('wall', Math.max(...op) <= 1.001 && op.includes(0) && op.at(-1) === 0, `the sweep does not fade in and out: ${op.filter((_, i) => i % 10 === 0).map((v) => v.toFixed(2)).join(' ')}`);
-  const gone = JSON.parse(await page.eval(GL));
-  expect('wall', !gone.sweep && gone.gx === '', `after the sweep the attribute stays (${gone.sweep}) or a scroll position was written (${gone.gx})`);
-  await page.eval("document.getElementById('mat-metal').click()"); await sleep(900);
-  await page.eval("document.getElementById('mat-acrylic').click()");
-  let again = false;
-  for (let i = 0; i < 40 && !again; i++) { await sleep(60); again = JSON.parse(await page.eval(GL)).sweep; }
-  expect('wall', again, 'a phone: no second sweep after leaving acrylic and picking it again');
+  await sleep(2400);
+  const ph1 = JSON.parse(await page.eval(GL));
+  await page.eval('window.scrollBy({ top: 220, behavior: "instant" })'); await sleep(1100);
+  const ph2 = JSON.parse(await page.eval(GL));
+  expect('wall', !ph1.sweep && ph1.anim !== 'lp-sweep' && ph1.op === '1' && ph1.blend === 'screen' && ph1.tr !== ph2.tr, `a phone: the band is not bound to the scroll, or a sweep is still there (${JSON.stringify(ph1)}, then ${ph2.tr})`);
   await page.close();
-  if (!problems.some((x) => x.startsWith('wall'))) pass('wall', 'the stage cross-fades, the facts fade in on a pick, the glint lives on the acrylic print face only (10 percent at most, scroll bound, not pointer bound), a phone gets one sweep per pick');
+  if (!problems.some((x) => x.startsWith('wall'))) pass('wall', 'the stage cross-fades, the facts fade in on a pick, the glint lives on the acrylic print face only (10 percent at most, scroll bound, not pointer bound), the band of a phone follows the scroll, with no single sweep');
 }
 
 // ---------------------------------------------------------------------------------------------------- sizes
@@ -420,6 +413,13 @@ async function checkSizes() {
     const b = JSON.parse(await page.eval("JSON.stringify([document.getElementById('ruler').dataset.in !== undefined, ...[...document.querySelectorAll('.lp-dr')].map((e) => getComputedStyle(e).strokeDashoffset), ...[...document.querySelectorAll('.lp-sqg')].map((e) => getComputedStyle(e).opacity)])"));
     expect('sizes', b[0] === false && b.slice(1, 9).every((v) => v === '1px') && b.slice(9).every((v) => v === '0'), `${tag}: the drawing is not hidden before it is in view: ${JSON.stringify(b)}`);
     await scrollTo(page, '#ruler', width < 800 ? 120 : 150);
+    if (width < 768) {
+      // a phone with the engine draws by the scroll, not by the clock (the owner's request of 2026-10-17; scripts/check_motion_phone.mjs checks it in steps): scrolled to its end
+      // the drawing is whole at once, and no animation of the clock is running under it
+      await sleep(1500);
+      const whole = JSON.parse(await page.eval(`JSON.stringify({ dr: [...document.querySelectorAll('.lp-dr')].map((e) => getComputedStyle(e).strokeDashoffset), sq: [...document.querySelectorAll('.lp-sqg')].map((e) => getComputedStyle(e).opacity), lb: [...document.querySelectorAll('.lp-ruler .lp-lbl')].filter((e) => getComputedStyle(e).display !== 'none').map((e) => getComputedStyle(e).opacity), clock: document.getAnimations().filter((a) => a instanceof CSSAnimation && /^lp-(draw|sq-in)$/.test(a.animationName)).length, scrub: document.getElementById('ruler').dataset.scrub !== undefined })`));
+      expect('sizes', whole.dr.every((v) => v === '0px') && whole.sq.every((v) => v === '1') && whole.lb.every((v) => v === '1') && whole.clock === 0 && whole.scrub, `${tag}: the phone's drawing is not whole and scroll driven at the end of its crossing: ${JSON.stringify(whole)}`);
+    } else {
     const f = await frames(page, ['.lp-dr', '.lp-sqg', '.lp-lbl', '.lp-sqg:nth-of-type(n+4)'], ['stroke-dashoffset', 'opacity'], 3600);
     const d = col(f['.lp-dr'], 1).map(num);
     expect('sizes', d[0] > 0.9 && d.at(-1) === 0 && d.every((v, i) => i === 0 || v <= d[i - 1] + 1e-6), `${tag}: the sofa does not draw 1 to 0 monotonically (${d[0]} ... ${d.at(-1)})`);
@@ -428,6 +428,7 @@ async function checkSizes() {
     expect('sizes', sq[0] === 0 && sq.at(-1) === 1 && lb.at(-1) === 1, `${tag}: the squares or labels do not end whole (${sq.at(-1)}, ${lb.at(-1)})`);
     expect('sizes', f['.lp-sqg'][startSq][0] >= 800, `${tag}: the squares start at ${f['.lp-sqg'][startSq][0]} ms, before the sofa has been drawn for a while`);
     note(`sizes ${tag}: the sofa's first line is 99 percent drawn at ${f['.lp-dr'][endD]?.[0]} ms, the first square starts at ${f['.lp-sqg'][startSq][0]} ms`);
+    }
     // a pick draws the gold outline of that size
     const gold = JSON.stringify(['20', '30', '40', '50']);
     await page.eval("document.querySelector('#sizeChips [data-cm=\"30\"]').click()");
