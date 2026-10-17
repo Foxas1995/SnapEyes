@@ -168,7 +168,7 @@ export function Wall() {
           </div>
         </div>
 
-        <p className="lp-fine lp-wall-foot">{w.footnote}</p>
+        <p className="lp-fine lp-wall-foot">{t('wall.footnote', { printMaxCm: c.facts.printMaxCm })}</p>
         <p className="lp-wall-cta">
           <a className="lp-link-gold" href={tryHref}>{w.cta}</a>
         </p>
