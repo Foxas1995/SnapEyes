@@ -411,6 +411,11 @@ IR = [synth_iris(seed=s, hue=s) for s in range(1, 9)]
 NEW_REPLY_FIELDS = ("tiles", "pick", "size", "opts", "design_used", "fallback", "plan8", "plan8_core", "engine", "selfcheck", "timing")      # the compose API v3's additive fields (WP10; plan8_core: the review of WP12, the plan8 without the pixel choices)
 got = {}
 replies = {}
+# The goldens were recorded with the watermark's words of before ("SNAPEYES.COM  ·  PREVIEW"); since 2026-10-20 the words are the site's address alone (the owner,
+# iris.WATERMARK_TILE), which changes every watermarked pixel and has nothing to do with the registry. So the legacy pictures are drawn here with the words they were
+# recorded with: what this check proves (the registry left the legacy pixels alone) stays exactly what it was. The words themselves: v3lang section 4.
+_WORDS = dict(L.WATERMARK_TEXT)
+L.WATERMARK_TEXT["en"] = ("SNAPEYES.COM  ·  PREVIEW", L.WATERMARK_TEXT["en"][1])
 with contextlib.redirect_stdout(io.StringIO()):
     for style in L.STYLES:
         got[f"engine {style} 1 single"] = h(L.compose_multi(IR[:1], style=style, names="Anna", size=256))
@@ -428,8 +433,10 @@ with contextlib.redirect_stdout(io.StringIO()):
         got[f"handler {style} {n} {layout}"] = h(img)
         got[f"handler {style} {n} {layout} fields"] = hashlib.sha256(
             json.dumps({k: v for k, v in rep.items() if k not in ("image", "qa", "eyes", *NEW_REPLY_FIELDS)}, sort_keys=True).encode()).hexdigest()[:20]   # "eyes": added by WP3, the NEW_REPLY_FIELDS by WP10 (compose API v3): additive (v3gate and v3compose check them); the old fields stay byte for byte
+L.WATERMARK_TEXT.clear()
+L.WATERMARK_TEXT.update(_WORDS)
 diff = {k: (got.get(k), v) for k, v in GOLDENS.items() if got.get(k) != v}
-check("the six legacy ids render the same pixels as before the registry (22 results of the engine and of the compose handler)", not diff, diff)
+check("the six legacy ids render the same pixels as before the registry (22 results of the engine and of the compose handler, drawn with the watermark's words they were recorded with)", not diff, diff)
 rep = replies[("celestial_gold", 4)]
 check("compose reply: styles is the six legacy ids in the old order, layouts the old table for the eye count, the layout as chosen",
       rep["styles"] == LEGACY and rep["layouts"] == ["grid", "row"] and rep["layout"] == "row" and replies[("studio_black", 1)]["layouts"] == ["single"]

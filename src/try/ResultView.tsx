@@ -14,6 +14,7 @@ import { ManualRoute, RetakePanel, StylePicker, type PickerModel } from './Style
 import { Words, type WordsModel } from './Words';
 import { FeedbackBox } from './Feedback';
 import { type Opts, lookName, soonChoice } from './picker';
+import { CROP_MAX_PX } from './crop';
 
 interface Props {
   eyes: Eye[];
@@ -348,7 +349,7 @@ const WhatWeDid: React.FC<{ eye: Eye; colourNote: boolean; promised: boolean }> 
           <li key={l} className="flex gap-2 text-xs text-zinc-200"><Check className="w-3.5 h-3.5 shrink-0 mt-px text-emerald-400" aria-hidden="true" /><span>{l}</span></li>
         ))}
       </ul>
-      <p data-testid="quality-note" className="mt-2 text-[11px] leading-snug text-zinc-400">{D.quality}</p>
+      <p data-testid="quality-note" className="mt-2 text-[11px] leading-snug text-zinc-400">{D.quality(CROP_MAX_PX)}</p>
     </div>
   );
 };

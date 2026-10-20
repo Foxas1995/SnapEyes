@@ -172,12 +172,23 @@ check(f"reveal_params: the wire dict of all {len(RC.CASES)} cases equals the scr
 bad = [k for k in RC.CASES if sha(RES[k]["prep"]) != GOLD[k]["prep"]]
 check("prepare_restored: the prepared restoration of all cases equals the scratch's byte for byte", not bad, bad)
 bad = []
-for key in RC.CASES:
-    for lang, want in GOLD[key]["arcs"].items():
-        if sha(R.display_copy(RES[key]["prep"], lang, "arcs")) != want:
-            bad.append((key, lang))
-check("the arcs display copy (OFF, but kept) equals the recorded one byte for byte, in English and Lithuanian (the scratch's until 2026-10-20, then re-recorded for the words "
-      "of the watermark, the site's address alone: data/reveal_goldens.json about)", not bad, bad)
+# the arcs goldens were recorded with the watermark's words of before; since 2026-10-20 the words are the site's address alone (the owner, iris.WATERMARK_TILE), so the
+# arcs are drawn here with the words they were recorded with: the check is about the arcs, and the golden files (ENGINE_V, test_steps.py) stay as they were
+_WORDS = dict(L.WATERMARK_TEXT)
+L.WATERMARK_TEXT["en"] = ("SNAPEYES.COM  ·  PREVIEW", L.WATERMARK_TEXT["en"][1])
+L.WATERMARK_TEXT["lt"] = ("SNAPEYES.COM  ·  PERŽIŪRA", L.WATERMARK_TEXT["lt"][1])
+try:
+    for key in RC.CASES:
+        for lang, want in GOLD[key]["arcs"].items():
+            if sha(R.display_copy(RES[key]["prep"], lang, "arcs")) != want:
+                bad.append((key, lang))
+finally:
+    L.WATERMARK_TEXT.clear()
+    L.WATERMARK_TEXT.update(_WORDS)
+check("the arcs display copy (OFF, but kept) equals the scratch's byte for byte, in English and Lithuanian (drawn with the watermark's words it was recorded with)", not bad, bad)
+_now = {lang: sha(R.display_copy(RES["blue_clean"]["prep"], lang, "arcs")) for lang in ("en", "lt")}
+check("with today's words (the address alone, 2026-10-20) the arcs copy is another picture than the recorded one, and the same in both languages",
+      _now["en"] != GOLD["blue_clean"]["arcs"]["en"] and _now["en"] == _now["lt"], _now)
 bad = [k for k in RC.CASES if abs(RES[k]["p"]["_info"]["reg"]["spread_r"] - GOLD[k]["registration"]["spread_r"]) > 1e-6
        or abs(RES[k]["p"]["_info"]["reg"]["ncc"] - GOLD[k]["registration"]["ncc"]) > 1e-4]
 check("the registration spread and correlation of every case equal the scratch's", not bad, bad)

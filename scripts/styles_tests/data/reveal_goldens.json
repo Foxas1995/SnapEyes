@@ -1,9 +1,9 @@
 {
- "about": "Reveal server half on the synthetic cases of reveal_cases.py, scratch prototype (designs/presentation.py); the arcs hashes re-recorded in the repository on 2026-10-20 (test_reveal.py of v3-insights): the words of the watermark became the site's address alone (the owner), nothing else moved",
+ "about": "Reveal server half on the synthetic cases of reveal_cases.py, scratch prototype (designs/presentation.py)",
  "cases": {
   "amber_slit_clean": {
    "arcs": {
-    "en": "29a65054db3e5da3c09c4e70f0ab06fff5dd40bc6b2b50ebea17cfa7ed0168d7"
+    "en": "54e311503fde1b308f02559f01f5c72f4c9fd4d4c04d9098b6b10e25f79ffe17"
    },
    "params": {
     "cls": "slit",
@@ -34,8 +34,8 @@
   },
   "blue_clean": {
    "arcs": {
-    "en": "2d5d013757cc5a5c47e4a9820ec7aa225c034c39caa6d334136f2390ed9c40cc",
-    "lt": "2d5d013757cc5a5c47e4a9820ec7aa225c034c39caa6d334136f2390ed9c40cc"
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3",
+    "lt": "7627bd32ede857f2baafeca6a32c717440876f8307004f6a7389c3d6b6284445"
    },
    "params": {
     "cls": "round",
@@ -66,7 +66,7 @@
   },
   "blue_lid_clean": {
    "arcs": {
-    "en": "06ce9fab3800720006787f11d708afbb9cdbd12431149de18ee1f694ccedd30f"
+    "en": "7eecd6fcb729ecc60c228684c56e58d9504e58b27a520edbed4b6430afe865a0"
    },
    "params": {
     "cls": "round",
@@ -97,7 +97,7 @@
   },
   "blue_rot1": {
    "arcs": {
-    "en": "c9f4abe49c89f92af56ff0042487db821cc4c6dd9f560e132e1562ae30a59777"
+    "en": "1621226cbfc12dfecb48636bbe13616dbb10d76c48324ea50914ef107cff6001"
    },
    "params": {
     "cls": "round",
@@ -128,7 +128,7 @@
   },
   "blue_scale102": {
    "arcs": {
-    "en": "a76e55df58f888fe72178604890b09003fb0e91a9228ebca8681baf946f85977"
+    "en": "7d0768a2f5981d7ab66ec3cff8b939f1e8782c7bf08c27cce1af30622066f5eb"
    },
    "params": {
     "cls": "round",
@@ -159,7 +159,7 @@
   },
   "blue_shift": {
    "arcs": {
-    "en": "2d5d013757cc5a5c47e4a9820ec7aa225c034c39caa6d334136f2390ed9c40cc"
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3"
    },
    "params": {
     "cls": "round",
@@ -190,7 +190,7 @@
   },
   "blue_warm": {
    "arcs": {
-    "en": "2d5d013757cc5a5c47e4a9820ec7aa225c034c39caa6d334136f2390ed9c40cc"
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3"
    },
    "params": {
     "cls": "round",
@@ -221,7 +221,7 @@
   },
   "blue_warm_mild": {
    "arcs": {
-    "en": "2d5d013757cc5a5c47e4a9820ec7aa225c034c39caa6d334136f2390ed9c40cc"
+    "en": "a6b0fc9d44ed2d9c746a3229ec2d52791ed1e12e1dcccf5e9b50f0d192d626b3"
    },
    "params": {
     "cls": "round",
@@ -252,7 +252,7 @@
   },
   "dark_brown_bar_clean": {
    "arcs": {
-    "en": "6adfe1e55519377cf5de2a483563e91807c2d63f9bf1fd04dc48507e35215be3"
+    "en": "d71b505409ba7f47ece694018ccdd244bddb08600b0ea9f732b0ffd3d777af6c"
    },
    "params": {
     "cls": "bar",
@@ -283,7 +283,7 @@
   },
   "dark_brown_clean": {
    "arcs": {
-    "en": "cca4a57e4398407d6e13257cdf768f3502d068e557c7fdd62d64b5d351d3aba4"
+    "en": "323097b9ed8e35f5916f34cf75f820e54bee7e32897bd97cde0c0f37d469ebc0"
    },
    "params": {
     "cls": "round",
@@ -314,7 +314,7 @@
   },
   "flat": {
    "arcs": {
-    "en": "5fe2e0d675bbaaf1cc83a212f32dd39464d23c95d5dd5fd05374b1cf71196e20"
+    "en": "cf9e90fd3d2239c42b1a3f681dc50cb7a94902a40b5297f1cf37d9b5f190ef98"
    },
    "params": {
     "cls": null,
@@ -345,7 +345,7 @@
   },
   "grey_clean": {
    "arcs": {
-    "en": "d0c3bb8bae32f19cbd78e62f2036a068ca9a3d48a15a2cc97b77980379db60ff"
+    "en": "157de05c05ed4ecfabb68a7ce61727cf7401036b44878dff4e3b70897fd51047"
    },
    "params": {
     "cls": "round",

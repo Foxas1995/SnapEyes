@@ -4399,12 +4399,23 @@ WATERMARK_ANGLE = -18
 # so that a preview that travels carries the address): it was "SNAPEYES.COM  ·  PREVIEW" and its translations, 495 px against
 # the 716 px tile step at 1024, the address alone is 261 px. The badge says what the preview is.
 WATERMARK_TILE = "SnapEyes.com"
-# The tile's step along a row (share of the type scale u) and, for a short text, the room left between two words of a row. The long words
-# of before took 0.48 u of the 0.70 u step; the address alone takes 0.25 u, and at the old step it covered the iris about a third less
-# (the display copy of the site's sample restoration: 1.6 % of the iris ring changed by more than 40 levels, against 2.3 % before), so a
-# text shorter than the step less this room is laid closer (0.41 u for the address): as much of the iris covered as before (2.3 %; the
-# iris-anchored overlay's ink in the iris ring 2.9 % against 2.6 %). A text as long as the old ones keeps the 0.70 u step and its pixels.
-WATERMARK_STEP = (0.7, 0.16)
+# The tile's step along a row (share of the type scale u), and for a short text the room left between two words of a row and what counts as
+# short. The long words of before took 0.48 to 0.53 u of the 0.70 u step; the address alone takes 0.25 u, and at the old step it covered the
+# iris about a third less (the display copy of the site's sample restoration: 1.6 % of the iris ring changed by more than 40 levels, against
+# 2.3 % before). So a text under 0.40 u (measured once at the 1024 px type size, so the choice and the step do not move with the size a
+# picture is drawn at) is laid closer, its width plus 0.16 u (0.41 u for the address): as much of the iris covered as before (2.3 %). A text
+# of 0.40 u or more (every tile of before) keeps the 0.70 u step: the very pixels it had, at every size.
+WATERMARK_STEP = (0.7, 0.16, 0.40)
+_TILE_WIDTH = {}                  # text -> its width at the 1024 px type size, as a share of u (a handful of texts: the four tiles)
+
+
+def _tile_width(text):
+    w = _TILE_WIDTH.get(text)
+    if w is None:
+        w = ImageDraw.Draw(Image.new("L", (1, 1))).textlength(text, font=_font("PlusJakartaSans.ttf", int(1024 * 0.036), "Bold")) / 1024.0
+        if len(_TILE_WIDTH) < 16:
+            _TILE_WIDTH[text] = w
+    return w
 WATERMARK_TEXT = {
     "en": (WATERMARK_TILE, "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"),
     "de": (WATERMARK_TILE, "VORSCHAU MIT WASSERZEICHEN  ·  DATEI IN VOLLER GRÖSSE KAUFEN"),
@@ -4452,9 +4463,9 @@ def _watermark_layer(W, H, u, text=WATERMARK_TEXT["en"][0]):
     step_y, step_x = int(u * 0.3), int(u * WATERMARK_STEP[0])
     fw = _font("PlusJakartaSans.ttf", int(u * 0.036), "Bold")
     shift = u * 0.35                             # every second row moves this far: the words of a tile are laid like bricks
-    tw = ImageDraw.Draw(Image.new("L", (1, 1))).textlength(text, font=fw)
-    if tw + u * WATERMARK_STEP[1] < step_x:      # a short text (the address alone) is laid closer: as much of the iris covered as before
-        step_x = max(1, int(round(tw + u * WATERMARK_STEP[1])))
+    tw = _tile_width(text)
+    if tw < WATERMARK_STEP[2]:                   # a short text (the address alone) is laid closer: as much of the iris covered as before
+        step_x = max(1, int(round(u * (tw + WATERMARK_STEP[1]))))
         shift = step_x / 2.0
     wy0 = (sy0 // step_y) * step_y               # start on a text row, so no row is cut off at the top
     layer = Image.new("RGBA", (max(1, sx1), max(1, sy1 - wy0)), (0, 0, 0, 0)); ld = ImageDraw.Draw(layer)

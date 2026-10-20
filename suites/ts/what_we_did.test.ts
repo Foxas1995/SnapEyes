@@ -11,6 +11,7 @@ import { emptyPicker } from '../../src/try/StylePicker';
 import { emptyWords } from '../../src/try/Words';
 import { NO_OPTS } from '../../src/try/picker';
 import { LANGS } from '../../src/shared/lang';
+import { CROP_MAX_PX } from '../../src/try/crop';
 import { parseReveal, revealGeometry, tightFit } from '../../src/reveal/revealMath';
 
 export async function run(): Promise<Array<[string, boolean, string?]>> {
@@ -18,13 +19,15 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   const check = (name: string, ok: boolean, detail = '') => out.push([name, ok, detail]);
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
   const KEYS = ['title', 'glare', 'sharp', 'colour', 'lid', 'nothing', 'quality'] as const;
+  const text = (d: Record<string, unknown>, k: string): string => (k === 'quality' ? (d[k] as (n: number) => string)(CROP_MAX_PX) : String(d[k]));
 
   // ---- the words, four languages
   for (const l of LANGS) {
-    const d = COPY[l].result.did as Record<string, string>;
-    check(`${l}: the card has its seven lines, all different and none empty`, KEYS.every((k) => typeof d[k] === 'string' && d[k].length > 8) && new Set(KEYS.map((k) => d[k])).size === KEYS.length, JSON.stringify(d).slice(0, 200));
-    check(`${l}: the quality line names the crop's 1400 px and the file's 4096 px, and the file only in the conditional (ordering is not open yet)`,
-      d.quality.includes('1400') && d.quality.includes('4096') && /would|würde|būtų|készülne/.test(d.quality), d.quality);
+    const d = COPY[l].result.did as unknown as Record<string, unknown>;
+    check(`${l}: the card has its seven lines, all different and none empty`, KEYS.every((k) => text(d, k).length > 8) && new Set(KEYS.map((k) => text(d, k))).size === KEYS.length, JSON.stringify(d).slice(0, 200));
+    const q = text(d, 'quality');
+    check(`${l}: the quality line names the crop's ${CROP_MAX_PX} px (the page's own cut, src/try/crop.ts) and the file's 4096 px, and the file only in the conditional (ordering is not open yet)`,
+      q.includes(`${CROP_MAX_PX} px`) && q.includes('4096') && /would|würde|būtų|készülne/.test(q), q);
     const c = COPY[l].result.colourOff;
     check(`${l}: the colour note no longer says "our colour check" or "soft daylight", names the flash and a torch from the side, and says that a result one likes can stay`,
       !/colour check|Farbprüfung|spalvų patikra|színellenőrzés|soft daylight|weichem Tageslicht|švelnioje dienos|lágy nappali/i.test(c)
@@ -71,7 +74,7 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
       continue;
     }
     check(`ResultView, ${name}: the card says ${want.lines.join(', ')} and the quality line`,
-      c !== null && JSON.stringify(lines(c)) === JSON.stringify(want.lines) && c.includes(esc(D.title)) && c.includes(esc(D.quality)), c ? lines(c).join() : 'no card');
+      c !== null && JSON.stringify(lines(c)) === JSON.stringify(want.lines) && c.includes(esc(D.title)) && c.includes(esc(D.quality(CROP_MAX_PX))), c ? lines(c).join() : 'no card');
     check(`ResultView, ${name}: the card comes after the before/after and the colour note, before the sentence that says where the colour comes from`,
       h.indexOf('data-testid="what-we-did"') < h.indexOf('data-testid="transparency"') && (!eye.colourOff || h.indexOf('data-testid="colour-off"') < h.indexOf('data-testid="what-we-did"')));
     check(`ResultView, ${name}: "no new colours" never stands beside the colour note, nor twice with the Reveal's promise`,
@@ -83,11 +86,13 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
     setCopyLang(l);
     const h = page(eyeOf(undefined, { glarePct: 2, lidPct: 3 }));
     const d = COPY[l].result.did;
-    check(`${l}: the card speaks the page's language (its title, the lid line and the quality line)`, h.includes(esc(d.title)) && h.includes(esc(d.lid)) && h.includes(esc(d.quality)));
+    check(`${l}: the card speaks the page's language (its title, the lid line and the quality line)`, h.includes(esc(d.title)) && h.includes(esc(d.lid)) && h.includes(esc(d.quality(CROP_MAX_PX))));
   }
   setCopyLang('en');
   const app = readFileSync('src/try/TryApp.tsx', 'utf8');
   check('the eye remembers the share of the iris /api/deglare filled under a lid (its lid_pct), so the card can say it only when it was done',
     /lidPct: typeof d\.lid_pct === 'number' \? d\.lid_pct : 0/.test(app));
+  check('the crop the page cuts and the size the quality line names are one constant (src/try/crop.ts), so the sentence cannot drift from the cut',
+    /Math\.min\(CROP_MAX_PX, Math\.round\(S\)\)/.test(app) && !/Math\.min\(\d+, Math\.round\(S\)\)/.test(app));
   return out;
 }

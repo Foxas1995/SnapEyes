@@ -274,7 +274,7 @@ const en = {
     // was found (api/deglare glare_pct, as the line "Reflection removed." said before); lid: only when an eyelid over the iris was filled from the iris itself (api/deglare
     // lid_pct, api/_lib/lidcap.py); colour and nothing are left out while the colour note above shows, and nothing also where the Reveal's promise says it. quality: the
     // owner asked whether the phone camera's quality is kept: the photo is the camera's own, the restoration gets a crop of at most 1400 px cut from it (TryApp process),
-    // and a file would be drawn from the restoration (would: ordering is not open yet)
+    // and a file would be drawn from the restoration (would: ordering is not open yet); the crop's size is a parameter (./crop.ts CROP_MAX_PX)
     did: {
       title: 'What we did to your photo',
       glare: 'Removed the reflections of windows and lamps.',
@@ -282,7 +282,7 @@ const en = {
       colour: 'Balanced the light. The colours are your photo\'s own.',
       lid: 'Where your eyelid covered the iris, continued it from your own iris.',
       nothing: 'Painted nothing on top: no new colours, no pattern from another eye.',
-      quality: 'Your phone\'s own camera takes the photo at full quality. We cut a close crop of your eye from it (at most 1400 px) and restore that; a full-size file of 4096 px would be drawn from this restoration, not stretched from your photo.',
+      quality: (crop: number) => `Your phone's own camera takes the photo at full quality. We cut a close crop of your eye from it (at most ${crop} px) and restore that; a full-size file of 4096 px would be drawn from this restoration, not stretched from your photo.`,
     },
     retakeEye: (i: number) => `Retake eye ${i}`,
     retakeOnly: 'Retake this eye',
@@ -795,7 +795,7 @@ const de: TryCopy = {
       colour: 'Das Licht ausgeglichen. Die Farben sind die Ihres eigenen Fotos.',
       lid: 'Den vom Augenlid verdeckten Teil der Iris aus Ihrer eigenen Iris fortgesetzt.',
       nothing: 'Nichts darübergemalt: keine neuen Farben, kein Muster eines anderen Auges.',
-      quality: 'Die eigene Kamera Ihres Smartphones nimmt das Foto in voller Qualität auf. Daraus schneiden wir einen engen Ausschnitt Ihres Auges (höchstens 1400 px) und restaurieren ihn; eine Datei in voller Größe (4096 px) würde aus dieser Restaurierung entstehen, nicht aus Ihrem Foto hochskaliert.',
+      quality: (crop: number) => `Die eigene Kamera Ihres Smartphones nimmt das Foto in voller Qualität auf. Daraus schneiden wir einen engen Ausschnitt Ihres Auges (höchstens ${crop} px) und restaurieren ihn; eine Datei in voller Größe (4096 px) würde aus dieser Restaurierung entstehen, nicht aus Ihrem Foto hochskaliert.`,
     },
     retakeEye: (i: number) => `Auge ${i} neu aufnehmen`,
     retakeOnly: 'Dieses Auge neu aufnehmen',

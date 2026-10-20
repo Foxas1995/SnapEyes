@@ -270,7 +270,7 @@ export const hu: TryCopy = {
       colour: 'Kiegyenlítettük a fényt. A színek a saját fotódéi.',
       lid: 'Ahol a szemhéjad takarta az íriszt, a saját íriszedből folytattuk.',
       nothing: 'Semmit nem festettünk rá: se új színeket, se egy másik szem mintázatát.',
-      quality: 'A fotót a telefonod saját kamerája készíti, teljes minőségben. Ebből kivágjuk a szemedet (legfeljebb 1400 px), és azt állítjuk helyre; a teljes méretű fájl (4096 px) ebből a helyreállításból készülne, nem a fotód felnagyításával.',
+      quality: (crop: number) => `A fotót a telefonod saját kamerája készíti, teljes minőségben. Ebből kivágjuk a szemedet (legfeljebb ${crop} px), és azt állítjuk helyre; a teljes méretű fájl (4096 px) ebből a helyreállításból készülne, nem a fotód felnagyításával.`,
     },
     retakeEye: (i: number) => `${i}. szem újrafotózása`,
     retakeOnly: 'A szem újrafotózása',

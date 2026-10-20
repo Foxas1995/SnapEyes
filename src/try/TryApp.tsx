@@ -10,6 +10,7 @@ import {
 } from './multi';
 import { T, setCopyLang, type BlockCopy } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
+import { CROP_MAX_PX } from './crop';
 import { LANG_NAMES, LOCALES, marketLangs } from '../shared/lang';
 import { ResultView } from './ResultView';
 import { Working } from './Working';
@@ -741,7 +742,7 @@ export const TryApp: React.FC = () => {
     const W = img.naturalWidth, H = img.naturalHeight;
     const { cx, cy, r } = a.iris!; const pad = a.pad || 1.12;
     const S = 2 * r * W * pad;
-    const out = Math.min(1400, Math.round(S));
+    const out = Math.min(CROP_MAX_PX, Math.round(S));
     const crop = drawToDataUrl(img, cx * W - S / 2, cy * H - S / 2, S, S, out, out, 0.95);
     setClientCrop(crop);
     let d: { crop: string; glare_pct: number; lid_pct?: number; changed: boolean; used_sr: boolean };

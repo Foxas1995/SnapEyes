@@ -502,7 +502,14 @@ with Show("solo.gold"), mock.patch.object(L, "colour_qa", wraps=L.colour_qa) as 
     ev_g = [e for e in EVENTS if e[0] == "compose"][0][1]
 meta_ = P.unseal_full(sealed)[1]
 exp_pv = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye_id"])], {"style": "solo.gold", "layout": "single", "eyes": 1, "canvas": "1:1", "names": "Anna \u00b7 Max", "date": "12 May 2026"},
-                    size=1024, watermark=True)
+                    size=1024)
+# the free preview's badge says ordering opens soon while this deployment takes no orders (2026-10-20, api/compose.py _ordering_soon): the expected picture carries
+# the badge compose draws here, by the same rule
+exp_pv.img = ST.watermarked(exp_pv, soon=CMP._ordering_soon())
+check("this deployment takes no orders (no Stripe here), so the free preview's badge says that ordering opens soon: the reply is not the picture with the badge of an "
+      "open deployment (UNLOCK FULL SIZE)", CMP._ordering_soon() is True
+      and r_g["image"] != L.pil_to_b64(ST.watermarked(ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_["eye_id"])], {"style": "solo.gold", "layout": "single", "eyes": 1,
+                                                                    "canvas": "1:1", "names": "Anna · Max", "date": "12 May 2026"}, size=1024), soon=False), "JPEG", 90))
 check("a style made visible is drawn by the engine: the reply has every field of a compose reply (and canvas), the picture is the engine's clean render with the preview watermark (equal to a render of the same bytes, "
       "names as one lockup, date as typed), the eye id and gate of the seal are in eyes[]",
       r_g["ok"] and r_g["style"] == "solo.gold" and r_g["layout"] == "single" and r_g["layouts"] == ["single"] and r_g["format"] == "artwork" and r_g["canvas"] == "1:1" and r_g["count"] == 1
@@ -898,8 +905,9 @@ with Show("solo.splash"), Show("solo.powder"):
     r_pl = CMP.compose({"sealed": [sealed_bare], "style": "solo.splash", "pad": 1.12})
 plan_p = ST.resolve({"style": "solo.splash", "eyes": 1, "eye_ids": [meta_p["eye_id"]]}, [meta_p["profile"]])
 plan_w = ST.resolve({"style": "solo.powder", "eyes": 1, "eye_ids": [meta_p["eye_id"]]}, None)
-exp_sp = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_p["eye_id"])], {"style": "solo.splash", "eyes": 1, "canvas": "1:1", "frozen": plan_p["frozen"]}, size=1024, watermark=True)
-exp_pw = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_p["eye_id"])], {"style": "solo.powder", "eyes": 1, "canvas": "1:1"}, size=1024, watermark=True)
+exp_sp = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_p["eye_id"])], {"style": "solo.splash", "eyes": 1, "canvas": "1:1", "frozen": plan_p["frozen"]}, size=1024)
+exp_pw = ST.preview([C.Iris(jpeg, "compose", max_side=2048, eye_id=meta_p["eye_id"])], {"style": "solo.powder", "eyes": 1, "canvas": "1:1"}, size=1024)
+exp_sp.img, exp_pw.img = ST.watermarked(exp_sp, soon=CMP._ordering_soon()), ST.watermarked(exp_pw, soon=CMP._ordering_soon())     # the badge compose draws (above)
 check("the preview a customer sees through /api/compose is the plan's picture: with a sealed profile the splash is drawn with the plan's frozen liquid and the powder from the seal's eye id, "
       "byte for byte what a master of the same plan would draw at this size (the plan's seed key, frozen choices and eye id)",
       r_sp["image"] == L.pil_to_b64(exp_sp.img, "JPEG", 90) and r_pw["image"] == L.pil_to_b64(exp_pw.img, "JPEG", 90) and r_sp["eyes"][0]["eye_id"] == meta_p["eye_id"]

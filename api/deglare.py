@@ -11,9 +11,10 @@ crop is exactly the one before.
 Then a dark lash curtain over the iris (lash shadow and fringe the eyelid gate does not see, _lib/lashfill.py): measured
 on the finished crop, and only where the measurement arms it the thin dark strokes are filled from the same iris at the
 same radius; a quiet gate returns the crop untouched and adds no key to the reply.
-Reply: {ok, glare_pct, lid_pct, veil_pct, changed, used_sr, pupil_overlap, crop[, curtain]}. glare_pct and lid_pct are
+Reply: {ok, glare_pct, lid_pct, veil_pct, changed, used_sr, pupil_overlap, crop[, curtain][, lid_cap]}. glare_pct and lid_pct are
 shares of the iris disk, measured separately, veil_pct a share of the fibre ring; with no eyelid found (lid_pct 0) the
-result is exactly the glare-only one. curtain (only when the gate armed): {verdict, ...}, see lashfill.py."""
+result is exactly the glare-only one. curtain (only when the gate armed): {verdict, ...}, see lashfill.py. lid_cap (only when
+the lid filled was a thin one iris.lid_mask leaves alone, _lib/lidcap.py): [[tilt, pct], ...] of the caps coverage.py read."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
