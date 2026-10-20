@@ -263,7 +263,7 @@ export const hu: TryCopy = {
     aiMaterial: 'Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
     sampleNote: 'Ez a szem az MI által generált minta, nem valódi fotó. A saját fotóddal a szín a te fotódból származik.',
     // new sentences of 2026-10-20 (colourOff, pupilWide, how, did): written without a native reader
-    colourOff: 'A színek kissé eltérhetnek a szemedétől. A leghűbb színeket nappali fény adja, vaku nélkül.',
+    colourOff: 'A színek kissé eltérhetnek a szemedétől. Nappali fényben, vaku és zseblámpa nélkül a leghűbbek; ha tetszik, folytasd nyugodtan.',
     pupilWide: 'Több fénynél kisebb a pupilla, és több látszik az íriszedből.',
     how: 'Hogyan működik?',
     did: {

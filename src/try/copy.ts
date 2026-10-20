@@ -272,7 +272,7 @@ const en = {
     sampleNote: 'This eye is the AI-generated sample, not a real photo. With your own photo, the colour comes from your photo.',
     // the engine's colour check (api/enhance qa) failed for this eye: say so, what helps (the owner, 2026-10-20: people light the eye with a torch from the side, so
     // "soft daylight" alone said too little) and that a result the visitor likes is fine to keep
-    colourOff: 'Colours may differ slightly from your eye. Daylight without flash gives the truest colour.',
+    colourOff: 'Colours may differ slightly from your eye. Daylight without flash or torch is truest; if you like it, carry on.',
     // one line under the before/after, only when the pupil measured on the photo is wide (./multi.ts pupilWide): the engine keeps the photo's pupil, so more light is what helps
     pupilWide: 'More light makes the pupil smaller and shows more of your iris.',
     // the summary of the one closed disclosure under the before/after (./ResultView.tsx HowItWorks): the sentence that says where the colour comes from and what the AI
@@ -792,7 +792,7 @@ const de: TryCopy = {
     transparency: 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.',
     aiMaterial: 'Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt.',
     sampleNote: 'Dieses Auge ist das KI-generierte Beispiel, kein echtes Foto. Mit Ihrem eigenen Foto stammt die Farbe aus Ihrem Foto.',
-    colourOff: 'Die Farben können leicht von Ihrem Auge abweichen. Tageslicht ohne Blitz ergibt die natürlichsten Farben.',
+    colourOff: 'Die Farben können leicht abweichen. Tageslicht ohne Blitz oder Taschenlampe ist am natürlichsten; gefällt es Ihnen, machen Sie einfach weiter.',
     pupilWide: 'Mehr Licht macht die Pupille kleiner und zeigt mehr von Ihrer Iris.',
     how: 'So funktioniert es',
     did: {

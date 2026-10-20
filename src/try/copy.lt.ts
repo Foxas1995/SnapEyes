@@ -235,7 +235,7 @@ export const lt: TryCopy = {
     aiMaterial: 'Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos, todėl kito kliento kūrinyje gali būti tas pats elementas. Jūsų rainelė išlaiko Jūsų nuotraukos spalvas, raštą ir išdėstymą; smulkiausias skaidulas, kaip aprašyta aukščiau, atkuria DI.',
     sampleNote: 'Ši akis yra DI sugeneruotas pavyzdys, ne tikra nuotrauka. Su Jūsų nuotrauka spalva paimama iš Jūsų nuotraukos.',
     // the owner's own language (2026-10-20): colourOff, pupilWide, how and did are new sentences, for his read
-    colourOff: 'Spalvos gali šiek tiek skirtis nuo Jūsų akies. Tikriausias spalvas duoda dienos šviesa be blykstės.',
+    colourOff: 'Spalvos gali šiek tiek skirtis nuo Jūsų akies. Tikriausios jos dienos šviesoje be blykstės ir žibintuvėlio; jei patinka, galite tęsti.',
     pupilWide: 'Daugiau šviesos sumažins vyzdį ir parodys daugiau rainelės.',
     how: 'Kaip tai veikia?',
     did: {
