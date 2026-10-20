@@ -113,7 +113,7 @@ export async function run(): Promise<Row[]> {
   const mAdv = model(1, advTiles, [bad(1)], { priceOf }, 'solo.powder');
   const eyeObj = (id: string, extra: Partial<Eye> = {}): Eye => ({ id, before: 'data:image/jpeg;base64,B', image: 'DISPLAY', thumb: 'data:image/jpeg;base64,T', pad: 1.12, fallback: false, usedSr: false, stored: false, glarePct: 0, sample: false, colourOff: false, ...extra }) as Eye;
   const rvProps = (eyes: Eye[], picker: PickerModel, extra: Record<string, unknown> = {}) => ({
-    eyes, selectedId: eyes[0].id, onSelect: noop, onRemove: noop, onRetake: noop, onAdd: noop, onMove: noop, art: art(), staleArt: undefined, composeError: null, onRetryCompose: noop,
+    eyes, selectedId: eyes[0].id, onSelect: noop, onRemove: noop, onRetake: noop, onAdd: noop, onMove: noop, onCentre: noop, art: art(), staleArt: undefined, composeError: null, onRetryCompose: noop,
     picker, layout: null, layoutOptions: [] as string[], onLayout: noop, opts: NO_OPTS, onOpts: noop, words: emptyWords(eyes.length), onStartOver: noop, purchase: null, ...extra,
   });
   const hAdv = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mAdv)));
@@ -189,6 +189,17 @@ export async function run(): Promise<Row[]> {
   check('a pair drawn in stack mode says so in one line; a pair with wide pupils says the irises touch; neither otherwise', text(hStack).includes('Your two irises differ strongly in colour, so one sits in front of the other.') && !has(hStack, 'wide-pupil')
     && text(hWide).includes('Your pupils are wide, so the irises touch instead of overlapping.') && !has(hWide, 'stack-note') && !has(renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b')], mPair))), 'stack-note'));
   check('a Soon style\'s preview note says it opens soon and does not promise a file', text(hStack).includes('Preview reduced and watermarked. This style opens soon.') && !text(hStack).includes('Your file:'));
+  // ---- Family Orbit (the ensemble family, 2026-10-20): the customer chooses the eye in the middle (the layout orbit: the first eye of the order is the hub)
+  const orb = [tile('grp.orb', { name: 'Family Orbit', group: 'grp', stage: 'preview', gate: 'hard', layouts: ['orbit'], eyes: 4 })];
+  const mOrb = model(4, orb, [eye(1), eye(2), eye(3), eye(4)]);
+  const four = [eyeObj('a'), eyeObj('b'), eyeObj('c'), eyeObj('d')];
+  const hOrb2 = renderToStaticMarkup(createElement(ResultView, rvProps(four, mOrb, { layout: 'orbit', selectedId: 'b' })));
+  const hOrb1 = renderToStaticMarkup(createElement(ResultView, rvProps(four, mOrb, { layout: 'orbit', selectedId: 'a' })));
+  const hRing = renderToStaticMarkup(createElement(ResultView, rvProps(four, mOrb, { layout: 'ring', selectedId: 'b' })));
+  check('the layout orbit (Family Orbit): the selected eye has a "Put in the centre" button with its own label, the eye already in the centre has it pressed and shut, a line says the first eye is the centre; no such button on another layout',
+    has(hOrb2, 'centre-eye') && /data-testid="centre-eye"[^>]*aria-label="Put eye 2 in the centre of the artwork"/.test(hOrb2) && !/data-testid="centre-eye"[^>]*disabled/.test(hOrb2)
+    && /data-testid="centre-eye"[^>]*disabled/.test(hOrb1) && has(hOrb2, 'centre-note') && text(hOrb2).includes('The first eye is in the centre') && !has(hRing, 'centre-eye') && !has(hRing, 'centre-note'));
+  check('the layout glyph of orbit is one eye in the middle and the others round it', glyphPoints('orbit', 5).pts.length === 5 && glyphPoints('orbit', 5).pts[0][0] === 10 && glyphPoints('orbit', 5).pts[0][1] === 8);
   const hLive = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], m1)));
   check('a style that can be bought keeps the promise of the file under its preview', text(hLive).includes('Your file: 4096 px'));
   const hSaved = hLive.match(/download="([^"]+)"/)?.[1] ?? '';

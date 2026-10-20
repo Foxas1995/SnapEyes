@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import importlib
 
-ENGINE_FAMILIES = ("singles", "collision", "universe", "lumen")      # the engine packages (lumen: the light looks of one eye); legacy styles never come through here
+ENGINE_FAMILIES = ("singles", "collision", "universe", "lumen", "ensemble")      # the engine packages (lumen: the light looks of one eye; ensemble: the pairs and families of whole irises); legacy styles never come through here
 
 # The version of the engine's PICTURES. It changes if and only if a golden changes (scripts/styles_tests/data/engine_v.json records it with the
 # hashes of the golden files and v3steps compares them): a plan records the version it was made under and the master step holds an order whose

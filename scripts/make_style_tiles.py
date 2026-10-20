@@ -8,11 +8,17 @@ Every picture is made by the engine of this repository (api/_lib/styles, the sam
 page labels an example as an example), from the restored irises of the owner's own eye and of two photos he has confirmed the right to publish on the
 page (the eye files are NOT in the repository and never enter it: --eyes names the folder that holds them). Nothing here calls an image model or reads a key.
 
-The eyes (file names in <folder>): own215120_2_enhanced.jpg (the owner's own eye), drv_w03_2_enhanced.jpg (brown) and drv_w04_2_enhanced.jpg (yellow green).
+The eyes (file names in <folder>): own215120_2_enhanced.jpg (the owner's own eye), drv_w03_2_enhanced.jpg (brown) and drv_w04_2_enhanced.jpg (yellow green),
+and for the ensemble family (2026-10-20) two more of the photos the owner holds the rights to publish (scripts/landing_assets_provenance.json, LICENCIJOS.csv w06 and
+w09): drv_w06_2_enhanced.jpg (dark brown) and drv_w09_2_enhanced.jpg (violet brown). The ensemble tiles keep the owner's sample rule of 2026-10-20 for every public
+picture: no eye whose eyelid skin or lashes show above the iris (drv_w03 has pink lid skin at the top, drv_d01 lashes: neither is in an ensemble tile) and no set with
+one pupil far bigger than the others. A command reads only the eyes of the tiles it makes.
   one eye          the owner's own eye
   Kiss Collision   own eye and the brown one
   Infinity pairs   own eye and the yellow green one (the high contrast pair that shows the smooth seam)
   Family Colours   all three, the Trio
+  Clean Duo        own eye and the yellow green one; Radiance Duo: own eye and the dark brown one
+  Family Orbit, Light Circle, Radiance Family: four eyes (own, yellow green, dark brown, violet brown; Family Orbit has the owner's own eye in the middle)
 The size of a picture is the long side of the family's default canvas at 1024 px (a preview), reduced with LANCZOS to 800 and 480 px; WEBP quality 80 and 78.
 The same command run again on the same code and the same eyes gives the same files (the seed comes from the eye ids, which are hashes of the files).
 
@@ -31,7 +37,8 @@ REPO = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(REPO, "api"))
 sys.dont_write_bytecode = True
 
-EYES = {"own": "own215120_2_enhanced.jpg", "brown": "drv_w03_2_enhanced.jpg", "yellow": "drv_w04_2_enhanced.jpg"}
+EYES = {"own": "own215120_2_enhanced.jpg", "brown": "drv_w03_2_enhanced.jpg", "yellow": "drv_w04_2_enhanced.jpg", "dark": "drv_w06_2_enhanced.jpg",
+        "violet": "drv_w09_2_enhanced.jpg"}
 # tile slug -> the eyes it is shown on, in the order of the canvas (keyed by slug, the file name part of the tile images: the registry holds the ids)
 SETS = {
     "clean-iris": ("own",),
@@ -44,6 +51,11 @@ SETS = {
     "collision-infinity": ("own", "yellow"),
     "clean-infinity": ("own", "yellow"),
     "family-colours": ("own", "yellow", "brown"),
+    "clean-duo": ("own", "yellow"),
+    "radiance-duo": ("own", "dark"),
+    "family-orbit": ("own", "yellow", "dark", "violet"),
+    "light-circle": ("own", "yellow", "dark", "violet"),
+    "radiance-family": ("own", "yellow", "dark", "violet"),
 }
 ONE_EYE = ("own",)          # a style of one eye that SETS does not name is shown on the owner's own eye, as every style of one eye is
 WIDTHS = ((800, 80), (480, 78))
@@ -69,12 +81,14 @@ def shown_styles():
     return out
 
 
-def load_eyes(folder):
+def load_eyes(folder, keys=None):
     raws = {}
     for key, name in EYES.items():
+        if keys is not None and key not in keys:
+            continue
         p = os.path.join(folder, name)
         if not os.path.isfile(p):
-            sys.exit(f"make_style_tiles: {p} is missing: --eyes names the folder with {', '.join(EYES.values())}")
+            sys.exit(f"make_style_tiles: {p} is missing: --eyes names the folder with {', '.join(EYES[k] for k in (keys or EYES))}")
         with open(p, "rb") as f:
             raws[key] = f.read()
     return raws
@@ -117,7 +131,8 @@ def main(argv=None):
     from PIL import Image
     from _lib import styles as ST
     from _lib.styles import core as SCORE
-    raws = load_eyes(a.eyes)
+    todo = [i for i in shown if not a.only or C.slug_of(i) in a.only]
+    raws = load_eyes(a.eyes, {k for i in todo for k in SETS[C.slug_of(i)]})
     os.makedirs(a.out, exist_ok=True)
     for i in shown:
         slug = C.slug_of(i)

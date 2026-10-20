@@ -400,6 +400,12 @@
       "duo_clean": {
         "d": "The same pair, without powder."
       },
+      "duo_thread": {
+        "d": "Two whole irises joined by one thin gold thread."
+      },
+      "duo_radiance": {
+        "d": "Two irises send rays in their own colours that meet between them."
+      },
       "fam_trio": {
         "d": "Three irises in a triangle."
       },
@@ -411,6 +417,15 @@
       },
       "fam_6": {
         "d": "Six irises, each in its own colour."
+      },
+      "fam_orbit": {
+        "d": "One iris in the middle, the family in orbit around it."
+      },
+      "fam_circle": {
+        "d": "Irises on a circle round one small light."
+      },
+      "fam_radiance": {
+        "d": "Every iris sends its own fine rays."
       }
     },
     "own": "Mantas's eye",

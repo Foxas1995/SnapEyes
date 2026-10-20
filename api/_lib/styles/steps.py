@@ -771,7 +771,7 @@ def _check_drawn(plan, pv):
     want = plan.get("seed")
     if want is not None and str(pv.seed) != str(want):
         raise Hold("picture_drift", f"drawn from seed {pv.seed}, the plan names {want}")
-    if plan.get("decided") is not False and plan.get("family") in ("collision", "universe"):
+    if plan.get("decided") is not False and plan.get("family") in ("collision", "universe", "ensemble"):
         if str(getattr(pv, "design", None)) != str(plan.get("design_used")):
             raise Hold("picture_drift", f"drew the design {pv.design!r}, the plan names {plan.get('design_used')!r}")
         want_fz = plan.get("frozen")

@@ -89,7 +89,7 @@ export const SAMPLES = {
   'picker.changed.reseal': [['Kiss Collision', 'Powder Burst', 1]], 'picker.changed.pupil': [['Kiss Collision', 'Powder Burst']],
   'picker.chipLabel': [[2]], 'picker.advisory': [[[1], 1], [[2], 3], [[1, 3], 4], [[5], 6]],
   'picker.retake.title': [[[1], 1], [[2], 3], [[1, 3], 4], [[2, 3, 5], 6]], 'picker.retake.reseal': [[[1], 1], [[2], 3], [[1, 2], 4]],
-  'picker.options.earlierLabel': [[2]], 'picker.options.laterLabel': [[2]], 'picker.names.nameFor': [[1, 1], [2, 3]],
+  'picker.options.earlierLabel': [[2]], 'picker.options.laterLabel': [[2]], 'picker.options.centreLabel': [[2]], 'picker.names.nameFor': [[1, 1], [2, 3]],
   'picker.names.problem.nameLong': [[2, 24]], 'picker.names.problem.namesLong': [[200]], 'picker.names.problem.glyph': [['Ñ']],
   'picker.names.problem.dateLong': [[20]], 'picker.names.problem.familyLong': [[24]],
   'buy.button': [['13 990 Ft']], 'buy.steps.upload': [[1, 1], [2, 3]], 'buy.sample': [[1], [2]], 'buy.replaceSampleEye': [[2]],

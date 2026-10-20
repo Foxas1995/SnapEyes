@@ -45,8 +45,8 @@ export async function run(): Promise<R> {
   // --- names: the registry's, and no tile name in any language of the copy
   check('every tile prints the registry\'s name of the style it stands for (tileName), and the name is one of the registry\'s',
     ids.every((id) => { const r = tileRow(id); return !!r && tileName(id) === STYLES[r.id].name && tileName(id) === styleName(r.id); }), ids.map((id) => `${id}=${tileName(id)}`).join());
-  check('the names of the 14 tiles: Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity twice, Kiss Collision, Clean Infinity, Family Colours four times (no tile for the held Universe pair and family: release review H-M3)',
-    ids.map(tileName).join(', ') === 'Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity, Collision Infinity, Kiss Collision, Clean Infinity, Family Colours, Family Colours, Family Colours, Family Colours',
+  check('the names of the 19 tiles: Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity twice, Kiss Collision, Clean Infinity, Clean Duo, Radiance Duo, Family Colours four times, Family Orbit, Light Circle, Radiance Family (the ensemble family since 2026-10-20; no tile for the held Universe pair and family: release review H-M3)',
+    ids.map(tileName).join(', ') === 'Radiance, Powder Burst, Universe, Celestial Gold, Splash, Clean Iris, Collision Infinity, Collision Infinity, Kiss Collision, Clean Infinity, Clean Duo, Radiance Duo, Family Colours, Family Colours, Family Colours, Family Colours, Family Orbit, Light Circle, Radiance Family',
     ids.map(tileName).join(', '));
   check('a tile id the table does not know (or a hostile one: constructor, __proto__) has no row, no name, and is never for sale',
     ['nope', 'constructor', '__proto__', 'toString', ''].every((id) => tileRow(id) === null && tileName(id) === '' && tileState(id, trio).sale === 'soon' && tileState(id, trio).style === null), '');
@@ -71,9 +71,9 @@ export async function run(): Promise<R> {
     })(), '');
   check('saleTiles: the registry names of the tiles for sale in tile order, each name once, with how many tiles of the list can be bought (two Collision Infinity tiles name it once)',
     JSON.stringify(saleTiles(idsOf('one'), trio)) === JSON.stringify({ names: ['Powder Burst', 'Clean Iris'], sale: 2, total: 6 })
-    && JSON.stringify(saleTiles(idsOf('two'), pairs)) === JSON.stringify({ names: ['Kiss Collision', 'Clean Infinity'], sale: 2, total: 4 })
+    && JSON.stringify(saleTiles(idsOf('two'), pairs)) === JSON.stringify({ names: ['Kiss Collision', 'Clean Infinity'], sale: 2, total: 6 })
     && JSON.stringify(saleTiles(['duo_infinity', 'duo_infinity_bb'], readCatalogue(answer({ 'duo.collision_infinity': { '2': 'live' } }, 2))!)) === JSON.stringify({ names: ['Collision Infinity'], sale: 2, total: 2 })
-    && JSON.stringify(saleTiles(idsOf('two'), nothing)) === JSON.stringify({ names: [], sale: 0, total: 4 }), JSON.stringify(saleTiles(idsOf('one'), trio)));
+    && JSON.stringify(saleTiles(idsOf('two'), nothing)) === JSON.stringify({ names: [], sale: 0, total: 6 }), JSON.stringify(saleTiles(idsOf('one'), trio)));
 
   // --- the line under a group's intro
   check('groupLine: only while ordering is open; nothing of the group for sale is "soon", some is "more", all is none',
@@ -125,14 +125,14 @@ export async function run(): Promise<R> {
   const rendered = await renderGate(states);
   const tileHtml = (si: number, lang: 'en' | 'de' | 'lt' | 'hu', id: string) => rendered.scenarios[si].langs[lang]!.tiles.find((t) => t.id === id)!.html;
   const shows = (html: string) => ({ chip: /class="lp-soon"/.test(html), price: /<b>/.test(html), state: /data-state="(\w+)"/.exec(html)?.[1] });
-  check('rendered: closed, every tile of the page says Soon in its own language and prints no price; the open page with one style ticked prints a price on that one tile only and Soon on the 13 others; open with nothing ticked is as closed',
+  check('rendered: closed, every tile of the page says Soon in its own language and prints no price; the open page with one style ticked prints a price on that one tile only and Soon on the 18 others; open with nothing ticked is as closed',
     rendered.errors.length === 0 && rendered.pictures.length === 0
     && (['en', 'de', 'lt', 'hu'] as const).every((lang) => {
       const soon = rendered.scenarios[0].langs[lang]!.soon;
       return rendered.scenarios[0].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price && t.html.includes(`>${soon}</span>`))
         && rendered.scenarios[2].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price)
         && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).price).map((t) => t.id).join() === 'powder'
-        && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).chip).length === 13;
+        && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).chip).length === 18;
     }), JSON.stringify([rendered.errors, rendered.pictures]));
   check('rendered: a tile for sale is marked "sale" and shows no Soon chip, a tile that cannot be bought is marked "soon", and the tile heading is the registry\'s name',
     shows(tileHtml(1, 'en', 'powder')).state === 'sale' && !shows(tileHtml(1, 'en', 'powder')).chip && shows(tileHtml(1, 'en', 'duo_kiss')).state === 'soon' && tileHtml(1, 'en', 'duo_kiss').includes('<h3>Kiss Collision</h3>')

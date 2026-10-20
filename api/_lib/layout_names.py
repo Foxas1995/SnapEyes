@@ -19,9 +19,10 @@ pay_hu.py do. Every entry has exactly the four languages en, de, lt and hu, each
 
 Which ids are which. The legacy ids (single, duo, fusion, triangle, row, grid, galaxy) are what the six styles of today take and what
 every order made so far carries: their words are the ones the e-mails and the order page have always printed and stay for ever, so
-that an old order still reads the same. The v3 ids (pair, trio, diag, zigzag, cluster, brick, ring, flower, chain; single is shared)
+that an old order still reads the same. The v3 ids (pair, trio, diag, zigzag, cluster, brick, ring, flower, chain, orbit; single is shared)
 are the arrangements of the new styles. The words of the v3 ids are drafts of the product work (PRODUCT.md 2.1, the integration
-specification 5.4); `pair` has no draft there and is named by the work package that moved the tables here. Nothing in Lithuanian or
+specification 5.4); `pair` has no draft there and is named by the work package that moved the tables here; `orbit` (Family Orbit: one eye in the
+middle, the others round it) is named by the work of 2026-10-20 that brought the ensemble family. Nothing in Lithuanian or
 Hungarian has been read by a native speaker yet (README): every word of a v3 id is on that review list.
 """
 LAYOUT_NAMES = {
@@ -35,6 +36,7 @@ LAYOUT_NAMES = {
     "brick": {"en": "Rows", "de": "Reihen", "lt": "Eilės", "hu": "Sorok"},
     "flower": {"en": "Flower", "de": "Blume", "lt": "Gėlė", "hu": "Virág"},
     "chain": {"en": "Chain", "de": "Kette", "lt": "Grandinė", "hu": "Lánc"},
+    "orbit": {"en": "Orbit", "de": "Umlaufbahn", "lt": "Orbita", "hu": "Pálya"},
     "duo": {"en": "Side by side", "de": "Nebeneinander", "lt": "Greta", "hu": "Egymás mellett"},
     "fusion": {"en": "Fusion", "de": "Fusion", "lt": "Susiliejimas", "hu": "Összeolvadás"},
     "triangle": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög"},

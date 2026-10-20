@@ -417,6 +417,9 @@ export const hu: TryCopy = {
       later: 'Hátrébb',
       earlierLabel: (i: number) => `${i}. szem előrébb helyezése az alkotáson`,
       laterLabel: (i: number) => `${i}. szem hátrébb helyezése az alkotáson`,
+      centre: 'Középre',
+      centreLabel: (i: number) => `${i}. szem az alkotás közepére`,
+      centreNote: 'Az első szem van középen, a többi körülötte kering. Válasszon fent egy szemet, és tegye középre.',
       look: 'Változat',
     },
     names: {

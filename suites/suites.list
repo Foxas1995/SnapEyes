@@ -60,3 +60,4 @@ v3feedback:scripts/styles_tests:test_feedback.py
 v3lang:scripts/styles_tests:test_lang_switch.py
 v3lumen:scripts/styles_tests:test_lumen.py
 v3lidcap:scripts/styles_tests:test_lidcap.py:fixtures
+v3ensemble:scripts/styles_tests:test_goldens_ensemble.py

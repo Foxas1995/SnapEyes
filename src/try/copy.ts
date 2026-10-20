@@ -448,6 +448,9 @@ const en = {
       later: 'Move later',
       earlierLabel: (i: number) => `Move eye ${i} earlier on the artwork`,
       laterLabel: (i: number) => `Move eye ${i} later on the artwork`,
+      centre: 'Put in the centre',
+      centreLabel: (i: number) => `Put eye ${i} in the centre of the artwork`,
+      centreNote: 'The first eye is in the centre, the others go round it. Choose an eye above and put it in the centre.',
       look: 'Look',
     },
     // the customer's own words on the artwork: a name per eye, a date and (for an arrangement with a hollow) a family name. Nothing else is ever written on it.
@@ -939,6 +942,9 @@ const de: TryCopy = {
       later: 'Weiter nach hinten',
       earlierLabel: (i: number) => `Auge ${i} im Kunstwerk weiter nach vorn setzen`,
       laterLabel: (i: number) => `Auge ${i} im Kunstwerk weiter nach hinten setzen`,
+      centre: 'In die Mitte',
+      centreLabel: (i: number) => `Auge ${i} in die Mitte des Kunstwerks setzen`,
+      centreNote: 'Das erste Auge steht in der Mitte, die anderen kreisen darum. Wählen Sie oben ein Auge und setzen Sie es in die Mitte.',
       look: 'Variante',
     },
     names: {

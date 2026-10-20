@@ -1,0 +1,1495 @@
+{
+ "cases": {
+  "duo.clean_duo.amber+blue2.default.1024": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     275.0,
+     342.0,
+     202.0
+    ],
+    [
+     749.0,
+     342.0,
+     202.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "12967353333093508770",
+   "sha": "d05a3ac992e826643ab454483e3290200f2d04ae83bbbbde1d685ff7f57d4e48",
+   "w": 1024
+  },
+  "duo.clean_duo.blue+brown.4:5.512": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     142.0,
+     147.0,
+     108.0
+    ],
+    [
+     268.0,
+     366.0,
+     108.0
+    ]
+   ],
+   "fmt": "4:5",
+   "frozen": {},
+   "h": 512,
+   "seed": "9059041394247355343",
+   "sha": "30f8ad7e78357b45f1304702724a2074132650e59fb545b57d03d740e31b3a78",
+   "w": 410
+  },
+  "duo.clean_duo.blue+brown.5:4.512": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     137.0,
+     205.0,
+     101.0
+    ],
+    [
+     375.0,
+     205.0,
+     101.0
+    ]
+   ],
+   "fmt": "5:4",
+   "frozen": {},
+   "h": 410,
+   "seed": "9059041394247355343",
+   "sha": "40d408bd76319f1c5e792afdc4f874135c23f4bebdb414a49d3876f9f7132c0a",
+   "w": 512
+  },
+  "duo.clean_duo.blue+brown.default.1024": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     275.0,
+     342.0,
+     202.0
+    ],
+    [
+     749.0,
+     342.0,
+     202.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "9059041394247355343",
+   "sha": "3e36cdbe4e4f8ed13583995bb4d38a18be6b042c5abd96445cd4a79b486ffda1",
+   "w": 1024
+  },
+  "duo.clean_duo.blue+brown.default.1024.swap": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     275.0,
+     342.0,
+     202.0
+    ],
+    [
+     749.0,
+     342.0,
+     202.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "10413608046148857846",
+   "sha": "04053440c8401906cf2391fa1b374ae603550d9fd29e903e8147beaf4a7869d8",
+   "w": 1024
+  },
+  "duo.clean_duo.blue+brown.default.1024.text": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     290.0,
+     321.0,
+     190.0
+    ],
+    [
+     734.0,
+     321.0,
+     190.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "9059041394247355343",
+   "sha": "3c80af4098eb5b8c086966ae4f8c1f9bb2dcb1573c101e08dc2f762a39f08798",
+   "w": 1024
+  },
+  "duo.clean_duo.blue+brown.default.1024.tint": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     275.0,
+     342.0,
+     202.0
+    ],
+    [
+     749.0,
+     342.0,
+     202.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "9059041394247355343",
+   "sha": "0fc1f0f5f96c7aa85de0281f4b463662bbd0073f8539c274ef2ed1d6d4231224",
+   "w": 1024
+  },
+  "duo.clean_duo.blue+brown.default.4096": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     1100.0,
+     1368.0,
+     808.0
+    ],
+    [
+     2996.0,
+     1368.0,
+     808.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 2732,
+   "seed": "9059041394247355343",
+   "sha": "47005f7aa63fcd3e20fff77aaef6b94f5a87caa75767aa7d017cc37c6430d5a4",
+   "w": 4096
+  },
+  "duo.clean_duo.green+grey.9:19.5.512": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     118.0,
+     199.0,
+     79.0
+    ],
+    [
+     118.0,
+     383.0,
+     79.0
+    ]
+   ],
+   "fmt": "9:19.5",
+   "frozen": {},
+   "h": 512,
+   "seed": "12671877946218503158",
+   "sha": "41cb5725c0273c9ce286b2ef9f1d6b60b774c3531c987852fa618bef6b5b1003",
+   "w": 236
+  },
+  "duo.clean_duo.green+grey.default.1024": {
+   "design": "clean_duo",
+   "discs": [
+    [
+     275.0,
+     342.0,
+     202.0
+    ],
+    [
+     749.0,
+     342.0,
+     202.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "12671877946218503158",
+   "sha": "b1fa99a7de03b0128d68d3328c89300c493d686b78a801984b144f5af2fd5294",
+   "w": 1024
+  },
+  "duo.radiance.amber+blue2.default.1024": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     296.0,
+     342.0,
+     184.0
+    ],
+    [
+     728.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "3205708010201496716",
+   "sha": "130d11f1d4bfdb2e0186b48afe920489b5956cfb313a05ba42950f8015d4cecc",
+   "w": 1024
+  },
+  "duo.radiance.blue+blue2.default.1024.frozen": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     296.0,
+     342.0,
+     184.0
+    ],
+    [
+     728.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     2
+    ]
+   },
+   "h": 683,
+   "seed": "8829313310491951446",
+   "sha": "6fe007767d04e7c1650eb572182450a9353b8d87d147b6b018fdceb4ff6e7904",
+   "w": 1024
+  },
+  "duo.radiance.blue+blue2.default.1024.near": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     296.0,
+     342.0,
+     184.0
+    ],
+    [
+     728.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     3
+    ]
+   },
+   "h": 683,
+   "seed": "8829313310491951446",
+   "sha": "d373af2d096433cadb025a6ff81c7f28c12b2faaf181419dd3345178a31b70bd",
+   "w": 1024
+  },
+  "duo.radiance.blue+brown.4:5.512": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     141.5,
+     146.5,
+     108.5
+    ],
+    [
+     268.5,
+     366.5,
+     108.5
+    ]
+   ],
+   "fmt": "4:5",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 512,
+   "seed": "3782972251490337771",
+   "sha": "78197c93f2906d57f1f60ee51c16881cf13e2a4cf7e27e2a951f21e3a585f0e1",
+   "w": 410
+  },
+  "duo.radiance.blue+brown.5:4.512": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     137.5,
+     204.5,
+     101.5
+    ],
+    [
+     375.5,
+     204.5,
+     101.5
+    ]
+   ],
+   "fmt": "5:4",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 410,
+   "seed": "3782972251490337771",
+   "sha": "c9eae9fd841dff97918a93a50aed2c78dba0704fc570a7c0256b87758ec7a8c3",
+   "w": 512
+  },
+  "duo.radiance.blue+brown.default.1024": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     296.0,
+     342.0,
+     184.0
+    ],
+    [
+     728.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "3782972251490337771",
+   "sha": "8d0130764d10ec71a2d156138dba1ea1111103cfd7803901a84137aabb10c676",
+   "w": 1024
+  },
+  "duo.radiance.blue+brown.default.1024.swap": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     296.0,
+     342.0,
+     184.0
+    ],
+    [
+     728.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "13447162229290500772",
+   "sha": "cc3f942ab3295d719284475337e2c263e297e1328ce1bd3c91de21133856522d",
+   "w": 1024
+  },
+  "duo.radiance.blue+brown.default.1024.text": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     309.5,
+     321.5,
+     173.5
+    ],
+    [
+     714.5,
+     321.5,
+     173.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "3782972251490337771",
+   "sha": "2eddea272de6c9787fc94a888ebd9f4fd8c8ded40cc311182fca58526a0b5b3b",
+   "w": 1024
+  },
+  "duo.radiance.blue+brown.default.4096": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     1184.0,
+     1368.0,
+     736.0
+    ],
+    [
+     2912.0,
+     1368.0,
+     736.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 2732,
+   "seed": "3782972251490337771",
+   "sha": "f0db33874fe1724adbeb30ef637d024482bac6d070b933489a8d5a0dac5b5756",
+   "w": 4096
+  },
+  "duo.radiance.brown+brown2.default.1024.dark": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     296.0,
+     342.0,
+     184.0
+    ],
+    [
+     728.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     1
+    ]
+   },
+   "h": 683,
+   "seed": "14585529737550538330",
+   "sha": "343d143988acf773f3b5b8f39db202286b22252a55fd41f8e1f69e24bd2de20a",
+   "w": 1024
+  },
+  "duo.radiance.green+grey.9:19.5.512": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     118.5,
+     198.5,
+     79.5
+    ],
+    [
+     118.5,
+     384.5,
+     79.5
+    ]
+   ],
+   "fmt": "9:19.5",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 512,
+   "seed": "13680621532490099163",
+   "sha": "932bbbf026dc26333ae0dfa987a76069b3acf2ebc155ac0facc7478322771522",
+   "w": 236
+  },
+  "duo.radiance.green+grey.default.1024": {
+   "design": "radiance_duo",
+   "discs": [
+    [
+     296.0,
+     342.0,
+     184.0
+    ],
+    [
+     728.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "13680621532490099163",
+   "sha": "91ed4b9b5cf7c2c38b9518d36b7f50441afaf2991980d58b03b342ec7f318ed8",
+   "w": 1024
+  },
+  "grp.light_circle.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
+   "design": "light_circle",
+   "discs": [
+    [
+     640.5,
+     200.5,
+     118.5
+    ],
+    [
+     823.5,
+     383.5,
+     118.5
+    ],
+    [
+     823.5,
+     640.5,
+     118.5
+    ],
+    [
+     640.5,
+     823.5,
+     118.5
+    ],
+    [
+     383.5,
+     823.5,
+     118.5
+    ],
+    [
+     200.5,
+     640.5,
+     118.5
+    ],
+    [
+     200.5,
+     383.5,
+     118.5
+    ],
+    [
+     383.5,
+     200.5,
+     118.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "12609438507260726499",
+   "sha": "0001ebab262bc7ce4a82544b58a3e7cf6ee045863f4ffec4d4d820e167d1cf3d",
+   "w": 1024
+  },
+  "grp.light_circle.blue+brown+green+grey+amber+blue2.4:5.512": {
+   "design": "light_circle",
+   "discs": [
+    [
+     264.5,
+     153.5,
+     54.5
+    ],
+    [
+     323.5,
+     256.5,
+     54.5
+    ],
+    [
+     264.5,
+     359.5,
+     54.5
+    ],
+    [
+     145.5,
+     359.5,
+     54.5
+    ],
+    [
+     86.5,
+     256.5,
+     54.5
+    ],
+    [
+     145.5,
+     153.5,
+     54.5
+    ]
+   ],
+   "fmt": "4:5",
+   "frozen": {},
+   "h": 512,
+   "seed": "6054772219665329015",
+   "sha": "78efd90bb24e6134682b4603785c23b6497cc182b602c8ae3d320f226e6e36e8",
+   "w": 410
+  },
+  "grp.light_circle.blue+brown+green+grey+amber.default.1024": {
+   "design": "light_circle",
+   "discs": [
+    [
+     512.5,
+     250.5,
+     152.5
+    ],
+    [
+     787.5,
+     450.5,
+     152.5
+    ],
+    [
+     682.5,
+     773.5,
+     152.5
+    ],
+    [
+     341.5,
+     773.5,
+     152.5
+    ],
+    [
+     236.5,
+     450.5,
+     152.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "14695604351586089",
+   "sha": "eac10680eb764a198d95d11279f88bf4cd42406b3b44109cc63beff6d12752a3",
+   "w": 1024
+  },
+  "grp.light_circle.blue+brown+green+grey+amber.default.1024.text": {
+   "design": "light_circle",
+   "discs": [
+    [
+     511.5,
+     235.5,
+     143.5
+    ],
+    [
+     770.5,
+     423.5,
+     143.5
+    ],
+    [
+     672.5,
+     727.5,
+     143.5
+    ],
+    [
+     351.5,
+     727.5,
+     143.5
+    ],
+    [
+     253.5,
+     423.5,
+     143.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "14695604351586089",
+   "sha": "a03acedd7e482ecaf064ded9f498d815b7933245ddfedd076ee996ef8b151e51",
+   "w": 1024
+  },
+  "grp.light_circle.blue+brown+green+grey+amber.default.4096": {
+   "design": "light_circle",
+   "discs": [
+    [
+     2050.0,
+     1002.0,
+     610.0
+    ],
+    [
+     3150.0,
+     1802.0,
+     610.0
+    ],
+    [
+     2730.0,
+     3094.0,
+     610.0
+    ],
+    [
+     1366.0,
+     3094.0,
+     610.0
+    ],
+    [
+     946.0,
+     1802.0,
+     610.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 4096,
+   "seed": "14695604351586089",
+   "sha": "8e64639d78534d276614aad7d563d88461903af5aac41d1bb3e34df78197b26c",
+   "w": 4096
+  },
+  "grp.light_circle.blue+brown+green+grey.default.1024": {
+   "design": "light_circle",
+   "discs": [
+    [
+     747.0,
+     277.0,
+     175.0
+    ],
+    [
+     747.0,
+     747.0,
+     175.0
+    ],
+    [
+     277.0,
+     747.0,
+     175.0
+    ],
+    [
+     277.0,
+     277.0,
+     175.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "2528647143496801478",
+   "sha": "cf2bad0516f43e894a265136c3ee41f35f3fea1f26cc658ec118a10a6a819bdc",
+   "w": 1024
+  },
+  "grp.light_circle.blue+brown+green+grey.default.1024.rot2": {
+   "design": "light_circle",
+   "discs": [
+    [
+     747.0,
+     277.0,
+     175.0
+    ],
+    [
+     747.0,
+     747.0,
+     175.0
+    ],
+    [
+     277.0,
+     747.0,
+     175.0
+    ],
+    [
+     277.0,
+     277.0,
+     175.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "18301774647856365398",
+   "sha": "b56224ff06e47f71920efee5957a92fb799a4ff7f73271ae9f36cf859efa3b1a",
+   "w": 1024
+  },
+  "grp.light_circle.blue+brown+green.default.1024": {
+   "design": "light_circle",
+   "discs": [
+    [
+     512.5,
+     283.5,
+     160.5
+    ],
+    [
+     776.5,
+     740.5,
+     160.5
+    ],
+    [
+     247.5,
+     740.5,
+     160.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "3150544806788161520",
+   "sha": "a7b4dfa086a91986119f7fe0eb39738c1edf6229b27b9543f6e7e6956b88b11b",
+   "w": 1024
+  },
+  "grp.orbit.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
+   "design": "orbit",
+   "discs": [
+    [
+     511.5,
+     527.5,
+     143.5
+    ],
+    [
+     511.5,
+     214.5,
+     119.5
+    ],
+    [
+     756.5,
+     332.5,
+     119.5
+    ],
+    [
+     817.5,
+     597.5,
+     119.5
+    ],
+    [
+     647.5,
+     809.5,
+     119.5
+    ],
+    [
+     376.5,
+     809.5,
+     119.5
+    ],
+    [
+     206.5,
+     597.5,
+     119.5
+    ],
+    [
+     267.5,
+     332.5,
+     119.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "11760203360389160408",
+   "sha": "0166fb062f00c403791f9342f5e819c77f79b6e500783aef689b6b4e4dd39a99",
+   "w": 1024
+  },
+  "grp.orbit.blue+brown+green+grey+amber.4:5.512": {
+   "design": "orbit",
+   "discs": [
+    [
+     205.0,
+     257.0,
+     76.0
+    ],
+    [
+     91.5,
+     142.5,
+     54.5
+    ],
+    [
+     318.5,
+     142.5,
+     54.5
+    ],
+    [
+     318.5,
+     369.5,
+     54.5
+    ],
+    [
+     91.5,
+     369.5,
+     54.5
+    ]
+   ],
+   "fmt": "4:5",
+   "frozen": {},
+   "h": 512,
+   "seed": "8534498240907430377",
+   "sha": "8ad7e2b05d2bd9d3d1f33e9a85bc0d6fe8935757394fa60a88d0e08531f52d5b",
+   "w": 410
+  },
+  "grp.orbit.blue+brown+green+grey+amber.default.1024": {
+   "design": "orbit",
+   "discs": [
+    [
+     511.5,
+     512.5,
+     186.5
+    ],
+    [
+     234.0,
+     234.0,
+     133.0
+    ],
+    [
+     790.0,
+     234.0,
+     133.0
+    ],
+    [
+     790.0,
+     790.0,
+     133.0
+    ],
+    [
+     234.0,
+     790.0,
+     133.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "8534498240907430377",
+   "sha": "5b72b212cda021f43baf25ed9d52cac91b6b694ccf627713f964d4f3d30c05d0",
+   "w": 1024
+  },
+  "grp.orbit.blue+brown+green+grey+amber.default.1024.text": {
+   "design": "orbit",
+   "discs": [
+    [
+     511.5,
+     481.5,
+     175.5
+    ],
+    [
+     251.0,
+     220.0,
+     125.0
+    ],
+    [
+     773.0,
+     220.0,
+     125.0
+    ],
+    [
+     773.0,
+     742.0,
+     125.0
+    ],
+    [
+     251.0,
+     742.0,
+     125.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "8534498240907430377",
+   "sha": "dee89cf021cfc32cb48ae8afc8debb31acf1ce866cf6f94e930e633faf068d6f",
+   "w": 1024
+  },
+  "grp.orbit.blue+brown+green+grey+amber.default.4096": {
+   "design": "orbit",
+   "discs": [
+    [
+     2046.0,
+     2050.0,
+     746.0
+    ],
+    [
+     936.0,
+     936.0,
+     532.0
+    ],
+    [
+     3160.0,
+     936.0,
+     532.0
+    ],
+    [
+     3160.0,
+     3160.0,
+     532.0
+    ],
+    [
+     936.0,
+     3160.0,
+     532.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 4096,
+   "seed": "8534498240907430377",
+   "sha": "b29634f97384bf3bb4da4a872177db59830eb89c13fb2b06ebf150194f203c1c",
+   "w": 4096
+  },
+  "grp.orbit.blue+brown+green+grey.default.1024": {
+   "design": "orbit",
+   "discs": [
+    [
+     512.5,
+     600.5,
+     168.5
+    ],
+    [
+     512.5,
+     246.5,
+     120.5
+    ],
+    [
+     819.5,
+     777.5,
+     120.5
+    ],
+    [
+     204.5,
+     777.5,
+     120.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "3225852808927642306",
+   "sha": "b033009eb9cbdf0e73f47eb0a5d3f8422cdaf343a9c6331620baba491d4f914a",
+   "w": 1024
+  },
+  "grp.orbit.blue+brown+green+grey.default.1024.rot2": {
+   "design": "orbit",
+   "discs": [
+    [
+     512.5,
+     600.5,
+     168.5
+    ],
+    [
+     512.5,
+     246.5,
+     120.5
+    ],
+    [
+     819.5,
+     777.5,
+     120.5
+    ],
+    [
+     204.5,
+     777.5,
+     120.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "11673490615490673753",
+   "sha": "de9a874399b9184e681b0d6e33469e1f5ece5e282e7839c54b87c68f5c7cd20c",
+   "w": 1024
+  },
+  "grp.orbit.blue+brown+green.default.1024": {
+   "design": "orbit",
+   "discs": [
+    [
+     511.5,
+     511.5,
+     191.5
+    ],
+    [
+     232.0,
+     232.0,
+     132.0
+    ],
+    [
+     792.0,
+     792.0,
+     132.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "10873788297338032008",
+   "sha": "26c5a5bad7360b76d5f28a7bdb9f31108ede0180447a7147f9875464ea711ad1",
+   "w": 1024
+  },
+  "grp.radiance.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     209.5,
+     250.5,
+     116.5
+    ],
+    [
+     512.5,
+     250.5,
+     116.5
+    ],
+    [
+     814.5,
+     250.5,
+     116.5
+    ],
+    [
+     360.5,
+     512.5,
+     116.5
+    ],
+    [
+     663.5,
+     512.5,
+     116.5
+    ],
+    [
+     209.5,
+     773.5,
+     116.5
+    ],
+    [
+     512.5,
+     773.5,
+     116.5
+    ],
+    [
+     814.5,
+     773.5,
+     116.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     3,
+     2,
+     1
+    ]
+   },
+   "h": 1024,
+   "seed": "12259796767032286948",
+   "sha": "6c5d117632c970b5086387983542e886fa1750ef7eac70281a4f9046a140a04a",
+   "w": 1024
+  },
+  "grp.radiance.blue+brown+green+grey+amber+blue2.default.1024": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     263.5,
+     225.5,
+     127.5
+    ],
+    [
+     594.5,
+     225.5,
+     127.5
+    ],
+    [
+     429.5,
+     511.5,
+     127.5
+    ],
+    [
+     760.5,
+     511.5,
+     127.5
+    ],
+    [
+     263.5,
+     798.5,
+     127.5
+    ],
+    [
+     594.5,
+     798.5,
+     127.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     3
+    ]
+   },
+   "h": 1024,
+   "seed": "15556575288122200278",
+   "sha": "53bd451982bef48e0e2cce581fc0663afa2a7d9de8f5926a4912b5d25d929f33",
+   "w": 1024
+  },
+  "grp.radiance.blue+brown+green+grey+amber.1:1.512": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     180.5,
+     190.5,
+     58.5
+    ],
+    [
+     331.5,
+     190.5,
+     58.5
+    ],
+    [
+     104.5,
+     321.5,
+     58.5
+    ],
+    [
+     256.5,
+     321.5,
+     58.5
+    ],
+    [
+     407.5,
+     321.5,
+     58.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "h": 512,
+   "seed": "10561558743339327293",
+   "sha": "f7e3d15e5b0dccca950373634da16c14a4d4638562ad9c746c34f595fcce0ac7",
+   "w": 512
+  },
+  "grp.radiance.blue+brown+green+grey+amber.default.1024": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     356.0,
+     207.0,
+     120.0
+    ],
+    [
+     668.0,
+     207.0,
+     120.0
+    ],
+    [
+     201.0,
+     476.0,
+     120.0
+    ],
+    [
+     512.0,
+     476.0,
+     120.0
+    ],
+    [
+     823.0,
+     476.0,
+     120.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "10561558743339327293",
+   "sha": "27e6de33e89c615f9e87855160cfaa677c7a036c42e0365f2d93492795f4997f",
+   "w": 1024
+  },
+  "grp.radiance.blue+brown+green+grey+amber.default.1024.text": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     366.0,
+     194.0,
+     113.0
+    ],
+    [
+     658.0,
+     194.0,
+     113.0
+    ],
+    [
+     219.0,
+     448.0,
+     113.0
+    ],
+    [
+     512.0,
+     448.0,
+     113.0
+    ],
+    [
+     805.0,
+     448.0,
+     113.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "10561558743339327293",
+   "sha": "e8aefd2de4b7f8cc1dde772c2d059ad0b6c9c141bc7fb41d28aceb8a92f71e96",
+   "w": 1024
+  },
+  "grp.radiance.blue+brown+green+grey+amber.default.4096": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     1424.0,
+     828.0,
+     480.0
+    ],
+    [
+     2672.0,
+     828.0,
+     480.0
+    ],
+    [
+     804.0,
+     1904.0,
+     480.0
+    ],
+    [
+     2048.0,
+     1904.0,
+     480.0
+    ],
+    [
+     3292.0,
+     1904.0,
+     480.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "h": 2732,
+   "seed": "10561558743339327293",
+   "sha": "a14668e5ac081febf6aadd3556b3bcd8fc628918441f6c9e9627360ff4f7c69c",
+   "w": 4096
+  },
+  "grp.radiance.blue+brown+green+grey.default.1024": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     273.5,
+     203.5,
+     122.5
+    ],
+    [
+     591.5,
+     203.5,
+     122.5
+    ],
+    [
+     432.5,
+     479.5,
+     122.5
+    ],
+    [
+     750.5,
+     479.5,
+     122.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "2819466942071678790",
+   "sha": "565c7da2e74c2c53b979e4bae2bbce0ef23e73bfbbe8b5241cdc37af4b767753",
+   "w": 1024
+  },
+  "grp.radiance.blue+brown+green+grey.default.1024.rot2": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     273.5,
+     203.5,
+     122.5
+    ],
+    [
+     591.5,
+     203.5,
+     122.5
+    ],
+    [
+     432.5,
+     479.5,
+     122.5
+    ],
+    [
+     750.5,
+     479.5,
+     122.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "10905807068303916571",
+   "sha": "45ab513296fa1e79e166a4bdcc25c5850005bae05ab905fd1c01519581796a57",
+   "w": 1024
+  },
+  "grp.radiance.blue+brown+green.default.1024": {
+   "design": "radiance_family",
+   "discs": [
+    [
+     512.5,
+     203.5,
+     122.5
+    ],
+    [
+     352.5,
+     479.5,
+     122.5
+    ],
+    [
+     671.5,
+     479.5,
+     122.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {
+    "pal": [
+     0,
+     0,
+     0
+    ]
+   },
+   "h": 683,
+   "seed": "2668447989687225262",
+   "sha": "31da899f076c22689dabfed191b5e27dd7de62164d859ec10a74fd59ee4464c7",
+   "w": 1024
+  }
+ },
+ "engine_v": 8,
+ "note": "the pictures of the ensemble family (api/_lib/styles/ensemble) on the synthetic eyes of synth_iris, recorded by test_goldens_ensemble.py --record: sha256 of the decoded pixels and their shape, the seed, the design, the canvas, the frozen choices and the discs of every case. Exact for this machine class and the pins of requirements.txt"
+}

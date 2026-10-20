@@ -24,6 +24,7 @@ interface Props {
   onRetake: (id: string) => void;
   onAdd: () => void;
   onMove: (id: string, delta: -1 | 1) => void;   // an eye one place earlier or later on the artwork (four to eight eyes)
+  onCentre: (id: string) => void;                // an eye in the centre of an arrangement that has one (the layout orbit: the first eye is the hub)
   art: Art | undefined;          // the preview for exactly the current eyes, layout, style and words
   staleArt: Art | undefined;     // the last preview shown, kept on screen while the next one composes
   composeError: string | null;
@@ -58,6 +59,8 @@ export const ResultView: React.FC<Props> = (p) => {
       <span aria-hidden="true" className="fx-hair" />
     </>
   );
+  // an arrangement with an eye in its centre (the layout orbit of Family Orbit: the first eye of the order is the hub, the customer chooses which)
+  const hub = n >= 3 && p.layout === 'orbit' && !!p.picker.selected && p.picker.selected.legacy !== 1;
   const samples = p.eyes.filter((e) => e.sample).length;
   const allSample = samples > 0 && samples === n;
   if (!eye) return null;
@@ -198,6 +201,10 @@ export const ResultView: React.FC<Props> = (p) => {
               className="min-h-[44px] px-3 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-zinc-200 disabled:opacity-40">{T.picker.options.later}</button>
           </>
         )}
+        {hub && (
+          <button type="button" data-testid="centre-eye" disabled={idx === 0} aria-pressed={idx === 0} aria-label={T.picker.options.centreLabel(idx + 1)} onClick={() => p.onCentre(eye.id)}
+            className={`fx-pick min-h-[44px] px-3 rounded-xl border text-sm font-semibold ${idx === 0 ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-200'}`}>{T.picker.options.centre}</button>
+        )}
       </div>
     </div>
   );
@@ -281,6 +288,7 @@ export const ResultView: React.FC<Props> = (p) => {
           </div>
         </div>
       )}
+      {hub && <p data-testid="centre-note" className="text-[11px] text-zinc-300 mt-2">{T.picker.options.centreNote}</p>}
       {/* the places of the eyes: two eyes swap, three rotate (a new arrangement of the same eyes; the style keeps its look) */}
       {sel && sel.legacy !== 1 && (n === 2 || n === 3) && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -377,7 +385,7 @@ export function glyphPoints(layout: string, n: number): { pts: Array<[number, nu
       return { pts: [...row(top, 4.8), ...row(bottom, 11.2)], r: 2.5 };
     }
     case 'ring': return { pts: ring(Math.max(3, n)), r: 2.3 };
-    case 'flower': return { pts: [[10, 8], ...ring(Math.max(2, n - 1))], r: 2.2 };
+    case 'flower': case 'orbit': return { pts: [[10, 8], ...ring(Math.max(2, n - 1))], r: 2.2 };
     case 'cluster': return { pts: ring(Math.max(3, n)).map(([x, y], i) => [10 + (x - 10) * (i % 2 ? 0.6 : 1), 8 + (y - 8) * (i % 2 ? 0.6 : 1)] as [number, number]), r: 2.6 };
     default: return { pts: [[10, 8]], r: 3.2 };
   }

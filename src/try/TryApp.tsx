@@ -531,6 +531,17 @@ export const TryApp: React.FC = () => {
     commitEyes(next); setSelectedId(id);
   };
 
+  /** The selected eye in the centre of an arrangement that has one (the layout Orbit: the first eye of the order is the hub, the others go round it): it
+   *  becomes the first eye, the others keep their order, and the places are not rotated any more (the server reads the order as it comes). */
+  const centreEye = (id: string) => {
+    const list = eyesRef.current;
+    const i = list.findIndex((e) => e.id === id);
+    if (i <= 0) return;
+    commitEyes([list[i], ...list.slice(0, i), ...list.slice(i + 1)]);
+    setSelectedId(id);
+    setOpts((o) => (o.rotate ? { ...o, rotate: 0 } : o));
+  };
+
   // ---- capture study
   const setPending = (list: StudyPayload[]) => {
     pendingStudyRef.current = list.slice(-STUDY_PENDING_MAX);
@@ -1169,7 +1180,7 @@ export const TryApp: React.FC = () => {
 
         {step === 'result' && eyes.length > 0 && (
           <ResultView
-            eyes={eyes} selectedId={selectedId} onSelect={setSelectedId} onRemove={removeEye} onRetake={retakeEye} onAdd={addEye} onMove={moveEye}
+            eyes={eyes} selectedId={selectedId} onSelect={setSelectedId} onRemove={removeEye} onRetake={retakeEye} onAdd={addEye} onMove={moveEye} onCentre={centreEye}
             art={art} staleArt={previews.staleArt} composeError={previews.composeError} onRetryCompose={previews.retryCompose}
             picker={picker} layout={previews.layout} layoutOptions={selectedTile?.layouts ?? []} onLayout={setLayoutWant}
             opts={opts} onOpts={setOpts} words={words}

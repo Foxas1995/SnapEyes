@@ -233,6 +233,18 @@ export const GALLERY: {
       "file": "duo_clean_by",
       "price": "two",
       "src": "mixed"
+    },
+    {
+      "id": "duo_thread",
+      "file": "duo_thread_by",
+      "price": "two",
+      "src": "mixed"
+    },
+    {
+      "id": "duo_radiance",
+      "file": "duo_radiance_bd",
+      "price": "two",
+      "src": "mixed"
     }
   ],
   "family": [
@@ -263,6 +275,29 @@ export const GALLERY: {
       "file": "fam_6",
       "price": "n",
       "n": 6,
+      "src": "mixed"
+    },
+    {
+      "id": "fam_orbit",
+      "file": "fam_orbit_4",
+      "price": "n",
+      "n": 4,
+      "src": "mixed",
+      "square": true
+    },
+    {
+      "id": "fam_circle",
+      "file": "fam_circle_4",
+      "price": "n",
+      "n": 4,
+      "src": "mixed",
+      "square": true
+    },
+    {
+      "id": "fam_radiance",
+      "file": "fam_radiance_4",
+      "price": "n",
+      "n": 4,
       "src": "mixed"
     }
   ]

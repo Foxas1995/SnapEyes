@@ -389,6 +389,9 @@ export const lt: TryCopy = {
       later: 'Perkelti vėliau',
       earlierLabel: (i: number) => `Perkelti akį ${i} kūrinyje anksčiau`,
       laterLabel: (i: number) => `Perkelti akį ${i} kūrinyje vėliau`,
+      centre: 'Į centrą',
+      centreLabel: (i: number) => `Perkelti akį ${i} į kūrinio centrą`,
+      centreNote: 'Pirmoji akis yra centre, kitos sukasi aplink ją. Pasirinkite akį viršuje ir perkelkite ją į centrą.',
       look: 'Variantas',
     },
     names: {

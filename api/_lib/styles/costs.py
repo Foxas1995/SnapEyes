@@ -156,6 +156,35 @@ for _key, _n, _master, _preview in ADDED:
         MASTER[_key] = {_n: _master}
     if _key not in PREVIEW:
         PREVIEW[_key] = {_n: _preview}
+# THE ENSEMBLE FAMILY (api/_lib/styles/ensemble: Clean Duo, Radiance Duo, Family Orbit, Light Circle, Radiance Family; 2026-10-20): not in the spike, so not baked. Measured on this
+# repository's port the way the master step makes a master (steps._exec_engine: the eyes from 4K restorations at the registry's 2048 px working copy, the family's preview
+# at 4096 px WITH the self check), one fresh process per row, OMP_NUM_THREADS=1, on this machine (its yardstick 0.951 of the spike's core: the seconds are the measured CPU
+# seconds divided by 0.951, as MEASURED's are), the peak the resident high-water mark of the process. The registry caps every eye count of the family at 2048 px, so the
+# MASTER rows are the same 2048 px figures (cold and warm alike: no warm run was measured); PREVIEW is a 1024 px preview from 1024 px eyes in a fresh process (cold, a second
+# preview of new eyes, a third of the same eyes, their difference, the high-water mark). The eye sets: two pairs of 4K restorations, and the first n of eight 4K
+# restorations for the families (Radiance Family at 8 eyes the slower of two sets). Measured beside them the same way: Family Colours at 8 eyes 26.5 s and 875 MB
+# (its baked capped row says 16.8 s), the pairs of today 8 to 10 s.
+MASTER.update({
+    "ensemble.clean_duo": {2: (7.6, 7.6, 484, 484)},
+    "ensemble.radiance_duo": {2: (10.8, 10.8, 609, 609)},
+    "ensemble.orbit": {3: (14.5, 14.5, 610, 610), 4: (16.2, 16.2, 628, 628), 5: (21.6, 21.6, 710, 710), 6: (25.1, 25.1, 705, 705), 7: (26.7, 26.7, 740, 740), 8: (29.6, 29.6, 787, 787)},
+    "ensemble.light_circle": {3: (11.7, 11.7, 618, 618), 4: (15.2, 15.2, 712, 712), 5: (17.5, 17.5, 720, 720), 6: (18.1, 18.1, 733, 733), 7: (19.0, 19.0, 751, 751), 8: (23.7, 23.7, 772, 772)},
+    "ensemble.radiance_family": {3: (13.7, 13.7, 571, 571), 4: (16.2, 16.2, 627, 627), 5: (21.0, 21.0, 663, 663), 6: (24.5, 24.5, 902, 902), 7: (26.8, 26.8, 915, 915), 8: (33.5, 33.5, 960, 960)},
+})
+CAPPED.update({
+    "ensemble.clean_duo": {2: (7.6, 484)},
+    "ensemble.radiance_duo": {2: (10.8, 609)},
+    "ensemble.orbit": {3: (14.5, 610), 4: (16.2, 628), 5: (21.6, 710), 6: (25.1, 705), 7: (26.7, 740), 8: (29.6, 787)},
+    "ensemble.light_circle": {3: (11.7, 618), 4: (15.2, 712), 5: (17.5, 720), 6: (18.1, 733), 7: (19.0, 751), 8: (23.7, 772)},
+    "ensemble.radiance_family": {3: (13.7, 571), 4: (16.2, 627), 5: (21.0, 663), 6: (24.5, 902), 7: (26.8, 915), 8: (33.5, 960)},
+})
+PREVIEW.update({
+    "ensemble.clean_duo": {2: (1.39, 1.16, 0.25, 0.91, 101)},
+    "ensemble.radiance_duo": {2: (1.63, 1.55, 0.64, 0.91, 138)},
+    "ensemble.orbit": {3: (2.15, 2.13, 0.88, 1.25, 120), 4: (1.99, 1.93, 0.87, 1.06, 121), 5: (3.08, 3.1, 0.97, 2.14, 133), 6: (3.26, 3.45, 1.0, 2.45, 135), 7: (3.66, 3.69, 1.12, 2.56, 141), 8: (4.16, 4.31, 1.11, 3.2, 146)},
+    "ensemble.light_circle": {3: (1.65, 1.48, 0.19, 1.29, 116), 4: (2.34, 2.31, 0.25, 2.06, 125), 5: (2.43, 2.56, 0.25, 2.31, 131), 6: (2.69, 2.66, 0.27, 2.38, 132), 7: (2.89, 2.98, 0.27, 2.71, 137), 8: (3.26, 3.46, 0.25, 3.21, 141)},
+    "ensemble.radiance_family": {3: (1.81, 1.74, 0.6, 1.14, 136), 4: (2.4, 2.42, 0.69, 1.73, 143), 5: (2.8, 2.79, 0.83, 1.96, 150), 6: (3.07, 3.17, 0.92, 2.26, 147), 7: (3.36, 3.47, 0.96, 2.51, 150), 8: (3.95, 4.2, 1.2, 3.0, 156)},
+})
 
 # MEASURED = ((cost key, eyes, working copy side, cpu s, peak MB), ...): quiet-core seconds in the spike's units and the cold peak of a MASTER as the master step
 # runs it (preview at 4096 px with the self check) on real calibration restorations, measured on this repo's port (WP7A review fix, 2026-10-05, Windows, one thread;

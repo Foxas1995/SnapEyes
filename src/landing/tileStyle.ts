@@ -10,6 +10,9 @@
 //   duo_kiss                         -> Kiss Collision
 //   duo_clean                        -> Clean Infinity
 //   fam_trio, fam_4, fam_5, fam_6    -> Family Colours at three, four, five and six eyes (the Trio is its three-eye layout)
+//   duo_thread                       -> Clean Duo (the ensemble family: two whole irises and one thin infinity thread)
+//   duo_radiance                     -> Radiance Duo
+//   fam_orbit, fam_circle, fam_radiance  -> Family Orbit, Light Circle and Radiance Family at four eyes
 // The Universe pair and the Universe family (held in the laboratory) have NO tile: the pictures the prototype had for them were designs the engine does not make, and a tile
 // that says Soon promises its look (release review H-M3). When the engine draws them, add their tiles with pictures made by the engine.
 // scripts/check_styles.mjs (item 15) keeps this table equal to the gallery: every tile has a row, every row names a style of the registry that takes
@@ -38,4 +41,9 @@ export const TILE_STYLE: Readonly<Record<string, TileStyle>> = {
   fam_4: { id: 'grp.collision', eyes: 4 },
   fam_5: { id: 'grp.collision', eyes: 5 },
   fam_6: { id: 'grp.collision', eyes: 6 },
+  duo_thread: { id: 'duo.clean_duo', eyes: 2 },
+  duo_radiance: { id: 'duo.radiance', eyes: 2 },
+  fam_orbit: { id: 'grp.orbit', eyes: 4 },
+  fam_circle: { id: 'grp.light_circle', eyes: 4 },
+  fam_radiance: { id: 'grp.radiance', eyes: 4 },
 };

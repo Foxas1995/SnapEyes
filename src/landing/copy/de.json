@@ -400,6 +400,12 @@
       "duo_clean": {
         "d": "Dasselbe Paar, ohne Pulver."
       },
+      "duo_thread": {
+        "d": "Zwei ganze Iriden, verbunden durch einen feinen goldenen Faden."
+      },
+      "duo_radiance": {
+        "d": "Zwei Iriden senden Strahlen in ihren eigenen Farben, die sich zwischen ihnen treffen."
+      },
       "fam_trio": {
         "d": "Drei Iriden im Dreieck."
       },
@@ -411,6 +417,15 @@
       },
       "fam_6": {
         "d": "Sechs Iriden, jede in ihrer eigenen Farbe."
+      },
+      "fam_orbit": {
+        "d": "Eine Iris in der Mitte, die Familie kreist um sie."
+      },
+      "fam_circle": {
+        "d": "Iriden im Kreis um ein kleines Licht."
+      },
+      "fam_radiance": {
+        "d": "Jede Iris sendet ihre eigenen feinen Strahlen."
       }
     },
     "own": "Das Auge von Mantas",

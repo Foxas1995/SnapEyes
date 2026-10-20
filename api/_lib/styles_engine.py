@@ -5,9 +5,9 @@ the two have exactly the same ids). Same rules for the literal as the public fil
 {} for nothing, ASCII, whole numbers, nothing after it.
 Fields of an entry (all are required):
   engine         {} while the style is planned (an id reserved, nothing to draw); else {module, design[, looks][, clean]}:
-                   module  singles | collision | universe | lumen | legacy: the engine family (lumen: the light looks of one eye,
-                           2026-10-20). catalogue.engine_built tells whether a module is in the repository: a style whose module is
-                           not built is never routed to, whatever its stage says
+                   module  singles | collision | universe | lumen | ensemble | legacy: the engine family (lumen: the light looks of one eye,
+                           2026-10-20; ensemble: the pairs and families of whole irises, 2026-10-20). catalogue.engine_built tells whether
+                           a module is in the repository: a style whose module is not built is never routed to, whatever its stage says
                    design  the engine's own key for the look
                    looks   {look: stage}: looks inside one style (Universe: echo, vortex, deepfield, starfield); a look never
                            has a higher stage than its style
@@ -189,6 +189,17 @@ ENGINE = {
         "fill_side": 1536,
         "wave": "R1"
     },
+    "duo.clean_duo": {
+        "engine": {"module": "ensemble", "design": "clean_duo"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "5:4", "1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
     "duo.universe": {
         "engine": {"module": "universe", "design": "echo"},
         "design_by_eyes": {},
@@ -212,9 +223,9 @@ ENGINE = {
         "wave": "R2"
     },
     "duo.radiance": {
-        "engine": {},
+        "engine": {"module": "ensemble", "design": "radiance_duo"},
         "design_by_eyes": {},
-        "canvases": ["3:2"],
+        "canvases": ["3:2", "5:4", "1:1", "4:5", "9:19.5"],
         "gate_rules": "lid",
         "plates": [],
         "atlas": [],
@@ -243,6 +254,28 @@ ENGINE = {
         "steps": {},
         "fill_side": 1536,
         "wave": "R1"
+    },
+    "grp.orbit": {
+        "engine": {"module": "ensemble", "design": "orbit"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "grp.light_circle": {
+        "engine": {"module": "ensemble", "design": "light_circle"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
     },
     "grp.chain": {
         "engine": {"module": "collision", "design": "chain"},
@@ -278,9 +311,9 @@ ENGINE = {
         "wave": "R2"
     },
     "grp.radiance": {
-        "engine": {},
+        "engine": {"module": "ensemble", "design": "radiance_family"},
         "design_by_eyes": {},
-        "canvases": ["3:2", "1:1"],
+        "canvases": ["3:2", "1:1", "5:4", "4:5"],
         "gate_rules": "lid",
         "plates": [],
         "atlas": [],

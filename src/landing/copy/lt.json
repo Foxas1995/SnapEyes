@@ -400,6 +400,12 @@
       "duo_clean": {
         "d": "Ta pati pora be miltelių."
       },
+      "duo_thread": {
+        "d": "Dvi visos rainelės, sujungtos plona auksine gija."
+      },
+      "duo_radiance": {
+        "d": "Dvi rainelės skleidžia savo spalvų spindulius, kurie susitinka tarp jų."
+      },
       "fam_trio": {
         "d": "Trys rainelės trikampyje."
       },
@@ -411,6 +417,15 @@
       },
       "fam_6": {
         "d": "Šešios rainelės, kiekviena savo spalvos."
+      },
+      "fam_orbit": {
+        "d": "Viena rainelė centre, šeima skrieja orbita aplink ją."
+      },
+      "fam_circle": {
+        "d": "Rainelės ratu aplink vieną mažą šviesą."
+      },
+      "fam_radiance": {
+        "d": "Kiekviena rainelė skleidžia savo plonus spindulius."
       }
     },
     "own": "Manto akis",

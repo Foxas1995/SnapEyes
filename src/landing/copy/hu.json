@@ -400,6 +400,12 @@
       "duo_clean": {
         "d": "Ugyanaz a pár, por nélkül."
       },
+      "duo_thread": {
+        "d": "Két teljes írisz, egy vékony arany szállal összekötve."
+      },
+      "duo_radiance": {
+        "d": "Két írisz saját színű sugarakat bocsát ki, amelyek köztük találkoznak."
+      },
       "fam_trio": {
         "d": "Három írisz háromszögben."
       },
@@ -411,6 +417,15 @@
       },
       "fam_6": {
         "d": "Hat írisz, mindegyik a saját színében."
+      },
+      "fam_orbit": {
+        "d": "Egy írisz középen, a család körülötte kering."
+      },
+      "fam_circle": {
+        "d": "Íriszek körben egy kis fény körül."
+      },
+      "fam_radiance": {
+        "d": "Minden írisz a saját finom sugarait bocsátja ki."
       }
     },
     "own": "Mantas szeme",

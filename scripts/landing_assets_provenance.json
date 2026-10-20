@@ -42,6 +42,12 @@
    "rights": "as above",
    "label": "mixed"
   },
+  "art/duo_thread_by_*, duo_radiance_bd_*, fam_orbit_4_*, fam_circle_4_*, fam_radiance_4_*": {
+   "eyes": "Clean Duo (duo_thread_by): own215120 + drv_w04. Radiance Duo (duo_radiance_bd): own215120 + drv_w06. Family Orbit (fam_orbit_4, the owner's own eye in the middle), Light Circle (fam_circle_4) and Radiance Family (fam_radiance_4): own215120, drv_w04, drv_w06, drv_w09. No drv_w03 (pink eyelid skin at the top of the iris) and no drv_d01 (lashes over the top of the iris): the owner's sample rule of 2026-10-20 for every public picture (no lid skin or lashes above an iris, no pupil far bigger than the others)",
+   "rights": "as above (LICENCIJOS.csv w04, w06, w09; the owner's own eye)",
+   "label": "mixed",
+   "made": "the ensemble family of this repository's engine (2026-10-20), the very pictures of the picker's tiles (scripts/make_style_tiles.py, the 1024 px clean render, no watermark, no words), reduced to 900 and 480 px, WebP quality 80 and 78"
+  },
   "art/fam_*": {
    "eyes": "trio: own215120, drv_w04, drv_w06. Family 4 to 6 and Family Universe: own215120, drv_w04, drv_w06, drv_d01, then lid19h (photo 19, Ojo-retina.jpg, Public domain, no conditions, LICENCIJOS.csv 19) as the fifth eye and drv_w09 (owner confirmed) as the sixth. The round 2c boards use p05i, p08f and p09f, which are CC BY-SA, so they were NOT used",
    "rights": "owner confirmed for every Drive photo, Public domain for lid19h; all shown only as 'Example photo, not a customer'",
