@@ -100,6 +100,8 @@ class Cfg:
     hair_shift: float = 0.0           # R: the hairline's centre sits this far outside (+) or inside (-) the limb
     # Pairs phase 2 (2026-10-14): the crossfade that follows the texture (seam_plan.texture_plan; engine.render turns blend 'oklab_tx' on for a woven pair whose plan has the texture)
     beta_f: float = 0.30              # blend 'oklab_tx': the linear share of the ramp of the fibre switch (blend_w)
+    # Pairs phase 3 (2026-10-20): the tone harmony inside the band of a woven lens (engine.render sets it from the option band_tone for a woven pair with the texture; 0 = off, the picture of phase 2)
+    band_tone: float = 0.0            # share of the gap by which the darker iris's low frequency lightness is pulled toward the lighter one's, at the middle of the band (0 where it ends)
 
     @property
     def p(self):
@@ -552,6 +554,8 @@ class Compositor:
             Xp = Xp * erX[..., None]
             AX = AX * erX
         wX = np.clip(1.0 - front_sum, 0.0, 1.0)
+        if self.cfg.band_tone > 0.0 and self.cfg.blend == "oklab_tx":
+            Xp, Bp_rgb = self._tone_layers(partners, j, wX, AX, aB, Xp, Bp_rgb, xs, ys)
         Xm = Xp * mult_x[..., None]
         Bm = Bp_rgb * mult_b[..., None]
         wx = 1.0 - (1.0 - wX) * aB
@@ -615,6 +619,47 @@ class Compositor:
         res = out[sub]
         res[bm] = SP.oklab_to_srgb255(lab[bm])
         out[sub] = res
+
+    def _tone_layers(self, partners, j, wX, AX, aB, Xp, Bp, xs, ys):
+        """The tone harmony of a woven lens (pairs phase 3, cfg.band_tone): inside the band of the colours the low frequency lightness of the DARKER of the two irises is pulled toward the
+        lighter one's by up to band_tone of their gap, with the profile sin^2(pi w) of the colour weight w (1 in the middle of the band, 0 where the band ends, so that no pixel outside it
+        and no pixel at its edge moves). The gap is the plan's coarse tone field (seam_plan.texture_plan tex_tone: OKLab lightness, a Gaussian of 0.03 R of each iris on the canonical
+        grade), so the pull is a smooth shift of the darker iris's own pixels: its fibres keep their contrast and colour (the detail layers of _blend_band are the layers minus their own low
+        pass), and it is made on the iris before the contact edge's multiplier, so the dark edge keeps its depth. Returns (Xp, Bp): the arrays that came in where nothing moves, a copy
+        with the band's pixels shifted where something does."""
+        if len(partners) != 1:
+            return Xp, Bp
+        ri = partners[0][1]
+        rule = self.sc.rules[ri]
+        plan = (self.cfg.plans or {}).get(ri)
+        if rule.mode != "weave" or plan is None or getattr(plan, "tex_tone", None) is None:
+            return Xp, Bp
+        band = (wX > 0.0) & (wX < 1.0) & (AX > 0.999) & (aB > 0.999)
+        if not band.any():
+            return Xp, Bp
+        iy, ix = np.nonzero(band)
+        ta, tb = self.tiles[rule.a], self.tiles[rule.b]
+        Ra = np.float32(ta.R)
+        px, py = xs[0, ix], ys[iy, 0]
+        vx, vy = rule.uy, -rule.ux
+        t = ((px - ta.cx) * vx + (py - ta.cy) * vy) / Ra
+        s = ((px - 0.5 * (ta.cx + tb.cx)) * rule.ux + (py - 0.5 * (ta.cy + tb.cy)) * rule.uy) / Ra
+        gap = plan.tex_tone.at(s, t)                                   # the lightness of iris B minus iris A here
+        if j == rule.a:
+            gap = -gap                                                 # j: the iris composited now, X: the one already there; gap = j minus X
+        amt = np.float32(self.cfg.band_tone) * np.sin(np.pi * wX[iy, ix]).astype(np.float32) ** 2
+        out = []
+        for P, d in ((Xp, amt * np.maximum(gap, 0.0)), (Bp, amt * np.maximum(-gap, 0.0))):       # the darker one is lifted: X where j is lighter, j where X is
+            sel = d > 0.0
+            if not sel.any():
+                out.append(P)
+                continue
+            P = P.copy()
+            lab = SP.srgb_to_oklab(P[iy[sel], ix[sel]])
+            lab[:, 0] += d[sel]
+            P[iy[sel], ix[sel]] = SP.oklab_to_srgb255(lab)
+            out.append(P)
+        return out[0], out[1]
 
     def _hairline(self, out, aout, k, hk, j, hj):
         for idx, cov in ((k, hk), (j, hj)):

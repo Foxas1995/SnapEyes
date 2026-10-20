@@ -643,10 +643,12 @@ def render(design, irises, fmt=None, size=1024, names=None, date=None, bg="dark"
             if design in PAIR_DESIGNS and o.get("seam_follow") == "texture" and o.get("plan_fn") is None:
                 # pairs phase 2: the crossfade follows the texture of the two irises (the plan's band, line and budgets are kept: seam_plan.texture_plan); the colours cross over the weight of the
                 # plan, the detail layers over the weight of the texture (blend 'oklab_tx')
-                cfg.plans[ri] = SP.texture_plan(cfg.plans[ri], irises[r.a], irises[r.b], dR, rc.ux, rc.uy, C, o.get("seam_tex"), o.get("mix_budget", SP.MIX_BUDGET),
+                tex_p = dict(SP.TONGUE_ROUND if o.get("tongue") == "round" else {}, **(o.get("seam_tex") or {}))          # pairs phase 3: the tongues of the colours rounded (option tongue)
+                cfg.plans[ri] = SP.texture_plan(cfg.plans[ri], irises[r.a], irises[r.b], dR, rc.ux, rc.uy, C, tex_p or None, o.get("mix_budget", SP.MIX_BUDGET),
                                                 o.get("support_budget", SP.SUPPORT_BUDGET))
         if any(getattr(p_, "tex_f", None) is not None for p_ in cfg.plans.values()):
             cfg.blend, cfg.beta_f = "oklab_tx", SP.TEXTURE_SEAM["beta_f"]
+            cfg.band_tone = min(max(float(o.get("band_tone") or 0.0), 0.0), 1.0)          # pairs phase 3: the tone harmony inside the band (0 = off)
             if "dp_sigma" not in o:
                 cfg.dp_sigma = SP.TEXTURE_SEAM["split"]
     info["plan_s"] = round(time.perf_counter() - t_plan, 3)

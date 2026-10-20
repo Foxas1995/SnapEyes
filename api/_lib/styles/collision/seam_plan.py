@@ -172,6 +172,8 @@ class SeamPlan:
     tex_c_amp: float = 0.0              # R: how far the colour seam moves where tex_c is +-1
     tex_f: object = None                # a TexField (unit): the switch of the FIBRES (the detail layers of the two irises, blend 'oklab_tx') inside the band of the colours
     tex_f_alpha: float = 0.0            # the share of the colour band's half width by which the fibre switch moves where tex_f is +-1 (its own half width is 1 minus this)
+    # pairs design phase 3 (texture_plan): the coarse tone of the two irises in the lens, for the tone harmony inside the band (collision.PAIR_FINISH band_tone, compositor._tone_layers)
+    tex_tone: object = None             # a TexField (OKLab lightness, B minus A, a Gaussian of tone_sig R of each iris, faded out toward the limbs like the displacements)
 
     def line(self, s):
         x = np.clip(s / np.float32(self.L), -1.15, 1.15)
@@ -411,7 +413,14 @@ def support_share(plan, d, step=0.006):
 TEXTURE_SEAM = {"ds": 0.005, "T": 0.32, "eps": 0.35, "st_sig": 0.03, "edge": 0.14,
                 "f_alpha": 0.6, "f_hp": 0.012, "f_gain": 2.5, "f_along": 0.05, "f_across": 0.004,
                 "c_amp": 0.065, "c_hp": 0.02, "c_gain": 2.5, "c_along": 0.07, "c_across": 0.009, "c_grow": 0.8,
-                "split": 0.010, "beta_f": 0.30}
+                "split": 0.010, "beta_f": 0.30, "tone_sig": 0.03}
+
+
+# pairs design phase 3, step 2 (option tongue "round", collision.PAIR_FINISH): the tongues of the colour crossfade (tex_c) with a smaller maximum and rounder ends. In phase 2 the key of the tongues is
+# smoothed along the fibres by 0.07 R and across them by only 0.009 R, and tanh(2.5 x key) saturates over long thin stretches: a tongue of one iris reaches into the other as a thin sliver, 0.065 R
+# long, that reads as a hair (the raw 0.5 contour of the colour weight is 1.6 to 2.0 times as long as a straight seam on the blue and brown pairs, the owner's H11 is 1.03 and H10 1.22). The round
+# tongue is smoothed 0.014 R across the fibres, saturates less (gain 1.8) and reaches 0.05 R: the macro line and the fibre switch (tex_f) are the same, the contour is 1.0 to 1.1 times a straight seam.
+TONGUE_ROUND = {"c_across": 0.014, "c_amp": 0.05, "c_gain": 1.8}
 
 
 class TexField:
@@ -525,12 +534,15 @@ def texture_plan(plan, ir_a, ir_b, d, ux, uy, C, params=None, mix_budget=MIX_BUD
     rA = np.hypot((S + d / 2.0) * ux + Tt * vx, (S + d / 2.0) * uy + Tt * vy)
     rB = np.hypot((S - d / 2.0) * ux + Tt * vx, (S - d / 2.0) * uy + Tt * vy)
     fade = smooth(0.0, q["edge"], 1.0 - np.maximum(rA, rB))            # at the limbs the seam is the plan's: the displacements fade out toward the boundary of the lens
+    sgt = q["tone_sig"] / ds                                           # the coarse tone of each iris (several fibres: a Gaussian of 0.03 R), B minus A, on the same fade
+    tone = (_lowpass(srgb_to_oklab(m["rgbB"])[..., 0], val, sgt) - _lowpass(srgb_to_oklab(m["rgbA"])[..., 0], val, sgt)) * fade
 
     def unit(hp, along, across, gain):
         u = np.tanh(gain * _along(key(hp), ang, along / ds, across / ds)) * fade
         return TexField(s[0], t[0], ds, np.where(val > 0.5, u, 0.0).astype(np.float32))
     out = dataclasses.replace(plan, tex_c=unit(q["c_hp"], q["c_along"], q["c_across"], q["c_gain"]), tex_c_amp=float(q["c_amp"]),
-                              tex_f=unit(q["f_hp"], q["f_along"], q["f_across"], q["f_gain"]), tex_f_alpha=float(q["f_alpha"]), info=dict(plan.info))
+                              tex_f=unit(q["f_hp"], q["f_along"], q["f_across"], q["f_gain"]), tex_f_alpha=float(q["f_alpha"]), info=dict(plan.info),
+                              tex_tone=TexField(s[0], t[0], ds, np.where(val > 0.5, tone, 0.0).astype(np.float32)))
     hw0 = plan.hw_k.copy()
     lo_, hi_ = 0.25, float(q["c_grow"])
     out.hw_k = (hw0 * np.float32(hi_)).astype(np.float32)

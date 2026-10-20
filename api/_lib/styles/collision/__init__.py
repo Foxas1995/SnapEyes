@@ -71,7 +71,7 @@ SIZES = (64, 4096)                                                          # th
 NAMES_MAX = 8
 E1_BAND_MAX = 0.04                                                          # the owner's budget: the seam band (support of the blend, as T1 pads it) per iris
 MIX_MAX = 0.03                                                              # ... and the pixels that are really mixed (0.02 < w < 0.98): about 3 percent
-# The last five are the finish of the two-iris designs (pairs design phase 1, 2026-10-14) and reach a pair only (engine.PAIR_DESIGNS: Kiss, Collision Infinity, Clean Infinity
+# The last seven are the finish of the two-iris designs (pairs design phases 1 to 3, 2026-10-14 to 20) and reach a pair only (engine.PAIR_DESIGNS: Kiss, Collision Infinity, Clean Infinity
 # and an infinity that fell back to the Kiss geometry); the trio, the families and the chain draw as before. rim "both": a contact is drawn as the bright hairline only where
 # BOTH bands are dark (the prototype: where the back band is). crumble_aa: the crumbling contact of the Kiss geometry is antialiased (2.2 px) instead of cut at hard thresholds.
 # dust "fine": the same powder drawn as smaller, rounder, softer flakes (engine.PAIR_DUST). valley "deep": Collision Infinity and Clean Infinity (engine.VALLEY_DEEP_STYLES), the
@@ -79,12 +79,15 @@ MIX_MAX = 0.03                                                              # ..
 # seam_follow "texture" (pairs design phase 2): the woven lens of Clean and Collision Infinity crosses its two irises along their texture (seam_plan.texture_plan: the colours move along the
 # larger structures of the irises, the fibres switch at the scale of a fibre inside the band of the colours, blend 'oklab_tx') instead of in a straight band where both irises' fibres are
 # mixed; the plan's band, line and budgets (D13) are kept. "line" is the straight band.
-PAIR_FINISH = {"rim": "both", "crumble_aa": 2.2, "dust": "fine", "valley": "deep", "seam_follow": "texture"}
+# band_tone (pairs design phase 3, step 1): the share (0 to 1) of the gap by which, inside the band of a woven lens, the low frequency lightness of the darker iris is pulled toward the lighter
+# one's (compositor._tone_layers; 0 is off, the picture of phase 2). Only the pixels of the band move, and they fade to no change at its edge; the fibres keep their contrast and colour.
+# tongue (pairs design phase 3, step 2): the tongues of the colour crossfade of the texture seam, "thin" as in phase 2 (reach 0.065 R, thin slivers) or "round" (seam_plan.TONGUE_ROUND: reach 0.05 R, rounder ends).
+PAIR_FINISH = {"rim": "both", "crumble_aa": 2.2, "dust": "fine", "valley": "deep", "seam_follow": "texture", "band_tone": 0.0, "tongue": "thin"}
 PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble", **PAIR_FINISH}
 OPT_KEYS = frozenset(("edge", "zone_c", "seam", "seam_dust", "kiss_d", "hairline", "plates", "breakup", "rotate", "trio_base", "lens_mode", "plan_mode", "beta", "seed_mode",
                       "support_budget", "strict_gate", "allow_bar", "exact_scale", "auto_hairline", "mem", "prm", "fill", "keep_cv", "flood", "seam_hw",
                       "seam_amp", "seam_lam", "seam_bend", "seam_fine", "seam_wave", "blend", "pad", "dp_sigma", "dp_rho",
-                      "rim", "crumble_aa", "dust", "valley", "hair", "seam_follow", "seam_tex"))
+                      "rim", "crumble_aa", "dust", "valley", "hair", "seam_follow", "seam_tex", "band_tone", "tongue"))
 T3_TOL = 0.004                                                              # the visible share is measured on pixels: a margin of 0.4 point
 T3_ZONE = 0.985                                                             # ... inside this share of R (the brief's definition: the feather of the disc is not the iris)
 SEPARATORS = (" ∞ ", " & ", " · ")                               # what layout_text puts between names (an infinity, an ampersand, a middle dot)

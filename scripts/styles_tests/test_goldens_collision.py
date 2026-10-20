@@ -1322,6 +1322,150 @@ check("the texture plan is a function of the two irises and the geometry alone: 
       "made from, the size of the render does not enter (the fields of a 256 px and of a 512 px render are the same), and the colour band keeps the plan's line",
       np.array_equal(tp_a.tex_c.arr, tp_b.tex_c.arr) and np.array_equal(tp_a.tex_f.arr, tp_b.tex_f.arr) and np.array_equal(tp_a.hw_k, tp_b.hw_k) and pp_a.tex_c is None and pp_a.tex_f is None
       and np.array_equal(tp_s.tex_c.arr, pl_on.tex_c.arr) and tp_a.a == pp_a.a and float(np.abs(tp_a.tex_c.arr).max()) <= 1.0 and float(np.abs(tp_a.tex_f.arr).max()) <= 1.0, "")
+# ============================================================================================ 12. the tone harmony inside the band (pairs design phase 3)
+section("12. pairs design phase 3 (2026-10-20): the tone harmony inside the band of the woven lens (collision.PAIR_FINISH band_tone, compositor._tone_layers, seam_plan.texture_plan tex_tone)")
+TONEON, TONEOFF = {"band_tone": 0.30}, {"band_tone": 0.0}
+same3_ = [pix_sha(finish_render(d, n, f, s_, {"band_tone": 1.0}, layout=l)) == pix_sha(finish_render(d, n, f, s_, TONEOFF, layout=l)) for d, n, f, s_, l in OTHERS2]
+stk3_on, stk3_off = finish_render("infinity", ("blue", "green"), "3:2", 384, {"lens_mode": "stack", "band_tone": 1.0}, clean=True), finish_render("infinity", ("blue", "green"), "3:2", 384, {"lens_mode": "stack", **TONEOFF}, clean=True)
+ln3_on, ln3_off = finish_render("infinity", ("blue", "brown"), "3:2", 384, {"seam_follow": "line", "band_tone": 1.0}, clean=True), finish_render("infinity", ("blue", "brown"), "3:2", 384, {"seam_follow": "line", **TONEOFF}, clean=True)
+check("the tone harmony reaches the woven lens with the texture only: a trio, a family of four, a chain, a Kiss pair, an infinity that fell back to the Kiss geometry (a wide pupil), the stack lens and "
+      "the straight band (seam_follow line) are the same picture at full strength and off, byte for byte; the setting is a share between 0 and 1 and the switch is in the production options of the pairs",
+      all(same3_) and pix_sha(stk3_on) == pix_sha(stk3_off) and pix_sha(ln3_on) == pix_sha(ln3_off) and 0.0 <= CX.PAIR_FINISH["band_tone"] <= 1.0 and CX.PRODUCTION["band_tone"] == CX.PAIR_FINISH["band_tone"]
+      and CC.PAIR_FINISH["band_tone"] == CX.PAIR_FINISH["band_tone"] and CC.PROTOTYPE_FINISH["band_tone"] == 0.0 and "band_tone" in CX.OPT_KEYS, (same3_, pix_sha(stk3_on) == pix_sha(stk3_off), pix_sha(ln3_on) == pix_sha(ln3_off)))
+tn_on, tn_off = finish_render("infinity", ("blue", "brown"), "3:2", 512, TONEON, clean=True), finish_render("infinity", ("blue", "brown"), "3:2", 512, TONEOFF, clean=True)
+pn_on, pn_off = tn_on.cfg.plans[0], tn_off.cfg.plans[0]
+check("on a woven pair the switch changes the picture and nothing of the plan: the same design, front, seed, lens and distance, the very same seam plan (its line, its half width and both texture fields, so the "
+      "mixed share, the support and the seam band of the budgets cannot move), the compositor takes the share and the plan carries the coarse tone field",
+      pix_sha(tn_on) != pix_sha(tn_off) and tn_on.seed == tn_off.seed and tn_on.info["rules"] == tn_off.info["rules"] and tn_on.info["d_over_R"] == tn_off.info["d_over_R"]
+      and tn_on.info["lens_mode_used"] == tn_off.info["lens_mode_used"] == "weave" and pn_on.a == pn_off.a and np.array_equal(pn_on.hw_k, pn_off.hw_k) and np.array_equal(pn_on.tex_c.arr, pn_off.tex_c.arr)
+      and np.array_equal(pn_on.tex_f.arr, pn_off.tex_f.arr) and np.array_equal(pn_on.tex_tone.arr, pn_off.tex_tone.arr) and pn_on.info["mixed_share"] == pn_off.info["mixed_share"]
+      and pn_on.info["support_share"] == pn_off.info["support_share"] and tn_on.cfg.band_tone == 0.30 and tn_off.cfg.band_tone == 0.0 and tn_on.cfg.blend == "oklab_tx", (tn_on.cfg.band_tone, tn_off.cfg.band_tone))
+t_on, t_off = np.asarray(tn_on.img.convert("RGB")).astype(np.int16), np.asarray(tn_off.img.convert("RGB")).astype(np.int16)
+dpx3 = np.argwhere(np.abs(t_on - t_off).max(axis=2) > 0)
+rule3, ta3, tb3 = tn_on.scene.rules[0], tn_on.tiles[0], tn_on.tiles[1]
+xs3, ys3 = dpx3[:, 1].astype(np.float32) + 0.5, dpx3[:, 0].astype(np.float32) + 0.5
+tp3, hw3 = CMP.seam_field(tn_on.cfg, rule3, ta3, tb3, xs3, ys3, 0, fine=True)
+w3 = CMP.blend_w(tp3, hw3, tn_on.cfg.beta)
+inlens3 = (np.hypot(xs3 - ta3.cx, ys3 - ta3.cy) <= ta3.R) & (np.hypot(xs3 - tb3.cx, ys3 - tb3.cy) <= tb3.R)
+check("the tone harmony changes nothing outside the band: every pixel that differs between full strength 0.30 and off lies inside both discs and has a colour weight strictly between 0 and 1 (the support of "
+      "the crossfade, the band that T1 and the budgets count), so the pupils, the limbs, the contact edges and both irises outside the band are untouched",
+      len(dpx3) > 200 and bool(inlens3.all()) and bool(((w3 > 0.0) & (w3 < 1.0)).all()), (len(dpx3), int((~inlens3).sum()), float(w3.min()) if len(w3) else None, float(w3.max()) if len(w3) else None))
+mid3 = (w3 > 0.4) & (w3 < 0.6)
+edge3 = (w3 < 0.1) | (w3 > 0.9)
+dmag3 = np.abs(t_on - t_off).max(axis=2)[dpx3[:, 0], dpx3[:, 1]].astype(np.float32)
+check("it fades out toward the edge of the band: the change in the outer tenths of the colour weight is a small share of the change in the middle (the profile sin^2(pi w) is 0 at both edges and 1 in the middle)",
+      mid3.sum() > 30 and edge3.sum() > 30 and float(dmag3[edge3].mean()) < 0.35 * float(dmag3[mid3].mean()), (int(mid3.sum()), int(edge3.sum()), float(dmag3[mid3].mean()), float(dmag3[edge3].mean())))
+lab_on, lab_off = SP.srgb_to_oklab(t_on[dpx3[:, 0], dpx3[:, 1]].astype(np.float32)), SP.srgb_to_oklab(t_off[dpx3[:, 0], dpx3[:, 1]].astype(np.float32))
+dL3 = lab_on[:, 0] - lab_off[:, 0]
+cap3 = 0.30 * float(np.abs(pn_on.tex_tone.arr).max())
+check("the pull is toward the lighter iris and within the share: where the picture changes it gets lighter (the mean change of lightness is positive, 99 percent of the pixels are not darker by more than the "
+      "rounding of a level), and no pixel is lifted by more than 0.30 of the largest gap of the lens plus the rounding",
+      float(dL3.mean()) > 0.0 and float((dL3 > -0.006).mean()) >= 0.99 and float(dL3.max()) <= cap3 + 0.008 and cap3 > 0.05, (float(dL3.mean()), float((dL3 > -0.006).mean()), float(dL3.max()), cap3))
+rec_ = {}
+orig_tone = CMP.Compositor._tone_layers
+
+
+def wrap_tone(self, partners, j, wX, AX, aB, Xp, Bp, xs, ys):
+    X2, B2 = orig_tone(self, partners, j, wX, AX, aB, Xp, Bp, xs, ys)
+    rec_.update(args=(partners, j, wX, AX, aB, xs, ys), X=(Xp, X2), B=(Bp, B2))
+    return X2, B2
+
+
+with mock.patch.object(CMP.Compositor, "_tone_layers", wrap_tone):
+    tn_1k = finish_render("infinity", ("blue", "brown"), "3:2", 1024, TONEON, clean=True)
+partners_, j_, wX_, AX_, aB_, xs_k, ys_k = rec_["args"]
+rng_ = np.random.RandomState(5)
+tex_k = rng_.normal(0.0, 10.0, wX_.shape + (1,)).astype(np.float32)          # a fibre texture of +-10 levels of sRGB, white noise: the finest detail there is
+dL_seen, dL_tex, n_ch = [], [], 0
+for nm_ in ("X", "B"):
+    P0_, P1_ = rec_[nm_]
+    Pt_ = np.clip(P0_ + tex_k, 0.0, 255.0).astype(np.float32)
+    Xt_, Bt_ = orig_tone(tn_1k.comp, partners_, j_, wX_, AX_, aB_, Pt_ if nm_ == "X" else rec_["X"][0], Pt_ if nm_ == "B" else rec_["B"][0], xs_k, ys_k)
+    Pt2_ = Xt_ if nm_ == "X" else Bt_
+    ch_ = (np.abs(SP.srgb_to_oklab(P1_)[..., 0] - SP.srgb_to_oklab(P0_)[..., 0]) > 1e-6) & (Pt_ > 12.0).all(axis=2) & (Pt_ < 243.0).all(axis=2)
+    n_ch += int(ch_.sum())
+    dL_seen.append((SP.srgb_to_oklab(P1_)[..., 0] - SP.srgb_to_oklab(P0_)[..., 0])[ch_])
+    dL_tex.append((SP.srgb_to_oklab(Pt2_)[..., 0] - SP.srgb_to_oklab(Pt_)[..., 0])[ch_])
+dL_seen, dL_tex = np.concatenate(dL_seen), np.concatenate(dL_tex)
+check("the fibres keep their contrast and colour: the pull adds the same lightness to a pixel whatever its own value (it is a function of the place in the lens and of the colour weight, never of the iris's "
+      "pixels): the lightness added to the two layers of the render and to the same layers with a +-10 level white noise texture on top (away from black and white) agree within 0.004 for 99 percent of the pixels",
+      n_ch > 300 and float((np.abs(dL_seen - dL_tex) < 0.004).mean()) >= 0.99 and float(dL_seen.mean()) > 0.003, (n_ch, float((np.abs(dL_seen - dL_tex) < 0.004).mean()), float(dL_seen.mean())))
+tn_15, tn_100 = finish_render("infinity", ("blue", "brown"), "3:2", 512, {"band_tone": 0.15}, clean=True), finish_render("infinity", ("blue", "brown"), "3:2", 512, {"band_tone": 1.0}, clean=True)
+m_ = lambda r: float(np.abs(np.asarray(r.img.convert("RGB")).astype(np.int16) - t_off).mean())
+check("the share is a strength: 0.15, 0.30 and 1.0 change the picture more and more (the mean change per pixel rises with it), and a render with a share of 0 or none draws the old picture",
+      0.0 < m_(tn_15) < m_(tn_on) < m_(tn_100) and pix_sha(finish_render("infinity", ("blue", "brown"), "3:2", 512, {k: v for k, v in CC.PRODUCTION.items() if k != "band_tone"}, clean=True)) == pix_sha(tn_off),
+      (m_(tn_15), m_(tn_on), m_(tn_100)))
+rep_tn, rep_tf = CX.selfcheck(tn_on, "infinity", ["duo.clean", "infinity", "pair"], None, None), CX.selfcheck(tn_off, "infinity", ["duo.clean", "infinity", "pair"], None, None)
+check("the budgets of the owner's reading A and every check of the self check hold with the tone harmony (T1 and T6: every pixel outside the band is the graded iris; T2; T3; T19) and the seam numbers are "
+      "the very numbers of the picture without it", rep_tn["ok"] and rep_tn["checks"]["seam"]["ok"] and rep_tn["checks"]["seam"] == rep_tf["checks"]["seam"] and rep_tn["checks"]["seam"]["e1"] <= CX.E1_BAND_MAX
+      and pn_on.info["mixed_share"] <= SP.MIX_BUDGET + 1e-6 and pn_on.info["support_share"] <= SP.SUPPORT_BUDGET + 1e-6, {k: v for k, v in rep_tn["checks"].items() if not v.get("ok", True)})
+ea3, eb3 = EYEOBJ["blue"], EYEOBJ["brown"]
+pp3 = SP.plan_seam(ea3, eb3, tn_on.info["d_over_R"][0], 1.0, 0.0, K.pupil(ea3), K.pupil(eb3), C)
+tt_a, tt_b = SP.texture_plan(pp3, ea3, eb3, tn_on.info["d_over_R"][0], 1.0, 0.0, C), SP.texture_plan(pp3, ea3, eb3, tn_on.info["d_over_R"][0], 1.0, 0.0, C)
+tt_s = finish_render("infinity", ("blue", "brown"), "3:2", 256, TONEON, clean=True).cfg.plans[0]
+tt_r = SP.texture_plan(pp3, eb3, ea3, tn_on.info["d_over_R"][0], 1.0, 0.0, C)
+check("the coarse tone field is a function of the two irises and the geometry alone: planning twice gives the same field (no random number, no clock), the plan it was made from has none, the size of the "
+      "render does not enter (a 256 px and a 512 px render carry the same field), it is zero where the displacements are (the limbs: it fades out with them) and it changes sign when the irises are "
+      "exchanged (lightness of B minus A)", np.array_equal(tt_a.tex_tone.arr, tt_b.tex_tone.arr) and pp3.tex_tone is None and np.array_equal(tt_s.tex_tone.arr, pn_on.tex_tone.arr)
+      and bool(np.isfinite(tt_a.tex_tone.arr).all()) and float(np.abs(tt_a.tex_tone.arr).max()) > 0.1 and float(np.sign(tt_a.tex_tone.arr.sum())) == -float(np.sign(tt_r.tex_tone.arr.sum())),
+      (float(tt_a.tex_tone.arr.sum()), float(tt_r.tex_tone.arr.sum())))
+# ============================================================================================ 13. the tongues of the texture seam rounded (pairs design phase 3, step 2)
+section("13. pairs design phase 3, step 2 (2026-10-20): the tongues of the colour crossfade are rounder (collision.PAIR_FINISH tongue, seam_plan.TONGUE_ROUND)")
+TGON, TGOFF = {"tongue": "round"}, {"tongue": "thin"}
+same4_ = [pix_sha(finish_render(d, n, f, s_, TGON, layout=l)) == pix_sha(finish_render(d, n, f, s_, TGOFF, layout=l)) for d, n, f, s_, l in OTHERS2]
+stk4_on, stk4_off = finish_render("infinity", ("blue", "green"), "3:2", 384, {"lens_mode": "stack", **TGON}, clean=True), finish_render("infinity", ("blue", "green"), "3:2", 384, {"lens_mode": "stack", **TGOFF}, clean=True)
+ln4_on, ln4_off = finish_render("infinity", ("blue", "brown"), "3:2", 384, {"seam_follow": "line", **TGON}, clean=True), finish_render("infinity", ("blue", "brown"), "3:2", 384, {"seam_follow": "line", **TGOFF}, clean=True)
+check("the rounder tongues reach the woven lens with the texture only: a trio, a family of four, a chain, a Kiss pair, an infinity that fell back to the Kiss geometry, the stack lens and the straight band "
+      "are the same picture with them and without, byte for byte; the switch is one of the two shapes, in the production options of the pairs and in the tests' copy of them, and the round shape reaches less, "
+      "is smoothed more across the fibres and saturates less than the phase 2 shape",
+      all(same4_) and pix_sha(stk4_on) == pix_sha(stk4_off) and pix_sha(ln4_on) == pix_sha(ln4_off) and CX.PAIR_FINISH["tongue"] in ("thin", "round") and CX.PRODUCTION["tongue"] == CX.PAIR_FINISH["tongue"]
+      and CC.PAIR_FINISH["tongue"] == CX.PAIR_FINISH["tongue"] and CC.PROTOTYPE_FINISH["tongue"] == "thin" and "tongue" in CX.OPT_KEYS and SP.TONGUE_ROUND["c_amp"] < SP.TEXTURE_SEAM["c_amp"]
+      and SP.TONGUE_ROUND["c_across"] > SP.TEXTURE_SEAM["c_across"] and SP.TONGUE_ROUND["c_gain"] < SP.TEXTURE_SEAM["c_gain"] and set(SP.TONGUE_ROUND) <= set(SP.TEXTURE_SEAM), (same4_, ))
+tg_on, tg_off = finish_render("infinity", ("blue", "brown"), "3:2", 512, TGON, clean=True), finish_render("infinity", ("blue", "brown"), "3:2", 512, TGOFF, clean=True)
+pg_on, pg_off = tg_on.cfg.plans[0], tg_off.cfg.plans[0]
+check("on a woven pair the switch changes the picture and only the tongues of the colours: the same design, front, seed, lens and distance, the same line of the seam, the very same switch of the fibres "
+      "and tone field, another colour field with a smaller reach (0.05 R against 0.065 R), the band re-fitted to the budgets as before",
+      pix_sha(tg_on) != pix_sha(tg_off) and tg_on.seed == tg_off.seed and tg_on.info["rules"] == tg_off.info["rules"] and tg_on.info["d_over_R"] == tg_off.info["d_over_R"]
+      and tg_on.info["lens_mode_used"] == tg_off.info["lens_mode_used"] == "weave" and pg_on.a == pg_off.a and np.array_equal(pg_on.tex_f.arr, pg_off.tex_f.arr) and np.array_equal(pg_on.tex_tone.arr, pg_off.tex_tone.arr)
+      and not np.array_equal(pg_on.tex_c.arr, pg_off.tex_c.arr) and pg_on.tex_c_amp == 0.05 and pg_off.tex_c_amp == 0.065 and pg_on.tex_f_alpha == pg_off.tex_f_alpha, (pg_on.tex_c_amp, pg_off.tex_c_amp))
+
+
+def contour_per_width(r):
+    """Length of the 0.5 contour of the colour weight in the lens over the width of the lens (a straight seam across is 1.0), on the lens grid at 0.005 R (the proxy of DG1's tortuosity of the raw weight)."""
+    pl = r.cfg.plans[0]
+    d = r.info["d_over_R"][0]
+    L = 1.0 - d / 2.0
+    S, T = np.meshgrid(np.arange(-L, L, 0.005, dtype=np.float32), np.arange(-0.4, 0.4, 0.005, dtype=np.float32))
+    tpc, hwc = pl.tp_hw(S, T)
+    b = CMP.blend_w(tpc, hwc, pl.beta) > 0.5
+    lens = (np.hypot(S + d / 2.0, T) <= 1.0) & (np.hypot(S - d / 2.0, T) <= 1.0)
+    return float(((b[:, 1:] != b[:, :-1]) & lens[:, 1:] & lens[:, :-1]).sum() + ((b[1:, :] != b[:-1, :]) & lens[1:, :] & lens[:-1, :]).sum()) * 0.005 / (2.0 * L)
+
+
+cw_ = [(contour_per_width(finish_render("infinity", p_, "3:2", 384, TGOFF, clean=True)), contour_per_width(finish_render("infinity", p_, "3:2", 384, TGON, clean=True)))
+       for p_ in (("blue", "brown"), ("grey", "amber"), ("blue", "green"), ("brown", "brown2"))]
+check("the tongues are rounder: the 0.5 contour of the colour weight in the lens is at most 0.8 of its phase 2 length on four pairs (1.2 to 1.4 against 1.7 to 2.8 times the width of the lens), and never "
+      "shorter than a straight seam across", all(1.0 <= b_ <= 0.8 * a_ for a_, b_ in cw_), cw_)
+a4_on, a4_off = np.asarray(tg_on.img.convert("RGB")).astype(np.int16), np.asarray(tg_off.img.convert("RGB")).astype(np.int16)
+dpx4 = np.argwhere(np.abs(a4_on - a4_off).max(axis=2) > 0)
+rule4, ta4, tb4 = tg_on.scene.rules[0], tg_on.tiles[0], tg_on.tiles[1]
+vx4, vy4 = rule4.uy, -rule4.ux
+xs4, ys4 = dpx4[:, 1].astype(np.float32) + 0.5, dpx4[:, 0].astype(np.float32) + 0.5
+t4_ = ((xs4 - ta4.cx) * vx4 + (ys4 - ta4.cy) * vy4) / ta4.R
+s4_ = ((xs4 - 0.5 * (ta4.cx + tb4.cx)) * rule4.ux + (ys4 - 0.5 * (ta4.cy + tb4.cy)) * rule4.uy) / ta4.R
+reach4 = max(float(pg_on.hw_k.max()) + pg_on.tex_c_amp, float(pg_off.hw_k.max()) + pg_off.tex_c_amp) + 0.02
+inlens4 = (np.hypot(xs4 - ta4.cx, ys4 - ta4.cy) <= 1.02 * ta4.R) & (np.hypot(xs4 - tb4.cx, ys4 - tb4.cy) <= 1.02 * tb4.R)
+check("the rounder tongues change nothing outside the seam: every pixel that differs lies inside the lens (with the feather of its two discs) and within the reach of the band of the colours (the half width "
+      "and the displacement) of the line of the plan",
+      len(dpx4) > 500 and bool(inlens4.all()) and bool((np.abs(t4_ - pg_on.line(s4_)) <= reach4).all()), (len(dpx4), int((~inlens4).sum()), float(np.abs(t4_ - pg_on.line(s4_)).max()), reach4))
+rep_g = CX.selfcheck(tg_on, "infinity", ["duo.clean", "infinity", "pair"], None, None)
+fin_ = finish_render("infinity", ("blue", "brown"), "3:2", 512, {"tongue": "round", "band_tone": 0.30}, clean=True)
+rep_f = CX.selfcheck(fin_, "infinity", ["duo.clean", "infinity", "pair"], None, None)
+pf_ = fin_.cfg.plans[0]
+check("the budgets of the owner's reading A hold with the rounder tongues, alone and with the tone harmony on: the mixed share and the support at most 3 percent of an iris, the seam band of T1 at most 4, "
+      "and every check of the self check passes (T1, T2, T3, T6, T19)", rep_g["ok"] and rep_g["checks"]["seam"]["ok"] and rep_f["ok"] and rep_f["checks"]["seam"]["ok"] and pg_on.info["mixed_share"] <= SP.MIX_BUDGET + 1e-6
+      and pg_on.info["support_share"] <= SP.SUPPORT_BUDGET + 1e-6 and pf_.info["support_share"] <= SP.SUPPORT_BUDGET + 1e-6 and rep_g["checks"]["seam"]["e1"] <= CX.E1_BAND_MAX and rep_f["checks"]["seam"]["e1"] <= CX.E1_BAND_MAX,
+      ({k: v for k, v in rep_g["checks"].items() if not v.get("ok", True)}, {k: v for k, v in rep_f["checks"].items() if not v.get("ok", True)}))
 # ============================================================================================ 8. real eyes and the scratch tree (LOCAL)
 section("9. LOCAL: the real calibration eyes and the port as the scratch plus its edits")
 if CALIB and os.path.isdir(CALIB) and os.path.exists(os.path.join(HERE, "data", "collision_goldens_real.json")):
