@@ -14,6 +14,7 @@
     "check:states": "node scripts/check_landing_states.mjs",
     "check:shell": "node scripts/check_shell.mjs",
     "check:langswitch": "node scripts/check_lang_switch.mjs",
+    "check:polish": "node scripts/check_polish.mjs",
     "check:langheads": "node scripts/check_langheads.mjs --browser",
     "check:tryheader": "node scripts/check_try_header.mjs",
     "check:legal": "node scripts/legal_look.mjs",

@@ -42,7 +42,7 @@ export const lt: TryCopy = {
     timeout: 'Mūsų pusėje tai užtruko per ilgai. Pabandykite dar kartą.',
     notResponding: 'Studija šiuo metu neatsako. Po akimirkos pabandykite dar kartą.',
     requestFailed: (status: number) => `Užklausa nepavyko (${status})`,
-    unreadable: 'Nepavyko nuskaityti šio vaizdo',
+    unreadable: 'Šios nuotraukos nepavyko atidaryti. Jei tai HEIC failas iš iPhone, ši naršyklė jo nenuskaito: pasirinkite JPEG arba PNG failą arba atidarykite snapeyes.com telefone ir nufotografuokite ten.',
     noEyeAny: 'Nė vienoje iš šių nuotraukų neradome akies.',
     noEyeShot: 'Šiame kadre neradome akies.',
     noEye: 'Akis nerasta',

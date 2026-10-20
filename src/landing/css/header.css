@@ -10,6 +10,8 @@
   .lp-hdr .lp-wrap { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .lp-logo svg { width: 32px; height: 32px; flex: none; }
+  .lp-logo { position: relative; }
+  .lp-logo::after { content: ""; position: absolute; inset: -8px 0; }
   .lp-logo b { display: block; font-family: var(--display); font-weight: 600; letter-spacing: .18em; font-size: 17px; line-height: 1; color: #fff; }
   .lp-logo small { display: block; margin-top: 5px; font-size: 9px; font-weight: 600; letter-spacing: .34em; text-transform: uppercase; color: var(--ink-3); line-height: 1; }
   /* the navigation: the link of the section being read is full colour (aria-current, set by src/landing/shell/navMark.ts) and the gold hairline slides under it */

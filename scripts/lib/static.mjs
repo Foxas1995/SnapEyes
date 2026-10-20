@@ -15,7 +15,7 @@ import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml', '.webp': 'image/webp', '.avif': 'image/avif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
-  '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json',
 };
 const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.json', '.svg', '.txt', '.xml']);
 
@@ -114,7 +114,13 @@ export function serve(dir, { port = 0, vercelFile, compress = true, handler } = 
         return;
       }
       file = dest !== null ? fileFor(dir, vercel, dest) : null;
-      if (!file) { res.writeHead(404, { 'content-type': 'text/plain' }).end('not found'); return; }
+      if (!file) {
+        // Vercel answers a path nothing serves with the project's 404.html (status 404), or its own page when there is none
+        const nf = fileFor(dir, vercel, '/404');
+        if (nf) { const body = readFileSync(nf); res.writeHead(404, { 'content-type': TYPES['.html'], 'content-length': body.length, 'cache-control': 'public, max-age=0, must-revalidate' }); res.end(req.method === 'HEAD' ? undefined : body); return; }
+        res.writeHead(404, { 'content-type': 'text/plain' }).end('not found');
+        return;
+      }
     }
     const ext = extname(file);
     const headers = { 'content-type': TYPES[ext] || 'application/octet-stream', ...headersFor(vercel, pathname) };

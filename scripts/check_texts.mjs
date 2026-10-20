@@ -809,6 +809,15 @@ export async function checkTexts(load, root) {
     }
   } catch { out.push('src/landing/shell/share.json not found or not JSON (the share heads and cards read it)'); }
 
+  // the words of the 404 page (src/notfound/notfound.json, written into dist/404.html by the build): linted like any string of the page, in their own language
+  try {
+    const nf = JSON.parse(readFileSync(join(root, 'src/notfound/notfound.json'), 'utf8').replace(/^\ufeff/, ''));
+    for (const l of LANGS) for (const k of ['title', 'h1', 'p', 'home']) {
+      if (typeof nf[l]?.[k] !== 'string' || !nf[l][k].trim()) out.push(`src/notfound/notfound.json: no ${k} for ${l}`);
+      else lint(`notfound.json ${l} ${k}`, nf[l][k], l, out);
+    }
+  } catch { out.push('src/notfound/notfound.json not found or not JSON (the 404 page is made from it)'); }
+
   // the head of index.html (search and share copy: English only): the same claims, the same dashes
   try {
     const html = readFileSync(join(root, 'index.html'), 'utf8');

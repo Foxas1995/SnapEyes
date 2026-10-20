@@ -21,6 +21,9 @@
 @property --fx-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 
 @layer components {
+  /* a touch target of 44 px of height without moving a box: the hit area is a pseudo-element (hit-s: the 4 px a row of links has to spare); the element is `relative` (Tailwind); /try's language buttons, logo and legal links (QA 2026-10-20) */
+  .hit::after { content: ""; position: absolute; inset: -8px 0; }
+  .hit-s::after { inset: -4px 0; }
   /* ---------------------------------------------------------------------------------------------- 1. the arc, the rings and the check (7.3, 8)
      The one loop of a waiting screen: a thin gold arc, 22 percent of a ring, turning slowly around a still photo (or around a thin ring when there is
      no photo yet). The circle has pathLength 100, so 22 78 is exactly 22 percent; an SVG circle starts at 3 o'clock, hence the quarter turn, so the

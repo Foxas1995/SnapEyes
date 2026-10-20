@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#07090e" />
+    <meta name="robots" content="noindex" />
+    <title>SnapEyes: page not found</title>
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- The page Vercel answers an unknown address with (status 404). Written by the build (vite.config.ts langPages) from this template and src/notfound/notfound.json
+         (the words in the four languages, linted by scripts/check_texts.mjs): no framework, no script file, the site's own fonts and look. The language is ?lang=, else the
+         visitor's earlier choice (snapeyes.lang), else the browser's; the way home keeps it. -->
+    <style>
+      @font-face { font-family: Cinzel; src: url('/assets/atelier/fonts/cinzel-var.woff2') format('woff2'); font-weight: 400 900; font-display: swap; }
+      @font-face { font-family: 'Plus Jakarta Sans'; src: url('/assets/atelier/fonts/plus-jakarta-sans-var.woff2') format('woff2'); font-weight: 200 800; font-display: swap; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; }
+      body { background: #07090e; color: #f0f3fa; font: 16px/1.6 'Plus Jakarta Sans', system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; padding: 32px 20px; }
+      main { max-width: 34rem; text-align: center; }
+      .logo { display: inline-flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; min-height: 44px; }
+      .logo svg { width: 36px; height: 36px; }
+      .logo b { font: 600 19px/1 Cinzel, serif; letter-spacing: .18em; }
+      .logo small { display: block; margin-top: 6px; font-size: 9px; font-weight: 600; letter-spacing: .34em; text-transform: uppercase; color: #8c93a3; }
+      .logo span { text-align: left; }
+      h1 { font: 600 clamp(28px, 7vw, 40px)/1.15 Cinzel, serif; margin: 44px 0 14px; }
+      p { margin: 0 auto 32px; color: #b6bccb; max-width: 30rem; }
+      .home { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 999px; border: 1px solid #f5c542; color: #f5c542; text-decoration: none; font-weight: 700; letter-spacing: .04em; }
+      .home:hover, .home:focus-visible { background: #f5c542; color: #07090e; outline: none; }
+      .home:focus-visible { box-shadow: 0 0 0 3px rgba(245, 197, 66, .35); }
+      .code { margin-top: 48px; font-size: 12px; letter-spacing: .3em; color: #6f7686; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="logo" href="/" aria-label="SnapEyes Private Atelier">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="#f5c542" stroke-opacity=".55" /><circle cx="16" cy="16" r="9.5" fill="none" stroke="#f5c542" stroke-width="1.4" /><circle cx="16" cy="16" r="4" fill="#f5c542" /></svg>
+        <span><b>SNAPEYES</b><small>Private Atelier</small></span>
+      </a>
+      <h1 id="h1">This page is not here.</h1>
+      <p id="p">The address may have changed, or the link may be incomplete. The first screen of SnapEyes is one click away.</p>
+      <a class="home" id="home" href="/">Back to SnapEyes</a>
+      <div class="code" aria-hidden="true">404</div>
+    </main>
+    <script>
+      (function () {
+        var W = /*WORDS*/null;
+        var m = /[?&]lang=(en|de|lt|hu)(?:&|$)/.exec(location.search), l = m ? m[1] : null;
+        try { if (!l) l = localStorage.getItem('snapeyes.lang'); } catch (e) { /* storage blocked: the browser's language */ }
+        if (!W[l]) { var n = String(navigator.language || 'en').slice(0, 2).toLowerCase(); l = W[n] ? n : 'en'; }
+        var w = W[l], d = document;
+        d.documentElement.lang = l;
+        d.title = w.title;
+        d.getElementById('h1').textContent = w.h1;
+        d.getElementById('p').textContent = w.p;
+        var a = d.getElementById('home');
+        a.textContent = w.home;
+        a.href = l === 'en' ? '/' : '/?lang=' + l;
+        d.querySelector('.logo').href = a.href;
+      })();
+    </script>
+  </body>
+</html>

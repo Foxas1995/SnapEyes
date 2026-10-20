@@ -989,7 +989,7 @@ export const TryApp: React.FC = () => {
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
         {/* back to the landing page in the same language */}
-        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-semibold tracking-wider text-lg">SNAP<span className="text-[#f5c542]">EYES</span></a>
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-semibold tracking-wider text-lg relative hit">SNAP<span className="text-[#f5c542]">EYES</span></a>
         <div className="flex items-center justify-end gap-3 min-w-0">
           <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
             {STUDY && <span className="text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}
@@ -1058,7 +1058,8 @@ export const TryApp: React.FC = () => {
 
             <CaptureDiagram />
 
-            <div className="bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* on a short screen (a phone under 820 px tall) the guide comes after the buttons: the way to take the photo is on the first screen, the guide is one scroll away (QA of 2026-10-20: at 360 x 740 the button was below the fold) */}
+            <div className="[@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {T.capture.steps.map((s) => (
                 <div key={s.title}><span className="text-[#f5c542] font-bold block">{s.title}</span>{s.text}</div>
               ))}
@@ -1180,7 +1181,7 @@ export const TryApp: React.FC = () => {
       <footer className="max-w-3xl mx-auto px-4 pb-24">
         <nav aria-label={LEGAL_LABELS[lang].nav} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-zinc-400">
           {LEGAL_DOCS.map((d) => (
-            <a key={d} href={legalHref(d, lang)} target="_blank" rel="noopener" className="hover:text-white hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm">
+            <a key={d} href={legalHref(d, lang)} target="_blank" rel="noopener" className="relative hit hit-s hover:text-white hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm">
               {LEGAL_LABELS[lang][d]}
             </a>
           ))}
@@ -1203,7 +1204,7 @@ const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lan
   <div role="group" aria-label={T.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
     {marketLangs(currentMarket()).map((l) => (
       <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
-        className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+        className={`relative hit min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
         {l}
       </button>
     ))}

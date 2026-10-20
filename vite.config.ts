@@ -239,6 +239,9 @@ function langPages(): Plugin {
       mkdirSync(join(dir, heads.LANDING_DIR), { recursive: true })
       for (const l of lang.LANGS as string[]) writeFileSync(join(dir, heads.landingFile(l)), heads.editionOf(final, heads.headData(process.cwd(), lang, l)))
       rmSync(source)
+      // the page of an unknown address (Vercel serves dist/404.html with status 404): the template and the words in the four languages (src/notfound), no framework
+      const words = JSON.stringify(JSON.parse(readFileSync('./src/notfound/notfound.json', 'utf8')))
+      writeFileSync(join(dir, '404.html'), readFileSync('./src/notfound/notfound.html', 'utf8').replace('/*WORDS*/null', () => words))
     },
   }
 }

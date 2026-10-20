@@ -143,6 +143,10 @@
   .lp-seg button { min-width: 40px; height: 32px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); transition: background-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out); }
   .lp-seg button[aria-pressed="true"] { background: rgba(255, 255, 255, .12); color: #fff; box-shadow: inset 0 0 0 1px var(--gold); }
   .lp-seg button:hover { color: #fff; }
+  /* tap targets (QA 2026-10-20): the language buttons and the quiet link are 44 px high for a finger; a pseudo-element, so no layout moves */
+  .lp-seg button::after { content: ""; position: absolute; inset: -6px 0; }
+  .lp-link-quiet { position: relative; }
+  .lp-link-quiet::after { content: ""; position: absolute; inset: -11px 0; }
   .lp-glint { position: absolute; pointer-events: none; overflow: hidden; }
   .lp-glint::after { content: ""; position: absolute; inset: 0 -50%; background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, .14) 42%, rgba(255, 255, 255, .36) 50%, rgba(255, 255, 255, .14) 58%, transparent 66%); transform: translateX(-40%); opacity: 0; }
   @media (min-width: 960px) {

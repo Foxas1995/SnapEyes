@@ -76,7 +76,7 @@ export const hu: TryCopy = {
     timeout: 'Ez nálunk túl sokáig tartott. Kérjük, próbáld újra.',
     notResponding: 'A stúdió most nem válaszol. Kérjük, próbáld újra egy kicsit később.',
     requestFailed: (status: number) => `A kérés nem sikerült (${status})`,
-    unreadable: 'Ezt a képet nem tudtuk beolvasni',
+    unreadable: 'Ezt a fényképet nem sikerült megnyitni. Ha iPhone-ról származó HEIC fájl, ez a böngésző nem tudja beolvasni: válassz JPEG vagy PNG fájlt, vagy nyisd meg a snapeyes.com oldalt a telefonodon, és ott fotózz.',
     noEyeAny: 'Egyik fotón sem találtunk szemet.',
     noEyeShot: 'Ezen a felvételen nem találtunk szemet.',
     noEye: 'Nem található szem',

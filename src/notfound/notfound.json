@@ -1,0 +1,26 @@
+{
+  "en": {
+    "title": "SnapEyes: page not found",
+    "h1": "This page is not here.",
+    "p": "The address may have changed, or the link may be incomplete. The first screen of SnapEyes is one click away.",
+    "home": "Back to SnapEyes"
+  },
+  "de": {
+    "title": "SnapEyes: Seite nicht gefunden",
+    "h1": "Diese Seite gibt es nicht.",
+    "p": "Die Adresse hat sich vielleicht geändert, oder der Link ist unvollständig. Zur Startseite von SnapEyes ist es nur ein Klick.",
+    "home": "Zurück zu SnapEyes"
+  },
+  "lt": {
+    "title": "SnapEyes: puslapis nerastas",
+    "h1": "Šio puslapio čia nėra.",
+    "p": "Adresas galėjo pasikeisti arba nuoroda gali būti neišsami. Į SnapEyes pradžią galite grįžti vienu paspaudimu.",
+    "home": "Grįžti į SnapEyes"
+  },
+  "hu": {
+    "title": "SnapEyes: az oldal nem található",
+    "h1": "Ez az oldal nincs itt.",
+    "p": "Lehet, hogy megváltozott a cím, vagy hiányos a link. A SnapEyes kezdőlapja egy kattintásra van.",
+    "home": "Vissza a SnapEyes oldalra"
+  }
+}
