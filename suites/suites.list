@@ -55,3 +55,4 @@ v3retry2:scripts/styles_tests:test_retry2.py
 v3nonce:scripts/styles_tests:test_ticket_nonce.py
 v3gate2:scripts/styles_tests:test_gate2.py
 v3counter:scripts/styles_tests:test_counter.py::pre
+v3traffic:scripts/styles_tests:test_traffic.py

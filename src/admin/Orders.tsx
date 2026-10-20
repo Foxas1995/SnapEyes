@@ -8,6 +8,7 @@ import { countBy } from './agg';
 import { AKYS, explain, fmtMoney, fmtTime, ltCount, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { gateCodeLt } from './stylesView';
 import { SalesDetails } from './StyleSales';
+import { SRC_LT, campText, label } from './traffic';
 import { BTN, CARD, Chip, H2, INPUT, MUTED, Notice, Spinner } from './ui';
 
 const PERIODS: [number, string][] = [[7, '7 d.'], [30, '30 d.'], [90, '90 d.'], [400, 'Visi']];
@@ -20,6 +21,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
   const [state, setState] = useState('');
   const [variant, setVariant] = useState('');      // '' all, 'none' no price test, else "<experiment>:<variant>"
   const [style, setStyle] = useState('');          // '' all, 'none' no style recorded, else the style id
+  const [source, setSource] = useState('');        // '' all, 'none' no source recorded, else the platform or kind of page the customer came from
   const [find, setFind] = useState('');
 
   const apply = useCallback((r: Reply<Orders>) => {
@@ -46,7 +48,9 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
   const hasTests = Object.keys(byVariant).some((k) => k !== 'none');
   const skey = (r: Orders['orders'][number]) => r.style || 'none';
   const byStyle = useMemo(() => countBy(rows, skey), [rows]);
-  const shown = rows.filter((r) => (!state || r.state === state) && (!variant || vkey(r) === variant) && (!style || skey(r) === style) && (!q || r.order.includes(q)));
+  const ckey = (r: Orders['orders'][number]) => (r.camp ? r.camp.split('|')[0] : 'none');
+  const byCamp = useMemo(() => countBy(rows, ckey), [rows]);
+  const shown = rows.filter((r) => (!state || r.state === state) && (!variant || vkey(r) === variant) && (!style || skey(r) === style) && (!source || ckey(r) === source) && (!q || r.order.includes(q)));
 
   return (
     <div className="flex flex-col gap-4">
@@ -79,6 +83,19 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
               <button key={k} type="button" onClick={() => setStyle(k)} aria-pressed={style === k}
                 className={`px-2.5 py-1 rounded-lg text-xs border ${style === k ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>
                 {k === 'none' ? 'Be stiliaus' : STYLE_LT[k] || k} ({byStyle[k]})
+              </button>
+            ))}
+          </div>
+        )}
+        {Object.keys(byCamp).some((k) => k !== 'none') && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Šaltinis">
+            <span className={`text-xs self-center ${MUTED}`}>Šaltinis:</span>
+            <button type="button" onClick={() => setSource('')} aria-pressed={!source}
+              className={`px-2.5 py-1 rounded-lg text-xs border ${!source ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>Visi</button>
+            {Object.keys(byCamp).sort((a, b) => (a === 'none' ? 1 : b === 'none' ? -1 : a.localeCompare(b))).map((k) => (
+              <button key={k} type="button" onClick={() => setSource(k)} aria-pressed={source === k}
+                className={`px-2.5 py-1 rounded-lg text-xs border ${source === k ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>
+                {k === 'none' ? 'Be šaltinio' : label(SRC_LT, k)} ({byCamp[k]})
               </button>
             ))}
           </div>
@@ -123,6 +140,7 @@ export const OrdersPage: React.FC<{ call: Call }> = ({ call }) => {
               </p>
               <p className="text-xs text-white/55 break-words">
                 {r.email || (r.paid ? 'be el. pašto' : 'neapmokėtas')}
+                {r.camp ? ` · šaltinis: ${campText(r.camp)}` : ''}
                 {r.extra_payments ? ` · papildomi mokėjimai: ${r.extra_payments}` : ''}
                 {r.withdrawal ? ' · atsisakymo pareiškimas' : ''}
                 {r.held ? ' · laukia tavo peržiūros' : ''}

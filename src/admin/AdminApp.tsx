@@ -1,5 +1,6 @@
 // The owner's admin panel (/admin): the login with the admin key (scripts/mint_admin.py), then five pages. The key is
-// kept in this browser's localStorage and sent only to /api/admin; nothing here is linked from the public site.
+// kept in this browser's localStorage and sent only to /api/admin; nothing here is linked from the public site. The pages: the day to day, the visitors and advertising (Saltiniai, Piltuvas,
+// Kodel nepavyksta, Nuotrauku kokybe, Reklamos: the anonymous counter, api/_lib/counter.py) and the tools.
 import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
 import { adminCall, dropKey, KEY_RE, loadKey, saveKey } from './api';
@@ -14,10 +15,18 @@ import { LabPage } from './Lab';
 import { StatsPage } from './Stats';
 import { TestsPage } from './Tests';
 import { ErrorsPage } from './Errors';
+import { SourcesPage } from './Sources';
+import { FunnelPage } from './Funnel';
+import { WhyPage } from './Why';
+import { PhotosPage } from './Photos';
+import { AdsPage } from './Ads';
 
 export type Call = <T>(action: string, body?: Record<string, unknown>, timeoutMs?: number) => Promise<Reply<T>>;
 
-type Route = { page: 'summary' | 'orders' | 'order' | 'styles' | 'lab' | 'stats' | 'tests' | 'errors'; order?: string };
+type Page = 'summary' | 'orders' | 'order' | 'styles' | 'lab' | 'stats' | 'tests' | 'errors' | 'sources' | 'funnel' | 'why' | 'photos' | 'ads';
+type Route = { page: Page; order?: string };
+
+const PAGES = ['orders', 'styles', 'lab', 'stats', 'tests', 'errors', 'sources', 'funnel', 'why', 'photos', 'ads'] as const;
 
 function readRoute(): Route {
   const raw = (typeof location !== 'undefined' ? location.hash : '').replace(/^#\/?/, '');
@@ -26,12 +35,15 @@ function readRoute(): Route {
   try { h = decodeURIComponent(raw); } catch { h = ''; }
   const m = /^order\/([a-z0-9][a-z0-9-]{3,63})$/.exec(h);
   if (m) return { page: 'order', order: m[1] };
-  if (h === 'orders' || h === 'styles' || h === 'lab' || h === 'stats' || h === 'tests' || h === 'errors') return { page: h };
+  if ((PAGES as readonly string[]).includes(h)) return { page: h as Page };
   return { page: 'summary' };
 }
 
-const TABS: [Route['page'], string][] = [
-  ['summary', 'Suvestinė'], ['orders', 'Užsakymai'], ['styles', 'Stiliai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['tests', 'Kainų testai'], ['errors', 'Klaidos'],
+// the pages in three groups: the day to day, the visitors and the advertising (the counter's pages), and the tools
+export const TAB_GROUPS: [string, [Route['page'], string][]][] = [
+  ['Kasdien', [['summary', 'Suvestinė'], ['orders', 'Užsakymai'], ['errors', 'Klaidos']]],
+  ['Lankytojai ir reklama', [['sources', 'Šaltiniai'], ['funnel', 'Piltuvas'], ['why', 'Kodėl nepavyksta'], ['photos', 'Nuotraukų kokybė'], ['ads', 'Reklamos']]],
+  ['Įrankiai', [['styles', 'Stiliai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['tests', 'Kainų testai']]],
 ];
 
 const Login: React.FC<{ onIn: (key: string, me: Me) => void; message: string }> = ({ onIn, message }) => {
@@ -138,12 +150,17 @@ export const AdminApp: React.FC = () => {
           </div>
           <button type="button" className={BTN} onClick={() => logout('Atsijungta.')}>Atsijungti</button>
         </div>
-        <nav className="max-w-6xl mx-auto px-4 pb-2 flex flex-wrap gap-1.5" aria-label="Skyriai">
-          {TABS.map(([p, label]) => (
-            <a key={p} href={`#${p}`} aria-current={active === p ? 'page' : undefined}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${active === p ? 'bg-[#f5c542] text-black border-[#f5c542]' : 'border-white/10 text-white/80 hover:bg-white/5'}`}>
-              {label}
-            </a>
+        <nav className="max-w-6xl mx-auto px-4 pb-2 flex flex-col gap-1" aria-label="Skyriai">
+          {TAB_GROUPS.map(([group, tabs]) => (
+            <div key={group} className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] uppercase tracking-widest text-white/40 w-full sm:w-auto sm:min-w-[9.5rem]">{group}</span>
+              {tabs.map(([p, label]) => (
+                <a key={p} href={`#${p}`} aria-current={active === p ? 'page' : undefined}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${active === p ? 'bg-[#f5c542] text-black border-[#f5c542]' : 'border-white/10 text-white/80 hover:bg-white/5'}`}>
+                  {label}
+                </a>
+              ))}
+            </div>
           ))}
         </nav>
       </header>
@@ -156,6 +173,11 @@ export const AdminApp: React.FC = () => {
         {route.page === 'stats' && <StatsPage call={call} />}
         {route.page === 'tests' && <TestsPage call={call} />}
         {route.page === 'errors' && <ErrorsPage call={call} />}
+        {route.page === 'sources' && <SourcesPage call={call} />}
+        {route.page === 'funnel' && <FunnelPage call={call} />}
+        {route.page === 'why' && <WhyPage call={call} />}
+        {route.page === 'photos' && <PhotosPage call={call} />}
+        {route.page === 'ads' && <AdsPage call={call} />}
       </main>
     </div>
   );

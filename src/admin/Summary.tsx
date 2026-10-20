@@ -10,6 +10,7 @@ import { countBy, lastDays, ordersSince, revenue, sumTable } from './agg';
 import { BLOCK_LT, DEFAULT_PRICES, explain, fmtEur, fmtMoney, fmtTime, fmtUsd, KIND_LT, spend, STATE_LT, STYLE_LT, VERDICT_LT } from './format';
 import { attentionText } from './stylesView';
 import { BTN, CARD, Chip, Flag, H2, MUTED, Notice, Spinner, ToneLine } from './ui';
+import { DailyCard } from './DailyCard';
 
 const WINDOWS: [number, string][] = [[1, 'Šiandien'], [7, '7 d.'], [30, '30 d.']];
 
@@ -94,6 +95,7 @@ export const SummaryPage: React.FC<{ call: Call }> = ({ call }) => {
       </H2>
       {err.map((e, i) => <Notice key={i}>{e}</Notice>)}
       {sum?.retention && !sum.retention.cron && <Notice tone="warn">Statistika nerenkama: šiame serveryje nenustatytas CRON_SECRET (bent 16 simbolių). Privatumo politika žada įvykius ištrinti po 12 mėnesių, o nesėkmingų prisijungimų žymas po 2 dienų, bet juos ištrina tik kasdienis valymas, kuriam reikia CRON_SECRET. Kol jo nėra, niekas nerašoma.</Notice>}
+      <DailyCard call={call} rows={rows} prices={prices} />
       <section className={CARD} aria-label="Kainų testai">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <h3 className="text-sm font-bold">Kainų testai</h3>

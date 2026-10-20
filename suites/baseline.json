@@ -64,7 +64,7 @@
    "pass": 349
   },
   "ts": {
-   "pass": 627
+   "pass": 670
   },
   "v3wp0": {
    "pass": 93
@@ -125,6 +125,9 @@
   },
   "v3counter": {
    "pass": 78
+  },
+  "v3traffic": {
+   "pass": 49
   }
  }
 }

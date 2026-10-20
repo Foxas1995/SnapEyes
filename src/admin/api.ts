@@ -128,6 +128,8 @@ export interface OrderRow {
   withdrawal: boolean; extra_payments: number; mail: string | null;
   /** the set level gate result of the style's rule at checkout: ok, unknown or the failing eye's reason code (order.json checkout.gate); null for an order that never reached the payment page */
   gate?: string | null;
+  /** the campaign code of the advertisement the customer came from ("src|med|cmp|trm|cnt"), else null (api/_lib/counter.py pack) */
+  camp?: string | null;
   /** the price experiment and variant the order was priced under, if any */
   experiment?: { key: string; variant: string; label?: string | null } | null;
 }

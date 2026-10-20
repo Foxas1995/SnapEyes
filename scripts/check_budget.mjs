@@ -43,7 +43,11 @@ const COUNTER = { js: 391, css: 0 };
 // The privacy policy says what the counter keeps (the same release). The legal pages' entry (src/legal/main.tsx) is also named main-*.js, so this script counts it although the landing never loads it:
 // LEGAL_TEXT is the growth of that chunk from the new privacy paragraphs in four languages, measured the same way (the chunk that holds the legal texts, on the commit minus its parent).
 const LEGAL_TEXT = { js: 5200 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css };
+// The owner's visitor pages of the admin panel (2026-10-20: Saltiniai, Piltuvas, Kodel nepavyksta, Nuotrauku kokybe, Reklamos, the daily block) are work the spec's budget did not foresee either. The landing never loads them;
+// ADMIN_VIEWS is what this script still sees grow: the Tailwind utilities their markup uses, which land in the stylesheet that the tools and the panel share (jsx-runtime-*.css, counted because it is not named after a page):
+// CSS +56 B gzip, measured as this script's own sum on the commit with the pages minus on its parent (4742fe9). The JavaScript sum moved by -37 B (the names of chunks in import lists); that is not taken as room.
+const ADMIN_VIEWS = { js: 0, css: 56 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

@@ -59,6 +59,8 @@ from . import events as E
 from . import withdraw as W
 from . import catalogue as CT
 from . import counter as CN
+from . import traffic as TR
+from . import ads as AD
 from .styles import steps as SP
 
 ADMIN_TTL_MAX = 90 * 86400   # a key may live this long at most (scripts/mint_admin.py mints 1 to 90 days)
@@ -553,6 +555,144 @@ def a_stats(body, who):
     rows = collect_days(n)
     return {"ok": True, "days": [{"day": d, "counts": _slim(a), "complete": c} for d, a, c in rows],
             "partial": not all(c for _, _, c in rows), "prices_usd": PRICES_USD, "recording": E.retention_ok()}
+
+
+# ----------------------------------------------------------------------------- the visitor pages (Saltiniai, Piltuvas, Kodel nepavyksta, Nuotrauku kokybe, Reklamos)
+def _days_of(body, default=30):
+    n = body.get("days")
+    return int(n) if isinstance(n, int) and not isinstance(n, bool) and 1 <= n <= STATS_DAYS_MAX else default
+
+
+def _traffic(body):
+    """(days, filters, the day rows, the merged counts) of a request of the visitor pages: {days (1 to 90, default 30), market, lang, dev, br, src, cmp (each one code or absent)}."""
+    from . import style_stats as SS
+    n = _days_of(body)
+    try:
+        f = TR.filters_from(body)
+    except ValueError as e:
+        raise L.ClientError(str(e)) from None
+    rows = collect_days(n)
+    return n, f, rows, SS.merge_all([a for _d, a, _c in rows])
+
+
+def _paid_orders(n, f):
+    """([{camp, amount, currency}], more, comparable): the live, paid, not withdrawn orders of the last n days, from the order records (their campaign code is in the record). The refunds are not taken
+    off (said on the page). comparable is False when a filter the order record cannot answer (device class, browser family) is set: the orders are then left out and the page says so."""
+    if f.get("dev") or f.get("br"):
+        return [], False, False
+    names = order_folders(n)
+    rows, more = [], False
+    for i in range(0, min(len(names), LIST_MAX), 10):
+        if L.time_left() < 8:
+            more = True
+            break
+        rows += [r for r in each([lambda o=o: order_row(o) for o in names[i:i + 10]], width=10) if isinstance(r, dict)]
+    more = more or len(names) > LIST_MAX
+    out = [{"camp": r.get("camp"), "amount": r["amount"], "currency": r["currency"]} for r in rows
+           if r.get("paid") and r.get("live") is True and r.get("state") != "withdrawn" and isinstance(r.get("amount"), int)
+           and (not f.get("market") or r.get("market") == f["market"]) and (not f.get("lang") or r.get("lang") == f["lang"])]
+    return out, more, True
+
+
+def a_sources(body, who):
+    """The page Saltiniai: where the visits and the orders come from. {days, group (src: source and medium, cmp: campaign, trm: ad set, cnt: advertisement), market, lang, dev, br, src, cmp}. Each
+    row is a campaign key with the steps counted for it (landing, try, photo, result, soon, buy, order and the server's an, anok, en, rs, sv, co, pd, help), its orders and its revenue per currency
+    (from the order records; refunds are not taken off). Read only."""
+    n, f, rows, agg = _traffic(body)
+    group = body.get("group") if body.get("group") in TR.GROUPS else "cmp"
+    rep = TR.sources_report(agg, f, group)
+    orders, more, comparable = _paid_orders(n, f)
+    if comparable:
+        TR.attach_orders(rep, orders, group)
+    return dict(rep, ok=True, days=n, group=group, filters=f, available=TR.available(agg), orders_comparable=comparable, orders_more=more,
+                partial=not all(c for _d, _a, c in rows), recording=E.retention_ok())
+
+
+def a_funnel(body, who):
+    """The page Piltuvas: the steps of a visit in order, whole and split by device class and browser family, the time from a photo to its preview and the countries. Same request as a_sources
+    without the group. Read only."""
+    n, f, rows, agg = _traffic(body)
+    return dict(TR.funnel_report(agg, f), ok=True, days=n, filters=f, available=TR.available(agg), partial=not all(c for _d, _a, c in rows), recording=E.retention_ok())
+
+
+def a_why(body, who):
+    """The page Kodel nepavyksta: why a visit does not get through. {days, dev, br, src, cmp, by (dev or br: every count also split by it)}. Read only."""
+    n, f, rows, agg = _traffic(body)
+    by = body.get("by") if body.get("by") in ("dev", "br") else None
+    return dict(TR.why_report(agg, f, by), ok=True, days=n, filters=f, available=TR.available(agg), partial=not all(c for _d, _a, c in rows), recording=E.retention_ok())
+
+
+def a_photos(body, who):
+    """The page Nuotrauku kokybe: what the server saw of the photos, as classes, by campaign (default), device class or browser family. {days, dev, br, src, cmp, by (cmp, dev or br)}. Read only. No photo
+    of a free preview is ever stored: these are counts of classes."""
+    n, f, rows, agg = _traffic(body)
+    by = body.get("by") if body.get("by") in ("cmp", "dev", "br") else "cmp"
+    return dict(TR.photos_report(agg, f, by), ok=True, days=n, filters=f, available=TR.available(agg), partial=not all(c for _d, _a, c in rows), recording=E.retention_ok())
+
+
+def a_daily(body, who):
+    """The daily block of the Suvestine page: the last 8 UTC days (the last is today), each with the counter's steps summed over all its codes, the errors and the Gemini calls, and the five sources
+    that brought the most visits in the last 7 of them. Read only."""
+    from . import style_stats as SS
+    rows = collect_days(8)
+    days = []
+    for d, agg, c in rows:
+        steps = {}
+        for key, v in (agg.get("hits") or {}).items():
+            p = key.split("|")
+            if len(p) == len(TR.HIT_COLS):
+                steps[p[0]] = steps.get(p[0], 0) + (v if isinstance(v, int) and not isinstance(v, bool) else 0)
+        days.append({"day": d, "complete": c, "steps": steps, "errors": sum(v for v in (agg.get("errors") or {}).values() if isinstance(v, int)),
+                     "gemini": dict(agg.get("gemini") or {"vision": 0, "image_1k": 0, "image_4k": 0})})
+    top = TR.sources_report(SS.merge_all([a for _d, a, _c in rows[-7:]]), {}, "src")["rows"][:5]
+    return {"ok": True, "days": days, "top": top, "prices_usd": PRICES_USD, "recording": E.retention_ok(), "partial": not all(c for _d, _a, c in rows)}
+
+
+def a_ads(body, who):
+    """The page Reklamos: the owner's spend ledger (ops/ads/ledger.json) with, for the last n days, the steps and the orders of every advertisement (the campaign keys down to the advertisement,
+    from the counter and the order records), so that the page works out the cost per step. {days}. Returns rows (the whole ledger), rev (the ledger's revision), groups (a_sources at the
+    advertisement level), vat (Meta's 21 percent)."""
+    n, f, rows, agg = _traffic(dict(body, days=_days_of(body)))
+    rep = TR.sources_report(agg, f, "cnt")
+    orders, more, _ok = _paid_orders(n, f)
+    TR.attach_orders(rep, orders, "cnt")
+    led = AD.load()
+    return dict(ok=True, days=n, rows=led["rows"], rev=led["rev"], groups=rep["rows"], totals=rep["totals"], orders=rep.get("orders", 0), revenue=rep.get("revenue", {}),
+                orders_more=more, vat=AD.VAT, partial=not all(c for _d, _a, c in rows), recording=E.retention_ok())
+
+
+def _ad_rows(body):
+    """The rows of an ads_put request: {rows: [...]} or {paste: "lines"} (AD.parse_lines); a sentence for the first wrong line, nothing stored on any error."""
+    if isinstance(body.get("paste"), str):
+        rows, errors = AD.parse_lines(body["paste"])
+        if errors:
+            raise L.ClientError("; ".join(errors[:5]) + (f"; and {len(errors) - 5} more" if len(errors) > 5 else ""))
+        return rows
+    return body.get("rows")
+
+
+def _stale(e):
+    return store.Answer(409, "stale_view", "The ledger was changed since this page was drawn: reload it.", False) if str(e) == "stale" else L.ClientError(str(e))
+
+
+def act_ads_put(body, who):
+    """Add rows to the spend ledger or replace rows by id: {rows: [{day, cmp, trm?, cnt?, src?, amount (euro cents), vat?, impr?, clicks?}]} or {paste: "day; campaign; ad set; ad; euros; impressions; clicks" lines},
+    rev (the revision the page saw). Nothing is stored when any row is wrong."""
+    try:
+        out = AD.put(_ad_rows(body), rev=body.get("rev"))
+    except ValueError as e:
+        raise _stale(e) from None
+    return {"ok": True, "result": "stored", "rev": out["rev"], "stored": len(out["rows"]), "total": out["total"], "ids": [r["id"] for r in out["rows"]],
+            "audit_detail": f"{len(out['rows'])} rows"}
+
+
+def act_ads_delete(body, who):
+    """Delete ledger rows by id: {ids: [...], rev}."""
+    try:
+        out = AD.delete(body.get("ids"), rev=body.get("rev"))
+    except ValueError as e:
+        raise _stale(e) from None
+    return {"ok": True, "result": "deleted", "rev": out["rev"], "deleted": out["deleted"], "total": out["total"], "audit_detail": f"{out['deleted']} rows"}
 
 
 def a_errors(body, who):
@@ -1988,6 +2128,8 @@ ACTIONS = {
     "audit": a_audit, "order_link": a_order_link, "lab_list": a_lab_list, "experiments": a_experiments, "cpu_probe": a_cpu_probe, "plates_status": a_plates_status,
     "styles_lab": a_styles_lab, "order_steps": a_order_steps, "styles_catalogue": a_styles_catalogue, "styles_audit": a_styles_audit,
     "styles_override": audited("styles_override", act_styles_override), "styles_stats": a_styles_stats,
+    "sources": a_sources, "daily": a_daily, "funnel": a_funnel, "why": a_why, "photos": a_photos, "ads": a_ads,
+    "ads_put": audited("ads_put", act_ads_put), "ads_delete": audited("ads_delete", act_ads_delete),
     "styles_limits": audited("styles_limits", act_styles_limits),
     "exp_start": audited("exp_start", act_exp_start),
     "exp_stop": audited("exp_stop", act_exp_stop),

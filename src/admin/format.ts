@@ -130,7 +130,7 @@ export const ACTION_LT: Record<string, string> = {
   refund: 'Grąžinti pinigus',
   mark_refunded: 'Grąžinau Stripe svetainėje', delete_files: 'Ištrinti failus', lab_start: 'Laboratorijos testas',
   lab_delete: 'Ištrinti laboratorijos testą', exp_start: 'Paleisti kainų testą', exp_stop: 'Sustabdyti kainų testą',
-  styles_override: 'Pakeisti stiliaus būseną', styles_limits: 'Pakeisti dėmesio ribas',
+  styles_override: 'Pakeisti stiliaus būseną', styles_limits: 'Pakeisti dėmesio ribas', ads_put: 'Įrašyti reklamų išlaidas', ads_delete: 'Ištrinti reklamų išlaidų įrašą',
 };
 
 // an audit entry's result code in words (RESULT_LT for the email words, then these), else the code itself

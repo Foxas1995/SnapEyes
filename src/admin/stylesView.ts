@@ -68,6 +68,7 @@ export const GATE_CODE_LT: Record<string, string> = {
   ok: 'praėjo', unknown: 'nežinoma (nėra užantspauduoto profilio)', lid: 'nepraėjo voko taisyklė', fill: 'nepraėjo užpildymo taisyklė', both: 'nepraėjo abi taisyklės',
   lid_sectors_inner: 'voko ar blakstienų sektoriai viduje', lid_sectors_outer: 'voko ar blakstienų sektoriai išorėje', lid_ring_outliers: 'žiede yra nukrypusių spalvų',
   lid_outliers_and_sectors: 'nukrypusios spalvos ir sektoriai kartu', lid_deviation: 'per didelis žiedo spalvų nukrypimas',
+  lid_colour_wedge: 'spalvos pleištas voko pusėje', lid_lash_lines: 'blakstienų linijos rainelės krašte', lid_ring_structure: 'kraštas, einantis aplink rainelę',
   fill_lid_margin: 'užpildymas: voko paraštė', fill_rim_sector: 'užpildymas: krašto sektorius', fill_hard_edges: 'užpildymas: aštrūs kraštai', fill_catchlight: 'užpildymas: atspindys akyje',
   bar_pupil: 'horizontalus vyzdys', reseal: 'reikia iš naujo padaryti peržiūrą', gate: 'vartai',
 };
