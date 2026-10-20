@@ -7,6 +7,7 @@ import { checkPrices, type ClientMarkets, type LandingPriceModule } from './scri
 import { checkPack, checkTexts } from './scripts/check_texts.mjs'
 import { checkStyles, describeRegistry, describePlates } from './scripts/check_styles.mjs'
 import { checkLandingAssets, renderLanding } from './scripts/check_landing_assets.mjs'
+import { SLIM_FILES, slimPySource } from './scripts/py_source_slim.mjs'
 
 // The legal texts for the order confirmation email (src/legal/plain.ts legalMailPack: the terms of sale and the
 // withdrawal information with the model form, per language, plus the seller's contact facts). Built from the same
@@ -246,9 +247,32 @@ function langPages(): Plugin {
   }
 }
 
+// The Python files the pages read as text (src/shared/styles.ts and src/shared/layouts.ts import api/_lib/styles_registry.py and
+// api/_lib/layout_names.py with ?raw) reach every page, the landing too. Their docstrings and comments are for the people who change them
+// and for the server: the pages get each file without them and with its literal in compact JSON (scripts/py_source_slim.mjs, which proves
+// on every load that a page reads the same constants and the same literal, or stops the build). The dev server does the same, so a page
+// never sees another text in dev than in production; the server, the build's checks and the tests read the files themselves.
+// 2026-10-20: about 4.5 kB of gzip off the landing's JavaScript (scripts/check_budget.mjs).
+function pySourceSlim(): Plugin {
+  const files = Object.entries(SLIM_FILES).map(([rel, literal]) => ({ rel, literal, path: join(process.cwd(), rel).split('\\').join('/') }))
+  return {
+    name: 'snapeyes-py-source-slim',
+    enforce: 'pre',
+    load(id) {
+      if (!id.endsWith('?raw')) return null
+      const path = id.slice(0, -'?raw'.length).split('\\').join('/')
+      const f = files.find((x) => x.path.toLowerCase() === path.toLowerCase())
+      if (!f) return null
+      this.addWatchFile(path)
+      return `export default ${JSON.stringify(slimPySource(readFileSync(path, 'utf8'), f.rel, f.literal))}`
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    pySourceSlim(),
     react(),
     tailwindcss(),
     priceCheck(),

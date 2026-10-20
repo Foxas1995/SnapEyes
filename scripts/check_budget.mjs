@@ -51,6 +51,10 @@ const ADMIN_VIEWS = { js: 0, css: 56 };
 // sees grow: the Tailwind utilities the box and its admin page use, in the stylesheet the tools and the panel share (jsx-runtime-*.css): CSS +131 B gzip, measured on this commit minus its parent (d40529b). The box's own
 // code and words are in the chunk of /try (try-*, left out here) and in the admin's; the landing's JavaScript does not grow.
 const FEEDBACK = { js: 0, css: 131 };
+// The style registry's text (2026-10-20): the landing bundles api/_lib/styles_registry.py and api/_lib/layout_names.py as text (INTEGRATION above), and the light family
+// of the same day brought the page to +7,873 B of JavaScript. Since then the pages get those two files without their docstrings, comments and blank lines and with their literals
+// in compact JSON (vite.config.ts pySourceSlim, scripts/py_source_slim.mjs; suites/ts/py_source_slim.test.ts proves the pages read the same values): -3,970 B on that tree
+// (+3,903 B). No constant moves for it: what it gives back is room under the same budget and the same hard stop, not a new base.
 const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
