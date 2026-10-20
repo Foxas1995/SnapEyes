@@ -744,7 +744,7 @@ export const TryApp: React.FC = () => {
     const out = Math.min(1400, Math.round(S));
     const crop = drawToDataUrl(img, cx * W - S / 2, cy * H - S / 2, S, S, out, out, 0.95);
     setClientCrop(crop);
-    let d: { crop: string; glare_pct: number; changed: boolean; used_sr: boolean };
+    let d: { crop: string; glare_pct: number; lid_pct?: number; changed: boolean; used_sr: boolean };
     let e: Enhanced;
     let wm: Lang = T.lang;
     try {
@@ -779,7 +779,7 @@ export const TryApp: React.FC = () => {
     }
     const eye: Eye = {
       id, before: crop, ...restored(e), thumb: await thumbOf(e.image), pad,
-      fallback: !!e.fallback, usedSr: !!e.used_sr, stored: !!e.stored, glarePct: d.glare_pct,
+      fallback: !!e.fallback, usedSr: !!e.used_sr, stored: !!e.stored, glarePct: d.glare_pct, lidPct: typeof d.lid_pct === 'number' ? d.lid_pct : 0,
       diameterPx: a.quality?.diameter_px, sample, colourOff: colourOff(e.qa), draft, wm,
       ...(reveal ? { reveal } : {}), ...(wide ? { wide } : {}),
     };

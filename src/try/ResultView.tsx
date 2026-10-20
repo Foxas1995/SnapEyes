@@ -154,6 +154,7 @@ export const ResultView: React.FC<Props> = (p) => {
           beforeLabel={eye.sample ? T.result.samplePhoto : T.result.yourPhoto} afterLabel={T.result.after} />
       )}
       {colourWarning}
+      {!eye.sample && <WhatWeDid eye={eye} colourNote={colourNote} promised={!!revealHero && !colourNote} />}
       {/* decision 5 speaks about the customer's own photo, so the sample gets its own line instead */}
       {eye.sample
         ? <p className="text-xs text-amber-100 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">{T.result.sampleNote}</p>
@@ -166,7 +167,6 @@ export const ResultView: React.FC<Props> = (p) => {
         {[
           rev.view === 'cut' ? R.drag : rev.view === 'strip' ? '' : T.result.drag,
           eye.diameterPx && !eye.sample ? T.result.irisPx(eye.diameterPx) : '',
-          eye.glarePct >= 0.4 ? T.result.reflection : '',
           eye.usedSr ? T.result.upscaled : '',
         ].filter(Boolean).join(' ')}
       </p>
@@ -325,6 +325,31 @@ export const ResultView: React.FC<Props> = (p) => {
 
       <button onClick={p.onStartOver} className="text-xs text-zinc-300 underline underline-offset-4 self-center">{T.result.startOver}</button>
     </section>
+  );
+};
+
+/** What the studio did to this photo, in plain words (the owner, 2026-10-20; the words: copy.ts result.did). The reflection line only when one was found, the eyelid
+ *  line only when an eyelid was filled from the iris itself; the colour lines step aside while the colour note shows (it says the light moved), and "nothing painted
+ *  on top" also where the Reveal's promise already says it. The last line says what the photo goes through, for the question whether the camera's quality is kept. */
+const WhatWeDid: React.FC<{ eye: Eye; colourNote: boolean; promised: boolean }> = ({ eye, colourNote, promised }) => {
+  const D = T.result.did;
+  const lines = [
+    eye.glarePct >= 0.4 ? D.glare : '',
+    D.sharp,
+    colourNote ? '' : D.colour,
+    (eye.lidPct ?? 0) > 0 ? D.lid : '',
+    colourNote || promised ? '' : D.nothing,
+  ].filter(Boolean);
+  return (
+    <div data-testid="what-we-did" className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+      <h3 className="text-xs font-bold text-zinc-100">{D.title}</h3>
+      <ul className="mt-1.5 space-y-1">
+        {lines.map((l) => (
+          <li key={l} className="flex gap-2 text-xs text-zinc-200"><Check className="w-3.5 h-3.5 shrink-0 mt-px text-emerald-400" aria-hidden="true" /><span>{l}</span></li>
+        ))}
+      </ul>
+      <p data-testid="quality-note" className="mt-2 text-[11px] leading-snug text-zinc-400">{D.quality}</p>
+    </div>
   );
 };
 

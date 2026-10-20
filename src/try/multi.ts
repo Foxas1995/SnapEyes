@@ -31,6 +31,7 @@ export interface Eye {
   usedSr: boolean;
   stored: boolean;
   glarePct: number;
+  lidPct?: number;      // the share of the iris an eyelid covered that /api/deglare filled from the iris itself (its lid_pct; api/_lib/lidcap.py): the result says so
   diameterPx?: number;
   sample: boolean;      // the site's AI-generated demo eye, never a customer's
   wm?: Lang;            // the language the preview watermark of `image` is drawn in (the request's): when the page speaks another one, TryApp asks for the display copy again in it (api/enhance.py redisplay)

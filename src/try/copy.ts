@@ -267,8 +267,23 @@ const en = {
     // the shared library of plates (src/shared/aiMaterial.ts AI_MATERIAL_PAGE, held word for word by scripts/check_texts.mjs item 12), shown under the line above while it is published
     aiMaterial: 'In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer\'s artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above.',
     sampleNote: 'This eye is the AI-generated sample, not a real photo. With your own photo, the colour comes from your photo.',
-    // the engine's colour check (api/enhance qa) failed for this eye: say so next to the promise above
-    colourOff: 'Our colour check says this restoration drifted from your photo: it may look lighter or darker than your eye. A retake in soft daylight usually fixes it.',
+    // the engine's colour check (api/enhance qa) failed for this eye: say so, what helps (the owner, 2026-10-20: people light the eye with a torch from the side, so
+    // "soft daylight" alone said too little) and that a result the visitor likes is fine to keep
+    colourOff: 'This restoration may look a little lighter or darker than your eye. Even light gives the truest colour: daylight from a window, no flash and no torch shining from the side. If you like it as it is, simply carry on.',
+    // what the studio did to this photo, in plain words (the owner, 2026-10-20), under the before/after of a real eye (./ResultView.tsx WhatWeDid). glare: only when a reflection
+    // was found (api/deglare glare_pct, as the line "Reflection removed." said before); lid: only when an eyelid over the iris was filled from the iris itself (api/deglare
+    // lid_pct, api/_lib/lidcap.py); colour and nothing are left out while the colour note above shows, and nothing also where the Reveal's promise says it. quality: the
+    // owner asked whether the phone camera's quality is kept: the photo is the camera's own, the restoration gets a crop of at most 1400 px cut from it (TryApp process),
+    // and a file would be drawn from the restoration (would: ordering is not open yet)
+    did: {
+      title: 'What we did to your photo',
+      glare: 'Removed the reflections of windows and lamps.',
+      sharp: 'Sharpened the focus and the fine fibres.',
+      colour: 'Balanced the light. The colours are your photo\'s own.',
+      lid: 'Where your eyelid covered the iris, continued it from your own iris.',
+      nothing: 'Painted nothing on top: no new colours, no pattern from another eye.',
+      quality: 'Your phone\'s own camera takes the photo at full quality. We cut a close crop of your eye from it (at most 1400 px) and restore that; a full-size file of 4096 px would be drawn from this restoration, not stretched from your photo.',
+    },
     retakeEye: (i: number) => `Retake eye ${i}`,
     retakeOnly: 'Retake this eye',
     replaceSample: 'Use your own eye instead',
@@ -283,7 +298,6 @@ const en = {
     mixedArtworkNote: 'This artwork contains the AI-generated sample eye, which is not a real photo.',
     drag: 'Drag the handle.',
     irisPx: (px: number) => `Iris in your photo: ${px}px.`,
-    reflection: 'Reflection removed.',
     upscaled: 'Small photo: upscaled before restoration.',
     badgeMacro: 'Studio macro',
     badgeFallback: 'Faithful upscale only',
@@ -773,7 +787,16 @@ const de: TryCopy = {
     transparency: 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.',
     aiMaterial: 'Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt.',
     sampleNote: 'Dieses Auge ist das KI-generierte Beispiel, kein echtes Foto. Mit Ihrem eigenen Foto stammt die Farbe aus Ihrem Foto.',
-    colourOff: 'Unsere Farbprüfung zeigt, dass diese Restaurierung von Ihrem Foto abweicht: Sie kann heller oder dunkler wirken als Ihr Auge. Eine neue Aufnahme bei weichem Tageslicht behebt das meist.',
+    colourOff: 'Diese Restaurierung wirkt vielleicht etwas heller oder dunkler als Ihr Auge. Die natürlichsten Farben gibt gleichmäßiges Licht: Tageslicht von einem Fenster, ohne Blitz und ohne Taschenlampe von der Seite. Wenn sie Ihnen so gefällt, machen Sie einfach weiter.',
+    did: {
+      title: 'Was wir mit Ihrem Foto gemacht haben',
+      glare: 'Spiegelungen von Fenstern und Lampen entfernt.',
+      sharp: 'Schärfe und feine Fasern herausgearbeitet.',
+      colour: 'Das Licht ausgeglichen. Die Farben sind die Ihres eigenen Fotos.',
+      lid: 'Den vom Augenlid verdeckten Teil der Iris aus Ihrer eigenen Iris fortgesetzt.',
+      nothing: 'Nichts darübergemalt: keine neuen Farben, kein Muster eines anderen Auges.',
+      quality: 'Die eigene Kamera Ihres Smartphones nimmt das Foto in voller Qualität auf. Daraus schneiden wir einen engen Ausschnitt Ihres Auges (höchstens 1400 px) und restaurieren ihn; eine Datei in voller Größe (4096 px) würde aus dieser Restaurierung entstehen, nicht aus Ihrem Foto hochskaliert.',
+    },
     retakeEye: (i: number) => `Auge ${i} neu aufnehmen`,
     retakeOnly: 'Dieses Auge neu aufnehmen',
     replaceSample: 'Stattdessen Ihr eigenes Auge verwenden',
@@ -786,7 +809,6 @@ const de: TryCopy = {
     mixedArtworkNote: 'Dieses Kunstwerk enthält das KI-generierte Beispielauge, das kein echtes Foto ist.',
     drag: 'Ziehen Sie den Regler.',
     irisPx: (px: number) => `Iris in Ihrem Foto: ${px} px.`,
-    reflection: 'Spiegelung entfernt.',
     upscaled: 'Kleines Foto: vor der Restaurierung hochskaliert.',
     badgeMacro: 'Studio-Makro',
     badgeFallback: 'Nur originalgetreu vergrößert',
