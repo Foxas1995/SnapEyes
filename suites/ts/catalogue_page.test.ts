@@ -120,6 +120,6 @@ export async function run(): Promise<R> {
     ['en', 'de', 'lt', 'hu'].every((l) => typeof (AI_MATERIAL as Record<string, string>)[l] === 'string' && (AI_MATERIAL as Record<string, string>)[l].length > 150
       && aiBlocks(l as 'en').length === 1 && aiBlocks(l as 'en')[0] === (AI_MATERIAL as Record<string, string>)[l] && aiSentence(l as 'en') === ` ${(AI_MATERIAL as Record<string, string>)[l]}`)
     && AI_MATERIAL_PUBLISHED === true && !DASH.test(JSON.stringify(AI_MATERIAL)), '');
-  check('one LEGAL_UPDATED moved with this work (2026-10-06, WP18: the AI-made material sentence entered the terms; it was 2026-10-05 at WP12)', LEGAL_UPDATED === '2026-10-06', LEGAL_UPDATED);
+  check('one LEGAL_UPDATED moved with this work (2026-10-20, the privacy paragraphs of the anonymous counter; it was 2026-10-06 at WP18, the AI-made material sentence, and 2026-10-05 at WP12)', LEGAL_UPDATED === '2026-10-20', LEGAL_UPDATED);
   return out;
 }

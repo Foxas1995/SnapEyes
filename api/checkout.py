@@ -75,7 +75,14 @@ GET /api/checkout while one runs and ordering is open: without a visitor id the 
 POST /api/checkout {..., exp_token, shown}: the price comes from the verified token only ("shown" is checked, never used);
      no valid token for a running experiment of the order's market: the standard ladder. Errors as above.
 POST /api/checkout {exp_event: "visit" | "preview", exp_token, market[, eyes, style]}: the page's once-per-visitor funnel
-     beacon (no order, no Stripe): {ok, counted}."""
+     beacon (no order, no Stripe): {ok, counted}.
+
+The anonymous counter (api/_lib/counter.py; none of it runs when SNAPEYES_COUNTER is off):
+GET /api/checkout also answers counter: true or false, whether the pages should send their beacons.
+POST /api/checkout {hit: "landing" | "try" | "photo" | "result" | "soon" | "buy" | "order", camp, lang, market[, took, eyes, style]}: one step a page reached, with the campaign
+     code (camp: "src|med|cmp|trm|cnt", short codes) and the page's language and price market. No order, no Stripe, always {ok, counted}; a robot, an unknown step, a client
+     that sends too many or an instance past its day ceiling is not counted.
+"""
 import os, re, sys, time, json, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
@@ -84,6 +91,7 @@ from _lib import store
 from _lib import pay
 from _lib import abtest
 from _lib import catalogue
+from _lib import counter
 
 
 def country_hint(value):
@@ -109,7 +117,9 @@ def info(body, country=None):
             "consent": dict({"version": pay.CONSENT_VERSION}, **{lang: pay.CONSENT_TEXT[lang] for lang in pay.LANGS},
                             markets={m: {lang: pay.consent_for(m, lang) for lang in pay.edition_langs(m)}
                                      for m in pay.SELECTABLE if pay.acl_market(m)}),
-            "country": cc, "suggest": suggest}
+            "country": cc, "suggest": suggest,
+            # whether the anonymous counter counts here (the switch SNAPEYES_COUNTER, somewhere to keep the counts, the daily clean-up): the pages send their beacons only when it does
+            "counter": counter.on()}
 
 
 def _engine(plan):
@@ -186,6 +196,8 @@ def freeze_plan(order, rec, spec, body, drafts):
 def checkout(body):
     if "exp_event" in body:      # the price test's anonymous beacon: no order, no Stripe (api/_lib/abtest.py)
         return abtest.beacon(body)
+    if "hit" in body:            # the anonymous counter's beacon: no order, no Stripe, always answered 200 (api/_lib/counter.py)
+        return counter.hit(body)
     why = pay.ordering_problem()
     if why:
         raise pay.PayNotConfigured(why)

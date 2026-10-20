@@ -23,8 +23,9 @@ export type LegalLang = Lang;
  *  the terms name price classes and print no number of eyes, "and the same arrangement", the delivery time, the privacy policy's lists). It is not the
  *  consent version (WITHDRAWAL_CONSENT_VERSION), which moves only when the withdrawal-waiver wording does. A change of the set of live styles needs no new
  *  date: no legal text prints a list of styles or a number of eyes (scripts/check_styles.mjs item 7 holds it). 2026-10-06, work package WP18 (the catalogue
- *  switch): the AI-made material sentence (src/shared/aiMaterial.ts) entered the terms of every edition and language in the cutover deploy. */
-export const LEGAL_UPDATED = '2026-10-06';
+ *  switch): the AI-made material sentence (src/shared/aiMaterial.ts) entered the terms of every edition and language in the cutover deploy. 2026-10-20: the privacy
+ *  policy (every edition and language) says what the anonymous counter keeps (api/_lib/counter.py) and where the country hint goes; no other legal text moved. */
+export const LEGAL_UPDATED = '2026-10-20';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right

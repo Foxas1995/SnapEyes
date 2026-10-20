@@ -19,6 +19,7 @@ import { styleName } from '../shared/styles';
 import { layoutName } from '../shared/layouts';
 import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref } from '../shared/legal';
 import { withdrawHref } from './withdraw';
+import { count, note as noteCounter } from '../shared/counter';
 
 // The order and its private key come from the address (the Stripe success page and the emails link here); s is the
 // Stripe session the success page names, so the payment is confirmed even before Stripe's webhook has arrived.
@@ -76,12 +77,15 @@ export const OrderApp: React.FC = () => {
     } catch { /* no document */ }
   }, [lang, C]);
 
+  // the anonymous counter: the order page was opened (not the withdrawal form), sent once /api/health says the counter is on
+  useEffect(() => { if (LINK && !WITHDRAW_MODE) count('order', lang, market); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+
   // whether the delivery email is configured: only then does the page say the link is in the email
   useEffect(() => {
     let alive = true;
     fetch('/api/health', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((h) => { if (alive) setEmail(h?.email === true); })
+      .then((h) => { noteCounter(h?.counter); if (alive) setEmail(h?.email === true); })
       .catch(() => { /* the page works without it */ });
     return () => { alive = false; };
   }, []);

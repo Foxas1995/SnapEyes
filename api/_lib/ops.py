@@ -517,8 +517,8 @@ def collect_days(n):
 
 
 def _slim(agg):
-    # compose_slice and ms_hist are the Stiliai page's (styles_stats): they are the largest tables and the Statistika page has no use for them
-    return {k: v for k, v in agg.items() if k not in ("v", "day", "t", "recent_errors", "compose_slice", "ms_hist")}
+    # compose_slice and ms_hist are the Stiliai page's (styles_stats), hits, hit_cc and hit_ms the counter's pages (traffic.py): they are the largest tables and the Statistika page has no use for them
+    return {k: v for k, v in agg.items() if k not in ("v", "day", "t", "recent_errors", "compose_slice", "ms_hist", "hits", "hit_cc", "hit_ms")}
 
 
 # ----------------------------------------------------------------------------- read-only actions

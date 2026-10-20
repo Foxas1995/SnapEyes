@@ -30,6 +30,7 @@ import {
 import { callApi, type CheckoutInfo } from '../order/api';
 import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavailable, notePreview } from '../shared/pricing';
 import { priceChangedNote } from './priceNote';
+import { count, note as noteCounter } from '../shared/counter';
 import { readCatalogue } from '../shared/catalogue';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
@@ -40,6 +41,9 @@ import { parseReveal } from '../reveal/revealMath';
 import { wideFrame, type WideFrame } from '../reveal/wideFrame';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
+
+// when the photo was chosen (milliseconds), for the anonymous counter's time to a preview (src/shared/counter.ts)
+let photoAt = 0;
 
 // Several photos are measured at once: each /api/analyze call is mostly waiting on the vision model, so
 // three in flight cut the wait roughly threefold without piling a whole gallery onto the server at once.
@@ -304,6 +308,9 @@ export const TryApp: React.FC = () => {
     } catch { /* no document: nothing to label */ }
   }, [lang]);
 
+  // the anonymous counter: /try was opened (sent once /api/health says the counter is on)
+  useEffect(() => { count('try', T.lang, currentMarket()); }, []);
+
   // only offer the training-memory checkbox when this deployment can really store something, and the buy button only
   // when it takes orders: /api/health says whether Stripe is set up, GET /api/checkout whether ordering is open (Stripe
   // and the private store) and gives the server's prices and waiver text. Until both say yes: "ordering opens soon".
@@ -313,6 +320,7 @@ export const TryApp: React.FC = () => {
       .then((r) => r.json())
       .then(async (h) => {
         if (!alive) return;
+        noteCounter(h.counter);        // the anonymous counter (src/shared/counter.ts) sends its beacons only when the server says it counts
         setStorageOn(!!h.blob_store);
         // live payments only with the delivery email: it carries the confirmation of the withdrawal waiver that the
         // law asks for (src/shared/legal.ts), so a live key without Resend sells nothing yet. Test mode may try it.
@@ -531,6 +539,7 @@ export const TryApp: React.FC = () => {
    *  the customer cannot pick by eye and neither can a size rule. Measure each and use the best. */
   const onFiles = async (all: File[]) => {
     const files = all.slice(0, GALLERY_MAX);
+    photoAt = Date.now(); count('photo', T.lang, currentMarket());       // a photo was chosen or taken (the sample eye never comes through here)
     if (files.length === 1) return onFile(files[0]);
     sampleRef.current = false;
     setError(null); setStep('analyzing'); clearShots();
@@ -753,6 +762,7 @@ export const TryApp: React.FC = () => {
     releasePhoto(); sampleRef.current = false;
     setAnalysis(null); setClientCrop(null);
     setStep('result'); setArriving(true); toTop();
+    if (!sample) { count('result', T.lang, currentMarket(), { eyes: list.length, ...(photoAt ? { took: Date.now() - photoAt } : {}) }); photoAt = 0; }       // the restored eye is on screen: the time since the photo is the page's own
   };
 
   // ---- the result screen: the server's tile list for these eyes, the style on screen and its previews (src/try/usePreviews.ts)
@@ -781,6 +791,12 @@ export const TryApp: React.FC = () => {
   const lookNow = lookOf(selectedTile, opts.look);
   // what the buy card does: the price and the button only for a style AND a look that can be bought (a Soon look under a live style is drawn, never sold)
   const buying = buyState({ n: eyes.length, tiles: catalog?.tiles ?? [], selected: selectedTile, look: lookNow });
+  // the anonymous counter: the buy card showed that this cannot be bought yet (ordering is not open, or the style or the number of eyes opens soon), once per page load
+  const soonRef = useRef(false);
+  const buyClosed = step === 'result' && eyes.some((e) => !e.sample) && ordering !== null && (buying.kind === 'soon' || buying.kind === 'countSoon' || (buying.kind === 'normal' && !ordering.open));
+  useEffect(() => {
+    if (buyClosed && !soonRef.current) { soonRef.current = true; count('soon', T.lang, currentMarket(), { eyes: eyes.length, ...(style ? { style } : {}) }); }
+  }, [buyClosed, eyes.length, style]);
   const picker: PickerModel = {
     n: eyes.length, catalog, error: previews.catalogError, onRetryCatalog: previews.retryCatalog, style, selected: selectedTile, changed: previews.changed,
     tilePicture: previews.tilePicture, tileBusy: previews.tileBusy, tileFailed: previews.tileFailed, onRetryTiles: previews.retryTiles, paused: previews.tilesPaused, priceOf,
@@ -822,6 +838,7 @@ export const TryApp: React.FC = () => {
     const list = eyesRef.current;
     if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open || !style || !art || wordProblems.length || buying.kind !== 'normal') return;
     buyingRef.current = true;
+    count('buy', T.lang, currentMarket(), { eyes: list.length, style });       // the buy button was pressed (anonymous counter)
     setNotice(null);
     setPriceNote(null);
     setBuy({ busy: true, step: null, error: null });

@@ -693,8 +693,8 @@ legal_ts = read("src/shared/legal.ts")
 upd = re.search(r"export const LEGAL_UPDATED = '(\d{4}-\d{2}-\d{2})'", legal_ts).group(1)
 # WP18 (the catalogue switch): the date moved from 2026-10-05 (WP12) to 2026-10-06 with the publication of the AI-made material sentence
 check("one LEGAL_UPDATED versions every legal page and the pack the confirmation quotes: the built pack's date is that date, it is not in the future, and it moved on the last work "
-      "that changed a legal text (2026-10-06, WP18: the AI-made material sentence; it was 2026-10-05 at WP12)",
-      PACK["updated"] == upd == "2026-10-06" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
+      "that changed a legal text (2026-10-20, the anonymous counter's privacy paragraphs; it was 2026-10-06 at WP18, the AI-made material sentence, and 2026-10-05 at WP12)",
+      PACK["updated"] == upd == "2026-10-20" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
 terms_en = PACK["docs"]["en"]["terms"]["text"]
 check("the pack's English terms (what the e-mail quotes) print the new rows and the arrangement clause, say that a preview of five to eight eyes is coarser, and no longer promise half a minute "
       "per eye", "One eye, Clean Iris" in terms_en and "One eye, any other style" in terms_en and "arrangement of the eyes" in terms_en and "five to eight eyes is made from smaller copies" in terms_en

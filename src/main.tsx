@@ -12,6 +12,7 @@ import { watchPreloadErrors } from './landing/lazy'
 import { boot, reveals, traverse } from './motion/motion'
 import { lend } from './motion/phone'
 import { adoptIntro } from './motion/handoff'
+import { count } from './shared/counter'
 
 // The landing entry. index.html already holds the first screen as static HTML (<div id="shell">, written at build time by the
 // heroShell plugin of vite.config.ts from src/landing/SiteTopView.tsx and HeroView.tsx, in the visitor's language: English in the
@@ -48,7 +49,10 @@ if (shell) {
 watchPreloadErrors()
 
 // a visitor who reads another language than English: its file travels while React boots
-preloadCopy(detectLang(currentMarket()))
+const lang = detectLang(currentMarket())
+preloadCopy(lang)
+// the anonymous counter (src/shared/counter.ts): the landing page was opened; it is sent once /api/health says the counter is on (src/landing/ordering.ts)
+count('landing', lang, currentMarket())
 
 // The page's two API answers (is ordering open, which currency does the visitor's country suggest) were asked for from the head of
 // index.html. React starts once they are in, for at most MAX_HOLD_MS: the static first screen stays on screen meanwhile, and an offer

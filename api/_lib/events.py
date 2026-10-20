@@ -65,6 +65,12 @@ The kinds (all with "ms", the time since the request started, when known):
             preview, checkout, paid), exp (the experiment's key), variant, market, eyes, amount and currency (checkout
             and paid), hit (the artwork's price differs between the variants), live (paid: a real payment). No visitor
             id and no order number: the counts per variant are all it can give
+  hit       (2026-10-20, api/_lib/counter.py) the anonymous counter: one step a page reached. step (landing: the first page was opened, try: /try, photo: a photo was chosen
+            or taken, result: the preview was shown, soon: the buy card showed that ordering is not open yet, buy: the buy button was pressed, order: the order page was opened),
+            the campaign code (src, med, cmp, trm, cnt: utm_source, utm_medium, utm_campaign, utm_term, utm_content as short codes, or the class of the page the visitor came
+            from), lang and market (the page's), dev (device class) and br (browser family) worked out from the user agent, which is dropped, cc (the two letter country Vercel
+            derives from the address), and, where the step has them, took (result: milliseconds from the photo to the preview, measured by the page), eyes and style. No visitor
+            number, no address, no user agent, no URL. Counted per day by step and by the codes above (hits, hit_cc, hit_ms of empty())
 
 The reading side (the admin panel) is here too: day_events() reads one day, summarize() turns events into counts,
 rollup() stores a finished day's counts once (ops/daily/<YYYY-MM-DD>.json), purge_old() is the clean-up."""
@@ -75,7 +81,10 @@ from . import store
 CRON_MIN = 16                # characters of CRON_SECRET (pay.ordering_problem and /api/health use the same rule)
 WAIT = 1.5                   # seconds a request waits for its event to be written, at most
 PUT_TIMEOUT = 1.2            # the storage call itself
-RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0), "help": (20, 60.0)}   # events per instance per window (seconds)
+RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0), "help": (20, 60.0), "hit": (150, 60.0)}   # events per instance per window (seconds)
+HIT_DAY_MAX = 20000          # counter beacons per instance per UTC day (anybody can send one without an order, so they are capped like the price test's)
+TABLE_KEYS_MAX = {"hits": 2000, "hit_cc": 800, "hit_ms": 400}     # distinct keys of a counter table in one day's counts; a new key above this is counted under "overflow"
+TTP_MS = (5000, 10000, 15000, 20000, 30000, 45000, 60000, 90000, 120000, 180000, 300000)       # upper bounds, ms, of the time from a photo to its preview (hit_ms); one more bucket above
 HELP_DAY_MAX = 1000          # help beacons per instance per UTC day (anybody can send one without an order, so they are capped like the price test's)
 ERROR_DAY_MAX = 1500         # error events per instance per UTC day
 EXP_DAY_MAX = 5000           # price-test visit and preview beacons per instance per UTC day (they need no order, so they are capped)
@@ -87,6 +96,7 @@ ROLLUP_MAX_BYTES = 2 << 20   # a stored day is read back with this ceiling (a fe
 RECENT_ERRORS = 40           # error events kept one by one in a day's counts
 
 _CODE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,39}$")
+_ADDRESS = re.compile(r"^[0-9]{1,3}(\.[0-9]{1,3}){3}$")        # no code of an event is an IPv4 address (a dotted number of four parts is dropped)
 _DAY = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 _NAME = re.compile(r"^[0-9]{6}-[0-9a-f]{8,16}\.json$")
 
@@ -109,7 +119,10 @@ FIELDS = {
     "checkout": {"stage": "c", "style": "c", "eyes": "n", "gate": "c", "lang": "c", "market": "c"},
     "exp": {"stage": "c", "exp": "c", "variant": "c", "market": "c", "eyes": "n", "amount": "n", "currency": "c",
             "hit": "b", "live": "b"},
+    "hit": {"step": "c", "src": "c", "med": "c", "cmp": "c", "trm": "c", "cnt": "c", "lang": "c", "market": "c", "dev": "c", "br": "c", "cc": "c",
+            "took": "n", "eyes": "n", "style": "c"},
 }
+HIT_STEPS = ("landing", "try", "photo", "result", "soon", "buy", "order")      # api/_lib/counter.py STEPS (a test holds the two equal)
 EXP_STAGES = ("visit", "preview", "checkout", "paid")
 CHECKOUT_STAGES = ("start", "paid")
 SOURCES = ("camera", "gallery", "live", "sample", "lab")
@@ -117,7 +130,7 @@ SOURCES = ("camera", "gallery", "live", "sample", "lab")
 
 # ----------------------------------------------------------------------------- writing
 _RATE_LOCK = threading.Lock()
-_SEEN = {"all": [], "error": [], "exp": [], "help": [], "day": "", "errors_today": 0, "exp_day": "", "exp_today": 0, "help_day": "", "help_today": 0}
+_SEEN = {"all": [], "error": [], "exp": [], "help": [], "hit": [], "day": "", "errors_today": 0, "exp_day": "", "exp_today": 0, "help_day": "", "help_today": 0, "hit_day": "", "hit_today": 0}
 
 
 def _allow(kind, now, stage=None):
@@ -138,6 +151,18 @@ def _allow(kind, now, stage=None):
             if len(q) >= n or _SEEN["exp_today"] >= EXP_DAY_MAX:
                 return False
             _SEEN["exp_today"] += 1
+            q.append(now)
+            return True
+        if kind == "hit":                   # the counter's beacons: no order behind them either, so a budget of their own per minute and per day on this instance
+            n, win = RATE["hit"]
+            q = [t for t in _SEEN["hit"] if now - t < win]
+            _SEEN["hit"] = q
+            d = time.strftime("%Y-%m-%d", time.gmtime(now))
+            if _SEEN["hit_day"] != d:
+                _SEEN["hit_day"], _SEEN["hit_today"] = d, 0
+            if len(q) >= n or _SEEN["hit_today"] >= HIT_DAY_MAX:
+                return False
+            _SEEN["hit_today"] += 1
             q.append(now)
             return True
         if kind == "help":                  # a click on the manual route: no order behind it, so a small budget of its own (as the price test's beacons)
@@ -182,7 +207,7 @@ def _value(typ, v):
             return None
         return int(v) if isinstance(v, int) else round(float(v), 3)
     if typ == "c":
-        return v if isinstance(v, str) and _CODE.fullmatch(v) else None
+        return v if isinstance(v, str) and _CODE.fullmatch(v) and not _ADDRESS.fullmatch(v) else None
     if typ == "o":
         return v if isinstance(v, str) and store.ORDER_RE.fullmatch(v) else None
     return None
@@ -204,7 +229,7 @@ def build(kind, fields, now=None):
     now = time.time() if now is None else now
     ev = {"v": 1, "kind": kind, "t": round(now, 3)}
     ms = fields.get("ms")
-    ms = _value("n", ms) if ms is not None else elapsed_ms()
+    ms = _value("n", ms) if ms is not None else (None if kind == "hit" else elapsed_ms())      # a beacon's own request time says nothing (its "took" is the page's)
     if ms is not None:
         ev["ms"] = ms
     for k, typ in spec.items():
@@ -399,12 +424,38 @@ def empty():
             # price experiments (kind "exp"): "<experiment>|<variant>|<stage>" -> events (exp_stage; exp_hit counts only the
             # events whose artwork's price differs between the variants; stage "paid_test" is a Stripe test payment) and
             # "<experiment>|<variant>|<currency>" -> the paid amounts in the smallest unit (exp_rev; exp_rev_hit the affected ones)
-            "exp_stage": {}, "exp_hit": {}, "exp_rev": {}, "exp_rev_hit": {}}
+            "exp_stage": {}, "exp_hit": {}, "exp_rev": {}, "exp_rev_hit": {},
+            # the anonymous counter (kind "hit"): hits "<step>|<src>|<med>|<cmp>|<trm>|<cnt>|<lang>|<market>|<dev>|<br>" (an empty code is "-") counts the steps the pages reached, by
+            # campaign code, the page's language and price market, and the visitor's device class and browser family; hit_cc "<step>|<country>"; hit_ms "<dev>|<br>|<bucket>" is the
+            # time the page measured from a photo to its preview, in the buckets of TTP_MS. A table keeps at most TABLE_KEYS_MAX keys a day (the rest is counted under "overflow")
+            "hits": {}, "hit_cc": {}, "hit_ms": {}}
 
 
 def _inc(d, k, n=1):
     k = str(k)
     d[k] = d.get(k, 0) + n
+
+
+def _tinc(agg, table, key, n=1):
+    """Count into one of the counter's tables, keeping the number of distinct keys of a day under TABLE_KEYS_MAX: a stranger who sends a different campaign code with every beacon cannot
+    make a day's counts grow without limit. A key that would be one too many is counted under "overflow" (the reports show it as the rest)."""
+    t = agg[table]
+    if key not in t and len(t) >= TABLE_KEYS_MAX.get(table, 1000):
+        key = "overflow"
+    t[key] = t.get(key, 0) + n
+
+
+def ttp_bucket(ms):
+    """The bucket (an index into TTP_MS, len(TTP_MS) for above the last bound) a time from a photo to its preview falls in."""
+    for i, ub in enumerate(TTP_MS):
+        if ms <= ub:
+            return i
+    return len(TTP_MS)
+
+
+def hit_key(step, ev):
+    """The key of the hits table for one event: the step, the five campaign codes, the page's language and market, the device class and the browser family ("-" for what is not known)."""
+    return "|".join([step] + [str(ev.get(k) or "-") for k in ("src", "med", "cmp", "trm", "cnt", "lang", "market", "dev", "br")])
 
 
 def _ms(agg, step, ev):
@@ -624,6 +675,14 @@ def add(agg, ev):
                 _inc(agg["exp_rev"], f"{base}|{cur}", amount)
                 if ev.get("hit"):
                     _inc(agg["exp_rev_hit"], f"{base}|{cur}", amount)
+    elif kind == "hit":
+        step = ev.get("step")
+        if step in HIT_STEPS:
+            _tinc(agg, "hits", hit_key(step, ev))
+            _tinc(agg, "hit_cc", f"{step}|{ev.get('cc') or 'xx'}")
+            took = ev.get("took")
+            if step == "result" and isinstance(took, (int, float)) and not isinstance(took, bool) and took >= 0:
+                _tinc(agg, "hit_ms", f"{ev.get('dev') or '-'}|{ev.get('br') or '-'}|{ttp_bucket(took)}")
     elif kind == "error":
         k = ev.get("class") or "unknown"
         _inc(agg["errors"], k)

@@ -25,6 +25,8 @@ const ADMIN_LOG_HU = {
 const OPS_HU = {
   events:
     'Hogy lássuk, működik-e a szolgáltatás, milyen gyors, és mennyibe kerül, a szerverünk apró technikai eseményeket rögzít a Supabase nevű szolgáltatónál, az EU-ban lévő privát tárhelyünkön. Például: hogy egy fotót ellenőriztünk (az eredménnyel, például „nem található szem”, az eszköz típusával, például iPhone, Android vagy számítógép, azzal, hogy a fotó a kamerából vagy a galériából jött, és az oldal nyelvével), hogy eltávolítottuk a tükröződéseket, hogy elkészült egy előnézet vagy egy megrendelt fájl, és mennyi ideig tartott, vagy hogy egy kérés hibával végződött (a hibakóddal). Amíg árakat tesztelünk, az események azt is megmondják, melyik árlista (egy rövid kód) jelent meg, szerepelt az előnézetben, nyílt meg fizetésre vagy lett kifizetve, kifizetett megrendelésnél az összeggel. Az adminisztrációs felületünk ezeket főként napi darabszámként mutatja nekünk.',
+  counter:
+    'Hogy lássuk, hányan jutnak el az oldal egyes lépéseihez, a szerverünk azt is megszámolja, mely lépéseket éri el egy oldal: hogy megnyitották az első oldalt, hogy megnyitották a fotóoldalt, hogy kiválasztottak vagy elkészítettek egy fotót, hogy megjelent az előnézet (a fotótól eltelt másodpercekkel), hogy a vásárlási kártya azt mutatta, hogy a rendelés még nem nyitott, hogy megnyomták a vásárlás gombot, és hogy megnyitották a rendelési oldalt. Minden számlálás számokból és rövid kódokból álló kis rekord: a lépés, az oldal nyelve, a piac (a pénznem), az eszköz típusa (iPhone, Android vagy számítógép), a böngésző típusa (például Chrome, Safari, vagy a Facebook- vagy Instagram-alkalmazás beépített böngészője) és az ország (két betű, amelyet a Vercel az IP-címéből származtat). Az eszköz és a böngésző meghatározásához a szerverünk egy pillanatra elolvassa a böngészőazonosítóját (user agent), és hogy lefékezzen egy olyan klienst, amely túl sok számlálást küld, egy percnél rövidebb ideig a memóriájában tartja az IP-címe kivonatát, amelyet egy, a szerver újraindításakor elveszett kulccsal képzünk; egyiket sem tároljuk. Ezek a számlálások nem használnak sütit és látogatószámot, és nem tartalmaznak IP-címet, böngészőazonosítót, oldalcímet és olyan linket, amelyről érkezett, ezért nem vezethetők vissza Önre. Az adminisztrációs felületünkön napi összesítésben látjuk őket.',
   content:
     '**Ezek az események nem tartalmaznak képet, Ön által beírt szöveget, nevet, e-mail-címet, IP-címet, böngészőazonosítót (user agent) és linket.** Az ingyenes előnézet eseményei nem vezethetők vissza Önre. Csak a kifizetett megrendelés fájljának elkészítéséről szóló események tartalmazzák a rendelésszámot is, hogy megtaláljuk a lassú vagy sikertelen elkészítést; ez a szám a megrendelési adatainkon keresztül az Ön megrendeléséhez kapcsolódik.',
   basis:
@@ -61,7 +63,7 @@ export const hu: LegalDoc = {
       title: 'Amikor a weboldalt látogatja',
       blocks: [
         'Amikor megnyitja a snapeyes.com egy oldalát, a böngészője technikai adatokat küld a tárhelyszolgáltatónknak, a Vercelnek, például az IP-címét, a dátumot és az időpontot, a kért oldalt és a böngészője típusát (user agent). A Vercelnek ezekre az adatokra az oldal kiszolgálásához és a szolgáltatás támadások elleni védelméhez van szüksége. Rövid ideig szervernaplókban tárolja, majd törli őket.',
-        'Hogy a saját pénznemében tudjunk árakat javasolni, a szerverünk azt az országot is le tudja olvasni, amelyet a Vercel az IP-címéből származtat (például „AU”). Ezt kizárólag erre a javaslatra használjuk, soha nem változtatja meg a látott árakat, és nem tároljuk.',
+        'Hogy a saját pénznemében tudjunk árakat javasolni, a szerverünk azt az országot is le tudja olvasni, amelyet a Vercel az IP-címéből származtat (például „AU”). Ezt erre a javaslatra használjuk, és soha nem változtatja meg a látott árakat. Semmi olyannal együtt nem tároljuk, ami azonosíthatná Önt: az egyetlen nyoma az ország két betűje a névtelen számlálásainkban (lásd: [Szolgáltatási statisztika és adminisztrációs napló](#operations)).',
         'Jogalap: a biztonságos, működő weboldalhoz fűződő jogos érdekünk (GDPR 6. cikk (1) bekezdés f) pont).',
         'A betűtípusokat a saját szerverünkről szolgáltatjuk, így semmilyen adat nem jut a Google Fonts vagy más betűtípus-szolgáltató részére. Ezen a weboldalon nem használunk más cégek webanalitikai, hirdetési vagy követő eszközeit, és semmi nem követi Önt oldalról oldalra vagy weboldalak között. Saját, névtelen szolgáltatási statisztikánkat a [Szolgáltatási statisztika és adminisztrációs napló](#operations) pont írja le.',
       ],
@@ -97,7 +99,7 @@ export const hu: LegalDoc = {
     {
       id: 'operations',
       title: 'Szolgáltatási statisztika és adminisztrációs napló',
-      blocks: [OPS_HU.events, OPS_HU.content, OPS_HU.basis, OPS_HU.admin, OPS_HU.signin],
+      blocks: [OPS_HU.events, OPS_HU.counter, OPS_HU.content, OPS_HU.basis, OPS_HU.admin, OPS_HU.signin],
     },
     {
       id: 'orders',

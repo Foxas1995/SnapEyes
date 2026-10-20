@@ -91,6 +91,8 @@ const OPS = {
   en: {
     events:
       'To see whether the service works, how fast it is and what it costs, our server records small technical events in our private storage at Supabase in the EU. For example: that a photo was checked (with the result, such as "no eye found", the kind of device, such as iPhone, Android or computer, whether the photo came from the camera or the gallery, and the page language), that reflections were removed, that a preview or an ordered file was made and how long it took, or that a request failed (with its error code). While we test prices, the events also say which price list (a short code) was shown, previewed, opened for payment or paid, with the amount of a paid order. Our admin panel shows them to us, mostly as counts per day.',
+    counter:
+      'To see how many people reach each step of the site, our server also counts the steps a page reaches: that the first page was opened, that the photo page was opened, that a photo was chosen or taken, that the preview was shown (with the seconds it took from the photo), that the buy card showed that ordering is not open yet, that the buy button was pressed, and that the order page was opened. Each count is a small record of numbers and short codes: the step, the page language, the market (currency), the kind of device (iPhone, Android or computer), the kind of browser (for example Chrome, Safari, or the built-in browser of the Facebook or Instagram app) and the country (two letters, which Vercel derives from your IP address). To work out the device and the browser our server reads your browser identification (user agent) for a moment, and to hold back a client that sends far too many counts it keeps a hash of your IP address in its memory for under a minute, made with a key that is lost when the server restarts; it stores neither. These counts use no cookie and no visitor number and hold no IP address, no browser identification, no address of a page and no link you came from, so they cannot be traced back to you. In our admin panel we see them added up per day.',
     content:
       '**These events hold no image, no text you typed, no name, no email address, no IP address, no browser identification (user agent) and no link.** Events from the free preview cannot be traced back to you. Only the events about making the file of a paid order also hold its order number, so that we can find a slow or failed rendering; through our order records, that number relates to your order.',
     basis:
@@ -101,6 +103,8 @@ const OPS = {
   de: {
     events:
       'Um zu sehen, ob der Dienst funktioniert, wie schnell er ist und was er kostet, legt unser Server kleine technische Ereignisse in unserem privaten Speicher bei Supabase in der EU ab. Zum Beispiel: dass ein Foto geprüft wurde (mit dem Ergebnis, etwa „kein Auge gefunden“, der Art des Geräts, etwa iPhone, Android oder Computer, ob das Foto von der Kamera oder aus der Galerie stammt, und der Sprache der Seite), dass Spiegelungen entfernt wurden, dass eine Vorschau oder eine bestellte Datei erstellt wurde und wie lange das dauerte, oder dass eine Anfrage fehlschlug (mit ihrem Fehlercode). Solange wir Preise testen, sagen die Ereignisse außerdem, welche Preisliste (ein kurzer Code) angezeigt, in der Vorschau gesehen, zur Zahlung geöffnet oder bezahlt wurde, bei einer bezahlten Bestellung mit dem Betrag. Unser Admin-Bereich zeigt sie uns, meist als Zahlen pro Tag.',
+    counter:
+      'Um zu sehen, wie viele Menschen die einzelnen Schritte der Website erreichen, zählt unser Server außerdem die Schritte, die eine Seite erreicht: dass die erste Seite geöffnet wurde, dass die Fotoseite geöffnet wurde, dass ein Foto ausgewählt oder aufgenommen wurde, dass die Vorschau angezeigt wurde (mit den Sekunden, die sie ab dem Foto brauchte), dass die Kaufkarte zeigte, dass Bestellungen noch nicht möglich sind, dass die Kauf-Schaltfläche gedrückt wurde und dass die Bestellseite geöffnet wurde. Jede Zählung ist ein kleiner Datensatz aus Zahlen und kurzen Codes: der Schritt, die Sprache der Seite, der Markt (die Währung), die Art des Geräts (iPhone, Android oder Computer), die Art des Browsers (zum Beispiel Chrome, Safari oder der eingebaute Browser der Facebook- oder Instagram-App) und das Land (zwei Buchstaben, die Vercel aus Ihrer IP-Adresse ableitet). Um Gerät und Browser zu bestimmen, liest unser Server kurz Ihre Browserkennung (User-Agent), und um einen Client auszubremsen, der viel zu viele Zählungen sendet, hält er weniger als eine Minute lang einen Hashwert Ihrer IP-Adresse im Arbeitsspeicher, gebildet mit einem Schlüssel, der beim Neustart des Servers verloren geht; beides wird nicht gespeichert. Diese Zählungen verwenden keinen Cookie und keine Besuchernummer und enthalten keine IP-Adresse, keine Browserkennung, keine Adresse einer Seite und keinen Link, von dem Sie kamen; sie lassen sich daher nicht auf Sie zurückführen. In unserem Admin-Bereich sehen wir sie pro Tag aufsummiert.',
     content:
       '**Diese Ereignisse enthalten kein Bild, keinen von Ihnen eingegebenen Text, keinen Namen, keine E-Mail-Adresse, keine IP-Adresse, keine Browserkennung (User-Agent) und keinen Link.** Ereignisse aus der kostenlosen Vorschau lassen sich nicht auf Sie zurückführen. Nur die Ereignisse zur Erstellung der Datei einer bezahlten Bestellung enthalten auch deren Bestellnummer, damit wir eine langsame oder fehlgeschlagene Erstellung finden können; über unsere Bestelldatensätze gehört diese Nummer zu Ihrer Bestellung.',
     basis:
@@ -142,7 +146,7 @@ const en: LegalDoc = {
       title: 'When you visit the website',
       blocks: [
         'When you open a page of snapeyes.com, your browser sends technical data to our hosting provider Vercel, such as your IP address, the date and time, the page requested and your browser type (user agent). Vercel needs this data to deliver the page and to protect the service against attacks. It is kept in server logs for a short time and then deleted.',
-        'To be able to suggest prices in your own currency, our server can also read the country that Vercel derives from your IP address (for example "AU"). It is used only for that suggestion, never changes the prices you see, and is not stored.',
+        'To be able to suggest prices in your own currency, our server can also read the country that Vercel derives from your IP address (for example "AU"). It is used for that suggestion and never changes the prices you see. It is stored with nothing that could identify you: its only trace is the two letters of the country in our anonymous counts (see [Service statistics and our admin log](#operations)).',
         'Legal basis: our legitimate interest in a secure, working website (Art. 6(1)(f) GDPR).',
         'Our fonts are served from our own server, so no data goes to Google Fonts or any other font service. We do not use analytics, advertising or tracking tools of other companies on this website, and nothing follows you from page to page or across websites. Our own anonymous service statistics are described under [Service statistics and our admin log](#operations).',
       ],
@@ -178,7 +182,7 @@ const en: LegalDoc = {
     {
       id: 'operations',
       title: 'Service statistics and our admin log',
-      blocks: [OPS.en.events, OPS.en.content, OPS.en.basis, OPS.en.admin, OPS.en.signin],
+      blocks: [OPS.en.events, OPS.en.counter, OPS.en.content, OPS.en.basis, OPS.en.admin, OPS.en.signin],
     },
     {
       id: 'orders',
@@ -324,7 +328,7 @@ const de: LegalDoc = {
       title: 'Beim Besuch der Website',
       blocks: [
         'Wenn Sie eine Seite von snapeyes.com aufrufen, sendet Ihr Browser technische Daten an unseren Hosting-Anbieter Vercel, etwa Ihre IP-Adresse, Datum und Uhrzeit, die aufgerufene Seite und Ihren Browsertyp (User-Agent). Vercel braucht diese Daten, um die Seite auszuliefern und den Dienst vor Angriffen zu schützen. Sie werden für kurze Zeit in Server-Protokollen gespeichert und dann gelöscht.',
-        'Um Ihnen Preise in Ihrer eigenen Währung vorschlagen zu können, kann unser Server außerdem das Land lesen, das Vercel aus Ihrer IP-Adresse ableitet (zum Beispiel „AU“). Es dient nur diesem Vorschlag, ändert nie die angezeigten Preise und wird nicht gespeichert.',
+        'Um Ihnen Preise in Ihrer eigenen Währung vorschlagen zu können, kann unser Server außerdem das Land lesen, das Vercel aus Ihrer IP-Adresse ableitet (zum Beispiel „AU“). Es dient diesem Vorschlag und ändert nie die angezeigten Preise. Es wird mit nichts gespeichert, was Sie identifizieren könnte: Seine einzige Spur sind die zwei Buchstaben des Landes in unseren anonymen Zählungen (siehe [Betriebsstatistik und Admin-Protokoll](#operations)).',
         'Rechtsgrundlage: unser berechtigtes Interesse an einer sicheren, funktionierenden Website (Art. 6 Abs. 1 lit. f DSGVO).',
         'Unsere Schriftarten kommen von unserem eigenen Server, es werden also keine Daten an Google Fonts oder andere Schriftdienste übertragen. Wir setzen auf dieser Website keine Analyse-, Werbe- oder Tracking-Werkzeuge anderer Unternehmen ein, und nichts verfolgt Sie von Seite zu Seite oder über Websites hinweg. Unsere eigene anonyme Betriebsstatistik ist unter [Betriebsstatistik und Admin-Protokoll](#operations) beschrieben.',
       ],
@@ -360,7 +364,7 @@ const de: LegalDoc = {
     {
       id: 'operations',
       title: 'Betriebsstatistik und Admin-Protokoll',
-      blocks: [OPS.de.events, OPS.de.content, OPS.de.basis, OPS.de.admin, OPS.de.signin],
+      blocks: [OPS.de.events, OPS.de.counter, OPS.de.content, OPS.de.basis, OPS.de.admin, OPS.de.signin],
     },
     {
       id: 'orders',

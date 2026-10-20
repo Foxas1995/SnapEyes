@@ -24,6 +24,8 @@ const ADMIN_LOG_LT = {
 const OPS_LT = {
   events:
     'Kad matytume, ar paslauga veikia, kaip greitai ir kiek kainuoja, mūsų serveris mūsų privačioje Supabase saugykloje ES įrašo nedidelius techninius įvykius. Pavyzdžiui: kad nuotrauka buvo patikrinta (su rezultatu, pavyzdžiui, „akis nerasta“, įrenginio rūšimi, pavyzdžiui, iPhone, Android ar kompiuteris, informacija, ar nuotrauka padaryta kamera, ar paimta iš galerijos, ir puslapio kalba), kad buvo pašalinti atspindžiai, kad buvo sukurta peržiūra ar užsakytas failas ir kiek laiko tai užtruko, arba kad užklausa nepavyko (su jos klaidos kodu). Kol bandome kainas, įvykiai taip pat nurodo, kuris kainoraštis (trumpas kodas) buvo parodytas, peržiūrėtas, atidarytas apmokėjimui ar apmokėtas, o apmokėto užsakymo atveju ir sumą. Mūsų administravimo skydelis juos mums rodo, dažniausiai kaip dienos suvestines.',
+  counter:
+    'Kad matytume, kiek žmonių pasiekia kiekvieną svetainės žingsnį, mūsų serveris taip pat skaičiuoja žingsnius, kuriuos pasiekia puslapis: kad atidarytas pirmasis puslapis, kad atidarytas nuotraukos puslapis, kad pasirinkta ar padaryta nuotrauka, kad parodyta peržiūra (su sekundėmis, kurių jai prireikė nuo nuotraukos), kad pirkimo kortelėje buvo parodyta, jog užsakymai dar neatidaryti, kad paspaustas pirkimo mygtukas ir kad atidarytas užsakymo puslapis. Kiekvienas skaičiavimas yra nedidelis skaičių ir trumpų kodų įrašas: žingsnis, puslapio kalba, rinka (valiuta), įrenginio rūšis (iPhone, Android ar kompiuteris), naršyklės rūšis (pavyzdžiui, Chrome, Safari arba Facebook ar Instagram programėlės įmontuota naršyklė) ir šalis (dvi raidės, kurias Vercel nustato pagal Jūsų IP adresą). Įrenginiui ir naršyklei nustatyti mūsų serveris akimirkai nuskaito Jūsų naršyklės identifikatorių (user agent), o kad sulaikytų klientą, siunčiantį per daug skaičiavimų, mažiau nei minutę savo atmintyje laiko Jūsų IP adreso maišą, sudarytą raktu, kuris prarandamas, kai serveris paleidžiamas iš naujo; nė vieno iš jų nesaugome. Šiuose skaičiavimuose nenaudojamas slapukas ar lankytojo numeris ir nėra IP adreso, naršyklės identifikatoriaus, puslapio adreso ar nuorodos, iš kurios atėjote, todėl jų su Jumis susieti neįmanoma. Savo administravimo skydelyje matome juos susumuotus pagal dienas.',
   content:
     '**Šiuose įvykiuose nėra jokio vaizdo, Jūsų įvesto teksto, vardo, el. pašto adreso, IP adreso, naršyklės identifikatoriaus (user agent) ir nuorodos.** Nemokamos peržiūros įvykių su Jumis susieti neįmanoma. Tik įvykiuose apie apmokėto užsakymo failo kūrimą yra ir to užsakymo numeris, kad galėtume rasti lėtą ar nepavykusį kūrimą; per mūsų užsakymų įrašus šis numeris susijęs su Jūsų užsakymu.',
   basis:
@@ -60,7 +62,7 @@ export const lt: LegalDoc = {
       title: 'Kai lankotės svetainėje',
       blocks: [
         'Kai atidarote svetainės snapeyes.com puslapį, Jūsų naršyklė mūsų prieglobos paslaugų teikėjui Vercel siunčia techninius duomenis, pavyzdžiui, Jūsų IP adresą, datą ir laiką, užklaustą puslapį ir naršyklės tipą (user agent). Vercel šių duomenų reikia puslapiui pateikti ir paslaugai apsaugoti nuo atakų. Jie trumpai saugomi serverio žurnaluose ir tada ištrinami.',
-        'Kad galėtume pasiūlyti kainas Jūsų valiuta, mūsų serveris taip pat gali nuskaityti šalį, kurią Vercel nustato pagal Jūsų IP adresą (pavyzdžiui, „AU“). Ji naudojama tik tam pasiūlymui, niekada nekeičia Jūsų matomų kainų ir nėra saugoma.',
+        'Kad galėtume pasiūlyti kainas Jūsų valiuta, mūsų serveris taip pat gali nuskaityti šalį, kurią Vercel nustato pagal Jūsų IP adresą (pavyzdžiui, „AU“). Ji naudojama tam pasiūlymui ir niekada nekeičia Jūsų matomų kainų. Ji nesaugoma su niekuo, kas galėtų Jus atpažinti: vienintelis jos pėdsakas yra dvi šalies raidės mūsų anoniminiuose skaičiavimuose (žr. [Paslaugos statistika ir mūsų administravimo žurnalas](#operations)).',
         'Teisinis pagrindas: mūsų teisėtas interesas turėti saugią ir veikiančią svetainę (BDAR 6 straipsnio 1 dalies f punktas).',
         'Mūsų šriftai teikiami iš mūsų pačių serverio, todėl jokie duomenys nepatenka į Google Fonts ar kitą šriftų paslaugą. Šioje svetainėje nenaudojame kitų įmonių analitikos, reklamos ar sekimo priemonių ir niekas Jūsų neseka iš puslapio į puslapį ar tarp svetainių. Mūsų pačių anoniminė paslaugos statistika aprašyta skyriuje [Paslaugos statistika ir mūsų administravimo žurnalas](#operations).',
       ],
@@ -96,7 +98,7 @@ export const lt: LegalDoc = {
     {
       id: 'operations',
       title: 'Paslaugos statistika ir mūsų administravimo žurnalas',
-      blocks: [OPS_LT.events, OPS_LT.content, OPS_LT.basis, OPS_LT.admin, OPS_LT.signin],
+      blocks: [OPS_LT.events, OPS_LT.counter, OPS_LT.content, OPS_LT.basis, OPS_LT.admin, OPS_LT.signin],
     },
     {
       id: 'orders',

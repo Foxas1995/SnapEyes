@@ -1,6 +1,6 @@
 #!/bin/bash
 # usage: run_all.sh <spdir> <repo> <outdir> [name ...]
-# Runs the suites of suites.list three at a time (no names = every suite) in the prepared tree <spdir> (mksp.py), against the
+# Runs the suites of suites.list three at a time, or SNAPEYES_SUITE_JOBS at a time (no names = every suite) in the prepared tree <spdir> (mksp.py), against the
 # checkout <repo>. Results: <outdir>/<name>.out and <name>.exit ("<name> EXIT <code>"; 77 = skipped), <name>.secs (the seconds it took), then all.done.
 # A suite is stopped after SNAPEYES_SUITE_TIMEOUT seconds (default 3600: v3coll takes 15 to 20 minutes alone and more with three suites and another
 # builder's process on one machine, v3uni 12 to 14; a timeout is exit 124, RED, and says so in the table).
@@ -47,5 +47,5 @@ if [ $# -gt 0 ]; then
 else
   LIST="$ALL"
 fi
-printf '%s\n' "$LIST" | grep -v '^$' | xargs -r -P 3 -I{} bash -c 'run {}'
+printf '%s\n' "$LIST" | grep -v '^$' | xargs -r -P "${SNAPEYES_SUITE_JOBS:-3}" -I{} bash -c 'run {}'
 echo ALLDONE > "$OUT/all.done"

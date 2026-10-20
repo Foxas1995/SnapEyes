@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler
 from _lib import iris as L
 from _lib import store
 from _lib import pay
+from _lib import counter
 from _lib.styles import plates
 import deglare
 
@@ -39,6 +40,8 @@ def handle(req):
             "test_orders": pay.test_orders_allowed(),
             # whether the daily clean-up can run here (CRON_SECRET set; vercel.json crons calls GET /api/order)
             "cron": len(pay._env("CRON_SECRET")) >= 16,
+            # whether the anonymous counter counts here (SNAPEYES_COUNTER, a store for the counts and the daily clean-up that deletes them): the pages read this and send their beacons only when it is true
+            "counter": counter.on(),
             # whether /legal/order-mail.json is readable and complete enough for live sales (pay.legal_problem)
             "legal": not pay.legal_problem(),
             # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)

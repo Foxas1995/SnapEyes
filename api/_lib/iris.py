@@ -8,6 +8,7 @@ from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
 from . import iris_lt, iris_hu
 from . import catalogue
 from . import duration
+from . import counter as _counter     # light (re, hmac, threading only): the request's campaign code and classes (run() puts them in ctx())
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(os.path.dirname(HERE), "_assets")
@@ -170,7 +171,12 @@ _LOCAL = threading.local()   # per-invocation deadline: one warm container can s
 def deadline():
     return getattr(_LOCAL, "deadline", 0.0)
 
-PAGE_LANGS = ("de", "lt", "hu")   # the languages besides English that the customer sentences of run() and the preview
+def ctx():
+    """What the request this thread serves says about where it came from, as classes (api/_lib/counter.py context: the campaign code, the device class, the browser family,
+    the country, the page's language and price market; no user agent, no address). Set by run(); None outside a request or when it could not be read."""
+    return getattr(_LOCAL, "ctx", None)
+
+PAGE_LANGS =("de", "lt", "hu")   # the languages besides English that the customer sentences of run() and the preview
                                  # watermark (WATERMARK_TEXT) come in: api/_lib/pay.py LANGS without "en"
 
 def page_lang():
@@ -304,6 +310,7 @@ def run(req, fn, gate=True):
     # unreadable body stay English; a ClientError's text is its raiser's, as it is
     lang = "en"
     _LOCAL.lang = "en"            # never the language of the request this thread served before
+    _LOCAL.ctx = None             # ... nor its campaign code and classes
     try:
         if gate and not json_content_type(req):
             return send_json(req, 415, {"ok": False, "error": "Send application/json."})
@@ -314,6 +321,7 @@ def run(req, fn, gate=True):
             raise ClientError("Send a JSON object.")
         lang = body.get("lang") if body.get("lang") in PAGE_LANGS else "en"
         _LOCAL.lang = lang
+        _LOCAL.ctx = _counter.context(req, body)
         out = fn(body)
         out["ms"] = int((time.time() - t0) * 1000)
         send_json(req, 200, out)
@@ -3848,6 +3856,10 @@ QA_TONE_ON = (os.environ.get("SNAPEYES_QATONE") or "on").strip().lstrip("\ufeff"
 # lid_ring_structure). PREPARED, OFF BY DEFAULT: unset, empty, off, 0, false and no are off; on, 1, yes or true turns them on. Read once at import (BOM safe). It is read here and not in
 # gate.py because the style package reads no environment (no os in its modules, test_gate_seal.py); gate.lid asks L.GATE2_ON when it runs, so every path that measures a profile agrees.
 GATE2_ON = (os.environ.get("SNAPEYES_GATE2") or "").strip().lstrip("\ufeff").strip().lower() not in ("", "off", "0", "false", "no")
+# SNAPEYES_COUNTER (2026-10-20): the anonymous counter of api/_lib/counter.py (a beacon per step of a visit, the campaign code, the classes of device and browser). ON by default,
+# because the privacy policy that describes it ships in the same release: unset, empty, on, 1, yes and true are on; off, 0, false and no (any case, BOM safe) turn it off. Read once at
+# import, so a change needs a redeploy. Off, the beacon route counts nothing and /api/health and GET /api/checkout say counter false, which is how the pages know to send nothing.
+COUNTER_ON = (os.environ.get("SNAPEYES_COUNTER") or "on").strip().lstrip("\ufeff").strip().lower() not in ("off", "0", "false", "no")
 PUPIL_NEUTRAL_MAX = 1.5      # |Cb| and |Cr| of the pupil core: every professional print measured sits inside this
 PUPIL_QA_DARK = 8.0          # an off-centre pupil's core is centred on its pixels this close to its darkest (grey
                              # levels)

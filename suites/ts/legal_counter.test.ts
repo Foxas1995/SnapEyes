@@ -1,0 +1,54 @@
+// The privacy policy says what the anonymous counter keeps (2026-10-20): the same paragraphs, in the same places, in English, German, Lithuanian and Hungarian, in the three editions
+// (the euro texts, the Australian edition made from them by patchDoc, and the Hungarian edition, which is the euro text with the forint prices), and nothing the policy says contradicts
+// the counter (api/_lib/counter.py): no cookie, no visitor number, no IP address, no user agent stored; the country is stored as two letters. Pure page code, loaded through Vite's
+// module runner by scripts/run_ts_tests.mjs; returns its results.
+import { EDITIONS } from '../../src/legal/editions';
+import { PRIVACY } from '../../src/legal/docs/privacy';
+import { LEGAL_UPDATED } from '../../src/shared/legal';
+import type { Block, LegalDoc } from '../../src/legal/types';
+
+type Row = [string, boolean, string?];
+const LANGS = ['en', 'de', 'lt', 'hu'] as const;
+const blockText = (b: Block): string => (typeof b === 'string' ? b : 'ul' in b ? b.ul.join('\n') : 'dl' in b ? b.dl.map((r) => r.join(': ')).join('\n') : b.box.join('\n'));
+const section = (d: LegalDoc, id: string) => d.sections.find((s) => s.id === id);
+const sectionText = (d: LegalDoc, id: string) => (section(d, id)?.blocks ?? []).map(blockText).join('\n');
+
+export async function run(): Promise<Row[]> {
+  const out: Row[] = [];
+  const check = (name: string, ok: boolean, detail = '') => out.push([name, ok, detail]);
+
+  const ids = (d: LegalDoc) => d.sections.map((s) => s.id).join();
+  check('the four languages of the privacy policy have the same sections in the same order', LANGS.every((l) => ids(PRIVACY[l]) === ids(PRIVACY.en)), LANGS.map((l) => ids(PRIVACY[l])).join(' | '));
+  const nOps = LANGS.map((l) => section(PRIVACY[l], 'operations')?.blocks.length ?? -1);
+  check('the "operations" section (service statistics) has the same number of paragraphs in every language, one more than before the counter (six)', nOps.every((n) => n === 6), nOps.join());
+
+  const KEY: Record<(typeof LANGS)[number], RegExp> = {
+    en: /counts the steps a page reaches/, de: /zählt unser Server außerdem die Schritte, die eine Seite erreicht/, lt: /serveris taip pat skaičiuoja žingsnius, kuriuos pasiekia puslapis/, hu: /a szerverünk azt is megszámolja, mely lépéseket éri el egy oldal/,
+  };
+  check('the counter paragraph is in the operations section of every language', LANGS.every((l) => KEY[l].test(sectionText(PRIVACY[l], 'operations'))), LANGS.filter((l) => !KEY[l].test(sectionText(PRIVACY[l], 'operations'))).join());
+
+  const NO_COOKIE: Record<(typeof LANGS)[number], RegExp> = { en: /use no cookie and no visitor number/, de: /keinen Cookie und keine Besuchernummer/, lt: /nenaudojamas slapukas ar lankytojo numeris/, hu: /nem használnak sütit és látogatószámot/ };
+  check('and says that the counts use no cookie and no visitor number', LANGS.every((l) => NO_COOKIE[l].test(sectionText(PRIVACY[l], 'operations'))), LANGS.filter((l) => !NO_COOKIE[l].test(sectionText(PRIVACY[l], 'operations'))).join());
+  const IP: Record<(typeof LANGS)[number], RegExp> = { en: /hold no IP address, no browser identification/, de: /keine IP-Adresse, keine Browserkennung/, lt: /nėra IP adreso, naršyklės identifikatoriaus/, hu: /nem tartalmaznak IP-címet, böngészőazonosítót/ };
+  check('and that they hold no IP address and no browser identification', LANGS.every((l) => IP[l].test(sectionText(PRIVACY[l], 'operations'))), LANGS.filter((l) => !IP[l].test(sectionText(PRIVACY[l], 'operations'))).join());
+  const COUNTRY: Record<(typeof LANGS)[number], RegExp> = { en: /two letters, which Vercel derives from your IP address/, de: /zwei Buchstaben, die Vercel aus Ihrer IP-Adresse ableitet/, lt: /dvi raidės, kurias Vercel nustato pagal Jūsų IP adresą/, hu: /két betű, amelyet a Vercel az IP-címéből származtat/ };
+  check('and that the country is kept as two letters', LANGS.every((l) => COUNTRY[l].test(sectionText(PRIVACY[l], 'operations'))), LANGS.filter((l) => !COUNTRY[l].test(sectionText(PRIVACY[l], 'operations'))).join());
+
+  const NOT_STORED: Record<(typeof LANGS)[number], RegExp> = { en: /and is not stored\./, de: /und wird nicht gespeichert\./, lt: /nėra saugoma\./, hu: /és nem tároljuk\./ };
+  check('the website paragraph about the country no longer says it is not stored at all: it names the two letters in the anonymous counts, in every language',
+    LANGS.every((l) => !NOT_STORED[l].test(sectionText(PRIVACY[l], 'website')) && /#operations/.test(sectionText(PRIVACY[l], 'website'))), LANGS.map((l) => NOT_STORED[l].test(sectionText(PRIVACY[l], 'website'))).join());
+
+  const doc = (e: keyof typeof EDITIONS, l: (typeof LANGS)[number]) => EDITIONS[e].privacy[l];
+  check('the Hungarian edition reads the same privacy texts as the euro one (the forint prices are in the terms, not here), in all four languages',
+    LANGS.every((l) => doc('hu', l) === PRIVACY[l] && doc('eu', l) === PRIVACY[l]));
+  const au = EDITIONS.au.privacy;
+  check('the Australian edition has English and German only, made from the euro texts: its operations section is the same paragraphs',
+    !!au.en && !!au.de && !au.lt && !au.hu && (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'operations') === sectionText(PRIVACY[l], 'operations') && sectionText(au[l]!, 'website') === sectionText(PRIVACY[l], 'website')));
+  check('the Australian edition keeps its own section on top of them, after the rights section', (['en', 'de'] as const).every((l) => section(au[l]!, 'australia') !== undefined));
+
+  const dash = new RegExp('[' + [0x2012, 0x2013, 0x2014, 0x2015].map((c) => String.fromCharCode(c)).join('') + ']');
+  check('no paragraph of the policy holds an en or em dash', LANGS.every((l) => !dash.test(PRIVACY[l].sections.map((s) => sectionText(PRIVACY[l], s.id)).join('\n'))));
+  check('one date versions the legal pages and it is the day of this change', LEGAL_UPDATED === '2026-10-20', LEGAL_UPDATED);
+  check('the retention row of the service statistics still says twelve months in every language', LANGS.every((l) => /12/.test(sectionText(PRIVACY[l], 'retention').split('\n').filter((x) => /operations/.test(x)).join('\n'))));
+  return out;
+}
