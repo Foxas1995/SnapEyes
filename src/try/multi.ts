@@ -32,6 +32,7 @@ export interface Eye {
   stored: boolean;
   glarePct: number;
   lidPct?: number;      // the share of the iris an eyelid covered that /api/deglare filled from the iris itself (its lid_pct; api/_lib/lidcap.py): the result says so
+  pupil?: number;       // the pupil's radius on the photo, in iris radii (/api/analyze quality.pupil_size): a wide one gets the one line that more light helps (pupilWide)
   diameterPx?: number;
   sample: boolean;      // the site's AI-generated demo eye, never a customer's
   wm?: Lang;            // the language the preview watermark of `image` is drawn in (the request's): when the page speaks another one, TryApp asks for the display copy again in it (api/enhance.py redisplay)
@@ -68,6 +69,19 @@ export interface ColourQa { ring_de00?: number | null; pupil_neutral?: boolean |
  *  (ring_de00 null) says nothing about the eye, so it never raises the note. */
 export const colourOff = (qa: ColourQa | null | undefined): boolean =>
   !!qa && qa.ok === false && typeof qa.ring_de00 === 'number' && Number.isFinite(qa.ring_de00);
+
+/** A pupil whose radius is this share of the iris radius or more is wide. The studio keeps the photo's pupil (it never paints iris into it), so the result says in
+ *  one line that more light makes it smaller. 0.40 is the radius the engine itself treats as dilated (api/_lib/pupilgeo.py DISC_PUPIL_MAX). Measured on stored
+ *  photos (2026-10-20): the owner's own eye 0.42 to 0.51 in three of his four photos (0.30 in the fourth); of 21 test photos 4 read 0.40 or more. */
+export const PUPIL_WIDE = 0.40;
+
+/** True when the photo's pupil (quality.pupil_size), or where its edge could not be read the restored one (the Reveal's rho), is PUPIL_WIDE or wider. Never for the
+ *  AI-generated sample, which is no photo of the visitor's. */
+export function pupilWide(e: Pick<Eye, 'pupil' | 'sample' | 'reveal'>): boolean {
+  if (e.sample) return false;
+  const r = typeof e.pupil === 'number' && Number.isFinite(e.pupil) ? e.pupil : e.reveal?.rho;
+  return typeof r === 'number' && Number.isFinite(r) && r >= PUPIL_WIDE;
+}
 
 /** The eyes an order would be for: the AI-generated sample eye is never one of them. */
 export const billableEyes = (list: readonly Eye[]): number => list.filter((e) => !e.sample).length;

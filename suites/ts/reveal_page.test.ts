@@ -37,8 +37,10 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   check('the way back finds the eye with its Reveal numbers and its crop, and no frame (the page builds the tight frame again from the crop)',
     !!be && parseReveal(be.reveal)?.ok === true && be.before === eye.before && !('wide' in be));
 
-  // ---- the words: four languages, the same keys, the claims the owner and the review ruled out are not there
-  const KEYS = ['photo', 'iris', 'art', 'slider', 'valueText', 'drag', 'promise', 'stripTitle', 'stripIntro', 'stripIntroPair', 'noCut', 'softTip', 'frameWide', 'frameTight'];
+  // ---- the words: four languages, the same keys, the claims the owner and the review ruled out are not there. Since the owner's evening of 2026-10-20 ("what is
+  // that cut?") an eye whose Reveal is withheld gets the plain slider with no note, the strip under the Reveal is gone and no line names a cut or a frame: the
+  // keys of the note, the strip, the drag line and the frame lines went with them (what_we_did.test.ts checks that no sentence names a cut)
+  const KEYS = ['photo', 'iris', 'slider', 'valueText', 'promise', 'softTip'];
   const rev = (l: (typeof LANGS)[number]) => COPY[l].result.reveal as unknown as Record<string, string>;
   for (const l of LANGS) {
     const r = rev(l);
@@ -52,11 +54,12 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
       !/redrawn|never redraw/i.test(r.promise) && r.promise.length > 40, r.promise);
   }
   check('de, lt and hu are not the English words (a string kept in English by mistake would be flagged by the build too, not for one word labels)',
-    (['de', 'lt', 'hu'] as const).every((l) => KEYS.filter((k) => !['art'].includes(k)).every((k) => rev(l)[k] !== rev('en')[k])));
-  check('the no-cut note and the strip lines are different strings (nothing is said twice)', new Set(KEYS.map((k) => rev('en')[k])).size === KEYS.length);
+    (['de', 'lt', 'hu'] as const).every((l) => KEYS.every((k) => rev(l)[k] !== rev('en')[k])));
+  check("the Reveal's strings are all different (nothing is said twice), in every language", LANGS.every((l) => new Set(KEYS.map((k) => rev(l)[k])).size === KEYS.length));
 
   // ---- what the result page prints around the Reveal (the real ResultView, rendered on the server with the eye's own numbers): the promise line and the colour warning
-  // never stand together (review of WP9: "we never recolour your iris" beside "our colour check says this restoration drifted" contradicted itself on the p09f eye)
+  // never stand together (review of WP9: "we never recolour your iris" beside "our colour check says this restoration drifted" contradicted itself on the p09f eye).
+  // The before/after is the Reveal when it is shown, else the plain slider (also for an eye whose Reveal the server withheld); the promise is in the closed disclosure
   const en = COPY.en.result;
   const geomOf = (rvIn: unknown) => revealGeometry(tightFit(400), parseReveal(rvIn)!);
   const base = { pupil: [0.001, 0], shift: [0, 0], edge: [0.95, 1.02], rho: 0.26, cls: 'round', soft: false, lid: 0 };
@@ -75,15 +78,15 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   const cases: Array<[string, Eye, { view: string; promise: boolean; colour: boolean }]> = [
     ['the cut shown, the colour fine', eyeOf(okRv), { view: 'reveal-hero', promise: true, colour: false }],
     ['the cut shown, but the colour check of the restoration itself failed (colourOff)', eyeOf(okRv, { colourOff: true }), { view: 'reveal-hero', promise: false, colour: true }],
-    ['the cut withheld because the colour drifted (the p09f case, 19.7)', eyeOf({ ...base, ok: false, drift: 19.7 }), { view: 'reveal-withheld', promise: false, colour: true }],
-    ['the cut withheld by registration alone (the colour is fine)', eyeOf({ ...base, ok: false, drift: 1.2 }), { view: 'reveal-withheld', promise: true, colour: false }],
-    ['the plain slider (no numbers), the colour check failed', eyeOf(undefined, { colourOff: true }), { view: 'none', promise: false, colour: true }],
-    ['the AI-generated sample eye', eyeOf(okRv, { sample: true }), { view: 'none', promise: false, colour: false }],
+    ['the cut withheld because the colour drifted (the p09f case, 19.7)', eyeOf({ ...base, ok: false, drift: 19.7 }), { view: 'slider-hero', promise: false, colour: true }],
+    ['the cut withheld by registration alone (the colour is fine)', eyeOf({ ...base, ok: false, drift: 1.2 }), { view: 'slider-hero', promise: true, colour: false }],
+    ['the plain slider (no numbers), the colour check failed', eyeOf(undefined, { colourOff: true }), { view: 'slider-hero', promise: false, colour: true }],
+    ['the AI-generated sample eye', eyeOf(okRv, { sample: true }), { view: 'slider-hero', promise: false, colour: false }],
   ];
   for (const [name, eye, want] of cases) {
     let h = '';
     try { h = page(eye); } catch (e) { check(`ResultView renders: ${name}`, false, e instanceof Error ? e.message : String(e)); continue; }
-    const view = has(h, 'reveal-hero') ? 'reveal-hero' : has(h, 'reveal-withheld') ? 'reveal-withheld' : 'none';
+    const view = has(h, 'reveal-hero') ? (has(h, 'slider-hero') ? 'both' : 'reveal-hero') : has(h, 'slider-hero') ? 'slider-hero' : 'none';
     check(`ResultView, ${name}: shows ${want.view}, the promise line ${want.promise ? 'is' : 'is not'} there, the colour warning ${want.colour ? 'is' : 'is not'} there`,
       view === want.view && has(h, 'promise') === want.promise && has(h, 'colour-off') === want.colour && h.includes(want.promise ? COPY.en.result.reveal.promise : 'never-printed-sentinel') === want.promise,
       `${view} promise=${has(h, 'promise')} colour=${has(h, 'colour-off')}`);
@@ -92,7 +95,7 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
         h.indexOf(en.colourOff) >= 0 && h.indexOf(en.colourOff) < h.indexOf(en.transparency) && has(h, 'transparency'), [h.indexOf(en.colourOff), h.indexOf(en.transparency)].join());
     }
   }
-  check('ResultView, the withheld colour case still says why there is no cut and still offers the retake (the review asked for exactly this case to be shown honestly)',
-    (() => { const h = page(cases[2][1]); return h.includes(en.reveal.noCut) && h.includes(en.colourOff) && !h.includes(en.reveal.promise); })());
+  check('ResultView, the withheld colour case is shown honestly without jargon: the plain slider, the colour note (what helps, and that a result one likes can stay), the retake, no promise, and no note about a cut or a strip',
+    (() => { const h = page(cases[2][1]); return has(h, 'slider-hero') && h.includes(en.colourOff) && h.includes(en.retakeOnly) && !h.includes(en.reveal.promise) && !has(h, 'no-cut') && !has(h, 'reveal-withheld'); })());
   return out;
 }

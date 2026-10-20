@@ -623,7 +623,10 @@ async function checkWiring() {
 // base of /try by +1,144 B JS, measured on e2754c1 against the tree with them (162,238 to 163,382 B; the CSS +9 B and /order -13 B are left in the budget). None of it is motion.
 // The light family (2026-10-20: five styles of one eye at preview, one line under every one-eye tile in four languages) moved it by +1,108 B JS on /try and +110 B JS on
 // /order, measured on e2754c1 against v3-singles5 (162,238 to 163,346 B and 111,209 to 111,319 B). None of it is motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108, css: 10975 + 245 }, order: { js: 108723 + 414 + 110, css: 10975 + 245 } };
+// The owner's evening of 2026-10-20 (the plain slider for an eye whose Reveal is withheld, the strip and its note gone, the result's text folded into one disclosure,
+// the calm first screen, the pupil line; four languages) moved the base of /try by -1,373 B JS, measured on b96c04c against the tree with it (164,524 to 163,151 B;
+// the CSS 13,214 B and /order 111,318 B unchanged). None of it is motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373, css: 10975 + 245 }, order: { js: 108723 + 414 + 110, css: 10975 + 245 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

@@ -15,7 +15,7 @@ const andList = (xs: number[], and: string) => (xs.length < 2 ? String(xs[0] ?? 
 
 // The capture guide's steps, word for word the same on the capture screen and in the retake cards (the English
 // file's rule): daylight from the side, never a lamp or the flash.
-const LIGHT = 'Dienos šviesa pro langą, iš šono (ne tiesiai iš priekio). Ne lempa ir ne blykstė.';
+const LIGHT = 'Dienos šviesa pro langą, iš šono. Ne lempa ir ne blykstė.';
 const CAMERA = 'Galinė kamera su 2x priartinimu, maždaug 10 cm nuo akies.';
 const FOCUS = 'Bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų.';
 const STEADY = 'Laikykite telefoną stabiliai (alkūnes atremkite į ką nors tvirto) ir padarykite 3-5 kadrus.';
@@ -51,9 +51,9 @@ export const lt: TryCopy = {
 
   capture: {
     // the first screen's heading: the second part is set in gold
-    titleA: 'JŪSŲ AKIS. ',
-    titleB: 'TIKRAI.',
-    lead: 'Nufotografuokite vieną akį. Surasime rainelę, pašalinsime atspindžius, atkursime skaidulas ir perteiksime ją meno kūrinyje. Maždaug minutė.',
+    titleA: 'JŪSŲ AKIS ',
+    titleB: 'KAIP MENO KŪRINYS.',
+    lead: 'Nufotografuokite vieną akį ir maždaug po minutės pamatykite ją atkurtą.',
     addTitle: (n: number) => `Pridėti akį ${n}`,
     addLead: 'Partnerio, vaiko arba kita Jūsų akis. Tie patys žingsniai kaip anksčiau: padarykite kelis kadrus, o mes pasiliksime geriausią.',
     takeTurns: 'Fotografuojate vienas kitą? Darykite tai paeiliui: vienas laiko telefoną, kitas žiūri tiesiai į priekį. Tada apsikeiskite.',
@@ -68,10 +68,11 @@ export const lt: TryCopy = {
     // the capture guide on the first screen. Step 3 is the retake guide's first step, word for word (LIGHT).
     steps: [
       { title: '1. Galinė kamera', text: '2x arba 3x priartinimas, ne priekinė kamera.' },
-      { title: '2. 10 cm atstumu', text: 'Rainelė turėtų užpildyti trečdalį kadro.' },
+      { title: '2. 10 cm atstumu', text: 'Rainelė užpildo trečdalį kadro.' },
       { title: '3. Šviesa pro langą', text: LIGHT },
       { title: '4. Sufokusuokite bakstelėdami', text: 'Bakstelėkite rainelę ekrane, nejudėkite, fotografuokite.' },
     ],
+    moreTips: 'Daugiau patarimų',
     stepsOpen: 'Plačiai atmerkta akis. ',
     stepsOpenMore: 'Žiūrėkite tiesiai į priekį ir piršto galiuku švelniai pakelkite viršutinį voką, kad nei vokas, nei blakstienos nedengtų rainelės.',
     stepsShots: 'Padarykite 3-5 kadrus ir siųskite visus.',
@@ -233,14 +234,16 @@ export const lt: TryCopy = {
     transparency: 'Spalva paimta iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI.',
     aiMaterial: 'Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos, todėl kito kliento kūrinyje gali būti tas pats elementas. Jūsų rainelė išlaiko Jūsų nuotraukos spalvas, raštą ir išdėstymą; smulkiausias skaidulas, kaip aprašyta aukščiau, atkuria DI.',
     sampleNote: 'Ši akis yra DI sugeneruotas pavyzdys, ne tikra nuotrauka. Su Jūsų nuotrauka spalva paimama iš Jūsų nuotraukos.',
-    // the owner's own language (2026-10-20): colourOff and did are new sentences, for his read
+    // the owner's own language (2026-10-20): colourOff, pupilWide, how and did are new sentences, for his read
     colourOff: 'Šis atkūrimas gali atrodyti šiek tiek šviesesnis arba tamsesnis nei Jūsų akis. Tikriausias spalvas duoda tolygi šviesa: dienos šviesa pro langą, be blykstės ir be žibintuvėlio iš šono. Jei rezultatas Jums patinka, galite tiesiog tęsti.',
+    pupilWide: 'Daugiau šviesos sumažins vyzdį ir parodys daugiau rainelės.',
+    how: 'Kaip tai veikia?',
     did: {
-      title: 'Ką padarėme su Jūsų nuotrauka',
-      glare: 'Pašalinome langų ir lempų atspindžius.',
+      title: 'Ką padarėme',
+      glare: 'Pašalinome atspindžius.',
       sharp: 'Paryškinome fokusą ir smulkias skaidulas.',
-      colour: 'Išlyginome šviesą. Spalvos paimtos iš Jūsų nuotraukos.',
-      lid: 'Kur vokas dengė rainelę, ją pratęsėme iš Jūsų pačių rainelės.',
+      colour: 'Išlyginome šviesą.',
+      lid: 'Po voku pratęsėme Jūsų pačių rainelę.',
       nothing: 'Ant viršaus nieko nepiešėme: jokių naujų spalvų, jokio kitos akies rašto.',
       quality: (crop: number) => `Nuotrauką daro Jūsų telefono kamera visa savo kokybe. Iš jos iškerpame Jūsų akį (ne daugiau kaip ${crop} px) ir ją atkuriame; viso dydžio failas (4096 px) būtų kuriamas iš šio atkūrimo, o ne ištemptas iš nuotraukos.`,
     },
@@ -255,8 +258,6 @@ export const lt: TryCopy = {
     sampleTitle: 'DI sugeneruotas pavyzdys',
     sampleArtworkNote: 'Sukurta tik iš DI sugeneruotos pavyzdinės akies, ne iš tikros nuotraukos.',
     mixedArtworkNote: 'Šiame kūrinyje yra DI sugeneruota pavyzdinė akis, kuri nėra tikra nuotrauka.',
-    drag: 'Tempkite rankenėlę.',
-    irisPx: (px: number) => `Rainelė Jūsų nuotraukoje: ${px} px.`,
     upscaled: 'Maža nuotrauka: prieš atkuriant padidinta.',
     badgeMacro: 'Studijinis makro',
     badgeFallback: 'Tik tikslus padidinimas',
@@ -285,18 +286,10 @@ export const lt: TryCopy = {
     reveal: {
       photo: 'Jūsų nuotrauka',
       iris: 'Jūsų rainelė',
-      art: 'Jūsų kūrinys',
       slider: 'Palyginkite nuotrauką su atkurta rainele',
       valueText: 'nuotrauka {n} %',
-      drag: 'Tempkite liniją arba naudokite rodykles. Enter grąžina į vyzdžio pjūvį.',
       promise: 'Atkurta, niekada neperpiešta: niekada nekeičiame Jūsų rainelės spalvos ir nepakeičiame jos kita akimi.',
-      stripTitle: 'Nuo nuotraukos iki meno',
-      stripIntro: 'Ta pati akis tris kartus: kaip nufotografavote, atkurta ir kaip kūrinys, kurį jai siūlome.',
-      stripIntroPair: 'Ta pati akis du kartus: kaip nufotografavote ir atkurta.',
-      noCut: 'Šiai akiai pjūvio parodyti nepavyko, todėl Jūsų nuotrauka ir atkurta rainelė rodomos greta.',
       softTip: 'Jūsų nuotrauka maža, todėl jos pusė atrodo minkšta. Prisiartinkite arba naudokite 2x priartinimą, kad palyginimas būtų ryškesnis.',
-      frameWide: 'Platus kadras',
-      frameTight: 'Siauras kadras: Jūsų nuotrauka apkirpta prie pat rainelės, aplink ją nieko nepiešiama',
     },
   },
 

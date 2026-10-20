@@ -70,7 +70,7 @@
   "reveal": {
     "eyebrow": "Atskleidimas",
     "title": "Nuotrauka kairėje. Rainelė dešinėje.",
-    "intro": "Kairė pusė yra telefono nuotrauka, dešinė pusė yra ta pati atkurta rainelė. Pjūvis eina per vyzdį: sekite vieną vagelę ar spalvos dėmę iš vienos pusės į kitą.",
+    "intro": "Kairė pusė yra telefono nuotrauka, dešinė pusė yra ta pati atkurta rainelė. Sekite vieną vagelę ar spalvos dėmę iš vienos pusės į kitą.",
     "hint": "Tempkite ir palyginkite",
     "sliderLabel": "Palyginkite nuotrauką telefonu ir atkurtą rainelę",
     "valueText": "nuotrauka {n} %",
@@ -79,7 +79,7 @@
     "scale": "Nuotrauka telefonu: {n} px. Atkurtas failas: {px}.",
     "beforeWeb": "Nuotrauka",
     "scaleWeb": "Nuotrauka: {n} px. Atkurtas failas: {px}.",
-    "introWeb": "Kairė pusė yra pradinė nuotrauka, dešinė pusė yra ta pati atkurta rainelė. Pjūvis eina per vyzdį: sekite vieną vagelę ar spalvos dėmę iš vienos pusės į kitą.",
+    "introWeb": "Kairė pusė yra pradinė nuotrauka, dešinė pusė yra ta pati atkurta rainelė. Sekite vieną vagelę ar spalvos dėmę iš vienos pusės į kitą.",
     "sliderLabelWeb": "Palyginkite nuotrauką ir atkurtą rainelę",
     "eyes": [
       {

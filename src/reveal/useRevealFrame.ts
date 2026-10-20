@@ -30,10 +30,12 @@ export interface RevealState {
 
 /** The Reveal's photo frame for an eye, and whether both layers are decoded. A fresh eye brings its frame (cut from the full photo before the page
  *  let it go). An eye that has none (brought back from Stripe's page: the frame is memory only and is not kept) gets the tight frame of the client crop
- *  it still holds: nothing is invented around the iris, nothing is stored or uploaded. If even that fails the view is 'plain': the old slider. */
+ *  it still holds: nothing is invented around the iris, nothing is stored or uploaded. If even that fails the view is 'plain': the old slider.
+ *  Only a Reveal that is shown needs its frame: an eye whose Reveal the server withheld ('strip') shows the plain slider (src/try/ResultView.tsx), so no
+ *  frame is built for it. */
 export function useRevealFrame(eye: FrameEye | undefined): RevealState {
   const rv = useMemo(() => parseReveal(eye?.reveal), [eye?.reveal]);
-  const wanted = !!eye && revealView(rv, eye.sample) !== 'plain';
+  const wanted = !!eye && revealView(rv, eye.sample) === 'cut';
   const [built, setBuilt] = useState<{ id: string; frame: WideFrame | null } | null>(null);
   const id = eye?.id ?? '';
   const before = eye?.before;

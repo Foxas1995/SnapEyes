@@ -50,7 +50,7 @@ const ordList = (xs: number[]) => {
 };
 
 // the capture guide's steps, word for word the same on the capture screen and in the retake cards (src/try/copy.ts)
-const LIGHT = 'Nappali fény egy ablakból, oldalról (nem szemből). Se lámpa, se vaku.';
+const LIGHT = 'Nappali fény egy ablakból, oldalról. Se lámpa, se vaku.';
 const CAMERA = 'Hátsó kamera 2x-es zoommal, kb. 10 cm-re a szemtől.';
 const FOCUS = 'Koppints az íriszre a képernyőn, hogy a kamera arra állítsa az élességet.';
 const STEADY = 'Tartsd stabilan a telefont (támaszd meg a könyöködet), és készíts 3-5 felvételt.';
@@ -84,9 +84,9 @@ export const hu: TryCopy = {
   },
 
   capture: {
-    titleA: 'A TE SZEMED, ',
-    titleB: 'TÉNYLEG.',
-    lead: 'Fotózd le az egyik szemedet. Megkeressük az íriszt, eltávolítjuk a tükröződéseket, helyreállítjuk a rostokat, és műalkotássá formáljuk. Kb. egy perc.',
+    titleA: 'A SZEMED ',
+    titleB: 'MŰALKOTÁSKÉNT.',
+    lead: 'Fotózd le az egyik szemedet, és nagyjából egy perc múlva helyreállítva látod.',
     addTitle: (n: number) => `${n}. szem hozzáadása`,
     addLead: 'A párod, a gyermeked vagy a másik szemed. Ugyanazok a lépések, mint az előbb: készíts néhány felvételt, és a legjobbat megtartjuk.',
     takeTurns: 'Egymást fotózzátok? Felváltva csináljátok: az egyik tartja a telefont, a másik egyenesen előre néz. Aztán cseréljetek.',
@@ -100,10 +100,11 @@ export const hu: TryCopy = {
     sampleThumb: 'MI által generált minta',
     steps: [
       { title: '1. Hátsó kamera', text: '2x-es vagy 3x-os zoom, ne a szelfikamera.' },
-      { title: '2. 10 cm távolság', text: 'Az írisz töltse ki a kép harmadát.' },
+      { title: '2. 10 cm távolság', text: 'Az írisz a kép harmadát tölti ki.' },
       { title: '3. Ablakfény', text: LIGHT },
       { title: '4. Élességállítás', text: 'Koppints az íriszre a képernyőn, maradj mozdulatlan, és fotózz.' },
     ],
+    moreTips: 'További tippek',
     stepsOpen: 'Tágra nyitott szem. ',
     stepsOpenMore: 'Nézz egyenesen előre, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se a szemhéj, se a szempillák ne takarják az íriszt.',
     stepsShots: 'Készíts 3-5 felvételt, és küldd el mindet.',
@@ -261,14 +262,16 @@ export const hu: TryCopy = {
     transparency: TRANSPARENCY_HU,
     aiMaterial: 'Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
     sampleNote: 'Ez a szem az MI által generált minta, nem valódi fotó. A saját fotóddal a szín a te fotódból származik.',
-    // new sentences of 2026-10-20 (colourOff, did): written without a native reader
+    // new sentences of 2026-10-20 (colourOff, pupilWide, how, did): written without a native reader
     colourOff: 'Ez a helyreállítás kicsit világosabbnak vagy sötétebbnek tűnhet, mint a szemed. A leghűbb színeket egyenletes fény adja: nappali fény egy ablakon át, vaku és oldalról világító zseblámpa nélkül. Ha így is tetszik, nyugodtan folytasd.',
+    pupilWide: 'Több fénynél kisebb a pupilla, és több látszik az íriszedből.',
+    how: 'Hogyan működik?',
     did: {
-      title: 'Mit csináltunk a fotóddal',
-      glare: 'Eltávolítottuk az ablakok és lámpák tükröződését.',
+      title: 'Mit csináltunk',
+      glare: 'Eltávolítottuk a tükröződéseket.',
       sharp: 'Élesítettük a fókuszt és a finom rostokat.',
-      colour: 'Kiegyenlítettük a fényt. A színek a saját fotódéi.',
-      lid: 'Ahol a szemhéjad takarta az íriszt, a saját íriszedből folytattuk.',
+      colour: 'Kiegyenlítettük a fényt.',
+      lid: 'A szemhéj alatt a saját íriszedet folytattuk.',
       nothing: 'Semmit nem festettünk rá: se új színeket, se egy másik szem mintázatát.',
       quality: (crop: number) => `A fotót a telefonod saját kamerája készíti, teljes minőségben. Ebből kivágjuk a szemedet (legfeljebb ${crop} px), és azt állítjuk helyre; a teljes méretű fájl (4096 px) ebből a helyreállításból készülne, nem a fotód felnagyításával.`,
     },
@@ -283,8 +286,6 @@ export const hu: TryCopy = {
     sampleTitle: 'MI által generált minta',
     sampleArtworkNote: 'Kizárólag az MI által generált mintaszemből készült, nem valódi fotóból.',
     mixedArtworkNote: 'Ez az alkotás tartalmazza az MI által generált mintaszemet, amely nem valódi fotó.',
-    drag: 'Húzd el a csúszkát.',
-    irisPx: (px: number) => `Írisz a fotódon: ${px} px.`,
     upscaled: 'Kis fotó: helyreállítás előtt felnagyítva.',
     badgeMacro: 'Részletes helyreállítás',
     badgeFallback: 'Csak hű nagyítás',
@@ -313,18 +314,10 @@ export const hu: TryCopy = {
     reveal: {
       photo: 'A fotód',
       iris: 'Az íriszed',
-      art: 'Az alkotásod',
       slider: 'Hasonlítsd össze a fotódat a helyreállított íriszeddel',
       valueText: 'fotó {n} százalék',
-      drag: 'Húzd el a vonalat, vagy használd a nyílbillentyűket. Az Enter visszavisz a pupillán átmenő vágáshoz.',
       promise: 'Helyreállítva, soha át nem festve: az íriszedet sosem színezzük át, és sosem cseréljük le másik szemre.',
-      stripTitle: 'A fotótól az alkotásig',
-      stripIntro: 'Ugyanaz a szem háromszor: ahogy lefotóztad, helyreállítva, és az alkotásként, amit javaslunk hozzá.',
-      stripIntroPair: 'Ugyanaz a szem kétszer: ahogy lefotóztad, és helyreállítva.',
-      noCut: 'Ennél a szemnél nem tudtuk megmutatni a vágást, ezért a fotód és a helyreállított írisz egymás mellett látható.',
       softTip: 'A fotód kicsi, ezért a fele lágynak tűnik. Menj közelebb, vagy használj 2x-es zoomot az élesebb összehasonlításhoz.',
-      frameWide: 'Széles kivágás',
-      frameTight: 'Szoros kivágás: a fotód szoros kivágás, az írisz körül semmit nem találunk ki',
     },
   },
 

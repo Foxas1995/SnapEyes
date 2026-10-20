@@ -20,6 +20,8 @@ export interface Quality {
   fibre_score?: number | null;
   glare_on_fibres_pct?: number | null;
   pupil_reflection?: boolean;
+  // the pupil's radius measured on the photo's own crop, in iris radii (api/analyze.py pupil_blocked: iris.pupil_circle), null when its edge cannot be read
+  pupil_size?: number | null;
   lamp_cast?: boolean;
   lamp_message?: string | null;
   // The same sentences in every language (api/analyze.py words()): the verdict's message, the tips and the lamp message as the server wrote them for en, de, lt and hu. A visitor who

@@ -33,7 +33,7 @@ const andList = (xs: number[], and: string) => (xs.length < 2 ? String(xs[0] ?? 
 // engine blocked, so "Retake" never leads to advice that contradicts the screen it came from. Daylight from the
 // side: straight-on light washes over the iris (04 in the test set), and a lamp tints it (api/analyze.py
 // LAMP_MESSAGE).
-const LIGHT = 'Daylight from a window, off to one side (not straight in front). Not a lamp or the flash.';
+const LIGHT = 'Daylight from a window, from one side. No lamp, no flash.';
 const CAMERA = 'Back camera at 2x zoom, about 10 cm from the eye.';
 const FOCUS = 'Tap the iris on the screen so the camera focuses on it.';
 const STEADY = 'Hold the phone steady (rest your elbows on something) and take 3-5 shots.';
@@ -69,10 +69,10 @@ const en = {
   },
 
   capture: {
-    // the first screen's heading: the second part is set in gold
+    // the first screen's heading: the second part is set in gold. Calm and short (the owner, 2026-10-20: a page that has to say "for real" makes people read the opposite)
     titleA: 'YOUR EYE, ',
-    titleB: 'FOR REAL.',
-    lead: 'Photograph one eye. We find the iris, remove reflections, restore the fibres and set it in art. About a minute.',
+    titleB: 'AS ART.',
+    lead: 'Photograph one eye and see it restored in about a minute.',
     addTitle: (n: number) => `Add eye ${n}`,
     addLead: 'Your partner, your child, or your other eye. Same steps as before: take a few shots and we keep the best one.',
     // a couple with one phone: the back camera cannot be aimed at your own eye while you watch the screen
@@ -88,10 +88,13 @@ const en = {
     // the capture guide on the first screen. Step 3 is the retake guide's first step, word for word (LIGHT).
     steps: [
       { title: '1. Back camera', text: '2x or 3x zoom, not the selfie camera.' },
-      { title: '2. 10 cm away', text: 'The iris should fill a third of the frame.' },
+      { title: '2. 10 cm away', text: 'The iris fills a third of the frame.' },
       { title: '3. Window light', text: LIGHT },
       { title: '4. Tap to focus', text: 'Tap the iris on screen, hold still, shoot.' },
     ],
+    // the summary of the closed disclosure under the four steps that holds the three lines below (the open eye, the 3-5 shots, the pair): the first screen shows
+    // the four steps and the buttons, the rest is one tap away
+    moreTips: 'More tips',
     // lashes that hang over the iris cannot be removed by the engine (they come out as dark streaks), so the guide
     // asks for an open eye before the first shot
     stepsOpen: 'Eye wide open. ',
@@ -111,7 +114,7 @@ const en = {
     measuringShot: (k: number, max: number) => `Measuring shot ${k} of ${max}`,
     restoring: 'Restoring your iris…',
     restoringEye: (n: number) => `Restoring eye ${n}…`,
-    cut: 'Cutting out your iris',
+    cut: 'Cropping your iris',
     reflections: 'Removing reflections',
     macro: 'Studio macro restoration (about 30 s)',
     composing: (n: number) => (n > 1 ? `Composing your artwork with ${n} eyes` : 'Composing your artwork'),
@@ -270,19 +273,26 @@ const en = {
     // the engine's colour check (api/enhance qa) failed for this eye: say so, what helps (the owner, 2026-10-20: people light the eye with a torch from the side, so
     // "soft daylight" alone said too little) and that a result the visitor likes is fine to keep
     colourOff: 'This restoration may look a little lighter or darker than your eye. Even light gives the truest colour: daylight from a window, no flash and no torch shining from the side. If you like it as it is, simply carry on.',
-    // what the studio did to this photo, in plain words (the owner, 2026-10-20), under the before/after of a real eye (./ResultView.tsx WhatWeDid). glare: only when a reflection
-    // was found (api/deglare glare_pct, as the line "Reflection removed." said before); lid: only when an eyelid over the iris was filled from the iris itself (api/deglare
-    // lid_pct, api/_lib/lidcap.py); colour and nothing are left out while the colour note above shows, and nothing also where the Reveal's promise says it. quality: the
-    // owner asked whether the phone camera's quality is kept: the photo is the camera's own, the restoration gets a crop of at most 1400 px cut from it (TryApp process),
-    // and a file would be drawn from the restoration (would: ordering is not open yet); the crop's size is a parameter (./crop.ts CROP_MAX_PX)
+    // one line under the before/after, only when the pupil measured on the photo is wide (./multi.ts pupilWide): the engine keeps the photo's pupil, so more light is what helps
+    pupilWide: 'More light makes the pupil smaller and shows more of your iris.',
+    // the summary of the one closed disclosure under the before/after (./ResultView.tsx HowItWorks): the sentence that says where the colour comes from and what the AI
+    // restores (transparency), the promise or "nothing painted on top", the shared library (aiMaterial), the camera's quality (did.quality) and the small-photo notes.
+    // Folded, never deleted: every sentence counsel may need is still on the page, one tap away
+    how: 'How it works',
+    // what the studio did to this photo, in plain words (the owner, 2026-10-20), at most three check lines under the before/after of a real eye (./ResultView.tsx
+    // WhatWeDid). glare: only when a reflection was found (api/deglare glare_pct); lid: only when an eyelid over the iris was filled from the iris itself (api/deglare
+    // lid_pct, api/_lib/lidcap.py); colour is left out while the colour note shows, and steps aside when glare and lid both show. colour says nothing about where the
+    // colours come from: the transparency sentence says that, once. nothing (where the promise does not stand) and quality are in the disclosure. quality: the owner
+    // asked whether the phone camera's quality is kept: the photo is the camera's own, the restoration gets a crop of at most 1400 px (TryApp process), and a file
+    // would be drawn from the restoration (would: ordering is not open yet); the crop's size is a parameter (./crop.ts CROP_MAX_PX)
     did: {
-      title: 'What we did to your photo',
-      glare: 'Removed the reflections of windows and lamps.',
+      title: 'What we did',
+      glare: 'Removed the reflections.',
       sharp: 'Sharpened the focus and the fine fibres.',
-      colour: 'Balanced the light. The colours are your photo\'s own.',
-      lid: 'Where your eyelid covered the iris, continued it from your own iris.',
+      colour: 'Balanced the light.',
+      lid: 'Continued your own iris under the eyelid.',
       nothing: 'Painted nothing on top: no new colours, no pattern from another eye.',
-      quality: (crop: number) => `Your phone's own camera takes the photo at full quality. We cut a close crop of your eye from it (at most ${crop} px) and restore that; a full-size file of 4096 px would be drawn from this restoration, not stretched from your photo.`,
+      quality: (crop: number) => `Your phone's own camera takes the photo at full quality. We take a close crop of your eye from it (at most ${crop} px) and restore that; a full-size file of 4096 px would be drawn from this restoration, not stretched from your photo.`,
     },
     retakeEye: (i: number) => `Retake eye ${i}`,
     retakeOnly: 'Retake this eye',
@@ -296,8 +306,6 @@ const en = {
     sampleTitle: 'AI-generated sample',
     sampleArtworkNote: 'Made only from the AI-generated sample eye, not from a real photo.',
     mixedArtworkNote: 'This artwork contains the AI-generated sample eye, which is not a real photo.',
-    drag: 'Drag the handle.',
-    irisPx: (px: number) => `Iris in your photo: ${px}px.`,
     upscaled: 'Small photo: upscaled before restoration.',
     badgeMacro: 'Studio macro',
     badgeFallback: 'Faithful upscale only',
@@ -326,24 +334,17 @@ const en = {
     confirmStartOver: (n: number) => `Discard all ${n} eyes and start over?`,
     stored: 'Saved to training memory',
 
-    // the Reveal (src/reveal): the photo left of a hard cut, the restored iris right of it; the strip of the same eye three times. The wording of the
-    // pills, the slider and the promise is the landing page's (wave-lp reveal.strip, reveal.never); the proof line ("the pixels are identical") is NOT here:
-    // it is published only when the automatic test runs on every delivery (decision 10, WP12)
+    // the Reveal (src/reveal): the photo left of a line through the pupil, the restored iris right of it. The wording of the pills, the slider and the promise is the
+    // landing page's (wave-lp reveal.strip, reveal.never); the proof line ("the pixels are identical") is NOT here: it is published only when the automatic test runs
+    // on every delivery (decision 10, WP12). No word of the page names the line a "cut" (the owner, 2026-10-20: "what is that cut?"): an eye whose Reveal the server
+    // withholds gets the plain before/after slider, with no note about it. The promise and the soft-photo tip are in the closed disclosure (result.how).
     reveal: {
       photo: 'Your photo',
       iris: 'Your iris',
-      art: 'Your art',
       slider: 'Compare your photo with your restored iris',
       valueText: 'photo {n} percent',
-      drag: 'Drag the line, or use the arrow keys. Enter returns to the pupil cut.',
       promise: 'Restored, never repainted: we never recolour your iris or swap it for another eye.',
-      stripTitle: 'From photo to art',
-      stripIntro: 'The same eye three times: as you took it, restored, and as the art we suggest for it.',
-      stripIntroPair: 'The same eye twice: as you took it, and restored.',
-      noCut: 'We could not show the cut for this eye, so your photo and the restored iris are shown side by side.',
       softTip: 'Your photo is small, so its half looks soft. Move closer or use 2x zoom for a sharper comparison.',
-      frameWide: 'Wide frame',
-      frameTight: 'Tight frame: your photo is a close crop, nothing is invented around it',
     },
   },
 
@@ -581,7 +582,7 @@ const augen = (n: number) => `${n} ${n === 1 ? 'Auge' : 'Augen'}`;
 
 // the capture guide's steps in German: the same rule as above, word for word on the capture screen and in the
 // retake cards
-const LIGHT_DE = 'Tageslicht von einem Fenster, seitlich (nicht direkt von vorn). Keine Lampe, kein Blitz.';
+const LIGHT_DE = 'Tageslicht von einem Fenster, von der Seite. Keine Lampe, kein Blitz.';
 const CAMERA_DE = 'Rückkamera mit 2-fachem Zoom, etwa 10 cm vor dem Auge.';
 const FOCUS_DE = 'Tippen Sie auf dem Bildschirm auf die Iris, damit die Kamera darauf scharfstellt.';
 const STEADY_DE = 'Halten Sie das Smartphone ruhig (stützen Sie die Ellbogen auf) und machen Sie 3-5 Aufnahmen.';
@@ -615,9 +616,9 @@ const de: TryCopy = {
   },
 
   capture: {
-    titleA: 'IHR AUGE, ',
-    titleB: 'GANZ ECHT.',
-    lead: 'Fotografieren Sie ein Auge. Wir finden die Iris, entfernen Spiegelungen, restaurieren die Fasern und setzen sie als Kunstwerk in Szene. Etwa eine Minute.',
+    titleA: 'IHR AUGE ',
+    titleB: 'ALS KUNSTWERK.',
+    lead: 'Fotografieren Sie ein Auge und sehen Sie es in etwa einer Minute restauriert.',
     addTitle: (n: number) => `Auge ${n} hinzufügen`,
     addLead: 'Ihr Partner oder Ihre Partnerin, Ihr Kind oder Ihr anderes Auge. Dieselben Schritte wie zuvor: Machen Sie ein paar Aufnahmen, wir behalten die beste.',
     takeTurns: 'Sie fotografieren sich gegenseitig? Wechseln Sie sich ab: Eine Person hält das Smartphone, die andere schaut geradeaus. Dann tauschen Sie.',
@@ -631,10 +632,11 @@ const de: TryCopy = {
     sampleThumb: 'KI-generiertes Beispiel',
     steps: [
       { title: '1. Rückkamera', text: '2- oder 3-facher Zoom, nicht die Selfie-Kamera.' },
-      { title: '2. 10 cm Abstand', text: 'Die Iris sollte ein Drittel des Bildes füllen.' },
+      { title: '2. 10 cm Abstand', text: 'Die Iris füllt ein Drittel des Bildes.' },
       { title: '3. Fensterlicht', text: LIGHT_DE },
       { title: '4. Scharfstellen', text: 'Tippen Sie auf die Iris, halten Sie still, lösen Sie aus.' },
     ],
+    moreTips: 'Weitere Tipps',
     stepsOpen: 'Auge weit geöffnet. ',
     stepsOpenMore: 'Schauen Sie geradeaus und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit weder Lid noch Wimpern über der Iris liegen.',
     stepsShots: 'Machen Sie 3-5 Aufnahmen und senden Sie alle.',
@@ -791,14 +793,16 @@ const de: TryCopy = {
     aiMaterial: 'Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt.',
     sampleNote: 'Dieses Auge ist das KI-generierte Beispiel, kein echtes Foto. Mit Ihrem eigenen Foto stammt die Farbe aus Ihrem Foto.',
     colourOff: 'Diese Restaurierung wirkt vielleicht etwas heller oder dunkler als Ihr Auge. Die natürlichsten Farben gibt gleichmäßiges Licht: Tageslicht von einem Fenster, ohne Blitz und ohne Taschenlampe von der Seite. Wenn sie Ihnen so gefällt, machen Sie einfach weiter.',
+    pupilWide: 'Mehr Licht macht die Pupille kleiner und zeigt mehr von Ihrer Iris.',
+    how: 'So funktioniert es',
     did: {
-      title: 'Was wir mit Ihrem Foto gemacht haben',
-      glare: 'Spiegelungen von Fenstern und Lampen entfernt.',
+      title: 'Was wir gemacht haben',
+      glare: 'Spiegelungen entfernt.',
       sharp: 'Schärfe und feine Fasern herausgearbeitet.',
-      colour: 'Das Licht ausgeglichen. Die Farben sind die Ihres eigenen Fotos.',
-      lid: 'Den vom Augenlid verdeckten Teil der Iris aus Ihrer eigenen Iris fortgesetzt.',
+      colour: 'Das Licht ausgeglichen.',
+      lid: 'Ihre eigene Iris unter dem Lid fortgesetzt.',
       nothing: 'Nichts darübergemalt: keine neuen Farben, kein Muster eines anderen Auges.',
-      quality: (crop: number) => `Die eigene Kamera Ihres Smartphones nimmt das Foto in voller Qualität auf. Daraus schneiden wir einen engen Ausschnitt Ihres Auges (höchstens ${crop} px) und restaurieren ihn; eine Datei in voller Größe (4096 px) würde aus dieser Restaurierung entstehen, nicht aus Ihrem Foto hochskaliert.`,
+      quality: (crop: number) => `Die eigene Kamera Ihres Smartphones nimmt das Foto in voller Qualität auf. Davon verwenden wir nur den Bereich Ihres Auges (höchstens ${crop} px) und restaurieren ihn; eine Datei in voller Größe (4096 px) würde aus dieser Restaurierung entstehen, nicht aus Ihrem Foto hochskaliert.`,
     },
     retakeEye: (i: number) => `Auge ${i} neu aufnehmen`,
     retakeOnly: 'Dieses Auge neu aufnehmen',
@@ -810,8 +814,6 @@ const de: TryCopy = {
     sampleTitle: 'KI-generiertes Beispiel',
     sampleArtworkNote: 'Nur aus dem KI-generierten Beispielauge erstellt, nicht aus einem echten Foto.',
     mixedArtworkNote: 'Dieses Kunstwerk enthält das KI-generierte Beispielauge, das kein echtes Foto ist.',
-    drag: 'Ziehen Sie den Regler.',
-    irisPx: (px: number) => `Iris in Ihrem Foto: ${px} px.`,
     upscaled: 'Kleines Foto: vor der Restaurierung hochskaliert.',
     badgeMacro: 'Studio-Makro',
     badgeFallback: 'Nur originalgetreu vergrößert',
@@ -839,18 +841,10 @@ const de: TryCopy = {
     reveal: {
       photo: 'Ihr Foto',
       iris: 'Ihre Iris',
-      art: 'Ihr Kunstwerk',
       slider: 'Ihr Foto mit Ihrer restaurierten Iris vergleichen',
       valueText: 'Foto {n} Prozent',
-      drag: 'Linie ziehen oder Pfeiltasten benutzen. Enter springt zurück zum Pupillenschnitt.',
       promise: 'Restauriert, nie neu gemalt: Wir färben Ihre Iris nie um und tauschen sie nie gegen ein anderes Auge.',
-      stripTitle: 'Vom Foto zur Kunst',
-      stripIntro: 'Dasselbe Auge dreimal: so, wie Sie es aufgenommen haben, restauriert und als das Kunstwerk, das wir dafür vorschlagen.',
-      stripIntroPair: 'Dasselbe Auge zweimal: so, wie Sie es aufgenommen haben, und restauriert.',
-      noCut: 'Den Schnitt konnten wir für dieses Auge nicht zeigen, deshalb sehen Sie Ihr Foto und die restaurierte Iris nebeneinander.',
       softTip: 'Ihr Foto ist klein, deshalb wirkt seine Hälfte weich. Gehen Sie näher heran oder nutzen Sie 2x Zoom für einen schärferen Vergleich.',
-      frameWide: 'Weiter Ausschnitt',
-      frameTight: 'Enger Ausschnitt: Ihr Foto ist ein enger Zuschnitt, um die Iris wird nichts erfunden',
     },
   },
 

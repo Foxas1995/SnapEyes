@@ -75,7 +75,7 @@ export const SAMPLES = {
   'collector.bestLabel': [[3, 45], [3, undefined]], 'collector.full': [[5, 'X 2 (45)']], 'collector.more': [[1], [3], [11]],
   'collector.lampSkipped': [[1, 'X 3'], [2, 'X 3'], [5, 'X 3']], 'collector.bestIs': [['X 3']],
   'collector.lastFailed': [['Ezen a felvételen nem találtunk szemet.']],
-  'result.eyeLabel': [[1]], 'result.retakeEye': [[2]], 'result.removed': [[2]], 'result.irisPx': [[420]],
+  'result.eyeLabel': [[1]], 'result.retakeEye': [[2]], 'result.removed': [[2]],
   'result.previewFile': [[true], [false]], 'result.fileName': [['celestial-gold', 2, false], ['studio-black', 1, true]],
   'result.did.quality': [[1400]], 'result.addHint': [[1], [3], [11]], 'result.full': [[8]], 'result.remove': [[2]], 'result.confirmStartOver': [[3], [5]],
   'price.eyes': [[1, 'Celestial Gold'], [2, 'Kiss Collision'], [4, 'Family Colours'], [11, 'Family Colours']],

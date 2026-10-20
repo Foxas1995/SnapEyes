@@ -1,15 +1,14 @@
 import React from 'react';
-import { AlertTriangle, Check, Download, Plus, RefreshCcw, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, Download, Info, Plus, RefreshCcw, Trash2 } from 'lucide-react';
 import { CompareSlider } from './CompareSlider';
 import { ArtImage } from '../motion/ArtImage';
 import { Reveal } from '../reveal/Reveal';
-import { RevealStrip } from '../reveal/RevealStrip';
 import { withheldByColour } from '../reveal/revealMath';
 import { useRevealFrame } from '../reveal/useRevealFrame';
 import { AI_MATERIAL_PUBLISHED } from '../shared/aiMaterial';
 import { T, layoutLabel } from './copy';
 import { NO_SAVE, NO_SAVE_BOX } from './noSave';
-import { type Art, type Eye, MAX_EYES, canvasSize } from './multi';
+import { type Art, type Eye, MAX_EYES, canvasSize, pupilWide } from './multi';
 import { ManualRoute, RetakePanel, StylePicker, type PickerModel } from './StylePicker';
 import { Words, type WordsModel } from './Words';
 import { FeedbackBox } from './Feedback';
@@ -75,49 +74,37 @@ export const ResultView: React.FC<Props> = (p) => {
   // null for a list with no style at all, and a pupil or a gate has its own sentences)
   const noPreview = !!p.picker.catalog && !p.picker.style;
 
-  // The Reveal (src/reveal, WP9): the photo left of a hard cut, the restored iris right of it. When the server withheld the cut (the colour drifted, or
-  // photo and restoration do not register) the same two pictures show side by side as a strip, with the note and, for a colour drift, the colour check's
-  // retake advice. Without the server's numbers (an older server, the sample eye, no time left there) the plain slider below stays.
+  // The before/after leads every eye (the owner, 2026-10-20: "the before and after that slides is the most important thing"). The Reveal (src/reveal, WP9: the
+  // photo left of a line through the pupil, the restored iris right of it) when the server gives its numbers and passes them; every other eye gets the plain
+  // slider: the client crop /api/deglare took against the display copy made from it, the same square by construction, so it needs no registration. That is
+  // also the eye whose Reveal the server withheld (the colour drifted, or photo and restoration do not register): no strip of thumbnails and no note about a
+  // "cut" any more, only the colour note below when the colour drifted.
   const R = T.result.reveal;
   const revealLabels = { photo: R.photo, iris: R.iris, slider: R.slider, valueText: R.valueText };
-  const stripAlts = { photo: R.photo, iris: R.iris, art: T.result.artwork };
-  const stripCaptions = { photo: R.photo, iris: R.iris, art: R.art };
-  const revealHero = rev.view === 'cut' ? (
+  const hero = rev.view === 'cut' ? (
     <div className="mx-auto w-full max-w-[640px]" data-testid="reveal-hero">
       {rev.frame
         ? <Reveal key={eye.id} photo={rev.frame.url} restored={rev.restored} geometry={rev.frame.geometry} labels={revealLabels} ready={rev.ready} />
         : <div className="aspect-square w-full rounded-2xl bg-black border border-white/10" />}
     </div>
-  ) : rev.view === 'strip' ? (
-    <div data-testid="reveal-withheld">
-      {rev.frame && (
-        <RevealStrip key={eye.id} wide={rev.frame.url} restored={rev.restored} art={n === 1 ? (shown?.src ?? null) : undefined} geometry={rev.frame.geometry}
-          captions={stripCaptions} alts={stripAlts} />
-      )}
-      <p data-testid="no-cut" className="text-xs text-amber-200/90 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
-        <AlertTriangle className="w-4 h-4 shrink-0 mt-px text-amber-300" /> <span>{R.noCut}</span>
-      </p>
+  ) : (
+    <div data-testid="slider-hero">
+      <CompareSlider key={eye.id} sweepKey={eye.id} before={eye.before} after={`data:image/jpeg;base64,${eye.image}`}
+        beforeLabel={eye.sample ? T.result.samplePhoto : T.result.yourPhoto} afterLabel={T.result.after} />
     </div>
-  ) : null;
+  );
   // The colour check's warning (the engine's own check failed for this eye, or the Reveal was withheld because the restored colour drifted from the photo).
   // It comes BEFORE the transparency sentence, and while it shows the promise line ("we never recolour your iris") does not: the two together would
-  // contradict each other on exactly the eyes where the promise is under strain (the p09f case). The transparency sentence stays: it is also the AI
-  // disclosure, and it says where the colour comes from, which the warning then qualifies.
+  // contradict each other on exactly the eyes where the promise is under strain (the p09f case). The transparency sentence stays (in the disclosure): it is
+  // also the AI disclosure, and it says where the colour comes from, which the warning then qualifies.
   const colourNote = !eye.sample && (eye.colourOff || withheldByColour(rev.rv));
   const colourWarning = colourNote ? (
     <p data-testid="colour-off" className="text-xs text-amber-200/90 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
       <AlertTriangle className="w-4 h-4 shrink-0 mt-px text-amber-300" /> <span>{T.result.colourOff}</span>
     </p>
   ) : null;
-  // one eye on the artwork: the same eye three times, between the Reveal and the style tiles
-  const stripSection = n === 1 && rev.view === 'cut' && rev.frame ? (
-    <div data-testid="strip-section">
-      <h2 className="font-luxury text-xl font-bold">{R.stripTitle}</h2>
-      <p className="text-xs text-zinc-400 mt-1 mb-3">{R.stripIntro}</p>
-      <RevealStrip key={eye.id} wide={rev.frame.url} restored={rev.restored} art={shown?.src ?? null} geometry={rev.frame.geometry}
-        captions={stripCaptions} alts={stripAlts} />
-    </div>
-  ) : null;
+  // the server measured this eye against its photo (the Reveal's numbers came, shown or withheld for registration): the promise may stand where the colour is fine
+  const measured = rev.view !== 'plain';
 
   // every eye on the artwork, each with its own before/after
   const beforeAfter = (
@@ -153,34 +140,17 @@ export const ResultView: React.FC<Props> = (p) => {
           )}
         </div>
       )}
-      {revealHero ?? (
-        <CompareSlider key={eye.id} sweepKey={eye.id} before={eye.before} after={`data:image/jpeg;base64,${eye.image}`}
-          beforeLabel={eye.sample ? T.result.samplePhoto : T.result.yourPhoto} afterLabel={T.result.after} />
-      )}
+      {hero}
       {colourWarning}
-      {!eye.sample && <WhatWeDid eye={eye} colourNote={colourNote} promised={!!revealHero && !colourNote} />}
-      {/* decision 5 speaks about the customer's own photo, so the sample gets its own line instead */}
+      {/* one line, only for a wide pupil: the studio keeps the photo's pupil, more light is what makes it smaller */}
+      {pupilWide(eye) && (
+        <p data-testid="pupil-hint" className="text-[11px] text-zinc-300 mt-3 flex gap-1.5"><Info aria-hidden="true" className="w-3.5 h-3.5 shrink-0 mt-px text-zinc-400" /> <span>{T.result.pupilWide}</span></p>
+      )}
+      {/* decision 5 speaks about the customer's own photo, so the sample gets its own line instead of the card */}
       {eye.sample
         ? <p className="text-xs text-amber-100 mt-3 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">{T.result.sampleNote}</p>
-        : <p data-testid="transparency" className="text-xs text-zinc-200 mt-3 bg-white/5 border border-white/10 rounded-xl p-3">{T.result.transparency}</p>}
-      {/* the shared library of plates (release review H-M1): the page says "we never hide what the AI does", so the sentence the terms carry is here too, under the line above,
-          for the customer's own photo (the sample has no style of its own to sell) */}
-      {!eye.sample && AI_MATERIAL_PUBLISHED && <p data-testid="ai-material" className="text-xs text-zinc-300 mt-2">{T.result.aiMaterial}</p>}
-      {revealHero && !colourNote && <p data-testid="promise" className="text-xs text-zinc-300 mt-2">{R.promise}</p>}
-      <p className="text-[11px] text-zinc-400 mt-2">
-        {[
-          rev.view === 'cut' ? R.drag : rev.view === 'strip' ? '' : T.result.drag,
-          eye.diameterPx && !eye.sample ? T.result.irisPx(eye.diameterPx) : '',
-          eye.usedSr ? T.result.upscaled : '',
-        ].filter(Boolean).join(' ')}
-      </p>
-      {rev.view !== 'plain' && rev.rv?.soft && <p data-testid="soft-tip" className="text-[11px] text-amber-200 mt-1">{R.softTip}</p>}
-      {rev.view === 'cut' && rev.frame && (
-        <p data-testid="frame-note" className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
-          <Check className="w-3 h-3" /> {rev.frame.geometry.plan.mode === 'wide' ? R.frameWide : R.frameTight}
-        </p>
-      )}
-      {eye.stored && <p className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1"><Check className="w-3 h-3" /> {T.result.stored}</p>}
+        : <WhatWeDid eye={eye} colourNote={colourNote} promised={measured && !colourNote} soft={measured && !!rev.rv?.soft} />}
+      {eye.stored && <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1"><Check className="w-3 h-3" /> {T.result.stored}</p>}
       <div className={`grid gap-2 mt-3 ${n > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <button onClick={() => p.onRetake(eye.id)}
           className={`min-h-[44px] px-3 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 ${(eye.colourOff && !eye.sample) || flagged.has(idx + 1) ? 'border-amber-400/50 bg-amber-500/10 text-amber-100' : 'border-white/10 bg-white/5 text-zinc-200'}`}>
@@ -325,7 +295,7 @@ export const ResultView: React.FC<Props> = (p) => {
     <section className={`flex flex-col gap-6${p.enter ? ' fx-step' : ''}`}>
       {/* One eye: its before/after is the surprise, so it leads. Two or more: the artwork of all of them is
           what the couple came for, so it leads and the per-eye before/after follows. */}
-      {n > 1 ? <>{artwork}{beforeAfter}</> : <>{beforeAfter}{stripSection}{artwork}</>}
+      {n > 1 ? <>{artwork}{beforeAfter}</> : <>{beforeAfter}{artwork}</>}
 
       {p.purchase}
 
@@ -337,27 +307,44 @@ export const ResultView: React.FC<Props> = (p) => {
   );
 };
 
-/** What the studio did to this photo, in plain words (the owner, 2026-10-20; the words: copy.ts result.did). The reflection line only when one was found, the eyelid
- *  line only when an eyelid was filled from the iris itself; the colour lines step aside while the colour note shows (it says the light moved), and "nothing painted
- *  on top" also where the Reveal's promise already says it. The last line says what the photo goes through, for the question whether the camera's quality is kept. */
-const WhatWeDid: React.FC<{ eye: Eye; colourNote: boolean; promised: boolean }> = ({ eye, colourNote, promised }) => {
+/** At most this many check lines say what was done (the owner, 2026-10-20: one compact block, no long text under the before/after). */
+const DID_MAX = 3;
+
+/** What the studio did to this photo (the owner, 2026-10-20; the words: copy.ts result.did): one compact card under the before/after, at most DID_MAX short check
+ *  lines and, under them, the one closed disclosure for everything longer. The reflection line only when one was found, the eyelid line only when an eyelid was
+ *  filled from the iris itself; the colour line steps aside while the colour note shows (it says the light moved) and when the reflection and the eyelid lines
+ *  both show (the eyelid line is the one the owner asked for).
+ *  The disclosure (closed until the visitor opens it, the same screen): where the colour comes from and what the AI restores (transparency, decision 5: also the
+ *  AI disclosure), the promise where the server measured the eye and the colour is fine, else "nothing painted on top" (never both: they say one thing; neither
+ *  beside the colour note), the shared library of plates (the sentence the terms carry, while published), what the photo goes through (the camera's quality),
+ *  and the notes of a small photo. Folded, never deleted: what counsel may need stays on the page. */
+const WhatWeDid: React.FC<{ eye: Eye; colourNote: boolean; promised: boolean; soft: boolean }> = ({ eye, colourNote, promised, soft }) => {
   const D = T.result.did;
-  const lines = [
-    eye.glarePct >= 0.4 ? D.glare : '',
-    D.sharp,
-    colourNote ? '' : D.colour,
-    (eye.lidPct ?? 0) > 0 ? D.lid : '',
-    colourNote || promised ? '' : D.nothing,
-  ].filter(Boolean);
+  const lid = (eye.lidPct ?? 0) > 0;
+  const all = [eye.glarePct >= 0.4 ? D.glare : '', D.sharp, colourNote ? '' : D.colour, lid ? D.lid : ''].filter(Boolean);
+  const lines = all.length > DID_MAX ? all.filter((l) => l !== D.colour) : all;
   return (
-    <div data-testid="what-we-did" className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
-      <h3 className="text-xs font-bold text-zinc-100">{D.title}</h3>
-      <ul className="mt-1.5 space-y-1">
-        {lines.map((l) => (
-          <li key={l} className="flex gap-2 text-xs text-zinc-200"><Check className="w-3.5 h-3.5 shrink-0 mt-px text-emerald-400" aria-hidden="true" /><span>{l}</span></li>
-        ))}
-      </ul>
-      <p data-testid="quality-note" className="mt-2 text-[11px] leading-snug text-zinc-400">{D.quality(CROP_MAX_PX)}</p>
+    <div data-testid="what-we-did" className="mt-3 rounded-xl border border-white/10 bg-white/5">
+      <div className="px-3 pt-3 pb-2">
+        <h3 className="text-xs font-bold text-zinc-100">{D.title}</h3>
+        <ul className="mt-1.5 space-y-1">
+          {lines.map((l) => (
+            <li key={l} className="flex gap-2 text-xs text-zinc-200"><Check className="w-3.5 h-3.5 shrink-0 mt-px text-emerald-400" aria-hidden="true" /><span>{l}</span></li>
+          ))}
+        </ul>
+      </div>
+      <details data-testid="how-it-works" className="border-t border-white/10">
+        <summary className="cursor-pointer px-3 py-3 min-h-[44px] text-xs font-semibold text-zinc-200">{T.result.how}</summary>
+        <div className="px-3 pb-3 flex flex-col gap-2 text-[11px] leading-snug text-zinc-300">
+          <p data-testid="transparency">{T.result.transparency}</p>
+          {!colourNote && (promised ? <p data-testid="promise">{T.result.reveal.promise}</p> : <p data-testid="nothing">{D.nothing}</p>)}
+          {/* the shared library of plates (release review H-M1): the page says "we never hide what the AI does", so the sentence the terms carry is here too */}
+          {AI_MATERIAL_PUBLISHED && <p data-testid="ai-material">{T.result.aiMaterial}</p>}
+          <p data-testid="quality-note">{D.quality(CROP_MAX_PX)}</p>
+          {eye.usedSr && <p>{T.result.upscaled}</p>}
+          {soft && <p data-testid="soft-tip">{T.result.reveal.softTip}</p>}
+        </div>
+      </details>
     </div>
   );
 };

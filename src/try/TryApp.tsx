@@ -792,6 +792,7 @@ export const TryApp: React.FC = () => {
     const eye: Eye = {
       id, before: crop, ...restored(e), thumb: await thumbOf(e.image), pad,
       fallback: !!e.fallback, usedSr: !!e.used_sr, stored: !!e.stored, glarePct: d.glare_pct, lidPct: typeof d.lid_pct === 'number' ? d.lid_pct : 0,
+      ...(typeof a.quality?.pupil_size === 'number' ? { pupil: a.quality.pupil_size } : {}),
       diameterPx: a.quality?.diameter_px, sample, colourOff: colourOff(e.qa), draft, wm,
       ...(reveal ? { reveal } : {}), ...(wide ? { wide } : {}),
     };
@@ -1071,13 +1072,20 @@ export const TryApp: React.FC = () => {
             <CaptureDiagram />
 
             {/* on a short screen (a phone under 820 px tall) the guide comes after the buttons: the way to take the photo is on the first screen, the guide is one scroll away (QA of 2026-10-20: at 360 x 740 the button was below the fold) */}
-            <div className="[@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* the four steps; the open eye, the 3-5 shots and the pair are one tap away in a closed disclosure (the owner, 2026-10-20: "a lot of text before the photo") */}
+            <div data-testid="capture-guide" className="[@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {T.capture.steps.map((s) => (
                 <div key={s.title}><span className="text-[#f5c542] font-bold block">{s.title}</span>{s.text}</div>
               ))}
-              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</div>
-              <div className="col-span-2 sm:col-span-4 pt-1 border-t border-white/10"><span className="text-[#f5c542] font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</div>
-              {!adding && <div className="col-span-2 sm:col-span-4 text-zinc-400">{T.capture.helper}</div>}
+              {/* the browser's own disclosure triangle: no stylesheet rule of its own (the landing's CSS budget is shared with the tools) */}
+              <details data-testid="more-tips" className="col-span-2 sm:col-span-4 border-t border-white/10">
+                <summary className="cursor-pointer py-3 min-h-[44px] font-semibold text-zinc-200">{T.capture.moreTips}</summary>
+                <div className="flex flex-col gap-2 pb-1">
+                  <p><span className="text-[#f5c542] font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</p>
+                  <p><span className="text-[#f5c542] font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</p>
+                  {!adding && <p className="text-zinc-400">{T.capture.helper}</p>}
+                </div>
+              </details>
             </div>
 
             {/* the first camera shot starts a fresh collection */}
@@ -1097,7 +1105,7 @@ export const TryApp: React.FC = () => {
             </div>
 
             {/* whose eye may be photographed (the terms of sale), and where the photo goes */}
-            <p data-testid="photo-notice" className="text-[11px] leading-relaxed text-zinc-400 text-center">
+            <p data-testid="photo-notice" className="text-[10px] leading-relaxed text-zinc-400 text-center">
               <LegalParts parts={CHECKOUT_LEGAL[lang].photoNotice} lang={lang} />
             </p>
 

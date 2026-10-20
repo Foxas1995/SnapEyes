@@ -70,7 +70,7 @@
   "reveal": {
     "eyebrow": "A leleplezés",
     "title": "Balra fotó, jobbra írisz.",
-    "intro": "A kép bal fele telefonos fotó, a jobb fele ugyanaz az írisz, helyreállítva. A vágás a pupillán halad át: kövess egy barázdát vagy egy színfoltot az egyik oldalról a másikra.",
+    "intro": "A kép bal fele telefonos fotó, a jobb fele ugyanaz az írisz, helyreállítva. Kövess egy barázdát vagy egy színfoltot az egyik oldalról a másikra.",
     "hint": "Húzd az összehasonlításhoz",
     "sliderLabel": "Hasonlítsd össze a telefonos fotót és a helyreállított íriszt",
     "valueText": "fotó {n} százalék",
@@ -79,7 +79,7 @@
     "scale": "Telefonos fotó: {n} px. A helyreállított fájl: {px}.",
     "beforeWeb": "Fotó",
     "scaleWeb": "Fotó: {n} px. A helyreállított fájl: {px}.",
-    "introWeb": "A kép bal fele az eredeti fotó, a jobb fele ugyanaz az írisz, helyreállítva. A vágás a pupillán halad át: kövess egy barázdát vagy egy színfoltot az egyik oldalról a másikra.",
+    "introWeb": "A kép bal fele az eredeti fotó, a jobb fele ugyanaz az írisz, helyreállítva. Kövess egy barázdát vagy egy színfoltot az egyik oldalról a másikra.",
     "sliderLabelWeb": "Hasonlítsd össze a fotót és a helyreállított íriszt",
     "eyes": [
       {

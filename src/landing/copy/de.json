@@ -70,7 +70,7 @@
   "reveal": {
     "eyebrow": "Die Enthüllung",
     "title": "Foto links. Iris rechts.",
-    "intro": "Die linke Hälfte ist ein Smartphone-Foto, die rechte Hälfte dieselbe Iris, restauriert. Der Schnitt verläuft durch die Pupille: Verfolgen Sie eine Furche oder einen Farbfleck von einer Seite zur anderen.",
+    "intro": "Die linke Hälfte ist ein Smartphone-Foto, die rechte Hälfte dieselbe Iris, restauriert. Verfolgen Sie eine Furche oder einen Farbfleck von einer Seite zur anderen.",
     "hint": "Zum Vergleichen ziehen",
     "sliderLabel": "Smartphone-Foto und restaurierte Iris vergleichen",
     "valueText": "Foto {n} Prozent",
@@ -79,7 +79,7 @@
     "scale": "Smartphone-Foto: {n} px. Die restaurierte Datei: {px}.",
     "beforeWeb": "Foto",
     "scaleWeb": "Foto: {n} px. Die restaurierte Datei: {px}.",
-    "introWeb": "Die linke Hälfte ist das Originalfoto, die rechte Hälfte dieselbe Iris, restauriert. Der Schnitt verläuft durch die Pupille: Verfolgen Sie eine Furche oder einen Farbfleck von einer Seite zur anderen.",
+    "introWeb": "Die linke Hälfte ist das Originalfoto, die rechte Hälfte dieselbe Iris, restauriert. Verfolgen Sie eine Furche oder einen Farbfleck von einer Seite zur anderen.",
     "sliderLabelWeb": "Foto und restaurierte Iris vergleichen",
     "eyes": [
       {
