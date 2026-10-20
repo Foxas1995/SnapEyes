@@ -20,7 +20,7 @@ export async function run(): Promise<Row[]> {
   const ids = (d: LegalDoc) => d.sections.map((s) => s.id).join();
   check('the four languages of the privacy policy have the same sections in the same order', LANGS.every((l) => ids(PRIVACY[l]) === ids(PRIVACY.en)), LANGS.map((l) => ids(PRIVACY[l])).join(' | '));
   const nOps = LANGS.map((l) => section(PRIVACY[l], 'operations')?.blocks.length ?? -1);
-  check('the "operations" section (service statistics) has the same number of paragraphs in every language: the counter and the campaign code are two more than before (seven)', nOps.every((n) => n === 7), nOps.join());
+  check('the "operations" section (service statistics) has the same number of paragraphs in every language: the counter, the campaign code and the feedback box are three more than before (eight)', nOps.every((n) => n === 8), nOps.join());
 
   const KEY: Record<(typeof LANGS)[number], RegExp> = {
     en: /counts the steps a page reaches/, de: /zählt unser Server außerdem die Schritte, die eine Seite erreicht/, lt: /serveris taip pat skaičiuoja žingsnius, kuriuos pasiekia puslapis/, hu: /a szerverünk azt is megszámolja, mely lépéseket éri el egy oldal/,

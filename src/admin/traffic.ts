@@ -21,6 +21,12 @@ export interface FunnelReply extends Base {
   ttp: { all: Pcts; by_dev: Record<string, Pcts>; by_br: Record<string, Pcts> }; cc: Record<string, Record<string, number>>;
 }
 export type Fx = Record<string, Record<string, Record<string, number>>>;
+/** One stored text of the feedback box (api/_lib/feedback.py texts): the text, the chip, the place, the style on screen or the block reason, the classes of the request. */
+export interface FeedbackText {
+  id: string; day: string; at: string; t: number; w: 'result' | 'retake'; c: string; x?: string; eyes?: number; txt: string;
+  src?: string; med?: string; cmp?: string; trm?: string; cnt?: string; dev?: string; br?: string; cc?: string; lang?: string; market?: string;
+}
+export interface FeedbackReply extends Base { fx: Fx; by: string | null; texts: FeedbackText[]; texts_more: boolean; retention_days: number; on: boolean }
 export interface MsReport { all: Pcts; by_dev: Record<string, Pcts>; by_br: Record<string, Pcts> }
 // "times", not "ms": every admin reply carries the milliseconds the call took under that name (api/_lib/iris.py run)
 export interface FxReply extends Base { fx: Fx; times: Record<string, MsReport>; by: string | null }
@@ -131,6 +137,20 @@ export function groupsOf(fx: Fx | undefined, metrics: readonly string[], max = 6
   return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, max).map(([g]) => g);
 }
 
+// the feedback box (src/try/Feedback.tsx, api/_lib/feedback.py): the chips of the two places, in the owner's words, and what became of a text
+export const FB_RESULT_LT: Record<string, string> = {
+  love: 'Man labai patinka', likeness: 'Neatrodo kaip mano akis', colour: 'Spalvos neatrodo teisingos', style: 'Norėjau kito stiliaus', price: 'Kaina per didelė', other: 'Kas nors kita',
+};
+export const FB_RETAKE_LT: Record<string, string> = {
+  unclear: 'Nesuprantu, kas negerai', fine: 'Mano nuotrauka gera', device: 'Telefonas geriau nepadaro', only: 'Tai vienintelė nuotrauka', effort: 'Per daug vargo', other: 'Kas nors kita',
+};
+export const FB_TEXT_LT: Record<string, string> = {
+  kept: 'Tekstas išsaugotas', contact: 'Nesaugota: kontaktiniai duomenys', link: 'Nesaugota: nuoroda', junk: 'Nesaugota: triukšmas arba per ilgas', dup: 'Nesaugota: toks tekstas jau buvo',
+};
+export const FB_PLACE_LT: Record<string, string> = { result: 'Rezultato ekranas', retake: 'Kortelė „padaryk kitą nuotrauką“' };
+/** The chip of a place in words (the code itself where no word is known). */
+export const fbChipLt = (place: string, chip: string): string => (place === 'retake' ? FB_RETAKE_LT : FB_RESULT_LT)[chip] ?? chip;
+
 const GATE_LT: Record<string, string> = { ok: 'Praėjo', lid: 'Voko taisyklė', fill: 'Užpildymo taisyklė', both: 'Abi taisyklės', unknown: 'Nežinoma' };
 const RETRY_LT: Record<string, string> = { none: 'Nereikėjo', kept2: 'Antra restauracija išlaikyta', kept1: 'Antra padaryta, pirma išlaikyta', time: 'Nebuvo laiko', error: 'Antra nepavyko' };
 const RES_LT: Record<string, string> = { mp_lt1: 'iki 1 MP', mp_1_3: '1-3 MP', mp_3_8: '3-8 MP', mp_8_16: '8-16 MP', mp_16_40: '16-40 MP', mp_40p: 'virš 40 MP' };
@@ -164,6 +184,14 @@ export function valueLt(metric: string, value: string, gateCode: (c: string) => 
     case 'err_ep': return ENDPOINT_LT[value] ?? value;
     case 'err_cls': return KIND_LT[value] ?? value;
     case 'err_reason': return REASON_LT[value] ? `${value}` : value;
+    case 'fb_result': return fbChipLt('result', value);
+    case 'fb_retake': return fbChipLt('retake', value);
+    case 'fb_style': case 'fb_block': {
+      const [chip, ctx = ''] = value.split(':');
+      const where = metric === 'fb_style' ? STYLE_LT[ctx] ?? ctx : BLOCK_LT[ctx] ?? ctx;
+      return `${fbChipLt(metric === 'fb_style' ? 'result' : 'retake', chip)}: ${where || 'nežinoma'}`;
+    }
+    case 'fb_text': return FB_TEXT_LT[value] ?? value;
     default: return value;
   }
 }

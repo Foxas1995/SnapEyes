@@ -3860,6 +3860,10 @@ GATE2_ON = (os.environ.get("SNAPEYES_GATE2") or "").strip().lstrip("\ufeff").str
 # because the privacy policy that describes it ships in the same release: unset, empty, on, 1, yes and true are on; off, 0, false and no (any case, BOM safe) turn it off. Read once at
 # import, so a change needs a redeploy. Off, the beacon route counts nothing and /api/health and GET /api/checkout say counter false, which is how the pages know to send nothing.
 COUNTER_ON = (os.environ.get("SNAPEYES_COUNTER") or "on").strip().lstrip("\ufeff").strip().lower() not in ("off", "0", "false", "no")
+# SNAPEYES_FEEDBACK (2026-10-20): the anonymous feedback box of /try (api/_lib/feedback.py: six chips and an optional text of up to 300 characters, kept 90 days). ON by default, because the privacy
+# policy that describes it ships in the same release; off, 0, false and no (any case, BOM safe) turn it off. Read once at import. Off, the beacon route keeps nothing and /api/health and
+# GET /api/checkout say feedback false, which is how /try knows not to show the box.
+FEEDBACK_ON = (os.environ.get("SNAPEYES_FEEDBACK") or "on").strip().lstrip(chr(0xFEFF)).strip().lower() not in ("off", "0", "false", "no")
 PUPIL_NEUTRAL_MAX = 1.5      # |Cb| and |Cr| of the pupil core: every professional print measured sits inside this
 PUPIL_QA_DARK = 8.0          # an off-centre pupil's core is centred on its pixels this close to its darkest (grey
                              # levels)

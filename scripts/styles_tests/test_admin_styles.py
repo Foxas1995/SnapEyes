@@ -917,7 +917,7 @@ for kind, spec_f in E.FIELDS.items():
                 leaks.append((kind, field, v))
 check("codes only: no field of any kind keeps a value of the wrong type, a code with a space, an at sign or an upper case letter, a number that is not finite (the field is dropped)", not leaks, leaks[:5])
 check("the new fields are in the whitelist: compose again, help style; and the price test's and the master's are unchanged in kind",
-      E.FIELDS["compose"]["again"] == "b" and E.FIELDS["help"]["style"] == "c" and set(E.FIELDS) == {"analyze", "deglare", "enhance", "compose", "master", "error", "help", "checkout", "exp", "hit"})
+      E.FIELDS["compose"]["again"] == "b" and E.FIELDS["help"]["style"] == "c" and set(E.FIELDS) == {"analyze", "deglare", "enhance", "compose", "master", "error", "help", "checkout", "exp", "hit", "fb"})
 
 section("8b. the set-level funnel equals a replay of the recorded events; again; the slices")
 rng = random.Random(13)

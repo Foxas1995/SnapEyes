@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Fills a LOCAL store folder with a month of believable DEMO traffic for the owner's visitor pages (admin v2): the counter's beacons, the events the endpoints write, a few orders, the spend ledger and
-(when the feedback box exists) its answers. Nothing here is real: every number comes from a seeded random generator (--seed), the people are invented, the e-mail addresses are example.com. Used to
+its feedback answers (the chips and a few invented texts). Nothing here is real: every number comes from a seeded random generator (--seed), the people are invented, the e-mail addresses are example.com. Used to
 look at every page with real looking numbers (screenshots) and by the suites that need a month of data (suites/README.md).
 
     python scripts/seed_demo_traffic.py --store D:/admin_out/demo_store [--days 30] [--seed 7] [--end 2026-10-31] [--clean]
@@ -34,6 +34,7 @@ os.environ["STORE_LOCAL_DIR"] = os.path.abspath(A.store)
 os.environ.pop("VERCEL", None)
 from _lib import ads as AD  # noqa: E402
 from _lib import events as E  # noqa: E402
+from _lib import feedback as FBK  # noqa: E402
 from _lib import markets as MK  # noqa: E402
 from _lib import pay  # noqa: E402
 from _lib import store  # noqa: E402
@@ -114,10 +115,46 @@ SOLO = sorted((k for k, v in SR.STYLES.items() if v["group"] == "solo"), key=lam
 HARD = next(k for k in SOLO if SR.STYLES[k]["gate"] == "hard")                   # the style whose gate judges a set of eyes
 STYLES = [(k, max(2, 40 // (i + 1))) for i, k in enumerate(SOLO)]                # the first on the page is chosen the most
 ORDERS = []
+# the feedback box: the chips a visitor chooses (weights) and a few invented texts per chip, in the page's language (English where a language has none)
+FB_RESULT = [("love", 30), ("likeness", 14), ("colour", 20), ("style", 12), ("price", 16), ("other", 8)]
+FB_RETAKE = [("unclear", 28), ("fine", 22), ("device", 14), ("only", 12), ("effort", 14), ("other", 10)]
+FB_TEXTS = {
+    "love": {"lt": ["Labai graži! Nepatikėjau, kad iš mano akies gali išeiti toks paveikslas.", "Ačiū, mano mamai tikrai patiks."], "en": ["Wow, thank you, my mum will love this."], "de": ["Wunderschön, danke!"], "hu": ["Nagyon szép lett, köszönöm."]},
+    "likeness": {"lt": ["Mano akis žalsva, o čia atrodo ruda.", "Rainelės raštas aplink vyzdį kitoks nei mano."], "en": ["The pattern around the pupil is not the same as mine."], "de": ["Die Form der Pupille stimmt nicht ganz."], "hu": ["A szivárványhártya mintája nem az enyém."]},
+    "colour": {"lt": ["Spalvos per šaltos, norėjau šiltesnių.", "Atrodo pilkesnė nei tikrovėje."], "en": ["Too grey, my eye is warm brown."], "de": ["Die Farben sind zu kühl."], "hu": ["A színek túl halványak."]},
+    "style": {"lt": ["Norėjau kažko ryškesnio, su auksu."], "en": ["I would like a darker background."], "de": ["Ich hätte gern etwas Dunkleres."], "hu": ["Sötétebb hátteret szerettem volna."]},
+    "price": {"lt": ["Per brangu dovanai, jei imti du."], "en": ["A bit more than I expected for a file."], "de": ["Teurer als erwartet."], "hu": ["Kicsit soknak találom az árat."]},
+    "other": {"lt": ["Ar galima užsakyti ant drobės?"], "en": ["Does it come as a print?"], "de": ["Gibt es das auch gedruckt?"], "hu": ["Nyomtatva is kapható?"]},
+    "unclear": {"lt": ["Nesupratau, kaip laikyti telefoną."], "en": ["I do not get what is wrong with the picture."], "de": ["Ich verstehe nicht, was falsch ist."], "hu": ["Nem értem, mi a baj a képpel."]},
+    "fine": {"lt": ["Nuotrauka man atrodo gera, kodėl atmesta?"], "en": ["The photo is sharp, I checked."], "de": ["Das Foto ist scharf."], "hu": ["A fotó éles, ellenőriztem."]},
+    "device": {"lt": ["Turiu seną telefoną."], "en": ["My camera has no zoom."], "de": ["Mein Handy hat keinen Zoom."], "hu": ["Nincs zoom a telefonomon."]},
+    "only": {"lt": ["Tai močiutės akis, kitos nuotraukos nėra."], "en": ["It is an old photo of my dad."], "de": ["Es ist ein altes Foto meines Vaters."], "hu": ["Ez egy régi fotó az apámról."]},
+    "effort": {"lt": ["Per ilgai užtrunka."], "en": ["Too many steps."], "de": ["Zu viele Schritte."], "hu": ["Túl sok lépés."]},
+}
 
 
 def lognorm(mean, sd=0.35):
     return mean * math.exp(R.gauss(0, sd) - sd * sd / 2)
+
+
+def answer(t, place, chip, x, base):
+    """One answer of the feedback box, written as the server writes it: an event of codes (events.build) and, when the visitor wrote something the filter keeps, the text row apart from it."""
+    if t > END:
+        return
+    texts = FB_TEXTS.get(chip, {})
+    text = None
+    if R.random() < 0.4:
+        text = R.choice(texts.get(base["lang"]) or texts.get("en") or [""]) or None
+    dropped = None
+    if R.random() < 0.1:
+        text, dropped = None, R.choice(["contact", "link", "junk"])      # now and then somebody writes an address or a link: the answer counts, the text is not kept
+    fields = dict(base, w=place, c=chip, eyes=1, **({"x": x} if x else {}), **({"txt": "kept"} if text else ({"txt": dropped} if dropped else {})))
+    emit(t, "fb", **fields)
+    if text:
+        row = {"v": 1, "t": int(t), "w": place, "c": chip, "txt": text, "eyes": 1, **({"x": x} if x else {}),
+               **{k: base[k] for k in ("src", "med", "cmp", "trm", "cnt", "dev", "br", "cc", "lang", "market") if base.get(k)}}
+        store.put(FBK.row_path(t), store.json_bytes(row), "application/json", upsert=False)
+        written["feedback"] += 1
 
 
 def journey(c, t0, dev, br, ordering):
@@ -145,9 +182,12 @@ def journey(c, t0, dev, br, ordering):
         irs = pick(IRS)
         verdict = pick([("good", 36), ("ok", 34), ("weak", 22), ("no_eye", 8)])
         blocked = verdict == "weak" and R.random() < 0.45
+        reason = pick([("too_blurry", 5), ("too_small", 2), ("eyelid", 2), ("pupil_too_large", 1)]) if blocked else None
         usable = usable or (verdict in ("good", "ok") or (verdict == "weak" and not blocked))
-        emit(t, "analyze", ok=verdict != "no_eye", verdict=verdict, detail=R.randint(15, 95), blocked=blocked, block_reason=pick([("too_blurry", 5), ("too_small", 2), ("eyelid", 2), ("pupil_too_large", 1)]) if blocked else None,
+        emit(t, "analyze", ok=verdict != "no_eye", verdict=verdict, detail=R.randint(15, 95), blocked=blocked, block_reason=reason,
              locked=verdict != "no_eye", res=res, ori=ori, irs=irs if verdict != "no_eye" else None, source=pick([("camera", 55), ("gallery", 45)]), ms=an_ms, **base)
+        if blocked and R.random() < 0.2:
+            answer(t + lognorm(8, 0.5), "retake", pick(FB_RETAKE), reason, base)
         t += lognorm(1.5, 0.4)                          # the visitor reads the verdict
     if not usable:
         return False
@@ -179,6 +219,8 @@ def journey(c, t0, dev, br, ordering):
         style = pick(STYLES)
         emit(t_res + k * 9, "compose", style=style, eyes=1, tiles=1, gate="ok", again=True, size=1024, ms=int(lognorm(1500, 0.3)), **base)
     emit(t_res, "hit", step="result", eyes=1, took=int((t_res - t_photo) * 1000), **base)
+    if R.random() < 0.09:
+        answer(t_res + lognorm(40, 0.6), "result", pick(FB_RESULT), style, base)
     t = t_res + 9 * views + 15
     if not ordering:
         if R.random() < 0.6:
@@ -261,10 +303,4 @@ for k, (live, withdrawn) in enumerate(((True, True), (False, False))):
         store.put(f"orders/{oid}/withdrawn.json", b"{}", "application/json", upsert=True)
     written["orders"] += 1
 
-# the feedback box (when this build has it)
-try:
-    from _lib import feedback as FB
-    written["feedback"] = FB.seed_demo(R, END, N, put_event) if hasattr(FB, "seed_demo") else 0
-except ImportError:
-    pass
 print("seeded", written)

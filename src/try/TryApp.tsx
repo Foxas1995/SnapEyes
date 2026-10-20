@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Upload, Sparkles, RefreshCcw, AlertTriangle, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
 import {
   type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, mapPool,
-  autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf,
+  autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf, blockCode,
 } from './shots';
 import {
   type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
@@ -31,6 +31,7 @@ import { callApi, type CheckoutInfo } from '../order/api';
 import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavailable, notePreview } from '../shared/pricing';
 import { priceChangedNote } from './priceNote';
 import { count, note as noteCounter, withCamp } from '../shared/counter';
+import { noteFeedback } from '../shared/feedback';
 import { readCatalogue } from '../shared/catalogue';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
@@ -321,6 +322,7 @@ export const TryApp: React.FC = () => {
       .then(async (h) => {
         if (!alive) return;
         noteCounter(h.counter);        // the anonymous counter (src/shared/counter.ts) sends its beacons only when the server says it counts
+        noteFeedback(h.feedback);      // the feedback box (src/shared/feedback.ts) is shown only when the server says it keeps the answers
         setStorageOn(!!h.blob_store);
         // live payments only with the delivery email: it carries the confirmation of the withdrawal waiver that the
         // law asks for (src/shared/legal.ts), so a live key without Resend sells nothing yet. Test mode may try it.
@@ -1097,7 +1099,7 @@ export const TryApp: React.FC = () => {
               <p className="text-xs text-rose-200/90 bg-rose-950/25 border border-rose-500/30 rounded-xl p-3">{T.quality.noneUsable(analysis.picked.of)}</p>
             ))}
             {/* blocked: the retake steps for its reason replace the tips list, which would only repeat them */}
-            {blockOf(analysis) && <RetakeGuide block={blockOf(analysis)!} />}
+            {blockOf(analysis) && <RetakeGuide block={blockOf(analysis)!} code={blockCode(analysis)} />}
             <ShotNotes q={analysis.quality} onRetake={retake} />
             {!blockedShot(analysis) && visibleTips(analysis.quality).length > 0 && (
               <ul className="text-xs text-zinc-300 bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5">
@@ -1286,7 +1288,7 @@ const ShotCollector: React.FC<{
       )}
       {/* nothing usable and the latest shot blocked: the capture guide's steps for the next one. Its title says
           why; the server's message is left out because it lists the same steps */}
-      {guide && <RetakeGuide block={guide} />}
+      {guide && <RetakeGuide block={guide} code={blockCode(latest)} />}
       {/* the notes follow the shot that will be processed, so a lamp warning never disappears while its
           shot is still the one we use. No retake link here: "Take another" below already covers it. */}
       {best.quality && <ShotNotes q={best.quality} />}

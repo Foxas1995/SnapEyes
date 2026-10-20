@@ -95,6 +95,7 @@ export const SAMPLES = {
   'buy.button': [['13 990 Ft']], 'buy.steps.upload': [[1, 1], [2, 3]], 'buy.sample': [[1], [2]], 'buy.replaceSampleEye': [[2]],
   'buy.stale': [[[1], 1], [[2], 3], [[1, 2, 4], 5], [[5], 6]], 'study.title': [[3, 1], [5, 3]],
   'study.pending': [[[2]], [[1, 3]]],
+  'feedback.count': [[0, 300], [57, 300]],
   orderNo: [['260929-ab12']], 'summary.eyes': [[1], [2], [10]], 'summary.paid': [['13 990 Ft']],
   'summary.inscription': [['Anna & Péter']], 'making.eye': [[1]], 'making.progress': [[1, 3]], 'making.part': [[1, 2], [2, 2]], 'making.elapsed': [[20]],
   'wait.busy': [[10]], 'wait.network': [[10]], 'wait.rendering': [[10]], 'wait.confirming': [[10]],

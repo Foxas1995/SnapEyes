@@ -212,6 +212,15 @@ def fx_report(agg, f, metrics, by=None):
     return out
 
 
+FEEDBACK_METRICS = ("fb_result", "fb_retake", "fb_style", "fb_block", "fb_text")
+
+
+def feedback_report(agg, f, by=None):
+    """The Atsiliepimai page's counts: the chips of the feedback box (fb_result on the result screen, fb_retake on the card that asks for another photo), each chip with the style on screen
+    (fb_style, "<chip>:<style>") or the block reason (fb_block, "<chip>:<reason>"), and what became of the texts (fb_text: kept, contact, link, junk, dup), by device or browser or campaign."""
+    return {"fx": fx_report(agg, f, FEEDBACK_METRICS, by), "by": by}
+
+
 def ms_report(agg, f):
     """Server times by step, p50 and p95 in milliseconds, whole and by device class and browser family: {what: {all, by_dev, by_br}} (HIST_MS buckets)."""
     out = {}

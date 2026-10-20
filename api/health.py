@@ -9,6 +9,7 @@ from _lib import iris as L
 from _lib import store
 from _lib import pay
 from _lib import counter
+from _lib import feedback
 from _lib.styles import plates
 import deglare
 
@@ -42,6 +43,8 @@ def handle(req):
             "cron": len(pay._env("CRON_SECRET")) >= 16,
             # whether the anonymous counter counts here (SNAPEYES_COUNTER, a store for the counts and the daily clean-up that deletes them): the pages read this and send their beacons only when it is true
             "counter": counter.on(),
+            # whether the anonymous feedback box of /try is offered here (SNAPEYES_FEEDBACK, a store for the answers and the daily clean-up that deletes the texts after 90 days): /try shows it only when this is true
+            "feedback": feedback.on(),
             # whether /legal/order-mail.json is readable and complete enough for live sales (pay.legal_problem)
             "legal": not pay.legal_problem(),
             # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)

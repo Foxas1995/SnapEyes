@@ -505,6 +505,26 @@ const en = {
     footnoteAud: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no GST is charged.',
   },
 
+  // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py): six chips and an optional text, on the result screen and on the card that asks for another photo
+  feedback: {
+    title: { result: 'How does it look to you?', retake: 'Did this help?' },
+    hint: { result: 'One tap and, if you like, a few words. It goes to the person who makes these.', retake: 'One tap tells us what got in your way.' },
+    chips: {
+      result: { love: 'I love it', likeness: 'It does not look like my eye', colour: 'The colours look off', style: 'I wanted another style', price: 'The price is too high', other: 'Something else' },
+      retake: { unclear: 'I do not understand what is wrong', fine: 'I think my photo is fine', device: 'My phone cannot do better', only: 'It is the only photo I have', effort: 'It is too much effort', other: 'Something else' },
+    },
+    textLabel: 'Anything to add? (optional)',
+    textHint: 'Please do not write names, e-mail addresses or phone numbers.',
+    count: (n: number, max: number) => `${n} of ${max}`,
+    send: 'Send',
+    sending: 'Sending',
+    thanks: 'Thank you. It reached the person who makes these.',
+    textDropped: 'Thank you. We counted your answer but did not keep the text, because it looked like it had contact details or a link.',
+    textLost: 'Thank you. Your answer reached us, but the text could not be saved.',
+    failed: 'It did not go through. Please try again in a moment.',
+    privacy: 'Anonymous: no name, no e-mail. A text is deleted after 90 days.',
+  },
+
   study: {
     title: (shot: number, photos: number) => (photos > 1 ? `Family test · photos ${shot - photos + 1}-${shot}` : `Family test · shot ${shot}`),
     light: 'Light for this shot',
@@ -940,6 +960,26 @@ const de: TryCopy = {
     namesBlocked: 'Bitte korrigieren Sie zuerst die Worte auf dem Kunstwerk (siehe oben).',
     footnote: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.',
     footnoteAud: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine GST berechnet.',
+  },
+
+  // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py)
+  feedback: {
+    title: { result: 'Wie gefällt Ihnen das Ergebnis?', retake: 'Hat Ihnen das weitergeholfen?' },
+    hint: { result: 'Ein Tipp und, wenn Sie möchten, ein paar Worte. Es geht an die Person, die diese Bilder macht.', retake: 'Ein Tipp zeigt uns, was im Weg war.' },
+    chips: {
+      result: { love: 'Ich liebe es', likeness: 'Es sieht nicht aus wie mein Auge', colour: 'Die Farben stimmen nicht', style: 'Ich wollte einen anderen Stil', price: 'Der Preis ist mir zu hoch', other: 'Etwas anderes' },
+      retake: { unclear: 'Ich verstehe nicht, was falsch ist', fine: 'Ich finde mein Foto in Ordnung', device: 'Mein Handy kann es nicht besser', only: 'Es ist das einzige Foto, das ich habe', effort: 'Es ist mir zu aufwendig', other: 'Etwas anderes' },
+    },
+    textLabel: 'Möchten Sie etwas hinzufügen? (freiwillig)',
+    textHint: 'Bitte schreiben Sie keine Namen, E-Mail-Adressen oder Telefonnummern.',
+    count: (n: number, max: number) => `${n} von ${max}`,
+    send: 'Senden',
+    sending: 'Wird gesendet',
+    thanks: 'Danke. Es ist bei der Person angekommen, die diese Bilder macht.',
+    textDropped: 'Danke. Wir haben Ihre Antwort gezählt, den Text aber nicht gespeichert, weil er Kontaktdaten oder einen Link zu enthalten schien.',
+    textLost: 'Danke. Ihre Antwort ist angekommen, der Text konnte aber nicht gespeichert werden.',
+    failed: 'Das hat nicht geklappt. Bitte versuchen Sie es gleich noch einmal.',
+    privacy: 'Anonym: kein Name, keine E-Mail. Ein Text wird nach 90 Tagen gelöscht.',
   },
 
   study: {

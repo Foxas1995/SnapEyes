@@ -71,6 +71,9 @@ The kinds (all with "ms", the time since the request started, when known):
             from), lang and market (the page's), dev (device class) and br (browser family) worked out from the user agent, which is dropped, cc (the two letter country Vercel
             derives from the address), and, where the step has them, took (result: milliseconds from the photo to the preview, measured by the page), eyes and style. No visitor
             number, no address, no user agent, no URL. Counted per day by step and by the codes above (hits, hit_cc, hit_ms of empty())
+  fb        (2026-10-20, api/_lib/feedback.py) the anonymous feedback box of /try: w (the place: result or retake), c (the chip the visitor chose, one of six of that place), x
+            (the style on screen for result, the block reason for retake), eyes, txt (only when a text came with it: kept, or why it was not kept: contact, link, junk, dup) and the
+            same codes and classes as a hit (campaign, lang, market, dev, br, cc). NEVER the text itself: the text is a separate row under ops/feedback/, deleted after 90 days
 
 The reading side (the admin panel) is here too: day_events() reads one day, summarize() turns events into counts,
 rollup() stores a finished day's counts once (ops/daily/<YYYY-MM-DD>.json), purge_old() is the clean-up."""
@@ -82,7 +85,8 @@ from . import counter
 CRON_MIN = 16                # characters of CRON_SECRET (pay.ordering_problem and /api/health use the same rule)
 WAIT = 1.5                   # seconds a request waits for its event to be written, at most
 PUT_TIMEOUT = 1.2            # the storage call itself
-RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0), "help": (20, 60.0), "hit": (150, 60.0)}   # events per instance per window (seconds)
+RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0), "help": (20, 60.0), "hit": (150, 60.0), "fb": (12, 60.0)}   # events per instance per window (seconds)
+FB_DAY_MAX = 400             # feedback answers per instance per UTC day (anybody can send one without an order, so they are capped like the counter's beacons)
 HIT_DAY_MAX = 20000          # counter beacons per instance per UTC day (anybody can send one without an order, so they are capped like the price test's)
 TABLE_KEYS_MAX = {"hits": 2000, "hit_cc": 800, "hit_ms": 400, "fx": 3000, "fx_ms": 800}     # distinct keys of a counter table in one day's counts; a new key above this is counted under "overflow"
 TTP_MS = (5000, 10000, 15000, 20000, 30000, 45000, 60000, 90000, 120000, 180000, 300000)       # upper bounds, ms, of the time from a photo to its preview (hit_ms); one more bucket above
@@ -122,8 +126,10 @@ FIELDS = {
             "hit": "b", "live": "b"},
     "hit": {"step": "c", "src": "c", "med": "c", "cmp": "c", "trm": "c", "cnt": "c", "lang": "c", "market": "c", "dev": "c", "br": "c", "cc": "c",
             "took": "n", "eyes": "n", "style": "c"},
+    "fb": {"w": "c", "c": "c", "x": "c", "eyes": "n", "txt": "c", "src": "c", "med": "c", "cmp": "c", "trm": "c", "cnt": "c", "lang": "c", "market": "c", "dev": "c", "br": "c", "cc": "c"},
 }
 HIT_STEPS = ("landing", "try", "photo", "result", "soon", "buy", "order")      # api/_lib/counter.py STEPS (a test holds the two equal)
+FB_PLACES = ("result", "retake")                                               # api/_lib/feedback.py PLACES (a test holds the two equal)
 # The events the endpoints write for a visitor's request carry, besides their own fields, where the request came from as codes (api/_lib/counter.py context, put in by record()): the campaign
 # (src, med, cmp, trm, cnt), the device class (dev), the browser family (br), the country (cc) and the page's language and price market. Nothing else of the request.
 ATTR = {"src": "c", "med": "c", "cmp": "c", "trm": "c", "cnt": "c", "dev": "c", "br": "c", "cc": "c", "lang": "c", "market": "c"}
@@ -140,7 +146,7 @@ SOURCES = ("camera", "gallery", "live", "sample", "lab")
 
 # ----------------------------------------------------------------------------- writing
 _RATE_LOCK = threading.Lock()
-_SEEN = {"all": [], "error": [], "exp": [], "help": [], "hit": [], "day": "", "errors_today": 0, "exp_day": "", "exp_today": 0, "help_day": "", "help_today": 0, "hit_day": "", "hit_today": 0}
+_SEEN = {"all": [], "error": [], "exp": [], "help": [], "hit": [], "fb": [], "day": "", "errors_today": 0, "exp_day": "", "exp_today": 0, "help_day": "", "help_today": 0, "hit_day": "", "hit_today": 0, "fb_day": "", "fb_today": 0}
 
 
 def _allow(kind, now, stage=None):
@@ -173,6 +179,18 @@ def _allow(kind, now, stage=None):
             if len(q) >= n or _SEEN["hit_today"] >= HIT_DAY_MAX:
                 return False
             _SEEN["hit_today"] += 1
+            q.append(now)
+            return True
+        if kind == "fb":                    # a feedback answer: no order behind it either, so a budget of its own per minute and per day on this instance
+            n, win = RATE["fb"]
+            q = [t for t in _SEEN["fb"] if now - t < win]
+            _SEEN["fb"] = q
+            d = time.strftime("%Y-%m-%d", time.gmtime(now))
+            if _SEEN["fb_day"] != d:
+                _SEEN["fb_day"], _SEEN["fb_today"] = d, 0
+            if len(q) >= n or _SEEN["fb_today"] >= FB_DAY_MAX:
+                return False
+            _SEEN["fb_today"] += 1
             q.append(now)
             return True
         if kind == "help":                  # a click on the manual route: no order behind it, so a small budget of its own (as the price test's beacons)
@@ -804,6 +822,14 @@ def add(agg, ev):
             took = ev.get("took")
             if step == "result" and isinstance(took, (int, float)) and not isinstance(took, bool) and took >= 0:
                 _tinc(agg, "hit_ms", f"{ev.get('dev') or '-'}|{ev.get('br') or '-'}|{ttp_bucket(took)}")
+    elif kind == "fb":
+        w, c = ev.get("w"), ev.get("c")
+        if w in FB_PLACES and isinstance(c, str):
+            _fx(agg, ev, f"fb_{w}", c)                                  # the chip, by campaign, device class and browser family
+            if ev.get("x"):
+                _fx(agg, ev, "fb_style" if w == "result" else "fb_block", f"{c}:{ev['x']}")      # the chip with the style on screen (result) or the block reason (retake)
+            if ev.get("txt"):
+                _fx(agg, ev, "fb_text", ev["txt"])                       # what became of the text: kept, or why not
     elif kind == "error":
         k = ev.get("class") or "unknown"
         _inc(agg["errors"], k)
@@ -892,7 +918,7 @@ def purge_old(days=365, yes=True, stop_left=10.0, out=None):
     """Delete events and day counts older than `days` days, and the admin panel's failed-login markers older than 2
     days. For the daily clean-up (api/_lib/cleanup.py may call it). Never raises; stops for time with more: true.
     Returns {ok, events, days, rollups, adminfail, more}."""
-    res = {"ok": True, "events": 0, "days": 0, "rollups": 0, "adminfail": 0, "more": False}
+    res = {"ok": True, "events": 0, "days": 0, "rollups": 0, "adminfail": 0, "feedback": 0, "more": False}
     say = out or (lambda m: print("snapeyes events: " + str(m)[:300], flush=True))
     try:
         if not store.configured():
@@ -911,6 +937,14 @@ def purge_old(days=365, yes=True, stop_left=10.0, out=None):
                 store.delete_many(names)
             res["events"] += len(names)
             res["days"] += 1
+        if not res["more"]:
+            try:
+                from . import feedback as FBK        # the texts of the feedback box are kept 90 days, not twelve months
+                got = FBK.purge_text(days=FBK.RETENTION_DAYS, yes=yes, stop_left=stop_left)
+                res["feedback"] = got["texts"]
+                res["more"] = bool(got["more"])
+            except Exception:  # noqa: the rest of the clean-up goes on
+                res["feedback"] = 0
         if not res["more"]:
             old = [f"{DAILY}/{r['name']}" for r in store.list_all(DAILY)
                    if not r["folder"] and r["name"].endswith(".json") and r["name"][:-5] < cut]

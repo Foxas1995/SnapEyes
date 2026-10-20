@@ -470,6 +470,26 @@ export const hu: TryCopy = {
     footnoteAud: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: GST-t nem számítunk fel.',
   },
 
+  // a névtelen visszajelzés doboz (src/try/Feedback.tsx, api/_lib/feedback.py)
+  feedback: {
+    title: { result: 'Hogy tetszik Önnek?', retake: 'Segített ez?' },
+    hint: { result: 'Egy koppintás és, ha szeretné, néhány szó. Ahhoz jut el, aki ezeket a képeket készíti.', retake: 'Egy koppintás megmutatja, mi állt az útjába.' },
+    chips: {
+      result: { love: 'Nagyon tetszik', likeness: 'Nem hasonlít az én szememre', colour: 'A színek nem stimmelnek', style: 'Másik stílust szerettem volna', price: 'Az ár túl magas nekem', other: 'Valami más' },
+      retake: { unclear: 'Nem értem, mi a baj', fine: 'Szerintem jó a fotóm', device: 'A telefonom nem tud jobbat', only: 'Ez az egyetlen fotóm', effort: 'Túl sok fáradság', other: 'Valami más' },
+    },
+    textLabel: 'Szeretne hozzáfűzni valamit? (nem kötelező)',
+    textHint: 'Kérjük, ne írjon nevet, e-mail-címet vagy telefonszámot.',
+    count: (n: number, max: number) => `${n} / ${max}`,
+    send: 'Küldés',
+    sending: 'Küldés folyamatban',
+    thanks: 'Köszönjük. Elérte azt, aki ezeket a képeket készíti.',
+    textDropped: 'Köszönjük. A válaszát megszámoltuk, a szöveget azonban nem tartottuk meg, mert elérhetőséget vagy hivatkozást tartalmazni látszott.',
+    textLost: 'Köszönjük. A válasza megérkezett, de a szöveget nem sikerült elmenteni.',
+    failed: 'Nem sikerült elküldeni. Kérjük, próbálja újra egy pillanat múlva.',
+    privacy: 'Névtelenül: nincs név, nincs e-mail. A szöveget 90 nap után töröljük.',
+  },
+
   study: {
     title: (shot: number, photos: number) => (photos > 1 ? `Családi teszt · ${shot - photos + 1}-${shot}. fotó` : `Családi teszt · ${shot}. felvétel`),
     light: 'A felvétel fénye',

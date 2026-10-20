@@ -12,6 +12,7 @@ import { NO_SAVE, NO_SAVE_BOX } from './noSave';
 import { type Art, type Eye, MAX_EYES, canvasSize } from './multi';
 import { ManualRoute, RetakePanel, StylePicker, type PickerModel } from './StylePicker';
 import { Words, type WordsModel } from './Words';
+import { FeedbackBox } from './Feedback';
 import { type Opts, lookName, soonChoice } from './picker';
 
 interface Props {
@@ -318,6 +319,9 @@ export const ResultView: React.FC<Props> = (p) => {
       {n > 1 ? <>{artwork}{beforeAfter}</> : <>{beforeAfter}{stripSection}{artwork}</>}
 
       {p.purchase}
+
+      {/* the anonymous feedback box (api/_lib/feedback.py): after the price, never in the way of it, and only once a preview is on screen; it shows itself only when the server keeps the answers */}
+      {p.art && <FeedbackBox where="result" ctx={p.picker.style ?? undefined} eyes={n} />}
 
       <button onClick={p.onStartOver} className="text-xs text-zinc-300 underline underline-offset-4 self-center">{T.result.startOver}</button>
     </section>

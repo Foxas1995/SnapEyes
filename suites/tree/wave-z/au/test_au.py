@@ -396,11 +396,13 @@ check("B2 EU privacy policy: only two sentences added per language (the market k
 
 
 # 1020: the privacy policy now differs from the WP18 pin by exactly the anonymous counter's paragraphs (api/_lib/counter.py): the country sentence (website), the counter and campaign paragraphs
-# (operations), the session storage key (storage), the Stripe sentence (orders) and the order records row (retention); every other section, the frame and the terms are WP18's
-PRIV20 = {"website": (1, 1), "operations": (2, 0), "storage": (1, 0), "orders": (1, 1), "retention": (1, 1)}
+# (operations), the session storage key (storage), the Stripe sentence (orders) and the order records row (retention); every other section, the frame and the terms are WP18's.
+# Later the same day the feedback box's paragraphs joined them: the feedback paragraph (operations: one more block), the two sentences that changed in "content" and "basis" (one block added and
+# one removed each) and the retention row of the feedback texts (the same table block as the order records row): operations is now 5 blocks added (counter, campaign, feedback, content, basis) and 2 removed
+PRIV20 = {"website": (1, 1), "operations": (5, 2), "storage": (1, 0), "orders": (1, 1), "retention": (1, 1)}
 priv20 = {l: doc_diff(EDI["eu"]["privacy"][l], EU_WP18["privacy"][l]) for l in LANG2}
 priv20_ok = {l: fr and sorted(d) == sorted(PRIV20) and all((len(d[sec][0]), len(d[sec][1])) == n for sec, n in PRIV20.items()) for l, (fr, d) in priv20.items()}
-check("B2b EU privacy policy since WP18 (1020): only the anonymous counter's paragraphs differ, in the sections website, operations, storage, orders and retention, nothing else, en and de",
+check("B2b EU privacy policy since WP18 (1020): only the anonymous counter's and the feedback box's paragraphs differ, in the sections website, operations, storage, orders and retention, nothing else, en and de",
       all(priv20_ok.values()), (priv20_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv20.items()}))
 
 

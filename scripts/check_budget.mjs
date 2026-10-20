@@ -42,12 +42,16 @@ const PHONE = { js: 635, css: 543 };
 const COUNTER = { js: 391, css: 0 };
 // The privacy policy says what the counter keeps (the same release). The legal pages' entry (src/legal/main.tsx) is also named main-*.js, so this script counts it although the landing never loads it:
 // LEGAL_TEXT is the growth of that chunk from the new privacy paragraphs in four languages, measured the same way (the chunk that holds the legal texts, on the commit minus its parent).
-const LEGAL_TEXT = { js: 5200 };
+const LEGAL_TEXT = { js: 5200 + 2874 };      // 5,200 B for the counter's paragraphs (item 1) and 2,874 B for the feedback box's (item 4: its paragraph, the sentence about the texts and the retention row, in four languages)
 // The owner's visitor pages of the admin panel (2026-10-20: Saltiniai, Piltuvas, Kodel nepavyksta, Nuotrauku kokybe, Reklamos, the daily block) are work the spec's budget did not foresee either. The landing never loads them;
 // ADMIN_VIEWS is what this script still sees grow: the Tailwind utilities their markup uses, which land in the stylesheet that the tools and the panel share (jsx-runtime-*.css, counted because it is not named after a page):
 // CSS +56 B gzip, measured as this script's own sum on the commit with the pages minus on its parent (4742fe9). The JavaScript sum moved by -37 B (the names of chunks in import lists); that is not taken as room.
 const ADMIN_VIEWS = { js: 0, css: 56 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css };
+// The feedback box of /try (2026-10-20, src/try/Feedback.tsx, src/admin/Feedback.tsx) is more of the same: the landing never loads it, and the privacy text it needs is LEGAL_TEXT above. FEEDBACK is what this script still
+// sees grow: the Tailwind utilities the box and its admin page use, in the stylesheet the tools and the panel share (jsx-runtime-*.css): CSS +131 B gzip, measured on this commit minus its parent (d40529b). The box's own
+// code and words are in the chunk of /try (try-*, left out here) and in the admin's; the landing's JavaScript does not grow.
+const FEEDBACK = { js: 0, css: 131 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

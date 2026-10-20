@@ -447,6 +447,26 @@ export const lt: TryCopy = {
     footnoteAud: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: GST netaikomas.',
   },
 
+  // anoniminė atsiliepimų dėžutė (src/try/Feedback.tsx, api/_lib/feedback.py)
+  feedback: {
+    title: { result: 'Kaip Jums atrodo?', retake: 'Ar tai padėjo?' },
+    hint: { result: 'Vienas paspaudimas ir, jei norite, keli žodžiai. Tai pasiekia žmogų, kuris kuria šiuos paveikslus.', retake: 'Vienas paspaudimas parodo, kas Jums sutrukdė.' },
+    chips: {
+      result: { love: 'Man labai patinka', likeness: 'Neatrodo kaip mano akis', colour: 'Spalvos neatrodo teisingos', style: 'Norėjau kito stiliaus', price: 'Kaina man per didelė', other: 'Kas nors kita' },
+      retake: { unclear: 'Nesuprantu, kas negerai', fine: 'Manau, mano nuotrauka gera', device: 'Mano telefonas geriau nepadaro', only: 'Tai vienintelė mano turima nuotrauka', effort: 'Tai per daug vargo', other: 'Kas nors kita' },
+    },
+    textLabel: 'Norite ką nors pridėti? (neprivaloma)',
+    textHint: 'Prašome nerašyti vardų, el. pašto adresų ar telefono numerių.',
+    count: (n: number, max: number) => `${n} iš ${max}`,
+    send: 'Siųsti',
+    sending: 'Siunčiama',
+    thanks: 'Ačiū. Tai pasiekė žmogų, kuris kuria šiuos paveikslus.',
+    textDropped: 'Ačiū. Jūsų atsakymą suskaičiavome, bet teksto neišsaugojome, nes atrodė, kad jame yra kontaktinių duomenų arba nuoroda.',
+    textLost: 'Ačiū. Jūsų atsakymas mus pasiekė, bet teksto išsaugoti nepavyko.',
+    failed: 'Nepavyko išsiųsti. Pabandykite dar kartą po akimirkos.',
+    privacy: 'Anonimiškai: be vardo, be el. pašto. Tekstas ištrinamas po 90 dienų.',
+  },
+
   study: {
     title: (shot: number, photos: number) => (photos > 1 ? `Šeimos testas · nuotraukos ${shot - photos + 1}-${shot}` : `Šeimos testas · kadras ${shot}`),
     light: 'Šviesa šiam kadrui',

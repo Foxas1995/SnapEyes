@@ -82,6 +82,10 @@ GET /api/checkout also answers counter: true or false, whether the pages should 
 POST /api/checkout {hit: "landing" | "try" | "photo" | "result" | "soon" | "buy" | "order", camp, lang, market[, took, eyes, style]}: one step a page reached, with the campaign
      code (camp: "src|med|cmp|trm|cnt", short codes) and the page's language and price market. No order, no Stripe, always {ok, counted}; a robot, an unknown step, a client
      that sends too many or an instance past its day ceiling is not counted.
+GET /api/checkout also answers feedback: true or false, whether /try offers its feedback box (api/_lib/feedback.py; SNAPEYES_FEEDBACK).
+POST /api/checkout {feedback: {w: "result" | "retake", c: <one of that place's six chips>[, x: the style on screen or the block reason, eyes, t: a text of up to 300 characters, hp: ""]}, camp, lang, market}:
+     an anonymous answer. No order, no Stripe, always {ok, counted, text} (text: kept, none, dropped, lost); a robot, a filled honeypot, a client that sends more than four in ten minutes or an
+     instance past its ceiling is not counted. A text with contact details, a link or noise is not kept (the answer still counts); the texts are deleted after 90 days.
 Every other POST of the site may carry camp too (analyze, deglare, enhance, compose, this route's checkout): iris.run turns it, with the user agent and the country header, into the classes the usage
 events carry (iris.ctx()). The order record keeps the code (checkout.camp, and camp in paid.json) and the Stripe session's metadata `src`, so an order and its revenue are tied to a source.
 """
@@ -94,6 +98,7 @@ from _lib import pay
 from _lib import abtest
 from _lib import catalogue
 from _lib import counter
+from _lib import feedback
 
 
 def country_hint(value):
@@ -121,7 +126,9 @@ def info(body, country=None):
                                      for m in pay.SELECTABLE if pay.acl_market(m)}),
             "country": cc, "suggest": suggest,
             # whether the anonymous counter counts here (the switch SNAPEYES_COUNTER, somewhere to keep the counts, the daily clean-up): the pages send their beacons only when it does
-            "counter": counter.on()}
+            "counter": counter.on(),
+            # whether /try offers the anonymous feedback box (the switch SNAPEYES_FEEDBACK, somewhere to keep the answers, the daily clean-up that deletes the texts)
+            "feedback": feedback.on()}
 
 
 def _engine(plan):
@@ -200,6 +207,8 @@ def checkout(body):
         return abtest.beacon(body)
     if "hit" in body:            # the anonymous counter's beacon: no order, no Stripe, always answered 200 (api/_lib/counter.py)
         return counter.hit(body)
+    if "feedback" in body:       # the feedback box of /try: six chips and an optional text, no order, no Stripe, always answered 200 (api/_lib/feedback.py)
+        return feedback.submit(body)
     why = pay.ordering_problem()
     if why:
         raise pay.PayNotConfigured(why)

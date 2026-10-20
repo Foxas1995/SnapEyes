@@ -104,6 +104,12 @@ export function blockOf(a?: Analysis | null): BlockCopy | null {
   return typeof r === 'string' && hasBlockCopy(r) ? T.quality.blocks[r] : T.quality.blockedOther;
 }
 
+/** The block reason of a blocked shot as a short code for the feedback box (the server's own code when it is one, else "blocked"): never text. */
+export function blockCode(a?: Analysis | null): string {
+  const r = a?.quality?.block_reason;
+  return typeof r === 'string' && /^[a-z0-9][a-z0-9_.-]{0,39}$/.test(r) ? r : 'blocked';
+}
+
 /** The Detail to SHOW for a shot: none for a blocked one. Detail's fibre band also reads sensor grain, so a
  *  grainy haze with no iris in it can read 23 while a usable soft shot reads 16; printed next to "Too blurry" it
  *  would tell the customer the opposite of the verdict. Ranking still uses detailOf (a blocked shot already

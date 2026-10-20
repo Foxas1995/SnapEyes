@@ -61,6 +61,7 @@ from . import catalogue as CT
 from . import counter as CN
 from . import traffic as TR
 from . import ads as AD
+from . import feedback as FBK
 from .styles import steps as SP
 
 ADMIN_TTL_MAX = 90 * 86400   # a key may live this long at most (scripts/mint_admin.py mints 1 to 90 days)
@@ -693,6 +694,26 @@ def act_ads_delete(body, who):
     except ValueError as e:
         raise _stale(e) from None
     return {"ok": True, "result": "deleted", "rev": out["rev"], "deleted": out["deleted"], "total": out["total"], "audit_detail": f"{out['deleted']} rows"}
+
+
+def a_feedback(body, who):
+    """The page Atsiliepimai: what visitors said in the feedback box of /try (api/_lib/feedback.py). {days (1 to 90, default 30), dev, br, src, cmp, lang, market, by (cmp, dev or br: the counts are also
+    split by it, default cmp)}. Returns the counts of the chips per place, per chip with the style on screen or the block reason, and what became of the texts (fx, from the day counts, kept twelve
+    months) and the stored texts of the window, newest first, at most 100 (kept 90 days, deleted by the owner here or by the daily clean-up). Read only."""
+    n, f, rows, agg = _traffic(body)
+    by = body.get("by") if body.get("by") in ("cmp", "dev", "br") else "cmp"
+    texts, more = FBK.texts(min(n, FBK.RETENTION_DAYS), f)
+    return dict(TR.feedback_report(agg, f, by), ok=True, days=n, filters=f, available=TR.available(agg), partial=not all(c for _d, _a, c in rows), recording=E.retention_ok(),
+                texts=texts, texts_more=more, retention_days=FBK.RETENTION_DAYS, on=FBK.on())
+
+
+def act_feedback_delete(body, who):
+    """Delete one stored feedback text by its id ({id}); the counts stay (they hold no text). Nothing of the text goes into the audit log."""
+    try:
+        gone = FBK.delete_text(body.get("id"))
+    except ValueError as e:
+        raise L.ClientError(str(e)) from None
+    return {"ok": True, "result": "deleted" if gone else "not_found", "audit_detail": "1 text" if gone else "none"}
 
 
 def a_errors(body, who):
@@ -2130,6 +2151,7 @@ ACTIONS = {
     "styles_override": audited("styles_override", act_styles_override), "styles_stats": a_styles_stats,
     "sources": a_sources, "daily": a_daily, "funnel": a_funnel, "why": a_why, "photos": a_photos, "ads": a_ads,
     "ads_put": audited("ads_put", act_ads_put), "ads_delete": audited("ads_delete", act_ads_delete),
+    "feedback": a_feedback, "feedback_delete": audited("feedback_delete", act_feedback_delete),
     "styles_limits": audited("styles_limits", act_styles_limits),
     "exp_start": audited("exp_start", act_exp_start),
     "exp_stop": audited("exp_stop", act_exp_stop),
