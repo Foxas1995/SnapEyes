@@ -40,9 +40,13 @@ from _lib.styles import eye as EYE   # the eye profile: measured here, sealed, r
 from _lib.styles import gate as GATE   # the gate's severity: how far past its rules an eye is (the second restoration)
 from _lib.styles import reveal as REV   # the Reveal's numbers and its display copy (WP9)
 
-# sha256 of public/assets/sample_eye_blue_restored.jpg, the sample eye's restoration the page ships (made once by the
-# live engine, 2026-09-29). Replace the file and this changes with it; the page then falls back to the studio.
-SAMPLE_SHA256 = "7e681ceca21955127d41cb6c899c4f5dd708819ea872a9dc305f8d0cce3e6cb7"
+# sha256 of public/assets/sample_eye_blue_restored.jpg, the sample eye's restoration the page ships (made by the live engine on
+# 2026-09-29, made again on 2026-10-20 by scripts/bake_sample.py: the first file passed the lid rule but failed the fill rule of the
+# restoration gate (fill_hard_edges, 127 sectors of 180 against the limit of 120: the fibres of this very detailed iris are read as a hard
+# edge inside it), which held the Universe style and raised the "Your eye needs a retake" card for a picture the visitor did not take. The file
+# of today is a new draw of the same chain on the same crop and passes BOTH rules (lid 0 / 0 / 10 outliers, fill n_step 95). Replace the file and
+# this changes with it (scripts/bake_sample.py prints it); the page then falls back to the studio.
+SAMPLE_SHA256 = "4c4429b21f0d7d4927e4c65a019ef8c00ca29588533f81bdd04caa3224ca3121"
 SAMPLE_B64_MAX = 600_000
 
 def _measure(clean, pad, memo=False):

@@ -429,6 +429,14 @@ for gate2 in (False, True):
         sample_rows[gate2] = (prof_sample.gate("lid")["ok"], CT.why_unavailable("solo.clean", 1, [prof_sample.rec]), CT.why_unavailable("solo.gold", 1, [prof_sample.rec]))
 check("the site's own AI-generated sample eye (the demo of /try) passes the lid rule with the added detectors off and on (as in production), so the demo still shows Clean Iris and Celestial Gold",
       sample_rows == {False: (True, None, None), True: (True, None, None)}, sample_rows)
+# ... and the fill rule (QA of 2026-10-20: the first sample file failed it, fill_hard_edges, which held the Universe style and raised the retake card for a picture the visitor did
+# not take): no live style of one eye is held back for the demo eye, and the tile list the page is given for it has every tile available
+with Show("solo.clean", "solo.powder", "solo.universe", "solo.splash", "solo.gold", stage="live"):
+    sample_held = {sid: CT.why_unavailable(sid, 1, [prof_sample.rec]) for sid in ("solo.clean", "solo.powder", "solo.universe", "solo.splash", "solo.gold")}
+    sample_tiles = CT.tile_list(1, [prof_sample.rec])
+check("... and the fill rule too: no live style of one eye (Clean Iris, Powder Burst, Universe, Splash, Celestial Gold) is held back for the demo eye, and no tile of the list the page is given is unavailable "
+      "(the Universe styles are the ones that read the fill rule)",
+      prof_sample.gate("fill")["ok"] is True and not any(sample_held.values()) and all(t["available"] for t in sample_tiles["tiles"] if t["stage"] == "live"), (sample_held, [(t["id"], t["available"]) for t in sample_tiles["tiles"]]))
 
 # ============================================================================================ 4. a batch
 section("4. a batch: one call, the tile order, a tile alone against the tile in a batch (IE7), the cost guard, the slot, the daily ceiling")

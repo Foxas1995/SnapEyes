@@ -43,7 +43,7 @@ export function flowApi(root, { wait = {} } = {}) {
       eyes: Array.from({ length: order.eyes }, (_, i) => ({ eye: i + 1, made: order.made.has(i + 1), uploaded: true, preview_url: '/assets/sample_eye_blue_before.jpg' })),
     };
     if (order.state === 'pending') { st.waiting_for = 'confirmation_email'; if (Date.now() >= order.pendingUntil) { order.state = 'making'; st.state = 'making'; } }
-    if (order.state === 'ready') st.download = { url: '/assets/sample_eye_blue_restored.jpg', download_url: '/assets/sample_eye_blue_restored.jpg', width: 1600, height: 1600, bytes: 294739 };
+    if (order.state === 'ready') st.download = { url: '/assets/sample_eye_blue_restored.jpg', download_url: '/assets/sample_eye_blue_restored.jpg', width: 1600, height: 1600, bytes: 269375 };
     else if (order.state === 'making' || order.state === 'paid') st.artwork = { done: 0, of: 1 };
     return st;
   };

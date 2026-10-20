@@ -691,6 +691,35 @@ out_s2 = ENH.enhance({"sample": True, "image": b64(SAMPLE_RAW), "lang": "en"})
 check("enhance: the sample eye's seals carry its profile too (no model call), measured once per instance",
       len(MODEL) == calls and P.unseal_full(out_s["sealed"])[1]["profile"] is not None and out_s["profile"]["cls"] in EYE.CLASSES
       and P.unseal_full(out_s["sealed"])[1]["profile"].rec == P.unseal_full(out_s2["sealed"])[1]["profile"].rec == EYE.profile_of_bytes(SAMPLE_RAW, memo=True).rec)
+# The demo eye of /try must not meet the gate (QA of 2026-10-20): its first restoration file passed the lid rule and FAILED the fill rule (fill_hard_edges: n_step 127 of 180
+# sectors against the limit of 120, the fibres of a very detailed iris read as a hard edge inside it), which held the Universe style and raised the "Your eye needs a retake"
+# card for a picture the visitor did not take. The file of 2026-10-20 (scripts/bake_sample.py: the same chain, a new draw) passes both rules; the gate itself is unchanged,
+# and there is no exemption by identity: the sample is measured by the very function every eye is measured by.
+prof_s = P.unseal_full(out_s["sealed"])[1]["profile"]
+check("enhance: the AI-generated sample eye, posted as the page posts it ({sample: true} with the shipped restored file), is told to the page as passing BOTH rules of the gate (lid and fill), "
+      "and so are the profile in its sealed copy and in every sealed size /api/compose is sent",
+      out_s["profile"]["gate"] == {"lid": {"ok": True}, "fill": {"ok": True}} and prof_s.gate("lid+fill")["ok"] is True
+      and all(P.unseal_full(v)[1]["profile"].gate("lid+fill")["ok"] is True for v in out_s["sealed_sizes"].values()), out_s["profile"].get("gate"))
+vals_s = prof_s.gate("lid+fill")["values"]
+check("... with room to spare, not on the edge of a rule: the severity is 0, the fill rule's n_step is at least 10 percent under its limit (120) and the lid rule's counts under their limits",
+      GATE.severity(prof_s) == 0.0 and vals_s["fill"]["n_step"] <= 0.9 * GATE.R3_STEP and vals_s["fill"]["run18"] < GATE.R1_RUN and vals_s["lid"]["lid70"] < GATE.LID70_MAX
+      and vals_s["lid"]["lid88"] < GATE.LID88_MAX and vals_s["lid"]["outlier_bins"] < GATE.OUTLIER_MAX, vals_s)
+sample_refused, sample_raw_ok = [], []
+for label, bad in (("an eye that fails both rules", EYES["own_lid"]["raw"]), ("the sample's crop", CROP_RAW), ("the sample with a byte changed", SAMPLE_RAW[:-3] + bytes([SAMPLE_RAW[-3] ^ 1]) + SAMPLE_RAW[-2:])):
+    try:
+        ENH.enhance({"sample": True, "image": b64(bad), "lang": "en"})
+        sample_raw_ok.append(label)
+    except L.ClientError as e:
+        sample_refused.append(str(e))
+check("the sample path is no way round the gate: only the shipped file is accepted ({sample: true} with a failing eye, the crop or the file with one byte changed is refused, \"That is not the sample eye.\"), "
+      "and the file is measured by the same function as every eye (a measurement equal to profile_of_bytes), so no photo and no profile is exempt by what it is",
+      not sample_raw_ok and sample_refused == ["That is not the sample eye."] * 3 and prof_s.rec == EYE.profile_of_bytes(SAMPLE_RAW, pad=1.12).rec, (sample_raw_ok, sample_refused))
+fail_seal = P.protect(EYES["own_lid"]["im"], EYES["own_lid"]["raw"], profile=EYES["own_lid"]["prof"])
+fail_prof = P.unseal_full(fail_seal["sealed_sizes"]["560"])[1]["profile"]
+check("an ordinary failing eye is unchanged: an eye with a lash band across the iris still fails the lid rule and the fill rule, in the reply to the page and in its seals "
+      "(the new sample file changed nothing about the gate)",
+      fail_prof.gate("lid")["ok"] is False and fail_prof.gate("fill")["ok"] is False and fail_prof.public()["gate"]["lid"]["ok"] is False and fail_prof.public()["gate"]["fill"]["ok"] is False
+      and GATE.severity(fail_prof) > 1.0, fail_prof.public()["gate"])
 print(f"   enhance CPU seconds with the stub model: {cpu_enh:.1f} (the profile part is 1 to 2)", flush=True)
 
 # compose with the sealed copies
