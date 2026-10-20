@@ -1,6 +1,7 @@
 // Types and pure helpers for the capture flow: reading /api/analyze defensively, ranking shots and picking
 // the one tip worth showing. No React and no DOM here, so the rules can be checked on their own.
 import { T, type BlockCopy, type BlockReason } from './copy';
+import type { Lang } from './lang';
 
 export interface Quality {
   diameter_px: number;
@@ -21,6 +22,10 @@ export interface Quality {
   pupil_reflection?: boolean;
   lamp_cast?: boolean;
   lamp_message?: string | null;
+  // The same sentences in every language (api/analyze.py words()): the verdict's message, the tips and the lamp message as the server wrote them for en, de, lt and hu. A visitor who
+  // switches the page's language after the analysis (or while it ran) reads the new language at once (wordsOf); a server that predates it sends none and the three fields above
+  // (the request's language) are all there is.
+  words?: Partial<Record<Lang, { message: string; tips: string[]; lamp_message?: string | null }>>;
   // A shot the engine blocked (api/analyze.py): too blurry to restore the customer's own iris ('too_blurry'), a
   // sharp photo of a dark iris with too little light to show its pattern ('too_dark'), or a pupil too wide
   // ('pupil_too_large'). The server issues no work ticket for it, exactly as for a circle that did not lock.
@@ -175,13 +180,23 @@ export function meterBand(d: number, q: Quality | undefined, t: Targets): { band
   return { band, caption };
 }
 
+/** The server's sentences of a shot in the language the page speaks NOW (T.lang): the ones api/analyze.py wrote for that language (quality.words), else the three fields of the reply
+ *  (the language of the request, which is the page's when nothing was switched). Pure text: no request and no model call, so a switch of the language costs nothing and cannot change
+ *  the verdict. */
+export function wordsOf(q: Quality, lang: Lang = T.lang): { message: string; tips: string[]; lamp_message: string | null } {
+  const w = q.words?.[lang];
+  return w && typeof w.message === 'string' && Array.isArray(w.tips)
+    ? { message: w.message, tips: w.tips, lamp_message: w.lamp_message ?? null }
+    : { message: q.message, tips: q.tips || [], lamp_message: q.lamp_message ?? null };
+}
+
 /** Tips worth showing. "We will remove it automatically" instructs nothing, and the old "reflection sits on
  *  your pupil, move the light" tip contradicts the calm pupil note whenever the server sets pupil_reflection.
  *  The other languages' words are the ones api/analyze.py's texts use: German ("automatisch", "Spiegelung", "Pupille"),
  *  Lithuanian ("automatiškai", "atspindys", "vyzdys": api/_lib/analyze_lt.py) and Hungarian ("automatikusan",
  *  "tükröződés", "pupilla": api/_lib/analyze_hu.py). */
 export function visibleTips(q: Quality): string[] {
-  return (q.tips || []).filter((s) => !/automatically|automatisch|automatiškai|automatikusan/i.test(s)
+  return wordsOf(q).tips.filter((s) => !/automatically|automatisch|automatiškai|automatikusan/i.test(s)
     && !(q.pupil_reflection && /reflection|spiegelung|atspind|tükröződés/i.test(s) && /pupil|vyzd/i.test(s)));
 }
 
@@ -191,8 +206,9 @@ export function visibleTips(q: Quality): string[] {
  *  server ranked first. */
 export function topTip(q: Quality, t: Targets): string | null {
   const tips = visibleTips(q);
-  if (q.locked === false) return tips[0] ?? q.message ?? null;
-  if (q.blocked) return q.message || (blockOf({ ok: true, quality: q }) ?? T.quality.blockedOther).retakeLine;
+  const w = wordsOf(q);
+  if (q.locked === false) return tips[0] ?? w.message ?? null;
+  if (q.blocked) return w.message || (blockOf({ ok: true, quality: q }) ?? T.quality.blockedOther).retakeLine;
   if (num(q.diameter_px) !== undefined && q.diameter_px < t.min_diameter_px) {
     return tips.find((s) => /closer|zoom|näher|arčiau/i.test(s)) ?? T.quality.closer;
   }

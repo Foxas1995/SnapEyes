@@ -783,17 +783,6 @@ def analyze(body):
     if shake is not None and shake[0] and shake[1] >= SHAKE_CONF:
         blocked, block_by = True, "shake"
         reason = block_reason(block_by, dark_iris, label)
-    tips = []
-    if diam_orig < GOOD_DIAMETER_PX:
-        tips.append(say("closer", f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want {GOOD_DIAMETER_PX} px or more.",
-                        px=int(diam_orig), good=GOOD_DIAMETER_PX))
-    if basis < FIBRE_GOOD:
-        tips.append(say("dark_iris", DARK_IRIS_TIP) if dark_iris else
-                    say("fibres", "The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
-                                  "hold the phone against something steady, and shoot again."))
-    if occl > OCCL_TIP_PCT:
-        tips.append(say("open", "Open the eye wide: look straight ahead and lift the upper lid gently with a fingertip, so no lid "
-                                "or lashes cross the iris. Lashes over the iris show up as dark streaks in the artwork."))
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False
     if pupil_r and v.get("glare_boxes"):
@@ -804,36 +793,60 @@ def analyze(body):
                 gcx, gcy = (gb[0] + gb[2]) / 2, (gb[1] + gb[3]) / 2
                 if ((gcx - pcx) ** 2 + (gcy - pcy) ** 2) ** 0.5 < prad: on_pupil = True
             except Exception: pass
-    if on_pupil:
-        tips.append(say("on_pupil", "The reflection sits on your pupil. Tilt your head or move the light to the side, or we will "
-                                    "have to rebuild the pupil as plain darkness."))
-    elif v.get("glare_boxes"): tips.append(say("reflection", "A reflection was found; we will remove it automatically."))
-    if glare_fib > GLARE_OK_PCT:
-        tips.append(say("glare", "A reflection covers part of the iris fibres, and what it hides has to be rebuilt. Turn so the "
-                                 "window or lamp is off to one side rather than straight in front of you."))
-    # a dark iris that the vision model still calls sharp needs light, not focus: its tip is already above
-    if label != "sharp" or (basis < FIBRE_GOOD and not dark_iris):
-        tips.append(say("soft", "This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
-                                "steady; front cameras cannot focus at this distance at all."))
-    if not locked:
-        tips.insert(0, say("no_lock", "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
-                                      "little space around it, and keep the eyelid out of the way."))
-    # These say how much of the artwork will be the customer's own fibre detail. The product is a digital file,
-    # so no word here may promise or imply a physical print.
-    msg = say(verdict, {"good": "Great capture. Your own fibres are sharp enough to carry the full-size artwork.",
-                        "ok": "This will make a beautiful artwork. A closer or steadier shot would keep more of your own fibre detail.",
-                        "weak": "Small or soft, so more of the fine detail gets rebuilt. Closer and steadier gives a truer artwork."}[verdict])
-    if glare_capped:
-        msg = say("glare_" + verdict, {"ok": "This will make a beautiful artwork. A shot without the reflection on your iris would keep more of your own fibre detail.",
-                                       "weak": "A reflection covers too much of your iris, so the fibres under it would be rebuilt. Move the light to one side and shoot again."}[verdict])
-    if not locked:
-        msg = say("unlocked", "We found an eye but could not lock onto the iris edge, so the crop would be off. Please take another photo.")
-    if blocked:
-        msg = say(reason, BLOCK_MESSAGES[reason])
     # the white of the eye shows the colour of the light: a strong cast here is on the iris too, and the
     # colour lock later keeps whatever colour the photo has. Only judged on a locked circle.
     tint = L.sclera_tint(im, cx, cy, r) if locked else None
     lamp = lamp_cast(tint)
+
+    def words(lng):
+        """The customer sentences of this analysis in one language (lng: "en", "de", "lt" or "hu"): the verdict's message, the tips and the lamp message, as plain text from the
+        measurements above. The request's own language goes into the reply as it always did (message, tips, lamp_message); all four go into quality.words, so that a page whose
+        visitor switches language after the analysis (or while it ran) shows the new language without asking again (the model is not asked twice, and a second look could judge
+        the photo another way)."""
+        def say_(key, en, **kw):
+            return TEXTS[lng][key].format(**kw) if lng in TEXTS else en
+        tips = []
+        if diam_orig < GOOD_DIAMETER_PX:
+            tips.append(say_("closer", f"Move closer or use 2x zoom: the iris is {int(diam_orig)} px, we want {GOOD_DIAMETER_PX} px or more.",
+                            px=int(diam_orig), good=GOOD_DIAMETER_PX))
+        if basis < FIBRE_GOOD:
+            tips.append(say_("dark_iris", DARK_IRIS_TIP) if dark_iris else
+                        say_("fibres", "The fibres are not resolved yet. Tap the iris on screen so it locks focus, "
+                                      "hold the phone against something steady, and shoot again."))
+        if occl > OCCL_TIP_PCT:
+            tips.append(say_("open", "Open the eye wide: look straight ahead and lift the upper lid gently with a fingertip, so no lid "
+                                    "or lashes cross the iris. Lashes over the iris show up as dark streaks in the artwork."))
+        if on_pupil:
+            tips.append(say_("on_pupil", "The reflection sits on your pupil. Tilt your head or move the light to the side, or we will "
+                                        "have to rebuild the pupil as plain darkness."))
+        elif v.get("glare_boxes"): tips.append(say_("reflection", "A reflection was found; we will remove it automatically."))
+        if glare_fib > GLARE_OK_PCT:
+            tips.append(say_("glare", "A reflection covers part of the iris fibres, and what it hides has to be rebuilt. Turn so the "
+                                     "window or lamp is off to one side rather than straight in front of you."))
+        # a dark iris that the vision model still calls sharp needs light, not focus: its tip is already above
+        if label != "sharp" or (basis < FIBRE_GOOD and not dark_iris):
+            tips.append(say_("soft", "This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
+                                    "steady; front cameras cannot focus at this distance at all."))
+        if not locked:
+            tips.insert(0, say_("no_lock", "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
+                                          "little space around it, and keep the eyelid out of the way."))
+        # These say how much of the artwork will be the customer's own fibre detail. The product is a digital file,
+        # so no word here may promise or imply a physical print.
+        msg = say_(verdict, {"good": "Great capture. Your own fibres are sharp enough to carry the full-size artwork.",
+                            "ok": "This will make a beautiful artwork. A closer or steadier shot would keep more of your own fibre detail.",
+                            "weak": "Small or soft, so more of the fine detail gets rebuilt. Closer and steadier gives a truer artwork."}[verdict])
+        if glare_capped:
+            msg = say_("glare_" + verdict, {"ok": "This will make a beautiful artwork. A shot without the reflection on your iris would keep more of your own fibre detail.",
+                                           "weak": "A reflection covers too much of your iris, so the fibres under it would be rebuilt. Move the light to one side and shoot again."}[verdict])
+        if not locked:
+            msg = say_("unlocked", "We found an eye but could not lock onto the iris edge, so the crop would be off. Please take another photo.")
+        if blocked:
+            msg = say_(reason, BLOCK_MESSAGES[reason])
+        return {"message": msg, "tips": tips, "lamp_message": say_("lamp", LAMP_MESSAGE) if lamp else None}
+
+    mine = words(lang)
+    msg, tips = mine["message"], mine["tips"]
+    all_words = {l: words(l) for l in ("en", "de", "lt", "hu")}
     capture = {"verdict": verdict, "detail": detail, "fibre_score": round(fscore, 2),
                "fibre": round(fibre, 2), "basis": round(basis, 2), "glare_on_fibres_pct": round(glare_fib, 1), "diameter_px": int(diam_orig),
                "sclera_b": None if not tint else round(tint["b"], 1), "sclera_a": None if not tint else round(tint["a"], 1),
@@ -862,8 +875,8 @@ def analyze(body):
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,
                         "glare": bool(v.get("glare_boxes")), "locked": bool(locked),
                         "detail": detail, "fibre_score": round(fscore, 2), "glare_on_fibres_pct": round(glare_fib, 1),
-                        "pupil_reflection": bool(on_pupil), "lamp_cast": lamp, "lamp_message": say("lamp", LAMP_MESSAGE) if lamp else None,
-                        "verdict": verdict, "message": msg, "tips": tips,
+                        "pupil_reflection": bool(on_pupil), "lamp_cast": lamp, "lamp_message": mine["lamp_message"],
+                        "verdict": verdict, "message": msg, "tips": tips, "words": all_words,
                         "pattern": None if pattern is None else round(pattern, 2),
                         "pattern_shape": None if shape is None else round(shape, 2),
                         "direction": None if direction is None else round(direction, 3),

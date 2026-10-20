@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Upload, Sparkles, RefreshCcw, AlertTriangle, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
 import {
-  type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, mapPool,
+  type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, wordsOf, mapPool,
   autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf, blockCode,
 } from './shots';
 import {
@@ -317,6 +317,31 @@ export const TryApp: React.FC = () => {
 
   // the anonymous counter: /try was opened (sent once /api/health says the counter is on)
   useEffect(() => { count('try', T.lang, currentMarket()); }, []);
+  // The preview watermark is drawn into the pixels of an eye's display copy, in the language of the request that made it (eye.wm). When the page speaks another language (the visitor
+  // switched after the restoration, or while it ran and the answer came in the old one), the display copy is asked for again in the new one: /api/enhance {redisplay} draws it from
+  // the sealed preview, no model call and no ticket, and the page swaps only the picture and its chip. One eye at a time; a Reveal eye is never given a plain copy (shown says which
+  // the server made); an eye that cannot be done keeps the words it has (once per language, so there is no loop).
+  const wmBusy = useRef(false);
+  const wmGaveUp = useRef(new Set<string>());
+  const [wmTick, setWmTick] = useState(0);
+  useEffect(() => {
+    if (wmBusy.current) return;
+    const eye = eyes.find((e) => e.wm && e.wm !== lang && typeof e.sealed === 'string' && e.sealed && !wmGaveUp.current.has(`${e.id}:${lang}`));
+    if (!eye) return;
+    wmBusy.current = true;
+    const want = lang;
+    void (async () => {
+      try {
+        const r = await post<{ image?: string; shown?: string }>('/api/enhance', { redisplay: true, sealed: eye.sealed, lang: want, pad: eye.pad, ...(eye.draft?.crop ? { crop: eye.draft.crop } : {}) });
+        const now = eyesRef.current.find((x) => x.id === eye.id);
+        if (!now || typeof r.image !== 'string' || !r.image) return;
+        if (now.reveal && r.shown !== 'reveal') { wmGaveUp.current.add(`${eye.id}:${want}`); return; }
+        const thumb = await thumbOf(r.image);
+        commitEyes(eyesRef.current.map((x) => (x.id === eye.id ? { ...x, image: r.image!, thumb, wm: want } : x)));
+      } catch { wmGaveUp.current.add(`${eye.id}:${want}`); } finally { wmBusy.current = false; setWmTick((n) => n + 1); }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eyes, lang, wmTick]);
 
   // only offer the training-memory checkbox when this deployment can really store something, and the buy button only
   // when it takes orders: /api/health says whether Stripe is set up, GET /api/checkout whether ordering is open (Stripe
@@ -721,12 +746,15 @@ export const TryApp: React.FC = () => {
     setClientCrop(crop);
     let d: { crop: string; glare_pct: number; changed: boolean; used_sr: boolean };
     let e: Enhanced;
+    let wm: Lang = T.lang;
     try {
       setProgress((p) => [...p, T.working.reflections]);
       d = await post('/api/deglare', { crop: stripDataUrl(crop), pad, ticket: a.ticket, pupil_r: a.pupil_r, glare_boxes: a.glare_boxes_crop || [] });
       setProgress((p) => [...p, T.working.macro]);
-      // each eye has its own storage folder, or one eye would overwrite another one's files
-      e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'artistic', pad, ticket: a.ticket, session: `${session}-${id}`, consent, used_sr: d.used_sr, meta: a.quality });
+      // each eye has its own storage folder, or one eye would overwrite another one's files. The language is named here, once: the watermark of the display copy is drawn in it
+      // (and the eye remembers it, wm), so a switch of the page's language while this runs is seen when the answer is in
+      wm = T.lang;
+      e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'artistic', pad, ticket: a.ticket, session: `${session}-${id}`, consent, used_sr: d.used_sr, meta: a.quality, lang: wm });
     } catch (err) {
       // the photo is still held, so "Continue anyway" / "Use this shot" can run it again
       setError((err as Error).message);
@@ -752,7 +780,7 @@ export const TryApp: React.FC = () => {
     const eye: Eye = {
       id, before: crop, ...restored(e), thumb: await thumbOf(e.image), pad,
       fallback: !!e.fallback, usedSr: !!e.used_sr, stored: !!e.stored, glarePct: d.glare_pct,
-      diameterPx: a.quality?.diameter_px, sample, colourOff: colourOff(e.qa), draft,
+      diameterPx: a.quality?.diameter_px, sample, colourOff: colourOff(e.qa), draft, wm,
       ...(reveal ? { reveal } : {}), ...(wide ? { wide } : {}),
     };
     // a retaken eye takes the old one's place; the old restoration goes only now that the new one exists
@@ -934,11 +962,12 @@ export const TryApp: React.FC = () => {
       const [rb, ra] = await Promise.all([fetch(SAMPLE_BEFORE), fetch(SAMPLE_RESTORED)]);
       if (!rb.ok || !ra.ok) throw new Error('sample files');
       const [before, file] = await Promise.all([blobToDataUrl(await rb.blob()), blobToDataUrl(await ra.blob())]);
-      const r = await post<Enhanced>('/api/enhance', { sample: true, image: stripDataUrl(file) });
+      const wm: Lang = T.lang;
+      const r = await post<Enhanced>('/api/enhance', { sample: true, image: stripDataUrl(file), lang: wm });
       if (typeof r.image !== 'string' || !r.image || typeof r.sealed !== 'string') throw new Error('sample preview');
       const eye: Eye = {
         id: newEyeId(), before, ...restored(r), thumb: await thumbOf(r.image), pad: SAMPLE_PAD,
-        fallback: false, usedSr: false, stored: false, glarePct: 0, sample: true, colourOff: false, draft: null,
+        fallback: false, usedSr: false, stored: false, glarePct: 0, sample: true, colourOff: false, draft: null, wm,
       };
       sampleRef.current = false;
       setError(null); setWorking({ eye: 1, sample: true });
@@ -1090,7 +1119,7 @@ export const TryApp: React.FC = () => {
                 <Verdict v={analysis.quality.verdict} block={blockOf(analysis)} />
                 {/* blocked: the one-line reason; the retake steps are in the guide below (the server's message
                     lists them too, and shown together every step was read twice) */}
-                <p className="text-sm text-zinc-200 mt-2">{blockOf(analysis)?.reason ?? analysis.quality.message}</p>
+                <p className="text-sm text-zinc-200 mt-2">{blockOf(analysis)?.reason ?? wordsOf(analysis.quality).message}</p>
                 <DetailMeter a={analysis} t={targetsOf(analysis)} />
               </div>
             </div>
@@ -1225,7 +1254,7 @@ const ShotNotes: React.FC<{ q: Quality; onRetake?: () => void }> = ({ q, onRetak
       <div className="text-xs text-amber-200/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
         <Lightbulb className="w-4 h-4 shrink-0 mt-px text-amber-300" />
         <span>
-          {q.lamp_message || T.quality.lampFallback}
+          {wordsOf(q).lamp_message || T.quality.lampFallback}
           {onRetake && <> <button onClick={onRetake} className="underline underline-offset-2 font-semibold text-amber-100">{T.quality.tryRetake}</button></>}
         </span>
       </div>

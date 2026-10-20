@@ -1,6 +1,7 @@
 // Pure helpers for the multi-eye result: layouts the engine accepts, the canvas shape it returns, and the
 // capture-study payloads (the price is src/shared/markets.ts priceMinor). No React and no DOM here.
 import type { Analysis } from './shots';
+import type { Lang } from '../shared/lang';
 import { legacyLayoutsFor } from '../shared/styles';
 import type { RevealParams } from '../reveal/revealMath';
 import type { WideFrame } from '../reveal/wideFrame';
@@ -32,6 +33,7 @@ export interface Eye {
   glarePct: number;
   diameterPx?: number;
   sample: boolean;      // the site's AI-generated demo eye, never a customer's
+  wm?: Lang;            // the language the preview watermark of `image` is drawn in (the request's): when the page speaks another one, TryApp asks for the display copy again in it (api/enhance.py redisplay)
   colourOff: boolean;   // the engine's own colour check measured this restoration as off from the photo
   // what ordering this eye needs (./checkout.ts): null for the AI-generated sample, which is never ordered, and for
   // an eye brought back after the payment page (it is in the order by then). sealed above is the preview string

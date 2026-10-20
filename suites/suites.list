@@ -57,3 +57,4 @@ v3gate2:scripts/styles_tests:test_gate2.py
 v3counter:scripts/styles_tests:test_counter.py::pre
 v3traffic:scripts/styles_tests:test_traffic.py
 v3feedback:scripts/styles_tests:test_feedback.py
+v3lang:scripts/styles_tests:test_lang_switch.py

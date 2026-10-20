@@ -4,9 +4,11 @@
 // can reach beyond this machine. The shapes are the ones of api/analyze.py, deglare.py, enhance.py, compose.py and order.py (read from the real answers of
 // the dev API with its models stubbed, and from the page code that parses them: src/try/shots.ts, picker.ts, composeApi.ts, src/order/api.ts).
 //
-//   POST /api/analyze     one good shot, the iris in the middle, a work ticket
+//   POST /api/analyze     one good shot, the iris in the middle, a work ticket (api.setShot('ok') makes it a middling one: the quality step; api.setSentences(true) makes the sentences
+//                         of every language marked, in the request's language and in quality.words, as api/analyze.py sends them)
 //   POST /api/deglare     the crop back, nothing changed
-//   POST /api/enhance     the restored picture (the display copy: the stub does not draw a watermark, the check says so where it matters)
+//   POST /api/enhance     the restored picture (the display copy: the stub does not draw a watermark, the check says so where it matters); {redisplay: true, lang} answers the display copy
+//                         of another picture per language (the real one draws the watermark again in that language); every call is noted in stats.enhance
 //   POST /api/compose     the tile list of one eye (a live style, a second one, one that opens soon), the large preview, the 480 px tiles. api.setEye('lid') makes the eye fail the lid rule
 //                         (2026-10-14: Clean Iris and Celestial Gold are hard): the hard tiles are held back (gate), the plate styles open soon, nothing is recommended, as the real server answers
 //   GET  /api/order       the scripted order: states making, pending, ready, review (api.setOrder), its eyes made one at a time
@@ -26,7 +28,10 @@ export function flowApi(root, { wait = {} } = {}) {
   const file = (n) => readFileSync(join(root, 'public/assets', n)).toString('base64');
   const restored = file('sample_eye_blue_restored.jpg');   // the display picture of the eye and of the first style
   const second = file('sample_eye_blue_before.jpg');       // another picture, so that a second style is a different picture
-  const stats = { calls: [], model: 0 };
+  const stats = { calls: [], model: 0, enhance: [] };
+  let shot = 'good';          // 'good': the analysis goes on by itself; 'ok': it stops at the quality step (api.setShot)
+  let marked = false;         // api.setSentences: every sentence of the analysis carries its language, in the reply and in quality.words
+  const mark = (l) => ({ message: `Message [${l}]`, tips: [`Tip: move closer [${l}]`], lamp_message: null });
   let eyeKind = 'ok';      // 'ok': the eye passes every rule; 'lid': it fails the lid rule (api.setEye)
   // the styles of one eye, read from the registry (api/_lib/styles_registry.py, the one place for ids, names and stages; no id is written here): the first style that
   // can be bought now and is plain black, the first live art style, and one that opens soon
@@ -72,13 +77,18 @@ export function flowApi(root, { wait = {} } = {}) {
         await sleep(w.analyze);
         json({
           ok: true, ticket: 'tk-i3', pupil_r: 0.2, fibre: 3, iris: { cx: 0.5, cy: 0.5, r: 0.3 }, pad: 1.12, glare_boxes_crop: [],
-          quality: { diameter_px: 600, sharpness: 5, sharpness_label: 'sharp', occlusion_pct: 0, glare: false, locked: true, verdict: 'good', message: 'Great photo', tips: [], detail: 90 },
+          quality: {
+            diameter_px: 600, sharpness: 5, sharpness_label: 'sharp', occlusion_pct: 0, glare: false, locked: true, verdict: shot, message: 'Great photo', tips: [], detail: shot === 'good' ? 90 : 55,
+            ...(marked ? { ...mark(['de', 'lt', 'hu'].includes(b.lang) ? b.lang : 'en'), words: { en: mark('en'), de: mark('de'), lt: mark('lt'), hu: mark('hu') } } : {}),
+          },
           targets: { detail_good: 70, detail_ok: 40, min_diameter_px: 280, good_diameter_px: 420, max_shots: 5 },
         });
       } else if (url.pathname === '/api/deglare') {
         await sleep(w.deglare);
         json({ ok: true, crop: String(b.crop || 'AAAA').slice(0, 64) || 'AAAA', glare_pct: 0, changed: false, used_sr: false });
       } else if (url.pathname === '/api/enhance') {
+        stats.enhance.push({ lang: b.lang, redisplay: b.redisplay === true, sample: b.sample === true, crop: !!b.crop });
+        if (b.redisplay === true) { json({ ok: true, image: b.lang === 'en' ? restored : second, shown: b.crop ? 'reveal' : 'plain', lang: b.lang }); return; }
         if (b.sample === true) { json({ ok: false, error: 'the stand-in has no prepared sample' }, 500); return; }
         await sleep(w.enhance);
         json({ ok: true, image: restored, sealed: 'S', sealed_sizes: {}, fidelity: 0.9, used_sr: false, fallback: false, seconds: 2, stored: false, qa: null });
@@ -114,6 +124,12 @@ export function flowApi(root, { wait = {} } = {}) {
     },
     /** the eye the stand-in judges: 'ok' (it passes every rule) or 'lid' (it fails the lid rule: the hard tiles are held back) */
     setEye(kind) { eyeKind = kind === 'lid' ? 'lid' : 'ok'; },
+    /** the shot the stand-in judges: 'good' (the flow goes on by itself) or 'ok' (it stops at the quality step) */
+    setShot(kind) { shot = kind === 'ok' ? 'ok' : 'good'; },
+    /** sentences marked with their language (see the top), for the check of the language switch */
+    setSentences(on) { marked = !!on; },
+    /** the answers' delays (ms), for a switch while a step runs */
+    setWait(o) { Object.assign(w, o); },
     /** the picture the stand-in sends as the display copy of the first style, as a data URL (to see that the page shows that picture and no other) */
     restoredDataUrl: `data:image/jpeg;base64,${restored}`,
     secondDataUrl: `data:image/jpeg;base64,${second}`,

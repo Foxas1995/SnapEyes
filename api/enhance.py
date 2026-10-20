@@ -27,7 +27,7 @@ every call is a new draw), the second restoration goes through the same steps an
 when it fails no rule the first passed and its severity (api/_lib/styles/gate.py severity) is at most RETRY_CLEAR of the first's, else the first.
 A passing eye makes no second call and comes back exactly as before, and so does every eye with SNAPEYES_RETRY2=off. Only when a rule failed, the
 reply gets "retry" (ran, kept, code, gate1, sev1, sev2, ms) and the event gets retry, gate1, sev1, sev2, retry_ms."""
-import os, sys, json, time, base64, hashlib, collections
+import os, sys, io, json, time, base64, hashlib, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from http.server import BaseHTTPRequestHandler
 from PIL import Image
@@ -177,10 +177,51 @@ def sample(body):
     prof, _ = _measure(raw, 1.12, memo=True)          # the same file every time: measured once per instance
     return {"ok": True, "mode": "artistic", "sample": True, **P.protect(L.b64_to_pil(s), raw, profile=prof), "profile": _public(prof, raw)}
 
+REDISPLAY_CROP_B64_MAX = 1_600_000       # the deglared crop a Reveal eye's display copy is drawn again from (1024 px, JPEG q95: about 300 kB as text)
+
+
+def redisplay(body):
+    """POST /api/enhance {redisplay: true, sealed, lang[, crop, pad]}: the display copy of an eye that is already restored, drawn again in the language of THIS request.
+    The preview watermark is drawn into the pixels of the display copy in the language the request named (api/_lib/iris.py WATERMARK_TEXT), so a visitor who switches the
+    page's language after the restoration (or while it ran: the request left in the old language) kept a watermark in the old one. No model call and no ticket: the
+    sealed preview this server made (KIND_ORDER: the exact enhance output, authenticated, 48 hours) is what is drawn from, so this is no way to watermark anything else,
+    and what it returns is what the page already has of that eye but for the words. crop (the deglared crop /api/enhance was sent, which the page keeps for the eye's draft) lets
+    the Reveal's display copy be made again as /api/enhance made it (eyelid hidden, pupil crushed); without it the plain display copy comes back, and the reply says which
+    ("shown": "reveal" or "plain") so that the page never swaps a Reveal eye's picture for a plain one."""
+    sealed = body.get("sealed")
+    try:
+        raw = P.unseal(sealed, kinds=(P.KIND_ORDER,))
+        clean = Image.open(io.BytesIO(raw)).convert("RGB")
+    except P.SealError as e:
+        raise L.ClientError(P.refusal(e)) from None
+    except Exception:  # noqa: not an image of ours
+        raise L.ClientError(P.refusal(P.SealError("not a preview"))) from None
+    try:
+        pad = float(body.get("pad") or 1.12)
+    except (TypeError, ValueError):
+        pad = 1.12
+    shown = None
+    crop_b64 = body.get("crop")
+    if isinstance(crop_b64, str) and crop_b64 and len(crop_b64) <= REDISPLAY_CROP_B64_MAX:
+        crop = L.b64_to_pil(crop_b64)
+        s = min(crop.size)
+        crop = crop.crop((0, 0, s, s))
+        if s > L.WORK:
+            crop = crop.resize((L.WORK, L.WORK), Image.LANCZOS)
+        rv = REV.reveal_for(L.mask_disk(crop, pad), clean, pad=pad)        # the same call /api/enhance makes: None when there is no time or the padding is not the site's
+        if rv["image"] is not None:
+            shown = REV.display_b64(rv["image"])
+    if shown is not None:
+        return {"ok": True, "image": shown, "shown": "reveal", "lang": L.page_lang()}
+    return {"ok": True, "image": P.display_b64(clean, None, pad), "shown": "plain", "lang": L.page_lang()}
+
+
 def enhance(body):
     t0 = time.time()
     if body.get("sample") is True:
         return sample(body)
+    if body.get("redisplay") is True:
+        return redisplay(body)
     if not L.check_ticket(body.get("ticket")):
         raise PermissionError("expired_or_missing_ticket")
     crop = L.b64_to_pil(body.get("crop"))
