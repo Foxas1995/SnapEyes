@@ -195,8 +195,11 @@ ring = (rr > 0.35) & (rr < 0.85)                         # the iris itself (pupi
 changed = (np.abs(np.asarray(want, np.float32) - plain).max(axis=2) > 40)
 check("B7 the watermark crosses the iris itself (a share of the iris ring changed by more than 40 levels)",
       changed[ring].mean() > 0.02, changed[ring].mean())
-check("B8 German and English display copies differ (VORSCHAU / PREVIEW)",
-      np.abs(np.asarray(P.display_image(CLEAN_IM, "en"), np.float32) - np.asarray(want, np.float32)).max() > 100)
+# B8: until 2026-10-20 the words were "SNAPEYES.COM  ·  PREVIEW" and their translations, and the German and English copies differed; since then the
+# tile is the site's address alone in every language (the owner: "drop PREVIEW, keep SnapEyes.com", iris.py WATERMARK_TILE), so the two are one picture
+check("B8 the German and English display copies carry the same words (the address SnapEyes.com, the same in every language since 2026-10-20)",
+      L.WATERMARK_TEXT["de"][0] == L.WATERMARK_TEXT["en"][0] == "SnapEyes.com"
+      and np.abs(np.asarray(P.display_image(CLEAN_IM, "en"), np.float32) - np.asarray(want, np.float32)).max() == 0)
 small = {k: Image.open(io.BytesIO(P.unseal(v))) for k, v in j["sealed_sizes"].items()}
 check("B9 sealed_sizes open to clean JPEG squares of 768 and 560 px",
       small["768"].size == (768, 768) and small["560"].size == (560, 560) and all(i.format == "JPEG" for i in small.values()))
@@ -300,8 +303,10 @@ for style, seals, layout in (("studio_black", [SEALED], None), ("celestial_gold"
     key = f"{style}/{layout or 'single'}"
     shares[key] = (c, ring_share(dec_np(jm_["image"]), jpeg90(nowm), DISCS[0]) if c == 200 and DISCS else 0.0,
                    len(DISCS[0]) if DISCS else 0)
-check("C9 every compose preview marks each iris disc: > 2% of the iris ring changed by more than 40 levels",
-      all(c == 200 and sh > 0.02 for c, sh, _ in shares.values()) and [v[2] for v in shares.values()] == [1, 1, 2, 4, 8],
+# C9: the share was 2 % or more with the words of before; the address alone (2026-10-20) is laid closer on the tile (iris.py WATERMARK_STEP) and covers
+# 85 to 100 % of what they did (1.9 to 2.2 % on these five previews, against the 2.3 % of the display copy before and after), so the line is 1.5 %
+check("C9 every compose preview marks each iris disc: > 1.5% of the iris ring changed by more than 40 levels",
+      all(c == 200 and sh > 0.015 for c, sh, _ in shares.values()) and [v[2] for v in shares.values()] == [1, 1, 2, 4, 8],
       {k: (v[0], round(v[1] * 100, 2), v[2]) for k, v in shares.items()})
 print("   iris ring share changed > 40 levels:", {k: round(v[1] * 100, 2) for k, v in shares.items()})
 L._iris_mark = lambda out, layer, discs: out            # the watermark of b5d3113: the tile alone

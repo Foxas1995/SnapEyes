@@ -897,8 +897,12 @@ rot_ref = np.asarray(Image.fromarray(v_a.astype(np.uint8)).rotate(30.0, resample
 check("a disc that carries its rotation turns the overlay with the iris: in the iris's frame it is the same overlay (a view turned by 30 degrees equals the unturned one turned by 30 degrees)",
       ncc(v_rot, rot_ref) >= 0.9 and ncc(v_rot, v_a) < 0.9, (ncc(v_rot, rot_ref), ncc(v_rot, v_a)))
 v_de = overlay_view(300.0, 250.0, 140.0, text=L.WATERMARK_TEXT["de"][0])
-check("the words are the page's language's (the German overlay is another picture than the English one, the tile's first word being the same) and the canonical overlays kept are at most four",
-      ncc(v_a, v_de) < 0.97 and len(P._CANON) <= 4, (ncc(v_a, v_de), len(P._CANON)))
+v_old = overlay_view(300.0, 250.0, 140.0, text="SNAPEYES.COM  ·  VORSCHAU")
+# since 2026-10-20 the words are the site's address alone in every language (the owner: "drop PREVIEW, keep SnapEyes.com", iris.py WATERMARK_TILE): the German
+# overlay is the English one; other words still make another picture (the words of before), and the canonical overlays kept are at most four
+check("the words are the page's language's, the address alone in all four since 2026-10-20 (the German overlay is the English one, the German words of before another picture), "
+      "and the canonical overlays kept are at most four",
+      ncc(v_a, v_de) > 0.999 and ncc(v_a, v_old) < 0.97 and len(P._CANON) <= 4, (ncc(v_a, v_de), ncc(v_a, v_old), len(P._CANON)))
 # the aligned median attack: every view of one eye the page can obtain, aligned on the disc, per pixel median
 views_new, clean_views = [], []
 for s in SINGLES:

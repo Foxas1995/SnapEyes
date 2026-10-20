@@ -4395,12 +4395,41 @@ WATERMARK_ANGLE = -18
 # The Lithuanian and Hungarian pairs (api/_lib/iris_lt.py, iris_hu.py) were measured the same way: narrower than the
 # German badge on every canvas (badge pill 561 / 481 px against 592 on the 1024 px square, 374 / 311 against 391 of the
 # 469 px on the 473 px wallpaper, tile text 508 / 520 px against 542 of the 716 px step).
+# The tile is the site's address alone, the same in every language (the owner, 2026-10-20: "drop PREVIEW, keep SnapEyes.com",
+# so that a preview that travels carries the address): it was "SNAPEYES.COM  ·  PREVIEW" and its translations, 495 px against
+# the 716 px tile step at 1024, the address alone is 261 px. The badge says what the preview is.
+WATERMARK_TILE = "SnapEyes.com"
+# The tile's step along a row (share of the type scale u) and, for a short text, the room left between two words of a row. The long words
+# of before took 0.48 u of the 0.70 u step; the address alone takes 0.25 u, and at the old step it covered the iris about a third less
+# (the display copy of the site's sample restoration: 1.6 % of the iris ring changed by more than 40 levels, against 2.3 % before), so a
+# text shorter than the step less this room is laid closer (0.41 u for the address): as much of the iris covered as before (2.3 %; the
+# iris-anchored overlay's ink in the iris ring 2.9 % against 2.6 %). A text as long as the old ones keeps the 0.70 u step and its pixels.
+WATERMARK_STEP = (0.7, 0.16)
 WATERMARK_TEXT = {
-    "en": ("SNAPEYES.COM  ·  PREVIEW", "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"),
-    "de": ("SNAPEYES.COM  ·  VORSCHAU", "VORSCHAU MIT WASSERZEICHEN  ·  DATEI IN VOLLER GRÖSSE KAUFEN"),
+    "en": (WATERMARK_TILE, "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"),
+    "de": (WATERMARK_TILE, "VORSCHAU MIT WASSERZEICHEN  ·  DATEI IN VOLLER GRÖSSE KAUFEN"),
     "lt": iris_lt.WATERMARK_TEXT_LT,
     "hu": iris_hu.WATERMARK_TEXT_HU,
 }
+# The badge while this deployment takes no orders (the owner, 2026-10-20: "UNLOCK FULL SIZE" promised what the site cannot do yet).
+# api/compose.py asks the rule the page is told (GET /api/checkout open: pay.ordering_open() and store.configured()) and passes
+# soon=True; the badge of an open deployment is the one above. Narrower than the German badge above on every canvas (pill 373,
+# 518, 508 and 481 px on the 1024 px square for en, de, lt, hu against 592; 158 to 212 of the 469 px of the 473 px wallpaper).
+WATERMARK_SOON = {
+    "en": "FREE PREVIEW  ·  ORDERING OPENS SOON",
+    "de": "KOSTENLOSE VORSCHAU  ·  BESTELLUNGEN BALD MÖGLICH",
+    "lt": iris_lt.WATERMARK_SOON_LT,
+    "hu": iris_hu.WATERMARK_SOON_HU,
+}
+
+
+def watermark_badge(lang=None, soon=False):
+    """The badge's words in a page language (the requesting page's when not given): WATERMARK_SOON while ordering is closed (soon), else
+    the badge of WATERMARK_TEXT."""
+    lang = lang or page_lang()
+    if soon:
+        return WATERMARK_SOON.get(lang, WATERMARK_SOON["en"])
+    return WATERMARK_TEXT.get(lang, WATERMARK_TEXT["en"])[1]
 
 def _watermark_layer(W, H, u, text=WATERMARK_TEXT["en"][0]):
     """The rotated text tile for a W x H artwork. Defined as: draw the tile on a 2W x 2H layer, rotate it
@@ -4420,15 +4449,20 @@ def _watermark_layer(W, H, u, text=WATERMARK_TEXT["en"][0]):
     sx1 = min(2 * W, int(math.ceil(max(p[0] for p in corners))) + 4)
     sy0 = max(0, int(math.floor(min(p[1] for p in corners))) - 4)
     sy1 = min(2 * H, int(math.ceil(max(p[1] for p in corners))) + 4)
-    step_y, step_x = int(u * 0.3), int(u * 0.7)
+    step_y, step_x = int(u * 0.3), int(u * WATERMARK_STEP[0])
+    fw = _font("PlusJakartaSans.ttf", int(u * 0.036), "Bold")
+    shift = u * 0.35                             # every second row moves this far: the words of a tile are laid like bricks
+    tw = ImageDraw.Draw(Image.new("L", (1, 1))).textlength(text, font=fw)
+    if tw + u * WATERMARK_STEP[1] < step_x:      # a short text (the address alone) is laid closer: as much of the iris covered as before
+        step_x = max(1, int(round(tw + u * WATERMARK_STEP[1])))
+        shift = step_x / 2.0
     wy0 = (sy0 // step_y) * step_y               # start on a text row, so no row is cut off at the top
     layer = Image.new("RGBA", (max(1, sx1), max(1, sy1 - wy0)), (0, 0, 0, 0)); ld = ImageDraw.Draw(layer)
-    fw = _font("PlusJakartaSans.ttf", int(u * 0.036), "Bold")
     for y in range(0, H * 2, step_y):
         if y + step_y < wy0 or y > sy1:
             continue
         for x in range(0, W * 2, step_x):
-            ld.text((x + (y // step_y % 2) * u * 0.35, y - wy0), text, font=fw, fill=(255, 255, 255, 40))
+            ld.text((x + (y // step_y % 2) * shift, y - wy0), text, font=fw, fill=(255, 255, 255, 40))
     return layer.transform((W, H), Image.AFFINE, (a, b, c, d, e, f - wy0), resample=Image.BICUBIC)
 
 WATERMARK_BADGE = WATERMARK_TEXT["en"][1]   # the English badge (kept under its old name)
@@ -4465,16 +4499,18 @@ def _iris_mark(out, layer, discs):
     return Image.alpha_composite(out, Image.merge("RGBA", (white, white, white,
                                                            Image.fromarray(np.round(extra * 255.0).astype(np.uint8)))))
 
-def _watermark(out, accent, u, tile_u=None, note=None, lang=None, discs=None):
-    """The preview watermark: a faint rotated tile of SNAPEYES.COM PREVIEW over the whole artwork and a badge
+def _watermark(out, accent, u, tile_u=None, note=None, lang=None, discs=None, soon=False):
+    """The preview watermark: a faint rotated tile of the site's address over the whole artwork and a badge
     at the top centre. u is the badge scale; for the square single-eye artwork it is the side. tile_u is the
     tile's scale, u when not given. The badge's pill is cut to its measured text plus a margin, so the words
     stay inside it on every canvas (a fixed 0.28 u pill left 40 px of text outside each end at 1024).
     note: one short line under the badge, for a style that draws no caption (Studio Black), so a saved preview of
     the AI-generated sample eye still says so in its pixels. lang: the words' language (WATERMARK_TEXT), the
     requesting page's (page_lang) when not given; English draws exactly the pixels it always did.
-    discs: the artwork's iris discs (cx, cy, r); the tile is drawn WATERMARK_IRIS times as strong on them (_iris_mark)."""
-    tile, badge = WATERMARK_TEXT.get(lang or page_lang(), WATERMARK_TEXT["en"])
+    discs: the artwork's iris discs (cx, cy, r); the tile is drawn WATERMARK_IRIS times as strong on them (_iris_mark).
+    soon: ordering is closed, so the badge says so (watermark_badge)."""
+    tile = WATERMARK_TEXT.get(lang or page_lang(), WATERMARK_TEXT["en"])[0]
+    badge = watermark_badge(lang, soon)
     W, H = out.size
     layer = _watermark_layer(W, H, tile_u or u, tile)
     out = Image.alpha_composite(out.convert("RGBA"), layer)

@@ -1,4 +1,4 @@
-"""The Lithuanian words of api/_lib/iris.py: WATERMARK_TEXT["lt"] = (tile, badge) and the five customer sentences of run()
+"""The Lithuanian words of api/_lib/iris.py: WATERMARK_TEXT["lt"] = (tile, badge), WATERMARK_SOON["lt"] and the five customer sentences of run()
 (RUN_ERRORS["lt"]). page_lang() keeps "lt" for a request whose body says "lang": "lt".
 
 Tile: "PERŽIŪRA" is the site's word for the preview. Badge: "PERŽIŪRA SU VANDENS ŽENKLU" (watermarked preview) and a
@@ -20,7 +20,12 @@ spare on the wallpaper, German 78 px), and the tile rows keep their gap (at most
 shorter call to action that also fits everywhere: "UŽSAKYKITE VISĄ DYDĮ".
 """
 
-WATERMARK_TEXT_LT = ("SNAPEYES.COM  ·  PERŽIŪRA", "PERŽIŪRA SU VANDENS ŽENKLU  ·  UŽSAKYKITE VISO DYDŽIO FAILĄ")
+# The tile is the site's address alone in every language since 2026-10-20 (iris.py WATERMARK_TILE); it was "SNAPEYES.COM  ·  PERŽIŪRA".
+WATERMARK_TEXT_LT = ("SnapEyes.com", "PERŽIŪRA SU VANDENS ŽENKLU  ·  UŽSAKYKITE VISO DYDŽIO FAILĄ")
+# The badge while ordering is closed (iris.py WATERMARK_SOON): "free preview", then the site's own words for "we will start taking
+# orders soon" (src/try/copy.lt.ts price.notice says "Užsakymus pradėsime priimti netrukus"). Pill 508 px on the 1024 px square, 212
+# of 469 px on the wallpaper: narrower than the German badge everywhere. Written without a native reader: for the owner to read.
+WATERMARK_SOON_LT = "NEMOKAMA PERŽIŪRA  ·  UŽSAKYMUS PRIIMSIME NETRUKUS"
 
 # The customer sentences of run(), which answer in the page's language once the body is parsed (iris.py RUN_ERRORS): the
 # Lithuanian twin of each German/English pair, keyed by the exception it answers.

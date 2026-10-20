@@ -158,16 +158,19 @@ SEALED = prot["sealed"]
 shown = {lang: post("/api/enhance", {"redisplay": True, "sealed": SEALED, "lang": lang, "pad": 1.12}) for lang in LANGS}
 check("a sealed preview is drawn again in each of the four languages: 200, ok, the plain display copy (shown plain), and the reply names the language it was drawn in",
       all(c == 200 and r.get("ok") is True and r.get("shown") == "plain" and r.get("lang") == l and isinstance(r.get("image"), str) for l, (c, r) in shown.items()), {l: (c, r.get("shown"), r.get("lang")) for l, (c, r) in shown.items()})
-check("every copy is a display copy (the mark of preview.is_display_b64) and the four are four different pictures: the words of the watermark are in the pixels",
-      all(P.is_display_b64(r["image"]) for _, r in shown.values()) and len({r["image"] for _, r in shown.values()}) == 4, {l: len(r["image"]) for l, (_, r) in shown.items()})
+# since 2026-10-20 the words on the iris are the site's address alone, the same in every language (the owner: "drop PREVIEW, keep SnapEyes.com", iris.py
+# WATERMARK_TILE): the four copies are one picture now, and the redraw still answers each language with exactly what display_b64 makes in it (the check below)
+check("every copy is a display copy (the mark of preview.is_display_b64), and the four carry the same words in the pixels (SnapEyes.com in every language since 2026-10-20)",
+      all(P.is_display_b64(r["image"]) for _, r in shown.values()) and len({r["image"] for _, r in shown.values()}) == 1
+      and len({L.WATERMARK_TEXT[l][0] for l in LANGS}) == 1, {l: len(r["image"]) for l, (_, r) in shown.items()})
 check("each copy is byte for byte what preview.display_b64 makes of the sealed clean picture in that language (the first one, English, is also the one /api/enhance made in English)",
       all(r["image"] == P.display_b64(clean_im, l, 1.12) for l, (_, r) in shown.items()) and shown["en"][1]["image"] == prot["image"], [l for l, (_, r) in shown.items() if r["image"] != P.display_b64(clean_im, l, 1.12)])
 rv = {l: post("/api/enhance", {"redisplay": True, "sealed": SEALED, "lang": l, "pad": 1.12, "crop": base64.b64encode(CROP_RAW).decode()}) for l in ("en", "de")}
 crop_im = Image.open(io.BytesIO(CROP_RAW)).convert("RGB")
 want_rv = {l: REV.reveal_for(L.mask_disk(crop_im.crop((0, 0, min(crop_im.size), min(crop_im.size))), 1.12), clean_im, lang=l, pad=1.12) for l in ("en", "de")}
 if all(want_rv[l]["image"] is not None for l in want_rv):
-    check("with the deglared crop the Reveal's copy comes back (shown reveal: eyelid hidden, pupil crushed), byte for byte what the Reveal makes in that language, and the two languages differ",
-          all(c == 200 and r.get("shown") == "reveal" and r["image"] == REV.display_b64(want_rv[l]["image"]) for l, (c, r) in rv.items()) and rv["en"][1]["image"] != rv["de"][1]["image"]
+    check("with the deglared crop the Reveal's copy comes back (shown reveal: eyelid hidden, pupil crushed), byte for byte what the Reveal makes in that language (the same words in both since 2026-10-20)",
+          all(c == 200 and r.get("shown") == "reveal" and r["image"] == REV.display_b64(want_rv[l]["image"]) for l, (c, r) in rv.items()) and rv["en"][1]["image"] == rv["de"][1]["image"]
           and rv["en"][1]["image"] != shown["en"][1]["image"], {l: (c, r.get("shown")) for l, (c, r) in rv.items()})
 else:
     check("with the deglared crop the Reveal is measured on this pair or the reply says plain (never a Reveal claim it did not make)", all(r.get("shown") == "plain" for _, r in rv.values()), {l: (c, r.get("shown")) for l, (c, r) in rv.items()})
@@ -197,6 +200,39 @@ c_s, r_s = post("/api/enhance", {"sample": True, "image": base64.b64encode(CLEAN
 check("the other two routes are as they were: a restoration without a ticket is still a 403, and the sample route still answers the shipped sample (its display copy in the request's language)",
       c_t == 403 and c_s == 200 and r_s.get("sample") is True and P.is_display_b64(r_s["image"]) and r_s["image"] == P.display_b64(clean_im, "de", 1.12), (c_t, c_s, r_s.get("ok")))
 check("still no model call", not MODEL_CALLS, MODEL_CALLS)
+
+# ============================================================================================ 4. the words of the watermark (the owner's insight 4, 2026-10-20)
+section("4. the address on the iris, and a badge that promises nothing while ordering is closed")
+OLD_EN_TILE = "SNAPEYES.COM  ·  PREVIEW"
+check("the words on the iris are the site's address alone, the same in all four languages: no PREVIEW, VORSCHAU, PERŽIŪRA or ELŐNÉZET",
+      all(L.WATERMARK_TEXT[l][0] == "SnapEyes.com" for l in LANGS), {l: L.WATERMARK_TEXT[l][0] for l in LANGS})
+check("the badge while ordering is closed (soon) says the preview is free and that ordering opens soon, in each language, and offers nothing to unlock or buy",
+      all(L.watermark_badge(l, soon=True) == L.WATERMARK_SOON[l] for l in LANGS)
+      and all(w in L.WATERMARK_SOON[l] for l, w in (("en", "FREE"), ("de", "KOSTENLOSE"), ("lt", "NEMOKAMA"), ("hu", "INGYENES")))
+      and not any(re.search("UNLOCK|KAUFEN|UŽSAKYKITE|RENDELD", L.WATERMARK_SOON[l]) for l in LANGS), L.WATERMARK_SOON)
+check("with ordering open the badge is the one of before in every language (its call to order the full size)",
+      all(L.watermark_badge(l, soon=False) == L.WATERMARK_TEXT[l][1] for l in LANGS) and L.watermark_badge("en") == "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE")
+from PIL import ImageDraw  # noqa: E402
+import numpy as np  # noqa: E402
+wide = {}
+for W_, H_ in ((1024, 1024), (473, 1024)):
+    u_ = min(W_, H_)
+    d_ = ImageDraw.Draw(Image.new("RGB", (W_, H_)))
+    f_ = L._font("PlusJakartaSans.ttf", int(u_ * 0.016), "Bold")
+    wide[(W_, H_)] = (max(d_.textlength(L.WATERMARK_SOON[l], font=f_) for l in LANGS), d_.textlength(L.WATERMARK_TEXT["de"][1], font=f_))
+check("every closed badge is narrower than the German badge of an open deployment (the widest, measured to fit) on the 1024 px square and the 473 px wallpaper",
+      all(a < b and a + 2 * 0.022 * min(W_, H_) < W_ - 4 for (W_, H_), (a, b) in wide.items()), wide)
+canvas = Image.new("RGB", (1024, 1024), (8, 8, 8))
+canvas.paste(clean_im.resize((900, 900)), (62, 62))
+disc = [(512.0, 512.0, 900 * L.iris_radius_frac(1.12))]
+w_soon = np.asarray(P.watermark(canvas, (245, 197, 66), disc, lang="lt", soon=True), np.int16)
+w_open = np.asarray(P.watermark(canvas, (245, 197, 66), disc, lang="lt", soon=False), np.int16)
+band = int(0.11 * 1024)
+check("a picture's closed and open watermarks differ only in the badge band at the top (the words on the iris and everything else are the same pixels)",
+      int((np.abs(w_soon - w_open)[:band] > 40).sum()) > 200 and int(np.abs(w_soon - w_open)[band:].max()) == 0)
+ink = {t: round(float((np.asarray(L._watermark_layer(800, 800, 800.0, t).getchannel("A")) > 10).mean()), 4) for t in (OLD_EN_TILE, "SnapEyes.com")}
+check("the address alone is laid closer on the tile (iris.WATERMARK_STEP), so it covers about as much as the long words did (at least 80 % of their ink)",
+      ink["SnapEyes.com"] >= 0.8 * ink[OLD_EN_TILE], ink)
 
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed")

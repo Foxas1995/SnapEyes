@@ -20,7 +20,11 @@ The style titles on the artwork ("THE UNIVERSE WITHIN", ...) and the signature l
 are the brand's; no Hungarian version is proposed.
 """
 
-WATERMARK_TEXT_HU = ("SNAPEYES.COM  ·  ELŐNÉZET", "VÍZJELES ELŐNÉZET  ·  RENDELD MEG TELJES MÉRETBEN")
+# The tile is the site's address alone in every language since 2026-10-20 (iris.py WATERMARK_TILE); it was "SNAPEYES.COM  ·  ELŐNÉZET".
+WATERMARK_TEXT_HU = ("SnapEyes.com", "VÍZJELES ELŐNÉZET  ·  RENDELD MEG TELJES MÉRETBEN")
+# The badge while ordering is closed (iris.py WATERMARK_SOON): "free preview", then the words of src/try/copy.hu.ts price.notice ("A
+# rendelés hamarosan indul"). Pill 481 px on the 1024 px square, 196 of 469 px on the wallpaper. Written without a native reader.
+WATERMARK_SOON_HU = "INGYENES ELŐNÉZET  ·  A RENDELÉS HAMAROSAN INDUL"
 
 ERRORS_HU = {
     # PermissionError that is an UnlockError: a download link that expired or belongs to another order

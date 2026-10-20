@@ -176,7 +176,8 @@ for key in RC.CASES:
     for lang, want in GOLD[key]["arcs"].items():
         if sha(R.display_copy(RES[key]["prep"], lang, "arcs")) != want:
             bad.append((key, lang))
-check("the arcs display copy (OFF, but kept) equals the scratch's byte for byte, in English and Lithuanian", not bad, bad)
+check("the arcs display copy (OFF, but kept) equals the recorded one byte for byte, in English and Lithuanian (the scratch's until 2026-10-20, then re-recorded for the words "
+      "of the watermark, the site's address alone: data/reveal_goldens.json about)", not bad, bad)
 bad = [k for k in RC.CASES if abs(RES[k]["p"]["_info"]["reg"]["spread_r"] - GOLD[k]["registration"]["spread_r"]) > 1e-6
        or abs(RES[k]["p"]["_info"]["reg"]["ncc"] - GOLD[k]["registration"]["ncc"]) > 1e-4]
 check("the registration spread and correlation of every case equal the scratch's", not bad, bad)

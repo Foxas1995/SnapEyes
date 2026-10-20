@@ -353,10 +353,11 @@ def _paint(region, A, shade):
     return out * (np.float32(1.0) - A[..., None]) + np.float32(255.0) * A[..., None]
 
 
-def _badge(out, accent, u, lang=None, note=None):
+def _badge(out, accent, u, lang=None, note=None, soon=False):
     """The badge at the top centre (and the optional note under it), drawn as iris._watermark draws it, on the picture itself: a pill cut to its
-    measured text and filled opaque first, so drawing it a second time over itself gives the same pixels."""
-    badge = L.WATERMARK_TEXT.get(lang or L.page_lang(), L.WATERMARK_TEXT["en"])[1]
+    measured text and filled opaque first, so drawing it a second time over itself gives the same pixels. soon: ordering is closed
+    (iris.watermark_badge)."""
+    badge = L.watermark_badge(lang, soon)
     W, H = out.size
     d = ImageDraw.Draw(out)
     fp = L._font("PlusJakartaSans.ttf", int(u * 0.016), "Bold")
@@ -371,20 +372,21 @@ def _badge(out, accent, u, lang=None, note=None):
     return out
 
 
-def watermark(img, accent, discs, lang=None, note=None, n_eyes=None):
+def watermark(img, accent, discs, lang=None, note=None, n_eyes=None, soon=False):
     """The free preview of a picture of the v3 engine: img (PIL RGB, the clean render) with the preview watermark, as a new image. Everything
     outside the discs is exactly iris._watermark's (the faint tile of words over the whole canvas, anchored to the canvas, and the badge); on each
     disc (cx, cy, r[, rot]: the visible iris disc in canvas pixels, pixel centres at +0.5) the canvas tile is replaced by the iris-anchored
     overlay at the strength of the display copy (see the module text). An engine never draws any of it: the paid file has none.
     n_eyes: how many irises the picture holds. When fewer discs than that can be marked (an engine that reported none, or one too few: a bug of
     that engine, never a customer's doing), the whole canvas gets the overlay at the iris strength instead of the faint canvas tile alone: a
-    picture of an iris is never left with the legacy mark. None: no check (the legacy callers and the tests of the tile itself)."""
+    picture of an iris is never left with the legacy mark. None: no check (the legacy callers and the tests of the tile itself).
+    soon: this deployment takes no orders yet, so the badge says so instead of offering the full size (iris.watermark_badge)."""
     W, H = img.size
     u = min(W, H)
     live = [d for d in (discs or ()) if len(d) >= 3]
     wins = _windows(W, H, live)                     # the discs the overlay can mark (a disc of a few pixels or one that is not a number is not one)
     dia = max((2.0 * w[2] for w in wins), default=float(u))
-    base = L._watermark(img, accent, u, tile_u=min(float(u), L.WM_DISC * dia), note=note, lang=lang)
+    base = L._watermark(img, accent, u, tile_u=min(float(u), L.WM_DISC * dia), note=note, lang=lang, soon=soon)
     mask = "disc"
     if n_eyes is not None and len(wins) < int(n_eyes):
         print(f"snapeyes watermark: {len(wins)} markable discs for {int(n_eyes)} eyes, the whole canvas is marked", flush=True)
@@ -401,7 +403,7 @@ def watermark(img, accent, discs, lang=None, note=None, n_eyes=None):
     m = M[..., None]
     region = np.where(m > 0, np.round(cur * (np.float32(1.0) - m) + painted * m), cur)
     base.paste(Image.fromarray(np.clip(region, 0, 255).astype(np.uint8)), (box[0], box[1]))
-    return _badge(base, accent, u, lang, note)
+    return _badge(base, accent, u, lang, note, soon)
 
 
 # ----------------------------------------------------------------------------- the display copy

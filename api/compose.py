@@ -356,6 +356,30 @@ def _opts(v):
     return out
 
 
+ORDERING_READ_S = 60.0       # how long one instance keeps its reading of whether ordering is open (the badge of a free preview)
+_ORDERING = {"t": -1e9, "open": False}
+_ORDERING_LOCK = threading.Lock()
+
+
+def _ordering_soon():
+    """True while this deployment takes no orders, by the rule the page is told (GET /api/checkout "open": pay.ordering_open() and
+    store.configured()): the badge of a free preview then says that ordering opens soon instead of offering the full size (the owner,
+    2026-10-20; iris.watermark_badge). Read at most once a minute per instance (pay may read the legal pack over the network once its
+    key is live); a failure to read counts as closed, so the badge never promises what may not be there."""
+    now = time.time()
+    with _ORDERING_LOCK:
+        if now - _ORDERING["t"] < ORDERING_READ_S:
+            return not _ORDERING["open"]
+    try:
+        from _lib import pay                                   # here, not with the imports: only a preview's badge needs it (about 0.1 s once)
+        is_open = bool(pay.ordering_open() and store.configured())
+    except Exception:  # noqa: closed is the honest answer when it cannot be read
+        is_open = False
+    with _ORDERING_LOCK:
+        _ORDERING.update(t=now, open=is_open)
+    return not is_open
+
+
 def _request(body):
     """The cheap, checked part of a request: what was asked for, no pixel touched. Every refusal here is a ClientError (400) or a refusal of the
     batch's size (422)."""
@@ -717,7 +741,7 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
         # The same answer as the master's first plate fault (steps.py plate_retry); the log line names the plate for the owner (the error event carries the style)
         print("snapeyes plate unavailable:", style, getattr(e, "plate_id", ""), getattr(e, "why", ""), flush=True)
         raise _refuse(503, "plate_retry", "plate_retry", True, SP.PLATE_RETRY_S, style=style) from None
-    img = pv.img if clean else ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n)
+    img = pv.img if clean else ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n, soon=_ordering_soon())
     qa = _qa_of(pv)
     design, fallback = _drawn(pv, plan)
     canvas = pv.fmt or canvas or eng["canvases"][0]
@@ -842,7 +866,7 @@ def _batch(req, styles, n, body, opened, cat, admin, t0):
                             continue
                         t_w = time.time()
                         pv = pvs[s]
-                        made[s] = {"img": ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n), "spec": specs[s], "plan": _plan(s, specs[s], specs[s]["profiles"]),
+                        made[s] = {"img": ST.watermarked(pv, req["lang"], note=req["title"] or None, n_eyes=n, soon=_ordering_soon()), "spec": specs[s], "plan": _plan(s, specs[s], specs[s]["profiles"]),
                                    "layout": specs[s]["layout"], "canvas": pv.fmt or specs[s]["canvas"] or catalogue.engine_for(s, n)["canvases"][0], "pv": pv, "eyes": eyes}
                         timing[s] = int(((pv.times or {}).get("total", 0.0) + (time.time() - t_w)) * 1000)      # the design's own render and its watermark
                 if legacy:
