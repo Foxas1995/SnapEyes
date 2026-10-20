@@ -1,10 +1,11 @@
 // The payments API client (api/order.py, api/checkout.py, api/health.py), shared by the buy card on /try and the
 // /order page. A call never throws for an HTTP answer: it resolves to an ApiReply, so the callers branch on the status
 // and the server's reason code (the work notes' API.md lists them all). Nothing here talks to a third party or writes
-// to the browser.
+// to the browser, except that a request to /api/checkout or /api/compose carries the campaign code (src/shared/counter.ts).
 
 import type { PriceList } from '../shared/markets';
 import type { Lang } from '../shared/lang';
+import { withCamp } from '../shared/counter';
 
 export interface ApiReply<T> {
   ok: boolean;          // HTTP 2xx and the body did not say ok: false
@@ -28,7 +29,7 @@ export async function callApi<T>(path: string, opts: { body?: Record<string, unk
     const r = await fetch(path, {
       method: post ? 'POST' : 'GET',
       headers: post ? { 'Content-Type': 'application/json', Accept: 'application/json' } : { Accept: 'application/json' },
-      body: post ? JSON.stringify(opts.body) : undefined,
+      body: post ? JSON.stringify(/^[/]api[/](checkout|compose)([?]|$)/.test(path) ? withCamp(opts.body as Record<string, unknown>) : opts.body) : undefined,
       cache: 'no-store',
       credentials: 'same-origin',
       signal: ctrl?.signal,

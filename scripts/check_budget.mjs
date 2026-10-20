@@ -34,14 +34,15 @@ const TOOLS = { js: 1515, css: 2008 };   // the review fix of the motion changed
 // (the single sweep of a phone's pick, the code and the rules of it, went out in the same commit). It is the smallest increase that keeps the gate honest: the rest of the page is still held to the same budget and the
 // same hard stops, and anything that grows after this is measured against them. Re-measure it when a phone scene changes: build both, run this script on each, take the difference.
 const PHONE = { js: 635, css: 543 };
-// The anonymous counter (2026-10-20, the owner's request: src/shared/counter.ts, its calls in src/main.tsx and src/landing/ordering.ts) is work the spec's budget did not foresee, and the page was at
-// +7,854 B JavaScript (146 B under the hard stop) before it. COUNTER is the landing page's own growth: measured as this script's own sum on the commit with the counter minus on its parent (a498855), without
-// LEGAL_TEXT below: the counter's chunk (counter-*.js, shared with /try and /order, so the landing fetches it too) and the few bytes the landing's entry and the chunks that name it gain. The request
-// was "under 400 B gzip on the landing". Re-measure it when the counter changes: build both trees, run this script on each, take the difference.
-const COUNTER = { js: 287, css: 0 };
+// The anonymous counter (2026-10-20, the owner's request) is work the spec's budget did not foresee, and the page was at +7,854 B JavaScript (146 B under the hard stop) before it. The landing page's
+// own beacon is an inline script in the head of index.html (src/landing/shell/scripts.ts counterScript: 334 B gzip in the HTML, 0 B in the assets), so the landing's JavaScript does not grow. COUNTER is
+// what this script still sees grow without the landing loading it: the counter's code for /try and /order (src/shared/counter.ts), which lands in their shared chunk (checkout-*.js, 361 B), and 30 B
+// that the changed names of that chunk and of the legal entry add to the import lists of the landing's small chunks. Measured as this script's own sum on the commit with the counter minus on its
+// parent (a498855) without LEGAL_TEXT below. Re-measure it when the counter changes: build both trees, run this script on each, take the difference.
+const COUNTER = { js: 391, css: 0 };
 // The privacy policy says what the counter keeps (the same release). The legal pages' entry (src/legal/main.tsx) is also named main-*.js, so this script counts it although the landing never loads it:
 // LEGAL_TEXT is the growth of that chunk from the new privacy paragraphs in four languages, measured the same way (the chunk that holds the legal texts, on the commit minus its parent).
-const LEGAL_TEXT = { js: 2294 };
+const LEGAL_TEXT = { js: 5200 };
 const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };

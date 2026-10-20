@@ -117,6 +117,7 @@ from . import iris as L
 from . import catalogue
 from . import store
 from . import abtest
+from . import counter
 from . import words as W
 from .markets import MARKETS, DEFAULT_MARKET
 from . import pay_lt, pay_hu
@@ -1118,12 +1119,14 @@ def _raise_for(r, label):
     raise PayError(msg)
 
 
-def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None):
+def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp=""):
     """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
     methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
     exp: the price experiment and variant the amount was priced under (abtest.assignment), written to the metadata.
     plan: the plan the checkout froze for the order (api/_lib/styles/steps.py make_plan): its plates version, engine version and plan8 are written to the
     metadata (pv, ev, plan8), so that a paid record can be compared with the plan stored in order.json (record_paid, steps.create_plan).
+    camp: the campaign code of the advertisement the customer came from ("src|med|cmp|trm|cnt", api/_lib/counter.py pack), written to the metadata as `src` so that the order and its revenue are tied
+    to a source; nothing else of the visit, and nothing when there is none.
     Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
     market = spec.get("market") or DEFAULT_MARKET
@@ -1158,6 +1161,8 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     if isinstance(plan, dict):
         meta.update(pv=str(plan.get("pv")), ev=str(plan.get("engine_v")), plan8=str(plan.get("plan8") or ""))
     meta.update(abtest.metadata(exp, market))
+    if camp:
+        meta["src"] = camp
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
             params.append((f"metadata[{name}]", v))
@@ -1365,8 +1370,11 @@ def note_checkout(stage, spec, rec, sess=None, gate=None):
         co = rec.get("checkout") if isinstance(rec, dict) else None
         if gate is None and isinstance(co, dict) and sess is not None and co.get("session_id") == sess.get("id"):
             gate = co.get("gate")
+        camp = counter.parse(co.get("camp")) if isinstance(co, dict) else None
+        if camp is None and isinstance(sess, dict) and isinstance(sess.get("metadata"), dict):
+            camp = counter.parse(sess["metadata"].get("src"))      # the payment arrives without the request that made the session: its campaign is in the order record and in the metadata
         events.record("checkout", stage=stage, style=spec.get("style"), eyes=spec.get("eyes"), gate=gate if isinstance(gate, str) else "unknown",
-                      lang=spec.get("lang"), market=spec.get("market"), _wait=0.6)
+                      lang=spec.get("lang"), market=spec.get("market"), _wait=0.6, **(camp or {}))
     except Exception:  # noqa: a count must never cost a payment
         pass
 
@@ -1404,6 +1412,9 @@ def record_paid(order, rec, sess, source, event_id=None):
             "email": email.strip() if email else None, "paid_at": now, "paid_iso": iso(now),
             "source": source, "event_id": event_id if isinstance(event_id, str) else None, "spec": spec,
             "consent": consent_record(meta, rec, sess, spec["lang"])}
+    camp = counter.parse(meta.get("src")) or counter.parse(((rec.get("checkout") or {}) if isinstance(rec, dict) else {}).get("camp"))
+    if camp:
+        paid["camp"] = counter.pack(camp)          # the campaign code of the advertisement the customer came from (the metadata the server wrote, else the order record's)
     # the plan the checkout froze for this session (WP12): its identity and the engine it was made under, as the session's metadata says them (the server
     # wrote them; the client cannot change them). steps.create_plan uses the plan stored in order.json only when its plan8 is this one
     p8 = meta.get("plan8")

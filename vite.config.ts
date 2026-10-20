@@ -118,7 +118,7 @@ function assetCheck(): Plugin {
 //   * the title, description and share texts come from the English copy (src/landing/copy/en.json meta), as they do at run time.
 // Loaded through Vite's module runner, like the other build steps, so this file imports no app code itself.
 function heroShell(): Plugin {
-  type Parts = { html: string; templates: Record<string, string>; preload: string; decision: string; swap: string; prefetch: string; bar: string; menu: string; meta: { title: string; description: string; shareDescription: string } }
+  type Parts = { html: string; templates: Record<string, string>; preload: string; decision: string; swap: string; prefetch: string; counter: string; bar: string; menu: string; meta: { title: string; description: string; shareDescription: string } }
   let built: Promise<Parts> | null = null
   const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
   async function make(): Promise<Parts> {
@@ -144,6 +144,7 @@ function heroShell(): Plugin {
       // the markets whose edition has fewer languages than the site (the Australian one): the swap keeps only their language buttons
       swap: scripts.swapScript(market, Object.fromEntries(all.filter((m) => lang.marketLangs(m).length < lang.LANGS.length).map((m) => [m, lang.marketLangs(m)]))),
       prefetch: scripts.prefetchScript,
+      counter: scripts.counterScript,
       bar: scripts.barScript,
       menu: scripts.menuScript,
       meta: out.meta,
@@ -173,7 +174,7 @@ function heroShell(): Plugin {
         .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
         .replace(/(<meta name="twitter:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.title)}${b}`)
         .replace(/(<meta name="twitter:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
-        .replace('<!-- lp:head -->', () => `<script>${p.decision}</script>\n    <script>${p.prefetch}</script>\n    ${p.preload}`)
+        .replace('<!-- lp:head -->', () => `<script>${p.decision}</script>\n    <script>${p.prefetch}</script>\n    <script>${p.counter}</script>\n    ${p.preload}`)
         .replace('<!-- lp:shell -->', () => {
           const templates = Object.entries(p.templates).map(([l, h]) => `<template id="tpl-${l}">${h}</template>`).join('\n    ')
           return `<div id="shell" class="lp-shell">${p.html}</div>\n    ${templates}\n    <script>${p.swap}</script>\n    <script>${p.bar}</script>\n    <script>${p.menu}</script>`

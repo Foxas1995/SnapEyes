@@ -1196,7 +1196,7 @@ E._SEEN["all"] = [time.time()] * E.RATE["all"][0]               # the per-instan
 allowed = (E._allow("compose", time.time(), None), E._allow("checkout", time.time(), "start"), E._allow("checkout", time.time(), "paid"))
 E._SEEN["all"] = []
 check("a paid checkout event follows a real payment and is not lost to a flood of other events (the ceiling holds back the rest)", allowed == (False, False, True), allowed)
-check("the checkout kind is whitelisted: stage, style, eyes, gate, lang and market only, no order id and no amount", set(E.FIELDS["checkout"]) == {"stage", "style", "eyes", "gate", "lang", "market"}
+check("the checkout kind is whitelisted: stage, style, eyes, gate, lang and market, and the campaign codes and classes of the request (E.ATTR), no order id and no amount", set(E.FIELDS["checkout"]) == {"stage", "style", "eyes", "gate", "lang", "market"} | set(E.ATTR)
       and E.CHECKOUT_STAGES == ("start", "paid") and "order" not in E.FIELDS["checkout"] and "amount" not in E.FIELDS["checkout"])
 check("the new tables merge across days (numbers add) and an old day without them merges as before",
       E.merge(a9, a9)["checkout_funnel"]["solo.gold|1|start|ok"] == 12 and E.merge(a8, {"events": 1})["compose_chosen_cls"] == a8["compose_chosen_cls"])

@@ -1,6 +1,5 @@
 import { createContext, useContext, useSyncExternalStore } from 'react';
 import { noteCheckoutInfo, noteInfoUnavailable } from '../shared/pricing';
-import { note as noteCounter } from '../shared/counter';
 import { NOTHING_FOR_SALE, fallbackCatalogue, ordersOpen, readCatalogue, saleCatalogue, type RunCatalogue } from '../shared/catalogue';
 
 // Whether this deployment takes orders, by the capture tool's own rule (src/try/TryApp.tsx): /api/health says Stripe
@@ -82,7 +81,6 @@ export function createOrdering(ask: Ask, settled = false): Ordering {
   async function check(): Promise<{ open: boolean; suggest: string | null; catalogue: RunCatalogue | null }> {
     const none = { open: false, suggest: null, catalogue: null };
     const h = await getJson('/api/health', false);
-    if (h) noteCounter(h.counter);       // the anonymous counter sends its beacons only when the server says it counts (src/shared/counter.ts)
     if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) { noteInfoUnavailable(); return none; }
     const plain = await getJson('/api/checkout', true);
     if (!plain) { noteInfoUnavailable(); return none; }

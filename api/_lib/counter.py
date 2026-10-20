@@ -29,9 +29,11 @@ import os
 import re
 import threading
 import time
+from urllib.parse import unquote_plus
 
 CODE = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,39}$")
 _ADDRESS = re.compile(r"^[0-9]{1,3}(\.[0-9]{1,3}){3}$")        # a dotted number that is an IPv4 address is no campaign code (events.py holds the same rule for every code it stores)
+_UTM = {"utm_source": "src", "utm_medium": "med", "utm_campaign": "cmp", "utm_term": "trm", "utm_content": "cnt"}
 PARTS = ("src", "med", "cmp", "trm", "cnt")        # utm_source, utm_medium, utm_campaign, utm_term (the ad set), utm_content (the advertisement)
 LANGS = ("en", "de", "lt", "hu")
 MARKETS = ("eu", "lt", "hu", "au")                  # api/_lib/markets.py keys; a copy so that this file imports nothing (a test holds the two equal)
@@ -46,7 +48,7 @@ CLIENTS_KEPT = 2000         # the in-memory rate table is cut back above this
 _BOT = re.compile(
     r"bot\b|crawl|spider|slurp|facebookexternalhit|facebookcatalog|meta-externalagent|meta-externalfetcher|headless|lighthouse|pagespeed|gtmetrix|pingdom|"
     r"uptime|monitor|python|curl/|wget|java/|okhttp|go-http|axios|libwww|httpclient|node-fetch|postman|scanner|preview|phantom|puppeteer|playwright|selenium|"
-    r"semrush|ahrefs|mj12|dataprovider|bytespider|petalbot|embedly|vkshare|skypeuripreview", re.I)
+    r"semrush|ahrefs|mj12|dataprovider|bytespider|petalbot|embedly|vkshare|skypeuripreview|snapeyes-self-call", re.I)      # the last one: the server's own relay calls (api/_lib/maker.py)
 _IOS = re.compile(r"iPhone|iPad|iPod")
 _DESKTOP = re.compile(r"Windows|Macintosh|X11|Linux|CrOS")
 
@@ -115,19 +117,31 @@ def _one(value, allowed):
 
 # ----------------------------------------------------------------------------- the campaign code
 def parse(value):
-    """The campaign code a page sent ("src|med|cmp|trm|cnt", each part a short code or empty) as {src, med, cmp, trm, cnt} with only the parts that are valid codes, or
-    None when there is no source. A part that is not a code of letters, digits and _ . - (at most 40 characters, starting with a letter or a digit) is dropped on its own,
-    so a stranger's text can never reach an event; the source decides whether anything is kept at all."""
-    if not isinstance(value, str) or len(value) > 260:
+    """The campaign code a page sent as {src, med, cmp, trm, cnt} with only the parts that are valid codes, or None when there is no source. Two forms are read. The wire form is what the pages
+    carry (src/shared/counter.ts capture): the utm_ parameters of the address as they stand, "utm_source=fb&utm_medium=paid&utm_campaign=se-p0-test&utm_term=lt-a1-eye&utm_content=a1-lt-s1"
+    (percent-encoded as in the link), or "ref=facebook" (the kind of page the visitor came from: facebook, instagram, tiktok, google, direct, other) when the link named no campaign. The
+    stored form is pack()'s "src|med|cmp|trm|cnt" (the order record, Stripe's metadata). A part that is not a short code of letters, digits and _ . - (at most 40 characters, starting with a
+    letter or a digit, not an IPv4 address) is dropped on its own, so a stranger's text can never reach an event; the source decides whether anything is kept at all."""
+    if not isinstance(value, str) or not value or len(value) > 500:
         return None
-    parts = value.split("|")
-    if len(parts) > len(PARTS):
-        parts = parts[:len(PARTS)]
     out = {}
-    for name, p in zip(PARTS, parts):
-        p = p.strip().lower()
-        if is_code(p):
-            out[name] = p
+    if "=" in value:
+        ref = None
+        for pair in value.split("&")[:12]:
+            k, _, v = pair.partition("=")
+            v = unquote_plus(v)[:80].strip().lower()
+            if k == "ref":
+                ref = v if v in REFERRERS else None
+            elif k in _UTM and is_code(v):
+                out.setdefault(_UTM[k], v)
+        if not out.get("src") and ref:
+            out = {"src": ref}
+    else:
+        parts = value.split("|")
+        for name, p in zip(PARTS, parts[:len(PARTS)]):
+            p = p.strip().lower()
+            if is_code(p):
+                out[name] = p
     return out if out.get("src") else None
 
 

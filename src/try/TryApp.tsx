@@ -30,7 +30,7 @@ import {
 import { callApi, type CheckoutInfo } from '../order/api';
 import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavailable, notePreview } from '../shared/pricing';
 import { priceChangedNote } from './priceNote';
-import { count, note as noteCounter } from '../shared/counter';
+import { count, note as noteCounter, withCamp } from '../shared/counter';
 import { readCatalogue } from '../shared/catalogue';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
@@ -140,7 +140,7 @@ async function post<R>(path: string, body: Record<string, unknown>, answerNotOk 
     r = await fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ lang: T.lang, ...body }),
+      body: JSON.stringify(withCamp({ lang: T.lang, market: currentMarket(), ...body })),
     });
     // Vercel answers a timeout or an oversized body with text/plain, so read text first and never let
     // JSON.parse throw the real status away

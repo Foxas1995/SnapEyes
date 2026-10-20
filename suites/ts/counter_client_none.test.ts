@@ -8,12 +8,16 @@ const tick = () => new Promise<void>((r) => setTimeout(r, 15));
 export async function run(): Promise<Row[]> {
   const out: Row[] = [];
   const check = (name: string, ok: boolean, detail = '') => out.push([name, ok, detail]);
+  const g = globalThis as unknown as Record<string, unknown>;
+  g.location = { search: '?utm_source=fb&utm_medium=paid&utm_campaign=se-p0-test&utm_term=lt-a1-eye&utm_content=a1-lt-s1' };      // the page the tab was opened on
+  g.document = { referrer: '' };
+  g.sessionStorage = { getItem: () => null, setItem: () => undefined };
   const sent: string[] = [];
   const nav = globalThis.navigator as unknown as Record<string, unknown>;
   const had = Object.getOwnPropertyDescriptor(nav, 'sendBeacon');
   Object.defineProperty(nav, 'sendBeacon', { configurable: true, value: (url: string) => { sent.push(url); return true; } });
   try {
-    count('landing', 'lt', 'lt');
+    count('try', 'lt', 'lt');
     count('try', 'lt', 'lt');
     count('photo', 'lt', 'lt');
     await tick();

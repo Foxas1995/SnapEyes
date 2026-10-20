@@ -18,6 +18,7 @@
 // 4. The loader (end of the body, build only): starts the page's own script after the LCP picture has loaded, see loaderScript.
 // 5. The early ask (in the head): the two small API answers the page needs (see prefetchScript).
 // 6. The menu (right after the bar script): the dialog of the narrow widths opens and closes, see menuScript.
+// 7. The anonymous counter's beacon (in the head, after the early ask): the landing page was opened, see counterScript.
 
 /** The tables of src/shared/markets.ts and src/shared/lang.ts the decision needs. */
 export interface ShellRule {
@@ -87,6 +88,20 @@ export const prefetchScript =
   "(function(){try{var o={headers:{Accept:'application/json'},cache:'no-store',credentials:'same-origin',priority:'low'},a={};" +
   "a['/api/health']=fetch('/api/health',o);a['/api/checkout']=fetch('/api/checkout',o);" +
   "a['/api/health'].catch(function(){});a['/api/checkout'].catch(function(){});window.__lpApi=a}catch(e){}})()";
+
+/** The anonymous counter's beacon for the landing page (7): the visit reached the first page. It lives here and not in the page's script so that the landing's JavaScript does not grow at all
+ *  (npm run check:budget) and so that a visit is counted even when React never starts. It waits for what the early ask (5) learns from /api/health: counter true means the server counts (the
+ *  kill switch SNAPEYES_COUNTER is on, there is a store); anything else sends nothing. Then, once the page has loaded (never in the way of the picture), one sendBeacon to /api/checkout:
+ *  {hit: "landing", lang, market (the decision script's answer, window.__lpShell, as the swap left it), camp}. camp is the campaign code of src/shared/counter.ts capture() written for a browser
+ *  without modules: the utm_ parameters of the address as they stand there (utm_source=fb&utm_medium=paid..., at most 60 characters a value; the server turns them into short codes or drops them),
+ *  else the code this tab already holds in sessionStorage "snapeyes.c", else ref=<the class of the page the visitor came from>; kept in sessionStorage "snapeyes.c" for the life of the tab
+ *  (/try and /order read it there). Nothing else of the address is read (no fbclid), nothing is set as a cookie.
+ *  suites/ts/counter_landing.test.ts runs this very string against capture() over a matrix of addresses, referrers and stored codes. */
+export const counterScript =
+  "(()=>{try{const s=window.__lpShell,K='snapeyes.c';window.__lpApi['/api/health'].then(r=>r.clone().json()).then(h=>{if(h.counter!==true)return;let c,r=document.referrer;try{c=sessionStorage[K]}catch(e){}" +
+  "c=(location.search.match(/utm_(source|medium|campaign|term|content)=[^&]{0,60}/g)||[]).join('&')||c||'ref='+(r.match(/(facebook|instagram|tiktok|google)[.]/)||[0,r?'other':'direct'])[1];try{sessionStorage[K]=c}catch(e){}" +
+  "const go=()=>navigator.sendBeacon('/api/checkout',new Blob([JSON.stringify({hit:'landing',lang:s.l,market:s.m,camp:c})],{type:'application/json'}));" +
+  "document.readyState=='complete'?go():addEventListener('load',go)}).catch(e=>e)}catch(e){}})()";
 
 export const barScript =
   "(function(){var b=document.getElementById('topbar'),r=document.documentElement;" +

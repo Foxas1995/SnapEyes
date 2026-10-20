@@ -77,13 +77,14 @@ rollup() stores a finished day's counts once (ops/daily/<YYYY-MM-DD>.json), purg
 import os, re, json, time, math, calendar, secrets, threading
 from . import iris as L
 from . import store
+from . import counter
 
 CRON_MIN = 16                # characters of CRON_SECRET (pay.ordering_problem and /api/health use the same rule)
 WAIT = 1.5                   # seconds a request waits for its event to be written, at most
 PUT_TIMEOUT = 1.2            # the storage call itself
 RATE = {"all": (240, 60.0), "error": (30, 60.0), "exp": (60, 60.0), "help": (20, 60.0), "hit": (150, 60.0)}   # events per instance per window (seconds)
 HIT_DAY_MAX = 20000          # counter beacons per instance per UTC day (anybody can send one without an order, so they are capped like the price test's)
-TABLE_KEYS_MAX = {"hits": 2000, "hit_cc": 800, "hit_ms": 400}     # distinct keys of a counter table in one day's counts; a new key above this is counted under "overflow"
+TABLE_KEYS_MAX = {"hits": 2000, "hit_cc": 800, "hit_ms": 400, "fx": 3000, "fx_ms": 800}     # distinct keys of a counter table in one day's counts; a new key above this is counted under "overflow"
 TTP_MS = (5000, 10000, 15000, 20000, 30000, 45000, 60000, 90000, 120000, 180000, 300000)       # upper bounds, ms, of the time from a photo to its preview (hit_ms); one more bucket above
 HELP_DAY_MAX = 1000          # help beacons per instance per UTC day (anybody can send one without an order, so they are capped like the price test's)
 ERROR_DAY_MAX = 1500         # error events per instance per UTC day
@@ -123,6 +124,15 @@ FIELDS = {
             "took": "n", "eyes": "n", "style": "c"},
 }
 HIT_STEPS = ("landing", "try", "photo", "result", "soon", "buy", "order")      # api/_lib/counter.py STEPS (a test holds the two equal)
+# The events the endpoints write for a visitor's request carry, besides their own fields, where the request came from as codes (api/_lib/counter.py context, put in by record()): the campaign
+# (src, med, cmp, trm, cnt), the device class (dev), the browser family (br), the country (cc) and the page's language and price market. Nothing else of the request.
+ATTR = {"src": "c", "med": "c", "cmp": "c", "trm": "c", "cnt": "c", "dev": "c", "br": "c", "cc": "c", "lang": "c", "market": "c"}
+ATTRIBUTED = ("analyze", "deglare", "enhance", "compose", "checkout", "help", "error")
+for _kind in ATTRIBUTED:
+    for _field, _typ in ATTR.items():
+        FIELDS[_kind].setdefault(_field, _typ)
+# What the analysis saw of the photo, as classes (photo_classes): the resolution of the original in megapixels, its orientation, the size of the iris in it. The photo itself is never stored.
+FIELDS["analyze"].update(res="c", ori="c", irs="c")
 EXP_STAGES = ("visit", "preview", "checkout", "paid")
 CHECKOUT_STAGES = ("start", "paid")
 SOURCES = ("camera", "gallery", "live", "sample", "lab")
@@ -264,6 +274,16 @@ def retention_ok():
         return False
 
 
+def _attr(kind, fields):
+    """The fields of an event of a visitor's request completed with the campaign, the classes and the country of that request (iris.ctx()); what the caller gave is kept."""
+    if kind not in ATTRIBUTED:
+        return fields
+    try:
+        return counter.attach(fields, L.ctx())
+    except Exception:  # noqa
+        return fields
+
+
 def record(kind, **fields):
     """Store one event (see the module text). True when it was written in time; never raises. Skipped (False) while
     storage is not configured or the daily clean-up cannot run here (retention_ok)."""
@@ -271,6 +291,7 @@ def record(kind, **fields):
         cap = fields.pop("_wait", None)       # a caller that must not hold its request long (the price test's beacons)
         if kind not in FIELDS or not store.configured() or not retention_ok():
             return False
+        fields = _attr(kind, fields)
         now = time.time()
         wait = min(WAIT if not isinstance(cap, (int, float)) or isinstance(cap, bool) else float(cap), L.time_left() - 1.0)
         if wait < 0.2 or not _allow(kind, now, fields.get("stage") if isinstance(fields.get("stage"), str) else None):
@@ -303,7 +324,7 @@ def record_many(kind, rows, _wait=None):
             if not _allow(kind, now, fields.get("stage") if isinstance(fields.get("stage"), str) else None):
                 break
             box = {}
-            th = threading.Thread(target=_put, args=(event_path(now), store.json_bytes(build(kind, dict(fields), now)), box), daemon=True)
+            th = threading.Thread(target=_put, args=(event_path(now), store.json_bytes(build(kind, _attr(kind, dict(fields)), now)), box), daemon=True)
             th.start()
             started.append((th, box))
         end = time.time() + wait
@@ -428,12 +449,94 @@ def empty():
             # the anonymous counter (kind "hit"): hits "<step>|<src>|<med>|<cmp>|<trm>|<cnt>|<lang>|<market>|<dev>|<br>" (an empty code is "-") counts the steps the pages reached, by
             # campaign code, the page's language and price market, and the visitor's device class and browser family; hit_cc "<step>|<country>"; hit_ms "<dev>|<br>|<bucket>" is the
             # time the page measured from a photo to its preview, in the buckets of TTP_MS. A table keeps at most TABLE_KEYS_MAX keys a day (the rest is counted under "overflow")
-            "hits": {}, "hit_cc": {}, "hit_ms": {}}
+            # and the server's side of the same visits, by campaign, device class and browser family (api/_lib/traffic.py): the server steps join hits (an, anok, en, rs, sv, co, pd, help),
+            # fx "<metric>|<value>|<src>|<cmp>|<dev>|<br>" counts what the server saw of the photos and what went wrong (FX_METRICS), fx_ms "<analyze, enhance or compose>|<dev>|<br>|<bucket>"
+            # its times in the buckets of HIST_MS
+            "hits": {}, "hit_cc": {}, "hit_ms": {}, "fx": {}, "fx_ms": {}}
 
 
 def _inc(d, k, n=1):
     k = str(k)
     d[k] = d.get(k, 0) + n
+
+
+def _step(agg, ev, step):
+    """Count a server step in the hits table under the event's campaign codes, language, market, device class and browser family."""
+    _tinc(agg, "hits", hit_key(step, ev))
+
+
+def _fx(agg, ev, metric, value):
+    """Count what the server saw (a metric and its value) under the event's campaign source, campaign, device class and browser family."""
+    if value is None or value == "":
+        return
+    _tinc(agg, "fx", f"{metric}|{value}|{ev.get('src') or '-'}|{ev.get('cmp') or '-'}|{ev.get('dev') or '-'}|{ev.get('br') or '-'}")
+
+
+def _fx_ms(agg, ev, what):
+    ms = ev.get("ms")
+    if isinstance(ms, (int, float)) and not isinstance(ms, bool) and ms >= 0:
+        _tinc(agg, "fx_ms", f"{what}|{ev.get('dev') or '-'}|{ev.get('br') or '-'}|{hist_bucket(ms)}")
+
+
+def _server_counts(agg, ev):
+    """The visitor-facing events of the endpoints (ATTRIBUTED) counted for the owner's visitor pages: the server steps of a visit (hits), what the analysis and the restoration saw and how a set of
+    eyes fared (fx), the times (fx_ms), the errors and the requests behind them. Every table is keyed by the event's campaign, device class and browser family, never by anything finer."""
+    kind = ev.get("kind")
+    if kind == "analyze":
+        _step(agg, ev, "an")
+        verdict = ev.get("verdict") or ("ok" if ev.get("ok", True) else "no_eye")
+        if ev.get("ok") is not False and verdict in ("good", "ok", "weak") and not ev.get("blocked"):
+            _step(agg, ev, "anok")
+        _fx(agg, ev, "req", "analyze")
+        _fx(agg, ev, "an_verdict", verdict)
+        if ev.get("blocked"):
+            _fx(agg, ev, "an_block", ev.get("block_reason") or "unknown")
+        for metric, field in (("an_res", "res"), ("an_ori", "ori"), ("an_iris", "irs"), ("an_source", "source")):
+            _fx(agg, ev, metric, ev.get(field))
+        if ev.get("locked") is not None:
+            _fx(agg, ev, "an_lock", "locked" if ev["locked"] else "unlocked")
+        _fx_ms(agg, ev, "analyze")
+    elif kind == "deglare":
+        _fx(agg, ev, "req", "deglare")
+    elif kind == "enhance":
+        _step(agg, ev, "en")
+        _fx(agg, ev, "req", "enhance")
+        _fx(agg, ev, "en_gate", ev.get("gate"))
+        if ev.get("reason") and ev["reason"] != "none":
+            _fx(agg, ev, "en_reason", ev["reason"])
+        for metric, field in (("en_cls", "cls"), ("en_pupil", "pupil"), ("en_reveal", "reveal")):
+            _fx(agg, ev, metric, ev.get(field))
+        _fx(agg, ev, "en_retry", ev.get("retry") or "none")
+        if ev.get("qa_ok") is not None:
+            _fx(agg, ev, "en_qa", "ok" if ev["qa_ok"] else "fail")
+        _fx_ms(agg, ev, "enhance")
+    elif kind == "compose":
+        tile = ev.get("tile") is True
+        undrawn = _undrawn(ev)
+        if (not tile) or ev.get("tiles") is not None:
+            _fx(agg, ev, "req", "compose")
+            if ev.get("gate") and ev.get("again") is not True:
+                _step(agg, ev, "rs")
+                retake = ev.get("retake")
+                retake = int(retake) if isinstance(retake, (int, float)) and not isinstance(retake, bool) and retake > 0 else 0
+                _fx(agg, ev, "set_gate", ev["gate"])
+                _fx(agg, ev, "set_retake", min(2, retake))
+                _fx(agg, ev, "set_eyes", ev.get("eyes") or 1)
+        if not tile and not undrawn:
+            _step(agg, ev, "sv")
+            _fx(agg, ev, "sv_style", ev.get("style"))
+            _fx_ms(agg, ev, "compose")
+    elif kind == "checkout":
+        if ev.get("stage") == "start":
+            _step(agg, ev, "co")
+        elif ev.get("stage") == "paid":
+            _step(agg, ev, "pd")
+    elif kind == "help":
+        _step(agg, ev, "help")
+    elif kind == "error":
+        _fx(agg, ev, "err_ep", ev.get("endpoint") or "other")
+        _fx(agg, ev, "err_cls", ev.get("class") or "unknown")
+        _fx(agg, ev, "err_reason", ev.get("reason"))
 
 
 def _tinc(agg, table, key, n=1):
@@ -451,6 +554,22 @@ def ttp_bucket(ms):
         if ms <= ub:
             return i
     return len(TTP_MS)
+
+
+def photo_classes(width, height, diameter=None):
+    """The classes the analysis event keeps of a photo: res (the original's size in megapixels: mp_lt1, mp_1_3, mp_3_8, mp_8_16, mp_16_40, mp_40p), ori (portrait, landscape or square) and irs (the iris's
+    diameter in the original: d_lt280, d_280_420, d_420_600, d_600p), each None when it cannot be told. Numbers only in, classes only out."""
+    def num(v):
+        return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and 0 < v < 1e6 else None
+    w, h, d = num(width), num(height), num(diameter)
+    res = ori = irs = None
+    if w and h:
+        mp = w * h / 1e6
+        res = "mp_lt1" if mp < 1 else "mp_1_3" if mp < 3 else "mp_3_8" if mp < 8 else "mp_8_16" if mp < 16 else "mp_16_40" if mp < 40 else "mp_40p"
+        ori = "square" if abs(w - h) <= 0.05 * max(w, h) else ("portrait" if h > w else "landscape")
+    if d:
+        irs = "d_lt280" if d < 280 else "d_280_420" if d < 420 else "d_420_600" if d < 600 else "d_600p"
+    return res, ori, irs
 
 
 def hit_key(step, ev):
@@ -520,6 +639,8 @@ def add(agg, ev):
         return agg
     agg["events"] += 1
     _inc(agg["kinds"], kind)
+    if kind in ATTRIBUTED:
+        _server_counts(agg, ev)
     g = agg["gemini"]
     if kind == "analyze":
         _inc(agg["verdict"], ev.get("verdict") or ("ok" if ev.get("ok", True) else "no_eye"))

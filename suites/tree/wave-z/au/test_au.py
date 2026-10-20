@@ -192,8 +192,9 @@ PACK_AUTO = dict(PACK, making_start="after_confirmation")
 EU_BEFORE = json.load(open(os.path.join(HERE, "eu_before.json"), encoding="utf-8"))
 EU_1ACEF = json.load(open(os.path.join(HERE, "eu_1acef38.json"), encoding="utf-8"))   # 0930 refresh: the EU edition as of 1acef38 (the base of the 1005 refresh)
 EU_WP12 = json.load(open(os.path.join(HERE, "eu_wp12.json"), encoding="utf-8"))   # 1005 refresh: the EU edition as of WP12 (the base of the 1006 refresh)
-EU_NOW = json.load(open(os.path.join(HERE, "eu_wp18.json"), encoding="utf-8"))   # 1006 refresh: the EU edition as of WP18 (the catalogue switch)
-LEGAL_NOW = "2026-10-06"        # 1006 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-05 since WP12, 2026-09-30 before)
+EU_WP18 = json.load(open(os.path.join(HERE, "eu_wp18.json"), encoding="utf-8"))   # 1006 refresh: the EU edition as of WP18 (the catalogue switch), the base of the 1020 refresh
+EU_NOW = json.load(open(os.path.join(HERE, "eu_counter.json"), encoding="utf-8"))   # 1020 refresh: the EU edition with the anonymous counter's privacy paragraphs (the terms are WP18's)
+LEGAL_NOW = "2026-10-20"        # 1020 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
 CONSENT_NOW = "2026-09-30.2"    # 0930 refresh: the consent version since 30efee7 (the lt and hu texts added; en, de, AU as of .1)
 LANG2 = ("en", "de")            # the two languages the snapshots of before the Lithuanian and Hungarian work have
 set_pack(PACK)
@@ -213,7 +214,8 @@ EDI = CL["editions"]
 check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED 2026-09-30 = pack updated"
       " - 0930: bumped again by 30efee7 (lt and hu texts), now 2026-09-30.2; 2026-09-30.1 is still quoted (A3, H1)"
       " - 1005: LEGAL_UPDATED is 2026-10-05 (WP12), the consent version is not bumped"
-      " - 1006: LEGAL_UPDATED is 2026-10-06 (WP18: the AI-made material sentence), the consent version is still not bumped",
+      " - 1006: LEGAL_UPDATED is 2026-10-06 (WP18: the AI-made material sentence), the consent version is still not bumped"
+      " - 1020: LEGAL_UPDATED is 2026-10-20 (the anonymous counter's privacy paragraphs), the consent version is still not bumped",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
       and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
@@ -381,7 +383,7 @@ priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
                    for sec, (na, nr, pa, pr) in PRIV_ALLOWED[l].items() if sec in d)
            for l, (fr, d) in priv_diff.items()}
-priv_diff12 = {l: doc_diff(EDI["eu"]["privacy"][l], EU_1ACEF["privacy"][l]) for l in LANG2}
+priv_diff12 = {l: doc_diff(EU_WP18["privacy"][l], EU_1ACEF["privacy"][l]) for l in LANG2}      # 1020: the policy as of WP18 against the pin of 1acef38 (the live one is checked against WP18 in B2b)
 priv12_ok = {l: fr and wp12_ok(d, PRIV12[l]) for l, (fr, d) in priv_diff12.items()}
 priv_pinned = {l: EDI["eu"]["privacy"][l] == EU_NOW["privacy"][l] for l in LANG2}
 check("B2 EU privacy policy: only two sentences added per language (the market key, the country hint), all else as before"
@@ -393,10 +395,20 @@ check("B2 EU privacy policy: only two sentences added per language (the market k
       (priv_ok, priv12_ok, priv_pinned, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv_diff12.items()}))
 
 
+# 1020: the privacy policy now differs from the WP18 pin by exactly the anonymous counter's paragraphs (api/_lib/counter.py): the country sentence (website), the counter and campaign paragraphs
+# (operations), the session storage key (storage), the Stripe sentence (orders) and the order records row (retention); every other section, the frame and the terms are WP18's
+PRIV20 = {"website": (1, 1), "operations": (2, 0), "storage": (1, 0), "orders": (1, 1), "retention": (1, 1)}
+priv20 = {l: doc_diff(EDI["eu"]["privacy"][l], EU_WP18["privacy"][l]) for l in LANG2}
+priv20_ok = {l: fr and sorted(d) == sorted(PRIV20) and all((len(d[sec][0]), len(d[sec][1])) == n for sec, n in PRIV20.items()) for l, (fr, d) in priv20.items()}
+check("B2b EU privacy policy since WP18 (1020): only the anonymous counter's paragraphs differ, in the sections website, operations, storage, orders and retention, nothing else, en and de",
+      all(priv20_ok.values()), (priv20_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv20.items()}))
+
+
 def _norm(t):
     """The pack's text without its date line (the date changes with every legal change)."""
     return (t.replace("2026-09-30", "X").replace("30.09.2026", "X").replace("2026-10-05", "X").replace("05.10.2026", "X")      # 1005: and the date of WP12
-             .replace("2026-10-06", "X").replace("06.10.2026", "X"))                                                              # 1006: and the date of WP18
+             .replace("2026-10-06", "X").replace("06.10.2026", "X")                                                               # 1006: and the date of WP18
+             .replace("2026-10-20", "X").replace("20.10.2026", "X"))                                                              # 1020: and the date of the counter's privacy paragraphs
 
 
 def _terms_pack_ok(l, pack=None):
@@ -643,7 +655,7 @@ check("E6 the full AU withdrawal information and AU terms are attached (not the 
 check("E7 the AU email: no 'no refunds' wording, no en or em dash", not bad_words(t) and not any(d in t for d in DASHES), bad_words(t))
 md = read_json(f"orders/{oE}/mail_delivery.json")
 check("E8 mail_delivery.json sent with the new consent version and the pack date"
-      " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12) - 1006: the pack date is 2026-10-06 (WP18)", md.get("state") == "sent"
+      " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12) - 1006: the pack date is 2026-10-06 (WP18) - 1020: the pack date is 2026-10-20 (the counter's privacy paragraphs)", md.get("state") == "sent"
       and md.get("consent") == CONSENT_NOW and md.get("legal") == LEGAL_NOW, md)
 with open(os.path.join(HERE, "sample_au_confirmation_en.txt"), "w", encoding="utf-8") as f:
     f.write(head)

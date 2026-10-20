@@ -43,7 +43,7 @@
    "pass": 58
   },
   "au": {
-   "pass": 70
+   "pass": 71
   },
   "payrev": {
    "pass": 19
@@ -64,7 +64,7 @@
    "pass": 349
   },
   "ts": {
-   "pass": 591
+   "pass": 627
   },
   "v3wp0": {
    "pass": 93
@@ -124,7 +124,7 @@
    "pass": 48
   },
   "v3counter": {
-   "pass": 48
+   "pass": 78
   }
  }
 }

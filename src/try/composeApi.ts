@@ -9,6 +9,7 @@ import type { Eye } from './multi';
 import { composeSide, sealedFor } from './multi';
 import type { Lang } from './lang';
 import { T } from './copy';
+import { withCamp } from '../shared/counter';
 
 /** What a compose call came to. busy: another render holds this instance, ask again after retryAfter seconds; paused: this instance's ceiling of
  *  pictures for today is reached (not worth retrying now); unavailable: the server will not draw this style for these eyes (stage, eyes, gate,
@@ -92,7 +93,7 @@ export function sendHelp(f: { route: 'manual'; eyes: number; why: string; lang: 
   try {
     void fetch('/api/compose', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ action: 'help', route: f.route, eyes: f.eyes, why: f.why, lang: f.lang }), keepalive: true, credentials: 'same-origin',
+      body: JSON.stringify(withCamp({ action: 'help', route: f.route, eyes: f.eyes, why: f.why, lang: f.lang })), keepalive: true, credentials: 'same-origin',
     }).catch(() => { /* a count is best effort */ });
   } catch { /* no fetch: nothing to count */ }
 }

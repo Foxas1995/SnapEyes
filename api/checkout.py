@@ -82,6 +82,8 @@ GET /api/checkout also answers counter: true or false, whether the pages should 
 POST /api/checkout {hit: "landing" | "try" | "photo" | "result" | "soon" | "buy" | "order", camp, lang, market[, took, eyes, style]}: one step a page reached, with the campaign
      code (camp: "src|med|cmp|trm|cnt", short codes) and the page's language and price market. No order, no Stripe, always {ok, counted}; a robot, an unknown step, a client
      that sends too many or an instance past its day ceiling is not counted.
+Every other POST of the site may carry camp too (analyze, deglare, enhance, compose, this route's checkout): iris.run turns it, with the user agent and the country header, into the classes the usage
+events carry (iris.ctx()). The order record keeps the code (checkout.camp, and camp in paid.json) and the Stripe session's metadata `src`, so an order and its revenue are tied to a source.
 """
 import os, re, sys, time, json, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -253,7 +255,8 @@ def checkout(body):
     text = pay.consent_for(market, lang)
     consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": text,
                "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]}
-    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan)
+    camp = counter.pack(counter.parse(body.get("camp")))     # the campaign code of the advertisement the customer came from: "" when there is none
+    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp)
     sid = sess["id"]
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,
@@ -263,6 +266,8 @@ def checkout(body):
                          # the frozen plan (the master reads it, steps._stored_plan), the engine it was made under, the set level gate result at checkout
                          # and whether the page's plan8 was compared: what the admin shows beside the delivered file
                          "plan": plan, "engine": _engine(plan), "gate": gate, "plan8_shown": shown})
+    if camp:
+        rec["checkout"]["camp"] = camp
     if note:
         # the page's plan8 was not the server's but its plan8_core was (freeze_plan): the plan stored is the server's, and the owner can see that and what the page showed
         rec["checkout"].update(plan8_note=note, plan8_page=_page8(body))

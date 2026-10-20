@@ -58,6 +58,7 @@ from . import abtest
 from . import events as E
 from . import withdraw as W
 from . import catalogue as CT
+from . import counter as CN
 from .styles import steps as SP
 
 ADMIN_TTL_MAX = 90 * 86400   # a key may live this long at most (scripts/mint_admin.py mints 1 to 90 days)
@@ -420,7 +421,9 @@ def order_row(order):
     lang = spec.get("lang") or (rec.get("lang") if isinstance(rec, dict) else None)
     xv = abtest.order_view(paid if is_paid else None, rec)
     gate = _code(co.get("gate"), 60) if isinstance(co, dict) else None          # ok, unknown or the failing eye's reason code (checkout.freeze_plan)
-    return {"order": order, "state": state, "gate": gate,
+    camp = (paid.get("camp") if is_paid else None) or (co.get("camp") if isinstance(co, dict) else None)       # the campaign code of the advertisement the customer came from
+    camp = camp if isinstance(camp, str) and CN.parse(camp) else None
+    return {"order": order, "state": state, "gate": gate, "camp": CN.pack(CN.parse(camp)) if camp else None,
             "experiment": {"key": xv["key"], "variant": xv["variant"], "label": xv.get("label")} if xv else None,
             "created_at": created_at if isinstance(created_at, (int, float)) else None,
             "lang": lang if lang in pay.LANGS else None,
@@ -517,8 +520,8 @@ def collect_days(n):
 
 
 def _slim(agg):
-    # compose_slice and ms_hist are the Stiliai page's (styles_stats), hits, hit_cc and hit_ms the counter's pages (traffic.py): they are the largest tables and the Statistika page has no use for them
-    return {k: v for k, v in agg.items() if k not in ("v", "day", "t", "recent_errors", "compose_slice", "ms_hist", "hits", "hit_cc", "hit_ms")}
+    # compose_slice and ms_hist are the Stiliai page's (styles_stats), hits, hit_cc, hit_ms, fx and fx_ms the visitor pages' (traffic.py): they are the largest tables and the Statistika page has no use for them
+    return {k: v for k, v in agg.items() if k not in ("v", "day", "t", "recent_errors", "compose_slice", "ms_hist", "hits", "hit_cc", "hit_ms", "fx", "fx_ms")}
 
 
 # ----------------------------------------------------------------------------- read-only actions

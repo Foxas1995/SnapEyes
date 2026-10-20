@@ -20,7 +20,7 @@ export async function run(): Promise<Row[]> {
   const ids = (d: LegalDoc) => d.sections.map((s) => s.id).join();
   check('the four languages of the privacy policy have the same sections in the same order', LANGS.every((l) => ids(PRIVACY[l]) === ids(PRIVACY.en)), LANGS.map((l) => ids(PRIVACY[l])).join(' | '));
   const nOps = LANGS.map((l) => section(PRIVACY[l], 'operations')?.blocks.length ?? -1);
-  check('the "operations" section (service statistics) has the same number of paragraphs in every language, one more than before the counter (six)', nOps.every((n) => n === 6), nOps.join());
+  check('the "operations" section (service statistics) has the same number of paragraphs in every language: the counter and the campaign code are two more than before (seven)', nOps.every((n) => n === 7), nOps.join());
 
   const KEY: Record<(typeof LANGS)[number], RegExp> = {
     en: /counts the steps a page reaches/, de: /zählt unser Server außerdem die Schritte, die eine Seite erreicht/, lt: /serveris taip pat skaičiuoja žingsnius, kuriuos pasiekia puslapis/, hu: /a szerverünk azt is megszámolja, mely lépéseket éri el egy oldal/,
@@ -45,6 +45,19 @@ export async function run(): Promise<Row[]> {
   check('the Australian edition has English and German only, made from the euro texts: its operations section is the same paragraphs',
     !!au.en && !!au.de && !au.lt && !au.hu && (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'operations') === sectionText(PRIVACY[l], 'operations') && sectionText(au[l]!, 'website') === sectionText(PRIVACY[l], 'website')));
   check('the Australian edition keeps its own section on top of them, after the rights section', (['en', 'de'] as const).every((l) => section(au[l]!, 'australia') !== undefined));
+
+  // the campaign code (item 2): the key in the storage section, the operations paragraph, the order section and the retention row, in every language
+  const KEYS: Record<(typeof LANGS)[number], RegExp> = { en: /key "snapeyes\.c"/, de: /Schlüssel „snapeyes\.c“/, lt: /raktu „snapeyes\.c“/, hu: /„snapeyes\.c” kulcs alatt/ };
+  check('the storage section names the session storage key snapeyes.c and what it holds, in every language', LANGS.every((l) => KEYS[l].test(sectionText(PRIVACY[l], 'storage'))), LANGS.filter((l) => !KEYS[l].test(sectionText(PRIVACY[l], 'storage'))).join());
+  const FB: Record<(typeof LANGS)[number], RegExp> = { en: /"fbclid" or similar number in the address is never read/, de: /„fbclid“ oder ähnliche Nummer in der Adresse wird nie gelesen/, lt: /„fbclid“ ar panašus numeris adrese niekada neskaitomas/, hu: /„fbclid” vagy hasonló számot soha nem olvassuk/ };
+  check('and says that a click number (fbclid) is never read', LANGS.every((l) => FB[l].test(sectionText(PRIVACY[l], 'storage'))), LANGS.filter((l) => !FB[l].test(sectionText(PRIVACY[l], 'storage'))).join());
+  const CAMP: Record<(typeof LANGS)[number], RegExp> = { en: /which advertisement led to which step/, de: /welche Anzeige zu welchem Schritt geführt hat/, lt: /kuri reklama atvedė iki kurio žingsnio/, hu: /melyik hirdetés melyik lépéshez vezetett/ };
+  check('the operations section says what the code is for', LANGS.every((l) => CAMP[l].test(sectionText(PRIVACY[l], 'operations'))), LANGS.filter((l) => !CAMP[l].test(sectionText(PRIVACY[l], 'operations'))).join());
+  const ORD: Record<(typeof LANGS)[number], RegExp> = { en: /its campaign code/, de: /deren Kampagnencode/, lt: /jos kampanijos kodą/, hu: /annak kampánykódját/ };
+  check('the order section says the Stripe payment receives the code, in every language', LANGS.every((l) => ORD[l].test(sectionText(PRIVACY[l], 'orders'))), LANGS.filter((l) => !ORD[l].test(sectionText(PRIVACY[l], 'orders'))).join());
+  const REC: Record<(typeof LANGS)[number], RegExp> = { en: /campaign code of the advertisement you came from \(if any\)/, de: /Kampagnencode der Anzeige, über die Sie kamen \(falls vorhanden\)/, lt: /kampanijos kodą \(jei yra\)/, hu: /kampánykódja, amelyen keresztül érkezett \(ha van\)/ };
+  check('and the retention row of the order records lists it', LANGS.every((l) => REC[l].test(sectionText(PRIVACY[l], 'retention'))), LANGS.filter((l) => !REC[l].test(sectionText(PRIVACY[l], 'retention'))).join());
+  check('the Australian edition carries the same storage and order paragraphs', (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'storage') === sectionText(PRIVACY[l], 'storage') && sectionText(au[l]!, 'orders') === sectionText(PRIVACY[l], 'orders')));
 
   const dash = new RegExp('[' + [0x2012, 0x2013, 0x2014, 0x2015].map((c) => String.fromCharCode(c)).join('') + ']');
   check('no paragraph of the policy holds an en or em dash', LANGS.every((l) => !dash.test(PRIVACY[l].sections.map((s) => sectionText(PRIVACY[l], s.id)).join('\n'))));
