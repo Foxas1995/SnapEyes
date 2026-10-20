@@ -1393,7 +1393,7 @@ check("the fibres keep their contrast and colour: the pull adds the same lightne
 tn_15, tn_100 = finish_render("infinity", ("blue", "brown"), "3:2", 512, {"band_tone": 0.15}, clean=True), finish_render("infinity", ("blue", "brown"), "3:2", 512, {"band_tone": 1.0}, clean=True)
 m_ = lambda r: float(np.abs(np.asarray(r.img.convert("RGB")).astype(np.int16) - t_off).mean())
 check("the share is a strength: 0.15, 0.30 and 1.0 change the picture more and more (the mean change per pixel rises with it), and a render with a share of 0 or none draws the old picture",
-      0.0 < m_(tn_15) < m_(tn_on) < m_(tn_100) and pix_sha(finish_render("infinity", ("blue", "brown"), "3:2", 512, {k: v for k, v in CC.PRODUCTION.items() if k != "band_tone"}, clean=True)) == pix_sha(tn_off),
+      0.0 < m_(tn_15) < m_(tn_on) < m_(tn_100) and pix_sha(finish_render("infinity", ("blue", "brown"), "3:2", 512, {"band_tone": None}, clean=True)) == pix_sha(tn_off),
       (m_(tn_15), m_(tn_on), m_(tn_100)))
 rep_tn, rep_tf = CX.selfcheck(tn_on, "infinity", ["duo.clean", "infinity", "pair"], None, None), CX.selfcheck(tn_off, "infinity", ["duo.clean", "infinity", "pair"], None, None)
 check("the budgets of the owner's reading A and every check of the self check hold with the tone harmony (T1 and T6: every pixel outside the band is the graded iris; T2; T3; T19) and the seam numbers are "

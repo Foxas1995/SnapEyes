@@ -37,14 +37,16 @@ ENGINE_FAMILIES = ("singles", "collision", "universe")      # the engine package
 # The version of the engine's PICTURES. It changes if and only if a golden changes (scripts/styles_tests/data/engine_v.json records it with the
 # hashes of the golden files and v3steps compares them): a plan records the version it was made under and the master step holds an order whose
 # plan was made under another one (engine_skew: a deploy between payment and master must never draw a picture the preview did not show).
-ENGINE_V = 7          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
+ENGINE_V = 8          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
                       # seed key); 3: step B for the collision family (WP7B: the same seed, the names out of it, the pixel decisions made once and frozen in the plan);
                       # 4: step B for the universe family (WP8B: the same seed, the per eye seeds derived from it, the plates version in every pick, the pair's fallback frozen);
                       # 5: the finish of the pair designs of the collision family (pairs design phase 1: an antialiased crumble, the hairline only where both bands are dark, finer
                       # powder, the deeper valley of Collision Infinity; the trio, the families and the chain draw as under 4);
                       # 6: the deeper valley of the owner's H10 for Clean Infinity too (pairs design phase 2: the Clean Infinity pictures only; every other picture draws as under 5);
                       # 7: the woven lens of Clean and Collision Infinity crosses its irises along their texture (pairs design phase 2: the pictures of the woven pairs only; a Kiss pair, a stack
-                      # lens, the trio, the families and the chain draw as under 6)
+                      # lens, the trio, the families and the chain draw as under 6);
+                      # 8: the darker iris is pulled toward the lighter one inside the band of that lens (band_tone 0.30) and the tongues of its colour crossfade are rounder (tongue "round"):
+                      # pairs design phase 3, the pictures of the woven pairs only; every other picture draws as under 7
 
 
 class EngineNotBuilt(LookupError):

@@ -82,7 +82,7 @@ MIX_MAX = 0.03                                                              # ..
 # band_tone (pairs design phase 3, step 1): the share (0 to 1) of the gap by which, inside the band of a woven lens, the low frequency lightness of the darker iris is pulled toward the lighter
 # one's (compositor._tone_layers; 0 is off, the picture of phase 2). Only the pixels of the band move, and they fade to no change at its edge; the fibres keep their contrast and colour.
 # tongue (pairs design phase 3, step 2): the tongues of the colour crossfade of the texture seam, "thin" as in phase 2 (reach 0.065 R, thin slivers) or "round" (seam_plan.TONGUE_ROUND: reach 0.05 R, rounder ends).
-PAIR_FINISH = {"rim": "both", "crumble_aa": 2.2, "dust": "fine", "valley": "deep", "seam_follow": "texture", "band_tone": 0.0, "tongue": "thin"}
+PAIR_FINISH = {"rim": "both", "crumble_aa": 2.2, "dust": "fine", "valley": "deep", "seam_follow": "texture", "band_tone": 0.30, "tongue": "round"}
 PRODUCTION = {"edge": "ref", "zone_c": True, "seam": "plan", "seam_dust": False, "lens_mode": "auto", "trio_base": "crumble", **PAIR_FINISH}
 OPT_KEYS = frozenset(("edge", "zone_c", "seam", "seam_dust", "kiss_d", "hairline", "plates", "breakup", "rotate", "trio_base", "lens_mode", "plan_mode", "beta", "seed_mode",
                       "support_budget", "strict_gate", "allow_bar", "exact_scale", "auto_hairline", "mem", "prm", "fill", "keep_cv", "flood", "seam_hw",
