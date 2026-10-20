@@ -931,7 +931,8 @@ export const TryApp: React.FC = () => {
         <div className="flex items-center justify-end gap-3 min-w-0">
           <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
             {STUDY && <span className="text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}
-            <span>{T.header.tag}</span>
+            {/* decorative: under 380 px its longest word (peržiūra, előnézet, Vorschau) no longer fits beside the logo and the language switch and ran over the logo, so it goes there */}
+            <span className="max-[379px]:hidden">{T.header.tag}</span>
           </span>
           <LangSwitch lang={lang} onSwitch={switchLang} />
         </div>
