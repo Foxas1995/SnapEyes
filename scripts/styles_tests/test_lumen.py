@@ -382,9 +382,13 @@ meta_b = P.unseal_full(sealed_b)[1]
 r_b = CMP.compose({"sealed": [sealed_b], "styles": ["solo.supernova", "solo.nebula"], "pad": 1.12})
 r_b2 = CMP.compose({"sealed": [sealed_b], "styles": ["solo.sparks", "solo.halo", "solo.aurora"], "pad": 1.12})
 got = {t["id"]: t for t in r_b["tiles"] + r_b2["tiles"] if t.get("image")}
-exp_t = {s: L.pil_to_b64(ST.preview([C.Iris(jpeg_b, "compose", max_side=2048, eye_id=meta_b["eye_id"])], {"style": s, "layout": "single", "eyes": 1, "canvas": "1:1",
-                                                                                                              "names": "", "date": ""}, size=480, watermark=True).img, "JPEG", 90)
-         for s in LUMEN}
+def _tile_of(s):
+    # the free tile as compose draws it since the insights (2026-10-20): the clean preview, then the watermark with the badge of a deployment that takes no
+    # orders yet (api/compose.py _ordering_soon, the same rule test_goldens_singles.py mirrors)
+    pv = ST.preview([C.Iris(jpeg_b, "compose", max_side=2048, eye_id=meta_b["eye_id"])], {"style": s, "layout": "single", "eyes": 1, "canvas": "1:1",
+                                                                                         "names": "", "date": ""}, size=480)
+    return L.pil_to_b64(ST.watermarked(pv, soon=CMP._ordering_soon()), "JPEG", 90)
+exp_t = {s: _tile_of(s) for s in LUMEN}
 check("a batch of tiles draws each look at 480 px through the engine: the picture is the engine's preview of the sealed eye with the preview watermark, as every tile",
       sorted(got) == sorted(LUMEN) and all((got[s]["width"], got[s]["height"]) == (480, 480) and got[s]["design_used"] == LUMEN[s] for s in LUMEN)
       and all(got[s]["image"] == exp_t[s] for s in LUMEN), {s: (got.get(s, {}).get("width"), got.get(s, {}).get("image") == exp_t[s]) for s in LUMEN})
