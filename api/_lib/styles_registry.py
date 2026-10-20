@@ -53,8 +53,7 @@ Fields of an entry (all are required):
                stays; hard: the style is withheld for that eye set, in the picker AND at checkout: 409 style_unavailable, why gate).
                Since 2026-10-14 (the owner's decision, after he rejected a delivered file that kept lashes and lid skin at the rim) the
                one-eye styles Clean Iris and Celestial Gold are hard, like Universe, the pairs and the families; Powder Burst, Splash and
-               Radiance stay advisory. The five styles of the light family (Supernova, Nebula, Sparks, Halo, Aurora; 2026-10-20) are advisory
-               as Radiance is: light round the limb, nothing drawn over the iris, the lid rule of their gate only warns
+               Radiance stay advisory
   pick         eye classes (own | dark_brown | grey) for which this style is the recommended tile
   reason       for each class in pick, the key of the line printed under the recommended tile (copy files)
   tile_order   position in the tile list of its group (1 first; 0 not in the list). Unique per group, among legacy ids and among v3 ids

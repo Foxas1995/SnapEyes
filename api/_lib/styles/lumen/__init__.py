@@ -23,6 +23,9 @@ The contract of api/_lib/styles/__init__.py, for this family (the singles family
     tiles(eyes, styles, spec, size)           several styles on one eye preparation
 and the family's own render(design, eye, fmt, size, names, date, opts), which the golden suite calls.
 
+The registry gives every style of the family the gate policy advisory with the lid rule, as Radiance's: the looks draw light round the limb and nothing
+over the iris, so an eye that fails the lid rule is warned, never refused (the registry's text ships in the landing's bundle, so the reason is written here).
+
 The effects read their discs and irises as LISTS (ctx.discs, ctx.irises): Nebula and Supernova draw round several irises with the very same code, so the
 pair and family styles take them over as they are (nebula.fx_nebula, stardust.fx_stardust on a context of their own). The lab id of Supernova is
 "stardust": the registry's legacy id of the old Supernova is the word itself, which no file but the registry may write (scripts/check_styles.mjs item 3).
