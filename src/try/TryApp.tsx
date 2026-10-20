@@ -130,14 +130,22 @@ const restored = (e: Pick<Enhanced, 'image' | 'sealed' | 'sealed_sizes'>) => ({
  *  server's own sentences (the quality message, tips and errors) and the preview watermark come back in it. A body
  *  that names its own lang keeps it. */
 async function post<R>(path: string, body: Record<string, unknown>, answerNotOk = false): Promise<R> {
-  const r = await fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ lang: T.lang, ...body }),
-  });
-  // Vercel answers a timeout or an oversized body with text/plain, so read text first and never let
-  // JSON.parse throw the real status away
-  const raw = await r.text();
+  let r: Response;
+  let raw: string;
+  try {
+    r = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ lang: T.lang, ...body }),
+    });
+    // Vercel answers a timeout or an oversized body with text/plain, so read text first and never let
+    // JSON.parse throw the real status away
+    raw = await r.text();
+  } catch {
+    // no connection, a dropped one or a blocked request: the browser's own words ("Failed to fetch", "Load failed") are English
+    // on every page and mean nothing to the visitor, who waited a minute for them
+    throw new Error(T.errors.notResponding);
+  }
   let j: any = null;
   try { j = JSON.parse(raw); } catch { /* platform error, not ours */ }
   if (!j) {
