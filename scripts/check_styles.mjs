@@ -52,8 +52,9 @@
 //      (an art tile of an art style, the black tile of the black one), not retired; no row names a tile the gallery does not have; and every language's
 //      styles.items has an entry for exactly the gallery's tiles. A tile is for sale only when the run-time catalogue lists that style live for that many
 //      eyes (src/landing/StyleTile.tsx): without a row it would never carry a price, and a wrong row would print the price of another style. The other direction too:
-//      every style of the v3 engine the picker shows (a place in the picker's order, preview or live for some count of eyes) has a tile; and a tile's copy is its description
-//      only (the name a tile prints is the registry's, src/landing/tileState.ts).
+//      every style of the v3 engine the picker shows (a place in the picker's order, preview or live for some count of eyes) has a tile, but for the styles of
+//      LANDING_TILE_LATER while none of their ceilings is live (the light family of 2026-10-20: /try first, the gallery is at its budget); and a tile's copy is its
+//      description only (the name a tile prints is the registry's, src/landing/tileState.ts).
 // Items 8, 9, 10, 12 and 13 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
 // `npm run check:styles` runs it alone.
@@ -80,7 +81,7 @@ const GROUPS = ['solo', 'duo', 'grp', 'pet'];
 const CLASSES = ['black', 'art'];
 const GATES = ['none', 'advisory', 'hard'];
 const EYE_CLASSES = ['own', 'dark_brown', 'grey'];
-const MODULES = ['singles', 'collision', 'universe', 'legacy'];
+const MODULES = ['singles', 'collision', 'universe', 'lumen', 'legacy'];
 const RULE_SETS = ['lid', 'fill'];
 const ATLASES = ['chips', 'drops'];
 const STEP_KINDS = ['prep', 'art', 'scene', 'finish', 'bands'];
@@ -571,12 +572,31 @@ export function checkRuntimeTokens(copy, out) {
 }
 
 // ---------------------------------------------------------------------------------------------------- 15. the landing's tiles
+/** Styles the picker of /try shows (a preview ceiling) that wait for their tile on the landing, and why. The landing's gallery is at its byte budget and its
+ *  slots (check:budget, check:slots), so the five looks of the light family (2026-10-20, the owner's choice: shown in /try and its picker like Radiance, not on
+ *  the landing) have none yet. Item 15 holds the rest of its rule for them: a style of this list with a LIVE ceiling needs its tile (a style the owner can switch
+ *  on never lacks its picture on the landing), and a style of this list that has a tile is taken off it. */
+export const LANDING_TILE_LATER = {
+  'solo.supernova': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'solo.nebula': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'solo.sparks': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'solo.halo': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'solo.aurora': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
+};
+/** The list itself (item 15, run on the repository): every id of it is a style of the registry, and none has its landing tile yet (one that has is taken off). */
+export function checkLandingLater(tileStyle, styles, out, later = LANDING_TILE_LATER) {
+  const stood = new Set(Object.values(isObj(tileStyle) ? tileStyle : {}).map((r) => r?.id));
+  for (const id of Object.keys(later)) {
+    if (!isObj(styles) || !(id in styles)) out.push(`scripts/check_styles.mjs LANDING_TILE_LATER names "${id}", which is not in ${STYLES_FILE}`);
+    else if (stood.has(id)) out.push(`scripts/check_styles.mjs LANDING_TILE_LATER names "${id}", which has its landing tile now: take it off the list`);
+  }
+}
 const TILE_GROUP = { one: 'solo', two: 'duo', family: 'grp' };
 const TILE_EYES = { art: () => 1, black: () => 1, two: () => 2, n: (t) => t.n };
 
 /** Item 15: the tile table of the landing against the gallery and the registry. tileStyle: TILE_STYLE of src/landing/tileStyle.ts; gallery: GALLERY of
  *  src/landing/assets.data.ts; styles: the registry's; copy: {lang: the landing copy JSON}. */
-export function checkLandingTiles(tileStyle, gallery, styles, copy, out) {
+export function checkLandingTiles(tileStyle, gallery, styles, copy, out, later = LANDING_TILE_LATER) {
   const at = 'src/landing/tileStyle.ts';
   if (!isObj(tileStyle)) { out.push(`${at}: TILE_STYLE not found (the style check reads it)`); return; }
   if (!isObj(gallery)) { out.push('src/landing/assets.data.ts: GALLERY not found (the style check reads it)'); return; }
@@ -603,7 +623,8 @@ export function checkLandingTiles(tileStyle, gallery, styles, copy, out) {
     const stood = new Set(Object.values(tileStyle).map((r) => r?.id));
     for (const [id, d] of Object.entries(styles)) {
       const stages = [d.stage, ...Object.values(d.stage_by_eyes ?? {})];
-      if (d.legacy === 0 && d.tile_order > 0 && stages.some((s) => s === 'preview' || s === 'live') && !stood.has(id)) {
+      // a style of the picker whose landing tile waits (LANDING_TILE_LATER) may stand without one while no ceiling of it is live
+      if (d.legacy === 0 && d.tile_order > 0 && stages.some((s) => s === 'preview' || s === 'live') && !stood.has(id) && !(id in later && !stages.includes('live'))) {
         out.push(`${at}: no tile of the gallery stands for "${id}" (${d.name}), a style the picker shows (stage ${stages.join('/')}): add its tile to the gallery (scripts/landing_assets.json) and its row here`);
       }
     }
@@ -933,6 +954,7 @@ export async function checkStyles(root, load) {
       checkRuntimeTokens(landingJson, out);
     }
     checkLandingTiles(tileTs.TILE_STYLE, galleryTs.GALLERY, reg.styles, landingJson, out);
+    checkLandingLater(tileTs.TILE_STYLE, reg.styles, out);
     checkPictureLabels(reg.styles, landingJson, out);
   }
   checkLayouts(root, reg.styles, names, out, pageNames);

@@ -5,9 +5,9 @@ the two have exactly the same ids). Same rules for the literal as the public fil
 {} for nothing, ASCII, whole numbers, nothing after it.
 Fields of an entry (all are required):
   engine         {} while the style is planned (an id reserved, nothing to draw); else {module, design[, looks][, clean]}:
-                   module  singles | collision | universe | legacy: the engine family. Only legacy exists in the repository until the
-                           engine packages land (catalogue.engine_built tells whether a module is there: a style whose module is
-                           not built is never routed to, whatever its stage says)
+                   module  singles | collision | universe | lumen | legacy: the engine family (lumen: the light looks of one eye,
+                           2026-10-20). catalogue.engine_built tells whether a module is in the repository: a style whose module is
+                           not built is never routed to, whatever its stage says
                    design  the engine's own key for the look
                    looks   {look: stage}: looks inside one style (Universe: echo, vortex, deepfield, starfield); a look never
                            has a higher stage than its style
@@ -92,6 +92,61 @@ ENGINE = {
     },
     "solo.gold": {
         "engine": {"module": "singles", "design": "gold"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "solo.supernova": {
+        "engine": {"module": "lumen", "design": "stardust"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "solo.nebula": {
+        "engine": {"module": "lumen", "design": "nebula"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "solo.sparks": {
+        "engine": {"module": "lumen", "design": "sparks"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "solo.halo": {
+        "engine": {"module": "lumen", "design": "halo"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "solo.aurora": {
+        "engine": {"module": "lumen", "design": "aurora"},
         "design_by_eyes": {},
         "canvases": ["1:1", "4:5", "9:19.5"],
         "gate_rules": "lid",

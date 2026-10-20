@@ -133,6 +133,30 @@ PREVIEW = {
 }
 # END BAKED
 
+# ADDED = ((cost key, eyes, MASTER row, PREVIEW row), ...): the designs the planning spike never drew, measured on this repository's own code and put in the
+# spike's units through the live Radiance, measured in the same runs (one render per fresh process, Windows, one thread, 2026-10-20, scratch on drive D):
+#   MASTER: the 4096 px master as the step runner calls it (the family's preview at 4096 with the self check) from the 4096 px restorations of a blue and a dark
+#     brown eye; cold cpu = Radiance's 9.3 s x the largest ratio of the look's wall time to Radiance's on the same eye, warm = cold x 8.4 / 9.3 (Radiance's own
+#     ratio); the peaks = Radiance's 900 and 986 MB plus the look's largest increase over Radiance's on the same eye, never under Clean Iris's 620 and 706 (the
+#     grade of the 4096 px eye is the floor of every single). Measured: Radiance +819 to +822 MB, 10.9 to 12.4 s; Clean Iris +523 to +527 MB; the five looks
+#     +458 to +546 MB and 9.5 to 14.0 s, of which the art step 4.9 to 7.8 s (Radiance 6.2 to 6.3)
+#   PREVIEW: the 1024 px preview in a fresh process (cold), on new eyes and on the same eyes (the design alone, median of three), each column scaled by
+#     Radiance's (1.07 / 1.26, 0.89 / 1.32, 0.41 / 0.58); the eye's preparation is the same work for every design: Radiance's 0.48 s, and warm new = warm same
+#     + 0.48. The peaks of these previews were the same for every design (the eye's 2048 px copy dominates): Radiance's 167 MB, rounded up to 170
+# Rows here never replace a baked row (the spike's table is what the plan's section 10.3 pins); bake_costs.py leaves this block alone.
+ADDED = (
+    ("lumen.stardust", 1, (10.5, 9.5, 627, 713), (1.9, 1.58, 1.10, 0.48, 170)),
+    ("lumen.nebula", 1, (9.6, 8.7, 620, 706), (2.1, 1.66, 1.18, 0.48, 170)),
+    ("lumen.sparks", 1, (9.7, 8.8, 620, 706), (1.1, 0.96, 0.48, 0.48, 170)),
+    ("lumen.halo", 1, (8.9, 8.0, 620, 706), (0.92, 0.79, 0.31, 0.48, 170)),
+    ("lumen.aurora", 1, (9.9, 9.0, 627, 713), (1.4, 1.18, 0.70, 0.48, 170)),
+)
+for _key, _n, _master, _preview in ADDED:
+    if _key not in MASTER:
+        MASTER[_key] = {_n: _master}
+    if _key not in PREVIEW:
+        PREVIEW[_key] = {_n: _preview}
+
 # MEASURED = ((cost key, eyes, working copy side, cpu s, peak MB), ...): quiet-core seconds in the spike's units and the cold peak of a MASTER as the master step
 # runs it (preview at 4096 px with the self check) on real calibration restorations, measured on this repo's port (WP7A review fix, 2026-10-05, Windows, one thread;
 # this machine's yardstick was 0.951 of the spike's core, so the seconds are the measured ones divided by 0.951). A tuple, edited by hand with a measurement:

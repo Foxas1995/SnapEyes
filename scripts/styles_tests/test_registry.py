@@ -124,10 +124,12 @@ eng_lit = json.loads(eng_text[eng_text.index("\nENGINE = {") + len("\nENGINE = "
 check("the literal in each file is plain JSON and is what Python imports", pub_lit == R.STYLES and eng_lit == X.ENGINE
       or (real_world().get("pub_equal") is True and real_world().get("eng_equal") is True), real_world().get("error"))
 check("both files are ASCII and hold no en or em dash", all(ord(ch) < 128 for ch in pub_text + eng_text) and not re.search(DASH, pub_text + eng_text))
-check("28 ids: the 6 legacy ones live, 14 in the laboratory, 8 planned; nothing of v3 is above the laboratory",
-      len(R.STYLES) == 28 and [i for i, d in R.STYLES.items() if d["legacy"] == 1] == LEGACY
+# 2026-10-20: the light family added five styles of one eye at preview (Supernova, Nebula, Sparks, Halo, Aurora), which this world (before the cutover) holds in the
+# laboratory like every v3 style that has an engine: 33 ids, 19 in the laboratory (it said 28 and 14)
+check("33 ids: the 6 legacy ones live, 19 in the laboratory, 8 planned; nothing of v3 is above the laboratory",
+      len(R.STYLES) == 33 and [i for i, d in R.STYLES.items() if d["legacy"] == 1] == LEGACY
       and all(R.STYLES[i]["stage"] == "live" for i in LEGACY)
-      and sum(1 for d in R.STYLES.values() if d["stage"] == "lab") == 14 and sum(1 for d in R.STYLES.values() if d["stage"] == "planned") == 8,
+      and sum(1 for d in R.STYLES.values() if d["stage"] == "lab") == 19 and sum(1 for d in R.STYLES.values() if d["stage"] == "planned") == 8,
       {d["stage"] for d in R.STYLES.values()})
 check("the two literals have the same ids; a planned style has no engine, every other one has",
       set(R.STYLES) == set(X.ENGINE) and all((R.STYLES[i]["stage"] == "planned") == (not X.ENGINE[i]["engine"]) for i in R.STYLES))
@@ -146,8 +148,9 @@ check("the owner's price keys are unchanged", pay.PRICE_KEYS == ("one_eye_studio
       and all(set(m["prices"]) == set(pay.PRICE_KEYS) for m in MK.MARKETS.values()))
 check("no heart and no pet symbol in any id, slug or name",
       not [w for d in R.STYLES.values() for w in re.split(r"[^a-z]+", (d["slug"] + " " + d["name"]).lower()) if w in ("heart", "hearts", "love", "cupid", "paw", "paws", "dog", "cat", "bone")])
-check("slugs are unique, except that a legacy id and a v3 id of one name share one",
-      len({d["slug"] for d in R.STYLES.values()}) == 27 and [i for i, d in R.STYLES.items() if d["slug"] == "celestial-gold"] == ["solo.gold", "celestial_gold"])
+check("slugs are unique, except that a legacy id and a v3 id of one name share one (Celestial Gold, and since 2026-10-20 Supernova: 33 ids, 31 slugs)",
+      len({d["slug"] for d in R.STYLES.values()}) == 31 and [i for i, d in R.STYLES.items() if d["slug"] == "celestial-gold"] == ["solo.gold", "celestial_gold"]
+      and [i for i, d in R.STYLES.items() if d["slug"] == "supernova"] == ["solo.supernova", "supernova"])
 check("registry hash: 12 hex digits, the hash of the canonical ASCII text",
       re.fullmatch(r"[0-9a-f]{12}", C.registry_hash()) and C.registry_hash() == hashlib.sha256(C.canonical().encode("ascii")).hexdigest()[:12])
 check("tile_order is unique per group among legacy ids and among v3 ids",
@@ -278,11 +281,13 @@ POLICY_TABLE = {         # the gate policy of every id of the registry after the
     "solo.clean": "hard", "solo.powder": "advisory", "solo.universe": "hard", "solo.splash": "advisory", "solo.elements": "advisory", "solo.radiance": "advisory", "solo.gold": "hard",
     "duo.collision_infinity": "hard", "duo.clean": "hard", "duo.kiss_collision": "hard", "duo.universe": "hard", "duo.reflection": "hard", "duo.radiance": "advisory", "duo.gold": "advisory",
     "grp.collision": "hard", "grp.chain": "hard", "grp.universe": "hard", "grp.reflection": "hard", "grp.radiance": "advisory", "grp.clean": "hard", "pet.solo": "hard", "pet.clean": "hard",
+    # 2026-10-20: the five styles of the light family, advisory as Radiance is (light round the limb, nothing over the iris)
+    "solo.supernova": "advisory", "solo.nebula": "advisory", "solo.sparks": "advisory", "solo.halo": "advisory", "solo.aurora": "advisory",
     **{i: "none" for i in LEGACY},
 }
 check("the gate policy of every id of the registry is the table: only Clean Iris and Celestial Gold moved (advisory to hard, 2026-10-14); Universe, the pairs, the families and the pet ids are hard as before, "
-      "Powder Burst, Splash, Elements, Radiance and the two planned advisory pairs and groups still only warn, the six legacy ids have none",
-      {i: d["gate"] for i, d in R.STYLES.items()} == POLICY_TABLE and len(POLICY_TABLE) == len(R.STYLES) == 28, {i: d["gate"] for i, d in R.STYLES.items() if POLICY_TABLE.get(i) != d["gate"]})
+      "Powder Burst, Splash, Elements, Radiance, the five styles of the light family and the two planned advisory pairs and groups only warn, the six legacy ids have none",
+      {i: d["gate"] for i, d in R.STYLES.items()} == POLICY_TABLE and len(POLICY_TABLE) == len(R.STYLES) == 33, {i: d["gate"] for i, d in R.STYLES.items() if POLICY_TABLE.get(i) != d["gate"]})
 # 2026-10-14, the owner's decision: Clean Iris and Celestial Gold are HARD (they were advisory: a failing eye only warned and the set could still be bought, so a delivered file kept
 # lashes and lid skin at the rim). The rule is the same for every hard style (catalogue._problem); what is new is who it holds back: a one-eye set whose eye fails the lid rule.
 # Powder Burst, Splash and Radiance stay advisory, Universe stays hard with the fill rule.
@@ -596,7 +601,7 @@ for sid in R.STYLES:
             n_checked += 1
             if not (pay.price_cents(eyes, sid, m) == abtest.ladder_price(pr, eyes, sid) == want):
                 bad.append((sid, m, eyes, pay.price_cents(eyes, sid, m), abtest.ladder_price(pr, eyes, sid), want))
-check("pay.price_cents and abtest.ladder_price equal the rule for every id (28) x 4 markets x 1 to 8 eyes", not bad and n_checked == 28 * 4 * 8, bad[:3])
+check("pay.price_cents and abtest.ladder_price equal the rule for every id (33 since the light family) x 4 markets x 1 to 8 eyes", not bad and n_checked == 33 * 4 * 8, bad[:3])
 lad = []
 for key, e in XP.EXPERIMENTS.items():
     for name, v in e["variants"].items():
@@ -609,7 +614,7 @@ check("abtest.ladder_price equals the rule on every ladder of every price experi
 if probe:
     tbad = [r for r in probe["table"] if not (r[3] == r[4] == r[5] == expected(r[0], r[2], MK.MARKETS[r[1]]["prices"]) == pay.price_cents(r[2], r[0], r[1]))]
     check("the site's priceMinor, check_prices priceRule and check_experiments ladderRule give the server's price for every id x market x 1 to 8 eyes",
-          not tbad and len(probe["table"]) == 896, tbad[:3])
+          not tbad and len(probe["table"]) == 33 * 4 * 8, tbad[:3])          # 2026-10-20: 33 ids (the light family), it was 28 x 4 x 8 = 896
     lbad = [r for r in probe["ladders"] if not (r[5] == r[6] == expected(r[0], r[4], XP.EXPERIMENTS[r[1]]["variants"][r[2]]["prices"][r[3]]))]
     check("the same on every experiment ladder (priceMinor fed the ladder, as the server's answer feeds it)", not lbad and probe["ladders"], lbad[:3])
     sbad = []
@@ -630,7 +635,7 @@ if probe:
 # ============================================================================================ 5. the build check
 section("5. scripts/check_styles.mjs: the repository passes, and each refusal is exact")
 rc, so, se = run_node(["scripts/check_styles.mjs"])
-check("npm run check:styles passes on the repository and prints the registry hash (item 11)", rc == 0 and "styles registry ok: 28 ids" in so, (rc, so, se[-500:]))
+check("npm run check:styles passes on the repository and prints the registry hash (item 11)", rc == 0 and "styles registry ok: 33 ids" in so, (rc, so, se[-500:]))
 mh = re.search(r"registry hash ([0-9a-f]{12})", so)
 check("the hash the build prints is the hash the server computes (node and Python make the same canonical text)",
       bool(mh) and mh.group(1) == real_world().get("hash"), (mh and mh.group(1), real_world().get("hash")))

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """api/_lib/styles: the v3 style engine package. The shared foundation (core, layouts, text, plates, atlas, costs, selfcheck) lives in
-this package; each engine family is a sub package of its own (singles, collision, universe) that lands in its own work package.
+this package; each engine family is a sub package of its own (singles, collision, universe, lumen) that lands in its own work package.
 
 THIS FILE IMPORTS NO ENGINE AND NO FOUNDATION MODULE. enhance, checkout, analyze and the webhook import the package for the profile
 and the plan only, so an engine (numpy and Pillow heavy, plates, atlases) is loaded lazily, per family, on first use, and
@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import importlib
 
-ENGINE_FAMILIES = ("singles", "collision", "universe")      # the engine packages; legacy styles never come through here
+ENGINE_FAMILIES = ("singles", "collision", "universe", "lumen")      # the engine packages (lumen: the light looks of one eye); legacy styles never come through here
 
 # The version of the engine's PICTURES. It changes if and only if a golden changes (scripts/styles_tests/data/engine_v.json records it with the
 # hashes of the golden files and v3steps compares them): a plan records the version it was made under and the master step holds an order whose

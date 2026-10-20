@@ -58,3 +58,4 @@ v3counter:scripts/styles_tests:test_counter.py::pre
 v3traffic:scripts/styles_tests:test_traffic.py
 v3feedback:scripts/styles_tests:test_feedback.py
 v3lang:scripts/styles_tests:test_lang_switch.py
+v3lumen:scripts/styles_tests:test_lumen.py

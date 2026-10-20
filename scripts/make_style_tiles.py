@@ -45,9 +45,18 @@ SETS = {
     "clean-infinity": ("own", "yellow"),
     "family-colours": ("own", "yellow", "brown"),
 }
+ONE_EYE = ("own",)          # a style of one eye that SETS does not name is shown on the owner's own eye, as every style of one eye is
 WIDTHS = ((800, 80), (480, 78))
 SIDE = 1024
 NO_KEYS = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_KEY")
+
+
+def eye_set(style_id, C):
+    """The eyes a style's tile is shown on: its row of SETS, else the owner's own eye for a style of one eye (None: a style of more eyes needs its row)."""
+    keys = SETS.get(C.slug_of(style_id))
+    if keys is None and C.eyes_range(style_id) == (1, 1):
+        keys = ONE_EYE
+    return keys
 
 
 def shown_styles():
@@ -72,7 +81,7 @@ def load_eyes(folder):
 
 
 def make_one(style_id, raws, ST, C, SCORE):
-    keys = SETS[C.slug_of(style_id)]
+    keys = eye_set(style_id, C)
     n = len(keys)
     eyes = []
     for k in keys:
@@ -98,9 +107,9 @@ def main(argv=None):
     shown = shown_styles()
     if a.list:
         for i in shown:
-            print(i, C.slug_of(i), "->", "+".join(SETS.get(C.slug_of(i), ("?",))))
+            print(i, C.slug_of(i), "->", "+".join(eye_set(i, C) or ("?",)))
         return 0
-    missing = [C.slug_of(i) for i in shown if C.slug_of(i) not in SETS]
+    missing = [C.slug_of(i) for i in shown if eye_set(i, C) is None]
     if missing:
         sys.exit(f"make_style_tiles: no eye set for {', '.join(missing)}: add the slug to SETS")
     if not a.eyes:

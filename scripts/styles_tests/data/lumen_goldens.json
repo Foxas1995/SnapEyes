@@ -1,0 +1,944 @@
+{
+ "cases": {
+  "aurora.blue_round.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "aurora": {
+     "class": "own",
+     "factor": 1,
+     "partner_rgb": [
+      0.994,
+      0.435,
+      0.716
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 12783837230065542443,
+   "sha": "3a6c432e5e59a667559ed3075f97d25333ba8f4dba87f2baa966fff388a3e68c",
+   "w": 1024
+  },
+  "aurora.blue_round.1:1.4096": {
+   "cls": "own",
+   "facts": {
+    "aurora": {
+     "class": "own",
+     "factor": 3,
+     "partner_rgb": [
+      0.994,
+      0.435,
+      0.716
+     ]
+    }
+   },
+   "h": 4096,
+   "seed": 12783837230065542443,
+   "sha": "74ceddd42bd086090959fac880ae3b436b204778c420d642a19547ac45b54d29",
+   "w": 4096
+  },
+  "aurora.blue_round.1:1.512": {
+   "cls": "own",
+   "facts": {
+    "aurora": {
+     "class": "own",
+     "factor": 1,
+     "partner_rgb": [
+      0.994,
+      0.435,
+      0.716
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 12783837230065542443,
+   "sha": "5ac6c881da287eea3c517b4c1e4b8affc7f6b09f6b3bcf5135e5394c97dce621",
+   "w": 512
+  },
+  "aurora.blue_round.4:5.512.text": {
+   "cls": "own",
+   "facts": {
+    "aurora": {
+     "class": "own",
+     "factor": 1,
+     "partner_rgb": [
+      0.994,
+      0.435,
+      0.716
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 12783837230065542443,
+   "sha": "31d0db441763ca39facec2baca7fc75019bfa56bf8045e3e621e9990699b667c",
+   "w": 410
+  },
+  "aurora.dark_brown_round.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "aurora": {
+     "class": "dark_brown",
+     "factor": 1,
+     "partner_rgb": [
+      0.695,
+      0.187,
+      0.571
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 2147363036596696958,
+   "sha": "e63d7fe9cd5ae15576f0b843e01af3a4812c71a4baf41d3417c697a871db5cf7",
+   "w": 1024
+  },
+  "aurora.dark_brown_round.1:1.512": {
+   "cls": "dark_brown",
+   "facts": {
+    "aurora": {
+     "class": "dark_brown",
+     "factor": 1,
+     "partner_rgb": [
+      0.695,
+      0.187,
+      0.571
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 2147363036596696958,
+   "sha": "560d2eaa9b3def7fd43478400b63190e0d9fac7dfa87d8b5de7256fceabbed31",
+   "w": 512
+  },
+  "aurora.dark_brown_round.1:1.512.text": {
+   "cls": "dark_brown",
+   "facts": {
+    "aurora": {
+     "class": "dark_brown",
+     "factor": 1,
+     "partner_rgb": [
+      0.695,
+      0.187,
+      0.571
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 2147363036596696958,
+   "sha": "a942f81e44496c1cf4a5150d2a8659774fe454bcf6f00df838693a0d6c99a509",
+   "w": 512
+  },
+  "aurora.grey_round.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "aurora": {
+     "class": "grey",
+     "factor": 1,
+     "partner_rgb": [
+      0.813,
+      0.569,
+      0.678
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 15448534748537295228,
+   "sha": "69fc129ac234c362ccd9c59dd87bb4b426f52b74241d8b659f2ebf198f28c5fa",
+   "w": 1024
+  },
+  "aurora.grey_round.1:1.512": {
+   "cls": "grey",
+   "facts": {
+    "aurora": {
+     "class": "grey",
+     "factor": 1,
+     "partner_rgb": [
+      0.813,
+      0.569,
+      0.678
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 15448534748537295228,
+   "sha": "3f450b7413191ede8b446618ac47dede7ecc5673646954c85f1e1b499d386672",
+   "w": 512
+  },
+  "aurora.grey_round.9:19.5.512.text": {
+   "cls": "grey",
+   "facts": {
+    "aurora": {
+     "class": "grey",
+     "factor": 1,
+     "partner_rgb": [
+      0.813,
+      0.569,
+      0.678
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 15448534748537295228,
+   "sha": "c6bf309e37484f9a8dd6eb4314a83c0220632003febc3267b4613865206cc22f",
+   "w": 236
+  },
+  "halo.blue_round.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "halo": {
+     "class": "own",
+     "factor": 2,
+     "mid_rgb": [
+      0.096,
+      0.689,
+      1.0
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 13697943839542698482,
+   "sha": "1402a36fb91a62186074164bd3335a9aa99252db432b4bd9a157ee5800df29a7",
+   "w": 1024
+  },
+  "halo.blue_round.1:1.4096": {
+   "cls": "own",
+   "facts": {
+    "halo": {
+     "class": "own",
+     "factor": 8,
+     "mid_rgb": [
+      0.096,
+      0.689,
+      1.0
+     ]
+    }
+   },
+   "h": 4096,
+   "seed": 13697943839542698482,
+   "sha": "2329c30061ecb3dfdfaa2d432fe1438c125a210edde749e8cca69608aeaca329",
+   "w": 4096
+  },
+  "halo.blue_round.1:1.512": {
+   "cls": "own",
+   "facts": {
+    "halo": {
+     "class": "own",
+     "factor": 1,
+     "mid_rgb": [
+      0.096,
+      0.689,
+      1.0
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 13697943839542698482,
+   "sha": "a61f812cc77d1ac437a28ff9f8b85bab02e1133a5f4501809dc825dcb68b40d5",
+   "w": 512
+  },
+  "halo.blue_round.4:5.512.text": {
+   "cls": "own",
+   "facts": {
+    "halo": {
+     "class": "own",
+     "factor": 1,
+     "mid_rgb": [
+      0.096,
+      0.689,
+      1.0
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 13697943839542698482,
+   "sha": "539bbd6adfff07b17f35d6a19087c3b7161a6e0154824f5bfeca3075d69a043e",
+   "w": 410
+  },
+  "halo.dark_brown_round.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "halo": {
+     "class": "dark_brown",
+     "factor": 2,
+     "mid_rgb": [
+      0.649,
+      0.341,
+      0.107
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 14019351393659360912,
+   "sha": "39e0bc40703c5d579ed229b8c6c5ea5eab38ed1822ed186915475e18d70b5595",
+   "w": 1024
+  },
+  "halo.dark_brown_round.1:1.512": {
+   "cls": "dark_brown",
+   "facts": {
+    "halo": {
+     "class": "dark_brown",
+     "factor": 1,
+     "mid_rgb": [
+      0.649,
+      0.341,
+      0.107
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 14019351393659360912,
+   "sha": "89508542e746904175fc17a6d273a968dbc19b6a6127302000577ba7b9f5c57c",
+   "w": 512
+  },
+  "halo.dark_brown_round.1:1.512.text": {
+   "cls": "dark_brown",
+   "facts": {
+    "halo": {
+     "class": "dark_brown",
+     "factor": 1,
+     "mid_rgb": [
+      0.649,
+      0.341,
+      0.107
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 14019351393659360912,
+   "sha": "cb34385c12465b6dce07e040f91cf0f37f3371c17f4e32508a1bd6c2537675cd",
+   "w": 512
+  },
+  "halo.grey_round.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "halo": {
+     "class": "grey",
+     "factor": 2,
+     "mid_rgb": [
+      0.571,
+      0.672,
+      0.773
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 11080882587000826920,
+   "sha": "d57b530cb8eea3a6eaa90a246732eb0418b553a9451cc28de9d6857bc50c4769",
+   "w": 1024
+  },
+  "halo.grey_round.1:1.512": {
+   "cls": "grey",
+   "facts": {
+    "halo": {
+     "class": "grey",
+     "factor": 1,
+     "mid_rgb": [
+      0.571,
+      0.672,
+      0.773
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 11080882587000826920,
+   "sha": "c25be93ad8af394af37ea2aa9315eeb93013072d8c69718e234e04c5ee2098db",
+   "w": 512
+  },
+  "halo.grey_round.9:19.5.512.text": {
+   "cls": "grey",
+   "facts": {
+    "halo": {
+     "class": "grey",
+     "factor": 1,
+     "mid_rgb": [
+      0.571,
+      0.672,
+      0.773
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 11080882587000826920,
+   "sha": "da8f5876f644ed18fda706b6de38f8c9fdc35198731ca70ab1a802ceea6b8f8d",
+   "w": 236
+  },
+  "nebula.blue_round.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "cool"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      328.4
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 4125699241587591979,
+   "sha": "53b0bec0ec74c50a89bb2f436520df8dc868d2972bcf79c416523aa5657d4f1a",
+   "w": 1024
+  },
+  "nebula.blue_round.1:1.4096": {
+   "cls": "own",
+   "facts": {
+    "nebula": {
+     "factor": 3,
+     "family": [
+      "cool"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      328.4
+     ]
+    }
+   },
+   "h": 4096,
+   "seed": 4125699241587591979,
+   "sha": "a1395095b2869ae3ae970ed7c09e341e70cbb04ef994f10ce1bd881784157cae",
+   "w": 4096
+  },
+  "nebula.blue_round.1:1.512": {
+   "cls": "own",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "cool"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      328.4
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 4125699241587591979,
+   "sha": "c4335a519e2e6c59b21c740de6cc2e519a28004d86d913c1b9f97bd22d5565eb",
+   "w": 512
+  },
+  "nebula.blue_round.4:5.512.text": {
+   "cls": "own",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "cool"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      328.4
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 4125699241587591979,
+   "sha": "34562a4ec70180f3abbf8a95c5594644864072a6e219c09b0a08785b76108bf4",
+   "w": 410
+  },
+  "nebula.dark_brown_round.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "warm"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      218.0
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 16666310958598232226,
+   "sha": "fd0f316e2c12e6ea737ddf8148644ee85b988610295af5be0a9455c4310e5dcf",
+   "w": 1024
+  },
+  "nebula.dark_brown_round.1:1.512": {
+   "cls": "dark_brown",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "warm"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      218.0
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 16666310958598232226,
+   "sha": "3393ccbc30a8926a633064866b0c7494d97b3cca6a543c5c97e1ff7d219c8606",
+   "w": 512
+  },
+  "nebula.dark_brown_round.1:1.512.text": {
+   "cls": "dark_brown",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "warm"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      218.0
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 16666310958598232226,
+   "sha": "118f5aac5d570e1c5a60b3182219e7e97e87af3dd6f2afe86f95b2115194f2cc",
+   "w": 512
+  },
+  "nebula.grey_round.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "cool"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      321.7
+     ]
+    }
+   },
+   "h": 1024,
+   "seed": 3314106494379865511,
+   "sha": "8d0b9ddafb5b6d8bceae3c193cecbd009604fc562cfcc86ff65f9fe9321665bc",
+   "w": 1024
+  },
+  "nebula.grey_round.1:1.512": {
+   "cls": "grey",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "cool"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      321.7
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 3314106494379865511,
+   "sha": "9b75835bf7ff506b15f403a8afd972a553dfa52fb2e6c7424a41ac3ad8e57da8",
+   "w": 512
+  },
+  "nebula.grey_round.9:19.5.512.text": {
+   "cls": "grey",
+   "facts": {
+    "nebula": {
+     "factor": 1,
+     "family": [
+      "cool"
+     ],
+     "how": [
+      "turn"
+     ],
+     "partner_hue": [
+      321.7
+     ]
+    }
+   },
+   "h": 512,
+   "seed": 3314106494379865511,
+   "sha": "13f5224a83df8e0071aa4b892b09324d79e274469d37cdce5f657ed36cee6a32",
+   "w": 236
+  },
+  "sparks.blue_round.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "sparks": {
+     "class": "own",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -57.7
+    }
+   },
+   "h": 1024,
+   "seed": 3489418849615325976,
+   "sha": "6c4348669c3d2a76a288aed3694c2229eac1e4018e8ddaa06059db16580760ab",
+   "w": 1024
+  },
+  "sparks.blue_round.1:1.4096": {
+   "cls": "own",
+   "facts": {
+    "sparks": {
+     "class": "own",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -57.7
+    }
+   },
+   "h": 4096,
+   "seed": 3489418849615325976,
+   "sha": "ca427e90d1feadf94a79084349e5416b780d5ac1646b3c7b18c0e3a67f3c5553",
+   "w": 4096
+  },
+  "sparks.blue_round.1:1.512": {
+   "cls": "own",
+   "facts": {
+    "sparks": {
+     "class": "own",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -57.7
+    }
+   },
+   "h": 512,
+   "seed": 3489418849615325976,
+   "sha": "ca09da6fc867d11ff29ec96f31c2ac0aead295de6913b14caff6cd4331fce90e",
+   "w": 512
+  },
+  "sparks.blue_round.4:5.512.text": {
+   "cls": "own",
+   "facts": {
+    "sparks": {
+     "class": "own",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -57.7
+    }
+   },
+   "h": 512,
+   "seed": 3489418849615325976,
+   "sha": "ae89c64e4b76d8edcc5c8c322c6b0f461f33787e44c4ba06d5681792184b155f",
+   "w": 410
+  },
+  "sparks.dark_brown_round.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "sparks": {
+     "class": "dark_brown",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -59.1
+    }
+   },
+   "h": 1024,
+   "seed": 6558783998147849548,
+   "sha": "c606aa7274411210e0926b010f81d96bac95f25f4fc7e2c934f573a765448aa4",
+   "w": 1024
+  },
+  "sparks.dark_brown_round.1:1.512": {
+   "cls": "dark_brown",
+   "facts": {
+    "sparks": {
+     "class": "dark_brown",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -59.1
+    }
+   },
+   "h": 512,
+   "seed": 6558783998147849548,
+   "sha": "0968fb15792075faecad75e4e553f4a0889cb61789ca85bab8f3065bd81346b5",
+   "w": 512
+  },
+  "sparks.dark_brown_round.1:1.512.text": {
+   "cls": "dark_brown",
+   "facts": {
+    "sparks": {
+     "class": "dark_brown",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -59.1
+    }
+   },
+   "h": 512,
+   "seed": 6558783998147849548,
+   "sha": "99db38857d5c4614fd0e72793be7e2931f401161e0c437c0592f8ce222877042",
+   "w": 512
+  },
+  "sparks.grey_round.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "sparks": {
+     "class": "grey",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -69.3
+    }
+   },
+   "h": 1024,
+   "seed": 16342459337413067449,
+   "sha": "cc43ca9afec8d7d8d4ee174211e33cdfb404c3ef91faeee4fb0b181b9fbab591",
+   "w": 1024
+  },
+  "sparks.grey_round.1:1.512": {
+   "cls": "grey",
+   "facts": {
+    "sparks": {
+     "class": "grey",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -69.3
+    }
+   },
+   "h": 512,
+   "seed": 16342459337413067449,
+   "sha": "4946ae8187d476f6f5ba4095b27a96ca8fb64db09e7a305c621d3542e996aff9",
+   "w": 512
+  },
+  "sparks.grey_round.9:19.5.512.text": {
+   "cls": "grey",
+   "facts": {
+    "sparks": {
+     "class": "grey",
+     "n": [
+      430,
+      1700,
+      38
+     ],
+     "wind_deg": -69.3
+    }
+   },
+   "h": 512,
+   "seed": 16342459337413067449,
+   "sha": "071822bc14faa390113486b6a49e2dbaee6c1a5f052b154662e5b2f977a6dc47",
+   "w": 236
+  },
+  "stardust.blue_round.1:1.1024": {
+   "cls": "own",
+   "facts": {
+    "stardust": [
+     {
+      "class": "own",
+      "filaments": 504,
+      "grains": 38813,
+      "jets": 18,
+      "sparkles": 303
+     }
+    ]
+   },
+   "h": 1024,
+   "seed": 3651286146176547483,
+   "sha": "2a5c0efcb13806eae36dd4727796f0418be1e69849d68b4510c1d548b364f35f",
+   "w": 1024
+  },
+  "stardust.blue_round.1:1.4096": {
+   "cls": "own",
+   "facts": {
+    "stardust": [
+     {
+      "class": "own",
+      "filaments": 504,
+      "grains": 38813,
+      "jets": 18,
+      "sparkles": 303
+     }
+    ]
+   },
+   "h": 4096,
+   "seed": 3651286146176547483,
+   "sha": "0c90cf0a79ce4d0208fac505993c5ed480c40cd4e5f9eb0afd23fb93d70f6897",
+   "w": 4096
+  },
+  "stardust.blue_round.1:1.512": {
+   "cls": "own",
+   "facts": {
+    "stardust": [
+     {
+      "class": "own",
+      "filaments": 504,
+      "grains": 38813,
+      "jets": 18,
+      "sparkles": 303
+     }
+    ]
+   },
+   "h": 512,
+   "seed": 3651286146176547483,
+   "sha": "577d5183441fccaec6152ae6691b64a7ede6bd537798c27faae17d88e607b30e",
+   "w": 512
+  },
+  "stardust.blue_round.4:5.512.text": {
+   "cls": "own",
+   "facts": {
+    "stardust": [
+     {
+      "class": "own",
+      "filaments": 617,
+      "grains": 48792,
+      "jets": 18,
+      "sparkles": 419
+     }
+    ]
+   },
+   "h": 512,
+   "seed": 3651286146176547483,
+   "sha": "a59314254f699d14a6c00539a48f36d52169e19cd11ed95d35afaf5c011a40ad",
+   "w": 410
+  },
+  "stardust.dark_brown_round.1:1.1024": {
+   "cls": "dark_brown",
+   "facts": {
+    "stardust": [
+     {
+      "class": "dark_brown",
+      "filaments": 520,
+      "grains": 42000,
+      "jets": 18,
+      "sparkles": 340
+     }
+    ]
+   },
+   "h": 1024,
+   "seed": 1351449962002132829,
+   "sha": "9debcca5a1bcee647baa7b8ca780ca9402265b48a7cfd382a5f4595d02b04290",
+   "w": 1024
+  },
+  "stardust.dark_brown_round.1:1.512": {
+   "cls": "dark_brown",
+   "facts": {
+    "stardust": [
+     {
+      "class": "dark_brown",
+      "filaments": 520,
+      "grains": 42000,
+      "jets": 18,
+      "sparkles": 340
+     }
+    ]
+   },
+   "h": 512,
+   "seed": 1351449962002132829,
+   "sha": "a186aad333bc2ae6fa821a045258b270e5c65a9d79f4f3563d4a41d7383aa401",
+   "w": 512
+  },
+  "stardust.dark_brown_round.1:1.512.text": {
+   "cls": "dark_brown",
+   "facts": {
+    "stardust": [
+     {
+      "class": "dark_brown",
+      "filaments": 520,
+      "grains": 42000,
+      "jets": 18,
+      "sparkles": 340
+     }
+    ]
+   },
+   "h": 512,
+   "seed": 1351449962002132829,
+   "sha": "158fee06e2395fac80a69b3bc2eece75dd2bba6bf141bc0af5bc6ef52bdab0a6",
+   "w": 512
+  },
+  "stardust.grey_round.1:1.1024": {
+   "cls": "grey",
+   "facts": {
+    "stardust": [
+     {
+      "class": "grey",
+      "filaments": 444,
+      "grains": 36228,
+      "jets": 18,
+      "sparkles": 278
+     }
+    ]
+   },
+   "h": 1024,
+   "seed": 14880562763415134684,
+   "sha": "6dd1fec78ba11f4f3d628d99877ec9329490583f299c4ddaa167ecaed4f3bae7",
+   "w": 1024
+  },
+  "stardust.grey_round.1:1.512": {
+   "cls": "grey",
+   "facts": {
+    "stardust": [
+     {
+      "class": "grey",
+      "filaments": 444,
+      "grains": 36228,
+      "jets": 18,
+      "sparkles": 278
+     }
+    ]
+   },
+   "h": 512,
+   "seed": 14880562763415134684,
+   "sha": "5c8332fb3effbf98c24f604d99b1db92b272338a9101b8d59cdccbd9b4abecee",
+   "w": 512
+  },
+  "stardust.grey_round.9:19.5.512.text": {
+   "cls": "grey",
+   "facts": {
+    "stardust": [
+     {
+      "class": "grey",
+      "filaments": 980,
+      "grains": 78170,
+      "jets": 18,
+      "sparkles": 645
+     }
+    ]
+   },
+   "h": 512,
+   "seed": 14880562763415134684,
+   "sha": "c962010f30f4237e507a80c34b49083a3c8cb4b69d492758dad012a642cfbbb5",
+   "w": 236
+  }
+ },
+ "family": "lumen",
+ "fixtures": {
+  "blue_round": "fd37d54ef6cccd707e85949f5567db5dc9d5518265bf4cd942acc6b44561cefd",
+  "dark_brown_round": "db098e0c793e0392e5516794a266a15dd021f6a9031a37ffb211d2aa94c4f750",
+  "grey_round": "42f0adad5ea8db965a21465cb6e5eb8c3cd6abf06715ac9fd98f386313894529"
+ },
+ "machine": {
+  "numpy": "2.4.4",
+  "pillow": "12.2.0"
+ }
+}

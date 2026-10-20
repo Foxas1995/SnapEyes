@@ -242,7 +242,9 @@ PASS_L0 = {"L0": {"mean": 4.02, "min_axis": 3.84, "by": "Art Director"}}        
 # ============================================================================================ 1. the release-1 table
 section("1. the release-1 catalogue: every id at the ceiling the specification gives it")
 LIVE1 = ["solo.clean", "solo.powder", "solo.universe", "solo.splash", "solo.gold"]
-PREVIEW = ["solo.radiance", "duo.kiss_collision", "duo.collision_infinity", "duo.clean"]
+# 2026-10-20: the five styles of the light family (api/_lib/styles/lumen) joined the preview ceiling: shown in /try and its picker, not on the landing, not orderable
+LUMEN = ["solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora"]
+PREVIEW = ["solo.radiance", "duo.kiss_collision", "duo.collision_infinity", "duo.clean"] + LUMEN
 LAB = ["solo.elements", "duo.universe", "grp.chain", "grp.universe"]
 PLANNED = ["duo.reflection", "duo.radiance", "duo.gold", "grp.reflection", "grp.radiance", "grp.clean", "pet.solo", "pet.clean"]
 
@@ -252,8 +254,8 @@ def ceilings(i):
     return [CT.ceiling(i, n) for n in range(lo, hi + 1)]
 
 
-check("every id of the registry is classified here once: 5 live, 4 preview, grp.collision, 4 laboratory, 8 planned, 6 legacy (28)",
-      sorted(LIVE1 + PREVIEW + LAB + PLANNED + ["grp.collision"] + LEGACY) == sorted(CT.ids()) and len(CT.ids()) == 28, sorted(set(CT.ids()) - set(LIVE1 + PREVIEW + LAB + PLANNED + LEGACY)))
+check("every id of the registry is classified here once: 5 live, 9 preview (the light family's five since 2026-10-20), grp.collision, 4 laboratory, 8 planned, 6 legacy (33)",
+      sorted(LIVE1 + PREVIEW + LAB + PLANNED + ["grp.collision"] + LEGACY) == sorted(CT.ids()) and len(CT.ids()) == 33, sorted(set(CT.ids()) - set(LIVE1 + PREVIEW + LAB + PLANNED + LEGACY)))
 check("singles at live: Clean Iris, Powder Burst, Universe (Echo and Vortex), Splash and Celestial Gold are live for one eye (the owner's release-1 singles)",
       all(CT.ceiling(i, 1) == "live" for i in LIVE1) and [CT.name_of(i) for i in LIVE1] == ["Clean Iris", "Powder Burst", "Universe", "Splash", "Celestial Gold"], [CT.ceiling(i, 1) for i in LIVE1])
 check("Family Colours: live for three eyes (the Trio, which opens alone: 1.6.3), preview for four to eight (Clean Family and DG4 come first)",
@@ -267,8 +269,9 @@ check("the six legacy ids are RETIRED for 1 to 8 eyes (a ceiling of retired is f
 looks = CT.engine_for("solo.universe", 1)["looks"]
 check("Universe: Echo and Vortex are live looks, Deep Field and Starfield stay in the laboratory (a look is never above its style)",
       looks == {"echo": "live", "vortex": "live", "deepfield": "lab", "starfield": "lab"}, looks)
-check("no style shown to customers is a heart, a pet or a study: the shown ids are exactly the ten of the landing's gate table (6 + 3 + the Family tile)",
-      sorted(i for i in V3 if any(c in ("preview", "live") for c in ceilings(i))) == sorted(LIVE1 + PREVIEW + ["grp.collision"]) and len(LIVE1 + PREVIEW + ["grp.collision"]) == 10)
+check("no style shown to customers is a heart, a pet or a study: the shown ids are exactly the ten of the landing's gate table (6 + 3 + the Family tile) and the five of the light "
+      "family that /try shows (2026-10-20: they wait for their landing tile, scripts/check_styles.mjs LANDING_TILE_LATER)",
+      sorted(i for i in V3 if any(c in ("preview", "live") for c in ceilings(i))) == sorted(LIVE1 + PREVIEW + ["grp.collision"]) and len(LIVE1 + PREVIEW + ["grp.collision"]) == 15)
 check("the price classes did not move: Clean Iris is the one style of the black class (the class the terms row names), the others are art, and the keys are unchanged",
       [i for i in V3 if CT.is_black(i) and CT.ceiling(i, CT.eyes_range(i)[0]) != "planned"] == ["solo.clean"] and tuple(pay.PRICE_KEYS) == ("one_eye_studio_black", "one_eye_art", "two_eyes", "each_further_eye")
       and tuple(abtest.PRICE_KEYS) == tuple(pay.PRICE_KEYS), "")
@@ -324,8 +327,8 @@ check("... it refuses a live ceiling with no default, a default of live, a legac
       and any("still live beside live v3" in p for p in g.get("a legacy id still live beside live v3 styles", []))
       and any("legacy style and the v3 styles are live" in p for p in g.get("a legacy default style beside live v3 styles", [])), g)
 r_build = subprocess.run([NODE, os.path.join(REPO, "scripts", "check_styles.mjs")], cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=300)
-check("the whole style check passes on the committed tree and prints the cutover's registry (5 preview, 5 live, 6 retired)",
-      r_build.returncode == 0 and "5 preview, 5 live, 6 retired" in r_build.stdout, (r_build.returncode, r_build.stdout[-300:], r_build.stderr[-300:]))
+check("the whole style check passes on the committed tree and prints the cutover's registry (10 preview with the light family's five, 5 live, 6 retired)",
+      r_build.returncode == 0 and "10 preview, 5 live, 6 retired" in r_build.stdout, (r_build.returncode, r_build.stdout[-300:], r_build.stderr[-300:]))
 
 # ============================================================================================ 3. before the owner's tick
 section("3. before the owner's tick: nothing can be bought, everything can be looked at")
@@ -337,21 +340,21 @@ check("every release-1 style can be PREVIEWED (a customer sees the tile, the fre
       all(CT.previewable(i, 1) for i in LIVE1 + ["solo.radiance"]) and all(CT.previewable(i, 2) for i in ("duo.kiss_collision", "duo.collision_infinity", "duo.clean"))
       and all(CT.previewable("grp.collision", n) for n in range(3, 9)) and not any(CT.previewable(i, 1) for i in ("solo.elements",) + tuple(LEGACY))
       and not CT.previewable("grp.chain", 3) and not CT.previewable("grp.clean", 3), "")
-check("the tiles: six for one eye (Powder Burst first, Clean Iris last), three for two eyes, one for three to eight, all at preview; none is the recommended tile",
-      [t["id"] for t in CT.tiles_for(1)] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean"]
+check("the tiles: eleven for one eye (Powder Burst first, Clean Iris sixth, then the light family's five), three for two eyes, one for three to eight, all at preview; none is the recommended tile",
+      [t["id"] for t in CT.tiles_for(1)] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean"] + LUMEN
       and [t["id"] for t in CT.tiles_for(2)] == ["duo.kiss_collision", "duo.collision_infinity", "duo.clean"]
       and all([t["id"] for t in CT.tiles_for(n)] == ["grp.collision"] for n in range(3, 9))
       and all(t["stage"] == "preview" for n in range(1, 9) for t in CT.tiles_for(n)) and all(CT.tile_list(n)["pick"] is None for n in range(1, 9)), "")
-check("the public catalogue (what a customer's page is told) lists the ten shown ids at preview only, with no held, planned or legacy id",
+check("the public catalogue (what a customer's page is told) lists the fifteen shown ids at preview only, with no held, planned or legacy id",
       sorted(c["id"] for c in CT.public_catalogue()) == sorted(LIVE1 + PREVIEW + ["grp.collision"]) and all(set(c["stages"].values()) == {"preview"} for c in CT.public_catalogue()), CT.public_catalogue()[:2])
 c_cat, j_cat = get("/api/checkout")
 ANS = {"before": j_cat}              # the answers the landing reads, kept for the check at the end of section 4 (the page's own functions through the probe)
 check("GET /api/checkout over HTTP: the same catalogue (preview only) and orderable_max_eyes 0: the landing and the buy card print 'opens soon', never a price for a style that cannot be bought",
-      c_cat == 200 and j_cat.get("orderable_max_eyes") == 0 and all(set(s["stages"].values()) == {"preview"} for s in j_cat["styles"]) and len(j_cat["styles"]) == 10, (c_cat, j_cat.get("orderable_max_eyes")))
+      c_cat == 200 and j_cat.get("orderable_max_eyes") == 0 and all(set(s["stages"].values()) == {"preview"} for s in j_cat["styles"]) and len(j_cat["styles"]) == 15, (c_cat, j_cat.get("orderable_max_eyes")))
 S1 = [eye("blue_round")[2]["sealed"]]
 t1 = comp({"sealed": S1, "styles": []})
 check("the compose endpoint answers the tile list of one eye at preview with no pick and draws nothing; a preview of Powder Burst at 480 px is drawn (free) and its tile says preview",
-      t1["pick"] is None and [t["id"] for t in t1["tiles"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean"] and all(t["stage"] == "preview" for t in t1["tiles"]), t1.get("pick"))
+      t1["pick"] is None and [t["id"] for t in t1["tiles"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean"] + LUMEN and all(t["stage"] == "preview" for t in t1["tiles"]), t1.get("pick"))
 r_p = comp({"sealed": S1, "style": "solo.clean", "size": 480})
 check("a free preview of a style that cannot be bought yet is drawn (labelled, watermarked, the same engine as the file): Clean Iris at 480 px", r_p["width"] == r_p["height"] == 480 and r_p["design_used"] and r_p["tiles"][0]["stage"] == "preview", {k: r_p.get(k) for k in ("width", "design_used")})
 e_leg = raised(lambda: comp({"sealed": S1, "style": "studio_black"}))
@@ -578,7 +581,7 @@ for i in shown:
                 dims[(i, w)] = (im.format, im.size, os.path.getsize(p))
         except OSError:
             dims[(i, w)] = None
-check("every shown style has a WEBP tile at 480 and at 800 px wide, none missing (the build's item 8 says the same of the files)", len(shown) == 10 and all(v and v[0] == "WEBP" and v[1][0] == w for (i, w), v in dims.items()), {k: v for k, v in dims.items() if not v})
+check("every shown style has a WEBP tile at 480 and at 800 px wide, none missing (the build's item 8 says the same of the files; fifteen styles since the light family)", len(shown) == 15 and all(v and v[0] == "WEBP" and v[1][0] == w for (i, w), v in dims.items()), {k: v for k, v in dims.items() if not v})
 check("the shape: one eye and the Trio are square, a pair is 3:2 (the family's default canvas); none is over 150 kB, so the gallery stays light",
       all(dims[(i, w)][1][0] == dims[(i, w)][1][1] for i in shown if CT.eyes_range(i)[1] <= 1 or i == "grp.collision" for w in (480, 800))
       and all(abs(dims[(i, w)][1][1] / dims[(i, w)][1][0] - 2 / 3) < 0.01 for i in shown if i.startswith("duo.") for w in (480, 800))
@@ -593,7 +596,7 @@ if CALIB and all(os.path.isfile(os.path.join(CALIB, f)) for f in ("own215120_2_e
     out_dir = os.path.join(TMP, "tiles")
     r_t = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "make_style_tiles.py"), "--eyes", CALIB, "--out", out_dir], capture_output=True, text=True, encoding="utf-8", timeout=900)
     same = {k: open(os.path.join(out_dir, f"style-{CT.slug_of(k[0])}-{k[1]}.webp"), "rb").read() == b for k, b in tile_bytes.items()} if r_t.returncode == 0 else {}
-    local("the committed tile images are byte for byte what scripts/make_style_tiles.py makes of the owner's eyes with this code (the seed comes from the eye ids)", r_t.returncode == 0 and all(same.values()) and len(same) == 20,
+    local("the committed tile images are byte for byte what scripts/make_style_tiles.py makes of the owner's eyes with this code (the seed comes from the eye ids)", r_t.returncode == 0 and all(same.values()) and len(same) == 30,
           (r_t.returncode, r_t.stderr[-300:], [k for k, v in same.items() if not v]))
 else:
     print("   (skipped: SNAPEYES_CALIB does not name the folder with the owner's restored eyes)", flush=True)

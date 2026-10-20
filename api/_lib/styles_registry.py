@@ -53,7 +53,8 @@ Fields of an entry (all are required):
                stays; hard: the style is withheld for that eye set, in the picker AND at checkout: 409 style_unavailable, why gate).
                Since 2026-10-14 (the owner's decision, after he rejected a delivered file that kept lashes and lid skin at the rim) the
                one-eye styles Clean Iris and Celestial Gold are hard, like Universe, the pairs and the families; Powder Burst, Splash and
-               Radiance stay advisory
+               Radiance stay advisory. The five styles of the light family (Supernova, Nebula, Sparks, Halo, Aurora; 2026-10-20) are advisory
+               as Radiance is: light round the limb, nothing drawn over the iris, the lid rule of their gate only warns
   pick         eye classes (own | dark_brown | grey) for which this style is the recommended tile
   reason       for each class in pick, the key of the line printed under the recommended tile (copy files)
   tile_order   position in the tile list of its group (1 first; 0 not in the list). Unique per group, among legacy ids and among v3 ids
@@ -182,6 +183,91 @@ STYLES = {
         "pick": ["dark_brown"],
         "reason": {"dark_brown": "reason.solo_gold.dark_brown"},
         "tile_order": 4,
+        "work_side": {"1": 4096},
+        "accent": []
+    },
+    "solo.supernova": {
+        "group": "solo",
+        "slug": "supernova",
+        "name": "Supernova",
+        "legacy": 0,
+        "eyes": [1, 1],
+        "layouts": {"1": ["single"]},
+        "stage": "preview",
+        "stage_by_eyes": {},
+        "price_class": "art",
+        "gate": "advisory",
+        "pick": [],
+        "reason": {},
+        "tile_order": 7,
+        "work_side": {"1": 4096},
+        "accent": []
+    },
+    "solo.nebula": {
+        "group": "solo",
+        "slug": "nebula",
+        "name": "Nebula",
+        "legacy": 0,
+        "eyes": [1, 1],
+        "layouts": {"1": ["single"]},
+        "stage": "preview",
+        "stage_by_eyes": {},
+        "price_class": "art",
+        "gate": "advisory",
+        "pick": [],
+        "reason": {},
+        "tile_order": 8,
+        "work_side": {"1": 4096},
+        "accent": []
+    },
+    "solo.sparks": {
+        "group": "solo",
+        "slug": "sparks",
+        "name": "Sparks",
+        "legacy": 0,
+        "eyes": [1, 1],
+        "layouts": {"1": ["single"]},
+        "stage": "preview",
+        "stage_by_eyes": {},
+        "price_class": "art",
+        "gate": "advisory",
+        "pick": [],
+        "reason": {},
+        "tile_order": 9,
+        "work_side": {"1": 4096},
+        "accent": []
+    },
+    "solo.halo": {
+        "group": "solo",
+        "slug": "halo",
+        "name": "Halo",
+        "legacy": 0,
+        "eyes": [1, 1],
+        "layouts": {"1": ["single"]},
+        "stage": "preview",
+        "stage_by_eyes": {},
+        "price_class": "art",
+        "gate": "advisory",
+        "pick": [],
+        "reason": {},
+        "tile_order": 10,
+        "work_side": {"1": 4096},
+        "accent": []
+    },
+    "solo.aurora": {
+        "group": "solo",
+        "slug": "aurora",
+        "name": "Aurora",
+        "legacy": 0,
+        "eyes": [1, 1],
+        "layouts": {"1": ["single"]},
+        "stage": "preview",
+        "stage_by_eyes": {},
+        "price_class": "art",
+        "gate": "advisory",
+        "pick": [],
+        "reason": {},
+        "tile_order": 11,
         "work_side": {"1": 4096},
         "accent": []
     },
