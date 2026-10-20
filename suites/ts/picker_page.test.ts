@@ -67,6 +67,14 @@ export async function run(): Promise<Row[]> {
   check('every tile is a list item with one button; the chips come after their tile\'s button (keyboard order is the visual order)',
     (h1.match(/<li /g) ?? []).length === 4 && h1.indexOf('<button', h1.indexOf('tile-universe')) < h1.indexOf('look-echo'));
   check('a tile\'s picture has an alt text that names the style', /alt="Powder Burst on your eyes: reduced preview with a watermark"/.test(h1));
+  // 2026-10-20: a tile of one eye says what the look is in one line under its name (copy picker.lines; the six of release 1 say what the landing's tiles say)
+  check('a tile of one eye carries the style\'s one line under its name, and only one', (h1.match(/data-testid="style-line"/g) ?? []).length === 4
+    && text(h1).includes('Fine rays of light in the colours of your own iris.') && text(h1).includes('Your restored iris alone on pure black.'));
+  const hNew = renderToStaticMarkup(createElement(StylePicker, { model: model(1, [tile('solo.nebula', { name: 'Nebula', slug: 'nebula', stage: 'preview' }), tile('solo.nothing', { name: 'Nothing', slug: 'nothing', stage: 'preview' })], [eye(1)]) }));
+  check('a look of the light family has its line, and a style the copy has no line for prints none', text(hNew).includes('Your iris glows at the heart of a nebula.') && (hNew.match(/data-testid="style-line"/g) ?? []).length === 1);
+  const lineKeys = Object.keys(COPY.en.picker.lines);
+  check('the one line of each of the eleven styles of one eye is written in English, German, Lithuanian and Hungarian (the same keys), none empty, no dash',
+    lineKeys.length === 11 && LANGS.every((l: Lang) => Object.keys(COPY[l].picker.lines).join() === lineKeys.join() && Object.values(COPY[l].picker.lines).every((s) => s.length > 0 && !/[\u2012-\u2015]/.test(s))));
 
   // ---- the same list loading
   const hLoad = renderToStaticMarkup(createElement(StylePicker, { model: { ...emptyPicker(1) } }));

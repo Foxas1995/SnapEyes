@@ -111,6 +111,8 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
   const price = m.priceOf(t);
   const looks = looksOf(t);
   const reason = pick && m.catalog?.reasonKey ? (T.picker.reasons as Record<string, string>)[m.catalog.reasonKey] : undefined;
+  // the style's one line (copy picker.lines, keyed by the server's id with "_" for "."): what the look is, under its name; none where the copy has none
+  const line = (T.picker.lines as Record<string, string>)[`line.${t.id.replace('.', '_')}`];
   const label = st.kind === 'gate' ? T.picker.retakeFirst(st.eye) : st.kind === 'reseal' ? T.picker.resealFirst(st.eye) : st.kind === 'pupil' ? T.picker.pupil : '';
   const ring = selected ? 'border-[#f5c542] ring-2 ring-[#f5c542]' : pick ? 'border-[#f5c542]/60' : 'border-white/15';
   // a tile that is held back cannot be chosen: pressing it takes the customer to the retake state, which says why
@@ -150,6 +152,7 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
               <span data-testid="soon" className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-amber-200 border border-amber-400/40 rounded-full px-1.5 py-px">{T.picker.soon}</span>
             )}
           </span>
+          {line && <span data-testid="style-line" className="block text-[11px] text-zinc-400 mt-0.5">{line}</span>}
           {reason && <span data-testid="reason" className="block text-[11px] text-zinc-300 mt-0.5">{reason}</span>}
           {label && <span data-testid="held-label" className="block text-[11px] font-semibold text-amber-200 mt-0.5">{label}</span>}
         </span>
