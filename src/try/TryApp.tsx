@@ -10,7 +10,7 @@ import {
 } from './multi';
 import { T, setCopyLang, type BlockCopy } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
-import { LANG_NAMES, marketLangs } from '../shared/lang';
+import { LANG_NAMES, LOCALES, marketLangs } from '../shared/lang';
 import { ResultView } from './ResultView';
 import { Working } from './Working';
 import { CaptureDiagram } from '../motion/CaptureDiagram';
@@ -300,12 +300,18 @@ export const TryApp: React.FC = () => {
     setCopyLang(l); rememberLang(l); setLangState(l);
   };
 
-  // the document's language, title and description follow the page's (try.html carries the English ones)
+  // the document's language, title, description and share tags follow the page's (try.html carries the English ones)
   useEffect(() => {
     try {
       document.documentElement.lang = lang;
       document.title = T.meta.title;
-      document.head.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', T.meta.description);
+      const tags: [string, string][] = [
+        ['meta[name="description"]', T.meta.description],
+        ['meta[property="og:title"]', T.meta.title], ['meta[name="twitter:title"]', T.meta.title],
+        ['meta[property="og:description"]', T.meta.description], ['meta[name="twitter:description"]', T.meta.description],
+        ['meta[property="og:locale"]', LOCALES[lang].og],
+      ];
+      for (const [selector, value] of tags) document.head.querySelector<HTMLMetaElement>(selector)?.setAttribute('content', value);
     } catch { /* no document: nothing to label */ }
   }, [lang]);
 

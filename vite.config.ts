@@ -1,3 +1,5 @@
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig, runnerImport, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -216,6 +218,31 @@ function lateMainScript(): Plugin {
   }
 }
 
+// The landing page in each of its languages (scripts/lib/langheads.mjs has the why). A crawler does not run the page's script, so the
+// share tags of the HTML it is sent are the whole card: this writes one HTML file per language under dist/lp/ (en, de, lt, hu), each with
+// its own title, description, og:*, twitter:*, og:locale, og:url, canonical, share picture and <html lang>, made from the final index.html,
+// and takes dist/index.html away. vercel.json rewrites / (?lang=de, ?lang=lt, ?lang=hu, the market's own language, else English) to the right
+// file. There must be no dist/index.html: Vercel looks in the file system BEFORE the rewrites, so an index.html would answer / itself and
+// the rewrites for the language links would never fire. The checks that read the landing's HTML read dist/lp/en.html (scripts/lib/langheads.mjs).
+function langPages(): Plugin {
+  return {
+    name: 'snapeyes-lang-pages',
+    apply: 'build',
+    async writeBundle(options) {
+      const dir = options.dir
+      if (!dir) return
+      const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
+      const heads = await load('./scripts/lib/langheads.mjs')
+      const lang = await load('./src/shared/lang.ts')
+      const source = join(dir, 'index.html')
+      const final = readFileSync(source, 'utf8')
+      mkdirSync(join(dir, heads.LANDING_DIR), { recursive: true })
+      for (const l of lang.LANGS as string[]) writeFileSync(join(dir, heads.landingFile(l)), heads.editionOf(final, heads.headData(process.cwd(), lang, l)))
+      rmSync(source)
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -228,6 +255,7 @@ export default defineConfig({
     legalMail(),
     heroShell(),
     lateMainScript(),
+    langPages(),
   ],
   build: {
     rollupOptions: {

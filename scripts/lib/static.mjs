@@ -1,6 +1,12 @@
 // A static server for a Vite build (dist/) that behaves like the site's Vercel deployment: cleanUrls (/terms serves
-// terms.html), the headers of vercel.json, brotli or gzip for text files. For the checks only (scripts/legal_look.mjs,
-// scripts/check_headers.mjs, scripts/measure_landing.mjs); never used in production.
+// terms.html), the rewrites of vercel.json, the headers of vercel.json, brotli or gzip for text files. For the checks only
+// (scripts/legal_look.mjs, scripts/check_headers.mjs, scripts/measure_landing.mjs); never used in production.
+//
+// The order of Vercel's routing, as the CLI's own build output has it (.vercel/output/config.json, read on 2026-10-20): the redirects of
+// cleanUrls (a path that ends in .html, or in /index, is a 308 to its clean path), then the FILE SYSTEM, then the rewrites of vercel.json
+// in the order they are written (a rewrite is only tried when no file answers the path, so a file for / would shadow every rewrite for /),
+// each with its `has` conditions; a rewrite's destination is looked up again (a file under its clean path), and a destination that ends in
+// .html would be caught by the cleanUrls redirect, so here it is answered with that 308 and a check sees it.
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, sep } from 'node:path';
@@ -58,6 +64,36 @@ export function headersFor(vercel, pathname) {
   return out;
 }
 
+/** The destination of the first rewrite of vercel.json that answers (pathname, query), or null. Only the conditions the site uses are known: `has` of
+ *  type query; any other condition, a missing list or a :placeholder in a destination stops with an error, so that the emulation never answers
+ *  a rule it does not understand. A query value is matched as a whole (a string is the pattern). */
+export function rewriteFor(vercel, pathname, query) {
+  for (const rule of vercel.rewrites || []) {
+    if (!sourceToRegExp(rule.source).test(pathname)) continue;
+    if (rule.missing) throw new Error(`static.mjs: a rewrite with "missing" is not emulated (${rule.source})`);
+    if (/:[A-Za-z_]/.test(rule.destination)) throw new Error(`static.mjs: a rewrite destination with a :placeholder is not emulated (${rule.destination})`);
+    let ok = true;
+    for (const h of rule.has || []) {
+      if (h.type !== 'query') throw new Error(`static.mjs: a rewrite condition of type ${h.type} is not emulated (${rule.source})`);
+      const v = query.get(h.key);
+      if (v === null || (h.value !== undefined && !new RegExp(`^(?:${h.value})$`).test(v))) { ok = false; break; }
+    }
+    if (ok) return rule.destination;
+  }
+  return null;
+}
+
+/** The file a path is answered from, as the file system of the deployment: the file itself, a directory's index.html, or with cleanUrls the .html of an
+ *  extension-less path. Null when there is none. */
+function fileFor(dir, vercel, pathname) {
+  const p = pathname.endsWith('/') ? `${pathname}index.html` : pathname;
+  const file = normalize(join(dir, p));
+  if (!file.startsWith(normalize(dir) + sep) && file !== normalize(dir)) return null;
+  if (existsSync(file) && !statSync(file).isDirectory()) return file;
+  if (vercel.cleanUrls && !extname(p) && existsSync(`${file}.html`)) return `${file}.html`;
+  return null;
+}
+
 export function serve(dir, { port = 0, vercelFile, compress = true, handler } = {}) {
   let vercel = { cleanUrls: true };
   try { vercel = JSON.parse(readFileSync(vercelFile || join(dir, '..', 'vercel.json'), 'utf8')); } catch { /* no vercel.json next to the build: clean URLs, no headers */ }
@@ -65,13 +101,20 @@ export function serve(dir, { port = 0, vercelFile, compress = true, handler } = 
   const server = createServer((req, res) => {
     // a check may answer some requests itself (a stub of /api/health and /api/checkout): handler(req, res) returns true when it did
     if (handler && handler(req, res)) return;
-    let pathname = decodeURIComponent((req.url || '/').split('?')[0]);
-    if (pathname.endsWith('/')) pathname += 'index.html';
-    let file = normalize(join(dir, pathname));
-    if (!file.startsWith(normalize(dir) + sep) && file !== normalize(dir)) { res.writeHead(403).end(); return; }
-    if (!existsSync(file) || statSync(file).isDirectory()) {
-      if (vercel.cleanUrls && !extname(pathname) && existsSync(`${file}.html`)) file = `${file}.html`;
-      else { res.writeHead(404, { 'content-type': 'text/plain' }).end('not found'); return; }
+    const [rawPath, rawQuery = ''] = (req.url || '/').split('?');
+    const pathname = decodeURIComponent(rawPath);
+    if (pathname.split('/').includes('..')) { res.writeHead(403).end(); return; }
+    let file = fileFor(dir, vercel, pathname);
+    if (!file) {
+      // no file answers: the rewrites of vercel.json, then the answer of what they name
+      const dest = rewriteFor(vercel, pathname, new URLSearchParams(rawQuery));
+      if (dest !== null && vercel.cleanUrls && /\.html$/.test(dest)) {
+        // the cleanUrls redirect (^/(.*)\.html/?$, 308) would catch it
+        res.writeHead(308, { location: dest.slice(0, -5) || '/' }).end();
+        return;
+      }
+      file = dest !== null ? fileFor(dir, vercel, dest) : null;
+      if (!file) { res.writeHead(404, { 'content-type': 'text/plain' }).end('not found'); return; }
     }
     const ext = extname(file);
     const headers = { 'content-type': TYPES[ext] || 'application/octet-stream', ...headersFor(vercel, pathname) };

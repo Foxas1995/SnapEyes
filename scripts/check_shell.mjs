@@ -1,4 +1,4 @@
-// The checks of the prerendered first screen (src/landing/shell, written into dist/index.html by the heroShell plugin of vite.config.ts).
+// The checks of the prerendered first screen (src/landing/shell, written into the landing's HTML by the heroShell plugin of vite.config.ts; the build keeps it as dist/lp/en.html, de, lt and hu: scripts/lib/langheads.mjs).
 //   node scripts/check_shell.mjs [--dist dist] [--shots <folder>]        both parts
 //   node scripts/check_shell.mjs --rules                                 part 1 only (Node, no browser, no build needed)
 //
@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { runnerImport } from 'vite';
 import { launch, sleep } from './lib/cdp.mjs';
+import { landingFile } from './lib/langheads.mjs';
 import { serve } from './lib/static.mjs';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -149,11 +150,11 @@ async function browser(dist, shotsDir) {
   const site = await serve(dist, { vercelFile: join(ROOT, 'vercel.json') });
   const chrome = await launch();
   const origin = `http://127.0.0.1:${site.port}`;
-  const html = readFileSync(join(dist, 'index.html'), 'utf8');
+  const html = readFileSync(join(dist, landingFile('en')), 'utf8');
   // the page's own script is started by the inline loader after the LCP picture (vite.config.ts lateMainScript), so it is in the loader, not in a tag
   const mainJs = /var M="(\/assets\/main-[^"]+\.js)"/.exec(html)?.[1];
-  if (!mainJs) note('dist/index.html: the loader of the page script is missing');
-  if (/<script type="module"[^>]*src=/.test(html) || /<link rel="modulepreload"/.test(html)) note('dist/index.html: a module script or modulepreload is still in the head (it would compete with the LCP picture)');
+  if (!mainJs) note(`dist/${landingFile('en')}: the loader of the page script is missing`);
+  if (/<script type="module"[^>]*src=/.test(html) || /<link rel="modulepreload"/.test(html)) note(`dist/${landingFile('en')}: a module script or modulepreload is still in the head (it would compete with the LCP picture)`);
   // every page starts as a first visit: the page remembers the market of a ?m= link (localStorage), which would change the next page
   const fresh = async (opts) => {
     const p = await chrome.page(opts);
@@ -279,7 +280,7 @@ const n = await rules();
 if (!problems.length) console.log(`decision script: ${n} combinations of link, stored choice and browser language agree with detectLang and detectMarket`);
 if (!flag('--rules')) {
   const dist = resolve(opt('--dist', join(ROOT, 'dist')));
-  if (!existsSync(join(dist, 'index.html'))) {
+  if (!existsSync(join(dist, landingFile('en')))) {
     console.error(`no build at ${dist}: run npm run build first`);
     process.exit(2);
   }

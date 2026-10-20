@@ -9,8 +9,11 @@ import { currentMarket, type Market } from '../shared/markets';
 export { detectLang };
 
 // One URL per language, each its own canonical: English at /, the others at /?lang=de, /?lang=lt, /?lang=hu (index.html
-// lists them all as hreflang alternates). index.html has no static canonical on purpose: this is the only one, so a
-// rendered German page is never canonicalised to the English root.
+// lists them all as hreflang alternates). The build writes one HTML file per language (vite.config.ts langPages, scripts/lib/langheads.mjs),
+// each with its own canonical, og:* and share picture, and vercel.json serves the one the link asks for, so a crawler that does not run
+// this script reads the right head. Here the same tags are kept in step at run time (a visitor who switches the language, or whose stored
+// choice differs from the link's). The source index.html has no static canonical on purpose: the build adds one per edition, so a German
+// page is never canonicalised to the English root.
 const SITE_ORIGIN = 'https://snapeyes.com';
 const canonicalUrl = (lang: Lang) => `${SITE_ORIGIN}/${langQuery(lang)}`;
 

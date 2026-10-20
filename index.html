@@ -13,8 +13,12 @@
          cannot drift. They are read before the page knows whether ordering is open (src/landing/ordering.ts), so they say
          nothing about ordering: true before and after it opens. -->
     <meta name="description" content="Photograph one eye with your phone and see your iris as art, restored, never repainted. Free watermarked preview, then a digital file to print anywhere." />
-    <!-- rel=canonical is injected once by src/landing/lang.tsx (self-referencing: / for English, /?lang=de for
-         German), so the German URL is not canonicalised to the English one. Do not add a static canonical here. -->
+    <!-- This file is the template of the four language editions the build writes (vite.config.ts langPages, scripts/lib/langheads.mjs): dist/lp/en.html,
+         de.html, lt.html and hu.html, each with its own <html lang>, title, description, canonical, og:* (url, locale, title, description, picture and its
+         alt text) and twitter:* tags, because a crawler does not run the page's script. There is no dist/index.html: vercel.json rewrites / by ?lang= (and
+         ?m=lt, ?m=hu) to the edition. The English tags written here are the English edition's. rel=canonical is added by the build, self-referencing
+         (/ for English, /?lang=de for German), and kept in step by src/landing/lang.tsx once the script runs. Do not add a static canonical here: the
+         build stops when it finds one. -->
     <link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
     <link rel="alternate" hreflang="de" href="https://snapeyes.com/?lang=de" />
     <link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
@@ -29,7 +33,9 @@
     <meta property="og:locale:alternate" content="hu_HU" />
     <meta property="og:title" content="SnapEyes Private Atelier: Your Real Iris as Art" />
     <meta property="og:description" content="Photograph one eye with your phone and see your own iris as art. The watermarked preview is free." />
-    <!-- The share image is the founder's own eye (phone photo rendered in the Clean Iris look), labelled on the card. -->
+    <!-- The share image is the founder's own eye (phone photo rendered in the Clean Iris look), labelled on the card. This is the English card; the other
+         editions get og-founder-eye-de.jpg, -lt.jpg and -hu.jpg (scripts/make_og_cards.py draws the words again in their language, alt text in
+         src/landing/shell/share.json). -->
     <meta property="og:image" content="https://snapeyes.com/assets/atelier/og-founder-eye.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />

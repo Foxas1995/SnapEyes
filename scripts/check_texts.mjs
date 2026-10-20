@@ -797,6 +797,18 @@ export async function checkTexts(load, root) {
   for (const l of LANGS) for (const [p, s] of strings[l]) lint(p, s, l, out);
   identical(strings, out);
 
+  // the words of the share cards (src/landing/shell/share.json: the alt text of the share picture in the four languages, the caption drawn on the German, Lithuanian and
+  // Hungarian cards by scripts/make_og_cards.py): linted like any string of the page, in their own language (dashes, claims, untranslated English, the typographic slips)
+  try {
+    const share = JSON.parse(readFileSync(join(root, 'src/landing/shell/share.json'), 'utf8').replace(/^﻿/, ''));
+    for (const l of LANGS) {
+      for (const k of l === 'en' ? ['alt'] : ['alt', 'caption']) {
+        if (typeof share[l]?.[k] !== 'string' || !share[l][k].trim()) out.push(`src/landing/shell/share.json: no ${k} for ${l}`);
+        else lint(`share.json ${l} ${k}`, share[l][k], l, out);
+      }
+    }
+  } catch { out.push('src/landing/shell/share.json not found or not JSON (the share heads and cards read it)'); }
+
   // the head of index.html (search and share copy: English only): the same claims, the same dashes
   try {
     const html = readFileSync(join(root, 'index.html'), 'utf8');

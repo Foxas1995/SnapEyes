@@ -39,6 +39,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch, sleep } from './lib/cdp.mjs';
+import { landingFile } from './lib/langheads.mjs';
 import { serve } from './lib/static.mjs';
 import { checkoutAnswer } from './lib/stubapi.mjs';
 
@@ -71,7 +72,7 @@ const handler = (req, res) => {
   const json = (o) => { res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(o)); };
   const later = (o) => setTimeout(() => json(o), stub.delay);
   if (skew.on && url.pathname === '/' && ++skew.rootHits > 1) {
-    const html = readFileSync(join(dist, 'index.html'), 'utf8').split(skew.mainFile).join('/assets/main-NEWDEPLOY.js');
+    const html = readFileSync(join(dist, landingFile('en')), 'utf8').split(skew.mainFile).join('/assets/main-NEWDEPLOY.js');
     res.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
     res.end(html);
     return true;
@@ -83,7 +84,7 @@ const handler = (req, res) => {
   if (url.pathname.startsWith('/api/')) { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{}'); return true; }
   return false;
 };
-if (!existsSync(join(dist, 'index.html'))) { console.error(`no build in ${dist}: run npm run build first`); process.exit(2); }
+if (!existsSync(join(dist, landingFile('en')))) { console.error(`no build in ${dist}: run npm run build first`); process.exit(2); }
 const site = await serve(dist, { vercelFile: join(ROOT, 'vercel.json'), handler });
 const origin = `http://127.0.0.1:${site.port}`;
 const chrome = await launch();
@@ -585,7 +586,7 @@ async function checkResilience() {
 
 async function checkSkew() {
   console.log('skew');
-  const html = readFileSync(join(dist, 'index.html'), 'utf8');
+  const html = readFileSync(join(dist, landingFile('en')), 'utf8');
   const main = /\/assets\/main-[\w-]+\.js/.exec(html);
   const faq = readdirSync(join(dist, 'assets')).find((f) => f.startsWith('Faq-') && f.endsWith('.js'));
   if (!main || !faq) { fail('skew', 'no main or Faq chunk in the build'); return; }

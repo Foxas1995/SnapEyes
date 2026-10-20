@@ -19,6 +19,7 @@ import { request } from 'node:http';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch, sleep } from './lib/cdp.mjs';
+import { landingFile } from './lib/langheads.mjs';
 import { serve } from './lib/static.mjs';
 import { checkoutAnswer, firstLiveOneEyeStyle } from './lib/stubapi.mjs';
 import { loadRegistry } from './styles_source.mjs';
@@ -98,7 +99,7 @@ async function startDev() {
   }
 }
 
-if (!existsSync(join(dist, 'index.html'))) { console.error(`no build in ${dist}: run npm run build first`); process.exit(2); }
+if (!existsSync(join(dist, landingFile('en')))) { console.error(`no build in ${dist}: run npm run build first`); process.exit(2); }
 if (api === 'dev') await startDev();
 const site = await serve(dist, { vercelFile: join(ROOT, 'vercel.json'), handler });
 const origin = `http://127.0.0.1:${site.port}`;

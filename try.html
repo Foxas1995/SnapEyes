@@ -9,6 +9,23 @@
     <meta name="theme-color" content="#07090e" />
     <meta name="description" content="Take a photo of your eye with your phone and see your own iris restored and set in the style you choose in about a minute." />
     <meta name="robots" content="noindex" />
+    <!-- Share tags of the tool (a link to /try pasted into a chat or a post): English, the same card as the landing's English edition. /try is one file whatever
+         the language (the language is the visitor's choice, ?lang=, and the page's script follows it: src/try/TryApp.tsx rewrites these tags and the title for a
+         visitor or a scraper that runs the script); the landing page has an HTML file per language for the crawlers that do not (scripts/lib/langheads.mjs). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SnapEyes Private Atelier" />
+    <meta property="og:url" content="https://snapeyes.com/try" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:title" content="SnapEyes Studio - Turn your eye photo into iris art" />
+    <meta property="og:description" content="Take a photo of your eye with your phone and see your own iris restored and set in the style you choose in about a minute." />
+    <meta property="og:image" content="https://snapeyes.com/assets/atelier/og-founder-eye.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mantas, founder: his own iris, photographed at home with a phone and rendered in Clean Iris" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SnapEyes Studio - Turn your eye photo into iris art" />
+    <meta name="twitter:description" content="Take a photo of your eye with your phone and see your own iris restored and set in the style you choose in about a minute." />
+    <meta name="twitter:image" content="https://snapeyes.com/assets/atelier/og-founder-eye.jpg" />
     <!-- The page transition (src/motion/transition.css) never covers an order, a payment or a form: this page arrives without it when its address names
          an order (o, k, s), a payment (checkout, session_id) or the online withdrawal function (withdraw). The address is read while the head is parsed: the page's own script may already have tidied it (a return from payment is cleaned) when the page is revealed. -->
     <script>(function(q){addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v&&/[?&](o|k|s|checkout|session_id|withdraw)=/.test(q))v.skipTransition()})})(location.search)</script>
