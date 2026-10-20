@@ -241,7 +241,7 @@ export const lt: TryCopy = {
       sharp: 'Paryškinome fokusą ir smulkias skaidulas.',
       colour: 'Išlyginome šviesą. Spalvos paimtos iš Jūsų nuotraukos.',
       lid: 'Kur vokas dengė rainelę, ją pratęsėme iš Jūsų pačių rainelės.',
-      nothing: 'Nieko neperpiešėme: jokių naujų spalvų, jokio kitos akies rašto.',
+      nothing: 'Ant viršaus nieko nepiešėme: jokių naujų spalvų, jokio kitos akies rašto.',
       quality: (crop: number) => `Nuotrauką daro Jūsų telefono kamera visa savo kokybe. Iš jos iškerpame Jūsų akį (ne daugiau kaip ${crop} px) ir ją atkuriame; viso dydžio failas (4096 px) būtų kuriamas iš šio atkūrimo, o ne ištemptas iš nuotraukos.`,
     },
     retakeEye: (i: number) => `Fotografuoti akį ${i} iš naujo`,
