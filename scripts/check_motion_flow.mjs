@@ -616,7 +616,10 @@ async function checkWiring() {
 // +4 kB. A change of a module that /try and /order share with other work (src/shared) moves the base: re-measure it on the commit before, as scripts/check_budget.mjs says.
 // The release review fixes of /try (2026-10-07: the focus that follows the step, the alert for an error, the keyboard slider, the plain message when the script cannot load, the
 // contrast classes) moved the base of /try by +1,961 B JS; the motion keeps the +2,598 B it had.
-const BEFORE = { try: { js: 152765 + 1961, css: 10975 }, order: { js: 108723, css: 10975 } };
+// The visitor counter and admin v2 phase A (the counter, the campaign code on every request, the feedback box of the result and the retake card) and the QA follow-up fixes
+// (the server's sentences in four languages and the watermark redrawn on a language switch, the sample eye, the polish) moved the base again, measured on 88f8141 against
+// the tree with both (2026-10-20): /try +4,483 B JS and +245 B CSS, /order +414 B JS and +245 B CSS (the shared stylesheet). None of it is motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483, css: 10975 + 245 }, order: { js: 108723 + 414, css: 10975 + 245 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();
