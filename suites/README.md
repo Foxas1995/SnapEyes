@@ -43,7 +43,9 @@ The two admin suites (`admin`, `oldadmin`) replay the replies of the image model
 suites are reported SKIPPED (exit 77), not green, and the run ends with `INCOMPLETE: admin, oldadmin did not run` and **exits 1**,
 so that a gate reading the exit code of `run_main.sh` in a fresh clone cannot take a run without the 372 admin checks for a green
 one. A machine that cannot have the fixtures says so on purpose: `--allow-skipped` for `summary.py`, or `SNAPEYES_ALLOW_SKIPPED=1`
-for `run_main.sh` (the last lines still name what did not run). The v3 style suites use a synthetic iris generator (work package WP4) and need none.
+for `run_main.sh` (the last lines still name what did not run). The v3 style suites use a synthetic iris generator (work package WP4) and need none,
+but for `v3lidcap` (2026-10-20): it reads the owner's own crop 215208 and the AI-generated sample's crop from the same folder (the thin lid of a real light
+iris, which a painted one does not reproduce) and is SKIPPED with the admin suites where they are missing.
 Keep a copy of `suites/private/` somewhere safe outside the repository: the only other copy is in a session scratch folder.
 
 ## The two worlds (the catalogue switch, WP18)

@@ -285,16 +285,10 @@ def _cap(Q, phi, skin, dark):
     area = 100.0 * ((Q["Xd"] * c + Q["Yd"] * s) > tcut).sum() / Q["ndisc"]
     return area, depth * DT, best, depth
 
-def lid_cover(im, cx, cy, r, pupil_r=None):
-    """{"wedge_pct", "covered_pct", "side", "tilt", "depth"} for the analyze circle (cx, cy, r in pixels of im, the
-    photo as analyze received it; pupil_r the vision pupil as a share of the pad-1.12 crop side), or None when the
-    iris cannot be read. side: where the largest lid comes from (top, bottom, left, right); tilt: its direction in
-    degrees (image coordinates, 270 = straight down from the top). Deterministic; numpy and PIL only."""
-    if r < 4:
-        return None
-    Q = _prep(im, cx, cy, r, pupil_r)
-    if Q is None:
-        return None
+def _lids(Q):
+    """(the caps of every direction, i1, i2) or None: i1 the largest lid, i2 the largest one at least 90 degrees from it
+    (i1 itself when there is none). Each entry of the caps: (phi, area %, depth in iris radii, score, strips). Also read
+    by api/_lib/lidcap.py (the thin lid /api/deglare fills)."""
     out = []
     for i in range(NDIR):
         phi = i * 360.0 / NDIR
@@ -313,11 +307,27 @@ def lid_cover(im, cx, cy, r, pupil_r=None):
                 best = j
         lids.add(best)
     if not lids:
-        return {"wedge_pct": 0.0, "covered_pct": 0.0, "side": None, "tilt": None, "depth": 0.0}
+        return None
     lids = sorted(lids)
     i1 = max(lids, key=lambda i: out[i][1])
     other = [i for i in lids if abs((out[i][0] - out[i1][0] + 180) % 360 - 180) >= 90]
     i2 = max(other, key=lambda i: out[i][1]) if other else i1
+    return out, i1, i2
+
+def lid_cover(im, cx, cy, r, pupil_r=None):
+    """{"wedge_pct", "covered_pct", "side", "tilt", "depth"} for the analyze circle (cx, cy, r in pixels of im, the
+    photo as analyze received it; pupil_r the vision pupil as a share of the pad-1.12 crop side), or None when the
+    iris cannot be read. side: where the largest lid comes from (top, bottom, left, right); tilt: its direction in
+    degrees (image coordinates, 270 = straight down from the top). Deterministic; numpy and PIL only."""
+    if r < 4:
+        return None
+    Q = _prep(im, cx, cy, r, pupil_r)
+    if Q is None:
+        return None
+    got = _lids(Q)
+    if got is None:
+        return {"wedge_pct": 0.0, "covered_pct": 0.0, "side": None, "tilt": None, "depth": 0.0}
+    out, i1, i2 = got
     cov = np.zeros(len(Q["Xd"]), bool)
     for i in {i1, i2}:
         c, s = math.cos(math.radians(out[i][0])), math.sin(math.radians(out[i][0]))

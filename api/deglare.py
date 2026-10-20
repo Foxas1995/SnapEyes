@@ -23,6 +23,7 @@ from _lib import iris as L
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import lashfill as LF   # a dark lash curtain over the iris: measured, then repaired from the iris itself
 from _lib import rimfix as RF   # the black where the circle left the photo filled (22), a lid fill's highlight and shadow remnant filled (26)
+from _lib import lidcap as LC   # a thin lid lid_mask leaves alone (a light iris under a thin lid), as analyze measures it: filled like any lid
 
 # The reflection call to the image model (PROMPT_DEGLARE) is a switch, OFF by default since 2026-09-29: the
 # reflection holes keep glare_fill's same-radius fill (the model's input), exactly what they got when the call failed
@@ -64,9 +65,16 @@ def deglare(body):
     # out at a third of its size (19: 0.16 for 0.46) and the fill reached into it. A crop without a lid takes exactly
     # the glare-only path below
     lid_hard, lid_feather, lid_pct = None, None, 0.0
+    cap = None
     if pupil_ok:
         lid_hard, lid_feather, lid_pct = L.lid_mask(raw, L.iris_radius_frac(pad) * raw.size[0], glare_hard=hard,
                                                     size=S, pupil_rho=pr / L.iris_radius_frac(pad))
+        if lid_pct <= 0:
+            # a thin lid lid_mask leaves alone, as analyze measures it (_lib/lidcap.py): filled like any lid below, so the model
+            # never paints the lid skin's colour into a light iris (none found: exactly as before)
+            got = LC.cap_mask(raw, pad, pr, S)
+            if got is not None:
+                lid_hard, lid_feather, lid_pct, cap = got
     # a reflection on the pupil is not recoverable iris detail; rebuild that part as darkness ourselves and
     # keep it out of the model's mask, or it paints window frames inside the eye
     pupil_overlap, pupil_changed, disc = 0.0, False, None
@@ -90,7 +98,7 @@ def deglare(body):
         filled = L.mirror_prefill(crop, np.maximum(feather, lid_feather), L.LID_EXTRA_DONORS)
         base = L.composite(crop, filled, lid_feather)
         if L.lid_drift(crop, base, lid_hard, hard, r_px) > L.LID_DRIFT_MAX:
-            base, lid_pct = crop, 0.0           # no clean iris to borrow from: leave the lid to the grade, as before
+            base, lid_pct, cap = crop, 0.0, None    # no clean iris to borrow from: leave the lid to the grade, as before
     if pct < L.GLARE_MIN_PCT:
         if lid_pct > 0:
             base = L.lid_composite(crop, filled, lid_hard, lid_feather, r_px, prho, glare_hard=hard)
@@ -109,7 +117,7 @@ def deglare(body):
         return RF.tag({"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
                        "changed": changed, "used_sr": used_sr,
                        "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(base, "JPEG", 95),
-                       **({"curtain": curtain} if curtain else {})}, void, rem)
+                       **({"curtain": curtain} if curtain else {}), **({"lid_cap": cap} if cap and lid_pct > 0 else {})}, void, rem)
     # the reflection holes: the whole glint with its halo, outline ring and soft shoulder (glare_extent), never less than
     # glare_mask's. The gate above and every lid and pupil decision still read glare_mask's, so a crop below the gate is
     # exactly as before. The holes get the lid path's kind of fill (glare_fill: the tone of the iris round them, single
@@ -161,7 +169,7 @@ def deglare(body):
     return RF.tag({"ok": True, "glare_pct": round(pct, 2), "lid_pct": round(lid_pct, 2), "veil_pct": round(100.0 * veil, 2),
                    "changed": True, "used_sr": used_sr,
                    "pupil_overlap": round(pupil_overlap, 3), "crop": L.pil_to_b64(clean, "JPEG", 95),
-                   **({"curtain": curtain} if curtain else {})}, void, rem)
+                   **({"curtain": curtain} if curtain else {}), **({"lid_cap": cap} if cap and lid_pct > 0 else {})}, void, rem)
 
 def handle(req): L.run(req, deglare)
 

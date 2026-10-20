@@ -137,6 +137,9 @@
   },
   "v3lumen": {
    "pass": 89
+  },
+  "v3lidcap": {
+   "pass": 18
   }
  }
 }
