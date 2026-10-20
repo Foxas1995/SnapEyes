@@ -53,8 +53,8 @@
 //      styles.items has an entry for exactly the gallery's tiles. A tile is for sale only when the run-time catalogue lists that style live for that many
 //      eyes (src/landing/StyleTile.tsx): without a row it would never carry a price, and a wrong row would print the price of another style. The other direction too:
 //      every style of the v3 engine the picker shows (a place in the picker's order, preview or live for some count of eyes) has a tile, but for the styles of
-//      LANDING_TILE_LATER while none of their ceilings is live (the light family of 2026-10-20: /try first, the gallery is at its budget); and a tile's copy is its
-//      description only (the name a tile prints is the registry's, src/landing/tileState.ts).
+//      LANDING_TILE_LATER while none of their ceilings is live (the light family of 2026-10-20 and the ensemble family's four cosmos looks of the same day: /try
+//      first, the gallery is at its budget); and a tile's copy is its description only (the name a tile prints is the registry's, src/landing/tileState.ts).
 // Items 8, 9, 10, 12 and 13 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
 // `npm run check:styles` runs it alone.
@@ -582,6 +582,10 @@ export const LANDING_TILE_LATER = {
   'solo.sparks': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
   'solo.halo': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
   'solo.aurora': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'duo.nebula': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'duo.supernova': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'grp.nebula': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
+  'grp.supernova': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
 };
 /** The list itself (item 15, run on the repository): every id of it is a style of the registry, and none has its landing tile yet (one that has is taken off). */
 export function checkLandingLater(tileStyle, styles, out, later = LANDING_TILE_LATER) {

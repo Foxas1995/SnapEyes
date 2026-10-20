@@ -10,6 +10,8 @@ quite good"; Endless Duo did not please him and the gold looks stay shelved):
                                      the hub: the order of the eyes, or rotate)
   light_circle     Light Circle      the irises evenly on a circle round one small light, a white star in a thin aureole
   radiance_family  Radiance Family   every eye sends its own short rays, one shared key light, a soft territory per eye
+  nebula_duo, nebula_family         Nebula Duo, Nebula Family         the irises as the bright hearts of one nebula (the light family's Nebula, cosmos.py)
+  supernova_duo, supernova_family   Supernova Duo, Supernova Family   a burst of stardust in each eye's own colours (the light family's Supernova, cosmos.py)
 
 Every picture follows the artwork charter by construction (base.py): the matter is drawn into the float canvas, the irises are pasted LAST, byte for byte;
 nothing is drawn over an iris or a pupil (checks.py measures T1, T2, T6 on every render it is asked to and on every master).
@@ -36,9 +38,9 @@ from .. import seeds as SD
 from .. import text as TX
 from . import base as B
 
-DESIGNS = ("clean_duo", "radiance_duo", "orbit", "light_circle", "radiance_family")
-PAIR_DESIGNS = ("clean_duo", "radiance_duo")
-GROUP_DESIGNS = ("orbit", "light_circle", "radiance_family")
+DESIGNS = ("clean_duo", "radiance_duo", "orbit", "light_circle", "radiance_family", "nebula_duo", "nebula_family", "supernova_duo", "supernova_family")
+PAIR_DESIGNS = ("clean_duo", "radiance_duo", "nebula_duo", "supernova_duo")
+GROUP_DESIGNS = ("orbit", "light_circle", "radiance_family", "nebula_family", "supernova_family")
 SIZES = (64, 4096)
 NAMES_MAX = 8
 _LOOKS = {}
@@ -47,9 +49,10 @@ _LOOKS = {}
 def looks():
     """{design: the look's entry}: n (min, max eyes), fmt (the default canvas for n eyes), canvases, plan, fx, bg, group, decide (the Radiance looks)."""
     if not _LOOKS:
-        from . import clean_duo, light_circle, orbit, radiance_duo, radiance_family
+        from . import clean_duo, cosmos, light_circle, orbit, radiance_duo, radiance_family
         _LOOKS.update({"clean_duo": clean_duo.LOOK, "radiance_duo": radiance_duo.LOOK, "orbit": orbit.LOOK, "light_circle": light_circle.LOOK,
-                       "radiance_family": radiance_family.LOOK})
+                       "radiance_family": radiance_family.LOOK, "nebula_duo": cosmos.NEBULA_DUO, "nebula_family": cosmos.NEBULA_FAMILY,
+                       "supernova_duo": cosmos.SUPERNOVA_DUO, "supernova_family": cosmos.SUPERNOVA_FAMILY})
     return _LOOKS
 
 

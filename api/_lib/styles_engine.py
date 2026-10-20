@@ -200,6 +200,28 @@ ENGINE = {
         "fill_side": 0,
         "wave": "R2"
     },
+    "duo.nebula": {
+        "engine": {"module": "ensemble", "design": "nebula_duo"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "5:4", "1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "duo.supernova": {
+        "engine": {"module": "ensemble", "design": "supernova_duo"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "5:4", "1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
     "duo.universe": {
         "engine": {"module": "universe", "design": "echo"},
         "design_by_eyes": {},
@@ -270,6 +292,28 @@ ENGINE = {
         "engine": {"module": "ensemble", "design": "light_circle"},
         "design_by_eyes": {},
         "canvases": ["1:1", "4:5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "grp.nebula": {
+        "engine": {"module": "ensemble", "design": "nebula_family"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "1:1", "5:4", "4:5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "grp.supernova": {
+        "engine": {"module": "ensemble", "design": "supernova_family"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "1:1", "5:4", "4:5"],
         "gate_rules": "lid",
         "plates": [],
         "atlas": [],

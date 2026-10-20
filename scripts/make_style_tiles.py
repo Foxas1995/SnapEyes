@@ -19,6 +19,8 @@ one pupil far bigger than the others. A command reads only the eyes of the tiles
   Family Colours   all three, the Trio
   Clean Duo        own eye and the yellow green one; Radiance Duo: own eye and the dark brown one
   Family Orbit, Light Circle, Radiance Family: four eyes (own, yellow green, dark brown, violet brown; Family Orbit has the owner's own eye in the middle)
+  the other looks of the ensemble family (Nebula and Supernova as a pair and a family): no row of SETS, the family's defaults (the pair on the own eye and the
+                   dark brown one, the family on the four eyes): their slugs carry the word of a legacy id, which this script may not write
 The size of a picture is the long side of the family's default canvas at 1024 px (a preview), reduced with LANCZOS to 800 and 480 px; WEBP quality 80 and 78.
 The same command run again on the same code and the same eyes gives the same files (the seed comes from the eye ids, which are hashes of the files).
 
@@ -58,16 +60,21 @@ SETS = {
     "radiance-family": ("own", "yellow", "dark", "violet"),
 }
 ONE_EYE = ("own",)          # a style of one eye that SETS does not name is shown on the owner's own eye, as every style of one eye is
+ENSEMBLE_PAIR = ("own", "dark")                          # a pair of the ensemble family that SETS does not name
+ENSEMBLE_GROUP = ("own", "yellow", "dark", "violet")     # a family of the ensemble family that SETS does not name
 WIDTHS = ((800, 80), (480, 78))
 SIDE = 1024
 NO_KEYS = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_KEY")
 
 
 def eye_set(style_id, C):
-    """The eyes a style's tile is shown on: its row of SETS, else the owner's own eye for a style of one eye (None: a style of more eyes needs its row)."""
+    """The eyes a style's tile is shown on: its row of SETS, else the owner's own eye for a style of one eye and the ensemble family's defaults for its pairs
+    and families (None: any other style of more eyes needs its row)."""
     keys = SETS.get(C.slug_of(style_id))
     if keys is None and C.eyes_range(style_id) == (1, 1):
         keys = ONE_EYE
+    if keys is None and ((C.ENGINE.get(style_id) or {}).get("engine") or {}).get("module") == "ensemble":
+        keys = ENSEMBLE_PAIR if C.eyes_range(style_id) == (2, 2) else ENSEMBLE_GROUP
     return keys
 
 
@@ -132,7 +139,7 @@ def main(argv=None):
     from _lib import styles as ST
     from _lib.styles import core as SCORE
     todo = [i for i in shown if not a.only or C.slug_of(i) in a.only]
-    raws = load_eyes(a.eyes, {k for i in todo for k in SETS[C.slug_of(i)]})
+    raws = load_eyes(a.eyes, {k for i in todo for k in eye_set(i, C)})
     os.makedirs(a.out, exist_ok=True)
     for i in shown:
         slug = C.slug_of(i)

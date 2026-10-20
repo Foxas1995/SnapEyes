@@ -210,6 +210,111 @@
    "sha": "b1fa99a7de03b0128d68d3328c89300c493d686b78a801984b144f5af2fd5294",
    "w": 1024
   },
+  "duo.nebula.amber+blue2.9:19.5.512": {
+   "design": "nebula_duo",
+   "discs": [
+    [
+     118.0,
+     203.0,
+     83.0
+    ],
+    [
+     118.0,
+     379.0,
+     83.0
+    ]
+   ],
+   "fmt": "9:19.5",
+   "frozen": {},
+   "h": 512,
+   "seed": "17368102249768171594",
+   "sha": "7ae20853e0a00189acc96ca845e9a4054137fb709e105f0445f0e44a9c4d50f1",
+   "w": 236
+  },
+  "duo.nebula.blue+brown.default.1024": {
+   "design": "nebula_duo",
+   "discs": [
+    [
+     317.0,
+     342.0,
+     184.0
+    ],
+    [
+     707.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "14353508359580197063",
+   "sha": "6e4b754720c6eb3f8fe239ff29d4ef2a45347338e27f2696cab3ba5db8a99ab2",
+   "w": 1024
+  },
+  "duo.nebula.blue+brown.default.1024.text": {
+   "design": "nebula_duo",
+   "discs": [
+    [
+     328.5,
+     321.5,
+     173.5
+    ],
+    [
+     695.5,
+     321.5,
+     173.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "14353508359580197063",
+   "sha": "0b021f33a1014e97222ab408a0671823ecd0eebe4b3480f996c8c6cba9aa4b8e",
+   "w": 1024
+  },
+  "duo.nebula.blue+brown.default.4096": {
+   "design": "nebula_duo",
+   "discs": [
+    [
+     1268.0,
+     1368.0,
+     736.0
+    ],
+    [
+     2828.0,
+     1368.0,
+     736.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 2732,
+   "seed": "14353508359580197063",
+   "sha": "07732237debb9f7a7429c661220d85a7c7e529220a2d75224a55a4ef9b37ae56",
+   "w": 4096
+  },
+  "duo.nebula.green+grey.default.1024": {
+   "design": "nebula_duo",
+   "discs": [
+    [
+     317.0,
+     342.0,
+     184.0
+    ],
+    [
+     707.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "17070384429896188585",
+   "sha": "879f5326a7e7b48cd43e827d3b9d4017bbda3fa250e09a0f13e8cb870d57114d",
+   "w": 1024
+  },
   "duo.radiance.amber+blue2.default.1024": {
    "design": "radiance_duo",
    "discs": [
@@ -522,6 +627,111 @@
    "sha": "91ed4b9b5cf7c2c38b9518d36b7f50441afaf2991980d58b03b342ec7f318ed8",
    "w": 1024
   },
+  "duo.supernova.amber+blue2.9:19.5.512": {
+   "design": "supernova_duo",
+   "discs": [
+    [
+     118.0,
+     203.0,
+     83.0
+    ],
+    [
+     118.0,
+     379.0,
+     83.0
+    ]
+   ],
+   "fmt": "9:19.5",
+   "frozen": {},
+   "h": 512,
+   "seed": "5475882726361614192",
+   "sha": "4afb29e595261404352aeb886e2e5b2c237f678921c9eadfbc9cd08a97c2df0d",
+   "w": 236
+  },
+  "duo.supernova.blue+brown.default.1024": {
+   "design": "supernova_duo",
+   "discs": [
+    [
+     317.0,
+     342.0,
+     184.0
+    ],
+    [
+     707.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "13011081185238193846",
+   "sha": "df871792c1c12b39c3f72b633aef0909b403aab58ac3fdbd02f6aa795d57e1c4",
+   "w": 1024
+  },
+  "duo.supernova.blue+brown.default.1024.text": {
+   "design": "supernova_duo",
+   "discs": [
+    [
+     328.5,
+     321.5,
+     173.5
+    ],
+    [
+     695.5,
+     321.5,
+     173.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "13011081185238193846",
+   "sha": "c0126a686d209414a9c3771f224d6794d0ecd0af0f21619268ee56b76ef48590",
+   "w": 1024
+  },
+  "duo.supernova.blue+brown.default.4096": {
+   "design": "supernova_duo",
+   "discs": [
+    [
+     1268.0,
+     1368.0,
+     736.0
+    ],
+    [
+     2828.0,
+     1368.0,
+     736.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 2732,
+   "seed": "13011081185238193846",
+   "sha": "71714d66102d49c9bb53d436eed7df5d9af381ade9dd1c155d0543eb7b408cdb",
+   "w": 4096
+  },
+  "duo.supernova.green+grey.default.1024": {
+   "design": "supernova_duo",
+   "discs": [
+    [
+     317.0,
+     342.0,
+     184.0
+    ],
+    [
+     707.0,
+     342.0,
+     184.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "13271955723421660922",
+   "sha": "29fa1f0d1f9b6173e64879f4131fbd98b8d9cc9d88cdc08d2e1aa402d1a8ba31",
+   "w": 1024
+  },
   "grp.light_circle.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
    "design": "light_circle",
    "discs": [
@@ -808,6 +1018,191 @@
    "h": 1024,
    "seed": "3150544806788161520",
    "sha": "a7b4dfa086a91986119f7fe0eb39738c1edf6229b27b9543f6e7e6956b88b11b",
+   "w": 1024
+  },
+  "grp.nebula.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
+   "design": "nebula_family",
+   "discs": [
+    [
+     216.5,
+     255.5,
+     125.5
+    ],
+    [
+     511.5,
+     255.5,
+     125.5
+    ],
+    [
+     807.5,
+     255.5,
+     125.5
+    ],
+    [
+     364.5,
+     511.5,
+     125.5
+    ],
+    [
+     659.5,
+     511.5,
+     125.5
+    ],
+    [
+     216.5,
+     768.5,
+     125.5
+    ],
+    [
+     511.5,
+     768.5,
+     125.5
+    ],
+    [
+     807.5,
+     768.5,
+     125.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "3876776046765501835",
+   "sha": "819e35272f33710e4c378fc1bb8a34430600518cc1807ac0ba5e6a9c8127f870",
+   "w": 1024
+  },
+  "grp.nebula.blue+brown+green+grey+amber.default.1024": {
+   "design": "nebula_family",
+   "discs": [
+    [
+     360.0,
+     210.0,
+     129.0
+    ],
+    [
+     664.0,
+     210.0,
+     129.0
+    ],
+    [
+     208.0,
+     473.0,
+     129.0
+    ],
+    [
+     512.0,
+     473.0,
+     129.0
+    ],
+    [
+     816.0,
+     473.0,
+     129.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "6268652238882167319",
+   "sha": "a0bfe567eae3617e32ba8d5f116aca22ce476e21312e950368cb7126ecbe8214",
+   "w": 1024
+  },
+  "grp.nebula.blue+brown+green+grey+amber.default.1024.text": {
+   "design": "nebula_family",
+   "discs": [
+    [
+     368.5,
+     197.5,
+     121.5
+    ],
+    [
+     655.5,
+     197.5,
+     121.5
+    ],
+    [
+     225.5,
+     444.5,
+     121.5
+    ],
+    [
+     511.5,
+     444.5,
+     121.5
+    ],
+    [
+     798.5,
+     444.5,
+     121.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "6268652238882167319",
+   "sha": "045e60101e74a97c8cce76e83adf51744d0214f8c688031b465219d8860f9d7e",
+   "w": 1024
+  },
+  "grp.nebula.blue+brown+green+grey+amber.default.4096": {
+   "design": "nebula_family",
+   "discs": [
+    [
+     1440.0,
+     840.0,
+     516.0
+    ],
+    [
+     2656.0,
+     840.0,
+     516.0
+    ],
+    [
+     832.0,
+     1892.0,
+     516.0
+    ],
+    [
+     2048.0,
+     1892.0,
+     516.0
+    ],
+    [
+     3264.0,
+     1892.0,
+     516.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 2732,
+   "seed": "6268652238882167319",
+   "sha": "8200a48e9c98d37f07c4c936d5c22c3061892267dd7fc0f64017296e5a4cb8cf",
+   "w": 4096
+  },
+  "grp.nebula.blue+brown+green.default.1024": {
+   "design": "nebula_family",
+   "discs": [
+    [
+     512.0,
+     209.0,
+     130.0
+    ],
+    [
+     359.0,
+     474.0,
+     130.0
+    ],
+    [
+     665.0,
+     474.0,
+     130.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "2584597698763989378",
+   "sha": "8ab1570d32a9cd0d5a759a1966a4ed021c81ee62fc2a9a51ffd529028776620f",
    "w": 1024
   },
   "grp.orbit.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
@@ -1487,6 +1882,191 @@
    "h": 683,
    "seed": "2668447989687225262",
    "sha": "31da899f076c22689dabfed191b5e27dd7de62164d859ec10a74fd59ee4464c7",
+   "w": 1024
+  },
+  "grp.supernova.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
+   "design": "supernova_family",
+   "discs": [
+    [
+     216.5,
+     255.5,
+     125.5
+    ],
+    [
+     511.5,
+     255.5,
+     125.5
+    ],
+    [
+     807.5,
+     255.5,
+     125.5
+    ],
+    [
+     364.5,
+     511.5,
+     125.5
+    ],
+    [
+     659.5,
+     511.5,
+     125.5
+    ],
+    [
+     216.5,
+     768.5,
+     125.5
+    ],
+    [
+     511.5,
+     768.5,
+     125.5
+    ],
+    [
+     807.5,
+     768.5,
+     125.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "4014575517831033842",
+   "sha": "7f46d49b03d91b9d188d518435edba01db11c709acc9bb7a58f9b77055dd488a",
+   "w": 1024
+  },
+  "grp.supernova.blue+brown+green+grey+amber.default.1024": {
+   "design": "supernova_family",
+   "discs": [
+    [
+     360.0,
+     210.0,
+     129.0
+    ],
+    [
+     664.0,
+     210.0,
+     129.0
+    ],
+    [
+     208.0,
+     473.0,
+     129.0
+    ],
+    [
+     512.0,
+     473.0,
+     129.0
+    ],
+    [
+     816.0,
+     473.0,
+     129.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "4633562092025101187",
+   "sha": "d9914c431ed3b2cdb5cd737042d3847eca8c5edbc3493aa1c329a6265853b7a6",
+   "w": 1024
+  },
+  "grp.supernova.blue+brown+green+grey+amber.default.1024.text": {
+   "design": "supernova_family",
+   "discs": [
+    [
+     368.5,
+     197.5,
+     121.5
+    ],
+    [
+     655.5,
+     197.5,
+     121.5
+    ],
+    [
+     225.5,
+     444.5,
+     121.5
+    ],
+    [
+     511.5,
+     444.5,
+     121.5
+    ],
+    [
+     798.5,
+     444.5,
+     121.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "4633562092025101187",
+   "sha": "a9287810f274f1050bb8a67b2915058752cbcf3faa7572f33899cf5cf6967c18",
+   "w": 1024
+  },
+  "grp.supernova.blue+brown+green+grey+amber.default.4096": {
+   "design": "supernova_family",
+   "discs": [
+    [
+     1440.0,
+     840.0,
+     516.0
+    ],
+    [
+     2656.0,
+     840.0,
+     516.0
+    ],
+    [
+     832.0,
+     1892.0,
+     516.0
+    ],
+    [
+     2048.0,
+     1892.0,
+     516.0
+    ],
+    [
+     3264.0,
+     1892.0,
+     516.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 2732,
+   "seed": "4633562092025101187",
+   "sha": "3f197acb84825953c69fbf6ebf0177771a357ad9d5032e190766d9e1ec8068a2",
+   "w": 4096
+  },
+  "grp.supernova.blue+brown+green.default.1024": {
+   "design": "supernova_family",
+   "discs": [
+    [
+     512.0,
+     209.0,
+     130.0
+    ],
+    [
+     359.0,
+     474.0,
+     130.0
+    ],
+    [
+     665.0,
+     474.0,
+     130.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "3703649115235570893",
+   "sha": "889e59aa620169fdbe994ac8ee65ac6d697673b2ea207e437f683d2a61636782",
    "w": 1024
   }
  },

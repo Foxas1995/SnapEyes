@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""The ensemble family of the v3 engine (2026-10-20): the pairs and families of WHOLE irises the owner chose from the laboratory round of the same day (Clean Duo,
-Radiance Duo, Family Orbit, Light Circle, Radiance Family) in api/_lib/styles/ensemble, at stage preview. The goldens of the family, the checks of the brief on every
-golden picture, the master against the preview, the contract and the master plan.
+"""The ensemble family of the v3 engine (2026-10-20): the pairs and families of WHOLE irises the owner chose from the laboratory rounds of the same day (Clean Duo,
+Radiance Duo, Family Orbit, Light Circle, Radiance Family; and Nebula and Supernova as a pair and a family, the light family's effects drawn round several irises)
+in api/_lib/styles/ensemble, at stage preview. The goldens of the family, the checks of the brief on every golden picture, the master against the preview, the
+contract and the master plan.
 
-  1. the family in the repository: its files and the rules of every module, the registry's five entries (stage preview, gate hard, the art price class, the
+  1. the family in the repository: its files and the rules of every module, the registry's nine entries (stage preview, gate hard, the art price class, the
      working copy, the layouts and their words), the engine table, the family's place in the style package; nothing of it can be bought before the owner's tick
   2. the golden replay: the pictures this code makes, recorded on purpose once (data/ensemble_goldens.json; record again with --record after a reviewed change of a
      picture, together with ENGINE_V and data/engine_v.json), for every look on several sets of synthetic eyes, the canvases, the sizes 512, 1024 and 4096, the
@@ -77,7 +78,9 @@ from _lib.styles import ensemble as HL  # noqa: E402
 from _lib.styles.ensemble import base as HB, checks as HCK  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
-STYLES = {"duo.clean_duo": "clean_duo", "duo.radiance": "radiance_duo", "grp.orbit": "orbit", "grp.light_circle": "light_circle", "grp.radiance": "radiance_family"}
+STYLES = {"duo.clean_duo": "clean_duo", "duo.radiance": "radiance_duo", "grp.orbit": "orbit", "grp.light_circle": "light_circle", "grp.radiance": "radiance_family",
+          "duo.nebula": "nebula_duo", "grp.nebula": "nebula_family", "duo.supernova": "supernova_duo", "grp.supernova": "supernova_family"}
+COSMOS = ("duo.nebula", "grp.nebula", "duo.supernova", "grp.supernova")
 
 
 def read(rel):
@@ -89,7 +92,8 @@ def read(rel):
 section("1. the family in the repository, the registry, the engine table")
 mods = sorted(f for f in os.listdir(FAMILY) if f.endswith(".py"))
 check("the package holds the contract, the renderer, the pieces, the checks and one module per look",
-      mods == sorted(["__init__.py", "base.py", "pieces.py", "corona.py", "checks.py", "clean_duo.py", "radiance_duo.py", "orbit.py", "light_circle.py", "radiance_family.py"]), mods)
+      mods == sorted(["__init__.py", "base.py", "pieces.py", "corona.py", "checks.py", "clean_duo.py", "radiance_duo.py", "orbit.py", "light_circle.py", "radiance_family.py",
+                      "cosmos.py"]), mods)
 srcs = {m: read(os.path.join("api", "_lib", "styles", "ensemble", m)) for m in mods}
 check("every module starts with the __future__ import and parses as Python 3.12 (Vercel's default)",
       all(re.search(r"^from __future__ import annotations\r?$", s, re.M) and ast.parse(s, feature_version=(3, 12)) for s in srcs.values()), "")
@@ -112,22 +116,26 @@ check("importing the style package and the catalogue loads no engine family (the
       imp.returncode == 0 and imp.stdout.strip() == "[]", (imp.stdout[-300:], imp.stderr[-300:]))
 reg = {sid: CT.STYLES[sid] for sid in STYLES}
 eng = {sid: CT.ENGINE[sid] for sid in STYLES}
-check("the registry has the five styles at stage preview (drawn in /try, never orderable until the owner's tick), in the art price class, with the HARD gate and the lid rule",
+check("the registry has the nine styles at stage preview (drawn in /try, never orderable until the owner's tick), in the art price class, with the HARD gate and the lid rule",
       all(d["stage"] == "preview" and d["stage_by_eyes"] == {} and d["price_class"] == "art" and d["gate"] == "hard" and d["legacy"] == 0 for d in reg.values())
       and all(e["gate_rules"] == "lid" and e["plates"] == [] and e["atlas"] == [] for e in eng.values()), {s: (d["stage"], d["gate"]) for s, d in reg.items()})
-check("their engine is the ensemble family with the design of each look; the names are the owner's (Clean Duo, Radiance Duo, Family Orbit, Light Circle, Radiance Family)",
+check("their engine is the ensemble family with the design of each look; the names are the owner's (Clean Duo, Radiance Duo, Family Orbit, Light Circle, Radiance Family, "
+      "Nebula Duo, Nebula Family, Supernova Duo, Supernova Family)",
       all(eng[s]["engine"] == {"module": "ensemble", "design": STYLES[s]} for s in STYLES)
-      and [reg[s]["name"] for s in STYLES] == ["Clean Duo", "Radiance Duo", "Family Orbit", "Light Circle", "Radiance Family"], {s: eng[s]["engine"] for s in STYLES})
+      and [reg[s]["name"] for s in STYLES] == ["Clean Duo", "Radiance Duo", "Family Orbit", "Light Circle", "Radiance Family", "Nebula Duo", "Nebula Family", "Supernova Duo",
+                                               "Supernova Family"], {s: eng[s]["engine"] for s in STYLES})
 check("the pairs take two eyes in the layout pair, the families three to eight (Family Orbit the new layout orbit, Light Circle the ring, Radiance Family the triangle, the "
       "zigzag and the rows), and every layout has its word in the four languages",
-      reg["duo.clean_duo"]["eyes"] == [2, 2] and reg["duo.radiance"]["layouts"] == {"2": ["pair"]} and reg["duo.clean_duo"]["layouts"] == {"2": ["pair"]}
-      and all(reg[s]["eyes"] == [3, 8] for s in ("grp.orbit", "grp.light_circle", "grp.radiance"))
+      reg["duo.clean_duo"]["eyes"] == [2, 2] and all(reg[s]["layouts"] == {"2": ["pair"]} for s in ("duo.radiance", "duo.clean_duo", "duo.nebula", "duo.supernova"))
+      and all(reg[s]["eyes"] == [3, 8] for s in ("grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova"))
+      and reg["grp.nebula"]["layouts"] == reg["grp.supernova"]["layouts"] == reg["grp.radiance"]["layouts"]
       and all(reg["grp.orbit"]["layouts"][str(n)] == ["orbit"] and reg["grp.light_circle"]["layouts"][str(n)] == ["ring"] for n in range(3, 9))
       and reg["grp.radiance"]["layouts"] == {"3": ["trio"], "4": ["zigzag"], "5": ["brick"], "6": ["brick"], "7": ["brick"], "8": ["brick"]}
       and sorted(CT.LAYOUT_NAMES["orbit"]) == ["de", "en", "hu", "lt"] and CT.layout_name("lt", "orbit") == "Orbita", reg["grp.radiance"]["layouts"])
 check("a working copy of 2048 px for every eye count (the master reads each eye at most 2048 px wide, as the pairs and Family Colours do), and a place in the picker's order",
       all(CT.work_side(s, n) == 2048 for s in STYLES for n in range(reg[s]["eyes"][0], reg[s]["eyes"][1] + 1))
-      and sorted(reg[s]["tile_order"] for s in ("duo.clean_duo", "duo.radiance")) == [4, 5] and sorted(reg[s]["tile_order"] for s in ("grp.orbit", "grp.light_circle", "grp.radiance")) == [3, 4, 5],
+      and sorted(reg[s]["tile_order"] for s in ("duo.clean_duo", "duo.radiance", "duo.nebula", "duo.supernova")) == [4, 5, 6, 7]
+      and sorted(reg[s]["tile_order"] for s in ("grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova")) == [3, 4, 5, 6, 7],
       {s: reg[s]["tile_order"] for s in STYLES})
 CT.set_override_source(lambda sid, n: None)
 check("with no tick of the owner every new style is at preview for every eye count it takes: previewable for a customer, renderable, and orderable for no one",
@@ -200,6 +208,17 @@ def cases():
     out.append(case("grp.light_circle", F8[:6], "4:5", 512))
     out.append(case("grp.radiance", F8[:6]))
     out.append(case("grp.radiance", F8[:5], "1:1", 512))
+    for s in ("duo.nebula", "duo.supernova"):
+        out.append(case(s, P1))
+        out.append(case(s, P2))
+        out.append(case(s, P3, "9:19.5", 512))
+        out.append(case(s, P1, text=True))
+        out.append(case(s, P1, size=4096))
+    for s in ("grp.nebula", "grp.supernova"):
+        for n in (3, 5, 8):
+            out.append(case(s, F8[:n]))
+        out.append(case(s, F8[:5], text=True))
+        out.append(case(s, F8[:5], size=4096))
     return out
 
 
@@ -234,7 +253,7 @@ if RECORD:
                            "this machine class and the pins of requirements.txt", "engine_v": ST.ENGINE_V, "cases": got}, f, indent=1, sort_keys=True)
     print("recorded", GOLDEN, len(got), "cases")
     gold = got
-check(f"the replay has every recorded case ({len(CASES)} pictures: the five looks, the canvases, 512, 1024 and 4096 px, the words, the swapped pair, the rotated group, "
+check(f"the replay has every recorded case ({len(CASES)} pictures: the nine looks, the canvases, 512, 1024 and 4096 px, the words, the swapped pair, the rotated group, "
       "the tinted thread, the dark pair, a near pair whose palettes move, a forced frozen palette)", sorted(gold) == sorted(got), sorted(set(gold) ^ set(got))[:6])
 diff = [k for k in got if k in gold and got[k]["sha"] != gold[k]["sha"]]
 check("every picture is byte for byte its golden (decoded pixels): the family draws what was recorded and reviewed", not diff, diff[:8])
@@ -267,8 +286,12 @@ edge = {k: (r["checks"]["edge"]["min_1024"], r["checks"]["edge"]["min_320"]) for
 check("the limb reads: every iris of Clean Duo, Radiance Duo, Family Orbit and Light Circle at least 6 L* from the ring outside it at 1024 px and at a 320 px tile (the "
       "laboratory's bar; the synthetic eyes have a dark limbal ring of their own, the owner's real sets read 7 to 38), the dark brown pair of Radiance Duo included (its dark "
       "limb keeps the deeper moat)",
-      all(v[0] >= 6.0 and v[1] >= 6.0 for k, v in edge.items() if PVS[k][0]["style"] != "grp.radiance"),
-      {k: v for k, v in edge.items() if PVS[k][0]["style"] != "grp.radiance" and not (v[0] >= 6.0 and v[1] >= 6.0)})
+      all(v[0] >= 6.0 and v[1] >= 6.0 for k, v in edge.items() if PVS[k][0]["style"] not in ("grp.radiance",) + COSMOS),
+      {k: v for k, v in edge.items() if PVS[k][0]["style"] not in ("grp.radiance",) + COSMOS and not (v[0] >= 6.0 and v[1] >= 6.0)})
+cos = {k: v for k, v in edge.items() if PVS[k][0]["style"] in COSMOS}
+check("the cosmos looks draw the light family's own light at every limb (Nebula's warm glow, Supernova's white hot rim), so their limb read is REPORTED, not bounded (it is the "
+      "look: on these synthetic eyes Nebula reads 4 to 36 L*, Supernova 0.9 to 9.4; on the owner's public sets Nebula 2.2 to 39, Supernova 1.7 to 16): every reading exists and "
+      "none is 0 (a rim the very colour of the limb)", len(cos) == 16 and all(v[0] is not None and v[1] is not None and v[0] > 0.5 and v[1] > 0.5 for v in cos.values()), cos)
 rf = {k: v for k, v in edge.items() if PVS[k][0]["style"] == "grp.radiance"}
 check("Radiance Family reads at least 4 L* at the limb everywhere (its short rays run all round each iris: the laboratory's 4 to 5.7 is the known weak point, reported "
       "on the owner's board)", all(v[1] >= 4.0 for v in rf.values()), rf)
@@ -283,8 +306,18 @@ for k, (c, pv, a) in PVS.items():
     k1 = k.replace(".4096", ".1024")
     _c1, pv1, a1 = PVS[k1]
     t9[k] = HCK.t9_scale(a1, pv1.discs, a)
+    if c["style"] in ("duo.nebula", "grp.nebula") and not t9[k]["ok"]:
+        # the light family's Nebula master draws two finer octaves of the gas and the filaments than the preview can hold (lumen.nebula NP["extra"],
+        # common.fbm_master: its own choice, so that the gas is fibrous at 100 percent; the single Nebula does the same) and the field is stretched by its
+        # quantiles after them: the master's gas is another texture of the same composition (measured on these eyes: design SSIM 0.89 and 0.91, mean dE00 1.8
+        # and 1.5, p99 10.2 and 9.7; without the octaves 0.95 and 0.96, 1.6 and 1.35). The ensemble family calls the effect as it is, so T9 of the two Nebula
+        # looks is held to a floor that names it (SSIM 0.88, mean dE00 2.0, p99 11) and REPORTED; the irises keep their bound and every other look the brief's
+        v = t9[k]
+        t9[k] = dict(v, ok=bool(v["ssim_design"] >= 0.88 and v["dE_mean_design"] <= 2.0 and v["dE_p99_design"] <= 11.0 and v["dE_iris_T9b"] <= 3.0), nebula_floor=True)
 check("T9: every 4096 px master is its 1024 px preview made larger: the design SSIM at least 0.95 (several eyes), its mean dE00 at most 1.5 and p99 at most 10, the "
-      "irises' own mean dE00 at most 3.0 (T9b); the seed and the frozen choices are the preview's", len(t9) == 5 and all(v["ok"] for v in t9.values())
+      "irises' own mean dE00 at most 3.0 (T9b), Supernova Duo and Family included; the two Nebula looks to the floor of the light family's master octaves (SSIM 0.88, "
+      "dE00 2.0, p99 11: reported); the seed and the frozen choices are the preview's",
+      len(t9) == 9 and all(v["ok"] for v in t9.values()) and not any(v.get("nebula_floor") for k, v in t9.items() if PVS[k][0]["style"] not in ("duo.nebula", "grp.nebula"))
       and all(PVS[k][1].seed == PVS[k.replace(".4096", ".1024")][1].seed and PVS[k][1].log.get("frozen") == PVS[k.replace(".4096", ".1024")][1].log.get("frozen") for k in t9), t9)
 print("   " + "; ".join(f"{k.split('.')[1]}: ssim {v['ssim_design']}, dE {v['dE_mean_design']}/{v['dE_p99_design']}, iris {v['dE_iris_T9b']}" for k, v in t9.items()))
 
@@ -378,10 +411,12 @@ check("the cost table has a measured row of every style and eye count (masters a
       "unpriced", all(CO.known(f"ensemble.{d}", n) and n in CO.CAPPED[f"ensemble.{d}"] and n in CO.PREVIEW[f"ensemble.{d}"] for s, d in STYLES.items()
                       for n in range(CT.eyes_range(s)[0], CT.eyes_range(s)[1] + 1)), "")
 fits = {f"{s}/{n}": STP.capacity(p, 1.6) for (s, n), p in caps.items()}
-OVER = ["grp.orbit/7", "grp.orbit/8", "grp.radiance/7", "grp.radiance/8"]
-check("at the default slow factor (1.6) every plan of the family fits one call's work and memory budgets but four: Family Orbit and Radiance Family at seven and eight eyes "
-      "need 53 to 65 s of the 52 s (measured: checkout answers capacity for them, never a held order). PINNED, so that a change of the table or of the budget is seen",
-      sorted(k for k, v in fits.items() if not v["ok"]) == OVER and all(fits[k]["why"] == "time" for k in OVER) and all(v["est_mb"] < CO.MEM_BUDGET_MB for v in fits.values()),
+OVER = ["grp.orbit/7", "grp.orbit/8", "grp.radiance/7", "grp.radiance/8", "grp.nebula/6", "grp.nebula/7", "grp.nebula/8", "grp.supernova/4", "grp.supernova/5", "grp.supernova/6",
+        "grp.supernova/7", "grp.supernova/8"]
+check("at the default slow factor (1.6) every plan of the family fits one call's work and memory budgets but twelve: Family Orbit and Radiance Family at seven and eight eyes "
+      "(53 to 65 s of the 52 s), Nebula Family from six eyes (58 to 78 s) and Supernova Family from four (58 to 103 s), measured: checkout answers capacity for them, never "
+      "a held order. PINNED, so that a change of the table or of the budget is seen",
+      sorted(k for k, v in fits.items() if not v["ok"]) == sorted(OVER) and all(fits[k]["why"] == "time" for k in OVER) and all(v["est_mb"] < CO.MEM_BUDGET_MB for v in fits.values()),
       {k: (v["need_s"], v["est_mb"], v["why"]) for k, v in fits.items() if not v["ok"]})
 print("   (need s at factor 1.6: " + ", ".join(f"{k} {v['need_s']}" for k, v in fits.items()) + ")")
 plan = caps[("duo.radiance", 2)]

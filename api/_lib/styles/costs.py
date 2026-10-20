@@ -185,6 +185,27 @@ PREVIEW.update({
     "ensemble.light_circle": {3: (1.65, 1.48, 0.19, 1.29, 116), 4: (2.34, 2.31, 0.25, 2.06, 125), 5: (2.43, 2.56, 0.25, 2.31, 131), 6: (2.69, 2.66, 0.27, 2.38, 132), 7: (2.89, 2.98, 0.27, 2.71, 137), 8: (3.26, 3.46, 0.25, 3.21, 141)},
     "ensemble.radiance_family": {3: (1.81, 1.74, 0.6, 1.14, 136), 4: (2.4, 2.42, 0.69, 1.73, 143), 5: (2.8, 2.79, 0.83, 1.96, 150), 6: (3.07, 3.17, 0.92, 2.26, 147), 7: (3.36, 3.47, 0.96, 2.51, 150), 8: (3.95, 4.2, 1.2, 3.0, 156)},
 })
+# The four cosmos looks of the ensemble family (Nebula Duo and Family, Supernova Duo and Family: the light family's effects round several irises), measured the
+# same way (two pair sets, the slower kept; the first n of the eight 4K restorations for the families). Their families pass the work budget at the default slow
+# factor from six eyes (Nebula) and from four (Supernova): the grade of the eyes at the 2048 px working copy is 15 to 17 s of it at six to eight eyes.
+MASTER.update({
+    "ensemble.nebula_duo": {2: (20.6, 20.6, 466, 466)},
+    "ensemble.nebula_family": {3: (19.4, 19.4, 455, 455), 4: (20.3, 20.3, 501, 501), 5: (24.8, 24.8, 543, 543), 6: (30.1, 30.1, 743, 743), 7: (36.0, 36.0, 754, 754), 8: (41.7, 41.7, 796, 796)},
+    "ensemble.supernova_duo": {2: (17.9, 17.9, 476, 476)},
+    "ensemble.supernova_family": {3: (22.4, 22.4, 490, 490), 4: (30.9, 30.9, 549, 549), 5: (38.3, 38.3, 607, 607), 6: (52.3, 52.3, 735, 735), 7: (54.6, 54.6, 751, 751), 8: (57.6, 57.6, 802, 802)},
+})
+CAPPED.update({
+    "ensemble.nebula_duo": {2: (20.6, 466)},
+    "ensemble.nebula_family": {3: (19.4, 455), 4: (20.3, 501), 5: (24.8, 543), 6: (30.1, 743), 7: (36.0, 754), 8: (41.7, 796)},
+    "ensemble.supernova_duo": {2: (17.9, 476)},
+    "ensemble.supernova_family": {3: (22.4, 490), 4: (30.9, 549), 5: (38.3, 607), 6: (52.3, 735), 7: (54.6, 751), 8: (57.6, 802)},
+})
+PREVIEW.update({
+    "ensemble.nebula_duo": {2: (5.0, 4.62, 2.73, 1.88, 138)},
+    "ensemble.nebula_family": {3: (5.8, 5.54, 3.87, 1.67, 143), 4: (8.64, 7.37, 4.75, 2.61, 151), 5: (9.12, 8.13, 4.48, 3.66, 157), 6: (10.93, 14.01, 9.86, 4.16, 184), 7: (19.61, 11.4, 7.85, 3.55, 190), 8: (13.87, 12.72, 8.44, 4.28, 197)},
+    "ensemble.supernova_duo": {2: (4.8, 4.46, 3.26, 1.2, 213)},
+    "ensemble.supernova_family": {3: (6.24, 6.07, 4.8, 1.27, 237), 4: (9.39, 9.11, 7.26, 1.85, 252), 5: (13.51, 11.75, 10.33, 1.41, 275), 6: (16.88, 15.99, 12.03, 3.96, 273), 7: (19.41, 20.2, 16.32, 3.88, 285), 8: (23.6, 21.57, 16.48, 5.09, 296)},
+})
 
 # MEASURED = ((cost key, eyes, working copy side, cpu s, peak MB), ...): quiet-core seconds in the spike's units and the cold peak of a MASTER as the master step
 # runs it (preview at 4096 px with the self check) on real calibration restorations, measured on this repo's port (WP7A review fix, 2026-10-05, Windows, one thread;
