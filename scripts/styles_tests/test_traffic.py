@@ -304,6 +304,37 @@ for action in ("sources", "funnel", "why", "photos", "daily", "ads"):
     lost += [f"{action}.{k}" for k in direct if type(wire.get(k)) is not type(direct[k])]
 check("over HTTP every report keeps all its keys and their kinds (none is replaced by the call's own time)", not lost, lost)
 
+# ============================================================================================ 7. a seeded month holds codes and numbers only
+section("7. the demo seed (scripts/seed_demo_traffic.py): a month of believable traffic, codes and numbers only")
+import re  # noqa: E402
+import subprocess  # noqa: E402
+demo = os.path.join(TMP, "demo")
+run = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "seed_demo_traffic.py"), "--store", demo, "--days", "30", "--seed", "3", "--clean"], capture_output=True, text=True, timeout=300, env=dict(os.environ, STORE_LOCAL_DIR=demo))
+seeded = {}
+m = re.search(r"seeded ([{].*[}])", run.stdout)
+if m:
+    seeded = eval(m.group(1))  # noqa: S307: the line is printed by the script just run
+check("the seed script runs and writes a month: thousands of events, orders, ledger rows and feedback answers", run.returncode == 0 and seeded.get("events", 0) > 1500 and seeded.get("orders", 0) >= 5 and seeded.get("ledger", 0) > 20 and seeded.get("feedback", 0) >= 1, (run.returncode, run.stdout[-300:], run.stderr[-300:]))
+blobs, bad_keys = [], []
+for root, _d, files in os.walk(demo):
+    for n in files:
+        text = open(os.path.join(root, n), encoding="utf-8", errors="replace").read()
+        blobs.append(text)
+        if root.replace(os.sep, "/").find("/ops/events/") >= 0:
+            ev = json.loads(text)
+            bad_keys += [k for k in ev if k not in set(E.FIELDS.get(ev.get("kind"), {})) | {"v", "kind", "t", "ms"}]
+whole = chr(10).join(blobs)
+check("every key of every event the seed wrote is one of the whitelist of its kind", not bad_keys, sorted(set(bad_keys))[:8])
+check("and nothing the seed wrote holds an IP address, a user agent, a link, or an address of e-mail except the example.com ones of the demo orders", not re.search(r"[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}", whole) and "Mozilla" not in whole and "http" not in whole
+      and all(x.endswith("@example.com") for x in re.findall(r"[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+[.][A-Za-z.]+", whole)), None)
+snippet = ("import sys, json; sys.path.insert(0, sys.argv[1]); from _lib import ops; w = {'kind': 'admin-v1', 'exp': 9999999999}; "
+           "s = ops.ACTIONS['sources']({'days': 30, 'group': 'cmp'}, w); f = ops.ACTIONS['funnel']({'days': 30}, w); "
+           "print(json.dumps({'rows': len(s['rows']), 'orders': s.get('orders'), 'revenue': s.get('revenue'), 'brs': sorted(f['by_br']), 'devs': sorted(f['by_dev'])}))")
+out = subprocess.run([sys.executable, "-c", snippet, API], capture_output=True, text=True, timeout=300, env=dict(os.environ, STORE_LOCAL_DIR=demo))
+rep = json.loads(out.stdout.strip().splitlines()[-1]) if out.returncode == 0 and out.stdout.strip() else {}
+check("the pages answer over the seeded month: several campaigns, orders with revenue, the Facebook and Instagram in-app browsers among the browsers, and the three device classes", rep.get("rows", 0) >= 5 and rep.get("orders", 0) >= 3
+      and "eur" in (rep.get("revenue") or {}) and {"fb", "ig"} <= set(rep.get("brs", [])) and {"ios", "android", "desktop"} <= set(rep.get("devs", [])), (rep, out.stderr[-300:]))
+
 total = len(RESULTS)
 passed = sum(RESULTS)
 print(f"\n{passed} of {total} passed", flush=True)

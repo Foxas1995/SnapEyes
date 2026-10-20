@@ -109,7 +109,7 @@ P_TRY = {("ios", "fb"): 0.40, ("ios", "ig"): 0.44}
 P_PHOTO = {("ios", "fb"): 0.50, ("ios", "ig"): 0.54, ("desktop", "chrome"): 0.30, ("desktop", "safari"): 0.30}
 RES = [("mp_8_16", 58), ("mp_16_40", 20), ("mp_3_8", 14), ("mp_1_3", 6), ("mp_lt1", 2)]
 IRS = [("d_lt280", 14), ("d_280_420", 30), ("d_420_600", 36), ("d_600p", 20)]
-LID, FILL = list(GT.WHY["lid"][:5]), list(GT.WHY["fill"][:3])        # the reason codes of the gate that is live today (the added detectors of SNAPEYES_GATE2 are off, so they are not in the demo)
+LID, FILL = list(GT.WHY["lid"]), list(GT.WHY["fill"][:3])        # the reason codes of the restoration gate (api/_lib/styles/gate.py WHY): the lid rule's eight, the fill rule's first three
 # the styles and the prices are read from the one place that holds them (api/_lib/styles_registry.py, markets.py through pay.price_cents): the build refuses a script that types an id or a price
 SOLO = sorted((k for k, v in SR.STYLES.items() if v["group"] == "solo"), key=lambda k: SR.STYLES[k]["tile_order"])
 HARD = next(k for k in SOLO if SR.STYLES[k]["gate"] == "hard")                   # the style whose gate judges a set of eyes
