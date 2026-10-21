@@ -236,10 +236,10 @@ def preview(eyes, spec, size=1024, check=False):
     names, date = _words(spec)
     eo = spec.get("engine_opts") if isinstance(spec.get("engine_opts"), dict) else None
     r = B.render(looks()[design], design, irs, fmt, int(size), names, date, opts=eo, key=key, frozen=fz)
-    graded = [d.iris.graded(d.Sd) for d in r.discs]
+    graded = [d.iris.graded(d.Sd, d.master_map) for d in r.discs]          # the very grade each disc was placed with
     rep = CK.selfcheck(r, [spec["style"], design, layout]) if check else None
     log = dict(r.ctx.log)
-    log.update(design_used=design, fallback=None, plates=[], frozen=r.frozen, layout=layout)
+    log.update(design_used=design, fallback=None, plates=[], frozen=r.frozen, layout=layout, master_map=bool(r.discs and r.discs[0].master_map))
     return Preview(img=r.img, discs=[(d.cx, d.cy, d.R) for d in r.discs], graded=graded, design=design, fmt=fmt, size=int(size), seed=r.seed,
                    cls=[ir.cls for ir in irs], log=log, times=r.times, text_log=r.text_log, selfcheck=rep, ctx=None, frame=r.plan)
 

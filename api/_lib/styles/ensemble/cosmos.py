@@ -24,6 +24,19 @@ from .radiance_family import ROWS, hex_points
 
 GAP_DUO = 0.12           # limb to limb gap of a pair in R (the laboratory's sketch: about 0.1 R, the two lights meet between the irises)
 GAP_FAMILY = 0.18        # the gap of the hex arrangement of a family in iris diameters (the laboratory's sketch: one sky round all of them)
+# The masters of the two cosmos families from six eyes (the family speed work of 2026-10-21). The light family's effects compute their soft fields on a
+# grid of cells over the whole canvas for every disc (lumen.common.grid_factor: 3 px a cell at 4096), most of the time of a big family's master. From
+# GRID_FROM eyes a master (a canvas of GRID_MASTER px and more) draws them on a coarser grid; the stars, grains, sparkles, filaments and young clusters
+# stay full resolution, every particle count stays the laboratory's, and the preview (1024 px, one px a cell), three to five eyes and the pairs are
+# untouched.
+GRID_FROM = 6
+GRID_MASTER = 2048
+# Supernova Family: the haze of the bursts on 768 cells asked (5 px a cell at 4096, 820 cells): at eight eyes the 3 px cells took 8 of the 16 s of the
+# effect, 768 cells take 3; side by side at 100 percent the two hazes are not told apart.
+HAZE_GRID = 768
+# Nebula Family: the gas, the filaments and the dust on the preview's own grid (lumen.nebula's "grid": 1024 cells, 4 px a cell at 4096): the gas reads
+# slightly softer at 100 percent (SSIM 0.997 beyond the irises at eight eyes).
+GAS_GRID = 1024
 
 
 def plan_cosmos_duo(n, fmt, o):
@@ -53,11 +66,24 @@ def family_fmt(n):
     return "1:1" if n >= 6 else "3:2"
 
 
+def master_grid(ctx):
+    """Does this picture draw the soft fields of its effect on the coarser grid of a big family's master (GRID_FROM eyes, a GRID_MASTER px canvas)?"""
+    return len(ctx.discs) >= GRID_FROM and max(ctx.W, ctx.H) >= GRID_MASTER
+
+
 def fx_nebula_group(cv, ctx):
+    if master_grid(ctx):
+        o = dict(ctx.opts.get("nebula") or {})
+        o.setdefault("grid", GAS_GRID)                                    # an option the laboratory gives wins
+        ctx.opts = dict(ctx.opts, nebula=o)
     NB.fx_nebula(cv, ctx)
 
 
 def fx_supernova_group(cv, ctx):
+    if master_grid(ctx):
+        o = dict(ctx.opts.get("stardust") or {})
+        o.setdefault("grid", HAZE_GRID)                                   # an option the laboratory gives wins
+        ctx.opts = dict(ctx.opts, stardust=o)
     SDT.fx_stardust(cv, ctx)
 
 

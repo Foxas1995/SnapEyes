@@ -3656,7 +3656,7 @@ def studio_ease(im, r_frac):
     return float(np.clip((9.0 - have) / 6.0, 0.0, 1.0))
 
 
-def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=None, sclera=None, trim=None):
+def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=None, sclera=None, trim=None, master_map=False):
     """Turn a masked iris square into the fine-art frame: limbus-tight, pure black outside, sculpted fibres.
 
     A phone crop carries a slice of sclera or eyelid at the bottom of the disk and sits small inside its frame.
@@ -3701,7 +3701,9 @@ def studio_grade(im, r_frac, out=1024, fill=None, local=None, micro=None, sat=No
 
     # 1. push the pale intruders out of the outer rim: sclera and eyelid are brighter and far less saturated
     #    than iris, so they can be identified without touching the iris itself. No lid found = nothing to do.
-    pale = _pale_intruders(src, R=R, reduce=out > PALE_MAP_MAX) if sclera > 0 else None
+    # master_map: the caller draws a master (a 4096 px canvas), so the lid map is measured on the box-averaged copy even when this disc is drawn under
+    # PALE_MAP_MAX (the many small irises of a family: the map moved by at most 3 levels on the eyes measured, 2026-10-21); a preview keeps the exact map
+    pale = _pale_intruders(src, R=R, reduce=out > PALE_MAP_MAX or bool(master_map)) if sclera > 0 else None
 
     def pixels(r0, r1, c0=w0, c1=w1):
         """The float32 pixels of rows r0..r1, columns c0..c1 after step 1 (absolute frame indices)."""

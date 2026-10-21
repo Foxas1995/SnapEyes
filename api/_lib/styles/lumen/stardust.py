@@ -61,6 +61,20 @@ def _lut(tab, th):
     return tab[i0 % n] * (1.0 - w) + tab[(i0 + 1) % n] * w
 
 
+def _lut_index(n, th):
+    """The bins and weights _lut finds for a table of n entries at the angles th, found once for several tables of one length."""
+    p = (np.asarray(th, np.float64) % TWO_PI) * (n / TWO_PI)
+    i0 = np.floor(p).astype(np.int64)
+    w = p - i0
+    return i0 % n, (i0 + 1) % n, 1.0 - w, w
+
+
+def _lut_at(tab, ix):
+    """_lut(tab, th) with the bins and weights of _lut_index(len(tab), th): the same arithmetic, to the bit."""
+    a, b, w0, w1 = ix
+    return tab[a] * w0 + tab[b] * w1
+
+
 def fx_stardust(cv, ctx):
     o = dict(SP)
     o.update(ctx.opts.get("stardust", {}))
@@ -98,8 +112,9 @@ def fx_stardust(cv, ctx):
             st = streak[ai, ri]
             cl = clump[ai, ri]
             del ai, ri
-            s_th = _lut(strength, th).astype(F32)
-            r_th = _lut(reach, th).astype(F32)
+            ix = _lut_index(len(strength), th)                                           # strength, reach and prof: one length (_jet_profile)
+            s_th = _lut_at(strength, ix).astype(F32)
+            r_th = _lut_at(reach, ix).astype(F32)
             prof_r = np.exp(-e / r_th) * CM.smooth((rho - F32(0.99)) / F32(0.04))
             tex = (F32(0.25) + F32(1.15) * CM.smooth((st - F32(0.40)) / F32(0.35))) * (F32(0.45) + F32(0.9) * cl)
             I = (F32(o["haze"]) * s_th * prof_r * tex).astype(F32)
@@ -108,12 +123,12 @@ def fx_stardust(cv, ctx):
             # the white hot rim and its glow (the light of the burst itself)
             Ir = (F32(rk) * np.exp(-e / F32(rl)) + F32(bk) * np.exp(-e / F32(bl)) * (F32(0.5) + s_th)) * CM.smooth((rho - F32(0.985)) / F32(0.03))
             # the broken shock shell
-            Is = F32(sk) * np.exp(-0.5 * ((rho - F32(sr)) / F32(sw)) ** 2) * np.clip(_lut(prof, th).astype(F32) * F32(1.6) - F32(0.75), 0.0, 1.0) ** 2
+            Is = F32(sk) * np.exp(-0.5 * ((rho - F32(sr)) / F32(sw)) ** 2) * np.clip(_lut_at(prof, ix).astype(F32) * F32(1.6) - F32(0.75), 0.0, 1.0) ** 2
             # one colour lookup for the three lights: the level of each, weighted by its own light (the ramp is the dear part on a full grid)
             tot = I + Ir + Is
             lv = (lvl * I + np.clip(Ir * F32(1.4), 0.0, 1.0) * Ir + F32(0.75) * Is) / np.maximum(tot, F32(1e-6))
             light[r0:r1] += CM.ramp3(stp, th, lv) * tot[..., None]
-            del tot, lv, rho, th, e, prof_r, I, Ir, Is, s_th, r_th, lvl
+            del tot, lv, rho, th, e, prof_r, I, Ir, Is, s_th, r_th, lvl, ix
         del streak, clump
         # ---- the grains: positions drawn from the burst (angle by strength, distance by the reach at that angle)
         def burst(n, reach_k=1.0, min_e=0.012):

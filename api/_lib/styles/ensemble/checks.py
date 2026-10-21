@@ -83,8 +83,9 @@ def edge_delta(img8, discs, scale=1.0):
 def frame_luma(img8, S):
     """The mean luminance (0..1) of the outer 0.02 S of the canvas (T8b)."""
     fw = max(2, int(round(0.02 * S)))
-    luma = img8.astype(np.float32) @ np.array([0.299, 0.587, 0.114], np.float32)
-    fr = np.concatenate([luma[:fw].ravel(), luma[-fw:].ravel(), luma[fw:-fw, :fw].ravel(), luma[fw:-fw, -fw:].ravel()])
+    k = np.array([0.299, 0.587, 0.114], np.float32)
+    lum = lambda a: (a.astype(np.float32) @ k).ravel()                     # noqa: E731  the frame's pixels alone: the same values, in the same order
+    fr = np.concatenate([lum(img8[:fw]), lum(img8[-fw:]), lum(img8[fw:-fw, :fw]), lum(img8[fw:-fw, -fw:])])
     return float(fr.mean()) / 255.0
 
 

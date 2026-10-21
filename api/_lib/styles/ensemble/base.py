@@ -27,6 +27,11 @@ from ..collision import scenes as CS
 from ..singles import kit as K
 
 REF = 1024
+# a master (4096 px) grades every iris with a master's lid map (iris.studio_grade master_map: measured on the box-averaged copy), as every master whose
+# disc is above 1024 px always did: the bigger groups draw their discs under 1024 px at 4096 (Radiance Family at five, seven and eight eyes, Family
+# Orbit at six to eight, Light Circle at eight), which took the preview's exact full-frame map, about 0.3 s an eye more (2026-10-21). A preview keeps
+# the exact map.
+MASTER_MAP_FROM = 2048
 WALL = "9:19.5"
 
 
@@ -162,11 +167,12 @@ def render(spec, design, eyes, fmt, size, names="", date="", opts=None, key=None
     W, H = CS.canvas_size(fmt, int(size))
     k = W / float(plan.W)
     g0 = sum(ir.grade_seconds for ir in irises)
+    mmap = int(size) >= MASTER_MAP_FROM
     discs, d3s = [], []
     for i, (ir, (cx, cy, R)) in enumerate(zip(irises, plan.discs)):
         sx, sy, sR = snap_ref(cx, cy, R)
         f = _F(sx * k, sy * k, sR * k) if int(size) != REF else _F(sx, sy, sR)
-        d, d3 = K.place_iris(ir, f, None, sharpen=o.get("sharpen", True), limb=o.get("limb"))
+        d, d3 = K.place_iris(ir, f, None, sharpen=o.get("sharpen", True), limb=o.get("limb"), master_map=mmap)
         d.index = d3.index = i
         discs.append(d)
         d3s.append(d3)

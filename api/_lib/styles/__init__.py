@@ -34,10 +34,11 @@ import importlib
 
 ENGINE_FAMILIES = ("singles", "collision", "universe", "lumen", "ensemble")      # the engine packages (lumen: the light looks of one eye; ensemble: the pairs and families of whole irises); legacy styles never come through here
 
-# The version of the engine's PICTURES. It changes if and only if a golden changes (scripts/styles_tests/data/engine_v.json records it with the
-# hashes of the golden files and v3steps compares them): a plan records the version it was made under and the master step holds an order whose
-# plan was made under another one (engine_skew: a deploy between payment and master must never draw a picture the preview did not show).
-ENGINE_V = 8          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
+# The version of the engine's PICTURES. It changes whenever a golden changes (scripts/styles_tests/data/engine_v.json records it with the
+# hashes of the golden files and v3steps compares them), and when paid masters change that no golden holds (9): a plan records the version it was
+# made under and the master step holds an order whose plan was made under another one (engine_skew: a deploy between payment and master must never
+# draw a picture the preview did not show).
+ENGINE_V = 9          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
                       # seed key); 3: step B for the collision family (WP7B: the same seed, the names out of it, the pixel decisions made once and frozen in the plan);
                       # 4: step B for the universe family (WP8B: the same seed, the per eye seeds derived from it, the plates version in every pick, the pair's fallback frozen);
                       # 5: the finish of the pair designs of the collision family (pairs design phase 1: an antialiased crumble, the hairline only where both bands are dark, finer
@@ -46,7 +47,12 @@ ENGINE_V = 8          # 1: step A (the prototype's seed, from the bytes of the i
                       # 7: the woven lens of Clean and Collision Infinity crosses its irises along their texture (pairs design phase 2: the pictures of the woven pairs only; a Kiss pair, a stack
                       # lens, the trio, the families and the chain draw as under 6);
                       # 8: the darker iris is pulled toward the lighter one inside the band of that lens (band_tone 0.30) and the tongues of its colour crossfade are rounder (tongue "round"):
-                      # pairs design phase 3, the pictures of the woven pairs only; every other picture draws as under 7
+                      # pairs design phase 3, the pictures of the woven pairs only; every other picture draws as under 7;
+                      # 9: the family speed work of 2026-10-21: the 4096 px masters of the ensemble family measure the lid map of every iris as a master's
+                      # (ensemble.base MASTER_MAP_FROM: the irises drawn under 1024 px, Radiance Family at five, seven and eight eyes, Family Orbit at six
+                      # to eight and Light Circle at eight, move by at most 4 levels where the eye shows a lid), and the masters of Supernova Family and
+                      # Nebula Family from six eyes draw the haze of the bursts and the gas on coarser grids (ensemble.cosmos). The MASTERS of the ensemble
+                      # family only: every preview, so every golden, and every other picture draws as under 8
 
 
 class EngineNotBuilt(LookupError):

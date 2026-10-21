@@ -164,47 +164,52 @@ for _key, _n, _master, _preview in ADDED:
 # preview of new eyes, a third of the same eyes, their difference, the high-water mark). The eye sets: two pairs of 4K restorations, and the first n of eight 4K
 # restorations for the families (Radiance Family at 8 eyes the slower of two sets). Measured beside them the same way: Family Colours at 8 eyes 26.5 s and 875 MB
 # (its baked capped row says 16.8 s), the pairs of today 8 to 10 s.
+# The rows of the five GROUPS (Family Orbit, Light Circle, Radiance Family, Nebula Family, Supernova Family) were measured again on 2026-10-21 after the family
+# speed work (baseline.md section 48: the exact splat and ramps, a master's lid map, the cosmos masters' grids from six eyes), ONE process at a time and
+# before and after alternating, the fastest of two to six samples of a row: the rows above were taken two processes at a time and read 20 to 55 percent
+# high. At the default slow factor every plan of three to eight eyes fits the 52 s budget and the memory budget but Supernova Family at eight eyes
+# (54.0 s with the laboratory's dense bursts; the next slowest Supernova Family at seven eyes, 48.5 s).
 MASTER.update({
     "ensemble.clean_duo": {2: (7.6, 7.6, 484, 484)},
     "ensemble.radiance_duo": {2: (10.8, 10.8, 609, 609)},
-    "ensemble.orbit": {3: (14.5, 14.5, 610, 610), 4: (16.2, 16.2, 628, 628), 5: (21.6, 21.6, 710, 710), 6: (25.1, 25.1, 705, 705), 7: (26.7, 26.7, 740, 740), 8: (29.6, 29.6, 787, 787)},
-    "ensemble.light_circle": {3: (11.7, 11.7, 618, 618), 4: (15.2, 15.2, 712, 712), 5: (17.5, 17.5, 720, 720), 6: (18.1, 18.1, 733, 733), 7: (19.0, 19.0, 751, 751), 8: (23.7, 23.7, 772, 772)},
-    "ensemble.radiance_family": {3: (13.7, 13.7, 571, 571), 4: (16.2, 16.2, 627, 627), 5: (21.0, 21.0, 663, 663), 6: (24.5, 24.5, 902, 902), 7: (26.8, 26.8, 915, 915), 8: (33.5, 33.5, 960, 960)},
+    "ensemble.orbit": {3: (13.1, 13.1, 517, 517), 4: (13.6, 13.6, 516, 516), 5: (17.0, 17.0, 611, 611), 6: (16.5, 16.5, 596, 596), 7: (18.3, 18.3, 631, 631), 8: (21.5, 21.5, 678, 678)},
+    "ensemble.light_circle": {3: (8.9, 8.9, 508, 508), 4: (12.6, 12.6, 617, 617), 5: (14.0, 14.0, 608, 608), 6: (15.1, 15.1, 619, 619), 7: (15.4, 15.4, 644, 644), 8: (15.8, 15.8, 665, 665)},
+    "ensemble.radiance_family": {3: (9.1, 9.1, 575, 575), 4: (12.2, 12.2, 623, 623), 5: (14.1, 14.1, 668, 668), 6: (19.3, 19.3, 906, 906), 7: (19.2, 19.2, 916, 916), 8: (21.9, 21.9, 965, 965)},
 })
 CAPPED.update({
     "ensemble.clean_duo": {2: (7.6, 484)},
     "ensemble.radiance_duo": {2: (10.8, 609)},
-    "ensemble.orbit": {3: (14.5, 610), 4: (16.2, 628), 5: (21.6, 710), 6: (25.1, 705), 7: (26.7, 740), 8: (29.6, 787)},
-    "ensemble.light_circle": {3: (11.7, 618), 4: (15.2, 712), 5: (17.5, 720), 6: (18.1, 733), 7: (19.0, 751), 8: (23.7, 772)},
-    "ensemble.radiance_family": {3: (13.7, 571), 4: (16.2, 627), 5: (21.0, 663), 6: (24.5, 902), 7: (26.8, 915), 8: (33.5, 960)},
+    "ensemble.orbit": {3: (13.1, 517), 4: (13.6, 516), 5: (17.0, 611), 6: (16.5, 596), 7: (18.3, 631), 8: (21.5, 678)},
+    "ensemble.light_circle": {3: (8.9, 508), 4: (12.6, 617), 5: (14.0, 608), 6: (15.1, 619), 7: (15.4, 644), 8: (15.8, 665)},
+    "ensemble.radiance_family": {3: (9.1, 575), 4: (12.2, 623), 5: (14.1, 668), 6: (19.3, 906), 7: (19.2, 916), 8: (21.9, 965)},
 })
 PREVIEW.update({
     "ensemble.clean_duo": {2: (1.39, 1.16, 0.25, 0.91, 101)},
     "ensemble.radiance_duo": {2: (1.63, 1.55, 0.64, 0.91, 138)},
-    "ensemble.orbit": {3: (2.15, 2.13, 0.88, 1.25, 120), 4: (1.99, 1.93, 0.87, 1.06, 121), 5: (3.08, 3.1, 0.97, 2.14, 133), 6: (3.26, 3.45, 1.0, 2.45, 135), 7: (3.66, 3.69, 1.12, 2.56, 141), 8: (4.16, 4.31, 1.11, 3.2, 146)},
-    "ensemble.light_circle": {3: (1.65, 1.48, 0.19, 1.29, 116), 4: (2.34, 2.31, 0.25, 2.06, 125), 5: (2.43, 2.56, 0.25, 2.31, 131), 6: (2.69, 2.66, 0.27, 2.38, 132), 7: (2.89, 2.98, 0.27, 2.71, 137), 8: (3.26, 3.46, 0.25, 3.21, 141)},
-    "ensemble.radiance_family": {3: (1.81, 1.74, 0.6, 1.14, 136), 4: (2.4, 2.42, 0.69, 1.73, 143), 5: (2.8, 2.79, 0.83, 1.96, 150), 6: (3.07, 3.17, 0.92, 2.26, 147), 7: (3.36, 3.47, 0.96, 2.51, 150), 8: (3.95, 4.2, 1.2, 3.0, 156)},
+    "ensemble.orbit": {3: (2.28, 2.01, 0.77, 1.24, 117), 4: (1.94, 1.72, 0.73, 0.99, 123), 5: (2.83, 2.62, 0.81, 1.81, 131), 6: (2.96, 2.84, 0.8, 2.03, 134), 7: (3.22, 2.93, 0.8, 2.13, 139), 8: (3.83, 3.9, 1.0, 2.9, 146)},
+    "ensemble.light_circle": {3: (1.57, 1.31, 0.17, 1.15, 114), 4: (2.19, 1.98, 0.22, 1.76, 124), 5: (2.24, 2.12, 0.22, 1.9, 131), 6: (2.6, 2.55, 0.26, 2.29, 132), 7: (2.71, 2.45, 0.23, 2.23, 139), 8: (2.99, 3.05, 0.3, 2.75, 141)},
+    "ensemble.radiance_family": {3: (1.65, 1.4, 0.46, 0.94, 135), 4: (2.19, 2.01, 0.58, 1.44, 142), 5: (2.48, 2.17, 0.62, 1.55, 149), 6: (3.0, 2.78, 0.84, 1.93, 145), 7: (3.27, 3.04, 0.81, 2.23, 147), 8: (3.7, 3.49, 1.04, 2.45, 155)},
 })
 # The four cosmos looks of the ensemble family (Nebula Duo and Family, Supernova Duo and Family: the light family's effects round several irises), measured the
-# same way (two pair sets, the slower kept; the first n of the eight 4K restorations for the families). Their families pass the work budget at the default slow
-# factor from six eyes (Nebula) and from four (Supernova): the grade of the eyes at the 2048 px working copy is 15 to 17 s of it at six to eight eyes.
+# same way (two pair sets, the slower kept; the first n of the eight 4K restorations for the families). The two families' rows are the measurements of
+# 2026-10-21 after the family speed work (see above): Nebula Family fits the budget at every eye count, Supernova Family up to seven eyes.
 MASTER.update({
     "ensemble.nebula_duo": {2: (20.6, 20.6, 466, 466)},
-    "ensemble.nebula_family": {3: (19.4, 19.4, 455, 455), 4: (20.3, 20.3, 501, 501), 5: (24.8, 24.8, 543, 543), 6: (30.1, 30.1, 743, 743), 7: (36.0, 36.0, 754, 754), 8: (41.7, 41.7, 796, 796)},
+    "ensemble.nebula_family": {3: (9.8, 9.8, 418, 418), 4: (12.0, 12.0, 468, 468), 5: (14.2, 14.2, 514, 514), 6: (18.8, 18.8, 651, 651), 7: (18.7, 18.7, 667, 667), 8: (21.2, 21.2, 716, 716)},
     "ensemble.supernova_duo": {2: (17.9, 17.9, 476, 476)},
-    "ensemble.supernova_family": {3: (22.4, 22.4, 490, 490), 4: (30.9, 30.9, 549, 549), 5: (38.3, 38.3, 607, 607), 6: (52.3, 52.3, 735, 735), 7: (54.6, 54.6, 751, 751), 8: (57.6, 57.6, 802, 802)},
+    "ensemble.supernova_family": {3: (12.4, 12.4, 461, 461), 4: (15.1, 15.1, 528, 528), 5: (19.9, 19.9, 591, 591), 6: (22.5, 22.5, 713, 713), 7: (23.7, 23.7, 732, 732), 8: (26.7, 26.7, 785, 785)},
 })
 CAPPED.update({
     "ensemble.nebula_duo": {2: (20.6, 466)},
-    "ensemble.nebula_family": {3: (19.4, 455), 4: (20.3, 501), 5: (24.8, 543), 6: (30.1, 743), 7: (36.0, 754), 8: (41.7, 796)},
+    "ensemble.nebula_family": {3: (9.8, 418), 4: (12.0, 468), 5: (14.2, 514), 6: (18.8, 651), 7: (18.7, 667), 8: (21.2, 716)},
     "ensemble.supernova_duo": {2: (17.9, 476)},
-    "ensemble.supernova_family": {3: (22.4, 490), 4: (30.9, 549), 5: (38.3, 607), 6: (52.3, 735), 7: (54.6, 751), 8: (57.6, 802)},
+    "ensemble.supernova_family": {3: (12.4, 461), 4: (15.1, 528), 5: (19.9, 591), 6: (22.5, 713), 7: (23.7, 732), 8: (26.7, 785)},
 })
 PREVIEW.update({
     "ensemble.nebula_duo": {2: (5.0, 4.62, 2.73, 1.88, 138)},
-    "ensemble.nebula_family": {3: (5.8, 5.54, 3.87, 1.67, 143), 4: (8.64, 7.37, 4.75, 2.61, 151), 5: (9.12, 8.13, 4.48, 3.66, 157), 6: (10.93, 14.01, 9.86, 4.16, 184), 7: (19.61, 11.4, 7.85, 3.55, 190), 8: (13.87, 12.72, 8.44, 4.28, 197)},
+    "ensemble.nebula_family": {3: (2.65, 2.3, 1.38, 0.92, 145), 4: (3.4, 3.03, 1.74, 1.29, 153), 5: (3.88, 3.59, 1.95, 1.63, 160), 6: (5.62, 5.39, 3.39, 2.01, 184), 7: (6.24, 5.84, 3.72, 2.11, 190), 8: (7.14, 6.57, 4.24, 2.33, 199)},
     "ensemble.supernova_duo": {2: (4.8, 4.46, 3.26, 1.2, 213)},
-    "ensemble.supernova_family": {3: (6.24, 6.07, 4.8, 1.27, 237), 4: (9.39, 9.11, 7.26, 1.85, 252), 5: (13.51, 11.75, 10.33, 1.41, 275), 6: (16.88, 15.99, 12.03, 3.96, 273), 7: (19.41, 20.2, 16.32, 3.88, 285), 8: (23.6, 21.57, 16.48, 5.09, 296)},
+    "ensemble.supernova_family": {3: (3.97, 3.52, 2.4, 1.12, 221), 4: (5.05, 4.39, 3.16, 1.22, 238), 5: (6.25, 5.9, 4.16, 1.75, 262), 6: (8.23, 7.51, 5.34, 2.17, 259), 7: (10.02, 9.37, 6.72, 2.65, 274), 8: (9.88, 10.37, 8.09, 2.28, 281)},
 })
 
 # MEASURED = ((cost key, eyes, working copy side, cpu s, peak MB), ...): quiet-core seconds in the spike's units and the cold peak of a MASTER as the master step

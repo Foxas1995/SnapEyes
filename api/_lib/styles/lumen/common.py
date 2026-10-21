@@ -86,7 +86,10 @@ def mean_colour(stp, which=1):
 
 def ramp3(stp, th, level):
     """deep -> mid -> hot at angle(s) th (radians) for a light level 0..1 (the Powder Burst mapping): (..., 3) float32."""
-    deep, mid, hot = C.ring_at(stp[0], th), C.ring_at(stp[1], th), C.ring_at(stp[2], th)
+    if stp[0].shape[0] == stp[1].shape[0] == stp[2].shape[0]:
+        deep, mid, hot = C.ring_at_stack((stp[0], stp[1], stp[2]), th)          # the same bins and weights for the three: ring_at to the bit
+    else:
+        deep, mid, hot = C.ring_at(stp[0], th), C.ring_at(stp[1], th), C.ring_at(stp[2], th)
     lv = np.asarray(level, F32)[..., None]
     a = np.clip(lv * 2.0, 0.0, 1.0)
     b = np.clip(lv * 2.0 - 1.0, 0.0, 1.0)

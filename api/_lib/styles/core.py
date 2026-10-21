@@ -154,15 +154,17 @@ class Iris:
             self.grade_seconds += time.perf_counter() - t0
         return self._ease
 
-    def graded(self, Sd):
+    def graded(self, Sd, master_map=False):
+        """The studio grade in an Sd x Sd frame, cached per size. master_map: the lid map measured as a master's (grade_disc); cached apart."""
         Sd = int(Sd)
-        g = self._grades.get(Sd)
+        key = (Sd, "m") if master_map else Sd
+        g = self._grades.get(key)
         if g is None:
             ease = self.ease
             t0 = time.perf_counter()
-            g = np.ascontiguousarray(np.asarray(grade_disc(self.src, Sd, ease)))
+            g = np.ascontiguousarray(np.asarray(grade_disc(self.src, Sd, ease, master_map=True) if master_map else grade_disc(self.src, Sd, ease)))
             self.grade_seconds += time.perf_counter() - t0
-            self._grades[Sd] = g
+            self._grades[key] = g
         return g
 
     @property
@@ -185,7 +187,7 @@ class Iris:
         return f"Iris({self.name!r}, {self.src.size[0]} px, {self.digest.hex()[:8]})"
 
 
-def grade_disc(src, Sd, ease=None):
+def grade_disc(src, Sd, ease=None, master_map=False):
     """L._grade_disc (compose_multi's grade, equal to compose()'s for a 1024 input) with the ease passed in, so
     it is measured once per eye instead of on every size. Same arithmetic line by line; test_fx checks the pixels
     against L._grade_disc itself."""
@@ -194,6 +196,8 @@ def grade_disc(src, Sd, ease=None):
     target = max(8, int(round(Sd * L.STUDIO_FILL)))
     need = int(math.ceil(1.5 * target / (2.0 * R_FRAC * L.STUDIO_TRIM)))
     s = src if src.size[0] <= need else src.resize((need, need), Image.LANCZOS)
+    if master_map:                      # a master's lid map (iris.studio_grade master_map); every other call is the call it always was
+        return L.studio_grade(s, R_FRAC, out=Sd, local=L.STUDIO_LOCAL * ease, micro=L.STUDIO_MICRO * ease, master_map=True)
     return L.studio_grade(s, R_FRAC, out=Sd, local=L.STUDIO_LOCAL * ease, micro=L.STUDIO_MICRO * ease)
 
 
@@ -432,6 +436,21 @@ def ring_at(pal, theta):
     w = (f - i0)[..., None]
     i0 %= n
     return (pal[i0] * (1 - w) + pal[(i0 + 1) % n] * w).astype(np.float32)
+
+
+def ring_at_stack(pals, theta):
+    """[ring_at(p, theta) for p in pals] for palettes of one length (a ramp's deep, mid and hot): the angle's bins and weights are found once instead of
+    once per palette, and every palette takes exactly ring_at's arithmetic, so each result is ring_at's to the bit (the families of the light family
+    call it on every grid row of every iris)."""
+    theta = np.asarray(theta, np.float64)
+    n = pals[0].shape[0]
+    f = (theta * (n / TWO_PI)) % n - 0.5
+    i0 = np.floor(f).astype(np.int64)
+    w = (f - i0)[..., None]
+    i0 %= n
+    i1 = (i0 + 1) % n
+    w0 = 1 - w
+    return [(p[i0] * w0 + p[i1] * w).astype(np.float32) for p in pals]
 
 
 # ----------------------------------------------------------------------------- seeds and randomness
@@ -854,7 +873,9 @@ def splat(layer, xs, ys, sigma, rgb, amp=1.0, min_sigma=0.5):
             ok = np.broadcast_to(ok, w.shape)
             fi = (np.broadcast_to(py, w.shape) * W + np.broadcast_to(px, w.shape))[ok]
             pi = np.broadcast_to(np.arange(len(ii))[:, None, None], w.shape)[ok]
-            np.add.at(flat, fi, w[ok][:, None] * col[ii][pi])
+            wk, ck = w[ok], col[ii]
+            for ch in range(3):         # a channel at a time: the same products, and per pixel the same additions in the same order, as one add.at of
+                np.add.at(flat[:, ch], fi, wk * ck[pi, ch])   # (n, 3) rows (to the bit), on numpy's fast one-dimensional path: 3 to 5 times faster
     return layer
 
 
@@ -902,22 +923,22 @@ class Disc:
     """A graded iris placed on a canvas. g: the tight disc square (uint8, premultiplied by its own soft edge),
     alpha: that edge (float32, 1 inside rho <= 1 - FEATHER), (x0, y0): its integer top-left on the canvas,
     (cx, cy, R): the EXACT centre and visible radius in canvas px every effect must use."""
-    __slots__ = ("iris", "index", "g", "alpha", "x0", "y0", "cx", "cy", "R", "Sd")
+    __slots__ = ("iris", "index", "g", "alpha", "x0", "y0", "cx", "cy", "R", "Sd", "master_map")
 
     def __repr__(self):
         return f"Disc(#{self.index} {self.iris.name if self.iris else ''} c=({self.cx:.1f},{self.cy:.1f}) R={self.R:.1f})"
 
 
-def place_disc(iris, cx, cy, R, index=0):
+def place_disc(iris, cx, cy, R, index=0, master_map=False):
     """Grade iris for a visible radius of about R px and snap it to whole pixels near (cx, cy). The returned
     Disc's cx, cy, R are exact (effects use those, never the requested ones): R = target / 2 where
     target = round(Sd * STUDIO_FILL), Sd = round(2R / STUDIO_FILL), and the top-left is rounded to integers so
-    the graded pixels are pasted unresampled."""
+    the graded pixels are pasted unresampled. master_map: the grade measures its lid map as a master's (Iris.graded), kept on the Disc."""
     Sd = max(8, int(round(2.0 * R / L.STUDIO_FILL)))
-    frame = iris.graded(Sd)
+    frame = iris.graded(Sd, master_map)
     sq, tgt = _tight(frame)
     d = Disc()
-    d.iris, d.index, d.Sd = iris, index, Sd
+    d.iris, d.index, d.Sd, d.master_map = iris, index, Sd, bool(master_map)
     d.g = np.ascontiguousarray(sq)
     d.alpha = L.disk_alpha(tgt, tgt / 2.0, FEATHER).astype(np.float32)
     d.x0, d.y0 = int(round(cx - tgt / 2.0)), int(round(cy - tgt / 2.0))

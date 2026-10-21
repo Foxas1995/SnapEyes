@@ -411,11 +411,10 @@ check("the cost table has a measured row of every style and eye count (masters a
       "unpriced", all(CO.known(f"ensemble.{d}", n) and n in CO.CAPPED[f"ensemble.{d}"] and n in CO.PREVIEW[f"ensemble.{d}"] for s, d in STYLES.items()
                       for n in range(CT.eyes_range(s)[0], CT.eyes_range(s)[1] + 1)), "")
 fits = {f"{s}/{n}": STP.capacity(p, 1.6) for (s, n), p in caps.items()}
-OVER = ["grp.orbit/7", "grp.orbit/8", "grp.radiance/7", "grp.radiance/8", "grp.nebula/6", "grp.nebula/7", "grp.nebula/8", "grp.supernova/4", "grp.supernova/5", "grp.supernova/6",
-        "grp.supernova/7", "grp.supernova/8"]
-check("at the default slow factor (1.6) every plan of the family fits one call's work and memory budgets but twelve: Family Orbit and Radiance Family at seven and eight eyes "
-      "(53 to 65 s of the 52 s), Nebula Family from six eyes (58 to 78 s) and Supernova Family from four (58 to 103 s), measured: checkout answers capacity for them, never "
-      "a held order. PINNED, so that a change of the table or of the budget is seen",
+OVER = ["grp.supernova/8"]
+check("at the default slow factor (1.6) every plan of the family fits one call's work and memory budgets but one: " + "Supernova Family at eight eyes, 54.0 s of the 52 s with the laboratory's dense bursts (the next slowest, Supernova Family at seven eyes, 48.5 s)" + "; the "
+      "family speed work of 2026-10-21, measured one process at a time: checkout answers capacity for it, never a held order. PINNED, so that a change of the "
+      "table or of the budget is seen",
       sorted(k for k, v in fits.items() if not v["ok"]) == sorted(OVER) and all(fits[k]["why"] == "time" for k in OVER) and all(v["est_mb"] < CO.MEM_BUDGET_MB for v in fits.values()),
       {k: (v["need_s"], v["est_mb"], v["why"]) for k, v in fits.items() if not v["ok"]})
 print("   (need s at factor 1.6: " + ", ".join(f"{k} {v['need_s']}" for k, v in fits.items()) + ")")
@@ -437,6 +436,86 @@ try:
 except STP.Hold as h:
     held = h.reason == "picture_drift"
 check("a picture that drew other frozen choices than its plan names is never delivered (picture_drift: the ensemble family is checked like the collision and universe families)", held, "")
+
+# ============================================================================================ 7. the speed work of 2026-10-21
+section("7. the family speed work: the master's lid map, the cosmos masters' grids from six eyes, the exact refactors")
+check("a 4096 px master of the family grades every iris with a master's lid map (iris.studio_grade master_map, ensemble.base MASTER_MAP_FROM 2048: measured "
+      "on the box-averaged copy as every disc above 1024 px always was), a preview with the exact map: the log of every picture of the replay says which",
+      HB.MASTER_MAP_FROM == 2048 and all(PVS[k][1].log.get("master_map") is (c["size"] >= HB.MASTER_MAP_FROM) for k, (c, pv, a) in PVS.items()),
+      {k: PVS[k][1].log.get("master_map") for k in PVS if PVS[k][0]["size"] >= 2048})
+import types  # noqa: E402
+from _lib.styles.ensemble import cosmos as COS_  # noqa: E402
+seen_, got_ = {}, {}
+orig_ = (COS_.NB.fx_nebula, COS_.SDT.fx_stardust)
+COS_.NB.fx_nebula = lambda cv, ctx: seen_.__setitem__("nebula", dict(ctx.opts.get("nebula") or {}))
+COS_.SDT.fx_stardust = lambda cv, ctx: seen_.__setitem__("stardust", dict(ctx.opts.get("stardust") or {}))
+try:
+    for n_, side_ in ((8, 4096), (6, 4096), (8, 1024), (5, 4096), (2, 4096)):
+        ctx_ = types.SimpleNamespace(discs=[types.SimpleNamespace(R=0.122 * side_)] * n_, W=side_, H=side_, S=side_, opts={}, log={})
+        seen_.clear()
+        COS_.fx_nebula_group(None, ctx_)
+        COS_.fx_supernova_group(None, ctx_)
+        got_[(n_, side_)] = (seen_["nebula"], seen_["stardust"])
+finally:
+    COS_.NB.fx_nebula, COS_.SDT.fx_stardust = orig_
+check("the cosmos families hand the light family's effects their options and nothing else: from six eyes a master (4096 px) draws the nebula's gas on the "
+      "preview's grid (1024 cells) and the burst's haze on 768 cells, every particle count the laboratory's; a preview, five eyes and a pair are handed nothing "
+      "(their pictures as recorded)",
+      got_[(8, 4096)] == got_[(6, 4096)] == ({"grid": 1024}, {"grid": 768}) and (COS_.GAS_GRID, COS_.HAZE_GRID, COS_.GRID_FROM) == (1024, 768, 6)
+      and got_[(8, 1024)] == got_[(5, 4096)] == got_[(2, 4096)] == ({}, {}), got_)
+from _lib.styles.lumen import stardust as SDT_  # noqa: E402
+rng = np.random.default_rng(7)
+th = np.concatenate([rng.uniform(-20.0, 20.0, 20000), np.linspace(-7.0, 7.0, 4010)]).astype(np.float32).reshape(-1, 49)
+pals = [rng.random((360, 3), dtype=np.float32) for _ in range(3)]
+tabs = [rng.random(4096) for _ in range(3)]
+ix_ = SDT_._lut_index(4096, th)
+check("the exact refactors draw to the bit what they replace: core.ring_at_stack is ring_at for every palette of a ramp, and lumen.stardust's shared angle "
+      "tables are _lut, on angles negative, large and on the bins (the light family's goldens, v3lumen, replay unchanged)",
+      all(np.array_equal(x.view(np.uint32), C.ring_at(p, th).view(np.uint32)) for x, p in zip(C.ring_at_stack(pals, th), pals))
+      and all(np.array_equal(SDT_._lut_at(tb, ix_).view(np.uint64), SDT_._lut(tb, th).view(np.uint64)) for tb in tabs), "")
+
+
+def splat_ref_(layer, xs, ys, sigma, rgb, amp=1.0, min_sigma=0.5):
+    """core.splat as it was before 2026-10-21 (one add.at of (n, 3) rows): the reference of its exact refactor."""
+    H, W = layer.shape[:2]
+    xs = np.atleast_1d(np.asarray(xs, np.float64))
+    ys = np.atleast_1d(np.asarray(ys, np.float64))
+    n = len(xs)
+    sig = np.broadcast_to(np.asarray(sigma, np.float64), (n,)).copy()
+    energy = np.broadcast_to(np.asarray(amp, np.float64), (n,)) * 2.0 * np.pi * sig * sig
+    s_eff = np.maximum(sig, min_sigma)
+    col = np.broadcast_to(np.asarray(rgb, np.float32), (n, 3))
+    rad = np.ceil(3.5 * s_eff + 1.0).astype(np.int64)
+    flat = layer.reshape(-1, 3)
+    for r in np.unique(rad):
+        idx_r = np.nonzero(rad == r)[0]
+        K = 2 * r + 1
+        per = max(1, C.SPLAT_CHUNK // (K * K))
+        for c0 in range(0, len(idx_r), per):
+            ii = idx_r[c0:c0 + per]
+            gx, ix0 = C._pix_gauss(xs[ii], s_eff[ii], r)
+            gy, iy0 = C._pix_gauss(ys[ii], s_eff[ii], r)
+            w = (gy[:, :, None] * gx[:, None, :]) * energy[ii].astype(np.float32)[:, None, None]
+            px = ix0[:, None, None] + np.arange(K)[None, None, :]
+            py = iy0[:, None, None] + np.arange(K)[None, :, None]
+            ok = np.broadcast_to((px >= 0) & (px < W) & (py >= 0) & (py < H), w.shape)
+            fi = (np.broadcast_to(py, w.shape) * W + np.broadcast_to(px, w.shape))[ok]
+            pi = np.broadcast_to(np.arange(len(ii))[:, None, None], w.shape)[ok]
+            np.add.at(flat, fi, w[ok][:, None] * col[ii][pi])
+    return layer
+
+
+rs_ = np.random.default_rng(11)
+xs_, ys_ = rs_.uniform(-20.0, 340.0, 6000), rs_.uniform(-20.0, 260.0, 6000)            # stamps over the edges and off the canvas, many on one pixel
+sg_ = np.concatenate([rs_.uniform(0.2, 0.6, 3000), rs_.uniform(0.6, 4.0, 3000)])       # under the floor of 0.5 px too
+cl_, am_ = rs_.random((6000, 3), dtype=np.float32), rs_.uniform(0.1, 2.0, 6000)
+base_ = rs_.random((240, 320, 3), dtype=np.float32)
+sp_new = (C.splat(base_.copy(), xs_, ys_, sg_, cl_, am_), C.splat(base_.copy(), xs_[:500], ys_[:500], 1.3, (0.9, 0.5, 0.2), 0.7))
+sp_old = (splat_ref_(base_.copy(), xs_, ys_, sg_, cl_, am_), splat_ref_(base_.copy(), xs_[:500], ys_[:500], 1.3, (0.9, 0.5, 0.2), 0.7))
+check("core.splat adds a channel at a time (numpy's fast one-dimensional add.at) and draws to the bit what one add.at of (n, 3) rows drew: per stamp and "
+      "shared sigma, colour and amplitude, stamps over the edges and off the canvas, many on one pixel (every look with particles; that call three to five "
+      "times faster)",
+      all(np.array_equal(a.view(np.uint32), b.view(np.uint32)) for a, b in zip(sp_new, sp_old)) and not np.array_equal(sp_new[0], base_), "")
 
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed   [{time.time() - T_START:.0f} s]")
 sys.exit(0 if all(RESULTS) else 1)
