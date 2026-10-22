@@ -1299,3 +1299,51 @@ Branch `v3-calm`, one commit on main `2638331` (live). Local only: nothing was p
 **Screenshots** (`SP/wave-calm/final/shots`, Lithuanian, 412 x 915, before 2638331 and after, with side by side sheets): the header of /try; the owner's own photo 215120 under a lamp, the live server's analysis of 2026-10-12 replayed (verdict weak, Detail 26, lamp): before the quality step with SILPNA NUOTRAUKA, Detalumas 26/100 and the tips, after the restoring screen with the one lamp line and then the result; the style grid of cm024 (the 2026-10-12 chain, its restoration fails the fill rule, lid_margin): before the Universe tile with the warning sign and the amber card with the e-mail, after no Universe tile and no card; the landing's price list (closed, as live). The replays run through the local dev API with a local test secret and no model key (`final/tools/make_replay2.py`, `shoot_calm.mjs`). One more pair: the owner's own d03 (blocked, too blurry, Detail 11) still stops, after with its one reason line, the retake steps and the retake button only (`shoot_blocked.mjs`).
 
 **Not measured, risks.** Every usable photo now starts a paid restoration (about 0.07 USD) without a click, and a weak photo gives a weaker restoration, for which the gate holds back more styles (now silently). Universe is held for about a third of real eyes and simply disappears for them. "Take a photo" uses the first usable shot: the capture guide's "3-5 shots" now fits the gallery pick only. The lamp line is the server's existing sentence ("iškraipo", distorts): a softer one would be an api change. Other "soon" lines remain (the landing's tiles, the /try group line, the buy card), and so does "Private Atelier" on the landing's logo and /order. Prices while ordering is closed reverse the old rule that no price stands beside "opens soon". The new Lithuanian, German and Hungarian sentences need a native read. The work of `v3-howto` touches TryApp.tsx and the copy files too: a hand merge.
+
+## 50. The guide video (2026-10-22): our own animation shows how to photograph the eye, on /try's first screen and in the landing's first step
+
+Branch `v3-howto` on main `2638331`. Local only: nothing pushed or deployed, no Vercel or environment setting written, no model called (0 USD). `api/` is unchanged.
+
+**What the owner asked.** He said the explanation was not good: "make something like irisblink.com/pages/how-it-work, the clearer the better; sales depend on it". He also pointed to five clips on his desktop. Those are other people's TikTok and Reels videos, with faces and captions, and they were watched for ideas only (`SP/wave-howto/final/RESEARCH_NOTES.md`). Nothing of theirs, and nothing of irisblink's, is in anything of ours.
+
+**The video** (`SP/wave-howto/final`: the four 9:16 files, 1080 x 1920, 1.36 to 1.44 MB, and their posters; the square files of the site; the contact sheets; `source/`). It is 23 s at 30 fps, and its last frame returns to its first, so it loops without a cut and frame 0 is the poster. It has no faces, no voice and no music. The style is the site's: the dark card gradient, gold, Cinzel and Plus Jakarta Sans. Seven short scenes, mostly picture, each with one large line and one small line:
+1. Back camera and 2x: the phone turns to its lenses, back to the camera at 1x, and a tap on "2" zooms in.
+2. About 10 cm: a side view counts from 30 to 10 cm, then the camera grid shows the iris filling the middle third.
+3. Window light from the side, with a check mark, and the bulb, flash and torch crossed out: the iris turns yellow and gets a glare spot.
+4. Look ahead: the lid droops and a fingertip lifts it lightly.
+5. Tap the iris to focus: blur, a tap, the focus square, sharp, then hold still.
+6. 3 to 5 shots: a counter, the five shots side by side, the sharpest ringed in gold.
+7. Easiest with two people.
+
+The eye on the phone screen is drawn around the owner's own iris (215120, licensed for our use). The captions are in four languages; LT and HU need a native read. How it is made: an HTML page with a paused GSAP 3.15 timeline (`D:\howto_out\comp`), rendered frame by frame in real headless Chrome through `scripts/lib/cdp.mjs` and encoded with ffmpeg (H.264 High, `-tune animation`). It lives outside the repository; `SP/wave-howto/final/source/README.md` has the commands.
+
+**On the site** (`src/shared/GuideVideo.tsx`): one square file per language (`public/assets/howto/howto-11-<lang>.mp4`, 720 x 720, 434 to 466 kB, no sound track, moov first; poster `howto-11-<lang>.jpg`, 27 to 29 kB) plays in both places, so the landing's visit caches it for /try.
+- **Loading.** The poster is a lazy picture in the flow and holds the box. The file is asked for only as the video comes on screen.
+- **Playing.** It plays muted, inline and in a loop while half of it is on screen and the tab is visible, and has a pause button while it plays.
+- **Waiting for a press.** Under reduced motion, with a data saver, or when the browser refuses to play by itself, the poster stays with a play button, and a press plays it (once under reduced motion or a data saver).
+- **Accessibility.** The video is decorative (aria-hidden), and the button's words are in four languages.
+- **/try.** The video takes the capture diagram's place (`src/motion/CaptureDiagram.tsx`, its rules and `fx-settle` removed). It is at most 40 percent of the window tall, so the video, the steps and the photo button all fit on the first screen of a 412 x 915 phone. The four steps are one line each under it, numbered by the list, and "More tips" is unchanged.
+- **Why the square on /try.** A 9:16 cut at the same height would be about 205 px wide, with captions near 11 px. The 9:16 cut stays for phones full screen and social posts.
+- **The landing.** The first step of "How it works" shows the video instead of the camera phone, which showed the eye far too close. PhoneMock's camera branch, its rules in `css/how.css` and the copy key `phoneZoom` are gone.
+
+**Checks moved and added.**
+- `check:motion:flow`: the new `guide` check (the language's file plays muted, inline and in a loop; at most 40 percent tall; the steps and the photo button on the first screen; the pause button holds; a hidden tab stops it). `reduced` now checks the guide's poster and play button, and that no file is asked for, instead of the diagram's strokes.
+- `check:landing`: the new `guide` check (no video while the first screens are read; the language's file plays when its step is on screen and stops when it leaves; under reduced motion nothing is asked for until the press, which plays once).
+- `check:landing` `phrases` reads the markup without inline style attributes: the player's `width: 100%` matched the banned "100%", and a CSS length is not a claim (the visible text is read as before).
+- `check:polish` finds the steps' card by its test id.
+- `scripts/lib/static.mjs` knows `.mp4` and answers byte ranges, as Vercel does.
+- `check:budget`: GUIDE (JavaScript +1,304 B) moves the landing's base by the player's bytes. That is content, not motion: a chunk of its own that the How section and /try load. The CSS the removed rules gave back (-462 B) is room, and no constant moves for it. `check_motion_flow`'s base of /try is not moved (JS +364 B over it, CSS +1,782 B of +2,048: the diagram's rules gave back 212 B).
+- `ts` 904 to 912: `suites/ts/guide_video.test.ts` adds 8. `motion_flow.test.ts` checks the guide's first render instead of the diagram's. `what_we_did.test.ts` checks four one-line steps.
+
+**Results** (the final build, real Chrome, all exit 0):
+- `check:texts`, `check:assets`, `check:budget` (JavaScript +4,884 B with GUIDE, CSS +6,841 B), `check:tryheader`, `check:polish` (72), `check:slots`.
+- `check:motion:flow`: guide and reduced as above; the layout shift of the flow 0.197 against 0.189, the same as on 2638331.
+- `check:landing`: the same 2 notes as before, axe-core not installed and the late offer's CLS; phone LCP 1,040 to 1,084 ms; HowItWorks blocked, the page stays.
+- `check:states`: 1,352 of 1,352.
+- `check:motion:sections` and `check:motion:phone`: their `how` checks pass. Two other cases fail exactly as on 2638331: sizes, hu 375 px, flaky (green on a second run here, red on main); identity, #stage 58 px. They are not touched by this change.
+- `ts` 912 of 912.
+- The full set, with the private fixtures, one suite at a time (the page checks ran beside it), scratch on drive D: 75 minutes, **47 of 47 green**, every count equal to `suites/baseline.json` (`ts` 912).
+- `git apply --check` of `SP/wave-howto/final/fix.patch` on a fresh checkout of 2638331: clean.
+- A three-way apply of v3-calm's work in progress (its working tree at 11:53) onto this branch conflicts only in the header comment of `scripts/check_motion_flow.mjs` and in `suites/baseline.json` (both keep both); `TryApp.tsx`, the copy files and the landing JSONs merge cleanly.
+
+**Not measured, risks.** LT and HU captions and button words need a native read. Real iPhones and Androids were not tried; low power mode on iOS is handled by the play button but not seen on a device. The drawn eye is an illustration around a real iris; a filmed version could replace it later (`SP/wave-howto/final/FILMAVIMO_PLANAS_LT.md`, a one-page shot list). The 9:16 files are not on the site. The landing's "How it works" text still says what the video shows in words; nothing was removed from it.
