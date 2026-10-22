@@ -3,10 +3,11 @@
 // the page's language during the quality step, while the analysis ran, or while the restoration ran.
 //   npm run build && node scripts/check_lang_switch.mjs [--dist dist]        real Chrome on the built page, the stand-in API of scripts/lib/flowstub.mjs, four languages
 // For each of the four languages as the start (and the next one, then the one after it, as the target), on a phone:
-//   quality   a middling shot stops at the quality step; its message and tip are in the page's language; a switch changes both at once (the words come with the analysis in every
+//   quality   a shot whose circle did not lock stops at the quality step (since 2026-10-22 a usable shot, a middling one included, goes straight on: the step shows the one
+//             line of a shot the studio cannot restore, no tips); its message is in the page's language; a switch changes it at once (the words come with the analysis in every
 //             language, quality.words), twice in a row, and nothing of the old language is left
 //   analysis  a switch while the analysis runs (the answer was asked for in the old language): the quality step, when it comes, speaks the new one
-//   marks     a switch after the restoration asks the server for the display copy again in the new language (/api/enhance {redisplay}, one call per switch, in that language, with the
+//   marks     (a middling shot, which goes straight to the restoration) a switch after the restoration asks the server for the display copy again in the new language (/api/enhance {redisplay}, one call per switch, in that language, with the
 //             sealed preview, and the picture on screen is the new one), and never when the language has not changed
 //   running   a switch while the restoration runs: the answer comes in the old language (wm), the page asks for it again in the new one, once
 // The stand-in does not draw a watermark: it answers the display copy of the other language with another picture, which the check sees on screen.
@@ -62,7 +63,8 @@ async function open(lang) {
 }
 const text = (page) => page.eval('document.body.innerText');
 const switchTo = (page, l) => page.eval(`(() => { const b = document.querySelector('header button[lang="${l}"]'); if (!b) return false; b.click(); return true; })()`);
-const marks = (l) => [`Message [${l}]`, `Tip: move closer [${l}]`];
+// the quality step shows the server's one line of a shot it cannot use, no tips (2026-10-22): the message alone carries the language
+const marks = (l) => [`Message [${l}]`];
 /** does the quality step say exactly the sentences of language l, and nothing of the other three? */
 async function says(page, l, ms = 6000) {
   const want = marks(l);
@@ -79,17 +81,17 @@ try {
     const tag = `${a} -> ${b} -> ${c}`;
 
     // ---- the quality step
-    api.stats.enhance.length = 0; api.setShot('ok'); api.setWait({ analyze: 300 });
+    api.stats.enhance.length = 0; api.setShot('unlocked'); api.setWait({ analyze: 300 });
     let page = await open(a);
     await setFile(page, 'input[type=file][multiple]', PHOTO);
     let r = await says(page, a);
     ok('quality', r.good && !r.stale.length, `${tag}: the quality step does not speak ${a} (${JSON.stringify(r)})`);
     await switchTo(page, b);
     r = await says(page, b);
-    ok('quality', r.good && !r.stale.length, `${tag}: after the switch to ${b} the message and the tip are not ${b} (${JSON.stringify(r)})`);
+    ok('quality', r.good && !r.stale.length, `${tag}: after the switch to ${b} the message is not ${b} (${JSON.stringify(r)})`);
     await switchTo(page, c);
     r = await says(page, c);
-    ok('quality', r.good && !r.stale.length, `${tag}: after the second switch to ${c} the message and the tip are not ${c} (${JSON.stringify(r)})`);
+    ok('quality', r.good && !r.stale.length, `${tag}: after the second switch to ${c} the message is not ${c} (${JSON.stringify(r)})`);
     ok('quality', calls().length === 0, `${tag}: a switch in the quality step asked the server for something (${calls()})`);
     await page.close();
 
@@ -104,7 +106,7 @@ try {
     await page.close();
 
     // ---- the watermark after the restoration
-    api.setShot('good'); api.setWait({ analyze: 300, enhance: 400 }); api.stats.enhance.length = 0;
+    api.setShot('ok'); api.setWait({ analyze: 300, enhance: 400 }); api.stats.enhance.length = 0;
     page = await open(a);
     await setFile(page, 'input[type=file][multiple]', PHOTO);
     const arrived = await waitFor(page, "!!document.querySelector('[data-testid=artwork]')", 30000);

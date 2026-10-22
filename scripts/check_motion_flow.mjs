@@ -33,8 +33,9 @@
 //   wiring     the head script that skips the page transition for an order, a payment or the withdrawal form is in both pages; no html.mo (nothing is hidden until
 //              a script reveals it); the landing's engine is not loaded by the tools
 //   bundle     the first-load bytes of /try and /order (gzip): the motion adds at most the budget of the spec (CSS +2 kB each) and the numbers are printed
-//   retake     (2026-10-14) a single eye that fails the lid rule while the styles that can be bought are hard: what the visitor reads (the held tiles, the retake card, the buy card, the e-mail) and
-//              that the way out works: no price, no waiver, no button, no "choose another", and the retake button opens the capture screen. Not about motion: the stand-in's `lid` eye
+//   retake     (2026-10-14; the calm page of 2026-10-22) a single eye that fails the lid rule while the styles that can be bought are hard: what the visitor reads (the held tile is not
+//              shown, no retake card, no warning sign, the buy card's one line with its own retake button) and that the way out works: no price, no waiver, no button to buy, no
+//              "choose another", and the retake button opens the capture screen. Not about motion: the stand-in's `lid` eye
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -171,26 +172,28 @@ async function checkRetake() {
   try {
     const page = await open('/try?lang=en', { reduceMotion: true });
     expect('retake', await walkTry(page, 'result'), 'the artwork did not come');
-    expect('retake', await waitFor(page, "!!document.querySelector('[data-testid=retake-state]') && !!document.querySelector('[data-testid=buy-retake]')", 20000), 'the retake card and the buy card did not come');
+    expect('retake', await waitFor(page, "!!document.querySelector('[data-testid=buy-retake]') && document.querySelectorAll('[data-testid=tile-list] li').length >= 2", 20000), 'the buy card and the tiles did not come');
     const facts = () => {
       const q = (s) => document.querySelector(s);
       const all = (s) => [...document.querySelectorAll(s)];
       const txt = (el) => (el ? el.textContent.split(/\s+/).filter(Boolean).join(' ') : '');
+      const card = q('[data-testid=buy-retake]');
       return {
-        held: all('[data-state=gate]').map((li) => txt(li.querySelector('[data-testid=held-label]'))),
-        heldPressable: all('[data-state=gate] [aria-pressed]').length, soon: all('[data-state=soon]').length, recommended: !!q('[data-testid=recommended]'),
-        title: txt(q('#retake-title')), lid: txt(q('[data-testid=retake-lid]')), tip: txt(q('[data-testid^=retake-tip]')), mail: ((q('[data-testid=manual-route] a') || {}).href || ''),
-        retakeButton: txt(q('[data-testid=retake-eye-1]')), buyLine: txt(q('[data-testid=buy-retake-line]')), buyButton: !!q('[data-testid=buy]'), waiver: !!q('[data-testid=waiver]'),
+        held: all('[data-state=gate]').length, heldLabel: all('[data-testid=held-label]').length, soon: all('[data-state=soon]').length, recommended: !!q('[data-testid=recommended]'),
+        retakeCard: !!q('[data-testid=retake-state]') || !!q('#retake-title'), calm: !!q('[data-testid=retake-calm]'), mail: all('a[href^="mailto:"]').filter((a) => !a.closest('footer')).length,
+        warn: all('[data-testid=style-picker] svg').filter((s) => /triangle|alert/.test(s.getAttribute('class') || '')).length,
+        retakeButton: txt(card && card.querySelector('[data-testid=retake-eye-1]')), buyLine: txt(q('[data-testid=buy-retake-line]')), buyButton: !!q('[data-testid=buy]'), waiver: !!q('[data-testid=waiver]'),
         price: !!q('[data-testid=price]') || !!q('[data-testid=tile-price]'), text: txt(document.body),
       };
     };
     const f = JSON.parse(await page.eval(`JSON.stringify((${facts.toString()})())`));
-    expect('retake', f.held.length === 1 && f.held[0] === 'Retake eye 1 first' && f.heldPressable === 0 && f.soon >= 2 && !f.recommended, `the tiles: ${JSON.stringify([f.held, f.heldPressable, f.soon, f.recommended])}`,
-      'the held tile says "Retake eye 1 first" and cannot be chosen, the plate styles are drawn with the Soon chip, nothing is recommended');
-    expect('retake', f.title === 'Your eye needs a retake' && /still inside the ring/.test(f.lid) && /lift the upper lid/.test(f.tip) && /^mailto:/.test(f.mail) && f.retakeButton === 'Retake this eye',
-      `the retake card: ${JSON.stringify([f.title, f.lid, f.tip, f.mail, f.retakeButton])}`, 'the retake card names the eye, says what is in the ring, gives the tip, the retake button and the e-mail');
-    expect('retake', /^Nothing can be ordered with this photo yet\./.test(f.buyLine) && !f.buyButton && !f.waiver && !f.price && !/choose another|buy anyway|order anyway/i.test(f.text),
-      `the buy card: ${JSON.stringify([f.buyLine, f.buyButton, f.waiver, f.price])}`, 'the buy card sends the customer to the retake card: no price, no waiver, no button, no "choose another"');
+    // adapted 2026-10-22 (the owner: "we exist to raise the iris quality, not to tell every customer what does not fit"): the held tile with "Retake eye 1 first" and the retake card
+    // with its reasons, tip and e-mail were checked here; neither is on the page any more
+    expect('retake', f.held === 0 && f.heldLabel === 0 && f.warn === 0 && f.soon >= 2 && !f.recommended, `the tiles: ${JSON.stringify([f.held, f.heldLabel, f.warn, f.soon, f.recommended])}`,
+      'the held tile is not shown (no "Retake eye 1 first", no warning sign), the plate styles are drawn with the Soon chip, nothing is recommended');
+    expect('retake', !f.retakeCard && !f.calm && f.mail === 0, `the retake card: ${JSON.stringify([f.retakeCard, f.calm, f.mail])}`, 'no retake card under the list and no e-mail route (a style can be drawn)');
+    expect('retake', /^Nothing can be ordered with this photo yet\./.test(f.buyLine) && !/see above/i.test(f.buyLine) && f.retakeButton === 'Retake this eye' && !f.buyButton && !f.waiver && !f.price && !/choose another|buy anyway|order anyway/i.test(f.text),
+      `the buy card: ${JSON.stringify([f.buyLine, f.retakeButton, f.buyButton, f.waiver, f.price])}`, 'the buy card says it in one line with its own retake button: no price, no waiver, no button to buy, no "choose another"');
     if (process.env.SNAPEYES_SHOTS) { const fs = await import('node:fs'); fs.mkdirSync(process.env.SNAPEYES_SHOTS, { recursive: true }); let i = 0; for (const b of await page.fullShots()) fs.writeFileSync(join(process.env.SNAPEYES_SHOTS, `retake-${++i}.png`), b); }
     await page.eval("document.querySelector('[data-testid=retake-eye-1]').click()");
     expect('retake', await waitFor(page, "!!document.querySelector('input[type=file][multiple]')", 10000), 'the retake button did not open the capture screen', 'the retake button opens the capture screen for the eye');
@@ -626,7 +629,10 @@ async function checkWiring() {
 // The owner's evening of 2026-10-20 (the plain slider for an eye whose Reveal is withheld, the strip and its note gone, the result's text folded into one disclosure,
 // the calm first screen, the pupil line; four languages) moved the base of /try by -1,373 B JS, measured on b96c04c against the tree with it (164,524 to 163,151 B;
 // the CSS 13,214 B and /order 111,318 B unchanged). None of it is motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373, css: 10975 + 245 }, order: { js: 108723 + 414 + 110, css: 10975 + 245 } };
+// The owner's phone of 2026-10-22 (the calm flow: no verdict, Detail meter, tips list or shot notes on the quality step, no held tile and no retake card in the picker, no
+// tagline in the header, the dead words of four languages) moved the base of /try by -3,730 B JS, measured on 2638331 against the tree with it (159,650 to 155,920 B;
+// the CSS -24 B of both pages and /order -1 B are left in the budget). None of it is motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730, css: 10975 + 245 }, order: { js: 108723 + 414 + 110, css: 10975 + 245 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

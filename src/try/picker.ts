@@ -7,7 +7,7 @@
 // Words used below, from the plan (INTEGRATION_SPEC 1.6, 1.7, 1.8, 2.5):
 //   stage     live (can be bought), preview ("Soon": drawn for free, never sold), lab and the rest never reach a customer
 //   policy    the style's gate policy: advisory (a failing eye only warns: the tile is drawn and can be bought) or hard (the style is held back for
-//             that set of eyes: "Retake eye N first"), none (the six old styles: nothing). Since 2026-10-14 the one-eye styles Clean Iris and
+//             that set of eyes: its tile is not shown: heldTile), none (the six old styles: nothing). Since 2026-10-14 the one-eye styles Clean Iris and
 //             Celestial Gold are hard like Universe, so a single eye that fails the lid rule can be held back from every style that can be bought
 //             (Powder Burst and Splash only warn, but they open soon until their plates are in storage): buyState then says "retake", not "choose another"
 //   rule      the rule set a style's gate reads: lid (an eyelid, lash or skin inside the ring) or fill (the Universe fill: a reflection, a hard edge)
@@ -131,6 +131,14 @@ export function tileState(t: ServerTile, eyes: readonly ServerEye[]): TileState 
   }
   return isSoon(t) ? { kind: 'soon' } : { kind: 'ready' };
 }
+
+/** A tile the gate, a pupil shape or an unmeasured preview holds back for these eyes. The page does not show it at all (the owner, 2026-10-22: never a
+ *  broken tile with a warning sign and "Retake eye 1 first"): the grid shows what can be drawn for these eyes, and when nothing can, the frame says so in
+ *  one calm line with the retake button (src/try/StylePicker.tsx CalmRetake). */
+export const heldTile = (t: ServerTile, eyes: readonly ServerEye[]): boolean => {
+  const k = tileState(t, eyes).kind;
+  return k === 'gate' || k === 'reseal' || k === 'pupil';
+};
 
 /** The tiles that need a picture: available, drawn for a customer (live or preview), in the server's order. */
 export const drawable = (t: ServerTile): boolean => t.available && (isLive(t) || isSoon(t));
@@ -262,6 +270,10 @@ export function retakeView(a: { tiles: readonly ServerTile[]; eyes: readonly Ser
   };
 }
 
+/** The eyes (1-based, in order) a retake view names: the ones that fail a rule, have no sealed value, or have a pupil the styles cannot take. */
+export const retakeEyes = (view: RetakeView | null | undefined): number[] =>
+  view ? [...new Set([...view.eyes, ...view.reseal, ...view.pupil])].sort((a, b) => a - b) : [];
+
 /** The eyes (1-based) that fail the rule of the selected style when that style only warns (advisory): the warning under the picture, on the chip
  *  and above the buy button. A hard style that fails is not selectable (the server holds it back), and the six old styles (policy none) never warn. */
 export function advisoryEyes(selected: ServerTile | undefined, eyes: readonly ServerEye[]): number[] {
@@ -276,11 +288,11 @@ export type BuyState =
   | { kind: 'soon'; look?: string }                     // the selected style opens soon, or (look: its code) the look on screen does: one line, no price, no button
   | { kind: 'retake' }                                  // the selected style opens soon and every style that is live is held back by the eyes: one line that sends the customer to the retake card
   | { kind: 'countSoon'; n: number }                    // no style of this many eyes can be bought yet: one line
-  | { kind: 'none' };                                   // nothing is selected (nothing can be drawn for these eyes: the retake state says why)
+  | { kind: 'none' };                                   // nothing is selected (nothing can be drawn for these eyes: the calm retake line stands where the picture would be)
 
 /** The styles that can be bought are all held back by these eyes (a hard style whose rule an eye fails, an eye with no sealed value, a pupil shape): none is live and
- *  available to choose, some live tile is not. "Choose another to order now" would be false then, because the only other styles that can be ordered are the greyed
- *  ones; a retake is what lifts the hold. Since 2026-10-14 this is what a one-eye set that fails the lid rule meets while the advisory styles still open soon:
+ *  available to choose, some live tile is not. "Choose another to order now" would be false then, because the only other styles that can be ordered are the held
+ *  ones (not shown); a retake is what lifts the hold. Since 2026-10-14 this is what a one-eye set that fails the lid rule meets while the advisory styles still open soon:
  *  Clean Iris and Celestial Gold are hard, Powder Burst and Splash are Soon until their 4K plates are in storage. */
 export const onlyHeldLive = (tiles: readonly ServerTile[]): boolean =>
   !tiles.some((t) => isLive(t) && t.available) && tiles.some((t) => isLive(t) && !t.available);

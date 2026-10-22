@@ -1,7 +1,8 @@
 // The landing page in the three states of the owner's catalogue a visitor can meet, in real Chrome, against a build (dist/) served the way Vercel serves it:
 //
-//   closed        nothing ticked and ordering closed (the state of the release): every tile says Soon, no price anywhere, the bar and the pricing notice say "Ordering opens soon"
-//   open_none     ordering OPEN with nothing ticked (a deployment that takes orders before the owner switches a style on): the same page, no price anywhere
+//   closed        nothing ticked and ordering closed (the state of the release): every tile says Soon and prints no price, the bar and the pricing notice say "Ordering opens
+//                 soon", and the price table is the shop's price list (the owner, 2026-10-22): every row prints its price, none says Soon, none names a style
+//   open_none     ordering OPEN with nothing ticked (a deployment that takes orders before the owner switches a style on): the same page
 //   one           one style ticked live: that tile (and the price rows and the hero line that belong to its class) show the price, everything else says Soon, the group lines say
 //                 "More styles soon." and "Free preview now. Ordering for this group opens soon.", the bar and the notice switch to their open sentences
 //   ceilings      every live ceiling ticked (five singles and the Trio; every pair, Radiance and the larger families stay Soon)
@@ -253,16 +254,18 @@ for (const state of STATES) {
       ok(rows.length === 5, where, `the price table has ${rows.length} rows`);
       if (rows.length === 5) {
         const liveOne = (cls) => [...read.live].some(([id, set]) => read.open && set.has(1) && styles[id].price_class === cls);
-        const want = [liveOne('black'), liveOne('art'), read.open && read.eyes.has(2), read.open && read.eyes.has(3)];
+        // closed: the price list, every row priced; open: a price only where something of the row can be bought, Soon in the others
+        const want = read.open ? [liveOne('black'), liveOne('art'), read.eyes.has(2), read.eyes.has(3)] : [true, true, true, true];
         want.forEach((w, i) => {
           const r = rows[i + 1];
-          ok(w ? r.price && !r.soon : r.soon && !r.price && r.value === c.styles.soonTag, `${where} price row "${r.title}"`, `${w ? 'can be bought' : 'cannot be bought'} but shows "${r.value}" (soon ${r.soon}, price ${r.price})`);
+          ok(w ? r.price && !r.soon : r.soon && !r.price && r.value === c.styles.soonTag, `${where} price row "${r.title}"`, `${w ? (read.open ? 'can be bought' : 'is a row of the closed price list') : 'cannot be bought'} but shows "${r.value}" (soon ${r.soon}, price ${r.price})`);
         });
         const artNote = rows[2].note, twoNote = rows[3].note;
         // the styles a row names are the registry's names of tiles that can be bought: never Radiance (preview) in the art row, never a pair while no pair can be bought
         ok(!artNote.includes('Radiance'), `${where} art row`, `names Radiance, a style that cannot be bought: "${artNote}"`);
         ok(read.eyes.has(2) || !/Collision|Kiss|Infinity/.test(twoNote), `${where} two eyes row`, `names a pair that cannot be bought: "${twoNote}"`);
-        if (!read.open) ok(!rows.slice(1).some((r) => /\d/.test(r.note) || r.price), where, 'a price or a number stands in the table while nothing can be bought');
+        // the closed price list says "soon" once, in the notice above it: no row names a style or says that something opens soon
+        if (!read.open) ok(!artNote && !twoNote && !rows.slice(1).some((r) => r.note.includes(c.styles.moreSoon) || r.note.includes(c.pricing.severalSoon)), where, `the closed price list names a style or says soon in a row: "${artNote}" / "${twoNote}" / "${rows[4].note}"`);
       }
       ok(g.notice === (read.open ? c.pricing.noticeOpen : c.pricing.notice), where, `the pricing notice says "${g.notice}"`);
       ok(g.body.includes(read.open ? c.bar.open : c.bar.soon) && !g.body.includes(read.open ? c.bar.soon : c.bar.open), where, `the bar does not say ${read.open ? 'the open' : 'the soon'} sentence`);

@@ -15,13 +15,13 @@ import { hu } from './copy.hu';
  *  ticket, so the page offers only a retake. */
 export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large' | 'too_small' | 'eyelid';
 
-/** What the page says about a blocked shot. badge: the verdict pill; title: the retake card's heading; reason:
- *  why, in one line, on the single-photo card (the steps follow in the retake card, so the server's own message,
+/** What the page says about a blocked shot (no verdict pill any more, the owner, 2026-10-22: the retake card's title says why). title: the retake
+ *  card's heading; reason: why, in one line, on the single-photo card (the steps follow in the retake card, so the server's own message,
  *  which lists them too, is not shown next to them); error: when the studio is asked for it anyway; retakeLine:
  *  one self-contained line for a shot collector whose best shot is still usable (no retake card there), used
- *  only when the server sends no message; thumb: under its thumbnail instead of a Detail number; steps: the
+ *  only when the server sends no message; thumb: under its thumbnail instead of its number; steps: the
  *  retake card's list. */
-export interface BlockCopy { badge: string; title: string; reason: string; error: string; retakeLine: string; thumb: string; steps: string[] }
+export interface BlockCopy { title: string; reason: string; error: string; retakeLine: string; thumb: string; steps: string[] }
 
 // ---------------------------------------------------------------------------------------------------- English
 
@@ -52,7 +52,6 @@ const en = {
   dec1: (v: number) => v.toFixed(1),
 
   header: {
-    tag: 'Private Atelier · preview',
     study: 'Family test',
   },
 
@@ -125,14 +124,12 @@ const en = {
 
   quality: {
     retake: 'Retake',
-    continueAnyway: 'Continue anyway',
     notCentred: 'This photo is not centred on an iris, so it cannot be restored. Please retake it with one eye filling the frame.',
     // shots the engine blocked (api/analyze.py quality.blocked + block_reason): no work ticket, so never a way
     // forward from them. One entry per reason the server gives; blockOf() in shots.ts picks it.
     blocks: {
       // blur_blocked: too little of the customer's own iris pattern to restore it, the studio would invent one
       too_blurry: {
-        badge: 'Too blurry',
         title: 'Too blurry to restore your own iris',
         reason: 'We could not see enough of your own iris pattern in this photo to restore it, so it is not used.',
         error: 'This photo is too blurry to restore your own iris. Please retake it following the steps below.',
@@ -142,7 +139,6 @@ const en = {
       },
       // blocked for the same reason, but the photo is sharp and the iris dark: light is the fix, not focus
       too_dark: {
-        badge: 'Too dark',
         title: 'Too dark to see your own iris pattern',
         reason: 'Your iris is dark and there was too little light to see its own pattern, so this photo is not used.',
         error: 'This photo is too dark to see your own iris pattern. Please retake it following the steps below.',
@@ -153,7 +149,6 @@ const en = {
       // a pupil so wide that too little iris shows around it. Light is the fix: the pupil narrows in bright
       // light, while the flash comes too late to narrow it and puts a reflection on the iris
       pupil_too_large: {
-        badge: 'Pupil too wide',
         title: 'Your pupil is too wide to restore your iris',
         reason: 'Your pupil is open so wide in this photo that too little of your iris shows around it, so it is not used.',
         error: 'Your pupil is too wide in this photo to restore your own iris. Please retake it following the steps below.',
@@ -168,7 +163,6 @@ const en = {
       },
       // an iris too small in the photo (BLOCK_DIAMETER_PX): the model would draw a pattern the photo does not have
       too_small: {
-        badge: 'Too small',
         title: 'Your iris is too small in this photo',
         reason: 'Your iris is so small in this photo that too little of its own pattern shows, so it is not used.',
         error: 'Your iris is too small in this photo to restore it. Please retake it closer, following the steps below.',
@@ -184,7 +178,6 @@ const en = {
       // an eyelid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would paint iris over the lid.
       // A sideways glance lets the upper lid slide across the iris, so looking into the lens comes first
       eyelid: {
-        badge: 'Eyelid in the way',
         title: 'Your eyelid covers part of your iris',
         reason: 'Part of your iris is hidden under your eyelid or lashes in this photo, so it is not used.',
         error: 'Your eyelid covers part of your iris in this photo. Please retake it following the steps below.',
@@ -201,7 +194,6 @@ const en = {
     // a reason this page does not know yet (a newer server, or none sent): still never a way forward, and still
     // the guide. Neutral on purpose: it must not claim a cause (blur, darkness) the server did not name
     blockedOther: {
-      badge: 'Not enough detail',
       title: 'Not enough detail to restore your own iris',
       reason: 'We could not see enough of your own iris pattern in this photo to restore it, so it is not used.',
       error: 'This photo does not show enough of your own iris to restore it. Please retake it following the steps below.',
@@ -216,15 +208,7 @@ const en = {
     shotUnusable: 'This shot cannot be used. Take another with the advice above.',
     shotsUnusable: 'None of these shots can be used yet. Take another with the advice above.',
     fullUnusable: (max: number) => `None of these ${max} shots can be used. Take another to start a fresh set.`,
-    verdicts: { good: 'Great photo', ok: 'Usable photo', weak: 'Weak photo' },
     detectedIris: 'Detected iris',
-    detail: 'Detail',
-    aimFor: (d: number) => `Aim for ${d}+`,
-    fibresResolved: 'Fibres resolved',
-    // "best", not "sharpest": the verdict ranks first, so a glared photo can be sharper and still lose
-    picked: (of: number, used: number) => `We compared ${of} photos and used the best one (photo ${used}).`,
-    pickedRatio: (ratio: string) => ` It carries ${ratio}x the fibre detail of the softest.`,
-    tryRetake: 'Try a retake',
     pupilNote: 'A reflection on the pupil is fine: we rebuild the pupil as clean darkness.',
     lampFallback: 'Lamp light is tinting the white of your eye, so the colours may come out warmer than they really are.',
     // topTip() when the iris is too small and the server sent no tip of its own for it
@@ -234,7 +218,6 @@ const en = {
   // the camera shot collector
   collector: {
     header: (n: number, max: number) => `Shot ${n} of ${max}`,
-    headerDetail: (d: number) => ` · Detail ${d}`,
     shotAlt: (n: number) => `Shot ${n}`,
     bestLabel: (k: number, d?: number) => `shot ${k}${d !== undefined ? ` (Detail ${d})` : ''}`,
     full: (max: number, best: string) => `That is ${max} shots. We will use your best one, ${best}.`,
@@ -362,10 +345,10 @@ const en = {
     // the buy card when no style of this many eyes can be bought yet, and when the selected style opens soon: one line, no price, no date
     countSoon: (n: number) => `Ordering for ${eyes(n)} opens soon.`,
     soonBuy: 'This style opens soon. Choose another to order now.',
-    // the buy card when the style on screen opens soon and every style that can be bought is held back by the eyes (the greyed tiles): no "choose another", the retake card above says what to change
+    // the buy card when the style on screen opens soon and every style that can be bought is held back by the eyes (those tiles are not shown): no "choose another"; the retake buttons stand in the card under this line
     retakeBuy: (total: number): string => (total === 1
-      ? 'Nothing can be ordered with this photo yet. To order, retake your eye (see above).'
-      : 'Nothing can be ordered with these photos yet. To order, retake the eyes named above.'),
+      ? 'Nothing can be ordered with this photo yet. To order, retake your eye.'
+      : 'Nothing can be ordered with these photos yet. To order, retake the eyes below.'),
     soonNote: 'This style opens soon.',
     // a style that can be bought whose look on screen opens soon (Universe: Vortex): the same line, naming the look (the look names are English in every language)
     soonLookBuy: (look: string) => `The ${look} look opens soon. Choose another look or style to order now.`,
@@ -401,9 +384,6 @@ const en = {
       'line.solo_halo': 'Your iris, lit from behind in its own colour.',
       'line.solo_aurora': 'Curtains of northern light around your iris.',
     },
-    retakeFirst: (i: number) => `Retake eye ${i} first`,
-    resealFirst: (i: number) => `Make the preview of eye ${i} again`,
-    pupil: 'Not for this pupil shape',
     tileAlt: (name: string) => `${name} on your eyes: reduced preview with a watermark`,
     tileMaking: (name: string) => `${name}: the preview is being made`,
     tileFailed: 'Preview not made',
@@ -414,30 +394,19 @@ const en = {
       reseal: (from: string, to: string, i: number) => `To use ${from}, please make the preview of eye ${i} again. For now we chose ${to}.`,
       pupil: (from: string, to: string) => `${from} does not suit this pupil shape, so we chose ${to}.`,
     },
-    // the retake state: the eye chip, the warning of a style that only warns, and the card with the reason, one tip and the way to ask us
+    // the retake state: the eye chip, the one calm line of a style that only warns, and (where no style can be drawn) the calm line with the retake button; the card
+    // with reasons, tips and the e-mail under the list is gone (the owner, 2026-10-22); the e-mail stays where no style exists for this many eyes (noStyles)
     chipRetake: 'Retake',
     chipLabel: (i: number) => `Eye ${i}: a retake is needed`,
     advisory: (list: number[], total: number) => (total === 1
       ? 'An eyelid or lash is still in the ring of your iris. Retake it for a cleaner result.'
       : `${list.length === 1 ? `Eye ${list[0]}` : `Eyes ${andList(list, 'and')}`}: an eyelid or lash is still in the ring. Retake for a cleaner result.`),
     retake: {
-      title: (list: number[], total: number) => (total === 1 ? 'Your eye needs a retake' : list.length === 1 ? `Eye ${list[0]} needs a retake` : `Eyes ${andList(list, 'and')} need a retake`),
-      lid: 'An eyelid, a lash or skin is still inside the ring of the iris.',
-      reflection: 'A reflection is still left in the iris.',
-      reseal: (list: number[], total: number) => (total === 1
-        ? 'We could not check this preview. Please retake the eye to go on.'
-        : `We could not check ${list.length === 1 ? `the preview of eye ${list[0]}` : `the previews of eyes ${andList(list, 'and')}`}. Please retake ${list.length === 1 ? 'it' : 'them'} to go on.`),
-      held: 'Styles that need a cleaner iris are greyed out until then.',
-      tips: {
-        open: 'Open the eye wide, look straight into the lens and lift the upper lid gently with a fingertip.',
-        light: 'Use daylight from a window, off to one side. No flash and no lamp.',
-        grey: 'A grey iris has a soft edge and shows best in even daylight: stand close to a window, off to one side, and keep the eye wide open.',
-      },
-      // the landing page's FAQ answer, word for word ({link} is a link): the owner looks at the photos, no promise of a time
+      // when no style at all can be drawn for these eyes (the gate holds every style of the list back for them): ONE calm line and the retake button, no reasons and no
+      // tips (the owner, 2026-10-22: "we exist to raise the iris quality, not to tell every customer what does not fit"); a style that is held back while others can be
+      // drawn is simply not shown
+      calm: 'To show the styles, we need one more photo.',
       manual: 'Still stuck? Email your best photos to {link} and Mantas will look at them.',
-      noPreview: 'We cannot show a preview of these eyes yet. See below what to change.',
-      // every style of the list is held for the shape of the pupil (the collision styles need a round one), and the case of no style at all for this many eyes
-      pupil: 'The pupil in this photo does not read as round, and these styles are made for round pupils.',
       noStyles: 'No style can be shown for this number of eyes yet. Remove an eye, or write to us.',
     },
     stack: 'Your two irises differ strongly in colour, so one sits in front of the other.',
@@ -599,7 +568,6 @@ const de: TryCopy = {
   dec1: (v: number) => DE_DECIMAL.format(v),
 
   header: {
-    tag: 'Private Atelier · Vorschau',
     study: 'Familientest',
   },
 
@@ -665,11 +633,9 @@ const de: TryCopy = {
 
   quality: {
     retake: 'Neu aufnehmen',
-    continueAnyway: 'Trotzdem fortfahren',
     notCentred: 'Dieses Foto ist nicht auf eine Iris zentriert und kann daher nicht restauriert werden. Bitte nehmen Sie es neu auf, sodass ein Auge das Bild füllt.',
     blocks: {
       too_blurry: {
-        badge: 'Zu unscharf',
         title: 'Zu unscharf, um Ihre eigene Iris zu restaurieren',
         reason: 'Auf diesem Foto ist zu wenig von Ihrem eigenen Irismuster zu sehen, um es zu restaurieren. Daher verwenden wir es nicht.',
         error: 'Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren. Bitte nehmen Sie es mit den Schritten unten neu auf.',
@@ -678,7 +644,6 @@ const de: TryCopy = {
         steps: [LIGHT_DE, CAMERA_DE, FOCUS_DE, STEADY_DE],
       },
       too_dark: {
-        badge: 'Zu dunkel',
         title: 'Zu dunkel, um Ihr eigenes Irismuster zu erkennen',
         reason: 'Ihre Iris ist dunkel und es war zu wenig Licht, um ihr eigenes Muster zu erkennen. Daher verwenden wir dieses Foto nicht.',
         error: 'Dieses Foto ist zu dunkel, um Ihr eigenes Irismuster zu erkennen. Bitte nehmen Sie es mit den Schritten unten neu auf.',
@@ -687,7 +652,6 @@ const de: TryCopy = {
         steps: [DARK_LIGHT_DE, CAMERA_DE, FOCUS_DE, STEADY_DE],
       },
       pupil_too_large: {
-        badge: 'Pupille zu weit',
         title: 'Ihre Pupille ist zu weit, um Ihre Iris zu restaurieren',
         reason: 'Ihre Pupille ist auf diesem Foto so weit geöffnet, dass zu wenig von Ihrer Iris zu sehen ist. Daher verwenden wir es nicht.',
         error: 'Ihre Pupille ist auf diesem Foto zu weit, um Ihre eigene Iris zu restaurieren. Bitte nehmen Sie es mit den Schritten unten neu auf.',
@@ -701,7 +665,6 @@ const de: TryCopy = {
         ],
       },
       too_small: {
-        badge: 'Zu klein',
         title: 'Ihre Iris ist auf diesem Foto zu klein',
         reason: 'Ihre Iris ist auf diesem Foto so klein, dass zu wenig von ihrem eigenen Muster zu sehen ist. Daher verwenden wir es nicht.',
         error: 'Ihre Iris ist auf diesem Foto zu klein, um sie zu restaurieren. Bitte nehmen Sie es näher mit den Schritten unten neu auf.',
@@ -715,7 +678,6 @@ const de: TryCopy = {
         ],
       },
       eyelid: {
-        badge: 'Lid im Weg',
         title: 'Ihr Augenlid verdeckt einen Teil Ihrer Iris',
         reason: 'Auf diesem Foto liegt ein Teil Ihrer Iris unter dem Augenlid oder den Wimpern. Daher verwenden wir es nicht.',
         error: 'Ihr Augenlid verdeckt auf diesem Foto einen Teil Ihrer Iris. Bitte nehmen Sie es mit den Schritten unten neu auf.',
@@ -730,7 +692,6 @@ const de: TryCopy = {
       },
     } satisfies Record<BlockReason, BlockCopy>,
     blockedOther: {
-      badge: 'Zu wenig Details',
       title: 'Zu wenig Details, um Ihre eigene Iris zu restaurieren',
       reason: 'Auf diesem Foto ist zu wenig von Ihrem eigenen Irismuster zu sehen, um es zu restaurieren. Daher verwenden wir es nicht.',
       error: 'Dieses Foto zeigt zu wenig von Ihrer eigenen Iris, um sie zu restaurieren. Bitte nehmen Sie es mit den Schritten unten neu auf.',
@@ -743,14 +704,7 @@ const de: TryCopy = {
     shotUnusable: 'Diese Aufnahme ist nicht verwendbar. Machen Sie eine weitere mit den Hinweisen oben.',
     shotsUnusable: 'Noch keine dieser Aufnahmen ist verwendbar. Machen Sie eine weitere mit den Hinweisen oben.',
     fullUnusable: (max: number) => `Keine dieser ${max} Aufnahmen ist verwendbar. Machen Sie eine weitere, um neu zu beginnen.`,
-    verdicts: { good: 'Sehr gutes Foto', ok: 'Brauchbares Foto', weak: 'Schwaches Foto' },
     detectedIris: 'Erkannte Iris',
-    detail: 'Detail',
-    aimFor: (d: number) => `Ziel: ${d}+`,
-    fibresResolved: 'Fasern erkennbar',
-    picked: (of: number, used: number) => `Wir haben ${of} Fotos verglichen und das beste verwendet (Foto ${used}).`,
-    pickedRatio: (ratio: string) => ` Es zeigt ${ratio}-mal so viele Faserdetails wie das unschärfste.`,
-    tryRetake: 'Neu aufnehmen',
     pupilNote: 'Eine Spiegelung auf der Pupille ist kein Problem: Wir bauen die Pupille als sauberes Schwarz neu auf.',
     lampFallback: 'Lampenlicht färbt das Weiße Ihres Auges, daher können die Farben wärmer wirken, als sie wirklich sind.',
     closer: 'Gehen Sie näher heran oder zoomen Sie, damit die Iris mehr vom Bild füllt.',
@@ -758,7 +712,6 @@ const de: TryCopy = {
 
   collector: {
     header: (n: number, max: number) => `Aufnahme ${n} von ${max}`,
-    headerDetail: (d: number) => ` · Detail ${d}`,
     shotAlt: (n: number) => `Aufnahme ${n}`,
     bestLabel: (k: number, d?: number) => `Aufnahme ${k}${d !== undefined ? ` (Detail ${d})` : ''}`,
     full: (max: number, best: string) => `Das sind ${max} Aufnahmen. Wir verwenden Ihre beste, ${best}.`,
@@ -859,8 +812,8 @@ const de: TryCopy = {
     countSoon: (n: number) => `Bestellungen für ${augen(n)} sind bald möglich.`,
     soonBuy: 'Dieser Stil ist bald erhältlich. Wählen Sie einen anderen, um jetzt zu bestellen.',
     retakeBuy: (total: number) => (total === 1
-      ? 'Mit diesem Foto lässt sich noch nichts bestellen. Zum Bestellen nehmen Sie Ihr Auge neu auf (siehe oben).'
-      : 'Mit diesen Fotos lässt sich noch nichts bestellen. Zum Bestellen nehmen Sie die oben genannten Augen neu auf.'),
+      ? 'Mit diesem Foto lässt sich noch nichts bestellen. Zum Bestellen nehmen Sie Ihr Auge neu auf.'
+      : 'Mit diesen Fotos lässt sich noch nichts bestellen. Zum Bestellen nehmen Sie die unten genannten Augen neu auf.'),
     soonNote: 'Dieser Stil ist bald erhältlich.',
     soonLookBuy: (look: string) => `Die Variante ${look} ist bald erhältlich. Wählen Sie eine andere Variante oder einen anderen Stil, um jetzt zu bestellen.`,
     soonLookNote: (look: string) => `Die Variante ${look} ist bald erhältlich.`,
@@ -892,9 +845,6 @@ const de: TryCopy = {
       'line.solo_halo': 'Ihre Iris, von hinten in ihrer eigenen Farbe beleuchtet.',
       'line.solo_aurora': 'Vorhänge aus Nordlicht rund um Ihre Iris.',
     },
-    retakeFirst: (i: number) => `Zuerst Auge ${i} neu aufnehmen`,
-    resealFirst: (i: number) => `Vorschau von Auge ${i} neu erstellen`,
-    pupil: 'Nicht für diese Pupillenform',
     tileAlt: (name: string) => `${name} an Ihren Augen: verkleinerte Vorschau mit Wasserzeichen`,
     tileMaking: (name: string) => `${name}: Die Vorschau wird erstellt`,
     tileFailed: 'Vorschau nicht erstellt',
@@ -910,21 +860,8 @@ const de: TryCopy = {
       ? 'Ein Lid oder eine Wimper liegt noch im Ring Ihrer Iris. Eine neue Aufnahme gibt ein saubereres Ergebnis.'
       : `${list.length === 1 ? `Auge ${list[0]}` : `Augen ${andList(list, 'und')}`}: Ein Lid oder eine Wimper liegt noch im Ring. Eine neue Aufnahme gibt ein saubereres Ergebnis.`),
     retake: {
-      title: (list: number[], total: number) => (total === 1 ? 'Ihr Auge muss neu aufgenommen werden' : list.length === 1 ? `Auge ${list[0]} muss neu aufgenommen werden` : `Die Augen ${andList(list, 'und')} müssen neu aufgenommen werden`),
-      lid: 'Ein Augenlid, eine Wimper oder Haut liegt noch im Ring der Iris.',
-      reflection: 'In der Iris ist noch eine Spiegelung übrig.',
-      reseal: (list: number[], total: number) => (total === 1
-        ? 'Diese Vorschau konnten wir nicht prüfen. Bitte nehmen Sie das Auge neu auf, um fortzufahren.'
-        : `${list.length === 1 ? `Die Vorschau von Auge ${list[0]}` : `Die Vorschauen der Augen ${andList(list, 'und')}`} konnten wir nicht prüfen. Bitte nehmen Sie ${list.length === 1 ? 'es' : 'sie'} neu auf, um fortzufahren.`),
-      held: 'Stile, die eine sauberere Iris brauchen, sind bis dahin ausgegraut.',
-      tips: {
-        open: 'Öffnen Sie das Auge weit, schauen Sie gerade in die Kamera und heben Sie das Oberlid sanft mit einer Fingerspitze an.',
-        light: 'Nutzen Sie Tageslicht von einem Fenster, seitlich. Kein Blitz und keine Lampe.',
-        grey: 'Eine graue Iris hat einen weichen Rand und kommt bei gleichmäßigem Tageslicht am besten heraus: Stellen Sie sich nah an ein Fenster, das Fenster seitlich, und halten Sie das Auge weit geöffnet.',
-      },
+      calm: 'Um die Stile zu zeigen, brauchen wir noch ein Foto.',
       manual: 'Kommen Sie nicht weiter? Schicken Sie Ihre besten Fotos an {link}, und Mantas sieht sie sich an.',
-      noPreview: 'Für diese Augen können wir noch keine Vorschau zeigen. Unten steht, was Sie ändern können.',
-      pupil: 'Die Pupille auf diesem Foto wirkt nicht rund, und diese Stile sind für runde Pupillen gemacht.',
       noStyles: 'Für diese Anzahl von Augen kann noch kein Stil gezeigt werden. Entfernen Sie ein Auge oder schreiben Sie uns.',
     },
     stack: 'Ihre beiden Iriden unterscheiden sich stark in der Farbe, deshalb liegt eine vor der anderen.',

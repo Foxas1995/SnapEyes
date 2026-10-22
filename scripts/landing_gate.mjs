@@ -19,9 +19,11 @@
 //          hero's "from", the several-eyes card) is the one the server's rule gives (src/shared/markets.ts priceMinor) for the style the REGISTRY says it is: a price of the wrong
 //          class or the wrong count of eyes is a broken promise as much as a price that should not be there;
 //        * every name a tile prints is the registry's name of the style the tile stands for, and a name of no style of the registry is refused;
-//        * the price table prints a price in a row only when the catalogue lists a style of that class (or count of eyes) live, says Soon in the others, and names in
-//          the rows of styles only styles whose tiles can be bought;
-//        * where nothing can be bought, no price stands anywhere in the table or on a tile;
+//        * the price table: while ordering is open it prints a price in a row only when the catalogue lists a style of that class (or count of eyes) live, says Soon in
+//          the others, and names in the rows of styles only styles whose tiles can be bought; while nothing can be bought it is the shop's price list (the owner,
+//          2026-10-22: "why is everything soon?"): every row prints the server's price for its class or count, none says Soon, none names a style, the three eyes
+//          row states the ladder with the server's prices, and the one notice above it says that ordering opens soon;
+//        * where nothing can be bought, no price stands on a tile or on a several-eyes card (the price list of the table aside);
 //        * the line a group adds under its intro and the several-eyes card of the pairs and the families follow how many of the group's tiles and which counts of eyes can be bought;
 //        * every answer of the FAQ is the wording the state calls for (the open wording only while ordering is open, a number of eyes only up to what can be sold);
 //        * every tile has its picture (for every eye colour, in the two widths): a missing picture is an error in every build, not a matter of promises.
@@ -31,6 +33,8 @@ import { ceilingOf } from './styles_source.mjs';
 import { checkoutAnswer, firstLiveOneEyeStyle } from './lib/stubapi.mjs';
 
 const has = (o, k) => o !== null && typeof o === 'object' && Object.prototype.hasOwnProperty.call(o, k);
+// the most eyes one artwork holds (src/shared/markets.ts MAX_EYES): what the closed price list's three eyes row says the ladder goes up to
+const MAX_EYES = 8;
 
 /** Is the gate an error in this environment? A production deploy (Vercel sets VERCEL_ENV=production) or an explicit LANDING_GATE=strict: yes. A local build, a
  *  preview deploy: a notice only. */
@@ -309,7 +313,8 @@ export function promiseGate(rendered, inputs, styles, tileStyle, gallery) {
       if (rows.length !== 5) { promises.add(`${at}: the price table has ${rows.length} rows, the gate reads 5 (free, black, art, two eyes, three eyes)`); continue; }
       const liveOne = (cls) => open && [...live].some(([id, set]) => set.has(1) && styles[id]?.price_class === cls);
       const liveFor = (n) => open && [...live].some(([, set]) => set.has(n));
-      const wantRow = { black: liveOne('black'), art: liveOne('art'), two: liveFor(2), more: liveFor(3) };
+      // closed: the price list, every row priced (see the module text); open: a price only where something of the row can be bought
+      const wantRow = open ? { black: liveOne('black'), art: liveOne('art'), two: liveFor(2), more: liveFor(3) } : { black: true, art: true, two: true, more: true };
       // what each row must print: the price of one eye of the class, of two eyes, of three
       const rowPrice = { black: priceOf(lang, classId('black', 1), 1), art: priceOf(lang, classId('art', 1), 1), two: priceOf(lang, classId(null, 2), 2), more: priceOf(lang, classId(null, 3), 3) };
       const names = Object.keys(wantRow);
@@ -317,7 +322,9 @@ export function promiseGate(rendered, inputs, styles, tileStyle, gallery) {
         const r = rows[k + 1];
         const label = `the price table row "${r.title}" (${key})`;
         if (wantRow[key]) {
-          if (!r.price || r.soon) underSells.add(`${at}: ${label} can be bought but shows ${r.price ? 'a price' : 'no price'}${r.soon ? ' and says Soon' : ''}`);
+          // a row of the closed price list that says Soon, or prints no price, is what the owner asked to be rid of: a broken rule, not a modest page
+          if (!open && (r.soon || !r.price)) promises.add(`${at}: ${label} ${r.soon ? 'says Soon' : 'prints no price'}, but while nothing can be bought the table is the price list: every row prints its price (${lang})`);
+          else if (!r.price || r.soon) underSells.add(`${at}: ${label} can be bought but shows ${r.price ? 'a price' : 'no price'}${r.soon ? ' and says Soon' : ''}`);
           else if (!rowPrice[key]) promises.add(`${at}: the gate has no price for ${label} in ${lang}`);
           else if (norm(r.value) !== rowPrice[key].text) promises.add(`${at}: ${label} prints "${r.value}", the server charges ${rowPrice[key].text} (${lang})`);
         } else {
@@ -326,10 +333,12 @@ export function promiseGate(rendered, inputs, styles, tileStyle, gallery) {
           if (r.price) promises.add(`${at}: ${label} cannot be bought but prints a price`);
         }
       });
-      // the sentence of the three eyes row states the ladder (two eyes, each further eye, up to how many): only when two to three eyes can all be bought, and then with the server's prices
-      if (several >= 3 && wantRow.more) {
+      // the sentence of the three eyes row states the ladder (two eyes, each further eye, up to how many): when two to three eyes can all be bought, with the server's prices, and
+      // in the closed price list (up to the most eyes one artwork holds)
+      if ((several >= 3 && wantRow.more) || !open) {
         const note = norm(rows[4].note);
-        if (!note.includes(String(several))) promises.add(`${at}: the price table row "${rows[4].title}" does not say up to ${several} eyes (${lang}): "${note}"`);
+        const upTo = open ? several : MAX_EYES;
+        if (!note.includes(String(upTo))) promises.add(`${at}: the price table row "${rows[4].title}" does not say up to ${upTo} eyes (${lang}): "${note}"`);
         if (rowPrice.two && !note.includes(rowPrice.two.text)) promises.add(`${at}: the price table row "${rows[4].title}" does not say the price of two eyes ${rowPrice.two.text} (${lang}): "${note}"`);
         if (further && !note.includes(further.text)) promises.add(`${at}: the price table row "${rows[4].title}" does not say the price of each further eye ${further.text} (${lang}): "${note}"`);
       }
@@ -347,10 +356,13 @@ export function promiseGate(rendered, inputs, styles, tileStyle, gallery) {
         for (const name of other) if (note.includes(name)) promises.add(`${at}: the price table row "${rows[k].title}" names "${name}", a style that cannot be bought`);
         if (wantRow[kind === 'art' ? 'art' : 'two']) for (const name of sale) if (!note.includes(name)) underSells.add(`${at}: the price table row "${rows[k].title}" can be bought but does not name "${name}"`);
       }
-      // where nothing can be bought, no price stands anywhere in the table (the free row aside), on a tile or on a card
+      // where nothing can be bought, no price stands on a tile or on a card (the table is the price list then, above), and no row of the price list names a style or says soon
+      if (!open) {
+        const soonWords = [view.words.moreSoon, view.words.severalSoon].filter(Boolean);
+        for (const r of rows.slice(1)) if (soonWords.some((w) => r.note.includes(w))) promises.add(`${at}: the price table row "${r.title}" says "${r.note}" while nothing can be bought: the one notice above the table says that ordering opens soon (${lang})`);
+        for (const r of [rows[2], rows[3]]) if (norm(r.note)) promises.add(`${at}: the price table row "${r.title}" names "${r.note}" while nothing can be bought (${lang})`);
+      }
       if (!live.size || !open) {
-        const rest = rows.slice(1);
-        if (rest.some((r) => /\d/.test(r.value) || /\d/.test(r.note))) promises.add(`${at}: nothing can be bought but the price table prints a number`);
         if (view.tiles.some((t) => readTile(t.html).price)) promises.add(`${at}: nothing can be bought but a tile prints a price`);
         if (Object.values(view.groups ?? {}).some((h) => { const c = readCombo(h); return c && /\d/.test(c.title + c.body); })) promises.add(`${at}: nothing can be bought but a several-eyes card prints a number`);
       }

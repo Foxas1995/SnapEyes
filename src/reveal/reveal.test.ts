@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DRIFT_FAIL, PUPIL_CUT, SNAP, parseReveal, planFrame, revealGeometry, revealView, snapCut, stripFadeMs, sweepFor, tightFit, withheldByColour, type Aspect, type Fit } from './revealMath.ts';
+import { DRIFT_FAIL, PUPIL_CUT, SNAP, parseReveal, planFrame, revealGeometry, revealView, dragCut, stripFadeMs, sweepFor, tightFit, withheldByColour, type Aspect, type Fit } from './revealMath.ts';
 
 interface Vec { eye: string; aspect: Aspect; fit: Fit; params: Record<string, unknown>; expect: ReturnType<typeof revealGeometry> }
 const vectors: Vec[] = JSON.parse(readFileSync(new URL('./vectors.json', import.meta.url), 'utf8'));
@@ -63,10 +63,12 @@ test('the p09f case against the vectors: only the hazel eye (drift 19.7) is with
   assert.equal(human.filter((id) => withheldByColour(parseReveal(eyes.get(id)!.params))).join(), 'p09f');
 });
 
-test('the cut sits at 50 percent of the frame, exactly (the vectors say 0.5), and snaps there within 3 percent', () => {
+// 2026-10-22: this test also pinned the snap to 50 within 3 percent; the owner asked for a drag without the snap and the vibration, so the drag
+// now stays where the finger is (dragCut), and the cut's resting place is still the pupil cut the vectors say.
+test('the cut sits at 50 percent of the frame, exactly (the vectors say 0.5), and a drag near it stays where the finger is (no snap)', () => {
   assert.equal(PUPIL_CUT, 50);
   for (const v of vectors) assert.ok(Math.abs(revealGeometry(v.fit, v.params as never, v.aspect).cut - 0.5) <= 0.005, v.eye);
-  for (const p of [47, 49.2, 50, 50.7, 53]) assert.equal(snapCut(p), 50);
+  for (const p of [47, 49.2, 50, 50.7, 53]) assert.equal(dragCut(p), p);
   assert.equal(SNAP, 3);
 });
 

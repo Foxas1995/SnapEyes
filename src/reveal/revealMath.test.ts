@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CARD_ASPECT, PUPIL_CUT, RF, RF_SNAP_MAX, SNAP, checkFit, chooseRf, contextBox, edgePair, entersSnap, keyCut, maskCss, maskStops, photoBox, revealGeometry, snapCut, stripFadeMs, sweepFor, tightNeeded, tightRf, toggleCut, uncoveredShare, uncoveredWindow, valueText, type Aspect, type Fit } from './revealMath.ts';
+import { CARD_ASPECT, RF, RF_SNAP_MAX, SNAP, checkFit, chooseRf, contextBox, dragCut, edgePair, keyCut, maskCss, maskStops, photoBox, revealGeometry, stripFadeMs, sweepFor, tightNeeded, tightRf, toggleCut, uncoveredShare, uncoveredWindow, valueText, type Aspect, type Fit } from './revealMath.ts';
 
 interface Vec { eye: string; aspect: Aspect; fit: Fit; params: { pupil: [number, number]; shift: [number, number]; edge: [number, number]; ok: boolean; ia?: number }; expect: ReturnType<typeof revealGeometry>; context: [number, number, number, number] }
 const vectors: Vec[] = JSON.parse(readFileSync(new URL('./vectors.json', import.meta.url), 'utf8'));
@@ -140,15 +140,13 @@ test('the mask stops are the smoothstep of the restored edge', () => {
   assert.match(maskCss(0.935, 0.995), /^radial-gradient\(closest-side, rgba\(0,0,0,1\.0000\) 0\.00%, /);
 });
 
-test('snap: within +-3 % of the pupil cut the cut sits exactly on it', () => {
-  for (const p of [47.0, 47.01, 50, 50.4, 52.99, 53]) assert.equal(snapCut(p), PUPIL_CUT, String(p));
-  for (const p of [46.99, 53.01, 0, 100, 12]) assert.notEqual(snapCut(p), PUPIL_CUT, String(p));
-  assert.equal(snapCut(-5), 0);
-  assert.equal(snapCut(140), 100);
-  assert.equal(SNAP, 3);
-  assert.equal(entersSnap(60, 52), true);
-  assert.equal(entersSnap(52, 50), false);
-  assert.equal(entersSnap(40, 20), false);
+// 2026-10-22 (the owner, on his own phone: "maybe the slider should not vibrate and snap in the middle when sliding?"): this test pinned the snap to the pupil cut
+// within +-3 % and the haptic tick on entering that zone. Both are gone; it now pins the opposite: the drag follows the finger everywhere, the middle included.
+test('drag: the cut follows the finger, also within 3 % of the pupil cut (no snap, no detent), clamped to the frame', () => {
+  for (const p of [47.0, 47.01, 49.2, 50, 50.4, 52.99, 53, 12, 88.5]) assert.equal(dragCut(p), p, String(p));
+  assert.equal(dragCut(-5), 0);
+  assert.equal(dragCut(140), 100);
+  assert.equal(SNAP, 3);                 // still the double tap's tolerance (toggleCut), never a drag's
 });
 
 test('keys: arrows step 2 %, Home 0, End 100, Enter snaps to the pupil cut, other keys are ignored', () => {

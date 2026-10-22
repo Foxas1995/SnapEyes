@@ -40,9 +40,6 @@ export function szer(num: string): string {
   return ['2', '3', '6', '8'].includes(digits.slice(-2, -1)) ? 'szor' : 'szer';  // húsz, harminc, hatvan, nyolcvan
 }
 
-/** "4,0" -> "4": a whole ratio is written without its ",0" (4-szer, not 4,0-szer). */
-const dropZero = (num: string) => num.trim().replace(/[.,]0$/, '');
-
 /** "1.", "1. és 3.", "1., 2. és 4.": ordinals in a list. */
 const ordList = (xs: number[]) => {
   const o = xs.map((x) => `${x}.`);
@@ -67,7 +64,6 @@ export const hu: TryCopy = {
   dec1: (v: number) => HU_DECIMAL.format(v),
 
   header: {
-    tag: 'Private Atelier · előnézet',
     study: 'Családi teszt',
   },
 
@@ -133,11 +129,9 @@ export const hu: TryCopy = {
 
   quality: {
     retake: 'Újrafotózás',
-    continueAnyway: 'Folytatás így is',
     notCentred: 'Ezen a fotón az írisz nincs középen, ezért nem állítható helyre. Kérjük, fotózd újra úgy, hogy az egyik szemed kitöltse a képet.',
     blocks: {
       too_blurry: {
-        badge: 'Túl elmosódott',
         title: 'Túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk',
         reason: 'Ezen a fotón nem látszik eléggé a saját íriszmintázatod ahhoz, hogy helyreállítsuk, ezért nem használjuk.',
         error: 'Ez a fotó túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Kérjük, fotózd újra az alábbi lépések szerint.',
@@ -146,7 +140,6 @@ export const hu: TryCopy = {
         steps: [LIGHT, CAMERA, FOCUS, STEADY],
       },
       too_dark: {
-        badge: 'Túl sötét',
         title: 'Túl sötét ahhoz, hogy látsszon a saját íriszmintázatod',
         reason: 'Az íriszed sötét, és túl kevés volt a fény ahhoz, hogy a saját mintázata látsszon, ezért ezt a fotót nem használjuk.',
         error: 'Ez a fotó túl sötét ahhoz, hogy látsszon a saját íriszmintázatod. Kérjük, fotózd újra az alábbi lépések szerint.',
@@ -155,7 +148,6 @@ export const hu: TryCopy = {
         steps: [DARK_LIGHT, CAMERA, FOCUS, STEADY],
       },
       pupil_too_large: {
-        badge: 'Túl tág pupilla',
         title: 'A pupillád túl tág ahhoz, hogy az íriszedet helyreállítsuk',
         reason: 'Ezen a fotón annyira tág a pupillád, hogy túl kevés látszik körülötte az íriszedből, ezért nem használjuk.',
         error: 'Ezen a fotón túl tág a pupillád ahhoz, hogy a saját íriszedet helyreállítsuk. Kérjük, fotózd újra az alábbi lépések szerint.',
@@ -169,7 +161,6 @@ export const hu: TryCopy = {
         ],
       },
       too_small: {
-        badge: 'Túl kicsi',
         title: 'Az íriszed túl kicsi ezen a fotón',
         reason: 'Az íriszed olyan kicsi ezen a fotón, hogy túl kevés látszik a saját mintázatából, ezért nem használjuk.',
         error: 'Az íriszed túl kicsi ezen a fotón ahhoz, hogy helyreállítsuk. Kérjük, fotózd újra közelebbről, az alábbi lépések szerint.',
@@ -185,7 +176,6 @@ export const hu: TryCopy = {
       // a lid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would have to paint iris over it. The words
       // of the capture guide's open-eye step (stepsOpen, stepsOpenMore) and of api/_lib/analyze_hu.py TEXT_HU["eyelid"]
       eyelid: {
-        badge: 'Takarja a szemhéj',
         title: 'A szemhéjad eltakarja az íriszed egy részét',
         reason: 'Ezen a fotón az íriszed egy részét a szemhéjad vagy a szempilláid takarják, ezért nem használjuk.',
         error: 'A szemhéjad ezen a fotón eltakarja az íriszed egy részét. Kérjük, fotózd újra az alábbi lépések szerint.',
@@ -200,7 +190,6 @@ export const hu: TryCopy = {
       },
     } satisfies Record<BlockReason, BlockCopy>,
     blockedOther: {
-      badge: 'Kevés a részlet',
       title: 'Túl kevés a részlet ahhoz, hogy a saját íriszedet helyreállítsuk',
       reason: 'Ezen a fotón nem látszik eléggé a saját íriszmintázatod ahhoz, hogy helyreállítsuk, ezért nem használjuk.',
       error: 'Ezen a fotón nem látszik eléggé a saját íriszed ahhoz, hogy helyreállítsuk. Kérjük, fotózd újra az alábbi lépések szerint.',
@@ -213,14 +202,7 @@ export const hu: TryCopy = {
     shotUnusable: 'Ez a felvétel nem használható. Készíts egy újat a fenti tanácsok szerint.',
     shotsUnusable: 'Ezek közül még egyik felvétel sem használható. Készíts egy újat a fenti tanácsok szerint.',
     fullUnusable: (max: number) => `Ennek ${az(max)} ${max} felvételnek egyike sem használható. Egy újabb felvétellel új sorozatot kezdesz.`,
-    verdicts: { good: 'Remek fotó', ok: 'Használható fotó', weak: 'Gyenge fotó' },
     detectedIris: 'Felismert írisz',
-    detail: 'Részletesség',
-    aimFor: (d: number) => `Cél: ${d}+`,
-    fibresResolved: 'A rostok kivehetők',
-    picked: (of: number, used: number) => `${of} fotót hasonlítottunk össze, és a legjobbat használtuk (${used}. fotó).`,
-    pickedRatio: (ratio: string) => ` Ezen ${dropZero(ratio)}-${szer(dropZero(ratio))} annyi rostrészlet látszik, mint a legelmosódottabbon.`,
-    tryRetake: 'Újrafotózás',
     pupilNote: 'A pupillán lévő tükröződés nem gond: a pupillát tiszta sötétként építjük újra.',
     lampFallback: 'A lámpafény elszínezi a szemfehérjédet, ezért a színek melegebbnek tűnhetnek, mint amilyenek valójában.',
     closer: 'Menj közelebb, vagy zoomolj rá, hogy az írisz nagyobb részt töltsön ki a képből.',
@@ -228,7 +210,6 @@ export const hu: TryCopy = {
 
   collector: {
     header: (n: number, max: number) => `Felvétel: ${n}/${max}`,
-    headerDetail: (d: number) => ` · Részletesség ${d}`,
     shotAlt: (n: number) => `${n}. felvétel`,
     bestLabel: (k: number, d?: number) => `${k}. felvétel${d !== undefined ? ` (részletesség ${d})` : ''}`,
     full: (max: number, best: string) => `Ez már ${max} felvétel. A legjobbat használjuk: ${best}.`,
@@ -333,8 +314,8 @@ export const hu: TryCopy = {
     countSoon: (n: number) => `${n} szem rendelése hamarosan indul.`,
     soonBuy: 'Ez a stílus hamarosan elérhető lesz. Válassz egy másikat, ha most szeretnél rendelni.',
     retakeBuy: (total: number) => (total === 1
-      ? 'Ezzel a fotóval egyelőre semmit sem lehet rendelni. A rendeléshez fotózd újra a szemedet (lásd fent).'
-      : 'Ezekkel a fotókkal egyelőre semmit sem lehet rendelni. A rendeléshez fotózd újra a fent megnevezett szemeket.'),
+      ? 'Ezzel a fotóval egyelőre semmit sem lehet rendelni. A rendeléshez fotózd újra a szemedet.'
+      : 'Ezekkel a fotókkal egyelőre semmit sem lehet rendelni. A rendeléshez fotózd újra a lent megnevezett szemeket.'),
     soonNote: 'Ez a stílus hamarosan elérhető lesz.',
     soonLookBuy: (look: string) => `${look} változat: hamarosan elérhető lesz. Válassz másik változatot vagy stílust, ha most szeretnél rendelni.`,
     soonLookNote: (look: string) => `${look} változat: hamarosan elérhető lesz.`,
@@ -366,9 +347,6 @@ export const hu: TryCopy = {
       'line.solo_halo': 'Az íriszed a saját színének fényében ragyog.',
       'line.solo_aurora': 'Sarki fény függönyei az íriszed körül.',
     },
-    retakeFirst: (i: number) => `Előbb fotózd újra ${az(i)} ${i}. szemet`,
-    resealFirst: (i: number) => `Készítsd el újra ${az(i)} ${i}. szem előnézetét`,
-    pupil: 'Nem ehhez a pupillaformához',
     tileAlt: (name: string) => `${name} a szemeiden: kicsinyített, vízjeles előnézet`,
     tileMaking: (name: string) => `${name}: az előnézet készül`,
     tileFailed: 'Az előnézet nem készült el',
@@ -384,21 +362,8 @@ export const hu: TryCopy = {
       ? 'Az íriszed gyűrűjében még szemhéj vagy szempilla van. Egy újrafotózás tisztább eredményt ad.'
       : `${Az(list[0] ?? 0)} ${ordList(list)} szem gyűrűjében még szemhéj vagy szempilla van. Egy újrafotózás tisztább eredményt ad.`),
     retake: {
-      title: (list: number[], total: number) => (total === 1 ? 'A szemedet újra kell fotózni' : `${Az(list[0] ?? 0)} ${ordList(list)} szemet újra kell fotózni`),
-      lid: 'Az írisz gyűrűjében még szemhéj, szempilla vagy bőr van.',
-      reflection: 'Az íriszben még maradt egy tükröződés.',
-      reseal: (list: number[], total: number) => (total === 1
-        ? 'Ezt az előnézetet nem tudtuk ellenőrizni. A folytatáshoz fotózd újra a szemet.'
-        : `${Az(list[0] ?? 0)} ${ordList(list)} szem előnézetét nem tudtuk ellenőrizni. A folytatáshoz fotózd újra ${list.length === 1 ? 'azt' : 'azokat'}.`),
-      held: 'A tisztább íriszt igénylő stílusok addig szürkék.',
-      tips: {
-        open: 'Nyisd tágra a szemedet, nézz egyenesen a lencsébe, és egy ujjheggyel óvatosan emeld meg a felső szemhéjat.',
-        light: 'Használj nappali fényt egy ablakból, oldalról. Se vaku, se lámpa.',
-        grey: 'A szürke írisznek lágy a széle, és egyenletes nappali fényben mutat a legjobban: állj közel egy ablakhoz úgy, hogy az ablak oldalt legyen, és tartsd tágra nyitva a szemedet.',
-      },
+      calm: 'A stílusok megjelenítéséhez még egy fotóra van szükségünk.',
       manual: 'Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {link}. Mantas megnézi őket.',
-      noPreview: 'Ezekről a szemekről még nem tudunk előnézetet mutatni. Lent látod, mit érdemes módosítani.',
-      pupil: 'A pupilla ezen a fotón nem tűnik kereknek, ezek a stílusok viszont kerek pupillákhoz készültek.',
       noStyles: 'Ennyi szemhez még egyetlen stílust sem tudunk mutatni. Távolíts el egy szemet, vagy írj nekünk.',
     },
     stack: 'A két íriszed színe erősen eltér, ezért az egyik a másik előtt van.',

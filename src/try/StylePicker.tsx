@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RefreshCcw, Trash2 } from 'lucide-react';
+import { RefreshCcw, Trash2 } from 'lucide-react';
 import { T } from './copy';
 import { NO_SAVE } from './noSave';
 import type { Art } from './multi';
@@ -7,7 +7,7 @@ import { CONTACT_EMAIL } from '../landing/config';
 import { styleName } from '../shared/styles';
 import {
   type Catalog, type Changed, type RetakeView, type ServerTile,
-  groupAllSoon, groupOf, isSoon, looksOf, lookName, tileState,
+  groupAllSoon, groupOf, heldTile, isSoon, looksOf, lookName, retakeEyes, tileState,
 } from './picker';
 
 /** Everything the picker draws, as TryApp (src/try/usePreviews.ts and picker.ts) worked it out. The page owns no list of styles: `catalog` is what the
@@ -57,14 +57,18 @@ export function changedLine(c: Changed, n: number, name: (id: string) => string)
 }
 
 /** The group's heading and line (the landing page's words), the line that says once that a group opens soon, the line that says why the style on screen
- *  is not the chosen one, and the tiles: the recommended one first and framed, every other in the server's order. */
+ *  is not the chosen one, and the tiles these eyes can take: the recommended one first and framed, every other in the server's order. A tile held back for
+ *  these eyes is left out (heldTile). Whether the whole group opens soon is a fact of the group, not of these eyes: it is read from every tile of the list, so
+ *  a group with a style that can be ordered after a retake never says that its ordering opens soon (its Soon tiles carry the chip, and the buy card asks for the
+ *  retake). */
 export const StylePicker: React.FC<{ model: PickerModel }> = ({ model: m }) => {
   const group = groupOf(m.n);
-  const tiles = m.catalog?.tiles ?? [];
-  const allSoon = groupAllSoon(tiles);
-  // a style that is not in this list (the customer chose it for another number of eyes) is named by the registry
-  const nameOf = (id: string) => tiles.find((t) => t.id === id)?.name ?? styleName(id);
+  const all = m.catalog?.tiles ?? [];
   const eyes = m.catalog?.eyes ?? [];
+  const tiles = all.filter((t) => !heldTile(t, eyes));
+  const allSoon = groupAllSoon(all);
+  // a style that is not in this list (the customer chose it for another number of eyes) is named by the registry
+  const nameOf = (id: string) => all.find((t) => t.id === id)?.name ?? styleName(id);
   return (
     <div data-testid="style-picker" data-group={group}>
       <div className="mt-4">
@@ -90,43 +94,34 @@ export const StylePicker: React.FC<{ model: PickerModel }> = ({ model: m }) => {
             </li>
           ))}
         </ul>
-      ) : (
+      ) : tiles.length ? (
         <ul aria-label={T.picker.listLabel} data-testid="tile-list" className="mt-2 grid gap-2 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
           {tiles.map((t) => <Tile key={t.id} t={t} m={m} allSoon={allSoon} eyes={eyes} />)}
         </ul>
-      )}
+      ) : null /* every style is held back for these eyes: no empty grid (the calm line with the retake button stands where the picture would be) */}
       {m.paused && <p role="status" data-testid="tiles-paused" className="text-xs text-amber-100 mt-2 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3">{m.paused}</p>}
     </div>
   );
 };
 
+/** One tile these eyes can take (StylePicker leaves the held ones out): its picture (or the skeleton while it is made, or Try again), its name, price,
+ *  Soon chip, line and reason, and the look chips of a style that has looks. */
 const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Catalog['eyes'] }> = ({ t, m, allSoon, eyes }) => {
   const st = tileState(t, eyes);
-  const held = st.kind === 'gate' || st.kind === 'reseal' || st.kind === 'pupil';
   const selected = m.style === t.id;
   const pick = !!m.catalog && m.catalog.pick === t.id && t.available;
-  const art = held ? undefined : m.tilePicture(t);
-  const busy = !held && !art && m.tileBusy(t);
-  const failed = !held && !art && !busy && m.tileFailed(t);
+  const art = m.tilePicture(t);
+  const busy = !art && m.tileBusy(t);
+  const failed = !art && !busy && m.tileFailed(t);
   const price = m.priceOf(t);
   const looks = looksOf(t);
   const reason = pick && m.catalog?.reasonKey ? (T.picker.reasons as Record<string, string>)[m.catalog.reasonKey] : undefined;
   // the style's one line (copy picker.lines, keyed by the server's id with "_" for "."): what the look is, under its name; none where the copy has none
   const line = (T.picker.lines as Record<string, string>)[`line.${t.id.replace('.', '_')}`];
-  const label = st.kind === 'gate' ? T.picker.retakeFirst(st.eye) : st.kind === 'reseal' ? T.picker.resealFirst(st.eye) : st.kind === 'pupil' ? T.picker.pupil : '';
   const ring = selected ? 'border-[#f5c542] ring-2 ring-[#f5c542]' : pick ? 'border-[#f5c542]/60' : 'border-white/15';
-  // a tile that is held back cannot be chosen: pressing it takes the customer to the retake state, which says why
-  const press = () => {
-    if (!held) { m.onStyle(t.id); return; }
-    try {
-      const el = document.getElementById('retake-state');
-      el?.scrollIntoView({ block: 'center' });
-      el?.querySelector<HTMLElement>('h3')?.focus();
-    } catch { /* no document: nothing to show */ }
-  };
   return (
-    <li data-testid={`tile-${t.slug}`} data-state={st.kind} data-stage={t.stage} className={`fx-pick rounded-xl border overflow-hidden bg-[#0b0e17] flex flex-col ${ring} ${held ? 'opacity-75' : ''}`}>
-      <button type="button" onClick={press} aria-pressed={held ? undefined : selected} aria-disabled={held || undefined} aria-busy={busy || undefined}
+    <li data-testid={`tile-${t.slug}`} data-state={st.kind} data-stage={t.stage} className={`fx-pick rounded-xl border overflow-hidden bg-[#0b0e17] flex flex-col ${ring}`}>
+      <button type="button" onClick={() => m.onStyle(t.id)} aria-pressed={selected} aria-busy={busy || undefined}
         className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]">
         <span className="relative block w-full aspect-[4/3] bg-black overflow-hidden">
           {art && <img {...NO_SAVE} src={art.src} alt={T.picker.tileAlt(t.name)} className="absolute inset-0 w-full h-full object-contain" />}
@@ -137,9 +132,6 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
             </>
           )}
           {failed && <span className="absolute inset-0 flex items-center justify-center px-2 text-center text-[11px] text-zinc-300 bg-white/5">{T.picker.tileFailed}</span>}
-          {held && (
-            <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center bg-white/5"><AlertTriangle className="w-6 h-6 text-amber-300/80" /></span>
-          )}
           {pick && (
             <span data-testid="recommended" className="absolute top-1.5 left-1.5 rounded-full bg-[#f5c542] text-black text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">{T.picker.recommended}</span>
           )}
@@ -148,13 +140,12 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
           <span className="flex items-baseline justify-between gap-2">
             <span className="text-xs font-bold text-zinc-100 min-w-0 break-words leading-tight">{t.name}</span>
             {price && <span data-testid="tile-price" className="shrink-0 text-xs font-semibold text-[#f5c542] whitespace-nowrap">{price}</span>}
-            {!allSoon && isSoon(t) && !held && (
+            {!allSoon && isSoon(t) && (
               <span data-testid="soon" className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-amber-200 border border-amber-400/40 rounded-full px-1.5 py-px">{T.picker.soon}</span>
             )}
           </span>
           {line && <span data-testid="style-line" className="block text-[11px] text-zinc-400 mt-0.5">{line}</span>}
           {reason && <span data-testid="reason" className="block text-[11px] text-zinc-300 mt-0.5">{reason}</span>}
-          {label && <span data-testid="held-label" className="block text-[11px] font-semibold text-amber-200 mt-0.5">{label}</span>}
         </span>
       </button>
       {failed && (
@@ -165,7 +156,7 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
           </button>
         </div>
       )}
-      {looks.length > 1 && !held && (
+      {looks.length > 1 && (
         <div role="group" aria-label={T.picker.options.look} className="flex flex-wrap gap-1.5 px-2 pb-2">
           {looks.map((l) => (
             <button key={l.code} type="button" aria-pressed={selected && m.look === l.code} data-testid={`look-${l.code}`}
@@ -195,37 +186,31 @@ export const ManualRoute: React.FC<{ onManual: () => void }> = ({ onManual }) =>
   );
 };
 
-/** The retake state (INTEGRATION_SPEC 1.6.2 rule 3, 2.5): which eyes, why in plain sentences (a rule the iris fails, or a pupil that is not round), the one
- *  tip that fits, the retake buttons (and, for a pupil the styles cannot take, a button that takes the eye off the artwork), and where nothing can be
- *  bought the way to ask us. Never a dead end. `inPlace`: shown where the preview would be. */
-export const RetakePanel: React.FC<{
-  view: RetakeView; total: number; onRetake: (position: number) => void; onManual: () => void; onRemove?: (position: number) => void; inPlace?: boolean;
-}> = ({ view, total, onRetake, onManual, onRemove, inPlace }) => {
-  const all = [...new Set([...view.eyes, ...view.reseal, ...view.pupil])].sort((a, b) => a - b);
-  return (
-    <section id="retake-state" data-testid="retake-state" aria-labelledby="retake-title" className={`text-xs text-amber-50 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3 ${inPlace ? '' : 'mt-3'}`}>
-      <h3 id="retake-title" tabIndex={-1} className="font-bold text-sm text-amber-100 flex items-center gap-2 focus:outline-none"><AlertTriangle className="w-4 h-4 shrink-0 text-amber-300" /> {T.picker.retake.title(view.eyes.length ? view.eyes : view.reseal.length ? view.reseal : view.pupil, total)}</h3>
-      {view.reasons.length > 0 && view.eyes.length > 0 && view.reasons.map((r) => <p key={r} data-testid={`retake-${r}`} className="mt-1.5">{T.picker.retake[r]}</p>)}
-      {view.pupil.length > 0 && <p data-testid="retake-pupil" className="mt-1.5">{T.picker.retake.pupil}</p>}
-      {view.reseal.length > 0 && <p data-testid="retake-reseal" className="mt-1.5">{T.picker.retake.reseal(view.reseal, total)}</p>}
-      {(view.eyes.length > 0 || view.pupil.length > 0) && <p data-testid={`retake-tip-${view.tip}`} className="mt-1.5 text-amber-100">{T.picker.retake.tips[view.tip]}</p>}
-      {view.holds && <p className="mt-1.5 text-zinc-300">{T.picker.retake.held}</p>}
-      <div className="flex flex-wrap gap-2 mt-2.5">
-        {all.map((i) => (
-          <button key={i} type="button" data-testid={`retake-eye-${i}`} onClick={() => onRetake(i)}
-            className="min-h-[44px] px-3 rounded-xl border border-amber-400/50 bg-amber-500/10 text-amber-100 text-xs font-semibold flex items-center gap-1.5">
-            <RefreshCcw className="w-3.5 h-3.5" /> {total === 1 ? T.result.retakeOnly : T.result.retakeEye(i)}
-          </button>
-        ))}
-        {/* a pupil the styles cannot take is a reason to leave that eye out as well as to photograph it again (the others may still make an artwork) */}
-        {onRemove && total > 1 && view.pupil.map((i) => (
-          <button key={`rm${i}`} type="button" data-testid={`remove-eye-${i}`} onClick={() => onRemove(i)}
-            className="min-h-[44px] px-3 rounded-xl border border-white/20 bg-white/10 text-zinc-100 text-xs font-semibold flex items-center gap-1.5">
-            <Trash2 className="w-3.5 h-3.5" /> {T.result.remove(i)}
-          </button>
-        ))}
-      </div>
-      {view.deadEnd && <ManualRoute onManual={onManual} />}
-    </section>
-  );
-};
+/** The retake buttons of the eyes a retake view names (and, for a pupil the styles cannot take, a button that takes that eye off an artwork of several
+ *  eyes: the others may still make one). Used where no style can be drawn (CalmRetake) and on the buy card. */
+export const RetakeButtons: React.FC<{ view: RetakeView | null; total: number; onRetake: (position: number) => void; onRemove?: (position: number) => void }> = ({ view, total, onRetake, onRemove }) => (
+  <div className="flex flex-wrap gap-2 mt-2.5">
+    {retakeEyes(view).map((i) => (
+      <button key={i} type="button" data-testid={`retake-eye-${i}`} onClick={() => onRetake(i)}
+        className="min-h-[44px] px-3 rounded-xl border border-white/15 bg-white/5 text-zinc-100 text-sm font-semibold flex items-center gap-1.5">
+        <RefreshCcw className="w-4 h-4" /> {total === 1 ? T.result.retakeOnly : T.result.retakeEye(i)}
+      </button>
+    ))}
+    {onRemove && total > 1 && (view?.pupil ?? []).map((i) => (
+      <button key={`rm${i}`} type="button" data-testid={`remove-eye-${i}`} onClick={() => onRemove(i)}
+        className="min-h-[44px] px-3 rounded-xl border border-white/15 bg-white/5 text-zinc-300 text-sm font-semibold flex items-center gap-1.5">
+        <Trash2 className="w-4 h-4" /> {T.result.remove(i)}
+      </button>
+    ))}
+  </div>
+);
+
+/** No style at all can be drawn for these eyes (every style of the list is held back for them: a rule of the gate, a pupil shape, an unmeasured
+ *  preview): ONE calm line and the retake button, where the preview would be. No reasons, no tips, no warning sign (the owner, 2026-10-22: "we exist to
+ *  raise the iris quality, not to tell every customer what does not fit"); a style held back while others can be drawn is simply not shown. */
+export const CalmRetake: React.FC<{ view: RetakeView; total: number; onRetake: (position: number) => void; onRemove?: (position: number) => void }> = ({ view, total, onRetake, onRemove }) => (
+  <section id="retake-state" data-testid="retake-calm" className="rounded-xl border border-white/10 bg-white/5 p-4">
+    <p className="text-sm text-zinc-200">{T.picker.retake.calm}</p>
+    <RetakeButtons view={view} total={total} onRetake={onRetake} onRemove={onRemove} />
+  </section>
+);

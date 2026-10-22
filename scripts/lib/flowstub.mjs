@@ -4,7 +4,8 @@
 // can reach beyond this machine. The shapes are the ones of api/analyze.py, deglare.py, enhance.py, compose.py and order.py (read from the real answers of
 // the dev API with its models stubbed, and from the page code that parses them: src/try/shots.ts, picker.ts, composeApi.ts, src/order/api.ts).
 //
-//   POST /api/analyze     one good shot, the iris in the middle, a work ticket (api.setShot('ok') makes it a middling one: the quality step; api.setSentences(true) makes the sentences
+//   POST /api/analyze     one good shot, the iris in the middle, a work ticket (api.setShot('ok') makes it a middling one, which goes straight on as every usable shot does since
+//                         2026-10-22; api.setShot('unlocked') a circle that did not lock onto the iris edge, no ticket: the quality step; api.setSentences(true) makes the sentences
 //                         of every language marked, in the request's language and in quality.words, as api/analyze.py sends them)
 //   POST /api/deglare     the crop back, nothing changed
 //   POST /api/enhance     the restored picture (the display copy: the stub does not draw a watermark, the check says so where it matters); {redisplay: true, lang} answers the display copy
@@ -29,7 +30,7 @@ export function flowApi(root, { wait = {} } = {}) {
   const restored = file('sample_eye_blue_restored.jpg');   // the display picture of the eye and of the first style
   const second = file('sample_eye_blue_before.jpg');       // another picture, so that a second style is a different picture
   const stats = { calls: [], model: 0, enhance: [] };
-  let shot = 'good';          // 'good': the analysis goes on by itself; 'ok': it stops at the quality step (api.setShot)
+  let shot = 'good';          // 'good' and 'ok' (a middling shot): the analysis goes on by itself; 'unlocked': its circle did not lock, it stops at the quality step (api.setShot)
   let marked = false;         // api.setSentences: every sentence of the analysis carries its language, in the reply and in quality.words
   const mark = (l) => ({ message: `Message [${l}]`, tips: [`Tip: move closer [${l}]`], lamp_message: null });
   let eyeKind = 'ok';      // 'ok': the eye passes every rule; 'lid': it fails the lid rule (api.setEye)
@@ -75,10 +76,11 @@ export function flowApi(root, { wait = {} } = {}) {
       const b = req.method === 'POST' ? await body(req) : {};
       if (url.pathname === '/api/analyze') {
         await sleep(w.analyze);
+        const unlocked = shot === 'unlocked';
         json({
-          ok: true, ticket: 'tk-i3', pupil_r: 0.2, fibre: 3, iris: { cx: 0.5, cy: 0.5, r: 0.3 }, pad: 1.12, glare_boxes_crop: [],
+          ok: true, ticket: unlocked ? null : 'tk-i3', pupil_r: 0.2, fibre: 3, iris: { cx: 0.5, cy: 0.5, r: 0.3 }, pad: 1.12, glare_boxes_crop: [],
           quality: {
-            diameter_px: 600, sharpness: 5, sharpness_label: 'sharp', occlusion_pct: 0, glare: false, locked: true, verdict: shot, message: 'Great photo', tips: [], detail: shot === 'good' ? 90 : 55,
+            diameter_px: 600, sharpness: 5, sharpness_label: 'sharp', occlusion_pct: 0, glare: false, locked: !unlocked, verdict: unlocked ? 'weak' : shot, message: 'Great photo', tips: [], detail: shot === 'good' ? 90 : 55,
             ...(marked ? { ...mark(['de', 'lt', 'hu'].includes(b.lang) ? b.lang : 'en'), words: { en: mark('en'), de: mark('de'), lt: mark('lt'), hu: mark('hu') } } : {}),
           },
           targets: { detail_good: 70, detail_ok: 40, min_diameter_px: 280, good_diameter_px: 420, max_shots: 5 },
@@ -124,8 +126,8 @@ export function flowApi(root, { wait = {} } = {}) {
     },
     /** the eye the stand-in judges: 'ok' (it passes every rule) or 'lid' (it fails the lid rule: the hard tiles are held back) */
     setEye(kind) { eyeKind = kind === 'lid' ? 'lid' : 'ok'; },
-    /** the shot the stand-in judges: 'good' (the flow goes on by itself) or 'ok' (it stops at the quality step) */
-    setShot(kind) { shot = kind === 'ok' ? 'ok' : 'good'; },
+    /** the shot the stand-in judges: 'good' or 'ok' (the flow goes on by itself: every usable shot does), or 'unlocked' (its circle did not lock: it stops at the quality step) */
+    setShot(kind) { shot = kind === 'ok' || kind === 'unlocked' ? kind : 'good'; },
     /** sentences marked with their language (see the top), for the check of the language switch */
     setSentences(on) { marked = !!on; },
     /** the answers' delays (ms), for a switch while a step runs */

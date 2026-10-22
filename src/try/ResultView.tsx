@@ -9,10 +9,10 @@ import { AI_MATERIAL_PUBLISHED } from '../shared/aiMaterial';
 import { T, layoutLabel } from './copy';
 import { NO_SAVE, NO_SAVE_BOX } from './noSave';
 import { type Art, type Eye, MAX_EYES, canvasSize, pupilWide } from './multi';
-import { ManualRoute, RetakePanel, StylePicker, type PickerModel } from './StylePicker';
+import { CalmRetake, ManualRoute, StylePicker, type PickerModel } from './StylePicker';
 import { Words, type WordsModel } from './Words';
 import { FeedbackBox } from './Feedback';
-import { type Opts, lookName, soonChoice } from './picker';
+import { type Opts, lookName, retakeEyes, soonChoice } from './picker';
 import { CROP_MAX_PX } from './crop';
 
 interface Props {
@@ -68,11 +68,12 @@ export const ResultView: React.FC<Props> = (p) => {
   const artTitle = allSample ? T.result.sampleArtwork : T.result.artwork;
   const artAlt = samples ? `${artTitle} (${T.result.sampleBadge})` : artTitle;
   const retakeLabel = eye.sample ? T.result.replaceSample : n > 1 ? T.result.retakeEye(idx + 1) : T.result.retakeOnly;
-  // the eyes the retake state names (a rule they fail holds a tile back, or warns on the style on screen): a badge on the chip
-  const flagged = new Set<number>([...(p.picker.retake?.eyes ?? []), ...(p.picker.retake?.reseal ?? []), ...(p.picker.retake?.pupil ?? []), ...p.picker.advisory]);
   // the tile list is here and no style can be drawn from it: the frame never waits for a picture that will not come, whatever the retake state is (it is
-  // null for a list with no style at all, and a pupil or a gate has its own sentences)
+  // null for a list with no style at all; held tiles are not shown, so this and the buy card's retake line are the only places that ask for a retake)
   const noPreview = !!p.picker.catalog && !p.picker.style;
+  // the eyes marked on their chips: the ones a style on screen warns about (advisory) and, when no style can be drawn, the ones to photograph again. An eye
+  // that only holds back a style which is not shown is not marked (the owner, 2026-10-22: not telling every customer what does not fit)
+  const flagged = new Set<number>([...(noPreview ? retakeEyes(p.picker.retake) : []), ...p.picker.advisory]);
 
   // The before/after leads every eye (the owner, 2026-10-20: "the before and after that slides is the most important thing"). The Reveal (src/reveal, WP9: the
   // photo left of a line through the pupil, the restored iris right of it) when the server gives its numbers and passes them; every other eye gets the plain
@@ -195,10 +196,8 @@ export const ResultView: React.FC<Props> = (p) => {
       {noPreview ? (
         <div data-testid="no-preview">
           {p.picker.retake ? (
-            <>
-              <p className="text-sm text-zinc-200 mb-2">{T.picker.retake.noPreview}</p>
-              <RetakePanel view={p.picker.retake} total={n} onRetake={p.picker.onRetakeEye} onRemove={p.picker.onRemoveEye} onManual={p.picker.onManual} inPlace />
-            </>
+            // every style of the list is held back for these eyes: one calm line and the retake button (no reasons, no tips, no warning)
+            <CalmRetake view={p.picker.retake} total={n} onRetake={p.picker.onRetakeEye} onRemove={p.picker.onRemoveEye} />
           ) : (
             // no style for this many eyes at all: say so, and the way to ask us (the eye's own retake and remove buttons are under the picture)
             <div data-testid="no-styles" className="text-xs text-amber-50 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3">
@@ -234,16 +233,17 @@ export const ResultView: React.FC<Props> = (p) => {
       )}
       {fallback === 'overlap_fallback' && <p data-testid="wide-pupil" className="text-[11px] text-sky-100 mt-2">{T.picker.widePupil}</p>}
       {fallback === 'stack_contrast' && <p data-testid="stack-note" className="text-[11px] text-sky-100 mt-2">{T.picker.stack}</p>}
+      {/* the style on screen draws an eye that failed its rule: one calm line, no warning sign (the eye's own retake button is under its before/after) */}
       {p.picker.advisory.length > 0 && (
-        <p role="status" data-testid="advisory-note" className="text-xs text-amber-100 mt-2 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-px text-amber-300" /> <span>{T.picker.advisory(p.picker.advisory, n)}</span>
+        <p role="status" data-testid="advisory-note" className="text-[11px] text-zinc-300 mt-2 flex gap-1.5">
+          <Info aria-hidden="true" className="w-3.5 h-3.5 shrink-0 mt-px text-zinc-400" /> <span>{T.picker.advisory(p.picker.advisory, n)}</span>
         </p>
       )}
       {samples > 0 && <p className="text-[11px] text-amber-200/90 mt-2">{allSample ? T.result.sampleArtworkNote : T.result.mixedArtworkNote}</p>}
 
       <p className="text-[10px] uppercase tracking-widest text-zinc-300 mt-4">{T.result.style}</p>
+      {/* the styles these eyes can take; a style held back for them is not shown, and nothing under the list asks for a retake (the owner, 2026-10-22) */}
       <StylePicker model={p.picker} />
-      {p.picker.retake && !noPreview && <RetakePanel view={p.picker.retake} total={n} onRetake={p.picker.onRetakeEye} onRemove={p.picker.onRemoveEye} onManual={p.picker.onManual} />}
 
       {p.layoutOptions.length > 1 && (
         <div className="mt-3">

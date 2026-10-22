@@ -25,7 +25,7 @@ export const SHIFT_MAX = 0.06;                 // iris radii: a larger registrat
 export const PUPIL_MAX = 0.30;                 // iris radii: |pupil offset| the frame accepts
 export const CONTEXT_MARGIN = 0.05;            // of the window: the context crop's margin
 export const CONTEXT_MAX_SIDE = 1600;          // longest side of the context crop the page uploads with a paid order
-export const SNAP = 3;                         // percent: the cut snaps to the pupil cut within +-3 %
+export const SNAP = 3;                         // percent: a double tap counts the cut as on the pupil cut within +-3 % (a drag never snaps: dragCut)
 export const PUPIL_CUT = 50;                   // percent
 export const CARD_ASPECT: Aspect = [4, 5];
 
@@ -208,19 +208,14 @@ export function maskCss(e0: number, e1: number): string {
   return `radial-gradient(closest-side, ${s.join(', ')})`;
 }
 
-// ---- the cut: snapping and keys (percent of the frame width, 0 = all restored, 100 = all photo)
+// ---- the cut: dragging and keys (percent of the frame width, 0 = all restored, 100 = all photo)
 
 export const clampCut = (p: number): number => Math.max(0, Math.min(100, p));
 
-/** Snap to the pupil cut within +-SNAP percent. */
-export function snapCut(p: number, target: number = PUPIL_CUT, tol: number = SNAP): number {
-  const c = clampCut(p);
-  return Math.abs(c - target) <= tol ? target : c;
-}
-
-/** True when moving from `from` to `to` enters the snap zone (the page ticks the haptic once). */
-export const entersSnap = (from: number, to: number, tol: number = SNAP): boolean =>
-  Math.abs(from - PUPIL_CUT) > tol && Math.abs(to - PUPIL_CUT) <= tol;
+/** Where a drag puts the cut: exactly under the finger, clamped to the frame. No snap to the pupil cut and no vibration on the way past it (the
+ *  owner, 2026-10-22, on his own phone: "maybe the slider should not vibrate and snap in the middle when sliding?"); it used to jump to 50 within
+ *  +-3 percent and tick the phone's vibration motor as it entered that zone. */
+export const dragCut = (p: number): number => clampCut(p);
 
 /** The key's effect on the cut, null for a key the slider ignores: arrows +-2, Home 0, End 100, Enter snaps to the pupil cut. */
 export function keyCut(pos: number, key: string): number | null {

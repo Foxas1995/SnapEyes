@@ -90,8 +90,10 @@ export async function run(): Promise<R> {
     check(`landing pricing (${lang}): the art row's note is the token {styles}, the several-eyes row holds {max}, the soon sentence exists, no written list and no old class label`,
       p.rows.art.b.startsWith('{styles}') && p.rows.more.b.includes('{max}') && p.severalSoon.length > 20
       && !/Studio Black|Couple Duo|Celestial|Deep Nebula/.test(JSON.stringify(p)) && !DASH.test(JSON.stringify(p)), JSON.stringify(p.rows).slice(0, 300));
+    // 2026-10-22: the notice is the ONE soon sentence above the closed price list ("Ordering opens soon.", 20 characters in English), so it is held to being a sentence
+    // of its own (12 characters or more), no longer to the two sentences it had (more than 20)
     check(`landing pricing (${lang}): the several-eyes row prints the maximum it is given ({max}), no written number of eyes, and the notice promises no price (no "planned prices" sentence)`,
-      !/\d/.test(p.rows.more.b.replace(/\{[a-zA-Z0-9]+\}/g, '')) && p.notice.length > 20 && !/planned|geplant|planuoj|tervezett/i.test(p.notice), `${p.rows.more.b} | ${p.notice}`);
+      !/\d/.test(p.rows.more.b.replace(/\{[a-zA-Z0-9]+\}/g, '')) && p.notice.length >= 12 && !/\d/.test(p.notice) && !/planned|geplant|planuoj|tervezett/i.test(p.notice), `${p.rows.more.b} | ${p.notice}`);
     const all = JSON.stringify(LANDING[lang]);
     check(`the landing page (${lang}) states no number of styles ("six styles", "6 styles") and names no style it cannot sell in its head lines`,
       !/(\b(six|sechs|šeši|hat)\b|\b6\b)\s+(styles?|stile[ns]?|stili\w*|stíl\w*)/i.test(all) && !/in six|in allen sechs|visais šešiais|mind a hat/i.test(all), '');

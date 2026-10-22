@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NO_SAVE, NO_SAVE_BOX, NO_SAVE_IMG_STYLE } from '../try/noSave';
 import { usePrefersReducedMotion } from './usePrefersReducedMotion';
-import { PAD, PUPIL_CUT, entersSnap, keyCut, maskCss, snapCut, sweepFor, toggleCut, valueText, type Geometry } from './revealMath';
+import { PAD, PUPIL_CUT, dragCut, keyCut, maskCss, sweepFor, toggleCut, valueText, type Geometry } from './revealMath';
 
 /** The restored iris on the frame circle: a square wrapper exactly the disc's bounding square (side 2 R_f), the restored image
  *  (the clean restoration on the landing, the watermarked display copy on /try: a square in which the iris radius is 1 / (2 PAD)
@@ -34,7 +34,8 @@ interface Props {
 }
 
 /** The Reveal: left of a hard cut the customer's own photo, right of it the restored iris on black, registered, the cut through
- *  the pupil centre. Arrival sweep 100 % -> 50 % (900 ms after 400 ms), drag with snapping, keys, double tap; no stroke, no glow. */
+ *  the pupil centre. Arrival sweep 100 % -> 50 % (900 ms after 400 ms), a drag that follows the finger freely (no snap and no vibration at the
+ *  middle: the owner, 2026-10-22), keys, double tap; no stroke, no glow. */
 export const Reveal: React.FC<Props> = ({ photo, restored, geometry, labels, ready = true, reducedMotion, onCut, className = '' }) => {
   const rm = usePrefersReducedMotion(reducedMotion);
   const [pos, setPos] = useState<number>(() => (rm ? PUPIL_CUT : 100));
@@ -48,7 +49,6 @@ export const Reveal: React.FC<Props> = ({ photo, restored, geometry, labels, rea
   useEffect(() => { posRef.current = pos; }, [pos]);
 
   const move = (p: number) => {
-    if (entersSnap(posRef.current, p)) { try { navigator.vibrate?.(10); } catch { /* no haptics */ } }
     posRef.current = p;
     setPos(p);
     onCut?.(p);
@@ -75,7 +75,7 @@ export const Reveal: React.FC<Props> = ({ photo, restored, geometry, labels, rea
     const el = box.current;
     if (!el) return posRef.current;
     const r = el.getBoundingClientRect();
-    return snapCut(((clientX - r.left) / r.width) * 100);
+    return dragCut(((clientX - r.left) / r.width) * 100);
   };
 
   const onDown = (e: React.PointerEvent<HTMLDivElement>) => {

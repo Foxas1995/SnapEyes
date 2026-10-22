@@ -27,7 +27,8 @@ export async function run(): Promise<Row[]> {
   // the failing eye is still handled as before: the file shipped before is exactly such an eye (it fails the fill rule only), so the card and the grey tile are what a visitor's
   // own eye with that defect gets
   const rv = view(OLD);
-  check('an eye that fails the fill rule (the first sample file) still raises the retake card for the eye and holds the Universe tile back, and no other tile (the gate is unchanged)',
+  // 2026-10-22: the page no longer shows the retake card or the held tile for such an eye (the tile is left out, src/try/picker.ts heldTile); the state below is what it reads
+  check('an eye that fails the fill rule (the first sample file) still has a retake state for the eye and holds the Universe tile back, and no other tile (the gate is unchanged)',
     rv !== null && rv.eyes.join() === '1' && rv.holds === true && rv.why === 'fill_hard_edges' && rv.reasons.join() === 'lid'
     && OLD.tiles.filter((t) => !t.available).map((t) => t.id).join() === 'solo.universe' && tileState(OLD.tiles.find((t) => t.id === 'solo.universe')!, OLD.eyes).kind === 'gate', JSON.stringify([rv, states(OLD)]));
   return out;

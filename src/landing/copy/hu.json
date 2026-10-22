@@ -484,7 +484,7 @@
   "pricing": {
     "eyebrow": "Árak",
     "title": "Átlátható árak egy digitális fájlért",
-    "notice": "A rendelés hamarosan indul. Az ingyenes előnézet már most elérhető.",
+    "notice": "A rendelés hamarosan indul.",
     "noticeOpen": "Kezdd az ingyenes előnézettel: csak akkor rendelsz, ha tetszik az eredmény.",
     "severalSoon": "Az előnézet már most ingyenes. Ennek a csoportnak a rendelése hamarosan indul.",
     "currencyLabel": "Árak pénzneme",

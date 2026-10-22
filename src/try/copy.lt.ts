@@ -33,7 +33,6 @@ export const lt: TryCopy = {
   dec1: (v: number) => dec1Lt(v),
 
   header: {
-    tag: 'Private Atelier · peržiūra',
     study: 'Šeimos testas',
   },
 
@@ -101,11 +100,9 @@ export const lt: TryCopy = {
 
   quality: {
     retake: 'Fotografuoti iš naujo',
-    continueAnyway: 'Vis tiek tęsti',
     notCentred: 'Šios nuotraukos centre nėra rainelės, todėl jos atkurti negalime. Nufotografuokite iš naujo taip, kad viena akis užpildytų kadrą.',
     blocks: {
       too_blurry: {
-        badge: 'Per neryški',
         title: 'Nuotrauka per neryški, kad atkurtume Jūsų rainelę',
         reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl šios nuotraukos nenaudojame.',
         error: 'Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
@@ -114,7 +111,6 @@ export const lt: TryCopy = {
         steps: [LIGHT, CAMERA, FOCUS, STEADY],
       },
       too_dark: {
-        badge: 'Per tamsi',
         title: 'Per tamsu, kad būtų matomas Jūsų rainelės raštas',
         reason: 'Jūsų rainelė tamsi, o šviesos buvo per mažai, kad būtų matomas jos raštas, todėl šios nuotraukos nenaudojame.',
         error: 'Ši nuotrauka per tamsi, kad būtų matomas Jūsų rainelės raštas. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
@@ -123,7 +119,6 @@ export const lt: TryCopy = {
         steps: [DARK_LIGHT, CAMERA, FOCUS, STEADY],
       },
       pupil_too_large: {
-        badge: 'Per platus vyzdys',
         title: 'Vyzdys per platus, kad atkurtume Jūsų rainelę',
         reason: 'Šioje nuotraukoje Jūsų vyzdys taip išsiplėtęs, kad aplink jį matyti per mažai rainelės, todėl šios nuotraukos nenaudojame.',
         error: 'Šioje nuotraukoje Jūsų vyzdys per platus, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
@@ -137,7 +132,6 @@ export const lt: TryCopy = {
         ],
       },
       too_small: {
-        badge: 'Per maža',
         title: 'Šioje nuotraukoje Jūsų rainelė per maža',
         reason: 'Šioje nuotraukoje Jūsų rainelė tokia maža, kad matyti per mažai jos rašto, todėl nuotraukos nenaudojame.',
         error: 'Šioje nuotraukoje Jūsų rainelė per maža, kad ją atkurtume. Nufotografuokite iš naujo iš arčiau pagal toliau pateiktus žingsnius.',
@@ -153,7 +147,6 @@ export const lt: TryCopy = {
       // a lid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would have to paint iris over it. The words
       // of the capture guide's open-eye step (stepsOpen, stepsOpenMore) and of api/_lib/analyze_lt.py TEXT_LT["eyelid"]
       eyelid: {
-        badge: 'Vokas dengia rainelę',
         title: 'Vokas dengia dalį Jūsų rainelės',
         reason: 'Šioje nuotraukoje dalį Jūsų rainelės dengia vokas arba blakstienos, todėl šios nuotraukos nenaudojame.',
         error: 'Šioje nuotraukoje vokas dengia dalį Jūsų rainelės. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
@@ -169,7 +162,6 @@ export const lt: TryCopy = {
     } satisfies Record<BlockReason, BlockCopy>,
     // a reason this page does not know yet: neutral on purpose, it names no cause the server did not name
     blockedOther: {
-      badge: 'Per mažai detalių',
       title: 'Per mažai detalių, kad atkurtume Jūsų rainelę',
       reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl šios nuotraukos nenaudojame.',
       error: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės, kad ją atkurtume. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
@@ -182,15 +174,7 @@ export const lt: TryCopy = {
     shotUnusable: 'Šio kadro panaudoti negalima. Padarykite kitą pagal aukščiau pateiktus patarimus.',
     shotsUnusable: 'Kol kas nė vieno iš šių kadrų panaudoti negalima. Padarykite kitą pagal aukščiau pateiktus patarimus.',
     fullUnusable: (max: number) => `Nė vieno iš šių ${max} ${kadruWord(max)} panaudoti negalima. Padarykite dar vieną ir pradėkite naują seriją.`,
-    verdicts: { good: 'Puiki nuotrauka', ok: 'Tinkama nuotrauka', weak: 'Silpna nuotrauka' },
     detectedIris: 'Rasta rainelė',
-    detail: 'Detalumas',
-    aimFor: (d: number) => `Siekite ${d}+`,
-    fibresResolved: 'Matomos skaidulos',
-    // "geriausią", not "ryškiausią": the verdict ranks first, so a photo with a reflection can be sharper and still lose
-    picked: (of: number, used: number) => `Palyginome ${nuotraukasAcc(of)} ir panaudojome geriausią (nuotrauka ${used}).`,
-    pickedRatio: (ratio: string) => ` Joje ${ratio} karto daugiau skaidulų detalių nei neryškiausioje.`,
-    tryRetake: 'Fotografuoti iš naujo',
     pupilNote: 'Atspindys vyzdyje netrukdo: vyzdį atkuriame kaip švarią tamsą.',
     lampFallback: 'Lempos šviesa nuspalvina Jūsų akies baltymą, todėl spalvos gali atrodyti šiltesnės, nei yra iš tikrųjų.',
     closer: 'Fotografuokite iš arčiau arba priartinkite vaizdą, kad rainelė užpildytų didesnę kadro dalį.',
@@ -199,7 +183,6 @@ export const lt: TryCopy = {
   // the camera shot collector
   collector: {
     header: (n: number, max: number) => `Kadras ${n} iš ${max}`,
-    headerDetail: (d: number) => ` · Detalumas ${d}`,
     shotAlt: (n: number) => `Kadras ${n}`,
     // best is printed in the nominative after a colon or as a subject ("Kol kas geriausias: kadras 2")
     bestLabel: (k: number, d?: number) => `kadras ${k}${d !== undefined ? ` (detalumas ${d})` : ''}`,
@@ -305,8 +288,8 @@ export const lt: TryCopy = {
     countSoon: (n: number) => `Užsakymus kūriniams iš ${n} ${akiuWord(n)} pradėsime priimti netrukus.`,
     soonBuy: 'Šis stilius netrukus bus prieinamas. Pasirinkite kitą, jei norite užsisakyti dabar.',
     retakeBuy: (total: number) => (total === 1
-      ? 'Su šia nuotrauka kol kas nieko užsisakyti negalima. Norėdami užsisakyti, nufotografuokite akį iš naujo (žr. aukščiau).'
-      : 'Su šiomis nuotraukomis kol kas nieko užsisakyti negalima. Norėdami užsisakyti, nufotografuokite aukščiau nurodytas akis iš naujo.'),
+      ? 'Su šia nuotrauka kol kas nieko užsisakyti negalima. Norėdami užsisakyti, nufotografuokite akį iš naujo.'
+      : 'Su šiomis nuotraukomis kol kas nieko užsisakyti negalima. Norėdami užsisakyti, nufotografuokite toliau nurodytas akis iš naujo.'),
     soonNote: 'Šis stilius netrukus bus prieinamas.',
     soonLookBuy: (look: string) => `Variantas ${look} netrukus bus prieinamas. Pasirinkite kitą variantą arba stilių, jei norite užsisakyti dabar.`,
     soonLookNote: (look: string) => `Variantas ${look} netrukus bus prieinamas.`,
@@ -338,9 +321,6 @@ export const lt: TryCopy = {
       'line.solo_halo': 'Jūsų rainelė švyti savo pačios spalvos šviesoje.',
       'line.solo_aurora': 'Šiaurės pašvaistės užuolaidos aplink Jūsų rainelę.',
     },
-    retakeFirst: (i: number) => `Pirmiausia nufotografuokite akį ${i} iš naujo`,
-    resealFirst: (i: number) => `Sukurkite akies ${i} peržiūrą iš naujo`,
-    pupil: 'Netinka šiai vyzdžio formai',
     tileAlt: (name: string) => `${name} Jūsų akims: sumažinta peržiūra su vandens ženklu`,
     tileMaking: (name: string) => `${name}: peržiūra kuriama`,
     tileFailed: 'Peržiūra nesukurta',
@@ -356,21 +336,8 @@ export const lt: TryCopy = {
       ? 'Jūsų rainelės žiede dar yra voko ar blakstienų. Nufotografuokite iš naujo, kad rezultatas būtų švaresnis.'
       : `${list.length === 1 ? `Akis ${list[0]}` : `Akys ${andList(list, 'ir')}`}: žiede dar yra voko ar blakstienų. Nufotografuokite iš naujo, kad rezultatas būtų švaresnis.`),
     retake: {
-      title: (list: number[], total: number) => (total === 1 ? 'Jūsų akį reikia nufotografuoti iš naujo' : list.length === 1 ? `Akį ${list[0]} reikia nufotografuoti iš naujo` : `Akis ${andList(list, 'ir')} reikia nufotografuoti iš naujo`),
-      lid: 'Rainelės žiede dar yra voko, blakstienų arba odos.',
-      reflection: 'Rainelėje dar liko atspindys.',
-      reseal: (list: number[], total: number) => (total === 1
-        ? 'Šios peržiūros patikrinti nepavyko. Norėdami tęsti, nufotografuokite akį iš naujo.'
-        : `${list.length === 1 ? `Akies ${list[0]} peržiūros` : `Akių ${andList(list, 'ir')} peržiūrų`} patikrinti nepavyko. Norėdami tęsti, nufotografuokite ${list.length === 1 ? 'ją' : 'jas'} iš naujo.`),
-      held: 'Stiliai, kuriems reikia švaresnės rainelės, kol kas pilki.',
-      tips: {
-        open: 'Plačiai atmerkite akį, žiūrėkite tiesiai į objektyvą ir švelniai piršto galiuku pakelkite viršutinį voką.',
-        light: 'Naudokite dienos šviesą pro langą, iš šono. Ne blykstę ir ne lempą.',
-        grey: 'Pilka rainelė turi minkštą kraštą ir geriausiai atrodo vienodoje dienos šviesoje: atsistokite arti lango, kad langas būtų iš šono, ir laikykite akį plačiai atmerktą.',
-      },
+      calm: 'Kad parodytume stilius, reikia dar vienos nuotraukos.',
       manual: 'Vis dar nepavyksta? Atsiųskite geriausias savo nuotraukas adresu {link}, ir Mantas jas peržiūrės.',
-      noPreview: 'Šių akių peržiūros kol kas parodyti negalime. Žemiau pasakyta, ką pakeisti.',
-      pupil: 'Šioje nuotraukoje vyzdys neatrodo apvalus, o šie stiliai skirti apvaliems vyzdžiams.',
       noStyles: 'Šiam akių skaičiui kol kas negalime parodyti nė vieno stiliaus. Pašalinkite akį arba parašykite mums.',
     },
     stack: 'Jūsų dviejų rainelių spalvos labai skiriasi, todėl viena yra priešakyje, o kita už jos.',

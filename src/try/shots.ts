@@ -117,12 +117,6 @@ export function blockCode(a?: Analysis | null): string {
   return typeof r === 'string' && /^[a-z0-9][a-z0-9_.-]{0,39}$/.test(r) ? r : 'blocked';
 }
 
-/** The Detail to SHOW for a shot: none for a blocked one. Detail's fibre band also reads sensor grain, so a
- *  grainy haze with no iris in it can read 23 while a usable soft shot reads 16; printed next to "Too blurry" it
- *  would tell the customer the opposite of the verdict. Ranking still uses detailOf (a blocked shot already
- *  ranks below every usable one). */
-export const shownDetail = (a?: Analysis | null): number | undefined => (blockedShot(a) ? undefined : detailOf(a));
-
 /** Positive when shot x is better than shot y. Compared in this order, each step only breaking ties of the
  *  one before:
  *  1. usable: a crop that never locked onto the iris edge loses, its "detail" may be eyelash or skin texture,
@@ -147,10 +141,13 @@ export function compareShots(x: Analysis, y: Analysis): number {
   return 0;
 }
 
-/** A good shot goes straight to the studio, unless lamp light tinted it: then the customer sees the warning
- *  and decides, instead of learning about it from a yellow artwork. Always asked of the shot that will
- *  actually be processed, never of the latest one. Never a shot that is not usable. */
-export const autoContinue = (a: Analysis): boolean => usable(a) && a.quality?.verdict === 'good' && !a.quality?.lamp_cast;
+/** Every shot the studio can restore goes straight to it (the owner, 2026-10-22: "we exist to RAISE the iris quality, not to tell every customer
+ *  what does not fit"): its verdict, its Detail and a lamp colour no longer stop it on a screen of its own (the lamp gets one calm line while
+ *  the iris is restored: calmNote). What stops is only what the engine cannot restore: a circle that did not lock onto the iris edge, or a shot
+ *  it blocked (too blurry, too dark, a pupil or an eyelid that leaves too little iris, an iris too small), the two that get no work ticket.
+ *  Always asked of the shot that will actually be processed, never of the latest one. The numbers stay in the answer: they rank several
+ *  shots (compareShots) and the server logs them for the admin page. */
+export const autoContinue = (a: Analysis): boolean => usable(a);
 
 /** Index of the best shot; on a full tie the earlier shot wins. -1 for an empty list. */
 export function bestIndex(shots: Analysis[]): number {
@@ -159,27 +156,13 @@ export function bestIndex(shots: Analysis[]): number {
   return best;
 }
 
-/** The ratio for "It carries Nx the fibre detail of the softest", or null when it should not be said.
- *  The engine returns fibre_score 0.0 when glare hides every sector of the ring, so a softest shot near
- *  zero is not a measurement and would give "780x". A ratio under 1.2 says nothing; one over 10 is not
- *  believable even when it is real. */
-export function fibreRatio(p: { fibre: number; worst: number }): number | null {
-  if (!(p.worst >= 0.5)) return null;
-  const r = p.fibre / p.worst;
-  return r >= 1.2 && r <= 10 ? r : null;
-}
-
-export type Band = 'good' | 'ok' | 'low';
-/** Colour band and caption for the Detail meter. Detail sees only the fibres the glare mask left, so the
- *  verdict caps the band: a sharp shot the engine calls 'weak' (glare, size, eyelid, no lock) must not show
- *  green or "Fibres resolved" next to a message saying its fibres will be rebuilt. */
-export function meterBand(d: number, q: Quality | undefined, t: Targets): { band: Band; caption: string | null } {
-  const byDetail = d >= t.detail_good ? 2 : d >= t.detail_ok ? 1 : 0;
-  const cap = !q?.verdict ? 2 : q.locked === false || q.blocked ? 0 : VERDICT_RANK[q.verdict] ?? 2;
-  const band = (['low', 'ok', 'good'] as const)[Math.min(byDetail, cap)];
-  // above the target but capped: the reason is on the card (message or tip), so the meter stays quiet
-  const caption = d < t.detail_good ? T.quality.aimFor(t.detail_good) : band === 'good' ? T.quality.fibresResolved : null;
-  return { band, caption };
+/** The one calm line the restoring screen may show for the photo being restored (the owner, 2026-10-22: at most ONE short line, and only where
+ *  it really helps): the lamp's colour when lamp light tinted the photo (the restoration keeps the photo's own colours, so daylight is what makes
+ *  them truer next time), else the reassurance about a reflection on the pupil, else none. Never a reason to stop: the iris is being restored. */
+export function calmNote(q?: Quality | null): string | null {
+  if (!q) return null;
+  if (q.lamp_cast) return wordsOf(q).lamp_message || T.quality.lampFallback;
+  return q.pupil_reflection ? T.quality.pupilNote : null;
 }
 
 /** The server's sentences of a shot in the language the page speaks NOW (T.lang): the ones api/analyze.py wrote for that language (quality.words), else the three fields of the reply

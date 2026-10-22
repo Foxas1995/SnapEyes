@@ -987,7 +987,10 @@ res.defects = {
   wrongName: mut((c) => { const t = tileOf(c, 'closed', 'en', 'duo_kiss'); t.html = t.html.replace('<h3>Kiss Collision</h3>', '<h3>Kiss</h3>'); }),
   otherRegistryName: mut((c) => { const t = tileOf(c, 'closed', 'en', 'duo_kiss'); t.html = t.html.replace('<h3>Kiss Collision</h3>', '<h3>Splash</h3>'); }),
   stateAttr: mut((c) => { const t = tileOf(c, 'closed', 'en', 'duo_kiss'); t.html = t.html.replace('data-state="soon"', 'data-state="sale"'); }),
-  tableRowPrice: mut((c) => { const t = c.scenarios[at('closed')].langs.en; t.table = t.table.replace(/(<small>[^<]*<\/small><\/div><div class="lp-pv">)<span class="lp-soon">Soon<\/span>/, '$1<span>€7</span>'); }),
+  // 2026-10-22 (the owner: the closed table is the price list, every row priced): the price in a row nothing can be bought for is planted where a row still says Soon, in an
+  // open state with one style ticked (no pair can be bought there); the closed table gets its own defect, a row that says Soon instead of its price
+  tableRowPrice: mut((c) => { const t = c.scenarios[at('one style ticked')].langs.en; t.table = t.table.replace(/(<small>[^<]*<\/small><\/div><div class="lp-pv">)<span class="lp-soon">Soon<\/span>/, '$1<span>€7</span>'); }),
+  closedRowSoon: mut((c) => { const t = c.scenarios[at('closed')].langs.en; t.table = t.table.replace(/(<b>Two eyes<\/b><small>[^<]*<\/small><\/div><div class="lp-pv">)[\s\S]*?(<\/div><\/div>)/, '$1<span class="lp-soon">Soon</span>$2'); }),
   tableNamesSoonStyle: mut((c) => { const t = c.scenarios[at('one style ticked')].langs.en; t.table = t.table.replace('Powder Burst.', 'Powder Burst, Radiance.'); }),
   heroShown: mut((c) => { const t = c.scenarios[at('closed')].langs.en; t.hero = t.hero.replace(' inert=""', ''); }),
   openWhileClosed: mut((c) => { c.scenarios[at('closed, every live ceiling ticked')].open = true; }),
@@ -1076,8 +1079,9 @@ if gate:
     check("I2: a name that is not the registry's is refused: the old landing word (Kiss), and the name of another style of the registry (Splash) on the Kiss Collision tile",
           has(d["wrongName"]["promises"], 'is called "Kiss"', '"Kiss Collision"') and has(d["wrongName"]["promises"], 'no style name of the registry')
           and has(d["otherRegistryName"]["promises"], 'is called "Splash"') and not has(d["otherRegistryName"]["promises"], 'no style name of the registry'), d)
-    check("I2: the price table: a price in a row nothing can be bought for, a row that names a style that cannot be bought, the hero's line shown while nothing can be bought for one eye, the page treating a closed deployment as open, and a group line that does not follow the tiles are broken promises",
+    check("I2: the price table: a price in a row nothing can be bought for (ordering open), a row of the closed price list that says Soon (2026-10-22), a row that names a style that cannot be bought, the hero's line shown while nothing can be bought for one eye, the page treating a closed deployment as open, and a group line that does not follow the tiles are broken promises",
           has(d["tableRowPrice"]["promises"], "the price table row", "cannot be bought but prints a price")
+          and has(d["closedRowSoon"]["promises"], "the price table row", "says Soon", "the table is the price list")
           and has(d["tableNamesSoonStyle"]["promises"], 'names "Radiance", a style that cannot be bought')
           and has(d["heroShown"]["promises"], "no style can be bought for one eye but the hero says")
           and has(d["openWhileClosed"]["promises"], "the page treats ordering as open but the catalogue says closed")
@@ -1129,13 +1133,13 @@ if gate:
 
 # --- the deliberate defects of the gate, run for real in a throw-away copy of the tree (scripts/check_landing_gate_defects.mjs --no-build: the gate alone, with VERCEL_ENV=production). `npm run check:gate` adds the
 # real production build of each case (about 15 seconds each: not part of the suite); I2 ran it once, all 13 cases as expected (release_reports/I2-align.md); the review of I2 (M1) added
-# 14 cases for the wiring of the page and the value of a price, 27 in all (release_reports/I2-align.md, section 11).
+# 14 cases for the wiring of the page and the value of a price, 27 in all (release_reports/I2-align.md, section 11); 2026-10-22 added the closed price list that says Soon, 28 in all.
 rc, so, se = run_node(["scripts/check_landing_gate_defects.mjs", "--no-build"], timeout=900)
-check("I2: the 27 cases of the gate's defect test behave as expected with the gate alone in production mode: the honest page and a tile of a planned style that says Soon pass; each of 10 deliberate defects "
-      "(a tile that ignores the catalogue, a tile without the Soon chip, a price row that prices or names what cannot be bought, a style that is not in the registry, a name from the copy, a missing picture, a price while "
-      "ordering is closed, a wrong group line, a hero price while nothing can be bought) fails; so does each of 11 defects of the wiring of the page (the hero, the FAQ, the group line, the several-eyes card, the price "
+check("I2: the 28 cases of the gate's defect test behave as expected with the gate alone in production mode: the honest page and a tile of a planned style that says Soon pass; each of 11 deliberate defects "
+      "(a tile that ignores the catalogue, a tile without the Soon chip, a price row that prices or names what cannot be bought, the closed price list that says Soon, a style that is not in the registry, a name from the copy, a missing picture, a price "
+      "while ordering is closed, a wrong group line, a hero price while nothing can be bought) fails; so does each of 11 defects of the wiring of the page (the hero, the FAQ, the group line, the several-eyes card, the price "
       "table's sale, ordering's sale, the notice bar, the pricing notice, the steps) and each of 3 of the value of a price (the black tile and row, the Trio); the same defect is only a notice in a preview build",
-      rc == 0 and "27 of 27 cases as expected" in so and so.count("\nok ") + (1 if so.startswith("ok ") else 0) == 27, (rc, so[-900:], se[-300:]))
+      rc == 0 and "28 of 28 cases as expected" in so and so.count("\nok ") + (1 if so.startswith("ok ") else 0) == 28, (rc, so[-900:], se[-300:]))
 
 # --- I2: the pictures of the landing's tiles (the final round 2c renders of the landing team) and the pictures of the picker's tiles (public/assets/atelier, made by THIS repository's engine,
 # scripts/make_style_tiles.py) show the same designs. The seeds of the particles differ (the seed formula changed with the engine: Powder Burst, Splash, Universe and Radiance differ in their

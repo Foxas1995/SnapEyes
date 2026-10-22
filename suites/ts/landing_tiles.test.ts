@@ -137,13 +137,17 @@ export async function run(): Promise<R> {
   check('rendered: a tile for sale is marked "sale" and shows no Soon chip, a tile that cannot be bought is marked "soon", and the tile heading is the registry\'s name',
     shows(tileHtml(1, 'en', 'powder')).state === 'sale' && !shows(tileHtml(1, 'en', 'powder')).chip && shows(tileHtml(1, 'en', 'duo_kiss')).state === 'soon' && tileHtml(1, 'en', 'duo_kiss').includes('<h3>Kiss Collision</h3>')
     && tileHtml(1, 'de', 'fam_trio').includes('<h3>Family Colours</h3>') && tileHtml(1, 'lt', 'radiance').includes('<h3>Radiance</h3>') && tileHtml(1, 'hu', 'clean').includes('<h3>Clean Iris</h3>'), '');
-  check('rendered: the price table prints the art price and names the styles for sale in the state with one style ticked, and not a number in the closed state; the hero line is held back (inert) while nothing can be bought for one eye',
+  // 2026-10-22 (the owner: "why is everything soon?"): this check pinned "not a number in the closed state". The closed table is the shop's price list now: its four
+  // rows print their prices, none says Soon and none names a style (the one notice above it says that ordering opens soon); the open state is unchanged.
+  check('rendered: the price table prints the art price and names the styles for sale in the state with one style ticked; closed, it is the price list (four prices, no Soon, no style named, no "soon" line in a row); the hero line is held back (inert) while nothing can be bought for one eye',
     (() => {
       const row = (si: number) => rendered.scenarios[si].langs.en!.table;
       const hero = (si: number) => rendered.scenarios[si].langs.en!.hero;
-      return row(1).includes('Powder Burst.') && /lp-pv"><span>[^<]*\d/.test(row(1)) && !/lp-pv"><span>[^<]*\d/.test(row(0)) && !/\d/.test(row(0).replace(/class="[^"]*"/g, '').replace(/data-[a-z]+="[^"]*"/g, ''))
+      const priced = (si: number) => (row(si).match(/lp-pv"><span>[^<]*\d/g) ?? []).length;
+      return row(1).includes('Powder Burst.') && /lp-pv"><span>[^<]*\d/.test(row(1)) && priced(0) === 4 && !row(0).includes('lp-soon')
+        && !row(0).includes(en.styles.moreSoon) && !row(0).includes(en.pricing.severalSoon) && !row(0).includes('Powder Burst') && priced(2) === 4
         && /<li class="lp-price" inert/.test(hero(0)) && !/<li class="lp-price" inert/.test(hero(1)) && /<li class="lp-price" inert/.test(hero(2));
-    })(), '');
+    })(), rendered.scenarios[0].langs.en!.table.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 300));
   // what the gallery printed under each group's intro, read from the markup of the styles chapter the page itself rendered
   const lineOf = (si: number, g: string) => /<span class="lp-gline"([^>]*)>/.exec(rendered.scenarios[si].langs.en!.groups[g])?.[1].replace(/^.*data-line="(\w+)".*$/, '$1') ?? null;
   const linesOf = (si: number) => JSON.stringify({ one: lineOf(si, 'one'), two: lineOf(si, 'two'), family: lineOf(si, 'family') });

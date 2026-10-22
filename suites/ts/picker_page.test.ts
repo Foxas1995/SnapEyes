@@ -1,13 +1,17 @@
 // WP11 (I17, I24): the picker as it is printed, with the real components rendered on the server (react-dom/server): the tile list and its states (ready, Soon,
-// held back, loading), the group line, the retake state, the warning of a style that only warns, the buy card (a style that opens soon has no price and no
-// button, nothing is ticked for the customer), the words on the artwork, the layout glyphs, and the four languages: every registry reason line has its words,
-// no tile text claims anything the owner and the review ruled out. The state machine itself is suites/ts/picker_state.test.ts.
+// loading), the group line, the calm retake line where nothing can be drawn, the warning of a style that only warns, the buy card (a style that opens soon has no
+// price and no button, nothing is ticked for the customer), the words on the artwork, the layout glyphs, and the four languages: every registry reason line has its
+// words, no tile text claims anything the owner and the review ruled out. The state machine itself is suites/ts/picker_state.test.ts.
+// 2026-10-22 (the owner, on his own phone: "why does Universe not work?", a tile with a warning sign and "Retake eye 1 first"; "we exist to raise the iris quality,
+// not to tell every customer what does not fit"): a tile held back for these eyes is not shown any more, the retake card under the list is gone, and where no style at
+// all can be drawn one calm line with the retake button stands where the picture would be. The checks of the held tile, the retake card's reasons, tips and e-mail were
+// turned into checks of that: each says so where it was adapted.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { COPY, T, setCopyLang } from '../../src/try/copy';
 import { LANGS, type Lang } from '../../src/shared/lang';
 import { STYLES } from '../../src/shared/styles';
-import { StylePicker, RetakePanel, emptyPicker, type PickerModel } from '../../src/try/StylePicker';
+import { StylePicker, CalmRetake, emptyPicker, type PickerModel } from '../../src/try/StylePicker';
 import { ResultView, glyphPoints } from '../../src/try/ResultView';
 import { BuyCard } from '../../src/try/BuyCard';
 import { Words, emptyWords } from '../../src/try/Words';
@@ -43,6 +47,12 @@ export async function run(): Promise<Row[]> {
   const check = (name: string, ok: boolean, detail = '') => out.push([name, ok, detail]);
   (globalThis as unknown as { window: unknown }).window = { sessionStorage: { getItem: () => null, setItem: noop, removeItem: noop }, localStorage: { getItem: () => null, setItem: noop, removeItem: noop } };
   setCopyLang('en');
+  // the result screen's props and an eye of it (used from the first checks on)
+  const eyeObj = (id: string, extra: Partial<Eye> = {}): Eye => ({ id, before: 'data:image/jpeg;base64,B', image: 'DISPLAY', thumb: 'data:image/jpeg;base64,T', pad: 1.12, fallback: false, usedSr: false, stored: false, glarePct: 0, sample: false, colourOff: false, ...extra }) as Eye;
+  const rvProps = (eyes: Eye[], picker: PickerModel, extra: Record<string, unknown> = {}) => ({
+    eyes, selectedId: eyes[0].id, onSelect: noop, onRemove: noop, onRetake: noop, onAdd: noop, onMove: noop, onCentre: noop, art: art(), staleArt: undefined, composeError: null, onRetryCompose: noop,
+    picker, layout: null, layoutOptions: [] as string[], onLayout: noop, opts: NO_OPTS, onOpts: noop, words: emptyWords(eyes.length), onStartOver: noop, purchase: null, ...extra,
+  });
 
   // ---- one eye: the release 1 singles
   const singles = [
@@ -94,28 +104,28 @@ export async function run(): Promise<Row[]> {
   check('two eyes, nothing live: the group says "Free preview now. Ordering for this group opens soon." once and no tile has a Soon chip, no price, no Recommended',
     text(h2).includes('Free preview now. Ordering for this group opens soon.') && !has(h2, 'soon') && !has(h2, 'tile-price') && !has(h2, 'recommended') && text(h2).includes('Two of you'));
 
-  // ---- held tiles and the retake state
+  // ---- a tile held back for these eyes, and the calm line where nothing can be drawn
   const trio = [tile('grp.fam', { name: 'Family Colours', group: 'grp', gate: 'hard', available: false, why: 'gate', layouts: ['trio'], eyes: 3 })];
   const eyes3 = [eye(1), eye(2), bad(3)];
   const m3 = model(3, trio, eyes3, { tilePicture: () => undefined });
   const h3 = renderToStaticMarkup(createElement(StylePicker, { model: m3 }));
-  check('a held tile is dimmed, says "Retake eye 3 first", draws no picture and is not pressable as a choice', text(h3).includes('Retake eye 3 first') && h3.includes('data-state="gate"') && h3.includes('aria-disabled="true"') && !h3.includes('<img') && !/aria-pressed/.test(h3.slice(h3.indexOf('tile-grp-fam'))));
-  const rp = renderToStaticMarkup(createElement(RetakePanel, { view: m3.retake!, total: 3, onRetake: noop, onManual: noop }));
+  // adapted 2026-10-22: it was "a held tile is dimmed, says Retake eye 3 first": the held tile is not shown at all now
+  check('a tile held back for these eyes is not shown: no tile, no "Retake eye 3 first", no warning sign, no picture', !has(h3, 'tile-grp-fam') && !text(h3).includes('Retake eye') && !/triangle-alert|alert-triangle/.test(h3) && !h3.includes('<img'));
+  const rp = renderToStaticMarkup(createElement(CalmRetake, { view: m3.retake!, total: 3, onRetake: noop }));
   const rt = text(rp);
-  check('the retake state: which eye, why in plain words, one tip, the retake button, and (nothing can be bought) the way to ask us with the e-mail as a link',
-    rt.includes('Eye 3 needs a retake') && rt.includes('An eyelid, a lash or skin is still inside the ring of the iris.') && rt.includes('lift the upper lid gently') && has(rp, 'retake-eye-3') && has(rp, 'manual-route')
-    && rt.includes('Still stuck? Email your best photos to info@snapeyes.com and Mantas will look at them.') && /href="mailto:info@snapeyes.com"/.test(rp) && !/within|hours|days|guarantee/i.test(rt.split('Still stuck?')[1] ?? ''));
-  check('the retake state of a one-eye set that has a style to buy has no manual route (no dead end to get out of)',
-    !has(renderToStaticMarkup(createElement(RetakePanel, { view: retakeView({ tiles: [singles[0], { ...singles[1], available: false, why: 'gate' }], eyes: [bad(1)], selected: singles[0] })!, total: 1, onRetake: noop, onManual: noop })), 'manual-route'));
+  // adapted 2026-10-22: it was "the retake state: which eye, why in plain words, one tip, the retake button and the e-mail": now one calm line and the button
+  check('the calm retake: one line and the retake button of the eye it names; no reason, no tip, no warning sign, no e-mail',
+    rt.includes(COPY.en.picker.retake.calm) && has(rp, 'retake-calm') && has(rp, 'retake-eye-3') && !has(rp, 'retake-eye-1') && !has(rp, 'manual-route') && !/eyelid|lash|lift the upper lid|mailto/i.test(rp) && !/triangle-alert|alert-triangle/.test(rp));
+  // adapted 2026-10-22: it was "the retake state of a one-eye set that has a style to buy has no manual route": a set with something to draw has no retake state at all now
+  const uniHeld = { ...singles[1], available: false, why: 'gate' } as ServerTile;
+  const mUni = model(1, [singles[0], uniHeld], [eye(1, { gate: { lid: true, fill: false }, why: ['fill_rim_sector'] })], { priceOf }, 'solo.powder');
+  const hUni = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mUni)));
+  check('Universe held back for one eye (the owner\'s case of 2026-10-22): its tile is not in the grid, the other styles are, nothing asks for a retake and nothing warns',
+    has(hUni, 'tile-powder-burst') && !has(hUni, 'tile-universe') && !has(hUni, 'retake-calm') && !has(hUni, 'retake-state') && !text(hUni).includes('Retake eye') && !has(hUni, 'chip-retake-1') && !/triangle-alert|alert-triangle/.test(hUni.slice(hUni.indexOf('style-picker'))));
 
   // ---- the warning of a style that only warns, and the buy card
   const advTiles = [singles[0]];
   const mAdv = model(1, advTiles, [bad(1)], { priceOf }, 'solo.powder');
-  const eyeObj = (id: string, extra: Partial<Eye> = {}): Eye => ({ id, before: 'data:image/jpeg;base64,B', image: 'DISPLAY', thumb: 'data:image/jpeg;base64,T', pad: 1.12, fallback: false, usedSr: false, stored: false, glarePct: 0, sample: false, colourOff: false, ...extra }) as Eye;
-  const rvProps = (eyes: Eye[], picker: PickerModel, extra: Record<string, unknown> = {}) => ({
-    eyes, selectedId: eyes[0].id, onSelect: noop, onRemove: noop, onRetake: noop, onAdd: noop, onMove: noop, onCentre: noop, art: art(), staleArt: undefined, composeError: null, onRetryCompose: noop,
-    picker, layout: null, layoutOptions: [] as string[], onLayout: noop, opts: NO_OPTS, onOpts: noop, words: emptyWords(eyes.length), onStartOver: noop, purchase: null, ...extra,
-  });
   const hAdv = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mAdv)));
   check('a failing eye on an advisory style: the page still shows its preview, with the line under the picture and a Retake mark on the eye', has(hAdv, 'advisory-note') && text(hAdv).includes('An eyelid or lash is still in the ring of your iris. Retake it for a cleaner result.') && has(hAdv, 'artwork'));
   const buy = (o: Record<string, unknown> = {}) => renderToStaticMarkup(createElement(BuyCard, {
@@ -149,18 +159,22 @@ export async function run(): Promise<Row[]> {
   const soonList = [tile('solo.powder', { name: 'Powder Burst', slug: 'powder-burst', stage: 'preview' }), tile('solo.splash', { name: 'Splash', slug: 'splash', stage: 'preview' }), goldHeld, singles[2], cleanHeld];
   const mLid = model(1, soonList, failEye);
   const hLid = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mLid)));
-  const hLidBuy = buy({ state: buyState({ n: 1, tiles: soonList, selected: mLid.selected }), styleName: 'Powder Burst', advisory: [1] });
+  const hLidBuy = buy({ state: buyState({ n: 1, tiles: soonList, selected: mLid.selected }), styleName: 'Powder Burst', advisory: [1], retake: mLid.retake });
   const tLid = text(hLid + hLidBuy);
-  check('a single eye that fails the lid rule: Clean Iris and Celestial Gold are held ("Retake eye 1 first", no picture, no choice), Powder Burst, Splash and Radiance are drawn with the Soon chip, nothing is recommended and no group line says the group opens soon',
-    (hLid.match(/data-state="gate"/g) ?? []).length === 2 && (tLid.match(/Retake eye 1 first/g) ?? []).length === 2 && (hLid.match(/data-state="soon"/g) ?? []).length === 3 && (hLid.match(/data-testid="soon"/g) ?? []).length === 3
-    && !has(hLid, 'recommended') && !has(hLid, 'group-soon') && ['clean-iris', 'celestial-gold'].every((slug) => { const li = liOf(hLid, slug); return li.includes('aria-disabled="true"') && !li.includes('aria-pressed') && !li.includes('<img'); }), hLid.slice(0, 200));
-  check('... the way out is on the page: the retake state names the eye, says what is in the ring, gives the tip and one retake button, says the greyed styles wait for a cleaner iris, and (nothing can be bought) offers the e-mail',
-    has(hLid, 'retake-state') && tLid.includes('Your eye needs a retake') && tLid.includes('An eyelid, a lash or skin is still inside the ring of the iris.') && tLid.includes('lift the upper lid gently') && has(hLid, 'retake-eye-1')
-    && tLid.includes('Retake this eye') && tLid.includes('Styles that need a cleaner iris are greyed out until then.') && has(hLid, 'manual-route') && /href="mailto:info@snapeyes.com"/.test(hLid));
+  // adapted 2026-10-22: Clean Iris and Celestial Gold were drawn greyed with "Retake eye 1 first"; held back for these eyes, they are not shown now. The group is not
+  // all Soon (two of its styles can be ordered after a retake), so its Soon tiles keep their chips and no group line says the group opens soon
+  check('a single eye that fails the lid rule: Clean Iris and Celestial Gold are not shown (no "Retake eye 1 first", no warning sign), Powder Burst, Splash and Radiance are drawn with the Soon chip, nothing is recommended and no group line says the group opens soon',
+    !has(hLid, 'tile-clean-iris') && !has(hLid, 'tile-celestial-gold') && !tLid.includes('Retake eye 1 first') && (hLid.match(/data-state="soon"/g) ?? []).length === 3 && (hLid.match(/data-testid="soon"/g) ?? []).length === 3
+    && !has(hLid, 'recommended') && !has(hLid, 'group-soon') && !liOf(hLid, 'clean-iris') && !/triangle-alert|alert-triangle/.test(hLid.slice(hLid.indexOf('style-picker'))), hLid.slice(0, 200));
+  // adapted 2026-10-22: the way out was the retake card under the list (reasons, tip, "greyed out", e-mail); it is the buy card's line and the retake button now
+  check('... the way out is on the buy card: its one line and the retake button of the eye; no retake card under the list, no reasons, no tips, no e-mail',
+    !has(hLid, 'retake-state') && !has(hLid, 'retake-calm') && !has(hLid, 'manual-route') && has(hLidBuy, 'retake-eye-1') && text(hLidBuy).includes('Retake this eye')
+    && !tLid.includes('Your eye needs a retake') && !tLid.includes('greyed out') && !/mailto:/.test(hLid + hLidBuy));
   check('... the free preview on screen is a Soon style and says so; the warning of the advisory style stays under the picture',
     has(hLid, 'artwork') && tLid.includes('Preview reduced and watermarked. This style opens soon.') && has(hLid, 'advisory-note') && tLid.includes('An eyelid or lash is still in the ring of your iris. Retake it for a cleaner result.'));
-  check('... the buy card sends the customer to the retake state: one line, no price, no waiver, no button, and it is not the "choose another" line (every other style that can be ordered is greyed out)',
+  check('... the buy card says it in one line with the retake button under it: no price, no waiver, no button to buy, no "see above", and it is not the "choose another" line (no other style can be ordered)',
     has(hLidBuy, 'buy-retake') && text(hLidBuy).includes(COPY.en.picker.retakeBuy(1)) && !has(hLidBuy, 'buy') && !has(hLidBuy, 'waiver') && !has(hLidBuy, 'price') && !has(hLidBuy, 'buy-soon') && !text(hLidBuy).includes(COPY.en.picker.soonBuy)
+    && !/see above|named above/i.test(text(hLidBuy))
     && !/\d{4}|€|\d[,.]\d\d/.test(text(hLidBuy).replace('Price for this artwork', '')), text(hLidBuy));
   check('... nothing on the page offers a way that is false: no "choose another", no "buy anyway", no "order now" for a set that cannot order, and no price is printed on any tile',
     !/choose another|buy anyway|order anyway|order now|to order now/i.test(tLid.replace(COPY.en.picker.retakeBuy(1), '')) && !has(hLid, 'tile-price'), tLid.match(/choose another|buy anyway|order anyway|order now/i)?.[0] ?? '');
@@ -169,8 +183,10 @@ export async function run(): Promise<Row[]> {
   const mSell = model(1, sellList, failEye, { priceOf: priceOfReal }, 'solo.powder', 'reason.solo_powder.own');
   const hSell = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mSell)));
   const hSellBuy = buy({ state: buyState({ n: 1, tiles: sellList, selected: mSell.selected }), advisory: [1] });
-  check('a single eye that fails the lid rule with Powder Burst and Splash live: they warn and sell (the warning is above the waiver, the button is there), Clean Iris and Celestial Gold stay greyed, the e-mail is not offered (no dead end), and the card does not say retake',
-    has(hSell, 'recommended') && (text(hSell).match(/Retake eye 1 first/g) ?? []).length === 2 && has(hSell, 'retake-state') && !has(hSell, 'manual-route') && has(hSell, 'advisory-note')
+  // adapted 2026-10-22: Clean Iris and Celestial Gold "stay greyed" with a retake card under the list; they are not shown now, and nothing under the list asks for a retake
+  check('a single eye that fails the lid rule with Powder Burst and Splash live: they warn in one calm line and sell (the warning is above the waiver, the button is there), Clean Iris and Celestial Gold are not shown, no retake card, no e-mail, and the card does not say retake',
+    has(hSell, 'recommended') && !text(hSell).includes('Retake eye 1 first') && !has(hSell, 'tile-clean-iris') && !has(hSell, 'retake-state') && !has(hSell, 'manual-route') && has(hSell, 'advisory-note')
+    && !/triangle-alert|alert-triangle/.test(hSell.slice(hSell.indexOf('data-testid="advisory-note"'), hSell.indexOf('data-testid="advisory-note"') + 400))
     && has(hSellBuy, 'buy') && has(hSellBuy, 'waiver') && hSellBuy.indexOf('data-testid="buy-advisory"') > 0 && hSellBuy.indexOf('data-testid="buy-advisory"') < hSellBuy.indexOf('data-testid="waiver"') && !has(hSellBuy, 'buy-retake'));
   // a set that passes: the policy changes nothing for it
   const passList = [tile('solo.powder', { name: 'Powder Burst', slug: 'powder-burst' }), tile('solo.gold', { name: 'Celestial Gold', slug: 'celestial-gold', gate: 'hard' }), { ...singles[3] } as ServerTile];
@@ -207,29 +223,33 @@ export async function run(): Promise<Row[]> {
 
   // ---- no preview can be drawn (a trio that fails the gate): the retake state takes the place of the picture
   const hNone = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b'), eyeObj('c')], { ...m3, style: null, selected: undefined }, { art: undefined })));
-  check('when nothing can be drawn the retake state stands where the picture would be, the eyes are marked, and nothing is for sale', has(hNone, 'no-preview') && !has(hNone, 'artwork') && has(hNone, 'retake-state') && has(hNone, 'chip-retake-3') && text(hNone).includes('We cannot show a preview of these eyes yet.'));
+  // adapted 2026-10-22: the retake card with "We cannot show a preview of these eyes yet." and its reasons is one calm line and the retake button now
+  check('when nothing can be drawn one calm line and the retake button stand where the picture would be, the eye to retake is marked, and nothing is for sale', has(hNone, 'no-preview') && !has(hNone, 'artwork') && has(hNone, 'retake-calm') && has(hNone, 'retake-eye-3') && has(hNone, 'chip-retake-3')
+    && !has(hNone, 'chip-retake-1') && text(hNone).includes(COPY.en.picker.retake.calm) && !text(hNone).includes('We cannot show a preview') && !/eyelid|lash|mailto/i.test(hNone.slice(hNone.indexOf('no-preview'))));
 
   // ---- every style held for the pupil (review of WP11, M2): the frame says what to do; it never waits for a picture that will not come
   const barPair = pair.map((t) => ({ ...t, available: false, why: 'bar_pupil' }));
   const barEyes = [eye(1, { pupil: 'bar' }), eye(2, { pupil: 'bar' })];
   const mBar: PickerModel = { ...model(2, barPair, barEyes, { tilePicture: () => undefined }), style: null, selected: undefined, retake: retakeView({ tiles: barPair, eyes: barEyes, selected: undefined }) };
   const hBar = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b')], mBar, { art: undefined, onRemove: noop })));
-  const hBarPanel = renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 2, onRetake: noop, onRemove: noop, onManual: noop }));
-  check('two eyes, every tile held for the pupil: no "Composing" and no spinner frame; the state stands where the picture would be, with the pupil sentence, the tip, a retake and a remove button per eye and the way to ask us',
-    has(hBar, 'no-preview') && !has(hBar, 'artwork') && !text(hBar).includes(T.result.composing) && !hBar.includes('animate-spin') && has(hBar, 'retake-state') && has(hBar, 'retake-pupil')
-    && text(hBar).includes('The pupil in this photo does not read as round, and these styles are made for round pupils.') && has(hBar, 'retake-tip-open')
-    && has(hBar, 'retake-eye-1') && has(hBar, 'retake-eye-2') && has(hBarPanel, 'remove-eye-1') && has(hBarPanel, 'remove-eye-2') && has(hBar, 'manual-route'));
-  check('the pupil state marks the eyes on their chips, blames no rule (no lid or reflection sentence, no "cleaner iris") and names the eyes in its title',
-    has(hBar, 'chip-retake-1') && has(hBar, 'chip-retake-2') && !has(hBar, 'retake-lid') && !has(hBar, 'retake-reflection') && !text(hBar).includes('cleaner iris') && text(hBarPanel).includes('Eyes 1 and 2 need a retake'));
-  check('a remove button only where there is more than one eye and a way to remove (a pupil card with one eye has the retake button alone)',
-    !has(renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 1, onRetake: noop, onRemove: noop, onManual: noop })), 'remove-eye-1') && !has(renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 2, onRetake: noop, onManual: noop })), 'remove-eye-1'));
+  const hBarPanel = renderToStaticMarkup(createElement(CalmRetake, { view: mBar.retake!, total: 2, onRetake: noop, onRemove: noop }));
+  // adapted 2026-10-22: the pupil card (its sentence, the tip, the e-mail) is the calm line now; the retake and the remove buttons per eye stay
+  check('two eyes, every tile held for the pupil: no "Composing" and no spinner frame; the calm line stands where the picture would be, with a retake and a remove button per eye',
+    has(hBar, 'no-preview') && !has(hBar, 'artwork') && !text(hBar).includes(T.result.composing) && !hBar.includes('animate-spin') && has(hBar, 'retake-calm') && text(hBar).includes(COPY.en.picker.retake.calm)
+    && has(hBar, 'retake-eye-1') && has(hBar, 'retake-eye-2') && has(hBarPanel, 'remove-eye-1') && has(hBarPanel, 'remove-eye-2') && !has(hBar, 'manual-route'));
+  check('the pupil case marks the eyes on their chips and blames nothing (no pupil, lid or reflection sentence, no "cleaner iris")',
+    has(hBar, 'chip-retake-1') && has(hBar, 'chip-retake-2') && !/round pupils|eyelid|reflection|cleaner iris/i.test(text(hBar)));
+  check('a remove button only where there is more than one eye and a way to remove (one eye has the retake button alone)',
+    !has(renderToStaticMarkup(createElement(CalmRetake, { view: mBar.retake!, total: 1, onRetake: noop, onRemove: noop })), 'remove-eye-1') && !has(renderToStaticMarkup(createElement(CalmRetake, { view: mBar.retake!, total: 2, onRetake: noop })), 'remove-eye-1'));
   const tileBar = renderToStaticMarkup(createElement(StylePicker, { model: mBar }));
-  check('every held tile says "Not for this pupil shape" and is no choice', (tileBar.match(/Not for this pupil shape/g) ?? []).length === 3 && !/aria-pressed/.test(tileBar));
+  // adapted 2026-10-22: it was "every held tile says Not for this pupil shape": a held tile is not shown
+  check('no tile held for the pupil is shown, and none says "Not for this pupil shape"', !/data-testid="tile-(?!list|skeleton|retry|price)/.test(tileBar) && !tileBar.includes('Not for this pupil shape'));
   const mTrioBar: PickerModel = { ...model(3, [tile('grp.fam', { group: 'grp', gate: 'hard', available: false, why: 'bar_pupil', layouts: ['trio'], eyes: 3 })], [eye(1), eye(2, { pupil: 'bar' }), eye(3)], { tilePicture: () => undefined }), style: null, selected: undefined,
     retake: retakeView({ tiles: [tile('grp.fam', { group: 'grp', gate: 'hard', available: false, why: 'bar_pupil', layouts: ['trio'], eyes: 3 })], eyes: [eye(1), eye(2, { pupil: 'bar' }), eye(3)], selected: undefined }) };
   const hTrioBar = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('a'), eyeObj('b'), eyeObj('c')], mTrioBar, { art: undefined })));
-  check('three eyes with the Trio live and held for one pupil: the state names eye 2, says why, nothing waits; the buy card has nothing to sell and is not drawn',
-    has(hTrioBar, 'no-preview') && text(hTrioBar).includes('Eye 2 needs a retake') && has(hTrioBar, 'chip-retake-2') && !has(hTrioBar, 'chip-retake-1') && !text(hTrioBar).includes(T.result.composing)
+  // adapted 2026-10-22: "the state names eye 2 and says why" is the calm line and the retake button of eye 2 now
+  check('three eyes with the Trio live and held for one pupil: the calm line with the retake button of eye 2, nothing waits; the buy card has nothing to sell and is not drawn',
+    has(hTrioBar, 'no-preview') && has(hTrioBar, 'retake-eye-2') && !has(hTrioBar, 'retake-eye-1') && has(hTrioBar, 'chip-retake-2') && !has(hTrioBar, 'chip-retake-1') && !text(hTrioBar).includes(T.result.composing)
     && buy({ eyes: [eyeObj('a'), eyeObj('b'), eyeObj('c')], state: buyState({ n: 3, tiles: [tile('grp.fam', { group: 'grp', available: false, why: 'bar_pupil', eyes: 3 })], selected: undefined }) }) === '');
   // no style at all for this many eyes: the frame still never waits
   const mNone: PickerModel = { ...emptyPicker(2), catalog: { key: 'k', n: 2, tiles: [], pick: null, reasonKey: null, eyes: [eye(1), eye(2)] }, style: null, selected: undefined, retake: null };
@@ -307,21 +327,22 @@ export async function run(): Promise<Row[]> {
     check(`${lang}: no claim of uniqueness, "best seller" or "most chosen" in the picker, the tiles or the price lines`, !claims.test(joined) && !claims.test(text(hh)), joined.match(claims)?.[0] ?? '');
     check(`${lang}: no dash, no "Couple Duo" and no "Studio Black" in the picker or the price lines (the black class is named by the registry)`, !new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']').test(joined) && !/Couple Duo|Studio Black/.test(joined));
     check(`${lang}: the tile list prints in this language (group, alt text and the Recommended mark)`, text(hh).includes(GROUPS[lang][0]) && text(hh).includes(P.recommended) && hh.includes(`alt="${P.tileAlt('Powder Burst')}"`));
-    check(`${lang}: the retake state and the buy card speak this language, no English left in them (the e-mail address and the names of styles excepted)`,
+    // adapted 2026-10-22: the retake card (its reasons, tips and e-mail) is the calm line; it is held to speaking this language, and so are its buttons
+    check(`${lang}: the calm retake line and its buttons speak this language, no English left in them`,
       (() => {
-        const t1 = text(renderToStaticMarkup(createElement(RetakePanel, { view: m3.retake!, total: 3, onRetake: noop, onManual: noop })));
-        const t2 = text(hs);
-        return t1.includes(P.retake.lid) && t1.includes(P.retake.tips.open) && t1.includes(P.retake.manual.split('{link}')[0]) && (lang === 'en' || !/Still stuck|eyelid|retake/i.test(t1));
+        const t1 = text(renderToStaticMarkup(createElement(CalmRetake, { view: m3.retake!, total: 3, onRetake: noop })));
+        return P.retake.calm.length > 20 && t1.includes(P.retake.calm) && t1.includes(T.result.retakeEye(3)) && (lang === 'en' || (P.retake.calm !== COPY.en.picker.retake.calm && !/photo|retake|styles/i.test(t1)));
       })());
-    check(`${lang}: the pupil sentence, the no-style sentence and the Soon look lines are written out, name the look and are not the English ones (review of WP11)`,
+    // adapted 2026-10-22: the pupil sentence went with the retake card; the no-style sentence and the Soon look lines stay
+    check(`${lang}: the no-style sentence and the Soon look lines are written out, name the look and are not the English ones (review of WP11); the calm line of a pupil case offers the remove button`,
       (() => {
         const en = COPY.en.picker;
-        const pupilRender = text(renderToStaticMarkup(createElement(RetakePanel, { view: mBar.retake!, total: 2, onRetake: noop, onRemove: noop, onManual: noop })));
-        const base = P.retake.pupil.length > 30 && P.retake.noStyles.length > 30 && P.soonLookBuy('Vortex').includes('Vortex') && P.soonLookNote('Vortex').includes('Vortex') && pupilRender.includes(P.retake.pupil) && pupilRender.includes(T.result.remove(1));
-        return base && (lang === 'en' || (P.retake.pupil !== en.retake.pupil && P.retake.noStyles !== en.retake.noStyles && P.soonLookBuy('Vortex') !== en.soonLookBuy('Vortex') && P.soonLookNote('Vortex') !== en.soonLookNote('Vortex')
-          && !/read as round|made for round/.test(pupilRender)));
+        const pupilRender = text(renderToStaticMarkup(createElement(CalmRetake, { view: mBar.retake!, total: 2, onRetake: noop, onRemove: noop })));
+        const base = P.retake.noStyles.length > 30 && P.soonLookBuy('Vortex').includes('Vortex') && P.soonLookNote('Vortex').includes('Vortex') && pupilRender.includes(T.result.remove(1));
+        return base && (lang === 'en' || (P.retake.noStyles !== en.retake.noStyles && P.soonLookBuy('Vortex') !== en.soonLookBuy('Vortex') && P.soonLookNote('Vortex') !== en.soonLookNote('Vortex')));
       })());
-    check(`${lang}: the held tile, the Soon note and the changed lines are written out`, P.retakeFirst(3).includes('3') && P.soonBuy.length > 20 && P.countSoon(2).includes('2') && P.changed.eyes('A', 'B', 3).includes('A') && P.changed.gate('A', 'B', 2).includes('B') && P.advisory([1, 3], 4).includes('3') && P.retake.title([2, 3], 6).includes('3'));
+    // adapted 2026-10-22: "Retake eye 3 first" (the held tile) and the retake card's title are gone
+    check(`${lang}: the Soon note and the changed lines are written out`, P.soonBuy.length > 20 && P.countSoon(2).includes('2') && P.changed.eyes('A', 'B', 3).includes('A') && P.changed.gate('A', 'B', 2).includes('B') && P.advisory([1, 3], 4).includes('3'));
     check(`${lang}: the buy card of a single eye held back from every style it could buy (retake) is written out for one eye and for more, is not the "choose another" line, and speaks this language`,
       (() => {
         const en = COPY.en.picker;
@@ -331,13 +352,13 @@ export async function run(): Promise<Row[]> {
         const base = rb1.length > 40 && rb3.length > 40 && rb1 !== rb3 && rb1 !== P.soonBuy && rb3 !== P.soonBuy && card.includes(rb1) && card3.includes(rb3) && !card.includes(P.soonBuy);
         return base && (lang === 'en' || (rb1 !== en.retakeBuy(1) && rb3 !== en.retakeBuy(3) && !/Nothing can be|To order|retake/i.test(card + card3)));
       })());
-    check(`${lang}: the reseal sentence (an eye with no sealed gate value: an unmeasured profile as well as an older seal, which Clean Iris and Celestial Gold now hold back too) names no cause: it says the preview could not be checked and to retake, for one eye and for more`,
+    // adapted 2026-10-22: the reseal sentence went with the retake card; an eye with no sealed gate value (an unmeasured profile, an older seal) gets the same calm line and
+    // its retake button, which names no cause at all
+    check(`${lang}: an eye with no sealed gate value that holds every style back gets the calm line and its retake button, naming no cause`,
       (() => {
-        const r1 = P.retake.reseal([1], 1), r2 = P.retake.reseal([2], 3), r3 = P.retake.reseal([1, 3], 4);
         const view = retakeView({ tiles: [tile('solo.clean', { gate: 'hard', available: false, why: 'reseal' })], eyes: [eye(1, { gate: { lid: null, fill: null } })], selected: undefined })!;
-        const panel = text(renderToStaticMarkup(createElement(RetakePanel, { view, total: 1, onRetake: noop, onManual: noop })));
-        return r1.length > 25 && r2.length > 25 && r3.length > 25 && r1 !== r2 && r2 !== r3 && panel.includes(r1) && has(renderToStaticMarkup(createElement(RetakePanel, { view, total: 1, onRetake: noop, onManual: noop })), 'retake-reseal')
-          && !/older version|ältere|älteren|senesn|régebbi/i.test(r1 + r2 + r3);
+        const html = renderToStaticMarkup(createElement(CalmRetake, { view, total: 1, onRetake: noop }));
+        return text(html) === `${P.retake.calm} ${T.result.retakeOnly}` && has(html, 'retake-eye-1') && !/older version|ältere|älteren|senesn|régebbi/i.test(text(html));
       })());
     check(`${lang}: the same twelve option and word labels exist and none is empty`, [P.options.swap, P.options.rotate, P.options.earlier, P.options.later, P.options.look, P.names.title, P.names.date, P.names.family, P.names.datePlaceholder, P.stack, P.widePupil, P.groupSoon].every((s) => s.trim().length > 2));
   }

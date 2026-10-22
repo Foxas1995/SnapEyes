@@ -61,8 +61,14 @@ const CASES = [
   {
     name: 'price row prices what cannot be bought',
     note: 'the price table prints the price of two eyes while no style can be bought for two eyes',
-    edits: [{ file: TABLE, from: 'value={cat.eyes.includes(2) ? gate(p.price2) : soon}', to: 'value={gate(p.price2)}' }],
+    edits: [{ file: TABLE, from: 'value={closed || cat.eyes.includes(2) ? gate(p.price2) : soon}', to: 'value={gate(p.price2)}' }],
     gate: 'fail', words: ['the price table row', 'cannot be bought but'], build: 'fail',
+  },
+  {
+    name: 'the closed price list says Soon',
+    note: 'the price table treats a closed shop like an open one that sells nothing: Soon in every row instead of the price list the owner asked for (2026-10-22)',
+    edits: [{ file: TABLE, from: 'const closed = !p.open;', to: 'const closed = false;' }],
+    gate: 'fail', words: ['while nothing can be bought the table is the price list'], build: 'fail',
   },
   {
     name: 'price row names a style that cannot be bought',

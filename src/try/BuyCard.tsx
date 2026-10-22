@@ -2,7 +2,8 @@ import React from 'react';
 import { Lock, RefreshCcw } from 'lucide-react';
 import { T } from './copy';
 import { type Eye, MAX_EYES, billableEyes } from './multi';
-import { type BuyState, lookName } from './picker';
+import { type BuyState, type RetakeView, lookName } from './picker';
+import { RetakeButtons } from './StylePicker';
 import { classStyle, styleName } from '../shared/styles';
 import { currencyOf, currentMarket, money, priceMinor, type PriceList } from '../shared/markets';
 import { listFor } from '../shared/pricing';
@@ -53,6 +54,8 @@ interface Props {
   advisory?: number[];
   /** the words on the artwork break a rule (a letter the font cannot draw): the button waits, and says why */
   wordsBlocked?: boolean;
+  /** the eyes to photograph again when every style that can be bought is held back for them (state retake): their buttons stand in the card, under its line */
+  retake?: RetakeView | null;
 }
 
 // what a card is told when its caller says nothing of the picker (the card of before the picker existed, and the checks that render it alone): the
@@ -85,13 +88,14 @@ export const BuyCard: React.FC<Props> = (props) => {
   }
 
   const n = billable;
-  // the styles that can be bought are all held back by the eyes and the one on screen only opens soon: one line that sends the customer to the retake card above,
-  // never "choose another" (the others are greyed out), no price, no button
+  // the styles that can be bought are all held back by the eyes (they are not shown) and the one on screen only opens soon: one line and, right under it, the
+  // retake button of each eye to photograph again; never "choose another" (no other style can be ordered), no price, no button to buy
   if (p.state.kind === 'retake') {
     return (
       <section aria-label={T.price.title} data-testid="buy-retake" className={CARD}>
         <p className="text-[10px] uppercase tracking-widest text-zinc-300">{T.price.title}</p>
-        <p data-testid="buy-retake-line" className="text-sm font-semibold text-amber-200 mt-1.5">{T.picker.retakeBuy(p.eyes.length)}</p>
+        <p data-testid="buy-retake-line" className="text-sm font-semibold text-zinc-100 mt-1.5">{T.picker.retakeBuy(p.eyes.length)}</p>
+        <RetakeButtons view={p.retake ?? null} total={p.eyes.length} onRetake={p.onRetake} />
       </section>
     );
   }
@@ -104,7 +108,7 @@ export const BuyCard: React.FC<Props> = (props) => {
       </section>
     );
   }
-  // nothing is selected (nothing can be drawn for these eyes: the retake state above says why): no price and no button
+  // nothing is selected (nothing can be drawn for these eyes: the calm line above, where the picture would be, asks for the retake): no price and no button
   if (!p.loading && p.state.kind === 'none') return null;
   if (p.loading) {
     return (

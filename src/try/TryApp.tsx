@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Upload, Sparkles, RefreshCcw, AlertTriangle, Info, Lightbulb, ArrowLeft, X } from 'lucide-react';
+import { Camera, Upload, Sparkles, RefreshCcw, AlertTriangle, Info, ArrowLeft, X } from 'lucide-react';
 import {
-  type Analysis, type Quality, type Targets, targetsOf, shownDetail, rawFibre, bestIndex, visibleTips, topTip, wordsOf, mapPool,
-  autoContinue, fibreRatio, meterBand, usable, blockedShot, blockOf, blockCode,
+  type Analysis, type Targets, targetsOf, rawFibre, bestIndex, topTip, wordsOf, mapPool,
+  autoContinue, calmNote, usable, blockOf, blockCode,
 } from './shots';
 import {
   type ColourQa, type Eye, type Layout, type LightAnswer, type ShotOrigin, type StudyPayload,
   MAX_EYES, STUDY_PENDING_MAX, colourOff, deviceInfo, keptSealed, outcomeOf, savedEye, studyAnswered, studyBody, studyOn,
 } from './multi';
-import { T, setCopyLang, type BlockCopy } from './copy';
+import { T, setCopyLang } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
 import { CROP_MAX_PX } from './crop';
 import { LANG_NAMES, LOCALES, marketLangs } from '../shared/lang';
@@ -277,8 +277,7 @@ export const TryApp: React.FC = () => {
   const galleryRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const photoUrlRef = useRef<string | null>(null);
-  // The site's own demo eye is a studio photo whose ring light covers part of the fibres, so on the glare
-  // cap it reads 'ok', not 'good'. We know it restores well, so it is not parked on the quality screen.
+  // the photo being captured is the site's own AI-generated demo eye (its studio is the prepared restoration, or the live one when that cannot be read)
   const sampleRef = useRef(false);
   // ---- capture study: the open question card, and the answers waiting for an analyze request the engine
   // logs. The engine writes them only with an analyze that found an eye, so answers stay here until one
@@ -662,8 +661,8 @@ export const TryApp: React.FC = () => {
     shotsRef.current = next; setShots(next); setProgress([]);
     const chosen = next[bi];
     setPhoto(best.img, best.url); setAnalysis(chosen);
-    // go on by itself only when the shot that will be processed is good and lamp-free. Asking this of the
-    // latest shot instead once sent an earlier 'weak' shot (sharp, but glared) to the studio unseen.
+    // the shot that will be processed goes on by itself whenever the studio can restore it (autoContinue): asked of that shot, never of the
+    // latest one, so a later shot that cannot be used never sends the best one away and a usable best is never held back for it
     if (autoContinue(chosen)) { await process(best.img, chosen); return; }
     setStep('quality');
   };
@@ -708,8 +707,7 @@ export const TryApp: React.FC = () => {
     askStudy(source, 1, outcomeOf(a));
     if (!a.ok || !a.iris) { setError(a.message || T.errors.noEye); setStep('capture'); return; }
     setAnalysis(a);
-    const sampleOk = sampleRef.current && a.quality?.verdict !== 'weak' && usable(a);
-    if (autoContinue(a) || sampleOk) { await process(img, a); } else { setStep('quality'); }
+    if (autoContinue(a)) { await process(img, a); } else { setStep('quality'); }
   };
 
   /** The eye's image re-encoded at the side /api/compose needs for this many eyes (cached per eye). Only for an
@@ -948,7 +946,7 @@ export const TryApp: React.FC = () => {
       eyes={eyes} style={style ?? ''} styleName={selectedTile?.name ?? style ?? ''} ordering={ordering}
       preview={art ? 'ready' : previews.composeError !== null ? 'failed' : 'composing'}
       state={buying} loading={!catalog && !previews.catalogError}
-      advisory={advisory} wordsBlocked={wordProblems.length > 0}
+      advisory={advisory} wordsBlocked={wordProblems.length > 0} retake={retakeState}
       stale={ordering?.open && !eyes.some((e) => e.sample) ? staleEyes(eyes, orderRef, now) : []}
       onRetake={(i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); }}
       waiver={waiver} onWaiver={setWaiver}
@@ -1003,12 +1001,9 @@ export const TryApp: React.FC = () => {
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
         {/* back to the landing page in the same language */}
         <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-semibold tracking-wider text-lg relative hit">SNAP<span className="text-[#f5c542]">EYES</span></a>
+        {/* the logo and the language switch, nothing else (the owner, 2026-10-22, asked what the tagline beside them meant: it is gone); the family test's badge only with ?study=1 */}
         <div className="flex items-center justify-end gap-3 min-w-0">
-          <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
-            {STUDY && <span className="text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}
-            {/* decorative: under 380 px its longest word (peržiūra, előnézet, Vorschau) no longer fits beside the logo and the language switch and ran over the logo, so it goes there */}
-            <span className="max-[379px]:hidden">{T.header.tag}</span>
-          </span>
+          {STUDY && <span className="min-w-0 text-[10px] uppercase tracking-widest text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}
           <LangSwitch lang={lang} onSwitch={switchLang} />
         </div>
       </header>
@@ -1132,42 +1127,25 @@ export const TryApp: React.FC = () => {
           </>
         )}
 
+        {/* Only a photo the studio cannot restore stops here (a usable one goes straight on: autoContinue), or a usable one whose restoration just failed (the
+            error above says why, and it can be tried again). No verdict, no Detail meter and no list of tips (the owner, 2026-10-22): the reason in one line
+            and, for a photo the engine blocked, the retake steps for that reason. The numbers stay in the analysis (the ranking, the server's log, the admin). */}
         {step === 'quality' && analysis?.quality && shots.length === 0 && (
-          <section className={`flex flex-col gap-4${stepped ? ' fx-step' : ''}`}>
-            <div className="grid grid-cols-[120px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
-              {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt={T.quality.detectedIris} className="w-[120px] h-[120px] rounded-full border border-[#f5c542]/40 object-cover" />}
-              <div className="min-w-0">
-                <Verdict v={analysis.quality.verdict} block={blockOf(analysis)} />
-                {/* blocked: the one-line reason; the retake steps are in the guide below (the server's message
-                    lists them too, and shown together every step was read twice) */}
-                <p className="text-sm text-zinc-200 mt-2">{blockOf(analysis)?.reason ?? wordsOf(analysis.quality).message}</p>
-                <DetailMeter a={analysis} t={targetsOf(analysis)} />
-              </div>
+          <section data-testid="quality-step" className={`flex flex-col gap-4${stepped ? ' fx-step' : ''}`}>
+            <div className="flex gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
+              {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt={T.quality.detectedIris} className="shrink-0 w-[120px] h-[120px] rounded-full border border-[#f5c542]/40 object-cover" />}
+              {/* blocked: the one-line reason (the retake steps are in the guide below: the server's message lists them too); not centred: the server's own line */}
+              {!usable(analysis) && <p data-testid="quality-reason" className="min-w-0 text-sm text-zinc-200">{blockOf(analysis)?.reason ?? wordsOf(analysis.quality).message}</p>}
             </div>
-            {analysis.picked && (usable(analysis) ? (
-              <p className="text-xs text-emerald-300/90 bg-emerald-950/25 border border-emerald-500/30 rounded-xl p-3">
-                {/* "best", not "sharpest": the verdict ranks first, so a glared photo can be sharper and still lose */}
-                {T.quality.picked(analysis.picked.of, analysis.picked.used)}
-                {fibreRatio(analysis.picked) !== null && T.quality.pickedRatio(T.dec1(fibreRatio(analysis.picked)!))}
-              </p>
-            ) : (
-              // the best of the pick still cannot be used: never say "used"
-              <p className="text-xs text-rose-200/90 bg-rose-950/25 border border-rose-500/30 rounded-xl p-3">{T.quality.noneUsable(analysis.picked.of)}</p>
-            ))}
-            {/* blocked: the retake steps for its reason replace the tips list, which would only repeat them */}
+            {/* the best of a gallery pick still cannot be used: never say "used" */}
+            {analysis.picked && !usable(analysis) && <p className="text-xs text-rose-200/90 bg-rose-950/25 border border-rose-500/30 rounded-xl p-3">{T.quality.noneUsable(analysis.picked.of)}</p>}
             {blockOf(analysis) && <RetakeGuide block={blockOf(analysis)!} code={blockCode(analysis)} />}
-            <ShotNotes q={analysis.quality} onRetake={retake} />
-            {!blockedShot(analysis) && visibleTips(analysis.quality).length > 0 && (
-              <ul className="text-xs text-zinc-300 bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5">
-                {visibleTips(analysis.quality).map((t) => <li key={t}>• {t}</li>)}
-              </ul>
-            )}
             <div className={`grid gap-3 ${usable(analysis) ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <button onClick={retake} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2"><RefreshCcw className="w-4 h-4" /> {T.quality.retake}</button>
               {/* no way forward from a crop that is not an iris, nor from one the engine blocked: the studio
                   would invent one, and the server gave neither a work ticket */}
               {usable(analysis) && (
-                <button onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> {T.quality.continueAnyway}</button>
+                <button data-testid="quality-again" onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> {T.result.retry}</button>
               )}
             </div>
             {backLink}
@@ -1177,7 +1155,7 @@ export const TryApp: React.FC = () => {
         {step === 'processing' && (
           <Working title={working.eye > 1 ? T.working.restoringEye(working.eye) : T.working.restoring} lines={progress} elapsed={elapsed} image={clientCrop}
             caption={working.sample ? T.working.sampleCaption : undefined} enter={stepped}
-            note={analysis?.quality?.pupil_reflection ? T.quality.pupilNote : undefined} />
+            note={calmNote(analysis?.quality) ?? undefined} />
         )}
 
         {step === 'result' && STUDY && !studyAsk && pendingShots.length > 0 && (
@@ -1231,60 +1209,11 @@ const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lan
   </div>
 );
 
-const Verdict: React.FC<{ v: 'good' | 'ok' | 'weak'; block?: BlockCopy | null }> = ({ v, block = null }) => {
-  const map = { good: [T.quality.verdicts.good, 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'], ok: [T.quality.verdicts.ok, 'bg-amber-500/15 text-amber-300 border-amber-500/40'], weak: [T.quality.verdicts.weak, 'bg-rose-500/15 text-rose-300 border-rose-500/40'] } as const;
-  // a blocked shot is not merely weak: nothing will be made from it, and its badge says why
-  const [label, cls] = block ? [block.badge, map.weak[1]] : map[v];
-  return <span className={`inline-block text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${cls}`}>{label}</span>;
-};
 
-/** Detail N/100 with the ok and good targets marked, so the customer sees how far a retake has to go.
- *  Renders nothing against an older server that sends no score (the verdict badge still speaks there), nor
- *  for a blocked shot, whose number would contradict its "Too blurry" badge (shownDetail). */
-const DetailMeter: React.FC<{ a: Analysis; t: Targets; label?: boolean }> = ({ a, t, label = true }) => {
-  const d = shownDetail(a);
-  if (d === undefined) return null;
-  const { band, caption } = meterBand(d, a.quality, t);
-  const [text, bar] = { good: ['text-emerald-300', 'bg-emerald-400'], ok: ['text-amber-300', 'bg-amber-400'], low: ['text-rose-300', 'bg-rose-400'] }[band];
-  return (
-    <div className="mt-3" role="meter" aria-label={T.quality.detail} aria-valuemin={0} aria-valuemax={100} aria-valuenow={d}>
-      <div className="flex items-baseline justify-between gap-2 text-xs">
-        {label ? <span className="font-bold text-zinc-200">{T.quality.detail} <span className={text}>{d}</span><span className="text-zinc-400">/100</span></span> : <span />}
-        {caption && <span className="text-[10px] text-zinc-400">{caption}</span>}
-      </div>
-      <div className="relative h-2 mt-1.5 rounded-full bg-white/10 overflow-hidden">
-        <div className={`fx-fill h-full rounded-full ${bar}`} style={{ width: `${Math.max(d, 2)}%` }} />
-        <span className="absolute inset-y-0 w-px bg-white/35" style={{ left: `${t.detail_ok}%` }} />
-        <span className="absolute inset-y-0 w-px bg-white/70" style={{ left: `${t.detail_good}%` }} />
-      </div>
-    </div>
-  );
-};
-
-/** Notes that come from the light in the photo rather than its sharpness. The pupil one reassures (the
- *  engine rebuilds the pupil anyway), so it is left out for a blocked shot that will not be rebuilt at all;
- *  the lamp one warns gently and offers a retake. */
-const ShotNotes: React.FC<{ q: Quality; onRetake?: () => void }> = ({ q, onRetake }) => (
-  <>
-    {q.pupil_reflection && !q.blocked && (
-      <p className="text-xs text-sky-200/90 bg-sky-950/25 border border-sky-500/25 rounded-xl p-3 flex gap-2">
-        <Info className="w-4 h-4 shrink-0 mt-px text-sky-300" /> <span>{T.quality.pupilNote}</span>
-      </p>
-    )}
-    {q.lamp_cast && (
-      <div className="text-xs text-amber-200/90 bg-amber-950/25 border border-amber-500/30 rounded-xl p-3 flex gap-2">
-        <Lightbulb className="w-4 h-4 shrink-0 mt-px text-amber-300" />
-        <span>
-          {wordsOf(q).lamp_message || T.quality.lampFallback}
-          {onRetake && <> <button onClick={onRetake} className="underline underline-offset-2 font-semibold text-amber-100">{T.quality.tryRetake}</button></>}
-        </span>
-      </div>
-    )}
-  </>
-);
-
-/** The camera shot collector: the latest shot's score and the one tip for the next shot, every shot so far
- *  with the best one ringed, and a way to shoot again or go on with the best at any point. */
+/** The camera shot collector. A shot the studio can restore goes on by itself (autoContinue), so this is on screen only while no shot of the set
+ *  can be used (the retake steps of the latest blocked shot, or the one line of a shot whose circle did not lock), or when the restoration of a
+ *  usable best shot just failed (the error above says why; the one way on is to try it again). No verdict, no Detail: the shots so far, the best one
+ *  ringed, a way to shoot again or to go on. */
 const ShotCollector: React.FC<{
   shots: Analysis[]; t: Targets; note: string | null;
   onTakeAnother: () => void; onContinue: () => void; onStartOver: () => void; canUse?: boolean; enter?: boolean;
@@ -1292,26 +1221,20 @@ const ShotCollector: React.FC<{
   const n = shots.length;
   const latest = shots[n - 1];
   const q = latest.quality;
-  // a blocked shot shows no Detail anywhere here: its number could read higher than the usable shot we pick
-  const d = shownDetail(latest);
   const bi = bestIndex(shots);
   const best = shots[bi];
-  const bestD = shownDetail(best);
   const full = n >= t.max_shots;
   const bestUsable = usable(best);
   const use = canUse && bestUsable;
-  // Prompting ends when the shot we would process is good and lamp-free (the page then goes on by itself).
-  // Judged on the best shot, not the latest: a good but lamp-tinted latest shot must still leave room for
-  // the daylight retake its own warning asks for. A full set with nothing usable in it still takes another
-  // shot, which starts a fresh set (onCameraShot).
+  // Prompting ends when the shot we would process can be restored (it goes on by itself; it is here only after a failed restoration). Judged on the
+  // best shot, not the latest. A full set with nothing usable in it still takes another shot, which starts a fresh set (onCameraShot).
   const canTakeMore = !autoContinue(best) && (!full || !bestUsable);
-  // nothing usable yet and the latest shot was blocked: the retake card with the steps for its reason (the
-  // one the customer just saw fail). With a usable best shot the one-line tip below covers it instead.
+  // nothing usable yet and the latest shot was blocked: the retake card with the steps for its reason (the one the customer just saw fail)
   const guide = !bestUsable ? blockOf(latest) : null;
-  // the latest shot's tip, unless the retake card already says it (the server's message lists the same steps)
+  // the latest shot's one line (a circle that did not lock), unless the retake card already says it (the server's message lists the same steps)
   const tip = q && canTakeMore && !guide ? topTip(q, t) : null;
-  const bestLabel = T.collector.bestLabel(bi + 1, bestD);
-  // the one case where the latest shot reads "Great photo" and is still not used: say why
+  const bestLabel = T.collector.bestLabel(bi + 1);
+  // the one case where the latest shot was a lamp-tinted one and the best is not: say which is used
   const skippedForLamp = bi !== n - 1 && !!q?.lamp_cast && !best.quality?.lamp_cast;
   const summary = !bestUsable ? (full ? T.quality.fullUnusable(t.max_shots) : n === 1 ? T.quality.shotUnusable : T.quality.shotsUnusable)
     : full ? T.collector.full(t.max_shots, bestLabel)
@@ -1320,16 +1243,12 @@ const ShotCollector: React.FC<{
     : skippedForLamp ? T.collector.lampSkipped(n, bestLabel)
     : T.collector.bestIs(bestLabel);
   return (
-    <section className={`flex flex-col gap-4${enter ? ' fx-step' : ''}`}>
-      <div className="grid grid-cols-[96px_1fr] gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
+    <section data-testid="shot-collector" className={`flex flex-col gap-4${enter ? ' fx-step' : ''}`}>
+      <div className="flex gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
         {latest.preview
-          ? <img src={`data:image/jpeg;base64,${latest.preview}`} alt={T.collector.shotAlt(n)} className="w-24 h-24 rounded-full border border-[#f5c542]/40 object-cover" />
-          : <span className="w-24 h-24 rounded-full bg-white/5" />}
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-zinc-100">{T.collector.header(n, t.max_shots)}{d !== undefined && T.collector.headerDetail(d)}</p>
-          {q && <div className="mt-1.5"><Verdict v={q.verdict} block={blockOf(latest)} /></div>}
-          <DetailMeter a={latest} t={t} label={false} />
-        </div>
+          ? <img src={`data:image/jpeg;base64,${latest.preview}`} alt={T.collector.shotAlt(n)} className="shrink-0 w-24 h-24 rounded-full border border-[#f5c542]/40 object-cover" />
+          : <span className="shrink-0 w-24 h-24 rounded-full bg-white/5" />}
+        <p className="min-w-0 text-sm font-bold text-zinc-100">{T.collector.header(n, t.max_shots)}</p>
       </div>
 
       {note && (
@@ -1345,15 +1264,12 @@ const ShotCollector: React.FC<{
       {/* nothing usable and the latest shot blocked: the capture guide's steps for the next one. Its title says
           why; the server's message is left out because it lists the same steps */}
       {guide && <RetakeGuide block={guide} code={blockCode(latest)} />}
-      {/* the notes follow the shot that will be processed, so a lamp warning never disappears while its
-          shot is still the one we use. No retake link here: "Take another" below already covers it. */}
-      {best.quality && <ShotNotes q={best.quality} />}
 
       <div>
         <div className="flex items-start gap-3">
           {shots.map((s, i) => {
-            // a blocked shot's thumbnail names its reason: its Detail number is not a measure of anything usable
-            const sd = blockOf(s)?.thumb ?? shownDetail(s);
+            // a blocked shot's thumbnail names its reason in one word; every other one its number
+            const word = blockOf(s)?.thumb;
             // the best shot is ringed in gold only when it is one we would really use
             const ring = i !== bi ? 'border-white/10' : usable(s) ? 'border-[#f5c542]' : 'border-rose-400/70';
             const ink = i !== bi ? (usable(s) ? 'text-zinc-400' : 'text-rose-300/70') : usable(s) ? 'text-[#f5c542]' : 'text-rose-300';
@@ -1362,7 +1278,7 @@ const ShotCollector: React.FC<{
                 {s.preview
                   ? <img src={`data:image/jpeg;base64,${s.preview}`} alt={T.collector.shotAlt(i + 1)} className={`w-11 h-11 rounded-full object-cover border-2 ${ring} ${i === bi ? '' : 'opacity-60'}`} />
                   : <span className={`w-11 h-11 rounded-full bg-white/5 border-2 ${ring}`} />}
-                <span className={`text-[10px] font-mono ${ink}`}>{sd ?? `#${i + 1}`}</span>
+                <span className={`text-[10px] font-mono ${ink}`}>{word ?? `#${i + 1}`}</span>
               </div>
             );
           })}
