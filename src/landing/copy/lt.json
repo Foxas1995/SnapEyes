@@ -57,11 +57,11 @@
     "fromPrice": "Skaitmeninis failas nuo {from}",
     "computerHint": "Kompiuteryje? Atidarykite snapeyes.com telefone arba įkelkite turimas nuotraukas.",
     "secondary": "Tikra nuotrauka: prieš ir po",
-    "imageAlt": "Vizualizacija: mūsų pačių rainelė kaip blizgus spaudinys ant akrilo, pakabintas ant sienos.",
-    "chipTitle": "Vizualizacija",
-    "discAlt": "Mūsų pačių akis, padalyta per vyzdį: kairėje tikra nuotrauka telefonu, dešinėje atkurta rainelė.",
-    "discLabel": "Tikra telefono nuotrauka, prieš ir po",
-    "discLink": "Mūsų pačių akis: tikra nuotrauka telefonu, atkurta rainelė. Pereiti prie vaizdo prieš ir po."
+    "globeAlt": "Sfera iš apvalių kūrinių mūsų stiliais: mūsų pačių akis ir pavyzdinės nuotraukos",
+    "globeLabel": "Mūsų stiliai ant sukamos sferos",
+    "globeTry": "Išbandykite su savo akimi",
+    "globeClose": "Uždaryti",
+    "globeNote": "Mūsų pačių akis ir pavyzdinės nuotraukos, ne klientų"
   },
   "reveal": {
     "eyebrow": "Prieš ir po",

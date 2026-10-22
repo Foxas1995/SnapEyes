@@ -77,8 +77,10 @@ async function open({ lang = 'en', width = 1280, height = 900, ...more } = {}) {
   return page;
 }
 const scrollTo = (page, sel, at = 100) => page.eval(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return false; window.scrollTo({ top: e.getBoundingClientRect().top + scrollY - ${at}, behavior: 'instant' }); return true; })()`);
-/** Frames of the page itself for `ms` milliseconds: for every selector the computed values of `props` (a pseudo element as "sel::after"). */
-async function frames(page, sels, props, ms) {
+/** Frames of the page itself for `ms` milliseconds: for every selector the computed values of `props` (a pseudo element as "sel::after"). `act` (a statement) runs in
+ *  the same task, just before the first frame is asked for: an action whose first frame is to be seen (a click as a separate call races the page's next frame, which
+ *  may go by before the sampler's first one: measured 2026-10-22 on a size pick, 18 of 30 picks lost that race on the base build itself). */
+async function frames(page, sels, props, ms, act = '') {
   return JSON.parse(await page.eval(`new Promise((done) => {
     const sels = ${JSON.stringify(sels)}, props = ${JSON.stringify(props)}, out = {}, t0 = performance.now();
     for (const s of sels) out[s] = [];
@@ -87,6 +89,7 @@ async function frames(page, sels, props, ms) {
       for (const s of sels) { const [q, p] = s.split('::'); const e = document.querySelector(q); out[s].push(e ? [t, ...props.map((k) => getComputedStyle(e, p ? '::' + p : null).getPropertyValue(k))] : [t, null]); }
       if (t < ${ms}) requestAnimationFrame(tick); else done(JSON.stringify(out));
     };
+    ${act}
     requestAnimationFrame(tick);
   })`));
 }
@@ -435,10 +438,9 @@ async function checkSizes() {
     expect('sizes', f['.lp-sqg'][startSq][0] >= 800, `${tag}: the squares start at ${f['.lp-sqg'][startSq][0]} ms, before the sofa has been drawn for a while`);
     note(`sizes ${tag}: the sofa's first line is 99 percent drawn at ${f['.lp-dr'][endD]?.[0]} ms, the first square starts at ${f['.lp-sqg'][startSq][0]} ms`);
     }
-    // a pick draws the gold outline of that size
+    // a pick draws the gold outline of that size (the click and the first frame in one task: see frames)
     const gold = JSON.stringify(['20', '30', '40', '50']);
-    await page.eval("document.querySelector('#sizeChips [data-cm=\"30\"]').click()");
-    const f2 = await frames(page, ['.lp-sqg[data-cm="30"] .lp-sq-on', '.lp-sqg[data-cm="50"] .lp-sq-on', '.lp-sqg[data-cm="20"] .lp-sq-on'], ['stroke-dashoffset'], 1000);
+    const f2 = await frames(page, ['.lp-sqg[data-cm="30"] .lp-sq-on', '.lp-sqg[data-cm="50"] .lp-sq-on', '.lp-sqg[data-cm="20"] .lp-sq-on'], ['stroke-dashoffset'], 1000, "document.querySelector('#sizeChips [data-cm=\"30\"]').click();");
     const on30 = col(f2['.lp-sqg[data-cm="30"] .lp-sq-on'], 1).map(num), off50 = col(f2['.lp-sqg[data-cm="50"] .lp-sq-on'], 1).map(num);
     expect('sizes', on30[0] > 0.8 && on30.at(-1) === 0, `${tag}: the outline of the chosen size does not draw (${on30[0]} to ${on30.at(-1)})`);
     expect('sizes', off50[0] < 0.2 && off50.at(-1) === 1, `${tag}: the outline of the size that was left does not undraw (${off50[0]} to ${off50.at(-1)})`);

@@ -726,7 +726,9 @@ function checkLandingCopy(root, mods, strings, out) {
     const h = HONESTY[l];
     if (h) {
       for (const [p, want] of Object.entries(h.chips)) if (dig(x, p) !== want) out.push(`${rel}: ${p} is "${dig(x, p)}", the label must read "${want}" word for word`);
-      for (const p of ['hero.chipTitle', 'final.chip']) if (dig(x, p) !== x.example?.vis) out.push(`${rel}: ${p} ("${dig(x, p)}") must be the same label as example.vis ("${x.example?.vis}")`);
+      // (the hero's own label hero.chipTitle went with its wall visualisation on 2026-10-22: the hero shows the globe of real artworks, labelled
+      // with the provenance line styles.mixed; the wall picture and its "Visualisation" label live in the wall section)
+      for (const p of ['final.chip']) if (dig(x, p) !== x.example?.vis) out.push(`${rel}: ${p} ("${dig(x, p)}") must be the same label as example.vis ("${x.example?.vis}")`);
       for (const [p, re] of Object.entries(h.printing.alt ?? {})) if (!re.test(dig(x, p) ?? '')) out.push(`${rel}: ${p} must say that printing is not part of the order in the words ${re} (the caption's own wording)`);
       for (const [what, rule] of Object.entries({ 'the line "printing is not part of your order"': h.printing, 'the line "ordering opens soon"': h.soon })) {
         const where = leaves.filter(([, v]) => typeof v === 'string' && rule.re.test(v)).map(([p]) => p).sort();

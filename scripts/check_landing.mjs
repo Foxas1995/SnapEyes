@@ -6,10 +6,11 @@
 // (--mutate runs a snippet in every settled page, a deliberate defect to see that a check really fails: documented in the README.)
 //
 // What it checks (each name is a value of --only):
-//   labels     every picture area of the page (hero, wall stage, the four rooms, the polished edge, the crop, the tiles of the
+//   labels     every picture area of the page (wall stage, the four rooms, the polished edge, the crop, the tiles of the
 //              style gallery, the closing scene) carries its label ("Example", "Visualisation", "Example photo", in the
-//              page's own language: one word since the lean pass of 2026-10-22, no "AI" in it) INSIDE the picture; every picture has alt,
-//              width and height
+//              page's own language: one word since the lean pass of 2026-10-22, no "AI" in it) INSIDE the picture; the hero's globe of artworks
+//              (2026-10-22) carries its honest line under the stage, in its own figure ("our own eye and example photos, not customers"), and every
+//              artwork on it is a button that says whose eyes it shows; every picture has alt, width and height
 //   phrases    no "ready to print", "druckfertig", "100 percent", "museum glass" (the banned claims of scripts/check_texts.mjs) in the
 //              visible text, in any of the four languages; "Ordering opens soon" in exactly three places while ordering is not
 //              open and in none once it is (the stub flips); "Printing is not part of your order" exactly in the price list and the FAQ
@@ -23,12 +24,12 @@
 //   ordering   the closed and the open states: the bar, the pricing notice, the FAQ item about ordering
 //   axe        axe-core with every <details> open, in eight states (needs axe-core: --axe, AXE_CORE, or node_modules/axe-core)
 //   resilience each lazy chunk of the page blocked in turn (a flaky network, a new deploy): the header, the hero and the footer stay, the page is
-//              not blank and does not reload itself in a loop
+//              not blank and does not reload itself in a loop; with the globe's chunk blocked the hero keeps its poster, whole
 //   skew       a new deploy under an open page (the old chunk is a 404 and the server's index.html names another script): the page reloads
 //              itself once, not in a loop; a chunk that fails while index.html is still the page's own does not reload it
 //   stall      one chunk whose request is never answered (a stalled connection) does not hold the sections behind it back
-//   glass      the frosted blur of the header, the hero chip and the sticky phone button is really applied (a build that dropped the unprefixed
-//              backdrop-filter once left it off in Chrome, Edge and Firefox)
+//   glass      the frosted blur of the header and the sticky phone button is really applied (a build that dropped the unprefixed
+//              backdrop-filter once left it off in Chrome, Edge and Firefox), and nothing on the hero's globe blurs the artworks (charter AC-2)
 //   shellclick a tap on a language button of the static first screen BEFORE the page's script has run switches the language, remembers it,
 //              keeps the focus on the new button, and the page that React then starts speaks that language
 //   offers     the offer of another currency: A$ only to a reader of English or German (the Australian edition has no other language), the
@@ -36,6 +37,11 @@
 //   guide      (2026-10-22) the guide video of the first step of "How it works" (src/shared/GuideVideo.tsx): on a phone it asks for no video file while the first
 //              screens are read, then for the page language's square cut when its step comes near, plays it muted and inline while half of it is on screen
 //              and stops when it leaves; under reduced motion it shows its poster with a play button and asks for nothing; the poster holds the box (no shift)
+//   globe      (2026-10-22) the hero's globe (src/landing/globe): its chunk is asked for only after the page's load, and not while the hero is off the
+//              screen; reduced motion keeps it still and a tap opens an artwork in place; the keyboard (one tab stop, the arrows, Enter onto the button,
+//              Escape back to the artwork, the closed words out of the tab order); a tap shows the style's name, whose eyes it shows, Soon while
+//              ordering is closed, and one button to /try in the page's language; a tap beside it closes it; a vertical swipe on it scrolls the page
+//              and a sideways one turns it without scrolling
 //   vitals     phone, slow 4G, CPU x4 (BUILD_PLAN section 5): LCP under 2.5 s (a warning above the 1.6 s target), CLS under 0.05, with
 //              the ordering flip mocked (the stub answers "open" after 2.5 s: the bar sentence changes in a page that is on screen)
 // Exit code 1 when any check fails.
@@ -141,7 +147,7 @@ async function checkLabels() {
     const c = COPY[lang];
     const page = await open({ lang, width });
     const r = JSON.parse(await page.eval(`(() => {
-      const AREAS = [['hero', '.lp-hero-frame', '.lp-frame-chip', 1], ['stage', '#stage', '.lp-vis-chip', 1], ['rooms', '#rail figure > div', '.lp-vis-chip', 4],
+      const AREAS = [['hero', '.lp-hero-fig', '.lp-globe-note', 1], ['stage', '#stage', '.lp-vis-chip', 1], ['rooms', '#rail figure > div', '.lp-vis-chip', 4],
         ['edge', '.lp-edge-img', '.lp-vis-chip', 1], ['crop', '.lp-cu-img', '.lp-cu-badge', 1], ['final', '.lp-final', '.lp-final-chip', 1],
         ['reveal', '.lp-rv-frame', '.lp-rv-who', 1]];   // the pinned scene's frame (768 px and up) and the phone's own (up to 767 px): both are here with motion allowed
       const out = { miss: [], texts: {}, imgs: [], tiles: 0, tilesWithPhotoChip: 0, legend: !!document.querySelector('.lp-legend') };
@@ -155,6 +161,8 @@ async function checkLabels() {
           (out.texts[name] ||= []).push(ch.querySelector('b') ? ch.querySelector('b').textContent.trim() : ch.textContent.trim());
         }
       }
+      // the globe's artworks (once its chunk is in): each a button whose label ends with whose eyes it shows
+      out.discs = [...document.querySelectorAll('#heroGlobe .lp-gl-disc')].map((b) => b.tagName + '|' + (b.getAttribute('aria-label') || ''));
       for (const i of document.querySelectorAll('main img')) {
         if (i.getAttribute('alt') === null) out.imgs.push('no alt: ' + (i.currentSrc || i.src).split('/').pop());
         if (!i.getAttribute('width') || !i.getAttribute('height')) out.imgs.push('no size: ' + (i.currentSrc || i.src).split('/').pop());
@@ -163,7 +171,13 @@ async function checkLabels() {
     })()`));
     const problemsHere = [...r.miss, ...r.imgs.slice(0, 5)];
     const wantVis = c.example.vis;
-    for (const name of ['hero', 'stage', 'rooms', 'edge', 'final']) for (const t of r.texts[name] || []) if (t !== wantVis) problemsHere.push(`${name} label "${t}", the language says "${wantVis}"`);
+    for (const name of ['stage', 'rooms', 'edge', 'final']) for (const t of r.texts[name] || []) if (t !== wantVis) problemsHere.push(`${name} label "${t}", the language says "${wantVis}"`);
+    // the globe shows flat artworks (our own eye and example photos), not a visualisation: its line says so, and each artwork says whose eyes it shows
+    for (const t of r.texts.hero || []) if (t !== c.hero.globeNote) problemsHere.push(`hero line "${t}", the language says "${c.hero.globeNote}"`);
+    const prov = [c.styles.eyeNote.own, c.styles.eyeNote.other, c.styles.mixed];
+    if (r.discs.length !== 32) problemsHere.push(`the globe has ${r.discs.length} artworks on the page (32)`);
+    const unlabelled = r.discs.filter((d) => !d.startsWith('BUTTON|') || !prov.some((p) => d.endsWith(`, ${p}`)));
+    if (unlabelled.length) problemsHere.push(`globe artworks without a button label of whose eyes they show: ${unlabelled.slice(0, 3).join(' / ')}`);
     // the pinned scene's frame (the desktop's, the phone's own) is the founder's own eye and says so in the picture (charter AC-8), whatever the chips are doing
     for (const t of r.texts.reveal || []) if (t !== c.example.mantas) problemsHere.push(`reveal frame label "${t}", the language says "${c.example.mantas}"`);
     if (!(r.texts.reveal || []).length) problemsHere.push('the pinned scene has no label of whose eye it is');
@@ -564,8 +578,10 @@ async function openBlocked(patterns, { width = 375, height = 812, query = '' } =
 async function checkResilience() {
   console.log('resilience');
   const files = readdirSync(join(dist, 'assets')).filter((f) => f.endsWith('.js'));
-  const SECTIONS = ['Reveal', 'Wall', 'StyleGallery', 'HowItWorks', 'Pricing', 'CloseUps', 'Trust', 'Faq', 'ClosingScene', 'SizeGuide', 'MoreRooms'];
-  const picked = quick ? ['Faq', 'Wall', 'SizeGuide'] : SECTIONS;
+  const SECTIONS = ['Reveal', 'Wall', 'StyleGallery', 'HowItWorks', 'Pricing', 'CloseUps', 'Trust', 'Faq', 'ClosingScene', 'SizeGuide', 'MoreRooms', 'Globe'];
+  // the chunks that are no section of their own: the two inside the wall and the hero's globe
+  const INNER = ['SizeGuide', 'MoreRooms', 'Globe'];
+  const picked = quick ? ['Faq', 'Wall', 'SizeGuide', 'Globe'] : SECTIONS;
   for (const name of picked) {
     const file = files.find((f) => f.startsWith(`${name}-`));
     if (!file) { fail('resilience', `no chunk ${name}-*.js in ${dist}/assets: the section list of this check is out of date`); continue; }
@@ -574,6 +590,7 @@ async function checkResilience() {
     await page.eval('window.__marker = 1');
     await sleep(5500);
     const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: !!document.getElementById('hdr'), hero: !!document.querySelector('.lp-hero h1'), ftr: !!document.querySelector('.lp-ftr'),
+      poster: (() => { const i = document.querySelector('#root #heroImg'); return !!i && i.complete && i.naturalWidth > 0 && getComputedStyle(i).opacity === '1'; })(), globe: !!document.querySelector('#heroGlobe .lp-gl'),
       root: document.getElementById('root').childElementCount, h: document.documentElement.scrollHeight,
       marker: window.__marker === 1, others: document.querySelectorAll('main > section.lp-sec, main > .lp-sheet > section.lp-sec, main > section.lp-final').length })`));
     const msgs = [];
@@ -581,8 +598,10 @@ async function checkResilience() {
     if (!r.hdr || !r.hero || !r.ftr) msgs.push(`the page lost ${[!r.hdr && 'the header', !r.hero && 'the hero', !r.ftr && 'the footer'].filter(Boolean).join(', ')}`);
     if (!r.root) msgs.push('React left #root empty (a blank page)');
     // the blocked section is the one that is missing: the others are all there
-    const total = SECTIONS.filter((s) => !['SizeGuide', 'MoreRooms'].includes(s)).length;
-    if (!['SizeGuide', 'MoreRooms'].includes(name) && r.others !== total - 1) msgs.push(`${r.others} sections are on the page, ${total - 1} expected (the blocked one missing, the others there)`);
+    const total = SECTIONS.filter((s) => !INNER.includes(s)).length;
+    if (!INNER.includes(name) && r.others !== total - 1) msgs.push(`${r.others} sections are on the page, ${total - 1} expected (the blocked one missing, the others there)`);
+    if (name === 'Globe' && r.others !== total) msgs.push(`${r.others} sections are on the page, ${total} expected (the globe's chunk is no section)`);
+    if (name === 'Globe' && (!r.poster || r.globe)) msgs.push(`without the globe's chunk the hero must keep its poster, whole (poster shown: ${r.poster}, a globe: ${r.globe})`);
     if (r.h < 2500) msgs.push(`the page is ${r.h} px high: the other sections are gone too`);
     if (!r.marker) msgs.push('the page reloaded itself');
     if (msgs.length) fail('resilience', `${name} blocked: ${msgs.join('; ')}`);
@@ -644,13 +663,13 @@ async function checkGlass() {
     await sleep(2500);
     await page.eval('window.scrollTo({ top: 400, behavior: "instant" })');
     await sleep(500);
-    const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: getComputedStyle(document.getElementById('hdr')).backdropFilter, chip: getComputedStyle(document.querySelector('.lp-frame-chip')).backdropFilter, chipBg: getComputedStyle(document.querySelector('.lp-frame-chip')).backgroundColor })`));
+    const r = JSON.parse(await page.eval(`JSON.stringify({ hdr: getComputedStyle(document.getElementById('hdr')).backdropFilter,
+      blurs: [...document.querySelectorAll('.lp-hero-fig, .lp-hero-fig *')].filter((e) => getComputedStyle(e).backdropFilter !== 'none' || getComputedStyle(e).filter !== 'none').map((e) => e.tagName + '.' + String(e.className).slice(0, 24)) })`));
     const msgs = [];
     if (!r.hdr || r.hdr === 'none') msgs.push(`the solid header has backdrop-filter "${r.hdr}"`);
-    // the chips lie on artwork: nothing blurs it (charter AC-2), the chip is solid enough to read on its own (the two fixed bars are the page's only blurred surfaces)
-    if (r.chip !== 'none') msgs.push(`the hero chip blurs the artwork behind it (backdrop-filter "${r.chip}")`);
-    const alpha = /rgba?\((?:[^,]+,){3}\s*([\d.]+)\)/.exec(r.chipBg);
-    if (!alpha || +alpha[1] < 0.9) msgs.push(`the hero chip is not solid enough without a blur (${r.chipBg})`);
+    // the hero's globe is artwork: nothing on it blurs or filters it (charter AC-2; the two fixed bars are the page's only blurred surfaces). Its old chip over
+    // the picture went with the picture (2026-10-22): the honest line is under the stage
+    if (r.blurs.length) msgs.push(`something on the hero's globe blurs or filters the artworks: ${r.blurs.slice(0, 4).join(', ')}`);
     if (width < 768) {
       await page.eval('window.scrollTo({ top: 1500, behavior: "instant" })');
       await sleep(700);
@@ -658,7 +677,7 @@ async function checkGlass() {
       if (!s || s === 'none') msgs.push(`the sticky phone bar has backdrop-filter "${s}"`);
     }
     if (msgs.length) fail('glass', `${width}px: ${msgs.join('; ')}`);
-    else pass('glass', `${width}px: the header${width < 768 ? ' and the sticky bar' : ''} are frosted (${r.hdr}), the hero chip is solid and blurs nothing`);
+    else pass('glass', `${width}px: the header${width < 768 ? ' and the sticky bar' : ''} are frosted (${r.hdr}), nothing on the hero's globe blurs the artworks`);
     await page.close();
   }
 }
@@ -770,8 +789,203 @@ async function checkGuide() {
   await page.close();
 }
 
+// ---------------------------------------------------------------------------------------------------- globe
+async function checkGlobe() {
+  console.log('globe');
+  const globeJs = readdirSync(join(dist, 'assets')).find((f) => /^Globe-[\w-]+\.js$/.test(f));
+  if (!globeJs) { fail('globe', `no chunk Globe-*.js in ${dist}/assets`); return; }
+  const until = async (page, js, ms = 15000) => { for (let t = 0; t < ms; t += 100) { if (await page.eval(js)) return true; await sleep(100); } return false; };
+  const LIVE = "!!document.querySelector('#heroGlobe[data-live] .lp-gl-orb')";
+  const ORB = "document.querySelector('.lp-gl-orb').style.transform";
+  const asked = `performance.getEntriesByType('resource').filter((e) => e.name.includes(${JSON.stringify(globeJs)})).map((e) => Math.round(e.startTime))`;
+  const tap = async (page, p) => {
+    await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] });
+    await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  };
+  /** the disc at the front: the one under the centre of the sphere */
+  const FRONT = `(() => { const s = document.getElementById('heroGlobe').getBoundingClientRect(); const cy = parseFloat(document.getElementById('heroGlobe').querySelector('.lp-gl').style.getPropertyValue('--cy')); const e = document.elementFromPoint(s.left + s.width / 2, s.top + cy); const b = e && e.closest('.lp-gl-disc'); if (!b) return null; const r = b.getBoundingClientRect(); return JSON.stringify({ x: r.left + r.width / 2, y: r.top + r.height / 2, label: b.getAttribute('aria-label') }); })()`;
+  const OPENED = `JSON.stringify({ vis: getComputedStyle(document.querySelector('.lp-gl-open')).visibility, op: document.querySelector('.lp-gl-open').style.opacity, tf: document.querySelector('.lp-gl-open').style.transform, name: document.querySelector('.lp-gl-name').textContent, prov: document.querySelector('.lp-gl-prov').textContent, soon: !document.querySelector('.lp-gl-soon').hidden, soonText: document.querySelector('.lp-gl-soon').textContent, href: document.querySelector('.lp-gl-cta').getAttribute('href'), heroHref: document.getElementById('ctaHero').getAttribute('href'), inert: document.querySelector('.lp-gl-info').inert, info: +document.querySelector('.lp-gl-info').style.opacity })`;
+
+  // 1. when the chunk is asked for: after the page's load (the poster, the LCP, first), and not while the hero is off the screen
+  {
+    const page = await open({ lang: 'lt', width: 412, height: 915, settle: false });
+    const live = await until(page, LIVE);
+    const t = JSON.parse(await page.eval(`JSON.stringify({ asked: ${asked}, load: Math.round(performance.getEntriesByType('navigation')[0].loadEventEnd), lcp: (() => { const l = performance.getEntriesByType('largest-contentful-paint'); return l.length ? Math.round(l.at(-1).startTime) : -1; })() })`));
+    await page.close();
+    if (!live || t.asked.length !== 1 || t.asked[0] < t.load) fail('globe', `the globe's chunk: live ${live}, asked at ${t.asked.join(', ')} ms, the page's load ended at ${t.load} ms (it must be asked for once, after the load)`);
+    else pass('globe', `the globe's chunk is asked for at ${t.asked[0]} ms, after the page's load (${t.load} ms), and the globe took the poster's place`);
+    const away = await open({ lang: 'lt', width: 412, height: 915, settle: false, hash: '#faq' });
+    await sleep(4000);
+    const off = JSON.parse(await away.eval(`JSON.stringify({ y: Math.round(scrollY), asked: ${asked} })`));
+    await away.eval("window.scrollTo({ top: 0, behavior: 'instant' })");
+    const back = await until(away, LIVE, 10000);
+    await away.close();
+    if (off.y < 1000 || off.asked.length || !back) fail('globe', `opened at #faq (scrolled to ${off.y} px): the chunk was asked for ${off.asked.length} times while the hero was off the screen; back at the top the globe came: ${back}`);
+    else pass('globe', `opened at #faq: nothing asked for while the hero is off the screen (4 s), the globe comes when the visitor goes back up`);
+  }
+  // 2. reduced motion: the globe keeps still, a tap opens the artwork in place (no flight, no turn), with its name, whose eyes, Soon (ordering is closed)
+  //    and the one button to /try in the page's language; Escape closes it, and a tap beside the opened artwork closes it too
+  {
+    const page = await open({ lang: 'lt', width: 412, height: 915, settle: false, reduceMotion: true });
+    const msgs = [];
+    if (!(await until(page, LIVE))) msgs.push('the globe never came');
+    else {
+      await page.eval('Promise.all([...document.querySelectorAll(".lp-gl img")].filter((i) => i.src).map((i) => i.decode().catch(() => 0))).then(() => 1)');
+      const a = await page.eval(ORB);
+      await sleep(1500);
+      const b = await page.eval(ORB);
+      if (a !== b) msgs.push(`it turned by itself (${a} to ${b})`);
+      const front = JSON.parse(await page.eval(FRONT));
+      await tap(page, front);
+      await sleep(400);
+      const o = JSON.parse(await page.eval(OPENED));
+      const c = await page.eval(ORB);
+      const [name, who] = front.label.split(', ');
+      if (o.vis !== 'visible' || o.op !== '1' || !/scale\(1(\.0+)?, ?1(\.0+)?\)/.test(o.tf) || c !== b) msgs.push(`a tap did not open it in place: ${JSON.stringify(o)}, the globe ${c === b ? 'kept still' : 'turned'}`);
+      if (o.name !== name || o.prov !== who) msgs.push(`the opened artwork says "${o.name}" / "${o.prov}", its disc "${front.label}"`);
+      if (!o.soon || o.soonText !== COPY.lt.styles.soonTag) msgs.push(`ordering is closed, the opened artwork does not say "${COPY.lt.styles.soonTag}" (${o.soon ? o.soonText : 'hidden'})`);
+      if (!o.href || o.href !== o.heroHref || !/\/try\b.*lang=lt/.test(o.href)) msgs.push(`its button goes to "${o.href}" (the hero's own: "${o.heroHref}")`);
+      if (o.inert) msgs.push('the opened words are inert');
+      await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+      await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+      await sleep(500);
+      const shut = JSON.parse(await page.eval(OPENED));
+      if (shut.vis !== 'hidden' || !shut.inert) msgs.push(`Escape did not close it: ${JSON.stringify(shut)}`);
+      // a tap beside the opened artwork (the empty corner of the stage) closes it
+      await tap(page, front);
+      await sleep(400);
+      const s = JSON.parse(await page.eval("JSON.stringify(document.getElementById('heroGlobe').getBoundingClientRect())"));
+      await tap(page, { x: s.left + 14, y: s.top + s.height - 14 });
+      await sleep(500);
+      const beside = JSON.parse(await page.eval(OPENED));
+      if (beside.vis !== 'hidden') msgs.push('a tap beside the opened artwork did not close it');
+    }
+    await page.close();
+    if (msgs.length) fail('globe', `reduced motion 412px: ${msgs.join('; ')}`);
+    else pass('globe', 'reduced motion 412px: still; a tap opens the artwork in place with its name, whose eyes, Soon and the button to /try?lang=lt; Escape and a tap beside it close it');
+  }
+  // 3. the keyboard: one tab stop, the arrows move along a row and to the next row, Enter opens and puts the focus on the button, Escape closes and gives
+  //    the focus back to the artwork, Tab from the artwork does not land in the closed words; every artwork is a labelled button
+  {
+    const page = await open({ lang: 'en', width: 1440, height: 900, settle: false });
+    const msgs = [];
+    const press = async (k, code) => {
+      await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code: k, windowsVirtualKeyCode: code, ...(k === 'Enter' ? { text: String.fromCharCode(13) } : {}) });
+      await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code: k, windowsVirtualKeyCode: code });
+    };
+    const focused = "(document.activeElement.getAttribute('aria-label') || document.activeElement.className || document.activeElement.tagName)";
+    if (!(await until(page, LIVE))) msgs.push('the globe never came');
+    else {
+      const stops = await page.eval("document.querySelectorAll('#heroGlobe .lp-gl-disc[tabindex=\"0\"]').length");
+      const buttons = await page.eval("[...document.querySelectorAll('#heroGlobe .lp-gl-disc')].every((b) => b.tagName === 'BUTTON' && (b.getAttribute('aria-label') || '').length > 4)");
+      if (stops !== 1 || !buttons) msgs.push(`${stops} tab stops on the globe (1), every artwork a labelled button: ${buttons}`);
+      await page.eval("document.querySelector('#heroGlobe .lp-gl-disc[tabindex=\"0\"]').focus(); 1");
+      await press('Tab', 9);
+      await sleep(200);
+      const next = await page.eval("JSON.stringify({ inInfo: !!document.activeElement.closest('.lp-gl-info'), inGlobe: !!document.activeElement.closest('#heroGlobe') })");
+      if (JSON.parse(next).inInfo || JSON.parse(next).inGlobe) msgs.push(`Tab from the artwork stays in the globe or lands in its closed words (${next})`);
+      await page.eval("document.querySelector('#heroGlobe .lp-gl-disc[tabindex=\"0\"]').focus(); 1");
+      const f0 = await page.eval(focused);
+      await press('ArrowRight', 39);
+      await sleep(800);
+      const f1 = await page.eval(focused);
+      await press('ArrowUp', 38);
+      await sleep(800);
+      const f2 = await page.eval(focused);
+      if (f0 === f1 || f1 === f2) msgs.push(`the arrows did not move the focus (${f0} / ${f1} / ${f2})`);
+      await press('Enter', 13);
+      await sleep(1200);
+      const o = JSON.parse(await page.eval(`JSON.stringify({ name: document.querySelector('.lp-gl-name').textContent, on: document.activeElement.className })`));
+      if (!o.on.includes('lp-gl-cta') || !f2.startsWith(o.name)) msgs.push(`Enter opened "${o.name}" with the focus on "${o.on}" (the artwork was "${f2}")`);
+      await press('Escape', 27);
+      await sleep(1000);
+      const back = await page.eval(focused);
+      const vis = await page.eval("getComputedStyle(document.querySelector('.lp-gl-open')).visibility");
+      if (back !== f2 || vis !== 'hidden') msgs.push(`Escape left the focus on "${back}" (the artwork "${f2}"), the opened copy ${vis}`);
+    }
+    await page.close();
+    if (msgs.length) fail('globe', `keyboard 1440px: ${msgs.join('; ')}`);
+    else pass('globe', 'keyboard 1440px: one tab stop, the arrows move along and across the rows, Enter opens onto the button, Escape gives the focus back, Tab leaves the globe');
+  }
+  // 4. touch: a vertical swipe on the globe scrolls the page and does not turn it; a sideways swipe turns it and does not scroll
+  {
+    const page = await open({ lang: 'lt', width: 412, height: 915, settle: false });
+    const msgs = [];
+    if (!(await until(page, LIVE))) msgs.push('the globe never came');
+    else {
+      const box = JSON.parse(await page.eval("JSON.stringify(document.getElementById('heroGlobe').getBoundingClientRect())"));
+      const x = box.left + box.width * 0.5;
+      const y0 = box.top + box.height * 0.8;
+      const pitch = () => page.eval(`${ORB}.replace(/rotateY\\([^)]*\\)/, '')`);
+      const p0 = await pitch();
+      await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y0 }] });
+      for (let k = 1; k <= 12; k++) {
+        await page.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + k * 0.5, y: y0 - k * 22 }] });
+        await sleep(16);
+      }
+      await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await sleep(700);
+      const sy = await page.eval('Math.round(scrollY)');
+      const p1 = await pitch();
+      if (sy < 80) msgs.push(`a vertical swipe on the globe scrolled the page by ${sy} px`);
+      if (p1 !== p0) msgs.push(`a vertical swipe tilted the globe (${p0} to ${p1})`);
+      await page.eval("window.scrollTo({ top: 0, behavior: 'instant' })");
+      await sleep(400);
+      const t0 = await page.eval(ORB);
+      const y1 = box.top + box.height * 0.45;
+      await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.left + box.width * 0.85, y: y1 }] });
+      for (let k = 1; k <= 12; k++) {
+        await page.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.left + box.width * 0.85 - k * 22, y: y1 + k * 0.6 }] });
+        await sleep(16);
+      }
+      await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await sleep(900);
+      const sy2 = await page.eval('Math.round(scrollY)');
+      const t1 = await page.eval(ORB);
+      const yaw = (t) => parseFloat(/rotateY\(([-\d.]+)deg\)/.exec(t)?.[1] ?? 'NaN');
+      if (sy2 !== 0) msgs.push(`a sideways swipe scrolled the page by ${sy2} px`);
+      if (!(Math.abs(yaw(t1) - yaw(t0)) > 20)) msgs.push(`a sideways swipe turned the globe by ${(yaw(t1) - yaw(t0)).toFixed(1)} degrees`);
+    }
+    await page.close();
+    if (msgs.length) fail('globe', `touch 412px: ${msgs.join('; ')}`);
+    else pass('globe', 'touch 412px: a vertical swipe on the globe scrolls the page and leaves it, a sideways swipe turns it and does not scroll');
+  }
+  // 5. ordering open: an artwork whose style can be bought for its number of eyes opens without Soon, and one whose style is still a preview says Soon,
+  //    as the gallery's tiles do (the stub's catalogue is the registry's: which styles are live for one eye is read from it, never written here)
+  {
+    stub.open = true;
+    const cat = checkoutAnswer(ROOT, { open: true });
+    const names = (stage) => cat.styles.filter((s) => s.group === 'solo' && s.stages['1'] === stage).map((s) => s.name);
+    const page = await open({ lang: 'en', width: 412, height: 915, settle: false, reduceMotion: true });
+    const msgs = [];
+    const seen = [];
+    if (!(await until(page, LIVE))) msgs.push('the globe never came');
+    else {
+      await sleep(1500);
+      for (const [stage, wantSoon] of [['live', false], ['preview', true]]) {
+        const label = await page.eval(`(() => { const want = ${JSON.stringify(names(stage))}; const b = [...document.querySelectorAll('#heroGlobe .lp-gl-disc')].find((x) => want.includes((x.getAttribute('aria-label') || '').split(', ')[0])); if (!b) return ''; b.focus(); return b.getAttribute('aria-label'); })()`);
+        if (!label) { msgs.push(`no artwork of a style that is ${stage} for one eye`); continue; }
+        await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: String.fromCharCode(13) });
+        await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+        await sleep(500);
+        const o = JSON.parse(await page.eval(OPENED));
+        if (o.vis !== 'visible' || o.name !== label.split(', ')[0]) msgs.push(`Enter did not open "${label}": ${JSON.stringify(o)}`);
+        if (o.soon !== wantSoon) msgs.push(`ordering is open, "${label}" is ${stage} for one eye, and the opened artwork ${o.soon ? 'says' : 'does not say'} Soon`);
+        seen.push(`${label.split(', ')[0]} ${o.soon ? 'Soon' : 'for sale'}`);
+        await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        await sleep(500);
+      }
+    }
+    await page.close();
+    stub.open = false;
+    if (msgs.length) fail('globe', `ordering open: ${msgs.join('; ')}`);
+    else pass('globe', `ordering open: an artwork whose style can be bought opens without Soon, a preview style says Soon (${seen.join(', ')})`);
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------- run
-const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, stall: checkStall, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, guide: checkGuide, vitals: checkVitals };
+const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, stall: checkStall, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, guide: checkGuide, globe: checkGlobe, vitals: checkVitals };
 try {
   for (const [name, fn] of Object.entries(checks)) {
     if (!wants(name)) continue;

@@ -888,9 +888,9 @@ for label, mutate, needle in [
     ("a number of styles in the landing's own words", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Free watermarked preview"', '"Free watermarked preview in six styles"'),
      "states a number of styles"),
     # release review H-M2 (check item 16): a picture's label names no style that customers see and cannot buy (the tiles say Soon, a label cannot)
-    # (the hero's alt text is one sentence since the landing's lean pass of 2026-10-22: the plant goes at its end)
-    ("a picture label that names a style nobody can buy yet (the hero's alt text)", lambda c, r: sub(c, r, "src/landing/copy/en.json", 'print on a wall."', 'print on a wall, in the Radiance style."'),
-     'landing.en.hero.imageAlt: the label of a picture names the style "Radiance"'),
+    # (the hero's alt text is the globe poster's since 2026-10-22, the owner's choice of the globe of artworks: the plant goes at its end)
+    ("a picture label that names a style nobody can buy yet (the hero's alt text)", lambda c, r: sub(c, r, "src/landing/copy/en.json", 'made from our own eye and example photos"', 'made from our own eye and example photos, in the Radiance style"'),
+     'landing.en.hero.globeAlt: the label of a picture names the style "Radiance"'),
     ("a picture label in another language names one too (a German artwork alt text names Kiss Collision)", lambda c, r: sub(c, r, "src/landing/copy/de.json", '"Die restaurierte Iris als Kunstwerk"', '"Die restaurierte Iris als Kunstwerk im Stil Kiss Collision"'),
      'landing.de.reveal.eyes[1].artAlt: the label of a picture names the style "Kiss Collision"'),
     ("the wall's artwork button named after a style that is not live (Family Colours)", lambda c, r: sub(c, r, "src/landing/copy/lt.json", '"eye": "Viena akis",', '"eye": "Family Colours",'),

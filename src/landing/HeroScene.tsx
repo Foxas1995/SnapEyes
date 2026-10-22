@@ -1,36 +1,26 @@
-// The hero's picture (prototype: .hero-fig): the lounge with the acrylic print in a 4:5 frame sized to the viewport, the label
-// INSIDE the frame (top left: "Visualisation"; the lean pass of 2026-10-22 took off its second line and the caption under the picture: the
-// digital file and the printing that is not included are said once in the price list and once in the FAQ) and the disc over its corner (our
-// own eye cut through the pupil, phone photo left, restored iris right).
-// A PURE component (props in, markup out, no hook and no window): it is rendered to static HTML at build time for the
-// prerendered first screen and live by ./Hero.tsx, and it is the LCP element of the page.
-//
-// The entrance (src/motion/motion.css, css/hero.css) is pure CSS and never touches the picture's opacity: the picture is opaque from the
-// first frame (it is the LCP element and the artwork), it only settles from a scale of 1.03 (.lp-settle). The glint (an empty span
-// positioned over the print) sweeps once, late; the disc enters from the corner; both labels stay put, visible from the first frame.
-// The picture's address, srcset and sizes come from src/landing/shell/hero.ts, the one place that also writes the <link rel=preload>
-// in the head, so the preload and the image can never ask for different files.
+// The hero's centrepiece (2026-10-22, the owner's choice of the prototypes: "the sphere reminds of the eyeball itself"): a globe of round artworks in
+// our styles. The wall visualisation and the before/after disc that stood here before live in the wall section and the Reveal.
+// A PURE component (props in, markup out, no hook and no window): it is rendered to static HTML at build time for the prerendered first screen and
+// live by ./Hero.tsx. The first paint is the POSTER, a still picture of the globe's first view (#heroImg: the LCP element, preloaded with the same
+// srcset and sizes by src/landing/shell/render.tsx, and the picture the page's own script waits for, src/landing/shell/scripts.ts loaderScript); the
+// stage keeps its box from the first paint, so nothing moves (CLS 0). The live page puts the interactive globe (its own lazy chunk, ./globe/Globe.tsx)
+// into the same box once the hero is on screen and the browser is idle (`live`), and the poster steps back when the globe's first pictures are in
+// (`liveReady`, the attribute data-live: the two show the same arrangement, so the swap is not seen). The line under the stage is the honest label of
+// what the globe shows: our own eye and example photos, never a customer (hero.globeNote).
+import type { ReactNode } from 'react';
 import type { LandingCopy } from './copy/types';
-import { HERO_SIZES, heroDisc, heroPicture } from './shell/hero';
+import { HERO_SIZES, heroPicture } from './shell/hero';
 
-export function HeroScene({ hero }: { hero: LandingCopy['hero'] }) {
+export function HeroScene({ copy, live, liveReady = false }: { copy: LandingCopy; live?: ReactNode; liveReady?: boolean }) {
   const pic = heroPicture();
-  const disc = heroDisc();
   return (
     <figure className="lp-hero-fig">
-      <div className="lp-hero-stage">
-        <div className="lp-hero-frame lp-settle">
-          <img id="heroImg" src={pic.src} srcSet={pic.srcset} sizes={HERO_SIZES} width={pic.w} height={pic.h} fetchPriority="high" decoding="async" alt={hero.imageAlt} />
-          <span className="lp-glint" aria-hidden="true" />
-          <div className="lp-frame-chip" data-chip="vis">
-            <b>{hero.chipTitle}</b>
-          </div>
-        </div>
-        <a className="lp-disc" href="#reveal" id="heroDisc" aria-label={hero.discLink}>
-          <img src={disc.src} width={disc.w} height={disc.h} loading="lazy" fetchPriority="low" decoding="async" alt={hero.discAlt} />
-          <span className="lp-disc-label" aria-hidden="true">{hero.discLabel}</span>
-        </a>
+      <div className="lp-globe" id="heroGlobe" data-live={liveReady ? '' : undefined}>
+        {/* once the live globe is in, it speaks for itself (a group of labelled buttons): the poster is hidden from assistive technology then */}
+        <img id="heroImg" className="lp-globe-poster" src={pic.src} srcSet={pic.srcset} sizes={HERO_SIZES} width={pic.w} height={pic.h} fetchPriority="high" decoding="async" alt={copy.hero.globeAlt} aria-hidden={liveReady || undefined} />
+        {live}
       </div>
+      <figcaption className="lp-globe-note">{copy.hero.globeNote}</figcaption>
     </figure>
   );
 }

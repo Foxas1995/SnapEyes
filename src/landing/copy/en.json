@@ -57,11 +57,11 @@
     "fromPrice": "Digital file from {from}",
     "computerHint": "On a computer? Open snapeyes.com on your phone, or use photos you already have.",
     "secondary": "See a real before and after",
-    "imageAlt": "A visualisation: our own iris as a glossy acrylic print on a wall.",
-    "chipTitle": "Visualisation",
-    "discAlt": "Our own eye: a real phone photo on the left, the restored iris on the right.",
-    "discLabel": "A real phone photo, before and after",
-    "discLink": "Our own eye: a real phone photo, restored iris. Go to the before and after."
+    "globeAlt": "A sphere of round artworks in our styles, made from our own eye and example photos",
+    "globeLabel": "Our styles on a sphere you can turn",
+    "globeTry": "Try it with your eye",
+    "globeClose": "Close",
+    "globeNote": "Our own eye and example photos, not customers"
   },
   "reveal": {
     "eyebrow": "Before and after",

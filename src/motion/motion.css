@@ -3,6 +3,10 @@
 
    Slow, precise, quiet: ONE curve (expo out) for entrances, one (in out) for wipes; transform, opacity and clip-path only; no blur,
    no 3D, no per character motion. The artwork is never hidden, distorted or blurred (spec 2.2). Prices and legal text never animate.
+   ONE DELIBERATE EXCEPTION (the owner's choice of 2026-10-22): the hero's globe (src/landing/globe) is a CSS 3D scene of round artworks on a turning
+   sphere, seen foreshortened as it turns; each artwork opens flat, whole and sharp on a tap, the globe is still under reduced motion, and its code is
+   a lazy chunk of its own. scripts/check_taste.mjs (rule "3D", ALLOW_3D) refuses 3D anywhere else. It is also the one thing that moves at rest
+   (principle 4): it turns by itself, one turn a minute, only while the hero is on screen and the tab is shown (scripts/check_reveal.mjs rest).
 
    Every rule is inside @layer landing, like the rest of the page (declared in src/index.css), and every class carries the prefix lp-.
    The engine is src/motion/motion.ts. A hidden state exists only while <html> has the class "mo" (motion allowed, observers present)
@@ -133,18 +137,17 @@
 
   /* ------------------------------------------------------------------------------------------------ 5. first screen entrance
      Pure CSS: it starts from the markup that is already painted (the prerendered shell) and nothing waits for a script. Fill mode is
-     backwards, so the layer is released when the animation ends. The picture is NEVER given an opacity animation (it is the LCP
-     element and the artwork): see .lp-settle. Delays come from --d, set per element. */
+     backwards, so the layer is released when the animation ends. The picture is NEVER animated (the globe's poster: the LCP element and
+     the artwork, whole and still from the first frame; the globe's own slow turn starts from that same view once its chunk is in).
+     Delays come from --d, set per element. */
   @media (prefers-reduced-motion: no-preference) {
     .lp-rise { animation: lp-rise var(--d-reveal) var(--ease-out) var(--d, 0s) backwards; }          /* lead, button row: rises 20 px */
-    .lp-rise-s { animation: lp-rise-s var(--d-reveal-s) var(--ease-out) var(--d, 0s) backwards; }    /* eyebrow, small lists, the disc: rises 10 px */
+    .lp-rise-s { animation: lp-rise-s var(--d-reveal-s) var(--ease-out) var(--d, 0s) backwards; }    /* eyebrow, small lists: rises 10 px */
     .lp-rise-line { animation: lp-rise-line 1.4s var(--ease-out) var(--d, 0s) backwards; }           /* translate only: no opacity */
-    .lp-settle img { animation: lp-settle var(--d-settle) var(--ease-out) backwards; }               /* the picture is opaque from the first frame */
   }
   @keyframes lp-rise { from { opacity: 0; translate: 0 var(--rise-m); } }
   @keyframes lp-rise-s { from { opacity: 0; translate: 0 var(--rise-s); } }
   @keyframes lp-rise-line { from { translate: 0 var(--mask-from); } }
-  @keyframes lp-settle { from { scale: 1.03; } }
 
   /* ------------------------------------------------------------------------------------------------ 6. stacked sheets (chapters)
      Three rounded edges on the whole page. The rim is light catching an edge, so it fades out toward the corners. A sheet sets NO

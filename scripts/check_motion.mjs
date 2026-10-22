@@ -7,15 +7,17 @@
 //
 // What it checks (each name is a value of --only):
 //   reduced   prefers-reduced-motion: reduce: no html.mo, nothing hidden, no running animation, every [data-reveal] in its final state, the
-//             first screen in its final state at once, the hero artwork pixel for pixel the same as with motion after the entrance (AC-5)
+//             first screen in its final state at once, the hero's globe still (it turns only when the visitor turns it), the hero artwork (the
+//             globe's poster) pixel for pixel the same as with motion after the entrance (AC-5)
 //   nojs      the page without JavaScript: the static first screen's entrance still ends in the final state, nothing stays hidden
 //   failsafe  a dead IntersectionObserver (an in-app browser): html.mo-fail lifts every hidden state 3.5 s after boot; with a live one it never
 //             appears; a full scroll reveals every [data-reveal] it passed, leaves no animation behind and no transition delay
 //   engine    the engine's own code (src/motion/motion.ts, transpiled) and motion.css in a sandbox page with real frames: reveals, late mounts,
 //             stagger cap, failsafe, pinned scene at p = 0 .25 .5 .75 1, no pin on a phone, whenPinned following the width, lit() gated by html.mo,
 //             reduced motion doing nothing at all, and the padded mask keeping Hungarian and Lithuanian accents and ogoneks inside the clip
-//   hero      the first screen: the picture is never faded, filtered, rotated or scaled above 1.03 at any frame; the honesty labels are visible
-//             from the first frame; one headline, real text, a space between phrases, no stray star
+//   hero      the first screen: the artwork (the globe's poster, then the live globe in its place) is never faded, filtered, rotated or scaled
+//             at any frame, the poster gives its place only to the live globe; the honest line under it is visible from the first frame; one
+//             headline, real text, a space between phrases, no stray star
 //   header    the glass after 24 px, the gold marker under the link of the section being read (and gone on a section with no link), measured
 //             again after a language switch, the language switch's pressed background sliding
 //   menu      the dialog of the narrow widths: opens before React has started, keeps the focus inside, Escape and the close button close it, a
@@ -29,7 +31,7 @@
 //   skip      the chapters below the first screen are skipped until near the screen (content-visibility), the pinned Reveal is not, a jump to a section lands on it
 //             and the page keeps its height from the first moment to the end of a full scroll (within 3.5 percent)
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -59,6 +61,8 @@ const handler = (req, res) => {
 };
 const site = await serve(dist, { vercelFile: join(ROOT, 'vercel.json'), handler });
 const origin = `http://127.0.0.1:${site.port}`;
+// the hero's globe: its interactive part is a chunk of its own, fetched when the hero is on screen and the browser is idle (src/landing/Hero.tsx)
+const GLOBE_JS = readdirSync(join(dist, 'assets')).find((f) => /^Globe-[\w-]+\.js$/.test(f));
 const chrome = await launch();
 
 // ---------------------------------------------------------------------------------------------------- helpers
@@ -71,6 +75,7 @@ async function open({ lang = 'en', query = '', width = 1280, height = 900, settl
   await wipe.close();
   const page = await chrome.page({ width, height, mobile: width < 800, dpr: width < 800 ? 2 : 1, ...more });
   if (more.pre) await page.send('Page.addScriptToEvaluateOnNewDocument', { source: more.pre });
+  if (more.block) await page.send('Network.setBlockedURLs', { urls: more.block });
   const q = new URLSearchParams(query);
   if (lang) q.set('lang', lang);
   await page.goto(`${origin}/?${q}`);
@@ -109,27 +114,41 @@ async function checkReduced() {
     const s = JSON.parse(await page.eval(`JSON.stringify({
       mo: document.documentElement.classList.contains('mo'), fail: document.documentElement.classList.contains('mo-fail'),
       anims: document.getAnimations().filter((a) => a instanceof CSSAnimation).length,
-      hidden: ${finalState('[data-reveal], [data-reveal] .lp-line-mask > span')}, heroHidden: ${finalState('.lp-hero .lp-rise, .lp-hero .lp-rise-s, .lp-hero .lp-rise-line, .lp-hero .lp-disc, .lp-hero-frame img')},
+      hidden: ${finalState('[data-reveal], [data-reveal] .lp-line-mask > span')}, heroHidden: ${finalState('.lp-hero .lp-rise, .lp-hero .lp-rise-s, .lp-hero .lp-rise-line, .lp-hero .lp-globe, .lp-hero .lp-globe-note, .lp-hero .lp-gl, .lp-hero .lp-globe:not([data-live]) #heroImg')},
       inlineLit: [...document.querySelectorAll('.lp-lit [data-w]')].filter((w) => w.style.opacity).length, reveals: document.querySelectorAll('[data-reveal]').length })`));
     expect('reduced', !s.mo && !s.fail, `${tag}: html carries mo (${s.mo}) or mo-fail (${s.fail}) under reduced motion`);
     expect('reduced', s.anims === 0, `${tag}: ${s.anims} CSS animations are running under reduced motion`);
     expect('reduced', s.hidden.length === 0, `${tag}: hidden or moved at rest: ${s.hidden.join(', ')}`);
     expect('reduced', s.heroHidden.length === 0, `${tag}: the first screen is not in its final state: ${s.heroHidden.join(', ')}`);
     expect('reduced', s.inlineLit === 0, `${tag}: ${s.inlineLit} scroll lit words carry an inline opacity under reduced motion`);
+    // the globe (its own chunk, in once the hero is on screen and the browser is idle) keeps still: nothing turns by itself under reduced motion
+    let live = false;
+    for (let i = 0; i < 100 && !live; i++) {
+      live = await page.eval("!!document.querySelector('#heroGlobe[data-live] .lp-gl-orb')");
+      if (!live) await sleep(100);
+    }
+    if (expect('reduced', live, `${tag}: the hero's globe never took the poster's place`)) {
+      const t0 = await page.eval("document.querySelector('.lp-gl-orb').style.transform");
+      await sleep(1500);
+      const t1 = await page.eval("document.querySelector('.lp-gl-orb').style.transform");
+      expect('reduced', t0 === t1 && t0.length > 0, `${tag}: the globe turned by itself under reduced motion (${t0} to ${t1})`);
+    }
     await scrollThrough(page, 120);
     const after = JSON.parse(await page.eval(`JSON.stringify({ hidden: ${finalState('[data-reveal], [data-reveal] .lp-line-mask > span')}, mo: document.documentElement.classList.contains('mo') })`));
     expect('reduced', after.hidden.length === 0 && !after.mo, `${tag}: after a full scroll: hidden ${after.hidden.join(', ')}, mo ${after.mo}`);
     await page.close();
   }
-  // the artwork at rest is pixel for pixel the same with the motion off and with it on, after the entrance (AC-5, zero tolerance)
+  // the artwork at rest is pixel for pixel the same with the motion off and with it on, after the entrance (AC-5, zero tolerance). Since 2026-10-22 the
+  // artwork of the first screen is the globe's poster: the live globe that takes its place turns slowly by itself when motion is allowed (the motion
+  // spec's one exception, src/motion/motion.css), so the comparison is made on the poster, with the globe's chunk held back in both; that the still
+  // globe of reduced motion is the poster's picture is scripts/check_shell.mjs's part
   for (const width of [1280, 375]) {
     const shot = async (reduceMotion) => {
-      const page = await open({ lang: 'en', width, height: width < 800 ? 812 : 900, reduceMotion, settle: false });
-      await sleep(6000);   // the entrance, the glint sweep (it ends at 4.5 s) and the handoff are over
-      // the artwork's own pixels: what is laid over it (the disc, the chip, the glint, the ring, the bloom) is hidden in both, and the clip stays 24 px
-      // inside the frame, away from the anti-aliased edge of its rounded corners (which Chrome rasterises a little differently for a node that has
-      // been animated). The overlays are checked on their own: the hero check follows their opacity frame by frame.
-      await page.eval("(() => { const s = document.createElement('style'); s.textContent = '.lp-disc, .lp-frame-chip, .lp-glint, .lp-hero::before, .lp-hero-stage::before { visibility: hidden !important }'; document.head.appendChild(s); })()");
+      const page = await open({ lang: 'en', width, height: width < 800 ? 812 : 900, reduceMotion, settle: false, block: GLOBE_JS ? [`*/assets/${GLOBE_JS}`] : [] });
+      await sleep(6000);   // the entrance and the handoff are over
+      // the artwork's own pixels: the clip stays 24 px inside the stage, away from its edges (the line under it is checked on its own: the hero check
+      // follows its opacity frame by frame)
+      await page.eval("(() => { const s = document.createElement('style'); s.textContent = '.lp-glint { visibility: hidden !important }'; document.head.appendChild(s); })()");
       const clip = JSON.parse(await page.eval("JSON.stringify((() => { const r = document.getElementById('heroImg').getBoundingClientRect(); return [r.left + 24, r.top + scrollY + 24, r.width - 48, r.height - 48]; })())"));
       const png = await page.shot(clip);
       await page.close();
@@ -425,8 +444,10 @@ async function checkEngine() {
 // ---------------------------------------------------------------------------------------------------- hero
 async function checkHero() {
   console.log('hero');
-  // sampled every frame from the very start, on the phone profile so the entrance is slow enough to see
-  const SAMPLER = `window.__f = []; (function loop() { const i = document.getElementById('heroImg'); if (i) { let min = 1, filt = 'none', tf = 0; for (let e = i; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e); min = Math.min(min, +c.opacity); if (c.filter !== 'none') filt = c.filter; } const c = getComputedStyle(i); const sc = c.scale === 'none' ? 1 : parseFloat(c.scale); const rot = c.rotate; const chip = document.querySelector('.lp-frame-chip'), cap = document.querySelector('.lp-hero-cap'), gl = document.querySelector('.lp-hero-frame .lp-glint'); window.__f.push({ t: Math.round(performance.now()), min, filt, sc, rot, tr: c.transform, chip: chip ? +getComputedStyle(chip).opacity : -1, cap: cap ? +getComputedStyle(cap).opacity : -1, vis: i.getBoundingClientRect().width > 0, gl: gl ? +getComputedStyle(gl, '::after').opacity : -1 }); } requestAnimationFrame(loop); })();`;
+  // sampled every frame from the very start, on the phone profile so the entrance is slow enough to see. The artwork is the globe's poster (#heroImg)
+  // until the live globe (.lp-gl, its own chunk) takes its place: then the poster is hidden at once (opacity 0, never in between) and the globe is the
+  // artwork, held to the same rule (no fade, no filter on it or an ancestor). The poster itself is never scaled or turned.
+  const SAMPLER = `window.__f = []; (function loop() { const i = document.getElementById('heroImg'); if (i) { const stage = document.getElementById('heroGlobe'), live = !!stage && stage.hasAttribute('data-live'); const art = live ? stage.querySelector('.lp-gl') : i; let min = 1, filt = 'none'; for (let e = art; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e); min = Math.min(min, +c.opacity); if (c.filter !== 'none') filt = c.filter; } const c = getComputedStyle(i); const sc = c.scale === 'none' ? 1 : parseFloat(c.scale); const rot = c.rotate; const chip = document.querySelector('.lp-globe-note'), cap = document.querySelector('.lp-hero-cap'), gl = stage && stage.querySelector('.lp-gl'); window.__f.push({ t: Math.round(performance.now()), live, glShown: !!gl && getComputedStyle(gl).visibility === 'visible', min, filt, sc, rot, tr: c.transform, poster: +c.opacity, chip: chip ? +getComputedStyle(chip).opacity : -1, cap: cap ? +getComputedStyle(cap).opacity : -1, vis: i.getBoundingClientRect().width > 0 }); } requestAnimationFrame(loop); })();`;
   for (const [lang, width] of [['en', 375], ['de', 1280]]) {
     const page = await chrome.page({ width, height: width < 800 ? 812 : 900, mobile: width < 800, dpr: 1, cpu: 4, throttle: { latency: 150, down: 200000, up: 93750 } });
     await page.send('Page.addScriptToEvaluateOnNewDocument', { source: SAMPLER });
@@ -435,22 +456,19 @@ async function checkHero() {
     const f = JSON.parse(await page.eval('JSON.stringify(window.__f)'));
     const tag = `${lang} ${width}px`;
     expect('hero', f.length > 30, `${tag}: only ${f.length} frames were sampled`);
-    expect('hero', f.every((x) => x.min === 1), `${tag}: the picture or an ancestor was below full opacity in ${f.filter((x) => x.min < 1).length} frames (min ${Math.min(...f.map((x) => x.min))}): the LCP picture must never be faded`);
-    expect('hero', f.every((x) => x.filt === 'none'), `${tag}: a filter on the picture or an ancestor`);
-    expect('hero', f.every((x) => x.sc <= 1.0301 && x.sc >= 0.9999), `${tag}: the picture scales to ${Math.max(...f.map((x) => x.sc))} (the charter allows 1.03)`);
-    expect('hero', f.every((x) => x.rot === 'none' && !/matrix\(.*,\s*-?[1-9]/.test(x.tr.replace(/matrix\(1, 0, 0, 1,[^)]*\)/, ''))), `${tag}: the picture is rotated or skewed`);
-    // the honesty label is the chip in the frame; the caption under the picture went in the lean pass of 2026-10-22 (the owner: too much text), so a caption, if one is
-    // ever there again, is held to the same rule and its absence (-1) is no failure
-    expect('hero', f.every((x) => x.chip === 1 && (x.cap === 1 || x.cap === -1)), `${tag}: the honesty chip or the caption was below full opacity in some frame (chip min ${Math.min(...f.map((x) => x.chip))}, caption min ${Math.min(...f.map((x) => x.cap))})`);
-    // the glint on the print face is one quiet sweep at .10 (spec 6.2, ledger 16.2 C). Its keyframes once shared a global name with the wall's glint, whose chunk arrives
-    // after the first render and replaces the running keyframes (2026-10-05: a white slab at opacity 1 over the print face): so the painted opacity is read every frame,
-    // after every chunk that could replace it, and the sweep must have been seen at all
-    const gl = f.map((x) => x.gl).filter((x) => x >= 0);
-    expect('hero', gl.length > 30, `${tag}: the glint element was not found`);
-    expect('hero', Math.max(0, ...gl) <= 0.1005, `${tag}: the hero glint reached opacity ${Math.max(0, ...gl)} (the spec's sweep peaks at .10: a second @keyframes of the same name replaced it?)`);
-    expect('hero', Math.max(0, ...gl) >= 0.05, `${tag}: the hero glint never showed (peak ${Math.max(0, ...gl)})`);
-    const last = f.at(-1);
-    expect('hero', last.sc === 1, `${tag}: the picture ends at scale ${last.sc}`);
+    expect('hero', f.every((x) => x.min === 1), `${tag}: the artwork (the poster, or the live globe in its place) or an ancestor was below full opacity in ${f.filter((x) => x.min < 1).length} frames (min ${Math.min(...f.map((x) => x.min))}): the LCP picture must never be faded`);
+    expect('hero', f.every((x) => x.filt === 'none'), `${tag}: a filter on the artwork or an ancestor`);
+    expect('hero', f.every((x) => x.sc === 1), `${tag}: the poster scales to ${Math.max(...f.map((x) => x.sc))} (it is never scaled)`);
+    expect('hero', f.every((x) => x.rot === 'none' && !/matrix\(.*,\s*-?[1-9]/.test(x.tr.replace(/matrix\(1, 0, 0, 1,[^)]*\)/, ''))), `${tag}: the poster is rotated or skewed`);
+    // the poster is shown whole until the live globe takes its place, and hidden at once then: never half way, never before the globe is there
+    expect('hero', f.every((x) => (x.live ? x.poster === 0 : x.poster === 1)), `${tag}: the poster was at opacity ${[...new Set(f.filter((x) => (x.live ? x.poster !== 0 : x.poster !== 1)).map((x) => `${x.poster} (globe ${x.live ? 'in' : 'not in'})`))].slice(0, 4).join(', ')}`);
+    expect('hero', f.some((x) => x.live), `${tag}: the live globe never took the poster's place in 7 s on the phone profile`);
+    // the globe is in the page (hidden) while it fetches the pictures of its first view: it may be seen only once it has taken the poster's place
+    expect('hero', f.every((x) => x.live || !x.glShown), `${tag}: the live globe was shown over the poster before its pictures were in, in ${f.filter((x) => !x.live && x.glShown).length} frames`);
+    // the honest line under the globe ("our own eye and example photos, not customers") is visible from the first frame; the caption under the old picture went in
+    // the lean pass of 2026-10-22 (the owner: too much text), so a caption, if one is ever there again, is held to the same rule and its absence (-1) is no failure.
+    // (The old picture's glint, a sweep at .10 whose keyframes once collided with the wall's, went with the picture: the globe has none.)
+    expect('hero', f.every((x) => x.chip === 1 && (x.cap === 1 || x.cap === -1)), `${tag}: the honest line or the caption was below full opacity in some frame (line min ${Math.min(...f.map((x) => x.chip))}, caption min ${Math.min(...f.map((x) => x.cap))})`);
     await page.close();
   }
   // one headline, real text, a space between phrases, no stray star, in every language
@@ -465,7 +483,7 @@ async function checkHero() {
     expect('hero', s.glued.length === 0, `${lang}: no space between phrases in ${s.glued.join(' | ')}`);
     await page.close();
   }
-  if (!problems.some((x) => x.startsWith('hero'))) pass('hero', 'the picture is opaque, unfiltered, unrotated and at most 1.03 in every frame from the first; the honesty label is visible from the first frame; headline is real text in all four languages');
+  if (!problems.some((x) => x.startsWith('hero'))) pass('hero', 'the artwork (the poster, then the live globe in its place at once) is opaque and unfiltered in every frame from the first, the poster never scaled or turned; the honest line is visible from the first frame; headline is real text in all four languages');
 }
 
 // ---------------------------------------------------------------------------------------------------- header

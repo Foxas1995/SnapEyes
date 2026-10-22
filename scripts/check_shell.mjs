@@ -10,12 +10,17 @@
 // Lithuanian, Hungarian and Australian markets): the shell (the page with its main script blocked: only the static HTML and the inline
 // scripts, the swap to the visitor's language included) and the live first screen (React, after the shell has gone) occupy the same
 // boxes, with the same styles and the same pixels (the held-back price aside), say the same words and link to the same /try, the
-// shell is gone after the handoff, no id is used twice, the honesty words are in the static HTML of every language (the label
-// "Visualisation" inside the picture's frame, the lead, the bar; since the lean pass of 2026-10-22 the label is one word and the digital file and the
-// printing that is not included are said in the price list and the FAQ, not on the first screen), the LCP picture
-// is preloaded with the srcset of the image.
+// shell is gone after the handoff, no id is used twice, the honesty words are in the static HTML of every language (the line under the
+// globe, "our own eye and example photos, not customers", the poster's alt text, the lead, the bar; since the lean pass of 2026-10-22 the digital
+// file and the printing that is not included are said in the price list and the FAQ, not on the first screen), the LCP picture (the globe's
+// poster) is preloaded with the srcset of the image.
+// The globe (2026-10-22): its interactive part is a chunk of its own that the live page fetches when the hero is on screen and the browser is
+// idle, so the comparison above is made with that chunk held back (the first screen React renders is the shell's, poster included). Then, with the
+// chunk let in, the globe has to take the poster's place without being seen: every box of the first screen stays where it was (no shift) and the
+// stage shows the poster's picture (the poster IS the globe's first view, scripts/make_globe_poster.mjs: the two may differ only by the
+// resampling of the pictures, measured as the mean difference of the stage's pixels and the share of pixels far apart).
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
@@ -96,7 +101,7 @@ async function rules() {
 
 // ------------------------------------------------------------------------------------------------ part 2: the built page in Chrome
 const LANDMARKS = ['.lp-topbar', '.lp-hdr', '.lp-hdr .lp-logo', '.lp-nav', '.lp-seg', '.lp-hdr .lp-btn-line', '.lp-hero', '.lp-eyebrow', '#h1', '.lp-lead', '.lp-cta-row', '#ctaHero', '.lp-link-quiet',
-  '.lp-micro', '.lp-computer-hint', '.lp-hero-fig', '.lp-hero-frame', '#heroImg', '.lp-frame-chip', '.lp-disc', '.lp-disc-label'];
+  '.lp-micro', '.lp-computer-hint', '.lp-hero-fig', '#heroGlobe', '#heroImg', '.lp-globe-note'];
 const STYLE_PROPS = ['color', 'font-size', 'font-family', 'font-weight', 'line-height', 'letter-spacing', 'background-color', 'opacity', 'display', 'position', 'border-radius', 'padding-top', 'margin-top', 'object-fit', 'text-transform'];
 
 const MEASURE = `(() => {
@@ -115,8 +120,16 @@ const MEASURE = `(() => {
   out.bar = getComputedStyle(document.documentElement).getPropertyValue('--bar-h');
   return JSON.stringify(out);
 })()`;
-const HIDE_PRICE = `(() => { const s = document.createElement('style'); s.textContent = '.lp-price, .lp-glint { visibility: hidden !important }'; document.head.appendChild(s); })()`;
+// the held-back price (another width in some markets), and what follows the hero in the live page: the shell is the first screen only, and since the
+// globe (2026-10-22) the hero of a portrait tablet can end just above the screen's bottom edge, where the live page shows the top of the next sheet
+const HIDE_PRICE = `(() => { const s = document.createElement('style'); s.textContent = '.lp-price, .lp-glint, #main > .lp-hero ~ * { visibility: hidden !important }'; document.head.appendChild(s); })()`;
 const sha = (b) => createHash('sha256').update(b).digest('hex').slice(0, 16);
+// how far the globe's first view may be from its poster (the stage's pixels: the mean difference over the three channels, 0 to 255, and the share
+// of pixels that differ by more than 48 in a channel). Measured on the build of 2026-10-22 at 375 and 1280 px: the globe as it is 2.5 to 3.1 and
+// 0.2 to 0.6 %; the same globe turned by one degree 5.3 to 5.5 and 2.7 %; a changed sheen on every disc 4.7 to 5.3 and 0.8 %. So a poster that
+// was not rebuilt after a change of the globe's look or of its first arrangement fails.
+const GLOBE_MEAN = 4.2;
+const GLOBE_FAR = 0.015;
 
 
 /** Compare two PNGs in Chrome itself (canvas): how many pixels differ by more than 8 in any channel, and where. */
@@ -143,6 +156,30 @@ async function pngDiff(chrome, a, b) {
   return r;
 }
 
+/** The stage of the globe in two PNGs of the same size: the mean difference of its pixels (0 to 255, over the three channels) and the share of its
+ *  pixels that differ by more than 48 in a channel. */
+async function stageDiff(chrome, a, b, box) {
+  const page = await chrome.page({ width: 400, height: 300 });
+  const expr = `(async () => {
+    const load = (b64) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = 'data:image/png;base64,' + b64; });
+    const [x, y] = await Promise.all([load(${JSON.stringify(a.toString('base64'))}), load(${JSON.stringify(b.toString('base64'))})]);
+    const [l, t, w, h] = ${JSON.stringify(box.map((v) => Math.round(v)))};
+    const data = (im) => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); return g.getImageData(l, t, w, h).data; };
+    const p = data(x), q = data(y);
+    let sum = 0, far = 0;
+    for (let i = 0; i < p.length; i += 4) {
+      const d0 = Math.abs(p[i] - q[i]), d1 = Math.abs(p[i + 1] - q[i + 1]), d2 = Math.abs(p[i + 2] - q[i + 2]);
+      sum += d0 + d1 + d2;
+      if (d0 > 48 || d1 > 48 || d2 > 48) far++;
+    }
+    const n = p.length / 4;
+    return JSON.stringify({ mean: sum / n / 3, far: far / n });
+  })()`;
+  const r = JSON.parse(await page.eval(expr));
+  await page.close();
+  return r;
+}
+
 function close(a, b, tol = 0.51) {
   return a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) <= tol);
 }
@@ -156,6 +193,10 @@ async function browser(dist, shotsDir) {
   const mainJs = /var M="(\/assets\/main-[^"]+\.js)"/.exec(html)?.[1];
   if (!mainJs) note(`dist/${landingFile('en')}: the loader of the page script is missing`);
   if (/<script type="module"[^>]*src=/.test(html) || /<link rel="modulepreload"/.test(html)) note(`dist/${landingFile('en')}: a module script or modulepreload is still in the head (it would compete with the LCP picture)`);
+  // the globe's interactive chunk: never named by the landing's HTML (it is fetched when the hero is on screen and the browser is idle)
+  const globeJs = readdirSync(join(dist, 'assets')).find((f) => /^Globe-[\w-]+\.js$/.test(f));
+  if (!globeJs) note("dist/assets: the chunk of the hero's globe (Globe-*.js) is missing");
+  else if (html.includes(globeJs)) note(`dist/${landingFile('en')}: the globe's chunk ${globeJs} is named in the HTML (it must be fetched only when the hero is on screen and the browser is idle)`);
   // every page starts as a first visit: the page remembers the market of a ?m= link (localStorage), which would change the next page
   const fresh = async (opts) => {
     const p = await chrome.page(opts);
@@ -182,13 +223,13 @@ async function browser(dist, shotsDir) {
       const copy = COPY[l];
       const f = (s) => s.replace(/\{(\w+)\}/g, (w, k) => copy.facts[k] ?? w);
       const text = decode(parts[l]);
-      for (const [what, s] of [['the label inside the picture frame', copy.hero.chipTitle], ['the lead', f(copy.hero.lead)],
-        ['the bar sentence', copy.bar.soon], ['the picture alt text', copy.hero.imageAlt]]) {
+      for (const [what, s] of [['the line under the globe', copy.hero.globeNote], ['the lead', f(copy.hero.lead)],
+        ['the bar sentence', copy.bar.soon], ["the poster's alt text", copy.hero.globeAlt]]) {
         if (!text.includes(s)) note(`static HTML (${l}): ${what} is missing ("${s.slice(0, 50)}")`);
       }
-      if (!/<div class="lp-frame-chip"[^>]*><b>[^<]+<\/b><\/div><\/div>/.test(parts[l])) note(`static HTML (${l}): the label is not inside the picture frame (.lp-hero-frame)`);
+      if (!/<figcaption class="lp-globe-note">[^<]+<\/figcaption><\/figure>/.test(parts[l])) note(`static HTML (${l}): the honest line is not the caption of the globe's figure (.lp-globe-note)`);
       if (!/<img id="heroImg"[^>]*fetchpriority="high"/i.test(parts[l])) note(`static HTML (${l}): the hero picture is not fetchpriority=high`);
-      const img = /<img id="heroImg" src="([^"]+)" srcSet="([^"]+)" sizes="([^"]+)"/i.exec(parts[l]);
+      const img = /<img id="heroImg"[^>]*? src="([^"]+)" srcSet="([^"]+)" sizes="([^"]+)"/i.exec(parts[l]);
       if (pre && (!img || pre[1] !== img[2] || pre[2] !== img[3])) note(`head: the preload srcset or sizes differs from the hero image of the ${l} shell`);
       if (!/class="lp-price"[^>]*inert/.test(parts[l])) note(`static HTML (${l}): the price line is not held back`);
       if (/€\s?\d|\d\s?€|A\$\s?\d/.test(parts[l].replace(/class="lp-price"[\s\S]*?<\/li>/g, ''))) note(`static HTML (${l}): a price is printed outside the held-back line`);
@@ -212,8 +253,9 @@ async function browser(dist, shotsDir) {
         const shellM = JSON.parse(await a.eval(MEASURE));
         const shellPng = await a.shot();
         await a.close();
-        // 2. the live first screen
+        // 2. the live first screen (React's), the globe's chunk held back: the poster stays
         const b = await fresh({ width: w, height: h, mobile, dpr: 1, reduceMotion: true });
+        if (globeJs) await b.send('Network.setBlockedURLs', { urls: [`*/assets/${globeJs}`] });
         await b.goto(`${origin}${url}`);
         await b.loaded();
         for (let i = 0; i < 100; i++) {
@@ -255,6 +297,38 @@ async function browser(dist, shotsDir) {
         const d = await pngDiff(chrome, shellPng, livePng);
         if (d.size || d.n > 30) note(`${tag}: the first screen pixels differ between the shell and the live page: ${d.size ? `sizes ${d.size}` : `${d.n} pixels, ${d.box}`} (run with --shots and compare the shell_ and live_ pictures)`);
         else console.log(`${tag}: shell and live first screen: ${d.n} pixels differ by more than 8 of ${w * h}`);
+        // 3. the globe takes the poster's place (in English and Lithuanian at every size: the stage holds no words)
+        if (market !== 'eu' || !globeJs || !['en', 'lt'].includes(lang)) continue;
+        const g = await fresh({ width: w, height: h, mobile, dpr: 1, reduceMotion: true });
+        await g.goto(`${origin}${url}`);
+        await g.loaded();
+        let live = false;
+        for (let i = 0; i < 150 && !live; i++) {
+          live = await g.eval("!!document.querySelector('#root #heroGlobe[data-live] .lp-gl')");
+          if (!live) await sleep(100);
+        }
+        if (!live) {
+          note(`${tag}: the globe did not take the poster's place within 15 s of the load`);
+          await g.close();
+          continue;
+        }
+        await g.eval('Promise.all([...document.querySelectorAll(".lp-gl img")].filter((i) => i.src).map((i) => i.decode().catch(() => 0))).then(() => 1)');
+        await sleep(400);
+        await g.eval(HIDE_PRICE);
+        const globeM = JSON.parse(await g.eval(MEASURE));
+        const globePng = await g.shot();
+        const state = JSON.parse(await g.eval(`JSON.stringify({ poster: getComputedStyle(document.getElementById('heroImg')).opacity, hidden: document.getElementById('heroImg').getAttribute('aria-hidden'), tabStops: document.querySelectorAll('#heroGlobe .lp-gl-disc[tabindex="0"]').length, discs: document.querySelectorAll('#heroGlobe .lp-gl-disc').length })`));
+        await g.close();
+        for (const sel of LANDMARKS) {
+          const x = liveM[sel], y = globeM[sel];
+          if (x && y && !close(x.box, y.box)) note(`${tag}: ${sel} moved when the globe came: ${x.box} with the poster, ${y.box} with the globe`);
+        }
+        if (state.poster !== '0' || state.hidden !== 'true') note(`${tag}: with the globe in, the poster is still shown (opacity ${state.poster}, aria-hidden ${state.hidden})`);
+        if (state.discs !== 32 || state.tabStops !== 1) note(`${tag}: the globe has ${state.discs} artworks and ${state.tabStops} tab stops (32 and 1)`);
+        const sd = await stageDiff(chrome, shellPng, globePng, liveM['#heroGlobe'].box);
+        if (sd.mean > GLOBE_MEAN || sd.far > GLOBE_FAR) note(`${tag}: the globe's first view is not the poster's picture: mean difference ${sd.mean.toFixed(2)} (at most ${GLOBE_MEAN}), ${(sd.far * 100).toFixed(2)} % of the stage far apart (at most ${GLOBE_FAR * 100} %); rebuild the poster (scripts/make_globe_poster.mjs) after a change of the globe`);
+        else console.log(`${tag}: the globe took the poster's place: no box moved, stage mean difference ${sd.mean.toFixed(2)}, ${(sd.far * 100).toFixed(2)} % of its pixels far apart`);
+        if (shotsDir) writeFileSync(join(shotsDir, `globe_${lang}_${market}_${w}.png`), globePng);
       }
     }
     // a German browser on the plain address has the German shell

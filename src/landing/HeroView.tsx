@@ -1,6 +1,6 @@
 // The hero (prototype: section.hero) as a PURE component: props in, markup out, no hook and no window. Copy and call to action on
-// the left, the picture with its in-frame label and the disc on the right (./HeroScene.tsx). On a phone the order is headline,
-// lead, button, picture, micro line (the CSS unwraps the copy column); from 960 px it is two columns, the picture sized to the
+// the left, the globe of artworks and its honest line on the right (./HeroScene.tsx). On a phone the order is globe, headline,
+// lead, button and link, micro line (the CSS unwraps the copy column); from 960 px it is two columns, the globe sized to the
 // viewport so it is whole on a 1366 x 768 screen.
 //
 // The same markup is rendered twice: to static HTML at build time (src/landing/shell/render.tsx, the prerendered first screen) and
@@ -8,7 +8,7 @@
 // The micro line's price ("Digital file from {from}") is the visitor's own price, held back (invisible, out of the tab order, its
 // space kept) until the server has answered about the visitor's prices, so nobody in a price experiment sees the standard price
 // for a moment and nothing moves when it appears (src/landing/prices.ts).
-import type { CSSProperties, Ref } from 'react';
+import type { CSSProperties, ReactNode, Ref } from 'react';
 import type { LandingCopy } from './copy/types';
 import { fill } from './copy/format';
 import { HeroScene } from './HeroScene';
@@ -34,13 +34,16 @@ export interface HeroViewProps {
   /** Hold the price line back until the visitor's prices are known. */
   pricePending: boolean;
   ctaRef?: Ref<HTMLAnchorElement>;
+  /** Only the live page gives these: the interactive globe (./globe/Globe.tsx, a lazy chunk) and whether it has taken the poster's place. */
+  globe?: ReactNode;
+  globeReady?: boolean;
 }
 
 /** The entrance of the first screen (motion spec 6.2): when this element starts, in seconds. The CSS (src/motion/motion.css lp-rise,
  *  lp-rise-s) plays from the markup that is already painted, the prerendered shell included; nothing here waits for a script. */
 const at = (s: number): CSSProperties => ({ '--d': `${s}s` }) as CSSProperties;
 
-export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef }: HeroViewProps) {
+export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef, globe, globeReady }: HeroViewProps) {
   const h = copy.hero;
   return (
     <section className="lp-hero" id="top" aria-labelledby="h1">
@@ -69,7 +72,7 @@ export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef }: Her
           </ul>
           <p className="lp-computer-hint lp-rise-s" style={at(0.8)}>{h.computerHint}</p>
         </div>
-        <HeroScene hero={h} />
+        <HeroScene copy={copy} live={globe} liveReady={globeReady} />
       </div>
     </section>
   );

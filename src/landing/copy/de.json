@@ -57,11 +57,11 @@
     "fromPrice": "Digitale Datei ab {from}",
     "computerHint": "Am Computer? Öffnen Sie snapeyes.com auf dem Smartphone oder nutzen Sie vorhandene Fotos.",
     "secondary": "Echtes Vorher und Nachher ansehen",
-    "imageAlt": "Eine Visualisierung: unsere eigene Iris als glänzender Acryldruck an einer Wand.",
-    "chipTitle": "Visualisierung",
-    "discAlt": "Unser eigenes Auge, durch die Pupille geteilt: links ein echtes Smartphone-Foto, rechts die restaurierte Iris.",
-    "discLabel": "Ein echtes Smartphone-Foto, vorher und nachher",
-    "discLink": "Unser eigenes Auge: echtes Smartphone-Foto, restaurierte Iris. Zu Vorher und Nachher."
+    "globeAlt": "Eine Kugel aus runden Kunstwerken in unseren Stilen, aus unserem eigenen Auge und Beispielfotos",
+    "globeLabel": "Unsere Stile auf einer drehbaren Kugel",
+    "globeTry": "Mit Ihrem Auge ausprobieren",
+    "globeClose": "Schließen",
+    "globeNote": "Unser eigenes Auge und Beispielfotos, keine Kunden"
   },
   "reveal": {
     "eyebrow": "Vorher und Nachher",

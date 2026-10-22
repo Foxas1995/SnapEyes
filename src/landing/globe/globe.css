@@ -1,0 +1,103 @@
+/* SnapEyes landing v2: the hero's globe, its interactive part (src/landing/globe/Globe.tsx: its own lazy chunk; the stage box, the poster and the line
+   under it are the first screen's, css/hero.css). Every rule is inside @layer landing and every class carries the prefix lp-gl-, like the rest of the page.
+   The sizes are custom properties the controller writes from the stage's size: --R the sphere's radius, --P the perspective, --D a disc, --A the radius
+   the sphere appears to have, --cy its centre, --Dh and --hy the opened artwork. Only transform and opacity move; the fog, the sheen and the edge of
+   the sphere are still. The one 3D scene of the landing (motion spec exception, scripts/check_taste.mjs rule "3D"). */
+@layer landing {
+  .lp-gl {
+    position: absolute; inset: 0; z-index: 1; touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent; contain: layout style;
+  }
+  .lp-gl :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  /* until the pictures of its first view are decoded the globe stays hidden under the poster (it fetches and decodes them meanwhile); then the stage
+     gets data-live and, in the same frame, the poster steps back and the globe shows the same arrangement (css/hero.css): no empty disc is ever seen */
+  .lp-globe:not([data-live]) .lp-gl { visibility: hidden; }
+
+  /* the pool of warm light the sphere stands over, like a piece on a jeweller's display */
+  .lp-gl::before {
+    content: ""; position: absolute; left: 50%; top: calc(var(--cy) + var(--A) * .93); width: calc(var(--A) * 2.1); height: calc(var(--A) * .5); translate: -50% -50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgb(var(--gold-rgb) / .13), rgb(var(--gold-rgb) / .04) 55%, rgb(var(--gold-rgb) / 0));
+  }
+  /* the body of the sphere: dark polished stone, lit from the upper left, a thread of gold light along its edge */
+  .lp-gl-body {
+    position: absolute; left: 50%; top: var(--cy); width: calc(var(--A) * 2); height: calc(var(--A) * 2); translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(circle at 36% 30%, #171b25 0%, #0c0f16 42%, #06080c 74%, #030407 100%);
+    box-shadow: inset calc(var(--A) * .02) calc(var(--A) * .03) calc(var(--A) * .06) rgb(255 240 214 / .06), inset calc(var(--A) * -.06) calc(var(--A) * -.08) calc(var(--A) * .3) rgb(0 0 0 / .7), 0 calc(var(--A) * .16) calc(var(--A) * .5) calc(var(--A) * -.18) rgb(var(--gold-rgb) / .14);
+  }
+  .lp-gl-body::after {
+    content: ""; position: absolute; inset: -1px; border-radius: 50%;
+    background: conic-gradient(from 100deg, rgb(var(--gold-rgb) / .4), rgb(var(--gold-rgb) / .1) 22%, rgb(var(--gold-rgb) / 0) 40%, rgb(var(--gold-rgb) / 0) 62%, rgb(var(--gold-rgb) / .12) 84%, rgb(var(--gold-rgb) / .4));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+  }
+
+  .lp-gl-scene { position: absolute; inset: 0; perspective: var(--P); perspective-origin: 50% var(--cy); }
+  .lp-gl-orb { position: absolute; left: 50%; top: var(--cy); width: 0; height: 0; transform-style: preserve-3d; }
+
+  .lp-gl-disc {
+    position: absolute; left: 0; top: 0; width: var(--D); height: var(--D); margin: calc(var(--D) / -2) 0 0 calc(var(--D) / -2); padding: 0; border: 0; border-radius: 50%;
+    background: #05070a; backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: pointer;
+  }
+  .lp-gl-disc img { display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; -webkit-user-drag: none; }
+  /* the bezel and the shadow inside it */
+  .lp-gl-disc::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; box-shadow: inset 0 0 0 1px rgb(var(--gold-rgb) / .32), inset 0 0 calc(var(--D) * .06) rgb(0 0 0 / .45); }
+  /* the glass: one soft reflection of the light, upper left */
+  .lp-gl-disc::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 31% 23%, rgb(255 249 236 / .13), rgb(255 249 236 / 0) 36%); }
+  /* the gold rim of the disc at the front: a polished bezel, brightest where the light comes from */
+  .lp-gl-rim {
+    position: absolute; inset: -1px; z-index: 2; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
+    background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-primary) 18%, rgb(var(--gold-rgb) / .3) 42%, var(--gold-secondary) 66%, var(--gold-light) 86%, var(--gold-pale));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.4px), #000 calc(100% - 1.8px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2.4px), #000 calc(100% - 1.8px));
+  }
+
+  /* depth fog: one still radial layer that darkens the discs as they turn away; with it a soft reflection of the light on the polished body */
+  .lp-gl-fog {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse calc(var(--A) * .66) calc(var(--A) * .44) at calc(50% - var(--A) * .3) calc(var(--cy) - var(--A) * .46), rgb(255 247 228 / .09), rgb(255 247 228 / 0) 72%),
+      radial-gradient(circle at 50% var(--cy), rgb(7 9 14 / 0) calc(var(--A) * .46), rgb(7 9 14 / .16) calc(var(--A) * .7), rgb(7 9 14 / .5) calc(var(--A) * .9), rgb(7 9 14 / .82) calc(var(--A) * 1.0), rgb(7 9 14 / 0) calc(var(--A) * 1.07));
+  }
+
+  /* the opened artwork, and the dark around it while it is open */
+  .lp-gl-veil { position: absolute; inset: 0; z-index: 2; opacity: 0; pointer-events: none; background: radial-gradient(circle at 50% var(--cy), rgb(4 5 9 / .7), rgb(4 5 9 / .82) calc(var(--A) * .9), rgb(7 9 14 / 0) calc(var(--A) * 1.35)); }
+  /* on a small stage the opened artwork's words reach below it: the veil goes on down over the rest of the first screen (--low, written at the tap: 0 on
+     a large stage; the hero clips it at its foot), so the words are read on the page's dark, nothing of the copy shows through them, and a tap there closes
+     it as a tap beside the artwork does */
+  .lp-gl-veil::after {
+    content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 48px); height: var(--low, 0px);
+    background: linear-gradient(rgb(7 9 14 / 0), rgb(7 9 14) 48px);
+  }
+  .lp-gl-open {
+    position: absolute; left: 50%; top: var(--hy); z-index: 3; width: var(--Dh); height: var(--Dh); margin: calc(var(--Dh) / -2) 0 0 calc(var(--Dh) / -2); padding: 0; border: 0;
+    border-radius: 50%; background: #05070a; visibility: hidden; cursor: pointer; will-change: transform;
+    box-shadow: 0 calc(var(--Dh) * .1) calc(var(--Dh) * .18) calc(var(--Dh) * -.06) rgb(0 0 0 / .85);
+  }
+  .lp-gl-open img { position: relative; display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; }
+  .lp-gl-open::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 31% 22%, rgb(255 249 236 / .12), rgb(255 249 236 / 0) 34%); }
+  /* the glow, the darkening of the flight's first frames and the bezel are layers of their own: only their opacity changes, the browser repaints nothing */
+  .lp-gl-open-glow { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity; box-shadow: 0 0 calc(var(--Dh) * .16) rgb(var(--gold-rgb) / .22); }
+  .lp-gl-open-shade { position: absolute; inset: 0; border-radius: 50%; background: #07090e; opacity: 0; pointer-events: none; will-change: opacity; }
+  .lp-gl-open-rim {
+    position: absolute; inset: -2px; border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity;
+    background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-primary) 18%, rgb(var(--gold-rgb) / .35) 42%, var(--gold-secondary) 66%, var(--gold-light) 86%, var(--gold-pale));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.2px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.2px));
+  }
+
+  /* the words of the opened artwork: its name, Soon while it cannot be bought, whose eyes it shows, and the one button */
+  .lp-gl-info {
+    position: absolute; left: 0; right: 0; top: calc(var(--hy) + var(--Dh) / 2 + 16px); z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 0 16px; text-align: center; opacity: 0; pointer-events: none;
+  }
+  .lp-gl-name { font-family: var(--display); font-weight: 600; font-size: clamp(21px, 5.6vw, 30px); line-height: 1.15; letter-spacing: .05em; color: var(--t-1); }
+  .lp-gl-chips { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; }
+  .lp-gl-soon { padding: 2px 8px; border: 1px solid var(--gold-line); border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4; color: var(--t-1); }
+  .lp-gl-prov { font-size: 11px; font-weight: 600; line-height: 1.4; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); }
+  .lp-gl-info .lp-gl-cta { margin-top: 12px; min-height: 48px; padding: 12px 24px; }
+  /* below 960 px the stage is centred on the screen and on a short phone narrower than it: the opened words and the veil under them take the screen's
+     whole width */
+  @media (max-width: 959px) {
+    .lp-gl-info, .lp-gl-veil::after { left: calc(50% - 50vw); right: calc(50% - 50vw); }
+  }
+}

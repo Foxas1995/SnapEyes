@@ -1,5 +1,6 @@
 // The check of the landing page's pictures (run by vite.config.ts before every build; `npm run check:assets` runs it alone).
-// public/assets/landing and src/landing/assets.ts (the manifest, written by scripts/build_landing_assets.py) must agree:
+// public/assets/landing and the manifests (src/landing/assets.ts, and src/landing/globe/assets.globe.ts for the discs of the hero's globe, which only the
+// globe's lazy chunk imports; both written by scripts/build_landing_assets.py) must agree:
 //   1. every picture of the manifest exists under its content hashed name, its bytes hash to the name, its size in bytes and
 //      its width and height (read from the webp header) are the manifest's;
 //   2. no file in public/assets/landing is left out of the manifest (only what the page uses is in the repository), and the
@@ -66,7 +67,8 @@ export const LANDING_DIR = 'public/assets/landing';
 const HASH_LEN = 10;
 const TOTAL_BUDGET = 10.5e6;       // bytes of all pictures together (9.2 MB today: 163 files)
 const FILE_BUDGET = 350e3;         // bytes of any one picture
-const HERO_FAMILY = 'm/lounge_acrylic__gold__tight';
+// the LCP picture: since 2026-10-22 the poster of the hero's globe (its first view, src/landing/HeroScene.tsx), before that the lounge with the acrylic print
+const HERO_FAMILY = 'globe/poster';
 const HERO_BUDGET = 38e3;          // the LCP picture the phone fetches (900 px) on slow 4G: the measuring rig (scripts/measure_landing.mjs) shows a cliff of about 100 ms of LCP between a 38.5 and a 39.3 kB file
 const HERO_WIDTHS = [900, 1200];   // the 1200 px file is fetched by phones at pixel ratio 3 and 412 px Androids (pixel ratio 2.6 and more), so it gets the same cap
 const WIDTH_RE = /^(.*)_(\d+)$/;
@@ -124,7 +126,23 @@ export function usedNames(spec, available) {
     used.add(e.art);
   }
   for (const v of Object.values(spec.wallThumbs)) used.add(v);
+  // the hero's globe: every artwork at every width, and the poster of its first view (the LCP picture)
+  if (spec.globe) {
+    for (const a of spec.globe.art) for (const w of spec.globe.widths) used.add(`globe/${a}_${w}`);
+    for (const w of spec.globe.poster) used.add(`globe/poster_${w}`);
+  }
   return { used, missing };
+}
+
+/** The globe's own manifest (src/landing/globe/assets.globe.ts) as name -> [hash, width, height, bytes], the shape of assets.ts ASSET_HASH. */
+export function globeManifest(root, problems = []) {
+  const at = 'src/landing/globe/assets.globe.ts';
+  let text = '';
+  try { text = readFileSync(join(root, at), 'utf8'); } catch { problems.push(`${at} cannot be read (run scripts/build_landing_assets.py)`); return {}; }
+  const out = {};
+  for (const m of text.matchAll(/'([A-Za-z0-9_.-]+)_(\d+)': \['([0-9a-f]{10})', (\d+)\],/g)) out[`globe/${m[1]}_${m[2]}`] = [m[3], +m[2], +m[2], +m[4]];
+  if (!Object.keys(out).length) problems.push(`${at} lists no picture`);
+  return out;
 }
 
 /** { problems, notices, gate } for the committed pictures. assets: src/landing/assets.ts, data: src/landing/assets.data.ts, tiles: src/landing/tileStyle.ts
@@ -133,8 +151,11 @@ export function checkLandingAssets(root, assets, data, tiles, rendered) {
   const problems = [];
   const notices = [];
   const dir = join(root, LANDING_DIR);
-  const files = assets?.ASSET_HASH;
-  if (!files) return { problems: ['src/landing/assets.ts: ASSET_HASH not found (run scripts/build_landing_assets.py)'], notices, gate: null };
+  const main = assets?.ASSET_HASH;
+  if (!main) return { problems: ['src/landing/assets.ts: ASSET_HASH not found (run scripts/build_landing_assets.py)'], notices, gate: null };
+  // the globe's discs are listed in a manifest of their own that only the globe's chunk imports (src/landing/globe/assets.globe.ts, written by the same script): every
+  // file is square, its width is in its name; read from the file's text so this check needs no second module load
+  const files = { ...main, ...globeManifest(root, problems) };
   let total = 0;
   const want = new Set();
   for (const [name, [hash, w, h, bytes]] of Object.entries(files)) {

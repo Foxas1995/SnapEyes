@@ -11,7 +11,8 @@
 // filter blur (AC-2, and a blur on the page's own surfaces costs frames); font-black (the display type is 500 and 600); a gold gradient fill
 // on a button (the one exception is the logo's metal of palette A, the owner's choice of 2026-10-22: its tokens and the class gold-metal live in
 // src/index.css, and its stops anywhere else are a hit); backdrop blur outside the two fixed bars, which are the page's only blurred surfaces; a gold
-// glow above .28 alpha (the literal gold or the token rgb(var(--gold-rgb) / a)).
+// glow above .28 alpha (the literal gold or the token rgb(var(--gold-rgb) / a)); 3D (perspective, preserve-3d, a rotation about x or y, a z
+// translation, backface-visibility: the spec has no 3D, and its one exception, the hero's globe of 2026-10-22, is named in ALLOW_3D with its reason).
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +24,14 @@ const strict = !process.argv.includes('--report');
 const ALLOW_BLUR = {
   'src/landing/css/header.css': 'the fixed header: one of the two blurred surfaces, static, 64 px high',
   'src/landing/css/sticky.css': 'the sticky phone bar: the other blurred surface, static',
+};
+
+/** file -> why it may draw in 3D. The motion spec has no 3D (src/motion/motion.css): the hero's globe is its one deliberate exception, the owner's
+ *  choice of 2026-10-22 ("the sphere reminds of the eyeball itself"): a CSS 3D scene confined to its own folder and its own lazy chunk, one transform
+ *  per frame, still under prefers-reduced-motion (src/landing/globe/Globe.tsx has the whole of it). Anything else that turns into 3D is a hit. */
+const ALLOW_3D = {
+  'src/landing/globe/globe.css': 'the hero globe (motion spec exception of 2026-10-22): its perspective, its preserve-3d orb and the discs that face away',
+  'src/landing/globe/Globe.tsx': 'the hero globe (motion spec exception of 2026-10-22): the transforms of its orb and of its discs on the sphere',
 };
 
 function* walk(dir) {
@@ -55,6 +64,7 @@ const RULES = [
   ['gold gradient fill (bg-gradient-to-r with the gold hexes)', /bg-gradient-to-r[^"'`\n]*(#(f5c542|d4af37)|(from|via|to)-gold)|(#(f5c542|d4af37)|(from|via|to)-gold)[^"'`\n]*bg-gradient-to-r/i],
   ['the metal outside its one place (src/index.css: --metal, the class gold-metal)', /#f4e0a0/i],
   ['backdrop blur', /backdrop-blur|backdrop-filter\s*:/],
+  ['3D (the motion spec has none; ALLOW_3D names its one exception)', /(?<![\w-])perspective\s*[:(]|preserve-3d|rotate[XY]\(|rotate3d\(|translateZ\(|matrix3d\(|backface-visibility/],
 ];
 const GOLD = /rgba?\(\s*(?:245[\s,]+197[\s,]+66|var\(--gold-rgb\))\s*(?:[,/]\s*([.\d]+))?\s*\)/g;
 
@@ -67,6 +77,7 @@ for (const file of walk(join(ROOT, 'src'))) {
     for (const [name, re] of RULES) {
       if (!re.test(line)) continue;
       if (name === 'backdrop blur' && ALLOW_BLUR[rel]) continue;
+      if (name.startsWith('3D') && ALLOW_3D[rel]) continue;
       if (name.startsWith('the metal outside') && rel === 'src/index.css') continue;
       hits.push({ rule: name, file: rel, line: i + 1, text: line.trim().slice(0, 110) });
     }

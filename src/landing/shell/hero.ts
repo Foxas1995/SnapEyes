@@ -2,9 +2,9 @@
 // preload in the head) and the live hero (src/landing/HeroScene.tsx).
 import { asset } from '../assets';
 
-/** What the hero picture says about its width (the prototype's rule: a 500 px column from 960 px, else the screen minus the gutters). */
-export const HERO_SIZES = '(min-width: 960px) 500px, calc(100vw - 32px)';
-/** The hero picture: the lounge with the acrylic print, offered at 600, 900 and 1200 px only (the LCP budget), src 900. */
-export const heroPicture = () => asset('m/lounge_acrylic__gold__tight', { pick: 900, max: 1200 });
-/** The disc over the picture's corner: the owner's eye cut at the pupil, phone photo left, restored iris right. */
-export const heroDisc = () => asset('reveal/disc_own_420');
+/** What the hero picture says about its width: the globe's stage is a column of at most 600 px from 960 px, and the full width of a phone (its
+ *  stage reaches the screen's edges; on a short phone it is narrower, so the screen's width is the most it asks for). */
+export const HERO_SIZES = '(min-width: 960px) 600px, 100vw';
+/** The hero picture: the poster of the globe (its first view, scripts/make_globe_poster.mjs), offered at 600, 900 and 1200 px (the LCP budget of
+ *  scripts/check_landing_assets.mjs), src 900. */
+export const heroPicture = () => asset('globe/poster', { pick: 900, max: 1200 });

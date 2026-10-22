@@ -36,7 +36,7 @@ export interface ExampleChipProps {
   variant: ChipVariant;
   /** "example" only: the chip that names a photo of someone else's eye (example.photo, "Example photo"), styled .lp-photo. */
   photo?: boolean;
-  /** Other words for the label, from the copy (hero.chipTitle, final.chip): never typed in a component. */
+  /** Other words for the label, from the copy (final.chip): never typed in a component. */
   label?: string;
   /** A second line under the label: the framed chip of the first screen ("You receive the digital file. Printing is not
    *  included."), class lp-frame-chip. Needs the variant "vis". */

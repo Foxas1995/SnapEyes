@@ -1,7 +1,7 @@
-// The checks of the Reveal scene (motion spec 6.4, 11 and 13) and of the first screen's disc, in real Chrome, against a build (dist/) served the way
+// The checks of the Reveal scene (motion spec 6.4, 11 and 13) and of the landing at rest, in real Chrome, against a build (dist/) served the way
 // Vercel serves it, with a stub of the two API calls the page makes. Not part of `vite build`; run it after a build:
 //   npm run build && node scripts/check_reveal.mjs
-//   node scripts/check_reveal.mjs [--dist dist] [--only scene,pixels,keyboard,static,fit,sheet,anchor,cls,disc]
+//   node scripts/check_reveal.mjs [--dist dist] [--only scene,pixels,keyboard,static,fit,sheet,anchor,cls,rest]
 //   --mutate-css "from@@to" and --mutate-js "from@@to" change the Reveal chunk's stylesheet or code on its way to the browser: a deliberate defect,
 //   to see that a check really fails.
 // Exit code 1 when any check fails.
@@ -20,7 +20,10 @@
 //   sheet     no ancestor of the stage sets an overflow that would stop it sticking; the stage sticks inside its sheet
 //   anchor    an address with #reveal lands on the first state, pinned (the stage 92 px from the top, the section's top there too)
 //   cls       a full scroll at 1280 x 800: no layout shift
-//   disc      the first screen's disc: its cut line has the soft glow (BR-4: .28 at most), and nothing on the landing loops at rest (BR-3, principle 4)
+//   rest      the landing at rest: the gold glows of the first screen's globe are .28 at most (BR-4), and nothing loops at rest (BR-3, principle 4)
+//             but the globe's slow turn, the one deliberate exception of the motion spec (the owner's choice of 2026-10-22, src/motion/motion.css):
+//             it turns only while the hero is on screen, and it stops when the hero leaves it. (Until 2026-10-22 this was "disc": the disc over the
+//             corner of the old hero picture, gone with it.)
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -371,25 +374,49 @@ async function checkCls() {
   if (!problems.some((x) => x.startsWith('cls'))) pass('cls', 'no layout shift over a full scroll at 1280 and 1920 px');
 }
 
-// ---------------------------------------------------------------------------------------------------- disc
-async function checkDisc() {
-  console.log('disc');
+// ---------------------------------------------------------------------------------------------------- rest
+async function checkRest() {
+  console.log('rest');
   const page = await open({ lang: 'en', width: 1280, height: 800, settle: false });
   await sleep(6000);
-  const r = JSON.parse(await page.eval(`JSON.stringify({ glow: getComputedStyle(document.querySelector('.lp-disc'), '::after').boxShadow,
+  // the glows of the globe, its pseudo elements included, as scripts/check_taste.mjs defines a glow: a gold shadow with a blur of 12 px or more and no negative
+  // spread (a 1 px bezel or a contact shadow is not one), and a radial light of the gold; its rims are lines, not glows
+  const r = JSON.parse(await page.eval(`JSON.stringify({ live: !!document.querySelector('#heroGlobe[data-live] .lp-gl'),
+    glows: [...document.querySelectorAll('#heroGlobe, #heroGlobe *')].flatMap((e) => [null, '::before', '::after'].flatMap((p) => {
+      const c = getComputedStyle(e, p), out = [];
+      for (const s of c.boxShadow === 'none' ? [] : c.boxShadow.split(/,(?![^(]*\\))/)) {
+        const px = [...s.matchAll(/(-?[\\d.]+)px/g)].map((m) => +m[1]);
+        if (/rgba?\\(196, 154, 89/.test(s) && (px[2] || 0) >= 12 && (px[3] || 0) >= 0) out.push(s);
+      }
+      if (/radial-gradient/.test(c.backgroundImage)) out.push(c.backgroundImage);
+      return out;
+    })).join(' '),
     loops: document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().iterations === Infinity).map((a) => (a.effect.target && a.effect.target.className) + ' ' + a.animationName),
     running: document.getAnimations().filter((a) => a.playState === 'running').length })`));
-  const alphas = [...r.glow.matchAll(/rgba\(196, 154, 89, ([\d.]+)\)/g)].map((m) => +m[1]);
-  expect('disc', alphas.length > 0 && /16px/.test(r.glow), `the disc's cut line has the box shadow "${r.glow}" (want the soft gold glow, --glow: 16 px)`);
-  expect('disc', alphas.every((a) => a <= 0.28), `the disc's glow "${r.glow}" is stronger than .28 (BR-4)`);
-  expect('disc', r.loops.length === 0, `something loops on the landing at rest: ${r.loops.join(', ')} (BR-3, principle 4)`);
-  expect('disc', r.running === 0, `${r.running} animations are still running 6 s after the load`);
+  const alphas = [...r.glows.matchAll(/rgba\(196, 154, 89, ([\d.]+)\)/g)].map((m) => +m[1]);
+  expect('rest', r.live, 'the globe did not take the poster\'s place in 6 s');
+  expect('rest', alphas.length > 0, 'no gold glow was found on the globe (the selector of this check is out of date)');
+  expect('rest', alphas.every((a) => a <= 0.28), `a gold glow of the globe is stronger than .28 (BR-4): ${alphas.filter((a) => a > 0.28).join(', ')}`);
+  expect('rest', r.loops.length === 0, `something loops on the landing at rest: ${r.loops.join(', ')} (BR-3, principle 4)`);
+  expect('rest', r.running === 0, `${r.running} animations are still running 6 s after the load`);
+  // the globe's slow turn (the exception): it turns while the hero is on screen, and not once the hero has left it
+  const ORB = "document.querySelector('.lp-gl-orb') ? document.querySelector('.lp-gl-orb').style.transform : ''";
+  const a = await page.eval(ORB);
+  await sleep(1000);
+  const b = await page.eval(ORB);
+  await page.eval("window.scrollTo({ top: 2400, behavior: 'instant' })");
+  await sleep(600);
+  const c = await page.eval(ORB);
+  await sleep(1500);
+  const d = await page.eval(ORB);
   await page.close();
-  if (!problems.some((x) => x.startsWith('disc'))) pass('disc', 'the disc line has the soft gold glow (.28), and nothing on the landing loops or runs at rest');
+  expect('rest', a !== b, 'the globe does not turn on screen (the slow turn is the exception this check allows; it should be there)');
+  expect('rest', c === d, `the globe still turns with the hero off the screen (${c.slice(0, 60)} to ${d.slice(0, 60)})`);
+  if (!problems.some((x) => x.startsWith('rest'))) pass('rest', `the globe's gold glows are .28 at most (${[...new Set(alphas)].join(', ')}); nothing loops or runs at rest but the globe's slow turn, which stops once the hero has left the screen`);
 }
 
 // ---------------------------------------------------------------------------------------------------- run
-const checks = { scene: checkScene, pixels: checkPixels, keyboard: checkKeyboard, static: checkStatic, fit: checkFit, sheet: checkSheet, anchor: checkAnchor, cls: checkCls, disc: checkDisc };
+const checks = { scene: checkScene, pixels: checkPixels, keyboard: checkKeyboard, static: checkStatic, fit: checkFit, sheet: checkSheet, anchor: checkAnchor, cls: checkCls, rest: checkRest };
 try {
   for (const [name, fn] of Object.entries(checks)) {
     if (!wants(name)) continue;

@@ -55,6 +55,11 @@
 //      every style of the v3 engine the picker shows (a place in the picker's order, preview or live for some count of eyes) has a tile, but for the styles of
 //      LANDING_TILE_LATER while none of their ceilings is live (the light family of 2026-10-20 and the ensemble family's four cosmos looks of the same day: /try
 //      first, the gallery is at its budget); and a tile's copy is its description only (the name a tile prints is the registry's, src/landing/tileState.ts).
+//  17. the hero's globe (2026-10-22): src/landing/globeArt.ts names, for each round artwork of the globe, a style of the registry that takes that many eyes,
+//      is not retired and can be previewed for that many eyes (preview or live: the opened artwork offers "Try it with your eye"), with the honest label
+//      its eyes call for (our own eye on an _own picture, an example photo on a yellow green or brown one, both on a pair or a family); its artworks are
+//      exactly the pictures scripts/landing_assets.json lists under "globe", and its rows place each of them once. An opened artwork prints the registry's
+//      name and, like a tile, says Soon when the run-time catalogue cannot sell that style for that many eyes (src/landing/globe/Globe.tsx).
 // Items 8, 9, 10, 12 and 13 read the deployment tree and run only where there is a vercel.json (the registry suite's mutation copies carry no such file).
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as for the text check);
 // `npm run check:styles` runs it alone.
@@ -98,6 +103,7 @@ const PET_WORDS = ['paw', 'paws', 'bone', 'bones', 'cat', 'cats', 'dog', 'dogs',
 export const ID_ALLOW = {
   'api/_lib/iris.py': 'the legacy engine\'s own table (STYLES: background, accent, title per legacy id); item 1 keeps its keys and accents equal to the registry\'s legacy block',
   'src/landing/tileStyle.ts': 'the gallery\'s tile-to-style table (which registry style and how many eyes each tile of the new landing stands for); item 15 keeps it equal to the gallery and the registry',
+  'src/landing/globeArt.ts': 'the hero globe\'s artwork-to-style table (which registry style, how many eyes and whose eyes each round artwork of the globe shows); item 17 keeps it equal to the globe\'s pictures and the registry',
   'api/_lib/styles/collision/scenes.py': 'the scene key of a collision artwork is the registry id of its style: it is part of the prototype\'s seed in step A (WP7A), which step B (WP7B) replaces by the plan\'s seed key',
 };
 // folders of a scan that never hold customer-facing code: the style suites (they name ids to test them) and this check's own files
@@ -644,12 +650,43 @@ export function checkLandingTiles(tileStyle, gallery, styles, copy, out, later =
   }
 }
 
+// ---------------------------------------------------------------------------------------------------- 17. the hero's globe
+/** Item 17: the globe's artwork table (src/landing/globeArt.ts GLOBE_ART and GLOBE_ROWS) against its pictures (scripts/landing_assets.json globe.art) and the registry. */
+export function checkGlobeArt(globeArt, globeRows, listed, styles, out) {
+  const at = 'src/landing/globeArt.ts';
+  if (!Array.isArray(globeArt) || !Array.isArray(globeRows)) { out.push(`${at}: GLOBE_ART or GLOBE_ROWS not found (the style check reads them)`); return; }
+  const ids = globeArt.map((a) => a?.id);
+  const seen = new Set();
+  for (const id of ids) {
+    if (seen.has(id)) out.push(`${at}: the artwork "${id}" is listed twice`);
+    seen.add(id);
+  }
+  const pics = new Set(Array.isArray(listed) ? listed : []);
+  for (const id of ids) if (!pics.has(id)) out.push(`${at}: the artwork "${id}" has no pictures: scripts/landing_assets.json globe.art does not list it (scripts/make_globe_assets.py makes them)`);
+  for (const id of pics) if (!seen.has(id)) out.push(`scripts/landing_assets.json globe.art lists "${id}", which ${at} does not name: a picture of the globe nobody shows`);
+  for (const a of globeArt) {
+    const d = isObj(styles) ? styles[a.style] : undefined;
+    if (!d) { out.push(`${at}: the artwork "${a.id}" names the style "${a.style}", which is not in ${STYLES_FILE}`); continue; }
+    if (!isInt(a.eyes) || a.eyes < d.eyes[0] || a.eyes > d.eyes[1]) out.push(`${at}: the artwork "${a.id}" shows ${a.eyes} eyes, but "${a.style}" takes ${d.eyes[0]} to ${d.eyes[1]}`);
+    if (d.stage === 'retired') out.push(`${at}: the artwork "${a.id}" names "${a.style}", which is retired`);
+    const stage = (d.stage_by_eyes ?? {})[String(a.eyes)] ?? d.stage;
+    if (stage !== 'preview' && stage !== 'live') out.push(`${at}: the artwork "${a.id}" names "${a.style}", which cannot be previewed for ${a.eyes} eyes (stage ${stage}): its "Try it with your eye" would lead nowhere`);
+    const want = a.eyes > 1 ? 'mixed' : /_own$/.test(a.id) ? 'own' : 'licensed';
+    if (a.prov !== want) out.push(`${at}: the artwork "${a.id}" carries the label "${a.prov}", its eyes call for "${want}"`);
+  }
+  const placed = globeRows.flatMap((r) => (Array.isArray(r?.ids) ? r.ids : []));
+  const count = new Map();
+  for (const id of placed) count.set(id, (count.get(id) ?? 0) + 1);
+  for (const id of ids) if (count.get(id) !== 1) out.push(`${at}: the rows place the artwork "${id}" ${count.get(id) ?? 0} times (once is right)`);
+  for (const id of count.keys()) if (!seen.has(id)) out.push(`${at}: the rows place "${id}", which is no artwork of GLOBE_ART`);
+}
+
 // ---------------------------------------------------------------------------------------------------- 16. the landing's picture labels
 /** The places of the landing's copy that label a PICTURE: an alt text, a caption, the name of a scene or of the wall's artwork (dotted keys; arrays count their items, a
  *  key names the string or the whole object below it). A picture shows a look, so a label that names a style nobody can buy yet ("in the Radiance style") sells that style,
  *  and a label has no Soon chip to take it back: it names no style that is not live (release review H-M2; the tiles are different, they carry their state). */
 export const PICTURE_LABELS = [
-  'hero.imageAlt', 'hero.discAlt', 'reveal.eyes', 'wall.arts', 'wall.captions', 'wall.captionsSize', 'more.scenes',
+  'hero.globeAlt', 'reveal.eyes', 'wall.arts', 'wall.captions', 'wall.captionsSize', 'more.scenes',
   'closeups.fibreAlt', 'closeups.fibreTitle', 'closeups.locatorAlt', 'closeups.edgeAlt', 'closeups.edgeTitle', 'final.imageAlt', 'final.chip',
 ];
 
@@ -940,9 +977,9 @@ export async function checkStyles(root, load) {
   let client = null;
   let pageNames;
   if (load) {
-    const [stylesTs, layoutsTs, markets, landing, tryCopy, orderCopy, tileTs, galleryTs] = await Promise.all([
+    const [stylesTs, layoutsTs, markets, landing, tryCopy, orderCopy, tileTs, galleryTs, globeTs] = await Promise.all([
       load('./src/shared/styles.ts'), load('./src/shared/layouts.ts'), load('./src/shared/markets.ts'), load('./src/landing/copy.ts'), load('./src/try/copy.ts'),
-      load('./src/order/copy.ts'), load('./src/landing/tileStyle.ts'), load('./src/landing/assets.data.ts'),
+      load('./src/order/copy.ts'), load('./src/landing/tileStyle.ts'), load('./src/landing/assets.data.ts'), load('./src/landing/globeArt.ts'),
     ]);
     const landingJson = readLandingCopy(root, out);
     client = markets;
@@ -959,6 +996,9 @@ export async function checkStyles(root, load) {
     }
     checkLandingTiles(tileTs.TILE_STYLE, galleryTs.GALLERY, reg.styles, landingJson, out);
     checkLandingLater(tileTs.TILE_STYLE, reg.styles, out);
+    let globeList = null;
+    try { globeList = JSON.parse(readFileSync(join(root, 'scripts', 'landing_assets.json'), 'utf8')).globe?.art ?? null; } catch { out.push('scripts/landing_assets.json cannot be read (item 17)'); }
+    checkGlobeArt(globeTs.GLOBE_ART, globeTs.GLOBE_ROWS, globeList, reg.styles, out);
     checkPictureLabels(reg.styles, landingJson, out);
   }
   checkLayouts(root, reg.styles, names, out, pageNames);

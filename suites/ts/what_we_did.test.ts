@@ -161,9 +161,10 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   for (const l of LANGS) {
     const bad = strings(COPY[l]).filter(([, s]) => cutWord.test(s));
     check(`${l}: no sentence of /try names a "cut" (pjūvis, Schnitt, vágás)`, bad.length === 0, bad.map(([p]) => p).join());
-    // the Reveal's one line (reveal.intro; its second wording for a web photo, introWeb, went in the landing's lean pass of 2026-10-22) and the disc's alt text
-    const landing = JSON.parse(readFileSync(`src/landing/copy/${l}.json`, 'utf8')) as { reveal: { intro: string }; hero: { discAlt: string } };
-    const lb = [landing.reveal.intro, landing.hero.discAlt].filter((s) => cutWord.test(s));
+    // the Reveal's one line (reveal.intro; its second wording for a web photo, introWeb, went in the landing's lean pass of 2026-10-22) and the words of the
+    // hero's globe (the disc that showed our eye cut through the pupil, with its alt text, went with the old hero picture on 2026-10-22)
+    const landing = JSON.parse(readFileSync(`src/landing/copy/${l}.json`, 'utf8')) as { reveal: { intro: string }; hero: { globeAlt: string; globeNote: string } };
+    const lb = [landing.reveal.intro, landing.hero.globeAlt, landing.hero.globeNote].filter((s) => cutWord.test(s));
     check(`${l}: the landing's Reveal says nothing about a cut either`, lb.length === 0, lb.join(' | '));
   }
 

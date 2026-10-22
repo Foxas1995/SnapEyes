@@ -73,7 +73,17 @@ const BRAND = { js: 323, css: 180 };
 // its parent (9facf04): CSS +559 B (the shared stylesheet jsx-runtime-*.css +522 B, the landing's chunks +67 B, the tools' checkout-*.css -30 B). The JavaScript sum
 // moved by -20 B (class names); that is not taken as room. Re-measure it when the palette changes: build both trees, run this script on each, take the difference.
 const PALETTE = { js: 0, css: 559 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css };
+// The hero's globe (2026-10-22, the owner's choice of the centrepiece prototypes: a sphere of round artworks that replaces the wall picture and the disc of the
+// first screen) is the motion spec's one deliberate exception (src/motion/motion.css) and content the budget did not foresee. Its code and its stylesheet are a
+// chunk of their own (Globe-*.js, Globe-*.css: src/landing/globe) that the landing asks for only when the hero is on screen, the page has loaded and the browser
+// is idle, so the first load does not carry them; this script counts every chunk the landing can request, lazy ones included. GLOBE is this script's own sum on
+// the commit with the globe minus on its parent (8c253bf): JavaScript +7,868 B (the chunk 7,805 B; the landing's entry +124 B for the watcher that fetches it and
+// the state that lets it take the poster's place; the copy files of de, lt and hu -37 B, the old hero's words out; the import lists of the other chunks -24 B),
+// CSS +1,158 B (the chunk 1,635 B; the old hero's rules out of the first screen's stylesheet -477 B). What the first load carries: +124 B of JavaScript, -477 B
+// of CSS, -0.4 kB of HTML (gzip), and a poster of 20.5 kB (900 px) instead of the wall picture of 34.1 kB and the disc of 13.8 kB. Re-measure it when the
+// globe changes: build both trees, run this script on each, take the difference.
+const GLOBE = { js: 7868, css: 1158 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

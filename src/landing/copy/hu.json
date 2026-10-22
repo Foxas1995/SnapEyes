@@ -57,11 +57,11 @@
     "fromPrice": "Digitális fájl, induló ár: {from}",
     "computerHint": "Számítógépen vagy? Nyisd meg a snapeyes.com oldalt a telefonodon, vagy használd a meglévő fotóidat.",
     "secondary": "Nézd meg a valódi előtte-utána képet",
-    "imageAlt": "Vizualizáció: a saját íriszünk fényes akrilnyomatként egy falon.",
-    "chipTitle": "Vizualizáció",
-    "discAlt": "A saját szemünk a pupillán keresztül kettéosztva: balra egy valódi telefonos fotó, jobbra a helyreállított írisz.",
-    "discLabel": "Valódi telefonos fotó, előtte és utána",
-    "discLink": "A saját szemünk: valódi telefonos fotó, helyreállított írisz. Ugrás az előtte-utána képhez."
+    "globeAlt": "Kerek műalkotásokból álló gömb a stílusainkban, a saját szemünkből és példafotókból",
+    "globeLabel": "Stílusaink egy forgatható gömbön",
+    "globeTry": "Próbáld ki a saját szemeddel",
+    "globeClose": "Bezárás",
+    "globeNote": "A saját szemünk és példafotók, nem vásárlók"
   },
   "reveal": {
     "eyebrow": "Előtte és utána",

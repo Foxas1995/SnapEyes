@@ -1,5 +1,5 @@
 {
- "note": "The files of the landing page and how its pictures are grouped. scripts/build_landing_assets.py reads this, copies exactly these files from a folder of rendered pictures (--src) to public/assets/landing with content hashed names, and writes src/landing/assets.ts and assets.data.ts. A picture family is a base name; its files are base_<width>.webp. A name in extras is a file a component names itself.",
+ "note": "The files of the landing page and how its pictures are grouped. scripts/build_landing_assets.py reads this, copies exactly these files from a folder of rendered pictures (--src) to public/assets/landing with content hashed names, and writes src/landing/assets.ts and assets.data.ts. A picture family is a base name; its files are base_<width>.webp. A name in extras is a file a component names itself. The hero's globe (globe): its round artworks globe/<id>_<width> at the widths given, and the poster of its first view globe/poster_<width> (the LCP picture); which style each artwork shows is src/landing/globeArt.ts.",
  "stage": {
   "acrylic": {
    "eye": {
@@ -325,17 +325,59 @@
  "extras": [
   "art/fibre_crop_1200",
   "art/fibre_full_480",
-  "m/lounge_acrylic__gold__tight_1200",
-  "m/lounge_acrylic__gold__tight_600",
-  "m/lounge_acrylic__gold__tight_900",
   "m/macro_acrylic_corner__universe__wide_1200",
   "m/macro_acrylic_corner__universe__wide_2000",
   "m/macro_acrylic_corner__universe__wide_600",
   "m/study_acrylic_3x2__gold__wide_1200",
   "m/study_acrylic_3x2__gold__wide_2000",
   "m/study_acrylic_3x2__gold__wide_600",
-  "reveal/disc_own_420",
   "ui/before-phone-crop-315",
   "ui/preview_wm_360"
- ]
+ ],
+ "globe": {
+  "art": [
+   "halo_own",
+   "sparks_own",
+   "fam_orbit_4",
+   "powder_yg",
+   "nebula_duo",
+   "universe_own",
+   "splash_br",
+   "duo_thread_by",
+   "radiance_yg",
+   "aurora_own",
+   "nebula_own",
+   "splash_yg",
+   "clean_own",
+   "fam_radiance_4",
+   "powder_br",
+   "supernova_duo",
+   "universe_yg",
+   "radiance_own",
+   "fam_trio",
+   "powder_own",
+   "duo_infinity_by",
+   "clean_yg",
+   "supernova_family",
+   "splash_own",
+   "duo_kiss_bb",
+   "supernova_own",
+   "duo_clean_by",
+   "gold_own",
+   "nebula_family",
+   "radiance_br",
+   "duo_radiance_bd",
+   "fam_circle_4"
+  ],
+  "widths": [
+   160,
+   240,
+   480
+  ],
+  "poster": [
+   600,
+   900,
+   1200
+  ]
+ }
 }
