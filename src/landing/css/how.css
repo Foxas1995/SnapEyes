@@ -17,7 +17,7 @@
   .lp-prev { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 8px 8px; gap: 8px; background: #070a10; }
   .lp-prev b { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); text-align: center; }
   .lp-prev img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
-  .lp-prev span { margin-top: auto; display: block; text-align: center; padding: 9px 6px; border-radius: 99px; background: rgba(245, 197, 66, .14); color: var(--gold-soft); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
+  .lp-prev span { margin-top: auto; display: block; text-align: center; padding: 9px 6px; border-radius: 99px; background: rgb(var(--gold-rgb) / .14); color: var(--gold-soft); font-size: 10.5px; font-weight: 700; line-height: 1.2; }
   .lp-prev.lp-open span { background: var(--gold); color: #000; }
   /* the label of the open button is the real checkout button of /try, in the statutory words of each language: the Hungarian one is 38 letters
      and 16 for its longest word, which does not fit the 88 px pill of a 320 px screen at 10.5 px. Smaller and tighter on a phone, and the
@@ -86,7 +86,7 @@
       html.mo:not(.mo-fail) .lp-steps > .lp-step[data-reveal]:not([data-in]) { opacity: 1; translate: none; }
       html.mo:not(.mo-fail) .lp-steps > .lp-step[data-reveal][data-in] { animation: none; }
       /* the current step is in full tone, the others in the dimmest tone that is still legible (4.9:1): the numeral goes from that tone to gold, the title to white */
-      .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) .lp-num { color: rgb(245 197 66 / .6); }
+      .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) .lp-num { color: rgb(var(--gold-rgb) / .6); }
       .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) h3 { color: var(--t-floor); }
       .lp-step .lp-num, .lp-step h3 { transition: color var(--d-tap) var(--ease-out); }
     }

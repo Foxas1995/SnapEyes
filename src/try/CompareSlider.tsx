@@ -110,7 +110,7 @@ export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = T.
       aria-valuenow={Math.round(pos)}
       aria-valuetext={T.result.sliderValue.replace('{n}', String(Math.round(pos)))}
       onKeyDown={onKey}
-      className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black border border-white/10 select-none touch-none cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]"
+      className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black border border-white/10 select-none touch-none cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
       {...NO_SAVE_BOX}
       onPointerDown={(e) => { stopSweep.current(); setDragging(true); (e.target as Element).setPointerCapture?.(e.pointerId); update(e.clientX); }}
       onPointerMove={(e) => { if (dragging) update(e.clientX); }}
@@ -126,10 +126,10 @@ export const CompareSlider: React.FC<Props> = ({ before, after, beforeLabel = T.
         style={{ ...NO_SAVE_IMG_STYLE, clipPath: `inset(0 0 0 ${pos}%)` }}
       />
       <span className="absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-zinc-200">{beforeLabel}</span>
-      <span className="absolute top-3 right-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-[#f5c542]">{afterLabel}</span>
+      <span className="absolute top-3 right-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-gold">{afterLabel}</span>
       {/* the cut: one pixel of gold with the soft glow the tokens allow (never above .28) */}
-      <div className="absolute top-0 bottom-0 w-px bg-[#f5c542] shadow-[0_0_16px_0_rgba(245,197,66,0.28)]" style={{ left: `${pos}%` }}>
-        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-[#f5c542] text-black flex items-center justify-center border-2 border-white shadow-lg">
+      <div className="absolute top-0 bottom-0 w-px bg-gold shadow-[0_0_16px_0_rgb(var(--gold-rgb)/0.28)]" style={{ left: `${pos}%` }}>
+        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full gold-knob flex items-center justify-center border-2 border-white shadow-lg">
           <MoveHorizontal className="w-5 h-5" />
         </div>
       </div>

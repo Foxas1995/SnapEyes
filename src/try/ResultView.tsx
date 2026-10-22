@@ -123,8 +123,8 @@ export const ResultView: React.FC<Props> = (p) => {
               <button key={e.id} role="tab" aria-selected={i === idx} onClick={() => p.onSelect(e.id)} data-flagged={flagged.has(i + 1) || undefined}
                 aria-label={flagged.has(i + 1) ? T.picker.chipLabel(i + 1) : undefined}
                 className="shrink-0 flex flex-col items-center gap-1 w-16 pt-1">
-                <img {...NO_SAVE} src={e.thumb} alt="" className={`fx-pick w-12 h-12 rounded-full object-cover border-2 ${flagged.has(i + 1) ? 'border-amber-400' : i === idx ? 'fx-pop border-[#f5c542] ring-2 ring-[#f5c542]/40' : 'border-white/15 opacity-75'}`} />
-                <span className={`text-[10px] font-bold leading-tight text-center ${i === idx ? 'text-[#f5c542]' : 'text-zinc-300'}`}>
+                <img {...NO_SAVE} src={e.thumb} alt="" className={`fx-pick w-12 h-12 rounded-full object-cover border-2 ${flagged.has(i + 1) ? 'border-amber-400' : i === idx ? 'fx-pop border-gold ring-2 ring-gold/40' : 'border-white/15 opacity-75'}`} />
+                <span className={`text-[10px] font-bold leading-tight text-center ${i === idx ? 'text-gold' : 'text-zinc-300'}`}>
                   {T.result.eyeLabel(i + 1)}
                   {e.sample && <span className="block text-[9px] font-semibold text-amber-200/90">{T.result.sampleLabel}</span>}
                   {flagged.has(i + 1) && <span data-testid={`chip-retake-${i + 1}`} className="block text-[9px] font-semibold text-amber-200">{T.picker.chipRetake}</span>}
@@ -135,7 +135,7 @@ export const ResultView: React.FC<Props> = (p) => {
           {/* the add button is no tab: it stands beside the tab list, not inside it */}
           {n < MAX_EYES && (
             <button onClick={p.onAdd} aria-label={T.result.addAnother}
-              className="shrink-0 mt-1 w-12 h-12 rounded-full border-2 border-dashed border-[#f5c542]/50 text-[#f5c542] flex items-center justify-center">
+              className="shrink-0 mt-1 w-12 h-12 rounded-full border-2 border-dashed border-gold/50 text-gold flex items-center justify-center">
               <Plus className="w-5 h-5" />
             </button>
           )}
@@ -174,7 +174,7 @@ export const ResultView: React.FC<Props> = (p) => {
         )}
         {hub && (
           <button type="button" data-testid="centre-eye" disabled={idx === 0} aria-pressed={idx === 0} aria-label={T.picker.options.centreLabel(idx + 1)} onClick={() => p.onCentre(eye.id)}
-            className={`fx-pick min-h-[44px] px-3 rounded-xl border text-sm font-semibold ${idx === 0 ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-200'}`}>{T.picker.options.centre}</button>
+            className={`fx-pick min-h-[44px] px-3 rounded-xl border text-sm font-semibold ${idx === 0 ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 bg-white/5 text-zinc-200'}`}>{T.picker.options.centre}</button>
         )}
       </div>
     </div>
@@ -251,7 +251,7 @@ export const ResultView: React.FC<Props> = (p) => {
           <div role="radiogroup" aria-label={T.result.layout} className={`grid gap-2 ${p.layoutOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
             {p.layoutOptions.map((l) => (
               <button key={l} role="radio" aria-checked={p.layout === l} onClick={() => p.onLayout(l)}
-                className={`fx-pick min-h-[44px] py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 ${p.layout === l ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
+                className={`fx-pick min-h-[44px] py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 ${p.layout === l ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 bg-white/5 text-zinc-300'}`}>
                 <LayoutGlyph layout={l} n={n} /> {layoutLabel(l)}
               </button>
             ))}
@@ -264,7 +264,7 @@ export const ResultView: React.FC<Props> = (p) => {
         <div className="mt-3 flex flex-wrap gap-2">
           {n === 2 && (
             <button type="button" data-testid="swap-places" aria-pressed={p.opts.swap} onClick={() => p.onOpts({ ...p.opts, swap: !p.opts.swap })}
-              className={`fx-pick min-h-[44px] px-3 rounded-xl border text-sm font-semibold ${p.opts.swap ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/10 bg-white/5 text-zinc-200'}`}>{T.picker.options.swap}</button>
+              className={`fx-pick min-h-[44px] px-3 rounded-xl border text-sm font-semibold ${p.opts.swap ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 bg-white/5 text-zinc-200'}`}>{T.picker.options.swap}</button>
           )}
           {n === 3 && (
             <button type="button" data-testid="rotate-places" onClick={() => p.onOpts({ ...p.opts, rotate: (p.opts.rotate + 1) % 3 })}
@@ -282,7 +282,7 @@ export const ResultView: React.FC<Props> = (p) => {
           <Download className="w-4 h-4" /> {T.result.save}
         </a>
         {n < MAX_EYES && (
-          <button onClick={p.onAdd} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2">
+          <button onClick={p.onAdd} className="py-3 rounded-xl gold-metal text-sm font-bold flex items-center justify-center gap-2">
             <Plus className="w-4 h-4" /> {n === 1 ? T.result.addSecond : T.result.addAnother}
           </button>
         )}
@@ -351,7 +351,7 @@ const WhatWeDid: React.FC<{ eye: Eye; colourNote: boolean; promised: boolean; so
 
 const FidelityBadge: React.FC<{ eye: Eye }> = ({ eye }) => (eye.fallback
   ? <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-amber-400/40 text-amber-200 bg-amber-500/10">{T.result.badgeFallback}</span>
-  : <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#f5c542]/50 text-[#f5c542] bg-[#f5c542]/10">{T.result.badgeMacro}</span>);
+  : <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-gold/50 text-gold bg-gold/10">{T.result.badgeMacro}</span>);
 
 /** Where the discs of a layout go in a 20 x 16 box, so that "Fusion" and "Side by side", a trio, a ring and the rest read at a glance. The ids are the
  *  registry's (api/_lib/styles_registry.py layouts): the old ones and the v3 ones; an id this does not know draws as one disc. */

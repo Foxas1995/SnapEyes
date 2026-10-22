@@ -20,7 +20,7 @@ import { useMarket } from '../shared/useMarket';
 import type { Lang } from '../try/lang';
 import { CARD, LINK, PLAIN_BTN, Spinner } from './ui';
 
-const FIELD = 'mt-1 w-full min-h-[44px] rounded-xl bg-black/40 border px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#f5c542]/70';
+const FIELD = 'mt-1 w-full min-h-[44px] rounded-xl bg-black/40 border px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-gold/70';
 const CONFIRM_BTN = 'min-h-[48px] px-4 py-3 rounded-xl bg-[#f0f3fa] text-black text-sm font-bold flex items-center justify-center gap-2 text-center active:scale-[0.98] disabled:opacity-60';
 
 /** An order of the Australian market (the page adopts its order's market): the line that keeps the Australian

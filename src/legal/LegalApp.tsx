@@ -30,7 +30,7 @@ const UI: Record<Lang, { updated: string; back: string; contents: string; print:
   hu: { updated: 'Utolsó frissítés:', back: 'Vissza a SnapEyes oldalára', contents: 'Tartalom', print: 'Nyomtatás vagy mentés PDF-ként' },
 };
 
-const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm';
+const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold rounded-sm';
 
 function BlockView({ block, lang }: { block: Block; lang: Lang }) {
   if (typeof block === 'string') {
@@ -38,7 +38,7 @@ function BlockView({ block, lang }: { block: Block; lang: Lang }) {
   }
   if ('ul' in block) {
     return (
-      <ul className="list-disc space-y-2 pl-5 marker:text-[#f5c542]/70">
+      <ul className="list-disc space-y-2 pl-5 marker:text-gold/70">
         {block.ul.map((li, i) => <li key={i}><Inline text={li} lang={lang} /></li>)}
       </ul>
     );
@@ -56,9 +56,9 @@ function BlockView({ block, lang }: { block: Block; lang: Lang }) {
     );
   }
   return (
-    <figure className="rounded-xl border border-[#f5c542]/25 bg-[#f5c542]/[0.04] px-5 py-4">
+    <figure className="rounded-xl border border-gold/25 bg-gold/[0.04] px-5 py-4">
       {block.label && (
-        <figcaption className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f5c542]">{block.label}</figcaption>
+        <figcaption className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">{block.label}</figcaption>
       )}
       <div className="space-y-2 text-zinc-100">
         {block.box.map((line, i) => <p key={i}><Inline text={line} lang={lang} /></p>)}
@@ -83,7 +83,7 @@ function LegalPage({ id }: { id: LegalDocId }) {
   }, []);
 
   return (
-    <div className="legal-page min-h-screen bg-[#030408] text-[#f0f3fa] selection:bg-[#f5c542] selection:text-black">
+    <div className="legal-page min-h-screen bg-[#030408] text-[#f0f3fa] selection:bg-gold selection:text-black">
       <header className="legal-noprint border-b border-white/[0.06]">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 max-[340px]:gap-2 sm:px-6">
           <Logo tag={t.brandTag} href={home} />
@@ -96,8 +96,8 @@ function LegalPage({ id }: { id: LegalDocId }) {
           <ArrowLeft aria-hidden="true" className="h-4 w-4" />
           {ui.back}
         </a>
-        <p className="mt-8 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f5c542]">
-          <span aria-hidden="true" className="h-px w-7 bg-[#f5c542]/60" />
+        <p className="mt-8 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-gold">
+          <span aria-hidden="true" className="h-px w-7 bg-gold/60" />
           <span>{labels.nav}</span>
         </p>
         {/* German titles are single long words (Datenschutzerklärung): they carry soft hyphens (docs/*.ts), and

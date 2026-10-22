@@ -89,7 +89,7 @@ export function StickyBar({ heroRef }: { heroRef?: RefObject<HTMLElement | null>
 
   return (
     <div className={show ? 'lp-sticky lp-show' : 'lp-sticky'} id="sticky" ref={bar} role="region" aria-label={c.ctaShort} aria-hidden={!show} inert={!show || undefined}>
-      <a className="lp-btn lp-btn-gold" href={tryHref} tabIndex={show ? 0 : -1}>
+      <a className="lp-btn lp-btn-gold gold-metal" href={tryHref} tabIndex={show ? 0 : -1}>
         <span>{c.cta}</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M5 12h14M13 6l6 6-6 6" />

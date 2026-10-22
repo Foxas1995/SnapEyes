@@ -8,7 +8,7 @@ import { BrandPicture } from '../shared/BrandLogo';
 // under it the eye with a short swoosh beside SNAPEYES in Cinzel.
 export function Logo({ tag, href = '#top' }: { tag: string; href?: string }) {
   return (
-    <a href={href} className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f5c542]" aria-label="SnapEyes">
+    <a href={href} className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold" aria-label="SnapEyes">
       <BrandPicture className="shrink-0" imgClass="block h-[34px] w-auto md:h-14" />
       <span className="flex flex-col leading-none md:sr-only">
         <span className="font-luxury text-[17px] font-semibold tracking-[0.18em] text-white">SNAPEYES</span>

@@ -236,7 +236,7 @@ async function checkKeyboard() {
   await key('Tab');
   await sleep(450);
   const ring2 = await page.eval(`(() => { const a = document.activeElement, c = getComputedStyle(a); return (a.textContent || '').trim().slice(0, 12) + ' | ' + c.outlineStyle + ' ' + c.outlineWidth + ' ' + c.outlineColor; })()`);
-  expect('keyboard', /Art \| solid 2px rgb\(245, 197, 66\)/.test(ring2), `two Tabs from the first row reach "${ring2}" (want the third row with the page's 2 px gold ring)`);
+  expect('keyboard', /Art \| solid 2px rgb\(196, 154, 89\)/.test(ring2), `two Tabs from the first row reach "${ring2}" (want the third row with the page's 2 px gold ring)`);
   await key('Enter');
   await sleep(2200);
   let s = await frameState(page);
@@ -379,7 +379,7 @@ async function checkDisc() {
   const r = JSON.parse(await page.eval(`JSON.stringify({ glow: getComputedStyle(document.querySelector('.lp-disc'), '::after').boxShadow,
     loops: document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().iterations === Infinity).map((a) => (a.effect.target && a.effect.target.className) + ' ' + a.animationName),
     running: document.getAnimations().filter((a) => a.playState === 'running').length })`));
-  const alphas = [...r.glow.matchAll(/rgba\(245, 197, 66, ([\d.]+)\)/g)].map((m) => +m[1]);
+  const alphas = [...r.glow.matchAll(/rgba\(196, 154, 89, ([\d.]+)\)/g)].map((m) => +m[1]);
   expect('disc', alphas.length > 0 && /16px/.test(r.glow), `the disc's cut line has the box shadow "${r.glow}" (want the soft gold glow, --glow: 16 px)`);
   expect('disc', alphas.every((a) => a <= 0.28), `the disc's glow "${r.glow}" is stronger than .28 (BR-4)`);
   expect('disc', r.loops.length === 0, `something loops on the landing at rest: ${r.loops.join(', ')} (BR-3, principle 4)`);

@@ -21,7 +21,7 @@ export function LangSwitch() {
           aria-pressed={lang === l}
           lang={l}
           title={LANG_NAMES[l]}
-          className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${
+          className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${
             lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'
           }`}
         >

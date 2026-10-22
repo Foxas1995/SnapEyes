@@ -32,9 +32,9 @@
     /* the sheets' tones, the deeper gold, the light of the cut line and of the bloom, the dimmest readable text */
     --tone-1: #0a0d14;     /* sheet tone A and D */
     --tone-2: #0d111a;     /* sheet tone B */
-    --gold-deep: #d4af37;
-    --glow: 0 0 16px 0 rgb(245 197 66 / .28);        /* the cut line and focus only; never above .28 */
-    --glow-soft: 0 0 40px rgb(245 197 66 / .12);     /* the static hero bloom */
+    --gold-deep: var(--gold-secondary);
+    --glow: 0 0 16px 0 rgb(var(--gold-rgb) / .28);        /* the cut line and focus only; never above .28 */
+    --glow-soft: 0 0 40px rgb(var(--gold-rgb) / .12);     /* the static hero bloom */
     --t-floor: rgb(240 243 250 / .5);    /* the dimmest any readable text may be, 4.91:1 */
 
     /* radii and the frame's shadow */
@@ -52,7 +52,7 @@
     --stagger-mask: 100ms;
     --stagger-card: 90ms;
 
-    --rim: rgb(245 197 66 / .30);        /* peak of the 1 px top edge of a sheet; fades to 0 toward both ends */
+    --rim: rgb(var(--gold-rgb) / .30);        /* peak of the 1 px top edge of a sheet; fades to 0 toward both ends */
 
     /* display type: ONE pair of tokens (spec D12); 600 and .004em is the earlier look */
     --w-display: 500;

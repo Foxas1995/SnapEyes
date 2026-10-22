@@ -11,7 +11,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 // (WCAG 2.2.2). The video is decorative (aria-hidden): the steps beside it say the same in words. Styles are inline: the landing and the tools share no
 // stylesheet, and their CSS budgets are spent.
 const BTN: CSSProperties = { position: 'absolute', display: 'grid', placeItems: 'center', borderRadius: '50%', padding: 0, cursor: 'pointer' };
-const PLAY: CSSProperties = { ...BTN, left: '50%', top: '50%', width: 64, height: 64, margin: -32, background: 'rgb(7 9 14/.74)', border: '1px solid rgb(245 197 66/.6)', color: '#f5c542' };
+const PLAY: CSSProperties = { ...BTN, left: '50%', top: '50%', width: 64, height: 64, margin: -32, background: 'rgb(7 9 14/.74)', border: '1px solid rgb(var(--gold-rgb) / .6)', color: 'var(--gold-primary)' };
 const PAUSE: CSSProperties = { ...BTN, right: 4, bottom: 4, width: 44, height: 44, background: 'rgb(7 9 14/.5)', border: 0, color: '#f0f3fa' };
 
 /** True when the video must wait for a press: reduced motion, a data saver, no IntersectionObserver (and on the server). */

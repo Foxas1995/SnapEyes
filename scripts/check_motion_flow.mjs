@@ -236,7 +236,7 @@ async function checkTryWithMotion() {
   })())`));
   expect('arc', proc.pathLength === '100' && /^22(px)?,? 78(px)?$/.test(proc.dash) && proc.width === '1.5px' && proc.size === 172 && proc.turn && proc.turn.n === 'wk-rot' && proc.turn.dur === 3200 && proc.turn.ease === 'linear' && proc.turn.it === 'inf',
     `the arc: ${JSON.stringify(proc)}`, 'the arc is 22 percent of a ring (22 78 of pathLength 100), 1.5 px, 3.2 s, linear, forever');
-  expect('arc', proc.cropFilter === 'none' && proc.own === 0 && !/245, 197, 66/.test(proc.cropShadow + proc.imgShadow) && proc.spinners === 0 && proc.bars === 0,
+  expect('arc', proc.cropFilter === 'none' && proc.own === 0 && !/196, 154, 89/.test(proc.cropShadow + proc.imgShadow) && proc.spinners === 0 && proc.bars === 0,
     `the customer's photo: filter ${proc.cropFilter}, shadow ${proc.cropShadow}, animations on it ${proc.own}, spinners ${proc.spinners}, bars ${proc.bars}`, 'the customer\'s own crop stands still: no animation, no filter, no glow, no pulse; no progress bar, no percentage');
   expect('arc', proc.lines.length >= 2 && proc.lines.slice(0, -1).every((l) => l[0] && !l[1]) && proc.lines.at(-1)[1] && !proc.lines.at(-1)[0] && /^\d+ ?s$/.test(proc.secs.trim()) && /tabular/.test(proc.tnum),
     `the steps: ${JSON.stringify(proc.lines)} ${proc.secs} ${proc.tnum}`, 'the real steps: a drawn check for every finished one, a still dot for the one in hand, the real seconds in tabular figures');
@@ -664,7 +664,10 @@ async function checkGuide() {
 // The owner's phone of 2026-10-22 (the calm flow: no verdict, Detail meter, tips list or shot notes on the quality step, no held tile and no retake card in the picker, no
 // tagline in the header, the dead words of four languages) moved the base of /try by -3,730 B JS, measured on 2638331 against the tree with it (159,650 to 155,920 B;
 // the CSS -24 B of both pages and /order -1 B are left in the budget). None of it is motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730, css: 10975 + 245 }, order: { js: 108723 + 414 + 110, css: 10975 + 245 } };
+// The gold of the logo (2026-10-22, palette A: the root's gold tokens and the metal of the primary buttons in src/index.css, the utilities that replace the hex ones,
+// the class gold-metal on the gold buttons) moved the base of both pages by +494 B CSS (the shared stylesheet), measured on 9facf04 against the tree with it
+// (12,978 to 13,472 B each; the JS +10 B of /try and -4 B of /order are left in the budget). It is colour, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730, css: 10975 + 245 + 494 }, order: { js: 108723 + 414 + 110, css: 10975 + 245 + 494 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

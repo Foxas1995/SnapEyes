@@ -172,7 +172,7 @@ export async function run(): Promise<R> {
   }
   check('no blur, no filter, no text shadow, no backdrop, and the only gradients are the two hairlines of gold (the one that sweeps along a frame, the one that passes once around a button) and the mask that cuts the second to 1 px (BR-4, AC-2)',
     !/blur\(|filter\s*:|backdrop|text-shadow|drop-shadow/.test(stripCss(flow)) && gradients.length === 6
-    && gradients.every((g) => /^linear-gradient\(90deg, transparent, rgb\(245 197 66 \/ \.6\), transparent\)$/.test(g) || /^conic-gradient\(from var\(--fx-a\), transparent 0 68%, rgb\(245 197 66 \/ \.7\) 96%, transparent 100%\)$/.test(g) || g === 'linear-gradient(#000 0 0)'), gradients.join(' | '));
+    && gradients.every((g) => /^linear-gradient\(90deg, transparent, rgb\(var\(--gold-rgb\) \/ \.6\), transparent\)$/.test(g) || /^conic-gradient\(from var\(--fx-a\), transparent 0 68%, rgb\(var\(--gold-rgb\) \/ \.7\) 96%, transparent 100%\)$/.test(g) || g === 'linear-gradient(#000 0 0)'), gradients.join(' | '));
   check('the only shadow of the flow is a hairline of 1 px and a contact shadow (a negative spread): no halo',
     decl.filter((d) => d.prop === 'box-shadow').length >= 3 && decl.filter((d) => d.prop === 'box-shadow').every((d) => d.value.startsWith('0 0 0 1px') || /\s-\d+px\s+rgb/.test(d.value)));
   check('the aperture is a clip and nothing else: circle(0) to circle(75) at the centre, and it is never given a fill (it exists only while it runs), the frame\'s own border warms and returns',
@@ -180,8 +180,8 @@ export async function run(): Promise<R> {
     && decl.filter((d) => d.prop === 'animation' && /fx-open/.test(d.value)).every((d) => !/\b(forwards|both)\b/.test(d.value)) && /@keyframes fx-warm\s*\{\s*0%, 100%/.test(stripCss(flow)));
   const used = new Set([...stripCss(flow).matchAll(/var\((--[\w-]+)(?:,[^)]*)?\)/g)].map((m) => m[1]));
   const have = new Set([...tokens.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
-  const local = new Set(['--i', '--sw', '--fx-a', '--gold-primary']);
-  check('every custom property the flow reads is a token of src/motion/tokens.css (the landing\'s own) or a local one (--i, --sw, --fx-a, the page\'s --gold-primary)', [...used].every((u) => have.has(u) || local.has(u)), [...used].filter((u) => !have.has(u) && !local.has(u)).join());
+  const local = new Set(['--i', '--sw', '--fx-a', '--gold-primary', '--gold-rgb']);   // the last two are the page's root tokens of the gold (src/index.css)
+  check('every custom property the flow reads is a token of src/motion/tokens.css (the landing\'s own) or a local one (--i, --sw, --fx-a, the page\'s --gold-primary and --gold-rgb)', [...used].every((u) => have.has(u) || local.has(u)), [...used].filter((u) => !have.has(u) && !local.has(u)).join());
   const landingProps = new Set([...stripCss(landing).matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
   check('the tokens have one source: tokens.css is imported by motion.css and by flow.css, and motion.css defines none of them again',
     /@import '\.\/tokens\.css'/.test(landing) && /@import '\.\/tokens\.css'/.test(flow) && [...have].every((t) => !landingProps.has(t)) && /body\.lp\)?,\s*:root:has\(> body\.fx\)/.test(tokens), [...have].filter((t) => landingProps.has(t)).join());

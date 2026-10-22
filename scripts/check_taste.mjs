@@ -9,7 +9,9 @@
 //
 // What it refuses: animate-pulse, animate-spin, animate-bounce, animate-ping (loops: BR-3); text-shadow and gradient text (BR-4: no neon);
 // filter blur (AC-2, and a blur on the page's own surfaces costs frames); font-black (the display type is 500 and 600); a gold gradient fill
-// on a button (one flat pill); backdrop blur outside the two fixed bars, which are the page's only blurred surfaces; a gold glow above .28 alpha.
+// on a button (the one exception is the logo's metal of palette A, the owner's choice of 2026-10-22: its tokens and the class gold-metal live in
+// src/index.css, and its stops anywhere else are a hit); backdrop blur outside the two fixed bars, which are the page's only blurred surfaces; a gold
+// glow above .28 alpha (the literal gold or the token rgb(var(--gold-rgb) / a)).
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,10 +52,11 @@ const RULES = [
   ['filter blur', /(?<![-\w])filter\s*:[^;}\n]*blur\(/],
   ['text-gold-gradient', TOKEN('text-gold-gradient')],
   ['font-black', TOKEN('font-black')],
-  ['gold gradient fill (bg-gradient-to-r with the gold hexes)', /bg-gradient-to-r[^"'`\n]*#(f5c542|d4af37)|#(f5c542|d4af37)[^"'`\n]*bg-gradient-to-r/i],
+  ['gold gradient fill (bg-gradient-to-r with the gold hexes)', /bg-gradient-to-r[^"'`\n]*(#(f5c542|d4af37)|(from|via|to)-gold)|(#(f5c542|d4af37)|(from|via|to)-gold)[^"'`\n]*bg-gradient-to-r/i],
+  ['the metal outside its one place (src/index.css: --metal, the class gold-metal)', /#f4e0a0/i],
   ['backdrop blur', /backdrop-blur|backdrop-filter\s*:/],
 ];
-const GOLD = /rgba?\(\s*245[\s,]+197[\s,]+66\s*(?:[,/]\s*([.\d]+))?\s*\)/g;
+const GOLD = /rgba?\(\s*(?:245[\s,]+197[\s,]+66|var\(--gold-rgb\))\s*(?:[,/]\s*([.\d]+))?\s*\)/g;
 
 const hits = [];
 for (const file of walk(join(ROOT, 'src'))) {
@@ -64,6 +67,7 @@ for (const file of walk(join(ROOT, 'src'))) {
     for (const [name, re] of RULES) {
       if (!re.test(line)) continue;
       if (name === 'backdrop blur' && ALLOW_BLUR[rel]) continue;
+      if (name.startsWith('the metal outside') && rel === 'src/index.css') continue;
       hits.push({ rule: name, file: rel, line: i + 1, text: line.trim().slice(0, 110) });
     }
     // a gold glow: a shadow of the gold with a blur of 12 px or more, no negative spread, and an alpha above .28 (a contact shadow has a negative spread)

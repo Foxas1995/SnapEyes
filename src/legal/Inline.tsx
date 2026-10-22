@@ -6,7 +6,7 @@ import type { Lang } from '../landing/copy';
 import { LEGAL_PATH, legalHref, type LegalDocId } from '../shared/legal';
 
 const TOKEN = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*/g;
-const LINK = 'text-zinc-100 underline decoration-[#f5c542]/50 underline-offset-4 hover:decoration-[#f5c542] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm break-words';
+const LINK = 'text-zinc-100 underline decoration-gold/50 underline-offset-4 hover:decoration-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold rounded-sm break-words';
 
 function resolve(href: string, lang: Lang): { url: string; external: boolean } {
   if (href.startsWith('doc:')) {

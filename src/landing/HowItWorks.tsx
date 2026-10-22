@@ -107,7 +107,7 @@ export function HowItWorks() {
           ))}
         </ol>
         <div className="lp-how-cta" data-reveal="fade">
-          <a className="lp-btn lp-btn-gold" href={tryHref}>
+          <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>
             <span>{c.cta}</span>
             <Arrow />
           </a>

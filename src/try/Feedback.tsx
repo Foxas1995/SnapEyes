@@ -51,7 +51,7 @@ export const FeedbackBox: React.FC<{ where: Place; ctx?: string; eyes?: number; 
               {CHIPS[where].map((c) => (
                 <label key={c} className="relative">
                   <input type="radio" name={`${id}-chip`} value={c} checked={chip === c} onChange={() => setChip(c)} data-testid={`feedback-chip-${c}`} className="peer sr-only" />
-                  <span className="inline-flex min-h-[44px] items-center rounded-full border border-white/15 bg-white/5 px-3 text-[12px] font-semibold text-zinc-200 peer-checked:border-[#f5c542] peer-checked:bg-[#f5c542]/10 peer-checked:text-[#f5c542] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#f5c542]">
+                  <span className="inline-flex min-h-[44px] items-center rounded-full border border-white/15 bg-white/5 px-3 text-[12px] font-semibold text-zinc-200 peer-checked:border-gold peer-checked:bg-gold/10 peer-checked:text-gold peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gold">
                     {(F.chips[where] as Record<string, string>)[c]}
                   </span>
                 </label>
@@ -63,7 +63,7 @@ export const FeedbackBox: React.FC<{ where: Place; ctx?: string; eyes?: number; 
               <label className="flex flex-col gap-1">
                 <span className="text-[11px] text-zinc-300">{F.textLabel}</span>
                 <textarea value={text} onChange={(e) => setText(e.target.value.slice(0, TEXT_MAX))} maxLength={TEXT_MAX} rows={3} aria-describedby={`${id}-h`} data-testid="feedback-text"
-                  className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-[13px] text-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]" />
+                  className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-[13px] text-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold" />
               </label>
               <p id={`${id}-h`} className="text-[11px] text-zinc-400">{F.textHint} <span aria-hidden="true">{F.count(text.length, TEXT_MAX)}</span></p>
               {/* the honeypot: a person never sees it, never reaches it with the keyboard and a screen reader skips it; a robot that fills every field gives itself away */}
@@ -71,7 +71,7 @@ export const FeedbackBox: React.FC<{ where: Place; ctx?: string; eyes?: number; 
                 className="absolute left-[-9999px] h-0 w-0 opacity-0" />
               <div className="flex items-center gap-3">
                 <button type="submit" disabled={busy} data-testid="feedback-send"
-                  className="min-h-[44px] rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-zinc-100 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]">
+                  className="min-h-[44px] rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-semibold text-zinc-100 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
                   {busy ? F.sending : F.send}
                 </button>
                 {result === 'failed' && <p role="alert" data-testid="feedback-failed" className="text-[11px] text-rose-200">{F.failed}</p>}
@@ -82,7 +82,7 @@ export const FeedbackBox: React.FC<{ where: Place; ctx?: string; eyes?: number; 
       )}
       <p className="mt-2 text-[10px] text-zinc-400">
         {F.privacy}{' '}
-        <a href={legalHref('privacy', T.lang)} target="_blank" rel="noopener" className="underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm">{LEGAL_LABELS[T.lang].privacy}</a>
+        <a href={legalHref('privacy', T.lang)} target="_blank" rel="noopener" className="underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold rounded-sm">{LEGAL_LABELS[T.lang].privacy}</a>
       </p>
     </section>
   );

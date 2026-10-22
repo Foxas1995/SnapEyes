@@ -30,7 +30,7 @@ export function MenuDialogView({ copy, tryHref }: { copy: LandingCopy; tryHref: 
             ))}
           </ul>
         </nav>
-        <a className="lp-btn lp-btn-gold" href={tryHref}>
+        <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>
           <span>{copy.cta}</span>
         </a>
       </div>

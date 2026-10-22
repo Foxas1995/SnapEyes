@@ -5,7 +5,7 @@
    no specificity. */
 @layer landing {
   .lp-notice { display: flex; align-items: center; gap: 12px; margin-top: 26px; font-size: 14.5px; font-weight: 600; color: var(--t-2); }
-  .lp-notice::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex: none; box-shadow: 0 0 0 4px rgba(245, 197, 66, .15); }
+  .lp-notice::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex: none; box-shadow: 0 0 0 4px rgb(var(--gold-rgb) / .15); }
   .lp-price-grid { display: grid; gap: 44px; margin-top: 40px; }
   @media (min-width: 960px) {
     .lp-price-grid { grid-template-columns: 1.25fr .75fr; gap: 80px; align-items: start; }
@@ -16,7 +16,7 @@
   .lp-prow::after { content: ""; position: absolute; inset: auto 0 -1px; height: 1px; background: var(--line); transform-origin: left center; }
   .lp-prow b { font-weight: 600; color: #fff; font-size: 16px; }
   .lp-prow small { display: block; margin-top: 3px; font-size: 13px; color: var(--ink-3); font-weight: 400; line-height: 1.5; }
-  .lp-prow.lp-free .lp-pv { color: var(--gold); }
+  .lp-prow.lp-free .lp-pv { color: var(--gold-2); }
   .lp-prow .lp-pv { font-family: var(--display); font-weight: 600; font-size: 24px; color: #fff; text-align: right; white-space: nowrap; }
   .lp-prow .lp-pv .lp-soon { font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
   .lp-prow .lp-pv em { font-style: normal; font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--ink-3); display: block; margin-top: 2px; letter-spacing: .02em; }

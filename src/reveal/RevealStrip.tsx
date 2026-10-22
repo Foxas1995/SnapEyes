@@ -45,7 +45,7 @@ export const RevealStrip: React.FC<Props> = ({ wide, restored, art, geometry, ca
         </figure>
         <figure style={col(1)} data-testid="strip-iris">
           <div className={frame}><RestoredDisc src={restored} g={geometry} alt={alts.iris} /></div>
-          <figcaption className="mt-2 text-[11px] sm:text-xs font-semibold tracking-wide text-[#f5c542] text-center">{captions.iris}</figcaption>
+          <figcaption className="mt-2 text-[11px] sm:text-xs font-semibold tracking-wide text-gold text-center">{captions.iris}</figcaption>
         </figure>
         {art !== undefined && (
           <figure style={col(2)} data-testid="strip-art">

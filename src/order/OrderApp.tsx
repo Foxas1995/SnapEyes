@@ -395,7 +395,7 @@ const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: 
             <li key={e.eye} data-testid={`eye-${e.eye}`} className="w-[72px] flex flex-col items-center gap-1 text-center">
               <EyeRing made={!!e.made} busy={busy} thumb={e.preview_url} />
               <span className="text-[10px] font-bold text-zinc-300 leading-tight">{C.making.eye(e.eye)}</span>
-              <span className={`text-[10px] leading-tight ${e.made ? 'text-[var(--ok)]' : busy ? 'text-[#f5c542]' : 'text-zinc-400'}`}>
+              <span className={`text-[10px] leading-tight ${e.made ? 'text-[var(--ok)]' : busy ? 'text-gold' : 'text-zinc-400'}`}>
                 {e.made ? C.making.done : busy ? C.making.working : C.making.waiting}
               </span>
             </li>
@@ -403,7 +403,7 @@ const Making: React.FC<{ C: OrderCopy; st: OrderStatus; view: DriveView; clock: 
         })}
       </ul>
       <div className="mt-4 h-2 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-label={line} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-        <div className="fx-bar h-full rounded-full bg-[#f5c542]" style={{ width: `${Math.max(pct, 4)}%` }} />
+        <div className="fx-bar h-full rounded-full bg-gold" style={{ width: `${Math.max(pct, 4)}%` }} />
       </div>
       <div className="flex items-start justify-between gap-3 mt-2">
         <p data-testid="making-line" className="text-xs text-zinc-300 flex items-center gap-2 min-w-0">{(view.making.length > 0 || view.composing) && !w && <Dot />}<span>{line}</span></p>
@@ -456,7 +456,7 @@ const LangSwitch: React.FC<{ C: OrderCopy; lang: Lang; langs: readonly Lang[]; o
   <div role="group" aria-label={C.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
     {langs.map((l) => (
       <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
-        className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+        className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
         {l}
       </button>
     ))}

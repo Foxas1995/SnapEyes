@@ -47,7 +47,7 @@ export function ClosingScene({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
       <div className="lp-wrap">
         <Title id="finalH" text={c.final.title} />
         <p className="lp-lede" data-reveal="fade" style={after(2.5)}>{c.final.body}</p>
-        <a className="lp-btn lp-btn-gold" id="ctaFinal" href={tryHref} ref={ctaRef} data-reveal="fade" style={after(4)}>
+        <a className="lp-btn lp-btn-gold gold-metal" id="ctaFinal" href={tryHref} ref={ctaRef} data-reveal="fade" style={after(4)}>
           <span>{c.cta}</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" />

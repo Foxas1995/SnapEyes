@@ -42,7 +42,7 @@
   @supports (paint-order: stroke fill) {
     .lp-ftr-mark { display: block; margin: 48px 0 0; padding-block: .18em .12em; font-family: var(--display); font-weight: 600; font-size: min(17.5vw, 22rem); line-height: .8; letter-spacing: .02em; text-align: center; white-space: nowrap; clip-path: inset(0 -1em); pointer-events: none; user-select: none; }
     .lp-ftr-mark > span { display: block; }
-    .lp-ftr-mark > span::before { content: "SNAPEYES"; color: var(--ftr-bg); -webkit-text-stroke: clamp(1.5px, .4vw, 2px) rgb(245 197 66 / .22); paint-order: stroke fill; }
+    .lp-ftr-mark > span::before { content: "SNAPEYES"; color: var(--ftr-bg); -webkit-text-stroke: clamp(1.5px, .4vw, 2px) rgb(var(--gold-rgb) / .22); paint-order: stroke fill; }
     @media screen and (prefers-reduced-motion: no-preference) {
       html.mo:not(.mo-fail) .lp-ftr-mark:not([data-in]) > span { translate: 0 var(--mask-from); }
       html.mo:not(.mo-fail) .lp-ftr-mark[data-in] > span { animation: lp-rv-mask var(--d-mask) var(--ease-out) backwards; }

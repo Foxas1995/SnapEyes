@@ -194,7 +194,7 @@ async function checkHow() {
   const sc = sc0.slice(sc0.findIndex((v) => v < 1));   // the frames before the step came into view have no animation yet
   expect('how', sc[0] === 0 && sc.at(-1) === 1 && sc.every((v, i) => i === 0 || v >= sc[i - 1] - 1e-6), `the hairline of step 3 does not draw from 0 to 1 monotonically: ${sc.filter((_, i) => i % 15 === 0).map((v) => v.toFixed(2)).join(' ')}`);
   const colors = col(f['.lp-step:nth-child(3) .lp-num'], 3);
-  expect('how', colors.some((c) => c.includes('0.5)')) && colors.at(-1) === 'rgb(245, 197, 66)', `the numeral of step 3 does not warm to gold: ${colors[0]} ... ${colors.at(-1)}`);
+  expect('how', colors.some((c) => c.includes('0.5)')) && colors.at(-1) === 'rgb(196, 154, 89)', `the numeral of step 3 does not warm to gold: ${colors[0]} ... ${colors.at(-1)}`);
   await scrollTo(page, '.lp-how-cta', 500);
   const cta = (await frames(page, ['.lp-how-cta'], ['opacity', 'translate'], 1500))['.lp-how-cta'];
   expect('how', cta.at(-1)[1] === '1' && cta.at(-1)[2] === 'none' && num(cta[0][1]) < 0.6, `the button row does not rise to its place (${cta[0][1]} to ${cta.at(-1)[1]})`);
@@ -217,7 +217,7 @@ async function checkHow() {
   await sleep(500);
   let c = JSON.parse(await cur());
   expect('how', c.i === 0 && c.n === 1, `rail at rest: the current step is ${c.i} (${c.n} marked), wanted 0`);
-  expect('how', c.num[0] === 'rgb(245, 197, 66)' && c.num[1].endsWith('0.6)') && c.h3[0] === 'rgb(255, 255, 255)' && c.h3[1].includes('0.5)'), `rail at rest: the tones are not current gold and white against 0.6 gold and the floor: ${JSON.stringify(c)}`);
+  expect('how', c.num[0] === 'rgb(196, 154, 89)' && c.num[1].endsWith('0.6)') && c.h3[0] === 'rgb(255, 255, 255)' && c.h3[1].includes('0.5)'), `rail at rest: the tones are not current gold and white against 0.6 gold and the floor: ${JSON.stringify(c)}`);
   await page.eval("document.getElementById('steps').scrollTo({ left: document.querySelector('.lp-step:nth-child(2)').offsetLeft - 16, behavior: 'instant' })");
   await sleep(700);
   c = JSON.parse(await cur());

@@ -63,7 +63,7 @@ interface Props {
 const NORMAL: BuyState = { kind: 'normal' };
 
 // fx-card: the card arrives once (src/motion/flow.css); nothing inside it (the price, the waiver, the legal links) ever moves on its own
-const CARD = 'fx-card bg-[#0b0e17] border border-[#f5c542]/25 rounded-2xl p-4';
+const CARD = 'fx-card bg-[#0b0e17] border border-gold/25 rounded-2xl p-4';
 
 /** The price of this artwork and, where this deployment takes orders, the way to buy it: the withdrawal waiver (never
  *  ticked in advance), the legal links and the button to Stripe's page. Where it does not, today's plain "ordering
@@ -139,7 +139,7 @@ export const BuyCard: React.FC<Props> = (props) => {
       <p className="text-[10px] uppercase tracking-widest text-zinc-400">{T.price.title}</p>
       <div className="flex items-baseline justify-between gap-3 mt-1.5">
         <span className="text-sm font-semibold text-zinc-100">{label}</span>
-        <span data-testid="price" className="font-luxury text-2xl font-bold text-[#f5c542] whitespace-nowrap">{fmt(cents)}</span>
+        <span data-testid="price" className="font-luxury text-2xl font-bold text-gold-light whitespace-nowrap">{fmt(cents)}</span>
       </div>
       {hint && <p className="text-[11px] text-zinc-300 mt-2">{hint}</p>}
       {samples > 0 && <p className="text-[11px] text-amber-200/90 mt-2">{T.price.sampleNotCounted(samples)}</p>}
@@ -199,7 +199,7 @@ export const BuyCard: React.FC<Props> = (props) => {
 
       <label className="mt-4 flex items-start gap-3 text-xs leading-relaxed text-zinc-200 bg-white/5 border border-white/10 rounded-xl p-3 cursor-pointer">
         <input data-testid="waiver" type="checkbox" checked={p.waiver} disabled={p.busy} onChange={(e) => p.onWaiver(e.target.checked)}
-          className="mt-0.5 w-5 h-5 shrink-0 accent-[#f5c542]" />
+          className="mt-0.5 w-5 h-5 shrink-0 accent-gold" />
         <span>{waiverText}</span>
       </label>
       <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
@@ -207,7 +207,7 @@ export const BuyCard: React.FC<Props> = (props) => {
       <button data-testid="buy" type="button" onClick={p.onBuy} disabled={disabled}
         className={`mt-3 w-full min-h-[48px] px-3 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 text-center ${disabled
           ? 'bg-white/5 border border-white/10 text-zinc-500 cursor-not-allowed'
-          : 'fx-gold'}`}>
+          : 'fx-gold gold-metal'}`}>
         {p.busy ? <Dot /> : <Lock className="w-4 h-4 shrink-0" />}
         <span>{p.busy && p.step ? p.step : T.buy.button(fmt(cents))}</span>
       </button>

@@ -54,7 +54,7 @@ export async function run(): Promise<R> {
   const src = read('src/try/CompareSlider.tsx');
   check('the arrows move the cut by 5, the page keys by 10, Home and End to the ends, and a key ends the sweep like a touch; the focus ring is drawn on the frame',
     /ArrowLeft/.test(src) && /ArrowRight/.test(src) && /'PageDown' \? -10/.test(src) && /'PageUp' \? 10/.test(src) && /'Home' \? 0/.test(src) && /'End' \? 100/.test(src) && /stopSweep\.current\(\)/.test(src.split('const onKey')[1] ?? '')
-    && /focus-visible:outline-\[#f5c542\]/.test(src), '');
+    && /focus-visible:outline-gold(?![\w-])/.test(src), '');
 
   // ---- the words that were missing, in four languages (M3, M5, H-M1)
   const keys = ['sliderLabel', 'sliderValue', 'previewReady', 'aiMaterial'] as const;

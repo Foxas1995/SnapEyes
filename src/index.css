@@ -13,6 +13,15 @@
   --ease-out: initial;
 }
 
+/* The gold of the pages' utilities (text-gold, bg-gold/10, border-gold/30, ring-gold, outline-gold, text-gold-light ...): the same two values as
+   --gold-primary and --gold-light of the root below. They are written out here, inline, so that Tailwind works out every translucent shade at build
+   time (one plain colour per class, as the old hex classes had) and writes no variable of its own onto any page's root.
+   suites/ts/gold_palette.test.ts keeps the copies in step. */
+@theme inline {
+  --color-gold: #c49a59;
+  --color-gold-light: #e0bc74;
+}
+
 /* Tailwind reads every source file for class names, and takes any word that is a utility ("resize" in an event name) for one.
    The landing v2 shell and its generated picture manifest use no utility (their classes are lp- classes of src/landing/css),
    and neither do the check scripts, so they are not read: the CSS of every other page stays exactly what it was. */
@@ -44,13 +53,28 @@
 }
 
 @layer base {
+  /* The gold of every page, in one place: the logo's metal (palette A, the owner's choice of 2026-10-22). The logo runs from a champagne highlight
+     #f9e6a1 through the mid gold #c49a59 to a bronze shadow #875b2e; the pages take the mid gold for their accents and the champagne to antique gold
+     sheen for their primary buttons. The landing (src/landing/css/base.css) and the motion tokens (src/motion) read these; the utilities above carry
+     copies of the first and the third, and the 404 page (src/notfound/notfound.html) its own of four.
+     Contrast on #07090e: the accent 7.7:1, the light gold 11.0:1, the pale gold 13.5:1; the text of a metal button 5.5:1 or more on every stop. */
   :root {
-    --gold-primary: #f5c542;
-    --gold-secondary: #d4af37;
-    --gold-dark: #b8860b;
+    --gold-primary: #c49a59;   /* accents: a gold word or full stop, numerals, ticks, rings, borders, the focus ring, the slider line */
+    --gold-rgb: 196 154 89;    /* the same gold for its translucent uses (hairlines, washes, glows): rgb(var(--gold-rgb) / .28) */
+    --gold-light: #e0bc74;     /* a gold that brightens on hover, and the prices */
+    --gold-pale: #ecd28f;      /* gold words on a gold wash */
+    --gold-secondary: #aa7d45;
+    --gold-dark: #875b2e;
     --bg-main: #07090e;
     --card-dark: rgba(15, 18, 28, 0.75);
-    --border-gold: rgba(245, 197, 66, 0.25);
+    --border-gold: rgb(var(--gold-rgb) / .25);
+    /* the metal of a primary button (.gold-metal below) and of a slider's knob (.gold-knob): the logo's sheen, lit from the upper left */
+    --metal: linear-gradient(115deg, #f4e0a0 0%, #e0bd77 42%, #cba05d 74%, #b98d50 100%);
+    --metal-hi: linear-gradient(115deg, #f9e9b3 0%, #e9c886 42%, #d6ac69 74%, #c69958 100%);
+    --metal-press: linear-gradient(115deg, #e7cd8b 0%, #d2ae68 42%, #bd9252 74%, #ab8047 100%);
+    --metal-knob: radial-gradient(circle at 32% 28%, #f9e8b0 0%, #e0bd77 46%, #b98d50 100%);
+    --metal-base: #e0bd77;     /* under the gradient, while it paints */
+    --metal-ink: #0e0a07;      /* the logo's warm black: the words and the icon on the metal */
   }
 
   body {
@@ -62,4 +86,28 @@
   h1, h2, h3, .font-luxury {
     font-family: 'Cinzel', serif;
   }
+}
+
+/* The one class of a primary action on every page (the landing's gold pill, the photo, buy and order buttons of /try and /order): the logo's metal.
+   Its shape, its contact shadow and its press scale stay with .lp-btn-gold and .fx-gold; a hover brightens the metal, a press deepens it. A forced
+   colours theme drops the gradient, and the border those two classes draw there keeps it a button. */
+@utility gold-metal {
+  background-color: var(--metal-base);
+  background-image: var(--metal);
+  color: var(--metal-ink);
+  @media (hover: hover) {
+    &:hover {
+      background-image: var(--metal-hi);
+    }
+  }
+  &:active {
+    background-image: var(--metal-press);
+  }
+}
+
+/* the knob of a before and after slider: the same metal, a round light in its upper left */
+@utility gold-knob {
+  background-color: var(--metal-base);
+  background-image: var(--metal-knob);
+  color: var(--metal-ink);
 }

@@ -58,7 +58,7 @@ export function Pricing() {
             <p className="lp-not">{pr.notIncludes}</p>
             {p.open && <p className="lp-pay-open">{pr.payOpen}</p>}
             {legalEdition(p.market) === 'au' && <p className="lp-au-line">{pr.auLine}</p>}
-            <a className="lp-btn lp-btn-gold" href={tryHref}>
+            <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>
               <span>{c.cta}</span>
               <Arrow />
             </a>

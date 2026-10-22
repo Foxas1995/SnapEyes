@@ -10,7 +10,7 @@
    .ladder, .ladder-h, .soonbadge) and .no-js; the @font-face lines (src/index.css declares the fonts once). The prototype's
    :root tokens sit on the root element while the body has the class lp, where JS may still set --bar-h inline. */
 @layer landing {
-  :root:has(> body.lp) { color-scheme: dark; --bg: #07090e; --bg-2: #0b0e16; --bg-3: #10141e; --ink: #f0f3fa; --ink-2: #c9ced9; --ink-3: #9da4b3; --gold: #f5c542; --gold-2: #ffd666; --gold-soft: #f7d77a; --line: rgba(255, 255, 255, .08); --line-2: rgba(255, 255, 255, .16); --gold-line: rgba(245, 197, 66, .38); --ring: 0 0 0 1px rgba(255, 255, 255, .08), 0 40px 100px -34px rgba(0, 0, 0, .95); --display: 'Cinzel', 'Trajan Pro', Georgia, 'Times New Roman', serif; --body: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; --gut: 16px; --bar-h: 34px; --hdr-h: 64px; --r: 22px; --hdr-total: 100px; --ease: cubic-bezier(.2, .7, .2, 1); }
+  :root:has(> body.lp) { color-scheme: dark; --bg: #07090e; --bg-2: #0b0e16; --bg-3: #10141e; --ink: #f0f3fa; --ink-2: #c9ced9; --ink-3: #9da4b3; --gold: var(--gold-primary); --gold-2: var(--gold-light); --gold-soft: var(--gold-pale); --line: rgba(255, 255, 255, .08); --line-2: rgba(255, 255, 255, .16); --gold-line: rgb(var(--gold-rgb) / .38); --ring: 0 0 0 1px rgba(255, 255, 255, .08), 0 40px 100px -34px rgba(0, 0, 0, .95); --display: 'Cinzel', 'Trajan Pro', Georgia, 'Times New Roman', serif; --body: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; --gut: 16px; --bar-h: 34px; --hdr-h: 64px; --r: 22px; --hdr-total: 100px; --ease: cubic-bezier(.2, .7, .2, 1); }
   @media (min-width: 640px) {
     :root:has(> body.lp) { --gut: 28px; }
   }
@@ -30,7 +30,7 @@
   :where(.lp) ul, :where(.lp) ol { list-style: none; }
   :where(.lp) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
   :where(.lp) a { color: inherit; }
-  :where(.lp)::selection, :where(.lp) ::selection { background: rgb(245 197 66 / .28); color: var(--t-1); }
+  :where(.lp)::selection, :where(.lp) ::selection { background: rgb(var(--gold-rgb) / .28); color: var(--t-1); }
   :root:has(> body.lp) { -webkit-tap-highlight-color: transparent; }   /* the press scale of the buttons replaces the grey flash */
   :where(.lp) input, :where(.lp) textarea { caret-color: var(--gold); accent-color: var(--gold); }
   /* one focus ring everywhere: 2 px gold, 4 px off; on keyboard focus the offset settles from 7 px to 4 px in .25 s, so the ring lands on the
@@ -111,7 +111,7 @@
     .lp-sheet > .lp-sec:not(#reveal, .lp-slot) { contain-intrinsic-size: auto calc(var(--slot-d, 1052px) - 152px); }
     .lp-final { contain-intrinsic-size: auto var(--slot-d, 600px); }
   }
-  .lp-sec + .lp-sec::before { content: ""; position: absolute; top: 0; left: 50%; width: min(1120px, calc(100% - 2 * var(--gut))); transform: translateX(-50%); height: 1px; background: linear-gradient(90deg, transparent, rgba(245, 197, 66, .28), transparent); }
+  .lp-sec + .lp-sec::before { content: ""; position: absolute; top: 0; left: 50%; width: min(1120px, calc(100% - 2 * var(--gut))); transform: translateX(-50%); height: 1px; background: linear-gradient(90deg, transparent, rgb(var(--gold-rgb) / .28), transparent); }
   .lp-sec-head { max-width: 680px; }
   .lp-sec-head h2 { margin-top: 18px; }
   .lp-sec-head p.lp-intro { margin-top: 18px; color: var(--ink-2); font-size: 17px; max-width: 38em; }
@@ -124,11 +124,9 @@
   @media (hover: hover) {
     .lp-btn:hover svg { translate: 3px 0; }
   }
-  /* the gold pill never changes shape, it brightens (a circle fill between two golds 10.8 dE apart is a flourish, not a change); contact shadow only, no halo */
-  .lp-btn-gold { background: var(--gold); color: var(--tone-abyss); box-shadow: 0 12px 32px -18px rgb(245 197 66 / .30); }
-  @media (hover: hover) {
-    .lp-btn-gold:hover { background: var(--gold-hi); }
-  }
+  /* the gold pill wears the logo's metal: its fill, its hover and its press are the class gold-metal beside it (src/index.css); the pill never changes
+     shape, and it has a contact shadow only, no halo */
+  .lp-btn-gold { box-shadow: 0 12px 32px -18px rgb(var(--gold-rgb) / .30); }
   .lp-btn-gold:focus-visible { outline-offset: 4px; border-radius: 999px; }
   /* the outline pill: white label, gold ring; on hover and focus a gold circle grows from its end while the label turns ink */
   .lp-btn-line { --origin: calc(100% - 1.25rem); border: 1px solid var(--ring-gold); color: var(--t-1); min-height: 44px; padding: 9px 20px; font-size: 14px; }
@@ -155,7 +153,7 @@
   .lp-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .lp-pill { min-height: 40px; padding: 8px 16px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); }
   .lp-pill:hover { color: #fff; border-color: rgba(255, 255, 255, .4); }
-  .lp-pill[aria-checked="true"], .lp-pill[aria-selected="true"], .lp-pill[aria-pressed="true"] { border-color: var(--gold); color: var(--t-1); background: rgba(245, 197, 66, .07); }
+  .lp-pill[aria-checked="true"], .lp-pill[aria-selected="true"], .lp-pill[aria-pressed="true"] { border-color: var(--gold); color: var(--t-1); background: rgb(var(--gold-rgb) / .07); }
   .lp-pill[aria-disabled="true"] { opacity: .35; pointer-events: none; }
   .lp-link-gold { color: var(--t-1); font-weight: 600; font-size: 15px; text-decoration: underline; text-decoration-color: var(--gold-line); text-underline-offset: 6px; transition: color var(--d-tap) var(--ease-out); }
   .lp-link-gold:hover { color: #fff; }

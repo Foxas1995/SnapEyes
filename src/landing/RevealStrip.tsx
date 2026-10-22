@@ -40,7 +40,7 @@ export function RevealStrip({ eye }: RevealStripProps) {
       <p className="lp-reveal-note">{r.note}</p>
       <div className="lp-your-turn" data-reveal="fade">
         <p>{r.yourTurn}</p>
-        <a className="lp-btn lp-btn-gold" href={tryHref}>
+        <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>
           <span>{c.cta}</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" />

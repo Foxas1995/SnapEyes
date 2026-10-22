@@ -26,10 +26,12 @@
       .logo img { display: block; height: 96px; width: auto; }
       h1 { font: 600 clamp(28px, 7vw, 40px)/1.15 Cinzel, serif; margin: 44px 0 14px; }
       p { margin: 0 auto 32px; color: #b6bccb; max-width: 30rem; }
-      .home { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 999px; border: 1px solid #f5c542; color: #f5c542; text-decoration: none; font-weight: 700; letter-spacing: .04em; }
-      .home:hover, .home:focus-visible { background: #f5c542; color: #07090e; outline: none; }
-      .home:focus-visible { box-shadow: 0 0 0 3px rgba(245, 197, 66, .35); }
+      .home { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); text-decoration: none; font-weight: 700; letter-spacing: .04em; }
+      .home:hover, .home:focus-visible { background: var(--metal); color: var(--metal-ink); outline: none; }
+      .home:focus-visible { box-shadow: 0 0 0 3px rgb(var(--gold-rgb) / .35); }
       .code { margin-top: 48px; font-size: 12px; letter-spacing: .3em; color: #6f7686; }
+      /* the gold of the logo (palette A, 2026-10-22): this page loads none of the site's stylesheets, so it carries its own copy of the values of src/index.css */
+      :root { --gold: #c49a59; --gold-rgb: 196 154 89; --metal: linear-gradient(115deg, #f4e0a0 0%, #e0bd77 42%, #cba05d 74%, #b98d50 100%); --metal-ink: #0e0a07; }
     </style>
   </head>
   <body>

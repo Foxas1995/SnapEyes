@@ -20,7 +20,7 @@ export function emptyWords(n = 1): WordsModel {
   return { names: Array.from({ length: n }, () => ''), onName: no, date: '', onDate: no, family: '', onFamily: no, showFamily: false, problems: [] };
 }
 
-const INPUT = 'w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-[#f5c542] aria-[invalid=true]:border-rose-400/70';
+const INPUT = 'w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-gold aria-[invalid=true]:border-rose-400/70';
 const LABEL = 'block text-[11px] font-semibold text-zinc-300 mb-1';
 const BAD = 'text-[11px] text-rose-200 mt-1';
 

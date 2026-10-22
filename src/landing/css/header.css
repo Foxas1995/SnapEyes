@@ -29,7 +29,7 @@
   @media (forced-colors: active) {
     .lp-nav a[aria-current] { text-decoration: underline; }
   }
-  .lp-nav-mark { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; background: rgb(245 197 66 / .8); transform-origin: 0 50%; translate: var(--mx, 0px) 0; scale: var(--mw, 0) 1; opacity: var(--mo, 0); pointer-events: none; transition: translate var(--d-ui) var(--ease-out), scale var(--d-ui) var(--ease-out), opacity var(--d-ui) var(--ease-out); }
+  .lp-nav-mark { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; background: rgb(var(--gold-rgb) / .8); transform-origin: 0 50%; translate: var(--mx, 0px) 0; scale: var(--mw, 0) 1; opacity: var(--mo, 0); pointer-events: none; transition: translate var(--d-ui) var(--ease-out), scale var(--d-ui) var(--ease-out), opacity var(--d-ui) var(--ease-out); }
   .lp-nav.lp-nm-jump .lp-nav-mark { transition: none; }
   @media (min-width: 960px) {
     .lp-nav { display: flex; }

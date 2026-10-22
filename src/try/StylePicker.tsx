@@ -118,11 +118,11 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
   const reason = pick && m.catalog?.reasonKey ? (T.picker.reasons as Record<string, string>)[m.catalog.reasonKey] : undefined;
   // the style's one line (copy picker.lines, keyed by the server's id with "_" for "."): what the look is, under its name; none where the copy has none
   const line = (T.picker.lines as Record<string, string>)[`line.${t.id.replace('.', '_')}`];
-  const ring = selected ? 'border-[#f5c542] ring-2 ring-[#f5c542]' : pick ? 'border-[#f5c542]/60' : 'border-white/15';
+  const ring = selected ? 'border-gold ring-2 ring-gold' : pick ? 'border-gold/60' : 'border-white/15';
   return (
     <li data-testid={`tile-${t.slug}`} data-state={st.kind} data-stage={t.stage} className={`fx-pick rounded-xl border overflow-hidden bg-[#0b0e17] flex flex-col ${ring}`}>
       <button type="button" onClick={() => m.onStyle(t.id)} aria-pressed={selected} aria-busy={busy || undefined}
-        className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542]">
+        className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
         <span className="relative block w-full aspect-[4/3] bg-black overflow-hidden">
           {art && <img {...NO_SAVE} src={art.src} alt={T.picker.tileAlt(t.name)} className="absolute inset-0 w-full h-full object-contain" />}
           {busy && (
@@ -133,13 +133,13 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
           )}
           {failed && <span className="absolute inset-0 flex items-center justify-center px-2 text-center text-[11px] text-zinc-300 bg-white/5">{T.picker.tileFailed}</span>}
           {pick && (
-            <span data-testid="recommended" className="absolute top-1.5 left-1.5 rounded-full bg-[#f5c542] text-black text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">{T.picker.recommended}</span>
+            <span data-testid="recommended" className="absolute top-1.5 left-1.5 rounded-full bg-gold text-black text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">{T.picker.recommended}</span>
           )}
         </span>
         <span className="block px-2 py-1.5">
           <span className="flex items-baseline justify-between gap-2">
             <span className="text-xs font-bold text-zinc-100 min-w-0 break-words leading-tight">{t.name}</span>
-            {price && <span data-testid="tile-price" className="shrink-0 text-xs font-semibold text-[#f5c542] whitespace-nowrap">{price}</span>}
+            {price && <span data-testid="tile-price" className="shrink-0 text-xs font-semibold text-gold-light whitespace-nowrap">{price}</span>}
             {!allSoon && isSoon(t) && (
               <span data-testid="soon" className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-amber-200 border border-amber-400/40 rounded-full px-1.5 py-px">{T.picker.soon}</span>
             )}
@@ -161,7 +161,7 @@ const Tile: React.FC<{ t: ServerTile; m: PickerModel; allSoon: boolean; eyes: Ca
           {looks.map((l) => (
             <button key={l.code} type="button" aria-pressed={selected && m.look === l.code} data-testid={`look-${l.code}`}
               onClick={() => { m.onLook(l.code); m.onStyle(t.id); }}
-              className={`min-h-[36px] px-2.5 rounded-lg border text-[11px] font-semibold ${selected && m.look === l.code ? 'border-[#f5c542] bg-[#f5c542]/10 text-[#f5c542]' : 'border-white/15 bg-white/5 text-zinc-200'}`}>
+              className={`min-h-[36px] px-2.5 rounded-lg border text-[11px] font-semibold ${selected && m.look === l.code ? 'border-gold bg-gold/10 text-gold' : 'border-white/15 bg-white/5 text-zinc-200'}`}>
               {lookName(l.code)}{l.soon && !allSoon ? ` · ${T.picker.soon}` : ''}
             </button>
           ))}

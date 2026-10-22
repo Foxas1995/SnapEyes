@@ -288,7 +288,7 @@ async function checkFaq() {
     const t0 = o.find(([, v]) => v.h > 1)?.[0], t1 = o.find(([, v]) => v.h >= hs[hs.length - 1] - 0.5)?.[0];
     expect('faq', t1 !== undefined && t1 - (t0 ?? 0) > 160 && t1 - (t0 ?? 0) < 700, `${tag}: opening takes ${t1 - t0} ms, expected about .5 s on the expo curve`);
     const ring = o.map(([, v]) => v.ring);
-    expect('faq', new Set(ring).size >= 3 && /245, 197, 66/.test(ring[ring.length - 1]), `${tag}: the plus's ring does not warm to gold while it opens (${[...new Set(ring)].slice(0, 4).join(' | ')})`);
+    expect('faq', new Set(ring).size >= 3 && /196, 154, 89/.test(ring[ring.length - 1]), `${tag}: the plus's ring does not warm to gold while it opens (${[...new Set(ring)].slice(0, 4).join(' | ')})`);
     expect('faq', new Set(o.map(([, v]) => v.turn)).size >= 3, `${tag}: the plus does not turn`);
     // close with Space (the keyboard), open again with Enter
     await page.eval("document.querySelector('#faq summary').focus()");
@@ -304,7 +304,7 @@ async function checkFaq() {
     await key(page, 'Tab', 'Tab', 9, '');
     await sleep(500);
     const ring2 = J(await page.eval(`JSON.stringify((() => { const a = document.activeElement, s = getComputedStyle(a); return { tag: a.tagName, inFaq: !!a.closest('#faq'), w: s.outlineWidth, st: s.outlineStyle, c: s.outlineColor, off: s.outlineOffset }; })())`));
-    expect('faq', ring2.inFaq && ring2.st === 'solid' && ring2.w === '2px' && /245, 197, 66/.test(ring2.c) && ring2.off === '4px', `${tag}: the keyboard focus ring in the FAQ is not the page's gold ring: ${JSON.stringify(ring2)}`);
+    expect('faq', ring2.inFaq && ring2.st === 'solid' && ring2.w === '2px' && /196, 154, 89/.test(ring2.c) && ring2.off === '4px', `${tag}: the keyboard focus ring in the FAQ is not the page's gold ring: ${JSON.stringify(ring2)}`);
     // the list rose one after the other and nothing is left behind
     await walk(page, '#faq');
     await sleep(2200);
@@ -744,7 +744,7 @@ async function checkFocus() {
       await page.eval(`document.querySelector(${JSON.stringify(sel)}).focus()`);
       await sleep(500);
       const r = J(await page.eval(`JSON.stringify((() => { const a = document.activeElement, s = getComputedStyle(a), b = a.getBoundingClientRect(); return { is: a.matches(${JSON.stringify(sel)}), w: s.outlineWidth, st: s.outlineStyle, c: s.outlineColor, off: s.outlineOffset, inView: b.top >= 0 && b.bottom <= innerHeight && b.left >= 0 && b.right <= innerWidth, vis: s.visibility, op: +s.opacity }; })())`));
-      expect('focus', r.is && r.st === 'solid' && r.w === '2px' && /245, 197, 66/.test(r.c) && r.off === '4px' && r.inView && r.vis === 'visible', `${lang} ${width}px: ${name} does not show the gold focus ring from the keyboard: ${JSON.stringify(r)}`);
+      expect('focus', r.is && r.st === 'solid' && r.w === '2px' && /196, 154, 89/.test(r.c) && r.off === '4px' && r.inView && r.vis === 'visible', `${lang} ${width}px: ${name} does not show the gold focus ring from the keyboard: ${JSON.stringify(r)}`);
     }
     await page.close();
   }

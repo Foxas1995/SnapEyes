@@ -17,7 +17,7 @@ export const RetakeGuide: React.FC<{ block: BlockCopy; code?: string }> = ({ blo
       <ol className="mt-1.5 space-y-1.5 text-xs text-zinc-200">
         {block.steps.map((s, i) => (
           <li key={s} className="fx-up flex gap-2" style={{ '--i': i } as React.CSSProperties}>
-            <span className="w-4 h-4 shrink-0 rounded-full bg-[#f5c542]/15 text-[#f5c542] text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
+            <span className="w-4 h-4 shrink-0 rounded-full bg-gold/15 text-gold text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
             <span>{s}</span>
           </li>
         ))}

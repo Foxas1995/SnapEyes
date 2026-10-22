@@ -63,11 +63,12 @@
      The hairline of a frame that is being composed (7.5) or a card that is being waited for (8): 1 px of gold at .6, a third of the width. At rest a
      short line in the middle, so a reduced-motion visitor sees the same state without the sweep. */
   .fx-edge { position: relative; overflow: hidden; }
-  .fx-hair { position: absolute; z-index: 2; top: 0; left: 35%; width: 30%; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, rgb(245 197 66 / .6), transparent); }
+  .fx-hair { position: absolute; z-index: 2; top: 0; left: 35%; width: 30%; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, rgb(var(--gold-rgb) / .6), transparent); }
   :root[data-away] .fx-hair { animation-play-state: paused !important; }
 
-  /* the flat gold button: a fill that brightens on hover and presses to .97, a contact shadow and no halo (BR-4) */
-  .fx-gold { position: relative; background: var(--gold-primary); color: var(--tone-abyss); box-shadow: 0 12px 32px -18px rgb(245 197 66 / .30); }
+  /* the gold button: the logo's metal (the class gold-metal beside it, src/index.css: a hover brightens it, a press deepens it), a press to .97, a
+     contact shadow and no halo (BR-4) */
+  .fx-gold { position: relative; box-shadow: 0 12px 32px -18px rgb(var(--gold-rgb) / .30); }
 
   /* tiles, radios, chips: what is chosen changes its ring and its fill, not its size */
   .fx-pick { transition-property: border-color, background-color, color, box-shadow, opacity; }
@@ -110,7 +111,7 @@
     /* the download button of a file that has just become ready: a hairline passes once around it, after the aperture, and is gone */
     .fx-pass::after {
       content: ""; position: absolute; inset: -5px; padding: 1px; border-radius: 17px; pointer-events: none; opacity: 0;
-      background: conic-gradient(from var(--fx-a), transparent 0 68%, rgb(245 197 66 / .7) 96%, transparent 100%);
+      background: conic-gradient(from var(--fx-a), transparent 0 68%, rgb(var(--gold-rgb) / .7) 96%, transparent 100%);
       -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
       mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
       animation: fx-pass 1.4s var(--ease-inout) 1.35s backwards;
@@ -120,10 +121,6 @@
     .wk-fresh .wk-tick path { animation-delay: .5s; }
   }
 
-  /* a hover is a colour change, not a movement: it stays under reduced motion (the clamp below makes it instant) */
-  @media (hover: hover) and (pointer: fine) {
-    .fx-gold:hover { background: var(--gold-hi); }
-  }
 }
 
 @keyframes fx-fade { from { opacity: 0; } }

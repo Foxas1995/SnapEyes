@@ -231,7 +231,7 @@ const mutate = (text, spec) => { if (!spec) return text; const [from, to] = spec
 const JS = mutate(ts.transpileModule(TS, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText, opt('--mutate-js'));
 const CSS = mutate(readFileSync(join(ROOT, 'src/motion/motion.css'), 'utf8'), opt('--mutate-css'));
 const SANDBOX_CSS = `@font-face { font-family: 'Cinzel'; src: url('/assets/atelier/fonts/cinzel-var.woff2') format('woff2'); font-weight: 400 900; }
-:root { --display: 'Cinzel', serif; --gold: #f5c542; --hdr-h: 64px; color-scheme: dark; } body { margin: 0; background: #07090e; color: #f0f3fa; } .pad { height: 1400px; }`;
+:root { --display: 'Cinzel', serif; --gold: #c49a59; --gold-rgb: 196 154 89; --hdr-h: 64px; color-scheme: dark; } body { margin: 0; background: #07090e; color: #f0f3fa; } .pad { height: 1400px; }`;
 /** An empty page of the site's own origin with motion.css in it and the engine's code ready to be imported, fresh each time. */
 async function sandbox({ width = 1280, height = 800, reduceMotion = false } = {}) {
   const page = await chrome.page({ width, height, mobile: width < 800, dpr: 1, reduceMotion });
@@ -382,7 +382,7 @@ async function checkEngine() {
   })()`));
   expect('engine', r5.before[0] === 0.5 && r5.before[1] === 0.5 && r5.after[0] === 1 && r5.after[1] === 1, `lit() ends: before ${JSON.stringify(r5.before)}, after ${JSON.stringify(r5.after)} (want .5 and 1)`);
   expect('engine', r5.sequence && r5.floor >= 0.5, `lit() is not a sequence from the first word on, or went under the .50 floor (${r5.floor}; the middle frame reads ${JSON.stringify(r5.mid)})`);
-  expect('engine', /245, 197, 66/.test(r5.gold), `the marked word is not gold (${r5.gold})`);
+  expect('engine', /196, 154, 89/.test(r5.gold), `the marked word is not gold (${r5.gold})`);
   await p.close();
   p = await sandbox({ width: 1280, height: 800, reduceMotion: true });
   const r6 = JSON.parse(await p.eval(`(async () => {
@@ -655,7 +655,7 @@ async function checkSheets() {
 async function checkGold() {
   console.log('gold');
   const CENSUS = `JSON.stringify((() => {
-    const gold = (c) => { const m = c.match(/rgba?\\((\\d+), (\\d+), (\\d+)(?:, ([\\d.]+))?\\)/); return !!m && (m[4] === undefined || +m[4] > .4) && +m[1] > 200 && +m[2] > 150 && +m[3] < 135 && +m[1] - +m[3] > 100; };
+    const gold = (c) => { const m = c.match(/rgba?\\((\\d+), (\\d+), (\\d+)(?:, ([\\d.]+))?\\)/); return !!m && (m[4] === undefined || +m[4] > .4) && +m[1] > 180 && +m[2] > 130 && +m[3] < 135 && +m[1] - +m[3] > 90; };
     const ownText = (el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     const chrome = (el) => !!el.closest('.lp-topbar, .lp-hdr, .lp-menu, .lp-skip');
     const out = { text: [], fill: [], line: [] };

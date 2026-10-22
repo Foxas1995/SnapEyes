@@ -27,8 +27,8 @@
     --tone-0: #07090e;
 
     /* gold: one accent, four jobs (the CTA pill, one accent word or full stop, hairlines rings and dots, focus and glow) */
-    --gold-hi: #ffd666;
-    --ring-gold: rgb(245 197 66 / .28);  /* frame ring */
+    --gold-hi: var(--gold-light);
+    --ring-gold: rgb(var(--gold-rgb) / .28);  /* frame ring */
 
     /* text (contrast on #07090e, measured) */
     --t-1: #f0f3fa;                      /* headings, 17.9:1 */

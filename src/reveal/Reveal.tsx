@@ -119,7 +119,7 @@ export const Reveal: React.FC<Props> = ({ photo, restored, geometry, labels, rea
       ref={box}
       role="slider" tabIndex={0} aria-label={labels.slider} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pos)} aria-valuetext={valueText(pos, labels.valueText)}
       data-testid="reveal" data-pos={pos.toFixed(2)}
-      className={`relative aspect-square w-full overflow-hidden rounded-2xl bg-black border border-white/10 select-none touch-none cursor-ew-resize outline-none focus-visible:ring-2 focus-visible:ring-[#f5c542] ${className}`}
+      className={`relative aspect-square w-full overflow-hidden rounded-2xl bg-black border border-white/10 select-none touch-none cursor-ew-resize outline-none focus-visible:ring-2 focus-visible:ring-gold ${className}`}
       {...NO_SAVE_BOX}
       onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => setDragging(false)}
       onPointerEnter={() => setHot(true)} onPointerLeave={() => setHot(false)} onFocus={() => setHot(true)} onBlur={() => setHot(false)} onKeyDown={onKey}
@@ -131,11 +131,11 @@ export const Reveal: React.FC<Props> = ({ photo, restored, geometry, labels, rea
         <RestoredDisc src={restored} g={geometry} alt={labels.iris} />
       </div>
       <span className="pointer-events-none absolute top-3 left-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-zinc-200 transition-opacity duration-700" style={{ opacity: pills && pos > 18 ? 1 : 0 }}>{labels.photo}</span>
-      <span className="pointer-events-none absolute top-3 right-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-[#f5c542] transition-opacity duration-700" style={{ opacity: pills && pos < 82 ? 1 : 0 }}>{labels.iris}</span>
+      <span className="pointer-events-none absolute top-3 right-3 text-[10px] font-bold tracking-widest uppercase bg-black/70 px-2.5 py-1 rounded-full text-gold transition-opacity duration-700" style={{ opacity: pills && pos < 82 ? 1 : 0 }}>{labels.iris}</span>
       {/* the handle: hidden at rest (the owner's clean look), shown on hover, touch, focus and while it moves */}
-      <div aria-hidden="true" className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-[#f5c542] transition-opacity duration-300" data-testid="handle"
+      <div aria-hidden="true" className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-gold transition-opacity duration-300" data-testid="handle"
         style={{ left: `${pos}%`, opacity: showHandle ? 1 : 0, transition: `opacity 300ms, ${trLeft === 'none' ? 'left 0s' : trLeft}` }}>
-        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-[#f5c542] text-black flex items-center justify-center border-2 border-white shadow-lg">
+        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full gold-knob flex items-center justify-center border-2 border-white shadow-lg">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5" /></svg>
         </div>
       </div>

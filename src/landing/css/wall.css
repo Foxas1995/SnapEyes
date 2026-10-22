@@ -28,7 +28,7 @@
   .lp-mat { flex: none; scroll-snap-align: start; min-height: 46px; padding: 8px 18px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--ink-2); transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); white-space: nowrap; }
   .lp-mat .lp-mt { display: none; }
   .lp-mat:hover { color: #fff; border-color: rgba(255, 255, 255, .4); }
-  .lp-mat[aria-selected="true"] { border-color: var(--gold); color: var(--t-1); background: rgba(245, 197, 66, .07); }
+  .lp-mat[aria-selected="true"] { border-color: var(--gold); color: var(--t-1); background: rgb(var(--gold-rgb) / .07); }
   @media (min-width: 960px) {
     .lp-mats { flex-direction: column; gap: 0; overflow: visible; margin-inline: 0; padding-inline: 0; border-top: 1px solid var(--line); }
     .lp-mat { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 16px; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none !important; padding: 14px 4px 14px 18px; position: relative; min-height: 64px; white-space: normal; }
@@ -53,7 +53,7 @@
   .lp-arts { margin-top: 26px; }
   .lp-artchip { display: inline-flex; align-items: center; gap: 9px; min-height: 46px; padding: 5px 16px 5px 6px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); }
   .lp-artchip img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; background: #000; }
-  .lp-artchip[aria-checked="true"] { border-color: var(--gold); color: var(--t-1); background: rgba(245, 197, 66, .07); }
+  .lp-artchip[aria-checked="true"] { border-color: var(--gold); color: var(--t-1); background: rgb(var(--gold-rgb) / .07); }
   .lp-artchip[aria-disabled="true"] { opacity: .32; pointer-events: none; }
   .lp-artchip:hover { color: #fff; }
   .lp-compare { margin-top: 26px; border-top: 1px solid var(--line); }

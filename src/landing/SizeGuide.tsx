@@ -81,7 +81,8 @@ export function SizeGuide() {
                     y={q.y}
                     width={q.side}
                     height={q.side}
-                    fill={on ? 'rgba(245,197,66,.06)' : 'none'}
+                    fill="none"
+                    style={on ? { fill: 'rgb(var(--gold-rgb) / .06)' } : undefined}
                     stroke="rgba(255,255,255,.34)"
                     strokeWidth={1.5}
                   />

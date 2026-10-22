@@ -66,7 +66,14 @@ const GUIDE = { js: 1304, css: 0 };
 // own (the 28, 34 and 56 px heights, the 390 px step, the name hidden from 768 px), which land in the shared stylesheet. BRAND is this script's own sum on the commit with the logo
 // minus on its parent (9facf04): JavaScript +323 B, CSS +180 B. The pictures themselves are not counted (no script or stylesheet).
 const BRAND = { js: 323, css: 180 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css };
+// The gold of the logo (2026-10-22, palette A: the owner chose the logo's metal for the pages) is a change of colour, not motion: the root's gold tokens and the
+// metal of the primary buttons (src/index.css: --gold-primary, --gold-rgb, --gold-light, --gold-pale, four gradients, the classes gold-metal and gold-knob), the
+// utilities that replace the hex ones (text-gold, bg-gold/10 ...: the hex ones stay generated for /admin and the old snapshots under suites/tree), and the landing's
+// translucent golds written as rgb(var(--gold-rgb) / a), a little longer than the hex they replace. PALETTE is this script's own sum on the commit with it minus on
+// its parent (9facf04): CSS +559 B (the shared stylesheet jsx-runtime-*.css +522 B, the landing's chunks +67 B, the tools' checkout-*.css -30 B). The JavaScript sum
+// moved by -20 B (class names); that is not taken as room. Re-measure it when the palette changes: build both trees, run this script on each, take the difference.
+const PALETTE = { js: 0, css: 559 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

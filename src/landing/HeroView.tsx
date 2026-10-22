@@ -46,7 +46,7 @@ export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef }: Her
           <Title as="h1" id="h1" text={h.title} intro className="lp-t-display" />
           <p className="lp-lead lp-rise" style={at(0.5)}>{fill(h.lead, copy.facts)}</p>
           <div className="lp-cta-row lp-rise" style={at(0.62)}>
-            <a className="lp-btn lp-btn-gold" id="ctaHero" href={tryHref} ref={ctaRef}>
+            <a className="lp-btn lp-btn-gold gold-metal" id="ctaHero" href={tryHref} ref={ctaRef}>
               <span>{copy.cta}</span>
               <Arrow />
             </a>

@@ -1053,19 +1053,19 @@ export const TryApp: React.FC = () => {
                 <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 mt-3">
                   {eyes.map((e, i) => (
                     <span key={e.id} className="flex flex-col items-center gap-0.5 w-16">
-                      <img {...NO_SAVE} src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-[#f5c542]/70 opacity-50' : 'border border-[#f5c542]/40'}`} />
+                      <img {...NO_SAVE} src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-gold/70 opacity-50' : 'border border-gold/40'}`} />
                       <span className={`text-[8px] leading-tight text-center ${e.sample ? 'font-semibold text-amber-200/90' : 'text-zinc-400'}`}>
                         {e.sample ? T.capture.sampleThumb : T.capture.thumbLabel(i + 1)}
                       </span>
                     </span>
                   ))}
-                  {!replaceNo && <span className="w-9 h-9 rounded-full border-2 border-dashed border-[#f5c542]/60" aria-hidden />}
+                  {!replaceNo && <span className="w-9 h-9 rounded-full border-2 border-dashed border-gold/60" aria-hidden />}
                 </div>
-                <p className="text-xs text-[#f5c542]/90 bg-[#f5c542]/5 border border-[#f5c542]/20 rounded-xl px-3 py-2 mt-3">{T.capture.takeTurns}</p>
+                <p className="text-xs text-gold/90 bg-gold/5 border border-gold/20 rounded-xl px-3 py-2 mt-3">{T.capture.takeTurns}</p>
               </div>
             ) : (
               <div className="text-center mt-2">
-                <h1 ref={stepHead} tabIndex={-1} className="font-luxury text-3xl sm:text-4xl font-bold focus:outline-none">{T.capture.titleA}<span className="text-[#f5c542]">{T.capture.titleB}</span></h1>
+                <h1 ref={stepHead} tabIndex={-1} className="font-luxury text-3xl sm:text-4xl font-bold focus:outline-none">{T.capture.titleA}<span className="text-gold">{T.capture.titleB}</span></h1>
                 <p className="text-zinc-400 text-sm mt-2">{T.capture.lead}</p>
               </div>
             )}
@@ -1082,32 +1082,32 @@ export const TryApp: React.FC = () => {
             <div data-testid="capture-guide" className="[@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-sm text-zinc-300 flex flex-col gap-2">
               <ol className="flex flex-col gap-2">
                 {T.capture.steps.map((s, i) => (
-                  <li key={i}><span className="text-[#f5c542] font-bold">{i + 1}.</span> {s}</li>
+                  <li key={i}><span className="text-gold font-bold">{i + 1}.</span> {s}</li>
                 ))}
               </ol>
               {/* the browser's own disclosure triangle: no stylesheet rule of its own (the landing's CSS budget is shared with the tools) */}
               <details data-testid="more-tips" className="border-t border-white/10 text-xs">
                 <summary className="cursor-pointer py-3 min-h-[44px] font-semibold text-zinc-200">{T.capture.moreTips}</summary>
                 <div className="flex flex-col gap-2 pb-1">
-                  <p><span className="text-[#f5c542] font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</p>
-                  <p><span className="text-[#f5c542] font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</p>
+                  <p><span className="text-gold font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</p>
+                  <p><span className="text-gold font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</p>
                   {!adding && <p className="text-zinc-400">{T.capture.helper}</p>}
                 </div>
               </details>
             </div>
 
             {/* the first camera shot starts a fresh collection */}
-            <button onClick={() => { clearShots(); fileRef.current?.click(); }} className="fx-gold w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+            <button onClick={() => { clearShots(); fileRef.current?.click(); }} className="fx-gold gold-metal w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
               <Camera className="w-5 h-5" /> {T.capture.takePhoto}
             </button>
 
             <div className={`grid gap-3 ${offerSample ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <button onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
-                <Upload className="w-4 h-4 text-[#f5c542]" /> {T.capture.pickShots}
+                <Upload className="w-4 h-4 text-gold" /> {T.capture.pickShots}
               </button>
               {offerSample && (
                 <button onClick={trySample} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
-                  <Sparkles className="w-4 h-4 text-[#f5c542]" /> {T.capture.sampleButton}
+                  <Sparkles className="w-4 h-4 text-gold" /> {T.capture.sampleButton}
                 </button>
               )}
             </div>
@@ -1146,7 +1146,7 @@ export const TryApp: React.FC = () => {
         {step === 'quality' && analysis?.quality && shots.length === 0 && (
           <section data-testid="quality-step" className={`flex flex-col gap-4${stepped ? ' fx-step' : ''}`}>
             <div className="flex gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
-              {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt={T.quality.detectedIris} className="shrink-0 w-[120px] h-[120px] rounded-full border border-[#f5c542]/40 object-cover" />}
+              {analysis.preview && <img src={`data:image/jpeg;base64,${analysis.preview}`} alt={T.quality.detectedIris} className="shrink-0 w-[120px] h-[120px] rounded-full border border-gold/40 object-cover" />}
               {/* blocked: the one-line reason (the retake steps are in the guide below: the server's message lists them too); not centred: the server's own line */}
               {!usable(analysis) && <p data-testid="quality-reason" className="min-w-0 text-sm text-zinc-200">{blockOf(analysis)?.reason ?? wordsOf(analysis.quality).message}</p>}
             </div>
@@ -1158,7 +1158,7 @@ export const TryApp: React.FC = () => {
               {/* no way forward from a crop that is not an iris, nor from one the engine blocked: the studio
                   would invent one, and the server gave neither a work ticket */}
               {usable(analysis) && (
-                <button data-testid="quality-again" onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> {T.result.retry}</button>
+                <button data-testid="quality-again" onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl gold-metal text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> {T.result.retry}</button>
               )}
             </div>
             {backLink}
@@ -1192,7 +1192,7 @@ export const TryApp: React.FC = () => {
       <footer className="max-w-3xl mx-auto px-4 pb-24">
         <nav aria-label={LEGAL_LABELS[lang].nav} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-zinc-400">
           {LEGAL_DOCS.map((d) => (
-            <a key={d} href={legalHref(d, lang)} target="_blank" rel="noopener" className="relative hit hit-s hover:text-white hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm">
+            <a key={d} href={legalHref(d, lang)} target="_blank" rel="noopener" className="relative hit hit-s hover:text-white hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold rounded-sm">
               {LEGAL_LABELS[lang][d]}
             </a>
           ))}
@@ -1202,7 +1202,7 @@ export const TryApp: React.FC = () => {
       {step === 'result' && undo && (
         <div role="status" className="fx-toast fixed bottom-4 inset-x-4 z-40 mx-auto max-w-sm bg-zinc-900 border border-white/15 rounded-xl pl-4 pr-1 flex items-center justify-between gap-3 text-sm text-zinc-100 shadow-lg shadow-black/50">
           <span>{T.result.removed(undo.index + 1)}</span>
-          <button onClick={undoRemove} className="min-h-[44px] min-w-[44px] px-3 font-bold text-[#f5c542] underline underline-offset-4">{T.result.undo}</button>
+          <button onClick={undoRemove} className="min-h-[44px] min-w-[44px] px-3 font-bold text-gold underline underline-offset-4">{T.result.undo}</button>
         </div>
       )}
     </div>
@@ -1215,7 +1215,7 @@ const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lan
   <div role="group" aria-label={T.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
     {marketLangs(currentMarket()).map((l) => (
       <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
-        className={`relative hit min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+        className={`relative hit min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
         {l}
       </button>
     ))}
@@ -1259,7 +1259,7 @@ const ShotCollector: React.FC<{
     <section data-testid="shot-collector" className={`flex flex-col gap-4${enter ? ' fx-step' : ''}`}>
       <div className="flex gap-4 items-center bg-[#0b0e17] border border-white/10 rounded-2xl p-4">
         {latest.preview
-          ? <img src={`data:image/jpeg;base64,${latest.preview}`} alt={T.collector.shotAlt(n)} className="shrink-0 w-24 h-24 rounded-full border border-[#f5c542]/40 object-cover" />
+          ? <img src={`data:image/jpeg;base64,${latest.preview}`} alt={T.collector.shotAlt(n)} className="shrink-0 w-24 h-24 rounded-full border border-gold/40 object-cover" />
           : <span className="shrink-0 w-24 h-24 rounded-full bg-white/5" />}
         <p className="min-w-0 text-sm font-bold text-zinc-100">{T.collector.header(n, t.max_shots)}</p>
       </div>
@@ -1271,7 +1271,7 @@ const ShotCollector: React.FC<{
       )}
       {tip && (
         <p className="text-sm text-zinc-200 bg-white/5 border border-white/10 rounded-xl p-3 flex gap-2">
-          <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-[#f5c542]" /> <span>{tip}</span>
+          <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-gold" /> <span>{tip}</span>
         </p>
       )}
       {/* nothing usable and the latest shot blocked: the capture guide's steps for the next one. Its title says
@@ -1284,8 +1284,8 @@ const ShotCollector: React.FC<{
             // a blocked shot's thumbnail names its reason in one word; every other one its number
             const word = blockOf(s)?.thumb;
             // the best shot is ringed in gold only when it is one we would really use
-            const ring = i !== bi ? 'border-white/10' : usable(s) ? 'border-[#f5c542]' : 'border-rose-400/70';
-            const ink = i !== bi ? (usable(s) ? 'text-zinc-400' : 'text-rose-300/70') : usable(s) ? 'text-[#f5c542]' : 'text-rose-300';
+            const ring = i !== bi ? 'border-white/10' : usable(s) ? 'border-gold' : 'border-rose-400/70';
+            const ink = i !== bi ? (usable(s) ? 'text-zinc-400' : 'text-rose-300/70') : usable(s) ? 'text-gold' : 'text-rose-300';
             return (
               <div key={i} className="fx-tile flex flex-col items-center gap-1">
                 {s.preview
@@ -1304,12 +1304,12 @@ const ShotCollector: React.FC<{
 
       <div className={`grid gap-3 ${canTakeMore && use ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {canTakeMore && (
-          <button onClick={onTakeAnother} className="py-3 rounded-xl bg-[#f5c542] text-black text-sm font-bold flex items-center justify-center gap-2"><Camera className="w-4 h-4" /> {T.collector.takeAnother}</button>
+          <button onClick={onTakeAnother} className="py-3 rounded-xl gold-metal text-sm font-bold flex items-center justify-center gap-2"><Camera className="w-4 h-4" /> {T.collector.takeAnother}</button>
         )}
         {/* the best shot is not centred on an iris, or the engine blocked it: offer only another shot, never
             the studio */}
         {use && (
-          <button onClick={onContinue} className={`py-3 rounded-xl text-sm flex items-center justify-center gap-2 ${canTakeMore ? 'bg-white/5 border border-white/10 font-semibold' : 'bg-[#f5c542] text-black font-bold'}`}>
+          <button onClick={onContinue} className={`py-3 rounded-xl text-sm flex items-center justify-center gap-2 ${canTakeMore ? 'bg-white/5 border border-white/10 font-semibold' : 'gold-metal font-bold'}`}>
             <Sparkles className="w-4 h-4" /> {n > 1 ? T.collector.useBest : T.collector.useThis}
           </button>
         )}

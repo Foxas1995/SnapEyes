@@ -21,7 +21,7 @@
   .lp-cmp-grip { cursor: ew-resize; }
   .lp-cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
   .lp-cmp .lp-cmp-photo { clip-path: inset(0 calc(100% - var(--pos, 50) * 1%) 0 0); }
-  .lp-cmp-line { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: rgba(245, 197, 66, .9); box-shadow: var(--glow); transform: translateX(calc(var(--pos, 50) * 1cqw - .5px)); will-change: transform; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .lp-cmp-line { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: rgb(var(--gold-rgb) / .9); box-shadow: var(--glow); transform: translateX(calc(var(--pos, 50) * 1cqw - .5px)); will-change: transform; opacity: 0; transition: opacity .3s; pointer-events: none; }
   .lp-cmp.lp-show .lp-cmp-line, .lp-cmp:hover .lp-cmp-line, .lp-cmp:focus-within .lp-cmp-line { opacity: 1; }
   /* the grip sits low in the frame, off the pupil (the centre is the most looked at part of the picture), solid and unblurred: nothing blurs artwork */
   .lp-cmp-grip { position: absolute; top: 90%; left: 0; width: 32px; height: 32px; margin: -16px 0 0 0; transform: translateX(calc(var(--pos, 50) * 1cqw - 16px)); will-change: transform; border-radius: 50%; background: rgb(3 4 8 / .72); box-shadow: 0 0 0 1px var(--gold); display: grid; place-items: center; opacity: 0; transition: opacity .3s; }
@@ -96,8 +96,8 @@
   /* the photo shows to the left of the cut; the artwork shows inside the aperture (72 percent of the frame covers the corners) */
   .lp-rv-photo { clip-path: inset(0 calc(100% - var(--rv-pos) * 1%) 0 0); }
   .lp-rv-art { clip-path: circle(calc(var(--rv-ap) * 1%) at 50% 50%); }
-  .lp-rv-ap { position: absolute; inset: 0; width: 100%; height: 100%; color: rgb(245 197 66 / .6); opacity: var(--rv-ring); pointer-events: none; }
-  .lp-rv-line { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: rgba(245, 197, 66, .9); box-shadow: var(--glow); opacity: var(--rv-line); translate: calc(var(--rv-pos) * 1cqw - .5px) 0; will-change: translate; pointer-events: none; }
+  .lp-rv-ap { position: absolute; inset: 0; width: 100%; height: 100%; color: rgb(var(--gold-rgb) / .6); opacity: var(--rv-ring); pointer-events: none; }
+  .lp-rv-line { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: rgb(var(--gold-rgb) / .9); box-shadow: var(--glow); opacity: var(--rv-line); translate: calc(var(--rv-pos) * 1cqw - .5px) 0; will-change: translate; pointer-events: none; }
   .lp-rv-chip { position: absolute; top: 12px; z-index: 2; padding: 6px 12px; border-radius: 999px; background: rgb(3 4 8 / .72); color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .04em; line-height: 1.4; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); opacity: 0; transition: opacity .15s var(--ease-out); pointer-events: none; }
   .lp-rv-chip[data-k="photo"] { left: 12px; }
   .lp-rv-chip[data-k="iris"], .lp-rv-chip[data-k="art"] { right: 12px; box-shadow: 0 0 0 1px var(--gold-line); }

@@ -2,9 +2,9 @@
 // the checkout) and the landing page. The wording lives in ./legal.ts.
 import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref, withdrawFunctionHref, type LegalLang, type LegalPart } from './legal';
 
-const LINK = 'underline underline-offset-4 decoration-white/30 hover:text-white hover:decoration-[#f5c542] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm';
+const LINK = 'underline underline-offset-4 decoration-white/30 hover:text-white hover:decoration-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold rounded-sm';
 
-const ROW_LINK = 'hover:text-white hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5c542] rounded-sm';
+const ROW_LINK = 'hover:text-white hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold rounded-sm';
 
 /** A row of links to the four legal pages and the online withdrawal function, for a page footer.
  *  /try: <LegalLinks lang="en" className="mt-10" />. */
