@@ -36,57 +36,50 @@
   "ctaNote": "",
   "bar": {
     "label": "Notice",
-    "soon": "Ordering opens soon. The free preview is available now.",
-    "open": "Start with the free preview. Order only if you like it."
+    "soon": "Ordering opens soon.",
+    "open": "Start with the free preview."
   },
   "example": {
     "chip": "Example",
-    "vis": "AI visualisation",
+    "vis": "Visualisation",
     "photo": "Example photo",
-    "photoFull": "Example photo, not a customer",
     "mantas": "Our own eye"
   },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Your real iris, made into art.",
-    "lead": "Photograph one eye with your phone. We restore your real iris and set it in a style you choose. You receive a digital file, {px}, made for printing up to {printMax}. Printing is not included.",
+    "lead": "A phone photo of your eye, restored and set in the style you choose.",
     "micro": [
       "Free watermarked preview",
-      "Preview in about a minute",
-      "No sign-up to try"
+      "In about a minute",
+      "No sign-up"
     ],
     "fromPrice": "Digital file from {from}",
-    "computerHint": "Reading on a computer? Open snapeyes.com on your phone to take the photo, or choose photos you already have.",
-    "ready": "Your file from {from}",
-    "secondary": "See a before and after of a real phone photo",
-    "imageAlt": "An AI visualisation: our own iris as a glossy acrylic print on a wall. It shows how the digital file can look once printed.",
-    "chipTitle": "AI visualisation",
-    "chipBody": "You receive the digital file. Printing is not included.",
-    "caption": "Your file on acrylic, about 50 cm. Printing is not part of your order.",
+    "computerHint": "On a computer? Open snapeyes.com on your phone, or use photos you already have.",
+    "secondary": "See a real before and after",
+    "imageAlt": "A visualisation: our own iris as a glossy acrylic print on a wall.",
+    "chipTitle": "Visualisation",
     "discAlt": "Our own eye: a real phone photo on the left, the restored iris on the right.",
     "discLabel": "A real phone photo, before and after",
     "discLink": "Our own eye: a real phone photo, restored iris. Go to the before and after."
   },
   "reveal": {
-    "eyebrow": "The Reveal",
+    "eyebrow": "Before and after",
     "title": "Photo left. Iris right.",
-    "intro": "The left half is a phone photo, the right half is the same iris, restored. Follow a furrow or a patch of colour from one side to the other.",
+    "intro": "Restored, never repainted: the colour and the pattern stay yours.",
     "hint": "Drag to compare",
     "sliderLabel": "Compare the phone photo and the restored iris",
     "valueText": "photo {n} percent",
     "before": "Phone photo",
     "after": "Restored iris",
-    "scale": "Phone photo: {n} px. The restored file: {px}.",
     "beforeWeb": "Photo",
-    "scaleWeb": "Photo: {n} px. The restored file: {px}.",
-    "introWeb": "The left half is the original photo, the right half is the same iris, restored. Follow a furrow or a patch of colour from one side to the other.",
     "sliderLabelWeb": "Compare the photo and the restored iris",
     "eyes": [
       {
         "id": "gd",
         "label": "Grey green eye",
         "n": 380,
-        "note": "Example photo, not a customer. The window reflection in the photo is cleared away.",
+        "note": "Example photo, not a customer.",
         "photoAlt": "An example photo of a grey green eye with a window reflection, left half of the frame",
         "irisAlt": "The same grey green iris restored, without the reflection",
         "artAlt": "The restored grey green iris as an artwork"
@@ -95,7 +88,7 @@
         "id": "own",
         "label": "Our own eye",
         "n": 315,
-        "note": "Photographed at home with a phone. The photo is cropped to the iris.",
+        "note": "Photographed at home with a phone.",
         "photoAlt": "A phone photo of our own eye, left half of the frame",
         "irisAlt": "The same iris restored, on black",
         "artAlt": "The restored iris as an artwork"
@@ -107,35 +100,13 @@
       "iris": "Iris",
       "art": "Art"
     },
-    "never": "Restored, never repainted: we never recolour your iris or swap it for another eye.",
-    "aiTitle": "What comes from you, and what the AI adds",
-    "ai": [
-      {
-        "t": "From your photo",
-        "b": "The colour, the pattern and the layout of your iris stay as they are in your photo."
-      },
-      {
-        "t": "Restored by our AI",
-        "b": "Fine detail your phone was too small to record, rebuilt to match your photo. Reflections are cleared away. The very finest hairlines are a reconstruction, not a microscope photograph."
-      },
-      {
-        "t": "AI-made material in some styles",
-        "b": "In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer's artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above."
-      },
-      {
-        "t": "Never",
-        "b": "Recoloured, or swapped for another eye."
-      }
-    ],
-    "note": "These examples come from carefully taken photos. Your result depends on your photo, and the free preview shows it before you pay.",
-    "yourTurn": "Your turn. See your own iris this way, free, in about a minute."
+    "yourTurn": "Your turn."
   },
   "wall": {
-    "eyebrow": "Your file, your wall",
-    "title": "See your file on a wall",
-    "intro": "You receive a digital file. These pictures show how it can look once you print it. Printing is not part of your order.",
-    "varies": "Materials and results vary by print shop and by the light in your room.",
-    "stageLabel": "AI visualisations of your file, printed",
+    "eyebrow": "Your wall",
+    "title": "See it on your wall",
+    "intro": "Print it wherever you like: on acrylic, aluminium, canvas or in a frame.",
+    "stageLabel": "Visualisations of your file, printed",
     "materialsLabel": "Material",
     "artLabel": "Artwork",
     "materials": {
@@ -143,86 +114,79 @@
         "n": "Acrylic",
         "tag": "Glossy and deep",
         "facts": [
-          "Photo paper or a direct print behind a clear panel, often 3 to 6 mm thick.",
-          "Held off the wall on small standoff posts.",
-          "Blacks often look deepest here, so it suits dark artwork.",
-          "Hang it away from direct window glare."
+          "Often 3 to 6 mm thick",
+          "Held off the wall",
+          "The deepest blacks"
         ]
       },
       "metal": {
         "n": "Aluminium",
-        "tag": "Crisp, slim, modern",
+        "tag": "Crisp and modern",
         "facts": [
-          "The image is printed on aluminium, often 1 to 3 mm thick.",
-          "Hangs close to the wall on a hidden float mount.",
-          "Gloss or satin finish. Blacks stay deep.",
-          "Light on the wall."
+          "Often 1 to 3 mm thick",
+          "Close to the wall",
+          "Gloss or satin"
         ]
       },
       "canvas": {
         "n": "Canvas",
-        "tag": "Soft and warm, less glare",
+        "tag": "Soft and warm",
         "facts": [
-          "Cotton canvas on a wooden stretcher, often 2 to 4 cm deep.",
-          "The weave softens the finest fibres and lifts the blacks.",
-          "No glass, so much less glare.",
-          "No frame needed."
+          "Often 2 to 4 cm deep",
+          "Very little glare",
+          "No frame needed"
         ]
       },
       "framed": {
         "n": "Framed print",
         "tag": "Classic and calm",
         "facts": [
-          "Photo paper behind glass, with a white mat.",
-          "Frame often about 2 cm wide.",
-          "Easy to hang and to ship."
+          "Behind glass, white mat",
+          "Frame about 2 cm",
+          "Easy to hang"
         ]
       },
       "block": {
         "n": "Acrylic block",
-        "tag": "A small object for a shelf or desk",
+        "tag": "For a shelf or desk",
         "facts": [
-          "Solid clear acrylic, often 2 to 4 cm thick.",
-          "Stands on its own, nothing to hang.",
-          "Polished edges catch the light.",
-          "Typical sizes are 10 to 20 cm."
+          "Often 2 to 4 cm thick",
+          "Stands on its own",
+          "Often 10 to 20 cm"
         ]
       },
       "phone": {
         "n": "Phone",
-        "tag": "Your art on your lock screen",
+        "tag": "On your lock screen",
         "facts": [
-          "Your file is square and a phone screen is tall, so add black space around it in any photo editor, then set it as your wallpaper.",
-          "The screen lights the art itself, so it glows.",
-          "No printing to wait for."
+          "Lit by the screen",
+          "Add black space around",
+          "Nothing to print"
         ]
       }
     },
-    "typical": "Typical for print shops. Details vary.",
     "arts": {
       "eye": "One eye",
       "universe": "Universe",
       "family4": "Family",
       "collision": "Two of you"
     },
-    "eyesNote": "Eyes: our own and example photos, not customers.",
+    "eyesNote": "Eyes: our own and example photos.",
     "captions": {
-      "acrylic": "Your file printed on acrylic.",
-      "metal": "Your file printed on aluminium.",
-      "canvas": "Your file printed on canvas.",
-      "framed": "Your file, framed.",
-      "block": "Your file as an acrylic block.",
-      "phone": "Your artwork on a phone lock screen."
+      "acrylic": "On acrylic.",
+      "metal": "On aluminium.",
+      "canvas": "On canvas.",
+      "framed": "Framed.",
+      "block": "As an acrylic block.",
+      "phone": "On a phone lock screen."
     },
     "captionsSize": {
-      "acrylic": "Your file printed on acrylic, about {size}.",
-      "metal": "Your file printed on aluminium, about {size}.",
-      "canvas": "Your file printed on canvas, about {size}.",
-      "framed": "Your file, framed, about {size}."
+      "acrylic": "On acrylic, about {size}.",
+      "metal": "On aluminium, about {size}.",
+      "canvas": "On canvas, about {size}.",
+      "framed": "Framed, about {size}."
     },
-    "footnote": "AI visualisation. The artwork is a real SnapEyes file. The rooms, hands and objects are AI-generated images, not photographs, and a real print looks different. Colours on a print can look different from your screen. Some styles in these pictures open soon. Sizes in the pictures are illustrative; we suggest up to {printMaxCm}.",
-    "cta": "Your file, printed by the print shop you choose. Start with the free preview.",
-    "compareTitle": "Compare the four wall materials",
+    "compareTitle": "Compare the materials",
     "compareCorner": "Material",
     "compare": {
       "cols": [
@@ -273,9 +237,9 @@
     }
   },
   "sizes": {
-    "eyebrow": "The size guide",
+    "eyebrow": "Sizes",
     "title": "Enough pixels for {printMax}",
-    "intro": "Your file is {px} on its longest side. The drawing is to scale: a 220 cm sofa, a person and four sizes on a wall.",
+    "intro": "Pick a size: the drawing is to scale.",
     "svgLabel": "A to scale drawing of four print sizes on a wall, with a sofa and a person for scale",
     "sofa": "Sofa, 220 cm",
     "person": "Person, 175 cm",
@@ -286,76 +250,66 @@
       {
         "cm": 20,
         "t": "Desk and shelf",
-        "b": "More than print shops usually ask for."
+        "b": "More than print shops ask for"
       },
       {
         "cm": 30,
         "t": "Above a console",
-        "b": "Above the usual 150 to 300."
+        "b": "Above the usual 150 to 300"
       },
       {
         "cm": 40,
         "t": "A wall piece",
-        "b": "Inside the usual range."
+        "b": "Inside the usual 150 to 300"
       },
       {
         "cm": 50,
         "t": "The largest we suggest",
-        "b": "Inside the usual range, and our upper limit."
+        "b": "Inside the usual 150 to 300"
       }
-    ],
-    "several": "Several eyes: the file is {px} on the longest side, so up to {printMaxCm} on the long edge.",
-    "above": "Above {printMaxCm} a print is possible but stretches the file further, so we do not promise it.",
-    "rule": "Print shops usually ask for about 150 to 300 pixels per inch. The result also depends on your photo: the free preview shows it before you pay. Ask the print shop for a proof or a sample."
+    ]
   },
   "more": {
     "title": "More ways to see it",
-    "intro": "Other rooms, two hands and a polished edge. All AI visualisations.",
-    "railLabel": "More AI visualisations",
+    "railLabel": "More visualisations",
     "prev": "Previous picture",
     "next": "Next picture",
     "scenes": [
       {
         "id": "pair",
         "t": "Two of you, on dark walnut",
-        "c": "Your file printed on acrylic. Eyes: our own and an example photo, not customers."
+        "c": "Eyes: our own and an example photo."
       },
       {
         "id": "group",
         "t": "Four of you, in a frame",
-        "c": "Your file, framed. Eyes: our own and example photos, not customers."
+        "c": "Eyes: our own and example photos."
       },
       {
         "id": "hands",
         "t": "In your hands",
-        "c": "Your file printed on acrylic."
+        "c": ""
       },
       {
         "id": "gallery",
         "t": "Seen from an angle",
-        "c": "Your file on acrylic with standoff posts. Eyes: our own and an example photo, not customers."
+        "c": "Eyes: our own and an example photo."
       },
       {
         "id": "shelf",
         "t": "On a shelf",
-        "c": "Your file printed on acrylic."
+        "c": ""
       }
     ]
   },
   "styles": {
     "eyebrow": "Styles",
-    "title": "One iris, many ways to see it",
-    "intro": "Every piece below is an example. Yours will carry your own colours and your own pattern.",
-    "legend": "Examples made with the SnapEyes engine. Shown in our own eye unless a tile says otherwise. A style marked Soon cannot be ordered yet.",
+    "title": "One iris, many styles",
+    "legend": "Examples. Yours will carry your own colours and pattern.",
     "groups": {
       "one": "Just you",
       "two": "Two of you",
       "family": "Family"
-    },
-    "groupIntro": {
-      "one": "One iris, alone on black or set in a universe of its own.",
-      "two": "For a partner: two irises that meet.",
-      "family": "For a family: each iris keeps its own colour."
     },
     "tabsLabel": "Style groups",
     "eyeLabel": "Try another eye colour",
@@ -367,7 +321,7 @@
     },
     "eyeNote": {
       "own": "Our own eye",
-      "other": "Example photo, not a customer"
+      "other": "Example photo"
     },
     "items": {
       "radiance": {
@@ -428,9 +382,7 @@
         "d": "Every iris sends its own fine rays."
       }
     },
-    "own": "Our own eye",
-    "licensed": "Example photo, not a customer",
-    "mixed": "Our own eye and example photos, not customers",
+    "mixed": "Our own eye and example photos",
     "priceOne": "One eye, {price}",
     "priceTwo": "Two eyes, {price}",
     "priceFrom": "From {price}",
@@ -450,28 +402,18 @@
     "title": "Three steps, no studio",
     "steps": [
       {
-        "t": "Take one photo",
-        "b": "Use the back camera at 2x, about 10\u00a0cm from your eye, in daylight from a window or with a torch, off to one side. Take three to five shots or pick them from your gallery. We measure every shot and use the best one.",
-        "v": "Back camera, light from the side, one eye"
+        "t": "Photograph your eye",
+        "b": "Back camera, light from the side."
       },
       {
-        "t": "See your free preview",
-        "b": "In about a minute your iris appears in several styles, with a watermark. No sign-up, nothing to pay. Free previews are not stored.",
-        "v": "Example preview, with watermark"
+        "t": "See your preview",
+        "b": "Your iris in several styles."
       },
       {
-        "t": "Get your digital file",
-        "b": "Choose a style and receive your artwork as a digital file ({px}), made in full resolution.",
-        "bOpen": "Choose a style, pay through Stripe and receive your artwork as a digital file ({px}), made in full resolution as soon as your order is confirmed.",
-        "v": "Your digital file"
+        "t": "Get your file",
+        "b": "Choose a style; your file is made in full resolution.",
+        "bOpen": "Choose a style and pay through Stripe; your file is made in full resolution."
       }
-    ],
-    "tipsTitle": "Tips for a sharp shot",
-    "tips": [
-      "Back camera at 2x zoom, about 10\u00a0cm from your eye.",
-      "Daylight from a window or a torch, off to one side. Not a room lamp or the flash.",
-      "Tap the iris to focus and hold the phone steady. Keep the eye wide open, so no lid or lashes cross the iris, and take glasses off.",
-      "Take three to five shots. On a real test the best shot had 3.7 times the detail of the worst, and we use the sharpest."
     ],
     "videoPlay": "Play the guide video",
     "videoPause": "Pause the guide video",
@@ -479,8 +421,7 @@
     "previewButton": "Continue to payment",
     "previewSoon": "Your file, next",
     "fileName": "snapeyes-artwork.jpg",
-    "fileMeta": "{square}, JPEG",
-    "fileTag": "Digital file"
+    "fileMeta": "{square}, JPEG"
   },
   "pricing": {
     "eyebrow": "Pricing",
@@ -493,7 +434,7 @@
     "rows": {
       "free": {
         "t": "Preview",
-        "b": "With watermark, in about a minute, no sign-up."
+        "b": "With a watermark."
       },
       "black": {
         "t": "One eye on black",
@@ -516,59 +457,43 @@
     "eyes": "{n} eyes",
     "includesTitle": "What you receive",
     "includes": [
-      "One digital file without watermark, {px} on its longest side ({square} for one eye)",
-      "Made in full resolution from the preview you approve, to print wherever you like",
-      "Your files stay available to download for 12 months",
-      "The free preview first, so you see your own eye and style before you pay. The full resolution file adds finer fibre detail.",
-      "A personal licence: print it for yourself or as a gift. Selling the artwork or prints is not included (see the terms of sale)."
+      "{px}, no watermark",
+      "Made from your preview",
+      "12 months to download",
+      "Personal licence"
     ],
-    "notIncludes": "Printing is not part of your order. A print shop charges for it separately, and its price depends on the shop, the size and the material.",
+    "notIncludes": "Printing is not part of your order.",
     "payOpen": "Secure card payment through Stripe.",
     "termsLink": "Terms of sale",
     "auLine": "Sold by MB Portretizuokis, Kaunas, Lithuania. Card payment in A$ through Stripe. A digital file, so nothing is posted.",
-    "footnote": "Every order is one digital file without watermark. Prices in euros. These are final prices: we are not registered for VAT, so no VAT is added.",
-    "footnoteAud": "Every order is one digital file without watermark. Prices in Australian dollars (A$). Each price is the total price: no GST is charged.",
-    "footnoteHuf": "Every order is one digital file without watermark. Prices in Hungarian forints (Ft). These are final prices: we are not registered for VAT, so no VAT is added."
+    "footnote": "Prices in euros. These are final prices: we are not registered for VAT, so no VAT is added.",
+    "footnoteAud": "Prices in Australian dollars (A$). Each price is the total price: no GST is charged.",
+    "footnoteHuf": "Prices in Hungarian forints (Ft). These are final prices: we are not registered for VAT, so no VAT is added."
   },
   "closeups": {
     "eyebrow": "Look closer",
     "title": "Cropped straight from the file",
-    "intro": "A {n} px square cropped from the {px} file, not resized (your screen may scale it to fit). The photo behind this example was {src} px wide, so the fine fibres you see here are our AI's reconstruction.",
+    "intro": "A real piece of the file, not enlarged.",
     "badge": "{n} px crop",
-    "fibreTitle": "A square cropped straight from the file",
+    "fibreTitle": "Our own eye",
     "fibreAlt": "A close-up of our own restored iris, cropped from the 4096 px file: radial fibres, a gold collarette and the edge of the pupil.",
     "locatorAlt": "The whole restored iris, with a square marking where the close-up was cropped",
     "locatorLabel": "Where it was cropped",
     "edgeTitle": "The edge of an acrylic print",
-    "edgeBody": "An AI-generated close-up of the corner of an acrylic print: a polished edge, a standoff post and a window reflection. A real print differs with the print shop and the light in your room.",
-    "edgeAlt": "An AI visualisation of the corner of a print on acrylic: a polished clear edge, a steel standoff post and a soft window reflection.",
-    "edgeCaption": "The polished edge of a print on acrylic. Printing is not part of your order."
+    "edgeAlt": "A visualisation of the corner of a print on acrylic: a polished clear edge, a steel standoff post and a soft window reflection."
   },
   "trust": {
     "eyebrow": "What we never do",
     "title": "Small promises, kept",
     "items": [
-      {
-        "t": "We never repaint your iris",
-        "b": "We restore fine detail. The colour, the pattern and the layout stay yours. We never recolour it or swap it for another eye."
-      },
-      {
-        "t": "We never pass examples off as customers",
-        "b": "Every example picture is labelled or captioned. The eye we show most is our own. The other eyes are example photos, never customers."
-      },
-      {
-        "t": "We never hide what the AI does",
-        "b": "Our AI restores fine detail and clears reflections. In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library. It never replaces your iris with another one."
-      },
-      {
-        "t": "We never add false urgency",
-        "b": "No countdowns, no crossed out prices, no fake discounts. The price you see is the price you pay."
-      }
+      "Repaint your iris",
+      "Present examples as customers",
+      "Hide how pictures are made",
+      "Rush you with false urgency"
     ],
-    "idLine": "MB Portretizuokis, company code 305605052, Kaunas, Lithuania.",
     "curatorEyebrow": "Help",
     "curatorTitle": "Can't get a sharp shot?",
-    "offer": "Send us your best photos and we will look at them, usually within one or two working days.",
+    "offer": "Send us your best photos; we usually reply within one or two working days.",
     "offerCta": "Email us",
     "privacyEyebrow": "Your photo",
     "privacyTitle": "A promise about your eye",
@@ -601,27 +526,27 @@
       {
         "id": "receive",
         "q": "What do I receive?",
-        "a": "One digital file without watermark: a JPEG in sRGB, {square} for one eye and {px} on the longest side for several eyes. After you pay, your order page opens and its link comes by email. It is usually ready within minutes; if we ever hold an order for a check, the latest we promise is {hours} hours. It stays available to download for 12 months."
+        "a": "One digital file without watermark: a JPEG in sRGB, {square} for one eye and {px} on the longest side for several eyes, made in full resolution from the preview you approve. After you pay, your order page opens and its link comes by email. It is usually ready within minutes; if we ever hold an order for a check, the latest we promise is {hours} hours. It stays available to download for 12 months. A personal licence: print it for yourself or as a gift; selling the artwork or prints is not included (see the terms of sale)."
       },
       {
         "id": "print",
         "q": "Do you print or ship it?",
-        "a": "No. You receive the digital file, and printing is not part of your order. If we ever add printing, we will say so on this page."
+        "a": "No. Printing is not part of your order: a print shop charges for it separately, and its price depends on the shop, the size and the material. If we ever add printing, we will say so on this page."
       },
       {
         "id": "printit",
         "q": "Can I print it, and how big?",
-        "a": "Yes. Choose a print shop, pick a square size such as 20, 30, 40 or 50 cm and upload the JPEG. For other shapes ask the shop to crop or add a border, and ask for a proof or a sample. We do not print or ship: the print is the shop's work and price. For one eye we recommend up to {printMax}, which is about 208 pixels per inch (about 347 at 30 cm). Print shops usually ask for about 150 to 300. With several eyes the long edge can be up to {printMaxCm}."
+        "a": "Yes. Choose a print shop, pick a square size such as 20, 30, 40 or 50 cm and upload the JPEG. For other shapes ask the shop to crop or add a border, and ask for a proof or a sample. We do not print or ship: the print is the shop's work and price. For one eye we recommend up to {printMax}, which is about 208 pixels per inch (about 347 at 30 cm). Print shops usually ask for about 150 to 300. With several eyes the long edge can be up to {printMaxCm}. Above {printMaxCm} a print is possible but stretches the file further, so we do not promise it. The result also depends on your photo."
       },
       {
         "id": "look",
         "q": "Will my print look like the pictures?",
-        "a": "The pictures are AI visualisations of how a file can look once printed. A real print differs with the print shop, the material and the light in your room, the same way a screen differs from a wall. Ask the print shop for a proof or a sample."
+        "a": "The pictures of rooms, hands and prints are visualisations of how a file can look once printed, not photographs. A real print differs with the print shop, the material and the light in your room, the same way a screen differs from a wall, and its colours can differ from your screen. Sizes in the pictures are illustrative, and some styles in them open soon. Ask the print shop for a proof or a sample."
       },
       {
-        "id": "real",
-        "q": "Is it really my eye?",
-        "a": "Yes. The colour and the pattern come from your own photo. Where your phone could not capture the finest fibres, our AI restores them, so the very finest detail is a reconstruction, not a microscope photograph. The free preview lets you judge the result before you pay anything."
+        "id": "how",
+        "q": "How does it work?",
+        "a": "We start from your own photo and clear away reflections. Where your phone could not capture the finest fibres, our AI restores them, so the very finest detail is a reconstruction, not a microscope photograph. In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer's artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above. The rooms, hands and objects in the pictures on this page are made with AI, not photographed. The eyes on this page are our own and example photos, never a customer's, all taken with care: your result depends on your photo, and the free preview shows it before you pay."
       },
       {
         "id": "bad",
@@ -636,7 +561,7 @@
       {
         "id": "phone",
         "q": "Which phone and camera should I use?",
-        "a": "Any recent smartphone with a good back camera. Use the back camera at 2x or 3x zoom, not the selfie camera. Use daylight from a window or a torch, off to one side, not a room lamp or the flash. Hold the phone about 10\u00a0cm from your eye, tap the iris to focus, take glasses off and take three to five shots."
+        "a": "Any recent smartphone with a good back camera. Use the back camera at 2x or 3x zoom, not the selfie camera. Use daylight from a window or a torch, off to one side, not a room lamp or the flash. Hold the phone about 10\u00a0cm from your eye, tap the iris to focus, keep the eye wide open so no lid or lashes cross the iris, take glasses off and take three to five shots. We measure every shot and use the sharpest."
       },
       {
         "id": "colour",
@@ -652,7 +577,7 @@
       {
         "id": "material",
         "q": "Which material should I choose?",
-        "a": "Acrylic is glossy and deep. Aluminium is crisp and modern. Canvas is soft with less glare, but its weave softens the finest fibres. A framed print is classic. An acrylic block stands on a shelf. Ask the print shop for a sample."
+        "a": "Acrylic is glossy and deep; hang it away from direct window glare. Aluminium is crisp and modern. Canvas is soft with less glare, but its weave softens the finest fibres. A framed print is classic. An acrylic block stands on a shelf. For a phone, add black space around the square file in any photo editor and set it as your wallpaper. The details on this page are typical of print shops and vary; ask the print shop for a sample."
       },
       {
         "id": "time",
@@ -697,9 +622,8 @@
   "final": {
     "title": "See your own iris",
     "body": "All it takes is your phone, good light and about a minute.",
-    "small": "You receive a digital file. Printing is not part of your order.",
-    "imageAlt": "An AI visualisation: a dark study at dusk with our own iris printed on acrylic on the wall.",
-    "chip": "AI visualisation"
+    "imageAlt": "A visualisation: a dark study at dusk with our own iris printed on acrylic on the wall.",
+    "chip": "Visualisation"
   },
   "footer": {
     "operatedBy": "SnapEyes is operated by",

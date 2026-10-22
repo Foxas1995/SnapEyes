@@ -7,13 +7,14 @@
 // The numbers are in ./revealScript.ts, the engine is src/motion/motion.ts (track: smoothed progress, listeners only while the wrapper is near
 // the screen). The frame is driven by custom properties written on the frame itself (never on html or body): --rv-pos (the cut), --rv-ap (the
 // aperture), --rv-line and --rv-ring (their opacity; the page's own --r is a radius token, so the spec's names --pos and --r are not used); the
-// ring is an SVG circle whose radius is set directly, because its 1 px stroke must not scale with it. The three step rows are real buttons that scroll to their state, so a keyboard has a way to every state. The step rows are never in a hidden entrance state: the stage is on screen from the first frame of the pin, and a row that waited for an observer never came in a short, narrow window. The honesty lines
-// (whose eye it is, the photo's size) are static text under the frame. Below 768 px, under reduced motion and when the window is too short,
+// ring is an SVG circle whose radius is set directly, because its 1 px stroke must not scale with it. The three step rows are real buttons that scroll to their state, so a keyboard has a way to every state. The step rows are never in a hidden entrance state: the stage is on screen from the first frame of the pin, and a row that waited for an observer never came in a short, narrow window. The honesty line
+// (how the photo was taken) is static text under the frame; the line with the photo's size in pixels went in the lean pass of 2026-10-22 (the owner: no
+// pixel counts for a visitor). Below 768 px, under reduced motion and when the window is too short,
 // Reveal.tsx renders the static layout instead of this one (./useScenePinned.ts): the same words, the pictures in a row, the slider.
 //
 // The phone has a shorter scene of its own (`phone`, the owner's request of 2026-10-17): the same frame, the same script and the same three step
 // buttons, but no copy beside the frame (the heading and the sentence stay above it, in the section's own head) and a stage that is just the frame, its
-// two honesty lines and the steps as one row of three. The wrapper is that stage plus one screen of scrolling (100svh, so the page's length never follows
+// honesty line and the steps as one row of three. The wrapper is that stage plus one screen of scrolling (100svh, so the page's length never follows
 // the browser's toolbar), the stage sticks under the header, and the sticky button bar at the foot of the screen is left clear (css/reveal.css). The
 // artwork layer is asked for when the scene is within 300 px of the screen, not when the section mounts: a phone has no use for its 48 kB before then, and the aperture
 // that shows it is more than a screen of scrolling away from that moment.
@@ -29,7 +30,7 @@ import { track, whenNear } from '../motion/motion';
 const SCENE_SIZES = '(min-width: 960px) 540px, 46vw';
 
 export function RevealScene({ eye, phone = false }: { eye: RevealEye; phone?: boolean }) {
-  const { c, t } = useCopy();
+  const { c } = useCopy();
   const r = c.reveal;
   const wrap = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -113,7 +114,6 @@ export function RevealScene({ eye, phone = false }: { eye: RevealEye; phone?: bo
       </div>
       <figcaption className="lp-rv-cap">
         <span>{eye.note}</span>
-        <span className="lp-rv-scale">{t(eye.phone ? 'reveal.scale' : 'reveal.scaleWeb', { n: eye.n })}</span>
       </figcaption>
     </>
   );
@@ -136,7 +136,7 @@ export function RevealScene({ eye, phone = false }: { eye: RevealEye; phone?: bo
             <div className="lp-sec-head">
               <p className="lp-eyebrow" data-reveal="fade-s">{r.eyebrow}</p>
               <Title id="revealH" text={r.title} />
-              <p className="lp-intro" data-reveal="fade">{eye.phone ? r.intro : r.introWeb}</p>
+              <p className="lp-intro" data-reveal="fade">{r.intro}</p>
             </div>
             {steps}
           </div>

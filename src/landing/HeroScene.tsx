@@ -1,6 +1,7 @@
 // The hero's picture (prototype: .hero-fig): the lounge with the acrylic print in a 4:5 frame sized to the viewport, the label
-// INSIDE the frame (top left: "AI visualisation" and "You receive the digital file. Printing is not included."), the disc over
-// its corner (Mantas's own eye cut through the pupil, phone photo left, restored iris right) and the caption under it.
+// INSIDE the frame (top left: "Visualisation"; the lean pass of 2026-10-22 took off its second line and the caption under the picture: the
+// digital file and the printing that is not included are said once in the price list and once in the FAQ) and the disc over its corner (our
+// own eye cut through the pupil, phone photo left, restored iris right).
 // A PURE component (props in, markup out, no hook and no window): it is rendered to static HTML at build time for the
 // prerendered first screen and live by ./Hero.tsx, and it is the LCP element of the page.
 //
@@ -16,14 +17,13 @@ export function HeroScene({ hero }: { hero: LandingCopy['hero'] }) {
   const pic = heroPicture();
   const disc = heroDisc();
   return (
-    <figure className="lp-hero-fig" aria-labelledby="heroCap">
+    <figure className="lp-hero-fig">
       <div className="lp-hero-stage">
         <div className="lp-hero-frame lp-settle">
           <img id="heroImg" src={pic.src} srcSet={pic.srcset} sizes={HERO_SIZES} width={pic.w} height={pic.h} fetchPriority="high" decoding="async" alt={hero.imageAlt} />
           <span className="lp-glint" aria-hidden="true" />
           <div className="lp-frame-chip" data-chip="vis">
             <b>{hero.chipTitle}</b>
-            <span>{hero.chipBody}</span>
           </div>
         </div>
         <a className="lp-disc" href="#reveal" id="heroDisc" aria-label={hero.discLink}>
@@ -31,7 +31,6 @@ export function HeroScene({ hero }: { hero: LandingCopy['hero'] }) {
           <span className="lp-disc-label" aria-hidden="true">{hero.discLabel}</span>
         </a>
       </div>
-      <figcaption className="lp-hero-cap" id="heroCap">{hero.caption}</figcaption>
     </figure>
   );
 }

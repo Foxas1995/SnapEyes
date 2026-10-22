@@ -1,14 +1,15 @@
-// The closing scene of the new landing (prototype: section.final): the last section of <main>, a dark study with Mantas's iris on
-// acrylic, the headline, the gold button, and the line that the file is digital and printing is not part of the order.
+// The closing scene of the new landing (prototype: section.final): the last section of <main>, a dark study with our own iris on
+// acrylic, the headline, one line and the gold button (the line that the file is digital and printing is not part of the order went in the
+// lean pass of 2026-10-22: the price list and the FAQ say it).
 //
 //   <ClosingScene ctaRef={...} />     needs <LangProvider> and <CopyProvider> above it
 //
-// The closing picture is an AI visualisation and says so in its corner (the "AI visualisation" chip, the words of final.chip).
+// The closing picture is a visualisation and says so in its corner (the "Visualisation" chip, the words of final.chip).
 // Importing this file brings its own stylesheet, so it is loaded lazily with its section.
 // Motion (motion spec 6.14): when the scene is well in view the large picture opens from a frame, a mat opening: it starts inset by 7 percent
 // with rounded corners (86 percent of it is on screen from the first frame), and opens to the full band in 1.3 s while the picture inside
 // settles from 1.03 to 1 (src/landing/css/final.css). The headline rises out of its mask, the sentence and the button rise after it. The
-// "AI visualisation" label and the line that the file is digital and printing is not part of the order never move and never fade.
+// "Visualisation" label never moves and never fades.
 import { useEffect, useRef, type CSSProperties, type Ref } from 'react';
 import { useCopy } from './copy/useCopy';
 import { useTryHref } from './links';
@@ -28,7 +29,7 @@ export function ClosingScene({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
   const pic = asset('m/study_acrylic_3x2__gold__wide', { pick: 2000 });
   // on a phone with the engine running (the owner's request of 2026-10-17) the mat opens with the scroll instead of the clock: --op, 0 when the band's top is at 92
   // percent of the screen and 1 when it is near 30 percent, is written on the picture's frame and the stylesheet opens the clip and settles the picture from it
-  // (css/final.css; src/motion/phone.ts). Nothing else of the scene is touched: the label, the sentence about the file and the button come as they did.
+  // (css/final.css; src/motion/phone.ts). Nothing else of the scene is touched: the label and the button come as they did.
   const band = useRef<HTMLElement>(null);
   const bg = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -53,7 +54,6 @@ export function ClosingScene({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
         </a>
-        <p className="lp-fine">{c.final.small}</p>
       </div>
     </section>
   );

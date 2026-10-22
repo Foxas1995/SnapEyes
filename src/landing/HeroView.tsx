@@ -12,7 +12,11 @@ import type { CSSProperties, Ref } from 'react';
 import type { LandingCopy } from './copy/types';
 import { fill } from './copy/format';
 import { HeroScene } from './HeroScene';
+import { Icon, type IconName } from './Icons';
 import { Title } from '../motion/Title';
+
+/** The icons of the three short facts under the button (hero.micro: the free preview, the minute it takes, no sign-up). */
+const MICRO_ICONS: readonly IconName[] = ['eye', 'clock', 'noUser'];
 
 function Arrow() {
   return (
@@ -53,8 +57,11 @@ export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef }: Her
             <a className="lp-link-quiet" href="#reveal">{h.secondary}</a>
           </div>
           <ul className="lp-micro lp-rise-s" id="heroMicro" style={at(0.76)}>
-            {h.micro.map((x) => (
-              <li key={x}>{x}</li>
+            {h.micro.map((x, i) => (
+              <li key={x}>
+                <Icon name={MICRO_ICONS[i] ?? 'check'} />
+                {x}
+              </li>
             ))}
             <li className="lp-price" inert={pricePending || undefined} style={pricePending ? { opacity: 0, userSelect: 'none' } : undefined}>
               <a href="#pricing">{priceLine}</a>

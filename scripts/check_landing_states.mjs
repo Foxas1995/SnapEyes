@@ -238,7 +238,8 @@ for (const state of STATES) {
         // the line under the intro
         const wantLine = !read.open ? null : nSale === 0 ? c.pricing.severalSoon : nSale < wanted.length ? c.styles.moreSoon : null;
         ok(got.line === wantLine, gwhere, `the line under the intro is ${JSON.stringify(got.line)}, expected ${JSON.stringify(wantLine)}`);
-        ok(got.intro.startsWith(c.styles.groupIntro[group]), gwhere, `the intro is "${got.intro}"`);
+        // the group's paragraph holds the line above and nothing else: the intro sentence of each group went in the lean pass of 2026-10-22 (the owner: too much text; the tab names the group)
+        ok(got.intro === (got.line ?? ''), gwhere, `the group's paragraph says "${got.intro}", expected only its line ${JSON.stringify(got.line)}`);
         // the combo card of the wide groups
         if (group !== 'one') {
           ok(!!got.combo, gwhere, 'no combo card');

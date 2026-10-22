@@ -888,7 +888,8 @@ for label, mutate, needle in [
     ("a number of styles in the landing's own words", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"Free watermarked preview"', '"Free watermarked preview in six styles"'),
      "states a number of styles"),
     # release review H-M2 (check item 16): a picture's label names no style that customers see and cannot buy (the tiles say Soon, a label cannot)
-    ("a picture label that names a style nobody can buy yet (the hero's alt text)", lambda c, r: sub(c, r, "src/landing/copy/en.json", "on a wall. It shows", "on a wall, in the Radiance style. It shows"),
+    # (the hero's alt text is one sentence since the landing's lean pass of 2026-10-22: the plant goes at its end)
+    ("a picture label that names a style nobody can buy yet (the hero's alt text)", lambda c, r: sub(c, r, "src/landing/copy/en.json", 'print on a wall."', 'print on a wall, in the Radiance style."'),
      'landing.en.hero.imageAlt: the label of a picture names the style "Radiance"'),
     ("a picture label in another language names one too (a German artwork alt text names Kiss Collision)", lambda c, r: sub(c, r, "src/landing/copy/de.json", '"Die restaurierte Iris als Kunstwerk"', '"Die restaurierte Iris als Kunstwerk im Stil Kiss Collision"'),
      'landing.de.reveal.eyes[1].artAlt: the label of a picture names the style "Kiss Collision"'),
@@ -1008,7 +1009,8 @@ res.defects = {
   barOpenWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.top = v.top.replace(/(<span id="barText">)[^<]*/, '$1' + v.words.barOpen); }),
   noticeOpenWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.pricing = v.pricing.replace(/(<p class="lp-notice"[^>]*>)[^<]*/, '$1' + v.words.noticeOpen); }),
   payLineWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.pricing += '<p class="lp-pay-open">' + v.words.payOpen + '</p>'; }),
-  stepsPayWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.how = v.how.replace('Choose a style and receive', 'Choose a style, pay through Stripe and receive'); }),
+  // the third step's words since the landing's lean pass of 2026-10-22: "Choose a style; your file is made in full resolution." (open: "Choose a style and pay through Stripe; ...")
+  stepsPayWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.how = v.how.replace('Choose a style; your file', 'Choose a style and pay through Stripe; your file'); }),
   barClosedWhileOpen: mut((c) => { const v = c.scenarios[at('one style ticked')].langs.en; v.top = v.top.replace(/(<span id="barText">)[^<]*/, '$1' + v.words.barSoon); }),
   fewerStates: G.promiseGate({ scenarios: rendered.scenarios.slice(1), pictures: [] }, inputs, styles, rows, gal),
   underSell: mut((c) => { const t = tileOf(c, 'one style ticked', 'en', 'powder'); t.html = t.html.replace(/<span class="lp-price">[\s\S]*?<\/span>/, '<span class="lp-price"><span class="lp-soon">Soon</span></span>').replace('data-state="sale"', 'data-state="soon"'); }),

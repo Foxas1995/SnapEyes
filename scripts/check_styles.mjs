@@ -649,8 +649,8 @@ export function checkLandingTiles(tileStyle, gallery, styles, copy, out, later =
  *  key names the string or the whole object below it). A picture shows a look, so a label that names a style nobody can buy yet ("in the Radiance style") sells that style,
  *  and a label has no Soon chip to take it back: it names no style that is not live (release review H-M2; the tiles are different, they carry their state). */
 export const PICTURE_LABELS = [
-  'hero.imageAlt', 'hero.caption', 'hero.discAlt', 'reveal.eyes', 'wall.arts', 'wall.captions', 'wall.captionsSize', 'more.scenes',
-  'closeups.fibreAlt', 'closeups.locatorAlt', 'closeups.edgeAlt', 'closeups.edgeCaption', 'final.imageAlt', 'final.chip',
+  'hero.imageAlt', 'hero.discAlt', 'reveal.eyes', 'wall.arts', 'wall.captions', 'wall.captionsSize', 'more.scenes',
+  'closeups.fibreAlt', 'closeups.fibreTitle', 'closeups.locatorAlt', 'closeups.edgeAlt', 'closeups.edgeTitle', 'final.imageAlt', 'final.chip',
 ];
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

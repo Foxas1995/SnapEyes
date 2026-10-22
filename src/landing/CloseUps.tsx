@@ -1,7 +1,8 @@
 // The close-ups of the new landing (BUILD_PLAN section 2, "Close-ups"): a 1200 px square cut straight from the 4096 px file, with a
-// little map of where it was cut, and an AI visualisation of the polished edge of an acrylic print. Two pictures, two kinds of
-// honesty: the crop is real engine output and says what it is (its size, and in the intro that the source photo was only 315 px
-// wide, so the fine fibres are a reconstruction); the edge is an AI visualisation and carries that label inside the picture.
+// little map of where it was cut, and a visualisation of the polished edge of an acrylic print. Two pictures, two kinds of honesty:
+// the crop is real engine output and says what it is (its size on the badge, whose eye under it; that the photo behind it was only 315 px
+// wide, so the fine fibres are a reconstruction by AI, is in the FAQ's answer "How does it work?" since the lean pass of 2026-10-22); the
+// edge is a visualisation and carries that label inside the picture, with its title under it.
 //
 // On a phone the two cards sit side by side in a sideways scroller (the stylesheet); a scroller that really scrolls gets a tab
 // stop and a name (useScrollableRegion), so a keyboard user can reach it too. Importing this file brings its own stylesheet.
@@ -104,14 +105,8 @@ export function CloseUps() {
             <div className="lp-edge-open" data-open ref={edgeRef}>
               <Picture asset={EDGE} alt={cu.edgeAlt} chip="vis" sizes="(min-width: 960px) 520px, calc(100vw + -32px)" className="lp-edge-img" />
             </div>
-            <figcaption>
-              <div className="lp-edge-cap">
-                <span>{cu.edgeCaption}</span>
-              </div>
-              <div className="lp-cu-cap">
-                <h3>{cu.edgeTitle}</h3>
-                <p>{cu.edgeBody}</p>
-              </div>
+            <figcaption className="lp-cu-cap">
+              <h3>{cu.edgeTitle}</h3>
             </figcaption>
           </figure>
         </div>

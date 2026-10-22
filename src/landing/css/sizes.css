@@ -31,9 +31,6 @@
   .lp-size-card .lp-big span { font-size: 13px; line-height: 1.35; color: var(--ink-2); max-width: 9em; }
   .lp-size-card h3 { margin-top: 16px; font-size: 19px; }
   .lp-size-card p { margin-top: 8px; font-size: 15px; color: var(--ink-2); }
-  .lp-size-notes { margin-top: 26px; display: grid; gap: 10px; }
-  .lp-size-notes p { font-size: 13.5px; line-height: 1.6; color: var(--ink-3); padding-left: 16px; position: relative; }
-  .lp-size-notes p::before { content: ""; position: absolute; left: 0; top: 11px; width: 8px; height: 1px; background: var(--gold); }
   .lp-size-grid > * { min-width: 0; }
   /* ------------------------------------------------------------------------------------------------ motion (spec 6.8)
      Hidden states only under html.mo:not(.mo-fail) and prefers-reduced-motion: no-preference (src/motion/motion.css): without the engine, under

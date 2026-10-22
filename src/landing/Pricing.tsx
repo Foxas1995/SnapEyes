@@ -1,6 +1,8 @@
 // The pricing block of the new landing (BUILD_PLAN section 2, "Pricing"): the notice (ordering opens soon, or open), the price
-// table with its free preview row and the "three eyes" row, what you receive (the licence, the printing cost sentence), the
-// Australian seller line, the currency switch and the footnote with the link to the terms of sale.
+// table with its free preview row and the "three eyes" row, what you receive (four icons of a few words: the file, the preview it is
+// made from, the download, the licence), the ONE line of the page that says printing is not part of the order (the title says the
+// digital file: the lean pass of 2026-10-22 says each once here and once in the FAQ), the Australian seller line, the currency switch
+// and the footnote with the link to the terms of sale.
 //
 // No purchase button here: an order starts from the visitor's own preview on /try, so the one action is the free preview. Every
 // price comes through src/landing/prices.ts (PriceTable.tsx); the words come from the copy (src/landing/copy), the links from
@@ -13,9 +15,13 @@ import { useLandingPrices } from './prices';
 import { useLegalHref, useTryHref } from './links';
 import { legalEdition } from '../shared/legal';
 import { CurrencySwitch } from './CurrencySwitch';
+import { Icon, type IconName } from './Icons';
 import { PriceTable } from './PriceTable';
 import { Title } from '../motion/Title';
 import './css/pricing.css';
+
+/** The icon of each line of what you receive (pricing.includes, in order): the file without watermark, made from your preview, the download, the licence. */
+const INCLUDE_ICONS: readonly IconName[] = ['image', 'eye', 'download', 'badge'];
 
 // the prototype's arrow (a shorter head than the icon set's): the same on every button of the page
 function Arrow() {
@@ -50,12 +56,18 @@ export function Pricing() {
           </div>
           <div className="lp-incl">
             <h3>{pr.includesTitle}</h3>
-            <ul>
+            <ul className="lp-irow">
               {pr.includes.map((line, i) => (
-                <li key={i}>{fmt(line)}</li>
+                <li key={i}>
+                  <Icon name={INCLUDE_ICONS[i] ?? 'check'} />
+                  {fmt(line)}
+                </li>
               ))}
             </ul>
-            <p className="lp-not">{pr.notIncludes}</p>
+            <p className="lp-not">
+              <Icon name="noPrint" />
+              {pr.notIncludes}
+            </p>
             {p.open && <p className="lp-pay-open">{pr.payOpen}</p>}
             {legalEdition(p.market) === 'au' && <p className="lp-au-line">{pr.auLine}</p>}
             <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>

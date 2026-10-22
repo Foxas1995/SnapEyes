@@ -36,57 +36,50 @@
   "ctaNote": "",
   "bar": {
     "label": "Hinweis",
-    "soon": "Bestellungen sind bald möglich. Die kostenlose Vorschau ist jetzt verfügbar.",
-    "open": "Starten Sie mit der kostenlosen Vorschau. Bestellen Sie nur bei Gefallen."
+    "soon": "Bestellungen sind bald möglich.",
+    "open": "Starten Sie mit der kostenlosen Vorschau."
   },
   "example": {
     "chip": "Beispiel",
-    "vis": "KI-Visualisierung",
+    "vis": "Visualisierung",
     "photo": "Beispielfoto",
-    "photoFull": "Beispielfoto, kein Kunde",
     "mantas": "Unser eigenes Auge"
   },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Ihre echte Iris, als Kunstwerk.",
-    "lead": "Fotografieren Sie ein Auge mit Ihrem Smartphone. Wir restaurieren Ihre echte Iris und setzen sie im Stil Ihrer Wahl in Szene. Sie erhalten eine digitale Datei mit {px}, zum Drucken gemacht bis {printMax}. Der Druck ist nicht enthalten.",
+    "lead": "Ein Smartphone-Foto Ihres Auges, restauriert und im Stil Ihrer Wahl gestaltet.",
     "micro": [
       "Kostenlose Vorschau mit Wasserzeichen",
-      "Vorschau in etwa einer Minute",
-      "Ohne Anmeldung zum Ausprobieren"
+      "In etwa einer Minute",
+      "Ohne Anmeldung"
     ],
     "fromPrice": "Digitale Datei ab {from}",
-    "computerHint": "Sie lesen am Computer? Öffnen Sie snapeyes.com auf Ihrem Smartphone, um das Foto aufzunehmen, oder wählen Sie Fotos, die Sie schon haben.",
-    "ready": "Ihre Datei ab {from}",
-    "secondary": "Vorher und Nachher eines echten Smartphone-Fotos ansehen",
-    "imageAlt": "Eine KI-Visualisierung: unsere eigene Iris als glänzender Acryldruck an einer Wand. Sie zeigt, wie die digitale Datei gedruckt aussehen kann.",
-    "chipTitle": "KI-Visualisierung",
-    "chipBody": "Sie erhalten die digitale Datei. Der Druck ist nicht enthalten.",
-    "caption": "Ihre Datei auf Acryl, etwa 50 cm. Der Druck gehört nicht zur Bestellung.",
+    "computerHint": "Am Computer? Öffnen Sie snapeyes.com auf dem Smartphone oder nutzen Sie vorhandene Fotos.",
+    "secondary": "Echtes Vorher und Nachher ansehen",
+    "imageAlt": "Eine Visualisierung: unsere eigene Iris als glänzender Acryldruck an einer Wand.",
+    "chipTitle": "Visualisierung",
     "discAlt": "Unser eigenes Auge, durch die Pupille geteilt: links ein echtes Smartphone-Foto, rechts die restaurierte Iris.",
     "discLabel": "Ein echtes Smartphone-Foto, vorher und nachher",
     "discLink": "Unser eigenes Auge: echtes Smartphone-Foto, restaurierte Iris. Zu Vorher und Nachher."
   },
   "reveal": {
-    "eyebrow": "Die Enthüllung",
+    "eyebrow": "Vorher und Nachher",
     "title": "Foto links. Iris rechts.",
-    "intro": "Die linke Hälfte ist ein Smartphone-Foto, die rechte Hälfte dieselbe Iris, restauriert. Verfolgen Sie eine Furche oder einen Farbfleck von einer Seite zur anderen.",
+    "intro": "Restauriert, nie neu gemalt: Farbe und Muster bleiben Ihre.",
     "hint": "Zum Vergleichen ziehen",
     "sliderLabel": "Smartphone-Foto und restaurierte Iris vergleichen",
     "valueText": "Foto {n} Prozent",
     "before": "Smartphone-Foto",
     "after": "Restaurierte Iris",
-    "scale": "Smartphone-Foto: {n} px. Die restaurierte Datei: {px}.",
     "beforeWeb": "Foto",
-    "scaleWeb": "Foto: {n} px. Die restaurierte Datei: {px}.",
-    "introWeb": "Die linke Hälfte ist das Originalfoto, die rechte Hälfte dieselbe Iris, restauriert. Verfolgen Sie eine Furche oder einen Farbfleck von einer Seite zur anderen.",
     "sliderLabelWeb": "Foto und restaurierte Iris vergleichen",
     "eyes": [
       {
         "id": "gd",
         "label": "Graugrünes Auge",
         "n": 380,
-        "note": "Beispielfoto, kein Kunde. Die Fensterspiegelung im Foto ist entfernt.",
+        "note": "Beispielfoto, kein Kunde.",
         "photoAlt": "Ein Beispielfoto eines graugrünen Auges mit Fensterspiegelung, linke Bildhälfte",
         "irisAlt": "Dieselbe graugrüne Iris restauriert, ohne die Spiegelung",
         "artAlt": "Die restaurierte graugrüne Iris als Kunstwerk"
@@ -95,7 +88,7 @@
         "id": "own",
         "label": "Unser eigenes Auge",
         "n": 315,
-        "note": "Zu Hause mit dem Smartphone fotografiert. Das Foto ist auf die Iris zugeschnitten.",
+        "note": "Zu Hause mit dem Smartphone fotografiert.",
         "photoAlt": "Ein Smartphone-Foto unseres eigenen Auges, linke Bildhälfte",
         "irisAlt": "Dieselbe Iris restauriert, auf Schwarz",
         "artAlt": "Die restaurierte Iris als Kunstwerk"
@@ -107,35 +100,13 @@
       "iris": "Iris",
       "art": "Kunstwerk"
     },
-    "never": "Restauriert, nie neu gemalt: Wir färben Ihre Iris nie um und tauschen sie nie gegen ein anderes Auge.",
-    "aiTitle": "Was von Ihnen stammt und was die KI ergänzt",
-    "ai": [
-      {
-        "t": "Aus Ihrem Foto",
-        "b": "Die Farbe, das Muster und die Anordnung Ihrer Iris bleiben so, wie sie in Ihrem Foto sind."
-      },
-      {
-        "t": "Von unserer KI wiederhergestellt",
-        "b": "Feinste Details, die Ihr Smartphone zu klein aufgenommen hat, passend zu Ihrem Foto neu aufgebaut. Spiegelungen werden entfernt. Die allerfeinsten Härchen sind eine Rekonstruktion, keine Mikroskopaufnahme."
-      },
-      {
-        "t": "KI-erzeugtes Material bei einigen Stilen",
-        "b": "Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt."
-      },
-      {
-        "t": "Nie",
-        "b": "Umgefärbt oder gegen ein anderes Auge getauscht."
-      }
-    ],
-    "note": "Diese Beispiele stammen aus sorgfältig aufgenommenen Fotos. Ihr Ergebnis hängt von Ihrem Foto ab, und die kostenlose Vorschau zeigt es Ihnen, bevor Sie bezahlen.",
-    "yourTurn": "Jetzt Sie: Sehen Sie Ihre eigene Iris so, kostenlos und in etwa einer Minute."
+    "yourTurn": "Jetzt sind Sie dran."
   },
   "wall": {
-    "eyebrow": "Ihre Datei, Ihre Wand",
-    "title": "Ihre Datei an der Wand",
-    "intro": "Sie erhalten eine digitale Datei. Diese Bilder zeigen, wie sie nach dem Druck aussehen kann. Der Druck gehört nicht zur Bestellung.",
-    "varies": "Material und Ergebnis hängen von der Druckerei und vom Licht in Ihrem Raum ab.",
-    "stageLabel": "KI-Visualisierungen Ihrer Datei, gedruckt",
+    "eyebrow": "Ihre Wand",
+    "title": "Sehen Sie es an Ihrer Wand",
+    "intro": "Drucken Sie es, wo Sie möchten: auf Acryl, Aluminium, Leinwand oder gerahmt.",
+    "stageLabel": "Visualisierungen Ihrer Datei, gedruckt",
     "materialsLabel": "Material",
     "artLabel": "Kunstwerk",
     "materials": {
@@ -143,86 +114,79 @@
         "n": "Acryl",
         "tag": "Glänzend und tief",
         "facts": [
-          "Fotopapier oder Direktdruck hinter einer klaren Platte, oft 3 bis 6 mm dick.",
-          "Mit kleinen Abstandhaltern von der Wand abgesetzt.",
-          "Schwarz wirkt hier oft am tiefsten, deshalb passt es zu dunklen Motiven.",
-          "Nicht in direktes Fensterlicht hängen."
+          "Oft 3 bis 6 mm dick",
+          "Mit Abstand zur Wand",
+          "Das tiefste Schwarz"
         ]
       },
       "metal": {
         "n": "Aluminium",
-        "tag": "Klar, schlank, modern",
+        "tag": "Klar und modern",
         "facts": [
-          "Das Bild wird auf Aluminium gedruckt, oft 1 bis 3 mm dick.",
-          "Hängt dicht an der Wand an einer verdeckten Aufhängung.",
-          "Glänzend oder seidenmatt. Schwarz bleibt tief.",
-          "Leicht an der Wand."
+          "Oft 1 bis 3 mm dick",
+          "Dicht an der Wand",
+          "Glänzend oder seidenmatt"
         ]
       },
       "canvas": {
         "n": "Leinwand",
-        "tag": "Weich und warm, weniger Spiegelung",
+        "tag": "Weich und warm",
         "facts": [
-          "Baumwollleinwand auf einem Holzrahmen, oft 2 bis 4 cm tief.",
-          "Die Gewebestruktur mildert die feinsten Fasern und hellt das Schwarz auf.",
-          "Kein Glas, daher deutlich weniger Spiegelung.",
-          "Kein Rahmen nötig."
+          "Oft 2 bis 4 cm tief",
+          "Kaum Spiegelungen",
+          "Kein Rahmen nötig"
         ]
       },
       "framed": {
         "n": "Gerahmter Druck",
         "tag": "Klassisch und ruhig",
         "facts": [
-          "Fotopapier hinter Glas, mit weißem Passepartout.",
-          "Rahmen oft etwa 2 cm breit.",
-          "Leicht aufzuhängen und zu versenden."
+          "Hinter Glas, mit Passepartout",
+          "Rahmen etwa 2 cm",
+          "Leicht aufzuhängen"
         ]
       },
       "block": {
         "n": "Acrylblock",
-        "tag": "Ein kleines Objekt für Regal oder Schreibtisch",
+        "tag": "Für Regal oder Schreibtisch",
         "facts": [
-          "Massives, klares Acryl, oft 2 bis 4 cm dick.",
-          "Steht von selbst, nichts aufzuhängen.",
-          "Polierte Kanten fangen das Licht.",
-          "Übliche Größen sind 10 bis 20 cm."
+          "Oft 2 bis 4 cm dick",
+          "Steht von selbst",
+          "Oft 10 bis 20 cm"
         ]
       },
       "phone": {
         "n": "Smartphone",
-        "tag": "Ihr Kunstwerk auf dem Sperrbildschirm",
+        "tag": "Auf dem Sperrbildschirm",
         "facts": [
-          "Ihre Datei ist quadratisch, ein Smartphone-Bildschirm ist hoch: Fügen Sie in einem Bildbearbeitungsprogramm schwarzen Rand hinzu und stellen Sie sie dann als Hintergrundbild ein.",
-          "Der Bildschirm leuchtet selbst, so strahlt das Motiv.",
-          "Kein Druck, auf den Sie warten müssten."
+          "Vom Bildschirm beleuchtet",
+          "Schwarzen Rand ergänzen",
+          "Nichts zu drucken"
         ]
       }
     },
-    "typical": "Üblich bei Druckereien. Einzelheiten können abweichen.",
     "arts": {
       "eye": "Ein Auge",
       "universe": "Universe",
       "family4": "Familie",
       "collision": "Sie zu zweit"
     },
-    "eyesNote": "Augen: unser eigenes und Beispielfotos, keine Kunden.",
+    "eyesNote": "Augen: unser eigenes und Beispielfotos.",
     "captions": {
-      "acrylic": "Ihre Datei auf Acryl gedruckt.",
-      "metal": "Ihre Datei auf Aluminium gedruckt.",
-      "canvas": "Ihre Datei auf Leinwand gedruckt.",
-      "framed": "Ihre Datei, gerahmt.",
-      "block": "Ihre Datei als Acrylblock.",
-      "phone": "Ihr Kunstwerk auf einem Smartphone-Sperrbildschirm."
+      "acrylic": "Auf Acryl.",
+      "metal": "Auf Aluminium.",
+      "canvas": "Auf Leinwand.",
+      "framed": "Gerahmt.",
+      "block": "Als Acrylblock.",
+      "phone": "Auf einem Smartphone-Sperrbildschirm."
     },
     "captionsSize": {
-      "acrylic": "Ihre Datei auf Acryl gedruckt, etwa {size}.",
-      "metal": "Ihre Datei auf Aluminium gedruckt, etwa {size}.",
-      "canvas": "Ihre Datei auf Leinwand gedruckt, etwa {size}.",
-      "framed": "Ihre Datei, gerahmt, etwa {size}."
+      "acrylic": "Auf Acryl, etwa {size}.",
+      "metal": "Auf Aluminium, etwa {size}.",
+      "canvas": "Auf Leinwand, etwa {size}.",
+      "framed": "Gerahmt, etwa {size}."
     },
-    "footnote": "KI-Visualisierung. Das Kunstwerk ist eine echte SnapEyes-Datei. Räume, Hände und Gegenstände sind KI-generierte Bilder, keine Fotos, und ein echter Druck sieht anders aus. Farben im Druck können vom Bildschirm abweichen. Einige Stile in diesen Bildern folgen bald. Die Größen in den Bildern sind beispielhaft; wir empfehlen bis zu {printMaxCm}.",
-    "cta": "Ihre Datei, gedruckt von der Druckerei Ihrer Wahl. Beginnen Sie mit der kostenlosen Vorschau.",
-    "compareTitle": "Die vier Wandmaterialien im Vergleich",
+    "compareTitle": "Die Materialien im Vergleich",
     "compareCorner": "Material",
     "compare": {
       "cols": [
@@ -273,9 +237,9 @@
     }
   },
   "sizes": {
-    "eyebrow": "Die Größenhilfe",
+    "eyebrow": "Größen",
     "title": "Genug Pixel für {printMax}",
-    "intro": "Ihre Datei hat {px} an der längsten Seite. Die Zeichnung ist maßstabsgetreu: ein Sofa von 220 cm, eine Person und vier Größen an einer Wand.",
+    "intro": "Wählen Sie eine Größe: Die Zeichnung ist maßstabsgetreu.",
     "svgLabel": "Maßstabsgetreue Zeichnung von vier Druckgrößen an einer Wand, mit einem Sofa und einer Person als Größenvergleich",
     "sofa": "Sofa, 220 cm",
     "person": "Person, 175 cm",
@@ -286,76 +250,66 @@
       {
         "cm": 20,
         "t": "Schreibtisch und Regal",
-        "b": "Mehr, als Druckereien meist verlangen."
+        "b": "Mehr, als Druckereien verlangen"
       },
       {
         "cm": 30,
         "t": "Über einer Kommode",
-        "b": "Über den üblichen 150 bis 300."
+        "b": "Über den üblichen 150 bis 300"
       },
       {
         "cm": 40,
         "t": "Ein Wandbild",
-        "b": "Innerhalb des üblichen Bereichs."
+        "b": "Innerhalb der üblichen 150 bis 300"
       },
       {
         "cm": 50,
         "t": "Die größte empfohlene Größe",
-        "b": "Innerhalb des üblichen Bereichs und unsere Obergrenze."
+        "b": "Innerhalb der üblichen 150 bis 300"
       }
-    ],
-    "several": "Mehrere Augen: Die Datei hat {px} an der längsten Seite, also bis zu {printMaxCm} an der langen Kante.",
-    "above": "Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht.",
-    "rule": "Druckereien verlangen meist etwa 150 bis 300 Pixel pro Zoll. Das Ergebnis hängt auch von Ihrem Foto ab: Die kostenlose Vorschau zeigt es Ihnen, bevor Sie bezahlen. Bitten Sie die Druckerei um einen Probedruck oder ein Muster."
+    ]
   },
   "more": {
     "title": "Weitere Ansichten",
-    "intro": "Andere Räume, zwei Hände und eine polierte Kante. Alles KI-Visualisierungen.",
-    "railLabel": "Weitere KI-Visualisierungen",
+    "railLabel": "Weitere Visualisierungen",
     "prev": "Vorheriges Bild",
     "next": "Nächstes Bild",
     "scenes": [
       {
         "id": "pair",
         "t": "Sie zu zweit, auf dunklem Nussbaum",
-        "c": "Ihre Datei auf Acryl gedruckt. Augen: unser eigenes und ein Beispielfoto, keine Kunden."
+        "c": "Augen: unser eigenes und ein Beispielfoto."
       },
       {
         "id": "group",
         "t": "Sie zu viert, im Rahmen",
-        "c": "Ihre Datei, gerahmt. Augen: unser eigenes und Beispielfotos, keine Kunden."
+        "c": "Augen: unser eigenes und Beispielfotos."
       },
       {
         "id": "hands",
         "t": "In Ihren Händen",
-        "c": "Ihre Datei auf Acryl gedruckt."
+        "c": ""
       },
       {
         "id": "gallery",
         "t": "Aus einem Blickwinkel",
-        "c": "Ihre Datei auf Acryl mit Abstandhaltern. Augen: unser eigenes und ein Beispielfoto, keine Kunden."
+        "c": "Augen: unser eigenes und ein Beispielfoto."
       },
       {
         "id": "shelf",
         "t": "Im Regal",
-        "c": "Ihre Datei auf Acryl gedruckt."
+        "c": ""
       }
     ]
   },
   "styles": {
     "eyebrow": "Stile",
-    "title": "Eine Iris, viele Sichtweisen",
-    "intro": "Jedes Stück hier ist ein Beispiel. Ihres trägt Ihre eigenen Farben und Ihr eigenes Muster.",
-    "legend": "Beispiele, erstellt mit der SnapEyes-Engine. Gezeigt an unserem eigenen Auge, sofern eine Kachel nichts anderes sagt. Ein Stil mit dem Hinweis Bald kann noch nicht bestellt werden.",
+    "title": "Eine Iris, viele Stile",
+    "legend": "Beispiele. Ihres trägt Ihre eigenen Farben und Ihr eigenes Muster.",
     "groups": {
       "one": "Nur Sie",
       "two": "Sie zu zweit",
       "family": "Familie"
-    },
-    "groupIntro": {
-      "one": "Eine Iris, allein auf Schwarz oder in einem eigenen Universum.",
-      "two": "Für Ihren Partner: zwei Iriden, die sich treffen.",
-      "family": "Für eine Familie: Jede Iris behält ihre eigene Farbe."
     },
     "tabsLabel": "Stilgruppen",
     "eyeLabel": "Andere Augenfarbe ausprobieren",
@@ -367,7 +321,7 @@
     },
     "eyeNote": {
       "own": "Unser eigenes Auge",
-      "other": "Beispielfoto, kein Kunde"
+      "other": "Beispielfoto"
     },
     "items": {
       "radiance": {
@@ -428,9 +382,7 @@
         "d": "Jede Iris sendet ihre eigenen feinen Strahlen."
       }
     },
-    "own": "Unser eigenes Auge",
-    "licensed": "Beispielfoto, kein Kunde",
-    "mixed": "Unser eigenes Auge und Beispielfotos, keine Kunden",
+    "mixed": "Unser eigenes Auge und Beispielfotos",
     "priceOne": "Ein Auge, {price}",
     "priceTwo": "Zwei Augen, {price}",
     "priceFrom": "Ab {price}",
@@ -450,28 +402,18 @@
     "title": "Drei Schritte, kein Fotostudio",
     "steps": [
       {
-        "t": "Ein Foto aufnehmen",
-        "b": "Nutzen Sie die Rückkamera mit 2-fachem Zoom, etwa 10\u00a0cm vom Auge entfernt, bei Tageslicht vom Fenster oder mit einer Taschenlampe, seitlich. Machen Sie drei bis fünf Aufnahmen oder wählen Sie sie aus Ihrer Galerie. Wir prüfen jede davon und verwenden die beste.",
-        "v": "Rückkamera, Licht von der Seite, ein Auge"
+        "t": "Ihr Auge fotografieren",
+        "b": "Rückkamera, Licht von der Seite."
       },
       {
-        "t": "Kostenlose Vorschau ansehen",
-        "b": "Nach etwa einer Minute sehen Sie Ihre Iris in mehreren Stilen, mit Wasserzeichen. Ohne Anmeldung und ohne Kosten. Kostenlose Vorschauen werden nicht gespeichert.",
-        "v": "Beispielvorschau, mit Wasserzeichen"
+        "t": "Vorschau ansehen",
+        "b": "Ihre Iris in mehreren Stilen."
       },
       {
-        "t": "Digitale Datei erhalten",
-        "b": "Wählen Sie einen Stil und erhalten Sie Ihr Kunstwerk als digitale Datei ({px}), in voller Auflösung erstellt.",
-        "bOpen": "Wählen Sie einen Stil, bezahlen Sie über Stripe und erhalten Sie Ihr Kunstwerk als digitale Datei ({px}), in voller Auflösung erstellt, sobald Ihre Bestellung bestätigt ist.",
-        "v": "Ihre digitale Datei"
+        "t": "Datei erhalten",
+        "b": "Wählen Sie einen Stil: Die Datei entsteht in voller Auflösung.",
+        "bOpen": "Wählen Sie einen Stil und bezahlen Sie über Stripe: Die Datei entsteht in voller Auflösung."
       }
-    ],
-    "tipsTitle": "Tipps für eine scharfe Aufnahme",
-    "tips": [
-      "Rückkamera mit 2-fachem Zoom, etwa 10\u00a0cm vom Auge entfernt.",
-      "Tageslicht vom Fenster oder eine Taschenlampe, seitlich. Keine Zimmerlampe und kein Blitz.",
-      "Tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig. Halten Sie das Auge weit offen, damit kein Lid und keine Wimper die Iris verdeckt, und nehmen Sie die Brille ab.",
-      "Machen Sie drei bis fünf Aufnahmen. In einem echten Test hatte die beste Aufnahme 3,7-mal so viele Details wie die schlechteste, und wir verwenden die schärfste."
     ],
     "videoPlay": "Anleitungsvideo abspielen",
     "videoPause": "Anleitungsvideo anhalten",
@@ -479,8 +421,7 @@
     "previewButton": "Weiter zur Zahlung",
     "previewSoon": "Ihre Datei, als Nächstes",
     "fileName": "snapeyes-artwork.jpg",
-    "fileMeta": "{square}, JPEG",
-    "fileTag": "Digitale Datei"
+    "fileMeta": "{square}, JPEG"
   },
   "pricing": {
     "eyebrow": "Preise",
@@ -493,7 +434,7 @@
     "rows": {
       "free": {
         "t": "Vorschau",
-        "b": "Mit Wasserzeichen, in etwa einer Minute, ohne Anmeldung."
+        "b": "Mit Wasserzeichen."
       },
       "black": {
         "t": "Ein Auge auf Schwarz",
@@ -516,59 +457,43 @@
     "eyes": "{n} Augen",
     "includesTitle": "Was Sie erhalten",
     "includes": [
-      "Eine digitale Datei ohne Wasserzeichen, {px} an der längsten Seite ({square} bei einem Auge)",
-      "In voller Auflösung aus der von Ihnen freigegebenen Vorschau erstellt, zum Drucken, wo Sie möchten",
-      "Ihre Dateien bleiben 12 Monate zum Download verfügbar",
-      "Zuerst die kostenlose Vorschau, damit Sie Ihr Auge und Ihren Stil sehen, bevor Sie bezahlen. Die Datei in voller Auflösung ergänzt feinere Faserdetails.",
-      "Eine persönliche Lizenz: Drucken Sie es für sich oder als Geschenk. Der Verkauf des Kunstwerks oder von Drucken ist nicht enthalten (siehe AGB)."
+      "{px}, ohne Wasserzeichen",
+      "Aus Ihrer Vorschau erstellt",
+      "12 Monate zum Download",
+      "Persönliche Lizenz"
     ],
-    "notIncludes": "Der Druck gehört nicht zur Bestellung. Eine Druckerei berechnet ihn separat, und sein Preis hängt von Druckerei, Größe und Material ab.",
+    "notIncludes": "Der Druck gehört nicht zur Bestellung.",
     "payOpen": "Sichere Kartenzahlung über Stripe.",
     "termsLink": "AGB",
     "auLine": "Verkauft von MB Portretizuokis, Kaunas, Litauen. Kartenzahlung in A$ über Stripe. Eine digitale Datei, es wird also nichts versandt.",
-    "footnote": "Jede Bestellung ist eine digitale Datei ohne Wasserzeichen. Preise in Euro. Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.",
-    "footnoteAud": "Jede Bestellung ist eine digitale Datei ohne Wasserzeichen. Preise in australischen Dollar (A$). Jeder Preis ist der Gesamtpreis: Es wird keine GST berechnet.",
-    "footnoteHuf": "Jede Bestellung ist eine digitale Datei ohne Wasserzeichen. Preise in ungarischen Forint (Ft). Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet."
+    "footnote": "Preise in Euro. Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.",
+    "footnoteAud": "Preise in australischen Dollar (A$). Jeder Preis ist der Gesamtpreis: Es wird keine GST berechnet.",
+    "footnoteHuf": "Preise in ungarischen Forint (Ft). Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet."
   },
   "closeups": {
     "eyebrow": "Genauer hinsehen",
     "title": "Direkt aus der Datei geschnitten",
-    "intro": "Ein Quadrat von {n} px aus der Datei mit {px}, nicht verkleinert (Ihr Bildschirm skaliert es eventuell). Das Foto hinter diesem Beispiel war nur {src} px breit, die feinen Fasern sehen Sie hier also als Rekonstruktion unserer KI.",
+    "intro": "Ein echtes Stück der Datei, nicht vergrößert.",
     "badge": "{n} px Ausschnitt",
-    "fibreTitle": "Ein Quadrat direkt aus der Datei",
+    "fibreTitle": "Unser eigenes Auge",
     "fibreAlt": "Eine Nahaufnahme unserer eigenen restaurierten Iris, ausgeschnitten aus der Datei mit 4096 px: radiale Fasern, ein goldener Kragen und der Rand der Pupille.",
     "locatorAlt": "Die ganze restaurierte Iris, ein Quadrat markiert die Stelle der Nahaufnahme",
     "locatorLabel": "Hier ausgeschnitten",
     "edgeTitle": "Die Kante eines Acryldrucks",
-    "edgeBody": "Eine KI-generierte Nahaufnahme der Ecke eines Acryldrucks: polierte Kante, ein Abstandhalter und eine Fensterspiegelung. Ein echter Druck unterscheidet sich je nach Druckerei und Licht in Ihrem Raum.",
-    "edgeAlt": "Eine KI-Visualisierung der Ecke eines Drucks auf Acryl: polierte klare Kante, ein Abstandhalter aus Stahl und eine weiche Fensterspiegelung.",
-    "edgeCaption": "Die polierte Kante eines Drucks auf Acryl. Der Druck gehört nicht zur Bestellung."
+    "edgeAlt": "Eine Visualisierung der Ecke eines Drucks auf Acryl: polierte klare Kante, ein Abstandhalter aus Stahl und eine weiche Fensterspiegelung."
   },
   "trust": {
     "eyebrow": "Was wir nie tun",
     "title": "Kleine Versprechen, eingehalten",
     "items": [
-      {
-        "t": "Wir malen Ihre Iris nie neu",
-        "b": "Wir stellen feine Details wieder her. Farbe, Muster und Anordnung bleiben Ihre. Wir färben sie nie um und tauschen sie nie gegen ein anderes Auge."
-      },
-      {
-        "t": "Wir geben Beispiele nie als Kunden aus",
-        "b": "Jedes Beispielbild ist gekennzeichnet oder beschriftet. Das Auge, das wir am häufigsten zeigen, ist unser eigenes. Die anderen Augen sind Beispielfotos, nie Kunden."
-      },
-      {
-        "t": "Wir verschweigen nie, was die KI tut",
-        "b": "Unsere KI stellt feine Details wieder her und entfernt Spiegelungen. Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek. Sie ersetzt Ihre Iris nie durch eine andere."
-      },
-      {
-        "t": "Wir erzeugen nie falschen Zeitdruck",
-        "b": "Keine Countdowns, keine durchgestrichenen Preise, keine Scheinrabatte. Der Preis, den Sie sehen, ist der Preis, den Sie zahlen."
-      }
+      "Ihre Iris neu malen",
+      "Beispiele als Kunden ausgeben",
+      "Verschweigen, wie Bilder entstehen",
+      "Mit falschem Zeitdruck drängen"
     ],
-    "idLine": "MB Portretizuokis, Unternehmenscode 305605052, Kaunas, Litauen.",
     "curatorEyebrow": "Hilfe",
     "curatorTitle": "Gelingt Ihnen kein scharfes Foto?",
-    "offer": "Schicken Sie uns Ihre besten Aufnahmen, wir sehen sie uns an, meist innerhalb von ein bis zwei Werktagen.",
+    "offer": "Schicken Sie uns Ihre besten Aufnahmen, wir antworten meist innerhalb von ein bis zwei Werktagen.",
     "offerCta": "Schreiben Sie uns",
     "privacyEyebrow": "Ihr Foto",
     "privacyTitle": "Unser Versprechen für Ihr Auge",
@@ -601,27 +526,27 @@
       {
         "id": "receive",
         "q": "Was erhalte ich?",
-        "a": "Eine digitale Datei ohne Wasserzeichen: ein JPEG in sRGB, {square} bei einem Auge und {px} an der längsten Seite bei mehreren Augen. Nach der Zahlung öffnet sich Ihre Bestellseite, und ihren Link erhalten Sie per E-Mail. Meist ist die Datei in wenigen Minuten fertig; halten wir eine Bestellung einmal zur Prüfung zurück, versprechen wir spätestens {hours} Stunden. Sie bleibt 12 Monate zum Download verfügbar."
+        "a": "Eine digitale Datei ohne Wasserzeichen: ein JPEG in sRGB, {square} bei einem Auge und {px} an der längsten Seite bei mehreren Augen, in voller Auflösung aus der von Ihnen freigegebenen Vorschau erstellt. Nach der Zahlung öffnet sich Ihre Bestellseite, und ihren Link erhalten Sie per E-Mail. Meist ist die Datei in wenigen Minuten fertig; halten wir eine Bestellung einmal zur Prüfung zurück, versprechen wir spätestens {hours} Stunden. Sie bleibt 12 Monate zum Download verfügbar. Eine persönliche Lizenz: Drucken Sie es für sich oder als Geschenk; der Verkauf des Kunstwerks oder von Drucken ist nicht enthalten (siehe AGB)."
       },
       {
         "id": "print",
         "q": "Drucken oder versenden Sie es?",
-        "a": "Nein. Sie erhalten die digitale Datei, der Druck gehört nicht zur Bestellung. Sollten wir einmal Druck anbieten, sagen wir es auf dieser Seite."
+        "a": "Nein. Der Druck gehört nicht zur Bestellung: Eine Druckerei berechnet ihn separat, und sein Preis hängt von Druckerei, Größe und Material ab. Sollten wir einmal Druck anbieten, sagen wir es auf dieser Seite."
       },
       {
         "id": "printit",
         "q": "Kann ich es drucken, und wie groß?",
-        "a": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 50 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Wir drucken und versenden nicht: Der Druck ist die Arbeit und der Preis der Druckerei. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 208 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen."
+        "a": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 50 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Wir drucken und versenden nicht: Der Druck ist die Arbeit und der Preis der Druckerei. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 208 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab."
       },
       {
         "id": "look",
         "q": "Sieht mein Druck aus wie die Bilder?",
-        "a": "Die Bilder sind KI-Visualisierungen, wie eine Datei gedruckt aussehen kann. Ein echter Druck weicht ab, je nach Druckerei, Material und dem Licht in Ihrem Raum, so wie ein Bildschirm von einer Wand abweicht. Bitten Sie die Druckerei um einen Probedruck oder ein Muster."
+        "a": "Die Bilder von Räumen, Händen und Drucken sind Visualisierungen, wie eine Datei gedruckt aussehen kann, keine Fotos. Ein echter Druck weicht ab, je nach Druckerei, Material und dem Licht in Ihrem Raum, so wie ein Bildschirm von einer Wand abweicht, und seine Farben können vom Bildschirm abweichen. Die Größen in den Bildern sind beispielhaft, und einige Stile darin folgen bald. Bitten Sie die Druckerei um einen Probedruck oder ein Muster."
       },
       {
-        "id": "real",
-        "q": "Ist das wirklich mein Auge?",
-        "a": "Ja. Die Farbe und das Muster stammen aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her, die allerfeinsten Details sind also eine Rekonstruktion, keine Mikroskopaufnahme. Mit der kostenlosen Vorschau beurteilen Sie das Ergebnis, bevor Sie etwas bezahlen."
+        "id": "how",
+        "q": "Wie funktioniert es?",
+        "a": "Wir beginnen mit Ihrem eigenen Foto und entfernen Spiegelungen. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her, die allerfeinsten Details sind also eine Rekonstruktion, keine Mikroskopaufnahme. Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt. Räume, Hände und Gegenstände in den Bildern dieser Seite sind mit KI erstellt, nicht fotografiert. Die Augen auf dieser Seite sind unser eigenes und Beispielfotos, nie die eines Kunden, alle sorgfältig aufgenommen: Ihr Ergebnis hängt von Ihrem Foto ab, und die kostenlose Vorschau zeigt es Ihnen, bevor Sie bezahlen."
       },
       {
         "id": "bad",
@@ -636,7 +561,7 @@
       {
         "id": "phone",
         "q": "Welches Smartphone und welche Kamera brauche ich?",
-        "a": "Jedes aktuelle Smartphone mit guter Rückkamera. Nutzen Sie die Rückkamera mit 2- oder 3-fachem Zoom, nicht die Selfie-Kamera. Nutzen Sie Tageslicht vom Fenster oder eine Taschenlampe, seitlich von Ihnen, keine Zimmerlampe und keinen Blitz. Halten Sie das Smartphone etwa 10\u00a0cm vor Ihr Auge, tippen Sie zum Scharfstellen auf die Iris, nehmen Sie die Brille ab und machen Sie drei bis fünf Aufnahmen."
+        "a": "Jedes aktuelle Smartphone mit guter Rückkamera. Nutzen Sie die Rückkamera mit 2- oder 3-fachem Zoom, nicht die Selfie-Kamera. Nutzen Sie Tageslicht vom Fenster oder eine Taschenlampe, seitlich von Ihnen, keine Zimmerlampe und keinen Blitz. Halten Sie das Smartphone etwa 10\u00a0cm vor Ihr Auge, tippen Sie zum Scharfstellen auf die Iris, halten Sie das Auge weit offen, damit kein Lid und keine Wimper die Iris verdeckt, nehmen Sie die Brille ab und machen Sie drei bis fünf Aufnahmen. Wir prüfen jede davon und verwenden die schärfste."
       },
       {
         "id": "colour",
@@ -652,7 +577,7 @@
       {
         "id": "material",
         "q": "Welches Material soll ich wählen?",
-        "a": "Acryl ist glänzend und tief. Aluminium ist klar und modern. Leinwand ist weich und spiegelt weniger, doch ihr Gewebe mildert die feinsten Fasern. Ein gerahmter Druck ist klassisch. Ein Acrylblock steht im Regal. Bitten Sie die Druckerei um ein Muster."
+        "a": "Acryl ist glänzend und tief; hängen Sie es nicht in direktes Fensterlicht. Aluminium ist klar und modern. Leinwand ist weich und spiegelt weniger, doch ihr Gewebe mildert die feinsten Fasern. Ein gerahmter Druck ist klassisch. Ein Acrylblock steht im Regal. Für das Smartphone ergänzen Sie in einem beliebigen Fotoeditor einen schwarzen Rand um die quadratische Datei und legen sie als Hintergrundbild fest. Die Angaben auf dieser Seite sind bei Druckereien üblich und können abweichen; bitten Sie die Druckerei um ein Muster."
       },
       {
         "id": "time",
@@ -697,9 +622,8 @@
   "final": {
     "title": "Sehen Sie Ihre eigene Iris",
     "body": "Sie brauchen nur Ihr Smartphone, gutes Licht und etwa eine Minute.",
-    "small": "Sie erhalten eine digitale Datei. Der Druck gehört nicht zur Bestellung.",
-    "imageAlt": "Eine KI-Visualisierung: ein dunkles Arbeitszimmer in der Dämmerung, an der Wand unsere eigene Iris auf Acryl gedruckt.",
-    "chip": "KI-Visualisierung"
+    "imageAlt": "Eine Visualisierung: ein dunkles Arbeitszimmer in der Dämmerung, an der Wand unsere eigene Iris auf Acryl gedruckt.",
+    "chip": "Visualisierung"
   },
   "footer": {
     "operatedBy": "SnapEyes wird betrieben von",

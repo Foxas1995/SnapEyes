@@ -439,7 +439,9 @@ async function checkHero() {
     expect('hero', f.every((x) => x.filt === 'none'), `${tag}: a filter on the picture or an ancestor`);
     expect('hero', f.every((x) => x.sc <= 1.0301 && x.sc >= 0.9999), `${tag}: the picture scales to ${Math.max(...f.map((x) => x.sc))} (the charter allows 1.03)`);
     expect('hero', f.every((x) => x.rot === 'none' && !/matrix\(.*,\s*-?[1-9]/.test(x.tr.replace(/matrix\(1, 0, 0, 1,[^)]*\)/, ''))), `${tag}: the picture is rotated or skewed`);
-    expect('hero', f.every((x) => x.chip === 1 && x.cap === 1), `${tag}: the honesty chip or the caption was below full opacity in some frame (chip min ${Math.min(...f.map((x) => x.chip))}, caption min ${Math.min(...f.map((x) => x.cap))})`);
+    // the honesty label is the chip in the frame; the caption under the picture went in the lean pass of 2026-10-22 (the owner: too much text), so a caption, if one is
+    // ever there again, is held to the same rule and its absence (-1) is no failure
+    expect('hero', f.every((x) => x.chip === 1 && (x.cap === 1 || x.cap === -1)), `${tag}: the honesty chip or the caption was below full opacity in some frame (chip min ${Math.min(...f.map((x) => x.chip))}, caption min ${Math.min(...f.map((x) => x.cap))})`);
     // the glint on the print face is one quiet sweep at .10 (spec 6.2, ledger 16.2 C). Its keyframes once shared a global name with the wall's glint, whose chunk arrives
     // after the first render and replaces the running keyframes (2026-10-05: a white slab at opacity 1 over the print face): so the painted opacity is read every frame,
     // after every chunk that could replace it, and the sweep must have been seen at all
@@ -463,7 +465,7 @@ async function checkHero() {
     expect('hero', s.glued.length === 0, `${lang}: no space between phrases in ${s.glued.join(' | ')}`);
     await page.close();
   }
-  if (!problems.some((x) => x.startsWith('hero'))) pass('hero', 'the picture is opaque, unfiltered, unrotated and at most 1.03 in every frame from the first; both honesty labels are visible from the first frame; headline is real text in all four languages');
+  if (!problems.some((x) => x.startsWith('hero'))) pass('hero', 'the picture is opaque, unfiltered, unrotated and at most 1.03 in every frame from the first; the honesty label is visible from the first frame; headline is real text in all four languages');
 }
 
 // ---------------------------------------------------------------------------------------------------- header

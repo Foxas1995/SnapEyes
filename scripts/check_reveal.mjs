@@ -265,8 +265,8 @@ async function checkKeyboard() {
 async function checkStatic() {
   console.log('static');
   // the flat layout: reduced motion at any width and a short window. A phone (a window up to 767 px) with motion allowed has the scene of its own (src/landing/RevealScene.tsx
-  // with `phone`, checked by scripts/check_motion_phone.mjs): here it must have no scene of the DESKTOP (no .lp-rv-scene, no pin of 768 px and up) and keeps the slider, the
-  // strip and the table under its own.
+  // with `phone`, checked by scripts/check_motion_phone.mjs): here it must have no scene of the DESKTOP (no .lp-rv-scene, no pin of 768 px and up) and keeps the slider and the
+  // strip under its own (the table of what the AI adds went into the FAQ in the lean pass of 2026-10-22).
   for (const [tag, o, phone] of [['reduced motion 1280', { width: 1280, height: 800, reduceMotion: true }, false], ['reduced motion phone 375', { width: 375, height: 812, reduceMotion: true }, false], ['reduced motion window 767', { width: 767, height: 900, reduceMotion: true }, false],
     ['short window 1280 x 540', { width: 1280, height: 540 }, false], ['phone 375', { width: 375, height: 812 }, true], ['window 767', { width: 767, height: 900 }, true]]) {
     const page = await open({ lang: 'en', ...o });
@@ -279,7 +279,7 @@ async function checkStatic() {
     // the strip's pictures are shown once the engine has seen them (or at once without it)
     await page.eval("document.querySelector('.lp-strip').scrollIntoView({ block: 'center', behavior: 'instant' })");
     await sleep(2200);
-    const shown = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('.lp-strip li, .lp-never, .lp-your-turn')].map((e) => +getComputedStyle(e).opacity))`));
+    const shown = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('.lp-strip li, .lp-your-turn')].map((e) => +getComputedStyle(e).opacity))`));
     expect('static', shown.every((o) => o === 1), `${tag}: after being on screen the strip's parts have opacities ${shown.join(', ')} (want 1)`);
     await page.close();
   }

@@ -1,5 +1,5 @@
 /* SnapEyes landing v2: How it works: the three steps with their visuals (the guide video of step 1 styles itself inline, src/shared/GuideVideo.tsx;
-   the camera phone it replaced and its rules are gone), the tips disclosure.
+   the camera phone it replaced and its rules are gone), an icon and a short title each (the tips disclosure went in the lean pass of 2026-10-22).
    Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
    the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
    .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
@@ -28,9 +28,9 @@
   }
   .lp-step-body .lp-num { font-size: 15px; display: flex; align-items: center; gap: 12px; }
   .lp-step-body .lp-num::after { content: ""; height: 1px; flex: 1; background: var(--line-2); }
-  .lp-step-body h3 { margin-top: 12px; font-size: 20px; }
-  .lp-step-body p { margin-top: 10px; font-size: 15px; line-height: 1.6; color: var(--ink-2); }
-  .lp-step-body .lp-vcap { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); display: flex; gap: 8px; align-items: flex-start; }
+  .lp-step-body h3 { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 20px; }
+  .lp-step-body h3 .lp-ic { width: 22px; height: 22px; }
+  .lp-step-body p { margin-top: 8px; font-size: 15px; line-height: 1.55; color: var(--ink-2); }
   /* overflow: clip, not hidden: a box that clips does not become a scroll container, so its automatic minimum height (the card) still holds and the square grows when the text is spaced out (WCAG 1.4.12) */
   .lp-vis.lp-file { overflow: clip; background: radial-gradient(120% 90% at 50% 0%, #1b2130 0%, #0c0f17 62%); }
   .lp-filecard { width: 66%; padding: 11px; border-radius: 16px; background: #0f1320; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 24px 50px -20px rgba(0, 0, 0, .9); }
@@ -38,15 +38,6 @@
   .lp-filecard div { margin-top: 12px; display: grid; gap: 3px; }
   .lp-filecard b { font-size: 13.5px; font-weight: 600; color: #fff; word-break: break-all; }
   .lp-filecard span { font-size: 12.5px; color: var(--ink-2); }
-  .lp-filecard em { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
-  details.lp-tips { margin-top: 14px; border-top: 1px solid var(--line); }
-  details.lp-tips > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--t-1); }
-  details.lp-tips > summary::-webkit-details-marker { display: none; }
-  details.lp-tips > summary svg { width: 14px; height: 14px; color: var(--gold); flex: none; transition: transform var(--d-ui) var(--ease-out); }
-  details.lp-tips[open] > summary svg { transform: rotate(45deg); }
-  details.lp-tips ul { display: grid; gap: 8px; padding: 2px 0 10px; }
-  details.lp-tips li { position: relative; padding-left: 18px; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
-  details.lp-tips li::before { content: ""; position: absolute; left: 0; top: 10px; width: 8px; height: 1px; background: var(--gold); }
   .lp-how-cta { margin-top: 48px; display: flex; justify-content: center; }
   @media (min-width: 860px) {
     .lp-how-cta { justify-content: flex-start; }
@@ -60,12 +51,6 @@
   /* ------------------------------------------------------------------------------------------------ motion (spec 6.5)
      Every hidden state is under html.mo:not(.mo-fail) and prefers-reduced-motion: no-preference (the page's own gate, src/motion/motion.css), so
      with the engine off, under reduced motion and after the failsafe all three steps are there, numerals gold, hairlines whole. */
-  /* the tips open in .5 s: the height is animated through ::details-content (interpolate-size is set on the root in src/motion/motion.css) */
-  details.lp-tips::details-content { block-size: 0; overflow: clip; transition: block-size var(--d-ui) var(--ease-out), content-visibility var(--d-ui) allow-discrete; }
-  details.lp-tips[open]::details-content { block-size: auto; }
-  @media (prefers-reduced-motion: reduce) {
-    details.lp-tips::details-content { transition: none; }
-  }
   /* the hairline of each column reaches into the gap and ends just before the next numeral, so 01, 02 and 03 sit on one continuous line (the
      static look, the same with and without motion) */
   @media (min-width: 860px) {

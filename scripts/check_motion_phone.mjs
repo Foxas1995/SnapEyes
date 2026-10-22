@@ -22,8 +22,8 @@
 //             and the clock's animations do not run under it
 //   how       the line through the numerals of the swipe rail is drawn by the scroll: each step's hairline scales from 0 to 1 in its turn (18 percent after the one before), monotonic, whole by
 //             the end of the crossing, and the steps, their pictures and the rail's own scroll never move
-//   final     the closing picture opens with the scroll (inset 7 to 0 percent, corners 28 to 0 px, scale 1.03 to 1), monotonic, whole at the end; the label, the sentence about the file and
-//             the button are where they were
+//   final     the closing picture opens with the scroll (inset 7 to 0 percent, corners 28 to 0 px, scale 1.03 to 1), monotonic, whole at the end; the label and the button are
+//             where they were (the sentence about the file under the button went in the lean pass of 2026-10-22)
 //   failsafe  a dead IntersectionObserver (an in-app browser): html.mo-fail lifts every phone scene at 3.5 s: nothing pinned, clipped, scaled or undrawn
 //   cls       no layout shift over a slow scroll of the whole page at 390 px, and none at 1280 px
 //   identity  the artwork rectangles of the plate, the closing picture and the drawing are the same with the motion off and after the scenes have played (charter AC-5): the same visual
@@ -274,8 +274,9 @@ async function checkReveal() {
       if (el.tagName === 'IMG' && (+c.opacity !== 1 || c.visibility !== 'visible' || c.display === 'none')) bad.push(n + ' opacity ' + c.opacity + ' ' + c.visibility); }
     const who = f.querySelector('.lp-rv-who'), wc = getComputedStyle(who);
     if (wc.visibility !== 'visible' || +wc.opacity !== 1 || !who.textContent.trim()) bad.push('the label of whose eye it is is not shown (' + wc.visibility + ', ' + wc.opacity + ')');
+    // one caption line under the frame (how the photo was taken): the line with the photo's size in pixels went in the lean pass of 2026-10-22 (the owner: no pixel counts for a visitor)
     const cap = [...document.querySelectorAll('.lp-rvp .lp-rv-cap span')].map((e) => +getComputedStyle(e).opacity);
-    if (cap.length !== 2 || cap.some((o) => o !== 1)) bad.push('a caption line is not shown');
+    if (cap.length !== 1 || cap.some((o) => o !== 1)) bad.push('a caption line is not shown');
     return { label, bad, who: who.textContent.trim() }; })())`;
   const labels = new Set(), bads = new Set(), whos = new Set();
   for (const p of [0, 0.1, 0.3, 0.5, 0.6, 0.8, 1]) { await goP(page, g, p); const r = JSON.parse(await page.eval(probe)); r.bad.forEach((b) => bads.add(b)); whos.add(r.who); labels.add(r.label.split(' ')[0]); }
@@ -286,8 +287,9 @@ async function checkReveal() {
   await goP(page, g, 0.5);
   const clear = JSON.parse(await page.eval(`JSON.stringify((() => { const b = document.getElementById('sticky').getBoundingClientRect(), s = document.querySelector('.lp-rvp-stage').getBoundingClientRect(), h = document.getElementById('hdr').getBoundingClientRect(); return { bar: Math.round(b.top), stage: Math.round(s.bottom), hdr: Math.round(h.bottom), stageTop: Math.round(s.top), shown: document.getElementById('sticky').classList.contains('lp-show') }; })())`));
   expect('reveal', clear.stage <= clear.bar && clear.stageTop >= clear.hdr, `the stage (${clear.stageTop} to ${clear.stage} px) is not between the header (${clear.hdr}) and the sticky bar (${clear.bar})`);
-  const order = JSON.parse(await page.eval(`JSON.stringify((() => { const y = (s) => document.querySelector(s).getBoundingClientRect().top + scrollY; return { h2: y('#revealH'), scene: y('.lp-rvp'), slider: y('.lp-cmp'), table: y('.lp-ai'), strip: y('.lp-strip') }; })())`));
-  expect('reveal', order.h2 < order.scene && order.scene + g.h <= order.slider + 2 && order.slider < order.table && order.table < order.strip, `the order of the section is not heading, scene, slider, table, strip: ${JSON.stringify(order)}`);
+  // the table of what comes from the photo and what the AI adds went into the FAQ's answer "How does it work?" in the lean pass of 2026-10-22: heading, scene, slider, strip
+  const order = JSON.parse(await page.eval(`JSON.stringify((() => { const y = (s) => document.querySelector(s).getBoundingClientRect().top + scrollY; return { h2: y('#revealH'), scene: y('.lp-rvp'), slider: y('.lp-cmp'), strip: y('.lp-strip'), table: document.querySelectorAll('#reveal .lp-ai').length }; })())`));
+  expect('reveal', order.h2 < order.scene && order.scene + g.h <= order.slider + 2 && order.slider < order.strip && order.table === 0, `the order of the section is not heading, scene, slider, strip: ${JSON.stringify(order)}`);
   expect('reveal', (await page.eval("document.querySelectorAll('#reveal .lp-cmp-range').length")) === 1, 'the slider (one native range) is not in the section');
   expect('reveal', page.errors.length === 0, `script errors: ${page.errors.join(' | ')}`);
   await page.close();
@@ -505,9 +507,10 @@ async function checkFinal() {
   const h = await page.eval("document.querySelector('.lp-final').getBoundingClientRect().height"), vh = 844;
   const goto = (p) => place(page, '.lp-final', 0.92 * vh - p * (h - 0.16 * vh), '.lp-bg');
   const PROBE = `JSON.stringify((() => { const s = document.querySelector('.lp-final'), b = s.querySelector('.lp-bg'), c = getComputedStyle(b), i = getComputedStyle(b.querySelector('img')), m = /^inset\\(([\\d.e+-]+)%(?: round ([\\d.e+-]+)px)?/.exec(c.clipPath);
-    const chip = s.querySelector('.lp-final-chip'), cc = getComputedStyle(chip), fine = s.querySelector('.lp-fine'), fc = getComputedStyle(fine), sr = s.getBoundingClientRect(), cr = chip.getBoundingClientRect();
+    // the honesty words of the band are its label; the line that the file is digital went in the lean pass of 2026-10-22 (the price list and the FAQ say it), so there is no second line to hold
+    const chip = s.querySelector('.lp-final-chip'), cc = getComputedStyle(chip), fine = s.querySelector('.lp-fine'), sr = s.getBoundingClientRect(), cr = chip.getBoundingClientRect();
     return { op: +b.style.getPropertyValue('--op'), scrub: b.dataset.scrub !== undefined, run: b.hasAttribute('data-run'), raw: c.clipPath + ' ' + i.scale, clip: c.clipPath === 'none' ? 0 : m ? +m[1] : -1, round: m && m[2] ? +m[2] : 0, scale: i.scale === 'none' ? 1 : +i.scale, tr: i.translate + '|' + i.transform + '|' + b.style.opacity,
-      chip: cc.visibility === 'visible' && +cc.opacity === 1 && cr.left >= sr.left && cr.right <= sr.right && !!chip.textContent.trim(), fine: +fc.opacity === 1 && fc.translate === 'none' && fine.textContent.trim().length > 20,
+      chip: cc.visibility === 'visible' && +cc.opacity === 1 && cr.left >= sr.left && cr.right <= sr.right && !!chip.textContent.trim(), fine: fine === null,
       clock: document.getAnimations().filter((a) => a instanceof CSSAnimation && /^(lp-open|lp-rv-settle)$/.test(a.animationName) && b.contains(a.effect.target)).length }; })())`;
   const ps = [0, 0.15, 0.3, 0.5, 0.7, 0.85, 1.04];   // the last stop is a little past the end of the crossing: a stop AT 1 can only be placed to within a pixel, which is a few thousandths either side
   const rows = [];
@@ -517,7 +520,7 @@ async function checkFinal() {
     expect('final', near(r.clip, 7 * (1 - r.op), 0.12) && near(r.round, 28 * (1 - r.op), 0.6), `p ${p}: the clip is an inset of ${r.clip} percent with corners of ${r.round} px (want ${(7 * (1 - r.op)).toFixed(2)} and ${(28 * (1 - r.op)).toFixed(1)})`);
     expect('final', near(r.scale, 1 + 0.03 * (1 - r.op), 0.0008) && r.scale <= 1.0301, `p ${p}: the picture's scale is ${r.scale} (want ${(1 + 0.03 * (1 - r.op)).toFixed(4)}, never above 1.03)`);
     expect('final', r.tr === 'none|none|', `p ${p}: the picture moved or faded: ${r.tr}`);
-    expect('final', r.chip && r.fine, `p ${p}: the label (${r.chip}) or the sentence about the file (${r.fine}) is not as it was`);
+    expect('final', r.chip && r.fine, `p ${p}: the label (${r.chip}) is not as it was, or the sentence about the file is back under the button (${!r.fine})`);
     expect('final', r.clock === 0, `p ${p}: ${r.clock} animations of the clock are running under the scroll`);
   }
   expect('final', monotone(rows.map(([, r]) => r.op), 1, 0.003) && monotone(rows.map(([, r]) => r.clip), -1, 0.1) && monotone(rows.map(([, r]) => r.scale), -1, 0.0006), 'going down the opening is not monotone');

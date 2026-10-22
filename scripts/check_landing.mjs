@@ -7,11 +7,12 @@
 //
 // What it checks (each name is a value of --only):
 //   labels     every picture area of the page (hero, wall stage, the four rooms, the polished edge, the crop, the tiles of the
-//              style gallery, the closing scene) carries its label ("Example", "AI visualisation", "Example photo", in the
-//              page's own language) INSIDE the picture; every picture has alt, width and height
+//              style gallery, the closing scene) carries its label ("Example", "Visualisation", "Example photo", in the
+//              page's own language: one word since the lean pass of 2026-10-22, no "AI" in it) INSIDE the picture; every picture has alt,
+//              width and height
 //   phrases    no "ready to print", "druckfertig", "100 percent", "museum glass" (the banned claims of scripts/check_texts.mjs) in the
 //              visible text, in any of the four languages; "Ordering opens soon" in exactly three places while ordering is not
-//              open and in none once it is (the stub flips); "Printing is not part of your order" where the prototype has it
+//              open and in none once it is (the stub flips); "Printing is not part of your order" exactly in the price list and the FAQ
 //   dashes     no en or em dash and no spaced hyphen in any text node, alt, aria-label, title or the head of the page
 //   anchors    a link to #section lands on the section (fresh load, so the lazy sections must have caught up), and the header's links
 //   focus      the focus stays on the control after an arrow key (roving groups) and after a click on a language or currency button;
@@ -209,7 +210,9 @@ async function checkPhrases() {
       if (lang === 'en' || lang === 'de') {
         const printing = lang === 'en' ? /Printing is not part of your order/gi : /Der Druck gehört nicht zur Bestellung/gi;
         const n = (text.match(printing) || []).length;
-        if (n !== 6) msgs.push(`the line "printing is not part of your order" appears ${n} times (6: hero caption, wall, pricing, FAQ, polished edge, closing)`);
+        // said once where it matters (the lean pass of 2026-10-22, the owner: "too much text"): the price list and the FAQ answer about printing (the tile line of a
+        // printed piece with its price, styles.wallFile, only appears when such a tile is on its wall view and can be bought)
+        if (n !== 2) msgs.push(`the line "printing is not part of your order" appears ${n} times (2: the price list, the FAQ)`);
       }
       if (state === 'open') {
         const bar = await page.eval("document.getElementById('barText').textContent");

@@ -214,7 +214,6 @@ export function RevealSlider({ eye }: RevealSliderProps) {
         <span>{eye.note}</span>
         <span className="lp-hint">{r.hint}</span>
       </figcaption>
-      <p className="lp-cmp-scale">{t(eye.phone ? 'reveal.scale' : 'reveal.scaleWeb', { n: eye.n })}</p>
     </figure>
   );
 }

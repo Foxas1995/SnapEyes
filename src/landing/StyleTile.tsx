@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useCopy } from './copy/useCopy';
 import type { RunCatalogue } from '../shared/catalogue';
 import { tileState } from './tileState';
-import { artPicture, hasPhotoChip, provenance, tileCopy, tileKey, tileSizes, wallPicture, type EyeId, type GalleryGroup, type GalleryTile } from './gallery';
+import { artPicture, hasPhotoChip, tileCopy, tileKey, tileSizes, wallPicture, type EyeId, type GalleryGroup, type GalleryTile } from './gallery';
 import type { LandingPricesState } from './prices';
 import { ExampleChip, Picture, PriceGate, type PictureAsset } from './ui';
 
@@ -56,11 +56,13 @@ export interface StyleTileProps {
 interface Shown { cur: PictureAsset; prev: PictureAsset | null; ready: boolean }
 const calm = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** One tile of the gallery: the flat artwork (an Example), optionally the same artwork on a wall (an AI visualisation,
- *  fetched only when asked for), the labels, the name, the price line and whose eye it is.
- *  Labels (BUILD_PLAN section 7): the flat artworks of Mantas's own eye carry no chip, the legend line under the styles intro
- *  is their label; "Example photo" (example.photo) sits in the picture of every tile that shows someone else's eye; the
- *  wall view carries "AI visualisation" (example.vis), which is only visible while the wall is on. */
+/** One tile of the gallery: the flat artwork (an Example), optionally the same artwork on a wall (a visualisation, fetched only
+ *  when asked for), the labels, the name and the price line. Whose eye it is: the line under the eye colour dots (or the group's
+ *  line for the pairs and the families, src/landing/StyleGallery.tsx), and the chip in the picture; the tile's own description is in
+ *  its picture's alt text (the lean pass of 2026-10-22 took the two lines under the name off the tile).
+ *  Labels (BUILD_PLAN section 7): the flat artworks of our own eye carry no chip, the legend line of the styles is their label;
+ *  "Example photo" (example.photo) sits in the picture of every tile that shows someone else's eye; the wall view carries
+ *  "Visualisation" (example.vis), which is only visible while the wall is on. */
 export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices, sale, enter, index }: StyleTileProps) {
   const { c, t } = useCopy();
   // for sale now: ordering is open and the run-time catalogue lists the tile's style as live for the tile's number of eyes (src/landing/tileState.ts, the style is
@@ -85,7 +87,6 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
   const wall = wallPicture(group, tile, eye);
   const on = wallOn && !!wall;
   const photo = hasPhotoChip(group, tile, eye);
-  const prov = provenance(tile, eye);
   return (
     <figure
       className={`lp-tile${enter === 'swap' ? ' lp-tile-in' : ''}${on ? ' lp-on-wall' : ''}`}
@@ -94,7 +95,7 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
       data-reveal={enter === 'reveal' ? 'fade' : undefined}
       style={{ '--i': Math.min(index, 4), '--j': Math.min(index, 5) } as CSSProperties}
     >
-      {/* The picture's own chip: "AI visualisation" when the tile has a wall view (shown only while the wall is on), else
+      {/* The picture's own chip: "Visualisation" when the tile has a wall view (shown only while the wall is on), else
           "Example photo" when it shows another person's eye, else none (the legend line is the label). A tile with both
           gets the photo chip as a second layer; the two never show at the same time (css/styles.css). */}
       <Picture
@@ -165,8 +166,6 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
         {/* a price next to a picture of a printed piece says what the price is for (the wall view only; the flat artwork is the file); a tile with no price (it says Soon) has
             nothing to explain (release review H-m8) */}
         {on && forSale && <p className="lp-file">{t('styles.wallFile')}</p>}
-        <p>{desc}</p>
-        <p className="lp-src">{c.styles[prov]}</p>
       </figcaption>
     </figure>
   );

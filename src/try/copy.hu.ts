@@ -90,7 +90,7 @@ export const hu: TryCopy = {
     retakeTitle: (n: number) => `${n}. szem újrafotózása`,
     retakeLead: 'Ugyanazok a lépések, mint az előbb. Az új felvételed lecseréli ezt a szemet az alkotáson; addig minden marad, ahogy van.',
     back: (n: number) => `Vissza az alkotásodhoz (${n} szem)`,
-    sampleButton: 'MI által generált mintaszem',
+    sampleButton: 'Mintaszem',
     sampleLoadFailed: 'A mintaszemet nem sikerült betölteni.',
     thumbLabel: (i: number) => `${i}. szem`,
     sampleThumb: 'MI által generált minta',

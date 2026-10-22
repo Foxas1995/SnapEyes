@@ -60,7 +60,7 @@ export const lt: TryCopy = {
     retakeTitle: (n: number) => `Fotografuoti akį ${n} iš naujo`,
     retakeLead: 'Tie patys žingsniai kaip anksčiau. Naujas kadras pakeis šią akį kūrinyje; iki tol ji lieka tokia, kokia yra.',
     back: (n: number) => `Grįžti prie kūrinio (${akys(n)})`,
-    sampleButton: 'DI sugeneruota pavyzdinė akis',
+    sampleButton: 'Pavyzdinė akis',
     sampleLoadFailed: 'Nepavyko įkelti pavyzdinės akies.',
     thumbLabel: (i: number) => `Akis ${i}`,
     sampleThumb: 'DI sugeneruotas pavyzdys',

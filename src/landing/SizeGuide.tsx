@@ -1,6 +1,7 @@
 // The size guide (#sizes): a drawing to scale of four print sizes on a wall next to a sofa and a person, four size chips, and a
-// card with the one number that matters, the pixels per inch of the 4096 px file at that size, with the plain statement of
-// what print shops usually ask for. Pick a size with a chip or by clicking the square in the drawing. The drawing is an SVG
+// card with the one number that matters, the pixels per inch of the 4096 px file at that size, and a few words on how that compares with
+// what print shops usually ask for (the three notes under the card went into the FAQ's answer about printing in the lean pass of 2026-10-22).
+// Pick a size with a chip or by clicking the square in the drawing. The drawing is an SVG
 // (the pieces are the owner's own eye as an artwork); its text labels are HTML laid over it by percent, so they stay crisp.
 // On a phone the view box is cropped so the four squares stay large, and only the picked size keeps its label.
 //
@@ -122,11 +123,6 @@ export function SizeGuide() {
                 </Fragment>
               ))}
             />
-          </div>
-          <div className="lp-size-notes" id="sizeNotes">
-            {(['several', 'above', 'rule'] as const).map((k) => (
-              <p key={k}>{t(`sizes.${k}`)}</p>
-            ))}
           </div>
         </div>
       </div>

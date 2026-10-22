@@ -76,9 +76,3 @@ export function hasPhotoChip(group: GalleryGroup, tile: GalleryTile, eye: EyeId)
   return hasEyeSwitch(group) ? eye !== 'own' : tile.src === 'mixed';
 }
 
-/** Whose eyes a tile shows, for the line under it (styles.own, styles.licensed, styles.mixed). */
-export type Provenance = 'own' | 'licensed' | 'mixed';
-export function provenance(tile: GalleryTile, eye: EyeId): Provenance {
-  if (tile.src === 'mixed') return 'mixed';
-  return eye === 'own' ? 'own' : 'licensed';
-}

@@ -1,7 +1,8 @@
 // "More ways to see it": five pictures that are not on the stage (two of you on walnut, four of you in a frame, in your hands, seen
 // from an angle, on a shelf), in a disclosure that is open on a desktop and closed on a phone (where it would add about 450 px of scrolling). The
-// rail scrolls sideways; it is a named region with a tab stop so the keyboard can scroll it. Every picture is an AI
-// visualisation and carries its chip inside its frame.
+// rail scrolls sideways; it is a named region with a tab stop so the keyboard can scroll it. Every picture is a visualisation and
+// carries its chip inside its frame; a caption names whose eyes are in it only where other people's eyes are (the lean pass of 2026-10-22:
+// the summary is the title alone, and a picture of one of our own prints needs no second line).
 //
 // Motion (motion spec 6.9): the rail appears as one piece (opacity only: nothing moves inside a scroller); above it a counter ("03 / 05",
 // Plus Jakarta Sans with tabular figures, so it never shifts) and a gold hairline of 1 px show how far the rail has been scrolled, directly
@@ -83,7 +84,6 @@ export function MoreRooms() {
       summary={
         <span>
           <b>{m.title}</b>
-          <small>{m.intro}</small>
         </span>
       }
     >
@@ -122,13 +122,13 @@ export function MoreRooms() {
                     height={big.h}
                     loading="lazy"
                     decoding="async"
-                    alt={`${c.example.vis}. ${s.c}`}
+                    alt={`${c.example.vis}. ${s.t}.${s.c ? ` ${s.c}` : ''}`}
                   />
                   <ExampleChip variant="vis" />
                 </div>
                 <figcaption>
                   <b>{s.t}</b>
-                  <span>{s.c}</span>
+                  {s.c && <span>{s.c}</span>}
                 </figcaption>
               </figure>
             );

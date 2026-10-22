@@ -1,4 +1,6 @@
-// The styles chapter (BUILD_PLAN section 2, "Styles"): group tabs, the eye colour dots, the legend, the tiles. The composition
+// The styles chapter (BUILD_PLAN section 2, "Styles"): group tabs, the one line (the legend: these are examples, yours carries your own colours),
+// the eye colour dots (or, for the pairs and the families, the one line of whose eyes they show), the tiles. The lean pass of 2026-10-22 took off the
+// section's intro, the line under each tab and the two lines under each tile (its description stays in its picture's alt text). The composition
 // only: the tabs are ./StyleTabs.tsx, the dots ./EyeChips.tsx, a tile ./StyleTile.tsx, the data ./gallery.ts, which registry
 // style a tile stands for ./tileStyle.ts (the build's release gate reads it), the look css/styles.css. Words come from the copy
 // layer, prices from the visitor's own ladder, pictures from the asset manifest; nothing is written here. Importing this file
@@ -46,8 +48,8 @@ export function StyleGallery({ initialGroup = DEFAULT_GROUP }: { initialGroup?: 
   const eyeSwitch = hasEyeSwitch(group);
   const wide = isWide(group);
   const ids = tilesOf(group).map((tile) => tile.id);
-  // under the group's intro, only while ordering is open: nothing of this group can be bought yet ("Free preview now. Ordering for this group opens soon."), or only some of it
-  // ("More styles soon."). The intro itself says what the group is, never what it costs or how many eyes it takes.
+  // the group's line, only while ordering is open: nothing of this group can be bought yet ("Free preview now. Ordering for this group opens soon."), or only some of it
+  // ("More styles soon."); with no line the paragraph is empty and not shown (css/styles.css).
   const line = groupLine(ids, sale);
   const anySale = saleTiles(ids, sale).sale > 0;
   return (
@@ -56,16 +58,16 @@ export function StyleGallery({ initialGroup = DEFAULT_GROUP }: { initialGroup?: 
         <div className="lp-sec-head">
           <p className="lp-eyebrow">{c.styles.eyebrow}</p>
           <Title id="stylesH" text={c.styles.title} />
-          <p className="lp-intro">{c.styles.intro}</p>
         </div>
         <StyleTabs group={group} onPick={pickGroup} />
         <div className="lp-gpanel" id="gPanel" role="tabpanel" tabIndex={0} aria-labelledby={`gtab-${group}`}>
           <p className="lp-group-intro lp-gintro" id="gIntro">
-            {c.styles.groupIntro[group]}
             {line && <span className="lp-gline" data-line={line}>{` ${line === 'soon' ? c.pricing.severalSoon : c.styles.moreSoon}`}</span>}
           </p>
           <p className="lp-legend">{c.styles.legend}</p>
           <EyeChips eye={eye} onPick={setEye} hidden={!eyeSwitch} />
+          {/* the pairs and the families have no eye colour to pick: one line says whose eyes they show */}
+          {!eyeSwitch && <p className="lp-eyenote">{c.styles.mixed}</p>}
           <div className={wide ? 'lp-grid lp-wide' : 'lp-grid'} id="gGrid" data-reveal="soft" ref={railRef} {...railProps(c.styles.title, 'group')}>
             {tilesOf(group).map((tile, n) => {
               const key = tileKey(group, tile);

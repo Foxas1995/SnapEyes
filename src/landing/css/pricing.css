@@ -21,10 +21,9 @@
   .lp-prow .lp-pv .lp-soon { font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
   .lp-prow .lp-pv em { font-style: normal; font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--ink-3); display: block; margin-top: 2px; letter-spacing: .02em; }
   .lp-incl h3 { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); font-family: var(--body); }
-  .lp-incl ul { margin-top: 14px; display: grid; gap: 14px; }
-  .lp-incl li { position: relative; padding-left: 26px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
-  .lp-incl li::before { content: ""; position: absolute; left: 0; top: 7px; width: 12px; height: 7px; border-left: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(-45deg) scale(.9); }
-  .lp-incl .lp-not { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 14px; font-weight: 600; color: #fff; }
+  .lp-incl ul { margin-top: 16px; }
+  .lp-incl li { font-size: 15px; color: var(--ink-2); }
+  .lp-incl .lp-not { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 14.5px; font-weight: 600; color: #fff; }
   .lp-incl .lp-pay-open, .lp-incl .lp-au-line { margin-top: 10px; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
   .lp-incl .lp-btn { margin-top: 26px; width: 100%; }
   .lp-foot-price { margin-top: 34px; font-size: 13px; line-height: 1.65; color: var(--ink-3); max-width: 58em; }

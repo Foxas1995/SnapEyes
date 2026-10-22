@@ -1,4 +1,4 @@
-/* SnapEyes landing v2: The Reveal (photo left, iris right), the three up strip, the AI table, the quiet call to action.
+/* SnapEyes landing v2: The Reveal (photo left, iris right), the three up strip, the quiet call to action.
    Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
    the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
    .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
@@ -10,7 +10,6 @@
     .lp-reveal-text { display: contents; }
     .lp-reveal-text .lp-sec-head { order: 1; }
     .lp-cmp-wrap { order: 2; }
-    .lp-reveal-text .lp-ai { order: 3; margin-top: 0; }
   }
   @media (min-width: 960px) {
     .lp-reveal-grid { grid-template-columns: .86fr 1.14fr; gap: 80px; align-items: center; }
@@ -35,16 +34,6 @@
   .lp-cmp-lab.lp-r { right: 12px; box-shadow: 0 0 0 1px var(--gold-line); }
   .lp-cmp-meta { display: flex; justify-content: space-between; gap: 14px; margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
   .lp-cmp-meta .lp-hint { white-space: nowrap; color: var(--t-2); }
-  .lp-cmp-scale { margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--ink-2); font-weight: 600; }
-  .lp-ai { margin-top: 34px; }
-  .lp-ai h3 { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); }
-  .lp-ai dl { display: grid; margin-top: 6px; }
-  .lp-ai dl > div { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 16px 0; border-bottom: 1px solid var(--line); }
-  .lp-ai dt { font-weight: 700; font-size: 14px; color: var(--t-1); }
-  .lp-ai dd { font-size: 14.5px; color: var(--ink-2); line-height: 1.55; }
-  @media (min-width: 640px) {
-    .lp-ai dl > div { grid-template-columns: 11em 1fr; gap: 20px; }
-  }
   .lp-strip { margin-top: 56px; }
   .lp-strip ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 900px; margin-inline: auto; }
   @media (min-width: 640px) {
@@ -62,12 +51,8 @@
   @media (max-width: 359px) {
     .lp-strip figcaption { flex-wrap: wrap; gap: 0 5px; font-size: 10.5px; letter-spacing: .04em; overflow-wrap: anywhere; }
   }
-  .lp-never { margin: 26px auto 0; max-width: 30em; text-align: center; font-family: var(--display); font-size: clamp(17px, 3.4vw, 24px); line-height: 1.3; color: #fff; text-wrap: balance; }
-  .lp-reveal-note { margin: 18px auto 0; max-width: 40em; text-align: center; font-size: 13.5px; line-height: 1.6; color: var(--ink-3); }
   .lp-your-turn { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 34px; text-align: center; }
   .lp-your-turn p { max-width: 26em; font-size: 16.5px; line-height: 1.5; color: var(--ink); font-weight: 600; }
-  .lp-never::before, .lp-never::after { content: ""; display: block; width: 28px; height: 1px; background: var(--gold); margin: 0 auto 14px; }
-  .lp-never::after { margin: 14px auto 0; }
   .lp-reveal-grid > * { min-width: 0; }
   @media (max-width: 359px) {
     .lp-your-turn .lp-btn { white-space: normal; }
@@ -105,7 +90,6 @@
   /* whose eye it is: a static label in the frame (charter AC-8), bottom left, off the pupil, never animated */
   .lp-rv-who { position: absolute; left: 12px; bottom: 12px; z-index: 2; max-width: calc(100% - 24px); }
   .lp-rv-cap { display: grid; gap: 3px; margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
-  .lp-rv-scale { color: var(--ink-2); font-weight: 600; }
   /* the three states as rows: a gold numeral, the title at full strength while it is the state on show, dimmed (never below .50, 4.91:1) otherwise */
   .lp-rv-steps { max-width: 26rem; margin-top: 26px; border-top: 1px solid var(--line); }
   .lp-rv-steps li { border-bottom: 1px solid var(--line); }

@@ -1,4 +1,4 @@
-/* SnapEyes landing v2: Trust: the four promises, the identity line, the help offer, privacy.
+/* SnapEyes landing v2: Trust: the four promises (an icon and a few words each), the help offer, privacy.
    Every rule is inside @layer landing (declared before components and utilities in src/index.css) and every class carries
    the prefix lp-, so nothing here can reach the legal pages, /try, /order or /admin, and Tailwind's utilities (.grid,
    .sticky, .ring ...) never meet a class of this page. Elements are styled through :where(.lp), the body class, which adds
@@ -10,16 +10,16 @@
   }
   @media (min-width: 1100px) {
     .lp-never-list { grid-template-columns: repeat(4, 1fr); column-gap: 32px; }
-    .lp-never-list h3 { flex-direction: column; gap: 10px; }
-    .lp-never-list p { margin-left: 0; }
   }
   /* the hairline above each promise is a line of its own (the border stays, transparent, so nothing moves): it draws from the left when the item is revealed */
   .lp-never-list li { position: relative; padding: 22px 0; border-top: 1px solid transparent; }
   .lp-never-list li::before { content: ""; position: absolute; inset: -1px 0 auto; height: 1px; background: var(--line-2); transform-origin: left center; }
-  .lp-never-list h3 { font-size: 17px; display: flex; gap: 14px; align-items: baseline; }
-  .lp-never-list h3 .lp-num { font-size: 14px; flex: none; }
-  .lp-never-list p { margin: 8px 0 0 34px; font-size: 14px; color: var(--ink-2); line-height: 1.55; }
-  .lp-id-line { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
+  .lp-never-list h3 { font-size: 17px; display: flex; gap: 14px; align-items: center; }
+  .lp-never-list h3 .lp-ic { width: 24px; height: 24px; }
+  /* four columns: the icon above its words, both at the start of the column */
+  @media (min-width: 1100px) {
+    .lp-never-list h3 { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
   .lp-cur-priv { margin-top: 72px; display: grid; gap: 52px; }
   @media (min-width: 960px) {
     .lp-cur-priv { grid-template-columns: .92fr 1.08fr; gap: 80px; align-items: start; }
@@ -36,8 +36,6 @@
   .lp-priv-list li { padding: 18px 0; border-top: 1px solid var(--line); }
   .lp-priv-list li:first-child { border-top: 1px solid var(--line-2); }
   .lp-priv-list h3 { font-size: 15.5px; }
-  .lp-pv-plain { padding: 18px 0; border-top: 1px solid var(--line); }
-  .lp-priv-list .lp-pv-plain:first-child { border-top: 1px solid var(--line-2); }
   .lp-priv-list p { margin-top: 5px; font-size: 14px; line-height: 1.6; color: var(--ink-3); }
   .lp-priv-foot { margin-top: 22px; font-size: 13.5px; line-height: 1.65; color: var(--ink-3); }
   .lp-priv-foot p + p { margin-top: 8px; }
@@ -57,18 +55,8 @@
     details.lp-pv::details-content { transition: none; }
   }
   details.lp-pv > p { padding: 0 0 18px; font-size: 14px; line-height: 1.6; color: var(--ink-3); }
-  @media (min-width: 960px) {
-    details.lp-pv > summary { cursor: default; pointer-events: none; padding: 18px 0 4px; }
-    details.lp-pv > summary svg { display: none; }
-    details.lp-pv > p { padding-bottom: 18px; }
-  }
   @media (max-width: 959px) {
     .lp-never-list li { padding: 18px 0; }
-    .lp-never-list p { margin-left: 30px; font-size: 14px; }
-  }
-  @media (min-width: 1100px) {
-    .lp-never-list h3 { flex-direction: column; gap: 10px; }
-    .lp-never-list p { margin-left: 0; }
   }
   .lp-cur-priv > * { min-width: 0; }
   /* ---- motion (spec 6.11). Hidden states only while the engine is on (html.mo, not mo-fail) and motion is allowed: without them everything is drawn and in place.

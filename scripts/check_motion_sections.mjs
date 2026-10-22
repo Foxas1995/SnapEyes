@@ -195,8 +195,13 @@ async function checkHow() {
   expect('how', sc[0] === 0 && sc.at(-1) === 1 && sc.every((v, i) => i === 0 || v >= sc[i - 1] - 1e-6), `the hairline of step 3 does not draw from 0 to 1 monotonically: ${sc.filter((_, i) => i % 15 === 0).map((v) => v.toFixed(2)).join(' ')}`);
   const colors = col(f['.lp-step:nth-child(3) .lp-num'], 3);
   expect('how', colors.some((c) => c.includes('0.5)')) && colors.at(-1) === 'rgb(196, 154, 89)', `the numeral of step 3 does not warm to gold: ${colors[0]} ... ${colors.at(-1)}`);
-  await scrollTo(page, '.lp-how-cta', 500);
-  const cta = (await frames(page, ['.lp-how-cta'], ['opacity', 'translate'], 1500))['.lp-how-cta'];
+  // the button row rises when it comes into view. Since the lean pass of 2026-10-22 the steps are short (a title and one line), so at 1280 x 900 the row is often in view
+  // together with the steps and rises in the frames above: those frames are the evidence then; when it is still hidden after them, it is brought into view on its own
+  let cta = f['.lp-how-cta'];
+  if (cta.at(-1)[1] !== '1') {
+    await scrollTo(page, '.lp-how-cta', 500);
+    cta = (await frames(page, ['.lp-how-cta'], ['opacity', 'translate'], 1500))['.lp-how-cta'];
+  }
   expect('how', cta.at(-1)[1] === '1' && cta.at(-1)[2] === 'none' && num(cta[0][1]) < 0.6, `the button row does not rise to its place (${cta[0][1]} to ${cta.at(-1)[1]})`);
   // the dimmer states belong to the swipe rail only
   const wideDim = await page.eval("[...document.querySelectorAll('.lp-step h3')].map((h) => getComputedStyle(h).color).join('|')");
@@ -378,9 +383,10 @@ async function checkWall() {
   await sleep(120);
   const after = await page.eval("JSON.stringify([...document.querySelectorAll('#specs li')].map((l) => [getComputedStyle(l).animationName, +getComputedStyle(l).opacity]))");
   expect('wall', JSON.parse(after).every(([a, o]) => a === 'lp-spec-in' ? false : o === 1) || JSON.parse(after).every(([a, o]) => o === 1), `a language switch makes the facts fade again: ${after}`);
-  // the chip and the words about printing are never touched
-  const label = await page.eval("JSON.stringify([+getComputedStyle(document.querySelector('#stage .lp-vis-chip')).opacity, +getComputedStyle(document.querySelector('.lp-note-box')).opacity, getComputedStyle(document.querySelector('.lp-note-box')).translate])");
-  expect('wall', label === '[1,1,"none"]', `the chip or the printing note moved or faded: ${label}`);
+  // the chip and the words about printing are never touched (since the lean pass of 2026-10-22 those words are the one line under the title, "Print it wherever you
+  // like": the note box with the sentence that printing is not part of the order went, the price list and the FAQ say that)
+  const label = await page.eval("JSON.stringify([+getComputedStyle(document.querySelector('#stage .lp-vis-chip')).opacity, +getComputedStyle(document.querySelector('#wall .lp-sec-head .lp-intro')).opacity, getComputedStyle(document.querySelector('#wall .lp-sec-head .lp-intro')).translate])");
+  expect('wall', label === '[1,1,"none"]', `the chip or the line about printing moved or faded: ${label}`);
   // the stage column sticks
   const stick = [];
   const travel = await page.eval("document.querySelector('.lp-wall-grid').getBoundingClientRect().height - document.querySelector('.lp-stage-col').getBoundingClientRect().height");
@@ -449,7 +455,8 @@ async function checkSizes() {
       const r = JSON.parse(await page.eval(`JSON.stringify({
         stacks: [...document.querySelectorAll('#sizeCard .lp-stack')].map((s) => [...s.children].map((c) => [c.dataset.on !== undefined, c.getAttribute('aria-hidden'), c.inert, +getComputedStyle(c).opacity, getComputedStyle(c).visibility])),
         size: [...document.querySelectorAll('#sizeCard .lp-stack')].map((s) => { const r = s.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }),
-        card: Math.round(document.getElementById('sizeCard').getBoundingClientRect().height), notes: Math.round(document.getElementById('sizeNotes').getBoundingClientRect().top - document.getElementById('sizeCard').getBoundingClientRect().top),
+        // the card's height and where the side column ends (the three notes under the card went into the FAQ in the lean pass of 2026-10-22: the column's foot is what the notes measured)
+        card: Math.round(document.getElementById('sizeCard').getBoundingClientRect().height), notes: Math.round(document.querySelector('.lp-size-side').getBoundingClientRect().bottom - document.getElementById('sizeCard').getBoundingClientRect().top),
         say: document.getElementById('sizeCard').innerText.replace(/\\s+/g, ' ').trim() })`));
       modes.push({ cm, mid, ...r });
     }

@@ -1,5 +1,7 @@
 // The "How it works" chapter (BUILD_PLAN section 2): three steps, each with a picture of what you see (the guide video of how to
-// photograph an eye, the free preview, the file card), the tips disclosure under step 1 and the call to action. The guide video is
+// photograph an eye, the free preview, the file card), an icon, a title of two to four words and one short line, and the call to action
+// (the lean pass of 2026-10-22: the long step texts, the tips and the captions under the pictures went; the tips are in the FAQ's answer
+// about the phone and camera, and the guide video shows them). The guide video is
 // src/shared/GuideVideo.tsx (the square cut in the page's language; the owner, 2026-10-22: the phone drawing before it showed the eye far
 // too close), the preview's phone ./PhoneMock.tsx, the file card ./FileCard.tsx, the look css/how.css. Words come from the copy layer; the open wording of
 // step 3 ("pay through Stripe") is used only once ordering is open (src/landing/ordering.ts). Importing this file brings its own
@@ -17,12 +19,15 @@ import { put, scrub } from '../motion/phone';
 import { GuideVideo } from '../shared/GuideVideo';
 import { useCopy } from './copy/useCopy';
 import { FileCard } from './FileCard';
+import { Icon, type IconName } from './Icons';
 import { useTryHref } from './links';
 import { useOrderingOpen } from './ordering';
 import { PhoneMock } from './PhoneMock';
-import { Disclosure } from './ui';
 import { useScrollableRegion } from './useScrollableRegion';
 import './css/how.css';
+
+/** The icon of each step: the photo, the preview, the file. */
+const STEP_ICONS: readonly IconName[] = ['camera', 'eye', 'file'];
 
 function Arrow() {
   return (
@@ -76,7 +81,7 @@ export function HowItWorks() {
             which of the two is live at which width) */}
         <ol className="lp-steps" id="steps" data-reveal="soft" ref={railRef} {...railProps(c.how.title)}>
           {c.how.steps.map((s, i) => (
-            // the index is the key: the same three nodes stay when the language changes, so an open tips list stays open
+            // the index is the key: the same three nodes stay when the language changes
             <li className="lp-step" key={i} data-reveal="fade" style={{ '--i': i } as CSSProperties} aria-current={scrolls && current === i ? 'step' : undefined}>
               <div className={i === 2 ? 'lp-vis lp-file' : 'lp-vis'}>
                 {i === 0 && (
@@ -88,20 +93,11 @@ export function HowItWorks() {
               </div>
               <div className="lp-step-body">
                 <span className="lp-num">{`0${i + 1}`}</span>
-                <h3>{fmt(s.t)}</h3>
+                <h3>
+                  <Icon name={STEP_ICONS[i] ?? 'check'} />
+                  {fmt(s.t)}
+                </h3>
                 <p>{fmt(open && s.bOpen ? s.bOpen : s.b)}</p>
-                {i === 0 && (
-                  <Disclosure className="lp-tips" summary={<span>{c.how.tipsTitle}</span>}>
-                    <ul>
-                      {c.how.tips.map((x, k) => (
-                        <li key={k}>{x}</li>
-                      ))}
-                    </ul>
-                  </Disclosure>
-                )}
-                <p className="lp-vcap">
-                  <span>{s.v}</span>
-                </p>
               </div>
             </li>
           ))}

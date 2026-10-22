@@ -792,20 +792,23 @@ def sub(root, rel, old, new, count=1):
     return True
 
 
+# the landing lines that carry a planted claim are the hero's second fact (hero.micro[1]); its words are shorter since the landing's lean pass of 2026-10-22
+# ("Preview in about a minute" is "In about a minute" now, the same in the other languages), so the plant follows the line, not its old words
 MUT = [
-    ("a claim in an English landing line", "src/landing/copy/en.json", '"Preview in about a minute"', '"Every artwork is unique"', "the claim"),
-    ("a claim in a German landing line", "src/landing/copy/de.json", '"Vorschau in etwa einer Minute"', '"Jedes Kunstwerk ist einzigartig"', "the claim"),
-    ("a claim in a Lithuanian landing line", "src/landing/copy/lt.json", '"Peržiūra maždaug per minutę"', '"Rankų darbo kūrinys"', "the claim"),
-    ("a claim in a Hungarian landing line", "src/landing/copy/hu.json", '"Előnézet kb. egy perc alatt"', '"Egyedülálló alkotás"', "the claim"),
+    ("a claim in an English landing line", "src/landing/copy/en.json", '"In about a minute"', '"Every artwork is unique"', "the claim"),
+    ("a claim in a German landing line", "src/landing/copy/de.json", '"In etwa einer Minute"', '"Jedes Kunstwerk ist einzigartig"', "the claim"),
+    ("a claim in a Lithuanian landing line", "src/landing/copy/lt.json", '"Maždaug per minutę"', '"Rankų darbo kūrinys"', "the claim"),
+    ("a claim in a Hungarian landing line", "src/landing/copy/hu.json", '"Kb. egy perc alatt"', '"Egyedülálló alkotás"', "the claim"),
     ("a claim in the head of index.html", "index.html", 'Free watermarked preview, then a digital file to print anywhere." />', 'Free watermarked preview, then a digital file to print anywhere. Handmade." />', "the claim"),
     ("a claim in a legal text (the terms)", "src/legal/docs/terms.ts", "A preview of five to eight eyes is made from smaller copies of your photos", "Your artwork is unique. A preview of five to eight eyes is made from smaller copies of your photos", "the claim"),
     ("a claim in a Lithuanian e-mail sentence", "api/_lib/pay_lt.py", '"questions": "Turite klausimų? Tiesiog atsakykite į šį el. laišką.",\n    "sign": "Pagarbiai\\nSnapEyes",\n}\n\n\ndef confirmation_rows_lt',
      '"questions": "Turite klausimų? Tiesiog atsakykite į šį el. laišką. Unikalus kūrinys.",\n    "sign": "Pagarbiai\\nSnapEyes",\n}\n\n\ndef confirmation_rows_lt', "the claim"),
     ("the AI sentence hard-coded in the terms before the cutover publishes it", "src/legal/docs/terms.ts", "...aiBlocks('en'),", "'In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer\\'s artwork can contain the same piece. Your iris keeps the colours, the pattern and the layout of your photo; the finest fibres are restored by AI, as described above.',", "before the cutover publishes it"),
     ("the AI sentence published but left out of the terms", "src/legal/docs/terms.ts", "...aiBlocks('en'),", "", "is published"),
-    # release review H-M1: the pages say "we never hide what the AI does", so the sentence is on the landing and in the result of /try, word for word
-    ("the Reveal box of the English landing without the sentence about AI-made material word for word", "src/landing/copy/en.json", "the finest fibres are restored by AI, as described above.", "the finest fibres are restored by AI.", "does not hold the sentence about AI-made material word for word"),
-    ("the Reveal box of the Hungarian landing with another sentence than the page register", "src/landing/copy/hu.json", "Az íriszednek megmaradnak a fotód színei", "Az Ön íriszének megmaradnak a fotója színei", "does not hold the sentence about AI-made material word for word"),
+    # release review H-M1: the pages say they never hide what the AI does, so the sentence is on the landing and in the result of /try, word for word (on the landing in the
+    # FAQ answer "How does it work?" since the lean pass of 2026-10-22: it was the Reveal's table; the planted defect and the refusal are the same words)
+    ("the FAQ answer how of the English landing without the sentence about AI-made material word for word", "src/landing/copy/en.json", "the finest fibres are restored by AI, as described above.", "the finest fibres are restored by AI.", "does not hold the sentence about AI-made material word for word"),
+    ("the FAQ answer how of the Hungarian landing with another sentence than the page register", "src/landing/copy/hu.json", "Az íriszednek megmaradnak a fotód színei", "Az Ön íriszének megmaradnak a fotója színei", "does not hold the sentence about AI-made material word for word"),
     ("the result of /try (German) with another sentence than the page register", "src/try/copy.ts", "wie oben beschrieben, durch KI wiederhergestellt.',", "wie oben beschrieben, durch KI wiederhergestellt!',", "result.aiMaterial is not the sentence about AI-made material word for word"),
     ("a page sentence (English) that is not the legal one", "src/shared/aiMaterial.ts", "  en: AI_MATERIAL.en,", "  en: 'In some styles the powder, liquid, flame or dust around your iris is AI-made material from a shared library, so another customer\\'s artwork can contain the same piece.',", "the en page sentence differs from the legal one"),
 ]

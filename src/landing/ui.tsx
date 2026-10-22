@@ -27,7 +27,8 @@ export function Logo({ tag, href = '#top' }: { tag: string; href?: string }) {
 // ================================================================================================================
 
 /** The two labels that keep every picture honest (BUILD_PLAN section 7): "example" (DE "Beispiel") for real engine
- *  artwork, "vis" ("AI visualisation", DE "KI-Visualisierung") for every wall, room, hand, desk, phone and edge picture.
+ *  artwork, "vis" ("Visualisation", DE "Visualisierung": one word since 2026-10-22, no "AI" in it; the FAQ answer "How does it work?"
+ *  says what is made with AI) for every wall, room, hand, desk, phone and edge picture.
  *  The words are the copy's (example.chip, example.vis). */
 export type ChipVariant = 'example' | 'vis';
 
@@ -44,7 +45,7 @@ export interface ExampleChipProps {
   className?: string;
 }
 
-/** The label on a picture: <span class="lp-vis-chip">AI visualisation</span> (absolute in the picture's corner by the CSS),
+/** The label on a picture: <span class="lp-vis-chip">Visualisation</span> (absolute in the picture's corner by the CSS),
  *  <span class="lp-chip-ex">Example</span> (inline; the tile CSS pins it), or the framed one with a body. */
 export function ExampleChip({ variant, photo = false, label, body, className = '' }: ExampleChipProps) {
   const { c } = useCopy();

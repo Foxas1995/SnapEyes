@@ -11,7 +11,8 @@
 // scripts, the swap to the visitor's language included) and the live first screen (React, after the shell has gone) occupy the same
 // boxes, with the same styles and the same pixels (the held-back price aside), say the same words and link to the same /try, the
 // shell is gone after the handoff, no id is used twice, the honesty words are in the static HTML of every language (the label
-// "AI visualisation" and "Printing is not included" inside the picture's frame, the lead names the digital file), the LCP picture
+// "Visualisation" inside the picture's frame, the lead, the bar; since the lean pass of 2026-10-22 the label is one word and the digital file and the
+// printing that is not included are said in the price list and the FAQ, not on the first screen), the LCP picture
 // is preloaded with the srcset of the image.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -95,7 +96,7 @@ async function rules() {
 
 // ------------------------------------------------------------------------------------------------ part 2: the built page in Chrome
 const LANDMARKS = ['.lp-topbar', '.lp-hdr', '.lp-hdr .lp-logo', '.lp-nav', '.lp-seg', '.lp-hdr .lp-btn-line', '.lp-hero', '.lp-eyebrow', '#h1', '.lp-lead', '.lp-cta-row', '#ctaHero', '.lp-link-quiet',
-  '.lp-micro', '.lp-computer-hint', '.lp-hero-fig', '.lp-hero-frame', '#heroImg', '.lp-frame-chip', '.lp-disc', '.lp-disc-label', '#heroCap'];
+  '.lp-micro', '.lp-computer-hint', '.lp-hero-fig', '.lp-hero-frame', '#heroImg', '.lp-frame-chip', '.lp-disc', '.lp-disc-label'];
 const STYLE_PROPS = ['color', 'font-size', 'font-family', 'font-weight', 'line-height', 'letter-spacing', 'background-color', 'opacity', 'display', 'position', 'border-radius', 'padding-top', 'margin-top', 'object-fit', 'text-transform'];
 
 const MEASURE = `(() => {
@@ -110,7 +111,7 @@ const MEASURE = `(() => {
   out['.lp-micro li'] = Array.from(document.querySelectorAll('.lp-micro li')).map((li) => { const r = li.getBoundingClientRect(); return [r.left, r.top + scrollY, r.width, r.height].map((v) => Math.round(v * 100) / 100); });
   out.ids = (() => { const seen = {}, dup = []; for (const e of document.querySelectorAll('[id]')) { if (seen[e.id]) dup.push(e.id); seen[e.id] = 1; } return dup; })();
   out.shell = !!document.getElementById('shell') && getComputedStyle(document.getElementById('shell')).display !== 'none';
-  out.words = [document.documentElement.lang, document.getElementById('h1').textContent, document.getElementById('barText').textContent, document.getElementById('ctaHero').textContent, document.querySelector('.lp-hdr .lp-btn-line').getAttribute('href'), document.getElementById('ctaHero').getAttribute('href'), document.querySelector('.lp-link-quiet').textContent, document.getElementById('heroCap').textContent, [...document.querySelectorAll('#langSeg button')].map((b) => b.textContent + b.getAttribute('aria-pressed')).join(',')].join(' | ');
+  out.words = [document.documentElement.lang, document.getElementById('h1').textContent, document.getElementById('barText').textContent, document.getElementById('ctaHero').textContent, document.querySelector('.lp-hdr .lp-btn-line').getAttribute('href'), document.getElementById('ctaHero').getAttribute('href'), document.querySelector('.lp-link-quiet').textContent, [...document.querySelectorAll('.lp-micro li')].map((li) => li.textContent).join(' / '), [...document.querySelectorAll('#langSeg button')].map((b) => b.textContent + b.getAttribute('aria-pressed')).join(',')].join(' | ');
   out.bar = getComputedStyle(document.documentElement).getPropertyValue('--bar-h');
   return JSON.stringify(out);
 })()`;
@@ -181,11 +182,11 @@ async function browser(dist, shotsDir) {
       const copy = COPY[l];
       const f = (s) => s.replace(/\{(\w+)\}/g, (w, k) => copy.facts[k] ?? w);
       const text = decode(parts[l]);
-      for (const [what, s] of [['the label inside the picture frame', copy.hero.chipTitle], ['its second line', copy.hero.chipBody], ['the lead (digital file, printing not included)', f(copy.hero.lead)],
-        ['the caption', copy.hero.caption], ['the bar sentence', copy.bar.soon], ['the picture alt text', copy.hero.imageAlt]]) {
+      for (const [what, s] of [['the label inside the picture frame', copy.hero.chipTitle], ['the lead', f(copy.hero.lead)],
+        ['the bar sentence', copy.bar.soon], ['the picture alt text', copy.hero.imageAlt]]) {
         if (!text.includes(s)) note(`static HTML (${l}): ${what} is missing ("${s.slice(0, 50)}")`);
       }
-      if (!/<div class="lp-frame-chip"[^>]*><b>[^<]+<\/b><span>[^<]+<\/span><\/div><\/div>/.test(parts[l])) note(`static HTML (${l}): the label is not inside the picture frame (.lp-hero-frame)`);
+      if (!/<div class="lp-frame-chip"[^>]*><b>[^<]+<\/b><\/div><\/div>/.test(parts[l])) note(`static HTML (${l}): the label is not inside the picture frame (.lp-hero-frame)`);
       if (!/<img id="heroImg"[^>]*fetchpriority="high"/i.test(parts[l])) note(`static HTML (${l}): the hero picture is not fetchpriority=high`);
       const img = /<img id="heroImg" src="([^"]+)" srcSet="([^"]+)" sizes="([^"]+)"/i.exec(parts[l]);
       if (pre && (!img || pre[1] !== img[2] || pre[2] !== img[3])) note(`head: the preload srcset or sizes differs from the hero image of the ${l} shell`);

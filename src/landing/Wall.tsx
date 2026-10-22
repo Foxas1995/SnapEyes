@@ -1,7 +1,9 @@
-// The wall chapter (#wall): "See your file on a wall". A stage with an AI visualisation of the file in a room, a list of six
-// materials (each in its own room), four artworks, what each material is, a compare table, the honest footnote and a text
-// link to /try, then the size guide and "More ways to see it". The visitor buys a DIGITAL file: every picture here is an AI
-// visualisation and says so in the picture (the chip), and the sentence under the title says printing is not part of the order.
+// The wall chapter (#wall): "See it on your wall". A stage with a visualisation of the file in a room, a list of six materials (each in
+// its own room), four artworks, what each material is as three icons of a few words each, a compare table (closed), then the size guide and
+// "More ways to see it". The visitor buys a DIGITAL file: every picture here is a visualisation and says so in the picture (the chip), and
+// the one line under the title says the visitor prints it where they like. The lean pass of 2026-10-22 (the owner: too much text) moved the
+// rest into the FAQ: that printing is not part of the order (the price list and the FAQ say it), that the rooms are made with AI, that
+// materials and colours vary, the sizes in the pictures; the footnote and the text link under the stage are gone.
 //
 // Keyboard: the materials are a vertical tab list and the artworks a radio group, both with a roving tabindex (one tab stop
 // each; arrow keys, Home and End move AND pick, as the prototype does), and the focus stays on the control after a pick.
@@ -12,11 +14,11 @@
 // past, never following the pointer (WallStage.tsx). The honesty words, the chip and the captions never animate.
 import { Suspense, useState, type CSSProperties, type SyntheticEvent } from 'react';
 import { Title } from '../motion/Title';
+import { Icon, type IconName } from './Icons';
 import { asset } from './assets';
 import { WALL_THUMBS } from './assets.data';
 import { CompareTable } from './CompareTable';
 import { useCopy } from './copy/useCopy';
-import { useTryHref } from './links';
 import { useKeepFocus, useRoving } from './ui';
 import { WallStage } from './WallStage';
 import { ARTS, DEFAULT_ART, DEFAULT_MATERIAL, MATERIALS, artFor, glintFor, hasScene, isSized, stagePicture, warm, type Material, type WallArt } from './wallScenes';
@@ -30,10 +32,19 @@ import './css/wall.css';
 const SizeGuide = lazyRetry(() => import('./SizeGuide').then((m) => ({ default: m.SizeGuide })));
 const MoreRooms = lazyRetry(() => import('./MoreRooms').then((m) => ({ default: m.MoreRooms })));
 
+/** The icon of each fact of a material (wall.materials.<m>.facts, three each, in order): the thickness, how it hangs, how it looks. */
+const FACT_ICONS: Record<Material, readonly IconName[]> = {
+  acrylic: ['layers', 'float', 'contrast'],
+  metal: ['layers', 'wall', 'shine'],
+  canvas: ['layers', 'noGlare', 'noFrame'],
+  framed: ['frame', 'ruler', 'hang'],
+  block: ['cube', 'stand', 'ruler'],
+  phone: ['phone', 'expand', 'check'],
+};
+
 export function Wall() {
   const { c, t, lang } = useCopy();
   const w = c.wall;
-  const tryHref = useTryHref();
   const [mat, setMat] = useState<Material>(DEFAULT_MATERIAL);
   const [art, setArt] = useState<WallArt>(DEFAULT_ART);
   // false until the visitor has picked a material once: the facts fade in on a pick, not when the section arrives
@@ -78,10 +89,7 @@ export function Wall() {
         <div className="lp-sec-head">
           <p className="lp-eyebrow">{w.eyebrow}</p>
           <Title id="wallH" text={w.title} />
-        </div>
-        <div className="lp-note-box">
-          <strong>{w.intro}</strong>
-          <span>{w.varies}</span>
+          <p className="lp-intro">{w.intro}</p>
         </div>
 
         <div className="lp-wall-grid">
@@ -132,12 +140,14 @@ export function Wall() {
               {/* keyed by the material: a pick makes new nodes, which fade in; a language change keeps them and only changes the words */}
               <div className="lp-specs-in" key={mat} data-swap={picked || undefined}>
                 <h3>{m.n}</h3>
-                <ul>
+                <ul className="lp-irow">
                   {m.facts.map((f, i) => (
-                    <li key={i} style={{ '--n': i + 1 } as CSSProperties}>{f}</li>
+                    <li key={i} style={{ '--n': i + 1 } as CSSProperties}>
+                      <Icon name={FACT_ICONS[mat][i] ?? 'check'} />
+                      {f}
+                    </li>
                   ))}
                 </ul>
-                {mat !== 'phone' && mat !== 'block' && <p className="lp-typ" style={{ '--n': m.facts.length + 1 } as CSSProperties}>{w.typical}</p>}
               </div>
             </div>
             <div className="lp-arts">
@@ -167,11 +177,6 @@ export function Wall() {
             <CompareTable />
           </div>
         </div>
-
-        <p className="lp-fine lp-wall-foot">{t('wall.footnote', { printMaxCm: c.facts.printMaxCm })}</p>
-        <p className="lp-wall-cta">
-          <a className="lp-link-gold" href={tryHref}>{w.cta}</a>
-        </p>
 
         <SectionBoundary>
           <Suspense fallback={<div className="lp-slot" id="sizes" aria-hidden="true" style={slotStyle('sizes', lang)} />}>

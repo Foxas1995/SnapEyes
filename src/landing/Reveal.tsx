@@ -1,15 +1,15 @@
 // The Reveal (BUILD_PLAN section 2): "Photo left. Iris right." A real phone photo and the same iris restored, cut through the
-// pupil, for three example eyes (grey green, brown, and the owner's own). Next to it what comes from the visitor's photo and
-// what the AI adds; under it the three up strip and the quiet call to action. Replaces BeforeAfter.tsx.
+// pupil, for the example eyes (grey green and our own), under ONE line (restored, never repainted); under it the three up strip and the
+// quiet call to action. The table of what comes from the photo and what the AI adds went into the FAQ's answer "How does it work?" in the
+// lean pass of 2026-10-22 (the owner: too much text, "AI AI AI" everywhere). Replaces BeforeAfter.tsx.
 //
 // Every word is the copy's (c.reveal, c.cta), every picture the asset manifest's (revealEyes), the link to /try is useTryHref.
 // The sections below the first screen are meant to be loaded lazily, so this file has a default export for React.lazy.
 //
 // Two layouts with the same words (motion spec 6.4). Where a scene can be pinned (768 px and up, motion allowed, a window tall enough,
 // the engine running: ./useScenePinned.ts) the section opens with the pinned scene (./RevealScene.tsx: one frame, three states of the
-// founder's own eye, scroll drives it), and under it, in normal flow, come the table of what is yours and what the AI adds and the slider
-// with its eye pills and the strip. Under reduced motion and in a short window there is no scene: the heading, the slider with its pills,
-// the table and the strip, as before. A phone with motion allowed (a window up to 767 px, the engine running) gets a scene of its own between
+// founder's own eye, scroll drives it), and under it, in normal flow, come the slider with its eye pills and the strip. Under reduced motion
+// and in a short window there is no scene: the heading, the slider with its pills and the strip. A phone with motion allowed (a window up to 767 px, the engine running) gets a scene of its own between
 // the section's head and the slider: the same frame and the same three states over one screen of scrolling (./RevealScene.tsx with `phone`,
 // css/reveal.css). The slider stays under it for the hand, the keyboard and the other eyes, as on a desktop.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -83,20 +83,6 @@ export function Reveal() {
   const phoneScene = usePhoneScene();
   const sceneEye = eyes.find((e) => e.id === SCENE_EYE) ?? eyes[0];
 
-  const ai = (
-    <div className="lp-ai">
-      <h3>{r.aiTitle}</h3>
-      <dl data-stagger>
-        {r.ai.map((x, i) => (
-          // keyed by place, not by its words: a language switch must not make new nodes that wait hidden (they are reveal nodes of a stagger list)
-          <div key={i}>
-            <dt>{x.t}</dt>
-            <dd>{x.b}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
   const compare = (
     <div ref={wrap} className="lp-cmp-wrap">
       <RevealSlider eye={shown} />
@@ -115,10 +101,7 @@ export function Reveal() {
       {pinned ? (
         <>
           <RevealScene eye={sceneEye} />
-          <div className="lp-wrap lp-reveal-grid lp-rv-lower">
-            <div className="lp-reveal-text">{ai}</div>
-            {compare}
-          </div>
+          <div className="lp-wrap lp-rv-lower">{compare}</div>
         </>
       ) : (
         <div className="lp-wrap lp-reveal-grid">
@@ -126,9 +109,8 @@ export function Reveal() {
             <div className="lp-sec-head">
               <p className="lp-eyebrow" data-reveal="fade-s">{r.eyebrow}</p>
               <Title id="revealH" text={r.title} />
-              <p className="lp-intro" data-reveal="fade">{shown.phone ? r.intro : r.introWeb}</p>
+              <p className="lp-intro" data-reveal="fade">{r.intro}</p>
             </div>
-            {ai}
           </div>
           {phoneScene && <RevealScene eye={sceneEye} phone />}
           {compare}

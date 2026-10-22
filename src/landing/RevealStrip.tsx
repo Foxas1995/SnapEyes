@@ -1,5 +1,6 @@
-// Under the Reveal: the three up strip (your photo, your iris, your art), the line that says nothing is ever repainted, the note
-// about how the examples were taken, and the quiet call to action ("Your turn"). The strip follows the eye that is on show
+// Under the Reveal: the three up strip (your photo, your iris, your art) and the quiet call to action ("Your turn"). The line that says nothing is
+// ever repainted is the section's one line under its title now, and the note about how the examples were taken is in the FAQ (the lean pass of
+// 2026-10-22). The strip follows the eye that is on show
 // in the frame above it, and its three pictures rise one after the other the first time they are seen (the engine's reveal and stagger,
 // src/motion/motion.ts: 120 ms apart here, see css/reveal.css; under reduced motion and without the engine they are simply there).
 import { useCopy } from './copy/useCopy';
@@ -36,8 +37,6 @@ export function RevealStrip({ eye }: RevealStripProps) {
           </li>
         ))}
       </ol>
-      <p className="lp-never">{r.never}</p>
-      <p className="lp-reveal-note">{r.note}</p>
       <div className="lp-your-turn" data-reveal="fade">
         <p>{r.yourTurn}</p>
         <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>

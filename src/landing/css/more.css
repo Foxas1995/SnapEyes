@@ -9,7 +9,6 @@
   .lp-more > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; min-height: 64px; }
   .lp-more > summary::-webkit-details-marker { display: none; }
   .lp-more > summary b { display: block; font-family: var(--display); font-size: 20px; font-weight: 600; letter-spacing: .02em; color: #fff; }
-  .lp-more > summary small { display: block; margin-top: 4px; font-size: 13.5px; line-height: 1.5; color: var(--ink-3); }
   .lp-more > summary svg { width: 16px; height: 16px; color: var(--gold); flex: none; transition: transform var(--d-ui) var(--ease-out); }
   .lp-more[open] > summary svg { transform: rotate(45deg); }
   .lp-rail { display: flex; gap: 14px; margin-inline: calc(-1 * var(--gut)); padding: 6px var(--gut) 18px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut); scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }

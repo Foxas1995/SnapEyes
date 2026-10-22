@@ -5,9 +5,6 @@
    no specificity. */
 @layer landing {
   .lp-wall { background: linear-gradient(180deg, transparent, rgba(20, 16, 10, .55) 18%, rgba(20, 16, 10, .55) 82%, transparent); }
-  .lp-note-box { margin-top: 26px; padding-left: 18px; border-left: 2px solid var(--gold); max-width: 40em; }
-  .lp-note-box strong { display: block; font-weight: 600; color: #fff; font-size: 16.5px; line-height: 1.55; }
-  .lp-note-box span { display: block; margin-top: 6px; font-size: 14px; color: var(--ink-3); }
   .lp-wall-grid { display: grid; gap: 22px; margin-top: 44px; }
   @media (min-width: 960px) {
     .lp-wall-grid { grid-template-columns: 0.92fr 1.08fr; gap: 72px; align-items: start; margin-top: 64px; }
@@ -45,11 +42,8 @@
     .lp-specs { margin-top: 26px; }
   }
   .lp-specs h3 { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: .02em; }
-  .lp-specs ul { margin-top: 14px; display: grid; gap: 10px; }
-  .lp-specs li { position: relative; padding-left: 20px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
-  .lp-specs li::before { content: ""; position: absolute; left: 0; top: 10px; width: 8px; height: 1px; background: var(--gold); }
-  .lp-specs .lp-typ { margin-top: 14px; font-size: 12.5px; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
-  .lp-specs .lp-typ::before { content: ""; width: 14px; height: 1px; background: var(--ink-3); }
+  .lp-specs ul { margin-top: 16px; }
+  .lp-specs li { font-size: 15px; color: var(--ink-2); }
   .lp-arts { margin-top: 26px; }
   .lp-artchip { display: inline-flex; align-items: center; gap: 9px; min-height: 46px; padding: 5px 16px 5px 6px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); }
   .lp-artchip img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; background: #000; }
@@ -69,8 +63,6 @@
   .lp-tbl tbody th { color: #fff; font-weight: 600; width: 22%; }
   .lp-tbl td { color: var(--ink-2); }
   .lp-tbl-note { margin: 12px 0 18px; font-size: 12.5px; color: var(--ink-3); }
-  .lp-wall-foot { margin-top: 40px; max-width: 52em; }
-  .lp-wall-cta { margin-top: 14px; }
   @media (max-width: 959px) {
     .lp-wall-grid { display: flex; flex-direction: column; gap: 0; margin-top: 30px; }
     .lp-ctl { display: contents; }
@@ -88,12 +80,12 @@
   .lp-wall-grid > * { min-width: 0; }
   /* ------------------------------------------------------------------------------------------------ motion (spec 6.7)
      The stage cross-fades by itself (the two pictures of .lp-stage, above). Everything below is gated like the rest of the page: nothing is
-     hidden without the engine (html.mo), under reduced motion, or after the failsafe. The photograph never moves, scales or blurs; the chip, the
-     captions and the words about printing are never touched. */
+     hidden without the engine (html.mo), under reduced motion, or after the failsafe. The photograph never moves, scales or blurs; the chip and the
+     captions are never touched. */
   @keyframes lp-spec-in { from { opacity: 0; } }
   @media (prefers-reduced-motion: no-preference) {
-    /* a pick of a material: its title, its facts and the line "Typical for print shops" fade in (opacity only, 350 ms, 50 ms apart) */
-    .lp-specs-in[data-swap] :is(h3, li, .lp-typ) { animation: lp-spec-in .35s var(--ease-out) calc(var(--n, 0) * 50ms) backwards; }
+    /* a pick of a material: its title and its facts fade in (opacity only, 350 ms, 50 ms apart) */
+    .lp-specs-in[data-swap] :is(h3, li) { animation: lp-spec-in .35s var(--ease-out) calc(var(--n, 0) * 50ms) backwards; }
   }
   /* the glint: the print face of the acrylic plate, clipped by its span (the box is set from the plate's own measurements, wallScenes.ts).
      A band 30 percent wide, white at 10 percent at its centre at most, screen blended, at the angle of the window light of the room picture.
