@@ -1,7 +1,8 @@
 // A small Chrome DevTools Protocol driver for the checks of the landing page (Node 22 or newer, no dependencies: the
 // WebSocket is Node's own). Real Chrome, headless, its own throw-away profile. Used by scripts/legal_look.mjs,
 // scripts/check_shell.mjs and scripts/measure_landing.mjs.
-//   Chrome's path: the CHROME_PATH environment variable, else the usual install places.
+//   Chrome's path: the CHROME_PATH environment variable, else the usual install places. CHROME_FLAGS adds switches of its own (space-separated),
+//   for a Linux container that runs as root: CHROME_PATH=/opt/pw-browsers/chromium CHROME_FLAGS=--no-sandbox npm run check:landing
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -116,7 +117,7 @@ export async function launch({ args = [] } = {}) {
   const proc = spawn(chromePath(), [
     '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, '--disable-gpu', '--hide-scrollbars',
     '--no-first-run', '--no-default-browser-check', '--mute-audio', '--force-color-profile=srgb', '--font-render-hinting=none',
-    '--disable-lcd-text', '--disable-extensions', '--disable-background-networking', ...args, 'about:blank',
+    '--disable-lcd-text', '--disable-extensions', '--disable-background-networking', ...(process.env.CHROME_FLAGS ?? '').split(' ').filter(Boolean), ...args, 'about:blank',
   ], { stdio: 'ignore' });
   let up = false;
   for (let i = 0; i < 120 && !up; i++) {
