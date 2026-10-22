@@ -9,7 +9,15 @@
   .lp-hdr.lp-solid { background: rgb(3 4 8 / .85); border-bottom-color: var(--line); backdrop-filter: blur(24px); }
   .lp-hdr .lp-wrap { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-  .lp-logo svg { width: 32px; height: 32px; flex: none; }
+  /* the owner's logo (src/shared/BrandLogo.tsx): under 768 px the eye with a short swoosh beside SNAPEYES, from 768 px the full logo alone */
+  .lp-logo picture { display: block; flex: none; }
+  .lp-logo img { display: block; height: 34px; width: auto; }
+  @media (min-width: 768px) {
+    .lp-logo:not(.lp-logo-full) img { height: 56px; }
+    .lp-logo:not(.lp-logo-full) > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+  /* the footer: the full logo, 96 px tall */
+  .lp-logo-full img { height: 96px; }
   .lp-logo { position: relative; }
   .lp-logo::after { content: ""; position: absolute; inset: -8px 0; }
   .lp-logo b { display: block; font-family: var(--display); font-weight: 600; letter-spacing: .18em; font-size: 17px; line-height: 1; color: #fff; }
@@ -66,7 +74,7 @@
     .lp-hdr-r { gap: 4px; }
     .lp-logo small { display: none; }
     .lp-logo b { font-size: 15px; letter-spacing: .14em; }
-    .lp-logo svg { width: 28px; height: 28px; }
+    .lp-logo:not(.lp-logo-full) img { height: 30px; }
     .lp-logo { gap: 8px; }
   }
   @media (max-width: 340px) {
@@ -78,7 +86,7 @@
   }
   @media (max-width: 299px) {
     .lp-seg { --bw: 26px; }
-    .lp-logo svg { width: 24px; height: 24px; }
+    .lp-logo:not(.lp-logo-full) img { height: 26px; }
     /* the mark alone keeps the room for the menu button (the word stays in the page for a screen reader) */
     .lp-logo b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   }

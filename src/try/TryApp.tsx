@@ -37,6 +37,7 @@ import { readCatalogue } from '../shared/catalogue';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
 import { STYLES as REGISTRY, isStyle } from '../shared/styles';
+import { BrandPicture } from '../shared/BrandLogo';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
 import { parseReveal } from '../reveal/revealMath';
@@ -1000,7 +1001,12 @@ export const TryApp: React.FC = () => {
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
         {/* back to the landing page in the same language */}
-        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 font-luxury font-semibold tracking-wider text-lg relative hit">SNAP<span className="text-[#f5c542]">EYES</span></a>
+        {/* the owner's logo: from 768 px the full logo, under it the eye with a short swoosh beside SNAPEYES in Cinzel (src/shared/BrandLogo.tsx); under 390 px the
+            eye is 28 px tall and the name 15 px, so that the logo and the language switch fit side by side at 320 px */}
+        <a href={withMarket(`/?lang=${lang}`)} aria-label="SnapEyes" className="shrink-0 flex items-center gap-1.5 min-[390px]:gap-2 font-luxury font-semibold tracking-wider text-[15px] min-[390px]:text-lg relative hit">
+          <BrandPicture className="shrink-0" imgClass="block h-7 w-auto min-[390px]:h-[34px] md:h-14" />
+          <span className="md:sr-only">SNAPEYES</span>
+        </a>
         {/* the logo and the language switch, nothing else (the owner, 2026-10-22, asked what the tagline beside them meant: it is gone); the family test's badge only with ?study=1 */}
         <div className="flex items-center justify-end gap-3 min-w-0">
           {STUDY && <span className="min-w-0 text-[10px] uppercase tracking-widest text-sky-300 border border-sky-400/40 rounded-full px-2 py-0.5">{T.header.study}</span>}

@@ -1,7 +1,7 @@
 // The polish of the QA of 2026-10-20, as a check: the icons and the manifest, the branded 404 page, tap targets of 44 px, the "Take a photo" button on a short phone and
 // the message for a photo the browser cannot open (HEIC).
 //   npm run build && node scripts/check_polish.mjs [--dist dist]        real Chrome on the built page (the stand-in API of scripts/lib/flowstub.mjs)
-//   icons     public/favicon.svg is the SnapEyes mark (not the Vite logo it was), favicon.ico holds 16, 32 and 48 px, the touch icon is 180 px, the app icons 192 and 512, the web
+//   icons     the icon is the iris of the owner's logo (2026-10-22: no favicon.svg; favicon-16/32/48.png), favicon.ico holds 16, 32 and 48 px, the touch icon is 180 px, the app icons 192 and 512, the web
 //             manifest names the site's colours, and every page of the build links all of them (and every linked file is in the build)
 //   404       an unknown address is answered 404 with dist/404.html: the site's look, the words in the visitor's language (?lang=, then the stored choice) from
 //             src/notfound/notfound.json, a way home that keeps the language and is 44 px high
@@ -30,8 +30,9 @@ const png = (f) => { if (!existsSync(f)) return null; const b = readFileSync(f);
 
 // ---------------------------------------------------------------------------------------------------- icons (files only)
 {
-  const svg = readFileSync(join(dist, 'favicon.svg'), 'utf8');
-  ok('icons', /#f5c542/.test(svg) && (svg.match(/<circle/g) ?? []).length === 3 && !/863bff|47bfff|7e14ff/i.test(svg) && svg.length < 1500, `favicon.svg is not the SnapEyes mark (${svg.length} bytes: ${svg.slice(0, 80)})`);
+  // since 2026-10-22 the icon is the iris of the owner's logo (scripts/make_brand.py): a picture, so no SVG; favicon-16/32/48.png beside the ICO
+  ok('icons', !existsSync(join(dist, 'favicon.svg')), 'favicon.svg is back: the icon is the iris of the logo (favicon.ico and the PNGs)');
+  for (const px of [16, 32, 48]) ok('icons', (png(join(dist, `favicon-${px}.png`)) ?? []).join('x') === `${px}x${px}`, `favicon-${px}.png is ${png(join(dist, `favicon-${px}.png`))}, expected ${px}x${px}`);
   const ico = existsSync(join(dist, 'favicon.ico')) ? readFileSync(join(dist, 'favicon.ico')) : null;
   const sizes = ico ? Array.from({ length: ico.readUInt16LE(4) }, (_, i) => ico[6 + 16 * i] || 256) : [];
   ok('icons', !!ico && ico.readUInt16LE(2) === 1 && sizes.join() === '16,32,48', `favicon.ico ${ico ? `holds ${sizes} px` : 'is missing'}, expected 16,32,48`);
@@ -40,7 +41,7 @@ const png = (f) => { if (!existsSync(f)) return null; const b = readFileSync(f);
   ok('icons', man.name && man.short_name && man.start_url === '/' && man.theme_color === '#07090e' && man.background_color === '#07090e' && man.icons.every((i) => existsSync(join(dist, i.src.slice(1)))), JSON.stringify(man).slice(0, 200));
   for (const page of ['index.html', 'try.html', 'order.html', 'admin.html', 'privacy.html', 'terms.html', 'withdrawal.html', 'imprint.html', 'lp/en.html', 'lp/de.html', 'lp/lt.html', 'lp/hu.html', '404.html'].filter((p) => existsSync(join(dist, p)))) {
     const h = readFileSync(join(dist, page), 'utf8');
-    const has = ['href="/favicon.ico"', 'href="/favicon.svg"', 'rel="apple-touch-icon" href="/apple-touch-icon.png"', 'rel="manifest" href="/manifest.webmanifest"'].filter((t) => !h.includes(t));
+    const has = ['href="/favicon.ico"', 'href="/favicon-32.png"', 'rel="apple-touch-icon" href="/apple-touch-icon.png"', 'rel="manifest" href="/manifest.webmanifest"'].filter((t) => !h.includes(t));
     ok('icons', !has.length, `${page} does not link ${has.join(', ')}`);
   }
 }

@@ -12,6 +12,8 @@ this very code, differs from the committed one by a mean of a few grey levels in
 The words are the page's own: the headline is the landing's hero title of the language (src/landing/copy/<lang>.json hero.title,
 without its full stop), the line under it the first line of hero.micro, the brand line is the brand (SnapEyes, Private Atelier, the
 same in every language); only the caption under the eye is new text (src/landing/shell/share.json, with the alt text of the image).
+Since 2026-10-22 the brand is the owner's own logo, its dark version (scripts/make_brand.py: his black strokes in cream, the gold untouched),
+drawn where the card printed SNAPEYES and the gold rule under it.
 
     python scripts/make_og_cards.py              write og-founder-eye-de.jpg, -lt.jpg and -hu.jpg next to the English card
     python scripts/make_og_cards.py --check      draw them again and compare with the committed files (what check:langheads runs)
@@ -37,13 +39,27 @@ QUALITY = 88
 GOLD = (245, 197, 66)
 BRAND = dict(font="cinzel-var", size=58, wght=700, track=0.12, x=640.0, base=205, fill=(247, 197, 72))
 TAG = dict(font="plus-jakarta-sans-var", size=17, wght=600, track=0.36, x=642.0, base=250, fill=(172, 172, 178))
-RULE = dict(x0=642, x1=722, y0=292, y1=293, fill=GOLD)
+RULE = dict(x0=642, x1=722, y0=292, y1=293, fill=GOLD)     # the rule under the old SNAPEYES (no longer drawn: the logo takes its place)
+LOGO = dict(x=632, top=126, width=460)                    # the owner's logo, dark version, where SNAPEYES and the rule were (460 x 171 px)
 HEAD = dict(font="cinzel-var", size=38, wght=600, track=0.0, x=639.5, base=356, pitch=52, fill=(240, 243, 250), max_width=520)
 SUB = dict(font="plus-jakarta-sans-var", size=21, wght=400, track=0.0, x=641.5, gap=62, fill=(165, 165, 169))   # gap: from the last headline baseline
 CAP = dict(font="plus-jakarta-sans-var", size=20, wght=500, track=0.0, cx=319.0, base=588, fill=(224, 224, 228))
 EN_CARD = dict(headline=["Precision Iris Art", "from Your Smartphone"], sub="Free watermarked preview",
                caption="Mantas, founder - photographed at home with a phone")   # the English card's own words (a spaced hyphen: the card is not a text of the site)
-CLEAR = [(600, 120, 1200, 520), (0, 556, 700, 612)]    # the areas of the English card that hold words: painted black before the new words go on (the card's background is black)
+CLEAR = [(600, 90, 1200, 520), (0, 556, 700, 612)]    # the areas of the English card that hold words: painted black before the new words go on (the card's background is black)
+
+
+_LOGO = {}
+
+
+def brand_logo(width):
+    """The owner's logo, the dark version, width px wide (scripts/make_brand.py: the same cut, colours and scaling as the site's files)."""
+    if width not in _LOGO:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import make_brand
+        m, iris = make_brand.load()
+        _LOGO[width] = make_brand.scaled(make_brand.recolour(m, iris), width=width)
+    return _LOGO[width]
 
 
 def read_json(path):
@@ -132,10 +148,9 @@ def card(base_card, fonts, headline, sub, caption):
         raise SystemExit(f"the headline needs {len(lines)} lines: {lines}")
     lift = (len(lines) - 2) * HEAD["pitch"] / 2          # the block keeps its optical centre when the headline has another number of lines
     shift = lambda y: round(y - lift)
-    bf = fonts.get(BRAND["font"], BRAND["size"], BRAND["wght"])
-    put(img, "SNAPEYES", bf, BRAND["x"], shift(BRAND["base"]), BRAND["track"] * BRAND["size"], BRAND["fill"])
-    # no brand line under SNAPEYES since 2026-10-22: the owner asked what "Private Atelier" means; the site and the cards say SnapEyes alone
-    d.rectangle((RULE["x0"], shift(RULE["y0"]), RULE["x1"], shift(RULE["y1"])), fill=RULE["fill"])
+    # the owner's logo (dark version) where SNAPEYES and the rule were; no brand line under it (the owner asked what "Private Atelier" means)
+    logo = brand_logo(LOGO["width"])
+    img.paste(logo, (LOGO["x"], shift(LOGO["top"])), logo)
     base = HEAD["base"]
     for i, line in enumerate(lines):
         put(img, line, hf, HEAD["x"], shift(base + i * HEAD["pitch"]), 0, HEAD["fill"])

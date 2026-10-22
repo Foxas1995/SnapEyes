@@ -23,7 +23,7 @@ export function SiteFooter() {
       <div className="lp-wrap">
         <div className="lp-ftr-grid">
           <div>
-            <SiteLogo brandTag={c.brandTag} />
+            <SiteLogo brandTag={c.brandTag} full />
           </div>
           <address>
             <span className="lp-ftr-by">{f.operatedBy}</span>

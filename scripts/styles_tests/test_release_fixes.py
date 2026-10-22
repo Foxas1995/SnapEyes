@@ -392,11 +392,13 @@ landing_art = os.path.join(REPO, "public", "assets", "landing", "art")
 check("the pictures of the two held Universe tiles are gone from the page (and from the manifest: check:assets holds the rest)",
       not [f for f in os.listdir(landing_art) if f.startswith(("duo_infinity_bb_uni_", "fam_6_uni_"))], "")
 for page in ("index.html", "try.html", "order.html", "admin.html", "terms.html", "privacy.html", "imprint.html", "withdrawal.html"):
-    if '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />' not in read(page):
-        check(f"{page} names its icon (no /favicon.ico 404 on every page load)", False, page)
+    # since 2026-10-22 the icon is the iris of the owner's logo, a picture: favicon.ico (16, 32, 48) and two PNGs, no SVG (scripts/make_brand.py)
+    if not all(tag in read(page) for tag in ('<link rel="icon" href="/favicon.ico" sizes="48x48" />', '<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />')):
+        check(f"{page} names its icons (favicon.ico and favicon-32.png)", False, page)
         break
 else:
-    check("every page names its icon (public/favicon.svg), so the browser does not ask for /favicon.ico (a 404 and a console error on every load)", os.path.isfile(os.path.join(REPO, "public", "favicon.svg")), "")
+    check("every page names its icons (favicon.ico and favicon-32.png, the iris of the owner's logo) and the files exist, so no icon request is a 404",
+          all(os.path.isfile(os.path.join(REPO, "public", f)) for f in ("favicon.ico", "favicon-16.png", "favicon-32.png")) and not os.path.isfile(os.path.join(REPO, "public", "favicon.svg")), "")
 
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed" + (f"   (+ {len(LOCAL)} local checks)" if LOCAL else ""))

@@ -61,7 +61,12 @@ const FEEDBACK = { js: 0, css: 131 };
 // on its parent (2638331). The video files are not counted (they are no script or stylesheet, and the landing asks for one only when its step is on screen: check:landing guide). The
 // same change removed the camera phone's rules (css/how.css) and the capture diagram's (src/motion/flow.css): CSS -462 B, given back as room, no constant moves for it.
 const GUIDE = { js: 1304, css: 0 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css };
+// The owner's logo (2026-10-22, his own design on every page: src/shared/BrandLogo.tsx) is content, not motion: the landing's header holds a <picture> with four sources instead of
+// the three circles of an SVG (the file names, widths and heights are text in the bundle), and the headers of /try, /order and the legal pages use a few Tailwind utilities of their
+// own (the 28, 34 and 56 px heights, the 390 px step, the name hidden from 768 px), which land in the shared stylesheet. BRAND is this script's own sum on the commit with the logo
+// minus on its parent (9facf04): JavaScript +323 B, CSS +180 B. The pictures themselves are not counted (no script or stylesheet).
+const BRAND = { js: 323, css: 180 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

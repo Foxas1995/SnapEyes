@@ -1364,3 +1364,45 @@ The eye on the phone screen is drawn around the owner's own iris (215120, licens
 - A three-way apply of v3-calm's work in progress (its working tree at 11:53) onto this branch conflicts only in the header comment of `scripts/check_motion_flow.mjs` and in `suites/baseline.json` (both keep both); `TryApp.tsx`, the copy files and the landing JSONs merge cleanly.
 
 **Not measured, risks.** LT and HU captions and button words need a native read. Real iPhones and Androids were not tried; low power mode on iOS is handled by the play button but not seen on a device. The drawn eye is an illustration around a real iris; a filmed version could replace it later (`SP/wave-howto/final/FILMAVIMO_PLANAS_LT.md`, a one-page shot list). The 9:16 files are not on the site. The landing's "How it works" text still says what the video shows in words; nothing was removed from it.
+
+## 51. The owner's logo (2026-10-22): his own design on every page, the icons and the share cards
+
+Branch `v3-logo` on `v3-int6` (`9facf04`). Local only: nothing was pushed or deployed, no Vercel or environment setting was written, no image model was called and no tool was downloaded (0 USD). `api/` is unchanged.
+
+**What the owner chose.** After four rounds of drawn proposals he chose his own design and approved it ("taip, darom su šituo"): an eye on the right with fine black lashes and a gold metallic aperture iris with a catch-light, thin gold and black swooshes flowing left, and the script name "SnapEyes" (Snap in gold, Eyes in black), on white. He then supplied its 4096 px master himself (`karikatura-4K-print-1792679002452.jpg`). Nothing of it is redrawn or restyled: every file is cut, recoloured or scaled from his master, and his file is untouched (the work used a copy).
+
+**The cut** (`SP/wave-logo/final_logo_work/build/cut.py`, run once, outside the repository): his JPEG to a transparent master, 3827 x 1421. A JPEG's white is not 255 everywhere (here 251 to 255), so a plain colour-to-alpha would leave a grey haze: alpha is taken only where the artwork meets the white (the near-white regions, the pockets the strokes close in included, plus three pixels into each stroke), relative to the stroke's own ink strength, above a noise floor of 0.035; then the colours are unmultiplied from white. The only white kept is the catch-light inside the pupil (and specks of near-white inside a gold stroke, which are highlights of the metal). The thin line ends and the script's edges were checked at 100 percent on white, on #07090e and on blue: no fringe, no haze.
+
+**The files** (`scripts/make_brand.py`, from `assets/brand/snapeyes-logo-master.png`, 2400 px wide, and `assets/brand/iris.json`, the iris's centre and radii):
+- **The dark version** for the page: every neutral dark pixel (his black ink) moves to a warm cream, #efe6d2, in proportion to how black it is; the gold is untouched; inside the iris's gold ring nothing changes, so the pupil stays black and the catch-light white.
+- `public/brand`: the full logo 56 px tall (the header from 768 px) and 96 px tall (the footer, the 404 page), and the eye with a short swoosh (the eye, its lashes and the strokes that enter it, faded out to the left), 34 px tall, each 1x, 2x and 3x, WebP with a PNG twin (25 files, about 1.0 MB together; a page asks for one of them, 7 to 21 kB).
+- The icons, the iris alone: `favicon.ico` (16, 32, 48 px), `favicon-16/32/48.png`, `apple-touch-icon.png` (180, on #07090e), `icon-192.png`, `icon-512.png`. `public/favicon.svg` (the three circles) is gone; `scripts/make_icons.py` is replaced by `make_brand.py`. `python scripts/make_brand.py --check` draws everything again and compares it with the committed files (the PNGs; the WebP encoder is not byte stable across Pillow builds).
+
+**On the pages.** `src/shared/BrandLogo.tsx`: one `<picture>` with art direction, each `<source>` with its own width and height (no layout shift whichever is chosen), WebP then PNG, `alt="SnapEyes"`.
+- **Phones: the eye and SNAPEYES.** The full logo's script name is about 4 px high in a 30 px logo, too small to read, so under 768 px the headers show the eye with a short swoosh beside SNAPEYES in the site's Cinzel.
+- **From 768 px: the full logo** alone, 56 px tall, with the name visually hidden.
+- **The landing header** (`src/landing/Header.tsx` SiteLogo, `css/header.css`): the eye is 34 px tall, 30 px under 640 px and 26 px under 300 px (where the name was already hidden). At 300 to 412 px the logo, the language switch and the menu button do not overlap and the page does not scroll sideways.
+- **The footer:** the full logo 96 px tall, lazy (below the fold).
+- **The legal pages** (`src/landing/ui.tsx` Logo), **/try** (`src/try/TryApp.tsx`; it was the two-colour SNAPEYES text) and **/order** (`src/order/OrderApp.tsx`): the same picture. On /try and /order the eye is 28 px and the name 15 px under 390 px, so the logo and the language switch fit side by side at 320 px.
+- **The branded 404:** `src/notfound/notfound.html` shows the full logo at 96 px.
+- **Every page's head** (index, try, order, admin, the four legal pages, the 404) links `favicon.ico`, `favicon-32.png` and `favicon-16.png`. The manifest names the 192 and 512 px icons (purpose any).
+- **The share cards** (`scripts/make_og_cards.py`): the dark logo, 460 px wide, stands where SNAPEYES and the gold rule were; the headline, the line under it and the caption are as before. The four cards were drawn again (101 to 105 kB each).
+
+**Checks moved.** `check:polish` icons: no `favicon.svg` (it fails if it comes back), `favicon-16/32/48.png` at their sizes, and every page links `favicon.ico` and `favicon-32.png` (it checked `favicon.svg`). `scripts/styles_tests/test_release_fixes.py`: its last check reads the same way (one check for one, the count is equal). `check:budget` gets a named allowance, BRAND, which is not motion: the logo's markup and the headers' few Tailwind utilities. It is this script's own sum on this tree minus 9facf04: JavaScript +323 B, CSS +180 B. Without it, CSS stood at +6,997 B of the +7,000 B budget.
+
+**Results** (real Chrome on the build, all exit 0):
+- `check:polish`, 75 checks (72 before, plus the three favicon PNGs): the icons as above, the 404 page, and the tap targets, where the logos still answer a touch over 44 px.
+- `check:tryheader`: the logo and the language switch only, nothing over the logo, four languages at 320 to 412 px, 24 pages.
+- `check:assets`, `check:texts`, `check:langheads` (the share cards 1200 x 630, under 150 kB), `check:slots` (4 languages x 3 layouts).
+- `check:budget` with BRAND: JavaScript +4,935 B, CSS +6,817 B, the figures of 9facf04.
+- `check:landing`: the same 2 notes as before, axe-core not installed and the late offer's CLS. Phone slow 4G LCP 1,068 to 1,112 ms, CLS 0.0004: the header's picture has its box before it arrives.
+- `check:motion:flow`: the flow's layout shift is unchanged, /try 0.197 against 0.189 and /order 0.050. The /try bundle is JavaScript +1,226 B and CSS +1,890 B of +2,048 over its base.
+- `check:states`: 1,352 of 1,352.
+- `npm run lint`: 54 warnings, none on the new lines.
+- The landing's header, measured at 300 to 1024 px: the logo, the language switch and the menu button never overlap, and the page never scrolls sideways. The headers of /order and of the legal pages at 320 to 412 px: the same.
+- The full set, with the private fixtures, one suite at a time (the page checks ran beside it), scratch on drive D: 79 minutes, **47 of 47 green**, every count equal to `suites/baseline.json` (`ts` 924, `v3reg` 226).
+- On the final build (the same source, one `export` dropped for the linter): `check:budget`, `check:tryheader`, `check:polish`, `check:assets`, `check:texts`, `check:langheads`, `python scripts/make_brand.py --check` and `python scripts/make_og_cards.py --check`, all exit 0, with the same figures.
+
+**For the owner to look at.** The script name in the desktop header is readable but small: the full logo is 56 px tall there, so a capital is about 18 px and a small letter about 6 px. On a phone the eye and SNAPEYES stand in its place. Two choices are his: whether "Eyes" on the dark page should be cream or light gold (both are in `SP/wave-logo/final/final_logo`), and whether the full logo should wait until 1024 px. The share cards' logo is 460 px wide.
+
+**Not measured, risks.** Not tried on a real iPhone or Android, nor in Safari: Chrome only, with the size of each `<source>` honoured. A browser that ignores the width and height of a `<source>` (Safari before 15, Firefox before 108) reserves the `<img>`'s ratio (58 x 34). From 768 px its box would widen from about 96 to 151 px when the full logo arrives: a move sideways in the header, not down the page, because the CSS fixes the height. The deliverable set (light and two dark versions at 160 to 1200 px, 1x 2x 3x, the eye mark, the icons, the profile picture) is in `SP/wave-logo/final/final_logo` and `D:/logo_out/final_logo`, not in the repository; the site carries only the files it uses.

@@ -8,7 +8,8 @@
     <meta name="robots" content="noindex" />
     <title>SnapEyes: page not found</title>
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <!-- The page Vercel answers an unknown address with (status 404). Written by the build (vite.config.ts langPages) from this template and src/notfound/notfound.json
@@ -22,10 +23,7 @@
       body { background: #07090e; color: #f0f3fa; font: 16px/1.6 'Plus Jakarta Sans', system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; padding: 32px 20px; }
       main { max-width: 34rem; text-align: center; }
       .logo { display: inline-flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; min-height: 44px; }
-      .logo svg { width: 36px; height: 36px; }
-      .logo b { font: 600 19px/1 Cinzel, serif; letter-spacing: .18em; }
-      .logo small { display: block; margin-top: 6px; font-size: 9px; font-weight: 600; letter-spacing: .34em; text-transform: uppercase; color: #8c93a3; }
-      .logo span { text-align: left; }
+      .logo img { display: block; height: 96px; width: auto; }
       h1 { font: 600 clamp(28px, 7vw, 40px)/1.15 Cinzel, serif; margin: 44px 0 14px; }
       p { margin: 0 auto 32px; color: #b6bccb; max-width: 30rem; }
       .home { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 999px; border: 1px solid #f5c542; color: #f5c542; text-decoration: none; font-weight: 700; letter-spacing: .04em; }
@@ -37,8 +35,8 @@
   <body>
     <main>
       <a class="logo" href="/" aria-label="SnapEyes">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="#f5c542" stroke-opacity=".55" /><circle cx="16" cy="16" r="9.5" fill="none" stroke="#f5c542" stroke-width="1.4" /><circle cx="16" cy="16" r="4" fill="#f5c542" /></svg>
-        <span><b>SNAPEYES</b></span>
+        <!-- the owner's logo, the dark version (scripts/make_brand.py) -->
+        <picture><source type="image/webp" srcset="/brand/logo-dark-h96.webp 1x, /brand/logo-dark-h96@2x.webp 2x, /brand/logo-dark-h96@3x.webp 3x" width="259" height="96" /><img src="/brand/logo-dark-h96.png" srcset="/brand/logo-dark-h96.png 1x, /brand/logo-dark-h96@2x.png 2x, /brand/logo-dark-h96@3x.png 3x" width="259" height="96" alt="SnapEyes" /></picture>
       </a>
       <h1 id="h1">This page is not here.</h1>
       <p id="p">The address may have changed, or the link may be incomplete. The first screen of SnapEyes is one click away.</p>

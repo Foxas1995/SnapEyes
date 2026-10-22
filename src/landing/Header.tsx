@@ -9,27 +9,22 @@ import type { CSSProperties, Ref } from 'react';
 import { LANG_NAMES, type Lang } from '../shared/lang';
 import type { LandingCopy } from './copy/types';
 import { NAV_KEYS } from './navKeys';
+import { BrandFull, BrandPicture } from '../shared/BrandLogo';
 
 
-export function LogoMark() {
+/** The logo link: the owner's logo (src/shared/BrandLogo.tsx). In the header: the full logo from 768 px, under it the eye with a short swoosh
+ *  beside SNAPEYES in Cinzel (the full logo's script name is too small to read in a phone's header). In the footer (`full`): the full logo,
+ *  96 px tall, lazy (below the fold). It goes to the top of the page. */
+export function SiteLogo({ brandTag, full = false }: { brandTag: string; full?: boolean }) {
   return (
-    <svg viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="15" fill="none" stroke="#f5c542" strokeOpacity=".55" />
-      <circle cx="16" cy="16" r="9.5" fill="none" stroke="#f5c542" strokeWidth="1.4" />
-      <circle cx="16" cy="16" r="4" fill="#f5c542" />
-    </svg>
-  );
-}
-
-/** The logo link: the mark, SNAPEYES and the brand tag under it. It goes to the top of the page; the header and the footer use it. */
-export function SiteLogo({ brandTag }: { brandTag: string }) {
-  return (
-    <a className="lp-logo" href="#top" aria-label="SnapEyes">
-      <LogoMark />
-      <span>
-        <b>SNAPEYES</b>
-        {brandTag && <small>{brandTag}</small>}
-      </span>
+    <a className={full ? 'lp-logo lp-logo-full' : 'lp-logo'} href="#top" aria-label="SnapEyes">
+      {full ? <BrandFull /> : <BrandPicture />}
+      {!full && (
+        <span>
+          <b>SNAPEYES</b>
+          {brandTag && <small>{brandTag}</small>}
+        </span>
+      )}
     </a>
   );
 }

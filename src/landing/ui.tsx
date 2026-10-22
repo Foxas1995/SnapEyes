@@ -2,17 +2,15 @@ import { useCallback, useRef, useSyncExternalStore, type ButtonHTMLAttributes, t
 import { flushSync } from 'react-dom';
 import { Plus } from 'lucide-react';
 import { useCopy } from './copy/useCopy';
+import { BrandPicture } from '../shared/BrandLogo';
 
-// href: the landing links to its own top; the legal pages link home.
+// href: the landing links to its own top; the legal pages link home. The owner's logo (src/shared/BrandLogo.tsx): from 768 px the full logo,
+// under it the eye with a short swoosh beside SNAPEYES in Cinzel.
 export function Logo({ tag, href = '#top' }: { tag: string; href?: string }) {
   return (
     <a href={href} className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f5c542]" aria-label="SnapEyes">
-      <svg aria-hidden="true" viewBox="0 0 32 32" className="h-8 w-8 shrink-0">
-        <circle cx="16" cy="16" r="15" fill="none" stroke="#f5c542" strokeOpacity="0.55" strokeWidth="1" />
-        <circle cx="16" cy="16" r="9.5" fill="none" stroke="#f5c542" strokeWidth="1.4" />
-        <circle cx="16" cy="16" r="4" fill="#f5c542" />
-      </svg>
-      <span className="flex flex-col leading-none">
+      <BrandPicture className="shrink-0" imgClass="block h-[34px] w-auto md:h-14" />
+      <span className="flex flex-col leading-none md:sr-only">
         <span className="font-luxury text-[17px] font-semibold tracking-[0.18em] text-white">SNAPEYES</span>
         {tag && <span className="mt-1 text-[9px] font-medium uppercase tracking-[0.34em] text-zinc-400">{tag}</span>}
       </span>
