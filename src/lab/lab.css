@@ -1,0 +1,34 @@
+/* LAB: the page around the prototypes (src/lab/main.tsx): a header with the logo, then the hero as it could be: on a phone the piece first and the
+   title and button under it, from 960 px the title on the left and the piece on the right. */
+.lab-hdr { position: relative; z-index: 5; height: 64px; }
+.lab-hdr .lp-wrap { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.lab-switch { display: flex; gap: 4px; padding: 3px; border: 1px solid rgb(255 255 255 / .1); border-radius: 999px; }
+.lab-switch button { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--ink-3, #9da4b3); }
+.lab-switch button[aria-pressed='true'] { background: rgb(var(--gold-rgb) / .16); color: var(--t-1, #f0f3fa); }
+
+.lab-hero { position: relative; padding: 0 0 48px; overflow-x: clip; }
+.lab-grid { display: flex; flex-direction: column-reverse; gap: 20px; }
+.lab-copy { text-align: center; }
+.lab-copy h1 { font-size: clamp(30px, 8vw, 56px); }
+.lab-cta { display: flex; justify-content: center; margin-top: 20px; }
+
+/* the stage's place is kept from the first paint: the poster, then the piece, in the same box */
+.lab-frame { position: relative; width: calc(100% + 2 * var(--gut, 16px)); margin-inline: calc(-1 * var(--gut, 16px)); }
+.lab-globe { aspect-ratio: 1 / 1.06; }
+.lab-ring { aspect-ratio: 1 / 1; }
+.lab-frame > .sx-stage { position: absolute; inset: 0; width: auto; aspect-ratio: auto; }
+.lab-poster { position: absolute; inset: 0; z-index: 6; width: 100%; height: 100%; object-fit: cover; pointer-events: none; transition: opacity .35s ease; }
+.lab-frame[data-ready] .lab-poster { opacity: 0; }
+
+@media (min-width: 960px) {
+  .lab-hero { padding-top: 24px; }
+  .lab-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 600px); align-items: center; gap: clamp(32px, 4vw, 64px); }
+  .lab-copy { text-align: left; }
+  .lab-cta { justify-content: flex-start; }
+  .lab-frame { width: 100%; margin-inline: 0; }
+}
+
+/* ?shot: the stage alone, for the poster */
+body.lab-shot { margin: 0; }
+body.lab-shot .lab-frame { width: 800px; margin: 0; }
+body.lab-shot .sx-info, body.lab-shot .sx-note { visibility: hidden; }

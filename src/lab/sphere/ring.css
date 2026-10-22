@@ -1,0 +1,38 @@
+/* LAB, prototype B: the Iris ring (src/lab/sphere/Ring.tsx). Classes sx-, nothing here reaches a page of the site. The controller writes --T (the front
+   artwork), --P (the perspective), --y0 (the front of the ring) and --up from the stage's width, and each artwork's transform and opacity per frame. */
+@import './stage.css';
+
+.sx-ring { aspect-ratio: 1 / 1; }
+
+/* the floor of the display: a soft pool of warm light under the ring, and the dark it fades into */
+.sx-floor {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(closest-side at 50% calc(var(--y0) + var(--T) * .56), rgb(var(--gold-rgb) / .09), rgb(var(--gold-rgb) / .025) 60%, rgb(var(--gold-rgb) / 0)),
+    radial-gradient(closest-side at 50% var(--y0), rgb(18 22 32 / .5), rgb(7 9 14 / 0));
+  background-size: 100% calc(var(--T) * .9), 100% calc(var(--T) * 2.4);
+  background-position: 50% calc(var(--y0) + var(--T) * .56 - var(--T) * .45), 50% calc(var(--y0) - var(--T) * 1.2);
+  background-repeat: no-repeat;
+}
+
+.sx-ring .sx-scene { position: absolute; inset: 0; perspective: var(--P); perspective-origin: 50% var(--y0); }
+.sx-carousel { position: absolute; left: 50%; top: var(--y0); width: 0; height: 0; transform-style: preserve-3d; }
+
+.sx-tile {
+  position: absolute; left: 0; top: 0; width: var(--T); height: var(--T); margin: calc(var(--T) / -2) 0 0 calc(var(--T) / -2); padding: 0; border: 0; border-radius: 50%;
+  background: #05070a; cursor: pointer; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  -webkit-box-reflect: below calc(var(--T) * .03) linear-gradient(transparent 70%, rgb(0 0 0 / .13));
+}
+.sx-tile img { display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; -webkit-user-drag: none; }
+.sx-tile::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; box-shadow: inset 0 0 0 1px rgb(var(--gold-rgb) / .32), inset 0 0 calc(var(--T) * .07) rgb(0 0 0 / .55); }
+.sx-tile::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 31% 23%, rgb(255 249 236 / .13), rgb(255 249 236 / 0) 36%); }
+/* the gold of the front artwork: a soft glow around it and a polished bezel, faded in by their own opacity (the controller writes it) */
+.sx-tile .sx-glow { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0; box-shadow: 0 0 calc(var(--T) * .16) rgb(var(--gold-rgb) / .24); }
+.sx-tile .sx-rim {
+  position: absolute; inset: -2px; z-index: 2; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-primary) 18%, rgb(var(--gold-rgb) / .35) 42%, var(--gold-secondary) 66%, var(--gold-light) 86%, var(--gold-pale));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.2px));
+}
+
+.sx-ring .sx-info { top: calc(var(--y0) + var(--up) + var(--T) * .5 + var(--T) * .16); opacity: 1; }

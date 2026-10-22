@@ -1,0 +1,74 @@
+/* LAB, prototype A: the Iris globe (src/lab/sphere/Globe.tsx). Classes sx-, nothing here reaches a page of the site. The sizes are custom properties the
+   controller writes from the stage's width: --R the sphere's radius, --P the perspective, --D a disc, --A the radius the sphere appears to have, --cy
+   its centre, --Dh and --hy the enlarged artwork. Only transform and opacity move; the fog, the sheen and the rim of the sphere are still. */
+@import './stage.css';
+
+.sx-globe { aspect-ratio: 1 / 1.06; }
+
+/* the pool of warm light the sphere stands over, like a piece on a jeweller's display */
+.sx-globe::before {
+  content: ""; position: absolute; left: 50%; top: calc(var(--cy) + var(--A) * .93); width: calc(var(--A) * 2.1); height: calc(var(--A) * .5); translate: -50% -50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgb(var(--gold-rgb) / .13), rgb(var(--gold-rgb) / .04) 55%, rgb(var(--gold-rgb) / 0));
+}
+/* the body of the sphere: dark polished stone, lit from the upper left, a thread of gold light along its edge */
+.sx-body {
+  position: absolute; left: 50%; top: var(--cy); width: calc(var(--A) * 2); height: calc(var(--A) * 2); translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #171b25 0%, #0c0f16 42%, #06080c 74%, #030407 100%);
+  box-shadow: inset calc(var(--A) * .02) calc(var(--A) * .03) calc(var(--A) * .06) rgb(255 240 214 / .06), inset calc(var(--A) * -.06) calc(var(--A) * -.08) calc(var(--A) * .3) rgb(0 0 0 / .7), 0 calc(var(--A) * .16) calc(var(--A) * .5) calc(var(--A) * -.18) rgb(var(--gold-rgb) / .14);
+}
+.sx-body::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%;
+  background: conic-gradient(from 100deg, rgb(var(--gold-rgb) / .4), rgb(var(--gold-rgb) / .1) 22%, rgb(var(--gold-rgb) / 0) 40%, rgb(var(--gold-rgb) / 0) 62%, rgb(var(--gold-rgb) / .12) 84%, rgb(var(--gold-rgb) / .4));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+}
+
+.sx-scene { position: absolute; inset: 0; perspective: var(--P); perspective-origin: 50% var(--cy); }
+.sx-orb { position: absolute; left: 50%; top: var(--cy); width: 0; height: 0; transform-style: preserve-3d; }
+
+.sx-disc {
+  position: absolute; left: 0; top: 0; width: var(--D); height: var(--D); margin: calc(var(--D) / -2) 0 0 calc(var(--D) / -2); padding: 0; border: 0; border-radius: 50%;
+  background: #05070a; backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: pointer;
+  box-shadow: 0 0 calc(var(--D) * .2) rgb(var(--gold-rgb) / calc(var(--lit, 0) * .24));
+}
+.sx-disc img { display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; -webkit-user-drag: none; }
+/* the bezel and the shadow inside it */
+.sx-disc::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; box-shadow: inset 0 0 0 1px rgb(var(--gold-rgb) / .32), inset 0 0 calc(var(--D) * .06) rgb(0 0 0 / .45); }
+/* the glass: one soft reflection of the light, upper left */
+.sx-disc::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 31% 23%, rgb(255 249 236 / .13), rgb(255 249 236 / 0) 36%); }
+/* the gold rim of the disc at the front: a polished bezel, brightest where the light comes from */
+.sx-rim {
+  position: absolute; inset: -1px; z-index: 2; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
+  background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-primary) 18%, rgb(var(--gold-rgb) / .3) 42%, var(--gold-secondary) 66%, var(--gold-light) 86%, var(--gold-pale));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.4px), #000 calc(100% - 1.8px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.4px), #000 calc(100% - 1.8px));
+}
+
+/* depth fog: on a sphere the distance from the viewer grows with the distance from the centre of the picture, so one still radial layer darkens the
+   discs as they turn away; with it a soft reflection of the light on the polished body and its gold edge */
+.sx-fog {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse calc(var(--A) * .66) calc(var(--A) * .44) at calc(50% - var(--A) * .3) calc(var(--cy) - var(--A) * .46), rgb(255 247 228 / .09), rgb(255 247 228 / 0) 72%),
+    radial-gradient(circle at 50% var(--cy), rgb(7 9 14 / 0) calc(var(--A) * .46), rgb(7 9 14 / .16) calc(var(--A) * .7), rgb(7 9 14 / .5) calc(var(--A) * .9), rgb(7 9 14 / .82) calc(var(--A) * 1.0), rgb(7 9 14 / 0) calc(var(--A) * 1.07));
+}
+/* the enlarged artwork, and the dark around it while it is open */
+.sx-veil { position: absolute; inset: 0; z-index: 2; opacity: 0; pointer-events: none; background: radial-gradient(circle at 50% var(--cy), rgb(4 5 9 / .7), rgb(4 5 9 / .82) calc(var(--A) * .9), rgb(7 9 14 / 0) calc(var(--A) * 1.35)); }
+.sx-hero {
+  position: absolute; left: 50%; top: var(--hy); z-index: 3; width: var(--Dh); height: var(--Dh); margin: calc(var(--Dh) / -2) 0 0 calc(var(--Dh) / -2); padding: 0; border: 0;
+  border-radius: 50%; background: #05070a; visibility: hidden; cursor: pointer; will-change: transform;
+  box-shadow: 0 calc(var(--Dh) * .1) calc(var(--Dh) * .18) calc(var(--Dh) * -.06) rgb(0 0 0 / .85);
+}
+.sx-hero img { position: relative; display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; }
+.sx-hero::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 31% 22%, rgb(255 249 236 / .12), rgb(255 249 236 / 0) 34%); }
+/* the glow, the darkening of the flight's first frames and the bezel are layers of their own: only their opacity changes, the browser repaints nothing */
+.sx-hero-glow { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity; box-shadow: 0 0 calc(var(--Dh) * .16) rgb(var(--gold-rgb) / .22); }
+.sx-hero-shade { position: absolute; inset: 0; border-radius: 50%; background: #07090e; opacity: 0; pointer-events: none; will-change: opacity; }
+.sx-hero-rim {
+  position: absolute; inset: -2px; border-radius: 50%; pointer-events: none; opacity: 0; will-change: opacity;
+  background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-primary) 18%, rgb(var(--gold-rgb) / .35) 42%, var(--gold-secondary) 66%, var(--gold-light) 86%, var(--gold-pale));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.2px));
+}
+.sx-globe .sx-info { top: calc(var(--hy) + var(--Dh) / 2 + 16px); }
+.sx-note { position: absolute; left: 0; right: 0; bottom: 6px; z-index: 1; margin: 0; padding: 0 16px; text-align: center; font-size: 11px; font-weight: 600; letter-spacing: .1em; line-height: 1.4; text-transform: uppercase; color: var(--ink-3, #9da4b3); pointer-events: none; }
