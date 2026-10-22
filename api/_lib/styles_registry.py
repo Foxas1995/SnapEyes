@@ -516,7 +516,7 @@ STYLES = {
         "eyes": [3, 8],
         "layouts": {"3": ["trio"], "4": ["zigzag"], "5": ["brick"], "6": ["brick"], "7": ["brick"], "8": ["brick"]},
         "stage": "preview",
-        "stage_by_eyes": {},
+        "stage_by_eyes": {"8": "lab"},
         "price_class": "art",
         "gate": "hard",
         "pick": [],

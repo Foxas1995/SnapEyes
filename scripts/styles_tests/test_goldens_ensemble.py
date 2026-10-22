@@ -117,7 +117,7 @@ check("importing the style package and the catalogue loads no engine family (the
 reg = {sid: CT.STYLES[sid] for sid in STYLES}
 eng = {sid: CT.ENGINE[sid] for sid in STYLES}
 check("the registry has the nine styles at stage preview (drawn in /try, never orderable until the owner's tick), in the art price class, with the HARD gate and the lid rule",
-      all(d["stage"] == "preview" and d["stage_by_eyes"] == {} and d["price_class"] == "art" and d["gate"] == "hard" and d["legacy"] == 0 for d in reg.values())
+      all(d["stage"] == "preview" and d["stage_by_eyes"] == ({"8": "lab"} if s == "grp.supernova" else {}) and d["price_class"] == "art" and d["gate"] == "hard" and d["legacy"] == 0 for s, d in reg.items())
       and all(e["gate_rules"] == "lid" and e["plates"] == [] and e["atlas"] == [] for e in eng.values()), {s: (d["stage"], d["gate"]) for s, d in reg.items()})
 check("their engine is the ensemble family with the design of each look; the names are the owner's (Clean Duo, Radiance Duo, Family Orbit, Light Circle, Radiance Family, "
       "Nebula Duo, Nebula Family, Supernova Duo, Supernova Family)",
@@ -138,9 +138,11 @@ check("a working copy of 2048 px for every eye count (the master reads each eye 
       and sorted(reg[s]["tile_order"] for s in ("grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova")) == [3, 4, 5, 6, 7],
       {s: reg[s]["tile_order"] for s in STYLES})
 CT.set_override_source(lambda sid, n: None)
-check("with no tick of the owner every new style is at preview for every eye count it takes: previewable for a customer, renderable, and orderable for no one",
+# Supernova Family is sold up to seven eyes (the owner, 2026-10-22: its eight-eye master needs 54 of the 52 s a Hobby call allows): eight eyes stay in the laboratory
+check("with no tick of the owner every new style is at preview for every eye count it takes (Supernova Family at eight eyes in the laboratory): previewable for a customer, renderable, and orderable for no one",
       all(CT.stage_of(s, n) == "preview" and CT.previewable(s, n) and CT.renderable(s, n) and not CT.orderable(s, n, strict=False)
-          for s in STYLES for n in range(reg[s]["eyes"][0], reg[s]["eyes"][1] + 1)), "")
+          for s in STYLES for n in range(reg[s]["eyes"][0], reg[s]["eyes"][1] + 1) if (s, n) != ("grp.supernova", 8))
+      and CT.stage_of("grp.supernova", 8) == "lab" and not CT.previewable("grp.supernova", 8) and not CT.orderable("grp.supernova", 8, strict=False), "")
 check("the canvases the registry lists are canvases each look draws, its default first where the default does not depend on the eye count",
       all(set(eng[s]["canvases"]) <= set(HL.looks()[STYLES[s]]["canvases"]) for s in STYLES)
       and eng["duo.clean_duo"]["canvases"][0] == "3:2" and eng["grp.orbit"]["canvases"][0] == "1:1", {s: eng[s]["canvases"] for s in STYLES})

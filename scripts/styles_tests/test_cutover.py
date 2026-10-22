@@ -263,8 +263,9 @@ check("singles at live: Clean Iris, Powder Burst, Universe (Echo and Vortex), Sp
       all(CT.ceiling(i, 1) == "live" for i in LIVE1) and [CT.name_of(i) for i in LIVE1] == ["Clean Iris", "Powder Burst", "Universe", "Splash", "Celestial Gold"], [CT.ceiling(i, 1) for i in LIVE1])
 check("Family Colours: live for three eyes (the Trio, which opens alone: 1.6.3), preview for four to eight (Clean Family and DG4 come first)",
       [CT.ceiling("grp.collision", n) for n in range(3, 9)] == ["live", "preview", "preview", "preview", "preview", "preview"] and CT.ceiling("grp.collision", 2) is None)
-check("Radiance and the three pair designs wait at preview (DG7, DG1 and the gate pass rule of two eyes are theirs), and every other design of the first release stays in the laboratory",
-      all(set(ceilings(i)) == {"preview"} for i in PREVIEW + ENSEMBLE) and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
+# Supernova Family is sold up to seven eyes (the owner, 2026-10-22: its eight-eye master needs 54 of the 52 s a Hobby call allows): eight eyes stay in the laboratory
+check("Radiance and the three pair designs wait at preview (DG7, DG1 and the gate pass rule of two eyes are theirs), Supernova Family up to seven eyes (eight in the laboratory), and every other design of the first release stays in the laboratory",
+      all(set(ceilings(i)) == {"preview"} for i in PREVIEW + ENSEMBLE if i != "grp.supernova") and ceilings("grp.supernova") == ["preview"] * 5 + ["lab"] and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
 check("planned ids (the reserved designs, Clean Family and the two pet ids) have no engine and stay planned",
       all(set(ceilings(i)) == {"planned"} and not X.ENGINE[i]["engine"] for i in PLANNED), {i: ceilings(i) for i in PLANNED})
 check("the six legacy ids are RETIRED for 1 to 8 eyes (a ceiling of retired is final), still known and still renderable by the legacy engine",
@@ -344,11 +345,12 @@ check("every release-1 style can be PREVIEWED (a customer sees the tile, the fre
       and all(CT.previewable("grp.collision", n) for n in range(3, 9)) and not any(CT.previewable(i, 1) for i in ("solo.elements",) + tuple(LEGACY))
       and not CT.previewable("grp.chain", 3) and not CT.previewable("grp.clean", 3), "")
 check("the tiles: eleven for one eye (Powder Burst first, Clean Iris sixth, then the light family's five), seven for two eyes (the three pairs, then Clean Duo, Radiance Duo, Nebula Duo and "
-      "Supernova Duo), six for three to eight (Family Colours, then Family Orbit, Light Circle, Radiance Family, Nebula Family and Supernova Family), all at preview; "
+      "Supernova Duo), six for three to seven (Family Colours, then Family Orbit, Light Circle, Radiance Family, Nebula Family and Supernova Family) and five for eight (no Supernova Family), all at preview; "
       "none is the recommended tile",
       [t["id"] for t in CT.tiles_for(1)] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean"] + LUMEN
       and [t["id"] for t in CT.tiles_for(2)] == ["duo.kiss_collision", "duo.collision_infinity", "duo.clean", "duo.clean_duo", "duo.radiance", "duo.nebula", "duo.supernova"]
-      and all([t["id"] for t in CT.tiles_for(n)] == ["grp.collision", "grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova"] for n in range(3, 9))
+      and all([t["id"] for t in CT.tiles_for(n)] == ["grp.collision", "grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova"] for n in range(3, 8))
+      and [t["id"] for t in CT.tiles_for(8)] == ["grp.collision", "grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula"]
       and all(t["stage"] == "preview" for n in range(1, 9) for t in CT.tiles_for(n)) and all(CT.tile_list(n)["pick"] is None for n in range(1, 9)), "")
 check("the public catalogue (what a customer's page is told) lists the twenty-four shown ids at preview only, with no held, planned or legacy id",
       sorted(c["id"] for c in CT.public_catalogue()) == sorted(LIVE1 + PREVIEW + ENSEMBLE + ["grp.collision"]) and all(set(c["stages"].values()) == {"preview"} for c in CT.public_catalogue()), CT.public_catalogue()[:2])
