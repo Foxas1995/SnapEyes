@@ -55,15 +55,15 @@ OCCL_TIP_PCT = 10
 # sclera is a slightly warm white; a red one is the eye itself (irritation), so red never counts as the light.
 LAMP_WARM_B = 24.0           # b* above this: a warm lamp
 LAMP_COOL_AB = -15.0         # a* + b* below this: a cold or cyan light (a sclera is never blue-green by itself)
-LAMP_MESSAGE = "Lamp light is tinting your eye colour. Daylight from a window gives truer colour."
+LAMP_MESSAGE = "Lamp light is tinting your eye colour. Daylight from a window or a torch from the side gives truer colour."
 MAX_SHOTS = 5                # how many frames the capture screen collects before it picks the best
 # Dark irises show their fibres faintly, and on the 30-photo brown test set the fix for a weak dark photo was more
 # light, not focus: 8 of 24 weak brown photos had an iris ring median luma below this. Detail itself stays on the
 # absolute measure (normalising it by brightness predicted the render's own-pattern survival worse: 0.46 vs 0.61).
 DARK_IRIS_LUMA = 50
 DARK_IRIS_TIP = ("Your iris is dark, so its fibres show faintly. Stand close to a bright window in daylight (not direct "
-                 "sun), with the window off to one side, and shoot again: more light brings them out. A desk lamp or a "
-                 "torch changes your eye colour.")
+                 "sun), with the window off to one side, or have someone hold a torch to the side, and shoot again: more "
+                 "light brings them out. A warm desk lamp changes your eye colour.")
 # The blur block. A photo that does not show enough of the customer's own iris pattern gets no work ticket and a
 # retake request: from it the studio model invents an iris, which would be sold as the customer's own eye. Any one
 # trigger blocks (blur_blocked); only a locked circle is judged. Lines 1-3 read how much fibre and crypt energy is
@@ -173,15 +173,16 @@ PATTERN_OUTER = 0.92         # ...and ends here (iris.FIBRE_RING)
 PATTERN_SECTORS = 16
 PATTERN_MIN_SECTORS = 8      # fewer sectors left after the reflections are cut out: no reading
 BLOCK_MESSAGE = ("This photo is too blurry for us to restore your own iris, so we have not used it: the studio would "
-                 "have to invent the pattern. Please retake it in daylight from a window off to one side, with the back "
-                 "camera at 2x, tap the iris on screen to focus, and hold the phone steady.")
+                 "have to invent the pattern. Please retake it in daylight from a window or with a torch, off to one "
+                 "side, with the back camera at 2x, tap the iris on screen to focus, and hold the phone steady.")
 # The same block on a photo the vision model calls sharp, of a dark iris (DARK_IRIS_LUMA): 01 as it is (Laplacian
 # 179.8, the owner's passing photos 31.6-80.7), 18 and 19 1-1.5 EV darker. Focus and a steady hand cannot help
 # there; light can. The same light as the capture guide's (a window off to one side), only closer.
 BLOCK_MESSAGE_DARK = ("Your iris is dark and there was too little light in this photo to see its own pattern, so we have "
                       "not used it: the studio would have to invent the pattern. Please retake it close to a bright "
-                      "window in daylight, with the window off to one side (not direct sun, not a lamp or the flash), the "
-                      "back camera at 2x, tap the iris on screen to focus, and hold the phone steady.")
+                      "window in daylight, with the window off to one side (not direct sun, not a room lamp or the flash), "
+                      "or with a torch held to the side, the back camera at 2x, tap the iris on screen to focus, and hold the "
+                      "phone steady.")
 BLOCK_MESSAGES = {"too_blurry": BLOCK_MESSAGE, "too_dark": BLOCK_MESSAGE_DARK}
 TARGETS = {"detail_good": DETAIL_GOOD, "detail_ok": DETAIL_OK, "min_diameter_px": MIN_DIAMETER_PX,
            "good_diameter_px": GOOD_DIAMETER_PX, "max_shots": MAX_SHOTS}
@@ -462,8 +463,8 @@ PUPIL_BLOCK_VISION = 0.55    # the vision pupil box's radius, in iris radii
 PUPIL_BLOCK_MESSAGE = ("Your pupil is very wide in this photo, so only a thin ring of your iris shows: too little to make "
                        "your artwork from. More light makes the pupil smaller: stand close to a bright window in daylight "
                        "(not direct sun) for a minute, then shoot again with the window off to one side. After dark, "
-                       "switch on all the ceiling lights and wait a minute first. If drops at an eye exam widened your "
-                       "pupils, wait until they wear off.")
+                       "switch on all the ceiling lights, wait a minute first and have someone hold a torch to the side. If "
+                       "drops at an eye exam widened your pupils, wait until they wear off.")
 BLOCK_MESSAGES["pupil_too_large"] = PUPIL_BLOCK_MESSAGE
 
 # An iris this small in the original photo holds too few pixels of its own pattern: enhance upscales it four times and
@@ -576,23 +577,27 @@ def telemetry(v, depth=0):
 TEXT_DE = {
     "no_eye": "Auf diesem Foto haben wir kein Auge gefunden. Füllen Sie das Bild mit einem geöffneten Auge und versuchen Sie "
               "es erneut.",
-    "lamp": "Lampenlicht verfälscht Ihre Augenfarbe. Tageslicht von einem Fenster gibt die Farbe echter wieder.",
+    "lamp": "Lampenlicht verfälscht Ihre Augenfarbe. Tageslicht von einem Fenster oder eine Taschenlampe von der Seite gibt "
+            "die Farbe echter wieder.",
     "dark_iris": "Ihre Iris ist dunkel, daher sind ihre Fasern nur schwach zu sehen. Stellen Sie sich bei Tageslicht nah an ein "
-                 "helles Fenster (keine direkte Sonne), das Fenster seitlich, und fotografieren Sie erneut: Mehr Licht bringt "
-                 "sie hervor. Eine Schreibtischlampe oder eine Taschenlampe verändert Ihre Augenfarbe.",
+                 "helles Fenster (keine direkte Sonne), das Fenster seitlich, oder lassen Sie jemanden eine Taschenlampe "
+                 "seitlich halten, und fotografieren Sie erneut: Mehr Licht bringt sie hervor. Eine warme Schreibtischlampe "
+                 "verändert Ihre Augenfarbe.",
     "too_blurry": "Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren, daher haben wir es nicht verwendet: Das "
-                  "Studio müsste das Muster erfinden. Bitte nehmen Sie es bei Tageslicht von einem seitlichen Fenster neu auf, "
-                  "mit der Rückkamera und 2-fachem Zoom, tippen Sie zum Scharfstellen auf die Iris und halten Sie das "
-                  "Smartphone ruhig.",
+                  "Studio müsste das Muster erfinden. Bitte nehmen Sie es bei Tageslicht von einem seitlichen Fenster oder "
+                  "mit einer seitlich gehaltenen Taschenlampe neu auf, mit der Rückkamera und 2-fachem Zoom, tippen Sie zum "
+                  "Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.",
     "too_dark": "Ihre Iris ist dunkel und auf diesem Foto war zu wenig Licht, um ihr eigenes Muster zu erkennen, daher haben "
                 "wir es nicht verwendet: Das Studio müsste das Muster erfinden. Bitte nehmen Sie es bei Tageslicht nah an "
-                "einem hellen Fenster neu auf, das Fenster seitlich (keine direkte Sonne, keine Lampe, kein Blitz), mit der "
-                "Rückkamera und 2-fachem Zoom, tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.",
+                "einem hellen Fenster neu auf, das Fenster seitlich (keine direkte Sonne, keine Zimmerlampe, kein Blitz), "
+                "oder mit einer seitlich gehaltenen Taschenlampe, mit der Rückkamera und 2-fachem Zoom, tippen Sie zum "
+                "Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.",
     "pupil_too_large": "Ihre Pupille ist auf diesem Foto sehr weit, daher ist nur ein schmaler Ring Ihrer Iris zu sehen: zu "
                        "wenig für Ihr Kunstwerk. Mehr Licht macht die Pupille kleiner: Stellen Sie sich eine Minute lang bei "
                        "Tageslicht nah an ein helles Fenster (keine direkte Sonne) und fotografieren Sie dann erneut, das "
-                       "Fenster seitlich. Wenn es draußen dunkel ist, schalten Sie alle Deckenlampen ein und warten Sie zuerst "
-                       "eine Minute. Wurden Ihre Pupillen bei einer Augenuntersuchung mit Tropfen erweitert, warten Sie, bis "
+                       "Fenster seitlich. Wenn es draußen dunkel ist, schalten Sie alle Deckenlampen ein, warten Sie zuerst "
+                       "eine Minute und lassen Sie jemanden eine Taschenlampe seitlich halten. Wurden Ihre Pupillen bei einer "
+                       "Augenuntersuchung mit Tropfen erweitert, warten Sie, bis "
                        "die Wirkung nachlässt.",
     "too_small": "Ihre Iris ist auf diesem Foto zu klein, daher ist zu wenig von ihrem eigenen Muster zu sehen: Das Studio "
                  "müsste es erfinden. Halten Sie das Smartphone etwa 10 cm vor Ihr Auge, mit der Rückkamera und 2-fachem "

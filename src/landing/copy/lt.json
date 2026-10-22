@@ -451,8 +451,8 @@
     "steps": [
       {
         "t": "Padarykite vieną nuotrauką",
-        "b": "Naudokite galinę kamerą su 2x priartinimu, maždaug 10 cm nuo akies, dienos šviesoje pro langą, iš šono. Padarykite nuo trijų iki penkių kadrų arba pasirinkite juos iš galerijos. Kiekvieną kadrą įvertiname ir panaudojame geriausią.",
-        "v": "Galinė kamera, dienos šviesa, viena akis"
+        "b": "Naudokite galinę kamerą su 2x priartinimu, maždaug 10 cm nuo akies, dienos šviesoje pro langą arba su žibintuvėliu, iš šono. Padarykite nuo trijų iki penkių kadrų arba pasirinkite juos iš galerijos. Kiekvieną kadrą įvertiname ir panaudojame geriausią.",
+        "v": "Galinė kamera, šviesa iš šono, viena akis"
       },
       {
         "t": "Pamatykite nemokamą peržiūrą",
@@ -469,7 +469,7 @@
     "tipsTitle": "Patarimai ryškiam kadrui",
     "tips": [
       "Galinė kamera su 2x priartinimu, maždaug 10 cm nuo akies.",
-      "Dienos šviesa pro langą, iš šono. Ne lempa ir ne blykstė.",
+      "Dienos šviesa pro langą arba žibintuvėlis, iš šono. Ne lempa ir ne blykstė.",
       "Bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai. Plačiai atmerkite akį, kad nei vokas, nei blakstienos nedengtų rainelės, ir nusiimkite akinius.",
       "Padarykite nuo trijų iki penkių kadrų. Realiame bandyme geriausias kadras turėjo 3,7 karto daugiau detalių nei prasčiausias, o mes naudojame ryškiausią."
     ],
@@ -639,12 +639,12 @@
       {
         "id": "phone",
         "q": "Kokį telefoną ir kamerą naudoti?",
-        "a": "Tinka bet kuris naujesnis išmanusis telefonas su gera galine kamera. Naudokite galinę kamerą su 2x arba 3x priartinimu, ne priekinę kamerą. Fotografuokite dienos šviesoje pro langą, iš šono, ne su lempa ir ne su blykste. Laikykite telefoną maždaug 10 cm nuo akies, bakstelėkite rainelę, kad kamera ją sufokusuotų, nusiimkite akinius ir padarykite nuo trijų iki penkių kadrų."
+        "a": "Tinka bet kuris naujesnis išmanusis telefonas su gera galine kamera. Naudokite galinę kamerą su 2x arba 3x priartinimu, ne priekinę kamerą. Fotografuokite dienos šviesoje pro langą arba su žibintuvėliu, iš šono, ne su lempa ir ne su blykste. Laikykite telefoną maždaug 10 cm nuo akies, bakstelėkite rainelę, kad kamera ją sufokusuotų, nusiimkite akinius ir padarykite nuo trijų iki penkių kadrų."
       },
       {
         "id": "colour",
         "q": "Ar spalva atitiks mano akį?",
-        "a": "Spalva paimta iš Jūsų nuotraukos, o telefonas spalvas užfiksuoja skirtingai, kai fotografuojama su lempa, su blykste ar pavėsyje. Mes niekada nekeičiame rainelės spalvos, todėl jei nuotrauka atrodo nuspalvinta, nufotografuokite iš naujo dienos šviesoje pro langą."
+        "a": "Spalva paimta iš Jūsų nuotraukos, o telefonas spalvas užfiksuoja skirtingai, kai fotografuojama su lempa, su blykste ar pavėsyje. Mes niekada nekeičiame rainelės spalvos, todėl jei nuotrauka atrodo nuspalvinta, nufotografuokite iš naujo dienos šviesoje pro langą arba su žibintuvėliu iš šono."
       },
       {
         "id": "other",

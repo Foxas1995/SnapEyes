@@ -451,8 +451,8 @@
     "steps": [
       {
         "t": "Take one photo",
-        "b": "Use the back camera at 2x, about 10\u00a0cm from your eye, in daylight from a window off to one side. Take three to five shots or pick them from your gallery. We measure every shot and use the best one.",
-        "v": "Back camera, daylight, one eye"
+        "b": "Use the back camera at 2x, about 10\u00a0cm from your eye, in daylight from a window or with a torch, off to one side. Take three to five shots or pick them from your gallery. We measure every shot and use the best one.",
+        "v": "Back camera, light from the side, one eye"
       },
       {
         "t": "See your free preview",
@@ -469,7 +469,7 @@
     "tipsTitle": "Tips for a sharp shot",
     "tips": [
       "Back camera at 2x zoom, about 10\u00a0cm from your eye.",
-      "Daylight from a window, off to one side. Not a lamp or the flash.",
+      "Daylight from a window or a torch, off to one side. Not a room lamp or the flash.",
       "Tap the iris to focus and hold the phone steady. Keep the eye wide open, so no lid or lashes cross the iris, and take glasses off.",
       "Take three to five shots. On a real test the best shot had 3.7 times the detail of the worst, and we use the sharpest."
     ],
@@ -639,12 +639,12 @@
       {
         "id": "phone",
         "q": "Which phone and camera should I use?",
-        "a": "Any recent smartphone with a good back camera. Use the back camera at 2x or 3x zoom, not the selfie camera. Use daylight from a window, off to one side, not a lamp or the flash. Hold the phone about 10\u00a0cm from your eye, tap the iris to focus, take glasses off and take three to five shots."
+        "a": "Any recent smartphone with a good back camera. Use the back camera at 2x or 3x zoom, not the selfie camera. Use daylight from a window or a torch, off to one side, not a room lamp or the flash. Hold the phone about 10\u00a0cm from your eye, tap the iris to focus, take glasses off and take three to five shots."
       },
       {
         "id": "colour",
         "q": "Will the colour match my eye?",
-        "a": "The colour comes from your photo, and a phone records colour differently under a lamp, a flash or in shade. We never recolour an iris, so if a photo looks tinted, retake it in window daylight."
+        "a": "The colour comes from your photo, and a phone records colour differently under a room lamp, a flash or in shade. We never recolour an iris, so if a photo looks tinted, retake it in window daylight or with a torch from the side."
       },
       {
         "id": "other",

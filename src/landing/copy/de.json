@@ -451,8 +451,8 @@
     "steps": [
       {
         "t": "Ein Foto aufnehmen",
-        "b": "Nutzen Sie die Rückkamera mit 2-fachem Zoom, etwa 10\u00a0cm vom Auge entfernt, bei Tageslicht von einem Fenster, seitlich. Machen Sie drei bis fünf Aufnahmen oder wählen Sie sie aus Ihrer Galerie. Wir prüfen jede davon und verwenden die beste.",
-        "v": "Rückkamera, Tageslicht, ein Auge"
+        "b": "Nutzen Sie die Rückkamera mit 2-fachem Zoom, etwa 10\u00a0cm vom Auge entfernt, bei Tageslicht vom Fenster oder mit einer Taschenlampe, seitlich. Machen Sie drei bis fünf Aufnahmen oder wählen Sie sie aus Ihrer Galerie. Wir prüfen jede davon und verwenden die beste.",
+        "v": "Rückkamera, Licht von der Seite, ein Auge"
       },
       {
         "t": "Kostenlose Vorschau ansehen",
@@ -469,7 +469,7 @@
     "tipsTitle": "Tipps für eine scharfe Aufnahme",
     "tips": [
       "Rückkamera mit 2-fachem Zoom, etwa 10\u00a0cm vom Auge entfernt.",
-      "Tageslicht von einem Fenster, seitlich. Keine Lampe und kein Blitz.",
+      "Tageslicht vom Fenster oder eine Taschenlampe, seitlich. Keine Zimmerlampe und kein Blitz.",
       "Tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig. Halten Sie das Auge weit offen, damit kein Lid und keine Wimper die Iris verdeckt, und nehmen Sie die Brille ab.",
       "Machen Sie drei bis fünf Aufnahmen. In einem echten Test hatte die beste Aufnahme 3,7-mal so viele Details wie die schlechteste, und wir verwenden die schärfste."
     ],
@@ -639,12 +639,12 @@
       {
         "id": "phone",
         "q": "Welches Smartphone und welche Kamera brauche ich?",
-        "a": "Jedes aktuelle Smartphone mit guter Rückkamera. Nutzen Sie die Rückkamera mit 2- oder 3-fachem Zoom, nicht die Selfie-Kamera. Nutzen Sie Tageslicht von einem Fenster, seitlich von Ihnen, keine Lampe und keinen Blitz. Halten Sie das Smartphone etwa 10\u00a0cm vor Ihr Auge, tippen Sie zum Scharfstellen auf die Iris, nehmen Sie die Brille ab und machen Sie drei bis fünf Aufnahmen."
+        "a": "Jedes aktuelle Smartphone mit guter Rückkamera. Nutzen Sie die Rückkamera mit 2- oder 3-fachem Zoom, nicht die Selfie-Kamera. Nutzen Sie Tageslicht vom Fenster oder eine Taschenlampe, seitlich von Ihnen, keine Zimmerlampe und keinen Blitz. Halten Sie das Smartphone etwa 10\u00a0cm vor Ihr Auge, tippen Sie zum Scharfstellen auf die Iris, nehmen Sie die Brille ab und machen Sie drei bis fünf Aufnahmen."
       },
       {
         "id": "colour",
         "q": "Passt die Farbe zu meinem Auge?",
-        "a": "Die Farbe stammt aus Ihrem Foto, und ein Smartphone nimmt Farben unter einer Lampe, mit Blitz oder im Schatten unterschiedlich auf. Wir färben eine Iris nie um. Wirkt ein Foto farbstichig, nehmen Sie es bei Fensterlicht neu auf."
+        "a": "Die Farbe stammt aus Ihrem Foto, und ein Smartphone nimmt Farben unter einer Zimmerlampe, mit Blitz oder im Schatten unterschiedlich auf. Wir färben eine Iris nie um. Wirkt ein Foto farbstichig, nehmen Sie es bei Fensterlicht oder mit einer Taschenlampe von der Seite neu auf."
       },
       {
         "id": "other",

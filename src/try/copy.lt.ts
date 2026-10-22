@@ -13,14 +13,14 @@ import { akiuWord, akys, akysWord, dec1Lt, kadrai, kadruWord, ltForm, nuotraukas
 // "1", "1 ir 3", "1, 2 ir 4"
 const andList = (xs: number[], and: string) => (xs.length < 2 ? String(xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} ${and} ${xs[xs.length - 1]}`);
 
-// The capture guide's steps, word for word the same on the capture screen and in the retake cards (the English
-// file's rule): daylight from the side, never a lamp or the flash.
-const LIGHT = 'Dienos šviesa pro langą, iš šono. Ne lempa ir ne blykstė.';
+// The retake cards' steps, the same light as the English file's (2026-10-22: daylight or a torch from the side, never a
+// room lamp or the flash).
+const LIGHT = 'Dienos šviesa pro langą arba žibintuvėlis, iš šono. Ne lempa ir ne blykstė.';
 const CAMERA = 'Galinė kamera su 2x priartinimu, maždaug 10 cm nuo akies.';
 const FOCUS = 'Bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų.';
 const STEADY = 'Laikykite telefoną stabiliai (alkūnes atremkite į ką nors tvirto) ir padarykite 3-5 kadrus.';
 // the first retake step for a dark iris: the same light, only closer to the window
-const DARK_LIGHT = 'Daugiau šviesos išryškina tamsią rainelę: dieną atsistokite arti šviesaus lango, kad langas būtų iš šono (ne tiesioginiai saulės spinduliai). Ne lempa ir ne blykstė.';
+const DARK_LIGHT = 'Daugiau šviesos išryškina tamsią rainelę: dieną atsistokite arti šviesaus lango, kad langas būtų iš šono (ne tiesioginiai saulės spinduliai), arba paprašykite, kad kas nors palaikytų žibintuvėlį iš šono. Ne lempa ir ne blykstė.';
 
 export const lt: TryCopy = {
   lang: 'lt',
@@ -56,7 +56,7 @@ export const lt: TryCopy = {
     addTitle: (n: number) => `Pridėti akį ${n}`,
     addLead: 'Partnerio, vaiko arba kita Jūsų akis. Tie patys žingsniai kaip anksčiau: padarykite kelis kadrus, o mes pasiliksime geriausią.',
     takeTurns: 'Fotografuojate vienas kitą? Darykite tai paeiliui: vienas laiko telefoną, kitas žiūri tiesiai į priekį. Tada apsikeiskite.',
-    helper: 'Lengviausia dviese: vienas laiko telefoną, kitas žiūri tiesiai į priekį.',
+    helper: 'Lengviausia dviese, alkūnes atrėmus į stalą: vienas laiko telefoną arti akies, kitas atremia smakrą į delną, žiūri tiesiai ir iš šono laiko žibintuvėlį.',
     retakeTitle: (n: number) => `Fotografuoti akį ${n} iš naujo`,
     retakeLead: 'Tie patys žingsniai kaip anksčiau. Naujas kadras pakeis šią akį kūrinyje; iki tol ji lieka tokia, kokia yra.',
     back: (n: number) => `Grįžti prie kūrinio (${akys(n)})`,
@@ -67,7 +67,7 @@ export const lt: TryCopy = {
     // the guide video's button and the four steps under it, one line each (copy.ts says why)
     videoPlay: 'Paleisti vaizdo įrašą',
     videoPause: 'Pristabdyti vaizdo įrašą',
-    steps: ['Galinė kamera, 2x priartinimas', 'Maždaug 10 cm nuo akies', 'Dienos šviesa pro langą, iš šono', 'Bakstelėkite rainelę ir nejudėkite'],
+    steps: ['Galinė kamera, 2x priartinimas', 'Maždaug 10 cm nuo akies', 'Dienos šviesa arba žibintuvėlis iš šono', 'Bakstelėkite rainelę ir nejudėkite'],
     moreTips: 'Daugiau patarimų',
     stepsOpen: 'Plačiai atmerkta akis. ',
     stepsOpenMore: 'Žiūrėkite tiesiai į priekį ir piršto galiuku švelniai pakelkite viršutinį voką, kad nei vokas, nei blakstienos nedengtų rainelės.',
@@ -103,7 +103,7 @@ export const lt: TryCopy = {
         title: 'Nuotrauka per neryški, kad atkurtume Jūsų rainelę',
         reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl šios nuotraukos nenaudojame.',
         error: 'Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
-        retakeLine: 'Šis kadras per neryškus, kad atkurtume Jūsų rainelę. Fotografuokite iš naujo dienos šviesoje prie lango iš šono, galine kamera su 2x priartinimu: bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai.',
+        retakeLine: 'Šis kadras per neryškus, kad atkurtume Jūsų rainelę. Fotografuokite iš naujo dienos šviesoje prie lango arba su žibintuvėliu, iš šono, galine kamera su 2x priartinimu: bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai.',
         thumb: 'neryški',
         steps: [LIGHT, CAMERA, FOCUS, STEADY],
       },
@@ -111,7 +111,7 @@ export const lt: TryCopy = {
         title: 'Per tamsu, kad būtų matomas Jūsų rainelės raštas',
         reason: 'Jūsų rainelė tamsi, o šviesos buvo per mažai, kad būtų matomas jos raštas, todėl šios nuotraukos nenaudojame.',
         error: 'Ši nuotrauka per tamsi, kad būtų matomas Jūsų rainelės raštas. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
-        retakeLine: 'Šis kadras per tamsus, kad būtų matomas Jūsų rainelės raštas. Fotografuokite iš naujo arti šviesaus lango dienos šviesoje, kad langas būtų iš šono. Ne lempa ir ne blykstė.',
+        retakeLine: 'Šis kadras per tamsus, kad būtų matomas Jūsų rainelės raštas. Fotografuokite iš naujo arti šviesaus lango dienos šviesoje, kad langas būtų iš šono, arba su žibintuvėliu iš šono. Ne lempa ir ne blykstė.',
         thumb: 'tamsi',
         steps: [DARK_LIGHT, CAMERA, FOCUS, STEADY],
       },
@@ -119,11 +119,11 @@ export const lt: TryCopy = {
         title: 'Vyzdys per platus, kad atkurtume Jūsų rainelę',
         reason: 'Šioje nuotraukoje Jūsų vyzdys taip išsiplėtęs, kad aplink jį matyti per mažai rainelės, todėl šios nuotraukos nenaudojame.',
         error: 'Šioje nuotraukoje Jūsų vyzdys per platus, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
-        retakeLine: 'Šiame kadre Jūsų vyzdys per platus. Daugiau šviesos jį sumažina: fotografuokite iš naujo arti šviesaus lango dienos šviesoje, ne su blykste.',
+        retakeLine: 'Šiame kadre Jūsų vyzdys per platus. Daugiau šviesos jį sumažina: fotografuokite iš naujo arti šviesaus lango dienos šviesoje arba su žibintuvėliu iš šono, ne su blykste.',
         thumb: 'vyzdys',
         steps: [
-          'Daugiau šviesos sumažina vyzdį: dieną atsistokite arti šviesaus lango, kad langas būtų iš šono (ne tiesioginiai saulės spinduliai). Ne blykstė.',
-          'Prieš fotografuojant leiskite akiai minutę pabūti toje šviesoje, kad vyzdys spėtų susiaurėti. Sutemus įjunkite visas lubų lempas.',
+          'Daugiau šviesos sumažina vyzdį: dieną atsistokite arti šviesaus lango, kad langas būtų iš šono (ne tiesioginiai saulės spinduliai), arba paprašykite, kad kas nors palaikytų žibintuvėlį iš šono. Ne blykstė.',
+          'Prieš fotografuojant leiskite akiai minutę pabūti toje šviesoje, kad vyzdys spėtų susiaurėti. Sutemus įjunkite visas lubų lempas ir paprašykite, kad kas nors palaikytų žibintuvėlį iš šono.',
           CAMERA,
           'Bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų, laikykite telefoną stabiliai ir padarykite 3-5 kadrus.',
         ],
@@ -215,7 +215,7 @@ export const lt: TryCopy = {
     aiMaterial: 'Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos, todėl kito kliento kūrinyje gali būti tas pats elementas. Jūsų rainelė išlaiko Jūsų nuotraukos spalvas, raštą ir išdėstymą; smulkiausias skaidulas, kaip aprašyta aukščiau, atkuria DI.',
     sampleNote: 'Ši akis yra DI sugeneruotas pavyzdys, ne tikra nuotrauka. Su Jūsų nuotrauka spalva paimama iš Jūsų nuotraukos.',
     // the owner's own language (2026-10-20): colourOff, pupilWide, how and did are new sentences, for his read
-    colourOff: 'Spalvos gali šiek tiek skirtis nuo Jūsų akies. Tikriausios jos dienos šviesoje be blykstės ir žibintuvėlio; jei patinka, galite tęsti.',
+    colourOff: 'Spalvos gali šiek tiek skirtis nuo Jūsų akies. Tikriausios jos dienos šviesoje arba su žibintuvėliu iš šono, be blykstės; jei patinka, galite tęsti.',
     pupilWide: 'Daugiau šviesos sumažins vyzdį ir parodys daugiau rainelės.',
     how: 'Kaip tai veikia?',
     did: {

@@ -13,24 +13,27 @@ keys instead of words, keep those words in the three tips.
 
 TEXT_HU = {
     "no_eye": "Ezen a fotón nem találtunk szemet. Egy nyitott szem töltse ki a képet, és próbáld újra.",
-    "lamp": "A lámpafény elszínezi a szemed színét. Egy ablakon beeső nappali fény valódibb színt ad.",
+    "lamp": "A lámpafény elszínezi a szemed színét. Egy ablakon beeső nappali fény vagy egy oldalról tartott zseblámpa "
+            "valódibb színt ad.",
     "dark_iris": "Az íriszed sötét, ezért a rostjai csak halványan látszanak. Nappal állj közel egy világos ablakhoz (ne "
-                 "közvetlen napfényben), úgy, hogy az ablak oldalt legyen, és fotózz újra: több fénynél előtűnnek. Az "
-                 "asztali lámpa vagy a zseblámpa megváltoztatja a szemed színét.",
+                 "közvetlen napfényben), úgy, hogy az ablak oldalt legyen, vagy kérd meg, hogy valaki oldalról tartson "
+                 "egy zseblámpát, és fotózz újra: több fénynél előtűnnek. A meleg fényű asztali lámpa megváltoztatja a "
+                 "szemed színét.",
     "too_blurry": "Ez a fotó túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk, ezért nem használtuk: a "
                   "stúdiónak ki kellene találnia a mintázatot. Kérjük, fotózd újra nappali fénynél, oldalt lévő "
-                  "ablaknál, a hátsó kamerával 2x-es zoommal, koppints a képernyőn az íriszre az élességállításhoz, és "
-                  "tartsd stabilan a telefont.",
+                  "ablaknál vagy oldalról tartott zseblámpával, a hátsó kamerával 2x-es zoommal, koppints a képernyőn az "
+                  "íriszre az élességállításhoz, és tartsd stabilan a telefont.",
     "too_dark": "Az íriszed sötét, és ezen a fotón túl kevés volt a fény ahhoz, hogy a saját mintázata látsszon, ezért nem "
                 "használtuk: a stúdiónak ki kellene találnia a mintázatot. Kérjük, fotózd újra nappal, egy világos "
-                "ablak közelében, úgy, hogy az ablak oldalt legyen (ne közvetlen napfényben, se lámpa, se vaku), a "
-                "hátsó kamerával 2x-es zoommal, koppints a képernyőn az íriszre az élességállításhoz, és tartsd "
+                "ablak közelében, úgy, hogy az ablak oldalt legyen (ne közvetlen napfényben, se szobalámpa, se vaku), "
+                "vagy oldalról tartott zseblámpával, a hátsó kamerával 2x-es zoommal, koppints a képernyőn az íriszre az élességállításhoz, és tartsd "
                 "stabilan a telefont.",
     "pupil_too_large": "Ezen a fotón nagyon tág a pupillád, ezért csak egy vékony gyűrű látszik az íriszedből: ez túl "
                        "kevés az alkotásodhoz. Több fénynél kisebb lesz a pupilla: állj egy percre közel egy világos "
                        "ablakhoz nappali fényben (ne közvetlen napfényben), majd fotózz újra úgy, hogy az ablak oldalt "
-                       "legyen. Sötétedés után kapcsold fel az összes mennyezeti lámpát, és előtte várj egy percet. Ha "
-                       "egy szemvizsgálaton cseppekkel tágították a pupilládat, várd meg, amíg a hatásuk elmúlik.",
+                       "legyen. Sötétedés után kapcsold fel az összes mennyezeti lámpát, várj előtte egy percet, és kérd "
+                       "meg, hogy valaki oldalról tartson egy zseblámpát. Ha egy szemvizsgálaton cseppekkel tágították a "
+                       "pupilládat, várd meg, amíg a hatásuk elmúlik.",
     "too_small": "Az íriszed túl kicsi ezen a fotón, ezért túl kevés látszik a saját mintázatából: a stúdiónak ki kellene "
                  "találnia. Tartsd a telefont kb. 10 cm-re a szemedtől, a hátsó kamerával 2x-es zoommal, hogy az írisz a "
                  "kép kb. harmadát kitöltse, koppints az íriszre az élességállításhoz, és fotózz újra.",

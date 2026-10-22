@@ -451,8 +451,8 @@
     "steps": [
       {
         "t": "Készíts egy fotót",
-        "b": "Használd a hátsó kamerát 2x-es zoommal, kb. 10 cm-re a szemtől, egy ablakból oldalról érkező nappali fényben. Készíts három-öt felvételt, vagy válaszd ki őket a galériádból. Mindegyik felvételt kielemezzük, és a legjobbat használjuk.",
-        "v": "Hátsó kamera, nappali fény, egy szem"
+        "b": "Használd a hátsó kamerát 2x-es zoommal, kb. 10 cm-re a szemtől, ablakból vagy zseblámpából oldalról érkező fényben. Készíts három-öt felvételt, vagy válaszd ki őket a galériádból. Mindegyik felvételt kielemezzük, és a legjobbat használjuk.",
+        "v": "Hátsó kamera, oldalfény, egy szem"
       },
       {
         "t": "Nézd meg az ingyenes előnézetedet",
@@ -469,7 +469,7 @@
     "tipsTitle": "Tippek az éles felvételhez",
     "tips": [
       "Hátsó kamera 2x-es zoommal, kb. 10 cm-re a szemtől.",
-      "Nappali fény egy ablakból, oldalról. Se lámpa, se vaku.",
+      "Nappali fény egy ablakból vagy zseblámpa, oldalról. Se szobalámpa, se vaku.",
       "Az élességállításhoz koppints az íriszre, és tartsd stabilan a telefont. Tartsd tágra nyitva a szemedet, hogy se a szemhéj, se a szempillák ne takarják az íriszt, és vedd le a szemüvegedet.",
       "Készíts három-öt felvételt. Egy valódi teszten a legjobb felvételen 3,7-szer annyi részlet volt, mint a legrosszabbon, mi pedig a legélesebbet használjuk."
     ],
@@ -639,12 +639,12 @@
       {
         "id": "phone",
         "q": "Milyen telefont és kamerát használjak?",
-        "a": "Bármilyen újabb okostelefon megfelel, amelynek jó a hátsó kamerája. A hátsó kamerát használd 2x-es vagy 3x-os zoommal, ne a szelfikamerát. Használj ablakból érkező, oldalról eső nappali fényt, ne lámpát vagy vakut. Tartsd a telefont kb. 10 cm-re a szemedtől, koppints az íriszre az élességállításhoz, vedd le a szemüvegedet, és készíts három-öt felvételt."
+        "a": "Bármilyen újabb okostelefon megfelel, amelynek jó a hátsó kamerája. A hátsó kamerát használd 2x-es vagy 3x-os zoommal, ne a szelfikamerát. Használj ablakból érkező nappali fényt vagy zseblámpát, oldalról, ne szobalámpát vagy vakut. Tartsd a telefont kb. 10 cm-re a szemedtől, koppints az íriszre az élességállításhoz, vedd le a szemüvegedet, és készíts három-öt felvételt."
       },
       {
         "id": "colour",
         "q": "Egyezik a szín a szemem színével?",
-        "a": "A szín a fotódból származik, a telefon pedig másként rögzíti a színeket lámpafényben, vakuval vagy árnyékban. Az íriszt soha nem színezzük át, ezért ha egy fotón színeltolódás látszik, fotózd újra ablakból érkező nappali fényben."
+        "a": "A szín a fotódból származik, a telefon pedig másként rögzíti a színeket szobalámpa fényében, vakuval vagy árnyékban. Az íriszt soha nem színezzük át, ezért ha egy fotón színeltolódás látszik, fotózd újra ablakból érkező nappali fényben vagy oldalról tartott zseblámpával."
       },
       {
         "id": "other",

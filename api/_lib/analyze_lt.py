@@ -14,24 +14,27 @@ The capture screen recognises three tips by their words (src/try/shots.ts visibl
 
 TEXT_LT = {
     "no_eye": "Šioje nuotraukoje neradome akies. Užpildykite kadrą viena atmerkta akimi ir bandykite dar kartą.",
-    "lamp": "Lempos šviesa iškraipo Jūsų akių spalvą. Dienos šviesa pro langą perteikia tikresnę spalvą.",
+    "lamp": "Lempos šviesa iškraipo Jūsų akių spalvą. Dienos šviesa pro langą arba žibintuvėlis iš šono perteikia "
+            "tikresnę spalvą.",
     "dark_iris": "Jūsų rainelė tamsi, todėl jos skaidulos vos matomos. Dieną atsistokite arti šviesaus lango (ne "
-                 "tiesioginiuose saulės spinduliuose), kad langas būtų iš šono, ir fotografuokite dar kartą: daugiau "
-                 "šviesos jas išryškins. Stalinė lempa ar žibintuvėlis pakeičia Jūsų akių spalvą.",
+                 "tiesioginiuose saulės spinduliuose), kad langas būtų iš šono, arba paprašykite, kad kas nors palaikytų "
+                 "žibintuvėlį iš šono, ir fotografuokite dar kartą: daugiau šviesos jas išryškins. Šilta stalinė lempa "
+                 "pakeičia Jūsų akių spalvą.",
     "too_blurry": "Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę, todėl jos nepanaudojome: studijai tektų raštą "
-                  "išgalvoti. Fotografuokite iš naujo dienos šviesoje prie lango iš šono, galine kamera su 2x "
-                  "priartinimu, bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų, ir laikykite telefoną "
-                  "stabiliai.",
+                  "išgalvoti. Fotografuokite iš naujo dienos šviesoje prie lango arba su žibintuvėliu, iš šono, galine "
+                  "kamera su 2x priartinimu, bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų, ir laikykite "
+                  "telefoną stabiliai.",
     "too_dark": "Jūsų rainelė tamsi, o šioje nuotraukoje buvo per mažai šviesos, kad būtų matomas jos raštas, todėl jos "
                 "nepanaudojome: studijai tektų raštą išgalvoti. Fotografuokite iš naujo arti šviesaus lango dienos "
-                "šviesoje, kad langas būtų iš šono (ne tiesioginiai saulės spinduliai, ne lempa ir ne blykstė), galine "
-                "kamera su 2x priartinimu, bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų, ir laikykite "
+                "šviesoje, kad langas būtų iš šono (ne tiesioginiai saulės spinduliai, ne lempa ir ne blykstė), arba su "
+                "žibintuvėliu iš šono, galine kamera su 2x priartinimu, bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų, ir laikykite "
                 "telefoną stabiliai.",
     "pupil_too_large": "Šioje nuotraukoje Jūsų vyzdys labai išsiplėtęs, todėl matomas tik siauras rainelės žiedas: per "
                        "mažai kūriniui sukurti. Daugiau šviesos vyzdį sumažina: minutę pastovėkite arti šviesaus lango "
                        "dienos šviesoje (ne tiesioginiuose saulės spinduliuose), tada fotografuokite dar kartą, kad "
-                       "langas būtų iš šono. Sutemus įjunkite visas lubų lempas ir pirmiausia palaukite minutę. Jei "
-                       "akių tyrimo metu vyzdžiai buvo išplėsti lašais, palaukite, kol jų poveikis praeis.",
+                       "langas būtų iš šono. Sutemus įjunkite visas lubų lempas, pirmiausia palaukite minutę ir paprašykite, "
+                       "kad kas nors palaikytų žibintuvėlį iš šono. Jei akių tyrimo metu vyzdžiai buvo išplėsti lašais, "
+                       "palaukite, kol jų poveikis praeis.",
     "too_small": "Šioje nuotraukoje Jūsų rainelė per maža, todėl matyti per mažai jos rašto: studijai tektų jį "
                  "išgalvoti. Laikykite telefoną maždaug 10 cm nuo akies, galine kamera su 2x priartinimu, kad rainelė "
                  "užpildytų maždaug trečdalį kadro, bakstelėkite rainelę, kad kamera ją sufokusuotų, ir fotografuokite "

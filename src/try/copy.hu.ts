@@ -47,11 +47,11 @@ const ordList = (xs: number[]) => {
 };
 
 // the capture guide's steps, word for word the same on the capture screen and in the retake cards (src/try/copy.ts)
-const LIGHT = 'Nappali fény egy ablakból, oldalról. Se lámpa, se vaku.';
+const LIGHT = 'Nappali fény egy ablakból vagy zseblámpa, oldalról. Se szobalámpa, se vaku.';
 const CAMERA = 'Hátsó kamera 2x-es zoommal, kb. 10 cm-re a szemtől.';
 const FOCUS = 'Koppints az íriszre a képernyőn, hogy a kamera arra állítsa az élességet.';
 const STEADY = 'Tartsd stabilan a telefont (támaszd meg a könyöködet), és készíts 3-5 felvételt.';
-const DARK_LIGHT = 'Több fénynél a sötét írisz mintázata is előtűnik: nappal állj közel egy világos ablakhoz, úgy, hogy az ablak oldalt legyen (ne közvetlen napfényben). Se lámpa, se vaku.';
+const DARK_LIGHT = 'Több fénynél a sötét írisz mintázata is előtűnik: nappal állj közel egy világos ablakhoz, úgy, hogy az ablak oldalt legyen (ne közvetlen napfényben), vagy kérd meg, hogy valaki oldalról tartson egy zseblámpát. Se szobalámpa, se vaku.';
 const HU_DECIMAL = new Intl.NumberFormat('hu-HU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export const hu: TryCopy = {
@@ -86,7 +86,7 @@ export const hu: TryCopy = {
     addTitle: (n: number) => `${n}. szem hozzáadása`,
     addLead: 'A párod, a gyermeked vagy a másik szemed. Ugyanazok a lépések, mint az előbb: készíts néhány felvételt, és a legjobbat megtartjuk.',
     takeTurns: 'Egymást fotózzátok? Felváltva csináljátok: az egyik tartja a telefont, a másik egyenesen előre néz. Aztán cseréljetek.',
-    helper: 'Kettesben a legkönnyebb: az egyik tartja a telefont, a másik egyenesen előre néz.',
+    helper: 'Kettesben a legkönnyebb, a könyököt az asztalra támasztva: az egyik közel tartja a telefont a szemhez, a másik a tenyerére támasztja az állát, egyenesen előre néz, és oldalról zseblámpát tart.',
     retakeTitle: (n: number) => `${n}. szem újrafotózása`,
     retakeLead: 'Ugyanazok a lépések, mint az előbb. Az új felvételed lecseréli ezt a szemet az alkotáson; addig minden marad, ahogy van.',
     back: (n: number) => `Vissza az alkotásodhoz (${n} szem)`,
@@ -96,7 +96,7 @@ export const hu: TryCopy = {
     sampleThumb: 'MI által generált minta',
     videoPlay: 'Útmutató videó lejátszása',
     videoPause: 'Útmutató videó szüneteltetése',
-    steps: ['Hátsó kamera, 2x-es zoom', 'Kb. 10 cm-re a szemtől', 'Ablakfény oldalról', 'Koppints az íriszre, ne mozdulj'],
+    steps: ['Hátsó kamera, 2x-es zoom', 'Kb. 10 cm-re a szemtől', 'Ablakfény vagy zseblámpa oldalról', 'Koppints az íriszre, ne mozdulj'],
     moreTips: 'További tippek',
     stepsOpen: 'Tágra nyitott szem. ',
     stepsOpenMore: 'Nézz egyenesen előre, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se a szemhéj, se a szempillák ne takarják az íriszt.',
@@ -132,7 +132,7 @@ export const hu: TryCopy = {
         title: 'Túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk',
         reason: 'Ezen a fotón nem látszik eléggé a saját íriszmintázatod ahhoz, hogy helyreállítsuk, ezért nem használjuk.',
         error: 'Ez a fotó túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Kérjük, fotózd újra az alábbi lépések szerint.',
-        retakeLine: 'Ez a felvétel túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Fotózd újra nappali fénynél, oldalt lévő ablaknál, a hátsó kamerával 2x-es zoommal: koppints az íriszre az élességállításhoz, és tartsd stabilan a telefont.',
+        retakeLine: 'Ez a felvétel túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Fotózd újra nappali fénynél, oldalt lévő ablaknál vagy oldalról tartott zseblámpával, a hátsó kamerával 2x-es zoommal: koppints az íriszre az élességállításhoz, és tartsd stabilan a telefont.',
         thumb: 'elmosódott',
         steps: [LIGHT, CAMERA, FOCUS, STEADY],
       },
@@ -140,7 +140,7 @@ export const hu: TryCopy = {
         title: 'Túl sötét ahhoz, hogy látsszon a saját íriszmintázatod',
         reason: 'Az íriszed sötét, és túl kevés volt a fény ahhoz, hogy a saját mintázata látsszon, ezért ezt a fotót nem használjuk.',
         error: 'Ez a fotó túl sötét ahhoz, hogy látsszon a saját íriszmintázatod. Kérjük, fotózd újra az alábbi lépések szerint.',
-        retakeLine: 'Ez a felvétel túl sötét ahhoz, hogy látsszon a saját íriszmintázatod. Fotózd újra nappal, egy világos ablak közelében, úgy, hogy az ablak oldalt legyen. Se lámpa, se vaku.',
+        retakeLine: 'Ez a felvétel túl sötét ahhoz, hogy látsszon a saját íriszmintázatod. Fotózd újra nappal, egy világos ablak közelében, úgy, hogy az ablak oldalt legyen, vagy oldalról tartott zseblámpával. Se szobalámpa, se vaku.',
         thumb: 'sötét',
         steps: [DARK_LIGHT, CAMERA, FOCUS, STEADY],
       },
@@ -148,11 +148,11 @@ export const hu: TryCopy = {
         title: 'A pupillád túl tág ahhoz, hogy az íriszedet helyreállítsuk',
         reason: 'Ezen a fotón annyira tág a pupillád, hogy túl kevés látszik körülötte az íriszedből, ezért nem használjuk.',
         error: 'Ezen a fotón túl tág a pupillád ahhoz, hogy a saját íriszedet helyreállítsuk. Kérjük, fotózd újra az alábbi lépések szerint.',
-        retakeLine: 'Ezen a felvételen túl tág a pupillád. Több fénynél kisebb lesz: fotózd újra nappal, egy világos ablak közelében, ne vakuval.',
+        retakeLine: 'Ezen a felvételen túl tág a pupillád. Több fénynél kisebb lesz: fotózd újra nappal, egy világos ablak közelében, vagy oldalról tartott zseblámpával, ne vakuval.',
         thumb: 'pupilla',
         steps: [
-          'Több fénynél kisebb lesz a pupillád: nappal állj közel egy világos ablakhoz, úgy, hogy az ablak oldalt legyen (ne közvetlen napfényben). Vakut ne használj.',
-          'Fotózás előtt hagyj a szemednek egy percet ebben a fényben, hogy a pupilla összeszűkülhessen. Sötétedés után kapcsold fel az összes mennyezeti lámpát.',
+          'Több fénynél kisebb lesz a pupillád: nappal állj közel egy világos ablakhoz, úgy, hogy az ablak oldalt legyen (ne közvetlen napfényben), vagy kérd meg, hogy valaki oldalról tartson egy zseblámpát. Vakut ne használj.',
+          'Fotózás előtt hagyj a szemednek egy percet ebben a fényben, hogy a pupilla összeszűkülhessen. Sötétedés után kapcsold fel az összes mennyezeti lámpát, és kérd meg, hogy valaki oldalról tartson egy zseblámpát.',
           CAMERA,
           'Koppints az íriszre a képernyőn az élességállításhoz, tartsd stabilan a telefont, és készíts 3-5 felvételt.',
         ],
@@ -241,7 +241,7 @@ export const hu: TryCopy = {
     aiMaterial: 'Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
     sampleNote: 'Ez a szem az MI által generált minta, nem valódi fotó. A saját fotóddal a szín a te fotódból származik.',
     // new sentences of 2026-10-20 (colourOff, pupilWide, how, did): written without a native reader
-    colourOff: 'A színek kissé eltérhetnek a szemedétől. Nappali fényben, vaku és zseblámpa nélkül a leghűbbek; ha tetszik, folytasd nyugodtan.',
+    colourOff: 'A színek kissé eltérhetnek a szemedétől. Nappali fényben vagy oldalról érkező zseblámpafénnyel, vaku nélkül a leghűbbek; ha tetszik, folytasd nyugodtan.',
     pupilWide: 'Több fénynél kisebb a pupilla, és több látszik az íriszedből.',
     how: 'Hogyan működik?',
     did: {

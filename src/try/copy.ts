@@ -31,15 +31,16 @@ const andList = (xs: number[], and: string) => (xs.length < 2 ? String(xs[0] ?? 
 
 // The capture guide's steps, word for word the same on the capture screen and in the retake guide of a shot the
 // engine blocked, so "Retake" never leads to advice that contradicts the screen it came from. Daylight from the
-// side: straight-on light washes over the iris (04 in the test set), and a lamp tints it (api/analyze.py
-// LAMP_MESSAGE).
-const LIGHT = 'Daylight from a window, from one side. No lamp, no flash.';
+// side: straight-on light washes over the iris (04 in the test set), and a warm room lamp tints it (api/analyze.py
+// LAMP_MESSAGE). A torch held from the side is as good as a window (the owner, 2026-10-22: his 2021 studio lit irises that way),
+// so the light lines offer both and refuse only the room lamp and the flash.
+const LIGHT = 'Daylight from a window or a torch, from one side. No room lamp, no flash.';
 const CAMERA = 'Back camera at 2x zoom, about 10 cm from the eye.';
 const FOCUS = 'Tap the iris on the screen so the camera focuses on it.';
 const STEADY = 'Hold the phone steady (rest your elbows on something) and take 3-5 shots.';
 // the first retake step for a dark iris: the same light as LIGHT, only closer to the window, since more light is
 // what brings a dark iris's pattern out (api/analyze.py DARK_IRIS_TIP)
-const DARK_LIGHT = 'More light brings out a dark iris: stand close to a bright window in daylight, with the window off to one side (not direct sun). Not a lamp or the flash.';
+const DARK_LIGHT = 'More light brings out a dark iris: stand close to a bright window in daylight, with the window off to one side (not direct sun), or have someone hold a torch to the side. Not a room lamp or the flash.';
 
 const en = {
   lang: 'en' as Lang,
@@ -76,7 +77,7 @@ const en = {
     addLead: 'Your partner, your child, or your other eye. Same steps as before: take a few shots and we keep the best one.',
     // a couple with one phone: the back camera cannot be aimed at your own eye while you watch the screen
     takeTurns: 'Photographing each other? Take turns: one holds the phone, the other looks straight ahead. Then swap.',
-    helper: 'Easiest in pairs: one holds the phone, the other looks straight ahead.',
+    helper: 'Easiest in pairs, elbows on a table: one holds the phone close to the eye, the other rests the chin on a hand, looks straight ahead and holds a torch to the side.',
     retakeTitle: (n: number) => `Retake eye ${n}`,
     retakeLead: 'Same steps as before. Your new shot replaces this eye on the artwork; until then it stays as it is.',
     back: (n: number) => `Back to your artwork (${eyes(n)})`,
@@ -89,7 +90,7 @@ const en = {
     videoPause: 'Pause the guide video',
     // the capture guide under the video: four steps, one line each, numbered by the list (2026-10-22: the video shows them; the retake guide keeps the
     // full sentences, LIGHT, CAMERA, FOCUS and STEADY, and says nothing these lines contradict)
-    steps: ['Back camera, 2x zoom', 'About 10 cm from the eye', 'Window light from the side', 'Tap the iris to focus, hold still'],
+    steps: ['Back camera, 2x zoom', 'About 10 cm from the eye', 'Window or torch light, from the side', 'Tap the iris to focus, hold still'],
     // the summary of the closed disclosure under the four steps that holds the three lines below (the open eye, the 3-5 shots, the pair): the first screen shows
     // the four steps and the buttons, the rest is one tap away
     moreTips: 'More tips',
@@ -132,7 +133,7 @@ const en = {
         title: 'Too blurry to restore your own iris',
         reason: 'We could not see enough of your own iris pattern in this photo to restore it, so it is not used.',
         error: 'This photo is too blurry to restore your own iris. Please retake it following the steps below.',
-        retakeLine: 'This shot is too blurry to restore your own iris. Retake it in daylight from a window off to one side, with the back camera at 2x: tap the iris to focus and hold the phone steady.',
+        retakeLine: 'This shot is too blurry to restore your own iris. Retake it in daylight from a window or with a torch, off to one side, with the back camera at 2x: tap the iris to focus and hold the phone steady.',
         thumb: 'blurry',
         steps: [LIGHT, CAMERA, FOCUS, STEADY],
       },
@@ -141,7 +142,7 @@ const en = {
         title: 'Too dark to see your own iris pattern',
         reason: 'Your iris is dark and there was too little light to see its own pattern, so this photo is not used.',
         error: 'This photo is too dark to see your own iris pattern. Please retake it following the steps below.',
-        retakeLine: 'This shot is too dark to see your own iris pattern. Retake it close to a bright window in daylight, with the window off to one side. Not a lamp or the flash.',
+        retakeLine: 'This shot is too dark to see your own iris pattern. Retake it close to a bright window in daylight, with the window off to one side, or with a torch held to the side. Not a room lamp or the flash.',
         thumb: 'dark',
         steps: [DARK_LIGHT, CAMERA, FOCUS, STEADY],
       },
@@ -151,11 +152,11 @@ const en = {
         title: 'Your pupil is too wide to restore your iris',
         reason: 'Your pupil is open so wide in this photo that too little of your iris shows around it, so it is not used.',
         error: 'Your pupil is too wide in this photo to restore your own iris. Please retake it following the steps below.',
-        retakeLine: 'Your pupil is too wide in this shot. More light makes it smaller: retake it close to a bright window in daylight, not with the flash.',
+        retakeLine: 'Your pupil is too wide in this shot. More light makes it smaller: retake it close to a bright window in daylight, or with a torch held to the side, not with the flash.',
         thumb: 'pupil',
         steps: [
-          'More light makes your pupil smaller: stand close to a bright window in daylight, with the window off to one side (not direct sun). Not the flash.',
-          'Give your eye a minute in that light before you shoot, so the pupil has time to narrow. After dark, switch on all the ceiling lights.',
+          'More light makes your pupil smaller: stand close to a bright window in daylight, with the window off to one side (not direct sun), or have someone hold a torch to the side. Not the flash.',
+          'Give your eye a minute in that light before you shoot, so the pupil has time to narrow. After dark, switch on all the ceiling lights and have someone hold a torch to the side.',
           CAMERA,
           'Tap the iris on the screen to focus, hold the phone steady and take 3-5 shots.',
         ],
@@ -254,7 +255,7 @@ const en = {
     sampleNote: 'This eye is the AI-generated sample, not a real photo. With your own photo, the colour comes from your photo.',
     // the engine's colour check (api/enhance qa) failed for this eye: say so, what helps (the owner, 2026-10-20: people light the eye with a torch from the side, so
     // "soft daylight" alone said too little) and that a result the visitor likes is fine to keep
-    colourOff: 'Colours may differ slightly from your eye. Daylight without flash or torch is truest; if you like it, carry on.',
+    colourOff: 'Colours may differ slightly from your eye. Daylight or a torch from the side is truest, without the flash; if you like it, carry on.',
     // one line under the before/after, only when the pupil measured on the photo is wide (./multi.ts pupilWide): the engine keeps the photo's pupil, so more light is what helps
     pupilWide: 'More light makes the pupil smaller and shows more of your iris.',
     // the summary of the one closed disclosure under the before/after (./ResultView.tsx HowItWorks): the sentence that says where the colour comes from and what the AI
@@ -550,11 +551,11 @@ const augen = (n: number) => `${n} ${n === 1 ? 'Auge' : 'Augen'}`;
 
 // the capture guide's steps in German: the same rule as above, word for word on the capture screen and in the
 // retake cards
-const LIGHT_DE = 'Tageslicht von einem Fenster, von der Seite. Keine Lampe, kein Blitz.';
+const LIGHT_DE = 'Tageslicht vom Fenster oder eine Taschenlampe, von der Seite. Keine Zimmerlampe, kein Blitz.';
 const CAMERA_DE = 'Rückkamera mit 2-fachem Zoom, etwa 10 cm vor dem Auge.';
 const FOCUS_DE = 'Tippen Sie auf dem Bildschirm auf die Iris, damit die Kamera darauf scharfstellt.';
 const STEADY_DE = 'Halten Sie das Smartphone ruhig (stützen Sie die Ellbogen auf) und machen Sie 3-5 Aufnahmen.';
-const DARK_LIGHT_DE = 'Mehr Licht bringt eine dunkle Iris zur Geltung: Stellen Sie sich bei Tageslicht nah an ein helles Fenster, das Fenster seitlich (keine direkte Sonne). Keine Lampe, kein Blitz.';
+const DARK_LIGHT_DE = 'Mehr Licht bringt eine dunkle Iris zur Geltung: Stellen Sie sich bei Tageslicht nah an ein helles Fenster, das Fenster seitlich (keine direkte Sonne), oder lassen Sie jemanden eine Taschenlampe seitlich halten. Keine Zimmerlampe, kein Blitz.';
 const DE_DECIMAL = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 const de: TryCopy = {
@@ -589,7 +590,7 @@ const de: TryCopy = {
     addTitle: (n: number) => `Auge ${n} hinzufügen`,
     addLead: 'Ihr Partner oder Ihre Partnerin, Ihr Kind oder Ihr anderes Auge. Dieselben Schritte wie zuvor: Machen Sie ein paar Aufnahmen, wir behalten die beste.',
     takeTurns: 'Sie fotografieren sich gegenseitig? Wechseln Sie sich ab: Eine Person hält das Smartphone, die andere schaut geradeaus. Dann tauschen Sie.',
-    helper: 'Am einfachsten zu zweit: Eine Person hält das Smartphone, die andere schaut geradeaus.',
+    helper: 'Am einfachsten zu zweit, die Ellbogen auf einem Tisch: Eine Person hält das Smartphone nah ans Auge, die andere stützt das Kinn auf die Hand, schaut geradeaus und hält eine Taschenlampe seitlich.',
     retakeTitle: (n: number) => `Auge ${n} neu aufnehmen`,
     retakeLead: 'Dieselben Schritte wie zuvor. Ihre neue Aufnahme ersetzt dieses Auge im Kunstwerk, bis dahin bleibt es, wie es ist.',
     back: (n: number) => `Zurück zu Ihrem Kunstwerk (${augen(n)})`,
@@ -599,7 +600,7 @@ const de: TryCopy = {
     sampleThumb: 'KI-generiertes Beispiel',
     videoPlay: 'Anleitungsvideo abspielen',
     videoPause: 'Anleitungsvideo anhalten',
-    steps: ['Rückkamera, 2-facher Zoom', 'Etwa 10 cm vor dem Auge', 'Fensterlicht von der Seite', 'Auf die Iris tippen, still halten'],
+    steps: ['Rückkamera, 2-facher Zoom', 'Etwa 10 cm vor dem Auge', 'Fensterlicht oder Taschenlampe, seitlich', 'Auf die Iris tippen, still halten'],
     moreTips: 'Weitere Tipps',
     stepsOpen: 'Auge weit geöffnet. ',
     stepsOpenMore: 'Schauen Sie geradeaus und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit weder Lid noch Wimpern über der Iris liegen.',
@@ -635,7 +636,7 @@ const de: TryCopy = {
         title: 'Zu unscharf, um Ihre eigene Iris zu restaurieren',
         reason: 'Auf diesem Foto ist zu wenig von Ihrem eigenen Irismuster zu sehen, um es zu restaurieren. Daher verwenden wir es nicht.',
         error: 'Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren. Bitte nehmen Sie es mit den Schritten unten neu auf.',
-        retakeLine: 'Diese Aufnahme ist zu unscharf, um Ihre eigene Iris zu restaurieren. Nehmen Sie sie bei Tageslicht von einem seitlichen Fenster neu auf, mit der Rückkamera und 2-fachem Zoom: Tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.',
+        retakeLine: 'Diese Aufnahme ist zu unscharf, um Ihre eigene Iris zu restaurieren. Nehmen Sie sie bei Tageslicht von einem seitlichen Fenster oder mit einer seitlich gehaltenen Taschenlampe neu auf, mit der Rückkamera und 2-fachem Zoom: Tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.',
         thumb: 'unscharf',
         steps: [LIGHT_DE, CAMERA_DE, FOCUS_DE, STEADY_DE],
       },
@@ -643,7 +644,7 @@ const de: TryCopy = {
         title: 'Zu dunkel, um Ihr eigenes Irismuster zu erkennen',
         reason: 'Ihre Iris ist dunkel und es war zu wenig Licht, um ihr eigenes Muster zu erkennen. Daher verwenden wir dieses Foto nicht.',
         error: 'Dieses Foto ist zu dunkel, um Ihr eigenes Irismuster zu erkennen. Bitte nehmen Sie es mit den Schritten unten neu auf.',
-        retakeLine: 'Diese Aufnahme ist zu dunkel, um Ihr eigenes Irismuster zu erkennen. Nehmen Sie sie bei Tageslicht nah an einem hellen Fenster neu auf, das Fenster seitlich. Keine Lampe, kein Blitz.',
+        retakeLine: 'Diese Aufnahme ist zu dunkel, um Ihr eigenes Irismuster zu erkennen. Nehmen Sie sie bei Tageslicht nah an einem hellen Fenster neu auf, das Fenster seitlich, oder mit einer seitlich gehaltenen Taschenlampe. Keine Zimmerlampe, kein Blitz.',
         thumb: 'dunkel',
         steps: [DARK_LIGHT_DE, CAMERA_DE, FOCUS_DE, STEADY_DE],
       },
@@ -651,11 +652,11 @@ const de: TryCopy = {
         title: 'Ihre Pupille ist zu weit, um Ihre Iris zu restaurieren',
         reason: 'Ihre Pupille ist auf diesem Foto so weit geöffnet, dass zu wenig von Ihrer Iris zu sehen ist. Daher verwenden wir es nicht.',
         error: 'Ihre Pupille ist auf diesem Foto zu weit, um Ihre eigene Iris zu restaurieren. Bitte nehmen Sie es mit den Schritten unten neu auf.',
-        retakeLine: 'Ihre Pupille ist auf dieser Aufnahme zu weit. Mehr Licht macht sie kleiner: Nehmen Sie sie bei Tageslicht nah an einem hellen Fenster neu auf, nicht mit Blitz.',
+        retakeLine: 'Ihre Pupille ist auf dieser Aufnahme zu weit. Mehr Licht macht sie kleiner: Nehmen Sie sie bei Tageslicht nah an einem hellen Fenster oder mit einer seitlich gehaltenen Taschenlampe neu auf, nicht mit Blitz.',
         thumb: 'Pupille',
         steps: [
-          'Mehr Licht macht Ihre Pupille kleiner: Stellen Sie sich bei Tageslicht nah an ein helles Fenster, das Fenster seitlich (keine direkte Sonne). Kein Blitz.',
-          'Geben Sie Ihrem Auge vor der Aufnahme eine Minute in diesem Licht, damit sich die Pupille verengen kann. Wenn es draußen dunkel ist, schalten Sie alle Deckenlampen ein.',
+          'Mehr Licht macht Ihre Pupille kleiner: Stellen Sie sich bei Tageslicht nah an ein helles Fenster, das Fenster seitlich (keine direkte Sonne), oder lassen Sie jemanden eine Taschenlampe seitlich halten. Kein Blitz.',
+          'Geben Sie Ihrem Auge vor der Aufnahme eine Minute in diesem Licht, damit sich die Pupille verengen kann. Wenn es draußen dunkel ist, schalten Sie alle Deckenlampen ein und lassen Sie jemanden eine Taschenlampe seitlich halten.',
           CAMERA_DE,
           'Tippen Sie zum Scharfstellen auf die Iris, halten Sie das Smartphone ruhig und machen Sie 3-5 Aufnahmen.',
         ],
@@ -741,7 +742,7 @@ const de: TryCopy = {
     transparency: 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.',
     aiMaterial: 'Bei einigen Stilen sind das Pulver, die Flüssigkeit, die Flamme oder der Staub um Ihre Iris KI-erzeugtes Material aus einer gemeinsamen Bibliothek, sodass das Kunstwerk einer anderen Person dasselbe Stück enthalten kann. Ihre Iris behält die Farben, das Muster und die Anordnung Ihres Fotos; die feinsten Fasern werden, wie oben beschrieben, durch KI wiederhergestellt.',
     sampleNote: 'Dieses Auge ist das KI-generierte Beispiel, kein echtes Foto. Mit Ihrem eigenen Foto stammt die Farbe aus Ihrem Foto.',
-    colourOff: 'Die Farben können leicht abweichen. Tageslicht ohne Blitz oder Taschenlampe ist am natürlichsten; gefällt es Ihnen, machen Sie einfach weiter.',
+    colourOff: 'Die Farben können leicht abweichen. Am natürlichsten sind sie bei Tageslicht oder mit einer Taschenlampe von der Seite, ohne Blitz; gefällt es Ihnen, machen Sie einfach weiter.',
     pupilWide: 'Mehr Licht macht die Pupille kleiner und zeigt mehr von Ihrer Iris.',
     how: 'So funktioniert es',
     did: {
