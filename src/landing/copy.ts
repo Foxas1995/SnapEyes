@@ -25,7 +25,7 @@ export const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr 
  *  words of the question are not to drift (scripts/check_texts.mjs). Only English and German keyed on them in the old landing. */
 export const WITHDRAW_Q: Record<'en' | 'de', string> = { en: 'Can I withdraw from an order?', de: 'Kann ich eine Bestellung widerrufen?' };
 
-const en: Copy = { switchLabel: 'Language', brandTag: 'Private Atelier' };
-const de: Copy = { switchLabel: 'Sprache', brandTag: 'Private Atelier' };
+const en: Copy = { switchLabel: 'Language', brandTag: '' };
+const de: Copy = { switchLabel: 'Sprache', brandTag: '' };
 
 export const COPY: Record<Lang, Copy> = { en, de, lt, hu };

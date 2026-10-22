@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "SnapEyes Private Atelier: Jūsų tikroji rainelė kaip meno kūrinys",
+    "title": "SnapEyes: Jūsų tikroji rainelė kaip meno kūrinys",
     "description": "Nufotografuokite vieną akį telefonu ir pamatykite savo rainelę kaip meno kūrinį, atkurtą, o ne perpieštą. Nemokama peržiūra su vandens ženklu, tuomet gausite skaitmeninį failą, kurį galėsite atspausdinti bet kur.",
     "shareDescription": "Nufotografuokite vieną akį telefonu ir pamatykite savo rainelę kaip meno kūrinį. Peržiūra su vandens ženklu nemokama.",
     "locale": "lt_LT"
@@ -15,7 +15,7 @@
   },
   "langName": "Lietuvių",
   "switchLabel": "Kalba",
-  "brandTag": "Private Atelier",
+  "brandTag": "",
   "skip": "Pereiti prie turinio",
   "nav": {
     "reveal": "Prieš ir po",
@@ -47,7 +47,7 @@
     "mantas": "Paties Manto akis"
   },
   "hero": {
-    "eyebrow": "SnapEyes Private Atelier",
+    "eyebrow": "SnapEyes",
     "title": "Jūsų tikroji rainelė, paversta menu.",
     "lead": "Nufotografuokite vieną akį telefonu. Atkursime Jūsų tikrąją rainelę ir perteiksime ją Jūsų pasirinktu stiliumi. Gausite skaitmeninį failą ({px}), skirtą spausdinti iki {printMax} dydžio. Spausdinimas neįskaičiuotas.",
     "micro": [

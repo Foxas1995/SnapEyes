@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "SnapEyes Private Atelier: A valódi íriszed műalkotásként",
+    "title": "SnapEyes: A valódi íriszed műalkotásként",
     "description": "Fotózd le az egyik szemedet a telefonoddal, és lásd az íriszedet műalkotásként: helyreállítva, soha át nem festve. Ingyenes vízjeles előnézet, majd egy digitális fájl, amelyet bárhol kinyomtathatsz.",
     "shareDescription": "Fotózd le az egyik szemedet a telefonoddal, és nézd meg a saját íriszedet műalkotásként. A vízjeles előnézet ingyenes.",
     "locale": "hu_HU"
@@ -15,7 +15,7 @@
   },
   "langName": "Magyar",
   "switchLabel": "Nyelv",
-  "brandTag": "Private Atelier",
+  "brandTag": "",
   "skip": "Ugrás a tartalomra",
   "nav": {
     "reveal": "Előtte és utána",
@@ -47,7 +47,7 @@
     "mantas": "Mantas saját szeme"
   },
   "hero": {
-    "eyebrow": "SnapEyes Private Atelier",
+    "eyebrow": "SnapEyes",
     "title": "A valódi íriszed műalkotásként.",
     "lead": "Fotózd le az egyik szemedet a telefonoddal. Helyreállítjuk a valódi íriszedet, és a választott stílusban műalkotássá formáljuk. Digitális fájlt kapsz ({px}), amely legfeljebb {printMax} méretű nyomtatásra készült. Az ár nem tartalmazza a nyomtatást.",
     "micro": [

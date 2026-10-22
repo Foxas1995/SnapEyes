@@ -6,7 +6,7 @@ import { useCopy } from './copy/useCopy';
 // href: the landing links to its own top; the legal pages link home.
 export function Logo({ tag, href = '#top' }: { tag: string; href?: string }) {
   return (
-    <a href={href} className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f5c542]" aria-label="SnapEyes Private Atelier">
+    <a href={href} className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f5c542]" aria-label="SnapEyes">
       <svg aria-hidden="true" viewBox="0 0 32 32" className="h-8 w-8 shrink-0">
         <circle cx="16" cy="16" r="15" fill="none" stroke="#f5c542" strokeOpacity="0.55" strokeWidth="1" />
         <circle cx="16" cy="16" r="9.5" fill="none" stroke="#f5c542" strokeWidth="1.4" />
@@ -14,7 +14,7 @@ export function Logo({ tag, href = '#top' }: { tag: string; href?: string }) {
       </svg>
       <span className="flex flex-col leading-none">
         <span className="font-luxury text-[17px] font-semibold tracking-[0.18em] text-white">SNAPEYES</span>
-        <span className="mt-1 text-[9px] font-medium uppercase tracking-[0.34em] text-zinc-400">{tag}</span>
+        {tag && <span className="mt-1 text-[9px] font-medium uppercase tracking-[0.34em] text-zinc-400">{tag}</span>}
       </span>
     </a>
   );

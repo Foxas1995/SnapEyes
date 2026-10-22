@@ -7,4 +7,4 @@ import type { Copy } from './copy';
 export const TRANSPARENCY_HU =
   'A szín a saját fotódból származik. Ahol a telefonod nem tudta rögzíteni a legfinomabb rostokat, ott a mesterséges intelligenciánk állítja helyre őket.';
 
-export const hu: Copy = { switchLabel: 'Nyelv', brandTag: 'Private Atelier' };
+export const hu: Copy = { switchLabel: 'Nyelv', brandTag: '' };

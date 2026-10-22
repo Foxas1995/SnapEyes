@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "SnapEyes Private Atelier: Your Real Iris as Art",
+    "title": "SnapEyes: Your Real Iris as Art",
     "description": "Photograph one eye with your phone and see your iris as art, restored, never repainted. Free watermarked preview, then a digital file to print anywhere.",
     "shareDescription": "Photograph one eye with your phone and see your own iris as art. The watermarked preview is free.",
     "locale": "en_GB"
@@ -15,7 +15,7 @@
   },
   "langName": "English",
   "switchLabel": "Language",
-  "brandTag": "Private Atelier",
+  "brandTag": "",
   "skip": "Skip to content",
   "nav": {
     "reveal": "Before and after",
@@ -47,7 +47,7 @@
     "mantas": "Mantas's own eye"
   },
   "hero": {
-    "eyebrow": "SnapEyes Private Atelier",
+    "eyebrow": "SnapEyes",
     "title": "Your real iris, made into art.",
     "lead": "Photograph one eye with your phone. We restore your real iris and set it in a style you choose. You receive a digital file, {px}, made for printing up to {printMax}. Printing is not included.",
     "micro": [

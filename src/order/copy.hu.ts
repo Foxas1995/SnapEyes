@@ -16,7 +16,7 @@ export const hu: OrderCopy = {
     description: 'A SnapEyes-rendelésed: itt készül el az íriszalkotásod, és innen töltheted le.',
   },
   switchLabel: 'Nyelv',
-  tag: 'Private Atelier · rendelés',
+  tag: 'Rendelés',
   title: 'A rendelésed',
   orderNo: (o: string) => `Rendelés: ${o}`,
   loading: 'A rendelésed megnyitása…',

@@ -24,11 +24,11 @@ export function LogoMark() {
 /** The logo link: the mark, SNAPEYES and the brand tag under it. It goes to the top of the page; the header and the footer use it. */
 export function SiteLogo({ brandTag }: { brandTag: string }) {
   return (
-    <a className="lp-logo" href="#top" aria-label={`SnapEyes ${brandTag}`}>
+    <a className="lp-logo" href="#top" aria-label="SnapEyes">
       <LogoMark />
       <span>
         <b>SNAPEYES</b>
-        <small>{brandTag}</small>
+        {brandTag && <small>{brandTag}</small>}
       </span>
     </a>
   );

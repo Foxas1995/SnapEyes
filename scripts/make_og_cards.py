@@ -134,8 +134,7 @@ def card(base_card, fonts, headline, sub, caption):
     shift = lambda y: round(y - lift)
     bf = fonts.get(BRAND["font"], BRAND["size"], BRAND["wght"])
     put(img, "SNAPEYES", bf, BRAND["x"], shift(BRAND["base"]), BRAND["track"] * BRAND["size"], BRAND["fill"])
-    tf = fonts.get(TAG["font"], TAG["size"], TAG["wght"])
-    put(img, "PRIVATE ATELIER", tf, TAG["x"], shift(TAG["base"]), TAG["track"] * TAG["size"], TAG["fill"])
+    # no brand line under SNAPEYES since 2026-10-22: the owner asked what "Private Atelier" means; the site and the cards say SnapEyes alone
     d.rectangle((RULE["x0"], shift(RULE["y0"]), RULE["x1"], shift(RULE["y1"])), fill=RULE["fill"])
     base = HEAD["base"]
     for i, line in enumerate(lines):
@@ -182,6 +181,13 @@ def main(argv):
             print(f"English card drawn again: mean grey difference in the text areas {d:.2f} (a text area of the original against the same area redrawn)")
             again.save(os.path.join(os.environ.get("OG_OUT", tempfile.gettempdir()), "og_en_redrawn.jpg"), quality=90)
             return 0 if d < 3.0 else 1
+        if mode == "--write":
+            # the English card is drawn again from itself with the same words and without the brand line (the area is painted out by CLEAR)
+            en = encode(card(base, fonts, EN_CARD["headline"], EN_CARD["sub"], EN_CARD["caption"]))
+            with open(en_path, "wb") as f:
+                f.write(en)
+            print(f"{os.path.basename(en_path)}: {len(en)} bytes  (English, drawn again without the brand line)")
+            base = Image.open(en_path).convert("RGB")     # the other cards are drawn from the card as it is now on disk, as --check draws them
         for lang in LANGS:
             w = words(lang)
             img = card(base, fonts, w["headline"], w["sub"], w["caption"])

@@ -131,7 +131,7 @@ try {
     }
     if (got.canonicals !== 1) fail(`${link}: ${got.canonicals} canonical links, expected exactly one`);
     if (JSON.stringify(got.hreflang) !== JSON.stringify(HREFLANG)) fail(`${link}: the hreflang alternates are ${JSON.stringify(got.hreflang)}`);
-    for (const [k, v] of [['ogType', 'website'], ['ogSiteName', 'SnapEyes Private Atelier'], ['ogImageWidth', '1200'], ['ogImageHeight', '630'], ['twitterCard', 'summary_large_image']]) if (got[k] !== v) fail(`${link}: ${k} is ${JSON.stringify(got[k])}, expected ${JSON.stringify(v)}`);
+    for (const [k, v] of [['ogType', 'website'], ['ogSiteName', 'SnapEyes'], ['ogImageWidth', '1200'], ['ogImageHeight', '630'], ['twitterCard', 'summary_large_image']]) if (got[k] !== v) fail(`${link}: ${k} is ${JSON.stringify(got[k])}, expected ${JSON.stringify(v)}`);
     if (got.twitterImage !== got.ogImage) fail(`${link}: twitter:image differs from og:image`);
     if (!bodies[l]) bodies[l] = html.slice(html.indexOf('<body'));
     else if (bodies[l] !== html.slice(html.indexOf('<body'))) fail(`${link}: the body differs from the other links of ${l}`);

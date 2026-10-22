@@ -13,7 +13,7 @@ export const lt: OrderCopy = {
     description: 'Jūsų SnapEyes užsakymas: čia sukuriamas Jūsų rainelės kūrinys ir čia jį galite atsisiųsti.',
   },
   switchLabel: 'Kalba',
-  tag: 'Private Atelier · užsakymas',
+  tag: 'Užsakymas',
   title: 'Jūsų užsakymas',
   orderNo: (o: string) => `Užsakymas ${o}`,
   loading: 'Atidarome Jūsų užsakymą…',

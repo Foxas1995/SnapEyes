@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "SnapEyes Private Atelier: Ihre echte Iris als Kunstwerk",
+    "title": "SnapEyes: Ihre echte Iris als Kunstwerk",
     "description": "Fotografieren Sie ein Auge mit Ihrem Smartphone und sehen Sie Ihre Iris als Kunstwerk, restauriert, nie neu gemalt. Die Vorschau mit Wasserzeichen ist kostenlos. Ihre digitale Datei ist zum Drucken gemacht.",
     "shareDescription": "Fotografieren Sie ein Auge mit dem Smartphone und sehen Sie Ihre eigene Iris als Kunstwerk. Die Vorschau mit Wasserzeichen ist kostenlos.",
     "locale": "de_DE"
@@ -15,7 +15,7 @@
   },
   "langName": "Deutsch",
   "switchLabel": "Sprache",
-  "brandTag": "Private Atelier",
+  "brandTag": "",
   "skip": "Zum Inhalt springen",
   "nav": {
     "reveal": "Vorher und Nachher",
@@ -47,7 +47,7 @@
     "mantas": "Das Auge von Mantas"
   },
   "hero": {
-    "eyebrow": "SnapEyes Private Atelier",
+    "eyebrow": "SnapEyes",
     "title": "Ihre echte Iris, als Kunstwerk.",
     "lead": "Fotografieren Sie ein Auge mit Ihrem Smartphone. Wir restaurieren Ihre echte Iris und setzen sie im Stil Ihrer Wahl in Szene. Sie erhalten eine digitale Datei mit {px}, zum Drucken gemacht bis {printMax}. Der Druck ist nicht enthalten.",
     "micro": [

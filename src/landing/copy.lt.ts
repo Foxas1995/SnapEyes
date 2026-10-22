@@ -5,4 +5,4 @@ import type { Copy } from './copy';
 
 export const TRANSPARENCY_LT = 'Spalva paimta iš Jūsų pačių nuotraukos. Kur telefonas neužfiksavo smulkiausių skaidulų, jas atkuria mūsų DI.';
 
-export const lt: Copy = { switchLabel: 'Kalba', brandTag: 'Private Atelier' };
+export const lt: Copy = { switchLabel: 'Kalba', brandTag: '' };
