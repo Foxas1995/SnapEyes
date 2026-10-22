@@ -140,7 +140,8 @@ try {
     await page.goto(`${origin}/try?lang=en`);
     await page.loaded();
     await sleep(3500);
-    const r = JSON.parse(await page.eval(`(() => { const s = document.querySelector('main section'); const cls = (c) => String(c.getAttribute('class') || ''); const card = [...s.children].find((c) => cls(c).includes('rounded-2xl') && cls(c).includes('grid')); const b = [...s.children].find((c) => c.tagName === 'BUTTON'); return JSON.stringify({ card: Math.round(card.getBoundingClientRect().top), button: Math.round(b.getBoundingClientRect().top) }); })()`));
+    // the card of the steps by its test id (2026-10-22: the steps are one line each under the guide video, a list and no longer a grid)
+    const r = JSON.parse(await page.eval(`(() => { const s = document.querySelector('main section'); const card = s.querySelector('[data-testid=capture-guide]'); const b = [...s.children].find((c) => c.tagName === 'BUTTON'); return JSON.stringify({ card: Math.round(card.getBoundingClientRect().top), button: Math.round(b.getBoundingClientRect().top) }); })()`));
     if (wantCardFirst) ok('fold', r.card < r.button, `${w}x${h}: on a tall phone the guide is read before the button (${JSON.stringify(r)})`);
     else ok('fold', r.button < h, `${w}x${h}: ${JSON.stringify(r)}`);
     await page.close();

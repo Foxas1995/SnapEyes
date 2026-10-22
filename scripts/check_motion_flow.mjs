@@ -2,7 +2,7 @@
 // (dist/) served the way Vercel serves it, with the API of the tools stood in for (scripts/lib/flowstub.mjs: the models are stubbed, nothing leaves this machine,
 // every answer takes a moment so that the waiting screens can be looked at). Not part of `vite build` (it needs Chrome and a few minutes); run it after a build:
 //   npm run build && npm run check:motion:flow
-//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,slider,arrival,failsafe,failopen,shift,wiring,bundle,retake] [--mutate-css "from@@to"]
+//   node scripts/check_motion_flow.mjs [--dist dist] [--only reduced,loops,arc,aperture,crossfade,order,slider,arrival,failsafe,failopen,shift,wiring,bundle,retake,guide] [--mutate-css "from@@to"]
 // --mutate-css changes every stylesheet of the build on its way to the browser (every occurrence of `from` becomes `to`): a deliberate defect, to see that a check
 // really fails. Example: replacing the reduced-motion clamp of the first rule (`:root:has(>body.fx) *{scroll-behavior:auto!important;transition-duration:.01ms!important;transition-delay:0s!important;animation:none!important}`) with
 // `.wk-arc{animation:wk-rot 3.2s linear infinite}` takes the safety net away and leaks a loop into reduced motion: the `reduced` check must fail on the arc.
@@ -36,6 +36,9 @@
 //   retake     (2026-10-14; the calm page of 2026-10-22) a single eye that fails the lid rule while the styles that can be bought are hard: what the visitor reads (the held tile is not
 //              shown, no retake card, no warning sign, the buy card's one line with its own retake button) and that the way out works: no price, no waiver, no button to buy, no
 //              "choose another", and the retake button opens the capture screen. Not about motion: the stand-in's `lid` eye
+//   guide      (2026-10-22) the guide video of the capture screen (src/shared/GuideVideo.tsx): with motion it asks for the page language's file and plays by itself, muted,
+//              inline and in a loop, at most 40 percent of the window tall so that the steps and the photo button stay on the first screen of a 412 x 915 phone; its
+//              button pauses it and it stays paused; a hidden tab stops it. (Under reduced motion it waits with its poster and asks for nothing: the `reduced` check.)
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -128,9 +131,11 @@ async function checkReduced() {
   const page = await open('/try?lang=de', { reduceMotion: true });
   await startRec(page, `document.getAnimations().length + '|' + document.documentElement.className`, 2400);
   expect('reduced', await walkTry(page, 'capture'), 'the capture screen did not come');
-  const cap = await page.eval(`JSON.stringify({ anims: document.getAnimations().length, offsets: [...document.querySelectorAll('.fx-diagram .dr')].map((p) => getComputedStyle(p).strokeDashoffset), rest: getComputedStyle(document.querySelector('.fx-diagram .rest')).opacity })`);
+  // the guide video (it replaced the capture diagram on 2026-10-22) never starts by itself under reduced motion: its poster with a play button, no file asked for
+  const cap = await page.eval(`JSON.stringify({ anims: document.getAnimations().length, guide: (() => { const g = document.querySelector('[data-guide]'); if (!g) return null; const v = g.querySelector('video'), b = g.querySelector('button'), i = g.querySelector('img'); return { state: g.dataset.guide, src: v.getAttribute('src'), paused: v.paused, label: b && b.getAttribute('aria-label'), poster: i.complete && i.naturalWidth > 0 }; })(), asked: performance.getEntriesByType('resource').filter((e) => /\\.mp4/.test(e.name)).length })`);
   const c = JSON.parse(cap);
-  expect('reduced', c.anims === 0 && c.offsets.length === 7 && c.offsets.every((o) => o === '0px') && c.rest === '1', `capture: ${cap}`, 'the capture diagram is drawn at once, nothing animates');
+  expect('reduced', c.anims === 0 && c.guide && c.guide.state === 'held' && !c.guide.src && c.guide.paused && !!c.guide.label && c.guide.poster && c.asked === 0, `capture: ${cap}`,
+    'the capture screen rests: the guide video waits with its poster and a play button, no video file asked for, nothing animates');
   await setFile(page, 'input[type=file][multiple]', PHOTO);
   expect('reduced', await waitFor(page, "!!document.querySelector('.wk-disc .crop img')", 20000), 'the processing screen did not come');
   await sleep(500);
@@ -613,6 +618,33 @@ async function checkWiring() {
   await page.close();
 }
 
+// ---------------------------------------------------------------------------------------------------- guide
+async function checkGuide() {
+  console.log('guide');
+  const page = await open('/try?lang=lt', { width: 412, height: 915 });
+  expect('guide', await walkTry(page, 'capture'), 'the capture screen did not come');
+  const ok = await waitFor(page, "(() => { const v = document.querySelector('[data-guide] video'); return !!v && !v.paused && v.currentTime > 0.3; })()", 10000);
+  const st = JSON.parse(await page.eval(`JSON.stringify((() => { const g = document.querySelector('[data-guide]'), v = g.querySelector('video'), b = g.querySelector('button'), r = g.getBoundingClientRect(); return { state: g.dataset.guide, src: v.getAttribute('src'), muted: v.muted, inline: v.playsInline, loop: v.loop, label: b.getAttribute('aria-label'), frame: v.readyState >= 2, w: Math.round(r.width), h: Math.round(r.height) }; })())`));
+  expect('guide', ok && st.state === 'auto' && st.src === '/assets/howto/howto-11-lt.mp4' && st.muted && st.inline && st.loop && st.frame, `playing: ${JSON.stringify(st)}`, `the Lithuanian guide plays by itself, muted, inline, in a loop (${st.w} x ${st.h} px)`);
+  const shot = await page.eval("(() => { const b = [...document.querySelectorAll('button')].find((x) => /fx-gold/.test(x.className)); return b ? Math.round(b.getBoundingClientRect().bottom) : -1; })()");
+  const steps = await page.eval("Math.round(document.querySelector('[data-testid=capture-guide]').getBoundingClientRect().top)");
+  expect('guide', st.h <= Math.round(915 * 0.4) + 1 && steps > 0 && steps < shot && shot > 0 && shot <= 915, `the guide is ${st.h} px tall, the steps start at ${steps} px, the photo button ends at ${shot} px of 915`,
+    `the guide is ${st.h} px tall, the steps follow it and the photo button ends at ${shot} px: all on the first screen`);
+  await page.eval("document.querySelector('[data-guide] button').click()");
+  await sleep(400);
+  const p1 = JSON.parse(await page.eval(`JSON.stringify((() => { const g = document.querySelector('[data-guide]'), v = g.querySelector('video'); return { state: g.dataset.guide, paused: v.paused, label: g.querySelector('button').getAttribute('aria-label') }; })())`));
+  await page.eval('window.scrollTo(0, 2000)'); await sleep(300); await page.eval('window.scrollTo(0, 0)'); await sleep(700);
+  const p2 = await page.eval("document.querySelector('[data-guide] video').paused");
+  expect('guide', p1.state === 'held' && p1.paused && p2 && p1.label !== st.label, `pause: ${JSON.stringify(p1)}, paused after a scroll: ${p2}`, 'its button pauses it, the label turns to play, and it stays paused after a scroll');
+  await page.eval("document.querySelector('[data-guide] button').click()");
+  const again = await waitFor(page, "!document.querySelector('[data-guide] video').paused", 5000);
+  await page.eval(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange'))`);
+  await sleep(300);
+  expect('guide', again && (await page.eval("document.querySelector('[data-guide] video').paused")), `played again: ${again}; it still plays in a hidden tab`, 'pressed again it plays, and a hidden tab stops it');
+  expect('guide', (errorsOf.get(page) || []).length === 0, `console errors: ${(errorsOf.get(page) || []).join(' | ')}`);
+  await page.close();
+}
+
 // ---------------------------------------------------------------------------------------------------- bundle
 // The first-load bytes of the two pages (gzip level 6: the html's scripts and stylesheets and their static imports) on the commit before the motion of the tools
 // (5c9054c, measured the same way). The budget is the spec's (section 10: CSS +2 kB each for /try and /order); the JS has no number in the spec, so this gate says
@@ -671,6 +703,7 @@ try {
   if (wants('wiring')) await checkWiring();
   if (wants('bundle')) checkBundle();
   if (wants('retake')) await checkRetake();
+  if (wants('guide')) await checkGuide();
 } finally {
   await chrome.close();
   await site.close();

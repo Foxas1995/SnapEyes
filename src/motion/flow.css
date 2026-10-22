@@ -13,7 +13,8 @@
      * a global clamp at the end switches every animation off under reduced motion, whatever a component forgot.
    The tokens (curves, durations, distances, gold, success) are the landing's own: src/motion/tokens.css, imported below. Classes are fx- (a state or a
    rule of the flow) and wk- (the waiting arc, the rings, the drawn check). Imported by src/try/main.tsx and src/order/main.tsx, never by the landing,
-   the legal pages or /admin. The components are in src/motion: Tick.tsx (Tick, Arc, Dot, Waiting), CaptureDiagram.tsx, ArtImage.tsx, EyeRing.tsx. */
+   the legal pages or /admin. The components are in src/motion: Tick.tsx (Tick, Arc, Dot, Waiting), ArtImage.tsx, EyeRing.tsx. The capture screen's drawing gave way to the guide
+   video (2026-10-22, src/shared/GuideVideo.tsx), which styles itself inline and plays only on screen, never under reduced motion. */
 @layer theme, base, landing, components, utilities;
 @import './tokens.css';
 
@@ -74,13 +75,6 @@
   /* the meter of a measured value: its bar grows from the left to the measured width (a real number, not a score) */
   .fx-fill { transform-origin: left center; }
 
-  /* the capture diagram: the strokes are the muted text colour, the eye is the one gold line */
-  .fx-diagram { display: block; width: 240px; max-width: 100%; height: auto; margin-inline: auto; color: var(--t-3); }
-  .fx-diagram .st { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-  .fx-diagram .au { stroke: var(--gold-primary); }
-  .fx-diagram .nm { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; fill: var(--t-2); text-anchor: middle; }
-  .fx-diagram .dr { stroke-dasharray: 1; }
-
   @media (prefers-reduced-motion: no-preference) {
     /* -------------------------------------------------------------------------------------------- 3. step transitions (7.1, 8)
        The root of a step fades up once when it mounts; the old step is already gone (no exit animation). Banners fade only, the undo toast rises. */
@@ -90,11 +84,6 @@
     .fx-up { animation: fx-up .5s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 80ms); }
     .fx-tile { animation: fx-up .4s var(--ease-out) backwards; }
     .fx-soft { animation: fx-fade .5s var(--ease-out) backwards; }
-
-    /* -------------------------------------------------------------------------------------------- 4. the capture diagram (7.2)
-       The strokes draw in one after the other; then the ring on the eye settles once and rests (no repeating pulse, BR-3). */
-    .fx-diagram .dr { animation: fx-draw .9s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 150ms); }
-    .fx-diagram .rest { animation: fx-settle .8s var(--ease-out) 1s backwards; }
 
     /* -------------------------------------------------------------------------------------------- 5. waiting (7.3, 7.5, 8) */
     .wk-arc { animation: wk-rot 3.2s linear infinite; }
@@ -141,7 +130,6 @@
 @keyframes fx-up { from { opacity: 0; translate: 0 var(--rise-s); } }
 @keyframes fx-rise { from { opacity: 0; translate: 0 var(--rise-m); } }
 @keyframes fx-draw { from { stroke-dashoffset: 1; } }
-@keyframes fx-settle { from { opacity: .6; } }
 @keyframes fx-sweep { from { translate: -100% 0; } to { translate: 333% 0; } }
 @keyframes wk-rot { to { rotate: 360deg; } }
 @keyframes fx-scalex { from { scale: 0 1; } }

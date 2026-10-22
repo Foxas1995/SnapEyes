@@ -55,7 +55,13 @@ const FEEDBACK = { js: 0, css: 131 };
 // of the same day brought the page to +7,873 B of JavaScript. Since then the pages get those two files without their docstrings, comments and blank lines and with their literals
 // in compact JSON (vite.config.ts pySourceSlim, scripts/py_source_slim.mjs; suites/ts/py_source_slim.test.ts proves the pages read the same values): -3,970 B on that tree
 // (+3,903 B). No constant moves for it: what it gives back is room under the same budget and the same hard stop, not a new base.
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css };
+// The guide video (2026-10-22, the owner's request: "our explanation is not good ... make something like irisblink, the clearer the better") is content the spec's budget did not
+// foresee, not motion of the page: a player for our own how-to film (src/shared/GuideVideo.tsx: poster first, the file asked for on screen, play and pause, reduced motion and a
+// data saver respected), a chunk of its own that the landing's "How it works" and /try both load, and the step that shows it. GUIDE is this script's own sum on the commit with it minus
+// on its parent (2638331). The video files are not counted (they are no script or stylesheet, and the landing asks for one only when its step is on screen: check:landing guide). The
+// same change removed the camera phone's rules (css/how.css) and the capture diagram's (src/motion/flow.css): CSS -462 B, given back as room, no constant moves for it.
+const GUIDE = { js: 1304, css: 0 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

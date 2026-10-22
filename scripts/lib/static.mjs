@@ -16,6 +16,7 @@ const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml', '.webp': 'image/webp', '.avif': 'image/avif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
   '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json',
+  '.mp4': 'video/mp4',
 };
 const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.json', '.svg', '.txt', '.xml']);
 
@@ -137,6 +138,19 @@ export function serve(dir, { port = 0, vercelFile, compress = true, handler } = 
         headers['content-encoding'] = enc;
         headers.vary = 'Accept-Encoding';
       }
+    }
+    // a video is asked for in parts (Chrome's player sends Range: bytes=0- and seeks with more): a part is answered 206 with its range, as Vercel answers it
+    const range = ext === '.mp4' ? /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || '')) : null;
+    if (ext === '.mp4') headers['accept-ranges'] = 'bytes';
+    if (range && (range[1] !== '' || range[2] !== '')) {
+      const size = body.length;
+      const a = range[1] === '' ? Math.max(0, size - Number(range[2])) : Number(range[1]);
+      const b = range[1] !== '' && range[2] !== '' ? Math.min(Number(range[2]), size - 1) : size - 1;
+      if (a >= size || a > b) { res.writeHead(416, { 'content-range': `bytes */${size}` }).end(); return; }
+      const part = body.subarray(a, b + 1);
+      res.writeHead(206, { ...headers, 'content-range': `bytes ${a}-${b}/${size}`, 'content-length': part.length });
+      res.end(req.method === 'HEAD' ? undefined : part);
+      return;
     }
     headers['content-length'] = body.length;
     res.writeHead(200, headers);

@@ -14,7 +14,7 @@ import { CROP_MAX_PX } from './crop';
 import { LANG_NAMES, LOCALES, marketLangs } from '../shared/lang';
 import { ResultView } from './ResultView';
 import { Working } from './Working';
-import { CaptureDiagram } from '../motion/CaptureDiagram';
+import { GuideVideo } from '../shared/GuideVideo';
 import { usePreviews } from './usePreviews';
 import { sendHelp } from './composeApi';
 import { type Opts, type ServerTile, NO_OPTS, advisoryEyes, buyState, lookOf, retakeView, showsPrice } from './picker';
@@ -1064,16 +1064,23 @@ export const TryApp: React.FC = () => {
               </div>
             )}
 
-            <CaptureDiagram />
+            {/* the guide video (2026-10-22, the owner: "make something like irisblink ... the clearer the better"): our own animation in the page's language, the
+                square cut the landing shows too (one file, cached for both; the 9:16 cut is for phones full screen and social posts). At most 40 percent of the
+                window tall, so the steps and the photo button stay on the first screen of a 412 x 915 phone; it loads and plays only on screen (src/shared/GuideVideo.tsx) */}
+            <GuideVideo key={lang} src={`/assets/howto/howto-11-${lang}.mp4`} poster={`/assets/howto/howto-11-${lang}.jpg`} w={720} h={720}
+              play={T.capture.videoPlay} pause={T.capture.videoPause} className="mx-auto rounded-2xl overflow-hidden border border-white/10"
+              style={{ width: 'min(100%, 40vh)' }} />
 
-            {/* on a short screen (a phone under 820 px tall) the guide comes after the buttons: the way to take the photo is on the first screen, the guide is one scroll away (QA of 2026-10-20: at 360 x 740 the button was below the fold) */}
-            {/* the four steps; the open eye, the 3-5 shots and the pair are one tap away in a closed disclosure (the owner, 2026-10-20: "a lot of text before the photo") */}
-            <div data-testid="capture-guide" className="[@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-xs text-zinc-300 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {T.capture.steps.map((s) => (
-                <div key={s.title}><span className="text-[#f5c542] font-bold block">{s.title}</span>{s.text}</div>
-              ))}
+            {/* on a short screen (a phone under 820 px tall) the steps come after the buttons: the way to take the photo is on the first screen, the steps are one scroll away (QA of 2026-10-20: at 360 x 740 the button was below the fold) */}
+            {/* the four steps, one line each (the video shows them); the open eye, the 3-5 shots and the pair are one tap away in a closed disclosure (the owner, 2026-10-20: "a lot of text before the photo") */}
+            <div data-testid="capture-guide" className="[@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-sm text-zinc-300 flex flex-col gap-2">
+              <ol className="flex flex-col gap-2">
+                {T.capture.steps.map((s, i) => (
+                  <li key={i}><span className="text-[#f5c542] font-bold">{i + 1}.</span> {s}</li>
+                ))}
+              </ol>
               {/* the browser's own disclosure triangle: no stylesheet rule of its own (the landing's CSS budget is shared with the tools) */}
-              <details data-testid="more-tips" className="col-span-2 sm:col-span-4 border-t border-white/10">
+              <details data-testid="more-tips" className="border-t border-white/10 text-xs">
                 <summary className="cursor-pointer py-3 min-h-[44px] font-semibold text-zinc-200">{T.capture.moreTips}</summary>
                 <div className="flex flex-col gap-2 pb-1">
                   <p><span className="text-[#f5c542] font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</p>

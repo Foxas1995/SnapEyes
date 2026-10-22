@@ -64,13 +64,10 @@ export const lt: TryCopy = {
     sampleLoadFailed: 'Nepavyko įkelti pavyzdinės akies.',
     thumbLabel: (i: number) => `Akis ${i}`,
     sampleThumb: 'DI sugeneruotas pavyzdys',
-    // the capture guide on the first screen. Step 3 is the retake guide's first step, word for word (LIGHT).
-    steps: [
-      { title: '1. Galinė kamera', text: '2x arba 3x priartinimas, ne priekinė kamera.' },
-      { title: '2. 10 cm atstumu', text: 'Rainelė užpildo trečdalį kadro.' },
-      { title: '3. Šviesa pro langą', text: LIGHT },
-      { title: '4. Sufokusuokite bakstelėdami', text: 'Bakstelėkite rainelę ekrane, nejudėkite, fotografuokite.' },
-    ],
+    // the guide video's button and the four steps under it, one line each (copy.ts says why)
+    videoPlay: 'Paleisti vaizdo įrašą',
+    videoPause: 'Pristabdyti vaizdo įrašą',
+    steps: ['Galinė kamera, 2x priartinimas', 'Maždaug 10 cm nuo akies', 'Dienos šviesa pro langą, iš šono', 'Bakstelėkite rainelę ir nejudėkite'],
     moreTips: 'Daugiau patarimų',
     stepsOpen: 'Plačiai atmerkta akis. ',
     stepsOpenMore: 'Žiūrėkite tiesiai į priekį ir piršto galiuku švelniai pakelkite viršutinį voką, kad nei vokas, nei blakstienos nedengtų rainelės.',

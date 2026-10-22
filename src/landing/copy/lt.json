@@ -473,7 +473,8 @@
       "Bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai. Plačiai atmerkite akį, kad nei vokas, nei blakstienos nedengtų rainelės, ir nusiimkite akinius.",
       "Padarykite nuo trijų iki penkių kadrų. Realiame bandyme geriausias kadras turėjo 3,7 karto daugiau detalių nei prasčiausias, o mes naudojame ryškiausią."
     ],
-    "phoneZoom": "2x",
+    "videoPlay": "Paleisti vaizdo įrašą",
+    "videoPause": "Pristabdyti vaizdo įrašą",
     "previewTitle": "Jūsų peržiūra",
     "previewButton": "Pereiti prie apmokėjimo",
     "previewSoon": "Toliau: Jūsų failas",

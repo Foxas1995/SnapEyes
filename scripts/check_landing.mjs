@@ -32,6 +32,9 @@
 //              keeps the focus on the new button, and the page that React then starts speaks that language
 //   offers     the offer of another currency: A$ only to a reader of English or German (the Australian edition has no other language), the
 //              forint offer to every language
+//   guide      (2026-10-22) the guide video of the first step of "How it works" (src/shared/GuideVideo.tsx): on a phone it asks for no video file while the first
+//              screens are read, then for the page language's square cut when its step comes near, plays it muted and inline while half of it is on screen
+//              and stops when it leaves; under reduced motion it shows its poster with a play button and asks for nothing; the poster holds the box (no shift)
 //   vitals     phone, slow 4G, CPU x4 (BUILD_PLAN section 5): LCP under 2.5 s (a warning above the 1.6 s target), CLS under 0.05, with
 //              the ordering flip mocked (the stub answers "open" after 2.5 s: the bar sentence changes in a page that is on screen)
 // Exit code 1 when any check fails.
@@ -197,7 +200,8 @@ async function checkPhrases() {
       const text = await page.eval('document.body.innerText');
       const html = await page.eval('document.documentElement.outerHTML');
       const soonCount = (text.match(new RegExp(esc(soon), 'gi')) || []).length;
-      const bad = BANNED.exec(text) || BANNED.exec(html.replace(/<script[\s\S]*?<\/script>/g, ''));
+      // the markup is read without its scripts and without inline style attributes: a CSS length (the guide video's width: 100%, 2026-10-22) is not a claim
+      const bad = BANNED.exec(text) || BANNED.exec(html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/\sstyle="[^"]*"/g, ''));
       const msgs = [];
       if (bad) msgs.push(`the banned claim "${bad[0]}"`);
       if (state === 'closed' && soonCount !== 3) msgs.push(`"${soon}" appears ${soonCount} times (bar, pricing notice, FAQ: exactly 3)`);
@@ -713,8 +717,58 @@ async function checkOffers() {
   }
 }
 
+// ---------------------------------------------------------------------------------------------------- guide
+async function checkGuide() {
+  console.log('guide');
+  const mp4s = "performance.getEntriesByType('resource').map((e) => e.name).filter((n) => /\\.mp4$/.test(n)).map((n) => n.split('/').pop())";
+  const state = `(() => { const g = document.querySelector('#how [data-guide]'); if (!g) return null; const v = g.querySelector('video'), b = g.querySelector('button'), i = g.querySelector('img'); return { state: g.dataset.guide, src: v.getAttribute('src'), paused: v.paused, t: v.currentTime, label: b && b.getAttribute('aria-label'), boxW: Math.round(g.getBoundingClientRect().width), boxH: Math.round(g.getBoundingClientRect().height), vis: Math.round(g.parentElement.getBoundingClientRect().height), poster: i.complete && i.naturalWidth > 0 }; })()`;
+  const toHow = async (page) => {
+    for (let i = 0; i < 80 && !(await page.eval("!!document.querySelector('#how [data-guide]')")); i++) { await page.eval('window.scrollBy(0, 500)'); await sleep(120); }
+    await page.eval("document.querySelector('#how .lp-step').scrollIntoView({ block: 'center', behavior: 'instant' })");
+  };
+  for (const lang of ['lt', 'en']) {
+    const c = COPY[lang];
+    const page = await open({ lang, width: 412, height: 915, settle: false });
+    await sleep(3000);
+    const early = JSON.parse(await page.eval(`JSON.stringify(${mp4s})`));
+    await toHow(page);
+    const playing = await (async () => { for (let i = 0; i < 60; i++) { const s2 = JSON.parse(await page.eval(`JSON.stringify(${state})`)); if (s2 && !s2.paused && s2.t > 0.3) return s2; await sleep(150); } return JSON.parse(await page.eval(`JSON.stringify(${state})`)); })();
+    await page.eval('window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" })');
+    await sleep(700);
+    const away = JSON.parse(await page.eval(`JSON.stringify(${state})`));
+    const asked = JSON.parse(await page.eval(`JSON.stringify(${mp4s})`));
+    const here = [];
+    if (early.length) here.push(`a video was asked for before its step came near: ${early.join()}`);
+    if (!playing || playing.paused || playing.src !== `/assets/howto/howto-11-${lang}.mp4`) here.push(`near its step it does not play the ${lang} file: ${JSON.stringify(playing)}`);
+    if (playing && (playing.label !== c.how.videoPause || playing.state !== 'auto')) here.push(`its button while it plays: ${playing && playing.label}`);
+    if (playing && Math.abs(playing.boxH - playing.vis) > 2) here.push(`the poster does not hold the square box: ${playing.boxH} of ${playing.vis} px`);
+    if (!away || !away.paused) here.push('it still plays once its step has left the screen');
+    if (asked.some((n) => n !== `howto-11-${lang}.mp4`)) here.push(`another file was asked for: ${asked.join()}`);
+    if (here.length) fail('guide', `${lang} 412px: ${here.join('; ')}`);
+    else pass('guide', `${lang} 412px: no video while the first screens are read, the ${lang} square plays when its step is near (${playing.boxW} px), it stops when the step leaves`);
+    await page.close();
+  }
+  // reduced motion: the poster and a play button, nothing asked for until the press; the press plays it once
+  const page = await open({ lang: 'de', width: 412, height: 915, settle: false, reduceMotion: true });
+  await toHow(page);
+  await sleep(1500);
+  const still = JSON.parse(await page.eval(`JSON.stringify(${state})`));
+  const asked = JSON.parse(await page.eval(`JSON.stringify(${mp4s})`));
+  await page.eval("document.querySelector('#how [data-guide] button').click()");
+  let pressed = null;
+  for (let i = 0; i < 60; i++) { pressed = JSON.parse(await page.eval(`JSON.stringify(${state})`)); if (pressed && !pressed.paused && pressed.t > 0.2) break; await sleep(150); }
+  const loop = await page.eval("document.querySelector('#how [data-guide] video').loop");
+  const here = [];
+  if (!still || still.state !== 'held' || still.src || !still.paused || still.label !== COPY.de.how.videoPlay || !still.poster) here.push(`before the press: ${JSON.stringify(still)}`);
+  if (asked.length) here.push(`a video was asked for before the press: ${asked.join()}`);
+  if (!pressed || pressed.paused || loop) here.push(`after the press: ${JSON.stringify(pressed)}, loop ${loop}`);
+  if (here.length) fail('guide', `reduced motion: ${here.join('; ')}`);
+  else pass('guide', 'reduced motion: the poster with a play button, nothing asked for; a press plays it once (no loop)');
+  await page.close();
+}
+
 // ---------------------------------------------------------------------------------------------------- run
-const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, stall: checkStall, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, vitals: checkVitals };
+const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, stall: checkStall, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, guide: checkGuide, vitals: checkVitals };
 try {
   for (const [name, fn] of Object.entries(checks)) {
     if (!wants(name)) continue;

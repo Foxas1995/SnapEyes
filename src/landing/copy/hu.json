@@ -473,7 +473,8 @@
       "Az élességállításhoz koppints az íriszre, és tartsd stabilan a telefont. Tartsd tágra nyitva a szemedet, hogy se a szemhéj, se a szempillák ne takarják az íriszt, és vedd le a szemüvegedet.",
       "Készíts három-öt felvételt. Egy valódi teszten a legjobb felvételen 3,7-szer annyi részlet volt, mint a legrosszabbon, mi pedig a legélesebbet használjuk."
     ],
-    "phoneZoom": "2x",
+    "videoPlay": "Útmutató videó lejátszása",
+    "videoPause": "Útmutató videó szüneteltetése",
     "previewTitle": "Az előnézeted",
     "previewButton": "Megrendelés fizetési kötelezettséggel",
     "previewSoon": "Következik: a fájlod",

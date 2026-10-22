@@ -473,7 +473,8 @@
       "Tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig. Halten Sie das Auge weit offen, damit kein Lid und keine Wimper die Iris verdeckt, und nehmen Sie die Brille ab.",
       "Machen Sie drei bis fünf Aufnahmen. In einem echten Test hatte die beste Aufnahme 3,7-mal so viele Details wie die schlechteste, und wir verwenden die schärfste."
     ],
-    "phoneZoom": "2x",
+    "videoPlay": "Anleitungsvideo abspielen",
+    "videoPause": "Anleitungsvideo anhalten",
     "previewTitle": "Ihre Vorschau",
     "previewButton": "Weiter zur Zahlung",
     "previewSoon": "Ihre Datei, als Nächstes",

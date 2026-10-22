@@ -1,6 +1,7 @@
-// The "How it works" chapter (BUILD_PLAN section 2): three steps, each with a picture of what you see (the phone at your eye, the
-// free preview, the file card), the tips disclosure under step 1 and the call to action. The phone visuals are
-// ./PhoneMock.tsx, the file card ./FileCard.tsx, the look css/how.css. Words come from the copy layer; the open wording of
+// The "How it works" chapter (BUILD_PLAN section 2): three steps, each with a picture of what you see (the guide video of how to
+// photograph an eye, the free preview, the file card), the tips disclosure under step 1 and the call to action. The guide video is
+// src/shared/GuideVideo.tsx (the square cut in the page's language; the owner, 2026-10-22: the phone drawing before it showed the eye far
+// too close), the preview's phone ./PhoneMock.tsx, the file card ./FileCard.tsx, the look css/how.css. Words come from the copy layer; the open wording of
 // step 3 ("pay through Stripe") is used only once ordering is open (src/landing/ordering.ts). Importing this file brings its own
 // stylesheet, so it can be loaded lazily with its section.
 //
@@ -8,10 +9,12 @@
 // mask, the three steps rise one after the other and a single hairline runs through their numerals, drawing itself from 01 to 03 while
 // each numeral warms to gold as the line reaches it (css/how.css). On a phone the steps are a swipe rail: the rail appears as one
 // piece, and the step that is most on screen is the current one (aria-current="step", its numeral gold and its title white, the
-// others at the dimmest legible tone). Nothing here moves a picture.
+// others at the dimmest legible tone). Nothing here moves a picture; the guide video of step 1 plays by itself only while half of it is on
+// screen, and never under reduced motion (GuideVideo.tsx).
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Title } from '../motion/Title';
 import { put, scrub } from '../motion/phone';
+import { GuideVideo } from '../shared/GuideVideo';
 import { useCopy } from './copy/useCopy';
 import { FileCard } from './FileCard';
 import { useTryHref } from './links';
@@ -30,7 +33,7 @@ function Arrow() {
 }
 
 export function HowItWorks() {
-  const { c, fmt } = useCopy();
+  const { c, fmt, lang } = useCopy();
   const open = useOrderingOpen();
   const tryHref = useTryHref();
   const { ref: railRef, props: railProps, scrolls } = useScrollableRegion<HTMLOListElement>();
@@ -76,8 +79,11 @@ export function HowItWorks() {
             // the index is the key: the same three nodes stay when the language changes, so an open tips list stays open
             <li className="lp-step" key={i} data-reveal="fade" style={{ '--i': i } as CSSProperties} aria-current={scrolls && current === i ? 'step' : undefined}>
               <div className={i === 2 ? 'lp-vis lp-file' : 'lp-vis'}>
-                {i === 0 && <PhoneMock kind="camera" open={open} />}
-                {i === 1 && <PhoneMock kind="preview" open={open} />}
+                {i === 0 && (
+                  <GuideVideo src={`/assets/howto/howto-11-${lang}.mp4`} poster={`/assets/howto/howto-11-${lang}.jpg`} w={720} h={720}
+                    play={c.how.videoPlay} pause={c.how.videoPause} style={{ width: '100%' }} />
+                )}
+                {i === 1 && <PhoneMock open={open} />}
                 {i === 2 && <FileCard />}
               </div>
               <div className="lp-step-body">

@@ -473,7 +473,8 @@
       "Tap the iris to focus and hold the phone steady. Keep the eye wide open, so no lid or lashes cross the iris, and take glasses off.",
       "Take three to five shots. On a real test the best shot had 3.7 times the detail of the worst, and we use the sharpest."
     ],
-    "phoneZoom": "2x",
+    "videoPlay": "Play the guide video",
+    "videoPause": "Pause the guide video",
     "previewTitle": "Your preview",
     "previewButton": "Continue to payment",
     "previewSoon": "Your file, next",

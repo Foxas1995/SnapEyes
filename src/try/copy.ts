@@ -84,13 +84,12 @@ const en = {
     sampleLoadFailed: 'The sample eye could not be loaded.',
     thumbLabel: (i: number) => `Eye ${i}`,
     sampleThumb: 'AI-generated sample',
-    // the capture guide on the first screen. Step 3 is the retake guide's first step, word for word (LIGHT).
-    steps: [
-      { title: '1. Back camera', text: '2x or 3x zoom, not the selfie camera.' },
-      { title: '2. 10 cm away', text: 'The iris fills a third of the frame.' },
-      { title: '3. Window light', text: LIGHT },
-      { title: '4. Tap to focus', text: 'Tap the iris on screen, hold still, shoot.' },
-    ],
+    // the two words of the guide video's one button (src/shared/GuideVideo.tsx): the video itself is decorative, the steps below say the same
+    videoPlay: 'Play the guide video',
+    videoPause: 'Pause the guide video',
+    // the capture guide under the video: four steps, one line each, numbered by the list (2026-10-22: the video shows them; the retake guide keeps the
+    // full sentences, LIGHT, CAMERA, FOCUS and STEADY, and says nothing these lines contradict)
+    steps: ['Back camera, 2x zoom', 'About 10 cm from the eye', 'Window light from the side', 'Tap the iris to focus, hold still'],
     // the summary of the closed disclosure under the four steps that holds the three lines below (the open eye, the 3-5 shots, the pair): the first screen shows
     // the four steps and the buttons, the rest is one tap away
     moreTips: 'More tips',
@@ -598,12 +597,9 @@ const de: TryCopy = {
     sampleLoadFailed: 'Das Beispielauge konnte nicht geladen werden.',
     thumbLabel: (i: number) => `Auge ${i}`,
     sampleThumb: 'KI-generiertes Beispiel',
-    steps: [
-      { title: '1. Rückkamera', text: '2- oder 3-facher Zoom, nicht die Selfie-Kamera.' },
-      { title: '2. 10 cm Abstand', text: 'Die Iris füllt ein Drittel des Bildes.' },
-      { title: '3. Fensterlicht', text: LIGHT_DE },
-      { title: '4. Scharfstellen', text: 'Tippen Sie auf die Iris, halten Sie still, lösen Sie aus.' },
-    ],
+    videoPlay: 'Anleitungsvideo abspielen',
+    videoPause: 'Anleitungsvideo anhalten',
+    steps: ['Rückkamera, 2-facher Zoom', 'Etwa 10 cm vor dem Auge', 'Fensterlicht von der Seite', 'Auf die Iris tippen, still halten'],
     moreTips: 'Weitere Tipps',
     stepsOpen: 'Auge weit geöffnet. ',
     stepsOpenMore: 'Schauen Sie geradeaus und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit weder Lid noch Wimpern über der Iris liegen.',

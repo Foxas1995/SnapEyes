@@ -1,4 +1,5 @@
-// I3: the motion of /try and /order (src/motion/flow.css, flow.ts, flowLogic.ts, Tick.tsx, EyeRing.tsx, ArtImage.tsx, CaptureDiagram.tsx, src/try/Working.tsx).
+// I3: the motion of /try and /order (src/motion/flow.css, flow.ts, flowLogic.ts, Tick.tsx, EyeRing.tsx, ArtImage.tsx, src/try/Working.tsx; the capture diagram gave way
+// to the guide video, src/shared/GuideVideo.tsx, on 2026-10-22).
 // What can be decided without a browser: the decisions (a file that became ready while the visit was open, the card that is on screen, the sweep), the markup of the
 // pieces (the waiting arc, the drawn check, the rings, the diagram, the screens), and the contract of the stylesheet read as text (nothing moves outside
 // prefers-reduced-motion: no-preference, the resting look is the finished look, no blur, no filter, no glow above .28, one source for the tokens). The browser half is
@@ -12,7 +13,7 @@ import { SWEEP, SWEEP_PARTIAL_MS, SWEEP_SEEN, arrivalSpent, cardOf, hasSwept, in
 import { Arc, Dot, Tick, Waiting } from '../../src/motion/Tick';
 import { EyeRing } from '../../src/motion/EyeRing';
 import { ArtImage } from '../../src/motion/ArtImage';
-import { CaptureDiagram } from '../../src/motion/CaptureDiagram';
+import { GuideVideo } from '../../src/shared/GuideVideo';
 import { Working } from '../../src/try/Working';
 import { setCopyLang } from '../../src/try/copy';
 
@@ -111,11 +112,11 @@ export async function run(): Promise<R> {
   const ring = (made: boolean, busy: boolean) => html(createElement(EyeRing, { made, busy, thumb: '/t.jpg' }));
   check('an eye that waits has a dim still ring (no arc, no tick); the one being made has the arc; a made one has its ring closed in the page\'s success class and a check that is not drawn again',
     (() => { const w = ring(false, false), b = ring(false, true), m = ring(true, false); return w.includes('wk-waits') && !w.includes('wk-arc') && !w.includes('class="on"') && b.includes('wk-arc') && !b.includes('wk-waits') && m.includes('class="on"') && m.includes('wk-badge') && m.includes('wk-still') && !m.includes('wk-arc') && !m.includes('fx-fresh'); })());
-  const diagram = html(createElement(CaptureDiagram));
-  const nbsp = String.fromCharCode(0xa0);
-  check('the capture diagram: decorative, four things draw in (seven strokes), one dashed line under a mask, and the only text is "10 cm" with a no-break space',
-    diagram.includes('aria-hidden="true"') && (diagram.match(/class="[^"]*\bdr\b/g) ?? []).length === 7 && diagram.includes('<mask') && diagram.includes('stroke-dasharray="3 4"')
-    && (diagram.match(/<text[^>]*>[^<]*<\/text>/g) ?? []).length === 1 && diagram.includes(`10${nbsp}cm</text>`));
+  // the guide video that replaced the capture diagram (2026-10-22): as the server renders it, and as a page under reduced motion starts, it waits for a press
+  const guide = html(createElement(GuideVideo, { src: '/assets/howto/howto-11-en.mp4', poster: '/assets/howto/howto-11-en.jpg', w: 720, h: 720, play: 'Play', pause: 'Pause' }));
+  check('the guide video: the poster is a lazy picture in the flow that holds the box (width and height, no alt text: it is decorative), the video is decorative, muted, inline and has no file until it is near (preload none, no src) and no style that hides it (with no frame a video is transparent: the poster shows), and one button says what it does (waiting for a press: Play)',
+    /<img src="\/assets\/howto\/howto-11-en\.jpg" width="720" height="720" alt="" loading="lazy"/.test(guide) && /<video muted="" playsInline="" preload="none" aria-hidden="true" tabindex="-1"/.test(guide)
+    && !/<video[^>]*\ssrc=/.test(guide) && /<button type="button" aria-label="Play"/.test(guide) && guide.includes('data-guide="held"') && /object-fit:cover"><\/video>/.test(guide) && !/opacity/.test(guide));
   const art = html(createElement(ArtImage, { src: 'data:image/jpeg;base64,AAAA', alt: 'Your artwork' }));
   const arriving = html(createElement(ArtImage, { src: 'data:image/jpeg;base64,AAAA', alt: 'Your artwork', arrive: true }));
   check('a picture that was there at the start is in the first render, untouched; an arriving one is put in only after it has decoded (never a flash of the whole picture before its opening)',
@@ -161,7 +162,7 @@ export async function run(): Promise<R> {
   const from = frames.filter((f) => !ends(f)).map((f) => f[1]).sort().join();
   const explicit = frames.filter(ends).map((f) => f[1]).sort().join();
   check('every keyframes of the flow is named fx- or wk-; the ones that end where the element rests have a from only (the element\'s own style is the end: the resting look is the finished look), the six that run to somewhere are the sweep, the turn, the opening, the border\'s warmth and the pass',
-    frames.every((f) => /^(fx|wk)-/.test(f[1])) && from === 'fx-draw,fx-fade,fx-pop,fx-rise,fx-scalex,fx-settle,fx-up' && explicit === 'fx-open,fx-pass,fx-sweep,fx-warm,wk-rot', `from: ${from}; explicit: ${explicit}`);
+    frames.every((f) => /^(fx|wk)-/.test(f[1])) && from === 'fx-draw,fx-fade,fx-pop,fx-rise,fx-scalex,fx-up' && explicit === 'fx-open,fx-pass,fx-sweep,fx-warm,wk-rot', `from: ${from}; explicit: ${explicit}`);
   const gradients: string[] = [];
   for (const m of stripCss(flow).matchAll(/[a-z-]*gradient\(/g)) {
     let depth = 0, i = (m.index ?? 0) + m[0].length - 1;
@@ -188,12 +189,12 @@ export async function run(): Promise<R> {
   // ---- the wiring
   const tryMain = read('src/try/main.tsx'), orderMain = read('src/order/main.tsx'), landingMain = read('src/main.tsx');
   check('/try and /order load the flow stylesheet and pause their loops in a hidden tab; the landing loads neither (the tools\' motion code is loaded only where it is used)',
-    [tryMain, orderMain].every((m) => m.includes("'../motion/flow.css'") && m.includes('watchAway()')) && !/flow/.test(landingMain) && !/motion\/(flow|Tick|ArtImage|EyeRing|CaptureDiagram)/.test(read('src/landing/Hero.tsx')));
+    [tryMain, orderMain].every((m) => m.includes("'../motion/flow.css'") && m.includes('watchAway()')) && !/flow/.test(landingMain) && !/motion\/(flow|Tick|ArtImage|EyeRing)/.test(read('src/landing/Hero.tsx')));
   check('the bodies of try.html and order.html carry the class fx (the tokens need it) and keep the head script that skips the page transition for an order, a payment or the withdrawal form',
     ['try.html', 'order.html'].every((f) => { const h = read(f); return /<body class="fx /.test(h) && h.includes('skipTransition') && h.includes('(o|k|s|checkout|session_id|withdraw)='); }));
   check('motion.ts, the landing\'s engine, is not imported by the tools (a module both the landing and the tools import becomes a shared chunk the landing must fetch)',
     !/from '\.\.?\/(\.\.\/)?motion\/motion'|from '\.\/motion'/.test(['src/motion/flow.ts', 'src/motion/ArtImage.tsx', 'src/motion/Tick.tsx', 'src/motion/EyeRing.tsx', 'src/try/CompareSlider.tsx', 'src/try/ResultView.tsx', 'src/try/TryApp.tsx', 'src/order/OrderApp.tsx'].map(read).join('\n')));
-  const files = ['src/motion/flow.css', 'src/motion/tokens.css', 'src/motion/flow.ts', 'src/motion/flowLogic.ts', 'src/motion/Tick.tsx', 'src/motion/EyeRing.tsx', 'src/motion/ArtImage.tsx', 'src/motion/CaptureDiagram.tsx', 'src/try/Working.tsx'];
+  const files = ['src/motion/flow.css', 'src/motion/tokens.css', 'src/motion/flow.ts', 'src/motion/flowLogic.ts', 'src/motion/Tick.tsx', 'src/motion/EyeRing.tsx', 'src/motion/ArtImage.tsx', 'src/shared/GuideVideo.tsx', 'src/try/Working.tsx'];
   const bad = String.fromCharCode(0x2013, 0x2014, 0x2012, 0x2015, 0x200b, 0x202f, 0xa0, 0xfeff);
   check('no dash, no zero width and no raw no-break space in the new files (the no-break space is written as an escape)', files.every((f) => ![...read(f)].some((c) => bad.includes(c))), files.filter((f) => [...read(f)].some((c) => bad.includes(c))).join());
   return out;
