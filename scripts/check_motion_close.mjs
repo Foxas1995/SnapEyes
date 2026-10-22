@@ -6,8 +6,8 @@
 // Exit code 1 when any check fails. (The foundation's checks are scripts/check_motion.mjs.)
 //
 // What it checks (each name is a value of --only):
-//   trust       the four promises draw their hairline one after the other and their words rise after it; the gold ring draws around the portrait
-//               (concentric with it, the portrait itself never moves, fades or scales); the quote and the privacy items rise; every state at rest is
+//   trust       the four promises draw their hairline one after the other and their words rise after it; the help offer shows no person (no portrait,
+//               no name, no role, no quote: the owner, 2026-10-22) and rises after its title; the privacy items rise; every state at rest is
 //               final; reduced motion shows all of it at once
 //   pricing     nothing animates on a price: no animation or transition on any price, any sentence that holds one, the notice, the list of what
 //               you receive, the statement that printing is not part of the order, the footnote or the terms link, at any frame of a full scroll;
@@ -134,20 +134,25 @@ const nonincreasing = (xs, eps = 0.002) => xs.every((x, i) => i === 0 || x <= xs
 // ---------------------------------------------------------------------------------------------------- trust
 async function checkTrust() {
   console.log('trust');
+  // the first name of the seller's representative (src/landing/config.ts SELLER): the footer and the legal pages name him, the trust section does not (the owner, 2026-10-22)
+  const firstName = (/representative:\s*'([^']*)'/.exec(readFileSync(join(ROOT, 'src/landing/config.ts'), 'utf8'))?.[1] ?? '').split(' ')[0];
   for (const [lang, width] of [['en', 1280], ['de', 375], ['hu', 1280], ['lt', 375]]) {
     const tag = `${lang} ${width}px`;
     const page = await open({ lang, width, height: width < 800 ? 812 : 900 });
-    const pre = J(await page.eval(`JSON.stringify({ ring: parseFloat(getComputedStyle(document.querySelector('.lp-cur-ring path')).strokeDashoffset),
+    const pre = J(await page.eval(`JSON.stringify({
       lines: [...document.querySelectorAll('.lp-never-list li')].map((l) => getComputedStyle(l, '::before').scale),
-      words: [...document.querySelectorAll('.lp-never-list li > *')].map((e) => +getComputedStyle(e).opacity), quote: +getComputedStyle(document.querySelector('.lp-curator blockquote')).opacity,
-      titles: [...document.querySelectorAll('#trust h2')].map((h) => h.dataset.reveal), n: document.querySelectorAll('.lp-never-list li').length })`));
+      words: [...document.querySelectorAll('.lp-never-list li > *')].map((e) => +getComputedStyle(e).opacity), offer: +getComputedStyle(document.querySelector('.lp-curator [data-reveal]')).opacity,
+      titles: [...document.querySelectorAll('#trust h2')].map((h) => h.dataset.reveal), n: document.querySelectorAll('.lp-never-list li').length,
+      person: [...document.querySelectorAll('#trust img, #trust blockquote, #trust .lp-curator b, #trust .lp-cur-ring')].map((e) => e.tagName + '.' + e.className), text: document.getElementById('trust').textContent })`));
     expect('trust', pre.n === 4, `${tag}: ${pre.n} promises, expected 4`);
-    expect('trust', pre.ring === 1 && pre.lines.every((s) => s === '0 1') && pre.words.every((o) => o === 0) && pre.quote === 0, `${tag}: before it is reached the promises, the ring and the quote are not in their hidden state (${JSON.stringify(pre)}): the test would see nothing`);
+    expect('trust', pre.lines.every((s) => s === '0 1') && pre.words.every((o) => o === 0) && pre.offer === 0, `${tag}: before it is reached the promises and the help offer are not in their hidden state (${JSON.stringify({ ...pre, text: undefined })}): the test would see nothing`);
+    // no person in the trust section: no portrait, no name, no role, no quote (what replaced the founder block is a plain help offer)
+    expect('trust', pre.person.length === 0 && !(firstName && pre.text.includes(firstName)), `${tag}: the trust section shows a person: ${pre.person.join(', ') || 'no element'}${firstName && pre.text.includes(firstName) ? `, the name "${firstName}" in its text` : ''}`);
     expect('trust', pre.titles.length === 3 && pre.titles.every((t) => t === 'mask'), `${tag}: the three headings of the trust section are not masked titles (${pre.titles})`);
 
     // the promises: one by one
     await reach(page, '.lp-never-list');
-    const f = await frames(page, 2300, `const pimg = document.querySelector('.lp-cur-ring img'), pc = getComputedStyle(pimg); return { img: [pc.opacity, pc.translate, pc.scale, pc.rotate, pc.transform, pc.filter, getComputedStyle(pimg.parentElement).opacity, getComputedStyle(pimg.parentElement).translate], ring: parseFloat(getComputedStyle(document.querySelector('.lp-cur-ring path')).strokeDashoffset), quote: +getComputedStyle(document.querySelector('.lp-curator blockquote')).opacity, lines: [...document.querySelectorAll('.lp-never-list li')].map((l) => getComputedStyle(l, '::before').scale), words: [...document.querySelectorAll('.lp-never-list li > h3')].map((e) => +getComputedStyle(e).opacity), ys: [...document.querySelectorAll('.lp-never-list li > h3')].map((e) => getComputedStyle(e).translate) };`);
+    const f = await frames(page, 2300, `return { offer: +getComputedStyle(document.querySelector('.lp-curator [data-reveal]')).opacity, lines: [...document.querySelectorAll('.lp-never-list li')].map((l) => getComputedStyle(l, '::before').scale), words: [...document.querySelectorAll('.lp-never-list li > h3')].map((e) => +getComputedStyle(e).opacity), ys: [...document.querySelectorAll('.lp-never-list li > h3')].map((e) => getComputedStyle(e).translate) };`);
     for (let i = 0; i < 4; i++) {
       const line = f.map(([, v]) => num(v.lines[i])), word = f.map(([, v]) => v.words[i]);
       expect('trust', nondecreasing(line) && nondecreasing(word), `${tag}: promise ${i + 1} goes backwards while it appears`);
@@ -162,18 +167,11 @@ async function checkTrust() {
     const lag = f.findIndex(([, v]) => v.words[0] > 0.02) - starts[0];
     expect('trust', lag >= 2, `${tag}: the words of the first promise rise ${lag} frames after its line began, expected the line to lead`);
 
-    // the founder: the ring draws, the portrait never moves
-    await reach(page, '.lp-cur-ring', 'center');
-    const g = await frames(page, 2600, `const img = document.querySelector('.lp-cur-ring img'), ci = getComputedStyle(img); return { dash: parseFloat(getComputedStyle(document.querySelector('.lp-cur-ring path')).strokeDashoffset), img: [ci.opacity, ci.translate, ci.scale, ci.rotate, ci.transform, ci.filter, getComputedStyle(img.parentElement).opacity, getComputedStyle(img.parentElement).translate], quote: +getComputedStyle(document.querySelector('.lp-curator blockquote')).opacity };`);
-    const dash = f.map(([, v]) => v.ring).concat(g.map(([, v]) => v.dash));
-    expect('trust', nonincreasing(dash) && dash.some((x) => x > 0.05 && x < 0.95) && dash[dash.length - 1] === 0, `${tag}: the ring does not draw from 1 to 0 (${dash.filter((_, i) => i % 8 === 0).map((x) => x.toFixed(2))})`);
-    const still = f.concat(g).every(([, v]) => v.img[0] === '1' && v.img[1] === 'none' && v.img[2] === 'none' && v.img[3] === 'none' && v.img[4] === 'none' && v.img[5] === 'none' && v.img[6] === '1' && v.img[7] === 'none');
-    expect('trust', still, `${tag}: the portrait itself was moved, faded, scaled or filtered while the ring drew: ${JSON.stringify(f.concat(g).find(([, v]) => v.img[0] !== '1' || v.img[1] !== 'none' || v.img[2] !== 'none')?.[1].img)}`);
-    const quote = f.map(([, v]) => v.quote).concat(g.map(([, v]) => v.quote));
-    expect('trust', nondecreasing(quote) && quote[quote.length - 1] === 1, `${tag}: the quote does not rise to full opacity`);
-    const geo = J(await page.eval(`JSON.stringify((() => { const i = document.querySelector('.lp-cur-ring img').getBoundingClientRect(), s = document.querySelector('.lp-cur-ring svg').getBoundingClientRect();
-      return { dx: (i.left + i.width / 2) - (s.left + s.width / 2), dy: (i.top + i.height / 2) - (s.top + s.height / 2), img: i.width, svg: s.width }; })())`));
-    expect('trust', Math.abs(geo.dx) < 0.51 && Math.abs(geo.dy) < 0.51 && geo.svg - geo.img >= 7, `${tag}: the ring is not concentric with the portrait or does not clear it: ${JSON.stringify(geo)}`);
+    // the help offer (the block that replaced the founder's, 2026-10-22): it rises once, after its title, and ends at full opacity
+    await reach(page, '.lp-curator', 'center');
+    const g = await frames(page, 2000, `return { offer: +getComputedStyle(document.querySelector('.lp-curator [data-reveal]')).opacity };`);
+    const offer = f.map(([, v]) => v.offer).concat(g.map(([, v]) => v.offer));
+    expect('trust', nondecreasing(offer) && offer.some((x) => x > 0.05 && x < 0.95) && offer[offer.length - 1] === 1, `${tag}: the help offer does not rise to full opacity (${offer.filter((_, i) => i % 8 === 0).map((x) => x.toFixed(2))})`);
 
     // the privacy promise on a phone is a disclosure: it opens smoothly like an FAQ answer
     if (width < 800) {
@@ -193,19 +191,19 @@ async function checkTrust() {
     expect('trust', p[p.length - 1][1].items.length === 4 && p[p.length - 1][1].items.every((o) => o === 1), `${tag}: the four privacy items are not all in place after 2.2 s`);
     await walk(page, '#trust');
     await sleep(2200);
-    const after = J(await page.eval(`JSON.stringify({ left: ${ANIMS}.filter((a) => /lp-rv|lp-ring/.test(a)), hidden: ${rest('#trust .lp-never-list li > *, #trust .lp-curator *, #trust .lp-priv-list > *, #trust [data-reveal]')} })`));
+    const after = J(await page.eval(`JSON.stringify({ left: ${ANIMS}.filter((a) => /lp-rv/.test(a)), hidden: ${rest('#trust .lp-never-list li > *, #trust .lp-curator *, #trust .lp-priv-list > *, #trust [data-reveal]')} })`));
     expect('trust', after.left.length === 0 && after.hidden.length === 0, `${tag}: after the reveals, animations left ${after.left.join(', ')}; not at rest ${after.hidden.join(', ')}`);
     await page.close();
   }
   // reduced motion: all of it at once
   for (const [lang, width] of [['en', 1280], ['hu', 375]]) {
     const page = await open({ lang, width, height: width < 800 ? 812 : 900, reduceMotion: true });
-    const r = J(await page.eval(`JSON.stringify({ ring: parseFloat(getComputedStyle(document.querySelector('.lp-cur-ring path')).strokeDashoffset),
+    const r = J(await page.eval(`JSON.stringify({
       lines: [...document.querySelectorAll('.lp-never-list li')].map((l) => getComputedStyle(l, '::before').scale), hidden: ${rest('#trust .lp-never-list li > *, #trust .lp-curator *, #trust .lp-priv-list > *, #trust [data-reveal]')}, anims: ${ANIMS}.length, mo: document.documentElement.classList.contains('mo') })`));
-    expect('trust', r.ring === 0 && r.lines.every((s) => s === 'none') && r.hidden.length === 0 && r.anims === 0 && !r.mo, `${lang} ${width}px reduced motion: the section is not in its final state at once: ${JSON.stringify(r)}`);
+    expect('trust', r.lines.every((s) => s === 'none') && r.hidden.length === 0 && r.anims === 0 && !r.mo, `${lang} ${width}px reduced motion: the section is not in its final state at once: ${JSON.stringify(r)}`);
     await page.close();
   }
-  if (!problems.some((x) => x.startsWith('trust'))) pass('trust', 'four promises draw and rise one after the other, the ring draws around a portrait that never moves (concentric), quote and privacy items rise, everything ends at rest, reduced motion is final at once');
+  if (!problems.some((x) => x.startsWith('trust'))) pass('trust', 'four promises draw and rise one after the other, no person in the section, the help offer and the privacy items rise, everything ends at rest, reduced motion is final at once');
 }
 
 // ---------------------------------------------------------------------------------------------------- pricing
@@ -723,18 +721,18 @@ async function checkFailsafe() {
   await mounted(page);
   const r = J(await page.eval(`JSON.stringify({ fail: document.documentElement.classList.contains('mo-fail'),
     hidden: ${rest('.lp-never-list li > *, .lp-curator *, .lp-priv-list > *, .lp-ftr-mark > span, .lp-final .lp-bg img, .lp-final [data-reveal], #trust [data-reveal], #faq [data-reveal], #pricing [data-reveal]')},
-    ring: parseFloat(getComputedStyle(document.querySelector('.lp-cur-ring path')).strokeDashoffset), lines: [...document.querySelectorAll('.lp-never-list li, .lp-prow')].map((l) => getComputedStyle(l, l.matches('.lp-prow') ? '::after' : '::before').scale),
+    lines: [...document.querySelectorAll('.lp-never-list li, .lp-prow')].map((l) => getComputedStyle(l, l.matches('.lp-prow') ? '::after' : '::before').scale),
     clip: getComputedStyle(document.querySelector('.lp-final .lp-bg')).clipPath })`));
   expect('failsafe', r.fail, 'with a dead observer html.mo-fail never came');
-  expect('failsafe', r.hidden.length === 0 && r.ring === 0 && r.lines.every((s) => s === 'none') && r.clip === 'none', `with a dead observer these stay hidden: ${r.hidden.join(', ')} (ring ${r.ring}, lines ${r.lines}, clip ${r.clip})`);
+  expect('failsafe', r.hidden.length === 0 && r.lines.every((s) => s === 'none') && r.clip === 'none', `with a dead observer these stay hidden: ${r.hidden.join(', ')} (lines ${r.lines}, clip ${r.clip})`);
   await page.close();
-  if (!problems.some((x) => x.startsWith('failsafe'))) pass('failsafe', 'with a dead observer the promises, the ring, the price hairlines, the closing picture and the wordmark are all drawn and in place after 3.5 s');
+  if (!problems.some((x) => x.startsWith('failsafe'))) pass('failsafe', 'with a dead observer the promises, the help offer, the price hairlines, the closing picture and the wordmark are all drawn and in place after 3.5 s');
 }
 
 // ---------------------------------------------------------------------------------------------------- focus
 async function checkFocus() {
   console.log('focus');
-  const targets = [['the founder mail button', '.lp-curator a.lp-btn-line'], ['the privacy policy link', '.lp-priv-foot a'], ['the pricing call to action', '.lp-incl a.lp-btn-gold'],
+  const targets = [['the mail button of the help offer', '.lp-curator a.lp-btn-line'], ['the privacy policy link', '.lp-priv-foot a'], ['the pricing call to action', '.lp-incl a.lp-btn-gold'],
     ['the terms link under the prices', '.lp-foot-price a'], ['the closing call to action', '#ctaFinal'], ['a footer link', '.lp-ftr nav a'], ['a legal link', '#legalNav a'], ['an FAQ question', '#faq summary']];
   for (const [lang, width] of [['en', 1280], ['de', 375]]) {
     const page = await open({ lang, width, height: width < 800 ? 812 : 900 });

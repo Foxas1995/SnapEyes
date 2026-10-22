@@ -334,7 +334,7 @@ export const lt: TryCopy = {
       : `${list.length === 1 ? `Akis ${list[0]}` : `Akys ${andList(list, 'ir')}`}: žiede dar yra voko ar blakstienų. Nufotografuokite iš naujo, kad rezultatas būtų švaresnis.`),
     retake: {
       calm: 'Kad parodytume stilius, reikia dar vienos nuotraukos.',
-      manual: 'Vis dar nepavyksta? Atsiųskite geriausias savo nuotraukas adresu {link}, ir Mantas jas peržiūrės.',
+      manual: 'Vis dar nepavyksta? Atsiųskite geriausias savo nuotraukas adresu {link}, ir mes jas peržiūrėsime.',
       noStyles: 'Šiam akių skaičiui kol kas negalime parodyti nė vieno stiliaus. Pašalinkite akį arba parašykite mums.',
     },
     stack: 'Jūsų dviejų rainelių spalvos labai skiriasi, todėl viena yra priešakyje, o kita už jos.',

@@ -44,7 +44,7 @@
     "vis": "AI visualisation",
     "photo": "Example photo",
     "photoFull": "Example photo, not a customer",
-    "mantas": "Mantas's own eye"
+    "mantas": "Our own eye"
   },
   "hero": {
     "eyebrow": "SnapEyes",
@@ -59,13 +59,13 @@
     "computerHint": "Reading on a computer? Open snapeyes.com on your phone to take the photo, or choose photos you already have.",
     "ready": "Your file from {from}",
     "secondary": "See a before and after of a real phone photo",
-    "imageAlt": "An AI visualisation: Mantas's own iris as a glossy acrylic print on a wall. It shows how the digital file can look once printed.",
+    "imageAlt": "An AI visualisation: our own iris as a glossy acrylic print on a wall. It shows how the digital file can look once printed.",
     "chipTitle": "AI visualisation",
     "chipBody": "You receive the digital file. Printing is not included.",
     "caption": "Your file on acrylic, about 50 cm. Printing is not part of your order.",
-    "discAlt": "Mantas's eye: his phone photo on the left, the restored iris on the right.",
-    "discLabel": "Mantas's own eye, before and after",
-    "discLink": "Mantas's own eye: real phone photo, restored iris. Go to the before and after."
+    "discAlt": "Our own eye: a real phone photo on the left, the restored iris on the right.",
+    "discLabel": "A real phone photo, before and after",
+    "discLink": "Our own eye: a real phone photo, restored iris. Go to the before and after."
   },
   "reveal": {
     "eyebrow": "The Reveal",
@@ -93,10 +93,10 @@
       },
       {
         "id": "own",
-        "label": "Mantas's eye",
+        "label": "Our own eye",
         "n": 315,
-        "note": "His own eye, photographed at home. The photo is cropped to the iris.",
-        "photoAlt": "Mantas's phone photo of his own eye, left half of the frame",
+        "note": "Photographed at home with a phone. The photo is cropped to the iris.",
+        "photoAlt": "A phone photo of our own eye, left half of the frame",
         "irisAlt": "The same iris restored, on black",
         "artAlt": "The restored iris as an artwork"
       }
@@ -205,7 +205,7 @@
       "family4": "Family",
       "collision": "Two of you"
     },
-    "eyesNote": "Eyes: Mantas and example photos, not customers.",
+    "eyesNote": "Eyes: our own and example photos, not customers.",
     "captions": {
       "acrylic": "Your file printed on acrylic.",
       "metal": "Your file printed on aluminium.",
@@ -318,12 +318,12 @@
       {
         "id": "pair",
         "t": "Two of you, on dark walnut",
-        "c": "Your file printed on acrylic. Eyes: Mantas and an example photo, not customers."
+        "c": "Your file printed on acrylic. Eyes: our own and an example photo, not customers."
       },
       {
         "id": "group",
         "t": "Four of you, in a frame",
-        "c": "Your file, framed. Eyes: Mantas and example photos, not customers."
+        "c": "Your file, framed. Eyes: our own and example photos, not customers."
       },
       {
         "id": "hands",
@@ -333,7 +333,7 @@
       {
         "id": "gallery",
         "t": "Seen from an angle",
-        "c": "Your file on acrylic with standoff posts. Eyes: Mantas and an example photo, not customers."
+        "c": "Your file on acrylic with standoff posts. Eyes: our own and an example photo, not customers."
       },
       {
         "id": "shelf",
@@ -346,7 +346,7 @@
     "eyebrow": "Styles",
     "title": "One iris, many ways to see it",
     "intro": "Every piece below is an example. Yours will carry your own colours and your own pattern.",
-    "legend": "Examples made with the SnapEyes engine. Shown in Mantas's own eye unless a tile says otherwise. A style marked Soon cannot be ordered yet.",
+    "legend": "Examples made with the SnapEyes engine. Shown in our own eye unless a tile says otherwise. A style marked Soon cannot be ordered yet.",
     "groups": {
       "one": "Just you",
       "two": "Two of you",
@@ -366,7 +366,7 @@
       "gr": "Grey"
     },
     "eyeNote": {
-      "own": "Mantas's own eye",
+      "own": "Our own eye",
       "other": "Example photo, not a customer"
     },
     "items": {
@@ -428,9 +428,9 @@
         "d": "Every iris sends its own fine rays."
       }
     },
-    "own": "Mantas's eye",
+    "own": "Our own eye",
     "licensed": "Example photo, not a customer",
-    "mixed": "Mantas's eye and example photos, not customers",
+    "mixed": "Our own eye and example photos, not customers",
     "priceOne": "One eye, {price}",
     "priceTwo": "Two eyes, {price}",
     "priceFrom": "From {price}",
@@ -536,7 +536,7 @@
     "intro": "A {n} px square cropped from the {px} file, not resized (your screen may scale it to fit). The photo behind this example was {src} px wide, so the fine fibres you see here are our AI's reconstruction.",
     "badge": "{n} px crop",
     "fibreTitle": "A square cropped straight from the file",
-    "fibreAlt": "A close-up of Mantas's restored iris, cropped from the 4096 px file: radial fibres, a gold collarette and the edge of the pupil.",
+    "fibreAlt": "A close-up of our own restored iris, cropped from the 4096 px file: radial fibres, a gold collarette and the edge of the pupil.",
     "locatorAlt": "The whole restored iris, with a square marking where the close-up was cropped",
     "locatorLabel": "Where it was cropped",
     "edgeTitle": "The edge of an acrylic print",
@@ -554,7 +554,7 @@
       },
       {
         "t": "We never pass examples off as customers",
-        "b": "Every example picture is labelled or captioned. Mantas's eye is his own. The other eyes are example photos, never customers."
+        "b": "Every example picture is labelled or captioned. The eye we show most is our own. The other eyes are example photos, never customers."
       },
       {
         "t": "We never hide what the AI does",
@@ -566,13 +566,10 @@
       }
     ],
     "idLine": "MB Portretizuokis, company code 305605052, Kaunas, Lithuania.",
-    "curatorEyebrow": "The founder",
-    "curatorTitle": "Behind SnapEyes",
-    "curatorRole": "Founder",
-    "curatorNote": "The eye I show most on this page is mine, photographed at home with my phone. The preview is free so that you can judge the result with your own eyes before you pay anything.",
-    "curatorPhotoAlt": "Mantas's own iris",
-    "offer": "Can't get a sharp shot? Send me your best photos and I will look at them personally, usually within one or two working days.",
-    "offerCta": "Email Mantas",
+    "curatorEyebrow": "Help",
+    "curatorTitle": "Can't get a sharp shot?",
+    "offer": "Send us your best photos and we will look at them, usually within one or two working days.",
+    "offerCta": "Email us",
     "privacyEyebrow": "Your photo",
     "privacyTitle": "A promise about your eye",
     "privacy": [
@@ -629,7 +626,7 @@
       {
         "id": "bad",
         "q": "What if my photo is bad?",
-        "a": "Before you pay, the preview tells you if a shot is too blurry, too dark or the pupil too wide, and shows you how to retake it. Still stuck? Email your best photos to {email} and Mantas will look at them."
+        "a": "Before you pay, the preview tells you if a shot is too blurry, too dark or the pupil too wide, and shows you how to retake it. Still stuck? Email your best photos to {email} and we will look at them."
       },
       {
         "id": "unhappy",
@@ -701,7 +698,7 @@
     "title": "See your own iris",
     "body": "All it takes is your phone, good light and about a minute.",
     "small": "You receive a digital file. Printing is not part of your order.",
-    "imageAlt": "An AI visualisation: a dark study at dusk with Mantas's iris printed on acrylic on the wall.",
+    "imageAlt": "An AI visualisation: a dark study at dusk with our own iris printed on acrylic on the wall.",
     "chip": "AI visualisation"
   },
   "footer": {

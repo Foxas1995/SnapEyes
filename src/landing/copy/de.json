@@ -44,7 +44,7 @@
     "vis": "KI-Visualisierung",
     "photo": "Beispielfoto",
     "photoFull": "Beispielfoto, kein Kunde",
-    "mantas": "Das Auge von Mantas"
+    "mantas": "Unser eigenes Auge"
   },
   "hero": {
     "eyebrow": "SnapEyes",
@@ -59,13 +59,13 @@
     "computerHint": "Sie lesen am Computer? Öffnen Sie snapeyes.com auf Ihrem Smartphone, um das Foto aufzunehmen, oder wählen Sie Fotos, die Sie schon haben.",
     "ready": "Ihre Datei ab {from}",
     "secondary": "Vorher und Nachher eines echten Smartphone-Fotos ansehen",
-    "imageAlt": "Eine KI-Visualisierung: die Iris von Mantas als glänzender Acryldruck an einer Wand. Sie zeigt, wie die digitale Datei gedruckt aussehen kann.",
+    "imageAlt": "Eine KI-Visualisierung: unsere eigene Iris als glänzender Acryldruck an einer Wand. Sie zeigt, wie die digitale Datei gedruckt aussehen kann.",
     "chipTitle": "KI-Visualisierung",
     "chipBody": "Sie erhalten die digitale Datei. Der Druck ist nicht enthalten.",
     "caption": "Ihre Datei auf Acryl, etwa 50 cm. Der Druck gehört nicht zur Bestellung.",
-    "discAlt": "Das Auge von Mantas, durch die Pupille geteilt: links sein Smartphone-Foto, rechts die restaurierte Iris.",
-    "discLabel": "Das eigene Auge von Mantas, vorher und nachher",
-    "discLink": "Das eigene Auge von Mantas: echtes Smartphone-Foto, restaurierte Iris. Zu Vorher und Nachher."
+    "discAlt": "Unser eigenes Auge, durch die Pupille geteilt: links ein echtes Smartphone-Foto, rechts die restaurierte Iris.",
+    "discLabel": "Ein echtes Smartphone-Foto, vorher und nachher",
+    "discLink": "Unser eigenes Auge: echtes Smartphone-Foto, restaurierte Iris. Zu Vorher und Nachher."
   },
   "reveal": {
     "eyebrow": "Die Enthüllung",
@@ -93,10 +93,10 @@
       },
       {
         "id": "own",
-        "label": "Das Auge von Mantas",
+        "label": "Unser eigenes Auge",
         "n": 315,
-        "note": "Sein eigenes Auge, zu Hause fotografiert. Das Foto ist auf die Iris zugeschnitten.",
-        "photoAlt": "Das Smartphone-Foto von Mantas von seinem eigenen Auge, linke Bildhälfte",
+        "note": "Zu Hause mit dem Smartphone fotografiert. Das Foto ist auf die Iris zugeschnitten.",
+        "photoAlt": "Ein Smartphone-Foto unseres eigenen Auges, linke Bildhälfte",
         "irisAlt": "Dieselbe Iris restauriert, auf Schwarz",
         "artAlt": "Die restaurierte Iris als Kunstwerk"
       }
@@ -205,7 +205,7 @@
       "family4": "Familie",
       "collision": "Sie zu zweit"
     },
-    "eyesNote": "Augen: Mantas und Beispielfotos, keine Kunden.",
+    "eyesNote": "Augen: unser eigenes und Beispielfotos, keine Kunden.",
     "captions": {
       "acrylic": "Ihre Datei auf Acryl gedruckt.",
       "metal": "Ihre Datei auf Aluminium gedruckt.",
@@ -318,12 +318,12 @@
       {
         "id": "pair",
         "t": "Sie zu zweit, auf dunklem Nussbaum",
-        "c": "Ihre Datei auf Acryl gedruckt. Augen: Mantas und ein Beispielfoto, keine Kunden."
+        "c": "Ihre Datei auf Acryl gedruckt. Augen: unser eigenes und ein Beispielfoto, keine Kunden."
       },
       {
         "id": "group",
         "t": "Sie zu viert, im Rahmen",
-        "c": "Ihre Datei, gerahmt. Augen: Mantas und Beispielfotos, keine Kunden."
+        "c": "Ihre Datei, gerahmt. Augen: unser eigenes und Beispielfotos, keine Kunden."
       },
       {
         "id": "hands",
@@ -333,7 +333,7 @@
       {
         "id": "gallery",
         "t": "Aus einem Blickwinkel",
-        "c": "Ihre Datei auf Acryl mit Abstandhaltern. Augen: Mantas und ein Beispielfoto, keine Kunden."
+        "c": "Ihre Datei auf Acryl mit Abstandhaltern. Augen: unser eigenes und ein Beispielfoto, keine Kunden."
       },
       {
         "id": "shelf",
@@ -346,7 +346,7 @@
     "eyebrow": "Stile",
     "title": "Eine Iris, viele Sichtweisen",
     "intro": "Jedes Stück hier ist ein Beispiel. Ihres trägt Ihre eigenen Farben und Ihr eigenes Muster.",
-    "legend": "Beispiele, erstellt mit der SnapEyes-Engine. Gezeigt am Auge von Mantas, sofern eine Kachel nichts anderes sagt. Ein Stil mit dem Hinweis Bald kann noch nicht bestellt werden.",
+    "legend": "Beispiele, erstellt mit der SnapEyes-Engine. Gezeigt an unserem eigenen Auge, sofern eine Kachel nichts anderes sagt. Ein Stil mit dem Hinweis Bald kann noch nicht bestellt werden.",
     "groups": {
       "one": "Nur Sie",
       "two": "Sie zu zweit",
@@ -366,7 +366,7 @@
       "gr": "Grau"
     },
     "eyeNote": {
-      "own": "Das Auge von Mantas",
+      "own": "Unser eigenes Auge",
       "other": "Beispielfoto, kein Kunde"
     },
     "items": {
@@ -428,9 +428,9 @@
         "d": "Jede Iris sendet ihre eigenen feinen Strahlen."
       }
     },
-    "own": "Das Auge von Mantas",
+    "own": "Unser eigenes Auge",
     "licensed": "Beispielfoto, kein Kunde",
-    "mixed": "Das Auge von Mantas und Beispielfotos, keine Kunden",
+    "mixed": "Unser eigenes Auge und Beispielfotos, keine Kunden",
     "priceOne": "Ein Auge, {price}",
     "priceTwo": "Zwei Augen, {price}",
     "priceFrom": "Ab {price}",
@@ -536,7 +536,7 @@
     "intro": "Ein Quadrat von {n} px aus der Datei mit {px}, nicht verkleinert (Ihr Bildschirm skaliert es eventuell). Das Foto hinter diesem Beispiel war nur {src} px breit, die feinen Fasern sehen Sie hier also als Rekonstruktion unserer KI.",
     "badge": "{n} px Ausschnitt",
     "fibreTitle": "Ein Quadrat direkt aus der Datei",
-    "fibreAlt": "Eine Nahaufnahme der restaurierten Iris von Mantas, ausgeschnitten aus der Datei mit 4096 px: radiale Fasern, ein goldener Kragen und der Rand der Pupille.",
+    "fibreAlt": "Eine Nahaufnahme unserer eigenen restaurierten Iris, ausgeschnitten aus der Datei mit 4096 px: radiale Fasern, ein goldener Kragen und der Rand der Pupille.",
     "locatorAlt": "Die ganze restaurierte Iris, ein Quadrat markiert die Stelle der Nahaufnahme",
     "locatorLabel": "Hier ausgeschnitten",
     "edgeTitle": "Die Kante eines Acryldrucks",
@@ -554,7 +554,7 @@
       },
       {
         "t": "Wir geben Beispiele nie als Kunden aus",
-        "b": "Jedes Beispielbild ist gekennzeichnet oder beschriftet. Das Auge von Mantas ist sein eigenes. Die anderen Augen sind Beispielfotos, nie Kunden."
+        "b": "Jedes Beispielbild ist gekennzeichnet oder beschriftet. Das Auge, das wir am häufigsten zeigen, ist unser eigenes. Die anderen Augen sind Beispielfotos, nie Kunden."
       },
       {
         "t": "Wir verschweigen nie, was die KI tut",
@@ -566,13 +566,10 @@
       }
     ],
     "idLine": "MB Portretizuokis, Unternehmenscode 305605052, Kaunas, Litauen.",
-    "curatorEyebrow": "Der Gründer",
-    "curatorTitle": "Hinter SnapEyes",
-    "curatorRole": "Gründer",
-    "curatorNote": "Das Auge, das ich auf dieser Seite am häufigsten zeige, ist mein eigenes, zu Hause mit meinem Smartphone fotografiert. Die Vorschau ist kostenlos, damit Sie das Ergebnis mit eigenen Augen beurteilen können, bevor Sie etwas bezahlen.",
-    "curatorPhotoAlt": "Die Iris von Mantas",
-    "offer": "Gelingt Ihnen kein scharfes Foto? Schicken Sie mir Ihre besten Aufnahmen, ich sehe sie mir persönlich an, meist innerhalb von ein bis zwei Werktagen.",
-    "offerCta": "E-Mail an Mantas",
+    "curatorEyebrow": "Hilfe",
+    "curatorTitle": "Gelingt Ihnen kein scharfes Foto?",
+    "offer": "Schicken Sie uns Ihre besten Aufnahmen, wir sehen sie uns an, meist innerhalb von ein bis zwei Werktagen.",
+    "offerCta": "Schreiben Sie uns",
     "privacyEyebrow": "Ihr Foto",
     "privacyTitle": "Unser Versprechen für Ihr Auge",
     "privacy": [
@@ -629,7 +626,7 @@
       {
         "id": "bad",
         "q": "Was, wenn mein Foto schlecht ist?",
-        "a": "Vor der Zahlung sagt Ihnen die Vorschau, wenn eine Aufnahme zu unscharf, zu dunkel oder die Pupille zu weit ist, und zeigt Ihnen, wie Sie neu aufnehmen. Kommen Sie nicht weiter? Schicken Sie Ihre besten Fotos an {email}, und Mantas sieht sie sich an."
+        "a": "Vor der Zahlung sagt Ihnen die Vorschau, wenn eine Aufnahme zu unscharf, zu dunkel oder die Pupille zu weit ist, und zeigt Ihnen, wie Sie neu aufnehmen. Kommen Sie nicht weiter? Schicken Sie Ihre besten Fotos an {email}, und wir sehen sie uns an."
       },
       {
         "id": "unhappy",
@@ -701,7 +698,7 @@
     "title": "Sehen Sie Ihre eigene Iris",
     "body": "Sie brauchen nur Ihr Smartphone, gutes Licht und etwa eine Minute.",
     "small": "Sie erhalten eine digitale Datei. Der Druck gehört nicht zur Bestellung.",
-    "imageAlt": "Eine KI-Visualisierung: ein dunkles Arbeitszimmer in der Dämmerung, an der Wand die Iris von Mantas auf Acryl gedruckt.",
+    "imageAlt": "Eine KI-Visualisierung: ein dunkles Arbeitszimmer in der Dämmerung, an der Wand unsere eigene Iris auf Acryl gedruckt.",
     "chip": "KI-Visualisierung"
   },
   "footer": {

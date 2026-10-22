@@ -1,9 +1,9 @@
 {
  "note": "Where every image family on the page comes from and how it must be labelled. Source ids are those of the SnapEyes design waves (wave-y, wave-y3) and C:/kuriam/snapeyes-parodomieji/LICENCIJOS.csv. Nothing here is a customer work: the page never calls an example a customer. Fix round 2026-09-30: two labels only. 'Example' (copy example.chip) for real engine artwork, 'AI visualisation' (copy example.vis) for every mock-up; the eyes that are not Mantas's are called 'Example photo, not a customer' (copy example.photoFull), which claims no licence type.",
  "labels": {
-  "own": "copy styles.own and example.mantas (Mantas's own eye)",
+  "own": "copy styles.own and example.mantas (Our own eye)",
   "licensed": "copy styles.licensed = example.photoFull (Example photo, not a customer); the chip on a tile reads example.photo",
-  "mixed": "copy styles.mixed (Mantas's eye and example photos, not customers)",
+  "mixed": "copy styles.mixed (Our own eye and example photos, not customers)",
   "visualisation": "copy example.vis (AI visualisation) on every mock-up picture, plus wall.footnote (rooms, hands and objects are AI-generated images, not photographs)"
  },
  "families": {

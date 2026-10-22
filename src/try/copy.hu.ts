@@ -360,7 +360,7 @@ export const hu: TryCopy = {
       : `${Az(list[0] ?? 0)} ${ordList(list)} szem gyűrűjében még szemhéj vagy szempilla van. Egy újrafotózás tisztább eredményt ad.`),
     retake: {
       calm: 'A stílusok megjelenítéséhez még egy fotóra van szükségünk.',
-      manual: 'Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {link}. Mantas megnézi őket.',
+      manual: 'Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {link}. Megnézzük őket.',
       noStyles: 'Ennyi szemhez még egyetlen stílust sem tudunk mutatni. Távolíts el egy szemet, vagy írj nekünk.',
     },
     stack: 'A két íriszed színe erősen eltér, ezért az egyik a másik előtt van.',

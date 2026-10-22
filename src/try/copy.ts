@@ -406,7 +406,7 @@ const en = {
       // tips (the owner, 2026-10-22: "we exist to raise the iris quality, not to tell every customer what does not fit"); a style that is held back while others can be
       // drawn is simply not shown
       calm: 'To show the styles, we need one more photo.',
-      manual: 'Still stuck? Email your best photos to {link} and Mantas will look at them.',
+      manual: 'Still stuck? Email your best photos to {link} and we will look at them.',
       noStyles: 'No style can be shown for this number of eyes yet. Remove an eye, or write to us.',
     },
     stack: 'Your two irises differ strongly in colour, so one sits in front of the other.',
@@ -858,7 +858,7 @@ const de: TryCopy = {
       : `${list.length === 1 ? `Auge ${list[0]}` : `Augen ${andList(list, 'und')}`}: Ein Lid oder eine Wimper liegt noch im Ring. Eine neue Aufnahme gibt ein saubereres Ergebnis.`),
     retake: {
       calm: 'Um die Stile zu zeigen, brauchen wir noch ein Foto.',
-      manual: 'Kommen Sie nicht weiter? Schicken Sie Ihre besten Fotos an {link}, und Mantas sieht sie sich an.',
+      manual: 'Kommen Sie nicht weiter? Schicken Sie Ihre besten Fotos an {link}, und wir sehen sie uns an.',
       noStyles: 'Für diese Anzahl von Augen kann noch kein Stil gezeigt werden. Entfernen Sie ein Auge oder schreiben Sie uns.',
     },
     stack: 'Ihre beiden Iriden unterscheiden sich stark in der Farbe, deshalb liegt eine vor der anderen.',

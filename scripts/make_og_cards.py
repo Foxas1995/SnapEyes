@@ -45,7 +45,7 @@ HEAD = dict(font="cinzel-var", size=38, wght=600, track=0.0, x=639.5, base=356, 
 SUB = dict(font="plus-jakarta-sans-var", size=21, wght=400, track=0.0, x=641.5, gap=62, fill=(165, 165, 169))   # gap: from the last headline baseline
 CAP = dict(font="plus-jakarta-sans-var", size=20, wght=500, track=0.0, cx=319.0, base=588, fill=(224, 224, 228))
 EN_CARD = dict(headline=["Precision Iris Art", "from Your Smartphone"], sub="Free watermarked preview",
-               caption="Mantas, founder - photographed at home with a phone")   # the English card's own words (a spaced hyphen: the card is not a text of the site)
+               caption="Photographed at home with a phone")   # the English card's own words (2026-10-22: no name, the owner's wish)
 CLEAR = [(600, 90, 1200, 520), (0, 556, 700, 612)]    # the areas of the English card that hold words: painted black before the new words go on (the card's background is black)
 
 

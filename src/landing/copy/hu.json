@@ -44,7 +44,7 @@
     "vis": "MI-vizualizáció",
     "photo": "Példafotó",
     "photoFull": "Példafotó, nem vásárló",
-    "mantas": "Mantas saját szeme"
+    "mantas": "A saját szemünk"
   },
   "hero": {
     "eyebrow": "SnapEyes",
@@ -59,13 +59,13 @@
     "computerHint": "Számítógépen olvasod? Nyisd meg a snapeyes.com oldalt a telefonodon, és ott fotózz, vagy válassz a már meglévő fotóid közül.",
     "ready": "A fájlod, induló ár: {from}",
     "secondary": "Nézd meg egy valódi telefonos fotó előtte-utána képét",
-    "imageAlt": "MI-vizualizáció: Mantas saját írisze fényes akrilnyomatként egy falon. Megmutatja, hogyan nézhet ki a digitális fájl kinyomtatva.",
+    "imageAlt": "MI-vizualizáció: a saját íriszünk fényes akrilnyomatként egy falon. Megmutatja, hogyan nézhet ki a digitális fájl kinyomtatva.",
     "chipTitle": "MI-vizualizáció",
     "chipBody": "A digitális fájlt kapod meg. Az ár nem tartalmazza a nyomtatást.",
     "caption": "A fájlod akrilra nyomtatva, kb. 50 cm. A nyomtatás nem része a rendelésnek.",
-    "discAlt": "Mantas szeme a pupillán keresztül kettéosztva: balra a telefonos fotója, jobbra a helyreállított írisz.",
-    "discLabel": "Mantas saját szeme, előtte és utána",
-    "discLink": "Mantas saját szeme: valódi telefonos fotó, helyreállított írisz. Ugrás az előtte-utána képhez."
+    "discAlt": "A saját szemünk a pupillán keresztül kettéosztva: balra egy valódi telefonos fotó, jobbra a helyreállított írisz.",
+    "discLabel": "Valódi telefonos fotó, előtte és utána",
+    "discLink": "A saját szemünk: valódi telefonos fotó, helyreállított írisz. Ugrás az előtte-utána képhez."
   },
   "reveal": {
     "eyebrow": "A leleplezés",
@@ -93,10 +93,10 @@
       },
       {
         "id": "own",
-        "label": "Mantas szeme",
+        "label": "A saját szemünk",
         "n": 315,
-        "note": "Saját szeme, otthon fotózva. A fotót az íriszre vágtuk.",
-        "photoAlt": "Mantas telefonos fotója a saját szeméről, a kép bal fele",
+        "note": "Otthon, telefonnal fotózva. A fotót az íriszre vágtuk.",
+        "photoAlt": "Telefonos fotó a saját szemünkről, a kép bal fele",
         "irisAlt": "Ugyanaz az írisz helyreállítva, fekete háttéren",
         "artAlt": "A helyreállított írisz műalkotásként"
       }
@@ -205,7 +205,7 @@
       "family4": "Család",
       "collision": "Ti ketten"
     },
-    "eyesNote": "Szemek: Mantasé és példafotók, nem vásárlóké.",
+    "eyesNote": "Szemek: a sajátunk és példafotók, nem vásárlóké.",
     "captions": {
       "acrylic": "A fájlod akrilra nyomtatva.",
       "metal": "A fájlod alumíniumra nyomtatva.",
@@ -318,12 +318,12 @@
       {
         "id": "pair",
         "t": "Ti ketten, sötét diófán",
-        "c": "A fájlod akrilra nyomtatva. Szemek: Mantasé és egy példafotó, nem vásárlóké."
+        "c": "A fájlod akrilra nyomtatva. Szemek: a sajátunk és egy példafotó, nem vásárlóké."
       },
       {
         "id": "group",
         "t": "Ti négyen, keretben",
-        "c": "A fájlod, keretezve. Szemek: Mantasé és példafotók, nem vásárlóké."
+        "c": "A fájlod, keretezve. Szemek: a sajátunk és példafotók, nem vásárlóké."
       },
       {
         "id": "hands",
@@ -333,7 +333,7 @@
       {
         "id": "gallery",
         "t": "Ferde szögből nézve",
-        "c": "A fájlod akrilon, távtartókkal. Szemek: Mantasé és egy példafotó, nem vásárlóké."
+        "c": "A fájlod akrilon, távtartókkal. Szemek: a sajátunk és egy példafotó, nem vásárlóké."
       },
       {
         "id": "shelf",
@@ -346,7 +346,7 @@
     "eyebrow": "Stílusok",
     "title": "Egy írisz, sokféle látásmód",
     "intro": "Az alábbi alkotások mind példák. A tiéd a saját színeidet és a saját mintázatodat hordozza majd.",
-    "legend": "A SnapEyes-motorral készült példák. Mantas saját szemén láthatók, hacsak az adott kártya mást nem jelez. A Hamarosan jelölésű stílus még nem rendelhető.",
+    "legend": "A SnapEyes-motorral készült példák. A saját szemünkön láthatók, hacsak az adott kártya mást nem jelez. A Hamarosan jelölésű stílus még nem rendelhető.",
     "groups": {
       "one": "Csak te",
       "two": "Ti ketten",
@@ -366,7 +366,7 @@
       "gr": "Szürke"
     },
     "eyeNote": {
-      "own": "Mantas saját szeme",
+      "own": "A saját szemünk",
       "other": "Példafotó, nem vásárló"
     },
     "items": {
@@ -428,9 +428,9 @@
         "d": "Minden írisz a saját finom sugarait bocsátja ki."
       }
     },
-    "own": "Mantas szeme",
+    "own": "A saját szemünk",
     "licensed": "Példafotó, nem vásárló",
-    "mixed": "Mantas szeme és példafotók, nem vásárlók",
+    "mixed": "A saját szemünk és példafotók, nem vásárlók",
     "priceOne": "Egy szem, {price}",
     "priceTwo": "Két szem, {price}",
     "priceFrom": "Induló ár: {price}",
@@ -536,7 +536,7 @@
     "intro": "A fájl ({px}) egy {n} px-es négyzete, átméretezés nélkül kivágva (a képernyőd a megjelenítéshez átméretezheti). A példához használt fotó {src} px széles volt, ezért az itt látható finom rostok a mesterséges intelligenciánk rekonstrukciói.",
     "badge": "{n} px-es kivágás",
     "fibreTitle": "Közvetlenül a fájlból kivágott négyzet",
-    "fibreAlt": "Közelkép Mantas helyreállított íriszéről, a 4096 px-es fájlból kivágva: sugárirányú rostok, aranyszínű íriszgallér és a pupilla széle.",
+    "fibreAlt": "Közelkép a saját helyreállított íriszünkről, a 4096 px-es fájlból kivágva: sugárirányú rostok, aranyszínű íriszgallér és a pupilla széle.",
     "locatorAlt": "A teljes helyreállított írisz, egy négyzet jelöli, hol vágtuk ki a közelképet",
     "locatorLabel": "A kivágás helye",
     "edgeTitle": "Az akrilnyomat éle",
@@ -554,7 +554,7 @@
       },
       {
         "t": "Soha nem tüntetünk fel példákat vásárlóinkként",
-        "b": "Minden példaként mutatott képet megjelölünk vagy felirattal látunk el. Mantas szeme a sajátja. A többi szem példafotó: soha nem vásárlók szeme."
+        "b": "Minden példaként mutatott képet megjelölünk vagy felirattal látunk el. A leggyakrabban mutatott szem a saját szemünk. A többi szem példafotó: soha nem vásárlók szeme."
       },
       {
         "t": "Soha nem titkoljuk, mit tesz az MI",
@@ -566,13 +566,10 @@
       }
     ],
     "idLine": "MB Portretizuokis, cégazonosító szám 305605052, Kaunas, Litvánia.",
-    "curatorEyebrow": "Az alapító",
-    "curatorTitle": "A SnapEyes mögött",
-    "curatorRole": "Alapító",
-    "curatorNote": "Az a szem, amelyet ezen az oldalon a legtöbbször mutatok, az enyém, otthon fotóztam a telefonommal. Az előnézet azért ingyenes, hogy a saját szemeddel ítélhesd meg az eredményt, mielőtt bármit is fizetnél.",
-    "curatorPhotoAlt": "Mantas saját írisze",
-    "offer": "Nem sikerül éles felvételt készítened? Küldd el nekem a legjobb fotóidat, és személyesen megnézem őket, általában egy-két munkanapon belül.",
-    "offerCta": "Írj Mantasnak",
+    "curatorEyebrow": "Segítség",
+    "curatorTitle": "Nem sikerül éles felvételt készítened?",
+    "offer": "Küldd el nekünk a legjobb fotóidat, és megnézzük őket, általában egy-két munkanapon belül.",
+    "offerCta": "Írj nekünk",
     "privacyEyebrow": "A fotód",
     "privacyTitle": "Ígéretünk a szemeddel kapcsolatban",
     "privacy": [
@@ -629,7 +626,7 @@
       {
         "id": "bad",
         "q": "Mi történik, ha rossz a fotóm?",
-        "a": "Fizetés előtt az előnézet jelzi, ha egy felvétel túl elmosódott, túl sötét, vagy a pupilla túl tág, és megmutatja, hogyan fotózhatod újra. Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {email}. Mantas megnézi őket."
+        "a": "Fizetés előtt az előnézet jelzi, ha egy felvétel túl elmosódott, túl sötét, vagy a pupilla túl tág, és megmutatja, hogyan fotózhatod újra. Továbbra sem sikerül? Küldd el a legjobb fotóidat erre a címre: {email}. Megnézzük őket."
       },
       {
         "id": "unhappy",
@@ -701,7 +698,7 @@
     "title": "Nézd meg a saját íriszedet",
     "body": "Csak a telefonodra, jó fényre és kb. egy percre van szükséged.",
     "small": "Digitális fájlt kapsz. A nyomtatás nem része a rendelésnek.",
-    "imageAlt": "MI-vizualizáció: egy sötét dolgozószoba alkonyatkor, amelynek falán Mantas írisze látható akrilra nyomtatva.",
+    "imageAlt": "MI-vizualizáció: egy sötét dolgozószoba alkonyatkor, amelynek falán a saját íriszünk látható akrilra nyomtatva.",
     "chip": "MI-vizualizáció"
   },
   "footer": {

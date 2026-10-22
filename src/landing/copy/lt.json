@@ -44,7 +44,7 @@
     "vis": "DI vizualizacija",
     "photo": "Pavyzdinė nuotrauka",
     "photoFull": "Pavyzdinė nuotrauka, ne kliento",
-    "mantas": "Paties Manto akis"
+    "mantas": "Mūsų pačių akis"
   },
   "hero": {
     "eyebrow": "SnapEyes",
@@ -59,13 +59,13 @@
     "computerHint": "Naršote kompiuteriu? Atidarykite snapeyes.com telefone ir nufotografuokite akį arba pasirinkite jau turimas nuotraukas.",
     "ready": "Jūsų failas nuo {from}",
     "secondary": "Pamatykite tikros telefonu darytos nuotraukos vaizdą prieš ir po",
-    "imageAlt": "DI vizualizacija: paties Manto rainelė kaip blizgus spaudinys ant akrilo, pakabintas ant sienos. Ji rodo, kaip skaitmeninis failas gali atrodyti atspausdintas.",
+    "imageAlt": "DI vizualizacija: mūsų pačių rainelė kaip blizgus spaudinys ant akrilo, pakabintas ant sienos. Ji rodo, kaip skaitmeninis failas gali atrodyti atspausdintas.",
     "chipTitle": "DI vizualizacija",
     "chipBody": "Gausite skaitmeninį failą. Spausdinimas neįskaičiuotas.",
     "caption": "Jūsų failas ant akrilo, apie 50 cm. Spausdinimas neįskaičiuotas.",
-    "discAlt": "Manto akis, padalyta per vyzdį: kairėje jo telefonu daryta nuotrauka, dešinėje atkurta rainelė.",
-    "discLabel": "Paties Manto akis, prieš ir po",
-    "discLink": "Paties Manto akis: tikra nuotrauka telefonu, atkurta rainelė. Pereiti prie vaizdo prieš ir po."
+    "discAlt": "Mūsų pačių akis, padalyta per vyzdį: kairėje tikra nuotrauka telefonu, dešinėje atkurta rainelė.",
+    "discLabel": "Tikra telefono nuotrauka, prieš ir po",
+    "discLink": "Mūsų pačių akis: tikra nuotrauka telefonu, atkurta rainelė. Pereiti prie vaizdo prieš ir po."
   },
   "reveal": {
     "eyebrow": "Atskleidimas",
@@ -93,10 +93,10 @@
       },
       {
         "id": "own",
-        "label": "Manto akis",
+        "label": "Mūsų pačių akis",
         "n": 315,
-        "note": "Jo paties akis, nufotografuota namuose. Nuotrauka apkirpta iki rainelės.",
-        "photoAlt": "Paties Manto akies nuotrauka telefonu, kairioji kadro pusė",
+        "note": "Nufotografuota namuose telefonu. Nuotrauka apkirpta iki rainelės.",
+        "photoAlt": "Mūsų pačių akies nuotrauka telefonu, kairioji kadro pusė",
         "irisAlt": "Ta pati rainelė, atkurta, juodame fone",
         "artAlt": "Atkurta rainelė kaip kūrinys"
       }
@@ -205,7 +205,7 @@
       "family4": "Šeima",
       "collision": "Jūs dviese"
     },
-    "eyesNote": "Akys: Manto ir pavyzdinių nuotraukų, ne klientų.",
+    "eyesNote": "Akys: mūsų pačių ir pavyzdinių nuotraukų, ne klientų.",
     "captions": {
       "acrylic": "Jūsų failas, atspausdintas ant akrilo.",
       "metal": "Jūsų failas, atspausdintas ant aliuminio.",
@@ -318,12 +318,12 @@
       {
         "id": "pair",
         "t": "Jūs dviese, ant tamsaus riešutmedžio",
-        "c": "Jūsų failas, atspausdintas ant akrilo. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+        "c": "Jūsų failas, atspausdintas ant akrilo. Akys: mūsų pačių ir pavyzdinės nuotraukos, ne klientų."
       },
       {
         "id": "group",
         "t": "Jūs keturiese, rėme",
-        "c": "Jūsų failas, įrėmintas. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+        "c": "Jūsų failas, įrėmintas. Akys: mūsų pačių ir pavyzdinės nuotraukos, ne klientų."
       },
       {
         "id": "hands",
@@ -333,7 +333,7 @@
       {
         "id": "gallery",
         "t": "Žvelgiant iš šono",
-        "c": "Jūsų failas ant akrilo su atstumo laikikliais. Akys: Manto ir pavyzdinės nuotraukos, ne klientų."
+        "c": "Jūsų failas ant akrilo su atstumo laikikliais. Akys: mūsų pačių ir pavyzdinės nuotraukos, ne klientų."
       },
       {
         "id": "shelf",
@@ -346,7 +346,7 @@
     "eyebrow": "Stiliai",
     "title": "Viena rainelė, daug būdų ją pamatyti",
     "intro": "Kiekvienas toliau pateiktas kūrinys yra pavyzdys. Jūsų kūrinyje bus Jūsų pačių spalvos ir Jūsų pačių raštas.",
-    "legend": "Pavyzdžiai sukurti naudojant SnapEyes programą. Pavyzdžiuose naudojama paties Manto akis, jei kortelėje nenurodyta kitaip. Stiliaus, pažymėto žyma Netrukus, dar negalima užsisakyti.",
+    "legend": "Pavyzdžiai sukurti naudojant SnapEyes programą. Pavyzdžiuose naudojama mūsų pačių akis, jei kortelėje nenurodyta kitaip. Stiliaus, pažymėto žyma Netrukus, dar negalima užsisakyti.",
     "groups": {
       "one": "Tik Jūs",
       "two": "Jūs dviese",
@@ -366,7 +366,7 @@
       "gr": "Pilka"
     },
     "eyeNote": {
-      "own": "Paties Manto akis",
+      "own": "Mūsų pačių akis",
       "other": "Pavyzdinė nuotrauka, ne kliento"
     },
     "items": {
@@ -428,9 +428,9 @@
         "d": "Kiekviena rainelė skleidžia savo plonus spindulius."
       }
     },
-    "own": "Manto akis",
+    "own": "Mūsų pačių akis",
     "licensed": "Pavyzdinė nuotrauka, ne kliento",
-    "mixed": "Manto akis ir pavyzdinės nuotraukos, ne klientų",
+    "mixed": "Mūsų pačių akis ir pavyzdinės nuotraukos, ne klientų",
     "priceOne": "Viena akis: {price}",
     "priceTwo": "Dvi akys: {price}",
     "priceFrom": "Nuo {price}",
@@ -536,7 +536,7 @@
     "intro": "{n} px kvadratas, iškirptas iš {px} failo, nekeičiant dydžio (Jūsų ekranas gali pakeisti jo mastelį, kad tilptų). Nuotrauka, iš kurios sukurtas šis pavyzdys, buvo {src} px pločio, todėl smulkios skaidulos, kurias čia matote, yra mūsų DI rekonstrukcija.",
     "badge": "{n} px fragmentas",
     "fibreTitle": "Kvadratas, iškirptas tiesiai iš failo",
-    "fibreAlt": "Manto atkurtos rainelės vaizdas iš arti, iškirptas iš 4096 px failo: spindulinės skaidulos, auksinė apykaklė ir vyzdžio kraštas.",
+    "fibreAlt": "Mūsų pačių atkurtos rainelės vaizdas iš arti, iškirptas iš 4096 px failo: spindulinės skaidulos, auksinė apykaklė ir vyzdžio kraštas.",
     "locatorAlt": "Visa atkurta rainelė, kvadratu pažymėta vieta, iš kurios iškirptas fragmentas",
     "locatorLabel": "Iškirpimo vieta",
     "edgeTitle": "Spaudinio ant akrilo kraštas",
@@ -554,7 +554,7 @@
       },
       {
         "t": "Niekada nepristatome pavyzdžių kaip klientų nuotraukų",
-        "b": "Kiekvienas pavyzdinis vaizdas pažymėtas arba turi parašą. Manto akis yra jo paties. Kitos akys yra pavyzdinės nuotraukos, o ne klientų."
+        "b": "Kiekvienas pavyzdinis vaizdas pažymėtas arba turi parašą. Dažniausiai rodoma akis yra mūsų pačių. Kitos akys yra pavyzdinės nuotraukos, o ne klientų."
       },
       {
         "t": "Niekada neslepiame, ką daro DI",
@@ -566,13 +566,10 @@
       }
     ],
     "idLine": "MB „Portretizuokis“, įmonės kodas 305605052, Kaunas, Lietuva.",
-    "curatorEyebrow": "Įkūrėjas",
-    "curatorTitle": "Kas kuria SnapEyes",
-    "curatorRole": "Įkūrėjas",
-    "curatorNote": "Akis, kurią šiame puslapyje rodau dažniausiai, yra mano, nufotografuota namuose mano telefonu. Peržiūra nemokama, kad rezultatą galėtumėte įvertinti savo akimis prieš ką nors mokėdami.",
-    "curatorPhotoAlt": "Paties Manto rainelė",
-    "offer": "Nepavyksta padaryti ryškaus kadro? Atsiųskite man geriausias savo nuotraukas: asmeniškai jas peržiūrėsiu, paprastai per vieną ar dvi darbo dienas.",
-    "offerCta": "Rašyti Mantui",
+    "curatorEyebrow": "Pagalba",
+    "curatorTitle": "Nepavyksta padaryti ryškaus kadro?",
+    "offer": "Atsiųskite mums geriausias nuotraukas, peržiūrėsime jas paprastai per vieną ar dvi darbo dienas.",
+    "offerCta": "Rašyti mums",
     "privacyEyebrow": "Jūsų nuotrauka",
     "privacyTitle": "Pažadas dėl Jūsų akies",
     "privacy": [
@@ -629,7 +626,7 @@
       {
         "id": "bad",
         "q": "Kas, jei mano nuotrauka prasta?",
-        "a": "Prieš mokėjimą peržiūra praneša, jei kadras per neryškus, per tamsus arba vyzdys per platus, ir parodo, kaip jį nufotografuoti iš naujo. Vis dar nepavyksta? Atsiųskite geriausias savo nuotraukas adresu {email}, ir Mantas jas peržiūrės."
+        "a": "Prieš mokėjimą peržiūra praneša, jei kadras per neryškus, per tamsus arba vyzdys per platus, ir parodo, kaip jį nufotografuoti iš naujo. Vis dar nepavyksta? Atsiųskite geriausias savo nuotraukas adresu {email}, ir mes jas peržiūrėsime."
       },
       {
         "id": "unhappy",
@@ -701,7 +698,7 @@
     "title": "Pamatykite savo rainelę",
     "body": "Tereikia telefono, geros šviesos ir maždaug minutės.",
     "small": "Gausite skaitmeninį failą. Spausdinimas nėra Jūsų užsakymo dalis.",
-    "imageAlt": "DI vizualizacija: tamsus kabinetas prieblandoje, ant sienos Manto rainelė, atspausdinta ant akrilo.",
+    "imageAlt": "DI vizualizacija: tamsus kabinetas prieblandoje, ant sienos mūsų pačių rainelė, atspausdinta ant akrilo.",
     "chip": "DI vizualizacija"
   },
   "footer": {
