@@ -1306,9 +1306,9 @@ Branch `v3-howto` on main `2638331`. Local only: nothing pushed or deployed, no 
 
 **What the owner asked.** He said the explanation was not good: "make something like irisblink.com/pages/how-it-work, the clearer the better; sales depend on it". He also pointed to five clips on his desktop. Those are other people's TikTok and Reels videos, with faces and captions, and they were watched for ideas only (`SP/wave-howto/final/RESEARCH_NOTES.md`). Nothing of theirs, and nothing of irisblink's, is in anything of ours.
 
-**The video** (`SP/wave-howto/final`: the four 9:16 files, 1080 x 1920, 1.36 to 1.44 MB, and their posters; the square files of the site; the contact sheets; `source/`). It is 23 s at 30 fps, and its last frame returns to its first, so it loops without a cut and frame 0 is the poster. It has no faces, no voice and no music. The style is the site's: the dark card gradient, gold, Cinzel and Plus Jakarta Sans. Seven short scenes, mostly picture, each with one large line and one small line:
+**The video** (`SP/wave-howto/final`: the four 9:16 files, 1080 x 1920, 1.33 to 1.40 MB, and their posters; the square files of the site; the contact sheets; `source/`). It is 28.7 s at 30 fps, and its last frame returns to its first, so it loops without a cut and frame 0 is the poster. It has no faces, no voice and no music. The style is the site's: the dark card gradient, gold, Cinzel and Plus Jakarta Sans. Seven short scenes, mostly picture, each with one large line and at most one short second line, both large on a phone:
 1. Back camera and 2x: the phone turns to its lenses, back to the camera at 1x, and a tap on "2" zooms in.
-2. About 10 cm: a side view counts from 30 to 10 cm, then the camera grid shows the iris filling the middle third.
+2. About 10 cm: in a side view the phone comes in with no number, then 10 cm appears with a tick, then the camera grid shows the iris filling the middle third.
 3. Window light from the side, with a check mark, and the bulb, flash and torch crossed out: the iris turns yellow and gets a glare spot.
 4. Look ahead: the lid droops and a fingertip lifts it lightly.
 5. Tap the iris to focus: blur, a tap, the focus square, sharp, then hold still.
@@ -1317,7 +1317,16 @@ Branch `v3-howto` on main `2638331`. Local only: nothing pushed or deployed, no 
 
 The eye on the phone screen is drawn around the owner's own iris (215120, licensed for our use). The captions are in four languages; LT and HU need a native read. How it is made: an HTML page with a paused GSAP 3.15 timeline (`D:\howto_out\comp`), rendered frame by frame in real headless Chrome through `scripts/lib/cdp.mjs` and encoded with ffmpeg (H.264 High, `-tune animation`). It lives outside the repository; `SP/wave-howto/final/source/README.md` has the commands.
 
-**On the site** (`src/shared/GuideVideo.tsx`): one square file per language (`public/assets/howto/howto-11-<lang>.mp4`, 720 x 720, 434 to 466 kB, no sound track, moov first; poster `howto-11-<lang>.jpg`, 27 to 29 kB) plays in both places, so the landing's visit caches it for /try.
+**Version 3, the same day** (the owner's review: "is it really easy to understand?"). The second lines had come out about 7 px tall on a phone, and the distance scene showed "15 cm" under "About 10 cm". Changes:
+- **Fewer words, larger.** Every caption is one large line and at most one short second line, and the picture says the rest (the torch crossed out, the grid of thirds, the two people). The square sets them at 70 and 54 px of 1080 (46.7 and 36 px in the 720 px file), the 9:16 cut at 88 and 64 px.
+- **On screen.** On /try at 412 x 915 the video is 366 px wide: the large line is 23.7 px and the second line 18.3 px. In the landing's 312 px card they are 20.2 and 15.6 px. The 9:16 cut shown 412 px wide gives 33.6 and 24.4 px.
+- **Hyphens.** A word with a hyphen (2-facher, 3-5, 2x-es) never breaks at it.
+- **Distance.** The scene shows only 10 cm.
+- **Timing.** Each scene has more time to be read: 28.7 s in all, still a clean loop, and the poster is frame 0.
+- **Files.** Square files 454 to 490 kB (CRF 27), 9:16 files 1.33 to 1.40 MB (CRF 25).
+- **Re-run on the version 3 build:** check:texts, check:assets, check:budget, check:landing, check:motion:flow and ts (`SP/wave-howto/final/shots/v3_try_playing_lt_412x915.png`). The full set ran on the first version (below); version 3 changes only the eight files in public/assets/howto and this section.
+
+**On the site** (`src/shared/GuideVideo.tsx`): one square file per language (`public/assets/howto/howto-11-<lang>.mp4`, 720 x 720, 454 to 490 kB, no sound track, moov first; poster `howto-11-<lang>.jpg`, 27 to 29 kB) plays in both places, so the landing's visit caches it for /try.
 - **Loading.** The poster is a lazy picture in the flow and holds the box. The file is asked for only as the video comes on screen.
 - **Playing.** It plays muted, inline and in a loop while half of it is on screen and the tab is visible, and has a pause button while it plays.
 - **Waiting for a press.** Under reduced motion, with a data saver, or when the browser refuses to play by itself, the poster stays with a play button, and a press plays it (once under reduced motion or a data saver).
