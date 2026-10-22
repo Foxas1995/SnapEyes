@@ -47,7 +47,8 @@ function jpegSize(buf: Buffer): [number, number] | null {
 }
 
 // the cut as the pages declare it (src/try/TryApp.tsx, src/landing/HowItWorks.tsx): the poster's width and height, and the most bytes a file may weigh
-const CUT = { w: 720, h: 720, max: 650_000 };
+// (version 5 of 2026-10-22 is 42 s with camera moves instead of 28.7 s: the owner's limit is about 0.8 MB)
+const CUT = { w: 720, h: 720, max: 800_000 };
 
 export async function run(): Promise<Row[]> {
   const out: Row[] = [];
