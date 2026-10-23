@@ -2,6 +2,8 @@
 
     python scripts/make_globe_assets.py --src <folder>                  the 32 artworks as <folder>/globe/<id>_<width>.webp (160, 240 and 480 px)
     python scripts/make_globe_assets.py --src <folder> --poster <png>   and the poster from a capture of the globe's first view (scripts/make_globe_poster.mjs)
+    python scripts/make_globe_assets.py --src <folder> --poster <png> --poster-only   the poster alone (a change of the globe's look: the discs stay
+        byte for byte what they are, so their content hashed names and the manifest do not move)
 then python scripts/build_landing_assets.py --src <folder> copies them to public/assets/landing/globe with content hashed names and writes the manifest.
 
 Nothing new is drawn: every disc is an existing artwork of public/assets (the landing's art tiles and the style pictures of /try).
@@ -147,20 +149,24 @@ def main():
     ap = argparse.ArgumentParser(description="Make the globe's round thumbnails (and its poster) for scripts/build_landing_assets.py.")
     ap.add_argument('--src', required=True, help='the folder build_landing_assets.py reads (the files go to its globe/ folder)')
     ap.add_argument('--poster', help="a PNG capture of the globe's first view (scripts/make_globe_poster.mjs)")
+    ap.add_argument('--poster-only', action='store_true', help='write the poster and leave the discs as they are in <folder>/globe')
     args = ap.parse_args()
+    if args.poster_only and not args.poster:
+        sys.exit('--poster-only needs --poster')
     spec = json.load(open(os.path.join(ROOT, 'scripts', 'landing_assets.json'), encoding='utf-8'))['globe']
     if sorted(spec['art']) != sorted(ITEMS):
         sys.exit(f'scripts/landing_assets.json globe.art and this script disagree: {sorted(set(spec["art"]) ^ set(ITEMS))}')
     out = os.path.join(args.src, 'globe')
     os.makedirs(out, exist_ok=True)
     total = {k: 0 for k in spec['widths']}
-    for key, (src, kind, side) in ITEMS.items():
+    for key, (src, kind, side) in ([] if args.poster_only else ITEMS.items()):
         big = finish(square(src, kind, side))
         for px in spec['widths']:
             path = os.path.join(out, f'{key}_{px}.webp')
             big.resize((px, px), Image.LANCZOS).save(path, 'WEBP', quality=SIZES[px], method=6)
             total[px] += os.path.getsize(path)
-    print(f'{len(ITEMS)} artworks ->', ', '.join(f'{px} px {total[px] / 1024:.0f} KB' for px in spec['widths']))
+    if not args.poster_only:
+        print(f'{len(ITEMS)} artworks ->', ', '.join(f'{px} px {total[px] / 1024:.0f} KB' for px in spec['widths']))
     if args.poster:
         # painted on the page's own dark (#07090e, the hero has no other background behind the stage): an opaque picture is a third of the size
         # of one with an alpha channel (the soft fog and glows around the sphere cost 40 kB of alpha alone), and the LCP budget is 38 kB
