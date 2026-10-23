@@ -70,8 +70,10 @@
     @media (max-width: 859px) {
       html.mo:not(.mo-fail) .lp-steps > .lp-step[data-reveal]:not([data-in]) { opacity: 1; translate: none; }
       html.mo:not(.mo-fail) .lp-steps > .lp-step[data-reveal][data-in] { animation: none; }
-      /* the current step is in full tone, the others in the dimmest tone that is still legible (4.9:1): the numeral goes from that tone to gold, the title to white */
-      .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) .lp-num { color: rgb(var(--gold-rgb) / .6); }
+      /* the current step is in full tone, the others in the dimmest tone that is still legible: the numeral goes from that tone to gold, the title to
+         white. The numeral's tone is the logo's gold at .8 (4.9:1 or more on the page, the card and the third ground; .6 was 4.9:1 with the old,
+         brighter gold and 3.3:1 with the logo's: the axe contrast finding of 2026-10-23) */
+      .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) .lp-num { color: rgb(var(--gold-rgb) / .8); }
       .lp-steps:has(> [aria-current]) > .lp-step:not([aria-current]) h3 { color: var(--t-floor); }
       .lp-step .lp-num, .lp-step h3 { transition: color var(--d-tap) var(--ease-out); }
     }
