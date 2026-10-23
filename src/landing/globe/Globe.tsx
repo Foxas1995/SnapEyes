@@ -19,10 +19,19 @@
 // goes on about the same axis; nothing pulls it back to the equator.
 //
 // Why it is light on a phone:
-//   * one transform per frame for the whole sphere (the orb); the 32 discs keep the transforms React gave them, so the browser only re-composites;
+//   * one transform per frame for the whole sphere (written to its four orbs, below); the 32 discs keep the transforms React gave them, so the
+//     browser only re-composites;
+//   * the discs are in four groups, each its own 3D scene (an orb; all four turn together). In one scene the browser sorts the layers in 3D
+//     and splits two layers whose planes cross inside their boxes, and Chrome then lost part of a disc along a straight line (the edges the
+//     owner saw on 2026-10-23). A disc's layer is the square round its picture, and two such squares can cross only when the discs' centres are
+//     less than 45.5 degrees apart (33 degree discs); no two discs of one group are closer than 47. Discs that face the visitor never overlap
+//     on the screen, so the order of the scenes does not matter;
 //   * the shading and the sheen are one still layer in front of it, the body and its gold edge one behind it, drawn once;
-//   * a disc's fade and the front disc's gold rim and glow are opacities, in twentieths, written only when they change (a few discs a second);
-//   * every disc's gold hairline is painted once with the disc; nothing is blurred and no shadow is repainted per frame;
+//   * a disc's fade and the front disc's gold rim are opacities, in twentieths, written only when they change (a few discs a second);
+//   * every disc's gold hairline is painted once with the disc, as a soft radial ring (it stays smooth when the disc is turned and resampled);
+//   * the soft gold light behind the one or two discs that face the visitor is not part of any disc: two round 2D layers behind the sphere,
+//     moved to the front discs' places (one transform and one opacity each). Inside a disc it overflowed the disc's box and was cut by it
+//     with straight edges; nothing a disc draws reaches outside its own box now, so no layer of the 3D scene meets another;
 //   * the opened artwork is a flat copy (the 480 px picture) that flies out of the disc's place, so it is sharp and the sphere stays untouched;
 //   * a disc's picture is fetched when the disc comes near the visible half, the rest when the browser is idle.
 // prefers-reduced-motion: nothing moves by itself and nothing flies: the still arrangement of the poster, a drag turns it only while the finger is
@@ -94,6 +103,34 @@ const DISCS: readonly Disc[] = GLOBE_ROWS.flatMap((r, row) =>
   }),
 );
 
+/** The disc's group (its orb): a colouring of the discs where two discs closer than CROSS degrees never share a group (the most constrained disc
+ *  first). It needs four groups for this layout. */
+const CROSS = 47;
+const GROUPS: readonly number[] = (() => {
+  const near = DISCS.map((a, i) => DISCS.flatMap((b, j) => (j !== i && Math.acos(clamp(a.n[0] * b.n[0] + a.n[1] * b.n[1] + a.n[2] * b.n[2], -1, 1)) / RAD < CROSS ? [j] : [])));
+  const col = DISCS.map(() => -1);
+  for (let step = 0; step < DISCS.length; step++) {
+    let best = -1;
+    let bs = -1;
+    let bd = -1;
+    for (let i = 0; i < DISCS.length; i++) {
+      if (col[i] >= 0) continue;
+      const sat = new Set(near[i].map((j) => col[j]).filter((c) => c >= 0)).size;
+      if (sat > bs || (sat === bs && near[i].length > bd)) {
+        best = i;
+        bs = sat;
+        bd = near[i].length;
+      }
+    }
+    const used = new Set(near[best].map((j) => col[j]));
+    let c = 0;
+    while (used.has(c)) c++;
+    col[best] = c;
+  }
+  return col;
+})();
+const ORBS = Math.max(...GROUPS) + 1;
+
 /** The first view (the poster's): seen a little from above, the first row's first disc at the front. */
 const REST: Quat = qAxis(1, 0, 0, REST_PITCH);
 /** The turn of the first view: about the sphere's own axis as the visitor sees it (tilted by REST_PITCH), so it turns like a globe on its stand. */
@@ -129,13 +166,15 @@ const step20 = (v: number) => Math.round(v * 20) / 20;
 class GlobeCtl {
   stage: HTMLElement;
   world: HTMLElement;
-  orb: HTMLElement;
+  orbs: HTMLElement[];
   discs: HTMLButtonElement[];
   hero: HTMLButtonElement;
   heroImg: HTMLImageElement;
   shade: HTMLElement;
   rim: HTMLElement;
   glow: HTMLElement;
+  halos: HTMLElement[];
+  haloLast: string[] = ['', ''];
   veil: HTMLElement;
   info: HTMLElement;
   live: () => Live;
@@ -173,10 +212,10 @@ class GlobeCtl {
   unbind: () => void;
   ro: ResizeObserver;
 
-  constructor(els: { stage: HTMLElement; world: HTMLElement; orb: HTMLElement; hero: HTMLButtonElement; veil: HTMLElement; info: HTMLElement }, live: () => Live) {
+  constructor(els: { stage: HTMLElement; world: HTMLElement; scene: HTMLElement; hero: HTMLButtonElement; veil: HTMLElement; info: HTMLElement }, live: () => Live) {
     this.stage = els.stage;
     this.world = els.world;
-    this.orb = els.orb;
+    this.orbs = [...els.scene.querySelectorAll<HTMLElement>('.lp-gl-orb')];
     this.hero = els.hero;
     this.heroImg = els.hero.querySelector('img')!;
     this.shade = els.hero.querySelector<HTMLElement>('.lp-gl-open-shade')!;
@@ -185,7 +224,8 @@ class GlobeCtl {
     this.veil = els.veil;
     this.info = els.info;
     this.live = live;
-    this.discs = [...els.orb.querySelectorAll<HTMLButtonElement>('.lp-gl-disc')];
+    this.discs = DISCS.map((_, i) => els.scene.querySelector<HTMLButtonElement>(`.lp-gl-disc[data-i="${i}"]`)!);
+    this.halos = [...els.world.querySelectorAll<HTMLElement>('.lp-gl-halo')];
     this.lit = DISCS.map(() => -1);
     this.vis = DISCS.map(() => -1);
     this.pick = DISCS.map(() => true);
@@ -414,6 +454,7 @@ class GlobeCtl {
     }, () => undefined);
     this.focus = i;
     this.setCurrent(i);
+    this.placeHalos();
     // the words of the opened artwork, written straight into the page (no render of the component at the moment of the tap): the registry's name,
     // Soon while the run-time catalogue cannot sell that style for that many eyes (as a tile of the gallery says it), and whose eyes they are. The
     // words and their button are inert while closed (not in the tab order, not read out): they wake before the name is written, so it is announced
@@ -518,7 +559,7 @@ class GlobeCtl {
     this.m = qMat(this.q);
     const orb = `translate3d(0,0,${(-this.geo.r).toFixed(2)}px) ${cssMatrix(this.m)}`;
     if (orb !== this.lastOrb) {
-      this.orb.style.transform = orb;
+      for (const o of this.orbs) o.style.transform = orb;
       this.lastOrb = orb;
       this.light();
     }
@@ -557,6 +598,42 @@ class GlobeCtl {
         this.discs[i].style.pointerEvents = pick ? '' : 'none';
       }
     }
+    this.placeHalos();
+  }
+
+  /** the soft gold light behind the two discs that face the visitor most squarely (if they are lit at all), at their projected place and size */
+  placeHalos(): void {
+    const g = this.geo;
+    let a = -1;
+    let b = -1;
+    for (let i = 0; i < DISCS.length; i++) {
+      if (this.lit[i] <= 0 || i === this.focus) continue;
+      if (a < 0 || this.lit[i] > this.lit[a]) {
+        b = a;
+        a = i;
+      } else if (b < 0 || this.lit[i] > this.lit[b]) b = i;
+    }
+    [a, b].forEach((i, k) => {
+      const el = this.halos[k];
+      if (!el) return;
+      let css = 'o0';
+      if (i >= 0) {
+        const [x, y, z] = this.facing(i);
+        const kk = g.p / (g.p - (g.rc * z - g.r));
+        const sx = kk * Math.sqrt(Math.max(0, 1 - x * x));
+        const sy = kk * Math.sqrt(Math.max(0, 1 - y * y));
+        css = `translate3d(${(g.w / 2 + g.rc * x * kk).toFixed(2)}px,${(g.cy + g.rc * y * kk).toFixed(2)}px,0) scale(${sx.toFixed(4)},${sy.toFixed(4)})|${this.lit[i]}`;
+      }
+      if (css === this.haloLast[k]) return;
+      this.haloLast[k] = css;
+      if (i < 0) {
+        el.style.opacity = '0';
+        return;
+      }
+      const [tf, o] = css.split('|');
+      el.style.transform = tf;
+      el.style.opacity = o;
+    });
   }
 
   paintFocus(t: number): void {
@@ -592,6 +669,7 @@ class GlobeCtl {
     this.refocus = -1;
     this.focus = -1;
     this.closing = false;
+    this.placeHalos();
   }
 }
 
@@ -612,7 +690,7 @@ export default function Globe({ onReady }: GlobeProps) {
   const prov = useMemo<Record<GlobeProv, string>>(() => ({ own: c.styles.eyeNote.own, licensed: c.styles.eyeNote.other, mixed: c.styles.mixed }), [c]);
   const stage = useRef<HTMLDivElement>(null);
   const world = useRef<HTMLDivElement>(null);
-  const orb = useRef<HTMLDivElement>(null);
+  const scene = useRef<HTMLDivElement>(null);
   const hero = useRef<HTMLButtonElement>(null);
   const veil = useRef<HTMLDivElement>(null);
   const info = useRef<HTMLDivElement>(null);
@@ -626,7 +704,7 @@ export default function Globe({ onReady }: GlobeProps) {
   // before the browser paints the new markup: the sizes (custom properties of the stage) and the first view are written in the same frame, so nothing is
   // ever laid out without them (a frame without them would move every layer of the globe once: a layout shift)
   useLayoutEffect(() => {
-    const ctl = new GlobeCtl({ stage: stage.current!, world: world.current!, orb: orb.current!, hero: hero.current!, veil: veil.current!, info: info.current! }, () => latest.current());
+    const ctl = new GlobeCtl({ stage: stage.current!, world: world.current!, scene: scene.current!, hero: hero.current!, veil: veil.current!, info: info.current! }, () => latest.current());
     const first = DISCS.map((_, i) => i).filter((i) => ctl.fetched[i]).map((i) => ctl.discs[i].querySelector('img')!);
     let alive = true;
     let idle = 0;
@@ -652,11 +730,11 @@ export default function Globe({ onReady }: GlobeProps) {
             key={d.id}
             type="button"
             className="lp-gl-disc"
+            data-i={i}
             tabIndex={i === 0 ? 0 : -1}
             aria-label={`${styleName(a.style)}, ${prov[a.prov]}`}
             style={{ transform: `rotateY(${d.lon}deg) rotateX(${d.lat}deg) translateZ(var(--Rc))` } as CSSProperties}
           >
-            <span className="lp-gl-glow" aria-hidden="true" />
             <img alt="" width={240} height={240} draggable={false} decoding="async" />
             <span className="lp-gl-rim" aria-hidden="true" />
           </button>
@@ -669,10 +747,14 @@ export default function Globe({ onReady }: GlobeProps) {
     <div className="lp-gl" ref={stage} role="group" aria-label={h.globeLabel}>
       <div className="lp-gl-world" ref={world}>
         <div className="lp-gl-body" aria-hidden="true" />
-        <div className="lp-gl-scene">
-          <div className="lp-gl-orb" ref={orb}>
-            {discs}
-          </div>
+        <div className="lp-gl-halo" aria-hidden="true" />
+        <div className="lp-gl-halo" aria-hidden="true" />
+        <div className="lp-gl-scene" ref={scene}>
+          {Array.from({ length: ORBS }, (_, g) => (
+            <div className="lp-gl-orb" key={g}>
+              {discs.filter((_, i) => GROUPS[i] === g)}
+            </div>
+          ))}
         </div>
         <div className="lp-gl-fog" aria-hidden="true" />
       </div>

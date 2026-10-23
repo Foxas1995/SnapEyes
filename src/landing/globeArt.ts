@@ -37,11 +37,13 @@ export const GLOBE_ART: readonly GlobeArt[] = [
 ];
 
 /** The globe's five latitude rows, written from the front (longitude 0) round to the right. The first one faces the visitor at the start: Halo, with
- *  Aurora and Sparks beside it, Radiance and Nebula above, Supernova and the Trio below; Celestial Gold sits in the top cap. */
+ *  Aurora and Sparks beside it, Radiance and Nebula above, Supernova and the Trio below; Celestial Gold sits in the top cap.
+ *  The caps are at 70 degrees, not 72 (the owner's review of 2026-10-23): at 72 the three discs round a pole were 31 degrees apart, less than a
+ *  disc (33), so they overlapped; at 70 no two of the 32 discs are closer than 34.2 degrees, a gap of at least 1.2 degrees in every orientation. */
 export const GLOBE_ROWS: readonly { lat: number; offset: number; ids: readonly string[] }[] = [
   { lat: 0, offset: 0, ids: ['halo_own', 'sparks_own', 'fam_orbit_4', 'powder_yg', 'nebula_duo', 'universe_own', 'splash_br', 'duo_thread_by', 'radiance_yg', 'aurora_own'] },
   { lat: 36, offset: 22.5, ids: ['nebula_own', 'splash_yg', 'clean_own', 'fam_radiance_4', 'powder_br', 'supernova_duo', 'universe_yg', 'radiance_own'] },
   { lat: -36, offset: 22.5, ids: ['fam_trio', 'powder_own', 'duo_infinity_by', 'clean_yg', 'supernova_family', 'splash_own', 'duo_kiss_bb', 'supernova_own'] },
-  { lat: 72, offset: 0, ids: ['duo_clean_by', 'gold_own', 'nebula_family'] },
-  { lat: -72, offset: 60, ids: ['radiance_br', 'duo_radiance_bd', 'fam_circle_4'] },
+  { lat: 70, offset: 0, ids: ['duo_clean_by', 'gold_own', 'nebula_family'] },
+  { lat: -70, offset: 60, ids: ['radiance_br', 'duo_radiance_bd', 'fam_circle_4'] },
 ];

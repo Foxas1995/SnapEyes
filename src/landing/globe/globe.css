@@ -10,6 +10,8 @@
     -webkit-tap-highlight-color: transparent; contain: layout style;
   }
   .lp-gl :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  /* a disc's focus ring is drawn inside its box: a ring outside it would make the disc's layer larger than its square (Globe.tsx: the groups) */
+  .lp-gl .lp-gl-disc:focus-visible { outline-offset: -3px; }
   /* until the pictures of its first view are decoded the globe stays hidden under the poster (it fetches and decodes them meanwhile); then the stage
      gets data-live and, in the same frame, the poster steps back and the globe shows the same arrangement (css/hero.css): no empty disc is ever seen */
   .lp-globe:not([data-live]) .lp-gl { visibility: hidden; }
@@ -43,23 +45,30 @@
   }
   .lp-gl-disc img { position: relative; display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; -webkit-user-drag: none; }
   /* every disc's gold hairline (the light gold of the logo's metal, a fine line, not a frame) and the shadow just inside it, painted once with the
-     disc: it turns with the sphere and is never repainted. No glass reflection of its own: the light is the sphere's, one layer over all of it */
+     disc: it turns with the sphere and is never repainted. The line is a radial gradient ring with about a pixel of soft falloff on each side, not
+     a 1 px border or inset shadow: a disc is drawn into its layer and then turned and resampled, and a hard 1 px edge came out jagged and dotted at
+     a pixel ratio of 2 and 3 (the owner's review in Chrome on Windows). No glass reflection of its own: the light is the sphere's, one layer over all */
   .lp-gl-disc::before {
     content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none;
-    box-shadow: inset 0 0 0 1px rgb(224 188 116 / .5), inset 0 0 0 1.5px rgb(var(--gold-rgb) / .22), inset 0 0 calc(var(--D) * .07) rgb(0 0 0 / .5);
+    background: radial-gradient(closest-side, rgb(224 188 116 / 0) calc(100% - 2.8px), rgb(224 188 116 / .5) calc(100% - 1.7px), rgb(224 188 116 / .5) calc(100% - 1.1px), rgb(var(--gold-rgb) / .25) calc(100% - .5px), rgb(var(--gold-rgb) / 0) 100%);
+    box-shadow: inset 0 0 calc(var(--D) * .07) rgb(0 0 0 / .5);
   }
-  /* the disc at the front: its hairline brightens into a polished bezel (lit from the upper left) and a soft gold light opens around it. Both are
-     painted once; only their opacity follows the turn (--lit: 0 except on the one or two discs that face the visitor, in twentieths). The light is a
-     radial gradient under the picture (z-index -1 in the disc's own stacking context), so it shows only outside the disc: no blur, no shadow */
+  /* the disc at the front: its hairline brightens into a polished bezel, lit from the upper left. Painted once, inside the disc's own box (nothing a
+     disc draws reaches outside it, so no layer of the 3D scene meets another); only its opacity follows the turn (--lit: 0 except on the one or two
+     discs that face the visitor, in twentieths). Its mask is a soft ring (a pixel of falloff on each side) for the same reason as the hairline */
   .lp-gl-rim {
-    position: absolute; inset: -.5px; z-index: 2; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
+    position: absolute; inset: 0; z-index: 2; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
     background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-light) 14%, var(--gold-primary) 30%, rgb(var(--gold-rgb) / .35) 50%, var(--gold-secondary) 68%, var(--gold-light) 86%, var(--gold-pale));
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.7px), #000 calc(100% - 1.1px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 1.7px), #000 calc(100% - 1.1px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px), #000 calc(100% - 1px), transparent);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px), #000 calc(100% - 1px), transparent);
   }
-  .lp-gl-glow {
-    position: absolute; inset: -9%; z-index: -1; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
-    background: radial-gradient(closest-side, rgb(var(--gold-rgb) / 0) 84%, rgb(var(--gold-rgb) / .26) 91.5%, rgb(var(--gold-rgb) / .08) 96%, rgb(var(--gold-rgb) / 0));
+  /* the soft gold light behind the disc that faces the visitor: a round 2D layer under the sphere's discs (two of them, Globe.tsx placeHalos moves
+     each to a front disc's projected centre and size with one transform, and fades it with its --lit). It is 1.5 discs across and reaches nothing
+     at its own edge (closest-side), so no box can cut it at any turn; the part under the disc is hidden by the disc itself. No blur, no shadow */
+  .lp-gl-halo {
+    position: absolute; left: 0; top: 0; width: calc(var(--D) * 1.5); height: calc(var(--D) * 1.5); margin: calc(var(--D) * -.75) 0 0 calc(var(--D) * -.75);
+    pointer-events: none; opacity: 0; will-change: transform, opacity;
+    background: radial-gradient(closest-side, rgb(var(--gold-rgb) / 0) 60%, rgb(var(--gold-rgb) / .26) 68%, rgb(var(--gold-rgb) / .11) 78%, rgb(var(--gold-rgb) / .03) 90%, rgb(var(--gold-rgb) / 0));
   }
 
   /* the shading of the one sphere, over its body and its discs alike, so they read as one object: a soft reflection of the light from the upper left,
