@@ -41,7 +41,8 @@
 //              screen; reduced motion keeps it still and a tap opens an artwork in place; the keyboard (one tab stop, the arrows, Enter onto the button,
 //              Escape back to the artwork, the closed words out of the tab order); a tap shows the style's name, whose eyes it shows, Soon while
 //              ordering is closed, and one button to /try in the page's language; a tap beside it closes it; a vertical swipe on it scrolls the page
-//              and a sideways one turns it without scrolling
+//              and a sideways one turns it without scrolling; (the owner's review of 2026-10-23) after an upward drag it goes on turning that way
+//              at its calm speed, with no swing back to the equator, and no disc lies outside the sphere's outline, at rest or tilted
 //   vitals     phone, slow 4G, CPU x4 (BUILD_PLAN section 5): LCP under 2.5 s (a warning above the 1.6 s target), CLS under 0.05, with
 //              the ordering flip mocked (the stub answers "open" after 2.5 s: the bar sentence changes in a page that is on screen)
 // Exit code 1 when any check fails.
@@ -797,6 +798,9 @@ async function checkGlobe() {
   const until = async (page, js, ms = 15000) => { for (let t = 0; t < ms; t += 100) { if (await page.eval(js)) return true; await sleep(100); } return false; };
   const LIVE = "!!document.querySelector('#heroGlobe[data-live] .lp-gl-orb')";
   const ORB = "document.querySelector('.lp-gl-orb').style.transform";
+  /** the orb's rotation as a 3 x 3 matrix, row by row, whatever transform functions write it (the browser's own parser) */
+  const ORBM = "(() => { const m = new DOMMatrix(document.querySelector('.lp-gl-orb').style.transform); return JSON.stringify([m.m11, m.m21, m.m31, m.m12, m.m22, m.m32, m.m13, m.m23, m.m33]); })()";
+  const rot = (t) => (t ? JSON.parse(t) : null);
   const asked = `performance.getEntriesByType('resource').filter((e) => e.name.includes(${JSON.stringify(globeJs)})).map((e) => Math.round(e.startTime))`;
   const tap = async (page, p) => {
     await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] });
@@ -907,8 +911,16 @@ async function checkGlobe() {
     if (msgs.length) fail('globe', `keyboard 1440px: ${msgs.join('; ')}`);
     else pass('globe', 'keyboard 1440px: one tab stop, the arrows move along and across the rows, Enter opens onto the button, Escape gives the focus back, Tab leaves the globe');
   }
-  // 4. touch: a vertical swipe on the globe scrolls the page and does not turn it; a sideways swipe turns it and does not scroll
+  // 4. touch: a vertical swipe on the globe scrolls the page and does not turn it; a sideways swipe turns it and does not scroll. The orb's orientation
+  //    may turn about any axis (src/landing/globe/Globe.tsx): how far it turned is the angle of the rotation from one orientation to the other
   {
+    const turned = (a, b) => {
+      const A = rot(a), B = rot(b);
+      if (!A || !B) return NaN;
+      let tr = 0;
+      for (let i = 0; i < 9; i++) tr += A[i] * B[i];
+      return (Math.acos(Math.max(-1, Math.min(1, (tr - 1) / 2))) * 180) / Math.PI;
+    };
     const page = await open({ lang: 'lt', width: 412, height: 915, settle: false });
     const msgs = [];
     if (!(await until(page, LIVE))) msgs.push('the globe never came');
@@ -916,8 +928,8 @@ async function checkGlobe() {
       const box = JSON.parse(await page.eval("JSON.stringify(document.getElementById('heroGlobe').getBoundingClientRect())"));
       const x = box.left + box.width * 0.5;
       const y0 = box.top + box.height * 0.8;
-      const pitch = () => page.eval(`${ORB}.replace(/rotateY\\([^)]*\\)/, '')`);
-      const p0 = await pitch();
+      const p0 = await page.eval(ORBM);
+      const s0 = Date.now();
       await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y0 }] });
       for (let k = 1; k <= 12; k++) {
         await page.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + k * 0.5, y: y0 - k * 22 }] });
@@ -926,12 +938,14 @@ async function checkGlobe() {
       await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       await sleep(700);
       const sy = await page.eval('Math.round(scrollY)');
-      const p1 = await pitch();
+      const p1 = await page.eval(ORBM);
+      // the globe goes on turning by itself meanwhile (6 degrees a second): the swipe may not have turned it by more than that
+      const idleTurn = (6 * (Date.now() - s0)) / 1000 + 2;
       if (sy < 80) msgs.push(`a vertical swipe on the globe scrolled the page by ${sy} px`);
-      if (p1 !== p0) msgs.push(`a vertical swipe tilted the globe (${p0} to ${p1})`);
+      if (!(turned(p0, p1) <= idleTurn)) msgs.push(`a vertical swipe turned the globe by ${turned(p0, p1).toFixed(1)} degrees (its own slow turn: ${idleTurn.toFixed(1)} at most)`);
       await page.eval("window.scrollTo({ top: 0, behavior: 'instant' })");
       await sleep(400);
-      const t0 = await page.eval(ORB);
+      const t0 = await page.eval(ORBM);
       const y1 = box.top + box.height * 0.45;
       await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.left + box.width * 0.85, y: y1 }] });
       for (let k = 1; k <= 12; k++) {
@@ -941,16 +955,68 @@ async function checkGlobe() {
       await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       await sleep(900);
       const sy2 = await page.eval('Math.round(scrollY)');
-      const t1 = await page.eval(ORB);
-      const yaw = (t) => parseFloat(/rotateY\(([-\d.]+)deg\)/.exec(t)?.[1] ?? 'NaN');
+      const t1 = await page.eval(ORBM);
       if (sy2 !== 0) msgs.push(`a sideways swipe scrolled the page by ${sy2} px`);
-      if (!(Math.abs(yaw(t1) - yaw(t0)) > 20)) msgs.push(`a sideways swipe turned the globe by ${(yaw(t1) - yaw(t0)).toFixed(1)} degrees`);
+      if (!(turned(t0, t1) > 20)) msgs.push(`a sideways swipe turned the globe by ${turned(t0, t1).toFixed(1)} degrees`);
     }
     await page.close();
     if (msgs.length) fail('globe', `touch 412px: ${msgs.join('; ')}`);
     else pass('globe', 'touch 412px: a vertical swipe on the globe scrolls the page and leaves it, a sideways swipe turns it and does not scroll');
   }
-  // 5. ordering open: an artwork whose style can be bought for its number of eyes opens without Soon, and one whose style is still a preview says Soon,
+  // 5. (the owner's review of 2026-10-23) after an upward drag the globe goes on turning the way it was sent, about the screen's horizontal axis, at its
+  //    calm speed, and does not swing back to the equator; and the discs are printed on the one sphere: with only the discs drawn (over a transparent
+  //    page) no pixel of them lies outside the sphere's outline, at rest and in the tilted view a drag leaves, at 412 and 1440 px
+  for (const [width, height] of [[412, 915], [1440, 900]]) {
+    const page = await open({ lang: 'en', width, height, settle: false });
+    const msgs = [];
+    if (!(await until(page, LIVE))) msgs.push('the globe never came');
+    else {
+      await sleep(1200);
+      /** the turn from orientation a to b: its angle in degrees and its unit axis on the screen (x right, y down, z to the viewer) */
+      const between = (a, b) => {
+        const A = rot(a), B = rot(b);
+        // R = B A^T, row by row
+        const R = [0, 1, 2].flatMap((i) => [0, 1, 2].map((j) => B[i * 3] * A[j * 3] + B[i * 3 + 1] * A[j * 3 + 1] + B[i * 3 + 2] * A[j * 3 + 2]));
+        const ax = [R[7] - R[5], R[2] - R[6], R[3] - R[1]];
+        const l = Math.hypot(...ax) || 1;
+        return { deg: (Math.acos(Math.max(-1, Math.min(1, (R[0] + R[4] + R[8] - 1) / 2))) * 180) / Math.PI, axis: ax.map((x) => x / l) };
+      };
+      /** with only the discs drawn: how far out of the sphere's centre their farthest pixel lies, over the radius of its outline (--A) */
+      const reach = async () => {
+        await page.eval(`(() => { const s = document.createElement('style'); s.id = 'only-discs'; s.textContent = 'html, body { background: transparent !important } body * { visibility: hidden !important } .lp-gl-orb, .lp-gl-orb * { visibility: visible !important }'; document.head.appendChild(s); return 1; })()`);
+        await page.send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+        await sleep(150);
+        const g = JSON.parse(await page.eval("JSON.stringify((() => { const st = document.querySelector('#heroGlobe .lp-gl'); const r = st.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, a: parseFloat(st.style.getPropertyValue('--A')), cy: parseFloat(st.style.getPropertyValue('--cy')) }; })())"));
+        const shot = await page.send('Page.captureScreenshot', { format: 'png', clip: { x: g.x, y: g.y, width: g.w, height: g.h, scale: 1 } });
+        await page.send('Emulation.setDefaultBackgroundColorOverride', {});
+        await page.eval("document.getElementById('only-discs').remove(), 1");
+        return page.eval(`new Promise((done) => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; const k = im.width / ${g.w}; let far = 0; for (let y = 0; y < c.height; y++) for (let i = 0; i < c.width; i++) { if (d[(y * c.width + i) * 4 + 3] < 12) continue; const r = Math.hypot((i + 0.5) / k - ${g.w / 2}, (y + 0.5) / k - ${g.cy}); if (r > far) far = r; } done(JSON.stringify({ far, a: ${g.a} })); }; im.src = 'data:image/png;base64,${shot.data}'; })`).then(JSON.parse);
+      };
+      const atRest = await reach();
+      const box = JSON.parse(await page.eval("JSON.stringify(document.getElementById('heroGlobe').getBoundingClientRect())"));
+      const x0 = box.left + box.width / 2;
+      const y0 = box.top + box.height * 0.55;
+      await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x0, y: y0 });
+      await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: x0, y: y0, button: 'left', buttons: 1, clickCount: 1 });
+      for (let k = 1; k <= 20; k++) {
+        await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x0, y: y0 - k * 7, button: 'left', buttons: 1 });
+        await sleep(16);
+      }
+      await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: x0, y: y0 - 140, button: 'left', buttons: 0, clickCount: 1 });
+      await sleep(2500);
+      const a = await page.eval(ORBM);
+      await sleep(1000);
+      const b = await page.eval(ORBM);
+      const t = between(a, b);
+      if (!(t.deg > 3 && t.deg < 9.5) || !(Math.abs(t.axis[0]) > 0.9)) msgs.push(`2.5 s after an upward drag the globe turned ${t.deg.toFixed(1)} degrees in a second about (${t.axis.map((v) => v.toFixed(2)).join(', ')}) (it should go on about the screen's horizontal axis at about 6 degrees a second)`);
+      const tilted = await reach();
+      for (const [when, r] of [['at rest', atRest], ['after the drag', tilted]]) if (!(r.far <= r.a + 1.5)) msgs.push(`${when} a disc reaches ${(r.far - r.a).toFixed(1)} px outside the sphere's outline`);
+      if (!msgs.length) pass('globe', `${width}px: after an upward drag it goes on about the horizontal axis (${t.deg.toFixed(1)} degrees a second, no swing back to the equator); no disc outside the outline (farthest ${(atRest.far - atRest.a).toFixed(1)} and ${(tilted.far - tilted.a).toFixed(1)} px from it)`);
+    }
+    await page.close();
+    if (msgs.length) fail('globe', `${width}px: ${msgs.join('; ')}`);
+  }
+  // 6. ordering open: an artwork whose style can be bought for its number of eyes opens without Soon, and one whose style is still a preview says Soon,
   //    as the gallery's tiles do (the stub's catalogue is the registry's: which styles are live for one eye is read from it, never written here)
   {
     stub.open = true;
