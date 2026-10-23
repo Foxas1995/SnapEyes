@@ -77,12 +77,14 @@ const PALETTE = { js: 0, css: 559 };
 // first screen) is the motion spec's one deliberate exception (src/motion/motion.css) and content the budget did not foresee. Its code and its stylesheet are a
 // chunk of their own (Globe-*.js, Globe-*.css: src/landing/globe) that the landing asks for only when the hero is on screen, the page has loaded and the browser
 // is idle, so the first load does not carry them; this script counts every chunk the landing can request, lazy ones included. GLOBE is this script's own sum on
-// the commit with the globe minus on its parent (8c253bf): JavaScript +7,868 B (the chunk 7,805 B; the landing's entry +124 B for the watcher that fetches it and
-// the state that lets it take the poster's place; the copy files of de, lt and hu -37 B, the old hero's words out; the import lists of the other chunks -24 B),
-// CSS +1,158 B (the chunk 1,635 B; the old hero's rules out of the first screen's stylesheet -477 B). What the first load carries: +124 B of JavaScript, -477 B
-// of CSS, -0.4 kB of HTML (gzip), and a poster of 20.5 kB (900 px) instead of the wall picture of 34.1 kB and the disc of 13.8 kB. Re-measure it when the
-// globe changes: build both trees, run this script on each, take the difference.
-const GLOBE = { js: 7868, css: 1158 };
+// the commit with the globe minus on its parent (8c253bf), measured on two clean builds in the cloud session of 2026-10-23 (both trees built with the same
+// node_modules): JavaScript +7,888 B (the chunk Globe-*.js 7,804 B; the landing's entry +125 B for the watcher that fetches it and the state that lets it take
+// the poster's place; the copy files of de, lt and hu -37 B, the old hero's words out; the import lists of the other lazy chunks -4 B), CSS +1,158 B (the chunk
+// Globe-*.css 1,635 B; the old hero's rules out of the first screen's stylesheet -477 B). What the first load carries (dist/lp/lt.html and en.html with what
+// they name): +125 B of JavaScript in the entry, the copy file -10 to -16 B, -477 B of CSS, -390 B of HTML (gzip), and a poster of 20.5 kB (900 px) instead of
+// the wall picture of 34.1 kB and the disc of 13.8 kB. The work-in-progress commit wrote +7,868 B before anything was built; this is the measured number.
+// Re-measure it when the globe changes: build both trees, run this script on each, take the difference.
+const GLOBE = { js: 7888, css: 1158 };
 const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
