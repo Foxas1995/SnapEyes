@@ -1,8 +1,9 @@
 /* SnapEyes landing v2: the hero's globe, its interactive part (src/landing/globe/Globe.tsx: its own lazy chunk; the stage box, the poster and the line
    under it are the first screen's, css/hero.css). Every rule is inside @layer landing and every class carries the prefix lp-gl-, like the rest of the page.
-   The sizes are custom properties the controller writes from the stage's size: --R the sphere's radius, --P the perspective, --D a disc, --A the radius
-   the sphere appears to have, --cy its centre, --Dh and --hy the opened artwork. Only transform and opacity move; the fog, the sheen and the edge of
-   the sphere are still. The one 3D scene of the landing (motion spec exception, scripts/check_taste.mjs rule "3D"). */
+   The sizes are custom properties the controller writes from the stage's size: --R the sphere's radius, --Rc the plane a disc lies in (its rim on the
+   sphere), --P the perspective, --D a disc, --A the radius the sphere appears to have, --cy its centre, --Dh and --hy the opened artwork. Only
+   transform and opacity move; the shading, the sheen, the edge of the sphere and every disc's gold hairline are still. The one 3D scene of the
+   landing (motion spec exception, scripts/check_taste.mjs rule "3D"). */
 @layer landing {
   .lp-gl {
     position: absolute; inset: 0; z-index: 1; touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
@@ -18,6 +19,8 @@
     content: ""; position: absolute; left: 50%; top: calc(var(--cy) + var(--A) * .93); width: calc(var(--A) * 2.1); height: calc(var(--A) * .5); translate: -50% -50%; pointer-events: none;
     background: radial-gradient(closest-side, rgb(var(--gold-rgb) / .13), rgb(var(--gold-rgb) / .04) 55%, rgb(var(--gold-rgb) / 0));
   }
+  /* the sphere as one picture (its body, its discs and the shading over them): an opened artwork dims it as a whole (Globe.tsx paintFocus) */
+  .lp-gl-world { position: absolute; inset: 0; }
   /* the body of the sphere: dark polished stone, lit from the upper left, a thread of gold light along its edge */
   .lp-gl-body {
     position: absolute; left: 50%; top: var(--cy); width: calc(var(--A) * 2); height: calc(var(--A) * 2); translate: -50% -50%; border-radius: 50%;
@@ -38,35 +41,59 @@
     position: absolute; left: 0; top: 0; width: var(--D); height: var(--D); margin: calc(var(--D) / -2) 0 0 calc(var(--D) / -2); padding: 0; border: 0; border-radius: 50%;
     background: #05070a; backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: pointer;
   }
-  .lp-gl-disc img { display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; -webkit-user-drag: none; }
-  /* the bezel and the shadow inside it */
-  .lp-gl-disc::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; box-shadow: inset 0 0 0 1px rgb(var(--gold-rgb) / .32), inset 0 0 calc(var(--D) * .06) rgb(0 0 0 / .45); }
-  /* the glass: one soft reflection of the light, upper left */
-  .lp-gl-disc::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 31% 23%, rgb(255 249 236 / .13), rgb(255 249 236 / 0) 36%); }
-  /* the gold rim of the disc at the front: a polished bezel, brightest where the light comes from */
+  .lp-gl-disc img { position: relative; display: block; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; -webkit-user-drag: none; }
+  /* every disc's gold hairline (the light gold of the logo's metal, a fine line, not a frame) and the shadow just inside it, painted once with the
+     disc: it turns with the sphere and is never repainted. No glass reflection of its own: the light is the sphere's, one layer over all of it */
+  .lp-gl-disc::before {
+    content: ""; position: absolute; inset: 0; z-index: 1; border-radius: 50%; pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgb(224 188 116 / .5), inset 0 0 0 1.5px rgb(var(--gold-rgb) / .22), inset 0 0 calc(var(--D) * .07) rgb(0 0 0 / .5);
+  }
+  /* the disc at the front: its hairline brightens into a polished bezel (lit from the upper left) and a soft gold light opens around it. Both are
+     painted once; only their opacity follows the turn (--lit: 0 except on the one or two discs that face the visitor, in twentieths). The light is a
+     radial gradient under the picture (z-index -1 in the disc's own stacking context), so it shows only outside the disc: no blur, no shadow */
   .lp-gl-rim {
-    position: absolute; inset: -1px; z-index: 2; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
-    background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-primary) 18%, rgb(var(--gold-rgb) / .3) 42%, var(--gold-secondary) 66%, var(--gold-light) 86%, var(--gold-pale));
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.4px), #000 calc(100% - 1.8px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 2.4px), #000 calc(100% - 1.8px));
+    position: absolute; inset: -.5px; z-index: 2; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
+    background: conic-gradient(from 210deg, var(--gold-pale), var(--gold-light) 14%, var(--gold-primary) 30%, rgb(var(--gold-rgb) / .35) 50%, var(--gold-secondary) 68%, var(--gold-light) 86%, var(--gold-pale));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.7px), #000 calc(100% - 1.1px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 1.7px), #000 calc(100% - 1.1px));
+  }
+  .lp-gl-glow {
+    position: absolute; inset: -9%; z-index: -1; border-radius: 50%; pointer-events: none; opacity: var(--lit, 0);
+    background: radial-gradient(closest-side, rgb(var(--gold-rgb) / 0) 84%, rgb(var(--gold-rgb) / .26) 91.5%, rgb(var(--gold-rgb) / .08) 96%, rgb(var(--gold-rgb) / 0));
   }
 
-  /* depth fog: one still radial layer that darkens the discs as they turn away; with it a soft reflection of the light on the polished body */
+  /* the shading of the one sphere, over its body and its discs alike, so they read as one object: a soft reflection of the light from the upper left,
+     the shadow on the side away from it, the darkening toward the limb (a disc fades into it as it turns away, Globe.tsx light) and a faint rim of
+     light right at the edge. One still layer, clipped to the sphere's outline: nothing of it lies outside the ball */
   .lp-gl-fog {
     position: absolute; inset: 0; pointer-events: none;
     background:
-      radial-gradient(ellipse calc(var(--A) * .66) calc(var(--A) * .44) at calc(50% - var(--A) * .3) calc(var(--cy) - var(--A) * .46), rgb(255 247 228 / .09), rgb(255 247 228 / 0) 72%),
-      radial-gradient(circle at 50% var(--cy), rgb(7 9 14 / 0) calc(var(--A) * .46), rgb(7 9 14 / .16) calc(var(--A) * .7), rgb(7 9 14 / .5) calc(var(--A) * .9), rgb(7 9 14 / .82) calc(var(--A) * 1.0), rgb(7 9 14 / 0) calc(var(--A) * 1.07));
+      radial-gradient(ellipse calc(var(--A) * .62) calc(var(--A) * .42) at calc(50% - var(--A) * .32) calc(var(--cy) - var(--A) * .46), rgb(255 247 228 / .1), rgb(255 247 228 / 0) 72%),
+      radial-gradient(circle at 50% var(--cy), rgb(255 238 208 / 0) calc(var(--A) * .9), rgb(255 238 208 / .07) calc(var(--A) * .975), rgb(255 238 208 / 0) var(--A)),
+      radial-gradient(circle at 50% var(--cy), rgb(5 6 10 / 0) calc(var(--A) * .5), rgb(5 6 10 / .22) calc(var(--A) * .74), rgb(5 6 10 / .5) calc(var(--A) * .9), rgb(5 6 10 / .66) calc(var(--A) * .98)),
+      radial-gradient(circle at calc(50% - var(--A) * .42) calc(var(--cy) - var(--A) * .48), rgb(3 4 8 / 0) calc(var(--A) * .7), rgb(3 4 8 / .2) calc(var(--A) * 1.15), rgb(3 4 8 / .42) calc(var(--A) * 1.6));
+    -webkit-mask: radial-gradient(circle var(--A) at 50% var(--cy), #000 calc(var(--A) - .75px), transparent var(--A));
+    mask: radial-gradient(circle var(--A) at 50% var(--cy), #000 calc(var(--A) - .75px), transparent var(--A));
   }
 
-  /* the opened artwork, and the dark around it while it is open */
-  .lp-gl-veil { position: absolute; inset: 0; z-index: 2; opacity: 0; pointer-events: none; background: radial-gradient(circle at 50% var(--cy), rgb(4 5 9 / .7), rgb(4 5 9 / .82) calc(var(--A) * .9), rgb(7 9 14 / 0) calc(var(--A) * 1.35)); }
-  /* on a small stage the opened artwork's words reach below it: the veil goes on down over the rest of the first screen (--low, written at the tap: 0 on
-     a large stage; the hero clips it at its foot), so the words are read on the page's dark, nothing of the copy shows through them, and a tap there closes
-     it as a tap beside the artwork does */
+  /* the opened artwork, and the dark around it while it is open. The veil's box is the stage (a tap on it closes the artwork); what is seen of it is a
+     round vignette larger than the stage, centred on the sphere, that reaches nothing at its own edge (closest-side), so it has no edge or corner at any
+     width: the stage's box never clips it (the hero clips it far outside). With the sphere itself dimmed as one picture (.lp-gl-world), the opened
+     artwork stands on an even, soft dark. Before 2026-10-23 the veil was painted inside the stage's box and did not reach nothing before the stage's
+     sides: the box cut it with straight edges, and the dark discs at the limb showed as hard shapes around it */
+  .lp-gl-veil { position: absolute; inset: 0; z-index: 2; opacity: 0; pointer-events: none; }
+  .lp-gl-veil::before {
+    content: ""; position: absolute; left: 50%; top: var(--cy); width: calc(var(--A) * 4.6); height: calc(var(--A) * 4.6); translate: -50% -50%; pointer-events: none;
+    background: radial-gradient(closest-side, rgb(5 6 10 / .62), rgb(5 6 10 / .58) 28%, rgb(6 7 11 / .44) 46%, rgb(7 9 14 / .22) 66%, rgb(7 9 14 / .07) 84%, rgb(7 9 14 / 0));
+  }
+  /* on a small stage the opened artwork's words reach below it: the dark goes on down over the rest of the first screen (--low, written at the tap: 0 on
+     a large stage; the hero clips it at its foot), from nothing at the middle of the opened artwork to the page's own dark where the words begin, so they
+     are read on the page's dark and nothing of the copy shows through them; its sides fade out too, so it has no edge where it ends */
   .lp-gl-veil::after {
-    content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 48px); height: var(--low, 0px);
-    background: linear-gradient(rgb(7 9 14 / 0), rgb(7 9 14) 48px);
+    content: ""; position: absolute; left: -12%; right: -12%; top: var(--hy); height: var(--low, 0px); pointer-events: none;
+    background: linear-gradient(rgb(7 9 14 / 0), rgb(7 9 14 / .9) calc(var(--Dh) / 2), rgb(7 9 14) calc(var(--Dh) / 2 + 16px));
+    -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
   }
   .lp-gl-open {
     position: absolute; left: 50%; top: var(--hy); z-index: 3; width: var(--Dh); height: var(--Dh); margin: calc(var(--Dh) / -2) 0 0 calc(var(--Dh) / -2); padding: 0; border: 0;
@@ -99,5 +126,6 @@
      whole width */
   @media (max-width: 959px) {
     .lp-gl-info, .lp-gl-veil::after { left: calc(50% - 50vw); right: calc(50% - 50vw); }
+    .lp-gl-veil::after { -webkit-mask: none; mask: none; }
   }
 }

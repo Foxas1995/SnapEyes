@@ -70,6 +70,60 @@ export const smooth = (e0: number, e1: number, v: number): number => {
   return p * p * (3 - 2 * p);
 };
 
+/**
+ * The globe's orientation as a unit quaternion [w, x, y, z] in the page's 3D frame (x right, y down, z to the viewer: the frame of a CSS transform).
+ * A turn about any axis of the screen is one multiplication, so the globe can roll on in whichever direction it was dragged without the flip that
+ * two angles (a yaw and a pitch) make at the poles.
+ */
+export type Quat = [number, number, number, number];
+const DEG = Math.PI / 180;
+
+/** a turn of deg degrees about the unit axis (ax, ay, az), in the sense of CSS rotate3d */
+export const qAxis = (ax: number, ay: number, az: number, deg: number): Quat => {
+  const h = (deg * DEG) / 2;
+  const s = Math.sin(h);
+  return [Math.cos(h), ax * s, ay * s, az * s];
+};
+
+/** a then b applied after it is qMul(b, a) */
+export const qMul = (a: Quat, b: Quat): Quat => [
+  a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
+  a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
+  a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
+  a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0],
+];
+
+export const qNorm = (q: Quat): Quat => {
+  const n = Math.hypot(q[0], q[1], q[2], q[3]) || 1;
+  return [q[0] / n, q[1] / n, q[2] / n, q[3] / n];
+};
+
+/** the shortest way from a to b, at p (0 to 1) */
+export function qSlerp(a: Quat, b: Quat, p: number): Quat {
+  let d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+  const c: Quat = d < 0 ? [-b[0], -b[1], -b[2], -b[3]] : b;
+  d = Math.abs(d);
+  if (d > 0.9995) return qNorm([mix(a[0], c[0], p), mix(a[1], c[1], p), mix(a[2], c[2], p), mix(a[3], c[3], p)]);
+  const th = Math.acos(d);
+  const sa = Math.sin((1 - p) * th) / Math.sin(th);
+  const sb = Math.sin(p * th) / Math.sin(th);
+  return [a[0] * sa + c[0] * sb, a[1] * sa + c[1] * sb, a[2] * sa + c[2] * sb, a[3] * sa + c[3] * sb];
+}
+
+/** the rotation matrix of q, row by row (m[0..2] the first row) */
+export function qMat(q: Quat): number[] {
+  const [w, x, y, z] = q;
+  return [
+    1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y),
+    2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x),
+    2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y),
+  ];
+}
+
+/** CSS matrix3d of a rotation matrix (CSS lists it column by column) */
+export const cssMatrix = (m: number[]): string =>
+  `matrix3d(${[m[0], m[3], m[6], 0, m[1], m[4], m[7], 0, m[2], m[5], m[8], 0, 0, 0, 0, 1].map((v) => (v === 0 || v === 1 ? String(v) : v.toFixed(6))).join(',')})`;
+
 /** One value tweened from a to b over dur ms from t0 with a curve. */
 export class Tween {
   a = 0;
@@ -95,7 +149,7 @@ export class Tween {
 export interface DragHandler {
   /** the gesture became a turn */
   begin(): void;
-  /** the distance moved since the pointer went down, in CSS px (dy is 0 except for a mouse) */
+  /** the distance moved since the pointer went down, in CSS px (both axes: a finger that started sideways may then go up, down or round) */
   move(dx: number, dy: number): void;
   /** the pointer let go: its speed over the last 100 ms, in px per second (0 when cancelled) */
   end(vx: number, vy: number): void;
@@ -103,8 +157,9 @@ export interface DragHandler {
 
 /**
  * The stage's one gesture. A finger or a pen turns the globe only when it moves sideways first (8 px, more sideways than up or down); a vertical
- * swipe is left to the browser, which scrolls the page (touch-action: pan-y on the stage) and sends pointercancel. A mouse turns it after 4 px, in
- * both axes. A press that never became a turn is a tap: the button's own click runs. The click that follows a turn is swallowed, so a drag that ends
+ * swipe is left to the browser, which scrolls the page (touch-action: pan-y on the stage) and sends pointercancel. Once the turn has begun the
+ * browser no longer pans, so the finger may go on in any direction and the globe follows it in both axes. A mouse turns it after 4 px, in both
+ * axes. A press that never became a turn is a tap: the button's own click runs. The click that follows a turn is swallowed, so a drag that ends
  * on an artwork does not open it.
  */
 export function bindDrag(el: HTMLElement, h: DragHandler): () => void {
@@ -149,7 +204,7 @@ export function bindDrag(el: HTMLElement, h: DragHandler): () => void {
     const t = performance.now();
     samples.push([t, e.clientX, e.clientY]);
     while (samples.length > 2 && t - samples[0][0] > 120) samples.shift();
-    h.move(dx, mouse ? dy : 0);
+    h.move(dx, dy);
   };
   const up = (e: PointerEvent) => {
     if (e.pointerId !== id) return;
@@ -165,7 +220,7 @@ export function bindDrag(el: HTMLElement, h: DragHandler): () => void {
         vx = ((b[1] - a[1]) / span) * 1000;
         vy = ((b[2] - a[2]) / span) * 1000;
       }
-      h.end(vx, mouse ? vy : 0);
+      h.end(vx, vy);
       swallow = true;
       setTimeout(() => (swallow = false), 0);
     }

@@ -32,6 +32,7 @@ const ALLOW_BLUR = {
 const ALLOW_3D = {
   'src/landing/globe/globe.css': 'the hero globe (motion spec exception of 2026-10-22): its perspective, its preserve-3d orb and the discs that face away',
   'src/landing/globe/Globe.tsx': 'the hero globe (motion spec exception of 2026-10-22): the transforms of its orb and of its discs on the sphere',
+  'src/landing/globe/engine.ts': 'the hero globe (motion spec exception of 2026-10-22): its orientation written as the matrix3d of its orb (a drag turns it about any axis, 2026-10-23)',
 };
 
 function* walk(dir) {

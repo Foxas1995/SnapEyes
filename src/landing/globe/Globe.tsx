@@ -1,20 +1,32 @@
 // The hero's globe, the interactive part (its own lazy chunk; the first screen paints its poster, src/landing/HeroScene.tsx, and src/landing/Hero.tsx
 // fetches this when the hero is on screen and the browser is idle). A dark polished sphere set with 32 round artworks that turns slowly by itself; a
-// sideways drag or swipe turns it (a mouse also tilts it) and lets go with inertia; a tapped artwork glides to the front, grows, and shows its style's
-// name (the registry's), its honest label and one button to /try. Escape, a tap beside it or a new turn puts it back.
+// drag or a swipe turns it in any direction and lets go with inertia, after which it rolls on slowly the way it was sent; a tapped artwork glides to
+// the front, grows, and shows its style's name (the registry's), its honest label and one button to /try. Escape, a tap beside it or a new turn puts
+// it back.
 //
 // MOTION SPEC EXCEPTION (the owner's choice of 2026-10-22): the landing's motion has no 3D (src/motion/motion.css); this piece is the one deliberate
 // exception, a real CSS 3D scene (perspective, preserve-3d, rotations), confined to this folder and allowed by name in scripts/check_taste.mjs (rule
 // "3D"). Its artworks are drawn on a turning sphere, so they are seen foreshortened as they turn; each one opens flat, whole and sharp on a tap.
 //
+// Printed on one sphere (the owner's review of 2026-10-23): every disc lies in the plane of the circle where its rim meets the sphere (a chord, sunk
+// R (1 - cos 16.5 deg) under the surface), so no part of it is ever outside the ball and none can poke past the outline at the limb. A disc fades
+// into the dark of the body as it turns away, by how squarely it faces the eye (the cosine of its tilt, with the perspective), and is gone before it
+// is a sliver; one still layer over the whole sphere (the light from the upper left, the shadow and the soft rim at the limb) shades the discs and the
+// body as one object.
+//
+// The turn: the orientation is a quaternion, so a drag turns the globe about the screen axis square to the finger's path, up, down and round
+// included, with no flip at the poles. When the finger lets go the turn eases from its speed down to the calm idle speed (one turn a minute) and
+// goes on about the same axis; nothing pulls it back to the equator.
+//
 // Why it is light on a phone:
 //   * one transform per frame for the whole sphere (the orb); the 32 discs keep the transforms React gave them, so the browser only re-composites;
-//   * the depth fog and the sheen are one still layer in front of it, the body and its gold edge one behind it, drawn once: on a sphere the distance
-//     from the viewer and the distance from the centre of the picture are the same thing, so a radial fog in screen space IS depth fog;
-//   * the front disc's gold rim is one opacity on the two or three discs near the front, written only when it changes, in twentieths;
+//   * the shading and the sheen are one still layer in front of it, the body and its gold edge one behind it, drawn once;
+//   * a disc's fade and the front disc's gold rim and glow are opacities, in twentieths, written only when they change (a few discs a second);
+//   * every disc's gold hairline is painted once with the disc; nothing is blurred and no shadow is repainted per frame;
 //   * the opened artwork is a flat copy (the 480 px picture) that flies out of the disc's place, so it is sharp and the sphere stays untouched;
 //   * a disc's picture is fetched when the disc comes near the visible half, the rest when the browser is idle.
-// prefers-reduced-motion: nothing moves by itself and nothing flies: the still arrangement of the poster, a tap opens the artwork in place (a fade).
+// prefers-reduced-motion: nothing moves by itself and nothing flies: the still arrangement of the poster, a drag turns it only while the finger is
+// on it, a tap opens the artwork in place (a fade).
 // Keyboard: one tab stop; the arrows turn it (left and right along a row, up and down to the next row); Enter opens and puts the focus on the button;
 // Escape closes and gives the focus back. Every artwork is a button labelled with its style's name and whose eyes it shows.
 import { useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
@@ -26,7 +38,10 @@ import { useCopy } from '../copy/useCopy';
 import { useSaleCatalogue } from '../ordering';
 import { useTryHref } from '../links';
 import { globeUrl } from './assets.globe';
-import { Tween, bindDrag, clamp, decoded, easeInOut, easeOut, easeTurn, loop, mix, reducedMotion, smooth, whileVisible } from './engine';
+import {
+  Tween, bindDrag, clamp, cssMatrix, decoded, easeInOut, easeOut, easeTurn, loop, mix, qAxis, qMat, qMul, qNorm, qSlerp, reducedMotion, smooth, whileVisible,
+  type Quat,
+} from './engine';
 
 export interface GlobeProps {
   /** the pictures of the first view are decoded: the poster may go */
@@ -43,13 +58,22 @@ interface Live {
   onReady: () => void;
 }
 
+type Vec = [number, number, number];
+
 const RAD = Math.PI / 180;
 const DISC_DEG = 33;          // the angular diameter of a disc on the sphere (the rows are 36 degrees apart)
+const SINK = Math.cos((DISC_DEG / 2) * RAD);   // a disc's plane from the centre, over the radius: its rim on the sphere, its middle just under it
 const K = 4.4;                // the perspective distance over the radius
 const REST_PITCH = -14;       // seen a little from above
 const IDLE = 6;               // degrees per second: one turn a minute
 const MAX_SPIN = 420;
 const FLING = 0.7;            // a fling turns the globe a little less than the finger's speed: heavy, calm
+const SETTLE = 0.45;          // seconds: how fast a fling eases down to the idle speed (about three of these to settle)
+// a disc's fade by the cosine of its tilt to the eye: whole down to FADE_TO, gone at FADE_FROM (a disc less than about a quarter as wide as it is
+// tall is never shown: no sliver at the limb)
+const FADE_FROM = 0.22;
+const FADE_TO = 0.5;
+const PICK = 0.36;            // a disc this square to the eye (half faded or more) can be tapped; one further round cannot
 
 const ART_BY_ID: Readonly<Record<string, GlobeArt>> = Object.fromEntries(GLOBE_ART.map((a) => [a.id, a]));
 
@@ -59,16 +83,24 @@ interface Disc {
   lat: number;
   row: number;
   /** the unit normal in the sphere's own frame (x right, y down, z to the viewer) */
-  n: [number, number, number];
+  n: Vec;
 }
 
 const DISCS: readonly Disc[] = GLOBE_ROWS.flatMap((r, row) =>
   r.ids.map((id, k) => {
     const lon = r.offset + (360 / r.ids.length) * k;
     const lat = r.lat;
-    return { id, lon, lat, row, n: [Math.cos(lat * RAD) * Math.sin(lon * RAD), -Math.sin(lat * RAD), Math.cos(lat * RAD) * Math.cos(lon * RAD)] as [number, number, number] };
+    return { id, lon, lat, row, n: [Math.cos(lat * RAD) * Math.sin(lon * RAD), -Math.sin(lat * RAD), Math.cos(lat * RAD) * Math.cos(lon * RAD)] as Vec };
   }),
 );
+
+/** The first view (the poster's): seen a little from above, the first row's first disc at the front. */
+const REST: Quat = qAxis(1, 0, 0, REST_PITCH);
+/** The turn of the first view: about the sphere's own axis as the visitor sees it (tilted by REST_PITCH), so it turns like a globe on its stand. */
+const REST_AXIS: Vec = [0, Math.cos(REST_PITCH * RAD), Math.sin(REST_PITCH * RAD)];
+
+/** Disc i upright at the front: the orientation a keyboard turn or a tap glides to. */
+const upright = (d: Disc): Quat => qMul(qAxis(1, 0, 0, clamp(-d.lat, -72, 72)), qAxis(0, 1, 0, -d.lon));
 
 const discSet = (id: string) => `${globeUrl(id, 160)} 160w, ${globeUrl(id, 240)} 240w`;
 
@@ -80,14 +112,23 @@ function geometry(w: number, h: number) {
   // the opened artwork: about half the stage, and on a small stage (a short phone) at least 80 percent of its width up to 210 px, so it can still be looked at;
   // its words may then reach below the stage, over the veil's own continuation (open)
   const dh = Math.max(0.54 * Math.min(w, h * 0.94), Math.min(0.8 * w, 210));
-  return { w, h, a, r, p: K * r, d, cy: h * 0.5, dh, hy: Math.max(h * 0.4, dh / 2 + 10) };
+  return { w, h, a, r, rc: r * SINK, p: K * r, d, cy: h * 0.5, dh, hy: Math.max(h * 0.4, dh / 2 + 10) };
 }
 type Geo = ReturnType<typeof geometry>;
 
 const nearestTurn = (from: number, to: number) => from + ((((to - from) % 360) + 540) % 360) - 180;
+const len = (v: Vec) => Math.hypot(v[0], v[1], v[2]);
+/** the turn a drag of (dx, dy) px asks for: about the screen axis square to it, so the front of the sphere follows the finger */
+const dragAxis = (dx: number, dy: number): Vec => {
+  const l = Math.hypot(dx, dy) || 1;
+  return [-dy / l, dx / l, 0];
+};
+/** in twentieths: a disc is repainted about twenty times as it crosses, not every frame */
+const step20 = (v: number) => Math.round(v * 20) / 20;
 
 class GlobeCtl {
   stage: HTMLElement;
+  world: HTMLElement;
   orb: HTMLElement;
   discs: HTMLButtonElement[];
   hero: HTMLButtonElement;
@@ -101,18 +142,21 @@ class GlobeCtl {
   geo: Geo;
   reduce = reducedMotion();
 
-  yaw = 0;
-  pitch = REST_PITCH;
-  vel = IDLE;
-  pitchVel = 0;
-  dir = 1;
+  q: Quat = REST;
+  m: number[] = qMat(REST);
+  /** the turn now, as an axis of the screen times degrees per second */
+  vel: Vec;
+  /** the axis the globe turns about when it is left alone: the sphere's own at first, then the way the last drag sent it */
+  axis: Vec = REST_AXIS;
   mode: 'idle' | 'drag' | 'coast' | 'turn' | 'open' | 'close' = 'idle';
   idleFrom = 0;           // the time the spin started to come back after a stop
   holdSpin = false;       // a disc has the keyboard focus: the globe keeps still
-  drag0 = { yaw: 0, pitch: 0 };
-  turnYaw = new Tween();
-  turnPitch = new Tween();
+  last = { dx: 0, dy: 0 };
+  turnFrom: Quat = REST;
+  turnTo_: Quat = REST;
+  turnT = new Tween();
   lit: number[];
+  vis: number[];
   pick: boolean[];
   fetched: boolean[];
   current = 0;            // the disc that holds the tab stop
@@ -129,8 +173,9 @@ class GlobeCtl {
   unbind: () => void;
   ro: ResizeObserver;
 
-  constructor(els: { stage: HTMLElement; orb: HTMLElement; hero: HTMLButtonElement; veil: HTMLElement; info: HTMLElement }, live: () => Live) {
+  constructor(els: { stage: HTMLElement; world: HTMLElement; orb: HTMLElement; hero: HTMLButtonElement; veil: HTMLElement; info: HTMLElement }, live: () => Live) {
     this.stage = els.stage;
+    this.world = els.world;
     this.orb = els.orb;
     this.hero = els.hero;
     this.heroImg = els.hero.querySelector('img')!;
@@ -142,8 +187,10 @@ class GlobeCtl {
     this.live = live;
     this.discs = [...els.orb.querySelectorAll<HTMLButtonElement>('.lp-gl-disc')];
     this.lit = DISCS.map(() => -1);
+    this.vis = DISCS.map(() => -1);
     this.pick = DISCS.map(() => true);
     this.fetched = DISCS.map(() => false);
+    this.vel = this.reduce ? [0, 0, 0] : [REST_AXIS[0] * IDLE, REST_AXIS[1] * IDLE, REST_AXIS[2] * IDLE];
     this.geo = geometry(this.stage.clientWidth, this.stage.clientHeight);
     this.applyGeo();
     this.ro = new ResizeObserver(() => {
@@ -152,25 +199,31 @@ class GlobeCtl {
       this.lastOrb = '';
     });
     this.ro.observe(this.stage);
-    if (this.reduce) this.vel = 0;
     this.unbind = bindDrag(this.stage, {
       begin: () => {
         if (this.focus >= 0) this.close(true);
         this.mode = 'drag';
-        this.drag0 = { yaw: this.yaw, pitch: this.pitch };
+        this.last = { dx: 0, dy: 0 };
       },
       move: (dx, dy) => {
         if (this.mode !== 'drag') return;
-        const k = 180 / Math.PI / this.geo.r;
-        this.yaw = this.drag0.yaw + dx * k;
-        this.pitch = clamp(this.drag0.pitch - dy * k, -60, 60);
+        const ix = dx - this.last.dx;
+        const iy = dy - this.last.dy;
+        this.last = { dx, dy };
+        const l = Math.hypot(ix, iy);
+        if (l < 0.01) return;
+        const ax = dragAxis(ix, iy);
+        this.q = qNorm(qMul(qAxis(ax[0], ax[1], ax[2], (l * 180) / Math.PI / this.geo.r), this.q));
       },
       end: (vx, vy) => {
         if (this.mode !== 'drag') return;
-        const k = 180 / Math.PI / this.geo.r;
-        this.vel = this.reduce ? 0 : clamp(vx * k * FLING, -MAX_SPIN, MAX_SPIN);
-        this.pitchVel = this.reduce ? 0 : clamp(-vy * k * FLING, -160, 160);
-        if (Math.abs(vx) > 60) this.dir = vx > 0 ? 1 : -1;
+        // the way it goes on: the finger's last direction, or the whole drag's when the finger stopped before it let go
+        const v = Math.hypot(vx, vy);
+        const total = Math.hypot(this.last.dx, this.last.dy);
+        if (v > 40) this.axis = dragAxis(vx, vy);
+        else if (total > 4) this.axis = dragAxis(this.last.dx, this.last.dy);
+        const speed = this.reduce || v <= 40 ? 0 : Math.min(MAX_SPIN, ((v * 180) / Math.PI / this.geo.r) * FLING);
+        this.vel = [this.axis[0] * speed, this.axis[1] * speed, this.axis[2] * speed];
         this.mode = 'coast';
       },
     });
@@ -187,6 +240,7 @@ class GlobeCtl {
     const g = this.geo;
     const s = this.stage.style;
     s.setProperty('--R', `${g.r.toFixed(2)}px`);
+    s.setProperty('--Rc', `${g.rc.toFixed(2)}px`);
     s.setProperty('--P', `${g.p.toFixed(1)}px`);
     s.setProperty('--D', `${g.d.toFixed(2)}px`);
     s.setProperty('--A', `${g.a.toFixed(2)}px`);
@@ -222,13 +276,20 @@ class GlobeCtl {
   }
 
   /** the normal of disc i as seen now (the orb's rotation applied) */
-  facing(i: number): [number, number, number] {
+  facing(i: number): Vec {
     const [x, y, z] = DISCS[i].n;
-    const cy = Math.cos(this.yaw * RAD), sy = Math.sin(this.yaw * RAD);
-    const x1 = x * cy + z * sy;
-    const z1 = -x * sy + z * cy;
-    const cp = Math.cos(this.pitch * RAD), sp = Math.sin(this.pitch * RAD);
-    return [x1, y * cp - z1 * sp, y * sp + z1 * cp];
+    const m = this.m;
+    return [m[0] * x + m[1] * y + m[2] * z, m[3] * x + m[4] * y + m[5] * z, m[6] * x + m[7] * y + m[8] * z];
+  }
+
+  /** how squarely disc i faces the eye: the cosine of the angle between its normal and the line to the eye (the perspective included); its width
+   *  as it is seen, over its height, is about this */
+  square(f: Vec): number {
+    const g = this.geo;
+    const ex = -g.rc * f[0];
+    const ey = -g.rc * f[1];
+    const ez = g.p + g.r - g.rc * f[2];
+    return (f[0] * ex + f[1] * ey + f[2] * ez) / Math.hypot(ex, ey, ez);
   }
 
   /**
@@ -239,43 +300,28 @@ class GlobeCtl {
   flyFrom(i: number): { cx: number; cy: number } {
     const g = this.geo;
     const [x, y, z] = this.facing(i);
-    const depth = g.r * z - g.r;
+    const depth = g.rc * z - g.r;
     const k = g.p / (g.p - depth);
-    const cx = g.w / 2 + g.r * x * k;
-    const cy = g.cy + g.r * y * k;
+    const cx = g.w / 2 + g.rc * x * k;
+    const cy = g.cy + g.rc * y * k;
     const size = g.d * k;
     this.from = { x: cx - g.w / 2, y: cy - g.hy, sx: Math.max(0.05, (size * Math.sqrt(Math.max(0, 1 - x * x))) / g.dh), sy: Math.max(0.05, (size * Math.sqrt(Math.max(0, 1 - y * y))) / g.dh) };
     return { cx, cy };
   }
 
-  /** the disc nearest the front */
-  front(): number {
-    let best = 0;
-    let bz = -2;
-    for (let i = 0; i < DISCS.length; i++) {
-      const z = this.facing(i)[2];
-      if (z > bz) {
-        bz = z;
-        best = i;
-      }
-    }
-    return best;
-  }
-
-  /** turn the globe so that disc i faces the visitor */
+  /** glide to disc i upright at the front */
   turnTo(i: number, t: number, dur: number): void {
-    const d = DISCS[i];
-    const yaw = nearestTurn(this.yaw, -d.lon);
-    const pitch = clamp(-d.lat, -72, 72);
+    const q = upright(DISCS[i]);
     if (this.reduce || dur <= 0) {
-      this.yaw = yaw;
-      this.pitch = pitch;
-      this.turnYaw.set(yaw, yaw, t, 1);
-      this.turnPitch.set(pitch, pitch, t, 1);
+      this.q = q;
+      this.turnFrom = q;
+      this.turnTo_ = q;
+      this.turnT.set(1, 1, t, 1);
       return;
     }
-    this.turnYaw.set(this.yaw, yaw, t, dur, easeTurn);
-    this.turnPitch.set(this.pitch, pitch, t, dur, easeTurn);
+    this.turnFrom = this.q;
+    this.turnTo_ = q;
+    this.turnT.set(0, 1, t, dur, easeTurn);
   }
 
   onClick = (e: MouseEvent): void => {
@@ -356,7 +402,7 @@ class GlobeCtl {
     const t = performance.now();
     const g = this.geo;
     const { cx, cy } = this.flyFrom(i);
-    // how dark the fog made the disc where it was (the flat copy starts as dark and clears)
+    // how dark the shading made the disc where it was (the flat copy starts as dark and clears)
     this.shadeFrom = 0.85 * smooth(0.5, 1, Math.hypot(cx - g.w / 2, cy - g.cy) / g.a);
     const img = this.discs[i].querySelector('img')!;
     this.heroImg.src = img.currentSrc || img.src;
@@ -390,9 +436,11 @@ class GlobeCtl {
     this.stage.style.setProperty('--low', below > 0 ? '200vh' : '0px');
     this.mode = 'open';
     this.closing = false;
+    this.vel = [0, 0, 0];
     if (this.reduce) {
-      this.turnYaw.set(this.yaw, this.yaw, t, 1);
-      this.turnPitch.set(this.pitch, this.pitch, t, 1);
+      this.turnFrom = this.q;
+      this.turnTo_ = this.q;
+      this.turnT.set(1, 1, t, 1);
       this.heroT.set(1, 1, t, 1);
       this.veilT.set(0, 1, t, 180, easeOut);
       this.infoT.set(0, 1, t, 180, easeOut);
@@ -427,25 +475,28 @@ class GlobeCtl {
     if (this.mode !== 'drag') this.mode = 'close';
   }
 
+  /** turn the globe by the velocity for s seconds */
+  spin(s: number): void {
+    const v = this.vel;
+    const speed = len(v);
+    if (speed * s < 1e-5) return;
+    this.q = qNorm(qMul(qAxis(v[0] / speed, v[1] / speed, v[2] / speed, speed * s), this.q));
+  }
+
   frame(t: number, dt: number): void {
     const s = dt / 1000;
-    const idleTarget = this.reduce || this.holdSpin || this.focus >= 0 ? 0 : IDLE * this.dir;
+    const idle = this.reduce || this.holdSpin || this.focus >= 0 ? 0 : IDLE;
     switch (this.mode) {
-      case 'idle': {
-        // the spin comes back over about 1.5 s after a stop (and at the start: the first frame is the poster's still arrangement)
-        const ramp = smooth(0, 1500, t - this.idleFrom);
-        this.vel = mix(this.vel, idleTarget * ramp, 1 - Math.exp(-s / 0.35));
-        this.yaw += this.vel * s;
-        this.pitchVel += (-(this.pitch - REST_PITCH) * 18 - this.pitchVel * 8.5) * s;
-        this.pitch += this.pitchVel * s;
-        break;
-      }
+      case 'idle':
       case 'coast': {
-        this.vel = mix(this.vel, idleTarget, 1 - Math.exp(-s / 0.5));
-        this.yaw += this.vel * s;
-        this.pitchVel += (-(this.pitch - REST_PITCH) * 18 - this.pitchVel * 6) * s;
-        this.pitch = clamp(this.pitch + this.pitchVel * s, -60, 60);
-        if (Math.abs(this.vel - idleTarget) < 0.5 && Math.abs(this.pitch - REST_PITCH) < 0.5) {
+        // after a stop the spin comes back over about 1.5 s (and at the start: the first frame is the poster's still arrangement); after a fling the
+        // turn eases from the finger's speed to the idle speed about the axis it was sent along, and stays on that axis
+        const goal = idle * (this.mode === 'idle' ? smooth(0, 1500, t - this.idleFrom) : 1);
+        const e = 1 - Math.exp(-s / (this.mode === 'idle' ? 0.35 : SETTLE));
+        const a = this.axis;
+        this.vel = [mix(this.vel[0], a[0] * goal, e), mix(this.vel[1], a[1] * goal, e), mix(this.vel[2], a[2] * goal, e)];
+        this.spin(s);
+        if (this.mode === 'coast' && len([this.vel[0] - a[0] * goal, this.vel[1] - a[1] * goal, this.vel[2] - a[2] * goal]) < 0.5) {
           this.mode = 'idle';
           this.idleFrom = t - 1500;
         }
@@ -453,11 +504,9 @@ class GlobeCtl {
       }
       case 'turn':
       case 'open': {
-        this.yaw = this.turnYaw.at(t);
-        this.pitch = this.turnPitch.at(t);
-        this.vel = 0;
-        this.pitchVel = 0;
-        if (this.mode === 'turn' && this.turnYaw.done(t)) {
+        this.q = qSlerp(this.turnFrom, this.turnTo_, this.turnT.at(t));
+        this.vel = [0, 0, 0];
+        if (this.mode === 'turn' && this.turnT.done(t)) {
           this.mode = 'idle';
           this.idleFrom = t;
         }
@@ -466,7 +515,8 @@ class GlobeCtl {
       default:
         break;
     }
-    const orb = `translate3d(0,0,${(-this.geo.r).toFixed(2)}px) rotateX(${this.pitch.toFixed(3)}deg) rotateY(${this.yaw.toFixed(3)}deg)`;
+    this.m = qMat(this.q);
+    const orb = `translate3d(0,0,${(-this.geo.r).toFixed(2)}px) ${cssMatrix(this.m)}`;
     if (orb !== this.lastOrb) {
       this.orb.style.transform = orb;
       this.lastOrb = orb;
@@ -484,18 +534,24 @@ class GlobeCtl {
     }
   }
 
-  /** the gold rim of the discs at the front, which discs can be tapped (none that faces away), and which pictures to fetch */
+  /** each disc's fade toward the limb, the gold rim and glow of the discs at the front, which discs can be tapped (none that is turned away), and
+   *  which pictures to fetch */
   light(): void {
     for (let i = 0; i < DISCS.length; i++) {
-      const z = this.facing(i)[2];
-      if (z > -0.45) this.fetchPic(i);
-      // in steps of a twentieth: a disc is repainted about twenty times as it crosses the front, not every frame
-      const lit = Math.round(smooth(0.9, 0.995, z) * 20) / 20;
+      const f = this.facing(i);
+      if (f[2] > -0.45) this.fetchPic(i);
+      const c = this.square(f);
+      const vis = step20(smooth(FADE_FROM, FADE_TO, c));
+      if (vis !== this.vis[i]) {
+        this.vis[i] = vis;
+        this.discs[i].style.opacity = vis === 1 ? '' : String(vis);
+      }
+      const lit = step20(smooth(0.9, 0.995, c));
       if (lit !== this.lit[i]) {
         this.lit[i] = lit;
         this.discs[i].style.setProperty('--lit', String(lit));
       }
-      const pick = z > 0.12;
+      const pick = c > PICK;
       if (pick !== this.pick[i]) {
         this.pick[i] = pick;
         this.discs[i].style.pointerEvents = pick ? '' : 'none';
@@ -513,8 +569,11 @@ class GlobeCtl {
     this.rim.style.opacity = o;
     this.glow.style.opacity = o;
     this.shade.style.opacity = (this.shadeFrom * (1 - p)).toFixed(3);
-    if (this.reduce) this.hero.style.opacity = this.veilT.at(t).toFixed(3);
-    this.veil.style.opacity = this.veilT.at(t).toFixed(3);
+    const v = this.veilT.at(t);
+    if (this.reduce) this.hero.style.opacity = v.toFixed(3);
+    this.veil.style.opacity = v.toFixed(3);
+    // the whole sphere (body, discs, shading) recedes into the dark as one picture behind the opened artwork: an even dimming with no edge of its own
+    this.world.style.opacity = mix(1, 0.22, v).toFixed(3);
     const q = this.infoT.at(t);
     this.info.style.opacity = q.toFixed(3);
     this.info.style.transform = this.reduce ? '' : `translate3d(0,${((1 - q) * 10).toFixed(2)}px,0)`;
@@ -526,6 +585,7 @@ class GlobeCtl {
     this.hero.style.visibility = 'hidden';
     this.hero.style.transform = '';
     this.veil.style.opacity = '0';
+    this.world.style.opacity = '';
     this.info.style.opacity = '0';
     if (this.refocus === this.focus) this.discs[this.focus].focus({ preventScroll: true });
     this.info.inert = true;
@@ -551,6 +611,7 @@ export default function Globe({ onReady }: GlobeProps) {
   // whose eyes an artwork shows: the gallery's own words for it
   const prov = useMemo<Record<GlobeProv, string>>(() => ({ own: c.styles.eyeNote.own, licensed: c.styles.eyeNote.other, mixed: c.styles.mixed }), [c]);
   const stage = useRef<HTMLDivElement>(null);
+  const world = useRef<HTMLDivElement>(null);
   const orb = useRef<HTMLDivElement>(null);
   const hero = useRef<HTMLButtonElement>(null);
   const veil = useRef<HTMLDivElement>(null);
@@ -565,7 +626,7 @@ export default function Globe({ onReady }: GlobeProps) {
   // before the browser paints the new markup: the sizes (custom properties of the stage) and the first view are written in the same frame, so nothing is
   // ever laid out without them (a frame without them would move every layer of the globe once: a layout shift)
   useLayoutEffect(() => {
-    const ctl = new GlobeCtl({ stage: stage.current!, orb: orb.current!, hero: hero.current!, veil: veil.current!, info: info.current! }, () => latest.current());
+    const ctl = new GlobeCtl({ stage: stage.current!, world: world.current!, orb: orb.current!, hero: hero.current!, veil: veil.current!, info: info.current! }, () => latest.current());
     const first = DISCS.map((_, i) => i).filter((i) => ctl.fetched[i]).map((i) => ctl.discs[i].querySelector('img')!);
     let alive = true;
     let idle = 0;
@@ -593,8 +654,9 @@ export default function Globe({ onReady }: GlobeProps) {
             className="lp-gl-disc"
             tabIndex={i === 0 ? 0 : -1}
             aria-label={`${styleName(a.style)}, ${prov[a.prov]}`}
-            style={{ transform: `rotateY(${d.lon}deg) rotateX(${d.lat}deg) translateZ(var(--R))` } as CSSProperties}
+            style={{ transform: `rotateY(${d.lon}deg) rotateX(${d.lat}deg) translateZ(var(--Rc))` } as CSSProperties}
           >
+            <span className="lp-gl-glow" aria-hidden="true" />
             <img alt="" width={240} height={240} draggable={false} decoding="async" />
             <span className="lp-gl-rim" aria-hidden="true" />
           </button>
@@ -605,13 +667,15 @@ export default function Globe({ onReady }: GlobeProps) {
 
   return (
     <div className="lp-gl" ref={stage} role="group" aria-label={h.globeLabel}>
-      <div className="lp-gl-body" aria-hidden="true" />
-      <div className="lp-gl-scene">
-        <div className="lp-gl-orb" ref={orb}>
-          {discs}
+      <div className="lp-gl-world" ref={world}>
+        <div className="lp-gl-body" aria-hidden="true" />
+        <div className="lp-gl-scene">
+          <div className="lp-gl-orb" ref={orb}>
+            {discs}
+          </div>
         </div>
+        <div className="lp-gl-fog" aria-hidden="true" />
       </div>
-      <div className="lp-gl-fog" aria-hidden="true" />
       <div className="lp-gl-veil" ref={veil} aria-hidden="true" />
       <button type="button" className="lp-gl-open" ref={hero} tabIndex={-1} aria-label={h.globeClose}>
         <img alt="" width={480} height={480} draggable={false} decoding="async" />
@@ -620,10 +684,10 @@ export default function Globe({ onReady }: GlobeProps) {
         <span className="lp-gl-open-rim" aria-hidden="true" />
       </button>
       <div className="lp-gl-info" ref={info} inert>
-        <p className="lp-gl-name" aria-live="polite">{' '}</p>
+        <p className="lp-gl-name" aria-live="polite">{' '}</p>
         <p className="lp-gl-chips">
           <span className="lp-gl-soon" hidden />
-          <span className="lp-gl-prov">{' '}</span>
+          <span className="lp-gl-prov">{' '}</span>
         </p>
         <a className="lp-btn lp-btn-gold gold-metal lp-gl-cta" href={tryHref}>
           <span>{h.globeTry}</span>
