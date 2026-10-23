@@ -12,19 +12,13 @@ import { NAV_KEYS } from './navKeys';
 import { BrandFull, BrandPicture } from '../shared/BrandLogo';
 
 
-/** The logo link: the owner's logo (src/shared/BrandLogo.tsx). In the header: the full logo from 768 px, under it the eye with a short swoosh
- *  beside SNAPEYES in Cinzel (the full logo's script name is too small to read in a phone's header). In the footer (`full`): the full logo,
- *  96 px tall, lazy (below the fold). It goes to the top of the page. */
-export function SiteLogo({ brandTag, full = false }: { brandTag: string; full?: boolean }) {
+/** The logo link: the owner's logo (src/shared/BrandLogo.tsx). In the header: the full logo at every width (56 px tall, smaller on the narrowest
+ *  phones: css/header.css). In the footer (`full`): the full logo, 96 px tall, lazy (below the fold). It goes to the top of the page; its one name
+ *  is the picture's alt, "SnapEyes". */
+export function SiteLogo({ full = false }: { full?: boolean }) {
   return (
-    <a className={full ? 'lp-logo lp-logo-full' : 'lp-logo'} href="#top" aria-label="SnapEyes">
+    <a className={full ? 'lp-logo lp-logo-full' : 'lp-logo'} href="#top">
       {full ? <BrandFull /> : <BrandPicture />}
-      {!full && (
-        <span>
-          <b>SNAPEYES</b>
-          {brandTag && <small>{brandTag}</small>}
-        </span>
-      )}
     </a>
   );
 }
@@ -47,7 +41,7 @@ export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangInten
   return (
     <header className="lp-hdr" id="hdr" ref={headerRef}>
       <div className="lp-wrap">
-        <SiteLogo brandTag={copy.brandTag} />
+        <SiteLogo />
         <nav className="lp-nav" id="nav" aria-label={copy.navLabels.main}>
           {NAV_KEYS.map((k) => (
             <a key={k} href={`#${k}`}>{copy.nav[k]}</a>

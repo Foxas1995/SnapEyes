@@ -4,16 +4,12 @@ import { Plus } from 'lucide-react';
 import { useCopy } from './copy/useCopy';
 import { BrandPicture } from '../shared/BrandLogo';
 
-// href: the landing links to its own top; the legal pages link home. The owner's logo (src/shared/BrandLogo.tsx): from 768 px the full logo,
-// under it the eye with a short swoosh beside SNAPEYES in Cinzel.
-export function Logo({ tag, href = '#top' }: { tag: string; href?: string }) {
+// href: the landing links to its own top; the legal pages link home. The owner's logo (src/shared/BrandLogo.tsx): the full logo at every width,
+// 56 px tall from 375 px, 50 px from 341 px, 44 px below (the same steps as the landing's header and /try); its one name is the picture's alt.
+export function Logo({ href = '#top' }: { href?: string }) {
   return (
-    <a href={href} className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold" aria-label="SnapEyes">
-      <BrandPicture className="shrink-0" imgClass="block h-[34px] w-auto md:h-14" />
-      <span className="flex flex-col leading-none md:sr-only">
-        <span className="font-luxury text-[17px] font-semibold tracking-[0.18em] text-white">SNAPEYES</span>
-        {tag && <span className="mt-1 text-[9px] font-medium uppercase tracking-[0.34em] text-zinc-400">{tag}</span>}
-      </span>
+    <a href={href} className="flex items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
+      <BrandPicture className="shrink-0" imgClass="block h-11 w-auto min-[341px]:h-[50px] min-[375px]:h-14" />
     </a>
   );
 }

@@ -68,7 +68,7 @@ function BlockView({ block, lang }: { block: Block; lang: Lang }) {
 }
 
 function LegalPage({ id }: { id: LegalDocId }) {
-  const { lang, t } = useLang();
+  const { lang } = useLang();
   const market = useMarket();
   // the edition's own text in the page's language (langFor already keeps a market to the languages it has)
   const doc = EDITIONS[legalEdition(market)][id][editionLang(lang, market)]!;
@@ -86,7 +86,7 @@ function LegalPage({ id }: { id: LegalDocId }) {
     <div className="legal-page min-h-screen bg-[#030408] text-[#f0f3fa] selection:bg-gold selection:text-black">
       <header className="legal-noprint border-b border-white/[0.06]">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 max-[340px]:gap-2 sm:px-6">
-          <Logo tag={t.brandTag} href={home} />
+          <Logo href={home} />
           <LangSwitch />
         </div>
       </header>

@@ -1001,11 +1001,10 @@ export const TryApp: React.FC = () => {
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
         {/* back to the landing page in the same language */}
-        {/* the owner's logo: from 768 px the full logo, under it the eye with a short swoosh beside SNAPEYES in Cinzel (src/shared/BrandLogo.tsx); under 390 px the
-            eye is 28 px tall and the name 15 px, so that the logo and the language switch fit side by side at 320 px */}
-        <a href={withMarket(`/?lang=${lang}`)} aria-label="SnapEyes" className="shrink-0 flex items-center gap-1.5 min-[390px]:gap-2 font-luxury font-semibold tracking-wider text-[15px] min-[390px]:text-lg relative hit">
-          <BrandPicture className="shrink-0" imgClass="block h-7 w-auto min-[390px]:h-[34px] md:h-14" />
-          <span className="md:sr-only">SNAPEYES</span>
+        {/* the owner's full logo at every width (src/shared/BrandLogo.tsx): 56 px tall from 375 px, 50 px from 341 px and 44 px below, so that the logo and the
+            language switch fit side by side at 320 px; its one name is the picture's alt */}
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 flex items-center relative hit">
+          <BrandPicture className="shrink-0" imgClass="block h-11 w-auto min-[341px]:h-[50px] min-[375px]:h-14" />
         </a>
         {/* the logo and the language switch, nothing else (the owner, 2026-10-22, asked what the tagline beside them meant: it is gone); the family test's badge only with ?study=1 */}
         <div className="flex items-center justify-end gap-3 min-w-0">

@@ -297,13 +297,13 @@ export const OrderApp: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-2xl mx-auto">
-        {/* the owner's logo (src/shared/BrandLogo.tsx): from 768 px the full logo, under it the eye with a short swoosh beside SNAPEYES in Cinzel */}
-        <a href={withMarket(`/?lang=${lang}`)} aria-label="SnapEyes" className="shrink-0 flex items-center gap-1.5 min-[390px]:gap-2 font-luxury font-semibold tracking-wider text-[15px] min-[390px]:text-lg">
-          <BrandPicture className="shrink-0" imgClass="block h-7 w-auto min-[390px]:h-[34px] md:h-14" />
-          <span className="md:sr-only">SNAPEYES</span>
+        {/* the owner's full logo at every width (src/shared/BrandLogo.tsx): 56 px tall from 375 px, 50 px from 341 px and 44 px below; its one name is the picture's alt */}
+        <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 flex items-center">
+          <BrandPicture className="shrink-0" imgClass="block h-11 w-auto min-[341px]:h-[50px] min-[375px]:h-14" />
         </a>
         <div className="flex items-center justify-end gap-3 min-w-0">
-          <span className="min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right">{C.tag}</span>
+          {/* the page's tag beside the switch only where there is room for it (from 640 px): on a phone it ran into the switch, and the page's own heading says it */}
+          <span className="hidden sm:inline min-w-0 text-[10px] uppercase tracking-widest text-zinc-400 text-right">{C.tag}</span>
           <LangSwitch C={C} lang={lang} langs={langs} onSwitch={switchLang} />
         </div>
       </header>
