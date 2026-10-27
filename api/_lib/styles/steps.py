@@ -760,7 +760,7 @@ def _pupil_measure(eye):
     its class and aspect are comparable with the profile's. The grade is the iris's own cache, which the ring colours read already."""
     from . import core as SCORE
     from . import pupil as PUP
-    sq, _ = SCORE._tight(eye.graded(SCORE.REF_SIDE))
+    sq, _ = SCORE._tight(eye.graded(SCORE.REF_SIDE, finish=False))      # the grade without the iris finish, as the profile's
     return PUP.analyse(sq)
 
 

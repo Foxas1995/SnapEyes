@@ -65,7 +65,7 @@ def atelier(name, group):
 
 # id: (source, kind, fit): a wide picture shows `fit` of its width in the circle; a square one is scaled by `fit` (1: whole, the corners cut)
 ITEMS = {}
-for design, eyes in (('radiance', 'own yg br'), ('powder', 'own yg br'), ('universe', 'own yg'), ('splash', 'own yg br'), ('clean', 'own yg'), ('gold', 'own')):
+for design, eyes in (('radiance', 'own yg br'), ('powder', 'own yg br'), ('universe', 'own yg'), ('splash', 'own yg br'), ('clean', 'own yg'), ('echo', 'own')):
     for eye in eyes.split():
         ITEMS[f'{design}_{eye}'] = (art(f'{design}_{eye}'), 'square', 1.0)
 # the five newer one-eye styles exist only as /try's pictures, in our own eye: <slug>_own like the landing's own-eye tiles

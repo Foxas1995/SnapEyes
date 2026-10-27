@@ -362,8 +362,8 @@ for market in MK.MARKETS:
             got, lad = pay.price_cents(n, sid, market), abtest.ladder_price(MK.MARKETS[market]["prices"], n, sid)
             if got != want or lad != want:
                 bad.append((market, sid, n, got, lad, want))
-check("I2: for every one of the 40 ids (28 before the light family of 2026-10-20, 33 before the ensemble family's three new ones and 36 before its four cosmos looks of the same day), 1 to 8 eyes and the 4 markets, pay.price_cents and abtest.ladder_price give the golden amount of the opening "
-      "ladder (EUR 1997, 2497, 3997, +1500; AUD 3900, 4900, 7900, +2900; HUF 699000, 899000, 1399000, +499000, in minor units)", not bad and len(CT.ids()) == 40, bad[:3])
+check("I2: for every one of the 41 ids (28 before the light family of 2026-10-20, 33 before the ensemble family's three new ones, 36 before its four cosmos looks of the same day and 40 before Iris Echo of 2026-10-27), 1 to 8 eyes and the 4 markets, pay.price_cents and abtest.ladder_price give the golden amount of the opening "
+      "ladder (EUR 1997, 2497, 3997, +1500; AUD 3900, 4900, 7900, +2900; HUF 699000, 899000, 1399000, +499000, in minor units)", not bad and len(CT.ids()) == 41, bad[:3])
 check("the amounts the card names for seven and eight eyes in euros are 11497 and 12997 minor units, from two eyes upward the style does not matter",
       pay.price_cents(7, "solo.powder", "eu") == 11497 == pay.price_cents(7, "studio_black", "eu") and pay.price_cents(8, "grp.collision", "eu") == 12997, "")
 check("the price KEYS are unchanged (one_eye_studio_black, one_eye_art, two_eyes, each_further_eye) in pay, abtest and markets.py, and the black class is one predicate",

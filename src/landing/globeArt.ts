@@ -29,7 +29,7 @@ export const GLOBE_ART: readonly GlobeArt[] = [
   one('universe_own', 'solo.universe', 'own'), one('universe_yg', 'solo.universe', 'licensed'),
   one('splash_own', 'solo.splash', 'own'), one('splash_yg', 'solo.splash', 'licensed'), one('splash_br', 'solo.splash', 'licensed'),
   one('clean_own', 'solo.clean', 'own'), one('clean_yg', 'solo.clean', 'licensed'),
-  one('gold_own', 'solo.gold', 'own'),
+  one('echo_own', 'solo.echo', 'own'),
   many('duo_infinity_by', 'duo.collision_infinity', 2), many('duo_clean_by', 'duo.clean', 2), many('duo_kiss_bb', 'duo.kiss_collision', 2),
   many('duo_thread_by', 'duo.clean_duo', 2), many('duo_radiance_bd', 'duo.radiance', 2), many('nebula_duo', 'duo.nebula', 2), many('supernova_duo', 'duo.supernova', 2),
   many('fam_trio', 'grp.collision', 3), many('fam_orbit_4', 'grp.orbit', 4), many('fam_circle_4', 'grp.light_circle', 4), many('fam_radiance_4', 'grp.radiance', 4),
@@ -44,6 +44,6 @@ export const GLOBE_ROWS: readonly { lat: number; offset: number; ids: readonly s
   { lat: 0, offset: 0, ids: ['halo_own', 'sparks_own', 'fam_orbit_4', 'powder_yg', 'nebula_duo', 'universe_own', 'splash_br', 'duo_thread_by', 'radiance_yg', 'aurora_own'] },
   { lat: 36, offset: 22.5, ids: ['nebula_own', 'splash_yg', 'clean_own', 'fam_radiance_4', 'powder_br', 'supernova_duo', 'universe_yg', 'radiance_own'] },
   { lat: -36, offset: 22.5, ids: ['fam_trio', 'powder_own', 'duo_infinity_by', 'clean_yg', 'supernova_family', 'splash_own', 'duo_kiss_bb', 'supernova_own'] },
-  { lat: 70, offset: 0, ids: ['duo_clean_by', 'gold_own', 'nebula_family'] },
+  { lat: 70, offset: 0, ids: ['duo_clean_by', 'echo_own', 'nebula_family'] },
   { lat: -70, offset: 60, ids: ['radiance_br', 'duo_radiance_bd', 'fam_circle_4'] },
 ];

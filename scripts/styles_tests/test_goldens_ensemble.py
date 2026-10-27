@@ -74,6 +74,7 @@ import collision_cases as CCS  # noqa: E402
 from _lib import catalogue as CT  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, costs as CO, seeds as SD, steps as STP, text as TX  # noqa: E402
+C.IRIS_FINISH = False   # 2026-10-27: these goldens pin the engine UNDER the iris finish (the scratch prototype has none); the finish has its own checks in test_iris_finish.py
 from _lib.styles import ensemble as HL  # noqa: E402
 from _lib.styles.ensemble import base as HB, checks as HCK  # noqa: E402
 

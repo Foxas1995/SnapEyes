@@ -154,15 +154,21 @@ class Iris:
             self.grade_seconds += time.perf_counter() - t0
         return self._ease
 
-    def graded(self, Sd, master_map=False):
-        """The studio grade in an Sd x Sd frame, cached per size. master_map: the lid map measured as a master's (grade_disc); cached apart."""
+    def graded(self, Sd, master_map=False, finish=True):
+        """The studio grade in an Sd x Sd frame, cached per size. master_map: the lid map measured as a master's (grade_disc); cached apart.
+        finish: with the iris finish on top (what every picture draws). finish=False is the grade alone, which every MEASUREMENT reads (the ring
+        colours, the colour class, the pupil): the sealed profile (eye.py) is measured on it, so the preview's palette, the profile and the master's
+        drift checks (steps: class_changed, pupil_changed) read the same numbers as before the finish existed."""
         Sd = int(Sd)
-        key = (Sd, "m") if master_map else Sd
+        fin = bool(finish) and IRIS_FINISH
+        key = ((Sd, "m") if master_map else Sd) if fin or not IRIS_FINISH else ((Sd, "m", "raw") if master_map else (Sd, "raw"))
         g = self._grades.get(key)
         if g is None:
             ease = self.ease
             t0 = time.perf_counter()
             g = np.ascontiguousarray(np.asarray(grade_disc(self.src, Sd, ease, master_map=True) if master_map else grade_disc(self.src, Sd, ease)))
+            if fin:
+                g = finish_iris(g)
             self.grade_seconds += time.perf_counter() - t0
             self._grades[key] = g
         return g
@@ -185,6 +191,121 @@ class Iris:
 
     def __repr__(self):
         return f"Iris({self.name!r}, {self.src.size[0]} px, {self.digest.hex()[:8]})"
+
+
+# ----------------------------------------------------------------------------- the iris finish (the owner, 2026-10-27)
+# "These effects look weak": the arrows were on the iris itself. The restored iris came out milky (a pale veil over the crypts, soft fibres, a bright rim),
+# where the competitors' irises are clear, saturated, with dark crypts, a dark limbal ring and a round glossy pupil. The finish is ONE function on the
+# graded frame, so every style of every family, the free preview and the 4096 px master get the same iris; every length is in units of the disc's R,
+# so a master is the preview drawn finer. Its parameters (FIN) are the prototype's the owner approved ("manau daug geriau").
+IRIS_FINISH = True                  # always on; the golden suites set it False on the module (they pin the engine under the finish)
+FIN = {
+    "dehaze": 0.55,             # share of the veil (the 6th percentile of the iris body's luminance) taken away
+    "micro": ((0.0044, 0.90), (0.0197, 0.60)),   # local contrast at the fibres' and the crypts' scale: (sigma in R, amount)
+    "vib": 0.35,                # vibrance: more colour where there is little
+    "limb": (0.78, 0.60),       # the dark limbal ring inside the iris: from this share of R, down to (1 - this) at the edge
+    "pupil_dark": 0.85,         # the pupil a little deeper
+    "gloss": 0.0,               # no gloss on the pupil (the owner, 2026-10-27: "no dots inside like the competitor")
+}
+
+
+def _pupil_frac(lum, r):
+    """The pupil's radius as a share of R: the steepest rise of the radial luminance profile between 0.05 and 0.70 R (rings of 0.02 R)."""
+    n = 33
+    sel = (r > 0.05) & (r < 0.70)
+    idx = np.minimum(((r[sel] - 0.05) / 0.02).astype(np.int64), n - 1)
+    cnt = np.bincount(idx, minlength=n)
+    tot = np.bincount(idx, weights=lum[sel].astype(np.float64), minlength=n)
+    prof = np.where(cnt > 0, tot / np.maximum(cnt, 1), 0.0)
+    return float(0.05 + 0.02 * (int(np.argmax(np.diff(prof))) + 1))
+
+
+def _finish(frame, fin=None):
+    """The iris finish on a graded frame (uint8, the disc of side round(Sd * STUDIO_FILL) centred, black around it): dehaze, micro contrast at two
+    scales, vibrance, a dark limbal ring inside the disc, a deeper pupil (and a soft gloss, off). Pixels outside the disc are left as they are.
+    Deterministic. It works on the disc's square only (with room for the blurs) and reads its statistics (the veil, the pupil) on a grid of about
+    512 cells across the disc, so a master costs what its pixels cost and reads the same numbers as its preview."""
+    o = dict(FIN)
+    o.update(fin or {})
+    Sd = frame.shape[0]
+    tgt = max(8, int(round(Sd * L.STUDIO_FILL)))
+    R = tgt / 2.0
+    if R < 24:                                                       # a thumbnail: nothing to finish
+        return frame
+    c = Sd / 2.0
+    pad = int(math.ceil(4.0 * max(s for s, _ in o["micro"]) * R)) + 2
+    q0, q1 = max(0, int(math.floor(c - R)) - pad), min(Sd, int(math.ceil(c + R)) + pad)
+    a = np.asarray(frame[q0:q1, q0:q1], np.float32)
+    ax = np.arange(q0, q1, dtype=np.float32) + np.float32(0.5 - c)
+    r = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2) / np.float32(R)
+    inside = r <= 1.0
+    st = max(1, int(R // 256))
+    rs, ls = r[::st, ::st], a[::st, ::st].mean(axis=2)
+    body = (rs <= 1.0) & (rs > 0.35)
+    floor = float(np.percentile(ls[body], 6)) if body.any() else 0.0
+    k = o["dehaze"] * floor
+    b = a - np.float32(k)
+    b *= np.float32(1.0 / max(1e-3, 1.0 - k / 255.0))
+    for sig_r, amt in o["micro"]:
+        bl = blur(b, max(0.6, sig_r * R), clip_negative=False)
+        np.subtract(b, bl, out=bl)
+        bl *= np.float32(amt)
+        b += bl
+    m = b.mean(axis=2, keepdims=True)
+    b -= m
+    sat = np.abs(b).mean(axis=2, keepdims=True)
+    sat *= np.float32(1.0 / 80.0)
+    np.clip(sat, 0.0, 1.0, out=sat)
+    b *= 1.0 + np.float32(o["vib"]) * (1.0 - sat)
+    b += m
+    l0, ld = o["limb"]
+    pf = _pupil_frac(ls, rs)
+    pm = np.clip((1.04 - r / np.float32(pf)) / np.float32(0.08), 0.0, 1.0)
+    gain = (1.0 - np.float32(ld) * smoothstep((r - np.float32(l0)) / np.float32(1.0 - l0))) * (1.0 - np.float32(o["pupil_dark"]) * pm)
+    b *= gain.astype(np.float32)[..., None]
+    if o["gloss"] > 0:
+        gx = (ax[None, :] + np.float32(0.32 * pf * R)) / np.float32(0.42 * pf * R)
+        gy = (ax[:, None] + np.float32(0.38 * pf * R)) / np.float32(0.42 * pf * R)
+        gl = (np.float32(o["gloss"] * 255.0) * np.exp(-(gx ** 2 + gy ** 2) * 2.2) * pm).astype(np.float32)
+        b += gl[..., None] * np.array([0.92, 0.95, 1.0], np.float32)
+    np.clip(b, 0.0, 255.0, out=b)
+    np.rint(b, out=b)
+    out = np.array(frame, np.uint8, copy=True)
+    sq = out[q0:q1, q0:q1]
+    sq[inside] = b[inside].astype(np.uint8)
+    return out
+
+
+FIN_R_CAP = 640     # px: a larger disc (a master's) is finished at this radius and the change is brought up to its size
+
+
+def finish_iris(frame, fin=None):
+    """finish_iris of a frame; a disc larger than FIN_R_CAP (a master's) is finished on a copy reduced to that radius, and the change it made
+    (finished minus reduced, smooth at the master's scale) is brought up bicubic and added to the full frame inside the disc. So a master costs a
+    few full size passes instead of the finish's thirty, holds a third of its memory, and is the preview drawn finer, as everywhere else."""
+    Sd = frame.shape[0]
+    R = max(8, int(round(Sd * L.STUDIO_FILL))) / 2.0
+    if R <= FIN_R_CAP:
+        return _finish(frame, fin)
+    sd = max(8, int(round(Sd * FIN_R_CAP / R)))
+    small = np.asarray(Image.fromarray(np.asarray(frame, np.uint8)).resize((sd, sd), Image.LANCZOS))
+    d = _finish(small, fin).astype(np.float32) - small.astype(np.float32)
+    c = Sd / 2.0
+    q0, q1 = max(0, int(math.floor(c - R)) - 2), min(Sd, int(math.ceil(c + R)) + 2)
+    k = sd / float(Sd)
+    box = (q0 * k, q0 * k, q1 * k, q1 * k)
+    a = np.asarray(frame[q0:q1, q0:q1], np.float32)
+    n = q1 - q0
+    for ch in range(3):
+        a[..., ch] += np.asarray(Image.fromarray(np.ascontiguousarray(d[..., ch]), "F").resize((n, n), Image.BICUBIC, box=box), np.float32)
+    np.clip(a, 0.0, 255.0, out=a)
+    np.rint(a, out=a)
+    ax = np.arange(q0, q1, dtype=np.float32) + np.float32(0.5 - c)
+    inside = (ax[None, :] ** 2 + ax[:, None] ** 2) <= np.float32(R * R)
+    out = np.array(frame, np.uint8, copy=True)
+    sq = out[q0:q1, q0:q1]
+    sq[inside] = a[inside].astype(np.uint8)
+    return out
 
 
 def grade_disc(src, Sd, ease=None, master_map=False):
@@ -249,7 +370,7 @@ def ring_colours(iris, bins=RING_BINS, band=RING_BAND, smooth=RING_SMOOTH, info=
     residue: luminance outside RING_OUTLIER x the median bin) re-filled from their neighbours, then circular
     Gaussian smoothing (25 taps). iris: an Iris (measured on its canonical REF_SIDE grade) or a graded frame array.
     info: optional dict that receives {"outlier_bins": n}."""
-    frame = iris.graded(REF_SIDE) if isinstance(iris, Iris) else np.asarray(iris)
+    frame = iris.graded(REF_SIDE, finish=False) if isinstance(iris, Iris) else np.asarray(iris)      # a measurement: the grade without the finish
     sq, tgt = _tight(frame)
     R = tgt / 2.0
     ax = np.arange(tgt, dtype=np.float64) + 0.5 - R

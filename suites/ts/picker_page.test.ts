@@ -83,8 +83,8 @@ export async function run(): Promise<Row[]> {
   const hNew = renderToStaticMarkup(createElement(StylePicker, { model: model(1, [tile('solo.nebula', { name: 'Nebula', slug: 'nebula', stage: 'preview' }), tile('solo.nothing', { name: 'Nothing', slug: 'nothing', stage: 'preview' })], [eye(1)]) }));
   check('a look of the light family has its line, and a style the copy has no line for prints none', text(hNew).includes('Your iris glows at the heart of a nebula.') && (hNew.match(/data-testid="style-line"/g) ?? []).length === 1);
   const lineKeys = Object.keys(COPY.en.picker.lines);
-  check('the one line of each of the eleven styles of one eye is written in English, German, Lithuanian and Hungarian (the same keys), none empty, no dash',
-    lineKeys.length === 11 && LANGS.every((l: Lang) => Object.keys(COPY[l].picker.lines).join() === lineKeys.join() && Object.values(COPY[l].picker.lines).every((s) => s.length > 0 && !/[\u2012-\u2015]/.test(s))));
+  check('the one line of each of the twelve styles of one eye (Iris Echo since 2026-10-27; Celestial Gold keeps its line in the lab) is written in English, German, Lithuanian and Hungarian (the same keys), none empty, no dash',
+    lineKeys.length === 12 && LANGS.every((l: Lang) => Object.keys(COPY[l].picker.lines).join() === lineKeys.join() && Object.values(COPY[l].picker.lines).every((s) => s.length > 0 && !/[\u2012-\u2015]/.test(s))));
 
   // ---- the same list loading
   const hLoad = renderToStaticMarkup(createElement(StylePicker, { model: { ...emptyPicker(1) } }));

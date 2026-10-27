@@ -79,7 +79,7 @@ def _fibre_info(iris):
     got = _INFO.get(key)
     if got is not None:
         return got
-    fr = iris.graded(C.REF_SIDE)
+    fr = iris.graded(C.REF_SIDE, finish=False)
     sq, tgt = C._tight(fr)
     R = tgt / 2.0
     ax = np.arange(tgt) + 0.5 - R

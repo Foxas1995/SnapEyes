@@ -9,7 +9,9 @@
 //   duo_infinity, duo_infinity_bb    -> Collision Infinity (two eyes; the second shows the pair of two eye colours)
 //   duo_kiss                         -> Kiss Collision
 //   duo_clean                        -> Clean Infinity
-//   fam_trio, fam_4, fam_5, fam_6    -> Family Colours at three, four, five and six eyes (the Trio is its three-eye layout)
+//   fam_trio, fam_4                  -> Family Colours at three and four eyes (the Trio is its three-eye layout; the five and six eye tiles left on 2026-10-27:
+//                                       no published eye of the owner's set without lid skin or lashes was left to draw them)
+//   echo                             -> Iris Echo (2026-10-27, in Celestial Gold's place: the owner took Celestial Gold off)
 //   duo_thread                       -> Clean Duo (the ensemble family: two whole irises and one thin infinity thread)
 //   duo_radiance                     -> Radiance Duo
 //   fam_orbit, fam_circle, fam_radiance  -> Family Orbit, Light Circle and Radiance Family at four eyes
@@ -36,7 +38,7 @@ export const TILE_STYLE: Readonly<Record<string, TileStyle>> = {
   aurora: { id: 'solo.aurora', eyes: 1 },
   powder: { id: 'solo.powder', eyes: 1 },
   universe: { id: 'solo.universe', eyes: 1 },
-  gold: { id: 'solo.gold', eyes: 1 },
+  echo: { id: 'solo.echo', eyes: 1 },
   splash: { id: 'solo.splash', eyes: 1 },
   clean: { id: 'solo.clean', eyes: 1 },
   duo_infinity: { id: 'duo.collision_infinity', eyes: 2 },
@@ -47,8 +49,6 @@ export const TILE_STYLE: Readonly<Record<string, TileStyle>> = {
   duo_supernova: { id: 'duo.supernova', eyes: 2 },
   fam_trio: { id: 'grp.collision', eyes: 3 },
   fam_4: { id: 'grp.collision', eyes: 4 },
-  fam_5: { id: 'grp.collision', eyes: 5 },
-  fam_6: { id: 'grp.collision', eyes: 6 },
   duo_thread: { id: 'duo.clean_duo', eyes: 2 },
   duo_radiance: { id: 'duo.radiance', eyes: 2 },
   fam_orbit: { id: 'grp.orbit', eyes: 4 },

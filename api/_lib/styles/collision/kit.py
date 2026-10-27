@@ -27,7 +27,7 @@ def pupil(ir):
     """Pupil analysis on the canonical 256 grade (R units, resolution independent)."""
     got = _PUP.get(ir.digest)
     if got is None:
-        fr = ir.graded(C.REF_SIDE)
+        fr = ir.graded(C.REF_SIDE, finish=False)
         sq, t = C._tight(fr)
         got = _PUP.put(ir.digest, PUP.analyse(sq))
     return got
@@ -60,7 +60,7 @@ def gate(ir):
         return got
     info = {}
     C.ring_colours(ir, info=info)
-    fr = ir.graded(C.REF_SIDE)
+    fr = ir.graded(C.REF_SIDE, finish=False)
     sq, t = C._tight(fr)
     R = t / 2.0
     ax = np.arange(t) + 0.5 - R

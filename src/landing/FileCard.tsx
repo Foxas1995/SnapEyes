@@ -7,7 +7,7 @@ import { useCopy } from './copy/useCopy';
  *  list says it. */
 export function FileCard() {
   const { c, fmt } = useCopy();
-  const pic = asset('art/gold_own_480');
+  const pic = asset('art/echo_own_480');
   return (
     <div className="lp-filecard">
       <img src={pic.src} width={pic.w} height={pic.h} loading="lazy" decoding="async" alt="" />

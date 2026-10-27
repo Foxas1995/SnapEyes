@@ -168,7 +168,7 @@ def _canon_disc(iris):
     k = iris.digest
     got = _LST.get(k)
     if got is None:
-        sq, t = C._tight(iris.graded(C.REF_SIDE))
+        sq, t = C._tight(iris.graded(C.REF_SIDE, finish=False))
         R = t / 2.0
         ax = (np.arange(t, dtype=np.float32) + 0.5 - R) / R
         rr = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)

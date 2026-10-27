@@ -1747,7 +1747,7 @@ check("master_compose still answers 400 for a style that is not renderable (an i
       isinstance(raises(lambda: REAL_MC(dict(mcb, style="duo.kiss_collision", ticket=L.mint_ticket(store.unlock_kind(LAB2), 300))), L.ClientError), L.ClientError), "")
 check("step_need: the legacy figure for a legacy style, the cost table's for a v3 style, None where the table has no row",
       MC.step_need("studio_black", 1) == CO.legacy_need(1) == 21.8 and 20 < MC.step_need("solo.powder", 1) < 30
-      and MC.step_need("solo.powder", 1) == round(CO.step_need("singles.powder", 1, side=4096), 3), (MC.step_need("solo.powder", 1),))
+      and abs(MC.step_need("solo.powder", 1) - CO.step_need("singles.powder", 1, side=4096)) < 1e-9, (MC.step_need("solo.powder", 1),))
 with mock.patch.object(CT, "engine_for", lambda s, n: {"module": "singles", "design": "nonesuch", "work_side": 4096, "clean": 0}):
     no_row = MC.step_need("solo.powder", 1)
 check("... and None where the cost table has no row for the design", no_row is None, no_row)

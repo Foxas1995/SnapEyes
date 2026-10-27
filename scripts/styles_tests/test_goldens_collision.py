@@ -100,6 +100,8 @@ from _lib import store  # noqa: E402
 from _lib import events as EV  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, selfcheck as SCK, plates as PL, text as TX, costs as CO, seeds as SD, eye as EYE, pupil as PUPM, steps as STP  # noqa: E402
+C.IRIS_FINISH = False   # 2026-10-27: these goldens pin the engine UNDER the iris finish (the scratch prototype has none); the finish has its own checks in test_iris_finish.py
+CO.FINISH_S_PER_EYE = 0.0   # ... and its seconds: the cost table below is the planning spike's, which had no finish
 from _lib.styles import collision as CX  # noqa: E402
 from _lib.styles.collision import engine as E, scenes as CL, compositor as CMP, seam_plan as SP, lens_mode as LM, kit as K, jetplates as JP, fill as FL  # noqa: E402
 
@@ -577,7 +579,7 @@ check(f"T19, the stacking solver: {n19} random colour sets on the zigzag, cluste
 section("6. determinism, bounded caches, the guards of render() and the plates")
 a = CC.render_case(port_render, C.Iris, FIX, [c for c in ALL if c["key"] == "kiss.blue+brown.3:2.1024"][0], {})
 check("the same eyes twice in one process give the same picture; so does a fresh Iris of the same bytes", a["sha"] == G["kiss.blue+brown.3:2.1024"]["sha"])
-code = ("import sys; sys.path.insert(0, %r); sys.path.insert(0, %r); import hashlib, numpy as np, collision_cases as CC; from _lib.styles import core as C, collision as CX; "
+code = ("import sys; sys.path.insert(0, %r); sys.path.insert(0, %r); import hashlib, numpy as np, collision_cases as CC; from _lib.styles import core as C, collision as CX; C.IRIS_FINISH = False; "
         "fx = {n: CC.fixture_bytes(n) for n in ('blue', 'brown', 'green')}; "
         "r = CX.render('infinity', [C.Iris(fx['blue'], 'a'), C.Iris(fx['green'], 'b')], '3:2', 512, ['Anna', 'Max']); "
         "t = CX.render('trio', [C.Iris(fx[n], n) for n in ('blue', 'brown', 'green')], '1:1', 512); "

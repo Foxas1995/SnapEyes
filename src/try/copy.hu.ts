@@ -343,6 +343,7 @@ export const hu: TryCopy = {
       'line.solo_sparks': 'Szikrák szállnak fel a peremről, a szemed saját színeiben.',
       'line.solo_halo': 'Az íriszed a saját színének fényében ragyog.',
       'line.solo_aurora': 'Sarki fény függönyei az íriszed körül.',
+      'line.solo_echo': 'Az íriszed a saját visszhangjában, rostjai alagútként nyúlnak.',
     },
     tileAlt: (name: string) => `${name} a szemeiden: kicsinyített, vízjeles előnézet`,
     tileMaking: (name: string) => `${name}: az előnézet készül`,

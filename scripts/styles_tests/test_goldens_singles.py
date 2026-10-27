@@ -93,6 +93,7 @@ from _lib import events as E  # noqa: E402
 from _lib import store  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, selfcheck as SCK, plates as PL, text as TX, costs as CO  # noqa: E402
+C.IRIS_FINISH = False   # 2026-10-27: these goldens pin the engine UNDER the iris finish (the scratch prototype has none); the finish has its own checks in test_iris_finish.py
 from _lib.styles import seeds as SD, eye as EYE  # noqa: E402
 from _lib.styles import singles as S  # noqa: E402
 from _lib.styles.singles import kit as K  # noqa: E402
@@ -170,13 +171,12 @@ check("every cost row the family needs exists: a preview row and a master row fo
 # WP18 (the catalogue switch): this check said that no stage was raised (every single style at the laboratory ceiling). The cutover raised the ceilings of the release-1
 # singles (Clean Iris, Powder Burst, Splash, Celestial Gold to live, Radiance to preview; Elements stays in the laboratory) and the registry's EFFECTIVE_DEFAULT holds every
 # one at preview until the owner's tick, so it now says the cutover's state: nothing is orderable, the shown ones can be previewed, Elements only by the admin.
-check("the stages: Clean Iris, Powder Burst, Splash, Celestial Gold and (since 2026-10-27) Radiance have a live ceiling, Elements stays in the laboratory; the registry's default holds them "
-      "at preview, so a customer can preview five of them and order none, and only the admin can look at Elements",
-      {i: CT.ceiling(i, 1) for i in SINGLES_STYLES} == {"solo.clean": "live", "solo.powder": "live", "solo.splash": "live", "solo.elements": "lab", "solo.radiance": "live", "solo.gold": "live"}
-      and all(CT.stage_with(i, 1, None) == ("lab" if i == "solo.elements" else "preview") for i in SINGLES_STYLES)
+check("the stages: Clean Iris, Powder Burst, Splash and (since 2026-10-27) Radiance have a live ceiling, Elements stays in the laboratory and Celestial Gold went back to it (2026-10-27, Iris Echo took its place); the registry's default holds the four at preview, so a customer can preview them and order none, and only the admin can look at Elements and Celestial Gold",
+      {i: CT.ceiling(i, 1) for i in SINGLES_STYLES} == {"solo.clean": "live", "solo.powder": "live", "solo.splash": "live", "solo.elements": "lab", "solo.radiance": "live", "solo.gold": "lab"}
+      and all(CT.stage_with(i, 1, None) == ("lab" if i in ("solo.elements", "solo.gold") else "preview") for i in SINGLES_STYLES)
       and all(not CT.orderable(i, 1, strict=False) for i in SINGLES_STYLES) and all(CT.previewable(i, 1, admin=True) for i in SINGLES_STYLES)
-      and not CT.previewable("solo.elements", 1) and all(CT.previewable(i, 1) for i in SINGLES_STYLES if i != "solo.elements")
-      and not any(t["id"] == "solo.elements" for t in CT.tiles_for(1)) and {t["id"] for t in CT.tiles_for(1)} >= {i for i in SINGLES_STYLES if i != "solo.elements"}
+      and not any(CT.previewable(i, 1) for i in ("solo.elements", "solo.gold")) and all(CT.previewable(i, 1) for i in SINGLES_STYLES if i not in ("solo.elements", "solo.gold"))
+      and not any(t["id"] in ("solo.elements", "solo.gold") for t in CT.tiles_for(1)) and {t["id"] for t in CT.tiles_for(1)} >= {i for i in SINGLES_STYLES if i not in ("solo.elements", "solo.gold")}
       and CT.STYLES["solo.elements"]["tile_order"] == 0,
       [(i, CT.ceiling(i, 1), CT.stage_with(i, 1, None)) for i in SINGLES_STYLES])
 
@@ -335,7 +335,7 @@ check("the customer's words: the old string \"Anna;Max\" is drawn as one lockup 
 section("4. determinism, bounded caches and the guards of render()")
 a = SC.render_case(port_render, C.Iris, FIX, [c for c in ALL if c["design"] == "powder" and c["size"] == 512][0], {})
 check("the same eye twice in one process gives the same picture; so does a fresh Iris of the same bytes", a["sha"] == G["powder.blue_round.1:1.512"]["sha"])
-code = ("import sys; sys.path.insert(0, %r); sys.path.insert(0, %r); import hashlib, numpy as np, synth_iris as SI; from _lib.styles import core as C, singles as S; "
+code = ("import sys; sys.path.insert(0, %r); sys.path.insert(0, %r); import hashlib, numpy as np, synth_iris as SI; from _lib.styles import core as C, singles as S; C.IRIS_FINISH = False; "
         "r = S.render('splash', C.Iris(SI.png_bytes('grey_round'), 'g'), '1:1', 512); print(hashlib.sha256(np.ascontiguousarray(np.asarray(r.img)).tobytes()).hexdigest())") % (API, HERE)
 env = dict(os.environ, PYTHONHASHSEED="12345")
 pr = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=300, env=env)
@@ -476,9 +476,9 @@ ids_before = list(CT.previewable_ids(1))
 # WP18: the list of a customer for one eye is the cutover's (the six shown styles of the engine, no legacy id: they are retired); it said the legacy six before.
 # 2026-10-20: the five styles of the light family (api/_lib/styles/lumen, a family of its own) are shown too, so the list is the six and those five (it said six)
 LUMEN_IDS = [i for i in CT.ids() if (CT.ENGINE[i]["engine"] or {}).get("module") == "lumen"]
-check("the customer's list of styles for one eye is the cutover's: the six shown styles of the engine (Elements is not among them), the five of the light family and no legacy id",
-      sorted(ids_before) == sorted([i for i in SINGLES_STYLES if i != "solo.elements"] + ["solo.universe"] + LUMEN_IDS) and not any(CT.is_legacy(i) for i in ids_before)
-      and len(ids_before) == 11 and len(LUMEN_IDS) == 5, ids_before)
+check("the customer's list of styles for one eye is the cutover's: the five shown styles of the engine (not Elements, not Celestial Gold since 2026-10-27), the six of the light family (Iris Echo the sixth) and no legacy id",
+      sorted(ids_before) == sorted([i for i in SINGLES_STYLES if i not in ("solo.elements", "solo.gold")] + ["solo.universe"] + LUMEN_IDS) and not any(CT.is_legacy(i) for i in ids_before)
+      and len(ids_before) == 11 and len(LUMEN_IDS) == 6, ids_before)
 try:
     CMP.compose({"sealed": [sealed], "style": "solo.elements", "pad": 1.12})      # WP18: Celestial Gold is previewable now; Elements is the laboratory style left
     e_lab = None

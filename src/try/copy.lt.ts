@@ -317,6 +317,7 @@ export const lt: TryCopy = {
       'line.solo_sparks': 'Kibirkštys kyla nuo krašto Jūsų akies spalvomis.',
       'line.solo_halo': 'Jūsų rainelė švyti savo pačios spalvos šviesoje.',
       'line.solo_aurora': 'Šiaurės pašvaistės užuolaidos aplink Jūsų rainelę.',
+      'line.solo_echo': 'Jūsų rainelė savo pačios aide, skaidulos tęsiasi lyg tunelis.',
     },
     tileAlt: (name: string) => `${name} Jūsų akims: sumažinta peržiūra su vandens ženklu`,
     tileMaking: (name: string) => `${name}: peržiūra kuriama`,

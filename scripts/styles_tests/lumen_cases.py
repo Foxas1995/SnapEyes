@@ -17,7 +17,7 @@ import json
 
 import numpy as np
 
-DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora")
+DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo")          # echo: Iris Echo, 2026-10-27
 EYES = ("blue_round", "dark_brown_round", "grey_round")          # the three colour classes: own, dark_brown, grey
 SIZES = (512, 1024)
 MASTER = (4096, "blue_round")

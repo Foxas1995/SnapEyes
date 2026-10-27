@@ -372,7 +372,8 @@ class EyeInput:
             self.grade_seconds += time.perf_counter() - t0
         return self._ease
 
-    def graded(self, Sd):
+    def graded(self, Sd, finish=False):
+        """The grade alone (finish is accepted for core.Iris's signature: a measurement never reads the iris finish)."""
         Sd = int(Sd)
         with self._lock:
             g = self._grades.get(Sd)

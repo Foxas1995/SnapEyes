@@ -127,11 +127,11 @@ check("both files are ASCII and hold no en or em dash", all(ord(ch) < 128 for ch
 # 2026-10-20: the light family added five styles of one eye at preview (Supernova, Nebula, Sparks, Halo, Aurora), which this world (before the cutover) holds in the
 # laboratory like every v3 style that has an engine: 33 ids, 19 in the laboratory (it said 28 and 14); the same day the ensemble family (suites/baseline.md section 45:
 # Clean Duo, Family Orbit and Light Circle new ids, Radiance Duo and Radiance Family planned until then): 36 ids, 24 in the laboratory, 6 planned; and its four cosmos
-# looks (Nebula Duo, Nebula Family, Supernova Duo, Supernova Family): 40 ids, 28 in the laboratory
-check("40 ids: the 6 legacy ones live, 28 in the laboratory, 6 planned; nothing of v3 is above the laboratory",
-      len(R.STYLES) == 40 and [i for i, d in R.STYLES.items() if d["legacy"] == 1] == LEGACY
+# looks (Nebula Duo, Nebula Family, Supernova Duo, Supernova Family): 40 ids, 28 in the laboratory; 2026-10-27 Iris Echo (solo.echo, the light family): 41 ids, 29
+check("41 ids: the 6 legacy ones live, 29 in the laboratory, 6 planned; nothing of v3 is above the laboratory",
+      len(R.STYLES) == 41 and [i for i, d in R.STYLES.items() if d["legacy"] == 1] == LEGACY
       and all(R.STYLES[i]["stage"] == "live" for i in LEGACY)
-      and sum(1 for d in R.STYLES.values() if d["stage"] == "lab") == 28 and sum(1 for d in R.STYLES.values() if d["stage"] == "planned") == 6,
+      and sum(1 for d in R.STYLES.values() if d["stage"] == "lab") == 29 and sum(1 for d in R.STYLES.values() if d["stage"] == "planned") == 6,
       {d["stage"] for d in R.STYLES.values()})
 check("the two literals have the same ids; a planned style has no engine, every other one has",
       set(R.STYLES) == set(X.ENGINE) and all((R.STYLES[i]["stage"] == "planned") == (not X.ENGINE[i]["engine"]) for i in R.STYLES))
@@ -150,8 +150,8 @@ check("the owner's price keys are unchanged", pay.PRICE_KEYS == ("one_eye_studio
       and all(set(m["prices"]) == set(pay.PRICE_KEYS) for m in MK.MARKETS.values()))
 check("no heart and no pet symbol in any id, slug or name",
       not [w for d in R.STYLES.values() for w in re.split(r"[^a-z]+", (d["slug"] + " " + d["name"]).lower()) if w in ("heart", "hearts", "love", "cupid", "paw", "paws", "dog", "cat", "bone")])
-check("slugs are unique, except that a legacy id and a v3 id of one name share one (Celestial Gold, and since 2026-10-20 Supernova: 40 ids, 38 slugs)",
-      len({d["slug"] for d in R.STYLES.values()}) == 38 and [i for i, d in R.STYLES.items() if d["slug"] == "celestial-gold"] == ["solo.gold", "celestial_gold"]
+check("slugs are unique, except that a legacy id and a v3 id of one name share one (Celestial Gold, and since 2026-10-20 Supernova: 41 ids with Iris Echo, 39 slugs)",
+      len({d["slug"] for d in R.STYLES.values()}) == 39 and [i for i, d in R.STYLES.items() if d["slug"] == "celestial-gold"] == ["solo.gold", "celestial_gold"]
       and [i for i, d in R.STYLES.items() if d["slug"] == "supernova"] == ["solo.supernova", "supernova"])
 check("registry hash: 12 hex digits, the hash of the canonical ASCII text",
       re.fullmatch(r"[0-9a-f]{12}", C.registry_hash()) and C.registry_hash() == hashlib.sha256(C.canonical().encode("ascii")).hexdigest()[:12])
@@ -285,14 +285,16 @@ POLICY_TABLE = {         # the gate policy of every id of the registry after the
     "grp.collision": "hard", "grp.chain": "hard", "grp.universe": "hard", "grp.reflection": "hard", "grp.radiance": "hard", "grp.clean": "hard", "pet.solo": "hard", "pet.clean": "hard",
     # 2026-10-20: the five styles of the light family, advisory as Radiance is (light round the limb, nothing over the iris)
     "solo.supernova": "advisory", "solo.nebula": "advisory", "solo.sparks": "advisory", "solo.halo": "advisory", "solo.aurora": "advisory",
+    # 2026-10-27: Iris Echo, advisory as the light family is (its echo is drawn round the iris, nothing over it)
+    "solo.echo": "advisory",
     # 2026-10-20: the ensemble family's seven new ids, hard as every pair and family is
     "duo.clean_duo": "hard", "grp.orbit": "hard", "grp.light_circle": "hard", "duo.nebula": "hard", "duo.supernova": "hard", "grp.nebula": "hard", "grp.supernova": "hard",
     **{i: "none" for i in LEGACY},
 }
 check("the gate policy of every id of the registry is the table: Clean Iris and Celestial Gold moved (advisory to hard, 2026-10-14); Universe, the pairs, the families and the pet ids are hard as before, "
       "and so are the nine of the ensemble family (2026-10-20: Radiance Duo and Radiance Family were planned advisory ids, pair and family gates stay hard); Powder Burst, Splash, Elements, Radiance, "
-      "the five styles of the light family and the planned Celestial Gold Duo still only warn, the six legacy ids have none",
-      {i: d["gate"] for i, d in R.STYLES.items()} == POLICY_TABLE and len(POLICY_TABLE) == len(R.STYLES) == 40, {i: d["gate"] for i, d in R.STYLES.items() if POLICY_TABLE.get(i) != d["gate"]})
+      "the five styles of the light family, Iris Echo and the planned Celestial Gold Duo still only warn, the six legacy ids have none",
+      {i: d["gate"] for i, d in R.STYLES.items()} == POLICY_TABLE and len(POLICY_TABLE) == len(R.STYLES) == 41, {i: d["gate"] for i, d in R.STYLES.items() if POLICY_TABLE.get(i) != d["gate"]})
 # 2026-10-14, the owner's decision: Clean Iris and Celestial Gold are HARD (they were advisory: a failing eye only warned and the set could still be bought, so a delivered file kept
 # lashes and lid skin at the rim). The rule is the same for every hard style (catalogue._problem); what is new is who it holds back: a one-eye set whose eye fails the lid rule.
 # Powder Burst, Splash and Radiance stay advisory, Universe stays hard with the fill rule.
@@ -613,7 +615,7 @@ for sid in R.STYLES:
             n_checked += 1
             if not (pay.price_cents(eyes, sid, m) == abtest.ladder_price(pr, eyes, sid) == want):
                 bad.append((sid, m, eyes, pay.price_cents(eyes, sid, m), abtest.ladder_price(pr, eyes, sid), want))
-check("pay.price_cents and abtest.ladder_price equal the rule for every id (33 since the light family, 40 with the ensemble family) x 4 markets x 1 to 8 eyes", not bad and n_checked == 40 * 4 * 8, bad[:3])
+check("pay.price_cents and abtest.ladder_price equal the rule for every id (33 since the light family, 40 with the ensemble family, 41 with Iris Echo) x 4 markets x 1 to 8 eyes", not bad and n_checked == 41 * 4 * 8, bad[:3])
 lad = []
 for key, e in XP.EXPERIMENTS.items():
     for name, v in e["variants"].items():
@@ -626,7 +628,7 @@ check("abtest.ladder_price equals the rule on every ladder of every price experi
 if probe:
     tbad = [r for r in probe["table"] if not (r[3] == r[4] == r[5] == expected(r[0], r[2], MK.MARKETS[r[1]]["prices"]) == pay.price_cents(r[2], r[0], r[1]))]
     check("the site's priceMinor, check_prices priceRule and check_experiments ladderRule give the server's price for every id x market x 1 to 8 eyes",
-          not tbad and len(probe["table"]) == 40 * 4 * 8, tbad[:3])          # 2026-10-20: 40 ids (the light family, then the ensemble family), it was 28 x 4 x 8 = 896
+          not tbad and len(probe["table"]) == 41 * 4 * 8, tbad[:3])          # 2026-10-20: 40 ids (the light family, then the ensemble family), it was 28 x 4 x 8 = 896; 41 with Iris Echo (2026-10-27)
     lbad = [r for r in probe["ladders"] if not (r[5] == r[6] == expected(r[0], r[4], XP.EXPERIMENTS[r[1]]["variants"][r[2]]["prices"][r[3]]))]
     check("the same on every experiment ladder (priceMinor fed the ladder, as the server's answer feeds it)", not lbad and probe["ladders"], lbad[:3])
     sbad = []
@@ -639,7 +641,7 @@ if probe:
     ms = probe["misc"]
     check("styles.ts: classStyle, DEFAULT_STYLE, the legacy list in engine order, the landing order by tile_order, the accents, schema and plates version",
           ms["classBlack"] == real_world()["class_black"] and ms["classArt"] == real_world()["class_art"] and ms["def"] == real_world()["default"]
-          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora"]      # WP18: the landing lists the live one-eye styles of the v3 engine (eleven since 2026-10-27)
+          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora", "solo.echo"]      # WP18: the landing lists the live one-eye styles of the v3 engine (eleven since 2026-10-27: Iris Echo in, Celestial Gold back in the laboratory)
           and [s["id"] for s in ms["picker"]] == LEGACY and ms["picker"][0]["accent"] == [245, 197, 66] and ms["picker"][-1]["accent"] is None
           and all(s["accent"] == list(L.STYLES[s["id"]]["accent"]) for s in ms["picker"][:-1])
           and ms["schema"] == R.STYLES_SCHEMA and ms["pv"] == R.PLATES_VERSION and ms["names"] == C.names(), ms["picker"][:1])
@@ -647,7 +649,7 @@ if probe:
 # ============================================================================================ 5. the build check
 section("5. scripts/check_styles.mjs: the repository passes, and each refusal is exact")
 rc, so, se = run_node(["scripts/check_styles.mjs"])
-check("npm run check:styles passes on the repository and prints the registry hash (item 11)", rc == 0 and "styles registry ok: 40 ids" in so, (rc, so, se[-500:]))
+check("npm run check:styles passes on the repository and prints the registry hash (item 11)", rc == 0 and "styles registry ok: 41 ids" in so, (rc, so, se[-500:]))
 mh = re.search(r"registry hash ([0-9a-f]{12})", so)
 check("the hash the build prints is the hash the server computes (node and Python make the same canonical text)",
       bool(mh) and mh.group(1) == real_world().get("hash"), (mh and mh.group(1), real_world().get("hash")))
@@ -886,8 +888,8 @@ for label, mutate, needle in [
      'the tile "duo_kiss" of the gallery has no row'),
     ("a tile row that names a style the registry does not have", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", "id: 'duo.kiss_collision'", "id: 'duo.kiss'"),
      'the tile "duo_kiss" names the style "duo.kiss"'),
-    ("a tile row with more eyes than its style takes", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", "fam_6: { id: 'grp.collision', eyes: 6 }", "fam_6: { id: 'grp.collision', eyes: 9 }"),
-     'the tile "fam_6" shows 9 eyes'),
+    ("a tile row with more eyes than its style takes", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", "fam_4: { id: 'grp.collision', eyes: 4 }", "fam_4: { id: 'grp.collision', eyes: 9 }"),
+     'the tile "fam_4" shows 9 eyes'),
     ("a one-eye tile whose style is of the other price class", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", "clean: { id: 'solo.clean', eyes: 1 }", "clean: { id: 'solo.powder', eyes: 1 }"),
      'the tile "clean" prints the black one-eye price'),
     ("a row for a tile the gallery does not have", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", TILE_ROW, TILE_ROW + "  duo_ghost: { id: 'duo.clean', eyes: 2 },\n"),
@@ -959,11 +961,11 @@ res.expect = Object.fromEntries(ids.map((id) => [id, S.ceilingOf(styles[rows[id]
 const blockedOf = (st, rw, gl = gal) => G.releaseGate(st, rw, gl).blocked.map((b) => `${b.tile}: ${b.reason}`);
 let m = clone(styles); m['duo.kiss_collision'].stage = 'retired'; res.retired = blockedOf(m, rows);
 m = clone(styles); m['duo.kiss_collision'].stage = 'planned'; res.planned = blockedOf(m, rows); res.plannedTable = G.releaseGate(m, rows, gal).planned;
-m = clone(styles); m['grp.collision'].stage_by_eyes = { '3': 'live', '6': 'planned' }; res.perEye = blockedOf(m, rows); res.perEyeTable = G.releaseGate(m, rows, gal).planned;
+m = clone(styles); m['grp.collision'].stage_by_eyes = { '3': 'live', '4': 'planned' }; res.perEye = blockedOf(m, rows); res.perEyeTable = G.releaseGate(m, rows, gal).planned;
 let r2 = clone(rows); delete r2.duo_kiss; res.noRow = blockedOf(styles, r2);
 r2 = clone(rows); r2.duo_kiss.id = 'duo.nope'; res.noStyle = blockedOf(styles, r2);
 r2 = clone(rows); r2.duo_kiss.id = 'constructor'; res.protoStyle = blockedOf(styles, r2);
-r2 = clone(rows); r2.fam_6.eyes = 9; res.eyes = blockedOf(styles, r2);
+r2 = clone(rows); r2.fam_4.eyes = 9; res.eyes = blockedOf(styles, r2);
 const g2 = clone(gal); g2.one.push({ id: '__proto__' }, { id: 'constructor' }); res.protoTile = blockedOf(styles, rows, g2);
 res.empty = G.releaseGate({}, {}, undefined);
 res.strict = [{}, { VERCEL_ENV: 'production' }, { VERCEL_ENV: 'preview' }, { LANDING_GATE: 'strict' }, { LANDING_GATE: 'soft' }, { VERCEL_ENV: '' }].map((e) => G.gateIsStrict(e));
@@ -1052,24 +1054,24 @@ gate = last_json(so)
 check("the release gate script ran on the real tree", gate is not None, (rc, se[-500:], so[-300:]))
 if gate:
     real = gate["real"]
-    check("release gate: on the real tree every one of the 28 tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27) is in exactly one of live, preview, lab and planned by the registry's "
+    check("release gate: on the real tree every one of the 26 tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27, less the five and six eye Family Colours tiles the owner took off that day) is in exactly one of live, preview, lab and planned by the registry's "
           "ceiling for its style and eyes, and none is blocked",
-          real["total"] == 28 and len(gate["ids"]) == 28 and real["blocked"] == []
+          real["total"] == 26 and len(gate["ids"]) == 26 and real["blocked"] == []
           and sorted(real["live"] + real["preview"] + real["lab"] + real["planned"]) == sorted(gate["ids"])
           and all(gate["expect"][i] == b for b in ("live", "preview", "lab", "planned") for i in real[b]), real)
-    check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of six eyes alone to planned moves only the six-eye tile to the planned list, and blocks nothing",
-          gate["perEye"] == [] and gate["perEyeTable"] == ["fam_6"], (gate["perEye"], gate["perEyeTable"]))
+    check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of four eyes alone to planned moves only the four-eye tile to the planned list, and blocks nothing (the five and six eye tiles left on 2026-10-27)",
+          gate["perEye"] == [] and gate["perEyeTable"] == ["fam_4"], (gate["perEye"], gate["perEyeTable"]))
     check("release gate: a retired style blocks its tile (a Soon that can never come true would be a lie)", gate["retired"] == ['duo_kiss: "duo.kiss_collision" is retired: it can never be bought again, so its tile could never say Soon honestly'], gate["retired"])
     check("release gate: a style that is only planned (no engine yet) does NOT block its tile: the tile says Soon like every tile that cannot be bought, and the table lists it as planned",
           gate["planned"] == [] and gate["plannedTable"] == ["duo_kiss"], (gate["planned"], gate["plannedTable"]))
     check("release gate: a tile without a row, a row that names a style the registry does not have, and a row with more eyes than the style takes each block their tile",
           gate["noRow"] == ['duo_kiss: src/landing/tileStyle.ts has no row for it'] and gate["noStyle"] == ['duo_kiss: the registry has no style "duo.nope"']
-          and len(gate["eyes"]) == 1 and gate["eyes"][0].startswith('fam_6: "grp.collision" takes 3 to 8 eyes, the tile shows 9'), gate)
+          and len(gate["eyes"]) == 1 and gate["eyes"][0].startswith('fam_4: "grp.collision" takes 3 to 8 eyes, the tile shows 9'), gate)
     check("release gate: hostile ids (a tile called __proto__ or constructor, a row naming the style constructor) block cleanly and never read the prototype",
           len(gate["protoTile"]) == 2 and all("has no row" in b for b in gate["protoTile"]) and gate["protoStyle"] == ['duo_kiss: the registry has no style "constructor"'], gate)
     check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups, and only a production deploy or LANDING_GATE=strict is strict",
           gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
-          and "28 with a live ceiling" in gate["summary"] and "0 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
+          and "26 with a live ceiling" in gate["summary"] and "0 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
     check("I2: the gate renders the page in seven states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, every style live beyond the ceilings, the server not reachable), in four languages, with no render error and every tile picture present",
           gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "every style live, beyond the ceilings", "server not reachable"]
           and gate["renderedErrors"] == [] and gate["renderedPictures"] == [], (gate["inputs"], gate["renderedErrors"], gate["renderedPictures"]))
@@ -1174,7 +1176,7 @@ def _atelier_tile(slug):
     return _tile_vec(p) if os.path.isfile(p) else None
 
 
-_SINGLES = [("clean_own", "clean-iris"), ("powder_own", "powder-burst"), ("universe_own", "universe"), ("splash_own", "splash"), ("gold_own", "celestial-gold"), ("radiance_own", "radiance")]
+_SINGLES = [("clean_own", "clean-iris"), ("powder_own", "powder-burst"), ("universe_own", "universe"), ("splash_own", "splash"), ("echo_own", "iris-echo"), ("radiance_own", "radiance")]      # 2026-10-27: Iris Echo in Celestial Gold's place
 _PAIRS = [("duo_infinity_by", "collision-infinity"), ("duo_kiss_bb", "kiss-collision"), ("duo_clean_by", "clean-infinity")]
 _mad = lambda a, b: float(np.abs(a - b).mean())  # noqa: E731
 
@@ -1204,11 +1206,11 @@ import re as _re
 _rows = _re.findall(r"^  (\w+): \{ id: '([\w.]+)', eyes: (\d+) \}", read("src/landing/tileStyle.ts"), flags=_re.M)
 _slug = {i: d["slug"] for i, d in R.STYLES.items()}
 _no_engine_picture = sorted(t for t, sid, _n in _rows if not os.path.isfile(os.path.join(REPO, "public", "assets", "atelier", f"style-{_slug.get(sid, 'none')}-800.webp")))
-check("I2: every one of the 28 landing tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27) has a picture of this repository's engine to be compared with (the picker's tile of its style): "
+check("I2: every one of the 26 landing tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27, less the five and six eye Family Colours tiles) has a picture of this repository's engine to be compared with (the picker's tile of its style): "
       "no tile stands for a look the engine does not make (the two held Universe tiles are gone)",
-      len(_rows) == 28 and _no_engine_picture == [], (len(_rows), _no_engine_picture))
-check("I2: Celestial Gold is the same variant (A) in the landing's tile and in the picker's tile: the two are within 8 levels of 255 on the shared eye (the old design was 29 away), and the Clean Iris tile is the same picture (under 2 levels)",
-      _s is not None and _s["gold_own"]["own"] < 8.0 and _s["clean_own"]["own"] < 2.0, _s and {k: round(_s[k]["own"], 2) for k in ("gold_own", "clean_own")})
+      len(_rows) == 26 and _no_engine_picture == [], (len(_rows), _no_engine_picture))
+check("I2: Iris Echo (Celestial Gold's place since 2026-10-27) is the same design in the landing's tile and in the picker's tile: the two are within 8 levels of 255 on the shared eye, and the Clean Iris tile is the same picture (under 2 levels)",
+      _s is not None and _s["echo_own"]["own"] < 8.0 and _s["clean_own"]["own"] < 2.0, _s and {k: round(_s[k]["own"], 2) for k in ("echo_own", "clean_own")})
 
 # --- the rules of items 4 and 7 that work package 12's texts meet: built, tested on synthetic files, and enforced on the real tree (WP12_RULES)
 RULES = os.path.join(TMP, "wp1_rules.mjs")

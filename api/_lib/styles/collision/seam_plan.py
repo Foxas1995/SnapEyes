@@ -213,7 +213,7 @@ def straight_plan(d_over_R, hw=0.085, lean=0.0):
 
 
 def _canon(iris, C):
-    sq, t = C._tight(iris.graded(C.REF_SIDE))
+    sq, t = C._tight(iris.graded(C.REF_SIDE, finish=False))
     return sq.astype(np.float32), t / 2.0
 
 

@@ -61,6 +61,8 @@ from _lib import iris as L  # noqa: E402
 from _lib import catalogue as CT  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, layouts as LY, text as TX, selfcheck as SC, costs as CO  # noqa: E402
+C.IRIS_FINISH = False   # 2026-10-27: these goldens pin the engine UNDER the iris finish (the scratch prototype has none); the finish has its own checks in test_iris_finish.py
+CO.FINISH_S_PER_EYE = 0.0   # ... and its seconds: the cost table below is the planning spike's, which had no finish
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 GOLD = json.load(open(os.path.join(HERE, "data", "core_goldens.json"), encoding="utf-8"))
@@ -130,7 +132,7 @@ def module_level_growers(path, allow=()):
             out += [t.id for t in targets if isinstance(t, ast.Name) and t.id not in allow]
     return out
 OWN = ["__init__.py", "core.py", "layouts.py", "text.py", "plates.py", "atlas.py", "costs.py", "selfcheck.py", "matter.py"]    # this package's; each later one adds its own checks (the singles family: test_goldens_singles.py)
-growers = {m: module_level_growers(os.path.join(STYLES, m), allow={"MASTER", "CAPPED", "PREVIEW", "ASPECTS", "N_RANGE", "DEFAULT_CAPTION", "_FAMILY_FN", "TEXT_KINDS", "LOOK_FAMILIES"})
+growers = {m: module_level_growers(os.path.join(STYLES, m), allow={"MASTER", "CAPPED", "PREVIEW", "ASPECTS", "N_RANGE", "DEFAULT_CAPTION", "_FAMILY_FN", "TEXT_KINDS", "LOOK_FAMILIES", "FIN"})
            for m in OWN}
 check("no foundation module (core, layouts, text, plates, atlas, costs, selfcheck, matter) keeps a module level dict, list or set that can grow (the baked cost "
       "table and the constant tables aside): caches are BoundedCache, so a warm instance cannot leak (rule c of the Eng review)", not any(growers.values()), {m: g for m, g in growers.items() if g})
@@ -497,7 +499,7 @@ check("tiles_need: six single tiles on one eye preparation at 1024 px come to th
       and CO.preview_need("singles.powder", 1, factor=1.6, new_eyes=False) < CO.preview_need("singles.powder", 1, factor=1.6))
 check("a 480 px tile costs less than a 1024 px one but never less than a fifth of the design time", CO.tiles_need(sp, 1, size=480, factor=1.6) < CO.tiles_need(sp, 1, size=1024, factor=1.6)
       and CO.tiles_need(sp, 1, size=480, factor=1.6) > 0.2 * CO.tiles_need(sp, 1, size=1024, factor=1.6))
-code = ("import sys; sys.path.insert(0, %r); from _lib.styles import costs as K; print(round(K.step_need('singles.powder', 1), 2), K.MEM_BUDGET_MB, K.slow_factor())" % API)
+code = ("import sys; sys.path.insert(0, %r); from _lib.styles import costs as K; K.FINISH_S_PER_EYE = 0.0; print(round(K.step_need('singles.powder', 1), 2), K.MEM_BUDGET_MB, K.slow_factor())" % API)
 env2 = dict(os.environ, STYLE_SLOW_CPU="2.0", STYLE_FUNCTION_MEM_MB="1024")
 r2 = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env2, timeout=120).stdout.split()
 check("STYLE_SLOW_CPU and STYLE_FUNCTION_MEM_MB move the estimate and the memory budget (the factor from the probe, the memory from the project settings)",

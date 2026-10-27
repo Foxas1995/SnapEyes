@@ -22,7 +22,7 @@ import { DEFAULT_SIZE, FLOOR, SCENE, SIZES, labelSpots, person, ppi, sofaRects, 
 import { Pill, useKeepFocus, useMediaQuery, useRoving } from './ui';
 import './css/sizes.css';
 
-const ART = assetUrl('art/gold_own_480');
+const ART = assetUrl('art/echo_own_480');
 
 export function SizeGuide() {
   const { c, t } = useCopy();

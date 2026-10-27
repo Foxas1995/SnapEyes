@@ -996,7 +996,7 @@ def day_of(valid):
 real_day, stress_day = day_of(True), day_of(False)
 kb_real, kb_stress = len(json.dumps(real_day)) / 1024, len(json.dumps(stress_day)) / 1024
 check("a day of 6000 compose events with the combinations a real day can hold (every language, market, gate code and retake) is a few hundred KB at most, and the stress test with EVERY combination "
-      "(a style asked for eye counts it does not take) stays under the 2 MB a stored day is read back with", kb_real < 300 and kb_stress < 1024 and E.ROLLUP_MAX_BYTES == 2 << 20, (round(kb_real), round(kb_stress)))
+      "(a style asked for eye counts it does not take) stays under the 2 MB a stored day is read back with (2026-10-27: Iris Echo is one more style with a tile, 305 KB; the bound 300 became 340)", kb_real < 340 and kb_stress < 1024 and E.ROLLUP_MAX_BYTES == 2 << 20, (round(kb_real), round(kb_stress)))
 check("the demand for a live style is in the day's table but not in a slice (only the styles that are Soon are filtered by language and market)",
       any("|live|" in k for k in real_day["compose_demand"]) and not any("|compose_demand|" in k and "|live|" in k for k in real_day["compose_slice"])
       and any("|compose_demand|" in k and "|preview|" in k for k in real_day["compose_slice"]))

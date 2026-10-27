@@ -333,8 +333,8 @@
       "universe": {
         "d": "Ihre eigene Iris, vergrößert, füllt die ganze Fläche."
       },
-      "gold": {
-        "d": "Ein feiner Goldring und ein Lichthof um die Iris."
+      "echo": {
+        "d": "Ihre Iris in ihrem eigenen Echo, die Fasern wie ein Tunnel."
       },
       "splash": {
         "d": "Der Rand hebt sich zu einer Krone aus Flüssigkeit."
@@ -365,12 +365,6 @@
       },
       "fam_4": {
         "d": "Vier Iriden, mit Pulver in ihren eigenen Farben."
-      },
-      "fam_5": {
-        "d": "Fünf Iriden in zwei Reihen."
-      },
-      "fam_6": {
-        "d": "Sechs Iriden, jede in ihrer eigenen Farbe."
       },
       "fam_orbit": {
         "d": "Eine Iris in der Mitte, die Familie kreist um sie."

@@ -38,7 +38,7 @@ ENGINE_FAMILIES = ("singles", "collision", "universe", "lumen", "ensemble")     
 # hashes of the golden files and v3steps compares them), and when paid masters change that no golden holds (9): a plan records the version it was
 # made under and the master step holds an order whose plan was made under another one (engine_skew: a deploy between payment and master must never
 # draw a picture the preview did not show).
-ENGINE_V = 9          # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
+ENGINE_V = 10         # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
                       # seed key); 3: step B for the collision family (WP7B: the same seed, the names out of it, the pixel decisions made once and frozen in the plan);
                       # 4: step B for the universe family (WP8B: the same seed, the per eye seeds derived from it, the plates version in every pick, the pair's fallback frozen);
                       # 5: the finish of the pair designs of the collision family (pairs design phase 1: an antialiased crumble, the hairline only where both bands are dark, finer
@@ -53,6 +53,9 @@ ENGINE_V = 9          # 1: step A (the prototype's seed, from the bytes of the i
                       # to eight and Light Circle at eight, move by at most 4 levels where the eye shows a lid), and the masters of Supernova Family and
                       # Nebula Family from six eyes draw the haze of the bursts and the gas on coarser grids (ensemble.cosmos). The MASTERS of the ensemble
                       # family only: every preview, so every golden, and every other picture draws as under 8
+                      # 10: the iris finish of 2026-10-27 (core.finish_iris: dehaze, micro contrast, vibrance, a dark limbal ring, a deeper pupil) on EVERY
+                      # picture of every family, and Iris Echo (lumen echo); the goldens pin the engine under the finish, so they did not move (only Iris Echo's
+                      # cases joined lumen_goldens.json), but every picture did: an order paid under 9 and not yet drawn holds with engine_skew
 
 
 class EngineNotBuilt(LookupError):

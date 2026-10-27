@@ -24,6 +24,7 @@ import synth_iris as SI  # noqa: E402
 import lumen_cases as LC  # noqa: E402
 from _lib.styles import core as C  # noqa: E402
 from _lib.styles import lumen as LU  # noqa: E402
+C.IRIS_FINISH = False   # 2026-10-27: the goldens pin the engine UNDER the iris finish (test_lumen.py replays them so; test_iris_finish.py checks the finish)
 
 OUT = os.path.join(HERE, "data", "lumen_goldens.json")
 

@@ -96,6 +96,7 @@ from _lib import events as E  # noqa: E402
 from _lib import store  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, selfcheck as SCK, plates as PL, text as TX, costs as CO, seeds as SD, eye as EYE, gate as GT, pupil as PUP  # noqa: E402
+C.IRIS_FINISH = False   # 2026-10-27: these goldens pin the engine UNDER the iris finish (the scratch prototype has none); the finish has its own checks in test_iris_finish.py
 from _lib.styles import universe as U  # noqa: E402
 from _lib.styles.universe import layout as LO, plates as UPL  # noqa: E402
 
@@ -397,7 +398,7 @@ h2 = hashlib.sha256(np.ascontiguousarray(np.asarray(U.render("echo", [eye_a], 51
 h3 = hashlib.sha256(np.ascontiguousarray(np.asarray(U.render("echo", [C.Iris(FIX["blue_round"], "b")], 512))).tobytes()).hexdigest()
 check("the same eye twice in one process gives the same picture; so does a fresh Iris of the same bytes (nothing a render caches on the eye changes the next picture)",
       h1 == h2 == h3 == G["echo.blue_round.1:1.512"]["sha"])
-code = ("import sys; sys.path.insert(0, %r); sys.path.insert(0, %r); import hashlib, numpy as np, synth_iris as SI; from _lib.styles import core as C, universe as U; "
+code = ("import sys; sys.path.insert(0, %r); sys.path.insert(0, %r); import hashlib, numpy as np, synth_iris as SI; from _lib.styles import core as C, universe as U; C.IRIS_FINISH = False; "
         "print(hashlib.sha256(np.ascontiguousarray(np.asarray(U.render('echo', [C.Iris(SI.png_bytes('blue_round'), 'g')], 512))).tobytes()).hexdigest())") % (API, HERE)
 outs = [subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=300, env=dict(os.environ, PYTHONHASHSEED=str(k))) for k in (0, 7)]
 check("two fresh interpreters with other hash seeds draw the recorded picture (no dict order, no process state in a picture)",
@@ -1096,7 +1097,7 @@ def t15b_4k():
     """4096 px masters in FRESH processes (honest peak memory): the CPU seconds of the render, the high-water mark of the resident memory (guard.memory_now). Echo on one eye and on a pair (the
     working copies of a pair are capped at the registry's 2048 px)."""
     res, ok = {}, True
-    code = ("import sys, time, json; sys.path.insert(0, %r); sys.path.insert(0, %r); import synth_iris as SI; from _lib.styles import core as C, universe as U, guard as G; "
+    code = ("import sys, time, json; sys.path.insert(0, %r); sys.path.insert(0, %r); import synth_iris as SI; from _lib.styles import core as C, universe as U, guard as G; C.IRIS_FINISH = False; "
             "names = %r; side = %d; asp = %r; t0 = time.time(); c0 = time.process_time(); eyes = [C.Iris(SI.png_bytes(n), n, max_side=side) for n in names]; "
             "tm = {}; img = U.render('echo', eyes, 4096, asp, times=tm); print(json.dumps({'wall': round(time.time() - t0, 1), 'cpu': round(time.process_time() - c0, 1), 'hwm': G.memory_now()[1], 'size': img.size}))")
     for label, names, side, asp, limit_cpu, limit_mb in (("echo 1 eye", ["blue_round"], 4096, None, 40.0, 900.0), ("echo 2 eyes, copies at 2048", list(PAIRS[0]), 2048, "3:2", 60.0, 1100.0)):

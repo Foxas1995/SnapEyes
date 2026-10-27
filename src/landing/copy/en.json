@@ -333,8 +333,8 @@
       "universe": {
         "d": "Your own iris, enlarged, fills the whole canvas."
       },
-      "gold": {
-        "d": "A fine gold ring and a halo around the iris."
+      "echo": {
+        "d": "Your iris inside its own echo, fibres reaching out like a tunnel."
       },
       "splash": {
         "d": "The rim lifts into a crown of liquid."
@@ -365,12 +365,6 @@
       },
       "fam_4": {
         "d": "Four irises, with powder in their own colours."
-      },
-      "fam_5": {
-        "d": "Five irises in two rows."
-      },
-      "fam_6": {
-        "d": "Six irises, each in its own colour."
       },
       "fam_orbit": {
         "d": "One iris in the middle, the family in orbit around it."

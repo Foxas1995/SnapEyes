@@ -42,8 +42,8 @@ const CASES = [
   { name: 'baseline', note: 'the tree as it is: the non-live tiles say Soon, so a production build passes', edits: [], gate: 'pass', build: 'pass' },
   {
     name: 'planned-style tile says Soon',
-    note: 'a tile that stands for a style with no engine yet (Reflection for six eyes, planned) is fine while it says Soon: the production build passes',
-    edits: [{ file: TILES, from: "fam_6: { id: 'grp.collision', eyes: 6 }", to: "fam_6: { id: 'grp.reflection', eyes: 6 }" }],
+    note: 'a tile that stands for a style with no engine yet (Reflection for four eyes, planned) is fine while it says Soon: the production build passes',
+    edits: [{ file: TILES, from: "fam_4: { id: 'grp.collision', eyes: 4 }", to: "fam_4: { id: 'grp.reflection', eyes: 4 }" }],
     gate: 'pass', build: 'pass',
   },
   {

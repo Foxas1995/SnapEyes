@@ -6,7 +6,7 @@ The table is MEASURED, not guessed: quiet-core CPU seconds and peak memory of ev
 previews and at 4096 px masters made from real 4096 px eyes (baked by scripts/bake_costs.py from the spike's own tables, never rounded).
 A Vercel call is modelled as the spike models it (SPIKE.md section 2.4):
 
-    step_need = F x (cpu(design, eyes) + 0.25 s per eye of JPEG decode + 0.17 s of JPEG encode)
+    step_need = F x (cpu(design, eyes) + 0.25 s per eye of JPEG decode + 1.5 s per eye of iris finish + 0.17 s of JPEG encode)
                 + 4.5 s cold start + 0.31 s per eye of storage read + 0.8 s of upload, record and link
 
 F is STYLE_SLOW_CPU (api/_lib/cpu_probe.py style_slow_cpu(): the environment, default 1.6, bounded 1.0 to 6.0; measured on the real
@@ -36,6 +36,7 @@ from .. import duration
 # ----------------------------------------------------------------------------- the model's constants
 COLD_START_S = 4.5            # seconds outside the handler on a cold instance (SPIKE 2.1, measured on the live function)
 DECODE_S_PER_EYE = 0.25       # JPEG decode of one 4096 px eye
+FINISH_S_PER_EYE = 1.5        # the iris finish of one master eye (core.finish_iris, 2026-10-27: not in the measured rows; 2.4 s at the slow factor on a 3000 px grade, measured under load)
 ENCODE_S = 0.17               # JPEG q95 4:4:4 encode of the finished artwork
 STORAGE_READ_S_PER_EYE = 0.31  # an eye read from private storage (estimate: 20 MB/s down, 0.15 s a call)
 UPLOAD_S = 0.8                # the artwork upload, the record and the signed link
@@ -150,6 +151,7 @@ ADDED = (
     ("lumen.sparks", 1, (9.7, 8.8, 620, 706), (1.1, 0.96, 0.48, 0.48, 170)),
     ("lumen.halo", 1, (8.9, 8.0, 620, 706), (0.92, 0.79, 0.31, 0.48, 170)),
     ("lumen.aurora", 1, (9.9, 9.0, 627, 713), (1.4, 1.18, 0.70, 0.48, 170)),
+    ("lumen.echo", 1, (9.9, 9.0, 720, 806), (1.4, 1.18, 0.70, 0.48, 170)),   # Iris Echo (2026-10-27): Aurora's row with 100 MB more for the 1536 grid, until measured
 )
 for _key, _n, _master, _preview in ADDED:
     if _key not in MASTER:
@@ -289,7 +291,7 @@ def step_need(design, n, size=4096, factor=None, side=None):
         raise NoCost("step_need is for the 4096 px master; use preview_need for a preview")
     F = slow_factor() if factor is None else float(factor)
     c = cpu(design, n, side)
-    return F * (c + DECODE_S_PER_EYE * n + ENCODE_S) + COLD_START_S + STORAGE_READ_S_PER_EYE * n + UPLOAD_S
+    return F * (c + (DECODE_S_PER_EYE + FINISH_S_PER_EYE) * n + ENCODE_S) + COLD_START_S + STORAGE_READ_S_PER_EYE * n + UPLOAD_S
 
 
 def est_mb(design, n, size=4096, side=None):
@@ -311,7 +313,7 @@ def break_even_factor(design, n, budget=WORK_BUDGET_S, side=None):
     """The slow factor at which step_need reaches the budget: above it the step can never succeed (a configuration error, not busy)."""
     c = cpu(design, n, side)
     fixed = COLD_START_S + STORAGE_READ_S_PER_EYE * n + UPLOAD_S
-    return (budget - fixed) / (c + DECODE_S_PER_EYE * n + ENCODE_S)
+    return (budget - fixed) / (c + (DECODE_S_PER_EYE + FINISH_S_PER_EYE) * n + ENCODE_S)
 
 
 def assess(design, n, size=4096, side=None, factor=None, budget=WORK_BUDGET_S, mem_budget=None):

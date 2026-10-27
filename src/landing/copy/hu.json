@@ -333,8 +333,8 @@
       "universe": {
         "d": "A saját íriszed felnagyítva tölti ki az egész képet."
       },
-      "gold": {
-        "d": "Finom aranygyűrű és fénykoszorú az írisz körül."
+      "echo": {
+        "d": "Az íriszed a saját visszhangjában, rostjai alagútként nyúlnak."
       },
       "splash": {
         "d": "A perem folyadékkoronává emelkedik."
@@ -365,12 +365,6 @@
       },
       "fam_4": {
         "d": "Négy írisz, porral a saját színeikben."
-      },
-      "fam_5": {
-        "d": "Öt írisz két sorban."
-      },
-      "fam_6": {
-        "d": "Hat írisz, mindegyik a saját színében."
       },
       "fam_orbit": {
         "d": "Egy írisz középen, a család körülötte kering."

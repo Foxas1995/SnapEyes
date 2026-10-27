@@ -333,8 +333,8 @@
       "universe": {
         "d": "Padidinta Jūsų rainelė užpildo visą kūrinio plotą."
       },
-      "gold": {
-        "d": "Plonas auksinis žiedas ir šviesos aureolė aplink rainelę."
+      "echo": {
+        "d": "Jūsų rainelė savo pačios aide, skaidulos tęsiasi lyg tunelis."
       },
       "splash": {
         "d": "Kraštas iškyla kaip skysčio karūna."
@@ -365,12 +365,6 @@
       },
       "fam_4": {
         "d": "Keturios rainelės su milteliais jų pačių spalvomis."
-      },
-      "fam_5": {
-        "d": "Penkios rainelės dviem eilėmis."
-      },
-      "fam_6": {
-        "d": "Šešios rainelės, kiekviena savo spalvos."
       },
       "fam_orbit": {
         "d": "Viena rainelė centre, šeima skrieja orbita aplink ją."

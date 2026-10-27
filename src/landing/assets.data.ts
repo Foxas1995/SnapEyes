@@ -205,8 +205,8 @@ export const GALLERY: {
       "price": "art"
     },
     {
-      "id": "gold",
-      "design": "gold",
+      "id": "echo",
+      "design": "echo",
       "price": "art"
     },
     {
@@ -315,20 +315,6 @@ export const GALLERY: {
       "src": "mixed"
     },
     {
-      "id": "fam_5",
-      "file": "fam_5",
-      "price": "n",
-      "n": 5,
-      "src": "mixed"
-    },
-    {
-      "id": "fam_6",
-      "file": "fam_6",
-      "price": "n",
-      "n": 6,
-      "src": "mixed"
-    },
-    {
       "id": "fam_orbit",
       "file": "fam_orbit_4",
       "price": "n",
@@ -387,14 +373,14 @@ export const REVEAL: { readonly eyes: readonly { id: 'gd' | 'br' | 'own'; phone:
       "id": "gd",
       "photo": "reveal/gd_photo",
       "iris": "reveal/gd_iris",
-      "art": "art/gold_gr_900",
+      "art": "art/echo_gr_900",
       "phone": true
     },
     {
       "id": "own",
       "photo": "reveal/own_photo",
       "iris": "reveal/own_iris",
-      "art": "art/gold_own_900",
+      "art": "art/echo_own_900",
       "phone": true
     }
   ]

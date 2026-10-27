@@ -45,8 +45,8 @@ export async function run(): Promise<R> {
   // --- names: the registry's, and no tile name in any language of the copy
   check('every tile prints the registry\'s name of the style it stands for (tileName), and the name is one of the registry\'s',
     ids.every((id) => { const r = tileRow(id); return !!r && tileName(id) === STYLES[r.id].name && tileName(id) === styleName(r.id); }), ids.map((id) => `${id}=${tileName(id)}`).join());
-  check('the names of the 28 tiles: the light family and the cosmos pairs and families have their tiles since 2026-10-27 (the owner raised them to live); Collision Infinity twice, Family Colours four times; no tile for the held Universe pair and family: release review H-M3',
-    ids.map(tileName).join(', ') === 'Radiance, Supernova, Nebula, Powder Burst, Universe, Halo, Celestial Gold, Sparks, Aurora, Splash, Clean Iris, Collision Infinity, Collision Infinity, Nebula Duo, Supernova Duo, Kiss Collision, Clean Infinity, Clean Duo, Radiance Duo, Family Colours, Nebula Family, Supernova Family, Family Colours, Family Colours, Family Colours, Family Orbit, Light Circle, Radiance Family',
+  check('the names of the 26 tiles: the light family and the cosmos pairs and families have their tiles since 2026-10-27 (the owner raised them to live), Iris Echo stands where Celestial Gold stood and the two extra Family Colours tiles are gone (the owner, 2026-10-27); Collision Infinity twice, Family Colours twice; no tile for the held Universe pair and family: release review H-M3',
+    ids.map(tileName).join(', ') === 'Radiance, Supernova, Nebula, Powder Burst, Universe, Halo, Iris Echo, Sparks, Aurora, Splash, Clean Iris, Collision Infinity, Collision Infinity, Nebula Duo, Supernova Duo, Kiss Collision, Clean Infinity, Clean Duo, Radiance Duo, Family Colours, Nebula Family, Supernova Family, Family Colours, Family Orbit, Light Circle, Radiance Family',
     ids.map(tileName).join(', '));
   check('a tile id the table does not know (or a hostile one: constructor, __proto__) has no row, no name, and is never for sale',
     ['nope', 'constructor', '__proto__', 'toString', ''].every((id) => tileRow(id) === null && tileName(id) === '' && tileState(id, trio).sale === 'soon' && tileState(id, trio).style === null), '');
@@ -125,14 +125,14 @@ export async function run(): Promise<R> {
   const rendered = await renderGate(states);
   const tileHtml = (si: number, lang: 'en' | 'de' | 'lt' | 'hu', id: string) => rendered.scenarios[si].langs[lang]!.tiles.find((t) => t.id === id)!.html;
   const shows = (html: string) => ({ chip: /class="lp-soon"/.test(html), price: /<b>/.test(html), state: /data-state="(\w+)"/.exec(html)?.[1] });
-  check('rendered: closed, every tile of the page says Soon in its own language and prints no price; the open page with one style ticked prints a price on that one tile only and Soon on the 27 others; open with nothing ticked is as closed',
+  check('rendered: closed, every tile of the page says Soon in its own language and prints no price; the open page with one style ticked prints a price on that one tile only and Soon on the 25 others; open with nothing ticked is as closed',
     rendered.errors.length === 0 && rendered.pictures.length === 0
     && (['en', 'de', 'lt', 'hu'] as const).every((lang) => {
       const soon = rendered.scenarios[0].langs[lang]!.soon;
       return rendered.scenarios[0].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price && t.html.includes(`>${soon}</span>`))
         && rendered.scenarios[2].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price)
         && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).price).map((t) => t.id).join() === 'powder'
-        && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).chip).length === 27;
+        && rendered.scenarios[1].langs[lang]!.tiles.filter((t) => shows(t.html).chip).length === 25;
     }), JSON.stringify([rendered.errors, rendered.pictures]));
   check('rendered: a tile for sale is marked "sale" and shows no Soon chip, a tile that cannot be bought is marked "soon", and the tile heading is the registry\'s name',
     shows(tileHtml(1, 'en', 'powder')).state === 'sale' && !shows(tileHtml(1, 'en', 'powder')).chip && shows(tileHtml(1, 'en', 'duo_kiss')).state === 'soon' && tileHtml(1, 'en', 'duo_kiss').includes('<h3>Kiss Collision</h3>')

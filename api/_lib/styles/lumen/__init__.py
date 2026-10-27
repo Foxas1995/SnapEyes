@@ -9,6 +9,7 @@
   halo      Halo        the iris backlit in its own colour: a soft bloom, a faint optical ring, a breath of mist, a tonal ground of its own deep shade
   sparks    Sparks      sparks and soft lights lifting off the limb on a wind, as if the iris were a coal: comet streaks, glints and a few large lights
   aurora    Aurora      curtains of northern light standing on the limb, the eye's own colour at the foot and its partner hue at the tips
+  echo      Iris Echo   the iris in the middle of its own echo: the same iris enlarged behind it, its fibres radiating like a tunnel (2026-10-27)
 
 No plate, no atlas, no model call: every look is light drawn from noise fields, Gaussian stamps and the eye's own ring colours (common.py). The pipeline is
 the singles family's (api/_lib/styles/singles/kit.py: grade and place the iris, the F3 feather, the effect on the float canvas, the tone map, the dither,
@@ -44,7 +45,7 @@ from .. import seeds as SD
 from .. import text as TX
 from ..singles import kit as K
 
-DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora")
+DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo")
 FORMATS = ("1:1", "4:5", "9:19.5")                                            # the canvases (the engine entries of the registry list the same)
 SIZES = (64, 4096)                                                            # the long side a render may ask for
 BG = "#000000"                                                                # every look lays its own sky or tonal ground on pure black by adding light
@@ -57,6 +58,7 @@ GEOM = {
     "halo":     {"r": {"1:1": 0.300, "4:5": 0.300, "9:19.5": 0.300}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
     "sparks":   {"r": {"1:1": 0.285, "4:5": 0.285, "9:19.5": 0.285}, "cy": {"1:1": 0.520, "4:5": 0.470, "9:19.5": 0.410}},
     "aurora":   {"r": {"1:1": 0.262, "4:5": 0.262, "9:19.5": 0.262}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
+    "echo":     {"r": {"1:1": 0.330, "4:5": 0.330, "9:19.5": 0.300}, "cy": {"1:1": 0.500, "4:5": 0.470, "9:19.5": 0.420}},
 }
 
 
@@ -77,6 +79,9 @@ def _design(name):
     if name == "aurora":
         from . import aurora as m
         return {"fx": m.fx_aurora}
+    if name == "echo":
+        from . import echo as m
+        return {"fx": m.fx_echo}
     raise KeyError(name)
 
 

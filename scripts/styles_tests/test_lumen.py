@@ -76,13 +76,15 @@ from _lib import preview as P  # noqa: E402
 from _lib import events as E  # noqa: E402
 import _lib.styles as ST  # noqa: E402
 from _lib.styles import core as C, selfcheck as SCK, pupil as PU, seeds as SD, costs as CO, eye as EYE, steps as STP  # noqa: E402
+C.IRIS_FINISH = False   # 2026-10-27: these goldens pin the engine UNDER the iris finish (the scratch prototype has none); the finish has its own checks in test_iris_finish.py
 from _lib.styles import lumen as LU  # noqa: E402
 from _lib.styles.singles import kit as K  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
-LUMEN = {"solo.supernova": "stardust", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora"}
-NAMES = {"solo.supernova": "Supernova", "solo.nebula": "Nebula", "solo.sparks": "Sparks", "solo.halo": "Halo", "solo.aurora": "Aurora"}
-SLUGS = {"solo.supernova": "supernova", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora"}
+LUMEN = {"solo.supernova": "stardust", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora",
+         "solo.echo": "echo"}      # 2026-10-27: Iris Echo, the family's sixth look, in Celestial Gold's live place
+NAMES = {"solo.supernova": "Supernova", "solo.nebula": "Nebula", "solo.sparks": "Sparks", "solo.halo": "Halo", "solo.aurora": "Aurora", "solo.echo": "Iris Echo"}
+SLUGS = {"solo.supernova": "supernova", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora", "solo.echo": "iris-echo"}
 SIX = ["solo.clean", "solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance"]
 GOLD = json.load(open(os.path.join(HERE, "data", "lumen_goldens.json"), encoding="utf-8"))
 G = GOLD["cases"]
@@ -108,7 +110,7 @@ def raises(fn, exc):
 # ============================================================================================ 1. the family in the repository
 section("1. the family in the repository")
 FILES = sorted(f for f in os.listdir(FAMILY) if f.endswith(".py"))
-check("the family has its files: the contract, the shared pieces and one module per look", FILES == ["__init__.py", "aurora.py", "common.py", "halo.py", "nebula.py", "sparks.py", "stardust.py"], FILES)
+check("the family has its files: the contract, the shared pieces and one module per look", FILES == ["__init__.py", "aurora.py", "common.py", "echo.py", "halo.py", "nebula.py", "sparks.py", "stardust.py"], FILES)      # echo.py: Iris Echo, 2026-10-27
 mods = [os.path.join(FAMILY, f) for f in FILES]
 src_all = "".join(read(m) for m in mods)
 check("every module has the __future__ import (Python 3.12 is Vercel's default) and parses as 3.12",
@@ -131,7 +133,7 @@ def growers(path):
             continue
         if isinstance(v, (ast.Dict, ast.List, ast.Set, ast.DictComp, ast.ListComp, ast.SetComp)) or (
                 isinstance(v, ast.Call) and getattr(v.func, "id", getattr(v.func, "attr", "")) in ("dict", "list", "set", "defaultdict", "OrderedDict", "deque")):
-            out += [t.id for t in targets if isinstance(t, ast.Name) and t.id not in ("NP", "SP", "HP", "AP", "GEOM")]
+            out += [t.id for t in targets if isinstance(t, ast.Name) and t.id not in ("NP", "SP", "HP", "AP", "EP", "GEOM")]
     return out
 
 
@@ -144,8 +146,8 @@ ID_RE = re.compile(r"(?<![\w.])(" + "|".join(re.escape(i) for i in CT.ids()) + r
 check("no module writes a style id of the registry (the legacy id of the old Supernova among them: the design of the new one is 'stardust')",
       not ID_RE.search(src_all), ID_RE.findall(src_all)[:5])
 LUMEN_IDS = [i for i in CT.ids() if (CT.ENGINE[i]["engine"] or {}).get("module") == "lumen"]
-check("the registry names exactly the five styles of the family, each with its design, in the picker's order 7 to 11 after the six singles of release 1",
-      {i: CT.ENGINE[i]["engine"]["design"] for i in LUMEN_IDS} == LUMEN and [CT.STYLES[i]["tile_order"] for i in LUMEN_IDS] == [7, 8, 9, 10, 11]
+check("the registry names exactly the six styles of the family, each with its design, in the picker's order 7 to 12 after the singles of release 1 (the five of 2026-10-20, then Iris Echo of 2026-10-27)",
+      {i: CT.ENGINE[i]["engine"]["design"] for i in LUMEN_IDS} == LUMEN and [CT.STYLES[i]["tile_order"] for i in LUMEN_IDS] == [7, 8, 9, 10, 11, 12]
       and sorted(LU.DESIGNS) == sorted(LUMEN.values()), {i: CT.ENGINE[i]["engine"] for i in LUMEN_IDS})
 check("each is a style of one eye of the solo group: its name, its slug (Supernova shares the old legacy Supernova's, which the registry allows for one name), "
       "one layout, the art price class, no accent, no pick (the recommended tile stays the release 1 table), a 4096 px working copy",
@@ -170,7 +172,7 @@ check("every cost row the family needs exists: a master row and a preview row of
 check("the catalogue: a customer may preview each (and the admin), nobody can order one, and the picker lists them after the six of release 1, in their order; "
       "none is the recommended tile",
       all(CT.previewable(i, 1) and CT.previewable(i, 1, admin=True) and not CT.orderable(i, 1, strict=False) and CT.stage_of(i, 1) == "preview" for i in LUMEN_IDS)
-      and [t["id"] for t in CT.tiles_for(1)][-5:] == LUMEN_IDS and all(CT.why_unavailable(i, 1) is None for i in LUMEN_IDS)
+      and [t["id"] for t in CT.tiles_for(1)][-6:] == LUMEN_IDS and all(CT.why_unavailable(i, 1) is None for i in LUMEN_IDS)
       and CT.tile_list(1)["pick"] not in LUMEN_IDS and not any(CT.previewable(i, 2) for i in LUMEN_IDS), [t["id"] for t in CT.tiles_for(1)])
 SINGLES_FILES = sorted(f for f in os.listdir(SINGLES) if f.endswith(".py"))
 check("the singles family is untouched: its seven files and its six registry styles (the light family is a family of its own, so the singles goldens are the old ones)",
@@ -183,8 +185,8 @@ FIX = {n: SI.png_bytes(n) for n in LC.FIXTURE_BASE}
 check("the three fixtures of the replay are the very bytes of the recording", all(hashlib.sha256(FIX[n]).hexdigest() == GOLD["fixtures"][n] for n in FIX))
 print(f"   (recorded on {GOLD['machine']}; running on numpy {np.__version__}, Pillow {PIL.__version__})", flush=True)
 ALL = LC.cases()
-check("the recording holds every case of lumen_cases.py and nothing else (50: 5 looks x 3 eyes x 2 sizes, 5 masters, 15 with words or another canvas)",
-      sorted(G) == sorted(c["key"] for c in ALL) and len(G) == 50, sorted(set(G) ^ {c["key"] for c in ALL})[:5])
+check("the recording holds every case of lumen_cases.py and nothing else (60: 6 looks x 3 eyes x 2 sizes, 6 masters, 18 with words or another canvas; Iris Echo the sixth since 2026-10-27)",
+      sorted(G) == sorted(c["key"] for c in ALL) and len(G) == 60, sorted(set(G) ^ {c["key"] for c in ALL})[:5])
 IRISES = {}
 t0 = time.time()
 
@@ -380,7 +382,7 @@ check("the tile list of one eye holds the five looks at preview, available, with
       and [t["id"] for t in r_list["tiles"] if t["id"] in LUMEN] == list(LUMEN), [(t["id"], t["stage"], t["available"]) for t in r_list["tiles"]])
 meta_b = P.unseal_full(sealed_b)[1]
 r_b = CMP.compose({"sealed": [sealed_b], "styles": ["solo.supernova", "solo.nebula"], "pad": 1.12})
-r_b2 = CMP.compose({"sealed": [sealed_b], "styles": ["solo.sparks", "solo.halo", "solo.aurora"], "pad": 1.12})
+r_b2 = CMP.compose({"sealed": [sealed_b], "styles": ["solo.sparks", "solo.halo", "solo.aurora", "solo.echo"], "pad": 1.12})
 got = {t["id"]: t for t in r_b["tiles"] + r_b2["tiles"] if t.get("image")}
 def _tile_of(s):
     # the free tile as compose draws it since the insights (2026-10-20): the clean preview, then the watermark with the badge of a deployment that takes no
@@ -404,9 +406,9 @@ jpeg_l, prof_l, sealed_l = sealed_of("blue_lid")
 r_lid = CMP.compose({"sealed": [sealed_l], "styles": [], "pad": 1.12})
 t_lid = {t["id"]: t for t in r_lid["tiles"]}
 check("an eye that fails the lid rule (the gate's verdict, sealed with its profile): the five looks stay available (advisory: a warning, never a refusal) while the hard "
-      "styles Clean Iris and Celestial Gold are held back with why gate",
+      "style Clean Iris is held back with why gate (Celestial Gold, hard too, is in the laboratory since 2026-10-27 and not listed)",
       prof_l.rec["gate"]["lid"]["ok"] is False and all(t_lid[i]["available"] and t_lid[i]["why"] is None for i in LUMEN)
-      and not t_lid["solo.clean"]["available"] and t_lid["solo.clean"]["why"] == "gate" and not t_lid["solo.gold"]["available"], {i: (t_lid[i]["available"], t_lid[i]["why"]) for i in t_lid})
+      and not t_lid["solo.clean"]["available"] and t_lid["solo.clean"]["why"] == "gate" and "solo.gold" not in t_lid, {i: (t_lid[i]["available"], t_lid[i]["why"]) for i in t_lid})
 from _lib import ops  # noqa: E402
 lst = ops.a_styles_lab({}, "t")
 rows_l = {r["id"]: r for r in lst["styles"] if r["module"] == "lumen"}
