@@ -54,7 +54,7 @@ async function call<T>(path: string, init: RequestInit, timeoutMs: number): Prom
 }
 
 /** POST /api/admin {action, ...}. Actions that render take up to a minute. */
-export function adminCall<T>(action: string, body: Json = {}, key = loadKey(), timeoutMs = 75_000): Promise<Reply<T>> {
+export function adminCall<T>(action: string, body: Json = {}, key = loadKey(), timeoutMs = 135_000): Promise<Reply<T>> {
   return call<T>('/api/admin', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${key}` },
@@ -63,7 +63,7 @@ export function adminCall<T>(action: string, body: Json = {}, key = loadKey(), t
 }
 
 /** POST JSON to one of the site's public endpoints (no admin key). */
-export function publicCall<T>(path: string, body: Json, timeoutMs = 75_000): Promise<Reply<T>> {
+export function publicCall<T>(path: string, body: Json, timeoutMs = 135_000): Promise<Reply<T>> {
   return call<T>(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },

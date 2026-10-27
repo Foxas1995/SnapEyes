@@ -462,7 +462,7 @@ SPEC_TABLE = {   # design, eyes: (need at 1.6, need at 2.0, break-even factor, u
     ("collision.kiss", 2): (18.5, 21.7, 5.86), ("collision.family.universe", 8): (46.6, 56.3, 1.82)}
 bad = []
 for (k, n), (a16, a20, be) in SPEC_TABLE.items():
-    got = (round(CO.step_need(k, n, factor=1.6), 1), round(CO.step_need(k, n, factor=2.0), 1), round(CO.break_even_factor(k, n), 2))
+    got = (round(CO.step_need(k, n, factor=1.6), 1), round(CO.step_need(k, n, factor=2.0), 1), round(CO.break_even_factor(k, n, budget=52.0), 2))   # the table's factors are at the 52 s budget of a 60 s function
     if abs(got[0] - a16) > 0.06 or abs(got[1] - a20) > 0.06 or abs(got[2] - be) > 0.011:
         bad.append((k, n, got, (a16, a20, be)))
 check(f"step_need at 1.6 and 2.0 and the break-even factor of the 52 s guard equal the plan's table 10.3 for {len(SPEC_TABLE)} designs", not bad, bad[:3])
@@ -480,13 +480,13 @@ check("peak memory: the cold peak of the spike times the Linux allowance of 15 p
 check("a capped working copy is cheaper in time too (Family 8 on dark 16.8 s against 20.2), and a design without a capped row falls back to the uncapped figure",
       CO.cpu("collision.family", 8, 2048) == 16.8 and CO.cpu("collision.family", 8) == 20.2 and CO.cpu("singles.gold", 1, 2048) == CO.cpu("singles.gold", 1))
 a = CO.assess("collision.family.universe", 8)
-b = CO.assess("collision.family", 8, factor=2.1)
+b = CO.assess("collision.family", 8, factor=round(CO.break_even_factor("collision.family", 8) + 0.2, 2))   # just over its break-even at the budget in force (2.1 at 52 s)
 c_ = CO.assess("singles.clean", 1)
 d_ = CO.assess("nothing.such", 1)
-check("assess: a universe fill at eight eyes is refused for memory (2994 MB of a 1434 MB budget), a family at factor 2.1 for time (it can never finish), a clean "
+check("assess: a universe fill at eight eyes is refused for memory (2994 MB of a 1434 MB budget), a family just over its break-even factor for time (it can never finish), a clean "
       "iris is fine, an unknown design has no cost", a["why"] == "memory" and b["why"] == "time" and c_["ok"] and c_["why"] is None and d_["why"] == "no_cost" and not d_["ok"], (a, b, c_, d_))
-check("the budgets: 1434 MB at the default 2048 MB function, a step over 40 s is cut into steps (WP6b), the work budget is 52 s",
-      CO.MEM_BUDGET_MB == 1434 and CO.FUNCTION_MEM_MB == 2048 and CO.exceeds_step_budget(40.1) and not CO.exceeds_step_budget(40.0) and CO.WORK_BUDGET_S == 52.0)
+check("the budgets: 1434 MB at the default 2048 MB function, a step over 40 s is cut into steps (WP6b), the work budget is the one duration constant's (DURATION_S - 8: 112 s of 120 since 2026-10-27)",
+      CO.MEM_BUDGET_MB == 1434 and CO.FUNCTION_MEM_MB == 2048 and CO.exceeds_step_budget(40.1) and not CO.exceeds_step_budget(40.0) and CO.WORK_BUDGET_S == CO.duration.BUDGET_S == CO.duration.DURATION_S - 8)
 check("the legacy engine has no row and a master smaller than 4096 px is refused rather than guessed",
       raises(lambda: CO.cost_key(CT.engine_for(CT.legacy_ids()[0], 1)), CO.NoCost) is True and raises(lambda: CO.step_need("singles.clean", 1, size=1024), CO.NoCost) is True
       and raises(lambda: CO.step_need("singles.clean", 2), CO.NoCost) is True)

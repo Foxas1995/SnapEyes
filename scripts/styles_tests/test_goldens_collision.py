@@ -202,11 +202,12 @@ check("every cost row the family needs exists (a master row and a preview row fo
 trio4 = CO.assess("collision.trio", 3, side=4096, factor=1.6)
 trio2 = CO.assess("collision.trio", 3, side=2048, factor=1.6)
 check("the cost table is honest about the Trio (review of WP7A) and WP7B caps it at 2048 px: the spike's row (15.4 s, 929 MB) was a 2048 px copy's, the trio from 4096 px "
-      "sources was measured at 26.6 s of render and self check (28.0 s in the spike's units, 992 MB), so at 1.6 it would need 52.5 s and its break-even factor is 1.58 (the spike's 2.80): "
-      "it does not fit one art step; a 2048 px copy needs 40.0 s and fits; the spike's own figures stay what the plan's table pins (no working copy named), and no other design's row moved",
+      "sources was measured at 26.6 s of render and self check (28.0 s in the spike's units, 992 MB), so at 1.6 it would need 52.5 s and its break-even factor is 1.58 at the 52 s budget (the spike's 2.80): "
+      "it did not fit one art step of a 60 s function (it would of a 120 s one); a 2048 px copy needs 40.0 s and fits; the spike's own figures stay what the plan's table pins (no working copy named), and no other design's row moved",
       CT.work_side("grp.collision", 3) == 2048 and CO.measured("collision.trio", 3, 4096) == (28.0, 992) and CO.measured("collision.trio", 3, 2048) == (20.2, 778)
-      and CO.cpu("collision.trio", 3) == 15.4 and abs(CO.step_need("collision.trio", 3, factor=1.6) - 32.3) < 0.06 and abs(CO.break_even_factor("collision.trio", 3) - 2.80) < 0.011
-      and trio4["why"] == "time" and not trio4["ok"] and 52.0 < trio4["need_s"] < 53.0 and abs(CO.break_even_factor("collision.trio", 3, side=4096) - 1.58) < 0.01
+      and CO.cpu("collision.trio", 3) == 15.4 and abs(CO.step_need("collision.trio", 3, factor=1.6) - 32.3) < 0.06 and abs(CO.break_even_factor("collision.trio", 3, budget=52.0) - 2.80) < 0.011
+      and 52.0 < trio4["need_s"] < 53.0 and (trio4["ok"] if CO.WORK_BUDGET_S > 53.0 else (trio4["why"] == "time" and not trio4["ok"]))
+      and abs(CO.break_even_factor("collision.trio", 3, side=4096, budget=52.0) - 1.58) < 0.01
       and trio2["ok"] and 39.0 < trio2["need_s"] < 41.0 and 1000 < trio4["est_mb"] < CO.MEM_BUDGET_MB
       and all(CO.measured(k, n, sd) is None for k, n, sd in (("collision.family", 8, 2048), ("collision.infinity", 2, 2048), ("singles.powder", 1, 4096), ("collision.trio", 3, None)))
       and CO.cpu("collision.family", 8, 2048) == 16.8, (trio4, trio2))

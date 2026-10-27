@@ -44,7 +44,7 @@ export const REAL_DEPS: DriveDeps = {
 const BUSY = new Set(['model_busy', 'storage_busy', 'payments_busy', 'plate_retry', 'room_retry']);
 // an answer that means "the order is no longer what this step expected": ask for its status and go from there
 const RELOAD = new Set(['in_review', 'render_rejected', 'deleted', 'not_paid', 'payment_processing', 'eyes_not_ready', 'withdrawn']);
-const MAKE_TIMEOUT = 75_000;     // API.md: a make or compose takes up to about 50 s; Vercel stops it at 60 s
+const MAKE_TIMEOUT = 135_000;    // a make or compose works up to 112 s; Vercel stops it at 120 s (api/_lib/duration.py DURATION_S)
 const STATUS_TIMEOUT = 25_000;
 const PARALLEL = 2;              // API.md: one eye at a time, or at most two in parallel
 export const WATCH_POLL = 6_000; // while the server makes the order, the page reads its status this often

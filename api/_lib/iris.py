@@ -165,7 +165,7 @@ class UnlockError(PermissionError):
     """A paid endpoint got no valid unlock ticket for this order. run() answers 403 with a sentence for a buyer,
     not the free preview's "take the photo again"."""
 
-BUDGET = duration.BUDGET_S    # seconds of work we allow inside the Vercel function (duration.py: DURATION_S - 8 = 52 of 60 s; leaves room to encode the reply)
+BUDGET = duration.BUDGET_S    # seconds of work we allow inside the Vercel function (duration.py: DURATION_S - 8 = 112 of 120 s; leaves room to encode the reply)
 _LOCAL = threading.local()   # per-invocation deadline: one warm container can serve several requests at once
 
 def deadline():

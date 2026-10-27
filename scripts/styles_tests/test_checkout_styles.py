@@ -548,9 +548,14 @@ with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
           and any(kind == "checkout" and f.get("stage") == "start" and f.get("style") == "solo.powder" and f.get("gate") == rj(f"orders/{o}/order.json")["checkout"]["gate"] for kind, f in EVENTS), (c, j, EVENTS[-2:]))
     # the capacity: a plan that can never fit one call is refused before payment
     o, k = new_order(["blue_round"])
+    # the slow factor at its ceiling (6.0) against the 52 s budget of a 60 s function: at the 112 s of a 120 s one (2026-10-27) nothing reaches the budget at 6.0
+    import functools as _ft
+    from unittest import mock as _mock
+    from _lib.styles import costs as _CO
     os.environ["STYLE_SLOW_CPU"] = "6"
     try:
-        c_cap, j_cap = co(o, k, "solo.powder", 1)
+        with _mock.patch.object(_CO, "assess", _ft.partial(_CO.assess, budget=52.0)):
+            c_cap, j_cap = co(o, k, "solo.powder", 1)
     finally:
         os.environ.pop("STYLE_SLOW_CPU", None)
     check("IE5: a plan whose time need passes the work budget at the slow factor in force is 409 style_unavailable, why capacity (a refusal that can never succeed is found before payment, "

@@ -354,8 +354,8 @@ x300 = DU.derive(300)
 check("a longer function lengthens every lease with it (300 s: work 292, lease 315, fresh 340): the old 75 s lease would have let a second caller take over a live render",
       (x300["budget"], x300["lease_stale"], x300["fresh"]) == (292.0, 315.0, 340.0) and x300["lease_stale"] > 300, x300)
 wd = (DU.WATCHDOG_FIRST_S, DU.WATCHDOG_THEN_S)
-check("the watchdog's two relays wait out the lease (40 + 40 s against a 75 s lease) and no longer than the 48 h promise's first 120 s",
-      sum(wd) >= DU.LEASE_STALE_S and sum(wd) < 120 and all(w <= DU.WAIT_MAX_S for w in wd), wd)
+check("the watchdog's two relays wait out the lease (at 60 s: 40 + 40 s against a 75 s lease; at 120 s: 100 + 40 s against 135 s) and fire no later than the lease plus the watchdog's margin",
+      sum(wd) >= DU.LEASE_STALE_S and sum(wd) <= DU.LEASE_STALE_S + DU.WATCHDOG_EXTRA_S and all(w <= DU.WAIT_MAX_S for w in wd), wd)
 
 # the build check, on a tiny tree (the handlers' names, vercel.json, duration.py): the refusals and the control
 NODE_CHECK = os.path.join(TMP, "dur_check.mjs")
@@ -386,7 +386,7 @@ def tiny_tree(name, vj_edit=None, dur_text=None):
 trees = {"ok": tiny_tree("d_ok"),
          "vj300": tiny_tree("d_vj", lambda d: d["functions"]["api/order.py"].update({"maxDuration": 300})),
          "all300": tiny_tree("d_all", lambda d: [f.update({"maxDuration": 300}) for f in d["functions"].values()]),
-         "py300": tiny_tree("d_py", dur_text=re.sub(r"^DURATION_S = 60", "DURATION_S = 300", read("api/_lib/duration.py"), flags=re.M)),
+         "py300": tiny_tree("d_py", dur_text=re.sub(r"^DURATION_S = \d+", "DURATION_S = 300", read("api/_lib/duration.py"), flags=re.M)),
          "noconst": tiny_tree("d_none", dur_text="X = 1\n")}
 rc = subprocess.run([NODE, NODE_CHECK, REPO] + list(trees.values()), capture_output=True, text=True, encoding="utf-8", timeout=120)
 try:
@@ -397,10 +397,10 @@ check("the build check ran on the tiny trees", got is not None, (rc.returncode, 
 if got:
     probs = {k: [p for p in got[v] if "duration" in p.lower() or "DURATION" in p] for k, v in trees.items()}
     check("check_styles item 13: a tree whose maxDuration equals DURATION_S passes (no duration problem)", probs["ok"] == [], got[trees["ok"]][:3])
-    check("check_styles item 13 refuses one function with another maxDuration than DURATION_S", any("api/order.py" in p and "DURATION_S 60" in p for p in probs["vj300"]), probs["vj300"])
-    check("check_styles item 13 refuses every function longer than DURATION_S (all at 300, the constant at 60): the constant must change with the limit",
+    check("check_styles item 13 refuses one function with another maxDuration than DURATION_S", any("api/order.py" in p and f"DURATION_S {int(DU.DURATION_S)}" in p for p in probs["vj300"]), probs["vj300"])
+    check("check_styles item 13 refuses every function longer than DURATION_S (all at 300, the constant below it): the constant must change with the limit",
           len(probs["all300"]) >= 11 and all("300" in p for p in probs["all300"]), probs["all300"][:2])
-    check("check_styles item 13 refuses a DURATION_S raised alone (the constant at 300, vercel.json at 60)", len(probs["py300"]) >= 11, probs["py300"][:2])
+    check("check_styles item 13 refuses a DURATION_S raised alone (the constant at 300, vercel.json at the committed limit)", len(probs["py300"]) >= 11, probs["py300"][:2])
     check("check_styles item 13 refuses a duration.py without the constant", any("cannot be read" in p for p in probs["noconst"]), probs["noconst"])
 
 # ============================================================================================ 2. the plan
@@ -441,10 +441,25 @@ with mock.patch.object(CT, "registry_hash", lambda: "eeeeeeeeeeee"), mock.patch.
 check("the artwork's file name is sha256(plan8, rerun) and nothing else: an unrelated registry edit and a new registry hash leave it, a rerun changes it",
       key_a == key_c and key_a != key_b and re.fullmatch(r"orders/261005-keytest01/artwork_[0-9a-f]{16}\.jpg", key_a)
       and key_a[:-4].endswith(hashlib.sha256(json.dumps({"plan8": base8, "rerun": 0}, sort_keys=True).encode()).hexdigest()[:16]), (key_a, key_b, key_c))
-caps = {f: SP.capacity(SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, eyes1), f) for f in (1.6, 3.5, 3.7, 6.0)}
-check("capacity of a Powder Burst master flips where the cost table says (break-even factor 3.62): fits at 1.6 and 3.5, never at 3.7 and 6.0 (why time)",
-      caps[1.6]["ok"] and caps[3.5]["ok"] and not caps[3.7]["ok"] and caps[3.7]["why"] == "time" and caps[6.0]["why"] == "time"
-      and abs(CO.break_even_factor("singles.powder", 1) - 3.62) < 0.02, {k: (v["ok"], v["need_s"]) for k, v in caps.items()})
+BE_POWDER = CO.break_even_factor("singles.powder", 1)       # 3.62 at the 52 s budget of a 60 s function, 8.3 at the 112 s of a 120 s one
+FAR = round(BE_POWDER + 2.0, 2)                              # far over the break-even factor at the budget in force
+NEVER = "6"                                                  # the ceiling of STYLE_SLOW_CPU (cpu_probe: 1.0 to 6.0)
+import contextlib as _ctx, functools as _ft  # noqa: E402
+_ASSESS = CO.assess
+
+
+@_ctx.contextmanager
+def never_fits():
+    """A Powder Burst master that can never fit one call: the slow factor at its ceiling (6.0) against the work budget of a 60 s function (52 s). At the 112 s of
+    the 120 s function (2026-10-27) nothing reaches the budget at 6.0, so the case holds the budget where the rule was written; the rule itself is unchanged."""
+    with mock.patch.dict(os.environ, dict(STYLE_SLOW_CPU=NEVER)), mock.patch.object(CO, "assess", _ft.partial(_ASSESS, budget=52.0)):
+        yield
+
+
+caps = {f: SP.capacity(SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, eyes1), f) for f in (1.6, round(BE_POWDER - 0.1, 2), round(BE_POWDER + 0.1, 2), FAR)}
+check("capacity of a Powder Burst master flips where the cost table says (its break-even factor at the work budget in force): fits at 1.6 and just under it, never just over it and far over it (why time)",
+      caps[1.6]["ok"] and caps[round(BE_POWDER - 0.1, 2)]["ok"] and not caps[round(BE_POWDER + 0.1, 2)]["ok"] and caps[round(BE_POWDER + 0.1, 2)]["why"] == "time" and caps[FAR]["why"] == "time"
+      and BE_POWDER > 3.5, {k: (v["ok"], v["need_s"]) for k, v in caps.items()})
 with mock.patch.object(CO, "MEM_BUDGET_MB", 300):
     cap_mem = SP.capacity(p_clean)
 check("capacity says memory when the estimate passes the memory budget (here a 300 MB budget), and no_cost for a design the table has no row for",
@@ -793,9 +808,9 @@ check("a refusal with little time left on an invocation that had already used it
 # IE5: deterministic refusals: a plan that can never fit is a HOLD with no busy hop
 o = fresh_order()
 exe = Exe()
-with mock.patch.dict(SP.EXECUTORS, {"art": exe}), mock.patch.dict(os.environ, {"STYLE_SLOW_CPU": "6"}):
+with mock.patch.dict(SP.EXECUTORS, {"art": exe}), never_fits():
     why = hold_of(lambda: SP.advance(mkctx(o, dict(SPEC1, style="solo.powder"))))
-check("IE5: a plan whose need passes the work budget at the slow factor in force (Powder Burst at 6.0) is held style_step_too_big, before any guard, claim or record: "
+check("IE5: a plan whose need passes the work budget at the slow factor in force (Powder Burst far over its break-even factor) is held style_step_too_big, before any guard, claim or record: "
       "the executor never ran, no try record, no claim",
       why == "style_step_too_big" and exe.calls == 0 and not exists(f"orders/{o}/style/try_art.json") and not exists(f"orders/{o}/style/art.lock"), (why, exe.calls))
 o = fresh_order()
@@ -804,7 +819,7 @@ with mock.patch.dict(SP.EXECUTORS, {"art": Exe()}), mock.patch.object(CO, "MEM_B
 check("IE5: a plan whose memory estimate passes the memory budget is held the same way", why_mem == "style_step_too_big", why_mem)
 o = fresh_order()
 with mock.patch.dict(SP.EXECUTORS, {"art": Exe()}), mock.patch.object(L, "time_left", lambda default=L.BUDGET: 6.0):
-    why_fresh = hold_of(lambda: SP.advance(mkctx(o, arrival_left=52.0)))
+    why_fresh = hold_of(lambda: SP.advance(mkctx(o, arrival_left=L.BUDGET)))
 check("IE5: a FRESH invocation (all its time on arrival) that still cannot fit the step is a configuration error: held, not retried as busy", why_fresh == "style_step_too_big", why_fresh)
 o2 = fresh_order()
 cost_gap = SP.make_plan(SPEC1, [None])
@@ -817,9 +832,9 @@ check("a plan whose design has no row in the cost table is held style_not_priced
 
 # no room (the guards are full): 503 room_retry whose retry_after is the holder's remaining estimate between ROOM_MIN_S and ROOM_MAX_S, and the chain waits that long
 room_bounds = [(eta, SP._room(GD.Busy("cpu", "", eta)).retry_after) for eta in (None, float("nan"), 0.0, 0.2, 5.0, 16.3, 28.0, 500.0)]
-check("the back-off of a refusal for room: the holder's remaining estimate rounded up, never under ROOM_MIN_S (5 s) nor over ROOM_MAX_S (the longest back-off of a chain, 40 s), "
+check("the back-off of a refusal for room: the holder's remaining estimate rounded up, never under ROOM_MIN_S (5 s) nor over ROOM_MAX_S (the longest back-off of a chain: DURATION_S - 20), "
       "ROOM_DEFAULT_S (10 s) when the holder declared none or the number is nonsense",
-      [r for _, r in room_bounds] == [10, 10, 5, 5, 5, 17, 28, 40] and (SP.ROOM_MIN_S, SP.ROOM_MAX_S, SP.ROOM_DEFAULT_S) == (5, DU.WAIT_MAX_S, 10), room_bounds)
+      [r for _, r in room_bounds] == [10, 10, 5, 5, 5, 17, 28, int(DU.WAIT_MAX_S)] and (SP.ROOM_MIN_S, SP.ROOM_MAX_S, SP.ROOM_DEFAULT_S) == (5, DU.WAIT_MAX_S, 10), room_bounds)
 a_room = SP._room(GD.Busy("memory", "", 16.3))
 d_room = M._answer(a_room)
 d_room0 = M._answer(store.Answer(503, "room_retry", "x", True))
@@ -1399,14 +1414,14 @@ n0 = len(H.Fake.emails)
 with mock.patch.dict(SP.EXECUTORS, {"art": exe}), Show("solo.powder"):
     # WP12: the checkout itself refuses a plan that can never fit (409 capacity), so the factor rises between the checkout and the payment (a deploy, a new setting)
     o8a, k8a, sid8a = new_order(1, "solo.powder", "hold-a@example.com", pay_it=False)
-    with mock.patch.dict(os.environ, {"STYLE_SLOW_CPU": "6"}):
+    with never_fits():
         hook(H.pay_session(sid8a, email="hold-a@example.com"))
         done8a = wait_for(lambda: stopped(o8a, "review"), 60)
 ok, d = held(o8a, "style_step_too_big", n0)
 b = rj(f"orders/{o8a}/advance.json") or {}
-check("IE5: a paid order whose plan can never fit (Powder Burst at the slow factor 6.0) is held style_step_too_big with ZERO busy hops (the chain made the eye, tried the artwork once, stopped "
+check("IE5: a paid order whose plan can never fit (Powder Burst far over its break-even factor) is held style_step_too_big with ZERO busy hops (the chain made the eye, tried the artwork once, stopped "
       "'review'): review.json, ONE owner note naming the design, the factor and the need, no artwork, no other style, the executor never ran",
-      bool(done8a) and ok and exe.calls == 0 and b.get("hop") == 1 and "6.0" in [m for m in NOTES(n0) if "needs a look" in m["subject"]][0]["text"]
+      bool(done8a) and ok and exe.calls == 0 and b.get("hop") == 1 and f"{float(NEVER)}" in [m for m in NOTES(n0) if "needs a look" in m["subject"]][0]["text"]
       and "solo.powder" in [m for m in NOTES(n0) if "needs a look" in m["subject"]][0]["text"], (done8a, d, b))
 hold_ev = [f for k, f in EVENTS if k == "master" and f.get("order") == o8a and f.get("hold")]
 check("... and the hold is an event with its code", len(hold_ev) == 1 and hold_ev[0]["hold"] == "style_step_too_big" and hold_ev[0]["style"] == "solo.powder", hold_ev)
@@ -1707,7 +1722,7 @@ bad_calls = {
 }
 refused = {k: raises(lambda b=b: ops.a_lab_steps(b, WHO), L.ClientError) for k, b in bad_calls.items()}
 check("lab_steps refuses: " + ", ".join(bad_calls), all(isinstance(v, L.ClientError) for v in refused.values()), refused)
-with mock.patch.dict(os.environ, {"STYLE_SLOW_CPU": "6"}):
+with never_fits():
     e_hold = raises(lambda: ops.ACTIONS["lab_steps"]({"order": LAB_ORDER, "style": "solo.powder"}, WHO), store.Answer)
 check("lab_steps of a plan that can never fit answers 409 step_held naming the hold (and is audited as a failure), never a render", isinstance(e_hold, store.Answer)
       and e_hold.status == 409 and e_hold.body["reason"] == "step_held" and e_hold.body["hold"] == "style_step_too_big", e_hold)
@@ -1722,7 +1737,7 @@ store.put(f"orders/{LAB2}/eye_1.json", store.json_bytes({"order": LAB2, "eye": 1
 mcb = {"order": LAB2, "ticket": L.mint_ticket(store.unlock_kind(LAB2), 300), "keys": [f"orders/{LAB2}/eye_1.jpg"], "style": "solo.clean", "layout": "single", "names": "Ona", "title": ""}
 r_mc = REAL_MC(mcb)
 r_mc2 = REAL_MC(dict(mcb, ticket=L.mint_ticket(store.unlock_kind(LAB2), 300)))
-with mock.patch.dict(os.environ, {"STYLE_SLOW_CPU": "6"}):
+with never_fits():
     e_mc = raises(lambda: REAL_MC(dict(mcb, style="solo.powder", ticket=L.mint_ticket(store.unlock_kind(LAB2), 300))), store.Answer)
 check("master_compose of a style of the v3 engine (the lab's endpoint, which refused it until the plan existed): the same step runner, a 4096 px artwork, the same file the second time, "
       "and on a plan that can never fit 409 step_held",

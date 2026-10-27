@@ -413,8 +413,8 @@ check("the cost table has a measured row of every style and eye count (masters a
       "unpriced", all(CO.known(f"ensemble.{d}", n) and n in CO.CAPPED[f"ensemble.{d}"] and n in CO.PREVIEW[f"ensemble.{d}"] for s, d in STYLES.items()
                       for n in range(CT.eyes_range(s)[0], CT.eyes_range(s)[1] + 1)), "")
 fits = {f"{s}/{n}": STP.capacity(p, 1.6) for (s, n), p in caps.items()}
-OVER = ["grp.supernova/8"]
-check("at the default slow factor (1.6) every plan of the family fits one call's work and memory budgets but one: " + "Supernova Family at eight eyes, 54.0 s of the 52 s with the laboratory's dense bursts (the next slowest, Supernova Family at seven eyes, 48.5 s)" + "; the "
+OVER = ["grp.supernova/8"] if CO.WORK_BUDGET_S < 54.0 else []          # 52 s of work at 60 s; 112 s since 2026-10-27, where nothing of the family is over
+check("at the default slow factor (1.6) every plan of the family fits one call's work and memory budgets" + (" but one: Supernova Family at eight eyes, 54.0 s of the 52 s with the laboratory's dense bursts (the next slowest, Supernova Family at seven eyes, 48.5 s)" if OVER else ", Supernova Family at eight eyes too (54.0 s of the 112 s of a 120 s function)") + "; the "
       "family speed work of 2026-10-21, measured one process at a time: checkout answers capacity for it, never a held order. PINNED, so that a change of the "
       "table or of the budget is seen",
       sorted(k for k, v in fits.items() if not v["ok"]) == sorted(OVER) and all(fits[k]["why"] == "time" for k in OVER) and all(v["est_mb"] < CO.MEM_BUDGET_MB for v in fits.values()),

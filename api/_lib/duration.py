@@ -21,7 +21,8 @@ Nothing here imports anything: the constants are read by iris.py, maker.py, orde
 in every function, and by the tests."""
 from __future__ import annotations
 
-DURATION_S = 60              # vercel.json maxDuration of every function (the build check holds them equal)
+DURATION_S = 120             # vercel.json maxDuration of every function (the build check holds them equal). 60 until 2026-10-27: a pair, the Trio
+                             # and a family of four were held at 60 s although they draw in 10 to 21 s (a cold call had less left than the estimate)
 
 REPLY_MARGIN_S = 8           # the part of a call the work never uses
 SPARE_FRACTION = 0.5         # of that margin, what a self-call may still use after the work
