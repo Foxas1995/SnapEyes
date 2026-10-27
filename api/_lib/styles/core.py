@@ -48,6 +48,7 @@ import numpy as np
 from PIL import Image, ImageOps
 
 from .. import iris as L
+from . import pupil as PUP
 
 # ----------------------------------------------------------------------------- constants
 PAD = 1.12                           # the crop padding the site uses (compose._pad default)
@@ -168,7 +169,7 @@ class Iris:
             t0 = time.perf_counter()
             g = np.ascontiguousarray(np.asarray(grade_disc(self.src, Sd, ease, master_map=True) if master_map else grade_disc(self.src, Sd, ease)))
             if fin:
-                g = finish_iris(g)
+                g = finish_iris(g, pupil=PUP.analyse(_tight(self.graded(REF_SIDE, finish=False))[0]))
             self.grade_seconds += time.perf_counter() - t0
             self._grades[key] = g
         return g
@@ -220,7 +221,7 @@ def _pupil_frac(lum, r):
     return float(0.05 + 0.02 * (int(np.argmax(np.diff(prof))) + 1))
 
 
-def _finish(frame, fin=None):
+def _finish(frame, fin=None, pupil=None):
     """The iris finish on a graded frame (uint8, the disc of side round(Sd * STUDIO_FILL) centred, black around it): dehaze, micro contrast at two
     scales, vibrance, a dark limbal ring inside the disc, a deeper pupil (and a soft gloss, off). Pixels outside the disc are left as they are.
     Deterministic. It works on the disc's square only (with room for the blurs) and reads its statistics (the veil, the pupil) on a grid of about
@@ -259,8 +260,22 @@ def _finish(frame, fin=None):
     b *= 1.0 + np.float32(o["vib"]) * (1.0 - sat)
     b += m
     l0, ld = o["limb"]
-    pf = _pupil_frac(ls, rs)
-    pm = np.clip((1.04 - r / np.float32(pf)) / np.float32(0.08), 0.0, 1.0)
+    if pupil is not None and pupil.get("found"):
+        # the engine's own pupil (pupil.analyse on the canonical grade without the finish: centre and radius per angle, in R), so an irregular
+        # pupil is followed and the darkening never reaches past it
+        dx, dy = ax[None, :] / np.float32(R) - np.float32(pupil["cx"]), ax[:, None] / np.float32(R) - np.float32(pupil["cy"])
+        rt = np.asarray(pupil["r_theta"], np.float32)
+        nb = len(rt)
+        f = (np.arctan2(dy, dx) % np.float32(2 * math.pi)) * np.float32(nb / (2 * math.pi)) - np.float32(0.5)
+        i0 = np.floor(f).astype(np.int64)
+        w = (f - i0).astype(np.float32)
+        edge = np.maximum(rt[i0 % nb] * (1 - w) + rt[(i0 + 1) % nb] * w, np.float32(0.02))
+        pm = np.clip((1.04 - np.sqrt(dx * dx + dy * dy) / edge) / np.float32(0.08), 0.0, 1.0)
+        pf = float(pupil["rp"])
+    else:
+        pf = _pupil_frac(ls, rs)
+        pm = np.clip((1.04 - r / np.float32(pf)) / np.float32(0.08), 0.0, 1.0)
+    pm = pm * (1.0 - smoothstep((a.mean(axis=2) - np.float32(30.0)) / np.float32(60.0)))   # only what is dark already: iris fibres are never blackened
     gain = (1.0 - np.float32(ld) * smoothstep((r - np.float32(l0)) / np.float32(1.0 - l0))) * (1.0 - np.float32(o["pupil_dark"]) * pm)
     b *= gain.astype(np.float32)[..., None]
     if o["gloss"] > 0:
@@ -279,17 +294,17 @@ def _finish(frame, fin=None):
 FIN_R_CAP = 640     # px: a larger disc (a master's) is finished at this radius and the change is brought up to its size
 
 
-def finish_iris(frame, fin=None):
+def finish_iris(frame, fin=None, pupil=None):
     """finish_iris of a frame; a disc larger than FIN_R_CAP (a master's) is finished on a copy reduced to that radius, and the change it made
     (finished minus reduced, smooth at the master's scale) is brought up bicubic and added to the full frame inside the disc. So a master costs a
     few full size passes instead of the finish's thirty, holds a third of its memory, and is the preview drawn finer, as everywhere else."""
     Sd = frame.shape[0]
     R = max(8, int(round(Sd * L.STUDIO_FILL))) / 2.0
     if R <= FIN_R_CAP:
-        return _finish(frame, fin)
+        return _finish(frame, fin, pupil)
     sd = max(8, int(round(Sd * FIN_R_CAP / R)))
     small = np.asarray(Image.fromarray(np.asarray(frame, np.uint8)).resize((sd, sd), Image.LANCZOS))
-    d = _finish(small, fin).astype(np.float32) - small.astype(np.float32)
+    d = _finish(small, fin, pupil).astype(np.float32) - small.astype(np.float32)
     c = Sd / 2.0
     q0, q1 = max(0, int(math.floor(c - R)) - 2), min(Sd, int(math.ceil(c + R)) + 2)
     k = sd / float(Sd)

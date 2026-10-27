@@ -75,9 +75,11 @@ C.IRIS_FINISH = False
 rows = {}
 for n in EYES:
     raw = SI.png_bytes(n)
-    g0 = C.Iris(raw, n).graded(Sd)
-    g1 = C.finish_iris(g0)
-    g2 = C.finish_iris(np.array(g0))
+    ir0 = C.Iris(raw, n)
+    g0 = ir0.graded(Sd)
+    pup0 = C.PUP.analyse(C._tight(ir0.graded(C.REF_SIDE))[0])      # the pupil graded() hands the finish (IRIS_FINISH is off here: the plain grade)
+    g1 = C.finish_iris(g0, pupil=pup0)
+    g2 = C.finish_iris(np.array(g0), pupil=pup0)
     rows[n] = (g0, g1, g2)
 C.IRIS_FINISH = True
 check("outside the disc not one pixel changes (the styles draw their own ground there)",
@@ -98,6 +100,14 @@ check("deterministic: the same frame twice gives the same bytes", all(np.array_e
 h = [hashlib.sha256(np.ascontiguousarray(C.Iris(SI.png_bytes("blue_round"), f"x{i}").graded(Sd)).tobytes()).hexdigest() for i in range(2)]
 check("graded() is the grade with the finish: a fresh Iris of the same bytes gives the same bytes, and they are the finished frame",
       h[0] == h[1] and h[0] == hashlib.sha256(np.ascontiguousarray(rows["blue_round"][1]).tobytes()).hexdigest())
+g0b = rows["blue_round"][0]
+huge = {"found": True, "cx": 0.0, "cy": 0.0, "r_theta": np.full(64, 0.6, np.float32), "rp": 0.6, "cls": "round", "aspect": 1.0}
+with_p = C._finish(g0b, pupil=huge).astype(np.int16)
+no_p = C._finish(g0b, fin={"pupil_dark": 0.0}, pupil=huge).astype(np.int16)
+bright = (g0b.astype(np.float32).mean(axis=2) > 90) & (rr < 0.6)
+check("the pupil darkening follows the engine's pupil and touches only what is dark already: with a pupil read far too large (0.6 R), no iris pixel brighter than 90 "
+      "is darkened (a lab master of 2026-10-28 had fibres blackened inside an overestimated disc)",
+      bright.sum() > 1000 and int(np.abs(with_p[bright] - no_p[bright]).max()) <= 1, (int(bright.sum()), int(np.abs(with_p[bright] - no_p[bright]).max())))
 tiny = np.zeros((40, 40, 3), np.uint8)
 check("a thumbnail (a disc under 24 px of radius) is returned as it is", C.finish_iris(tiny) is tiny)
 
