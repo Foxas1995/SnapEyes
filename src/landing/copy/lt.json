@@ -380,6 +380,33 @@
       },
       "fam_radiance": {
         "d": "Kiekviena rainelė skleidžia savo plonus spindulius."
+      },
+      "supernova_one": {
+        "d": "Žvaigždžių dulkės išsiveržia iš krašto Jūsų akies spalvomis."
+      },
+      "nebula": {
+        "d": "Jūsų rainelė šviečia ūko širdyje."
+      },
+      "sparks": {
+        "d": "Kibirkštys kyla nuo krašto Jūsų akies spalvomis."
+      },
+      "halo": {
+        "d": "Jūsų rainelė švyti savo pačios spalvos šviesoje."
+      },
+      "aurora": {
+        "d": "Šiaurės pašvaistės užuolaidos aplink Jūsų rainelę."
+      },
+      "duo_nebula": {
+        "d": "Dvi rainelės šviečia greta ūko širdyje."
+      },
+      "duo_supernova": {
+        "d": "Žvaigždžių dulkės išsiveržia iš abiejų rainelių, kiekvienos akies spalvomis."
+      },
+      "fam_nebula": {
+        "d": "Visa šeima kartu šviečia viename ūke."
+      },
+      "fam_supernova": {
+        "d": "Kiekviena rainelė išsiveržia žvaigždžių dulkėmis savo spalvomis."
       }
     },
     "mixed": "Mūsų pačių akis ir pavyzdinės nuotraukos",

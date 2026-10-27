@@ -699,9 +699,11 @@ allmail = json.dumps([m for m, _ in H.Fake.emails], ensure_ascii=False)
 check("H2 no email carries a dash, a Stripe key, a webhook secret or the Resend key", not any(d in allmail for d in DASHES)
       and H.SK not in allmail and H.WHSEC not in allmail and H.RESEND not in allmail)
 vj = json.load(open(os.path.join(H.REPO, "vercel.json"), encoding="utf-8"))
-check("H3 vercel.json: one daily cron on /api/order, every function keeps maxDuration 60 (one entry per function since the plates of the v3 work: no catch-all glob)",
+import re as _re
+_DUR = int(_re.search(r"^DURATION_S\s*=\s*(\d+)", open(os.path.join(H.REPO, "api", "_lib", "duration.py"), encoding="utf-8").read(), _re.M).group(1))
+check("H3 vercel.json: one daily cron on /api/order, every function keeps the one maxDuration of api/_lib/duration.py DURATION_S (120 since 2026-10-27, 60 before; one entry per function since the plates of the v3 work: no catch-all glob)",
       vj["crons"] == [{"path": "/api/order", "schedule": "17 3 * * *"}] and len(vj["functions"]) >= 11
-      and all(v["maxDuration"] == 60 for v in vj["functions"].values()), vj)
+      and all(v["maxDuration"] == _DUR for v in vj["functions"].values()), vj)
 fns = [f for f in os.listdir(H.API) if f.endswith(".py") and not f.startswith("_")]
 check("H4 at most 12 Python functions (Hobby allows 12; api/admin.py is the 11th, wave q)", len(fns) <= 12, fns)
 

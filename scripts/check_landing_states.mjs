@@ -5,7 +5,7 @@
 //   open_none     ordering OPEN with nothing ticked (a deployment that takes orders before the owner switches a style on): the same page
 //   one           one style ticked live: that tile (and the price rows and the hero line that belong to its class) show the price, everything else says Soon, the group lines say
 //                 "More styles soon." and "Free preview now. Ordering for this group opens soon.", the bar and the notice switch to their open sentences
-//   ceilings      every live ceiling ticked (five singles and the Trio; every pair, Radiance and the larger families stay Soon)
+//   ceilings      every live ceiling ticked (since 2026-10-27 every single, pair and family the gallery shows)
 //
 //   node scripts/check_landing_states.mjs [--dist dist] [--api stub|dev] [--langs en,de] [--widths 375,1280] [--only closed,one,...] [--shots <folder>]      (npm run check:states)
 //
@@ -263,7 +263,8 @@ for (const state of STATES) {
         });
         const artNote = rows[2].note, twoNote = rows[3].note;
         // the styles a row names are the registry's names of tiles that can be bought: never Radiance (preview) in the art row, never a pair while no pair can be bought
-        ok(!artNote.includes('Radiance'), `${where} art row`, `names Radiance, a style that cannot be bought: "${artNote}"`);
+        // (since 2026-10-27 Radiance has a live ceiling: the rule is that the row names it only where it can be bought)
+        ok(read.buyable(TILE_STYLE.radiance.id, 1) || !artNote.includes('Radiance'), `${where} art row`, `names Radiance, a style that cannot be bought: "${artNote}"`);
         ok(read.eyes.has(2) || !/Collision|Kiss|Infinity/.test(twoNote), `${where} two eyes row`, `names a pair that cannot be bought: "${twoNote}"`);
         // the closed price list says "soon" once, in the notice above it: no row names a style or says that something opens soon
         if (!read.open) ok(!artNote && !twoNote && !rows.slice(1).some((r) => r.note.includes(c.styles.moreSoon) || r.note.includes(c.pricing.severalSoon)), where, `the closed price list names a style or says soon in a row: "${artNote}" / "${twoNote}" / "${rows[4].note}"`);

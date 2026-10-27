@@ -380,6 +380,33 @@
       },
       "fam_radiance": {
         "d": "Every iris sends its own fine rays."
+      },
+      "supernova_one": {
+        "d": "Stardust bursts from the rim in your eye's own colours."
+      },
+      "nebula": {
+        "d": "Your iris glows at the heart of a nebula."
+      },
+      "sparks": {
+        "d": "Sparks lift off the rim in your eye's own colours."
+      },
+      "halo": {
+        "d": "Your iris, lit from behind in its own colour."
+      },
+      "aurora": {
+        "d": "Curtains of northern light around your iris."
+      },
+      "duo_nebula": {
+        "d": "Two irises glow side by side in a nebula."
+      },
+      "duo_supernova": {
+        "d": "Stardust bursts from both rims in each eye's own colours."
+      },
+      "fam_nebula": {
+        "d": "The whole family glows together in one nebula."
+      },
+      "fam_supernova": {
+        "d": "Every iris bursts into stardust in its own colours."
       }
     },
     "mixed": "Our own eye and example photos",

@@ -261,11 +261,12 @@ check("every id of the registry is classified here once: 5 live, 9 preview (the 
       sorted(LIVE1 + PREVIEW + ENSEMBLE + LAB + PLANNED + ["grp.collision"] + LEGACY) == sorted(CT.ids()) and len(CT.ids()) == 40, sorted(set(CT.ids()) - set(LIVE1 + PREVIEW + ENSEMBLE + LAB + PLANNED + LEGACY)))
 check("singles at live: Clean Iris, Powder Burst, Universe (Echo and Vortex), Splash and Celestial Gold are live for one eye (the owner's release-1 singles)",
       all(CT.ceiling(i, 1) == "live" for i in LIVE1) and [CT.name_of(i) for i in LIVE1] == ["Clean Iris", "Powder Burst", "Universe", "Splash", "Celestial Gold"], [CT.ceiling(i, 1) for i in LIVE1])
-check("Family Colours: live for three eyes (the Trio, which opens alone: 1.6.3), preview for four to eight (Clean Family and DG4 come first)",
-      [CT.ceiling("grp.collision", n) for n in range(3, 9)] == ["live", "preview", "preview", "preview", "preview", "preview"] and CT.ceiling("grp.collision", 2) is None)
+check("Family Colours: a live ceiling for three to eight eyes (the Trio opened alone in release 1: 1.6.3; four to eight since 2026-10-27, after their 4K masters were drawn on production)",
+      [CT.ceiling("grp.collision", n) for n in range(3, 9)] == ["live"] * 6 and CT.ceiling("grp.collision", 2) is None)
 # Supernova Family is sold up to seven eyes (the owner, 2026-10-22: its eight-eye master needs 54 of the 52 s a Hobby call allows): eight eyes stay in the laboratory
-check("Radiance and the three pair designs wait at preview (DG7, DG1 and the gate pass rule of two eyes are theirs), Supernova Family up to seven eyes (eight in the laboratory), and every other design of the first release stays in the laboratory",
-      all(set(ceilings(i)) == {"preview"} for i in PREVIEW + ENSEMBLE if i != "grp.supernova") and ceilings("grp.supernova") == ["preview"] * 5 + ["lab"] and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
+check("Radiance, the three pair designs, the light family and the ensemble family have a live ceiling since 2026-10-27 (the owner's choice, after the 4K master of each was drawn on production), "
+      "Supernova Family up to seven eyes (eight in the laboratory), and every other design of the first release stays in the laboratory",
+      all(set(ceilings(i)) == {"live"} for i in PREVIEW + ENSEMBLE if i != "grp.supernova") and ceilings("grp.supernova") == ["live"] * 5 + ["lab"] and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
 check("planned ids (the reserved designs, Clean Family and the two pet ids) have no engine and stay planned",
       all(set(ceilings(i)) == {"planned"} and not X.ENGINE[i]["engine"] for i in PLANNED), {i: ceilings(i) for i in PLANNED})
 check("the six legacy ids are RETIRED for 1 to 8 eyes (a ceiling of retired is final), still known and still renderable by the legacy engine",
@@ -315,8 +316,8 @@ check("the page module reads the same registry: EFFECTIVE_DEFAULT and DEFAULT_ST
 bs = probe.get("buildStages", {})
 check("buildStage (what a page may assume before the server answers) is the server's stage with no tick: the ceiling held at the default, for every id and 1 to 8 eyes",
       bool(bs) and all(bs[i][n - 1] == eff.get((i, n)) for i in CT.ids() for n in range(1, 9)), [(i, n) for i in bs for n in range(1, 9) if bs[i][n - 1] != eff.get((i, n))][:5])
-check("the landing's gallery lists the five live one-eye styles of the v3 engine in tile order (a Soon style stays off the landing: spec 1.8 rule 1), never a legacy id",
-      probe.get("landing") == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.clean"], probe.get("landing"))
+check("the landing's gallery lists the live one-eye styles of the v3 engine in tile order (eleven since 2026-10-27; a Soon style stays off the landing: spec 1.8 rule 1), never a legacy id",
+      probe.get("landing") == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora"], probe.get("landing"))
 fb = probe.get("fallback") or {}
 check("the fallback catalogue (before the server answers, and when it cannot): nothing orderable, no maximum, no list of art styles, no id for one eye",
       fb == {"max": 0, "styles": [], "one": [], "eyes": [], "by": {}}, fb)
@@ -331,8 +332,8 @@ check("... it refuses a live ceiling with no default, a default of live, a legac
       and any("still live beside live v3" in p for p in g.get("a legacy id still live beside live v3 styles", []))
       and any("legacy style and the v3 styles are live" in p for p in g.get("a legacy default style beside live v3 styles", [])), g)
 r_build = subprocess.run([NODE, os.path.join(REPO, "scripts", "check_styles.mjs")], cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=300)
-check("the whole style check passes on the committed tree and prints the cutover's registry (19 preview with the light family's five and the ensemble family's nine, 5 live, 6 retired)",
-      r_build.returncode == 0 and "19 preview, 5 live, 6 retired" in r_build.stdout, (r_build.returncode, r_build.stdout[-300:], r_build.stderr[-300:]))
+check("the whole style check passes on the committed tree and prints the registry (24 live since 2026-10-27, 4 in the laboratory, 6 planned, 6 retired)",
+      r_build.returncode == 0 and "6 planned, 4 lab, 24 live, 6 retired" in r_build.stdout, (r_build.returncode, r_build.stdout[-300:], r_build.stderr[-300:]))
 
 # ============================================================================================ 3. before the owner's tick
 section("3. before the owner's tick: nothing can be bought, everything can be looked at")
@@ -429,10 +430,11 @@ over = {s: refused("styles_override", style=s, eyes=n, stage="live", confirm=Tru
 check("above the ceiling the owner's switch refuses even with ticks: Radiance, Kiss Collision, Collision Infinity, Clean Infinity, Family Colours from four eyes, Elements, the chain and Clean Family "
       "cannot be made live without a reviewed change of the registry",
       all(v and v[0] == 409 and v[1] in ("above_ceiling", "needs_ticks", "not_switchable") for v in over.values()), over)
-for s, n in (("solo.radiance", 1), ("duo.kiss_collision", 2), ("grp.collision", 4)):
+# since 2026-10-27 the shown styles have a live ceiling: the examples of a style above its ceiling are the ones in the laboratory
+for s, n in (("solo.elements", 1), ("grp.chain", 3), ("grp.supernova", 8)):
     act("styles_override", style=s, eyes=n, tick={"L1": True}, evidence=PASS_L0)
-over2 = {s: refused("styles_override", style=s, eyes=n, stage="live", confirm=True) for s, n in (("solo.radiance", 1), ("duo.kiss_collision", 2), ("grp.collision", 4))}
-check("... ticked, they are still refused for the ceiling (above_ceiling): a tick is not a way over the ceiling", all(v == (409, "above_ceiling") for v in over2.values()) and not CT.orderable("solo.radiance", 1), over2)
+over2 = {s: refused("styles_override", style=s, eyes=n, stage="live", confirm=True) for s, n in (("solo.elements", 1), ("grp.chain", 3), ("grp.supernova", 8))}
+check("... ticked, they are still refused for the ceiling (above_ceiling): a tick is not a way over the ceiling", all(v == (409, "above_ceiling") for v in over2.values()) and not CT.orderable("solo.elements", 1), over2)
 x_leg = {s: refused("styles_override", style=s, eyes=1, stage="live", confirm=True) for s in LEGACY}
 check("the six retired ids cannot be switched back on from the admin page (retired is final): refused, and still not orderable",
       all(v and v[0] in (400, 409) for v in x_leg.values()) and not any(CT.orderable(s, 1) for s in LEGACY), x_leg)

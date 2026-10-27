@@ -176,6 +176,16 @@ export const GALLERY: {
       }
     },
     {
+      "id": "supernova_one",
+      "design": "supernova1",
+      "price": "art"
+    },
+    {
+      "id": "nebula",
+      "design": "nebula",
+      "price": "art"
+    },
+    {
       "id": "powder",
       "design": "powder",
       "price": "art"
@@ -190,8 +200,23 @@ export const GALLERY: {
       }
     },
     {
+      "id": "halo",
+      "design": "halo",
+      "price": "art"
+    },
+    {
       "id": "gold",
       "design": "gold",
+      "price": "art"
+    },
+    {
+      "id": "sparks",
+      "design": "sparks",
+      "price": "art"
+    },
+    {
+      "id": "aurora",
+      "design": "aurora",
       "price": "art"
     },
     {
@@ -219,6 +244,18 @@ export const GALLERY: {
     {
       "id": "duo_infinity_bb",
       "file": "duo_infinity_bb",
+      "price": "two",
+      "src": "mixed"
+    },
+    {
+      "id": "duo_nebula",
+      "file": "duo_nebula_bd",
+      "price": "two",
+      "src": "mixed"
+    },
+    {
+      "id": "duo_supernova",
+      "file": "duo_supernova_bd",
       "price": "two",
       "src": "mixed"
     },
@@ -255,6 +292,20 @@ export const GALLERY: {
       "n": 3,
       "src": "mixed",
       "square": true
+    },
+    {
+      "id": "fam_nebula",
+      "file": "fam_nebula_4",
+      "price": "n",
+      "n": 4,
+      "src": "mixed"
+    },
+    {
+      "id": "fam_supernova",
+      "file": "fam_supernova_4",
+      "price": "n",
+      "n": 4,
+      "src": "mixed"
     },
     {
       "id": "fam_4",

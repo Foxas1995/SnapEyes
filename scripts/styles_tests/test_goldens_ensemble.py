@@ -116,8 +116,8 @@ check("importing the style package and the catalogue loads no engine family (the
       imp.returncode == 0 and imp.stdout.strip() == "[]", (imp.stdout[-300:], imp.stderr[-300:]))
 reg = {sid: CT.STYLES[sid] for sid in STYLES}
 eng = {sid: CT.ENGINE[sid] for sid in STYLES}
-check("the registry has the nine styles at stage preview (drawn in /try, never orderable until the owner's tick), in the art price class, with the HARD gate and the lid rule",
-      all(d["stage"] == "preview" and d["stage_by_eyes"] == ({"8": "lab"} if s == "grp.supernova" else {}) and d["price_class"] == "art" and d["gate"] == "hard" and d["legacy"] == 0 for s, d in reg.items())
+check("the registry has the nine styles at a live ceiling (since 2026-10-27; never orderable until the owner's tick: the default holds them at preview), in the art price class, with the HARD gate and the lid rule",
+      all(d["stage"] == "live" and d["stage_by_eyes"] == ({"8": "lab"} if s == "grp.supernova" else {}) and d["price_class"] == "art" and d["gate"] == "hard" and d["legacy"] == 0 for s, d in reg.items())
       and all(e["gate_rules"] == "lid" and e["plates"] == [] and e["atlas"] == [] for e in eng.values()), {s: (d["stage"], d["gate"]) for s, d in reg.items()})
 check("their engine is the ensemble family with the design of each look; the names are the owner's (Clean Duo, Radiance Duo, Family Orbit, Light Circle, Radiance Family, "
       "Nebula Duo, Nebula Family, Supernova Duo, Supernova Family)",

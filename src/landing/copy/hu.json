@@ -380,6 +380,33 @@
       },
       "fam_radiance": {
         "d": "Minden írisz a saját finom sugarait bocsátja ki."
+      },
+      "supernova_one": {
+        "d": "Csillagpor tör elő a peremből, a szemed saját színeiben."
+      },
+      "nebula": {
+        "d": "Az íriszed egy csillagköd szívében ragyog."
+      },
+      "sparks": {
+        "d": "Szikrák szállnak fel a peremről, a szemed saját színeiben."
+      },
+      "halo": {
+        "d": "Az íriszed a saját színének fényében ragyog."
+      },
+      "aurora": {
+        "d": "Sarki fény függönyei az íriszed körül."
+      },
+      "duo_nebula": {
+        "d": "Két írisz ragyog egymás mellett egy csillagködben."
+      },
+      "duo_supernova": {
+        "d": "Csillagpor tör elő mindkét peremből, mindegyik szem saját színeiben."
+      },
+      "fam_nebula": {
+        "d": "Az egész család együtt ragyog egy csillagködben."
+      },
+      "fam_supernova": {
+        "d": "Minden írisz csillagporrá robban a saját színeiben."
       }
     },
     "mixed": "A saját szemünk és példafotók",

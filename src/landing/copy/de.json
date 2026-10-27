@@ -380,6 +380,33 @@
       },
       "fam_radiance": {
         "d": "Jede Iris sendet ihre eigenen feinen Strahlen."
+      },
+      "supernova_one": {
+        "d": "Sternenstaub sprüht vom Rand in den Farben Ihres Auges."
+      },
+      "nebula": {
+        "d": "Ihre Iris leuchtet im Herzen eines Sternennebels."
+      },
+      "sparks": {
+        "d": "Funken steigen vom Rand in den Farben Ihres Auges auf."
+      },
+      "halo": {
+        "d": "Ihre Iris, von hinten in ihrer eigenen Farbe beleuchtet."
+      },
+      "aurora": {
+        "d": "Vorhänge aus Nordlicht rund um Ihre Iris."
+      },
+      "duo_nebula": {
+        "d": "Zwei Iriden leuchten nebeneinander in einem Nebel."
+      },
+      "duo_supernova": {
+        "d": "Sternenstaub sprüht von beiden Rändern, in den Farben jedes Auges."
+      },
+      "fam_nebula": {
+        "d": "Die ganze Familie leuchtet zusammen in einem Nebel."
+      },
+      "fam_supernova": {
+        "d": "Jede Iris sprüht Sternenstaub in ihren eigenen Farben."
       }
     },
     "mixed": "Unser eigenes Auge und Beispielfotos",

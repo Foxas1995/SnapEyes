@@ -91,7 +91,7 @@ const handler = (req, res) => {
   if (skew.on && skew.hang && skew.chunk && url.pathname.includes(skew.chunk)) return true;   // a stalled connection: the request is never answered
   if (skew.on && skew.chunk && url.pathname.includes(skew.chunk)) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('gone'); return true; }
   if (url.pathname === '/api/health') { later({ stripe: true, stripe_live: false, email: false }); return true; }
-  if (url.pathname === '/api/checkout') { later(checkoutAnswer(ROOT, { open: stub.open, suggest: stub.suggest })); return true; }
+  if (url.pathname === '/api/checkout') { later(checkoutAnswer(ROOT, { open: stub.open, suggest: stub.suggest, ticked: stub.ticked ?? stub.open })); return true; }
   if (url.pathname.startsWith('/api/')) { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{}'); return true; }
   return false;
 };
@@ -1020,7 +1020,13 @@ async function checkGlobe() {
   //    as the gallery's tiles do (the stub's catalogue is the registry's: which styles are live for one eye is read from it, never written here)
   {
     stub.open = true;
-    const cat = checkoutAnswer(ROOT, { open: true });
+    // since 2026-10-27 every one-eye style the picker shows has a live ceiling: the owner's switch holds one of them at preview here (the last live art style in
+    // tile order), so the globe has an artwork of each kind to open
+    const all = checkoutAnswer(ROOT, { open: true });
+    const solosLive = all.styles.filter((s) => s.group === 'solo' && s.stages['1'] === 'live');
+    const held = solosLive.length > 1 ? solosLive[solosLive.length - 1].id : null;
+    stub.ticked = all.styles.map((s) => s.id).filter((id) => id !== held);
+    const cat = checkoutAnswer(ROOT, { open: true, ticked: stub.ticked });
     const names = (stage) => cat.styles.filter((s) => s.group === 'solo' && s.stages['1'] === stage).map((s) => s.name);
     const page = await open({ lang: 'en', width: 412, height: 915, settle: false, reduceMotion: true });
     const msgs = [];
@@ -1045,6 +1051,7 @@ async function checkGlobe() {
     }
     await page.close();
     stub.open = false;
+    stub.ticked = undefined;
     if (msgs.length) fail('globe', `ordering open: ${msgs.join('; ')}`);
     else pass('globe', `ordering open: an artwork whose style can be bought opens without Soon, a preview style says Soon (${seen.join(', ')})`);
   }

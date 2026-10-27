@@ -583,15 +583,7 @@ export function checkRuntimeTokens(copy, out) {
  *  the landing) have none yet. Item 15 holds the rest of its rule for them: a style of this list with a LIVE ceiling needs its tile (a style the owner can switch
  *  on never lacks its picture on the landing), and a style of this list that has a tile is taken off it. */
 export const LANDING_TILE_LATER = {
-  'solo.supernova': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'solo.nebula': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'solo.sparks': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'solo.halo': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'solo.aurora': 'the light family: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'duo.nebula': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'duo.supernova': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'grp.nebula': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
-  'grp.supernova': 'the ensemble family\'s cosmos looks: /try and its picker first, the landing tile when the owner raises the ceiling',
+  // empty since 2026-10-27: the owner raised the light family and the cosmos looks to live, and each has its landing tile now
 };
 /** The list itself (item 15, run on the repository): every id of it is a style of the registry, and none has its landing tile yet (one that has is taken off). */
 export function checkLandingLater(tileStyle, styles, out, later = LANDING_TILE_LATER) {

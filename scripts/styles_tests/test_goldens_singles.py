@@ -170,9 +170,9 @@ check("every cost row the family needs exists: a preview row and a master row fo
 # WP18 (the catalogue switch): this check said that no stage was raised (every single style at the laboratory ceiling). The cutover raised the ceilings of the release-1
 # singles (Clean Iris, Powder Burst, Splash, Celestial Gold to live, Radiance to preview; Elements stays in the laboratory) and the registry's EFFECTIVE_DEFAULT holds every
 # one at preview until the owner's tick, so it now says the cutover's state: nothing is orderable, the shown ones can be previewed, Elements only by the admin.
-check("the stages are the cutover's: Clean Iris, Powder Burst, Splash and Celestial Gold have a live ceiling, Radiance a preview one, Elements stays in the laboratory; the registry's default holds them "
+check("the stages: Clean Iris, Powder Burst, Splash, Celestial Gold and (since 2026-10-27) Radiance have a live ceiling, Elements stays in the laboratory; the registry's default holds them "
       "at preview, so a customer can preview five of them and order none, and only the admin can look at Elements",
-      {i: CT.ceiling(i, 1) for i in SINGLES_STYLES} == {"solo.clean": "live", "solo.powder": "live", "solo.splash": "live", "solo.elements": "lab", "solo.radiance": "preview", "solo.gold": "live"}
+      {i: CT.ceiling(i, 1) for i in SINGLES_STYLES} == {"solo.clean": "live", "solo.powder": "live", "solo.splash": "live", "solo.elements": "lab", "solo.radiance": "live", "solo.gold": "live"}
       and all(CT.stage_with(i, 1, None) == ("lab" if i == "solo.elements" else "preview") for i in SINGLES_STYLES)
       and all(not CT.orderable(i, 1, strict=False) for i in SINGLES_STYLES) and all(CT.previewable(i, 1, admin=True) for i in SINGLES_STYLES)
       and not CT.previewable("solo.elements", 1) and all(CT.previewable(i, 1) for i in SINGLES_STYLES if i != "solo.elements")

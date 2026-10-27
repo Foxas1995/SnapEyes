@@ -639,7 +639,7 @@ if probe:
     ms = probe["misc"]
     check("styles.ts: classStyle, DEFAULT_STYLE, the legacy list in engine order, the landing order by tile_order, the accents, schema and plates version",
           ms["classBlack"] == real_world()["class_black"] and ms["classArt"] == real_world()["class_art"] and ms["def"] == real_world()["default"]
-          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.clean"]      # WP18: the landing lists the live one-eye styles of the v3 engine
+          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora"]      # WP18: the landing lists the live one-eye styles of the v3 engine (eleven since 2026-10-27)
           and [s["id"] for s in ms["picker"]] == LEGACY and ms["picker"][0]["accent"] == [245, 197, 66] and ms["picker"][-1]["accent"] is None
           and all(s["accent"] == list(L.STYLES[s["id"]]["accent"]) for s in ms["picker"][:-1])
           and ms["schema"] == R.STYLES_SCHEMA and ms["pv"] == R.PLATES_VERSION and ms["names"] == C.names(), ms["picker"][:1])
@@ -872,6 +872,15 @@ check("with the page code loaded (styles.ts, markets.ts, the copy dictionaries) 
 # the merge of the new landing: its tiles are keyed by tile id and the table src/landing/tileStyle.ts says which registry style each stands for (check item 15); these are the refusals of
 # that item on a real copy of the tree
 TILE_ROW = "  duo_kiss: { id: 'duo.kiss_collision', eyes: 2 },\n"
+
+
+def lower(case, root, name):
+    """The style of this registry name back at a preview ceiling in a copy (the state before 2026-10-27, when the label rule last had a shown style it could catch)."""
+    import re as _re
+    m = _re.search(r'"name": "%s",\n(?:[^\n]*\n)*?\s*"stage": "live",' % _re.escape(name), read("api/_lib/styles_registry.py").replace("\r\n", "\n"))
+    sub(case, root, "api/_lib/styles_registry.py", m.group(0), m.group(0).replace('"stage": "live",', '"stage": "preview",'))
+
+
 for label, mutate, needle in [
     ("a gallery tile without a row of the tile table", lambda c, r: sub(c, r, "src/landing/tileStyle.ts", TILE_ROW, ""),
      'the tile "duo_kiss" of the gallery has no row'),
@@ -889,11 +898,11 @@ for label, mutate, needle in [
      "states a number of styles"),
     # release review H-M2 (check item 16): a picture's label names no style that customers see and cannot buy (the tiles say Soon, a label cannot)
     # (the hero's alt text is the globe poster's since 2026-10-22, the owner's choice of the globe of artworks: the plant goes at its end)
-    ("a picture label that names a style nobody can buy yet (the hero's alt text)", lambda c, r: sub(c, r, "src/landing/copy/en.json", 'made from our own eye and example photos"', 'made from our own eye and example photos, in the Radiance style"'),
+    ("a picture label that names a style nobody can buy yet (the hero's alt text)", lambda c, r: (lower(c, r, "Radiance"), sub(c, r, "src/landing/copy/en.json", 'made from our own eye and example photos"', 'made from our own eye and example photos, in the Radiance style"')),
      'landing.en.hero.globeAlt: the label of a picture names the style "Radiance"'),
-    ("a picture label in another language names one too (a German artwork alt text names Kiss Collision)", lambda c, r: sub(c, r, "src/landing/copy/de.json", '"Die restaurierte Iris als Kunstwerk"', '"Die restaurierte Iris als Kunstwerk im Stil Kiss Collision"'),
+    ("a picture label in another language names one too (a German artwork alt text names Kiss Collision)", lambda c, r: (lower(c, r, "Kiss Collision"), sub(c, r, "src/landing/copy/de.json", '"Die restaurierte Iris als Kunstwerk"', '"Die restaurierte Iris als Kunstwerk im Stil Kiss Collision"')),
      'landing.de.reveal.eyes[1].artAlt: the label of a picture names the style "Kiss Collision"'),
-    ("the wall's artwork button named after a style that is not live (Family Colours)", lambda c, r: sub(c, r, "src/landing/copy/lt.json", '"eye": "Viena akis",', '"eye": "Family Colours",'),
+    ("the wall's artwork button named after a style that is not live (Family Colours)", lambda c, r: (lower(c, r, "Family Colours"), sub(c, r, "src/landing/copy/lt.json", '"eye": "Viena akis",', '"eye": "Family Colours",')),
      'landing.lt.wall.arts.eye: the label of a picture names the style "Family Colours"'),
     ("a written list of art styles in the pricing row", lambda c, r: sub(c, r, "src/landing/copy/en.json", '"One eye in an art style",\n        "b": "{styles}."', '"One eye in an art style",\n        "b": "Radiance, Powder Burst, Universe."'),
      "landing.en.pricing.rows.art.b must be the token {styles}"),
@@ -1043,9 +1052,9 @@ gate = last_json(so)
 check("the release gate script ran on the real tree", gate is not None, (rc, se[-500:], so[-300:]))
 if gate:
     real = gate["real"]
-    check("release gate: on the real tree every one of the 19 tiles (14, and the five of the ensemble family since 2026-10-20) is in exactly one of live, preview, lab and planned by the registry's "
+    check("release gate: on the real tree every one of the 28 tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27) is in exactly one of live, preview, lab and planned by the registry's "
           "ceiling for its style and eyes, and none is blocked",
-          real["total"] == 19 and len(gate["ids"]) == 19 and real["blocked"] == []
+          real["total"] == 28 and len(gate["ids"]) == 28 and real["blocked"] == []
           and sorted(real["live"] + real["preview"] + real["lab"] + real["planned"]) == sorted(gate["ids"])
           and all(gate["expect"][i] == b for b in ("live", "preview", "lab", "planned") for i in real[b]), real)
     check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of six eyes alone to planned moves only the six-eye tile to the planned list, and blocks nothing",
@@ -1060,7 +1069,7 @@ if gate:
           len(gate["protoTile"]) == 2 and all("has no row" in b for b in gate["protoTile"]) and gate["protoStyle"] == ['duo_kiss: the registry has no style "constructor"'], gate)
     check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups, and only a production deploy or LANDING_GATE=strict is strict",
           gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
-          and "6 with a live ceiling" in gate["summary"] and "13 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
+          and "28 with a live ceiling" in gate["summary"] and "0 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
     check("I2: the gate renders the page in seven states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, every style live beyond the ceilings, the server not reachable), in four languages, with no render error and every tile picture present",
           gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "every style live, beyond the ceilings", "server not reachable"]
           and gate["renderedErrors"] == [] and gate["renderedPictures"] == [], (gate["inputs"], gate["renderedErrors"], gate["renderedPictures"]))
@@ -1195,9 +1204,9 @@ import re as _re
 _rows = _re.findall(r"^  (\w+): \{ id: '([\w.]+)', eyes: (\d+) \}", read("src/landing/tileStyle.ts"), flags=_re.M)
 _slug = {i: d["slug"] for i, d in R.STYLES.items()}
 _no_engine_picture = sorted(t for t, sid, _n in _rows if not os.path.isfile(os.path.join(REPO, "public", "assets", "atelier", f"style-{_slug.get(sid, 'none')}-800.webp")))
-check("I2: every one of the 19 landing tiles (14, and the five of the ensemble family since 2026-10-20) has a picture of this repository's engine to be compared with (the picker's tile of its style): "
+check("I2: every one of the 28 landing tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27) has a picture of this repository's engine to be compared with (the picker's tile of its style): "
       "no tile stands for a look the engine does not make (the two held Universe tiles are gone)",
-      len(_rows) == 19 and _no_engine_picture == [], (len(_rows), _no_engine_picture))
+      len(_rows) == 28 and _no_engine_picture == [], (len(_rows), _no_engine_picture))
 check("I2: Celestial Gold is the same variant (A) in the landing's tile and in the picker's tile: the two are within 8 levels of 255 on the shared eye (the old design was 29 away), and the Clean Iris tile is the same picture (under 2 levels)",
       _s is not None and _s["gold_own"]["own"] < 8.0 and _s["clean_own"]["own"] < 2.0, _s and {k: round(_s[k]["own"], 2) for k in ("gold_own", "clean_own")})
 

@@ -28,9 +28,9 @@ export async function run(): Promise<R> {
   // cannot reach the server promises nothing: no maximum, no list, no id.
   check('the fallback is the build\'s reading of the stages (the ceilings held at the registry\'s effective default): since the cutover nothing is orderable, so no eyes, no art styles, no id',
     fb.max === 0 && fb.styles.length === 0 && fb.one.length === 0 && fb.eyes.length === 0 && EFFECTIVE_DEFAULT === 'preview', JSON.stringify(fb));
-  check('buildStage is the ceiling held at the effective default for a style of the v3 engine, never for a retired one: the five singles and the Trio are live ceilings and preview here, Elements stays lab, a legacy id is retired',
+  check('buildStage is the ceiling held at the effective default for a style of the v3 engine, never for a retired one: the eleven singles (live ceilings since 2026-10-27, the light family too) and the Trio are live ceilings and preview here, Elements stays lab, a legacy id is retired',
     buildStage('solo.clean', 1) === 'preview' && buildStage('grp.collision', 3) === 'preview' && buildStage('solo.elements', 1) === 'lab' && buildStage('studio_black', 1) === 'retired' && buildStage('solo.clean', 2) === null
-    && ceilingStage('solo.clean', 1) === 'live' && landingStyles().map((s) => s.id).join() === 'solo.powder,solo.universe,solo.splash,solo.gold,solo.clean', landingStyles().map((s) => s.id).join());
+    && ceilingStage('solo.clean', 1) === 'live' && landingStyles().map((s) => s.id).join() === 'solo.powder,solo.universe,solo.splash,solo.gold,solo.radiance,solo.clean,solo.supernova,solo.nebula,solo.sparks,solo.halo,solo.aurora', landingStyles().map((s) => s.id).join());
 
   const info = (styles: unknown, max: unknown) => ({ ok: true, open: true, styles, orderable_max_eyes: max });
   const live = (id: string, name: string, stages: Record<string, string>) => ({ id, name, slug: id, group: 'solo', eyes: [1, 8], stages });

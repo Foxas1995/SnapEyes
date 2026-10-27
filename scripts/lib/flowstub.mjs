@@ -39,7 +39,10 @@ export function flowApi(root, { wait = {} } = {}) {
   const reg = loadRegistry(root);
   const one = Object.entries(reg.styles).filter(([, d]) => d.legacy !== 1 && d.eyes[0] <= 1 && d.eyes[1] >= 1).sort((a, b) => a[1].tile_order - b[1].tile_order);
   const pick = (stage, cls) => one.find(([, d]) => ceilingOf(d, 1) === stage && (!cls || d.price_class === cls));
-  const [first, second_, soon] = [pick('live', 'black') || pick('live'), pick('live', 'art'), pick('preview')];
+  // the style that opens soon: one whose ceiling is preview, else (since 2026-10-27 every shown one-eye style has a live ceiling) the last live art style, which the
+  // owner's switch holds at preview (the run-time stage is the lower of the ceiling and the switch, so a live ceiling can still read Soon)
+  const lastLiveArt = () => one.filter(([, d]) => ceilingOf(d, 1) === 'live' && d.price_class === 'art').slice(-1)[0];
+  const [first, second_, soon] = [pick('live', 'black') || pick('live'), pick('live', 'art'), pick('preview') || lastLiveArt()];
   const ids = { first: first[0], second: second_[0], soon: soon[0] };
   const order = { state: 'making', eyes: 3, made: new Set(), pendingUntil: 0, composeMs: w.make };
 

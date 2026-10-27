@@ -153,9 +153,9 @@ check("each is a style of one eye of the solo group: its name, its slug (Superno
           and CT.STYLES[i]["layouts"] == {"1": ["single"]} and CT.STYLES[i]["legacy"] == 0 and CT.STYLES[i]["price_class"] == "art" and CT.STYLES[i]["pick"] == []
           and CT.STYLES[i]["reason"] == {} and CT.STYLES[i]["accent"] == [] and CT.STYLES[i]["work_side"] == {"1": 4096} for i in LUMEN_IDS)
       and CT.STYLES["supernova"]["slug"] == "supernova" and CT.STYLES["supernova"]["name"] == "Supernova", "")
-check("the stage is preview (a ceiling: the admin page can lower it, never raise it; raising it is a reviewed change of the registry) and the gate policy is "
+check("the stage is live (a ceiling, raised in the reviewed change of 2026-10-27: the admin page can lower it, never raise it; nothing is orderable before the owner's tick) and the gate policy is "
       "advisory with the lid rule, as Radiance's: a failing eye warns, it is never refused for these looks",
-      all(CT.STYLES[i]["stage"] == "preview" and CT.STYLES[i]["stage_by_eyes"] == {} and CT.STYLES[i]["gate"] == "advisory" and CT.ENGINE[i]["gate_rules"] == "lid"
+      all(CT.STYLES[i]["stage"] == "live" and CT.STYLES[i]["stage_by_eyes"] == {} and CT.STYLES[i]["gate"] == "advisory" and CT.ENGINE[i]["gate_rules"] == "lid"
           for i in LUMEN_IDS) and CT.STYLES["solo.radiance"]["gate"] == "advisory", "")
 check("the engine entries: the family lumen, the three canvases of the family (the square first), no plate, no atlas, one art step, no fill",
       all(CT.ENGINE[i]["canvases"] == list(LU.FORMATS) and CT.ENGINE[i]["plates"] == [] and CT.ENGINE[i]["atlas"] == [] and CT.ENGINE[i]["steps"] == {}
@@ -412,7 +412,7 @@ lst = ops.a_styles_lab({}, "t")
 rows_l = {r["id"]: r for r in lst["styles"] if r["module"] == "lumen"}
 lab_one = ops.a_styles_lab({"style": "solo.aurora", "eye": base64.b64encode(SI.png_bytes("grey_round")).decode("ascii"), "size": 480}, "t")
 check("the admin laboratory lists the five looks with their stage, ceiling, canvases and no plate, and draws one with the self check",
-      sorted(rows_l) == sorted(LUMEN) and all(r["ceiling"] == "preview" and r["canvases"] == list(LU.FORMATS) and r["plates"] == [] for r in rows_l.values())
+      sorted(rows_l) == sorted(LUMEN) and all(r["ceiling"] == "live" and r["canvases"] == list(LU.FORMATS) and r["plates"] == [] for r in rows_l.values())
       and lab_one["ok"] and lab_one["selfcheck"]["checks"]["t1"]["ok"], {k: v for k, v in lab_one.items() if k not in ("image",)} if isinstance(lab_one, dict) else lab_one)
 
 # ============================================================================================ 7. several irises
