@@ -1209,17 +1209,22 @@ export const TryApp: React.FC = () => {
 };
 
 /** The language switch, as on the landing page (src/landing/Header.tsx LangSwitch): one button per language the page's
- *  market can be read in. */
-const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lang, onSwitch }) => (
-  <div role="group" aria-label={T.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
-    {marketLangs(currentMarket()).map((l) => (
-      <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
-        className={`relative hit min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
-        {l}
-      </button>
-    ))}
-  </div>
-);
+ *  market can be read in. Its buttons are narrower on small phones so that the switch never meets the logo: below 340 px with up to four
+ *  languages, below 400 px with five (the euro market since Croatian, 2026-10-28: five full buttons are 206 px, which met the logo up to 375 px). */
+const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lang, onSwitch }) => {
+  const langs = marketLangs(currentMarket());
+  const narrow = langs.length > 4 ? 'max-[400px]:min-w-[28px] max-[400px]:px-1.5' : 'max-[340px]:min-w-[28px] max-[340px]:px-1.5';
+  return (
+    <div role="group" aria-label={T.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
+      {langs.map((l) => (
+        <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
+          className={`relative hit min-w-[40px] rounded-full px-2.5 py-1.5 ${narrow} uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 
 /** The camera shot collector. A shot the studio can restore goes on by itself (autoContinue), so this is on screen only while no shot of the set

@@ -83,6 +83,14 @@
     .lp-seg { --bw: 26px; }
     .lp-logo:not(.lp-logo-full) img { height: 38px; }
   }
+  /* five languages (the euro market since Croatian, 2026-10-28): five buttons of 32 or 28 px squeezed the logo out of its shape on a phone (133 px
+     wide instead of 151 at 375 px), so on a phone they are 26 px (24 px under 300 px) and the logo keeps its width; a market with fewer keeps the sizes above */
+  @media (max-width: 639px) {
+    .lp-seg:has(> button:nth-of-type(5)) { --bw: 26px; }
+  }
+  @media (max-width: 299px) {
+    .lp-seg:has(> button:nth-of-type(5)) { --bw: 24px; }
+  }
 
   /* the dialog: the whole screen, a near black, the links in the display face. It fades and rises in .5 s and leaves the same way (display and
      overlay are transitioned too, so the closing is seen); a browser without that closes it at once. Under reduced motion the global rule

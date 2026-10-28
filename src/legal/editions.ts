@@ -2,16 +2,22 @@
 // edition for the au market and the Hungarian edition (the EU texts with the prices in forints) for the hu market.
 // LegalApp shows the page's own; the build's order-mail pack carries all of them (src/legal/plain.ts), so the
 // confirmation email of an order quotes the texts of its market. An edition has texts in the languages
-// src/shared/legal.ts EDITION_LANGS lists for it (the Australian one: English and German).
+// src/shared/legal.ts EDITION_LANGS lists for it (the Australian one: English and German; the Hungarian one: every
+// language but Croatian, which is in the EU edition only).
 import type { EditionDocs } from './types';
-import type { LegalDocId, LegalEdition } from '../shared/legal';
+import { EDITION_LANGS, type LegalDocId, type LegalEdition } from '../shared/legal';
 import { PRIVACY, PRIVACY_AU } from './docs/privacy';
 import { TERMS, TERMS_AU, TERMS_HU } from './docs/terms';
 import { WITHDRAWAL, WITHDRAWAL_AU } from './docs/withdrawal';
 import { IMPRINT, IMPRINT_AU } from './docs/imprint';
 
+/** The texts of a shared page in the languages of an edition only (the Hungarian edition shares the EU privacy policy,
+ *  withdrawal information and legal notice, without their Croatian texts). */
+const only = (docs: EditionDocs, edition: LegalEdition): EditionDocs =>
+  Object.fromEntries(Object.entries(docs).filter(([l]) => (EDITION_LANGS[edition] as readonly string[]).includes(l)));
+
 export const EDITIONS: Readonly<Record<LegalEdition, Readonly<Record<LegalDocId, EditionDocs>>>> = {
   eu: { privacy: PRIVACY, terms: TERMS, withdrawal: WITHDRAWAL, imprint: IMPRINT },
   au: { privacy: PRIVACY_AU, terms: TERMS_AU, withdrawal: WITHDRAWAL_AU, imprint: IMPRINT_AU },
-  hu: { privacy: PRIVACY, terms: TERMS_HU, withdrawal: WITHDRAWAL, imprint: IMPRINT },
+  hu: { privacy: only(PRIVACY, 'hu'), terms: TERMS_HU, withdrawal: only(WITHDRAWAL, 'hu'), imprint: only(IMPRINT, 'hu') },
 };

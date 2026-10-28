@@ -84,7 +84,7 @@ export function flowApi(root, { wait = {} } = {}) {
           ok: true, ticket: unlocked ? null : 'tk-i3', pupil_r: 0.2, fibre: 3, iris: { cx: 0.5, cy: 0.5, r: 0.3 }, pad: 1.12, glare_boxes_crop: [],
           quality: {
             diameter_px: 600, sharpness: 5, sharpness_label: 'sharp', occlusion_pct: 0, glare: false, locked: !unlocked, verdict: unlocked ? 'weak' : shot, message: 'Great photo', tips: [], detail: shot === 'good' ? 90 : 55,
-            ...(marked ? { ...mark(['de', 'lt', 'hu'].includes(b.lang) ? b.lang : 'en'), words: { en: mark('en'), de: mark('de'), lt: mark('lt'), hu: mark('hu') } } : {}),
+            ...(marked ? { ...mark(['de', 'lt', 'hu', 'hr'].includes(b.lang) ? b.lang : 'en'), words: { en: mark('en'), de: mark('de'), lt: mark('lt'), hu: mark('hu'), hr: mark('hr') } } : {}),
           },
           targets: { detail_good: 70, detail_ok: 40, min_diameter_px: 280, good_diameter_px: 420, max_shots: 5 },
         });

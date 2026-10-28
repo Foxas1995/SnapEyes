@@ -543,7 +543,8 @@ async function checkFailsafe() {
 async function checkFailOpen() {
   console.log('failopen');
   const cases = [['/try?lang=de', '*/assets/try-*.js', 'Diese Seite konnte nicht geladen werden'], [`/order?o=i3check&k=${KEY}&lang=lt`, '*/assets/order-*.js', 'Šio puslapio nepavyko įkelti'],
-    ['/try?lang=hu', '*/assets/try-*.js', 'Az oldal nem töltődött be'], ['/order?o=i3check&k=' + KEY + '&lang=en', '*/assets/order-*.js', 'This page could not be loaded']];
+    ['/try?lang=hu', '*/assets/try-*.js', 'Az oldal nem töltődött be'], ['/order?o=i3check&k=' + KEY + '&lang=hr', '*/assets/order-*.js', 'Ova se stranica nije mogla učitati'],
+    ['/order?o=i3check&k=' + KEY + '&lang=en', '*/assets/order-*.js', 'This page could not be loaded']];
   for (const [path, block, words] of cases) {
     const page = await chrome.page({ width: 375, height: 812, mobile: true, dpr: 1 });
     // the browser has fetched these files before in this run: a cached one is never asked for again and the block would not touch it
@@ -667,7 +668,10 @@ async function checkGuide() {
 // The gold of the logo (2026-10-22, palette A: the root's gold tokens and the metal of the primary buttons in src/index.css, the utilities that replace the hex ones,
 // the class gold-metal on the gold buttons) moved the base of both pages by +494 B CSS (the shared stylesheet), measured on 9facf04 against the tree with it
 // (12,978 to 13,472 B each; the JS +10 B of /try and -4 B of /order are left in the budget). It is colour, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730, css: 10975 + 245 + 494 }, order: { js: 108723 + 414 + 110, css: 10975 + 245 + 494 } };
+// Croatian, the fifth language (2026-10-28: the /try and /order dictionaries in Croatian, which both pages bundle as they bundle the other four, the Croatian checkout
+// wording and legal labels, the price note) moved the base of /try by +8,838 B JS and of /order by +3,953 B JS, measured on b9d23d0 against the tree with it (158,081 to
+// 166,919 B and 108,420 to 112,373 B; the CSS +26 B of both pages, the narrower language buttons of five languages, is left in the budget). It is words, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838, css: 10975 + 245 + 494 }, order: { js: 108723 + 414 + 110 + 3953, css: 10975 + 245 + 494 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

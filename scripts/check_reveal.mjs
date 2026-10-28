@@ -36,7 +36,7 @@ const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const dist = resolve(opt('--dist', join(ROOT, 'dist')));
 const only = opt('--only') ? new Set(opt('--only').split(',')) : null;
 const wants = (name) => !only || only.has(name);
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 const TOP = 92; // the stage's sticky offset (css/reveal.css --rv-top) = the page's scroll-padding-top
 
 const problems = [];

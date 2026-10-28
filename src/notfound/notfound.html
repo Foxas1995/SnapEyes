@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <!-- The page Vercel answers an unknown address with (status 404). Written by the build (vite.config.ts langPages) from this template and src/notfound/notfound.json
-         (the words in the four languages, linted by scripts/check_texts.mjs): no framework, no script file, the site's own fonts and look. The language is ?lang=, else the
+         (the words in the five languages, linted by scripts/check_texts.mjs): no framework, no script file, the site's own fonts and look. The language is ?lang=, else the
          visitor's earlier choice (snapeyes.lang), else the browser's; the way home keeps it. -->
     <style>
       @font-face { font-family: Cinzel; src: url('/assets/atelier/fonts/cinzel-var.woff2') format('woff2'); font-weight: 400 900; font-display: swap; }
@@ -48,7 +48,7 @@
     <script>
       (function () {
         var W = /*WORDS*/null;
-        var m = /[?&]lang=(en|de|lt|hu)(?:&|$)/.exec(location.search), l = m ? m[1] : null;
+        var m = /[?&]lang=(en|de|lt|hu|hr)(?:&|$)/.exec(location.search), l = m ? m[1] : null;
         try { if (!l) l = localStorage.getItem('snapeyes.lang'); } catch (e) { /* storage blocked: the browser's language */ }
         if (!W[l]) { var n = String(navigator.language || 'en').slice(0, 2).toLowerCase(); l = W[n] ? n : 'en'; }
         var w = W[l], d = document;

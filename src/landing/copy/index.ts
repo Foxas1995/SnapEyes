@@ -1,10 +1,10 @@
 // The copy of the new landing: ALL its words live in JSON, one file per language in this folder (en.json, de.json, lt.json,
-// hu.json), the same keys in each. English is bundled with the page; every other language is its own chunk, loaded when
+// hu.json, hr.json), the same keys in each. English is bundled with the page; every other language is its own chunk, loaded when
 // the page needs it (loadCopy). The shape of the words is the shape of en.json (./types.ts), so a component cannot read
 // a key that does not exist, and a language file that does not fit the type does not compile (asCopy below).
 //
 // A language's file has the keys and {tokens} of en.json, and scripts/check_texts.mjs checks that and the words (a dash, an
-// untranslated sentence, the legal labels, the honesty lines). All four languages of the site (src/shared/lang.ts LANGS) have
+// untranslated sentence, the legal labels, the honesty lines). All five languages of the site (src/shared/lang.ts LANGS) have
 // their translation here.
 //
 // A language that src/shared/lang.ts lists (LANGS) and has no file here fails the build twice: the loader table below is
@@ -29,6 +29,7 @@ const LOADERS: Record<Exclude<Lang, 'en'>, () => Promise<LandingCopy>> = {
   de: () => import('./de.json').then((m) => asCopy(m.default)),
   lt: () => import('./lt.json').then((m) => asCopy(m.default)),
   hu: () => import('./hu.json').then((m) => asCopy(m.default)),
+  hr: () => import('./hr.json').then((m) => asCopy(m.default)),
 };
 
 const loaded = new Map<Lang, LandingCopy>([['en', COPY_EN]]);

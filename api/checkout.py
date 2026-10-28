@@ -16,7 +16,7 @@ GET  /api/checkout
      largest eye count some style can be ordered for now (0 when nothing can). The landing page, the buy card and the picker print the number of eyes and
      the list of styles from here, never from a text; the terms of sale print neither (they are a build-time text). max_eyes stays the structural limit (8).
 POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the old string "Anna;Max"), date, opts {swap, rotate, look}, title, plan8, plan8_core,
-                    lang: "en"|"de"|"lt"|"hu", market, consent_digital: true}
+                    lang: "en"|"de"|"lt"|"hu"|"hr", market, consent_digital: true}
      market: one of the markets the site sells in ("eu" when missing; one that is not offered, or any other value:
      400). lang: the page's language when the market's edition of the legal texts has it (the Australian one: en, de),
      else "en": the order, its consent text and its emails are in that language. The server computes the price from eyes, style and market (a price or currency sent by the client is

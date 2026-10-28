@@ -115,21 +115,22 @@ SOLO = sorted((k for k, v in SR.STYLES.items() if v["group"] == "solo"), key=lam
 HARD = next(k for k in SOLO if SR.STYLES[k]["gate"] == "hard")                   # the style whose gate judges a set of eyes
 STYLES = [(k, max(2, 40 // (i + 1))) for i, k in enumerate(SOLO)]                # the first on the page is chosen the most
 ORDERS = []
-# the feedback box: the chips a visitor chooses (weights) and a few invented texts per chip, in the page's language (English where a language has none)
+# the feedback box: the chips a visitor chooses (weights) and a few invented texts per chip, in the page's language (English where a language has none;
+# Croatian has its texts although no Croatian visit is seeded yet)
 FB_RESULT = [("love", 30), ("likeness", 14), ("colour", 20), ("style", 12), ("price", 16), ("other", 8)]
 FB_RETAKE = [("unclear", 28), ("fine", 22), ("device", 14), ("only", 12), ("effort", 14), ("other", 10)]
 FB_TEXTS = {
-    "love": {"lt": ["Labai graži! Nepatikėjau, kad iš mano akies gali išeiti toks paveikslas.", "Ačiū, mano mamai tikrai patiks."], "en": ["Wow, thank you, my mum will love this."], "de": ["Wunderschön, danke!"], "hu": ["Nagyon szép lett, köszönöm."]},
-    "likeness": {"lt": ["Mano akis žalsva, o čia atrodo ruda.", "Rainelės raštas aplink vyzdį kitoks nei mano."], "en": ["The pattern around the pupil is not the same as mine."], "de": ["Die Form der Pupille stimmt nicht ganz."], "hu": ["A szivárványhártya mintája nem az enyém."]},
-    "colour": {"lt": ["Spalvos per šaltos, norėjau šiltesnių.", "Atrodo pilkesnė nei tikrovėje."], "en": ["Too grey, my eye is warm brown."], "de": ["Die Farben sind zu kühl."], "hu": ["A színek túl halványak."]},
-    "style": {"lt": ["Norėjau kažko ryškesnio, su auksu."], "en": ["I would like a darker background."], "de": ["Ich hätte gern etwas Dunkleres."], "hu": ["Sötétebb hátteret szerettem volna."]},
-    "price": {"lt": ["Per brangu dovanai, jei imti du."], "en": ["A bit more than I expected for a file."], "de": ["Teurer als erwartet."], "hu": ["Kicsit soknak találom az árat."]},
-    "other": {"lt": ["Ar galima užsakyti ant drobės?"], "en": ["Does it come as a print?"], "de": ["Gibt es das auch gedruckt?"], "hu": ["Nyomtatva is kapható?"]},
-    "unclear": {"lt": ["Nesupratau, kaip laikyti telefoną."], "en": ["I do not get what is wrong with the picture."], "de": ["Ich verstehe nicht, was falsch ist."], "hu": ["Nem értem, mi a baj a képpel."]},
-    "fine": {"lt": ["Nuotrauka man atrodo gera, kodėl atmesta?"], "en": ["The photo is sharp, I checked."], "de": ["Das Foto ist scharf."], "hu": ["A fotó éles, ellenőriztem."]},
-    "device": {"lt": ["Turiu seną telefoną."], "en": ["My camera has no zoom."], "de": ["Mein Handy hat keinen Zoom."], "hu": ["Nincs zoom a telefonomon."]},
-    "only": {"lt": ["Tai močiutės akis, kitos nuotraukos nėra."], "en": ["It is an old photo of my dad."], "de": ["Es ist ein altes Foto meines Vaters."], "hu": ["Ez egy régi fotó az apámról."]},
-    "effort": {"lt": ["Per ilgai užtrunka."], "en": ["Too many steps."], "de": ["Zu viele Schritte."], "hu": ["Túl sok lépés."]},
+    "love": {"lt": ["Labai graži! Nepatikėjau, kad iš mano akies gali išeiti toks paveikslas.", "Ačiū, mano mamai tikrai patiks."], "en": ["Wow, thank you, my mum will love this."], "de": ["Wunderschön, danke!"], "hu": ["Nagyon szép lett, köszönöm."], "hr": ["Prekrasno, hvala vam!"]},
+    "likeness": {"lt": ["Mano akis žalsva, o čia atrodo ruda.", "Rainelės raštas aplink vyzdį kitoks nei mano."], "en": ["The pattern around the pupil is not the same as mine."], "de": ["Die Form der Pupille stimmt nicht ganz."], "hu": ["A szivárványhártya mintája nem az enyém."], "hr": ["Uzorak oko zjenice nije isti kao moj."]},
+    "colour": {"lt": ["Spalvos per šaltos, norėjau šiltesnių.", "Atrodo pilkesnė nei tikrovėje."], "en": ["Too grey, my eye is warm brown."], "de": ["Die Farben sind zu kühl."], "hu": ["A színek túl halványak."], "hr": ["Boje su previše hladne."]},
+    "style": {"lt": ["Norėjau kažko ryškesnio, su auksu."], "en": ["I would like a darker background."], "de": ["Ich hätte gern etwas Dunkleres."], "hu": ["Sötétebb hátteret szerettem volna."], "hr": ["Htjela sam tamniju pozadinu."]},
+    "price": {"lt": ["Per brangu dovanai, jei imti du."], "en": ["A bit more than I expected for a file."], "de": ["Teurer als erwartet."], "hu": ["Kicsit soknak találom az árat."], "hr": ["Malo skuplje nego što sam očekivala."]},
+    "other": {"lt": ["Ar galima užsakyti ant drobės?"], "en": ["Does it come as a print?"], "de": ["Gibt es das auch gedruckt?"], "hu": ["Nyomtatva is kapható?"], "hr": ["Može li se dobiti i tiskano?"]},
+    "unclear": {"lt": ["Nesupratau, kaip laikyti telefoną."], "en": ["I do not get what is wrong with the picture."], "de": ["Ich verstehe nicht, was falsch ist."], "hu": ["Nem értem, mi a baj a képpel."], "hr": ["Ne razumijem što ne valja sa slikom."]},
+    "fine": {"lt": ["Nuotrauka man atrodo gera, kodėl atmesta?"], "en": ["The photo is sharp, I checked."], "de": ["Das Foto ist scharf."], "hu": ["A fotó éles, ellenőriztem."], "hr": ["Fotografija je oštra, provjerila sam."]},
+    "device": {"lt": ["Turiu seną telefoną."], "en": ["My camera has no zoom."], "de": ["Mein Handy hat keinen Zoom."], "hu": ["Nincs zoom a telefonomon."], "hr": ["Moj mobitel nema zum."]},
+    "only": {"lt": ["Tai močiutės akis, kitos nuotraukos nėra."], "en": ["It is an old photo of my dad."], "de": ["Es ist ein altes Foto meines Vaters."], "hu": ["Ez egy régi fotó az apámról."], "hr": ["To je stara fotografija mog tate."]},
+    "effort": {"lt": ["Per ilgai užtrunka."], "en": ["Too many steps."], "de": ["Zu viele Schritte."], "hu": ["Túl sok lépés."], "hr": ["Previše koraka."]},
 }
 
 

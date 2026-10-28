@@ -793,15 +793,16 @@ NEG_BATCH = [   # label, mutation(case, root), a sentence the check must say
     ("a second style in the black price class", pub(lambda s: s["solo.powder"].update(price_class="black")),
      "the black price class has 2 styles that are not legacy or planned (solo.clean, solo.powder)"),
     # work package 2: the words for the layouts
-    ("a layout word missing in one language", names(lambda n: n["single"].pop("hu")), 'layout "single": it must have a word in exactly en, de, lt, hu'),
-    ("a layout word in a fifth language", names(lambda n: n["single"].update(fr="Seul")), 'layout "single": it must have a word in exactly en, de, lt, hu'),
+    ("a layout word missing in one language", names(lambda n: n["single"].pop("hu")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr'),
+    ("a layout word missing in Croatian", names(lambda n: n["single"].pop("hr")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr'),
+    ("a layout word in a sixth language", names(lambda n: n["single"].update(fr="Seul")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr'),
     ("an empty layout word", names(lambda n: n["duo"].update(lt="")), 'layout "duo": the lt word must be a short text'),
     ("a layout word with a space at its end", names(lambda n: n["duo"].update(de="Nebeneinander ")), 'layout "duo": the de word must be a short text'),
     ("a layout id that is not lower case", names(lambda n: n.update(Spiral=n["duo"])), 'layout "Spiral": a layout id is lower case letters'),
     ("a layout a style takes that has no words", names(lambda n: n.pop("pair")), 'layouts["2"] must be a list of distinct layout ids'),
-    ("words for a layout no style takes", names(lambda n: n.update(spiral={"en": "Spiral", "de": "Spirale", "lt": "Spirale", "hu": "Spir\u00e1l"})),
+    ("words for a layout no style takes", names(lambda n: n.update(spiral={"en": "Spiral", "de": "Spirale", "lt": "Spirale", "hu": "Spir\u00e1l", "hr": "Spirala"})),
      'has words for the layout "spiral", which no style of api/_lib/styles_registry.py takes'),
-    ("a LAYOUT_NAMES literal that is not JSON any more", lambda c, r: sub(c, r, "api/_lib/layout_names.py", '"hu": "Galaxis"}\n}', '"hu": "Galaxis"},\n}'),
+    ("a LAYOUT_NAMES literal that is not JSON any more", lambda c, r: sub(c, r, "api/_lib/layout_names.py", '"hr": "Galaksija"}\n}', '"hr": "Galaksija"},\n}'),
      "the LAYOUT_NAMES literal cannot be read as JSON"),
     ("a second layout table in a Python file", lambda c, r: append(r, "api/_lib/pay.py", '\nWORDS = {"single": "Single", "duo": "Side by side"}\n'),
      "api/_lib/pay.py: a table that names layouts again"),
@@ -1289,9 +1290,9 @@ def text_probs(root):
 
 
 def add_entry(root, line):
-    """One more key before each `save:` of the four /try dictionaries (English and German in copy.ts, Lithuanian, Hungarian). The marker was `namesPlaceholder:`
+    """One more key before each `save:` of the five /try dictionaries (English and German in copy.ts, Lithuanian, Hungarian, Croatian). The marker was `namesPlaceholder:`
     until WP11 replaced that one free line by the names form (src/try/Words.tsx); `save:` (result.save) is one key per dictionary as well."""
-    for rel in ("src/try/copy.ts", "src/try/copy.lt.ts", "src/try/copy.hu.ts"):
+    for rel in ("src/try/copy.ts", "src/try/copy.lt.ts", "src/try/copy.hu.ts", "src/try/copy.hr.ts"):
         path = os.path.join(root, *rel.split("/"))
         text = open(path, encoding="utf-8", newline="").read()
         text, k = re.subn(r"^(\s*)save: ", lambda m: f"{m.group(1)}{line}\n{m.group(1)}save: ", text, flags=re.M)
@@ -1354,6 +1355,7 @@ section("8. WP2: the words for the layouts are one table: golden strings in four
 LN_TEXT = read("api/_lib/layout_names.py")
 ln_lit = json.loads(LN_TEXT[LN_TEXT.index("\nLAYOUT_NAMES = {") + len("\nLAYOUT_NAMES = "):])
 LANGS4 = ("en", "de", "lt", "hu")
+LANGS5 = LANGS4 + ("hr",)   # the languages every layout has a word in since Croatian (2026-10-28); the old words below are the four of before
 OLD_WORDS = {   # the four tables of the e-mails and the eight dictionaries of the pages, as they stood on 1d58fbf: en, de, lt, hu
     "single": ("Single", "Einzeln", "Viena akis", "Egy szem"),
     "duo": ("Side by side", "Nebeneinander", "Greta", "Egymás mellett"),
@@ -1376,8 +1378,8 @@ SPEC_WORDS = {  # the draft words of the integration specification 5.4 (PRODUCT.
 taken_ids = {x for d in R.STYLES.values() for lst in d["layouts"].values() for x in lst}
 check("layout_names.py: the literal is plain JSON and is what Python imports; UTF-8 words (not ASCII), no en or em dash",
       ln_lit == LN.LAYOUT_NAMES == C.LAYOUT_NAMES and any(ord(ch) > 127 for ch in LN_TEXT) and not re.search(DASH, LN_TEXT))
-check("17 layout ids (orbit since 2026-10-20) with exactly the four languages each, short words with no space at either end; the ids are exactly the layouts the registry's styles take",
-      len(ln_lit) == 17 and set(ln_lit) == taken_ids and all(set(v) == set(LANGS4) and all(isinstance(w, str) and w == w.strip() and 0 < len(w) <= 40 for w in v.values()) for v in ln_lit.values())
+check("17 layout ids (orbit since 2026-10-20) with exactly the five languages each (Croatian since 2026-10-28), short words with no space at either end; the ids are exactly the layouts the registry's styles take",
+      len(ln_lit) == 17 and set(ln_lit) == taken_ids and all(set(v) == set(LANGS5) and all(isinstance(w, str) and w == w.strip() and 0 < len(w) <= 40 for w in v.values()) for v in ln_lit.values())
       and C.layout_ids() == tuple(ln_lit), (sorted(set(ln_lit) ^ taken_ids), len(ln_lit)))
 check("the words of the seven legacy layouts are the ones the e-mails and the pages always printed, 7 ids x 4 languages (28 strings)",
       all(C.layout_name(lg, i) == OLD_WORDS[i][k] for i in OLD_WORDS for k, lg in enumerate(LANGS4)) and len(OLD_WORDS) * 4 == 28,
@@ -1465,7 +1467,7 @@ rc, so, se = run_node([PROBE2, REPO])
 p2 = last_json(so)
 check("the node probe loads layouts.ts, styles.ts, the /try and /order copy and multi.ts", p2 is not None, (rc, se[-600:], so[-300:]))
 if p2:
-    check("src/shared/layouts.ts reads the very table the server reads (16 ids x 4 languages), in the file's order", p2["names"] == C.LAYOUT_NAMES and p2["ids"] == list(C.layout_ids()) and p2["langs"] == list(LANGS4))
+    check("src/shared/layouts.ts reads the very table the server reads (17 ids x 5 languages), in the file's order", p2["names"] == C.LAYOUT_NAMES and p2["ids"] == list(C.layout_ids()) and p2["langs"] == list(LANGS5))
     ids_ = p2["ids"] + ["spiral", "__proto__", "constructor", "toString"]
     lk_bad = []
     for lg in ("en", "de", "lt", "hu", "xx", ""):
@@ -1488,7 +1490,7 @@ if p2:
           p2["canvas"] == [{"w": 1024, "h": 1024}, {"w": 1024, "h": 683}, {"w": 1024, "h": 683}, {"w": 1024, "h": 512}, {"w": 819, "h": 1024},
                            {"w": 1024, "h": 439}, {"w": 819, "h": 1024}, {"w": 819, "h": 1024}, {"w": 819, "h": 1024}], p2["canvas"])
 rc, so, se = run_node(["scripts/check_styles.mjs"])
-check("the build log line says how many layouts are named in four languages", rc == 0 and "17 layouts named in en, de, lt, hu" in so, (rc, so, se[-300:]))
+check("the build log line says how many layouts are named in five languages", rc == 0 and "17 layouts named in en, de, lt, hu, hr" in so, (rc, so, se[-300:]))
 
 # --- the text check reads the layout words: a dash, an English word in Lithuanian, a German word in Hungarian
 for label, case_fn, needle in [

@@ -15,7 +15,7 @@ import { adoptMarket, currentMarket, linkMarket, withMarket, type Market } from 
 import type { Lang } from './lang';
 
 /** The languages the legal texts, the checkout wording and the emails exist in (src/shared/lang.ts): English, German,
- *  Lithuanian and Hungarian. Which of them an edition has is EDITION_LANGS. */
+ *  Lithuanian, Hungarian and Croatian (the EU edition only, 2026-10-28). Which of them an edition has is EDITION_LANGS. */
 export type LegalLang = Lang;
 
 /** The date every legal page prints as "Last updated" (terms, privacy, withdrawal, imprint), and the pack /legal/order-mail.json that the confirmation
@@ -24,8 +24,10 @@ export type LegalLang = Lang;
  *  consent version (WITHDRAWAL_CONSENT_VERSION), which moves only when the withdrawal-waiver wording does. A change of the set of live styles needs no new
  *  date: no legal text prints a list of styles or a number of eyes (scripts/check_styles.mjs item 7 holds it). 2026-10-06, work package WP18 (the catalogue
  *  switch): the AI-made material sentence (src/shared/aiMaterial.ts) entered the terms of every edition and language in the cutover deploy. 2026-10-20: the privacy
- *  policy (every edition and language) says what the anonymous counter keeps (api/_lib/counter.py) and where the country hint goes; no other legal text moved. */
-export const LEGAL_UPDATED = '2026-10-20';
+ *  policy (every edition and language) says what the anonymous counter keeps (api/_lib/counter.py) and where the country hint goes; no other legal text moved.
+ *  2026-10-28: the Croatian texts of the EU edition (src/legal/docs/*.hr.ts), Croatian named as a contract language in every terms text, and the
+ *  legal notice's example images described as our own eye (no founder named). */
+export const LEGAL_UPDATED = '2026-10-28';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right
@@ -45,7 +47,7 @@ export function legalEdition(m: Market = currentMarket()): LegalEdition {
  *  Consumer Law text is not translated into Lithuanian or Hungarian), so a page of the Australian market never shows
  *  those two languages (src/shared/lang.ts langFor). api/_lib/pay.py EDITION_LANGS is the same table. */
 export const EDITION_LANGS: Readonly<Record<LegalEdition, readonly LegalLang[]>> = {
-  eu: ['en', 'de', 'lt', 'hu'],
+  eu: ['en', 'de', 'lt', 'hu', 'hr'],
   au: ['en', 'de'],
   hu: ['en', 'de', 'lt', 'hu'],
 };
@@ -74,11 +76,11 @@ export function adoptLinkedEdition(): void {
   if (m !== null && legalEdition(m) !== 'eu') adoptMarket(m);
 }
 
-/** A legal date as the language writes it: German "30.09.2026", Hungarian "2026. 09. 30.", English and Lithuanian keep
+/** A legal date as the language writes it: German "30.09.2026", Hungarian "2026. 09. 30.", Croatian "30. 9. 2026.", English and Lithuanian keep
  *  the ISO order ("2026-09-30": Lithuanian writes dates that way, LST ISO 8601). */
 export function formatLegalDate(iso: string, lang: LegalLang): string {
   const [y, m, d] = iso.split('-');
-  return lang === 'de' ? `${d}.${m}.${y}` : lang === 'hu' ? `${y}. ${m}. ${d}.` : iso;
+  return lang === 'de' ? `${d}.${m}.${y}` : lang === 'hu' ? `${y}. ${m}. ${d}.` : lang === 'hr' ? `${+d}. ${+m}. ${y}.` : iso;
 }
 
 export type LegalDocId = 'privacy' | 'terms' | 'withdrawal' | 'imprint';
@@ -106,6 +108,8 @@ export const LEGAL_LABELS: Record<LegalLang, Record<LegalDocId, string> & { nav:
   // Terms of sale = "Pardavimo sąlygos", the legal notice = "Rekvizitai" (the Lithuanian name of a company-details page)
   lt: { privacy: 'Privatumo politika', terms: 'Pardavimo sąlygos', withdrawal: 'Teisė atsisakyti sutarties', imprint: 'Rekvizitai', nav: 'Teisinė informacija' },
   hu: { privacy: 'Adatkezelési tájékoztató', terms: 'ÁSZF', withdrawal: 'Elállási tájékoztató', imprint: 'Impresszum', nav: 'Jogi információk' },
+  // Croatian: the terms are "Opći uvjeti prodaje", the company-details page "Impresum" (the Croatian spelling)
+  hr: { privacy: 'Politika privatnosti', terms: 'Opći uvjeti prodaje', withdrawal: 'Pravo na jednostrani raskid ugovora', imprint: 'Impresum', nav: 'Pravne informacije' },
 };
 
 // The service that sends the order emails (the order page link and the confirmation): api/_lib/pay.py send_mail,
@@ -133,6 +137,8 @@ export const WITHDRAWAL_ONLINE: Record<LegalLang, WithdrawalOnline> = {
   // "elállás megerősítése")
   lt: { button: 'Atsisakyti sutarties čia', confirm: 'Patvirtinti sutarties atsisakymą' },
   hu: { button: 'Elállás a szerződéstől', confirm: 'Elállás megerősítése' },
+  // Croatia, Zakon o zaštiti potrošača čl. 81.a st. 2. and 5. (NN 59/26): "raskid ugovora", "potvrditi raskid ugovora"
+  hr: { button: 'Raskid ugovora', confirm: 'Potvrditi raskid ugovora' },
 };
 
 /** Where the function is: the order page in its withdrawal mode (src/order/withdraw.ts withdrawHref), which never
@@ -164,9 +170,9 @@ export interface LegalPart { text: string; doc?: LegalDocId; section?: string }
 // email confirms it (the durable-medium confirmation of Art. 16(m)(iii) Directive 2011/83/EU and § 356 Abs. 5 Nr. 3
 // BGB). Change both files together and bump the version (2026-09-30.1: the Australian text added, the EU text as it
 // was; 2026-09-30.2: the Lithuanian and the Hungarian texts added, the English, German and Australian texts as they
-// were). The build refuses a consent text that changed under the same version, and a version without its fingerprint
+// were; 2026-10-28.1: the Croatian text added, every other text as it was). The build refuses a consent text that changed under the same version, and a version without its fingerprint
 // (scripts/check_texts.mjs CONSENT_FINGERPRINTS: the check prints the new one).
-export const WITHDRAWAL_CONSENT_VERSION = '2026-09-30.2';
+export const WITHDRAWAL_CONSENT_VERSION = '2026-10-28.1';
 
 export interface CheckoutLegal {
   /** The withdrawal checkbox: unticked by default and required before the payment page opens. Art. 16(m)
@@ -270,6 +276,29 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     photoNotice: [
       { text: 'Csak a saját szemedet fotózd le, vagy olyan személy szemét, aki ehhez hozzájárult (gyermek esetén a szülő vagy a gondviselő). A fotódat kizárólag az alkotásod elkészítéséhez használjuk. ' },
       { text: 'Adatkezelési tájékoztató', doc: 'privacy' },
+    ],
+  },
+  // Croatian: Zakon o zaštiti potrošača (Directive 2011/83/EU Art. 16(m)): the express prior consent to start AND the acknowledgement
+  // that the right of unilateral termination is lost once making has started. The buy button carries the statutory order button
+  // wording "narudžba s obvezom plaćanja" (Art. 8(2)); the click that binds is Stripe's pay button, and api/_lib/pay_hr.py
+  // SUBMIT_NOTE_HR stands above it. Identical to api/_lib/pay.py CONSENT_TEXT["hr"].
+  hr: {
+    withdrawalConsent:
+      'Izričito pristajem da SnapEyes odmah, prije isteka roka za jednostrani raskid ugovora, počne izrađivati moje digitalno umjetničko djelo. Znam da time gubim pravo na jednostrani raskid ugovora čim izrada započne.',
+    withdrawalConsentMissing: 'Označite kućicu iznad: vaše umjetničko djelo možemo početi izrađivati tek kada pristanete.',
+    acceptance: [
+      { text: 'Narudžbom prihvaćate naše ' },
+      { text: 'Opće uvjete prodaje', doc: 'terms' },
+      { text: '. Pročitajte i našu ' },
+      { text: 'Politiku privatnosti', doc: 'privacy' },
+      { text: ' i ' },
+      { text: 'obavijest o pravu na jednostrani raskid ugovora', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+    continueButton: 'Narudžba s obvezom plaćanja',
+    photoNotice: [
+      { text: 'Fotografirajte samo svoje oko ili oko osobe koja je na to pristala (za dijete: roditelj ili skrbnik). Vaša se fotografija koristi samo za izradu vašeg umjetničkog djela. ' },
+      { text: 'Politika privatnosti', doc: 'privacy' },
     ],
   },
 };

@@ -42,9 +42,9 @@ const PRICE_FILES = [
   'src/landing/StyleGallery.tsx', 'src/landing/Faq.tsx', 'src/landing/Footer.tsx',
   'src/try/BuyCard.tsx', 'src/try/multi.ts', 'src/try/checkout.ts', 'src/try/copy.ts',
   'src/order/api.ts', 'src/order/copy.ts', 'src/order/OrderApp.tsx', 'src/order/WithdrawPanel.tsx', 'src/order/withdraw.ts',
-  'src/legal/facts.ts', 'src/legal/docs/terms.ts', 'src/legal/docs/terms.lt.ts', 'src/legal/docs/terms.hu.ts', 'src/legal/plain.ts',
-  'src/landing/copy.lt.ts', 'src/landing/copy.hu.ts', 'src/try/copy.lt.ts', 'src/try/copy.hu.ts', 'src/order/copy.lt.ts',
-  'src/order/copy.hu.ts', 'api/_lib/pay_lt.py', 'api/_lib/pay_hu.py', 'api/_lib/withdraw_lt.py', 'api/_lib/withdraw_hu.py',
+  'src/legal/facts.ts', 'src/legal/docs/terms.ts', 'src/legal/docs/terms.lt.ts', 'src/legal/docs/terms.hu.ts', 'src/legal/docs/terms.hr.ts', 'src/legal/plain.ts',
+  'src/landing/copy.lt.ts', 'src/landing/copy.hu.ts', 'src/try/copy.lt.ts', 'src/try/copy.hu.ts', 'src/try/copy.hr.ts', 'src/landing/copy.hr.ts', 'src/order/copy.lt.ts',
+  'src/order/copy.hu.ts', 'src/order/copy.hr.ts', 'api/_lib/pay_lt.py', 'api/_lib/pay_hu.py', 'api/_lib/pay_hr.py', 'api/_lib/withdraw_lt.py', 'api/_lib/withdraw_hu.py', 'api/_lib/withdraw_hr.py',
   'src/admin/format.ts', 'src/admin/agg.ts', 'src/admin/Summary.tsx', 'src/admin/Orders.tsx', 'src/admin/OrderDetail.tsx',
   'src/admin/Tests.tsx', 'api/_lib/abtest.py', 'src/shared/pricing.ts', 'src/shared/usePrices.ts', 'src/try/priceNote.ts',
   'src/shared/markets.ts', 'src/shared/legal.ts',
@@ -328,7 +328,7 @@ function checkCopies(root, markets, out) {
 // the files of src/landing that are not the landing's own sections (the facts of the seller, the words other pages still use, the
 // language and ordering state, the primitives the legal pages import): not governed by the rules above
 export const OLD_LANDING_FILES = new Set([
-  'config.ts', 'copy.hu.ts', 'copy.lt.ts', 'copy.ts', 'lang.tsx', 'ordering.ts', 'ui.tsx',
+  'config.ts', 'copy.hu.ts', 'copy.hr.ts', 'copy.lt.ts', 'copy.ts', 'lang.tsx', 'ordering.ts', 'ui.tsx',
 ]);
 
 // the standard ladder may be read by nothing in the new landing
@@ -366,7 +366,7 @@ function checkLandingSources(root, out) {
   }
 }
 
-const LANDING_LANGS = ['en', 'de', 'lt', 'hu'];
+const LANDING_LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 
 /** Every text the page can print for a ladder, with the amount it must show (in Stripe's smallest unit). */
 function landingTexts(p, L, styles) {

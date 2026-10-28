@@ -63,7 +63,7 @@ const quick = flag('--quick');
 const only = opt('--only') ? new Set(opt('--only').split(',')) : null;
 const wants = (name) => !only || only.has(name);
 
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 const COPY = Object.fromEntries(LANGS.map((l) => [l, JSON.parse(readFileSync(join(ROOT, `src/landing/copy/${l}.json`), 'utf8'))]));
 const BANNED = /ready to print|print[- ]ready|druckfertig|druckbereit|100 ?(percent|%|prozent)|museum[- ]?glass|museumsglas/i;
 const WIDTHS = quick ? [280, 375, 1280] : [280, 320, 375, 768, 1024, 1280];
@@ -335,7 +335,7 @@ async function checkFocus() {
   if (!(v1 > v0 && v2 === 100 && v3 === 0)) fail('focus', `the Reveal range answers ArrowRight ${v0} -> ${v1}, End ${v2}, Home ${v3}`);
   else pass('focus', 'the Reveal range is a native range: ArrowRight, End, Home work');
   // language buttons
-  for (const [from, to] of [['en', 'de'], ['de', 'lt'], ['lt', 'hu'], ['hu', 'en']]) {
+  for (const [from, to] of [['en', 'de'], ['de', 'lt'], ['lt', 'hu'], ['hu', 'hr'], ['hr', 'en']]) {
     await page.eval("window.scrollTo({ top: 0, behavior: 'instant' })");
     await page.eval(`document.querySelector('#langSeg button[lang=${to}]').focus(); document.activeElement.click()`);
     await sleep(900);
@@ -435,7 +435,7 @@ async function checkOverflow() {
 // ---------------------------------------------------------------------------------------------------- links
 async function checkLinks() {
   console.log('links');
-  const cases = [['en', ''], ['de', ''], ['lt', ''], ['hu', ''], ['en', 'm=au'], ['de', 'm=au'], ['hu', 'm=hu'], ['lt', 'm=lt']];
+  const cases = [['en', ''], ['de', ''], ['lt', ''], ['hu', ''], ['hr', ''], ['en', 'm=au'], ['de', 'm=au'], ['hu', 'm=hu'], ['lt', 'm=lt']];
   for (const [lang, m] of quick ? cases.slice(0, 5) : cases) {
     const page = await open({ lang, query: m });
     const r = JSON.parse(await page.eval(`JSON.stringify({ legal: [...document.querySelectorAll('#legalNav a')].map((a) => a.getAttribute('href')), try: [...document.querySelectorAll('a.lp-btn-gold, a.lp-btn-line')].map((a) => a.getAttribute('href')).filter((h) => !h.startsWith('mailto:')) })`));
@@ -726,6 +726,7 @@ async function checkOffers() {
   const cases = [
     ['en', 'au', true], ['de', 'au', true], ['lt', 'au', false], ['hu', 'au', false],
     ['en', 'hu', true], ['lt', 'hu', true], ['hu', 'hu', true],
+    ['hr', 'au', false], ['hr', 'hu', false],   // Croatian is in the EU edition only: neither the Australian nor the Hungarian edition has its texts
   ];
   for (const [lang, suggest, want] of cases) {
     stub.suggest = suggest;

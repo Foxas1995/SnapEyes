@@ -192,12 +192,22 @@ HU = {2026: "01-01 03-15 04-03 04-06 05-01 05-25 08-20 10-23 11-01 12-25 12-26",
       2027: "01-01 03-15 03-26 03-29 05-01 05-17 08-20 10-23 11-01 12-25 12-26",
       2028: "01-01 03-15 04-14 04-17 05-01 06-05 08-20 10-23 11-01 12-25 12-26"}
 HU_NEW = "03-15 08-20 10-23"
+# 2026-10-28 (Croatian, the EU edition): withdraw.holidays() also counts Croatia's national public holidays (Zakon o blagdanima, spomendanima i
+# neradnim danima u Republici Hrvatskoj, NN 110/19), typed by hand the same way, Easter Sunday and Monday and Corpus Christi (Easter + 60) included.
+# Against LT + DE + HU exactly six days a year are new: 6 Jan, 30 May, Corpus Christi, 22 Jun, 5 Aug, 18 Nov (HR_NEW, pinned below).
+HR = {2026: "01-01 01-06 04-05 04-06 05-01 05-30 06-04 06-22 08-05 08-15 11-01 11-18 12-25 12-26",
+      2027: "01-01 01-06 03-28 03-29 05-01 05-27 05-30 06-22 08-05 08-15 11-01 11-18 12-25 12-26",
+      2028: "01-01 01-06 04-16 04-17 05-01 05-30 06-15 06-22 08-05 08-15 11-01 11-18 12-25 12-26"}
+HR_NEW = {2026: "01-06 05-30 06-04 06-22 08-05 11-18", 2027: "01-06 05-27 05-30 06-22 08-05 11-18", 2028: "01-06 05-30 06-15 06-22 08-05 11-18"}
 want_ltde = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y]).split()}) for y in LT}
-want = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y] + " " + HU[y]).split()}) for y in LT}
-hu_new_ok = all(sorted(set(want[y]) - set(want_ltde[y])) == sorted(f"{y}-{md}" for md in HU_NEW.split()) for y in LT)
+want_ltdehu = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y] + " " + HU[y]).split()}) for y in LT}
+want = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y] + " " + HU[y] + " " + HR[y]).split()}) for y in LT}
+hu_new_ok = all(sorted(set(want_ltdehu[y]) - set(want_ltde[y])) == sorted(f"{y}-{md}" for md in HU_NEW.split()) for y in LT)
+hr_new_ok = all(sorted(set(want[y]) - set(want_ltdehu[y])) == sorted(f"{y}-{md}" for md in HR_NEW[y].split()) for y in LT)
 got = {y: sorted(d.isoformat() for d in W.holidays(y)) for y in LT}
-check("P1 the holidays of 2026 to 2028 are exactly Lithuania's and Germany's national ones" " - 0930: plus Hungary's 15 Mar, 20 Aug and 23 Oct (30efee7)", got == want and hu_new_ok,
-      ({y: (sorted(set(got[y]) ^ set(want[y]))) for y in LT}, "hu_new_ok", hu_new_ok))
+check("P1 the holidays of 2026 to 2028 are exactly Lithuania's and Germany's national ones" " - 0930: plus Hungary's 15 Mar, 20 Aug and 23 Oct (30efee7)"
+      " - 1028: plus Croatia's 6 Jan, 30 May, Corpus Christi, 22 Jun, 5 Aug and 18 Nov", got == want and hu_new_ok and hr_new_ok,
+      ({y: (sorted(set(got[y]) ^ set(want[y]))) for y in LT}, "hu_new_ok", hu_new_ok, "hr_new_ok", hr_new_ok))
 EASTER = {2026: "04-05", 2027: "03-28", 2028: "04-16", 2029: "04-01", 2030: "04-21", 2031: "04-13", 2032: "03-28",
           2033: "04-17", 2034: "04-09", 2035: "03-25", 2038: "04-25", 2285: "03-22"}
 check("P2 Easter by the computus matches the known dates (2026 to 2035, the latest 2038, the earliest 2285)",

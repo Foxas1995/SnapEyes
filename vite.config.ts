@@ -109,7 +109,7 @@ function assetCheck(): Plugin {
 // bar, the header and the hero, with the LCP picture already preloaded, before a line of script has run.
 //   * lp:shell (body): the first screen of the default market, rendered by the very components the live page uses
 //     (src/landing/SiteTopView.tsx, HeroView.tsx, called by src/landing/shell/render.tsx), inside <div id="shell">, in English; the
-//     German, Lithuanian and Hungarian ones follow as <template id="tpl-xx"> and a swap script puts the visitor's language in place
+//     German, Lithuanian, Hungarian and Croatian ones follow as <template id="tpl-xx"> and a swap script puts the visitor's language in place
 //     before the first paint. src/main.tsx takes the shell away the moment React has put the page in its place (createRoot, not
 //     hydrateRoot: the live page renders more than the first screen, so there is nothing to hydrate against). The prices in it are
 //     held back (invisible) like every price of the page until the server has answered.
@@ -205,7 +205,7 @@ function lateMainScript(): Plugin {
         // the chunk of each language's words (src/landing/copy/<lang>.json, loaded by the page on demand): the loader starts the visitor's own
         // one together with the page's script, instead of when the page's script asks for it a round trip later
         const langChunks: Record<string, string> = {}
-        for (const l of ['de', 'lt', 'hu']) {
+        for (const l of ['de', 'lt', 'hu', 'hr']) {
           const chunk = Object.values(ctx.bundle).find((c) => c.type === 'chunk' && (c.facadeModuleId ?? '').split('\\').join('/').endsWith(`/landing/copy/${l}.json`))
           if (chunk) langChunks[l] = `/${chunk.fileName}`
         }
@@ -220,9 +220,9 @@ function lateMainScript(): Plugin {
 }
 
 // The landing page in each of its languages (scripts/lib/langheads.mjs has the why). A crawler does not run the page's script, so the
-// share tags of the HTML it is sent are the whole card: this writes one HTML file per language under dist/lp/ (en, de, lt, hu), each with
+// share tags of the HTML it is sent are the whole card: this writes one HTML file per language under dist/lp/ (en, de, lt, hu, hr), each with
 // its own title, description, og:*, twitter:*, og:locale, og:url, canonical, share picture and <html lang>, made from the final index.html,
-// and takes dist/index.html away. vercel.json rewrites / (?lang=de, ?lang=lt, ?lang=hu, the market's own language, else English) to the right
+// and takes dist/index.html away. vercel.json rewrites / (?lang=de, ?lang=lt, ?lang=hu, ?lang=hr, the market's own language, else English) to the right
 // file. There must be no dist/index.html: Vercel looks in the file system BEFORE the rewrites, so an index.html would answer / itself and
 // the rewrites for the language links would never fire. The checks that read the landing's HTML read dist/lp/en.html (scripts/lib/langheads.mjs).
 function langPages(): Plugin {
@@ -240,7 +240,7 @@ function langPages(): Plugin {
       mkdirSync(join(dir, heads.LANDING_DIR), { recursive: true })
       for (const l of lang.LANGS as string[]) writeFileSync(join(dir, heads.landingFile(l)), heads.editionOf(final, heads.headData(process.cwd(), lang, l)))
       rmSync(source)
-      // the page of an unknown address (Vercel serves dist/404.html with status 404): the template and the words in the four languages (src/notfound), no framework
+      // the page of an unknown address (Vercel serves dist/404.html with status 404): the template and the words in the five languages (src/notfound), no framework
       const words = JSON.stringify(JSON.parse(readFileSync('./src/notfound/notfound.json', 'utf8')))
       writeFileSync(join(dir, '404.html'), readFileSync('./src/notfound/notfound.html', 'utf8').replace('/*WORDS*/null', () => words))
     },

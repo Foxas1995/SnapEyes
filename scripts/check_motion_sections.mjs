@@ -37,7 +37,7 @@ const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const dist = resolve(opt('--dist', join(ROOT, 'dist')));
 const only = opt('--only') ? new Set(opt('--only').split(',')) : null;
 const wants = (name) => !only || only.has(name);
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 
 const problems = [];
 const fail = (check, msg) => { problems.push(`${check}: ${msg}`); console.log(`  FAIL ${check}: ${msg}`); };
@@ -225,7 +225,7 @@ async function checkHow() {
   await sleep(500);
   let c = JSON.parse(await cur());
   expect('how', c.i === 0 && c.n === 1, `rail at rest: the current step is ${c.i} (${c.n} marked), wanted 0`);
-  expect('how', c.num[0] === 'rgb(196, 154, 89)' && c.num[1].endsWith('0.6)') && c.h3[0] === 'rgb(255, 255, 255)' && c.h3[1].includes('0.5)'), `rail at rest: the tones are not current gold and white against 0.6 gold and the floor: ${JSON.stringify(c)}`);
+  expect('how', c.num[0] === 'rgb(196, 154, 89)' && c.num[1].endsWith('0.8)') && c.h3[0] === 'rgb(255, 255, 255)' && c.h3[1].includes('0.5)'), `rail at rest: the tones are not current gold and white against 0.8 gold (4.9:1, 45ac1d7) and the floor: ${JSON.stringify(c)}`);
   await page.eval("document.getElementById('steps').scrollTo({ left: document.querySelector('.lp-step:nth-child(2)').offsetLeft - 16, behavior: 'instant' })");
   await sleep(700);
   c = JSON.parse(await cur());

@@ -7,8 +7,8 @@
 // Which layout ids a style takes for each number of eyes is the registry's (src/shared/styles.ts layoutsFor), not this file's.
 import LAYOUT_NAMES_SOURCE from '../../api/_lib/layout_names.py?raw';
 
-/** The languages every layout has a word in (the site's four: src/shared/lang.ts). */
-export const LAYOUT_LANGS = ['en', 'de', 'lt', 'hu'] as const;
+/** The languages every layout has a word in (the site's five: src/shared/lang.ts). */
+export const LAYOUT_LANGS = ['en', 'de', 'lt', 'hu', 'hr'] as const;
 export type LayoutWords = Record<(typeof LAYOUT_LANGS)[number], string>;
 
 /** The LAYOUT_NAMES literal of api/_lib/layout_names.py's text (plain JSON, it ends the file). scripts/styles_source.mjs parses it the same
@@ -19,7 +19,7 @@ export function parseLayoutNamesSource(src: string): Record<string, LayoutWords>
   return JSON.parse(src.slice(at + 'LAYOUT_NAMES = '.length)) as Record<string, LayoutWords>;
 }
 
-/** {layout id: {en, de, lt, hu}} of every layout any style takes: the legacy ids that old orders carry and the v3 ones. */
+/** {layout id: {en, de, lt, hu, hr}} of every layout any style takes: the legacy ids that old orders carry and the v3 ones. */
 export const LAYOUT_NAMES: Readonly<Record<string, LayoutWords>> = parseLayoutNamesSource(LAYOUT_NAMES_SOURCE);
 /** Every layout id that has a word, in the order of the file. */
 export const LAYOUT_IDS: readonly string[] = Object.keys(LAYOUT_NAMES);

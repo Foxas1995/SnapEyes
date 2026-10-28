@@ -63,7 +63,7 @@ _NAME = re.compile(r"^[0-9]{6}-[0-9a-f]{12}[.]json$")
 # the text filter (clean_text): contact details, links, markup and noise are not kept
 _MAILHOST = re.compile(r"(gmail|googlemail|hotmail|outlook|yahoo|icloud|proton|gmx|t-online|freenet|mail[.]ru|yandex|abv[.]bg|inbox[.]lt|one[.]lt)", re.I)
 _PHONE = re.compile(r"(?<![0-9A-Za-z])(?:[+]|00)?[0-9](?:[ ().-]?[0-9]){7,}")
-_LINK = re.compile(r"(?:https?:|ftp:|www[.]|//)|[A-Za-z0-9-]+[.](?:com|net|org|info|biz|io|ru|cn|xyz|top|shop|site|online|club|link|click|lt|de|hu|eu|co|me|ly|app|dev|ee|lv|pl)(?![A-Za-z0-9])", re.I)
+_LINK = re.compile(r"(?:https?:|ftp:|www[.]|//)|[A-Za-z0-9-]+[.](?:com|net|org|info|biz|io|ru|cn|xyz|top|shop|site|online|club|link|click|lt|de|hu|hr|eu|co|me|ly|app|dev|ee|lv|pl)(?![A-Za-z0-9])", re.I)
 _MARKUP = re.compile(r"[<>{}]|&#?[A-Za-z0-9]+;|javascript:|union[ ]+select|select[ ]+.{1,40}[ ]+from", re.I)
 _REPEAT = re.compile(r"(.)\1{7,}|\b(\w+)(?:[ ]+\2\b){5,}", re.I)
 

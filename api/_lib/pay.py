@@ -120,7 +120,7 @@ from . import abtest
 from . import counter
 from . import words as W
 from .markets import MARKETS, DEFAULT_MARKET
-from . import pay_lt, pay_hu
+from . import pay_lt, pay_hu, pay_hr
 
 STRIPE_API = "https://api.stripe.com"
 RESEND_API = "https://api.resend.com"
@@ -133,7 +133,7 @@ MAIL_FROM_DEFAULT = "SnapEyes <info@snapeyes.com>"
 # the pack cannot be read.
 SELLER = {"en": 'MB "Portretizuokis", company code 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Lithuania',
           "de": "MB „Portretizuokis“, Unternehmenscode 305605052, Gedimino g. 22A-14, LT-44319 Kaunas, Litauen",
-          "lt": pay_lt.SELLER_LT, "hu": pay_hu.SELLER_HU}
+          "lt": pay_lt.SELLER_LT, "hu": pay_hu.SELLER_HU, "hr": pay_hr.SELLER_HR}
 LEGAL_PACK_PATH = "/legal/order-mail.json"
 LEGAL_CACHE = 600            # seconds a fetched legal pack is used before it is fetched again
 LEGAL_STALE = 86400          # a pack this old is still used when a fresh fetch fails
@@ -146,7 +146,7 @@ CURRENCY = MARKETS[DEFAULT_MARKET]["currency"]      # the default market's curre
 CURRENCIES = ("eur", "aud", "huf")
 PRICE_KEYS = ("one_eye_studio_black", "one_eye_art", "two_eyes", "each_further_eye")
 MAX_EYES = L.MULTI_MAX       # 8
-LANGS = ("en", "de", "lt", "hu")
+LANGS = ("en", "de", "lt", "hu", "hr")
 STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 
 DRAFT_TTL = 24 * 3600        # an unpaid order can be paid for 24 h after its first eye was uploaded
@@ -164,9 +164,10 @@ DRAFT_ORDER_MAX = 30         # uploads one unpaid order may take per day (8 eyes
 # records this version, the time and a fingerprint of the text in the order's language. Show exactly this text.
 # Version 2026-09-30.1 added the Australian market's text (CONSENT_TEXT_AU); 2026-09-30.2 added the Lithuanian and the
 # Hungarian texts (CONSENT_TEXT "lt" and "hu"); the English, German and Australian texts are the ones of 2026-09-30.1.
+# 2026-10-28.1 added the Croatian text (CONSENT_TEXT "hr", api/_lib/pay_hr.py CONSENT_TEXT_HR); every other text as it was.
 # A changed text needs a new version here and in src/shared/legal.ts, and the fingerprint of its texts in
 # scripts/check_texts.mjs CONSENT_FINGERPRINTS (the build refuses a text that changed under the same version).
-CONSENT_VERSION = "2026-09-30.2"
+CONSENT_VERSION = "2026-10-28.1"
 CONSENT_TEXT_EN_DE = {
     "en": ("I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period "
            "ends. I know that I lose my right of withdrawal once this has started."),
@@ -175,8 +176,10 @@ CONSENT_TEXT_EN_DE = {
            "begonnen wurde."),
 }
 # the EU edition's texts, in every language of the site (src/shared/legal.ts CHECKOUT_LEGAL, word for word; the
-# Lithuanian one is api/_lib/pay_lt.py CONSENT_TEXT_LT, the Hungarian one api/_lib/pay_hu.py CONSENT_TEXT_HU)
-CONSENT_TEXT = dict(CONSENT_TEXT_EN_DE, lt=pay_lt.CONSENT_TEXT_LT, hu=pay_hu.CONSENT_TEXT_HU)
+# Lithuanian one is api/_lib/pay_lt.py CONSENT_TEXT_LT, the Hungarian one api/_lib/pay_hu.py CONSENT_TEXT_HU, the Croatian one
+# api/_lib/pay_hr.py CONSENT_TEXT_HR)
+CONSENT_TEXT_0930 = dict(CONSENT_TEXT_EN_DE, lt=pay_lt.CONSENT_TEXT_LT, hu=pay_hu.CONSENT_TEXT_HU)      # version 2026-09-30.2
+CONSENT_TEXT = dict(CONSENT_TEXT_0930, hr=pay_hr.CONSENT_TEXT_HR)
 # The markets whose customers read another edition of the legal texts than the EU one (src/shared/legal.ts
 # EDITION_MARKETS and legalEdition: keep both in step; the build checks it, scripts/check_prices.mjs): "au", the
 # Australian edition (terms with the Australian Consumer Law and prices in A$ without GST, the right of withdrawal
@@ -185,7 +188,7 @@ CONSENT_TEXT = dict(CONSENT_TEXT_EN_DE, lt=pay_lt.CONSENT_TEXT_LT, hu=pay_hu.CON
 # "editions" part of the legal pack (pack_docs). A market with an edition can be read in the languages EDITION_LANGS
 # lists for it (src/shared/legal.ts EDITION_LANGS: keep both in step).
 EDITION_MARKETS = ("au", "hu")
-EDITION_LANGS = {"eu": ("en", "de", "lt", "hu"), "au": ("en", "de"), "hu": ("en", "de", "lt", "hu")}
+EDITION_LANGS = {"eu": ("en", "de", "lt", "hu", "hr"), "au": ("en", "de"), "hu": ("en", "de", "lt", "hu")}
 # The markets that read the AUSTRALIAN edition in particular: the Australian checkbox, note and email blocks.
 ACL_MARKETS = ("au",)
 # The Australian checkbox (src/shared/legal.ts CHECKOUT_LEGAL_AU, word for word): both EU elements (an EU consumer may
@@ -203,8 +206,8 @@ CONSENT_TEXT_AU = {
 }
 # Every consent text ever shown, by version (and for the Australian market apart): an order's confirmation email
 # quotes the text its customer ticked, also after a text changes (add the new version here, keep the old ones).
-CONSENT_TEXTS = {"2026-09-29.1": CONSENT_TEXT_EN_DE, "2026-09-30.1": CONSENT_TEXT_EN_DE, CONSENT_VERSION: CONSENT_TEXT}
-CONSENT_TEXTS_AU = {"2026-09-30.1": CONSENT_TEXT_AU, CONSENT_VERSION: CONSENT_TEXT_AU}
+CONSENT_TEXTS = {"2026-09-29.1": CONSENT_TEXT_EN_DE, "2026-09-30.1": CONSENT_TEXT_EN_DE, "2026-09-30.2": CONSENT_TEXT_0930, CONSENT_VERSION: CONSENT_TEXT}
+CONSENT_TEXTS_AU = {"2026-09-30.1": CONSENT_TEXT_AU, "2026-09-30.2": CONSENT_TEXT_AU, CONSENT_VERSION: CONSENT_TEXT_AU}
 SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit)
     "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
            "right away and that your right of withdrawal ends once we have started."),
@@ -212,6 +215,7 @@ SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit)
            "zugestimmt, dass wir sofort beginnen und Ihr Widerrufsrecht damit erlischt."),
     "lt": pay_lt.SUBMIT_NOTE_LT,
     "hu": pay_hu.SUBMIT_NOTE_HU,
+    "hr": pay_hr.SUBMIT_NOTE_HR,
 }
 SUBMIT_NOTE_AU = {   # the same for the Australian market: never a "no refunds", the Australian Consumer Law kept
     "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
@@ -226,6 +230,7 @@ ITEM_DESC = {
     "de": "Nur digitale Datei: JPEG, 4096 px an der längsten Seite. Kein Druck, kein Rahmen.",
     "lt": pay_lt.ITEM_DESC_LT,
     "hu": pay_hu.ITEM_DESC_HU,
+    "hr": pay_hr.ITEM_DESC_HR,
 }
 
 _SK = re.compile(r"^(sk|rk)_(test|live)_[A-Za-z0-9]{10,247}$")
@@ -816,6 +821,8 @@ def item_name(spec, layout=True):
         return pay_lt.item_name_lt(n, style, word)
     if spec["lang"] == "hu":
         return pay_hu.item_name_hu(dict(spec, eyes=n), layout)
+    if spec["lang"] == "hr":
+        return pay_hr.item_name_hr(dict(spec, eyes=n), layout)
     if spec["lang"] == "de":
         return f"SnapEyes-Iris-Kunstwerk, {n} {'Auge' if n == 1 else 'Augen'}, {style}{', ' + word if word else ''}, digitale Datei 4096 px"
     return f"SnapEyes iris artwork, {n} {'eye' if n == 1 else 'eyes'}, {style}{', ' + word if word else ''}, 4096 px digital file"
@@ -852,7 +859,7 @@ def amount_text(cents, lang, currency=None):
     if cur == "huf":
         return f"{c // 100} HUF"
     s = f"{c // 100}.{c % 100:02d}"
-    return (s.replace(".", ",") if lang in ("de", "lt", "hu") else s) + " " + cur.upper()
+    return (s.replace(".", ",") if lang in ("de", "lt", "hu", "hr") else s) + " " + cur.upper()
 
 
 def price_text(cents, lang, currency=None):
@@ -863,6 +870,8 @@ def price_text(cents, lang, currency=None):
     c = _cents(cents)
     if lang == "hu" and cur in ("huf", "eur"):
         return pay_hu.price_text_hu(c, cur)     # "6 990 Ft", "19,97 €" (no-break spaces)
+    if lang == "hr":
+        return pay_hr.price_text_hr(c, cur)     # "24,97 €" (a no-break space)
     if cur == "huf":
         return f"{_grouped(round(c / 100), ' ')} Ft"
     s = f"{c // 100}.{c % 100:02d}"
@@ -1756,6 +1765,8 @@ def seller_lines(lang, pack=None):
         return pay_lt.seller_lines_lt(pack, CONTACT)
     if lang == "hu":
         return pay_hu.seller_lines_hu(pack, CONTACT)
+    if lang == "hr":
+        return pay_hr.seller_lines_hr(pack, CONTACT)
     s = (pack or {}).get("seller") if isinstance(pack, dict) else None
     if not isinstance(s, dict):
         return SELLER[lang_of(lang)].replace(", Gedimino", "\nGedimino") + f"\n{'E-Mail' if lang == 'de' else 'Email'}: {CONTACT}"
@@ -1791,6 +1802,8 @@ def when_text(ts, lang, seconds=False):
         return pay_lt.when_text_lt(ts, seconds)
     if lang == "hu":
         return pay_hu.when_text_hu(ts, seconds)
+    if lang == "hr":
+        return pay_hr.when_text_hr(ts, seconds)
     if lang == "de":
         return f"{g.tm_mday:02d}.{g.tm_mon:02d}.{g.tm_year}, {hm} Uhr UTC"
     return f"{g.tm_mday} {_MONTHS[g.tm_mon - 1]} {g.tm_year}, {hm} UTC"
@@ -1806,6 +1819,8 @@ def date_text(day_iso, lang):
         return pay_lt.date_text_lt(day_iso)
     if lang == "hu":
         return pay_hu.date_text_hu(day_iso)
+    if lang == "hr":
+        return pay_hr.date_text_hr(day_iso)
     return f"{g.tm_mday:02d}.{g.tm_mon:02d}.{g.tm_year}" if lang == "de" else f"{g.tm_mday} {_MONTHS[g.tm_mon - 1]} {g.tm_year}"
 
 
@@ -1813,6 +1828,8 @@ def quoted(text, lang):
     """A quotation in the language's own marks: „…“ German and Lithuanian, „…” Hungarian, “…” English."""
     if lang == "hu":
         return pay_hu.quoted_hu(text)
+    if lang == "hr":
+        return pay_hr.quoted_hr(text)
     return f"„{text}“" if lang in ("de", "lt") else f"“{text}”"
 
 
@@ -1899,8 +1916,8 @@ def confirmation_mail(order, paid, k, pack, consent):
         raise PayError(f"order {order}: the legal pack has no texts for the {market} market")
     wd, terms = docs["withdrawal"], docs["terms"]
     layout = catalogue.layout_name(lang, spec.get("layout"))
-    if lang in ("lt", "hu"):
-        # Lithuanian and Hungarian (api/_lib/pay_lt.py, pay_hu.py): block for block the English email, then the same legal
+    if lang in ("lt", "hu", "hr"):
+        # Lithuanian, Hungarian and Croatian (api/_lib/pay_lt.py, pay_hu.py, pay_hr.py): block for block the English email, then the same legal
         # texts. Neither is an Australian market's language, so no invoice and no "Your rights in Australia" here
         if lang == "lt":
             when = pay_lt.when_text_lt
@@ -1910,6 +1927,12 @@ def confirmation_mail(order, paid, k, pack, consent):
             blocks = pay_lt.confirmation_blocks_lt(link, wlink, crows, when(consent["at"]), consent["text"], auto,
                                                    pay_lt.date_text_lt(pack["updated"]), terms["url"],
                                                    seller_lines(lang, pack))
+        elif lang == "hr":
+            subject, blocks = pay_hr.confirmation_hr(order=order, spec=spec, n=n, layout=layout, price=price,
+                                                     paid_at=paid.get("paid_at"), consent_at=consent["at"],
+                                                     consent_text=consent["text"], auto=auto, link=link, wlink=wlink,
+                                                     terms_url=terms["url"], updated_day=pack["updated"],
+                                                     seller=seller_lines(lang, pack))
         else:
             subject, blocks = pay_hu.confirmation_hu(order=order, spec=spec, n=n, layout=layout, price=price,
                                                      paid_at=paid.get("paid_at"), consent_at=consent["at"],
@@ -2178,6 +2201,8 @@ def ready_mail(order, paid, k, checked=True):
         blocks = pay_lt.ready_blocks_lt(link, order, checked, seller_lines(lang, pack))
     elif lang == "hu":
         subject, blocks = pay_hu.ready_hu(order=order, link=link, checked=checked, seller=seller_lines(lang, pack))
+    elif lang == "hr":
+        subject, blocks = pay_hr.ready_hr(order=order, link=link, checked=checked, seller=seller_lines(lang, pack))
     elif lang == "de":
         subject = "Ihr SnapEyes-Kunstwerk ist fertig"
         blocks = [("p", "Guten Tag,"), ("p", ("Ihr Iris-Kunstwerk ist fertig und geprüft." if checked else

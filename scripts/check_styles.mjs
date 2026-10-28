@@ -92,8 +92,8 @@ const ATLASES = ['chips', 'drops'];
 const STEP_KINDS = ['prep', 'art', 'scene', 'finish', 'bands'];
 const WAVES = ['R1', 'R2', 'R3', 'legacy'];
 const MAX_EYES = 8;
-/** The languages every layout has a word in (the site's four: src/shared/lang.ts). */
-export const LAYOUT_LANGS = ['en', 'de', 'lt', 'hu'];
+/** The languages every layout has a word in (the site's five: src/shared/lang.ts). */
+export const LAYOUT_LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 const PUBLIC_FIELDS = ['accent', 'eyes', 'gate', 'group', 'layouts', 'legacy', 'name', 'pick', 'price_class', 'reason', 'slug', 'stage', 'stage_by_eyes', 'tile_order', 'work_side'];
 const ENGINE_FIELDS = ['atlas', 'canvases', 'design_by_eyes', 'engine', 'fill_side', 'gate_rules', 'plates', 'steps', 'wave'];
 const HEART_WORDS = ['heart', 'hearts', 'love', 'loves', 'valentine', 'valentines', 'cupid'];
@@ -527,7 +527,7 @@ export function checkPriceRules(root, styles, client, out) {
 }
 
 // ---------------------------------------------------------------------------------------------------- 7. terms of sale
-export const TERMS_FILES = ['src/legal/docs/terms.ts', 'src/legal/docs/terms.lt.ts', 'src/legal/docs/terms.hu.ts'];
+export const TERMS_FILES = ['src/legal/docs/terms.ts', 'src/legal/docs/terms.lt.ts', 'src/legal/docs/terms.hu.ts', 'src/legal/docs/terms.hr.ts'];
 const BLACK_ROW = /\[\s*'([^'\\]*)'\s*,\s*\w+\(\s*(?:PRICE_CENTS\.studioBlack|(?:AU|HU)_PRICES\.one_eye_studio_black)/g;
 
 /** The rows of the black price class (in every terms table) print the name of the class's one member. When enforcing the
@@ -544,7 +544,7 @@ export function checkTerms(root, styles, out, files = TERMS_FILES, enforce = WP1
     if (!rows.length) out.push(`${rel}: no row of the black price class found (the style check reads the terms tables)`);
     for (const r of rows) if (!r[1].includes(name)) out.push(`${rel}: the row "${r[1]}" prices the black class, whose one member is "${name}": the row must name it (a renamed or replaced style needs a text change and a new LEGAL_UPDATED)`);
     if (enforce && /\$\{MAX_EYES\}/.test(text)) out.push(`${rel}: prints the maximum number of eyes (\${MAX_EYES}): the terms print none (a build-time text cannot follow the catalogue)`);
-    const digits = enforce ? /(?<![\w.])(\d{1,2})\s+(eyes|Augen|akys|akių|szem)(?![\p{L}])/iu.exec(text) : null;
+    const digits = enforce ? /(?<![\w.])(\d{1,2})\s+(eyes|Augen|akys|akių|szem|oka|očiju|oko)(?![\p{L}])/iu.exec(text) : null;
     if (digits) out.push(`${rel}: prints a number of eyes ("${digits[0]}"): the terms print none (a build-time text cannot follow the catalogue)`);
     // a price row prints no list of styles (the art styles come from the run-time catalogue): the old constant is gone
     if (enforce && /\bconst ART\b/.test(text)) out.push(`${rel}: holds a list of art styles (const ART): the price rows name classes, the list is the run-time catalogue's`);

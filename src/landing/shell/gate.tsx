@@ -20,6 +20,7 @@ import en from '../copy/en.json';
 import de from '../copy/de.json';
 import lt from '../copy/lt.json';
 import hu from '../copy/hu.json';
+import hr from '../copy/hr.json';
 import type { LandingCopy } from '../copy/types';
 import { CopyContext } from '../copy/useCopy';
 import { makeApi } from '../copy/makeApi';
@@ -36,7 +37,7 @@ import { Pricing } from '../Pricing';
 import { HowItWorks } from '../HowItWorks';
 import { LANGS, type Lang } from '../../shared/lang';
 
-const COPIES: Record<Lang, LandingCopy> = { en, de, lt, hu };
+const COPIES: Record<Lang, LandingCopy> = { en, de, lt, hu, hr };
 
 /** One state of the catalogue to render: what GET /api/checkout answered (null: the server could not be read, the page keeps the build's fallback). */
 export interface GateInput {

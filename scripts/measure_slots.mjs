@@ -1,6 +1,6 @@
 // The heights of the empty slots that hold the place of the lazy sections (src/landing/slots.ts), measured on a build in real Chrome.
 //   node scripts/measure_slots.mjs [--dist dist] [--write | --check]
-// It opens the page in English, German, Lithuanian and Hungarian at 375 px (phone, under reduced motion: the flat layout), 768 px (tablet) and 1280 px (desktop), waits until
+// It opens the page in English, German, Lithuanian, Hungarian and Croatian at 375 px (phone, under reduced motion: the flat layout), 768 px (tablet) and 1280 px (desktop), waits until
 // every section is mounted, and reads the height of each section. Without a flag it prints the table; --write rewrites
 // src/landing/slots.ts from it; --check exits 1 when a slot in slots.ts is more than 12 percent away from the real section (a section
 // that grew or shrank after a copy change: the page then jumps by the difference when the section arrives, in a browser without scroll
@@ -15,7 +15,7 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const dist = resolve(opt('--dist', join(ROOT, 'dist')));
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 const LAYOUTS = [['phone', 375], ['tablet', 768], ['desktop', 1280]];
 const IDS = ['reveal', 'wall', 'styles', 'how', 'pricing', 'closeups', 'trust', 'faq', 'final', 'sizes', 'more'];
 const SLOTS = join(ROOT, 'src/landing/slots.ts');

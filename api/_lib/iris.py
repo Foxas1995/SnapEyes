@@ -5,7 +5,7 @@ import os, io, json, base64, time, math, re, uuid, hmac, hashlib, secrets, threa
 import numpy as np
 import requests
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
-from . import iris_lt, iris_hu
+from . import iris_lt, iris_hu, iris_hr
 from . import catalogue
 from . import duration
 from . import counter as _counter     # light (re, hmac, threading only): the request's campaign code and classes (run() puts them in ctx())
@@ -176,11 +176,11 @@ def ctx():
     the country, the page's language and price market; no user agent, no address). Set by run(); None outside a request or when it could not be read."""
     return getattr(_LOCAL, "ctx", None)
 
-PAGE_LANGS =("de", "lt", "hu")   # the languages besides English that the customer sentences of run() and the preview
+PAGE_LANGS =("de", "lt", "hu", "hr")   # the languages besides English that the customer sentences of run() and the preview
                                  # watermark (WATERMARK_TEXT) come in: api/_lib/pay.py LANGS without "en"
 
 def page_lang():
-    """The language of the page this request came from: "de", "lt" or "hu" when run() parsed a body saying so, else
+    """The language of the page this request came from: "de", "lt", "hu" or "hr" when run() parsed a body saying so, else
     "en" (also outside run(): tests, scripts). The preview watermark is drawn in it (WATERMARK_TEXT)."""
     lang = getattr(_LOCAL, "lang", "en")
     return lang if lang in PAGE_LANGS else "en"
@@ -295,6 +295,7 @@ RUN_ERRORS = {
     },
     "lt": iris_lt.RUN_ERRORS_LT,
     "hu": iris_hu.ERRORS_HU,
+    "hr": iris_hr.ERRORS_HR,
 }
 
 def _say(lang, key, english):
@@ -305,7 +306,7 @@ def run(req, fn, gate=True):
     """Wrap a handler body: gate, parse JSON, run, serialise, catch errors."""
     t0 = time.time()
     _LOCAL.deadline = t0 + BUDGET
-    # the capture screen sends its page's language ("lang": "de", "lt" or "hu"): the sentences below then come in it,
+    # the capture screen sends its page's language ("lang": "de", "lt", "hu" or "hr"): the sentences below then come in it,
     # and so does the preview watermark (page_lang). Known only once the body is parsed, so the gate's refusals and an
     # unreadable body stay English; a ClientError's text is its raiser's, as it is
     lang = "en"
@@ -4423,6 +4424,7 @@ WATERMARK_TEXT = {
     "de": (WATERMARK_TILE, "VORSCHAU MIT WASSERZEICHEN  ·  DATEI IN VOLLER GRÖSSE KAUFEN"),
     "lt": iris_lt.WATERMARK_TEXT_LT,
     "hu": iris_hu.WATERMARK_TEXT_HU,
+    "hr": iris_hr.WATERMARK_TEXT_HR,
 }
 # The badge while this deployment takes no orders (the owner, 2026-10-20: "UNLOCK FULL SIZE" promised what the site cannot do yet).
 # api/compose.py asks the rule the page is told (GET /api/checkout open: pay.ordering_open() and store.configured()) and passes
@@ -4433,6 +4435,7 @@ WATERMARK_SOON = {
     "de": "KOSTENLOSE VORSCHAU  ·  BESTELLUNGEN BALD MÖGLICH",
     "lt": iris_lt.WATERMARK_SOON_LT,
     "hu": iris_hu.WATERMARK_SOON_HU,
+    "hr": iris_hr.WATERMARK_SOON_HR,
 }
 
 

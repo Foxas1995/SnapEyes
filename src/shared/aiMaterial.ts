@@ -29,17 +29,20 @@ export const AI_MATERIAL: Readonly<Record<Lang, string>> = {
     'Kai kuriuose stiliuose milteliai, skystis, liepsna ar dulkės aplink Jūsų rainelę yra DI sukurta medžiaga iš bendros bibliotekos, todėl kito kliento kūrinyje gali būti tas pats elementas. Jūsų rainelė išlaiko Jūsų nuotraukos spalvas, raštą ir išdėstymą; smulkiausias skaidulas, kaip aprašyta aukščiau, atkuria DI.',
   hu:
     'Egyes stílusoknál az Ön íriszét körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az Ön íriszének megmaradnak a fotója színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
+  hr:
+    'U nekim stilovima prah, tekućina, plamen ili prašina oko vaše šarenice materijal je koji je izradila umjetna inteligencija, iz zajedničke biblioteke, pa slika drugog kupca može sadržavati isti komad. Vaša šarenica zadržava boje, uzorak i raspored s vaše fotografije; najfinija vlakna obnavlja umjetna inteligencija, kako je gore opisano.',
 };
 
 /** The same sentence in the register of the PAGES (the landing's Reveal box and the result of /try, release review H-M1: the page said "we never hide what the AI
- *  does" and the shared library was named only in the terms). English, German and Lithuanian address the visitor the same way on a page as in a legal text, so
- *  those three are the legal sentence itself; the Hungarian pages say "te" (the legal texts say "Ön"), so the Hungarian page sentence is its own wording.
+ *  does" and the shared library was named only in the terms). English, German, Lithuanian and Croatian address the visitor the same way on a page as in a legal text, so
+ *  those four are the legal sentence itself; the Hungarian pages say "te" (the legal texts say "Ön"), so the Hungarian page sentence is its own wording.
  *  Nothing at run time reads this table: each page carries the words in its own dictionary (the landing's src/landing/copy/<lang>.json, /try's src/try/copy*.ts),
  *  and scripts/check_texts.mjs (item 12) holds those words equal to it while AI_MATERIAL_PUBLISHED is true. */
 export const AI_MATERIAL_PAGE: Readonly<Record<Lang, string>> = {
   en: AI_MATERIAL.en,
   de: AI_MATERIAL.de,
   lt: AI_MATERIAL.lt,
+  hr: AI_MATERIAL.hr,
   hu:
     'Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
 };

@@ -754,7 +754,7 @@ async function checkFocus() {
 // ---------------------------------------------------------------------------------------------------- headlines
 async function checkHeadlines() {
   console.log('headlines');
-  for (const lang of ['en', 'de', 'lt', 'hu']) {
+  for (const lang of ['en', 'de', 'lt', 'hu', 'hr']) {
     for (const width of [320, 375, 768, 1280]) {
       const page = await open({ lang, width, height: width < 800 ? 700 : 900 });
       const r = J(await page.eval(`JSON.stringify((() => {

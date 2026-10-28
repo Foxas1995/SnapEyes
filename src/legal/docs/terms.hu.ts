@@ -79,7 +79,7 @@ export const hu: LegalDoc = {
       blocks: [
         `A weboldalunkon látható előnézetek és árak még nem kötelező erejű ajánlatok. Fizetés előtt ellenőrizheti a szemeket, a stílust, az elrendezést és a feliratot, és bármely adatot kijavíthat, ha visszalép vagy újrafotóz egy szemet. Ezután a „${CHECKOUT_LEGAL_HU.continueButton}” gombbal a fizetési szolgáltatónk, a Stripe fizetési oldalára lép. Ott megadja e-mail-címét és fizetési adatait, és kijavíthatja azokat. Kötelező erejű megrendelését akkor adja le, amikor ott a fizetési gombbal jóváhagyja a fizetést; a megrendelés fizetési kötelezettséggel jár.`,
         'A szerződés akkor jön létre, amikor a fizetését megerősítették. Ekkor megnyílik a rendelési oldala, és e-mailben, a megrendelés visszaigazolásával együtt elküldjük Önnek a linkjét. A fájl elkészítését ott akkor kezdjük meg, amikor ez az e-mail elment.',
-        'A szerződés nyelve magyar, angol, német vagy litván: az, amelyiken Ön megrendel.',
+        'A szerződés nyelve magyar, angol, német, litván vagy horvát: az, amelyiken Ön megrendel.',
         'A megrendelését a szerződés adataival együtt tároljuk: a megrendelt alkotás, az ár, a dátum, az e-mail-címe és az azonnali kezdéshez adott hozzájárulása. A rendelési oldala addig mutatja ezeket az adatokat, ameddig a megrendelését megőrizzük. E feltételekről nem őrzünk külön példányt minden megrendeléshez. Ehelyett a megrendelés visszaigazolását tartalmazó e-mail szövegként tartalmazza a rendelés adatait, ezeket a feltételeket és az elállási tájékoztatót az elállásinyilatkozat-mintával, a megrendeléskor hatályos változatban: kérjük, őrizze meg ezt az e-mailt. Ezt az oldalt is bármikor elmentheti vagy kinyomtathatja.',
       ],
     },

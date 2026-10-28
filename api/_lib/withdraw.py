@@ -74,7 +74,7 @@ import re, time, hmac, hashlib, secrets, threading, datetime
 from . import iris as L
 from . import store
 from . import pay
-from . import withdraw_lt, withdraw_hu
+from . import withdraw_lt, withdraw_hu, withdraw_hr
 
 NAME_MAX = 100
 EMAIL_MAX = 254
@@ -116,6 +116,7 @@ STATEMENT = {   # as the order page shows it before "Confirm withdrawal" (src/or
           "Inhalte: SnapEyes-Kunstwerk, Bestellung {order}.",
     "lt": withdraw_lt.STATEMENT_LT,
     "hu": withdraw_hu.STATEMENT_HU,
+    "hr": withdraw_hr.STATEMENT_HR,
 }
 
 
@@ -323,6 +324,8 @@ HOLIDAYS_DE = ((1, 1), (5, 1), (10, 3), (12, 25), (12, 26))
 EASTER_DE = (-2, 1, 39, 50)               # Good Friday, Easter Monday, Ascension Day, Whit Monday
 HOLIDAYS_HU = withdraw_hu.HOLIDAYS_HU     # Hungary (Mt. 102. § (1)): 1 Jan, 15 Mar, 1 May, 20 Aug, 23 Oct, 1 Nov, 25-26 Dec
 EASTER_HU = withdraw_hu.EASTER_HU         # Good Friday, Easter Monday, Whit Monday (only 15 Mar, 20 Aug, 23 Oct are new)
+HOLIDAYS_HR = withdraw_hr.HOLIDAYS_HR     # Croatia (Zakon o blagdanima, NN 110/19): 1 and 6 Jan, 1 and 30 May, 22 Jun, 5 and 15 Aug, 1 and 18 Nov, 25-26 Dec
+EASTER_HR = withdraw_hr.EASTER_HR         # Easter Sunday, Easter Monday, Corpus Christi (only Corpus Christi is new)
 _EPOCH = datetime.date(1970, 1, 1)
 _HOLIDAYS = {}                            # year -> the set of its holidays (dates)
 
@@ -341,14 +344,14 @@ def easter(year):
 
 
 def holidays(year):
-    """The public holidays of a year that stop a period ending on them: the national ones of Lithuania, Germany and
-    Hungary, for every order whatever its market (the latest end anywhere is taken: an English, German or Australian
+    """The public holidays of a year that stop a period ending on them: the national ones of Lithuania, Germany,
+    Hungary and Croatia, for every order whatever its market (the latest end anywhere is taken: an English, German or Australian
     order's period also runs past 15 Mar, 20 Aug and 23 Oct, one working day longer, on the consumer's side)."""
     got = _HOLIDAYS.get(year)
     if got is None:
         e = easter(year)
-        got = {datetime.date(year, m, d) for m, d in HOLIDAYS_LT + HOLIDAYS_DE + HOLIDAYS_HU}
-        got |= {e + datetime.timedelta(days=n) for n in EASTER_LT + EASTER_DE + EASTER_HU}
+        got = {datetime.date(year, m, d) for m, d in HOLIDAYS_LT + HOLIDAYS_DE + HOLIDAYS_HU + HOLIDAYS_HR}
+        got |= {e + datetime.timedelta(days=n) for n in EASTER_LT + EASTER_DE + EASTER_HU + EASTER_HR}
         _HOLIDAYS[year] = got = frozenset(got)
     return got
 
@@ -752,13 +755,16 @@ def _last_day(stmt):
 
 
 def _receipt_other(stmt, pack, lang, order, name):
-    """(subject, text, html) of the receipt in Lithuanian or Hungarian (api/_lib/withdraw_lt.py, withdraw_hu.py), the
+    """(subject, text, html) of the receipt in Lithuanian, Hungarian or Croatian (api/_lib/withdraw_lt.py, withdraw_hu.py, withdraw_hr.py), the
     same paragraphs as the English one, branch for branch. Neither language belongs to an Australian market, so there
     is no Australian Consumer Law paragraph."""
     seller = pay.seller_lines(lang, pack)
     by_at = stmt.get("refund_by") or stmt["received_at"] + REFUND_DAYS * 86400
     if lang == "hu":
         subject, blocks = withdraw_hu.receipt_hu(stmt, order=order, name=name, money=_money(stmt, lang),
+                                                 by_day=pay.iso(by_at), last_day=_last_day(stmt), seller=seller)
+    elif lang == "hr":
+        subject, blocks = withdraw_hr.receipt_hr(stmt, order=order, name=name, money=_money(stmt, lang),
                                                  by_day=pay.iso(by_at), last_day=_last_day(stmt), seller=seller)
     else:
         outcome, reason = stmt.get("outcome"), stmt.get("reason")
@@ -785,7 +791,7 @@ def receipt_mail(stmt, pack):
     de = lang == "de"
     order = stmt.get("order") or echo_order(stmt.get("order_given"))
     name = echo_name(stmt.get("name"))
-    if lang in ("lt", "hu"):
+    if lang in ("lt", "hu", "hr"):
         return _receipt_other(stmt, pack, lang, order, name)
     got = pay.when_text(stmt["received_at"], lang, seconds=True)
     rows = [("Eingegangen am" if de else "Received on", got), ("Bestellung" if de else "Order", order),
@@ -884,10 +890,12 @@ def unmatched_mail(stmt, pack):
     lang = pay.lang_of(stmt.get("lang"))
     de = lang == "de"
     given = echo_order(stmt.get("order_given")) or "-"
-    if lang in ("lt", "hu"):
+    if lang in ("lt", "hu", "hr"):
         seller = pay.seller_lines(lang, pack)
         if lang == "hu":
             subject, blocks = withdraw_hu.unmatched_hu(stmt, given=given, name=echo_name(stmt.get("name")), seller=seller)
+        elif lang == "hr":
+            subject, blocks = withdraw_hr.unmatched_hr(stmt, given=given, name=echo_name(stmt.get("name")), seller=seller)
         else:
             subject = withdraw_lt.UNMATCHED_LT["subject"]
             blocks = withdraw_lt.unmatched_blocks_lt(

@@ -9,6 +9,7 @@ import { WITHDRAWAL_ONLINE, withdrawFunctionHref } from '../../shared/legal';
 import { patchDoc } from '../patch';
 import { lt } from './imprint.lt';
 import { hu } from './imprint.hu';
+import { hr } from './imprint.hr';
 
 const rows = (lang: 'en' | 'de'): Array<[string, string]> => {
   const de = lang === 'de';
@@ -54,7 +55,7 @@ const en: LegalDoc = {
       id: 'images',
       title: 'About the images',
       blocks: [
-        "The example images on our home page show the founder's own eye, photographed with a phone and rendered by our software. The sample eye you can try in the preview tool is AI-generated and always labelled as such.",
+        "The example images on our home page show our own eye, photographed with a phone and rendered by our software. The sample eye you can try in the preview tool is AI-generated and always labelled as such.",
       ],
     },
     {
@@ -88,7 +89,7 @@ const de: LegalDoc = {
       id: 'images',
       title: 'Zu den Bildern',
       blocks: [
-        'Die Beispielbilder auf unserer Startseite zeigen das eigene Auge des Gründers, mit dem Smartphone fotografiert und von unserer Software gerendert. Das Beispielauge, das Sie in der Vorschau-App ausprobieren können, ist KI-generiert und immer als solches gekennzeichnet.',
+        'Die Beispielbilder auf unserer Startseite zeigen unser eigenes Auge, mit dem Smartphone fotografiert und von unserer Software gerendert. Das Beispielauge, das Sie in der Vorschau-App ausprobieren können, ist KI-generiert und immer als solches gekennzeichnet.',
       ],
     },
     {
@@ -101,7 +102,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const IMPRINT: LegalDocs = { en, de, lt, hu };
+export const IMPRINT: LegalDocs = { en, de, lt, hu, hr };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 const gst = (lang: 'en' | 'de'): [string, string] => (lang === 'de'

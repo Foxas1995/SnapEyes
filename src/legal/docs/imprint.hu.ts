@@ -49,7 +49,7 @@ export const hu: LegalDoc = {
       id: 'images',
       title: 'A képekről',
       blocks: [
-        'A kezdőlapunkon látható példák az alapító saját szemét mutatják, telefonnal fotózva és a szoftverünkkel elkészítve. Az előnézeti eszközben kipróbálható mintaszemet mesterséges intelligencia generálta, és ezt mindig jelöljük is.',
+        'A kezdőlapunkon látható példák a saját szemünket mutatják, telefonnal fotózva és a szoftverünkkel elkészítve. Az előnézeti eszközben kipróbálható mintaszemet mesterséges intelligencia generálta, és ezt mindig jelöljük is.',
       ],
     },
     {

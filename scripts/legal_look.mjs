@@ -17,7 +17,7 @@ import { launch } from './lib/cdp.mjs';
 import { serve } from './lib/static.mjs';
 
 const DOCS = ['terms', 'privacy', 'imprint', 'withdrawal'];
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 const WIDTHS = [375, 1280];
 const CASES = [];
 for (const d of DOCS) for (const l of LANGS) for (const w of WIDTHS) CASES.push({ path: `/${d}?lang=${l}`, width: w });

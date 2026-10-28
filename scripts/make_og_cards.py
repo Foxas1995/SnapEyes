@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""The share cards of the landing page (the og:image of /?lang=de, /?lang=lt and /?lang=hu).
+"""The share cards of the landing page (the og:image of /?lang=de, /?lang=lt, /?lang=hu and /?lang=hr).
 
 The English card, public/assets/atelier/og-founder-eye.jpg (1200 x 630, the founder's own iris on the left, the brand and the
-words on the right, a caption under the eye), was made by hand. A German, Lithuanian or Hungarian visitor who shares the page
-used to get that card with English words on it. This script makes the other three from the English card: the eye (the left half and
+words on the right, a caption under the eye), was made by hand. A German, Lithuanian, Hungarian or Croatian visitor who shares the page
+used to get that card with English words on it. This script makes the other four from the English card: the eye (the left half and
 everything that is not text) is the English card's own pixels, only the words are drawn again, in the site's own fonts
 (public/assets/atelier/fonts: Cinzel for the brand and the headline, Plus Jakarta Sans for the rest) with the sizes, weights, tracking
 and places that were measured on the English card (the parity check below proves the geometry: the English card, drawn again by
@@ -15,7 +15,7 @@ same in every language); only the caption under the eye is new text (src/landing
 Since 2026-10-22 the brand is the owner's own logo, its dark version (scripts/make_brand.py: his black strokes in cream, the gold untouched),
 drawn where the card printed SNAPEYES and the gold rule under it.
 
-    python scripts/make_og_cards.py              write og-founder-eye-de.jpg, -lt.jpg and -hu.jpg next to the English card
+    python scripts/make_og_cards.py              write og-founder-eye-de.jpg, -lt.jpg, -hu.jpg and -hr.jpg next to the English card
     python scripts/make_og_cards.py --check      draw them again and compare with the committed files (what check:langheads runs)
     python scripts/make_og_cards.py --parity     draw the English card again and compare it with the committed one
 
@@ -30,7 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ATELIER = os.path.join(ROOT, "public", "assets", "atelier")
 COPY = os.path.join(ROOT, "src", "landing", "copy")
 SHARE = os.path.join(ROOT, "src", "landing", "shell", "share.json")
-LANGS = ("de", "lt", "hu")
+LANGS = ("de", "lt", "hu", "hr")
 MAX_BYTES = 150_000
 QUALITY = 88
 
@@ -182,7 +182,7 @@ def text_diff(a, b):
 
 
 def main(argv):
-    sys.stdout.reconfigure(encoding="utf-8")      # the words are Lithuanian and Hungarian: a Windows console is not UTF-8 by itself
+    sys.stdout.reconfigure(encoding="utf-8")      # the words are Lithuanian, Hungarian and Croatian: a Windows console is not UTF-8 by itself
     mode = "--check" if "--check" in argv else "--parity" if "--parity" in argv else "--write"
     en_path = os.path.join(ATELIER, "og-founder-eye.jpg")
     base = Image.open(en_path).convert("RGB")
@@ -228,7 +228,7 @@ def main(argv):
         for p in problems:
             print("FAIL", p)
         if mode == "--check":
-            print("og cards: " + ("FAILED" if problems else "ok (3 cards, 1200x630, under 150 kB, the words of the page)"))
+            print("og cards: " + ("FAILED" if problems else f"ok ({len(LANGS)} cards, 1200x630, under 150 kB, the words of the page)"))
         return 1 if problems else 0
     finally:
         fonts.close()

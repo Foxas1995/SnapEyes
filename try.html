@@ -45,21 +45,22 @@
     <div id="root"></div>
     <!-- Fail open (release review, perf-a11y M2): when this page's script cannot be loaded (a flaky network, a content blocker, a deploy while the page was open) or never comes,
          the visitor gets a plain message with a way out instead of a blank page. A page that renders replaces it (React clears #root first), a late one too. The words are in the
-         visitor's language (?lang=, else the browser's), the same four as the site. -->
+         visitor's language (?lang=, else the browser's), the same five as the site. -->
     <script>
       (function () {
         var words = {
           en: ['This page could not be loaded, or it is taking very long.', 'Please reload it. If it keeps failing, write to', 'Reload'],
           de: ['Diese Seite konnte nicht geladen werden oder braucht sehr lange.', 'Bitte laden Sie sie neu. Klappt es weiter nicht, schreiben Sie an', 'Neu laden'],
           lt: ['Šio puslapio nepavyko įkelti arba jis kraunasi labai ilgai.', 'Perkraukite jį. Jei vis tiek nepavyksta, rašykite adresu', 'Perkrauti'],
-          hu: ['Az oldal nem töltődött be, vagy nagyon sokáig tart.', 'Töltsd újra. Ha továbbra sem megy, írj erre a címre:', 'Újratöltés']
+          hu: ['Az oldal nem töltődött be, vagy nagyon sokáig tart.', 'Töltsd újra. Ha továbbra sem megy, írj erre a címre:', 'Újratöltés'],
+          hr: ['Ova se stranica nije mogla učitati ili se učitava jako dugo.', 'Učitajte je ponovno. Ako i dalje ne uspijeva, pišite na', 'Ponovno učitaj']
         };
         var shown = false;
         function show() {
           var root = document.getElementById('root');
           if (shown || !root || root.childNodes.length) return;
           shown = true;
-          var m = /[?&]lang=(en|de|lt|hu)(?:&|$)/.exec(location.search);
+          var m = /[?&]lang=(en|de|lt|hu|hr)(?:&|$)/.exec(location.search);
           var l = m ? m[1] : String(navigator.language || 'en').slice(0, 2).toLowerCase();
           var w = words[l] || words.en;
           var box = document.createElement('div');

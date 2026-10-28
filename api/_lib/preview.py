@@ -234,6 +234,8 @@ REFUSALS = {
            "Nepavyko nuskaityti šios peržiūros. Nufotografuokite savo akį dar kartą."),
     "hu": ("Ez az előnézet túl régi. Kérjük, fotózd le újra a szemedet.",
            "Ezt az előnézetet nem tudtuk beolvasni. Kérjük, fotózd le újra a szemedet."),
+    "hr": ("Ovaj je pregled prestar. Molimo, ponovno fotografirajte oko.",
+           "Ovaj pregled nismo mogli pročitati. Molimo, ponovno fotografirajte oko."),
 }
 
 

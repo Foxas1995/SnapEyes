@@ -29,22 +29,22 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   // the four dashes the owner rules out (U+2012 to U+2015), built from their codes so that this file holds none itself (as scripts/check_texts.mjs does)
   const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']');
 
-  // ---- the words, four languages
+  // ---- the words, five languages
   for (const l of LANGS) {
     const d = COPY[l].result.did as unknown as Record<string, unknown>;
     check(`${l}: the card has its seven lines, all different and none empty`, KEYS.every((k) => text(d, k).length > 8) && new Set(KEYS.map((k) => text(d, k))).size === KEYS.length, JSON.stringify(d).slice(0, 200));
     check(`${l}: the four check lines are short (at most 8 words each)`, LINES.every((k) => words(text(d, k)) <= 8), LINES.map((k) => words(text(d, k))).join());
     check(`${l}: the colour line says the light was balanced and nothing about where the colours come from (the transparency sentence says that, once)`,
-      !/photo|Foto|nuotrauk|fotó/i.test(text(d, 'colour')), text(d, 'colour'));
+      !/photo|Foto|nuotrauk|fotó|fotografij/i.test(text(d, 'colour')), text(d, 'colour'));
     const q = text(d, 'quality');
     check(`${l}: the quality line names the crop's ${CROP_MAX_PX} px (the page's own cut, src/try/crop.ts) and the file's 4096 px, and the file only in the conditional (ordering is not open yet)`,
-      q.includes(`${CROP_MAX_PX} px`) && q.includes('4096') && /would|würde|būtų|készülne/.test(q), q);
+      q.includes(`${CROP_MAX_PX} px`) && q.includes('4096') && /would|würde|būtų|készülne|nastala bi/.test(q), q);
     const c = COPY[l].result.colourOff;
     check(`${l}: the colour note no longer says "our colour check" or "soft daylight", names the flash and a torch from the side, and says that a result one likes can stay`,
-      !/colour check|Farbprüfung|spalvų patikra|színellenőrzés|soft daylight|weichem Tageslicht|švelnioje dienos|lágy nappali/i.test(c)
-        && /flash|Blitz|blykst|vaku/i.test(c) && /torch|Taschenlampe|žibintuvėl|zseblámpa/i.test(c) && /carry on|weiter|tęsti|folytasd/i.test(c), c);
+      !/colour check|Farbprüfung|spalvų patikra|színellenőrzés|provjer\p{L}* boja|soft daylight|weichem Tageslicht|švelnioje dienos|lágy nappali|meko\p{L}* dnevn/iu.test(c)
+        && /flash|Blitz|blykst|vaku|bljeskalic/i.test(c) && /torch|Taschenlampe|žibintuvėl|zseblámpa|svjetiljk/i.test(c) && /carry on|weiter|tęsti|folytasd|nastavite/i.test(c), c);
     const pw = COPY[l].result.pupilWide;
-    check(`${l}: the pupil line is one short sentence that says more light helps`, /light|Licht|šviesos|fény/i.test(pw) && words(pw) <= 12 && (pw.match(/[.!?]/g) ?? []).length === 1, pw);
+    check(`${l}: the pupil line is one short sentence that says more light helps`, /light|Licht|šviesos|fény|svjetl/i.test(pw) && words(pw) <= 12 && (pw.match(/[.!?]/g) ?? []).length === 1, pw);
     check(`${l}: the disclosure has a short title`, COPY[l].result.how.length > 3 && words(COPY[l].result.how) <= 4, COPY[l].result.how);
     const r = COPY[l].result as unknown as Record<string, unknown>;
     check(`${l}: the iris size in pixels and the drag lines are gone from the dictionary`, !('irisPx' in r) && !('drag' in r) && !('drag' in (r.reveal as Record<string, unknown>)));

@@ -23,6 +23,7 @@ const WORDS: Record<Lang, SellerWords> = {
   // config.ts holds it ("atstovaujama" would need the genitive, which code cannot build reliably)
   lt: { quotes: ['„', '“'], country: 'Lietuva', phone: ', telefonas', phoneLine: ', telefonas:', represented: ', kuriai atstovauja', email: 'el. paštas' },
   hu: { quotes: ['„', '”'], country: 'Litvánia', phone: ', telefon:', phoneLine: ', telefon:', represented: ', képviseli:', email: 'e-mail' },
+  hr: { quotes: ['„', '“'], country: 'Litva', phone: ', telefon', phoneLine: ', telefon:', represented: ', zastupnik:', email: 'e-pošta' },
 };
 
 export const company = (lang: Lang) => `MB ${WORDS[lang].quotes[0]}${SELLER.name}${WORDS[lang].quotes[1]}`;

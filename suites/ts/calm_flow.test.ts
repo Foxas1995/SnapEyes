@@ -29,6 +29,7 @@ const LAMP_WORDS = {
   de: 'Lampenlicht verfälscht Ihre Augenfarbe. Tageslicht von einem Fenster gibt die Farbe echter wieder.',
   lt: 'Lempos šviesa iškraipo Jūsų akių spalvą. Dienos šviesa pro langą perteikia tikresnę spalvą.',
   hu: 'A lámpafény elszínezi a szemed színét. Egy ablakon beeső nappali fény valódibb színt ad.',
+  hr: 'Svjetlo lampe mijenja boju vaših očiju. Dnevno svjetlo s prozora ili svjetiljka sa strane daju vjerniju boju.',
 };
 const shot = (q: Partial<Quality>): Analysis => ({ ok: true, ticket: 'work.x', iris: { cx: 0.5, cy: 0.5, r: 0.3 }, quality: { ...D01, ...q } });
 

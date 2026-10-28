@@ -8,10 +8,11 @@
 //    and browsers and fails the build's check when they differ. The answer is left in window.__lpShell. Should the script itself
 //    fail, the page is marked "lp-noshell" and the stylesheet hides the shell (src/landing/css/base.css): the visitor then waits
 //    for React's first render.
-// 2. The swap script (right after the shells): the shell in the body is English; German, Lithuanian and Hungarian ones sit next to
-//    it as <template id="tpl-xx"> (src/landing/shell/render.tsx). When the visitor reads another language the swap puts that
+// 2. The swap script (right after the shells): the shell in the body is English; German, Lithuanian, Hungarian and Croatian ones sit
+//    next to it as <template id="tpl-xx"> (src/landing/shell/render.tsx). When the visitor reads another language the swap puts that
 //    template's markup in its place, before the first paint; it gives the links to /try the visitor's market (m=), and takes
-//    away the language buttons of a language the visitor's market has no texts in (the Australian one: English and German).
+//    away the language buttons of a language the visitor's market has no texts in (the Australian one: English and German; the
+//    Hungarian one: all but Croatian).
 // 3. The bar script (right after the swap): sets --bar-h, the height of the notice bar, before the first paint, because the
 //    header and the hero are placed by it (on a narrow phone the bar is two lines, not one). The live page keeps it in step
 //    afterwards (src/landing/shell/chrome.ts).
@@ -46,7 +47,7 @@ export function decisionScript(rule: ShellRule): string {
     `m=nm(q.get('m'));if(!sel(m)){m=st('${MARKET_KEY}');if(!sel(m))m=R.defaultMarket}` +
     `var al=R.allowed[m]||[],ok=function(v){return al.indexOf(v)>=0},l=q.get('lang');` +
     `if(!ok(l)){l=st('${LANG_KEY}');if(!ok(l)){l=R.own[m]||null;if(!l){var n=(navigator.language||'').toLowerCase();` +
-    `n=n.indexOf('de')===0?'de':n.indexOf('lt')===0?'lt':n.indexOf('hu')===0?'hu':'en';l=ok(n)?n:'en'}}}` +
+    `n=n.indexOf('de')===0?'de':n.indexOf('lt')===0?'lt':n.indexOf('hu')===0?'hu':n.indexOf('hr')===0?'hr':'en';l=ok(n)?n:'en'}}}` +
     `window.__lpShell={l:l,m:m}}catch(e){${hide}}})()`
   );
 }

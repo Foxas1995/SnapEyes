@@ -660,7 +660,8 @@ def beacon(body):
 
 # ----------------------------------------------------------------------------- the emails
 ROW_LABEL = {"en": "Price list that applied to your order", "de": "Preisliste, die für Ihre Bestellung galt",
-             "lt": "Jūsų užsakymui taikytas kainoraštis", "hu": "A megrendelésére alkalmazott árlista"}
+             "lt": "Jūsų užsakymui taikytas kainoraštis", "hu": "A megrendelésére alkalmazott árlista",
+             "hr": "Cjenik koji je vrijedio za vašu narudžbu"}
 # The row names the price CLASSES, not a list of styles or a number of eyes (WP12, the terms of sale do the same): {black} is the one style of the black class
 # (catalogue.class_style("black"), Clean Iris once the v3 styles are live), every other style costs the art price, two or more eyes cost the same in any style.
 # No maximum number of eyes: it is a run-time catalogue value, and this row is part of the contract e-mail.
@@ -669,6 +670,7 @@ ROW_TEXT = {
     "de": "ein Auge, {black}: {b}; ein Auge, jeder andere Stil: {a}; zwei Augen, jeder Stil: {t}; jedes weitere Auge: +{f}",
     "lt": "viena akis, {black}: {b}; viena akis, bet kuris kitas stilius: {a}; dvi akys, bet kuris stilius: {t}; kiekviena papildoma akis: +{f}",
     "hu": "egy szem, {black}: {b}; egy szem, bármely más stílus: {a}; két szem, bármelyik stílus: {t}; minden további szem: +{f}",
+    "hr": "jedno oko, {black}: {b}; jedno oko, bilo koji drugi stil: {a}; dva oka, bilo koji stil: {t}; svako sljedeće oko: +{f}",
 }
 
 

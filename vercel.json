@@ -9,6 +9,7 @@
     { "source": "/", "has": [{ "type": "query", "key": "lang", "value": "de" }], "destination": "/lp/de" },
     { "source": "/", "has": [{ "type": "query", "key": "lang", "value": "lt" }], "destination": "/lp/lt" },
     { "source": "/", "has": [{ "type": "query", "key": "lang", "value": "hu" }], "destination": "/lp/hu" },
+    { "source": "/", "has": [{ "type": "query", "key": "lang", "value": "hr" }], "destination": "/lp/hr" },
     { "source": "/", "has": [{ "type": "query", "key": "lang", "value": "en" }], "destination": "/lp/en" },
     { "source": "/", "has": [{ "type": "query", "key": "m", "value": "lt" }], "destination": "/lp/lt" },
     { "source": "/", "has": [{ "type": "query", "key": "m", "value": "hu" }], "destination": "/lp/hu" },

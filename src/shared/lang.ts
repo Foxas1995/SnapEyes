@@ -11,13 +11,13 @@
 import { DEFAULT_MARKET, MARKETS, currentMarket, type Market } from './markets';
 import { EDITION_LANGS, legalEdition } from './legal';
 
-export type Lang = 'en' | 'de' | 'lt' | 'hu';
+export type Lang = 'en' | 'de' | 'lt' | 'hu' | 'hr';
 
 /** Every language of the site, in the order the language switch shows them. */
-export const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu'];
+export const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr'];
 
 /** A language's name in itself (the tooltip of its switch button). */
-export const LANG_NAMES: Record<Lang, string> = { en: 'English', de: 'Deutsch', lt: 'Lietuvių', hu: 'Magyar' };
+export const LANG_NAMES: Record<Lang, string> = { en: 'English', de: 'Deutsch', lt: 'Lietuvių', hu: 'Magyar', hr: 'Hrvatski' };
 
 /** What each language needs outside its texts: the BCP 47 tag of the page (<html lang>), the Open Graph locale, the
  *  locale Intl formats numbers and dates by, and the page's own address (English at /, the others at ?lang=). */
@@ -27,6 +27,7 @@ export const LOCALES: Record<Lang, LocaleInfo> = {
   de: { html: 'de', og: 'de_DE', intl: 'de-DE', query: '?lang=de' },
   lt: { html: 'lt', og: 'lt_LT', intl: 'lt-LT', query: '?lang=lt' },
   hu: { html: 'hu', og: 'hu_HU', intl: 'hu-HU', query: '?lang=hu' },
+  hr: { html: 'hr', og: 'hr_HR', intl: 'hr-HR', query: '?lang=hr' },
 };
 
 export const isLang = (v: unknown): v is Lang => typeof v === 'string' && (LANGS as readonly string[]).includes(v);
@@ -39,24 +40,24 @@ export const langAllowed = (l: Lang, m: Market): boolean => marketLangs(m).inclu
 
 /** The market's own language, when it names one that is not just English (the site's language of last resort, which
  *  the browser's own language must still be able to beat: a German browser on ?m=au stays German, as it always was).
- *  lt: Lithuanian, hu: Hungarian. */
+ *  lt: Lithuanian, hu: Hungarian, hr: Croatian. */
 export function marketDefaultLang(m: Market): Lang | null {
   const d = MARKETS[m]?.lang ?? MARKETS[DEFAULT_MARKET].lang;
   return isLang(d) && d !== 'en' && langAllowed(d, m) ? d : null;
 }
 
-/** The language of the browser: German, Lithuanian and Hungarian are recognised ("de-AT", "lt", "hu-HU"), any other
+/** The language of the browser: German, Lithuanian, Hungarian and Croatian are recognised ("de-AT", "lt", "hu-HU", "hr"), any other
  *  is English, as before. */
 export function navigatorLang(): Lang {
   const nav = typeof navigator !== 'undefined' ? (navigator.language || '').toLowerCase() : '';
-  return nav.startsWith('de') ? 'de' : nav.startsWith('lt') ? 'lt' : nav.startsWith('hu') ? 'hu' : 'en';
+  return nav.startsWith('de') ? 'de' : nav.startsWith('lt') ? 'lt' : nav.startsWith('hu') ? 'hu' : nav.startsWith('hr') ? 'hr' : 'en';
 }
 
 export const LANG_STORE_KEY = 'snapeyes.lang';
 
 /** The language of a page, for the market the page shows: ?lang= wins, then the visitor's own earlier choice
  *  (localStorage "snapeyes.lang", shared by every page), then the market's own language (lt: Lithuanian, hu:
- *  Hungarian; en is no default, see marketDefaultLang), then the browser's language, then English. A language the
+ *  Hungarian, hr: Croatian; en is no default, see marketDefaultLang), then the browser's language, then English. A language the
  *  market's edition has no texts in (Lithuanian or Hungarian on the Australian market) counts as not asked. */
 export function detectLang(market: Market = currentMarket()): Lang {
   const ok = (v: unknown): v is Lang => isLang(v) && langAllowed(v, market);

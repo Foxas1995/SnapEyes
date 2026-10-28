@@ -36,7 +36,7 @@ const only = opt('--only') ? new Set(opt('--only').split(',')) : null;
 const shots = opt('--shots') ? resolve(opt('--shots')) : null;
 const PYTHON = process.env.PYTHON || 'python';
 
-const COPY = Object.fromEntries(['en', 'de', 'lt', 'hu'].map((l) => [l, JSON.parse(readFileSync(join(ROOT, `src/landing/copy/${l}.json`), 'utf8'))]));
+const COPY = Object.fromEntries(['en', 'de', 'lt', 'hu', 'hr'].map((l) => [l, JSON.parse(readFileSync(join(ROOT, `src/landing/copy/${l}.json`), 'utf8'))]));
 const registry = loadRegistry(ROOT);
 const styles = registry.styles;
 const oneStyle = firstLiveOneEyeStyle(ROOT);

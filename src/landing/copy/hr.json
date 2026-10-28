@@ -1,0 +1,679 @@
+{
+  "meta": {
+    "title": "SnapEyes: vaša prava šarenica kao umjetničko djelo",
+    "description": "Fotografirajte jedno oko mobitelom i pogledajte svoju šarenicu kao umjetničko djelo: obnovljenu, nikad iznova naslikanu. Besplatni pregled s vodenim žigom, a zatim digitalna datoteka koju možete tiskati bilo gdje.",
+    "shareDescription": "Fotografirajte jedno oko mobitelom i pogledajte svoju šarenicu kao umjetničko djelo. Pregled s vodenim žigom je besplatan.",
+    "locale": "hr_HR"
+  },
+  "facts": {
+    "px": "4096 px",
+    "square": "4096 × 4096 px",
+    "printMax": "50 × 50 cm",
+    "printMaxCm": "50 cm",
+    "email": "info@snapeyes.com",
+    "hours": "48"
+  },
+  "langName": "Hrvatski",
+  "switchLabel": "Jezik",
+  "brandTag": "",
+  "skip": "Prijeđi na sadržaj",
+  "nav": {
+    "reveal": "Prije i poslije",
+    "wall": "Vaš zid",
+    "styles": "Stilovi",
+    "how": "Kako funkcionira",
+    "pricing": "Cijene",
+    "faq": "Česta pitanja",
+    "privacy": "Privatnost"
+  },
+  "navLabels": {
+    "main": "Glavna navigacija",
+    "footer": "Podnožje",
+    "menu": "Izbornik"
+  },
+  "cta": "Izradite besplatni pregled",
+  "ctaShort": "Besplatni pregled",
+  "ctaNote": "",
+  "bar": {
+    "label": "Obavijest",
+    "soon": "Naručivanje se otvara uskoro.",
+    "open": "Započnite s besplatnim pregledom."
+  },
+  "example": {
+    "chip": "Primjer",
+    "vis": "Vizualizacija",
+    "photo": "Ogledna fotografija",
+    "mantas": "Naše vlastito oko"
+  },
+  "hero": {
+    "eyebrow": "SnapEyes",
+    "title": "Vaša prava šarenica, pretvorena u umjetnost.",
+    "lead": "Fotografija vašeg oka snimljena mobitelom, obnovljena i oblikovana u stilu koji odaberete.",
+    "micro": [
+      "Besplatni pregled s vodenim žigom",
+      "Za otprilike minutu",
+      "Bez registracije"
+    ],
+    "fromPrice": "Digitalna datoteka od {from}",
+    "computerHint": "Na računalu ste? Otvorite snapeyes.com na mobitelu ili upotrijebite fotografije koje već imate.",
+    "secondary": "Pogledajte pravo prije i poslije",
+    "globeAlt": "Kugla od okruglih umjetničkih djela u našim stilovima, izrađenih od našeg vlastitog oka i oglednih fotografija",
+    "globeLabel": "Naši stilovi na kugli koju možete okretati",
+    "globeTry": "Isprobajte sa svojim okom",
+    "globeClose": "Zatvori",
+    "globeNote": "Naše vlastito oko i ogledne fotografije, ne kupci"
+  },
+  "reveal": {
+    "eyebrow": "Prije i poslije",
+    "title": "Lijevo fotografija. Desno šarenica.",
+    "intro": "Obnovljena, nikad iznova naslikana: boja i uzorak ostaju vaši.",
+    "hint": "Povucite za usporedbu",
+    "sliderLabel": "Usporedite fotografiju s mobitela i obnovljenu šarenicu",
+    "valueText": "fotografija {n} posto",
+    "before": "Fotografija s mobitela",
+    "after": "Obnovljena šarenica",
+    "beforeWeb": "Fotografija",
+    "sliderLabelWeb": "Usporedite fotografiju i obnovljenu šarenicu",
+    "eyes": [
+      {
+        "id": "gd",
+        "label": "Sivozeleno oko",
+        "n": 380,
+        "note": "Ogledna fotografija, ne kupac.",
+        "photoAlt": "Ogledna fotografija sivozelenog oka s odrazom prozora, lijeva polovica kadra",
+        "irisAlt": "Ista sivozelena šarenica, obnovljena, bez odraza",
+        "artAlt": "Obnovljena sivozelena šarenica kao umjetničko djelo"
+      },
+      {
+        "id": "own",
+        "label": "Naše vlastito oko",
+        "n": 315,
+        "note": "Snimljeno kod kuće mobitelom.",
+        "photoAlt": "Fotografija našeg vlastitog oka snimljena mobitelom, lijeva polovica kadra",
+        "irisAlt": "Ista šarenica, obnovljena, na crnoj podlozi",
+        "artAlt": "Obnovljena šarenica kao umjetničko djelo"
+      }
+    ],
+    "eyeGroup": "Odaberite ogledno oko",
+    "strip": {
+      "photo": "Fotografija",
+      "iris": "Šarenica",
+      "art": "Slika"
+    },
+    "yourTurn": "Sada ste vi na redu."
+  },
+  "wall": {
+    "eyebrow": "Vaš zid",
+    "title": "Pogledajte je na svom zidu",
+    "intro": "Tiskajte je gdje god želite: na akrilu, aluminiju, platnu ili u okviru.",
+    "stageLabel": "Vizualizacije vaše datoteke, otisnute",
+    "materialsLabel": "Materijal",
+    "artLabel": "Slika",
+    "materials": {
+      "acrylic": {
+        "n": "Akril",
+        "tag": "Sjajan i dubok",
+        "facts": [
+          "Često debljine 3 do 6 mm",
+          "Odmaknut od zida",
+          "Najdublja crna"
+        ]
+      },
+      "metal": {
+        "n": "Aluminij",
+        "tag": "Oštar i moderan",
+        "facts": [
+          "Često debljine 1 do 3 mm",
+          "Blizu zida",
+          "Sjajan ili satenski"
+        ]
+      },
+      "canvas": {
+        "n": "Platno",
+        "tag": "Mekano i toplo",
+        "facts": [
+          "Često dubine 2 do 4 cm",
+          "Vrlo malo odsjaja",
+          "Okvir nije potreban"
+        ]
+      },
+      "framed": {
+        "n": "Uokvireni otisak",
+        "tag": "Klasičan i smiren",
+        "facts": [
+          "Iza stakla, s bijelim paspartuom",
+          "Okvir otprilike 2 cm",
+          "Lako se vješa"
+        ]
+      },
+      "block": {
+        "n": "Akrilni blok",
+        "tag": "Za policu ili radni stol",
+        "facts": [
+          "Često debljine 2 do 4 cm",
+          "Stoji samostalno",
+          "Često 10 do 20 cm"
+        ]
+      },
+      "phone": {
+        "n": "Mobitel",
+        "tag": "Na zaključanom zaslonu",
+        "facts": [
+          "Osvijetljen zaslonom",
+          "Dodajte crni prostor oko slike",
+          "Ništa se ne tiska"
+        ]
+      }
+    },
+    "arts": {
+      "eye": "Jedno oko",
+      "universe": "Universe",
+      "family4": "Obitelj",
+      "collision": "Vas dvoje"
+    },
+    "eyesNote": "Oči: naše vlastito i ogledne fotografije.",
+    "captions": {
+      "acrylic": "Na akrilu.",
+      "metal": "Na aluminiju.",
+      "canvas": "Na platnu.",
+      "framed": "Uokvireno.",
+      "block": "Kao akrilni blok.",
+      "phone": "Na zaključanom zaslonu mobitela."
+    },
+    "captionsSize": {
+      "acrylic": "Na akrilu, otprilike {size}.",
+      "metal": "Na aluminiju, otprilike {size}.",
+      "canvas": "Na platnu, otprilike {size}.",
+      "framed": "Uokvireno, otprilike {size}."
+    },
+    "compareTitle": "Usporedite materijale",
+    "compareCorner": "Materijal",
+    "compare": {
+      "cols": [
+        "Akril",
+        "Aluminij",
+        "Platno",
+        "Uokvireni otisak"
+      ],
+      "rows": [
+        {
+          "h": "Izgled",
+          "v": [
+            "Sjajan, s dubinom",
+            "Oštar, tanak",
+            "Mekan, s teksturom",
+            "Klasičan, smiren"
+          ]
+        },
+        {
+          "h": "Crna",
+          "v": [
+            "Duboka",
+            "Duboka",
+            "Mekša",
+            "Duboka, s bijelim paspartuom"
+          ]
+        },
+        {
+          "h": "Odsjaji",
+          "v": [
+            "Ponešto, u svijetloj prostoriji",
+            "Ponešto, manje na satenskom",
+            "Vrlo malo",
+            "Ponešto, manje sa staklom protiv odsjaja"
+          ]
+        },
+        {
+          "h": "Na zidu",
+          "v": [
+            "Lebdi ispred zida",
+            "Tanak i lagan",
+            "Topao i opušten",
+            "Svečan i tradicionalan"
+          ]
+        }
+      ],
+      "note": "Opći vodič kroz ono što nude tiskare, a ne opis naših proizvoda."
+    }
+  },
+  "sizes": {
+    "eyebrow": "Veličine",
+    "title": "Dovoljno piksela za {printMax}",
+    "intro": "Odaberite veličinu: crtež je u mjerilu.",
+    "svgLabel": "Crtež u mjerilu s četiri veličine otiska na zidu, uz kauč i osobu za usporedbu",
+    "sofa": "Kauč, 220 cm",
+    "person": "Osoba, 175 cm",
+    "chips": "Veličina otiska",
+    "cm": "{n} cm",
+    "ppi": "piksela po inču",
+    "rungs": [
+      {
+        "cm": 20,
+        "t": "Radni stol i polica",
+        "b": "Više nego što tiskare traže"
+      },
+      {
+        "cm": 30,
+        "t": "Iznad komode",
+        "b": "Iznad uobičajenih 150 do 300"
+      },
+      {
+        "cm": 40,
+        "t": "Slika za zid",
+        "b": "Unutar uobičajenih 150 do 300"
+      },
+      {
+        "cm": 50,
+        "t": "Najveća koju preporučujemo",
+        "b": "Unutar uobičajenih 150 do 300"
+      }
+    ]
+  },
+  "more": {
+    "title": "Još načina da je vidite",
+    "railLabel": "Još vizualizacija",
+    "prev": "Prethodna slika",
+    "next": "Sljedeća slika",
+    "scenes": [
+      {
+        "id": "pair",
+        "t": "Vas dvoje, na tamnom orahu",
+        "c": "Oči: naše vlastito i ogledna fotografija."
+      },
+      {
+        "id": "group",
+        "t": "Vas četvero, u okviru",
+        "c": "Oči: naše vlastito i ogledne fotografije."
+      },
+      {
+        "id": "hands",
+        "t": "U vašim rukama",
+        "c": ""
+      },
+      {
+        "id": "gallery",
+        "t": "Pogled iz kuta",
+        "c": "Oči: naše vlastito i ogledna fotografija."
+      },
+      {
+        "id": "shelf",
+        "t": "Na polici",
+        "c": ""
+      }
+    ]
+  },
+  "styles": {
+    "eyebrow": "Stilovi",
+    "title": "Jedna šarenica, mnogo stilova",
+    "legend": "Primjeri. Vaša će slika nositi vaše vlastite boje i uzorak.",
+    "groups": {
+      "one": "Samo vi",
+      "two": "Vas dvoje",
+      "family": "Obitelj"
+    },
+    "tabsLabel": "Skupine stilova",
+    "eyeLabel": "Isprobajte drugu boju očiju",
+    "eyes": {
+      "own": "Plavozelena",
+      "yg": "Žutozelena",
+      "br": "Smeđa",
+      "gr": "Siva"
+    },
+    "eyeNote": {
+      "own": "Naše vlastito oko",
+      "other": "Ogledna fotografija"
+    },
+    "items": {
+      "radiance": {
+        "d": "Fine zrake svjetla u bojama vaše šarenice."
+      },
+      "powder": {
+        "d": "Rub se rasipa u zrnca u vlastitim bojama vašeg oka."
+      },
+      "universe": {
+        "d": "Vaša šarenica, uvećana, ispunjava cijelu sliku."
+      },
+      "echo": {
+        "d": "Vaša šarenica unutar vlastite jeke, a vlakna se pružaju poput tunela."
+      },
+      "splash": {
+        "d": "Rub se podiže u krunu od tekućine."
+      },
+      "clean": {
+        "d": "Vaša obnovljena šarenica, sama na čistoj crnoj podlozi."
+      },
+      "duo_infinity": {
+        "d": "Dvije šarenice preklapaju se poput znaka beskonačnosti."
+      },
+      "duo_infinity_bb": {
+        "d": "Svaka šarenica zadržava svoju boju ondje gdje se susreću."
+      },
+      "duo_kiss": {
+        "d": "Dvije šarenice koje se dodiruju rubom."
+      },
+      "duo_clean": {
+        "d": "Isti par, bez praha."
+      },
+      "duo_thread": {
+        "d": "Dvije cijele šarenice spojene jednom tankom zlatnom niti."
+      },
+      "duo_radiance": {
+        "d": "Dvije šarenice šalju zrake u svojim bojama koje se susreću između njih."
+      },
+      "fam_trio": {
+        "d": "Tri šarenice u trokutu."
+      },
+      "fam_4": {
+        "d": "Četiri šarenice, s prahom u njihovim vlastitim bojama."
+      },
+      "fam_orbit": {
+        "d": "Jedna šarenica u sredini, a obitelj kruži oko nje."
+      },
+      "fam_circle": {
+        "d": "Šarenice poredane u krug, a u središtu malo svjetlo."
+      },
+      "fam_radiance": {
+        "d": "Svaka šarenica šalje svoje fine zrake."
+      },
+      "supernova_one": {
+        "d": "Zvjezdana prašina izbija iz ruba u vlastitim bojama vašeg oka."
+      },
+      "nebula": {
+        "d": "Vaša šarenica sjaji u srcu maglice."
+      },
+      "sparks": {
+        "d": "Iskre se dižu s ruba u vlastitim bojama vašeg oka."
+      },
+      "halo": {
+        "d": "Vaša šarenica, osvijetljena odostraga vlastitom bojom."
+      },
+      "aurora": {
+        "d": "Zastori polarne svjetlosti obavijaju vašu šarenicu."
+      },
+      "duo_nebula": {
+        "d": "Dvije šarenice sjaje jedna uz drugu u maglici."
+      },
+      "duo_supernova": {
+        "d": "Zvjezdana prašina izbija iz obaju rubova u vlastitim bojama svakog oka."
+      },
+      "fam_nebula": {
+        "d": "Cijela obitelj sjaji zajedno u jednoj maglici."
+      },
+      "fam_supernova": {
+        "d": "Svaka se šarenica rasprsne u zvjezdanu prašinu u svojim bojama."
+      }
+    },
+    "mixed": "Naše vlastito oko i ogledne fotografije",
+    "priceOne": "Jedno oko, {price}",
+    "priceTwo": "Dva oka, {price}",
+    "priceFrom": "Od {price}",
+    "wallOn": "Na zidu",
+    "wallOff": "Ravno",
+    "wallOnAria": "Prikaži {name} na zidu",
+    "wallOffAria": "Prikaži {name} ravno",
+    "wallFile": "Cijena se odnosi na digitalnu datoteku. Tisak nije dio vaše narudžbe.",
+    "comboTitle": "Više očiju na jednoj slici: od 2 do {max}",
+    "comboBody": "Vaše oči i oči ljudi koje volite. Svako dodatno oko košta {price}.",
+    "soonTag": "Uskoro",
+    "moreSoon": "Još stilova uskoro.",
+    "comboTitleSoon": "Više očiju na jednoj slici"
+  },
+  "how": {
+    "eyebrow": "Kako funkcionira",
+    "title": "Tri koraka, bez studija",
+    "steps": [
+      {
+        "t": "Fotografirajte svoje oko",
+        "b": "Stražnja kamera, svjetlo sa strane."
+      },
+      {
+        "t": "Pogledajte pregled",
+        "b": "Vaša šarenica u nekoliko stilova."
+      },
+      {
+        "t": "Preuzmite datoteku",
+        "b": "Odaberite stil: datoteka se izrađuje u punoj rezoluciji.",
+        "bOpen": "Odaberite stil i platite putem Stripea: datoteka se izrađuje u punoj rezoluciji."
+      }
+    ],
+    "videoPlay": "Pokrenite video s uputama",
+    "videoPause": "Pauzirajte video s uputama",
+    "previewTitle": "Vaš pregled",
+    "previewButton": "Narudžba s obvezom plaćanja",
+    "previewSoon": "Sljedeće: vaša datoteka",
+    "fileName": "snapeyes-artwork.jpg",
+    "fileMeta": "{square}, JPEG"
+  },
+  "pricing": {
+    "eyebrow": "Cijene",
+    "title": "Jasne cijene za jednu digitalnu datoteku",
+    "notice": "Naručivanje se otvara uskoro.",
+    "noticeOpen": "Započnite s besplatnim pregledom: naručujete tek kad vam se rezultat svidi.",
+    "severalSoon": "Besplatni pregled već je dostupan. Naručivanje za ovu skupinu otvara se uskoro.",
+    "currencyLabel": "Cijene u",
+    "free": "Besplatno",
+    "rows": {
+      "free": {
+        "t": "Pregled",
+        "b": "S vodenim žigom."
+      },
+      "black": {
+        "t": "Jedno oko na crnoj podlozi",
+        "b": "Stil {name}."
+      },
+      "art": {
+        "t": "Jedno oko u umjetničkom stilu",
+        "b": "{styles}."
+      },
+      "two": {
+        "t": "Dva oka",
+        "b": "{styles}."
+      },
+      "more": {
+        "t": "Tri oka",
+        "b": "Dva oka stoje {price2}. Svako dodatno oko košta {price}, a na jednoj slici može ih biti najviše {max}."
+      }
+    },
+    "ladderTitle": "Broj očiju",
+    "eyes": "{n} oka",
+    "includesTitle": "Što dobivate",
+    "includes": [
+      "{px}, bez vodenog žiga",
+      "Izrađeno iz vašeg pregleda",
+      "12 mjeseci za preuzimanje",
+      "Osobna licenca"
+    ],
+    "notIncludes": "Tisak nije dio vaše narudžbe.",
+    "payOpen": "Sigurno plaćanje karticom putem Stripea.",
+    "termsLink": "Opći uvjeti prodaje",
+    "auLine": "Prodavatelj: MB Portretizuokis, Kaunas, Litva. Plaćanje karticom u australskim dolarima (A$) putem Stripea. Riječ je o digitalnoj datoteci, pa se ništa ne šalje poštom.",
+    "footnote": "Cijene su u eurima. To su konačne cijene: nismo u sustavu PDV-a, pa se PDV ne obračunava.",
+    "footnoteAud": "Cijene su u australskim dolarima (A$). Svaka cijena je ukupna cijena: GST se ne obračunava.",
+    "footnoteHuf": "Cijene su u mađarskim forintama (Ft). To su konačne cijene: nismo u sustavu PDV-a, pa se PDV ne obračunava."
+  },
+  "closeups": {
+    "eyebrow": "Pogledajte izbliza",
+    "title": "Izrezano izravno iz datoteke",
+    "intro": "Pravi dio datoteke, bez uvećavanja.",
+    "badge": "Isječak od {n} px",
+    "fibreTitle": "Naše vlastito oko",
+    "fibreAlt": "Krupni plan naše vlastite obnovljene šarenice, izrezan iz datoteke od 4096 px: radijalna vlakna, zlatna kolareta i rub zjenice.",
+    "locatorAlt": "Cijela obnovljena šarenica, s kvadratom koji označava gdje je izrezan krupni plan",
+    "locatorLabel": "Gdje je izrezano",
+    "edgeTitle": "Rub otiska na akrilu",
+    "edgeAlt": "Vizualizacija kuta otiska na akrilu: polirani prozirni rub, čelični distancer i blagi odraz prozora."
+  },
+  "trust": {
+    "eyebrow": "Što nikad ne radimo",
+    "title": "Mala obećanja, održana",
+    "items": [
+      "Ne slikamo vašu šarenicu iznova",
+      "Ne predstavljamo primjere kao kupce",
+      "Ne skrivamo kako slike nastaju",
+      "Ne požurujemo vas lažnom hitnošću"
+    ],
+    "curatorEyebrow": "Pomoć",
+    "curatorTitle": "Ne uspijevate snimiti oštru fotografiju?",
+    "offer": "Pošaljite nam svoje najbolje fotografije; obično odgovaramo u roku od jednog do dva radna dana.",
+    "offerCta": "Pišite nam",
+    "privacyEyebrow": "Vaša fotografija",
+    "privacyTitle": "Obećanje o vašem oku",
+    "privacy": [
+      {
+        "t": "Samo za vašu sliku",
+        "b": "Vašu fotografiju upotrebljavamo samo za izradu vaše slike. Iz svake snimke bilježimo nekoliko mjerenja, nikad samu sliku, kako bismo poboljšali vodič za snimanje."
+      },
+      {
+        "t": "Nikad za identifikaciju",
+        "b": "Nikad se ne upotrebljava za identifikaciju bilo koga, nikad se ne prodaje i ne upotrebljava se za treniranje umjetne inteligencije."
+      },
+      {
+        "t": "Besplatne preglede ne čuvamo",
+        "b": "Vaš besplatni pregled ne pohranjujemo. Isječak šarenice i pregled čuvamo samo ako započnete narudžbu. Ako naručite, datoteke vaše narudžbe (ne fotografiju s mobitela) čuvamo 12 mjeseci radi preuzimanja."
+      },
+      {
+        "t": "Nekoliko vanjskih usluga",
+        "b": "Vercel pokreće stranicu i pregled, a Googleov Gemini API obnovu (Google zapise o zahtjevima čuva ograničeno vrijeme). Za narudžbe tome se pridružuju Stripe za plaćanje i privatna pohrana Supabase u EU-u."
+      }
+    ],
+    "controller": "Za vaše podatke odgovoran je MB „Portretizuokis“, Kaunas, Litva (svi podaci nalaze se u podnožju ove stranice).",
+    "rights": "Možete pitati koje podatke o vama čuvamo, zatražiti njihov ispravak ili brisanje te podnijeti pritužbu tijelu za zaštitu podataka.",
+    "policyLink": "Pročitajte cijelu politiku privatnosti"
+  },
+  "faq": {
+    "eyebrow": "Pitanja",
+    "title": "Prije nego što počnete",
+    "items": [
+      {
+        "id": "receive",
+        "q": "Što dobivam?",
+        "a": "Jednu digitalnu datoteku bez vodenog žiga: JPEG u sRGB-u, {square} za jedno oko i {px} na duljoj stranici za više očiju, izrađenu u punoj rezoluciji iz pregleda koji odobrite. Nakon plaćanja otvara se stranica vaše narudžbe, a poveznica na nju stiže e-poštom. Datoteka je obično gotova za nekoliko minuta; ako narudžbu ikad zadržimo radi provjere, obećavamo je najkasnije za {hours} sati. Za preuzimanje ostaje dostupna 12 mjeseci. Osobna licenca: tiskajte je za sebe ili kao poklon; prodaja slike ili otisaka nije uključena (pogledajte uvjete prodaje)."
+      },
+      {
+        "id": "print",
+        "q": "Tiskate li je i šaljete li je?",
+        "a": "Ne. Tisak nije dio vaše narudžbe: tiskara ga naplaćuje zasebno, a cijena ovisi o tiskari, veličini i materijalu. Ako ikad dodamo tisak, reći ćemo to na ovoj stranici."
+      },
+      {
+        "id": "printit",
+        "q": "Mogu li je tiskati i koliko veliku?",
+        "a": "Da. Odaberite tiskaru, kvadratnu veličinu poput 20, 30, 40 ili 50 cm i učitajte JPEG. Za druge oblike zamolite tiskaru da sliku obreže ili doda rub te zatražite probni otisak ili uzorak. Mi ne tiskamo i ne šaljemo: otisak je posao tiskare, koja određuje i cijenu. Za jedno oko preporučujemo najviše {printMax}, što je otprilike 208 piksela po inču (otprilike 347 pri 30 cm). Tiskare obično traže otprilike 150 do 300. Kod više očiju dulja stranica može biti do {printMaxCm}. Iznad {printMaxCm} otisak je moguć, ali datoteku još više rasteže, pa to ne obećavamo. Rezultat ovisi i o vašoj fotografiji."
+      },
+      {
+        "id": "look",
+        "q": "Hoće li moj otisak izgledati kao na slikama?",
+        "a": "Slike prostorija, ruku i otisaka vizualizacije su toga kako datoteka može izgledati kad se otisne, a ne fotografije. Pravi otisak razlikuje se ovisno o tiskari, materijalu i svjetlu u vašoj prostoriji, kao što se i zaslon razlikuje od zida, a njegove se boje mogu razlikovati od onih na vašem zaslonu. Veličine na slikama služe kao ilustracija, a neki stilovi s tih slika bit će dostupni tek uskoro. Zatražite od tiskare probni otisak ili uzorak."
+      },
+      {
+        "id": "how",
+        "q": "Kako to funkcionira?",
+        "a": "Polazimo od vaše vlastite fotografije i uklanjamo odraze. Gdje vaš mobitel nije mogao snimiti najfinija vlakna, naša ih umjetna inteligencija obnavlja, pa je najfiniji detalj rekonstrukcija, a ne fotografija pod mikroskopom. U nekim stilovima prah, tekućina, plamen ili prašina oko vaše šarenice materijal je koji je izradila umjetna inteligencija, iz zajedničke biblioteke, pa slika drugog kupca može sadržavati isti komad. Vaša šarenica zadržava boje, uzorak i raspored s vaše fotografije; najfinija vlakna obnavlja umjetna inteligencija, kako je gore opisano. Prostorije, ruke i predmeti na slikama na ovoj stranici izrađeni su umjetnom inteligencijom, a ne fotografirani. Oči na ovoj stranici naše su vlastito oko i ogledne fotografije, nikad oči kupaca, i sve su pažljivo snimljene: vaš rezultat ovisi o vašoj fotografiji, a besplatni pregled pokazuje ga prije plaćanja."
+      },
+      {
+        "id": "bad",
+        "q": "Što ako mi je fotografija loša?",
+        "a": "Prije plaćanja pregled vam kaže je li snimka previše mutna, pretamna ili je zjenica preširoka te vam pokazuje kako je ponoviti. I dalje ne ide? Pošaljite svoje najbolje fotografije na {email} i pogledat ćemo ih."
+      },
+      {
+        "id": "unhappy",
+        "q": "Što ako mi se rezultat ne svidi?",
+        "a": "Svoj pregled vidite besplatno prije plaćanja, a nakon plaćanja odmah počinjemo izrađivati vašu datoteku. Ako je datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam: izradit ćemo je ponovno ili vam vratiti novac. Pojedinosti o jednostranom raskidu ugovora nalaze se u nastavku."
+      },
+      {
+        "id": "phone",
+        "q": "Koji mobitel i koju kameru upotrijebiti?",
+        "a": "Bilo koji noviji pametni telefon s dobrom stražnjom kamerom. Upotrijebite stražnju kameru sa zumom 2x ili 3x, a ne prednju kameru. Upotrijebite dnevno svjetlo s prozora ili svjetiljku, sa strane, a ne sobnu lampu ili bljeskalicu. Držite mobitel otprilike 10 cm od oka, dodirnite šarenicu da je izoštrite, držite oko širom otvoreno tako da ni kapak ni trepavice ne prelaze preko šarenice, skinite naočale i snimite tri do pet fotografija. Svaku snimku mjerimo i upotrebljavamo najoštriju."
+      },
+      {
+        "id": "colour",
+        "q": "Hoće li boja odgovarati boji mog oka?",
+        "a": "Boja dolazi s vaše fotografije, a mobitel boju bilježi drukčije pod sobnom lampom, uz bljeskalicu ili u sjeni. Šarenicu nikad ne bojimo iznova, pa ako fotografija ima neprirodan ton, snimite je ponovno uz dnevno svjetlo s prozora ili sa svjetiljkom sa strane."
+      },
+      {
+        "id": "other",
+        "q": "Mogu li fotografirati nekog drugog?",
+        "a": "Da: partnera, dijete ili svoje drugo oko, a više očiju može dijeliti jednu sliku. Najprije pitajte, a za dijete odlučujete vi kao roditelj ili skrbnik. Sliku možete izraditi i za nekog drugog i pokloniti mu datoteku.",
+        "aOpen": "Da: partnera, dijete ili svoje drugo oko, a jedna slika može spojiti više očiju, najviše {max}. Najprije pitajte, a za dijete odlučujete vi kao roditelj ili skrbnik. Sliku možete izraditi i za nekog drugog i pokloniti mu datoteku."
+      },
+      {
+        "id": "material",
+        "q": "Koji materijal odabrati?",
+        "a": "Akril je sjajan i dubok; objesite ga podalje od izravnog odsjaja s prozora. Aluminij je oštar i moderan. Platno je mekano i manje odsijeva, ali tkanje omekšava najfinija vlakna. Uokvireni otisak je klasičan. Akrilni blok stoji na polici. Za mobitel u bilo kojem programu za uređivanje fotografija dodajte crni prostor oko kvadratne datoteke i postavite je kao pozadinu. Pojedinosti na ovoj stranici uobičajene su za tiskare i razlikuju se od tiskare do tiskare; zatražite uzorak."
+      },
+      {
+        "id": "time",
+        "q": "Koliko to traje?",
+        "a": "Besplatni pregled traje otprilike minutu. Kad se naručivanje otvori, datoteka se izrađuje u punoj rezoluciji nakon što je odobrite, obično za nekoliko minuta, a najkasnije u roku od {hours} sati.",
+        "aOpen": "Besplatni pregled traje otprilike minutu. Nakon plaćanja datoteka se izrađuje u punoj rezoluciji, obično za nekoliko minuta, a najkasnije u roku od {hours} sati."
+      },
+      {
+        "id": "photo",
+        "q": "Što se događa s mojom fotografijom?",
+        "a": "Vaš besplatni pregled ne pohranjujemo. Isječak šarenice i pregled čuvamo samo ako započnete narudžbu. Kad naručite, datoteke vaše narudžbe (ne fotografiju s mobitela) čuvamo 12 mjeseci kako biste ih mogli ponovno preuzeti, a zatim ih brišemo. Vaša se šarenica nikad ne upotrebljava za identifikaciju bilo koga ni za treniranje umjetne inteligencije. Pojedinosti su u našoj politici privatnosti, na koju vodi poveznica u podnožju ove stranice."
+      },
+      {
+        "id": "withdraw",
+        "q": "Mogu li odustati od narudžbe?",
+        "a": "Vašu datoteku počinjemo izrađivati čim pošaljemo e-poruku s potvrdom narudžbe, obično u roku od minute nakon plaćanja. Prije plaćanja pristajete da odmah počnemo, pa pravo na jednostrani raskid ugovora u roku od 14 dana prestaje čim počnemo izrađivati vašu datoteku. Do tada ugovor možete raskinuti e-poštom ili online putem funkcije „Raskid ugovora“, u podnožju ove stranice ili putem poveznice za raskid u e-poruci s potvrdom narudžbe. Ako je vaša datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam: izradit ćemo je ponovno ili vam vratiti novac. Pojedinosti su u uvjetima prodaje i u obavijesti o pravu na jednostrani raskid ugovora, na koje vode poveznice u podnožju ove stranice."
+      },
+      {
+        "id": "order",
+        "q": "Kada mogu naručiti?",
+        "a": "Naručivanje se otvara uskoro. Do tada je dostupan besplatni pregled. Za narudžbu vam je potrebna samo adresa e-pošte.",
+        "qOpen": "Kako naručiti?",
+        "aOpen": "Odmah nakon besplatnog pregleda, na istoj stranici: odaberite stil, označite polje o digitalnoj datoteci i nastavite na Stripeovu stranicu za plaćanje, gdje plaćate. Stranica vaše narudžbe otvara se odmah, a poveznica na nju stiže e-poštom. Potrebna vam je samo adresa e-pošte."
+      },
+      {
+        "id": "pets",
+        "q": "Mogu li izraditi sliku za svog ljubimca?",
+        "a": "Još ne. Kad to bude moguće, javit ćemo ovdje."
+      }
+    ]
+  },
+  "faqAu": {
+    "unhappy": {
+      "q": "Što ako mi se rezultat ne svidi?",
+      "a": "Svoj pregled vidite besplatno prije plaćanja, a nakon plaćanja odmah počinjemo izrađivati vašu datoteku. Ako je datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam. Naše usluge imaju jamstva koja se prema australskom zakonu o zaštiti potrošača (Australian Consumer Law) ne mogu isključiti. Pojedinosti o otkazivanju nalaze se u nastavku."
+    },
+    "withdraw": {
+      "q": "Mogu li otkazati narudžbu?",
+      "a": "Vašu datoteku počinjemo izrađivati čim pošaljemo e-poruku s potvrdom narudžbe, obično u roku od minute nakon plaćanja. Prije plaćanja pristajete da odmah počnemo, pa pravo na jednostrani raskid ugovora u roku od 14 dana prema pravu EU-a o zaštiti potrošača, koje se primjenjuje na vašu narudžbu, prestaje čim počnemo izrađivati vašu datoteku. Do tada narudžbu možete otkazati e-poštom ili online putem funkcije „Raskid ugovora“, u podnožju ove stranice ili putem poveznice za raskid u e-poruci s potvrdom narudžbe, i vratit ćemo vam cijeli iznos. To se odnosi samo na predomišljanje: naše usluge imaju jamstva koja se prema australskom zakonu o zaštiti potrošača (Australian Consumer Law) ne mogu isključiti, pa ako je vaša datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam. Pojedinosti su u uvjetima prodaje (Vaša prava u Australiji) i u obavijesti o pravu na jednostrani raskid ugovora, na koje vode poveznice u podnožju ove stranice."
+    }
+  },
+  "final": {
+    "title": "Pogledajte svoju šarenicu",
+    "body": "Potrebni su vam samo mobitel, dobro svjetlo i otprilike minuta.",
+    "imageAlt": "Vizualizacija: tamna radna soba u sumrak, s našom vlastitom šarenicom otisnutom na akrilu na zidu.",
+    "chip": "Vizualizacija"
+  },
+  "footer": {
+    "operatedBy": "SnapEyes vodi",
+    "company": "MB „Portretizuokis“",
+    "companyCode": "Matični broj",
+    "country": "Litva",
+    "contact": "Kontakt",
+    "representedBy": "Zastupa",
+    "rights": "SnapEyes",
+    "currency": "Cijene u",
+    "legalNav": "Pravne informacije",
+    "legal": {
+      "privacy": "Politika privatnosti",
+      "terms": "Opći uvjeti prodaje",
+      "withdrawal": "Pravo na jednostrani raskid ugovora",
+      "imprint": "Impresum",
+      "withdrawFn": "Raskid ugovora"
+    }
+  },
+  "marketHint": {
+    "label": "Cijene u vašoj valuti",
+    "close": "Ne, hvala",
+    "huf": {
+      "text": "Kupujete iz Mađarske? Pogledajte naše cijene u mađarskim forintama (Ft).",
+      "show": "Prikaži cijene u Ft"
+    }
+  },
+  "ui": {
+    "close": "Zatvori",
+    "scrollHint": "Pomaknite se u stranu za više"
+  }
+}

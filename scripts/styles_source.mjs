@@ -35,7 +35,7 @@ export function parseEngineSource(src) {
   return parseLiteral(src, 'ENGINE', ENGINE_FILE);
 }
 
-/** The LAYOUT_NAMES literal of layout_names.py's text: {layout id: {en, de, lt, hu}}, the one table of layout words (UTF-8, not ASCII). */
+/** The LAYOUT_NAMES literal of layout_names.py's text: {layout id: {en, de, lt, hu, hr}}, the one table of layout words (UTF-8, not ASCII). */
 export function parseLayoutNamesSource(src) {
   return parseLiteral(src, 'LAYOUT_NAMES', LAYOUTS_FILE);
 }

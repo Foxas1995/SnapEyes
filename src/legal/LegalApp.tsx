@@ -28,6 +28,7 @@ const UI: Record<Lang, { updated: string; back: string; contents: string; print:
   de: { updated: 'Zuletzt aktualisiert am', back: 'Zurück zu SnapEyes', contents: 'Inhalt', print: 'Drucken oder als PDF speichern' },
   lt: { updated: 'Atnaujinta', back: 'Grįžti į SnapEyes', contents: 'Turinys', print: 'Spausdinti arba išsaugoti PDF' },
   hu: { updated: 'Utolsó frissítés:', back: 'Vissza a SnapEyes oldalára', contents: 'Tartalom', print: 'Nyomtatás vagy mentés PDF-ként' },
+  hr: { updated: 'Posljednje ažuriranje:', back: 'Natrag na SnapEyes', contents: 'Sadržaj', print: 'Ispis ili spremanje u PDF' },
 };
 
 const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold rounded-sm';

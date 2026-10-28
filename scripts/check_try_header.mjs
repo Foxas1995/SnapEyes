@@ -10,7 +10,7 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
 const dist = resolve(args.includes('--dist') ? args[args.indexOf('--dist') + 1] : join(ROOT, 'dist'));
 const WIDTHS = [320, 340, 360, 375, 390, 412];
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 
 // every text box of the header outside the logo, against the logo's box
 const PROBE = `(() => {

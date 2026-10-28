@@ -451,14 +451,18 @@ const Ready: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang; email: boolea
   );
 };
 
-/** The language switch, as on /try and the landing page: one button per language the order's market can be read in. */
-const LangSwitch: React.FC<{ C: OrderCopy; lang: Lang; langs: readonly Lang[]; onSwitch: (l: Lang) => void }> = ({ C, lang, langs, onSwitch }) => (
-  <div role="group" aria-label={C.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
-    {langs.map((l) => (
-      <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
-        className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
-        {l}
-      </button>
-    ))}
-  </div>
-);
+/** The language switch, as on /try and the landing page: one button per language the order's market can be read in (narrower buttons
+ *  below 340 px, or below 400 px when there are five of them, as on /try). */
+const LangSwitch: React.FC<{ C: OrderCopy; lang: Lang; langs: readonly Lang[]; onSwitch: (l: Lang) => void }> = ({ C, lang, langs, onSwitch }) => {
+  const narrow = langs.length > 4 ? 'max-[400px]:min-w-[28px] max-[400px]:px-1.5' : 'max-[340px]:min-w-[28px] max-[340px]:px-1.5';
+  return (
+    <div role="group" aria-label={C.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
+      {langs.map((l) => (
+        <button key={l} type="button" onClick={() => onSwitch(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
+          className={`min-w-[40px] rounded-full px-2.5 py-1.5 ${narrow} uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+};

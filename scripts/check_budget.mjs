@@ -85,7 +85,15 @@ const PALETTE = { js: 0, css: 559 };
 // the wall picture of 34.1 kB and the disc of 13.8 kB. The work-in-progress commit wrote +7,868 B before anything was built; this is the measured number.
 // Re-measure it when the globe changes: build both trees, run this script on each, take the difference.
 const GLOBE = { js: 7888, css: 1158 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css };
+// Croatian, the site's fifth language (2026-10-28, EU edition only), is content, not motion. The landing loads none of its words unless the visitor reads Croatian: they
+// are a lazy chunk of their own (src/landing/copy/hr.json, hr-*.js, 9,600 B), and the Croatian legal texts land in the legal pages' entry (src/legal/main.tsx, also named
+// main-*.js and so counted here, +18,735 B), which the landing never loads. The landing's own entry grew by 69 B (the language table), the AI-material table by 197 B, the
+// chunk shared with the header (BrandLogo-*.js) by 477 B and /try's and /order's shared chunk (checkout-*.js) by 112 B; CSS +53 B: the landing's rule that narrows five
+// language buttons on a phone (src/landing/css/header.css, +27 B) and the utilities of the narrower switch of /try, /order and the legal pages in the shared stylesheet
+// (+26 B). HR is this script's own sum on the tree with Croatian minus on its parent (b9d23d0): JavaScript +28,900 B, CSS +53 B. Re-measure it when the Croatian texts
+// change: build both trees, run this script on each, take the difference.
+const HR = { js: 28900, css: 53 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

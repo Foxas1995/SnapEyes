@@ -8,9 +8,9 @@
 // The other editions (src/shared/legal.ts legalEdition: "au", the Australian market's, and "hu", the Hungarian market's
 // with the prices in forints) travel apart, under "editions": {"au": ..., "hu": ...}, with every link to a legal page
 // carrying m=au / m=hu, so an order's email quotes (and links) the texts its customer accepted; "docs" stays the EU
-// edition, as before, with plain links. Languages: English, German, Lithuanian and Hungarian for the EU and Hungarian
-// editions, English and German for the Australian one (src/shared/legal.ts EDITION_LANGS).
-import type { Lang } from '../shared/lang';
+// edition, as before, with plain links. Languages: English, German, Lithuanian, Hungarian and Croatian for the EU edition,
+// the same without Croatian for the Hungarian one, English and German for the Australian one (src/shared/legal.ts EDITION_LANGS).
+import { LANGS, type Lang } from '../shared/lang';
 import type { Block, LegalDoc } from './types';
 import {
   EDITION_LANGS, EDITION_MARKETS, LEGAL_PATH, LEGAL_UPDATED, SITE_HOST, formatLegalDate, legalHref, type LegalDocId, type LegalEdition,
@@ -59,7 +59,7 @@ function block(b: Block, lang: Lang, page: LegalDocId, market: string): string {
 }
 
 /** The words before the date under a legal text's title in the email ("Last updated: 2026-09-30"). */
-const UPDATED: Record<Lang, string> = { en: 'Last updated:', de: 'Stand:', lt: 'Atnaujinta:', hu: 'Utolsó frissítés:' };
+const UPDATED: Record<Lang, string> = { en: 'Last updated:', de: 'Stand:', lt: 'Atnaujinta:', hu: 'Utolsó frissítés:', hr: 'Posljednje ažuriranje:' };
 
 /** One legal page as plain text: title, date, address of the page, lead, then the sections. Paragraphs are separated
  *  by an empty line and never wrapped (mail clients wrap them). */
@@ -91,9 +91,9 @@ export interface LegalMailPack {
   };
   docs: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>;
   /** The other editions ("au", the Australian market's, in English and German; "hu", the Hungarian market's, in every
-   *  language), the same shape as docs: api/_lib/pay.py quotes them for an order of that market and keeps live
+   *  language but Croatian), the same shape as docs: api/_lib/pay.py quotes them for an order of that market and keeps live
    *  ordering closed while one of a selectable market is missing. */
-  editions: { au: Partial<Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>>; hu: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }> };
+  editions: { au: Partial<Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>>; hu: Partial<Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>> };
   /** Facts the law requires in these texts that are still empty and that nobody decided to leave out, as
    *  "seller.email": [] when complete. api/_lib/pay.py may keep live ordering closed while this list is not empty.
    *  The representative is never in it: no rule that applies to a Lithuanian seller requires the name. */
@@ -105,7 +105,6 @@ export interface LegalMailPack {
   waived: string[];
 }
 
-const LANGS: Lang[] = ['en', 'de', 'lt', 'hu'];
 const per = <T,>(f: (lang: Lang) => T, langs: readonly Lang[] = LANGS) => Object.fromEntries(langs.map((l) => [l, f(l)])) as Record<Lang, T>;
 
 function mailDoc(id: LegalDocId, doc: LegalDoc, lang: Lang, market: string = DEFAULT_MARKET): LegalMailDoc {

@@ -1,8 +1,8 @@
 // The language switch in the middle of the capture flow of /try (QA of 2026-10-20): the server's own sentences (api/analyze.py: the quality message and the tips) and the preview
 // watermark of the restoration (api/enhance.py draws it into the pixels of the display copy, in the language of the request) stayed in the old language after the visitor switched
 // the page's language during the quality step, while the analysis ran, or while the restoration ran.
-//   npm run build && node scripts/check_lang_switch.mjs [--dist dist]        real Chrome on the built page, the stand-in API of scripts/lib/flowstub.mjs, four languages
-// For each of the four languages as the start (and the next one, then the one after it, as the target), on a phone:
+//   npm run build && node scripts/check_lang_switch.mjs [--dist dist]        real Chrome on the built page, the stand-in API of scripts/lib/flowstub.mjs, five languages
+// For each of the five languages as the start (and the next one, then the one after it, as the target), on a phone:
 //   quality   a shot whose circle did not lock stops at the quality step (since 2026-10-22 a usable shot, a middling one included, goes straight on: the step shows the one
 //             line of a shot the studio cannot restore, no tips); its message is in the page's language; a switch changes it at once (the words come with the analysis in every
 //             language, quality.words), twice in a row, and nothing of the old language is left
@@ -21,7 +21,7 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
 const dist = resolve(args.includes('--dist') ? args[args.indexOf('--dist') + 1] : join(ROOT, 'dist'));
 const PHOTO = join(ROOT, 'public', 'assets', 'sample_eye_blue_1789706902835.jpg');
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 const problems = [];
 let n = 0;
 const fail = (c, m) => { problems.push(`${c}: ${m}`); console.log(`  FAIL ${c}: ${m}`); };
@@ -77,7 +77,7 @@ const calls = () => api.stats.enhance.filter((c) => c.redisplay).map((c) => c.la
 
 try {
   for (let i = 0; i < LANGS.length; i++) {
-    const [a, b, c] = [LANGS[i], LANGS[(i + 1) % 4], LANGS[(i + 2) % 4]];
+    const [a, b, c] = [LANGS[i], LANGS[(i + 1) % LANGS.length], LANGS[(i + 2) % LANGS.length]];
     const tag = `${a} -> ${b} -> ${c}`;
 
     // ---- the quality step
@@ -154,4 +154,4 @@ if (problems.length) {
   console.error(`language switch check FAILED (${problems.length} of ${n}):\n  ${problems.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`language switch check ok: ${n} checks, four languages as the start, in the quality step, during the analysis, after and during the restoration`);
+console.log(`language switch check ok: ${n} checks, five languages as the start, in the quality step, during the analysis, after and during the restoration`);

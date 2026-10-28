@@ -17,6 +17,7 @@ import en from '../copy/en.json';
 import de from '../copy/de.json';
 import lt from '../copy/lt.json';
 import hu from '../copy/hu.json';
+import hr from '../copy/hr.json';
 import type { LandingCopy } from '../copy/types';
 import { fill } from '../copy/format';
 import { tryUrl } from '../config';
@@ -26,7 +27,7 @@ import { HELD_PRICE } from '../heroPrice';
 import { SiteTopView } from '../SiteTopView';
 import type { Lang } from '../../shared/lang';
 
-const COPIES: Record<Lang, LandingCopy> = { en, de, lt, hu };
+const COPIES: Record<Lang, LandingCopy> = { en, de, lt, hu, hr };
 
 export interface ShellInput {
   /** The language buttons of the shells: the languages the default market can be read in. */

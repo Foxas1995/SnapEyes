@@ -49,7 +49,7 @@ export const lt: LegalDoc = {
       id: 'images',
       title: 'Apie vaizdus',
       blocks: [
-        'Mūsų pagrindinio puslapio pavyzdiniuose vaizduose matote paties įkūrėjo akį, nufotografuotą telefonu ir apdorotą mūsų programos. Pavyzdinė akis, kurią galite išbandyti peržiūros įrankyje, yra sugeneruota DI ir visada taip pažymėta.',
+        'Mūsų pagrindinio puslapio pavyzdiniuose vaizduose matote mūsų pačių akį, nufotografuotą telefonu ir apdorotą mūsų programos. Pavyzdinė akis, kurią galite išbandyti peržiūros įrankyje, yra sugeneruota DI ir visada taip pažymėta.',
       ],
     },
     {

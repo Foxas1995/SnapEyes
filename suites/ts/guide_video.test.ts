@@ -64,7 +64,7 @@ export async function run(): Promise<Row[]> {
   check('a picture track and no sound track (it plays muted; no music, no voice)', rows.every((r) => r.tracks.includes('vide') && !r.tracks.includes('soun')), JSON.stringify(rows.map((r) => [r.l, r.tracks])));
   check(`a poster beside each file at the size the pages declare (${CUT.w} x ${CUT.h}: the box is held before it loads), under 80 kB`,
     rows.every((r) => r.poster !== null && r.poster[0] === CUT.w && r.poster[1] === CUT.h && r.posterBytes < 80_000), JSON.stringify(rows.map((r) => [r.l, r.poster, r.posterBytes])));
-  check('the site carries only the files the pages ask for: the video and its poster in four languages, nothing else in public/assets/howto',
+  check('the site carries only the files the pages ask for: the video and its poster in every language, nothing else in public/assets/howto',
     readdirSync('public/assets/howto').sort().join() === LANGS.flatMap((l) => [`howto-11-${l}.jpg`, `howto-11-${l}.mp4`]).sort().join(), readdirSync('public/assets/howto').join());
 
   // both pages ask for the page language's file, with the size of the poster

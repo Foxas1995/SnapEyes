@@ -20,6 +20,7 @@ from _lib import lashblock as LB  # a dark lash curtain over the iris with a lid
 from _lib import overshoot as OS   # a limbus fit that runs off the photo is refitted inside a sane radius
 from _lib.analyze_lt import TEXT_LT
 from _lib.analyze_hu import TEXT_HU
+from _lib.analyze_hr import TEXT_HR
 
 # ---- capture targets: ONE block. The verdict, the tips and the "targets" the capture screen shows all read
 # these, so the numbers a customer is told can never disagree with the numbers that judge the photo.
@@ -573,7 +574,8 @@ def telemetry(v, depth=0):
 # and the landing page's words; the capture screen (src/try/shots.ts visibleTips, topTip) recognises three tips by
 # "automatisch", "Spiegelung" + "Pupille" and "näher", so keep those words in them. Lithuanian (api/_lib/analyze_lt.py
 # TEXT_LT: "automatiškai", "atspindys" + "vyzdys", "arčiau") and Hungarian (api/_lib/analyze_hu.py TEXT_HU:
-# "automatikusan", "tükröződés" + "pupilla", "zoom") have exactly the same keys, and shots.ts knows their words too.
+# "automatikusan", "tükröződés" + "pupilla", "zoom") and Croatian (api/_lib/analyze_hr.py TEXT_HR: "automatski", "odsjaj" +
+# "zjenic", "približ") have exactly the same keys, and shots.ts knows their words too.
 TEXT_DE = {
     "no_eye": "Auf diesem Foto haben wir kein Auge gefunden. Füllen Sie das Bild mit einem geöffneten Auge und versuchen Sie "
               "es erneut.",
@@ -634,14 +636,14 @@ TEXT_DE = {
                 "ungenau. Bitte machen Sie ein weiteres Foto.",
 }
 
-TEXTS = {"de": TEXT_DE, "lt": TEXT_LT, "hu": TEXT_HU}   # by the request's "lang"; English is inline
+TEXTS = {"de": TEXT_DE, "lt": TEXT_LT, "hu": TEXT_HU, "hr": TEXT_HR}   # by the request's "lang"; English is inline
 
 def analyze(body):
     device, study = telemetry(body.get("device")), telemetry(body.get("study"))
     lang = body.get("lang") if body.get("lang") in TEXTS else "en"
 
     def say(key, en, **kw):
-        """The sentence for the request's language: TEXTS[lang][key] (filled with kw) for "de", "lt" and "hu", else en
+        """The sentence for the request's language: TEXTS[lang][key] (filled with kw) for "de", "lt", "hu" and "hr", else en
         as it is."""
         return TEXTS[lang][key].format(**kw) if lang in TEXTS else en
     im = L.b64_to_pil(body.get("image"))
@@ -804,8 +806,8 @@ def analyze(body):
     lamp = lamp_cast(tint)
 
     def words(lng):
-        """The customer sentences of this analysis in one language (lng: "en", "de", "lt" or "hu"): the verdict's message, the tips and the lamp message, as plain text from the
-        measurements above. The request's own language goes into the reply as it always did (message, tips, lamp_message); all four go into quality.words, so that a page whose
+        """The customer sentences of this analysis in one language (lng: "en", "de", "lt", "hu" or "hr"): the verdict's message, the tips and the lamp message, as plain text from the
+        measurements above. The request's own language goes into the reply as it always did (message, tips, lamp_message); all five go into quality.words, so that a page whose
         visitor switches language after the analysis (or while it ran) shows the new language without asking again (the model is not asked twice, and a second look could judge
         the photo another way)."""
         def say_(key, en, **kw):
@@ -851,7 +853,7 @@ def analyze(body):
 
     mine = words(lang)
     msg, tips = mine["message"], mine["tips"]
-    all_words = {l: words(l) for l in ("en", "de", "lt", "hu")}
+    all_words = {l: words(l) for l in ("en", "de", "lt", "hu", "hr")}
     capture = {"verdict": verdict, "detail": detail, "fibre_score": round(fscore, 2),
                "fibre": round(fibre, 2), "basis": round(basis, 2), "glare_on_fibres_pct": round(glare_fib, 1), "diameter_px": int(diam_orig),
                "sclera_b": None if not tint else round(tint["b"], 1), "sclera_a": None if not tint else round(tint["a"], 1),

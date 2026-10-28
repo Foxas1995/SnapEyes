@@ -1,4 +1,4 @@
-// The checks of the prerendered first screen (src/landing/shell, written into the landing's HTML by the heroShell plugin of vite.config.ts; the build keeps it as dist/lp/en.html, de, lt and hu: scripts/lib/langheads.mjs).
+// The checks of the prerendered first screen (src/landing/shell, written into the landing's HTML by the heroShell plugin of vite.config.ts; the build keeps it as dist/lp/en.html, de, lt, hu and hr: scripts/lib/langheads.mjs).
 //   node scripts/check_shell.mjs [--dist dist] [--shots <folder>]        both parts
 //   node scripts/check_shell.mjs --rules                                 part 1 only (Node, no browser, no build needed)
 //
@@ -60,10 +60,10 @@ async function rules() {
     return { doc, preloads, win, sandbox: { URLSearchParams, location: { search: s.search }, localStorage: { getItem: (k) => (k in s.store ? s.store[k] : null) }, navigator: { language: s.nav }, document: doc, window: win } };
   };
   const qm = [null, 'au', 'hu', 'lt', 'AU ', 'xx', 'eu'];
-  const ql = [null, 'en', 'de', 'lt', 'hu', 'xx'];
+  const ql = [null, 'en', 'de', 'lt', 'hu', 'hr', 'xx'];
   const sm = [null, 'au', 'hu', 'lt', 'zz'];
-  const sl = [null, 'de', 'lt', 'hu', 'fr'];
-  const nav = ['en-US', 'de-AT', 'lt', 'hu-HU', 'fr-FR', ''];
+  const sl = [null, 'de', 'lt', 'hu', 'hr', 'fr'];
+  const nav = ['en-US', 'de-AT', 'lt', 'hu-HU', 'hr-HR', 'fr-FR', ''];
   let n = 0;
   const saved = { window: globalThis.window, navigator: Object.getOwnPropertyDescriptor(globalThis, 'navigator') };
   try {
@@ -205,7 +205,7 @@ async function browser(dist, shotsDir) {
     await p.send('Storage.clearDataForOrigin', { origin, storageTypes: 'all' }).catch(() => undefined);
     return p;
   };
-  const LANGS = ['en', 'de', 'lt', 'hu'];
+  const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
   const COPY = Object.fromEntries(LANGS.map((l) => [l, JSON.parse(readFileSync(join(ROOT, `src/landing/copy/${l}.json`), 'utf8'))]));
   try {
     // static HTML facts (what a crawler or a script-less visitor gets): the English shell, and a template per other language
@@ -237,7 +237,7 @@ async function browser(dist, shotsDir) {
 
     // the shell (main script blocked) against the live first screen, for every language and the markets with a language of their own
     const sizes = [[375, 812, true], [768, 1024, false], [1280, 800, false]];
-    const cases = [['en', '/', 'eu'], ['de', '/?lang=de', 'eu'], ['lt', '/?lang=lt', 'eu'], ['hu', '/?lang=hu', 'eu'], ['lt', '/?m=lt', 'lt'], ['hu', '/?m=hu', 'hu'], ['en', '/?m=au', 'au'], ['de', '/?m=au&lang=de', 'au']];
+    const cases = [['en', '/', 'eu'], ['de', '/?lang=de', 'eu'], ['lt', '/?lang=lt', 'eu'], ['hu', '/?lang=hu', 'eu'], ['hr', '/?lang=hr', 'eu'], ['lt', '/?m=lt', 'lt'], ['hu', '/?m=hu', 'hu'], ['en', '/?m=au', 'au'], ['de', '/?m=au&lang=de', 'au']];
     const shots = [];
     for (const [lang, url, market] of cases) {
       for (const [w, h, mobile] of sizes) {

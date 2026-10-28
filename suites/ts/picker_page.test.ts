@@ -304,12 +304,12 @@ export async function run(): Promise<Row[]> {
   check('reduced motion: nothing of the picker or the result loops or fades by a utility (no animate-*, no transition-opacity): its changes are the flow classes fx-*, which the stylesheet switches off', rmHtml.includes('fx-pick') && !/(^|[^:\w-])(animate-[a-z]+|transition-opacity)/.test(rmHtml),
     rmHtml.match(/(^|[^:\w-])(animate-[a-z]+|transition-opacity)/)?.[0] ?? '');
 
-  // ---- the four languages
-  const SOON = { en: 'Soon', de: 'Bald', lt: 'Netrukus', hu: 'Hamarosan' } as Record<Lang, string>;
-  const GROUPS = { en: ['Just you', 'Two of you', 'Family'], de: ['Nur Sie', 'Sie zu zweit', 'Familie'], lt: ['Tik Jūs', 'Jūs dviese', 'Šeima'], hu: ['Csak te', 'Ti ketten', 'Család'] } as Record<Lang, string[]>;
+  // ---- the five languages
+  const SOON = { en: 'Soon', de: 'Bald', lt: 'Netrukus', hu: 'Hamarosan', hr: 'Uskoro' } as Record<Lang, string>;
+  const GROUPS = { en: ['Just you', 'Two of you', 'Family'], de: ['Nur Sie', 'Sie zu zweit', 'Familie'], lt: ['Tik Jūs', 'Jūs dviese', 'Šeima'], hu: ['Csak te', 'Ti ketten', 'Család'], hr: ['Samo vi', 'Vas dvoje', 'Obitelj'] } as Record<Lang, string[]>;
   const reasonKeys = new Set<string>();
   for (const d of Object.values(STYLES)) for (const v of Object.values(d.reason)) reasonKeys.add(v);
-  const claims = /\b(unique|one of a kind|never repeated|no two alike|handmade|hand-painted|bestseller|best seller|most chosen|most popular)\b|einzigartig|einmalig|handgemacht|legvalasztottabb|vienintel|unikali|vienetin/i;
+  const claims = /\b(unique|one of a kind|never repeated|no two alike|handmade|hand-painted|bestseller|best seller|most chosen|most popular)\b|einzigartig|einmalig|handgemacht|legvalasztottabb|vienintel|unikali|vienetin|jedinstven|neponovljiv|ručno rađen|najprodavanij|najpopularnij/i;
   for (const lang of LANGS) {
     setCopyLang(lang);
     const P = COPY[lang].picker;

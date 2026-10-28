@@ -8,14 +8,14 @@ src/shared/layouts.ts layoutName(lang, id), and both read this very file (the pa
 literal below as JSON, as src/shared/styles.ts does with the registry).
 
 The build refuses to finish (scripts/check_styles.mjs, item 5) when the literal is not plain JSON, when a layout id has no word in one
-of the four languages, when a style takes a layout this file does not name, when a word here belongs to no style, when the pages read
+of the five languages, when a style takes a layout this file does not name, when a word here belongs to no style, when the pages read
 another table than this one, or when any other file of api/, src/ or scripts/ holds a table that names layouts again. The text check
 (scripts/check_texts.mjs) reads these words too: no en or em dash in any of them, and no English or German word in a Lithuanian or
 Hungarian one.
 
 Rules for the literal (JSON inside Python): double quotes only, no trailing commas, no comments inside it, nothing after it in this
 file. Unlike the style registry it holds the words in plain UTF-8 (the Lithuanian and Hungarian letters), exactly as pay_lt.py and
-pay_hu.py do. Every entry has exactly the four languages en, de, lt and hu, each a short word or two with no spaces at either end.
+pay_hu.py do. Every entry has exactly the five languages en, de, lt, hu and hr, each a short word or two with no spaces at either end.
 
 Which ids are which. The legacy ids (single, duo, fusion, triangle, row, grid, galaxy) are what the six styles of today take and what
 every order made so far carries: their words are the ones the e-mails and the order page have always printed and stay for ever, so
@@ -26,21 +26,21 @@ middle, the others round it) is named by the work of 2026-10-20 that brought the
 Hungarian has been read by a native speaker yet (README): every word of a v3 id is on that review list.
 """
 LAYOUT_NAMES = {
-    "single": {"en": "Single", "de": "Einzeln", "lt": "Viena akis", "hu": "Egy szem"},
-    "pair": {"en": "Pair", "de": "Paar", "lt": "Pora", "hu": "Pár"},
-    "trio": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög"},
-    "diag": {"en": "Diagonal", "de": "Diagonale", "lt": "Įstrižai", "hu": "Átlós"},
-    "zigzag": {"en": "Zigzag", "de": "Zickzack", "lt": "Zigzagas", "hu": "Cikcakk"},
-    "cluster": {"en": "Cluster", "de": "Gruppe", "lt": "Grupė", "hu": "Csoport"},
-    "ring": {"en": "Ring", "de": "Ring", "lt": "Žiedas", "hu": "Gyűrű"},
-    "brick": {"en": "Rows", "de": "Reihen", "lt": "Eilės", "hu": "Sorok"},
-    "flower": {"en": "Flower", "de": "Blume", "lt": "Gėlė", "hu": "Virág"},
-    "chain": {"en": "Chain", "de": "Kette", "lt": "Grandinė", "hu": "Lánc"},
-    "orbit": {"en": "Orbit", "de": "Umlaufbahn", "lt": "Orbita", "hu": "Pálya"},
-    "duo": {"en": "Side by side", "de": "Nebeneinander", "lt": "Greta", "hu": "Egymás mellett"},
-    "fusion": {"en": "Fusion", "de": "Fusion", "lt": "Susiliejimas", "hu": "Összeolvadás"},
-    "triangle": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög"},
-    "row": {"en": "In a row", "de": "In einer Reihe", "lt": "Vienoje eilėje", "hu": "Egy sorban"},
-    "grid": {"en": "Grid", "de": "Raster", "lt": "Tinklelis", "hu": "Rács"},
-    "galaxy": {"en": "Galaxy", "de": "Galaxie", "lt": "Galaktika", "hu": "Galaxis"}
+    "single": {"en": "Single", "de": "Einzeln", "lt": "Viena akis", "hu": "Egy szem", "hr": "Jedno oko"},
+    "pair": {"en": "Pair", "de": "Paar", "lt": "Pora", "hu": "Pár", "hr": "Par"},
+    "trio": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög", "hr": "Trokut"},
+    "diag": {"en": "Diagonal", "de": "Diagonale", "lt": "Įstrižai", "hu": "Átlós", "hr": "Dijagonalno"},
+    "zigzag": {"en": "Zigzag", "de": "Zickzack", "lt": "Zigzagas", "hu": "Cikcakk", "hr": "Cik-cak"},
+    "cluster": {"en": "Cluster", "de": "Gruppe", "lt": "Grupė", "hu": "Csoport", "hr": "Skupina"},
+    "ring": {"en": "Ring", "de": "Ring", "lt": "Žiedas", "hu": "Gyűrű", "hr": "Prsten"},
+    "brick": {"en": "Rows", "de": "Reihen", "lt": "Eilės", "hu": "Sorok", "hr": "Redovi"},
+    "flower": {"en": "Flower", "de": "Blume", "lt": "Gėlė", "hu": "Virág", "hr": "Cvijet"},
+    "chain": {"en": "Chain", "de": "Kette", "lt": "Grandinė", "hu": "Lánc", "hr": "Lanac"},
+    "orbit": {"en": "Orbit", "de": "Umlaufbahn", "lt": "Orbita", "hu": "Pálya", "hr": "Orbita"},
+    "duo": {"en": "Side by side", "de": "Nebeneinander", "lt": "Greta", "hu": "Egymás mellett", "hr": "Jedno uz drugo"},
+    "fusion": {"en": "Fusion", "de": "Fusion", "lt": "Susiliejimas", "hu": "Összeolvadás", "hr": "Stapanje"},
+    "triangle": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög", "hr": "Trokut"},
+    "row": {"en": "In a row", "de": "In einer Reihe", "lt": "Vienoje eilėje", "hu": "Egy sorban", "hr": "U nizu"},
+    "grid": {"en": "Grid", "de": "Raster", "lt": "Tinklelis", "hu": "Rács", "hr": "Mreža"},
+    "galaxy": {"en": "Galaxy", "de": "Galaxie", "lt": "Galaktika", "hu": "Galaxis", "hr": "Galaksija"}
 }

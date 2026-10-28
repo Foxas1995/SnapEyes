@@ -1,5 +1,5 @@
-// The text check of the build: the site speaks English, German, Lithuanian and Hungarian, and this refuses the build when
-//   1. a Lithuanian or Hungarian dictionary (landing page, /try, /order, the checkout wording, the legal pages) has other
+// The text check of the build: the site speaks English, German, Lithuanian, Hungarian and Croatian, and this refuses the build when
+//   1. a Lithuanian, Hungarian or Croatian dictionary (landing page, /try, /order, the checkout wording, the legal pages) has other
 //      keys, other value kinds, other array lengths or other function arity than the English one, or a legal text has
 //      other section ids, other block kinds or other links (so a language switch keeps every link), or a function has
 //      no sample arguments here (add it to SAMPLES when a function is added to a dictionary);
@@ -19,32 +19,32 @@
 //      a sentence for a reason a photo can be blocked for;
 //   7. the withdrawal waiver (checkbox) or the withdrawal statement is not the same words on the page and on the server,
 //      in any language;
-//   8. the consent texts (the four languages of the EU edition and the two of the Australian one) are not the ones the
+//   8. the consent texts (the five languages of the EU edition and the two of the Australian one) are not the ones the
 //      fingerprint of the current consent version says (CONSENT_FINGERPRINTS): a changed text needs a new version, in
 //      api/_lib/pay.py CONSENT_VERSION and src/shared/legal.ts WITHDRAWAL_CONSENT_VERSION together;
 //  10. a string of any language makes a claim the plate styles cannot keep (CLAIMS below: an artwork that is "unique", "one of a kind", "never
 //      repeated", "handmade", a "100 percent" close-up, "every fibre", a "best seller", "most chosen" or "most popular"), in the dictionaries, the
-//      legal texts, the Lithuanian and Hungarian e-mail sentences and the head of index.html; the powder, crowns and spirals around an iris come from a
+//      legal texts, the Lithuanian, Hungarian and Croatian e-mail sentences and the head of index.html; the powder, crowns and spirals around an iris come from a
 //      finite library of plates, so such a word would be untrue (review of 2026-10-04, risk 26). The sentence about AI-made material
-//      (src/shared/aiMaterial.ts) is linted like any other string in the four languages while it is unpublished, and is in every terms text once it is
+//      (src/shared/aiMaterial.ts) is linted like any other string in the five languages while it is unpublished, and is in every terms text once it is
 //      published and in none before;
-//   9. a Lithuanian or Hungarian string is the very same words as the English or German one (untranslated), or one of
+//   9. a Lithuanian, Hungarian or Croatian string is the very same words as the English or German one (untranslated), or one of
 //      the customer sentences in the Python files of those languages (api/_lib/*_lt.py, *_hu.py: the emails, the
 //      receipts, the Stripe notes, the analyze tips) holds English or German words or a dash; the refusals of the compose
-//      API (api/compose.py WORDS, four languages per key) go through the checks of 2 and 9 like any dictionary string.
+//      API (api/compose.py WORDS, five languages per key) go through the checks of 2 and 9 like any dictionary string.
 //  11. the copy of the NEW landing (src/landing/copy/<lang>.json, one file per language of src/shared/lang.ts LANGS): every
 //      language has its file, with the keys, the value kinds, the list lengths, the numbers and the {tokens} of en.json, only
 //      tokens the page knows (src/landing/copy/format.ts TOKENS), no dash and no spaced hyphen, none of the banned claims
 //      ("ready to print", "100 percent", "museum glass"), the honesty lines where the prototype has them (the labels, "Printing
 //      is not part of your order", "Ordering opens soon" in exactly three places), the legal labels and the withdrawal button of
 //      src/shared/legal.ts, the facts of src/landing/config.ts, the FAQ ids in the same order and the Australian FAQ answers for
-//      ids that exist. Every language has its real translation (no English stand-ins any more), so all four files are
+//      ids that exist. Every language has its real translation (no English stand-ins any more), so all five files are
 //      linted like every other dictionary.
 //  12. the sentence about AI-made material on the PAGES (src/shared/aiMaterial.ts AI_MATERIAL_PAGE): the landing's FAQ answer "How does it work?" (faq.items, id how)
 //      and the result of /try (result.aiMaterial) hold it word for word while it is published (the page promises not to hide how a picture is made, so the shared
 //      library of plates has to be on the page as well as in the terms; release review H-M1). Until the lean pass of 2026-10-22 the landing held it in the Reveal's
 //      table of what the AI adds; the owner asked for the AI wording to stand in one place, the FAQ answer about how it works, so it is held there now. English,
-//      German and Lithuanian pages use the legal sentence itself, Hungarian pages say "te" and have their own wording. Setting the flag back to false stays one
+//      German, Lithuanian and Croatian pages use the legal sentence itself, Hungarian pages say "te" and have their own wording. Setting the flag back to false stays one
 //      line: /try then stops showing it, and the landing may keep a disclosure the terms no longer hold.
 // vite.config.ts runs it before every build (src/ is loaded through Vite's module runner, as the legal pack is);
 // `npm run check:texts` runs it alone. The legal pack the confirmation email carries is checked by checkPack, which the
@@ -54,11 +54,11 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
-const LANGS = ['en', 'de', 'lt', 'hu'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
 const SHY = new RegExp(String.fromCharCode(0xad), 'g');              // the soft hyphens of the German titles
 const NBSP_RE = new RegExp(String.fromCharCode(0xa0), 'g');          // the no-break spaces of prices
 const SEPARATOR = new RegExp('[ ' + String.fromCharCode(0xa0) + ']·[ ' + String.fromCharCode(0xa0) + ']', 'g');   // " · " between the parts of a label
-const NEW_LANGS = ['lt', 'hu'];
+const NEW_LANGS = ['lt', 'hu', 'hr'];
 // the four dashes the owner rules out (U+2012 to U+2015), built from their codes so that this file holds none itself
 const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']');
 
@@ -108,7 +108,7 @@ export const SAMPLES = {
 };
 
 // ------------------------------------------------------------------------------------------ the lint
-// what counts as English inside a Lithuanian or Hungarian string, and what may stay English there
+// what counts as English inside a Lithuanian, Hungarian or Croatian string, and what may stay English there
 // Words of English (then German) that are nothing else in Lithuanian or Hungarian: function words and the words a shop's
 // text is made of. A word that is also a real Lithuanian or Hungarian word is left out on purpose (Hungarian "most",
 // "mind", "has", "had", "hat", "mit", "von", "start", "hold"; Lithuanian "man", "per", "ten", "to", "be", "as", "bei"
@@ -141,9 +141,12 @@ const WORDS_DE = [
 const wordRe = (words) => new RegExp(`(?<![\\p{L}])(${words.join('|')})(?![\\p{L}])`, 'iu');
 const ENGLISH = wordRe(WORDS_EN);
 const GERMAN = wordRe(WORDS_DE);
+// A word of the lists above that is a real word of one language only, left out for that language alone (the lists stay whole for
+// the others): Croatian "zum" (zoom, "zum 2x"), which is not the German "zum".
+const NATIVE_OK = { hr: /(?<![\p{L}])zum(?![\p{L}])/giu };
 // The brand names are English in every language (api/_lib/styles_registry.py names): the eleven names of the v3 catalogue, the held
 // and later ones (Elements, Reflection, Infinity Chain, Universe Duo) and the looks inside Universe, so that no string that names
-// them is flagged as untranslated English in Lithuanian or Hungarian. Longer names come before the names they contain.
+// them is flagged as untranslated English in Lithuanian, Hungarian or Croatian. Longer names come before the names they contain.
 const STYLE_NAMES_OK = [
   'Celestial Gold Duo', 'Radiance Duo', 'Universe Duo', 'Infinity Chain', 'Collision Infinity', 'Clean Infinity', 'Clean Family', 'Clean Iris',
   'Kiss Collision', 'Family Colours', 'Powder Burst', 'Celestial Gold', 'Universe', 'Splash', 'Radiance', 'Elements', 'Reflection',
@@ -179,6 +182,8 @@ const CLAIMS = {
     /dažniausiai (?:renkam|pasirenkam)/i, /\b100\s?(?:%|proc)/i],
   hu: [/egyedülálló/i, /megismételhetetlen/i, /két egyforma sincs/i, /kézzel (?:készült|festett)/i, /minden (?:egyes )?rost/i, /best[- ]?seller/i, /legnépszerűbb/i,
     /legtöbbet választott/i, /\b100\s?(?:%|százalék)/i],
+  hr: [/jedinstven/i, /neponovljiv/i, /(?:nema|ni) dva ista/i, /ručn(?:o|i|a) (?:rađen|izrađen|slikan|oslikan)|ručni rad/i, /svako (?:pojedino )?vlakno/i, /best[- ]?seller/i,
+    /najprodavanij/i, /najpopularnij/i, /najčešće (?:biran|odabran)/i, /\b100\s?(?:%|posto)/i],
 };
 
 /** A claim the plate styles cannot keep in one string (check 10), as a sentence, or null. */
@@ -209,14 +214,14 @@ function lint(path, s, lang, out, typography = true) {
     const bad = s.match(LT_FLAGGED);
     if (bad) out.push(`${path} (lt): "${bad[2]}" is a wording the language review ruled out: ${s.slice(0, 120)}`);
   }
-  const rest = s.replace(ENGLISH_OK, ' ').replace(/\[[^\]]*\]\([^)]*\)/g, (x) => x.replace(/\([^)]*\)$/, ''));
+  const rest = s.replace(ENGLISH_OK, ' ').replace(/\[[^\]]*\]\([^)]*\)/g, (x) => x.replace(/\([^)]*\)$/, '')).replace(NATIVE_OK[lang] ?? /$^/g, ' ');
   const e = rest.match(ENGLISH);
   if (e) out.push(`${path} (${lang}): untranslated English "${e[0]}"?: ${s.slice(0, 160)}`);
   const g = rest.match(GERMAN);
   if (g) out.push(`${path} (${lang}): untranslated German "${g[0]}"?: ${s.slice(0, 160)}`);
 }
 
-/** A Lithuanian or Hungarian string that is word for word the English or the German one is an untranslated sentence
+/** A Lithuanian, Hungarian or Croatian string that is word for word the English or the German one is an untranslated sentence
  *  (one word, a name or a number excepted, and what ENGLISH_OK names). strings: per language, [path, text] pairs. */
 function identical(strings, out) {
   const other = new Set();
@@ -262,8 +267,8 @@ function pyStrings(text) {
   return out;
 }
 
-/** The customer sentences of the Python files of Lithuanian and Hungarian (api/_lib/pay_*, withdraw_*, iris_*, analyze_*
- *  for lt and hu): no en or em dash, no untranslated English or German, no flagged Lithuanian wording. */
+/** The customer sentences of the Python files of Lithuanian, Hungarian and Croatian (api/_lib/pay_*, withdraw_*, iris_*, analyze_*
+ *  for lt, hu and hr): no en or em dash, no untranslated English or German, no flagged Lithuanian wording. */
 function checkPyTexts(root, out) {
   for (const l of NEW_LANGS) {
     for (const f of ['pay', 'withdraw', 'iris', 'analyze']) {
@@ -275,9 +280,9 @@ function checkPyTexts(root, out) {
   }
 }
 
-/** The customer sentences of the compose API (api/compose.py WORDS: one sentence per refusal key in each of en, de, lt and hu), as
+/** The customer sentences of the compose API (api/compose.py WORDS: one sentence per refusal key in each of en, de, lt, hu and hr), as
  *  [lang, path, text] triples, so that they go through the checks of a dictionary string (an en or em dash, untranslated English or
- *  German in Lithuanian or Hungarian, the typography lint, a sentence word for word the English one). Every key must have all four
+ *  German in Lithuanian, Hungarian or Croatian, the typography lint, a sentence word for word the English one). Every key must have all five
  *  languages. The rest of the file is code and error text the page never shows, and is not read as prose. */
 function composeWords(root, out) {
   const rel = 'api/compose.py';
@@ -289,7 +294,7 @@ function composeWords(root, out) {
   const triples = [];
   for (const row of text.slice(from, to + 2).matchAll(/^ {4}"([a-z_]+)": \{([^}]*)\}/gm)) {
     const seen = new Set();
-    for (const m of row[2].matchAll(/"(en|de|lt|hu)":\s*"((?:[^"\\]|\\.)*)"/g)) {
+    for (const m of row[2].matchAll(/"(en|de|lt|hu|hr)":\s*"((?:[^"\\]|\\.)*)"/g)) {
       let s;
       try { s = JSON.parse(`"${m[2]}"`); } catch { out.push(`${rel}: WORDS.${row[1]}.${m[1]} is not a plain string`); continue; }
       seen.add(m[1]);
@@ -354,6 +359,10 @@ const kinds = (b) => (typeof b === 'string' ? 's' : 'ul' in b ? `ul${b.ul.length
 // file's functionality, defects, complaints and out-of-court bodies; the statutory model form has no "delete as
 // appropriate" line): for them the paragraphs and the size of a form's box are not compared, everything else is.
 const looseKinds = (b) => (typeof b === 'string' ? '' : 'ul' in b ? `ul${b.ul.length}` : 'dl' in b ? `dl${b.dl.length}` : 'box');
+// The Croatian texts follow the English ones paragraph for paragraph, but the model withdrawal form is the statutory one of the
+// Zakon o zaštiti potrošača (its own numbered lines), and the privacy policy may link the Croatian supervisory authority (AZOP)
+// next to the Lithuanian one: for them the size of a form's box is not compared, and every English link must be there.
+const formKinds = (b) => (typeof b === 'string' ? 's' : 'ul' in b ? `ul${b.ul.length}` : 'dl' in b ? `dl${b.dl.length}` : `box${b.label ? 'L' : ''}`);
 const linkList = (blocks) => [...JSON.stringify(blocks).matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1].replace(/lang=[a-z]{2}/, 'lang=?').replace(/subject=[^)"]*/, 'subject=?'));
 
 function checkDoc(id, edition, lang, en, doc, out, strings) {
@@ -364,11 +373,11 @@ function checkDoc(id, edition, lang, en, doc, out, strings) {
   en.sections.forEach((s, j) => {
     const t = doc.sections[j];
     if (!t) return;
-    const kf = lang === 'hu' ? looseKinds : kinds;
+    const kf = lang === 'hu' ? looseKinds : lang === 'hr' ? formKinds : kinds;
     const a = s.blocks.map(kf).filter(Boolean).join(','), b = t.blocks.map(kf).filter(Boolean).join(',');
     if (a !== b) out.push(`${at}.${s.id}: other block kinds than the English text (${b} against ${a})`);
     const la = linkList(s.blocks), lb = linkList(t.blocks);
-    const same = lang === 'hu' ? la.every((x) => lb.includes(x)) : la.join(' ') === lb.join(' ');   // hu: its added paragraphs may link too
+    const same = lang === 'hu' || lang === 'hr' ? la.every((x) => lb.includes(x)) : la.join(' ') === lb.join(' ');   // hu: its added paragraphs may link too; hr: AZOP
     if (!same) out.push(`${at}.${s.id}: other links than the English text
    en: ${la.join(' ')}
    ${lang}: ${lb.join(' ')}`);
@@ -388,10 +397,11 @@ function checkDoc(id, edition, lang, en, doc, out, strings) {
 
 // the sentence of each language's terms that names the contract languages, and how it names each language
 const CONTRACT = {
-  en: { sentence: /^The contract languages are/, words: { en: 'English', de: 'German', lt: 'Lithuanian', hu: 'Hungarian' } },
-  de: { sentence: /^Vertragssprachen sind/, words: { en: 'Englisch', de: 'Deutsch', lt: 'Litauisch', hu: 'Ungarisch' } },
-  lt: { sentence: /^Sutarties kalbos:/, words: { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų' } },
-  hu: { sentence: /^A szerződés nyelve/, words: { en: 'angol', de: 'német', lt: 'litván', hu: 'magyar' } },
+  en: { sentence: /^The contract languages are/, words: { en: 'English', de: 'German', lt: 'Lithuanian', hu: 'Hungarian', hr: 'Croatian' } },
+  de: { sentence: /^Vertragssprachen sind/, words: { en: 'Englisch', de: 'Deutsch', lt: 'Litauisch', hu: 'Ungarisch', hr: 'Kroatisch' } },
+  lt: { sentence: /^Sutarties kalbos:/, words: { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų', hr: 'kroatų' } },
+  hu: { sentence: /^A szerződés nyelve/, words: { en: 'angol', de: 'német', lt: 'litván', hu: 'magyar', hr: 'horvát' } },
+  hr: { sentence: /^Jezici ugovora:/, words: { en: 'engleski', de: 'njemački', lt: 'litavski', hu: 'mađarski', hr: 'hrvatski' } },
 };
 
 const isoDay = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
@@ -413,7 +423,7 @@ function sourceFiles(root, dir, acc) {
 /** Every problem found in the legal pack the order confirmation email carries (src/legal/plain.ts legalMailPack, which the
  *  build writes to /legal/order-mail.json: vite.config.ts checks the very JSON it is about to write): every text of every
  *  language of every edition is there, the terms print their market's prices in its currency and no other currency's,
- *  name every contract language of the edition, and no Lithuanian or Hungarian text holds an en or em dash, a typographic
+ *  name every contract language of the edition, and no Lithuanian, Hungarian or Croatian text holds an en or em dash, a typographic
  *  slip or untranslated English. pack: the pack (or the file, parsed); legal, markets: src/shared/legal.ts and markets.ts. */
 export function checkPack(pack, legal, markets) {
   const out = [];
@@ -484,7 +494,7 @@ export function checkAnalyzeTexts(root) {
   const src = read('api/analyze.py');
   const de = entries(src, 'TEXT_DE');
   if (!de) return ['api/analyze.py: TEXT_DE not found (the text check reads it)'];
-  const dicts = { de, lt: entries(read('api/_lib/analyze_lt.py'), 'TEXT_LT'), hu: entries(read('api/_lib/analyze_hu.py'), 'TEXT_HU') };
+  const dicts = { de, lt: entries(read('api/_lib/analyze_lt.py'), 'TEXT_LT'), hu: entries(read('api/_lib/analyze_hu.py'), 'TEXT_HU'), hr: entries(read('api/_lib/analyze_hr.py'), 'TEXT_HR') };
   const reasons = [...(/^BLOCK_MESSAGES = \{([^}]*)\}/m.exec(src)?.[1] ?? '').matchAll(/"([a-z_]+)":/g)].map((x) => x[1]);
   for (const x of src.matchAll(/^BLOCK_MESSAGES\["([a-z_]+)"\] =/gm)) reasons.push(x[1]);
   if (!reasons.length) out.push('api/analyze.py: BLOCK_MESSAGES not found (the text check reads it)');
@@ -523,13 +533,15 @@ function pyValue(text, marker, from = 0) {
   return seen ? out : null;
 }
 
-/** sha256 of the consent texts that belong to each consent version (the four languages of the EU edition and the two of the
- *  Australian one, as api/_lib/pay.py has them, in this order: en, de, lt, hu, au en, au de). The version is what an order
+/** sha256 of the consent texts that belong to each consent version (the five languages of the EU edition and the two of the
+ *  Australian one, as api/_lib/pay.py has them, in this order: en, de, lt, hu, hr, au en, au de; the versions before
+ *  2026-10-28.1 had no Croatian text, and their fingerprints were taken without it). The version is what an order
  *  records next to its own copy of the text, so a text that changes under the same version would make the record say
  *  something else than what the customer ticked. Changing a consent text means a new CONSENT_VERSION in api/_lib/pay.py
  *  and WITHDRAWAL_CONSENT_VERSION in src/shared/legal.ts, and its fingerprint here (the check prints it). */
 export const CONSENT_FINGERPRINTS = {
   '2026-09-30.2': '1323e13de556f0533c0d3891789e3d49da9bc7cf15a506fc33cffddb97eee7b7',
+  '2026-10-28.1': 'fb948e2a56ef9967f3b101af39e73b6d8c449f18e2b449144e9f5b0b86098dd8',
 };
 
 /** The withdrawal waiver the checkbox shows and the server records (src/shared/legal.ts CHECKOUT_LEGAL, api/_lib/pay.py
@@ -540,17 +552,20 @@ export function checkServerTexts(root, legal, orderCopy) {
   const out = [];
   const read = (rel) => { try { return readFileSync(join(root, rel), 'utf8').replace(/\r\n/g, '\n'); } catch { return null; } };
   const pay = read('api/_lib/pay.py'), withdraw = read('api/_lib/withdraw.py');
-  const files = { payLt: read('api/_lib/pay_lt.py'), payHu: read('api/_lib/pay_hu.py'), wLt: read('api/_lib/withdraw_lt.py'), wHu: read('api/_lib/withdraw_hu.py') };
-  if (pay === null || withdraw === null || Object.values(files).some((f) => f === null)) return ['api/_lib/pay.py, withdraw.py, pay_lt.py, pay_hu.py, withdraw_lt.py or withdraw_hu.py not found (the text check reads them)'];
+  const files = {
+    payLt: read('api/_lib/pay_lt.py'), payHu: read('api/_lib/pay_hu.py'), payHr: read('api/_lib/pay_hr.py'),
+    wLt: read('api/_lib/withdraw_lt.py'), wHu: read('api/_lib/withdraw_hu.py'), wHr: read('api/_lib/withdraw_hr.py'),
+  };
+  if (pay === null || withdraw === null || Object.values(files).some((f) => f === null)) return ['api/_lib/pay.py, withdraw.py, pay_lt.py, pay_hu.py, pay_hr.py, withdraw_lt.py, withdraw_hu.py or withdraw_hr.py not found (the text check reads them)'];
   const base = pay.indexOf('CONSENT_TEXT_EN_DE = {');
   const consent = {
     en: pyValue(pay, '"en":', base), de: pyValue(pay, '"de":', base),
-    lt: pyValue(files.payLt, '\nCONSENT_TEXT_LT ='), hu: pyValue(files.payHu, '\nCONSENT_TEXT_HU ='),
+    lt: pyValue(files.payLt, '\nCONSENT_TEXT_LT ='), hu: pyValue(files.payHu, '\nCONSENT_TEXT_HU ='), hr: pyValue(files.payHr, '\nCONSENT_TEXT_HR ='),
   };
   const wbase = withdraw.indexOf('STATEMENT = {');
   const statement = {
     en: pyValue(withdraw, '"en":', wbase), de: pyValue(withdraw, '"de":', wbase),
-    lt: pyValue(files.wLt, '\nSTATEMENT_LT ='), hu: pyValue(files.wHu, '\nSTATEMENT_HU ='),
+    lt: pyValue(files.wLt, '\nSTATEMENT_LT ='), hu: pyValue(files.wHu, '\nSTATEMENT_HU ='), hr: pyValue(files.wHr, '\nSTATEMENT_HR ='),
   };
   for (const l of LANGS) {
     if (consent[l] === null) out.push(`the ${l} withdrawal waiver was not found in the server files (the text check reads it)`);
@@ -565,8 +580,8 @@ export function checkServerTexts(root, legal, orderCopy) {
   // the consent texts belong to their version: the fingerprint of the current version's texts is the one on record
   const auBase = pay.indexOf('CONSENT_TEXT_AU = {');
   const au = auBase < 0 ? { en: null, de: null } : { en: pyValue(pay, '"en":', auBase), de: pyValue(pay, '"de":', auBase) };
-  const texts = [consent.en, consent.de, consent.lt, consent.hu, au.en, au.de];
-  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py, pay_lt.py or pay_hu.py (the text check reads them for its fingerprint)');
+  const texts = [consent.en, consent.de, consent.lt, consent.hu, consent.hr, au.en, au.de];
+  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py, pay_lt.py, pay_hu.py or pay_hr.py (the text check reads them for its fingerprint)');
   else {
     const version = legal.WITHDRAWAL_CONSENT_VERSION;
     const print = createHash('sha256').update(JSON.stringify(texts)).digest('hex');
@@ -616,6 +631,11 @@ const HONESTY = {
     printing: { re: /A nyomtatás nem része a rendelésnek/i, keys: PRINTING_KEYS },
     soon: { re: /A rendelés hamarosan indul/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
+  hr: {
+    chips: { 'example.chip': 'Primjer', 'example.vis': 'Vizualizacija' },
+    printing: { re: /Tisak nije dio vaše narudžbe/i, keys: PRINTING_KEYS },
+    soon: { re: /Naručivanje se otvara uskoro/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
 };
 // the question of the FAQ item "withdraw" is pinned to the words of src/landing/copy.ts WITHDRAW_Q (the old landing keyed its
 // Australian override on them; the landing replaces by id now, but the words are not to drift)
@@ -661,7 +681,7 @@ function walkCopyJson(en, x, path, at, out) {
 }
 
 /** The copy files of the new landing: every problem as a sentence. strings: the per language lists of the lint (every
- *  string of en, de and of every translated lt or hu file joins them, so the dash, the typography, the untranslated English
+ *  string of en, de and of every translated lt, hu or hr file joins them, so the dash, the typography, the untranslated English
  *  and the word for word checks treat them like every other dictionary). */
 function checkLandingCopy(root, mods, strings, out) {
   const { lang, legal, config, format, oldCopy } = mods;
@@ -753,7 +773,7 @@ export async function checkTexts(load, root) {
   if (lang.LANGS.join() !== LANGS.join()) out.push(`src/shared/lang.ts LANGS is ${lang.LANGS.join()}, this check knows ${LANGS.join()}: update scripts/check_texts.mjs`);
 
   // 1 + 2. the dictionaries
-  const strings = { en: [], de: [], lt: [], hu: [] };
+  const strings = { en: [], de: [], lt: [], hu: [], hr: [] };
   const surfaces = [['landing', landing.COPY], ['try', tryCopy.COPY], ['order', orderCopy.ORDER_COPY]];
   for (const [name, dict] of surfaces) {
     for (const l of LANGS) {
@@ -764,7 +784,7 @@ export async function checkTexts(load, root) {
     }
   }
   // the layout words (api/_lib/layout_names.py through src/shared/layouts.ts): every layout has a word in every language, and each word is
-  // linted as a string of its language (no en or em dash, no untranslated English or German in a Lithuanian or Hungarian one)
+  // linted as a string of its language (no en or em dash, no untranslated English or German in a Lithuanian, Hungarian or Croatian one)
   for (const [id, row] of Object.entries(layouts.LAYOUT_NAMES)) {
     for (const l of LANGS) {
       if (typeof row[l] !== 'string' || !row[l].trim()) out.push(`layout words: "${id}" has no ${l} word (api/_lib/layout_names.py)`);
@@ -801,7 +821,7 @@ export async function checkTexts(load, root) {
   for (const l of LANGS) for (const [p, s] of strings[l]) lint(p, s, l, out);
   identical(strings, out);
 
-  // the words of the share cards (src/landing/shell/share.json: the alt text of the share picture in the four languages, the caption drawn on the German, Lithuanian and
+  // the words of the share cards (src/landing/shell/share.json: the alt text of the share picture in the five languages, the caption drawn on the German, Lithuanian, Croatian and
   // Hungarian cards by scripts/make_og_cards.py): linted like any string of the page, in their own language (dashes, claims, untranslated English, the typographic slips)
   try {
     const share = JSON.parse(readFileSync(join(root, 'src/landing/shell/share.json'), 'utf8').replace(/^﻿/, ''));
@@ -828,7 +848,7 @@ export async function checkTexts(load, root) {
     for (const m of html.matchAll(/<(?:title>([^<]*)<\/title>|meta\s+(?:name|property)="([^"]+)"\s+content="([^"]*)")/g)) lint(`index.html ${m[2] ?? 'title'}`, m[1] ?? m[3], 'en', out);
   } catch { out.push('index.html not found (the text check reads its head)'); }
 
-  // the sentence about AI-made material (owner decision 10): written in the four languages, linted like any string while it is unpublished, and present in
+  // the sentence about AI-made material (owner decision 10): written in the five languages, linted like any string while it is unpublished, and present in
   // every terms text once published and in none before (it is published by the cutover deploy, src/shared/aiMaterial.ts)
   for (const l of LANGS) {
     const sentence = aiMaterial.AI_MATERIAL?.[l];
@@ -860,7 +880,7 @@ export async function checkTexts(load, root) {
     }
   }
 
-  // the customer sentences of the server's Lithuanian and Hungarian files
+  // the customer sentences of the server's Lithuanian, Hungarian and Croatian files
   checkPyTexts(root, out);
 
   // the legal pack the email carries (the same function lints the file the build writes: vite.config.ts legalMail)
@@ -913,5 +933,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     console.error(`text check FAILED (${problems.length}):\n  ${problems.join('\n  ')}`);
     process.exit(1);
   }
-  console.log('text check ok: lt and hu dictionaries and legal texts match the English ones, every edition complete, no en or em dash');
+  console.log('text check ok: lt, hu and hr dictionaries and legal texts match the English ones, every edition complete, no en or em dash');
 }

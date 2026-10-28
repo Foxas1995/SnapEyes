@@ -1,13 +1,13 @@
 // The language editions of the landing page's HTML, made at build time (vite.config.ts langPages plugin) and read by the checks.
 //
 // WHY: a crawler (Facebook, WhatsApp, LinkedIn, iMessage, Slack) does not run the page's script, so it reads the share tags of the
-// HTML it is sent. index.html used to be one file for /, /?lang=de, /?lang=lt and /?lang=hu: every share card said English, with
+// HTML it is sent. index.html used to be one file for /, /?lang=de, /?lang=lt and /?lang=hu (and now /?lang=hr): every share card said English, with
 // the English picture and og:url / canonical of the root, and the page's own script (src/landing/lang.tsx applyLandingHead)
 // corrected the head only for visitors who run it. Now the build writes one file per language, each with its own title,
 // description, og:*, twitter:*, og:locale, og:url, canonical and share picture, and vercel.json rewrites the language links to the
 // right file, so a crawler and a browser are given the same head, without any script.
 //
-// WHERE THE FILES ARE: dist/lp/en.html, de.html, lt.html and hu.html (served at /lp/en and so on, the clean URLs of Vercel's
+// WHERE THE FILES ARE: dist/lp/en.html, de.html, lt.html, hu.html and hr.html (served at /lp/en and so on, the clean URLs of Vercel's
 // cleanUrls). There is NO dist/index.html: Vercel checks the file system BEFORE the rewrites of vercel.json (verified with the CLI's
 // own build output, .vercel/output/config.json: the routes of the rewrites come after {"handle": "filesystem"}), so an index.html
 // would answer / by itself and no rewrite for / could ever fire. A rewrite's destination is the clean path with no ".html" (the
@@ -21,7 +21,7 @@ import { join } from 'node:path';
 
 export const SITE_ORIGIN = 'https://snapeyes.com';
 export const LANDING_DIR = 'lp';
-export const LANG_ORDER = ['en', 'de', 'lt', 'hu'];
+export const LANG_ORDER = ['en', 'de', 'lt', 'hu', 'hr'];
 
 /** The file of a language's edition inside dist (and the path of the page's copy of it in the repository's own build). */
 export const landingFile = (lang) => `${LANDING_DIR}/${lang}.html`;

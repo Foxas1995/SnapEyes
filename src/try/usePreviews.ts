@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Art, Eye } from './multi';
 import type { Lang } from './lang';
+import { LANGS } from '../shared/lang';
 import { T } from './copy';
 import { composeCall, persist, pictureOf, type Ctx, type Outcome } from './composeApi';
 import { composeNames } from './names';
@@ -262,7 +263,7 @@ function messageOf(o: Outcome<unknown>): string {
  *  until the one in the new language is made. */
 function otherLanguage(bigs: Record<string, Art>, key: string, style: string | undefined, layout: string | null, opts: Record<string, unknown>, words: string, lang: Lang): Art | undefined {
   if (!style) return undefined;
-  for (const l of ['en', 'de', 'lt', 'hu'] as const) {
+  for (const l of LANGS) {
     if (l === lang) continue;
     const hit = bigs[artKey([key, style, layout, JSON.stringify(opts), words, l])];
     if (hit) return hit;

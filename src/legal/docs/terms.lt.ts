@@ -76,7 +76,7 @@ export const lt: LegalDoc = {
       blocks: [
         `Mūsų svetainėje pateiktos peržiūros ir kainos dar nėra oferta (pasiūlymas sudaryti sutartį). Prieš mokėjimą galite patikrinti savo akis, stilių, išdėstymą ir užrašą ir ištaisyti bet kokias įvesties klaidas, grįždami atgal arba iš naujo fotografuodami. Tada mūsų mygtuku „${CHECKOUT_LEGAL_LT.continueButton}“ atidarote mūsų mokėjimo paslaugų teikėjo Stripe mokėjimo puslapį; šis mygtukas dar nepateikia užsakymo. Tame puslapyje įvedate savo el. pašto adresą ir mokėjimo duomenis ir galite juos pataisyti. Užsakymą su prievole sumokėti pateikiate, kai ten patvirtinate mokėjimą mokėjimo mygtuku.`,
         'Sutartis sudaroma, kai patvirtinamas Jūsų mokėjimas. Tada atsidaro Jūsų užsakymo puslapis, o jo nuorodą kartu su užsakymo patvirtinimu atsiunčiame Jums el. paštu. Kai tik tas el. laiškas išsiųstas, ten pradedame kurti Jūsų failą.',
-        'Sutarties kalbos: lietuvių, anglų, vokiečių ir vengrų.',
+        'Sutarties kalbos: lietuvių, anglų, vokiečių, vengrų ir kroatų.',
         'Jūsų užsakymą saugome su sutarties duomenimis: užsakytas kūrinys, kaina, data, Jūsų el. pašto adresas ir Jūsų sutikimas, kad pradėtume iš karto. Jūsų užsakymo puslapyje šie duomenys matomi tol, kol saugome Jūsų užsakymą. Atskiros šių sąlygų kopijos kiekvienam užsakymui nesaugome. Vietoj to Jūsų užsakymo patvirtinimo el. laiške tekstu pateikiami Jūsų užsakymo duomenys, šios sąlygos ir informacija apie teisę atsisakyti sutarties su pavyzdine sutarties atsisakymo forma, užsakymo metu galiojusios redakcijos: išsaugokite tą el. laišką. Šį puslapį taip pat bet kada galite išsaugoti arba atsispausdinti.',
       ],
     },

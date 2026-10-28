@@ -57,6 +57,7 @@ import { MAIL, SELLER, address, company } from '../facts';
 import { patchDoc } from '../patch';
 import { lt } from './privacy.lt';
 import { hu } from './privacy.hu';
+import { hr } from './privacy.hr';
 
 // What the online withdrawal function keeps (the "withdrawal" section): keep it in step with the order page's form
 // and the API action behind it.
@@ -500,7 +501,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const PRIVACY: LegalDocs = { en, de, lt, hu };
+export const PRIVACY: LegalDocs = { en, de, lt, hu, hr };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 // Written from what the code does (see the header) and the Australian sources of 2026-09-29: OAIC on biometric

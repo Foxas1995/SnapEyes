@@ -112,7 +112,7 @@ export const ROUTE_LT: Record<string, string> = { manual: 'rankinis kelias (pirk
 export const ERROR_ENDPOINT_LT: Record<string, string> = { compose: 'peržiūra', master_compose: '4K kūrinys', order: 'užsakymas', checkout: 'mokėjimas', unknown: 'nežinoma' };
 export const REVEAL_LT: Record<string, string> = { ok: 'rodoma', colour: 'nerodoma: spalva pasikeitė', registration: 'nerodoma: nesutapo vaizdai', none: 'nėra', error: 'klaida' };
 export const SLICE_MARKET_LT: Record<string, string> = { eu: 'Europos Sąjunga', lt: 'Lietuva', au: 'Australija', hu: 'Vengrija' };
-export const SLICE_LANG_LT: Record<string, string> = { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų' };
+export const SLICE_LANG_LT: Record<string, string> = { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų', hr: 'kroatų' };
 
 // ------------------------------------------------------------------------------------------------ numbers (always with n)
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);

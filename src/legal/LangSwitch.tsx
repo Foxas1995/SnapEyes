@@ -5,12 +5,14 @@ import { useLang } from '../landing/lang';
 import { LANG_NAMES, marketLangs } from '../shared/lang';
 import { useMarket } from '../shared/useMarket';
 
-/** One button per language the visitor's market can be read in (English, German, Lithuanian and Hungarian; the
- *  Australian market: English and German, src/shared/legal.ts EDITION_LANGS). Below 340 px wide (the smallest phones)
- *  the buttons are narrower, so four of them still fit beside the logo and none is pushed off the screen. */
+/** One button per language the visitor's market can be read in (English, German, Lithuanian, Hungarian and Croatian; the
+ *  Australian market: English and German; the Hungarian one: all but Croatian, src/shared/legal.ts EDITION_LANGS). Below 340 px wide
+ *  (the smallest phones) the buttons are narrower, so four of them still fit beside the logo and none is pushed off the screen; with
+ *  five (the euro market since 2026-10-28) they are narrower below 400 px, where five full buttons would meet the logo. */
 export function LangSwitch() {
   const { lang, setLang, t } = useLang();
   const options = marketLangs(useMarket());
+  const narrow = options.length > 4 ? 'max-[400px]:min-w-[28px] max-[400px]:px-1.5' : 'max-[340px]:min-w-[28px] max-[340px]:px-1.5';
   return (
     <div role="group" aria-label={t.switchLabel} className="flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
       {options.map((l) => (
@@ -21,7 +23,7 @@ export function LangSwitch() {
           aria-pressed={lang === l}
           lang={l}
           title={LANG_NAMES[l]}
-          className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[340px]:min-w-[28px] max-[340px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${
+          className={`min-w-[40px] rounded-full px-2.5 py-1.5 ${narrow} uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${
             lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'
           }`}
         >
