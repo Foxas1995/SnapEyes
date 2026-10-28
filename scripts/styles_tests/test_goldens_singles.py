@@ -130,9 +130,11 @@ def raises(fn, exc):
 # ============================================================================================ 1. the family in the repository
 section("1. the family in the repository")
 SINGLES_STYLES = [i for i in CT.ids() if CT.ENGINE[i]["engine"] and CT.ENGINE[i]["engine"].get("module") == "singles"]
-check("the family has its six designs, a module each (Clean Iris draws no effect), the primitives are styles/matter.py, and the style catalogue sees the family built",
+check("the family has its six designs, a module each (Clean Iris draws no effect), the primitives are styles/matter.py, and the style catalogue sees the family built; "
+      "five registry styles draw it (Powder Burst draws the light family's dust since 2026-10-28: the powder design stays here, tested by its goldens and section 9)",
       FAMILY_FILES == ["__init__.py", "elements.py", "gold.py", "kit.py", "powder.py", "radiance.py", "splash.py"] and os.path.isfile(os.path.join(STYLES, "matter.py"))
-      and CT.engine_built("singles") and ST.family("singles").__name__ == "_lib.styles.singles" and len(SINGLES_STYLES) == 6, (FAMILY_FILES, SINGLES_STYLES))
+      and CT.engine_built("singles") and ST.family("singles").__name__ == "_lib.styles.singles" and len(SINGLES_STYLES) == 5 and "solo.powder" not in SINGLES_STYLES
+      and CT.ENGINE["solo.powder"]["engine"] == {"module": "lumen", "design": "dust"}, (FAMILY_FILES, SINGLES_STYLES))
 mods = [os.path.join(FAMILY, f) for f in FAMILY_FILES] + [os.path.join(STYLES, "matter.py")]
 src_all = "".join(read(m) for m in mods)
 check("every module of the family has the __future__ import (Python 3.12 is Vercel's default) and parses as 3.12",
@@ -159,20 +161,21 @@ check("no module of the family keeps an empty module level dict, list or set (a 
 check("importing a design reads no file of its own, opens no socket and writes nothing: no open(), no os.environ, no subprocess in any module of the family",
       not re.search(r"\bopen\(|os\.environ|subprocess|socket|np\.load|\.save\(", src_all), re.findall(r"\bopen\(|os\.environ|subprocess|socket|np\.load|\.save\(", src_all)[:5])
 DESIGNS_IN_REGISTRY = sorted(CT.ENGINE[i]["engine"]["design"] for i in SINGLES_STYLES)
-check("the registry's six single styles and the family agree: same designs, same canvases (the geometry table of the kit has a row per design and canvas)",
-      DESIGNS_IN_REGISTRY == sorted(S.DESIGNS) and all(CT.ENGINE[i]["canvases"] == list(S.FORMATS) for i in SINGLES_STYLES)
+check("the registry's five single styles and the family agree: the designs of the family but powder (no registry style since 2026-10-28), same canvases (the geometry table of the kit has a row per design and canvas)",
+      DESIGNS_IN_REGISTRY == sorted(d for d in S.DESIGNS if d != "powder") and "powder" in S.DESIGNS and all(CT.ENGINE[i]["canvases"] == list(S.FORMATS) for i in SINGLES_STYLES)
       and set(K.SPECS) == set(S.DESIGNS) and all(set(K.SPECS[d]["r"]) == set(S.FORMATS) and set(K.SPECS[d]["cy"]) == set(S.FORMATS) for d in K.SPECS), (DESIGNS_IN_REGISTRY, K.SPECS.keys()))
-PROTO_PICK = {"own": "powder", "dark_brown": "gold", "grey": "radiance"}      # the prototype's PICK table: the recommended design per colour class
-check("the prototype's recommend and PICK are the registry's pick: own colours Powder Burst, dark brown Celestial Gold, grey Radiance (each with a reason key), and no other single style is picked",
-      {c: [CT.ENGINE[i]["engine"]["design"] for i in SINGLES_STYLES if c in CT.STYLES[i]["pick"]] for c in PROTO_PICK} == {c: [d] for c, d in PROTO_PICK.items()}
-      and all(CT.STYLES[i]["reason"].keys() == set(CT.STYLES[i]["pick"]) for i in SINGLES_STYLES if CT.STYLES[i]["pick"]) and not hasattr(S, "recommend") and not hasattr(S, "PICK"))
+PROTO_PICK = {"own": "solo.powder", "dark_brown": "solo.gold", "grey": "solo.radiance"}      # the prototype's PICK table: the recommended style per colour class
+check("the prototype's recommend and PICK are the registry's pick: own colours Powder Burst (its style, which draws the light family's dust since 2026-10-28), dark brown Celestial Gold, "
+      "grey Radiance (each with a reason key), and no other single style is picked",
+      {c: [i for i in SINGLES_STYLES + ["solo.powder"] if c in CT.STYLES[i]["pick"]] for c in PROTO_PICK} == {c: [d] for c, d in PROTO_PICK.items()}
+      and all(CT.STYLES[i]["reason"].keys() == set(CT.STYLES[i]["pick"]) for i in SINGLES_STYLES + ["solo.powder"] if CT.STYLES[i]["pick"]) and not hasattr(S, "recommend") and not hasattr(S, "PICK"))
 check("every cost row the family needs exists: a preview row and a master row for each of the six designs",
       all(CO.known(f"singles.{d}", 1) and 1 in CO.PREVIEW[f"singles.{d}"] for d in S.DESIGNS))
 # WP18 (the catalogue switch): this check said that no stage was raised (every single style at the laboratory ceiling). The cutover raised the ceilings of the release-1
 # singles (Clean Iris, Powder Burst, Splash, Celestial Gold to live, Radiance to preview; Elements stays in the laboratory) and the registry's EFFECTIVE_DEFAULT holds every
 # one at preview until the owner's tick, so it now says the cutover's state: nothing is orderable, the shown ones can be previewed, Elements only by the admin.
-check("the stages: Clean Iris, Powder Burst, Splash and (since 2026-10-27) Radiance have a live ceiling, Elements stays in the laboratory and Celestial Gold went back to it (2026-10-27, Iris Echo took its place); the registry's default holds the four at preview, so a customer can preview them and order none, and only the admin can look at Elements and Celestial Gold",
-      {i: CT.ceiling(i, 1) for i in SINGLES_STYLES} == {"solo.clean": "live", "solo.powder": "live", "solo.splash": "live", "solo.elements": "lab", "solo.radiance": "live", "solo.gold": "lab"}
+check("the stages: Clean Iris, Splash and (since 2026-10-27) Radiance have a live ceiling (Powder Burst too, a style of the light family since 2026-10-28), Elements stays in the laboratory and Celestial Gold went back to it (2026-10-27, Iris Echo took its place); the registry's default holds the four at preview, so a customer can preview them and order none, and only the admin can look at Elements and Celestial Gold",
+      {i: CT.ceiling(i, 1) for i in SINGLES_STYLES} == {"solo.clean": "live", "solo.splash": "live", "solo.elements": "lab", "solo.radiance": "live", "solo.gold": "lab"} and CT.ceiling("solo.powder", 1) == "live"
       and all(CT.stage_with(i, 1, None) == ("lab" if i in ("solo.elements", "solo.gold") else "preview") for i in SINGLES_STYLES)
       and all(not CT.orderable(i, 1, strict=False) for i in SINGLES_STYLES) and all(CT.previewable(i, 1, admin=True) for i in SINGLES_STYLES)
       and not any(CT.previewable(i, 1) for i in ("solo.elements", "solo.gold")) and all(CT.previewable(i, 1) for i in SINGLES_STYLES if i not in ("solo.elements", "solo.gold"))
@@ -363,11 +366,11 @@ check("an eye may be the bytes of a restored square (a function reads what the r
 
 # ============================================================================================ 5. the contract
 section("5. the contract: resolve, preview, tiles, the watermark, a plate that is missing")
-spec = {"style": "solo.powder", "layout": "single", "eyes": 1, "canvas": "1:1", "names": ["Anna", "Max"], "date": ""}
+spec = {"style": "solo.splash", "layout": "single", "eyes": 1, "canvas": "1:1", "names": ["Anna", "Max"], "date": ""}      # Splash: Powder Burst left the family on 2026-10-28
 pl = ST.resolve(spec, [])
 check("resolve answers the plan without a pixel: family, design, canvas, the iris at 1024 px, the seed key of the plan (registry id, design, background, clean flag, layout, options, plates version); "
       "with no eye known there is no seed and no plate (the seed is made from the eye id: step B)",
-      pl["family"] == "singles" and pl["design_used"] == "powder" and pl["fallback"] is None and pl["canvas"] == "1:1" and pl["layout"] == "single"
+      pl["family"] == "singles" and pl["design_used"] == "splash" and pl["fallback"] is None and pl["canvas"] == "1:1" and pl["layout"] == "single"
       and set(pl["seed_key"]) == {"style", "design_used", "bg", "clean", "layout", "opts", "pv"} and pl["seed_key"]["pv"] == CT.PLATES_VERSION and pl["plates"] is None
       and pl["seed_from"] == "eye_id" and pl["seed"] is None and pl["eye_ids"] == [] and pl["frozen"] == {}
       and pl["steps"] == ["art"] and pl["iris_at_1024"]["R"] > 200 and ST.resolve(dict(spec, canvas="9:19.5"), None)["canvas"] == "9:19.5"
@@ -476,9 +479,10 @@ ids_before = list(CT.previewable_ids(1))
 # WP18: the list of a customer for one eye is the cutover's (the six shown styles of the engine, no legacy id: they are retired); it said the legacy six before.
 # 2026-10-20: the five styles of the light family (api/_lib/styles/lumen, a family of its own) are shown too, so the list is the six and those five (it said six)
 LUMEN_IDS = [i for i in CT.ids() if (CT.ENGINE[i]["engine"] or {}).get("module") == "lumen"]
-check("the customer's list of styles for one eye is the cutover's: the five shown styles of the engine (not Elements, not Celestial Gold since 2026-10-27), the six of the light family (Iris Echo the sixth) and no legacy id",
+check("the customer's list of styles for one eye is the cutover's: the three shown styles of this family (not Elements, not Celestial Gold since 2026-10-27), Universe, the seven of the light family "
+      "(Iris Echo the sixth, Powder Burst the seventh since 2026-10-28) and no legacy id",
       sorted(ids_before) == sorted([i for i in SINGLES_STYLES if i not in ("solo.elements", "solo.gold")] + ["solo.universe"] + LUMEN_IDS) and not any(CT.is_legacy(i) for i in ids_before)
-      and len(ids_before) == 11 and len(LUMEN_IDS) == 6, ids_before)
+      and len(ids_before) == 11 and len(LUMEN_IDS) == 7 and "solo.powder" in LUMEN_IDS, ids_before)
 try:
     CMP.compose({"sealed": [sealed], "style": "solo.elements", "pad": 1.12})      # WP18: Celestial Gold is previewable now; Elements is the laboratory style left
     e_lab = None
@@ -697,7 +701,7 @@ by_order = ops.a_styles_lab({"style": "solo.clean", "order": "lab-260101-abcd123
 check("a lab test order's stored eye is an eye (a real master without a new image model call); an order with no such eye is a 400",
       isinstance(e_nostore, L.ClientError) and by_order["ok"] and by_order["width"] == 480, e_nostore)
 with EmptyStore():
-    e_plate = raises(lambda: ops.a_styles_lab({"style": "solo.powder", "eye": b64(SAMPLE), "size": 4096}, "t"), store.Answer)
+    e_plate = raises(lambda: ops.a_styles_lab({"style": "solo.splash", "eye": b64(SAMPLE), "size": 4096}, "t"), store.Answer)      # Splash: Powder Burst draws no plate since 2026-10-28
 check("a 4096 px render of a plate style without its 4K plate in storage is 409 plate_unavailable naming the plate (the page says so), never a render with another plate",
       isinstance(e_plate, store.Answer) and e_plate.status == 409 and e_plate.body["reason"] == "plate_unavailable" and e_plate.body.get("why") == "missing", e_plate)
 with mock.patch.object(CO, "assess", return_value={"need_s": 99.0, "est_mb": 9999, "ok": False, "why": "time"}):
@@ -776,6 +780,14 @@ check("the seed does not depend on the pixels or the bytes the eye arrives in: t
 r_leg = S.render("powder", eye_b, "1:1", 256, opts={"seed_mode": "legacy"})
 check("the old seed is still one switch away for the laboratory's before and after look: opts seed_mode legacy seeds from the iris bytes, the design and the frame key (the prototype's formula), "
       "and the new seed is not that number", r_leg.info["seed"] == C.seed_for(FIX["blue_round"], 0, "powder", "single/1:1") != seeds_same[("1:1", 256, "", "")], r_leg.info["seed"])
+
+# Powder Burst draws the light family's dust since 2026-10-28 (ENGINE_V 12), so no registry style draws the powder design of this family any more. The design stays
+# (its goldens above, the renders of this section), and its contract (the seed and the cloud plate known from the eye id alone, the plates version of every pick, the
+# plan's picture through compose and the laboratory) is checked from here to the end of the section through the very engine entry Powder Burst had until then, put
+# back in memory for these blocks only (mock.patch.dict, stopped below); everything before and after reads the real registry
+POWDER_ENTRY = dict(CT.ENGINE["solo.powder"], engine={"module": "singles", "design": "powder"}, plates=["P-SN-CLOUD"], atlas=["chips"])
+_POWDER = mock.patch.dict(CT.ENGINE, {"solo.powder": POWDER_ENTRY})
+_POWDER.start()
 
 # resolve names the seed and the plates, and the render draws what it names
 PROF = {e: EYE.profile_of_bytes(FIX[e], rules=("lid",)) for e in SC.EYES}
@@ -928,6 +940,8 @@ store.put("orders/lab-260101-abcd1234/eye_1.json", json.dumps({"eye_id": EID_B, 
 by_order2 = ops.a_styles_lab({"style": "solo.powder", "order": "lab-260101-abcd1234", "n": 1, "size": 480}, "t")
 check("a lab test order's eye takes the eye id of its stored record (the id of the preview the master was made from), so a style looked at on a real master has the seed of the order's picture",
       by_order2["eye_id"] == EID_B and by_order2["seed"] == str(SD.seed_for_key([EID_B], S.seed_key("solo.powder", "powder"))), (by_order2["eye_id"], by_order2["seed"]))
+_POWDER.stop()
+check("the entry of the powder design was in memory only: the registry's Powder Burst is the light family's dust again", CT.ENGINE["solo.powder"]["engine"] == {"module": "lumen", "design": "dust"})
 tsx2 = read(os.path.join(REPO, "src", "admin", "StyleLab.tsx"))
 check("the admin page's laboratory has the switch: a Sėkla menu with the new seed and the old one for comparison, sent as seed, and the answer shows which was used",
       "Sėkla" in tsx2 and "'legacy'" in tsx2 and "seed," in tsx2 and "seed_mode" in tsx2 and not re.search(DASH, tsx2))

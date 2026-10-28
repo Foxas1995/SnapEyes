@@ -354,8 +354,10 @@ with patched(public=scenario_prod, built=("singles",)):
           and C.tile_list(1, PASS_BROWN)["pick"] == "solo.gold" and C.tile_list(1, [{"cls": "own", "gate": GATE_OK}])["pick"] == "solo.gold", (t_prod["pick"], {k: (v["stage"], v["available"]) for k, v in row_prod.items()}))
 with patched(public=lambda s: s["solo.powder"].update(stage="live"), built=("singles",)):
     check("engine_for: module, design, looks, clean, gate rules, plates, atlas, canvases, the default plan of one art step, fill and work sizes",
-          C.engine_for("solo.powder", 1) == {"module": "singles", "design": "powder", "looks": {}, "clean": 0, "gate_rules": "lid", "plates": ["P-SN-CLOUD"],
-                                             "atlas": ["chips"], "canvases": ["1:1", "4:5", "9:19.5"], "steps": ["art"], "fill_side": 0, "work_side": 4096}
+          C.engine_for("solo.splash", 1) == {"module": "singles", "design": "splash", "looks": {}, "clean": 0, "gate_rules": "lid", "plates": ["P-SP-CROWN"],
+                                             "atlas": ["drops"], "canvases": ["1:1", "4:5", "9:19.5"], "steps": ["art"], "fill_side": 0, "work_side": 4096}
+          and C.engine_for("solo.powder", 1) == {"module": "lumen", "design": "dust", "looks": {}, "clean": 0, "gate_rules": "lid", "plates": [],      # Powder Burst since 2026-10-28
+                                                 "atlas": [], "canvases": ["1:1", "4:5", "9:19.5"], "steps": ["art"], "fill_side": 0, "work_side": 4096}
           and C.engine_for("solo.powder", 2) is None and C.engine_for("duo.reflection", 2) is None and C.engine_for("nothing", 1) is None
           and C.engine_for("solo.universe", 1)["looks"]["vortex"] == "lab" and C.engine_for("duo.clean", 2)["clean"] == 1
           and C.gate_policy("solo.universe") == "hard" and C.gate_policy("solo.clean") == "hard" and C.gate_policy("solo.gold") == "hard" and C.gate_policy("solo.powder") == "advisory"

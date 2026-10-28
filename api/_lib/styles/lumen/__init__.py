@@ -10,6 +10,7 @@
   sparks    Sparks      sparks and soft lights lifting off the limb on a wind, as if the iris were a coal: comet streaks, glints and a few large lights
   aurora    Aurora      curtains of northern light standing on the limb, the eye's own colour at the foot and its partner hue at the tips
   echo      Iris Echo   the iris in the middle of its own echo: the same iris enlarged behind it, its fibres radiating like a tunnel (2026-10-27)
+  dust      Powder Burst  the iris whole, its own colour turned into dust round it (2026-10-28: Powder Burst's look since then)
 
 No plate, no atlas, no model call: every look is light drawn from noise fields, Gaussian stamps and the eye's own ring colours (common.py). The pipeline is
 the singles family's (api/_lib/styles/singles/kit.py: grade and place the iris, the F3 feather, the effect on the float canvas, the tone map, the dither,
@@ -45,7 +46,7 @@ from .. import seeds as SD
 from .. import text as TX
 from ..singles import kit as K
 
-DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo")
+DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo", "dust")
 FORMATS = ("1:1", "4:5", "9:19.5")                                            # the canvases (the engine entries of the registry list the same)
 SIZES = (64, 4096)                                                            # the long side a render may ask for
 BG = "#000000"                                                                # every look lays its own sky or tonal ground on pure black by adding light
@@ -59,7 +60,12 @@ GEOM = {
     "sparks":   {"r": {"1:1": 0.285, "4:5": 0.285, "9:19.5": 0.285}, "cy": {"1:1": 0.520, "4:5": 0.470, "9:19.5": 0.410}},
     "aurora":   {"r": {"1:1": 0.262, "4:5": 0.262, "9:19.5": 0.262}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
     "echo":     {"r": {"1:1": 0.330, "4:5": 0.330, "9:19.5": 0.300}, "cy": {"1:1": 0.500, "4:5": 0.470, "9:19.5": 0.420}},
+    "dust":     {"r": {"1:1": 0.300, "4:5": 0.300, "9:19.5": 0.285}, "cy": {"1:1": 0.500, "4:5": 0.460, "9:19.5": 0.410}},
 }
+
+# a design's own iris finish over core.FIN: the dust round Powder Burst's iris starts at the limb, so its iris keeps no dark limbal ring
+# (the owner's approved board of 2026-10-28, variant A)
+DESIGN_FIN = {"dust": {"limb": (0.78, 0.0)}}
 
 
 def _design(name):
@@ -82,6 +88,9 @@ def _design(name):
     if name == "echo":
         from . import echo as m
         return {"fx": m.fx_echo}
+    if name == "dust":
+        from . import dust as m
+        return {"fx": m.fx_dust}
     raise KeyError(name)
 
 
@@ -143,7 +152,7 @@ def render_single(effect, iris, design, fmt="1:1", size=1024, names="", date="",
     frame = frame_for(design, fmt, size, has_text)
     g0 = iris.grade_seconds
     o_ = opts or {}
-    d, d3 = K.place_iris(iris, frame, None, sharpen=o_.get("sharpen", True), limb=None)
+    d, d3 = K.place_iris(iris, frame, None, sharpen=o_.get("sharpen", True), limb=None, fin=DESIGN_FIN.get(design))
     iris.ring
     t1 = time.perf_counter()
     ctx = K.MCtx(frame, d, iris, design, opts, seed=seed, pv=pv, frozen=None)
@@ -258,7 +267,8 @@ def preview(eyes, spec, size=1024, check=False):
     d = r.d
     log = r.ctx.log
     log["plates"] = []
-    pv = Preview(img=r.img, discs=[(d.cx, d.cy, d.R)], graded=[d.iris.graded(d.Sd)], design=design, fmt=fmt, size=int(size), seed=r.info["seed"],
+    fin = DESIGN_FIN.get(design)       # the grade the picture drew (a design with its own finish: the cached one, not a second grade of the eye)
+    pv = Preview(img=r.img, discs=[(d.cx, d.cy, d.R)], graded=[d.iris.graded(d.Sd, fin=fin) if fin else d.iris.graded(d.Sd)], design=design, fmt=fmt, size=int(size), seed=r.info["seed"],
                  cls=r.info["class"], log=log, times=r.times, text_log=r.log, ctx=r.ctx, frame=r.frame)
     if check:
         import numpy as np

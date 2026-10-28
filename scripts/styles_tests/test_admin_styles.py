@@ -505,7 +505,7 @@ reset()
 with ceiling("solo.powder", "live", built=()):
     reset()
     old_built = dict(CT._BUILT)
-    CT._BUILT["singles"] = False                          # this deployment has no singles engine
+    CT._BUILT["lumen"] = False                            # this deployment has no engine of the light family (Powder Burst's since 2026-10-28; it was singles)
     try:
         act("styles_override", style="solo.powder", eyes=1, tick={"L1": True}, evidence=PASS_L0)
         x = refused("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)

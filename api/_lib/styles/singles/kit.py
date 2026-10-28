@@ -207,10 +207,10 @@ def apply_limb(d3, mult=0.55, r0=0.955):
     return d3
 
 
-def place_iris(iris, frame, span=None, sharpen=True, limb=None, master_map=False):
+def place_iris(iris, frame, span=None, sharpen=True, limb=None, master_map=False, fin=None):
     """Grade + snap the iris to whole pixels near the frame's circle, finish it (declared unsharp at masters), then build the F3 disc
     (optionally with the zone B limb darkening of the design)."""
-    d = C.place_disc(iris, frame.cx, frame.cy, frame.R, 0, master_map)
+    d = C.place_disc(iris, frame.cx, frame.cy, frame.R, 0, master_map, fin=fin)
     d.g = finish_grade(d.g, d.R, sharpen)
     d3 = make_disc3(d, span)
     if limb:

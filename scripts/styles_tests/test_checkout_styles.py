@@ -457,7 +457,7 @@ with Show("solo.gold", stage="live"):
     check("an option that does not apply (swap for one eye) is dropped, as a preview drops it: the plan is the same as without it", c_nopage == 200 and j_nopage["plan8"] == j["plan8"], (c_nopage, j_nopage))
 
 # ---- the 409s
-with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
+with Show("duo.kiss_collision", "solo.universe", "solo.powder", "solo.splash", stage="live"):
     saved_looks = copy.deepcopy(CT.ENGINE["solo.universe"]["engine"].get("looks"))
     CT.ENGINE["solo.universe"]["engine"]["looks"] = {"echo": "live", "vortex": "live", "deepfield": "lab", "starfield": "lab"}
     n_creates = len(H.Fake.creates)
@@ -522,30 +522,31 @@ with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
           c == 200 and rj(f"orders/{o}/order.json")["checkout"]["plan"]["opts"].get("look") == "vortex" and p.get("metadata[opts]") == '{"look":"vortex"}'
           and ", Universe, Vortex," in p.get("line_items[0][price_data][product_data][name]", ""), (c, j))
     CT.ENGINE["solo.universe"]["engine"]["looks"] = saved_looks
-    # the plates: found before payment
+    # the plates: found before payment (Splash: Powder Burst draws no plate since 2026-10-28, the light family's dust)
     o, k = new_order(["blue_round"])
-    c_miss, j_miss = co(o, k, "solo.powder", 1)
-    need = SP.make_plan({"style": "solo.powder", "layout": "single", "eyes": 1, "opts": {}},
+    c_miss, j_miss = co(o, k, "solo.splash", 1)
+    need = SP.make_plan({"style": "solo.splash", "layout": "single", "eyes": 1, "opts": {}},
                         [{"eye_id": rj(f"orders/{o}/draft/eye_1.json")["eye_id"], "profile": rj(f"orders/{o}/draft/eye_1.json")["profile"]}])
     pids = [x["id"] for x in need.get("plates_needed") or []]
     check("IE8: a style that draws from a 4K plate that is not in storage is 409 style_unavailable, why plates, found before the customer pays; the answer names the style and the reason, never a plate id (release review, regression-security m5)",
           c_miss == 409 and j_miss["why"] == "plates" and "plates" not in j_miss and pids and not any(p in json.dumps(j_miss) for p in pids), (c_miss, j_miss, pids))
     for x in need["plates_needed"]:
         store.put(x["path"], b"plate", "image/png", upsert=True)
-    c_have, j_have = co(o, k, "solo.powder", 1)
+    c_have, j_have = co(o, k, "solo.splash", 1)
     check("... with the plate in storage the same order is accepted, and the plan names it (plates_needed: id, path, sha256, bytes)",
           c_have == 200 and rj(f"orders/{o}/order.json")["checkout"]["plan"]["plates_needed"][0]["id"] == pids[0], (c_have, j_have))
-    # an ADVISORY style is bought on a failing eye and the failure is recorded (ordered after failure): Powder Burst, now that its plate is in storage (it was Celestial Gold before 2026-10-14)
+    # an ADVISORY style is bought on a failing eye and the failure is recorded (ordered after failure): Splash, once its plate is in storage (it was Celestial Gold before 2026-10-14,
+    # Powder Burst until 2026-10-28, when it became a style without plates)
     o, k = new_order(["blue_lid"])
-    need_l = SP.make_plan({"style": "solo.powder", "layout": "single", "eyes": 1, "opts": {}},
+    need_l = SP.make_plan({"style": "solo.splash", "layout": "single", "eyes": 1, "opts": {}},
                           [{"eye_id": rj(f"orders/{o}/draft/eye_1.json")["eye_id"], "profile": rj(f"orders/{o}/draft/eye_1.json")["profile"]}])
     for x in need_l["plates_needed"]:                  # the plate of THIS eye's plan (the pick depends on the eye id)
         store.put(x["path"], b"plate", "image/png", upsert=True)
     EVENTS.clear()
-    c, j = co(o, k, "solo.powder", 1)
-    check("an ADVISORY style (Powder Burst) is bought on a failing eye (the warning is the picker's): 200, the set level gate result is the failing reason, recorded for the 'ordered after failure' count",
+    c, j = co(o, k, "solo.splash", 1)
+    check("an ADVISORY style (Splash) is bought on a failing eye (the warning is the picker's): 200, the set level gate result is the failing reason, recorded for the 'ordered after failure' count",
           c == 200 and rj(f"orders/{o}/order.json")["checkout"]["gate"] not in ("ok", "unknown")
-          and any(kind == "checkout" and f.get("stage") == "start" and f.get("style") == "solo.powder" and f.get("gate") == rj(f"orders/{o}/order.json")["checkout"]["gate"] for kind, f in EVENTS), (c, j, EVENTS[-2:]))
+          and any(kind == "checkout" and f.get("stage") == "start" and f.get("style") == "solo.splash" and f.get("gate") == rj(f"orders/{o}/order.json")["checkout"]["gate"] for kind, f in EVENTS), (c, j, EVENTS[-2:]))
     # the capacity: a plan that can never fit one call is refused before payment
     o, k = new_order(["blue_round"])
     # the slow factor at its ceiling (6.0) against the 52 s budget of a 60 s function: at the 112 s of a 120 s one (2026-10-27) nothing reaches the budget at 6.0
@@ -567,6 +568,12 @@ with Show("duo.kiss_collision", "solo.universe", "solo.powder", stage="live"):
 o, k = new_order(["blue_round"])
 EVENTS.clear()
 c, j = co(o, k, "solo.gold", 1)
+# the server records the event AFTER it has sent the reply (iris.run: send_json, then the event), so the reply can be read first on a loaded machine (seen in the
+# full run of 2026-10-28 with v3coll and v3uni beside it): wait up to 5 s for the event, the check below is unchanged
+for _ in range(100):
+    if any(kind == "help" and f.get("route") == "blocked" for kind, f in EVENTS):
+        break
+    time.sleep(0.05)
 check("a style whose ceiling is not live is refused as a 409 (why stage), and the owner's demand count sees it (events.answer records a help event with route blocked)",
       c == 409 and j["why"] == "stage" and j["style"] == "solo.gold"
       and any(kind == "help" and f.get("route") == "blocked" and f.get("style") == "solo.gold" and f.get("eyes") == 1 and f.get("why") == "stage" for kind, f in EVENTS), (c, j, EVENTS[-2:]))

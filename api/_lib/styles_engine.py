@@ -36,12 +36,12 @@ ENGINE = {
         "wave": "R1"
     },
     "solo.powder": {
-        "engine": {"module": "singles", "design": "powder"},
+        "engine": {"module": "lumen", "design": "dust"},
         "design_by_eyes": {},
         "canvases": ["1:1", "4:5", "9:19.5"],
         "gate_rules": "lid",
-        "plates": ["P-SN-CLOUD"],
-        "atlas": ["chips"],
+        "plates": [],
+        "atlas": [],
         "steps": {},
         "fill_side": 0,
         "wave": "R2"

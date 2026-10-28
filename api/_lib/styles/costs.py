@@ -144,6 +144,12 @@ PREVIEW = {
 #   PREVIEW: the 1024 px preview in a fresh process (cold), on new eyes and on the same eyes (the design alone, median of three), each column scaled by
 #     Radiance's (1.07 / 1.26, 0.89 / 1.32, 0.41 / 0.58); the eye's preparation is the same work for every design: Radiance's 0.48 s, and warm new = warm same
 #     + 0.48. The peaks of these previews were the same for every design (the eye's 2048 px copy dominates): Radiance's 167 MB, rounded up to 170
+# lumen.dust (Powder Burst since 2026-10-28) was measured the same way on 2026-10-28 (Windows, one thread, one fresh process per render, the 4096 px masters made from 4096 px copies
+#   of the owner's blue green eye and a dark brown one, Radiance and Supernova beside it in every round, with the iris finish and without): the dust's wall time was 0.79 to 0.87 of
+#   Radiance's (8 rounds; one round disturbed by another process, its wall 2 s over its CPU, left out), 10.3 to 11.8 s against 12.4 to 14.3; cold = 9.3 x 0.865 = 8.0 s, raised
+#   by the ratio of Supernova's row to Supernova measured beside it (10.5 / 9.8: these runs read 7 percent under the runs of 2026-10-20) to 8.6, warm 8.6 x 8.4 / 9.3; the
+#   peak 278 MB under Radiance's on the same eye (622 MB against 901): 900 - 278 and 986 - 278. The previews: the largest of six rounds of each column scaled by Radiance's
+#   (1.12 cold, 0.40 the design alone, warm new 0.40 + 0.48), the peak Radiance's (151 to 153 MB against 154): 170
 # Rows here never replace a baked row (the spike's table is what the plan's section 10.3 pins); bake_costs.py leaves this block alone.
 ADDED = (
     ("lumen.stardust", 1, (10.5, 9.5, 627, 713), (1.9, 1.58, 1.10, 0.48, 170)),
@@ -152,6 +158,7 @@ ADDED = (
     ("lumen.halo", 1, (8.9, 8.0, 620, 706), (0.92, 0.79, 0.31, 0.48, 170)),
     ("lumen.aurora", 1, (9.9, 9.0, 627, 713), (1.4, 1.18, 0.70, 0.48, 170)),
     ("lumen.echo", 1, (9.9, 9.0, 720, 806), (1.4, 1.18, 0.70, 0.48, 170)),   # Iris Echo (2026-10-27): Aurora's row with 100 MB more for the 1536 grid, until measured
+    ("lumen.dust", 1, (8.6, 7.8, 622, 708), (1.12, 0.88, 0.40, 0.48, 170)),   # Powder Burst's dust (2026-10-28), measured as above (below)
 )
 for _key, _n, _master, _preview in ADDED:
     if _key not in MASTER:
