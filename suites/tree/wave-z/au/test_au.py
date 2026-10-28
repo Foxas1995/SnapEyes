@@ -43,7 +43,13 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # founder named). A1, A3, B1, B3, C2, D2, E1 and E8 (pins of the version, the date and these two blocks, none a defect) moved, each keeping its id and the older
 # names, with " - 1028:" added. eu_hr.json is the EXACT pin of the EU edition as of this work (same layout as eu_counter.json, which stays as the base: the 1006
 # difference is now checked between the pins of WP12 and of the counter, and the 1028 difference from the counter's pin is TERMS28 and IMPRINT28 below).
-import os, sys, json, time, re, subprocess, importlib.util
+# 1028b refresh (2026-10-28, the US market and its legal edition, the owner's decisions of 2026-10-27/28). The consent version moves to 2026-10-28.2 (the US
+# checkbox text added, with the consent to the use of the eye photos; the EU and AU texts are the ones of 2026-10-28.1, which still quotes them); LEGAL_UPDATED
+# stays 2026-10-28 (no EU text changed: the US edition is new). us is an edition market of its own (EDITION_MARKETS au, hu, us; US_MARKETS us, ACL_MARKETS stays
+# au), hr and uk read the EU edition (uk is not sold in: selectable 0), and GET /api/checkout names the US checkbox under consent.markets. A1, A5, D1, D2, E1, E8
+# and K0 (pins of the version, of the list of editions, of consent.markets and of the buy cards rendered; none a defect) moved, each keeping its id and the
+# older names, with " - 1028b:" added; section U is the US market, checked the way sections A to K check the Australian one.
+import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
 PB = os.path.join(SP, "wave-r-back", "pb")
@@ -202,7 +208,8 @@ EU_WP18 = json.load(open(os.path.join(HERE, "eu_wp18.json"), encoding="utf-8")) 
 EU_COUNTER = json.load(open(os.path.join(HERE, "eu_counter.json"), encoding="utf-8"))   # 1020 refresh: the EU edition with the anonymous counter's privacy paragraphs (the terms are WP18's), the base of the 1028 refresh
 EU_NOW = json.load(open(os.path.join(HERE, "eu_hr.json"), encoding="utf-8"))   # 1028 refresh: the EU edition with its Croatian texts (the contract sentence and the legal notice's images block changed in en and de)
 LEGAL_NOW = "2026-10-28"        # 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
-CONSENT_NOW = "2026-10-28.1"    # 1028 refresh: the consent version since the Croatian text (2026-09-30.2 since 30efee7: the lt and hu texts added; en, de, AU as of .1)
+CONSENT_NOW = "2026-10-28.2"    # 1028b refresh: the consent version since the US text (2026-10-28.1 since the Croatian text; 2026-09-30.2 since 30efee7: the lt and hu texts added; en, de, AU as of .1)
+CONSENT_1028 = "2026-10-28.1"   # 1028b refresh: the version before the US text, which still quotes the EU and the AU texts of its customers
 CONSENT_0930 = "2026-09-30.2"   # 1028 refresh: the version before the Croatian text, which still quotes the four texts of its customers
 LANG2 = ("en", "de")            # the two languages the snapshots of before the Lithuanian and Hungarian work have
 set_pack(PACK)
@@ -224,7 +231,8 @@ check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED
       " - 1005: LEGAL_UPDATED is 2026-10-05 (WP12), the consent version is not bumped"
       " - 1006: LEGAL_UPDATED is 2026-10-06 (WP18: the AI-made material sentence), the consent version is still not bumped"
       " - 1020: LEGAL_UPDATED is 2026-10-20 (the anonymous counter's privacy paragraphs), the consent version is still not bumped"
-      " - 1028: LEGAL_UPDATED is 2026-10-28 and the consent version 2026-10-28.1 (the Croatian texts and checkbox)",
+      " - 1028: LEGAL_UPDATED is 2026-10-28 and the consent version 2026-10-28.1 (the Croatian texts and checkbox)"
+      " - 1028b: the consent version 2026-10-28.2 (the US checkbox text), LEGAL_UPDATED still 2026-10-28 (no EU text changed)",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
       and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
@@ -256,9 +264,9 @@ check("A4 AU checkbox keeps both EU elements and the ACL (express start before t
       and "mein Widerrufsrecht verliere" in pay.CONSENT_TEXT_AU["de"] and "Australian Consumer Law" in pay.CONSENT_TEXT_AU["de"], au_en)
 check("A5 editions: au reads the Australian texts; eu, lt, hu and unknown the EU ones; server ACL_MARKETS = client"
       " - 0930: hu now reads the Hungarian edition (30efee7: the EU texts with forint prices, not the ACL one), "
-      "server EDITION_MARKETS = client",
-      CL["edition"] == {"eu": "eu", "lt": "eu", "au": "au", "hu": "hu", "zz": "eu"} and pay.ACL_MARKETS == ("au",)
-      and CL["editionMarkets"] == {"au": "au", "hu": "hu"} and tuple(CL["editionMarkets"]) == pay.EDITION_MARKETS
+      "server EDITION_MARKETS = client - 1028b: us reads the US edition (EDITION_MARKETS au, hu, us), hr and uk the EU one",
+      CL["edition"] == {"eu": "eu", "lt": "eu", "au": "au", "hu": "hu", "zz": "eu", "us": "us", "hr": "eu", "uk": "eu"} and pay.ACL_MARKETS == ("au",)
+      and CL["editionMarkets"] == {"au": "au", "hu": "hu", "us": "us"} and tuple(CL["editionMarkets"]) == pay.EDITION_MARKETS
       and tuple(m for m in CL["edition"] if CL["edition"][m] == "au") == pay.ACL_MARKETS
       and pay.acl_market("au") and not pay.acl_market("eu") and not pay.acl_market(None) and not pay.acl_market("AU")
       and pay.edition_market("au") and pay.edition_market("hu") and not pay.acl_market("hu")
@@ -632,15 +640,17 @@ check("C17 order page: an ACL line for Australian orders (en, de)", CL["orderAcl
 
 # ---------------------------------------------------------------------------------------------- D. checkout
 c, j = get("/api/checkout")
-check("D1 GET /api/checkout: consent en/de the EU text as before; consent.markets.au the AU text (en, de)",
+check("D1 GET /api/checkout: consent en/de the EU text as before; consent.markets.au the AU text (en, de)"
+      " - 1028b: consent.markets.us the US text (en) beside it",
       c == 200 and j["consent"]["version"] == pay.CONSENT_VERSION and j["consent"]["en"] == PAY0.CONSENT_TEXT["en"]
-      and j["consent"]["de"] == PAY0.CONSENT_TEXT["de"] and j["consent"]["markets"] == {"au": pay.CONSENT_TEXT_AU}, j.get("consent"))
+      and j["consent"]["de"] == PAY0.CONSENT_TEXT["de"] and j["consent"]["markets"] == {"au": pay.CONSENT_TEXT_AU, "us": pay.CONSENT_TEXT_US}, j.get("consent"))
 oA, kA = new_order(2)
 c, j = checkout(oA, kA, 2, "studio_black", "en", market="au")
 p = H.Fake.creates[-1][0]
 rec = read_json(f"orders/{oA}/order.json")
 check("D2 au checkout: Stripe locale en-GB, aud, the AU submit note; order.json keeps the AU text, its version and fingerprint"
-      " - 0930: the version recorded is the current one, 2026-09-30.2 (30efee7), the AU text is unchanged - 1028: the current one is 2026-10-28.1 (the Croatian text), the AU text unchanged",
+      " - 0930: the version recorded is the current one, 2026-09-30.2 (30efee7), the AU text is unchanged - 1028: the current one is 2026-10-28.1 (the Croatian text), the AU text unchanged"
+      " - 1028b: the current one is 2026-10-28.2 (the US text), the AU text unchanged",
       c == 200 and p["locale"] == "en-GB" and p["line_items[0][price_data][currency]"] == "aud"
       and p["custom_text[submit][message]"] == pay.SUBMIT_NOTE_AU["en"] and "Australian Consumer Law" in p["custom_text[submit][message]"]
       and rec["checkout"]["consent"]["text"] == au_en and rec["checkout"]["consent"]["version"] == CONSENT_NOW
@@ -669,7 +679,7 @@ oE, kE, pE, mE = paid_order("au", "en", "sydney@example.com", eyes=2)
 t = mE[0]["text"] if mE else ""
 head = t.split("_" * 64)[0]
 check("E1 AU paid: paid.json market au, the AU consent text recorded; one confirmation, subject with 'invoice'"
-      " - 0930: recorded under the current version 2026-09-30.2 (30efee7), the AU text unchanged - 1028: the current version is 2026-10-28.1",
+      " - 0930: recorded under the current version 2026-09-30.2 (30efee7), the AU text unchanged - 1028: the current version is 2026-10-28.1 - 1028b: 2026-10-28.2",
       pE["market"] == "au" and pE["consent"]["text"] == au_en and pE["consent"]["version"] == CONSENT_NOW
       and len(mE) == 1 and mE[0]["subject"] == f"Your SnapEyes order {oE}: order confirmation and invoice", (pE.get("consent"), [m["subject"] for m in mE]))
 inv = f"Invoice\nInvoice number: {oE}\nInvoice date: "
@@ -694,7 +704,7 @@ check("E6 the full AU withdrawal information and AU terms are attached (not the 
 check("E7 the AU email: no 'no refunds' wording, no en or em dash", not bad_words(t) and not any(d in t for d in DASHES), bad_words(t))
 md = read_json(f"orders/{oE}/mail_delivery.json")
 check("E8 mail_delivery.json sent with the new consent version and the pack date"
-      " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12) - 1006: the pack date is 2026-10-06 (WP18) - 1020: the pack date is 2026-10-20 (the counter's privacy paragraphs) - 1028: the version 2026-10-28.1 and the pack date 2026-10-28 (the Croatian texts)", md.get("state") == "sent"
+      " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12) - 1006: the pack date is 2026-10-06 (WP18) - 1020: the pack date is 2026-10-20 (the counter's privacy paragraphs) - 1028: the version 2026-10-28.1 and the pack date 2026-10-28 (the Croatian texts) - 1028b: the version 2026-10-28.2 (the US text), the same pack date", md.get("state") == "sent"
       and md.get("consent") == CONSENT_NOW and md.get("legal") == LEGAL_NOW, md)
 with open(os.path.join(HERE, "sample_au_confirmation_en.txt"), "w", encoding="utf-8") as f:
     f.write(head)
@@ -886,8 +896,8 @@ try:
     BC = json.loads(r.stdout)
 except ValueError:
     BC = None
-check("K0 the /try buy card renders (react-dom/server through Vite) for au en/de, eu en, lt de", BC is not None
-      and sorted(BC) == ["au_de", "au_en", "eu_en", "lt_de"], (r.returncode, r.stderr[-900:]))
+check("K0 the /try buy card renders (react-dom/server through Vite) for au en/de, eu en, lt de - 1028b: and us en", BC is not None
+      and sorted(BC) == ["au_de", "au_en", "eu_en", "lt_de", "us_en"], (r.returncode, r.stderr[-900:]))
 if BC:
     card = {k: (re.sub(r"<[^>]+>", " ", v["html"]), re.sub(r"<[^>]+>", " ", v["noServer"]), v["html"]) for k, v in BC.items()}
     A39 = "A$" + str(pay.price_list("au")["one_eye_studio_black"] // 100)
@@ -902,6 +912,129 @@ if BC:
           "SERVER EU EN" in card["eu_en"][0] and "SERVER EU DE" in card["lt_de"][0] and "australia" not in card["eu_en"][2]
           and "australia" not in card["lt_de"][2] and "€" in card["eu_en"][0]
           and PAY0.CONSENT_TEXT["de"] in card["lt_de"][1], card["eu_en"][0][:400])
+
+# ---------------------------------------------------------------------------------------------- U. the US market (1028b)
+us_en = pay.CONSENT_TEXT_US["en"]
+DRAFT_US = ("I expressly agree that SnapEyes starts making my personalised digital artwork right away, before the withdrawal period ends. I know that once this "
+            "has started, I lose my right of withdrawal and can't cancel for a change of mind; my rights if the file is faulty are not affected. I also agree "
+            "that SnapEyes uses the photos of my eyes only to make my preview and my artwork, never to identify anyone, and deletes them as its privacy policy "
+            "describes.")
+check("U1 US checkbox: the owner's words, server CONSENT_TEXT_US = client CHECKOUT_LEGAL_US (English only)",
+      us_en == DRAFT_US == CL["checkoutUs"]["en"]["withdrawalConsent"] and sorted(pay.CONSENT_TEXT_US) == ["en"] and sorted(CL["checkoutUs"]) == ["en"],
+      (us_en, CL["checkoutUs"]))
+check("U2 the US checkbox keeps both EU elements, no change-of-mind cancelling, the rights for a faulty file and the consent to the use of the eye photos; "
+      "no 'no refunds', no dash", "expressly agree" in us_en and "before the withdrawal period ends" in us_en and "I lose my right of withdrawal" in us_en
+      and "can't cancel for a change of mind" in us_en and "my rights if the file is faulty are not affected" in us_en
+      and "uses the photos of my eyes only to make my preview and my artwork, never to identify anyone" in us_en
+      and not bad_words(us_en + json.dumps(pay.SUBMIT_NOTE_US)) and not any(d in us_en for d in DASHES), us_en)
+check("U3 consent versions: the US text only under 2026-10-28.2; 2026-10-28.1 still quotes the EU and AU texts; a US order is English whatever it asked",
+      pay.CONSENT_TEXTS_US == {CONSENT_NOW: pay.CONSENT_TEXT_US} and pay.CONSENT_TEXTS[CONSENT_1028] == pay.CONSENT_TEXT
+      and pay.CONSENT_TEXTS_AU[CONSENT_1028] == pay.CONSENT_TEXT_AU and pay.consent_text(CONSENT_NOW, "en", "us") == us_en
+      and pay.consent_text(CONSENT_1028, "en", "us") is None and pay.consent_text(CONSENT_NOW, "de", "us") is None
+      and pay.consent_for("us", "de") == us_en and pay.lang_for("us", "hu") == "en" and pay.submit_note("us", "de") == pay.SUBMIT_NOTE_US["en"]
+      and pay.US_MARKETS == ("us",) and pay.us_market("us") and not pay.us_market("au") and not pay.acl_market("us") and pay.edition_market("us")
+      and not pay.edition_market("hr") and not pay.edition_market("uk") and tuple(pay.edition_langs("us")) == ("en",),
+      (pay.CONSENT_TEXTS_US, pay.US_MARKETS))
+check("U4 checkoutLegal: us gets the US checkbox in English (a German page too) and a link to terms#united-states; hr the EU wording; the links carry m=us, m=hr",
+      cf["en_us"]["withdrawalConsent"] == us_en == cf["de_us"]["withdrawalConsent"] and cf["de_us"]["continueButton"] == "Continue to payment"
+      and any(p.get("section") == "united-states" and p.get("doc") == "terms" for p in cf["en_us"]["acceptance"])
+      and cf["en_hr"] == EU_NOW["checkout"]["en"] and CL["usHrefs"] == {"usSection": "/terms?lang=en&m=us#united-states", "hrPlain": "/terms?lang=hr&m=hr"},
+      (cf["en_us"]["acceptance"], CL["usHrefs"]))
+EUS = PACK["editions"]["us"]
+links_us = re.findall(r"https://snapeyes\.com/(?:terms|privacy|withdrawal|imprint)\?[^\s)]*", json.dumps(EUS))
+check("U5 pack editions.us: English only, terms and withdrawal, every legal link carries m=us; its terms print the US prices, the US rights and one contract language",
+      sorted(EUS) == ["en"] and sorted(EUS["en"]) == ["terms", "withdrawal"] and links_us and all("m=us" in x for x in links_us)
+      and EUS["en"]["terms"]["text"] == CL["plainUsTerms"] and EUS["en"]["terms"]["url"] == "https://snapeyes.com/terms?lang=en&m=us"
+      and "Your rights in the United States\n" in EUS["en"]["terms"]["text"] and "One eye, Clean Iris: $21.97" in EUS["en"]["terms"]["text"]
+      and "Each further eye: +$16.00" in EUS["en"]["terms"]["text"] and "The contract language is English." in EUS["en"]["terms"]["text"]
+      and "€" not in EUS["en"]["terms"]["text"] and "A$" not in EUS["en"]["terms"]["text"] and us_en in EUS["en"]["withdrawal"]["text"]
+      and CL["usMoney"] == ["$21.97", "$16.00"] and CL["copyUs"] and not any(d in json.dumps(EUS) for d in DASHES),
+      [x for x in links_us if "m=us" not in x][:5])
+c, j = get("/api/checkout")
+check("U6 GET /api/checkout: markets us (USD, its own list) and hr (EUR, the euro list), never uk; the country hint offers us to the US, nothing to Croatia or the UK",
+      c == 200 and j["markets"]["us"] == {"currency": "USD", "prices": pay.price_list("us")} and j["markets"]["hr"] == {"currency": "EUR", "prices": pay.price_list("eu")}
+      and "uk" not in j["markets"] and get("/api/checkout", {"x-vercel-ip-country": "US"})[1]["suggest"] == "us"
+      and get("/api/checkout", {"x-vercel-ip-country": "HR"})[1]["suggest"] is None and get("/api/checkout", {"x-vercel-ip-country": "GB"})[1]["suggest"] is None,
+      (j.get("markets"), j.get("suggest")))
+oV, kV = new_order(2)
+c, j = checkout(oV, kV, 2, "studio_black", "de", market="us")
+p = H.Fake.creates[-1][0]
+rec = read_json(f"orders/{oV}/order.json")
+check("U7 us checkout (a German page): Stripe in English, usd, $44.97 for two eyes, the US submit note; order.json keeps the US text, its version and fingerprint",
+      c == 200 and j.get("currency", "").lower() == "usd" and j.get("amount") == pay.price_list("us")["two_eyes"] and p["locale"] == "en"
+      and p["line_items[0][price_data][currency]"] == "usd" and p["line_items[0][price_data][unit_amount]"] == str(pay.price_list("us")["two_eyes"])
+      and p["custom_text[submit][message]"] == pay.SUBMIT_NOTE_US["en"] and p["metadata[market]"] == "us" and p["metadata[lang]"] == "en"
+      and rec["checkout"]["consent"]["text"] == us_en and rec["checkout"]["consent"]["version"] == CONSENT_NOW and rec["checkout"]["consent"]["lang"] == "en"
+      and p["metadata[consent_version]"] == CONSENT_NOW, (c, j, p.get("locale"), p.get("custom_text[submit][message]"), rec.get("checkout", {}).get("consent")))
+oH, kH = new_order(1, "hr")
+c, j = checkout(oH, kH, 1, "studio_black", "hr", market="hr")
+pH = H.Fake.creates[-1][0]
+recH = read_json(f"orders/{oH}/order.json")
+cK, jK = checkout(oH, kH, 1, "studio_black", "en", market="uk")
+check("U8 hr checkout: euros at the euro price, the Croatian EU checkbox and note, market hr in the metadata; uk is refused (priced, not selectable)",
+      c == 200 and pH["line_items[0][price_data][currency]"] == "eur" and pH["line_items[0][price_data][unit_amount]"] == str(pay.price_list("eu")["one_eye_studio_black"])
+      and pH["metadata[market]"] == "hr" and recH["checkout"]["consent"]["text"] == pay.CONSENT_TEXT["hr"] and pH["custom_text[submit][message]"] == pay.SUBMIT_NOTE["hr"]
+      and cK == 400 and "uk" not in pay.SELECTABLE and pay.MARKETS["uk"]["selectable"] == 0, (c, j, cK, jK))
+oS, kS, pS, mS = paid_order("us", "en", "boston@example.com", eyes=2)
+tS = mS[0]["text"] if mS else ""
+headS = tS.split("_" * 64)[0]
+check("U9 US paid: paid.json market us in USD, the US consent text recorded; one confirmation, subject with 'invoice'",
+      pS["market"] == "us" and pS["currency"] == "usd" and pS["consent"]["text"] == us_en and pS["consent"]["version"] == CONSENT_NOW
+      and len(mS) == 1 and mS[0]["subject"] == f"Your SnapEyes order {oS}: order confirmation and invoice", (pS.get("consent"), [m["subject"] for m in mS]))
+want_day = pay.date_text(pay.new_york_day(pS["paid_at"]), "en")
+check("U10 the US invoice: number, the New York date, supplier with company code and address, customer, what was supplied, total $44.97, "
+      "'No sales tax has been charged', paid in full; no GST, never 'Tax invoice'",
+      f"Invoice\nInvoice number: {oS}\nInvoice date: {want_day}\n" in headS and "Supplier: MB \"Portretizuokis\", company code 305605052, " in headS
+      and "Customer: boston@example.com" in headS and "Supplied: 1 x SnapEyes iris artwork, 2 eyes, Studio Black" in headS
+      and "Total: $44.97\n" in headS and "Sales tax: No sales tax has been charged. The supplier is not registered to collect sales tax in any US state." in headS
+      and f"Payment: paid in full through Stripe on {want_day}" in headS and "GST" not in headS and not re.search(r"tax invoice", tS, re.I)
+      and "Price: $44.97. This is the total price: no sales tax is charged." in headS and "€" not in headS and "VAT" not in headS, headS[:2500])
+i_rs, i_cs = headS.find("Your rights in the United States\n"), headS.find("Cancelling before we start\n")
+check("U11 'Your rights in the United States' (a faulty file made again or refunded) links terms#united-states (m=us), before 'Cancelling before we start'; "
+      "the US consent quoted with the use of the eye photos",
+      0 < i_rs < i_cs and "https://snapeyes.com/terms?lang=en&m=us#united-states" in headS and "we make the file again free of charge, or refund you in full" in headS
+      and "Your right of withdrawal\n" not in headS and "Your rights in Australia" not in headS and "“" + us_en + "”" in headS
+      and "We use the photos of your eyes only to make your preview and your artwork, never to identify anyone" in headS and "get a full refund" in headS, headS[:3000])
+check("U12 the full US withdrawal information and US terms are attached (not the EU or AU ones); no 'no refunds', no dash",
+      EUS["en"]["withdrawal"]["text"] in tS and EUS["en"]["terms"]["text"] in tS and PACK["docs"]["en"]["terms"]["text"] not in tS
+      and PACK["editions"]["au"]["en"]["terms"]["text"] not in tS and "https://snapeyes.com/terms?lang=en&m=us\n" in headS
+      and not bad_words(tS) and not any(d in tS for d in DASHES), bad_words(tS))
+with open(os.path.join(HERE, "sample_us_confirmation_en.txt"), "w", encoding="utf-8") as f:
+    f.write(headS)
+_t = lambda s: calendar.timegm(time.strptime(s, "%Y-%m-%dT%H:%M"))
+NY = {"2026-01-15T04:59": "2026-01-14", "2026-01-15T05:00": "2026-01-15",     # EST, UTC-5
+      "2026-03-08T04:30": "2026-03-07",                                         # before summer time starts (Sun 8 Mar 2026, 2:00 EST = 7:00 UTC)
+      "2026-03-09T04:30": "2026-03-09",                                         # EDT, UTC-4: 00:30
+      "2026-07-01T03:59": "2026-06-30", "2026-07-01T04:00": "2026-07-01",     # EDT around midnight
+      "2026-11-01T04:30": "2026-11-01",                                         # the last hours of summer time (Sun 1 Nov 2026, 2:00 EDT = 6:00 UTC)
+      "2026-11-02T04:30": "2026-11-01"}                                         # EST again: 23:30 the day before
+gotNY = {k: pay.new_york_day(_t(k)) for k in NY}
+check("U13 new_york_day: EST/EDT with the second-Sunday-of-March and first-Sunday-of-November rules, around midnight and both switches; no time: today",
+      gotNY == NY and re.fullmatch(r"\d{4}-\d{2}-\d{2}", pay.new_york_day(None) or "") and pay.new_york_day("junk") == pay.new_york_day(None), gotNY)
+nous = json.loads(json.dumps(PACK))
+del nous["editions"]["us"]
+set_pack(nous)
+whyU = pay.legal_problem()
+set_pack(PACK)
+check("U14 legal_problem: a pack without the us edition keeps live sales closed while us is selectable; pack_docs never gives a US order the EU texts",
+      "us market" in whyU and pay.legal_problem() == "" and pay.pack_docs(nous, "en", "us") is None and pay.pack_docs(PACK, "en", "us") == EUS["en"]
+      and pay.pack_docs(PACK, "de", "us") is None and pay.pack_docs(PACK, "en", "hr") == PACK["docs"]["en"], whyU)
+oL, kL, pL, mL = paid_order("us", "en", "denver@example.com")
+lapse(oL)
+c, j, rL = withdraw_now(oL, kL, "denver@example.com")
+check("U15 a lapsed statement on a US order: the receipt keeps the statutory sentence and adds the US line (never 'no refunds')",
+      c == 200 and (j.get("withdrawal") or {}).get("state") == "lapsed" and (j.get("withdrawal") or {}).get("market") == "us" and len(rL) == 1
+      and "Your rights if the file is faulty are not affected" in rL[0]["text"] and "Your rights in the United States" in rL[0]["text"]
+      and "Australian" not in rL[0]["text"] and not bad_words(rL[0]["text"]), (c, j, rL[0]["text"][:1500] if rL else None))
+if BC:
+    check("U16 the /try buy card on the US market: the server's US checkbox text, the line links terms#united-states (m=us), the price in US$, no euro",
+          "SERVER US EN" in card["us_en"][0] and "SERVER EU" not in card["us_en"][0] and "/terms?lang=en&amp;m=us#united-states" in card["us_en"][2]
+          and "$" + f"{pay.price_list('us')['one_eye_studio_black'] // 100}.{pay.price_list('us')['one_eye_studio_black'] % 100:02d}" in card["us_en"][0]
+          and "€" not in card["us_en"][0] and "no sales tax is charged" in card["us_en"][0]
+          and (pay.CONSENT_TEXT_US["en"].replace("'", "&#x27;") in card["us_en"][1] or pay.CONSENT_TEXT_US["en"] in card["us_en"][1]), card["us_en"][0][:700])
+check("U17 the order page has a line for US orders that keeps the rights for a faulty file and names no Australian law",
+      CL["orderAcl"] and isinstance(CL["orderAcl"].get("us"), str) and "faulty" in CL["orderAcl"]["us"] and "Australian" not in CL["orderAcl"]["us"]
+      and not bad_words(CL["orderAcl"]["us"]), CL["orderAcl"])
 
 # ---------------------------------------------------------------------------------------------- J. hygiene
 bad = []

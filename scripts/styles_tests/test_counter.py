@@ -224,12 +224,19 @@ e = events_today()[0]
 check("took is kept for the result step only; eyes and style on any step", "took" not in e and e.get("eyes") == 3 and e.get("style") == "x", e)
 wipe()
 bad = hit("result", body={"took": -1, "eyes": 0, "style": "has space", "lang": "xx", "market": "zz"})
-hit("result", body={"took": 10 ** 9, "eyes": 9, "style": "A" * 50, "camp": "|paid|x", "lang": "fr", "market": "us"})
+# 2026-10-28: "us" is a market of api/_lib/markets.py now (with "uk" and "hr"), so the unknown market of this beacon is "ca" (no market of ours)
+hit("result", body={"took": 10 ** 9, "eyes": 9, "style": "A" * 50, "camp": "|paid|x", "lang": "fr", "market": "ca"})
 hit("result", body={"took": "5", "eyes": True, "style": ["a"], "lang": ["lt"], "market": 5, "camp": 5})
 evs = events_today()
 check("a took below 0 or above fifteen minutes, an eye count outside 1 to 8, a style that is not a short code, an unknown language or market and a campaign without a source are all dropped; "
       "the beacon itself is still counted",
       len(evs) == 3 and all(not ({"took", "eyes", "style", "lang", "market", "src"} & set(x)) for x in evs), evs)
+wipe()
+for mk in ("us", "uk", "hr"):
+    hit("landing", ip="203.0.113.19", body={"lang": "en", "market": mk})
+evs = events_today()
+check("the markets of 2026-10-28 are counted under their own keys (us, uk, hr), each a market of api/_lib/markets.py",
+      sorted(x.get("market") for x in evs) == ["hr", "uk", "us"] and {"us", "uk", "hr"} <= set(markets.MARKETS), evs)
 
 wipe()
 IPS = ["203.0.113.77", "198.51.100.200", "2001:db8::beef"]

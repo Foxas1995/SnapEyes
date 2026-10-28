@@ -24,9 +24,14 @@ const FIELD = 'mt-1 w-full min-h-[44px] rounded-xl bg-black/40 border px-3 py-2 
 const CONFIRM_BTN = 'min-h-[48px] px-4 py-3 rounded-xl bg-[#f0f3fa] text-black text-sm font-bold flex items-center justify-center gap-2 text-center active:scale-[0.98] disabled:opacity-60';
 
 /** An order of the Australian market (the page adopts its order's market): the line that keeps the Australian
- *  Consumer Law next to anything about the end of the right of withdrawal. */
-const AclNote: React.FC<{ C: OrderCopy }> = ({ C }) =>
-  legalEdition(useMarket()) === 'au' ? <p data-testid="withdraw-acl" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.acl}</p> : null;
+ *  Consumer Law next to anything about the end of the right of withdrawal; an order of the US market: the line that
+ *  keeps the rights for a faulty file there. */
+const AclNote: React.FC<{ C: OrderCopy }> = ({ C }) => {
+  const e = legalEdition(useMarket());
+  if (e === 'au') return <p data-testid="withdraw-acl" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.acl}</p>;
+  if (e === 'us') return <p data-testid="withdraw-us" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.us}</p>;
+  return null;
+};
 
 /** The order page's withdrawal section: what the right is, and the button to the form. */
 export const WithdrawEntry: React.FC<{ C: OrderCopy; lang: Lang; link: OrderLink }> = ({ C, lang, link }) => (

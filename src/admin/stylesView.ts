@@ -111,7 +111,7 @@ export const HEALTH_LT: Record<string, string> = { styles: 'stilių registras ir
 export const ROUTE_LT: Record<string, string> = { manual: 'rankinis kelias (pirkėjas rašo tau)', soon: 'paspaudė „Greitai“ stiliaus pirkimą', blocked: 'pirkimas atmestas (stilius neparduodamas)' };
 export const ERROR_ENDPOINT_LT: Record<string, string> = { compose: 'peržiūra', master_compose: '4K kūrinys', order: 'užsakymas', checkout: 'mokėjimas', unknown: 'nežinoma' };
 export const REVEAL_LT: Record<string, string> = { ok: 'rodoma', colour: 'nerodoma: spalva pasikeitė', registration: 'nerodoma: nesutapo vaizdai', none: 'nėra', error: 'klaida' };
-export const SLICE_MARKET_LT: Record<string, string> = { eu: 'Europos Sąjunga', lt: 'Lietuva', au: 'Australija', hu: 'Vengrija' };
+export const SLICE_MARKET_LT: Record<string, string> = { eu: 'Europos Sąjunga', lt: 'Lietuva', au: 'Australija', hu: 'Vengrija', us: 'JAV', uk: 'Jungtinė Karalystė', hr: 'Kroatija' };
 export const SLICE_LANG_LT: Record<string, string> = { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų', hr: 'kroatų' };
 
 // ------------------------------------------------------------------------------------------------ numbers (always with n)

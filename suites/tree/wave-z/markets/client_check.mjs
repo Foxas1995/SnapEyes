@@ -28,7 +28,9 @@ for (const m of Object.keys(M.MARKETS)) {
   }
 }
 for (const [minor, cur] of [[1997, 'eur'], [3997, 'EUR'], [12997, 'eur'], [1500, 'eur'], [3900, 'aud'], [4900, 'AUD'], [25300, 'aud'],
-  [3950, 'aud'], [125300, 'aud'], [699000, 'huf'], [1399000, 'HUF'], [4393000, 'huf'], [1997, 'xyz']]) {
+  [3950, 'aud'], [125300, 'aud'], [699000, 'huf'], [1399000, 'HUF'], [4393000, 'huf'], [1997, 'xyz'],
+  // 1028b: the US and the UK market
+  [2197, 'usd'], [1600, 'USD'], [14097, 'usd'], [123450, 'usd'], [1797, 'gbp'], [1300, 'GBP']]) {
   for (const lang of ['en', 'de']) out.money.push([minor, cur, lang, M.money(minor, cur, lang)]);
 }
 // a server list overrides the local one for its keys only
@@ -49,6 +51,11 @@ out.links.auNoQuery = M.withMarket('/try', 'au');
 out.links.eu = M.withMarket('/terms?lang=en', 'eu');
 out.links.hu = M.withMarket('/terms?lang=en', 'hu');
 out.links.bogus = M.withMarket('/terms?lang=en', 'zz');
+// 1028b: the new markets (us and hr selectable, uk not), and the legal links of the US edition and of the Croatian market
+out.linksNew = {
+  us: M.withMarket('/terms?lang=en#prices', 'us'), hr: M.withMarket('/try', 'hr'), uk: M.withMarket('/try', 'uk'),
+  usLegal: LEGAL.legalHref('terms', 'en', 'united-states', 'us'), hrLegal: LEGAL.legalHref('terms', 'hr', '', 'hr'),
+};
 
 // detection: URL > localStorage > default; only selectable markets; a URL market is remembered
 function fakeWindow(search, stored) {
@@ -81,6 +88,9 @@ out.detect = detectAll(M, [
   ['nothing', '', null],
 ]);
 
+// 1028b: the new markets
+out.detectNew = detectAll(M, [['url_us', '?m=us', null], ['url_hr', '?m=hr', null], ['url_uk_ignored', '?m=uk', null], ['stored_uk_ignored', '', 'uk'], ['stored_us', '', 'us']]);
+
 // the same with hu paused
 if (MP) {
   out.paused = {
@@ -100,5 +110,6 @@ const now = Math.floor(Date.now() / 1000);
 const row = (amount, currency, live) => ({ paid: true, paid_at: now - 60, amount, currency, live });
 out.revenue = AGG.revenue([row(3997, 'EUR', true), row(1997, 'EUR', true), row(7900, 'AUD', true), row(1399000, 'HUF', true),
   row(3900, 'AUD', false), { paid: false, amount: 5000, currency: 'EUR' }, row(2497, undefined, true)], 7, now);
+out.fmtMoneyNew = [FMT.fmtMoney(2197, 'usd'), FMT.fmtMoney(1797, 'GBP')];
 out.fmtMoney = [FMT.fmtMoney(3997, 'EUR'), FMT.fmtMoney(7900, 'aud'), FMT.fmtMoney(1399000, 'HUF'), FMT.fmtMoney(3997), FMT.fmtEur(1997), FMT.fmtMoney(null, 'eur')];
 console.log(JSON.stringify(out));

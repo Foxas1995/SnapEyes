@@ -487,9 +487,11 @@
     "payOpen": "Sigurno plaćanje karticom putem Stripea.",
     "termsLink": "Opći uvjeti prodaje",
     "auLine": "Prodavatelj: MB Portretizuokis, Kaunas, Litva. Plaćanje karticom u australskim dolarima (A$) putem Stripea. Riječ je o digitalnoj datoteci, pa se ništa ne šalje poštom.",
+    "usLine": "Prodavatelj: MB Portretizuokis, Kaunas, Litva. Plaćanje karticom u američkim dolarima (US$) putem Stripea. Riječ je o digitalnoj datoteci, pa se ništa ne šalje poštom.",
     "footnote": "Cijene su u eurima. To su konačne cijene: nismo u sustavu PDV-a, pa se PDV ne obračunava.",
     "footnoteAud": "Cijene su u australskim dolarima (A$). Svaka cijena je ukupna cijena: GST se ne obračunava.",
-    "footnoteHuf": "Cijene su u mađarskim forintama (Ft). To su konačne cijene: nismo u sustavu PDV-a, pa se PDV ne obračunava."
+    "footnoteHuf": "Cijene su u mađarskim forintama (Ft). To su konačne cijene: nismo u sustavu PDV-a, pa se PDV ne obračunava.",
+    "footnoteUsd": "Cijene su u američkim dolarima (US$). Svaka cijena je ukupna cijena: američki porez na promet ne obračunava se."
   },
   "closeups": {
     "eyebrow": "Pogledajte izbliza",

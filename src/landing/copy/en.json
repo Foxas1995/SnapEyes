@@ -487,9 +487,11 @@
     "payOpen": "Secure card payment through Stripe.",
     "termsLink": "Terms of sale",
     "auLine": "Sold by MB Portretizuokis, Kaunas, Lithuania. Card payment in A$ through Stripe. A digital file, so nothing is posted.",
+    "usLine": "Sold by MB Portretizuokis, Kaunas, Lithuania. Card payment in US$ through Stripe. A digital file, so nothing is shipped.",
     "footnote": "Prices in euros. These are final prices: we are not registered for VAT, so no VAT is added.",
     "footnoteAud": "Prices in Australian dollars (A$). Each price is the total price: no GST is charged.",
-    "footnoteHuf": "Prices in Hungarian forints (Ft). These are final prices: we are not registered for VAT, so no VAT is added."
+    "footnoteHuf": "Prices in Hungarian forints (Ft). These are final prices: we are not registered for VAT, so no VAT is added.",
+    "footnoteUsd": "Prices in US dollars (US$). Each price is the total price: no sales tax is charged."
   },
   "closeups": {
     "eyebrow": "Look closer",
@@ -670,6 +672,10 @@
     "aud": {
       "text": "Shopping from Australia? See our prices in Australian dollars (A$), with our terms for Australia.",
       "show": "Show prices in A$"
+    },
+    "usd": {
+      "text": "Shopping from the United States? See our prices in US dollars (US$), with our terms for the United States.",
+      "show": "Show prices in US$"
     },
     "huf": {
       "text": "Shopping from Hungary? See our prices in Hungarian forints (Ft).",

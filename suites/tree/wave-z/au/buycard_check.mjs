@@ -24,7 +24,7 @@ function fakeWindow(search) {
 const ENTRY = pathToFileURL(join(process.argv[2], 'buycard_entry.ts')).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const out = {};
 const eye = { id: 'e1', before: '', image: '', thumb: '', pad: 1.1, fallback: false, usedSr: false, stored: true, glarePct: 0, sample: false, colourOff: false };
-for (const [name, search, lang] of [['au_en', '?m=au&lang=en', 'en'], ['au_de', '?m=au&lang=de', 'de'], ['eu_en', '?m=eu&lang=en', 'en'], ['lt_de', '?m=lt&lang=de', 'de']]) {
+for (const [name, search, lang] of [['au_en', '?m=au&lang=en', 'en'], ['au_de', '?m=au&lang=de', 'de'], ['eu_en', '?m=eu&lang=en', 'en'], ['lt_de', '?m=lt&lang=de', 'de'], ['us_en', '?m=us&lang=en', 'en']]) {
   store.clear();
   fakeWindow(search);
   // a fresh module graph per market: the page's market is detected once per page load
@@ -34,7 +34,7 @@ for (const [name, search, lang] of [['au_en', '?m=au&lang=en', 'en'], ['au_de', 
   B.setCopyLang(lang);
   const server = {
     en: 'SERVER EU EN', de: 'SERVER EU DE',
-    markets: { au: { en: 'SERVER AU EN', de: 'SERVER AU DE' } },
+    markets: { au: { en: 'SERVER AU EN', de: 'SERVER AU DE' }, us: { en: 'SERVER US EN' } },
   };
   const props = {
     eyes: [eye], style: 'studio_black', styleName: 'Studio Black', ordering: { open: true, consent: server }, preview: 'ready',

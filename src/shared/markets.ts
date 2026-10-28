@@ -18,7 +18,7 @@
 import MARKETS_SOURCE from '../../api/_lib/markets.py?raw';
 import { isBlack } from './styles';
 
-export type Currency = 'eur' | 'aud' | 'huf';
+export type Currency = 'eur' | 'aud' | 'huf' | 'usd' | 'gbp';
 export type Market = string;
 
 /** A market's prices in Stripe's smallest unit (cents; for HUF the forint x 100), in the server's names. */
@@ -33,7 +33,7 @@ export interface MarketDef {
   countries: string[];
 }
 
-export const CURRENCIES: readonly Currency[] = ['eur', 'aud', 'huf'];
+export const CURRENCIES: readonly Currency[] = ['eur', 'aud', 'huf', 'usd', 'gbp'];
 export const PRICE_KEYS: readonly (keyof PriceList)[] = ['one_eye_studio_black', 'one_eye_art', 'two_eyes', 'each_further_eye'];
 export const MAX_EYES = 8;
 
@@ -105,11 +105,20 @@ function grouped(n: number, sep: string): string {
  *  emails): euros "€19.97" in English, "19,97 €" in German, Lithuanian, Hungarian and Croatian (a decimal comma and a no-break
  *  space before the sign; Lithuanian, Hungarian and Croatian are written by hand, never by Intl, whose hu-HU prints
  *  "19,97 EUR"); Australian dollars "A$39" (whole dollars without decimals, never a bare "$"); forints "6 990 Ft"
- *  (whole forints, Stripe's amount / 100, no-break spaces, in every language). */
+ *  (whole forints, Stripe's amount / 100, no-break spaces, in every language); US dollars "$21.97" and pounds "£17.97" in
+ *  English, always with the cents (a US page is always English: the US edition has no other language), "21,97 $" and
+ *  "17,97 £" in the other languages (a decimal comma and a no-break space before the sign). */
 export function money(minor: number, currency: Currency | string, lang: string = 'en'): string {
   const cur = asCurrency(currency);
   const de = lang === 'de';
   if (cur === 'huf') return `${grouped(minor / 100, NBSP)}${NBSP}Ft`;
+  if (cur === 'usd' || cur === 'gbp') {
+    const sign = cur === 'usd' ? '$' : '£';
+    const neg = minor < 0 ? '-' : '';
+    const units = Math.floor(Math.abs(minor) / 100);
+    const cents = String(Math.abs(minor) % 100).padStart(2, '0');
+    return lang === 'en' ? `${neg}${sign}${grouped(units, ',')}.${cents}` : `${neg}${grouped(units, '.')},${cents}${NBSP}${sign}`;
+  }
   if (cur === 'aud') {
     const whole = minor % 100 === 0;
     const units = Math.floor(Math.abs(minor) / 100);

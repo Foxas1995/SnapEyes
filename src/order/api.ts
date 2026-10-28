@@ -75,7 +75,7 @@ export interface CheckoutInfo {
   markets?: Record<string, { currency?: string; prices?: Partial<PriceList> } | undefined>;
   max_eyes?: number;
   // the waiver text per language (the EU edition), and per market where a market has its own (markets.au: the
-  // Australian checkbox, src/shared/legal.ts CHECKOUT_LEGAL_AU)
+  // Australian checkbox, src/shared/legal.ts CHECKOUT_LEGAL_AU; markets.us: the US one, CHECKOUT_LEGAL_US)
   consent?: Partial<Record<Lang, string>> & { version?: string; markets?: Record<string, Partial<Record<Lang, string>> | undefined> };
   country?: string;
   suggest?: string | null;

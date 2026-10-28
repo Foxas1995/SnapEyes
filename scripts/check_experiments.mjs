@@ -21,7 +21,7 @@ export const EXPERIMENTS_FILE = 'api/_lib/experiments.py';
 const PRICE_KEYS = ['one_eye_studio_black', 'one_eye_art', 'two_eyes', 'each_further_eye'];
 const CLASSES = ['black', 'art'];   // the price classes (api/_lib/styles_registry.py price_class)
 const MAX_EYES = 8;
-const STRIPE_MIN = { eur: 50, aud: 50, huf: 17500 };
+const STRIPE_MIN = { eur: 50, aud: 50, huf: 17500, usd: 50, gbp: 30 };
 const isInt = (v) => typeof v === 'number' && Number.isInteger(v);
 
 /** {costs, experiments} of api/_lib/experiments.py's text: two JSON literals, COSTS first and EXPERIMENTS last. */

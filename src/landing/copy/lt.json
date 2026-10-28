@@ -487,9 +487,11 @@
     "payOpen": "Saugus mokėjimas kortele per Stripe.",
     "termsLink": "Pardavimo sąlygos",
     "auLine": "Parduoda MB „Portretizuokis“, Kaunas, Lietuva. Mokėjimas kortele Australijos doleriais (A$) per Stripe. Tai skaitmeninis failas, todėl paštu nieko nesiunčiama.",
+    "usLine": "Parduoda MB „Portretizuokis“, Kaunas, Lietuva. Mokėjimas kortele JAV doleriais (US$) per Stripe. Tai skaitmeninis failas, todėl paštu nieko nesiunčiama.",
     "footnote": "Kainos nurodytos eurais. Tai galutinės kainos: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.",
     "footnoteAud": "Kainos nurodytos Australijos doleriais (A$). Tai galutinės kainos: GST netaikomas.",
-    "footnoteHuf": "Kainos nurodytos Vengrijos forintais (Ft). Tai galutinės kainos: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas."
+    "footnoteHuf": "Kainos nurodytos Vengrijos forintais (Ft). Tai galutinės kainos: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.",
+    "footnoteUsd": "Kainos nurodytos JAV doleriais (US$). Tai galutinės kainos: JAV pardavimo mokestis netaikomas."
   },
   "closeups": {
     "eyebrow": "Iš arčiau",

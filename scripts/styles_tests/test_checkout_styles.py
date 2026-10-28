@@ -346,7 +346,9 @@ check("a recorded order of a style that is not live any more is still read (the 
 
 # ============================================================================================ 4. prices
 section("4. prices (I2): one rule for every id and count, golden amounts in minor units, the price keys")
-GOLD = {"eu": (1997, 2497, 3997, 1500), "lt": (1997, 2497, 3997, 1500), "au": (3900, 4900, 7900, 2900), "hu": (699000, 899000, 1399000, 499000)}
+GOLD = {"eu": (1997, 2497, 3997, 1500), "lt": (1997, 2497, 3997, 1500), "au": (3900, 4900, 7900, 2900), "hu": (699000, 899000, 1399000, 499000),
+        # 2026-10-28, the owner's decisions: the US and the UK market and the Croatian one (the euro list)
+        "us": (2197, 2797, 4497, 1600), "uk": (1797, 2197, 3497, 1300), "hr": (1997, 2497, 3997, 1500)}
 
 
 def golden(market, n, black):
@@ -363,7 +365,8 @@ for market in MK.MARKETS:
             if got != want or lad != want:
                 bad.append((market, sid, n, got, lad, want))
 check("I2: for every one of the 41 ids (28 before the light family of 2026-10-20, 33 before the ensemble family's three new ones, 36 before its four cosmos looks of the same day and 40 before Iris Echo of 2026-10-27), 1 to 8 eyes and the 4 markets, pay.price_cents and abtest.ladder_price give the golden amount of the opening "
-      "ladder (EUR 1997, 2497, 3997, +1500; AUD 3900, 4900, 7900, +2900; HUF 699000, 899000, 1399000, +499000, in minor units)", not bad and len(CT.ids()) == 41, bad[:3])
+      "ladder (EUR 1997, 2497, 3997, +1500; AUD 3900, 4900, 7900, +2900; HUF 699000, 899000, 1399000, +499000, in minor units; since 2026-10-28 also the us, uk and hr markets: USD 2197, 2797, 4497, +1600; "
+      "GBP 1797, 2197, 3497, +1300; hr the euro ladder)", not bad and len(CT.ids()) == 41 and sorted(MK.MARKETS) == sorted(GOLD), bad[:3])
 check("the amounts the card names for seven and eight eyes in euros are 11497 and 12997 minor units, from two eyes upward the style does not matter",
       pay.price_cents(7, "solo.powder", "eu") == 11497 == pay.price_cents(7, "studio_black", "eu") and pay.price_cents(8, "grp.collision", "eu") == 12997, "")
 check("the price KEYS are unchanged (one_eye_studio_black, one_eye_art, two_eyes, each_further_eye) in pay, abtest and markets.py, and the black class is one predicate",
@@ -717,12 +720,15 @@ for lang, needles in (("de", ("Ein Auge, Clean Iris", "Reihenfolge der Augen", "
     t = PACK["docs"][lang]["terms"]["text"]
     check(f"the pack's {lang} terms carry the new rows, the arrangement clause and the coarser preview sentence, and no per-eye time or Couple Duo",
           all(x in t for x in needles) and "Couple Duo" not in t and not re.search(r"pro Auge|pusę minutės|fél perc", t), [x for x in needles if x not in t])
-for ed in ("au", "hu"):
+for ed in ("au", "hu", "us"):      # 2026-10-28: and the US edition (English)
     for lang, d in PACK["editions"][ed].items():
-        check(f"the {ed} edition's {lang} terms (a Hungarian or Australian price table) have the class rows and no count of eyes", "Clean Iris" in d["terms"]["text"] and "Couple Duo" not in d["terms"]["text"]
+        check(f"the {ed} edition's {lang} terms (a Hungarian, Australian or US price table) have the class rows and no count of eyes", "Clean Iris" in d["terms"]["text"] and "Couple Duo" not in d["terms"]["text"]
               and not re.search(r"(?<![\w.])\d{1,2}\s+(eyes|Augen|akys|akių|szem)", d["terms"]["text"]), d["terms"]["text"][:120])
-check("consent and the withdrawal waiver are byte for byte as before: CONSENT_VERSION 2026-10-28.1 (the Croatian text added) in the server and the page, the texts of 2026-09-30.2 kept word for word under the new version, the fingerprint of the six texts equals the one on record",
-      pay.CONSENT_VERSION == "2026-10-28.1" and "WITHDRAWAL_CONSENT_VERSION = '2026-10-28.1'" in legal_ts
+check("consent and the withdrawal waiver are byte for byte as before: CONSENT_VERSION 2026-10-28.1 (the Croatian text added) in the server and the page, the texts of 2026-09-30.2 kept word for word under the new version, the fingerprint of the six texts equals the one on record"
+      " - 2026-10-28: CONSENT_VERSION 2026-10-28.2 (the US text added), the texts of 2026-10-28.1 (EU and AU) kept word for word under it, the US text only under the new version",
+      pay.CONSENT_VERSION == "2026-10-28.2" and "WITHDRAWAL_CONSENT_VERSION = '2026-10-28.2'" in legal_ts
+      and pay.CONSENT_TEXTS["2026-10-28.1"] == pay.CONSENT_TEXT == pay.CONSENT_TEXTS[pay.CONSENT_VERSION] and pay.CONSENT_TEXTS_AU["2026-10-28.1"] == pay.CONSENT_TEXT_AU
+      and pay.CONSENT_TEXTS_US == {"2026-10-28.2": pay.CONSENT_TEXT_US} and set(pay.CONSENT_TEXT_US) == {"en"}
       and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")} and set(pay.CONSENT_TEXT) == {"en", "de", "lt", "hu", "hr"}
       and pay.CONSENT_TEXTS_AU["2026-09-30.2"] == pay.CONSENT_TEXT_AU
       and hashlib.sha256(json.dumps([pay.CONSENT_TEXT["en"], pay.CONSENT_TEXT["de"], pay.CONSENT_TEXT["lt"], pay.CONSENT_TEXT["hu"], pay.CONSENT_TEXT_AU["en"], pay.CONSENT_TEXT_AU["de"]],

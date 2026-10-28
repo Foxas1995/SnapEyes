@@ -49,7 +49,10 @@
 // PRIVACY_AU (the end of this file) is the Australian edition (src/shared/legal.ts legalEdition "au"): the same policy
 // with a section for people in Australia (eye photos as possible biometric information, never used to identify
 // anyone; data processed outside Australia; the Australian Privacy Principles and the small business exemption as they
-// stand; the statutory privacy tort since 10 June 2025; the OAIC).
+// stand; the statutory privacy tort since 10 June 2025; the OAIC). PRIVACY_US (after it) is the US edition (legalEdition
+// "us", English only): the same policy with a section for people in the United States (the state laws on biometric
+// identifiers, the retention schedule of the eye images as the daily clean-up keeps it, no sale or sharing for targeted
+// advertising).
 // Not reviewed by a lawyer. Keep every sentence true when the code or a service changes.
 import type { EditionDocs, LegalDoc, LegalDocs } from '../types';
 import { ORDER_EMAIL_SENDER, WITHDRAWAL_ONLINE } from '../../shared/legal';
@@ -544,3 +547,28 @@ const auDe = patchDoc(de, {
 });
 
 export const PRIVACY_AU: EditionDocs = { en: auEn, de: auDe };
+
+// ------------------------------------------------------------------------------------------ the US edition
+// Written from the owner's draft of 2026-10-28 and checked against what the code does (see the header): free previews are
+// made in memory and never stored; the eye images of an order are uploaded when it starts (before the checkbox), deleted
+// by the daily clean-up (api/_lib/cleanup.py) within 30 days at the latest when unpaid, 12 months after the payment when
+// paid (pay.PAID_KEEP_DAYS), 14 days after an effective withdrawal; the site sets no cookies and runs no advertising tools.
+const usEn = patchDoc(en, {
+  after: {
+    rights: [
+      {
+        id: 'united-states',
+        title: 'Your data if you live in the United States',
+        blocks: [
+          'This policy follows the EU General Data Protection Regulation (GDPR), which applies to everything we do with your data, wherever you live. If you live in the United States, this section adds what you should know under the privacy laws of the US states.',
+          "**Your eye photos.** Some US state laws (for example Illinois, Texas and Washington) protect biometric identifiers such as an iris scan. We never use your photos as one: we never create, compare or store an iris template or any other biometric identifier, never identify or verify anyone, never sell or lease your photos or share them for anyone's profit, and never use them to train AI (see [Your iris is never used to identify anyone](#iris)). We use the photos of your eyes only because you send them to us to make your preview and your artwork, and for an order you also agree to this use at checkout.",
+          `**How long we keep them.** We do not store free previews, and we never store your full photo. The eye images and files of an unpaid order are deleted automatically within 30 days at the latest; those of a paid order 12 months after your payment, so that you can download your file again; those of a withdrawn order 14 days after the withdrawal. You can ask us to delete them earlier at any time: write to ${MAIL}. This schedule is public and applies to every order.`,
+          '**Where your data goes.** We are based in Lithuania, so your data is processed in the EU and by the services named under [Services we use](#services), some of which may process it in the USA.',
+          '**Your rights.** We do not sell or share your personal information for targeted advertising (we run no advertising cookies). You can ask us at any time for access to the data we hold about you, its correction or deletion, and we answer within one month (see [Your rights](#rights)); we will not treat you differently for asking.',
+        ],
+      },
+    ],
+  },
+});
+
+export const PRIVACY_US: EditionDocs = { en: usEn };

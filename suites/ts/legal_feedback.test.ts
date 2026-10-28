@@ -78,6 +78,9 @@ export async function run(): Promise<Row[]> {
   const au = EDITIONS.au.privacy;
   check('the Australian edition (English and German) has the same operations and retention sections, so the same feedback paragraph, basis and row',
     !!au.en && !!au.de && (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'operations') === sectionText(PRIVACY[l], 'operations') && sectionText(au[l]!, 'retention') === sectionText(PRIVACY[l], 'retention')));
+  const us = EDITIONS.us.privacy;
+  check('the US edition (English only) has the same operations and retention sections, so the same feedback paragraph, basis and row',
+    !!us.en && !us.de && sectionText(us.en, 'operations') === sectionText(PRIVACY.en, 'operations') && sectionText(us.en, 'retention') === sectionText(PRIVACY.en, 'retention'));
   const dash = new RegExp('[' + [0x2012, 0x2013, 0x2014, 0x2015].map((c) => String.fromCharCode(c)).join('') + ']');
   check('no paragraph of the feedback text holds an en or em dash', LANGS.every((l) => !dash.test(sectionText(PRIVACY[l], 'operations') + sectionText(PRIVACY[l], 'retention'))));
   return out;

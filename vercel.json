@@ -13,6 +13,7 @@
     { "source": "/", "has": [{ "type": "query", "key": "lang", "value": "en" }], "destination": "/lp/en" },
     { "source": "/", "has": [{ "type": "query", "key": "m", "value": "lt" }], "destination": "/lp/lt" },
     { "source": "/", "has": [{ "type": "query", "key": "m", "value": "hu" }], "destination": "/lp/hu" },
+    { "source": "/", "has": [{ "type": "query", "key": "m", "value": "hr" }], "destination": "/lp/hr" },
     { "source": "/", "destination": "/lp/en" }
   ],
   "headers": [

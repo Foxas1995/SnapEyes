@@ -47,9 +47,10 @@
 // WITHDRAWAL_AU (the end of this file) is the Australian edition (src/shared/legal.ts legalEdition "au"): the same
 // statutory EU text, with a lead that frames it as the EU right to cancel for a change of mind (never as "no refunds":
 // the Australian Consumer Law's guarantees cannot be excluded), the Australian checkbox text in its box and links to
-// the terms' "Your rights in Australia".
+// the terms' "Your rights in Australia". WITHDRAWAL_US (after it) is the US edition (legalEdition "us", English only), made
+// the same way: the US checkbox text in its box and links to the terms' "Your rights in the United States".
 import type { Block, EditionDocs, LegalDoc, LegalDocs, LegalSection } from '../types';
-import { CHECKOUT_LEGAL, CHECKOUT_LEGAL_AU, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
+import { CHECKOUT_LEGAL, CHECKOUT_LEGAL_AU, CHECKOUT_LEGAL_US, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
 import { CONTACT_EMAIL, contactLine, formLine } from '../facts';
 import { patchDoc } from '../patch';
 import { lt } from './withdrawal.lt';
@@ -232,3 +233,16 @@ const auDe = patchDoc(de, {
 });
 
 export const WITHDRAWAL_AU: EditionDocs = { en: auEn, de: auDe };
+
+// ------------------------------------------------------------------------------------------ the US edition
+const usEn = patchDoc(en, {
+  lead:
+    'This page sets out the right of withdrawal under EU consumer law, which applies to your contract through Lithuanian law: the right to cancel within 14 days without giving a reason. For a digital file like ours, it ends early once we start making your file with your consent. It is only about cancelling for a change of mind and never limits your rights if your file is faulty: see [Your rights in the United States](doc:terms#united-states). Here is the full information.',
+  replace: {
+    expiry: (s) => expiryAu(s, CHECKOUT_LEGAL_US.en.withdrawalConsent,
+      'Your statutory rights for a defective file are not affected: see [Complaints and defects](doc:terms#defects) in our terms of sale.',
+      'Your rights for a faulty file are not affected: see [Complaints and faulty files](doc:terms#defects) and [Your rights in the United States](doc:terms#united-states) in our terms of sale.'),
+  },
+});
+
+export const WITHDRAWAL_US: EditionDocs = { en: usEn };

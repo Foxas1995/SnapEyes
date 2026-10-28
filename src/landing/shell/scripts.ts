@@ -70,7 +70,9 @@ export function swapScript(defaultMarket: string, fewer: Record<string, string[]
     `if(F[s.m]){var b=sh.querySelectorAll('#langSeg button');for(var j=0;j<b.length;j++)if(F[s.m].indexOf(b[j].getAttribute('lang'))<0)b[j].remove()}}catch(e){}}` +
     `function put(l){try{if(l==='en')sh.innerHTML=en;else{var t=document.getElementById('tpl-'+l);if(t)sh.innerHTML=t.innerHTML}` +
     `document.documentElement.lang=l;s.l=l}catch(e){}fix()}` +
-    `if(s.l!=='en')put(s.l);else fix();` +
+    // English is the shell's own markup, but the file may be another language's edition (a ?lang= the market's edition lacks, such as
+    // ?lang=de&m=us: the edition of de is served, the page reads English), so the html lang is set to English as well
+    `if(s.l!=='en')put(s.l);else{document.documentElement.lang='en';fix()}` +
     `sh.addEventListener('click',function(e){try{var c=e.target&&e.target.closest&&e.target.closest('#langSeg button[lang]');if(!c)return;` +
     `var l=c.getAttribute('lang');if(!l||l===s.l)return;put(l);` +
     `try{localStorage.setItem('${langKey}',l)}catch(x){}` +

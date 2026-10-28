@@ -853,6 +853,16 @@ def receipt_mail(stmt, pack):
                        ("That was only about cancelling for a change of mind under EU consumer law. Your rights under "
                         "the Australian Consumer Law are not affected: if your file is faulty or not as described, simply "
                         "reply to this email. See “Your rights in Australia” in our terms of sale.")]
+    elif outcome == "lapsed" and pay.us_market(stmt.get("market")):
+        # a US order (always English; German only if a statement came in German): the end of the EU right of withdrawal
+        # never reads as "no refunds" either (the terms' "Your rights in the United States")
+        what = what + [("Das betraf nur den Widerruf ohne Angabe von Gründen nach dem EU-Verbraucherrecht. Ihre Rechte bei "
+                        "einer mangelhaften Datei bleiben unberührt: Ist Ihre Datei mangelhaft oder entspricht sie nicht "
+                        "der Beschreibung, antworten Sie einfach auf diese E-Mail. Siehe „Your rights in the United "
+                        "States“ in unseren AGB.") if de else
+                       ("That was only about cancelling for a change of mind under EU consumer law. Your rights if the "
+                        "file is faulty are not affected: if your file is faulty or not as described, simply reply to "
+                        "this email. See “Your rights in the United States” in our terms of sale.")]
     moved = []
     if stmt.get("email_given"):
         moved = [("Sie haben für diese Bestätigung eine andere Adresse angegeben. Wir senden sie an die E-Mail-Adresse, "

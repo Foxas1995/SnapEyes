@@ -487,9 +487,11 @@
     "payOpen": "Biztonságos kártyás fizetés a Stripe-on keresztül.",
     "termsLink": "ÁSZF",
     "auLine": "Eladó: MB Portretizuokis, Kaunas, Litvánia. Kártyás fizetés ausztrál dollárban (A$) a Stripe-on keresztül. Digitális fájl, ezért nem postázunk semmit.",
+    "usLine": "Eladó: MB Portretizuokis, Kaunas, Litvánia. Kártyás fizetés amerikai dollárban (US$) a Stripe-on keresztül. Digitális fájl, ezért nem postázunk semmit.",
     "footnote": "Az árak euróban értendők. Ezek végső árak: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.",
     "footnoteAud": "Az árak ausztrál dollárban (A$) értendők. Minden ár teljes ár: GST-t nem számítunk fel.",
-    "footnoteHuf": "Az árak forintban (Ft) értendők. Ezek végső árak: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel."
+    "footnoteHuf": "Az árak forintban (Ft) értendők. Ezek végső árak: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.",
+    "footnoteUsd": "Az árak amerikai dollárban (US$) értendők. Minden ár teljes ár: amerikai forgalmi adót nem számítunk fel."
   },
   "closeups": {
     "eyebrow": "Nézd közelebbről",

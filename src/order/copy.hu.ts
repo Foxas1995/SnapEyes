@@ -95,6 +95,7 @@ export const hu: OrderCopy = {
     heading: 'Elállás a szerződéstől',
     lead: 'A rendeléskor hozzájárultál, hogy azonnal megkezdjük a fájlod elkészítését. Amíg nem kezdtük el, itt elállhatsz ettől a szerződéstől. Amint az elkészítés megkezdődik, az elállási jogod megszűnik.',
     acl: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel akkor állhatsz el a szerződéstől, ha meggondolod magad. Az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) szerinti jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
+    us: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel akkor állhatsz el a szerződéstől, ha meggondolod magad. A hibás fájl esetén fennálló jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
     info: 'Elállási tájékoztató',
     formLead: (confirm: string) => `Kérjük, ellenőrizd az adataidat. Az „${confirm}” gombbal ezt a nyilatkozatot küldöd el nekünk:`,
     statement: (o: string) => `Alulírott kijelentem, hogy gyakorlom elállási jogomat az alábbi digitális tartalom szolgáltatására irányuló szerződés tekintetében: SnapEyes-alkotás, rendelésszám: ${o}.`,

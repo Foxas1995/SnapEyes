@@ -6,8 +6,8 @@ GET  /api/checkout
      ordering is open on this deployment (Stripe and storage configured), the price lists the server charges (currency
      and prices: the default market's, as before markets existed; markets: {key: {currency, prices}} of every market
      the site sells in, api/_lib/markets.py), and the exact withdrawal-waiver text the checkbox must show (en, de, lt,
-     hu: the EU text, also the Hungarian edition's; markets: {"au": {en, de}}, the text of a market that has its own,
-     pay.ACL_MARKETS, in the languages of its edition). country:
+     hu: the EU text, also the Hungarian edition's; markets: {"au": {en, de}, "us": {en}}, the text of a market that has
+     its own, pay.ACL_MARKETS and pay.US_MARKETS, in the languages of its edition). country:
      the visitor's country as Vercel names it (x-vercel-ip-country, "" when unknown) and suggest: a sellable market
      for that country other than the default one, or null. Only a hint the page may offer; it never picks the market.
      Nothing secret, nothing per order.
@@ -18,8 +18,8 @@ GET  /api/checkout
 POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the old string "Anna;Max"), date, opts {swap, rotate, look}, title, plan8, plan8_core,
                     lang: "en"|"de"|"lt"|"hu"|"hr", market, consent_digital: true}
      market: one of the markets the site sells in ("eu" when missing; one that is not offered, or any other value:
-     400). lang: the page's language when the market's edition of the legal texts has it (the Australian one: en, de),
-     else "en": the order, its consent text and its emails are in that language. The server computes the price from eyes, style and market (a price or currency sent by the client is
+     400). lang: the page's language when the market's edition of the legal texts has it (the Australian one: en, de;
+     the US one: en), else "en": the order, its consent text and its emails are in that language. The server computes the price from eyes, style and market (a price or currency sent by the client is
      ignored), refuses without the withdrawal waiver, records the consent's version, time and text fingerprint,
      creates a Stripe Checkout Session (mode payment, the market's currency, one line item, the customer's email
      collected by Stripe, Stripe's own page in de or en (en-GB for Australia), payment methods chosen by Stripe, no
@@ -123,7 +123,7 @@ def info(body, country=None):
             "styles": catalogue.public_catalogue(), "orderable_max_eyes": catalogue.orderable_max_eyes(),
             "consent": dict({"version": pay.CONSENT_VERSION}, **{lang: pay.CONSENT_TEXT[lang] for lang in pay.LANGS},
                             markets={m: {lang: pay.consent_for(m, lang) for lang in pay.edition_langs(m)}
-                                     for m in pay.SELECTABLE if pay.acl_market(m)}),
+                                     for m in pay.SELECTABLE if pay.own_consent_market(m)}),
             "country": cc, "suggest": suggest,
             # whether the anonymous counter counts here (the switch SNAPEYES_COUNTER, somewhere to keep the counts, the daily clean-up): the pages send their beacons only when it does
             "counter": counter.on(),

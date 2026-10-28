@@ -50,7 +50,7 @@ export const BR_LT: Record<string, string> = {
   other: 'Kita', '-': 'Nežinoma',
 };
 export const DEV_LT: Record<string, string> = { ...DEVICE_LT, '-': 'Nežinoma' };
-export const MARKET_LT: Record<string, string> = { eu: 'ES (EUR)', lt: 'Lietuva', hu: 'Vengrija', au: 'Australija', '-': 'Nežinoma' };
+export const MARKET_LT: Record<string, string> = { eu: 'ES (EUR)', lt: 'Lietuva', hu: 'Vengrija', au: 'Australija', us: 'JAV', uk: 'Jungtinė Karalystė', hr: 'Kroatija', '-': 'Nežinoma' };
 export const LANG_LT: Record<string, string> = { en: 'Anglų', de: 'Vokiečių', lt: 'Lietuvių', hu: 'Vengrų', hr: 'Kroatų', '-': 'Nežinoma' };
 export const MED_LT: Record<string, string> = { paid: 'mokama', org: 'organika', bio: 'bio nuoroda', story: 'stories', '': '', '-': '' };
 

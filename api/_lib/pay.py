@@ -143,7 +143,7 @@ MAIL_SLOW = 900              # the owner is told when a paid order's confirmatio
 # that is not selectable keeps its prices (a paid order of it is still checked and shown) but takes no new checkout.
 SELECTABLE = tuple(m for m, v in MARKETS.items() if v.get("selectable") == 1)
 CURRENCY = MARKETS[DEFAULT_MARKET]["currency"]      # the default market's currency: "eur"
-CURRENCIES = ("eur", "aud", "huf")
+CURRENCIES = ("eur", "aud", "huf", "usd", "gbp")
 PRICE_KEYS = ("one_eye_studio_black", "one_eye_art", "two_eyes", "each_further_eye")
 MAX_EYES = L.MULTI_MAX       # 8
 LANGS = ("en", "de", "lt", "hu", "hr")
@@ -165,9 +165,11 @@ DRAFT_ORDER_MAX = 30         # uploads one unpaid order may take per day (8 eyes
 # Version 2026-09-30.1 added the Australian market's text (CONSENT_TEXT_AU); 2026-09-30.2 added the Lithuanian and the
 # Hungarian texts (CONSENT_TEXT "lt" and "hu"); the English, German and Australian texts are the ones of 2026-09-30.1.
 # 2026-10-28.1 added the Croatian text (CONSENT_TEXT "hr", api/_lib/pay_hr.py CONSENT_TEXT_HR); every other text as it was.
+# 2026-10-28.2 added the US market's text (CONSENT_TEXT_US, with the consent to the use of the eye photos); every other
+# text as it was.
 # A changed text needs a new version here and in src/shared/legal.ts, and the fingerprint of its texts in
 # scripts/check_texts.mjs CONSENT_FINGERPRINTS (the build refuses a text that changed under the same version).
-CONSENT_VERSION = "2026-10-28.1"
+CONSENT_VERSION = "2026-10-28.2"
 CONSENT_TEXT_EN_DE = {
     "en": ("I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period "
            "ends. I know that I lose my right of withdrawal once this has started."),
@@ -184,13 +186,19 @@ CONSENT_TEXT = dict(CONSENT_TEXT_0930, hr=pay_hr.CONSENT_TEXT_HR)
 # EDITION_MARKETS and legalEdition: keep both in step; the build checks it, scripts/check_prices.mjs): "au", the
 # Australian edition (terms with the Australian Consumer Law and prices in A$ without GST, the right of withdrawal
 # framed as EU law, its own checkbox text, SUBMIT_NOTE_AU, an invoice and "Your rights in Australia" in the
-# confirmation email), and "hu", the Hungarian edition (the EU texts with the prices in forints). Both are in the
-# "editions" part of the legal pack (pack_docs). A market with an edition can be read in the languages EDITION_LANGS
-# lists for it (src/shared/legal.ts EDITION_LANGS: keep both in step).
-EDITION_MARKETS = ("au", "hu")
-EDITION_LANGS = {"eu": ("en", "de", "lt", "hu", "hr"), "au": ("en", "de"), "hu": ("en", "de", "lt", "hu")}
+# confirmation email), "hu", the Hungarian edition (the EU texts with the prices in forints), and "us", the US edition
+# (English only: terms with prices in US$ without sales tax and "Your rights in the United States", the right of
+# withdrawal framed as EU law, its own checkbox text with the consent to the use of the eye photos, SUBMIT_NOTE_US, an
+# invoice and "Your rights in the United States" in the confirmation email). All three are in the "editions" part of
+# the legal pack (pack_docs). A market with an edition can be read in the languages EDITION_LANGS lists for it
+# (src/shared/legal.ts EDITION_LANGS: keep both in step).
+EDITION_MARKETS = ("au", "hu", "us")
+EDITION_LANGS = {"eu": ("en", "de", "lt", "hu", "hr"), "au": ("en", "de"), "hu": ("en", "de", "lt", "hu"), "us": ("en",)}
 # The markets that read the AUSTRALIAN edition in particular: the Australian checkbox, note and email blocks.
 ACL_MARKETS = ("au",)
+# The markets that read the US edition in particular: the US checkbox, note and email blocks (scripts/check_prices.mjs
+# holds it equal to the market of src/shared/legal.ts EDITION_MARKETS.us).
+US_MARKETS = ("us",)
 # The Australian checkbox (src/shared/legal.ts CHECKOUT_LEGAL_AU, word for word): both EU elements (an EU consumer may
 # buy in A$ too), plus no cancelling for a change of mind once making started, and the Australian Consumer Law kept.
 # English and German only (the Australian edition has no other languages).
@@ -204,10 +212,24 @@ CONSENT_TEXT_AU = {
            "kann. Meine Rechte nach dem australischen Verbraucherrecht (Australian Consumer Law) bleiben davon "
            "unberührt."),
 }
-# Every consent text ever shown, by version (and for the Australian market apart): an order's confirmation email
-# quotes the text its customer ticked, also after a text changes (add the new version here, keep the old ones).
-CONSENT_TEXTS = {"2026-09-29.1": CONSENT_TEXT_EN_DE, "2026-09-30.1": CONSENT_TEXT_EN_DE, "2026-09-30.2": CONSENT_TEXT_0930, CONSENT_VERSION: CONSENT_TEXT}
-CONSENT_TEXTS_AU = {"2026-09-30.1": CONSENT_TEXT_AU, "2026-09-30.2": CONSENT_TEXT_AU, CONSENT_VERSION: CONSENT_TEXT_AU}
+# The US checkbox (src/shared/legal.ts CHECKOUT_LEGAL_US, word for word): both EU elements (the contract is under
+# Lithuanian law), no cancelling for a change of mind once making started, the rights for a faulty file kept, and the
+# consent to the use of the eye photos (some US state laws treat an iris image as a biometric identifier). English only
+# (the US edition has no other language).
+CONSENT_TEXT_US = {
+    "en": ("I expressly agree that SnapEyes starts making my personalised digital artwork right away, before the "
+           "withdrawal period ends. I know that once this has started, I lose my right of withdrawal and can't cancel "
+           "for a change of mind; my rights if the file is faulty are not affected. I also agree that SnapEyes uses the "
+           "photos of my eyes only to make my preview and my artwork, never to identify anyone, and deletes them as its "
+           "privacy policy describes."),
+}
+# Every consent text ever shown, by version (and for the Australian and the US market apart): an order's confirmation
+# email quotes the text its customer ticked, also after a text changes (add the new version here, keep the old ones).
+CONSENT_TEXTS = {"2026-09-29.1": CONSENT_TEXT_EN_DE, "2026-09-30.1": CONSENT_TEXT_EN_DE, "2026-09-30.2": CONSENT_TEXT_0930,
+                 "2026-10-28.1": CONSENT_TEXT, CONSENT_VERSION: CONSENT_TEXT}
+CONSENT_TEXTS_AU = {"2026-09-30.1": CONSENT_TEXT_AU, "2026-09-30.2": CONSENT_TEXT_AU, "2026-10-28.1": CONSENT_TEXT_AU,
+                    CONSENT_VERSION: CONSENT_TEXT_AU}
+CONSENT_TEXTS_US = {CONSENT_VERSION: CONSENT_TEXT_US}
 SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit)
     "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
            "right away and that your right of withdrawal ends once we have started."),
@@ -224,6 +246,11 @@ SUBMIT_NOTE_AU = {   # the same for the Australian market: never a "no refunds",
     "de": ("Sie kaufen eine digitale Datei (JPEG, 4096 px). Es wird kein Druck und kein Rahmen versendet. Sie haben "
            "zugestimmt, dass wir sofort beginnen; danach können Sie nicht mehr ohne Angabe von Gründen widerrufen. Ihre "
            "Rechte nach dem Australian Consumer Law bleiben unberührt."),
+}
+SUBMIT_NOTE_US = {   # the same for the US market: never a "no refunds", the rights for a faulty file kept
+    "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
+           "right away, so you can't cancel for a change of mind once we have started. Your rights if the file is "
+           "faulty are not affected."),
 }
 ITEM_DESC = {
     "en": "Digital file only: JPEG, 4096 px on the longest side. No print, no frame.",
@@ -602,6 +629,16 @@ def acl_market(market):
     return isinstance(market, str) and market in ACL_MARKETS
 
 
+def us_market(market):
+    """Does this market read the US edition of the legal texts (US_MARKETS)?"""
+    return isinstance(market, str) and market in US_MARKETS
+
+
+def own_consent_market(market):
+    """Does this market's checkout show a checkbox text of its own (the Australian and the US one), not the EU text?"""
+    return acl_market(market) or us_market(market)
+
+
 def edition_market(market):
     """Does this market read its own edition of the legal texts, in the pack's "editions" (EDITION_MARKETS)?"""
     return isinstance(market, str) and market in EDITION_MARKETS
@@ -609,21 +646,28 @@ def edition_market(market):
 
 def edition_langs(market):
     """The languages this market's edition of the legal texts has (EDITION_LANGS: the Australian one has English and
-    German only)."""
+    German only, the US one English only)."""
     return EDITION_LANGS[market if edition_market(market) else "eu"]
 
 
 def lang_for(market, lang):
     """The language an order of this market is made in: the asked one (lang_of) when the market's edition has texts in
     it, else English. An Australian order is English or German whatever the page said (its texts, its checkbox and its
-    emails exist in those two)."""
+    emails exist in those two), a US order always English."""
     lang = lang_of(lang)
     return lang if lang in edition_langs(market) else "en"
 
 
 def consent_for(market, lang):
     """The withdrawal-waiver text the checkout of this market shows today, in a language (CONSENT_VERSION)."""
-    return (CONSENT_TEXT_AU if acl_market(market) else CONSENT_TEXT)[lang_for(market, lang)]
+    texts = CONSENT_TEXT_AU if acl_market(market) else CONSENT_TEXT_US if us_market(market) else CONSENT_TEXT
+    return texts[lang_for(market, lang)]
+
+
+def submit_note(market, lang):
+    """What Stripe shows above its Pay button for this market (SUBMIT_NOTE, or the Australian or the US one)."""
+    notes = SUBMIT_NOTE_AU if acl_market(market) else SUBMIT_NOTE_US if us_market(market) else SUBMIT_NOTE
+    return notes[lang_for(market, lang)]
 
 
 def clean_text(v, n):
@@ -865,7 +909,9 @@ def amount_text(cents, lang, currency=None):
 def price_text(cents, lang, currency=None):
     """A price as the site shows it (the customer's emails; src/shared/markets.ts money is the same rule): euros
     "€19.97" in English, "19,97 €" in German, Lithuanian and Hungarian; Australian dollars "A$39" (whole dollars without
-    decimals, "A$39.50" otherwise); forints "6 990 Ft" (whole forints; Stripe's HUF amount is the forint x 100)."""
+    decimals, "A$39.50" otherwise); forints "6 990 Ft" (whole forints; Stripe's HUF amount is the forint x 100); US dollars
+    "$21.97" and pounds "£17.97" in English (always with the cents), "21,97 $" and "17,97 £" in the other languages (a US
+    order is always English: the US edition has no other language)."""
     cur = currency_of(currency)
     c = _cents(cents)
     if lang == "hu" and cur in ("huf", "eur"):
@@ -874,6 +920,11 @@ def price_text(cents, lang, currency=None):
         return pay_hr.price_text_hr(c, cur)     # "24,97 €" (a no-break space)
     if cur == "huf":
         return f"{_grouped(round(c / 100), ' ')} Ft"
+    if cur in ("usd", "gbp"):
+        sign = "$" if cur == "usd" else "£"
+        if lang == "en":
+            return f"{'-' if c < 0 else ''}{sign}{_grouped(abs(c) // 100, ',')}.{abs(c) % 100:02d}"
+        return f"{'-' if c < 0 else ''}{_grouped(abs(c) // 100, '.')},{abs(c) % 100:02d} {sign}"
     s = f"{c // 100}.{c % 100:02d}"
     if lang == "lt" and cur == "eur":
         return pay_lt.price_text_lt(c)          # "19,97 €"
@@ -886,11 +937,18 @@ def price_text(cents, lang, currency=None):
 def tax_note(currency, lang):
     """The sentence after a price in a customer's email: nothing added on top, in the words of the currency's market.
     Euros and forints: not registered for VAT (Lithuania's small-business rule). Australian dollars: one total price,
-    no GST charged (not registered for GST in Australia, below A$75,000 a year)."""
+    no GST charged (not registered for GST in Australia, below A$75,000 a year). US dollars: one total price, no sales
+    tax charged (not registered to collect sales tax in any US state). Pounds (the UK market, not sold in yet): one
+    total price, with no claim about UK VAT."""
     cur = currency_of(currency)
     if cur == "aud":
         return ("Das ist der Gesamtpreis: Es wird keine GST berechnet." if lang == "de" else
                 "This is the total price: no GST is charged.")
+    if cur == "usd":
+        return ("Das ist der Gesamtpreis: Es wird keine Sales Tax berechnet." if lang == "de" else
+                "This is the total price: no sales tax is charged.")
+    if cur == "gbp":
+        return "Das ist der Gesamtpreis." if lang == "de" else "This is the total price."
     return ("Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet."
             if lang == "de" else "This is the final price: we are not registered for VAT, so no VAT is charged.")
 
@@ -1157,7 +1215,7 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
         ("line_items[0][price_data][unit_amount]", str(int(amount))),
         ("line_items[0][price_data][product_data][name]", item_name(spec)),
         ("line_items[0][price_data][product_data][description]", ITEM_DESC[lang]),
-        ("custom_text[submit][message]", (SUBMIT_NOTE_AU if acl_market(market) else SUBMIT_NOTE)[lang]),
+        ("custom_text[submit][message]", submit_note(market, lang)),
         ("payment_intent_data[description]", f"SnapEyes order {order}"),
         ("payment_intent_data[metadata][order]", order),
     ]
@@ -1330,9 +1388,10 @@ def _paid_spec(sess, rec):
 
 
 def consent_text(version, lang, market=None):
-    """The exact waiver text of a consent version in a language (the market's own text for the Australian market), or
-    None for a version this code never showed there."""
-    t = (CONSENT_TEXTS_AU if acl_market(market) else CONSENT_TEXTS).get(version) if isinstance(version, str) else None
+    """The exact waiver text of a consent version in a language (the market's own text for the Australian and the US
+    market), or None for a version this code never showed there."""
+    texts = CONSENT_TEXTS_AU if acl_market(market) else CONSENT_TEXTS_US if us_market(market) else CONSENT_TEXTS
+    t = texts.get(version) if isinstance(version, str) else None
     return t.get(lang_of(lang)) if isinstance(t, dict) else None
 
 
@@ -1667,7 +1726,7 @@ def _legal_ok(pack):
 def pack_docs(pack, lang, market=None):
     """The withdrawal information and the terms an order's confirmation quotes ({"withdrawal", "terms"}, each {title,
     url, text}): the EU edition of the language (pack "docs"), or for a market with its own edition (EDITION_MARKETS:
-    Australia, Hungary) that edition (pack "editions", links with m=au / m=hu). None when the pack lacks them: then
+    Australia, Hungary, the United States) that edition (pack "editions", links with m=au / m=hu / m=us). None when the pack lacks them: then
     nothing is sent (the texts the customer accepted are never swapped for another edition's)."""
     try:
         docs = pack["editions"][market][lang_of(lang)] if edition_market(market) else pack["docs"][lang_of(lang)]
@@ -1752,7 +1811,7 @@ def legal_problem():
     if missing:
         return (f"{LEGAL_PACK_PATH} lists required facts that are still missing: "
                 f"{', '.join(re.sub(r'[^A-Za-z0-9_.-]', '', x)[:40] for x in missing[:8])}")
-    # a market the site sells in with its own edition (Australia, Hungary) needs it: its orders' emails quote it
+    # a market the site sells in with its own edition (Australia, Hungary, the United States) needs it: its orders' emails quote it
     for m in SELECTABLE:
         if edition_market(m) and any(pack_docs(pack, lang, m) is None for lang in edition_langs(m)):
             return f"{LEGAL_PACK_PATH} has no complete texts for the {m} market (editions.{m})"
@@ -1898,7 +1957,9 @@ def confirmation_mail(order, paid, k, pack, consent):
     link to the order's withdrawal form, withdraw_url(): the order page link itself starts making the file), the
     full withdrawal information with the model form and the full terms of sale (legal_pack(), the site's own
     texts). An order of the Australian market (ACL_MARKETS) gets its own edition of those texts and, in the email,
-    an invoice ("Invoice", never "Tax invoice": no GST is charged) and "Your rights in Australia" (_australian)."""
+    an invoice ("Invoice", never "Tax invoice": no GST is charged) and "Your rights in Australia" (_australian); an
+    order of the US market (US_MARKETS, always English) its own edition, an invoice (no sales tax charged) and a short
+    "Your rights in the United States" (_american)."""
     spec = paid.get("spec") or {}
     lang = lang_of(spec.get("lang"))
     de = lang == "de"
@@ -1918,7 +1979,8 @@ def confirmation_mail(order, paid, k, pack, consent):
     layout = catalogue.layout_name(lang, spec.get("layout"))
     if lang in ("lt", "hu", "hr"):
         # Lithuanian, Hungarian and Croatian (api/_lib/pay_lt.py, pay_hu.py, pay_hr.py): block for block the English email, then the same legal
-        # texts. Neither is an Australian market's language, so no invoice and no "Your rights in Australia" here
+        # texts. None is an Australian or a US market's language, so no invoice and no "Your rights in Australia" or
+        # "in the United States" here
         if lang == "lt":
             when = pay_lt.when_text_lt
             crows = pay_lt.confirmation_rows_lt(order, when(paid.get("paid_at")), item_name(dict(spec, lang=lang, eyes=n), layout=False),
@@ -2048,6 +2110,8 @@ def confirmation_mail(order, paid, k, pack, consent):
     abtest.insert_price_list_row(rows, paid, lang)      # an order made under a price experiment: the list that applied to it
     if acl_market(market):
         subject, blocks = _australian(blocks, order, paid, pack, lang, auto, terms["url"])
+    elif us_market(market):
+        subject, blocks = _american(blocks, order, paid, pack, lang, auto, terms["url"])
     blocks += [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
     text, html_body = render_mail(blocks, lang, subject)
     return subject, text, html_body
@@ -2074,17 +2138,42 @@ def sydney_day(ts=None):
     return time.strftime("%Y-%m-%d", time.gmtime(t + (11 if summer else 10) * 3600))
 
 
+def new_york_day(ts=None):
+    """The calendar day ("YYYY-MM-DD") of a unix time in New York (US Eastern time), for the US invoice: EST (UTC-5), and
+    EDT (UTC-4) from the second Sunday of March at 2:00 EST (7:00 UTC) to the first Sunday of November at 2:00 EDT (6:00
+    UTC). No time zone database needed (the Python runtime may have none)."""
+    try:
+        t = float(ts)
+    except (TypeError, ValueError):
+        t = time.time()
+
+    def sunday(year, month, nth):
+        d = [d for d in range(1, 15) if calendar.weekday(year, month, d) == 6][nth - 1]
+        return calendar.timegm((year, month, d, 0, 0, 0))
+
+    y = time.gmtime(t).tm_year
+    summer = sunday(y, 3, 2) + 7 * 3600 <= t < sunday(y, 11, 1) + 6 * 3600
+    return time.strftime("%Y-%m-%d", time.gmtime(t - (4 if summer else 5) * 3600))
+
+
 def invoice_rows(order, paid, pack, lang):
     """The invoice of a paid order as label: value rows (the confirmation email of the Australian market; ACL s 100
     proof of transaction: the supplier, the date, what was supplied and when, and the price). The dates are Sydney's
     (sydney_day: a payment in the Australian morning is not dated the UTC day before), and the date of supply is when
     the file is ready, at the latest DELIVERY_MAX_HOURS after payment (this email goes out before making starts). It is
     an "Invoice", never a "Tax invoice": the seller is not registered for GST in Australia (turnover below A$75,000), so
-    no GST is charged."""
+    no GST is charged. An order of the US market (always English) gets the same rows with the dates of New York
+    (new_york_day) and a sales tax row instead of the GST one: the seller is not registered to collect sales tax in any
+    US state, so none is charged."""
     de = lang == "de"
+    us = us_market(paid_market(paid))
     spec = paid.get("spec") or {}
     s = pack["seller"]
-    paid_day = date_text(sydney_day(paid.get("paid_at")), lang)
+    paid_day = date_text((new_york_day if us else sydney_day)(paid.get("paid_at")), lang)
+    tax = (("Sales tax", "No sales tax has been charged. The supplier is not registered to collect sales tax in any US "
+                         "state.") if us else
+           ("GST", ("Es wurde keine GST berechnet. Der Verkäufer ist in Australien nicht für die GST registriert." if de else
+                    "No GST has been charged. The supplier is not registered for GST in Australia.")))
     total = price_text(paid.get("amount_total") or 0, lang, paid.get("currency"))
     return [("Rechnungsnummer" if de else "Invoice number", order),
             ("Rechnungsdatum" if de else "Invoice date", paid_day),
@@ -2098,8 +2187,7 @@ def invoice_rows(order, paid, pack, lang):
               f"when your file is ready for download on your order page, at the latest {DELIVERY_MAX_HOURS} hours after "
               f"your payment")),
             ("Gesamtbetrag" if de else "Total", total),
-            ("GST", ("Es wurde keine GST berechnet. Der Verkäufer ist in Australien nicht für die GST registriert." if de else
-                     "No GST has been charged. The supplier is not registered for GST in Australia.")),
+            tax,
             ("Zahlung" if de else "Payment", (f"vollständig bezahlt über Stripe am {paid_day}" if de else
                                               f"paid in full through Stripe on {paid_day}"))]
 
@@ -2178,6 +2266,60 @@ def _australian(blocks, order, paid, pack, lang, auto, terms_url):
     if out[i + 1][0] != "rows":
         raise ValueError("the order rows moved")
     out[i + 2:i + 2] = [invoice_h, ("rows", invoice_rows(order, paid, pack, lang))]
+    i = out.index(consent_h)
+    if out[i + 2][0] != "quote" or out[i + 3][0] != "p":
+        raise ValueError("the consent blocks moved")
+    out[i + 3] = ("p", confirmed)
+    i = out.index(withdraw_h)
+    if out[i + 1][0] != "p":
+        raise ValueError("the withdrawal blocks moved")
+    out[i:i + 2] = rights + withdraw
+    return subject, out
+
+
+def _american(blocks, order, paid, pack, lang, auto, terms_url):
+    """The confirmation of a US order (always English: the US edition has no other language): the EU email's blocks with
+    its invoice, a short "Your rights in the United States" (a faulty file made again or refunded, a link to the terms'
+    section), the consent (with the use of the eye photos) and the right of withdrawal framed as EU law and as
+    cancelling for a change of mind only (never "no refunds"). Returns (subject, blocks). Each EU block it changes must
+    be there (ValueError otherwise): the email of every market is tested."""
+    out = list(blocks)
+    heading = ("h", "Your order")
+    consent_h = ("h", "Your consent to the immediate start")
+    withdraw_h = ("h", "Your right of withdrawal")
+    rights_url = terms_url.split("#")[0] + "#united-states"
+    subject = f"Your SnapEyes order {order}: order confirmation and invoice"
+    intro = ("thank you for your order. This email confirms your contract with us and is your invoice. Please keep it: "
+             "it holds your order and invoice, your consent to the immediate start and to the use of your eye photos, "
+             "your rights in the United States, the withdrawal information with the model withdrawal form, and our "
+             "terms of sale.")
+    confirmed = ("We confirm your express consent and your acknowledgement. We start making your file only after this "
+                 "email has been sent. Once we have started, your right of withdrawal under EU consumer law has ended "
+                 "and you can't cancel for a change of mind. Your rights if the file is faulty are not affected (see "
+                 "below). We use the photos of your eyes only to make your preview and your artwork, never to identify "
+                 "anyone, and delete them as our privacy policy describes.")
+    rights = [("h", "Your rights in the United States"),
+              ("p", f"If your file cannot be downloaded or opened, is damaged, is smaller than promised, clearly differs "
+                    f"from the preview you approved or is not ready within {DELIVERY_MAX_HOURS} hours of your payment, "
+                    f"simply reply to this email with your order number: we make the file again free of charge, or "
+                    f"refund you in full if that does not fix the problem. Your rights are set out under “Your rights "
+                    f"in the United States” in our terms of sale:"),
+              ("link", rights_url)]
+    withdraw = [("h", "Cancelling before we start"),
+                ("p", "EU consumer law, with its right of withdrawal, applies to your contract. We start making your "
+                      "file right after this email has been sent, so that right usually ends within a few moments. "
+                      "Until we have started, you can withdraw from the contract and get a full refund: with the "
+                      "button “Withdraw from contract here” on the withdrawal page of your order:"
+                 if auto else
+                      "EU consumer law, with its right of withdrawal, applies to your contract. Until we have "
+                      "started, you can withdraw from the contract and get a full refund: with the button “Withdraw "
+                      "from contract here” on the withdrawal page of your order. This link opens it without starting "
+                      "to make your file (unlike the order page link above):")]
+    out[1] = ("p", intro)
+    i = out.index(heading)
+    if out[i + 1][0] != "rows":
+        raise ValueError("the order rows moved")
+    out[i + 2:i + 2] = [("h", "Invoice"), ("rows", invoice_rows(order, paid, pack, lang))]
     i = out.index(consent_h)
     if out[i + 2][0] != "quote" or out[i + 3][0] != "p":
         raise ValueError("the consent blocks moved")

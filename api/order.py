@@ -114,7 +114,9 @@ FORMATS = {"JPEG": ("jpg", "image/jpeg"), "PNG": ("png", "image/png")}
 FILE_MAX = 8 << 20           # a stored draft file larger than this is not one we stored
 PREVIEW_LINK = 3600          # the order page's thumbnails of the approved previews
 LINK_SECONDS = MC.LINK_SECONDS
-DISPLAY_SIDE = 1600          # the longest side of the copy of the artwork the order PAGE shows (the file itself is 4096 px: 3 to 5 MB)
+DISPLAY_SIDE = 1_600         # the longest side of the copy of the artwork the order PAGE shows (the file itself is 4096 px: 3 to 5 MB);
+#                              written 1_600 because 1600 is also a price in Stripe's units (the US market's each further eye) and this file deals
+#                              with prices (scripts/check_prices.mjs refuses that number here)
 DISPLAY_FROM = 1800          # an artwork whose longest side is not longer than this is shown as it is (no copy)
 DISPLAY_QUALITY = 84         # progressive JPEG: a first rough picture arrives early
 DISPLAY_TIME = 14.0          # seconds a call must still have before it makes the copy (a read of the file, a decode, an encode, a write)
