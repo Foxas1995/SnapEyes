@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
-"""SPARKS (the light family, dramatic): sparks and soft lights lifting off the limb on a wind, as if the iris were a coal. Hundreds of small
-sparks with comet tails (hot white heads that cool to the eye's own colour and then to its deep tone), thousands of glints, a few large out of focus
-lights (bokeh) in front, and a warm bloom on the limb; denser and longer on the wind side, a quiet, dark lee. The colour of every spark is the eye's
-own at the angle it left the limb (kit.ramp_stops logic through common.stops: copper for dark browns, a tinted silver for grey eyes), so a blue eye
-throws blue sparks and a brown one amber ones. Particles only: no plate, no atlas, no cloud (that is Powder Burst).
+"""SPARKS (the light family; embers since 2026-10-28, after the owner's word on the old look: streaks across the whole canvas, uneven and noisy, bokeh,
+the iris pasted on; he wants the effect round the iris, compact, on black, and the iris untouched but for a few pixels at the limb).
 
-Where the matter goes is matter.Emission (the prototype's own angular density with a wind, jets and an envelope), drawn through matter.ParticleLayer
-(Gaussian stamps and comet streaks, banded, never a full size layer). All sizes are in R and S units and the counts do not depend on the canvas, so a
-4096 master is the preview drawn finer. The iris is not touched: nothing is drawn inside 1.02 R and the disc is pasted over everything.
+The iris is a coal and its embers rise on a gentle wind. The iris stays whole (the engine pastes it last, byte for byte inside 0.974 R, with the family's
+F3 feather at the limb; its own finish keeps a light limbal ring, DESIGN_FIN). Every ember is born AT the limb, at an angle drawn from a density a little
+higher on the wind side, and flies along the streamlines of an air current that flows round the iris (the potential flow past a disc, a uniform wind plus
+its doublet) with the lift of its own heat near the limb and a slow lateral wobble, so the embers born low stream round the sides and the plume rises over
+the top: they move outward round the iris and never across it (a point of a path that would come nearer than 1.004 R is put back on that circle). An
+ember is drawn as the last stretch of its own path (a short trail, motion blur) ending in a hot head: the trail cools from the deep tone of its colour to
+the colour, the head goes toward white. Its colour is the iris's own at the angle it left (a point of the band 0.50 to 0.93 R, its saturation lifted a
+little and brought to full brightness), so a blue green eye throws cyan and yellow embers and a brown one copper. Most embers are short and dim, a few
+bright, a twentieth are heroes with three times the trail; the brightness fades with the distance flown. A dust of tiny glints smoulders on the limb, so
+no dark seam separates the iris from its embers; no ring of light, no plate, no cloud, no bokeh.
+
+Every length is in R (the iris radius), the counts do not depend on the canvas and every random number is drawn for all embers before anything that
+depends on the canvas size (the colour an ember samples differs a little between a tile, the preview and the master; nothing is filtered on it), so a
+4096 px master is the 1024 px preview drawn finer: the paths are the same in R, only the number of stamps along a trail follows its length in pixels.
 """
 from __future__ import annotations
 
@@ -15,21 +23,77 @@ import math
 
 import numpy as np
 
-from .. import core as C
 from .. import matter as M
 from ..singles import kit as K
-from . import common as CM
 
 F32 = np.float32
 TWO_PI = 2.0 * math.pi
+SQ2PI = math.sqrt(2.0 * math.pi)
 SP = {
-    "wind": (-70.0, -35.0),             # the wind's direction, a seeded angle in this range (deg, 0 = 3 o'clock, clockwise: negative is up)
-    "sparks": 430, "glints": 1700, "bokeh": 38,
-    "ground": (0.12, 0.012),            # the tonal ground, centre and corner shares of the eye's deep tone
-    "bloom": (0.30, 0.070, 0.07),       # the limb's warm bloom: strength, e-fold (R), the wide body
-    "len": (0.008, 0.078),              # streak length range in S
-    "start": 0.020,                     # nothing is drawn nearer than this (R) to the limb
+    "n": 1150,                  # embers
+    "wind": (-105.0, -75.0),    # the wind's direction, a seeded angle in this range (deg, 0 = 3 o'clock, clockwise: -90 is straight up)
+    "bias": 0.35,               # birth density round the limb: 1 + bias x cos(angle - wind) (a little more on the wind side)
+    "flight": (0.32, 1.3),      # the distance an ember has flown (R): a gamma of this mean and shape (most near the limb, a few far)
+    "heat": (1.5, 0.18, 0.22),  # the lift off the limb: strength, e-fold (R) and the constant outward drift that widens the plume (over a wind of 1)
+    "wobble": (0.10, 0.22),     # the lateral wobble of a path: amplitude (over the wind) and period (R)
+    "steps": 48,                # the integration steps of a path (its length / steps each)
+    "trail": (0.02, 0.09),      # the drawn trail (R): uniform in this range, never longer than the path
+    "hero": (0.05, 3.2, 1.3),   # the share of hero embers, their trail and brightness factors
+    "sigma": (0.0012, 0.0036),  # the trail's stroke sigma (R): most fine, a few bold (u^3)
+    "light": (5.5, 3.0),        # the brightness of a trail and the exponent of its spread (most dim, a few bright)
+    "fade": 2.2,                # brightness falls as exp(-flight / (mean flight x fade))
+    "hot": 0.45,                # how far the hottest heads go toward white
+    "head": (2.6, 0.8, 0.5),    # the head of a bright ember: sigma over the trail's, brightness, the share of embers that have one (the brightest)
+    "bloom": (0.020, 0.02, 0.6),  # the soft light round the brighter heads: sigma (R), brightness, the share that has it
+    "src": (0.50, 0.93),        # the band of the iris whose colours the embers take (R)
+    "colour": (1.25, 0.30),     # the colour lift: saturation, the brightness floor before a colour is brought to full brightness
+    "smoulder": (2600, 0.030, 1.2, 0.0012),   # the glints on the limb: count, mean distance (R), brightness, sigma (R)
+    "start": 1.004,             # the limb the embers leave and never come nearer than (R)
 }
+
+
+def _own(col, sat, floor):
+    """The iris's own colour as light: its saturation lifted, brought to full brightness (a dark sample stays darker, under the floor)."""
+    m = col.mean(1, keepdims=True)
+    c = np.clip(m + (col - m) * sat, 0.0, None)
+    return np.clip(c / np.maximum(c.max(1, keepdims=True), floor), 0.0, 1.0).astype(F32)
+
+
+def _angles(u, dens):
+    """Angles of the circular density dens (bins round the circle) from the uniforms u, by its inverse distribution: no rejection, no extra draw."""
+    nb = len(dens)
+    cdf = np.concatenate([[0.0], np.cumsum(dens)])
+    cdf /= cdf[-1]
+    return np.interp(u, cdf, np.linspace(0.0, TWO_PI, nb + 1))
+
+
+def _trails(layer, d, X, Y, prof, col, hot, sig, amp, mmax=480):
+    """Stamps along every path (X, Y: (n, k) in R round the centre, tail first): <= 0.7 sigma apart, so they always join into a line, each carrying the
+    line's brightness amp x prof over its own length (a trail is as bright at 1024 px as at 4096). The colour runs from the deep tone of col at the tail
+    to col, the head toward white by hot."""
+    R = float(d.R)
+    n, k = X.shape
+    if n == 0:
+        return
+    Lr = np.maximum(np.hypot(np.diff(X, axis=1), np.diff(Y, axis=1)).sum(1), 1e-6)
+    sp = sig * R
+    m = np.clip(np.ceil(Lr * R / (0.7 * np.maximum(sp, 0.5))), 2, mmax).astype(np.int64)
+    m = (np.ceil(m / 8.0) * 8).astype(np.int64)                 # whole groups of eight, one vectorised pass per group
+    deep = (col ** 1.5).astype(F32)
+    for mv in np.unique(m):
+        sel = np.nonzero(m == mv)[0]
+        u = (np.arange(mv) + 0.5) / mv
+        f = u * (k - 1)
+        i0 = np.minimum(np.floor(f).astype(np.int64), k - 2)
+        w = (f - i0)[None, :]
+        xs = X[sel][:, i0] * (1 - w) + X[sel][:, i0 + 1] * w
+        ys = Y[sel][:, i0] * (1 - w) + Y[sel][:, i0 + 1] * w
+        pr = prof[sel][:, i0] * (1 - w) + prof[sel][:, i0 + 1] * w
+        a = amp[sel][:, None] * pr * (Lr[sel] * R / mv)[:, None] / (sp[sel][:, None] * SQ2PI)
+        t = u[None, :, None]
+        hh = hot[sel][:, None, None] * t ** 3
+        cc = (deep[sel][:, None, :] * (1 - t) + col[sel][:, None, :] * t) * (1 - hh) + hh
+        layer.splat((d.cx + xs * R).ravel(), (d.cy + ys * R).ravel(), np.repeat(sp[sel], mv), cc.reshape(-1, 3).astype(F32), a.ravel(), min_sigma=0.5)
 
 
 def fx_sparks(cv, ctx):
@@ -37,93 +101,99 @@ def fx_sparks(cv, ctx):
     o.update(ctx.opts.get("sparks", {}))
     d = ctx.discs[0]
     iris = ctx.irises[0]
-    W, H, S, R = ctx.W, ctx.H, ctx.S, d.R
-    stp = CM.stops(iris, white=0.55)
     rnd = ctx.rand("sparks")
-    wind = math.radians(o["wind"][0] + (o["wind"][1] - o["wind"][0]) * float(ctx.rand("sparks_wind").uniform()))
-    wv = np.array([math.cos(wind), math.sin(wind)])
-    fade = CM.fades_for(ctx)
-    # ---- the tonal ground and the bloom of the limb, warmer on the wind side
-    f = CM.grid_factor(W, H)
-    g = C.Grid(W, H, f)
-    CM.screen_grid(cv, CM.ground_grid(g, d.cx, d.cy, CM.tone(stp, o["ground"][0]), CM.tone(stp, o["ground"][1])), f, "add")      # the paper: no fade
-    gx0, gy0, gx1, gy1 = g.box(d.cx, d.cy, 2.6 * R)
-    rho, th = g.polar(d.cx, d.cy, R, 1.0, (gx0, gy0, gx1, gy1))
-    e = np.maximum(rho - 1.0, 0.0)
-    bk, bl, bw = o["bloom"]
-    wside = 0.62 + 0.38 * np.maximum(np.cos(th - wind), -0.3)
-    I = (bk * np.exp(-e / bl) + bw * np.exp(-e / 0.40)) * CM.smooth((rho - 0.985) / 0.03) * (0.5 + 0.5 * CM.smooth((rho - 1.0) / 0.08)) * wside
-    lvl = np.clip(I / 0.9, 0.0, 1.0)
-    glow = np.zeros((g.h, g.w, 3), F32)
-    glow[gy0:gy1, gx0:gx1] = CM.ramp3(stp, th, lvl) * I[..., None]
-    CM.screen_grid(cv, glow, f, "screen", fade)
-    del glow
-    # ---- where matter goes: the prototype's emission (wind, jets, lobes, an envelope)
-    emis = M.Emission(ctx.rand("sparks_emis"), wind, b=1.15, n_jets=5, jet_share=0.22, lobes=3, lobe_amp=0.30, halo=1.0, plume=2.0, stretch=(0.85, 1.10))
-    layer = M.ParticleLayer()
+    n = int(o["n"])
+    ns = int(o["smoulder"][0])
+    fm, fk = o["flight"]
+    # every draw of every ember and glint is made here, before anything that depends on the canvas size (see the module's note)
+    u_th = rnd.uniform(n)
+    u_src = rnd.uniform(n)
+    flown = rnd.gamma(n, fk, fm / fk)
+    u_tr = rnd.uniform(n)
+    u_b = rnd.uniform(n)
+    u_s = rnd.uniform(n)
+    ph = rnd.uniform(n) * TWO_PI
+    u_hero = rnd.uniform(n)
+    s_th = rnd.uniform(ns)
+    s_d = rnd.exponential(ns, o["smoulder"][1])
+    s_b = rnd.uniform(ns)
+    s_src = rnd.uniform(ns)
+    w0, w1 = o["wind"]
+    wind = math.radians(w0 + (w1 - w0) * float(ctx.rand("sparks_wind").uniform()))
+    grid = (np.arange(4096) + 0.5) / 4096 * TWO_PI
+    dens = 1.0 + o["bias"] * np.cos(grid - wind)
+    th0 = _angles(u_th, dens)
+    # ---- the colours: the iris's own at the angle of birth
+    s0, s1 = o["src"]
+    sat, floor = o["colour"]
+    col = _own(K.sample_disc(d, s1 - (s1 - s0) * u_src ** 1.5, th0).reshape(n, 3).astype(F32), sat, floor)
+    # ---- the flight: streamlines of the wind round the disc (complex potential U (z + 1/z) in the wind's frame), the heat's lift, the wobble
     start = float(o["start"])
-
-    def place(n, l1, l2, tail, cap):
-        t_, e_ = emis.sample(rnd, n, l1, l2, tail, cap=cap, over=4.0, min_e=start)
-        m = len(t_)
-        curl = rnd.normal(m, 0.0, 0.05) * (0.3 + e_)                               # a lateral wander that grows with the distance
-        px = d.cx + (1.0 + e_) * R * np.cos(t_) + R * curl * (-np.sin(t_)) + wv[0] * 0.18 * R * e_
-        py = d.cy + (1.0 + e_) * R * np.sin(t_) + R * curl * np.cos(t_) + wv[1] * 0.18 * R * e_
-        return t_, e_, px, py
-
-    # ---- 1. the sparks: comet streaks with hot heads
-    t_, e_, px, py = place(int(o["sparks"]), 0.32, 0.85, 0.28, 1.0)
-    m = len(t_)
-    u = rnd.uniform(m)
-    a = 0.14 + 0.86 * u ** 2.4
-    a *= 1.0 + 1.1 * (rnd.uniform(m) < 0.025)                                       # a few heroes
-    lvl = np.clip(0.15 + 0.85 * u ** 1.3 - 0.35 * np.clip(e_ / 2.0, 0, 1), 0.0, 1.0)
-    col = CM.ramp3(stp, t_, lvl)
-    vx = np.cos(t_) * 0.28 + wv[0] * 1.00
-    vy = np.sin(t_) * 0.28 + wv[1] * 1.00
-    nrm = np.hypot(vx, vy)
-    vx, vy = vx / nrm, vy / nrm
-    jit = rnd.normal(m, 0.0, 0.14)
-    cj, sj = np.cos(jit), np.sin(jit)
-    dx, dy = vx * cj - vy * sj, vx * sj + vy * cj
-    ln_ = (o["len"][0] + (o["len"][1] - o["len"][0]) * (0.25 + 0.75 * u ** 1.2) * (0.6 + 0.4 * np.clip(e_ / 1.2, 0, 1))) * S
-    cls_ = rnd.uniform(m)                                                          # three sizes of spark: many fine, some medium, a few bold
-    for lo_, hi_, sg_, lk_ in ((0.0, 0.66, 0.00060, 0.85), (0.66, 0.92, 0.00115, 1.0), (0.92, 1.01, 0.00200, 1.25)):
-        k_ = (cls_ >= lo_) & (cls_ < hi_)
-        if k_.any():
-            M.streaks(layer, px[k_], py[k_], dx[k_], dy[k_], ln_[k_] * lk_, col[k_], a[k_] * 0.9, sigma_px=sg_ * S)
-    # ---- 2. the glints: tiny points, many, dim, everywhere the wind carries them
-    t2, e2, px2, py2 = place(int(o["glints"]), 0.45, 1.1, 0.35, 1.0)
-    m2 = len(t2)
-    u2 = rnd.uniform(m2)
-    a2 = 0.10 + 0.55 * u2 ** 2.6
-    lv2 = np.clip(0.10 + 0.80 * u2 ** 1.4 - 0.2 * np.clip(e2 / 2.0, 0, 1), 0.0, 1.0)
-    col2 = CM.ramp3(stp, t2, lv2)
-    sg2 = (0.00045 + 0.00075 * rnd.uniform(m2) ** 2.0) * S
-    layer.splat(px2, py2, sg2, col2, a2, min_sigma=0.5)
-    layer.flush(cv, fades=(lambda v, r0: K.wall_fade(v, ctx, y0=r0), lambda v, r0: K.text_fade(v, ctx, y0=r0), lambda v, r0: K.edge_fade(v, ctx, y0=r0)))
-    # ---- 3. the bokeh: large out of focus lights in front, additive, soft, a brighter rim
-    nb = int(o["bokeh"])
-    tb, eb, pxb, pyb = place(nb, 0.55, 1.2, 0.4, 1.0)
-    mb = len(tb)
-    rad = (0.012 + 0.040 * rnd.uniform(mb) ** 1.6) * S
-    ab = 0.045 + 0.150 * rnd.uniform(mb) ** 1.8
-    cb = CM.ramp3(stp, tb, np.clip(0.28 + 0.4 * rnd.uniform(mb), 0, 1))
-    Hh, Ww = cv.shape[:2]
-    for k in range(mb):
-        r = float(rad[k])
-        m_ = int(r * 1.35) + 3
-        x0, y0 = int(round(pxb[k])) - m_, int(round(pyb[k])) - m_
-        xa, ya, xb_, yb_ = max(0, x0), max(0, y0), min(Ww, x0 + 2 * m_ + 1), min(Hh, y0 + 2 * m_ + 1)
-        if xa >= xb_ or ya >= yb_:
-            continue
-        gx = (np.arange(xa, xb_, dtype=F32) + F32(0.5 - pxb[k]))[None, :]
-        gy = (np.arange(ya, yb_, dtype=F32) + F32(0.5 - pyb[k]))[:, None]
-        rr = np.sqrt(gx * gx + gy * gy)
-        soft = max(1.0, 0.16 * r)
-        disc = np.clip((r - rr) / soft + 0.5, 0.0, 1.0)
-        prof = 0.72 + 0.28 * CM.smooth((rr / r - 0.55) / 0.45)
-        al = (disc * prof * F32(ab[k])).astype(F32)
-        reg = cv[ya:yb_, xa:xb_]
-        reg += al[..., None] * cb[k][None, None, :] * (1.0 - 0.0)
-    ctx.log["sparks"] = {"class": iris.cls, "wind_deg": round(math.degrees(wind), 1), "n": [m, m2, mb]}
+    ew = complex(math.cos(wind), math.sin(wind))
+    hk, hl, hd = o["heat"]
+    wa, wp = o["wobble"]
+    kk = int(o["steps"])
+    s_tot = 0.01 + flown
+    ds = s_tot / (kk - 1)
+    x, y = start * np.cos(th0), start * np.sin(th0)
+    Xs = np.empty((n, kk))
+    Ys = np.empty((n, kk))
+    Xs[:, 0], Ys[:, 0] = x, y
+    for j in range(1, kk):
+        z = (x + 1j * y) / ew
+        v = 1.0 - 1.0 / (z * z)                                 # u - i v of the flow past the unit disc in the wind's frame
+        V = (v.real - 1j * v.imag) * ew
+        r = np.hypot(x, y)
+        lift = hk * np.exp(-(r - 1.0) / hl) + hd
+        ux, uy = V.real + lift * x / r, V.imag + lift * y / r
+        nn = np.maximum(np.hypot(ux, uy), 1e-9)
+        ux, uy = ux / nn, uy / nn
+        s = ds * j
+        wb = wa * np.sin(ph + s * TWO_PI / wp) * np.minimum(s / 0.08, 1.0)
+        ux, uy = ux - uy * wb, uy + ux * wb
+        x, y = x + ux * ds, y + uy * ds
+        k_ = np.maximum(start / np.hypot(x, y), 1.0)              # never nearer than the limb it left
+        x, y = x * k_, y * k_
+        Xs[:, j], Ys[:, j] = x, y
+    # ---- the drawn trail: the last stretch of the path
+    hs, ht, ha = o["hero"]
+    hero = u_hero < hs
+    lo, hi = o["trail"]
+    tr = (lo + (hi - lo) * u_tr) * np.where(hero, ht, 1.0)
+    f0 = 1.0 - np.minimum(tr, s_tot) / s_tot
+    t = np.linspace(0.0, 1.0, 14)[None, :]
+    f = (f0[:, None] + (1.0 - f0[:, None]) * t) * (kk - 1)
+    i0 = np.minimum(np.floor(f).astype(np.int64), kk - 2)
+    w = f - i0
+    rows = np.arange(n)[:, None]
+    X = Xs[rows, i0] * (1 - w) + Xs[rows, i0 + 1] * w
+    Y = Ys[rows, i0] * (1 - w) + Ys[rows, i0 + 1] * w
+    del Xs, Ys
+    lk, le = o["light"]
+    amp = lk * (0.25 + 0.75 * u_b ** le) * np.where(hero, ha, 1.0) * np.exp(-flown / (fm * o["fade"]))
+    hot = o["hot"] * u_b ** 1.5
+    g0, g1 = o["sigma"]
+    sig = g0 + (g1 - g0) * u_s ** 3.0
+    layer = M.ParticleLayer()
+    _trails(layer, d, X, Y, np.broadcast_to(t ** 1.3, X.shape), col, hot, sig, amp)
+    # ---- the heads of the brighter embers and their soft light
+    R = float(d.R)
+    hx, hy = d.cx + X[:, -1] * R, d.cy + Y[:, -1] * R
+    sh, ah, qh = o["head"]
+    sel = u_b > 1.0 - qh
+    if sel.any():
+        layer.splat(hx[sel], hy[sel], sig[sel] * sh * R, (col[sel] * (1 - hot[sel, None]) + hot[sel, None]).astype(F32), amp[sel] * ah, min_sigma=0.5)
+    sb, ab, qb = o["bloom"]
+    sel = u_b > 1.0 - qb
+    if ab > 0 and sel.any():
+        layer.splat(hx[sel], hy[sel], sb * R, col[sel], amp[sel] * ab, min_sigma=0.5)
+    # ---- the smouldering limb: tiny glints of the iris's colours right on it, a little more on the wind side
+    if ns:
+        sth = _angles(s_th, dens)
+        scol = _own(K.sample_disc(d, s1 - (s1 - s0) * s_src ** 1.5, sth).reshape(ns, 3).astype(F32), sat, floor)
+        sm = float(o["smoulder"][1])
+        rr = (start + s_d) * R
+        sa = o["smoulder"][2] * (0.3 + 0.7 * s_b ** 2) * np.exp(-s_d / (2.0 * sm))
+        layer.splat(d.cx + rr * np.cos(sth), d.cy + rr * np.sin(sth), o["smoulder"][3] * R, scol, sa, min_sigma=0.5)
+    layer.flush(cv, fades=(lambda v_, r0: K.wall_fade(v_, ctx, y0=r0), lambda v_, r0: K.text_fade(v_, ctx, y0=r0), lambda v_, r0: K.edge_fade(v_, ctx, y0=r0)))
+    ctx.log["sparks"] = {"class": iris.cls, "wind_deg": round(math.degrees(wind), 1), "n": [n, int(hero.sum()), ns]}

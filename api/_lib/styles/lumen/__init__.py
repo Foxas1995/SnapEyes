@@ -7,7 +7,8 @@
   stardust  Supernova   the iris as a star that has just burst: clumpy jets of stardust leave every angle of the limb in the eye's own colour at that
                         angle, glitter, fine radial filaments, a broken shock shell, a white hot rim, a quiet field of stars
   halo      Halo        the iris backlit in its own colour: a soft bloom, a faint optical ring, a breath of mist, a tonal ground of its own deep shade
-  sparks    Sparks      sparks and soft lights lifting off the limb on a wind, as if the iris were a coal: comet streaks, glints and a few large lights
+  sparks    Sparks      the iris as a coal whose embers rise on a gentle wind: born at the limb in its own colours, they stream round it and over it
+                        (2026-10-28: embers since then)
   aurora    Aurora      curtains of northern light standing on the limb, the eye's own colour at the foot and its partner hue at the tips
   echo      Iris Echo   the iris in the middle of its own echo: the same iris enlarged behind it, its fibres radiating like a tunnel (2026-10-27)
   dust      Powder Burst  the iris whole, its own colour turned into dust round it (2026-10-28: Powder Burst's look since then)
@@ -64,8 +65,9 @@ GEOM = {
 }
 
 # a design's own iris finish over core.FIN: the dust round Powder Burst's iris starts at the limb, so its iris keeps no dark limbal ring
-# (the owner's approved board of 2026-10-28, variant A)
-DESIGN_FIN = {"dust": {"limb": (0.78, 0.0)}}
+# (the owner's approved board of 2026-10-28, variant A); the embers of Sparks are born at the limb too, so its iris keeps half the family's ring
+# (a light one: no dark seam between the iris and its embers, and no pale glassy rim either)
+DESIGN_FIN = {"dust": {"limb": (0.78, 0.0)}, "sparks": {"limb": (0.78, 0.3)}}
 
 
 def _design(name):

@@ -38,7 +38,7 @@ ENGINE_FAMILIES = ("singles", "collision", "universe", "lumen", "ensemble")     
 # hashes of the golden files and v3steps compares them), and when paid masters change that no golden holds (9): a plan records the version it was
 # made under and the master step holds an order whose plan was made under another one (engine_skew: a deploy between payment and master must never
 # draw a picture the preview did not show).
-ENGINE_V = 12         # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
+ENGINE_V = 13         # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
                       # seed key); 3: step B for the collision family (WP7B: the same seed, the names out of it, the pixel decisions made once and frozen in the plan);
                       # 4: step B for the universe family (WP8B: the same seed, the per eye seeds derived from it, the plates version in every pick, the pair's fallback frozen);
                       # 5: the finish of the pair designs of the collision family (pairs design phase 1: an antialiased crumble, the hairline only where both bands are dark, finer
@@ -61,6 +61,9 @@ ENGINE_V = 12         # 1: step A (the prototype's seed, from the bytes of the i
                       # 12: Powder Burst draws the dust design of the light family (lumen dust: grains of the iris's own colour round the untouched iris,
                       # its iris without the dark limbal ring, the owner's board A of 2026-10-28) instead of the singles family's plate powder cloud: every
                       # Powder Burst picture changed (the lumen goldens gain the dust cases, the other designs' unchanged); every other picture draws as under 11
+                      # 13: Sparks draws embers (lumen sparks of 2026-10-28: born at the limb in the iris's own colours, they rise on a gentle wind round the
+                      # untouched iris, whose own finish keeps a light limbal ring) instead of the wind of streaks, glints and bokeh: every Sparks picture
+                      # changed (its lumen goldens recorded again, the other designs' unchanged); every other picture draws as under 12
 
 
 class EngineNotBuilt(LookupError):

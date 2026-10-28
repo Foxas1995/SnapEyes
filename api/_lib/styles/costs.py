@@ -150,11 +150,15 @@ PREVIEW = {
 #   by the ratio of Supernova's row to Supernova measured beside it (10.5 / 9.8: these runs read 7 percent under the runs of 2026-10-20) to 8.6, warm 8.6 x 8.4 / 9.3; the
 #   peak 278 MB under Radiance's on the same eye (622 MB against 901): 900 - 278 and 986 - 278. The previews: the largest of six rounds of each column scaled by Radiance's
 #   (1.12 cold, 0.40 the design alone, warm new 0.40 + 0.48), the peak Radiance's (151 to 153 MB against 154): 170
+# lumen.sparks (the embers of 2026-10-28) was measured the same way beside Radiance and Powder Burst (4 master rounds on the blue green and the dark brown 4096 px eyes, on a
+#   machine loaded by other work, so only the ratios count): its CPU time 0.77 to 0.81 of Radiance's (Powder Burst's 0.81 to 0.87), the peak 624 MB against Radiance's 902 (Powder
+#   Burst's 623 to 624); the previews 0.65 to 0.86 of Radiance's for the design alone, the peak 153 to 155 MB. The time of the row stays the old look's (an over-estimate by
+#   about a fifth), the memory is Powder Burst's: 900 - 278 and 986 - 278
 # Rows here never replace a baked row (the spike's table is what the plan's section 10.3 pins); bake_costs.py leaves this block alone.
 ADDED = (
     ("lumen.stardust", 1, (10.5, 9.5, 627, 713), (1.9, 1.58, 1.10, 0.48, 170)),
     ("lumen.nebula", 1, (9.6, 8.7, 620, 706), (2.1, 1.66, 1.18, 0.48, 170)),
-    ("lumen.sparks", 1, (9.7, 8.8, 620, 706), (1.1, 0.96, 0.48, 0.48, 170)),
+    ("lumen.sparks", 1, (9.7, 8.8, 622, 708), (1.1, 0.96, 0.48, 0.48, 170)),   # embers since 2026-10-28 (below)
     ("lumen.halo", 1, (8.9, 8.0, 620, 706), (0.92, 0.79, 0.31, 0.48, 170)),
     ("lumen.aurora", 1, (9.9, 9.0, 627, 713), (1.4, 1.18, 0.70, 0.48, 170)),
     ("lumen.echo", 1, (9.9, 9.0, 720, 806), (1.4, 1.18, 0.70, 0.48, 170)),   # Iris Echo (2026-10-27): Aurora's row with 100 MB more for the 1536 grid, until measured
