@@ -311,8 +311,8 @@ def paid_print_order(cc="LT", product="acrylic40", lang="en", mismatch_cc=None):
 section("1. the tables and the rules: shipping, margins, the print file")
 check("the shipping rule: the cost with 19 % VAT rounded UP to the next .49 or .99 (3.99 to 4.99, 5.50 to 6.99, 6.99 to 8.49, 7.99 to 9.99)",
       [PR.ship_price(c) for c in (399, 550, 699, 799, 1, 49, 50)] == [499, 699, 849, 999, 49, 99, 99], [PR.ship_price(c) for c in (399, 550, 699, 799, 1, 49, 50)])
-check("the offer: five prints at the owner's prices (59, 79, 129, 69, 29 EUR), every SKU in the rate table, prints offered on eu, lt and hr only",
-      [(p["id"], p["price"]) for p in PR.products()] == [("acrylic30", 5900), ("acrylic40", 7900), ("acrylic60", 12900), ("canvas40", 6900), ("poster50", 2900)]
+check("the offer: five prints at the owner's prices (59, 79, 129, 69, 35 EUR), every SKU in the rate table, prints offered on eu, lt and hr only",
+      [(p["id"], p["price"]) for p in PR.products()] == [("acrylic30", 5900), ("acrylic40", 7900), ("acrylic60", 12900), ("canvas40", 6900), ("poster50", 3500)]
       and all(PR.sku_rec(p["sku"]) for p in PR.products()) and PR.markets() == ("eu", "lt", "hr"), PR.products())
 check("the countries: the 27 member states of the EU, each with a rate for every print and a name in every language; no US, no GB",
       len(PR.countries()) == 27 and "US" not in PR.countries() and "GB" not in PR.countries()
@@ -491,7 +491,7 @@ o3, k3, sid3 = paid_print_order(cc="LT", product="poster50", lang="en")
 mail3 = next((m for m, _i in reversed(H.Fake.emails) if o3 in m.get("subject", "") and m.get("to") == ["kunde@example.com"]), {})
 t3 = mail3.get("text", "")
 check("an English confirmation: the print rows, 'Your print', the print box, no sentence that says no print is shipped",
-      "Poster 50 × 50 cm, €29.00" in t3 and "Your print" in t3 and "Lithuania, €8.49" in t3 and "no print and no" not in t3 and PR.PRINT_CONSENT_TEXT["en"] in t3, t3[:1200])
+      "Poster 50 × 50 cm, €35.00" in t3 and "Your print" in t3 and "Lithuania, €8.49" in t3 and "no print and no" not in t3 and PR.PRINT_CONSENT_TEXT["en"] in t3, t3[:1200])
 o4, k4, sid4 = paid_print_order(cc="LT", product="acrylic30", mismatch_cc="LV")
 pj4 = rj(f"orders/{o4}/print.json") or {}
 check("an address in another country than the priced one: recorded as mismatch, the print HELD for the owner and the owner told (the payment itself is recorded)",
@@ -501,9 +501,9 @@ sess_old = dict(H.Fake.sessions[sid3])
 sess_old.pop("collected_information", None)
 sess_old["shipping_details"] = {"name": "A B", "address": {"line1": "x", "city": "y", "postal_code": "1", "country": "LT"}}
 check("an older Stripe API version's shipping_details is read too", PR.paid_part(sess_old, rj(f"orders/{o3}/order.json"))["name"] == "A B", "")
-meta = {"eyes": "1", "style": STYLE, "market": "eu", "amount": "2497", "print": "poster50", "print_amount": "2900", "ship_amount": "849"}
+meta = {"eyes": "1", "style": STYLE, "market": "eu", "amount": "2497", "print": "poster50", "print_amount": "3500", "ship_amount": "849"}
 check("a price test's session check takes the print off before comparing with the ladder (abtest.print_extra), and a session without one is unchanged",
-      abtest.print_extra(meta) == 3749 and abtest.print_extra({"amount": "1"}) == 0 and PR.extra_cents(meta) == 3749 and PR.extra_cents({}) == 0, "")
+      abtest.print_extra(meta) == 4349 and abtest.print_extra({"amount": "1"}) == 0 and PR.extra_cents(meta) == 4349 and PR.extra_cents({}) == 0, "")
 
 # ============================================================================================ 5. the order at merchOne
 section("5. the order at merchOne: when, what, once")
@@ -602,6 +602,7 @@ rr = requests.post(BASE + "/api/order?hook=merchone&token=" + PR.hook_token(), d
 check("an event for an order of no print of ours: 200 and ignored", rr.status_code == 200 and rr.json().get("ignored"), rr.text[:200])
 oid5 = PR.record(o5)["merchone_id"]
 MO.orders[oid5]["shipments"] = [{"tracking_number": "123", "tracking_url": "https://tracking.dpd.de/x", "shipping_method": {"name": "DPD"}}]
+PR._write(o5, PR.record(o5), is_test=False)      # as a live order: the daily run does not read a TEST order back (section 9)
 d = PR.daily(True, 0.0, lambda s: None)
 check("the daily run catches a shipment whose webhook was lost: the print read back, shipped, the e-mail sent", PR.record(o5)["state"] == "shipped" and d["shipped"] >= 1, d)
 oid6 = PR.record(o6)["merchone_id"]
@@ -677,6 +678,144 @@ check("the consent version is 2026-10-28.3 on the server and the page, and the p
       and all(PR.PRINT_CONSENT_TEXT[l] in open(os.path.join(REPO, "src", "shared", "legal.ts"), encoding="utf-8").read() for l in PR.LANGS), "")
 check("no dash in any print text the server sends (the e-mails, the Stripe notes, the consent)", not re.search(DASH, json.dumps([PR.CONF, PR.SHIPPED, PR.SUBMIT_NOTE_PRINT,
       PR.ITEM_DESC_PRINT, PR.PRINT_CONSENT_TEXT, PR.SHIP_LABEL, PR.SHIP_ADDRESS_NOTE], ensure_ascii=False)), "")
+
+
+# ============================================================================================ 9. the review's fixes
+section("9. the review of 2026-10-28: live payments, the line item, the daily run, the shipping e-mail, the lock, no step back, the refund")
+# the artwork's own line item of a print order says nothing of "no print"
+o20, k20 = draft()
+c, j = co(o20, k20, print={"product": "poster50", "country": "LT"}, consent_print=True)
+p20 = H.Fake.creates[-1][0]
+o21, k21 = draft()
+c2, j2 = co(o21, k21)
+p21 = H.Fake.creates[-1][0]
+check("a print order's own artwork line describes the file and the print line after it (never 'No print, no frame'); a file-only order keeps its description",
+      c == 200 and p20["line_items[0][price_data][product_data][description]"] == PR.ITEM_DESC_FILE["en"] and "No print" not in PR.ITEM_DESC_FILE["en"]
+      and c2 == 200 and p21["line_items[0][price_data][product_data][description]"] == pay.ITEM_DESC["en"]
+      and all(PR.ITEM_DESC_FILE[l] for l in PR.LANGS), (p20.get("line_items[0][price_data][product_data][description]"), p21.get("line_items[0][price_data][product_data][description]")))
+# a LIVE payment is never sent as a test order
+o22, k22, _s22 = paid_print_order(cc="LT", product="acrylic30")
+deliver(o22)
+pd22 = rj(f"orders/{o22}/paid.json")
+pd22["livemode"] = True
+store.put(f"orders/{o22}/paid.json", store.json_bytes(pd22), "application/json", upsert=True)
+MO.creates.clear()
+H.Fake.emails.clear()
+r = PR.step(o22, rj(f"orders/{o22}/order.json"), pay.get_paid(o22))
+check("a LIVE payment while MERCHONE_LIVE is not set: the print is HELD (not_live), nothing goes to merchOne, the owner is told",
+      r == "held" and not MO.creates and PR.record(o22)["state"] == "held" and PR.record(o22)["error"] == "not_live"
+      and any("MERCHONE_LIVE" in m.get("subject", "") for m, _i in H.Fake.emails), (r, PR.record(o22)))
+check("... and the daily run and the server's chain leave it (held is the owner's): no try, no test order", PR.step(o22, rj(f"orders/{o22}/order.json"), pay.get_paid(o22)) == "held"
+      and not MO.creates, len(MO.creates))
+os.environ["MERCHONE_LIVE"] = "1"
+res = ops.ACTIONS["print_retry"]({"order": o22}, WHO)
+live_pl = MO.creates[-1] if MO.creates else {}
+os.environ.pop("MERCHONE_LIVE", None)
+check("with MERCHONE_LIVE set the owner's retry sends it as a REAL order (is_test false)", res["result"] == "created" and live_pl.get("is_test") is False, (res, live_pl.get("is_test")))
+real_prod = pay.on_production
+pay.on_production = lambda: True
+e = None
+try:
+    ops.ACTIONS["print_switch"]({"on": True, "confirm": "spaudiniai", "rev": PR.switch_state(fresh=True)["rev"]}, WHO)
+except store.Answer as x:
+    e = x
+os.environ["MERCHONE_LIVE"] = "1"
+r_ok = ops.ACTIONS["print_switch"]({"on": True, "confirm": "spaudiniai", "rev": PR.switch_state(fresh=True)["rev"]}, WHO)
+os.environ.pop("MERCHONE_LIVE", None)
+pay.on_production = real_prod
+check("on production the switch refuses to turn prints on while MERCHONE_LIVE is not set (409 not_live), and turns them on once it is",
+      e is not None and e.body.get("reason") == "not_live" and r_ok["result"] == "on", e and e.body)
+# never a step back
+cur_o = PR.record(o)
+back = PR._write(o, dict(cur_o, state="created"), state="created", partner_status="FULFILLED")
+check("a write from a stale copy never moves a shipped print back (created asked, shipped kept, the other fields written)",
+      cur_o["state"] == "shipped" and back["state"] == "shipped" and PR.record(o)["state"] == "shipped" and PR.record(o)["partner_status"] == "FULFILLED", back.get("state"))
+st22 = PR.record(o22)
+PR._write(o22, dict(st22, state="waiting"), state="waiting")
+check("... nor a created one back to waiting; the owner's retry (back) may restart a failed or held one", PR.record(o22)["state"] == "created", PR.record(o22)["state"])
+# the lock: a stale one is never deleted, the next generation is taken
+o23, k23, _s23 = paid_print_order(cc="LT", product="poster50")
+store.put(f"orders/{o23}/print_0.lock", store.json_bytes({"t": time.time() - 3600, "id": "dead"}), "application/json", upsert=True)
+c1 = PR._claim(o23, 0)
+c2_ = PR._claim(o23, 0)
+check("a stale lock is not deleted: the next generation's lock is created (only one taker can), and a second taker finds it fresh and leaves",
+      c1 is not None and c1[2] == 1 and exists(f"orders/{o23}/print_0.lock") and c2_ is None, (c1, c2_))
+PR._release(c1)
+check("its release deletes only its own lock", not exists(f"orders/{o23}/print_1.lock") and exists(f"orders/{o23}/print_0.lock"), "")
+deliver(o23)
+r23 = PR.step(o23, rj(f"orders/{o23}/order.json"), pay.get_paid(o23))
+check("the next try records the generation it took (lock_gen) and is created", r23 == "created" and PR.record(o23).get("lock_gen") in (0, 1), PR.record(o23))
+# the shipping e-mail: a transient failure keeps the order in the index, the daily run sends it
+oid23 = PR.record(o23)["merchone_id"]
+MO.orders[oid23]["shipments"] = [{"tracking_number": "999", "tracking_url": "https://tracking.dpd.de/999", "shipping_method": {"name": "DPD"}}]
+H.Fake.emails.clear()
+H.Fake.fail_mail = [503]
+PR.refresh(o23)
+kept = exists(f"cleanup/print/{o23}.json")
+d = PR.daily(True, 0.0, lambda s: None)
+sent23 = [m for m, _i in H.Fake.emails if m.get("subject") == PR.SHIPPED["en"]["subject"]]
+check("the shipping e-mail that failed for a moment: the print is shipped, the order stays indexed, the daily run sends the e-mail once and then lets it go",
+      PR.record(o23)["state"] == "shipped" and kept and len(sent23) == 1 and not exists(f"cleanup/print/{o23}.json"), (kept, len(sent23), d))
+# the daily run: what waits for the owner takes no turn, a test order is not read back, the oldest checked go first
+for i in range(8):
+    store.put(f"cleanup/print/261028-parked{i:010d}.json", store.json_bytes({"t": 1}), "application/json", upsert=True)
+    store.put(f"orders/261028-parked{i:010d}/print.json", store.json_bytes({"state": "failed" if i % 2 else "held"}), "application/json", upsert=True)
+o24, k24, _s24 = paid_print_order(cc="LT", product="poster50")
+deliver(o24)
+d = PR.daily(True, 0.0, lambda s: None)
+check("eight held or failed prints in the index take no turn: a new print is sent in the same run (parked counted apart)",
+      PR.record(o24)["state"] == "created" and d.get("parked", 0) >= 8 and d["sent"] >= 1, d)
+chk24 = PR.record(o24).get("checked")
+d2 = PR.daily(True, 0.0, lambda s: None)
+check("the daily run records when it looked at a print (checked), so the next run takes the oldest first", isinstance(chk24, int), chk24)
+check("a TEST order that merchOne has is not read back again and again: the next daily run lets it leave the index (never produced, never shipped)",
+      not exists(f"cleanup/print/{o24}.json") and PR.record(o24)["state"] == "created", d2)
+# comments: no unverified text in the owner's note
+H.Fake.emails.clear()
+ev = {"type": "order_commented", "data": {"comment": "SECRET-UNVERIFIED-TEXT http://evil.example", "order": {"id": oid23, "external_id": o23}}}
+rr = requests.post(BASE + "/api/order?hook=merchone&token=" + PR.hook_token(), data=json.dumps(ev), headers={"Content-Type": "application/json"}, timeout=60)
+note = [m for m, _i in H.Fake.emails if "commented" in m.get("subject", "")]
+check("a merchOne comment: the owner is told where to read it, the event's own (unsigned) text is not passed on",
+      rr.status_code == 200 and note and "SECRET-UNVERIFIED-TEXT" not in note[0]["text"] and "merchOne dashboard" in note[0]["text"], note[:1])
+# the refund of an order with a print
+o25, k25, _s25 = paid_print_order(cc="LT", product="poster50")
+deliver(o25)
+PR.step(o25, rj(f"orders/{o25}/order.json"), pay.get_paid(o25))
+oid25 = PR.record(o25)["merchone_id"]
+pr25 = ops._print_after_refund(o25, pay.get_paid(o25))
+check("refunding an order with a print cancels the print at merchOne while it is cancellable", pr25 == {"result": "canceled"} and oid25 in MO.deletes
+      and PR.record(o25)["state"] == "canceled", pr25)
+pr_shipped = ops._print_after_refund(o23, pay.get_paid(o23))
+MO.refuse_delete = True
+o26, k26, _s26 = paid_print_order(cc="LT", product="poster50")
+deliver(o26)
+PR.step(o26, rj(f"orders/{o26}/order.json"), pay.get_paid(o26))
+pr26 = ops._print_after_refund(o26, pay.get_paid(o26))
+MO.refuse_delete = False
+check("... and warns the owner when it cannot (shipped already, or in production at merchOne)", pr_shipped.get("result") == "shipped" and pr_shipped.get("warning")
+      and pr26.get("result") == "not_canceled" and "merchOne" in pr26.get("warning", ""), (pr_shipped, pr26))
+# a second paid session with a print: the owner's note says so
+H.Fake.emails.clear()
+pay.extra_payment(o25, pay.get_paid(o25), {"session_id": "cs_test_second", "amount_total": 9999, "currency": "eur", "livemode": False, "payment_intent": "pi_x",
+                                          "email": None, "spec": {"eyes": 1, "style": STYLE}, "print": {"product": "poster50", "country": "LT"}})
+xn = [m for m, _i in H.Fake.emails if "paid twice" in m.get("subject", "")]
+check("a second paid session with a print: the owner's refund note names the print (nothing is sent to merchOne for it)",
+      xn and "with a PRINT (poster50 to LT)" in xn[0]["text"], xn[:1])
+check("the print box survives the next consent version: the current version maps to the current text, the first one is kept",
+      PR.PRINT_CONSENT_TEXTS[pay.CONSENT_VERSION] == PR.PRINT_CONSENT_TEXT and PR.PRINT_CONSENT_TEXTS["2026-10-28.3"] == PR.PRINT_CONSENT_TEXT
+      and PR.consent_text(pay.CONSENT_VERSION, "lt") == PR.PRINT_CONSENT_TEXT["lt"], "")
+# the print file of 60 cm without full-frame float arrays
+import tracemalloc  # noqa: E402
+a60 = (np.random.default_rng(3).random((4096, 4096, 3)) * 60).astype("uint8")
+b60 = io.BytesIO()
+Image.fromarray(a60).save(b60, "JPEG", quality=88)
+del a60
+tracemalloc.start()
+d60, i60 = PR.make_print_file(b60.getvalue(), "ACP0600601HP")
+peak = tracemalloc.get_traced_memory()[1]
+tracemalloc.stop()
+check("the 60 cm print file is made with the border strips only: the arrays' peak stays under 200 MB for a 4096 px master (no full-frame float copies)",
+      peak < 200 * 2 ** 20 and i60["width"] == PR.file_geometry("ACP0600601HP", 4096)[0], f"{peak / 2 ** 20:.0f} MB")
 
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed")
 sys.exit(0 if all(RESULTS) else 1)

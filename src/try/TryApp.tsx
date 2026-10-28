@@ -956,6 +956,14 @@ export const TryApp: React.FC = () => {
       setOrdering((o) => (o ? { ...o, prints: undefined } : o));
       setPrintChoice(NO_PRINT);
     }
+    if (out.code === 'print_changed') {
+      // the print's price or shipping changed while the customer looked (409 print_price_changed): the server's prints are read again, so the card
+      // shows the new numbers; the choice stays (when that print still ships there) and the customer presses again
+      const c = await callApi<CheckoutInfo>('/api/checkout');
+      const fresh = c.ok && c.data ? c.data.prints : undefined;
+      setOrdering((o) => (o ? { ...o, prints: fresh } : o));
+      if (!fresh?.on) setPrintChoice(NO_PRINT);
+    }
     setBuy({ busy: false, step: null, error: out.code });
   };
 

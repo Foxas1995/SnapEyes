@@ -246,8 +246,8 @@ export const lt: TryCopy = {
     composeFailed: 'Nepavyko sukurti šios peržiūros.',
     previewReduced: 'Peržiūra sumažinta ir su vandens ženklu.',
     previewFile: (square: boolean): string => (square
-      ? 'Jūsų failas: 4096 px, pakankamai ryškus spaudiniui iki 50 x 50 cm.'
-      : 'Jūsų failas: 4096 px ilgiausioje kraštinėje, pakankamai ryškus spaudiniui, kurio ilgiausia kraštinė iki 50 cm.'),
+      ? 'Jūsų failas: 4096 px, pakankamai ryškus spaudiniui iki 60 x 60 cm.'
+      : 'Jūsų failas: 4096 px ilgiausioje kraštinėje, pakankamai ryškus spaudiniui, kurio ilgiausia kraštinė iki 60 cm.'),
     retry: 'Bandyti dar kartą',
     layout: 'Išdėstymas',
     style: 'Stilius',

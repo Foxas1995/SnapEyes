@@ -272,8 +272,8 @@ export const hu: TryCopy = {
     composeFailed: 'Ezt az előnézetet nem sikerült összeállítani.',
     previewReduced: 'Az előnézet kicsinyített és vízjeles.',
     previewFile: (square: boolean): string => (square
-      ? 'A fájlod: 4096 px, elég éles a legfeljebb 50 x 50 cm-es nyomtatáshoz.'
-      : 'A fájlod: 4096 px a hosszabbik oldalán, elég éles olyan nyomtatáshoz, amelynek hosszabbik oldala legfeljebb 50 cm.'),
+      ? 'A fájlod: 4096 px, elég éles a legfeljebb 60 x 60 cm-es nyomtatáshoz.'
+      : 'A fájlod: 4096 px a hosszabbik oldalán, elég éles olyan nyomtatáshoz, amelynek hosszabbik oldala legfeljebb 60 cm.'),
     retry: 'Próbáld újra',
     layout: 'Elrendezés',
     style: 'Stílus',

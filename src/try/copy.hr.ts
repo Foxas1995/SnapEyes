@@ -262,8 +262,8 @@ export const hr: TryCopy = {
     composeFailed: 'Ovaj pregled nismo uspjeli složiti.',
     previewReduced: 'Pregled je smanjen i ima vodeni žig.',
     previewFile: (square: boolean): string => (square
-      ? 'Vaša datoteka: 4096 px, dovoljno oštra za ispis do 50 x 50 cm.'
-      : 'Vaša datoteka: 4096 px na duljoj stranici, dovoljno oštra za ispis do 50 cm na toj stranici.'),
+      ? 'Vaša datoteka: 4096 px, dovoljno oštra za ispis do 60 x 60 cm.'
+      : 'Vaša datoteka: 4096 px na duljoj stranici, dovoljno oštra za ispis do 60 cm na toj stranici.'),
     retry: 'Pokušajte ponovno',
     layout: 'Raspored',
     style: 'Stil',

@@ -1324,8 +1324,35 @@ def act_refund(body, who):
         store.put(path, store.json_bytes(rec), "application/json", upsert=True)
     except store.StorageError as e:
         log(f"order {order}: refund {rec['refund']} done at Stripe, its record not stored: {e}")
-    return {"ok": True, "result": _code(rec["status"]) or "refunded", "refund": rec,
-            "audit_detail": f"{rec['refund']} {rec['amount']} {rec['currency']}"}
+    out = {"ok": True, "result": _code(rec["status"]) or "refunded", "refund": rec,
+           "audit_detail": f"{rec['refund']} {rec['amount']} {rec['currency']}"}
+    if paid and pi == paid.get("payment_intent"):
+        out["print"] = _print_after_refund(order, paid)
+        if out["print"]:
+            out["audit_detail"] += f" print {out['print']['result']}"
+    return out
+
+
+def _print_after_refund(order, paid):
+    """The order's print after its payment was refunded: cancelled at merchOne when it is still cancellable (its hold time), else a warning
+    for the owner (it is in production or shipped: merchOne charges it). None for an order without a print. Never raises."""
+    from . import prints
+    if not prints.paid_print(paid):
+        return None
+    try:
+        cur = prints.record(order) or {}
+        if cur.get("state") == "shipped":
+            return {"result": "shipped", "warning": "The print is shipped already: merchOne has charged it."}
+        if not cur.get("merchone_id") or cur.get("state") in ("canceled", "canceled_partner"):
+            # never sent (or cancelled): the refund mark stops any later try (prints.due)
+            return {"result": "not_sent"}
+        prints.cancel(order)
+        return {"result": "canceled"}
+    except store.Answer as a:
+        return {"result": "not_canceled", "warning": f"The print could not be cancelled at merchOne ({a.body.get('error')}). Cancel it in the "
+                                                     "merchOne dashboard, or it is produced and charged."}
+    except Exception as e:  # noqa: the refund is done; the print is the owner's to look at
+        return {"result": "error", "warning": f"The print was not cancelled ({type(e).__name__}). Look at it in Spaudiniai and in merchOne."}
 
 
 def act_mark_refunded(body, who):
@@ -1467,6 +1494,11 @@ def act_print_switch(body, who):
         raise store.Answer(400, "confirm_required", "Type spaudiniai to confirm.", False)
     if on and not merchone.configured():
         raise store.Answer(409, "not_configured", "MERCHONE_API_USER and MERCHONE_API_KEY are not set on this deployment.", False)
+    if on and pay.on_production() and not merchone.live():
+        # on production every payment is live, and a live payment is never sent as a merchOne TEST order (prints.py holds it): prints are not sold
+        # here until merchOne orders are real ones
+        raise store.Answer(409, "not_live", "MERCHONE_LIVE is not set on this deployment: merchOne orders would be test orders. Set MERCHONE_LIVE=1 "
+                           "and redeploy first.", False)
     rev = body.get("rev") if isinstance(body.get("rev"), int) and not isinstance(body.get("rev"), bool) else None
     st = prints.set_switch(on, who.get("kind") if isinstance(who, dict) else who, rev)
     return {"ok": True, "result": "on" if on else "off", "switch": st, "audit_detail": f"prints {'on' if on else 'off'} rev {st['rev']}"}

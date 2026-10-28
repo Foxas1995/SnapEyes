@@ -29,7 +29,8 @@ Rules for the literal (JSON inside Python): double quotes only, no trailing comm
 Owner decisions of 2026-10-28: Premium Acrylic (12-colour photo paper behind 3 mm acrylic glass, with the hanger set for plates) 30, 40 and
 60 cm; Canvas 40 cm with the black floating frame and the hanger set (mirrored edge; the SKU without the ink pad); Poster 50 cm. A framed
 canvas of 60 cm was asked for, but merchOne makes the black floating frame for square canvases up to 40 x 40 cm only (2026-10-28), so it is
-not in the list."""
+not in the list. 2026-10-28, after the review: the poster at 35 EUR (at 29 EUR it earned about 20 EUR, under the owner's target of about
+25 EUR; at 35 EUR about 25.8 EUR)."""
 PRINT_OFFER = {
     "currency": "eur",
     "markets": ["eu", "lt", "hr"],
@@ -41,6 +42,6 @@ PRINT_OFFER = {
         {"id": "acrylic40", "kind": "acrylic", "cm": 40, "sku": "ACP0400401HP", "price": 7900, "on": 1},
         {"id": "acrylic60", "kind": "acrylic", "cm": 60, "sku": "ACP0600601HP", "price": 12900, "on": 1},
         {"id": "canvas40", "kind": "canvas", "cm": 40, "sku": "CVS0400401LMSBF2HC", "price": 6900, "on": 1},
-        {"id": "poster50", "kind": "poster", "cm": 50, "sku": "PSD0500501", "price": 2900, "on": 1}
+        {"id": "poster50", "kind": "poster", "cm": 50, "sku": "PSD0500501", "price": 3500, "on": 1}
     ]
 }

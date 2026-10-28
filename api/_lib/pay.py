@@ -1227,7 +1227,10 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     ]
     if part:
         from . import prints
-        params = [(k_, prints.SUBMIT_NOTE_PRINT[prints.lang_of(lang)] if k_ == "custom_text[submit][message]" else v) for k_, v in params]
+        # the note above the pay button and the artwork's own line item say that a print is shipped too (never "no print, no frame")
+        swap = {"custom_text[submit][message]": prints.SUBMIT_NOTE_PRINT[prints.lang_of(lang)],
+                "line_items[0][price_data][product_data][description]": prints.ITEM_DESC_FILE[prints.lang_of(lang)]}
+        params = [(k_, swap.get(k_, v)) for k_, v in params]
         params += prints.stripe_params(part, lang)
     meta = {"order": order, "key_sha": key_sha(k), "eyes": str(spec["eyes"]), "style": spec["style"],
             "layout": spec["layout"], "names": W.meta_names(spec.get("names")), "title": spec["title"], "lang": lang,
@@ -1582,7 +1585,9 @@ def extra_payment(order, cur, extra):
                f"  amount   {amount} ({'live' if extra.get('livemode') else 'TEST mode'})\n"
                f"  session  {sid}\n  payment  {extra.get('payment_intent')}\n  customer {extra.get('email') or 'no email'}\n"
                f"  it was for {spec.get('eyes')} eye(s), style {spec.get('style')}\n"
-               f"The order is delivered as the FIRST payment made it. Please refund the second payment in the Stripe "
+               + (f"  with a PRINT ({extra['print'].get('product')} to {extra['print'].get('country')}): nothing is sent to merchOne for this "
+                  f"second payment; refund it whole (the print and its shipping too)\n" if isinstance(extra.get("print"), dict) else "")
+               + f"The order is delivered as the FIRST payment made it. Please refund the second payment in the Stripe "
                f"Dashboard (Payments, search {extra.get('payment_intent') or sid}, Refund), and write to the customer if "
                f"they wanted the second version instead.\nStatus: python scripts/order_admin.py status {order}\n")
 

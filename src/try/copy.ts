@@ -301,8 +301,8 @@ const en = {
     // the only 4096 x 4096 file (several eyes are 4096 px on the longest side: never promise a square file for all)
     previewReduced: 'Preview reduced and watermarked.',
     previewFile: (square: boolean): string => (square
-      ? 'Your file: 4096 px, sharp enough to print up to 50 x 50 cm.'
-      : 'Your file: 4096 px on its longest side, sharp enough to print up to 50 cm on that side.'),
+      ? 'Your file: 4096 px, sharp enough to print up to 60 x 60 cm.'
+      : 'Your file: 4096 px on its longest side, sharp enough to print up to 60 cm on that side.'),
     retry: 'Try again',
     layout: 'Layout',
     style: 'Style',
@@ -792,8 +792,8 @@ const de: TryCopy = {
     composeFailed: 'Diese Vorschau konnte nicht erstellt werden.',
     previewReduced: 'Vorschau verkleinert und mit Wasserzeichen.',
     previewFile: (square: boolean): string => (square
-      ? 'Ihre Datei: 4096 px, scharf genug für einen Druck bis 50 x 50 cm.'
-      : 'Ihre Datei: 4096 px an der längsten Seite, scharf genug für einen Druck mit bis zu 50 cm an dieser Seite.'),
+      ? 'Ihre Datei: 4096 px, scharf genug für einen Druck bis 60 x 60 cm.'
+      : 'Ihre Datei: 4096 px an der längsten Seite, scharf genug für einen Druck mit bis zu 60 cm an dieser Seite.'),
     retry: 'Erneut versuchen',
     layout: 'Anordnung',
     style: 'Stil',

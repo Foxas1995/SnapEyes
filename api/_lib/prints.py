@@ -76,6 +76,7 @@ BILLING = {"firstname": "MB", "lastname": "Portretizuokis", "company": "MB Portr
 PRODUCER = "Picanova GmbH (merchOne), Eupener Straße 67, 50933 Köln"
 PRODUCER_COUNTRY = {"en": "Germany", "de": "Deutschland", "lt": "Vokietija", "hu": "Németország", "hr": "Njemačka"}
 FINAL = ("shipped", "canceled")
+PARKED = ("held", "failed", "canceled_partner")   # wait for the owner (admin page, Spaudiniai): the daily run does not spend its turns on them
 _TRACK_URL = re.compile(r"^https://[A-Za-z0-9.-]{3,120}(/[^\s<>\"']{0,600})?$")
 
 
@@ -254,8 +255,10 @@ PRINT_CONSENT_TEXT = {
     "hr": ("Znam da se moj ispis izrađuje po mojoj narudžbi iz mojeg osobnog umjetničkog djela, pa za njegovu kupnju nemam pravo na "
            "jednostrani raskid ugovora; to ne utječe na moja prava ako stigne neispravan ili oštećen."),
 }
-# every print consent text ever shown, by consent version (pay.CONSENT_VERSION): an order quotes the text its customer ticked
-PRINT_CONSENT_TEXTS = {"2026-10-28.3": PRINT_CONSENT_TEXT}
+# every print consent text ever shown, by consent version (pay.CONSENT_VERSION): an order quotes the text its customer ticked. As pay.CONSENT_TEXTS:
+# the version it came with is named, and the current version maps to the current text, so a new CONSENT_VERSION (a waiver that changes) keeps
+# the print box quotable under every version; a changed print box needs a new version and its old text kept here under the old ones
+PRINT_CONSENT_TEXTS = {"2026-10-28.3": PRINT_CONSENT_TEXT, pay.CONSENT_VERSION: PRINT_CONSENT_TEXT}
 
 SUBMIT_NOTE_PRINT = {   # what Stripe shows above its pay button when the order has a print (the order's language; the EU edition only)
     "en": ("You are buying a digital file (JPEG, 4096 px) and a print of it, shipped to the address above. You agreed that we start the file "
@@ -280,6 +283,14 @@ ITEM_DESC_PRINT = {
     "lt": "Gaminamas pagal užsakymą iš Jūsų kūrinio. Siunčiamas su siuntos sekimu iš mūsų spaudos partnerio dirbtuvių Europoje.",
     "hu": "A megrendelésedre, az alkotásodból készül. Nyomon követhető csomagként küldjük nyomdai partnerünk európai üzeméből.",
     "hr": "Izrađuje se po narudžbi iz vašeg umjetničkog djela. Šalje se s praćenjem pošiljke iz radionice našeg partnera za ispis u Europi.",
+}
+# the description of the artwork's own line item (0) when the order has a print: the file, without the "no print, no frame" of pay.ITEM_DESC
+ITEM_DESC_FILE = {
+    "en": "The digital file of your artwork: JPEG, 4096 px on the longest side. Your print is the next line.",
+    "de": "Die digitale Datei Ihres Kunstwerks: JPEG, 4096 px an der längsten Seite. Ihr Druck ist die nächste Zeile.",
+    "lt": "Skaitmeninis Jūsų kūrinio failas: JPEG, ilgoji kraštinė 4096 px. Spaudinys nurodytas kitoje eilutėje.",
+    "hu": "Az alkotásod digitális fájlja: JPEG, a hosszabbik oldalán 4096 px. A nyomatod a következő sorban van.",
+    "hr": "Digitalna datoteka vašeg umjetničkog djela: JPEG, 4096 px na duljoj stranici. Vaš ispis je u sljedećem retku.",
 }
 SHIP_LABEL = {"en": "Tracked shipping: {country}", "de": "Versand mit Sendungsverfolgung: {country}", "lt": "Siuntimas su sekimu: {country}",
               "hu": "Nyomon követhető szállítás: {country}", "hr": "Dostava s praćenjem: {country}"}
@@ -579,12 +590,30 @@ def record(order, timeout=6.0):
     return r if isinstance(r, dict) else None
 
 
-def _write(order, rec, **kw):
+# how far a print has come: a write never moves it back (a stale copy in one invocation cannot undo what another recorded); only the owner's
+# retry (back=True) starts a failed, held or cancelled print again
+RANK = {"waiting": 0, "creating": 0, "held": 0, "failed": 0, "canceled_partner": 0, "created": 1, "shipped": 2, "canceled": 2}
+
+
+def _write(order, rec, back=False, **kw):
+    """print.json, written on top of what is stored NOW (re-read: never a blind write of the caller's copy), with kw merged in. A state that
+    would go back (created to waiting, shipped to anything else) is not written unless back (the owner's retry); the other fields are."""
     now = int(time.time())
-    hist = list(rec.get("history") or [])[-11:]
-    if kw.get("state") and kw.get("state") != rec.get("state"):
-        hist.append({"t": now, "state": kw["state"], "why": str(kw.get("why") or kw.get("error") or "")[:160]})
-    new = dict(rec, **kw, history=hist, updated=now, updated_iso=pay.iso(now))
+    try:
+        fresh = record(order)
+    except store.StorageError:
+        fresh = None
+    base = fresh if isinstance(fresh, dict) else rec
+    want = kw.get("state")
+    have = base.get("state")
+    if want and want != have and have in RANK and (have == "shipped" or (RANK.get(want, 0) < RANK[have] and not back)):
+        pay.log(f"order {order}: print state {have} kept (a write wanted {want})")
+        kw = {k: v for k, v in kw.items() if k not in ("state", "error", "why")}
+        want = None
+    hist = list(base.get("history") or [])[-11:]
+    if want and want != have:
+        hist.append({"t": now, "state": want, "why": str(kw.get("why") or kw.get("error") or "")[:160]})
+    new = dict(base, **kw, history=hist, updated=now, updated_iso=pay.iso(now))
     new.pop("why", None)
     store.put(_path(order, "print.json"), store.json_bytes(new), "application/json", upsert=True, timeout=8.0)
     return new
@@ -637,7 +666,8 @@ def _note(order, kind, subject, text):
 # ----------------------------------------------------------------------------- the print file
 def _fill_edges(a, pad):
     """The array a (h, w, 3) grown by pad[0..3] (top, bottom, left, right) pixels: the artwork's own edge continued, then softened, so the trim
-    and the border of an artwork that is not square read as its background."""
+    and the border of an artwork that is not square read as its background. Only the border strips are blurred and blended (a 60 cm print file
+    is 4,000 px a side: full-frame float arrays would take most of a function's memory); the artwork itself is never touched."""
     import numpy as np
     from PIL import Image, ImageFilter
     top, bottom, left, right = pad
@@ -646,13 +676,38 @@ def _fill_edges(a, pad):
     big = np.pad(a, ((top, bottom), (left, right), (0, 0)), mode="edge")
     h, w = big.shape[:2]
     radius = max(2, int(0.02 * max(h, w)))
-    soft = np.asarray(Image.fromarray(big).filter(ImageFilter.GaussianBlur(radius)))
-    mask = np.ones((h, w), dtype=np.float32)
-    mask[top:h - bottom if bottom else h, left:w - right if right else w] = 0.0
-    m = np.asarray(Image.fromarray((mask * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(max(1, radius // 2))), dtype=np.float32) / 255.0
-    m[top:h - bottom if bottom else h, left:w - right if right else w] = 0.0       # the artwork itself is never touched
-    out = big.astype(np.float32) * (1 - m[..., None]) + soft.astype(np.float32) * m[..., None]
-    return np.clip(out + 0.5, 0, 255).astype(np.uint8)
+    ctx = 3 * radius                        # the blur's reach into the artwork, so a strip blurs as the whole picture would
+
+    def soft(y0, y1, x0, x1):
+        """The blurred block [y0:y1, x0:x1] of big, blurred with its context around it (uint8)."""
+        cy0, cy1, cx0, cx1 = max(0, y0 - ctx), min(h, y1 + ctx), max(0, x0 - ctx), min(w, x1 + ctx)
+        b = np.asarray(Image.fromarray(big[cy0:cy1, cx0:cx1]).filter(ImageFilter.GaussianBlur(radius)))
+        return b[y0 - cy0:y1 - cy0, x0 - cx0:x1 - cx0]
+
+    def blend(y0, y1, x0, x1, weight):
+        """big[y0:y1, x0:x1] = big blended with its blur by weight (h, w) in 0..1."""
+        if y1 <= y0 or x1 <= x0:
+            return
+        s = soft(y0, y1, x0, x1).astype(np.float32)
+        o = big[y0:y1, x0:x1].astype(np.float32)
+        wgt = weight[..., None]
+        big[y0:y1, x0:x1] = np.clip(o * (1 - wgt) + s * wgt + 0.5, 0, 255).astype(np.uint8)
+
+    ramp = lambda d: np.clip(d / float(radius), 0.0, 1.0).astype(np.float32)     # 0 at the artwork's edge, 1 a radius away
+    if top:
+        d = top - np.arange(top, dtype=np.float32)
+        blend(0, top, 0, w, np.repeat(ramp(d)[:, None], w, axis=1))
+    if bottom:
+        d = np.arange(1, bottom + 1, dtype=np.float32)
+        blend(h - bottom, h, 0, w, np.repeat(ramp(d)[:, None], w, axis=1))
+    rows = h - top - bottom
+    if left:
+        d = left - np.arange(left, dtype=np.float32)
+        blend(top, top + rows, 0, left, np.repeat(ramp(d)[None, :], rows, axis=0))
+    if right:
+        d = np.arange(1, right + 1, dtype=np.float32)
+        blend(top, top + rows, w - right, w, np.repeat(ramp(d)[None, :], rows, axis=0))
+    return big
 
 
 def file_geometry(sku, master_side):
@@ -690,13 +745,16 @@ def make_print_file(raw, sku):
 
 
 # ----------------------------------------------------------------------------- one try
-def _claim(order):
-    path = _path(order, "print.lock")
+def _claim(order, gen=0):
+    """One try at a time: the lock print_<gen>.lock, created atomically. A lock older than LOCK_STALE (its invocation died) is never deleted to
+    take it over (two takers could each delete the other's fresh lock): the taker creates the NEXT generation's lock instead, which only one of
+    them can create; print.json records the generation (lock_gen) with the try. Returns (path, id, gen) or None."""
     mine = {"t": round(time.time(), 3), "id": secrets.token_hex(6)}
-    for _ in range(2):
+    for g in (gen, gen + 1, gen + 2):
+        path = _path(order, f"print_{g}.lock")
         try:
             store.put(path, store.json_bytes(mine), "application/json", upsert=False, timeout=6.0, retry=False)
-            return path, mine["id"]
+            return path, mine["id"], g
         except store.StorageExists:
             pass
         cur = store.get_json(path, timeout=6.0, retry=False)
@@ -706,14 +764,13 @@ def _claim(order):
             age = LOCK_STALE + 1
         if age < LOCK_STALE:
             return None
-        store.delete(path, timeout=6.0, retry=False)
     return None
 
 
 def _release(claim):
     if not claim:
         return
-    path, cid = claim
+    path, cid = claim[0], claim[1]
     try:
         cur = store.get_json(path, timeout=5.0, retry=False)
         if isinstance(cur, dict) and cur.get("id") == cid:
@@ -811,6 +868,15 @@ def _step(order, rec, paid, f, by, force):
         return "wait"
     if pp.get("mismatch") and not force:
         return "held"
+    if paid.get("livemode") is True and not M.live():
+        # a LIVE payment and this deployment sends test orders (MERCHONE_LIVE is not set): never a test order for a paid print. Held for the owner
+        if cur.get("error") != "not_live":
+            _write(order, cur, state="held", error="not_live", why="MERCHONE_LIVE is not set")
+            _note(order, "print_not_live", f"SnapEyes: the print of order {order} is held: MERCHONE_LIVE is not set",
+                  f"Order {order} was paid LIVE with a print, but this deployment sends only TEST orders to merchOne (MERCHONE_LIVE is not set), "
+                  f"and a paid print is never sent as a test order.\nSet MERCHONE_LIVE=1 in Vercel (Production), redeploy, then press Retry in the "
+                  f"admin page (Spaudiniai, order {order}).\n")
+        return "held"
     if not M.configured():
         if cur.get("error") != "not_configured":
             _write(order, cur, state="waiting", error="not_configured")
@@ -820,7 +886,7 @@ def _step(order, rec, paid, f, by, force):
         return "wait"
     if L.time_left(99.0) < TIME_NEED:
         return "transient"
-    claim = _claim(order)
+    claim = _claim(order, int(cur.get("lock_gen") or 0))
     if claim is None:
         return "wait"
     try:
@@ -831,7 +897,7 @@ def _step(order, rec, paid, f, by, force):
         series = int(cur.get("series") or 1)
         if force and cur.get("merchone_id"):
             series += 1              # merchOne's order failed or was cancelled: a new one, under a new external id ("<order>-2")
-        cur = _write(order, cur, state="creating", attempts=attempts, series=series, by=by, why=f"try {attempts}")
+        cur = _write(order, cur, back=force, state="creating", attempts=attempts, series=series, by=by, lock_gen=claim[2], why=f"try {attempts}")
         dl = (f or {}).get("delivery") if f else None
         if not isinstance(dl, dict):
             dl = store.get_json(f"orders/{order}/delivery.json", timeout=8.0)
@@ -845,7 +911,7 @@ def _step(order, rec, paid, f, by, force):
             store.put(name, data, "image/jpeg", upsert=True, timeout=25.0)
             info = dict(info, path=name, sha256=hashlib.sha256(data).hexdigest()[:16], **{"from": dl["key"]})
         url = store.signed_url(name, SIGNED_DAYS * 86400)
-        is_test = not (M.live() and paid.get("livemode") is True)
+        is_test = paid.get("livemode") is not True       # a live payment reaches here only with MERCHONE_LIVE on (held above otherwise)
         body = payload(order, paid, pp, url, series, is_test)
         try:
             oid = M.create_order(body)
@@ -914,20 +980,35 @@ def shipped_mail(order, paid, tr):
     return w["subject"], text, html_body
 
 
-def mark_shipped(order, paid, cur, tr, source):
-    """The print is on its way: print.json shipped with its tracking, out of the index, and the customer's e-mail once."""
-    cur = _write(order, cur, state="shipped", tracking=tr, why=f"shipped ({source})")
-    unindex(order)
+def ship_mail(order, paid, tr):
+    """The customer's "your print is on its way" e-mail, once (print_mail.json, claimed before sending). Returns "sent", "done" (sent, or being
+    sent, before), "off" (no e-mail here or no address), "failed" (Resend refused it) or "transient" (try again later: the claim is given back)."""
     path = _path(order, "print_mail.json")
-    res = "off"
     try:
-        if pay.email_configured() and paid.get("email") and pay.claim_once(path):
-            subject, text, html_body = shipped_mail(order, paid, tr)
-            res = pay.send_mail(paid["email"], subject, text, f"snapeyes-print-shipped-{order}", html_body)
-            pay._mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res)
-    except Exception as e:  # noqa: the shipping is recorded all the same
+        if not pay.email_configured() or not paid.get("email"):
+            return "off"
+        if not pay.claim_once(path):
+            return "done"
+        subject, text, html_body = shipped_mail(order, paid, tr)
+        res = pay.send_mail(paid["email"], subject, text, f"snapeyes-print-shipped-{order}", html_body)
+        pay._mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res)
+        return res
+    except Exception as e:  # noqa: the shipping is recorded all the same; the daily run tries the e-mail again
         pay.log(f"order {order}: print shipped e-mail failed: {type(e).__name__}")
-        res = "failed"
+        try:
+            pay._mark(path, "retry")
+        except Exception:  # noqa
+            pass
+        return "transient"
+
+
+def mark_shipped(order, paid, cur, tr, source):
+    """The print is on its way: print.json shipped with its tracking and the customer's e-mail once. The order leaves the index only once that
+    e-mail is settled (sent, refused or not possible): a transient failure is tried again by the daily run."""
+    _write(order, cur, state="shipped", tracking=tr, why=f"shipped ({source})")
+    res = ship_mail(order, paid, tr)
+    if res != "transient":
+        unindex(order)
     pay.log(f"order {order}: print shipped ({source}), e-mail {res}")
     return res
 
@@ -1025,9 +1106,10 @@ def on_hook(event):
     if not paid:
         return 200, {"ok": True, "ignored": "not paid"}
     if typ == "order_commented":
+        # the comment's text is not passed on: nothing in the event is verified (merchOne signs nothing), so the note only says where to read it
         _note(order, f"print_comment_{hashlib.sha256(json.dumps(data.get('comment'), sort_keys=True).encode()).hexdigest()[:10]}",
               f"SnapEyes: merchOne commented on the print of order {order}",
-              f"merchOne wrote on its print order {oid} (order {order}):\n{str(data.get('comment') or '')[:800]}\n")
+              f"merchOne reports a comment on its print order {oid} (order {order}). Read it in the merchOne dashboard (Orders, {oid}).\n")
         return 200, {"ok": True, "order": order, "state": cur.get("state")}
     try:
         state = refresh(order, paid, cur)
@@ -1081,10 +1163,20 @@ def daily(yes, stop_left, say, max_seconds=DAILY_SECONDS):
     except store.StorageError as e:
         say(f"prints: index not readable: {e}")
         return out
-    for name in sorted(n for n in names if isinstance(n, str) and n.endswith(".json")):
-        order = name[:-5]
-        if not store.ORDER_RE.fullmatch(order):
-            continue
+    orders = [n[:-5] for n in names if isinstance(n, str) and n.endswith(".json") and store.ORDER_RE.fullmatch(n[:-5])]
+    recs = {}
+    for i in range(0, len(orders), 10):
+        if time.time() - t0 > max_seconds / 2 or L.time_left(99.0) < stop_left + TIME_NEED:
+            out["more"] = True
+            break
+        chunk = orders[i:i + 10]
+        got = pay.parallel([lambda o=o: _safe_record(o) for o in chunk])
+        recs.update(zip(chunk, got))
+    # the ones that wait for the owner (held, failed, cancelled at merchOne) stay listed for the admin page but take no turn here; the others
+    # go oldest-checked first, so a print never starves behind older ones
+    todo = sorted((o for o in recs if (recs[o] or {}).get("state") not in PARKED), key=lambda o: ((recs[o] or {}).get("checked") or 0, o))
+    out["parked"] = len(recs) - len(todo)
+    for order in todo:
         if out["looked"] >= DAILY_MAX or time.time() - t0 > max_seconds or L.time_left(99.0) < stop_left + TIME_NEED:
             out["more"] = True
             break
@@ -1093,15 +1185,26 @@ def daily(yes, stop_left, say, max_seconds=DAILY_SECONDS):
             continue
         try:
             paid = pay.get_paid(order)
-            cur = record(order)
+            cur = recs[order]
             if not paid or not paid_print(paid):
                 unindex(order)
                 continue
-            if cur and cur.get("state") in FINAL:
+            st = (cur or {}).get("state")
+            if st == "shipped":
+                # the shipping e-mail did not go out yet (a transient failure): once more; the order leaves the index when it is settled
+                if ship_mail(order, paid, cur.get("tracking") or {}) != "transient":
+                    unindex(order)
+                continue
+            if st in FINAL:
                 unindex(order)
                 continue
-            if cur and cur.get("state") == "created":
-                if refresh(order, paid, cur) == "shipped":
+            if cur:
+                _write(order, cur, checked=int(time.time()))
+            if st == "created":
+                if cur.get("is_test") is True:
+                    unindex(order)          # a test order is never produced or shipped: nothing to read back (the admin can still ask)
+                    continue
+                if refresh(order, paid, None) == "shipped":
                     out["shipped"] += 1
                 continue
             rec = store.get_json(f"orders/{order}/order.json", timeout=6.0)
@@ -1113,6 +1216,13 @@ def daily(yes, stop_left, say, max_seconds=DAILY_SECONDS):
         except Exception as e:  # noqa: one order never stops the run
             say(f"prints: order {order}: {type(e).__name__}: {pay.scrub(str(e))[:160]}")
     return out
+
+
+def _safe_record(order):
+    try:
+        return record(order, timeout=5.0)
+    except store.StorageError:
+        return None
 
 
 # ----------------------------------------------------------------------------- what the pages and the admin see
