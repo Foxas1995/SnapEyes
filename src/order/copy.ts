@@ -80,6 +80,15 @@ const en = {
     email: 'The link to this page is also in your email.',
     bookmark: 'Keep the address of this page: it is your access to your file.',
   },
+  // the order's print (api/_lib/prints.py order_view): preparing, sent (in production), shipped (with its tracking link), canceled
+  print: {
+    title: 'Your print',
+    preparing: 'We send it to production as soon as your file is ready.',
+    sent: 'In production. We email you the tracking link when it ships.',
+    shipped: 'On its way to you.',
+    canceled: 'This print was cancelled. Write to us if you have a question.',
+    track: 'Track the parcel',
+  },
   deleted: {
     title: 'Files deleted',
     body: `The files of this order were deleted. Write to ${CONTACT_EMAIL}.`,
@@ -238,6 +247,15 @@ const de: OrderCopy = {
     link: 'Der Download-Link gilt 7 Tage. Sie können diese Seite jederzeit erneut öffnen und erhalten dann einen neuen Link: Wir bewahren Ihre Datei 12 Monate auf.',
     email: 'Den Link zu dieser Seite finden Sie auch in Ihrer E-Mail.',
     bookmark: 'Bewahren Sie die Adresse dieser Seite auf: Sie ist Ihr Zugang zu Ihrer Datei.',
+  },
+  // the order's print (api/_lib/prints.py order_view): preparing, sent (in production), shipped (with its tracking link), canceled
+  print: {
+    title: 'Ihr Druck',
+    preparing: 'Wir geben ihn in die Produktion, sobald Ihre Datei fertig ist.',
+    sent: 'In Produktion. Sobald er versandt ist, senden wir Ihnen den Link zur Sendungsverfolgung.',
+    shipped: 'Er ist auf dem Weg zu Ihnen.',
+    canceled: 'Dieser Druck wurde storniert. Schreiben Sie uns, wenn Sie Fragen haben.',
+    track: 'Sendung verfolgen',
   },
   deleted: {
     title: 'Dateien gelöscht',

@@ -7,6 +7,7 @@ import type React from 'react';
 import type { EyeView, OrderDetail, Payment, Reply, StepsView } from './api';
 import { StepTable } from './StepTable';
 import { OrderStyle } from './OrderStyle';
+import { OrderPrint } from './Prints';
 import { optionsText } from './stylesView';
 import { namesText } from './orderWords';
 import type { Call } from './AdminApp';
@@ -337,6 +338,8 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
               <StepTable view={steps} />
             </section>
           )}
+
+          {d.print && <OrderPrint call={call} order={order} p={d.print} onDone={() => { void load(); }} />}
 
           {steps && steps.plan && (
             <section className={`${CARD} flex flex-col gap-3`}>

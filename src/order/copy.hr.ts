@@ -83,6 +83,15 @@ export const hr: OrderCopy = {
     email: 'Poveznica na ovu stranicu nalazi se i u vašoj e-poruci.',
     bookmark: 'Sačuvajte adresu ove stranice: preko nje pristupate svojoj datoteci.',
   },
+  // the order's print (api/_lib/prints.py order_view): preparing, sent (in production), shipped (with its tracking link), canceled
+  print: {
+    title: 'Vaš ispis',
+    preparing: 'Predajemo ga u izradu čim vaša datoteka bude gotova.',
+    sent: 'U izradi. Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za praćenje.',
+    shipped: 'Na putu je do vas.',
+    canceled: 'Ovaj je ispis otkazan. Pišite nam ako imate pitanja.',
+    track: 'Prati pošiljku',
+  },
   deleted: {
     title: 'Datoteke su izbrisane',
     body: `Datoteke ove narudžbe su izbrisane. Pišite nam na ${CONTACT_EMAIL}.`,

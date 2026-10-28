@@ -446,11 +446,27 @@ export const hu: TryCopy = {
       closed: 'A rendelés még nem indult el.',
       plan_changed: 'Az alkotásod éppen megváltozott, ezért újra elkészítettük az előnézetet. Nézd meg, majd nyomd meg újra a gombot.',
       unavailable: 'Ez a stílus most nem rendelhető meg a szemeidhez. Válassz másikat, vagy fotózd újra a szemet.',
+      print_unavailable: 'Nyomatot most nem lehet rendelni. A digitális fájlt külön is megrendelheted.',
+      print_changed: 'A nyomat ára épp most változott. Nézd meg újra, aztán nyomd meg a gombot.',
     },
     namesBlocked: 'Először javítsd ki az alkotáson szereplő szavakat (lásd fent).',
     footnote: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a végső ár: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.',
     footnoteAud: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: GST-t nem számítunk fel.',
     footnoteUsd: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: amerikai forgalmi adót nem számítunk fel.',
+  },
+
+  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
+  print: {
+    title: 'Nyomat',
+    none: 'Csak a digitális fájl',
+    option: (name: string, price: string) => `${name}, +${price}`,
+    country: 'Szállítási ország',
+    pick: 'Válassz országot',
+    shipping: 'Szállítás',
+    arrives: 'Nagyjából 1 vagy 2 hét alatt érkezik, nyomon követhetően.',
+    consentMissing: 'Jelöld be a nyomatra vonatkozó négyzetet.',
+    countryMissing: 'Válaszd ki, melyik országba küldjük a nyomatot.',
+    mockAlt: (name: string) => `${name}: az alkotásod előnézete`,
   },
 
   // a névtelen visszajelzés doboz (src/try/Feedback.tsx, api/_lib/feedback.py)

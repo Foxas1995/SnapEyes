@@ -112,7 +112,7 @@ export type CheckoutStep = { kind: 'sync' } | { kind: 'upload'; i: number; n: nu
 
 /** paused: the server's daily ceiling on unpaid uploads is reached (draft 503 uploads_paused); too_many: this order had
  *  its 30 uploads of the day (draft 429 too_many_uploads). Both clear the next day (UTC). */
-export type CheckoutError = 'network' | 'busy' | 'payments' | 'too_large' | 'paused' | 'too_many' | 'failed';
+export type CheckoutError = 'network' | 'busy' | 'payments' | 'too_large' | 'paused' | 'too_many' | 'failed' | 'print_unavailable' | 'print_changed';
 
 export type CheckoutOutcome =
   | { kind: 'redirect'; url: string; ref: OrderRef }            // Stripe's payment page
@@ -148,6 +148,10 @@ export interface CheckoutInput {
   /** The price the page showed, in the market's smallest unit: only compared by the server (409 price_changed when it
    *  would charge another), never used to price. */
   shown?: number;
+  /** A print of the artwork (src/try/PrintPick.tsx): the product and the delivery country; the customer ticked its box. printShown: the print and its
+   *  shipping as the page showed them (cents): only compared by the server (409 print_price_changed). None: the digital file only. */
+  print?: { product: string; country: string } | null;
+  printShown?: number;
 }
 
 type Api = typeof callApi;
@@ -293,6 +297,7 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
       ...(inp.plan8 && inp.plan8Core ? { plan8_core: inp.plan8Core } : {}),
       ...(inp.expToken ? { exp_token: inp.expToken } : {}),
       ...(typeof inp.shown === 'number' ? { shown: inp.shown } : {}),
+      ...(inp.print ? { print: inp.print, consent_print: true, ...(typeof inp.printShown === 'number' ? { print_shown: inp.printShown } : {}) } : {}),
     },
     timeoutMs: 30_000,
   });
@@ -303,6 +308,8 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
     return { kind: 'price_changed', reply: r.data as unknown as PriceChangedReply, ref };
   }
   if (r.reason === 'eyes_missing') return { kind: 'resync', ref };
+  if (r.reason === 'print_unavailable') return { kind: 'error', code: 'print_unavailable', ref };
+  if (r.reason === 'print_price_changed') return { kind: 'error', code: 'print_changed', ref };
   if (r.reason === 'already_paid') return { kind: 'paid', url: orderPageUrl(ref.order, ref.k, inp.lang), ref: null };
   if (r.reason === 'draft_expired' || r.reason === 'bad_link' || r.reason === 'withdrawn') return { kind: 'restart' };
   if (r.status === 409 && r.reason === 'plan_changed') return { kind: 'plan_changed', ref };

@@ -78,6 +78,15 @@ export const hu: OrderCopy = {
     email: 'Ennek az oldalnak a linkjét az e-mailedben is megtalálod.',
     bookmark: 'Őrizd meg ennek az oldalnak a címét: ezzel férsz hozzá a fájlodhoz.',
   },
+  // the order's print (api/_lib/prints.py order_view): preparing, sent (in production), shipped (with its tracking link), canceled
+  print: {
+    title: 'A nyomatod',
+    preparing: 'Amint elkészül a fájlod, gyártásba adjuk.',
+    sent: 'Gyártás alatt. Amikor elküldték, e-mailben megküldjük a csomagkövetési linket.',
+    shipped: 'Úton van hozzád.',
+    canceled: 'Ezt a nyomatot töröltük. Ha kérdésed van, írj nekünk.',
+    track: 'Csomag követése',
+  },
   deleted: {
     title: 'Fájlok törölve',
     body: `Ennek a rendelésnek a fájljait töröltük. Írj nekünk: ${CONTACT_EMAIL}.`,

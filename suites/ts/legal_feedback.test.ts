@@ -4,6 +4,7 @@
 // The words the policy quotes (the button, two chips) are the words the page shows. Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
 import { EDITIONS } from '../../src/legal/editions';
 import { PRIVACY } from '../../src/legal/docs/privacy';
+import { withPrintsPrivacy } from '../../src/legal/docs/prints';
 import { COPY } from '../../src/try/copy';
 import type { Block, LegalDoc } from '../../src/legal/types';
 
@@ -74,7 +75,9 @@ export async function run(): Promise<Row[]> {
 
   // editions
   const doc = (e: keyof typeof EDITIONS, l: Lang) => EDITIONS[e].privacy[l];
-  check('the Hungarian and the euro editions read the same privacy texts in all four languages', LANGS.every((l) => doc('hu', l) === PRIVACY[l] && doc('eu', l) === PRIVACY[l]));
+  // 2026-10-28: the euro edition's policy is the raw text with the print paragraphs, and the Hungarian edition reads that very one
+  check('the Hungarian and the euro editions read the same privacy texts in all four languages',
+    LANGS.every((l) => doc('hu', l) === doc('eu', l) && JSON.stringify(doc('eu', l)) === JSON.stringify(withPrintsPrivacy(PRIVACY[l], l))));
   const au = EDITIONS.au.privacy;
   check('the Australian edition (English and German) has the same operations and retention sections, so the same feedback paragraph, basis and row',
     !!au.en && !!au.de && (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'operations') === sectionText(PRIVACY[l], 'operations') && sectionText(au[l]!, 'retention') === sectionText(PRIVACY[l], 'retention')));

@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Clock, Download, ExternalLink, Mail, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Clock, Download, ExternalLink, Mail, RefreshCcw, Truck } from 'lucide-react';
 import { ORDER_COPY, mbOf, type OrderCopy } from './copy';
 import { adoptMarket, money, withMarket } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
 import { EMPTY_VIEW, REAL_DEPS, driveOrder, stopOf, type DriveView, type OrderLink } from './driver';
-import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPath, type OrderState, type OrderStatus } from './api';
+import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPath, type OrderPrint, type OrderState, type OrderStatus } from './api';
+import { countryName, printName, printProduct } from '../shared/prints';
 import { WithdrawEntry, WithdrawForm, WithdrawnCard } from './WithdrawPanel';
 import { CARD, GOLD_BTN, PLAIN_BTN } from './ui';
 import { Dot, Waiting } from '../motion/Tick';
@@ -367,7 +368,25 @@ const Summary: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang }> = ({ C, s
       <p className="font-semibold text-zinc-100">{parts}</p>
       {st.names && <p className="text-xs text-zinc-400 mt-1 break-words">{C.summary.inscription(st.names)}</p>}
       {typeof st.amount === 'number' && <p className="text-xs text-zinc-400 mt-1">{C.summary.paid(money(st.amount, st.currency ?? 'eur', lang))}</p>}
+      {st.print && st.state !== 'deleted' && <PrintLine C={C} p={st.print} lang={lang} />}
     </section>
+  );
+};
+
+/** The order's print (api/_lib/prints.py order_view): what it is and where it goes, how far it is, and the tracking link once it is shipped. */
+const PrintLine: React.FC<{ C: OrderCopy; p: OrderPrint; lang: Lang }> = ({ C, p, lang }) => {
+  const name = printProduct(p.product) ? printName(p.product, lang) : p.product;
+  return (
+    <div data-testid="order-print" data-state={p.state} className="mt-3 pt-3 border-t border-white/10">
+      <p className="text-xs font-semibold text-zinc-200">{C.print.title}: {name}{p.country ? `, ${countryName(p.country, lang)}` : ''}</p>
+      <p className="text-xs text-zinc-400 mt-1">{C.print[p.state]}</p>
+      {p.state === 'shipped' && p.tracking_url && (
+        <a data-testid="order-print-track" href={p.tracking_url} target="_blank" rel="noopener noreferrer"
+          className="mt-2 text-xs text-zinc-200 underline underline-offset-4 decoration-white/30 hover:text-white inline-flex items-center gap-1">
+          <Truck className="w-3.5 h-3.5" /> {C.print.track}
+        </a>
+      )}
+    </div>
   );
 };
 

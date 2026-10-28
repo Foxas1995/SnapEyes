@@ -93,7 +93,15 @@ const GLOBE = { js: 7888, css: 1158 };
 // (+26 B). HR is this script's own sum on the tree with Croatian minus on its parent (b9d23d0): JavaScript +28,900 B, CSS +53 B. Re-measure it when the Croatian texts
 // change: build both trees, run this script on each, take the difference.
 const HR = { js: 28900, css: 53 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css };
+// The prints (2026-10-28: a print of the artwork through merchOne, behind the owner's switch) are a product, not motion. The landing loads none of them but the print box's five
+// sentences in src/shared/legal.ts (CHECKOUT_LEGAL[l].printConsent, which the build holds equal to the server's), which land in the chunk shared with the header (BrandLogo-*.js,
+// +473 B). The rest is counted although the landing never loads it: the print sections of the terms, the privacy policy and the withdrawal page in five languages in the legal
+// pages' entry (src/legal/main.tsx, main-*.js, +10,459 B) and the shared chunk of /try, /order and the legal pages with the offer, the rate table and the words of the 27
+// countries (src/shared/prints.ts, prints-*.js, +3,477 B, its three Python files slimmed by vite.config.ts pySourceSlim), with -822 B of the Croatian chunk and +39 B of import
+// lists; CSS +261 B: the utilities of the print choice and of the admin's print page in the stylesheet the tools share. PRINTS is this script's own sum on the tree with them
+// minus on its parent (1a2fdca): JavaScript +13,538 B, CSS +261 B. Re-measure it when the print texts change: build both trees, run this script on each, take the difference.
+const PRINTS = { js: 13538, css: 261 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;

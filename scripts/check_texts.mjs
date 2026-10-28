@@ -76,6 +76,7 @@ export const SAMPLES = {
   'collector.bestLabel': [[3, 45], [3, undefined]], 'collector.full': [[5, 'X 2 (45)']], 'collector.more': [[1], [3], [11]],
   'collector.lampSkipped': [[1, 'X 3'], [2, 'X 3'], [5, 'X 3']], 'collector.bestIs': [['X 3']],
   'collector.lastFailed': [['Ezen a felvételen nem találtunk szemet.']],
+  'print.option': [['Akrilinis 30 × 30 cm', '59,00 €']], 'print.mockAlt': [['Plakatas 50 × 50 cm']],
   'result.eyeLabel': [[1]], 'result.retakeEye': [[2]], 'result.removed': [[2]],
   'result.previewFile': [[true], [false]], 'result.fileName': [['celestial-gold', 2, false], ['studio-black', 1, true]],
   'result.did.quality': [[1400]], 'result.addHint': [[1], [3], [11]], 'result.full': [[8]], 'result.remove': [[2]], 'result.confirmStartOver': [[3], [5]],
@@ -157,7 +158,7 @@ const ENGLISH_OK = new RegExp([
   'SnapEyes', 'Studio Black', 'Deep Nebula', 'Emerald Aurora', 'Obsidian Smoke', 'Supernova', 'Couple Duo',
   'Private Atelier', 'Studio', 'Gemini API', 'Google Fonts', 'Google Gemini', 'user agent', 'local storage', 'session storage',
   'snapeyes\\.[a-z]+', 'mailto:\\S+', 'https?:\\/\\/\\S+', 'snapeyes\\.com\\/\\S*', 'order\\?\\S*', '\\/order\\S*', '\\/try\\S*',
-  '\\.jpg', '\\.png', 'info@snapeyes\\.com', 'example\\.com', 'doc:\\S+', 'Australian Consumer Law', 'GST', 'Stripe', 'Resend',
+  '\\.jpg', '\\.png', 'info@snapeyes\\.com', 'support@merchone\\.com', 'example\\.com', 'doc:\\S+', 'Australian Consumer Law', 'GST', 'Stripe', 'Resend',
   'Vercel', 'Supabase', 'Hostinger', 'Apple Pay', 'Google Pay', 'Link', 'PayPal', 'Revolut Pay', 'JPEG', 'PNG', 'PDF', 'px', 'AI',
   'Art\\. 5', 'GDPR', 'Directive', 'Regulation', 'Mantas Bakšys', 'Portretizuokis', 'Global Privacy Control',
   // the style names of the landing's gallery are brand names in every language (longer ones first)
@@ -535,8 +536,9 @@ function pyValue(text, marker, from = 0) {
 
 /** sha256 of the consent texts that belong to each consent version (the five languages of the EU edition, the two of the
  *  Australian one and the one of the US edition, as api/_lib/pay.py has them, in this order: en, de, lt, hu, hr, au en, au de,
- *  us en; the versions before 2026-10-28.1 had no Croatian text, and their fingerprints were taken without it; the versions
- *  before 2026-10-28.2 had no US text, and theirs were taken without it). The version is what an order
+ *  us en, then the print box in en, de, lt, hu, hr (api/_lib/prints.py PRINT_CONSENT_TEXT); the versions before 2026-10-28.1 had no
+ *  Croatian text, and their fingerprints were taken without it; the versions before 2026-10-28.2 had no US text, and theirs were
+ *  taken without it; the versions before 2026-10-28.3 had no print box, and theirs were taken without it). The version is what an order
  *  records next to its own copy of the text, so a text that changes under the same version would make the record say
  *  something else than what the customer ticked. Changing a consent text means a new CONSENT_VERSION in api/_lib/pay.py
  *  and WITHDRAWAL_CONSENT_VERSION in src/shared/legal.ts, and its fingerprint here (the check prints it). */
@@ -544,6 +546,7 @@ export const CONSENT_FINGERPRINTS = {
   '2026-09-30.2': '1323e13de556f0533c0d3891789e3d49da9bc7cf15a506fc33cffddb97eee7b7',
   '2026-10-28.1': 'fb948e2a56ef9967f3b101af39e73b6d8c449f18e2b449144e9f5b0b86098dd8',
   '2026-10-28.2': '5082c38c317956e779b8625a40472b4359a39bfe116c58e1e924523c54211a26',
+  '2026-10-28.3': '547eb1f2abca838ca4a1efb2476c8d61607ee92b65fc78c83ecabc8bd5e24909',
 };
 
 /** The withdrawal waiver the checkbox shows and the server records (src/shared/legal.ts CHECKOUT_LEGAL, api/_lib/pay.py
@@ -588,8 +591,19 @@ export function checkServerTexts(root, legal, orderCopy) {
   if (us.en !== null && us.en !== legal.CHECKOUT_LEGAL_US?.en?.withdrawalConsent) {
     out.push('the US withdrawal waiver differs between the page (src/shared/legal.ts CHECKOUT_LEGAL_US.en.withdrawalConsent) and the server (api/_lib/pay.py CONSENT_TEXT_US): it must be the same words');
   }
-  const texts = [consent.en, consent.de, consent.lt, consent.hu, consent.hr, au.en, au.de, us.en];
-  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py (CONSENT_TEXT_EN_DE, CONSENT_TEXT_AU, CONSENT_TEXT_US), pay_lt.py, pay_hu.py or pay_hr.py (the text check reads them for its fingerprint)');
+  // the print box (api/_lib/prints.py PRINT_CONSENT_TEXT, src/shared/legal.ts CHECKOUT_LEGAL[l].printConsent): the same words on the page and on the server,
+  // and part of the fingerprint since 2026-10-28.3
+  const printsPy = read('api/_lib/prints.py');
+  const pBase = printsPy === null ? -1 : printsPy.indexOf('PRINT_CONSENT_TEXT = {');
+  const printBox = Object.fromEntries(LANGS.map((l) => [l, pBase < 0 ? null : pyValue(printsPy, `"${l}":`, pBase)]));
+  for (const l of LANGS) {
+    if (printBox[l] === null) out.push(`the ${l} print box was not found in api/_lib/prints.py PRINT_CONSENT_TEXT (the text check reads it)`);
+    else if (printBox[l] !== legal.CHECKOUT_LEGAL[l].printConsent) {
+      out.push(`the ${l} print box differs between the page (src/shared/legal.ts CHECKOUT_LEGAL.${l}.printConsent) and the server (api/_lib/prints.py PRINT_CONSENT_TEXT): it must be the same words`);
+    }
+  }
+  const texts = [consent.en, consent.de, consent.lt, consent.hu, consent.hr, au.en, au.de, us.en, ...LANGS.map((l) => printBox[l])];
+  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py (CONSENT_TEXT_EN_DE, CONSENT_TEXT_AU, CONSENT_TEXT_US), pay_lt.py, pay_hu.py, pay_hr.py or prints.py (the text check reads them for its fingerprint)');
   else {
     const version = legal.WITHDRAWAL_CONSENT_VERSION;
     const print = createHash('sha256').update(JSON.stringify(texts)).digest('hex');

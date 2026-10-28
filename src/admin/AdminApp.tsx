@@ -21,13 +21,14 @@ import { WhyPage } from './Why';
 import { PhotosPage } from './Photos';
 import { AdsPage } from './Ads';
 import { FeedbackPage } from './Feedback';
+import { PrintsPage } from './Prints';
 
 export type Call = <T>(action: string, body?: Record<string, unknown>, timeoutMs?: number) => Promise<Reply<T>>;
 
-type Page = 'summary' | 'orders' | 'order' | 'styles' | 'lab' | 'stats' | 'tests' | 'errors' | 'sources' | 'funnel' | 'why' | 'photos' | 'ads' | 'feedback';
+type Page = 'summary' | 'orders' | 'order' | 'styles' | 'lab' | 'stats' | 'tests' | 'errors' | 'sources' | 'funnel' | 'why' | 'photos' | 'ads' | 'feedback' | 'prints';
 type Route = { page: Page; order?: string };
 
-const PAGES = ['orders', 'styles', 'lab', 'stats', 'tests', 'errors', 'sources', 'funnel', 'why', 'photos', 'ads', 'feedback'] as const;
+const PAGES = ['orders', 'styles', 'lab', 'stats', 'tests', 'errors', 'sources', 'funnel', 'why', 'photos', 'ads', 'feedback', 'prints'] as const;
 
 function readRoute(): Route {
   const raw = (typeof location !== 'undefined' ? location.hash : '').replace(/^#\/?/, '');
@@ -44,7 +45,7 @@ function readRoute(): Route {
 export const TAB_GROUPS: [string, [Route['page'], string][]][] = [
   ['Kasdien', [['summary', 'Suvestinė'], ['orders', 'Užsakymai'], ['errors', 'Klaidos']]],
   ['Lankytojai ir reklama', [['sources', 'Šaltiniai'], ['funnel', 'Piltuvas'], ['why', 'Kodėl nepavyksta'], ['photos', 'Nuotraukų kokybė'], ['feedback', 'Atsiliepimai'], ['ads', 'Reklamos']]],
-  ['Įrankiai', [['styles', 'Stiliai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['tests', 'Kainų testai']]],
+  ['Įrankiai', [['styles', 'Stiliai'], ['lab', 'Laboratorija'], ['stats', 'Statistika'], ['tests', 'Kainų testai'], ['prints', 'Spaudiniai']]],
 ];
 
 const Login: React.FC<{ onIn: (key: string, me: Me) => void; message: string }> = ({ onIn, message }) => {
@@ -180,6 +181,7 @@ export const AdminApp: React.FC = () => {
         {route.page === 'photos' && <PhotosPage call={call} />}
         {route.page === 'ads' && <AdsPage call={call} />}
         {route.page === 'feedback' && <FeedbackPage call={call} />}
+        {route.page === 'prints' && <PrintsPage call={call} />}
       </main>
     </div>
   );

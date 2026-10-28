@@ -11,6 +11,8 @@ import { checkoutLegal, legalEdition, ownConsent } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
 import { Dot } from '../motion/Tick';
 import type { Lang } from '../shared/lang';
+import type { OfferedPrint, ServerPrints } from '../shared/prints';
+import { NO_PRINT, PrintPick, printPart, type PrintChoice } from './PrintPick';
 
 /** The withdrawal-waiver text per language, as GET /api/checkout sends it. */
 export type ConsentTexts = Partial<Record<Lang, string>>;
@@ -25,7 +27,10 @@ export interface Ordering {
   maxEyes?: number;
   // the EU texts per language (also the Hungarian edition's), and per market where a market has its own (markets.au: the
   // Australian checkbox; markets.us: the US one)
-  consent?: ConsentTexts & { version?: string; markets?: Record<string, ConsentTexts | undefined> };
+  consent?: ConsentTexts & { version?: string; markets?: Record<string, ConsentTexts | undefined>; print?: ConsentTexts };
+  // the prints the server sells now (GET /api/checkout prints: absent while the owner's switch is off) and the visitor's country (to preselect)
+  prints?: ServerPrints;
+  country?: string;
 }
 
 interface Props {
@@ -56,6 +61,14 @@ interface Props {
   wordsBlocked?: boolean;
   /** the eyes to photograph again when every style that can be bought is held back for them (state retake): their buttons stand in the card, under its line */
   retake?: RetakeView | null;
+  /** the prints this market's checkout offers now (src/shared/prints.ts offeredPrints: none while the owner's switch is off), the customer's choice
+   *  and the print box (never ticked in advance), and the preview of the artwork for the picture of the print */
+  prints?: readonly OfferedPrint[];
+  printChoice?: PrintChoice;
+  onPrintChoice?: (c: PrintChoice) => void;
+  printConsent?: boolean;
+  onPrintConsent?: (v: boolean) => void;
+  artSrc?: string;
 }
 
 // what a card is told when its caller says nothing of the picker (the card of before the picker existed, and the checks that render it alone): the
@@ -172,7 +185,13 @@ export const BuyCard: React.FC<Props> = (props) => {
   const legal = checkoutLegal(lang, market);
   const texts = ownConsent(legalEdition(market)) ? p.ordering?.consent?.markets?.[market] : p.ordering?.consent;
   const waiverText = texts?.[lang] || legal.withdrawalConsent;
-  const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : p.wordsBlocked ? 'words' : !p.waiver ? 'waiver' : null;
+  // a print (src/try/PrintPick.tsx): its price and its shipping are added to the button's total; it needs its country and its own box
+  const offered = p.prints ?? [];
+  const choice = offered.length ? (p.printChoice ?? NO_PRINT) : NO_PRINT;
+  const part = printPart(choice, offered);
+  const total = cents + (part ? part.price + part.ship : 0);
+  const printBlock = choice.product ? (!choice.country ? 'printCountry' : !p.printConsent ? 'printConsent' : null) : null;
+  const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : p.wordsBlocked ? 'words' : !p.waiver ? 'waiver' : printBlock;
   const disabled = p.busy || blockedBy !== null;
   return (
     <section aria-label={T.price.title} data-testid="buy-card" className={CARD}>
@@ -202,6 +221,11 @@ export const BuyCard: React.FC<Props> = (props) => {
           className="mt-0.5 w-5 h-5 shrink-0 accent-gold" />
         <span>{waiverText}</span>
       </label>
+      {offered.length > 0 && (
+        <PrintPick offered={offered} choice={choice} onChoice={(c) => p.onPrintChoice?.(c)} consent={!!p.printConsent}
+          onConsent={(v) => p.onPrintConsent?.(v)} consentText={p.ordering?.consent?.print?.[lang] || legal.printConsent}
+          artSrc={p.artSrc} fmt={fmt} busy={p.busy} />
+      )}
       <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
 
       <button data-testid="buy" type="button" onClick={p.onBuy} disabled={disabled}
@@ -209,9 +233,11 @@ export const BuyCard: React.FC<Props> = (props) => {
           ? 'bg-white/5 border border-white/10 text-zinc-500 cursor-not-allowed'
           : 'fx-gold gold-metal'}`}>
         {p.busy ? <Dot /> : <Lock className="w-4 h-4 shrink-0" />}
-        <span>{p.busy && p.step ? p.step : T.buy.button(fmt(cents))}</span>
+        <span>{p.busy && p.step ? p.step : T.buy.button(fmt(total))}</span>
       </button>
       {!p.busy && blockedBy === 'waiver' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{legal.withdrawalConsentMissing}</p>}
+      {!p.busy && blockedBy === 'printCountry' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.print.countryMissing}</p>}
+      {!p.busy && blockedBy === 'printConsent' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.print.consentMissing}</p>}
       {!p.busy && blockedBy === 'composing' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.buy.waitPreview}</p>}
       {!p.busy && blockedBy === 'failed' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.buy.previewFailed}</p>}
       {!p.busy && blockedBy === 'words' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.buy.namesBlocked}</p>}

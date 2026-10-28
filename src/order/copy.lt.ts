@@ -77,6 +77,15 @@ export const lt: OrderCopy = {
     email: 'Šio puslapio nuoroda yra ir Jūsų el. laiške.',
     bookmark: 'Išsaugokite šio puslapio adresą: tai Jūsų prieiga prie failo.',
   },
+  // the order's print (api/_lib/prints.py order_view): preparing, sent (in production), shipped (with its tracking link), canceled
+  print: {
+    title: 'Jūsų spaudinys',
+    preparing: 'Jį perduosime gaminti, kai tik Jūsų failas bus paruoštas.',
+    sent: 'Gaminamas. Kai jis bus išsiųstas, atsiųsime siuntos sekimo nuorodą.',
+    shipped: 'Jis jau keliauja pas Jus.',
+    canceled: 'Šis spaudinys atšauktas. Jei turite klausimų, parašykite mums.',
+    track: 'Sekti siuntą',
+  },
   deleted: {
     title: 'Failai ištrinti',
     body: `Šio užsakymo failai ištrinti. Parašykite mums adresu ${CONTACT_EMAIL}.`,

@@ -167,9 +167,11 @@ DRAFT_ORDER_MAX = 30         # uploads one unpaid order may take per day (8 eyes
 # 2026-10-28.1 added the Croatian text (CONSENT_TEXT "hr", api/_lib/pay_hr.py CONSENT_TEXT_HR); every other text as it was.
 # 2026-10-28.2 added the US market's text (CONSENT_TEXT_US, with the consent to the use of the eye photos); every other
 # text as it was.
+# 2026-10-28.3 added the print box (api/_lib/prints.py PRINT_CONSENT_TEXT, five languages: shown only when the order has a print, on the
+# euro markets of the EU edition); every withdrawal waiver as it was.
 # A changed text needs a new version here and in src/shared/legal.ts, and the fingerprint of its texts in
 # scripts/check_texts.mjs CONSENT_FINGERPRINTS (the build refuses a text that changed under the same version).
-CONSENT_VERSION = "2026-10-28.2"
+CONSENT_VERSION = "2026-10-28.3"
 CONSENT_TEXT_EN_DE = {
     "en": ("I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period "
            "ends. I know that I lose my right of withdrawal once this has started."),
@@ -226,10 +228,10 @@ CONSENT_TEXT_US = {
 # Every consent text ever shown, by version (and for the Australian and the US market apart): an order's confirmation
 # email quotes the text its customer ticked, also after a text changes (add the new version here, keep the old ones).
 CONSENT_TEXTS = {"2026-09-29.1": CONSENT_TEXT_EN_DE, "2026-09-30.1": CONSENT_TEXT_EN_DE, "2026-09-30.2": CONSENT_TEXT_0930,
-                 "2026-10-28.1": CONSENT_TEXT, CONSENT_VERSION: CONSENT_TEXT}
+                 "2026-10-28.1": CONSENT_TEXT, "2026-10-28.2": CONSENT_TEXT, CONSENT_VERSION: CONSENT_TEXT}
 CONSENT_TEXTS_AU = {"2026-09-30.1": CONSENT_TEXT_AU, "2026-09-30.2": CONSENT_TEXT_AU, "2026-10-28.1": CONSENT_TEXT_AU,
-                    CONSENT_VERSION: CONSENT_TEXT_AU}
-CONSENT_TEXTS_US = {CONSENT_VERSION: CONSENT_TEXT_US}
+                    "2026-10-28.2": CONSENT_TEXT_AU, CONSENT_VERSION: CONSENT_TEXT_AU}
+CONSENT_TEXTS_US = {"2026-10-28.2": CONSENT_TEXT_US, CONSENT_VERSION: CONSENT_TEXT_US}
 SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit)
     "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
            "right away and that your right of withdrawal ends once we have started."),
@@ -487,7 +489,8 @@ def scrub(s):
     """No key, webhook secret, order access key or signed-link token may reach a log line or a reply."""
     s = L._scrub(str(s))
     for name in ("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "SNAPEYES_SUPABASE_SERVICE_KEY",
-                 "SNAPEYES_TICKET_SECRET", "CRON_SECRET", "SNAPEYES_ADMIN_SECRET", "VERCEL_AUTOMATION_BYPASS_SECRET"):
+                 "SNAPEYES_TICKET_SECRET", "CRON_SECRET", "SNAPEYES_ADMIN_SECRET", "VERCEL_AUTOMATION_BYPASS_SECRET",
+                 "MERCHONE_API_USER", "MERCHONE_API_KEY"):
         for part in _env(name).split(","):
             part = part.strip()
             if len(part) >= 8:
@@ -1186,7 +1189,7 @@ def _raise_for(r, label):
     raise PayError(msg)
 
 
-def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp=""):
+def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp="", part=None):
     """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
     methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
     exp: the price experiment and variant the amount was priced under (abtest.assignment), written to the metadata.
@@ -1194,6 +1197,9 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     metadata (pv, ev, plan8), so that a paid record can be compared with the plan stored in order.json (record_paid, steps.create_plan).
     camp: the campaign code of the advertisement the customer came from ("src|med|cmp|trm|cnt", api/_lib/counter.py pack), written to the metadata as `src` so that the order and its revenue are tied
     to a source; nothing else of the visit, and nothing when there is none.
+    part: the order's print (api/_lib/prints.py checkout_part) or None: a second line item, Stripe's shipping address form for the one country it was
+    priced for, its fixed shipping rate, the print's note above the pay button and its metadata (print, print_sku, print_amount, ship_amount, ship_cc).
+    Without a print the session is exactly what it always was.
     Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
     market = spec.get("market") or DEFAULT_MARKET
@@ -1219,6 +1225,10 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
         ("payment_intent_data[description]", f"SnapEyes order {order}"),
         ("payment_intent_data[metadata][order]", order),
     ]
+    if part:
+        from . import prints
+        params = [(k_, prints.SUBMIT_NOTE_PRINT[prints.lang_of(lang)] if k_ == "custom_text[submit][message]" else v) for k_, v in params]
+        params += prints.stripe_params(part, lang)
     meta = {"order": order, "key_sha": key_sha(k), "eyes": str(spec["eyes"]), "style": spec["style"],
             "layout": spec["layout"], "names": W.meta_names(spec.get("names")), "title": spec["title"], "lang": lang,
             "market": market, "currency": currency,
@@ -1230,6 +1240,9 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     meta.update(abtest.metadata(exp, market))
     if camp:
         meta["src"] = camp
+    if part:
+        from . import prints
+        meta.update(prints.metadata(part))
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
             params.append((f"metadata[{name}]", v))
@@ -1495,23 +1508,34 @@ def record_paid(order, rec, sess, source, event_id=None):
     exp = abtest.paid_record(sess, spec)
     if exp:
         paid["experiment"] = exp            # {key, variant, prices}: the ladder this order was priced on
+    # a print (api/_lib/prints.py): what was priced for it and its shipping (the metadata the server wrote), the address Stripe collected and
+    # the print box the customer ticked. The amount checked below is the artwork's price plus the print and its shipping
+    from . import prints
+    pp = prints.paid_part(sess, rec)
+    extra = prints.extra_cents(meta)
+    if pp:
+        paid["print"] = pp
     want = abtest.expected_price(exp, spec) if exp else None
     if want is None:
         want = price_cents(spec["eyes"], spec["style"], market)
     priced = _int_amount(meta.get("amount"))
     want_cur = market_currency(market)
-    expected = priced if priced is not None else want
+    expected = (priced if priced is not None else want) + extra
     if amount != expected or paid["currency"] != want_cur:
         paid["amount_mismatch"] = {"expected": expected, "currency": want_cur, "market": market}
         log(f"order {order}: paid {amount} {paid['currency']} but the order costs {expected} {want_cur} "
             f"(market {market}; recorded, delivered as paid)")
     elif priced is not None and priced != want:
         log(f"order {order}: priced {priced} at checkout, the {market} price list says {want} now (a price change)")
+    if pp and pp.get("mismatch"):
+        log(f"order {order}: the print's {', '.join(pp['mismatch'])} does not match what was priced: the print is held for the owner")
     try:
         store.put(order_path(order, "paid.json"), store.json_bytes(paid), "application/json", upsert=False)
         log(f"order {order} PAID via {source}: {amount} {paid['currency']} ({market}) {spec['eyes']} eye(s) "
             f"{spec['style']} live={paid['livemode']}")
         index_making(order, now)       # the daily clean-up's catch-up (api/_lib/maker.py) finds it until it is done
+        if pp:
+            prints.on_paid(order, paid)  # print.json (waiting until the artwork is delivered) and the print index of the daily run
         if paid["livemode"]:
             _mark_sold(order)
         abtest.note_paid(paid)             # the anonymous event of a price experiment's payment, once
@@ -2001,7 +2025,8 @@ def confirmation_mail(order, paid, k, pack, consent):
                                                      consent_text=consent["text"], auto=auto, link=link, wlink=wlink,
                                                      terms_url=terms["url"], updated_day=pack["updated"],
                                                      seller=seller_lines(lang, pack))
-        blocks = list(blocks) + [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
+        from . import prints
+        blocks = prints.amend_confirmation(list(blocks), lang, paid) + [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
         text, html_body = render_mail(blocks, lang, subject)
         return subject, text, html_body
     rows = [("Bestellnummer" if de else "Order number", order),
@@ -2107,6 +2132,8 @@ def confirmation_mail(order, paid, k, pack, consent):
             ("p", "Kind regards\nSnapEyes"),
             ("p", seller_lines(lang, pack)),
         ]
+    from . import prints
+    blocks = prints.amend_confirmation(blocks, lang, paid)     # an order with a print: its rows and its section (the EU edition's languages)
     abtest.insert_price_list_row(rows, paid, lang)      # an order made under a price experiment: the list that applied to it
     if acl_market(market):
         subject, blocks = _australian(blocks, order, paid, pack, lang, auto, terms["url"])
@@ -2670,6 +2697,11 @@ def note_paid(order, paid):
             f"Names: {names_text(spec) or '-'}\nDate: {W.date_clean(spec.get('date')) or '-'}\nOptions: {opts_text(spec) or '-'}\n"
             f"Title: {spec.get('title') or '-'}\nLanguage: {spec.get('lang')}\n"
             f"Market: {spec.get('market') or DEFAULT_MARKET}\n"
+            # a print (api/_lib/prints.py): what, where, and that it goes to merchOne once the artwork is delivered
+            + (f"Print: {pp.get('product')} to {pp.get('country')} ({amount_text(pp.get('price') or 0, 'en', cur)} + shipping "
+               f"{amount_text(pp.get('ship') or 0, 'en', cur)}){', HELD: ' + ', '.join(pp['mismatch']) if pp.get('mismatch') else ''}; "
+               f"sent to merchOne when the artwork is delivered (admin: Spaudiniai)\n"
+               if isinstance((pp := paid.get("print")), dict) else "")
             + (f"CHECK THE AMOUNT: paid {amount_text(paid.get('amount_total') or 0, 'en', cur)}, the order costs "
                f"{amount_text(mm.get('expected') or 0, 'en', mm.get('currency'))} (market {mm.get('market')}). It is "
                f"delivered as paid; refund the difference in the Stripe Dashboard if it was too much.\n" if mm else "")
@@ -2856,7 +2888,7 @@ def purge_markers(yes, stop_left, res=None):
 # accounting: order.json and paid.json (order number, date, price, payment, email, the artwork's details, consent),
 # the email and note marks, the withdrawal statements, and the marks that say what happened.
 KEEP_NAMES = ("order.json", "paid.json", "mail_delivery.json", "deleted.json", "expired.json", "withdrawn.json",
-              "withdrawal.json", "making.json", "refunded.json")
+              "withdrawal.json", "making.json", "refunded.json", "print.json", "print_mail.json")
 KEEP_PREFIXES = ("note_", "extra_payment_", "withdrawal_", "withdrawal-")
 
 
