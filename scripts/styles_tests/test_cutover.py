@@ -445,20 +445,20 @@ act("styles_override", style="grp.collision", eyes=3, stage="live", confirm=True
 check("Family Colours for three eyes (the Trio) is switchable on its own ticks, and four to eight stay preview: the opening is per eye count",
       CT.orderable("grp.collision", 3) and not CT.orderable("grp.collision", 4) and CT.orderable_max_eyes() == 3, (CT.stage_of("grp.collision", 3), CT.stage_of("grp.collision", 4)))
 act("styles_override", style="grp.collision", eyes=3, stage="preview", confirm=True)
-# a plate style: the order of the runbook (plates in storage first)
-act("styles_override", style="solo.powder", eyes=1, tick={"L1": True}, evidence=PASS_L0)
-act("styles_override", style="solo.powder", eyes=1, stage="live", confirm=True)
+# a plate style: the order of the runbook (plates in storage first). Splash: Powder Burst draws no plate since 2026-10-28 (the light family's dust)
+act("styles_override", style="solo.splash", eyes=1, tick={"L1": True}, evidence=PASS_L0)
+act("styles_override", style="solo.splash", eyes=1, stage="live", confirm=True)
 o, k = new_order(["blue_round"])
-c_pl, j_pl = co(o, k, "solo.powder", 1)
+c_pl, j_pl = co(o, k, "solo.splash", 1)
 check("a plate style the owner has switched on is refused at checkout until its 4K plates are in storage (409 plates; the answer names the style and the reason, never a plate id: release review m5): upload first, tick second (the runbook)",
-      c_pl == 409 and j_pl.get("why") == "plates" and "plates" not in j_pl and not any("P-SN-CLOUD" in str(v) for v in j_pl.values()), (c_pl, j_pl))
-for pid in PL.storage_ids(CT.ENGINE["solo.powder"]["plates"]):          # the families Powder Burst reads, whole (the 409 no longer lists the plates the order needs)
+      c_pl == 409 and j_pl.get("why") == "plates" and "plates" not in j_pl and not any("P-SP-CROWN" in str(v) for v in j_pl.values()), (c_pl, j_pl))
+for pid in PL.storage_ids(CT.ENGINE["solo.splash"]["plates"]):          # the families Splash reads, whole (the 409 no longer lists the plates the order needs)
     store.put(PL.storage_path(pid), b"plate", "image/png", upsert=True)
-c_pl2, j_pl2 = co(o, k, "solo.powder", 1)
+c_pl2, j_pl2 = co(o, k, "solo.splash", 1)
 check("... with the plates in storage the same order is accepted", c_pl2 == 200, (c_pl2, j_pl2))
-r = act("styles_override", style="solo.powder", eyes=1, stage="restore", confirm=True)
-check("restore gives the DEFAULT, not the ceiling: Powder Burst is preview again (only an explicit, ticked live is orderable), the registry's default is what the page says",
-      r["effective"] == {"1": "preview"} and not CT.orderable("solo.powder", 1) and act("styles_catalogue")["default_effective"] == "preview", r["effective"])
+r = act("styles_override", style="solo.splash", eyes=1, stage="restore", confirm=True)
+check("restore gives the DEFAULT, not the ceiling: Splash is preview again (only an explicit, ticked live is orderable), the registry's default is what the page says",
+      r["effective"] == {"1": "preview"} and not CT.orderable("solo.splash", 1) and act("styles_catalogue")["default_effective"] == "preview", r["effective"])
 # the Universe looks
 act("styles_override", style="solo.universe", eyes=1, tick={"L1": True}, evidence=PASS_L0)
 act("styles_override", style="solo.universe", eyes=1, stage="live", confirm=True)

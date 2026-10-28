@@ -72,6 +72,9 @@ def _style_of(design):
         eng = CT.ENGINE[sid]["engine"]
         if eng and eng.get("module") == "singles" and eng.get("design") == design:
             return sid
+    for sid in CT.ids():        # no registry style draws powder since 2026-10-28 (Powder Burst draws the light family's dust): its goldens and the
+        if design == "powder" and CT.STYLES[sid]["name"] == "Powder Burst":     # laboratory's replays keep the seed key of the style it was drawn under
+            return sid
     raise KeyError(design)
 
 

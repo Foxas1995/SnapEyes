@@ -743,7 +743,8 @@ cases = [
     ("a plate retired before it arrived (until not after since)", lambda r: edit_registry(r, lambda L_: L_["plates"]["P-SN-CLOUD__mini0"].update({"until": 1})), "until must be 0"),
     ("a null in the library (not Python)", lambda r: edit_registry(r, lambda L_: L_["plates"]["P-SN-CLOUD__mini0"].update({"score": None})), "null, true and false are not Python"),
     ("a non ASCII word in the library", lambda r: edit_registry(r, lambda L_: L_["plates"]["P-SN-CLOUD__mini0"]["variables"].update({"x": "café"})), "ASCII only"),
-    ("an engine entry that names a plate family the library lacks", lambda r: sub_file(r, "api/_lib/styles_engine.py", '"plates": ["P-SN-CLOUD"],', '"plates": ["P-SN-NOPE"],'), "reads the plate family \"P-SN-NOPE\""),
+    ("an engine entry that names a plate family the library lacks", lambda r: sub_file(r, "api/_lib/styles_engine.py", '"plates": ["P-DN-SPIRAL", "P-UV-DUST", "P-UV-MILKY"],', '"plates": ["P-DN-NOPE", "P-UV-DUST", "P-UV-MILKY"],'),
+     "reads the plate family \"P-DN-NOPE\""),      # Universe's entry: Powder Burst's (the one entry with the cloud alone) reads no plate since 2026-10-28
     ("an engine entry that names an atlas that is not one (item 1 of the engine literal)", lambda r: sub_first(r, "api/_lib/styles_engine.py", '"atlas": ["drops"],', '"atlas": ["drops", "nope"],'), "atlas must list chips, drops"),
     ("a style shown to customers without a tile image", lambda r: os.remove(os.path.join(r, "public", "assets", "atelier", "style-powder-burst-800.webp")), "style-powder-burst-800.webp: the style \"solo.powder\" is shown to customers and has no tile image at 800 px"),
     ("the Python packages recorded at 234 MiB (over the budget with the files of api/)", lambda r: (sub_file(r, "api/_lib/plates_registry.py", "DEPENDENCIES_MIB = 126", "DEPENDENCIES_MIB = 234"), add_file(r, "api/_assets/pad.bin", b"\0" * (2 << 20))), "over the 235 MiB budget"),

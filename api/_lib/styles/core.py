@@ -155,21 +155,25 @@ class Iris:
             self.grade_seconds += time.perf_counter() - t0
         return self._ease
 
-    def graded(self, Sd, master_map=False, finish=True):
+    def graded(self, Sd, master_map=False, finish=True, fin=None):
         """The studio grade in an Sd x Sd frame, cached per size. master_map: the lid map measured as a master's (grade_disc); cached apart.
         finish: with the iris finish on top (what every picture draws). finish=False is the grade alone, which every MEASUREMENT reads (the ring
         colours, the colour class, the pupil): the sealed profile (eye.py) is measured on it, so the preview's palette, the profile and the master's
-        drift checks (steps: class_changed, pupil_changed) read the same numbers as before the finish existed."""
+        drift checks (steps: class_changed, pupil_changed) read the same numbers as before the finish existed. fin: a design's own finish
+        parameters over FIN (lumen DESIGN_FIN: Powder Burst's dust draws its iris without the dark limbal ring), cached apart."""
         Sd = int(Sd)
+        over = dict(fin) if fin else None
         fin = bool(finish) and IRIS_FINISH
         key = ((Sd, "m") if master_map else Sd) if fin or not IRIS_FINISH else ((Sd, "m", "raw") if master_map else (Sd, "raw"))
+        if fin and over:
+            key = (key, tuple(sorted((k, repr(v)) for k, v in over.items())))
         g = self._grades.get(key)
         if g is None:
             ease = self.ease
             t0 = time.perf_counter()
             g = np.ascontiguousarray(np.asarray(grade_disc(self.src, Sd, ease, master_map=True) if master_map else grade_disc(self.src, Sd, ease)))
             if fin:
-                g = finish_iris(g, pupil=PUP.analyse(_tight(self.graded(REF_SIDE, finish=False))[0]))
+                g = finish_iris(g, fin=over, pupil=PUP.analyse(_tight(self.graded(REF_SIDE, finish=False))[0]))
             self.grade_seconds += time.perf_counter() - t0
             self._grades[key] = g
         return g
@@ -1065,13 +1069,13 @@ class Disc:
         return f"Disc(#{self.index} {self.iris.name if self.iris else ''} c=({self.cx:.1f},{self.cy:.1f}) R={self.R:.1f})"
 
 
-def place_disc(iris, cx, cy, R, index=0, master_map=False):
+def place_disc(iris, cx, cy, R, index=0, master_map=False, fin=None):
     """Grade iris for a visible radius of about R px and snap it to whole pixels near (cx, cy). The returned
     Disc's cx, cy, R are exact (effects use those, never the requested ones): R = target / 2 where
     target = round(Sd * STUDIO_FILL), Sd = round(2R / STUDIO_FILL), and the top-left is rounded to integers so
     the graded pixels are pasted unresampled. master_map: the grade measures its lid map as a master's (Iris.graded), kept on the Disc."""
     Sd = max(8, int(round(2.0 * R / L.STUDIO_FILL)))
-    frame = iris.graded(Sd, master_map)
+    frame = iris.graded(Sd, master_map, fin=fin) if fin else iris.graded(Sd, master_map)
     sq, tgt = _tight(frame)
     d = Disc()
     d.iris, d.index, d.Sd, d.master_map = iris, index, Sd, bool(master_map)

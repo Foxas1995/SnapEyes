@@ -441,7 +441,7 @@ with mock.patch.object(CT, "registry_hash", lambda: "eeeeeeeeeeee"), mock.patch.
 check("the artwork's file name is sha256(plan8, rerun) and nothing else: an unrelated registry edit and a new registry hash leave it, a rerun changes it",
       key_a == key_c and key_a != key_b and re.fullmatch(r"orders/261005-keytest01/artwork_[0-9a-f]{16}\.jpg", key_a)
       and key_a[:-4].endswith(hashlib.sha256(json.dumps({"plan8": base8, "rerun": 0}, sort_keys=True).encode()).hexdigest()[:16]), (key_a, key_b, key_c))
-BE_POWDER = CO.break_even_factor("singles.powder", 1)       # 3.62 at the 52 s budget of a 60 s function, 8.3 at the 112 s of a 120 s one
+BE_POWDER = CO.break_even_factor("lumen.dust", 1)           # Powder Burst's row since 2026-10-28 (the light family's dust; it was singles.powder, 3.62 at 52 s and 8.3 at 112 s)
 FAR = round(BE_POWDER + 2.0, 2)                              # far over the break-even factor at the budget in force
 NEVER = "6"                                                  # the ceiling of STYLE_SLOW_CPU (cpu_probe: 1.0 to 6.0)
 import contextlib as _ctx, functools as _ft  # noqa: E402
@@ -1085,29 +1085,31 @@ check("I11: two orders at once on one instance: the second order's step is turne
       isinstance(e_b1, store.Answer) and e_b1.body["reason"] == "room_retry" and "a" in res_ab and exA.calls == 1 and exB.calls == 1
       and got_b["artwork"]["key"] != res_ab["a"]["artwork"]["key"] and steps_of(oB)["try"]["kills"] == 0, (e_b1, res_ab, exA.calls, exB.calls))
 
-# the 4K plates a plan will draw from (the family that knows them before the render: the seed from eye_id, WP5B and the families after it)
+# the 4K plates a plan will draw from (the family that knows them before the render: the seed from eye_id, WP5B and the families after it). The vehicle is Universe with
+# the Vortex look, whose spiral plate the eye id alone decides: Powder Burst, the vehicle until 2026-10-28, draws the light family's dust and reads no plate
 from _lib.styles import plates as PLT  # noqa: E402
-ids4k = [i for i in PLT.ids("P-SN-CLOUD") if PLT.record(i)["k4"]][:2]
+VORTEX = {"style": "solo.universe", "eyes": 1, "layout": "single", "opts": {"look": "vortex"}}
+ids4k = [i for i in PLT.ids("P-DN-SPIRAL") if PLT.record(i)["k4"]][:2]
 real_resolve = ST.resolve
 with mock.patch.object(ST, "resolve", lambda spec, profiles=None: dict(real_resolve(spec, profiles), plates=ids4k)):
-    p_pl = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, eyes1)
-p_nopl = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": None, "profile": None}])
+    p_pl = SP.make_plan(dict(VORTEX), eyes1)
+p_nopl = SP.make_plan(dict(VORTEX), [{"eye_id": None, "profile": None}])
 check("a plan that knows its plates carries plates_needed (id, family, storage path, sha256 and size of every 4K file: checkout verifies each exists before the customer pays) and the plates "
       "are part of plan8; a plan whose eye has no id cannot make the seed, so it does not know them yet and has none, and the family is named in plate_families",
       p_pl["plates"] == ids4k and p_pl["plates_needed"] == PLT.needed(ids4k) and len(ids4k) == 2 and all(re.fullmatch(r"[0-9a-f]{64}", x["sha256"]) and x["path"].startswith("plates/v1/")
                                                                                                     for x in p_pl["plates_needed"]) and p_pl["plan8"] != p_nopl["plan8"]
-      and p_nopl["plates"] is None and "plates_needed" not in p_nopl and p_nopl["plate_families"] == ["P-SN-CLOUD"], (p_pl.get("plates_needed"), p_nopl["plate_families"]))
+      and p_nopl["plates"] is None and "plates_needed" not in p_nopl and p_nopl["plate_families"] == ["P-DN-SPIRAL", "P-UV-DUST", "P-UV-MILKY"], (p_pl.get("plates_needed"), p_nopl["plate_families"]))
 
 # step B of the seed change (WP5B): the plan carries the seed, the plates and what it freezes, from the eye ids and the sealed profile
 from _lib.styles import seeds as SD  # noqa: E402
 from _lib.styles import eye as EYE  # noqa: E402
 IDA, IDB = "0123456789abcdef", "fedcba9876543210"
-p_a = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}])
-p_a2 = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}])
-p_b = SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDB, "profile": None}])
-check("a plan of Powder Burst made from an eye id knows its seed (sha256 of the eye id and the seed key, seeds.py), its one cloud plate and the 4K plate it needs; the same eye gives the same plan "
-      "(plan8 too), another eye another seed and another plan8; nothing but the eye and the style decides it",
-      p_a["seed"] == str(SD.seed_for_key([IDA], p_a["seed_key"])) and p_a["seed_from"] == "eye_id" and len(p_a["plates"]) == 1 and p_a["plates"][0].startswith("P-SN-CLOUD")
+p_a = SP.make_plan(dict(VORTEX), [{"eye_id": IDA, "profile": None}])
+p_a2 = SP.make_plan(dict(VORTEX), [{"eye_id": IDA, "profile": None}])
+p_b = SP.make_plan(dict(VORTEX), [{"eye_id": IDB, "profile": None}])
+check("a plan of Universe with the Vortex look made from an eye id knows its seed (sha256 of the eye id and the seed key, seeds.py), its one spiral plate and the 4K plate it needs; the same eye "
+      "gives the same plan (plan8 too), another eye another seed and another plan8; nothing but the eye and the style decides it",
+      p_a["seed"] == str(SD.seed_for_key([IDA], p_a["seed_key"])) and p_a["seed_from"] == "eye_id" and len(p_a["plates"]) == 1 and p_a["plates"][0].startswith("P-DN-SPIRAL")
       and p_a["plates_needed"] == PLT.needed(p_a["plates"]) and p_a["frozen"] == {} and p_a["plan8"] == p_a2["plan8"] and p_a["plan8"] != p_b["plan8"] and p_a["seed"] != p_b["seed"]
       and p_a["eye_ids"] == [IDA], (p_a["seed"], p_a["plates"], p_b["plates"]))
 prof_blue = EYE.profile_of_bytes(SI.png_bytes("blue_round"), rules=("lid",))
@@ -1123,21 +1125,21 @@ p_leg0 = SP.make_plan({"style": "studio_black", "eyes": 1, "layout": "single"}, 
 check("a style that draws no plate has its seed and no plate to name (plates None: no plates_needed); a plan of the legacy engine has none of it (it is drawn by the old composer)",
       p_clean0["seed"] == str(SD.seed_for_key([IDA], p_clean0["seed_key"])) and p_clean0["plates"] is None and p_clean0["frozen"] == {} and "plates_needed" not in p_clean0
       and "seed" not in p_leg0 and "frozen" not in p_leg0, (p_clean0["plates"], p_leg0.get("seed")))
-with mock.patch.object(ST, "resolve", side_effect=PLT.NoPlate("no plate for P-SN-CLOUD {}")):
-    e_np = raises(lambda: SP.make_plan({"style": "solo.powder", "eyes": 1, "layout": "single"}, [{"eye_id": IDA, "profile": None}]), SP.Hold)
+with mock.patch.object(ST, "resolve", side_effect=PLT.NoPlate("no plate for P-DN-SPIRAL {}")):
+    e_np = raises(lambda: SP.make_plan(dict(VORTEX), [{"eye_id": IDA, "profile": None}]), SP.Hold)
 check("a plate library with no plate for the style at the plan's version is a hold (no_engine), not a crash at checkout", isinstance(e_np, SP.Hold) and e_np.reason == "no_engine", e_np)
 
 
 class FakePv:
-    def __init__(self, seed, plates):
-        self.seed, self.log = seed, {"plates": plates}
+    def __init__(self, seed, plates, design=None):      # design: the plan's (the universe family's plan names the look it drew, checked too)
+        self.seed, self.log, self.design = seed, {"plates": plates}, design
 
 
-e_s = raises(lambda: SP._check_drawn(p_a, FakePv(1, p_a["plates"])), SP.Hold)
-e_p = raises(lambda: SP._check_drawn(p_a, FakePv(int(p_a["seed"]), ["P-SN-CLOUD__other"])), SP.Hold)
+e_s = raises(lambda: SP._check_drawn(p_a, FakePv(1, p_a["plates"], p_a["design_used"])), SP.Hold)
+e_p = raises(lambda: SP._check_drawn(p_a, FakePv(int(p_a["seed"]), ["P-DN-SPIRAL__other"], p_a["design_used"])), SP.Hold)
 check("the picture is checked against the plan before anything is stored: the drawn seed and plates equal the plan's (nothing raised), another seed or other plates is a hold picture_drift, and a plan "
       "that names no plates is not checked for them (a splash with no profile, an old plan)",
-      SP._check_drawn(p_a, FakePv(int(p_a["seed"]), p_a["plates"])) is None and isinstance(e_s, SP.Hold) and e_s.reason == "picture_drift" and isinstance(e_p, SP.Hold) and e_p.reason == "picture_drift"
+      SP._check_drawn(p_a, FakePv(int(p_a["seed"]), p_a["plates"], p_a["design_used"])) is None and isinstance(e_s, SP.Hold) and e_s.reason == "picture_drift" and isinstance(e_p, SP.Hold) and e_p.reason == "picture_drift"
       and SP._check_drawn(p_s0, FakePv(int(p_s0["seed"]), ["P-SP-CROWN__x"])) is None and SP._check_drawn({}, FakePv(5, [])) is None, (e_s, e_p))
 check("the two new holds have their words for the owner's reminder (why it waits, what to do)", all(SP.hold_text(r, "261005-x") for r in ("eye_changed", "picture_drift")), "")
 
@@ -1747,7 +1749,7 @@ check("master_compose still answers 400 for a style that is not renderable (an i
       isinstance(raises(lambda: REAL_MC(dict(mcb, style="duo.kiss_collision", ticket=L.mint_ticket(store.unlock_kind(LAB2), 300))), L.ClientError), L.ClientError), "")
 check("step_need: the legacy figure for a legacy style, the cost table's for a v3 style, None where the table has no row",
       MC.step_need("studio_black", 1) == CO.legacy_need(1) == 21.8 and 20 < MC.step_need("solo.powder", 1) < 30
-      and abs(MC.step_need("solo.powder", 1) - CO.step_need("singles.powder", 1, side=4096)) < 1e-9, (MC.step_need("solo.powder", 1),))
+      and abs(MC.step_need("solo.powder", 1) - CO.step_need("lumen.dust", 1, side=4096)) < 1e-9, (MC.step_need("solo.powder", 1),))      # lumen.dust: Powder Burst's row since 2026-10-28
 with mock.patch.object(CT, "engine_for", lambda s, n: {"module": "singles", "design": "nonesuch", "work_side": 4096, "clean": 0}):
     no_row = MC.step_need("solo.powder", 1)
 check("... and None where the cost table has no row for the design", no_row is None, no_row)
