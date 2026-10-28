@@ -57,6 +57,25 @@ export function ltCount(n: number, forms: [one: string, few: string, many: strin
   return `${n} ${w}`;
 }
 export const AKYS: [string, string, string] = ['akis', 'akys', 'akių'];
+
+/** Why a 4K eye check failed, in words: the codes of the record's "fail" list (api/_lib/iris.py preview_qa). pupil_shape (2026-10-28): the delivered pupil is
+ *  not one round dark disc (a blob with arms and black spots the restoration drew from a reflection on the pupil), so a person looks before it ships. */
+export const QA_FAIL_LT: Record<string, string> = {
+  ring_de00: 'spalva nutolo nuo peržiūros',
+  dl: 'šviesumas nutolo nuo peržiūros',
+  follow: 'neseka peržiūros piešinio',
+  pupil: 'vyzdžio dydis kitoks nei peržiūroje',
+  photo: 'peržiūra nepanaši į nuotrauką',
+  pupil_shape: 'vyzdys netaisyklingas (dėmė su atšakomis ar juodais taškais), pažiūrėk prieš siunčiant',
+  qa_error: 'patikra nepavyko',
+};
+
+/** "priežastis: ..." for a check record's fail list, '' when nothing failed or the list is not a list of codes. */
+export function qaFailText(fail: unknown): string {
+  if (!Array.isArray(fail)) return '';
+  const words = fail.filter((c): c is string => typeof c === 'string' && c.length > 0).map((c) => QA_FAIL_LT[c] ?? c);
+  return words.length ? `priežastis: ${words.join('; ')}` : '';
+}
 export const KARTAI: [string, string, string] = ['kartas', 'kartai', 'kartų'];
 
 export function fmtBytes(b: number | null | undefined): string {

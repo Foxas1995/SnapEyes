@@ -211,6 +211,9 @@ FIN = {
     "limb": (0.78, 0.60),       # the dark limbal ring inside the iris: from this share of R, down to (1 - this) at the edge
     "pupil_dark": 0.85,         # the pupil a little deeper
     "gloss": 0.0,               # no gloss on the pupil (the owner, 2026-10-27: "no dots inside like the competitor")
+    "edge": 0.0,                # 0: the micro contrast's blurs see the black round the disc (every style as approved). A radius (share of R): they read
+                                # only the iris inside it (a normalised blur), so the limb gets no bright overshoot. Lumen DESIGN_FIN turns it on for
+                                # Powder Burst, whose iris keeps no dark limbal ring to hide that overshoot (it read as a glass rim at the limb)
 }
 
 
@@ -251,8 +254,18 @@ def _finish(frame, fin=None, pupil=None):
     k = o["dehaze"] * floor
     b = a - np.float32(k)
     b *= np.float32(1.0 / max(1e-3, 1.0 - k / 255.0))
+    ew = None
+    if o["edge"] > 0:
+        # the blurs below read the iris only: a blur of the black round the disc is darker than the iris next to it, and b minus that blur is a
+        # bright band on the iris' last 0.04 R (+17 to +40 % at 0.984 R on the four test eyes); weighted by the disc and divided by the blurred
+        # weight, the limb is sharpened like any other part of the iris and the band is gone. Pixels further in than 4 sigma are unchanged
+        ew = (r <= np.float32(o["edge"])).astype(np.float32)
     for sig_r, amt in o["micro"]:
-        bl = blur(b, max(0.6, sig_r * R), clip_negative=False)
+        if ew is None:
+            bl = blur(b, max(0.6, sig_r * R), clip_negative=False)
+        else:
+            bl = blur(b * ew[..., None], max(0.6, sig_r * R), clip_negative=False)
+            bl /= np.maximum(blur(ew, max(0.6, sig_r * R), clip_negative=False), np.float32(1e-3))[..., None]
         np.subtract(b, bl, out=bl)
         bl *= np.float32(amt)
         b += bl

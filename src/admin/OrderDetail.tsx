@@ -10,7 +10,7 @@ import { OrderStyle } from './OrderStyle';
 import { optionsText } from './stylesView';
 import { namesText } from './orderWords';
 import type { Call } from './AdminApp';
-import { actionLt, AKYS, explain, fmtBytes, fmtMoney, fmtNum, fmtTime, logResultLt, ltCount, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
+import { actionLt, AKYS, explain, fmtBytes, fmtMoney, fmtNum, fmtTime, logResultLt, ltCount, qaFailText, RESULT_LT, STATE_LT, STATE_TONE, STYLE_LT } from './format';
 import { BTN, CARD, Chip, ConfirmDialog, CopyField, DANGER, ExtLink, H2, JsonView, MUTED, Notice, Rows, Spinner, Thumb, Toast } from './ui';
 import type { ConfirmSpec, Tone } from './ui';
 
@@ -39,6 +39,7 @@ const QaLine: React.FC<{ label: string; qa: J | null | undefined }> = ({ label, 
       {qa.render_ok !== undefined ? ` · sekė peržiūrą: ${yesNo(qa.render_ok)}` : ''}
       {qa.pupil_neutral !== undefined && qa.pupil_neutral !== null ? ` · vyzdys neutralus: ${yesNo(qa.pupil_neutral)}` : ''}
       {n(qa.score) !== null ? ` · balas ${fmtNum(n(qa.score))}` : ''}
+      {qaFailText(qa.fail) ? ` · ${qaFailText(qa.fail)}` : ''}
     </p>
   );
 };

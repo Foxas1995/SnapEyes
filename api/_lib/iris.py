@@ -4043,6 +4043,16 @@ PREVIEW_QA_PHOTO = 4.0              # the preview's colour-only dE00 against the
                                     # photo, 5.0 or more for any other eye of the test set (chroma_lock gave every
                                     # preview its photo's colour, so a larger gap is a preview of another eye)
 PREVIEW_RENDER_CHECKS = ("ring_de00", "dl", "follow", "pupil")   # the checks a second render could pass
+PREVIEW_QA_SHAPE = 0.97             # pupil_shape: the delivered pupil's solidity (its outline against its convex hull), at least.
+                                    # 43 restorations of the test sets (the clean, lid and drive eyes, the owner's four, eight
+                                    # 4K restorations) read 0.992-0.999; the owner's 215102 (a room and the photographer mirrored
+                                    # on a wide, lit pupil, drawn by the model as a square black blob with black spots: lab order
+                                    # lab-261027-9c1f1d48 of 2026-10-27) 0.933, and a lash fringe hanging into the pupil (drv_w12)
+                                    # 0.938. Not a render check: the approved preview has the same pupil, a second render does not help
+PUPIL_SHAPE_SIDE = 512              # read on a copy this size (a 4096 master reads like its preview)
+PUPIL_SHAPE_LEVEL = 0.25            # the outline: where the ray from the dark core's centre first climbs this share of the way to the iris
+PUPIL_SHAPE_ANGLES = 180            # rays, one per 2 degrees...
+PUPIL_SHAPE_MEDIAN = 9              # ...with a circular median over this many of them: one lash or one glint does not bend the outline
 
 
 def _reg_plane(im, n):
@@ -4270,14 +4280,87 @@ def preview_follow(render, preview, r_frac=None):
     return f
 
 
+def _hull_area(x, y):
+    """Area of the convex hull of the points (x, y) (monotone chain)."""
+    pts = sorted(set(zip(np.round(x, 4).tolist(), np.round(y, 4).tolist())))
+    if len(pts) < 3:
+        return 0.0
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lo, up = [], []
+    for p in pts:
+        while len(lo) >= 2 and cross(lo[-2], lo[-1], p) <= 0:
+            lo.pop()
+        lo.append(p)
+    for p in reversed(pts):
+        while len(up) >= 2 and cross(up[-2], up[-1], p) <= 0:
+            up.pop()
+        up.append(p)
+    h = np.array(lo[:-1] + up[:-1])
+    return 0.5 * abs(float(np.sum(h[:, 0] * np.roll(h[:, 1], -1) - np.roll(h[:, 0], -1) * h[:, 1])))
+
+
+def pupil_shape(im, r_frac=None):
+    """Is the pupil of a restored iris one round (or oval) dark disc? {"solidity", "rp"} or None when there is no dark centre to read.
+    A ray is cast from the centre of the dark core every 2 degrees to where it first climbs PUPIL_SHAPE_LEVEL of the way to the iris, the
+    rays are smoothed by a circular median, and solidity is the area of that outline over the area of its convex hull: about 0.99 for
+    any round, oval or slit pupil, lower for a pupil with bays and arms (a reflection or a crypt the model drew into it). rp: the outline's
+    area-equivalent radius (iris radii). Read on a PUPIL_SHAPE_SIDE copy; never raises for a picture without a pupil (None)."""
+    r_frac = r_frac or iris_radius_frac()
+    n = PUPIL_SHAPE_SIDE
+    im = im if im.mode == "RGB" else im.convert("RGB")
+    y = _lum3(np.asarray(im.resize((n, n), Image.BOX)))[..., 0].astype(np.float32)
+    ys = (y + np.roll(y, 1, 0) + np.roll(y, -1, 0) + np.roll(y, 1, 1) + np.roll(y, -1, 1)) / 5.0
+    R = r_frac * n
+    ax = (np.arange(n) - n / 2 + 0.5) / R
+    rr = np.sqrt(ax[None, :] ** 2 + ax[:, None] ** 2)
+    core = float(np.percentile(y[rr < 0.25], 5))
+    ring = (rr > 0.55) & (rr < 0.85)
+    if not ring.any():
+        return None
+    iris = float(np.median(y[ring]))
+    if iris - core < PUPIL_LOCK_CONTRAST:
+        return None
+    thr = core + PUPIL_SHAPE_LEVEL * (iris - core)
+    yy, xx = np.nonzero((y < thr) & (rr < 0.25))
+    if len(yy) < 20:
+        return None
+    cx, cy = float(xx.mean()) + 0.5, float(yy.mean()) + 0.5
+    na = PUPIL_SHAPE_ANGLES
+    ang = (np.arange(na) + 0.5) * (2 * math.pi / na)
+    steps = np.arange(0.0, 0.85 * R, 0.5)
+    X = np.clip(cx - 0.5 + np.cos(ang)[:, None] * steps[None, :], 0, n - 1.001)
+    Y = np.clip(cy - 0.5 + np.sin(ang)[:, None] * steps[None, :], 0, n - 1.001)
+    x0, y0 = np.floor(X).astype(np.int64), np.floor(Y).astype(np.int64)
+    fx, fy = X - x0, Y - y0
+    prof = (ys[y0, x0] * (1 - fx) * (1 - fy) + ys[y0, x0 + 1] * fx * (1 - fy) + ys[y0 + 1, x0] * (1 - fx) * fy
+            + ys[y0 + 1, x0 + 1] * fx * fy)
+    up = prof > thr
+    run = up[:, :-2] & up[:, 1:-1] & up[:, 2:]
+    hit = run.any(1)
+    e = np.where(hit, steps[np.argmax(run, axis=1)], steps[-1])
+    k = PUPIL_SHAPE_MEDIAN
+    pad = np.concatenate([e[-(k // 2):], e, e[:k // 2]])
+    e = np.median(np.stack([pad[i:i + na] for i in range(k)], 0), 0)
+    px, py = e * np.cos(ang), e * np.sin(ang)
+    area = 0.5 * abs(float(np.sum(px * np.roll(py, -1) - np.roll(px, -1) * py)))
+    hull = _hull_area(px, py)
+    if area <= 0 or hull <= 0:
+        return None
+    return {"solidity": round(min(1.0, area / hull), 3), "rp": round(math.sqrt(area / math.pi) / R, 3)}
+
+
 def preview_qa(stage, result, preview, photo=None, r_frac=None, follow=None, reg=None, lock=None):
     """How far the delivered master still is from the preview the customer approved. Logged and returned, never
     raised. follow: preview_follow() of the render before preview_lock (without it those two checks are skipped).
     ok is false when any measured check is past its limit (PREVIEW_QA_*); render_ok looks only at the checks a
     second render could pass (PREVIEW_RENDER_CHECKS), not at a preview that does not match its photo.
-    score: the worst of those checks as a share of its limit (1.0 at the limit), for choosing between two renders."""
+    score: the worst of those checks as a share of its limit (1.0 at the limit), for choosing between two renders.
+    pupil_shape: the delivered pupil's solidity (pupil_shape(), None when it has no dark centre to read); below PREVIEW_QA_SHAPE the
+    check "pupil_shape" fails, so a person looks before it ships (a blob with arms and black spots the restoration drew from a
+    reflection on the pupil). It is not a render check: the approved preview carries the same pupil."""
     r_frac = r_frac or iris_radius_frac()
-    q = {"ring_de00": None, "dl": None, "follow": None, "pupil_d": None, "photo_de00": None}
+    q = {"ring_de00": None, "dl": None, "follow": None, "pupil_d": None, "photo_de00": None, "pupil_shape": None}
     try:
         de, _, dl = qa_colour(result, preview, r_frac, parts=True)
         q["ring_de00"], q["dl"] = round(de, 2), round(dl, 2)
@@ -4292,6 +4375,14 @@ def preview_qa(stage, result, preview, photo=None, r_frac=None, follow=None, reg
             parts["pupil"] = q["pupil_d"] / PREVIEW_QA_PUPIL
         if q["photo_de00"] is not None:
             parts["photo"] = q["photo_de00"] / PREVIEW_QA_PHOTO
+        try:
+            shape = pupil_shape(result, r_frac)
+        except Exception as e:  # noqa: the shape is read for the owner's review; a fault leaves it unmeasured
+            shape = None
+            print("snapeyes preview qa pupil shape error", stage, _scrub(repr(e))[:160], flush=True)
+        if shape is not None:
+            q["pupil_shape"] = shape["solidity"]
+            parts["pupil_shape"] = (1.0 - shape["solidity"]) / (1.0 - PREVIEW_QA_SHAPE)
         fail = sorted(k for k, v in parts.items() if v > 1.0)
         q["score"] = round(max(parts[k] for k in PREVIEW_RENDER_CHECKS if k in parts), 3)
         q["fail"] = fail
