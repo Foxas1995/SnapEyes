@@ -7,10 +7,10 @@ type EnglishCopy = typeof en;
 
 /** The copy of one language: exactly the keys of en.json (nested objects, arrays, strings, a few numbers), except that the offer of
  *  Australian dollars (marketHint.aud) exists only in the languages of the Australian edition (English and German, src/shared/legal.ts
- *  EDITION_LANGS): a Lithuanian or Hungarian page is never offered that market, so it carries no words for it
- *  (scripts/check_texts.mjs holds every language file to this). */
+ *  EDITION_LANGS) and the offer of US dollars (marketHint.usd) only in the language of the US edition (English): a page in another
+ *  language is never offered that market, so it carries no words for it (scripts/check_texts.mjs holds every language file to this). */
 export type LandingCopy = Omit<EnglishCopy, 'marketHint'> & {
-  marketHint: Omit<EnglishCopy['marketHint'], 'aud'> & { aud?: EnglishCopy['marketHint']['aud'] };
+  marketHint: Omit<EnglishCopy['marketHint'], 'aud' | 'usd'> & { aud?: EnglishCopy['marketHint']['aud']; usd?: EnglishCopy['marketHint']['usd'] };
 };
 
 type Join<P extends string, K extends string | number> = P extends '' ? `${K}` : `${P}.${K}`;

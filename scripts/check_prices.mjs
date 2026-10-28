@@ -1,12 +1,12 @@
 // The price check of the build: every price lives in ONE place, api/_lib/markets.py (the server charges from it and
 // src/shared/markets.ts reads the same file for every page). This refuses the build when
 //   1. that file's MARKETS literal is not plain JSON, or breaks a rule (currencies, Stripe's smallest units and minimum
-//      charges, whole Australian dollars and whole forints, a selectable default market, ...);
+//      charges for EUR, AUD, HUF, USD and GBP, whole Australian dollars and whole forints, a selectable default market, ...);
 //   2. the site's own reading of it (src/shared/markets.ts, loaded by vite.config.ts) differs from this one, or its
 //      price rule (priceMinor) gives another price than api/_lib/pay.py's rule for any market, number of eyes and style (every id
 //      of api/_lib/styles_registry.py, by its price class: scripts/check_styles.mjs also compares the rules);
 //   3. any other file of the site or the server holds a price of its own: a price in Stripe's units in the files that
-//      deal with prices, or a written price ("19.97", "A$39", "6 990 Ft") anywhere in src/ or api/ (comments aside);
+//      deal with prices, or a written price ("19.97", "A$39", "6 990 Ft", "$16") anywhere in src/ or api/ (comments aside);
 //   5. every price experiment (api/_lib/experiments.py, checked by scripts/check_experiments.mjs): full ladders per
 //      variant and market, control = the standard ladder, no variant that sells at a loss, the site's price rule
 //      agrees with the server's for every variant, and no other file holds a variant's price;
@@ -16,7 +16,8 @@
 //      ladder's own price and changes when the ladder does (src/landing/priceText.ts, checkLandingPrices below);
 //   4. a market is selectable in another currency than the default market's without its own edition of the legal
 //      texts (src/shared/legal.ts EDITION_MARKETS = api/_lib/pay.py EDITION_MARKETS): the EU texts print euro prices
-//      only. The two lists, and the languages each edition has (EDITION_LANGS in both files), must agree.
+//      only. The two lists, and the languages each edition has (EDITION_LANGS in both files), must agree, and the
+//      server's Australian and US parts (pay.py ACL_MARKETS, US_MARKETS) are exactly the markets of those editions.
 // vite.config.ts runs it before every build (with the site's reading, check 2, and the landing's price texts, check 6);
 // `npm run check:prices` loads both as well and runs everything.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -27,12 +28,13 @@ import { checkExperiments, ladderRule, withVariantLadders } from './check_experi
 import { STYLES_FILE, loadRegistry, priceClassOf } from './styles_source.mjs';
 
 export const MARKETS_FILE = 'api/_lib/markets.py';
-const CURRENCIES = ['eur', 'aud', 'huf'];
+const CURRENCIES = ['eur', 'aud', 'huf', 'usd', 'gbp'];
 const PRICE_KEYS = ['one_eye_studio_black', 'one_eye_art', 'two_eyes', 'each_further_eye'];
 const CLASSES = ['black', 'art'];   // the price classes (api/_lib/styles_registry.py price_class)
 const MAX_EYES = 8;
-// Stripe's minimum charge per currency, in its smallest unit (docs.stripe.com/currencies: EUR 0.50, AUD 0.50, HUF 175)
-const STRIPE_MIN = { eur: 50, aud: 50, huf: 17500 };
+// Stripe's minimum charge per currency, in its smallest unit (docs.stripe.com/currencies: EUR 0.50, AUD 0.50, HUF 175,
+// USD 0.50, GBP 0.30)
+const STRIPE_MIN = { eur: 50, aud: 50, huf: 17500, usd: 50, gbp: 30 };
 
 // The files that deal with prices: none of them may hold a price in Stripe's units (1997, 3900, 699000, ...).
 const PRICE_FILES = [
@@ -177,19 +179,20 @@ function checkEditions(root, defaultMarket, markets, out) {
     }
   }
   // the server's Australian part (pay.py ACL_MARKETS: the Australian checkbox, note and invoice) is exactly the market the
-  // pages give the "au" edition (legal.ts EDITION_MARKETS.au), and inside the server's EDITION_MARKETS
+  // pages give the "au" edition (legal.ts EDITION_MARKETS.au), and inside the server's EDITION_MARKETS; the US part
+  // (pay.py US_MARKETS: the US checkbox with the consent to the use of the eye photos, note and invoice) the same for "us"
   if (payPy !== null) {
-    const m = /^ACL_MARKETS = \(([^)]*)\)/m.exec(payPy);
-    if (!m) out.push(`${PAY_FILE}: ACL_MARKETS not found (the price check reads it)`);
-    else {
-      const acl = [...m[1].matchAll(/"([a-z]{2,8})"/g)].map((x) => x[1]);
-      const table = legal !== null ? /export const EDITION_MARKETS[^=]*=\s*\{([^}]*)\}/.exec(legal)?.[1] : undefined;
-      const au = table !== undefined ? /\bau\s*:\s*'([a-z]{2,8})'/.exec(table)?.[1] : undefined;
-      if (au !== undefined && acl.join() !== au) {
-        out.push(`${PAY_FILE} ACL_MARKETS (${acl.join(', ')}) must be exactly the market of the Australian edition in ${LEGAL_FILE} EDITION_MARKETS (${au})`);
+    const table = legal !== null ? /export const EDITION_MARKETS[^=]*=\s*\{([^}]*)\}/.exec(legal)?.[1] : undefined;
+    for (const [list, edition, name] of [['ACL_MARKETS', 'au', 'Australian'], ['US_MARKETS', 'us', 'US']]) {
+      const m = new RegExp(`^${list} = \\(([^)]*)\\)`, 'm').exec(payPy);
+      if (!m) { out.push(`${PAY_FILE}: ${list} not found (the price check reads it)`); continue; }
+      const own = [...m[1].matchAll(/"([a-z]{2,8})"/g)].map((x) => x[1]);
+      const ed = table !== undefined ? new RegExp(`\\b${edition}\\s*:\\s*'([a-z]{2,8})'`).exec(table)?.[1] : undefined;
+      if (table !== undefined && own.join() !== (ed ?? '')) {
+        out.push(`${PAY_FILE} ${list} (${own.join(', ')}) must be exactly the market of the ${name} edition in ${LEGAL_FILE} EDITION_MARKETS (${ed ?? 'none'})`);
       }
-      if (server && !acl.every((x) => server.includes(x))) {
-        out.push(`${PAY_FILE} ACL_MARKETS (${acl.join(', ')}) must be inside its EDITION_MARKETS (${server.join(', ')})`);
+      if (server && !own.every((x) => server.includes(x))) {
+        out.push(`${PAY_FILE} ${list} (${own.join(', ')}) must be inside its EDITION_MARKETS (${server.join(', ')})`);
       }
     }
   }
@@ -270,6 +273,10 @@ function writtenPatterns(markets) {
           out.set(`${units}.${cents}`, new RegExp(`(?<![\\d.,])${units}[.,]${cents}(?![\\d])`));
         } else if (m.currency === 'aud') {
           out.set(`A$${units}`, new RegExp(`A\\$[ \\u00a0]?${units}(?![\\d])`));
+        } else if (m.currency === 'usd' || m.currency === 'gbp') {
+          // a whole dollar or pound price ("$16", "$16.00", "£13", "13,00 £")
+          const sign = m.currency === 'usd' ? '\\$' : '£';
+          out.set(`${m.currency === 'usd' ? '$' : '£'}${units}`, new RegExp(`${sign}[ \\u00a0]?${units}(?![\\d])|(?<![\\d.,])${units}[.,]00[ \\u00a0]?${sign}`));
         }
       }
     }
@@ -278,6 +285,9 @@ function writtenPatterns(markets) {
       if (m.currency !== 'huf' && minor % 100 !== 0) {
         const units = Math.floor(minor / 100), cents = String(minor % 100).padStart(2, '0');
         out.set(`${units}.${cents}`, new RegExp(`(?<![\\d.,])${units}[.,]${cents}(?![\\d])`));
+      } else if ((m.currency === 'usd' || m.currency === 'gbp') && minor % 100 === 0) {
+        const units = minor / 100, sign = m.currency === 'usd' ? '\\$' : '£';
+        out.set(`${m.currency === 'usd' ? '$' : '£'}${units}`, new RegExp(`${sign}[ \\u00a0]?${units}(?![\\d])|(?<![\\d.,])${units}[.,]00[ \\u00a0]?${sign}`));
       }
     }
   }

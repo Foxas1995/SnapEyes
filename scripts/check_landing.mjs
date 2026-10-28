@@ -20,7 +20,7 @@
 //              the Reveal's native range answers the keys
 //   overflow   no horizontal scroll, nothing beyond the edge, no clipped button and no word cut in the middle at 280, 320, 375,
 //              768, 1024 and 1280 px (and more with the full run) in English, German, Lithuanian and Hungarian
-//   links      every legal link carries ?lang= and the market's edition (m=au, m=hu); every call to action goes to /try in the language
+//   links      every legal link carries ?lang= and the market's edition (m=au, m=hu, m=us); every call to action goes to /try in the language
 //   ordering   the closed and the open states: the bar, the pricing notice, the FAQ item about ordering
 //   axe        axe-core with every <details> open, in eight states (needs axe-core: --axe, AXE_CORE, or node_modules/axe-core)
 //   resilience each lazy chunk of the page blocked in turn (a flaky network, a new deploy): the header, the hero and the footer stay, the page is
@@ -245,8 +245,9 @@ async function checkPhrases() {
 async function checkDashes() {
   console.log('dashes');
   for (const lang of LANGS) {
-    for (const m of ['', 'au']) {
-      if (m && lang !== 'en' && lang !== 'de') continue;
+    for (const m of ['', 'au', 'us']) {
+      if (m === 'au' && lang !== 'en' && lang !== 'de') continue;
+      if (m === 'us' && lang !== 'en') continue;     // the US edition is English only
       const page = await open({ lang, query: m ? `m=${m}` : '', details: true });
       const found = JSON.parse(await page.eval(String.raw`(() => {
         const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015, 0x2212) + ']'), SPACED = new RegExp('(^|[\\s' + String.fromCharCode(160) + '])-([\\s' + String.fromCharCode(160) + ']|$)');
@@ -354,6 +355,13 @@ async function checkFocus() {
   if (cur.pressed !== 'true' || !cur.eur || cur.aud) fail('focus', `currency switch to euro: pressed ${cur.pressed}, euro ${cur.eur}, A$ left ${cur.aud}`);
   else pass('focus', 'currency A$ -> euro: focus stays on the button, every price of the pricing block is in euro');
   await au.close();
+  const us = await open({ lang: 'en', query: 'm=us' });
+  await us.eval("document.querySelector('#pricing .lp-cur-seg button[data-market=eu]').scrollIntoView({ block: 'center', behavior: 'instant' }); document.querySelector('#pricing .lp-cur-seg button[data-market=eu]').focus(); document.activeElement.click()");
+  await sleep(900);
+  const curUs = JSON.parse(await us.eval(`(() => { const c = document.getElementById('pricing').cloneNode(true); c.querySelectorAll('.lp-cur-sw').forEach((e) => e.remove()); const t = c.textContent; return JSON.stringify({ pressed: document.activeElement.getAttribute('aria-pressed'), eur: t.includes(String.fromCharCode(0x20ac)), usd: t.includes('$'), url: location.search }); })()`));
+  if (curUs.pressed !== 'true' || !curUs.eur || curUs.usd) fail('focus', `currency switch US$ to euro: pressed ${curUs.pressed}, euro ${curUs.eur}, $ left ${curUs.usd}`);
+  else pass('focus', 'currency US$ -> euro: focus stays on the button, every price of the pricing block is in euro');
+  await us.close();
   stub.open = false;
 }
 
@@ -435,7 +443,7 @@ async function checkOverflow() {
 // ---------------------------------------------------------------------------------------------------- links
 async function checkLinks() {
   console.log('links');
-  const cases = [['en', ''], ['de', ''], ['lt', ''], ['hu', ''], ['hr', ''], ['en', 'm=au'], ['de', 'm=au'], ['hu', 'm=hu'], ['lt', 'm=lt']];
+  const cases = [['en', ''], ['de', ''], ['lt', ''], ['hu', ''], ['hr', ''], ['en', 'm=au'], ['de', 'm=au'], ['hu', 'm=hu'], ['lt', 'm=lt'], ['en', 'm=us'], ['hr', 'm=hr']];
   for (const [lang, m] of quick ? cases.slice(0, 5) : cases) {
     const page = await open({ lang, query: m });
     const r = JSON.parse(await page.eval(`JSON.stringify({ legal: [...document.querySelectorAll('#legalNav a')].map((a) => a.getAttribute('href')), try: [...document.querySelectorAll('a.lp-btn-gold, a.lp-btn-line')].map((a) => a.getAttribute('href')).filter((h) => !h.startsWith('mailto:')) })`));
@@ -492,7 +500,7 @@ async function checkAxe() {
   const path = [opt('--axe'), process.env.AXE_CORE, join(ROOT, 'node_modules/axe-core/axe.min.js')].find((p) => p && existsSync(p));
   if (!path) { info('axe', 'skipped: axe-core is not installed (pass --axe <axe.min.js> or set AXE_CORE; the repository takes no new dependency)'); return; }
   const AXE = readFileSync(path, 'utf8');
-  const states = [['en', 375, ''], ['en', 1280, ''], ['de', 375, ''], ['lt', 375, ''], ['hu', 375, ''], ['hu', 1280, ''], ['en', 1280, 'm=au'], ['en', 1280, 'open']];
+  const states = [['en', 375, ''], ['en', 1280, ''], ['de', 375, ''], ['lt', 375, ''], ['hu', 375, ''], ['hu', 1280, ''], ['en', 1280, 'm=au'], ['en', 1280, 'm=us'], ['en', 1280, 'open']];
   for (const [lang, width, state] of quick ? states.slice(0, 3) : states) {
     stub.open = state === 'open';
     const page = await open({ lang, width, query: state.startsWith('m=') ? state : '', details: true });
@@ -727,6 +735,7 @@ async function checkOffers() {
     ['en', 'au', true], ['de', 'au', true], ['lt', 'au', false], ['hu', 'au', false],
     ['en', 'hu', true], ['lt', 'hu', true], ['hu', 'hu', true],
     ['hr', 'au', false], ['hr', 'hu', false],   // Croatian is in the EU edition only: neither the Australian nor the Hungarian edition has its texts
+    ['en', 'us', true], ['de', 'us', false], ['lt', 'us', false], ['hu', 'us', false], ['hr', 'us', false],   // the US edition is English only
   ];
   for (const [lang, suggest, want] of cases) {
     stub.suggest = suggest;

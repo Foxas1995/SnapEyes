@@ -17,10 +17,11 @@ COSTS   what one artwork costs us, for the loss warning of the admin page and of
   unit_usd_per_eye   the image work per eye in US dollars: a 4K render 0.153 + a 1K preview 0.067 + the photo check
                      0.003 (api/_lib/ops.py PRICES_USD), rounded up
   per_usd            units of a currency for one US dollar (2026-09-30 rates of the market notes: 1 AUD = 0.58 EUR,
-                     1 USD = 0.86 EUR, 1000 HUF = 2.5 EUR)
+                     1 USD = 0.86 EUR, 1000 HUF = 2.5 EUR; 2026-10-28, for the US and UK markets: 1 GBP = 1.15 EUR)
   per_eur            units of a currency for one euro
   fee_pct            Stripe's card fee in percent, currency conversion included (an EEA card in euros 1.5, a card from
-                     outside the EEA paid in Australian dollars 3.15 + 2, forints 1.5 + 2)
+                     outside the EEA paid in Australian or US dollars 3.15 + 2, a UK card in pounds 2.5 + 2, forints
+                     1.5 + 2)
   fee_fixed_eur      Stripe's fixed fee per payment, in euros
 
 EXPERIMENTS   {key: experiment}; key: lower case letters, digits and "_" (it is written into events, the Stripe metadata
@@ -59,9 +60,9 @@ The two tests the owner approved on 2026-09-30 (the numbers are the literals'):
                   later test of A$99 against the winner is one more block here."""
 COSTS = {
     "unit_usd_per_eye": 0.22,
-    "per_usd": {"eur": 0.86, "aud": 1.483, "huf": 344.0},
-    "per_eur": {"eur": 1.0, "aud": 1.724, "huf": 400.0},
-    "fee_pct": {"eur": 1.5, "aud": 5.15, "huf": 3.5},
+    "per_usd": {"eur": 0.86, "aud": 1.483, "huf": 344.0, "usd": 1.0, "gbp": 0.748},
+    "per_eur": {"eur": 1.0, "aud": 1.724, "huf": 400.0, "usd": 1.163, "gbp": 0.87},
+    "fee_pct": {"eur": 1.5, "aud": 5.15, "huf": 3.5, "usd": 5.15, "gbp": 4.5},
     "fee_fixed_eur": 0.25
 }
 EXPERIMENTS = {

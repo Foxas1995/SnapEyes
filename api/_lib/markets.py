@@ -10,10 +10,10 @@ literal is not plain JSON, when a rule below is broken, or when another file hol
 
 Rules for the literal (JSON inside Python): double quotes only, no trailing commas, no comments inside it, no
 True/False/None (use 1/0), and nothing after it in this file.
-  currency       "eur", "aud" or "huf" (Stripe's lower-case codes)
-  prices         Stripe's smallest unit: cents for EUR and AUD, and for HUF the forint times 100 (Stripe takes HUF
-                 as a two-decimal currency: 6 990 Ft is 699000; the site shows whole forints). AUD and HUF prices are
-                 whole units (A$39, 6 990 Ft).
+  currency       "eur", "aud", "huf", "usd" or "gbp" (Stripe's lower-case codes)
+  prices         Stripe's smallest unit: cents for EUR, AUD and USD, pence for GBP, and for HUF the forint times 100
+                 (Stripe takes HUF as a two-decimal currency: 6 990 Ft is 699000; the site shows whole forints). AUD
+                 and HUF prices are whole units (A$39, 6 990 Ft); USD and GBP prices may have cents ($21.97, £17.97).
                    one_eye_studio_black  1 eye, Studio Black
                    one_eye_art           1 eye, any of the five art backgrounds
                    two_eyes              2 eyes (any style)
@@ -22,13 +22,15 @@ True/False/None (use 1/0), and nothing after it in this file.
                  and ignored in links. A market in another currency than the default market's can be 1 only with its
                  own edition of the legal texts, whose terms print its prices (src/shared/legal.ts EDITION_MARKETS =
                  api/_lib/pay.py EDITION_MARKETS; the build checks it): au has the Australian edition, hu the
-                 Hungarian one (the EU texts with the forint prices, in English, German, Lithuanian and Hungarian).
+                 Hungarian one (the EU texts with the forint prices, in English, German, Lithuanian and Hungarian),
+                 us the US one (English only, with its own checkbox that includes the consent to the use of the eye
+                 photos). uk has no edition yet, so it stays 0 (it needs UK VAT registration first).
                  Setting au or hu to 0 pauses new orders there; the texts stay readable for the orders already made
                  (their links carry m=au / m=hu). Setting hu to 0 only closes the FORINT market: the Hungarian
                  LANGUAGE is not a market, so a Hungarian page on the euro market (?lang=hu, a Hungarian browser)
                  still sells, in euros, under the Hungarian terms (README: go-live gates).
   lang           the market's own page language: the language a page of it opens in when the link and the visitor
-                 named none (src/shared/lang.ts detectLang; lt: Lithuanian, hu: Hungarian; "en" changes nothing,
+                 named none (src/shared/lang.ts detectLang; lt: Lithuanian, hu: Hungarian, hr: Croatian; "en" changes nothing,
                  it is the site's language of last resort). The language and the market stay independent: ?lang=
                  always wins, and the market never redirects.
   stripe_locale  the language of Stripe's payment page per page language, where it differs from the page's own
@@ -37,7 +39,11 @@ True/False/None (use 1/0), and nothing after it in this file.
                  this market; only ever a suggestion, never a redirect
 Owner decisions of 2026-09-29 (the numbers are the literal's): eu and lt share one euro price list (lt is its own key
 for the statistics and later tests); au in Australian dollars (one total price, no GST charged); hu in forints,
-selectable together with the Hungarian edition of the legal texts (Lithuanian and Hungarian wired 2026-09-30)."""
+selectable together with the Hungarian edition of the legal texts (Lithuanian and Hungarian wired 2026-09-30).
+Owner decisions of 2026-10-27/28: us in US dollars ($21.97 / $27.97 / $44.97 / +$16, one total price, no sales tax
+charged), selectable with the US edition of the legal texts; uk in pounds (£17.97 / £21.97 / £34.97 / +£13), priced
+but behind the switch ("selectable": 0) until the UK VAT registration and a UK edition exist; hr shares the euro list
+(its own key for the statistics, the EU edition, Croatian as its page language)."""
 DEFAULT_MARKET = "eu"
 MARKETS = {
     "eu": {
@@ -71,5 +77,29 @@ MARKETS = {
         "lang": "hu",
         "stripe_locale": {},
         "countries": ["HU"]
+    },
+    "us": {
+        "currency": "usd",
+        "prices": {"one_eye_studio_black": 2197, "one_eye_art": 2797, "two_eyes": 4497, "each_further_eye": 1600},
+        "selectable": 1,
+        "lang": "en",
+        "stripe_locale": {},
+        "countries": ["US"]
+    },
+    "uk": {
+        "currency": "gbp",
+        "prices": {"one_eye_studio_black": 1797, "one_eye_art": 2197, "two_eyes": 3497, "each_further_eye": 1300},
+        "selectable": 0,
+        "lang": "en",
+        "stripe_locale": {"en": "en-GB"},
+        "countries": ["GB"]
+    },
+    "hr": {
+        "currency": "eur",
+        "prices": {"one_eye_studio_black": 1997, "one_eye_art": 2497, "two_eyes": 3997, "each_further_eye": 1500},
+        "selectable": 1,
+        "lang": "hr",
+        "stripe_locale": {},
+        "countries": ["HR"]
     }
 }

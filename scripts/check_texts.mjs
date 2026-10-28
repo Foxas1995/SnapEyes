@@ -19,7 +19,7 @@
 //      a sentence for a reason a photo can be blocked for;
 //   7. the withdrawal waiver (checkbox) or the withdrawal statement is not the same words on the page and on the server,
 //      in any language;
-//   8. the consent texts (the five languages of the EU edition and the two of the Australian one) are not the ones the
+//   8. the consent texts (the five languages of the EU edition, the two of the Australian one and the US one) are not the ones the
 //      fingerprint of the current consent version says (CONSENT_FINGERPRINTS): a changed text needs a new version, in
 //      api/_lib/pay.py CONSENT_VERSION and src/shared/legal.ts WITHDRAWAL_CONSENT_VERSION together;
 //  10. a string of any language makes a claim the plate styles cannot keep (CLAIMS below: an artwork that is "unique", "one of a kind", "never
@@ -397,7 +397,7 @@ function checkDoc(id, edition, lang, en, doc, out, strings) {
 
 // the sentence of each language's terms that names the contract languages, and how it names each language
 const CONTRACT = {
-  en: { sentence: /^The contract languages are/, words: { en: 'English', de: 'German', lt: 'Lithuanian', hu: 'Hungarian', hr: 'Croatian' } },
+  en: { sentence: /^The contract languages? (?:are|is)\b/, words: { en: 'English', de: 'German', lt: 'Lithuanian', hu: 'Hungarian', hr: 'Croatian' } },
   de: { sentence: /^Vertragssprachen sind/, words: { en: 'Englisch', de: 'Deutsch', lt: 'Litauisch', hu: 'Ungarisch', hr: 'Kroatisch' } },
   lt: { sentence: /^Sutarties kalbos:/, words: { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų', hr: 'kroatų' } },
   hu: { sentence: /^A szerződés nyelve/, words: { en: 'angol', de: 'német', lt: 'litván', hu: 'magyar', hr: 'horvát' } },
@@ -427,7 +427,7 @@ function sourceFiles(root, dir, acc) {
  *  slip or untranslated English. pack: the pack (or the file, parsed); legal, markets: src/shared/legal.ts and markets.ts. */
 export function checkPack(pack, legal, markets) {
   const out = [];
-  const perEdition = { eu: pack.docs, au: pack.editions.au, hu: pack.editions.hu };
+  const perEdition = { eu: pack.docs, au: pack.editions.au, hu: pack.editions.hu, us: pack.editions.us };
   const money = markets.money;
   const cur = (m) => markets.MARKETS[m].currency;
   const priceTexts = (market, l) => Object.values(markets.MARKETS[market].prices).map((v) => money(v, cur(market), l));
@@ -533,15 +533,17 @@ function pyValue(text, marker, from = 0) {
   return seen ? out : null;
 }
 
-/** sha256 of the consent texts that belong to each consent version (the five languages of the EU edition and the two of the
- *  Australian one, as api/_lib/pay.py has them, in this order: en, de, lt, hu, hr, au en, au de; the versions before
- *  2026-10-28.1 had no Croatian text, and their fingerprints were taken without it). The version is what an order
+/** sha256 of the consent texts that belong to each consent version (the five languages of the EU edition, the two of the
+ *  Australian one and the one of the US edition, as api/_lib/pay.py has them, in this order: en, de, lt, hu, hr, au en, au de,
+ *  us en; the versions before 2026-10-28.1 had no Croatian text, and their fingerprints were taken without it; the versions
+ *  before 2026-10-28.2 had no US text, and theirs were taken without it). The version is what an order
  *  records next to its own copy of the text, so a text that changes under the same version would make the record say
  *  something else than what the customer ticked. Changing a consent text means a new CONSENT_VERSION in api/_lib/pay.py
  *  and WITHDRAWAL_CONSENT_VERSION in src/shared/legal.ts, and its fingerprint here (the check prints it). */
 export const CONSENT_FINGERPRINTS = {
   '2026-09-30.2': '1323e13de556f0533c0d3891789e3d49da9bc7cf15a506fc33cffddb97eee7b7',
   '2026-10-28.1': 'fb948e2a56ef9967f3b101af39e73b6d8c449f18e2b449144e9f5b0b86098dd8',
+  '2026-10-28.2': '5082c38c317956e779b8625a40472b4359a39bfe116c58e1e924523c54211a26',
 };
 
 /** The withdrawal waiver the checkbox shows and the server records (src/shared/legal.ts CHECKOUT_LEGAL, api/_lib/pay.py
@@ -580,8 +582,14 @@ export function checkServerTexts(root, legal, orderCopy) {
   // the consent texts belong to their version: the fingerprint of the current version's texts is the one on record
   const auBase = pay.indexOf('CONSENT_TEXT_AU = {');
   const au = auBase < 0 ? { en: null, de: null } : { en: pyValue(pay, '"en":', auBase), de: pyValue(pay, '"de":', auBase) };
-  const texts = [consent.en, consent.de, consent.lt, consent.hu, consent.hr, au.en, au.de];
-  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py, pay_lt.py, pay_hu.py or pay_hr.py (the text check reads them for its fingerprint)');
+  // the US checkbox: the same words on the page (src/shared/legal.ts CHECKOUT_LEGAL_US) and on the server (CONSENT_TEXT_US)
+  const usBase = pay.indexOf('CONSENT_TEXT_US = {');
+  const us = { en: usBase < 0 ? null : pyValue(pay, '"en":', usBase) };
+  if (us.en !== null && us.en !== legal.CHECKOUT_LEGAL_US?.en?.withdrawalConsent) {
+    out.push('the US withdrawal waiver differs between the page (src/shared/legal.ts CHECKOUT_LEGAL_US.en.withdrawalConsent) and the server (api/_lib/pay.py CONSENT_TEXT_US): it must be the same words');
+  }
+  const texts = [consent.en, consent.de, consent.lt, consent.hu, consent.hr, au.en, au.de, us.en];
+  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py (CONSENT_TEXT_EN_DE, CONSENT_TEXT_AU, CONSENT_TEXT_US), pay_lt.py, pay_hu.py or pay_hr.py (the text check reads them for its fingerprint)');
   else {
     const version = legal.WITHDRAWAL_CONSENT_VERSION;
     const print = createHash('sha256').update(JSON.stringify(texts)).digest('hex');
@@ -706,12 +714,17 @@ function checkLandingCopy(root, mods, strings, out) {
     if (l !== 'en') {
       // the offer of Australian dollars (marketHint.aud) belongs to the languages of the Australian edition (English and German) and to
       // no other: a Lithuanian or Hungarian visitor who took it would land on a page in English (src/landing/MarketHint.tsx offers a
-      // market only in a language its edition has, and this keeps the words from existing where they could never be shown)
-      const auOk = lang.langAllowed(l, 'au');
-      const hasAud = x.marketHint && 'aud' in x.marketHint;
-      if (hasAud && !auOk) out.push(`${rel}: marketHint.aud must not exist: the Australian edition has no texts in ${l} (src/shared/legal.ts EDITION_LANGS), so a visitor could never be offered it in ${l}`);
-      const without = (o) => (o.marketHint ? { ...o, marketHint: Object.fromEntries(Object.entries(o.marketHint).filter(([k]) => k !== 'aud')) } : o);
-      walkCopyJson(auOk ? en : without(en), auOk ? x : without(x), '', rel, out);
+      // market only in a language its edition has, and this keeps the words from existing where they could never be shown); the offer
+      // of US dollars (marketHint.usd) the same for the US edition (English only)
+      const offers = { aud: ['au', 'Australian'], usd: ['us', 'US'] };
+      const drop = [];
+      for (const [k, [m, name]] of Object.entries(offers)) {
+        const ok = lang.langAllowed(l, m);
+        if (x.marketHint && k in x.marketHint && !ok) out.push(`${rel}: marketHint.${k} must not exist: the ${name} edition has no texts in ${l} (src/shared/legal.ts EDITION_LANGS), so a visitor could never be offered it in ${l}`);
+        if (!ok) drop.push(k);
+      }
+      const without = (o) => (o.marketHint ? { ...o, marketHint: Object.fromEntries(Object.entries(o.marketHint).filter(([k]) => !drop.includes(k))) } : o);
+      walkCopyJson(without(en), without(x), '', rel, out);
     }
     const leaves = leafPaths(x);
     // every string of every language: the tokens exist, no spaced hyphen, none of the banned claims
@@ -813,8 +826,8 @@ export async function checkTexts(load, root) {
       for (const l of LANGS) {
         const listed = langs.includes(l);
         if (!listed && docs[l]) out.push(`legal ${edition}.${id}: has ${l} texts, but src/shared/legal.ts EDITION_LANGS does not list ${l} for the ${edition} edition`);
-        // the Australian edition adds sections of its own: only its strings are linted, the others are compared with the English text
-        if (listed) checkDoc(id, edition, l, editions.EDITIONS.eu[id].en, docs[l], edition === 'au' ? [] : out, strings[l]);
+        // the Australian and the US edition add sections of their own: only their strings are linted, the others are compared with the English text
+        if (listed) checkDoc(id, edition, l, editions.EDITIONS.eu[id].en, docs[l], edition === 'au' || edition === 'us' ? [] : out, strings[l]);
       }
     }
   }

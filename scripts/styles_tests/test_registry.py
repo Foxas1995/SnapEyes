@@ -484,14 +484,15 @@ class _Reply:
         return {"id": "cs_test_" + "a" * 20, "url": "https://checkout.stripe.com/c/pay/x"}
 
 
-def stripe_form_hash():
-    """SHA-256 of the Stripe Checkout Session parameters pay.create_session builds for every legacy style x market x language x 1, 2, 3, 8 eyes."""
+def stripe_form_hash(markets=("eu", "lt", "au", "hu")):
+    """SHA-256 of the Stripe Checkout Session parameters pay.create_session builds for every legacy style x market x language x 1, 2, 3, 8 eyes
+    (the four markets of 90695da by default; 2026-10-28: the US, UK and Croatian markets are pinned apart, so the old pin stays exact)."""
     captured, real = [], pay._stripe
     pay._stripe = lambda method, path, params=None, idem=None, timeout=None: (captured.append(sorted((k, v) for k, v in params)), _Reply())[1]
     out = {}
     lay = {1: "single", 2: "fusion", 3: "triangle", 8: "galaxy"}
     try:
-        for market in pay.MARKETS:
+        for market in markets:
             for lang in ("en", "de", "lt", "hu"):
                 for style in LEGACY:
                     for n in (1, 2, 3, 8):
@@ -505,6 +506,8 @@ def stripe_form_hash():
 
 check("the Stripe Checkout Session parameters of the six legacy ids (item name, amount, metadata: 384 combinations) are byte equal to those of 90695da",
       stripe_form_hash() == (384, "9d3e048ab360e89bac51819b"), stripe_form_hash())
+check("the same parameters for the markets of 2026-10-28 (us, uk, hr: 288 combinations) are byte equal to the pin taken when they were added",
+      stripe_form_hash(("us", "uk", "hr")) == (288, "4f5127a1a619e6e1ff7425c8") and sorted(MK.MARKETS) == ["au", "eu", "hr", "hu", "lt", "uk", "us"], stripe_form_hash(("us", "uk", "hr")))
 ok_specs = [pay.spec_from(dict(SPEC, eyes=str(n), style=i, layout=OLD_LAYOUTS[n][-1]), pay.SELECTABLE) for i in LEGACY for n in range(1, 9)]
 check("spec_from: every legacy id, 1 to 8 eyes and each layout is read at checkout exactly as before",
       len(ok_specs) == 48 and all(s["layout"] == OLD_LAYOUTS[s["eyes"]][-1] and s["style"] in LEGACY for s in ok_specs)
@@ -615,7 +618,8 @@ for sid in R.STYLES:
             n_checked += 1
             if not (pay.price_cents(eyes, sid, m) == abtest.ladder_price(pr, eyes, sid) == want):
                 bad.append((sid, m, eyes, pay.price_cents(eyes, sid, m), abtest.ladder_price(pr, eyes, sid), want))
-check("pay.price_cents and abtest.ladder_price equal the rule for every id (33 since the light family, 40 with the ensemble family, 41 with Iris Echo) x 4 markets x 1 to 8 eyes", not bad and n_checked == 41 * 4 * 8, bad[:3])
+check("pay.price_cents and abtest.ladder_price equal the rule for every id (33 since the light family, 40 with the ensemble family, 41 with Iris Echo) x 4 markets x 1 to 8 eyes"
+      " (7 markets since 2026-10-28: us, uk and hr added)", not bad and n_checked == 41 * 7 * 8 == 41 * len(MK.MARKETS) * 8, bad[:3])
 lad = []
 for key, e in XP.EXPERIMENTS.items():
     for name, v in e["variants"].items():
@@ -628,7 +632,7 @@ check("abtest.ladder_price equals the rule on every ladder of every price experi
 if probe:
     tbad = [r for r in probe["table"] if not (r[3] == r[4] == r[5] == expected(r[0], r[2], MK.MARKETS[r[1]]["prices"]) == pay.price_cents(r[2], r[0], r[1]))]
     check("the site's priceMinor, check_prices priceRule and check_experiments ladderRule give the server's price for every id x market x 1 to 8 eyes",
-          not tbad and len(probe["table"]) == 41 * 4 * 8, tbad[:3])          # 2026-10-20: 40 ids (the light family, then the ensemble family), it was 28 x 4 x 8 = 896; 41 with Iris Echo (2026-10-27)
+          not tbad and len(probe["table"]) == 41 * 7 * 8, tbad[:3])          # 2026-10-28: 7 markets (us, uk, hr added), it was 4; 2026-10-20: 40 ids (the light family, then the ensemble family), it was 28 x 4 x 8 = 896; 41 with Iris Echo (2026-10-27)
     lbad = [r for r in probe["ladders"] if not (r[5] == r[6] == expected(r[0], r[4], XP.EXPERIMENTS[r[1]]["variants"][r[2]]["prices"][r[3]]))]
     check("the same on every experiment ladder (priceMinor fed the ladder, as the server's answer feeds it)", not lbad and probe["ladders"], lbad[:3])
     sbad = []

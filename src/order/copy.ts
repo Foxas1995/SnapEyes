@@ -103,6 +103,8 @@ const en = {
     // an order of the Australian market (src/shared/legal.ts legalEdition "au"): shown under the lead and under a
     // lapsed answer, so that nothing here reads as "no refunds" (the Australian Consumer Law cannot be excluded)
     acl: "This is the right of withdrawal under EU consumer law, for cancelling when you change your mind. It doesn't affect your rights under the Australian Consumer Law: if your file is faulty or not as described, write to us with your order number.",
+    // an order of the US market (legalEdition "us", English): the same line without the Australian Consumer Law
+    us: "This is the right of withdrawal under EU consumer law, for cancelling when you change your mind. It doesn't affect your rights if your file is faulty: if your file is faulty or not as described, write to us with your order number.",
     info: 'Right of withdrawal',
     formLead: (confirm: string) => `Please check your details. With "${confirm}" you send us this statement:`,
     statement: (o: string) => `I hereby withdraw from the contract I concluded for the supply of the following digital content: SnapEyes artwork, order ${o}.`,
@@ -254,6 +256,7 @@ const de: OrderCopy = {
     heading: 'Vertrag widerrufen',
     lead: 'Sie haben bei der Bestellung zugestimmt, dass wir sofort mit der Erstellung Ihrer Datei beginnen. Solange wir noch nicht begonnen haben, können Sie diesen Vertrag hier widerrufen. Sobald die Erstellung begonnen hat, ist Ihr Widerrufsrecht erloschen.',
     acl: 'Das ist das Widerrufsrecht nach dem EU-Verbraucherrecht, für einen Widerruf ohne Angabe von Gründen. Ihre Rechte nach dem Australian Consumer Law bleiben davon unberührt: Ist Ihre Datei mangelhaft oder entspricht sie nicht der Beschreibung, schreiben Sie uns mit Ihrer Bestellnummer.',
+    us: 'Das ist das Widerrufsrecht nach dem EU-Verbraucherrecht, für einen Widerruf ohne Angabe von Gründen. Ihre Rechte bei einer mangelhaften Datei bleiben davon unberührt: Ist Ihre Datei mangelhaft oder entspricht sie nicht der Beschreibung, schreiben Sie uns mit Ihrer Bestellnummer.',
     info: 'Widerrufsbelehrung',
     formLead: (confirm: string) => `Bitte prüfen Sie Ihre Angaben. Mit „${confirm}“ senden Sie uns diese Erklärung:`,
     statement: (o: string) => `Hiermit widerrufe ich den von mir abgeschlossenen Vertrag über die Bereitstellung der folgenden digitalen Inhalte: SnapEyes-Kunstwerk, Bestellung ${o}.`,

@@ -1,7 +1,7 @@
 // The pricing block of the new landing (BUILD_PLAN section 2, "Pricing"): the notice (ordering opens soon, or open), the price
 // table with its free preview row and the "three eyes" row, what you receive (four icons of a few words: the file, the preview it is
 // made from, the download, the licence), the ONE line of the page that says printing is not part of the order (the title says the
-// digital file: the lean pass of 2026-10-22 says each once here and once in the FAQ), the Australian seller line, the currency switch
+// digital file: the lean pass of 2026-10-22 says each once here and once in the FAQ), the Australian and the US seller line, the currency switch
 // and the footnote with the link to the terms of sale.
 //
 // No purchase button here: an order starts from the visitor's own preview on /try, so the one action is the free preview. Every
@@ -38,7 +38,7 @@ export function Pricing() {
   const tryHref = useTryHref();
   const termsHref = useLegalHref('terms');
   const pr = c.pricing;
-  const footnote = p.currency === 'aud' ? pr.footnoteAud : p.currency === 'huf' ? pr.footnoteHuf : pr.footnote;
+  const footnote = p.currency === 'aud' ? pr.footnoteAud : p.currency === 'huf' ? pr.footnoteHuf : p.currency === 'usd' ? pr.footnoteUsd : pr.footnote;
   return (
     <section className="lp-sec" id="pricing" aria-labelledby="priceH">
       <div className="lp-wrap">
@@ -70,6 +70,7 @@ export function Pricing() {
             </p>
             {p.open && <p className="lp-pay-open">{pr.payOpen}</p>}
             {legalEdition(p.market) === 'au' && <p className="lp-au-line">{pr.auLine}</p>}
+            {legalEdition(p.market) === 'us' && <p className="lp-au-line">{pr.usLine}</p>}
             <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>
               <span>{c.cta}</span>
               <Arrow />

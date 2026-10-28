@@ -379,6 +379,7 @@ export const lt: TryCopy = {
     footnote: 'Gautumėte vieną skaitmeninį failą be vandens ženklo, kurio ilgoji kraštinė yra 4096 px. Kainos nurodytos eurais.',
     footnoteAud: 'Gautumėte vieną skaitmeninį failą be vandens ženklo, kurio ilgoji kraštinė yra 4096 px. Kainos nurodytos Australijos doleriais (A$).',
     footnoteHuf: 'Gautumėte vieną skaitmeninį failą be vandens ženklo, kurio ilgoji kraštinė yra 4096 px. Kainos nurodytos Vengrijos forintais (Ft).',
+    footnoteUsd: 'Gautumėte vieną skaitmeninį failą be vandens ženklo, kurio ilgoji kraštinė yra 4096 px. Kainos nurodytos JAV doleriais (US$).',
     demo: 'Tai demonstracija su DI sugeneruota pavyzdine akimi. Išbandykite su savo akimi ir pamatysite savo kainą.',
     sampleNotCounted: (k: number) => (k === 1
       ? 'DI sugeneruota pavyzdinė akis nėra užsakymo dalis, todėl ji neskaičiuojama.'
@@ -428,6 +429,7 @@ export const lt: TryCopy = {
     namesBlocked: 'Pirmiausia ištaisykite žodžius ant kūrinio (žr. aukščiau).',
     footnote: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai galutinė kaina: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.',
     footnoteAud: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: GST netaikomas.',
+    footnoteUsd: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: JAV pardavimo mokestis netaikomas.',
   },
 
   // anoniminė atsiliepimų dėžutė (src/try/Feedback.tsx, api/_lib/feedback.py)

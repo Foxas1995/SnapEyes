@@ -24,28 +24,34 @@ const out = {
   legalUpdated: L.LEGAL_UPDATED,
   consentVersion: L.WITHDRAWAL_CONSENT_VERSION,
   editionMarkets: L.EDITION_MARKETS,
-  edition: Object.fromEntries(['eu', 'lt', 'au', 'hu', 'zz'].map((m) => [m, L.legalEdition(m)])),
+  edition: Object.fromEntries(['eu', 'lt', 'au', 'hu', 'zz', 'us', 'hr', 'uk'].map((m) => [m, L.legalEdition(m)])),
   checkoutEu: L.CHECKOUT_LEGAL,
   checkoutAu: L.CHECKOUT_LEGAL_AU,
+  checkoutUs: L.CHECKOUT_LEGAL_US,
   checkoutFor: {
     en_au: L.checkoutLegal('en', 'au'), de_au: L.checkoutLegal('de', 'au'),
     en_eu: L.checkoutLegal('en', 'eu'), en_lt: L.checkoutLegal('en', 'lt'),
+    en_us: L.checkoutLegal('en', 'us'), de_us: L.checkoutLegal('de', 'us'), en_hr: L.checkoutLegal('en', 'hr'),
   },
   hrefs: {
     auSection: L.legalHref('terms', 'en', 'australia', 'au'),
     euSection: L.legalHref('terms', 'en', 'australia', 'eu'),
     plain: L.legalHref('privacy', 'de'),
   },
+  usHrefs: { usSection: L.legalHref('terms', 'en', 'united-states', 'us'), hrPlain: L.legalHref('terms', 'hr', '', 'hr') },
   auPrices: M.priceList('au'),
   money: { a39: M.money(M.priceList('au').one_eye_studio_black, 'aud', 'en') },
   copy: { eu: C.copyForMarket(C.COPY_EN, 'eu'), lt: C.copyForMarket(DE, 'lt'), auEn: C.copyForMarket(C.COPY_EN, 'au'), auDe: C.copyForMarket(DE, 'au') },
   copySame: { euEn: C.copyForMarket(C.COPY_EN, 'eu') === C.COPY_EN, euDe: C.copyForMarket(DE, 'eu') === DE, ltEn: C.copyForMarket(C.COPY_EN, 'lt') === C.COPY_EN },
   plainAuTerms: P.legalPlainText('terms', ED.EDITIONS.au.terms.en, 'en', 'au'),
+  plainUsTerms: P.legalPlainText('terms', ED.EDITIONS.us.terms.en, 'en', 'us'),
+  usMoney: [M.money(M.priceList('us').one_eye_studio_black, 'usd', 'en'), M.money(M.priceList('us').each_further_eye, 'usd', 'en')],
+  copyUs: C.copyForMarket(C.COPY_EN, 'us') === C.COPY_EN,
   pack: P.legalMailPack(),
   orderAcl: null,
 };
 // the order page copy's export name differs between versions: find the object with withdraw.acl
 for (const [k, v] of Object.entries(O)) {
-  if (v && typeof v === 'object' && v.en && v.en.withdraw && v.de && v.de.withdraw) out.orderAcl = { name: k, en: v.en.withdraw.acl, de: v.de.withdraw.acl };
+  if (v && typeof v === 'object' && v.en && v.en.withdraw && v.de && v.de.withdraw) out.orderAcl = { name: k, en: v.en.withdraw.acl, de: v.de.withdraw.acl, us: v.en.withdraw.us };
 }
 console.log(JSON.stringify(out));

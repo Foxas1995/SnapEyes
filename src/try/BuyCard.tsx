@@ -7,7 +7,7 @@ import { RetakeButtons } from './StylePicker';
 import { classStyle, styleName } from '../shared/styles';
 import { currencyOf, currentMarket, money, priceMinor, type PriceList } from '../shared/markets';
 import { listFor } from '../shared/pricing';
-import { checkoutLegal, legalEdition } from '../shared/legal';
+import { checkoutLegal, legalEdition, ownConsent } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
 import { Dot } from '../motion/Tick';
 import type { Lang } from '../shared/lang';
@@ -24,7 +24,7 @@ export interface Ordering {
   // absent: the artwork's own limit
   maxEyes?: number;
   // the EU texts per language (also the Hungarian edition's), and per market where a market has its own (markets.au: the
-  // Australian checkbox)
+  // Australian checkbox; markets.us: the US one)
   consent?: ConsentTexts & { version?: string; markets?: Record<string, ConsentTexts | undefined> };
 }
 
@@ -152,7 +152,7 @@ export const BuyCard: React.FC<Props> = (props) => {
       <section aria-label={T.price.title} className={CARD}>
         {head}
         <p className="text-sm font-semibold text-emerald-300 mt-3">{T.price.notice}</p>
-        <p className="text-[11px] text-zinc-400 mt-1">{currency === 'aud' ? T.price.footnoteAud : currency === 'huf' ? T.price.footnoteHuf : T.price.footnote}</p>
+        <p className="text-[11px] text-zinc-400 mt-1">{currency === 'aud' ? T.price.footnoteAud : currency === 'huf' ? T.price.footnoteHuf : currency === 'usd' ? T.price.footnoteUsd : T.price.footnote}</p>
       </section>
     );
   }
@@ -167,10 +167,10 @@ export const BuyCard: React.FC<Props> = (props) => {
     );
   }
 
-  // the market's checkout wording (src/shared/legal.ts checkoutLegal: the Australian checkbox for au). The server records
+  // the market's checkout wording (src/shared/legal.ts checkoutLegal: the Australian checkbox for au, the US one for us). The server records
   // a fingerprint of its own waiver text for the market: show exactly that one (it equals checkoutLegal's)
   const legal = checkoutLegal(lang, market);
-  const texts = legalEdition(market) === 'au' ? p.ordering?.consent?.markets?.[market] : p.ordering?.consent;
+  const texts = ownConsent(legalEdition(market)) ? p.ordering?.consent?.markets?.[market] : p.ordering?.consent;
   const waiverText = texts?.[lang] || legal.withdrawalConsent;
   const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : p.wordsBlocked ? 'words' : !p.waiver ? 'waiver' : null;
   const disabled = p.busy || blockedBy !== null;
@@ -222,7 +222,7 @@ export const BuyCard: React.FC<Props> = (props) => {
         <p role="alert" data-testid="buy-error" className="mt-3 text-xs text-rose-200 bg-rose-950/40 border border-rose-500/40 rounded-xl p-3">{p.error}</p>
       )}
       <p className="text-[11px] text-zinc-400 mt-3">{T.buy.next}</p>
-      <p className="text-[11px] text-zinc-400 mt-1">{currency === 'aud' ? T.buy.footnoteAud : T.buy.footnote}</p>
+      <p className="text-[11px] text-zinc-400 mt-1">{currency === 'aud' ? T.buy.footnoteAud : currency === 'usd' ? T.buy.footnoteUsd : T.buy.footnote}</p>
     </section>
   );
 };

@@ -5,11 +5,12 @@
 // The build writes legalMailPack() to /legal/order-mail.json (vite.config.ts), made from the very constants the legal
 // pages print, so the email can never drift from them: the sender (api/_lib/pay.py) reads that file of its own
 // deployment and puts the texts of the order's language into the email. Plain data only, no React, no DOM.
-// The other editions (src/shared/legal.ts legalEdition: "au", the Australian market's, and "hu", the Hungarian market's
-// with the prices in forints) travel apart, under "editions": {"au": ..., "hu": ...}, with every link to a legal page
-// carrying m=au / m=hu, so an order's email quotes (and links) the texts its customer accepted; "docs" stays the EU
-// edition, as before, with plain links. Languages: English, German, Lithuanian, Hungarian and Croatian for the EU edition,
-// the same without Croatian for the Hungarian one, English and German for the Australian one (src/shared/legal.ts EDITION_LANGS).
+// The other editions (src/shared/legal.ts legalEdition: "au", the Australian market's, "hu", the Hungarian market's
+// with the prices in forints, and "us", the US market's) travel apart, under "editions": {"au": ..., "hu": ..., "us": ...},
+// with every link to a legal page carrying m=au / m=hu / m=us, so an order's email quotes (and links) the texts its
+// customer accepted; "docs" stays the EU edition, as before, with plain links. Languages: English, German, Lithuanian,
+// Hungarian and Croatian for the EU edition, the same without Croatian for the Hungarian one, English and German for the
+// Australian one, English for the US one (src/shared/legal.ts EDITION_LANGS).
 import { LANGS, type Lang } from '../shared/lang';
 import type { Block, LegalDoc } from './types';
 import {
@@ -91,9 +92,9 @@ export interface LegalMailPack {
   };
   docs: Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>;
   /** The other editions ("au", the Australian market's, in English and German; "hu", the Hungarian market's, in every
-   *  language but Croatian), the same shape as docs: api/_lib/pay.py quotes them for an order of that market and keeps live
-   *  ordering closed while one of a selectable market is missing. */
-  editions: { au: Partial<Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>>; hu: Partial<Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>> };
+   *  language but Croatian; "us", the US market's, in English), the same shape as docs: api/_lib/pay.py quotes them for an
+   *  order of that market and keeps live ordering closed while one of a selectable market is missing. */
+  editions: Record<Exclude<LegalEdition, 'eu'>, Partial<Record<Lang, { withdrawal: LegalMailDoc; terms: LegalMailDoc }>>>;
   /** Facts the law requires in these texts that are still empty and that nobody decided to leave out, as
    *  "seller.email": [] when complete. api/_lib/pay.py may keep live ordering closed while this list is not empty.
    *  The representative is never in it: no rule that applies to a Lithuanian seller requires the name. */
@@ -157,6 +158,7 @@ export function legalMailPack(): LegalMailPack {
     editions: {
       au: per((lang) => editionDocs('au', lang), EDITION_LANGS.au),
       hu: per((lang) => editionDocs('hu', lang), EDITION_LANGS.hu),
+      us: per((lang) => editionDocs('us', lang), EDITION_LANGS.us),
     },
     missing: missingLegalFacts(),
     waived: waivedLegalFacts(),

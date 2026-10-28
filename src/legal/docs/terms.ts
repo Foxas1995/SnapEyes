@@ -20,10 +20,15 @@
 // against defects needing the reg 90 text and a phone number, Competition and Consumer Regulations 2010), a new
 // "Your rights in Australia" section that opens with the ACCC's own sentence, and liability and disputes that keep the
 // Australian Consumer Law. Nothing in it may read as "no refunds" (ACCC: consumer guarantees cannot be excluded).
+// TERMS_US (after it) is the US edition (src/shared/legal.ts legalEdition "us", English only): the EU terms with prices
+// in US$ and no sales tax charged, the right of withdrawal framed as EU law and as cancelling for a change of mind only
+// (the Australian edition's words), complaints that keep the rights of the customer's state, a new "Your rights in the
+// United States" section (a faulty file made again or refunded, the use of the eye photos), and liability and disputes
+// that keep the consumer protection law of the customer's state. Nothing in it may read as "no refunds" either.
 import type { EditionDocs, LegalDoc, LegalDocs, LegalSection } from '../types';
 import {
-  AU_PRICES, DELIVERY_MAX_HOURS, HU_PRICES, MAIL, PRICE_CENTS, SELLER, address, aud, company, eur, huf, phoneSuffix,
-  representedSuffix,
+  AU_PRICES, DELIVERY_MAX_HOURS, HU_PRICES, MAIL, PRICE_CENTS, SELLER, US_PRICES, address, aud, company, eur, huf, phoneSuffix,
+  representedSuffix, usd,
 } from '../facts';
 import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE } from '../../shared/legal';
 import { aiBlocks } from '../../shared/aiMaterial';
@@ -311,6 +316,17 @@ const relabel = (from: string, to: string) => (s: LegalSection): LegalSection =>
   return { ...s, blocks };
 };
 
+/** The right of withdrawal of an edition outside the EU, framed as the EU law the contract is under and as cancelling for a
+ *  change of mind only (the Australian and the US edition, English). rights: the link to the edition's own section of rights. */
+const withdrawalFramedEn = (rights: string): LegalSection => ({
+  id: 'withdrawal',
+  title: 'Cancelling for a change of mind (right of withdrawal)',
+  blocks: [
+    `Your contract is governed by Lithuanian law (see [Disputes and applicable law](#disputes)), and EU consumer law gives consumers a 14-day right of withdrawal: a right to cancel without giving a reason. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal, and so can no longer cancel for a change of mind, once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open. This applies even while the file is still being made or is waiting for our quality check. If we have not started, it ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button "${WITHDRAWAL_ONLINE.en.button}", and we refund you in full; the withdrawal link in your order confirmation email opens it for your order without starting to make your file. The full information, the online function and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page.`,
+    `**This is only about cancelling for a change of mind.** It never limits your rights if your file is faulty or not as described: see [Complaints and faulty files](#defects) and ${rights}.`,
+  ],
+});
+
 const auEn = patchDoc(en, {
   description:
     'The terms for ordering a SnapEyes digital iris artwork in Australian dollars: the product, prices, payment, delivery, your licence, cancelling, your rights under the Australian Consumer Law and complaints.',
@@ -334,14 +350,7 @@ const auEn = patchDoc(en, {
         STANDARD_LIST_NOTE.en,
       ],
     }),
-    withdrawal: {
-      id: 'withdrawal',
-      title: 'Cancelling for a change of mind (right of withdrawal)',
-      blocks: [
-        `Your contract is governed by Lithuanian law (see [Disputes and applicable law](#disputes)), and EU consumer law gives consumers a 14-day right of withdrawal: a right to cancel without giving a reason. For a digital file it ends early: before you pay, we ask you to agree that we start making your file straight away, before the withdrawal period ends, and to confirm that you know you lose your right of withdrawal, and so can no longer cancel for a change of mind, once we have started. It therefore ends as soon as we have started making your file (the performance of the contract); we start only after your order confirmation email has gone out, normally within a minute of your payment, while your order page is open. This applies even while the file is still being made or is waiting for our quality check. If we have not started, it ends when the 14-day withdrawal period is over: the day of your payment is not counted, and if the last day of the period is a Saturday, a Sunday or a public holiday, the period ends at the end of the next working day. While your right of withdrawal lasts, you can withdraw by email, by post or online with the button "${WITHDRAWAL_ONLINE.en.button}", and we refund you in full; the withdrawal link in your order confirmation email opens it for your order without starting to make your file. The full information, the online function and a model withdrawal form are on our [Right of withdrawal](doc:withdrawal) page.`,
-        `**This is only about cancelling for a change of mind.** It never limits your rights if your file is faulty or not as described: see [Complaints and faulty files](#defects) and [Your rights in Australia](#${AU_ID}).`,
-      ],
-    },
+    withdrawal: withdrawalFramedEn(`[Your rights in Australia](#${AU_ID})`),
     defects: {
       id: 'defects',
       title: 'Complaints and faulty files',
@@ -464,6 +473,82 @@ const auDe = patchDoc(de, {
 // the Australian pages exist in English and German only (src/shared/legal.ts EDITION_LANGS), so its contract languages
 // are those two
 export const TERMS_AU: EditionDocs = { en: auEn, de: auDe };
+
+// ------------------------------------------------------------------------------------------ the US edition
+// English only (src/shared/legal.ts EDITION_LANGS), so its contract language is English. Written from the owner's draft
+// of 2026-10-28: the US checkbox includes the consent to the use of the eye photos (some US state laws treat an iris
+// image as a biometric identifier), and "Your rights in the United States" says what that consent covers. The promise
+// for a faulty file (made again free of charge, or a full refund) is the EU terms' own, made explicit for US customers.
+const US_ID = 'united-states';
+const US_RIGHTS = `[Your rights in the United States](#${US_ID})`;
+
+const usEn = patchDoc(en, {
+  description:
+    'The terms for ordering a SnapEyes digital iris artwork in US dollars: the product, prices, payment, delivery, your licence, cancelling, your rights in the United States and complaints.',
+  lead: `These terms apply to every order placed on snapeyes.com in US dollars (US$), and they include [your rights in the United States](#${US_ID}). Please read them before you order. The free preview is offered without any obligation.`,
+  replace: {
+    preview: relabel('[Complaints and defects](#defects)', '[Complaints and faulty files](#defects)'),
+    contract: relabel('The contract languages are English, German, Lithuanian, Hungarian and Croatian.', 'The contract language is English.'),
+    prices: (s): LegalSection => ({
+      ...s,
+      blocks: [
+        {
+          dl: [
+            ['One eye, Clean Iris', usd(US_PRICES.one_eye_studio_black, 'en')],
+            ['One eye, any other style', usd(US_PRICES.one_eye_art, 'en')],
+            ['Two eyes, any style', usd(US_PRICES.two_eyes, 'en')],
+            ['Each further eye', `+${usd(US_PRICES.each_further_eye, 'en')}`],
+          ],
+        },
+        'All prices are in US dollars (US$), and each is the total price you pay: no shipping cost, no card surcharge and no other fee is added. We are a company based in Lithuania and are not registered to collect sales tax in any US state, so no sales tax is charged. Your order confirmation email includes your invoice.',
+        'You pay in advance through our payment provider Stripe, with the payment methods shown on the payment page. Your card issuer may charge its own fee for a payment to a business based outside the United States; we do not charge it and do not receive it.',
+        STANDARD_LIST_NOTE.en,
+      ],
+    }),
+    withdrawal: withdrawalFramedEn(US_RIGHTS),
+    defects: {
+      id: 'defects',
+      title: 'Complaints and faulty files',
+      blocks: [
+        `If your file is faulty, for example it cannot be downloaded or opened, is damaged, is smaller than promised, clearly differs from the preview you approved or is not ready in time, please write to ${MAIL} with your order number. We look at every complaint personally. Your rights are the ones the law gives you, and these terms do not limit them: in the United States, the rights your state's law gives you (see ${US_RIGHTS}); in the EU, the statutory rights for digital content that does not conform to the contract.`,
+      ],
+    },
+    liability: {
+      id: 'liability',
+      title: 'Liability',
+      blocks: [
+        `Nothing in these terms excludes or limits any right you have under the law of your state that cannot be excluded or limited by contract (see ${US_RIGHTS}). Subject to that, we are liable without limitation for intent and gross negligence, for injury to life, body or health, and wherever mandatory law provides for it. Otherwise, for slight negligence we are liable only for the breach of essential contractual obligations, and only for the damage that is typical and foreseeable for this kind of contract. The free preview is offered as it is, without any claim to its availability.`,
+      ],
+    },
+    disputes: {
+      id: 'disputes',
+      title: 'Disputes and applicable law',
+      blocks: [
+        'If something is wrong, please write to us first: most problems are solved quickly by email.',
+        "If we cannot agree and you are a consumer in the United States, you can turn to the consumer protection office of your state (usually part of the state attorney general's office) or report the problem to the Federal Trade Commission ([reportfraud.ftc.gov](https://reportfraud.ftc.gov)).",
+        'Consumers in the EU can turn to the Lithuanian State Consumer Rights Protection Authority (Valstybinė vartotojų teisių apsaugos tarnyba, [vvtat.lt](https://vvtat.lt)), which settles consumer disputes out of court, or to the consumer bodies and courts of their own country.',
+        'Lithuanian law applies. You keep the protection of the mandatory consumer law of the place where you live: in the United States, the consumer protection law of your state that cannot be excluded by contract; in an EU country, the mandatory consumer law of that country.',
+      ],
+    },
+  },
+  after: {
+    defects: [
+      {
+        id: US_ID,
+        title: 'Your rights in the United States',
+        blocks: [
+          'If you are a consumer in the United States, the following applies to your order in addition to the rest of these terms.',
+          `**Faulty files.** If your file cannot be downloaded or opened, is damaged, is smaller than promised, clearly differs from the preview you approved or is not ready within ${DELIVERY_MAX_HOURS} hours of your payment, write to ${MAIL} with your order number. We make the file again free of charge, or refund you in full if that does not fix the problem. You don't need to send anything back.`,
+          "**Changing your mind.** Once we have started making your file, you can't cancel just because you changed your mind (you agreed to this at checkout, see [Cancelling for a change of mind](#withdrawal)). That doesn't affect your rights for a faulty file.",
+          '**Your eye photos.** We use the photos of your eyes only to make your preview and your artwork. We never use them to identify or verify anyone and never create, keep or compare an iris template or any other biometric identifier. How long we keep them and how they are deleted: see [Your data if you live in the United States](doc:privacy#united-states).',
+          'Nothing in these terms excludes or limits any right you have under the law of your state that cannot be excluded or limited by contract. Where anything in these terms seems to do so, it does not apply to that extent.',
+        ],
+      },
+    ],
+  },
+});
+
+export const TERMS_US: EditionDocs = { en: usEn };
 
 // ------------------------------------------------------------------------------------------ the Hungarian edition
 // The EU texts with the prices of the Hungarian market in forints (api/_lib/markets.py, "6 990 Ft"): only the "prices"

@@ -395,11 +395,13 @@ check("G2 a copy of the real files: no problem", got == [], (got, err))
 # 30efee7: hu IS selectable now, with its own edition of the legal texts, so flipping hu to selectable (what this scenario
 # used to do) changes nothing. The same rule, the same market: hu selectable (as in the file) while no edition of the
 # legal texts is listed for it, in the pages' lists and the server's (legal.ts and pay.py EDITION_MARKETS, EDITION_LANGS).
+# 1028b: the lists name the US edition too (EDITION_MARKETS au, hu, us; EDITION_LANGS us: en), so the scenario takes hu out of
+# the lists as they are now; the rule and the market are the same.
 hu_on = neg_root("hu_selectable", pay_sub=lambda s: sub("hu_selectable", sub(
-    "hu_selectable", s, 'EDITION_MARKETS = ("au", "hu")', 'EDITION_MARKETS = ("au",)'),
-    ', "hu": ("en", "de", "lt", "hu")}', '}'))
+    "hu_selectable", s, 'EDITION_MARKETS = ("au", "hu", "us")', 'EDITION_MARKETS = ("au", "us")'),
+    ', "hu": ("en", "de", "lt", "hu")', ''))
 edit_file(hu_on, "src/shared/legal.ts", lambda t: sub("hu_selectable", sub(
-    "hu_selectable", t, "{ au: 'au', hu: 'hu' }", "{ au: 'au' }"),
+    "hu_selectable", t, "{ au: 'au', hu: 'hu', us: 'us' }", "{ au: 'au', us: 'us' }"),
     "  hu: ['en', 'de', 'lt', 'hu'],\n", ""))
 def hu_is_selectable(root):
     txt = open(os.path.join(root, "api", "_lib", "markets.py"), encoding="utf-8").read()
@@ -407,15 +409,15 @@ def hu_is_selectable(root):
 
 
 got, err = check_prices(hu_on)
-check("G3 hu set selectable without Hungarian texts: the build is refused, naming the market and the rule",
+check("G3 hu set selectable without Hungarian texts: the build is refused, naming the market and the rule - 1028b: the lists as they are with the US edition",
       not NEG_PROBLEMS.get("hu_selectable") and got and hu_is_selectable(hu_on)
       and any('market "hu": selectable, but no edition of the legal texts prints its HUF prices' in x for x in got),
       (got, err, NEG_PROBLEMS.get("hu_selectable")))
 # 30efee7: the server's list of markets with an edition is pay.py EDITION_MARKETS (ACL_MARKETS became the Australian part of
 # it, no longer compared with the pages' list); the build compares EDITION_MARKETS
-drift = neg_root("acl_drift", pay_sub=lambda s: sub("acl_drift", s, 'EDITION_MARKETS = ("au", "hu")', 'EDITION_MARKETS = ("au", "hu", "lt")'))
+drift = neg_root("acl_drift", pay_sub=lambda s: sub("acl_drift", s, 'EDITION_MARKETS = ("au", "hu", "us")', 'EDITION_MARKETS = ("au", "hu", "us", "lt")'))
 got, err = check_prices(drift)
-check("G4 pay.py EDITION_MARKETS and legal.ts EDITION_MARKETS disagree: refused",
+check("G4 pay.py EDITION_MARKETS and legal.ts EDITION_MARKETS disagree: refused - 1028b: the lists name us too",
       not NEG_PROBLEMS.get("acl_drift") and got and any("must name the same markets" in x for x in got),
       (got, err, NEG_PROBLEMS.get("acl_drift")))
 au_off = neg_root("au_paused", markets_sub=lambda s: s.replace('"currency": "aud",\n        "prices": {"one_eye_studio_black": 3900, "one_eye_art": 4900, "two_eyes": 7900, "each_further_eye": 2900},\n        "selectable": 1',
@@ -441,6 +443,37 @@ check("G7 pay.py ACL_MARKETS is exactly the market legal.ts EDITION_MARKETS give
       bool(page_ed) and sorted(pay.ACL_MARKETS) == sorted(m for m, e in page_ed.items() if e == "au") and set(pay.ACL_MARKETS) <= set(pay.EDITION_MARKETS)
       and pay.acl_market("au") and not pay.acl_market("hu") and not pay.acl_market("eu") and not pay.acl_market("lt")
       and pay.edition_market("hu") and not pay.edition_market("lt"), (page_ed, pay.ACL_MARKETS, pay.EDITION_MARKETS))
+# 1028b: the US edition. pay.py US_MARKETS (the US checkbox, note and invoice) is held to the market legal.ts EDITION_MARKETS gives the
+# us edition, the way ACL_MARKETS is to the au one (scripts/check_prices.mjs checks both now); the mutations below prove each rule fails.
+check("G7b pay.py US_MARKETS is exactly the market legal.ts EDITION_MARKETS gives the us edition, inside EDITION_MARKETS",
+      sorted(pay.US_MARKETS) == sorted(m for m, e in page_ed.items() if e == "us") == ["us"] and set(pay.US_MARKETS) <= set(pay.EDITION_MARKETS)
+      and pay.us_market("us") and not pay.us_market("au") and not pay.acl_market("us") and pay.edition_market("us"),
+      (page_ed, pay.US_MARKETS, pay.EDITION_MARKETS))
+us_drift = neg_root("us_drift", pay_sub=lambda s: sub("us_drift", s, 'US_MARKETS = ("us",)', 'US_MARKETS = ("us", "au")'))
+got, err = check_prices(us_drift)
+check("G8 pay.py US_MARKETS drifts from the US edition (us, au): refused, naming the rule",
+      not NEG_PROBLEMS.get("us_drift") and got and any("US_MARKETS (us, au) must be exactly the market of the US edition" in x for x in got),
+      (got, err, NEG_PROBLEMS.get("us_drift")))
+acl_drift2 = neg_root("acl_drift2", pay_sub=lambda s: sub("acl_drift2", s, 'ACL_MARKETS = ("au",)', 'ACL_MARKETS = ("au", "hu")'))
+got, err = check_prices(acl_drift2)
+check("G9 pay.py ACL_MARKETS drifts from the Australian edition (au, hu): still refused after the check learned the US part",
+      not NEG_PROBLEMS.get("acl_drift2") and got and any("ACL_MARKETS (au, hu) must be exactly the market of the Australian edition" in x for x in got),
+      (got, err, NEG_PROBLEMS.get("acl_drift2")))
+us_bare = neg_root("us_no_edition", pay_sub=lambda s: sub("us_no_edition", sub("us_no_edition", sub(
+    "us_no_edition", s, 'EDITION_MARKETS = ("au", "hu", "us")', 'EDITION_MARKETS = ("au", "hu")'),
+    ', "us": ("en",)}', '}'), 'US_MARKETS = ("us",)', 'US_MARKETS = ()'))
+edit_file(us_bare, "src/shared/legal.ts", lambda t: sub("us_no_edition", sub(
+    "us_no_edition", t, "{ au: 'au', hu: 'hu', us: 'us' }", "{ au: 'au', hu: 'hu' }"), "  us: ['en'],\n", ""))
+got, err = check_prices(us_bare)
+check("G10 us selectable without its US edition: the build is refused, naming the market and its USD prices",
+      not NEG_PROBLEMS.get("us_no_edition") and got and any('market "us": selectable, but no edition of the legal texts prints its USD prices' in x for x in got),
+      (got, err, NEG_PROBLEMS.get("us_no_edition")))
+uk_on = neg_root("uk_selectable", markets_sub=lambda s: s.replace('"currency": "gbp",\n        "prices": {"one_eye_studio_black": 1797, "one_eye_art": 2197, "two_eyes": 3497, "each_further_eye": 1300},\n        "selectable": 0',
+                                                                    '"currency": "gbp",\n        "prices": {"one_eye_studio_black": 1797, "one_eye_art": 2197, "two_eyes": 3497, "each_further_eye": 1300},\n        "selectable": 1'))
+got, err = check_prices(uk_on)
+check("G11 uk switched on (selectable 1) while no UK edition exists: the build is refused, naming the market and its GBP prices",
+      '"selectable": 1' in open(os.path.join(uk_on, "api", "_lib", "markets.py"), encoding="utf-8").read().split('"uk"')[1][:300]
+      and got and any('market "uk": selectable, but no edition of the legal texts prints its GBP prices' in x for x in got), (got, err))
 
 # ---------------------------------------------------------------------------------------------- H. the site's code
 r = subprocess.run(["node", os.path.join(HERE, "fixer_client.mjs"), HERE], cwd=H.REPO, capture_output=True, text=True,

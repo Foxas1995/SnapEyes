@@ -33,23 +33,32 @@ export const LEGAL_UPDATED = '2026-10-28';
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right
  *  framed as EU law, its own checkout consent, and an Australian part in the privacy policy. "hu" (the Hungarian
  *  market): the EU texts with the forint prices in the terms (the EU terms print euros, and an order in forints must
- *  be under a contract that prints forints). Every other market (eu, lt) reads the EU edition, unchanged.
- *  api/_lib/pay.py EDITION_MARKETS is the same list (and ACL_MARKETS the Australian part of it): keep them in step;
- *  the build checks it (scripts/check_prices.mjs). The build's legal pack carries the other editions apart
- *  (src/legal/plain.ts), with links that carry m=au / m=hu. */
-export type LegalEdition = 'eu' | 'au' | 'hu';
-export const EDITION_MARKETS: Readonly<Record<Exclude<LegalEdition, 'eu'>, Market>> = { au: 'au', hu: 'hu' };
+ *  be under a contract that prints forints). "us" (the US market): the terms with prices in US$ without sales tax and
+ *  "Your rights in the United States", the withdrawal right framed as EU law, its own checkout consent (with the
+ *  consent to the use of the eye photos), and a US part in the privacy policy. Every other market (eu, lt, hr; uk,
+ *  which is not sold in) reads the EU edition, unchanged.
+ *  api/_lib/pay.py EDITION_MARKETS is the same list (and ACL_MARKETS the Australian part of it, US_MARKETS the US
+ *  part): keep them in step; the build checks it (scripts/check_prices.mjs). The build's legal pack carries the other
+ *  editions apart (src/legal/plain.ts), with links that carry m=au / m=hu / m=us. */
+export type LegalEdition = 'eu' | 'au' | 'hu' | 'us';
+export const EDITION_MARKETS: Readonly<Record<Exclude<LegalEdition, 'eu'>, Market>> = { au: 'au', hu: 'hu', us: 'us' };
 export function legalEdition(m: Market = currentMarket()): LegalEdition {
-  return m === EDITION_MARKETS.au ? 'au' : m === EDITION_MARKETS.hu ? 'hu' : 'eu';
+  return m === EDITION_MARKETS.au ? 'au' : m === EDITION_MARKETS.hu ? 'hu' : m === EDITION_MARKETS.us ? 'us' : 'eu';
 }
+
+/** Does this edition's checkout show a checkbox text of its own (the Australian and the US one; GET /api/checkout sends
+ *  them under consent.markets), not the EU text? */
+export const ownConsent = (e: LegalEdition): boolean => e === 'au' || e === 'us';
 
 /** The languages each edition has texts in. The Australian edition is English and German only (its Australian
  *  Consumer Law text is not translated into Lithuanian or Hungarian), so a page of the Australian market never shows
- *  those two languages (src/shared/lang.ts langFor). api/_lib/pay.py EDITION_LANGS is the same table. */
+ *  those two languages (src/shared/lang.ts langFor); the US edition is English only, so a page of the US market is
+ *  always English. api/_lib/pay.py EDITION_LANGS is the same table. */
 export const EDITION_LANGS: Readonly<Record<LegalEdition, readonly LegalLang[]>> = {
   eu: ['en', 'de', 'lt', 'hu', 'hr'],
   au: ['en', 'de'],
   hu: ['en', 'de', 'lt', 'hu'],
+  us: ['en'],
 };
 
 /** The language an edition's texts are read in: the asked one, or English where the edition has none in it. */
@@ -57,7 +66,7 @@ export function editionLang(lang: LegalLang, m: Market = currentMarket()): Legal
   return EDITION_LANGS[legalEdition(m)].includes(lang) ? lang : 'en';
 }
 
-/** A link with a market in it: a market with its own edition always carries it (m=au), also while the owner has
+/** A link with a market in it: a market with its own edition always carries it (m=au, m=us), also while the owner has
  *  paused that market ("selectable": 0), so that the links in an order's emails and pages keep opening the texts the
  *  order was made under; any other market as src/shared/markets.ts withMarket does (m= only for a selectable market
  *  other than the default one). */
@@ -165,14 +174,16 @@ export function withdrawFunctionAddress(lang: LegalLang = 'en'): string {
 export interface LegalPart { text: string; doc?: LegalDocId; section?: string }
 
 // The withdrawal waiver exactly as the server records it: api/_lib/pay.py CONSENT_TEXT (and CONSENT_TEXT_AU for the
-// Australian market, CHECKOUT_LEGAL_AU below), version CONSENT_VERSION (GET /api/checkout also returns them).
+// Australian market, CHECKOUT_LEGAL_AU below, and CONSENT_TEXT_US for the US market, CHECKOUT_LEGAL_US), version
+// CONSENT_VERSION (GET /api/checkout also returns them).
 // /api/checkout refuses an order without it and stores its version, time and a fingerprint of the text; the delivery
 // email confirms it (the durable-medium confirmation of Art. 16(m)(iii) Directive 2011/83/EU and § 356 Abs. 5 Nr. 3
 // BGB). Change both files together and bump the version (2026-09-30.1: the Australian text added, the EU text as it
 // was; 2026-09-30.2: the Lithuanian and the Hungarian texts added, the English, German and Australian texts as they
-// were; 2026-10-28.1: the Croatian text added, every other text as it was). The build refuses a consent text that changed under the same version, and a version without its fingerprint
+// were; 2026-10-28.1: the Croatian text added, every other text as it was; 2026-10-28.2: the US text added, every other
+// text as it was). The build refuses a consent text that changed under the same version, and a version without its fingerprint
 // (scripts/check_texts.mjs CONSENT_FINGERPRINTS: the check prints the new one).
-export const WITHDRAWAL_CONSENT_VERSION = '2026-10-28.1';
+export const WITHDRAWAL_CONSENT_VERSION = '2026-10-28.2';
 
 export interface CheckoutLegal {
   /** The withdrawal checkbox: unticked by default and required before the payment page opens. Art. 16(m)
@@ -342,10 +353,38 @@ export const CHECKOUT_LEGAL_AU: Record<'en' | 'de', Pick<CheckoutLegal, 'withdra
   },
 };
 
+/** The checkout of the US market (legalEdition "us", English only): the same checkbox, with a text that keeps both EU
+ *  elements (the contract is under Lithuanian law: the express consent to start before the withdrawal period ends and
+ *  the acknowledgement of losing the right of withdrawal), says what a US customer reads in it (no cancelling for a
+ *  change of mind once making has started, the rights for a faulty file kept, so nothing reads as "no refunds"), and
+ *  adds the consent to the use of the eye photos (some US state laws treat an iris image as a biometric identifier:
+ *  used only for the preview and the artwork, never to identify anyone, deleted as the privacy policy describes).
+ *  Identical to api/_lib/pay.py CONSENT_TEXT_US. The line under it names the terms' "Your rights in the United States". */
+export const CHECKOUT_LEGAL_US: Record<'en', Pick<CheckoutLegal, 'withdrawalConsent' | 'acceptance'>> = {
+  en: {
+    withdrawalConsent:
+      "I expressly agree that SnapEyes starts making my personalised digital artwork right away, before the withdrawal period ends. I know that once this has started, I lose my right of withdrawal and can't cancel for a change of mind; my rights if the file is faulty are not affected. I also agree that SnapEyes uses the photos of my eyes only to make my preview and my artwork, never to identify anyone, and deletes them as its privacy policy describes.",
+    acceptance: [
+      { text: 'By ordering you accept our ' },
+      { text: 'Terms of sale', doc: 'terms' },
+      { text: ', including ' },
+      { text: 'your rights in the United States', doc: 'terms', section: 'united-states' },
+      { text: '. Please also read our ' },
+      { text: 'Privacy policy', doc: 'privacy' },
+      { text: ' and the ' },
+      { text: 'information on the right of withdrawal', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+  },
+};
+
 /** The checkout wording for a market: the EU wording (also for the hu edition: the same checkbox, the prices differ
- *  only in the terms), with the Australian checkbox and line for the au edition. A language the edition has no texts
- *  in (editionLang) reads the edition's English. */
+ *  only in the terms), with the Australian checkbox and line for the au edition and the US ones for the us edition. A
+ *  language the edition has no texts in (editionLang) reads the edition's English. */
 export function checkoutLegal(lang: LegalLang, market: Market = currentMarket()): CheckoutLegal {
   const l = editionLang(lang, market);
-  return legalEdition(market) === 'au' ? { ...CHECKOUT_LEGAL[l], ...CHECKOUT_LEGAL_AU[l === 'de' ? 'de' : 'en'] } : CHECKOUT_LEGAL[l];
+  const e = legalEdition(market);
+  if (e === 'au') return { ...CHECKOUT_LEGAL[l], ...CHECKOUT_LEGAL_AU[l === 'de' ? 'de' : 'en'] };
+  if (e === 'us') return { ...CHECKOUT_LEGAL.en, ...CHECKOUT_LEGAL_US.en };
+  return CHECKOUT_LEGAL[l];
 }

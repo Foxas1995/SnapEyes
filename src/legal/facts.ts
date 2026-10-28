@@ -60,4 +60,8 @@ export const aud = (cents: number, lang: Lang) => money(cents, 'aud', lang);
 export const HU_PRICES = priceList(EDITION_MARKETS.hu);
 export const huf = (minor: number, lang: Lang) => money(minor, 'huf', lang);
 
+// the US edition's terms print the US market's prices (in US dollars: "$21.97", English only)
+export const US_PRICES = priceList(EDITION_MARKETS.us);
+export const usd = (cents: number, lang: Lang) => money(cents, 'usd', lang);
+
 export { CONTACT_EMAIL, DELIVERY_MAX_HOURS, MAX_EYES, PHONE_OMITTED_BY_OWNER, PRICE_CENTS, SELLER };

@@ -8,7 +8,7 @@
 //   1. the build has the five editions (dist/lp/en.html, de, lt, hu, hr) and NO dist/index.html (a file for / would answer before any rewrite: Vercel checks
 //      the file system first, proven on the CLI's own build output), every rewrite of vercel.json names a clean path ("/lp/de", never ".html", which the
 //      cleanUrls redirect catches) that is a file of the build, and no file of the build answers the source of a rewrite;
-//   2. /, /?lang=en, de, lt, hu, hr, ?lang=de&m=au, ?m=lt, ?m=hu, ?lang=en&m=hu, an unknown or upper-case ?lang= are answered 200 at once (no redirect) with the
+//   2. /, /?lang=en, de, lt, hu, hr, ?lang=de&m=au, ?m=lt, ?m=hu, ?m=hr, ?m=us, ?lang=en&m=hu, an unknown or upper-case ?lang= are answered 200 at once (no redirect) with the
 //      edition of the language the link asks for, whose html lang, title, description, canonical, hreflang, og:url, og:locale (and its three alternates), og:title,
 //      og:description, og:image (+ width, height, alt) and twitter tags are the ones the page's own copy (src/landing/copy/<lang>.json meta), src/shared/lang.ts and
 //      src/landing/shell/share.json give, with exactly one canonical, the page's own address (English at /, the others at /?lang=xx);
@@ -108,6 +108,8 @@ const HREFLANG = { en: `${SITE_ORIGIN}/`, de: `${SITE_ORIGIN}/?lang=de`, lt: `${
 const LINKS = [
   ['/', 'en'], ['/?lang=en', 'en'], ['/?lang=de', 'de'], ['/?lang=lt', 'lt'], ['/?lang=hu', 'hu'], ['/?lang=hr', 'hr'],
   ['/?lang=de&m=au', 'de'], ['/?lang=de&m=hu', 'de'], ['/?m=lt', 'lt'], ['/?m=hu', 'hu'], ['/?lang=en&m=hu', 'en'], ['/?m=au', 'en'], ['/?m=eu', 'en'],
+  // 2026-10-28: the Croatian market opens in Croatian (its own language, like lt and hu), the US market in English (its edition's only language)
+  ['/?m=hr', 'hr'], ['/?lang=en&m=hr', 'en'], ['/?m=us', 'en'],
   ['/?lang=fr', 'en'], ['/?lang=DE', 'en'], ['/?utm_source=facebook&fbclid=abc', 'en'], ['/?utm_source=x&lang=lt', 'lt'],
 ];
 

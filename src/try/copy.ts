@@ -454,6 +454,7 @@ const en = {
     footnote: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in euros.',
     footnoteAud: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in Australian dollars (A$).',
     footnoteHuf: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in Hungarian forints (Ft).',
+    footnoteUsd: 'You would receive one digital file, 4096 px on its longest side, without watermark. Prices in US dollars (US$).',
     demo: 'This is a demo with the AI-generated sample eye. Try your own eye to see your price.',
     sampleNotCounted: (k: number) => (k === 1
       ? 'The AI-generated sample eye is not part of an order, so it is not counted.'
@@ -507,6 +508,7 @@ const en = {
     namesBlocked: 'Please fix the words on the artwork first (see above).',
     footnote: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the final price: we are not registered for VAT, so no VAT is added.',
     footnoteAud: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no GST is charged.',
+    footnoteUsd: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no sales tax is charged.',
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py): six chips and an optional text, on the result screen and on the card that asks for another photo
@@ -905,6 +907,7 @@ const de: TryCopy = {
     footnote: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in Euro.',
     footnoteAud: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in australischen Dollar (A$).',
     footnoteHuf: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in ungarischen Forint (Ft).',
+    footnoteUsd: 'Sie würden eine digitale Datei ohne Wasserzeichen erhalten, 4096 px an der längsten Seite. Preise in US-Dollar (US$).',
     demo: 'Dies ist eine Demo mit dem KI-generierten Beispielauge. Probieren Sie es mit Ihrem eigenen Auge, um Ihren Preis zu sehen.',
     sampleNotCounted: (k: number) => (k === 1
       ? 'Das KI-generierte Beispielauge ist nicht Teil einer Bestellung und wird daher nicht mitgezählt.'
@@ -947,6 +950,7 @@ const de: TryCopy = {
     namesBlocked: 'Bitte korrigieren Sie zuerst die Worte auf dem Kunstwerk (siehe oben).',
     footnote: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.',
     footnoteAud: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine GST berechnet.',
+    footnoteUsd: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine Sales Tax berechnet.',
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py)

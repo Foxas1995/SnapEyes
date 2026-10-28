@@ -22,7 +22,7 @@ import { useMarket } from '../shared/useMarket';
 import './css/currency.css';
 
 // symbols and ISO codes are the same in every language: not copy
-const CURRENCY_LABEL: Record<Currency, string> = { eur: '€ EUR', aud: 'A$ AUD', huf: 'Ft HUF' };
+const CURRENCY_LABEL: Record<Currency, string> = { eur: '€ EUR', aud: 'A$ AUD', huf: 'Ft HUF', usd: '$ USD', gbp: '£ GBP' };
 
 export interface CurrencySwitchProps {
   /** The words before the buttons, also the name of the button group (pricing.currencyLabel, footer.currency). */

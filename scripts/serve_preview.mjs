@@ -1,12 +1,12 @@
 // A local viewer of the built page (dist/) that answers the two API calls the landing makes, with no Python, no Stripe and no keys:
 //   npm run build
-//   node scripts/serve_preview.mjs [--port 5215] [--open] [--suggest au|hu] [--dist dist]
+//   node scripts/serve_preview.mjs [--port 5215] [--open] [--suggest au|hu|us] [--dist dist]
 // The page is served the way Vercel serves it (cache headers, clean URLs), so what you see is what the build is. The stub says what the
 // flags say:
 //   (no flag)       ordering is closed: the three "Ordering opens soon" places, "Free preview" everywhere
 //   --open          ordering is open (and the owner has switched on the styles whose ceiling is live: scripts/lib/stubapi.mjs): the bar, the pricing notice and
 //                   the FAQ switch to their open sentences, the tiles of those styles and the price rows show their prices, the others stay Soon
-//   --suggest au    the server places the visitor in Australia (or hu: Hungary): the offer of A$ (or Ft) above the hero
+//   --suggest au    the server places the visitor in Australia (or hu: Hungary, us: the United States): the offer of A$ (or Ft, US$) above the hero
 // Addresses: /  /?lang=de  /?lang=lt  /?lang=hu  /?m=au (A$ prices, the Australian FAQ)  /?m=hu (forints). /try, /order and the legal pages are
 // served too, but /try needs the real API to make a preview: this stub only answers /api/health and /api/checkout.
 import { join, resolve } from 'node:path';

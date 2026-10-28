@@ -395,6 +395,7 @@ export const hr: TryCopy = {
     footnote: 'Dobili biste jednu digitalnu datoteku bez vodenog žiga, 4096 px na duljoj stranici. Cijene su u eurima.',
     footnoteAud: 'Dobili biste jednu digitalnu datoteku bez vodenog žiga, 4096 px na duljoj stranici. Cijene su u australskim dolarima (A$).',
     footnoteHuf: 'Dobili biste jednu digitalnu datoteku bez vodenog žiga, 4096 px na duljoj stranici. Cijene su u mađarskim forintama (Ft).',
+    footnoteUsd: 'Dobili biste jednu digitalnu datoteku bez vodenog žiga, 4096 px na duljoj stranici. Cijene su u američkim dolarima (US$).',
     demo: 'Ovo je demonstracija s uzorkom oka koji je izradila umjetna inteligencija. Isprobajte sa svojim okom da vidite svoju cijenu.',
     sampleNotCounted: (k: number) => (k === 1
       ? 'Uzorak oka koji je izradila umjetna inteligencija nije dio narudžbe, pa se ne računa.'
@@ -443,6 +444,7 @@ export const hr: TryCopy = {
     namesBlocked: 'Najprije ispravite riječi na umjetničkom djelu (vidi gore).',
     footnote: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je konačna cijena: nismo u sustavu PDV-a, pa se PDV ne obračunava.',
     footnoteAud: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je ukupna cijena: GST se ne naplaćuje.',
+    footnoteUsd: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je ukupna cijena: američki porez na promet ne naplaćuje se.',
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py)

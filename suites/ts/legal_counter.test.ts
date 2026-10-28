@@ -1,5 +1,5 @@
 // The privacy policy says what the anonymous counter keeps (2026-10-20): the same paragraphs, in the same places, in English, German, Lithuanian, Hungarian and Croatian (2026-10-28),
-// in the three editions (the euro texts, the Australian edition made from them by patchDoc, and the Hungarian edition, which is the euro text with the forint prices and has no
+// in the four editions (the euro texts, the Australian and the US edition made from them by patchDoc, and the Hungarian edition, which is the euro text with the forint prices and has no
 // Croatian text), and nothing the policy says contradicts
 // the counter (api/_lib/counter.py): no cookie, no visitor number, no IP address, no user agent stored; the country is stored as two letters. Pure page code, loaded through Vite's
 // module runner by scripts/run_ts_tests.mjs; returns its results.
@@ -47,6 +47,12 @@ export async function run(): Promise<Row[]> {
   check('the Australian edition has English and German only, made from the euro texts: its operations section is the same paragraphs',
     !!au.en && !!au.de && !au.lt && !au.hu && !au.hr && (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'operations') === sectionText(PRIVACY[l], 'operations') && sectionText(au[l]!, 'website') === sectionText(PRIVACY[l], 'website')));
   check('the Australian edition keeps its own section on top of them, after the rights section', (['en', 'de'] as const).every((l) => section(au[l]!, 'australia') !== undefined));
+  // 2026-10-28: the US edition (English only), made the same way
+  const us = EDITIONS.us.privacy;
+  check('the US edition has English only, made from the euro texts: its operations and website sections are the same paragraphs',
+    !!us.en && !us.de && !us.lt && !us.hu && !us.hr && sectionText(us.en!, 'operations') === sectionText(PRIVACY.en, 'operations') && sectionText(us.en!, 'website') === sectionText(PRIVACY.en, 'website'));
+  check('the US edition keeps its own section on top of them, right after the rights section',
+    !!us.en && us.en.sections[us.en.sections.findIndex((s) => s.id === 'rights') + 1]?.id === 'united-states');
 
   // the campaign code (item 2): the key in the storage section, the operations paragraph, the order section and the retention row, in every language
   const KEYS: Record<(typeof LANGS)[number], RegExp> = { en: /key "snapeyes\.c"/, de: /Schlüssel „snapeyes\.c“/, lt: /raktu „snapeyes\.c“/, hu: /„snapeyes\.c” kulcs alatt/, hr: /ključem „snapeyes\.c“/ };
@@ -60,6 +66,7 @@ export async function run(): Promise<Row[]> {
   const REC: Record<(typeof LANGS)[number], RegExp> = { en: /campaign code of the advertisement you came from \(if any\)/, de: /Kampagnencode der Anzeige, über die Sie kamen \(falls vorhanden\)/, lt: /kampanijos kodą \(jei yra\)/, hu: /kampánykódja, amelyen keresztül érkezett \(ha van\)/, hr: /kod kampanje oglasa putem kojeg ste došli \(ako postoji\)/ };
   check('and the retention row of the order records lists it', LANGS.every((l) => REC[l].test(sectionText(PRIVACY[l], 'retention'))), LANGS.filter((l) => !REC[l].test(sectionText(PRIVACY[l], 'retention'))).join());
   check('the Australian edition carries the same storage and order paragraphs', (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'storage') === sectionText(PRIVACY[l], 'storage') && sectionText(au[l]!, 'orders') === sectionText(PRIVACY[l], 'orders')));
+  check('the US edition carries the same storage and order paragraphs', !!us.en && sectionText(us.en, 'storage') === sectionText(PRIVACY.en, 'storage') && sectionText(us.en, 'orders') === sectionText(PRIVACY.en, 'orders'));
 
   const dash = new RegExp('[' + [0x2012, 0x2013, 0x2014, 0x2015].map((c) => String.fromCharCode(c)).join('') + ']');
   check('no paragraph of the policy holds an en or em dash', LANGS.every((l) => !dash.test(PRIVACY[l].sections.map((s) => sectionText(PRIVACY[l], s.id)).join('\n'))));

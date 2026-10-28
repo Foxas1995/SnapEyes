@@ -103,6 +103,7 @@ export const hr: OrderCopy = {
     heading: 'Jednostrani raskid ugovora',
     lead: 'Pri narudžbi ste pristali da odmah počnemo izrađivati vašu datoteku. Dok još nismo počeli, ovaj ugovor ovdje možete jednostrano raskinuti. Čim izrada započne, vaše pravo na jednostrani raskid ugovora prestaje.',
     acl: 'Ovo je pravo na jednostrani raskid ugovora prema potrošačkom pravu EU-a, za slučaj da se predomislite. Ono ne utječe na vaša prava prema australskom zakonu o zaštiti potrošača (Australian Consumer Law): ako je vaša datoteka neispravna ili ne odgovara opisu, pišite nam i navedite broj narudžbe.',
+    us: 'Ovo je pravo na jednostrani raskid ugovora prema potrošačkom pravu EU-a, za slučaj da se predomislite. Ono ne utječe na vaša prava ako je datoteka neispravna: ako je vaša datoteka neispravna ili ne odgovara opisu, pišite nam i navedite broj narudžbe.',
     info: 'Pravo na jednostrani raskid ugovora',
     formLead: (confirm: string) => `Provjerite svoje podatke. Gumbom „${confirm}“ šaljete nam ovu izjavu:`,
     // identical to api/_lib/withdraw_hr.py STATEMENT_HR ({order} there)

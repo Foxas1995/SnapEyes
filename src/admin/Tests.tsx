@@ -22,7 +22,7 @@ const pct = (v: number | null | undefined, digits = 2): string => (typeof v === 
 const num = (v: number | null | undefined): string => (typeof v === 'number' ? String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : '-');
 const dec = (v: number, digits = 2): string => v.toFixed(digits).replace('.', ',');
 
-const MARKET_LT: Record<string, string> = { eu: 'eu (euras, anglų ir vokiečių kalbos)', lt: 'lt (euras, Lietuva)', au: 'au (Australijos doleriai)', hu: 'hu (forintai)' };
+const MARKET_LT: Record<string, string> = { eu: 'eu (euras, anglų ir vokiečių kalbos)', lt: 'lt (euras, Lietuva)', au: 'au (Australijos doleriai)', hu: 'hu (forintai)', us: 'us (JAV doleriai)', uk: 'uk (svarai sterlingai)', hr: 'hr (euras, Kroatija)' };
 const KEY_LT: Record<keyof ExpLadder, string> = {
   one_eye_studio_black: '1 akis, juodas fonas', one_eye_art: '1 akis, meninis fonas', two_eyes: '2 akys', each_further_eye: 'kiekviena kita akis',
 };

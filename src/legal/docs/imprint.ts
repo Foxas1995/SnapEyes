@@ -2,7 +2,8 @@
 // and SELLER.phone are set in src/landing/config.ts; the owner decided to show no phone (PHONE_OMITTED_BY_OWNER), so
 // the contact is the email address and, for withdrawals, the online withdrawal function. No VAT number: the MB is not
 // VAT-registered. IMPRINT_AU (the Australian edition, src/shared/legal.ts legalEdition "au") adds that it is not
-// registered for GST in Australia either (below the A$75,000 registration turnover), so no GST is charged.
+// registered for GST in Australia either (below the A$75,000 registration turnover), so no GST is charged. IMPRINT_US (the
+// US edition, English only) adds that it is not registered to collect sales tax in any US state, so none is charged.
 import type { EditionDocs, LegalDoc, LegalDocs } from '../types';
 import { MAIL, SELLER, company, country } from '../facts';
 import { WITHDRAWAL_ONLINE, withdrawFunctionHref } from '../../shared/legal';
@@ -116,3 +117,17 @@ const withGst = (doc: LegalDoc, lang: 'en' | 'de') => patchDoc(doc, {
 });
 
 export const IMPRINT_AU: EditionDocs = { en: withGst(en, 'en'), de: withGst(de, 'de') };
+
+// ------------------------------------------------------------------------------------------ the US edition
+export const IMPRINT_US: EditionDocs = {
+  en: patchDoc(en, {
+    replace: {
+      provider: (s) => ({
+        ...s,
+        blocks: s.blocks.map((b) => (typeof b !== 'string' && 'dl' in b
+          ? { dl: [...b.dl, ['Sales tax (United States)', 'Not registered to collect sales tax in any US state, so no sales tax is charged.'] as [string, string]] }
+          : b)),
+      }),
+    },
+  }),
+};

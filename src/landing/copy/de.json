@@ -487,9 +487,11 @@
     "payOpen": "Sichere Kartenzahlung über Stripe.",
     "termsLink": "AGB",
     "auLine": "Verkauft von MB Portretizuokis, Kaunas, Litauen. Kartenzahlung in A$ über Stripe. Eine digitale Datei, es wird also nichts versandt.",
+    "usLine": "Verkauft von MB Portretizuokis, Kaunas, Litauen. Kartenzahlung in US$ über Stripe. Eine digitale Datei, es wird also nichts versandt.",
     "footnote": "Preise in Euro. Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.",
     "footnoteAud": "Preise in australischen Dollar (A$). Jeder Preis ist der Gesamtpreis: Es wird keine GST berechnet.",
-    "footnoteHuf": "Preise in ungarischen Forint (Ft). Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet."
+    "footnoteHuf": "Preise in ungarischen Forint (Ft). Es sind Endpreise: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.",
+    "footnoteUsd": "Preise in US-Dollar (US$). Jeder Preis ist der Gesamtpreis: Es wird keine Sales Tax berechnet."
   },
   "closeups": {
     "eyebrow": "Genauer hinsehen",

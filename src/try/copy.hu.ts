@@ -405,6 +405,7 @@ export const hu: TryCopy = {
     footnote: 'Egy vízjel nélküli digitális fájlt kapnál, a hosszabbik oldalán 4096 px méretben. Az árak euróban értendők.',
     footnoteAud: 'Egy vízjel nélküli digitális fájlt kapnál, a hosszabbik oldalán 4096 px méretben. Az árak ausztrál dollárban (A$) értendők.',
     footnoteHuf: 'Egy vízjel nélküli digitális fájlt kapnál, a hosszabbik oldalán 4096 px méretben. Az árak forintban értendők.',
+    footnoteUsd: 'Egy vízjel nélküli digitális fájlt kapnál, a hosszabbik oldalán 4096 px méretben. Az árak amerikai dollárban (US$) értendők.',
     demo: 'Ez egy bemutató az MI által generált mintaszemmel. Próbáld ki a saját szemeddel, hogy lásd az árat.',
     sampleNotCounted: (k: number) => (k === 1
       ? 'Az MI által generált mintaszem nem része a rendelésnek, ezért nem számoljuk bele.'
@@ -449,6 +450,7 @@ export const hu: TryCopy = {
     namesBlocked: 'Először javítsd ki az alkotáson szereplő szavakat (lásd fent).',
     footnote: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a végső ár: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.',
     footnoteAud: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: GST-t nem számítunk fel.',
+    footnoteUsd: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: amerikai forgalmi adót nem számítunk fel.',
   },
 
   // a névtelen visszajelzés doboz (src/try/Feedback.tsx, api/_lib/feedback.py)

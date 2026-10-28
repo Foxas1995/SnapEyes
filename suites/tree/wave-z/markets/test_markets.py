@@ -136,21 +136,26 @@ src = open(os.path.join(H.API, "_lib", "markets.py"), encoding="utf-8").read()
 lit = json.loads(src[src.index("\nMARKETS = {") + len("\nMARKETS = "):])
 check("A1 markets.py: the MARKETS literal is plain JSON and equals what the server imports", lit == MK.MARKETS == pay.MARKETS,
       (lit, MK.MARKETS))
-check("A2 markets and currencies: eu/lt EUR, au AUD, hu HUF; default eu", MK.DEFAULT_MARKET == "eu"
-      and {m: v["currency"] for m, v in pay.MARKETS.items()} == {"eu": "eur", "lt": "eur", "au": "aud", "hu": "huf"}, pay.MARKETS)
+# 1028b (2026-10-28, the owner's decisions): us in US dollars with its own legal edition, selectable; uk in pounds, priced but behind the switch
+# (selectable 0, no edition yet); hr in euros (the euro list, its own key, the EU edition). A2, A3, A4, C1 and G5 pinned the four markets and moved,
+# each keeping its id and the older names, with " - 1028b:" added; B6, B7, G3b, G5b, G6b and G7c are new.
+check("A2 markets and currencies: eu/lt EUR, au AUD, hu HUF; default eu - 1028b: us USD, uk GBP, hr EUR", MK.DEFAULT_MARKET == "eu"
+      and {m: v["currency"] for m, v in pay.MARKETS.items()} == {"eu": "eur", "lt": "eur", "au": "aud", "hu": "huf", "us": "usd", "uk": "gbp", "hr": "eur"}, pay.MARKETS)
 # 30efee7: hu is selectable now (before: SELECTABLE ("eu", "lt", "au") and hu "selectable": 0). The rule it stays under:
 # a selectable market in another currency than the default's has its own edition of the legal texts (the build checks it,
 # G7), so hu must be in EDITION_MARKETS with the four languages of its edition, and pausing it (hu_paused) gives back the old list.
 with hu_paused():
     paused_selectable = pay.SELECTABLE
-check("A3 selectable: eu, lt, au (hu priced but not selectable)" " - 0930: hu is selectable since 30efee7, with its own legal edition; paused (hu_paused) it gives the old list", pay.SELECTABLE == ("eu", "lt", "au", "hu")
-      and [pay.MARKETS[m]["selectable"] for m in ("eu", "lt", "au", "hu")] == [1, 1, 1, 1]
+check("A3 selectable: eu, lt, au (hu priced but not selectable)" " - 0930: hu is selectable since 30efee7, with its own legal edition; paused (hu_paused) it gives the old list"
+      " - 1028b: us and hr selectable too (us with the US edition, English only), uk priced but not selectable", pay.SELECTABLE == ("eu", "lt", "au", "hu", "us", "hr")
+      and [pay.MARKETS[m]["selectable"] for m in ("eu", "lt", "au", "hu", "us", "uk", "hr")] == [1, 1, 1, 1, 1, 0, 1]
+      and pay.edition_market("us") and not pay.edition_market("uk") and not pay.edition_market("hr") and tuple(pay.edition_langs("us")) == ("en",)
       and pay.edition_market("hu") and pay.edition_market("au") and not pay.edition_market("eu") and not pay.edition_market("lt")
-      and tuple(pay.edition_langs("hu")) == ("en", "de", "lt", "hu") and paused_selectable == ("eu", "lt", "au"),
+      and tuple(pay.edition_langs("hu")) == ("en", "de", "lt", "hu") and paused_selectable == ("eu", "lt", "au", "us", "hr"),
       (pay.SELECTABLE, pay.EDITION_MARKETS, pay.EDITION_LANGS, paused_selectable))
 want = {"eu": (1997, 2497, 3997, 1500), "lt": (1997, 2497, 3997, 1500), "au": (3900, 4900, 7900, 2900),
-        "hu": (699000, 899000, 1399000, 499000)}
-check("A4 owner prices per market (Stripe units; HUF forint x 100)",
+        "hu": (699000, 899000, 1399000, 499000), "us": (2197, 2797, 4497, 1600), "uk": (1797, 2197, 3497, 1300), "hr": (1997, 2497, 3997, 1500)}
+check("A4 owner prices per market (Stripe units; HUF forint x 100) - 1028b: us $21.97 / $27.97 / $44.97 / +$16, uk £17.97 / £21.97 / £34.97 / +£13, hr the euro list",
       all(tuple(pay.price_list(m)[k] for k in pay.PRICE_KEYS) == v for m, v in want.items()), {m: pay.price_list(m) for m in want})
 tab = {(m, n, s): pay.price_cents(n, s, m) for m in pay.MARKETS for n in range(1, 9) for s in L.STYLES}
 check("A5 price_cents: 1 eye by style, 2 eyes, +extra per eye, every market",
@@ -190,17 +195,32 @@ check("B5 stripe_locale: en-GB for Australia's English, the page language otherw
       and pay.stripe_locale({"lang": "en", "market": "eu"}) == "en" and pay.stripe_locale({"lang": "de"}) == "de"
       and pay.stripe_locale({"lang": "en", "market": "lt"}) == "en")
 
+cases6 = [((2197, "en", "usd"), "$21.97"), ((1600, "en", "USD"), "$16.00"), ((14097, "en", "usd"), "$140.97"), ((123450, "en", "usd"), "$1,234.50"),
+          ((2197, "de", "usd"), "21,97 $"), ((1797, "en", "gbp"), "£17.97"), ((1300, "en", "gbp"), "£13.00"), ((1797, "de", "GBP"), "17,97 £"),
+          ((2197, "lt", "usd"), "21,97 $")]
+got6 = {c: pay.price_text(*c) for c, _ in cases6}
+check("B6 price_text for US dollars and pounds: '$21.97' in English, always with the cents; amount_text '21.97 USD'; tax_note: no sales tax for USD, no VAT or GST claim for GBP",
+      all(got6[c] == w for c, w in cases6) and pay.amount_text(2197, "en", "usd") == "21.97 USD" and pay.amount_text(1797, "de", "gbp") == "17,97 GBP"
+      and pay.tax_note("usd", "en") == "This is the total price: no sales tax is charged." and "Sales Tax" in pay.tax_note("usd", "de")
+      and pay.tax_note("gbp", "en") == "This is the total price." and "VAT" not in pay.tax_note("gbp", "en") and "GST" not in pay.tax_note("gbp", "en")
+      and pay.currency_of("USD") == "usd" and pay.currency_of("gbp") == "gbp" and not any(d in json.dumps(list(got6.values())) for d in DASHES), got6)
+check("B7 stripe_locale: the US market's page language (en), en-GB for the UK's English, Croatian for the Croatian market",
+      pay.stripe_locale({"lang": "en", "market": "us"}) == "en" and pay.stripe_locale({"lang": "en", "market": "uk"}) == "en-GB"
+      and pay.stripe_locale({"lang": "hr", "market": "hr"}) == "hr" and pay.stripe_locale({"lang": "en", "market": "hr"}) == "en")
+
 # ---------------------------------------------------------------------------------------------- C. GET /api/checkout
 c, j = get("/api/checkout")
 with hu_paused():       # 30efee7: hu is offered now; a paused hu is what "hu not in markets" pinned before
     cP, jP = get("/api/checkout")
     hintP = get("/api/checkout", {"x-vercel-ip-country": "HU"})[1]
-check("C1 GET: legacy currency/prices = eu, markets eu/lt/au only, in their currencies" " - 0930: hu is listed now (30efee7); with hu paused it is the old eu/lt/au list",
+check("C1 GET: legacy currency/prices = eu, markets eu/lt/au only, in their currencies" " - 0930: hu is listed now (30efee7); with hu paused it is the old eu/lt/au list"
+      " - 1028b: us (USD) and hr (EUR) are listed too, uk never",
       c == 200 and j["currency"] == "EUR" and j["prices"]["two_eyes"] == 3997 and j["market"] == "eu"
-      and sorted(j["markets"]) == ["au", "eu", "hu", "lt"] and j["markets"]["au"] == {"currency": "AUD", "prices": pay.price_list("au")}
+      and sorted(j["markets"]) == ["au", "eu", "hr", "hu", "lt", "us"] and j["markets"]["au"] == {"currency": "AUD", "prices": pay.price_list("au")}
+      and j["markets"]["us"] == {"currency": "USD", "prices": pay.price_list("us")} and "uk" not in j["markets"]
       and j["markets"]["hu"] == {"currency": "HUF", "prices": pay.price_list("hu")}
       and j["markets"]["lt"]["currency"] == "EUR"
-      and cP == 200 and sorted(jP["markets"]) == ["au", "eu", "lt"] and "hu" not in jP["markets"]
+      and cP == 200 and sorted(jP["markets"]) == ["au", "eu", "hr", "lt", "us"] and "hu" not in jP["markets"]
       and jP["currency"] == "EUR" and jP["prices"]["two_eyes"] == 3997 and jP["market"] == "eu", (j, jP))
 hints = {cc: get("/api/checkout", {"x-vercel-ip-country": cc})[1] for cc in ("AU", "au", "HU", "LT", "DE", "", "A1B")}
 check("C2 country hint: AU suggests au; HU (not selectable), LT (same currency), DE: none; junk: no country" " - 0930: HU suggests hu now (30efee7); with hu paused it suggests none",
@@ -461,11 +481,11 @@ if cl:
           cl["priceWithServerList"] == 7000 and cl["priceWithBadList"] == 3900
           and cl["serverPrices"] == {"own": {"two_eyes": 7900}, "legacyDefault": {"two_eyes": 3997}, "legacyOther": None}, cl)
     # 30efee7: hu is selectable, so its links carry m=hu like au's; with hu paused (cl["paused"]) they stay plain, as hu's did before
-    check("G5 links: m= only for a selectable non-default market, before #section; the printed address never has it",
+    check("G5 links: m= only for a selectable non-default market, before #section; the printed address never has it - 1028b: us and hr in the paused copy's selectable list",
           cl["links"] == {"legalPlain": "/terms?lang=en#prices", "withdrawPlain": "/order?withdraw=1&lang=de",
                           "address": "snapeyes.com/order?withdraw=1&lang=de", "au": "/terms?lang=en&m=au#prices",
                           "auNoQuery": "/try?m=au", "eu": "/terms?lang=en", "hu": "/terms?lang=en&m=hu", "bogus": "/terms?lang=en"}
-          and cl["paused"]["selectable"] == ["eu", "lt", "au"]
+          and cl["paused"]["selectable"] == ["eu", "lt", "au", "us", "hr"]
           and cl["paused"]["links"] == {"au": "/terms?lang=en&m=au#prices", "hu": "/terms?lang=en", "eu": "/terms?lang=en",
                                         "bogus": "/terms?lang=en"},
           (cl["links"], cl["paused"]))
@@ -480,6 +500,16 @@ if cl:
                                          "url_hu_ignored": {"market": "eu", "stored": None},
                                          "stored_hu_ignored": {"market": "eu", "stored": "hu"}},
           (cl["detect"], cl["paused"]["detect"]))
+    check("G5b links of the new markets: m=us and m=hr (selectable), never m=uk (not selectable); the US legal links always carry m=us",
+          cl["linksNew"] == {"us": "/terms?lang=en&m=us#prices", "hr": "/try?m=hr", "uk": "/try", "usLegal": "/terms?lang=en&m=us#united-states",
+                             "hrLegal": "/terms?lang=hr&m=hr"}, cl["linksNew"])
+    check("G6b detectMarket for the new markets: a us or hr link is taken and remembered; a uk link or a stored uk is ignored (priced, not selectable)",
+          cl["detectNew"] == {"url_us": {"market": "us", "stored": "us"}, "url_hr": {"market": "hr", "stored": "hr"},
+                              "url_uk_ignored": {"market": "eu", "stored": None}, "stored_uk_ignored": {"market": "eu", "stored": "uk"},
+                              "stored_us": {"market": "us", "stored": "us"}}, cl["detectNew"])
+    check("G3b client money() and the emails agree on US dollars and pounds too (en, de), and the money in English is '$21.97'",
+          any(x[1] == "usd" and x[2] == "en" and x[3] == "$21.97" for x in cl["money"]) and any(x[1] == "gbp" and x[2] == "en" and x[3] == "£17.97" for x in cl["money"]))
+    check("G7c admin amounts in US dollars and pounds", [x.replace(NBSP, " ") for x in cl["fmtMoneyNew"]] == ["21,97 $", "17,97 £"], cl["fmtMoneyNew"])
     check("G7a admin revenue summed per currency (EUR, AUD, HUF apart; a row without currency is EUR)",
           cl["revenue"] == {"eur": {"live": 3997 + 1997 + 2497, "test": 0, "n": 3}, "aud": {"live": 7900, "test": 3900, "n": 1},
                             "huf": {"live": 1399000, "test": 0, "n": 1}}, cl["revenue"])

@@ -59,9 +59,9 @@ async function rules() {
     const win = {};
     return { doc, preloads, win, sandbox: { URLSearchParams, location: { search: s.search }, localStorage: { getItem: (k) => (k in s.store ? s.store[k] : null) }, navigator: { language: s.nav }, document: doc, window: win } };
   };
-  const qm = [null, 'au', 'hu', 'lt', 'AU ', 'xx', 'eu'];
+  const qm = [null, 'au', 'hu', 'lt', 'AU ', 'xx', 'eu', 'us', 'hr', 'uk'];
   const ql = [null, 'en', 'de', 'lt', 'hu', 'hr', 'xx'];
-  const sm = [null, 'au', 'hu', 'lt', 'zz'];
+  const sm = [null, 'au', 'hu', 'lt', 'zz', 'us', 'hr', 'uk'];
   const sl = [null, 'de', 'lt', 'hu', 'hr', 'fr'];
   const nav = ['en-US', 'de-AT', 'lt', 'hu-HU', 'hr-HR', 'fr-FR', ''];
   let n = 0;
@@ -237,7 +237,7 @@ async function browser(dist, shotsDir) {
 
     // the shell (main script blocked) against the live first screen, for every language and the markets with a language of their own
     const sizes = [[375, 812, true], [768, 1024, false], [1280, 800, false]];
-    const cases = [['en', '/', 'eu'], ['de', '/?lang=de', 'eu'], ['lt', '/?lang=lt', 'eu'], ['hu', '/?lang=hu', 'eu'], ['hr', '/?lang=hr', 'eu'], ['lt', '/?m=lt', 'lt'], ['hu', '/?m=hu', 'hu'], ['en', '/?m=au', 'au'], ['de', '/?m=au&lang=de', 'au']];
+    const cases = [['en', '/', 'eu'], ['de', '/?lang=de', 'eu'], ['lt', '/?lang=lt', 'eu'], ['hu', '/?lang=hu', 'eu'], ['hr', '/?lang=hr', 'eu'], ['lt', '/?m=lt', 'lt'], ['hu', '/?m=hu', 'hu'], ['en', '/?m=au', 'au'], ['de', '/?m=au&lang=de', 'au'], ['en', '/?m=us', 'us'], ['en', '/?m=us&lang=de', 'us'], ['hr', '/?m=hr', 'hr']];
     const shots = [];
     for (const [lang, url, market] of cases) {
       for (const [w, h, mobile] of sizes) {
@@ -284,8 +284,8 @@ async function browser(dist, shotsDir) {
           if (x.style !== y.style) note(`${tag}: ${sel} styles differ: ${x.style} | ${y.style}`);
         }
         const lx = shellM['.lp-micro li'], ly = liveM['.lp-micro li'];
-        // the held-back price line is made in the default currency: on the forint and the Australian dollar markets its text (invisible) is another width
-        const sameBox = (bx, i) => (['hu', 'au'].includes(market) && i === lx.length - 1 ? close(bx.slice(0, 2), ly[i].slice(0, 2)) && Math.abs(bx[3] - ly[i][3]) <= 0.51 : close(bx, ly[i]));
+        // the held-back price line is made in the default currency: on the forint, the Australian and the US dollar markets its text (invisible) is another width
+        const sameBox = (bx, i) => (['hu', 'au', 'us'].includes(market) && i === lx.length - 1 ? close(bx.slice(0, 2), ly[i].slice(0, 2)) && Math.abs(bx[3] - ly[i][3]) <= 0.51 : close(bx, ly[i]));
         if (lx.length !== ly.length || lx.some((bx, i) => !sameBox(bx, i))) note(`${tag}: the micro line items differ: ${JSON.stringify(lx)} | ${JSON.stringify(ly)}`);
         if (shotsDir) {
           mkdirSync(shotsDir, { recursive: true });
