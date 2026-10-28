@@ -17,7 +17,7 @@ export interface StageScene { base: AssetFamily; sizeOk: boolean; de?: AssetFami
 export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, StageScene>>>>> = {
   "acrylic": {
     "eye": {
-      "base": "m/living_acrylic__gold__tight",
+      "base": "m/living_acrylic__radiance__tight",
       "sizeOk": false
     },
     "universe": {
@@ -35,7 +35,7 @@ export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, S
   },
   "metal": {
     "eye": {
-      "base": "m/office_metal__gold__tight",
+      "base": "m/office_metal__radiance__tight",
       "sizeOk": false
     },
     "universe": {
@@ -53,7 +53,7 @@ export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, S
   },
   "canvas": {
     "eye": {
-      "base": "m/hall_canvas__gold__tight",
+      "base": "m/hall_canvas__radiance__tight",
       "sizeOk": false
     },
     "universe": {
@@ -71,7 +71,7 @@ export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, S
   },
   "framed": {
     "eye": {
-      "base": "m/hotel_framed__gold__tight",
+      "base": "m/hotel_framed__radiance__tight",
       "sizeOk": true
     },
     "universe": {
@@ -89,7 +89,7 @@ export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, S
   },
   "block": {
     "eye": {
-      "base": "m/desk_block__gold__tight",
+      "base": "m/desk_block__radiance__tight",
       "sizeOk": false
     },
     "universe": {
@@ -103,7 +103,7 @@ export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, S
   },
   "phone": {
     "eye": {
-      "base": "m/phone_desk__gold__wide",
+      "base": "m/phone_desk__radiance__wide",
       "sizeOk": false
     },
     "universe": {
@@ -352,7 +352,7 @@ export const MORE: readonly { id: string; base: AssetFamily }[] = [
   },
   {
     "id": "hands",
-    "base": "m/hands_acrylic__gold__tight"
+    "base": "m/hands_acrylic__radiance__tight"
   },
   {
     "id": "gallery",
@@ -360,7 +360,7 @@ export const MORE: readonly { id: string; base: AssetFamily }[] = [
   },
   {
     "id": "shelf",
-    "base": "m/shelf_acrylic_30__gold__tight"
+    "base": "m/shelf_acrylic_30__radiance__tight"
   }
 ];
 
@@ -388,7 +388,7 @@ export const REVEAL: { readonly eyes: readonly { id: 'gd' | 'br' | 'own'; phone:
 
 /** The 96 px thumbnail of each wall artwork (the chips of the wall stage). */
 export const WALL_THUMBS: Readonly<Record<WallArt, AssetFile>> = {
-  "eye": "art/wallthumb_gold_96",
+  "eye": "art/wallthumb_radiance_96",
   "universe": "art/wallthumb_universe_96",
   "family4": "art/wallthumb_family4_96",
   "collision": "art/wallthumb_collision_96"

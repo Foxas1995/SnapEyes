@@ -264,10 +264,11 @@ check("singles at live: Clean Iris, Powder Burst, Universe (Echo and Vortex), Sp
       all(CT.ceiling(i, 1) == "live" for i in LIVE1) and [CT.name_of(i) for i in LIVE1] == ["Clean Iris", "Powder Burst", "Universe", "Splash", "Iris Echo"], [CT.ceiling(i, 1) for i in LIVE1])
 check("Family Colours: a live ceiling for three to eight eyes (the Trio opened alone in release 1: 1.6.3; four to eight since 2026-10-27, after their 4K masters were drawn on production)",
       [CT.ceiling("grp.collision", n) for n in range(3, 9)] == ["live"] * 6 and CT.ceiling("grp.collision", 2) is None)
-# Supernova Family is sold up to seven eyes (the owner, 2026-10-22: its eight-eye master needs 54 of the 52 s a Hobby call allows): eight eyes stay in the laboratory
+# Supernova Family was sold up to seven eyes (2026-10-22: its eight-eye master needed 54 of the 52 s a Hobby call allowed); since 2026-10-28 eight too (112 s of a 120 s call,
+# the eight-eye master drawn on production)
 check("Radiance, the three pair designs, the light family and the ensemble family have a live ceiling since 2026-10-27 (the owner's choice, after the 4K master of each was drawn on production), "
-      "Supernova Family up to seven eyes (eight in the laboratory), and every other design of the first release stays in the laboratory",
-      all(set(ceilings(i)) == {"live"} for i in PREVIEW + ENSEMBLE if i != "grp.supernova") and ceilings("grp.supernova") == ["live"] * 5 + ["lab"] and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
+      "Supernova Family up to eight eyes since 2026-10-28, and every other design of the first release stays in the laboratory",
+      all(set(ceilings(i)) == {"live"} for i in PREVIEW + ENSEMBLE) and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
 check("planned ids (the reserved designs, Clean Family and the two pet ids) have no engine and stay planned",
       all(set(ceilings(i)) == {"planned"} and not X.ENGINE[i]["engine"] for i in PLANNED), {i: ceilings(i) for i in PLANNED})
 check("the six legacy ids are RETIRED for 1 to 8 eyes (a ceiling of retired is final), still known and still renderable by the legacy engine",
@@ -347,12 +348,11 @@ check("every release-1 style can be PREVIEWED (a customer sees the tile, the fre
       and all(CT.previewable("grp.collision", n) for n in range(3, 9)) and not any(CT.previewable(i, 1) for i in ("solo.elements", "solo.gold") + tuple(LEGACY))
       and not CT.previewable("grp.chain", 3) and not CT.previewable("grp.clean", 3), "")
 check("the tiles: eleven for one eye (Powder Burst first, Clean Iris fifth, then the light family's five and Iris Echo), seven for two eyes (the three pairs, then Clean Duo, Radiance Duo, Nebula Duo and "
-      "Supernova Duo), six for three to seven (Family Colours, then Family Orbit, Light Circle, Radiance Family, Nebula Family and Supernova Family) and five for eight (no Supernova Family), all at preview; "
+      "Supernova Duo), six for three to eight (Family Colours, then Family Orbit, Light Circle, Radiance Family, Nebula Family and Supernova Family; eight eyes since 2026-10-28), all at preview; "
       "none is the recommended tile",
       [t["id"] for t in CT.tiles_for(1)] == ["solo.powder", "solo.universe", "solo.splash", "solo.radiance", "solo.clean"] + LUMEN + ["solo.echo"]
       and [t["id"] for t in CT.tiles_for(2)] == ["duo.kiss_collision", "duo.collision_infinity", "duo.clean", "duo.clean_duo", "duo.radiance", "duo.nebula", "duo.supernova"]
-      and all([t["id"] for t in CT.tiles_for(n)] == ["grp.collision", "grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova"] for n in range(3, 8))
-      and [t["id"] for t in CT.tiles_for(8)] == ["grp.collision", "grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula"]
+      and all([t["id"] for t in CT.tiles_for(n)] == ["grp.collision", "grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova"] for n in range(3, 9))
       and all(t["stage"] == "preview" for n in range(1, 9) for t in CT.tiles_for(n)) and all(CT.tile_list(n)["pick"] is None for n in range(1, 9)), "")
 check("the public catalogue (what a customer's page is told) lists the twenty-four shown ids at preview only, with no held, planned or legacy id",
       sorted(c["id"] for c in CT.public_catalogue()) == sorted(LIVE1 + PREVIEW + ENSEMBLE + ["grp.collision"]) and all(set(c["stages"].values()) == {"preview"} for c in CT.public_catalogue()), CT.public_catalogue()[:2])
@@ -432,9 +432,9 @@ check("above the ceiling the owner's switch refuses even with ticks: Radiance, K
       "cannot be made live without a reviewed change of the registry",
       all(v and v[0] == 409 and v[1] in ("above_ceiling", "needs_ticks", "not_switchable") for v in over.values()), over)
 # since 2026-10-27 the shown styles have a live ceiling: the examples of a style above its ceiling are the ones in the laboratory
-for s, n in (("solo.elements", 1), ("grp.chain", 3), ("grp.supernova", 8)):
+for s, n in (("solo.elements", 1), ("grp.chain", 3), ("solo.gold", 1)):
     act("styles_override", style=s, eyes=n, tick={"L1": True}, evidence=PASS_L0)
-over2 = {s: refused("styles_override", style=s, eyes=n, stage="live", confirm=True) for s, n in (("solo.elements", 1), ("grp.chain", 3), ("grp.supernova", 8))}
+over2 = {s: refused("styles_override", style=s, eyes=n, stage="live", confirm=True) for s, n in (("solo.elements", 1), ("grp.chain", 3), ("solo.gold", 1))}
 check("... ticked, they are still refused for the ceiling (above_ceiling): a tick is not a way over the ceiling", all(v == (409, "above_ceiling") for v in over2.values()) and not CT.orderable("solo.elements", 1), over2)
 x_leg = {s: refused("styles_override", style=s, eyes=1, stage="live", confirm=True) for s in LEGACY}
 check("the six retired ids cannot be switched back on from the admin page (retired is final): refused, and still not orderable",

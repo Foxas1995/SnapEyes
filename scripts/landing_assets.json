@@ -3,7 +3,7 @@
  "stage": {
   "acrylic": {
    "eye": {
-    "base": "m/living_acrylic__gold__tight",
+    "base": "m/living_acrylic__radiance__tight",
     "sizeOk": false
    },
    "universe": {
@@ -21,7 +21,7 @@
   },
   "metal": {
    "eye": {
-    "base": "m/office_metal__gold__tight",
+    "base": "m/office_metal__radiance__tight",
     "sizeOk": false
    },
    "universe": {
@@ -39,7 +39,7 @@
   },
   "canvas": {
    "eye": {
-    "base": "m/hall_canvas__gold__tight",
+    "base": "m/hall_canvas__radiance__tight",
     "sizeOk": false
    },
    "universe": {
@@ -57,7 +57,7 @@
   },
   "framed": {
    "eye": {
-    "base": "m/hotel_framed__gold__tight",
+    "base": "m/hotel_framed__radiance__tight",
     "sizeOk": true
    },
    "universe": {
@@ -75,7 +75,7 @@
   },
   "block": {
    "eye": {
-    "base": "m/desk_block__gold__tight",
+    "base": "m/desk_block__radiance__tight",
     "sizeOk": false
    },
    "universe": {
@@ -89,7 +89,7 @@
   },
   "phone": {
    "eye": {
-    "base": "m/phone_desk__gold__wide",
+    "base": "m/phone_desk__radiance__wide",
     "sizeOk": false
    },
    "universe": {
@@ -315,7 +315,7 @@
   },
   {
    "id": "hands",
-   "base": "m/hands_acrylic__gold__tight"
+   "base": "m/hands_acrylic__radiance__tight"
   },
   {
    "id": "gallery",
@@ -323,7 +323,7 @@
   },
   {
    "id": "shelf",
-   "base": "m/shelf_acrylic_30__gold__tight"
+   "base": "m/shelf_acrylic_30__radiance__tight"
   }
  ],
  "reveal": {
@@ -345,7 +345,7 @@
   ]
  },
  "wallThumbs": {
-  "eye": "art/wallthumb_gold_96",
+  "eye": "art/wallthumb_radiance_96",
   "universe": "art/wallthumb_universe_96",
   "family4": "art/wallthumb_family4_96",
   "collision": "art/wallthumb_collision_96"
@@ -365,9 +365,9 @@
   "m/macro_acrylic_corner__universe__wide_1200",
   "m/macro_acrylic_corner__universe__wide_2000",
   "m/macro_acrylic_corner__universe__wide_600",
-  "m/study_acrylic_3x2__gold__wide_1200",
-  "m/study_acrylic_3x2__gold__wide_2000",
-  "m/study_acrylic_3x2__gold__wide_600",
+  "m/study_acrylic_3x2__radiance__wide_1200",
+  "m/study_acrylic_3x2__radiance__wide_2000",
+  "m/study_acrylic_3x2__radiance__wide_600",
   "ui/before-phone-crop-315",
   "ui/preview_wm_360"
  ],

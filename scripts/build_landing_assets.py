@@ -163,10 +163,10 @@ def write_manifest(spec, files, ts_files_path, ts_data_path):
 // vercel.json serves it with "Cache-Control: immutable" for a year; a changed picture is another address. This file is the
 // only place that knows the addresses: components ask for a name and get the address, the srcset and the size.
 //
-//   asset('m/lounge_acrylic__gold__tight')    the family: every width as a srcset, one of them as src (pick, default 900)
+//   asset('m/lounge_acrylic__radiance__tight')    the family: every width as a srcset, one of them as src (pick, default 900)
 //   asset('reveal/gd_iris_900')               one file
-//   asset('m/study_acrylic_3x2__gold__wide', 2000)  the family with the 2000 px file as the src
-//   asset('m/lounge_acrylic__gold__tight', {{ max: 1200 }})   the family without its widest files
+//   asset('m/study_acrylic_3x2__radiance__wide', 2000)  the family with the 2000 px file as the src
+//   asset('m/lounge_acrylic__radiance__tight', {{ max: 1200 }})   the family without its widest files
 // A name that is not here does not compile. The structures that name pictures (wall, gallery, rooms, Reveal) are in
 // ./assets.data.ts, which only the sections below the first screen load.
 
