@@ -56,7 +56,7 @@ BG = "#000000"                                                                # 
 GEOM = {
     "nebula":   {"r": {"1:1": 0.255, "4:5": 0.255, "9:19.5": 0.262}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
     "stardust": {"r": {"1:1": 0.262, "4:5": 0.262, "9:19.5": 0.262}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
-    "halo":     {"r": {"1:1": 0.300, "4:5": 0.300, "9:19.5": 0.300}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
+    "halo":     {"r": {"1:1": 0.270, "4:5": 0.270, "9:19.5": 0.270}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
     "sparks":   {"r": {"1:1": 0.285, "4:5": 0.285, "9:19.5": 0.285}, "cy": {"1:1": 0.520, "4:5": 0.470, "9:19.5": 0.410}},
     "aurora":   {"r": {"1:1": 0.262, "4:5": 0.262, "9:19.5": 0.262}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
     "echo":     {"r": {"1:1": 0.330, "4:5": 0.330, "9:19.5": 0.300}, "cy": {"1:1": 0.500, "4:5": 0.470, "9:19.5": 0.420}},
@@ -66,8 +66,9 @@ GEOM = {
 # a design's own iris finish over core.FIN: the dust round Powder Burst's iris starts at the limb, so its iris keeps no dark limbal ring
 # (the owner's approved board of 2026-10-28, variant A). Without that ring the finish's micro contrast showed its bright overshoot on the iris' last
 # 0.04 R (its blurs read the black round the disc), and the F3 feather carried that band out to 1.03 R: a thin glass rim at the limb. edge: the
-# blurs read the iris only (core.FIN "edge"); inside 0.90 R not one pixel changes
-DESIGN_FIN = {"dust": {"limb": (0.78, 0.0), "edge": 0.985}}
+# blurs read the iris only (core.FIN "edge"); inside 0.90 R not one pixel changes. Halo's corona keeps half of the shade, the dark edge of the moon
+# in an eclipse
+DESIGN_FIN = {"dust": {"limb": (0.78, 0.0), "edge": 0.985}, "halo": {"limb": (0.78, 0.30)}}
 
 
 def _design(name):
