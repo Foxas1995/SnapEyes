@@ -7,7 +7,8 @@
   stardust  Supernova   the iris as a star that has just burst: clumpy jets of stardust leave every angle of the limb in the eye's own colour at that
                         angle, glitter, fine radial filaments, a broken shock shell, a white hot rim, a quiet field of stars
   halo      Halo        the iris backlit in its own colour: a soft bloom, a faint optical ring, a breath of mist, a tonal ground of its own deep shade
-  sparks    Sparks      sparks and soft lights lifting off the limb on a wind, as if the iris were a coal: comet streaks, glints and a few large lights
+  sparks    Sparks      the iris as a coal whose embers rise on a gentle wind: born at the limb in its own colours, they stream round it and over it
+                        (2026-10-28: embers since then)
   aurora    Aurora      curtains of northern light standing on the limb, the eye's own colour at the foot and its partner hue at the tips
   echo      Iris Echo   the iris in the middle of its own echo: the same iris enlarged behind it, its fibres radiating like a tunnel (2026-10-27)
   dust      Powder Burst  the iris whole, its own colour turned into dust round it (2026-10-28: Powder Burst's look since then)
@@ -67,8 +68,9 @@ GEOM = {
 # (the owner's approved board of 2026-10-28, variant A). Without that ring the finish's micro contrast showed its bright overshoot on the iris' last
 # 0.04 R (its blurs read the black round the disc), and the F3 feather carried that band out to 1.03 R: a thin glass rim at the limb. edge: the
 # blurs read the iris only (core.FIN "edge"); inside 0.90 R not one pixel changes. Halo's corona keeps half of the shade, the dark edge of the moon
-# in an eclipse
-DESIGN_FIN = {"dust": {"limb": (0.78, 0.0), "edge": 0.985}, "halo": {"limb": (0.78, 0.30)}}
+# in an eclipse. The embers of Sparks are born at the limb too, so its iris keeps half the family's ring (a light one: no dark seam between the
+# iris and its embers, and no pale glassy rim either)
+DESIGN_FIN = {"dust": {"limb": (0.78, 0.0), "edge": 0.985}, "halo": {"limb": (0.78, 0.30)}, "sparks": {"limb": (0.78, 0.3)}}
 
 
 def _design(name):
