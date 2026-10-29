@@ -66,9 +66,11 @@ ENGINE_V = 13         # 1: step A (the prototype's seed, from the bytes of the i
                       #   limbal shade): every Halo picture changed;
                       #   Sparks draws embers (born at the limb in the iris's own colours, they rise on a gentle wind round the untouched iris, whose own finish
                       #   keeps a light limbal ring) instead of the wind of streaks, glints and bokeh: every Sparks picture changed;
+                      #   Aurora redrawn: curtains of fine leaning rays rising from the limb, the eye's own colour at the foot and its partner hue at the tips,
+                      #   on black, the iris without the dark limbal ring: every Aurora picture changed;
                       #   Powder Burst's iris finish reads the iris only at the limb (core.FIN "edge" 0.985 R, lumen DESIGN_FIN dust): no glass rim at its limb,
                       #   inside 0.90 R not one pixel changed; its lumen goldens (which pin the engine with the finish off) unchanged;
-                      #   the lumen goldens of the Halo and Sparks cases recorded again, the other designs' unchanged; every other picture draws as under 12
+                      #   the lumen goldens of the Halo, Sparks and Aurora cases recorded again, the other designs' unchanged; every other picture draws as under 12
 
 
 class EngineNotBuilt(LookupError):
