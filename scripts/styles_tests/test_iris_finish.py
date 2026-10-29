@@ -8,6 +8,9 @@ golden suites pin the engine with the finish OFF (they set core.IRIS_FINISH = Fa
      the limbal band is darker than before, the pupil no lighter; deterministic, a fresh Iris of the same bytes gives the same bytes
   3. a master: a disc above FIN_R_CAP is finished on a reduced copy and the change brought up; it is within a level or so of finishing at full size,
      costs less, and reduced to the preview's size it is the preview's finish drawn finer
+  4. the edge mode (FIN "edge", on for Powder Burst only): off by default and then the approved finish to the byte; on, the iris' last band gets no
+     bright overshoot from the black round the disc (it read as a glass rim at Powder Burst's limb), the iris inside 0.88 R is unchanged, and a master
+     is its preview drawn finer
 No network, no image model, no real eye in the repository (the eyes are procedural: synth_iris).
     python test_iris_finish.py   prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure. Run by suites/run_main.sh as v3finish."""
 import hashlib
@@ -167,6 +170,43 @@ plain8 = CO.step_need("collision.family", 8, factor=1.0)
 CO.FINISH_S_PER_EYE = _keep
 check("a master's plan counts the finish: 1.5 s per eye in the table's units (2.4 s at the slow factor 1.6), inside the factor like the decode",
       CO.FINISH_S_PER_EYE == 1.5 and abs(base - plain - 1.5) < 1e-9 and abs(CO.step_need("collision.family", 8, factor=1.0) - plain8 - 12.0) < 1e-9, (base, plain))
+
+# ============================================================================================ 4. the edge mode (Powder Burst's limb, 2026-10-28)
+section("4. the edge mode: the micro contrast reads the iris only (Powder Burst keeps no dark limbal ring, so its overshoot read as a glass rim)")
+from _lib.styles import lumen as LU  # noqa: E402
+DUST = LU.DESIGN_FIN["dust"]
+check("off by default: FIN edge is 0 and a finish with edge 0 is the approved finish to the byte (every other style is unchanged)",
+      C.FIN["edge"] == 0.0 and all(np.array_equal(C._finish(g0, pupil=None), C._finish(g0, fin={"edge": 0.0}, pupil=None)) for g0, _, _ in rows.values()))
+check("only Powder Burst's dust turns it on, with its own limb (no dark limbal ring) and the edge at 0.985 R",
+      LU.DESIGN_FIN == {"dust": {"limb": (0.78, 0.0), "edge": 0.985}}, LU.DESIGN_FIN)
+rim_b, inner_b = (rr > 0.965) & (rr < 0.984), (rr > 0.90) & (rr < 0.95)
+deep = rr < 0.88
+
+
+def lum(a, m):
+    return float(a[m].astype(np.float64).mean())
+
+
+edge_rows = {}
+for n, (g0, _, _) in rows.items():
+    edge_rows[n] = (C._finish(g0, fin={"limb": DUST["limb"]}, pupil=None), C._finish(g0, fin=DUST, pupil=None))
+check("the defect, reproduced: without the edge mode and without the dark ring, the last band (0.965 to 0.984 R) of the light eyes (blue, grey) comes out at least "
+      "5 % brighter than the band inside it (0.90 to 0.95 R): the blur of the black round the disc (the real eyes of 2026-10-28: 17 to 40 % at 0.984 R)",
+      all(lum(edge_rows[n][0], rim_b) > 1.05 * lum(edge_rows[n][0], inner_b) for n in ("blue_round", "grey_round")), {n: (round(lum(a, rim_b), 1), round(lum(a, inner_b), 1)) for n, (a, _) in edge_rows.items()})
+check("with it the last band is no brighter than the band inside it (to 3 %): no bright rim at the limb",
+      all(lum(b, rim_b) <= 1.03 * lum(b, inner_b) for _, b in edge_rows.values()), {n: (round(lum(b, rim_b), 1), round(lum(b, inner_b), 1)) for n, (_, b) in edge_rows.items()})
+check("the iris inside 0.88 R is the same to the byte with and without it, and outside the disc nothing changes",
+      all(np.array_equal(a[deep], b[deep]) and np.array_equal(b[outside], g0[outside]) for (a, b), (g0, _, _) in zip(edge_rows.values(), rows.values())))
+check("the fibres at the limb keep their contrast: the band 0.90 to 0.97 R is at least 90 % as sharp as without the edge mode",
+      all(lap_std(b, (rr > 0.90) & (rr < 0.97)) >= 0.9 * lap_std(a, (rr > 0.90) & (rr < 0.97)) for a, b in edge_rows.values()),
+      {n: (round(lap_std(a, (rr > 0.90) & (rr < 0.97)), 2), round(lap_std(b, (rr > 0.90) & (rr < 0.97)), 2)) for n, (a, b) in edge_rows.items()})
+C.IRIS_FINISH = False
+prev_e = C.finish_iris(C.Iris(SI.png_bytes("blue_round", side=2048), "p", max_side=4096).graded(Sd), fin=DUST).astype(np.int16)
+C.IRIS_FINISH = True
+small_e = np.asarray(Image.fromarray(C.finish_iris(np.array(big), fin=DUST)).resize((Sd, Sd), Image.LANCZOS)).astype(np.int16)
+dme = float(np.abs(small_e[inside] - prev_e[inside]).mean())
+check("a master with the edge mode reduced to 1024 px is its preview drawn finer (mean difference inside the disc under 6 levels) and has no bright rim either",
+      dme < 6.0 and lum(small_e, rim_b) <= 1.03 * lum(small_e, inner_b), (round(dme, 2), round(lum(small_e, rim_b), 1), round(lum(small_e, inner_b), 1)))
 
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed")
 sys.exit(0 if all(RESULTS) else 1)

@@ -64,8 +64,10 @@ GEOM = {
 }
 
 # a design's own iris finish over core.FIN: the dust round Powder Burst's iris starts at the limb, so its iris keeps no dark limbal ring
-# (the owner's approved board of 2026-10-28, variant A)
-DESIGN_FIN = {"dust": {"limb": (0.78, 0.0)}}
+# (the owner's approved board of 2026-10-28, variant A). Without that ring the finish's micro contrast showed its bright overshoot on the iris' last
+# 0.04 R (its blurs read the black round the disc), and the F3 feather carried that band out to 1.03 R: a thin glass rim at the limb. edge: the
+# blurs read the iris only (core.FIN "edge"); inside 0.90 R not one pixel changes
+DESIGN_FIN = {"dust": {"limb": (0.78, 0.0), "edge": 0.985}}
 
 
 def _design(name):

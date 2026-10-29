@@ -63,3 +63,4 @@ v3lidcap:scripts/styles_tests:test_lidcap.py:fixtures
 v3ensemble:scripts/styles_tests:test_goldens_ensemble.py
 v3finish:scripts/styles_tests:test_iris_finish.py
 v3prints:scripts/styles_tests:test_prints.py::pre
+v3pupil:scripts/styles_tests:test_pupil_shape.py
