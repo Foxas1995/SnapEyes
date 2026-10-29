@@ -671,7 +671,11 @@ async function checkGuide() {
 // Croatian, the fifth language (2026-10-28: the /try and /order dictionaries in Croatian, which both pages bundle as they bundle the other four, the Croatian checkout
 // wording and legal labels, the price note) moved the base of /try by +8,838 B JS and of /order by +3,953 B JS, measured on b9d23d0 against the tree with it (158,081 to
 // 166,919 B and 108,420 to 112,373 B; the CSS +26 B of both pages, the narrower language buttons of five languages, is left in the budget). It is words, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838, css: 10975 + 245 + 494 }, order: { js: 108723 + 414 + 110 + 3953, css: 10975 + 245 + 494 } };
+// The prints (2026-10-28: the print choice of the buy card with its country list, shipping line, picture and box, src/try/PrintPick.tsx; the order page's print line; the
+// offer, the rate table and the words of the products and the 27 countries, src/shared/prints.ts, a chunk both pages load; the print words of five languages) moved the base
+// of /try by +5,366 B JS and of /order by +4,052 B JS, and both by +261 B CSS (the utilities of the choice and of the admin's print page in the shared stylesheet), measured
+// on 1a2fdca against the tree with them (167,795 to 173,161 B, 113,138 to 117,190 B, 13,521 to 13,782 B). It is a product, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366, css: 10975 + 245 + 494 + 261 }, order: { js: 108723 + 414 + 110 + 3953 + 4052, css: 10975 + 245 + 494 + 261 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

@@ -24,6 +24,8 @@ import { DATE_MAX, FAMILY_MAX, NAME_MAX, drawsFamilyName, namesFromWire, namesOf
 import { StudyCard } from './StudyCard';
 import { RetakeGuide } from './RetakeGuide';
 import { BuyCard, type Ordering } from './BuyCard';
+import { NO_PRINT, printPart, type PrintChoice } from './PrintPick';
+import { defaultCountry, offeredPrints } from '../shared/prints';
 import {
   type CheckoutError, type CheckoutOutcome, type CheckoutStep, type OrderRef, type Snapshot, TICKET_MARGIN_MS, TICKET_MS,
   loadOrderRef, runCheckout, saveOrderRef, saveSnapshot, staleEyes, takeSnapshot,
@@ -259,6 +261,9 @@ export const TryApp: React.FC = () => {
   const [orderRef, setOrderRefState] = useState<OrderRef | null>(() => loadOrderRef());
   const orderRefRef = useRef<OrderRef | null>(orderRef);
   const [waiver, setWaiver] = useState(false);
+  // a print of the artwork (./PrintPick.tsx): none by default; its box is never ticked in advance either
+  const [printChoice, setPrintChoice] = useState<PrintChoice>(NO_PRINT);
+  const [printConsent, setPrintConsent] = useState(false);
   const [priceNote, setPriceNote] = useState<string | null>(null);   // the price changed while the customer looked (409 price_changed)
   const [buy, setBuy] = useState<{ busy: boolean; step: CheckoutStep | null; error: CheckoutError | 'plan_changed' | 'unavailable' | null }>({ busy: false, step: null, error: null });
   const buyingRef = useRef(false);
@@ -369,7 +374,8 @@ export const TryApp: React.FC = () => {
         if (!alive) return;
         // the most eyes an artwork can be ordered with now is the run-time catalogue's (orderable_max_eyes: the owner's switch lowers it); max_eyes is only the structural limit of an older server
         const orderable = d ? readCatalogue(d) : null;
-        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent, maxEyes: orderable ? orderable.max : typeof d.max_eyes === 'number' ? d.max_eyes : undefined } : { open: false });
+        setOrdering(d && d.open === true ? { open: true, prices: serverPrices(d, currentMarket()), consent: d.consent, maxEyes: orderable ? orderable.max : typeof d.max_eyes === 'number' ? d.max_eyes : undefined,
+          prints: d.prints, country: typeof d.country === 'string' ? d.country : undefined } : { open: false });
       })
       .catch(() => { noteInfoUnavailable(); if (alive) setOrdering({ open: false }); });
     return () => { alive = false; };
@@ -496,8 +502,8 @@ export const TryApp: React.FC = () => {
     clearCapture(); commitEyes([]); setSelectedId(null); setLayoutWant(null); setWant(null);
     setNameById({}); setDate(''); setFamily(''); setOpts(NO_OPTS); retakesRef.current = 0;
     setReplacing(null); setUndo(null);
-    // a new artwork is a new decision: the waiver is asked again (the order itself is reused for its eyes)
-    setWaiver(false); setBuy({ busy: false, step: null, error: null });
+    // a new artwork is a new decision: the waiver is asked again (the order itself is reused for its eyes), and so is the print
+    setWaiver(false); setPrintChoice(NO_PRINT); setPrintConsent(false); setBuy({ busy: false, step: null, error: null });
     sizedRef.current.clear(); setStep('capture'); toTop();
   };
 
@@ -833,6 +839,13 @@ export const TryApp: React.FC = () => {
   // what the picker shows: everything is a function of the server's tile list (src/try/picker.ts)
   const market = currentMarket();
   const priceList = listFor(market, ordering?.open ? ordering.prices : undefined);
+  // the prints this market's checkout offers now (none while the owner's switch is off, or in a market without prints)
+  const printsOffered = offeredPrints(ordering?.open ? ordering.prints : undefined, market);
+  const onPrintChoice = (c: PrintChoice) => {
+    const p = c.product ? printsOffered.find((x) => x.id === c.product) : undefined;
+    // a print chosen for the first time: the visitor's own country, when prints ship there, is preselected (the customer can change it)
+    setPrintChoice(p && !c.country ? { ...c, country: defaultCountry(ordering?.country, p.ship) } : c);
+  };
   const priceOf = (tl: ServerTile) => (!eyes.some((e) => e.sample) && showsPrice(eyes.length, tl) ? money(priceMinor(1, tl.id, market, priceList), currencyOf(market), T.lang) : null);
   const retakeState = catalog ? retakeView({ tiles: catalog.tiles, eyes: catalog.eyes, selected: selectedTile }) : null;
   const advisory = advisoryEyes(selectedTile, catalog?.eyes ?? []);
@@ -896,8 +909,12 @@ export const TryApp: React.FC = () => {
       // the price on the button is what the server is asked to confirm (shown); the token names the visitor's variant
       const market = currentMarket();
       const shown = priceMinor(list.length, style, market, listFor(market, ordering?.prices));
+      // the print, when one is chosen (complete: a product, its country and its box): its price and shipping as shown are only compared by the server
+      const pp = printsOffered.length ? printPart(printChoice, printsOffered) : null;
+      const print = pp && printChoice.product && printConsent ? { product: printChoice.product, country: printChoice.country } : null;
       // the artwork on screen, as the server described it: its plan (plan8) and the options that applied are sent back, so a checkout of something else is a 409
-      out = await runCheckout({ eyes: list, style, layout: lay, names: wireNames(namesList), date, familyName: family, opts: art.opts, plan8: art.plan8, plan8Core: art.plan8Core, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown },
+      out = await runCheckout({ eyes: list, style, layout: lay, names: wireNames(namesList), date, familyName: family, opts: art.opts, plan8: art.plan8, plan8Core: art.plan8Core, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown,
+        print, printShown: pp && print ? pp.price + pp.ship : undefined },
         (s) => setBuy((b) => ({ ...b, step: s })));
     } catch {
       out = { kind: 'error', code: 'failed', ref: orderRefRef.current };
@@ -934,6 +951,19 @@ export const TryApp: React.FC = () => {
       setBuy({ busy: false, step: null, error: null });
       return;
     }
+    if (out.code === 'print_unavailable') {
+      // prints cannot be bought now (the owner switched them off meanwhile): the choice goes, the file alone can be ordered
+      setOrdering((o) => (o ? { ...o, prints: undefined } : o));
+      setPrintChoice(NO_PRINT);
+    }
+    if (out.code === 'print_changed') {
+      // the print's price or shipping changed while the customer looked (409 print_price_changed): the server's prints are read again, so the card
+      // shows the new numbers; the choice stays (when that print still ships there) and the customer presses again
+      const c = await callApi<CheckoutInfo>('/api/checkout');
+      const fresh = c.ok && c.data ? c.data.prints : undefined;
+      setOrdering((o) => (o ? { ...o, prints: fresh } : o));
+      if (!fresh?.on) setPrintChoice(NO_PRINT);
+    }
     setBuy({ busy: false, step: null, error: out.code });
   };
 
@@ -951,6 +981,8 @@ export const TryApp: React.FC = () => {
       stale={ordering?.open && !eyes.some((e) => e.sample) ? staleEyes(eyes, orderRef, now) : []}
       onRetake={(i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); }}
       waiver={waiver} onWaiver={setWaiver}
+      prints={printsOffered} printChoice={printChoice} onPrintChoice={onPrintChoice} printConsent={printConsent} onPrintConsent={setPrintConsent}
+      artSrc={art?.src}
       busy={buy.busy} step={stepText(buy.step)} error={buy.error ? T.buy.errors[buy.error] : null}
       priceNote={priceNote}
       onBuy={onBuy} />

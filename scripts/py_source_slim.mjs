@@ -10,7 +10,11 @@
 // what make this safe; scripts/check_styles.mjs enforces them.
 
 /** The files the pages import as text and the build slims, with the name of the literal that ends each. */
-export const SLIM_FILES = { 'api/_lib/styles_registry.py': 'STYLES', 'api/_lib/layout_names.py': 'LAYOUT_NAMES' };
+// 2026-10-28: and the three files of the prints (src/shared/prints.ts: the offer, the rate table, the words of the products and the countries)
+export const SLIM_FILES = {
+  'api/_lib/styles_registry.py': 'STYLES', 'api/_lib/layout_names.py': 'LAYOUT_NAMES',
+  'api/_lib/print_offer.py': 'PRINT_OFFER', 'api/_lib/print_rates.py': 'PRINT_RATES', 'api/_lib/print_names.py': 'PRINT_NAMES',
+};
 
 const CONST_LINE = /^([A-Z_][A-Z0-9_]*) = (\S.*)$/;
 

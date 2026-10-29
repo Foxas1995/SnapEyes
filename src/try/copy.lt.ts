@@ -246,8 +246,8 @@ export const lt: TryCopy = {
     composeFailed: 'Nepavyko sukurti šios peržiūros.',
     previewReduced: 'Peržiūra sumažinta ir su vandens ženklu.',
     previewFile: (square: boolean): string => (square
-      ? 'Jūsų failas: 4096 px, pakankamai ryškus spaudiniui iki 50 x 50 cm.'
-      : 'Jūsų failas: 4096 px ilgiausioje kraštinėje, pakankamai ryškus spaudiniui, kurio ilgiausia kraštinė iki 50 cm.'),
+      ? 'Jūsų failas: 4096 px, pakankamai ryškus spaudiniui iki 60 x 60 cm.'
+      : 'Jūsų failas: 4096 px ilgiausioje kraštinėje, pakankamai ryškus spaudiniui, kurio ilgiausia kraštinė iki 60 cm.'),
     retry: 'Bandyti dar kartą',
     layout: 'Išdėstymas',
     style: 'Stilius',
@@ -425,11 +425,27 @@ export const lt: TryCopy = {
       closed: 'Užsakymų dar nepriimame.',
       plan_changed: 'Jūsų kūrinys ką tik pasikeitė, todėl peržiūrą sukūrėme iš naujo. Pažiūrėkite į ją ir dar kartą paspauskite mygtuką.',
       unavailable: 'Šio stiliaus Jūsų akims dabar užsisakyti negalima. Pasirinkite kitą arba nufotografuokite akį iš naujo.',
+      print_unavailable: 'Spaudinių šiuo metu užsisakyti negalima. Galite užsisakyti tik skaitmeninį failą.',
+      print_changed: 'Spaudinio kaina ką tik pasikeitė. Peržiūrėkite ją dar kartą ir paspauskite mygtuką.',
     },
     namesBlocked: 'Pirmiausia ištaisykite žodžius ant kūrinio (žr. aukščiau).',
     footnote: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai galutinė kaina: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.',
     footnoteAud: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: GST netaikomas.',
     footnoteUsd: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: JAV pardavimo mokestis netaikomas.',
+  },
+
+  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
+  print: {
+    title: 'Spaudinys',
+    none: 'Tik skaitmeninis failas',
+    option: (name: string, price: string) => `${name}, +${price}`,
+    country: 'Pristatymo šalis',
+    pick: 'Pasirinkite šalį',
+    shipping: 'Siuntimas',
+    arrives: 'Pristatoma maždaug per 1 ar 2 savaites, su siuntos sekimu.',
+    consentMissing: 'Pažymėkite langelį apie spaudinį.',
+    countryMissing: 'Pasirinkite, į kurią šalį siųsti spaudinį.',
+    mockAlt: (name: string) => `${name}: Jūsų kūrinio peržiūra`,
   },
 
   // anoniminė atsiliepimų dėžutė (src/try/Feedback.tsx, api/_lib/feedback.py)

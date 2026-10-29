@@ -86,6 +86,15 @@ GET /api/checkout also answers feedback: true or false, whether /try offers its 
 POST /api/checkout {feedback: {w: "result" | "retake", c: <one of that place's six chips>[, x: the style on screen or the block reason, eyes, t: a text of up to 300 characters, hp: ""]}, camp, lang, market}:
      an anonymous answer. No order, no Stripe, always {ok, counted, text} (text: kept, none, dropped, lost); a robot, a filled honeypot, a client that sends more than four in ten minutes or an
      instance past its ceiling is not counted. A text with contact details, a link or noise is not kept (the answer still counts); the texts are deleted after 90 days.
+Prints (api/_lib/prints.py; nothing of it shows while the owner's switch in the admin page is off, the default):
+GET /api/checkout also answers prints (only while they can be bought: absent otherwise): {on: true, currency, markets, products: [{id, kind, cm, price, ship: {country: cents}}]} (the
+     prices and the shipping per country in euro cents, VAT of the print partner included in the shipping, nothing added by us), and consent.print:
+     {en, de, lt, hu, hr}, the exact text of the print box.
+POST /api/checkout {..., print: {product, country}, consent_print: true[, print_shown]}: the order adds that print. The server prices it (the product's
+     price and its shipping to that country), Stripe collects the delivery address for that one country and adds the shipping line, and the
+     reply also carries print {product, country, price, ship} and total (what Stripe charges). Errors: 409 print_unavailable {why: off,
+     not_configured, market, product, country}, 400 print_consent_required, 409 print_price_changed {print} (only with print_shown). An order
+     without print is exactly what it was before.
 Every other POST of the site may carry camp too (analyze, deglare, enhance, compose, this route's checkout): iris.run turns it, with the user agent and the country header, into the classes the usage
 events carry (iris.ctx()). The order record keeps the code (checkout.camp, and camp in paid.json) and the Stripe session's metadata `src`, so an order and its revenue are tied to a source.
 """
@@ -99,6 +108,7 @@ from _lib import abtest
 from _lib import catalogue
 from _lib import counter
 from _lib import feedback
+from _lib import prints
 
 
 def country_hint(value):
@@ -114,7 +124,7 @@ def country_hint(value):
 
 def info(body, country=None):
     cc, suggest = country_hint(country)
-    return {"ok": True, "open": pay.ordering_open() and store.configured(),
+    out = {"ok": True, "open": pay.ordering_open() and store.configured(),
             "currency": pay.market_currency(pay.DEFAULT_MARKET).upper(), "prices": pay.price_list(pay.DEFAULT_MARKET),
             "market": pay.DEFAULT_MARKET,
             "markets": {m: {"currency": pay.market_currency(m).upper(), "prices": pay.price_list(m)} for m in pay.SELECTABLE},
@@ -129,6 +139,13 @@ def info(body, country=None):
             "counter": counter.on(),
             # whether /try offers the anonymous feedback box (the switch SNAPEYES_FEEDBACK, somewhere to keep the answers, the daily clean-up that deletes the texts)
             "feedback": feedback.on()}
+    # prints (api/_lib/prints.py): only while the owner's switch is on and merchOne is configured; the exact text of the print box beside them
+    # (absent while they are off: the reply is then exactly what it was before prints existed)
+    p = prints.public_info()
+    if p.get("on"):
+        out["prints"] = p
+        out["consent"]["print"] = dict(prints.PRINT_CONSENT_TEXT)
+    return out
 
 
 def _engine(plan):
@@ -218,6 +235,8 @@ def checkout(body):
     if body.get("consent_digital") is not True:
         raise store.Answer(400, "consent_required", "Please tick the box about the digital file and your right of "
                            "withdrawal.", False)
+    # a print (api/_lib/prints.py): priced here from the offer and the rate table, refused while the owner's switch is off; None for the file alone
+    part = prints.checkout_part(body, spec)
     n, lang = spec["eyes"], spec["lang"]
     # a price experiment (api/_lib/abtest.py): the ladder of the variant the signed token names, when that experiment runs
     # for this market, else the standard price; the price the page says it showed is only compared with it, never used.
@@ -265,7 +284,7 @@ def checkout(body):
     consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": text,
                "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]}
     camp = counter.pack(counter.parse(body.get("camp")))     # the campaign code of the advertisement the customer came from: "" when there is none
-    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp)
+    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp, part=part)
     sid = sess["id"]
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,
@@ -277,6 +296,8 @@ def checkout(body):
                          "plan": plan, "engine": _engine(plan), "gate": gate, "plan8_shown": shown})
     if camp:
         rec["checkout"]["camp"] = camp
+    if part:
+        rec["checkout"]["print"] = part          # the print, its shipping country and the print box the customer ticked (consent: version, time, text)
     if note:
         # the page's plan8 was not the server's but its plan8_core was (freeze_plan): the plan stored is the server's, and the owner can see that and what the page showed
         rec["checkout"].update(plan8_note=note, plan8_page=_page8(body))
@@ -285,11 +306,15 @@ def checkout(body):
     pay.write_order(order, rec)
     pay.log(f"order {order}: checkout {sid} {amount} {currency} ({market}) {n} eye(s) {spec['style']} {lang} plan {plan['plan8']}"
             + (f" (the page showed {_page8(body)}: same plan but for the choices the pixels decide)" if note else "")
-            + (f" experiment {exp['key']}/{exp['variant']}" if exp else ""))
+            + (f" experiment {exp['key']}/{exp['variant']}" if exp else "")
+            + (f" print {part['product']} to {part['country']} {part['price']}+{part['ship']}" if part else ""))
     abtest.note_checkout(exp, market, n, spec["style"], amount)
     pay.note_checkout("start", spec, rec, gate=gate)
-    return {"ok": True, "url": sess["url"], "order": order, "amount": amount, "currency": currency.upper(),
-            "market": market, "eyes": n, "style": spec["style"], "plan8": plan["plan8"], "engine": _engine(plan), "expires_at": int(expires)}
+    out = {"ok": True, "url": sess["url"], "order": order, "amount": amount, "currency": currency.upper(),
+           "market": market, "eyes": n, "style": spec["style"], "plan8": plan["plan8"], "engine": _engine(plan), "expires_at": int(expires)}
+    if part:
+        out.update(print={k: part[k] for k in ("product", "country", "price", "ship")}, total=amount + prints.total(part))
+    return out
 
 
 def handle_get(req):

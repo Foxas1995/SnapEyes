@@ -5,6 +5,7 @@
 // module runner by scripts/run_ts_tests.mjs; returns its results.
 import { EDITIONS } from '../../src/legal/editions';
 import { PRIVACY } from '../../src/legal/docs/privacy';
+import { withPrintsPrivacy } from '../../src/legal/docs/prints';
 import { LEGAL_UPDATED } from '../../src/shared/legal';
 import type { Block, LegalDoc } from '../../src/legal/types';
 
@@ -41,8 +42,9 @@ export async function run(): Promise<Row[]> {
     LANGS.every((l) => !NOT_STORED[l].test(sectionText(PRIVACY[l], 'website')) && /#operations/.test(sectionText(PRIVACY[l], 'website'))), LANGS.map((l) => NOT_STORED[l].test(sectionText(PRIVACY[l], 'website'))).join());
 
   const doc = (e: keyof typeof EDITIONS, l: (typeof LANGS)[number]) => EDITIONS[e].privacy[l];
+  // 2026-10-28: the euro edition's policy is the raw text with the print paragraphs (src/legal/docs/prints.ts withPrintsPrivacy), and the Hungarian edition reads that very one
   check('the Hungarian edition reads the same privacy texts as the euro one (the forint prices are in the terms, not here), in all four of its languages, and has no Croatian text (Croatian is in the euro edition only)',
-    LANGS.every((l) => doc('eu', l) === PRIVACY[l] && (l === 'hr' ? doc('hu', l) === undefined : doc('hu', l) === PRIVACY[l])));
+    LANGS.every((l) => JSON.stringify(doc('eu', l)) === JSON.stringify(withPrintsPrivacy(PRIVACY[l], l)) && (l === 'hr' ? doc('hu', l) === undefined : doc('hu', l) === doc('eu', l))));
   const au = EDITIONS.au.privacy;
   check('the Australian edition has English and German only, made from the euro texts: its operations section is the same paragraphs',
     !!au.en && !!au.de && !au.lt && !au.hu && !au.hr && (['en', 'de'] as const).every((l) => sectionText(au[l]!, 'operations') === sectionText(PRIVACY[l], 'operations') && sectionText(au[l]!, 'website') === sectionText(PRIVACY[l], 'website')));

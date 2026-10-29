@@ -103,6 +103,7 @@ from _lib import maker as M
 from _lib import preview as P
 from _lib import duration
 from _lib.styles import steps as SP
+from _lib import prints as PR
 import master_eye as ME
 import master_compose as MC
 
@@ -513,6 +514,9 @@ def _paid_reply(order, paid, made, delivery, review, released, url=None, preview
         return out
     if state == "ready":
         out["download"] = _download(order, delivery["key"], delivery, url)
+    pv = PR.order_view(order, paid) if PR.paid_print(paid) else None
+    if pv:
+        out["print"] = pv            # the order's print: product, country, preparing / sent / shipped / canceled, the tracking link once shipped
     if previews:
         recs = pay.parallel([lambda i=i: store.get_json(f"orders/{order}/draft/eye_{i}.json", timeout=8.0)
                              for i in range(1, n + 1)])
@@ -828,6 +832,8 @@ def compose_order(order, rec, paid, server=False):
             f"{delivery['width']}x{delivery['height']} {delivery['bytes']} bytes{' (server)' if server else ''}")
     if not held:
         M.ready_mail_once(order, rec, paid, released)
+        if not server and PR.pending(order, paid):
+            M.kick(order, why="print")      # the order page composed it: the server's own step sends the print (api/_lib/prints.py), in its own invocation
     return _paid_reply(order, paid, [True] * n, delivery, None, released, url=r.get("url"))
 
 
@@ -893,6 +899,10 @@ def handle_get(req):
 
 
 def handle_post(req):
+    q = _query(req)
+    if q.get("hook") == "merchone":
+        # the print partner's webhook (api/_lib/prints.py serve_hook): the token in the URL, then the event's order read back from merchOne
+        return PR.serve_hook(req, q)
     pay.serve(req, "order", dispatch)
 
 

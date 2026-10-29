@@ -26,6 +26,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { checkExperiments, ladderRule, withVariantLadders } from './check_experiments.mjs';
 import { STYLES_FILE, loadRegistry, priceClassOf } from './styles_source.mjs';
+import { checkPrints, marginTable, readPrints } from './check_prints.mjs';
 
 export const MARKETS_FILE = 'api/_lib/markets.py';
 const CURRENCIES = ['eur', 'aud', 'huf', 'usd', 'gbp'];
@@ -444,7 +445,7 @@ export function checkLandingPrices(markets, experiments, client, landing, out, s
 /** Every problem found, as sentences ([] when the prices are sound). client: src/shared/markets.ts as the build loaded
  *  it (vite.config.ts), for the agreement check; without it that check is left out. landing: src/landing/priceText.ts as
  *  the build loaded it, for the check of the new landing's price texts (also left out without it). */
-export function checkPrices(root, client, landing) {
+export function checkPrices(root, client, landing, prints) {
   const out = [];
   let parsed;
   try {
@@ -456,6 +457,10 @@ export function checkPrices(root, client, landing) {
   checkRules(defaultMarket, markets, out);
   if (out.length) return out;
   checkEditions(root, defaultMarket, markets, out);
+  // the prints (scripts/check_prints.mjs): their offer, their cost table and words, the margins, the site's reading (prints: src/shared/prints.ts)
+  const payPy = readOptional(root, PAY_FILE) ?? '';
+  const em = /^EDITION_MARKETS = \(([^)]*)\)/m.exec(payPy);
+  out.push(...checkPrints(root, markets, em ? [...em[1].matchAll(/"([a-z]{2,8})"/g)].map((x) => x[1]) : [], prints));
   let registry;
   try {
     registry = loadRegistry(root);
@@ -482,22 +487,28 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const root = join(fileURLToPath(new URL('.', import.meta.url)), '..');
   // src/ is loaded through Vite for the checks that run the site's own code (the client reading of the prices, the landing's price texts). A tree without Vite (a
   // throw-away copy of the files, made by a test) still gets every file check: only a MISSING vite is excused, with a note; any other failure stops the check.
-  let client, landing;
+  let client, landing, prints;
   try {
     const require = createRequire(join(root, 'package.json'));
     const { runnerImport } = await import(pathToFileURL(require.resolve('vite')).href);
     const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent', root })).module;
     client = await load('./src/shared/markets.ts');
     landing = await load('./src/landing/priceText.ts');
+    prints = await load('./src/shared/prints.ts');
   } catch (e) {
     if (e?.code !== 'MODULE_NOT_FOUND') throw e;
     console.error(`note: vite is not installed under ${root}, so the checks that run the site's code (src/shared/markets.ts, the landing's price texts) are skipped; the file checks run`);
   }
-  const problems = checkPrices(root, client, landing);
+  const problems = checkPrices(root, client, landing, prints);
   const { markets } = parseMarketsSource(readFileSync(join(root, MARKETS_FILE), 'utf8'));
   if (problems.length) {
     console.error(`price check FAILED (${problems.length}):\n  ${problems.join('\n  ')}`);
     process.exit(1);
   }
   console.log(`price check ok: ${Object.keys(markets).length} markets in ${relative(process.cwd(), join(root, MARKETS_FILE)).split(sep).join('/')}, no other copy`);
+  // what every print earns (api/_lib/print_offer.py against api/_lib/print_rates.py: merchOne's price and shipping with VAT, the payment fee)
+  const t = readPrints(root);
+  const table = marginTable(t.offer, t.rates);
+  console.log(`prints: ${t.offer.products.length} in the offer, ${Object.keys(t.rates.shipping).length} countries (rates of ${t.rates.fetched}), margin floor ${(t.offer.margin_floor / 100).toFixed(2)} EUR`);
+  for (const p of t.offer.products) console.log(`  ${p.id.padEnd(10)} ${(p.price / 100).toFixed(2).padStart(7)} EUR  earns ${(table[p.id].min / 100).toFixed(2)} to ${(table[p.id].max / 100).toFixed(2)} EUR (least in ${table[p.id].worst})`);
 }

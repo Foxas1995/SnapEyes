@@ -17,7 +17,9 @@ it twice): a missed day is caught up by the next run, and a second run finds not
      its own invocation; for at most maker.CATCHUP_SECONDS of the run); finished ones leave the index; and every
      one of them that is not held for the owner and still not ready maker.LATE_HOURS (12 h) after payment gets ONE
      owner reminder (note_late.json; the run comes once a day, so it arrives 12 to 36 h after payment, inside the
-     48 h the terms promise)
+     48 h the terms promise); then the prints of paid orders (api/_lib/prints.py daily, from the index cleanup/print/): one whose artwork is
+     delivered and that was not sent yet goes to merchOne, one that was sent is read back from merchOne (the shipping e-mail when its webhook
+     was lost), for at most prints.DAILY_SECONDS of the run
   2. UNPAID orders older than 26 h are deleted with their images and their admin log (ops/orderlog/<order>/, which
      belongs to the order record: pay.drop_orderlog) (policy: within 30 days). Only after Stripe was
      asked: a session paid without paid.json is recorded as paid instead (the customer gets the confirmation), one
@@ -149,6 +151,10 @@ def run(yes=True, stop_left=10.0, out=None, lock=True):
         # paid orders nobody finished (the customer closed the tab, a self-call lost): the server goes on with them
         res["advance"] = M.catch_up(yes, stop_left, say, M.CATCHUP_SECONDS if boxed else 1e9)
         late = bool(res["advance"].pop("more", False)) or late
+        # the prints (api/_lib/prints.py): a waiting one whose artwork is delivered goes to the print partner, a sent one is read back (its shipping)
+        from . import prints
+        res["prints"] = prints.daily(yes, stop_left, say, prints.DAILY_SECONDS if boxed else 1e9)
+        late = bool(res["prints"].pop("more", False)) or late
         if not res["more"]:
             res["unpaid"] = _unpaid(yes, stop_left, say)
             res["more"] = res["unpaid"].pop("more", False)

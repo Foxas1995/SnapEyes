@@ -9,6 +9,7 @@ import {
 } from '../../src/shared/legal';
 import { langFor, marketDefaultLang, marketLangs } from '../../src/shared/lang';
 import { EDITIONS } from '../../src/legal/editions';
+import { PRIVACY } from '../../src/legal/docs/privacy';
 import { legalMailPack } from '../../src/legal/plain';
 import type { Block, LegalDoc } from '../../src/legal/types';
 
@@ -97,7 +98,9 @@ export async function run(): Promise<Row[]> {
   check('the US privacy policy: its own section after the rights section, with the state laws, the retention schedule and no sale for advertising',
     pids[pids.indexOf('rights') + 1] === 'united-states' && pus.includes('Illinois, Texas and Washington') && pus.includes('within 30 days at the latest')
       && pus.includes('12 months after your payment') && pus.includes('14 days after the withdrawal') && pus.includes('targeted advertising') && pus.includes('within one month'), pids.join(','));
-  check('the US privacy policy keeps every other section of the euro text word for word', pids.filter((x) => x !== 'united-states').every((x) => sectionText(privacy, x) === sectionText(EDITIONS.eu.privacy.en!, x)));
+  // 2026-10-28: the US edition is made from the euro text before the prints (src/legal/docs/prints.ts patches the euro edition only: the US market sells no print)
+  check('the US privacy policy keeps every other section of the euro text word for word', pids.filter((x) => x !== 'united-states').every((x) => sectionText(privacy, x) === sectionText(PRIVACY.en, x))
+    && !pids.includes('prints'));
   check('the US withdrawal page shows the US checkbox in its box and links the US rights', JSON.stringify(wd).includes(JSON.stringify(CHECKOUT_LEGAL_US.en.withdrawalConsent).slice(1, -1))
     && (wd.lead ?? '').includes('doc:terms#united-states') && sectionText(wd, 'expiry').includes('doc:terms#united-states'));
   check('the US legal notice says no sales tax is charged', sectionText(imprint, 'provider').includes('Sales tax (United States): Not registered to collect sales tax in any US state'));

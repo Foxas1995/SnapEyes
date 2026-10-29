@@ -132,6 +132,8 @@ export interface OrderRow {
   camp?: string | null;
   /** the price experiment and variant the order was priced under, if any */
   experiment?: { key: string; variant: string; label?: string | null } | null;
+  print?: { product?: string | null; country?: string | null; state?: string | null } | null;
+  print_amount?: number;
 }
 export interface Orders { days: number; orders: OrderRow[]; total: number; more: boolean }
 
@@ -167,6 +169,8 @@ export interface OrderDetail {
   making?: { began: boolean; period_over: boolean };
   /** the price experiment the order was made under: its variant and the price list that applied (paid.json, else the checkout) */
   experiment?: null | { key: string; variant: string; title?: string | null; label?: string | null; prices: ExpLadder | null; source: string; known: boolean };
+  // the order's print (api/_lib/prints.py admin_view), null for an order of the digital file only
+  print?: import('./Prints').PrintView | null;
   /** start: an eye not made yet may be made from here (making began, or the withdrawal period is over) */
   can: { email: boolean; stripe: boolean; link: boolean; counts: boolean; start?: boolean };
 }

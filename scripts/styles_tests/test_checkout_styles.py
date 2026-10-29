@@ -725,10 +725,12 @@ for ed in ("au", "hu", "us"):      # 2026-10-28: and the US edition (English)
         check(f"the {ed} edition's {lang} terms (a Hungarian, Australian or US price table) have the class rows and no count of eyes", "Clean Iris" in d["terms"]["text"] and "Couple Duo" not in d["terms"]["text"]
               and not re.search(r"(?<![\w.])\d{1,2}\s+(eyes|Augen|akys|akių|szem)", d["terms"]["text"]), d["terms"]["text"][:120])
 check("consent and the withdrawal waiver are byte for byte as before: CONSENT_VERSION 2026-10-28.1 (the Croatian text added) in the server and the page, the texts of 2026-09-30.2 kept word for word under the new version, the fingerprint of the six texts equals the one on record"
-      " - 2026-10-28: CONSENT_VERSION 2026-10-28.2 (the US text added), the texts of 2026-10-28.1 (EU and AU) kept word for word under it, the US text only under the new version",
-      pay.CONSENT_VERSION == "2026-10-28.2" and "WITHDRAWAL_CONSENT_VERSION = '2026-10-28.2'" in legal_ts
+      " - 2026-10-28: CONSENT_VERSION 2026-10-28.2 (the US text added), the texts of 2026-10-28.1 (EU and AU) kept word for word under it, the US text only under the new version"
+      " - 2026-10-28 (prints): CONSENT_VERSION 2026-10-28.3 (the print box added, api/_lib/prints.py), every waiver and the US text kept word for word under it and under 2026-10-28.2",
+      pay.CONSENT_VERSION == "2026-10-28.3" and "WITHDRAWAL_CONSENT_VERSION = '2026-10-28.3'" in legal_ts
       and pay.CONSENT_TEXTS["2026-10-28.1"] == pay.CONSENT_TEXT == pay.CONSENT_TEXTS[pay.CONSENT_VERSION] and pay.CONSENT_TEXTS_AU["2026-10-28.1"] == pay.CONSENT_TEXT_AU
-      and pay.CONSENT_TEXTS_US == {"2026-10-28.2": pay.CONSENT_TEXT_US} and set(pay.CONSENT_TEXT_US) == {"en"}
+      and pay.CONSENT_TEXTS_US == {"2026-10-28.2": pay.CONSENT_TEXT_US, "2026-10-28.3": pay.CONSENT_TEXT_US} and set(pay.CONSENT_TEXT_US) == {"en"}
+      and pay.CONSENT_TEXTS["2026-10-28.2"] == pay.CONSENT_TEXT
       and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")} and set(pay.CONSENT_TEXT) == {"en", "de", "lt", "hu", "hr"}
       and pay.CONSENT_TEXTS_AU["2026-09-30.2"] == pay.CONSENT_TEXT_AU
       and hashlib.sha256(json.dumps([pay.CONSENT_TEXT["en"], pay.CONSENT_TEXT["de"], pay.CONSENT_TEXT["lt"], pay.CONSENT_TEXT["hu"], pay.CONSENT_TEXT_AU["en"], pay.CONSENT_TEXT_AU["de"]],

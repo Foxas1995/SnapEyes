@@ -262,8 +262,8 @@ export const hr: TryCopy = {
     composeFailed: 'Ovaj pregled nismo uspjeli složiti.',
     previewReduced: 'Pregled je smanjen i ima vodeni žig.',
     previewFile: (square: boolean): string => (square
-      ? 'Vaša datoteka: 4096 px, dovoljno oštra za ispis do 50 x 50 cm.'
-      : 'Vaša datoteka: 4096 px na duljoj stranici, dovoljno oštra za ispis do 50 cm na toj stranici.'),
+      ? 'Vaša datoteka: 4096 px, dovoljno oštra za ispis do 60 x 60 cm.'
+      : 'Vaša datoteka: 4096 px na duljoj stranici, dovoljno oštra za ispis do 60 cm na toj stranici.'),
     retry: 'Pokušajte ponovno',
     layout: 'Raspored',
     style: 'Stil',
@@ -440,11 +440,27 @@ export const hr: TryCopy = {
       closed: 'Naručivanje još nije otvoreno.',
       plan_changed: 'Vaše se umjetničko djelo upravo promijenilo, pa smo ponovno izradili pregled. Pogledajte ga, a zatim ponovno pritisnite gumb.',
       unavailable: 'Ovaj se stil trenutačno ne može naručiti za vaše oči. Odaberite drugi ili ponovno snimite oko.',
+      print_unavailable: 'Ispis trenutačno nije moguće naručiti. Digitalnu datoteku možete naručiti zasebno.',
+      print_changed: 'Cijena ispisa upravo se promijenila. Pogledajte je ponovno, a zatim pritisnite gumb.',
     },
     namesBlocked: 'Najprije ispravite riječi na umjetničkom djelu (vidi gore).',
     footnote: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je konačna cijena: nismo u sustavu PDV-a, pa se PDV ne obračunava.',
     footnoteAud: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je ukupna cijena: GST se ne naplaćuje.',
     footnoteUsd: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je ukupna cijena: američki porez na promet ne naplaćuje se.',
+  },
+
+  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
+  print: {
+    title: 'Ispis',
+    none: 'Samo digitalna datoteka',
+    option: (name: string, price: string) => `${name}, +${price}`,
+    country: 'Zemlja dostave',
+    pick: 'Odaberite zemlju',
+    shipping: 'Dostava',
+    arrives: 'Stiže za otprilike 1 do 2 tjedna, s praćenjem pošiljke.',
+    consentMissing: 'Označite kućicu o svojem ispisu.',
+    countryMissing: 'Odaberite zemlju u koju šaljemo ispis.',
+    mockAlt: (name: string) => `${name}: pregled vašeg umjetničkog djela`,
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py)

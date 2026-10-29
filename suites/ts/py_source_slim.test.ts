@@ -6,6 +6,10 @@ import LAYOUTS from '../../api/_lib/layout_names.py?raw';
 import { SLIM_FILES, slimPySource } from '../../scripts/py_source_slim.mjs';
 import { parseStylesSource } from '../../src/shared/styles';
 import { parseLayoutNamesSource } from '../../src/shared/layouts';
+import OFFER from '../../api/_lib/print_offer.py?raw';
+import RATES from '../../api/_lib/print_rates.py?raw';
+import NAMES from '../../api/_lib/print_names.py?raw';
+import { parseLiteral } from '../../src/shared/prints';
 
 type Row = [string, boolean, string?];
 
@@ -29,9 +33,17 @@ export async function run(): Promise<Row[]> {
     reg.slice(0, 200));
   check('the slim layout words read as the file does: every layout id and its four words, in order',
     JSON.stringify(parseLayoutNamesSource(lay)) === JSON.stringify(parseLayoutNamesSource(LAYOUTS)), lay.slice(0, 200));
-  check('the slim texts carry no docstring, no comment and no blank line, and the build slims exactly these two files (the registry to under half its size)',
+  // 2026-10-28: the three files of the prints are slimmed too (the offer, the rate table, the words); each reads back to the same literal
+  const printSlim = ([['api/_lib/print_offer.py', OFFER, 'PRINT_OFFER'], ['api/_lib/print_rates.py', RATES, 'PRINT_RATES'], ['api/_lib/print_names.py', NAMES, 'PRINT_NAMES']] as const)
+    .map(([rel, src, name]) => {
+      const t = slimPySource(src, rel, name);
+      return !t.includes('"""') && !/^\s*#/m.test(t) && !/\n\s*\n/.test(t) && t.length < src.length && JSON.stringify(parseLiteral(t, name)) === JSON.stringify(parseLiteral(src, name));
+    });
+  check('the slim texts carry no docstring, no comment and no blank line, and the build slims exactly these two files (the registry to under half its size)'
+    + ' - 2026-10-28: and the three files of the prints, each read back to the same literal',
     ![reg, lay].some((t) => t.includes('"""') || /^\s*#/m.test(t) || /\n\s*\n/.test(t)) && reg.length * 2 < REGISTRY.length && lay.length < LAYOUTS.length
-    && Object.keys(SLIM_FILES).join() === 'api/_lib/styles_registry.py,api/_lib/layout_names.py', `${reg.length} of ${REGISTRY.length}, ${lay.length} of ${LAYOUTS.length}`);
+    && Object.keys(SLIM_FILES).join() === 'api/_lib/styles_registry.py,api/_lib/layout_names.py,api/_lib/print_offer.py,api/_lib/print_rates.py,api/_lib/print_names.py'
+    && printSlim.every(Boolean), `${reg.length} of ${REGISTRY.length}, ${lay.length} of ${LAYOUTS.length}, ${printSlim.join()}`);
   const head = '# -*- coding: utf-8 -*-\n"""Doc.\n"""\n';
   const lit = 'STYLES = {"a": {"b": 1}}\n';
   const bad = {

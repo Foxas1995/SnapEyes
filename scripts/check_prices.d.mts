@@ -34,4 +34,11 @@ export const MARKETS_FILE: string;
 export function parseMarketsSource(src: string): MarketsSource;
 /** The price of n eyes by the price class ("black" or "art") of the style: one eye by its class, then the same amount per further eye. */
 export function priceRule(markets: MarketsSource['markets'], market: string, eyes: number, cls: string): number;
-export function checkPrices(root: string, client?: ClientMarkets, landing?: LandingPriceModule): string[];
+/** src/shared/prints.ts as the build loaded it (scripts/check_prints.mjs compares its reading and its rules). */
+export interface ClientPrints {
+  PRINT_OFFER: unknown; PRINT_RATES: unknown; PRINT_NAMES: unknown;
+  printShipping: (country: string, id: string) => number | null;
+  printMargin: (id: string, country: string) => number | null;
+  shipPrice: (cost: number) => number;
+}
+export function checkPrices(root: string, client?: ClientMarkets, landing?: LandingPriceModule, prints?: ClientPrints): string[];

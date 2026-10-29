@@ -181,9 +181,10 @@ export interface LegalPart { text: string; doc?: LegalDocId; section?: string }
 // BGB). Change both files together and bump the version (2026-09-30.1: the Australian text added, the EU text as it
 // was; 2026-09-30.2: the Lithuanian and the Hungarian texts added, the English, German and Australian texts as they
 // were; 2026-10-28.1: the Croatian text added, every other text as it was; 2026-10-28.2: the US text added, every other
-// text as it was). The build refuses a consent text that changed under the same version, and a version without its fingerprint
+// text as it was; 2026-10-28.3: the print box added, printConsent below = api/_lib/prints.py PRINT_CONSENT_TEXT, every waiver as it was).
+// The build refuses a consent text that changed under the same version, and a version without its fingerprint
 // (scripts/check_texts.mjs CONSENT_FINGERPRINTS: the check prints the new one).
-export const WITHDRAWAL_CONSENT_VERSION = '2026-10-28.2';
+export const WITHDRAWAL_CONSENT_VERSION = '2026-10-28.3';
 
 export interface CheckoutLegal {
   /** The withdrawal checkbox: unticked by default and required before the payment page opens. Art. 16(m)
@@ -192,6 +193,10 @@ export interface CheckoutLegal {
   withdrawalConsent: string;
   /** Shown next to the checkbox when someone tries to continue without ticking it. */
   withdrawalConsentMissing: string;
+  /** The print box (src/try/PrintPick.tsx): shown, unticked, only when the customer adds a print (the euro markets of the EU edition). A print is made
+   *  to the consumer's specifications and clearly personalised, so the right of withdrawal does not apply to it (Art. 16(c) Directive 2011/83/EU);
+   *  the box says so before the payment and keeps the rights for a faulty or damaged print. Identical to api/_lib/prints.py PRINT_CONSENT_TEXT. */
+  printConsent: string;
   /** The line under the checkbox, as text and links (render each part with a doc as a link to legalHref). */
   acceptance: LegalPart[];
   /** Our button that opens Stripe's payment page. It is not the binding order button: the order becomes binding
@@ -206,6 +211,8 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     withdrawalConsent:
       'I expressly agree that SnapEyes starts making my digital artwork right away, before the withdrawal period ends. I know that I lose my right of withdrawal once this has started.',
     withdrawalConsentMissing: 'Please tick the box above: we can only start on your artwork once you agree.',
+    printConsent:
+      'I know that my print is made to my order from my personal artwork, so I cannot withdraw from buying it; my rights if it arrives faulty or damaged are not affected.',
     acceptance: [
       { text: 'By ordering you accept our ' },
       { text: 'Terms of sale', doc: 'terms' },
@@ -225,6 +232,8 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     withdrawalConsent:
       'Ich stimme ausdrücklich zu, dass SnapEyes sofort, vor Ablauf der Widerrufsfrist, mit der Erstellung meines digitalen Kunstwerks beginnt. Mir ist bekannt, dass ich dadurch mein Widerrufsrecht verliere, sobald damit begonnen wurde.',
     withdrawalConsentMissing: 'Bitte setzen Sie oben das Häkchen: Wir können mit Ihrem Kunstwerk erst beginnen, wenn Sie zustimmen.',
+    printConsent:
+      'Mir ist bekannt, dass mein Druck nach meiner Bestellung aus meinem persönlichen Kunstwerk angefertigt wird und ich seinen Kauf deshalb nicht widerrufen kann; meine Rechte bei einem fehlerhaften oder beschädigten Druck bleiben unberührt.',
     acceptance: [
       { text: 'Mit Ihrer Bestellung akzeptieren Sie unsere ' },
       { text: 'AGB', doc: 'terms' },
@@ -248,6 +257,8 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     withdrawalConsent:
       'Aiškiai sutinku, kad SnapEyes pradėtų kurti mano skaitmeninį kūrinį iš karto, dar nepasibaigus sutarties atsisakymo terminui. Pripažįstu, kad pradėjus kurti kūrinį neteksiu teisės atsisakyti sutarties.',
     withdrawalConsentMissing: 'Pažymėkite langelį aukščiau: Jūsų kūrinį pradėti kurti galime tik gavę Jūsų sutikimą.',
+    printConsent:
+      'Žinau, kad mano spaudinys gaminamas pagal mano užsakymą iš mano asmeninio kūrinio, todėl jo pirkimo atsisakyti negalėsiu; tai neriboja mano teisių, jei jis atkeliaus su trūkumais ar sugadintas.',
     acceptance: [
       { text: 'Užsakydami sutinkate su mūsų ' },
       { text: 'pardavimo sąlygomis', doc: 'terms' },
@@ -274,6 +285,8 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     withdrawalConsent:
       'Kifejezetten hozzájárulok ahhoz, hogy a SnapEyes még az elállási határidő lejárta előtt azonnal megkezdje a digitális alkotásom elkészítését. Tudomásul veszem, hogy a teljesítés megkezdését követően elveszítem az elállási jogomat.',
     withdrawalConsentMissing: 'Kérjük, jelöld be a fenti négyzetet: az alkotásod elkészítését csak a hozzájárulásoddal kezdhetjük meg.',
+    printConsent:
+      'Tudomásul veszem, hogy a nyomatom a megrendelésemre, a személyes alkotásomból készül, ezért a megvásárlásától nem állhatok el; ez nem érinti a jogaimat, ha hibásan vagy sérülten érkezik.',
     acceptance: [
       { text: 'A megrendeléssel elfogadod az ' },
       { text: 'ÁSZF-et', doc: 'terms' },
@@ -297,6 +310,8 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     withdrawalConsent:
       'Izričito pristajem da SnapEyes odmah, prije isteka roka za jednostrani raskid ugovora, počne izrađivati moje digitalno umjetničko djelo. Znam da time gubim pravo na jednostrani raskid ugovora čim izrada započne.',
     withdrawalConsentMissing: 'Označite kućicu iznad: vaše umjetničko djelo možemo početi izrađivati tek kada pristanete.',
+    printConsent:
+      'Znam da se moj ispis izrađuje po mojoj narudžbi iz mojeg osobnog umjetničkog djela, pa za njegovu kupnju nemam pravo na jednostrani raskid ugovora; to ne utječe na moja prava ako stigne neispravan ili oštećen.',
     acceptance: [
       { text: 'Narudžbom prihvaćate naše ' },
       { text: 'Opće uvjete prodaje', doc: 'terms' },

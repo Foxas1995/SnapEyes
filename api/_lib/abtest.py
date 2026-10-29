@@ -533,6 +533,26 @@ def session_exp(sess):
     return (str(key)[:40], str(var)[:40])
 
 
+def print_extra(meta):
+    """The print and its shipping a session's metadata names, in cents (api/_lib/prints.py extra_cents, restated here without the import:
+    prints.py imports pay, which imports this file). 0 without a print."""
+    if not isinstance(meta, dict) or not meta.get("print"):
+        return 0
+    out = 0
+    for k in ("print_amount", "ship_amount"):
+        v = meta.get(k)
+        out += int(v) if isinstance(v, str) and v.isdigit() and len(v) <= 7 else 0
+    return out
+
+
+def paid_extra(paid):
+    """The print and its shipping of a paid record (paid.json print {price, ship}), in cents; 0 without a print."""
+    pp = paid.get("print") if isinstance(paid, dict) else None
+    if not isinstance(pp, dict):
+        return 0
+    return sum(v for v in (pp.get("price"), pp.get("ship")) if isinstance(v, int) and not isinstance(v, bool))
+
+
 def session_ok(sess):
     """A session made under an experiment: is it one the server could have made? Its amount is the price of the ladder its
     own metadata carries (exp_lad, written at checkout) for the artwork in its metadata, and is the amount the server
@@ -557,6 +577,8 @@ def session_ok(sess):
             return False
         lad = ladder_of(key, var, market)
     amount = sess.get("amount_total")
+    if isinstance(amount, int) and not isinstance(amount, bool):
+        amount -= print_extra(m)       # an order with a print: its print and shipping (the server wrote both into the metadata) are not the ladder's
     try:
         eyes, style = int(m.get("eyes")), m.get("style")
         if lad is None or not catalogue.known(style) or not isinstance(amount, int) or isinstance(amount, bool):
@@ -632,7 +654,7 @@ def note_paid(paid):
     spec = paid.get("spec") if isinstance(paid.get("spec"), dict) else {}
     market = paid.get("market") or spec.get("market") or DEFAULT_MARKET
     _rec(stage="paid", exp=ex["key"], variant=ex.get("variant"), market=market, eyes=spec.get("eyes"),
-         amount=paid.get("amount_total"), currency=str(paid.get("currency") or "").lower(),
+         amount=(paid.get("amount_total") or 0) - paid_extra(paid), currency=str(paid.get("currency") or "").lower(),
          live=paid.get("livemode") is True, hit=differs(ex["key"], market, spec.get("eyes") or 1, spec.get("style") or ""))
 
 
@@ -858,6 +880,8 @@ def order_stats(orders, key, variant, currency):
         amount = r.get("amount")
         if not isinstance(amount, int) or isinstance(amount, bool) or amount <= 0:
             continue
+        pa = r.get("print_amount")
+        amount -= pa if isinstance(pa, int) and not isinstance(pa, bool) and 0 < pa < amount else 0     # a print is not the ladder's revenue
         if r.get("live") is not True:
             out["test"] += 1
             continue

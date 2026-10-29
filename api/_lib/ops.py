@@ -426,7 +426,13 @@ def order_row(order):
     gate = _code(co.get("gate"), 60) if isinstance(co, dict) else None          # ok, unknown or the failing eye's reason code (checkout.freeze_plan)
     camp = (paid.get("camp") if is_paid else None) or (co.get("camp") if isinstance(co, dict) else None)       # the campaign code of the advertisement the customer came from
     camp = camp if isinstance(camp, str) and CN.parse(camp) else None
+    pp = (paid.get("print") if is_paid else ((co or {}).get("print") if isinstance(co, dict) else None)) or None
+    pp = pp if isinstance(pp, dict) else None
+    pj = _safe(lambda: _json_or_none(f"orders/{order}/print.json")) if pp and "print.json" in names else None
     return {"order": order, "state": state, "gate": gate, "camp": CN.pack(CN.parse(camp)) if camp else None,
+            "print": {"product": pp.get("product"), "country": pp.get("country"), "state": (pj or {}).get("state") if isinstance(pj, dict) else None}
+            if pp else None,
+            "print_amount": (int(pp.get("price") or 0) + int(pp.get("ship") or 0)) if pp else 0,
             "experiment": {"key": xv["key"], "variant": xv["variant"], "label": xv.get("label")} if xv else None,
             "created_at": created_at if isinstance(created_at, (int, float)) else None,
             "lang": lang if lang in pay.LANGS else None,
@@ -829,6 +835,7 @@ def a_order(body, who):
             "records": {rel(p): r for p, r in recs.items()},
             "eyes": eyes, "artworks": arts, "payments": payments, "refunds": refunds, "log": admin_log,
             "experiment": abtest.order_view(paid if is_paid else None, rec),
+            "print": _print_view(order, paid) if is_paid else None,
             "making": {"began": began, "period_over": over},
             "can": {"email": pay.email_configured(), "stripe": pay.stripe_configured(), "link": k_ok,
                     "counts": bool(is_paid and pay.paid_counts(paid)), "start": bool(began or over)}}
@@ -1119,7 +1126,9 @@ def act_release(body, who):
             else:
                 subject, text, html_body = pay.ready_mail(order, paid, k)
                 mail = pay.send_mail(paid.get("email"), subject, text, f"snapeyes-ready-{order}", html_body)
-    return {"ok": True, "result": "released", "mail": mail, "was_held": held, "audit_detail": f"mail {mail}"}
+    from . import prints
+    server = _ask_server(order) if prints.pending(order, paid) else None     # an order with a print: the server's step sends it now
+    return {"ok": True, "result": "released", "mail": mail, "was_held": held, "server": server, "audit_detail": f"mail {mail}"}
 
 
 def act_clear_review(body, who):
@@ -1315,8 +1324,35 @@ def act_refund(body, who):
         store.put(path, store.json_bytes(rec), "application/json", upsert=True)
     except store.StorageError as e:
         log(f"order {order}: refund {rec['refund']} done at Stripe, its record not stored: {e}")
-    return {"ok": True, "result": _code(rec["status"]) or "refunded", "refund": rec,
-            "audit_detail": f"{rec['refund']} {rec['amount']} {rec['currency']}"}
+    out = {"ok": True, "result": _code(rec["status"]) or "refunded", "refund": rec,
+           "audit_detail": f"{rec['refund']} {rec['amount']} {rec['currency']}"}
+    if paid and pi == paid.get("payment_intent"):
+        out["print"] = _print_after_refund(order, paid)
+        if out["print"]:
+            out["audit_detail"] += f" print {out['print']['result']}"
+    return out
+
+
+def _print_after_refund(order, paid):
+    """The order's print after its payment was refunded: cancelled at merchOne when it is still cancellable (its hold time), else a warning
+    for the owner (it is in production or shipped: merchOne charges it). None for an order without a print. Never raises."""
+    from . import prints
+    if not prints.paid_print(paid):
+        return None
+    try:
+        cur = prints.record(order) or {}
+        if cur.get("state") == "shipped":
+            return {"result": "shipped", "warning": "The print is shipped already: merchOne has charged it."}
+        if not cur.get("merchone_id") or cur.get("state") in ("canceled", "canceled_partner"):
+            # never sent (or cancelled): the refund mark stops any later try (prints.due)
+            return {"result": "not_sent"}
+        prints.cancel(order)
+        return {"result": "canceled"}
+    except store.Answer as a:
+        return {"result": "not_canceled", "warning": f"The print could not be cancelled at merchOne ({a.body.get('error')}). Cancel it in the "
+                                                     "merchOne dashboard, or it is produced and charged."}
+    except Exception as e:  # noqa: the refund is done; the print is the owner's to look at
+        return {"result": "error", "warning": f"The print was not cancelled ({type(e).__name__}). Look at it in Spaudiniai and in merchOne."}
 
 
 def act_mark_refunded(body, who):
@@ -1431,6 +1467,77 @@ def act_exp_stop(body, who):
     key = abtest.check_key(body.get("key"))
     st = abtest.stop(key)
     return {"ok": True, "result": "stopped", "key": key, "state": st, "audit_detail": key}
+
+
+# ----------------------------------------------------------------------------- prints (api/_lib/prints.py)
+def _print_view(order, paid):
+    from . import prints
+    return _safe(lambda: prints.admin_view(order, paid))
+
+
+def a_print_status(body, who):
+    """The page "Spaudiniai": the owner's switch, whether merchOne is configured (and, with check: true, whether it answers), live or test
+    orders, the webhook URL to paste into the merchOne store, the rate table's date, the offer with its margins, and the prints not closed."""
+    from . import prints
+    return dict(prints.admin_status(check_api=body.get("check") is True), ok=True)
+
+
+def act_print_switch(body, who):
+    """The switch of the print offer (ops/prints/switch.json): on lets customers add a print at checkout, off stops it at once (paid prints
+    are still sent). Needs confirm: "spaudiniai" and the revision the page saw; turning it on needs merchOne configured."""
+    from . import prints
+    from . import merchone
+    on = body.get("on")
+    if not isinstance(on, bool):
+        raise L.ClientError("Send on: true or false.")
+    if body.get("confirm") != "spaudiniai":
+        raise store.Answer(400, "confirm_required", "Type spaudiniai to confirm.", False)
+    if on and not merchone.configured():
+        raise store.Answer(409, "not_configured", "MERCHONE_API_USER and MERCHONE_API_KEY are not set on this deployment.", False)
+    if on and pay.on_production() and not merchone.live():
+        # on production every payment is live, and a live payment is never sent as a merchOne TEST order (prints.py holds it): prints are not sold
+        # here until merchOne orders are real ones
+        raise store.Answer(409, "not_live", "MERCHONE_LIVE is not set on this deployment: merchOne orders would be test orders. Set MERCHONE_LIVE=1 "
+                           "and redeploy first.", False)
+    rev = body.get("rev") if isinstance(body.get("rev"), int) and not isinstance(body.get("rev"), bool) else None
+    st = prints.set_switch(on, who.get("kind") if isinstance(who, dict) else who, rev)
+    return {"ok": True, "result": "on" if on else "off", "switch": st, "audit_detail": f"prints {'on' if on else 'off'} rev {st['rev']}"}
+
+
+def act_print_retry(body, who):
+    """Send an order's print to merchOne now (a waiting one, or a failed, held or cancelled one again: force). The artwork must be delivered."""
+    from . import prints
+    order = _order(body)
+    rec, paid = _paid_order(order)
+    if not prints.paid_print(paid):
+        raise store.Answer(409, "no_print", "This order has no print.", False)
+    why = prints.due(order, paid)
+    if why:
+        raise store.Answer(409, "print_not_due", f"The print cannot be sent now: {why}.", False, None, why=why)
+    r = prints.step(order, rec, paid, by="admin", force=True)
+    cur = prints.record(order) or {}
+    return {"ok": True, "result": r, "state": cur.get("state"), "error": cur.get("error"), "merchone_id": cur.get("merchone_id"),
+            "audit_detail": f"print {r} {cur.get('merchone_id') or ''}"}
+
+
+def act_print_refresh(body, who):
+    """Read an order's print back from merchOne (its status, its shipping)."""
+    from . import prints
+    order = _order(body)
+    _rec, paid = _paid_order(order)
+    st = prints.refresh(order, paid)
+    return {"ok": True, "result": st, "state": st}
+
+
+def act_print_cancel(body, who):
+    """Cancel an order's print at merchOne (before production). Needs the order number typed as confirm."""
+    from . import prints
+    order = _order(body)
+    if body.get("confirm") != order:
+        raise store.Answer(400, "confirm_required", "Type the order number to confirm.", False)
+    _paid_order(order)
+    st = prints.cancel(order)
+    return {"ok": True, "result": st, "state": st, "audit_detail": "print canceled"}
 
 
 # ----------------------------------------------------------------------------- the lab
@@ -2154,6 +2261,11 @@ ACTIONS = {
     "feedback": a_feedback, "feedback_delete": audited("feedback_delete", act_feedback_delete),
     "styles_limits": audited("styles_limits", act_styles_limits),
     "exp_start": audited("exp_start", act_exp_start),
+    "print_status": a_print_status,
+    "print_switch": audited("print_switch", act_print_switch),
+    "print_retry": audited("print_retry", act_print_retry),
+    "print_refresh": audited("print_refresh", act_print_refresh),
+    "print_cancel": audited("print_cancel", act_print_cancel),
     "exp_stop": audited("exp_stop", act_exp_stop),
     "link": audited("link", act_link),
     "resend_confirmation": audited("resend_confirmation", act_resend_confirmation),

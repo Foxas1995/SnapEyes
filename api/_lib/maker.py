@@ -561,6 +561,13 @@ def _step(order, rec, paid, hop, steps):
         beat(order, "working", step="mail", hop=hop)
         if ready_mail_once(order, rec, paid, f["released"]) == "transient":
             return ("next", 30, True, "ready_mail")
+        from . import prints
+        if prints.paid_print(paid):
+            # the order has a print (api/_lib/prints.py): its artwork is delivered, so it goes to the print partner now, in this fresh step
+            beat(order, "working", step="print", hop=hop)
+            r = prints.step(order, rec, paid, f={"delivery": dl, "released": f["released"], "withdrawn": f["withdrawn"], "deleted": f["deleted"]})
+            if r == "transient":
+                return ("next", 60, True, "print")
         return ("stop", "ready")
     if isinstance(f["review"], dict):
         if (str(f["review"].get("reason") or "").startswith(pay.MAIL_REVIEW) and isinstance(f["mail"], dict)
@@ -599,6 +606,9 @@ def _step(order, rec, paid, hop, steps):
     if r.get("state") == "ready":
         if ready_mail_once(order, rec, paid) == "transient":
             return ("next", 30, True, "ready_mail")
+        from . import prints
+        if prints.pending(order, paid):
+            return ("next", 0, False, "print")     # the print goes to the print partner in a fresh step (the artwork used this one's time)
         return ("stop", "ready")
     a2 = r.get("artwork") if isinstance(r.get("artwork"), dict) else None
     if r.get("state") == "making" and a2 and a2.get("done", 0) < a2.get("of", 0):

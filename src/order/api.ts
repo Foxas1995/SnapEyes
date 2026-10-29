@@ -5,6 +5,7 @@
 
 import type { PriceList } from '../shared/markets';
 import type { Lang } from '../shared/lang';
+import type { ServerPrints } from '../shared/prints';
 import { withCamp } from '../shared/counter';
 
 export interface ApiReply<T> {
@@ -76,7 +77,7 @@ export interface CheckoutInfo {
   max_eyes?: number;
   // the waiver text per language (the EU edition), and per market where a market has its own (markets.au: the
   // Australian checkbox, src/shared/legal.ts CHECKOUT_LEGAL_AU; markets.us: the US one, CHECKOUT_LEGAL_US)
-  consent?: Partial<Record<Lang, string>> & { version?: string; markets?: Record<string, Partial<Record<Lang, string>> | undefined> };
+  consent?: Partial<Record<Lang, string>> & { version?: string; markets?: Record<string, Partial<Record<Lang, string>> | undefined>; print?: Partial<Record<Lang, string>> };
   country?: string;
   suggest?: string | null;
   // price experiments (api/_lib/abtest.py, src/shared/pricing.ts): exp_markets, while one runs, names the markets that run one;
@@ -85,6 +86,8 @@ export interface CheckoutInfo {
   exp_markets?: string[];
   experiments?: { key: string; variant: string; markets: string[]; run?: number }[];
   exp_token?: string;
+  // prints (api/_lib/prints.py, src/shared/prints.ts): only while they can be bought (the owner's switch); the print box's text is consent.print
+  prints?: ServerPrints;
 }
 
 export interface DraftReply { order: string; k: string; eye: number; created: boolean; expires_at: number }
@@ -143,7 +146,11 @@ export interface OrderStatus {
   server?: ServerMaking;
   // "paid" or "making": how far the artwork's steps are (a compose answer that made progress is a status with a larger `done`)
   artwork?: ArtworkProgress;
+  // a paid order with a print (api/_lib/prints.py order_view): what it is, where it goes, and how far it is (the tracking link once shipped)
+  print?: OrderPrint;
 }
+
+export interface OrderPrint { product: string; kind?: string; cm?: number; country?: string; state: 'preparing' | 'sent' | 'shipped' | 'canceled'; tracking_url?: string | null }
 
 export const ORDER_STATES: readonly OrderState[] = ['unpaid', 'pending', 'paid', 'making', 'review', 'ready', 'deleted', 'withdrawn'];
 

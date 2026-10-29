@@ -301,8 +301,8 @@ const en = {
     // the only 4096 x 4096 file (several eyes are 4096 px on the longest side: never promise a square file for all)
     previewReduced: 'Preview reduced and watermarked.',
     previewFile: (square: boolean): string => (square
-      ? 'Your file: 4096 px, sharp enough to print up to 50 x 50 cm.'
-      : 'Your file: 4096 px on its longest side, sharp enough to print up to 50 cm on that side.'),
+      ? 'Your file: 4096 px, sharp enough to print up to 60 x 60 cm.'
+      : 'Your file: 4096 px on its longest side, sharp enough to print up to 60 cm on that side.'),
     retry: 'Try again',
     layout: 'Layout',
     style: 'Style',
@@ -504,11 +504,27 @@ const en = {
       // 409 style_unavailable (the style cannot be ordered for these eyes any more)
       plan_changed: 'Your artwork changed just now, so we made the preview again. Please look at it, then press the button again.',
       unavailable: 'This style cannot be ordered for your eyes right now. Please choose another or retake the eye.',
+      print_unavailable: 'Prints cannot be ordered right now. You can order the digital file alone.',
+      print_changed: 'The price of the print changed just now. Please look at it again, then press the button.',
     },
     namesBlocked: 'Please fix the words on the artwork first (see above).',
     footnote: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the final price: we are not registered for VAT, so no VAT is added.',
     footnoteAud: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no GST is charged.',
     footnoteUsd: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no sales tax is charged.',
+  },
+
+  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
+  print: {
+    title: 'Print',
+    none: 'Digital file only',
+    option: (name: string, price: string) => `${name}, +${price}`,
+    country: 'Delivery country',
+    pick: 'Choose the country',
+    shipping: 'Shipping',
+    arrives: 'Arrives in about 1 to 2 weeks, tracked.',
+    consentMissing: 'Please tick the box about your print.',
+    countryMissing: 'Please choose the delivery country of your print.',
+    mockAlt: (name: string) => `${name}: a preview of your artwork`,
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py): six chips and an optional text, on the result screen and on the card that asks for another photo
@@ -776,8 +792,8 @@ const de: TryCopy = {
     composeFailed: 'Diese Vorschau konnte nicht erstellt werden.',
     previewReduced: 'Vorschau verkleinert und mit Wasserzeichen.',
     previewFile: (square: boolean): string => (square
-      ? 'Ihre Datei: 4096 px, scharf genug für einen Druck bis 50 x 50 cm.'
-      : 'Ihre Datei: 4096 px an der längsten Seite, scharf genug für einen Druck mit bis zu 50 cm an dieser Seite.'),
+      ? 'Ihre Datei: 4096 px, scharf genug für einen Druck bis 60 x 60 cm.'
+      : 'Ihre Datei: 4096 px an der längsten Seite, scharf genug für einen Druck mit bis zu 60 cm an dieser Seite.'),
     retry: 'Erneut versuchen',
     layout: 'Anordnung',
     style: 'Stil',
@@ -946,11 +962,27 @@ const de: TryCopy = {
       closed: 'Bestellungen sind noch nicht möglich.',
       plan_changed: 'Ihr Kunstwerk hat sich gerade geändert, deshalb haben wir die Vorschau neu erstellt. Bitte sehen Sie sie an und drücken Sie den Knopf dann erneut.',
       unavailable: 'Dieser Stil kann für Ihre Augen gerade nicht bestellt werden. Bitte wählen Sie einen anderen oder nehmen Sie das Auge neu auf.',
+      print_unavailable: 'Drucke können gerade nicht bestellt werden. Sie können die digitale Datei allein bestellen.',
+      print_changed: 'Der Preis des Drucks hat sich gerade geändert. Bitte sehen Sie ihn sich noch einmal an und drücken Sie dann den Knopf.',
     },
     namesBlocked: 'Bitte korrigieren Sie zuerst die Worte auf dem Kunstwerk (siehe oben).',
     footnote: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.',
     footnoteAud: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine GST berechnet.',
     footnoteUsd: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine Sales Tax berechnet.',
+  },
+
+  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
+  print: {
+    title: 'Druck',
+    none: 'Nur die digitale Datei',
+    option: (name: string, price: string) => `${name}, +${price}`,
+    country: 'Lieferland',
+    pick: 'Land wählen',
+    shipping: 'Versand',
+    arrives: 'Kommt in etwa 1 bis 2 Wochen an, mit Sendungsverfolgung.',
+    consentMissing: 'Bitte setzen Sie das Häkchen zu Ihrem Druck.',
+    countryMissing: 'Bitte wählen Sie das Lieferland Ihres Drucks.',
+    mockAlt: (name: string) => `${name}: Vorschau Ihres Kunstwerks`,
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py)

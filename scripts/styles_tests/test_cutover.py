@@ -626,8 +626,8 @@ docs = PACK.get("docs", {})
 check("the sentence is in the terms of the built pack (the one the confirmation e-mail quotes) in English, German, Lithuanian and Hungarian, and the pack's date is the new LEGAL_UPDATED",
       all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-10-28", (upd and upd.group(1), PACK.get("updated")))
 check("one LEGAL_UPDATED for every legal page, moved on after the switch (2026-10-28, the Croatian texts; 2026-10-20, the anonymous counter's privacy paragraphs; it was 2026-10-06, the day of the switch) and is not in the future; the consent texts of the switch are untouched (2026-09-30.2, kept word for word under 2026-10-28.1, which adds the Croatian one, and under 2026-10-28.2, "
-      "which adds the US one)",
-      upd.group(1) <= time.strftime("%Y-%m-%d") and pay.CONSENT_VERSION == "2026-10-28.2" and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")}
+      "which adds the US one, and under 2026-10-28.3, which adds the print box)",
+      upd.group(1) <= time.strftime("%Y-%m-%d") and pay.CONSENT_VERSION == "2026-10-28.3" and pay.CONSENT_TEXTS["2026-10-28.2"] == pay.CONSENT_TEXT and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")}
       and pay.CONSENT_TEXTS["2026-10-28.1"] == pay.CONSENT_TEXT, (upd and upd.group(1), pay.CONSENT_VERSION))
 check("the texts hold no dash and no claim the claims scan refuses: the text check of the build is green on the whole tree (it is the one that runs inside the build and reads these files)",
       not re.search(DASH, ai_src) and not re.search(DASH, terms_src[""]), "")

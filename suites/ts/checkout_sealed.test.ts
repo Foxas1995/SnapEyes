@@ -43,8 +43,9 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
     const r = COPY[lg].result;
     const sq = r.previewFile(true), wide = r.previewFile(false);
     const all = r.previewReduced + sq + wide;
-    check(`${lg}: the preview line promises 50 x 50 cm only for the square artwork, the longest side otherwise`,
-      sq.includes(`50${NB}x${NB}50${NB}cm`) && !wide.includes(`50${NB}x`) && wide.includes(`4096${NB}px`)
+    // 2026-10-28 (prints): 60 x 60 cm, the largest print sold (the 4096 px file is about 173 dpi there)
+    check(`${lg}: the preview line promises 60 x 60 cm only for the square artwork, the longest side otherwise`,
+      sq.includes(`60${NB}x${NB}60${NB}cm`) && !wide.includes(`60${NB}x`) && wide.includes(`4096${NB}px`)
       && (lg === 'en' ? wide.includes('longest side') : wide.includes('längsten Seite')), wide);
     check(`${lg}: no en or em dash in the preview line`, !DASH.some((d) => all.includes(d)));
   }
