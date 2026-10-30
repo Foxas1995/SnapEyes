@@ -159,8 +159,8 @@ ADDED = (
     ("lumen.stardust", 1, (10.5, 9.5, 627, 713), (1.9, 1.58, 1.10, 0.48, 170)),
     ("lumen.nebula", 1, (9.6, 8.7, 620, 706), (2.1, 1.66, 1.18, 0.48, 170)),
     ("lumen.sparks", 1, (9.7, 8.8, 622, 708), (1.1, 0.96, 0.48, 0.48, 170)),   # embers since 2026-10-28 (below)
-    ("lumen.halo", 1, (8.9, 8.0, 620, 706), (0.92, 0.79, 0.31, 0.48, 170)),
-    ("lumen.aurora", 1, (9.9, 9.0, 627, 713), (1.4, 1.18, 0.70, 0.48, 170)),
+    ("lumen.halo", 1, (8.9, 8.0, 670, 756), (0.92, 0.79, 0.31, 0.48, 170)),   # corona since 2026-10-29: measured peak 670 MB (Radiance 901)
+    ("lumen.aurora", 1, (9.9, 9.0, 640, 726), (1.4, 1.18, 0.70, 0.48, 170)),   # curtains since 2026-10-29: measured peak 640 MB (Radiance 901)
     ("lumen.echo", 1, (9.9, 9.0, 720, 806), (1.4, 1.18, 0.70, 0.48, 170)),   # Iris Echo (2026-10-27): Aurora's row with 100 MB more for the 1536 grid, until measured
     ("lumen.dust", 1, (8.6, 7.8, 622, 708), (1.12, 0.88, 0.40, 0.48, 170)),   # Powder Burst's dust (2026-10-28), measured as above (below)
 )
