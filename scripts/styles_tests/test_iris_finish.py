@@ -177,10 +177,10 @@ from _lib.styles import lumen as LU  # noqa: E402
 DUST = LU.DESIGN_FIN["dust"]
 check("off by default: FIN edge is 0 and a finish with edge 0 is the approved finish to the byte (every other style is unchanged)",
       C.FIN["edge"] == 0.0 and all(np.array_equal(C._finish(g0, pupil=None), C._finish(g0, fin={"edge": 0.0}, pupil=None)) for g0, _, _ in rows.values()))
-check("only Powder Burst's dust turns it on, with its own limb (no dark limbal ring) and the edge at 0.985 R (the other designs' own finishes, Halo's,"
-      " Sparks' and Aurora's limbs of ENGINE_V 13, leave the edge off)",
-      LU.DESIGN_FIN.get("dust") == {"limb": (0.78, 0.0), "edge": 0.985}
-      and all(not f.get("edge") for d, f in LU.DESIGN_FIN.items() if d != "dust"), LU.DESIGN_FIN)
+check("only Powder Burst's dust and Spiral Galaxy (2026-10-30: its arms and core glow start at the limb, no dark limbal ring either) turn it on, with their own limb "
+      "(no dark limbal ring) and the edge at 0.985 R (the other designs' own finishes, Halo's, Sparks' and Aurora's limbs of ENGINE_V 13, leave the edge off)",
+      LU.DESIGN_FIN.get("dust") == {"limb": (0.78, 0.0), "edge": 0.985} == LU.DESIGN_FIN.get("galaxy")
+      and all(not f.get("edge") for d, f in LU.DESIGN_FIN.items() if d not in ("dust", "galaxy")), LU.DESIGN_FIN)
 rim_b, inner_b = (rr > 0.965) & (rr < 0.984), (rr > 0.90) & (rr < 0.95)
 deep = rr < 0.88
 

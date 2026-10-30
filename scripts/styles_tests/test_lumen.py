@@ -82,10 +82,13 @@ from _lib.styles.singles import kit as K  # noqa: E402
 
 DASH = "[" + "".join(chr(c) for c in (0x2012, 0x2013, 0x2014, 0x2015)) + "]"
 LUMEN = {"solo.powder": "dust", "solo.supernova": "stardust", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora",
-         "solo.echo": "echo"}      # 2026-10-27: Iris Echo, the family's sixth look, in Celestial Gold's live place; 2026-10-28: Powder Burst draws the dust design (first: its tile is the first)
-NAMES = {"solo.powder": "Powder Burst", "solo.supernova": "Supernova", "solo.nebula": "Nebula", "solo.sparks": "Sparks", "solo.halo": "Halo", "solo.aurora": "Aurora", "solo.echo": "Iris Echo"}
-SLUGS = {"solo.powder": "powder-burst", "solo.supernova": "supernova", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora", "solo.echo": "iris-echo"}
-OWN = [i for i in LUMEN if i != "solo.powder"]      # the family's own six looks (tiles 7 to 12); Powder Burst keeps its release 1 place (tile 1, the pick for an eye of its own colours)
+         "solo.echo": "echo", "solo.galaxy": "galaxy"}      # 2026-10-27: Iris Echo, the family's sixth look, in Celestial Gold's live place; 2026-10-28: Powder Burst draws the dust design (first: its tile is the first); 2026-10-30: Spiral Galaxy
+NAMES = {"solo.powder": "Powder Burst", "solo.supernova": "Supernova", "solo.nebula": "Nebula", "solo.sparks": "Sparks", "solo.halo": "Halo", "solo.aurora": "Aurora", "solo.echo": "Iris Echo",
+         "solo.galaxy": "Spiral Galaxy"}
+SLUGS = {"solo.powder": "powder-burst", "solo.supernova": "supernova", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora", "solo.echo": "iris-echo",
+         "solo.galaxy": "spiral-galaxy"}
+OWN = [i for i in LUMEN if i != "solo.powder"]      # the family's own seven looks (tiles 7 to 13); Powder Burst keeps its release 1 place (tile 1, the pick for an eye of its own colours)
+LATER = ["solo.galaxy"]     # 2026-10-30: Spiral Galaxy's ceiling is preview until its landing tile fits the landing's byte budget (scripts/check_styles.mjs LANDING_TILE_LATER)
 SIX = ["solo.clean", "solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance"]
 GOLD = json.load(open(os.path.join(HERE, "data", "lumen_goldens.json"), encoding="utf-8"))
 G = GOLD["cases"]
@@ -111,7 +114,7 @@ def raises(fn, exc):
 # ============================================================================================ 1. the family in the repository
 section("1. the family in the repository")
 FILES = sorted(f for f in os.listdir(FAMILY) if f.endswith(".py"))
-check("the family has its files: the contract, the shared pieces and one module per look", FILES == ["__init__.py", "aurora.py", "common.py", "dust.py", "echo.py", "halo.py", "nebula.py", "sparks.py", "stardust.py"], FILES)      # echo.py: Iris Echo, 2026-10-27; dust.py: Powder Burst, 2026-10-28
+check("the family has its files: the contract, the shared pieces and one module per look", FILES == ["__init__.py", "aurora.py", "common.py", "dust.py", "echo.py", "galaxy.py", "halo.py", "nebula.py", "sparks.py", "stardust.py"], FILES)      # echo.py: Iris Echo, 2026-10-27; dust.py: Powder Burst, 2026-10-28; galaxy.py: Spiral Galaxy, 2026-10-30
 mods = [os.path.join(FAMILY, f) for f in FILES]
 src_all = "".join(read(m) for m in mods)
 check("every module has the __future__ import (Python 3.12 is Vercel's default) and parses as 3.12",
@@ -134,7 +137,7 @@ def growers(path):
             continue
         if isinstance(v, (ast.Dict, ast.List, ast.Set, ast.DictComp, ast.ListComp, ast.SetComp)) or (
                 isinstance(v, ast.Call) and getattr(v.func, "id", getattr(v.func, "attr", "")) in ("dict", "list", "set", "defaultdict", "OrderedDict", "deque")):
-            out += [t.id for t in targets if isinstance(t, ast.Name) and t.id not in ("NP", "SP", "HP", "AP", "EP", "DP", "GEOM", "DESIGN_FIN")]
+            out += [t.id for t in targets if isinstance(t, ast.Name) and t.id not in ("NP", "SP", "HP", "AP", "EP", "DP", "GP", "GEOM", "DESIGN_FIN")]
     return out
 
 
@@ -147,9 +150,9 @@ ID_RE = re.compile(r"(?<![\w.])(" + "|".join(re.escape(i) for i in CT.ids()) + r
 check("no module writes a style id of the registry (the legacy id of the old Supernova among them: the design of the new one is 'stardust')",
       not ID_RE.search(src_all), ID_RE.findall(src_all)[:5])
 LUMEN_IDS = [i for i in CT.ids() if (CT.ENGINE[i]["engine"] or {}).get("module") == "lumen"]
-check("the registry names exactly the seven styles of the family, each with its design: its own six in the picker's order 7 to 12 after the singles of release 1 (the five of 2026-10-20, "
-      "then Iris Echo of 2026-10-27), and Powder Burst (the dust design since 2026-10-28) in its release 1 place, tile 1",
-      {i: CT.ENGINE[i]["engine"]["design"] for i in LUMEN_IDS} == LUMEN and [CT.STYLES[i]["tile_order"] for i in LUMEN_IDS if i in OWN] == [7, 8, 9, 10, 11, 12]
+check("the registry names exactly the eight styles of the family, each with its design: its own seven in the picker's order 7 to 13 after the singles of release 1 (the five of 2026-10-20, "
+      "then Iris Echo of 2026-10-27 and Spiral Galaxy of 2026-10-30), and Powder Burst (the dust design since 2026-10-28) in its release 1 place, tile 1",
+      {i: CT.ENGINE[i]["engine"]["design"] for i in LUMEN_IDS} == LUMEN and [CT.STYLES[i]["tile_order"] for i in LUMEN_IDS if i in OWN] == [7, 8, 9, 10, 11, 12, 13]
       and CT.STYLES["solo.powder"]["tile_order"] == 1 and sorted(LU.DESIGNS) == sorted(LUMEN.values()), {i: CT.ENGINE[i]["engine"] for i in LUMEN_IDS})
 check("each is a style of one eye of the solo group: its name, its slug (Supernova shares the old legacy Supernova's, which the registry allows for one name), "
       "one layout, the art price class, no accent, a 4096 px working copy; no pick for the six (the recommended tile stays the release 1 table, where Powder Burst is the pick for own colours, with its reason)",
@@ -159,8 +162,9 @@ check("each is a style of one eye of the solo group: its name, its slug (Superno
           and CT.STYLES[i]["accent"] == [] and CT.STYLES[i]["work_side"] == {"1": 4096} for i in LUMEN_IDS)
       and CT.STYLES["supernova"]["slug"] == "supernova" and CT.STYLES["supernova"]["name"] == "Supernova", "")
 check("the stage is live (a ceiling, raised in the reviewed change of 2026-10-27: the admin page can lower it, never raise it; nothing is orderable before the owner's tick) and the gate policy is "
-      "advisory with the lid rule, as Radiance's: a failing eye warns, it is never refused for these looks",
-      all(CT.STYLES[i]["stage"] == "live" and CT.STYLES[i]["stage_by_eyes"] == {} and CT.STYLES[i]["gate"] == "advisory" and CT.ENGINE[i]["gate_rules"] == "lid"
+      "advisory with the lid rule, as Radiance's: a failing eye warns, it is never refused for these looks; Spiral Galaxy (2026-10-30) has the ceiling preview, waiting for its landing tile "
+      "(LANDING_TILE_LATER of scripts/check_styles.mjs)",
+      all(CT.STYLES[i]["stage"] == ("preview" if i in LATER else "live") and CT.STYLES[i]["stage_by_eyes"] == {} and CT.STYLES[i]["gate"] == "advisory" and CT.ENGINE[i]["gate_rules"] == "lid"
           for i in LUMEN_IDS) and CT.STYLES["solo.radiance"]["gate"] == "advisory", "")
 check("the engine entries: the family lumen, the three canvases of the family (the square first), no plate, no atlas, one art step, no fill",
       all(CT.ENGINE[i]["canvases"] == list(LU.FORMATS) and CT.ENGINE[i]["plates"] == [] and CT.ENGINE[i]["atlas"] == [] and CT.ENGINE[i]["steps"] == {}
@@ -172,10 +176,10 @@ check("the geometry has a row per look and canvas, and every iris is at least 22
       and all(2 * LU.frame_for(d, f, 1024, t).R / LU.frame_for(d, f, 1024, t).W >= 0.22 for d in LU.DESIGNS for f in LU.FORMATS for t in (False, True)), "")
 check("every cost row the family needs exists: a master row and a preview row of one eye for each look (a style the table cannot price is never sold)",
       all(CO.known(f"lumen.{d}", 1) and 1 in CO.PREVIEW[f"lumen.{d}"] for d in LU.DESIGNS) and all(CO.cost_key(CT.engine_for(i, 1)) == f"lumen.{LUMEN[i]}" for i in LUMEN_IDS))
-check("the catalogue: a customer may preview each (and the admin), nobody can order one, and the picker lists the six after the singles of release 1, in their order, "
+check("the catalogue: a customer may preview each (and the admin), nobody can order one, and the picker lists the seven after the singles of release 1, in their order, "
       "with Powder Burst the first tile; none of the six is the recommended tile",
       all(CT.previewable(i, 1) and CT.previewable(i, 1, admin=True) and not CT.orderable(i, 1, strict=False) and CT.stage_of(i, 1) == "preview" for i in LUMEN_IDS)
-      and [t["id"] for t in CT.tiles_for(1)][-6:] == OWN and [t["id"] for t in CT.tiles_for(1)][0] == "solo.powder" and all(CT.why_unavailable(i, 1) is None for i in LUMEN_IDS)
+      and [t["id"] for t in CT.tiles_for(1)][-7:] == OWN and [t["id"] for t in CT.tiles_for(1)][0] == "solo.powder" and all(CT.why_unavailable(i, 1) is None for i in LUMEN_IDS)
       and CT.tile_list(1)["pick"] not in OWN and not any(CT.previewable(i, 2) for i in LUMEN_IDS), [t["id"] for t in CT.tiles_for(1)])
 SINGLES_FILES = sorted(f for f in os.listdir(SINGLES) if f.endswith(".py"))
 check("the singles family keeps its seven files (powder.py stays: the singles goldens still test its design) and five registry styles: Powder Burst left it for the dust design "
@@ -189,9 +193,9 @@ FIX = {n: SI.png_bytes(n) for n in LC.FIXTURE_BASE}
 check("the three fixtures of the replay are the very bytes of the recording", all(hashlib.sha256(FIX[n]).hexdigest() == GOLD["fixtures"][n] for n in FIX))
 print(f"   (recorded on {GOLD['machine']}; running on numpy {np.__version__}, Pillow {PIL.__version__})", flush=True)
 ALL = LC.cases()
-check("the recording holds every case of lumen_cases.py and nothing else (70: 7 looks x 3 eyes x 2 sizes, 7 masters, 21 with words or another canvas; Iris Echo the sixth since 2026-10-27, "
-      "Powder Burst's dust the seventh since 2026-10-28)",
-      sorted(G) == sorted(c["key"] for c in ALL) and len(G) == 70, sorted(set(G) ^ {c["key"] for c in ALL})[:5])
+check("the recording holds every case of lumen_cases.py and nothing else (80: 8 looks x 3 eyes x 2 sizes, 8 masters, 24 with words or another canvas; Iris Echo the sixth since 2026-10-27, "
+      "Powder Burst's dust the seventh since 2026-10-28, Spiral Galaxy the eighth since 2026-10-30)",
+      sorted(G) == sorted(c["key"] for c in ALL) and len(G) == 80, sorted(set(G) ^ {c["key"] for c in ALL})[:5])
 IRISES = {}
 t0 = time.time()
 
@@ -388,7 +392,7 @@ check("the tile list of one eye holds the five looks at preview, available, with
 meta_b = P.unseal_full(sealed_b)[1]
 r_b = CMP.compose({"sealed": [sealed_b], "styles": ["solo.supernova", "solo.nebula"], "pad": 1.12})
 r_b2 = CMP.compose({"sealed": [sealed_b], "styles": ["solo.sparks", "solo.halo", "solo.aurora", "solo.echo"], "pad": 1.12})
-r_b3 = CMP.compose({"sealed": [sealed_b], "styles": ["solo.powder"], "pad": 1.12})
+r_b3 = CMP.compose({"sealed": [sealed_b], "styles": ["solo.powder", "solo.galaxy"], "pad": 1.12})
 got = {t["id"]: t for t in r_b["tiles"] + r_b2["tiles"] + r_b3["tiles"] if t.get("image")}
 def _tile_of(s):
     # the free tile as compose draws it since the insights (2026-10-20): the clean preview, then the watermark with the badge of a deployment that takes no
@@ -420,7 +424,7 @@ lst = ops.a_styles_lab({}, "t")
 rows_l = {r["id"]: r for r in lst["styles"] if r["module"] == "lumen"}
 lab_one = ops.a_styles_lab({"style": "solo.aurora", "eye": base64.b64encode(SI.png_bytes("grey_round")).decode("ascii"), "size": 480}, "t")
 check("the admin laboratory lists the five looks with their stage, ceiling, canvases and no plate, and draws one with the self check",
-      sorted(rows_l) == sorted(LUMEN) and all(r["ceiling"] == "live" and r["canvases"] == list(LU.FORMATS) and r["plates"] == [] for r in rows_l.values())
+      sorted(rows_l) == sorted(LUMEN) and all(r["ceiling"] == ("preview" if i in LATER else "live") and r["canvases"] == list(LU.FORMATS) and r["plates"] == [] for i, r in rows_l.items())
       and lab_one["ok"] and lab_one["selfcheck"]["checks"]["t1"]["ok"], {k: v for k, v in lab_one.items() if k not in ("image",)} if isinstance(lab_one, dict) else lab_one)
 
 # ============================================================================================ 7. several irises

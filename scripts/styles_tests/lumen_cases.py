@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""The golden cases of the light family (api/_lib/styles/lumen: Nebula, Supernova, Halo, Sparks, Aurora, Iris Echo, Powder Burst), written once and run twice:
+"""The golden cases of the light family (api/_lib/styles/lumen: Nebula, Supernova, Halo, Sparks, Aurora, Iris Echo, Powder Burst,
+Spiral Galaxy), written once and run twice:
 record_goldens_lumen.py renders them and writes the SHA-256 of every picture into data/lumen_goldens.json; test_lumen.py renders the very same cases and
 compares. numpy, Pillow and the fixtures of synth_iris only (no real eye, no plate: the family reads none).
 
@@ -17,7 +18,7 @@ import json
 
 import numpy as np
 
-DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo", "dust")  # echo: Iris Echo, 2026-10-27; dust: Powder Burst, 2026-10-28
+DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo", "dust", "galaxy")  # echo: Iris Echo, 2026-10-27; dust: Powder Burst, 2026-10-28; galaxy: Spiral Galaxy, 2026-10-30
 EYES = ("blue_round", "dark_brown_round", "grey_round")          # the three colour classes: own, dark_brown, grey
 SIZES = (512, 1024)
 MASTER = (4096, "blue_round")

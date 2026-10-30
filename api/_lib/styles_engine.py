@@ -167,6 +167,17 @@ ENGINE = {
         "fill_side": 0,
         "wave": "R2"
     },
+    "solo.galaxy": {
+        "engine": {"module": "lumen", "design": "galaxy"},
+        "design_by_eyes": {},
+        "canvases": ["1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
     "duo.collision_infinity": {
         "engine": {"module": "collision", "design": "infinity"},
         "design_by_eyes": {},

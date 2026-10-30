@@ -479,10 +479,10 @@ ids_before = list(CT.previewable_ids(1))
 # WP18: the list of a customer for one eye is the cutover's (the six shown styles of the engine, no legacy id: they are retired); it said the legacy six before.
 # 2026-10-20: the five styles of the light family (api/_lib/styles/lumen, a family of its own) are shown too, so the list is the six and those five (it said six)
 LUMEN_IDS = [i for i in CT.ids() if (CT.ENGINE[i]["engine"] or {}).get("module") == "lumen"]
-check("the customer's list of styles for one eye is the cutover's: the three shown styles of this family (not Elements, not Celestial Gold since 2026-10-27), Universe, the seven of the light family "
-      "(Iris Echo the sixth, Powder Burst the seventh since 2026-10-28) and no legacy id",
+check("the customer's list of styles for one eye is the cutover's: the three shown styles of this family (not Elements, not Celestial Gold since 2026-10-27), Universe, the eight of the light family "
+      "(Iris Echo the sixth, Powder Burst the seventh since 2026-10-28, Spiral Galaxy the eighth since 2026-10-30) and no legacy id",
       sorted(ids_before) == sorted([i for i in SINGLES_STYLES if i not in ("solo.elements", "solo.gold")] + ["solo.universe"] + LUMEN_IDS) and not any(CT.is_legacy(i) for i in ids_before)
-      and len(ids_before) == 11 and len(LUMEN_IDS) == 7 and "solo.powder" in LUMEN_IDS, ids_before)
+      and len(ids_before) == 12 and len(LUMEN_IDS) == 8 and "solo.powder" in LUMEN_IDS, ids_before)
 try:
     CMP.compose({"sealed": [sealed], "style": "solo.elements", "pad": 1.12})      # WP18: Celestial Gold is previewable now; Elements is the laboratory style left
     e_lab = None

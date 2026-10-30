@@ -14,6 +14,8 @@
                         partner hue at the tips, on black (redrawn 2026-10-28)
   echo      Iris Echo   the iris in the middle of its own echo: the same iris enlarged behind it, its fibres radiating like a tunnel (2026-10-27)
   dust      Powder Burst  the iris whole, its own colour turned into dust round it (2026-10-28: Powder Burst's look since then)
+  galaxy    Spiral Galaxy  the iris as the bright core of a face-on spiral galaxy: three arms of its own colours wind out of the limb, with star clouds,
+                        knots, dust lanes and a few spike stars, on black (2026-10-30: the owner's pick of the laboratory boards of 2026-10-28, variant A)
 
 No plate, no atlas, no model call: every look is light drawn from noise fields, Gaussian stamps and the eye's own ring colours (common.py). The pipeline is
 the singles family's (api/_lib/styles/singles/kit.py: grade and place the iris, the F3 feather, the effect on the float canvas, the tone map, the dither,
@@ -49,7 +51,7 @@ from .. import seeds as SD
 from .. import text as TX
 from ..singles import kit as K
 
-DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo", "dust")
+DESIGNS = ("nebula", "stardust", "halo", "sparks", "aurora", "echo", "dust", "galaxy")
 FORMATS = ("1:1", "4:5", "9:19.5")                                            # the canvases (the engine entries of the registry list the same)
 SIZES = (64, 4096)                                                            # the long side a render may ask for
 BG = "#000000"                                                                # every look lays its own sky or tonal ground on pure black by adding light
@@ -64,6 +66,7 @@ GEOM = {
     "aurora":   {"r": {"1:1": 0.262, "4:5": 0.262, "9:19.5": 0.262}, "cy": {"1:1": 0.500, "4:5": 0.450, "9:19.5": 0.400}},
     "echo":     {"r": {"1:1": 0.330, "4:5": 0.330, "9:19.5": 0.300}, "cy": {"1:1": 0.500, "4:5": 0.470, "9:19.5": 0.420}},
     "dust":     {"r": {"1:1": 0.300, "4:5": 0.300, "9:19.5": 0.285}, "cy": {"1:1": 0.500, "4:5": 0.460, "9:19.5": 0.410}},
+    "galaxy":   {"r": {"1:1": 0.240, "4:5": 0.240, "9:19.5": 0.240}, "cy": {"1:1": 0.500, "4:5": 0.460, "9:19.5": 0.410}},   # the laboratory board's
 }
 
 # a design's own iris finish over core.FIN: the dust round Powder Burst's iris starts at the limb, so its iris keeps no dark limbal ring
@@ -72,9 +75,10 @@ GEOM = {
 # blurs read the iris only (core.FIN "edge"); inside 0.90 R not one pixel changes. Halo's corona keeps half of the shade, the dark edge of the moon
 # in an eclipse. The embers of Sparks are born at the limb too, so its iris keeps half the family's ring (a light one: no dark seam between the
 # iris and its embers, and no pale glassy rim either). Aurora's curtains start under the limb's feather, so its iris keeps none (2026-10-28: the old
-# Aurora's "hard dark rim" was that ring against its light)
+# Aurora's "hard dark rim" was that ring against its light). Spiral Galaxy's arms and core glow start at the limb too: no ring (the laboratory board's
+# finish), and the dust's edge mode, so no bright band at the limb (no glass rim): inside 0.90 R the iris is the board's
 DESIGN_FIN = {"dust": {"limb": (0.78, 0.0), "edge": 0.985}, "halo": {"limb": (0.78, 0.30)}, "sparks": {"limb": (0.78, 0.3)},
-              "aurora": {"limb": (0.78, 0.0)}}
+              "aurora": {"limb": (0.78, 0.0)}, "galaxy": {"limb": (0.78, 0.0), "edge": 0.985}}
 
 
 def _design(name):
@@ -100,6 +104,9 @@ def _design(name):
     if name == "dust":
         from . import dust as m
         return {"fx": m.fx_dust}
+    if name == "galaxy":
+        from . import galaxy as m
+        return {"fx": m.fx_galaxy}
     raise KeyError(name)
 
 

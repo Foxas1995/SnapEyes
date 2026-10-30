@@ -154,6 +154,13 @@ PREVIEW = {
 #   machine loaded by other work, so only the ratios count): its CPU time 0.77 to 0.81 of Radiance's (Powder Burst's 0.81 to 0.87), the peak 624 MB against Radiance's 902 (Powder
 #   Burst's 623 to 624); the previews 0.65 to 0.86 of Radiance's for the design alone, the peak 153 to 155 MB. The time of the row stays the old look's (an over-estimate by
 #   about a fifth), the memory is Powder Burst's: 900 - 278 and 986 - 278
+# lumen.galaxy (Spiral Galaxy, 2026-10-30) was measured the same way (scripts as for Halo and Aurora: one fresh process per render, one thread, Windows, the 4096 px masters with the
+#   self check from the 4096 px blue green and dark brown eyes, Radiance and Aurora beside it in each of 3 rounds): CPU 10.5 to 12.8 s against Radiance's 14.3 to 16.3 s (CPU ratio
+#   0.67 to 0.81, wall ratio 0.61 to 0.87, the 0.87 a round disturbed by another process: wall 15.6 s over its 12.8 s of CPU), Aurora 11.5 to 12.7 s; the peak 619 to 624 MB
+#   against Radiance's 901 and Aurora's 640 to 641. Through Radiance's yardstick the master would be 9.3 x 0.87 = 8.1 s; the row takes the largest CPU measured itself, 12.8 s
+#   (warm 12.8 x 8.4 / 9.3), and 630 MB over the largest peak (warm + 86, as the rows above): every figure at or above the measurement. The previews (1024 px, 3 rounds): cold
+#   2.3 to 4.4 s (Radiance 2.1 to 2.3), new eyes 2.2 to 2.9 s, the design alone 0.99 to 1.17 s (Radiance 0.48 to 0.56), the preparation (new minus same) up to 1.7 s, the
+#   peak 302 to 305 MB (Radiance 190 to 191: the 120000 arm stars): the row is the largest of each, rounded up
 # Rows here never replace a baked row (the spike's table is what the plan's section 10.3 pins); bake_costs.py leaves this block alone.
 ADDED = (
     ("lumen.stardust", 1, (10.5, 9.5, 627, 713), (1.9, 1.58, 1.10, 0.48, 170)),
@@ -163,6 +170,7 @@ ADDED = (
     ("lumen.aurora", 1, (9.9, 9.0, 640, 726), (1.4, 1.18, 0.70, 0.48, 170)),   # curtains since 2026-10-29: measured peak 640 MB (Radiance 901)
     ("lumen.echo", 1, (9.9, 9.0, 720, 806), (1.4, 1.18, 0.70, 0.48, 170)),   # Iris Echo (2026-10-27): Aurora's row with 100 MB more for the 1536 grid, until measured
     ("lumen.dust", 1, (8.6, 7.8, 622, 708), (1.12, 0.88, 0.40, 0.48, 170)),   # Powder Burst's dust (2026-10-28), measured as above (below)
+    ("lumen.galaxy", 1, (12.8, 11.6, 630, 716), (4.5, 2.9, 1.2, 1.7, 310)),   # Spiral Galaxy (2026-10-30), measured beside Radiance and Aurora (above)
 )
 for _key, _n, _master, _preview in ADDED:
     if _key not in MASTER:

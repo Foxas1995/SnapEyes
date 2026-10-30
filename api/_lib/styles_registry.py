@@ -287,6 +287,23 @@ STYLES = {
         "work_side": {"1": 4096},
         "accent": []
     },
+    "solo.galaxy": {
+        "group": "solo",
+        "slug": "spiral-galaxy",
+        "name": "Spiral Galaxy",
+        "legacy": 0,
+        "eyes": [1, 1],
+        "layouts": {"1": ["single"]},
+        "stage": "preview",
+        "stage_by_eyes": {},
+        "price_class": "art",
+        "gate": "advisory",
+        "pick": [],
+        "reason": {},
+        "tile_order": 13,
+        "work_side": {"1": 4096},
+        "accent": []
+    },
     "duo.collision_infinity": {
         "group": "duo",
         "slug": "collision-infinity",

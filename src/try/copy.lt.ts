@@ -318,6 +318,7 @@ export const lt: TryCopy = {
       'line.solo_halo': 'Jūsų rainelė švyti savo pačios spalvos šviesoje.',
       'line.solo_aurora': 'Šiaurės pašvaistės užuolaidos aplink Jūsų rainelę.',
       'line.solo_echo': 'Jūsų rainelė savo pačios aide, skaidulos tęsiasi lyg tunelis.',
+      'line.solo_galaxy': 'Galaktikos vijos sukasi aplink Jūsų rainelę jos pačios spalvomis.',
     },
     tileAlt: (name: string) => `${name} Jūsų akims: sumažinta peržiūra su vandens ženklu`,
     tileMaking: (name: string) => `${name}: peržiūra kuriama`,

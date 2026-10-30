@@ -127,11 +127,12 @@ check("both files are ASCII and hold no en or em dash", all(ord(ch) < 128 for ch
 # 2026-10-20: the light family added five styles of one eye at preview (Supernova, Nebula, Sparks, Halo, Aurora), which this world (before the cutover) holds in the
 # laboratory like every v3 style that has an engine: 33 ids, 19 in the laboratory (it said 28 and 14); the same day the ensemble family (suites/baseline.md section 45:
 # Clean Duo, Family Orbit and Light Circle new ids, Radiance Duo and Radiance Family planned until then): 36 ids, 24 in the laboratory, 6 planned; and its four cosmos
-# looks (Nebula Duo, Nebula Family, Supernova Duo, Supernova Family): 40 ids, 28 in the laboratory; 2026-10-27 Iris Echo (solo.echo, the light family): 41 ids, 29
-check("41 ids: the 6 legacy ones live, 29 in the laboratory, 6 planned; nothing of v3 is above the laboratory",
-      len(R.STYLES) == 41 and [i for i, d in R.STYLES.items() if d["legacy"] == 1] == LEGACY
+# looks (Nebula Duo, Nebula Family, Supernova Duo, Supernova Family): 40 ids, 28 in the laboratory; 2026-10-27 Iris Echo (solo.echo, the light family): 41 ids, 29;
+# 2026-10-30 Spiral Galaxy (solo.galaxy, the light family): 42 ids, 30
+check("42 ids: the 6 legacy ones live, 30 in the laboratory, 6 planned; nothing of v3 is above the laboratory",
+      len(R.STYLES) == 42 and [i for i, d in R.STYLES.items() if d["legacy"] == 1] == LEGACY
       and all(R.STYLES[i]["stage"] == "live" for i in LEGACY)
-      and sum(1 for d in R.STYLES.values() if d["stage"] == "lab") == 29 and sum(1 for d in R.STYLES.values() if d["stage"] == "planned") == 6,
+      and sum(1 for d in R.STYLES.values() if d["stage"] == "lab") == 30 and sum(1 for d in R.STYLES.values() if d["stage"] == "planned") == 6,
       {d["stage"] for d in R.STYLES.values()})
 check("the two literals have the same ids; a planned style has no engine, every other one has",
       set(R.STYLES) == set(X.ENGINE) and all((R.STYLES[i]["stage"] == "planned") == (not X.ENGINE[i]["engine"]) for i in R.STYLES))
@@ -150,8 +151,8 @@ check("the owner's price keys are unchanged", pay.PRICE_KEYS == ("one_eye_studio
       and all(set(m["prices"]) == set(pay.PRICE_KEYS) for m in MK.MARKETS.values()))
 check("no heart and no pet symbol in any id, slug or name",
       not [w for d in R.STYLES.values() for w in re.split(r"[^a-z]+", (d["slug"] + " " + d["name"]).lower()) if w in ("heart", "hearts", "love", "cupid", "paw", "paws", "dog", "cat", "bone")])
-check("slugs are unique, except that a legacy id and a v3 id of one name share one (Celestial Gold, and since 2026-10-20 Supernova: 41 ids with Iris Echo, 39 slugs)",
-      len({d["slug"] for d in R.STYLES.values()}) == 39 and [i for i, d in R.STYLES.items() if d["slug"] == "celestial-gold"] == ["solo.gold", "celestial_gold"]
+check("slugs are unique, except that a legacy id and a v3 id of one name share one (Celestial Gold, and since 2026-10-20 Supernova: 41 ids with Iris Echo, 39 slugs; 42 and 40 with Spiral Galaxy)",
+      len({d["slug"] for d in R.STYLES.values()}) == 40 and [i for i, d in R.STYLES.items() if d["slug"] == "celestial-gold"] == ["solo.gold", "celestial_gold"]
       and [i for i, d in R.STYLES.items() if d["slug"] == "supernova"] == ["solo.supernova", "supernova"])
 check("registry hash: 12 hex digits, the hash of the canonical ASCII text",
       re.fullmatch(r"[0-9a-f]{12}", C.registry_hash()) and C.registry_hash() == hashlib.sha256(C.canonical().encode("ascii")).hexdigest()[:12])
@@ -287,14 +288,16 @@ POLICY_TABLE = {         # the gate policy of every id of the registry after the
     "solo.supernova": "advisory", "solo.nebula": "advisory", "solo.sparks": "advisory", "solo.halo": "advisory", "solo.aurora": "advisory",
     # 2026-10-27: Iris Echo, advisory as the light family is (its echo is drawn round the iris, nothing over it)
     "solo.echo": "advisory",
+    # 2026-10-30: Spiral Galaxy, advisory as the light family is (its arms are drawn round the iris, nothing over it)
+    "solo.galaxy": "advisory",
     # 2026-10-20: the ensemble family's seven new ids, hard as every pair and family is
     "duo.clean_duo": "hard", "grp.orbit": "hard", "grp.light_circle": "hard", "duo.nebula": "hard", "duo.supernova": "hard", "grp.nebula": "hard", "grp.supernova": "hard",
     **{i: "none" for i in LEGACY},
 }
 check("the gate policy of every id of the registry is the table: Clean Iris and Celestial Gold moved (advisory to hard, 2026-10-14); Universe, the pairs, the families and the pet ids are hard as before, "
       "and so are the nine of the ensemble family (2026-10-20: Radiance Duo and Radiance Family were planned advisory ids, pair and family gates stay hard); Powder Burst, Splash, Elements, Radiance, "
-      "the five styles of the light family, Iris Echo and the planned Celestial Gold Duo still only warn, the six legacy ids have none",
-      {i: d["gate"] for i, d in R.STYLES.items()} == POLICY_TABLE and len(POLICY_TABLE) == len(R.STYLES) == 41, {i: d["gate"] for i, d in R.STYLES.items() if POLICY_TABLE.get(i) != d["gate"]})
+      "the five styles of the light family, Iris Echo, Spiral Galaxy and the planned Celestial Gold Duo still only warn, the six legacy ids have none",
+      {i: d["gate"] for i, d in R.STYLES.items()} == POLICY_TABLE and len(POLICY_TABLE) == len(R.STYLES) == 42, {i: d["gate"] for i, d in R.STYLES.items() if POLICY_TABLE.get(i) != d["gate"]})
 # 2026-10-14, the owner's decision: Clean Iris and Celestial Gold are HARD (they were advisory: a failing eye only warned and the set could still be bought, so a delivered file kept
 # lashes and lid skin at the rim). The rule is the same for every hard style (catalogue._problem); what is new is who it holds back: a one-eye set whose eye fails the lid rule.
 # Powder Burst, Splash and Radiance stay advisory, Universe stays hard with the fill rule.
@@ -620,8 +623,8 @@ for sid in R.STYLES:
             n_checked += 1
             if not (pay.price_cents(eyes, sid, m) == abtest.ladder_price(pr, eyes, sid) == want):
                 bad.append((sid, m, eyes, pay.price_cents(eyes, sid, m), abtest.ladder_price(pr, eyes, sid), want))
-check("pay.price_cents and abtest.ladder_price equal the rule for every id (33 since the light family, 40 with the ensemble family, 41 with Iris Echo) x 4 markets x 1 to 8 eyes"
-      " (7 markets since 2026-10-28: us, uk and hr added)", not bad and n_checked == 41 * 7 * 8 == 41 * len(MK.MARKETS) * 8, bad[:3])
+check("pay.price_cents and abtest.ladder_price equal the rule for every id (33 since the light family, 40 with the ensemble family, 41 with Iris Echo, 42 with Spiral Galaxy) x 4 markets x 1 to 8 eyes"
+      " (7 markets since 2026-10-28: us, uk and hr added)", not bad and n_checked == 42 * 7 * 8 == 42 * len(MK.MARKETS) * 8, bad[:3])
 lad = []
 for key, e in XP.EXPERIMENTS.items():
     for name, v in e["variants"].items():
@@ -634,7 +637,7 @@ check("abtest.ladder_price equals the rule on every ladder of every price experi
 if probe:
     tbad = [r for r in probe["table"] if not (r[3] == r[4] == r[5] == expected(r[0], r[2], MK.MARKETS[r[1]]["prices"]) == pay.price_cents(r[2], r[0], r[1]))]
     check("the site's priceMinor, check_prices priceRule and check_experiments ladderRule give the server's price for every id x market x 1 to 8 eyes",
-          not tbad and len(probe["table"]) == 41 * 7 * 8, tbad[:3])          # 2026-10-28: 7 markets (us, uk, hr added), it was 4; 2026-10-20: 40 ids (the light family, then the ensemble family), it was 28 x 4 x 8 = 896; 41 with Iris Echo (2026-10-27)
+          not tbad and len(probe["table"]) == 42 * 7 * 8, tbad[:3])          # 2026-10-28: 7 markets (us, uk, hr added), it was 4; 2026-10-20: 40 ids (the light family, then the ensemble family), it was 28 x 4 x 8 = 896; 41 with Iris Echo (2026-10-27); 42 with Spiral Galaxy (2026-10-30)
     lbad = [r for r in probe["ladders"] if not (r[5] == r[6] == expected(r[0], r[4], XP.EXPERIMENTS[r[1]]["variants"][r[2]]["prices"][r[3]]))]
     check("the same on every experiment ladder (priceMinor fed the ladder, as the server's answer feeds it)", not lbad and probe["ladders"], lbad[:3])
     sbad = []
@@ -655,7 +658,7 @@ if probe:
 # ============================================================================================ 5. the build check
 section("5. scripts/check_styles.mjs: the repository passes, and each refusal is exact")
 rc, so, se = run_node(["scripts/check_styles.mjs"])
-check("npm run check:styles passes on the repository and prints the registry hash (item 11)", rc == 0 and "styles registry ok: 41 ids" in so, (rc, so, se[-500:]))
+check("npm run check:styles passes on the repository and prints the registry hash (item 11)", rc == 0 and "styles registry ok: 42 ids" in so, (rc, so, se[-500:]))
 mh = re.search(r"registry hash ([0-9a-f]{12})", so)
 check("the hash the build prints is the hash the server computes (node and Python make the same canonical text)",
       bool(mh) and mh.group(1) == real_world().get("hash"), (mh and mh.group(1), real_world().get("hash")))

@@ -334,6 +334,7 @@ export const hr: TryCopy = {
       'line.solo_halo': 'Vaša šarenica, osvijetljena straga vlastitom bojom.',
       'line.solo_aurora': 'Zastori polarne svjetlosti oko vaše šarenice.',
       'line.solo_echo': 'Vaša šarenica u vlastitoj jeci, vlakna se pružaju poput tunela.',
+      'line.solo_galaxy': 'Spiralni krakovi zvijezda u bojama vaše šarenice vijugaju oko nje.',
     },
     tileAlt: (name: string) => `${name} na vašim očima: smanjeni pregled s vodenim žigom`,
     tileMaking: (name: string) => `${name}: pregled se izrađuje`,
