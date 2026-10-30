@@ -91,6 +91,7 @@
   "what": "the 74 tile files art/<design>_<eye>_{480,900}, the pair and family files and the 64 px eye dots: the FINAL round 2c designs (wave-y3 board, approved by the owner 2026-10-04) rendered by the engine code of that round; Celestial Gold is the approved variant A (wave-cg2). Real engine artwork, so the chip is 'Example' (copy example.chip)",
   "text on pictures": "none (the engine's draw log is empty for every render, no name and no date is drawn)",
   "iris": "the iris pixels are the graded iris untouched (max absolute difference 0 on 8,271,297 visible iris pixels of 36 renders at 1024 px)",
-  "source": "wave-lp/assets_v3/tiles (TILES.md, gate_v3.json, render_tiles.py)"
+  "source": "wave-lp/assets_v3/tiles (TILES.md, gate_v3.json, render_tiles.py)",
+  "2026-10-30": "Halo, Sparks and Aurora (ENGINE_V 13) drawn again on the four eye chips by this engine (scripts/make_style_tiles.py make_one: the 1024 px preview, no watermark, LANCZOS to 900 and 480 px, WebP quality 42 and 50 to stay inside the folder budget of scripts/check_landing_assets.mjs). The calibration restorations of the earlier tiles were no longer on this machine, so: own = the private fixture restoration of own215120 (the same photo), yg = a restoration of drv_w04 (the same photo), gr = the 4 K restoration of drv_d01 (wave-masters), br = the Clean Iris tile of drv_w06 (art/clean_br_900) cropped to its iris, as no restoration of w06 was left. The globe discs halo_own, sparks_own and aurora_own come from the new /try style pictures (scripts/make_globe_assets.py), the poster was captured again (scripts/make_globe_poster.mjs, its 1442 px capture cut by one transparent row at the top and the bottom to 1440 px)"
  }
 }
