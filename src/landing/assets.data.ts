@@ -220,6 +220,11 @@ export const GALLERY: {
       "price": "art"
     },
     {
+      "id": "galaxy",
+      "design": "galaxy",
+      "price": "art"
+    },
+    {
       "id": "splash",
       "design": "splash",
       "price": "art"

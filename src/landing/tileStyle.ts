@@ -36,6 +36,7 @@ export const TILE_STYLE: Readonly<Record<string, TileStyle>> = {
   halo: { id: 'solo.halo', eyes: 1 },
   sparks: { id: 'solo.sparks', eyes: 1 },
   aurora: { id: 'solo.aurora', eyes: 1 },
+  galaxy: { id: 'solo.galaxy', eyes: 1 },
   powder: { id: 'solo.powder', eyes: 1 },
   universe: { id: 'solo.universe', eyes: 1 },
   echo: { id: 'solo.echo', eyes: 1 },

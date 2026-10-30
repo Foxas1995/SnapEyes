@@ -88,7 +88,7 @@ NAMES = {"solo.powder": "Powder Burst", "solo.supernova": "Supernova", "solo.neb
 SLUGS = {"solo.powder": "powder-burst", "solo.supernova": "supernova", "solo.nebula": "nebula", "solo.sparks": "sparks", "solo.halo": "halo", "solo.aurora": "aurora", "solo.echo": "iris-echo",
          "solo.galaxy": "spiral-galaxy"}
 OWN = [i for i in LUMEN if i != "solo.powder"]      # the family's own seven looks (tiles 7 to 13); Powder Burst keeps its release 1 place (tile 1, the pick for an eye of its own colours)
-LATER = ["solo.galaxy"]     # 2026-10-30: Spiral Galaxy's ceiling is preview until its landing tile fits the landing's byte budget (scripts/check_styles.mjs LANDING_TILE_LATER)
+LATER = []     # a look whose ceiling is preview while its landing tile waits (scripts/check_styles.mjs LANDING_TILE_LATER): none (Spiral Galaxy waited there on 2026-10-30 until the landing's budget took its tile)
 SIX = ["solo.clean", "solo.powder", "solo.universe", "solo.splash", "solo.gold", "solo.radiance"]
 GOLD = json.load(open(os.path.join(HERE, "data", "lumen_goldens.json"), encoding="utf-8"))
 G = GOLD["cases"]
@@ -162,8 +162,7 @@ check("each is a style of one eye of the solo group: its name, its slug (Superno
           and CT.STYLES[i]["accent"] == [] and CT.STYLES[i]["work_side"] == {"1": 4096} for i in LUMEN_IDS)
       and CT.STYLES["supernova"]["slug"] == "supernova" and CT.STYLES["supernova"]["name"] == "Supernova", "")
 check("the stage is live (a ceiling, raised in the reviewed change of 2026-10-27: the admin page can lower it, never raise it; nothing is orderable before the owner's tick) and the gate policy is "
-      "advisory with the lid rule, as Radiance's: a failing eye warns, it is never refused for these looks; Spiral Galaxy (2026-10-30) has the ceiling preview, waiting for its landing tile "
-      "(LANDING_TILE_LATER of scripts/check_styles.mjs)",
+      "advisory with the lid rule, as Radiance's: a failing eye warns, it is never refused for these looks (Spiral Galaxy too since 2026-10-30, with its landing tile)",
       all(CT.STYLES[i]["stage"] == ("preview" if i in LATER else "live") and CT.STYLES[i]["stage_by_eyes"] == {} and CT.STYLES[i]["gate"] == "advisory" and CT.ENGINE[i]["gate_rules"] == "lid"
           for i in LUMEN_IDS) and CT.STYLES["solo.radiance"]["gate"] == "advisory", "")
 check("the engine entries: the family lumen, the three canvases of the family (the square first), no plate, no atlas, one art step, no fill",

@@ -650,7 +650,7 @@ if probe:
     ms = probe["misc"]
     check("styles.ts: classStyle, DEFAULT_STYLE, the legacy list in engine order, the landing order by tile_order, the accents, schema and plates version",
           ms["classBlack"] == real_world()["class_black"] and ms["classArt"] == real_world()["class_art"] and ms["def"] == real_world()["default"]
-          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora", "solo.echo"]      # WP18: the landing lists the live one-eye styles of the v3 engine (eleven since 2026-10-27: Iris Echo in, Celestial Gold back in the laboratory)
+          and ms["legacy"] == LEGACY and [s["id"] for s in ms["landing"]] == ["solo.powder", "solo.universe", "solo.splash", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora", "solo.echo", "solo.galaxy"]      # WP18: the landing lists the live one-eye styles of the v3 engine (eleven since 2026-10-27: Iris Echo in, Celestial Gold back in the laboratory; twelve with Spiral Galaxy since 2026-10-30)
           and [s["id"] for s in ms["picker"]] == LEGACY and ms["picker"][0]["accent"] == [245, 197, 66] and ms["picker"][-1]["accent"] is None
           and all(s["accent"] == list(L.STYLES[s["id"]]["accent"]) for s in ms["picker"][:-1])
           and ms["schema"] == R.STYLES_SCHEMA and ms["pv"] == R.PLATES_VERSION and ms["names"] == C.names(), ms["picker"][:1])
@@ -1064,9 +1064,9 @@ gate = last_json(so)
 check("the release gate script ran on the real tree", gate is not None, (rc, se[-500:], so[-300:]))
 if gate:
     real = gate["real"]
-    check("release gate: on the real tree every one of the 26 tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27, less the five and six eye Family Colours tiles the owner took off that day) is in exactly one of live, preview, lab and planned by the registry's "
+    check("release gate: on the real tree every one of the 27 tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27, less the five and six eye Family Colours tiles the owner took off that day, and Spiral Galaxy's of 2026-10-30) is in exactly one of live, preview, lab and planned by the registry's "
           "ceiling for its style and eyes, and none is blocked",
-          real["total"] == 26 and len(gate["ids"]) == 26 and real["blocked"] == []
+          real["total"] == 27 and len(gate["ids"]) == 27 and real["blocked"] == []
           and sorted(real["live"] + real["preview"] + real["lab"] + real["planned"]) == sorted(gate["ids"])
           and all(gate["expect"][i] == b for b in ("live", "preview", "lab", "planned") for i in real[b]), real)
     check("release gate: the ceiling is read per count of eyes (the Trio and the larger families are one style, grp.collision): changing the ceiling of four eyes alone to planned moves only the four-eye tile to the planned list, and blocks nothing (the five and six eye tiles left on 2026-10-27)",
@@ -1079,9 +1079,9 @@ if gate:
           and len(gate["eyes"]) == 1 and gate["eyes"][0].startswith('fam_4: "grp.collision" takes 3 to 8 eyes, the tile shows 9'), gate)
     check("release gate: hostile ids (a tile called __proto__ or constructor, a row naming the style constructor) block cleanly and never read the prototype",
           len(gate["protoTile"]) == 2 and all("has no row" in b for b in gate["protoTile"]) and gate["protoStyle"] == ['duo_kiss: the registry has no style "constructor"'], gate)
-    check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups, and only a production deploy or LANDING_GATE=strict is strict",
+    check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups (27 tiles with a live ceiling since Spiral Galaxy's of 2026-10-30), and only a production deploy or LANDING_GATE=strict is strict",
           gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
-          and "26 with a live ceiling" in gate["summary"] and "0 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
+          and "27 with a live ceiling" in gate["summary"] and "0 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
     check("I2: the gate renders the page in seven states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, every style live beyond the ceilings, the server not reachable), in four languages, with no render error and every tile picture present",
           gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "every style live, beyond the ceilings", "server not reachable"]
           and gate["renderedErrors"] == [] and gate["renderedPictures"] == [], (gate["inputs"], gate["renderedErrors"], gate["renderedPictures"]))
@@ -1216,9 +1216,9 @@ import re as _re
 _rows = _re.findall(r"^  (\w+): \{ id: '([\w.]+)', eyes: (\d+) \}", read("src/landing/tileStyle.ts"), flags=_re.M)
 _slug = {i: d["slug"] for i, d in R.STYLES.items()}
 _no_engine_picture = sorted(t for t, sid, _n in _rows if not os.path.isfile(os.path.join(REPO, "public", "assets", "atelier", f"style-{_slug.get(sid, 'none')}-800.webp")))
-check("I2: every one of the 26 landing tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27, less the five and six eye Family Colours tiles) has a picture of this repository's engine to be compared with (the picker's tile of its style): "
+check("I2: every one of the 27 landing tiles (14, the five of the ensemble family since 2026-10-20, the nine of 2026-10-27, less the five and six eye Family Colours tiles, and Spiral Galaxy's of 2026-10-30) has a picture of this repository's engine to be compared with (the picker's tile of its style): "
       "no tile stands for a look the engine does not make (the two held Universe tiles are gone)",
-      len(_rows) == 26 and _no_engine_picture == [], (len(_rows), _no_engine_picture))
+      len(_rows) == 27 and _no_engine_picture == [], (len(_rows), _no_engine_picture))
 check("I2: Iris Echo (Celestial Gold's place since 2026-10-27) is the same design in the landing's tile and in the picker's tile: the two are within 8 levels of 255 on the shared eye, and the Clean Iris tile is the same picture (under 2 levels)",
       _s is not None and _s["echo_own"]["own"] < 8.0 and _s["clean_own"]["own"] < 2.0, _s and {k: round(_s[k]["own"], 2) for k in ("echo_own", "clean_own")})
 

@@ -1031,9 +1031,10 @@ async function checkGlobe() {
   {
     stub.open = true;
     // since 2026-10-27 every one-eye style the picker shows has a live ceiling: the owner's switch holds one of them at preview here (the last live art style in
-    // tile order), so the globe has an artwork of each kind to open
+    // tile order that has an artwork on the globe: Spiral Galaxy, the last in tile order since 2026-10-30, has none), so the globe has an artwork of each kind to open
     const all = checkoutAnswer(ROOT, { open: true });
-    const solosLive = all.styles.filter((s) => s.group === 'solo' && s.stages['1'] === 'live');
+    const onGlobe = readFileSync(join(ROOT, 'src/landing/globeArt.ts'), 'utf8');
+    const solosLive = all.styles.filter((s) => s.group === 'solo' && s.stages['1'] === 'live' && onGlobe.includes(`'${s.id}'`));
     const held = solosLive.length > 1 ? solosLive[solosLive.length - 1].id : null;
     stub.ticked = all.styles.map((s) => s.id).filter((id) => id !== held);
     const cat = checkoutAnswer(ROOT, { open: true, ticked: stub.ticked });

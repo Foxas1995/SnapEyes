@@ -294,7 +294,7 @@ STYLES = {
         "legacy": 0,
         "eyes": [1, 1],
         "layouts": {"1": ["single"]},
-        "stage": "preview",
+        "stage": "live",
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "advisory",

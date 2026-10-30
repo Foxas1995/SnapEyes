@@ -245,7 +245,7 @@ section("1. the release-1 catalogue: every id at the ceiling the specification g
 LIVE1 = ["solo.clean", "solo.powder", "solo.universe", "solo.splash", "solo.echo"]
 # 2026-10-20: the five styles of the light family (api/_lib/styles/lumen) joined the preview ceiling: shown in /try and its picker, not on the landing, not orderable
 LUMEN = ["solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora"]
-# 2026-10-30: Spiral Galaxy (the light family's eighth look) at the preview ceiling: shown in /try, waiting for its landing tile (scripts/check_styles.mjs LANDING_TILE_LATER)
+# 2026-10-30: Spiral Galaxy (the light family's eighth look), a live ceiling like the five with its landing tile (preview until the owner's tick, as every style here)
 GALAXY = ["solo.galaxy"]
 PREVIEW = ["solo.radiance", "duo.kiss_collision", "duo.collision_infinity", "duo.clean"] + LUMEN + GALAXY
 LAB = ["solo.elements", "solo.gold", "duo.universe", "grp.chain", "grp.universe"]
@@ -269,8 +269,8 @@ check("Family Colours: a live ceiling for three to eight eyes (the Trio opened a
 # Supernova Family was sold up to seven eyes (2026-10-22: its eight-eye master needed 54 of the 52 s a Hobby call allowed); since 2026-10-28 eight too (112 s of a 120 s call,
 # the eight-eye master drawn on production)
 check("Radiance, the three pair designs, the light family and the ensemble family have a live ceiling since 2026-10-27 (the owner's choice, after the 4K master of each was drawn on production), "
-      "Supernova Family up to eight eyes since 2026-10-28, and every other design of the first release stays in the laboratory; Spiral Galaxy (2026-10-30) has the ceiling preview until its landing tile",
-      all(set(ceilings(i)) == {"live"} for i in PREVIEW + ENSEMBLE if i not in GALAXY) and all(set(ceilings(i)) == {"preview"} for i in GALAXY) and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
+      "Supernova Family up to eight eyes since 2026-10-28, and every other design of the first release stays in the laboratory (Spiral Galaxy live too since 2026-10-30)",
+      all(set(ceilings(i)) == {"live"} for i in PREVIEW + ENSEMBLE) and all(set(ceilings(i)) == {"lab"} for i in LAB), {i: ceilings(i) for i in PREVIEW + ENSEMBLE + LAB})
 check("planned ids (the reserved designs, Clean Family and the two pet ids) have no engine and stay planned",
       all(set(ceilings(i)) == {"planned"} and not X.ENGINE[i]["engine"] for i in PLANNED), {i: ceilings(i) for i in PLANNED})
 check("the six legacy ids are RETIRED for 1 to 8 eyes (a ceiling of retired is final), still known and still renderable by the legacy engine",
@@ -321,7 +321,7 @@ bs = probe.get("buildStages", {})
 check("buildStage (what a page may assume before the server answers) is the server's stage with no tick: the ceiling held at the default, for every id and 1 to 8 eyes",
       bool(bs) and all(bs[i][n - 1] == eff.get((i, n)) for i in CT.ids() for n in range(1, 9)), [(i, n) for i in bs for n in range(1, 9) if bs[i][n - 1] != eff.get((i, n))][:5])
 check("the landing's gallery lists the live one-eye styles of the v3 engine in tile order (eleven since 2026-10-27; a Soon style stays off the landing: spec 1.8 rule 1), never a legacy id",
-      probe.get("landing") == ["solo.powder", "solo.universe", "solo.splash", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora", "solo.echo"], probe.get("landing"))
+      probe.get("landing") == ["solo.powder", "solo.universe", "solo.splash", "solo.radiance", "solo.clean", "solo.supernova", "solo.nebula", "solo.sparks", "solo.halo", "solo.aurora", "solo.echo", "solo.galaxy"], probe.get("landing"))
 fb = probe.get("fallback") or {}
 check("the fallback catalogue (before the server answers, and when it cannot): nothing orderable, no maximum, no list of art styles, no id for one eye",
       fb == {"max": 0, "styles": [], "one": [], "eyes": [], "by": {}}, fb)
@@ -336,8 +336,8 @@ check("... it refuses a live ceiling with no default, a default of live, a legac
       and any("still live beside live v3" in p for p in g.get("a legacy id still live beside live v3 styles", []))
       and any("legacy style and the v3 styles are live" in p for p in g.get("a legacy default style beside live v3 styles", [])), g)
 r_build = subprocess.run([NODE, os.path.join(REPO, "scripts", "check_styles.mjs")], cwd=REPO, capture_output=True, text=True, encoding="utf-8", timeout=300)
-check("the whole style check passes on the committed tree and prints the registry (24 live since 2026-10-27, 5 in the laboratory with Celestial Gold, 6 planned, 6 retired, and Spiral Galaxy at preview since 2026-10-30)",
-      r_build.returncode == 0 and "6 planned, 5 lab, 1 preview, 24 live, 6 retired" in r_build.stdout, (r_build.returncode, r_build.stdout[-300:], r_build.stderr[-300:]))
+check("the whole style check passes on the committed tree and prints the registry (24 live since 2026-10-27, 5 in the laboratory with Celestial Gold, 6 planned, 6 retired; 25 live with Spiral Galaxy since 2026-10-30)",
+      r_build.returncode == 0 and "6 planned, 5 lab, 25 live, 6 retired" in r_build.stdout, (r_build.returncode, r_build.stdout[-300:], r_build.stderr[-300:]))
 
 # ============================================================================================ 3. before the owner's tick
 section("3. before the owner's tick: nothing can be bought, everything can be looked at")

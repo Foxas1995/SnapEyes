@@ -65,7 +65,9 @@ export async function renderLanding(load, root) {
 
 export const LANDING_DIR = 'public/assets/landing';
 const HASH_LEN = 10;
-const TOTAL_BUDGET = 10.5e6;       // bytes of all pictures together (9.2 MB today: 163 files)
+const TOTAL_BUDGET = 11.0e6;       // bytes of all pictures together (10.71 MB on 2026-10-30: 317 files). Raised from 10.5 MB on 2026-10-30 for Spiral
+                                   // Galaxy's gallery tile (eight files, 0.30 MB): the gallery's art loads lazily, below the first screen, and the LCP
+                                   // picture keeps its own budget (HERO_BUDGET, unchanged), so the first view is not slower
 const FILE_BUDGET = 350e3;         // bytes of any one picture
 // the LCP picture: since 2026-10-22 the poster of the hero's globe (its first view, src/landing/HeroScene.tsx), before that the lounge with the acrylic print
 const HERO_FAMILY = 'globe/poster';
