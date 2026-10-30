@@ -65,11 +65,11 @@ def atelier(name, group):
 
 # id: (source, kind, fit): a wide picture shows `fit` of its width in the circle; a square one is scaled by `fit` (1: whole, the corners cut)
 ITEMS = {}
-for design, eyes in (('radiance', 'own yg br'), ('powder', 'own yg br'), ('universe', 'own yg'), ('splash', 'own yg br'), ('clean', 'own yg'), ('echo', 'own')):
+for design, eyes in (('radiance', 'own yg br'), ('powder', 'own yg br'), ('universe', 'own yg'), ('splash', 'own yg'), ('clean', 'own yg'), ('echo', 'own')):
     for eye in eyes.split():
         ITEMS[f'{design}_{eye}'] = (art(f'{design}_{eye}'), 'square', 1.0)
-# the five newer one-eye styles exist only as /try's pictures, in our own eye: <slug>_own like the landing's own-eye tiles
-for name in ('Halo', 'Sparks', 'Aurora', 'Nebula', 'Supernova'):
+# the six newer one-eye styles exist only as /try's pictures, in our own eye: <slug>_own like the landing's own-eye tiles
+for name in ('Halo', 'Sparks', 'Aurora', 'Nebula', 'Supernova', 'Spiral Galaxy'):
     src, key = atelier(name, 'solo')
     ITEMS[f'{key}_own'] = (src, 'square', 1.0)
 # Kiss Collision is the landing's own tile of it (our own eye and the dark brown example eye, drv_w06), not /try's picture of the style, whose brown eye

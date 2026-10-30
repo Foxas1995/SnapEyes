@@ -27,7 +27,8 @@ export const GLOBE_ART: readonly GlobeArt[] = [
   one('radiance_own', 'solo.radiance', 'own'), one('radiance_yg', 'solo.radiance', 'licensed'), one('radiance_br', 'solo.radiance', 'licensed'),
   one('powder_own', 'solo.powder', 'own'), one('powder_yg', 'solo.powder', 'licensed'), one('powder_br', 'solo.powder', 'licensed'),
   one('universe_own', 'solo.universe', 'own'), one('universe_yg', 'solo.universe', 'licensed'),
-  one('splash_own', 'solo.splash', 'own'), one('splash_yg', 'solo.splash', 'licensed'), one('splash_br', 'solo.splash', 'licensed'),
+  one('splash_own', 'solo.splash', 'own'), one('splash_yg', 'solo.splash', 'licensed'),
+  one('spiral_galaxy_own', 'solo.galaxy', 'own'),
   one('clean_own', 'solo.clean', 'own'), one('clean_yg', 'solo.clean', 'licensed'),
   one('echo_own', 'solo.echo', 'own'),
   many('duo_infinity_by', 'duo.collision_infinity', 2), many('duo_clean_by', 'duo.clean', 2), many('duo_kiss_bb', 'duo.kiss_collision', 2),
@@ -41,7 +42,7 @@ export const GLOBE_ART: readonly GlobeArt[] = [
  *  The caps are at 70 degrees, not 72 (the owner's review of 2026-10-23): at 72 the three discs round a pole were 31 degrees apart, less than a
  *  disc (33), so they overlapped; at 70 no two of the 32 discs are closer than 34.2 degrees, a gap of at least 1.2 degrees in every orientation. */
 export const GLOBE_ROWS: readonly { lat: number; offset: number; ids: readonly string[] }[] = [
-  { lat: 0, offset: 0, ids: ['halo_own', 'sparks_own', 'fam_orbit_4', 'powder_yg', 'nebula_duo', 'universe_own', 'splash_br', 'duo_thread_by', 'radiance_yg', 'aurora_own'] },
+  { lat: 0, offset: 0, ids: ['halo_own', 'sparks_own', 'fam_orbit_4', 'powder_yg', 'nebula_duo', 'universe_own', 'spiral_galaxy_own', 'duo_thread_by', 'radiance_yg', 'aurora_own'] },
   { lat: 36, offset: 22.5, ids: ['nebula_own', 'splash_yg', 'clean_own', 'fam_radiance_4', 'powder_br', 'supernova_duo', 'universe_yg', 'radiance_own'] },
   { lat: -36, offset: 22.5, ids: ['fam_trio', 'powder_own', 'duo_infinity_by', 'clean_yg', 'supernova_family', 'splash_own', 'duo_kiss_bb', 'supernova_own'] },
   { lat: 70, offset: 0, ids: ['duo_clean_by', 'echo_own', 'nebula_family'] },
