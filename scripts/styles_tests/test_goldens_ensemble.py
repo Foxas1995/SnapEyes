@@ -94,7 +94,7 @@ section("1. the family in the repository, the registry, the engine table")
 mods = sorted(f for f in os.listdir(FAMILY) if f.endswith(".py"))
 check("the package holds the contract, the renderer, the pieces, the checks and one module per look",
       mods == sorted(["__init__.py", "base.py", "pieces.py", "corona.py", "checks.py", "clean_duo.py", "radiance_duo.py", "orbit.py", "light_circle.py", "radiance_family.py",
-                      "cosmos.py"]), mods)
+                      "cosmos.py", "spiral.py", "powder_pair.py"]), mods)
 srcs = {m: read(os.path.join("api", "_lib", "styles", "ensemble", m)) for m in mods}
 check("every module starts with the __future__ import and parses as Python 3.12 (Vercel's default)",
       all(re.search(r"^from __future__ import annotations\r?$", s, re.M) and ast.parse(s, feature_version=(3, 12)) for s in srcs.values()), "")

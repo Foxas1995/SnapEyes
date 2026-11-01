@@ -172,7 +172,7 @@ def render(spec, design, eyes, fmt, size, names="", date="", opts=None, key=None
     for i, (ir, (cx, cy, R)) in enumerate(zip(irises, plan.discs)):
         sx, sy, sR = snap_ref(cx, cy, R)
         f = _F(sx * k, sy * k, sR * k) if int(size) != REF else _F(sx, sy, sR)
-        d, d3 = K.place_iris(ir, f, None, sharpen=o.get("sharpen", True), limb=o.get("limb"), master_map=mmap)
+        d, d3 = K.place_iris(ir, f, None, sharpen=o.get("sharpen", True), limb=o.get("limb"), master_map=mmap, fin=spec.get("fin"))
         d.index = d3.index = i
         discs.append(d)
         d3s.append(d3)
