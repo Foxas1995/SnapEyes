@@ -73,6 +73,8 @@ ENGINE_V = 13         # 1: step A (the prototype's seed, from the bytes of the i
                       #   the lumen goldens of the Halo, Sparks and Aurora cases recorded again, the other designs' unchanged; every other picture draws as under 12
                       #   (2026-10-30: Spiral Galaxy, lumen galaxy, a new design: no existing picture changed, so the version stays 13; its ten cases joined
                       #   lumen_goldens.json, the seventy other cases byte for byte the same, and engine_v.json records the file's new hash)
+                      #   (2026-11-02: Galaxy Duo, Galaxy Family and Powder Family, ensemble spiral and powder_family, new designs: no existing picture changed, so the
+                      #   version stays 13; their cases joined ensemble_goldens.json, every other case byte for byte the same, and engine_v.json records the file's new hash)
 
 
 class EngineNotBuilt(LookupError):

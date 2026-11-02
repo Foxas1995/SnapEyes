@@ -244,6 +244,17 @@ ENGINE = {
         "fill_side": 0,
         "wave": "R2"
     },
+    "duo.galaxy": {
+        "engine": {"module": "ensemble", "design": "galaxy_duo"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "5:4", "1:1", "4:5", "9:19.5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
     "duo.universe": {
         "engine": {"module": "universe", "design": "echo"},
         "design_by_eyes": {},
@@ -334,6 +345,28 @@ ENGINE = {
     },
     "grp.supernova": {
         "engine": {"module": "ensemble", "design": "supernova_family"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "1:1", "5:4", "4:5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "grp.galaxy": {
+        "engine": {"module": "ensemble", "design": "galaxy_family"},
+        "design_by_eyes": {},
+        "canvases": ["3:2", "1:1", "5:4", "4:5"],
+        "gate_rules": "lid",
+        "plates": [],
+        "atlas": [],
+        "steps": {},
+        "fill_side": 0,
+        "wave": "R2"
+    },
+    "grp.powder": {
+        "engine": {"module": "ensemble", "design": "powder_family"},
         "design_by_eyes": {},
         "canvases": ["3:2", "1:1", "5:4", "4:5"],
         "gate_rules": "lid",

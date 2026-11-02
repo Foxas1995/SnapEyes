@@ -265,6 +265,12 @@ export const GALLERY: {
       "src": "mixed"
     },
     {
+      "id": "duo_galaxy",
+      "file": "duo_galaxy_bd",
+      "price": "two",
+      "src": "mixed"
+    },
+    {
       "id": "duo_kiss",
       "file": "duo_kiss_bb",
       "price": "two",
@@ -310,6 +316,20 @@ export const GALLERY: {
       "file": "fam_supernova_4",
       "price": "n",
       "n": 4,
+      "src": "mixed"
+    },
+    {
+      "id": "fam_galaxy",
+      "file": "fam_galaxy_3",
+      "price": "n",
+      "n": 3,
+      "src": "mixed"
+    },
+    {
+      "id": "fam_powder",
+      "file": "fam_powder_3",
+      "price": "n",
+      "n": 3,
       "src": "mixed"
     },
     {

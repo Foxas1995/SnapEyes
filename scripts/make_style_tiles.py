@@ -19,6 +19,8 @@ one pupil far bigger than the others. A command reads only the eyes of the tiles
   Family Colours   all three, the Trio
   Clean Duo        own eye and the yellow green one; Radiance Duo: own eye and the dark brown one
   Family Orbit, Light Circle, Radiance Family: four eyes (own, yellow green, dark brown, violet brown; Family Orbit has the owner's own eye in the middle)
+  Galaxy Duo       own eye and the dark brown one; Galaxy Family, Powder Family: three eyes (own, yellow green, dark brown; 2026-11-02: no restoration of the violet brown
+                   one is left on this machine, and the public sample rule keeps every eye of a public picture different)
   the other looks of the ensemble family (Nebula and Supernova as a pair and a family): no row of SETS, the family's defaults (the pair on the own eye and the
                    dark brown one, the family on the four eyes): their slugs carry the word of a legacy id, which this script may not write
 The size of a picture is the long side of the family's default canvas at 1024 px (a preview), reduced with LANCZOS to 800 and 480 px; WEBP quality 80 and 78.
@@ -58,6 +60,9 @@ SETS = {
     "family-orbit": ("own", "yellow", "dark", "violet"),
     "light-circle": ("own", "yellow", "dark", "violet"),
     "radiance-family": ("own", "yellow", "dark", "violet"),
+    "galaxy-duo": ("own", "dark"),
+    "galaxy-family": ("own", "yellow", "dark"),
+    "powder-family": ("own", "yellow", "dark"),
 }
 ONE_EYE = ("own",)          # a style of one eye that SETS does not name is shown on the owner's own eye, as every style of one eye is
 ENSEMBLE_PAIR = ("own", "dark")                          # a pair of the ensemble family that SETS does not name

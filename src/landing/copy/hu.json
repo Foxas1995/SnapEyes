@@ -404,6 +404,15 @@
       },
       "fam_supernova": {
         "d": "Minden írisz csillagporrá robban a saját színeiben."
+      },
+      "duo_galaxy": {
+        "d": "Két írisz egy spirálgalaxis szívében, minden kar a saját színeiben."
+      },
+      "fam_galaxy": {
+        "d": "Egy galaxis az egész családnak, mindenkinek egy kar a saját színeiben."
+      },
+      "fam_powder": {
+        "d": "Minden írisz saját színű porrá válik, és középen összekeverednek."
       }
     },
     "mixed": "A saját szemünk és példafotók",

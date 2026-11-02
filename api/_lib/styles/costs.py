@@ -233,6 +233,31 @@ PREVIEW.update({
     "ensemble.supernova_family": {3: (3.97, 3.52, 2.4, 1.12, 221), 4: (5.05, 4.39, 3.16, 1.22, 238), 5: (6.25, 5.9, 4.16, 1.75, 262), 6: (8.23, 7.51, 5.34, 2.17, 259), 7: (10.02, 9.37, 6.72, 2.65, 274), 8: (9.88, 10.37, 8.09, 2.28, 281)},
 })
 
+# Galaxy Duo, Galaxy Family and Powder Family (2026-11-02, ensemble.spiral and ensemble.powder_family): NOT measured on real 4K restorations and not on a quiet machine, so the rows
+# are LOCAL RATIOS through the Nebula rows above. One fresh process per render, one thread, Windows, the master step's way (the preview at 4096 px with the self check, eyes at the 2048 px
+# working copy made from 4096 px enlargements of own215120, drv_w06, drv_w04, amber14e and their mirrors), Nebula Duo or Nebula Family of the same eye count beside it in each of 2 rounds, on
+# a machine loaded by other work: the seconds of a row = the Nebula row x the largest CPU ratio of the two rounds (raised to the tenth), the peak = the Nebula row + the largest difference of
+# the peaks. Measured CPU (s) against Nebula's: Galaxy Duo 10.14 to 10.83 (10.55 to 11.28); Galaxy Family at 3 eyes 13.78 to 15.16 (11.64 to 12.03), at 8 eyes 35.0 to 37.16 (25.22 to 26.56);
+# Powder Family at 3 eyes 13.17 to 14.31, at 8 eyes 35.39 to 36.34; from five eyes these two draw on the 1:1 canvas (Nebula Family's five on 3:2), hence the 1.5 at five eyes. The peaks: Galaxy Duo
+# 366 to 367 MB (Nebula 423), Galaxy Family 405 to 707 MB (413 to 703), Powder Family 437 to 767 MB (413 to 703). PREVIEW: each column the Nebula row x the ratio of that column in one fresh process
+# (a 1024 px preview from 1024 px eyes: cold, a second of new eyes, a third of the same eyes, their difference), the peak the Nebula row + the difference. Draw one master of each on production
+# before trusting the seconds; every plan fits the budgets at the default slow factor.
+MASTER.update({
+    "ensemble.galaxy_duo": {2: (19.8, 19.8, 410, 410)},
+    "ensemble.galaxy_family": {3: (12.4, 12.4, 410, 410), 4: (15.2, 15.2, 449, 449), 5: (22.1, 22.1, 598, 598), 6: (23.8, 23.8, 617, 617), 7: (26.2, 26.2, 676, 676), 8: (29.7, 29.7, 720, 720)},
+    "ensemble.powder_family": {3: (11.7, 11.7, 442, 442), 4: (15.3, 15.3, 512, 512), 5: (21.6, 21.6, 664, 664), 6: (23.5, 23.5, 675, 675), 7: (26.8, 26.8, 734, 734), 8: (29.8, 29.8, 780, 780)},
+})
+CAPPED.update({
+    "ensemble.galaxy_duo": {2: (19.8, 410)},
+    "ensemble.galaxy_family": {3: (12.4, 410), 4: (15.2, 449), 5: (22.1, 598), 6: (23.8, 617), 7: (26.2, 676), 8: (29.7, 720)},
+    "ensemble.powder_family": {3: (11.7, 442), 4: (15.3, 512), 5: (21.6, 664), 6: (23.5, 675), 7: (26.8, 734), 8: (29.8, 780)},
+})
+PREVIEW.update({
+    "ensemble.galaxy_duo": {2: (4.89, 4.72, 2.35, 2.31, 138)},
+    "ensemble.galaxy_family": {3: (2.73, 2.44, 1.17, 1.27, 153), 4: (3.7, 3.46, 1.41, 1.99, 168), 5: (5.1, 5.05, 2.36, 2.64, 191), 6: (5.04, 4.61, 2.63, 1.89, 193), 7: (6.84, 5.77, 2.89, 2.71, 208), 8: (7.59, 6.28, 2.9, 3.34, 216)},
+    "ensemble.powder_family": {3: (2.6, 2.24, 0.93, 1.31, 204), 4: (3.87, 3.11, 1.28, 1.78, 232), 5: (4.58, 4.42, 1.76, 2.58, 262), 6: (4.76, 4.14, 2.1, 1.87, 276), 7: (5.95, 5.08, 2.23, 2.63, 290), 8: (6.8, 5.72, 2.33, 3.34, 305)},
+})
+
 # MEASURED = ((cost key, eyes, working copy side, cpu s, peak MB), ...): quiet-core seconds in the spike's units and the cold peak of a MASTER as the master step
 # runs it (preview at 4096 px with the self check) on real calibration restorations, measured on this repo's port (WP7A review fix, 2026-10-05, Windows, one thread;
 # this machine's yardstick was 0.951 of the spike's core, so the seconds are the measured ones divided by 0.951). A tuple, edited by hand with a measurement:

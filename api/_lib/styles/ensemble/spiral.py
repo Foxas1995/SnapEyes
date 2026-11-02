@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """styles.ensemble.spiral: GALAXY DUO and GALAXY FAMILY, the light family's Spiral Galaxy (lumen/galaxy.py, live since 2026-10-30) round two to eight WHOLE
-irises. A laboratory look of 2026-11-01 (branch fx-cosmic): boards for the owner, no registry style yet.
+irises, the owner's picks of the boards of 2026-11-01 ("really impressive").
 
   galaxy_duo     the two irises as the double core of one barred spiral galaxy: they sit at the two ends of a short bar of light, and each sends out one arm
                  of its own colours (a two armed logarithmic spiral whose arms rise from the irises); a warm glow round each limb meets in the gap
@@ -35,11 +35,13 @@ from .base import Plan
 F32 = np.float32
 TWO_PI = 2.0 * math.pi
 FIN = {"limb": (0.78, 0.0), "edge": 0.985}          # the single look's iris finish (lumen DESIGN_FIN["galaxy"])
+T8_MARGIN = 0.056                                   # the irises of a ring keep this share of S from every edge (T8 asks 0.05 S, also after a caption's shrink)
 
 GD = {                       # Galaxy Duo
     "gap": 0.42,             # limb to limb (R)
-    "r": 0.185,              # the iris radius, share of S (3:2)
-    "q": 0.78,               # the inclination on the wide canvases: the disc's minor axis over its major axis
+    # per canvas: the iris radius as a share of S, and the inclination (the disc's minor axis over its major axis), so the arms keep inside the canvas
+    "r": {"3:2": 0.185, "5:4": 0.172, "1:1": 0.157, "4:5": 0.170, "9:19.5": 0.230},
+    "q": {"3:2": 0.78, "5:4": 0.82, "1:1": 0.85, "4:5": 0.78, "9:19.5": 0.62},
     "pitch": 16.0,
     "sharp": 3.0,
     "reach": 3.7,            # the galaxy's radius from its centre (R)
@@ -93,7 +95,8 @@ def _axis(fmt):
 
 
 def plan_galaxy_duo(n, fmt, o):
-    """Two irises on the galaxy's major axis (horizontal on the wide canvases, vertical on the tall ones), `gap` R apart, the bar's centre at the canvas'."""
+    """Two irises on the galaxy's major axis (horizontal on the wide canvases and the square, vertical on the tall ones), `gap` R apart, the bar's centre at the
+    canvas's (on the phone wallpaper a little lower, under the lock screen's clock, as Radiance Duo)."""
     W, H = CS.canvas_size(fmt, 1024)
     S = min(W, H)
     p = dict(GD)
@@ -101,51 +104,55 @@ def plan_galaxy_duo(n, fmt, o):
     gap = float(p["gap"])
     ax = math.radians(_axis(fmt))
     u = (math.cos(ax), math.sin(ax))
-    R = float(p["r"]) * S * (1.0 if fmt in ("3:2", "5:4") else 0.92)
-    cx, cy = W / 2.0, H / 2.0
+    R = float(p["r"][fmt]) * S
+    cx, cy = W / 2.0, (0.55 if fmt == "9:19.5" else 0.5) * H
     off = R * (1.0 + gap / 2.0)
-    q = float(p["q"]) if fmt in ("3:2", "5:4", "9:19.5", "4:5") else 1.0
     return Plan(fmt, [(cx - u[0] * off, cy - u[1] * off, R), (cx + u[0] * off, cy + u[1] * off, R)],
-                {"centre": (cx, cy), "rot": math.degrees(ax), "q": q, "gap": gap})
+                {"centre": (cx, cy), "rot": math.degrees(ax), "q": float(p["q"][fmt]), "gap": gap})
+
+
+def duo_fmt(n):
+    return "3:2"
 
 
 def family_fmt(n):
     return "1:1" if n >= 5 else "3:2"
 
 
-def plan_galaxy_family(n, fmt, o):
-    """n irises evenly on a ring round the galaxy's core (in the galaxy's plane; an ellipse on the canvas when the disc is inclined): neighbours at least
-    `gap` R apart, the core at least `core_free` R from every limb, the arms' room `halo` R beyond the ring."""
+def ring_layout(n, fmt, gap, core_free, halo, q, halo_y=None):
+    """n irises evenly on a ring (in the plane of a disc inclined by q: an ellipse on the canvas): neighbours at least `gap` R apart, the middle at least
+    `core_free` R from every limb. The largest size at which the irises keep `halo` R (`halo_y` R up and down) of room for their light, and where that would
+    leave an iris under 23.6 percent of the width (T18 asks 22 percent, also after the 0.94 of a caption) the room gives way down to the T8 margin of the canvas.
+    Returns (centres in canvas px, R px, centre (x, y), the ring's radius in R)."""
     W, H = CS.canvas_size(fmt, 1024)
+    start = -90.0 if n % 2 == 1 else -90.0 + 180.0 / n
+    th = [math.radians(start + 360.0 * i / n) for i in range(n)]
+    unit = [(math.cos(t), q * math.sin(t)) for t in th]
+    dmin = min(math.hypot(unit[i][0] - unit[j][0], unit[i][1] - unit[j][1]) for i in range(n) for j in range(i + 1, n))
+    near = min(math.hypot(x, y) for x, y in unit)
+    rho = max((2.0 + gap) / dmin, (1.0 + core_free) / near)
+    pts = [(rho * x, rho * y) for x, y in unit]
+    hy = halo if halo_y is None else halo_y
+    xs0, xs1 = min(x for x, _ in pts) - 1.0, max(x for x, _ in pts) + 1.0
+    ys0, ys1 = min(y for _, y in pts) - 1.0, max(y for _, y in pts) + 1.0
+    roomy = min(0.97 * W / (xs1 - xs0 + 2.0 * halo), 0.96 * H / (ys1 - ys0 + 2.0 * hy))
+    S = min(W, H)
+    edge = min((W - 2.0 * T8_MARGIN * S) / (xs1 - xs0), (H - 2.0 * T8_MARGIN * S) / (ys1 - ys0))
+    r = min(max(roomy, 0.118 * W), edge)
+    ox, oy = W / 2.0 - (xs0 + xs1) / 2.0 * r, H / 2.0 - (ys0 + ys1) / 2.0 * r
+    return [(ox + x * r, oy + y * r) for x, y in pts], r, (ox, oy), rho
+
+
+def plan_galaxy_family(n, fmt, o):
+    """n irises evenly on a ring round the galaxy's core: the arms' room `halo` R beyond the ring (less on the bigger families, which give it to the irises)."""
     p = dict(GF)
     p.update(o.get("galaxy_family") or {})
     qd = p["q"]
     q = float(qd.get(fmt, 1.0)) if isinstance(qd, dict) else float(qd)
     gap = min(float(p["gap"]), {7: 0.30, 8: 0.16}.get(n, 9.0))           # seven and eight eyes: closer, so each stays 22 percent of the width (T18)
-    start = -90.0 if n % 2 == 1 else -90.0 + 180.0 / n
-    th = [math.radians(start + 360.0 * i / n) for i in range(n)]
-    unit = [(math.cos(t), q * math.sin(t)) for t in th]
-    dmin = min(math.hypot(unit[i][0] - unit[(i + 1) % n][0], unit[i][1] - unit[(i + 1) % n][1]) for i in range(n))
-    if n >= 3:
-        dmin = min(dmin, min(math.hypot(unit[i][0] - unit[j][0], unit[i][1] - unit[j][1]) for i in range(n) for j in range(i + 1, n)))
-    near = min(math.hypot(x, y) for x, y in unit)
-    rho = max((2.0 + gap) / dmin, (1.0 + float(p["core_free"])) / near)
-    pts = [(rho * x, rho * y) for x, y in unit]
-    halo = min(float(p["halo"]), {3: 0.50, 4: 0.90, 5: 0.80, 6: 0.70, 7: 0.0, 8: 0.0}.get(n, 9.0))   # the bigger families give the arms' room to the irises (T18: D >= 0.22 W)
-    xs0, xs1 = min(x for x, _ in pts) - 1.0 - halo, max(x for x, _ in pts) + 1.0 + halo
-    ys0, ys1 = min(y for _, y in pts) - 1.0 - halo * q, max(y for _, y in pts) + 1.0 + halo * q
-    r = min(0.97 * W / (xs1 - xs0), 0.96 * H / (ys1 - ys0), ring_fit(pts, W, H))
-    ox, oy = W / 2.0 - (xs0 + xs1) / 2.0 * r, H / 2.0 - (ys0 + ys1) / 2.0 * r
-    return Plan(fmt, [(ox + x * r, oy + y * r, r) for x, y in pts], {"centre": (ox, oy), "rot": 0.0, "q": q, "rho_r": rho})
-
-
-def ring_fit(pts, W, H, margin=0.056):
-    """The largest iris radius (px) at which the irises of a ring (centres pts in R) keep `margin` S from every canvas edge (T8: 0.05 S, with room for
-    the caption's shrink)."""
-    S = min(W, H)
-    xs = [x for x, _ in pts]
-    ys = [y for _, y in pts]
-    return min((W - 2.0 * margin * S) / (max(xs) - min(xs) + 2.0), (H - 2.0 * margin * S) / (max(ys) - min(ys) + 2.0))
+    halo = min(float(p["halo"]), {3: 0.50, 4: 0.90, 5: 0.80, 6: 0.70, 7: 0.0, 8: 0.0}.get(n, 9.0))
+    cs, r, centre, rho = ring_layout(n, fmt, gap, float(p["core_free"]), halo, q, halo * q)
+    return Plan(fmt, [(x, y, r) for x, y in cs], {"centre": centre, "rot": 0.0, "q": q, "rho_r": rho})
 
 
 # ----------------------------------------------------------------------------- the frame of the galaxy
@@ -389,7 +396,7 @@ def fx_galaxy_family(cv, ctx):
 
 DUO_CANVASES = ("3:2", "5:4", "1:1", "4:5", "9:19.5")
 FAMILY_CANVASES = ("3:2", "1:1", "5:4", "4:5")
-GALAXY_DUO = {"n": (2, 2), "fmt": lambda n: "3:2", "canvases": DUO_CANVASES, "plan": plan_galaxy_duo, "fx": fx_galaxy_duo, "bg": "#000000",
+GALAXY_DUO = {"n": (2, 2), "fmt": duo_fmt, "canvases": DUO_CANVASES, "plan": plan_galaxy_duo, "fx": fx_galaxy_duo, "bg": "#000000",
               "group": "duo", "fin": FIN}
 GALAXY_FAMILY = {"n": (3, 8), "fmt": family_fmt, "canvases": FAMILY_CANVASES, "plan": plan_galaxy_family, "fx": fx_galaxy_family, "bg": "#000000",
                  "group": "grp", "fin": FIN}

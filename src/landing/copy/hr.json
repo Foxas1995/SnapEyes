@@ -404,6 +404,15 @@
       },
       "fam_supernova": {
         "d": "Svaka se šarenica rasprsne u zvjezdanu prašinu u svojim bojama."
+      },
+      "duo_galaxy": {
+        "d": "Dvije šarenice u srcu jedne spiralne galaksije, svaki krak u svojim bojama."
+      },
+      "fam_galaxy": {
+        "d": "Jedna galaksija za cijelu obitelj, po jedan krak u bojama svake osobe."
+      },
+      "fam_powder": {
+        "d": "Svaka šarenica postaje prah svojih boja, a u sredini se miješaju."
       }
     },
     "mixed": "Naše vlastito oko i ogledne fotografije",

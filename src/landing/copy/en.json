@@ -404,6 +404,15 @@
       },
       "fam_supernova": {
         "d": "Every iris bursts into stardust in its own colours."
+      },
+      "duo_galaxy": {
+        "d": "Two irises at the heart of one spiral galaxy, each arm in its own colours."
+      },
+      "fam_galaxy": {
+        "d": "One galaxy for the whole family, one arm in the colours of each person."
+      },
+      "fam_powder": {
+        "d": "Every iris turns to dust in its own colours, and they mix in the middle."
       }
     },
     "mixed": "Our own eye and example photos",

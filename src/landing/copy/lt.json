@@ -404,6 +404,15 @@
       },
       "fam_supernova": {
         "d": "Kiekviena rainelė išsiveržia žvaigždžių dulkėmis savo spalvomis."
+      },
+      "duo_galaxy": {
+        "d": "Dvi rainelės vienos spiralinės galaktikos širdyje, kiekviena vija savo spalvomis."
+      },
+      "fam_galaxy": {
+        "d": "Viena galaktika visai šeimai, po viją kiekvieno spalvomis."
+      },
+      "fam_powder": {
+        "d": "Kiekviena rainelė virsta savo spalvų dulkėmis, kurios susimaišo viduryje."
       }
     },
     "mixed": "Mūsų pačių akis ir pavyzdinės nuotraukos",

@@ -404,6 +404,15 @@
       },
       "fam_supernova": {
         "d": "Jede Iris sprüht Sternenstaub in ihren eigenen Farben."
+      },
+      "duo_galaxy": {
+        "d": "Zwei Iriden im Herzen einer Spiralgalaxie, jeder Arm in seinen eigenen Farben."
+      },
+      "fam_galaxy": {
+        "d": "Eine Galaxie für die ganze Familie, ein Arm in den Farben jedes Menschen."
+      },
+      "fam_powder": {
+        "d": "Jede Iris wird zu Staub in ihren Farben, in der Mitte mischen sie sich."
       }
     },
     "mixed": "Unser eigenes Auge und Beispielfotos",

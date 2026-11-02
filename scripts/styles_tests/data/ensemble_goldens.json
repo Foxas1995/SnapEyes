@@ -210,6 +210,216 @@
    "sha": "b1fa99a7de03b0128d68d3328c89300c493d686b78a801984b144f5af2fd5294",
    "w": 1024
   },
+  "duo.galaxy.amber+blue2.default.1024": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     359.5,
+     341.5,
+     126.5
+    ],
+    [
+     664.5,
+     341.5,
+     126.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "3887851741304480607",
+   "sha": "ffd65f47df2f798fb11b22b0387f8fdfea47d341532f0f1f466d5664d59a3a03",
+   "w": 1024
+  },
+  "duo.galaxy.blue+brown.1:1.512": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     158.5,
+     256.5,
+     80.5
+    ],
+    [
+     353.5,
+     256.5,
+     80.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 512,
+   "seed": "733307940556052307",
+   "sha": "cc2454bfd53fea6e232fa3b72e11bcf5b6799f6f528c47acc8ef712cf1d0719e",
+   "w": 512
+  },
+  "duo.galaxy.blue+brown.4:5.512": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     204.5,
+     172.5,
+     69.5
+    ],
+    [
+     204.5,
+     340.5,
+     69.5
+    ]
+   ],
+   "fmt": "4:5",
+   "frozen": {},
+   "h": 512,
+   "seed": "733307940556052307",
+   "sha": "0fddfa2311106f59f034b8dd7f9f5b2443faf641bfbaef9cda1fa02738686296",
+   "w": 410
+  },
+  "duo.galaxy.blue+brown.5:4.512": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     170.5,
+     204.5,
+     70.5
+    ],
+    [
+     340.5,
+     204.5,
+     70.5
+    ]
+   ],
+   "fmt": "5:4",
+   "frozen": {},
+   "h": 410,
+   "seed": "733307940556052307",
+   "sha": "4ff6c761a4901378fa8da4e710fc1e6cd9f301fe1c0b6ffb73d6eaa48521f252",
+   "w": 512
+  },
+  "duo.galaxy.blue+brown.default.1024": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     359.5,
+     341.5,
+     126.5
+    ],
+    [
+     664.5,
+     341.5,
+     126.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "733307940556052307",
+   "sha": "c97929569af39ec817eb823c8508d1518ba7c6a6879c8676774b8310a88b3d14",
+   "w": 1024
+  },
+  "duo.galaxy.blue+brown.default.1024.swap": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     359.5,
+     341.5,
+     126.5
+    ],
+    [
+     664.5,
+     341.5,
+     126.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "4064417819352569105",
+   "sha": "16ad3a35402dfff11683b3727cc2fc747cb5cd2af82114f5c411a6ccf7c14d0c",
+   "w": 1024
+  },
+  "duo.galaxy.blue+brown.default.1024.text": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     368.0,
+     321.0,
+     119.0
+    ],
+    [
+     656.0,
+     321.0,
+     119.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "733307940556052307",
+   "sha": "5f88969251bf556f3cf7aecf89182b15c6dad61779f158e5ef1d27641c1d6d92",
+   "w": 1024
+  },
+  "duo.galaxy.blue+brown.default.4096": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     1438.0,
+     1366.0,
+     506.0
+    ],
+    [
+     2658.0,
+     1366.0,
+     506.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 2732,
+   "seed": "733307940556052307",
+   "sha": "db7b28665087499f7e1915d6961b08c3a6f9713ddffd261fa53a27869b995fd5",
+   "w": 4096
+  },
+  "duo.galaxy.green+grey.9:19.5.512": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     118.0,
+     215.0,
+     54.0
+    ],
+    [
+     118.0,
+     347.0,
+     54.0
+    ]
+   ],
+   "fmt": "9:19.5",
+   "frozen": {},
+   "h": 512,
+   "seed": "13131263085455359455",
+   "sha": "dd067fd361425af69eef2c25d70dfc697cfb84db91db3ed64c9d6fbbed0e599d",
+   "w": 236
+  },
+  "duo.galaxy.green+grey.default.1024": {
+   "design": "galaxy_duo",
+   "discs": [
+    [
+     359.5,
+     341.5,
+     126.5
+    ],
+    [
+     664.5,
+     341.5,
+     126.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "13131263085455359455",
+   "sha": "966dc2c8b0ffaded9bda988a6f605c04a8938a563b7069eba01afd7b0c3945f6",
+   "w": 1024
+  },
   "duo.nebula.amber+blue2.9:19.5.512": {
    "design": "nebula_duo",
    "discs": [
@@ -730,6 +940,356 @@
    "h": 683,
    "seed": "13271955723421660922",
    "sha": "29fa1f0d1f9b6173e64879f4131fbd98b8d9cc9d88cdc08d2e1aa402d1a8ba31",
+   "w": 1024
+  },
+  "grp.galaxy.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     648.0,
+     183.0,
+     126.0
+    ],
+    [
+     841.0,
+     376.0,
+     126.0
+    ],
+    [
+     841.0,
+     648.0,
+     126.0
+    ],
+    [
+     648.0,
+     841.0,
+     126.0
+    ],
+    [
+     376.0,
+     841.0,
+     126.0
+    ],
+    [
+     183.0,
+     648.0,
+     126.0
+    ],
+    [
+     183.0,
+     376.0,
+     126.0
+    ],
+    [
+     376.0,
+     183.0,
+     126.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "7587824591802457595",
+   "sha": "4ada33d7c49f488c72b7c72302ac48b7c713b70ffa2bec3c9e15ec17857e7a52",
+   "w": 1024
+  },
+  "grp.galaxy.blue+brown+green+grey+amber+blue2.default.1024": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     655.0,
+     265.0,
+     124.0
+    ],
+    [
+     798.0,
+     512.0,
+     124.0
+    ],
+    [
+     655.0,
+     759.0,
+     124.0
+    ],
+    [
+     369.0,
+     759.0,
+     124.0
+    ],
+    [
+     226.0,
+     512.0,
+     124.0
+    ],
+    [
+     369.0,
+     265.0,
+     124.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "5712496170465449160",
+   "sha": "0dc83541fe2b15e7d400b9ca8c9d72991dc46bfd563bc41dbeef716f1e73b103",
+   "w": 1024
+  },
+  "grp.galaxy.blue+brown+green+grey+amber.4:5.512": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     204.5,
+     159.5,
+     54.5
+    ],
+    [
+     306.5,
+     233.5,
+     54.5
+    ],
+    [
+     267.5,
+     352.5,
+     54.5
+    ],
+    [
+     142.5,
+     352.5,
+     54.5
+    ],
+    [
+     103.5,
+     233.5,
+     54.5
+    ]
+   ],
+   "fmt": "4:5",
+   "frozen": {},
+   "h": 512,
+   "seed": "2581795605833017463",
+   "sha": "feb46b4cf02e2942c1fa7ac69d2ba9cab3d757932f550f703ad5ace73b898db7",
+   "w": 410
+  },
+  "grp.galaxy.blue+brown+green+grey+amber.default.1024": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     512.0,
+     272.0,
+     136.0
+    ],
+    [
+     764.0,
+     455.0,
+     136.0
+    ],
+    [
+     668.0,
+     752.0,
+     136.0
+    ],
+    [
+     356.0,
+     752.0,
+     136.0
+    ],
+    [
+     260.0,
+     455.0,
+     136.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "2581795605833017463",
+   "sha": "d5667841a84eb34f8919c5f188b5e3e592d120304a270028e67ef564055b949a",
+   "w": 1024
+  },
+  "grp.galaxy.blue+brown+green+grey+amber.default.1024.text": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     511.5,
+     255.5,
+     127.5
+    ],
+    [
+     749.5,
+     428.5,
+     127.5
+    ],
+    [
+     658.5,
+     706.5,
+     127.5
+    ],
+    [
+     365.5,
+     706.5,
+     127.5
+    ],
+    [
+     274.5,
+     428.5,
+     127.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "2581795605833017463",
+   "sha": "45cd25a3a5ae687ab22ecb30887bc90ac55a68f7ee0eade6fb4fa7155967e44f",
+   "w": 1024
+  },
+  "grp.galaxy.blue+brown+green+grey+amber.default.4096": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     2048.0,
+     1088.0,
+     544.0
+    ],
+    [
+     3056.0,
+     1820.0,
+     544.0
+    ],
+    [
+     2672.0,
+     3008.0,
+     544.0
+    ],
+    [
+     1424.0,
+     3008.0,
+     544.0
+    ],
+    [
+     1040.0,
+     1820.0,
+     544.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 4096,
+   "seed": "2581795605833017463",
+   "sha": "8976e13214a62c2bd98f57eb0b47276e922ff2922dca0dea06cd91cb432a9fd1",
+   "w": 4096
+  },
+  "grp.galaxy.blue+brown+green+grey.default.1024": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     729.0,
+     203.0,
+     121.0
+    ],
+    [
+     729.0,
+     480.0,
+     121.0
+    ],
+    [
+     295.0,
+     480.0,
+     121.0
+    ],
+    [
+     295.0,
+     203.0,
+     121.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "422246947224231478",
+   "sha": "f6a10b6931fd72ebc0a268edd8dc481aeea5e923cc3d00d640e442ae0fc529e4",
+   "w": 1024
+  },
+  "grp.galaxy.blue+brown+green+grey.default.1024.rot2": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     729.0,
+     203.0,
+     121.0
+    ],
+    [
+     729.0,
+     480.0,
+     121.0
+    ],
+    [
+     295.0,
+     480.0,
+     121.0
+    ],
+    [
+     295.0,
+     203.0,
+     121.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "5354255833061442262",
+   "sha": "3464ab26f116225fe5e93ca6ca5503cb549a74377e3a1932270e5236de5979b5",
+   "w": 1024
+  },
+  "grp.galaxy.blue+brown+green.1:1.512": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     256.0,
+     147.0,
+     81.0
+    ],
+    [
+     383.0,
+     365.0,
+     81.0
+    ],
+    [
+     129.0,
+     365.0,
+     81.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 512,
+   "seed": "12319949676589695940",
+   "sha": "d95fa10975eb160de9518362595750318b5a2b9d6b87a0ae7ba033518b07c3eb",
+   "w": 512
+  },
+  "grp.galaxy.blue+brown+green.default.1024": {
+   "design": "galaxy_family",
+   "discs": [
+    [
+     512.5,
+     175.5,
+     122.5
+    ],
+    [
+     811.5,
+     507.5,
+     122.5
+    ],
+    [
+     212.5,
+     507.5,
+     122.5
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "12319949676589695940",
+   "sha": "abcc5a672319adef0cb80b201bc6f05057d6d89960d2d31aea14ff84c20166f0",
    "w": 1024
   },
   "grp.light_circle.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
@@ -1488,6 +2048,356 @@
    "sha": "26c5a5bad7360b76d5f28a7bdb9f31108ede0180447a7147f9875464ea711ad1",
    "w": 1024
   },
+  "grp.powder.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
+   "design": "powder_family",
+   "discs": [
+    [
+     644.0,
+     194.0,
+     122.0
+    ],
+    [
+     830.0,
+     380.0,
+     122.0
+    ],
+    [
+     830.0,
+     644.0,
+     122.0
+    ],
+    [
+     644.0,
+     830.0,
+     122.0
+    ],
+    [
+     380.0,
+     830.0,
+     122.0
+    ],
+    [
+     194.0,
+     644.0,
+     122.0
+    ],
+    [
+     194.0,
+     380.0,
+     122.0
+    ],
+    [
+     380.0,
+     194.0,
+     122.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "2731067880949277319",
+   "sha": "bfeca3fdd2e484a69d0a6c0054302b8ccfa760c4b6236b699e8809606e2745ab",
+   "w": 1024
+  },
+  "grp.powder.blue+brown+green+grey+amber+blue2.default.1024": {
+   "design": "powder_family",
+   "discs": [
+    [
+     673.0,
+     233.0,
+     123.0
+    ],
+    [
+     834.0,
+     512.0,
+     123.0
+    ],
+    [
+     673.0,
+     791.0,
+     123.0
+    ],
+    [
+     351.0,
+     791.0,
+     123.0
+    ],
+    [
+     190.0,
+     512.0,
+     123.0
+    ],
+    [
+     351.0,
+     233.0,
+     123.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "15637293936756008984",
+   "sha": "64b652c465ce7124730060526fd9d69bb329b09c79cbe57846a5c0306aca4f36",
+   "w": 1024
+  },
+  "grp.powder.blue+brown+green+grey+amber.4:5.512": {
+   "design": "powder_family",
+   "discs": [
+    [
+     204.5,
+     142.5,
+     56.5
+    ],
+    [
+     324.5,
+     229.5,
+     56.5
+    ],
+    [
+     278.5,
+     369.5,
+     56.5
+    ],
+    [
+     131.5,
+     369.5,
+     56.5
+    ],
+    [
+     85.5,
+     229.5,
+     56.5
+    ]
+   ],
+   "fmt": "4:5",
+   "frozen": {},
+   "h": 512,
+   "seed": "2413699495343988026",
+   "sha": "346551bb93ef503452e98c9e4aacdbcde76b0fc0ec8a0bab216e34091e7fdfbe",
+   "w": 410
+  },
+  "grp.powder.blue+brown+green+grey+amber.default.1024": {
+   "design": "powder_family",
+   "discs": [
+    [
+     512.5,
+     229.5,
+     140.5
+    ],
+    [
+     809.5,
+     445.5,
+     140.5
+    ],
+    [
+     695.5,
+     794.5,
+     140.5
+    ],
+    [
+     328.5,
+     794.5,
+     140.5
+    ],
+    [
+     214.5,
+     445.5,
+     140.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "2413699495343988026",
+   "sha": "8323e9b0aca9139053ed500a1a78d91d4b2b2f4099a1b4c76f440cff9c9d9fdf",
+   "w": 1024
+  },
+  "grp.powder.blue+brown+green+grey+amber.default.1024.text": {
+   "design": "powder_family",
+   "discs": [
+    [
+     512.0,
+     215.0,
+     132.0
+    ],
+    [
+     792.0,
+     419.0,
+     132.0
+    ],
+    [
+     685.0,
+     747.0,
+     132.0
+    ],
+    [
+     339.0,
+     747.0,
+     132.0
+    ],
+    [
+     232.0,
+     419.0,
+     132.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 1024,
+   "seed": "2413699495343988026",
+   "sha": "37a94989129791899c8b2310b511fb6402f51679e62ebb8a73287a68076f9f16",
+   "w": 1024
+  },
+  "grp.powder.blue+brown+green+grey+amber.default.4096": {
+   "design": "powder_family",
+   "discs": [
+    [
+     2050.0,
+     918.0,
+     562.0
+    ],
+    [
+     3238.0,
+     1782.0,
+     562.0
+    ],
+    [
+     2782.0,
+     3178.0,
+     562.0
+    ],
+    [
+     1314.0,
+     3178.0,
+     562.0
+    ],
+    [
+     858.0,
+     1782.0,
+     562.0
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 4096,
+   "seed": "2413699495343988026",
+   "sha": "9f762be2eb7908fa098265317550d3815ad03953dfc3104b857a52798e6e23fc",
+   "w": 4096
+  },
+  "grp.powder.blue+brown+green+grey.default.1024": {
+   "design": "powder_family",
+   "discs": [
+    [
+     670.0,
+     183.0,
+     121.0
+    ],
+    [
+     670.0,
+     500.0,
+     121.0
+    ],
+    [
+     354.0,
+     500.0,
+     121.0
+    ],
+    [
+     354.0,
+     183.0,
+     121.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "13276411855648258207",
+   "sha": "3c9946f9378f2b058437f4cf132f010667ec00cf62ed597770109faf8391d132",
+   "w": 1024
+  },
+  "grp.powder.blue+brown+green+grey.default.1024.rot2": {
+   "design": "powder_family",
+   "discs": [
+    [
+     670.0,
+     183.0,
+     121.0
+    ],
+    [
+     670.0,
+     500.0,
+     121.0
+    ],
+    [
+     354.0,
+     500.0,
+     121.0
+    ],
+    [
+     354.0,
+     183.0,
+     121.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "17387925170462630013",
+   "sha": "ae6788bcf7c27d2bb66a74d66a39d9a9d7d45bce5a96de298f3ca3b362bcbeb2",
+   "w": 1024
+  },
+  "grp.powder.blue+brown+green.1:1.512": {
+   "design": "powder_family",
+   "discs": [
+    [
+     256.5,
+     144.5,
+     84.5
+    ],
+    [
+     384.5,
+     366.5,
+     84.5
+    ],
+    [
+     128.5,
+     366.5,
+     84.5
+    ]
+   ],
+   "fmt": "1:1",
+   "frozen": {},
+   "h": 512,
+   "seed": "5117418703051305654",
+   "sha": "4767b02a44d39c16ad2664f0e4eca8464a603ccfdf3652b28aaec1c3b3c6fa7f",
+   "w": 512
+  },
+  "grp.powder.blue+brown+green.default.1024": {
+   "design": "powder_family",
+   "discs": [
+    [
+     512.0,
+     183.0,
+     121.0
+    ],
+    [
+     695.0,
+     500.0,
+     121.0
+    ],
+    [
+     329.0,
+     500.0,
+     121.0
+    ]
+   ],
+   "fmt": "3:2",
+   "frozen": {},
+   "h": 683,
+   "seed": "5117418703051305654",
+   "sha": "79fffae75ba90517b83a9a9301f96bb17b806b0aab4d6f0ea8027b209e8d5795",
+   "w": 1024
+  },
   "grp.radiance.blue+brown+green+grey+amber+blue2+green2+brown2.default.1024": {
    "design": "radiance_family",
    "discs": [
@@ -2070,6 +2980,6 @@
    "w": 1024
   }
  },
- "engine_v": 8,
+ "engine_v": 13,
  "note": "the pictures of the ensemble family (api/_lib/styles/ensemble) on the synthetic eyes of synth_iris, recorded by test_goldens_ensemble.py --record: sha256 of the decoded pixels and their shape, the seed, the design, the canvas, the frozen choices and the discs of every case. Exact for this machine class and the pins of requirements.txt"
 }

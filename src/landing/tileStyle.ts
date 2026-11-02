@@ -16,6 +16,7 @@
 //   duo_radiance                     -> Radiance Duo
 //   fam_orbit, fam_circle, fam_radiance  -> Family Orbit, Light Circle and Radiance Family at four eyes
 //   duo_nebula, duo_supernova, fam_nebula, fam_supernova  -> Nebula Duo, Supernova Duo, Nebula Family and Supernova Family (four eyes); added 2026-10-27
+//   duo_galaxy, fam_galaxy, fam_powder  -> Galaxy Duo, Galaxy Family and Powder Family (three eyes); added 2026-11-02
 // The Universe pair and the Universe family (held in the laboratory) have NO tile: the pictures the prototype had for them were designs the engine does not make, and a tile
 // that says Soon promises its look (release review H-M3). When the engine draws them, add their tiles with pictures made by the engine.
 // scripts/check_styles.mjs (item 15) keeps this table equal to the gallery: every tile has a row, every row names a style of the registry that takes
@@ -57,4 +58,7 @@ export const TILE_STYLE: Readonly<Record<string, TileStyle>> = {
   fam_radiance: { id: 'grp.radiance', eyes: 4 },
   fam_nebula: { id: 'grp.nebula', eyes: 4 },
   fam_supernova: { id: 'grp.supernova', eyes: 4 },
+  duo_galaxy: { id: 'duo.galaxy', eyes: 2 },
+  fam_galaxy: { id: 'grp.galaxy', eyes: 3 },
+  fam_powder: { id: 'grp.powder', eyes: 3 },
 };
