@@ -260,7 +260,7 @@ export const GALLERY: {
     },
     {
       "id": "duo_supernova",
-      "file": "duo_supernova_bd",
+      "file": "duo_supernova_gd",
       "price": "two",
       "src": "mixed"
     },
@@ -290,7 +290,7 @@ export const GALLERY: {
     },
     {
       "id": "duo_radiance",
-      "file": "duo_radiance_bd",
+      "file": "duo_radiance_ga",
       "price": "two",
       "src": "mixed"
     }
@@ -306,10 +306,11 @@ export const GALLERY: {
     },
     {
       "id": "fam_nebula",
-      "file": "fam_nebula_4",
+      "file": "fam_nebula_8",
       "price": "n",
-      "n": 4,
-      "src": "mixed"
+      "n": 8,
+      "src": "mixed",
+      "square": true
     },
     {
       "id": "fam_supernova",
@@ -320,17 +321,19 @@ export const GALLERY: {
     },
     {
       "id": "fam_galaxy",
-      "file": "fam_galaxy_3",
+      "file": "fam_galaxy_6",
       "price": "n",
-      "n": 3,
-      "src": "mixed"
+      "n": 6,
+      "src": "mixed",
+      "square": true
     },
     {
       "id": "fam_powder",
-      "file": "fam_powder_3",
+      "file": "fam_powder_5",
       "price": "n",
-      "n": 3,
-      "src": "mixed"
+      "n": 5,
+      "src": "mixed",
+      "square": true
     },
     {
       "id": "fam_4",
