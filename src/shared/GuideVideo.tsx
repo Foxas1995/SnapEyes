@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
-// The guide to photographing an eye (2026-10-22, the owner: "our explanation is not good ... the clearer the better"): our own animated video, no voice,
+// The guide to photographing an eye (2026-10-22, the owner: "our explanation is not good ... the clearer the better"; version 6 of 2026-11-03: "more professional", a 3D phone and photographs, suites/baseline.md section 54): our own video, no voice,
 // its words burnt in, one square file per language (public/assets/howto), on the capture screen of /try and in the landing's first step of "How it works".
 // It costs nothing until it is on screen. The poster (the video's own first frame, so nothing jumps when it starts) is a plain lazy picture in the flow,
 // and it holds the box: the video arrives without moving anything, and until it has a frame it is transparent (a video with no poster of its own and no

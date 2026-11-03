@@ -1506,3 +1506,15 @@ Branch `v3-lean` on `1b43f20` (v3-int7). One commit, local only: no push, no dep
 - `hero.micro[0]` keeps its longer words ("Free watermarked preview", "Nemokama peržiūra su vandens ženklu") because the share cards of de, lt and hu draw that line (`scripts/make_og_cards.py`); shortening it means drawing the three cards again.
 - The line under a tile shown on its wall with a price (`styles.wallFile`) remains a third place of the printing line, but only in the open state with that view switched on.
 - Screens were judged in headless Chrome (reduced motion, as the owner's phone has its animations off), not on a real phone.
+
+## 54. The guide video, version 6 (2026-11-03): a 3D phone and photographs instead of drawings
+
+The owner: "I just want a more professional video"; he saw one 8 s trial shot next to the old film ("looks much better, go on") before the rest was made. Same place on the site, same file names, same rules: `src/shared/GuideVideo.tsx`, the pages and their browser checks are unchanged.
+
+- **The film** (43.5 s, 30 fps on the site, 60 fps master, a loop whose last frame flows into its first, no sound). One phone stays on screen and the camera goes through the method in the owner's order of version 5: the title, two people, the back camera and 2x, about 10 cm, the light, look straight and lift the lid, tap the iris, 3 to 5 shots, the restored iris. The back camera and the zoom, and the daylight and the torch, are now said one after the other; the progress line is gone. Every method line of version 5 stays, in all five languages.
+- **The phone** is built from geometry in three.js and lit by a studio made of soft panels, so its highlights are reflections. The screen is a 2D canvas drawn for each frame: the camera's picture, the zoom buttons, the focus square, the shot counter, the shutter.
+- **The pictures** are made with gemini-3.1-flash-image from the owner's iris (215120) as the reference: the eye at 1x and 2x, the eye with a low lid, the finger on the lid, the eye under a warm lamp and under a flash (the two crossed out), two people at a table, a profile, a window, a torch. None shows a real person. The iris of the end card is the owner's own, restored by the site's engine. Twelve pictures at 2K, about 1.20 USD by the price list (the 2K price is between the 1K and 4K prices noted in `api/_lib/ops.py`).
+- **Files** 2026-11-03, on `public/assets/howto/howto-11-<lang>.mp4`: 720 x 720, x264 CRF 32.5, each frame the mean of two master frames (a 180 degree shutter), moov first, no sound track; posters are the first frame at 720 x 720. Under the 800 kB of `guide_video.test.ts`.
+- **Where it lives:** `C:\kuriam\snapeyes-video-v6` (Remotion, its README says how to render). Not in the repository, as with the versions before it.
+
+**Not measured, risks.** Real iPhones and Androids were not tried. LT and HU captions had no native read. The 9:16 cut of version 5 is not remade; it was never on the site.
