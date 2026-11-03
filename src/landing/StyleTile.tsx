@@ -56,6 +56,11 @@ export interface StyleTileProps {
 interface Shown { cur: PictureAsset; prev: PictureAsset | null; ready: boolean }
 const calm = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// A square picture inside the tile's 3:2 frame is contained, not cropped. From six eyes the ring has an iris in its upper left, where the example chip sits, so the picture
+// goes to the frame's right: on black, the free side reads as one background.
+const squareFit = (tile: { square?: boolean; n?: number }): CSSProperties | undefined =>
+  tile.square ? { objectFit: 'contain', ...((tile.n ?? 0) >= 6 ? { objectPosition: 'right center' } : {}) } : undefined;
+
 /** One tile of the gallery: the flat artwork (an Example), optionally the same artwork on a wall (a visualisation, fetched only
  *  when asked for), the labels, the name and the price line. Whose eye it is: the line under the eye colour dots (or the group's
  *  line for the pairs and the families, src/landing/StyleGallery.tsx), and the chip in the picture; the tile's own description is in
@@ -108,7 +113,7 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
         photo={!wall && photo}
         imgProps={{
           'aria-hidden': on || undefined,
-          style: tile.square ? { objectFit: 'contain' } : undefined,
+          style: squareFit(tile),
           onLoad: () => setShown((p) => (p.ready ? p : { ...p, ready: true })),
           onError: () => setShown((p) => ({ ...p, prev: null })),
         }}
@@ -124,7 +129,7 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
             alt=""
             aria-hidden="true"
             decoding="async"
-            style={tile.square ? { objectFit: 'contain' } : undefined}
+            style={squareFit(tile)}
             onAnimationEnd={() => setShown((p) => ({ ...p, prev: null }))}
           />
         )}

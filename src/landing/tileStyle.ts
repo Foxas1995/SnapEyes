@@ -15,8 +15,8 @@
 //   duo_thread                       -> Clean Duo (the ensemble family: two whole irises and one thin infinity thread)
 //   duo_radiance                     -> Radiance Duo
 //   fam_orbit, fam_circle, fam_radiance  -> Family Orbit, Light Circle and Radiance Family at four eyes
-//   duo_nebula, duo_supernova, fam_nebula, fam_supernova  -> Nebula Duo, Supernova Duo, Nebula Family (eight eyes since 2026-11-02) and Supernova Family (four eyes); added 2026-10-27
-//   duo_galaxy, fam_galaxy, fam_powder  -> Galaxy Duo, Galaxy Family (six eyes) and Powder Family (five eyes); added 2026-11-02
+//   duo_nebula, duo_supernova, fam_nebula, fam_supernova  -> Nebula Duo, Supernova Duo, Nebula Family (five eyes since 2026-11-02: 3:2, its picture fills the tile; at six and over it draws on 1:1 and its sky would stop short of the tile's edges) and Supernova Family (four eyes); added 2026-10-27
+//   duo_galaxy, fam_galaxy, fam_powder  -> Galaxy Duo, Galaxy Family (eight eyes) and Powder Family (six eyes), on black, so their 1:1 pictures sit in the tile without a seam; added 2026-11-02
 // The Universe pair and the Universe family (held in the laboratory) have NO tile: the pictures the prototype had for them were designs the engine does not make, and a tile
 // that says Soon promises its look (release review H-M3). When the engine draws them, add their tiles with pictures made by the engine.
 // scripts/check_styles.mjs (item 15) keeps this table equal to the gallery: every tile has a row, every row names a style of the registry that takes
@@ -56,9 +56,9 @@ export const TILE_STYLE: Readonly<Record<string, TileStyle>> = {
   fam_orbit: { id: 'grp.orbit', eyes: 4 },
   fam_circle: { id: 'grp.light_circle', eyes: 4 },
   fam_radiance: { id: 'grp.radiance', eyes: 4 },
-  fam_nebula: { id: 'grp.nebula', eyes: 8 },
+  fam_nebula: { id: 'grp.nebula', eyes: 5 },
   fam_supernova: { id: 'grp.supernova', eyes: 4 },
   duo_galaxy: { id: 'duo.galaxy', eyes: 2 },
-  fam_galaxy: { id: 'grp.galaxy', eyes: 6 },
-  fam_powder: { id: 'grp.powder', eyes: 5 },
+  fam_galaxy: { id: 'grp.galaxy', eyes: 8 },
+  fam_powder: { id: 'grp.powder', eyes: 6 },
 };
