@@ -8,8 +8,8 @@
 //
 // Motion (motion spec 6.6): the title rises out of its mask; the tiles rise one after the other the first time the grid comes into view
 // (fade up, 90 ms apart, the index capped at 4: tiles are artworks, so no scale, no blur, no tilt); a change of group is a repeated
-// action and stays quiet: the new tiles only fade in, 300 ms, 40 ms apart, no rise. On a phone the tiles are a swipe rail, which appears
-// as one piece. A tile's picture cross-fades when the eye colour changes (StyleTile.tsx).
+// action and stays quiet: the new tiles only fade in, 300 ms, 40 ms apart, no rise. On a phone the tiles of one eye are a grid of two and those of
+// the pairs and the families a swipe rail (css/styles.css); either appears as one piece. A tile's picture cross-fades when the eye colour changes (StyleTile.tsx).
 import { useState } from 'react';
 import { Title } from '../motion/Title';
 import { useCopy } from './copy/useCopy';

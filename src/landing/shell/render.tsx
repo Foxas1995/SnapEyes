@@ -55,7 +55,7 @@ function renderOne(lang: Lang, langs: Lang[]): string {
     <>
       <SiteTopView copy={copy} lang={lang} langs={langs} barText={copy.bar.soon} tryHref={tryHref} />
       <main id="main">
-        <HeroView copy={copy} tryHref={tryHref} priceLine={fill(copy.hero.fromPrice, copy.facts, { from: HELD_PRICE })} pricePending />
+        <HeroView copy={copy} lang={lang} tryHref={tryHref} priceLine={fill(copy.hero.fromPrice, copy.facts, { from: HELD_PRICE })} pricePending />
       </main>
     </>,
   );

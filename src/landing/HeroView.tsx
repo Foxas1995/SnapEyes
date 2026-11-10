@@ -10,6 +10,7 @@
 // for a moment and nothing moves when it appears (src/landing/prices.ts).
 import type { CSSProperties, ReactNode, Ref } from 'react';
 import type { LandingCopy } from './copy/types';
+import type { Lang } from '../shared/lang';
 import { fill } from './copy/format';
 import { HeroScene } from './HeroScene';
 import { Icon, type IconName } from './Icons';
@@ -28,6 +29,8 @@ function Arrow() {
 
 export interface HeroViewProps {
   copy: LandingCopy;
+  /** The page's language: the code a computer shows opens /try in it (public/assets/atelier/qr-try-<lang>.svg, scripts/make_qr.py). */
+  lang: Lang;
   tryHref: string;
   /** "Digital file from {from}" with the price filled in. */
   priceLine: string;
@@ -43,7 +46,7 @@ export interface HeroViewProps {
  *  lp-rise-s) plays from the markup that is already painted, the prerendered shell included; nothing here waits for a script. */
 const at = (s: number): CSSProperties => ({ '--d': `${s}s` }) as CSSProperties;
 
-export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef, globe, globeReady }: HeroViewProps) {
+export function HeroView({ copy, lang, tryHref, priceLine, pricePending, ctaRef, globe, globeReady }: HeroViewProps) {
   const h = copy.hero;
   return (
     <section className="lp-hero" id="top" aria-labelledby="h1">
@@ -70,7 +73,12 @@ export function HeroView({ copy, tryHref, priceLine, pricePending, ctaRef, globe
               <a href="#pricing">{priceLine}</a>
             </li>
           </ul>
-          <p className="lp-computer-hint lp-rise-s" style={at(0.8)}>{h.computerHint}</p>
+          {/* only from 960 px (css/hero.css): a visitor at a desk has no camera for this, the code opens /try on the phone (2026-11-10). The picture is not fetched
+              while the block is not shown */}
+          <div className="lp-computer-hint lp-rise-s" style={at(0.8)}>
+            <img src={`/assets/atelier/qr-try-${lang}.svg`} width="76" height="76" alt="QR: snapeyes.com/try" loading="lazy" decoding="async" />
+            <p>{h.computerHint}</p>
+          </div>
         </div>
         <HeroScene copy={copy} live={globe} liveReady={globeReady} />
       </div>

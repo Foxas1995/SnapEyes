@@ -21,8 +21,8 @@ import type { SectionName } from './landing/sectionLoaders';
 //   first render (this bundle):  notice bar, header, hero (the same markup as the prerendered first screen in index.html, so the
 //                                handoff moves nothing), the footer and the sticky phone button;
 //   one chunk each, let in one at a time after the first render (src/landing/sectionQueue.ts: page order, one per idle slice, at once
-//                                when the visitor comes near): the Reveal, the wall chapter (its size guide and "More ways to see
-//                                it" are chunks of their own), the styles gallery, how it works, pricing, the close-ups, trust,
+//                                when the visitor comes near): the Reveal, the styles gallery, the wall chapter (its size guide and "More ways to see
+//                                it" are chunks of their own), how it works, pricing, the close-ups, trust,
 //                                the FAQ and the closing scene. Each brings its own stylesheet. Until a section is here its place
 //                                is held by an empty slot of the section's height (src/landing/slots.ts), carrying the section's
 //                                id, so the page does not move when it arrives and a link to #pricing already has a target. A chunk
@@ -97,14 +97,14 @@ function Page() {
         <MarketHintBar />
         <HeroSection ctaRef={heroCta} />
         {/* Three chapters, three rounded sheets that roll over what is above them (motion spec 6.0, src/motion/motion.css): the proof (the
-            Reveal), the choice (the wall, the styles, how it works), the price and the trust (pricing, the close-ups, trust, the FAQ). The
+            Reveal), the choice (the styles, the wall, how it works; the styles first since 2026-11-10: on a phone they were seven screens down), the price and the trust (pricing, the close-ups, trust, the FAQ). The
             closing scene and the footer are flat bands. The slots are inside the sheets, so a section arrives where its place was held. */}
         <div className="lp-sheet lp-sheet-a">
           <Slot name="reveal" />
         </div>
         <div className="lp-sheet lp-sheet-c">
-          <Slot name="wall" />
           <Slot name="styles" />
+          <Slot name="wall" />
           <Slot name="how" />
         </div>
         <div className="lp-sheet lp-sheet-d">

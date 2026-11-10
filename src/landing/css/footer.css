@@ -25,6 +25,10 @@
   }
   .lp-ftr nav { display: flex; flex-direction: column; gap: 10px; }
   .lp-ftr nav a { text-decoration: none; padding: 9px 0; min-height: 44px; display: inline-flex; align-items: center; transition: color var(--d-tap) var(--ease-out); }
+  /* a phone: the six links in two columns (2026-11-10: one under the other they were 324 px of a footer of 1215) */
+  @media (max-width: 767px) {
+    .lp-ftr #ftrNav { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+  }
   .lp-ftr-bottom { margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 18px; font-size: 12.5px; }
   @media (min-width: 768px) {
     .lp-ftr-bottom { flex-direction: row; justify-content: space-between; align-items: center; }

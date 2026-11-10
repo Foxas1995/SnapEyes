@@ -1533,3 +1533,15 @@ The owner after version 6: "not bad, but it could be better, did you really show
 
 **Not measured, risks.** Real iPhones and Androids were not tried. LT and HU captions had no native read. The people, the hand, the lamp and the eyes are generated pictures; none shows a real person. No 9:16 cut.
 
+## 56. The page after a review (2026-11-10): the styles first, a grid of two on a phone, the honest line after the button, a QR code on a computer
+
+The owner: "fix everything you notice", after a review of the live page in real Chrome (390 px phone, 1440 px desktop, /try with the sample eye). Same markup, words and prices; the order and the layout on a phone change.
+
+- **The styles before the wall.** On a phone the styles were the seventh screen (5,372 px down), after 2,041 px about print materials while prints are not sold. The order is now the Reveal, the styles, the wall, how it works (`src/App.tsx`, `SECTION_ORDER`, `NAV_KEYS`, the footer's links).
+- **One eye's styles are a grid of two on a phone** (`css/styles.css`): the rail showed one tile and the edge of the next, ten were a swipe away. The eye colour chips come before the grid, the wall button is its icon alone, the pictures ask for 46vw (`gallery.ts tileSizes`). The pairs and the families stay a rail of wide pictures. `slots.ts` measured again: the section is about 1,800 px on a phone.
+- **The globe's honest line on a phone** follows the button, in a caption's tone (`css/hero.css`: the figure gives its two parts to the column). It was the first words a phone read, above the headline, in an eyebrow's capitals. The line, its words and its place under the globe on a computer are unchanged.
+- **A QR code on a computer** next to the sentence that asks the visitor to open the site on a phone: `scripts/make_qr.py` writes `public/assets/atelier/qr-try-<lang>.svg` (the address of /try in the page's language; `--check` reads every file back with OpenCV). `HeroView` takes the page's language; the shell renders it too.
+- **The footer's six links in two columns on a phone** (`css/footer.css`), and a JSON-LD `Organization` block in `index.html` (the name, the address, the logo, the email).
+- **Left as they are, on purpose.** The sample eye of /try says "AI-generated sample" in its texts, its pixels and its file name: that is the honesty of a picture that is no customer's, not marketing. The three steps of "How it works" stay a rail on a phone (its drawn line is the owner's phone scene of 2026-10-17); the wall chapter keeps its size guide.
+
+**Checks.** `npm run build`, `tsc -b`, 1032 page tests, every `check:*` exit 0 (`check:landing` 2 notes as before; budget CSS +5,600 B of +7,000), `legal_look compare` against a build of 58092cc: identical, 44 pages.

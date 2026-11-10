@@ -14,7 +14,7 @@ import { loadRetry } from './lazy';
 import { SECTION_LOADERS, type SectionName } from './sectionLoaders';
 
 /** The sections in the order of the page, the first one to be let in first. */
-export const SECTION_ORDER: readonly SectionName[] = ['reveal', 'wall', 'styles', 'how', 'pricing', 'closeups', 'trust', 'faq', 'final'];
+export const SECTION_ORDER: readonly SectionName[] = ['reveal', 'styles', 'wall', 'how', 'pricing', 'closeups', 'trust', 'faq', 'final'];
 
 const IDLE_TIMEOUT_MS = 250;
 const NEAR_PX = 1500;

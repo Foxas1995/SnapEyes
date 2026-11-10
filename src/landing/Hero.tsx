@@ -57,7 +57,7 @@ function watchGlobe(done: (c: ComponentType<GlobeProps>) => void): () => void {
 }
 
 export function HeroSection({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
-  const { c, t } = useCopy();
+  const { c, t, lang } = useCopy();
   const prices = useLandingPrices();
   const tryHref = useTryHref();
   // the line prints the lowest price among the styles that can be bought now for one eye and is held back while there is none (./heroPrice.ts)
@@ -69,6 +69,7 @@ export function HeroSection({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
   return (
     <HeroView
       copy={c}
+      lang={lang}
       tryHref={tryHref}
       priceLine={t('hero.fromPrice', { from: hero.from })}
       pricePending={hero.held}

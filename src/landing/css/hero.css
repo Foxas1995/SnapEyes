@@ -9,7 +9,8 @@
      dark, so nothing under the stage may differ from it) */
   .lp-hero { position: relative; padding: calc(var(--bar-h) + var(--hdr-h) + 26px) 0 48px; overflow: clip; }
   .lp-hero-grid { position: relative; display: grid; gap: 28px; }
-  .lp-computer-hint { display: none; margin-top: 16px; max-width: 34em; font-size: 13px; line-height: 1.55; color: var(--ink-3); }
+  .lp-computer-hint { display: none; align-items: center; gap: 14px; margin-top: 18px; max-width: 34em; font-size: 13px; line-height: 1.55; color: var(--ink-3); }
+  .lp-computer-hint img { flex: none; border-radius: 6px; }
   .lp-hero-copy .lp-eyebrow { margin-bottom: 18px; }
   .lp-hero-copy .lp-lead { margin-top: 18px; }
   .lp-cta-row { display: flex; flex-direction: column; flex-wrap: wrap; gap: 14px; margin-top: 22px; }
@@ -33,7 +34,7 @@
     .lp-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(400px, 1.05fr); gap: clamp(32px, 4vw, 64px); align-items: center; }
     /* the globe as large as its column (at most 600 px), and whole with its line on a 1366 x 768 screen */
     .lp-hero-fig { width: min(100%, 600px, calc((100svh - var(--bar-h) - var(--hdr-h) - 108px) / 1.06)); min-width: min(400px, 100%); margin-left: auto; }
-    .lp-computer-hint { display: block; }
+    .lp-computer-hint { display: flex; }
     .lp-cta-row { flex-direction: row; align-items: center; gap: 12px 28px; }
     .lp-cta-row .lp-link-quiet { text-align: left; }
   }
@@ -47,8 +48,11 @@
        (the Lithuanian title takes three lines at 360 to 375 px: 305 px measured from the globe's foot to the button's, the other languages 250 to 280).
        100svh is the screen with the browser's bars shown (664 px on an iPhone of 390 x 844 in Safari). Never smaller than 220 px: below a visible screen
        of about 640 px the button is under the first screen (the sticky button comes once it has been scrolled past) */
-    .lp-hero-fig { order: 0; margin-inline: calc(-1 * var(--gut)); }
-    .lp-globe { width: min(100%, max(220px, calc((100svh - 2 * var(--bar-h) - var(--hdr-h) - 324px) / 1.06))); }
+    /* the figure gives its two parts to the column (2026-11-10): the globe first, and its honest line after the button, in a caption's own tone. Under the globe it
+       was the first words a phone read, above the headline, in the capitals of an eyebrow */
+    .lp-hero-fig { display: contents; }
+    .lp-globe { order: 0; justify-self: center; margin-inline: calc(-1 * var(--gut)); width: min(calc(100% + 2 * var(--gut)), max(220px, calc((100svh - 2 * var(--bar-h) - var(--hdr-h) - 292px) / 1.06))); }
+    .lp-globe-note { order: 4; margin-top: 14px; padding-inline: 0; font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; }
     .lp-hero h1 { order: 1; margin-top: 14px; }
     .lp-hero-copy .lp-lead { order: 2; margin-top: 12px; font-size: 16.5px; }
     .lp-hero .lp-cta-row { order: 3; }

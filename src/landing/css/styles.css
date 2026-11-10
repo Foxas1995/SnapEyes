@@ -93,11 +93,15 @@
   .lp-combo p { font-size: 14px; color: var(--ink-2); }
   .lp-combo .lp-btn-line { align-self: flex-start; margin-top: 6px; }
   @media (max-width: 639px) {
-    .lp-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 26px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 10px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
-    .lp-grid::-webkit-scrollbar { display: none; }
-    .lp-tile { flex: 0 0 72%; scroll-snap-align: start; }
-    .lp-grid.lp-wide .lp-tile { flex-basis: 86%; }
+    /* the pairs and the families are wide pictures: a swipe rail. One eye (2026-11-10, the owner: "fix all you see"; the rail showed one tile and the edge of the
+       next, the other ten were a swipe away) stays the grid of two it is above, so the whole choice is there at a glance; its wall button is the icon alone */
+    .lp-grid.lp-wide { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 26px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 10px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
+    .lp-grid.lp-wide::-webkit-scrollbar { display: none; }
+    .lp-wide .lp-tile { flex: 0 0 86%; scroll-snap-align: start; }
     .lp-combo { flex: 0 0 80%; scroll-snap-align: start; aspect-ratio: auto; }
+    .lp-grid:not(.lp-wide) { gap: 22px 12px; margin-top: 18px; }
+    .lp-grid:not(.lp-wide) .lp-wallbtn { right: 8px; bottom: 8px; padding: 0 10px; }
+    .lp-grid:not(.lp-wide) .lp-wallbtn span { display: none; }
   }
   .lp-tabs { scroll-padding-inline: var(--gut); }
   @media (max-width: 959px) {
@@ -107,8 +111,8 @@
     .lp-gpanel { display: flex; flex-direction: column; }
     .lp-gintro { order: 1; margin-top: 16px; font-size: 15px; }
     .lp-legend { order: 2; }
-    .lp-grid { order: 3; }
-    .lp-eyepick { order: 4; margin-top: 12px; flex-wrap: nowrap; }
+    .lp-eyepick { order: 3; margin-top: 14px; flex-wrap: nowrap; }
+    .lp-grid { order: 4; }
     .lp-eyepick .lp-lab { display: none; }
     .lp-eyenote { order: 5; }
     .lp-eyechip { padding-right: 6px; }

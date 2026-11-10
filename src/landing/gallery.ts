@@ -34,10 +34,10 @@ export function isWide(group: GalleryGroup): boolean {
   return group === 'two' || group === 'family';
 }
 
-/** What a tile's picture says about its width, for the srcset: the grid is 3 columns of 360 px from 960 px, 2 from 640 px, a
- *  rail of 72 percent (86 percent for the wide tiles) below. */
+/** What a tile's picture says about its width, for the srcset: the grid is 3 columns of 360 px from 960 px, 2 from 640 px and
+ *  2 below it too (a rail of 86 percent for the wide tiles). */
 export function tileSizes(wide: boolean): string {
-  return wide ? '(min-width: 960px) 360px, (min-width: 640px) 46vw, 86vw' : '(min-width: 960px) 360px, (min-width: 640px) 31vw, 72vw';
+  return wide ? '(min-width: 960px) 360px, (min-width: 640px) 46vw, 86vw' : '(min-width: 960px) 360px, (min-width: 640px) 31vw, 46vw';
 }
 
 /** The key of a tile in the page and in the wall toggles: the group and the tile's id (a tile keeps its key when the eye

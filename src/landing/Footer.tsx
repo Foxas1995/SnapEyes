@@ -12,7 +12,7 @@ import { CurrencySwitch } from './CurrencySwitch';
 import { SiteLogo } from './Header';
 
 /** The links of the footer, in the prototype's order: the header's sections except "how it works", and the privacy promise after the prices. */
-const FOOTER_NAV = ['reveal', 'wall', 'styles', 'pricing', 'privacy', 'faq'] as const;
+const FOOTER_NAV = ['reveal', 'styles', 'wall', 'pricing', 'privacy', 'faq'] as const;
 
 export function SiteFooter() {
   const { c } = useCopy();
