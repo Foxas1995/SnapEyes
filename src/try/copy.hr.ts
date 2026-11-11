@@ -446,6 +446,7 @@ export const hr: TryCopy = {
       unavailable: 'Ovaj se stil trenutačno ne može naručiti za vaše oči. Odaberite drugi ili ponovno snimite oko.',
       print_unavailable: 'Ispis trenutačno nije moguće naručiti. Digitalnu datoteku možete naručiti zasebno.',
       print_changed: 'Cijena ispisa upravo se promijenila. Pogledajte je ponovno, a zatim pritisnite gumb.',
+      voucher: 'Poklon-bon nije moguće iskoristiti: možda je već iskorišten ili mu je istekla valjanost. Provjerite ga ponovno.',
     },
     namesBlocked: 'Najprije ispravite riječi na umjetničkom djelu (vidi gore).',
     footnote: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je konačna cijena: nismo u sustavu PDV-a, pa se PDV ne obračunava.',
@@ -465,6 +466,24 @@ export const hr: TryCopy = {
     consentMissing: 'Označite kućicu o svojem ispisu.',
     countryMissing: 'Odaberite zemlju u koju šaljemo ispis.',
     mockAlt: (name: string) => `${name}: pregled vašeg umjetničkog djela`,
+  },
+  gift: {
+    open: 'Imam poklon-bon',
+    label: 'Kod poklon-bona',
+    apply: 'Iskoristi',
+    checking: 'Provjeravamo kod',
+    applied: (value: string) => `Poklon-bon: −${value}`,
+    remove: 'Ukloni',
+    toPay: (value: string) => `Za plaćanje: ${value}`,
+    note: 'Bon se iskorištava kada dovršite plaćanje. Ako umjetnička slika košta manje od bona, ostatak se ne isplaćuje.',
+    errors: {
+      format: 'Ovo nije kod bona. Kod ima 12 slova i brojeva, na primjer ABCD-EFGH-JKLM.',
+      unknown: 'Ne poznajemo ovaj kod. Provjerite ga.',
+      used: 'Ovaj bon je već iskorišten.',
+      expired: 'Ovom bonu je istekla valjanost.',
+      currency: 'Ovaj bon može se iskoristiti samo za narudžbe u eurima.',
+      failed: 'Trenutačno ne možemo provjeriti kod. Pokušajte ponovno.',
+    },
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py)

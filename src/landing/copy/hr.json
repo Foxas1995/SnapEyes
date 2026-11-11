@@ -24,7 +24,8 @@
     "how": "Kako funkcionira",
     "pricing": "Cijene",
     "faq": "Česta pitanja",
-    "privacy": "Privatnost"
+    "privacy": "Privatnost",
+    "gift": "Poklon-bon"
   },
   "navLabels": {
     "main": "Glavna navigacija",
@@ -497,6 +498,7 @@
     ],
     "notIncludes": "Tisak nije dio vaše narudžbe.",
     "payOpen": "Sigurno plaćanje karticom putem Stripea.",
+    "gift": "Za poklon? Kupite poklon-bon: osoba kasnije sama fotografira svoje oko.",
     "termsLink": "Opći uvjeti prodaje",
     "auLine": "Prodavatelj: MB Portretizuokis, Kaunas, Litva. Plaćanje karticom u australskim dolarima (A$) putem Stripea. Riječ je o digitalnoj datoteci, pa se ništa ne šalje poštom.",
     "usLine": "Prodavatelj: MB Portretizuokis, Kaunas, Litva. Plaćanje karticom u američkim dolarima (US$) putem Stripea. Riječ je o digitalnoj datoteci, pa se ništa ne šalje poštom.",

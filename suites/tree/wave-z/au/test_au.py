@@ -56,6 +56,12 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # "prints" after "orders", one item in the list of services and one line in retention. eu_prints.json is the EXACT pin of the EU edition as of this work
 # (snap_eu_edition.mjs: from the editions), eu_hr.json stays as the base of the steps before it. A1, A3, B1, B2b, B3 and U3 moved, each keeping its id and the older
 # names, with " - 1028c:" added; the AU and US editions are made from the texts before and carry no print (C and U pin them as before).
+# 1111g refresh (2026-11-11, gift vouchers: src/legal/docs/vouchers.ts, api/_lib/voucher.py). The EU edition changed on purpose, the raw docs did not (the AU and US
+# editions are made from them and sell no voucher): the terms gain the section "vouchers" after "prices" and one block added in "prices" (the sentence that points to
+# it); the withdrawal page the section "vouchers" after "expiry"; the privacy policy the section "vouchers" after "orders" and one row in the retention table (the
+# block with the row replaces the one without it). The legal notice, the checkout wording, the consent version and LEGAL_UPDATED (2026-11-11, the same day) are as
+# they were. eu_gift.json is the EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_cap.json stays as the base of the 1111 step, which is now
+# checked between the pins of the prints and of the ceiling. B1, B2b and B3 moved, each keeping its id and the older names, with " - 1111g:" added.
 import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -215,7 +221,8 @@ EU_WP18 = json.load(open(os.path.join(HERE, "eu_wp18.json"), encoding="utf-8")) 
 EU_COUNTER = json.load(open(os.path.join(HERE, "eu_counter.json"), encoding="utf-8"))   # 1020 refresh: the EU edition with the anonymous counter's privacy paragraphs (the terms are WP18's), the base of the 1028 refresh
 EU_HR = json.load(open(os.path.join(HERE, "eu_hr.json"), encoding="utf-8"))   # 1028 refresh: the EU edition with its Croatian texts (the contract sentence and the legal notice's images block changed in en and de)
 EU_PRINTS = json.load(open(os.path.join(HERE, "eu_prints.json"), encoding="utf-8"))   # 1028c refresh: the EU edition with the prints (snap_eu_edition.mjs), the base is eu_hr.json
-EU_NOW = json.load(open(os.path.join(HERE, "eu_cap.json"), encoding="utf-8"))   # 1111 refresh: the EU edition with the privacy paragraph of the daily ceiling of free previews (snap_eu_edition.mjs), the base is eu_prints.json
+EU_CAP = json.load(open(os.path.join(HERE, "eu_cap.json"), encoding="utf-8"))   # 1111 refresh: the EU edition with the privacy paragraph of the daily ceiling of free previews (snap_eu_edition.mjs), the base is eu_prints.json; 1111g: the base of the gift vouchers
+EU_NOW = json.load(open(os.path.join(HERE, "eu_gift.json"), encoding="utf-8"))   # 1111g refresh: the EU edition with the gift vouchers (snap_eu_edition.mjs), the base is eu_cap.json
 EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
 LEGAL_NOW = "2026-11-11"        # 1111 refresh: the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
 CONSENT_NOW = "2026-10-28.3"    # 1028c refresh: the print box added (2026-10-28.2 since the US text, every waiver as it was). 1028b refresh: the consent version since the US text (2026-10-28.1 since the Croatian text; 2026-09-30.2 since 30efee7: the lt and hu texts added; en, de, AU as of .1)
@@ -440,10 +447,18 @@ TERMS28C = {"en": {"product": (1, 1, ["see [Prints](#prints)"], ["We do not sell
             "de": {"product": (1, 1, ["siehe [Drucke](#prints)"], ["verkaufen wir nicht"], ["verkaufen wir nicht"]),
                    "prices": (1, 1, ["zu Drucken siehe [Drucke](#prints)"], [], ["Versandkosten fallen nicht an."]),
                    "withdrawal": (1, 0, ["kein Widerrufsrecht"], [], []), "defects": (1, 0, ["Zu Drucken siehe"], [], [])}}
-terms28c = {l: doc_diff(without(EDI["eu"]["terms"][l], "prints"), EU_HR["terms"][l]) for l in LANG2}
+terms28c = {l: doc_diff(without(EU_CAP["terms"][l], "prints"), EU_HR["terms"][l]) for l in LANG2}   # 1111g: the 1028c step, between the pins of hr and of the ceiling
 prints28c_ok = (all(fr and wp12_ok(d, TERMS28C[l]) for l, (fr, d) in terms28c.items())
-                and all(after(EDI["eu"]["terms"][l], "prints", "delivery") and after(EDI["eu"]["withdrawal"][l], "prints", "expiry")
-                        and without(EDI["eu"]["withdrawal"][l], "prints") == EU_HR["withdrawal"][l] for l in LANG2))
+                and all(after(EU_CAP["terms"][l], "prints", "delivery") and after(EU_CAP["withdrawal"][l], "prints", "expiry")
+                        and without(EU_CAP["withdrawal"][l], "prints") == EU_HR["withdrawal"][l] for l in LANG2))
+# 1111g refresh: what the gift vouchers changed in the EU terms and withdrawal page on purpose (en and de): the terms' new section "vouchers" after "prices" and ONE block
+# added in "prices" (the sentence that points to it), nothing removed; the withdrawal page's new section "vouchers" after "expiry", nothing else; the legal notice as it was
+TERMS1111G = {"en": {"prices": (1, 0, ["A gift voucher can pay for an order", "[Gift vouchers](#vouchers)"], [], [])},
+              "de": {"prices": (1, 0, ["Ein Geschenkgutschein kann eine Bestellung", "[Geschenkgutscheine](#vouchers)"], [], [])}}
+terms1111g = {l: doc_diff(without(EDI["eu"]["terms"][l], "vouchers"), EU_CAP["terms"][l]) for l in LANG2}
+gift1111g_ok = (all(fr and wp12_ok(d, TERMS1111G[l]) for l, (fr, d) in terms1111g.items())
+                and all(after(EDI["eu"]["terms"][l], "vouchers", "prices") and after(EDI["eu"]["withdrawal"][l], "vouchers", "expiry")
+                        and without(EDI["eu"]["withdrawal"][l], "vouchers") == EU_CAP["withdrawal"][l] and EDI["eu"]["imprint"][l] == EU_CAP["imprint"][l] for l in LANG2))
 pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
@@ -454,9 +469,11 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 1028: the pin is eu_hr.json; the terms and the legal notice differ from the counter's pin by exactly the blocks of TERMS28 and IMPRINT28 (Croatian named as a"
       " contract language, our own eye); hr editions present"
       " - 1028c: the pin is eu_prints.json; the terms differ from the pin of hr by exactly the section prints and the four blocks of TERMS28C, the withdrawal page by"
-      " exactly its section prints",
-      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and all(pinned.values()) and all(v == ["de", "en", "hr", "hu", "lt"] for v in editions4.values()),
-      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
+      " exactly its section prints"
+      " - 1111g: the pin is eu_gift.json; the 1028c step is checked between the pins of hr and of the ceiling; the terms differ from the pin of the ceiling by exactly the section"
+      " vouchers and the one block of TERMS1111G, the withdrawal page by exactly its section vouchers, the legal notice not at all",
+      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and all(pinned.values()) and all(v == ["de", "en", "hr", "hu", "lt"] for v in editions4.values()),
+      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
@@ -486,21 +503,30 @@ priv20_ok = {l: fr and sorted(d) == sorted(PRIV20) and all((len(d[sec][0]), len(
 PRIV28C = {"services": (1, 1), "retention": (1, 0)}
 priv28c = {l: doc_diff(without(EU_PRINTS["privacy"][l], "prints"), EU_HR["privacy"][l]) for l in LANG2}   # 1111: the 1028c step, between the pins of hr and of the prints
 priv28c_ok = {l: fr and sorted(d) == sorted(PRIV28C) and all((len(d[sec][0]), len(d[sec][1])) == n for sec, n in PRIV28C.items())
-              and after(EDI["eu"]["privacy"][l], "prints", "orders") and "Picanova" in json.dumps(EDI["eu"]["privacy"][l]["sections"], ensure_ascii=False)
+              and after(EU_CAP["privacy"][l], "prints", "orders") and "Picanova" in json.dumps(EU_CAP["privacy"][l]["sections"], ensure_ascii=False)   # 1111g: on the pin of the ceiling
               for l, (fr, d) in priv28c.items()}
 # 1111: the daily ceiling of free previews per connection (api/_lib/previewcap.py): one paragraph in "operations" and one line in retention, nothing else; the raw docs (the
 # base of the Australian and US editions) by exactly the same two
 PRIV1111 = {"operations": (1, 0), "retention": (1, 1)}   # retention is one table: the block with the new line replaces the one without it
-priv1111 = {l: doc_diff(EDI["eu"]["privacy"][l], EU_PRINTS["privacy"][l]) for l in LANG2}
+priv1111 = {l: doc_diff(EU_CAP["privacy"][l], EU_PRINTS["privacy"][l]) for l in LANG2}   # 1111g: the 1111 step, between the pins of the prints and of the ceiling
 priv1111_raw = {l: doc_diff(EU_CAP_RAW["privacy"][l], EU_HR["privacy"][l]) for l in LANG2}
 priv1111_ok = {l: all(fr and sorted(d) == sorted(PRIV1111) and all((len(d[sec][0]), len(d[sec][1])) == n for sec, n in PRIV1111.items())
                       and "IP" in json.dumps(d["operations"][0], ensure_ascii=False) for fr, d in (priv1111[l], priv1111_raw[l])) for l in LANG2}
+# 1111g: the gift vouchers in the privacy policy: the section "vouchers" after "orders" (the buyer's e-mail only at Stripe and in the e-mail, the code not stored) and one
+# row in the retention table (the block with the row replaces the one without it), nothing else; the raw docs (the base of the AU and US editions) carry none of it
+PRIV1111G = {"retention": (1, 1)}
+priv1111g = {l: doc_diff(without(EDI["eu"]["privacy"][l], "vouchers"), EU_CAP["privacy"][l]) for l in LANG2}
+priv1111g_ok = {l: fr and sorted(d) == sorted(PRIV1111G) and all((len(d[sec][0]), len(d[sec][1])) == n for sec, n in PRIV1111G.items())
+                and after(EDI["eu"]["privacy"][l], "vouchers", "orders") and not any(x["id"] == "vouchers" for x in EU_CAP_RAW["privacy"][l]["sections"])
+                for l, (fr, d) in priv1111g.items()}
 check("B2b EU privacy policy since WP18 (1020): only the anonymous counter's and the feedback box's paragraphs differ, in the sections website, operations, storage, orders and retention, nothing else, en and de"
       " - 1028c: checked between the pins of WP18 and of hr; the policy as it is now differs from the pin of hr by exactly the section prints, one item of the services and one retention line"
       " - 1111: the 1028c step checked between the pins of hr and of the prints; the policy as it is now differs from the pin of the prints, and the raw docs from the pin of hr, by"
-      " exactly the paragraph of the daily ceiling of free previews (operations) and its retention line",
-      all(priv20_ok.values()) and all(priv28c_ok.values()) and all(priv1111_ok.values()),
-      (priv20_ok, priv28c_ok, priv1111_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv1111.items()}))
+      " exactly the paragraph of the daily ceiling of free previews (operations) and its retention line"
+      " - 1111g: the 1111 step checked between the pins of the prints and of the ceiling; the policy as it is now differs from the pin of the ceiling by exactly the section"
+      " vouchers after orders and one retention row, the raw docs carry no voucher",
+      all(priv20_ok.values()) and all(priv28c_ok.values()) and all(priv1111_ok.values()) and all(priv1111g_ok.values()),
+      (priv20_ok, priv28c_ok, priv1111_ok, priv1111g_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv1111g.items()}))
 
 
 def _norm(t):
@@ -556,11 +582,25 @@ def _terms_pack_28c(l):
     """1028c: the pack's EU terms as they are now = the pin of hr (date aside) with the print paragraphs added and exactly the two replaced (product, prices),
     and the pinned pack of this work holds the same text. The numbered headings after the new section move by one, so the numbers are left out."""
     num = lambda p: re.sub(r"^[0-9]{1,2}\. ", "", p)
-    now = [num(p) for p in _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")]
+    now = [num(p) for p in _norm(EU_CAP["pack"]["docs"][l]["terms"]["text"]).split("\n\n")]   # 1111g: between the pins of hr and of the ceiling
     was = [num(p) for p in _norm(EU_HR["pack"]["docs"][l]["terms"]["text"]).split("\n\n")]
     add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
-    return (len(rem) == 2 and len(add) > 8 and any("Picanova GmbH" in p for p in add) and any("16" in p for p in add)
-            and _norm(PACK["docs"][l]["terms"]["text"]) == _norm(EU_NOW["pack"]["docs"][l]["terms"]["text"]))
+    return len(rem) == 2 and len(add) > 8 and any("Picanova GmbH" in p for p in add) and any("16" in p for p in add)
+
+
+def _pack_1111g(l):
+    """1111g: the pack's EU terms as they are now = the pin of the ceiling (date aside) with exactly the paragraphs of the gift vouchers added (the sentence in
+    prices, the section's title and its five blocks) and nothing removed; the withdrawal page with exactly its two (title and paragraph); the pinned pack of
+    this work holds the same texts. The numbered headings after the new section move by one, so the numbers are left out."""
+    num = lambda p: re.sub(r"^[0-9]{1,2}\. ", "", p)
+    ok = True
+    for d, n, key in (("terms", 7, ("#vouchers", "12")), ("withdrawal", 2, ("14",))):
+        now = [num(p) for p in _norm(PACK["docs"][l][d]["text"]).split("\n\n")]
+        was = [num(p) for p in _norm(EU_CAP["pack"]["docs"][l][d]["text"]).split("\n\n")]
+        add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
+        ok = ok and not rem and len(add) == n and len(now) == len(was) + n and all(any(k in p for p in add) for k in key)
+        ok = ok and _norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"])
+    return ok
 
 
 seller_en_de = {k: ({l: v[l] for l in LANG2} if isinstance(v, dict) else v) for k, v in PACK["seller"].items()}
@@ -568,7 +608,7 @@ pack_docs_eq = lambda a, b, l, d: (_norm(a[l][d]["text"]) == _norm(b[l][d]["text
                                     and a[l][d]["title"] == b[l][d]["title"])
 eu_pack_same = (
     all(_terms_pack_ok(l) for l in LANG2) and all(_terms_pack_12(l) for l in LANG2) and all(_terms_pack_18(l) for l in LANG2) and all(_terms_pack_28(l) for l in LANG2)
-    and all(_terms_pack_28c(l) for l in LANG2)
+    and all(_terms_pack_28c(l) for l in LANG2) and all(_pack_1111g(l) for l in LANG2)
     and all(pack_docs_eq(EU_HR["pack"]["docs"], EU_BEFORE["pack"]["docs"], l, "withdrawal") for l in LANG2)
     and all(PACK["docs"][l]["terms"]["url"] == EU_BEFORE["pack"]["docs"][l]["terms"]["url"] for l in LANG2)
     and all(pack_docs_eq(PACK["docs"], EU_NOW["pack"]["docs"], l, d) for l in LANG2 for d in ("terms", "withdrawal"))
@@ -581,7 +621,8 @@ check("B3 the built pack's EU texts are the same as before (the date line aside)
       "all pinned to eu_1acef38.json - 1005: pinned to eu_wp12.json, the terms by exactly the three paragraphs of the changed blocks (_terms_pack_12)"
       " - 1006: pinned to eu_wp18.json, the terms by exactly one more paragraph, the AI-made material sentence (_terms_pack_18)"
       " - 1028: pinned to eu_hr.json, the terms by exactly the one paragraph of the contract languages (_terms_pack_28), the seller with its hr lines"
-      " - 1028c: pinned to eu_prints.json, the terms by the print paragraphs and the two sentences replaced (_terms_pack_28c), the withdrawal page by its print paragraph",
+      " - 1028c: pinned to eu_prints.json, the terms by the print paragraphs and the two sentences replaced (_terms_pack_28c), the withdrawal page by its print paragraph"
+      " - 1111g: pinned to eu_gift.json, the terms and the withdrawal page by exactly the paragraphs of the gift vouchers, nothing removed (_pack_1111g)",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
       (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2], [_terms_pack_28(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",

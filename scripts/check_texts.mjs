@@ -77,6 +77,7 @@ export const SAMPLES = {
   'collector.lampSkipped': [[1, 'X 3'], [2, 'X 3'], [5, 'X 3']], 'collector.bestIs': [['X 3']],
   'collector.lastFailed': [['Ezen a felvételen nem találtunk szemet.']],
   'print.option': [['Akrilinis 30 × 30 cm', '59,00 €']], 'print.mockAlt': [['Plakatas 50 × 50 cm']],
+  'gift.applied': [['24,97 €']], 'gift.toPay': [['0,00 €'], ['15,00 €']],
   'result.eyeLabel': [[1]], 'result.retakeEye': [[2]], 'result.removed': [[2]],
   'result.previewFile': [[true], [false]], 'result.fileName': [['celestial-gold', 2, false], ['studio-black', 1, true]],
   'result.did.quality': [[1400]], 'result.addHint': [[1], [3], [11]], 'result.full': [[8]], 'result.remove': [[2]], 'result.confirmStartOver': [[3], [5]],

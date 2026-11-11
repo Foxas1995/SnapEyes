@@ -13,6 +13,7 @@ import { Dot } from '../motion/Tick';
 import type { Lang } from '../shared/lang';
 import type { OfferedPrint, ServerPrints } from '../shared/prints';
 import { NO_PRINT, PrintPick, printPart, type PrintChoice } from './PrintPick';
+import { GiftField, giftMarket, type GiftApplied } from './GiftField';
 
 /** The withdrawal-waiver text per language, as GET /api/checkout sends it. */
 export type ConsentTexts = Partial<Record<Lang, string>>;
@@ -69,6 +70,10 @@ interface Props {
   printConsent?: boolean;
   onPrintConsent?: (v: boolean) => void;
   artSrc?: string;
+  /** a gift voucher the customer entered and the server accepted (./GiftField.tsx; only on the euro markets of the EU edition): the button's total is
+   *  the price less the voucher. Without onGift the card offers no voucher field. */
+  gift?: GiftApplied | null;
+  onGift?: (g: GiftApplied | null) => void;
 }
 
 // what a card is told when its caller says nothing of the picker (the card of before the picker existed, and the checks that render it alone): the
@@ -190,6 +195,10 @@ export const BuyCard: React.FC<Props> = (props) => {
   const choice = offered.length ? (p.printChoice ?? NO_PRINT) : NO_PRINT;
   const part = printPart(choice, offered);
   const total = cents + (part ? part.price + part.ship : 0);
+  // a gift voucher pays for the total (the artwork and a print with its shipping) up to its value; the rest is not paid out
+  const giftHere = !!p.onGift && giftMarket(market);
+  const gift = giftHere ? p.gift ?? null : null;
+  const toPay = gift ? Math.max(0, total - gift.value) : total;
   const printBlock = choice.product ? (!choice.country ? 'printCountry' : !p.printConsent ? 'printConsent' : null) : null;
   const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : p.wordsBlocked ? 'words' : !p.waiver ? 'waiver' : printBlock;
   const disabled = p.busy || blockedBy !== null;
@@ -226,6 +235,7 @@ export const BuyCard: React.FC<Props> = (props) => {
           onConsent={(v) => p.onPrintConsent?.(v)} consentText={p.ordering?.consent?.print?.[lang] || legal.printConsent}
           artSrc={p.artSrc} fmt={fmt} busy={p.busy} />
       )}
+      {giftHere && <GiftField market={market} applied={gift} onApplied={(g) => p.onGift?.(g)} fmt={fmt} busy={p.busy} />}
       <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
 
       <button data-testid="buy" type="button" onClick={p.onBuy} disabled={disabled}
@@ -233,7 +243,7 @@ export const BuyCard: React.FC<Props> = (props) => {
           ? 'bg-white/5 border border-white/10 text-zinc-500 cursor-not-allowed'
           : 'fx-gold gold-metal'}`}>
         {p.busy ? <Dot /> : <Lock className="w-4 h-4 shrink-0" />}
-        <span>{p.busy && p.step ? p.step : T.buy.button(fmt(total))}</span>
+        <span>{p.busy && p.step ? p.step : T.buy.button(fmt(toPay))}</span>
       </button>
       {!p.busy && blockedBy === 'waiver' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{legal.withdrawalConsentMissing}</p>}
       {!p.busy && blockedBy === 'printCountry' && <p data-testid="buy-hint" className="text-[11px] text-zinc-400 mt-2">{T.print.countryMissing}</p>}

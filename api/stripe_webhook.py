@@ -25,6 +25,8 @@ one the server priced is recorded with amount_mismatch and named in the owner's 
 A paid session for an order whose record is gone is answered 200, and the owner is told to refund it.
 A test-mode session where test orders are not allowed (production), every other event, and a session that is not
 paid yet are answered 200 at once and ignored.
+A gift voucher's session (metadata kind "voucher", api/_lib/voucher.py) has no order: once paid, its coupon, its record and the buyer's email with
+the code are made once (voucher.on_paid); the email busy or the legal texts unreadable: 503, and Stripe retries.
 
 Replies: 200 {ok, ...}; 400 bad signature or body; 413 body too large; 503 when payments or storage are not
 configured, storage did not answer, or the email failed in a way a retry can fix (Stripe retries a non-2xx for up to
@@ -36,6 +38,7 @@ from _lib import iris as L
 from _lib import store
 from _lib import pay
 from _lib import maker as M
+from _lib import voucher as V
 
 MAX_BODY = 512 << 10         # a Checkout Session event is a few kB
 HANDLED = ("checkout.session.completed", "checkout.session.async_payment_succeeded")
@@ -50,6 +53,11 @@ def on_event(event):
     if not isinstance(obj, dict) or obj.get("object") != "checkout.session":
         return 200, {"ok": True, "ignored": "not a checkout session"}
     meta = obj.get("metadata") if isinstance(obj.get("metadata"), dict) else {}
+    if V.is_voucher_session(obj):
+        state, info = V.on_paid(obj, "webhook")
+        if state == "ready" and info.get("mail") in ("transient", "legal_unavailable", "sending"):
+            return 503, {"ok": False, "voucher": True, "reason": "mail_retry"}
+        return 200, {"ok": True, "voucher": True, "state": state, "mail": info.get("mail")}
     order = meta.get("order")
     if not isinstance(order, str) or not store.ORDER_RE.fullmatch(order):
         pay.log(f"webhook {event.get('id')}: {typ} for a session without an order of ours, ignored")

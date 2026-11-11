@@ -1189,7 +1189,7 @@ def _raise_for(r, label):
     raise PayError(msg)
 
 
-def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp="", part=None):
+def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp="", part=None, gift=None):
     """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
     methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
     exp: the price experiment and variant the amount was priced under (abtest.assignment), written to the metadata.
@@ -1200,6 +1200,9 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     part: the order's print (api/_lib/prints.py checkout_part) or None: a second line item, Stripe's shipping address form for the one country it was
     priced for, its fixed shipping rate, the print's note above the pay button and its metadata (print, print_sku, print_amount, ship_amount, ship_cc).
     Without a print the session is exactly what it always was.
+    gift: a gift voucher the customer entered (api/_lib/voucher.py lookup: {coupon, value}) or None: its coupon as the session's one discount
+    (discounts[0][coupon]) and the metadata voucher (the coupon id) and voucher_value. When it pays for everything the session is a no-cost one
+    (no PaymentIntent is made, so payment_intent_data is left out). Without a voucher the session is exactly what it was before vouchers.
     Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
     market = spec.get("market") or DEFAULT_MARKET
@@ -1232,6 +1235,11 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
                 "line_items[0][price_data][product_data][description]": prints.ITEM_DESC_FILE[prints.lang_of(lang)]}
         params = [(k_, swap.get(k_, v)) for k_, v in params]
         params += prints.stripe_params(part, lang)
+    if gift:
+        params.append(("discounts[0][coupon]", gift["coupon"]))
+        if int(gift["value"]) >= int(amount) + (prints_total(part) if part else 0):
+            # the voucher pays for everything: Stripe makes no PaymentIntent for a no-cost session
+            params = [(k_, v) for k_, v in params if not k_.startswith("payment_intent_data[")]
     meta = {"order": order, "key_sha": key_sha(k), "eyes": str(spec["eyes"]), "style": spec["style"],
             "layout": spec["layout"], "names": W.meta_names(spec.get("names")), "title": spec["title"], "lang": lang,
             "market": market, "currency": currency,
@@ -1246,6 +1254,8 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     if part:
         from . import prints
         meta.update(prints.metadata(part))
+    if gift:
+        meta.update(voucher=gift["coupon"], voucher_value=str(int(gift["value"])))
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
             params.append((f"metadata[{name}]", v))
@@ -1260,6 +1270,12 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     if not (isinstance(sid, str) and SID_RE.fullmatch(sid) and isinstance(url, str) and url.startswith("https://")):
         raise PayError("stripe create session: the reply has no session id or no https url")
     return sess
+
+
+def prints_total(part):
+    """What a print adds to a session (its price and its shipping), in the market's smallest unit."""
+    from . import prints
+    return int(prints.total(part))
 
 
 def retrieve_session(sid):
@@ -1370,7 +1386,11 @@ def session_matches(sess, order, rec):
 
 
 def session_paid(sess):
-    return isinstance(sess, dict) and sess.get("payment_status") == "paid" and sess.get("status") == "complete"
+    """A completed session that is paid: payment_status paid, or a no-cost session (a gift voucher paid for everything: payment_status
+    no_payment_required and an amount_total of 0)."""
+    if not isinstance(sess, dict) or sess.get("status") != "complete":
+        return False
+    return sess.get("payment_status") == "paid" or (sess.get("payment_status") == "no_payment_required" and sess.get("amount_total") == 0)
 
 
 # ----------------------------------------------------------------------------- the paid record
@@ -1524,6 +1544,13 @@ def record_paid(order, rec, sess, source, event_id=None):
     priced = _int_amount(meta.get("amount"))
     want_cur = market_currency(market)
     expected = (priced if priced is not None else want) + extra
+    # a gift voucher (api/_lib/voucher.py): its coupon and value as the server wrote them; the amount paid is the price less the voucher (never below 0)
+    gv = _int_amount(meta.get("voucher_value")) if isinstance(meta.get("voucher"), str) and meta["voucher"].startswith("gift_") else None
+    if gv is not None:
+        td = sess.get("total_details") if isinstance(sess.get("total_details"), dict) else {}
+        paid["voucher"] = {"coupon": meta["voucher"], "value": gv, "price": expected, "discount": min(gv, expected),
+                           "stripe_discount": td.get("amount_discount") if isinstance(td.get("amount_discount"), int) else None}
+        expected = max(0, expected - gv)
     if amount != expected or paid["currency"] != want_cur:
         paid["amount_mismatch"] = {"expected": expected, "currency": want_cur, "market": market}
         log(f"order {order}: paid {amount} {paid['currency']} but the order costs {expected} {want_cur} "
@@ -2001,6 +2028,10 @@ def confirmation_mail(order, paid, k, pack, consent):
     wlink = withdraw_url(order, k, lang)
     currency = currency_of(paid.get("currency"))
     price = price_text(paid.get("amount_total") or 0, lang, currency)
+    if isinstance(paid.get("voucher"), dict):
+        # a gift voucher paid for the order, in part or entirely: the price, the voucher and what was paid (api/_lib/voucher.py)
+        from . import voucher as V
+        price = V.price_row(paid, lang, currency, price_text) or price
     docs = pack_docs(pack, lang, market)
     if docs is None:     # deliver_mail and the admin's copy check this first: never the texts of another edition
         raise PayError(f"order {order}: the legal pack has no texts for the {market} market")
@@ -2707,6 +2738,9 @@ def note_paid(order, paid):
                f"{amount_text(pp.get('ship') or 0, 'en', cur)}){', HELD: ' + ', '.join(pp['mismatch']) if pp.get('mismatch') else ''}; "
                f"sent to merchOne when the artwork is delivered (admin: Spaudiniai)\n"
                if isinstance((pp := paid.get("print")), dict) else "")
+            # a gift voucher (api/_lib/voucher.py): its coupon and what it paid
+            + (f"Gift voucher: {gv.get('coupon')} paid {amount_text(gv.get('discount') or 0, 'en', cur)} of "
+               f"{amount_text(gv.get('price') or 0, 'en', cur)}\n" if isinstance((gv := paid.get("voucher")), dict) else "")
             + (f"CHECK THE AMOUNT: paid {amount_text(paid.get('amount_total') or 0, 'en', cur)}, the order costs "
                f"{amount_text(mm.get('expected') or 0, 'en', mm.get('currency'))} (market {mm.get('market')}). It is "
                f"delivered as paid; refund the difference in the Stripe Dashboard if it was too much.\n" if mm else "")

@@ -553,6 +553,17 @@ def paid_extra(paid):
     return sum(v for v in (pp.get("price"), pp.get("ship")) if isinstance(v, int) and not isinstance(v, bool))
 
 
+def voucher_discount(sess):
+    """What a gift voucher took off a session (api/_lib/voucher.py): Stripe's own total_details.amount_discount when the server made the session
+    with a voucher (its metadata names the coupon), else 0. Only the server sets a session's discount."""
+    m = _meta(sess)
+    td = sess.get("total_details") if isinstance(sess, dict) and isinstance(sess.get("total_details"), dict) else {}
+    d = td.get("amount_discount")
+    if not (isinstance(m.get("voucher"), str) and m["voucher"].startswith("gift_")) or not isinstance(d, int) or isinstance(d, bool) or d < 0:
+        return 0
+    return d
+
+
 def session_ok(sess):
     """A session made under an experiment: is it one the server could have made? Its amount is the price of the ladder its
     own metadata carries (exp_lad, written at checkout) for the artwork in its metadata, and is the amount the server
@@ -579,6 +590,7 @@ def session_ok(sess):
     amount = sess.get("amount_total")
     if isinstance(amount, int) and not isinstance(amount, bool):
         amount -= print_extra(m)       # an order with a print: its print and shipping (the server wrote both into the metadata) are not the ladder's
+        amount += voucher_discount(sess)   # a gift voucher (api/_lib/voucher.py) took Stripe's discount off: the ladder's price is the amount before it
     try:
         eyes, style = int(m.get("eyes")), m.get("style")
         if lad is None or not catalogue.known(style) or not isinstance(amount, int) or isinstance(amount, bool):

@@ -1,0 +1,21 @@
+/* The gift voucher page (./GiftApp.tsx): the card to print is hidden on screen; printing shows only the card (the page's header, the voucher panel, the links
+   and the footer are .gift-noprint). Plain print colours: dark ink on white paper, the code large and spaced. */
+.gift-card { display: none; }
+
+@media print {
+  @page { margin: 14mm; }
+  html, body, #root, #root > div { background: #fff !important; color: #111 !important; min-height: 0 !important; }
+  .gift-noprint { display: none !important; }
+  main { max-width: none !important; padding: 0 !important; }
+  .gift-card {
+    display: block; box-sizing: border-box; width: 100%; max-width: 160mm; margin: 0 auto; padding: 14mm 12mm; text-align: center;
+    border: 1.2mm solid #b08a4c; border-radius: 6mm; color: #111; font-family: inherit; break-inside: avoid;
+  }
+  .gift-card-brand { margin: 0; font-size: 11pt; letter-spacing: 0.3em; text-transform: uppercase; color: #8a6a35; }
+  .gift-card-heading { margin: 4mm 0 0; font-size: 26pt; font-weight: 700; }
+  .gift-card-line { margin: 2mm 0 0; font-size: 13pt; color: #333; }
+  .gift-card-art { display: block; width: 60mm; height: 60mm; object-fit: cover; margin: 8mm auto 0; border-radius: 4mm; }
+  .gift-card-code { margin: 8mm 0 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 22pt; letter-spacing: 0.18em; font-weight: 700; white-space: nowrap; }
+  .gift-card-how { margin: 6mm auto 0; max-width: 120mm; font-size: 11pt; line-height: 1.45; color: #333; }
+  .gift-card-until { margin: 4mm 0 0; font-size: 10pt; color: #555; }
+}

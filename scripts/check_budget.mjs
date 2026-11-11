@@ -101,10 +101,18 @@ const HR = { js: 28900, css: 53 };
 // lists; CSS +261 B: the utilities of the print choice and of the admin's print page in the stylesheet the tools share. PRINTS is this script's own sum on the tree with them
 // minus on its parent (1a2fdca): JavaScript +13,538 B, CSS +261 B. Re-measure it when the print texts change: build both trees, run this script on each, take the difference.
 const PRINTS = { js: 13538, css: 261 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css };
+// The gift vouchers (2026-11-11, the owner's "darom taip kaip siūlai": src/gift, gift.html, src/try/GiftField.tsx, src/legal/docs/vouchers.ts) are a product, not motion. The
+// gift page is a page of its own (gift-*.js, gift-*.css), left out like /try. VOUCHERS is only what this script still counts although the landing never loads it: the voucher
+// sections of the terms, the privacy policy and the withdrawal page in five languages in the legal pages' entry (src/legal/main.tsx, main-*.js, +6,502 B), and the chunks /try,
+// /order and the gift page now share (src/order/api.ts in api-*.js, the buttons and cards of src/order/ui.ts in a second ui-*.js, the lock and printer icons in lock-*.js and
+// printer-*.js: +3,104 B, while checkout-*.js shrank by 1,552 B; the stylesheet that was checkout-*.css is now api-*.css, the same 2,053 B). Measured per chunk, gzip level 6,
+// on the tree with the vouchers against its parent (b0616af). What the landing does load (the footer link, the pricing line, their words in five languages: +302 B JavaScript,
+// +74 B CSS) is not in it: it is held to the budget. Re-measure it when the voucher texts change: build both trees, gzip each chunk, take the differences named here.
+const VOUCHERS = { js: 6502 + 3104 - 1552, css: 0 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
-const OTHER_PAGES = /^(try|order|admin|terms|privacy|imprint|withdrawal)(-|\.)/;
+const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;
 
 const sum = { js: 0, css: 0 };
 for (const f of readdirSync(join(dist, 'assets'))) {

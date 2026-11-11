@@ -24,7 +24,8 @@
     "how": "How it works",
     "pricing": "Pricing",
     "faq": "FAQ",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "gift": "Gift voucher"
   },
   "navLabels": {
     "main": "Main",
@@ -497,6 +498,7 @@
     ],
     "notIncludes": "Printing is not part of your order.",
     "payOpen": "Secure card payment through Stripe.",
+    "gift": "Giving it as a present? Buy a gift voucher: they photograph their own eye later.",
     "termsLink": "Terms of sale",
     "auLine": "Sold by MB Portretizuokis, Kaunas, Lithuania. Card payment in A$ through Stripe. A digital file, so nothing is posted.",
     "usLine": "Sold by MB Portretizuokis, Kaunas, Lithuania. Card payment in US$ through Stripe. A digital file, so nothing is shipped.",

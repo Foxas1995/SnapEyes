@@ -431,6 +431,7 @@ export const lt: TryCopy = {
       unavailable: 'Šio stiliaus Jūsų akims dabar užsisakyti negalima. Pasirinkite kitą arba nufotografuokite akį iš naujo.',
       print_unavailable: 'Spaudinių šiuo metu užsisakyti negalima. Galite užsisakyti tik skaitmeninį failą.',
       print_changed: 'Spaudinio kaina ką tik pasikeitė. Peržiūrėkite ją dar kartą ir paspauskite mygtuką.',
+      voucher: 'Dovanų kupono panaudoti nepavyko: galbūt jis jau panaudotas arba baigėsi jo galiojimas. Patikrinkite jį dar kartą.',
     },
     namesBlocked: 'Pirmiausia ištaisykite žodžius ant kūrinio (žr. aukščiau).',
     footnote: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai galutinė kaina: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.',
@@ -450,6 +451,24 @@ export const lt: TryCopy = {
     consentMissing: 'Pažymėkite langelį apie spaudinį.',
     countryMissing: 'Pasirinkite, į kurią šalį siųsti spaudinį.',
     mockAlt: (name: string) => `${name}: Jūsų kūrinio peržiūra`,
+  },
+  gift: {
+    open: 'Turiu dovanų kuponą',
+    label: 'Dovanų kupono kodas',
+    apply: 'Panaudoti',
+    checking: 'Tikriname kodą',
+    applied: (value: string) => `Dovanų kuponas: −${value}`,
+    remove: 'Pašalinti',
+    toPay: (value: string) => `Mokėti: ${value}`,
+    note: 'Kuponas panaudojamas, kai užbaigiate mokėjimą. Jei kūrinys kainuoja mažiau nei kuponas, likutis negrąžinamas.',
+    errors: {
+      format: 'Tai ne kupono kodas. Kodą sudaro 12 raidžių ir skaičių, pavyzdžiui, ABCD-EFGH-JKLM.',
+      unknown: 'Tokio kodo nežinome. Patikrinkite jį.',
+      used: 'Šis kuponas jau panaudotas.',
+      expired: 'Šio kupono galiojimas baigėsi.',
+      currency: 'Šį kuponą galima panaudoti tik užsakymams eurais.',
+      failed: 'Šiuo metu nepavyko patikrinti kodo. Bandykite dar kartą.',
+    },
   },
 
   // anoniminė atsiliepimų dėžutė (src/try/Feedback.tsx, api/_lib/feedback.py)

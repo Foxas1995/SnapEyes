@@ -6,7 +6,7 @@
 // by the stylesheet, so they are not text to find, copy or read). It rises once out of its mask when it comes into view; the address, the
 // links, the currency switch and the legal links are static, in the order of the markup, at full contrast.
 import { useCopy } from './copy/useCopy';
-import { useLegalLinks } from './links';
+import { useGiftHref, useLegalLinks } from './links';
 import { CONTACT_EMAIL, SELLER } from './config';
 import { CurrencySwitch } from './CurrencySwitch';
 import { SiteLogo } from './Header';
@@ -18,6 +18,7 @@ export function SiteFooter() {
   const { c } = useCopy();
   const f = c.footer;
   const legal = useLegalLinks();
+  const gift = useGiftHref();
   return (
     <footer className="lp-ftr">
       <div className="lp-wrap">
@@ -56,6 +57,8 @@ export function SiteFooter() {
             {FOOTER_NAV.map((k) => (
               <a key={k} href={`#${k}`}>{c.nav[k]}</a>
             ))}
+            {/* the gift voucher page (src/gift): its own page, not a section of this one */}
+            {gift && <a href={gift}>{c.nav.gift}</a>}
           </nav>
         </div>
         <div className="lp-ftr-bottom">

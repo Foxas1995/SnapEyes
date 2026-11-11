@@ -452,6 +452,7 @@ export const hu: TryCopy = {
       unavailable: 'Ez a stílus most nem rendelhető meg a szemeidhez. Válassz másikat, vagy fotózd újra a szemet.',
       print_unavailable: 'Nyomatot most nem lehet rendelni. A digitális fájlt külön is megrendelheted.',
       print_changed: 'A nyomat ára épp most változott. Nézd meg újra, aztán nyomd meg a gombot.',
+      voucher: 'Az ajándékutalványt nem sikerült beváltani: lehet, hogy már felhasználták, vagy lejárt. Ellenőrizd újra.',
     },
     namesBlocked: 'Először javítsd ki az alkotáson szereplő szavakat (lásd fent).',
     footnote: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a végső ár: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.',
@@ -471,6 +472,24 @@ export const hu: TryCopy = {
     consentMissing: 'Jelöld be a nyomatra vonatkozó négyzetet.',
     countryMissing: 'Válaszd ki, melyik országba küldjük a nyomatot.',
     mockAlt: (name: string) => `${name}: az alkotásod előnézete`,
+  },
+  gift: {
+    open: 'Van ajándékutalványom',
+    label: 'Ajándékutalvány kódja',
+    apply: 'Beváltás',
+    checking: 'A kód ellenőrzése',
+    applied: (value: string) => `Ajándékutalvány: −${value}`,
+    remove: 'Eltávolítás',
+    toPay: (value: string) => `Fizetendő: ${value}`,
+    note: 'Az utalványt a fizetés befejezésekor váltjuk be. Ha az alkotás kevesebbe kerül, mint az utalvány, a maradékot nem fizetjük ki.',
+    errors: {
+      format: 'Ez nem utalványkód. A kód 12 betűből és számból áll, például ABCD-EFGH-JKLM.',
+      unknown: 'Ezt a kódot nem ismerjük. Ellenőrizd, kérlek.',
+      used: 'Ezt az utalványt már felhasználták.',
+      expired: 'Ez az utalvány lejárt.',
+      currency: 'Ez az utalvány csak euróban fizetett rendelésekhez használható.',
+      failed: 'Most nem tudtuk ellenőrizni a kódot. Próbáld újra.',
+    },
   },
 
   // a névtelen visszajelzés doboz (src/try/Feedback.tsx, api/_lib/feedback.py)

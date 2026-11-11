@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { useLang } from './lang';
 import { useCopy } from './copy/useCopy';
-import { tryUrl } from './config';
+import { giftUrl, tryUrl } from './config';
 import { LEGAL_DOCS, legalHref, withdrawFunctionHref, type LegalDocId } from '../shared/legal';
 import type { Lang } from '../shared/lang';
 import { useMarket } from '../shared/useMarket';
@@ -44,6 +44,13 @@ export function useLegalHref(doc: LegalDocId, section = ''): string {
 }
 
 /** The address of the capture tool in the page's language and market: the target of every call to action. */
+/** The gift voucher page (/gift, src/gift) in the visitor's language and market: empty until the market is known, like useTryHref. */
+export function useGiftHref(): string {
+  const { lang } = useLang();
+  const market = useMarket();
+  return useMemo(() => (market ? giftUrl(lang) : ''), [lang, market]);
+}
+
 export function useTryHref(): string {
   const { lang } = useLang();
   const market = useMarket();

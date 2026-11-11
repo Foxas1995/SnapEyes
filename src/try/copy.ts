@@ -510,6 +510,7 @@ const en = {
       unavailable: 'This style cannot be ordered for your eyes right now. Please choose another or retake the eye.',
       print_unavailable: 'Prints cannot be ordered right now. You can order the digital file alone.',
       print_changed: 'The price of the print changed just now. Please look at it again, then press the button.',
+      voucher: 'Your gift voucher could not be used: it may have been used already or have expired. Please check it again.',
     },
     namesBlocked: 'Please fix the words on the artwork first (see above).',
     footnote: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the final price: we are not registered for VAT, so no VAT is added.',
@@ -529,6 +530,25 @@ const en = {
     consentMissing: 'Please tick the box about your print.',
     countryMissing: 'Please choose the delivery country of your print.',
     mockAlt: (name: string) => `${name}: a preview of your artwork`,
+  },
+  // a gift voucher at the checkout (./GiftField.tsx, api/_lib/voucher.py): only on the euro markets of the EU edition
+  gift: {
+    open: 'I have a gift voucher',
+    label: 'Gift voucher code',
+    apply: 'Apply',
+    checking: 'Checking the code',
+    applied: (value: string) => `Gift voucher: −${value}`,
+    remove: 'Remove',
+    toPay: (value: string) => `To pay: ${value}`,
+    note: 'The voucher is used when you complete the payment. If the artwork costs less than the voucher, the rest is not paid out.',
+    errors: {
+      format: 'This is not a voucher code. A code has 12 letters and numbers, for example ABCD-EFGH-JKLM.',
+      unknown: 'We do not know this code. Please check it.',
+      used: 'This voucher has already been used.',
+      expired: 'This voucher has expired.',
+      currency: 'This voucher can be used for orders in euros only.',
+      failed: 'We could not check the code just now. Please try again.',
+    },
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py): six chips and an optional text, on the result screen and on the card that asks for another photo
@@ -972,6 +992,7 @@ const de: TryCopy = {
       unavailable: 'Dieser Stil kann für Ihre Augen gerade nicht bestellt werden. Bitte wählen Sie einen anderen oder nehmen Sie das Auge neu auf.',
       print_unavailable: 'Drucke können gerade nicht bestellt werden. Sie können die digitale Datei allein bestellen.',
       print_changed: 'Der Preis des Drucks hat sich gerade geändert. Bitte sehen Sie ihn sich noch einmal an und drücken Sie dann den Knopf.',
+      voucher: 'Ihr Geschenkgutschein konnte nicht eingelöst werden: Vielleicht wurde er schon eingelöst oder ist abgelaufen. Bitte prüfen Sie ihn noch einmal.',
     },
     namesBlocked: 'Bitte korrigieren Sie zuerst die Worte auf dem Kunstwerk (siehe oben).',
     footnote: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.',
@@ -991,6 +1012,24 @@ const de: TryCopy = {
     consentMissing: 'Bitte setzen Sie das Häkchen zu Ihrem Druck.',
     countryMissing: 'Bitte wählen Sie das Lieferland Ihres Drucks.',
     mockAlt: (name: string) => `${name}: Vorschau Ihres Kunstwerks`,
+  },
+  gift: {
+    open: 'Ich habe einen Geschenkgutschein',
+    label: 'Gutscheincode',
+    apply: 'Einlösen',
+    checking: 'Der Code wird geprüft',
+    applied: (value: string) => `Geschenkgutschein: −${value}`,
+    remove: 'Entfernen',
+    toPay: (value: string) => `Zu zahlen: ${value}`,
+    note: 'Der Gutschein wird eingelöst, wenn Sie die Zahlung abschließen. Kostet das Kunstwerk weniger als der Gutschein, wird der Rest nicht ausgezahlt.',
+    errors: {
+      format: 'Das ist kein Gutscheincode. Ein Code hat 12 Buchstaben und Ziffern, zum Beispiel ABCD-EFGH-JKLM.',
+      unknown: 'Diesen Code kennen wir nicht. Bitte prüfen Sie ihn.',
+      used: 'Dieser Gutschein wurde bereits eingelöst.',
+      expired: 'Dieser Gutschein ist abgelaufen.',
+      currency: 'Dieser Gutschein gilt nur für Bestellungen in Euro.',
+      failed: 'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es noch einmal.',
+    },
   },
 
   // the anonymous feedback box (src/try/Feedback.tsx, api/_lib/feedback.py)

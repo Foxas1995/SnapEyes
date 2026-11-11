@@ -24,7 +24,8 @@
     "how": "Kaip tai veikia",
     "pricing": "Kainos",
     "faq": "Klausimai",
-    "privacy": "Privatumas"
+    "privacy": "Privatumas",
+    "gift": "Dovanų kuponas"
   },
   "navLabels": {
     "main": "Pagrindinė navigacija",
@@ -497,6 +498,7 @@
     ],
     "notIncludes": "Spausdinimas nėra Jūsų užsakymo dalis.",
     "payOpen": "Saugus mokėjimas kortele per Stripe.",
+    "gift": "Dovanai? Nupirkite dovanų kuponą: akį apdovanotas žmogus vėliau nusifotografuos pats.",
     "termsLink": "Pardavimo sąlygos",
     "auLine": "Parduoda MB „Portretizuokis“, Kaunas, Lietuva. Mokėjimas kortele Australijos doleriais (A$) per Stripe. Tai skaitmeninis failas, todėl paštu nieko nesiunčiama.",
     "usLine": "Parduoda MB „Portretizuokis“, Kaunas, Lietuva. Mokėjimas kortele JAV doleriais (US$) per Stripe. Tai skaitmeninis failas, todėl paštu nieko nesiunčiama.",

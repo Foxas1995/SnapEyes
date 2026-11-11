@@ -24,6 +24,7 @@ import { DATE_MAX, FAMILY_MAX, NAME_MAX, drawsFamilyName, namesFromWire, namesOf
 import { StudyCard } from './StudyCard';
 import { RetakeGuide } from './RetakeGuide';
 import { BuyCard, type Ordering } from './BuyCard';
+import type { GiftApplied } from './GiftField';
 import { NO_PRINT, printPart, type PrintChoice } from './PrintPick';
 import { defaultCountry, offeredPrints } from '../shared/prints';
 import {
@@ -263,6 +264,8 @@ export const TryApp: React.FC = () => {
   const [waiver, setWaiver] = useState(false);
   // a print of the artwork (./PrintPick.tsx): none by default; its box is never ticked in advance either
   const [printChoice, setPrintChoice] = useState<PrintChoice>(NO_PRINT);
+  // a gift voucher the customer entered (./GiftField.tsx): its code goes with the checkout, the server checks it again
+  const [gift, setGift] = useState<GiftApplied | null>(null);
   const [printConsent, setPrintConsent] = useState(false);
   const [priceNote, setPriceNote] = useState<string | null>(null);   // the price changed while the customer looked (409 price_changed)
   const [buy, setBuy] = useState<{ busy: boolean; step: CheckoutStep | null; error: CheckoutError | 'plan_changed' | 'unavailable' | null }>({ busy: false, step: null, error: null });
@@ -914,7 +917,7 @@ export const TryApp: React.FC = () => {
       const print = pp && printChoice.product && printConsent ? { product: printChoice.product, country: printChoice.country } : null;
       // the artwork on screen, as the server described it: its plan (plan8) and the options that applied are sent back, so a checkout of something else is a 409
       out = await runCheckout({ eyes: list, style, layout: lay, names: wireNames(namesList), date, familyName: family, opts: art.opts, plan8: art.plan8, plan8Core: art.plan8Core, lang: T.lang, ref: orderRefRef.current, expToken: experimentToken(), shown,
-        print, printShown: pp && print ? pp.price + pp.ship : undefined },
+        print, printShown: pp && print ? pp.price + pp.ship : undefined, voucher: gift?.code ?? null },
         (s) => setBuy((b) => ({ ...b, step: s })));
     } catch {
       out = { kind: 'error', code: 'failed', ref: orderRefRef.current };
@@ -964,6 +967,8 @@ export const TryApp: React.FC = () => {
       setOrdering((o) => (o ? { ...o, prints: fresh } : o));
       if (!fresh?.on) setPrintChoice(NO_PRINT);
     }
+    // the voucher could not be used after all (used meanwhile, expired, cancelled): it is taken off the card, the customer can enter it again
+    if (out.code === 'voucher') setGift(null);
     setBuy({ busy: false, step: null, error: out.code });
   };
 
@@ -983,6 +988,7 @@ export const TryApp: React.FC = () => {
       waiver={waiver} onWaiver={setWaiver}
       prints={printsOffered} printChoice={printChoice} onPrintChoice={onPrintChoice} printConsent={printConsent} onPrintConsent={setPrintConsent}
       artSrc={art?.src}
+      gift={gift} onGift={(g) => { setGift(g); setBuy((b) => (b.error === 'voucher' ? { ...b, error: null } : b)); }}
       busy={buy.busy} step={stepText(buy.step)} error={buy.error ? T.buy.errors[buy.error] : null}
       priceNote={priceNote}
       onBuy={onBuy} />

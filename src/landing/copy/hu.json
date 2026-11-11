@@ -24,7 +24,8 @@
     "how": "Így működik",
     "pricing": "Árak",
     "faq": "GYIK",
-    "privacy": "Adatvédelem"
+    "privacy": "Adatvédelem",
+    "gift": "Ajándékutalvány"
   },
   "navLabels": {
     "main": "Fő navigáció",
@@ -497,6 +498,7 @@
     ],
     "notIncludes": "A nyomtatás nem része a rendelésnek.",
     "payOpen": "Biztonságos kártyás fizetés a Stripe-on keresztül.",
+    "gift": "Ajándékba adnád? Vegyél ajándékutalványt: a megajándékozott később maga fotózza le a szemét.",
     "termsLink": "ÁSZF",
     "auLine": "Eladó: MB Portretizuokis, Kaunas, Litvánia. Kártyás fizetés ausztrál dollárban (A$) a Stripe-on keresztül. Digitális fájl, ezért nem postázunk semmit.",
     "usLine": "Eladó: MB Portretizuokis, Kaunas, Litvánia. Kártyás fizetés amerikai dollárban (US$) a Stripe-on keresztül. Digitális fájl, ezért nem postázunk semmit.",

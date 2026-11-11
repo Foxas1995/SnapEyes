@@ -675,7 +675,11 @@ async function checkGuide() {
 // offer, the rate table and the words of the products and the 27 countries, src/shared/prints.ts, a chunk both pages load; the print words of five languages) moved the base
 // of /try by +5,366 B JS and of /order by +4,052 B JS, and both by +261 B CSS (the utilities of the choice and of the admin's print page in the shared stylesheet), measured
 // on 1a2fdca against the tree with them (167,795 to 173,161 B, 113,138 to 117,190 B, 13,521 to 13,782 B). It is a product, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366, css: 10975 + 245 + 494 + 261 }, order: { js: 108723 + 414 + 110 + 3953 + 4052, css: 10975 + 245 + 494 + 261 } };
+// The gift vouchers (2026-11-11: the field "I have a gift voucher" of the buy card, src/try/GiftField.tsx, its words and errors in five languages, the voucher in the
+// checkout request; src/order/api.ts and src/order/ui.ts now chunks of their own that the gift page shares) moved the base of /try by +3,068 B JS and of /order by +794 B JS,
+// and both by +74 B CSS (the utilities of the field and of the gift page in the shared stylesheet), measured on b0616af against the tree with them (173,941 to 177,009 B,
+// 117,398 to 118,192 B, 13,782 to 13,856 B). It is a product, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068, css: 10975 + 245 + 494 + 261 + 74 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794, css: 10975 + 245 + 494 + 261 + 74 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

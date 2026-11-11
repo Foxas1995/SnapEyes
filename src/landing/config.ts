@@ -13,6 +13,8 @@ export const TRY_URL = '/try';
 // who reads this page in German through /?lang=de, without ever touching the switch, still gets /try in German.
 // And in the page's market (m=, src/shared/markets.ts withMarket), so /try shows the same currency.
 export const tryUrl = (lang: Lang) => withMarket(`${TRY_URL}?lang=${lang}`);
+// the gift voucher page (src/gift, api/_lib/voucher.py)
+export const giftUrl = (lang: Lang) => withMarket(`/gift?lang=${lang}`);
 
 // Seller shown in the footer and on the legal pages (owner decision 2026-09-23). MB is not VAT-registered: no VAT
 // number, no "incl. VAT". Every page prints the "Represented by" and "Phone" lines only when the value is set.

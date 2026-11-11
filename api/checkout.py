@@ -109,6 +109,8 @@ from _lib import catalogue
 from _lib import counter
 from _lib import feedback
 from _lib import prints
+from _lib import voucher
+from urllib.parse import urlsplit, parse_qs
 
 
 def country_hint(value):
@@ -226,6 +228,8 @@ def checkout(body):
         return counter.hit(body)
     if "feedback" in body:       # the feedback box of /try: six chips and an optional text, no order, no Stripe, always answered 200 (api/_lib/feedback.py)
         return feedback.submit(body)
+    if "gift" in body:           # a gift voucher's payment page (api/_lib/voucher.py): no order
+        return voucher.buy(body)
     why = pay.ordering_problem()
     if why:
         raise pay.PayNotConfigured(why)
@@ -244,6 +248,8 @@ def checkout(body):
     exp = abtest.assignment(body.get("exp_token"), spec["market"])
     amount = abtest.price_cents(exp, n, spec["style"], spec["market"]) if exp else pay.price_cents(n, spec["style"], spec["market"])
     abtest.check_shown(body, spec["market"], amount, exp)
+    # a gift voucher the customer entered (api/_lib/voucher.py): checked at Stripe before anything is closed or stored (409 voucher_invalid touches nothing)
+    gift = voucher.lookup(body.get("voucher"), spec["market"]) if body.get("voucher") not in (None, "") else None
     folder = f"orders/{order}"
     found = pay.parallel([lambda: store.exists(f"{folder}/paid.json", timeout=8.0),
                           lambda: store.exists(f"{folder}/withdrawn.json", timeout=8.0)] +
@@ -284,7 +290,7 @@ def checkout(body):
     consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": text,
                "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]}
     camp = counter.pack(counter.parse(body.get("camp")))     # the campaign code of the advertisement the customer came from: "" when there is none
-    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp, part=part)
+    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp, part=part, gift=gift)
     sid = sess["id"]
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,
@@ -298,6 +304,9 @@ def checkout(body):
         rec["checkout"]["camp"] = camp
     if part:
         rec["checkout"]["print"] = part          # the print, its shipping country and the print box the customer ticked (consent: version, time, text)
+    total = amount + (prints.total(part) if part else 0)
+    if gift:
+        rec["checkout"]["voucher"] = {"coupon": gift["coupon"], "value": gift["value"], "discount": min(gift["value"], total)}
     if note:
         # the page's plan8 was not the server's but its plan8_core was (freeze_plan): the plan stored is the server's, and the owner can see that and what the page showed
         rec["checkout"].update(plan8_note=note, plan8_page=_page8(body))
@@ -307,17 +316,27 @@ def checkout(body):
     pay.log(f"order {order}: checkout {sid} {amount} {currency} ({market}) {n} eye(s) {spec['style']} {lang} plan {plan['plan8']}"
             + (f" (the page showed {_page8(body)}: same plan but for the choices the pixels decide)" if note else "")
             + (f" experiment {exp['key']}/{exp['variant']}" if exp else "")
-            + (f" print {part['product']} to {part['country']} {part['price']}+{part['ship']}" if part else ""))
+            + (f" print {part['product']} to {part['country']} {part['price']}+{part['ship']}" if part else "")
+            + (f" voucher {gift['coupon']} -{min(gift['value'], total)}" if gift else ""))
     abtest.note_checkout(exp, market, n, spec["style"], amount)
     pay.note_checkout("start", spec, rec, gate=gate)
     out = {"ok": True, "url": sess["url"], "order": order, "amount": amount, "currency": currency.upper(),
            "market": market, "eyes": n, "style": spec["style"], "plan8": plan["plan8"], "engine": _engine(plan), "expires_at": int(expires)}
     if part:
-        out.update(print={k: part[k] for k in ("product", "country", "price", "ship")}, total=amount + prints.total(part))
+        out.update(print={k: part[k] for k in ("product", "country", "price", "ship")}, total=total)
+    if gift:
+        out["voucher"] = {"value": gift["value"], "discount": min(gift["value"], total), "pay": max(0, total - gift["value"])}
     return out
 
 
 def handle_get(req):
+    q = {k: v[0] for k, v in parse_qs(urlsplit(getattr(req, "path", "") or "").query).items() if v}
+    if "voucher" in q:
+        # the checkout's look at a typed gift voucher code (api/_lib/voucher.py check)
+        return pay.serve(req, "voucher", lambda body: voucher.check(q["voucher"], q.get("m")), gate=False)
+    if "gift" in q:
+        # the gift page after the voucher's payment: its code once it is paid (api/_lib/voucher.py status)
+        return pay.serve(req, "gift", lambda body: voucher.status(q["gift"]), gate=False)
     country = req.headers.get("x-vercel-ip-country") if hasattr(req, "headers") else None
     vid = abtest.vid_of(req)        # the visitor id travels in a header, never in the address (api/_lib/abtest.py)
     L.run(req, lambda body: abtest.decorate(info(body, country), vid), gate=False)

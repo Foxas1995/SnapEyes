@@ -296,6 +296,8 @@ export default defineConfig({
         imprint: 'imprint.html',
         // the order page (src/order/main.tsx): /order?o=&k=[&s=] from the Stripe success page and the emails
         order: 'order.html',
+        // the gift voucher page (src/gift/main.tsx): /gift, buying a voucher and, after the payment, its code (api/_lib/voucher.py)
+        gift: 'gift.html',
         // the owner's admin panel (src/admin/main.tsx): /admin, noindex, not linked from the public site
         admin: 'admin.html',
       },

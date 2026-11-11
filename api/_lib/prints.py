@@ -558,7 +558,9 @@ def amend_confirmation(blocks, lang, paid):
     lang = lang_of(lang)
     w = CONF[lang]
     cur = pay.currency_of(paid.get("currency"))
-    art = int(paid.get("amount_total") or 0) - int(pp.get("price") or 0) - int(pp.get("ship") or 0)
+    # the file's own price: the total less the print and its shipping, plus what a gift voucher took off (api/_lib/voucher.py: it applies to the whole total)
+    gv = paid.get("voucher") if isinstance(paid.get("voucher"), dict) else {}
+    art = int(paid.get("amount_total") or 0) + int(gv.get("discount") or 0) - int(pp.get("price") or 0) - int(pp.get("ship") or 0)
     out = []
     for b in blocks:
         if b and b[0] == "rows" and isinstance(b[1], list) and len(b[1]) >= 3 and not any(r[0] == w["print"] for r in b[1]):

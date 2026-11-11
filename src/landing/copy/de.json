@@ -24,7 +24,8 @@
     "how": "Ablauf",
     "pricing": "Preise",
     "faq": "Fragen",
-    "privacy": "Datenschutz"
+    "privacy": "Datenschutz",
+    "gift": "Geschenkgutschein"
   },
   "navLabels": {
     "main": "Hauptnavigation",
@@ -497,6 +498,7 @@
     ],
     "notIncludes": "Der Druck gehört nicht zur Bestellung.",
     "payOpen": "Sichere Kartenzahlung über Stripe.",
+    "gift": "Als Geschenk? Kaufen Sie einen Geschenkgutschein: Das Auge wird später selbst fotografiert.",
     "termsLink": "AGB",
     "auLine": "Verkauft von MB Portretizuokis, Kaunas, Litauen. Kartenzahlung in A$ über Stripe. Eine digitale Datei, es wird also nichts versandt.",
     "usLine": "Verkauft von MB Portretizuokis, Kaunas, Litauen. Kartenzahlung in US$ über Stripe. Eine digitale Datei, es wird also nichts versandt.",

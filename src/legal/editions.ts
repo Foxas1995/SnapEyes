@@ -12,13 +12,16 @@ import { TERMS, TERMS_AU, TERMS_HU, TERMS_US } from './docs/terms';
 import { WITHDRAWAL, WITHDRAWAL_AU, WITHDRAWAL_US } from './docs/withdrawal';
 import { IMPRINT, IMPRINT_AU, IMPRINT_US } from './docs/imprint';
 import { patchEdition, withPrintsPrivacy, withPrintsTerms, withPrintsWithdrawal } from './docs/prints';
+import { withVoucherPrivacy, withVoucherTerms, withVoucherWithdrawal } from './docs/vouchers';
 
 // Prints (src/legal/docs/prints.ts): the EU edition's terms, privacy policy and withdrawal page in every language, and the Hungarian edition's
 // terms (whose privacy policy and withdrawal page are the EU ones). The Australian and the US editions sell no prints and are made from the
 // texts without them.
-const TERMS_EU = patchEdition(TERMS, withPrintsTerms);
-const PRIVACY_EU = patchEdition(PRIVACY, withPrintsPrivacy);
-const WITHDRAWAL_EU = patchEdition(WITHDRAWAL, withPrintsWithdrawal);
+// Gift vouchers (src/legal/docs/vouchers.ts): sold and redeemed in euros. The EU edition's terms, privacy policy and withdrawal page, and the Hungarian
+// edition's terms (whose forint price section says that a voucher is euros only; its privacy policy and withdrawal page are the EU ones).
+const TERMS_EU = patchEdition(patchEdition(TERMS, withPrintsTerms), withVoucherTerms);
+const PRIVACY_EU = patchEdition(patchEdition(PRIVACY, withPrintsPrivacy), withVoucherPrivacy);
+const WITHDRAWAL_EU = patchEdition(patchEdition(WITHDRAWAL, withPrintsWithdrawal), withVoucherWithdrawal);
 
 /** The texts of a shared page in the languages of an edition only (the Hungarian edition shares the EU privacy policy,
  *  withdrawal information and legal notice, without their Croatian texts). */
@@ -28,6 +31,6 @@ const only = (docs: EditionDocs, edition: LegalEdition): EditionDocs =>
 export const EDITIONS: Readonly<Record<LegalEdition, Readonly<Record<LegalDocId, EditionDocs>>>> = {
   eu: { privacy: PRIVACY_EU, terms: TERMS_EU, withdrawal: WITHDRAWAL_EU, imprint: IMPRINT },
   au: { privacy: PRIVACY_AU, terms: TERMS_AU, withdrawal: WITHDRAWAL_AU, imprint: IMPRINT_AU },
-  hu: { privacy: only(PRIVACY_EU, 'hu'), terms: patchEdition(TERMS_HU, withPrintsTerms), withdrawal: only(WITHDRAWAL_EU, 'hu'), imprint: only(IMPRINT, 'hu') },
+  hu: { privacy: only(PRIVACY_EU, 'hu'), terms: patchEdition(patchEdition(TERMS_HU, withPrintsTerms), withVoucherTerms), withdrawal: only(WITHDRAWAL_EU, 'hu'), imprint: only(IMPRINT, 'hu') },
   us: { privacy: PRIVACY_US, terms: TERMS_US, withdrawal: WITHDRAWAL_US, imprint: IMPRINT_US },
 };

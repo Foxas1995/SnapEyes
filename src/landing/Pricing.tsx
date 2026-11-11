@@ -12,7 +12,8 @@
 // the hairlines between the rows of the price table draw one after the other (src/landing/PriceTable.tsx, css/pricing.css).
 import { useCopy } from './copy/useCopy';
 import { useLandingPrices } from './prices';
-import { useLegalHref, useTryHref } from './links';
+import { useGiftHref, useLegalHref, useTryHref } from './links';
+import { giftMarket } from '../shared/gift';
 import { legalEdition } from '../shared/legal';
 import { CurrencySwitch } from './CurrencySwitch';
 import { Icon, type IconName } from './Icons';
@@ -36,6 +37,7 @@ export function Pricing() {
   const { c, fmt } = useCopy();
   const p = useLandingPrices();
   const tryHref = useTryHref();
+  const giftHref = useGiftHref();
   const termsHref = useLegalHref('terms');
   const pr = c.pricing;
   const footnote = p.currency === 'aud' ? pr.footnoteAud : p.currency === 'huf' ? pr.footnoteHuf : p.currency === 'usd' ? pr.footnoteUsd : pr.footnote;
@@ -69,6 +71,8 @@ export function Pricing() {
               {pr.notIncludes}
             </p>
             {p.open && <p className="lp-pay-open">{pr.payOpen}</p>}
+            {/* a gift voucher (src/gift, api/_lib/voucher.py): only where vouchers are sold (euros, the EU edition) and while ordering is open */}
+            {p.open && giftHref && giftMarket(p.market) && <p className="lp-pay-open"><a href={giftHref}>{pr.gift}</a></p>}
             {legalEdition(p.market) === 'au' && <p className="lp-au-line">{pr.auLine}</p>}
             {legalEdition(p.market) === 'us' && <p className="lp-au-line">{pr.usLine}</p>}
             <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>
