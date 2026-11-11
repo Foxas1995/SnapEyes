@@ -36,6 +36,7 @@ const OPS_LT = {
     'Teisinis pagrindas: mūsų teisėtas interesas patikimai teikti paslaugą, rasti gedimus, kontroliuoti jos sąnaudas ir sužinoti, kas lankytojams nepatinka (BDAR 6 straipsnio 1 dalies f punktas). Įvykiai ir iš jų sudarytos dienos suvestinės automatiškai ištrinami po 12 mėnesių, atsiliepimų dėžutės tekstai po 90 dienų. Bet kada galite nesutikti su tokiu tvarkymu (žr. [Jūsų teisės](#rights)).',
   admin: ADMIN_LOG_LT.log,
   signin: ADMIN_LOG_LT.signin,
+  previewcap: 'Kad nemokama peržiūra liktų prieinama visiems, iš vieno interneto ryšio per dieną galima sukurti ribotą peržiūrų skaičių. Kiekvienai peržiūrai mūsų serveris išsaugo IP adreso, iš kurio ji sukurta, ir dienos maišą, sudarytą slaptu raktu, bet niekada ne patį adresą: iš jos adreso atkurti negalima, o kitą dieną tas pats adresas duoda kitą maišą. Šie įrašai automatiškai ištrinami po 2 dienų. Teisinis pagrindas: mūsų teisėtas interesas išlaikyti nemokamą peržiūrą prieinamą ir kontroliuoti jos sąnaudas (BDAR 6 straipsnio 1 dalies f punktas).',
 };
 
 const repLt = SELLER.representative ? ` Jai atstovauja ${SELLER.representative}.` : '';
@@ -102,7 +103,7 @@ export const lt: LegalDoc = {
     {
       id: 'operations',
       title: 'Paslaugos statistika ir mūsų administravimo žurnalas',
-      blocks: [OPS_LT.events, OPS_LT.counter, OPS_LT.campaign, OPS_LT.feedback, OPS_LT.content, OPS_LT.basis, OPS_LT.admin, OPS_LT.signin],
+      blocks: [OPS_LT.events, OPS_LT.counter, OPS_LT.campaign, OPS_LT.feedback, OPS_LT.content, OPS_LT.basis, OPS_LT.admin, OPS_LT.signin, OPS_LT.previewcap],
     },
     {
       id: 'orders',
@@ -171,6 +172,7 @@ export const lt: LegalDoc = {
             ['Atsiliepimų tekstai', 'Neprivalomi atsiliepimų dėžutės tekstai (žr. [Paslaugos statistika ir mūsų administravimo žurnalas](#operations)): automatiškai ištrinami po 90 dienų, o mūsų anksčiau. Patys atsakymai yra tik kodai ir techninių įvykių dalis, saugoma, kaip aprašyta aukščiau.'],
             ['Administravimo žurnalas', 'Ką padarėme su užsakymu savo administravimo skydelyje: automatiškai ištrinama po 24 mėnesių; įrašai apie užsakymą lieka su jo užsakymo įrašu.'],
             ['Nesėkmingi prisijungimai prie mūsų administravimo skydelio', 'IP adreso maiša, sudaryta slaptu raktu, automatiškai ištrinama po 2 dienų.'],
+            ['Nemokamos peržiūros iš vieno ryšio', 'IP adreso ir dienos maiša, sudaryta slaptu raktu, automatiškai ištrinama po 2 dienų.'],
             ['El. laiškai', 'Tol, kol jų reikia Jūsų prašymui ir tolesniems veiksmams.'],
           ],
         },

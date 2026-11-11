@@ -26,8 +26,9 @@ export type LegalLang = Lang;
  *  switch): the AI-made material sentence (src/shared/aiMaterial.ts) entered the terms of every edition and language in the cutover deploy. 2026-10-20: the privacy
  *  policy (every edition and language) says what the anonymous counter keeps (api/_lib/counter.py) and where the country hint goes; no other legal text moved.
  *  2026-10-28: the Croatian texts of the EU edition (src/legal/docs/*.hr.ts), Croatian named as a contract language in every terms text, and the
- *  legal notice's example images described as our own eye (no founder named). */
-export const LEGAL_UPDATED = '2026-10-28';
+ *  legal notice's example images described as our own eye (no founder named). 2026-11-11: the privacy policy (every edition and language) says what the day's
+ *  ceiling of free previews per connection keeps (api/_lib/previewcap.py: a keyed hash of the address and the day, deleted after 2 days); no other legal text moved. */
+export const LEGAL_UPDATED = '2026-11-11';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right

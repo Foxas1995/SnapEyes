@@ -918,7 +918,7 @@ def purge_old(days=365, yes=True, stop_left=10.0, out=None):
     """Delete events and day counts older than `days` days, and the admin panel's failed-login markers older than 2
     days. For the daily clean-up (api/_lib/cleanup.py may call it). Never raises; stops for time with more: true.
     Returns {ok, events, days, rollups, adminfail, more}."""
-    res = {"ok": True, "events": 0, "days": 0, "rollups": 0, "adminfail": 0, "feedback": 0, "more": False}
+    res = {"ok": True, "events": 0, "days": 0, "rollups": 0, "adminfail": 0, "previewcap": 0, "feedback": 0, "more": False}
     say = out or (lambda m: print("snapeyes events: " + str(m)[:300], flush=True))
     try:
         if not store.configured():
@@ -964,6 +964,20 @@ def purge_old(days=365, yes=True, stop_left=10.0, out=None):
                 if yes and names:
                     store.delete_many(names)
                 res["adminfail"] += len(names)
+        if not res["more"]:
+            # the day's markers of the free previews per connection (api/_lib/previewcap.py): kept for two days, as the privacy policy says
+            from . import previewcap as PCAP
+            day_cut = time.strftime("%Y%m%d", time.gmtime(time.time() - PCAP.KEEP_DAYS * 86400))
+            for row in store.list_all(PCAP.TOP):
+                if not row["folder"] or not re.fullmatch(r"[0-9]{8}", row["name"]) or row["name"] >= day_cut:
+                    continue
+                if L.time_left() < stop_left:
+                    res["more"] = True
+                    break
+                names = [f"{PCAP.TOP}/{row['name']}/{r['name']}" for r in store.list_all(f"{PCAP.TOP}/{row['name']}") if not r["folder"]]
+                if yes and names:
+                    store.delete_many(names)
+                res["previewcap"] += len(names)
         say(f"purge_old{'' if yes else ' (dry run)'}: {res}")
     except Exception as e:  # noqa: the clean-up must go on without this step
         res.update(ok=False, error=type(e).__name__)

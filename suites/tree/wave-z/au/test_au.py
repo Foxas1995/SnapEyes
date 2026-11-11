@@ -214,8 +214,10 @@ EU_WP12 = json.load(open(os.path.join(HERE, "eu_wp12.json"), encoding="utf-8")) 
 EU_WP18 = json.load(open(os.path.join(HERE, "eu_wp18.json"), encoding="utf-8"))   # 1006 refresh: the EU edition as of WP18 (the catalogue switch), the base of the 1020 refresh
 EU_COUNTER = json.load(open(os.path.join(HERE, "eu_counter.json"), encoding="utf-8"))   # 1020 refresh: the EU edition with the anonymous counter's privacy paragraphs (the terms are WP18's), the base of the 1028 refresh
 EU_HR = json.load(open(os.path.join(HERE, "eu_hr.json"), encoding="utf-8"))   # 1028 refresh: the EU edition with its Croatian texts (the contract sentence and the legal notice's images block changed in en and de)
-EU_NOW = json.load(open(os.path.join(HERE, "eu_prints.json"), encoding="utf-8"))   # 1028c refresh: the EU edition with the prints (snap_eu_edition.mjs), the base is eu_hr.json
-LEGAL_NOW = "2026-10-28"        # 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
+EU_PRINTS = json.load(open(os.path.join(HERE, "eu_prints.json"), encoding="utf-8"))   # 1028c refresh: the EU edition with the prints (snap_eu_edition.mjs), the base is eu_hr.json
+EU_NOW = json.load(open(os.path.join(HERE, "eu_cap.json"), encoding="utf-8"))   # 1111 refresh: the EU edition with the privacy paragraph of the daily ceiling of free previews (snap_eu_edition.mjs), the base is eu_prints.json
+EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
+LEGAL_NOW = "2026-11-11"        # 1111 refresh: the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
 CONSENT_NOW = "2026-10-28.3"    # 1028c refresh: the print box added (2026-10-28.2 since the US text, every waiver as it was). 1028b refresh: the consent version since the US text (2026-10-28.1 since the Croatian text; 2026-09-30.2 since 30efee7: the lt and hu texts added; en, de, AU as of .1)
 CONSENT_1028B = "2026-10-28.2"  # 1028c refresh: the version of the US text, which still quotes every waiver
 CONSENT_1028 = "2026-10-28.1"   # 1028b refresh: the version before the US text, which still quotes the EU and the AU texts of its customers
@@ -247,7 +249,8 @@ check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED
       " - 1020: LEGAL_UPDATED is 2026-10-20 (the anonymous counter's privacy paragraphs), the consent version is still not bumped"
       " - 1028: LEGAL_UPDATED is 2026-10-28 and the consent version 2026-10-28.1 (the Croatian texts and checkbox)"
       " - 1028b: the consent version 2026-10-28.2 (the US checkbox text), LEGAL_UPDATED still 2026-10-28 (no EU text changed)"
-      " - 1028c: the consent version 2026-10-28.3 (the print box), LEGAL_UPDATED still 2026-10-28",
+      " - 1028c: the consent version 2026-10-28.3 (the print box), LEGAL_UPDATED still 2026-10-28"
+      " - 1111: LEGAL_UPDATED is 2026-11-11 (the privacy paragraph of the daily ceiling of free previews), the consent version is not bumped",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
       and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
@@ -481,13 +484,23 @@ priv20_ok = {l: fr and sorted(d) == sorted(PRIV20) and all((len(d[sec][0]), len(
 # 1028c: the prints in the privacy policy: the section "prints" after "orders" (the partner, the name and the address, not the e-mail), one item of the list of
 # services (the list is one block: replaced) and one line in retention
 PRIV28C = {"services": (1, 1), "retention": (1, 0)}
-priv28c = {l: doc_diff(without(EDI["eu"]["privacy"][l], "prints"), EU_HR["privacy"][l]) for l in LANG2}
+priv28c = {l: doc_diff(without(EU_PRINTS["privacy"][l], "prints"), EU_HR["privacy"][l]) for l in LANG2}   # 1111: the 1028c step, between the pins of hr and of the prints
 priv28c_ok = {l: fr and sorted(d) == sorted(PRIV28C) and all((len(d[sec][0]), len(d[sec][1])) == n for sec, n in PRIV28C.items())
               and after(EDI["eu"]["privacy"][l], "prints", "orders") and "Picanova" in json.dumps(EDI["eu"]["privacy"][l]["sections"], ensure_ascii=False)
               for l, (fr, d) in priv28c.items()}
+# 1111: the daily ceiling of free previews per connection (api/_lib/previewcap.py): one paragraph in "operations" and one line in retention, nothing else; the raw docs (the
+# base of the Australian and US editions) by exactly the same two
+PRIV1111 = {"operations": (1, 0), "retention": (1, 1)}   # retention is one table: the block with the new line replaces the one without it
+priv1111 = {l: doc_diff(EDI["eu"]["privacy"][l], EU_PRINTS["privacy"][l]) for l in LANG2}
+priv1111_raw = {l: doc_diff(EU_CAP_RAW["privacy"][l], EU_HR["privacy"][l]) for l in LANG2}
+priv1111_ok = {l: all(fr and sorted(d) == sorted(PRIV1111) and all((len(d[sec][0]), len(d[sec][1])) == n for sec, n in PRIV1111.items())
+                      and "IP" in json.dumps(d["operations"][0], ensure_ascii=False) for fr, d in (priv1111[l], priv1111_raw[l])) for l in LANG2}
 check("B2b EU privacy policy since WP18 (1020): only the anonymous counter's and the feedback box's paragraphs differ, in the sections website, operations, storage, orders and retention, nothing else, en and de"
-      " - 1028c: checked between the pins of WP18 and of hr; the policy as it is now differs from the pin of hr by exactly the section prints, one item of the services and one retention line",
-      all(priv20_ok.values()) and all(priv28c_ok.values()), (priv20_ok, priv28c_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv28c.items()}))
+      " - 1028c: checked between the pins of WP18 and of hr; the policy as it is now differs from the pin of hr by exactly the section prints, one item of the services and one retention line"
+      " - 1111: the 1028c step checked between the pins of hr and of the prints; the policy as it is now differs from the pin of the prints, and the raw docs from the pin of hr, by"
+      " exactly the paragraph of the daily ceiling of free previews (operations) and its retention line",
+      all(priv20_ok.values()) and all(priv28c_ok.values()) and all(priv1111_ok.values()),
+      (priv20_ok, priv28c_ok, priv1111_ok, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv1111.items()}))
 
 
 def _norm(t):
@@ -495,7 +508,8 @@ def _norm(t):
     return (t.replace("2026-09-30", "X").replace("30.09.2026", "X").replace("2026-10-05", "X").replace("05.10.2026", "X")      # 1005: and the date of WP12
              .replace("2026-10-06", "X").replace("06.10.2026", "X")                                                               # 1006: and the date of WP18
              .replace("2026-10-20", "X").replace("20.10.2026", "X")                                                               # 1020: and the date of the counter's privacy paragraphs
-             .replace("2026-10-28", "X").replace("28.10.2026", "X"))                                                              # 1028: and the date of the Croatian texts
+             .replace("2026-10-28", "X").replace("28.10.2026", "X")                                                               # 1028: and the date of the Croatian texts
+             .replace("2026-11-11", "X").replace("11.11.2026", "X"))                                                              # 1111: and the date of the ceiling of free previews
 
 
 def _terms_pack_ok(l, pack=None):
@@ -578,6 +592,7 @@ T = EDI["au"]["terms"]
 # 1028c: the Australian edition is made from the EU texts BEFORE the prints (src/legal/editions.ts applies src/legal/docs/prints.ts to the EU edition only): its base
 # is the pin of hr, the EU edition as it was before the prints, which the EU edition of now differs from by exactly PRINTS28C and PRIV28C (B1, B2b)
 EU_BASE = {d: EU_HR[d] for d in DOCS4}
+EU_BASE["privacy"] = EU_CAP_RAW["privacy"]   # 1111: the raw policy with the paragraph of the daily ceiling of free previews (B2b holds it to the pin of hr plus exactly that)
 ids_eu = [s["id"] for s in EU_BASE["terms"]["en"]["sections"]]
 ids_au = [s["id"] for s in T["en"]["sections"]]
 check("C1 AU terms: the EU sections in order, with 'australia' right after 'defects' (en, de) - 1028c: the EU sections before the prints (the pin of hr)",

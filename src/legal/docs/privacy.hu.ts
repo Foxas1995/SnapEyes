@@ -37,6 +37,7 @@ const OPS_HU = {
     'Jogalap: a szolgáltatás megbízható működtetéséhez, a hibák felderítéséhez, a költségek kézben tartásához és annak megismeréséhez fűződő jogos érdekünk, hogy mi riasztja el a látogatókat (GDPR 6. cikk (1) bekezdés f) pont). Az eseményeket és a belőlük képzett napi számokat 12 hónap után automatikusan töröljük, a visszajelzés doboz szövegeit 90 nap után. Ön bármikor tiltakozhat (lásd: [Az Ön jogai](#rights)).',
   admin: ADMIN_LOG_HU.log,
   signin: ADMIN_LOG_HU.signin,
+  previewcap: 'Hogy az ingyenes előnézet mindenki számára ingyenes maradjon, egy internetkapcsolatról naponta korlátozott számú előnézet készíthető. Minden előnézetnél a szerverünk annak az IP-címnek és a napnak egy titkos kulccsal képzett hash-értékét tárolja, amelyről az előnézet készült, magát a címet soha: a cím ebből nem állítható vissza, és másnap ugyanaz a cím más hash-értéket ad. Ezeket a bejegyzéseket 2 nap után automatikusan töröljük. Jogalap: jogos érdekünk, hogy az ingyenes előnézet elérhető maradjon, és a költségei kézben maradjanak (GDPR 6. cikk (1) bekezdés f) pont).',
 };
 
 const rep = (label: string) => (SELLER.representative ? ` ${label} ${SELLER.representative}.` : '');
@@ -103,7 +104,7 @@ export const hu: LegalDoc = {
     {
       id: 'operations',
       title: 'Szolgáltatási statisztika és adminisztrációs napló',
-      blocks: [OPS_HU.events, OPS_HU.counter, OPS_HU.campaign, OPS_HU.feedback, OPS_HU.content, OPS_HU.basis, OPS_HU.admin, OPS_HU.signin],
+      blocks: [OPS_HU.events, OPS_HU.counter, OPS_HU.campaign, OPS_HU.feedback, OPS_HU.content, OPS_HU.basis, OPS_HU.admin, OPS_HU.signin, OPS_HU.previewcap],
     },
     {
       id: 'orders',
@@ -172,6 +173,7 @@ export const hu: LegalDoc = {
             ['Visszajelzések szövegei', 'A visszajelzés doboz nem kötelező szövegei (lásd: [Szolgáltatási statisztika és adminisztrációs napló](#operations)): 90 nap után automatikusan töröljük őket, mi korábban is. Maguk a válaszok csak kódok, és a technikai események részei, a fent leírtak szerint őrizzük őket.'],
             ['Adminisztrációs napló', 'Hogy mit tettünk egy megrendeléssel az adminisztrációs felületünkön: 24 hónap után automatikusan töröljük; a megrendelésre vonatkozó bejegyzések a megrendelés adatainál maradnak.'],
             ['Sikertelen bejelentkezések az adminisztrációs felületre', 'Az IP-cím egy titkos kulccsal képzett hash-értéke, 2 nap után automatikusan töröljük.'],
+            ['Ingyenes előnézetek kapcsolatonként', 'Az IP-cím és a nap egy titkos kulccsal képzett hash-értéke, 2 nap után automatikusan töröljük.'],
             ['E-mailek', 'Ameddig a kéréséhez és az esetleges további ügyintézéshez szükségünk van rájuk.'],
           ],
         },

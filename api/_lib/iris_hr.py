@@ -42,4 +42,6 @@ ERRORS_HR = {
     "denied": "Naš je studio na trenutak zatvoren. Molimo pokušajte ponovno kasnije.",
     # anything else
     "failed": "Nešto je pošlo po zlu kod nas. Molimo pokušajte ponovno.",
+    "limit": ("S ove je veze dosegnuto današnje ograničenje besplatnih pregleda ({n} dnevno). Nove možete izraditi sutra. "
+              "Već izrađene preglede i dalje možete naručiti. Pitanja? Pišite na info@snapeyes.com."),
 }

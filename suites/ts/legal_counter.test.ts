@@ -22,7 +22,7 @@ export async function run(): Promise<Row[]> {
   const ids = (d: LegalDoc) => d.sections.map((s) => s.id).join();
   check('the five languages of the privacy policy have the same sections in the same order', LANGS.every((l) => ids(PRIVACY[l]) === ids(PRIVACY.en)), LANGS.map((l) => ids(PRIVACY[l])).join(' | '));
   const nOps = LANGS.map((l) => section(PRIVACY[l], 'operations')?.blocks.length ?? -1);
-  check('the "operations" section (service statistics) has the same number of paragraphs in every language: the counter, the campaign code and the feedback box are three more than before (eight)', nOps.every((n) => n === 8), nOps.join());
+  check('the "operations" section (service statistics) has the same number of paragraphs in every language: the counter, the campaign code and the feedback box are three more than before (eight), and the daily ceiling of free previews one more (nine, 2026-11-11)', nOps.every((n) => n === 9), nOps.join());
 
   const KEY: Record<(typeof LANGS)[number], RegExp> = {
     en: /counts the steps a page reaches/, de: /zählt unser Server außerdem die Schritte, die eine Seite erreicht/, lt: /serveris taip pat skaičiuoja žingsnius, kuriuos pasiekia puslapis/, hu: /a szerverünk azt is megszámolja, mely lépéseket éri el egy oldal/,
@@ -73,7 +73,7 @@ export async function run(): Promise<Row[]> {
   const dash = new RegExp('[' + [0x2012, 0x2013, 0x2014, 0x2015].map((c) => String.fromCharCode(c)).join('') + ']');
   check('no paragraph of the policy holds an en or em dash', LANGS.every((l) => !dash.test(PRIVACY[l].sections.map((s) => sectionText(PRIVACY[l], s.id)).join('\n'))));
   // 2026-10-28: the date moved on with the Croatian texts of the EU edition (src/shared/legal.ts LEGAL_UPDATED); the counter paragraphs above are those of 2026-10-20
-  check('one date versions the legal pages and it is the day of the last change (2026-10-28, the Croatian texts; the counter paragraphs came on 2026-10-20)', LEGAL_UPDATED === '2026-10-28', LEGAL_UPDATED);
+  check('one date versions the legal pages and it is the day of the last change (2026-11-11, the ceiling of free previews; the Croatian texts came on 2026-10-28, the counter paragraphs on 2026-10-20)', LEGAL_UPDATED === '2026-11-11', LEGAL_UPDATED);
   check('the retention row of the service statistics still says twelve months in every language', LANGS.every((l) => /12/.test(sectionText(PRIVACY[l], 'retention').split('\n').filter((x) => /operations/.test(x)).join('\n'))));
   return out;
 }

@@ -36,6 +36,7 @@ from _lib import pupilgeo as PG   # pupil repairs that start from a measurement 
 from _lib import pupil_seal as PS   # the render's pupil: a halo round it, a colour zone on a photo that is black there
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
+from _lib import previewcap as PC   # the day's ceiling of free previews per connection (api/_lib/previewcap.py)
 from _lib.styles import eye as EYE   # the eye profile: measured here, sealed, read by compose, the order draft and the master
 from _lib.styles import gate as GATE   # the gate's severity: how far past its rules an eye is (the second restoration)
 from _lib.styles import reveal as REV   # the Reveal's numbers and its display copy (WP9)
@@ -224,6 +225,7 @@ def enhance(body):
         return redisplay(body)
     if not L.check_ticket(body.get("ticket")):
         raise PermissionError("expired_or_missing_ticket")
+    cap = PC.check()                    # the day's ceiling of free previews of this connection, before the model is called
     crop = L.b64_to_pil(body.get("crop"))
     s = min(crop.size); crop = crop.crop((0, 0, s, s))
     if s < 48: raise ValueError("crop too small")
@@ -262,6 +264,7 @@ def enhance(body):
         u2 = L.store(f"eyes/{sid}/{mode}.jpg", L.pil_bytes(out, "JPEG", 93), "image/jpeg")
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
+    PC.mark(cap)                        # one more preview made by this connection today
     E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"],
              reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms), **_retry_codes(retry))
     return res

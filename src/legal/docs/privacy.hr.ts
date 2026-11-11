@@ -39,6 +39,7 @@ const OPS_HR = {
     'Pravna osnova: naš legitimni interes da uslugu pružamo pouzdano, pronalazimo pogreške, držimo njezine troškove pod kontrolom i saznamo što odbija posjetitelje (članak 6. stavak 1. točka (f) OUZP-a). Događaji i dnevni zbrojevi izrađeni iz njih automatski se brišu nakon 12 mjeseci, a tekstovi iz okvira za povratne informacije nakon 90 dana. U bilo kojem trenutku možete uložiti prigovor (pogledajte [Vaša prava](#rights)).',
   admin: ADMIN_LOG_HR.log,
   signin: ADMIN_LOG_HR.signin,
+  previewcap: 'Kako bi besplatni pregled ostao besplatan za sve, s jedne internetske veze dnevno se može izraditi ograničen broj pregleda. Za svaki pregled naš poslužitelj pohranjuje hash vrijednost IP adrese s koje je pregled izrađen i dana, izrađenu tajnim ključem, nikada samu adresu: iz nje se adresa ne može vratiti, a sljedeći dan ista adresa daje drugu hash vrijednost. Ti se zapisi automatski brišu nakon 2 dana. Pravna osnova: naš legitimni interes da besplatni pregled ostane dostupan i da njegovi troškovi ostanu pod kontrolom (članak 6. stavak 1. točka (f) OUZP-a).',
 };
 
 const repHr = SELLER.representative ? ` Društvo zastupa ${SELLER.representative}.` : '';
@@ -105,7 +106,7 @@ export const hr: LegalDoc = {
     {
       id: 'operations',
       title: 'Statistika usluge i naš administratorski zapisnik',
-      blocks: [OPS_HR.events, OPS_HR.counter, OPS_HR.campaign, OPS_HR.feedback, OPS_HR.content, OPS_HR.basis, OPS_HR.admin, OPS_HR.signin],
+      blocks: [OPS_HR.events, OPS_HR.counter, OPS_HR.campaign, OPS_HR.feedback, OPS_HR.content, OPS_HR.basis, OPS_HR.admin, OPS_HR.signin, OPS_HR.previewcap],
     },
     {
       id: 'orders',
@@ -174,6 +175,7 @@ export const hr: LegalDoc = {
             ['Tekstovi povratnih informacija', 'Neobvezni tekstovi iz okvira za povratne informacije (pogledajte [Statistika usluge i naš administratorski zapisnik](#operations)): automatski se brišu nakon 90 dana, ili ranije ako ih mi izbrišemo. Sami odgovori samo su kodovi i dio tehničkih događaja te se čuvaju kako je gore opisano.'],
             ['Administratorski zapisnik', 'Što smo učinili s narudžbom na našoj administratorskoj ploči: automatski se briše nakon 24 mjeseca; unosi o narudžbi ostaju uz njezin zapis o narudžbi.'],
             ['Neuspjele prijave na našu administratorsku ploču', 'Hash vrijednost IP adrese, izrađena tajnim ključem, automatski se briše nakon 2 dana.'],
+            ['Besplatni pregledi po vezi', 'Hash vrijednost IP adrese i dana, izrađena tajnim ključem, automatski se briše nakon 2 dana.'],
             ['E-poruke', 'Dok su nam potrebne za vaš zahtjev i daljnje postupanje.'],
           ],
         },

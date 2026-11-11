@@ -165,11 +165,22 @@ class UnlockError(PermissionError):
     """A paid endpoint got no valid unlock ticket for this order. run() answers 403 with a sentence for a buyer,
     not the free preview's "take the photo again"."""
 
+class PreviewLimit(Exception):
+    """This connection has made its ceiling of free previews today (api/_lib/previewcap.py). run() answers 429 preview_limit with a sentence in
+    the page's language that names the ceiling, and the seconds until 00:00 UTC."""
+    def __init__(self, n, retry_after):
+        super().__init__("preview ceiling reached")
+        self.n, self.retry_after = int(n), int(retry_after)
+
 BUDGET = duration.BUDGET_S    # seconds of work we allow inside the Vercel function (duration.py: DURATION_S - 8 = 112 of 120 s; leaves room to encode the reply)
 _LOCAL = threading.local()   # per-invocation deadline: one warm container can serve several requests at once
 
 def deadline():
     return getattr(_LOCAL, "deadline", 0.0)
+
+def request():
+    """The request this thread serves (set by run()), or None: what api/_lib/previewcap.py tags the connection by."""
+    return getattr(_LOCAL, "req", None)
 
 def ctx():
     """What the request this thread serves says about where it came from, as classes (api/_lib/counter.py context: the campaign code, the device class, the browser family,
@@ -292,6 +303,8 @@ RUN_ERRORS = {
         "busy": "Unser Studio ist gerade sehr ausgelastet. Bitte versuchen Sie es in einer Minute erneut.",
         "denied": "Unser Studio ist für einen Moment geschlossen. Bitte versuchen Sie es später erneut.",
         "failed": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.",
+        "limit": ("Von dieser Verbindung wurde das heutige Limit kostenloser Vorschauen erreicht ({n} pro Tag). Morgen können Sie weitere erstellen. "
+                  "Die bereits erstellten Vorschauen können Sie weiterhin bestellen. Fragen? Schreiben Sie an info@snapeyes.com."),
     },
     "lt": iris_lt.RUN_ERRORS_LT,
     "hu": iris_hu.ERRORS_HU,
@@ -312,6 +325,7 @@ def run(req, fn, gate=True):
     lang = "en"
     _LOCAL.lang = "en"            # never the language of the request this thread served before
     _LOCAL.ctx = None             # ... nor its campaign code and classes
+    _LOCAL.req = req
     try:
         if gate and not json_content_type(req):
             return send_json(req, 415, {"ok": False, "error": "Send application/json."})
@@ -345,6 +359,15 @@ def run(req, fn, gate=True):
         send_json(req, 400, {"ok": False, "error": _say(lang, "unreadable", "We could not read that image. Try another photo."),
                              "ms": int((time.time() - t0) * 1000)})
         _event(req, "400")
+    except PreviewLimit as e:
+        send_json(req, 429, {"ok": False, "reason": "preview_limit", "limit": e.n, "retry_after": e.retry_after,
+                             "error": _say(lang, "limit", "This connection has reached today's limit of free previews ({n} a day). You can make more tomorrow. The previews you have made can still be ordered. Questions? Write to info@snapeyes.com.").replace("{n}", str(e.n)),
+                             "ms": int((time.time() - t0) * 1000)})
+        try:
+            from . import events
+            events.error(req, "limit", "preview_limit", 429)
+        except Exception:  # noqa
+            pass
     except ModelDenied as e:
         print("snapeyes model denied:", _scrub(repr(e))[:300], flush=True)
         send_json(req, 503, {"ok": False, "reason": "model_denied",

@@ -40,4 +40,6 @@ ERRORS_HU = {
     "denied": "A stúdiónk egy időre zárva van. Kérjük, próbáld újra később.",
     # anything else
     "failed": "Hiba történt nálunk. Kérjük, próbáld újra.",
+    "limit": ("Erről a kapcsolatról elérted a mai ingyenes előnézetek korlátját (napi {n}). Holnap készíthetsz újakat. "
+              "A már elkészült előnézeteket továbbra is megrendelheted. Kérdésed van? Írj az info@snapeyes.com címre."),
 }

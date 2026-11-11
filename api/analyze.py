@@ -14,6 +14,7 @@ from http.server import BaseHTTPRequestHandler
 import numpy as np
 from PIL import Image
 from _lib import iris as L
+from _lib import previewcap as PC   # the day's ceiling of free previews per connection: refused here, before the photo is checked
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import coverage as CV   # how much of the iris an eyelid covers, measured on the photo
 from _lib import lashblock as LB  # a dark lash curtain over the iris with a lid margin behind it, measured on the photo
@@ -639,6 +640,7 @@ TEXT_DE = {
 TEXTS = {"de": TEXT_DE, "lt": TEXT_LT, "hu": TEXT_HU, "hr": TEXT_HR}   # by the request's "lang"; English is inline
 
 def analyze(body):
+    PC.check()
     device, study = telemetry(body.get("device")), telemetry(body.get("study"))
     lang = body.get("lang") if body.get("lang") in TEXTS else "en"
 

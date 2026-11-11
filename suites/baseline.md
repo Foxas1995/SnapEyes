@@ -1559,3 +1559,13 @@ The owner, after a second review of the page ("does it look clean, too much text
 - **`check:motion:close`** compares the closing band with and without motion pixel for pixel; it now lets through at most 64 pixels by at most 16 of 255. With these changes the label's border had 39 pixels at its two upper corners smoothed apart by 8 (the band is a layer of its own with motion and painted with the page without it, in tiles of their own; a corner on a tile's seam is smoothed apart). The build of 58092cc had none; a leftover of the motion changes thousands of pixels.
 
 **Checks.** `npm run build`, `tsc -b`, 1036 page tests, every `check:*`, `legal_look compare` against 58092cc, the 50 suites (preview 60 to 64).
+
+## 58. Eight free previews a day per connection (2026-11-11)
+
+The owner, after the 15 minute ticket went: "protect the free previews by IP instead, 8 a day, with a message that says the limit is reached".
+
+- **The ceiling.** `api/_lib/previewcap.py`: each restoration `/api/enhance` makes with the image model leaves an empty marker `ops/previewcap/<UTC day>/<tag>-<random>.json`; the tag is 12 hex characters of an HMAC (the ticket secret) of the address and the day, never the address, and another day gives the same address another tag. A connection with 8 markers today is refused by `/api/analyze` (before the photo is checked) and by `/api/enhance` (before the model is called): 429 `preview_limit`, `limit`, `retry_after` (seconds to 00:00 UTC) and a sentence in the page's language that names the ceiling and says the previews already made can still be ordered (`iris.PreviewLimit`, RUN_ERRORS "limit" in en, de, lt, hu, hr). /try shows the server's sentence as it shows every refusal.
+- **Where it counts.** Only where storage is configured and the daily clean-up runs (`events.retention_ok`); `SNAPEYES_PREVIEW_DAY` sets the number (0 turns it off), unset it is 8 on Vercel and off elsewhere. A storage error lets the preview through. The clean-up (`events.purge_old`) deletes the days older than two.
+- **The privacy policy** (every edition and language) gains one paragraph in "operations" and one retention line, worded as the admin sign-in's keyed hash; `LEGAL_UPDATED` is 2026-11-11, the consent version is not bumped.
+
+**Checks.** preview 64 to 71 (G1 to G7: the third preview refused without a model call, the German and Croatian sentences, analyze before the photo, another connection, the markers without an address, the tag per day, off at 0 and without the clean-up, the clean-up after two days); the au suite's 1111 step (eu_cap.json, eu_cap_raw.json: the policy differs by exactly that paragraph and line); the date pins of v3checkout, v3cutover, catalogue_page and legal_counter.

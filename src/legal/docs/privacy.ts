@@ -107,6 +107,8 @@ const OPS = {
       'Legal basis: our legitimate interest in running the service reliably, finding faults and keeping its costs under control and learning what puts visitors off (Art. 6(1)(f) GDPR). The events, and the daily counts made from them, are deleted automatically after 12 months; the texts of the feedback box after 90 days. You may object at any time (see [Your rights](#rights)).',
     admin: ADMIN_LOG.en.log,
     signin: ADMIN_LOG.en.signin,
+    // the day's ceiling of free previews per connection (api/_lib/previewcap.py, 2026-11-11): a keyed hash of the address and the day, ops/previewcap/<day>/, deleted after 2 days
+    previewcap: 'To keep the free preview free for everyone, one internet connection can make a limited number of previews a day. For each preview our server stores a hash of the IP address it came from and of the day, made with a secret key, never the address itself: the address cannot be read back from it, and the next day the same address gives another hash. These entries are deleted automatically after 2 days. Legal basis: our legitimate interest in keeping the free preview available and its costs under control (Art. 6(1)(f) GDPR).',
   },
   de: {
     events:
@@ -123,6 +125,7 @@ const OPS = {
       'Rechtsgrundlage: unser berechtigtes Interesse, den Dienst zuverlässig zu betreiben, Fehler zu finden, seine Kosten im Griff zu behalten und zu erfahren, was Besucher abschreckt (Art. 6 Abs. 1 lit. f DSGVO). Die Ereignisse und die daraus gebildeten Tageszahlen werden nach 12 Monaten automatisch gelöscht, die Texte des Feedback-Felds nach 90 Tagen. Sie können jederzeit widersprechen (siehe [Ihre Rechte](#rights)).',
     admin: ADMIN_LOG.de.log,
     signin: ADMIN_LOG.de.signin,
+    previewcap: 'Damit die kostenlose Vorschau für alle kostenlos bleibt, kann eine Internetverbindung nur eine begrenzte Zahl von Vorschauen pro Tag erstellen. Für jede Vorschau speichert unser Server einen mit einem geheimen Schlüssel gebildeten Hashwert der IP-Adresse, von der sie kam, und des Tages, nie die Adresse selbst: Die Adresse lässt sich daraus nicht zurückgewinnen, und am nächsten Tag ergibt dieselbe Adresse einen anderen Hashwert. Diese Einträge werden nach 2 Tagen automatisch gelöscht. Rechtsgrundlage: unser berechtigtes Interesse, die kostenlose Vorschau verfügbar und ihre Kosten im Griff zu halten (Art. 6 Abs. 1 lit. f DSGVO).',
   },
 };
 
@@ -194,7 +197,7 @@ const en: LegalDoc = {
     {
       id: 'operations',
       title: 'Service statistics and our admin log',
-      blocks: [OPS.en.events, OPS.en.counter, OPS.en.campaign, OPS.en.feedback, OPS.en.content, OPS.en.basis, OPS.en.admin, OPS.en.signin],
+      blocks: [OPS.en.events, OPS.en.counter, OPS.en.campaign, OPS.en.feedback, OPS.en.content, OPS.en.basis, OPS.en.admin, OPS.en.signin, OPS.en.previewcap],
     },
     {
       id: 'orders',
@@ -263,6 +266,7 @@ const en: LegalDoc = {
             ['Feedback texts', 'The optional texts of the feedback box (see [Service statistics and our admin log](#operations)): deleted automatically after 90 days, or earlier by us. The answers themselves are only codes and part of the technical events, kept as described above.'],
             ['Admin log', 'What we did with an order in our admin panel: deleted automatically after 24 months; the entries about an order stay with its order record.'],
             ['Failed sign-ins to our admin panel', 'A hash of the IP address, made with a secret key, deleted automatically after 2 days.'],
+            ['Free previews per connection', 'A hash of the IP address and the day, made with a secret key, deleted automatically after 2 days.'],
             ['Emails', 'For as long as we need them for your request and any follow-up.'],
           ],
         },
@@ -378,7 +382,7 @@ const de: LegalDoc = {
     {
       id: 'operations',
       title: 'Betriebsstatistik und Admin-Protokoll',
-      blocks: [OPS.de.events, OPS.de.counter, OPS.de.campaign, OPS.de.feedback, OPS.de.content, OPS.de.basis, OPS.de.admin, OPS.de.signin],
+      blocks: [OPS.de.events, OPS.de.counter, OPS.de.campaign, OPS.de.feedback, OPS.de.content, OPS.de.basis, OPS.de.admin, OPS.de.signin, OPS.de.previewcap],
     },
     {
       id: 'orders',
@@ -447,6 +451,7 @@ const de: LegalDoc = {
             ['Feedback-Texte', 'Die freiwilligen Texte des Feedback-Felds (siehe [Betriebsstatistik und Admin-Protokoll](#operations)): werden nach 90 Tagen automatisch gelöscht, von uns auch früher. Die Antworten selbst sind nur Codes und Teil der technischen Ereignisse, die wie oben beschrieben aufbewahrt werden.'],
             ['Admin-Protokoll', 'Was wir in unserem Admin-Bereich mit einer Bestellung getan haben: wird nach 24 Monaten automatisch gelöscht; die Einträge zu einer Bestellung bleiben bei ihrem Bestelldatensatz.'],
             ['Fehlgeschlagene Anmeldungen im Admin-Bereich', 'Ein mit einem geheimen Schlüssel gebildeter Hashwert der IP-Adresse, nach 2 Tagen automatisch gelöscht.'],
+            ['Kostenlose Vorschauen pro Verbindung', 'Ein mit einem geheimen Schlüssel gebildeter Hashwert der IP-Adresse und des Tages, nach 2 Tagen automatisch gelöscht.'],
             ['E-Mails', 'So lange, wie wir sie für Ihr Anliegen und etwaige Rückfragen brauchen.'],
           ],
         },

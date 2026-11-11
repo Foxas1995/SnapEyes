@@ -3,7 +3,7 @@
 restoration sealed; /api/compose and the order draft take the sealed copy back. Runs on the payments harness (fake
 Stripe + Resend, local store folder, the real handlers over HTTP) with the image model stubbed (no key, no cost).
     python test_preview.py        PASS/FAIL per check, exit 1 on any failure"""
-import os, sys, io, json, time, base64, hashlib, importlib.util
+import os, re, sys, io, json, time, base64, hashlib, importlib.util
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import harness as H
@@ -466,6 +466,72 @@ check("F4 POST /api/master_eye with a compose copy as sealed -> 400, nothing cla
 c, jme3, _ = post("/api/master_eye", {"crop": CROP_B64, "sealed": SEALED, "pad": 1.12, "order": LAB, "eye": 1,
                                       "ticket": L.mint_ticket("unlock")})
 check("F5 sealed does not get past master_eye's unlock ticket (a plain unlock ticket -> 403)", c == 403, (c, jme3))
+
+# ================================================================== G. the day's ceiling of free previews per connection (2026-11-11)
+# api/_lib/previewcap.py: one marker per preview made, a keyed hash of the address and the day; the connection's ceiling refused by /api/analyze and
+# /api/enhance (429 preview_limit, the sentence in the page's language), counted only where the daily clean-up runs, the days older than two deleted
+spec = importlib.util.spec_from_file_location("analyze", os.path.join(H.API, "analyze.py"))
+am = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(am)
+H.MODS["analyze"] = am
+from _lib import events as EV
+PCAP = H.MODS["enhance"].PC
+os.environ.update({"SNAPEYES_PREVIEW_DAY": "2", "CRON_SECRET": "c" * 40})
+
+
+def post_from(path, body, ip):
+    r = requests.post(BASE + path, data=json.dumps(body), headers={"Content-Type": "application/json", "x-real-ip": ip}, timeout=180)
+    try:
+        return r.status_code, r.json()
+    except ValueError:
+        return r.status_code, {"raw": r.text[:200]}
+
+
+def enh(lang="lt"):
+    return {"crop": b64(CROP_RAW), "mode": "artistic", "pad": 1.12, "ticket": L.mint_ticket("work"), "lang": lang}
+
+
+ONE, TWO = "203.0.113.7", "198.51.100.4"
+TODAY = f"{PCAP.TOP}/{PCAP.day()}"
+g = [post_from("/api/enhance", enh(), ONE)[0] for _ in range(2)]
+calls = len(MODEL_CALLS)
+c, jg = post_from("/api/enhance", enh(), ONE)
+check("G1 the third preview of one connection on a day with a ceiling of 2 -> 429 preview_limit with the ceiling, the seconds to midnight and the Lithuanian sentence; no model call",
+      g == [200, 200] and c == 429 and jg.get("reason") == "preview_limit" and jg.get("limit") == 2 and 0 < jg.get("retry_after", 0) <= 86401
+      and "(2 per dieną)" in jg.get("error", "") and "rytoj" in jg.get("error", "") and len(MODEL_CALLS) == calls, (g, c, jg))
+c, jd = post_from("/api/enhance", enh("de"), ONE)
+c2, ja = post_from("/api/analyze", {"image": "", "lang": "hr"}, ONE)
+check("G2 the same connection again: the German sentence (/api/enhance) and the Croatian one from /api/analyze, which refuses before it reads the photo",
+      c == 429 and "(2 pro Tag)" in jd.get("error", "") and c2 == 429 and ja.get("reason") == "preview_limit" and "(2 dnevno)" in ja.get("error", ""), (c, jd, c2, ja))
+c, jo = post_from("/api/enhance", enh(), TWO)
+marks = files_under(TODAY)
+names = [os.path.basename(m) for m in marks]
+check("G3 another connection still makes its preview; the markers are a 12 hex tag and a random part, empty, with no address in them",
+      c == 200 and len(marks) == 3 and all(re.fullmatch(r"[0-9a-f]{12}-[0-9a-f]{8}\.json", n) for n in names) and len({n[:12] for n in names}) == 2
+      and all(open(m, "rb").read() == b"{}" for m in marks) and ONE not in " ".join(names) and TWO not in " ".join(names), (c, names))
+class _Req:
+    headers = {"x-real-ip": ONE}
+check("G4 the tag is the address and the day keyed: another day gives the same address another tag",
+      PCAP.tag(_Req()) in {n[:12] for n in names} and PCAP.tag(_Req(), now=time.time() + 86400) != PCAP.tag(_Req()),
+      (PCAP.tag(_Req()), names))
+os.environ["SNAPEYES_PREVIEW_DAY"] = "0"
+c0, _ = post_from("/api/enhance", enh(), ONE)
+os.environ["SNAPEYES_PREVIEW_DAY"] = "2"
+os.environ.pop("CRON_SECRET")
+n_before = len(files_under(TODAY))
+c1, _ = post_from("/api/enhance", enh(), ONE)
+check("G5 a ceiling of 0 turns it off; without the daily clean-up (no CRON_SECRET) nothing is counted or stored",
+      c0 == 200 and c1 == 200 and len(files_under(TODAY)) == n_before, (c0, c1, n_before, len(files_under(TODAY))))
+os.environ["CRON_SECRET"] = "c" * 40
+old_day = time.strftime("%Y%m%d", time.gmtime(time.time() - 3 * 86400))
+store.put(f"{PCAP.TOP}/{old_day}/abcdefabcdef-00000000.json", b"{}", "application/json")
+res = EV.purge_old(yes=True)
+check("G6 the daily clean-up deletes the markers of the days older than two and keeps today's",
+      res.get("previewcap") == 1 and not files_under(f"{PCAP.TOP}/{old_day}") and len(files_under(TODAY)) == 3, (res, files_under(TODAY)))
+check("G7 the refusal sentences carry no dash", all(ch not in open(os.path.join(H.API, "_lib", f), encoding="utf-8").read()
+                                                       for f in ("previewcap.py", "iris_lt.py", "iris_hu.py", "iris_hr.py") for ch in DASHES))
+for k in ("SNAPEYES_PREVIEW_DAY", "CRON_SECRET"):
+    os.environ.pop(k, None)
 
 # ------------------------------------------------------------------
 ok = sum(1 for _, x in RESULTS if x)

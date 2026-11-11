@@ -43,6 +43,9 @@ RUN_ERRORS_LT = {
     "denied": "Mūsų studija trumpam uždaryta. Bandykite dar kartą vėliau.",
     # anything else (500)
     "failed": "Mūsų pusėje kažkas nepavyko. Bandykite dar kartą.",
+    # PreviewLimit: the day's ceiling of free previews of this connection (api/_lib/previewcap.py); {n} is the ceiling
+    "limit": ("Iš šio interneto ryšio šiandien pasiektas nemokamų peržiūrų limitas ({n} per dieną). Daugiau galėsite sukurti rytoj. "
+              "Jau sukurtas peržiūras galite užsisakyti. Klausimai? Rašykite info@snapeyes.com."),
 }
 
 # Left in English on purpose, as the German pages leave them: the art styles' default title drawn in the artwork
