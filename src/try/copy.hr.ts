@@ -425,10 +425,10 @@ export const hr: TryCopy = {
       ? 'Uzorak oka koji je izradila umjetna inteligencija ne može se naručiti. Zamijenite ga svojim okom da biste naručili ovo umjetničko djelo.'
       : 'Uzorci očiju koje je izradila umjetna inteligencija ne mogu se naručiti. Zamijenite ih svojim očima da biste naručili ovo umjetničko djelo.'),
     replaceSampleEye: (i: number) => `Zamijenite ${i}. oko svojim`,
-    // api/_lib/iris.py TICKET_TTL: an eye's draft is accepted only with its photo's 15-minute work ticket
+    // api/order.py draft: an eye is accepted with its photo's work ticket (15 minutes) or its sealed preview (api/_lib/preview.py SEAL_TTL, 48 hours)
     stale: (list: number[], total: number) => (total === 1
-      ? 'Vaša je fotografija snimljena prije više od 15 minuta. Fotografija se može naručiti u roku od 15 minuta od snimanja, pa je za narudžbu snimite ponovno.'
-      : `${list.length === 1 ? `${list[0]}. oko snimljeno je` : `${ordList(list)} oko snimljena su`} prije više od 15 minuta. Fotografija se može naručiti u roku od 15 minuta od snimanja, pa ${list.length === 1 ? 'ga' : 'ih'} za narudžbu snimite ponovno.${list.length < total ? ' Vaše ostale oči ostaju kakve jesu.' : ''}`),
+      ? 'Vaša je fotografija snimljena prije više od 2 dana. Fotografija se može naručiti u roku od 2 dana od snimanja, pa je za narudžbu snimite ponovno.'
+      : `${list.length === 1 ? `${list[0]}. oko snimljeno je` : `${ordList(list)} oko snimljena su`} prije više od 2 dana. Fotografija se može naručiti u roku od 2 dana od snimanja, pa ${list.length === 1 ? 'ga' : 'ih'} za narudžbu snimite ponovno.${list.length < total ? ' Vaše ostale oči ostaju kakve jesu.' : ''}`),
     cancelled: 'Plaćanje je otkazano. Ništa nije naplaćeno. Vaše je umjetničko djelo još ovdje: možete ga promijeniti ili ponovno naručiti.',
     cancelledLost: 'Plaćanje je otkazano. Ništa nije naplaćeno. Ova stranica nije mogla sačuvati vaš pregled, pa ponovno snimite fotografiju.',
     close: 'Zatvorite',

@@ -377,6 +377,18 @@ before2 = files_under(f"orders/{O1}")
 c, jx, _ = draft(3, O1, K1, sealed=SIZES["768"])
 check("D11 a smaller sealed_sizes copy is refused as an order's preview (400 preview_invalid), nothing stored",
       c == 400 and jx.get("reason") == "preview_invalid" and files_under(f"orders/{O1}") == before2, (c, jx))
+# 2026-11-11: the work ticket lives 15 minutes, the seal 48 hours. A draft whose ticket has run out is taken on its seal, one order per photo; the sample's seal,
+# which /api/enhance hands out without a ticket, and a plain preview are not taken without a ticket
+OLD_TICKET = L.mint_ticket("work", -5)
+c, jl, _ = draft(sealed=SEALED, ticket=OLD_TICKET)
+check("D12 a draft whose work ticket ran out, with a good sealed preview -> 200, a new order", c == 200 and jl.get("created") is True, (c, jl))
+c, jl2, _ = draft(sealed=SEALED, ticket=OLD_TICKET)
+check("D13 the same sealed preview sent again (a reply lost on the way) -> the same order", c == 200 and jl2.get("order") == jl.get("order")
+      and jl2.get("created") is False, (c, jl2, jl.get("order")))
+c, js, _ = draft(sealed=j3["sealed"], ticket=OLD_TICKET)
+check("D14 without a live ticket the sample eye's seal is refused (403): on its own it proves no photo", c == 403, (c, js))
+c, jp, _ = draft(preview=b64(CLEAN), ticket=OLD_TICKET)
+check("D15 without a live ticket a plain preview (an older page's) is refused (403)", c == 403, (c, jp))
 check("D10 the draft's new refusal sentences carry no dash", all(ch not in open(os.path.join(H.API, "order.py"),
                                                                                    encoding="utf-8").read() for ch in DASHES))
 

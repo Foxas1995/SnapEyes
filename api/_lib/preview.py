@@ -65,6 +65,9 @@ NONCE_BYTES = 16
 TAG_BYTES = 32
 HEAD_BYTES = 1 + 1 + 4 + NONCE_BYTES
 SEAL_TTL = 48 * 3600
+# the AI-generated sample eye's prepared restoration, the one file /api/enhance {sample: true} seals without a ticket (scripts/bake_sample.py makes it):
+# api/enhance.py takes only this file, and an order draft that rests on a seal alone refuses it (api/order.py draft)
+SAMPLE_SHA256 = "4c4429b21f0d7d4927e4c65a019ef8c00ca29588533f81bdd04caa3224ca3121"
 SEALED_B64_MAX = 1_700_000   # a sealed 1024 px enhance preview: api/order.py PREVIEW_B64_MAX (1.6 M) plus the envelope
 _LABEL = b"snapeyes-preview-seal-v1:"
 

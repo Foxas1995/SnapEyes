@@ -432,10 +432,10 @@ export const hu: TryCopy = {
       ? 'Az MI által generált mintaszem nem rendelhető meg. Cseréld le a saját szemedre, hogy megrendelhesd ezt az alkotást.'
       : 'Az MI által generált mintaszemek nem rendelhetők meg. Cseréld le őket valódi szemekre, hogy megrendelhesd ezt az alkotást.'),
     replaceSampleEye: (i: number) => `${i}. szem cseréje a sajátodra`,
-    // api/_lib/iris.py TICKET_TTL: an eye's draft is accepted only with its photo's 15-minute work ticket
+    // api/order.py draft: an eye is accepted with its photo's work ticket (15 minutes) or its sealed preview (api/_lib/preview.py SEAL_TTL, 48 hours)
     stale: (list: number[], total: number) => (total === 1
-      ? 'A fotódat több mint 15 perce készítetted. Egy fotó az elkészítése után 15 percig rendelhető meg, ezért a rendeléshez kérjük, fotózd újra.'
-      : `${Az(list[0] ?? 0)} ${ordList(list)} szemet több mint 15 perce fotóztad. Egy fotó az elkészítése után 15 percig rendelhető meg, ezért a rendeléshez kérjük, fotózd újra${list.length === 1 ? '' : ' őket'}.${list.length < total ? ' A többi szem marad, ahogy van.' : ''}`),
+      ? 'A fotódat több mint 2 napja készítetted. Egy fotó az elkészítése után 2 napig rendelhető meg, ezért a rendeléshez kérjük, fotózd újra.'
+      : `${Az(list[0] ?? 0)} ${ordList(list)} szemet több mint 2 napja fotóztad. Egy fotó az elkészítése után 2 napig rendelhető meg, ezért a rendeléshez kérjük, fotózd újra${list.length === 1 ? '' : ' őket'}.${list.length < total ? ' A többi szem marad, ahogy van.' : ''}`),
     cancelled: 'Fizetés megszakítva. Nem történt terhelés. Az alkotásod még itt van: módosíthatod, vagy újra megrendelheted.',
     cancelledLost: 'Fizetés megszakítva. Nem történt terhelés. Ez az oldal nem tudta megőrizni az előnézetedet, ezért kérjük, készítsd el újra a fotódat.',
     close: 'Bezárás',

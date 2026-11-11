@@ -486,10 +486,10 @@ const en = {
       ? 'The AI-generated sample eye cannot be ordered. Replace it with your own eye to order this artwork.'
       : 'The AI-generated sample eyes cannot be ordered. Replace them with your own eyes to order this artwork.'),
     replaceSampleEye: (i: number) => `Replace eye ${i} with your own`,
-    // api/_lib/iris.py TICKET_TTL: an eye's draft is accepted only with its photo's 15-minute work ticket
+    // api/order.py draft: an eye is accepted with its photo's work ticket (15 minutes) or its sealed preview (api/_lib/preview.py SEAL_TTL, 48 hours)
     stale: (list: number[], total: number) => (total === 1
-      ? 'Your photo was taken more than 15 minutes ago. A photo can be ordered within 15 minutes of taking it, so please take it again to order.'
-      : `${list.length === 1 ? `Eye ${list[0]} was` : `Eyes ${andList(list, 'and')} were`} taken more than 15 minutes ago. A photo can be ordered within 15 minutes of taking it, so please take ${list.length === 1 ? 'it' : 'them'} again to order.${list.length < total ? ' Your other eyes stay as they are.' : ''}`),
+      ? 'Your photo was taken more than 2 days ago. A photo can be ordered within 2 days of taking it, so please take it again to order.'
+      : `${list.length === 1 ? `Eye ${list[0]} was` : `Eyes ${andList(list, 'and')} were`} taken more than 2 days ago. A photo can be ordered within 2 days of taking it, so please take ${list.length === 1 ? 'it' : 'them'} again to order.${list.length < total ? ' Your other eyes stay as they are.' : ''}`),
     cancelled: 'Payment cancelled. Nothing was charged. Your artwork is still here: you can change it or order again.',
     cancelledLost: 'Payment cancelled. Nothing was charged. This page could not keep your preview, so please take your photo again.',
     close: 'Close',
@@ -954,8 +954,8 @@ const de: TryCopy = {
       : 'Die KI-generierten Beispielaugen können nicht bestellt werden. Ersetzen Sie sie durch Ihre eigenen Augen, um dieses Kunstwerk zu bestellen.'),
     replaceSampleEye: (i: number) => `Auge ${i} durch Ihr eigenes ersetzen`,
     stale: (list: number[], total: number) => (total === 1
-      ? 'Ihr Foto wurde vor mehr als 15 Minuten aufgenommen. Ein Foto kann innerhalb von 15 Minuten nach der Aufnahme bestellt werden. Bitte nehmen Sie es neu auf, um zu bestellen.'
-      : `${list.length === 1 ? `Auge ${list[0]} wurde` : `Die Augen ${andList(list, 'und')} wurden`} vor mehr als 15 Minuten aufgenommen. Ein Foto kann innerhalb von 15 Minuten nach der Aufnahme bestellt werden. Bitte nehmen Sie ${list.length === 1 ? 'es' : 'sie'} neu auf, um zu bestellen.${list.length < total ? ' Ihre anderen Augen bleiben, wie sie sind.' : ''}`),
+      ? 'Ihr Foto wurde vor mehr als 2 Tagen aufgenommen. Ein Foto kann innerhalb von 2 Tagen nach der Aufnahme bestellt werden. Bitte nehmen Sie es neu auf, um zu bestellen.'
+      : `${list.length === 1 ? `Auge ${list[0]} wurde` : `Die Augen ${andList(list, 'und')} wurden`} vor mehr als 2 Tagen aufgenommen. Ein Foto kann innerhalb von 2 Tagen nach der Aufnahme bestellt werden. Bitte nehmen Sie ${list.length === 1 ? 'es' : 'sie'} neu auf, um zu bestellen.${list.length < total ? ' Ihre anderen Augen bleiben, wie sie sind.' : ''}`),
     cancelled: 'Zahlung abgebrochen. Es wurde nichts berechnet. Ihr Kunstwerk ist noch da: Sie können es ändern oder erneut bestellen.',
     cancelledLost: 'Zahlung abgebrochen. Es wurde nichts berechnet. Diese Seite konnte Ihre Vorschau nicht behalten. Bitte nehmen Sie Ihr Foto erneut auf.',
     close: 'Schließen',

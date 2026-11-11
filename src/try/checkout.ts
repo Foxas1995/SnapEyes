@@ -2,9 +2,9 @@
 // what this tab keeps in sessionStorage for the way back from Stripe's page. No React here.
 //
 // Nothing is uploaded before the customer taps Buy: the privacy policy says the iris crop and the approved preview
-// are kept only once an order is started (src/legal/docs/privacy.ts). The server accepts an eye's draft only with the
-// work ticket /api/analyze gave its photo, and that ticket lives 15 minutes, so an eye taken earlier than that and
-// not yet uploaded has to be taken again before it can be ordered.
+// are kept only once an order is started (src/legal/docs/privacy.ts). The server accepts an eye's draft with the
+// work ticket /api/analyze gave its photo (15 minutes) or, after that, with the eye's sealed preview (48 hours, api/order.py
+// draft; 2026-11-11, the owner: a photo must not be lost after 15 minutes). Only an eye with neither has to be taken again.
 import { callApi, isStatus, orderPageUrl, statusPath, type ApiReply, type CheckoutReply, type DraftReply, type PriceChangedReply } from '../order/api';
 import type { Eye, Layout } from './multi';
 import type { Lang } from './lang';
@@ -14,6 +14,8 @@ import { currentMarket } from '../shared/markets';
 export const TICKET_MS = 900_000;
 /** Uploading takes a moment: a ticket this close to its end already counts as too old. */
 export const TICKET_MARGIN_MS = 45_000;
+/** A sealed preview this close to its end already counts as too old (api/_lib/preview.py SEAL_TTL, 48 hours). */
+const SEAL_MARGIN_MS = 5 * 60_000;
 /** api/_lib/pay.py SESSION_MIN is 32 minutes of draft life left; an order with less than this starts afresh. */
 const ORDER_FRESH_MS = 40 * 60_000;
 
@@ -105,7 +107,25 @@ export function clearCheckoutStorage(order: string): void {
  *  their work ticket is too old (or they never had one). */
 export function staleEyes(list: readonly Eye[], ref: OrderRef | null, now: number): number[] {
   const held = new Set(ref && ref.expiresAt * 1000 - now > ORDER_FRESH_MS ? ref.eyes : []);
-  return list.flatMap((e, i) => (!held.has(e.id) && !(e.draft && e.draft.until > now) ? [i + 1] : []));
+  return list.flatMap((e, i) => (!held.has(e.id) && !canUpload(e, now) ? [i + 1] : []));
+}
+
+/** When the server stops opening a sealed preview, in ms: the expiry the envelope carries (api/_lib/preview.py seal: seconds, big endian, bytes 2
+ *  to 5). null when it cannot be read. Only for what the page says before it tries: the server checks the seal itself. */
+export function sealedUntil(sealed: string | undefined): number | null {
+  if (!sealed) return null;
+  try {
+    const b = atob(sealed.slice(0, 8));
+    if (b.length < 6) return null;
+    return (b.charCodeAt(2) * 16777216 + b.charCodeAt(3) * 65536 + b.charCodeAt(4) * 256 + b.charCodeAt(5)) * 1000;
+  } catch {
+    return null;
+  }
+}
+
+/** Can this eye's draft be uploaded now: its crop is here, and its work ticket or its sealed preview is still good. */
+function canUpload(e: Eye, now: number): boolean {
+  return !!e.draft && (e.draft.until > now || (sealedUntil(e.sealed) ?? 0) - SEAL_MARGIN_MS > now);
 }
 
 export type CheckoutStep = { kind: 'sync' } | { kind: 'upload'; i: number; n: number } | { kind: 'arrange' } | { kind: 'checkout' };
@@ -215,9 +235,9 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
     ref.eyes = [...server.keys()];
   }
 
-  // 2. an eye the order lacks is uploaded with its own work ticket, which must still be good
+  // 2. an eye the order lacks is uploaded with its own work ticket or its sealed preview, one of which must still be good
   const now = Date.now();
-  const stale = list.flatMap((e, i) => (!server.has(e.id) && !(e.draft && e.draft.until > now) ? [i + 1] : []));
+  const stale = list.flatMap((e, i) => (!server.has(e.id) && !canUpload(e, now) ? [i + 1] : []));
   if (stale.length) return { kind: 'stale', eyes: stale, ref };
 
   const arrange = async (o: OrderRef, want: number[]): Promise<Attempt | null> => {

@@ -1,7 +1,7 @@
 // wave-pv: the page side of the sealed preview (src/try/multi.ts sealedFor, src/try/checkout.ts runCheckout's draft
 // upload), with a fake API. Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing.
 import { sealedFor, composeSide, keptSealed, type Eye } from '../../src/try/multi';
-import { runCheckout, takeSnapshot, saveSnapshot } from '../../src/try/checkout';
+import { runCheckout, takeSnapshot, saveSnapshot, sealedUntil, staleEyes } from '../../src/try/checkout';
 import { COPY } from '../../src/try/copy';
 
 type Rec = { path: string; body?: Record<string, unknown> };
@@ -84,6 +84,29 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
     r = await runCheckout(inp([eye('c', 'SEALED-c')]), () => {}, api);
     check(`draft refused ${reason} -> that eye is taken again (stale)`, r.kind === 'stale' && JSON.stringify((r as { eyes: number[] }).eyes) === '[1]', JSON.stringify(r));
   }
+
+  // 2026-11-11 (the owner: a photo must not be lost after 15 minutes): an eye whose work ticket has run out is still uploaded with its sealed preview while the
+  // seal is good (api/order.py draft takes it for its 48 hours); without a seal, or with one past its end, it has to be taken again
+  const envelope = (expSec: number) => {
+    const b = [1, 1, (expSec >>> 24) & 255, (expSec >>> 16) & 255, (expSec >>> 8) & 255, expSec & 255, 7, 7, 7];
+    return btoa(String.fromCharCode(...b)) + 'REST';
+  };
+  const nowSec = Math.floor(Date.now() / 1000);
+  const goodSeal = envelope(nowSec + 3600), oldSeal = envelope(nowSec - 60);
+  check('sealedUntil reads the expiry of the envelope (seconds, big endian, bytes 2 to 5) in ms, null for what it cannot read',
+    sealedUntil(goodSeal) === (nowSec + 3600) * 1000 && sealedUntil(undefined) === null && sealedUntil('SEALED-a') === null, String(sealedUntil(goodSeal)));
+  const late = (id: string, sealed?: string): Eye => ({ ...eye(id, sealed), draft: { crop: `CROP-${id}`, ticket: 'work.1.x', until: Date.now() - 1000 } });
+  const now = Date.now();
+  check('staleEyes: a run-out ticket with a good seal is not stale; with no seal or a seal past its end it is',
+    JSON.stringify(staleEyes([late('g', goodSeal), late('n'), late('o', oldSeal)], null, now)) === '[2,3]', JSON.stringify(staleEyes([late('g', goodSeal), late('n'), late('o', oldSeal)], null, now)));
+  calls.length = 0;
+  draftAnswer = () => reply(200, { ok: true, order: 'o2', k: 'k'.repeat(32), eye: 1, created: true, expires_at: Math.floor(Date.now() / 1000) + 86400 });
+  r = await runCheckout(inp([late('g', goodSeal)]), () => {}, api);
+  const d3 = calls.find((c) => c.body?.action === 'draft')?.body ?? {};
+  check('an eye taken more than 15 minutes ago goes to the payment page with its sealed preview', r.kind === 'redirect' && d3.sealed === goodSeal && d3.crop === 'CROP-g', JSON.stringify(r));
+  calls.length = 0;
+  r = await runCheckout(inp([late('o', oldSeal)]), () => {}, api);
+  check('...but not with a seal past its end: that eye is taken again, nothing uploaded', r.kind === 'stale' && !calls.some((c) => c.body?.action === 'draft'), JSON.stringify(r));
 
   // the snapshot kept for the way back from Stripe accepts eyes with sealed copies and refuses a malformed one
   const snapEye = (x: Record<string, unknown>) => ({ id: 'e1', before: 'b', image: 'i', thumb: 't', pad: 1.12, fallback: false, usedSr: false, stored: false, glarePct: 0, sample: false, colourOff: false, ...x });

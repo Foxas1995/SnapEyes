@@ -410,10 +410,10 @@ export const lt: TryCopy = {
       ? 'DI sugeneruotos pavyzdinės akies užsisakyti negalima. Pakeiskite ją savo akimi, kad galėtumėte užsisakyti šį kūrinį.'
       : 'DI sugeneruotų pavyzdinių akių užsisakyti negalima. Pakeiskite jas savo akimis, kad galėtumėte užsisakyti šį kūrinį.'),
     replaceSampleEye: (i: number) => `Pakeisti akį ${i} savo akimi`,
-    // api/_lib/iris.py TICKET_TTL: a photo can be ordered within 15 minutes of taking it
+    // api/order.py draft: an eye is accepted with its photo's work ticket (15 minutes) or its sealed preview (api/_lib/preview.py SEAL_TTL, 48 hours)
     stale: (list: number[], total: number) => (total === 1
-      ? 'Jūsų nuotrauka padaryta daugiau nei prieš 15 minučių. Nuotrauką galima užsisakyti per 15 minučių nuo jos padarymo, todėl, kad galėtumėte užsisakyti, nufotografuokite dar kartą.'
-      : `${list.length === 1 ? `Akis ${list[0]} nufotografuota` : `Akys ${andList(list, 'ir')} nufotografuotos`} daugiau nei prieš 15 minučių. Nuotrauką galima užsisakyti per 15 minučių nuo jos padarymo, todėl, kad galėtumėte užsisakyti, ${list.length === 1 ? 'ją' : 'jas'} nufotografuokite dar kartą.${list.length < total ? ' Kitos Jūsų akys lieka tokios, kokios yra.' : ''}`),
+      ? 'Jūsų nuotrauka padaryta daugiau nei prieš 2 paras. Nuotrauką galima užsisakyti per 2 paras nuo jos padarymo, todėl, kad galėtumėte užsisakyti, nufotografuokite dar kartą.'
+      : `${list.length === 1 ? `Akis ${list[0]} nufotografuota` : `Akys ${andList(list, 'ir')} nufotografuotos`} daugiau nei prieš 2 paras. Nuotrauką galima užsisakyti per 2 paras nuo jos padarymo, todėl, kad galėtumėte užsisakyti, ${list.length === 1 ? 'ją' : 'jas'} nufotografuokite dar kartą.${list.length < total ? ' Kitos Jūsų akys lieka tokios, kokios yra.' : ''}`),
     cancelled: 'Mokėjimas atšauktas. Pinigai nenuskaityti. Jūsų kūrinys vis dar čia: galite jį pakeisti arba užsisakyti dar kartą.',
     cancelledLost: 'Mokėjimas atšauktas. Pinigai nenuskaityti. Šis puslapis neišsaugojo Jūsų peržiūros, todėl nufotografuokite dar kartą.',
     close: 'Uždaryti',

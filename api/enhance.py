@@ -46,7 +46,7 @@ from _lib.styles import reveal as REV   # the Reveal's numbers and its display c
 # edge inside it), which held the Universe style and raised the "Your eye needs a retake" card for a picture the visitor did not take. The file
 # of today is a new draw of the same chain on the same crop and passes BOTH rules (lid 0 / 0 / 10 outliers, fill n_step 95). Replace the file and
 # this changes with it (scripts/bake_sample.py prints it); the page then falls back to the studio.
-SAMPLE_SHA256 = "4c4429b21f0d7d4927e4c65a019ef8c00ca29588533f81bdd04caa3224ca3121"
+SAMPLE_SHA256 = P.SAMPLE_SHA256      # kept in api/_lib/preview.py: the order draft refuses this file too
 SAMPLE_B64_MAX = 600_000
 
 def _measure(clean, pad, memo=False):

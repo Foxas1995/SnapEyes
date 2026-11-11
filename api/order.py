@@ -26,7 +26,8 @@ draft: one eye of an unpaid order, uploaded on its own (the 4.5 MB request limit
   the id and no profile (the gate is unknown). Old pages send
   preview = the clean image string instead, accepted for one release (a display copy, which an old page would get
   from the new /api/enhance, is refused 409 preview_outdated). pad = the pad
-  both used, ticket = the work ticket from /api/analyze (15 minutes: proof the eye came through the engine). Without
+  both used, ticket = the work ticket from /api/analyze (15 minutes: proof the eye came through the engine; after that the sealed
+  preview is the proof for its 48 hours, but never the sample eye's seal, which needs no ticket to get). Without
   order and k a new order is made and its id and access key are returned; with them the eye is added to that order
   or replaces the eye in the same slot. One work ticket has at most one unpaid order (a repeat gets the same order
   back; after that order was paid, one new one). Refused once the order is paid (409 order_paid) or 24 h after it was made
@@ -299,10 +300,23 @@ def _download(order, key, dl, url=None):
 
 
 # ----------------------------------------------------------------------------- draft
+def _seal_key(sealed):
+    """What a draft that rests on its seal keys its order by in pay.order_for_ticket, which gives one photo one unpaid order (a reply lost on the
+    way and sent again finds the same order): a stand-in ticket of the seal's digest whose expiry is the end of today, so pay.ticket_path files
+    its marker under that day and the daily clean-up removes it with the others."""
+    end = (int(time.time()) // 86400 + 1) * 86400
+    return f"seal.{end}.{hashlib.sha256(sealed.encode('ascii', 'replace')).hexdigest()[:32]}"
+
+
 def draft(body):
     _ordering_open()
     ticket = body.get("ticket")
-    if not L.check_ticket(ticket):
+    # The work ticket of /api/analyze lives 15 minutes; the sealed preview is this server's own proof that the eye came through the engine and lives
+    # P.SEAL_TTL (48 hours). So an eye whose ticket has run out is still taken with its seal (2026-11-11, the owner: a photo must not be lost after
+    # 15 minutes; the ticket never limited free previews, /api/analyze gives one to anyone). A plain preview (an older page's) still needs the ticket.
+    fresh = L.check_ticket(ticket)
+    sealed = body.get("sealed")
+    if not fresh and not (isinstance(sealed, str) and sealed):
         raise PermissionError("order draft: work ticket missing or expired")
     eye = ME._eye(body.get("eye"))
     cs, ss = body.get("crop"), body.get("sealed")
@@ -311,6 +325,9 @@ def draft(body):
         raise _too_large("upload")
     craw, cfmt, cside = _image(cs, "crop", CROP_B64_MAX)
     praw, pfmt, pside, pmeta = _preview_full(body)
+    if not fresh and hashlib.sha256(praw).hexdigest() == P.SAMPLE_SHA256:
+        # the sample's seal is handed out without a ticket (api/enhance.py sample): on its own it proves no photo
+        raise PermissionError("order draft: the AI-generated sample eye is no photo to order")
     pad = ME._pad(body.get("pad"))
     lang = pay.lang_of(body.get("lang"))
     ref = body.get("ref")
@@ -319,7 +336,7 @@ def draft(body):
     created = False
     if order in (None, "") and k in (None, ""):
         pay.draft_room(len(craw) + len(praw))
-        order, k, rec, created = pay.order_for_ticket(ticket, lang)
+        order, k, rec, created = pay.order_for_ticket(ticket if fresh else _seal_key(sealed), lang)
         if created:
             pay.log(f"order {order} created (draft eye {eye})")
     else:

@@ -14,7 +14,7 @@ here), so one run is one call (about 0.07 USD). It prints the gate of the candid
     SNAPEYES_DEV_KEYFILE=1 python scripts/bake_sample.py --out <folder> --yes-spend
 
 The key is read by api/_lib/iris.py (GEMINI_API_KEY, or C:\\kuriam\\.gemini-key with SNAPEYES_DEV_KEYFILE=1) and never printed. Without --yes-spend nothing is called.
-After a good candidate (both rules ok, fidelity above the floor, looked at): copy it over the shipped file, put its sha256 into api/enhance.py SAMPLE_SHA256, and
+After a good candidate (both rules ok, fidelity above the floor, looked at): copy it over the shipped file, put its sha256 into api/_lib/preview.py SAMPLE_SHA256, and
 run the suites (suites/README.md)."""
 import argparse, base64, hashlib, json, os, sys, time
 
