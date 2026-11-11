@@ -278,7 +278,8 @@ async function checkStatic() {
         h2: document.querySelectorAll('#revealH').length, sticky: [...document.querySelectorAll('#reveal *')].filter((e) => getComputedStyle(e).position === 'sticky').length }; })())`));
     expect('static', !r.scene && (phone ? r.own && r.steps === 3 && r.sticky === 1 : !r.own && r.steps === 0 && r.sticky === 0), `${tag}: the scene of the desktop is there (${r.scene}), or the phone's scene is not as it should be (scene ${r.own}, ${r.steps} step rows, ${r.sticky} sticky elements; a phone with motion has one, anything else none)`);
     expect('static', r.ranges === 1 && r.h2 === 1, `${tag}: ${r.ranges} sliders and ${r.h2} headings (want 1 and 1)`);
-    expect('static', r.row, `${tag}: the three pictures of the strip are not in a row`);
+    // a phone with its own scene has just seen the three states in it: the strip keeps its call to action and leaves its three pictures out (2026-11-10)
+    expect('static', phone ? r.strip === 0 : r.row, phone ? `${tag}: the strip shows ${r.strip} pictures under the phone's scene (want none)` : `${tag}: the three pictures of the strip are not in a row`);
     // the strip's pictures are shown once the engine has seen them (or at once without it)
     await page.eval("document.querySelector('.lp-strip').scrollIntoView({ block: 'center', behavior: 'instant' })");
     await sleep(2200);
@@ -286,7 +287,7 @@ async function checkStatic() {
     expect('static', shown.every((o) => o === 1), `${tag}: after being on screen the strip's parts have opacities ${shown.join(', ')} (want 1)`);
     await page.close();
   }
-  if (!problems.some((x) => x.startsWith('static'))) pass('static', 'reduced motion at 1280, 375 and 767 px and a short window: no scene or pin, the slider and the three pictures in a row, everything shown; a phone with motion: no desktop scene, its own scene, the slider and the strip under it');
+  if (!problems.some((x) => x.startsWith('static'))) pass('static', 'reduced motion at 1280, 375 and 767 px and a short window: no scene or pin, the slider and the three pictures in a row, everything shown; a phone with motion: no desktop scene, its own scene, the slider and the call to action under it (no second set of the three pictures)');
 }
 
 // ---------------------------------------------------------------------------------------------------- fit

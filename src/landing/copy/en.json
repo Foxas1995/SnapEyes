@@ -238,7 +238,7 @@
   },
   "sizes": {
     "eyebrow": "Sizes",
-    "title": "Enough pixels for {printMax}",
+    "title": "Sharp prints up to {printMax}",
     "intro": "Pick a size: the drawing is to scale.",
     "svgLabel": "A to scale drawing of four print sizes on a wall, with a sofa and a person for scale",
     "sofa": "Sofa, 220 cm",
@@ -250,22 +250,22 @@
       {
         "cm": 20,
         "t": "Desk and shelf",
-        "b": "More than print shops ask for"
+        "b": "Very sharp"
       },
       {
         "cm": 30,
         "t": "Above a console",
-        "b": "Above the usual 150 to 300"
+        "b": "Very sharp"
       },
       {
         "cm": 40,
         "t": "A wall piece",
-        "b": "Inside the usual 150 to 300"
+        "b": "Sharp"
       },
       {
         "cm": 50,
         "t": "The largest we suggest",
-        "b": "Inside the usual 150 to 300"
+        "b": "Sharp"
       }
     ]
   },
@@ -416,8 +416,8 @@
       }
     },
     "mixed": "Our own eye and example photos",
-    "priceOne": "One eye, {price}",
-    "priceTwo": "Two eyes, {price}",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
     "priceFrom": "From {price}",
     "wallOn": "On a wall",
     "wallOff": "Flat",
@@ -444,8 +444,8 @@
       },
       {
         "t": "Get your file",
-        "b": "Choose a style; your file is made in full resolution.",
-        "bOpen": "Choose a style and pay through Stripe; your file is made in full resolution."
+        "b": "Choose a style and get a large file.",
+        "bOpen": "Choose a style, pay through Stripe and get a large file."
       }
     ],
     "videoPlay": "Play the guide video",
@@ -490,10 +490,10 @@
     "eyes": "{n} eyes",
     "includesTitle": "What you receive",
     "includes": [
-      "{px}, no watermark",
+      "A large file, no watermark",
       "Made from your preview",
       "12 months to download",
-      "Personal licence"
+      "For personal use"
     ],
     "notIncludes": "Printing is not part of your order.",
     "payOpen": "Secure card payment through Stripe.",
@@ -509,7 +509,7 @@
     "eyebrow": "Look closer",
     "title": "Cropped straight from the file",
     "intro": "A real piece of the file, not enlarged.",
-    "badge": "{n} px crop",
+    "badge": "Actual size",
     "fibreTitle": "Our own eye",
     "fibreAlt": "A close-up of our own restored iris, cropped from the 4096 px file: radial fibres, a gold collarette and the edge of the pupil.",
     "locatorAlt": "The whole restored iris, with a square marking where the close-up was cropped",

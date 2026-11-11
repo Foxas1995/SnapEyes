@@ -32,7 +32,6 @@
   .lp-eyechip { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 5px 16px 5px 6px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); transition: border-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out); }
   .lp-eyechip[aria-checked="true"] { border-color: var(--gold); color: var(--t-1); background: rgb(var(--gold-rgb) / .07); }
   .lp-eyechip:hover { color: #fff; }
-  .lp-eyenote { margin-top: 10px; font-size: 13px; color: var(--ink-3); }
   .lp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px 12px; margin-top: 30px; }
   @media (min-width: 640px) {
     .lp-grid { gap: 40px 22px; }
@@ -102,6 +101,8 @@
     .lp-grid:not(.lp-wide) { gap: 22px 12px; margin-top: 18px; }
     .lp-grid:not(.lp-wide) .lp-wallbtn { right: 8px; bottom: 8px; padding: 0 10px; }
     .lp-grid:not(.lp-wide) .lp-wallbtn span { display: none; }
+    /* the name, then its price under it, in every tile alike (a long name used to push its price to a line of its own and a short one did not) */
+    .lp-grid:not(.lp-wide) .lp-tile-top { flex-direction: column; align-items: flex-start; gap: 4px; }
   }
   .lp-tabs { scroll-padding-inline: var(--gut); }
   @media (max-width: 959px) {
@@ -114,7 +115,6 @@
     .lp-eyepick { order: 3; margin-top: 14px; flex-wrap: nowrap; }
     .lp-grid { order: 4; }
     .lp-eyepick .lp-lab { display: none; }
-    .lp-eyenote { order: 5; }
     .lp-eyechip { padding-right: 6px; }
     .lp-eyechip:not([aria-checked="true"]) .lp-en { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .lp-eyechip[aria-checked="true"] { padding-right: 14px; }

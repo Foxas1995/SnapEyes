@@ -238,7 +238,7 @@
   },
   "sizes": {
     "eyebrow": "Dydžiai",
-    "title": "Pakanka pikselių {printMax} spaudiniui",
+    "title": "Ryškus spaudinys iki {printMax}",
     "intro": "Pasirinkite dydį: piešinys išlaiko mastelį.",
     "svgLabel": "Mastelį išlaikantis piešinys: keturi spaudinio dydžiai ant sienos su sofa ir žmogumi masteliui palyginti",
     "sofa": "Sofa, 220 cm",
@@ -250,22 +250,22 @@
       {
         "cm": 20,
         "t": "Darbo stalas ir lentyna",
-        "b": "Daugiau, nei reikalauja spaustuvės"
+        "b": "Labai ryšku"
       },
       {
         "cm": 30,
         "t": "Virš komodos",
-        "b": "Daugiau nei įprastas diapazonas"
+        "b": "Labai ryšku"
       },
       {
         "cm": 40,
         "t": "Kūrinys sienai",
-        "b": "Įprastame diapazone: nuo 150 iki 300"
+        "b": "Ryšku"
       },
       {
         "cm": 50,
         "t": "Didžiausias, kurį siūlome",
-        "b": "Įprastame diapazone: nuo 150 iki 300"
+        "b": "Ryšku"
       }
     ]
   },
@@ -416,8 +416,8 @@
       }
     },
     "mixed": "Mūsų pačių akis ir pavyzdinės nuotraukos",
-    "priceOne": "Viena akis: {price}",
-    "priceTwo": "Dvi akys: {price}",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
     "priceFrom": "Nuo {price}",
     "wallOn": "Ant sienos",
     "wallOff": "Plokščias vaizdas",
@@ -444,8 +444,8 @@
       },
       {
         "t": "Gaukite failą",
-        "b": "Pasirinkite stilių: failas sukuriamas visa raiška.",
-        "bOpen": "Pasirinkite stilių ir sumokėkite per Stripe: failas sukuriamas visa raiška."
+        "b": "Pasirinkite stilių ir gaukite didelį failą.",
+        "bOpen": "Pasirinkite stilių, sumokėkite per Stripe ir gaukite didelį failą."
       }
     ],
     "videoPlay": "Paleisti vaizdo įrašą",
@@ -490,10 +490,10 @@
     "eyes": "{n} akys",
     "includesTitle": "Ką gausite",
     "includes": [
-      "{px}, be vandens ženklo",
+      "Didelis failas be vandens ženklo",
       "Pagal Jūsų peržiūrą",
       "Atsisiuntimas 12 mėnesių",
-      "Asmeninė licencija"
+      "Asmeniniam naudojimui"
     ],
     "notIncludes": "Spausdinimas nėra Jūsų užsakymo dalis.",
     "payOpen": "Saugus mokėjimas kortele per Stripe.",
@@ -509,7 +509,7 @@
     "eyebrow": "Iš arčiau",
     "title": "Iškirpta tiesiai iš failo",
     "intro": "Tikra failo dalis, nepadidinta.",
-    "badge": "{n} px fragmentas",
+    "badge": "Tikras dydis",
     "fibreTitle": "Mūsų pačių akis",
     "fibreAlt": "Mūsų pačių atkurtos rainelės vaizdas iš arti, iškirptas iš 4096 px failo: spindulinės skaidulos, auksinė apykaklė ir vyzdžio kraštas.",
     "locatorAlt": "Visa atkurta rainelė, kvadratu pažymėta vieta, iš kurios iškirptas fragmentas",

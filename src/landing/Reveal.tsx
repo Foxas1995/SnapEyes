@@ -116,7 +116,7 @@ export function Reveal() {
           {compare}
         </div>
       )}
-      <RevealStrip eye={shown} />
+      <RevealStrip eye={shown} pictures={!phoneScene} />
     </section>
   );
 }

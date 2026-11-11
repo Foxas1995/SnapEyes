@@ -238,7 +238,7 @@
   },
   "sizes": {
     "eyebrow": "Méretek",
-    "title": "Elég pixel {printMax} méretig",
+    "title": "Éles nyomat {printMax} méretig",
     "intro": "Válassz méretet: a rajz méretarányos.",
     "svgLabel": "Méretarányos rajz négy nyomtatási méretről egy falon, egy kanapéval és egy emberrel a méretarány érzékeltetésére",
     "sofa": "Kanapé, 220 cm",
@@ -250,22 +250,22 @@
       {
         "cm": 20,
         "t": "Íróasztal és polc",
-        "b": "Több, mint amit a nyomdák kérnek"
+        "b": "Nagyon éles"
       },
       {
         "cm": 30,
         "t": "Komód fölött",
-        "b": "A szokásos 300 fölött"
+        "b": "Nagyon éles"
       },
       {
         "cm": 40,
         "t": "Falikép",
-        "b": "A szokásos 150 és 300 között"
+        "b": "Éles"
       },
       {
         "cm": 50,
         "t": "A legnagyobb javasolt méret",
-        "b": "A szokásos 150 és 300 között"
+        "b": "Éles"
       }
     ]
   },
@@ -416,8 +416,8 @@
       }
     },
     "mixed": "A saját szemünk és példafotók",
-    "priceOne": "Egy szem, {price}",
-    "priceTwo": "Két szem, {price}",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
     "priceFrom": "Induló ár: {price}",
     "wallOn": "Falon",
     "wallOff": "Fal nélkül",
@@ -444,8 +444,8 @@
       },
       {
         "t": "Töltsd le a fájlt",
-        "b": "Válassz stílust: a fájl teljes felbontásban készül.",
-        "bOpen": "Válassz stílust, és fizess a Stripe-on keresztül: a fájl teljes felbontásban készül."
+        "b": "Válassz stílust, és megkapod a nagy fájlt.",
+        "bOpen": "Válassz stílust, fizess a Stripe-on keresztül, és megkapod a nagy fájlt."
       }
     ],
     "videoPlay": "Útmutató videó lejátszása",
@@ -490,10 +490,10 @@
     "eyes": "{n} szem",
     "includesTitle": "Mit kapsz",
     "includes": [
-      "{px}, vízjel nélkül",
+      "Nagy fájl, vízjel nélkül",
       "Az előnézetedből készül",
       "12 hónapig letölthető",
-      "Személyes felhasználási jog"
+      "Személyes használatra"
     ],
     "notIncludes": "A nyomtatás nem része a rendelésnek.",
     "payOpen": "Biztonságos kártyás fizetés a Stripe-on keresztül.",
@@ -509,7 +509,7 @@
     "eyebrow": "Nézd közelebbről",
     "title": "Közvetlenül a fájlból kivágva",
     "intro": "A fájl valódi részlete, nagyítás nélkül.",
-    "badge": "{n} px-es kivágás",
+    "badge": "Eredeti méret",
     "fibreTitle": "A saját szemünk",
     "fibreAlt": "Közelkép a saját helyreállított íriszünkről, a 4096 px-es fájlból kivágva: sugárirányú rostok, aranyszínű íriszgallér és a pupilla széle.",
     "locatorAlt": "A teljes helyreállított írisz, egy négyzet jelöli, hol vágtuk ki a közelképet",

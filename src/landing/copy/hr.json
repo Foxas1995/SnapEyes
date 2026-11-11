@@ -238,7 +238,7 @@
   },
   "sizes": {
     "eyebrow": "Veličine",
-    "title": "Dovoljno piksela za {printMax}",
+    "title": "Oštar otisak do {printMax}",
     "intro": "Odaberite veličinu: crtež je u mjerilu.",
     "svgLabel": "Crtež u mjerilu s četiri veličine otiska na zidu, uz kauč i osobu za usporedbu",
     "sofa": "Kauč, 220 cm",
@@ -250,22 +250,22 @@
       {
         "cm": 20,
         "t": "Radni stol i polica",
-        "b": "Više nego što tiskare traže"
+        "b": "Vrlo oštro"
       },
       {
         "cm": 30,
         "t": "Iznad komode",
-        "b": "Iznad uobičajenih 150 do 300"
+        "b": "Vrlo oštro"
       },
       {
         "cm": 40,
         "t": "Slika za zid",
-        "b": "Unutar uobičajenih 150 do 300"
+        "b": "Oštro"
       },
       {
         "cm": 50,
         "t": "Najveća koju preporučujemo",
-        "b": "Unutar uobičajenih 150 do 300"
+        "b": "Oštro"
       }
     ]
   },
@@ -416,8 +416,8 @@
       }
     },
     "mixed": "Naše vlastito oko i ogledne fotografije",
-    "priceOne": "Jedno oko, {price}",
-    "priceTwo": "Dva oka, {price}",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
     "priceFrom": "Od {price}",
     "wallOn": "Na zidu",
     "wallOff": "Ravno",
@@ -444,8 +444,8 @@
       },
       {
         "t": "Preuzmite datoteku",
-        "b": "Odaberite stil: datoteka se izrađuje u punoj rezoluciji.",
-        "bOpen": "Odaberite stil i platite putem Stripea: datoteka se izrađuje u punoj rezoluciji."
+        "b": "Odaberite stil i dobit ćete veliku datoteku.",
+        "bOpen": "Odaberite stil, platite putem Stripea i dobit ćete veliku datoteku."
       }
     ],
     "videoPlay": "Pokrenite video s uputama",
@@ -490,10 +490,10 @@
     "eyes": "{n} oka",
     "includesTitle": "Što dobivate",
     "includes": [
-      "{px}, bez vodenog žiga",
+      "Velika datoteka bez vodenog žiga",
       "Izrađeno iz vašeg pregleda",
       "12 mjeseci za preuzimanje",
-      "Osobna licenca"
+      "Za osobnu upotrebu"
     ],
     "notIncludes": "Tisak nije dio vaše narudžbe.",
     "payOpen": "Sigurno plaćanje karticom putem Stripea.",
@@ -509,7 +509,7 @@
     "eyebrow": "Pogledajte izbliza",
     "title": "Izrezano izravno iz datoteke",
     "intro": "Pravi dio datoteke, bez uvećavanja.",
-    "badge": "Isječak od {n} px",
+    "badge": "Stvarna veličina",
     "fibreTitle": "Naše vlastito oko",
     "fibreAlt": "Krupni plan naše vlastite obnovljene šarenice, izrezan iz datoteke od 4096 px: radijalna vlakna, zlatna kolareta i rub zjenice.",
     "locatorAlt": "Cijela obnovljena šarenica, s kvadratom koji označava gdje je izrezan krupni plan",

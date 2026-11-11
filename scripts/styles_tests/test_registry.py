@@ -1032,8 +1032,8 @@ res.defects = {
   barOpenWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.top = v.top.replace(/(<span id="barText">)[^<]*/, '$1' + v.words.barOpen); }),
   noticeOpenWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.pricing = v.pricing.replace(/(<p class="lp-notice"[^>]*>)[^<]*/, '$1' + v.words.noticeOpen); }),
   payLineWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.pricing += '<p class="lp-pay-open">' + v.words.payOpen + '</p>'; }),
-  // the third step's words since the landing's lean pass of 2026-10-22: "Choose a style; your file is made in full resolution." (open: "Choose a style and pay through Stripe; ...")
-  stepsPayWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.how = v.how.replace('Choose a style; your file', 'Choose a style and pay through Stripe; your file'); }),
+  // the third step's words since 2026-11-11 (plainer words): "Choose a style and get a large file." (open: "Choose a style, pay through Stripe and get a large file.")
+  stepsPayWhileClosed: mut((c) => { const v = c.scenarios[at('closed')].langs.en; v.how = v.how.replace('Choose a style and get a large file.', 'Choose a style, pay through Stripe and get a large file.'); }),
   barClosedWhileOpen: mut((c) => { const v = c.scenarios[at('one style ticked')].langs.en; v.top = v.top.replace(/(<span id="barText">)[^<]*/, '$1' + v.words.barSoon); }),
   fewerStates: G.promiseGate({ scenarios: rendered.scenarios.slice(1), pictures: [] }, inputs, styles, rows, gal),
   underSell: mut((c) => { const t = tileOf(c, 'one style ticked', 'en', 'powder'); t.html = t.html.replace(/<span class="lp-price">[\s\S]*?<\/span>/, '<span class="lp-price"><span class="lp-soon">Soon</span></span>').replace('data-state="sale"', 'data-state="soon"'); }),

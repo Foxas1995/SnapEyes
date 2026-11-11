@@ -32,7 +32,6 @@ export function EyeChips({ eye, onPick, hidden }: { eye: EyeId; onPick: (eye: Ey
           ))}
         </div>
       </div>
-      <p className="lp-eyenote" id="gEyeNote" hidden={hidden}>{eye === 'own' ? c.styles.eyeNote.own : c.styles.eyeNote.other}</p>
     </>
   );
 }

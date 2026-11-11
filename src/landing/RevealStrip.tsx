@@ -9,9 +9,11 @@ import type { RevealEye } from './revealEyes';
 
 export interface RevealStripProps {
   eye: RevealEye;
+  /** The three pictures: left out where the phone's own scene has just shown the same three states (2026-11-10), the call to action stays. */
+  pictures?: boolean;
 }
 
-export function RevealStrip({ eye }: RevealStripProps) {
+export function RevealStrip({ eye, pictures = true }: RevealStripProps) {
   const { c } = useCopy();
   const tryHref = useTryHref();
   const r = c.reveal;
@@ -22,21 +24,23 @@ export function RevealStrip({ eye }: RevealStripProps) {
   ];
   return (
     <div className="lp-wrap lp-strip">
-      <ol data-stagger>
-        {steps.map((s, i) => (
-          <li key={s.key}>
-            <figure>
-              <div>
-                <img src={s.pic.src} width={s.pic.w} height={s.pic.h} loading="lazy" decoding="async" alt={s.alt} />
-              </div>
-              <figcaption>
-                <i>{i + 1}</i>
-                {s.caption}
-              </figcaption>
-            </figure>
-          </li>
-        ))}
-      </ol>
+      {pictures && (
+        <ol data-stagger>
+          {steps.map((s, i) => (
+            <li key={s.key}>
+              <figure>
+                <div>
+                  <img src={s.pic.src} width={s.pic.w} height={s.pic.h} loading="lazy" decoding="async" alt={s.alt} />
+                </div>
+                <figcaption>
+                  <i>{i + 1}</i>
+                  {s.caption}
+                </figcaption>
+              </figure>
+            </li>
+          ))}
+        </ol>
+      )}
       <div className="lp-your-turn" data-reveal="fade">
         <p>{r.yourTurn}</p>
         <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>

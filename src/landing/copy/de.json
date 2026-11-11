@@ -238,7 +238,7 @@
   },
   "sizes": {
     "eyebrow": "Größen",
-    "title": "Genug Pixel für {printMax}",
+    "title": "Scharfe Drucke bis {printMax}",
     "intro": "Wählen Sie eine Größe: Die Zeichnung ist maßstabsgetreu.",
     "svgLabel": "Maßstabsgetreue Zeichnung von vier Druckgrößen an einer Wand, mit einem Sofa und einer Person als Größenvergleich",
     "sofa": "Sofa, 220 cm",
@@ -250,22 +250,22 @@
       {
         "cm": 20,
         "t": "Schreibtisch und Regal",
-        "b": "Mehr, als Druckereien verlangen"
+        "b": "Sehr scharf"
       },
       {
         "cm": 30,
         "t": "Über einer Kommode",
-        "b": "Über den üblichen 150 bis 300"
+        "b": "Sehr scharf"
       },
       {
         "cm": 40,
         "t": "Ein Wandbild",
-        "b": "Innerhalb der üblichen 150 bis 300"
+        "b": "Scharf"
       },
       {
         "cm": 50,
         "t": "Die größte empfohlene Größe",
-        "b": "Innerhalb der üblichen 150 bis 300"
+        "b": "Scharf"
       }
     ]
   },
@@ -416,8 +416,8 @@
       }
     },
     "mixed": "Unser eigenes Auge und Beispielfotos",
-    "priceOne": "Ein Auge, {price}",
-    "priceTwo": "Zwei Augen, {price}",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
     "priceFrom": "Ab {price}",
     "wallOn": "An der Wand",
     "wallOff": "Flach",
@@ -444,8 +444,8 @@
       },
       {
         "t": "Datei erhalten",
-        "b": "Wählen Sie einen Stil: Die Datei entsteht in voller Auflösung.",
-        "bOpen": "Wählen Sie einen Stil und bezahlen Sie über Stripe: Die Datei entsteht in voller Auflösung."
+        "b": "Wählen Sie einen Stil und erhalten Sie eine große Datei.",
+        "bOpen": "Wählen Sie einen Stil, bezahlen Sie über Stripe und erhalten Sie eine große Datei."
       }
     ],
     "videoPlay": "Anleitungsvideo abspielen",
@@ -490,10 +490,10 @@
     "eyes": "{n} Augen",
     "includesTitle": "Was Sie erhalten",
     "includes": [
-      "{px}, ohne Wasserzeichen",
+      "Große Datei ohne Wasserzeichen",
       "Aus Ihrer Vorschau erstellt",
       "12 Monate zum Download",
-      "Persönliche Lizenz"
+      "Für den privaten Gebrauch"
     ],
     "notIncludes": "Der Druck gehört nicht zur Bestellung.",
     "payOpen": "Sichere Kartenzahlung über Stripe.",
@@ -509,7 +509,7 @@
     "eyebrow": "Genauer hinsehen",
     "title": "Direkt aus der Datei geschnitten",
     "intro": "Ein echtes Stück der Datei, nicht vergrößert.",
-    "badge": "{n} px Ausschnitt",
+    "badge": "Originalgröße",
     "fibreTitle": "Unser eigenes Auge",
     "fibreAlt": "Eine Nahaufnahme unserer eigenen restaurierten Iris, ausgeschnitten aus der Datei mit 4096 px: radiale Fasern, ein goldener Kragen und der Rand der Pupille.",
     "locatorAlt": "Die ganze restaurierte Iris, ein Quadrat markiert die Stelle der Nahaufnahme",
