@@ -179,10 +179,11 @@ export function wordsOf(q: Quality, lang: Lang = T.lang): { message: string; tip
  *  your pupil, move the light" tip contradicts the calm pupil note whenever the server sets pupil_reflection.
  *  The other languages' words are the ones api/analyze.py's texts use: German ("automatisch", "Spiegelung", "Pupille"),
  *  Lithuanian ("automatiškai", "atspindys", "vyzdys": api/_lib/analyze_lt.py), Hungarian ("automatikusan",
- *  "tükröződés", "pupilla": api/_lib/analyze_hu.py) and Croatian ("automatski", "odsjaj", "zjenica": api/_lib/analyze_hr.py). */
+ *  "tükröződés", "pupilla": api/_lib/analyze_hu.py) Croatian ("automatski", "odsjaj", "zjenica": api/_lib/analyze_hr.py), Finnish ("automaattisesti", "heijastus", "pupilli"), Estonian
+ *  ("automaatselt", "peegeldus", "pupill") and Latvian ("automātiski", "atspīdums", "zīlīte"): api/_lib/analyze_fi.py, analyze_et.py, analyze_lv.py. */
 export function visibleTips(q: Quality): string[] {
-  return wordsOf(q).tips.filter((s) => !/automatically|automatisch|automatiškai|automatikusan|automatski/i.test(s)
-    && !(q.pupil_reflection && /reflection|spiegelung|atspind|tükröződés|odsjaj/i.test(s) && /pupil|vyzd|zjenic/i.test(s)));
+  return wordsOf(q).tips.filter((s) => !/automatically|automatisch|automatiškai|automatikusan|automatski|automaattisesti|automaatselt|automātiski/i.test(s)
+    && !(q.pupil_reflection && /reflection|spiegelung|atspind|tükröződés|odsjaj|heijastu|peegeldus|atspīd/i.test(s) && /pupil|vyzd|zjenic|zīlīt/i.test(s)));
 }
 
 /** The single tip that would most improve the next shot. Someone holding a phone to their eye reads one
@@ -195,7 +196,7 @@ export function topTip(q: Quality, t: Targets): string | null {
   if (q.locked === false) return tips[0] ?? w.message ?? null;
   if (q.blocked) return w.message || (blockOf({ ok: true, quality: q }) ?? T.quality.blockedOther).retakeLine;
   if (num(q.diameter_px) !== undefined && q.diameter_px < t.min_diameter_px) {
-    return tips.find((s) => /closer|zoom|näher|arčiau|približ/i.test(s)) ?? T.quality.closer;   // Croatian: "Približite" (its other tips say "zum 2x" too)
+    return tips.find((s) => /closer|zoom|näher|arčiau|približ|lähemmäs|lähemale|pieejiet tuvāk/i.test(s)) ?? T.quality.closer;   // Croatian: "Približite" (its other tips say "zum 2x" too)
   }
   return tips[0] ?? null;
 }

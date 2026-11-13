@@ -31,6 +31,12 @@ export const AI_MATERIAL: Readonly<Record<Lang, string>> = {
     'Egyes stílusoknál az Ön íriszét körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az Ön íriszének megmaradnak a fotója színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
   hr:
     'U nekim stilovima prah, tekućina, plamen ili prašina oko vaše šarenice materijal je koji je izradila umjetna inteligencija, iz zajedničke biblioteke, pa slika drugog kupca može sadržavati isti komad. Vaša šarenica zadržava boje, uzorak i raspored s vaše fotografije; najfinija vlakna obnavlja umjetna inteligencija, kako je gore opisano.',
+  fi:
+    'Joissakin tyyleissä iiristänne ympäröivä jauhe, neste, liekki tai pöly on tekoälyn tekemää materiaalia yhteisestä kirjastosta, joten toisen asiakkaan taideteoksessa voi olla sama pala. Iiriksenne säilyttää valokuvanne värit, kuvion ja asettelun; hienoimmat säikeet entisöidään tekoälyllä, kuten edellä on kuvattu.',
+  et:
+    'Mõnes stiilis on pulber, vedelik, leek või tolm teie iirise ümber tehisintellekti loodud materjal ühisest kogust, seega võib teise kliendi kunstiteos sisaldada sama tükki. Teie iiris säilitab teie foto värvid, mustri ja paigutuse; kõige peenemad kiud taastab tehisintellekt, nagu eespool kirjeldatud.',
+  lv:
+    'Dažos stilos pulveris, šķidrums, liesma vai putekļi ap jūsu varavīksneni ir mākslīgā intelekta radīts materiāls no kopīgas bibliotēkas, tāpēc cita klienta mākslas darbā var būt tas pats elements. Jūsu varavīksnene saglabā jūsu fotogrāfijas krāsas, rakstu un izvietojumu; vissmalkākās šķiedras, kā aprakstīts iepriekš, atjauno mākslīgais intelekts.',
 };
 
 /** The same sentence in the register of the PAGES (the landing's Reveal box and the result of /try, release review H-M1: the page said "we never hide what the AI
@@ -43,6 +49,13 @@ export const AI_MATERIAL_PAGE: Readonly<Record<Lang, string>> = {
   de: AI_MATERIAL.de,
   lt: AI_MATERIAL.lt,
   hr: AI_MATERIAL.hr,
+  // the Finnish pages say "sinä" (the legal texts say "te"), so the Finnish page sentence is its own wording, as the Hungarian one
+  fi:
+    'Joissakin tyyleissä iiristäsi ympäröivä jauhe, neste, liekki tai pöly on tekoälyn tekemää materiaalia yhteisestä kirjastosta, joten toisen asiakkaan taideteoksessa voi olla sama pala. Iiriksesi säilyttää valokuvasi värit, kuvion ja asettelun; hienoimmat säikeet entisöidään tekoälyllä, kuten edellä on kuvattu.',
+  // the Estonian pages say "sina" (the legal texts say "teie"), so the Estonian page sentence is its own wording too
+  et:
+    'Mõnes stiilis on pulber, vedelik, leek või tolm sinu iirise ümber tehisintellekti loodud materjal ühisest kogust, seega võib teise kliendi kunstiteos sisaldada sama tükki. Sinu iiris säilitab sinu foto värvid, mustri ja paigutuse; kõige peenemad kiud taastab tehisintellekt, nagu eespool kirjeldatud.',
+  lv: AI_MATERIAL.lv,
   hu:
     'Egyes stílusoknál az íriszedet körülvevő púder, folyadék, láng vagy por egy közös könyvtárból származó, mesterséges intelligencia által készített anyag, ezért egy másik vásárló alkotásában ugyanaz a darab is szerepelhet. Az íriszednek megmaradnak a fotód színei, mintázata és elrendezése; a legfinomabb rostokat, a fent leírtak szerint, a mesterséges intelligencia állítja helyre.',
 };

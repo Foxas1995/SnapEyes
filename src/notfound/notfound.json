@@ -28,5 +28,23 @@
     "h1": "Ove stranice ovdje nema.",
     "p": "Adresa se možda promijenila ili je poveznica nepotpuna. Početna stranica SnapEyes udaljena je samo jedan klik.",
     "home": "Natrag na SnapEyes"
+  },
+  "fi": {
+    "title": "SnapEyes: sivua ei löytynyt",
+    "h1": "Tätä sivua ei ole täällä.",
+    "p": "Osoite on voinut muuttua, tai linkki voi olla puutteellinen. SnapEyesin etusivu on yhden napsautuksen päässä.",
+    "home": "Takaisin SnapEyesiin"
+  },
+  "et": {
+    "title": "SnapEyes: lehte ei leitud",
+    "h1": "Seda lehte siin ei ole.",
+    "p": "Aadress võib olla muutunud või on link poolik. SnapEyesi avaleht on ühe kliki kaugusel.",
+    "home": "Tagasi SnapEyesi lehele"
+  },
+  "lv": {
+    "title": "SnapEyes: lapa nav atrasta",
+    "h1": "Šīs lapas šeit nav.",
+    "p": "Iespējams, adrese ir mainījusies vai saite ir nepilnīga. SnapEyes sākumlapa ir viena klikšķa attālumā.",
+    "home": "Atpakaļ uz SnapEyes"
   }
 }

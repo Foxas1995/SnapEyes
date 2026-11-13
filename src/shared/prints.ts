@@ -68,7 +68,7 @@ export function printMargin(id: string, country: string, offer: PrintOffer = PRI
 
 const NBSP = ' ';
 export const printSize = (cm: number): string => `${cm}${NBSP}×${NBSP}${cm}${NBSP}cm`;
-const lng = (lang: string): Lang => (['en', 'de', 'lt', 'hu', 'hr'].includes(lang) ? lang : 'en') as Lang;
+const lng = (lang: string): Lang => (['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'].includes(lang) ? lang : 'en') as Lang;
 
 /** "Acrylic glass print 40 × 40 cm" in a language (api/_lib/prints.py product_name). */
 export function printName(id: string, lang: string): string {

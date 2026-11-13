@@ -39,14 +39,17 @@
           de: ['Diese Seite konnte nicht geladen werden oder braucht sehr lange.', 'Bitte laden Sie sie neu. Klappt es weiter nicht, schreiben Sie an', 'Neu laden'],
           lt: ['Šio puslapio nepavyko įkelti arba jis kraunasi labai ilgai.', 'Perkraukite jį. Jei vis tiek nepavyksta, rašykite adresu', 'Perkrauti'],
           hu: ['Az oldal nem töltődött be, vagy nagyon sokáig tart.', 'Töltsd újra. Ha továbbra sem megy, írj erre a címre:', 'Újratöltés'],
-          hr: ['Ova se stranica nije mogla učitati ili se učitava jako dugo.', 'Učitajte je ponovno. Ako i dalje ne uspijeva, pišite na', 'Ponovno učitaj']
+          hr: ['Ova se stranica nije mogla učitati ili se učitava jako dugo.', 'Učitajte je ponovno. Ako i dalje ne uspijeva, pišite na', 'Ponovno učitaj'],
+          fi: ['Tätä sivua ei voitu ladata, tai lataus kestää hyvin kauan.', 'Lataa sivu uudelleen. Jos se ei vieläkään onnistu, kirjoita osoitteeseen', 'Lataa uudelleen'],
+          et: ['Seda lehte ei õnnestunud laadida või võtab laadimine väga kaua aega.', 'Palun laadi leht uuesti. Kui see ikka ei õnnestu, kirjuta aadressile', 'Laadi uuesti'],
+          lv: ['Šo lapu neizdevās ielādēt, vai arī ielāde aizņem ļoti ilgu laiku.', 'Lūdzu, pārlādējiet to. Ja joprojām neizdodas, rakstiet uz', 'Pārlādēt']
         };
         var shown = false;
         function show() {
           var root = document.getElementById('root');
           if (shown || !root || root.childNodes.length) return;
           shown = true;
-          var m = /[?&]lang=(en|de|lt|hu|hr)(?:&|$)/.exec(location.search);
+          var m = /[?&]lang=(en|de|lt|hu|hr|fi|et|lv)(?:&|$)/.exec(location.search);
           var l = m ? m[1] : String(navigator.language || 'en').slice(0, 2).toLowerCase();
           var w = words[l] || words.en;
           var box = document.createElement('div');

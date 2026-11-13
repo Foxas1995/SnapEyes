@@ -109,7 +109,16 @@ const PRINTS = { js: 13538, css: 261 };
 // on the tree with the vouchers against its parent (b0616af). What the landing does load (the footer link, the pricing line, their words in five languages: +302 B JavaScript,
 // +74 B CSS) is not in it: it is held to the budget. Re-measure it when the voucher texts change: build both trees, gzip each chunk, take the differences named here.
 const VOUCHERS = { js: 6502 + 3104 - 1552, css: 0 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css };
+// Finnish, Estonian and Latvian, the site's sixth to eighth language (2026-11-13, EU edition only), are content, not motion. The landing loads none of their words unless the
+// visitor reads one of them: each is a lazy chunk of its own (src/landing/copy/fi.json, et.json, lv.json: fi-*.js 8,830 B, et-*.js 8,559 B, lv-*.js 8,950 B), and their legal
+// texts land in the legal pages' entry (src/legal/main.tsx, also named main-*.js and so counted here, +66,115 B), which the landing never loads. What every visitor of the
+// landing does load: the chunk shared with the header (BrandLogo-*.js: the legal labels and the checkout wording of three more languages, +1,700 B), the AI-material sentences
+// (aiMaterial-*.js, +565 B), the landing's own entry (+319 B: the language table and the language menu that replaced the row of buttons) and its stylesheet (+181 B: the
+// menu's rules, css/header.css, and two rules that fit Latvian on a screen under 320 px, css/pricing.css and css/reveal.css). The rest is the tools': the menu of /try, /order, /gift and the legal pages (src/shared/LangMenu.tsx, LangMenu-*.js 1,071 B, and its utilities
+// in the shared stylesheet, +135 B), the print words (prints-*.js +845 B) and the shared chunk of /try and /order (checkout-*.js +980 B). LANGS3 is this script's own sum on the
+// tree with them minus on its parent (33e948d): JavaScript +98,234 B, CSS +316 B. Re-measure it when those texts change: build both trees, run this script on each, take the difference.
+const LANGS3 = { js: 98234, css: 316 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;

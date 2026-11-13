@@ -28,7 +28,7 @@ const has = (h: string, id: string) => h.includes(`data-testid="${id}"`);
 const DASH = new RegExp('[' + [0x2012, 0x2013, 0x2014, 0x2015].map((c) => String.fromCharCode(c)).join('') + ']');
 const blockText = (b: Block): string => (typeof b === 'string' ? b : 'ul' in b ? b.ul.join('\n') : 'dl' in b ? b.dl.map((r) => r.join(': ')).join('\n') : b.box.join('\n'));
 const sectionText = (d: LegalDoc | undefined, id: string) => (d?.sections.find((s) => s.id === id)?.blocks ?? []).map(blockText).join('\n');
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'] as const;
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const;
 const noop = () => undefined;
 
 export async function run(): Promise<Row[]> {
@@ -101,6 +101,16 @@ export async function run(): Promise<Row[]> {
   const hl = buy({ prints: offered, printChoice: { product: 'poster50', country: 'LT' }, printConsent: false });
   check('Lithuanian: the words of the choice and the Lithuanian box', text(hl).includes('Tik skaitmeninis failas') && text(hl).includes('Plakatas 50 × 50 cm')
     && text(hl).includes('Lietuva') && text(hl).includes(sp(CHECKOUT_LEGAL.lt.printConsent)), text(hl).slice(0, 400));
+  // 2026-11-13: Finnish, Estonian and Latvian, the same way (the words of src/try/copy.fi.ts, copy.et.ts and copy.lv.ts print.none, the names of api/_lib/print_names.py)
+  const NEW_WORDS = { fi: ['Vain digitaalinen tiedosto', 'Juliste', 'FI', 'Suomi'], et: ['Ainult digitaalne fail', 'Plakat', 'EE', 'Eesti'], lv: ['Tikai digitālais fails', 'Plakāts', 'LV', 'Latvija'] } as const;
+  for (const l of ['fi', 'et', 'lv'] as const) {
+    setCopyLang(l);
+    const [none, poster, cc, country] = NEW_WORDS[l];
+    const hx = buy({ prints: offered, printChoice: { product: 'poster50', country: cc }, printConsent: false });
+    check(`${l}: the words of the choice and the box of that language (its own text, not the English or the Lithuanian one)`, text(hx).includes(none) && text(hx).includes(`${poster} 50 × 50 cm`)
+      && sp(printName('poster50', l)) === `${poster} 50 × 50 cm` && countryName(cc, l) === country && text(hx).includes(country) && text(hx).includes(sp(CHECKOUT_LEGAL[l].printConsent))
+      && CHECKOUT_LEGAL[l].printConsent !== CHECKOUT_LEGAL.en.printConsent && CHECKOUT_LEGAL[l].printConsent !== CHECKOUT_LEGAL.lt.printConsent && !text(hx).includes('Digital file only'), text(hx).slice(0, 400));
+  }
   setCopyLang('en');
   check('every language has the print words, the two errors and no dash', LANGS.every((l) => {
     const c = COPY[l];
@@ -129,8 +139,8 @@ export async function run(): Promise<Row[]> {
 
   // the legal texts
   const eu = EDITIONS.eu;
-  check('the EU edition: the terms, the privacy policy and the withdrawal page have a section "prints" in all five languages',
-    LANGS.every((l) => !!eu.terms[l]?.sections.some((s) => s.id === 'prints') && !!eu.privacy[l]?.sections.some((s) => s.id === 'prints')
+  check('the EU edition: the terms, the privacy policy and the withdrawal page have a section "prints" in all eight languages (five until 2026-11-13: Finnish, Estonian and Latvian)',
+    LANGS.length === 8 && LANGS.every((l) => !!eu.terms[l]?.sections.some((s) => s.id === 'prints') && !!eu.privacy[l]?.sections.some((s) => s.id === 'prints')
       && !!eu.withdrawal[l]?.sections.some((s) => s.id === 'prints')));
   const tp = sectionText(eu.terms.en, 'prints');
   check('the terms\' section: every print with its price, the shipping table, every country by name, the manufacturer, 16(c), the 7 days, the two years, 30 days',
@@ -147,8 +157,8 @@ export async function run(): Promise<Row[]> {
   check('the privacy policy names the partner in the list of services and says which data it receives (name and address, not the e-mail)',
     LANGS.every((l) => sectionText(eu.privacy[l], 'services').includes('Picanova GmbH (merchOne)') && sectionText(eu.privacy[l], 'prints').includes('Picanova'))
       && sectionText(eu.privacy.en, 'prints').includes('name and delivery address') && sectionText(eu.privacy.en, 'prints').includes('do not give it your email address'));
-  check('the print box: the page\'s text in every language, version 2026-10-28.3, the same for the hu edition\'s checkout',
-    WITHDRAWAL_CONSENT_VERSION === '2026-10-28.3' && LANGS.every((l) => CHECKOUT_LEGAL[l].printConsent.length > 60 && !DASH.test(CHECKOUT_LEGAL[l].printConsent))
+  check('the print box: the page\'s text in every language, version 2026-11-13.1 (the Finnish, Estonian and Latvian waivers and print boxes added, every other text as it was; 2026-10-28.3 before), eight different texts, the same for the hu edition\'s checkout',
+    WITHDRAWAL_CONSENT_VERSION === '2026-11-13.1' && new Set(LANGS.map((l) => CHECKOUT_LEGAL[l].printConsent)).size === 8 && LANGS.every((l) => CHECKOUT_LEGAL[l].printConsent.length > 60 && !DASH.test(CHECKOUT_LEGAL[l].printConsent))
       && checkoutLegal('hu', 'hu').printConsent === CHECKOUT_LEGAL.hu.printConsent);
 
   // the admin

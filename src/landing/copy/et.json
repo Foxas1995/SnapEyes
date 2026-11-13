@@ -1,0 +1,695 @@
+{
+  "meta": {
+    "title": "SnapEyes: sinu päris iiris kunstina",
+    "description": "Pildista telefoniga üht silma ja vaata oma iirist kunstina: taastatud, mitte kunagi üle maalitud. Tasuta vesimärgiga eelvaade, seejärel digitaalne fail, mida saad trükkida kus tahes.",
+    "shareDescription": "Pildista telefoniga üht silma ja vaata oma iirist kunstina. Vesimärgiga eelvaade on tasuta.",
+    "locale": "et_EE"
+  },
+  "facts": {
+    "px": "4096\u00a0px",
+    "square": "4096\u00a0×\u00a04096\u00a0px",
+    "printMax": "50\u00a0×\u00a050\u00a0cm",
+    "printMaxCm": "50\u00a0cm",
+    "email": "info@snapeyes.com",
+    "hours": "48"
+  },
+  "langName": "Eesti",
+  "switchLabel": "Keel",
+  "brandTag": "",
+  "skip": "Liigu sisu juurde",
+  "nav": {
+    "reveal": "Enne ja pärast",
+    "wall": "Sinu sein",
+    "styles": "Stiilid",
+    "how": "Kuidas see käib",
+    "pricing": "Hinnad",
+    "faq": "KKK",
+    "privacy": "Privaatsus",
+    "gift": "Kinkekaart"
+  },
+  "navLabels": {
+    "main": "Peamenüü",
+    "footer": "Jalus",
+    "menu": "Menüü"
+  },
+  "cta": "Loo tasuta eelvaade",
+  "ctaShort": "Tasuta eelvaade",
+  "ctaNote": "",
+  "bar": {
+    "label": "Teade",
+    "soon": "Tellimine avaneb peagi.",
+    "open": "Alusta tasuta eelvaatest."
+  },
+  "example": {
+    "chip": "Näide",
+    "vis": "Visualiseering",
+    "photo": "Näidisfoto",
+    "mantas": "Meie enda silm"
+  },
+  "hero": {
+    "eyebrow": "SnapEyes",
+    "title": "Sinu päris iiris, kunstiks muudetud.",
+    "lead": "Telefoniga tehtud foto sinu silmast, taastatud ja kujundatud sinu valitud stiilis.",
+    "micro": [
+      "Tasuta vesimärgiga eelvaade",
+      "Umbes minutiga",
+      "Ilma registreerumiseta"
+    ],
+    "fromPrice": "Digitaalne fail alates {from}",
+    "computerHint": "Oled arvutis? Ava snapeyes.com oma telefonis või kasuta fotosid, mis sul on olemas.",
+    "secondary": "Vaata päris näidet: enne ja pärast",
+    "globeAlt": "Kera ümmargustest kunstiteostest meie stiilides, tehtud meie enda silmast ja näidisfotodest",
+    "globeLabel": "Meie stiilid keral, mida saad pöörata",
+    "globeTry": "Proovi oma silmaga",
+    "globeClose": "Sulge",
+    "globeNote": "Meie enda silm ja näidisfotod, mitte kliendid"
+  },
+  "reveal": {
+    "eyebrow": "Enne ja pärast",
+    "title": "Vasakul foto. Paremal iiris.",
+    "intro": "Taastatud, mitte kunagi üle maalitud: värv ja muster jäävad sinu omaks.",
+    "hint": "Lohista võrdlemiseks",
+    "sliderLabel": "Võrdle telefonifotot ja taastatud iirist",
+    "valueText": "foto {n} protsenti",
+    "before": "Telefonifoto",
+    "after": "Taastatud iiris",
+    "beforeWeb": "Foto",
+    "sliderLabelWeb": "Võrdle fotot ja taastatud iirist",
+    "eyes": [
+      {
+        "id": "gd",
+        "label": "Hallikasroheline silm",
+        "n": 380,
+        "note": "Näidisfoto, mitte klient.",
+        "photoAlt": "Näidisfoto hallikasrohelisest silmast, millel on akna peegeldus, kaadri vasak pool",
+        "irisAlt": "Sama hallikasroheline iiris, taastatud, ilma peegelduseta",
+        "artAlt": "Taastatud hallikasroheline iiris kunstiteosena"
+      },
+      {
+        "id": "own",
+        "label": "Meie enda silm",
+        "n": 315,
+        "note": "Pildistatud kodus telefoniga.",
+        "photoAlt": "Telefonifoto meie enda silmast, kaadri vasak pool",
+        "irisAlt": "Sama iiris, taastatud, mustal taustal",
+        "artAlt": "Taastatud iiris kunstiteosena"
+      }
+    ],
+    "eyeGroup": "Vali näidissilm",
+    "strip": {
+      "photo": "Foto",
+      "iris": "Iiris",
+      "art": "Kunst"
+    },
+    "yourTurn": "Nüüd on sinu kord."
+  },
+  "wall": {
+    "eyebrow": "Sinu sein",
+    "title": "Vaata seda oma seinal",
+    "intro": "Trüki see kuhu tahes: akrüülile, alumiiniumile, lõuendile või raami sisse.",
+    "stageLabel": "Visualiseeringud sinu failist trükituna",
+    "materialsLabel": "Materjal",
+    "artLabel": "Kunstiteos",
+    "materials": {
+      "acrylic": {
+        "n": "Akrüül",
+        "tag": "Läikiv ja sügav",
+        "facts": [
+          "Sageli 3 kuni 6 mm paks",
+          "Seinast veidi eemal",
+          "Kõige sügavam must"
+        ]
+      },
+      "metal": {
+        "n": "Alumiinium",
+        "tag": "Terav ja moodne",
+        "facts": [
+          "Sageli 1 kuni 3 mm paks",
+          "Seina lähedal",
+          "Läikiv või satiinjas"
+        ]
+      },
+      "canvas": {
+        "n": "Lõuend",
+        "tag": "Pehme ja soe",
+        "facts": [
+          "Sageli 2 kuni 4 cm sügav",
+          "Väga vähe peegeldusi",
+          "Raami pole vaja"
+        ]
+      },
+      "framed": {
+        "n": "Raamitud pilt",
+        "tag": "Klassikaline ja rahulik",
+        "facts": [
+          "Klaasi taga, valge paspartuuga",
+          "Raam umbes 2 cm",
+          "Lihtne üles riputada"
+        ]
+      },
+      "block": {
+        "n": "Akrüülplokk",
+        "tag": "Riiulile või lauale",
+        "facts": [
+          "Sageli 2 kuni 4 cm paks",
+          "Seisab ise püsti",
+          "Sageli 10 kuni 20 cm"
+        ]
+      },
+      "phone": {
+        "n": "Telefon",
+        "tag": "Sinu lukustuskuval",
+        "facts": [
+          "Ekraani valgustatud",
+          "Lisa ümber musta ruumi",
+          "Midagi pole vaja trükkida"
+        ]
+      }
+    },
+    "arts": {
+      "eye": "Üks silm",
+      "universe": "Universe",
+      "family4": "Pere",
+      "collision": "Teie kaks"
+    },
+    "eyesNote": "Silmad: meie enda silm ja näidisfotod.",
+    "captions": {
+      "acrylic": "Akrüülil.",
+      "metal": "Alumiiniumil.",
+      "canvas": "Lõuendil.",
+      "framed": "Raamituna.",
+      "block": "Akrüülplokina.",
+      "phone": "Telefoni lukustuskuval."
+    },
+    "captionsSize": {
+      "acrylic": "Akrüülil, umbes {size}.",
+      "metal": "Alumiiniumil, umbes {size}.",
+      "canvas": "Lõuendil, umbes {size}.",
+      "framed": "Raamituna, umbes {size}."
+    },
+    "compareTitle": "Võrdle materjale",
+    "compareCorner": "Materjal",
+    "compare": {
+      "cols": [
+        "Akrüül",
+        "Alumiinium",
+        "Lõuend",
+        "Raamitud pilt"
+      ],
+      "rows": [
+        {
+          "h": "Välimus",
+          "v": [
+            "Läikiv, sügavusega",
+            "Terav, õhuke",
+            "Pehme, tekstuuriga",
+            "Klassikaline, rahulik"
+          ]
+        },
+        {
+          "h": "Must",
+          "v": [
+            "Sügav",
+            "Sügav",
+            "Pehmem",
+            "Sügav, valge paspartuuga"
+          ]
+        },
+        {
+          "h": "Peegeldused",
+          "v": [
+            "Mõningaid, heledas toas",
+            "Mõningaid, satiinjal pinnal vähem",
+            "Väga vähe",
+            "Mõningaid, peegeldusvastase klaasiga vähem"
+          ]
+        },
+        {
+          "h": "Seinal",
+          "v": [
+            "Hõljub seina ees",
+            "Õhuke ja kerge",
+            "Soe ja vaba",
+            "Pidulik ja traditsiooniline"
+          ]
+        }
+      ],
+      "note": "Üldine ülevaade sellest, mida trükikojad pakuvad, mitte meie toodete kirjeldus."
+    }
+  },
+  "sizes": {
+    "eyebrow": "Suurused",
+    "title": "Terav trükk kuni {printMax}",
+    "intro": "Vali suurus: joonis on mõõtkavas.",
+    "svgLabel": "Mõõtkavas joonis nelja suurusega trükitud pildist seinal, võrdluseks diivan ja inimene",
+    "sofa": "Diivan, 220 cm",
+    "person": "Inimene, 175 cm",
+    "chips": "Trüki suurus",
+    "cm": "{n} cm",
+    "ppi": "pikslit tolli kohta",
+    "rungs": [
+      {
+        "cm": 20,
+        "t": "Lauale ja riiulile",
+        "b": "Väga terav"
+      },
+      {
+        "cm": 30,
+        "t": "Konsoollaua kohale",
+        "b": "Väga terav"
+      },
+      {
+        "cm": 40,
+        "t": "Pilt seinale",
+        "b": "Terav"
+      },
+      {
+        "cm": 50,
+        "t": "Suurim, mida soovitame",
+        "b": "Terav"
+      }
+    ]
+  },
+  "more": {
+    "title": "Veel viise seda näha",
+    "railLabel": "Veel visualiseeringuid",
+    "prev": "Eelmine pilt",
+    "next": "Järgmine pilt",
+    "scenes": [
+      {
+        "id": "pair",
+        "t": "Teie kaks, tumedal pähklipuul",
+        "c": "Silmad: meie enda silm ja näidisfoto."
+      },
+      {
+        "id": "group",
+        "t": "Teie neli, raamis",
+        "c": "Silmad: meie enda silm ja näidisfotod."
+      },
+      {
+        "id": "hands",
+        "t": "Sinu käes",
+        "c": ""
+      },
+      {
+        "id": "gallery",
+        "t": "Nurga alt vaadatuna",
+        "c": "Silmad: meie enda silm ja näidisfoto."
+      },
+      {
+        "id": "shelf",
+        "t": "Riiulil",
+        "c": ""
+      }
+    ]
+  },
+  "styles": {
+    "eyebrow": "Stiilid",
+    "title": "Üks iiris, palju stiile",
+    "legend": "Näited. Sinu kunstiteos kannab sinu enda värve ja mustrit.",
+    "groups": {
+      "one": "Ainult sina",
+      "two": "Teie kaks",
+      "family": "Pere"
+    },
+    "tabsLabel": "Stiilirühmad",
+    "eyeLabel": "Proovi teist silmavärvi",
+    "eyes": {
+      "own": "Sinakasroheline",
+      "yg": "Kollakasroheline",
+      "br": "Pruun",
+      "gr": "Hall"
+    },
+    "eyeNote": {
+      "own": "Meie enda silm",
+      "other": "Näidisfoto"
+    },
+    "items": {
+      "radiance": {
+        "d": "Peened valguskiired sinu enda iirise värvides."
+      },
+      "powder": {
+        "d": "Serv laguneb teradeks sinu silma enda värvides."
+      },
+      "universe": {
+        "d": "Sinu enda iiris täidab suurendatuna kogu lõuendi."
+      },
+      "echo": {
+        "d": "Sinu iiris omaenda kaja sees, kiud sirutuvad välja nagu tunnel."
+      },
+      "splash": {
+        "d": "Serv kerkib vedelikust krooniks."
+      },
+      "clean": {
+        "d": "Sinu taastatud iiris üksi puhtal mustal taustal."
+      },
+      "duo_infinity": {
+        "d": "Kaks iirist kattuvad nagu lõpmatuse märk."
+      },
+      "duo_infinity_bb": {
+        "d": "Iga iiris säilitab kohtumiskohas oma värvi."
+      },
+      "duo_kiss": {
+        "d": "Kaks iirist, mis puudutavad teineteist servapidi."
+      },
+      "duo_clean": {
+        "d": "Sama paar, ilma pulbrita."
+      },
+      "duo_thread": {
+        "d": "Kaks tervet iirist, mida ühendab üks peen kuldne niit."
+      },
+      "duo_radiance": {
+        "d": "Kaks iirist saadavad oma värvides kiiri, mis nende vahel kohtuvad."
+      },
+      "fam_trio": {
+        "d": "Kolm iirist kolmnurgas."
+      },
+      "fam_4": {
+        "d": "Neli iirist, pulbriga nende endi värvides."
+      },
+      "fam_orbit": {
+        "d": "Üks iiris keskel, pere tiirleb selle ümber."
+      },
+      "fam_circle": {
+        "d": "Iirised ringis ühe väikese valguse ümber."
+      },
+      "fam_radiance": {
+        "d": "Iga iiris saadab välja oma peeneid kiiri."
+      },
+      "supernova_one": {
+        "d": "Servast paiskub tähetolm sinu silma enda värvides."
+      },
+      "nebula": {
+        "d": "Sinu iiris helendab udukogu südames."
+      },
+      "sparks": {
+        "d": "Servast tõusevad sädemed sinu silma enda värvides."
+      },
+      "halo": {
+        "d": "Sinu iiris, mida valgustab tagant tema enda värv."
+      },
+      "galaxy": {
+        "d": "Tähtede spiraalharud keerduvad sinu iirisest välja selle enda värvides."
+      },
+      "aurora": {
+        "d": "Virmaliste kardinad sinu iirise ümber."
+      },
+      "duo_nebula": {
+        "d": "Kaks iirist helendavad kõrvuti udukogus."
+      },
+      "duo_supernova": {
+        "d": "Mõlemast servast paiskub tähetolm kummagi silma enda värvides."
+      },
+      "fam_nebula": {
+        "d": "Kogu pere helendab koos ühes udukogus."
+      },
+      "fam_supernova": {
+        "d": "Iga iiris puhkeb tähetolmuks oma värvides."
+      },
+      "duo_galaxy": {
+        "d": "Kaks iirist ühe spiraalgalaktika südames, kumbki haru oma värvides."
+      },
+      "fam_galaxy": {
+        "d": "Üks galaktika kogu perele, üks haru iga inimese värvides."
+      },
+      "fam_powder": {
+        "d": "Iga iiris muutub oma värvides tolmuks ja keskel need segunevad."
+      }
+    },
+    "mixed": "Meie enda silm ja näidisfotod",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
+    "priceFrom": "Alates {price}",
+    "wallOn": "Seinal",
+    "wallOff": "Otsevaates",
+    "wallOnAria": "Näita stiili {name} seinal",
+    "wallOffAria": "Näita stiili {name} otsevaates",
+    "wallFile": "Hind kehtib digitaalse faili kohta. Trükkimine ei kuulu sinu tellimuse juurde.",
+    "comboTitle": "Kaks kuni {max} silma ühel kunstiteosel",
+    "comboBody": "Sinu ja sinu kallite inimeste silmad. Iga järgmine silm lisab {price}.",
+    "soonTag": "Peagi",
+    "moreSoon": "Peagi tuleb stiile juurde.",
+    "comboTitleSoon": "Mitu silma ühel kunstiteosel"
+  },
+  "how": {
+    "eyebrow": "Kuidas see käib",
+    "title": "Kolm sammu, ilma stuudiota",
+    "steps": [
+      {
+        "t": "Pildista oma silma",
+        "b": "Tagakaamera, valgus küljelt."
+      },
+      {
+        "t": "Vaata oma eelvaadet",
+        "b": "Sinu iiris mitmes stiilis."
+      },
+      {
+        "t": "Saa oma fail kätte",
+        "b": "Vali stiil ja saad suure faili.",
+        "bOpen": "Vali stiil, maksa Stripe’i kaudu ja saad suure faili."
+      }
+    ],
+    "videoPlay": "Esita juhendvideo",
+    "videoPause": "Peata juhendvideo",
+    "previewTitle": "Sinu eelvaade",
+    "previewButton": "Tellimus koos maksekohustusega",
+    "previewSoon": "Järgmisena: sinu fail",
+    "fileName": "snapeyes-artwork.jpg",
+    "fileMeta": "{square}, JPEG"
+  },
+  "pricing": {
+    "eyebrow": "Hinnad",
+    "title": "Selged hinnad ühe digitaalse faili eest",
+    "notice": "Tellimine avaneb peagi.",
+    "noticeOpen": "Alusta tasuta eelvaatest: tellid alles siis, kui tulemus sulle meeldib.",
+    "severalSoon": "Tasuta eelvaade on olemas. Selle rühma stiile saab tellida peagi.",
+    "currencyLabel": "Hindade valuuta",
+    "free": "Tasuta",
+    "rows": {
+      "free": {
+        "t": "Eelvaade",
+        "b": "Vesimärgiga."
+      },
+      "black": {
+        "t": "Üks silm mustal taustal",
+        "b": "Stiil {name}."
+      },
+      "art": {
+        "t": "Üks silm kunstistiilis",
+        "b": "{styles}."
+      },
+      "two": {
+        "t": "Kaks silma",
+        "b": "{styles}."
+      },
+      "more": {
+        "t": "Kolm silma",
+        "b": "Kaks silma maksavad {price2}. Iga järgmine silm lisab {price}, kuni {max} silma."
+      }
+    },
+    "ladderTitle": "Silmade arv",
+    "eyes": "{n} silma",
+    "includesTitle": "Mida sa saad",
+    "includes": [
+      "Suur fail ilma vesimärgita",
+      "Tehtud sinu eelvaate põhjal",
+      "12 kuud allalaadimiseks",
+      "Isiklikuks kasutamiseks"
+    ],
+    "notIncludes": "Trükkimine ei kuulu sinu tellimuse juurde.",
+    "payOpen": "Turvaline kaardimakse Stripe’i kaudu.",
+    "gift": "Kingid selle kellelegi? Osta kinkekaart: kingisaaja pildistab oma silma hiljem ise.",
+    "termsLink": "Müügitingimused",
+    "auLine": "Müüja: MB Portretizuokis, Kaunas, Leedu. Kaardimakse Austraalia dollarites (A$) Stripe’i kaudu. Tegu on digitaalse failiga, seega posti teel ei saadeta midagi.",
+    "usLine": "Müüja: MB Portretizuokis, Kaunas, Leedu. Kaardimakse USA dollarites (US$) Stripe’i kaudu. Tegu on digitaalse failiga, seega posti teel ei saadeta midagi.",
+    "footnote": "Hinnad on eurodes. Need on lõpphinnad: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.",
+    "footnoteAud": "Hinnad on Austraalia dollarites (A$). Iga hind on koguhind: GST-d ei lisandu.",
+    "footnoteHuf": "Hinnad on Ungari forintites (Ft). Need on lõpphinnad: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.",
+    "footnoteUsd": "Hinnad on USA dollarites (US$). Iga hind on koguhind: müügimaksu ei lisandu."
+  },
+  "closeups": {
+    "eyebrow": "Vaata lähemalt",
+    "title": "Lõigatud otse failist",
+    "intro": "Päris tükk failist, suurendamata.",
+    "badge": "Tegelik suurus",
+    "fibreTitle": "Meie enda silm",
+    "fibreAlt": "Lähivõte meie enda taastatud iirisest, lõigatud 4096 px failist: radiaalsed kiud, kuldne iirisekrae ja pupilli serv.",
+    "locatorAlt": "Kogu taastatud iiris, ruut näitab, kust lähivõte on lõigatud",
+    "locatorLabel": "Kust see on lõigatud",
+    "edgeTitle": "Akrüülile trükitud pildi serv",
+    "edgeAlt": "Visualiseering akrüülile trükitud pildi nurgast: poleeritud läbipaistev serv, terasest distantshoidik ja pehme akna peegeldus."
+  },
+  "trust": {
+    "eyebrow": "Mida me kunagi ei tee",
+    "title": "Väikesed lubadused, mida peame",
+    "items": [
+      "Ei maali sinu iirist üle",
+      "Ei esitle näiteid klientidena",
+      "Ei varja, kuidas pildid sünnivad",
+      "Ei kiirusta sind võltsi ajasurvega"
+    ],
+    "curatorEyebrow": "Abi",
+    "curatorTitle": "Terav võte ei õnnestu?",
+    "offer": "Saada meile oma parimad fotod; tavaliselt vastame ühe kuni kahe tööpäeva jooksul.",
+    "offerCta": "Kirjuta meile",
+    "privacyEyebrow": "Sinu foto",
+    "privacyTitle": "Lubadus sinu silma kohta",
+    "privacy": [
+      {
+        "t": "Ainult sinu kunstiteose jaoks",
+        "b": "Sinu fotot kasutatakse ainult sinu kunstiteose tegemiseks. Igast võttest salvestame mõne mõõtmistulemuse, mitte kunagi pilti ennast, et pildistamisjuhendit paremaks teha."
+      },
+      {
+        "t": "Mitte kunagi tuvastamiseks",
+        "b": "Seda ei kasutata kunagi kellegi tuvastamiseks, ei müüda kunagi ega kasutata tehisintellekti treenimiseks."
+      },
+      {
+        "t": "Tasuta eelvaateid me ei säilita",
+        "b": "Me ei salvesta sinu tasuta eelvaadet. Iirise väljalõike ja eelvaate säilitame ainult siis, kui alustad tellimust. Kui tellid, säilitame sinu tellimuse faile (mitte sinu telefonifotot) 12 kuud, et saaksid need alla laadida."
+      },
+      {
+        "t": "Mõned välised teenused",
+        "b": "Vercel käitab lehte ja eelvaadet, Google’i Gemini API teeb taastamise (Google säilitab päringute logisid piiratud aja). Tellimuste puhul lisanduvad Stripe makseteks ja privaatne Supabase’i salvestusruum ELis."
+      }
+    ],
+    "controller": "Sinu andmete eest vastutab MB „Portretizuokis“, Kaunas, Leedu (täielikud andmed on selle lehe jaluses).",
+    "rights": "Võid küsida, milliseid andmeid me sinu kohta hoiame, lasta neid parandada või kustutada ning esitada kaebuse andmekaitseasutusele.",
+    "policyLink": "Loe kogu privaatsuspoliitikat"
+  },
+  "faq": {
+    "eyebrow": "Küsimused",
+    "title": "Enne kui alustad",
+    "items": [
+      {
+        "id": "receive",
+        "q": "Mida ma saan?",
+        "a": "Ühe digitaalse faili ilma vesimärgita: JPEG sRGB-värviruumis, {square} ühe silma ja {px} pikimal küljel mitme silma puhul, tehtud täisresolutsioonis sinu heakskiidetud eelvaate põhjal. Pärast maksmist avaneb sinu tellimuse leht ja selle link saabub e-kirjaga. Tavaliselt on fail valmis mõne minutiga; kui peame tellimuse kunagi kontrollimiseks kinni, lubame selle hiljemalt {hours} tunni jooksul. Fail jääb allalaadimiseks kättesaadavaks 12 kuuks. Isiklik litsents: trüki see endale või kingituseks; kunstiteose või trükitud piltide müük ei kuulu litsentsi hulka (vt müügitingimusi)."
+      },
+      {
+        "id": "print",
+        "q": "Kas te trükite või saadate seda?",
+        "a": "Ei. Trükkimine ei kuulu sinu tellimuse juurde: trükikoda võtab selle eest eraldi tasu ning hind sõltub trükikojast, suurusest ja materjalist. Kui me kunagi trükkimise lisame, ütleme seda sellel lehel."
+      },
+      {
+        "id": "printit",
+        "q": "Kas ma saan seda trükkida ja kui suurelt?",
+        "a": "Jah. Vali trükikoda, vali ruudukujuline suurus, näiteks 20, 30, 40 või 50 cm, ja laadi JPEG üles. Muude kujude puhul palu trükikojal pilti kärpida või lisada ääris ning küsi proovitrükki või näidist. Meie ei trüki ega saada: trükk on trükikoja töö ja hind. Ühe silma puhul soovitame kuni {printMax}, mis on umbes 208 pikslit tolli kohta (30 cm juures umbes 347). Trükikojad küsivad tavaliselt umbes 150 kuni 300. Mitme silma puhul võib pikem serv olla kuni {printMaxCm}. Üle {printMaxCm} on trükk võimalik, kuid venitab faili rohkem, seega me seda ei luba. Tulemus sõltub ka sinu fotost."
+      },
+      {
+        "id": "look",
+        "q": "Kas minu trükitud pilt näeb välja nagu piltidel?",
+        "a": "Tubade, käte ja trükitud piltide pildid on visualiseeringud sellest, milline võib fail trükituna välja näha, mitte fotod. Päris trükk erineb sõltuvalt trükikojast, materjalist ja sinu toa valgusest, samamoodi nagu ekraan erineb seinast, ning selle värvid võivad erineda sinu ekraani omadest. Suurused piltidel on illustratiivsed ja mõned neil näha olevad stiilid avanevad peagi. Küsi trükikojalt proovitrükki või näidist."
+      },
+      {
+        "id": "how",
+        "q": "Kuidas see käib?",
+        "a": "Alustame sinu enda fotost ja eemaldame peegeldused. Seal, kus sinu telefon ei suutnud kõige peenemaid kiude jäädvustada, taastab need meie tehisintellekt, seega on kõige peenem detail rekonstruktsioon, mitte mikroskoobifoto. Mõnes stiilis on pulber, vedelik, leek või tolm sinu iirise ümber tehisintellekti loodud materjal ühisest kogust, seega võib teise kliendi kunstiteos sisaldada sama tükki. Sinu iiris säilitab sinu foto värvid, mustri ja paigutuse; kõige peenemad kiud taastab tehisintellekt, nagu eespool kirjeldatud. Toad, käed ja esemed selle lehe piltidel on loodud tehisintellektiga, mitte pildistatud. Silmad sellel lehel on meie enda silm ja näidisfotod, mitte kunagi kliendi omad, ning kõik on hoolega pildistatud: sinu tulemus sõltub sinu fotost ja tasuta eelvaade näitab seda enne maksmist."
+      },
+      {
+        "id": "bad",
+        "q": "Mis siis, kui mu foto on halb?",
+        "a": "Enne maksmist ütleb eelvaade sulle, kui võte on liiga udune, liiga tume või pupill liiga lai, ja näitab, kuidas see uuesti teha. Ikka ei õnnestu? Saada oma parimad fotod aadressile {email} ja me vaatame need üle."
+      },
+      {
+        "id": "unhappy",
+        "q": "Mis siis, kui tulemus mulle ei meeldi?",
+        "a": "Näed oma eelvaadet tasuta enne maksmist ja pärast maksmist hakkame sinu faili kohe valmistama. Kui fail on puudusega või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile: valmistame selle uuesti või tagastame sulle raha. Lepingust taganemise üksikasjad on allpool."
+      },
+      {
+        "id": "phone",
+        "q": "Millist telefoni ja kaamerat kasutada?",
+        "a": "Sobib iga uuem nutitelefon, millel on hea tagakaamera. Kasuta tagakaamerat 2x või 3x suurendusega, mitte esikaamerat. Kasuta päevavalgust aknast või taskulampi, küljelt, mitte toalampi ega välku. Hoia telefoni umbes 10\u00a0cm kaugusel silmast, puuduta teravustamiseks iirist, hoia silm pärani lahti, et laug ega ripsmed ei ulatuks iirise peale, võta prillid ära ja tee kolm kuni viis võtet. Mõõdame iga võtet ja kasutame kõige teravamat."
+      },
+      {
+        "id": "colour",
+        "q": "Kas värv vastab minu silmale?",
+        "a": "Värv tuleb sinu fotolt ning telefon jäädvustab värvi toalambi all, välguga või varjus erinevalt. Me ei värvi iirist kunagi ümber, seega kui foto tundub vale tooniga, tee see uuesti akna päevavalguses või taskulambiga küljelt."
+      },
+      {
+        "id": "other",
+        "q": "Kas ma võin pildistada kedagi teist?",
+        "a": "Jah: partnerit, last või oma teist silma, ja mitu silma saavad jagada üht kunstiteost. Küsi enne luba ja lapse puhul otsustad sina kui vanem või eestkostja. Võid kunstiteose teha ka kellelegi teisele ja kinkida talle faili.",
+        "aOpen": "Jah: partnerit, last või oma teist silma, ja kuni {max} silma jagavad üht kunstiteost. Küsi enne luba ja lapse puhul otsustad sina kui vanem või eestkostja. Võid kunstiteose teha ka kellelegi teisele ja kinkida talle faili."
+      },
+      {
+        "id": "material",
+        "q": "Millise materjali valida?",
+        "a": "Akrüül on läikiv ja sügav; riputa see eemale otsesest aknapeegeldusest. Alumiinium on terav ja moodne. Lõuend on pehme ja peegeldab vähem, kuid selle kude pehmendab kõige peenemaid kiude. Raamitud pilt on klassikaline. Akrüülplokk seisab riiulil. Telefoni jaoks lisa mis tahes fototöötlusprogrammis ruudukujulise faili ümber musta ruumi ja määra see taustapildiks. Selle lehe üksikasjad on trükikodadele tüüpilised ja varieeruvad; küsi trükikojalt näidist."
+      },
+      {
+        "id": "time",
+        "q": "Kui kaua see aega võtab?",
+        "a": "Tasuta eelvaade võtab umbes minuti. Kui tellimine on avatud, valmib sinu fail täisresolutsioonis pärast seda, kui oled selle heaks kiitnud, tavaliselt mõne minutiga ja hiljemalt {hours} tunni jooksul.",
+        "aOpen": "Tasuta eelvaade võtab umbes minuti. Pärast maksmist valmib sinu fail täisresolutsioonis, tavaliselt mõne minutiga ja hiljemalt {hours} tunni jooksul."
+      },
+      {
+        "id": "photo",
+        "q": "Mis saab minu fotost?",
+        "a": "Me ei salvesta sinu tasuta eelvaadet. Iirise väljalõike ja eelvaate säilitame ainult siis, kui alustad tellimust. Kui tellid, säilitame sinu tellimuse faile (mitte sinu telefonifotot) 12 kuud, et saaksid need uuesti alla laadida, ja seejärel kustutame need. Sinu iirist ei kasutata kunagi kellegi tuvastamiseks ega tehisintellekti treenimiseks. Üksikasjad on meie privaatsuspoliitikas, mille link on selle lehe jaluses."
+      },
+      {
+        "id": "withdraw",
+        "q": "Kas ma saan tellimusest taganeda?",
+        "a": "Hakkame sinu faili valmistama kohe, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset. Enne maksmist nõustud, et alustame kohe, seega lõpeb 14-päevane taganemisõigus siis, kui oleme sinu faili valmistamist alustanud. Seni saad lepingust taganeda e-kirjaga või veebis nupuga „Taganen lepingust“, mille leiad selle lehe jalusest või tellimuse kinnituskirjas olevalt taganemislingilt. Kui sinu fail on puudusega või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile: valmistame selle uuesti või tagastame sulle raha. Üksikasjad on meie müügitingimustes ja taganemisõiguse teabes, mille lingid on selle lehe jaluses."
+      },
+      {
+        "id": "order",
+        "q": "Millal ma saan tellida?",
+        "a": "Tellimine avaneb peagi. Seni on saadaval tasuta eelvaade. Tellimiseks on vaja ainult e-posti aadressi.",
+        "qOpen": "Kuidas ma tellin?",
+        "aOpen": "Kohe pärast tasuta eelvaadet, samal lehel: vali stiil, märgi digitaalse faili kohta käiv kast ja jätka Stripe’i makselehele, kus maksad. Sinu tellimuse leht avaneb kohe ja selle link saabub e-kirjaga. Vaja on ainult e-posti aadressi."
+      },
+      {
+        "id": "pets",
+        "q": "Kas ma saan teha kunstiteose oma lemmikloomast?",
+        "a": "Veel mitte. Kui see võimalikuks saab, anname siin teada."
+      }
+    ]
+  },
+  "faqAu": {
+    "unhappy": {
+      "q": "Mis siis, kui tulemus mulle ei meeldi?",
+      "a": "Näed oma eelvaadet tasuta enne maksmist ja pärast maksmist hakkame sinu faili kohe valmistama. Kui fail on vigane või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile. Meie teenustega kaasnevad garantiid, mida Austraalia tarbijaõiguse (Australian Consumer Law) alusel ei saa välistada. Tühistamise üksikasjad on allpool."
+    },
+    "withdraw": {
+      "q": "Kas ma saan tellimuse tühistada?",
+      "a": "Hakkame sinu faili valmistama kohe, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset. Enne maksmist nõustud, et alustame kohe, seega lõpeb sinu tellimusele kohalduv ELi tarbijaõigusest tulenev 14-päevane taganemisõigus siis, kui oleme sinu faili valmistamist alustanud. Seni saad tellimuse tühistada e-kirjaga või veebis nupuga „Taganen lepingust“, mille leiad selle lehe jalusest või tellimuse kinnituskirjas olevalt taganemislingilt, ja me tagastame sulle kogu summa. See puudutab ainult meelemuutust: meie teenustega kaasnevad garantiid, mida Austraalia tarbijaõiguse (Australian Consumer Law) alusel ei saa välistada, seega kui sinu fail on vigane või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile. Üksikasjad on meie müügitingimustes (Sinu õigused Austraalias) ja taganemisõiguse teabes, mille lingid on selle lehe jaluses."
+    }
+  },
+  "final": {
+    "title": "Vaata oma iirist",
+    "body": "Vaja on ainult telefoni, head valgust ja umbes minutit.",
+    "imageAlt": "Visualiseering: hämar kabinet õhtuhämaruses, seinal meie enda iiris akrüülile trükituna.",
+    "chip": "Visualiseering"
+  },
+  "footer": {
+    "operatedBy": "SnapEyesi haldab",
+    "company": "MB „Portretizuokis“",
+    "companyCode": "Registrikood",
+    "country": "Leedu",
+    "contact": "Kontakt",
+    "representedBy": "Esindaja",
+    "rights": "SnapEyes",
+    "currency": "Hindade valuuta",
+    "legalNav": "Õiguslik teave",
+    "legal": {
+      "privacy": "Privaatsuspoliitika",
+      "terms": "Müügitingimused",
+      "withdrawal": "Taganemisõigus",
+      "imprint": "Ettevõtte andmed",
+      "withdrawFn": "Taganen lepingust"
+    }
+  },
+  "marketHint": {
+    "label": "Hinnad sinu valuutas",
+    "close": "Ei, aitäh",
+    "huf": {
+      "text": "Ostad Ungarist? Vaata meie hindu Ungari forintites (Ft).",
+      "show": "Näita hindu forintites"
+    }
+  },
+  "ui": {
+    "close": "Sulge",
+    "scrollHint": "Keri küljele, et näha rohkem"
+  }
+}

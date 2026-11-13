@@ -7,7 +7,7 @@ import { callApi } from '../order/api';
 import { CARD, GOLD_BTN, PLAIN_BTN } from '../order/ui';
 import { Dot } from '../motion/Tick';
 import { detectLang, rememberLang, type Lang } from '../try/lang';
-import { LANG_NAMES } from '../shared/lang';
+import { LangMenu } from '../shared/LangMenu';
 import { LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { CONTACT_EMAIL } from '../landing/config';
 import { BrandPicture } from '../shared/BrandLogo';
@@ -20,7 +20,7 @@ import './gift.css';
 // ?cancelled=1: Stripe's back link. The page carries no third-party script and sends no referrer (the session id in its address shows the code).
 
 const SESSION_RE = /^cs_(test|live)_[A-Za-z0-9]{8,240}$/;
-const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const KINDS: readonly GiftKind[] = ['one', 'two'];
 const PICTURE: Record<GiftKind, string> = { one: '/assets/atelier/style-celestial-gold-480.webp', two: '/assets/atelier/style-clean-duo-480.webp' };
 
@@ -228,14 +228,7 @@ export const GiftApp: React.FC = () => {
         <a href={withMarket(`/?lang=${lang}`)} className="shrink-0 flex items-center">
           <BrandPicture className="shrink-0" imgClass="block h-11 w-auto min-[341px]:h-[50px] min-[375px]:h-14" />
         </a>
-        <div role="group" aria-label={C.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">
-          {LANGS.map((l) => (
-            <button key={l} type="button" onClick={() => switchLang(l)} aria-pressed={lang === l} lang={l} title={LANG_NAMES[l]}
-              className={`min-w-[40px] rounded-full px-2.5 py-1.5 max-[400px]:min-w-[28px] max-[400px]:px-1.5 uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${lang === l ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-white'}`}>
-              {l}
-            </button>
-          ))}
-        </div>
+        <LangMenu label={C.switchLabel} lang={lang} langs={LANGS} onSwitch={switchLang} />
       </header>
 
       <main className="max-w-2xl mx-auto px-4 pb-10">

@@ -55,7 +55,7 @@ from .print_offer import PRINT_OFFER
 from .print_rates import PRINT_RATES
 from .print_names import PRINT_NAMES
 
-LANGS = ("en", "de", "lt", "hu", "hr")
+LANGS = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
 SWITCH_PATH = "ops/prints/switch.json"
 SWITCH_TTL = 30.0            # one read of the switch per instance per 30 s
 SWITCH_FAIL_TTL = 5.0        # a failed read is remembered this long (read as OFF)
@@ -74,7 +74,7 @@ CONTACT = pay.CONTACT
 BILLING = {"firstname": "MB", "lastname": "Portretizuokis", "company": "MB Portretizuokis", "street_primary": "Gedimino g. 22A-14",
            "city": "Kaunas", "postcode": "44319", "country": "LT"}
 PRODUCER = "Picanova GmbH (merchOne), Eupener Straße 67, 50933 Köln"
-PRODUCER_COUNTRY = {"en": "Germany", "de": "Deutschland", "lt": "Vokietija", "hu": "Németország", "hr": "Njemačka"}
+PRODUCER_COUNTRY = {"en": "Germany", "de": "Deutschland", "lt": "Vokietija", "hu": "Németország", "hr": "Njemačka", "fi": "Saksa", "et": "Saksamaa", "lv": "Vācija"}
 FINAL = ("shipped", "canceled")
 PARKED = ("held", "failed", "canceled_partner")   # wait for the owner (admin page, Spaudiniai): the daily run does not spend its turns on them
 _TRACK_URL = re.compile(r"^https://[A-Za-z0-9.-]{3,120}(/[^\s<>\"']{0,600})?$")
@@ -254,11 +254,19 @@ PRINT_CONSENT_TEXT = {
            "ez nem érinti a jogaimat, ha hibásan vagy sérülten érkezik."),
     "hr": ("Znam da se moj ispis izrađuje po mojoj narudžbi iz mojeg osobnog umjetničkog djela, pa za njegovu kupnju nemam pravo na "
            "jednostrani raskid ugovora; to ne utječe na moja prava ako stigne neispravan ili oštećen."),
+    "fi": ("Tiedän, että tulosteeni tehdään tilaukseni mukaan henkilökohtaisesta taideteoksestani, joten en voi peruuttaa sen ostoa; "
+           "tämä ei vaikuta oikeuksiini, jos se saapuu virheellisenä tai vahingoittuneena."),
+    "et": ("Tean, et minu trükitud pilt valmistatakse minu tellimuse järgi minu isiklikust kunstiteosest, seega ei saa ma selle ostust "
+           "taganeda; see ei mõjuta minu õigusi, kui see saabub puudusega või kahjustatuna."),
+    "lv": ("Es zinu, ka mana izdruka tiek izgatavota pēc mana pasūtījuma no mana personīgā mākslas darba, tāpēc no tās pirkuma atteikties "
+           "nevaru; tas neietekmē manas tiesības, ja tā pienāk ar trūkumiem vai bojāta."),
 }
 # every print consent text ever shown, by consent version (pay.CONSENT_VERSION): an order quotes the text its customer ticked. As pay.CONSENT_TEXTS:
 # the version it came with is named, and the current version maps to the current text, so a new CONSENT_VERSION (a waiver that changes) keeps
 # the print box quotable under every version; a changed print box needs a new version and its old text kept here under the old ones
-PRINT_CONSENT_TEXTS = {"2026-10-28.3": PRINT_CONSENT_TEXT, pay.CONSENT_VERSION: PRINT_CONSENT_TEXT}
+# 2026-11-13.1 added the Finnish, Estonian and Latvian boxes: the version before keeps exactly the five boxes it had (as pay.CONSENT_TEXT_1028)
+PRINT_CONSENT_TEXT_1028 = {l: PRINT_CONSENT_TEXT[l] for l in ("en", "de", "lt", "hu", "hr")}
+PRINT_CONSENT_TEXTS = {"2026-10-28.3": PRINT_CONSENT_TEXT_1028, pay.CONSENT_VERSION: PRINT_CONSENT_TEXT}
 
 SUBMIT_NOTE_PRINT = {   # what Stripe shows above its pay button when the order has a print (the order's language; the EU edition only)
     "en": ("You are buying a digital file (JPEG, 4096 px) and a print of it, shipped to the address above. You agreed that we start the file "
@@ -276,6 +284,16 @@ SUBMIT_NOTE_PRINT = {   # what Stripe shows above its pay button when the order 
     "hr": ("Kupujete digitalnu datoteku (JPEG, 4096 px) i njezin ispis, koji šaljemo na gornju adresu. Pristali ste da odmah započnemo s "
            "datotekom i da vaše pravo na jednostrani raskid ugovora prestaje čim započnemo; ispis se izrađuje po vašoj narudžbi pa za njega "
            "nema prava na jednostrani raskid. Klikom na gumb za plaćanje dajete narudžbu s obvezom plaćanja."),
+    "fi": ("Ostat digitaalisen tiedoston (JPEG, 4096 px) ja siitä tehdyn tulosteen, joka lähetetään yllä olevaan osoitteeseen. Olet "
+           "hyväksynyt, että aloitamme tiedoston heti ja että peruuttamisoikeutesi päättyy, kun olemme aloittaneet; tuloste tehdään "
+           "tilauksesi mukaan, eikä sen ostoa voi peruuttaa. Maksupainiketta painamalla teet tilauksen, ja tilaukseen liittyy "
+           "maksuvelvollisuus."),
+    "et": ("Ostad digitaalse faili (JPEG, 4096 px) ja sellest trükitud pildi, mis saadetakse ülaltoodud aadressile. Nõustusid, et "
+           "alustame failiga kohe ja et sinu taganemisõigus lõpeb, kui oleme alustanud; trükitud pilt valmistatakse sinu tellimuse "
+           "järgi ja selle ostust ei saa taganeda. Maksenupule vajutades esitad tellimuse koos maksekohustusega."),
+    "lv": ("Jūs pērkat digitālu failu (JPEG, 4096 px) un tā izdruku, ko nosūtām uz augstāk norādīto adresi. Jūs piekritāt, ka failu "
+           "sākam veidot uzreiz un ka jūsu atteikuma tiesības beidzas, tiklīdz esam sākuši; izdruka tiek izgatavota pēc jūsu pasūtījuma, "
+           "un no tās pirkuma atteikties nevar. Nospiežot maksāšanas pogu, jūs veicat pasūtījumu ar pienākumu maksāt."),
 }
 ITEM_DESC_PRINT = {
     "en": "Made to order from your artwork. Shipped tracked from our print partner's workshop in Europe.",
@@ -283,6 +301,9 @@ ITEM_DESC_PRINT = {
     "lt": "Gaminamas pagal užsakymą iš Jūsų kūrinio. Siunčiamas su siuntos sekimu iš mūsų spaudos partnerio dirbtuvių Europoje.",
     "hu": "A megrendelésedre, az alkotásodból készül. Nyomon követhető csomagként küldjük nyomdai partnerünk európai üzeméből.",
     "hr": "Izrađuje se po narudžbi iz vašeg umjetničkog djela. Šalje se s praćenjem pošiljke iz radionice našeg partnera za ispis u Europi.",
+    "fi": "Tehdään tilauksesi mukaan taideteoksestasi. Lähetetään seurannalla tulostuskumppanimme työpajasta Euroopasta.",
+    "et": "Valmistatakse tellimuse järgi sinu kunstiteosest. Saadetakse jälgitava saadetisena meie trükipartneri töökojast Euroopas.",
+    "lv": "Tiek izgatavota pēc pasūtījuma no jūsu mākslas darba. Tiek nosūtīta ar sūtījuma izsekošanu no mūsu drukas partnera darbnīcas Eiropā.",
 }
 # the description of the artwork's own line item (0) when the order has a print: the file, without the "no print, no frame" of pay.ITEM_DESC
 ITEM_DESC_FILE = {
@@ -291,12 +312,21 @@ ITEM_DESC_FILE = {
     "lt": "Skaitmeninis Jūsų kūrinio failas: JPEG, ilgoji kraštinė 4096 px. Spaudinys nurodytas kitoje eilutėje.",
     "hu": "Az alkotásod digitális fájlja: JPEG, a hosszabbik oldalán 4096 px. A nyomatod a következő sorban van.",
     "hr": "Digitalna datoteka vašeg umjetničkog djela: JPEG, 4096 px na duljoj stranici. Vaš ispis je u sljedećem retku.",
+    "fi": "Taideteoksesi digitaalinen tiedosto: JPEG, 4096 px pisimmältä sivulta. Tulosteesi on seuraavalla rivillä.",
+    "et": "Sinu kunstiteose digitaalne fail: JPEG, 4096 px pikimal küljel. Sinu trükitud pilt on järgmisel real.",
+    "lv": "Jūsu mākslas darba digitālais fails: JPEG, 4096 px garākajā malā. Jūsu izdruka ir nākamajā rindā.",
 }
 SHIP_LABEL = {"en": "Tracked shipping: {country}", "de": "Versand mit Sendungsverfolgung: {country}", "lt": "Siuntimas su sekimu: {country}",
-              "hu": "Nyomon követhető szállítás: {country}", "hr": "Dostava s praćenjem: {country}"}
+              "hu": "Nyomon követhető szállítás: {country}", "hr": "Dostava s praćenjem: {country}",
+              "fi": "Toimitus seurannalla: {country}",
+              "et": "Jälgitav tarne: {country}",
+              "lv": "Piegāde ar izsekošanu: {country}"}
 SHIP_ADDRESS_NOTE = {"en": "Your print ships to this address ({country}).", "de": "Ihr Druck wird an diese Adresse versandt ({country}).",
                      "lt": "Jūsų spaudinys bus išsiųstas šiuo adresu ({country}).", "hu": "A nyomatodat erre a címre küldjük ({country}).",
-                     "hr": "Vaš ispis šaljemo na ovu adresu ({country})."}
+                     "hr": "Vaš ispis šaljemo na ovu adresu ({country}).",
+                     "fi": "Tulosteesi lähetetään tähän osoitteeseen ({country}).",
+                     "et": "Sinu trükitud pilt saadetakse sellele aadressile ({country}).",
+                     "lv": "Jūsu izdruku nosūtīsim uz šo adresi ({country})."}
 
 
 def consent_text(version, lang):
@@ -510,6 +540,36 @@ CONF = {
                   "info@snapeyes.com s brojem narudžbe, fotografijom oštećenja i fotografijom cijelog ispisa: tada ga najbrže možemo zamijeniti. "
                   "Vaša zakonska prava, uključujući zakonsko jamstvo od dvije godine za nedostatke, vrijede u cijelosti i ne ovise o tom roku."),
            "p3": "Prije plaćanja, {at}, označili ste ovu kućicu o svojem ispisu:"},
+    "fi": {"delivery": "digitaalinen tiedosto (JPEG, 4096 px pisimmältä sivulta) tilaussivullasi ja tuloste, joka lähetetään maksusivulla antamaasi osoitteeseen",
+           "file": "Taideteoksen tiedosto", "print": "Tuloste", "ship": "Toimitus", "address": "Toimitusosoite", "h": "Tulosteesi",
+           "p1": ("Lähetämme tulosteesi tuotantoon heti, kun tiedostosi on valmis. Tuotanto kestää noin 3 arkipäivää; toimitus kestää sen "
+                  "jälkeen yleensä 2-9 arkipäivää maasta riippuen. Lähetämme seurantalinkin sähköpostiisi, kun tuloste lähtee matkaan. "
+                  "Tulosteesi tekee meille tulostuskumppanimme {producer}."),
+           "p2": ("Tarkista tulosteesi, kun se saapuu. Jos se on vahingoittunut kuljetuksessa tai siinä on virhe, kirjoita mahdollisuuksien "
+                  "mukaan 7 päivän kuluessa osoitteeseen info@snapeyes.com ja liitä mukaan tilausnumerosi, kuva vauriosta ja kuva koko "
+                  "tulosteesta: silloin saamme sen vaihdettua nopeimmin. Lakisääteiset oikeutesi, myös kahden vuoden lakisääteinen "
+                  "virhevastuu, ovat voimassa täysimääräisinä eivätkä riipu tästä ajasta."),
+           "p3": "Ennen maksamista, {at}, rastitit tämän tulostettasi koskevan ruudun:"},
+    "et": {"delivery": "digitaalne fail (JPEG, 4096 px pikimal küljel) sinu tellimuse lehel ja trükitud pilt, mis saadetakse makselehel antud aadressile",
+           "file": "Kunstiteose fail", "print": "Trükitud pilt", "ship": "Tarne", "address": "Tarneaadress", "h": "Sinu trükitud pilt",
+           "p1": ("Saadame sinu trükitud pildi tootmisse kohe, kui sinu fail on valmis. Tootmine võtab umbes 3 tööpäeva; kohaletoimetamine "
+                  "võtab seejärel tavaliselt 2 kuni 9 tööpäeva, olenevalt riigist. Kui see teele läheb, saadame sulle e-kirjaga "
+                  "jälgimislingi. Sinu trükitud pildi valmistab meile meie trükipartner {producer}."),
+           "p2": ("Palun kontrolli oma trükitud pilti, kui see saabub. Kui see on transpordil kahjustada saanud või puudusega, kirjuta palun "
+                  "võimaluse korral 7 päeva jooksul aadressile info@snapeyes.com ning lisa oma tellimuse number, foto kahjustusest ja foto "
+                  "kogu trükitud pildist: nii saame selle kõige kiiremini välja vahetada. Sinu seadusest tulenevad õigused, sealhulgas "
+                  "seadusest tulenev kaheaastane vastutus puuduste eest, kehtivad täies ulatuses ega sõltu sellest tähtajast."),
+           "p3": "Enne maksmist ({at}) märkisid oma trükitud pildi kohta selle kasti:"},
+    "lv": {"delivery": "digitālais fails (JPEG, 4096 px garākajā malā) jūsu pasūtījuma lapā un izdruka, ko nosūtām uz adresi, kuru norādījāt maksājuma lapā",
+           "file": "Mākslas darba fails", "print": "Izdruka", "ship": "Piegāde", "address": "Piegādes adrese", "h": "Jūsu izdruka",
+           "p1": ("Jūsu izdruku nodosim ražošanā, tiklīdz jūsu fails būs gatavs. Ražošana aizņem apmēram 3 darba dienas; piegāde pēc tam "
+                  "parasti aizņem 2 līdz 9 darba dienas atkarībā no valsts. Kad izdruka būs izsūtīta, nosūtīsim jums e-pastā izsekošanas "
+                  "saiti. Jūsu izdruku mums izgatavo mūsu drukas partneris {producer}."),
+           "p2": ("Lūdzu, pārbaudiet izdruku, kad tā pienāk. Ja tā ir bojāta pārvadāšanas laikā vai ar trūkumiem, lūdzu, ja iespējams, 7 "
+                  "dienu laikā rakstiet uz info@snapeyes.com, norādot pasūtījuma numuru un pievienojot bojājuma fotogrāfiju un visas "
+                  "izdrukas fotogrāfiju: tad varēsim to nomainīt visātrāk. Jūsu likumīgās tiesības, tostarp likumā noteiktā divu gadu "
+                  "garantija par trūkumiem, ir spēkā pilnībā un nav atkarīgas no šī termiņa."),
+           "p3": "Pirms maksāšanas ({at}) jūs atzīmējāt šo rūtiņu par savu izdruku:"},
 }
 SHIPPED = {
     "en": {"subject": "Your SnapEyes print is on its way", "hello": "Hello,", "line": "your print ({name}) has left the workshop and is on its way to you.",
@@ -539,6 +599,24 @@ SHIPPED = {
            "check": ("Pregledajte ga kad stigne. Ako je oštećen ili neispravan, ako možete, pišite nam u roku od 7 dana s fotografijom oštećenja i "
                      "fotografijom cijelog ispisa: tada ga najbrže možemo zamijeniti. Vaša zakonska prava time nisu ograničena."),
            "bye": "Srdačan pozdrav,\nSnapEyes"},
+    "fi": {"subject": "SnapEyes-tulosteesi on matkalla", "hello": "Hei,", "line": "tulosteesi ({name}) on lähtenyt työpajasta ja on matkalla luoksesi.",
+           "track": "Voit seurata sitä täällä:", "number": "Seurantanumero: {number}", "order": "Tilaus: {order}",
+           "check": ("Tarkista se, kun se saapuu. Jos se on vahingoittunut tai siinä on virhe, kirjoita meille mahdollisuuksien mukaan 7 päivän "
+                     "kuluessa ja liitä mukaan kuva vauriosta ja kuva koko tulosteesta: silloin saamme sen vaihdettua nopeimmin. Tämä ei "
+                     "vaikuta lakisääteisiin oikeuksiisi."),
+           "bye": "Ystävällisin terveisin\nSnapEyes"},
+    "et": {"subject": "Sinu SnapEyesi trükitud pilt on teel", "hello": "Tere!", "line": "Sinu trükitud pilt ({name}) on töökojast lahkunud ja on teel sinu juurde.",
+           "track": "Saad seda jälgida siin:", "number": "Saadetise number: {number}", "order": "Tellimus: {order}",
+           "check": ("Palun kontrolli seda, kui see saabub. Kui see on kahjustatud või puudusega, kirjuta meile palun võimaluse korral 7 päeva "
+                     "jooksul ning lisa foto kahjustusest ja foto kogu trükitud pildist: nii saame selle kõige kiiremini välja vahetada. See "
+                     "ei mõjuta sinu seadusest tulenevaid õigusi."),
+           "bye": "Parimate soovidega\nSnapEyes"},
+    "lv": {"subject": "Jūsu SnapEyes izdruka ir ceļā", "hello": "Labdien!", "line": "Jūsu izdruka ({name}) ir izsūtīta no darbnīcas un ir ceļā pie jums.",
+           "track": "Tai varat sekot šeit:", "number": "Sūtījuma numurs: {number}", "order": "Pasūtījums: {order}",
+           "check": ("Lūdzu, pārbaudiet to, kad tā pienāk. Ja tā ir bojāta vai ar trūkumiem, lūdzu, ja iespējams, 7 dienu laikā rakstiet "
+                     "mums, pievienojot bojājuma fotogrāfiju un visas izdrukas fotogrāfiju: tad varēsim to nomainīt visātrāk. Tas "
+                     "neietekmē jūsu likumīgās tiesības."),
+           "bye": "Ar cieņu\nSnapEyes"},
 }
 
 

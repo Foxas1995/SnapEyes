@@ -21,7 +21,7 @@ import { join } from 'node:path';
 
 export const SITE_ORIGIN = 'https://snapeyes.com';
 export const LANDING_DIR = 'lp';
-export const LANG_ORDER = ['en', 'de', 'lt', 'hu', 'hr'];
+export const LANG_ORDER = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 
 /** The file of a language's edition inside dist (and the path of the page's copy of it in the repository's own build). */
 export const landingFile = (lang) => `${LANDING_DIR}/${lang}.html`;

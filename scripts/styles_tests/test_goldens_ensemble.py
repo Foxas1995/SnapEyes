@@ -128,14 +128,17 @@ check("their engine is the ensemble family with the design of each look; the nam
       and [reg[s]["name"] for s in STYLES] == ["Clean Duo", "Radiance Duo", "Family Orbit", "Light Circle", "Radiance Family", "Nebula Duo", "Nebula Family", "Supernova Duo",
                                                "Supernova Family", "Galaxy Duo", "Galaxy Family", "Powder Family"], {s: eng[s]["engine"] for s in STYLES})
 check("the pairs take two eyes in the layout pair, the families three to eight (Family Orbit the new layout orbit, Light Circle the ring, Radiance Family the triangle, the "
-      "zigzag and the rows, Galaxy Family and Powder Family the ring), and every layout has its word in the four languages",
+      "zigzag and the rows, Galaxy Family and Powder Family the ring), and every layout has its word in the four languages"
+      " - 1113: in the eight languages (Croatian since 2026-10-28; Finnish, Estonian and Latvian since 2026-11-13)",
       reg["duo.clean_duo"]["eyes"] == [2, 2] and all(reg[s]["layouts"] == {"2": ["pair"]} for s in ("duo.radiance", "duo.clean_duo", "duo.nebula", "duo.supernova", "duo.galaxy"))
       and all(reg[s]["eyes"] == [3, 8] for s in ("grp.orbit", "grp.light_circle", "grp.radiance", "grp.nebula", "grp.supernova", "grp.galaxy", "grp.powder"))
       and all(reg[g]["layouts"][str(n)] == ["ring"] for g in ("grp.galaxy", "grp.powder") for n in range(3, 9))
       and reg["grp.nebula"]["layouts"] == reg["grp.supernova"]["layouts"] == reg["grp.radiance"]["layouts"]
       and all(reg["grp.orbit"]["layouts"][str(n)] == ["orbit"] and reg["grp.light_circle"]["layouts"][str(n)] == ["ring"] for n in range(3, 9))
       and reg["grp.radiance"]["layouts"] == {"3": ["trio"], "4": ["zigzag"], "5": ["brick"], "6": ["brick"], "7": ["brick"], "8": ["brick"]}
-      and sorted(CT.LAYOUT_NAMES["orbit"]) == ["de", "en", "hr", "hu", "lt"] and CT.layout_name("lt", "orbit") == "Orbita", reg["grp.radiance"]["layouts"])
+      # 2026-11-13: orbit has its word in the eight languages (Finnish, Estonian and Latvian added)
+      and sorted(CT.LAYOUT_NAMES["orbit"]) == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] and CT.layout_name("lt", "orbit") == "Orbita"
+      and [CT.layout_name(lg, "orbit") for lg in ("fi", "et", "lv")] == ["Kiertorata", "Orbiit", "Orbīta"], reg["grp.radiance"]["layouts"])
 check("a working copy of 2048 px for every eye count (the master reads each eye at most 2048 px wide, as the pairs and Family Colours do), and a place in the picker's order",
       all(CT.work_side(s, n) == 2048 for s in STYLES for n in range(reg[s]["eyes"][0], reg[s]["eyes"][1] + 1))
       and sorted(reg[s]["tile_order"] for s in ("duo.clean_duo", "duo.radiance", "duo.nebula", "duo.supernova", "duo.galaxy")) == [4, 5, 6, 7, 8]

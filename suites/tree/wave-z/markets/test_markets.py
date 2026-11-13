@@ -204,9 +204,14 @@ check("B6 price_text for US dollars and pounds: '$21.97' in English, always with
       and pay.tax_note("usd", "en") == "This is the total price: no sales tax is charged." and "Sales Tax" in pay.tax_note("usd", "de")
       and pay.tax_note("gbp", "en") == "This is the total price." and "VAT" not in pay.tax_note("gbp", "en") and "GST" not in pay.tax_note("gbp", "en")
       and pay.currency_of("USD") == "usd" and pay.currency_of("gbp") == "gbp" and not any(d in json.dumps(list(got6.values())) for d in DASHES), got6)
-check("B7 stripe_locale: the US market's page language (en), en-GB for the UK's English, Croatian for the Croatian market",
+# 1113 (Finnish, Estonian and Latvian: languages of the EU edition, not markets): Stripe's page is in the page's language on the euro markets
+check("B7 stripe_locale: the US market's page language (en), en-GB for the UK's English, Croatian for the Croatian market"
+      " - 1113: Finnish, Estonian and Latvian on the euro markets eu, lt and hr (fi, et, lv), and they are languages only: no market is named after them",
       pay.stripe_locale({"lang": "en", "market": "us"}) == "en" and pay.stripe_locale({"lang": "en", "market": "uk"}) == "en-GB"
-      and pay.stripe_locale({"lang": "hr", "market": "hr"}) == "hr" and pay.stripe_locale({"lang": "en", "market": "hr"}) == "en")
+      and pay.stripe_locale({"lang": "hr", "market": "hr"}) == "hr" and pay.stripe_locale({"lang": "en", "market": "hr"}) == "en"
+      and all(pay.stripe_locale({"lang": l, "market": m}) == l for l in ("fi", "et", "lv") for m in ("eu", "lt", "hr"))
+      and tuple(pay.LANGS) == ("en", "de", "lt", "hu", "hr", "fi", "et", "lv") and not {"fi", "et", "lv", "ee"} & set(pay.MARKETS),
+      [pay.stripe_locale({"lang": l, "market": "eu"}) for l in ("fi", "et", "lv")])
 
 # ---------------------------------------------------------------------------------------------- C. GET /api/checkout
 c, j = get("/api/checkout")

@@ -60,10 +60,10 @@ async function rules() {
     return { doc, preloads, win, sandbox: { URLSearchParams, location: { search: s.search }, localStorage: { getItem: (k) => (k in s.store ? s.store[k] : null) }, navigator: { language: s.nav }, document: doc, window: win } };
   };
   const qm = [null, 'au', 'hu', 'lt', 'AU ', 'xx', 'eu', 'us', 'hr', 'uk'];
-  const ql = [null, 'en', 'de', 'lt', 'hu', 'hr', 'xx'];
+  const ql = [null, 'en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv', 'xx'];
   const sm = [null, 'au', 'hu', 'lt', 'zz', 'us', 'hr', 'uk'];
-  const sl = [null, 'de', 'lt', 'hu', 'hr', 'fr'];
-  const nav = ['en-US', 'de-AT', 'lt', 'hu-HU', 'hr-HR', 'fr-FR', ''];
+  const sl = [null, 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv', 'fr'];
+  const nav = ['en-US', 'de-AT', 'lt', 'hu-HU', 'hr-HR', 'fi-FI', 'et', 'lv-LV', 'fr-FR', ''];
   let n = 0;
   const saved = { window: globalThis.window, navigator: Object.getOwnPropertyDescriptor(globalThis, 'navigator') };
   try {
@@ -100,7 +100,7 @@ async function rules() {
 }
 
 // ------------------------------------------------------------------------------------------------ part 2: the built page in Chrome
-const LANDMARKS = ['.lp-topbar', '.lp-hdr', '.lp-hdr .lp-logo', '.lp-nav', '.lp-seg', '.lp-hdr .lp-btn-line', '.lp-hero', '.lp-eyebrow', '#h1', '.lp-lead', '.lp-cta-row', '#ctaHero', '.lp-link-quiet',
+const LANDMARKS = ['.lp-topbar', '.lp-hdr', '.lp-hdr .lp-logo', '.lp-nav', '.lp-lang', '.lp-hdr .lp-btn-line', '.lp-hero', '.lp-eyebrow', '#h1', '.lp-lead', '.lp-cta-row', '#ctaHero', '.lp-link-quiet',
   '.lp-micro', '.lp-computer-hint', '.lp-hero-fig', '#heroGlobe', '#heroImg', '.lp-globe-note'];
 const STYLE_PROPS = ['color', 'font-size', 'font-family', 'font-weight', 'line-height', 'letter-spacing', 'background-color', 'opacity', 'display', 'position', 'border-radius', 'padding-top', 'margin-top', 'object-fit', 'text-transform'];
 
@@ -205,7 +205,7 @@ async function browser(dist, shotsDir) {
     await p.send('Storage.clearDataForOrigin', { origin, storageTypes: 'all' }).catch(() => undefined);
     return p;
   };
-  const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+  const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
   const COPY = Object.fromEntries(LANGS.map((l) => [l, JSON.parse(readFileSync(join(ROOT, `src/landing/copy/${l}.json`), 'utf8'))]));
   try {
     // static HTML facts (what a crawler or a script-less visitor gets): the English shell, and a template per other language
@@ -237,7 +237,7 @@ async function browser(dist, shotsDir) {
 
     // the shell (main script blocked) against the live first screen, for every language and the markets with a language of their own
     const sizes = [[375, 812, true], [768, 1024, false], [1280, 800, false]];
-    const cases = [['en', '/', 'eu'], ['de', '/?lang=de', 'eu'], ['lt', '/?lang=lt', 'eu'], ['hu', '/?lang=hu', 'eu'], ['hr', '/?lang=hr', 'eu'], ['lt', '/?m=lt', 'lt'], ['hu', '/?m=hu', 'hu'], ['en', '/?m=au', 'au'], ['de', '/?m=au&lang=de', 'au'], ['en', '/?m=us', 'us'], ['en', '/?m=us&lang=de', 'us'], ['hr', '/?m=hr', 'hr']];
+    const cases = [['en', '/', 'eu'], ['de', '/?lang=de', 'eu'], ['lt', '/?lang=lt', 'eu'], ['hu', '/?lang=hu', 'eu'], ['hr', '/?lang=hr', 'eu'], ['fi', '/?lang=fi', 'eu'], ['et', '/?lang=et', 'eu'], ['lv', '/?lang=lv', 'eu'], ['lt', '/?m=lt', 'lt'], ['hu', '/?m=hu', 'hu'], ['en', '/?m=au', 'au'], ['de', '/?m=au&lang=de', 'au'], ['en', '/?m=us', 'us'], ['en', '/?m=us&lang=de', 'us'], ['hr', '/?m=hr', 'hr']];
     const shots = [];
     for (const [lang, url, market] of cases) {
       for (const [w, h, mobile] of sizes) {

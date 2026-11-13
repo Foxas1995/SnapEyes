@@ -1,7 +1,8 @@
 // WP6a: the order page's driver (src/order/driver.ts) with a fake API: a compose answer that made progress (one more step of the master plan done, the
 // artwork not finished yet) does not spend a reload; an answer that made none still ends the loop after eight; the status carries the artwork's progress;
 // a plate that is not ready (plate_retry) is waited out like any busy answer; another order's render holding the server (room_retry) is waited out for as long as
-// the server says (retry_after) and not asked again after a second; the progress line of the page exists in four languages.
+// the server says (retry_after) and not asked again after a second; the progress line of the page exists in four languages (eight since 2026-11-13: every language
+// of the site, src/shared/lang.ts LANGS).
 // Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing.
 import { driveOrder, EMPTY_VIEW, type DriveDeps, type DriveView } from '../../src/order/driver';
 import type { OrderStatus } from '../../src/order/api';
@@ -77,10 +78,12 @@ export async function run(): Promise<R> {
   r = await run1((n) => reply(409, { ok: false, reason: 'in_review' }, 'in_review'), base());
   check('a held order (409 in_review) asks for the status again and the page shows what the status says (here: still making, so the loop ends after its rounds, never a render loop)', r.composes <= 9, `${r.composes}`);
 
-  // the progress line exists in four languages and says which step of how many
-  for (const lang of ['en', 'de', 'lt', 'hu'] as const) {
+  // the progress line exists in four languages and says which step of how many (2026-11-13: in all eight; Croatian, Finnish, Estonian and Latvian were not read here)
+  for (const lang of ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const) {
     const line = ORDER_COPY[lang].making.part(2, 3);
     check(`${lang}: the progress line of a plan with several steps names the step and the count`, line.includes('2') && line.includes('3') && line.length > 12 && !DASH.some((d) => line.includes(d)), line);
   }
+  check('the progress line is written in every language of the site, eight different sentences', Object.keys(ORDER_COPY).sort().join() === 'de,en,et,fi,hr,hu,lt,lv'
+    && new Set(Object.values(ORDER_COPY).map((c) => c.making.part(2, 3))).size === 8, Object.keys(ORDER_COPY).join());
   return out;
 }

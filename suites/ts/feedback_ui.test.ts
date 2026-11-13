@@ -2,6 +2,7 @@
 // radio buttons, no e-mail field, a hidden honeypot only once a chip is chosen, quiet until the server says yes and after the place has been answered), where /try places it (after the price on the
 // result screen, under the card that asks for another photo and outside its alert), that it stores nothing in the browser, and the owner's page (Atsiliepimai: the words, the line under a text,
 // the wiring). Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
+// 2026-11-13: every language of the site, eight (Finnish, Estonian and Latvian came; Croatian, of 2026-10-28, had never been added to this file).
 import { readFileSync } from 'node:fs';
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -12,7 +13,7 @@ import { FB_PLACE_LT, FB_RESULT_LT, FB_RETAKE_LT, FB_TEXT_LT, fbChipLt, valueLt,
 import { metaText, whenText } from '../../src/admin/Feedback';
 
 type Row = [string, boolean, string?];
-const LANGS = ['en', 'de', 'lt', 'hu'] as const;
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const;
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const html = (el: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(el);
 const count = (s: string, re: RegExp) => (s.match(re) ?? []).length;
@@ -34,7 +35,7 @@ export async function run(): Promise<Row[]> {
     && new Set(Object.values(COPY[l].feedback.chips.result)).size === 6 && new Set(Object.values(COPY[l].feedback.chips.retake)).size === 6), LANGS.filter((l) => strings(l).some((s) => !s.trim() || dash.test(s))).join());
   check('the counter prints the length and the limit (300) in every language', LANGS.every((l) => /57/.test(COPY[l].feedback.count(57, TEXT_MAX)) && /300/.test(COPY[l].feedback.count(57, TEXT_MAX))) && TEXT_MAX === 300);
   check('the line under the box says it is anonymous and that a text goes after 90 days, in every language (the privacy policy says the same)', LANGS.every((l) => /90/.test(COPY[l].feedback.privacy)), LANGS.map((l) => COPY[l].feedback.privacy).join(' | '));
-  check('the hint asks the visitor not to write names, e-mail addresses or telephone numbers (the server drops the last two)', ['Names|names', 'Namen', 'vardų', 'nevet'].every((w, i) => new RegExp(w).test(COPY[LANGS[i]].feedback.textHint)), LANGS.map((l) => COPY[l].feedback.textHint).join(' | '));
+  check('the hint asks the visitor not to write names, e-mail addresses or telephone numbers (the server drops the last two)', ['Names|names', 'Namen', 'vardų', 'nevet', 'imena', 'nimiä', 'nimesid', 'vārdus'].every((w, i) => new RegExp(w).test(COPY[LANGS[i]].feedback.textHint)) && LANGS.length === 8, LANGS.map((l) => COPY[l].feedback.textHint).join(' | '));
 
   // ------------------------------------------------------------------------------------------ the markup
   for (const l of LANGS) {

@@ -36,6 +36,9 @@ import { patchDoc } from '../patch';
 import { lt, ltHufPrices } from './terms.lt';
 import { hu, huHufPrices } from './terms.hu';
 import { hr } from './terms.hr';
+import { fi } from './terms.fi';
+import { et } from './terms.et';
+import { lv } from './terms.lv';
 
 const TRANSPARENCY_EN = 'Colour from your own photo. Where your phone could not capture the finest fibres, our AI restores them.';
 const TRANSPARENCY_DE = 'Die Farbe stammt aus Ihrem eigenen Foto. Wo Ihr Smartphone die feinsten Fasern nicht erfassen konnte, stellt unsere KI sie wieder her.';
@@ -88,7 +91,7 @@ const en: LegalDoc = {
       blocks: [
         `The previews and prices on our website are not yet a binding offer. Before you pay, you can check your eyes, style, layout and inscription and correct any input by going back or retaking a photo. You then open the payment page of our payment provider Stripe with our button "${CHECKOUT_LEGAL.en.continueButton}"; this button does not yet place an order. On that page you enter your email address and payment details and can correct them. You place a binding order when you confirm the payment there with the pay button.`,
         'The contract is concluded when your payment is confirmed. Your order page then opens, and we email you its link with your order confirmation. We start making your file there as soon as that email has gone out.',
-        'The contract languages are English, German, Lithuanian, Hungarian and Croatian.',
+        'The contract languages are English, German, Lithuanian, Hungarian, Croatian, Finnish, Estonian and Latvian.',
         'We store your order with the details of the contract: the artwork you ordered, the price, the date, your email address and your consent to the immediate start. Your order page shows these details for as long as we keep your order. We do not keep a separate copy of these terms for each order. Instead, your order confirmation email contains, as text, your order details, these terms and the withdrawal information with the model withdrawal form, in the version in force when you ordered: please keep that email. You can also save or print this page at any time.',
       ],
     },
@@ -212,7 +215,7 @@ const de: LegalDoc = {
       blocks: [
         `Die Vorschauen und Preise auf unserer Website sind noch kein verbindliches Angebot. Vor der Zahlung können Sie Ihre Augen, den Stil, die Anordnung und die Widmung prüfen und Eingaben korrigieren, indem Sie zurückgehen oder ein Foto neu aufnehmen. Danach öffnen Sie mit unserer Schaltfläche „${CHECKOUT_LEGAL.de.continueButton}“ die Zahlungsseite unseres Zahlungsdienstleisters Stripe; diese Schaltfläche löst noch keine Bestellung aus. Auf dieser Seite geben Sie Ihre E-Mail-Adresse und Zahlungsangaben ein und können sie korrigieren. Eine verbindliche Bestellung geben Sie ab, wenn Sie dort die Zahlung mit der Zahlungsschaltfläche bestätigen.`,
         'Der Vertrag kommt zustande, sobald Ihre Zahlung bestätigt ist. Dann öffnet sich Ihre Bestellseite, und wir senden Ihnen deren Link mit Ihrer Bestellbestätigung per E-Mail. Sobald diese E-Mail versandt ist, beginnen wir dort mit Ihrer Datei.',
-        'Vertragssprachen sind Deutsch, Englisch, Litauisch, Ungarisch und Kroatisch.',
+        'Vertragssprachen sind Deutsch, Englisch, Litauisch, Ungarisch, Kroatisch, Finnisch, Estnisch und Lettisch.',
         'Wir speichern Ihre Bestellung mit den Vertragsdaten: das bestellte Kunstwerk, den Preis, das Datum, Ihre E-Mail-Adresse und Ihre Zustimmung zum sofortigen Beginn. Ihre Bestellseite zeigt diese Angaben, solange wir Ihre Bestellung aufbewahren. Eine eigene Kopie dieser Bedingungen je Bestellung bewahren wir nicht auf. Stattdessen enthält Ihre Bestellbestätigung per E-Mail als Text Ihre Bestelldaten, diese Bedingungen und die Widerrufsbelehrung mit dem Muster-Widerrufsformular, in der bei Ihrer Bestellung gültigen Fassung: Bitte bewahren Sie diese E-Mail auf. Sie können diese Seite außerdem jederzeit speichern oder ausdrucken.',
       ],
     },
@@ -297,7 +300,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const TERMS: LegalDocs = { en, de, lt, hu, hr };
+export const TERMS: LegalDocs = { en, de, lt, hu, hr, fi, et, lv };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 // The opening sentence of "australia" is the ACCC's wording, word for word, in both languages (the German text follows
@@ -333,7 +336,7 @@ const auEn = patchDoc(en, {
   lead: `These terms apply to every order placed on snapeyes.com in Australian dollars (A$), and they include [your rights in Australia](#${AU_ID}). Please read them before you order. The free preview is offered without any obligation.`,
   replace: {
     preview: relabel('[Complaints and defects](#defects)', '[Complaints and faulty files](#defects)'),
-    contract: relabel('The contract languages are English, German, Lithuanian, Hungarian and Croatian.', 'The contract languages are English and German.'),
+    contract: relabel('The contract languages are English, German, Lithuanian, Hungarian, Croatian, Finnish, Estonian and Latvian.', 'The contract languages are English and German.'),
     prices: (s): LegalSection => ({
       ...s,
       blocks: [
@@ -401,7 +404,7 @@ const auDe = patchDoc(de, {
   lead: `Diese Bedingungen gelten für jede Bestellung auf snapeyes.com in australischen Dollar (A$) und enthalten [Ihre Rechte in Australien](#${AU_ID}). Bitte lesen Sie sie, bevor Sie bestellen. Die kostenlose Vorschau ist unverbindlich.`,
   replace: {
     preview: relabel('[Reklamationen und Mängel](#defects)', '[Reklamationen und mangelhafte Dateien](#defects)'),
-    contract: relabel('Vertragssprachen sind Deutsch, Englisch, Litauisch, Ungarisch und Kroatisch.', 'Vertragssprachen sind Deutsch und Englisch.'),
+    contract: relabel('Vertragssprachen sind Deutsch, Englisch, Litauisch, Ungarisch, Kroatisch, Finnisch, Estnisch und Lettisch.', 'Vertragssprachen sind Deutsch und Englisch.'),
     prices: (s): LegalSection => ({
       ...s,
       blocks: [
@@ -488,7 +491,7 @@ const usEn = patchDoc(en, {
   lead: `These terms apply to every order placed on snapeyes.com in US dollars (US$), and they include [your rights in the United States](#${US_ID}). Please read them before you order. The free preview is offered without any obligation.`,
   replace: {
     preview: relabel('[Complaints and defects](#defects)', '[Complaints and faulty files](#defects)'),
-    contract: relabel('The contract languages are English, German, Lithuanian, Hungarian and Croatian.', 'The contract language is English.'),
+    contract: relabel('The contract languages are English, German, Lithuanian, Hungarian, Croatian, Finnish, Estonian and Latvian.', 'The contract language is English.'),
     prices: (s): LegalSection => ({
       ...s,
       blocks: [
@@ -598,18 +601,18 @@ const deHufPrices: LegalSection = {
 export const TERMS_HU: EditionDocs = {
   en: patchDoc(en, { replace: {
     prices: enHufPrices,
-    contract: relabel('The contract languages are English, German, Lithuanian, Hungarian and Croatian.', 'The contract languages are English, German, Lithuanian and Hungarian.'),
+    contract: relabel('The contract languages are English, German, Lithuanian, Hungarian, Croatian, Finnish, Estonian and Latvian.', 'The contract languages are English, German, Lithuanian and Hungarian.'),
   } }),
   de: patchDoc(de, { replace: {
     prices: deHufPrices,
-    contract: relabel('Vertragssprachen sind Deutsch, Englisch, Litauisch, Ungarisch und Kroatisch.', 'Vertragssprachen sind Deutsch, Englisch, Litauisch und Ungarisch.'),
+    contract: relabel('Vertragssprachen sind Deutsch, Englisch, Litauisch, Ungarisch, Kroatisch, Finnisch, Estnisch und Lettisch.', 'Vertragssprachen sind Deutsch, Englisch, Litauisch und Ungarisch.'),
   } }),
   lt: patchDoc(lt, { replace: {
     prices: ltHufPrices,
-    contract: relabel('Sutarties kalbos: lietuvių, anglų, vokiečių, vengrų ir kroatų.', 'Sutarties kalbos: lietuvių, anglų, vokiečių ir vengrų.'),
+    contract: relabel('Sutarties kalbos: lietuvių, anglų, vokiečių, vengrų, kroatų, suomių, estų ir latvių.', 'Sutarties kalbos: lietuvių, anglų, vokiečių ir vengrų.'),
   } }),
   hu: patchDoc(hu, { replace: {
     prices: huHufPrices,
-    contract: relabel('A szerződés nyelve magyar, angol, német, litván vagy horvát: az, amelyiken Ön megrendel.', 'A szerződés nyelve magyar, angol, német vagy litván: az, amelyiken Ön megrendel.'),
+    contract: relabel('A szerződés nyelve magyar, angol, német, litván, horvát, finn, észt vagy lett: az, amelyiken Ön megrendel.', 'A szerződés nyelve magyar, angol, német vagy litván: az, amelyiken Ön megrendel.'),
   } }),
 };

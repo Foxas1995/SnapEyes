@@ -199,15 +199,63 @@ HR = {2026: "01-01 01-06 04-05 04-06 05-01 05-30 06-04 06-22 08-05 08-15 11-01 1
       2027: "01-01 01-06 03-28 03-29 05-01 05-27 05-30 06-22 08-05 08-15 11-01 11-18 12-25 12-26",
       2028: "01-01 01-06 04-16 04-17 05-01 05-30 06-15 06-22 08-05 08-15 11-01 11-18 12-25 12-26"}
 HR_NEW = {2026: "01-06 05-30 06-04 06-22 08-05 11-18", 2027: "01-06 05-27 05-30 06-22 08-05 11-18", 2028: "01-06 05-30 06-15 06-22 08-05 11-18"}
+# 2026-11-13 (Finnish, Estonian and Latvian, the EU edition): withdraw.holidays() also counts Finland's, Estonia's and Latvia's public holidays, typed by
+# hand the same way, each from the country's own list:
+#   Finland (the Church Order's holidays, Independence Day and May Day, and the two eves that the Finnish act on time limits, 150/1930 section 5, treats
+#     like them): 1 and 6 Jan, Good Friday, Easter Sunday and Monday, 1 May, Ascension Day, Pentecost (Easter + 49), Midsummer's Eve (the Friday of 19 to
+#     25 June), 6 Dec, Christmas Eve, 25 and 26 Dec. Its two holidays that are ALWAYS Saturdays, Midsummer's Day (the day after the Eve) and All Saints'
+#     Day (the Saturday of 31 Oct to 6 Nov), are in no table (working_day() skips a Saturday anyway); FI_SAT pins that they are Saturdays and no working
+#     days. (withdraw_fi.py HOLIDAYS_FI has no 24 Dec; the day is in holidays() as Lithuania's, Estonia's and Latvia's, and P1 pins the union.)
+#   Estonia (Pühade ja tähtpäevade seadus § 1 and § 2): 1 Jan, 24 Feb, Good Friday, Easter Sunday, 1 May, Pentecost, 23 and 24 Jun, 20 Aug, 24 to 26 Dec
+#     (Easter Monday is no public holiday in Estonia).
+#   Latvia (likums "Par svētku, atceres un atzīmējamām dienām", 1. pants): 1 Jan, Good Friday, Easter Sunday and Monday, 1 May, 4 May, Pentecost, 23 and
+#     24 Jun, 18 Nov, 24 to 26 Dec, 31 Dec, and the Monday after 4 May or 18 Nov when that day is a Saturday or a Sunday (2028: Sat 18 Nov, so Mon 20 Nov).
+#     Mother's Day (the second Sunday of May, LV_SUN) is always a Sunday and in no table; the closing day of the Song and Dance Festival has no date in the law
+#     (it is set for each festival, the next one in 2028) and is in no table either: withdraw_lv.py says so, and the owner reads every lapsed statement by hand.
+# Against LT + DE + HU + HR these days are new (NEW_1113, pinned below): 24 Feb (ET), 4 May (LV), Pentecost Sunday (all three), Midsummer's Eve (FI; in 2028
+# it is 23 Jun), 23 Jun (ET, LV), 20 Nov 2028 (LV), 6 Dec (FI), 31 Dec (LV). Estonia's 20 Aug is Hungary's too, Latvia's 18 Nov Croatia's.
+FI = {2026: "01-01 01-06 04-03 04-05 04-06 05-01 05-14 05-24 06-19 12-06 12-24 12-25 12-26",
+      2027: "01-01 01-06 03-26 03-28 03-29 05-01 05-06 05-16 06-25 12-06 12-24 12-25 12-26",
+      2028: "01-01 01-06 04-14 04-16 04-17 05-01 05-25 06-04 06-23 12-06 12-24 12-25 12-26"}
+ET = {2026: "01-01 02-24 04-03 04-05 05-01 05-24 06-23 06-24 08-20 12-24 12-25 12-26",
+      2027: "01-01 02-24 03-26 03-28 05-01 05-16 06-23 06-24 08-20 12-24 12-25 12-26",
+      2028: "01-01 02-24 04-14 04-16 05-01 06-04 06-23 06-24 08-20 12-24 12-25 12-26"}
+LV = {2026: "01-01 04-03 04-05 04-06 05-01 05-04 05-24 06-23 06-24 11-18 12-24 12-25 12-26 12-31",
+      2027: "01-01 03-26 03-28 03-29 05-01 05-04 05-16 06-23 06-24 11-18 12-24 12-25 12-26 12-31",
+      2028: "01-01 04-14 04-16 04-17 05-01 05-04 06-04 06-23 06-24 11-18 11-20 12-24 12-25 12-26 12-31"}
+NEW_1113 = {2026: "02-24 05-04 05-24 06-19 06-23 12-06 12-31", 2027: "02-24 05-04 05-16 06-23 06-25 12-06 12-31", 2028: "02-24 05-04 06-04 06-23 11-20 12-06 12-31"}
+FI_SAT = {2026: "06-20 10-31", 2027: "06-26 11-06", 2028: "06-24 11-04"}          # Midsummer's Day, All Saints' Day: Saturdays, in no table
+LV_SUN = {2026: "05-10", 2027: "05-09", 2028: "05-14"}                            # Mother's Day: a Sunday, in no table
 want_ltde = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y]).split()}) for y in LT}
 want_ltdehu = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y] + " " + HU[y]).split()}) for y in LT}
-want = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y] + " " + HU[y] + " " + HR[y]).split()}) for y in LT}
+want_five = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y] + " " + HU[y] + " " + HR[y]).split()}) for y in LT}
+want = {y: sorted({f"{y}-{md}" for md in (LT[y] + " " + DE[y] + " " + HU[y] + " " + HR[y] + " " + FI[y] + " " + ET[y] + " " + LV[y]).split()}) for y in LT}
 hu_new_ok = all(sorted(set(want_ltdehu[y]) - set(want_ltde[y])) == sorted(f"{y}-{md}" for md in HU_NEW.split()) for y in LT)
-hr_new_ok = all(sorted(set(want[y]) - set(want_ltdehu[y])) == sorted(f"{y}-{md}" for md in HR_NEW[y].split()) for y in LT)
+hr_new_ok = all(sorted(set(want_five[y]) - set(want_ltdehu[y])) == sorted(f"{y}-{md}" for md in HR_NEW[y].split()) for y in LT)
+new_1113_ok = all(sorted(set(want[y]) - set(want_five[y])) == sorted(f"{y}-{md}" for md in NEW_1113[y].split()) for y in LT)
+off_table_ok = (all(day(f"{y}-{md}").weekday() == 5 and not W.working_day(day(f"{y}-{md}")) for y in LT for md in FI_SAT[y].split())
+                and all(day(f"{y}-{md}").weekday() == 6 and not W.working_day(day(f"{y}-{md}")) for y in LT for md in LV_SUN[y].split()))
 got = {y: sorted(d.isoformat() for d in W.holidays(y)) for y in LT}
 check("P1 the holidays of 2026 to 2028 are exactly Lithuania's and Germany's national ones" " - 0930: plus Hungary's 15 Mar, 20 Aug and 23 Oct (30efee7)"
-      " - 1028: plus Croatia's 6 Jan, 30 May, Corpus Christi, 22 Jun, 5 Aug and 18 Nov", got == want and hu_new_ok and hr_new_ok,
-      ({y: (sorted(set(got[y]) ^ set(want[y]))) for y in LT}, "hu_new_ok", hu_new_ok, "hr_new_ok", hr_new_ok))
+      " - 1028: plus Croatia's 6 Jan, 30 May, Corpus Christi, 22 Jun, 5 Aug and 18 Nov"
+      " - 1113: plus Finland's, Estonia's and Latvia's (24 Feb, 4 May, Pentecost, Midsummer's Eve, 23 Jun, 6 Dec, 31 Dec, and Mon 20 Nov 2028 for Sat 18 Nov)",
+      got == want and hu_new_ok and hr_new_ok and new_1113_ok and off_table_ok,
+      ({y: (sorted(set(got[y]) ^ set(want[y]))) for y in LT}, "hu_new_ok", hu_new_ok, "hr_new_ok", hr_new_ok, "new_1113_ok", new_1113_ok, "off_table_ok", off_table_ok))
+# 2026-11-13: the two rules that are neither a fixed date nor an Easter offset, over ten years, typed by hand from the calendar (2026 to 2028 are in P1 too):
+# Finland's Midsummer's Eve, and Latvia's Monday off after a 4 May or an 18 November that falls on a Saturday or a Sunday (in no other year is there one).
+FI_EVE = {2026: "06-19", 2027: "06-25", 2028: "06-23", 2029: "06-22", 2030: "06-21", 2031: "06-20", 2032: "06-25", 2033: "06-24", 2034: "06-23", 2035: "06-22"}
+LV_MON = {2028: "11-20", 2029: "11-19", 2030: "05-06", 2031: "05-05", 2034: "11-20", 2035: "11-19"}
+# every holiday of 19 to 25 June that is no fixed date of any country (22 Jun HR, 23 Jun ET and LV, 24 Jun LT, ET and LV) and no Easter offset is the Eve
+JUNE_FIXED = {(6, 22), (6, 23), (6, 24)}
+eve_got = {y: sorted({d.isoformat()[5:] for d in W.holidays(y) if d.month == 6 and 19 <= d.day <= 25 and d.weekday() == 4}
+                     | {d.isoformat()[5:] for d in W.holidays(y) if d.month == 6 and 19 <= d.day <= 25 and (d.month, d.day) not in JUNE_FIXED
+                        and (d - W.easter(y)).days not in (39, 49, 50, 60)}) for y in FI_EVE}
+# (Ascension Day, Easter + 39 and always a Thursday, is 6 May in 2027 and 2032: it is no substitute day)
+mon_got = {y: sorted(d.isoformat()[5:] for d in W.holidays(y) if (d.month, d.day) in ((5, 5), (5, 6), (11, 19), (11, 20)) and (d - W.easter(y)).days != 39) for y in FI_EVE}
+check("P1b 1113: Finland's Midsummer's Eve is the Friday of 19 to 25 June in each of 2026 to 2035, and Latvia's substitute Monday is there exactly in the years "
+      "4 May or 18 November is a Saturday or a Sunday (2028, 2029, 2030, 2031, 2034, 2035), on the Monday after it",
+      eve_got == {y: [md] for y, md in FI_EVE.items()} and mon_got == {y: ([LV_MON[y]] if y in LV_MON else []) for y in FI_EVE}
+      and all(day(f"{y}-{md}").weekday() == 4 for y, md in FI_EVE.items()) and all(day(f"{y}-{md}").weekday() == 0 for y, md in LV_MON.items()), (eve_got, mon_got))
 EASTER = {2026: "04-05", 2027: "03-28", 2028: "04-16", 2029: "04-01", 2030: "04-21", 2031: "04-13", 2032: "03-28",
           2033: "04-17", 2034: "04-09", 2035: "03-25", 2038: "04-25", 2285: "03-22"}
 check("P2 Easter by the computus matches the known dates (2026 to 2035, the latest 2038, the earliest 2285)",
@@ -228,7 +276,14 @@ for paid_s, last_s, why in (("2026-09-19T12:00:00", "2026-10-05", "a Saturday th
                             # P12 measure with, so they could not catch a wrong table by themselves)
                             ("2026-10-09T12:00:00", "2026-10-26", "Fri 23 Oct, Hungary's national day, then Monday"),
                             ("2026-08-06T12:00:00", "2026-08-21", "Thu 20 Aug, Hungary's national day"),
-                            ("2027-03-01T12:00:00", "2027-03-16", "Mon 15 Mar, Hungary's national day")):
+                            ("2027-03-01T12:00:00", "2027-03-16", "Mon 15 Mar, Hungary's national day"),
+                            # 2026-11-13: and past Finland's, Estonia's and Latvia's days (P1 and P1b pin the table, these rows that period_end() moves over them)
+                            ("2026-02-10T12:00:00", "2026-02-25", "Tue 24 Feb, Estonia's national day"),
+                            ("2026-04-20T12:00:00", "2026-05-05", "Mon 4 May, Latvia's day of the restoration of independence"),
+                            ("2026-06-05T12:00:00", "2026-06-25", "Fri 19 Jun, Finland's Midsummer's Eve, then the weekend, 22 Jun (Croatia), 23 Jun (Estonia, Latvia) and 24 Jun"),
+                            ("2027-11-22T12:00:00", "2027-12-07", "Mon 6 Dec, Finland's Independence Day"),
+                            ("2026-12-17T12:00:00", "2027-01-04", "Thu 31 Dec (Latvia), then New Year's Day and a weekend"),
+                            ("2028-11-04T12:00:00", "2028-11-21", "Sat 18 Nov, then Sunday and Latvia's substitute Monday 20 Nov")):
     end, last = W.period_end(ts(paid_s))
     check(f"P4 paid {paid_s[:16]} UTC: the 14th day is {why}; the last day is {last_s}",
           last == last_s and end == ts(last_s + "T00:00:00") + 86400 + 4 * 3600, (last, end))

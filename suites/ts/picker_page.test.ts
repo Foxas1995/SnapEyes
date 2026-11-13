@@ -304,12 +304,13 @@ export async function run(): Promise<Row[]> {
   check('reduced motion: nothing of the picker or the result loops or fades by a utility (no animate-*, no transition-opacity): its changes are the flow classes fx-*, which the stylesheet switches off', rmHtml.includes('fx-pick') && !/(^|[^:\w-])(animate-[a-z]+|transition-opacity)/.test(rmHtml),
     rmHtml.match(/(^|[^:\w-])(animate-[a-z]+|transition-opacity)/)?.[0] ?? '');
 
-  // ---- the five languages
-  const SOON = { en: 'Soon', de: 'Bald', lt: 'Netrukus', hu: 'Hamarosan', hr: 'Uskoro' } as Record<Lang, string>;
-  const GROUPS = { en: ['Just you', 'Two of you', 'Family'], de: ['Nur Sie', 'Sie zu zweit', 'Familie'], lt: ['Tik Jūs', 'Jūs dviese', 'Šeima'], hu: ['Csak te', 'Ti ketten', 'Család'], hr: ['Samo vi', 'Vas dvoje', 'Obitelj'] } as Record<Lang, string[]>;
+  // ---- the eight languages (five until 2026-11-13: Finnish, Estonian and Latvian, whose group words and Soon word are those of src/landing/copy/fi.json, et.json and lv.json styles.groups and styles.soonTag)
+  const SOON = { en: 'Soon', de: 'Bald', lt: 'Netrukus', hu: 'Hamarosan', hr: 'Uskoro', fi: 'Pian', et: 'Peagi', lv: 'Drīzumā' } as Record<Lang, string>;
+  const GROUPS = { en: ['Just you', 'Two of you', 'Family'], de: ['Nur Sie', 'Sie zu zweit', 'Familie'], lt: ['Tik Jūs', 'Jūs dviese', 'Šeima'], hu: ['Csak te', 'Ti ketten', 'Család'], hr: ['Samo vi', 'Vas dvoje', 'Obitelj'],
+    fi: ['Vain sinä', 'Te kaksi', 'Perhe'], et: ['Ainult sina', 'Teie kaks', 'Pere'], lv: ['Tikai jūs', 'Jūs abi', 'Ģimene'] } as Record<Lang, string[]>;
   const reasonKeys = new Set<string>();
   for (const d of Object.values(STYLES)) for (const v of Object.values(d.reason)) reasonKeys.add(v);
-  const claims = /\b(unique|one of a kind|never repeated|no two alike|handmade|hand-painted|bestseller|best seller|most chosen|most popular)\b|einzigartig|einmalig|handgemacht|legvalasztottabb|vienintel|unikali|vienetin|jedinstven|neponovljiv|ručno rađen|najprodavanij|najpopularnij/i;
+  const claims = /\b(unique|one of a kind|never repeated|no two alike|handmade|hand-painted|bestseller|best seller|most chosen|most popular)\b|einzigartig|einmalig|handgemacht|legvalasztottabb|vienintel|unikali|vienetin|jedinstven|neponovljiv|ručno rađen|najprodavanij|najpopularnij|ainutlaatui|ainutkertai|uniikk|käsintehty|käsin maalat|myydyin|suosituin|valituin|ainulaad|unikaal|kordumatu|käsitsi tehtud|käsitsi maalitud|enimmüüdud|populaarseim|enim valitud|unikāl|vienreizēj|neatkārtojam|roku darb|ar roku gleznot|pirktāk|populārāk|visbiežāk izvēlēt/i;
   for (const lang of LANGS) {
     setCopyLang(lang);
     const P = COPY[lang].picker;
@@ -358,7 +359,7 @@ export async function run(): Promise<Row[]> {
       (() => {
         const view = retakeView({ tiles: [tile('solo.clean', { gate: 'hard', available: false, why: 'reseal' })], eyes: [eye(1, { gate: { lid: null, fill: null } })], selected: undefined })!;
         const html = renderToStaticMarkup(createElement(CalmRetake, { view, total: 1, onRetake: noop }));
-        return text(html) === `${P.retake.calm} ${T.result.retakeOnly}` && has(html, 'retake-eye-1') && !/older version|ältere|älteren|senesn|régebbi/i.test(text(html));
+        return text(html) === `${P.retake.calm} ${T.result.retakeOnly}` && has(html, 'retake-eye-1') && !/older version|ältere|älteren|senesn|régebbi|starij|vanhem|vanem|vecāk/i.test(text(html));
       })());
     check(`${lang}: the same twelve option and word labels exist and none is empty`, [P.options.swap, P.options.rotate, P.options.earlier, P.options.later, P.options.look, P.names.title, P.names.date, P.names.family, P.names.datePlaceholder, P.stack, P.widePupil, P.groupSoon].every((s) => s.trim().length > 2));
   }

@@ -8,7 +8,7 @@ Dark modules on white with a quiet zone of 3 modules inside the picture (the pag
 import os, re, sys
 import qrcode
 
-LANGS = ["en", "de", "lt", "hu", "hr"]
+LANGS = ["en", "de", "lt", "hu", "hr", "fi", "et", "lv"]
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public", "assets", "atelier")
 QUIET = 3
 url = lambda l: "https://snapeyes.com/try?lang=%s" % l

@@ -704,38 +704,114 @@ check("the four terms files carry the price rows by class in the four languages:
       "Lithuanian and Hungarian ones)",
       all(x in terms_src for x in ("'One eye, Clean Iris'", "'One eye, any other style'", "'Two eyes, any style'", "'Each further eye'", "'Ein Auge, jeder andere Stil'", "'Zwei Augen, jeder Stil'",
                                    "'Viena akis, bet kuris kitas stilius'", "'Dvi akys, bet kuris stilius'", "'Egy szem, bármely más stílus'", "'Két szem, bármely stílus'")), "")
+# 2026-11-13 (Finnish, Estonian and Latvian, the EU edition): the same rules of I23 for the terms and privacy files of the languages that came after the four
+# (Croatian since 2026-10-28, whose files the three checks above never read, and the three new ones): no maximum of eyes, no list of styles, no old row name, no
+# style in the privacy text, and the price rows by class in each language
+later_terms = {x: read(f"src/legal/docs/terms.{x}.ts") for x in ("hr", "fi", "et", "lv")}
+later_priv = {x: read(f"src/legal/docs/privacy.{x}.ts") for x in ("hr", "fi", "et", "lv")}
+LATER_ROWS = {"hr": ("'Jedno oko, Clean Iris'", "'Jedno oko, bilo koji drugi stil'", "'Dva oka, bilo koji stil'"),
+              "fi": ("'Yksi silmä, Clean Iris'", "'Yksi silmä, mikä tahansa muu tyyli'", "'Kaksi silmää, mikä tahansa tyyli'"),
+              "et": ("'Üks silm, Clean Iris'", "'Üks silm, mis tahes muu stiil'", "'Kaks silma, mis tahes stiil'"),
+              "lv": ("'Viena acs, Clean Iris'", "'Viena acs, jebkurš cits stils'", "'Divas acis, jebkurš stils'")}
+later_bad = [(x, why) for x in later_terms for why, hit in (
+    ("MAX_EYES or a list of styles", "MAX_EYES" in later_terms[x] or "const ART" in later_terms[x]),
+    ("a digit before eyes", re.search(r"(?<![\w.])\d{1,2}\s+(oka|oči|očiju|silmä|silmää|silma|silm|acs|acis|acu|acīm)\b", later_terms[x])),
+    ("an old row name", "Couple Duo" in later_terms[x] + later_priv[x] or "Studio Black" in later_terms[x]),
+    ("a style in the privacy text", re.search(r"Couple Duo|Celestial|Powder|Splash|Universe|Studio Black", later_priv[x])),
+    ("a price row by class is missing", not all(r in later_terms[x] for r in LATER_ROWS[x]))) if hit]
+check("I23 for the later languages (Croatian, Finnish, Estonian, Latvian): their terms and privacy files print no maximum number of eyes, no list of styles, no old row name and no style "
+      "in the privacy text, and their terms carry the price rows by class (one eye Clean Iris, one eye any other style, two eyes any style)", not later_bad, later_bad)
 legal_ts = read("src/shared/legal.ts")
 upd = re.search(r"export const LEGAL_UPDATED = '(\d{4}-\d{2}-\d{2})'", legal_ts).group(1)
 # WP18 (the catalogue switch): the date moved from 2026-10-05 (WP12) to 2026-10-06 with the publication of the AI-made material sentence
+# 2026-11-13: the Finnish, Estonian and Latvian texts of the EU edition, and the eight contract languages in the EU terms of the five older languages
 check("one LEGAL_UPDATED versions every legal page and the pack the confirmation quotes: the built pack's date is that date, it is not in the future, and it moved on the last work "
-      "that changed a legal text (2026-11-11, the privacy paragraph of the daily ceiling of free previews; it was 2026-10-28 for the Croatian texts, 2026-10-20 for the anonymous counter's "
+      "that changed a legal text (2026-11-13, the Finnish, Estonian and Latvian texts of the EU edition; it was 2026-11-11 for the privacy paragraph of the daily ceiling of free previews, "
+      "2026-10-28 for the Croatian texts, 2026-10-20 for the anonymous counter's "
       "privacy paragraphs, 2026-10-06 at WP18, the AI-made material sentence, and 2026-10-05 at WP12)",
-      PACK["updated"] == upd == "2026-11-11" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
+      PACK["updated"] == upd == "2026-11-13" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
 terms_en = PACK["docs"]["en"]["terms"]["text"]
 check("the pack's English terms (what the e-mail quotes) print the new rows and the arrangement clause, say that a preview of five to eight eyes is coarser, and no longer promise half a minute "
       "per eye", "One eye, Clean Iris" in terms_en and "One eye, any other style" in terms_en and "arrangement of the eyes" in terms_en and "five to eight eyes is made from smaller copies" in terms_en
       and "half a minute" not in terms_en and "Couple Duo" not in terms_en, terms_en[:200])
 for lang, needles in (("de", ("Ein Auge, Clean Iris", "Reihenfolge der Augen", "Eine Vorschau mit fünf bis acht Augen")), ("lt", ("Viena akis, Clean Iris", "akių tvarka", "nuo penkių iki aštuonių akių")),
                       ("hu", ("Egy szem, Clean Iris", "a szemek ugyanolyan sorrendje", "Az öt-nyolc szemes előnézet")),
-                      ("hr", ("Jedno oko, Clean Iris", "redoslijed očiju", "Pregled s pet do osam očiju"))):
-    t = PACK["docs"][lang]["terms"]["text"]
+                      ("hr", ("Jedno oko, Clean Iris", "redoslijed očiju", "Pregled s pet do osam očiju")),
+                      # 2026-11-13: the Finnish, Estonian and Latvian terms of the EU edition
+                      ("fi", ("Yksi silmä, Clean Iris", "silmien järjestys", "Esikatselu, jossa on viidestä kahdeksaan silmää")),
+                      ("et", ("Üks silm, Clean Iris", "silmade järjestus", "Viie kuni kaheksa silmaga eelvaade")),
+                      ("lv", ("Viena acs, Clean Iris", "acu secība", "Piecu līdz astoņu acu priekšskatījums"))):
+    t = PACK["docs"].get(lang, {}).get("terms", {}).get("text", "")
     check(f"the pack's {lang} terms carry the new rows, the arrangement clause and the coarser preview sentence, and no per-eye time or Couple Duo",
-          all(x in t for x in needles) and "Couple Duo" not in t and not re.search(r"pro Auge|pusę minutės|fél perc", t), [x for x in needles if x not in t])
+          all(x in t for x in needles) and "Couple Duo" not in t and not re.search(r"pro Auge|pusę minutės|fél perc|pola minute|puoli minuuttia|pool minutit|pusminūt|pus minūtes", t), [x for x in needles if x not in t])
+# 2026-11-13: the pack has the EU edition in exactly the eight languages (each the terms and the withdrawal text, none empty), the Hungarian, Australian and US editions in the
+# languages they had (no Finnish, Estonian or Latvian text), and the sentence of the contract languages: eight in every EU terms text, their own in the three other editions
+EIGHT = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
+CONTRACT_LANGS = {"en": "The contract languages are English, German, Lithuanian, Hungarian, Croatian, Finnish, Estonian and Latvian.",
+                  "de": "Vertragssprachen sind Deutsch, Englisch, Litauisch, Ungarisch, Kroatisch, Finnisch, Estnisch und Lettisch.",
+                  "lt": "Sutarties kalbos: lietuvių, anglų, vokiečių, vengrų, kroatų, suomių, estų ir latvių.",
+                  "hu": "A szerződés nyelve magyar, angol, német, litván, horvát, finn, észt vagy lett: az, amelyiken Ön megrendel.",
+                  "hr": "Jezici ugovora: hrvatski, engleski, njemački, litavski, mađarski, finski, estonski i latvijski.",
+                  "fi": "Sopimuskielet: suomi, englanti, saksa, liettua, unkari, kroatia, viro ja latvia.",
+                  "et": "Lepingu keeled: eesti, inglise, saksa, leedu, ungari, horvaadi, soome ja läti.",
+                  "lv": "Līguma valodas: latviešu, angļu, vācu, lietuviešu, ungāru, horvātu, somu un igauņu."}
+CONTRACT_LANGS_ED = {("au", "en"): "The contract languages are English and German.", ("au", "de"): "Vertragssprachen sind Deutsch und Englisch.",
+                     ("hu", "en"): "The contract languages are English, German, Lithuanian and Hungarian.", ("hu", "de"): "Vertragssprachen sind Deutsch, Englisch, Litauisch und Ungarisch.",
+                     ("hu", "lt"): "Sutarties kalbos: lietuvių, anglų, vokiečių ir vengrų.", ("hu", "hu"): "A szerződés nyelve magyar, angol, német vagy litván: az, amelyiken Ön megrendel.",
+                     ("us", "en"): "The contract language is English."}
+check("the pack holds the EU edition in exactly the eight languages (terms and withdrawal text each, none empty, eight different terms texts) and the Hungarian, Australian and US "
+      "editions in the languages they had: no Finnish, Estonian or Latvian text in them",
+      list(PACK["docs"]) == list(EIGHT) and all(set(PACK["docs"][l]) == {"terms", "withdrawal"} and all(len(PACK["docs"][l][d]["text"]) > 2000 for d in ("terms", "withdrawal")) for l in EIGHT)
+      and len({PACK["docs"][l]["terms"]["text"] for l in EIGHT}) == 8 and len({PACK["docs"][l]["withdrawal"]["text"] for l in EIGHT}) == 8
+      and {e: sorted(v) for e, v in PACK["editions"].items()} == {"au": ["de", "en"], "hu": ["de", "en", "hu", "lt"], "us": ["en"]},
+      (list(PACK["docs"]), {e: sorted(v) for e, v in PACK["editions"].items()}))
+lang_sentence_bad = ([("eu", l) for l in EIGHT if PACK["docs"][l]["terms"]["text"].count("\n\n" + CONTRACT_LANGS[l] + "\n\n") != 1]
+                     + [(e, l) for (e, l), s_ in CONTRACT_LANGS_ED.items() if PACK["editions"][e][l]["terms"]["text"].count("\n\n" + s_ + "\n\n") != 1]
+                     + [(e, l, "names a new language") for e, v in PACK["editions"].items() for l, d in v.items()
+                        if re.search(r"Finnish|Estonian|Latvian|Finnisch|Estnisch|Lettisch|suomių|estų|latvių|\bfinn\b|\bészt\b", d["terms"]["text"])])      # not the Hungarian "lett": it is also an everyday verb
+check("the sentence of the contract languages names the eight languages in each of the eight EU terms texts (once, as its own paragraph), and the Hungarian, Australian and US editions "
+      "keep their own sentence (four, two and one language) and name no Finnish, Estonian or Latvian", not lang_sentence_bad, lang_sentence_bad)
 for ed in ("au", "hu", "us"):      # 2026-10-28: and the US edition (English)
     for lang, d in PACK["editions"][ed].items():
         check(f"the {ed} edition's {lang} terms (a Hungarian, Australian or US price table) have the class rows and no count of eyes", "Clean Iris" in d["terms"]["text"] and "Couple Duo" not in d["terms"]["text"]
               and not re.search(r"(?<![\w.])\d{1,2}\s+(eyes|Augen|akys|akių|szem)", d["terms"]["text"]), d["terms"]["text"][:120])
+# 2026-11-13: the fingerprint of every version's texts, made here from the server's tables the way scripts/check_texts.mjs makes it from the files (sha256 of the JSON list:
+# the EU waivers in the order of the languages, the Australian en and de, the US one since 2026-10-28.2, the print boxes since 2026-10-28.3), against the values on record
+# (typed here and read in check_texts.mjs CONSENT_FINGERPRINTS): an old version that quoted another word, or another set of texts, than it had would have another fingerprint
+FIVE = ("en", "de", "lt", "hu", "hr")
+from _lib import prints as PR_  # noqa: E402
+_fp = lambda texts: hashlib.sha256(json.dumps(texts, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+_eu = lambda v, ls: [pay.CONSENT_TEXTS[v].get(l) for l in ls] + [pay.CONSENT_TEXTS_AU[v].get(l) for l in ("en", "de")]
+consent_prints = {"2026-09-30.2": _fp(_eu("2026-09-30.2", ("en", "de", "lt", "hu"))),
+                  "2026-10-28.1": _fp(_eu("2026-10-28.1", FIVE)),
+                  "2026-10-28.2": _fp(_eu("2026-10-28.2", FIVE) + [pay.CONSENT_TEXTS_US["2026-10-28.2"]["en"]]),
+                  "2026-10-28.3": _fp(_eu("2026-10-28.3", FIVE) + [pay.CONSENT_TEXTS_US["2026-10-28.3"]["en"]] + [PR_.PRINT_CONSENT_TEXTS["2026-10-28.3"].get(l) for l in FIVE]),
+                  "2026-11-13.1": _fp(_eu("2026-11-13.1", EIGHT) + [pay.CONSENT_TEXTS_US["2026-11-13.1"]["en"]] + [PR_.PRINT_CONSENT_TEXTS["2026-11-13.1"].get(l) for l in EIGHT])}
+CONSENT_ON_RECORD = {"2026-09-30.2": "1323e13de556f0533c0d3891789e3d49da9bc7cf15a506fc33cffddb97eee7b7",
+                     "2026-10-28.1": "fb948e2a56ef9967f3b101af39e73b6d8c449f18e2b449144e9f5b0b86098dd8",
+                     "2026-10-28.2": "5082c38c317956e779b8625a40472b4359a39bfe116c58e1e924523c54211a26",
+                     "2026-10-28.3": "547eb1f2abca838ca4a1efb2476c8d61607ee92b65fc78c83ecabc8bd5e24909",
+                     "2026-11-13.1": "429f003ee1fb0a49f26f9eb4f38d1a196a7bc5f00358f6f8b75fb256faa18c02"}
+check_texts_src = read("scripts/check_texts.mjs")
 check("consent and the withdrawal waiver are byte for byte as before: CONSENT_VERSION 2026-10-28.1 (the Croatian text added) in the server and the page, the texts of 2026-09-30.2 kept word for word under the new version, the fingerprint of the six texts equals the one on record"
       " - 2026-10-28: CONSENT_VERSION 2026-10-28.2 (the US text added), the texts of 2026-10-28.1 (EU and AU) kept word for word under it, the US text only under the new version"
-      " - 2026-10-28 (prints): CONSENT_VERSION 2026-10-28.3 (the print box added, api/_lib/prints.py), every waiver and the US text kept word for word under it and under 2026-10-28.2",
-      pay.CONSENT_VERSION == "2026-10-28.3" and "WITHDRAWAL_CONSENT_VERSION = '2026-10-28.3'" in legal_ts
-      and pay.CONSENT_TEXTS["2026-10-28.1"] == pay.CONSENT_TEXT == pay.CONSENT_TEXTS[pay.CONSENT_VERSION] and pay.CONSENT_TEXTS_AU["2026-10-28.1"] == pay.CONSENT_TEXT_AU
-      and pay.CONSENT_TEXTS_US == {"2026-10-28.2": pay.CONSENT_TEXT_US, "2026-10-28.3": pay.CONSENT_TEXT_US} and set(pay.CONSENT_TEXT_US) == {"en"}
-      and pay.CONSENT_TEXTS["2026-10-28.2"] == pay.CONSENT_TEXT
-      and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")} and set(pay.CONSENT_TEXT) == {"en", "de", "lt", "hu", "hr"}
+      " - 2026-10-28 (prints): CONSENT_VERSION 2026-10-28.3 (the print box added, api/_lib/prints.py), every waiver and the US text kept word for word under it and under 2026-10-28.2"
+      " - 1113: CONSENT_VERSION 2026-11-13.1 (the Finnish, Estonian and Latvian waivers added), the five texts of 2026-10-28.1 to 2026-10-28.3 kept word for word under their versions "
+      "and under the new one, the three new texts only under the new version, and every version's fingerprint is the one on record",
+      pay.CONSENT_VERSION == "2026-11-13.1" and "WITHDRAWAL_CONSENT_VERSION = '2026-11-13.1'" in legal_ts
+      # the versions of 2026-10-28 quote exactly the five texts they had; the current one those five, unchanged, and the three new ones
+      and pay.CONSENT_TEXTS["2026-10-28.1"] == pay.CONSENT_TEXTS["2026-10-28.2"] == pay.CONSENT_TEXTS["2026-10-28.3"] == {k: pay.CONSENT_TEXT[k] for k in FIVE}
+      and pay.CONSENT_TEXT == pay.CONSENT_TEXTS[pay.CONSENT_VERSION] and pay.CONSENT_TEXTS_AU["2026-10-28.1"] == pay.CONSENT_TEXT_AU
+      and set(pay.CONSENT_TEXTS) == {"2026-09-29.1", "2026-09-30.1", "2026-09-30.2", "2026-10-28.1", "2026-10-28.2", "2026-10-28.3", "2026-11-13.1"}
+      and pay.CONSENT_TEXTS_US == {"2026-10-28.2": pay.CONSENT_TEXT_US, "2026-10-28.3": pay.CONSENT_TEXT_US, "2026-11-13.1": pay.CONSENT_TEXT_US} and set(pay.CONSENT_TEXT_US) == {"en"}
+      and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")} and set(pay.CONSENT_TEXT) == set(EIGHT)
+      and len(set(pay.CONSENT_TEXT.values())) == 8 and all(isinstance(t, str) and len(t) > 60 for t in pay.CONSENT_TEXT.values())
       and pay.CONSENT_TEXTS_AU["2026-09-30.2"] == pay.CONSENT_TEXT_AU
-      and hashlib.sha256(json.dumps([pay.CONSENT_TEXT["en"], pay.CONSENT_TEXT["de"], pay.CONSENT_TEXT["lt"], pay.CONSENT_TEXT["hu"], pay.CONSENT_TEXT_AU["en"], pay.CONSENT_TEXT_AU["de"]],
-                                    ensure_ascii=False, separators=(",", ":")).encode()).hexdigest() is not None, pay.CONSENT_VERSION)
+      and pay.CONSENT_TEXTS_AU == {v: pay.CONSENT_TEXT_AU for v in ("2026-09-30.1", "2026-09-30.2", "2026-10-28.1", "2026-10-28.2", "2026-10-28.3", "2026-11-13.1")}
+      and all(pay.consent_text(v, l) is None for v in ("2026-10-28.1", "2026-10-28.2", "2026-10-28.3") for l in ("fi", "et", "lv"))
+      and all(pay.consent_text("2026-11-13.1", l) == pay.CONSENT_TEXT[l] for l in EIGHT)
+      and consent_prints == CONSENT_ON_RECORD and all(f"'{v}': '{p}'" in check_texts_src for v, p in CONSENT_ON_RECORD.items()),
+      (pay.CONSENT_VERSION, {v: p for v, p in consent_prints.items() if CONSENT_ON_RECORD.get(v) != p}))
 
 TEXTRUN = os.path.join(TMP, "wp12_textcheck.mjs")
 with open(TEXTRUN, "w", encoding="utf-8", newline="\n") as f:

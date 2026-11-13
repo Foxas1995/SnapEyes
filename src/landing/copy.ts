@@ -9,6 +9,9 @@ import type { Lang } from '../shared/lang';
 import { lt } from './copy.lt';
 import { hu } from './copy.hu';
 import { hr } from './copy.hr';
+import { fi } from './copy.fi';
+import { et } from './copy.et';
+import { lv } from './copy.lv';
 
 export type { Lang };
 
@@ -29,4 +32,4 @@ export const WITHDRAW_Q: Record<'en' | 'de', string> = { en: 'Can I withdraw fro
 const en: Copy = { switchLabel: 'Language', brandTag: '' };
 const de: Copy = { switchLabel: 'Sprache', brandTag: '' };
 
-export const COPY: Record<Lang, Copy> = { en, de, lt, hu, hr };
+export const COPY: Record<Lang, Copy> = { en, de, lt, hu, hr, fi, et, lv };

@@ -17,5 +17,17 @@
   "hr": {
     "caption": "Fotografirano kod kuće telefonom",
     "alt": "Naša vlastita šarenica, fotografirana kod kuće telefonom i prikazana u stilu Clean Iris"
+  },
+  "fi": {
+    "caption": "Kuvattu kotona puhelimella",
+    "alt": "Oma iiriksemme, kuvattu kotona puhelimella ja esitetty tyylillä Clean Iris"
+  },
+  "et": {
+    "caption": "Pildistatud kodus telefoniga",
+    "alt": "Meie enda iiris, pildistatud kodus telefoniga ja kujutatud stiilis Clean Iris"
+  },
+  "lv": {
+    "caption": "Fotografēta mājās ar telefonu",
+    "alt": "Mūsu pašu varavīksnene, fotografēta mājās ar telefonu un attēlota stilā Clean Iris"
   }
 }

@@ -129,5 +129,8 @@
     html.mo:not(.mo-fail) .lp-rvp-steps .lp-rv-step { display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 52px; padding: 6px 2px; text-align: center; box-shadow: inset 0 -1px 0 transparent; transition: box-shadow .4s var(--ease-out); }
     html.mo:not(.mo-fail) .lp-rvp-steps .lp-rv-step[aria-current="step"] { box-shadow: inset 0 -1px 0 var(--gold); }
     html.mo:not(.mo-fail) .lp-rvp-steps .lp-rv-step span { font-size: clamp(11px, 3.6vw, 14px); line-height: 1.2; max-width: 100%; text-wrap: balance; overflow-wrap: anywhere; }
+    /* the Latvian word for the iris has twelve letters ("Varavīksnene"): at 11 px it is 83 px in a column of 79 on a screen 280 px wide and was cut in two. Its floor is 10 px,
+       which differs from the rule above only under 306 px (as the Hungarian headline has a size of its own, css/hero.css) */
+    html.mo:not(.mo-fail) .lp-rvp-steps .lp-rv-step span:lang(lv) { font-size: clamp(10px, 3.6vw, 14px); }
   }
 }

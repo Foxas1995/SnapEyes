@@ -49,12 +49,14 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
     check(`${l}: valueText holds the placeholder and the slider says a whole number`, r.valueText.includes('{n}') && /\d/.test(valueText(49.6, r.valueText)) && !valueText(49.6, r.valueText).includes('{n}'), valueText(49.6, r.valueText));
     const all = KEYS.map((k) => r[k]).join(' | ');
     check(`${l}: no claim of uniqueness, no "best", no proof line about identical pixels, no dash`,
-      !/unique|one of a kind|never repeated|no two alike|handmade|most chosen|\bbest\b|identical|pixel/i.test(all) && !new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']').test(all), all.slice(0, 120));
+      !/unique|one of a kind|never repeated|no two alike|handmade|most chosen|\bbest\b|identical|pixel/i.test(all)
+      // 2026-11-13: the same claims in Finnish, Estonian and Latvian words
+      && !/ainutlaatui|uniikk|käsintehty|valituin|\bparas\b|\bparhaa|identti|piksel|ainulaad|unikaal|käsitsi tehtud|enim valitud|\bparim|identne|identse|unikāl|vienreizēj|roku darb|visbiežāk izvēlēt|labākais|labākā|identisk|pikseļ/i.test(all) && !new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']').test(all), all.slice(0, 120));
     check(`${l}: the promise says the iris is restored, never recoloured and never swapped (the landing page's words), not that nothing is redrawn`,
       !/redrawn|never redraw/i.test(r.promise) && r.promise.length > 40, r.promise);
   }
-  check('de, lt and hu are not the English words (a string kept in English by mistake would be flagged by the build too, not for one word labels)',
-    (['de', 'lt', 'hu'] as const).every((l) => KEYS.every((k) => rev(l)[k] !== rev('en')[k])));
+  check('de, lt and hu are not the English words (a string kept in English by mistake would be flagged by the build too, not for one word labels), nor are hr, fi, et and lv (2026-11-13: every language of the site but English)',
+    (['de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const).every((l) => KEYS.every((k) => rev(l)[k] !== rev('en')[k])) && LANGS.filter((l) => l !== 'en').join() === 'de,lt,hu,hr,fi,et,lv');
   check("the Reveal's strings are all different (nothing is said twice), in every language", LANGS.every((l) => new Set(KEYS.map((k) => rev(l)[k])).size === KEYS.length));
 
   // ---- what the result page prints around the Reveal (the real ResultView, rendered on the server with the eye's own numbers): the promise line and the colour warning

@@ -1,6 +1,8 @@
 // Gift vouchers as the page code reads them (src/shared/gift.ts, src/try/GiftField.tsx, src/try/BuyCard.tsx, src/try/checkout.ts, src/gift/copy.ts,
 // src/legal/docs/vouchers.ts): where the voucher field shows, what the button then charges, what the checkout sends, the words in five languages and
 // the legal texts of each edition. The server's side is scripts/styles_tests/test_gift.py (v3gift).
+// 2026-11-13: eight languages (Finnish, Estonian and Latvian: the words of the checkout and of /gift, the link's word the e-mail of api/_lib/voucher.py quotes, and the
+// voucher sections of the EU edition; the Hungarian edition keeps its four languages).
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BuyCard } from '../../src/try/BuyCard';
@@ -21,7 +23,7 @@ const has = (h: string, id: string) => h.includes(`data-testid="${id}"`);
 const DASH = new RegExp('[' + [0x2012, 0x2013, 0x2014, 0x2015].map((c) => String.fromCharCode(c)).join('') + ']');
 const blockText = (b: Block): string => (typeof b === 'string' ? b : 'ul' in b ? b.ul.join('\n') : 'dl' in b ? b.dl.map((r) => r.join(': ')).join('\n') : b.box.join('\n'));
 const sectionText = (d: LegalDoc | undefined, id: string) => (d?.sections.find((s) => s.id === id)?.blocks ?? []).map(blockText).join('\n');
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'] as const;
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const;
 const noop = () => undefined;
 
 export async function run(): Promise<Row[]> {
@@ -84,12 +86,15 @@ export async function run(): Promise<Row[]> {
     return g.buy('PRICE').includes('PRICE') && g.steps.length === 3 && !!g.ready.title && g.card.until('X').includes('X') && !DASH.test(JSON.stringify(g, (_k, v) => (typeof v === 'function' ? v('') : v)));
   }));
   check('the email\'s button word matches the checkout\'s link: the code is entered after "I have a gift voucher"', COPY.lt.gift.open === 'Turiu dovanų kuponą'
-    && COPY.hu.gift.open === 'Van ajándékutalványom' && COPY.hr.gift.open === 'Imam poklon-bon' && COPY.de.gift.open === 'Ich habe einen Geschenkgutschein');
+    && COPY.hu.gift.open === 'Van ajándékutalványom' && COPY.hr.gift.open === 'Imam poklon-bon' && COPY.de.gift.open === 'Ich habe einen Geschenkgutschein'
+    // 2026-11-13: the Finnish, Estonian and Latvian e-mails (api/_lib/voucher.py, step 3) quote these words
+    && COPY.fi.gift.open === 'Minulla on lahjakortti' && COPY.et.gift.open === 'Mul on kinkekaart' && COPY.lv.gift.open === 'Man ir dāvanu karte' && COPY.en.gift.open === 'I have a gift voucher'
+    && new Set(LANGS.map((l) => COPY[l].gift.open)).size === 8);
 
   // the legal texts
   const eu = EDITIONS.eu;
-  check('the EU edition: the terms, the privacy policy and the withdrawal page have a section "vouchers" in all five languages',
-    LANGS.every((l) => !!eu.terms[l]?.sections.some((s) => s.id === 'vouchers') && !!eu.privacy[l]?.sections.some((s) => s.id === 'vouchers')
+  check('the EU edition: the terms, the privacy policy and the withdrawal page have a section "vouchers" in all eight languages (five until 2026-11-13: Finnish, Estonian and Latvian)',
+    LANGS.length === 8 && LANGS.every((l) => !!eu.terms[l]?.sections.some((s) => s.id === 'vouchers') && !!eu.privacy[l]?.sections.some((s) => s.id === 'vouchers')
       && !!eu.withdrawal[l]?.sections.some((s) => s.id === 'vouchers')));
   const tv = sectionText(eu.terms.en, 'vouchers');
   check('the English terms: the two vouchers with their prices, 12 months, one order, the rest not paid out, the 14 days while unused',
@@ -102,6 +107,7 @@ export async function run(): Promise<Row[]> {
   check('the Hungarian edition (forints): a voucher section without euro prices, the price section says vouchers are euros only',
     (['en', 'de', 'lt', 'hu'] as const).every((l) => !!hu[l]?.sections.some((s) => s.id === 'vouchers') && !sectionText(hu[l], 'vouchers').includes(money(2497, 'eur', l))
       && !sectionText(hu[l], 'vouchers').includes(money(3997, 'eur', l))) && sectionText(hu.en, 'prices').includes('cannot pay for an order in forints'), sectionText(hu.en, 'vouchers').slice(0, 300));
+  check('the Hungarian edition has no Finnish, Estonian or Latvian terms (they are texts of the EU edition only, 2026-11-13), nor Croatian ones', (['hr', 'fi', 'et', 'lv'] as const).every((l) => !hu[l]) && Object.keys(hu).sort().join() === 'de,en,hu,lt', Object.keys(hu).join());
   check('the Australian and the US editions have no voucher section', !EDITIONS.au.terms.en?.sections.some((s) => s.id === 'vouchers')
     && !EDITIONS.us.terms.en?.sections.some((s) => s.id === 'vouchers') && !EDITIONS.au.privacy.en?.sections.some((s) => s.id === 'vouchers'));
   const pv = sectionText(eu.privacy.en, 'vouchers');

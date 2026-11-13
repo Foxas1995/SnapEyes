@@ -5,6 +5,7 @@ A visitor who switched the language while the quality step was on screen, or whi
 
   1. /api/analyze answers every sentence in all four languages (quality.words), each the very sentence a request in that language gets, the four different, none with an unfilled
      {placeholder}, and the fields of the request's own language (message, tips, lamp_message) are exactly as before: an older page reads them unchanged
+     (five languages with Croatian since 2026-10-28; eight with Finnish, Estonian and Latvian since 2026-11-13, and the lamp note is asked for in all eight)
   2. /api/enhance {redisplay: true, sealed, lang}: the display copy of an eye that is already restored, drawn again in the request's language: no ticket, no model call, the plain copy
      equal to preview.display_b64 for that language, the Reveal's copy (eyelid hidden, pupil crushed) when the deglared crop comes with it, and "shown" says which
   3. it is no way to watermark anything else: only the exact sealed preview this server made (KIND_ORDER) is accepted, a compose copy, a changed one, a plain picture or nothing is refused
@@ -78,7 +79,7 @@ A = mod("analyze")
 H.MODS.update({"analyze": A, "enhance": mod("enhance")})
 srv = H.start_api()
 BASE = f"http://127.0.0.1:{srv.server_address[1]}"
-LANGS = ("en", "de", "lt", "hu", "hr")       # Croatian since 2026-10-28
+LANGS = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")       # Croatian since 2026-10-28; Finnish, Estonian and Latvian since 2026-11-13
 PUBLIC = os.path.join(REPO, "public", "assets")
 
 # the model must never be asked: the vision answer is a stub, any other model call raises (counted)
@@ -121,31 +122,62 @@ def analyze(lang, **vision):
 
 
 # ============================================================================================ 1. the sentences of an analysis
-section("1. /api/analyze: every sentence in all five languages")
+section("1. /api/analyze: every sentence in all eight languages")
 good = {lang: analyze(lang) for lang in LANGS}
-check("five analyses of one photo, one per language, are all answered 200 with a quality block",
+check("eight analyses of one photo, one per language, are all answered 200 with a quality block",
       all(c == 200 and a.get("ok") is True and isinstance(a.get("quality"), dict) for c, a in good.values()), {k: v[0] for k, v in good.items()})
 qs = {lang: good[lang][1]["quality"] for lang in LANGS}
-check("quality.words has the five languages, each a message, a list of tips and a lamp note (text or none)",
+check("quality.words has the eight languages, each a message, a list of tips and a lamp note (text or none)",
       all(set(q.get("words", {})) == set(LANGS) and all(isinstance(w["message"], str) and w["message"] and isinstance(w["tips"], list) and all(isinstance(t, str) and t for t in w["tips"])
                                                           and (w["lamp_message"] is None or isinstance(w["lamp_message"], str)) for w in q["words"].values()) for q in qs.values()), qs["en"].get("words"))
 check("the fields of the request's own language are exactly as before and are the same sentences as that language's entry of quality.words (an older page reads them unchanged)",
       all(qs[l]["message"] == qs[l]["words"][l]["message"] and qs[l]["tips"] == qs[l]["words"][l]["tips"] and qs[l]["lamp_message"] == qs[l]["words"][l]["lamp_message"] for l in LANGS), {l: qs[l]["message"] for l in LANGS})
-check("the words do not depend on the language of the request: all five answers carry the same quality.words (one analysis, the sentences written five times)",
+check("the words do not depend on the language of the request: all eight answers carry the same quality.words (one analysis, the sentences written eight times)",
       all(qs[l]["words"] == qs["en"]["words"] for l in LANGS) and all(qs[l]["verdict"] == qs["en"]["verdict"] for l in LANGS))
 msgs = [qs["en"]["words"][l]["message"] for l in LANGS]
-check("the five messages are five different sentences, and each is the sentence of that language's text table (German, Lithuanian, Hungarian, Croatian) or the English one that is inline",
-      len(set(msgs)) == 5 and qs["en"]["words"]["de"]["message"] == A.TEXT_DE[qs["en"]["verdict"]] and qs["en"]["words"]["lt"]["message"] == A.TEXT_LT[qs["en"]["verdict"]]
-      and qs["en"]["words"]["hu"]["message"] == A.TEXT_HU[qs["en"]["verdict"]] and qs["en"]["words"]["hr"]["message"] == A.TEXT_HR[qs["en"]["verdict"]], msgs)
+check("the eight messages are eight different sentences, and each is the sentence of that language's text table (German, Lithuanian, Hungarian, Croatian, Finnish, Estonian, Latvian) or the English one that is inline",
+      len(set(msgs)) == 8 and qs["en"]["words"]["de"]["message"] == A.TEXT_DE[qs["en"]["verdict"]] and qs["en"]["words"]["lt"]["message"] == A.TEXT_LT[qs["en"]["verdict"]]
+      and qs["en"]["words"]["hu"]["message"] == A.TEXT_HU[qs["en"]["verdict"]] and qs["en"]["words"]["hr"]["message"] == A.TEXT_HR[qs["en"]["verdict"]]
+      and qs["en"]["words"]["fi"]["message"] == A.TEXT_FI[qs["en"]["verdict"]] and qs["en"]["words"]["et"]["message"] == A.TEXT_ET[qs["en"]["verdict"]]
+      and qs["en"]["words"]["lv"]["message"] == A.TEXT_LV[qs["en"]["verdict"]], msgs)
 # a small iris and a reflection on the pupil: tips with numbers and words in every language
 small = {lang: analyze(lang, box=[380, 380, 640, 640], pupil=[470, 470, 550, 550], glare=[[500, 500, 520, 520]], sharp="soft", occl=40) for lang in LANGS}
 sq = {lang: small[lang][1]["quality"] for lang in LANGS if small[lang][0] == 200 and small[lang][1].get("ok")}
 tips_by = {l: sq[l]["words"][l]["tips"] for l in sq}
-check("a small, soft, reflected shot gives tips in every language (at least two each, the same number in all five), and the request's own tips are that language's entry",
+check("a small, soft, reflected shot gives tips in every language (at least two each, the same number in all eight), and the request's own tips are that language's entry",
       set(sq) == set(LANGS) and all(len(t) >= 2 for t in tips_by.values()) and len({len(t) for t in tips_by.values()}) == 1 and all(sq[l]["tips"] == tips_by[l] for l in LANGS), {l: len(t) for l, t in tips_by.items()})
 every = [s for q in sq.values() for w in q["words"].values() for s in [w["message"], *w["tips"], w["lamp_message"] or ""]]
-check("no sentence of any language has an unfilled {placeholder} or an empty text, and the iris size is in the tip about it in all five languages",
+check("no sentence of any language has an unfilled {placeholder} or an empty text, and the iris size is in the tip about it in all eight languages",
       every and not any("{" in s or "}" in s for s in every) and all(re.search(r"\d{3}", sq["en"]["words"][l]["tips"][0]) or any(re.search(r"\d{3}", t) for t in sq["en"]["words"][l]["tips"]) for l in LANGS), every[:3])
+# 2026-11-13 (Finnish, Estonian and Latvian): the tips of each language are that language's own sentences (the checks above count them and compare the request's own
+# with its entry; this one reads them against the tables), the lamp note is asked for (no check above ever saw one: the sample eye has no cast), and the three new
+# tables are twins of the Croatian one, key for key
+TABLES = {"de": A.TEXT_DE, "lt": A.TEXT_LT, "hu": A.TEXT_HU, "hr": A.TEXT_HR, "fi": A.TEXT_FI, "et": A.TEXT_ET, "lv": A.TEXT_LV}
+OF_TABLE = lambda table, t: any(re.fullmatch(re.sub(r"\\\{[a-z_]+\\\}", r"\\d+", re.escape(v)), t) for v in table.values())      # a {placeholder} stands for a number
+tip_sets = [tuple(sq["en"]["words"][l]["tips"]) for l in LANGS] if set(sq) == set(LANGS) else []
+check("the tips of that shot are eight different lists, and every tip of a language with a text table is a sentence of that table (its {px} and {good} filled in with numbers): none is left in English",
+      len(set(tip_sets)) == 8 and all(OF_TABLE(TABLES[l], t) for l in TABLES for t in sq["en"]["words"][l]["tips"])
+      and not any(t in sq["en"]["words"]["en"]["tips"] for l in TABLES for t in sq["en"]["words"][l]["tips"]), {l: sq.get("en", {}).get("words", {}).get(l, {}).get("tips") for l in ("fi", "et", "lv")})
+_tint = L.sclera_tint
+L.sclera_tint = lambda im_, cx_, cy_, r_: {"L": 70.0, "a": 4.0, "b": A.LAMP_WARM_B + 10.0, "n": 5000}      # the white of the eye under a warm lamp
+try:
+    warm = {lang: analyze(lang) for lang in LANGS}
+finally:
+    L.sclera_tint = _tint
+lamps = {l: (warm[l][1].get("quality") or {}).get("lamp_message") for l in LANGS}
+check("under a warm lamp every language has its lamp note: the request's own is that language's sentence (the table's \"lamp\", the inline one in English), quality.words carries all "
+      "eight whatever the request's language, and the eight are eight different sentences",
+      all(c == 200 for c, _ in warm.values()) and lamps["en"] == A.LAMP_MESSAGE and all(lamps[l] == TABLES[l]["lamp"] for l in TABLES)
+      and all(((warm[q][1].get("quality") or {}).get("words") or {}).get(l, {}).get("lamp_message") == lamps[l] for q in LANGS for l in LANGS)
+      and len(set(lamps.values())) == 8 and all(lamps.values()), lamps)
+PLACE = lambda t: sorted(re.findall(r"\{[a-z_]*\}", t))
+check("the Finnish, Estonian and Latvian tables are twins of the Croatian one (and so of the German one): exactly its keys, every text filled, the same {placeholders} key for key, "
+      "no en or em dash, and no sentence of one of them is the sentence of another language's table",
+      all(set(TABLES[l]) == set(A.TEXT_HR) == set(A.TEXT_DE) for l in ("fi", "et", "lv"))
+      and all(isinstance(TABLES[l][k], str) and TABLES[l][k].strip() and PLACE(TABLES[l][k]) == PLACE(A.TEXT_HR[k]) == PLACE(A.TEXT_DE[k]) and not re.search("[" + chr(0x2013) + chr(0x2014) + "]", TABLES[l][k])
+              for l in ("fi", "et", "lv") for k in A.TEXT_HR)
+      and all(len({TABLES[l][k] for l in TABLES}) == len(TABLES) for k in A.TEXT_HR),
+      [(l, k) for l in ("fi", "et", "lv") for k in A.TEXT_HR if k not in TABLES[l] or PLACE(TABLES[l][k]) != PLACE(A.TEXT_HR[k])] or [k for k in A.TEXT_HR if len({TABLES[l].get(k) for l in TABLES}) != len(TABLES)])
 check("the model was never asked (the vision answer is a stub, any other call raises)", not MODEL_CALLS, MODEL_CALLS)
 
 # ============================================================================================ 2. redisplay
@@ -156,11 +188,11 @@ clean_im = Image.open(io.BytesIO(CLEAN_RAW)).convert("RGB")
 prot = P.protect(clean_im, CLEAN_RAW, lang="en")
 SEALED = prot["sealed"]
 shown = {lang: post("/api/enhance", {"redisplay": True, "sealed": SEALED, "lang": lang, "pad": 1.12}) for lang in LANGS}
-check("a sealed preview is drawn again in each of the five languages: 200, ok, the plain display copy (shown plain), and the reply names the language it was drawn in",
+check("a sealed preview is drawn again in each of the eight languages: 200, ok, the plain display copy (shown plain), and the reply names the language it was drawn in",
       all(c == 200 and r.get("ok") is True and r.get("shown") == "plain" and r.get("lang") == l and isinstance(r.get("image"), str) for l, (c, r) in shown.items()), {l: (c, r.get("shown"), r.get("lang")) for l, (c, r) in shown.items()})
 # since 2026-10-20 the words on the iris are the site's address alone, the same in every language (the owner: "drop PREVIEW, keep SnapEyes.com", iris.py
-# WATERMARK_TILE): the four copies are one picture now, and the redraw still answers each language with exactly what display_b64 makes in it (the check below)
-check("every copy is a display copy (the mark of preview.is_display_b64), and the five carry the same words in the pixels (SnapEyes.com in every language since 2026-10-20)",
+# WATERMARK_TILE): the four copies are one picture now (eight since 2026-11-13), and the redraw still answers each language with exactly what display_b64 makes in it (the check below)
+check("every copy is a display copy (the mark of preview.is_display_b64), and the eight carry the same words in the pixels (SnapEyes.com in every language since 2026-10-20)",
       all(P.is_display_b64(r["image"]) for _, r in shown.values()) and len({r["image"] for _, r in shown.values()}) == 1
       and len({L.WATERMARK_TEXT[l][0] for l in LANGS}) == 1, {l: len(r["image"]) for l, (_, r) in shown.items()})
 check("each copy is byte for byte what preview.display_b64 makes of the sealed clean picture in that language (the first one, English, is also the one /api/enhance made in English)",
@@ -187,7 +219,7 @@ expired = P.seal(CLEAN_RAW, ttl=-10)
 refused = {}
 for label, sealed in (("a compose copy", compose_copy), ("a changed seal", flipped), ("a seal of something that is no picture", other), ("an expired seal", expired), ("a plain picture", base64.b64encode(CLEAN_RAW).decode()),
                       ("an empty string", ""), ("a number", 5), ("nothing", None)):
-    for lang in ("de", "lt"):
+    for lang in ("de", "lt", "fi", "et", "lv"):      # Finnish, Estonian and Latvian since 2026-11-13
         c, r = post("/api/enhance", {"redisplay": True, "sealed": sealed, "lang": lang, "pad": 1.12})
         refused[(label, lang)] = (c, r.get("ok"), r.get("error") or r.get("message") or "", "image" in r)
 check("a compose copy, a changed or expired seal, a seal of something that is not a picture, a plain picture, an empty string, a number and no seal at all are all refused (4xx, no image), none answered",
@@ -195,6 +227,11 @@ check("a compose copy, a changed or expired seal, a seal of something that is no
 check("the refusals are written in the page's language: the German and the Lithuanian one differ from each other and from the English one, and an expired seal says it is too old",
       refused[("a changed seal", "de")][2] != refused[("a changed seal", "lt")][2] and refused[("a changed seal", "de")][2] and refused[("an expired seal", "de")][2] == P.REFUSALS["de"][0]
       and refused[("an expired seal", "lt")][2] == P.REFUSALS["lt"][0], {k: v[2] for k, v in refused.items() if k[0] in ("a changed seal", "an expired seal")})
+check("... and in Finnish, Estonian and Latvian (2026-11-13): an expired seal says it is too old and a changed one that it could not be read, in that language's own two sentences, "
+      "and the refusals of all eight languages are sixteen different sentences",
+      all(refused[("an expired seal", l)][2] == P.REFUSALS[l][0] and refused[("a changed seal", l)][2] == P.REFUSALS[l][1] for l in ("fi", "et", "lv"))
+      and set(P.REFUSALS) == set(LANGS) and len({P.REFUSALS[l][i] for l in LANGS for i in (0, 1)}) == 16 and all(P.REFUSALS[l][0] and P.REFUSALS[l][1] for l in LANGS),
+      {k: v[2] for k, v in refused.items() if k[1] in ("fi", "et", "lv") and k[0] in ("a changed seal", "an expired seal")})
 c_t, r_t = post("/api/enhance", {"crop": base64.b64encode(CROP_RAW).decode(), "mode": "artistic", "pad": 1.12})
 c_s, r_s = post("/api/enhance", {"sample": True, "image": base64.b64encode(CLEAN_RAW).decode(), "lang": "de"})
 check("the other two routes are as they were: a restoration without a ticket is still a 403, and the sample route still answers the shipped sample (its display copy in the request's language)",
@@ -204,14 +241,21 @@ check("still no model call", not MODEL_CALLS, MODEL_CALLS)
 # ============================================================================================ 4. the words of the watermark (the owner's insight 4, 2026-10-20)
 section("4. the address on the iris, and a badge that promises nothing while ordering is closed")
 OLD_EN_TILE = "SNAPEYES.COM  ·  PREVIEW"
-check("the words on the iris are the site's address alone, the same in all five languages: no PREVIEW, VORSCHAU, PERŽIŪRA, ELŐNÉZET or PREGLED",
+check("the words on the iris are the site's address alone, the same in all eight languages: no PREVIEW, VORSCHAU, PERŽIŪRA, ELŐNÉZET, PREGLED, ESIKATSELU, EELVAADE or PRIEKŠSKATĪJUMS",
       all(L.WATERMARK_TEXT[l][0] == "SnapEyes.com" for l in LANGS), {l: L.WATERMARK_TEXT[l][0] for l in LANGS})
 check("the badge while ordering is closed (soon) says the preview is free and that ordering opens soon, in each language, and offers nothing to unlock or buy",
       all(L.watermark_badge(l, soon=True) == L.WATERMARK_SOON[l] for l in LANGS)
-      and all(w in L.WATERMARK_SOON[l] for l, w in (("en", "FREE"), ("de", "KOSTENLOSE"), ("lt", "NEMOKAMA"), ("hu", "INGYENES"), ("hr", "BESPLATNI")))
-      and not any(re.search("UNLOCK|KAUFEN|UŽSAKYKITE|RENDELD|NARUČITE", L.WATERMARK_SOON[l]) for l in LANGS), L.WATERMARK_SOON)
+      and all(w in L.WATERMARK_SOON[l] for l, w in (("en", "FREE"), ("de", "KOSTENLOSE"), ("lt", "NEMOKAMA"), ("hu", "INGYENES"), ("hr", "BESPLATNI"),
+                                                     ("fi", "ILMAINEN"), ("et", "TASUTA"), ("lv", "BEZMAKSAS")))
+      and set(L.WATERMARK_SOON) == set(L.WATERMARK_TEXT) == set(LANGS) and len(set(L.WATERMARK_SOON.values())) == 8
+      # the open badges' calls to order: the Finnish "TILAA" and the Estonian "TELLI" as whole words (the closed badges say TILAAMINEN and TELLIMINE, "ordering")
+      and not any(re.search(r"UNLOCK|KAUFEN|UŽSAKYKITE|RENDELD|NARUČITE|\bTILAA\b|\bTELLI\b|PASŪTIET", L.WATERMARK_SOON[l]) for l in LANGS), L.WATERMARK_SOON)
 check("with ordering open the badge is the one of before in every language (its call to order the full size)",
-      all(L.watermark_badge(l, soon=False) == L.WATERMARK_TEXT[l][1] for l in LANGS) and L.watermark_badge("en") == "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE")
+      all(L.watermark_badge(l, soon=False) == L.WATERMARK_TEXT[l][1] for l in LANGS) and L.watermark_badge("en") == "WATERMARKED PREVIEW  ·  UNLOCK FULL SIZE"
+      # 2026-11-13: each open badge carries its language's call (the words the closed badge must not have), and the eight badges are eight different texts
+      and all(re.search(w, L.WATERMARK_TEXT[l][1]) for l, w in (("en", "UNLOCK"), ("de", "KAUFEN"), ("lt", "UŽSAKYKITE"), ("hu", "RENDELD"), ("hr", "NARUČITE"),
+                                                                ("fi", r"\bTILAA\b"), ("et", r"\bTELLI\b"), ("lv", "PASŪTIET")))
+      and len({L.WATERMARK_TEXT[l][1] for l in LANGS}) == 8, {l: L.WATERMARK_TEXT[l][1] for l in LANGS})
 from PIL import ImageDraw  # noqa: E402
 import numpy as np  # noqa: E402
 wide = {}

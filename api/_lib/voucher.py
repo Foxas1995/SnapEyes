@@ -99,12 +99,18 @@ NAME = {
             "de": "SnapEyes-Geschenkgutschein: Iris-Kunstwerk mit einem Auge",
             "lt": "SnapEyes dovanų kuponas: vienos akies rainelės kūrinys",
             "hu": "SnapEyes ajándékutalvány: íriszalkotás egy szemről",
-            "hr": "SnapEyes poklon-bon: umjetnička slika šarenice jednog oka"},
+            "hr": "SnapEyes poklon-bon: umjetnička slika šarenice jednog oka",
+            "fi": "SnapEyes-lahjakortti: iiristaideteos yhdestä silmästä",
+            "et": "SnapEyesi kinkekaart: ühe silma iirisekunstiteos",
+            "lv": "SnapEyes dāvanu karte: vienas acs varavīksnenes mākslas darbs"},
     "two": {"en": "SnapEyes gift voucher: iris artwork of two eyes",
             "de": "SnapEyes-Geschenkgutschein: Iris-Kunstwerk mit zwei Augen",
             "lt": "SnapEyes dovanų kuponas: dviejų akių rainelės kūrinys",
             "hu": "SnapEyes ajándékutalvány: íriszalkotás két szemről",
-            "hr": "SnapEyes poklon-bon: umjetnička slika šarenice dvaju očiju"},
+            "hr": "SnapEyes poklon-bon: umjetnička slika šarenice dvaju očiju",
+            "fi": "SnapEyes-lahjakortti: iiristaideteos kahdesta silmästä",
+            "et": "SnapEyesi kinkekaart: kahe silma iirisekunstiteos",
+            "lv": "SnapEyes dāvanu karte: divu acu varavīksnenes mākslas darbs"},
 }
 DESC = {
     "en": "A code for one order on snapeyes.com, valid for 12 months. The person you give it to photographs their own eye.",
@@ -112,6 +118,9 @@ DESC = {
     "lt": "Kodas vienam užsakymui snapeyes.com, galioja 12 mėnesių. Apdovanotas žmogus nusifotografuoja savo akį pats.",
     "hu": "Kód egy rendeléshez a snapeyes.com oldalon, 12 hónapig érvényes. A megajándékozott a saját szemét fotózza le.",
     "hr": "Kod za jednu narudžbu na snapeyes.com, vrijedi 12 mjeseci. Osoba kojoj ga darujete sama fotografira svoje oko.",
+    "fi": "Koodi yhteen tilaukseen sivustolla snapeyes.com, voimassa 12 kuukautta. Lahjan saaja kuvaa oman silmänsä.",
+    "et": "Kood üheks tellimuseks lehel snapeyes.com, kehtib 12 kuud. Kingisaaja pildistab oma silma ise.",
+    "lv": "Kods vienam pasūtījumam vietnē snapeyes.com, derīgs 12 mēnešus. Apdāvinātais pats nofotografē savu aci.",
 }
 SUBMIT = {
     "en": "You receive the voucher code by email right after paying. An unused voucher can be withdrawn within 14 days.",
@@ -119,10 +128,14 @@ SUBMIT = {
     "lt": "Kupono kodą gausite el. paštu iškart po apmokėjimo. Nepanaudoto kupono galite atsisakyti per 14 dienų.",
     "hu": "Az utalvány kódját a fizetés után azonnal megkapja e-mailben. A fel nem használt utalványtól 14 napon belül elállhat.",
     "hr": "Kod bona dobit ćete e-poštom odmah nakon plaćanja. Ugovor o neiskorištenom bonu možete jednostrano raskinuti u roku od 14 dana.",
+    "fi": "Saat lahjakortin koodin sähköpostiisi heti maksun jälkeen. Käyttämättömän lahjakortin oston voit peruuttaa 14 päivän kuluessa.",
+    "et": "Kinkekaardi koodi saad e-kirjaga kohe pärast maksmist. Kasutamata kinkekaardi ostust saad taganeda 14 päeva jooksul.",
+    "lv": "Kartes kodu saņemsiet e-pastā uzreiz pēc samaksas. No neizmantotas dāvanu kartes pirkuma var atteikties 14 dienu laikā.",
 }
 # the coupon's name: Stripe shows it beside the discount on its payment page and receipt (at most 40 characters)
 COUPON_NAME = {"en": "SnapEyes gift voucher", "de": "SnapEyes-Geschenkgutschein", "lt": "SnapEyes dovanų kuponas",
-               "hu": "SnapEyes ajándékutalvány", "hr": "SnapEyes poklon-bon"}
+               "hu": "SnapEyes ajándékutalvány", "hr": "SnapEyes poklon-bon", "fi": "SnapEyes-lahjakortti",
+               "et": "SnapEyesi kinkekaart", "lv": "SnapEyes dāvanu karte"}
 # the confirmation e-mail's price row of an order a voucher paid for, in part or entirely: "{price}, gift voucher -{discount}, paid {paid}"
 PRICE_ROW = {
     "en": "{price}, gift voucher −{discount}, paid {paid}",
@@ -130,6 +143,9 @@ PRICE_ROW = {
     "lt": "{price}, dovanų kuponas −{discount}, sumokėta {paid}",
     "hu": "{price}, ajándékutalvány −{discount}, fizetve {paid}",
     "hr": "{price}, poklon-bon −{discount}, plaćeno {paid}",
+    "fi": "{price}, lahjakortti −{discount}, maksettu {paid}",
+    "et": "{price}, kinkekaart −{discount}, makstud {paid}",
+    "lv": "{price}, dāvanu karte −{discount}, samaksāts {paid}",
 }
 
 MAIL = {
@@ -227,6 +243,63 @@ MAIL = {
         "bye": "Srdačan pozdrav,\nSnapEyes",
         "kind": {"one": "umjetnička slika šarenice jednog oka, bilo koji stil", "two": "umjetnička slika šarenice dvaju očiju, bilo koji stil"},
         "legal": "U nastavku su naši uvjeti prodaje i informacije o pravu na jednostrani raskid ugovora, kao tekst.",
+    },
+    "fi": {
+        "subject": "SnapEyes-lahjakorttisi {code}",
+        "hello": "Hei,",
+        "thanks": "kiitos, että ostit SnapEyes-lahjakortin. Tässä on koodi, jonka voit antaa lahjaksi:",
+        "rows": ("Lahjakortin koodi", "Arvo", "Käyttökohde", "Viimeinen käyttöpäivä"),
+        "how_h": "Näin lahjakortti käytetään",
+        "how": ("1. Lahjan saaja avaa sivuston snapeyes.com puhelimellaan ja kuvaa oman silmänsä.\n"
+                "2. Hän valitsee tyylin ja näkee ilmaisen esikatselun.\n"
+                "3. Kassalla hän napauttaa ”Minulla on lahjakortti” ja kirjoittaa koodin. Lahjakortti maksaa taideteoksen; "
+                "jos hän valitsee suuremman, hän maksaa vain erotuksen."),
+        "rules": ("Lahjakortin voi käyttää kerran, 12 kuukauden kuluessa. Jos taideteos maksaa vähemmän kuin lahjakortin arvo, loppuosaa ei makseta takaisin. "
+                  "Pidä koodi tallessa: kuka tahansa, jolla se on, voi käyttää sen."),
+        "wd_h": "Jos muutat mielesi",
+        "wd": ("Voit peruuttaa tämän oston 14 päivän kuluessa, kunhan lahjakorttia ei ole käytetty: kirjoita osoitteeseen info@snapeyes.com "
+               "ja kerro lahjakortin koodi, niin palautamme koko summan ja mitätöimme koodin."),
+        "bye": "Lämpimin terveisin\nSnapEyes",
+        "kind": {"one": "iiristaideteos yhdestä silmästä, mikä tahansa tyyli", "two": "iiristaideteos kahdesta silmästä, mikä tahansa tyyli"},
+        "legal": "Alla ovat myyntiehtomme ja tiedot peruuttamisoikeudesta tekstinä.",
+    },
+    "et": {
+        "subject": "Sinu SnapEyesi kinkekaart {code}",
+        "hello": "Tere!",
+        "thanks": "Aitäh, et ostsid SnapEyesi kinkekaardi. Siin on kood, mille saad kinkida:",
+        "rows": ("Kinkekaardi kood", "Väärtus", "Mille jaoks", "Kehtib kuni"),
+        "how_h": "Kuidas kinkekaarti kasutada",
+        "how": ("1. Kingisaaja avab oma telefonis lehe snapeyes.com ja pildistab oma silma.\n"
+                "2. Ta valib stiili ja näeb tasuta eelvaadet.\n"
+                "3. Tellimisel puudutab ta valikut „Mul on kinkekaart“ ja sisestab koodi. Kinkekaart tasub kunstiteose eest; "
+                "kui ta valib suurema, maksab ta ainult vahe."),
+        "rules": ("Kinkekaarti saab kasutada ühe korra, 12 kuu jooksul. Kui kunstiteos maksab kinkekaardist vähem, siis ülejäänud summat välja ei maksta. "
+                  "Palun hoia koodi kindlas kohas: igaüks, kellel see on, saab seda kasutada."),
+        "wd_h": "Kui muudad meelt",
+        "wd": ("Sellest ostust saad taganeda 14 päeva jooksul, kuni kinkekaarti ei ole kasutatud: kirjuta aadressile info@snapeyes.com "
+               "ja lisa kinkekaardi kood ning me tagastame kogu summa ja tühistame koodi."),
+        "bye": "Soojade soovidega\nSnapEyes",
+        "kind": {"one": "ühe silma iirisekunstiteos, mis tahes stiilis", "two": "kahe silma iirisekunstiteos, mis tahes stiilis"},
+        "legal": "Allpool on tekstina meie müügitingimused ja taganemisõiguse teave.",
+    },
+    "lv": {
+        "subject": "Jūsu SnapEyes dāvanu karte {code}",
+        "hello": "Labdien!",
+        "thanks": "Paldies, ka iegādājāties SnapEyes dāvanu karti. Šis ir kods, ko uzdāvināt:",
+        "rows": ("Kartes kods", "Vērtība", "Paredzēta", "Derīga līdz"),
+        "how_h": "Kā izmantot dāvanu karti",
+        "how": ("1. Apdāvinātais savā telefonā atver snapeyes.com un nofotografē savu aci.\n"
+                "2. Viņš izvēlas stilu un redz bezmaksas priekšskatījumu.\n"
+                "3. Pasūtot viņš pieskaras „Man ir dāvanu karte” un ievada kodu. Karte apmaksā mākslas darbu; "
+                "ja viņš izvēlas lielāku, jāpiemaksā tikai starpība."),
+        "rules": ("Karti var izmantot vienu reizi, 12 mēnešu laikā. Ja mākslas darbs maksā mazāk nekā kartes vērtība, atlikums netiek izmaksāts. "
+                  "Lūdzu, glabājiet kodu drošībā: ikviens, kam tas ir, var to izmantot."),
+        "wd_h": "Ja pārdomājat",
+        "wd": ("No šī pirkuma varat atteikties 14 dienu laikā, kamēr karte nav izmantota: rakstiet uz info@snapeyes.com, "
+               "norādot kartes kodu, un mēs atmaksāsim visu summu un anulēsim kodu."),
+        "bye": "Sirsnīgi sveicieni\nSnapEyes",
+        "kind": {"one": "vienas acs varavīksnenes mākslas darbs, jebkurš stils", "two": "divu acu varavīksnenes mākslas darbs, jebkurš stils"},
+        "legal": "Zemāk teksta veidā ir mūsu pārdošanas noteikumi un informācija par atteikuma tiesībām.",
     },
 }
 

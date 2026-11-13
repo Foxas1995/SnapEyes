@@ -294,6 +294,10 @@ export async function run(): Promise<Row[]> {
   check('the opening basis is fixed: the whole market over the last 30 days (what the audit entry keeps); only numbers asked for exactly that are the basis',
     OPENING_DAYS === 30 && OPENING_BASIS_LT === 'paskutinės 30 d., visos rinkos ir kalbos' && isOpeningBasis(30, '') && !isOpeningBasis(7, '') && !isOpeningBasis(90, '') && !isOpeningBasis(30, 'lang:hu') && !isOpeningBasis(30, 'market:au')
     && basisText(7, 'lang:hu') === 'paskutinės 7 d., kalba vengrų' && basisText(30, 'market:au') === 'paskutinės 30 d., rinka Australija' && basisText(90, null) === 'paskutinės 90 d., visos rinkos ir kalbos', OPENING_BASIS_LT);
+  // 2026-11-13: the three new languages of the site have their Lithuanian names in the admin's filter (src/admin/stylesView.ts SLICE_LANG_LT), as Croatian has
+  check('the language filter names Finnish, Estonian and Latvian in Lithuanian (and Croatian), never the bare code',
+    basisText(7, 'lang:fi') === 'paskutinės 7 d., kalba suomių' && basisText(7, 'lang:et') === 'paskutinės 7 d., kalba estų' && basisText(7, 'lang:lv') === 'paskutinės 7 d., kalba latvių'
+    && basisText(7, 'lang:hr') === 'paskutinės 7 d., kalba kroatų' && JSON.stringify(filterBody('lang:fi')) === '{"lang":"fi"}', basisText(7, 'lang:fi'));
   const ob = openingBasisView(2, line()), obPart = openingBasisView(2, line(), true), obRed = openingBasisView(3, line({ ok: false, n: 12, first: 0.25, retake: 0.25, why: ['n_low', 'first_low'] }));
   check('the line beside a switch says what it was counted over in the line itself (green and red alike, and a partial reading says so); one eye has no line and no basis',
     ob.tone === 'good' && ob.text.endsWith('Imtis: paskutinės 30 d., visos rinkos ir kalbos.') && obPart.text.endsWith('Imtis: paskutinės 30 d., visos rinkos ir kalbos, dalis dienų dar neperskaityta.')

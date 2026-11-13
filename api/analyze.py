@@ -22,6 +22,9 @@ from _lib import overshoot as OS   # a limbus fit that runs off the photo is ref
 from _lib.analyze_lt import TEXT_LT
 from _lib.analyze_hu import TEXT_HU
 from _lib.analyze_hr import TEXT_HR
+from _lib.analyze_fi import TEXT_FI
+from _lib.analyze_et import TEXT_ET
+from _lib.analyze_lv import TEXT_LV
 
 # ---- capture targets: ONE block. The verdict, the tips and the "targets" the capture screen shows all read
 # these, so the numbers a customer is told can never disagree with the numbers that judge the photo.
@@ -637,7 +640,7 @@ TEXT_DE = {
                 "ungenau. Bitte machen Sie ein weiteres Foto.",
 }
 
-TEXTS = {"de": TEXT_DE, "lt": TEXT_LT, "hu": TEXT_HU, "hr": TEXT_HR}   # by the request's "lang"; English is inline
+TEXTS = {"de": TEXT_DE, "lt": TEXT_LT, "hu": TEXT_HU, "hr": TEXT_HR, "fi": TEXT_FI, "et": TEXT_ET, "lv": TEXT_LV}   # by the request's "lang"; English is inline
 
 def analyze(body):
     PC.check()
@@ -855,7 +858,7 @@ def analyze(body):
 
     mine = words(lang)
     msg, tips = mine["message"], mine["tips"]
-    all_words = {l: words(l) for l in ("en", "de", "lt", "hu", "hr")}
+    all_words = {l: words(l) for l in ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")}
     capture = {"verdict": verdict, "detail": detail, "fibre_score": round(fscore, 2),
                "fibre": round(fibre, 2), "basis": round(basis, 2), "glare_on_fibres_pct": round(glare_fib, 1), "diameter_px": int(diam_orig),
                "sclera_b": None if not tint else round(tint["b"], 1), "sclera_a": None if not tint else round(tint["a"], 1),

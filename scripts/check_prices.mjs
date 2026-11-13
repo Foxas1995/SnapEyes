@@ -377,7 +377,7 @@ function checkLandingSources(root, out) {
   }
 }
 
-const LANDING_LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANDING_LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 
 /** Every text the page can print for a ladder, with the amount it must show (in Stripe's smallest unit). */
 function landingTexts(p, L, styles) {

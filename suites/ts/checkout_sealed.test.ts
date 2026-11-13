@@ -49,6 +49,16 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
       && (lg === 'en' ? wide.includes('longest side') : wide.includes('längsten Seite')), wide);
     check(`${lg}: no en or em dash in the preview line`, !DASH.some((d) => all.includes(d)));
   }
+  // 2026-11-13: the other six languages (Lithuanian, Hungarian, Croatian and the new Finnish, Estonian and Latvian: src/try/copy.<lang>.ts) hold the same promise. Their
+  // sentences are written with plain spaces between number and unit, so the no-break spaces stay a rule of the two languages above; what is held here is what the line says.
+  for (const lg of ['lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const) {
+    const r = COPY[lg].result;
+    const sq = r.previewFile(true), wide = r.previewFile(false);
+    check(`${lg}: the preview line promises 60 x 60 cm only for the square artwork, and names the 4096 px and one side of 60 cm otherwise`,
+      /4096\s?px/.test(sq) && /60\s?x\s?60\s?cm/.test(sq) && !/60\s?x/.test(wide) && /4096\s?px/.test(wide) && /60\s?cm/.test(wide) && sq !== wide
+      && sq !== COPY.en.result.previewFile(true) && wide !== COPY.en.result.previewFile(false), `${sq} | ${wide}`);
+    check(`${lg}: no en or em dash in the preview line`, !DASH.some((d) => (r.previewReduced + sq + wide).includes(d)) && r.previewReduced.length > 12 && r.previewReduced !== COPY.en.result.previewReduced);
+  }
 
   const eye = (id: string, sealed?: string): Eye => ({
     id, before: 'data:image/jpeg;base64,AAAA', image: `DISPLAY-${id}`, thumb: 'data:image/jpeg;base64,BBBB', pad: 1.12,

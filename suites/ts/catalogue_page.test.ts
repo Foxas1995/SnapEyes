@@ -1,18 +1,25 @@
 // WP12: the run-time catalogue as a page reads it (src/shared/catalogue.ts) and the landing page's pricing copy that takes its list of styles and its number of eyes
 // from it: GET /api/checkout's styles and orderable_max_eyes are read, an older answer or a bad one keeps the build's fallback, the tokens {max} and {styles} are filled,
 // a style the server holds at preview is not listed, and the pricing rows of the four languages carry the tokens and no written number or list.
+// 2026-11-13: eight languages (Finnish, Estonian and Latvian came; Croatian, of 2026-10-28, was never added here): the landing checks and the AI-made material
+// sentence are held for all eight, with each language's own words in the patterns.
 // Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing.
 import { fallbackCatalogue, fillTokens, fromOneEye, liveFor, oneEyeRows, ordersOpen, readCatalogue, severalMax } from '../../src/shared/catalogue';
 import en from '../../src/landing/copy/en.json';
 import de from '../../src/landing/copy/de.json';
 import lt from '../../src/landing/copy/lt.json';
 import hu from '../../src/landing/copy/hu.json';
+import hr from '../../src/landing/copy/hr.json';
+import fi from '../../src/landing/copy/fi.json';
+import et from '../../src/landing/copy/et.json';
+import lv from '../../src/landing/copy/lv.json';
 import { GALLERY } from '../../src/landing/assets.data';
 import { TILE_STYLE } from '../../src/landing/tileStyle';
 import { landingPrices } from '../../src/landing/priceText';
 import { priceList } from '../../src/shared/markets';
 import { AI_MATERIAL, AI_MATERIAL_PUBLISHED, aiBlocks, aiSentence } from '../../src/shared/aiMaterial';
 import { LEGAL_UPDATED } from '../../src/shared/legal';
+import { LANGS } from '../../src/shared/lang';
 import { STYLES, styleName, classStyle, EFFECTIVE_DEFAULT, buildStage, ceilingStage, landingStyles } from '../../src/shared/styles';
 
 type R = Array<[string, boolean, string?]>;
@@ -84,8 +91,9 @@ export async function run(): Promise<R> {
 
   check('the black price class is named by its one style from the registry (the row of the landing and the terms)', styleName(classStyle('black')).length > 0 && STYLES[classStyle('black')].price_class === 'black', classStyle('black'));
   // the new landing (src/landing/copy/<lang>.json, merged with the registry): its pricing rows take the list of art styles and the number of eyes from the run-time tokens
-  const LANDING = { en, de, lt, hu };
-  for (const lang of ['en', 'de', 'lt', 'hu'] as const) {
+  const LANDING = { en, de, lt, hu, hr, fi, et, lv };
+  check('the landing checks below run for every language of the site (eight since 2026-11-13)', LANGS.length === 8 && LANGS.every((l) => l in LANDING) && Object.keys(LANDING).length === LANGS.length, LANGS.join());
+  for (const lang of ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const) {
     const p = LANDING[lang].pricing;
     check(`landing pricing (${lang}): the art row's note is the token {styles}, the several-eyes row holds {max}, the soon sentence exists, no written list and no old class label`,
       p.rows.art.b.startsWith('{styles}') && p.rows.more.b.includes('{max}') && p.severalSoon.length > 20
@@ -93,10 +101,12 @@ export async function run(): Promise<R> {
     // 2026-10-22: the notice is the ONE soon sentence above the closed price list ("Ordering opens soon.", 20 characters in English), so it is held to being a sentence
     // of its own (12 characters or more), no longer to the two sentences it had (more than 20)
     check(`landing pricing (${lang}): the several-eyes row prints the maximum it is given ({max}), no written number of eyes, and the notice promises no price (no "planned prices" sentence)`,
-      !/\d/.test(p.rows.more.b.replace(/\{[a-zA-Z0-9]+\}/g, '')) && p.notice.length >= 12 && !/\d/.test(p.notice) && !/planned|geplant|planuoj|tervezett/i.test(p.notice), `${p.rows.more.b} | ${p.notice}`);
+      !/\d/.test(p.rows.more.b.replace(/\{[a-zA-Z0-9]+\}/g, '')) && p.notice.length >= 12 && !/\d/.test(p.notice) && !/planned|geplant|planuoj|tervezett|planiran|suunnitel|kavandat|plaanit|plānot/i.test(p.notice), `${p.rows.more.b} | ${p.notice}`);
     const all = JSON.stringify(LANDING[lang]);
     check(`the landing page (${lang}) states no number of styles ("six styles", "6 styles") and names no style it cannot sell in its head lines`,
-      !/(\b(six|sechs|šeši|hat)\b|\b6\b)\s+(styles?|stile[ns]?|stili\w*|stíl\w*)/i.test(all) && !/in six|in allen sechs|visais šešiais|mind a hat/i.test(all), '');
+      !/(\b(six|sechs|šeši|hat)\b|\b6\b)\s+(styles?|stile[ns]?|stili\w*|stíl\w*)/i.test(all) && !/in six|in allen sechs|visais šešiais|mind a hat/i.test(all)
+      // Croatian, Finnish, Estonian and Latvian: the same two rules in their words (\b does not see their letters, so the number stands after a space, a quote or a bracket)
+      && !/(^|[\s"(])(šest|kuusi|kuuden|kuus|kuue|seši|sešu|sešiem|6)\s+(stil\p{L}*|tyyli\p{L}*|stiili\p{L}*)/iu.test(all) && !/u svih šest|kaikissa kuudessa|kõigis kuues|visos sešos/i.test(all), '');
   }
 
   // the gallery's tiles and the run-time catalogue (src/landing/tileStyle.ts, src/landing/StyleTile.tsx): a tile carries a price only when its style is LIVE for its number of eyes
@@ -118,10 +128,10 @@ export async function run(): Promise<R> {
     && lp.fromOf(['solo.powder']) === lp.art && lp.fromOf(['solo.clean', 'solo.powder']) === lp.from && lp.eyes(1, 'black') === lp.black && lp.eyes(1, 'art') === lp.art, JSON.stringify([lp.black, lp.art, lp.from]));
 
   // WP18: published by the cutover: every language gives one block and a sentence that ends with it
-  check('the AI-made material sentence is written in four languages and PUBLISHED by the cutover (WP18): one block and the sentence for the end of a line, in every language',
-    ['en', 'de', 'lt', 'hu'].every((l) => typeof (AI_MATERIAL as Record<string, string>)[l] === 'string' && (AI_MATERIAL as Record<string, string>)[l].length > 150
+  check('the AI-made material sentence is written in every language (four at WP18, Croatian since 2026-10-28, Finnish, Estonian and Latvian since 2026-11-13: eight) and PUBLISHED by the cutover (WP18): one block and the sentence for the end of a line, in every language',
+    Object.keys(AI_MATERIAL).sort().join() === [...LANGS].sort().join() && new Set(Object.values(AI_MATERIAL)).size === 8 && ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'].every((l) => typeof (AI_MATERIAL as Record<string, string>)[l] === 'string' && (AI_MATERIAL as Record<string, string>)[l].length > 150
       && aiBlocks(l as 'en').length === 1 && aiBlocks(l as 'en')[0] === (AI_MATERIAL as Record<string, string>)[l] && aiSentence(l as 'en') === ` ${(AI_MATERIAL as Record<string, string>)[l]}`)
     && AI_MATERIAL_PUBLISHED === true && !DASH.test(JSON.stringify(AI_MATERIAL)), '');
-  check('one LEGAL_UPDATED moved with this work (2026-11-11, the privacy paragraph of the daily ceiling of free previews; it was 2026-10-28 for the Croatian texts of the EU edition, 2026-10-20 for the privacy paragraphs of the anonymous counter, 2026-10-06 at WP18, the AI-made material sentence, and 2026-10-05 at WP12)', LEGAL_UPDATED === '2026-11-11', LEGAL_UPDATED);
+  check('one LEGAL_UPDATED moved with this work (2026-11-13, the Finnish, Estonian and Latvian texts of the EU edition; it was 2026-11-11 for the privacy paragraph of the daily ceiling of free previews, 2026-10-28 for the Croatian texts of the EU edition, 2026-10-20 for the privacy paragraphs of the anonymous counter, 2026-10-06 at WP18, the AI-made material sentence, and 2026-10-05 at WP12)', LEGAL_UPDATED === '2026-11-13', LEGAL_UPDATED);
   return out;
 }

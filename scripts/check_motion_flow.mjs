@@ -679,7 +679,11 @@ async function checkGuide() {
 // checkout request; src/order/api.ts and src/order/ui.ts now chunks of their own that the gift page shares) moved the base of /try by +3,068 B JS and of /order by +794 B JS,
 // and both by +74 B CSS (the utilities of the field and of the gift page in the shared stylesheet), measured on b0616af against the tree with them (173,941 to 177,009 B,
 // 117,398 to 118,192 B, 13,782 to 13,856 B). It is a product, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068, css: 10975 + 245 + 494 + 261 + 74 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794, css: 10975 + 245 + 494 + 261 + 74 } };
+// Finnish, Estonian and Latvian (2026-11-13: the /try and /order dictionaries in the three languages, which both pages bundle as they bundle the other five, their
+// checkout wording, legal labels, print and voucher words, and the language menu that replaces the row of buttons, src/shared/LangMenu.tsx) moved the base of /try by
+// +29,190 B JS and of /order by +13,127 B JS, and both by +135 B CSS (the menu's utilities in the shared stylesheet), measured on 33e948d against the tree with them.
+// It is words and a menu, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190, css: 10975 + 245 + 494 + 261 + 74 + 135 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127, css: 10975 + 245 + 494 + 261 + 74 + 135 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

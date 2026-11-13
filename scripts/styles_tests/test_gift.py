@@ -430,8 +430,11 @@ def text(doc, lang, edition=None):
 
 
 words = {l: (t, pay.price_text(2497, l, "eur").replace("\u00a0", " "), pay.price_text(3997, l, "eur").replace("\u00a0", " ")) for l, t in
-         (("en", "Gift vouchers"), ("de", "Geschenkgutscheine"), ("lt", "Dovanų kuponai"), ("hu", "Ajándékutalványok"), ("hr", "Poklon-bonovi"))}
-check("the EU terms in every language have the voucher section with the two prices, 12 months and the 14 days", all(
+         (("en", "Gift vouchers"), ("de", "Geschenkgutscheine"), ("lt", "Dovanų kuponai"), ("hu", "Ajándékutalványok"), ("hr", "Poklon-bonovi"),
+          # 2026-11-13: the Finnish, Estonian and Latvian terms of the EU edition
+          ("fi", "Lahjakortit"), ("et", "Kinkekaardid"), ("lv", "Dāvanu kartes"))}
+check("the EU terms in every language have the voucher section with the two prices, 12 months and the 14 days"
+      " - 1113: every language is eight (Finnish, Estonian, Latvian), exactly the languages of the pack", set(words) == set(docs) and len(words) == 8 and all(
     w[0] in text("terms", l).replace("\u00a0", " ") and w[1] in text("terms", l).replace("\u00a0", " ") and w[2] in text("terms", l).replace("\u00a0", " ")
     and "12" in text("terms", l) and "14" in text("terms", l) for l, w in words.items()), [l for l, w in words.items() if w[0] not in text("terms", l)])
 hu_t = text("terms", "hu", "hu").replace("\u00a0", " ")

@@ -1,0 +1,695 @@
+{
+  "meta": {
+    "title": "SnapEyes: jūsu īstā varavīksnene kā mākslas darbs",
+    "description": "Nofotografējiet vienu aci ar telefonu un ieraugiet savu varavīksneni kā mākslas darbu: atjaunotu, nekad nepārzīmētu. Bezmaksas priekšskatījums ar ūdenszīmi, pēc tam digitāls fails, ko varat izdrukāt jebkur.",
+    "shareDescription": "Nofotografējiet vienu aci ar telefonu un ieraugiet savu varavīksneni kā mākslas darbu. Priekšskatījums ar ūdenszīmi ir bez maksas.",
+    "locale": "lv_LV"
+  },
+  "facts": {
+    "px": "4096\u00a0px",
+    "square": "4096\u00a0×\u00a04096\u00a0px",
+    "printMax": "50\u00a0×\u00a050\u00a0cm",
+    "printMaxCm": "50\u00a0cm",
+    "email": "info@snapeyes.com",
+    "hours": "48"
+  },
+  "langName": "Latviešu",
+  "switchLabel": "Valoda",
+  "brandTag": "",
+  "skip": "Pāriet uz saturu",
+  "nav": {
+    "reveal": "Pirms un pēc",
+    "wall": "Jūsu siena",
+    "styles": "Stili",
+    "how": "Kā tas notiek",
+    "pricing": "Cenas",
+    "faq": "Biežākie jautājumi",
+    "privacy": "Privātums",
+    "gift": "Dāvanu karte"
+  },
+  "navLabels": {
+    "main": "Galvenā izvēlne",
+    "footer": "Kājene",
+    "menu": "Izvēlne"
+  },
+  "cta": "Izveidot bezmaksas priekšskatījumu",
+  "ctaShort": "Bezmaksas priekšskatījums",
+  "ctaNote": "",
+  "bar": {
+    "label": "Paziņojums",
+    "soon": "Pasūtījumus sāksim pieņemt drīz.",
+    "open": "Sāciet ar bezmaksas priekšskatījumu."
+  },
+  "example": {
+    "chip": "Piemērs",
+    "vis": "Vizualizācija",
+    "photo": "Parauga fotogrāfija",
+    "mantas": "Mūsu pašu acs"
+  },
+  "hero": {
+    "eyebrow": "SnapEyes",
+    "title": "Jūsu īstā varavīksnene, pārvērsta mākslā.",
+    "lead": "Ar telefonu uzņemta jūsu acs fotogrāfija, atjaunota un ietērpta jūsu izvēlētajā stilā.",
+    "micro": [
+      "Bezmaksas priekšskatījums ar ūdenszīmi",
+      "Apmēram minūtes laikā",
+      "Bez reģistrācijas"
+    ],
+    "fromPrice": "Digitālais fails no {from}",
+    "computerHint": "Esat pie datora? Atveriet snapeyes.com telefonā vai izmantojiet fotogrāfijas, kas jums jau ir.",
+    "secondary": "Skatiet īstu pirms un pēc",
+    "globeAlt": "Lode no apaļiem mākslas darbiem mūsu stilos, kas veidoti no mūsu pašu acs un parauga fotogrāfijām",
+    "globeLabel": "Mūsu stili uz lodes, ko varat griezt",
+    "globeTry": "Izmēģiniet ar savu aci",
+    "globeClose": "Aizvērt",
+    "globeNote": "Mūsu pašu acs un parauga fotogrāfijas, nevis klienti"
+  },
+  "reveal": {
+    "eyebrow": "Pirms un pēc",
+    "title": "Pa kreisi fotogrāfija. Pa labi varavīksnene.",
+    "intro": "Atjaunota, nekad nepārzīmēta: krāsa un raksts paliek jūsu.",
+    "hint": "Velciet, lai salīdzinātu",
+    "sliderLabel": "Salīdziniet telefona fotogrāfiju un atjaunoto varavīksneni",
+    "valueText": "fotogrāfija {n} procenti",
+    "before": "Telefona fotogrāfija",
+    "after": "Atjaunotā varavīksnene",
+    "beforeWeb": "Fotogrāfija",
+    "sliderLabelWeb": "Salīdziniet fotogrāfiju un atjaunoto varavīksneni",
+    "eyes": [
+      {
+        "id": "gd",
+        "label": "Pelēkzaļa acs",
+        "n": 380,
+        "note": "Parauga fotogrāfija, nevis klients.",
+        "photoAlt": "Parauga fotogrāfija: pelēkzaļa acs ar loga atspīdumu, kadra kreisā puse",
+        "irisAlt": "Tā pati pelēkzaļā varavīksnene, atjaunota, bez atspīduma",
+        "artAlt": "Atjaunotā pelēkzaļā varavīksnene kā mākslas darbs"
+      },
+      {
+        "id": "own",
+        "label": "Mūsu pašu acs",
+        "n": 315,
+        "note": "Fotografēta mājās ar telefonu.",
+        "photoAlt": "Mūsu pašu acs fotogrāfija, uzņemta ar telefonu, kadra kreisā puse",
+        "irisAlt": "Tā pati varavīksnene, atjaunota, uz melna fona",
+        "artAlt": "Atjaunotā varavīksnene kā mākslas darbs"
+      }
+    ],
+    "eyeGroup": "Izvēlieties parauga aci",
+    "strip": {
+      "photo": "Fotogrāfija",
+      "iris": "Varavīksnene",
+      "art": "Māksla"
+    },
+    "yourTurn": "Tagad jūsu kārta."
+  },
+  "wall": {
+    "eyebrow": "Jūsu siena",
+    "title": "Ieraugiet to uz savas sienas",
+    "intro": "Izdrukājiet, kur vien vēlaties: uz akrila, alumīnija, audekla vai ierāmētu.",
+    "stageLabel": "Jūsu izdrukātā faila vizualizācijas",
+    "materialsLabel": "Materiāls",
+    "artLabel": "Mākslas darbs",
+    "materials": {
+      "acrylic": {
+        "n": "Akrils",
+        "tag": "Spīdīgs un dziļš",
+        "facts": [
+          "Bieži 3 līdz 6 mm biezs",
+          "Atvirzīts no sienas",
+          "Visdziļākais melnais"
+        ]
+      },
+      "metal": {
+        "n": "Alumīnijs",
+        "tag": "Ass un moderns",
+        "facts": [
+          "Bieži 1 līdz 3 mm biezs",
+          "Cieši pie sienas",
+          "Spīdīgs vai pusmatēts"
+        ]
+      },
+      "canvas": {
+        "n": "Audekls",
+        "tag": "Maigs un silts",
+        "facts": [
+          "Bieži 2 līdz 4 cm dziļš",
+          "Ļoti maz atspīdumu",
+          "Rāmis nav vajadzīgs"
+        ]
+      },
+      "framed": {
+        "n": "Ierāmēta izdruka",
+        "tag": "Klasiska un mierīga",
+        "facts": [
+          "Aiz stikla, ar baltu paspartū",
+          "Rāmis apmēram 2 cm",
+          "Viegli pakārt"
+        ]
+      },
+      "block": {
+        "n": "Akrila bloks",
+        "tag": "Plauktam vai galdam",
+        "facts": [
+          "Bieži 2 līdz 4 cm biezs",
+          "Stāv pats",
+          "Bieži 10 līdz 20 cm"
+        ]
+      },
+      "phone": {
+        "n": "Telefons",
+        "tag": "Uz bloķēšanas ekrāna",
+        "facts": [
+          "Izgaismo ekrāns",
+          "Pievienojiet apkārt melnu laukumu",
+          "Nekas nav jādrukā"
+        ]
+      }
+    },
+    "arts": {
+      "eye": "Viena acs",
+      "universe": "Universe",
+      "family4": "Ģimene",
+      "collision": "Jūs abi"
+    },
+    "eyesNote": "Acis: mūsu pašu un parauga fotogrāfijas.",
+    "captions": {
+      "acrylic": "Uz akrila.",
+      "metal": "Uz alumīnija.",
+      "canvas": "Uz audekla.",
+      "framed": "Ierāmēts.",
+      "block": "Kā akrila bloks.",
+      "phone": "Uz telefona bloķēšanas ekrāna."
+    },
+    "captionsSize": {
+      "acrylic": "Uz akrila, apmēram {size}.",
+      "metal": "Uz alumīnija, apmēram {size}.",
+      "canvas": "Uz audekla, apmēram {size}.",
+      "framed": "Ierāmēts, apmēram {size}."
+    },
+    "compareTitle": "Salīdziniet materiālus",
+    "compareCorner": "Materiāls",
+    "compare": {
+      "cols": [
+        "Akrils",
+        "Alumīnijs",
+        "Audekls",
+        "Ierāmēta izdruka"
+      ],
+      "rows": [
+        {
+          "h": "Izskats",
+          "v": [
+            "Spīdīgs, ar dziļumu",
+            "Ass, plāns",
+            "Maigs, ar faktūru",
+            "Klasisks, mierīgs"
+          ]
+        },
+        {
+          "h": "Melnais",
+          "v": [
+            "Dziļš",
+            "Dziļš",
+            "Maigāks",
+            "Dziļš, ar baltu paspartū"
+          ]
+        },
+        {
+          "h": "Atspīdumi",
+          "v": [
+            "Nedaudz, gaišā telpā",
+            "Nedaudz, pusmatētam mazāk",
+            "Ļoti maz",
+            "Nedaudz, ar pretatspīduma stiklu mazāk"
+          ]
+        },
+        {
+          "h": "Uz sienas",
+          "v": [
+            "It kā peld sienas priekšā",
+            "Plāns un viegls",
+            "Silts un brīvs",
+            "Svinīgs un tradicionāls"
+          ]
+        }
+      ],
+      "note": "Vispārīgs ieskats tajā, ko piedāvā tipogrāfijas, nevis mūsu produktu apraksts."
+    }
+  },
+  "sizes": {
+    "eyebrow": "Izmēri",
+    "title": "Asas izdrukas līdz {printMax}",
+    "intro": "Izvēlieties izmēru: zīmējums ir mērogā.",
+    "svgLabel": "Mērogā veidots zīmējums: četri izdrukas izmēri uz sienas, salīdzinājumam dīvāns un cilvēks",
+    "sofa": "Dīvāns, 220 cm",
+    "person": "Cilvēks, 175 cm",
+    "chips": "Izdrukas izmērs",
+    "cm": "{n} cm",
+    "ppi": "pikseļi collā",
+    "rungs": [
+      {
+        "cm": 20,
+        "t": "Galdam un plauktam",
+        "b": "Ļoti asa"
+      },
+      {
+        "cm": 30,
+        "t": "Virs kumodes",
+        "b": "Ļoti asa"
+      },
+      {
+        "cm": 40,
+        "t": "Mākslas darbs sienai",
+        "b": "Asa"
+      },
+      {
+        "cm": 50,
+        "t": "Lielākais, ko iesakām",
+        "b": "Asa"
+      }
+    ]
+  },
+  "more": {
+    "title": "Vēl veidi, kā to ieraudzīt",
+    "railLabel": "Vēl vizualizācijas",
+    "prev": "Iepriekšējais attēls",
+    "next": "Nākamais attēls",
+    "scenes": [
+      {
+        "id": "pair",
+        "t": "Jūs abi, uz tumša riekstkoka",
+        "c": "Acis: mūsu pašu un parauga fotogrāfija."
+      },
+      {
+        "id": "group",
+        "t": "Jūs četri, rāmī",
+        "c": "Acis: mūsu pašu un parauga fotogrāfijas."
+      },
+      {
+        "id": "hands",
+        "t": "Jūsu rokās",
+        "c": ""
+      },
+      {
+        "id": "gallery",
+        "t": "Skats no sāniem",
+        "c": "Acis: mūsu pašu un parauga fotogrāfija."
+      },
+      {
+        "id": "shelf",
+        "t": "Uz plaukta",
+        "c": ""
+      }
+    ]
+  },
+  "styles": {
+    "eyebrow": "Stili",
+    "title": "Viena varavīksnene, daudz stilu",
+    "legend": "Piemēri. Jūsējā būs jūsu pašu krāsas un raksts.",
+    "groups": {
+      "one": "Tikai jūs",
+      "two": "Jūs abi",
+      "family": "Ģimene"
+    },
+    "tabsLabel": "Stilu grupas",
+    "eyeLabel": "Izmēģiniet citu acu krāsu",
+    "eyes": {
+      "own": "Zilganzaļa",
+      "yg": "Dzeltenzaļa",
+      "br": "Brūna",
+      "gr": "Pelēka"
+    },
+    "eyeNote": {
+      "own": "Mūsu pašu acs",
+      "other": "Parauga fotogrāfija"
+    },
+    "items": {
+      "radiance": {
+        "d": "Smalki gaismas stari jūsu pašu varavīksnenes krāsās."
+      },
+      "powder": {
+        "d": "Mala sabirst graudiņos jūsu acs krāsās."
+      },
+      "universe": {
+        "d": "Jūsu pašu varavīksnene, palielināta, piepilda visu attēlu."
+      },
+      "echo": {
+        "d": "Jūsu varavīksnene pašas atbalsī, šķiedras stiepjas kā tunelis."
+      },
+      "splash": {
+        "d": "Mala paceļas šķidruma kronī."
+      },
+      "clean": {
+        "d": "Jūsu atjaunotā varavīksnene viena pati uz tīri melna fona."
+      },
+      "duo_infinity": {
+        "d": "Divas varavīksnenes pārklājas kā bezgalības zīme."
+      },
+      "duo_infinity_bb": {
+        "d": "Tur, kur tās satiekas, katra varavīksnene saglabā savu krāsu."
+      },
+      "duo_kiss": {
+        "d": "Divas varavīksnenes, kas saskaras ar malām."
+      },
+      "duo_clean": {
+        "d": "Tas pats pāris, bez pulvera."
+      },
+      "duo_thread": {
+        "d": "Divas veselas varavīksnenes, ko savieno viens tievs zelta pavediens."
+      },
+      "duo_radiance": {
+        "d": "Divas varavīksnenes raida starus savās krāsās, un tie satiekas pa vidu."
+      },
+      "fam_trio": {
+        "d": "Trīs varavīksnenes trīsstūrī."
+      },
+      "fam_4": {
+        "d": "Četras varavīksnenes ar pulveri to pašu krāsās."
+      },
+      "fam_orbit": {
+        "d": "Viena varavīksnene vidū, ģimene riņķo ap to."
+      },
+      "fam_circle": {
+        "d": "Varavīksnenes aplī ap vienu mazu gaismu."
+      },
+      "fam_radiance": {
+        "d": "Katra varavīksnene raida savus smalkos starus."
+      },
+      "supernova_one": {
+        "d": "Zvaigžņu putekļi izšaujas no malas jūsu acs krāsās."
+      },
+      "nebula": {
+        "d": "Jūsu varavīksnene mirdz miglāja sirdī."
+      },
+      "sparks": {
+        "d": "Dzirksteles ceļas no malas jūsu acs krāsās."
+      },
+      "halo": {
+        "d": "Jūsu varavīksnene, no aizmugures izgaismota tās pašas krāsā."
+      },
+      "galaxy": {
+        "d": "Zvaigžņu spirāles zari vijas ārā no jūsu varavīksnenes tās pašas krāsās."
+      },
+      "aurora": {
+        "d": "Ziemeļblāzmas aizkari ap jūsu varavīksneni."
+      },
+      "duo_nebula": {
+        "d": "Divas varavīksnenes mirdz blakus vienā miglājā."
+      },
+      "duo_supernova": {
+        "d": "Zvaigžņu putekļi izšaujas no abām malām katras acs krāsās."
+      },
+      "fam_nebula": {
+        "d": "Visa ģimene kopā mirdz vienā miglājā."
+      },
+      "fam_supernova": {
+        "d": "Katra varavīksnene uzsprāgst zvaigžņu putekļos savās krāsās."
+      },
+      "duo_galaxy": {
+        "d": "Divas varavīksnenes vienas spirālveida galaktikas sirdī, katrs zars savās krāsās."
+      },
+      "fam_galaxy": {
+        "d": "Viena galaktika visai ģimenei, pa vienam zaram katra cilvēka krāsās."
+      },
+      "fam_powder": {
+        "d": "Katra varavīksnene pārtop putekļos savās krāsās, un vidū tie sajaucas."
+      }
+    },
+    "mixed": "Mūsu pašu acs un parauga fotogrāfijas",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
+    "priceFrom": "No {price}",
+    "wallOn": "Uz sienas",
+    "wallOff": "Plakans skats",
+    "wallOnAria": "Rādīt {name} uz sienas",
+    "wallOffAria": "Rādīt {name} plakanā skatā",
+    "wallFile": "Cena ir par digitālo failu. Druka nav jūsu pasūtījuma daļa.",
+    "comboTitle": "No divām līdz {max} acīm vienā mākslas darbā",
+    "comboBody": "Jūsu un jūsu mīļo cilvēku acis. Katra nākamā acs maksā papildus {price}.",
+    "soonTag": "Drīzumā",
+    "moreSoon": "Drīzumā vēl citi stili.",
+    "comboTitleSoon": "Vairākas acis vienā mākslas darbā"
+  },
+  "how": {
+    "eyebrow": "Kā tas notiek",
+    "title": "Trīs soļi, bez studijas",
+    "steps": [
+      {
+        "t": "Nofotografējiet savu aci",
+        "b": "Aizmugurējā kamera, gaisma no sāniem."
+      },
+      {
+        "t": "Apskatiet priekšskatījumu",
+        "b": "Jūsu varavīksnene vairākos stilos."
+      },
+      {
+        "t": "Saņemiet failu",
+        "b": "Izvēlieties stilu un saņemiet lielu failu.",
+        "bOpen": "Izvēlieties stilu, samaksājiet ar Stripe un saņemiet lielu failu."
+      }
+    ],
+    "videoPlay": "Atskaņot pamācības video",
+    "videoPause": "Apturēt pamācības video",
+    "previewTitle": "Jūsu priekšskatījums",
+    "previewButton": "Pasūtījums ar pienākumu maksāt",
+    "previewSoon": "Tālāk: jūsu fails",
+    "fileName": "snapeyes-artwork.jpg",
+    "fileMeta": "{square}, JPEG"
+  },
+  "pricing": {
+    "eyebrow": "Cenas",
+    "title": "Skaidras cenas par vienu digitālo failu",
+    "notice": "Pasūtījumus sāksim pieņemt drīz.",
+    "noticeOpen": "Sāciet ar bezmaksas priekšskatījumu: pasūtāt tikai tad, kad rezultāts jums patīk.",
+    "severalSoon": "Bezmaksas priekšskatījums pieejams jau tagad. Šai grupai pasūtījumus pieņemsim drīz.",
+    "currencyLabel": "Cenu valūta",
+    "free": "Bez maksas",
+    "rows": {
+      "free": {
+        "t": "Priekšskatījums",
+        "b": "Ar ūdenszīmi."
+      },
+      "black": {
+        "t": "Viena acs uz melna fona",
+        "b": "Stils {name}."
+      },
+      "art": {
+        "t": "Viena acs mākslas stilā",
+        "b": "{styles}."
+      },
+      "two": {
+        "t": "Divas acis",
+        "b": "{styles}."
+      },
+      "more": {
+        "t": "Trīs acis",
+        "b": "Divas acis maksā {price2}. Katra nākamā acs maksā papildus {price}, līdz {max} acīm."
+      }
+    },
+    "ladderTitle": "Acu skaits",
+    "eyes": "{n} acis",
+    "includesTitle": "Ko jūs saņemat",
+    "includes": [
+      "Liels fails bez ūdenszīmes",
+      "Veidots no jūsu priekšskatījuma",
+      "12 mēneši lejupielādei",
+      "Personīgai lietošanai"
+    ],
+    "notIncludes": "Druka nav jūsu pasūtījuma daļa.",
+    "payOpen": "Droša maksāšana ar karti, izmantojot Stripe.",
+    "gift": "Dāvināsiet? Nopērciet dāvanu karti: apdāvinātais savu aci nofotografēs vēlāk pats.",
+    "termsLink": "Pārdošanas noteikumi",
+    "auLine": "Pārdevējs: MB Portretizuokis, Kauņa, Lietuva. Maksājums ar karti Austrālijas dolāros (A$), izmantojot Stripe. Tas ir digitāls fails, tāpēc nekas netiek sūtīts pa pastu.",
+    "usLine": "Pārdevējs: MB Portretizuokis, Kauņa, Lietuva. Maksājums ar karti ASV dolāros (US$), izmantojot Stripe. Tas ir digitāls fails, tāpēc nekas netiek sūtīts.",
+    "footnote": "Cenas ir eiro. Tās ir galīgās cenas: neesam reģistrēti kā PVN maksātāji, tāpēc PVN netiek pieskaitīts.",
+    "footnoteAud": "Cenas ir Austrālijas dolāros (A$). Katra cena ir kopējā cena: GST netiek piemērots.",
+    "footnoteHuf": "Cenas ir Ungārijas forintos (Ft). Tās ir galīgās cenas: neesam reģistrēti kā PVN maksātāji, tāpēc PVN netiek pieskaitīts.",
+    "footnoteUsd": "Cenas ir ASV dolāros (US$). Katra cena ir kopējā cena: tirdzniecības nodoklis netiek piemērots."
+  },
+  "closeups": {
+    "eyebrow": "Paskatieties tuvāk",
+    "title": "Izgriezts tieši no faila",
+    "intro": "Īsts faila fragments, bez palielinājuma.",
+    "badge": "Faktiskais izmērs",
+    "fibreTitle": "Mūsu pašu acs",
+    "fibreAlt": "Mūsu pašu atjaunotās varavīksnenes tuvplāns, izgriezts no 4096 px faila: radiālas šķiedras, zeltaina kolarete un zīlītes mala.",
+    "locatorAlt": "Visa atjaunotā varavīksnene ar kvadrātu, kas rāda, kur izgriezts tuvplāns",
+    "locatorLabel": "Kur tas izgriezts",
+    "edgeTitle": "Akrila izdrukas mala",
+    "edgeAlt": "Vizualizācija: akrila izdrukas stūris ar pulētu caurspīdīgu malu, tērauda distanceri un maigu loga atspīdumu."
+  },
+  "trust": {
+    "eyebrow": "Ko mēs nekad nedarām",
+    "title": "Mazi solījumi, ko turam",
+    "items": [
+      "Nepārzīmējam jūsu varavīksneni",
+      "Neuzdodam piemērus par klientiem",
+      "Neslēpjam, kā attēli top",
+      "Nesteidzinām jūs ar viltus steigu"
+    ],
+    "curatorEyebrow": "Palīdzība",
+    "curatorTitle": "Neizdodas uzņemt asu kadru?",
+    "offer": "Atsūtiet mums savas labākās fotogrāfijas; parasti atbildam vienas vai divu darba dienu laikā.",
+    "offerCta": "Rakstiet mums",
+    "privacyEyebrow": "Jūsu fotogrāfija",
+    "privacyTitle": "Solījums par jūsu aci",
+    "privacy": [
+      {
+        "t": "Tikai jūsu mākslas darbam",
+        "b": "Jūsu fotogrāfiju izmantojam tikai jūsu mākslas darba izveidei. No katra kadra pierakstām dažus mērījumus, nekad pašu attēlu, lai uzlabotu fotografēšanas pamācību."
+      },
+      {
+        "t": "Nekad identificēšanai",
+        "b": "To nekad neizmanto, lai kādu identificētu, nekad nepārdod un neizmanto mākslīgā intelekta apmācībai."
+      },
+      {
+        "t": "Bezmaksas priekšskatījumus neglabājam",
+        "b": "Jūsu bezmaksas priekšskatījumu mēs neglabājam. Varavīksnenes izgriezumu un priekšskatījumu saglabājam tikai tad, ja sākat pasūtījumu. Ja pasūtāt, jūsu pasūtījuma failus (nevis telefona fotogrāfiju) glabājam 12 mēnešus, lai tos varētu lejupielādēt."
+      },
+      {
+        "t": "Daži ārējie pakalpojumi",
+        "b": "Vercel darbina lapu un priekšskatījumu, Google Gemini API veic atjaunošanu (Google ierobežotu laiku glabā pieprasījumu žurnālus). Pasūtījumiem klāt nāk Stripe maksājumiem un privāta Supabase krātuve ES."
+      }
+    ],
+    "controller": "Par jūsu datiem atbild MB „Portretizuokis”, Kauņa, Lietuva (visi dati ir šīs lapas apakšā).",
+    "rights": "Jūs varat jautāt, kādus datus par jums glabājam, lūgt tos labot vai dzēst un iesniegt sūdzību datu aizsardzības iestādē.",
+    "policyLink": "Lasiet visu privātuma politiku"
+  },
+  "faq": {
+    "eyebrow": "Jautājumi",
+    "title": "Pirms sākat",
+    "items": [
+      {
+        "id": "receive",
+        "q": "Ko es saņemu?",
+        "a": "Vienu digitālu failu bez ūdenszīmes: JPEG sRGB krāsu telpā, {square} vienai acij un {px} garākajā malā vairākām acīm, izveidotu pilnā izšķirtspējā no priekšskatījuma, ko apstiprināt. Pēc samaksas atveras jūsu pasūtījuma lapa, un tās saite atnāk e-pastā. Parasti fails ir gatavs dažu minūšu laikā; ja kādreiz pasūtījumu aizturam pārbaudei, vēlākais, ko solām, ir {hours} stundas. Lejupielādei tas ir pieejams 12 mēnešus. Personīga licence: izdrukājiet to sev vai dāvanai; mākslas darba vai izdruku pārdošana nav iekļauta (skatiet pārdošanas noteikumus)."
+      },
+      {
+        "id": "print",
+        "q": "Vai jūs to drukājat vai sūtāt?",
+        "a": "Nē. Druka nav jūsu pasūtījuma daļa: tipogrāfija par to prasa atsevišķu samaksu, un cena ir atkarīga no tipogrāfijas, izmēra un materiāla. Ja kādreiz piedāvāsim druku, pateiksim to šajā lapā."
+      },
+      {
+        "id": "printit",
+        "q": "Vai varu to izdrukāt, un cik lielu?",
+        "a": "Jā. Izvēlieties tipogrāfiju, kvadrātveida izmēru, piemēram, 20, 30, 40 vai 50 cm, un augšupielādējiet JPEG. Citām formām lūdziet tipogrāfijai attēlu apgriezt vai pievienot malu un palūdziet izmēģinājuma izdruku vai paraugu. Mēs nedrukājam un nesūtām: izdruka ir tipogrāfijas darbs un cena. Vienai acij iesakām līdz {printMax}, tas ir apmēram 208 pikseļi collā (apmēram 347 pie 30 cm). Tipogrāfijas parasti prasa apmēram 150 līdz 300. Ar vairākām acīm garākā mala var būt līdz {printMaxCm}. Virs {printMaxCm} izdruka ir iespējama, taču fails tiek izstiepts vēl vairāk, tāpēc to nesolām. Rezultāts ir atkarīgs arī no jūsu fotogrāfijas."
+      },
+      {
+        "id": "look",
+        "q": "Vai mana izdruka izskatīsies kā attēlos?",
+        "a": "Telpu, roku un izdruku attēli ir vizualizācijas, kas rāda, kā fails var izskatīties izdrukāts, nevis fotogrāfijas. Īsta izdruka atšķiras atkarībā no tipogrāfijas, materiāla un gaismas jūsu telpā, tāpat kā ekrāns atšķiras no sienas, un tās krāsas var atšķirties no jūsu ekrāna. Izmēri attēlos ir ilustratīvi, un daži stili tajos būs pieejami drīzumā. Palūdziet tipogrāfijai izmēģinājuma izdruku vai paraugu."
+      },
+      {
+        "id": "how",
+        "q": "Kā tas notiek?",
+        "a": "Sākam ar jūsu pašu fotogrāfiju un noņemam atspīdumus. Tur, kur telefons nespēja uztvert vissmalkākās šķiedras, tās atjauno mūsu mākslīgais intelekts, tāpēc vissmalkākās detaļas ir rekonstrukcija, nevis mikroskopa fotogrāfija. Dažos stilos pulveris, šķidrums, liesma vai putekļi ap jūsu varavīksneni ir mākslīgā intelekta radīts materiāls no kopīgas bibliotēkas, tāpēc cita klienta mākslas darbā var būt tas pats elements. Jūsu varavīksnene saglabā jūsu fotogrāfijas krāsas, rakstu un izvietojumu; vissmalkākās šķiedras, kā aprakstīts iepriekš, atjauno mākslīgais intelekts. Telpas, rokas un priekšmeti šīs lapas attēlos ir radīti ar mākslīgo intelektu, nevis fotografēti. Acis šajā lapā ir mūsu pašu un parauga fotogrāfijas, nekad klientu, un visas ir uzņemtas rūpīgi: jūsu rezultāts ir atkarīgs no jūsu fotogrāfijas, un bezmaksas priekšskatījums to parāda, pirms maksājat."
+      },
+      {
+        "id": "bad",
+        "q": "Ko darīt, ja mana fotogrāfija ir slikta?",
+        "a": "Pirms maksājat, priekšskatījums pasaka, ja kadrs ir pārāk izplūdis, pārāk tumšs vai zīlīte ir pārāk plata, un parāda, kā to uzņemt vēlreiz. Joprojām neizdodas? Atsūtiet savas labākās fotogrāfijas uz {email}, un mēs tās apskatīsim."
+      },
+      {
+        "id": "unhappy",
+        "q": "Ko darīt, ja rezultāts man nepatīk?",
+        "a": "Savu priekšskatījumu redzat bez maksas, pirms maksājat, un pēc samaksas mēs uzreiz sākam veidot jūsu failu. Ja fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums: izveidosim to vēlreiz vai atmaksāsim naudu. Sīkāk par atteikuma tiesībām lasiet zemāk."
+      },
+      {
+        "id": "phone",
+        "q": "Kādu telefonu un kameru izmantot?",
+        "a": "Jebkuru jaunāku viedtālruni ar labu aizmugurējo kameru. Izmantojiet aizmugurējo kameru ar 2x vai 3x tuvinājumu, nevis priekšējo kameru. Izmantojiet dienasgaismu no loga vai lukturīti, no sāniem, nevis istabas lampu vai zibspuldzi. Turiet telefonu apmēram 10\u00a0cm no acs, pieskarieties varavīksnenei ekrānā, lai kamera to iefokusē, turiet aci plaši atvērtu, lai plakstiņš un skropstas neaizsedz varavīksneni, noņemiet brilles un uzņemiet trīs līdz piecus kadrus. Mēs izmērām katru kadru un izmantojam asāko."
+      },
+      {
+        "id": "colour",
+        "q": "Vai krāsa atbildīs manai acij?",
+        "a": "Krāsa nāk no jūsu fotogrāfijas, un telefons krāsu fiksē citādi istabas lampas gaismā, ar zibspuldzi vai ēnā. Mēs nekad nepārkrāsojam varavīksneni, tāpēc, ja fotogrāfija izskatās ietonēta, uzņemiet to vēlreiz dienasgaismā pie loga vai ar lukturīti no sāniem."
+      },
+      {
+        "id": "other",
+        "q": "Vai varu fotografēt kādu citu?",
+        "a": "Jā: partneri, bērnu vai savu otru aci, un vairākas acis var būt vienā mākslas darbā. Vispirms pajautājiet, un par bērnu lemjat jūs kā vecāks vai aizbildnis. Varat to izveidot arī kādam citam un uzdāvināt failu.",
+        "aOpen": "Jā: partneri, bērnu vai savu otru aci, un vienā mākslas darbā var būt līdz {max} acīm. Vispirms pajautājiet, un par bērnu lemjat jūs kā vecāks vai aizbildnis. Varat to izveidot arī kādam citam un uzdāvināt failu."
+      },
+      {
+        "id": "material",
+        "q": "Kuru materiālu izvēlēties?",
+        "a": "Akrils ir spīdīgs un dziļš; kariniet to tālāk no tieša loga atspīduma. Alumīnijs ir ass un moderns. Audekls ir maigs un mazāk atspīd, taču tā audums padara vissmalkākās šķiedras maigākas. Ierāmēta izdruka ir klasika. Akrila bloks stāv uz plaukta. Telefonam jebkurā fotoattēlu redaktorā pievienojiet melnu laukumu ap kvadrātveida failu un iestatiet to kā fona attēlu. Šajā lapā minētās detaļas ir tipogrāfijām raksturīgas un var atšķirties; palūdziet tipogrāfijai paraugu."
+      },
+      {
+        "id": "time",
+        "q": "Cik ilgi tas aizņem?",
+        "a": "Bezmaksas priekšskatījums aizņem apmēram minūti. Kad pasūtījumus sāksim pieņemt, jūsu fails tiks veidots pilnā izšķirtspējā pēc tam, kad to apstiprināsiet, parasti dažu minūšu laikā un vēlākais {hours} stundu laikā.",
+        "aOpen": "Bezmaksas priekšskatījums aizņem apmēram minūti. Pēc samaksas jūsu fails tiek veidots pilnā izšķirtspējā, parasti dažu minūšu laikā un vēlākais {hours} stundu laikā."
+      },
+      {
+        "id": "photo",
+        "q": "Kas notiek ar manu fotogrāfiju?",
+        "a": "Jūsu bezmaksas priekšskatījumu mēs neglabājam. Varavīksnenes izgriezumu un priekšskatījumu saglabājam tikai tad, ja sākat pasūtījumu. Kad pasūtāt, jūsu pasūtījuma failus (nevis telefona fotogrāfiju) glabājam 12 mēnešus, lai varat tos lejupielādēt vēlreiz, un pēc tam dzēšam. Jūsu varavīksneni nekad neizmanto, lai kādu identificētu vai apmācītu mākslīgo intelektu. Sīkāka informācija ir mūsu privātuma politikā, uz kuru ved saite šīs lapas apakšā."
+      },
+      {
+        "id": "withdraw",
+        "q": "Vai varu atteikties no pasūtījuma?",
+        "a": "Jūsu failu sākam veidot, tiklīdz ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas. Pirms maksāšanas jūs piekrītat, ka sākam uzreiz, tāpēc 14 dienu atteikuma tiesības beidzas, tiklīdz esam sākuši veidot jūsu failu. Līdz tam varat atteikties pa e-pastu vai tiešsaistē ar pogu „Atteikties no līguma” šīs lapas apakšā vai izmantojot atteikuma saiti pasūtījuma apstiprinājuma e-pastā. Ja jūsu fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums: izveidosim to vēlreiz vai atmaksāsim naudu. Sīkāka informācija ir mūsu pārdošanas noteikumos un informācijā par atteikuma tiesībām, uz kuriem ved saites šīs lapas apakšā."
+      },
+      {
+        "id": "order",
+        "q": "Kad varu pasūtīt?",
+        "a": "Pasūtījumus sāksim pieņemt drīz. Līdz tam ir pieejams bezmaksas priekšskatījums. Lai pasūtītu, jums vajag tikai e-pasta adresi.",
+        "qOpen": "Kā pasūtīt?",
+        "aOpen": "Uzreiz pēc bezmaksas priekšskatījuma, tajā pašā lapā: izvēlieties stilu, atzīmējiet rūtiņu par digitālo failu un turpiniet uz Stripe maksājuma lapu, kur samaksājat. Jūsu pasūtījuma lapa atveras uzreiz, un tās saite atnāk e-pastā. Jums vajag tikai e-pasta adresi."
+      },
+      {
+        "id": "pets",
+        "q": "Vai varu izveidot mākslas darbu savam mājdzīvniekam?",
+        "a": "Vēl ne. Kad varēsim, pateiksim to šeit."
+      }
+    ]
+  },
+  "faqAu": {
+    "unhappy": {
+      "q": "Ko darīt, ja rezultāts man nepatīk?",
+      "a": "Savu priekšskatījumu redzat bez maksas, pirms maksājat, un pēc samaksas mēs uzreiz sākam veidot jūsu failu. Ja fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums. Mūsu pakalpojumiem ir garantijas, kuras saskaņā ar Austrālijas patērētāju tiesību likumu (Australian Consumer Law) nevar izslēgt. Sīkāk par atcelšanu lasiet zemāk."
+    },
+    "withdraw": {
+      "q": "Vai varu atcelt pasūtījumu?",
+      "a": "Jūsu failu sākam veidot, tiklīdz ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas. Pirms maksāšanas jūs piekrītat, ka sākam uzreiz, tāpēc 14 dienu atteikuma tiesības saskaņā ar ES patērētāju tiesībām, kas attiecas uz jūsu pasūtījumu, beidzas, tiklīdz esam sākuši veidot jūsu failu. Līdz tam varat pasūtījumu atcelt pa e-pastu vai tiešsaistē ar pogu „Atteikties no līguma” šīs lapas apakšā vai izmantojot atteikuma saiti pasūtījuma apstiprinājuma e-pastā, un mēs atmaksāsim visu summu. Tas attiecas tikai uz gadījumu, kad pārdomājat: mūsu pakalpojumiem ir garantijas, kuras saskaņā ar Austrālijas patērētāju tiesību likumu (Australian Consumer Law) nevar izslēgt, tāpēc, ja jūsu fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums. Sīkāka informācija ir mūsu pārdošanas noteikumos (Jūsu tiesības Austrālijā) un informācijā par atteikuma tiesībām, uz kuriem ved saites šīs lapas apakšā."
+    }
+  },
+  "final": {
+    "title": "Ieraugiet savu varavīksneni",
+    "body": "Vajag tikai telefonu, labu gaismu un apmēram minūti.",
+    "imageAlt": "Vizualizācija: tumšs kabinets krēslā, pie sienas mūsu pašu varavīksnene, izdrukāta uz akrila.",
+    "chip": "Vizualizācija"
+  },
+  "footer": {
+    "operatedBy": "SnapEyes uztur",
+    "company": "MB „Portretizuokis”",
+    "companyCode": "Reģistrācijas numurs",
+    "country": "Lietuva",
+    "contact": "Kontakti",
+    "representedBy": "Pārstāv",
+    "rights": "SnapEyes",
+    "currency": "Cenu valūta",
+    "legalNav": "Juridiskā informācija",
+    "legal": {
+      "privacy": "Privātuma politika",
+      "terms": "Pārdošanas noteikumi",
+      "withdrawal": "Atteikuma tiesības",
+      "imprint": "Rekvizīti",
+      "withdrawFn": "Atteikties no līguma"
+    }
+  },
+  "marketHint": {
+    "label": "Cenas jūsu valūtā",
+    "close": "Nē, paldies",
+    "huf": {
+      "text": "Iepērkaties no Ungārijas? Skatiet mūsu cenas Ungārijas forintos (Ft).",
+      "show": "Rādīt cenas Ft"
+    }
+  },
+  "ui": {
+    "close": "Aizvērt",
+    "scrollHint": "Ritiniet uz sāniem, lai redzētu vairāk"
+  }
+}

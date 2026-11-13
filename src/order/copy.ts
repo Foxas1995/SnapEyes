@@ -1,10 +1,13 @@
 // Every string the /order page shows, in English, German (formal "Sie", the words of /try and the landing page:
-// Kunstwerk, Vorschau, Auge, Datei), Lithuanian (./copy.lt.ts), Hungarian (./copy.hu.ts) and Croatian (./copy.hr.ts). The server's own sentences are English only, so the page never shows them: it
+// Kunstwerk, Vorschau, Auge, Datei), Lithuanian (./copy.lt.ts), Hungarian (./copy.hu.ts), Croatian (./copy.hr.ts), Finnish (./copy.fi.ts), Estonian (./copy.et.ts) and Latvian (./copy.lv.ts). The server's own sentences are English only, so the page never shows them: it
 // words every answer itself from the server's reason code.
 import { CONTACT_EMAIL } from '../landing/config';
 import type { Lang } from '../try/lang';
 import { hu, dateOfHu, mbOfHu, whenOfHu } from './copy.hu';
 import { hr, dateOfHr, mbOfHr, whenOfHr } from './copy.hr';
+import { fi, dateOfFi, mbOfFi, whenOfFi } from './copy.fi';
+import { et, dateOfEt, mbOfEt, whenOfEt } from './copy.et';
+import { lv, dateOfLv, mbOfLv, whenOfLv } from './copy.lv';
 import { lt, dateOfLt, mbOfLt, whenOfLt } from './copy.lt';
 
 const en = {
@@ -337,18 +340,28 @@ const de: OrderCopy = {
   },
 };
 
-export const ORDER_COPY: Record<Lang, OrderCopy> = { en, de, lt, hu, hr };
+export const ORDER_COPY: Record<Lang, OrderCopy> = { en, de, lt, hu, hr, fi, et, lv };
+
+/** The number and date formats each copy file of a language brings with it (English and German use Intl below). */
+const OWN: Partial<Record<Lang, { mb: (bytes: number) => string; date: (s: number) => string; when: (s: number) => string }>> = {
+  lt: { mb: mbOfLt, date: dateOfLt, when: whenOfLt },
+  hu: { mb: mbOfHu, date: dateOfHu, when: whenOfHu },
+  hr: { mb: mbOfHr, date: dateOfHr, when: whenOfHr },
+  fi: { mb: mbOfFi, date: dateOfFi, when: whenOfFi },
+  et: { mb: mbOfEt, date: dateOfEt, when: whenOfEt },
+  lv: { mb: mbOfLv, date: dateOfLv, when: whenOfLv },
+};
 
 /** Megabytes with one decimal, as the language writes it. */
-export const mbOf = (bytes: number, lang: Lang) => (lang === 'lt' ? mbOfLt(bytes) : lang === 'hu' ? mbOfHu(bytes) : lang === 'hr' ? mbOfHr(bytes)
+export const mbOf = (bytes: number, lang: Lang) => (OWN[lang] ? OWN[lang].mb(bytes)
   : new Intl.NumberFormat(lang === 'de' ? 'de-DE' : 'en-IE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(bytes / 1_000_000));
 
 /** A day in the language's own words (the date a refund is due by). */
-export const dateOf = (unixSeconds: number, lang: Lang) => (lang === 'lt' ? dateOfLt(unixSeconds) : lang === 'hu' ? dateOfHu(unixSeconds) : lang === 'hr' ? dateOfHr(unixSeconds)
+export const dateOf = (unixSeconds: number, lang: Lang) => (OWN[lang] ? OWN[lang].date(unixSeconds)
   : new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(unixSeconds * 1000)));
 
 /** A moment in the language's own words, with its time zone (the withdrawal receipt names the date and time). */
-export const whenOf = (unixSeconds: number, lang: Lang) => (lang === 'lt' ? whenOfLt(unixSeconds) : lang === 'hu' ? whenOfHu(unixSeconds) : lang === 'hr' ? whenOfHr(unixSeconds)
+export const whenOf = (unixSeconds: number, lang: Lang) => (OWN[lang] ? OWN[lang].when(unixSeconds)
   : new Intl.DateTimeFormat(lang === 'de' ? 'de-DE' : 'en-GB', {
     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
   }).format(new Date(unixSeconds * 1000)));

@@ -47,7 +47,7 @@ export function decisionScript(rule: ShellRule): string {
     `m=nm(q.get('m'));if(!sel(m)){m=st('${MARKET_KEY}');if(!sel(m))m=R.defaultMarket}` +
     `var al=R.allowed[m]||[],ok=function(v){return al.indexOf(v)>=0},l=q.get('lang');` +
     `if(!ok(l)){l=st('${LANG_KEY}');if(!ok(l)){l=R.own[m]||null;if(!l){var n=(navigator.language||'').toLowerCase();` +
-    `n=n.indexOf('de')===0?'de':n.indexOf('lt')===0?'lt':n.indexOf('hu')===0?'hu':n.indexOf('hr')===0?'hr':'en';l=ok(n)?n:'en'}}}` +
+    `n=n.slice(0,2);l=ok(n)?n:'en'}}}` +
     `window.__lpShell={l:l,m:m}}catch(e){${hide}}})()`
   );
 }
@@ -77,7 +77,7 @@ export function swapScript(defaultMarket: string, fewer: Record<string, string[]
     `var l=c.getAttribute('lang');if(!l||l===s.l)return;put(l);` +
     `try{localStorage.setItem('${langKey}',l)}catch(x){}` +
     `try{var u=new URL(location.href);u.searchParams.set('lang',l);history.replaceState(null,'',u)}catch(x){}` +
-    `var n=sh.querySelector('#langSeg button[lang="'+l+'"]');if(n)n.focus()}catch(x){}})})()`
+    `var n=sh.querySelector('#langBtn');if(n)n.focus()}catch(x){}})})()`
   );
 }
 
@@ -123,7 +123,11 @@ export const menuScript =
   "var b=t.closest('#menuBtn');if(b){if(d.showModal&&!d.open){d.showModal();D.documentElement.classList.add('lp-menu-open');b.setAttribute('aria-expanded','true')}return}" +
   "if(d.open&&t.closest('#menu a'))d.close()}catch(x){}});" +
   "D.addEventListener('close',function(e){var b=D.getElementById('menuBtn');if(e.target&&e.target.id==='menu'){D.documentElement.classList.remove('lp-menu-open');if(b)b.setAttribute('aria-expanded','false')}},true);" +
-  "try{window.matchMedia('(min-width:960px)').addEventListener('change',function(e){var d=m();if(e.matches&&d&&d.open)d.close()})}catch(x){}})()";
+  "try{window.matchMedia('(min-width:960px)').addEventListener('change',function(e){var d=m();if(e.matches&&d&&d.open)d.close()})}catch(x){}" +
+  // the language menu (a <details>, src/landing/Header.tsx): a click outside it or Escape closes it, before React and after
+  "function g(){return D.getElementById('langMenu')}" +
+  "D.addEventListener('click',function(e){try{var l=g();if(l&&l.open&&!(e.target&&e.target.closest&&e.target.closest('#langMenu')))l.open=false}catch(x){}});" +
+  "D.addEventListener('keydown',function(e){try{var l=g();if(e.key==='Escape'&&l&&l.open){l.open=false;var b=D.getElementById('langBtn');if(b)b.focus()}}catch(x){}})})()";
 
 /** The loader of the page's own script (4): the build takes the module script and its modulepreload links out of the head and this
  *  inline script adds them once the LCP picture has loaded (at once for a visitor the shell is not for, whose page has no such

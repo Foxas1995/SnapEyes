@@ -27,8 +27,10 @@ export type LegalLang = Lang;
  *  policy (every edition and language) says what the anonymous counter keeps (api/_lib/counter.py) and where the country hint goes; no other legal text moved.
  *  2026-10-28: the Croatian texts of the EU edition (src/legal/docs/*.hr.ts), Croatian named as a contract language in every terms text, and the
  *  legal notice's example images described as our own eye (no founder named). 2026-11-11: the privacy policy (every edition and language) says what the day's
- *  ceiling of free previews per connection keeps (api/_lib/previewcap.py: a keyed hash of the address and the day, deleted after 2 days); no other legal text moved. */
-export const LEGAL_UPDATED = '2026-11-11';
+ *  ceiling of free previews per connection keeps (api/_lib/previewcap.py: a keyed hash of the address and the day, deleted after 2 days); no other legal text moved.
+ *  2026-11-13: the Finnish, Estonian and Latvian texts of the EU edition (src/legal/docs/*.fi.ts, *.et.ts, *.lv.ts) and the three named as contract languages in
+ *  every terms text of that edition. */
+export const LEGAL_UPDATED = '2026-11-13';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right
@@ -56,7 +58,7 @@ export const ownConsent = (e: LegalEdition): boolean => e === 'au' || e === 'us'
  *  those two languages (src/shared/lang.ts langFor); the US edition is English only, so a page of the US market is
  *  always English. api/_lib/pay.py EDITION_LANGS is the same table. */
 export const EDITION_LANGS: Readonly<Record<LegalEdition, readonly LegalLang[]>> = {
-  eu: ['en', 'de', 'lt', 'hu', 'hr'],
+  eu: ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'],
   au: ['en', 'de'],
   hu: ['en', 'de', 'lt', 'hu'],
   us: ['en'],
@@ -86,11 +88,13 @@ export function adoptLinkedEdition(): void {
   if (m !== null && legalEdition(m) !== 'eu') adoptMarket(m);
 }
 
-/** A legal date as the language writes it: German "30.09.2026", Hungarian "2026. 09. 30.", Croatian "30. 9. 2026.", English and Lithuanian keep
+/** A legal date as the language writes it: German and Estonian "30.09.2026", Hungarian "2026. 09. 30.", Croatian "30. 9. 2026.", Finnish "30.9.2026",
+ *  Latvian "30.09.2026." (with its final dot), English and Lithuanian keep
  *  the ISO order ("2026-09-30": Lithuanian writes dates that way, LST ISO 8601). */
 export function formatLegalDate(iso: string, lang: LegalLang): string {
   const [y, m, d] = iso.split('-');
-  return lang === 'de' ? `${d}.${m}.${y}` : lang === 'hu' ? `${y}. ${m}. ${d}.` : lang === 'hr' ? `${+d}. ${+m}. ${y}.` : iso;
+  return lang === 'de' || lang === 'et' ? `${d}.${m}.${y}` : lang === 'hu' ? `${y}. ${m}. ${d}.` : lang === 'hr' ? `${+d}. ${+m}. ${y}.`
+    : lang === 'fi' ? `${+d}.${+m}.${y}` : lang === 'lv' ? `${d}.${m}.${y}.` : iso;
 }
 
 export type LegalDocId = 'privacy' | 'terms' | 'withdrawal' | 'imprint';
@@ -120,6 +124,12 @@ export const LEGAL_LABELS: Record<LegalLang, Record<LegalDocId, string> & { nav:
   hu: { privacy: 'Adatkezelési tájékoztató', terms: 'ÁSZF', withdrawal: 'Elállási tájékoztató', imprint: 'Impresszum', nav: 'Jogi információk' },
   // Croatian: the terms are "Opći uvjeti prodaje", the company-details page "Impresum" (the Croatian spelling)
   hr: { privacy: 'Politika privatnosti', terms: 'Opći uvjeti prodaje', withdrawal: 'Pravo na jednostrani raskid ugovora', imprint: 'Impresum', nav: 'Pravne informacije' },
+  // Finnish: the terms are "Myyntiehdot", the company-details page "Yritystiedot" (company details)
+  fi: { privacy: 'Tietosuojaseloste', terms: 'Myyntiehdot', withdrawal: 'Peruuttamisoikeus', imprint: 'Yritystiedot', nav: 'Oikeudelliset tiedot' },
+  // Estonian: the terms are "Müügitingimused", the company-details page "Ettevõtte andmed" (Estonian has no word like "Impressum")
+  et: { privacy: 'Privaatsuspoliitika', terms: 'Müügitingimused', withdrawal: 'Taganemisõigus', imprint: 'Ettevõtte andmed', nav: 'Õiguslik teave' },
+  // Latvian: the terms are "Pārdošanas noteikumi", the company-details page "Rekvizīti" (the Latvian name of a company-details page)
+  lv: { privacy: 'Privātuma politika', terms: 'Pārdošanas noteikumi', withdrawal: 'Atteikuma tiesības', imprint: 'Rekvizīti', nav: 'Juridiskā informācija' },
 };
 
 // The service that sends the order emails (the order page link and the confirmation): api/_lib/pay.py send_mail,
@@ -149,6 +159,15 @@ export const WITHDRAWAL_ONLINE: Record<LegalLang, WithdrawalOnline> = {
   hu: { button: 'Elállás a szerződéstől', confirm: 'Elállás megerősítése' },
   // Croatia, Zakon o zaštiti potrošača čl. 81.a st. 2. and 5. (NN 59/26): "raskid ugovora", "potvrditi raskid ugovora"
   hr: { button: 'Raskid ugovora', confirm: 'Potvrditi raskid ugovora' },
+  // Finland: the labels of Art. 11a(1) and (3) Directive 2011/83/EU in its official Finnish text, word for word (kuluttajansuojalaki
+  // 6 luku asks for a clear label and prescribes no words of its own)
+  fi: { button: 'Peruuta sopimus tästä', confirm: 'Vahvista peruuttaminen' },
+  // Estonia: the labels of Art. 11a(1) and (3) Directive 2011/83/EU in its official Estonian text (OJ L, 2023/2673), word for word;
+  // Võlaõigusseadus § 56⁴ lg 1 and 3 (RT I, 27.05.2026, 2) prescribes the same words
+  et: { button: 'Taganen lepingust', confirm: 'Kinnitan taganemise' },
+  // Latvia: the labels of Art. 11a(1) and (3) Directive 2011/83/EU in its official Latvian text (OJ L, 2023/2673), word for word; that
+  // text has no word for the English "here"
+  lv: { button: 'Atteikties no līguma', confirm: 'Apstiprināt atteikumu' },
 };
 
 /** Where the function is: the order page in its withdrawal mode (src/order/withdraw.ts withdrawHref), which never
@@ -182,10 +201,11 @@ export interface LegalPart { text: string; doc?: LegalDocId; section?: string }
 // BGB). Change both files together and bump the version (2026-09-30.1: the Australian text added, the EU text as it
 // was; 2026-09-30.2: the Lithuanian and the Hungarian texts added, the English, German and Australian texts as they
 // were; 2026-10-28.1: the Croatian text added, every other text as it was; 2026-10-28.2: the US text added, every other
-// text as it was; 2026-10-28.3: the print box added, printConsent below = api/_lib/prints.py PRINT_CONSENT_TEXT, every waiver as it was).
+// text as it was; 2026-10-28.3: the print box added, printConsent below = api/_lib/prints.py PRINT_CONSENT_TEXT, every waiver as it was;
+// 2026-11-13.1: the Finnish, Estonian and Latvian waivers and print boxes added, every other text as it was).
 // The build refuses a consent text that changed under the same version, and a version without its fingerprint
 // (scripts/check_texts.mjs CONSENT_FINGERPRINTS: the check prints the new one).
-export const WITHDRAWAL_CONSENT_VERSION = '2026-10-28.3';
+export const WITHDRAWAL_CONSENT_VERSION = '2026-11-13.1';
 
 export interface CheckoutLegal {
   /** The withdrawal checkbox: unticked by default and required before the payment page opens. Art. 16(m)
@@ -326,6 +346,82 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     photoNotice: [
       { text: 'Fotografirajte samo svoje oko ili oko osobe koja je na to pristala (za dijete: roditelj ili skrbnik). Vaša se fotografija koristi samo za izradu vašeg umjetničkog djela. ' },
       { text: 'Politika privatnosti', doc: 'privacy' },
+    ],
+  },
+  // Finnish: Art. 16(m) Directive 2011/83/EU (transposed in kuluttajansuojalaki 6 luku): the express prior consent to start AND the
+  // acknowledgement that the right of withdrawal is lost once making has started. The button is "Siirry maksamaan" ("continue to
+  // payment", as the English one): it only opens Stripe's page and places no order. The click that binds is Stripe's pay button, and
+  // api/_lib/pay_fi.py SUBMIT_NOTE_FI puts the words of Art. 8(2) in their official Finnish text ("tilaukseen liittyy
+  // maksuvelvollisuus") right above it. Identical to api/_lib/pay.py CONSENT_TEXT["fi"].
+  fi: {
+    withdrawalConsent:
+      'Annan nimenomaisen suostumukseni siihen, että SnapEyes alkaa tehdä digitaalista taideteostani heti, ennen peruuttamisajan päättymistä. Tiedän, että menetän peruuttamisoikeuteni, kun tekeminen on alkanut.',
+    withdrawalConsentMissing: 'Rastita yllä oleva ruutu: voimme aloittaa taideteoksesi vasta, kun annat suostumuksesi.',
+    printConsent:
+      'Tiedän, että tulosteeni tehdään tilaukseni mukaan henkilökohtaisesta taideteoksestani, joten en voi peruuttaa sen ostoa; tämä ei vaikuta oikeuksiini, jos se saapuu virheellisenä tai vahingoittuneena.',
+    acceptance: [
+      { text: 'Tilaamalla hyväksyt ' },
+      { text: 'myyntiehtomme', doc: 'terms' },
+      { text: '. Lue myös ' },
+      { text: 'tietosuojaselosteemme', doc: 'privacy' },
+      { text: ' ja ' },
+      { text: 'tiedot peruuttamisoikeudesta', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+    continueButton: 'Siirry maksamaan',
+    photoNotice: [
+      { text: 'Kuvaa vain omaa silmääsi tai sellaisen ihmisen silmää, joka on antanut siihen luvan (lapsen puolesta: vanhempi tai huoltaja). Kuvaasi käytetään vain taideteoksesi tekemiseen. ' },
+      { text: 'Tietosuojaseloste', doc: 'privacy' },
+    ],
+  },
+  // Estonian: Art. 16(m) Directive 2011/83/EU (Võlaõigusseadus § 53 lg 4 p 7¹): the express prior consent to start AND the acknowledgement
+  // that the right of withdrawal is lost once making has started. The buy button carries the statutory order button wording "tellimus koos
+  // maksekohustusega" (Art. 8(2); Võlaõigusseadus § 62¹ lg 3); the click that binds is Stripe's pay button, and api/_lib/pay_et.py
+  // SUBMIT_NOTE_ET stands above it. Identical to api/_lib/pay.py CONSENT_TEXT["et"].
+  et: {
+    withdrawalConsent:
+      'Nõustun sõnaselgelt, et SnapEyes alustab minu digitaalse kunstiteose valmistamist kohe, enne taganemistähtaja lõppu. Olen teadlik, et kaotan oma taganemisõiguse, kui valmistamine on alanud.',
+    withdrawalConsentMissing: 'Palun märgi ülal olev kast: saame sinu kunstiteosega alustada alles siis, kui oled nõus.',
+    printConsent:
+      'Tean, et minu trükitud pilt valmistatakse minu tellimuse järgi minu isiklikust kunstiteosest, seega ei saa ma selle ostust taganeda; see ei mõjuta minu õigusi, kui see saabub puudusega või kahjustatuna.',
+    acceptance: [
+      { text: 'Tellides nõustud meie ' },
+      { text: 'müügitingimustega', doc: 'terms' },
+      { text: '. Palun loe ka meie ' },
+      { text: 'privaatsuspoliitikat', doc: 'privacy' },
+      { text: ' ja ' },
+      { text: 'taganemisõiguse teavet', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+    continueButton: 'Tellimus koos maksekohustusega',
+    photoNotice: [
+      { text: 'Pildista ainult oma silma või sellise inimese silma, kes on sellega nõustunud (lapse puhul: vanem või eestkostja). Sinu fotot kasutatakse ainult sinu kunstiteose valmistamiseks. ' },
+      { text: 'Privaatsuspoliitika', doc: 'privacy' },
+    ],
+  },
+  // Latvian: Art. 16(m) Directive 2011/83/EU in the words of its official Latvian text: the express prior consent to start AND the
+  // acknowledgement that the right of withdrawal is lost once making has started. The buy button carries the statutory order button wording
+  // "pasūtījums ar pienākumu maksāt" (Art. 8(2)); the click that binds is Stripe's pay button, and api/_lib/pay_lv.py SUBMIT_NOTE_LV stands
+  // above it. Identical to api/_lib/pay.py CONSENT_TEXT["lv"].
+  lv: {
+    withdrawalConsent:
+      'Es skaidri piekrītu, ka SnapEyes sāk veidot manu digitālo mākslas darbu uzreiz, pirms atteikuma termiņa beigām. Es zinu, ka zaudēju atteikuma tiesības, tiklīdz veidošana ir sākta.',
+    withdrawalConsentMissing: 'Lūdzu, atzīmējiet rūtiņu augstāk: jūsu mākslas darbu varam sākt veidot tikai tad, kad piekrītat.',
+    printConsent:
+      'Es zinu, ka mana izdruka tiek izgatavota pēc mana pasūtījuma no mana personīgā mākslas darba, tāpēc no tās pirkuma atteikties nevaru; tas neietekmē manas tiesības, ja tā pienāk ar trūkumiem vai bojāta.',
+    acceptance: [
+      { text: 'Pasūtot jūs piekrītat mūsu ' },
+      { text: 'pārdošanas noteikumiem', doc: 'terms' },
+      { text: '. Lūdzu, izlasiet arī mūsu ' },
+      { text: 'privātuma politiku', doc: 'privacy' },
+      { text: ' un ' },
+      { text: 'informāciju par atteikuma tiesībām', doc: 'withdrawal' },
+      { text: '.' },
+    ],
+    continueButton: 'Pasūtījums ar pienākumu maksāt',
+    photoNotice: [
+      { text: 'Fotografējiet tikai savu aci vai tāda cilvēka aci, kurš tam ir piekritis (bērna gadījumā: vecāks vai aizbildnis). Jūsu fotogrāfija tiek izmantota tikai jūsu mākslas darba izveidei. ' },
+      { text: 'Privātuma politika', doc: 'privacy' },
     ],
   },
 };

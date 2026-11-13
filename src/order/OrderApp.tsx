@@ -14,6 +14,7 @@ import { ArtImage } from '../motion/ArtImage';
 import { cardOf, intoReady, moved } from '../motion/flowLogic';
 import { detectLang, rememberLang, type Lang } from '../try/lang';
 import { LANG_NAMES, langFor, marketLangs } from '../shared/lang';
+import { LangMenu, wantsLangMenu } from '../shared/LangMenu';
 import { clearCheckoutStorage } from '../try/checkout';
 import { CONTACT_EMAIL } from '../landing/config';
 import { styleName } from '../shared/styles';
@@ -473,6 +474,8 @@ const Ready: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang; email: boolea
 /** The language switch, as on /try and the landing page: one button per language the order's market can be read in (narrower buttons
  *  below 340 px, or below 400 px when there are five of them, as on /try). */
 const LangSwitch: React.FC<{ C: OrderCopy; lang: Lang; langs: readonly Lang[]; onSwitch: (l: Lang) => void }> = ({ C, lang, langs, onSwitch }) => {
+  // more than five languages (the euro market since 2026-11-13): a menu, not a row (src/shared/LangMenu.tsx)
+  if (wantsLangMenu(langs)) return <LangMenu label={C.switchLabel} lang={lang} langs={langs} onSwitch={onSwitch} />;
   const narrow = langs.length > 4 ? 'max-[400px]:min-w-[28px] max-[400px]:px-1.5' : 'max-[340px]:min-w-[28px] max-[340px]:px-1.5';
   return (
     <div role="group" aria-label={C.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">

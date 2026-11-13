@@ -125,7 +125,7 @@ export function money(minor: number, currency: Currency | string, lang: string =
     const cents = String(Math.abs(minor) % 100).padStart(2, '0');
     return `A$${grouped(units, de ? '.' : ',')}${whole ? '' : `${de ? ',' : '.'}${cents}`}`;
   }
-  if (lang === 'lt' || lang === 'hu' || lang === 'hr') {
+  if (lang !== 'en' && lang !== 'de') {   // lt, hu, hr, fi, et, lv: "24,97 €" (decimal comma, the sign after a no-break space)
     const units = Math.floor(Math.abs(minor) / 100);
     const cents = String(Math.abs(minor) % 100).padStart(2, '0');
     return `${minor < 0 ? '-' : ''}${grouped(units, NBSP)},${cents}${NBSP}€`;

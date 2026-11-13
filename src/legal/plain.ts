@@ -60,7 +60,7 @@ function block(b: Block, lang: Lang, page: LegalDocId, market: string): string {
 }
 
 /** The words before the date under a legal text's title in the email ("Last updated: 2026-09-30"). */
-const UPDATED: Record<Lang, string> = { en: 'Last updated:', de: 'Stand:', lt: 'Atnaujinta:', hu: 'Utolsó frissítés:', hr: 'Posljednje ažuriranje:' };
+const UPDATED: Record<Lang, string> = { en: 'Last updated:', de: 'Stand:', lt: 'Atnaujinta:', hu: 'Utolsó frissítés:', hr: 'Posljednje ažuriranje:', fi: 'Päivitetty viimeksi:', et: 'Viimati uuendatud:', lv: 'Pēdējoreiz atjaunināts:' };
 
 /** One legal page as plain text: title, date, address of the page, lead, then the sections. Paragraphs are separated
  *  by an empty line and never wrapped (mail clients wrap them). */

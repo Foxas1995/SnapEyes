@@ -26,21 +26,21 @@ middle, the others round it) is named by the work of 2026-10-20 that brought the
 Hungarian has been read by a native speaker yet (README): every word of a v3 id is on that review list.
 """
 LAYOUT_NAMES = {
-    "single": {"en": "Single", "de": "Einzeln", "lt": "Viena akis", "hu": "Egy szem", "hr": "Jedno oko"},
-    "pair": {"en": "Pair", "de": "Paar", "lt": "Pora", "hu": "Pár", "hr": "Par"},
-    "trio": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög", "hr": "Trokut"},
-    "diag": {"en": "Diagonal", "de": "Diagonale", "lt": "Įstrižai", "hu": "Átlós", "hr": "Dijagonalno"},
-    "zigzag": {"en": "Zigzag", "de": "Zickzack", "lt": "Zigzagas", "hu": "Cikcakk", "hr": "Cik-cak"},
-    "cluster": {"en": "Cluster", "de": "Gruppe", "lt": "Grupė", "hu": "Csoport", "hr": "Skupina"},
-    "ring": {"en": "Ring", "de": "Ring", "lt": "Žiedas", "hu": "Gyűrű", "hr": "Prsten"},
-    "brick": {"en": "Rows", "de": "Reihen", "lt": "Eilės", "hu": "Sorok", "hr": "Redovi"},
-    "flower": {"en": "Flower", "de": "Blume", "lt": "Gėlė", "hu": "Virág", "hr": "Cvijet"},
-    "chain": {"en": "Chain", "de": "Kette", "lt": "Grandinė", "hu": "Lánc", "hr": "Lanac"},
-    "orbit": {"en": "Orbit", "de": "Umlaufbahn", "lt": "Orbita", "hu": "Pálya", "hr": "Orbita"},
-    "duo": {"en": "Side by side", "de": "Nebeneinander", "lt": "Greta", "hu": "Egymás mellett", "hr": "Jedno uz drugo"},
-    "fusion": {"en": "Fusion", "de": "Fusion", "lt": "Susiliejimas", "hu": "Összeolvadás", "hr": "Stapanje"},
-    "triangle": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög", "hr": "Trokut"},
-    "row": {"en": "In a row", "de": "In einer Reihe", "lt": "Vienoje eilėje", "hu": "Egy sorban", "hr": "U nizu"},
-    "grid": {"en": "Grid", "de": "Raster", "lt": "Tinklelis", "hu": "Rács", "hr": "Mreža"},
-    "galaxy": {"en": "Galaxy", "de": "Galaxie", "lt": "Galaktika", "hu": "Galaxis", "hr": "Galaksija"}
+    "single": {"en": "Single", "de": "Einzeln", "lt": "Viena akis", "hu": "Egy szem", "hr": "Jedno oko", "fi": "Yksi silmä", "et": "Üks silm", "lv": "Viena acs"},
+    "pair": {"en": "Pair", "de": "Paar", "lt": "Pora", "hu": "Pár", "hr": "Par", "fi": "Pari", "et": "Paar", "lv": "Pāris"},
+    "trio": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög", "hr": "Trokut", "fi": "Kolmio", "et": "Kolmnurk", "lv": "Trīsstūris"},
+    "diag": {"en": "Diagonal", "de": "Diagonale", "lt": "Įstrižai", "hu": "Átlós", "hr": "Dijagonalno", "fi": "Vinottain", "et": "Diagonaalis", "lv": "Pa diagonāli"},
+    "zigzag": {"en": "Zigzag", "de": "Zickzack", "lt": "Zigzagas", "hu": "Cikcakk", "hr": "Cik-cak", "fi": "Siksak", "et": "Siksak", "lv": "Zigzags"},
+    "cluster": {"en": "Cluster", "de": "Gruppe", "lt": "Grupė", "hu": "Csoport", "hr": "Skupina", "fi": "Ryhmä", "et": "Kobar", "lv": "Grupa"},
+    "ring": {"en": "Ring", "de": "Ring", "lt": "Žiedas", "hu": "Gyűrű", "hr": "Prsten", "fi": "Rengas", "et": "Rõngas", "lv": "Gredzens"},
+    "brick": {"en": "Rows", "de": "Reihen", "lt": "Eilės", "hu": "Sorok", "hr": "Redovi", "fi": "Rivit", "et": "Read", "lv": "Rindas"},
+    "flower": {"en": "Flower", "de": "Blume", "lt": "Gėlė", "hu": "Virág", "hr": "Cvijet", "fi": "Kukka", "et": "Lill", "lv": "Zieds"},
+    "chain": {"en": "Chain", "de": "Kette", "lt": "Grandinė", "hu": "Lánc", "hr": "Lanac", "fi": "Ketju", "et": "Kett", "lv": "Ķēde"},
+    "orbit": {"en": "Orbit", "de": "Umlaufbahn", "lt": "Orbita", "hu": "Pálya", "hr": "Orbita", "fi": "Kiertorata", "et": "Orbiit", "lv": "Orbīta"},
+    "duo": {"en": "Side by side", "de": "Nebeneinander", "lt": "Greta", "hu": "Egymás mellett", "hr": "Jedno uz drugo", "fi": "Vierekkäin", "et": "Kõrvuti", "lv": "Blakus"},
+    "fusion": {"en": "Fusion", "de": "Fusion", "lt": "Susiliejimas", "hu": "Összeolvadás", "hr": "Stapanje", "fi": "Fuusio", "et": "Sulandus", "lv": "Saplūšana"},
+    "triangle": {"en": "Triangle", "de": "Dreieck", "lt": "Trikampis", "hu": "Háromszög", "hr": "Trokut", "fi": "Kolmio", "et": "Kolmnurk", "lv": "Trīsstūris"},
+    "row": {"en": "In a row", "de": "In einer Reihe", "lt": "Vienoje eilėje", "hu": "Egy sorban", "hr": "U nizu", "fi": "Rivissä", "et": "Reas", "lv": "Vienā rindā"},
+    "grid": {"en": "Grid", "de": "Raster", "lt": "Tinklelis", "hu": "Rács", "hr": "Mreža", "fi": "Ruudukko", "et": "Ruudustik", "lv": "Režģis"},
+    "galaxy": {"en": "Galaxy", "de": "Galaxie", "lt": "Galaktika", "hu": "Galaxis", "hr": "Galaksija", "fi": "Galaksi", "et": "Galaktika", "lv": "Galaktika"}
 }

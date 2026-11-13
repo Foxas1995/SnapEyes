@@ -1,5 +1,5 @@
 // Every string /try shows, in English, German (formal "Sie", the landing page's words: src/landing/copy.ts),
-// Lithuanian (./copy.lt.ts), Hungarian (./copy.hu.ts) and Croatian (./copy.hr.ts), in one place. T is the copy of the page's current language: TryApp sets it with setCopyLang() before it
+// Lithuanian (./copy.lt.ts), Hungarian (./copy.hu.ts), Croatian (./copy.hr.ts), Finnish (./copy.fi.ts), Estonian (./copy.et.ts) and Latvian (./copy.lv.ts), in one place. T is the copy of the page's current language: TryApp sets it with setCopyLang() before it
 // renders, and again when the visitor switches, so every component and helper reads T at render time.
 // The server's own sentences (quality.message, tips, errors) come in the language the request asked for
 // (the "lang" field every request carries).
@@ -11,6 +11,9 @@ import { layoutName } from '../shared/layouts';
 import { lt } from './copy.lt';
 import { hu } from './copy.hu';
 import { hr } from './copy.hr';
+import { fi } from './copy.fi';
+import { et } from './copy.et';
+import { lv } from './copy.lv';
 
 /** The reasons api/analyze.py gives for blocking a shot (quality.block_reason). A blocked shot gets no work
  *  ticket, so the page offers only a retake. */
@@ -1065,7 +1068,7 @@ const de: TryCopy = {
   },
 };
 
-export const COPY: Record<Lang, TryCopy> = { en, de, lt, hu, hr };
+export const COPY: Record<Lang, TryCopy> = { en, de, lt, hu, hr, fi, et, lv };
 
 /** The copy of the page's current language (a live binding: importers see every switch). */
 export let T: TryCopy = en;

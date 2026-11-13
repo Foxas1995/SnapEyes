@@ -3,6 +3,7 @@
 // of src/landing/Header.tsx, in the page's own classes), and the legal pages keep this one exactly as it was.
 import { useLang } from '../landing/lang';
 import { LANG_NAMES, marketLangs } from '../shared/lang';
+import { LangMenu, wantsLangMenu } from '../shared/LangMenu';
 import { useMarket } from '../shared/useMarket';
 
 /** One button per language the visitor's market can be read in (English, German, Lithuanian, Hungarian and Croatian; the
@@ -12,6 +13,8 @@ import { useMarket } from '../shared/useMarket';
 export function LangSwitch() {
   const { lang, setLang, t } = useLang();
   const options = marketLangs(useMarket());
+  // more than five languages (the euro market since 2026-11-13): a menu, not a row (src/shared/LangMenu.tsx)
+  if (wantsLangMenu(options)) return <LangMenu label={t.switchLabel} lang={lang} langs={options} onSwitch={setLang} />;
   const narrow = options.length > 4 ? 'max-[400px]:min-w-[28px] max-[400px]:px-1.5' : 'max-[340px]:min-w-[28px] max-[340px]:px-1.5';
   return (
     <div role="group" aria-label={t.switchLabel} className="flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">

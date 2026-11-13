@@ -12,7 +12,7 @@
 //              (2026-10-22) carries its honest line under the stage, in its own figure ("our own eye and example photos, not customers"), and every
 //              artwork on it is a button that says whose eyes it shows; every picture has alt, width and height
 //   phrases    no "ready to print", "druckfertig", "100 percent", "museum glass" (the banned claims of scripts/check_texts.mjs) in the
-//              visible text, in any of the four languages; "Ordering opens soon" in exactly three places while ordering is not
+//              visible text, in any language of the site; "Ordering opens soon" in exactly three places while ordering is not
 //              open and in none once it is (the stub flips); "Printing is not part of your order" exactly in the price list and the FAQ
 //   dashes     no en or em dash and no spaced hyphen in any text node, alt, aria-label, title or the head of the page
 //   anchors    a link to #section lands on the section (fresh load, so the lazy sections must have caught up), and the header's links
@@ -63,7 +63,7 @@ const quick = flag('--quick');
 const only = opt('--only') ? new Set(opt('--only').split(',')) : null;
 const wants = (name) => !only || only.has(name);
 
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const COPY = Object.fromEntries(LANGS.map((l) => [l, JSON.parse(readFileSync(join(ROOT, `src/landing/copy/${l}.json`), 'utf8'))]));
 const BANNED = /ready to print|print[- ]ready|druckfertig|druckbereit|100 ?(percent|%|prozent)|museum[- ]?glass|museumsglas/i;
 const WIDTHS = quick ? [280, 375, 1280] : [280, 320, 375, 768, 1024, 1280];
@@ -335,15 +335,16 @@ async function checkFocus() {
   const v3 = +(await page.eval("document.querySelector('.lp-cmp-range').value"));
   if (!(v1 > v0 && v2 === 100 && v3 === 0)) fail('focus', `the Reveal range answers ArrowRight ${v0} -> ${v1}, End ${v2}, Home ${v3}`);
   else pass('focus', 'the Reveal range is a native range: ArrowRight, End, Home work');
-  // language buttons
-  for (const [from, to] of [['en', 'de'], ['de', 'lt'], ['lt', 'hu'], ['hu', 'hr'], ['hr', 'en']]) {
+  // the language menu (a <details> since the eight languages of 2026-11-13): the pill opens it, a language is chosen from the keyboard's place, the menu closes
+  // and the focus is back on the pill, which now shows the chosen language
+  for (const [from, to] of [['en', 'de'], ['de', 'lt'], ['lt', 'hu'], ['hu', 'hr'], ['hr', 'fi'], ['fi', 'et'], ['et', 'lv'], ['lv', 'en']]) {
     await page.eval("window.scrollTo({ top: 0, behavior: 'instant' })");
-    await page.eval(`document.querySelector('#langSeg button[lang=${to}]').focus(); document.activeElement.click()`);
+    const opened = await page.eval(`(() => { const s = document.getElementById('langBtn'); s.focus(); s.click(); const d = document.getElementById('langMenu'); const b = document.querySelector('#langSeg button[lang=${to}]'); b.focus(); const ok = d.open && document.activeElement === b; b.click(); return ok; })()`);
     await sleep(900);
-    const r = JSON.parse(await page.eval(`JSON.stringify({ a: document.activeElement.getAttribute('lang') + ':' + document.activeElement.getAttribute('aria-pressed'), html: document.documentElement.lang, h1: document.getElementById('h1').textContent, url: location.search })`));
+    const r = JSON.parse(await page.eval(`JSON.stringify({ a: document.activeElement.id + ':' + document.activeElement.textContent.trim(), open: document.getElementById('langMenu').open, pressed: [...document.querySelectorAll('#langSeg button[aria-pressed=true]')].map((b) => b.lang).join(), html: document.documentElement.lang, h1: document.getElementById('h1').textContent, url: location.search })`));
     const want = COPY[to].hero.title;
-    if (r.a !== `${to}:true` || r.html !== to || r.h1 !== want || !r.url.includes(`lang=${to}`)) fail('focus', `switching ${from} -> ${to}: focus ${r.a}, html lang ${r.html}, h1 "${r.h1.slice(0, 30)}", url ${r.url}`);
-    else pass('focus', `language ${from} -> ${to}: focus stays on the button, the page speaks ${to} (words, html lang, address)`);
+    if (!opened || r.a !== `langBtn:${to.toUpperCase()}` || r.open || r.pressed !== to || r.html !== to || r.h1 !== want || !r.url.includes(`lang=${to}`)) fail('focus', `switching ${from} -> ${to}: menu opened ${opened}, focus ${r.a}, still open ${r.open}, pressed ${r.pressed}, html lang ${r.html}, h1 "${r.h1.slice(0, 30)}", url ${r.url}`);
+    else pass('focus', `language ${from} -> ${to}: the menu opens, the choice closes it, the focus is on its pill (${to.toUpperCase()}), the page speaks ${to} (words, html lang, address)`);
   }
   await page.close();
   // currency (ordering open: the page prints a price only for a style that can be bought now, so the closed page has no price to be in euro or A$)
@@ -443,7 +444,7 @@ async function checkOverflow() {
 // ---------------------------------------------------------------------------------------------------- links
 async function checkLinks() {
   console.log('links');
-  const cases = [['en', ''], ['de', ''], ['lt', ''], ['hu', ''], ['hr', ''], ['en', 'm=au'], ['de', 'm=au'], ['hu', 'm=hu'], ['lt', 'm=lt'], ['en', 'm=us'], ['hr', 'm=hr']];
+  const cases = [['en', ''], ['de', ''], ['lt', ''], ['hu', ''], ['hr', ''], ['fi', ''], ['et', ''], ['lv', ''], ['en', 'm=au'], ['de', 'm=au'], ['hu', 'm=hu'], ['lt', 'm=lt'], ['en', 'm=us'], ['hr', 'm=hr']];
   for (const [lang, m] of quick ? cases.slice(0, 5) : cases) {
     const page = await open({ lang, query: m });
     const r = JSON.parse(await page.eval(`JSON.stringify({ legal: [...document.querySelectorAll('#legalNav a')].map((a) => a.getAttribute('href')), try: [...document.querySelectorAll('a.lp-btn-gold, a.lp-btn-line')].map((a) => a.getAttribute('href')).filter((h) => !h.startsWith('mailto:')) })`));
@@ -703,11 +704,12 @@ async function checkShellClick() {
   await page.eval("document.querySelector('#langSeg button[lang=de]').click()");
   await sleep(300);
   const r = JSON.parse(await page.eval(`JSON.stringify({ lang: document.documentElement.lang, pressed: document.querySelector('#langSeg button[aria-pressed=true]')?.getAttribute('lang'),
-    focus: document.activeElement?.getAttribute('lang'), stored: localStorage.getItem('snapeyes.lang'), url: location.search, h1: document.querySelector('#shell h1')?.textContent || '' })`));
+    focus: (document.activeElement?.id || '') + ':' + (document.activeElement?.textContent || '').trim(), stored: localStorage.getItem('snapeyes.lang'), url: location.search, h1: document.querySelector('#shell h1')?.textContent || '' })`));
   const msgs = [];
   if (r.lang !== 'de') msgs.push(`html lang is "${r.lang}"`);
   if (r.pressed !== 'de') msgs.push(`the pressed button is "${r.pressed}"`);
-  if (r.focus !== 'de') msgs.push(`the focus is on "${r.focus}" (the markup was replaced)`);
+  // the language buttons live in a closed menu since 2026-11-13: after the swap the focus is on the menu's pill, which shows the chosen language
+  if (r.focus !== 'langBtn:DE') msgs.push(`the focus is on "${r.focus}", not on the menu's pill showing DE (the markup was replaced)`);
   if (r.stored !== 'de') msgs.push(`the choice was not remembered ("${r.stored}")`);
   if (!/lang=de/.test(r.url)) msgs.push(`the address has "${r.url}"`);
   if (r.h1.trim() !== COPY.de.hero.title) msgs.push(`the headline is "${r.h1.trim().slice(0, 40)}", not the German "${COPY.de.hero.title.slice(0, 40)}"`);
@@ -735,6 +737,7 @@ async function checkOffers() {
     ['en', 'au', true], ['de', 'au', true], ['lt', 'au', false], ['hu', 'au', false],
     ['en', 'hu', true], ['lt', 'hu', true], ['hu', 'hu', true],
     ['hr', 'au', false], ['hr', 'hu', false],   // Croatian is in the EU edition only: neither the Australian nor the Hungarian edition has its texts
+    ['fi', 'au', false], ['et', 'hu', false], ['lv', 'au', false],   // and so are Finnish, Estonian and Latvian (2026-11-13)
     ['en', 'us', true], ['de', 'us', false], ['lt', 'us', false], ['hu', 'us', false], ['hr', 'us', false],   // the US edition is English only
   ];
   for (const [lang, suggest, want] of cases) {

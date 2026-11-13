@@ -626,11 +626,26 @@ check("the AI-made material sentence is PUBLISHED by this deploy (AI_MATERIAL_PU
 SENT = {l: re.search(r"^  %s:\r?\n\s+['\"](.+)['\"],?\s*$" % l, ai_src, re.M) for l in ("en", "de", "lt", "hu")}
 docs = PACK.get("docs", {})
 check("the sentence is in the terms of the built pack (the one the confirmation e-mail quotes) in English, German, Lithuanian and Hungarian, and the pack's date is the new LEGAL_UPDATED",
-      all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-11-11", (upd and upd.group(1), PACK.get("updated")))
-check("one LEGAL_UPDATED for every legal page, moved on after the switch (2026-11-11, the ceiling of free previews in the privacy policy; 2026-10-28, the Croatian texts; 2026-10-20, the anonymous counter's privacy paragraphs; it was 2026-10-06, the day of the switch) and is not in the future; the consent texts of the switch are untouched (2026-09-30.2, kept word for word under 2026-10-28.1, which adds the Croatian one, and under 2026-10-28.2, "
-      "which adds the US one, and under 2026-10-28.3, which adds the print box)",
-      upd.group(1) <= time.strftime("%Y-%m-%d") and pay.CONSENT_VERSION == "2026-10-28.3" and pay.CONSENT_TEXTS["2026-10-28.2"] == pay.CONSENT_TEXT and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")}
-      and pay.CONSENT_TEXTS["2026-10-28.1"] == pay.CONSENT_TEXT, (upd and upd.group(1), pay.CONSENT_VERSION))
+      all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-11-13", (upd and upd.group(1), PACK.get("updated")))
+# 2026-11-13 (Finnish, Estonian and Latvian, the EU edition): the languages that came after the switch (Croatian on 2026-10-28, which the two checks above never read, and the
+# three new ones) take the sentence the same way: aiBlocks in their own terms file, their own wording in aiMaterial.ts, and the WHOLE sentence in the terms of the built pack
+LATER = ("hr", "fi", "et", "lv")
+later_terms = {l: read(f"src/legal/docs/terms.{l}.ts") for l in LATER}
+SENT_LATER = {l: re.search(r"^  %s:\r?\n\s+['\"](.+)['\"],?\s*$" % l, ai_src, re.M) for l in LATER}
+sent_later = {l: (SENT_LATER[l].group(1).replace("\\'", "'") if SENT_LATER[l] else "") for l in LATER}
+check("the Croatian, Finnish, Estonian and Latvian terms take the sentence through aiBlocks too (once each, in their own file), each language has its own wording (eight different "
+      "sentences with the four above), and the whole sentence is in that language's terms of the built pack, once",
+      all(later_terms[l].count("...aiBlocks('%s')" % l) == 1 and later_terms[l].count("...aiBlocks(") == 1 for l in LATER)
+      and all(len(sent_later[l]) > 150 and docs.get(l, {}).get("terms", {}).get("text", "").count(sent_later[l]) == 1 for l in LATER)
+      and len({sent_later[l] for l in LATER} | {SENT[l].group(1) for l in ("en", "de", "lt", "hu") if SENT[l]}) == 8 and not any(re.search(DASH, s_) for s_ in sent_later.values()),
+      {l: (later_terms[l].count("...aiBlocks("), len(sent_later[l]), docs.get(l, {}).get("terms", {}).get("text", "").count(sent_later[l]) if sent_later[l] else None) for l in LATER})
+FIVE = ("en", "de", "lt", "hu", "hr")
+check("one LEGAL_UPDATED for every legal page, moved on after the switch (2026-11-13, the Finnish, Estonian and Latvian texts; 2026-11-11, the ceiling of free previews in the privacy policy; 2026-10-28, the Croatian texts; 2026-10-20, the anonymous counter's privacy paragraphs; it was 2026-10-06, the day of the switch) and is not in the future; the consent texts of the switch are untouched (2026-09-30.2, kept word for word under 2026-10-28.1, which adds the Croatian one, and under 2026-10-28.2, "
+      "which adds the US one, and under 2026-10-28.3, which adds the print box, and under 2026-11-13.1, which adds the Finnish, Estonian and Latvian ones: the three versions of 2026-10-28 still quote exactly their five texts)",
+      upd.group(1) <= time.strftime("%Y-%m-%d") and pay.CONSENT_VERSION == "2026-11-13.1" and pay.CONSENT_TEXTS["2026-10-28.2"] == {k: pay.CONSENT_TEXT[k] for k in FIVE}
+      and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")}
+      and pay.CONSENT_TEXTS["2026-10-28.1"] == {k: pay.CONSENT_TEXT[k] for k in FIVE} and pay.CONSENT_TEXTS["2026-10-28.3"] == {k: pay.CONSENT_TEXT[k] for k in FIVE}
+      and pay.CONSENT_TEXTS["2026-11-13.1"] == pay.CONSENT_TEXT and set(pay.CONSENT_TEXT) == set(FIVE) | {"fi", "et", "lv"}, (upd and upd.group(1), pay.CONSENT_VERSION))
 check("the texts hold no dash and no claim the claims scan refuses: the text check of the build is green on the whole tree (it is the one that runs inside the build and reads these files)",
       not re.search(DASH, ai_src) and not re.search(DASH, terms_src[""]), "")
 

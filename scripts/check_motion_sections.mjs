@@ -37,7 +37,7 @@ const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const dist = resolve(opt('--dist', join(ROOT, 'dist')));
 const only = opt('--only') ? new Set(opt('--only').split(',')) : null;
 const wants = (name) => !only || only.has(name);
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 
 const problems = [];
 const fail = (check, msg) => { problems.push(`${check}: ${msg}`); console.log(`  FAIL ${check}: ${msg}`); };

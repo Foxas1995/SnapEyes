@@ -18,6 +18,9 @@ import de from '../copy/de.json';
 import lt from '../copy/lt.json';
 import hu from '../copy/hu.json';
 import hr from '../copy/hr.json';
+import fi from '../copy/fi.json';
+import et from '../copy/et.json';
+import lv from '../copy/lv.json';
 import type { LandingCopy } from '../copy/types';
 import { fill } from '../copy/format';
 import { tryUrl } from '../config';
@@ -27,7 +30,7 @@ import { HELD_PRICE } from '../heroPrice';
 import { SiteTopView } from '../SiteTopView';
 import type { Lang } from '../../shared/lang';
 
-const COPIES: Record<Lang, LandingCopy> = { en, de, lt, hu, hr };
+const COPIES: Record<Lang, LandingCopy> = { en, de, lt, hu, hr, fi, et, lv };
 
 export interface ShellInput {
   /** The language buttons of the shells: the languages the default market can be read in. */

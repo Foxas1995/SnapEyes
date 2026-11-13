@@ -1,0 +1,695 @@
+{
+  "meta": {
+    "title": "SnapEyes: aito iiriksesi taiteena",
+    "description": "Kuvaa yksi silmäsi puhelimella ja näe iiriksesi taiteena: entisöitynä, ei koskaan uudelleen maalattuna. Ilmainen vesileimattu esikatselu, sitten digitaalinen tiedosto, jonka voit tulostaa missä tahansa.",
+    "shareDescription": "Kuvaa yksi silmäsi puhelimella ja näe oma iiriksesi taiteena. Vesileimattu esikatselu on ilmainen.",
+    "locale": "fi_FI"
+  },
+  "facts": {
+    "px": "4096 px",
+    "square": "4096 × 4096 px",
+    "printMax": "50 × 50 cm",
+    "printMaxCm": "50 cm",
+    "email": "info@snapeyes.com",
+    "hours": "48"
+  },
+  "langName": "Suomi",
+  "switchLabel": "Kieli",
+  "brandTag": "",
+  "skip": "Siirry sisältöön",
+  "nav": {
+    "reveal": "Ennen ja jälkeen",
+    "wall": "Seinälläsi",
+    "styles": "Tyylit",
+    "how": "Näin se toimii",
+    "pricing": "Hinnat",
+    "faq": "Usein kysyttyä",
+    "privacy": "Tietosuoja",
+    "gift": "Lahjakortti"
+  },
+  "navLabels": {
+    "main": "Päävalikko",
+    "footer": "Alatunniste",
+    "menu": "Valikko"
+  },
+  "cta": "Luo ilmainen esikatselu",
+  "ctaShort": "Ilmainen esikatselu",
+  "ctaNote": "",
+  "bar": {
+    "label": "Ilmoitus",
+    "soon": "Tilaaminen avautuu pian.",
+    "open": "Aloita ilmaisella esikatselulla."
+  },
+  "example": {
+    "chip": "Esimerkki",
+    "vis": "Havainnekuva",
+    "photo": "Esimerkkikuva",
+    "mantas": "Oma silmämme"
+  },
+  "hero": {
+    "eyebrow": "SnapEyes",
+    "title": "Aito iiriksesi, taiteeksi tehtynä.",
+    "lead": "Puhelimella otettu kuva silmästäsi, entisöitynä ja valitsemassasi tyylissä.",
+    "micro": [
+      "Ilmainen vesileimattu esikatselu",
+      "Noin minuutissa",
+      "Ei rekisteröitymistä"
+    ],
+    "fromPrice": "Digitaalinen tiedosto alkaen {from}",
+    "computerHint": "Oletko tietokoneella? Avaa snapeyes.com puhelimellasi tai käytä kuvia, jotka sinulla jo on.",
+    "secondary": "Katso aito ennen ja jälkeen",
+    "globeAlt": "Pallo pyöreistä taideteoksista meidän tyyleissämme, tehty omasta silmästämme ja esimerkkikuvista",
+    "globeLabel": "Tyylimme pallolla, jota voit pyörittää",
+    "globeTry": "Kokeile omalla silmälläsi",
+    "globeClose": "Sulje",
+    "globeNote": "Oma silmämme ja esimerkkikuvia, ei asiakkaita"
+  },
+  "reveal": {
+    "eyebrow": "Ennen ja jälkeen",
+    "title": "Vasemmalla kuva. Oikealla iiris.",
+    "intro": "Entisöity, ei koskaan uudelleen maalattu: väri ja kuvio pysyvät sinun.",
+    "hint": "Vedä ja vertaa",
+    "sliderLabel": "Vertaa puhelinkuvaa ja entisöityä iiristä",
+    "valueText": "kuvaa {n} prosenttia",
+    "before": "Puhelinkuva",
+    "after": "Entisöity iiris",
+    "beforeWeb": "Kuva",
+    "sliderLabelWeb": "Vertaa kuvaa ja entisöityä iiristä",
+    "eyes": [
+      {
+        "id": "gd",
+        "label": "Harmaanvihreä silmä",
+        "n": 380,
+        "note": "Esimerkkikuva, ei asiakas.",
+        "photoAlt": "Esimerkkikuva harmaanvihreästä silmästä, jossa näkyy ikkunan heijastus, kuvan vasen puolisko",
+        "irisAlt": "Sama harmaanvihreä iiris entisöitynä, ilman heijastusta",
+        "artAlt": "Entisöity harmaanvihreä iiris taideteoksena"
+      },
+      {
+        "id": "own",
+        "label": "Oma silmämme",
+        "n": 315,
+        "note": "Kuvattu kotona puhelimella.",
+        "photoAlt": "Puhelinkuva omasta silmästämme, kuvan vasen puolisko",
+        "irisAlt": "Sama iiris entisöitynä, mustalla taustalla",
+        "artAlt": "Entisöity iiris taideteoksena"
+      }
+    ],
+    "eyeGroup": "Valitse esimerkkisilmä",
+    "strip": {
+      "photo": "Kuva",
+      "iris": "Iiris",
+      "art": "Taide"
+    },
+    "yourTurn": "Sinun vuorosi."
+  },
+  "wall": {
+    "eyebrow": "Seinälläsi",
+    "title": "Katso se seinälläsi",
+    "intro": "Tulosta se missä haluat: akryylille, alumiinille, canvakselle tai kehyksiin.",
+    "stageLabel": "Havainnekuvia tiedostostasi tulostettuna",
+    "materialsLabel": "Materiaali",
+    "artLabel": "Taideteos",
+    "materials": {
+      "acrylic": {
+        "n": "Akryyli",
+        "tag": "Kiiltävä ja syvä",
+        "facts": [
+          "Paksuus usein 3-6 mm",
+          "Irti seinästä",
+          "Syvin musta"
+        ]
+      },
+      "metal": {
+        "n": "Alumiini",
+        "tag": "Terävä ja moderni",
+        "facts": [
+          "Paksuus usein 1-3 mm",
+          "Lähellä seinää",
+          "Kiiltävä tai satiini"
+        ]
+      },
+      "canvas": {
+        "n": "Canvas",
+        "tag": "Pehmeä ja lämmin",
+        "facts": [
+          "Syvyys usein 2-4 cm",
+          "Hyvin vähän heijastuksia",
+          "Ei tarvitse kehystä"
+        ]
+      },
+      "framed": {
+        "n": "Kehystetty tuloste",
+        "tag": "Klassinen ja rauhallinen",
+        "facts": [
+          "Lasin takana, valkoinen paspis",
+          "Kehys noin 2 cm",
+          "Helppo ripustaa"
+        ]
+      },
+      "block": {
+        "n": "Akryyliblokki",
+        "tag": "Hyllylle tai pöydälle",
+        "facts": [
+          "Paksuus usein 2-4 cm",
+          "Seisoo itsestään",
+          "Koko usein 10-20 cm"
+        ]
+      },
+      "phone": {
+        "n": "Puhelin",
+        "tag": "Lukitusnäytölläsi",
+        "facts": [
+          "Näyttö valaisee sen",
+          "Lisää mustaa tilaa ympärille",
+          "Ei mitään tulostettavaa"
+        ]
+      }
+    },
+    "arts": {
+      "eye": "Yksi silmä",
+      "universe": "Universe",
+      "family4": "Perhe",
+      "collision": "Te kaksi"
+    },
+    "eyesNote": "Silmät: oma silmämme ja esimerkkikuvia.",
+    "captions": {
+      "acrylic": "Akryylilla.",
+      "metal": "Alumiinilla.",
+      "canvas": "Canvaksella.",
+      "framed": "Kehystettynä.",
+      "block": "Akryyliblokkina.",
+      "phone": "Puhelimen lukitusnäytöllä."
+    },
+    "captionsSize": {
+      "acrylic": "Akryylilla, noin {size}.",
+      "metal": "Alumiinilla, noin {size}.",
+      "canvas": "Canvaksella, noin {size}.",
+      "framed": "Kehystettynä, noin {size}."
+    },
+    "compareTitle": "Vertaa materiaaleja",
+    "compareCorner": "Materiaali",
+    "compare": {
+      "cols": [
+        "Akryyli",
+        "Alumiini",
+        "Canvas",
+        "Kehystetty tuloste"
+      ],
+      "rows": [
+        {
+          "h": "Ulkonäkö",
+          "v": [
+            "Kiiltävä, syvä",
+            "Terävä, ohut",
+            "Pehmeä, kuvioitu pinta",
+            "Klassinen, rauhallinen"
+          ]
+        },
+        {
+          "h": "Musta",
+          "v": [
+            "Syvä",
+            "Syvä",
+            "Pehmeämpi",
+            "Syvä, valkoisella paspiksella"
+          ]
+        },
+        {
+          "h": "Heijastukset",
+          "v": [
+            "Jonkin verran valoisassa huoneessa",
+            "Jonkin verran, satiinipinnalla vähemmän",
+            "Hyvin vähän",
+            "Jonkin verran, heijastamattomalla lasilla vähemmän"
+          ]
+        },
+        {
+          "h": "Seinällä",
+          "v": [
+            "Leijuu irti seinästä",
+            "Ohut ja kevyt",
+            "Lämmin ja rento",
+            "Arvokas ja perinteinen"
+          ]
+        }
+      ],
+      "note": "Yleinen opas siihen, mitä tulostuspalvelut tarjoavat, ei kuvaus meidän tuotteistamme."
+    }
+  },
+  "sizes": {
+    "eyebrow": "Koot",
+    "title": "Teräviä tulosteita kokoon {printMax} asti",
+    "intro": "Valitse koko: piirros on mittakaavassa.",
+    "svgLabel": "Mittakaavassa oleva piirros neljästä tulostekoosta seinällä, mittasuhteen näyttävät sohva ja ihminen",
+    "sofa": "Sohva, 220 cm",
+    "person": "Ihminen, 175 cm",
+    "chips": "Tulosteen koko",
+    "cm": "{n} cm",
+    "ppi": "pikseliä tuumalla",
+    "rungs": [
+      {
+        "cm": 20,
+        "t": "Pöydälle ja hyllylle",
+        "b": "Erittäin terävä"
+      },
+      {
+        "cm": 30,
+        "t": "Sivupöydän yläpuolelle",
+        "b": "Erittäin terävä"
+      },
+      {
+        "cm": 40,
+        "t": "Taulu seinälle",
+        "b": "Terävä"
+      },
+      {
+        "cm": 50,
+        "t": "Suurin, jota suosittelemme",
+        "b": "Terävä"
+      }
+    ]
+  },
+  "more": {
+    "title": "Lisää tapoja nähdä se",
+    "railLabel": "Lisää havainnekuvia",
+    "prev": "Edellinen kuva",
+    "next": "Seuraava kuva",
+    "scenes": [
+      {
+        "id": "pair",
+        "t": "Te kaksi, tummalla pähkinäpuulla",
+        "c": "Silmät: oma silmämme ja esimerkkikuva."
+      },
+      {
+        "id": "group",
+        "t": "Te neljä, kehyksissä",
+        "c": "Silmät: oma silmämme ja esimerkkikuvia."
+      },
+      {
+        "id": "hands",
+        "t": "Käsissäsi",
+        "c": ""
+      },
+      {
+        "id": "gallery",
+        "t": "Vinosti katsottuna",
+        "c": "Silmät: oma silmämme ja esimerkkikuva."
+      },
+      {
+        "id": "shelf",
+        "t": "Hyllyllä",
+        "c": ""
+      }
+    ]
+  },
+  "styles": {
+    "eyebrow": "Tyylit",
+    "title": "Yksi iiris, monta tyyliä",
+    "legend": "Esimerkkejä. Omassasi ovat sinun värisi ja kuviosi.",
+    "groups": {
+      "one": "Vain sinä",
+      "two": "Te kaksi",
+      "family": "Perhe"
+    },
+    "tabsLabel": "Tyyliryhmät",
+    "eyeLabel": "Kokeile toista silmien väriä",
+    "eyes": {
+      "own": "Sinivihreä",
+      "yg": "Keltavihreä",
+      "br": "Ruskea",
+      "gr": "Harmaa"
+    },
+    "eyeNote": {
+      "own": "Oma silmämme",
+      "other": "Esimerkkikuva"
+    },
+    "items": {
+      "radiance": {
+        "d": "Hienoja valonsäteitä oman iiriksesi väreissä."
+      },
+      "powder": {
+        "d": "Reuna hajoaa rakeiksi silmäsi omissa väreissä."
+      },
+      "universe": {
+        "d": "Oma iiriksesi täyttää suurennettuna koko kankaan."
+      },
+      "echo": {
+        "d": "Iiriksesi oman kaikunsa sisällä, säikeet kurottavat ulospäin kuin tunneli."
+      },
+      "splash": {
+        "d": "Reuna nousee nestekruunuksi."
+      },
+      "clean": {
+        "d": "Entisöity iiriksesi yksin puhtaalla mustalla."
+      },
+      "duo_infinity": {
+        "d": "Kaksi iiristä limittyy kuin äärettömyyden merkki."
+      },
+      "duo_infinity_bb": {
+        "d": "Jokainen iiris säilyttää oman värinsä siinä, missä ne kohtaavat."
+      },
+      "duo_kiss": {
+        "d": "Kaksi iiristä, jotka koskettavat toisiaan reunasta."
+      },
+      "duo_clean": {
+        "d": "Sama pari ilman jauhetta."
+      },
+      "duo_thread": {
+        "d": "Kaksi kokonaista iiristä, joita yhdistää yksi ohut kultalanka."
+      },
+      "duo_radiance": {
+        "d": "Kaksi iiristä lähettää omanvärisiään säteitä, jotka kohtaavat niiden välissä."
+      },
+      "fam_trio": {
+        "d": "Kolme iiristä kolmiossa."
+      },
+      "fam_4": {
+        "d": "Neljä iiristä, jauhe kunkin omissa väreissä."
+      },
+      "fam_orbit": {
+        "d": "Yksi iiris keskellä, perhe kiertoradalla sen ympärillä."
+      },
+      "fam_circle": {
+        "d": "Iirikset kehällä yhden pienen valon ympärillä."
+      },
+      "fam_radiance": {
+        "d": "Jokainen iiris lähettää omia hienoja säteitään."
+      },
+      "supernova_one": {
+        "d": "Tähtipöly purkautuu reunasta silmäsi omissa väreissä."
+      },
+      "nebula": {
+        "d": "Iiriksesi hehkuu tähtisumun sydämessä."
+      },
+      "sparks": {
+        "d": "Kipinät nousevat reunasta silmäsi omissa väreissä."
+      },
+      "halo": {
+        "d": "Iiriksesi, takaa valaistuna omalla värillään."
+      },
+      "galaxy": {
+        "d": "Tähtien spiraalihaarat kiertyvät iiriksestäsi ulos sen omissa väreissä."
+      },
+      "aurora": {
+        "d": "Revontulten verhot iiriksesi ympärillä."
+      },
+      "duo_nebula": {
+        "d": "Kaksi iiristä hehkuu vierekkäin tähtisumussa."
+      },
+      "duo_supernova": {
+        "d": "Tähtipöly purkautuu kummastakin reunasta kummankin silmän omissa väreissä."
+      },
+      "fam_nebula": {
+        "d": "Koko perhe hehkuu yhdessä samassa tähtisumussa."
+      },
+      "fam_supernova": {
+        "d": "Jokainen iiris purkautuu tähtipölyksi omissa väreissään."
+      },
+      "duo_galaxy": {
+        "d": "Kaksi iiristä yhden spiraaligalaksin sydämessä, kumpikin haara omissa väreissään."
+      },
+      "fam_galaxy": {
+        "d": "Yksi galaksi koko perheelle, yksi haara kunkin ihmisen väreissä."
+      },
+      "fam_powder": {
+        "d": "Jokainen iiris muuttuu pölyksi omissa väreissään, ja pölyt sekoittuvat keskellä."
+      }
+    },
+    "mixed": "Oma silmämme ja esimerkkikuvia",
+    "priceOne": "{price}",
+    "priceTwo": "{price}",
+    "priceFrom": "Alkaen {price}",
+    "wallOn": "Seinällä",
+    "wallOff": "Ilman seinää",
+    "wallOnAria": "Näytä {name} seinällä",
+    "wallOffAria": "Näytä {name} ilman seinää",
+    "wallFile": "Hinta koskee digitaalista tiedostoa. Tulostus ei kuulu tilaukseesi.",
+    "comboTitle": "Kahdesta {max} silmään samassa taideteoksessa",
+    "comboBody": "Sinun silmäsi ja rakkaittesi silmät. Jokainen lisäsilmä maksaa {price} lisää.",
+    "soonTag": "Pian",
+    "moreSoon": "Lisää tyylejä pian.",
+    "comboTitleSoon": "Useita silmiä samassa taideteoksessa"
+  },
+  "how": {
+    "eyebrow": "Näin se toimii",
+    "title": "Kolme vaihetta, ei studiota",
+    "steps": [
+      {
+        "t": "Kuvaa silmäsi",
+        "b": "Takakamera, valo sivulta."
+      },
+      {
+        "t": "Katso esikatselusi",
+        "b": "Iiriksesi useissa tyyleissä."
+      },
+      {
+        "t": "Saat tiedostosi",
+        "b": "Valitse tyyli ja saat suuren tiedoston.",
+        "bOpen": "Valitse tyyli, maksa Stripen kautta ja saat suuren tiedoston."
+      }
+    ],
+    "videoPlay": "Toista ohjevideo",
+    "videoPause": "Keskeytä ohjevideo",
+    "previewTitle": "Esikatselusi",
+    "previewButton": "Siirry maksamaan",
+    "previewSoon": "Seuraavaksi tiedostosi",
+    "fileName": "snapeyes-artwork.jpg",
+    "fileMeta": "{square}, JPEG"
+  },
+  "pricing": {
+    "eyebrow": "Hinnat",
+    "title": "Selkeät hinnat yhdelle digitaaliselle tiedostolle",
+    "notice": "Tilaaminen avautuu pian.",
+    "noticeOpen": "Aloita ilmaisella esikatselulla: tilaat vasta, kun pidät tuloksesta.",
+    "severalSoon": "Ilmainen esikatselu jo nyt. Tämän ryhmän tilaukset avautuvat pian.",
+    "currencyLabel": "Hintojen valuutta",
+    "free": "Ilmainen",
+    "rows": {
+      "free": {
+        "t": "Esikatselu",
+        "b": "Vesileimalla."
+      },
+      "black": {
+        "t": "Yksi silmä mustalla",
+        "b": "Tyyli {name}."
+      },
+      "art": {
+        "t": "Yksi silmä taidetyylissä",
+        "b": "{styles}."
+      },
+      "two": {
+        "t": "Kaksi silmää",
+        "b": "{styles}."
+      },
+      "more": {
+        "t": "Kolme silmää",
+        "b": "Kaksi silmää maksaa {price2}. Jokainen lisäsilmä maksaa {price} lisää, enintään {max} silmää."
+      }
+    },
+    "ladderTitle": "Silmien määrä",
+    "eyes": "{n} silmää",
+    "includesTitle": "Mitä saat",
+    "includes": [
+      "Suuri tiedosto ilman vesileimaa",
+      "Tehty esikatselustasi",
+      "12 kuukautta aikaa ladata",
+      "Henkilökohtaiseen käyttöön"
+    ],
+    "notIncludes": "Tulostus ei kuulu tilaukseesi.",
+    "payOpen": "Turvallinen korttimaksu Stripen kautta.",
+    "gift": "Annatko sen lahjaksi? Osta lahjakortti: saaja kuvaa oman silmänsä myöhemmin.",
+    "termsLink": "Myyntiehdot",
+    "auLine": "Myyjä: MB Portretizuokis, Kaunas, Liettua. Korttimaksu Australian dollareina (A$) Stripen kautta. Kyseessä on digitaalinen tiedosto, joten mitään ei lähetetä postitse.",
+    "usLine": "Myyjä: MB Portretizuokis, Kaunas, Liettua. Korttimaksu Yhdysvaltain dollareina (US$) Stripen kautta. Kyseessä on digitaalinen tiedosto, joten mitään ei lähetetä.",
+    "footnote": "Hinnat euroina. Nämä ovat lopullisia hintoja: emme ole arvonlisäverovelvollisia, joten arvonlisäveroa ei lisätä.",
+    "footnoteAud": "Hinnat Australian dollareina (A$). Jokainen hinta on kokonaishinta: GST-veroa ei peritä.",
+    "footnoteHuf": "Hinnat Unkarin forintteina (Ft). Nämä ovat lopullisia hintoja: emme ole arvonlisäverovelvollisia, joten arvonlisäveroa ei lisätä.",
+    "footnoteUsd": "Hinnat Yhdysvaltain dollareina (US$). Jokainen hinta on kokonaishinta: myyntiveroa ei peritä."
+  },
+  "closeups": {
+    "eyebrow": "Katso lähempää",
+    "title": "Rajattu suoraan tiedostosta",
+    "intro": "Aito pala tiedostosta, suurentamatta.",
+    "badge": "Todellinen koko",
+    "fibreTitle": "Oma silmämme",
+    "fibreAlt": "Lähikuva omasta entisöidystä iiriksestämme, rajattu 4096 px:n tiedostosta: säteittäisiä säikeitä, kultainen kollaretti ja pupillin reuna.",
+    "locatorAlt": "Koko entisöity iiris, jossa neliö näyttää, mistä lähikuva on rajattu",
+    "locatorLabel": "Mistä se on rajattu",
+    "edgeTitle": "Akryylitulosteen reuna",
+    "edgeAlt": "Havainnekuva akryylitulosteen kulmasta: kiillotettu kirkas reuna, teräksinen seinäkiinnike ja pehmeä ikkunan heijastus."
+  },
+  "trust": {
+    "eyebrow": "Mitä emme koskaan tee",
+    "title": "Pieniä lupauksia, jotka pidämme",
+    "items": [
+      "Maalaa iiristäsi uudelleen",
+      "Esitä esimerkkejä asiakkaina",
+      "Piilota, miten kuvat on tehty",
+      "Hoputa sinua tekaistulla kiireellä"
+    ],
+    "curatorEyebrow": "Apua",
+    "curatorTitle": "Eikö otoksesta tule terävää?",
+    "offer": "Lähetä meille parhaat kuvasi; vastaamme yleensä yhden tai kahden arkipäivän kuluessa.",
+    "offerCta": "Lähetä sähköpostia",
+    "privacyEyebrow": "Kuvasi",
+    "privacyTitle": "Lupaus silmästäsi",
+    "privacy": [
+      {
+        "t": "Vain taideteostasi varten",
+        "b": "Kuvaasi käytetään vain taideteoksesi tekemiseen. Jokaisesta otoksesta kirjaamme muutaman mittaustuloksen, emme koskaan kuvaa, jotta voimme parantaa kuvausohjetta."
+      },
+      {
+        "t": "Ei koskaan tunnistamiseen",
+        "b": "Sitä ei koskaan käytetä kenenkään tunnistamiseen, sitä ei koskaan myydä eikä sillä kouluteta tekoälyä."
+      },
+      {
+        "t": "Ilmaisia esikatseluja ei säilytetä",
+        "b": "Emme tallenna ilmaista esikatseluasi. Säilytämme iiriksen rajauksen ja esikatselun vain, jos aloitat tilauksen. Jos tilaat, säilytämme tilauksesi tiedostot (emme puhelinkuvaasi) 12 kuukautta latauksia varten."
+      },
+      {
+        "t": "Muutama ulkopuolinen palvelu",
+        "b": "Vercel pyörittää sivua ja esikatselua, Googlen Gemini API entisöintiä (Google säilyttää pyyntölokeja rajoitetun ajan). Tilauksissa mukaan tulevat Stripe maksua varten ja yksityinen Supabase-tallennustila EU:ssa."
+      }
+    ],
+    "controller": "Tiedoistasi vastaa: MB ”Portretizuokis”, Kaunas, Liettua (kaikki tiedot tämän sivun alaosassa).",
+    "rights": "Voit kysyä, mitä tietoja meillä on sinusta, pyytää niiden oikaisemista tai poistamista ja tehdä valituksen tietosuojaviranomaiselle.",
+    "policyLink": "Lue koko tietosuojaseloste"
+  },
+  "faq": {
+    "eyebrow": "Kysymyksiä",
+    "title": "Ennen kuin aloitat",
+    "items": [
+      {
+        "id": "receive",
+        "q": "Mitä saan?",
+        "a": "Yhden digitaalisen tiedoston ilman vesileimaa: JPEG, sRGB, {square} yhdelle silmälle ja {px} pisimmältä sivulta useammalle silmälle, tehtynä täydellä tarkkuudella hyväksymästäsi esikatselusta. Kun olet maksanut, tilaussivusi avautuu ja saat sen linkin sähköpostiisi. Tiedosto on yleensä valmis muutamassa minuutissa; jos joskus otamme tilauksen tarkistettavaksi, lupaamme tiedoston viimeistään {hours} tunnin kuluessa. Voit ladata sen 12 kuukauden ajan. Henkilökohtainen lisenssi: tulosta se itsellesi tai lahjaksi; taideteoksen tai tulosteiden myynti ei sisälly siihen (katso myyntiehdot)."
+      },
+      {
+        "id": "print",
+        "q": "Tulostatteko tai lähetättekö sen?",
+        "a": "Emme. Tulostus ei kuulu tilaukseesi: tulostuspalvelu veloittaa siitä erikseen, ja hinta riippuu palvelusta, koosta ja materiaalista. Jos joskus lisäämme tulostuksen, kerromme siitä tällä sivulla."
+      },
+      {
+        "id": "printit",
+        "q": "Voinko tulostaa sen, ja kuinka suurena?",
+        "a": "Kyllä. Valitse tulostuspalvelu, valitse neliön muotoinen koko, esimerkiksi 20, 30, 40 tai 50 cm, ja lähetä JPEG-tiedosto palveluun. Muita muotoja varten pyydä palvelua rajaamaan kuva tai lisäämään reunus, ja pyydä vedos tai näyte. Me emme tulosta emmekä lähetä: tuloste on tulostuspalvelun työtä, ja palvelu päättää sen hinnan. Yhdelle silmälle suosittelemme enintään kokoa {printMax}, mikä on noin 208 pikseliä tuumalla (noin 347, kun koko on 30 cm). Tulostuspalvelut pyytävät yleensä noin 150-300. Kun silmiä on useita, pitkä sivu voi olla enintään {printMaxCm}. Yli {printMaxCm}:n tuloste on mahdollinen, mutta se venyttää tiedostoa enemmän, joten emme lupaa sitä. Tulos riippuu myös kuvastasi."
+      },
+      {
+        "id": "look",
+        "q": "Näyttääkö tulosteeni samalta kuin kuvissa?",
+        "a": "Kuvat huoneista, käsistä ja tulosteista ovat havainnekuvia siitä, miltä tiedosto voi näyttää tulostettuna, eivät valokuvia. Oikea tuloste vaihtelee tulostuspalvelun, materiaalin ja huoneesi valon mukaan, samalla tavalla kuin näyttö eroaa seinästä, ja sen värit voivat poiketa näytöstäsi. Kuvien koot ovat suuntaa antavia, ja osa niissä näkyvistä tyyleistä tulee tilattavaksi pian. Pyydä tulostuspalvelulta vedos tai näyte."
+      },
+      {
+        "id": "how",
+        "q": "Miten se toimii?",
+        "a": "Lähdemme omasta valokuvastasi ja poistamme heijastukset. Kohdissa, joissa puhelimesi ei saanut hienoimpia säikeitä talteen, tekoälymme entisöi ne, joten kaikkein hienoin yksityiskohta on rekonstruktio, ei mikroskooppikuva. Joissakin tyyleissä iiristäsi ympäröivä jauhe, neste, liekki tai pöly on tekoälyn tekemää materiaalia yhteisestä kirjastosta, joten toisen asiakkaan taideteoksessa voi olla sama pala. Iiriksesi säilyttää valokuvasi värit, kuvion ja asettelun; hienoimmat säikeet entisöidään tekoälyllä, kuten edellä on kuvattu. Tämän sivun kuvien huoneet, kädet ja esineet on tehty tekoälyllä, ei valokuvattu. Tämän sivun silmät ovat oma silmämme ja esimerkkikuvia, eivät koskaan asiakkaan, ja kaikki on kuvattu huolella: sinun tuloksesi riippuu kuvastasi, ja ilmainen esikatselu näyttää sen ennen kuin maksat."
+      },
+      {
+        "id": "bad",
+        "q": "Entä jos kuvani on huono?",
+        "a": "Ennen kuin maksat, esikatselu kertoo, jos otos on liian epätarkka tai liian tumma tai pupilli liian laaja, ja näyttää, miten otat uuden. Etkö vieläkään onnistu? Lähetä parhaat kuvasi osoitteeseen {email}, niin katsomme niitä."
+      },
+      {
+        "id": "unhappy",
+        "q": "Entä jos en pidä tuloksesta?",
+        "a": "Näet oman esikatselusi ilmaiseksi ennen kuin maksat, ja kun olet maksanut, alamme heti tehdä tiedostoasi. Jos tiedostossa on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille: teemme sen uudelleen tai palautamme maksusi. Tietoa peruuttamisesta on alempana."
+      },
+      {
+        "id": "phone",
+        "q": "Mitä puhelinta ja kameraa kannattaa käyttää?",
+        "a": "Mitä tahansa melko uutta älypuhelinta, jossa on hyvä takakamera. Käytä takakameraa 2x- tai 3x-zoomilla, älä etukameraa. Käytä päivänvaloa ikkunasta tai taskulamppua, sivulta, älä huoneen lamppua tai salamaa. Pidä puhelinta noin 10 cm:n päässä silmästäsi, tarkenna napauttamalla iiristä, pidä silmä aivan auki, jotta luomi tai ripset eivät peitä iiristä, ota silmälasit pois ja ota kolmesta viiteen otosta. Mittaamme jokaisen otoksen ja käytämme terävintä."
+      },
+      {
+        "id": "colour",
+        "q": "Vastaako väri silmääni?",
+        "a": "Väri tulee valokuvastasi, ja puhelin tallentaa värin eri tavalla huoneen lampun valossa, salaman kanssa tai varjossa. Emme koskaan väritä iiristä uudelleen, joten jos kuva näyttää sävyttyneeltä, ota se uudelleen ikkunan päivänvalossa tai taskulampun kanssa sivulta."
+      },
+      {
+        "id": "other",
+        "q": "Voinko kuvata jonkun toisen?",
+        "a": "Kyllä: kumppanin, lapsen tai toisen silmäsi, ja samaan taideteokseen mahtuu useita silmiä. Kysy ensin lupa, ja lapsen puolesta päätät sinä vanhempana tai huoltajana. Voit myös tehdä sen jollekulle toiselle ja antaa hänelle tiedoston.",
+        "aOpen": "Kyllä: kumppanin, lapsen tai toisen silmäsi, ja samaan taideteokseen mahtuu enintään {max} silmää. Kysy ensin lupa, ja lapsen puolesta päätät sinä vanhempana tai huoltajana. Voit myös tehdä sen jollekulle toiselle ja antaa hänelle tiedoston."
+      },
+      {
+        "id": "material",
+        "q": "Minkä materiaalin valitsen?",
+        "a": "Akryyli on kiiltävä ja syvä; ripusta se paikkaan, johon ikkunasta ei heijastu suoraa valoa. Alumiini on terävä ja moderni. Canvas on pehmeä ja heijastaa vähemmän, mutta sen kudos pehmentää hienoimpia säikeitä. Kehystetty tuloste on klassinen. Akryyliblokki seisoo hyllyllä. Puhelinta varten lisää neliön muotoisen tiedoston ympärille mustaa tilaa millä tahansa kuvankäsittelysovelluksella ja aseta se taustakuvaksi. Tämän sivun tiedot ovat tulostuspalveluille tyypillisiä ja vaihtelevat; pyydä tulostuspalvelulta näyte."
+      },
+      {
+        "id": "time",
+        "q": "Kuinka kauan se kestää?",
+        "a": "Ilmainen esikatselu kestää noin minuutin. Kun tilaaminen avautuu, tiedostosi tehdään täydellä tarkkuudella sen jälkeen, kun olet hyväksynyt sen, yleensä muutamassa minuutissa ja viimeistään {hours} tunnin kuluessa.",
+        "aOpen": "Ilmainen esikatselu kestää noin minuutin. Kun olet maksanut, tiedostosi tehdään täydellä tarkkuudella, yleensä muutamassa minuutissa ja viimeistään {hours} tunnin kuluessa."
+      },
+      {
+        "id": "photo",
+        "q": "Mitä kuvalleni tapahtuu?",
+        "a": "Emme tallenna ilmaista esikatseluasi. Säilytämme iiriksen rajauksen ja esikatselun vain, jos aloitat tilauksen. Kun tilaat, säilytämme tilauksesi tiedostot (emme puhelinkuvaasi) 12 kuukautta, jotta voit ladata ne uudelleen, ja poistamme ne sen jälkeen. Iiristäsi ei koskaan käytetä kenenkään tunnistamiseen eikä tekoälyn kouluttamiseen. Tarkemmat tiedot ovat tietosuojaselosteessamme, jonka linkki on tämän sivun alaosassa."
+      },
+      {
+        "id": "withdraw",
+        "q": "Voinko peruuttaa tilauksen?",
+        "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Ennen maksamista hyväksyt, että aloitamme heti, joten 14 päivän peruuttamisoikeus päättyy, kun olemme alkaneet tehdä tiedostoasi. Siihen asti voit peruuttaa sopimuksen sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana. Jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille: teemme sen uudelleen tai palautamme maksusi. Tarkemmat tiedot ovat myyntiehdoissamme ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
+      },
+      {
+        "id": "order",
+        "q": "Milloin voin tilata?",
+        "a": "Tilaaminen avautuu pian. Siihen asti käytössäsi on ilmainen esikatselu. Tilaamiseen tarvitset vain sähköpostiosoitteen.",
+        "qOpen": "Miten tilaan?",
+        "aOpen": "Heti ilmaisen esikatselun jälkeen, samalla sivulla: valitse tyyli, rastita digitaalista tiedostoa koskeva ruutu ja siirry Stripen maksusivulle, jossa maksat. Tilaussivusi avautuu heti, ja saat sen linkin sähköpostiisi. Tarvitset vain sähköpostiosoitteen."
+      },
+      {
+        "id": "pets",
+        "q": "Voinko tehdä taideteoksen lemmikistäni?",
+        "a": "Et vielä. Kerromme täällä, kun se onnistuu."
+      }
+    ]
+  },
+  "faqAu": {
+    "unhappy": {
+      "q": "Entä jos en pidä tuloksesta?",
+      "a": "Näet oman esikatselusi ilmaiseksi ennen kuin maksat, ja kun olet maksanut, alamme heti tehdä tiedostoasi. Jos tiedostossa on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille. Palveluihimme liittyy takuita, joita ei voi sulkea pois Australian kuluttajalain (Australian Consumer Law) nojalla. Tietoa tilauksen perumisesta on alempana."
+    },
+    "withdraw": {
+      "q": "Voinko perua tilauksen?",
+      "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Ennen maksamista hyväksyt, että aloitamme heti, joten tilaukseesi sovellettavan EU:n kuluttajalainsäädännön mukainen 14 päivän peruuttamisoikeus päättyy, kun olemme alkaneet tehdä tiedostoasi. Siihen asti voit perua tilauksen sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana, ja palautamme maksusi kokonaan. Tämä koskee vain mielenmuutosta: palveluihimme liittyy takuita, joita ei voi sulkea pois Australian kuluttajalain (Australian Consumer Law) nojalla, joten jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille. Tarkemmat tiedot ovat myyntiehdoissamme (Oikeutesi Australiassa) ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
+    }
+  },
+  "final": {
+    "title": "Näe oma iiriksesi",
+    "body": "Tarvitset vain puhelimesi, hyvän valon ja noin minuutin.",
+    "imageAlt": "Havainnekuva: tumma työhuone iltahämärässä, seinällä oma iiriksemme akryylille tulostettuna.",
+    "chip": "Havainnekuva"
+  },
+  "footer": {
+    "operatedBy": "SnapEyes-palvelua ylläpitää",
+    "company": "MB ”Portretizuokis”",
+    "companyCode": "Yritystunnus",
+    "country": "Liettua",
+    "contact": "Yhteystiedot",
+    "representedBy": "Edustaja",
+    "rights": "SnapEyes",
+    "currency": "Hintojen valuutta",
+    "legalNav": "Oikeudelliset tiedot",
+    "legal": {
+      "privacy": "Tietosuojaseloste",
+      "terms": "Myyntiehdot",
+      "withdrawal": "Peruuttamisoikeus",
+      "imprint": "Yritystiedot",
+      "withdrawFn": "Peruuta sopimus tästä"
+    }
+  },
+  "marketHint": {
+    "label": "Hinnat omassa valuutassasi",
+    "close": "Ei kiitos",
+    "huf": {
+      "text": "Ostatko Unkarista? Katso hintamme Unkarin forintteina (Ft).",
+      "show": "Näytä hinnat forintteina (Ft)"
+    }
+  },
+  "ui": {
+    "close": "Sulje",
+    "scrollHint": "Vieritä sivusuunnassa, niin näet lisää"
+  }
+}

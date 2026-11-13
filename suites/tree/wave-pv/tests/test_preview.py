@@ -501,8 +501,17 @@ check("G1 the third preview of one connection on a day with a ceiling of 2 -> 42
       and "(2 per dieną)" in jg.get("error", "") and "rytoj" in jg.get("error", "") and len(MODEL_CALLS) == calls, (g, c, jg))
 c, jd = post_from("/api/enhance", enh("de"), ONE)
 c2, ja = post_from("/api/analyze", {"image": "", "lang": "hr"}, ONE)
-check("G2 the same connection again: the German sentence (/api/enhance) and the Croatian one from /api/analyze, which refuses before it reads the photo",
-      c == 429 and "(2 pro Tag)" in jd.get("error", "") and c2 == 429 and ja.get("reason") == "preview_limit" and "(2 dnevno)" in ja.get("error", ""), (c, jd, c2, ja))
+# 2026-11-13: and in Finnish, Estonian and Latvian, each language's own sentence with the ceiling in it (one from /api/analyze, two from /api/enhance)
+new_g2 = {"fi": post_from("/api/analyze", {"image": "", "lang": "fi"}, ONE), "et": post_from("/api/enhance", enh("et"), ONE), "lv": post_from("/api/enhance", enh("lv"), ONE)}
+check("G2 the same connection again: the German sentence (/api/enhance) and the Croatian one from /api/analyze, which refuses before it reads the photo"
+      " - 1113: and the Finnish, the Estonian and the Latvian one, three different sentences that are none of the older five",
+      c == 429 and "(2 pro Tag)" in jd.get("error", "") and c2 == 429 and ja.get("reason") == "preview_limit" and "(2 dnevno)" in ja.get("error", "")
+      and all(cn == 429 and jn.get("reason") == "preview_limit" and jn.get("limit") == 2 for cn, jn in new_g2.values())
+      and "(2 päivässä)" in new_g2["fi"][1].get("error", "") and "huomenna" in new_g2["fi"][1].get("error", "")
+      and "(2 päevas)" in new_g2["et"][1].get("error", "") and "Homme" in new_g2["et"][1].get("error", "")
+      and "(2 dienā)" in new_g2["lv"][1].get("error", "") and "rīt" in new_g2["lv"][1].get("error", "")
+      and len({jg.get("error"), jd.get("error"), ja.get("error")} | {jn.get("error") for _, jn in new_g2.values()}) == 6 and len(MODEL_CALLS) == calls,
+      (c, jd, c2, ja, new_g2))
 c, jo = post_from("/api/enhance", enh(), TWO)
 marks = files_under(TODAY)
 names = [os.path.basename(m) for m in marks]

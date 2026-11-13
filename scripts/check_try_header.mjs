@@ -1,6 +1,6 @@
 // The header of /try on narrow phones: nothing may run over the logo (QA, 2026-10-20: under 380 px the brand line "Private Atelier · preview" printed over it),
 // and since 2026-10-22 the header holds the logo and the language switch and nothing else (the owner asked what the tagline meant; it is gone in every language).
-//   node scripts/check_try_header.mjs [--dist dist]        real Chrome on the built page, 320 to 412 px, four languages
+//   node scripts/check_try_header.mjs [--dist dist]        real Chrome on the built page, 320 to 412 px, every language (the switch is a menu since the eight languages of 2026-11-13: src/shared/LangMenu.tsx)
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch, sleep } from './lib/cdp.mjs';
@@ -10,7 +10,7 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
 const dist = resolve(args.includes('--dist') ? args[args.indexOf('--dist') + 1] : join(ROOT, 'dist'));
 const WIDTHS = [320, 340, 360, 375, 390, 412];
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 
 // every text box of the header outside the logo, against the logo's box
 const PROBE = `(() => {
@@ -25,7 +25,7 @@ const PROBE = `(() => {
   const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     if (!n.textContent.trim() || logo.contains(n)) continue;
-    if (!(n.parentElement && n.parentElement.closest('[role=group]'))) extra.push(n.textContent.trim().slice(0, 40));
+    if (!(n.parentElement && n.parentElement.closest('[role=group], [data-testid=lang-menu]'))) extra.push(n.textContent.trim().slice(0, 40));
     range.selectNodeContents(n);
     for (const r of range.getClientRects()) {
       if (r.width > 0 && r.left < lr.right - 0.5 && r.right > lr.left && r.top < lr.bottom && r.bottom > lr.top) hit.push(n.textContent.trim().slice(0, 30) + ' ' + Math.round(r.left) + '-' + Math.round(r.right));

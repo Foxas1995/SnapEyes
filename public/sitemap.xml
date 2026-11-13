@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Only indexable pages belong here. /try and /order are noindex on purpose, so they are left out.
-     Each page has one URL per language (English plain, then ?lang=de, ?lang=lt, ?lang=hu and ?lang=hr), each its own canonical; every URL lists all
+     Each page has one URL per language (English plain, then ?lang=de, ?lang=lt, ?lang=hu, ?lang=hr, ?lang=fi, ?lang=et and ?lang=lv), each its own canonical; every URL lists all
      its language versions plus x-default, the same alternates the pages' own <link rel="alternate"> tags name. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
@@ -10,6 +10,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
   </url>
   <url>
@@ -19,6 +22,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
   </url>
   <url>
@@ -28,6 +34,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
   </url>
   <url>
@@ -37,6 +46,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
   </url>
   <url>
@@ -46,6 +58,45 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/?lang=fi</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/?lang=et</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/?lang=lv</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/" />
   </url>
   <url>
@@ -55,6 +106,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
   </url>
   <url>
@@ -64,6 +118,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
   </url>
   <url>
@@ -73,6 +130,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
   </url>
   <url>
@@ -82,6 +142,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
   </url>
   <url>
@@ -91,6 +154,45 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/privacy?lang=fi</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/privacy?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/privacy?lang=et</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/privacy?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/privacy?lang=lv</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/privacy" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/privacy?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/privacy?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/privacy?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/privacy?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/privacy?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/privacy?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/privacy?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/privacy" />
   </url>
   <url>
@@ -100,6 +202,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
   </url>
   <url>
@@ -109,6 +214,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
   </url>
   <url>
@@ -118,6 +226,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
   </url>
   <url>
@@ -127,6 +238,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
   </url>
   <url>
@@ -136,6 +250,45 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/terms?lang=fi</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/terms?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/terms?lang=et</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/terms?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/terms?lang=lv</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/terms" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/terms?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/terms?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/terms?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/terms?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/terms?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/terms?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/terms?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/terms" />
   </url>
   <url>
@@ -145,6 +298,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
   </url>
   <url>
@@ -154,6 +310,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
   </url>
   <url>
@@ -163,6 +322,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
   </url>
   <url>
@@ -172,6 +334,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
   </url>
   <url>
@@ -181,6 +346,45 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/withdrawal?lang=fi</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/withdrawal" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/withdrawal?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/withdrawal?lang=et</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/withdrawal" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/withdrawal?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/withdrawal?lang=lv</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/withdrawal" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/withdrawal?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/withdrawal?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/withdrawal?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/withdrawal?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/withdrawal?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/withdrawal?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/withdrawal?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/withdrawal" />
   </url>
   <url>
@@ -190,6 +394,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
   </url>
   <url>
@@ -199,6 +406,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
   </url>
   <url>
@@ -208,6 +418,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
   </url>
   <url>
@@ -217,6 +430,9 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
   </url>
   <url>
@@ -226,6 +442,45 @@
     <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
     <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
     <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/imprint?lang=fi</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/imprint" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/imprint?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/imprint?lang=et</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/imprint" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/imprint?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
+  </url>
+  <url>
+    <loc>https://snapeyes.com/imprint?lang=lv</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://snapeyes.com/imprint" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://snapeyes.com/imprint?lang=de" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://snapeyes.com/imprint?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="hu" href="https://snapeyes.com/imprint?lang=hu" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://snapeyes.com/imprint?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="fi" href="https://snapeyes.com/imprint?lang=fi" />
+    <xhtml:link rel="alternate" hreflang="et" href="https://snapeyes.com/imprint?lang=et" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://snapeyes.com/imprint?lang=lv" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://snapeyes.com/imprint" />
   </url>
 </urlset>

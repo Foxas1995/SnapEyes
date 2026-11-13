@@ -5,7 +5,7 @@ import os, io, json, base64, time, math, re, uuid, hmac, hashlib, secrets, threa
 import numpy as np
 import requests
 from PIL import Image, ImageFilter, ImageDraw, ImageFont, ImageOps
-from . import iris_lt, iris_hu, iris_hr
+from . import iris_lt, iris_hu, iris_hr, iris_fi, iris_et, iris_lv
 from . import catalogue
 from . import duration
 from . import counter as _counter     # light (re, hmac, threading only): the request's campaign code and classes (run() puts them in ctx())
@@ -187,7 +187,7 @@ def ctx():
     the country, the page's language and price market; no user agent, no address). Set by run(); None outside a request or when it could not be read."""
     return getattr(_LOCAL, "ctx", None)
 
-PAGE_LANGS =("de", "lt", "hu", "hr")   # the languages besides English that the customer sentences of run() and the preview
+PAGE_LANGS =("de", "lt", "hu", "hr", "fi", "et", "lv")   # the languages besides English that the customer sentences of run() and the preview
                                  # watermark (WATERMARK_TEXT) come in: api/_lib/pay.py LANGS without "en"
 
 def page_lang():
@@ -309,6 +309,9 @@ RUN_ERRORS = {
     "lt": iris_lt.RUN_ERRORS_LT,
     "hu": iris_hu.ERRORS_HU,
     "hr": iris_hr.ERRORS_HR,
+    "fi": iris_fi.ERRORS_FI,
+    "et": iris_et.ERRORS_ET,
+    "lv": iris_lv.ERRORS_LV,
 }
 
 def _say(lang, key, english):
@@ -4539,6 +4542,9 @@ WATERMARK_TEXT = {
     "lt": iris_lt.WATERMARK_TEXT_LT,
     "hu": iris_hu.WATERMARK_TEXT_HU,
     "hr": iris_hr.WATERMARK_TEXT_HR,
+    "fi": iris_fi.WATERMARK_TEXT_FI,
+    "et": iris_et.WATERMARK_TEXT_ET,
+    "lv": iris_lv.WATERMARK_TEXT_LV,
 }
 # The badge while this deployment takes no orders (the owner, 2026-10-20: "UNLOCK FULL SIZE" promised what the site cannot do yet).
 # api/compose.py asks the rule the page is told (GET /api/checkout open: pay.ordering_open() and store.configured()) and passes
@@ -4550,6 +4556,9 @@ WATERMARK_SOON = {
     "lt": iris_lt.WATERMARK_SOON_LT,
     "hu": iris_hu.WATERMARK_SOON_HU,
     "hr": iris_hr.WATERMARK_SOON_HR,
+    "fi": iris_fi.WATERMARK_SOON_FI,
+    "et": iris_et.WATERMARK_SOON_ET,
+    "lv": iris_lv.WATERMARK_SOON_LV,
 }
 
 

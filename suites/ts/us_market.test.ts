@@ -7,7 +7,10 @@ import { MARKETS, SELECTABLE, currencyOf, isSelectable, money, priceList, priceM
 import {
   CHECKOUT_LEGAL, CHECKOUT_LEGAL_US, EDITION_LANGS, EDITION_MARKETS, checkoutLegal, editionLang, legalEdition, legalHref, ownConsent,
 } from '../../src/shared/legal';
-import { langFor, marketDefaultLang, marketLangs } from '../../src/shared/lang';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { LANGS, LANG_NAMES, langFor, marketDefaultLang, marketLangs } from '../../src/shared/lang';
+import { LangMenu, wantsLangMenu } from '../../src/shared/LangMenu';
 import { EDITIONS } from '../../src/legal/editions';
 import { PRIVACY } from '../../src/legal/docs/privacy';
 import { legalMailPack } from '../../src/legal/plain';
@@ -44,8 +47,9 @@ export async function run(): Promise<Row[]> {
     money(2197, 'usd', 'en') === '$21.97' && money(1600, 'usd', 'en') === '$16.00' && money(1797, 'gbp', 'en') === '£17.97'
       && money(1300, 'gbp', 'en') === '£13.00' && money(123450, 'usd', 'en') === '$1,234.50' && money(2197, 'USD', 'en') === '$21.97',
     [money(2197, 'usd', 'en'), money(1600, 'usd', 'en'), money(1797, 'gbp', 'en'), money(123450, 'usd', 'en')].join(' '));
-  check('money: in the other languages a decimal comma and the sign after a no-break space (21,97 $, 17,97 £)',
-    money(2197, 'usd', 'de') === '21,97 $' && money(1797, 'gbp', 'lt') === '17,97 £' && money(123450, 'usd', 'de') === '1.234,50 $',
+  check('money: in the other languages a decimal comma and the sign after a no-break space (21,97 $, 17,97 £), Finnish, Estonian and Latvian among them (2026-11-13)',
+    money(2197, 'usd', 'de') === '21,97 $' && money(1797, 'gbp', 'lt') === '17,97 £' && money(123450, 'usd', 'de') === '1.234,50 $'
+      && (['fi', 'et', 'lv'] as const).every((l) => money(2197, 'usd', l) === '21,97 $' && money(1797, 'gbp', l) === '17,97 £' && money(2497, 'eur', l) === '24,97 €'),
     [money(2197, 'usd', 'de'), money(1797, 'gbp', 'lt')].join(' '));
   check('money: the old currencies write as before (euros, A$, forints)', money(1997, 'eur', 'en') === '€19.97' && money(3900, 'aud', 'en') === 'A$39'
     && money(699000, 'huf', 'en') === '6 990 Ft');
@@ -55,10 +59,32 @@ export async function run(): Promise<Row[]> {
     && legalEdition('eu') === 'eu' && legalEdition('lt') === 'eu' && legalEdition('hr') === 'eu' && legalEdition('uk') === 'eu'
     && legalEdition('au') === 'au' && legalEdition('hu') === 'hu' && EDITION_MARKETS.us === 'us');
   check('the US edition is English only: every language reads English on a US page, and the US market has no default language of its own',
-    JSON.stringify(EDITION_LANGS.us) === '["en"]' && JSON.stringify(marketLangs('us')) === '["en"]' && (['en', 'de', 'lt', 'hu', 'hr'] as const).every((l) => langFor(l, 'us') === 'en' && editionLang(l, 'us') === 'en')
+    JSON.stringify(EDITION_LANGS.us) === '["en"]' && JSON.stringify(marketLangs('us')) === '["en"]' && (['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const).every((l) => langFor(l, 'us') === 'en' && editionLang(l, 'us') === 'en')
       && marketDefaultLang('us') === null);
   check('the Croatian market opens in Croatian and can be read in every language of the EU edition', marketDefaultLang('hr') === 'hr'
     && JSON.stringify(marketLangs('hr')) === JSON.stringify(EDITION_LANGS.eu) && langFor('de', 'hr') === 'de');
+  // 2026-11-13: Finnish, Estonian and Latvian are texts of the EU edition only (src/shared/legal.ts EDITION_LANGS), so the euro markets read eight languages and the
+  // Hungarian (forint), the Australian and the US market the ones they had: a page of those three never shows one of the new languages
+  check('the EU edition reads eight languages since 2026-11-13 (Finnish, Estonian and Latvian came); the Hungarian edition keeps its four, the Australian its two, the US its one, and a page of those markets asked for a new language shows its own (hu) or English (au, us)',
+    JSON.stringify(EDITION_LANGS.eu) === '["en","de","lt","hu","hr","fi","et","lv"]' && JSON.stringify(EDITION_LANGS.hu) === '["en","de","lt","hu"]' && JSON.stringify(EDITION_LANGS.au) === '["en","de"]'
+      && (['eu', 'lt', 'hr'] as const).every((m) => (['fi', 'et', 'lv'] as const).every((l) => langFor(l, m) === l && editionLang(l, m) === l && marketLangs(m).length === 8))
+      && (['fi', 'et', 'lv'] as const).every((l) => langFor(l, 'hu') === 'hu' && editionLang(l, 'hu') === 'en' && langFor(l, 'au') === 'en' && editionLang(l, 'au') === 'en' && langFor(l, 'us') === 'en')
+      && (['fi', 'et', 'lv'] as const).every((l) => !EDITIONS.hu.terms[l] && !EDITIONS.hu.privacy[l] && !EDITIONS.hu.withdrawal[l] && !EDITIONS.hu.imprint[l] && !EDITIONS.au.terms[l] && !EDITIONS.au.privacy[l]
+        && !!EDITIONS.eu.terms[l] && !!EDITIONS.eu.privacy[l] && !!EDITIONS.eu.withdrawal[l] && !!EDITIONS.eu.imprint[l]),
+    JSON.stringify(EDITION_LANGS));
+  // 2026-11-13: with eight languages the switch of /try, /order, /gift and the legal pages is a menu on the euro markets (src/shared/LangMenu.tsx); a market that reads five
+  // languages or fewer keeps its row of buttons
+  check('the language switch is a menu where a market reads more than five languages (eu, lt, hr: eight) and the row of buttons elsewhere (hu: four, au: two, us: one)',
+    (['eu', 'lt', 'hr'] as const).every((m) => wantsLangMenu(marketLangs(m))) && (['hu', 'au', 'us'] as const).every((m) => !wantsLangMenu(marketLangs(m)))
+      && wantsLangMenu(['en', 'de', 'lt', 'hu', 'hr', 'fi']) && !wantsLangMenu(['en', 'de', 'lt', 'hu', 'hr']));
+  const menu = (lang: (typeof LANGS)[number]) => renderToStaticMarkup(createElement(LangMenu, { label: 'Language', lang, langs: marketLangs('eu'), onSwitch: () => undefined }));
+  const offered = (h: string) => [...h.matchAll(/<button[^>]*\slang="([a-z]{2})"[^>]*aria-pressed="(true|false)"[^>]*>([^<]*)<\/button>/g)].map((m) => ({ lang: m[1], pressed: m[2] === 'true', name: m[3] }));
+  check('the menu of a euro page: a closed <details data-testid="lang-menu"> whose summary shows the page\'s language code, and one button per language of the EU edition, in the site\'s order, named in its own language, only the page\'s own pressed',
+    (['fi', 'et', 'lv', 'en'] as const).every((l) => {
+      const h = menu(l), b = offered(h);
+      return /<details data-testid="lang-menu"/.test(h) && !/<details[^>]*\sopen/.test(h) && new RegExp(`<summary[^>]*aria-label="Language: ${LANG_NAMES[l]}"[^>]*><span aria-hidden="true"[^>]*>${l.toUpperCase()}<svg `).test(h)
+        && b.map((x) => x.lang).join() === EDITION_LANGS.eu.join() && b.length === 8 && b.every((x) => x.name === LANG_NAMES[x.lang as keyof typeof LANG_NAMES] && x.pressed === (x.lang === l));
+    }) && LANG_NAMES.fi === 'Suomi' && LANG_NAMES.et === 'Eesti' && LANG_NAMES.lv === 'Latviešu', menu('fi').replace(/ class="[^"]*"/g, '').slice(0, 400));
 
   // the checkout wording
   const us = checkoutLegal('de', 'us');
@@ -76,7 +102,7 @@ export async function run(): Promise<Row[]> {
   const ed = EDITIONS.us;
   const terms = ed.terms.en!, privacy = ed.privacy.en!, wd = ed.withdrawal.en!, imprint = ed.imprint.en!;
   check('the US edition has the four pages in English and in no other language', !!terms && !!privacy && !!wd && !!imprint
-    && (['de', 'lt', 'hu', 'hr'] as const).every((l) => !ed.terms[l] && !ed.privacy[l] && !ed.withdrawal[l] && !ed.imprint[l]));
+    && (['de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const).every((l) => !ed.terms[l] && !ed.privacy[l] && !ed.withdrawal[l] && !ed.imprint[l]));
   const prices = sectionText(terms, 'prices');
   check('the US terms print the four US prices and no euro or A$ price, and say no sales tax is charged',
     ['One eye, Clean Iris: $21.97', 'One eye, any other style: $27.97', 'Two eyes, any style: $44.97', 'Each further eye: +$16.00'].every((x) => prices.includes(x))
@@ -109,7 +135,7 @@ export async function run(): Promise<Row[]> {
   // the pack of the confirmation email and the links of the US texts
   const pack = legalMailPack();
   const pu = pack.editions.us;
-  check('the legal pack carries the US edition apart, English only, with links that carry m=us', !!pu?.en && !pu.de && !pu.lt && !pu.hu && !pu.hr
+  check('the legal pack carries the US edition apart, English only, with links that carry m=us', !!pu?.en && !pu.de && !pu.lt && !pu.hu && !pu.hr && !pu.fi && !pu.et && !pu.lv
     && pu.en.terms.url === 'https://snapeyes.com/terms?lang=en&m=us' && pu.en.withdrawal.url === 'https://snapeyes.com/withdrawal?lang=en&m=us'
     && pu.en.terms.text.includes('https://snapeyes.com/terms?lang=en&m=us#united-states') && pu.en.terms.text.includes('$21.97'), JSON.stringify(pu?.en?.terms.url));
   check('a legal link of the US market always carries m=us', legalHref('terms', 'en', 'united-states', 'us') === '/terms?lang=en&m=us#united-states'

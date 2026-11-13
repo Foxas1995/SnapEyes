@@ -5,7 +5,7 @@
 //
 // It imports nothing that carries the landing's words or pictures: types only, plus the language names (the legal pages have
 // their own language switch, src/legal/LangSwitch.tsx).
-import type { CSSProperties, Ref } from 'react';
+import type { Ref } from 'react';
 import { LANG_NAMES, type Lang } from '../shared/lang';
 import type { LandingCopy } from './copy/types';
 import { NAV_KEYS } from './navKeys';
@@ -50,25 +50,31 @@ export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangInten
           <i className="lp-nav-mark" aria-hidden="true" />
         </nav>
         <div className="lp-hdr-r">
-          {/* --n is the pressed button's place: the one pressed background slides to it in .3 s (css/header.css); the words change at once */}
-          <div className="lp-seg" role="group" id="langSeg" aria-label={copy.switchLabel} style={{ '--n': Math.max(0, langs.indexOf(lang)) } as CSSProperties}>
-            <span className="lp-seg-ind" aria-hidden="true" />
-            {langs.map((l) => (
-              <button
-                key={l}
-                type="button"
-                lang={l}
-                aria-pressed={lang === l}
-                title={LANG_NAMES[l]}
-                onClick={onLang ? () => onLang(l) : undefined}
-                onPointerEnter={onLangIntent ? () => onLangIntent(l) : undefined}
-                onTouchStart={onLangIntent ? () => onLangIntent(l) : undefined}
-                onFocus={onLangIntent ? () => onLangIntent(l) : undefined}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          {/* the language menu (eight languages since 2026-11-13: a row of buttons no longer fits beside the logo on a phone): the summary shows
+              the page's language, the list under it names each language in itself. A native <details>, so it opens before React has started; a
+              click outside or Escape closes it (src/landing/shell/scripts.ts menuScript), a choice closes it here or by the shell's swap. */}
+          <details className="lp-lang" id="langMenu">
+            <summary id="langBtn" aria-label={`${copy.switchLabel}: ${LANG_NAMES[lang]}`}>
+              <span aria-hidden="true">{lang.toUpperCase()}</span>
+            </summary>
+            <div className="lp-lang-list" role="group" id="langSeg" aria-label={copy.switchLabel}>
+              {langs.map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  lang={l}
+                  aria-pressed={lang === l}
+                  title={LANG_NAMES[l]}
+                  onClick={onLang ? (e) => { const d = e.currentTarget.closest('details'); d?.removeAttribute('open'); d?.querySelector('summary')?.focus(); onLang(l); } : undefined}
+                  onPointerEnter={onLangIntent ? () => onLangIntent(l) : undefined}
+                  onTouchStart={onLangIntent ? () => onLangIntent(l) : undefined}
+                  onFocus={onLangIntent ? () => onLangIntent(l) : undefined}
+                >
+                  {LANG_NAMES[l]}
+                </button>
+              ))}
+            </div>
+          </details>
           <a className="lp-btn lp-btn-line" href={tryHref}>{copy.ctaShort}</a>
           {/* phones and tablets: the page's links in a real dialog (showModal: focus kept inside, the page behind inert, Escape closes it).
               It works before React has started too: one delegated handler (src/landing/shell/scripts.ts menuScript) opens and closes it. */}

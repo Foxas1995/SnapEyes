@@ -4,6 +4,8 @@
 // The page is rendered WIRED (the gallery, the price table, the hero and the FAQ as the live page builds them, reading the catalogue through the hooks of src/landing/ordering.ts from a
 // store that asks a stand-in server), and the store itself is run here against stand-in answers, because the line that turns an answer into what the page can sell is the one the page's
 // promise rests on (the review of I2 planted defects in exactly such lines and found nothing red but a browser check).
+// 2026-11-13: every check that ran "in every language" over English, German, Lithuanian and Hungarian runs over the eight languages of the site (Croatian of 2026-10-28
+// and the new Finnish, Estonian and Latvian): the copy without tile names, the FAQ answer, the new words, and the rendered tiles and FAQ of each language.
 // Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -22,6 +24,11 @@ import en from '../../src/landing/copy/en.json';
 import de from '../../src/landing/copy/de.json';
 import lt from '../../src/landing/copy/lt.json';
 import hu from '../../src/landing/copy/hu.json';
+import hr from '../../src/landing/copy/hr.json';
+import fi from '../../src/landing/copy/fi.json';
+import et from '../../src/landing/copy/et.json';
+import lv from '../../src/landing/copy/lv.json';
+import { LANGS } from '../../src/shared/lang';
 
 type R = Array<[string, boolean, string?]>;
 
@@ -31,6 +38,10 @@ export async function run(): Promise<R> {
   const tiles = [...GALLERY.one, ...GALLERY.two, ...GALLERY.family];
   const ids = tiles.map((t) => t.id);
   const idsOf = (g: 'one' | 'two' | 'family') => GALLERY[g].map((t) => t.id);
+  // the copy of every language of the site
+  const COPIES = [['en', en], ['de', de], ['lt', lt], ['hu', hu], ['hr', hr], ['fi', fi], ['et', et], ['lv', lv]] as const;
+  const ALL = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const;
+  check('the checks "in every language" below read every language of the site (eight since 2026-11-13)', COPIES.map((x) => x[0]).join() === LANGS.join() && ALL.join() === LANGS.join(), LANGS.join());
 
   // a catalogue as GET /api/checkout would answer it, read by the page's own reader
   const answer = (live: Record<string, Record<string, string>>, max: number) => ({
@@ -50,7 +61,7 @@ export async function run(): Promise<R> {
     ids.map(tileName).join(', '));
   check('a tile id the table does not know (or a hostile one: constructor, __proto__) has no row, no name, and is never for sale',
     ['nope', 'constructor', '__proto__', 'toString', ''].every((id) => tileRow(id) === null && tileName(id) === '' && tileState(id, trio).sale === 'soon' && tileState(id, trio).style === null), '');
-  for (const [lang, c] of [['en', en], ['de', de], ['lt', lt], ['hu', hu]] as const) {
+  for (const [lang, c] of COPIES) {
     const items = c.styles.items as Record<string, Record<string, string>>;
     check(`the copy (${lang}) holds no tile name: every tile's entry is its description "d" only`,
       ids.every((id) => items[id] && Object.keys(items[id]).join() === 'd' && items[id].d.length > 10) && Object.keys(items).length === ids.length, Object.keys(items['powder'] ?? {}).join());
@@ -99,7 +110,7 @@ export async function run(): Promise<R> {
 
   // --- the FAQ answer about other people's eyes
   const other = (copy: typeof en, open: boolean, eyes: number) => faqEntries(copy as never, open, eyes).find((x) => x.id === 'other')!.a;
-  for (const [lang, c] of [['en', en], ['de', de], ['lt', lt], ['hu', hu]] as const) {
+  for (const [lang, c] of COPIES) {
     check(`faqEntries (${lang}): the answer about other people's eyes names no count while ordering is closed or only one eye can be bought, and prints {max} only when several eyes can be ordered`,
       !/\{max\}|\d/.test(other(c, false, 3)) && !/\{max\}|\d/.test(other(c, true, 1)) && !/\{max\}|\d/.test(other(c, true, 0)) && other(c, true, 3).includes('{max}') && other(c, true, 2).includes('{max}'), other(c, true, 3).slice(0, 80));
   }
@@ -107,8 +118,8 @@ export async function run(): Promise<R> {
     faqEntries(en as never, true, 0).find((x) => x.id === 'order')!.a === faqEntries(en as never, true, 5).find((x) => x.id === 'order')!.a
     && faqEntries(en as never, true, 5).find((x) => x.id === 'order')!.a !== faqEntries(en as never, false, 5).find((x) => x.id === 'order')!.a, '');
 
-  // --- the words that are new, in four languages
-  for (const [lang, c] of [['en', en], ['de', de], ['lt', lt], ['hu', hu]] as const) {
+  // --- the words that are new, in four languages (eight since 2026-11-13)
+  for (const [lang, c] of COPIES) {
     const s = c.styles;
     check(`the new words (${lang}): "more styles soon" and the combo card's two titles exist, the soon title and the soon line name no count, the title holds {max}, the black row takes its style from the registry`,
       s.moreSoon.length > 8 && s.comboTitleSoon.length > 8 && !/[0-9{]/.test(s.moreSoon + s.comboTitleSoon) && s.comboTitle.includes('{max}') && c.pricing.rows.black.b.includes('{name}') && c.pricing.rows.two.b === '{styles}.' && c.pricing.rows.art.b === '{styles}.',
@@ -123,11 +134,12 @@ export async function run(): Promise<R> {
     { name: 'open, the pairs and four eyes', answer: answer({ 'solo.powder': { '1': 'live' }, 'duo.kiss_collision': { '2': 'live' }, 'duo.clean': { '2': 'live' }, 'grp.collision': { '3': 'live', '4': 'live' } }, 4) },
   ];
   const rendered = await renderGate(states);
-  const tileHtml = (si: number, lang: 'en' | 'de' | 'lt' | 'hu', id: string) => rendered.scenarios[si].langs[lang]!.tiles.find((t) => t.id === id)!.html;
+  const tileHtml = (si: number, lang: (typeof ALL)[number], id: string) => rendered.scenarios[si].langs[lang]!.tiles.find((t) => t.id === id)!.html;
   const shows = (html: string) => ({ chip: /class="lp-soon"/.test(html), price: /<b>/.test(html), state: /data-state="(\w+)"/.exec(html)?.[1] });
   check('rendered: closed, every tile of the page says Soon in its own language and prints no price; the open page with one style ticked prints a price on that one tile only and Soon on the 29 others (the tile of Spiral Galaxy since 2026-10-30, the three of 2026-11-02); open with nothing ticked is as closed',
     rendered.errors.length === 0 && rendered.pictures.length === 0
-    && (['en', 'de', 'lt', 'hu'] as const).every((lang) => {
+    && new Set(ALL.map((lang) => rendered.scenarios[0].langs[lang]!.soon)).size === 8
+    && ALL.every((lang) => {
       const soon = rendered.scenarios[0].langs[lang]!.soon;
       return rendered.scenarios[0].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price && t.html.includes(`>${soon}</span>`))
         && rendered.scenarios[2].langs[lang]!.tiles.every((t) => shows(t.html).chip && !shows(t.html).price)
@@ -136,7 +148,9 @@ export async function run(): Promise<R> {
     }), JSON.stringify([rendered.errors, rendered.pictures]));
   check('rendered: a tile for sale is marked "sale" and shows no Soon chip, a tile that cannot be bought is marked "soon", and the tile heading is the registry\'s name',
     shows(tileHtml(1, 'en', 'powder')).state === 'sale' && !shows(tileHtml(1, 'en', 'powder')).chip && shows(tileHtml(1, 'en', 'duo_kiss')).state === 'soon' && tileHtml(1, 'en', 'duo_kiss').includes('<h3>Kiss Collision</h3>')
-    && tileHtml(1, 'de', 'fam_trio').includes('<h3>Family Colours</h3>') && tileHtml(1, 'lt', 'radiance').includes('<h3>Radiance</h3>') && tileHtml(1, 'hu', 'clean').includes('<h3>Clean Iris</h3>'), '');
+    && tileHtml(1, 'de', 'fam_trio').includes('<h3>Family Colours</h3>') && tileHtml(1, 'lt', 'radiance').includes('<h3>Radiance</h3>') && tileHtml(1, 'hu', 'clean').includes('<h3>Clean Iris</h3>')
+    && tileHtml(1, 'hr', 'powder').includes('<h3>Powder Burst</h3>') && tileHtml(1, 'fi', 'powder').includes('<h3>Powder Burst</h3>') && shows(tileHtml(1, 'fi', 'powder')).state === 'sale'
+    && tileHtml(1, 'et', 'duo_kiss').includes('<h3>Kiss Collision</h3>') && shows(tileHtml(1, 'et', 'duo_kiss')).state === 'soon' && tileHtml(1, 'lv', 'fam_trio').includes('<h3>Family Colours</h3>'), '');
   // 2026-10-22 (the owner: "why is everything soon?"): this check pinned "not a number in the closed state". The closed table is the shop's price list now: its four
   // rows print their prices, none says Soon and none names a style (the one notice above it says that ordering opens soon); the open state is unchanged.
   check('rendered: the price table prints the art price and names the styles for sale in the state with one style ticked; closed, it is the price list (four prices, no Soon, no style named, no "soon" line in a row); the hero line is held back (inert) while nothing can be bought for one eye',
@@ -159,9 +173,10 @@ export async function run(): Promise<R> {
   check('rendered: the several-eyes card of the pairs and the families carries the title without a count and no number while no count from two eyes can be bought (closed, one style, nothing ticked), and the title "to 4 eyes" with the further-eye price once two, three and four eyes can; the one-eye group has no card',
     [0, 1, 2].every((si) => comboOf(si, 'two')?.[1] === soonTitle && !/\d/.test(comboOf(si, 'two')?.[2] ?? '0') && comboOf(si, 'family')?.[1] === soonTitle)
     && comboOf(3, 'two')?.[1] === fourTitle && /\d/.test(comboOf(3, 'two')?.[2] ?? '') && comboOf(3, 'family')?.[1] === fourTitle && comboOf(0, 'one') === null, JSON.stringify([comboOf(0, 'two'), comboOf(3, 'two')]));
-  const faqAnswer = (si: number, lang: 'en' | 'de' | 'lt' | 'hu') => /<details id="faq-other"[^>]*><summary[^>]*>[\s\S]*?<\/summary><p>([\s\S]*?)<\/p>/.exec(rendered.scenarios[si].langs[lang]!.faq)?.[1] ?? '';
+  const faqAnswer = (si: number, lang: (typeof ALL)[number]) => /<details id="faq-other"[^>]*><summary[^>]*>[\s\S]*?<\/summary><p>([\s\S]*?)<\/p>/.exec(rendered.scenarios[si].langs[lang]!.faq)?.[1] ?? '';
   check('rendered: the FAQ answer about other people\'s eyes names no count while ordering is closed or one eye is the most that can be bought, and says "up to 4 eyes" once four can (in every language)',
-    (['en', 'de', 'lt', 'hu'] as const).every((lang) => [0, 1, 2].every((si) => !/\d/.test(faqAnswer(si, lang))) && /4/.test(faqAnswer(3, lang)) && faqAnswer(3, lang) !== faqAnswer(1, lang)), faqAnswer(3, 'en'));
+    ALL.every((lang) => [0, 1, 2].every((si) => faqAnswer(si, lang).length > 20 && !/\d/.test(faqAnswer(si, lang))) && /4/.test(faqAnswer(3, lang)) && faqAnswer(3, lang) !== faqAnswer(1, lang))
+    && new Set(ALL.map((lang) => faqAnswer(3, lang))).size === 8, ALL.map((lang) => faqAnswer(3, lang).slice(0, 40)).join(' | '));
   check('rendered: the FAQ question about ordering takes its open wording only when ordering is open (open with one style ticked or with the pairs, the plain one closed or with nothing ticked)',
     (() => {
       const item = en.faq.items.find((x) => x.id === 'order')!;

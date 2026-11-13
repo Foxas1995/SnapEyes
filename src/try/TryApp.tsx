@@ -12,6 +12,7 @@ import { T, setCopyLang } from './copy';
 import { detectLang, rememberLang, type Lang } from './lang';
 import { CROP_MAX_PX } from './crop';
 import { LANG_NAMES, LOCALES, marketLangs } from '../shared/lang';
+import { LangMenu, wantsLangMenu } from '../shared/LangMenu';
 import { ResultView } from './ResultView';
 import { Working } from './Working';
 import { GuideVideo } from '../shared/GuideVideo';
@@ -1251,6 +1252,8 @@ export const TryApp: React.FC = () => {
  *  languages, below 400 px with five (the euro market since Croatian, 2026-10-28: five full buttons are 206 px, which met the logo up to 375 px). */
 const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lang, onSwitch }) => {
   const langs = marketLangs(currentMarket());
+  // more than five languages (the euro market since 2026-11-13): a menu, not a row (src/shared/LangMenu.tsx)
+  if (wantsLangMenu(langs)) return <LangMenu label={T.switchLabel} lang={lang} langs={langs} onSwitch={onSwitch} />;
   const narrow = langs.length > 4 ? 'max-[400px]:min-w-[28px] max-[400px]:px-1.5' : 'max-[340px]:min-w-[28px] max-[340px]:px-1.5';
   return (
     <div role="group" aria-label={T.switchLabel} className="shrink-0 flex items-center rounded-full border border-white/10 p-0.5 text-[11px] font-semibold tracking-[0.12em]">

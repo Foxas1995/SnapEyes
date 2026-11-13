@@ -44,7 +44,7 @@ const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const dist = resolve(opt('--dist', join(ROOT, 'dist')));
 const only = opt('--only') ? new Set(opt('--only').split(',')) : null;
 const wants = (name) => !only || only.has(name);
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 
 const problems = [];
 const fail = (check, msg) => { problems.push(`${check}: ${msg}`); console.log(`  FAIL ${check}: ${msg}`); };
@@ -515,11 +515,11 @@ async function checkHeader() {
   expect('header', m3.href === '#styles', `at the styles section the current link is ${m3.href}`);
   await page.eval("document.querySelector('#langSeg button[lang=de]').click()");
   await sleep(1600);
-  const m4 = JSON.parse(await page.eval(`JSON.stringify((() => { const cur = document.querySelector('.lp-nav a[aria-current]'), m = document.querySelector('.lp-nav-mark'); const mr = m.getBoundingClientRect(), cr = cur.getBoundingClientRect(); return { href: cur.getAttribute('href'), text: cur.textContent, dx: Math.round(mr.left - cr.left), dw: Math.round(mr.width - cr.width), n: getComputedStyle(document.getElementById('langSeg')).getPropertyValue('--n') }; })())`));
+  const m4 = JSON.parse(await page.eval(`JSON.stringify((() => { const cur = document.querySelector('.lp-nav a[aria-current]'), m = document.querySelector('.lp-nav-mark'); const mr = m.getBoundingClientRect(), cr = cur.getBoundingClientRect(); return { href: cur.getAttribute('href'), text: cur.textContent, dx: Math.round(mr.left - cr.left), dw: Math.round(mr.width - cr.width) }; })())`));
   expect('header', Math.abs(m4.dx) <= 1 && Math.abs(m4.dw) <= 1, `after switching to German the marker is off its link (${JSON.stringify(m4)})`);
-  expect('header', m4.n.trim() === '1', `the language switch's place is --n ${m4.n} after choosing German (want 1)`);
-  const ind = JSON.parse(await page.eval(`JSON.stringify((() => { const i = document.querySelector('.lp-seg-ind').getBoundingClientRect(), b = document.querySelector('#langSeg button[aria-pressed=true]').getBoundingClientRect(); return { dx: Math.round(i.left - b.left), dw: Math.round(i.width - b.width), pressed: document.querySelector('#langSeg button[aria-pressed=true]').lang }; })())`));
-  expect('header', ind.pressed === 'de' && Math.abs(ind.dx) <= 2 && Math.abs(ind.dw) <= 2, `the pressed background is off the pressed button (${JSON.stringify(ind)})`);
+  // the language menu (since 2026-11-13 a <details>, no sliding background any more): after the choice its pill shows the language, the menu is closed, one button is pressed
+  const ind = JSON.parse(await page.eval(`JSON.stringify((() => { const d = document.getElementById('langMenu'); return { pill: document.getElementById('langBtn').textContent.trim(), open: d.open, pressed: [...d.querySelectorAll('button[aria-pressed=true]')].map((b) => b.lang).join(), slide: !!document.querySelector('.lp-seg-ind') }; })())`));
+  expect('header', ind.pill === 'DE' && !ind.open && ind.pressed === 'de' && !ind.slide, `after choosing German the language menu is ${JSON.stringify(ind)} (want its pill DE, closed, de pressed)`);
   await page.close();
   // no horizontal overflow of the header with the menu button, at the narrow widths
   for (const [lang, w] of [['de', 320], ['hu', 320], ['en', 360], ['lt', 375], ['de', 640], ['en', 768], ['de', 959]]) {
@@ -529,7 +529,7 @@ async function checkHeader() {
     expect('header', o.sw <= o.iw && o.right <= o.iw + 0.5 && o.overlap.length === 0, `${lang} ${w}px: the header overflows or its parts overlap (${JSON.stringify(o)})`);
     await p.close();
   }
-  if (!problems.some((x) => x.startsWith('header'))) pass('header', 'glass .5 s, the marker follows the section, clears on a section with no link and re-measures after a language switch, the pressed background sits on its button, no overflow from 320 to 959 px');
+  if (!problems.some((x) => x.startsWith('header'))) pass('header', 'glass .5 s, the marker follows the section, clears on a section with no link and re-measures after a language switch, the language menu closes on the choice with its pill showing it, no overflow from 320 to 959 px');
 }
 
 // ---------------------------------------------------------------------------------------------------- menu

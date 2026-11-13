@@ -695,7 +695,10 @@ def beacon(body):
 # ----------------------------------------------------------------------------- the emails
 ROW_LABEL = {"en": "Price list that applied to your order", "de": "Preisliste, die für Ihre Bestellung galt",
              "lt": "Jūsų užsakymui taikytas kainoraštis", "hu": "A megrendelésére alkalmazott árlista",
-             "hr": "Cjenik koji je vrijedio za vašu narudžbu"}
+             "hr": "Cjenik koji je vrijedio za vašu narudžbu",
+             "fi": "Tilaukseesi sovellettu hinnasto",
+             "et": "Sinu tellimuse puhul kehtinud hinnakiri",
+             "lv": "Cenrādis, kas tika piemērots jūsu pasūtījumam"}
 # The row names the price CLASSES, not a list of styles or a number of eyes (WP12, the terms of sale do the same): {black} is the one style of the black class
 # (catalogue.class_style("black"), Clean Iris once the v3 styles are live), every other style costs the art price, two or more eyes cost the same in any style.
 # No maximum number of eyes: it is a run-time catalogue value, and this row is part of the contract e-mail.
@@ -705,6 +708,9 @@ ROW_TEXT = {
     "lt": "viena akis, {black}: {b}; viena akis, bet kuris kitas stilius: {a}; dvi akys, bet kuris stilius: {t}; kiekviena papildoma akis: +{f}",
     "hu": "egy szem, {black}: {b}; egy szem, bármely más stílus: {a}; két szem, bármelyik stílus: {t}; minden további szem: +{f}",
     "hr": "jedno oko, {black}: {b}; jedno oko, bilo koji drugi stil: {a}; dva oka, bilo koji stil: {t}; svako sljedeće oko: +{f}",
+    "fi": "yksi silmä, {black}: {b}; yksi silmä, mikä tahansa muu tyyli: {a}; kaksi silmää, mikä tahansa tyyli: {t}; jokainen lisäsilmä: +{f}",
+    "et": "üks silm, {black}: {b}; üks silm, mis tahes muu stiil: {a}; kaks silma, mis tahes stiil: {t}; iga järgmine silm: +{f}",
+    "lv": "viena acs, {black}: {b}; viena acs, jebkurš cits stils: {a}; divas acis, jebkurš stils: {t}; katra nākamā acs: +{f}",
 }
 
 

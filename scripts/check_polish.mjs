@@ -21,7 +21,7 @@ import { flowApi } from './lib/flowstub.mjs';
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
 const dist = resolve(args.includes('--dist') ? args[args.indexOf('--dist') + 1] : join(ROOT, 'dist'));
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const problems = [];
 let n = 0;
 const fail = (c, m) => { problems.push(`${c}: ${m}`); console.log(`  FAIL ${c}: ${m}`); };
@@ -39,7 +39,7 @@ const png = (f) => { if (!existsSync(f)) return null; const b = readFileSync(f);
   for (const [f, px] of [['apple-touch-icon.png', 180], ['icon-192.png', 192], ['icon-512.png', 512]]) ok('icons', (png(join(dist, f)) ?? []).join('x') === `${px}x${px}`, `${f} is ${png(join(dist, f))}, expected ${px}x${px}`);
   const man = existsSync(join(dist, 'manifest.webmanifest')) ? JSON.parse(readFileSync(join(dist, 'manifest.webmanifest'), 'utf8')) : { icons: [] };
   ok('icons', man.name && man.short_name && man.start_url === '/' && man.theme_color === '#07090e' && man.background_color === '#07090e' && man.icons.every((i) => existsSync(join(dist, i.src.slice(1)))), JSON.stringify(man).slice(0, 200));
-  for (const page of ['index.html', 'try.html', 'order.html', 'admin.html', 'privacy.html', 'terms.html', 'withdrawal.html', 'imprint.html', 'lp/en.html', 'lp/de.html', 'lp/lt.html', 'lp/hu.html', 'lp/hr.html', '404.html'].filter((p) => existsSync(join(dist, p)))) {
+  for (const page of ['index.html', 'try.html', 'order.html', 'admin.html', 'privacy.html', 'terms.html', 'withdrawal.html', 'imprint.html', 'lp/en.html', 'lp/de.html', 'lp/lt.html', 'lp/hu.html', 'lp/hr.html', 'lp/fi.html', 'lp/et.html', 'lp/lv.html', '404.html'].filter((p) => existsSync(join(dist, p)))) {
     const h = readFileSync(join(dist, page), 'utf8');
     const has = ['href="/favicon.ico"', 'href="/favicon-32.png"', 'rel="apple-touch-icon" href="/apple-touch-icon.png"', 'rel="manifest" href="/manifest.webmanifest"'].filter((t) => !h.includes(t));
     ok('icons', !has.length, `${page} does not link ${has.join(', ')}`);
@@ -102,12 +102,15 @@ try {
   for (const [name, url, width, sel] of [
     // [selector, px a touch has to be answered over]: 44 for a target with room round it; the links of a row or a list that sit 8 to 10 px apart (the footer's address, the
     // legal links of /try) take the whole space between their neighbours, which is the most a hit area can be without moving the layout
-    ['landing', '/?lang=en', 390, [['.lp-hdr .lp-seg button', 44], ['.lp-hdr .lp-logo', 44], ['a.lp-link-quiet', 44], ['.lp-ftr .lp-logo', 44], ['.lp-ftr address a', 24]]],
-    ['try', '/try?lang=en', 360, [['header button[lang]', 44], ['header a', 44], ['footer nav a, nav a', 24]]],
+    // the language switch is a menu since the eight languages of 2026-11-13 (src/landing/Header.tsx, src/shared/LangMenu.tsx): its pill is measured closed, its
+    // list of languages once it is open (below)
+    ['landing', '/?lang=en', 390, [['.lp-hdr .lp-lang summary', 44], ['.lp-hdr .lp-logo', 44], ['a.lp-link-quiet', 44], ['.lp-ftr .lp-logo', 44], ['.lp-ftr address a', 24]]],
+    ['try', '/try?lang=en', 360, [['header summary', 44], ['header a', 44], ['footer nav a, nav a', 24]]],
   ]) {
     const page = await fresh(width, 780);
     await page.goto(origin + url);
     await page.loaded();
+    const [menu, items] = [name === 'landing' ? '#langMenu' : 'header details', name === 'landing' ? '#langSeg button[lang]' : 'header button[lang]'];
     await waitFor(page, name === 'landing' ? "!!document.querySelector('.lp-ftr') && document.querySelector('.lp-slot') === null" : "!!document.querySelector('header button[lang]')", 25000);
     await sleep(800);
     for (const [s, need] of sel) {
@@ -115,13 +118,18 @@ try {
       ok('targets', rows.length > 0, `${name}: nothing matches ${s}`);
       for (const [h, reached, hit, text] of rows) ok('targets', hit && reached >= need, `${name} ${width}px: "${text}" (${s}) is ${h} px high and answers a touch over ${reached} px (needs ${need})`);
     }
-    // the layout did not move: the landing's header and the language buttons keep their boxes
-    if (name === 'landing') {
-      const box = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('.lp-hdr .lp-seg button')].map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }))`));
-      // 32 x 32 with up to four languages; with five (the euro market since Croatian, 2026-10-28: src/landing/css/header.css) 26 x 32, so that the logo keeps its width
-      const bw = box.length > 4 ? 26 : 32;
-      ok('targets', box.every(([w, h]) => w === bw && h === 32), `the language buttons are ${JSON.stringify(box)} at 390 px: their boxes moved (${bw} x 32 before)`);
-    }
+    // the layout did not move: the pill of the language menu keeps its box (36 px high, its hit area 44), and the menu is closed until it is pressed
+    // (the landing's pill is its <summary>, with a taller hit area drawn round it; on /try the <summary> is the 44 px hit area and the pill is the span inside it)
+    const pill = JSON.parse(await page.eval(`JSON.stringify((() => { const d = document.querySelector(${JSON.stringify(menu)}); const r = d.querySelector(${JSON.stringify(name === 'landing' ? 'summary' : 'summary > span')}).getBoundingClientRect(); return { h: Math.round(r.height), w: Math.round(r.width), open: d.open, n: d.querySelectorAll('button[lang]').length }; })())`));
+    ok('targets', pill.h === 36 && pill.w >= 44 && pill.w <= 64 && !pill.open && pill.n === LANGS.length, `${name}: the language menu's pill is ${JSON.stringify(pill)} at ${width} px (36 px high, 44 to 64 wide, closed, ${LANGS.length} languages)`);
+    // opened: every language is a row of 44 px that answers a touch, inside the screen
+    await page.eval(`document.querySelector(${JSON.stringify(menu)}).open = true`);
+    await sleep(300);
+    const rows = await reaches(page, items);
+    ok('targets', rows.length === LANGS.length, `${name}: the open language menu shows ${rows.length} languages, not ${LANGS.length}`);
+    for (const [h, reached, hit, text] of rows) ok('targets', hit && reached >= 44, `${name} ${width}px: "${text}" of the open language menu is ${h} px high and answers a touch over ${reached} px (needs 44)`);
+    const inside = JSON.parse(await page.eval(`JSON.stringify((() => { const r = document.querySelector(${JSON.stringify(items)}).parentElement.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right), innerWidth, document.documentElement.scrollWidth]; })())`));
+    ok('targets', inside[0] >= 0 && inside[1] <= inside[2] && inside[3] <= inside[2], `${name}: the open language menu runs off the screen (${JSON.stringify(inside)})`);
     await page.close();
   }
 
@@ -178,4 +186,4 @@ if (problems.length) {
   console.error(`polish check FAILED (${problems.length} of ${n}):\n  ${problems.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`polish check ok: ${n} checks (icons and manifest, the 404 page in five languages, tap targets of 44 px, the first screen of /try on short phones, the HEIC message)`);
+console.log(`polish check ok: ${n} checks (icons and manifest, the 404 page in ${LANGS.length} languages, tap targets of 44 px, the first screen of /try on short phones, the HEIC message)`);

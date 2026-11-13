@@ -93,7 +93,7 @@ const STEP_KINDS = ['prep', 'art', 'scene', 'finish', 'bands'];
 const WAVES = ['R1', 'R2', 'R3', 'legacy'];
 const MAX_EYES = 8;
 /** The languages every layout has a word in (the site's five: src/shared/lang.ts). */
-export const LAYOUT_LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+export const LAYOUT_LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const PUBLIC_FIELDS = ['accent', 'eyes', 'gate', 'group', 'layouts', 'legacy', 'name', 'pick', 'price_class', 'reason', 'slug', 'stage', 'stage_by_eyes', 'tile_order', 'work_side'];
 const ENGINE_FIELDS = ['atlas', 'canvases', 'design_by_eyes', 'engine', 'fill_side', 'gate_rules', 'plates', 'steps', 'wave'];
 const HEART_WORDS = ['heart', 'hearts', 'love', 'loves', 'valentine', 'valentines', 'cupid'];

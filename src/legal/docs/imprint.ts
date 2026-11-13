@@ -11,6 +11,9 @@ import { patchDoc } from '../patch';
 import { lt } from './imprint.lt';
 import { hu } from './imprint.hu';
 import { hr } from './imprint.hr';
+import { fi } from './imprint.fi';
+import { et } from './imprint.et';
+import { lv } from './imprint.lv';
 
 const rows = (lang: 'en' | 'de'): Array<[string, string]> => {
   const de = lang === 'de';
@@ -103,7 +106,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const IMPRINT: LegalDocs = { en, de, lt, hu, hr };
+export const IMPRINT: LegalDocs = { en, de, lt, hu, hr, fi, et, lv };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 const gst = (lang: 'en' | 'de'): [string, string] => (lang === 'de'

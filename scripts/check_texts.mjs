@@ -54,11 +54,11 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const SHY = new RegExp(String.fromCharCode(0xad), 'g');              // the soft hyphens of the German titles
 const NBSP_RE = new RegExp(String.fromCharCode(0xa0), 'g');          // the no-break spaces of prices
 const SEPARATOR = new RegExp('[ ' + String.fromCharCode(0xa0) + ']·[ ' + String.fromCharCode(0xa0) + ']', 'g');   // " · " between the parts of a label
-const NEW_LANGS = ['lt', 'hu', 'hr'];
+const NEW_LANGS = ['lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 // the four dashes the owner rules out (U+2012 to U+2015), built from their codes so that this file holds none itself
 const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']');
 
@@ -144,8 +144,14 @@ const wordRe = (words) => new RegExp(`(?<![\\p{L}])(${words.join('|')})(?![\\p{L
 const ENGLISH = wordRe(WORDS_EN);
 const GERMAN = wordRe(WORDS_DE);
 // A word of the lists above that is a real word of one language only, left out for that language alone (the lists stay whole for
-// the others): Croatian "zum" (zoom, "zum 2x"), which is not the German "zum".
-const NATIVE_OK = { hr: /(?<![\p{L}])zum(?![\p{L}])/giu };
+// the others): Croatian "zum" (zoom, "zum 2x"), which is not the German "zum"; Finnish "alle" (under); Estonian "see", "need" (this, these),
+// "must" (black), "alles" (still) and "sind" (you); Latvian "der" (fits).
+const NATIVE_OK = {
+  hr: /(?<![\p{L}])zum(?![\p{L}])/giu,
+  fi: /(?<![\p{L}])alle(?![\p{L}])/giu,
+  et: /(?<![\p{L}])(?:see|need|must|alles|sind)(?![\p{L}])/giu,
+  lv: /(?<![\p{L}])der(?![\p{L}])/giu,
+};
 // The brand names are English in every language (api/_lib/styles_registry.py names): the eleven names of the v3 catalogue, the held
 // and later ones (Elements, Reflection, Infinity Chain, Universe Duo) and the looks inside Universe, so that no string that names
 // them is flagged as untranslated English in Lithuanian, Hungarian or Croatian. Longer names come before the names they contain.
@@ -186,6 +192,12 @@ const CLAIMS = {
     /legtöbbet választott/i, /\b100\s?(?:%|százalék)/i],
   hr: [/jedinstven/i, /neponovljiv/i, /(?:nema|ni) dva ista/i, /ručn(?:o|i|a) (?:rađen|izrađen|slikan|oslikan)|ručni rad/i, /svako (?:pojedino )?vlakno/i, /best[- ]?seller/i,
     /najprodavanij/i, /najpopularnij/i, /najčešće (?:biran|odabran)/i, /\b100\s?(?:%|posto)/i],
+  fi: [/ainutlaatui/i, /ainutkertai/i, /uniikk/i, /ei kahta samanlaista/i, /käsin ?tehty|käsityö/i, /käsin ?maalat/i, /jokai(?:nen|sen|sta) (?:yksittäi\p{L}+ )?säi(?:e|keen|että)/iu,
+    /best[- ]?seller|myydyin|myydyim/i, /suosituin|suosituim/i, /useimmin valit|eniten valit/i, /\b100\s?(?:%|prosent)/i],
+  et: [/ainulaad/i, /unikaal/i, /kordumatu/i, /(?:pole|ei ole) kaht(?:e)? (?:ühesugust|samasugust)/i, /käsitöö|käsitsi (?:tehtud|valmistatud|maalitud|joonistatud)/i,
+    /iga (?:üksik )?kiud/i, /best[- ]?seller|enim ?müüdud|müügihit/i, /populaarseim|kõige populaarsem|enim valitud|kõige sagedamini valitud/i, /\b100\s?(?:%|protsen)/i],
+  lv: [/unikāl/i, /vienreizēj/i, /neatkārtojam/i, /nav divu vienādu/i, /roku darb/i, /ar rokām (?:zīmēt|gleznot|darināt)/i, /katr[aāu] (?:atsevišķ\p{L}+ )?šķiedr/iu,
+    /best[- ]?seller/i, /vispārdotāk/i, /vispopulārāk/i, /visbiežāk (?:izvēlēt|pirkt)/i, /\b100\s?(?:%|procent)/i],
 };
 
 /** A claim the plate styles cannot keep in one string (check 10), as a sentence, or null. */
@@ -296,7 +308,7 @@ function composeWords(root, out) {
   const triples = [];
   for (const row of text.slice(from, to + 2).matchAll(/^ {4}"([a-z_]+)": \{([^}]*)\}/gm)) {
     const seen = new Set();
-    for (const m of row[2].matchAll(/"(en|de|lt|hu|hr)":\s*"((?:[^"\\]|\\.)*)"/g)) {
+    for (const m of row[2].matchAll(/"(en|de|lt|hu|hr|fi|et|lv)":\s*"((?:[^"\\]|\\.)*)"/g)) {
       let s;
       try { s = JSON.parse(`"${m[2]}"`); } catch { out.push(`${rel}: WORDS.${row[1]}.${m[1]} is not a plain string`); continue; }
       seen.add(m[1]);
@@ -379,7 +391,7 @@ function checkDoc(id, edition, lang, en, doc, out, strings) {
     const a = s.blocks.map(kf).filter(Boolean).join(','), b = t.blocks.map(kf).filter(Boolean).join(',');
     if (a !== b) out.push(`${at}.${s.id}: other block kinds than the English text (${b} against ${a})`);
     const la = linkList(s.blocks), lb = linkList(t.blocks);
-    const same = lang === 'hu' || lang === 'hr' ? la.every((x) => lb.includes(x)) : la.join(' ') === lb.join(' ');   // hu: its added paragraphs may link too; hr: AZOP
+    const same = lang === 'hu' || lang === 'hr' || lang === 'et' ? la.every((x) => lb.includes(x)) : la.join(' ') === lb.join(' ');   // hu: its added paragraphs may link too; hr: AZOP; et: Andmekaitse Inspektsioon
     if (!same) out.push(`${at}.${s.id}: other links than the English text
    en: ${la.join(' ')}
    ${lang}: ${lb.join(' ')}`);
@@ -399,11 +411,14 @@ function checkDoc(id, edition, lang, en, doc, out, strings) {
 
 // the sentence of each language's terms that names the contract languages, and how it names each language
 const CONTRACT = {
-  en: { sentence: /^The contract languages? (?:are|is)\b/, words: { en: 'English', de: 'German', lt: 'Lithuanian', hu: 'Hungarian', hr: 'Croatian' } },
-  de: { sentence: /^Vertragssprachen sind/, words: { en: 'Englisch', de: 'Deutsch', lt: 'Litauisch', hu: 'Ungarisch', hr: 'Kroatisch' } },
-  lt: { sentence: /^Sutarties kalbos:/, words: { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų', hr: 'kroatų' } },
-  hu: { sentence: /^A szerződés nyelve/, words: { en: 'angol', de: 'német', lt: 'litván', hu: 'magyar', hr: 'horvát' } },
-  hr: { sentence: /^Jezici ugovora:/, words: { en: 'engleski', de: 'njemački', lt: 'litavski', hu: 'mađarski', hr: 'hrvatski' } },
+  en: { sentence: /^The contract languages? (?:are|is)\b/, words: { en: 'English', de: 'German', lt: 'Lithuanian', hu: 'Hungarian', hr: 'Croatian', fi: 'Finnish', et: 'Estonian', lv: 'Latvian' } },
+  de: { sentence: /^Vertragssprachen sind/, words: { en: 'Englisch', de: 'Deutsch', lt: 'Litauisch', hu: 'Ungarisch', hr: 'Kroatisch', fi: 'Finnisch', et: 'Estnisch', lv: 'Lettisch' } },
+  lt: { sentence: /^Sutarties kalbos:/, words: { en: 'anglų', de: 'vokiečių', lt: 'lietuvių', hu: 'vengrų', hr: 'kroatų', fi: 'suomių', et: 'estų', lv: 'latvių' } },
+  hu: { sentence: /^A szerződés nyelve/, words: { en: 'angol', de: 'német', lt: 'litván', hu: 'magyar', hr: 'horvát', fi: 'finn', et: 'észt', lv: 'lett' } },
+  hr: { sentence: /^Jezici ugovora:/, words: { en: 'engleski', de: 'njemački', lt: 'litavski', hu: 'mađarski', hr: 'hrvatski', fi: 'finski', et: 'estonski', lv: 'latvijski' } },
+  fi: { sentence: /^Sopimuskielet:/, words: { en: 'englanti', de: 'saksa', lt: 'liettua', hu: 'unkari', hr: 'kroatia', fi: 'suomi', et: 'viro', lv: 'latvia' } },
+  et: { sentence: /^Lepingu keeled:/, words: { en: 'inglise', de: 'saksa', lt: 'leedu', hu: 'ungari', hr: 'horvaadi', fi: 'soome', et: 'eesti', lv: 'läti' } },
+  lv: { sentence: /^Līguma valodas:/, words: { en: 'angļu', de: 'vācu', lt: 'lietuviešu', hu: 'ungāru', hr: 'horvātu', fi: 'somu', et: 'igauņu', lv: 'latviešu' } },
 };
 
 const isoDay = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
@@ -496,7 +511,8 @@ export function checkAnalyzeTexts(root) {
   const src = read('api/analyze.py');
   const de = entries(src, 'TEXT_DE');
   if (!de) return ['api/analyze.py: TEXT_DE not found (the text check reads it)'];
-  const dicts = { de, lt: entries(read('api/_lib/analyze_lt.py'), 'TEXT_LT'), hu: entries(read('api/_lib/analyze_hu.py'), 'TEXT_HU'), hr: entries(read('api/_lib/analyze_hr.py'), 'TEXT_HR') };
+  const dicts = { de, lt: entries(read('api/_lib/analyze_lt.py'), 'TEXT_LT'), hu: entries(read('api/_lib/analyze_hu.py'), 'TEXT_HU'), hr: entries(read('api/_lib/analyze_hr.py'), 'TEXT_HR'),
+    fi: entries(read('api/_lib/analyze_fi.py'), 'TEXT_FI'), et: entries(read('api/_lib/analyze_et.py'), 'TEXT_ET'), lv: entries(read('api/_lib/analyze_lv.py'), 'TEXT_LV') };
   const reasons = [...(/^BLOCK_MESSAGES = \{([^}]*)\}/m.exec(src)?.[1] ?? '').matchAll(/"([a-z_]+)":/g)].map((x) => x[1]);
   for (const x of src.matchAll(/^BLOCK_MESSAGES\["([a-z_]+)"\] =/gm)) reasons.push(x[1]);
   if (!reasons.length) out.push('api/analyze.py: BLOCK_MESSAGES not found (the text check reads it)');
@@ -539,7 +555,8 @@ function pyValue(text, marker, from = 0) {
  *  Australian one and the one of the US edition, as api/_lib/pay.py has them, in this order: en, de, lt, hu, hr, au en, au de,
  *  us en, then the print box in en, de, lt, hu, hr (api/_lib/prints.py PRINT_CONSENT_TEXT); the versions before 2026-10-28.1 had no
  *  Croatian text, and their fingerprints were taken without it; the versions before 2026-10-28.2 had no US text, and theirs were
- *  taken without it; the versions before 2026-10-28.3 had no print box, and theirs were taken without it). The version is what an order
+ *  taken without it; the versions before 2026-10-28.3 had no print box, and theirs were taken without it; 2026-11-13.1 added the Finnish,
+ *  Estonian and Latvian waivers after the Croatian one and their print boxes after the Croatian one). The version is what an order
  *  records next to its own copy of the text, so a text that changes under the same version would make the record say
  *  something else than what the customer ticked. Changing a consent text means a new CONSENT_VERSION in api/_lib/pay.py
  *  and WITHDRAWAL_CONSENT_VERSION in src/shared/legal.ts, and its fingerprint here (the check prints it). */
@@ -548,6 +565,7 @@ export const CONSENT_FINGERPRINTS = {
   '2026-10-28.1': 'fb948e2a56ef9967f3b101af39e73b6d8c449f18e2b449144e9f5b0b86098dd8',
   '2026-10-28.2': '5082c38c317956e779b8625a40472b4359a39bfe116c58e1e924523c54211a26',
   '2026-10-28.3': '547eb1f2abca838ca4a1efb2476c8d61607ee92b65fc78c83ecabc8bd5e24909',
+  '2026-11-13.1': '429f003ee1fb0a49f26f9eb4f38d1a196a7bc5f00358f6f8b75fb256faa18c02',
 };
 
 /** The withdrawal waiver the checkbox shows and the server records (src/shared/legal.ts CHECKOUT_LEGAL, api/_lib/pay.py
@@ -558,20 +576,20 @@ export function checkServerTexts(root, legal, orderCopy) {
   const out = [];
   const read = (rel) => { try { return readFileSync(join(root, rel), 'utf8').replace(/\r\n/g, '\n'); } catch { return null; } };
   const pay = read('api/_lib/pay.py'), withdraw = read('api/_lib/withdraw.py');
-  const files = {
-    payLt: read('api/_lib/pay_lt.py'), payHu: read('api/_lib/pay_hu.py'), payHr: read('api/_lib/pay_hr.py'),
-    wLt: read('api/_lib/withdraw_lt.py'), wHu: read('api/_lib/withdraw_hu.py'), wHr: read('api/_lib/withdraw_hr.py'),
-  };
-  if (pay === null || withdraw === null || Object.values(files).some((f) => f === null)) return ['api/_lib/pay.py, withdraw.py, pay_lt.py, pay_hu.py, pay_hr.py, withdraw_lt.py, withdraw_hu.py or withdraw_hr.py not found (the text check reads them)'];
+  // every language but English and German has its own server files: api/_lib/pay_<lang>.py and withdraw_<lang>.py
+  const OWN = LANGS.filter((l) => l !== 'en' && l !== 'de');
+  const payOf = Object.fromEntries(OWN.map((l) => [l, read(`api/_lib/pay_${l}.py`)]));
+  const wOf = Object.fromEntries(OWN.map((l) => [l, read(`api/_lib/withdraw_${l}.py`)]));
+  if (pay === null || withdraw === null || OWN.some((l) => payOf[l] === null || wOf[l] === null)) return ['api/_lib/pay.py, withdraw.py or a language\'s pay_<lang>.py or withdraw_<lang>.py not found (the text check reads them)'];
   const base = pay.indexOf('CONSENT_TEXT_EN_DE = {');
   const consent = {
     en: pyValue(pay, '"en":', base), de: pyValue(pay, '"de":', base),
-    lt: pyValue(files.payLt, '\nCONSENT_TEXT_LT ='), hu: pyValue(files.payHu, '\nCONSENT_TEXT_HU ='), hr: pyValue(files.payHr, '\nCONSENT_TEXT_HR ='),
+    ...Object.fromEntries(OWN.map((l) => [l, pyValue(payOf[l], `\nCONSENT_TEXT_${l.toUpperCase()} =`)])),
   };
   const wbase = withdraw.indexOf('STATEMENT = {');
   const statement = {
     en: pyValue(withdraw, '"en":', wbase), de: pyValue(withdraw, '"de":', wbase),
-    lt: pyValue(files.wLt, '\nSTATEMENT_LT ='), hu: pyValue(files.wHu, '\nSTATEMENT_HU ='), hr: pyValue(files.wHr, '\nSTATEMENT_HR ='),
+    ...Object.fromEntries(OWN.map((l) => [l, pyValue(wOf[l], `\nSTATEMENT_${l.toUpperCase()} =`)])),
   };
   for (const l of LANGS) {
     if (consent[l] === null) out.push(`the ${l} withdrawal waiver was not found in the server files (the text check reads it)`);
@@ -603,8 +621,9 @@ export function checkServerTexts(root, legal, orderCopy) {
       out.push(`the ${l} print box differs between the page (src/shared/legal.ts CHECKOUT_LEGAL.${l}.printConsent) and the server (api/_lib/prints.py PRINT_CONSENT_TEXT): it must be the same words`);
     }
   }
-  const texts = [consent.en, consent.de, consent.lt, consent.hu, consent.hr, au.en, au.de, us.en, ...LANGS.map((l) => printBox[l])];
-  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py (CONSENT_TEXT_EN_DE, CONSENT_TEXT_AU, CONSENT_TEXT_US), pay_lt.py, pay_hu.py, pay_hr.py or prints.py (the text check reads them for its fingerprint)');
+  // since 2026-11-13.1: the waivers of all eight languages (en, de, lt, hu, hr, fi, et, lv), au en, au de, us en, then the eight print boxes
+  const texts = [...LANGS.map((l) => consent[l]), au.en, au.de, us.en, ...LANGS.map((l) => printBox[l])];
+  if (texts.some((t) => t === null)) out.push('a consent text was not found in api/_lib/pay.py (CONSENT_TEXT_EN_DE, CONSENT_TEXT_AU, CONSENT_TEXT_US), a language\'s pay_<lang>.py or prints.py (the text check reads them for its fingerprint)');
   else {
     const version = legal.WITHDRAWAL_CONSENT_VERSION;
     const print = createHash('sha256').update(JSON.stringify(texts)).digest('hex');
@@ -658,6 +677,21 @@ const HONESTY = {
     chips: { 'example.chip': 'Primjer', 'example.vis': 'Vizualizacija' },
     printing: { re: /Tisak nije dio vaše narudžbe/i, keys: PRINTING_KEYS },
     soon: { re: /Naručivanje se otvara uskoro/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+  fi: {
+    chips: { 'example.chip': 'Esimerkki', 'example.vis': 'Havainnekuva' },
+    printing: { re: /Tulostus ei kuulu tilaukseesi/i, keys: PRINTING_KEYS },
+    soon: { re: /Tilaaminen avautuu pian/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+  et: {
+    chips: { 'example.chip': 'Näide', 'example.vis': 'Visualiseering' },
+    printing: { re: /Trükkimine ei kuulu sinu tellimuse juurde/i, keys: PRINTING_KEYS },
+    soon: { re: /Tellimine avaneb peagi/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+  },
+  lv: {
+    chips: { 'example.chip': 'Piemērs', 'example.vis': 'Vizualizācija' },
+    printing: { re: /Druka nav jūsu pasūtījuma daļa/i, keys: PRINTING_KEYS },
+    soon: { re: /Pasūtījumus sāksim pieņemt drīz/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
 };
 // the question of the FAQ item "withdraw" is pinned to the words of src/landing/copy.ts WITHDRAW_Q (the old landing keyed its
@@ -801,7 +835,7 @@ export async function checkTexts(load, root) {
   if (lang.LANGS.join() !== LANGS.join()) out.push(`src/shared/lang.ts LANGS is ${lang.LANGS.join()}, this check knows ${LANGS.join()}: update scripts/check_texts.mjs`);
 
   // 1 + 2. the dictionaries
-  const strings = { en: [], de: [], lt: [], hu: [], hr: [] };
+  const strings = Object.fromEntries(LANGS.map((l) => [l, []]));
   const surfaces = [['landing', landing.COPY], ['try', tryCopy.COPY], ['order', orderCopy.ORDER_COPY]];
   for (const [name, dict] of surfaces) {
     for (const l of LANGS) {
@@ -896,7 +930,7 @@ export async function checkTexts(load, root) {
   for (const l of LANGS) {
     const page = aiMaterial.AI_MATERIAL_PAGE?.[l];
     if (typeof page !== 'string' || page.length < 80) { out.push(`src/shared/aiMaterial.ts: no ${l} page sentence about AI-made material (AI_MATERIAL_PAGE)`); continue; }
-    if (l !== 'hu' && page !== aiMaterial.AI_MATERIAL[l]) out.push(`src/shared/aiMaterial.ts: the ${l} page sentence differs from the legal one (only Hungarian has its own register)`);
+    if (!['hu', 'fi', 'et'].includes(l) && page !== aiMaterial.AI_MATERIAL[l]) out.push(`src/shared/aiMaterial.ts: the ${l} page sentence differs from the legal one (only Hungarian, Finnish and Estonian have a page register of their own: informal on the pages, formal in the legal texts)`);
     lint(`aiMaterial.page.${l}`, page, l, out);
     let how = null;
     try { how = (JSON.parse(readFileSync(join(root, 'src/landing/copy', `${l}.json`), 'utf8').replace(/^\ufeff/, '')).faq.items ?? []).find((it) => it && it.id === 'how') ?? null; } catch { out.push(`src/landing/copy/${l}.json: the FAQ (faq.items) cannot be read`); }

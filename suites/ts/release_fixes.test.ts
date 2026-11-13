@@ -2,6 +2,8 @@
 // scripts/check_motion_flow.mjs). What can be decided without a browser: the pages /try and /order fail open (a message with a way out when their script cannot load, a noscript
 // on /try), the slider of the result is a slider for the keyboard, the words that were missing exist in four languages, the grey of the small helper texts reads on the dark
 // page, forced colours keep the menu button and the gold buttons, focus and announcements are wired.
+// 2026-11-13: "four languages" is every language of the site, eight now (Croatian came on 2026-10-28, Finnish, Estonian and Latvian on 2026-11-13): the failsafe's
+// words, the slider's name and the words that were missing are held for all eight.
 // Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,8 +36,9 @@ export async function run(): Promise<R> {
     failsafe(tryHtml) && failsafe(orderHtml), '');
   for (const [name, h] of [['try.html', tryHtml], ['order.html', orderHtml]] as const) {
     const words = /var words = \{([\s\S]*?)\};/.exec(h)?.[1] ?? '';
-    check(`${name}: the failsafe has its words in English, German, Lithuanian and Hungarian, each with the sentence, the way out and the button`,
-      (['en', 'de', 'lt', 'hu'] as const).every((l) => new RegExp(`${l}: \\['[^']{15,}', '[^']{15,}', '[^']{3,}'\\]`).test(words)), words.slice(0, 80));
+    check(`${name}: the failsafe has its words in English, German, Lithuanian and Hungarian, and (2026-11-13) in Croatian, Finnish, Estonian and Latvian: every language of the site, each with the sentence, the way out and the button, eight different sentences`,
+      (['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const).every((l) => new RegExp(`${l}: \\['[^']{15,}', '[^']{15,}', '[^']{3,}'\\]`).test(words))
+        && new Set([...words.matchAll(/^\s*[a-z]{2}: \['([^']{15,})'/gm)].map((m) => m[1])).size === 8, words.slice(0, 80));
   }
   check('/try has a noscript with the support address (it was blank without JavaScript); /order keeps its own',
     /<noscript>[\s\S]*mailto:info@snapeyes\.com[\s\S]*<\/noscript>/.test(tryHtml) && /<noscript>[\s\S]*mailto:info@snapeyes\.com[\s\S]*<\/noscript>/.test(orderHtml), '');
@@ -44,13 +47,13 @@ export async function run(): Promise<R> {
   check('no dash in the two pages or in the failsafe words', [tryHtml, orderHtml].every((h) => ![...h].some((c) => bad.includes(c))), '');
 
   // ---- the slider of the result is a slider for the keyboard (M5)
-  const slider = (lang: 'en' | 'de' | 'lt' | 'hu') => { setCopyLang(lang); return renderToStaticMarkup(createElement(CompareSlider, { before: 'data:,a', after: 'data:,b' })); };
+  const slider = (lang: 'en' | 'de' | 'lt' | 'hu' | 'hr' | 'fi' | 'et' | 'lv') => { setCopyLang(lang); return renderToStaticMarkup(createElement(CompareSlider, { before: 'data:,a', after: 'data:,b' })); };
   const en = slider('en');
   check('the frame of the before and after slider is role=slider, in the tab order, named, with a value from 0 to 100 and a spoken value ("photo 50 percent")',
     /role="slider"/.test(en) && /tabindex="0"/.test(en) && /aria-valuemin="0"/.test(en) && /aria-valuemax="100"/.test(en) && /aria-valuenow="50"/.test(en) && /aria-valuetext="photo 50 percent"/.test(en)
     && new RegExp(`aria-label="${T.result.sliderLabel}"`).test(slider('en')), en.slice(0, 300));
-  const labels = (['en', 'de', 'lt', 'hu'] as const).map((l) => { const h = slider(l); return /aria-label="([^"]+)"/.exec(h)?.[1] ?? ''; });
-  check('the slider is named in four languages, four different words', new Set(labels).size === 4 && labels.every((s) => s.length > 10), labels.join(' | '));
+  const labels = (['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const).map((l) => { const h = slider(l); return /aria-label="([^"]+)"/.exec(h)?.[1] ?? ''; });
+  check('the slider is named in every language of the site (four at the release, eight since 2026-11-13), eight different words', new Set(labels).size === 8 && labels.every((s) => s.length > 10), labels.join(' | '));
   const src = read('src/try/CompareSlider.tsx');
   check('the arrows move the cut by 5, the page keys by 10, Home and End to the ends, and a key ends the sweep like a touch; the focus ring is drawn on the frame',
     /ArrowLeft/.test(src) && /ArrowRight/.test(src) && /'PageDown' \? -10/.test(src) && /'PageUp' \? 10/.test(src) && /'Home' \? 0/.test(src) && /'End' \? 100/.test(src) && /stopSweep\.current\(\)/.test(src.split('const onKey')[1] ?? '')
@@ -59,9 +62,9 @@ export async function run(): Promise<R> {
   // ---- the words that were missing, in four languages (M3, M5, H-M1)
   const keys = ['sliderLabel', 'sliderValue', 'previewReady', 'aiMaterial'] as const;
   for (const key of keys) {
-    const vals = (['en', 'de', 'lt', 'hu'] as const).map((l) => { setCopyLang(l); return String((T.result as Record<string, unknown>)[key] ?? ''); });
-    check(`/try result.${key}: a sentence in each of the four languages, all different${key === 'sliderValue' ? ', each with the token {n}' : ''}`,
-      new Set(vals).size === 4 && vals.every((v) => v.length > 8 && (key !== 'sliderValue' || v.includes('{n}'))), vals.map((v) => v.slice(0, 30)).join(' | '));
+    const vals = (['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'] as const).map((l) => { setCopyLang(l); return String((T.result as Record<string, unknown>)[key] ?? ''); });
+    check(`/try result.${key}: a sentence in each of the eight languages (four at the release), all different${key === 'sliderValue' ? ', each with the token {n}' : ''}`,
+      new Set(vals).size === 8 && vals.every((v) => v.length > 8 && (key !== 'sliderValue' || v.includes('{n}'))), vals.map((v) => v.slice(0, 30)).join(' | '));
   }
   setCopyLang('en');
 

@@ -5,10 +5,10 @@
 //
 // Without a browser and without any script, over HTTP, as a crawler (user agent facebookexternalhit, no Accept-Language, no cookies), against a server that
 // answers the way the Vercel deployment does (scripts/lib/static.mjs: the file system first, then the rewrites of vercel.json):
-//   1. the build has the five editions (dist/lp/en.html, de, lt, hu, hr) and NO dist/index.html (a file for / would answer before any rewrite: Vercel checks
+//   1. the build has the eight editions (dist/lp/en.html, de, lt, hu, hr, fi, et, lv) and NO dist/index.html (a file for / would answer before any rewrite: Vercel checks
 //      the file system first, proven on the CLI's own build output), every rewrite of vercel.json names a clean path ("/lp/de", never ".html", which the
 //      cleanUrls redirect catches) that is a file of the build, and no file of the build answers the source of a rewrite;
-//   2. /, /?lang=en, de, lt, hu, hr, ?lang=de&m=au, ?m=lt, ?m=hu, ?m=hr, ?m=us, ?lang=en&m=hu, an unknown or upper-case ?lang= are answered 200 at once (no redirect) with the
+//   2. /, /?lang=en, de, lt, hu, hr, fi, et, lv, ?lang=de&m=au, ?m=lt, ?m=hu, ?m=hr, ?m=us, ?lang=en&m=hu, an unknown or upper-case ?lang= are answered 200 at once (no redirect) with the
 //      edition of the language the link asks for, whose html lang, title, description, canonical, hreflang, og:url, og:locale (and its three alternates), og:title,
 //      og:description, og:image (+ width, height, alt) and twitter tags are the ones the page's own copy (src/landing/copy/<lang>.json meta), src/shared/lang.ts and
 //      src/landing/shell/share.json give, with exactly one canonical, the page's own address (English at /, the others at /?lang=xx);
@@ -36,7 +36,7 @@ const vercelFile = resolve(opt('--vercel', join(ROOT, 'vercel.json')));
 const problems = [];
 const fail = (m) => problems.push(m);
 const UA = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const CARD_MAX = 150_000;
 
 const load = async (p) => (await runnerImport(p, { configFile: false, logLevel: 'silent' })).module;
@@ -103,10 +103,10 @@ const expected = (l) => {
     twitterDescription: metas[l].shareDescription,
   };
 };
-const HREFLANG = { en: `${SITE_ORIGIN}/`, de: `${SITE_ORIGIN}/?lang=de`, lt: `${SITE_ORIGIN}/?lang=lt`, hu: `${SITE_ORIGIN}/?lang=hu`, hr: `${SITE_ORIGIN}/?lang=hr`, 'x-default': `${SITE_ORIGIN}/` };
+const HREFLANG = { ...Object.fromEntries(LANGS.map((l) => [l, l === 'en' ? `${SITE_ORIGIN}/` : `${SITE_ORIGIN}/?lang=${l}`])), 'x-default': `${SITE_ORIGIN}/` };
 
 const LINKS = [
-  ['/', 'en'], ['/?lang=en', 'en'], ['/?lang=de', 'de'], ['/?lang=lt', 'lt'], ['/?lang=hu', 'hu'], ['/?lang=hr', 'hr'],
+  ['/', 'en'], ['/?lang=en', 'en'], ['/?lang=de', 'de'], ['/?lang=lt', 'lt'], ['/?lang=hu', 'hu'], ['/?lang=hr', 'hr'], ['/?lang=fi', 'fi'], ['/?lang=et', 'et'], ['/?lang=lv', 'lv'],
   ['/?lang=de&m=au', 'de'], ['/?lang=de&m=hu', 'de'], ['/?m=lt', 'lt'], ['/?m=hu', 'hu'], ['/?lang=en&m=hu', 'en'], ['/?m=au', 'en'], ['/?m=eu', 'en'],
   // 2026-10-28: the Croatian market opens in Croatian (its own language, like lt and hu), the US market in English (its edition's only language)
   ['/?m=hr', 'hr'], ['/?lang=en&m=hr', 'en'], ['/?m=us', 'en'],

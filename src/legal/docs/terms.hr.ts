@@ -20,7 +20,7 @@
 //    mandatory law a consumer living in Croatia keeps (Rome I Art. 6(2)).
 //  - VAT: the owner's sentence wherever a price is final ("MB „Portretizuokis“ nije obveznik PDV-a, stoga se PDV ne
 //    obračunava."), built from company('hr') so that it follows config.ts.
-//  - The contract languages are named ("Jezici ugovora: hrvatski, engleski, njemački, litavski i mađarski."): the other
+//  - The contract languages are named ("Jezici ugovora: hrvatski, engleski, njemački, litavski, mađarski, finski, estonski i latvijski."): the other
 //    languages' terms must name Croatian too (the build checks it, scripts/check_texts.mjs CONTRACT).
 //  - The latest delivery time is "u roku od N sati" (satiGen below: the genitive after "od", "1 sata", "2 sata",
 //    "48 sati").
@@ -89,7 +89,7 @@ export const hr: LegalDoc = {
       blocks: [
         `Pregledi i cijene na našoj internetskoj stranici još nisu obvezujuća ponuda. Prije plaćanja možete provjeriti svoje oči, stil, raspored i natpis te ispraviti svaki unos tako da se vratite ili ponovno snimite fotografiju. Zatim našim gumbom „${CHECKOUT_LEGAL_HR.continueButton}“ otvarate stranicu za plaćanje našeg pružatelja usluga plaćanja Stripe; taj gumb još ne izvršava narudžbu. Na toj stranici upisujete svoju adresu e-pošte i podatke za plaćanje te ih možete ispraviti. Narudžbu s obvezom plaćanja izvršavate kada ondje potvrdite plaćanje gumbom za plaćanje.`,
         'Ugovor je sklopljen kada je vaše plaćanje potvrđeno. Tada se otvara vaša stranica narudžbe, a njezinu poveznicu šaljemo vam e-poštom zajedno s potvrdom narudžbe. Čim je ta e-poruka poslana, ondje počinjemo izrađivati vašu datoteku.',
-        'Jezici ugovora: hrvatski, engleski, njemački, litavski i mađarski.',
+        'Jezici ugovora: hrvatski, engleski, njemački, litavski, mađarski, finski, estonski i latvijski.',
         'Vašu narudžbu pohranjujemo s podacima o ugovoru: naručeno umjetničko djelo, cijena, datum, vaša adresa e-pošte i vaš pristanak da odmah započnemo. Vaša stranica narudžbe prikazuje te podatke sve dok čuvamo vašu narudžbu. Zasebnu kopiju ovih uvjeta za svaku narudžbu ne čuvamo. Umjesto toga, e-poruka s potvrdom narudžbe sadrži, kao tekst, podatke o vašoj narudžbi, ove uvjete i informacije o pravu na jednostrani raskid ugovora s primjerkom obrasca o jednostranom raskidu, u verziji koja je vrijedila kada ste naručili: sačuvajte tu e-poruku. Ovu stranicu također možete u bilo kojem trenutku spremiti ili ispisati.',
       ],
     },

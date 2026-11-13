@@ -9,6 +9,8 @@
 //   5. a style the gate holds back for these eyes is not a tile (src/try/picker.ts heldTile).
 // The quality answer below is the REAL one the live server gave for the owner's own photo d01 on 2026-10-12 (verdict weak, Detail 29: "Silpna nuotrauka", "siekite 70+"
 // on the old page), trimmed to the fields the page reads; the lamp answer is the same photo with the lamp's own words of api/analyze.py.
+// 2026-11-13: eight languages. The Finnish, Estonian and Latvian lamp words are the "lamp" sentences of api/_lib/analyze_fi.py, analyze_et.py and analyze_lv.py (as the Croatian
+// one is api/_lib/analyze_hr.py's), and the checks that read the dictionaries' source read all seven files of src/try/copy*.ts (they read three before, of four languages).
 import { readFileSync } from 'node:fs';
 import { COPY, T, setCopyLang } from '../../src/try/copy';
 import { LANGS } from '../../src/shared/lang';
@@ -30,6 +32,9 @@ const LAMP_WORDS = {
   lt: 'Lempos šviesa iškraipo Jūsų akių spalvą. Dienos šviesa pro langą perteikia tikresnę spalvą.',
   hu: 'A lámpafény elszínezi a szemed színét. Egy ablakon beeső nappali fény valódibb színt ad.',
   hr: 'Svjetlo lampe mijenja boju vaših očiju. Dnevno svjetlo s prozora ili svjetiljka sa strane daju vjerniju boju.',
+  fi: 'Lampun valo sävyttää silmiesi väriä. Päivänvalo ikkunasta tai taskulamppu sivulta antaa aidomman värin.',
+  et: 'Lambivalgus muudab sinu silmade värvi. Päevavalgus aknast või taskulamp küljelt annab tõetruuma värvi.',
+  lv: 'Lampas gaisma maina jūsu acu krāsu. Dienasgaisma no loga vai lukturītis no sāniem dod patiesāku krāsu.',
 };
 const shot = (q: Partial<Quality>): Analysis => ({ ok: true, ticket: 'work.x', iris: { cx: 0.5, cy: 0.5, r: 0.3 }, quality: { ...D01, ...q } });
 
@@ -61,16 +66,18 @@ export async function run(): Promise<Row[]> {
 
   // ---- 3. no verdict, no meter, no tips list, no tagline
   const tryApp = read('src/try/TryApp.tsx');
+  // the source of every dictionary of /try: English and German in copy.ts, one file each for the other six languages
+  const COPY_SRC = ['src/try/copy.ts', ...LANGS.filter((l) => l !== 'en' && l !== 'de').map((l) => `src/try/copy.${l}.ts`)].map(read).join('\n');
   check('the quality step and the shot collector show no verdict pill, no Detail meter and no tips list (the components are gone from the page)',
     !/\b(Verdict|DetailMeter|ShotNotes)\b/.test(tryApp) && !/visibleTips\(|meterBand\(|shownDetail\(/.test(tryApp) && !/T\.quality\.(verdicts|detail|aimFor|fibresResolved|continueAnyway)\b/.test(tryApp));
-  check('... and the four dictionaries have no words for them any more ("Silpna nuotrauka", "Detalumas", "Siekite 70+", "Continue anyway" and their twins), nor a badge per block reason',
+  check('... and the dictionaries (four then, eight since 2026-11-13) have no words for them any more ("Silpna nuotrauka", "Detalumas", "Siekite 70+", "Continue anyway" and their twins), nor a badge per block reason',
     LANGS.every((l) => {
       const q = COPY[l].quality as Record<string, unknown>;
       return !('verdicts' in q) && !('detail' in q) && !('aimFor' in q) && !('fibresResolved' in q) && !('continueAnyway' in q) && !('picked' in q)
         && Object.values(COPY[l].quality.blocks).every((b) => !('badge' in b)) && !('badge' in COPY[l].quality.blockedOther) && !('headerDetail' in COPY[l].collector);
-    }) && !/Silpna nuotrauka|Siekite \$\{|Weak photo|Schwaches Foto|Gyenge fotó/.test(read('src/try/copy.ts') + read('src/try/copy.lt.ts') + read('src/try/copy.hu.ts')));
+    }) && LANGS.length === 8 && !/Silpna nuotrauka|Siekite \$\{|Weak photo|Schwaches Foto|Gyenge fotó|Slaba fotografija|Heikko kuva|Heikko valokuva|Nõrk foto|Vāja fotogrāfija/.test(COPY_SRC));
   check('the header of /try holds the logo and the language switch and no tagline: no "Private Atelier" in /try\'s dictionaries or its page, no header.tag',
-    LANGS.every((l) => !('tag' in COPY[l].header)) && !/Private Atelier/.test(read('src/try/copy.ts') + read('src/try/copy.lt.ts') + read('src/try/copy.hu.ts') + tryApp) && !/T\.header\.tag/.test(tryApp));
+    LANGS.every((l) => !('tag' in COPY[l].header)) && !/Private Atelier/.test(COPY_SRC + tryApp) && !/T\.header\.tag/.test(tryApp));
   check('a blocked photo keeps its one reason line and its retake steps (the engine\'s hard blocks are the only stop), in every language',
     LANGS.every((l) => { setCopyLang(l); const b = blockOf(shot({ blocked: true, block_reason: 'too_blurry' })); return !!b && b.reason.length > 30 && b.steps.length === 4 && b.title.length > 10; }));
   setCopyLang('en');

@@ -239,6 +239,12 @@ REFUSALS = {
            "Ezt az előnézetet nem tudtuk beolvasni. Kérjük, fotózd le újra a szemedet."),
     "hr": ("Ovaj je pregled prestar. Molimo, ponovno fotografirajte oko.",
            "Ovaj pregled nismo mogli pročitati. Molimo, ponovno fotografirajte oko."),
+    "fi": ("Tämä esikatselu on liian vanha. Ota kuva uudelleen.",
+           "Emme pystyneet lukemaan tätä esikatselua. Ota kuva uudelleen."),
+    "et": ("See eelvaade on liiga vana. Palun tee foto uuesti.",
+           "Me ei saanud seda eelvaadet lugeda. Palun tee foto uuesti."),
+    "lv": ("Šis priekšskatījums ir pārāk vecs. Lūdzu, nofotografējiet vēlreiz.",
+           "Šo priekšskatījumu neizdevās nolasīt. Lūdzu, nofotografējiet vēlreiz."),
 }
 
 

@@ -192,10 +192,12 @@ ast.parse(SRC, feature_version=(3, 12))
 check("api/compose.py parses as Python 3.12 (Vercel's default) and carries no dash, no invisible character and no written price",
       not re.search(DASH, SRC) and not re.search(INVISIBLE, SRC)
       and not re.search(r"\d[.,]\d{2}\s*(EUR|" + chr(0x20ac) + r")|A\$\d|\d\s?Ft\b", SRC))
-check("every refusal has its sentence in the five languages (en, de, lt, hu, hr), different in each, with no dash",
-      {"stage", "eyes", "gate", "reseal", "bar_pupil", "too_many_styles", "busy_retry", "tiles_paused"} <= set(CMP.WORDS)
-      and all(set(CMP.WORDS[k]) == {"en", "de", "lt", "hu", "hr"} and len({CMP.WORDS[k][lg] for lg in CMP.WORDS[k]}) == 5
-              and all(not re.search(DASH, CMP.WORDS[k][lg]) for lg in CMP.WORDS[k]) for k in CMP.WORDS), sorted(CMP.WORDS))
+# 2026-11-13: Finnish, Estonian and Latvian; every sentence a filled text, and the keys this suite asks for by name (plate_retry since the plate styles) are all there
+check("every refusal has its sentence in the eight languages (en, de, lt, hu, hr, fi, et, lv), different in each, with no dash",
+      {"stage", "eyes", "gate", "reseal", "bar_pupil", "too_many_styles", "busy_retry", "tiles_paused", "plate_retry"} <= set(CMP.WORDS)
+      and all(set(CMP.WORDS[k]) == {"en", "de", "lt", "hu", "hr", "fi", "et", "lv"} and len({CMP.WORDS[k][lg] for lg in CMP.WORDS[k]}) == 8
+              and all(isinstance(CMP.WORDS[k][lg], str) and CMP.WORDS[k][lg].strip() and not re.search(DASH, CMP.WORDS[k][lg]) for lg in CMP.WORDS[k]) for k in CMP.WORDS),
+      sorted(k for k in CMP.WORDS if set(CMP.WORDS[k]) != {"en", "de", "lt", "hu", "hr", "fi", "et", "lv"} or len(set(CMP.WORDS[k].values())) != 8) or sorted(CMP.WORDS))
 check("the admin module is imported on use only (never at the top of compose.py) and the lab flag is read as the boolean true",
       not re.search(r"^(import|from)\s.*\bops\b", SRC, re.M) and "ops.check_admin_key" in SRC and 'body.get("lab") is True' in SRC)
 child = ("import sys, importlib.util as u; sys.path.insert(0, r'%s'); s = u.spec_from_file_location('compose', r'%s'); m = u.module_from_spec(s); s.loader.exec_module(m); "
@@ -1244,7 +1246,7 @@ check("the legacy page's own request (sealed, style, names, pad, lang) over HTTP
 c, j, r = post("/api/compose", {"sealed": S1, "style": "solo.gold", "lang": "de"})
 check("a held style over HTTP: 422 style_unavailable with the sentence in the page's language (German here), no Retry-After", c == 422 and j["reason"] == "style_unavailable" and j["why"] == "stage"
       and j["error"] == CMP.WORDS["stage"]["de"] and "Retry-After" not in r.headers, (c, j))
-for lg in ("lt", "hu", "hr"):
+for lg in ("lt", "hu", "hr", "fi", "et", "lv"):      # Finnish, Estonian and Latvian since 2026-11-13
     c_, j_, _ = post("/api/compose", {"sealed": S1, "style": "solo.gold", "lang": lg})
     check(f"... and in {lg}", c_ == 422 and j_["error"] == CMP.WORDS["stage"][lg])
 c, j, r = post("/api/compose", {"sealed": S1, "style": "supernova", "size": 700})

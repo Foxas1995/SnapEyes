@@ -36,7 +36,7 @@ from . import layout_names as LN
 STYLES = R.STYLES                  # {id: public entry}
 ENGINE = X.ENGINE                  # {id: engine entry}
 LAYOUT_NAMES = LN.LAYOUT_NAMES     # {layout id: {en, de, lt, hu}}: the words (api/_lib/layout_names.py)
-LAYOUT_LANGS = ("en", "de", "lt", "hu", "hr")
+LAYOUT_LANGS = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
 PLATES_VERSION = R.PLATES_VERSION
 DEFAULT_STYLE = R.DEFAULT_STYLE
 

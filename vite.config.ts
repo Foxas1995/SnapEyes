@@ -205,7 +205,7 @@ function lateMainScript(): Plugin {
         // the chunk of each language's words (src/landing/copy/<lang>.json, loaded by the page on demand): the loader starts the visitor's own
         // one together with the page's script, instead of when the page's script asks for it a round trip later
         const langChunks: Record<string, string> = {}
-        for (const l of ['de', 'lt', 'hu', 'hr']) {
+        for (const l of ['de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv']) {
           const chunk = Object.values(ctx.bundle).find((c) => c.type === 'chunk' && (c.facadeModuleId ?? '').split('\\').join('/').endsWith(`/landing/copy/${l}.json`))
           if (chunk) langChunks[l] = `/${chunk.fileName}`
         }
@@ -220,9 +220,9 @@ function lateMainScript(): Plugin {
 }
 
 // The landing page in each of its languages (scripts/lib/langheads.mjs has the why). A crawler does not run the page's script, so the
-// share tags of the HTML it is sent are the whole card: this writes one HTML file per language under dist/lp/ (en, de, lt, hu, hr), each with
+// share tags of the HTML it is sent are the whole card: this writes one HTML file per language under dist/lp/ (en, de, lt, hu, hr, fi, et, lv), each with
 // its own title, description, og:*, twitter:*, og:locale, og:url, canonical, share picture and <html lang>, made from the final index.html,
-// and takes dist/index.html away. vercel.json rewrites / (?lang=de, ?lang=lt, ?lang=hu, ?lang=hr, the market's own language, else English) to the right
+// and takes dist/index.html away. vercel.json rewrites / (?lang=de, ?lang=lt, ?lang=hu, ?lang=hr, ?lang=fi, ?lang=et, ?lang=lv, the market's own language, else English) to the right
 // file. There must be no dist/index.html: Vercel looks in the file system BEFORE the rewrites, so an index.html would answer / itself and
 // the rewrites for the language links would never fire. The checks that read the landing's HTML read dist/lp/en.html (scripts/lib/langheads.mjs).
 function langPages(): Plugin {

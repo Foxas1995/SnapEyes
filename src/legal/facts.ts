@@ -24,6 +24,10 @@ const WORDS: Record<Lang, SellerWords> = {
   lt: { quotes: ['„', '“'], country: 'Lietuva', phone: ', telefonas', phoneLine: ', telefonas:', represented: ', kuriai atstovauja', email: 'el. paštas' },
   hu: { quotes: ['„', '”'], country: 'Litvánia', phone: ', telefon:', phoneLine: ', telefon:', represented: ', képviseli:', email: 'e-mail' },
   hr: { quotes: ['„', '“'], country: 'Litva', phone: ', telefon', phoneLine: ', telefon:', represented: ', zastupnik:', email: 'e-pošta' },
+  fi: { quotes: ['”', '”'], country: 'Liettua', phone: ', puhelin', phoneLine: ', puhelin:', represented: ', edustaja', email: 'sähköposti' },
+  et: { quotes: ['„', '“'], country: 'Leedu', phone: ', telefon', phoneLine: ', telefon:', represented: ', esindaja', email: 'e-post' },
+  // "ko pārstāv": the active voice, so that the representative's name stays in the nominative as config.ts holds it
+  lv: { quotes: ['„', '”'], country: 'Lietuva', phone: ', tālrunis', phoneLine: ', tālrunis:', represented: ', ko pārstāv', email: 'e-pasts' },
 };
 
 export const company = (lang: Lang) => `MB ${WORDS[lang].quotes[0]}${SELLER.name}${WORDS[lang].quotes[1]}`;

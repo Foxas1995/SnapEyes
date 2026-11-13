@@ -42,12 +42,22 @@
     .lp-hdr .lp-btn-line { display: inline-flex; }
   }
 
-  /* the language switch: one pressed background (the span) slides to the pressed button in .3 s; the buttons are all as wide as --bw, so the
-     place of the n-th is n * --bw. The words of the page change at once. */
+  /* the segmented control (the currency switch, src/landing/CurrencySwitch.tsx; the language switch was one until 2026-11-13): the buttons are all as wide as --bw */
   .lp-seg { --bw: 40px; position: relative; }
   .lp-seg button { position: relative; z-index: 1; width: var(--bw); min-width: 0; padding: 0; }
-  .lp-seg-ind { position: absolute; left: 2px; top: 2px; bottom: 2px; width: var(--bw); border-radius: 999px; background: rgba(255, 255, 255, .12); box-shadow: inset 0 0 0 1px var(--gold); translate: calc(var(--n, 0) * var(--bw)) 0; transition: translate var(--d-tap) var(--ease-out); pointer-events: none; }
-  .lp-seg button[aria-pressed="true"] { background: none; box-shadow: none; }
+
+  /* the language menu: a pill with the page's language and a small arrow; its list opens under it, right aligned, each language named in itself */
+  .lp-lang { position: relative; flex: none; }
+  .lp-lang summary { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--t-1); cursor: pointer; list-style: none; user-select: none; position: relative; }
+  .lp-lang summary::-webkit-details-marker { display: none; }
+  .lp-lang summary::before { content: ""; position: absolute; inset: -6px 0; }
+  .lp-lang summary::after { content: ""; width: 6px; height: 6px; margin-top: -3px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; rotate: 45deg; opacity: .7; }
+  .lp-lang[open] summary::after { margin-top: 3px; rotate: -135deg; }
+  .lp-lang summary:hover, .lp-lang[open] summary { color: #fff; border-color: var(--gold); }
+  .lp-lang-list { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; display: grid; min-width: 168px; padding: 6px; border: 1px solid var(--line-2); border-radius: 14px; background: #0b0e15; box-shadow: 0 18px 40px rgba(0, 0, 0, .55); }
+  .lp-lang-list button { height: 44px; padding: 0 12px; border-radius: 9px; font-size: 14px; text-align: left; color: var(--t-1); }
+  .lp-lang-list button:hover { color: #fff; background: rgba(255, 255, 255, .06); }
+  .lp-lang-list button[aria-pressed="true"] { color: #fff; background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px var(--gold); }
 
   /* the menu button: below 960 px, where the navigation is hidden (it is reached by the dialog, css below) */
   .lp-menu-btn { display: none; flex: none; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: -10px; border-radius: 50%; color: var(--t-1); }
@@ -65,6 +75,7 @@
   /* a phone: the language switch is as compact as a row of words, so the menu button has room beside it at 320 px */
   @media (max-width: 639px) {
     .lp-seg { --bw: 32px; border: 0; padding: 0 2px; }
+    .lp-lang summary { padding: 0 10px; }
     .lp-hdr .lp-wrap { gap: 8px; }
     .lp-hdr-r { gap: 4px; }
   }
@@ -82,14 +93,6 @@
   @media (max-width: 299px) {
     .lp-seg { --bw: 26px; }
     .lp-logo:not(.lp-logo-full) img { height: 38px; }
-  }
-  /* five languages (the euro market since Croatian, 2026-10-28): five buttons of 32 or 28 px squeezed the logo out of its shape on a phone (133 px
-     wide instead of 151 at 375 px), so on a phone they are 26 px (24 px under 300 px) and the logo keeps its width; a market with fewer keeps the sizes above */
-  @media (max-width: 639px) {
-    .lp-seg:has(> button:nth-of-type(5)) { --bw: 26px; }
-  }
-  @media (max-width: 299px) {
-    .lp-seg:has(> button:nth-of-type(5)) { --bw: 24px; }
   }
 
   /* the dialog: the whole screen, a near black, the links in the display face. It fades and rises in .5 s and leaves the same way (display and

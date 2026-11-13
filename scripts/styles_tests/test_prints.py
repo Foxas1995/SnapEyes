@@ -27,6 +27,7 @@ catalogue switch: a legacy style is the vehicle of the checkout, as in the payme
     python test_prints.py       prints PASS/FAIL per check, "N of M passed"; exits 1 on any failure"""
 import atexit
 import base64
+import hashlib
 import io
 import json
 import os
@@ -349,9 +350,19 @@ check("a 3:2 artwork is centred on the square print file and its background is c
       "nothing of it is cut",
       pic.shape[0] == pic.shape[1] == info["width"] and info["art"][0] == info["design"] and abs(int(pic[5, 5, 0]) - 40) < 12
       and abs(int(pic[pic.shape[0] // 2, pic.shape[1] // 2, 0]) - 250) < 20, (info, pic[5, 5], pic[pic.shape[0] // 2, pic.shape[1] // 2]))
-check("the product's name in the five languages, with its size (no-break spaces)",
+# 2026-11-13: Finnish, Estonian and Latvian (languages, not markets: the prints stay on eu, lt and hr); a name for every print and every country in each of the eight
+check("the product's name in the five languages, with its size (no-break spaces)"
+      " - 1113: in the eight languages (Finnish, Estonian, Latvian), every print and every country named in each, the eight names of a print all different",
+      PR.LANGS == ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
+      and PR.product_name("acrylic40", "fi") == "Akryylilasitaulu 40\u00a0×\u00a040\u00a0cm" and PR.product_name("canvas40", "et").startswith("Lõuend mustas ujuvraamis")
+      and PR.product_name("poster50", "lv") == "Plakāts 50\u00a0×\u00a050\u00a0cm" and PR.product_name("poster50", "fi").startswith("Juliste")
+      and [PR.country_name("DE", l) for l in ("fi", "et", "lv")] == ["Saksa", "Saksamaa", "Vācija"]
+      and [PR.country_name(cc, l) for cc, l in (("FI", "fi"), ("EE", "et"), ("LV", "lv"))] == ["Suomi", "Eesti", "Latvija"]
+      and all(len({PR.product_name(pid, l) for l in PR.LANGS}) == 8 for pid in ("acrylic30", "acrylic40", "acrylic60", "canvas40"))
+      and all(PR.product_name(p_["id"], l).endswith("\u00a0cm") and "\u00a0×\u00a0" in PR.product_name(p_["id"], l) for p_ in PR.products() for l in PR.LANGS)
+      and all(isinstance(PR.country_name(cc, l), str) and PR.country_name(cc, l).strip() for cc in PR.countries() for l in PR.LANGS) and
       PR.product_name("acrylic40", "en") == "Acrylic glass print 40 × 40 cm" and PR.product_name("canvas40", "lt").startswith("Drobė juodame rėme")
-      and PR.product_name("poster50", "hu").startswith("Poszter") and PR.country_name("DE", "hr") == "Njemačka", PR.product_name("acrylic40", "en"))
+      and PR.product_name("poster50", "hu").startswith("Poszter") and PR.country_name("DE", "hr") == "Njemačka", [PR.product_name("acrylic40", l) for l in PR.LANGS])
 src = "\n".join(open(os.path.join(API, "_lib", f), encoding="utf-8").read() for f in ("prints.py", "merchone.py", "print_offer.py", "print_names.py", "print_rates.py"))
 check("the new server files hold no dash and no credential", not re.search(DASH, src) and USER not in src and "MERCHONE_API_KEY=" not in src, "")
 
@@ -454,14 +465,39 @@ check("the metadata: the artwork's amount as before, and print, print_sku, print
       and p["metadata[print_amount]"] == "12900" and p["metadata[ship_amount]"] == "699" and p["metadata[ship_cc]"] == "DE", {k_: v for k_, v in p.items() if k_.startswith("metadata[")})
 rec = rj(f"orders/{o}/order.json")
 cp = (rec.get("checkout") or {}).get("print") or {}
-check("order.json keeps the print with the print box the customer ticked (consent version 2026-10-28.3, time, Lithuanian text, fingerprint)",
-      cp.get("product") == "acrylic60" and cp.get("country") == "DE" and cp.get("ship") == 699 and cp["consent"]["version"] == pay.CONSENT_VERSION == "2026-10-28.3"
+check("order.json keeps the print with the print box the customer ticked (consent version 2026-10-28.3, time, Lithuanian text, fingerprint)"
+      " - 1113: consent version 2026-11-13.1 (the Finnish, Estonian and Latvian boxes added; the Lithuanian text as it was)",
+      cp.get("product") == "acrylic60" and cp.get("country") == "DE" and cp.get("ship") == 699 and cp["consent"]["version"] == pay.CONSENT_VERSION == "2026-11-13.1"
       and cp["consent"]["text"] == PR.PRINT_CONSENT_TEXT["lt"] and len(cp["consent"]["text_sha256"]) == 16, cp)
 check("the reply names the print and the total Stripe charges (the artwork, the print, its shipping)",
       j.get("print") == {"product": "acrylic60", "country": "DE", "price": 12900, "ship": 699} and j.get("total") == j["amount"] + 12900 + 699, j)
 check("the withdrawal waiver of the file is unchanged and recorded as before (its text is the version's)",
       (rec["checkout"]["consent"]["text"] == pay.CONSENT_TEXT["lt"]) and pay.consent_text("2026-10-28.2", "en") == pay.CONSENT_TEXT["en"]
       and pay.consent_text("2026-10-28.3", "en", "us") == pay.CONSENT_TEXT_US["en"], rec["checkout"]["consent"])
+# 2026-11-13: the same checkout in Finnish, Estonian and Latvian (a poster to the language's own country): Stripe's line, shipping and notes and the recorded print box
+# are that language's, under the current consent version (the variables of the Lithuanian order above are used further down and stay untouched)
+PAYDUTY = {"fi": "maksuvelvollisuus", "et": "maksekohustusega", "lv": "pienākumu maksāt"}
+for l_, cc_ in (("fi", "FI"), ("et", "EE"), ("lv", "LV")):
+    o_l, k_l = draft(lang=l_)
+    ship_l = PR.shipping(cc_, "poster50")
+    c_l, j_l = co(o_l, k_l, lang=l_, print={"product": "poster50", "country": cc_}, consent_print=True, print_shown=3500 + (ship_l or 0))
+    p_l = H.Fake.creates[-1][0] if c_l == 200 else {}
+    cp_l = ((rj(f"orders/{o_l}/order.json").get("checkout") or {}).get("print") or {}) if c_l == 200 else {}
+    rec_l = (rj(f"orders/{o_l}/order.json").get("checkout") or {}) if c_l == 200 else {}
+    check(f"... and a checkout with a print in {l_} (a poster to {cc_}): the line item's name and description, the shipping label and the address note with the country's name, and the "
+          f"note above the pay button with the binding order sentence are in {l_}; order.json keeps the {l_} print box and the {l_} waiver under consent version 2026-11-13.1",
+          c_l == 200 and p_l.get("line_items[1][price_data][product_data][name]") == PR.product_name("poster50", l_) and p_l.get("line_items[1][price_data][unit_amount]") == "3500"
+          and p_l.get("line_items[1][price_data][product_data][description]") == PR.ITEM_DESC_PRINT[l_]
+          and p_l.get("shipping_address_collection[allowed_countries][0]") == cc_ and p_l.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") == str(ship_l)
+          and p_l.get("shipping_options[0][shipping_rate_data][display_name]") == PR.SHIP_LABEL[l_].format(country=PR.country_name(cc_, l_))
+          and p_l.get("custom_text[shipping_address][message]") == PR.SHIP_ADDRESS_NOTE[l_].format(country=PR.country_name(cc_, l_))
+          and p_l.get("custom_text[submit][message]") == PR.SUBMIT_NOTE_PRINT[l_] and PAYDUTY[l_] in PR.SUBMIT_NOTE_PRINT[l_]
+          and PR.SUBMIT_NOTE_PRINT[l_] not in [PR.SUBMIT_NOTE_PRINT[x] for x in PR.LANGS if x != l_] and PR.ITEM_DESC_PRINT[l_] not in [PR.ITEM_DESC_PRINT[x] for x in PR.LANGS if x != l_]
+          and cp_l.get("product") == "poster50" and cp_l.get("country") == cc_ and cp_l.get("consent", {}).get("version") == "2026-11-13.1" and cp_l["consent"]["lang"] == l_
+          and cp_l["consent"]["text"] == PR.PRINT_CONSENT_TEXT[l_] and cp_l["consent"]["text_sha256"] == hashlib.sha256(PR.PRINT_CONSENT_TEXT[l_].encode("utf-8")).hexdigest()[:16]
+          and rec_l.get("consent", {}).get("text") == pay.CONSENT_TEXT[l_] and rec_l["consent"]["version"] == "2026-11-13.1"
+          and j_l.get("print") == {"product": "poster50", "country": cc_, "price": 3500, "ship": ship_l},
+          (c_l, j_l, {k_: v for k_, v in p_l.items() if "line_items[1]" in k_ or k_.startswith(("custom_text", "shipping_options[0][shipping_rate_data][display"))}, cp_l))
 
 # ============================================================================================ 4. the payment and the confirmation
 section("4. the payment: paid.json, print.json, the amount, the confirmation e-mail")
@@ -658,10 +694,19 @@ def term_text(lang, edition=None):
 
 
 en, lt_, hu_, hr_, de_ = (term_text(x) for x in ("en", "lt", "hu", "hr", "de"))
+fi_, et_, lv_ = (term_text(x) for x in ("fi", "et", "lv"))      # 2026-11-13: the Finnish, Estonian and Latvian terms of the EU edition
 check("the EU terms in every language name the prints with their prices, the shipping table, the delivery countries, the manufacturer and its address, "
-      "Art. 16(c), the 7 days and the legal guarantee of two years",
-      all("Picanova GmbH" in t and "Eupener Straße 67" in t and "16" in t for t in (en, lt_, hu_, hr_, de_)) and "€59.00" in en and "59,00 €" in de_
-      and "Germany" in en and "Sweden" in en and "two years" in en and "7 days" in en and "Article 16(c)" in en and "30 days" in en, en[:300])
+      "Art. 16(c), the 7 days and the legal guarantee of two years"
+      " - 1113: in Finnish, Estonian and Latvian too (the manufacturer and its address, Article 16(c) in each language's own words, the prices of all five prints, 7 and 30 days, two years, "
+      "the 27 countries by their names in that language)",
+      all("Picanova GmbH" in t and "Eupener Straße 67" in t and "16" in t for t in (en, lt_, hu_, hr_, de_, fi_, et_, lv_)) and "€59.00" in en and "59,00 €" in de_
+      and "Germany" in en and "Sweden" in en and "two years" in en and "7 days" in en and "Article 16(c)" in en and "30 days" in en
+      and "16 artiklan c alakohta" in fi_ and "artikli 16 punkt c" in et_ and "16. panta c) punkts" in lv_
+      and all(all(re.search(r"(?<!\d)%s,00\s*€" % eur_, t) for eur_ in (59, 79, 129, 69, 35)) for t in (fi_, et_, lv_))
+      and all(re.search(r"(?<!\d)7\s%s" % d_, t) and re.search(r"(?<!\d)30\s%s" % d_, t) for d_, t in (("päivä", fi_), ("päeva", et_), ("dien", lv_)))
+      and "kahden vuoden" in fi_ and "kaheaastane" in et_ and re.search(r"divu gadu|divus gadus", lv_)
+      and all(PR.country_name(cc, l) in t for l, t in (("fi", fi_), ("et", et_), ("lv", lv_)) for cc in PR.countries()),
+      [(l, cc) for l, t in (("fi", fi_), ("et", et_), ("lv", lv_)) for cc in PR.countries() if PR.country_name(cc, l) not in t] or en[:300])
 check("the EU terms no longer say that no print is sold, in any language", all(x not in t for t, x in ((en, "We do not sell prints"), (de_, "Drucke, Rahmen oder andere"),
       (lt_, "Spaudinių, rėmelių ar kitų"), (hu_, "Nyomatot, keretet vagy más"), (hr_, "Ne prodajemo otiske"))), "")
 au, us_ = term_text("en", "au"), term_text("en", "us")
@@ -673,8 +718,11 @@ check("the Hungarian edition's terms (forints) carry the print section and say a
 priv = json.dumps(PACK)
 check("the privacy policy of the EU edition names the print partner as a recipient of the name and the address (the pack carries it for every language)",
       all(("Picanova" in (((docs.get(l) or {}).get("privacy") or {}).get("text", "") or "Picanova")) for l in ("en",)) or "Picanova" in priv, "")
-check("the consent version is 2026-10-28.3 on the server and the page, and the print box is the same words on both (the build's text check holds it)",
-      pay.CONSENT_VERSION == "2026-10-28.3" and "2026-10-28.3" in open(os.path.join(REPO, "src", "shared", "legal.ts"), encoding="utf-8").read()
+check("the consent version is 2026-10-28.3 on the server and the page, and the print box is the same words on both (the build's text check holds it)"
+      " - 1113: the consent version is 2026-11-13.1 on both, and the print box of each of the eight languages is the same words on both, eight different texts",
+      pay.CONSENT_VERSION == "2026-11-13.1" and "WITHDRAWAL_CONSENT_VERSION = '2026-11-13.1'" in open(os.path.join(REPO, "src", "shared", "legal.ts"), encoding="utf-8").read()
+      and "2026-10-28.3'" not in open(os.path.join(REPO, "src", "shared", "legal.ts"), encoding="utf-8").read().split("WITHDRAWAL_CONSENT_VERSION = ")[1][:20]
+      and set(PR.PRINT_CONSENT_TEXT) == set(PR.LANGS) == {"en", "de", "lt", "hu", "hr", "fi", "et", "lv"} and len(set(PR.PRINT_CONSENT_TEXT.values())) == 8
       and all(PR.PRINT_CONSENT_TEXT[l] in open(os.path.join(REPO, "src", "shared", "legal.ts"), encoding="utf-8").read() for l in PR.LANGS), "")
 check("no dash in any print text the server sends (the e-mails, the Stripe notes, the consent)", not re.search(DASH, json.dumps([PR.CONF, PR.SHIPPED, PR.SUBMIT_NOTE_PRINT,
       PR.ITEM_DESC_PRINT, PR.PRINT_CONSENT_TEXT, PR.SHIP_LABEL, PR.SHIP_ADDRESS_NOTE], ensure_ascii=False)), "")
@@ -801,9 +849,23 @@ pay.extra_payment(o25, pay.get_paid(o25), {"session_id": "cs_test_second", "amou
 xn = [m for m, _i in H.Fake.emails if "paid twice" in m.get("subject", "")]
 check("a second paid session with a print: the owner's refund note names the print (nothing is sent to merchOne for it)",
       xn and "with a PRINT (poster50 to LT)" in xn[0]["text"], xn[:1])
-check("the print box survives the next consent version: the current version maps to the current text, the first one is kept",
-      PR.PRINT_CONSENT_TEXTS[pay.CONSENT_VERSION] == PR.PRINT_CONSENT_TEXT and PR.PRINT_CONSENT_TEXTS["2026-10-28.3"] == PR.PRINT_CONSENT_TEXT
-      and PR.consent_text(pay.CONSENT_VERSION, "lt") == PR.PRINT_CONSENT_TEXT["lt"], "")
+# 2026-11-13 (the next consent version came: 2026-11-13.1 added the Finnish, Estonian and Latvian boxes): the first version, 2026-10-28.3, still quotes the five boxes it
+# had, word for word (their fingerprint is the one of the texts as they were committed with 2026-10-28.3), and the current version the eight
+FIVE_BOXES_1028 = "f979c4e9b0e1b4ba86676e130f7c449fe6abf6219c7f1f091df7ed445d520da9"      # sha256 of the JSON list of the en, de, lt, hu, hr print boxes of 2026-10-28.3
+five_boxes = [(PR.PRINT_CONSENT_TEXTS.get("2026-10-28.3") or {}).get(l) for l in ("en", "de", "lt", "hu", "hr")]
+check("the print box survives the next consent version: the current version maps to the current text, the first one is kept"
+      " - 1113: the next version is here (2026-11-13.1, eight boxes); under 2026-10-28.3 the five boxes of that version are quoted byte for byte (the fingerprint on record) "
+      "and are the same words under the new version",
+      PR.PRINT_CONSENT_TEXTS[pay.CONSENT_VERSION] == PR.PRINT_CONSENT_TEXT and set(PR.PRINT_CONSENT_TEXTS) == {"2026-10-28.3", "2026-11-13.1"} and pay.CONSENT_VERSION == "2026-11-13.1"
+      and hashlib.sha256(json.dumps(five_boxes, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest() == FIVE_BOXES_1028
+      and all(PR.consent_text("2026-10-28.3", l) == PR.PRINT_CONSENT_TEXT[l] == PR.consent_text("2026-11-13.1", l) for l in ("en", "de", "lt", "hu", "hr"))
+      and all(PR.consent_text("2026-11-13.1", l) == PR.PRINT_CONSENT_TEXT[l] for l in ("fi", "et", "lv"))
+      and PR.consent_text(pay.CONSENT_VERSION, "lt") == PR.PRINT_CONSENT_TEXT["lt"] and PR.consent_text("2026-09-30.2", "lt") is None, sorted(PR.PRINT_CONSENT_TEXTS))
+check("1113: an old version quotes exactly the boxes it had: 2026-10-28.3 has the five print boxes of its day and no Finnish, Estonian or Latvian one (they were first shown under "
+      "2026-11-13.1), as pay.CONSENT_TEXTS keeps the waivers of 2026-10-28.3",
+      set(PR.PRINT_CONSENT_TEXTS.get("2026-10-28.3") or {}) == {"en", "de", "lt", "hu", "hr"} == set(pay.CONSENT_TEXTS["2026-10-28.3"])
+      and all(PR.consent_text("2026-10-28.3", l) is None for l in ("fi", "et", "lv")),
+      (sorted(PR.PRINT_CONSENT_TEXTS.get("2026-10-28.3") or {}), {l: (PR.consent_text("2026-10-28.3", l) or "")[:40] for l in ("fi", "et", "lv")}))
 # the print file of 60 cm without full-frame float arrays
 import tracemalloc  # noqa: E402
 a60 = (np.random.default_rng(3).random((4096, 4096, 3)) * 60).astype("uint8")

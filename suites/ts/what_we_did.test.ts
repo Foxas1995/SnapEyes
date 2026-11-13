@@ -4,6 +4,9 @@
 // His feedback of the same evening, from his own phone ("the before and after that slides is the most important thing", "so much text", "what is that cut?",
 // "why does the start say REALLY?"): the before/after leads every eye, at most three short check lines under it, everything longer in ONE closed disclosure on the
 // same screen (folded, never deleted), no sentence twice, no iris size in pixels, one line about the pupil only when it is wide, and a calm first screen.
+// 2026-11-13: eight languages. Every pattern that reads a sentence by its words has the Finnish, Estonian and Latvian words of the same sentence (src/try/copy.fi.ts,
+// copy.et.ts, copy.lv.ts): the conditional of the quality line, the flash, the torch and "carry on" of the colour note, the light of the pupil line, and the words the
+// owner ruled out (the photo in the colour line, "our colour check", "soft daylight", "really", "cut").
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -29,22 +32,23 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   // the four dashes the owner rules out (U+2012 to U+2015), built from their codes so that this file holds none itself (as scripts/check_texts.mjs does)
   const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015) + ']');
 
-  // ---- the words, five languages
+  // ---- the words, eight languages (five until 2026-11-13)
   for (const l of LANGS) {
     const d = COPY[l].result.did as unknown as Record<string, unknown>;
     check(`${l}: the card has its seven lines, all different and none empty`, KEYS.every((k) => text(d, k).length > 8) && new Set(KEYS.map((k) => text(d, k))).size === KEYS.length, JSON.stringify(d).slice(0, 200));
     check(`${l}: the four check lines are short (at most 8 words each)`, LINES.every((k) => words(text(d, k)) <= 8), LINES.map((k) => words(text(d, k))).join());
     check(`${l}: the colour line says the light was balanced and nothing about where the colours come from (the transparency sentence says that, once)`,
-      !/photo|Foto|nuotrauk|fotó|fotografij/i.test(text(d, 'colour')), text(d, 'colour'));
+      !/photo|Foto|nuotrauk|fotó|fotografij|valokuv|\bkuva|fotogrāfij/i.test(text(d, 'colour')), text(d, 'colour'));
     const q = text(d, 'quality');
     check(`${l}: the quality line names the crop's ${CROP_MAX_PX} px (the page's own cut, src/try/crop.ts) and the file's 4096 px, and the file only in the conditional (ordering is not open yet)`,
-      q.includes(`${CROP_MAX_PX} px`) && q.includes('4096') && /would|würde|būtų|készülne|nastala bi/.test(q), q);
+      q.includes(`${CROP_MAX_PX} px`) && q.includes('4096') && /would|würde|būtų|készülne|nastala bi|piirrettäisiin|joonistataks|tiktu veidots/.test(q), q);
     const c = COPY[l].result.colourOff;
     check(`${l}: the colour note no longer says "our colour check" or "soft daylight", names the flash and a torch from the side, and says that a result one likes can stay`,
       !/colour check|Farbprüfung|spalvų patikra|színellenőrzés|provjer\p{L}* boja|soft daylight|weichem Tageslicht|švelnioje dienos|lágy nappali|meko\p{L}* dnevn/iu.test(c)
-        && /flash|Blitz|blykst|vaku|bljeskalic/i.test(c) && /torch|Taschenlampe|žibintuvėl|zseblámpa|svjetiljk/i.test(c) && /carry on|weiter|tęsti|folytasd|nastavite/i.test(c), c);
+        && !/väritarkistu|värvikontroll|krāsu pārbaud|pehme\p{L}* päivänvalo|pehme\p{L}* päevavalg|maig\p{L}* dienasgaism/iu.test(c)
+        && /flash|Blitz|blykst|vaku|bljeskalic|salama|välgu|zibspuldz/i.test(c) && /torch|Taschenlampe|žibintuvėl|zseblámpa|svjetiljk|taskulamp|lukturī/i.test(c) && /carry on|weiter|tęsti|folytasd|nastavite|jatka|jätka|turpiniet/i.test(c), c);
     const pw = COPY[l].result.pupilWide;
-    check(`${l}: the pupil line is one short sentence that says more light helps`, /light|Licht|šviesos|fény|svjetl/i.test(pw) && words(pw) <= 12 && (pw.match(/[.!?]/g) ?? []).length === 1, pw);
+    check(`${l}: the pupil line is one short sentence that says more light helps`, /light|Licht|šviesos|fény|svjetl|lisävalo|enemmän valoa|valgust|gaism/i.test(pw) && words(pw) <= 12 && (pw.match(/[.!?]/g) ?? []).length === 1, pw);
     check(`${l}: the disclosure has a short title`, COPY[l].result.how.length > 3 && words(COPY[l].result.how) <= 4, COPY[l].result.how);
     const r = COPY[l].result as unknown as Record<string, unknown>;
     check(`${l}: the iris size in pixels and the drag lines are gone from the dictionary`, !('irisPx' in r) && !('drag' in r) && !('drag' in (r.reveal as Record<string, unknown>)));
@@ -151,7 +155,8 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   setCopyLang('en');
 
   // ---- no "cut" in any customer sentence of /try (the owner did not know the word: "what is that cut?"), nor in the landing's Reveal
-  const cutWord = /pjūv|\bcut\b|\bcutting\b|\bschnitt\b|schnitt\b(?<!ausschnitt|zuschnitt)|\bvágás|pupillenschnitt/i;
+  // 2026-11-13: Finnish "leikkaus", Estonian "lõige" and Latvian "griezums" (the crop, "väljalõige" and "izgriezums", is no cut, as "Ausschnitt" is none)
+  const cutWord = /pjūv|\bcut\b|\bcutting\b|\bschnitt\b|schnitt\b(?<!ausschnitt|zuschnitt)|\bvágás|pupillenschnitt|leikkau|(?<!välja)lõi[gk]e|(?<!iz)griezum/i;
   const strings = (o: unknown, path = ''): Array<[string, string]> => {
     if (typeof o === 'string') return [[path, o]];
     if (typeof o === 'function') { try { const v = (o as (...a: unknown[]) => unknown)(1400, 2, 3); return typeof v === 'string' ? [[path, v]] : []; } catch { return []; } }
@@ -160,7 +165,7 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   };
   for (const l of LANGS) {
     const bad = strings(COPY[l]).filter(([, s]) => cutWord.test(s));
-    check(`${l}: no sentence of /try names a "cut" (pjūvis, Schnitt, vágás)`, bad.length === 0, bad.map(([p]) => p).join());
+    check(`${l}: no sentence of /try names a "cut" (pjūvis, Schnitt, vágás, leikkaus, lõige, griezums)`, bad.length === 0, bad.map(([p]) => p).join());
     // the Reveal's one line (reveal.intro; its second wording for a web photo, introWeb, went in the landing's lean pass of 2026-10-22) and the words of the
     // hero's globe (the disc that showed our eye cut through the pupil, with its alt text, went with the old hero picture on 2026-10-22)
     const landing = JSON.parse(readFileSync(`src/landing/copy/${l}.json`, 'utf8')) as { reveal: { intro: string }; hero: { globeAlt: string; globeNote: string } };
@@ -172,8 +177,8 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   for (const l of LANGS) {
     const cp = COPY[l].capture;
     const head = `${cp.titleA}${cp.titleB}`;
-    check(`${l}: the headline does not insist ("REALLY", "FOR REAL", "TIKRAI", "GANZ ECHT", "TÉNYLEG") and has no dash`,
-      !/really|for real|tikrai|ganz echt|wirklich|tényleg|igazán/i.test(head) && !DASH.test(head), head);
+    check(`${l}: the headline does not insist ("REALLY", "FOR REAL", "TIKRAI", "GANZ ECHT", "TÉNYLEG", "OIKEASTI", "PÄRISELT", "PATIEŠĀM") and has no dash`,
+      !/really|for real|tikrai|ganz echt|wirklich|tényleg|igazán|oikeasti|todella|aidosti|päriselt|tõesti|tõeliselt|patiešām|tiešām|pa īstam/i.test(head) && !DASH.test(head), head);
     check(`${l}: the line under the headline is one short sentence`, (cp.lead.match(/[.!?](\s|$)/g) ?? []).length === 1 && words(cp.lead) <= 14, cp.lead);
     // 2026-10-22: the guide video above them shows the steps, so each is one short line (the list numbers them)
     check(`${l}: four steps, one short line each, no sentence`, cp.steps.length === 4 && cp.steps.every((s) => typeof s === 'string' && words(s) <= 7 && !/[.!?]$/.test(s)), cp.steps.map((s) => words(s)).join());

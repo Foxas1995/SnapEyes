@@ -74,7 +74,16 @@ import re, time, hmac, hashlib, secrets, threading, datetime
 from . import iris as L
 from . import store
 from . import pay
-from . import withdraw_lt, withdraw_hu, withdraw_hr
+from . import withdraw_lt, withdraw_hu, withdraw_hr, withdraw_fi, withdraw_et, withdraw_lv
+# The languages whose module is a twin of withdraw_hr.py, key for key (as api/_lib/pay.py TWINS): Croatian, Finnish, Estonian, Latvian.
+TWINS = {"hr": withdraw_hr, "fi": withdraw_fi, "et": withdraw_et, "lv": withdraw_lv}
+
+
+def tw(lang, name):
+    """The function or text `name` of a twin language's module: withdraw_hr.receipt_hr, withdraw_fi.STATEMENT_FI ..."""
+    return getattr(TWINS[lang], f"{name}_{lang.upper() if name.isupper() else lang}")
+
+
 
 NAME_MAX = 100
 EMAIL_MAX = 254
@@ -116,7 +125,7 @@ STATEMENT = {   # as the order page shows it before "Confirm withdrawal" (src/or
           "Inhalte: SnapEyes-Kunstwerk, Bestellung {order}.",
     "lt": withdraw_lt.STATEMENT_LT,
     "hu": withdraw_hu.STATEMENT_HU,
-    "hr": withdraw_hr.STATEMENT_HR,
+    **{l: tw(l, "STATEMENT") for l in TWINS},
 }
 
 
@@ -326,6 +335,9 @@ HOLIDAYS_HU = withdraw_hu.HOLIDAYS_HU     # Hungary (Mt. 102. § (1)): 1 Jan, 15
 EASTER_HU = withdraw_hu.EASTER_HU         # Good Friday, Easter Monday, Whit Monday (only 15 Mar, 20 Aug, 23 Oct are new)
 HOLIDAYS_HR = withdraw_hr.HOLIDAYS_HR     # Croatia (Zakon o blagdanima, NN 110/19): 1 and 6 Jan, 1 and 30 May, 22 Jun, 5 and 15 Aug, 1 and 18 Nov, 25-26 Dec
 EASTER_HR = withdraw_hr.EASTER_HR         # Easter Sunday, Easter Monday, Corpus Christi (only Corpus Christi is new)
+# Finland, Estonia and Latvia (2026-11-13): the public holidays their modules name (withdraw_fi.py, withdraw_et.py, withdraw_lv.py)
+HOLIDAYS_NEW = withdraw_fi.HOLIDAYS_FI + withdraw_et.HOLIDAYS_ET + withdraw_lv.HOLIDAYS_LV
+EASTER_NEW = withdraw_fi.EASTER_FI + withdraw_et.EASTER_ET + withdraw_lv.EASTER_LV
 _EPOCH = datetime.date(1970, 1, 1)
 _HOLIDAYS = {}                            # year -> the set of its holidays (dates)
 
@@ -345,13 +357,18 @@ def easter(year):
 
 def holidays(year):
     """The public holidays of a year that stop a period ending on them: the national ones of Lithuania, Germany,
-    Hungary and Croatia, for every order whatever its market (the latest end anywhere is taken: an English, German or Australian
+    Hungary, Croatia, Finland, Estonia and Latvia, for every order whatever its market (the latest end anywhere is taken: an English, German or Australian
     order's period also runs past 15 Mar, 20 Aug and 23 Oct, one working day longer, on the consumer's side)."""
     got = _HOLIDAYS.get(year)
     if got is None:
         e = easter(year)
-        got = {datetime.date(year, m, d) for m, d in HOLIDAYS_LT + HOLIDAYS_DE + HOLIDAYS_HU + HOLIDAYS_HR}
-        got |= {e + datetime.timedelta(days=n) for n in EASTER_LT + EASTER_DE + EASTER_HU + EASTER_HR}
+        got = {datetime.date(year, m, d) for m, d in HOLIDAYS_LT + HOLIDAYS_DE + HOLIDAYS_HU + HOLIDAYS_HR + HOLIDAYS_NEW}
+        got |= {e + datetime.timedelta(days=n) for n in EASTER_LT + EASTER_DE + EASTER_HU + EASTER_HR + EASTER_NEW}
+        got.add(withdraw_fi.midsummer_eve_fi(year))      # Finland's Midsummer's Eve: the Friday of 19 to 25 June, no fixed date and no Easter offset
+        for m, d in ((5, 4), (11, 18)):                  # Latvia: when 4 May or 18 November falls on a weekend, the next Monday is a holiday too
+            day = datetime.date(year, m, d)
+            if day.weekday() >= 5:
+                got.add(day + datetime.timedelta(days=7 - day.weekday()))
         _HOLIDAYS[year] = got = frozenset(got)
     return got
 
@@ -763,8 +780,8 @@ def _receipt_other(stmt, pack, lang, order, name):
     if lang == "hu":
         subject, blocks = withdraw_hu.receipt_hu(stmt, order=order, name=name, money=_money(stmt, lang),
                                                  by_day=pay.iso(by_at), last_day=_last_day(stmt), seller=seller)
-    elif lang == "hr":
-        subject, blocks = withdraw_hr.receipt_hr(stmt, order=order, name=name, money=_money(stmt, lang),
+    elif lang in TWINS:
+        subject, blocks = tw(lang, "receipt")(stmt, order=order, name=name, money=_money(stmt, lang),
                                                  by_day=pay.iso(by_at), last_day=_last_day(stmt), seller=seller)
     else:
         outcome, reason = stmt.get("outcome"), stmt.get("reason")
@@ -791,7 +808,7 @@ def receipt_mail(stmt, pack):
     de = lang == "de"
     order = stmt.get("order") or echo_order(stmt.get("order_given"))
     name = echo_name(stmt.get("name"))
-    if lang in ("lt", "hu", "hr"):
+    if lang in ("lt", "hu") or lang in TWINS:
         return _receipt_other(stmt, pack, lang, order, name)
     got = pay.when_text(stmt["received_at"], lang, seconds=True)
     rows = [("Eingegangen am" if de else "Received on", got), ("Bestellung" if de else "Order", order),
@@ -900,12 +917,12 @@ def unmatched_mail(stmt, pack):
     lang = pay.lang_of(stmt.get("lang"))
     de = lang == "de"
     given = echo_order(stmt.get("order_given")) or "-"
-    if lang in ("lt", "hu", "hr"):
+    if lang in ("lt", "hu") or lang in TWINS:
         seller = pay.seller_lines(lang, pack)
         if lang == "hu":
             subject, blocks = withdraw_hu.unmatched_hu(stmt, given=given, name=echo_name(stmt.get("name")), seller=seller)
-        elif lang == "hr":
-            subject, blocks = withdraw_hr.unmatched_hr(stmt, given=given, name=echo_name(stmt.get("name")), seller=seller)
+        elif lang in TWINS:
+            subject, blocks = tw(lang, "unmatched")(stmt, given=given, name=echo_name(stmt.get("name")), seller=seller)
         else:
             subject = withdraw_lt.UNMATCHED_LT["subject"]
             blocks = withdraw_lt.unmatched_blocks_lt(

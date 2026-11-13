@@ -48,7 +48,7 @@
     <script>
       (function () {
         var W = /*WORDS*/null;
-        var m = /[?&]lang=(en|de|lt|hu|hr)(?:&|$)/.exec(location.search), l = m ? m[1] : null;
+        var m = /[?&]lang=(en|de|lt|hu|hr|fi|et|lv)(?:&|$)/.exec(location.search), l = m ? m[1] : null;
         try { if (!l) l = localStorage.getItem('snapeyes.lang'); } catch (e) { /* storage blocked: the browser's language */ }
         if (!W[l]) { var n = String(navigator.language || 'en').slice(0, 2).toLowerCase(); l = W[n] ? n : 'en'; }
         var w = W[l], d = document;

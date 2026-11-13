@@ -804,16 +804,22 @@ NEG_BATCH = [   # label, mutation(case, root), a sentence the check must say
     ("a second style in the black price class", pub(lambda s: s["solo.powder"].update(price_class="black")),
      "the black price class has 2 styles that are not legacy or planned (solo.clean, solo.powder)"),
     # work package 2: the words for the layouts
-    ("a layout word missing in one language", names(lambda n: n["single"].pop("hu")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr'),
-    ("a layout word missing in Croatian", names(lambda n: n["single"].pop("hr")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr'),
-    ("a layout word in a sixth language", names(lambda n: n["single"].update(fr="Seul")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr'),
+    # 2026-11-13: eight languages (Finnish, Estonian, Latvian); the rule names all eight, a missing new one is refused like a missing Croatian one, and French is a ninth
+    ("a layout word missing in one language", names(lambda n: n["single"].pop("hu")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr, fi, et, lv (it has en, de, lt, hr, fi, et, lv)'),
+    ("a layout word missing in Croatian", names(lambda n: n["single"].pop("hr")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr, fi, et, lv (it has en, de, lt, hu, fi, et, lv)'),
+    ("a layout word missing in Finnish", names(lambda n: n["single"].pop("fi")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr, fi, et, lv (it has en, de, lt, hu, hr, et, lv)'),
+    ("a layout word missing in Estonian", names(lambda n: n["galaxy"].pop("et")), 'layout "galaxy": it must have a word in exactly en, de, lt, hu, hr, fi, et, lv (it has en, de, lt, hu, hr, fi, lv)'),
+    ("a layout word missing in Latvian", names(lambda n: n["pair"].pop("lv")), 'layout "pair": it must have a word in exactly en, de, lt, hu, hr, fi, et, lv (it has en, de, lt, hu, hr, fi, et)'),
+    ("a layout word in a sixth language", names(lambda n: n["single"].update(fr="Seul")), 'layout "single": it must have a word in exactly en, de, lt, hu, hr, fi, et, lv (it has en, de, lt, hu, hr, fi, et, lv, fr)'),
     ("an empty layout word", names(lambda n: n["duo"].update(lt="")), 'layout "duo": the lt word must be a short text'),
     ("a layout word with a space at its end", names(lambda n: n["duo"].update(de="Nebeneinander ")), 'layout "duo": the de word must be a short text'),
     ("a layout id that is not lower case", names(lambda n: n.update(Spiral=n["duo"])), 'layout "Spiral": a layout id is lower case letters'),
     ("a layout a style takes that has no words", names(lambda n: n.pop("pair")), 'layouts["2"] must be a list of distinct layout ids'),
-    ("words for a layout no style takes", names(lambda n: n.update(spiral={"en": "Spiral", "de": "Spirale", "lt": "Spirale", "hu": "Spir\u00e1l", "hr": "Spirala"})),
+    # (2026-11-13: the row has its eight words, so that the one thing wrong with it is that no style takes it; the literal's last word is the Latvian one now)
+    ("words for a layout no style takes", names(lambda n: n.update(spiral={"en": "Spiral", "de": "Spirale", "lt": "Spirale", "hu": "Spir\u00e1l", "hr": "Spirala",
+                                                                            "fi": "Spiraali", "et": "Spiraal", "lv": "Spirāle"})),
      'has words for the layout "spiral", which no style of api/_lib/styles_registry.py takes'),
-    ("a LAYOUT_NAMES literal that is not JSON any more", lambda c, r: sub(c, r, "api/_lib/layout_names.py", '"hr": "Galaksija"}\n}', '"hr": "Galaksija"},\n}'),
+    ("a LAYOUT_NAMES literal that is not JSON any more", lambda c, r: sub(c, r, "api/_lib/layout_names.py", '"lv": "Galaktika"}\n}', '"lv": "Galaktika"},\n}'),
      "the LAYOUT_NAMES literal cannot be read as JSON"),
     ("a second layout table in a Python file", lambda c, r: append(r, "api/_lib/pay.py", '\nWORDS = {"single": "Single", "duo": "Side by side"}\n'),
      "api/_lib/pay.py: a table that names layouts again"),
@@ -1303,7 +1309,8 @@ def text_probs(root):
 def add_entry(root, line):
     """One more key before each `save:` of the five /try dictionaries (English and German in copy.ts, Lithuanian, Hungarian, Croatian). The marker was `namesPlaceholder:`
     until WP11 replaced that one free line by the names form (src/try/Words.tsx); `save:` (result.save) is one key per dictionary as well."""
-    for rel in ("src/try/copy.ts", "src/try/copy.lt.ts", "src/try/copy.hu.ts", "src/try/copy.hr.ts"):
+    # 2026-11-13: and the Finnish, Estonian and Latvian ones (eight dictionaries in seven files)
+    for rel in ("src/try/copy.ts", "src/try/copy.lt.ts", "src/try/copy.hu.ts", "src/try/copy.hr.ts", "src/try/copy.fi.ts", "src/try/copy.et.ts", "src/try/copy.lv.ts"):
         path = os.path.join(root, *rel.split("/"))
         text = open(path, encoding="utf-8", newline="").read()
         text, k = re.subn(r"^(\s*)save: ", lambda m: f"{m.group(1)}{line}\n{m.group(1)}save: ", text, flags=re.M)
@@ -1320,8 +1327,10 @@ root = os.path.join(TMP, "ie1_brand_bad")
 copy_repo(root)
 add_entry(root, "brandProbe: 'Frost Collision',")
 p = text_probs(root)
-check("IE1: ... and an English name that is not listed is refused word for word, in both languages",
-      sum("brandProbe" in x and "word for word the English or German text" in x for x in p) >= 2, p[:4])
+check("IE1: ... and an English name that is not listed is refused word for word, in both languages"
+      " - 1113: in each of the six languages that have their own dictionary (lt, hu, hr, fi, et, lv), once each",
+      sum("brandProbe" in x and "word for word the English or German text" in x for x in p) >= 2
+      and all(sum("brandProbe" in x and f"({lg}): word for word the English or German text" in x for x in p) == 1 for lg in ("lt", "hu", "hr", "fi", "et", "lv")), p[:8])
 root = os.path.join(TMP, "ie1_samples")
 copy_repo(root)
 add_entry(root, "probeFn: (n: number) => `${n}`,")
@@ -1367,6 +1376,7 @@ LN_TEXT = read("api/_lib/layout_names.py")
 ln_lit = json.loads(LN_TEXT[LN_TEXT.index("\nLAYOUT_NAMES = {") + len("\nLAYOUT_NAMES = "):])
 LANGS4 = ("en", "de", "lt", "hu")
 LANGS5 = LANGS4 + ("hr",)   # the languages every layout has a word in since Croatian (2026-10-28); the old words below are the four of before
+LANGS8 = LANGS5 + ("fi", "et", "lv")   # ... and since Finnish, Estonian and Latvian (2026-11-13)
 OLD_WORDS = {   # the four tables of the e-mails and the eight dictionaries of the pages, as they stood on 1d58fbf: en, de, lt, hu
     "single": ("Single", "Einzeln", "Viena akis", "Egy szem"),
     "duo": ("Side by side", "Nebeneinander", "Greta", "Egymás mellett"),
@@ -1389,9 +1399,41 @@ SPEC_WORDS = {  # the draft words of the integration specification 5.4 (PRODUCT.
 taken_ids = {x for d in R.STYLES.values() for lst in d["layouts"].values() for x in lst}
 check("layout_names.py: the literal is plain JSON and is what Python imports; UTF-8 words (not ASCII), no en or em dash",
       ln_lit == LN.LAYOUT_NAMES == C.LAYOUT_NAMES and any(ord(ch) > 127 for ch in LN_TEXT) and not re.search(DASH, LN_TEXT))
-check("17 layout ids (orbit since 2026-10-20) with exactly the five languages each (Croatian since 2026-10-28), short words with no space at either end; the ids are exactly the layouts the registry's styles take",
-      len(ln_lit) == 17 and set(ln_lit) == taken_ids and all(set(v) == set(LANGS5) and all(isinstance(w, str) and w == w.strip() and 0 < len(w) <= 40 for w in v.values()) for v in ln_lit.values())
-      and C.layout_ids() == tuple(ln_lit), (sorted(set(ln_lit) ^ taken_ids), len(ln_lit)))
+check("17 layout ids (orbit since 2026-10-20) with exactly the five languages each (Croatian since 2026-10-28), short words with no space at either end; the ids are exactly the layouts the registry's styles take"
+      " - 1113: exactly the eight languages each (Finnish, Estonian, Latvian), in the order of the languages, and the catalogue's LAYOUT_LANGS is that order",
+      len(ln_lit) == 17 and set(ln_lit) == taken_ids and all(set(v) == set(LANGS8) and all(isinstance(w, str) and w == w.strip() and 0 < len(w) <= 40 for w in v.values()) for v in ln_lit.values())
+      and all(tuple(v) == LANGS8 for v in ln_lit.values()) and tuple(C.LAYOUT_LANGS) == LANGS8
+      and C.layout_ids() == tuple(ln_lit), (sorted(set(ln_lit) ^ taken_ids), len(ln_lit), [i for i, v in ln_lit.items() if tuple(v) != LANGS8][:4]))
+# 2026-11-13: golden strings for the three new languages too, as OLD_WORDS and SPEC_WORDS are for the four: the 17 words of each as they were added (51 strings), so a
+# word that is changed, swapped between two layouts or lost is seen here; fi, et, lv per id
+NEW_WORDS = {
+    "single": ("Yksi silmä", "Üks silm", "Viena acs"),
+    "pair": ("Pari", "Paar", "Pāris"),
+    "trio": ("Kolmio", "Kolmnurk", "Trīsstūris"),
+    "diag": ("Vinottain", "Diagonaalis", "Pa diagonāli"),
+    "zigzag": ("Siksak", "Siksak", "Zigzags"),
+    "cluster": ("Ryhmä", "Kobar", "Grupa"),
+    "ring": ("Rengas", "Rõngas", "Gredzens"),
+    "brick": ("Rivit", "Read", "Rindas"),
+    "flower": ("Kukka", "Lill", "Zieds"),
+    "chain": ("Ketju", "Kett", "Ķēde"),
+    "orbit": ("Kiertorata", "Orbiit", "Orbīta"),
+    "duo": ("Vierekkäin", "Kõrvuti", "Blakus"),
+    "fusion": ("Fuusio", "Sulandus", "Saplūšana"),
+    "triangle": ("Kolmio", "Kolmnurk", "Trīsstūris"),
+    "row": ("Rivissä", "Reas", "Vienā rindā"),
+    "grid": ("Ruudukko", "Ruudustik", "Režģis"),
+    "galaxy": ("Galaksi", "Galaktika", "Galaktika"),
+}
+col = lambda lg: tuple(ln_lit[i].get(lg) for i in ln_lit)
+same_en_de = {(a_, b_) for a_ in ln_lit for b_ in ln_lit if a_ < b_ and (ln_lit[a_]["en"] == ln_lit[b_]["en"] or ln_lit[a_]["de"] == ln_lit[b_]["de"])}
+check("1113: the Finnish, Estonian and Latvian words of the 17 layouts are the ones they were added with (51 strings), layout_name reads each of them (and each Croatian one) from "
+      "the table, the eight columns are eight different columns, and within a new language two layouts share a word only where English or German do (trio and triangle)",
+      set(NEW_WORDS) == set(ln_lit) and all(C.layout_name(lg, i) == NEW_WORDS[i][k] for i in NEW_WORDS for k, lg in enumerate(("fi", "et", "lv"))) and len(NEW_WORDS) * 3 == 51
+      and all(C.layout_name("hr", i) == ln_lit[i]["hr"] and ln_lit[i]["hr"] for i in ln_lit) and len({col(lg) for lg in LANGS8}) == 8
+      and all((a_, b_) in same_en_de for lg in ("fi", "et", "lv") for a_ in ln_lit for b_ in ln_lit if a_ < b_ and ln_lit[a_][lg] == ln_lit[b_][lg]),
+      ([(i, lg, C.layout_name(lg, i)) for i in NEW_WORDS for k, lg in enumerate(("fi", "et", "lv")) if C.layout_name(lg, i) != NEW_WORDS[i][k]],
+       [(lg, a_, b_) for lg in ("fi", "et", "lv") for a_ in ln_lit for b_ in ln_lit if a_ < b_ and ln_lit[a_][lg] == ln_lit[b_][lg] and (a_, b_) not in same_en_de]))
 check("the words of the seven legacy layouts are the ones the e-mails and the pages always printed, 7 ids x 4 languages (28 strings)",
       all(C.layout_name(lg, i) == OLD_WORDS[i][k] for i in OLD_WORDS for k, lg in enumerate(LANGS4)) and len(OLD_WORDS) * 4 == 28,
       [(i, lg, C.layout_name(lg, i)) for i in OLD_WORDS for k, lg in enumerate(LANGS4) if C.layout_name(lg, i) != OLD_WORDS[i][k]])
@@ -1478,7 +1520,9 @@ rc, so, se = run_node([PROBE2, REPO])
 p2 = last_json(so)
 check("the node probe loads layouts.ts, styles.ts, the /try and /order copy and multi.ts", p2 is not None, (rc, se[-600:], so[-300:]))
 if p2:
-    check("src/shared/layouts.ts reads the very table the server reads (17 ids x 5 languages), in the file's order", p2["names"] == C.LAYOUT_NAMES and p2["ids"] == list(C.layout_ids()) and p2["langs"] == list(LANGS5))
+    check("src/shared/layouts.ts reads the very table the server reads (17 ids x 5 languages), in the file's order"
+          " - 1113: 17 ids x 8 languages (136 words)", p2["names"] == C.LAYOUT_NAMES and p2["ids"] == list(C.layout_ids()) and p2["langs"] == list(LANGS8)
+          and sum(len(v) for v in p2["names"].values()) == 136, (p2.get("langs"), sum(len(v) for v in p2["names"].values())))
     ids_ = p2["ids"] + ["spiral", "__proto__", "constructor", "toString"]
     lk_bad = []
     for lg in ("en", "de", "lt", "hu", "xx", ""):
@@ -1501,7 +1545,8 @@ if p2:
           p2["canvas"] == [{"w": 1024, "h": 1024}, {"w": 1024, "h": 683}, {"w": 1024, "h": 683}, {"w": 1024, "h": 512}, {"w": 819, "h": 1024},
                            {"w": 1024, "h": 439}, {"w": 819, "h": 1024}, {"w": 819, "h": 1024}, {"w": 819, "h": 1024}], p2["canvas"])
 rc, so, se = run_node(["scripts/check_styles.mjs"])
-check("the build log line says how many layouts are named in five languages", rc == 0 and "17 layouts named in en, de, lt, hu, hr" in so, (rc, so, se[-300:]))
+check("the build log line says how many layouts are named in five languages"
+      " - 1113: in the eight languages", rc == 0 and "17 layouts named in en, de, lt, hu, hr, fi, et, lv" in so, (rc, so, se[-300:]))
 
 # --- the text check reads the layout words: a dash, an English word in Lithuanian, a German word in Hungarian
 for label, case_fn, needle in [
@@ -1510,6 +1555,10 @@ for label, case_fn, needle in [
     ("an English word in a Lithuanian layout word", lambda r: sub("t", r, "api/_lib/layout_names.py", '"lt": "Tinklelis"', '"lt": "Photo tinklelis"'), 'layout words.grid (lt): untranslated English "Photo"'),
     ("a German word in a Hungarian layout word", lambda r: sub("t", r, "api/_lib/layout_names.py", '"hu": "Rács"', '"hu": "Bitte rács"'), 'layout words.grid (hu): untranslated German "Bitte"'),
     ("a layout with an empty word in one language", lambda r: sub("t", r, "api/_lib/layout_names.py", '"hu": "Csoport"', '"hu": ""'), "layout words: \"cluster\" has no hu word"),
+    # 2026-11-13: the same three kinds of slip in the new languages
+    ("an English word in a Finnish layout word", lambda r: sub("t", r, "api/_lib/layout_names.py", '"fi": "Ruudukko"', '"fi": "Photo ruudukko"'), 'layout words.grid (fi): untranslated English "Photo"'),
+    ("a German word in an Estonian layout word", lambda r: sub("t", r, "api/_lib/layout_names.py", '"et": "Ruudustik"', '"et": "Bitte ruudustik"'), 'layout words.grid (et): untranslated German "Bitte"'),
+    ("a layout with an empty word in Latvian", lambda r: sub("t", r, "api/_lib/layout_names.py", '"lv": "Grupa"', '"lv": ""'), "layout words: \"cluster\" has no lv word"),
 ]:
     root = os.path.join(TMP, "wp2_text_" + re.sub(r"[^a-z0-9]+", "_", label.lower())[:36])
     copy_repo(root)

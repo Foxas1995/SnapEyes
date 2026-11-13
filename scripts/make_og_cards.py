@@ -30,7 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ATELIER = os.path.join(ROOT, "public", "assets", "atelier")
 COPY = os.path.join(ROOT, "src", "landing", "copy")
 SHARE = os.path.join(ROOT, "src", "landing", "shell", "share.json")
-LANGS = ("de", "lt", "hu", "hr")
+LANGS = ("de", "lt", "hu", "hr", "fi", "et", "lv")
 MAX_BYTES = 150_000
 QUALITY = 88
 

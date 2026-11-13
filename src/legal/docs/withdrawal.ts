@@ -56,6 +56,9 @@ import { patchDoc } from '../patch';
 import { lt } from './withdrawal.lt';
 import { hu } from './withdrawal.hu';
 import { hr } from './withdrawal.hr';
+import { fi } from './withdrawal.fi';
+import { et } from './withdrawal.et';
+import { lv } from './withdrawal.lv';
 
 const W = WITHDRAWAL_ONLINE;
 
@@ -193,7 +196,7 @@ const de: LegalDoc = {
   ],
 };
 
-export const WITHDRAWAL: LegalDocs = { en, de, lt, hu, hr };
+export const WITHDRAWAL: LegalDocs = { en, de, lt, hu, hr, fi, et, lv };
 
 // ------------------------------------------------------------------------------------------ the Australian edition
 /** The "expiry" section with the Australian checkbox text in its box and its closing sentence pointing at the

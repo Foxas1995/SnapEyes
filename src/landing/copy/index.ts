@@ -1,5 +1,5 @@
 // The copy of the new landing: ALL its words live in JSON, one file per language in this folder (en.json, de.json, lt.json,
-// hu.json, hr.json), the same keys in each. English is bundled with the page; every other language is its own chunk, loaded when
+// hu.json, hr.json, fi.json, et.json, lv.json), the same keys in each. English is bundled with the page; every other language is its own chunk, loaded when
 // the page needs it (loadCopy). The shape of the words is the shape of en.json (./types.ts), so a component cannot read
 // a key that does not exist, and a language file that does not fit the type does not compile (asCopy below).
 //
@@ -30,6 +30,9 @@ const LOADERS: Record<Exclude<Lang, 'en'>, () => Promise<LandingCopy>> = {
   lt: () => import('./lt.json').then((m) => asCopy(m.default)),
   hu: () => import('./hu.json').then((m) => asCopy(m.default)),
   hr: () => import('./hr.json').then((m) => asCopy(m.default)),
+  fi: () => import('./fi.json').then((m) => asCopy(m.default)),
+  et: () => import('./et.json').then((m) => asCopy(m.default)),
+  lv: () => import('./lv.json').then((m) => asCopy(m.default)),
 };
 
 const loaded = new Map<Lang, LandingCopy>([['en', COPY_EN]]);

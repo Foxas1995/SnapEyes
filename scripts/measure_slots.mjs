@@ -15,7 +15,7 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const dist = resolve(opt('--dist', join(ROOT, 'dist')));
-const LANGS = ['en', 'de', 'lt', 'hu', 'hr'];
+const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const LAYOUTS = [['phone', 375], ['tablet', 768], ['desktop', 1280]];
 const IDS = ['reveal', 'wall', 'styles', 'how', 'pricing', 'closeups', 'trust', 'faq', 'final', 'sizes', 'more'];
 const SLOTS = join(ROOT, 'src/landing/slots.ts');

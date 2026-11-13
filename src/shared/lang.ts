@@ -11,13 +11,13 @@
 import { DEFAULT_MARKET, MARKETS, currentMarket, type Market } from './markets';
 import { EDITION_LANGS, legalEdition } from './legal';
 
-export type Lang = 'en' | 'de' | 'lt' | 'hu' | 'hr';
+export type Lang = 'en' | 'de' | 'lt' | 'hu' | 'hr' | 'fi' | 'et' | 'lv';
 
 /** Every language of the site, in the order the language switch shows them. */
-export const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr'];
+export const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 
 /** A language's name in itself (the tooltip of its switch button). */
-export const LANG_NAMES: Record<Lang, string> = { en: 'English', de: 'Deutsch', lt: 'Lietuvių', hu: 'Magyar', hr: 'Hrvatski' };
+export const LANG_NAMES: Record<Lang, string> = { en: 'English', de: 'Deutsch', lt: 'Lietuvių', hu: 'Magyar', hr: 'Hrvatski', fi: 'Suomi', et: 'Eesti', lv: 'Latviešu' };
 
 /** What each language needs outside its texts: the BCP 47 tag of the page (<html lang>), the Open Graph locale, the
  *  locale Intl formats numbers and dates by, and the page's own address (English at /, the others at ?lang=). */
@@ -28,6 +28,9 @@ export const LOCALES: Record<Lang, LocaleInfo> = {
   lt: { html: 'lt', og: 'lt_LT', intl: 'lt-LT', query: '?lang=lt' },
   hu: { html: 'hu', og: 'hu_HU', intl: 'hu-HU', query: '?lang=hu' },
   hr: { html: 'hr', og: 'hr_HR', intl: 'hr-HR', query: '?lang=hr' },
+  fi: { html: 'fi', og: 'fi_FI', intl: 'fi-FI', query: '?lang=fi' },
+  et: { html: 'et', og: 'et_EE', intl: 'et-EE', query: '?lang=et' },
+  lv: { html: 'lv', og: 'lv_LV', intl: 'lv-LV', query: '?lang=lv' },
 };
 
 export const isLang = (v: unknown): v is Lang => typeof v === 'string' && (LANGS as readonly string[]).includes(v);
@@ -46,11 +49,11 @@ export function marketDefaultLang(m: Market): Lang | null {
   return isLang(d) && d !== 'en' && langAllowed(d, m) ? d : null;
 }
 
-/** The language of the browser: German, Lithuanian, Hungarian and Croatian are recognised ("de-AT", "lt", "hu-HU", "hr"), any other
- *  is English, as before. */
+/** The language of the browser: every language of the site but English is recognised by the first two letters of the browser's
+ *  tag ("de-AT", "lt", "hu-HU", "hr", "fi-FI", "et", "lv-LV"), any other is English, as before. */
 export function navigatorLang(): Lang {
   const nav = typeof navigator !== 'undefined' ? (navigator.language || '').toLowerCase() : '';
-  return nav.startsWith('de') ? 'de' : nav.startsWith('lt') ? 'lt' : nav.startsWith('hu') ? 'hu' : nav.startsWith('hr') ? 'hr' : 'en';
+  return LANGS.find((l) => l !== 'en' && nav.startsWith(l)) ?? 'en';
 }
 
 export const LANG_STORE_KEY = 'snapeyes.lang';
