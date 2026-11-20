@@ -204,11 +204,11 @@ const lt: GiftCopy = {
 const hu: GiftCopy = {
   meta: {
     title: 'Ajándékutalvány | SnapEyes',
-    description: 'Ajándékozz alkotást a saját íriszéből. Vásárolj most SnapEyes ajándékutalványt; a szemét később a telefonjával fotózza le.',
+    description: 'Ajándékozz valakinek alkotást a saját íriszéből. Vásárolj most SnapEyes ajándékutalványt; a megajándékozott később a telefonjával fotózza le a szemét.',
   },
   switchLabel: 'Nyelv',
   tag: 'Ajándékutalvány',
-  title: 'Ajándékozz alkotást a saját szeméből',
+  title: 'Ajándékozz valakinek alkotást a saját szeméből',
   lead: 'Az utalványt most veszed meg. A megajándékozott később lefotózza a szemét a telefonjával, stílust választ, és megkapja az alkotását.',
   choose: 'Válaszd ki az utalványt',
   kinds: {
@@ -239,7 +239,7 @@ const hu: GiftCopy = {
   },
   ready: {
     title: 'Az ajándékutalványod',
-    rows: { code: 'Kód', value: 'Érték', for: 'Mire', until: 'Érvényes' },
+    rows: { code: 'Kód', value: 'Érték', for: 'Mire szól', until: 'Érvényes eddig' },
     mailed: 'A kódot e-mailben is elküldtük.',
     copy: 'Kód másolása',
     copied: 'Másolva',
@@ -250,7 +250,7 @@ const hu: GiftCopy = {
     heading: 'Ajándékutalvány',
     line: 'Alkotás a saját szemedből',
     how: 'Nyisd meg a snapeyes.com oldalt a telefonodon, fotózd le a szemed, válassz stílust, és a pénztárnál írd be ezt a kódot.',
-    until: (day) => `Érvényes: ${day}`,
+    until: (day) => `Érvényes eddig: ${day}`,
   },
   contact: 'Kérdésed van? Írj ide:',
 };
@@ -258,11 +258,11 @@ const hu: GiftCopy = {
 const hr: GiftCopy = {
   meta: {
     title: 'Poklon-bon | SnapEyes',
-    description: 'Darujte umjetničku sliku vlastite šarenice. Kupite SnapEyes poklon-bon sada; oko se kasnije fotografira mobitelom.',
+    description: 'Poklonite dragoj osobi umjetničku sliku njezine šarenice. Kupite SnapEyes poklon-bon sada; oko se kasnije fotografira mobitelom.',
   },
   switchLabel: 'Jezik',
   tag: 'Poklon-bon',
-  title: 'Darujte umjetničku sliku vlastitog oka',
+  title: 'Poklonite dragoj osobi umjetničku sliku njezina oka',
   lead: 'Bon kupujete sada. Osoba kojoj ga darujete kasnije fotografira svoje oko mobitelom, odabere stil i dobije svoju sliku.',
   choose: 'Odaberite bon',
   kinds: {
@@ -276,7 +276,7 @@ const hr: GiftCopy = {
     'Osoba fotografira svoje oko na snapeyes.com i upiše kod na blagajni.',
   ],
   rules: 'Vrijedi 12 mjeseci, za jednu narudžbu. Ako slika košta manje, ostatak se ne isplaćuje. Ugovor o neiskorištenom bonu možete jednostrano raskinuti u roku od 14 dana.',
-  buy: (price) => `Kupi bon · ${price}`,
+  buy: (price) => `Kupite bon · ${price}`,
   next: 'Zatim se otvara Stripeova sigurna stranica za plaćanje. Ondje upisujete adresu e-pošte; na nju šaljemo kod.',
   accept: ['Kupnjom prihvaćate naše ', 'uvjete prodaje', '.'],
   euroOnly: 'Poklon-bonovi se prodaju i koriste u eurima.',
@@ -287,7 +287,7 @@ const hr: GiftCopy = {
   expired: 'Ova je stranica za plaćanje istekla. Ništa nije naplaćeno.',
   unknown: 'Ne možemo pronaći ovo plaćanje bona. Ako vam je naplaćeno, pišite na info@snapeyes.com.',
   errors: {
-    network: 'Ne možemo dosegnuti SnapEyes. Provjerite internetsku vezu i pokušajte ponovno.',
+    network: 'Nismo uspjeli doći do SnapEyesa. Provjerite internetsku vezu i pokušajte ponovno.',
     busy: 'Usluga plaćanja nije odgovorila. Pokušajte ponovno za trenutak.',
     failed: 'Nismo mogli otvoriti stranicu za plaćanje. Pokušajte ponovno ili pišite na info@snapeyes.com.',
   },
@@ -295,10 +295,10 @@ const hr: GiftCopy = {
     title: 'Vaš poklon-bon',
     rows: { code: 'Kod', value: 'Vrijednost', for: 'Za', until: 'Vrijedi do' },
     mailed: 'Kod smo vam poslali i e-poštom.',
-    copy: 'Kopiraj kod',
+    copy: 'Kopirajte kod',
     copied: 'Kopirano',
-    print: 'Ispiši karticu',
-    again: 'Kupi još jedan bon',
+    print: 'Ispišite karticu',
+    again: 'Kupite još jedan bon',
   },
   card: {
     heading: 'Poklon-bon',
@@ -418,11 +418,11 @@ const et: GiftCopy = {
 const lv: GiftCopy = {
   meta: {
     title: 'Dāvanu karte | SnapEyes',
-    description: 'Uzdāviniet mākslas darbu, kas tapis no paša acs varavīksnenes. Nopērciet SnapEyes dāvanu karti tagad; aci ar telefonu nofotografē vēlāk.',
+    description: 'Uzdāviniet mākslas darbu, kas tapis no apdāvinātā acs varavīksnenes. Nopērciet SnapEyes dāvanu karti tagad; savu aci ar telefonu viņš nofotografēs vēlāk.',
   },
   switchLabel: 'Valoda',
   tag: 'Dāvanu karte',
-  title: 'Uzdāviniet mākslas darbu no paša acs',
+  title: 'Uzdāviniet mākslas darbu no apdāvinātā acs',
   lead: 'Karti jūs pērkat tagad. Apdāvinātais vēlāk ar telefonu nofotografē savu aci, izvēlas stilu un saņem savu mākslas darbu.',
   choose: 'Izvēlieties karti',
   kinds: {
@@ -453,7 +453,7 @@ const lv: GiftCopy = {
   },
   ready: {
     title: 'Jūsu dāvanu karte',
-    rows: { code: 'Kods', value: 'Vērtība', for: 'Paredzēta', until: 'Derīga līdz' },
+    rows: { code: 'Kods', value: 'Vērtība', for: 'Dāvana', until: 'Derīga līdz' },
     mailed: 'Kodu nosūtījām arī uz jūsu e-pastu.',
     copy: 'Kopēt kodu',
     copied: 'Nokopēts',

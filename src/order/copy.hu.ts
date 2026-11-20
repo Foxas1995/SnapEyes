@@ -86,7 +86,7 @@ export const hu: OrderCopy = {
     preparingNow: 'Most adjuk gyártásba.',
     sent: 'Gyártás alatt. Amikor elküldték, e-mailben megküldjük a csomagkövetési linket.',
     shipped: 'Úton van hozzád.',
-    canceled: 'Ezt a nyomatot töröltük. Ha kérdésed van, írj nekünk.',
+    canceled: 'A nyomat megrendelését töröltük. Ha kérdésed van, írj nekünk.',
     track: 'Csomag követése',
   },
   // a print of the artwork, offered under a delivered artwork that has none (./PrintOffer.tsx; api/_lib/prints.py addon_offer, addon_buy and

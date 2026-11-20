@@ -92,7 +92,7 @@ export const hr: OrderCopy = {
     sent: 'U izradi. Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za praćenje.',
     shipped: 'Na putu je do vas.',
     canceled: 'Ovaj je ispis otkazan. Pišite nam ako imate pitanja.',
-    track: 'Prati pošiljku',
+    track: 'Pratite pošiljku',
   },
   // a print of the artwork, offered under a delivered artwork that has none (./PrintOffer.tsx; api/_lib/prints.py addon_offer, addon_buy and
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
@@ -156,7 +156,7 @@ export const hr: OrderCopy = {
     order: 'Broj narudžbe',
     orderHint: 'Naći ćete ga u e-poruci s potvrdom narudžbe i na stranici narudžbe.',
     sending: 'Šaljemo vašu izjavu o raskidu…',
-    cancel: 'Otkažite',
+    cancel: 'Odustanite',
     back: 'Natrag na vašu narudžbu',
     invalid: {
       name: 'Upišite svoje ime i prezime.',

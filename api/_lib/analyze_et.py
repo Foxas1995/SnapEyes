@@ -59,9 +59,9 @@ TEXT_ET = {
     "no_lock": "Me ei suutnud sinu iirise ümarat serva kindlalt leida. Sea üks silm kaadri keskele, nii et selle ümber "
                "jääb veidi ruumi, ja hoia silmalaug eest ära.",
     "good": "Suurepärane võte. Sinu enda kiud on täissuuruses kunstiteose jaoks piisavalt teravad.",
-    "ok": "Sellest saab ilus kunstiteos. Lähemalt tehtud või rahulikum võte säilitaks rohkem sinu enda kiudude "
+    "ok": "Sellest saab ilus kunstiteos. Lähemalt või kindlama käega tehtud võte säilitaks rohkem sinu enda kiudude "
           "detaile.",
-    "weak": "Väike või udune, seega tuleb rohkem peeni detaile rekonstrueerida. Lähemalt ja rahulikumalt tehtud võte "
+    "weak": "Väike või udune, seega tuleb rohkem peeni detaile rekonstrueerida. Lähemalt ja kindlama käega tehtud võte "
             "annab tõetruuma kunstiteose.",
     "glare_ok": "Sellest saab ilus kunstiteos. Võte ilma peegelduseta sinu iirisel säilitaks rohkem sinu enda kiudude "
                 "detaile.",

@@ -28,7 +28,7 @@ const CAMERA = 'Tagakaamera 2x suurendusega, umbes 10 cm kaugusel silmast.';
 const FOCUS = 'Puuduta ekraanil iirist, et kaamera sellele teravustaks.';
 const STEADY = 'Hoia telefoni paigal (toeta küünarnukid millelegi) ja tee 3-5 võtet.';
 // the first retake step for a dark iris: the same light, only closer to the window
-const DARK_LIGHT = 'Rohkem valgust toob tumeda iirise esile: seisa päevavalguses heleda akna lähedal, nii et aken jääb küljele (mitte otsese päikese kätte), või palu kellelgi hoida taskulampi küljelt. Ilma toalambi ja välguta.';
+const DARK_LIGHT = 'Rohkem valgust toob tumeda iirise esile: seisa päevavalguses heleda akna lähedal, nii et aken jääb küljele (mitte otsese päikese käes), või palu kellelgi hoida taskulampi küljelt. Ilma toalambi ja välguta.';
 // the two steps the pupil and the eyelid cards share
 const FOCUS_STEADY = 'Puuduta teravustamiseks ekraanil iirist, hoia telefoni paigal ja tee 3-5 võtet.';
 // src/shared/aiMaterial.ts AI_MATERIAL_PAGE.et, word for word as the landing's FAQ answer (src/landing/copy/et.json)
@@ -136,7 +136,7 @@ export const et: TryCopy = {
         retakeLine: 'Sinu pupill on sellel võttel liiga lai. Rohkem valgust teeb selle väiksemaks: pildista uuesti päevavalguses heleda akna lähedal või taskulambiga küljelt, mitte välguga.',
         thumb: 'pupill',
         steps: [
-          'Rohkem valgust teeb pupilli väiksemaks: seisa päevavalguses heleda akna lähedal, nii et aken jääb küljele (mitte otsese päikese kätte), või palu kellelgi hoida taskulampi küljelt. Ilma välguta.',
+          'Rohkem valgust teeb pupilli väiksemaks: seisa päevavalguses heleda akna lähedal, nii et aken jääb küljele (mitte otsese päikese käes), või palu kellelgi hoida taskulampi küljelt. Ilma välguta.',
           'Anna silmale enne pildistamist minut aega selles valguses olla, et pupill jõuaks aheneda. Pimedal ajal pane põlema kõik laelambid ja palu kellelgi hoida taskulampi küljelt.',
           CAMERA,
           FOCUS_STEADY,
@@ -357,8 +357,8 @@ export const et: TryCopy = {
     chipRetake: 'Uuesti',
     chipLabel: (i: number) => `Silm ${i}: vaja on uuesti pildistada`,
     advisory: (list: number[], total: number) => (total === 1
-      ? 'Sinu iirise rõngas on veel silmalaug või ripse. Puhtama tulemuse saamiseks pildista uuesti.'
-      : `${list.length === 1 ? `Silm ${list[0]}` : `Silmad ${jaList(list)}`}: rõngas on veel silmalaug või ripse. Puhtama tulemuse saamiseks pildista uuesti.`),
+      ? 'Sinu iirise rõnga sees on veel silmalaugu või ripsmeid. Puhtama tulemuse saamiseks pildista uuesti.'
+      : `${list.length === 1 ? `Silm ${list[0]}` : `Silmad ${jaList(list)}`}: rõnga sees on veel silmalaugu või ripsmeid. Puhtama tulemuse saamiseks pildista uuesti.`),
     retake: {
       calm: 'Stiilide näitamiseks vajame veel üht fotot.',
       manual: 'Ikka ei õnnestu? Saada oma parimad fotod aadressile {link} ja me vaatame need üle.',
@@ -397,14 +397,14 @@ export const et: TryCopy = {
   price: {
     title: 'Selle kunstiteose hind',
     eyes: (n: number, style: string) => `${silmad(n)} · ${style}`,
-    black: (name: string, black: string, art: string) => `1 silm: ${black} stiili ${name} eest, ${art} iga teise stiili eest.`,
+    black: (name: string, black: string, art: string) => `1 silm: ${black} stiili ${name} eest, ${art} mis tahes muu stiili eest.`,
     duoOffer: (two: string) => `Lisa teine silm: ${two} mõlema eest.`,
     extra: (two: string, further: string, max: number) => `Kaks silma ${two}, seejärel +${further} iga järgmise silma eest, kuni ${silmad(max)}.`,
     // the landing's pricing.notice (src/landing/copy/et.json), with today's free preview
     notice: 'Tellimine avaneb peagi: sinu eelvaade on täna tasuta.',
     footnote: `${WOULD_ET} Hinnad on eurodes.`,
     footnoteAud: `${WOULD_ET} Hinnad on Austraalia dollarites (A$).`,
-    footnoteHuf: `${WOULD_ET} Hinnad on Ungari forintites (Ft).`,
+    footnoteHuf: `${WOULD_ET} Hinnad on Ungari forintides (Ft).`,
     footnoteUsd: `${WOULD_ET} Hinnad on USA dollarites (US$).`,
     demo: 'See on demo tehisintellekti loodud näidissilmaga. Proovi oma silmaga, et näha oma hinda.',
     sampleNotCounted: (k: number) => (k === 1

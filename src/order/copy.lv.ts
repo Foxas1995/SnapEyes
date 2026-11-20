@@ -39,7 +39,7 @@ export const lv: OrderCopy = {
   },
   pending: {
     title: 'Jūsu maksājums tiek apstiprināts',
-    body: 'Jūsu maksāšanas veida apstiprināšana aizņem nedaudz ilgāk. Tiklīdz maksājums būs apstiprināts, sāksim veidot jūsu mākslas darbu. Šī lapa pati pārbauda vēlreiz.',
+    body: 'Jūsu maksāšanas veida apstiprināšana aizņem nedaudz vairāk laika. Tiklīdz maksājums būs apstiprināts, sāksim veidot jūsu mākslas darbu. Šī lapa pati pārbauda vēlreiz.',
     // paid, but the order confirmation email (it confirms the withdrawal waiver) has not gone out yet: nothing is made
     mailTitle: 'Maksājums saņemts',
     mailBody: 'Jūsu maksājums ir apstiprināts. Nosūtām jums pasūtījuma apstiprinājumu e-pastā un uzreiz pēc tam sākam veidot jūsu mākslas darbu. Šī lapa pati pārbauda vēlreiz.',
@@ -116,7 +116,7 @@ export const lv: OrderCopy = {
     unavailable: 'Izdrukas pašlaik nevar pasūtīt. Lūdzu, mēģiniet vēlāk.',
     cancelled: 'Jūs atgriezāties nesamaksājot, tāpēc nekas nav ieturēts. Izdruku šeit varat pasūtīt jebkurā laikā.',
     checking: 'Apstiprinām jūsu maksājumu par izdruku…',
-    slow: 'Jūsu maksājuma apstiprināšana aizņem nedaudz ilgāku laiku. Jums nekas nav jādara: izdruka parādīsies šeit, tiklīdz maksājums būs apstiprināts, un apstiprinājumu nosūtīsim e-pastā.',
+    slow: 'Jūsu maksājuma apstiprināšana aizņem nedaudz vairāk laika. Jums nekas nav jādara: izdruka parādīsies šeit, tiklīdz maksājums būs apstiprināts, un apstiprinājumu nosūtīsim e-pastā.',
     processing: 'Jūsu maksājuma veida apstiprināšanai vajag nedaudz vairāk laika. Izdruku pasūtīsim, tiklīdz maksājums būs apstiprināts.',
     expired: 'Šī maksājuma lapa bija beigusies, tāpēc nekas nav ieturēts. Izdruku varat pasūtīt vēlreiz zemāk.',
     extra: 'Šim pasūtījumam jau bija izdruka, tāpēc šis otrais maksājums nebija vajadzīgs. Mēs to atmaksāsim. Rakstiet mums, ja tā vietā vēlējāties otru izdruku.',
