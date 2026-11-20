@@ -276,6 +276,7 @@ export const lv: TryCopy = {
     addAnother: 'Pievienot vēl vienu aci',
     addHint: (left: number) => `Partnera, bērna vai jūsu otra acs. Šajā mākslas darbā vēl ir vieta ${acisDat(left)}.`,
     full: (max: number) => `Tās ir ${acis(max)}: vairāk vienā mākslas darbā neietilpst.`,
+    quota: (left: number, max: number) => `Bezmaksas priekšskatījumi šodien: atlikuši ${left} no ${max}.`,
     remove: (i: number) => `Noņemt ${i}. aci`,
     startOver: 'Sākt no sākuma',
     confirmStartOver: (n: number) => `Atmest visas acis (${n}) un sākt no sākuma?`,

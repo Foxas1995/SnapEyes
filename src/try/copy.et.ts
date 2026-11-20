@@ -279,6 +279,7 @@ export const et: TryCopy = {
     addAnother: 'Lisa veel üks silm',
     addHint: (left: number) => `Partner, laps või sinu teine silm. Sellel kunstiteosel on ruumi veel ${silmaGen(left)} jaoks.`,
     full: (max: number) => `See on ${silmad(max)}, rohkem ühele kunstiteosele ei mahu.`,
+    quota: (left: number, max: number) => `Tasuta eelvaateid täna alles: ${left}/${max}.`,
     remove: (i: number) => `Eemalda silm ${i}`,
     startOver: 'Alusta otsast',
     confirmStartOver: (n: number) => (n === 1 ? 'Kas visata see silm ära ja alustada otsast?' : `Kas visata kõik ${silmad(n)} ära ja alustada otsast?`),

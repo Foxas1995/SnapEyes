@@ -274,6 +274,7 @@ export const hr: TryCopy = {
     addAnother: 'Dodajte još jedno oko',
     addHint: (left: number) => `Partner, dijete ili vaše drugo oko. Na ovom umjetničkom djelu ima mjesta za još ${oci(left)}.`,
     full: (max: number) => `To je ${oci(max)}, najviše što stane na jedno umjetničko djelo.`,
+    quota: (left: number, max: number) => `Besplatni pregledi danas: preostalo ${left} od ${max}.`,
     remove: (i: number) => `Uklonite ${i}. oko`,
     startOver: 'Počnite ispočetka',
     confirmStartOver: (n: number) => `Odbaciti sve oči (${n}) i početi ispočetka?`,

@@ -7,6 +7,7 @@
 // measurements, written from those tables the way words() does (the same keys, 233 px and 420 px; the Croatian entries come out of the same step byte for byte).
 import { setCopyLang, T } from '../../src/try/copy';
 import { LANGS, type Lang } from '../../src/shared/lang';
+import { quotaOf } from '../../src/try/quota';
 import { topTip, visibleTips, wordsOf, DEFAULT_TARGETS, type Quality } from '../../src/try/shots';
 
 type Row = [string, boolean, string?];
@@ -72,6 +73,13 @@ export async function run(): Promise<Row[]> {
   on('de');
   check('without quality.words (an older server), with words that lack the page language, or with a malformed entry the own fields of the reply are used unchanged',
     wordsOf(legacy).message === GOOD.message && wordsOf(partial).message === GOOD.message && wordsOf(broken).message === GOOD.message && wordsOf(legacy).tips.join() === (GOOD.tips || []).join(), wordsOf(broken).message);
+  // 2026-11-20: the day's free previews left, printed under the result from the first preview on
+  check('quotaOf reads the {limit, left} of the server and nothing else (absent, not numbers, fractions, more left than the ceiling, a ceiling of 0)',
+    JSON.stringify(quotaOf({ limit: 8, left: 7 })) === '{"limit":8,"left":7}' && JSON.stringify(quotaOf({ limit: 8, left: 0 })) === '{"limit":8,"left":0}'
+      && [undefined, null, 7, {}, { limit: 8 }, { limit: '8', left: 7 }, { limit: 8, left: 7.5 }, { limit: 8, left: 9 }, { limit: 8, left: -1 }, { limit: 0, left: 0 }].every((v) => quotaOf(v) === null));
+  const said = LANGS.map((l) => { on(l); return T.result.quota(7, 8); });
+  check('each language says how many free previews are left today with both numbers (7 and 8), in a sentence of its own, without a dash',
+    said.every((s) => /\b7\b/.test(s) && /\b8\b/.test(s) && !/[\u2013\u2014]/.test(s) && s.length < 80) && new Set(said).size === LANGS.length, said.join(' | '));
   on('en');
   return out;
 }

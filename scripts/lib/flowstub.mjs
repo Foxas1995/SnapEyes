@@ -30,6 +30,7 @@ export function flowApi(root, { wait = {} } = {}) {
   const restored = file('sample_eye_blue_restored.jpg');   // the display picture of the eye and of the first style
   const second = file('sample_eye_blue_before.jpg');       // another picture, so that a second style is a different picture
   const stats = { calls: [], model: 0, enhance: [] };
+  let previews = null;        // api.setPreviews: what a made restoration says of the day's free previews ({limit, left}, api/_lib/previewcap.py left), or nothing
   let shot = 'good';          // 'good' and 'ok' (a middling shot): the analysis goes on by itself; 'unlocked': its circle did not lock, it stops at the quality step (api.setShot)
   let marked = false;         // api.setSentences: every sentence of the analysis carries its language, in the reply and in quality.words
   const mark = (l) => ({ message: `Message [${l}]`, tips: [`Tip: move closer [${l}]`], lamp_message: null });
@@ -96,7 +97,7 @@ export function flowApi(root, { wait = {} } = {}) {
         if (b.redisplay === true) { json({ ok: true, image: b.lang === 'en' ? restored : second, shown: b.crop ? 'reveal' : 'plain', lang: b.lang }); return; }
         if (b.sample === true) { json({ ok: false, error: 'the stand-in has no prepared sample' }, 500); return; }
         await sleep(w.enhance);
-        json({ ok: true, image: restored, sealed: 'S', sealed_sizes: {}, fidelity: 0.9, used_sr: false, fallback: false, seconds: 2, stored: false, qa: null });
+        json({ ok: true, image: restored, sealed: 'S', sealed_sizes: {}, fidelity: 0.9, used_sr: false, fallback: false, seconds: 2, stored: false, qa: null, ...(previews ? { previews } : {}) });
       } else if (url.pathname === '/api/compose') {
         if (b.action === 'help') { json({ ok: true }); return; }
         const list = Array.isArray(b.styles) ? b.styles : null;
@@ -122,6 +123,8 @@ export function flowApi(root, { wait = {} } = {}) {
 
   return {
     handler, stats,
+    /** the day's free previews a restoration reports from now on ({limit, left}), or null for a server that counts none */
+    setPreviews(v) { previews = v; },
     /** (re)start the scripted order: scenario making | pending | ready | review, with `eyes` eyes, `made` of them made already */
     setOrder({ scenario = 'making', eyes = 3, made = 0, pendingMs = 20000 } = {}) {
       order.state = scenario; order.eyes = eyes; order.made = new Set(Array.from({ length: made }, (_, i) => i + 1)); order.pendingUntil = Date.now() + pendingMs;

@@ -14,6 +14,7 @@ import { CROP_MAX_PX } from './crop';
 import { LANG_NAMES, LOCALES, marketLangs } from '../shared/lang';
 import { LangMenu, wantsLangMenu } from '../shared/LangMenu';
 import { ResultView } from './ResultView';
+import { quotaOf, type Quota } from './quota';
 import { Working } from './Working';
 import { GuideVideo } from '../shared/GuideVideo';
 import { usePreviews } from './usePreviews';
@@ -97,6 +98,7 @@ interface Enhanced {
   image: string; sealed?: string; sealed_sizes?: Record<string, string>;
   reveal?: unknown;   // the numbers for the Reveal (src/reveal: parseReveal checks them); absent: not measured, the plain slider stays
   fidelity: number; used_sr: boolean; fallback: boolean; seconds: number; stored?: boolean; qa?: ColourQa | null;
+  previews?: unknown;   // the day's free previews of this connection: {limit, left} (api/_lib/previewcap.py left, ./quota.ts); absent where nothing is counted
 }
 /** The eye counts a style id takes (the registry, src/shared/styles.ts), for the line that says why a chosen style was not kept. */
 const eyesOf = (id: string): readonly [number, number] | null => (isStyle(id) ? REGISTRY[id].eyes : null);
@@ -237,6 +239,8 @@ export const TryApp: React.FC = () => {
   const [announce, setAnnounce] = useState('');
   useEffect(() => { setAnnounce(arriving ? T.result.previewReady : ''); }, [arriving]);
   const [error, setError] = useState<string | null>(null);
+  // how many free previews this connection has left today, as the last restoration's reply said (the owner, 2026-11-20: tell people after the first one, not at the wall)
+  const [quota, setQuota] = useState<Quota | null>(null);
   const [consent, setConsent] = useState(false);
   const [storageOn, setStorageOn] = useState(false);
   const [session] = useState(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
@@ -793,6 +797,7 @@ export const TryApp: React.FC = () => {
     // The Reveal (src/reveal): the numbers /api/enhance measured for it and, cut now while this page still holds the photo (it is released below), the
     // customer's own photo in the Reveal's frame. The frame lives in this tab's memory only: never uploaded, never saved (keepForReturn leaves it out).
     // Without it the Reveal is built from the client crop (src/reveal/useRevealFrame.ts); without the numbers the plain slider stays.
+    if (!sample) setQuota(quotaOf(e.previews));
     const reveal = sample ? undefined : parseReveal(e.reveal) ?? undefined;
     let wide: WideFrame | undefined;
     if (reveal) {
@@ -1220,7 +1225,7 @@ export const TryApp: React.FC = () => {
             eyes={eyes} selectedId={selectedId} onSelect={setSelectedId} onRemove={removeEye} onRetake={retakeEye} onAdd={addEye} onMove={moveEye} onCentre={centreEye}
             art={art} staleArt={previews.staleArt} composeError={previews.composeError} onRetryCompose={previews.retryCompose}
             picker={picker} layout={previews.layout} layoutOptions={selectedTile?.layouts ?? []} onLayout={setLayoutWant}
-            opts={opts} onOpts={setOpts} words={words}
+            opts={opts} onOpts={setOpts} words={words} quota={quota}
             onStartOver={startOver} purchase={purchase} enter={stepped} arrive={arriving} onArrived={() => setArriving(false)} />
         )}
       </main>

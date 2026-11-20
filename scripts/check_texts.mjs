@@ -80,7 +80,7 @@ export const SAMPLES = {
   'gift.applied': [['24,97 €']], 'gift.toPay': [['0,00 €'], ['15,00 €']],
   'result.eyeLabel': [[1]], 'result.retakeEye': [[2]], 'result.removed': [[2]],
   'result.previewFile': [[true], [false]], 'result.fileName': [['celestial-gold', 2, false], ['studio-black', 1, true]],
-  'result.did.quality': [[1400]], 'result.addHint': [[1], [3], [11]], 'result.full': [[8]], 'result.remove': [[2]], 'result.confirmStartOver': [[3], [5]],
+  'result.did.quality': [[1400]], 'result.addHint': [[1], [3], [11]], 'result.full': [[8]], 'result.quota': [[7, 8], [1, 8], [0, 8]], 'result.remove': [[2]], 'result.confirmStartOver': [[3], [5]],
   'price.eyes': [[1, 'Celestial Gold'], [2, 'Kiss Collision'], [4, 'Family Colours'], [11, 'Family Colours']],
   'price.black': [['Clean Iris', '6 990 Ft', '8 990 Ft']],
   'price.duoOffer': [['13 990 Ft']], 'price.extra': [['13 990 Ft', '4 990 Ft', 8]], 'price.sampleNotCounted': [[1], [2], [5]],

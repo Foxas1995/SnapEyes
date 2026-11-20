@@ -1,3 +1,4 @@
+import type { Quota } from './quota';
 import React from 'react';
 import { AlertTriangle, Check, Download, Info, Plus, RefreshCcw, Trash2 } from 'lucide-react';
 import { CompareSlider } from './CompareSlider';
@@ -35,6 +36,7 @@ interface Props {
   opts: Opts;                    // swap places (two eyes), rotate places (three), the look of a style that has looks
   onOpts: (o: Opts) => void;
   words: WordsModel;             // a name per eye, a date, a family name
+  quota?: Quota | null;          // the day's free previews left, said once a preview was made (./quota.ts)
   onStartOver: () => void;
   purchase: React.ReactNode;     // the price and the way to buy it (./BuyCard.tsx)
   enter?: boolean;               // the screen arrives with a transition (the page changed step before: src/try/TryApp.tsx)
@@ -288,6 +290,8 @@ export const ResultView: React.FC<Props> = (p) => {
         )}
       </div>
       <p className="text-[11px] text-zinc-400 mt-2">{n < MAX_EYES ? T.result.addHint(MAX_EYES - n) : T.result.full(MAX_EYES)}</p>
+      {/* the day's free previews (8 per connection): said here, beside the button that spends the next one, so nobody meets the ceiling unwarned */}
+      {p.quota && <p data-testid="quota" className="text-[11px] text-zinc-400 mt-1">{T.result.quota(p.quota.left, p.quota.limit)}</p>}
     </div>
   );
 

@@ -9,6 +9,8 @@
 //   analysis  a switch while the analysis runs (the answer was asked for in the old language): the quality step, when it comes, speaks the new one
 //   marks     (a middling shot, which goes straight to the restoration) a switch after the restoration asks the server for the display copy again in the new language (/api/enhance {redisplay}, one call per switch, in that language, with the
 //             sealed preview, and the picture on screen is the new one), and never when the language has not changed
+//   quota     (2026-11-20) the result says how many free previews are left today when the restoration's answer carried them (7 of 8 here), in the page's language, and
+//             says nothing when the server counts none (every other start language)
 //   running   a switch while the restoration runs: the answer comes in the old language (wm), the page asks for it again in the new one, once
 // The stand-in does not draw a watermark: it answers the display copy of the other language with another picture, which the check sees on screen.
 import { join, resolve } from 'node:path';
@@ -27,6 +29,7 @@ let n = 0;
 const fail = (c, m) => { problems.push(`${c}: ${m}`); console.log(`  FAIL ${c}: ${m}`); };
 const ok = (c, cond, m) => { n++; if (!cond) fail(c, m); return !!cond; };
 
+const quotaLines = new Set();   // the line of the day's free previews, per language it was seen in
 const api = flowApi(ROOT, { wait: { analyze: 300, deglare: 300, enhance: 400, compose: 300, tile: 150 } });
 api.setSentences(true);
 const site = await serve(dist, { vercelFile: join(ROOT, 'vercel.json'), handler: api.handler });
@@ -132,6 +135,7 @@ try {
 
     // ---- a switch while the restoration runs
     api.setWait({ analyze: 300, enhance: 2500 }); api.stats.enhance.length = 0;
+    api.setPreviews(i % 2 === 0 ? { limit: 8, left: 7 } : null);
     page = await open(a);
     await setFile(page, 'input[type=file][multiple]', PHOTO);
     await waitFor(page, "!!document.querySelector('.wk-disc')", 10000);
@@ -143,9 +147,15 @@ try {
       const got = await (async () => { for (let k = 0; k < 100; k++) { if (calls().includes(b)) return true; await sleep(60); } return false; })();
       ok('running', got && api.stats.enhance.filter((x) => !x.redisplay).map((x) => x.lang).join() === a && calls().join() === b, `${tag}: restoration asked in ${api.stats.enhance.filter((x) => !x.redisplay).map((x) => x.lang)}, the picture again in ${calls()}: expected ${a} then ${b}`);
     }
+    if (done) {
+      const line = await page.eval("(document.querySelector('[data-testid=quota]') || { textContent: '' }).textContent");
+      if (i % 2 === 0) { ok('quota', /(^|[^0-9])7([^0-9]|$)/.test(line) && /(^|[^0-9])8([^0-9]|$)/.test(line), `${tag}: the result does not say 7 of 8 free previews are left ("${line}")`); quotaLines.add(line); }
+      else ok('quota', line === '', `${tag}: the result names free previews although the server counted none ("${line}")`);
+    }
     await page.close();
     console.log(`  done ${tag}`);
   }
+  ok('quota', quotaLines.size === Math.ceil(LANGS.length / 2), `the line of the free previews left was seen in ${quotaLines.size} different sentences, not one per language it was asked in (${[...quotaLines].join(' | ')})`);
 } finally {
   await chrome.close();
   await site.close();

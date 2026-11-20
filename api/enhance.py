@@ -265,6 +265,9 @@ def enhance(body):
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
     PC.mark(cap)                        # one more preview made by this connection today
+    quota = PC.left(cap)                # and how many it has left: the page says so under the result (src/try/ResultView.tsx)
+    if quota:
+        res["previews"] = quota
     E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"],
              reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms), **_retry_codes(retry))
     return res

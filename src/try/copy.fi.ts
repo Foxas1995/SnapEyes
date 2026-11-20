@@ -271,6 +271,7 @@ export const fi: TryCopy = {
     addAnother: 'Lisää vielä silmä',
     addHint: (left: number) => `Kumppani, lapsi tai toinen silmäsi. Tässä taideteoksessa on tilaa vielä ${left} silmälle.`,
     full: (max: number) => `Silmiä on nyt ${max}, eikä yhteen taideteokseen mahdu enempää.`,
+    quota: (left: number, max: number) => `Ilmaisia esikatseluja tänään jäljellä: ${left}/${max}.`,
     remove: (i: number) => `Poista silmä ${i}`,
     startOver: 'Aloita alusta',
     confirmStartOver: (n: number) => `Hylätäänkö ${n === 1 ? 'silmä' : `kaikki ${silmat(n)}`} ja aloitetaan alusta?`,

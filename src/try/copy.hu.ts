@@ -284,6 +284,7 @@ export const hu: TryCopy = {
     addAnother: 'Újabb szem hozzáadása',
     addHint: (left: number) => `A párod, a gyermeked vagy a másik szemed. Még ${left} szem fér el ezen az alkotáson.`,
     full: (max: number) => `Ez ${max} szem: ennél több nem fér el egy alkotáson.`,
+    quota: (left: number, max: number) => `Ingyenes előnézetek ma: még ${left} (napi keret: ${max}).`,
     remove: (i: number) => `${i}. szem eltávolítása`,
     startOver: 'Újrakezdés',
     confirmStartOver: (n: number) => `Elveted mind ${az(n)} ${n} szemet, és újrakezded?`,

@@ -493,7 +493,10 @@ def enh(lang="lt"):
 
 ONE, TWO = "203.0.113.7", "198.51.100.4"
 TODAY = f"{PCAP.TOP}/{PCAP.day()}"
-g = [post_from("/api/enhance", enh(), ONE)[0] for _ in range(2)]
+g_two = [post_from("/api/enhance", enh(), ONE) for _ in range(2)]
+g = [x[0] for x in g_two]
+check("G8 1120: the reply of a made preview says how many free previews the connection has left today (1 of 2, then 0 of 2), and the refusal that follows says none of it",
+      [x[1].get("previews") for x in g_two] == [{"limit": 2, "left": 1}, {"limit": 2, "left": 0}], [x[1].get("previews") for x in g_two])
 calls = len(MODEL_CALLS)
 c, jg = post_from("/api/enhance", enh(), ONE)
 check("G1 the third preview of one connection on a day with a ceiling of 2 -> 429 preview_limit with the ceiling, the seconds to midnight and the Lithuanian sentence; no model call",

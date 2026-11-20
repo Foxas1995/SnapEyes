@@ -59,13 +59,18 @@ def _seconds_left(now=None):
     return int((now // 86400 + 1) * 86400 - now) + 1
 
 
+class Tag(str):
+    """The connection's tag of the day. used is how many previews it had made before this one (None when the count could not be read)."""
+    used = None
+
+
 def check():
     """Refuse (iris.PreviewLimit) the request this thread serves when its connection has had its ceiling of previews today. Returns the tag
     to mark a made preview with, or None when nothing is counted here."""
     req = L.request()
     if req is None or not active():
         return None
-    t = tag(req)
+    t = Tag(tag(req))
     try:
         n = len([r for r in store.list_folder(f"{TOP}/{day()}", timeout=4.0, retry=False, search=t) if not r["folder"]])
     except store.StorageError:
@@ -73,7 +78,17 @@ def check():
     if n >= ceiling():
         print(f"snapeyes preview ceiling: connection {t} had {n} previews today", flush=True)
         raise L.PreviewLimit(ceiling(), _seconds_left())
+    t.used = n
     return t
+
+
+def left(t):
+    """What the reply of the preview just made tells the page (the owner, 2026-11-20: "warn people after the first generation"): the day's ceiling and how many
+    previews this connection has left after this one. None when nothing is counted here or the count could not be read."""
+    used = getattr(t, "used", None)
+    if not t or used is None:
+        return None
+    return {"limit": ceiling(), "left": max(0, ceiling() - used - 1)}
 
 
 def mark(t):

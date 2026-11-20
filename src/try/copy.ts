@@ -316,6 +316,8 @@ const en = {
     addAnother: 'Add another eye',
     addHint: (left: number) => `Partner, child, or your other eye. Room for ${left} more ${left === 1 ? 'eye' : 'eyes'} on this artwork.`,
     full: (max: number) => `That is ${max} eyes, the most one artwork holds.`,
+    // the day's free previews left, under the result once one was made (the server counts them: api/_lib/previewcap.py); no plural form depends on the numbers
+    quota: (left: number, max: number) => `Free previews today: ${left} of ${max} left.`,
     remove: (i: number) => `Remove eye ${i}`,
     startOver: 'Start over',
     confirmStartOver: (n: number) => `Discard all ${n} eyes and start over?`,
@@ -830,6 +832,7 @@ const de: TryCopy = {
     addAnother: 'Weiteres Auge hinzufügen',
     addHint: (left: number) => `Partner, Kind oder Ihr anderes Auge. Platz für ${left} ${left === 1 ? 'weiteres Auge' : 'weitere Augen'} auf diesem Kunstwerk.`,
     full: (max: number) => `Das sind ${max} Augen, mehr fasst ein Kunstwerk nicht.`,
+    quota: (left: number, max: number) => `Kostenlose Vorschauen heute: noch ${left} von ${max}.`,
     remove: (i: number) => `Auge ${i} entfernen`,
     startOver: 'Neu beginnen',
     confirmStartOver: (n: number) => `Alle ${n} Augen verwerfen und neu beginnen?`,

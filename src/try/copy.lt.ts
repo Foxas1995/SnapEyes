@@ -258,6 +258,7 @@ export const lt: TryCopy = {
     addAnother: 'Pridėti dar vieną akį',
     addHint: (left: number) => `Partnerio, vaiko arba kita Jūsų akis. Šiame kūrinyje telpa dar ${left} ${akysWord(left)}.`,
     full: (max: number) => `Tai jau ${akys(max)}: daugiau viename kūrinyje netelpa.`,
+    quota: (left: number, max: number) => `Nemokamos peržiūros šiandien: liko ${left} iš ${max}.`,
     remove: (i: number) => `Pašalinti akį ${i}`,
     startOver: 'Pradėti iš naujo',
     confirmStartOver: (n: number) => `Pašalinti visas akis (${n}) ir pradėti iš naujo?`,
