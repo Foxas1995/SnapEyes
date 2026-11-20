@@ -76,7 +76,8 @@ export const SAMPLES = {
   'collector.bestLabel': [[3, 45], [3, undefined]], 'collector.full': [[5, 'X 2 (45)']], 'collector.more': [[1], [3], [11]],
   'collector.lampSkipped': [[1, 'X 3'], [2, 'X 3'], [5, 'X 3']], 'collector.bestIs': [['X 3']],
   'collector.lastFailed': [['Ezen a felvételen nem találtunk szemet.']],
-  'print.option': [['Akrilinis 30 × 30 cm', '59,00 €']], 'print.mockAlt': [['Plakatas 50 × 50 cm']],
+  // the print offered after the purchase (src/order/copy*.ts offer; until 2026-11-21 these were /try's print.option and print.mockAlt: the picker moved to the order page)
+  'offer.option': [['Akrilinis 30 × 30 cm', '59,00 €']], 'offer.mockAlt': [['Plakatas 50 × 50 cm']],
   'gift.applied': [['24,97 €']], 'gift.toPay': [['0,00 €'], ['15,00 €']],
   'result.eyeLabel': [[1]], 'result.retakeEye': [[2]], 'result.removed': [[2]],
   'result.previewFile': [[true], [false]], 'result.fileName': [['celestial-gold', 2, false], ['studio-black', 1, true]],

@@ -1,7 +1,11 @@
 // Prints of the artwork as the page code reads them (src/shared/prints.ts, src/try/PrintPick.tsx, src/try/BuyCard.tsx, src/try/checkout.ts,
 // src/legal/docs/prints.ts, src/admin/Prints.tsx): the offer and the shipping rule, the server's answer and the markets that offer prints,
-// the buy card with and without a print (the choice, the country, the print box, the total on the button, the picture), the checkout request,
-// the legal texts of every edition and the admin's words. Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs.
+// the picker (the choice, the country, the print box, the total, the picture), the checkout request, the legal texts of every edition and the
+// admin's words. Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs.
+// 2026-11-21: a print is offered AFTER the purchase, on the order page (src/order/PrintOffer.tsx; suites/ts/print_offer.test.ts has that card's
+// own tests). The picker left /try's buy card, so the checks that drew it inside the buy card draw it in the order page's card now, with that
+// page's words ("Choose a print" where the buy card said "Digital file only", the print's price without the plus sign, the total on its own
+// line and not on the button), and the buy card's checks say that it shows no print even while the server offers them.
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
@@ -10,8 +14,10 @@ import {
 } from '../../src/shared/prints';
 import { BuyCard } from '../../src/try/BuyCard';
 import { PrintMock, printPart } from '../../src/try/PrintPick';
-import { COPY, T, setCopyLang } from '../../src/try/copy';
+import { COPY, setCopyLang } from '../../src/try/copy';
 import { ORDER_COPY } from '../../src/order/copy';
+import { PrintOffer } from '../../src/order/PrintOffer';
+import type { OrderStatus } from '../../src/order/api';
 import { runCheckout } from '../../src/try/checkout';
 import { CHECKOUT_LEGAL, checkoutLegal, WITHDRAWAL_CONSENT_VERSION } from '../../src/shared/legal';
 import { EDITIONS } from '../../src/legal/editions';
@@ -75,46 +81,59 @@ export async function run(): Promise<Row[]> {
     preview: 'ready', stale: [], onRetake: noop, waiver: true, onWaiver: noop, busy: false, step: null, error: null, onBuy: noop,
     state: { kind: 'normal' }, loading: false, advisory: [], wordsBlocked: false, ...o,
   } as never));
+  // the picker's card, where it lives since 2026-11-21: the order page's offer under a delivered artwork (the status reply's print_offer)
+  const st = (o: Partial<OrderStatus> = {}): OrderStatus => ({
+    order: '261121-0123456789abcdef', state: 'ready', eyes: [{ eye: 1, made: true }], count: 1, market: 'eu',
+    download: { url: 'data:,art', download_url: 'data:,art' }, print_offer: { currency: 'EUR', products: server.products, consent: { en: 'SERVER BOX TEXT' } }, ...o,
+  });
+  const offerCard = (o: Record<string, unknown> = {}, lang: (typeof LANGS)[number] = 'en') => renderToStaticMarkup(createElement(PrintOffer, {
+    C: ORDER_COPY[lang], lang, link: { o: '261121-0123456789abcdef', k: 'a'.repeat(32), s: null }, st: st(), market: 'eu', back: null, email: true, onReload: noop, onRecheck: noop, ...o,
+  } as never));
+  const OW = ORDER_COPY.en.offer;
   const h0 = buy();
   check('without prints (the switch off): the card is the card of before, no print choice, the button the artwork\'s price',
     !has(h0, 'print-pick') && text(h0).includes(sp(`Continue to payment · ${money(2497, 'eur', 'en')}`)) && !/data-testid="buy"[^>]*disabled/.test(h0), text(h0).slice(0, 300));
-  const h1 = buy({ prints: offered, printChoice: { product: null, country: '' } });
-  check('with prints: one choice, "Digital file only" selected first, every print with its price, the button still the artwork\'s price and open',
-    has(h1, 'print-pick') && text(h1).includes('Digital file only') && text(h1).includes(sp(`Acrylic glass print 40 × 40 cm, +${money(7900, 'eur', 'en')}`))
-      && !has(h1, 'print-country') && !has(h1, 'print-consent') && text(h1).includes(money(2497, 'eur', 'en')) && !/data-testid="buy"[^>]*disabled/.test(h1), text(h1).slice(0, 500));
-  const h2 = buy({ prints: offered, printChoice: { product: 'acrylic40', country: '' } });
+  const h1b = buy({ ordering: { open: true, prices, maxEyes: 8, prints: server, consent: { print: { en: 'SERVER BOX TEXT' } } } });
+  const h1 = offerCard();
+  check('with prints: the buy card still shows none (a print is offered after the purchase), its button the artwork\'s price and open; the order page\'s card has one '
+    + 'choice, "Choose a print" first, every print with its price, nothing chosen',
+    !has(h1b, 'print-pick') && text(h1b).includes(sp(`Continue to payment · ${money(2497, 'eur', 'en')}`)) && !/data-testid="buy"[^>]*disabled/.test(h1b)
+      && has(h1, 'print-pick') && text(h1).includes(OW.choose) && text(h1).includes(sp(`${printName('acrylic40', 'en')}, ${money(7900, 'eur', 'en')}`))
+      && !has(h1, 'print-country') && !has(h1, 'print-consent') && /data-testid="print-buy"[^>]*disabled/.test(h1), text(h1).slice(0, 500));
+  const h2 = offerCard({ initial: { choice: { product: 'acrylic40', country: '' } } });
   check('a print chosen without its country: the country list (by name), the picture of the print, the button shut with the hint to choose the country',
-    has(h2, 'print-country') && has(h2, 'print-mock') && /data-kind="acrylic"/.test(h2) && /data-testid="buy"[^>]*disabled/.test(h2) && text(h2).includes(T.print.countryMissing)
+    has(h2, 'print-country') && has(h2, 'print-mock') && /data-kind="acrylic"/.test(h2) && /data-testid="print-buy"[^>]*disabled/.test(h2) && text(h2).includes(OW.countryMissing)
       && h2.indexOf('Austria') < h2.indexOf('Germany') && !has(h2, 'print-shipping'), text(h2).slice(0, 400));
-  const h3 = buy({ prints: offered, printChoice: { product: 'acrylic40', country: 'DE' }, printConsent: false, artSrc: 'data:,art' });
+  const h3 = offerCard({ initial: { choice: { product: 'acrylic40', country: 'DE' }, consent: false } });
   check('with its country: the shipping line, the print box (the server\'s text, never ticked), the button shut until it is ticked',
     has(h3, 'print-shipping') && text(h3).includes(sp(`Shipping ${money(499, 'eur', 'en')}`)) && text(h3).includes('SERVER BOX TEXT') && !/data-testid="print-consent"[^>]*checked/.test(h3)
-      && /data-testid="buy"[^>]*disabled/.test(h3) && text(h3).includes(T.print.consentMissing) && h3.includes('src="data:,art"'), text(h3).slice(0, 600));
-  const h4 = buy({ prints: offered, printChoice: { product: 'acrylic40', country: 'DE' }, printConsent: true });
-  check('ticked: the button is open and shows the total (the artwork, the print, its shipping)', !/data-testid="buy"[^>]*disabled/.test(h4)
-    && text(h4).includes(sp(`Continue to payment · ${money(2497 + 7900 + 499, 'eur', 'en')}`)), text(h4).slice(0, 600));
-  const h5 = buy({ prints: offered, printChoice: { product: 'acrylic40', country: 'DE' }, printConsent: true, ordering: { open: true, prices, maxEyes: 8 } });
+      && /data-testid="print-buy"[^>]*disabled/.test(h3) && text(h3).includes(OW.consentMissing) && h3.includes('src="data:,art"'), text(h3).slice(0, 600));
+  const h4 = offerCard({ initial: { choice: { product: 'acrylic40', country: 'DE' }, consent: true } });
+  check('ticked: the button is open and the card shows the total (the print and its shipping; the artwork was paid before)', !/data-testid="print-buy"[^>]*disabled/.test(h4)
+    && text(h4).includes(sp(`${OW.total} ${money(7900 + 499, 'eur', 'en')}`)) && text(h4).includes('Continue to payment'), text(h4).slice(0, 600));
+  const h5 = offerCard({ st: st({ print_offer: { currency: 'EUR', products: server.products } }), initial: { choice: { product: 'acrylic40', country: 'DE' }, consent: true } });
   check('without the server\'s box text the page shows its own (the same words, held by the build)', text(h5).includes(sp(CHECKOUT_LEGAL.en.printConsent)));
   check('the picture of each kind: a frame for the canvas, a gloss for the acrylic, plain paper for the poster',
     ['acrylic', 'canvas', 'poster'].every((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).includes(`data-kind="${k}"`)));
-  setCopyLang('lt');
-  const hl = buy({ prints: offered, printChoice: { product: 'poster50', country: 'LT' }, printConsent: false });
-  check('Lithuanian: the words of the choice and the Lithuanian box', text(hl).includes('Tik skaitmeninis failas') && text(hl).includes('Plakatas 50 × 50 cm')
-    && text(hl).includes('Lietuva') && text(hl).includes(sp(CHECKOUT_LEGAL.lt.printConsent)), text(hl).slice(0, 400));
-  // 2026-11-13: Finnish, Estonian and Latvian, the same way (the words of src/try/copy.fi.ts, copy.et.ts and copy.lv.ts print.none, the names of api/_lib/print_names.py)
-  const NEW_WORDS = { fi: ['Vain digitaalinen tiedosto', 'Juliste', 'FI', 'Suomi'], et: ['Ainult digitaalne fail', 'Plakat', 'EE', 'Eesti'], lv: ['Tikai digitālais fails', 'Plakāts', 'LV', 'Latvija'] } as const;
+  // (the print box's text comes from the page's own copy here: the status reply of this card names no text for these languages)
+  const noBox = st({ print_offer: { currency: 'EUR', products: server.products } });
+  const hl = offerCard({ st: noBox, initial: { choice: { product: 'poster50', country: 'LT' }, consent: false } }, 'lt');
+  check('Lithuanian: the words of the choice and the Lithuanian box', text(hl).includes('Pasirinkite spaudinį') && text(hl).includes(sp(printName('poster50', 'lt')))
+    && sp(printName('poster50', 'lt')) === 'Plakatas 50 × 50 cm' && text(hl).includes('Lietuva') && text(hl).includes(sp(CHECKOUT_LEGAL.lt.printConsent)), text(hl).slice(0, 400));
+  // 2026-11-13: Finnish, Estonian and Latvian, the same way (the words of src/order/copy.fi.ts, copy.et.ts and copy.lv.ts offer.choose, the names of api/_lib/print_names.py)
+  const NEW_WORDS = { fi: ['Valitse tuloste', 'Juliste', 'FI', 'Suomi'], et: ['Vali trükitud pilt', 'Plakat', 'EE', 'Eesti'], lv: ['Izvēlieties izdruku', 'Plakāts', 'LV', 'Latvija'] } as const;
   for (const l of ['fi', 'et', 'lv'] as const) {
-    setCopyLang(l);
     const [none, poster, cc, country] = NEW_WORDS[l];
-    const hx = buy({ prints: offered, printChoice: { product: 'poster50', country: cc }, printConsent: false });
+    const hx = offerCard({ st: noBox, initial: { choice: { product: 'poster50', country: cc }, consent: false } }, l);
     check(`${l}: the words of the choice and the box of that language (its own text, not the English or the Lithuanian one)`, text(hx).includes(none) && text(hx).includes(`${poster} 50 × 50 cm`)
       && sp(printName('poster50', l)) === `${poster} 50 × 50 cm` && countryName(cc, l) === country && text(hx).includes(country) && text(hx).includes(sp(CHECKOUT_LEGAL[l].printConsent))
-      && CHECKOUT_LEGAL[l].printConsent !== CHECKOUT_LEGAL.en.printConsent && CHECKOUT_LEGAL[l].printConsent !== CHECKOUT_LEGAL.lt.printConsent && !text(hx).includes('Digital file only'), text(hx).slice(0, 400));
+      && CHECKOUT_LEGAL[l].printConsent !== CHECKOUT_LEGAL.en.printConsent && CHECKOUT_LEGAL[l].printConsent !== CHECKOUT_LEGAL.lt.printConsent && !text(hx).includes('Choose a print'), text(hx).slice(0, 400));
   }
   setCopyLang('en');
   check('every language has the print words, the two errors and no dash', LANGS.every((l) => {
     const c = COPY[l];
-    return !!c.print.title && !!c.print.none && !!c.buy.errors.print_unavailable && !!c.buy.errors.print_changed && !DASH.test(JSON.stringify(c.print))
+    const o = ORDER_COPY[l].offer;
+    return !!o.product && !!o.choose && !!c.buy.errors.print_unavailable && !!c.buy.errors.print_changed && !DASH.test(JSON.stringify(o))
       && !!ORDER_COPY[l].print.shipped && !DASH.test(JSON.stringify(ORDER_COPY[l].print));
   }));
 

@@ -440,19 +440,6 @@ export const lt: TryCopy = {
     footnoteUsd: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: JAV pardavimo mokestis netaikomas.',
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Spaudinys',
-    none: 'Tik skaitmeninis failas',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Pristatymo šalis',
-    pick: 'Pasirinkite šalį',
-    shipping: 'Siuntimas',
-    arrives: 'Pristatoma maždaug per 1 ar 2 savaites, su siuntos sekimu.',
-    consentMissing: 'Pažymėkite langelį apie spaudinį.',
-    countryMissing: 'Pasirinkite, į kurią šalį siųsti spaudinį.',
-    mockAlt: (name: string) => `${name}: Jūsų kūrinio peržiūra`,
-  },
   gift: {
     open: 'Turiu dovanų kuponą',
     label: 'Dovanų kupono kodas',

@@ -1,8 +1,24 @@
 import React from 'react';
-import { T } from './copy';
+import type { Lang } from '../shared/lang';
 import { countriesByName, countryName, type OfferedPrint, type PrintKind, kindName, printSize } from '../shared/prints';
 
-/** The customer's choice of a print: none (the digital file only), or a product and the country it ships to ('' until chosen). */
+// The print picker. It was the print option of /try's buy card; since 2026-11-21 a print is offered AFTER the purchase, on the order page
+// (src/order/PrintOffer.tsx), and the buy card shows none (the owner: a big price at the first checkout scares). The component takes its
+// words and its language from the page that shows it, so the order page does not load /try's dictionary for it.
+
+/** The words of the picker (src/order/copy*.ts offer has them). none: the first line of the list, chosen while no print is. */
+export interface PrintWords {
+  product: string;
+  none: string;
+  option: (name: string, price: string) => string;
+  country: string;
+  pick: string;
+  shipping: string;
+  arrives: string;
+  mockAlt: (name: string) => string;
+}
+
+/** The customer's choice of a print: none, or a product and the country it ships to ('' until chosen). */
 export interface PrintChoice { product: string | null; country: string }
 export const NO_PRINT: PrintChoice = { product: null, country: '' };
 
@@ -14,12 +30,14 @@ export function printPart(choice: PrintChoice, offered: readonly OfferedPrint[])
 }
 
 interface Props {
+  lang: Lang;
+  words: PrintWords;
   offered: readonly OfferedPrint[];
   choice: PrintChoice;
   onChoice: (c: PrintChoice) => void;
   consent: boolean;
   onConsent: (v: boolean) => void;
-  /** the exact text of the print box (GET /api/checkout consent.print, else src/shared/legal.ts CHECKOUT_LEGAL printConsent) */
+  /** the exact text of the print box (the order status reply's print_offer.consent, else src/shared/legal.ts CHECKOUT_LEGAL printConsent) */
   consentText: string;
   /** the preview of the artwork on screen (its watermarked display copy) */
   artSrc?: string;
@@ -30,16 +48,17 @@ interface Props {
 // a select as the card's other controls look
 const SELECT = 'mt-1 w-full min-h-[44px] rounded-xl bg-[#0b0e17] border border-white/15 text-sm text-zinc-100 px-3';
 
-/** The print option of the buy card: one choice (the file only, or a print with its price), the delivery country and its shipping, a picture
- *  of the artwork as that print, and the print box (never ticked in advance). Nothing here when no print is offered. */
+/** The choice of a print: the print with its price, the delivery country and its shipping, a picture of the artwork as that print, and the
+ *  print box (never ticked in advance). */
 export const PrintPick: React.FC<Props> = (p) => {
-  const lang = T.lang;
+  const lang = p.lang;
+  const w = p.words;
   const sel = p.choice.product ? p.offered.find((x) => x.id === p.choice.product) : undefined;
   const list = sel ? countriesByName(lang, Object.keys(sel.ship)) : [];
   const ship = sel && p.choice.country ? sel.ship[p.choice.country] : undefined;
   return (
     <div data-testid="print-pick" className="mt-4 bg-white/5 border border-white/10 rounded-xl p-3">
-      <label className="block text-[10px] uppercase tracking-widest text-zinc-400" htmlFor="print-product">{T.print.title}</label>
+      <label className="block text-[10px] uppercase tracking-widest text-zinc-400" htmlFor="print-product">{w.product}</label>
       <select id="print-product" data-testid="print-product" className={SELECT} disabled={p.busy} value={p.choice.product ?? ''}
         onChange={(e) => {
           const id = e.target.value || null;
@@ -47,28 +66,28 @@ export const PrintPick: React.FC<Props> = (p) => {
           // the country stays when the new print ships there too
           p.onChoice({ product: id, country: next && p.choice.country && next.ship[p.choice.country] ? p.choice.country : '' });
         }}>
-        <option value="">{T.print.none}</option>
+        <option value="">{w.none}</option>
         {p.offered.map((o) => (
-          <option key={o.id} value={o.id}>{T.print.option(`${kindName(o.kind, lang)} ${printSize(o.cm)}`, p.fmt(o.price))}</option>
+          <option key={o.id} value={o.id}>{w.option(`${kindName(o.kind, lang)} ${printSize(o.cm)}`, p.fmt(o.price))}</option>
         ))}
       </select>
       {sel && (
         <>
           <div className="mt-3 flex gap-3 items-start">
-            <PrintMock kind={sel.kind} src={p.artSrc} alt={T.print.mockAlt(`${kindName(sel.kind, lang)} ${printSize(sel.cm)}`)} />
+            <PrintMock kind={sel.kind} src={p.artSrc} alt={w.mockAlt(`${kindName(sel.kind, lang)} ${printSize(sel.cm)}`)} />
             <div className="flex-1 min-w-0">
-              <label className="block text-[11px] text-zinc-300" htmlFor="print-country">{T.print.country}</label>
+              <label className="block text-[11px] text-zinc-300" htmlFor="print-country">{w.country}</label>
               <select id="print-country" data-testid="print-country" className={SELECT} disabled={p.busy} value={p.choice.country}
                 onChange={(e) => p.onChoice({ product: sel.id, country: e.target.value })}>
-                <option value="">{T.print.pick}</option>
+                <option value="">{w.pick}</option>
                 {list.map((cc) => <option key={cc} value={cc}>{countryName(cc, lang)}</option>)}
               </select>
               {typeof ship === 'number' && (
                 <p data-testid="print-shipping" className="mt-2 text-xs text-zinc-200 flex justify-between gap-2">
-                  <span>{T.print.shipping}</span><span className="whitespace-nowrap">{p.fmt(ship)}</span>
+                  <span>{w.shipping}</span><span className="whitespace-nowrap">{p.fmt(ship)}</span>
                 </p>
               )}
-              <p className="mt-1 text-[11px] text-zinc-400">{T.print.arrives}</p>
+              <p className="mt-1 text-[11px] text-zinc-400">{w.arrives}</p>
             </div>
           </div>
           <label className="mt-3 flex items-start gap-3 text-xs leading-relaxed text-zinc-200 cursor-pointer">

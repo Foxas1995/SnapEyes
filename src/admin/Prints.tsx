@@ -142,6 +142,8 @@ export interface PrintView {
   state: string; attempts?: number | null; merchone_id?: string | null; external_id?: string | null; is_test?: boolean | null; error?: string | null;
   partner_status?: string | null; tracking?: { url?: string | null; number?: string | null; carrier?: string | null } | null;
   file?: { width?: number; dpi?: number; bytes?: number } | null; history?: { t: number; state: string; why?: string }[] | null; updated_iso?: string | null;
+  /** bought after the artwork, with a payment of its own (api/_lib/prints.py, the add-on): the payments list has it as its own line */
+  addon?: boolean;
 }
 
 export const OrderPrint: React.FC<{ call: Call; order: string; p: PrintView; onDone: () => void }> = ({ call, order, p, onDone }) => {
@@ -152,6 +154,7 @@ export const OrderPrint: React.FC<{ call: Call; order: string; p: PrintView; onD
       {acts.msg && <Notice tone={acts.msg.tone}>{acts.msg.text}</Notice>}
       <ul className="text-sm flex flex-col gap-1">
         <li>{p.name}, {p.country} ({p.city}): {fmtEur(p.price ?? null)} + siuntimas {fmtEur(p.ship ?? null)}; uždarbis apie {fmtEur(p.margin ?? null)}</li>
+        {p.addon && <li className={MUTED}>Užsakytas vėliau, užsakymo puslapyje: atskiras mokėjimas (žr. „Mokėjimai“). Grąžinus tą mokėjimą, spaudinys atšaukiamas.</li>}
         <li>Būsena: <b>{printStateLt(p.state)}</b>{p.attempts ? `, bandymų ${p.attempts}` : ''}{p.updated_iso ? `, ${p.updated_iso}` : ''}</li>
         {p.mismatch && p.mismatch.length > 0 && <li className="text-amber-300">Nesutampa: {p.mismatch.join(', ')} (spaudinys sulaikytas)</li>}
         {p.merchone_id && <li>merchOne: {p.merchone_id} ({p.is_test ? 'TEST' : 'tikras'}), išorinis nr. {p.external_id}{p.partner_status ? `, jų būsena ${p.partner_status}` : ''}</li>}

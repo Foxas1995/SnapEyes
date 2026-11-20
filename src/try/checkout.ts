@@ -168,7 +168,8 @@ export interface CheckoutInput {
   /** The price the page showed, in the market's smallest unit: only compared by the server (409 price_changed when it
    *  would charge another), never used to price. */
   shown?: number;
-  /** A print of the artwork (src/try/PrintPick.tsx): the product and the delivery country; the customer ticked its box. printShown: the print and its
+  /** A print of the artwork with the artwork's own checkout (the server's path, api/_lib/prints.py checkout_part; /try sends none since 2026-11-21: a print is offered
+   *  after the purchase, on the order page, src/order/PrintOffer.tsx): the product and the delivery country; the customer ticked its box. printShown: the print and its
    *  shipping as the page showed them (cents): only compared by the server (409 print_price_changed). None: the digital file only. */
   print?: { product: string; country: string } | null;
   printShown?: number;

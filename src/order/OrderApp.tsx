@@ -7,6 +7,8 @@ import { EMPTY_VIEW, REAL_DEPS, driveOrder, stopOf, type DriveView, type OrderLi
 import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPath, type OrderPrint, type OrderState, type OrderStatus } from './api';
 import { countryName, printName, printProduct } from '../shared/prints';
 import { WithdrawEntry, WithdrawForm, WithdrawnCard } from './WithdrawPanel';
+import { PrintOffer } from './PrintOffer';
+import { watchPrint, type PrintBack } from './printAddon';
 import { CARD, GOLD_BTN, PLAIN_BTN } from './ui';
 import { Dot, Waiting } from '../motion/Tick';
 import { EyeRing } from '../motion/EyeRing';
@@ -45,6 +47,18 @@ function readWithdrawMode(): boolean {
 }
 const WITHDRAW_MODE: boolean = typeof window !== 'undefined' ? readWithdrawMode() : false;
 
+// The way back from Stripe's page of a print bought after the artwork (api/_lib/prints.py addon_buy): ps names that payment's session, so
+// the page can ask until the print is on record (./printAddon.ts watchPrint); print=cancelled is Stripe's back link. Never read in the
+// withdrawal mode, which only reads the order.
+function readPrintReturn(): { ps: string | null; cancelled: boolean } {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    const ps = q.get('ps') || '';
+    return { ps: SESSION_RE.test(ps) ? ps : null, cancelled: q.get('print') === 'cancelled' };
+  } catch { return { ps: null, cancelled: false }; }
+}
+const PRINT_RETURN = typeof window !== 'undefined' && !WITHDRAW_MODE ? readPrintReturn() : { ps: null, cancelled: false };
+
 // the states of a concluded contract: the withdrawal function stays on the page for all of them (the server decides
 // whether the right still exists and says so in its answer)
 const CONTRACT_STATES: readonly OrderState[] = ['pending', 'paid', 'making', 'review', 'ready'];
@@ -65,6 +79,9 @@ export const OrderApp: React.FC = () => {
   const [email, setEmail] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
   const [makingSince, setMakingSince] = useState<number | null>(null);
+  // a print bought after the artwork: where the page is after the way back from Stripe (./printAddon.ts PrintBack), and a counter that starts the watch again
+  const [printBack, setPrintBack] = useState<PrintBack>(PRINT_RETURN.ps ? 'checking' : PRINT_RETURN.cancelled ? 'cancelled' : null);
+  const [printWatch, setPrintWatch] = useState(0);
   // the order's own market (the server names it): this page's links carry it (src/shared/markets.ts withMarket)
   const orderMarket = view.status?.market ?? view.status?.checkout?.market;
   useEffect(() => { adoptMarket(orderMarket); }, [orderMarket]);
@@ -113,6 +130,31 @@ export const OrderApp: React.FC = () => {
       .finally(() => { if (alive) { runningRef.current = false; setRunning(false); } });
     return () => { alive = false; };
   }, [run]);
+
+  // the order's status read once more, outside the driver (which has ended on a ready order): after a print was recorded, or when the offer's
+  // numbers changed. A read that fails changes nothing: the page keeps what it shows
+  const reloadStatus = () => {
+    if (!LINK) return;
+    void callApi<unknown>(statusPath(LINK.o, LINK.k, LINK.s, true), { timeoutMs: 25_000 }).then((r) => {
+      if (r.ok && isStatus(r.data)) { const fresh = r.data; setView((v) => ({ ...v, status: fresh })); }
+    });
+  };
+
+  // after Stripe's page of a print: ask until the payment is on record, then show the print (the answer carries its block, and the status is read
+  // again so the page is what a fresh visit would show)
+  useEffect(() => {
+    if (!LINK || !PRINT_RETURN.ps) return;
+    let alive = true;
+    void watchPrint(LINK, PRINT_RETURN.ps, { api: callApi, sleep: REAL_DEPS.sleep }, (back, print) => {
+      if (!alive) return;
+      setPrintBack(back);
+      if (back === 'done' || back === 'extra') {
+        if (print) setView((v) => (v.status ? { ...v, status: { ...v.status, print, print_offer: undefined } } : v));
+        reloadStatus();
+      }
+    }, () => alive);
+    return () => { alive = false; };
+  }, [printWatch]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   const again = () => {
     if (runningRef.current) return;
@@ -277,6 +319,9 @@ export const OrderApp: React.FC = () => {
     content = (
       <>
         <Ready C={C} st={st} lang={lang} email={email} reveal={rec.reveal} />
+        {/* a print of this artwork, offered once it is delivered (the status reply's print_offer), and the way back from its payment page */}
+        <PrintOffer C={C} lang={lang} link={LINK} st={st} market={orderMarket ?? market} back={printBack} email={email} onReload={reloadStatus}
+          onRecheck={() => { setPrintBack('checking'); setPrintWatch((n) => n + 1); }} />
         <Summary C={C} st={st} lang={lang} />
       </>
     );
@@ -369,18 +414,19 @@ const Summary: React.FC<{ C: OrderCopy; st: OrderStatus; lang: Lang }> = ({ C, s
       <p className="font-semibold text-zinc-100">{parts}</p>
       {st.names && <p className="text-xs text-zinc-400 mt-1 break-words">{C.summary.inscription(st.names)}</p>}
       {typeof st.amount === 'number' && <p className="text-xs text-zinc-400 mt-1">{C.summary.paid(money(st.amount, st.currency ?? 'eur', lang))}</p>}
-      {st.print && st.state !== 'deleted' && <PrintLine C={C} p={st.print} lang={lang} />}
+      {st.print && st.state !== 'deleted' && <PrintLine C={C} p={st.print} lang={lang} delivered={st.state === 'ready'} />}
     </section>
   );
 };
 
 /** The order's print (api/_lib/prints.py order_view): what it is and where it goes, how far it is, and the tracking link once it is shipped. */
-const PrintLine: React.FC<{ C: OrderCopy; p: OrderPrint; lang: Lang }> = ({ C, p, lang }) => {
+const PrintLine: React.FC<{ C: OrderCopy; p: OrderPrint; lang: Lang; delivered: boolean }> = ({ C, p, lang, delivered }) => {
   const name = printProduct(p.product) ? printName(p.product, lang) : p.product;
   return (
     <div data-testid="order-print" data-state={p.state} className="mt-3 pt-3 border-t border-white/10">
       <p className="text-xs font-semibold text-zinc-200">{C.print.title}: {name}{p.country ? `, ${countryName(p.country, lang)}` : ''}</p>
-      <p className="text-xs text-zinc-400 mt-1">{C.print[p.state]}</p>
+      {/* a print bought after the artwork waits for nothing: the file is delivered, so "as soon as your file is ready" would be the wrong words */}
+      <p className="text-xs text-zinc-400 mt-1">{p.state === 'preparing' && delivered ? C.print.preparingNow : C.print[p.state]}</p>
       {p.state === 'shipped' && p.tracking_url && (
         <a data-testid="order-print-track" href={p.tracking_url} target="_blank" rel="noopener noreferrer"
           className="mt-2 text-xs text-zinc-200 underline underline-offset-4 decoration-white/30 hover:text-white inline-flex items-center gap-1">

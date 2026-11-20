@@ -523,19 +523,6 @@ const en = {
     footnoteUsd: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no sales tax is charged.',
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Print',
-    none: 'Digital file only',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Delivery country',
-    pick: 'Choose the country',
-    shipping: 'Shipping',
-    arrives: 'Arrives in about 1 to 2 weeks, tracked.',
-    consentMissing: 'Please tick the box about your print.',
-    countryMissing: 'Please choose the delivery country of your print.',
-    mockAlt: (name: string) => `${name}: a preview of your artwork`,
-  },
   // a gift voucher at the checkout (./GiftField.tsx, api/_lib/voucher.py): only on the euro markets of the EU edition
   gift: {
     open: 'I have a gift voucher',
@@ -1006,19 +993,6 @@ const de: TryCopy = {
     footnoteUsd: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine Sales Tax berechnet.',
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Druck',
-    none: 'Nur die digitale Datei',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Lieferland',
-    pick: 'Land wählen',
-    shipping: 'Versand',
-    arrives: 'Kommt in etwa 1 bis 2 Wochen an, mit Sendungsverfolgung.',
-    consentMissing: 'Bitte setzen Sie das Häkchen zu Ihrem Druck.',
-    countryMissing: 'Bitte wählen Sie das Lieferland Ihres Drucks.',
-    mockAlt: (name: string) => `${name}: Vorschau Ihres Kunstwerks`,
-  },
   gift: {
     open: 'Ich habe einen Geschenkgutschein',
     label: 'Gutscheincode',

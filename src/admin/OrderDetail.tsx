@@ -372,7 +372,7 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
               {d.payments.map((p) => (
                 <div key={p.payment_intent} className="border-t border-white/5 pt-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm min-w-0 break-all">
-                    <p>{p.kind === 'extra' ? 'Papildomas (dvigubas) mokėjimas' : 'Užsakymo mokėjimas'}: <b>{fmtMoney(p.amount, p.currency)}</b>{p.live ? '' : ' (testas)'}</p>
+                    <p>{p.kind === 'extra' ? 'Papildomas (dvigubas) mokėjimas' : p.kind === 'print' ? 'Spaudinio mokėjimas (užsakytas vėliau)' : 'Užsakymo mokėjimas'}: <b>{fmtMoney(p.amount, p.currency)}</b>{p.live ? '' : ' (testas)'}</p>
                     <p className={`text-xs ${MUTED}`}>{p.payment_intent} · {isoTime(p.paid)}{p.refunded ? ' · grąžinta' : ''}</p>
                   </div>
                   {refundButton(p)}

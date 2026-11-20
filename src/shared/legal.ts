@@ -29,8 +29,11 @@ export type LegalLang = Lang;
  *  legal notice's example images described as our own eye (no founder named). 2026-11-11: the privacy policy (every edition and language) says what the day's
  *  ceiling of free previews per connection keeps (api/_lib/previewcap.py: a keyed hash of the address and the day, deleted after 2 days); no other legal text moved.
  *  2026-11-13: the Finnish, Estonian and Latvian texts of the EU edition (src/legal/docs/*.fi.ts, *.et.ts, *.lv.ts) and the three named as contract languages in
- *  every terms text of that edition. */
-export const LEGAL_UPDATED = '2026-11-13';
+ *  every terms text of that edition. 2026-11-21: a print is ordered from the order page AFTER the artwork is delivered, as a contract of its own
+ *  (src/legal/docs/prints.ts: the terms' print section and product sentence, the withdrawal page's and the privacy policy's print paragraph, in the eight
+ *  languages of the EU edition and in the Hungarian edition's terms and withdrawal page, which carry the same section); the print box's words and the consent
+ *  version are as they were. */
+export const LEGAL_UPDATED = '2026-11-21';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right
@@ -214,7 +217,7 @@ export interface CheckoutLegal {
   withdrawalConsent: string;
   /** Shown next to the checkbox when someone tries to continue without ticking it. */
   withdrawalConsentMissing: string;
-  /** The print box (src/try/PrintPick.tsx): shown, unticked, only when the customer adds a print (the euro markets of the EU edition). A print is made
+  /** The print box (src/try/PrintPick.tsx, shown by the order page's offer, src/order/PrintOffer.tsx): shown, unticked, only when the customer orders a print (the euro markets of the EU edition). A print is made
    *  to the consumer's specifications and clearly personalised, so the right of withdrawal does not apply to it (Art. 16(c) Directive 2011/83/EU);
    *  the box says so before the payment and keeps the rights for a faulty or damaged print. Identical to api/_lib/prints.py PRINT_CONSENT_TEXT. */
   printConsent: string;

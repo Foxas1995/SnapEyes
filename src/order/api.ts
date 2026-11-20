@@ -6,6 +6,7 @@
 import type { PriceList } from '../shared/markets';
 import type { Lang } from '../shared/lang';
 import type { ServerPrints } from '../shared/prints';
+import type { PrintOfferReply } from './printAddon';
 import { withCamp } from '../shared/counter';
 
 export interface ApiReply<T> {
@@ -148,6 +149,9 @@ export interface OrderStatus {
   artwork?: ArtworkProgress;
   // a paid order with a print (api/_lib/prints.py order_view): what it is, where it goes, and how far it is (the tracking link once shipped)
   print?: OrderPrint;
+  // a delivered order without a print, while one can be bought for it (api/_lib/prints.py addon_offer): the prints with the server's prices
+  // and shipping and the print box's text. The page shows the offer under the artwork (./PrintOffer.tsx); never together with print
+  print_offer?: PrintOfferReply;
 }
 
 export interface OrderPrint { product: string; kind?: string; cm?: number; country?: string; state: 'preparing' | 'sent' | 'shipped' | 'canceled'; tracking_url?: string | null }

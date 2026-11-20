@@ -683,7 +683,11 @@ async function checkGuide() {
 // checkout wording, legal labels, print and voucher words, and the language menu that replaces the row of buttons, src/shared/LangMenu.tsx) moved the base of /try by
 // +29,190 B JS and of /order by +13,127 B JS, and both by +135 B CSS (the menu's utilities in the shared stylesheet), measured on 33e948d against the tree with them.
 // It is words and a menu, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190, css: 10975 + 245 + 494 + 261 + 74 + 135 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127, css: 10975 + 245 + 494 + 261 + 74 + 135 } };
+// The print offered after the purchase (2026-11-21: the print choice left /try's buy card with its words of eight languages and the print module, src/shared/prints.ts; the
+// order page gained the offer card under a delivered artwork, src/order/PrintOffer.tsx with the picker src/try/PrintPick.tsx, the watch after Stripe's page, src/order/printAddon.ts,
+// and their words in eight languages) moved the base of /try by -5,390 B JS and of /order by +7,903 B JS, measured on e98e5ea against the tree with it (206,475 to 201,085 B
+// and 131,323 to 139,226 B; the CSS of both pages is 13,986 B before and after: the card uses the utilities the buy card had). It is a product, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390, css: 10975 + 245 + 494 + 261 + 74 + 135 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903, css: 10975 + 245 + 494 + 261 + 74 + 135 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

@@ -457,19 +457,6 @@ export const lv: TryCopy = {
     footnoteUsd: 'Viens digitāls fails (JPEG), 4096 px garākajā malā, bez ūdenszīmes. Šī ir kopējā cena: tirdzniecības nodoklis netiek piemērots.',
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Izdruka',
-    none: 'Tikai digitālais fails',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Piegādes valsts',
-    pick: 'Izvēlieties valsti',
-    shipping: 'Piegāde',
-    arrives: 'Pienāk apmēram 1 līdz 2 nedēļu laikā, ar sūtījuma izsekošanu.',
-    consentMissing: 'Atzīmējiet rūtiņu par savu izdruku.',
-    countryMissing: 'Izvēlieties savas izdrukas piegādes valsti.',
-    mockAlt: (name: string) => `${name}: jūsu mākslas darba priekšskatījums`,
-  },
   gift: {
     open: 'Man ir dāvanu karte',
     label: 'Dāvanu kartes kods',

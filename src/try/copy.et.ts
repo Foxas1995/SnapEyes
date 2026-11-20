@@ -460,19 +460,6 @@ export const et: TryCopy = {
     footnoteUsd: `${FILE_ET} See on koguhind: müügimaksu ei lisandu.`,
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Trükitud pilt',
-    none: 'Ainult digitaalne fail',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Tarneriik',
-    pick: 'Vali riik',
-    shipping: 'Tarne',
-    arrives: 'Saabub umbes 1 kuni 2 nädalaga, jälgitava saadetisena.',
-    consentMissing: 'Palun märgi oma trükitud pildi kohta käiv kast.',
-    countryMissing: 'Palun vali oma trükitud pildi tarneriik.',
-    mockAlt: (name: string) => `${name}: sinu kunstiteose eelvaade`,
-  },
   gift: {
     open: 'Mul on kinkekaart',
     label: 'Kinkekaardi kood',

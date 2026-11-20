@@ -725,11 +725,13 @@ legal_ts = read("src/shared/legal.ts")
 upd = re.search(r"export const LEGAL_UPDATED = '(\d{4}-\d{2}-\d{2})'", legal_ts).group(1)
 # WP18 (the catalogue switch): the date moved from 2026-10-05 (WP12) to 2026-10-06 with the publication of the AI-made material sentence
 # 2026-11-13: the Finnish, Estonian and Latvian texts of the EU edition, and the eight contract languages in the EU terms of the five older languages
+# 2026-11-21: a print is ordered from the order page after the artwork is delivered (src/legal/docs/prints.ts: the print paragraphs of the terms, the withdrawal page and the privacy policy)
 check("one LEGAL_UPDATED versions every legal page and the pack the confirmation quotes: the built pack's date is that date, it is not in the future, and it moved on the last work "
-      "that changed a legal text (2026-11-13, the Finnish, Estonian and Latvian texts of the EU edition; it was 2026-11-11 for the privacy paragraph of the daily ceiling of free previews, "
+      "that changed a legal text (2026-11-21, the print paragraphs: a print is ordered after the artwork; it was 2026-11-13 for the Finnish, Estonian and Latvian texts of the EU edition, "
+      "2026-11-11 for the privacy paragraph of the daily ceiling of free previews, "
       "2026-10-28 for the Croatian texts, 2026-10-20 for the anonymous counter's "
       "privacy paragraphs, 2026-10-06 at WP18, the AI-made material sentence, and 2026-10-05 at WP12)",
-      PACK["updated"] == upd == "2026-11-13" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
+      PACK["updated"] == upd == "2026-11-21" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
 terms_en = PACK["docs"]["en"]["terms"]["text"]
 check("the pack's English terms (what the e-mail quotes) print the new rows and the arrangement clause, say that a preview of five to eight eyes is coarser, and no longer promise half a minute "
       "per eye", "One eye, Clean Iris" in terms_en and "One eye, any other style" in terms_en and "arrangement of the eyes" in terms_en and "five to eight eyes is made from smaller copies" in terms_en

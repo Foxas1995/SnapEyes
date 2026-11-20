@@ -452,19 +452,6 @@ export const fi: TryCopy = {
     footnoteUsd: 'Yksi digitaalinen tiedosto (JPEG), 4096 px pisimmältä sivulta, ilman vesileimaa. Tämä on kokonaishinta: myyntiveroa ei peritä.',
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Tuloste',
-    none: 'Vain digitaalinen tiedosto',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Toimitusmaa',
-    pick: 'Valitse maa',
-    shipping: 'Toimitus',
-    arrives: 'Saapuu noin 1-2 viikossa, seurannalla.',
-    consentMissing: 'Rastita tulostettasi koskeva ruutu.',
-    countryMissing: 'Valitse tulosteesi toimitusmaa.',
-    mockAlt: (name: string) => `${name}: esikatselu taideteoksestasi`,
-  },
   gift: {
     open: 'Minulla on lahjakortti',
     label: 'Lahjakortin koodi',

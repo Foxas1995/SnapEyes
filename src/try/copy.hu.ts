@@ -461,19 +461,6 @@ export const hu: TryCopy = {
     footnoteUsd: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: amerikai forgalmi adót nem számítunk fel.',
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Nyomat',
-    none: 'Csak a digitális fájl',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Szállítási ország',
-    pick: 'Válassz országot',
-    shipping: 'Szállítás',
-    arrives: 'Nagyjából 1 vagy 2 hét alatt érkezik, nyomon követhetően.',
-    consentMissing: 'Jelöld be a nyomatra vonatkozó négyzetet.',
-    countryMissing: 'Válaszd ki, melyik országba küldjük a nyomatot.',
-    mockAlt: (name: string) => `${name}: az alkotásod előnézete`,
-  },
   gift: {
     open: 'Van ajándékutalványom',
     label: 'Ajándékutalvány kódja',

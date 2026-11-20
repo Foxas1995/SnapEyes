@@ -118,7 +118,18 @@ const VOUCHERS = { js: 6502 + 3104 - 1552, css: 0 };
 // in the shared stylesheet, +135 B), the print words (prints-*.js +845 B) and the shared chunk of /try and /order (checkout-*.js +980 B). LANGS3 is this script's own sum on the
 // tree with them minus on its parent (33e948d): JavaScript +98,234 B, CSS +316 B. Re-measure it when those texts change: build both trees, run this script on each, take the difference.
 const LANGS3 = { js: 98234, css: 316 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css };
+// The print offered after the purchase (2026-11-21, the owner: a print is offered once the customer has the file; src/order/PrintOffer.tsx and printAddon.ts, the picker
+// src/try/PrintPick.tsx without /try's dictionary, the print paragraphs of src/legal/docs/prints.ts in eight languages) is a product, not motion. The landing loads none of it.
+// PRINT_LATER is only what this script still counts although the landing never loads it, measured per chunk, gzip level 6, on the tree with it against its parent (e98e5ea):
+// the legal pages' entry (src/legal/main.tsx, main-*.js: the paragraphs that say a print is ordered after the artwork, +303 B), and the chunks the tools share, which the
+// bundler cut anew because /try no longer imports the print module: prints-*.js -1,040 B (now /order's and the legal pages' only), a new chunk lv-*.js +1,085 B (the language
+// helpers of src/shared that prints-*.js held, for /try, /order and the legal pages), lock-*.js -380 B (the lock icon, now inside checkout-*.js), checkout-*.js +201 B and
+// api-*.js +144 B. The order page's own chunk (order-*.js +7,512 B: the card, the watch after Stripe's page, the words of eight languages) and /try's (try-*.js -2,424 B: the
+// picker and its words gone) are left out here like every page's own. The landing's own chunks moved by -8 B (the names of chunks in import lists); that is not taken as room:
+// the page stands at +5,471 B of +6,000 (it was +5,479 B). Re-measure it when the print texts or the offer card change: build both trees, gzip each chunk, take the
+// differences named here.
+const PRINT_LATER = { js: 303 - 1040 + 1085 - 380 + 201 + 144, css: 0 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;

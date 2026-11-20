@@ -626,7 +626,7 @@ check("the AI-made material sentence is PUBLISHED by this deploy (AI_MATERIAL_PU
 SENT = {l: re.search(r"^  %s:\r?\n\s+['\"](.+)['\"],?\s*$" % l, ai_src, re.M) for l in ("en", "de", "lt", "hu")}
 docs = PACK.get("docs", {})
 check("the sentence is in the terms of the built pack (the one the confirmation e-mail quotes) in English, German, Lithuanian and Hungarian, and the pack's date is the new LEGAL_UPDATED",
-      all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-11-13", (upd and upd.group(1), PACK.get("updated")))
+      all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-11-21", (upd and upd.group(1), PACK.get("updated")))      # 2026-11-21: the date of the print paragraphs (a print is ordered after the artwork); it was 2026-11-13
 # 2026-11-13 (Finnish, Estonian and Latvian, the EU edition): the languages that came after the switch (Croatian on 2026-10-28, which the two checks above never read, and the
 # three new ones) take the sentence the same way: aiBlocks in their own terms file, their own wording in aiMaterial.ts, and the WHOLE sentence in the terms of the built pack
 LATER = ("hr", "fi", "et", "lv")
@@ -640,7 +640,7 @@ check("the Croatian, Finnish, Estonian and Latvian terms take the sentence throu
       and len({sent_later[l] for l in LATER} | {SENT[l].group(1) for l in ("en", "de", "lt", "hu") if SENT[l]}) == 8 and not any(re.search(DASH, s_) for s_ in sent_later.values()),
       {l: (later_terms[l].count("...aiBlocks("), len(sent_later[l]), docs.get(l, {}).get("terms", {}).get("text", "").count(sent_later[l]) if sent_later[l] else None) for l in LATER})
 FIVE = ("en", "de", "lt", "hu", "hr")
-check("one LEGAL_UPDATED for every legal page, moved on after the switch (2026-11-13, the Finnish, Estonian and Latvian texts; 2026-11-11, the ceiling of free previews in the privacy policy; 2026-10-28, the Croatian texts; 2026-10-20, the anonymous counter's privacy paragraphs; it was 2026-10-06, the day of the switch) and is not in the future; the consent texts of the switch are untouched (2026-09-30.2, kept word for word under 2026-10-28.1, which adds the Croatian one, and under 2026-10-28.2, "
+check("one LEGAL_UPDATED for every legal page, moved on after the switch (2026-11-21, a print is ordered after the artwork; 2026-11-13, the Finnish, Estonian and Latvian texts; 2026-11-11, the ceiling of free previews in the privacy policy; 2026-10-28, the Croatian texts; 2026-10-20, the anonymous counter's privacy paragraphs; it was 2026-10-06, the day of the switch) and is not in the future; the consent texts of the switch are untouched (2026-09-30.2, kept word for word under 2026-10-28.1, which adds the Croatian one, and under 2026-10-28.2, "
       "which adds the US one, and under 2026-10-28.3, which adds the print box, and under 2026-11-13.1, which adds the Finnish, Estonian and Latvian ones: the three versions of 2026-10-28 still quote exactly their five texts)",
       upd.group(1) <= time.strftime("%Y-%m-%d") and pay.CONSENT_VERSION == "2026-11-13.1" and pay.CONSENT_TEXTS["2026-10-28.2"] == {k: pay.CONSENT_TEXT[k] for k in FIVE}
       and pay.CONSENT_TEXTS["2026-09-30.2"] == {k: pay.CONSENT_TEXT[k] for k in ("en", "de", "lt", "hu")}

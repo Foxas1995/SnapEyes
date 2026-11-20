@@ -455,19 +455,6 @@ export const hr: TryCopy = {
     footnoteUsd: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je ukupna cijena: američki porez na promet ne naplaćuje se.',
   },
 
-  // a print of the artwork (./PrintPick.tsx, api/_lib/prints.py): offered only while the owner's switch is on, on the euro markets
-  print: {
-    title: 'Ispis',
-    none: 'Samo digitalna datoteka',
-    option: (name: string, price: string) => `${name}, +${price}`,
-    country: 'Zemlja dostave',
-    pick: 'Odaberite zemlju',
-    shipping: 'Dostava',
-    arrives: 'Stiže za otprilike 1 do 2 tjedna, s praćenjem pošiljke.',
-    consentMissing: 'Označite kućicu o svojem ispisu.',
-    countryMissing: 'Odaberite zemlju u koju šaljemo ispis.',
-    mockAlt: (name: string) => `${name}: pregled vašeg umjetničkog djela`,
-  },
   gift: {
     open: 'Imam poklon-bon',
     label: 'Kod poklon-bona',
