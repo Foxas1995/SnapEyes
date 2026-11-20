@@ -15,6 +15,7 @@ What is here, and where pay.py uses it once "lv" is in LANGS:
   seller_lines_lv()    seller_lines() for "lv"
   confirmation_lv()    the "lv" branch of confirmation_mail(): (subject, blocks) before the legal texts are appended
   ready_lv()           the "lv" branch of ready_mail(): (subject, blocks)
+  READY_PRINT_LV       READY_PRINT["lv"]       the ready email's section about a print (heading, paragraph), when the order can buy one
   lv_form()            the Latvian noun form after a number (1 acs, 2 acis, 10 acu), a helper of item_name_lv
 
 Latvian: Latvia pays in euros, so a price is the euro amount as Latvians write it, "24,97 €" (decimal comma, no-break
@@ -236,6 +237,12 @@ def confirmation_lv(*, order, spec, n, layout, price, paid_at, consent_at, conse
         ("p", seller),
     ]
     return subject, blocks
+
+
+# the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["lv"]): heading, paragraph, no price
+READY_PRINT_LV = ("Jūsu mākslas darbs kā izdruka",
+                  "Savu mākslas darbu varat pasūtīt arī kā izdruku: uz akrila stikla, uz audekla vai kā plakātu, izgatavotu pēc "
+                  "pasūtījuma un nosūtītu jums. Piedāvājumu atradīsiet savā pasūtījuma lapā, zem mākslas darba.")
 
 
 def ready_lv(*, order, link, checked, seller):

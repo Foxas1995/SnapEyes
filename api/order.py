@@ -51,7 +51,10 @@ status: unpaid / pending / paid / making / review / ready / withdrawn / deleted,
   production): elsewhere such an order is "unpaid" with payment_check "test_mode". A "paid" or "making" reply carries
   "server": {active, step, eye}: while active the server makes the order itself (api/_lib/maker.py) and the page
   only watches; an order whose making has begun and that has no live server step gets one asked for here
-  (maker.nudge). A status read never starts an order: the withdrawal page reads it too.
+  (maker.nudge). A status read never starts an order: the withdrawal page reads it too. A "ready" reply of an order
+  without a print carries "print_offer" {currency, products, consent} while a print can be bought for it (api/_lib/prints.py
+  addon_offer: the owner's switch on, a market that offers prints, not refunded): the order page's offer of a print, bought
+  through POST /api/checkout {addon}; a reply with "print" (the order has one, wherever it was bought) never has the offer.
 make: renders one eye of a PAID order at 4096 px from its stored crop and preview (master_eye's own function, with an
   unlock ticket minted here, so one eye fits in one 60 s call). Call it once per eye; a stored eye is answered from
   storage and never rendered twice. Nothing is rendered before the order confirmation email went out (402
@@ -534,6 +537,12 @@ def _paid_reply(order, paid, made, delivery, review, released, url=None, preview
     pv = PR.order_view(order, paid) if PR.paid_print(paid) else None
     if pv:
         out["print"] = pv            # the order's print: product, country, preparing / sent / shipped / canceled, the tracking link once shipped
+    elif state == "ready":
+        # a delivered order without a print, while prints can be bought for it (api/_lib/prints.py addon_problem): the offer the page shows under the artwork,
+        # with the prices and the shipping the server would charge and the print box's text. Absent otherwise: the reply is then the reply of before
+        offer = PR.addon_offer(order, paid, {"delivery": delivery, "released": released, "withdrawn": False, "deleted": False})
+        if offer:
+            out["print_offer"] = offer
     if previews:
         recs = pay.parallel([lambda i=i: store.get_json(f"orders/{order}/draft/eye_{i}.json", timeout=8.0)
                              for i in range(1, n + 1)])

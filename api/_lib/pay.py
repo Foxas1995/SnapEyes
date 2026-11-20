@@ -73,6 +73,9 @@ One order = one private folder (store.py), orders/<order>/:
                                shows as "the server is on it") and the lease that lets one step run at a time
   compose.lock                 an artwork is being composed (the order page and the server never compose twice)
   mail_ready.json              the "your artwork is ready" email: claimed before sending, marked after
+  print_checkout.json / print_paid.json / print_confirmation.json   a print bought AFTER the artwork (api/_lib/prints.py, the add-on): its
+                               latest checkout with the print box the customer ticked, its payment (created once, never overwritten;
+                               get_paid merges it into the paid record) and its own confirmation email's claim
   render_lost_<i>.json         a paid render that may have been lost (master_eye failed after the image model
                                answered; api/order.py make_eye): the order's LOST_MAX-th holds it for a person
   withdrawal_<id>.json         a withdrawal statement (name, email, time, outcome; withdraw.py), with
@@ -1395,8 +1398,16 @@ def session_currency_ok(sess):
 def session_matches(sess, order, rec):
     """Was this session made by /api/checkout for this order, in its market's currency? (session_ours plus
     session_currency_ok: the order id, the key fingerprint, the market and the currency, all written by the server.)
-    A session that is only ours in the currency is refused: the webhook tells the owner (stripe_webhook.py)."""
-    return session_ours(sess, order, rec) and session_currency_ok(sess) and abtest.session_ok(sess)
+    A session that is only ours in the currency is refused: the webhook tells the owner (stripe_webhook.py).
+    The session of a print bought after the artwork (metadata kind "print_addon", api/_lib/prints.py) names the order and its key too, but
+    it is never the order's own payment: it is refused here, and its own paths record it (prints.addon_record)."""
+    return session_ours(sess, order, rec) and not _addon_session(sess) and session_currency_ok(sess) and abtest.session_ok(sess)
+
+
+def _addon_session(sess):
+    """Is this the Checkout Session of a print bought after the artwork (prints.ADDON, restated here: prints.py imports this file)?"""
+    meta = sess.get("metadata") if isinstance(sess, dict) and isinstance(sess.get("metadata"), dict) else {}
+    return meta.get("kind") == "print_addon"
 
 
 def session_paid(sess):
@@ -1409,8 +1420,25 @@ def session_paid(sess):
 
 # ----------------------------------------------------------------------------- the paid record
 def get_paid(order, timeout=8.0):
-    rec = store.get_json(order_path(order, "paid.json"), timeout=timeout)
-    return rec if isinstance(rec, dict) and rec.get("paid") is True else None
+    """The order's paid record (paid.json), or None. A print bought AFTER the artwork has a payment record of its own (print_paid.json,
+    api/_lib/prints.py addon_record): it is read at the same time, not after (no added latency), and merged in (merge_addon), so everything
+    that reads paid["print"] finds the print wherever it was bought. A storage error of either read is raised: a record returned without its
+    print would offer the customer a print they already paid for."""
+    rec, addon = parallel([lambda: store.get_json(order_path(order, "paid.json"), timeout=timeout),
+                           lambda: store.get_json(order_path(order, "print_paid.json"), timeout=timeout)])
+    return merge_addon(rec, addon) if isinstance(rec, dict) and rec.get("paid") is True else None
+
+
+def merge_addon(paid, addon):
+    """The paid record with the print of a valid add-on record (print_paid.json) merged in: print (the shape prints.paid_part makes) and
+    print_addon {session_id, payment_intent, amount_total, at, livemode, email}: the payment that bought it, which is not the order's (the
+    refunds, the test-order rule and the e-mails of the print read it; amount_total of the record itself stays the artwork's). A record that
+    has a print of its own (bought at the first checkout) is returned as it is: an order has one print."""
+    pp = addon.get("print") if isinstance(addon, dict) and addon.get("paid") is True else None
+    own = paid.get("print")
+    if not (isinstance(pp, dict) and pp.get("product")) or (isinstance(own, dict) and own.get("product")):
+        return paid
+    return dict(paid, print=pp, print_addon={k: addon.get(k) for k in ("session_id", "payment_intent", "amount_total", "at", "livemode", "email")})
 
 
 def paid_market(paid):
@@ -1505,6 +1533,10 @@ def record_paid(order, rec, sess, source, event_id=None):
         # every caller checks session_matches first; a session of a price experiment at a price the server does not set
         # is never recorded, whoever asks (the owner is told by note_wrong_currency where the session is seen)
         raise PayError(f"order {order}: the paid session of a price experiment is not at a price the server sets")
+    if _addon_session(sess):
+        # every caller checks session_matches first, which refuses it; the session of a print bought later is never the order's payment,
+        # whoever asks (recorded here it would become a second payment of the artwork, or the order's own)
+        raise PayError(f"order {order}: the session of a print bought after the artwork is not the order's payment")
     if spec is None:
         cur = get_paid(order)
         if cur is None:
@@ -2408,10 +2440,41 @@ def _american(blocks, order, paid, pack, lang, auto, terms_url):
     return subject, out
 
 
-def ready_mail(order, paid, k, checked=True):
+# The section of the "ready" email that says the artwork can be ordered as a print (heading, paragraph), per language: one short section, no
+# price (the order page shows the prices the server would charge that day). Only for an order that can buy a print at that moment
+# (ready_print_offer). Each language's words are in its own module, as its other email texts are.
+READY_PRINT = {
+    "en": ("A print of your artwork",
+           "You can also order your artwork as a print: on acrylic glass, on canvas or as a poster, made to order and shipped to you. "
+           "You find it on your order page, under your artwork."),
+    "de": ("Ihr Kunstwerk als Druck",
+           "Sie können Ihr Kunstwerk auch als Druck bestellen: als Acrylglasbild, auf Leinwand oder als Poster, nach Ihrer Bestellung "
+           "angefertigt und zu Ihnen versandt. Sie finden das Angebot auf Ihrer Bestellseite, unter Ihrem Kunstwerk."),
+    "lt": pay_lt.READY_PRINT_LT,
+    "hu": pay_hu.READY_PRINT_HU,
+    **{l: tw(l, "READY_PRINT") for l in TWINS},
+}
+
+
+def ready_print_offer(order, paid):
+    """Does the "ready" email of this order say that a print can be ordered? Only when the order could buy one at this moment
+    (prints.addon_problem: the owner's switch on, merchOne configured, a market that offers prints, no print yet, a payment that counts,
+    delivered, not withdrawn, deleted or refunded). While prints are off (the default) nothing is read from storage and every email is
+    the email it was. Never raises: an answer that cannot be worked out is no."""
+    try:
+        from . import prints
+        return prints.addon_problem(order, paid) == ""
+    except Exception as e:  # noqa: the email goes out all the same, without the section
+        log(f"order {order}: the ready email's print section not worked out: {type(e).__name__}")
+        return False
+
+
+def ready_mail(order, paid, k, checked=True, offer=None):
     """The short "it is ready" email: (subject, text, html). checked (the default): scripts/order_admin.py release and
     the admin panel after a held delivery was looked at ("ready and checked"); checked=False: the server's own
-    making when an artwork is ready without a hold (api/_lib/maker.py ready_mail_once)."""
+    making when an artwork is ready without a hold (api/_lib/maker.py ready_mail_once).
+    offer: whether the email has the section that says the artwork can be ordered as a print from the order page (READY_PRINT, after the
+    order number); None: as the order stands now (ready_print_offer)."""
     lang = lang_of((paid.get("spec") or {}).get("lang"))
     link = order_url(order, k, lang)
     pack = legal_pack()
@@ -2435,6 +2498,12 @@ def ready_mail(order, paid, k, checked=True):
                                           "your iris artwork is ready.") + " Download it on your order page:"),
                   ("link", link), ("p", f"Order: {order}"), ("p", "Questions? Simply reply to this email."),
                   ("p", "Kind regards\nSnapEyes"), ("p", seller_lines(lang, pack))]
+    if ready_print_offer(order, paid) if offer is None else offer:
+        # after the order number, before the closing lines: every language's blocks are link, order number, questions, sign-off, seller
+        at = next((i for i, b in enumerate(blocks) if b[0] == "link"), None)
+        if at is not None and len(blocks) > at + 1:
+            blocks = list(blocks)
+            blocks[at + 2:at + 2] = [("h", READY_PRINT[lang][0]), ("p", READY_PRINT[lang][1])]
     text, html_body = render_mail(blocks, lang, subject)
     return subject, text, html_body
 
@@ -2940,8 +3009,12 @@ def purge_markers(yes, stop_left, res=None):
 # the order's records, no images. The privacy policy ("Order records") keeps them as proof of the contract and for
 # accounting: order.json and paid.json (order number, date, price, payment, email, the artwork's details, consent),
 # the email and note marks, the withdrawal statements, and the marks that say what happened.
+# A print bought after the artwork (api/_lib/prints.py) is a contract of its own: its checkout block with the print box the customer ticked,
+# its payment record and the mark of its confirmation e-mail are kept with the accounting files, as order.json, paid.json and
+# mail_delivery.json are for the artwork.
 KEEP_NAMES = ("order.json", "paid.json", "mail_delivery.json", "deleted.json", "expired.json", "withdrawn.json",
-              "withdrawal.json", "making.json", "refunded.json", "print.json", "print_mail.json")
+              "withdrawal.json", "making.json", "refunded.json", "print.json", "print_mail.json",
+              "print_checkout.json", "print_paid.json", "print_confirmation.json")
 KEEP_PREFIXES = ("note_", "extra_payment_", "withdrawal_", "withdrawal-")
 
 

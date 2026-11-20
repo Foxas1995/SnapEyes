@@ -548,7 +548,8 @@ def print_extra(meta):
 def paid_extra(paid):
     """The print and its shipping of a paid record (paid.json print {price, ship}), in cents; 0 without a print."""
     pp = paid.get("print") if isinstance(paid, dict) else None
-    if not isinstance(pp, dict):
+    if not isinstance(pp, dict) or isinstance(paid.get("print_addon"), dict):
+        # (a print bought after the artwork has a payment of its own, pay.merge_addon: nothing of it is in this record's amount)
         return 0
     return sum(v for v in (pp.get("price"), pp.get("ship")) if isinstance(v, int) and not isinstance(v, bool))
 

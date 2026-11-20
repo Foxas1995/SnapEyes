@@ -23,6 +23,29 @@ WHEN PAID (pay.record_paid): paid.json gains print {product, sku, kind, cm, coun
 address Stripe collected (shipping_details, or collected_information.shipping_details in the newer API versions). A country other than the
 priced one, or no address, is recorded as mismatch and the print is held for the owner (it is never sent to another country's price).
 
+A PRINT BOUGHT AFTER THE ARTWORK (the add-on, 2026-11-21; the owner: a big price at the first checkout scares, so the print is offered once the
+customer has the file). The order page of a paid, DELIVERED order without a print shows the offer (addon_offer in the status reply; who gets it
+is addon_problem: a payment that counts, delivered and not waiting for the owner's look, not withdrawn, deleted, expired or refunded, no print
+yet, a market that offers prints, the switch on, merchOne configured). The order link (order id and key) is the authentication, as for
+everything on that page. POST /api/checkout {addon: {order, key}, print: {product, country}, consent_print: true[, print_shown], lang}
+(addon_buy) makes a Checkout Session OF ITS OWN: the print as its only line item, the country's shipping rate, the address form for that one
+country, the print's own note above the pay button, metadata kind "print_addon" with order, key_sha, print, print_sku, print_amount,
+ship_amount, ship_cc, lang, market, currency, consent_version and consent_at; no voucher and no price experiment. One payable add-on session
+per order: the earlier ones are expired at Stripe first, and one that turns out paid is recorded instead.
+  orders/<order>/print_checkout.json   the latest add-on checkout: its session, the earlier ones, the print with the print box the customer
+                                       ticked (version, time, text, fingerprint)
+  orders/<order>/print_paid.json       created once (upsert False), by the Stripe webhook or by the order page's own check of the session
+                                       (GET /api/checkout?addon=<session>&o=<order>&k=<key>, addon_status): {paid, session_id, payment_intent,
+                                       amount_total, currency, at, livemode, email, print: the shape paid_part makes}. An amount other than the
+                                       print's price plus its shipping (or another currency) is recorded with mismatch ["amount"]: held
+  orders/<order>/print_confirmation.json   the add-on's own confirmation e-mail, claimed before sending (addon_mail_once)
+pay.get_paid reads print_paid.json beside paid.json and merges it (pay.merge_addon): a paid record without a print gains print and
+print_addon {session_id, payment_intent, amount_total, at, livemode, email}, so the fulfilment, the status, the tracking and the shipping
+e-mail below read paid["print"] as they always did. What differs for an add-on is only the money: its payment is print_payment(paid), not
+the order's, so the admin's refund of THAT payment cancels the print and a refund of the artwork's payment alone leaves it (_refunded), and
+the artwork's confirmation and price checks never count it (amend_confirmation, abtest.paid_extra). A second paid add-on session of an order
+that has its print already is stored as extra_payment_<id>.json and the owner told to refund it (_addon_extra); nothing is printed twice.
+
 FULFILMENT (step): once the artwork is DELIVERED (delivery.json exists and is not waiting for the owner's look, or he released it), the
 master is scaled to the SKU's print file (its design area at the resolution the master allows, at least merchOne's minimum and at most
 PRINT_DPI; the trim around it filled by continuing the artwork's own edge; an artwork that is not square is centred and its background
@@ -371,18 +394,20 @@ def total(part):
     return (part["price"] + part["ship"]) if part else 0
 
 
-def stripe_params(part, lang):
-    """The Stripe parameters a print adds to the Checkout Session (after the artwork's line item 0)."""
+def stripe_params(part, lang, item=1):
+    """The Stripe parameters a print adds to the Checkout Session: its line item (item 1, after the artwork's line item 0; item 0 in the
+    session of a print bought after the artwork, where it is the only one), the address form and the shipping rate."""
     lang = lang_of(lang)
     cc = part["country"]
     country = country_name(cc, lang)
     lo, hi = PROD_DAYS[0] + TRANSIT_DAYS[0], PROD_DAYS[1] + TRANSIT_DAYS[1]
+    li = f"line_items[{int(item)}]"
     return [
-        ("line_items[1][quantity]", "1"),
-        ("line_items[1][price_data][currency]", PRINT_OFFER["currency"]),
-        ("line_items[1][price_data][unit_amount]", str(int(part["price"]))),
-        ("line_items[1][price_data][product_data][name]", product_name(part["product"], lang)),
-        ("line_items[1][price_data][product_data][description]", ITEM_DESC_PRINT[lang]),
+        (f"{li}[quantity]", "1"),
+        (f"{li}[price_data][currency]", PRINT_OFFER["currency"]),
+        (f"{li}[price_data][unit_amount]", str(int(part["price"]))),
+        (f"{li}[price_data][product_data][name]", product_name(part["product"], lang)),
+        (f"{li}[price_data][product_data][description]", ITEM_DESC_PRINT[lang]),
         ("shipping_address_collection[allowed_countries][0]", cc),
         ("shipping_options[0][shipping_rate_data][type]", "fixed_amount"),
         ("shipping_options[0][shipping_rate_data][fixed_amount][amount]", str(int(part["ship"]))),
@@ -631,7 +656,9 @@ def amend_confirmation(blocks, lang, paid):
     the file, the print, the shipping and the delivery address stand before the price row (the price is the total), and a section "Your
     print" follows the rows: production and delivery time, the producer, damage in transit, and the print box the customer ticked."""
     pp = paid_print(paid)
-    if not pp:
+    if not pp or isinstance(paid.get("print_addon"), dict):
+        # a print bought after the artwork is a contract and a payment of its own with its own confirmation (addon_mail): the artwork's
+        # confirmation, sent again later (the admin's copy), stays what the customer got, and its price is never split by that print
         return blocks
     lang = lang_of(lang)
     w = CONF[lang]
@@ -882,9 +909,31 @@ def payload(order, paid, pp, url, series, is_test):
             "items": [{"external_id": f"{ext}-1", "quantity": 1, "product_sku": pp["sku"], "file": {"front": {"url": url}}}]}
 
 
+def print_payment(paid):
+    """The payment intent that paid for the order's print: the add-on's own when the print was bought after the artwork (print_addon, merged
+    in by pay.get_paid), else the order's (the print was a line item of the artwork's checkout). None when there is none on record."""
+    pa = paid.get("print_addon") if isinstance(paid, dict) else None
+    pi = pa.get("payment_intent") if isinstance(pa, dict) else (paid.get("payment_intent") if isinstance(paid, dict) else None)
+    return pi if isinstance(pi, str) and pi else None
+
+
+def print_live(paid):
+    """Was the print paid LIVE? The add-on's own payment says it for a print bought after the artwork, else the order's."""
+    pa = paid.get("print_addon") if isinstance(paid, dict) else None
+    return (pa if isinstance(pa, dict) else paid).get("livemode") is True
+
+
 def _refunded(order, paid):
+    """Was the payment that paid for the print refunded? A print of the artwork's own checkout: the order's refund marks (refunded.json, or
+    the admin's refund of the order's payment). A print bought after the artwork has a payment of its own: only the admin's refund of THAT
+    payment counts, so a refund of the artwork's payment alone (and refunded.json, which marks that one) leaves the print alone."""
     from . import maker
-    return any(store.exists(p, timeout=5.0, retry=False) for p in maker.refund_marks(order, paid))
+    if isinstance(paid.get("print_addon"), dict):
+        pi = print_payment(paid)
+        marks = [f"{maker.REFUNDS_TOP}/{order}/{hashlib.sha256(pi.encode()).hexdigest()[:16]}.json"] if pi else []
+    else:
+        marks = maker.refund_marks(order, paid)
+    return any(store.exists(p, timeout=5.0, retry=False) for p in marks)
 
 
 def due(order, paid, f=None):
@@ -948,7 +997,7 @@ def _step(order, rec, paid, f, by, force):
         return "wait"
     if pp.get("mismatch") and not force:
         return "held"
-    if paid.get("livemode") is True and not M.live():
+    if print_live(paid) and not M.live():
         # a LIVE payment and this deployment sends test orders (MERCHONE_LIVE is not set): never a test order for a paid print. Held for the owner
         if cur.get("error") != "not_live":
             _write(order, cur, state="held", error="not_live", why="MERCHONE_LIVE is not set")
@@ -991,7 +1040,7 @@ def _step(order, rec, paid, f, by, force):
             store.put(name, data, "image/jpeg", upsert=True, timeout=25.0)
             info = dict(info, path=name, sha256=hashlib.sha256(data).hexdigest()[:16], **{"from": dl["key"]})
         url = store.signed_url(name, SIGNED_DAYS * 86400)
-        is_test = paid.get("livemode") is not True       # a live payment reaches here only with MERCHONE_LIVE on (held above otherwise)
+        is_test = not print_live(paid)       # a live payment reaches here only with MERCHONE_LIVE on (held above otherwise)
         body = payload(order, paid, pp, url, series, is_test)
         try:
             oid = M.create_order(body)
@@ -1060,17 +1109,26 @@ def shipped_mail(order, paid, tr):
     return w["subject"], text, html_body
 
 
+def print_email(paid):
+    """Where the print's e-mails go: the address of the payment that bought the print (the add-on's own, when the print was bought after the
+    artwork and Stripe collected one there), else the order's."""
+    pa = paid.get("print_addon") if isinstance(paid, dict) else None
+    e = pa.get("email") if isinstance(pa, dict) else None
+    return e or (paid.get("email") if isinstance(paid, dict) else None)
+
+
 def ship_mail(order, paid, tr):
     """The customer's "your print is on its way" e-mail, once (print_mail.json, claimed before sending). Returns "sent", "done" (sent, or being
     sent, before), "off" (no e-mail here or no address), "failed" (Resend refused it) or "transient" (try again later: the claim is given back)."""
     path = _path(order, "print_mail.json")
     try:
-        if not pay.email_configured() or not paid.get("email"):
+        to = print_email(paid)
+        if not pay.email_configured() or not to:
             return "off"
         if not pay.claim_once(path):
             return "done"
         subject, text, html_body = shipped_mail(order, paid, tr)
-        res = pay.send_mail(paid["email"], subject, text, f"snapeyes-print-shipped-{order}", html_body)
+        res = pay.send_mail(to, subject, text, f"snapeyes-print-shipped-{order}", html_body)
         pay._mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res)
         return res
     except Exception as e:  # noqa: the shipping is recorded all the same; the daily run tries the e-mail again
@@ -1305,6 +1363,577 @@ def _safe_record(order):
         return None
 
 
+# ----------------------------------------------------------------------------- a print bought AFTER the artwork (the add-on)
+ADDON = "print_addon"                 # the metadata kind of an add-on's Checkout Session: the webhook and the order page's check know it by this
+ADDON_CHECKOUT = "print_checkout.json"
+ADDON_PAID = "print_paid.json"
+ADDON_MAIL = "print_confirmation.json"
+ADDON_TTL = 3600                      # the add-on's payment page stays open an hour (Stripe's minimum is 30 minutes), as a gift voucher's
+ADDON_SESSIONS = 3                    # how many of an order's latest add-on sessions a new checkout closes first (as pay.PREVIOUS_SESSIONS)
+
+SUBMIT_NOTE_ADDON = {   # what Stripe shows above its pay button for a print bought after the artwork (the sentences of SUBMIT_NOTE_PRINT without the file's)
+    "en": "You are buying a print of your artwork, shipped to the address above. The print is made to your order and cannot be withdrawn from.",
+    "de": ("Sie kaufen einen Druck Ihres Kunstwerks, der an die obige Adresse versandt wird. Der Druck wird nach Ihrer Bestellung angefertigt "
+           "und ist vom Widerruf ausgeschlossen."),
+    "lt": ("Perkate savo kūrinio spaudinį, kuris bus išsiųstas aukščiau nurodytu adresu. Spaudinys gaminamas pagal Jūsų užsakymą, todėl jo "
+           "pirkimo atsisakyti negalima. Paspausdami mokėjimo mygtuką, pateikiate užsakymą su prievole sumokėti."),
+    "hu": ("Az alkotásod nyomatát vásárolod meg, amelyet a fenti címre küldünk. A nyomat a megrendelésedre készül, ezért attól nem lehet "
+           "elállni. A fizetési gombbal fizetési kötelezettséggel járó megrendelést adsz le."),
+    "hr": ("Kupujete ispis svojeg umjetničkog djela, koji šaljemo na gornju adresu. Ispis se izrađuje po vašoj narudžbi pa za njega nema "
+           "prava na jednostrani raskid. Klikom na gumb za plaćanje dajete narudžbu s obvezom plaćanja."),
+    "fi": ("Ostat taideteoksestasi tehdyn tulosteen, joka lähetetään yllä olevaan osoitteeseen. Tuloste tehdään tilauksesi mukaan, eikä sen "
+           "ostoa voi peruuttaa. Maksupainiketta painamalla teet tilauksen, ja tilaukseen liittyy maksuvelvollisuus."),
+    "et": ("Ostad oma kunstiteosest trükitud pildi, mis saadetakse ülaltoodud aadressile. Trükitud pilt valmistatakse sinu tellimuse järgi "
+           "ja selle ostust ei saa taganeda. Maksenupule vajutades esitad tellimuse koos maksekohustusega."),
+    "lv": ("Jūs pērkat sava mākslas darba izdruku, ko nosūtām uz augstāk norādīto adresi. Izdruka tiek izgatavota pēc jūsu pasūtījuma, un "
+           "no tās pirkuma atteikties nevar. Nospiežot maksāšanas pogu, jūs veicat pasūtījumu ar pienākumu maksāt."),
+}
+# the add-on's own confirmation e-mail (addon_mail): what CONF and SHIPPED do not say already. The greeting is SHIPPED's, the rows' print,
+# shipping and address labels, the damage paragraph (p2) and the sentence before the quoted print box (p3) are CONF's
+ADDON_CONF = {
+    "en": {"subject": "Your SnapEyes print for order {order}: order confirmation",
+           "intro": ("thank you for ordering a print of your artwork. This email confirms that order: a contract of its own, beside the one for "
+                     "your digital file. Please keep it."),
+           "order": "Order number", "date": "Contract date", "total": "Total",
+           "note": "This is the final price: we are not registered for VAT, so no VAT is charged.", "payment": "Payment", "paid": "paid through Stripe",
+           "p1": ("Your file is ready, so we send your print to production right away. Production takes about 3 business days; delivery then "
+                  "usually takes 2 to 9 business days, depending on the country. We email you the tracking link when it ships. Your print is "
+                  "made for us by our print partner {producer}."),
+           "page": "You can follow your print on your order page:",
+           "terms": "Our terms of sale as of {date} apply to this order. Their full text is at the end of this email; you can also read them here:"},
+    "de": {"subject": "Ihr SnapEyes-Druck zur Bestellung {order}: Bestellbestätigung",
+           "intro": ("vielen Dank für Ihre Bestellung eines Drucks Ihres Kunstwerks. Diese E-Mail bestätigt diese Bestellung: einen eigenen "
+                     "Vertrag neben dem über Ihre digitale Datei. Bitte bewahren Sie sie auf."),
+           "order": "Bestellnummer", "date": "Vertragsschluss", "total": "Gesamtbetrag",
+           "note": "Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.",
+           "payment": "Zahlung", "paid": "bezahlt über Stripe",
+           "p1": ("Ihre Datei ist fertig, daher geben wir Ihren Druck sofort in die Produktion. Die Produktion dauert etwa 3 Werktage; die "
+                  "Zustellung dauert danach meist 2 bis 9 Werktage, je nach Land. Sobald er versandt ist, senden wir Ihnen den Link zur "
+                  "Sendungsverfolgung. Ihr Druck wird für uns von unserem Druckpartner {producer} hergestellt."),
+           "page": "Auf Ihrer Bestellseite sehen Sie, wie weit Ihr Druck ist:",
+           "terms": ("Für diese Bestellung gelten unsere Allgemeinen Geschäftsbedingungen in der Fassung vom {date}. Der vollständige Text "
+                     "steht am Ende dieser E-Mail; Sie finden die AGB auch hier:")},
+    "lt": {"subject": "Jūsų SnapEyes spaudinys, užsakymas {order}: užsakymo patvirtinimas",
+           "intro": ("Dėkojame, kad užsisakėte savo kūrinio spaudinį. Šis el. laiškas patvirtina šį užsakymą: atskirą sutartį šalia sutarties "
+                     "dėl Jūsų skaitmeninio failo. Išsaugokite jį."),
+           "order": "Užsakymo numeris", "date": "Sutarties sudarymo data", "total": "Iš viso",
+           "note": "Tai galutinė kaina: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.", "payment": "Mokėjimas", "paid": "apmokėta per Stripe",
+           "p1": ("Jūsų failas jau paruoštas, todėl spaudinį perduodame gaminti iš karto. Gamyba trunka apie 3 darbo dienas, o pristatymas, "
+                  "atsižvelgiant į šalį, paprastai trunka nuo 2 iki 9 darbo dienų. Kai spaudinys išsiunčiamas, el. paštu atsiunčiame siuntos "
+                  "sekimo nuorodą. Spaudinį mums gamina mūsų spaudos partneris {producer}."),
+           "page": "Spaudinio eigą matysite savo užsakymo puslapyje:",
+           "terms": ("Šiam užsakymui taikoma mūsų pardavimo sąlygų redakcija, galiojanti nuo {date}; visas jų tekstas pateiktas šio el. laiško "
+                     "pabaigoje, o jas taip pat galite perskaityti čia:")},
+    "hu": {"subject": "A SnapEyes-nyomatod a(z) {order} rendeléshez: rendelés-visszaigazolás",
+           "intro": ("Köszönjük, hogy megrendelted az alkotásod nyomatát. Ez az e-mail ezt a rendelést igazolja vissza: ez külön szerződés a "
+                     "digitális fájlodra vonatkozó mellett. Kérjük, őrizd meg."),
+           "order": "Rendelésszám", "date": "A szerződés létrejötte", "total": "Összesen",
+           "note": "Ez a végső ár: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.", "payment": "Fizetés",
+           "paid": "kifizetve a Stripe-on keresztül",
+           "p1": ("A fájlod már elkészült, ezért a nyomatot azonnal gyártásba adjuk. A gyártás körülbelül 3 munkanap, a kézbesítés ezután "
+                  "országtól függően általában 2 és 9 munkanap között tart. Amikor elküldték, e-mailben megküldjük a csomagkövetési linket. A "
+                  "nyomatot nyomdai partnerünk, a {producer} készíti nekünk."),
+           "page": "A nyomatod állapotát a rendelési oldaladon követheted:",
+           "terms": ("Erre a rendelésre az Általános Szerződési Feltételeink {date} napján hatályos változata vonatkozik. A teljes szövegét "
+                     "ennek az e-mailnek a végén találod, és itt is elolvashatod:")},
+    "hr": {"subject": "Vaš SnapEyes ispis uz narudžbu {order}: potvrda narudžbe",
+           "intro": ("hvala vam što ste naručili ispis svojeg umjetničkog djela. Ova e-poruka potvrđuje tu narudžbu: zaseban ugovor uz ugovor "
+                     "o vašoj digitalnoj datoteci. Sačuvajte je."),
+           "order": "Broj narudžbe", "date": "Datum sklapanja ugovora", "total": "Ukupno",
+           "note": "To je konačna cijena: nismo registrirani kao obveznik PDV-a, stoga PDV ne obračunavamo.", "payment": "Plaćanje",
+           "paid": "plaćeno putem Stripea",
+           "p1": ("Vaša je datoteka gotova, pa vaš ispis odmah predajemo u izradu. Izrada traje oko 3 radna dana, a dostava zatim obično 2 do "
+                  "9 radnih dana, ovisno o zemlji. Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za praćenje pošiljke. Vaš ispis za nas "
+                  "izrađuje naš partner za ispis {producer}."),
+           "page": "Svoj ispis možete pratiti na stranici svoje narudžbe:",
+           "terms": ("Na ovu narudžbu primjenjuju se naši uvjeti prodaje u verziji od {date}, a njihov cijeli tekst nalazi se na kraju ove "
+                     "e-poruke. Možete ih pročitati i ovdje:")},
+    "fi": {"subject": "SnapEyes-tulosteesi tilaukseen {order}: tilausvahvistus",
+           "intro": ("kiitos, että tilasit tulosteen taideteoksestasi. Tämä viesti vahvistaa tuon tilauksen: se on oma sopimuksensa "
+                     "digitaalista tiedostoasi koskevan sopimuksen rinnalla. Säilytä tämä viesti."),
+           "order": "Tilausnumero", "date": "Sopimuksen tekoaika", "total": "Yhteensä",
+           "note": "Tämä on lopullinen hinta: emme ole arvonlisäverovelvollisia, joten arvonlisäveroa ei peritä.", "payment": "Maksu",
+           "paid": "maksettu Stripen kautta",
+           "p1": ("Tiedostosi on valmis, joten lähetämme tulosteesi tuotantoon heti. Tuotanto kestää noin 3 arkipäivää; toimitus kestää sen "
+                  "jälkeen yleensä 2-9 arkipäivää maasta riippuen. Lähetämme seurantalinkin sähköpostiisi, kun tuloste lähtee matkaan. "
+                  "Tulosteesi tekee meille tulostuskumppanimme {producer}."),
+           "page": "Voit seurata tulostettasi tilaussivullasi:",
+           "terms": ("Tähän tilaukseen sovelletaan myyntiehtojamme sellaisina kuin ne olivat voimassa {date}. Niiden koko teksti on tämän "
+                     "viestin lopussa; voit lukea ne myös täältä:")},
+    "et": {"subject": "Sinu SnapEyesi trükitud pilt tellimusele {order}: tellimuse kinnitus",
+           "intro": ("Aitäh, et tellisid oma kunstiteosest trükitud pildi. See e-kiri kinnitab seda tellimust: see on omaette leping sinu "
+                     "digitaalse faili lepingu kõrval. Palun hoia see alles."),
+           "order": "Tellimuse number", "date": "Lepingu sõlmimise aeg", "total": "Kokku",
+           "note": "See on lõpphind: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.", "payment": "Maksmine",
+           "paid": "makstud Stripe’i kaudu",
+           "p1": ("Sinu fail on valmis, seega saadame sinu trükitud pildi kohe tootmisse. Tootmine võtab umbes 3 tööpäeva; "
+                  "kohaletoimetamine võtab seejärel tavaliselt 2 kuni 9 tööpäeva, olenevalt riigist. Kui see teele läheb, saadame sulle "
+                  "e-kirjaga jälgimislingi. Sinu trükitud pildi valmistab meile meie trükipartner {producer}."),
+           "page": "Oma trükitud pildi käekäiku saad jälgida oma tellimuse lehel:",
+           "terms": ("Selle tellimuse suhtes kehtivad meie müügitingimused seisuga {date}. Nende täistekst on selle e-kirja lõpus; võid neid "
+                     "lugeda ka siit:")},
+    "lv": {"subject": "Jūsu SnapEyes izdruka pasūtījumam {order}: pasūtījuma apstiprinājums",
+           "intro": ("Paldies, ka pasūtījāt sava mākslas darba izdruku. Šis e-pasts apstiprina šo pasūtījumu: tas ir atsevišķs līgums līdzās "
+                     "līgumam par jūsu digitālo failu. Lūdzu, saglabājiet to."),
+           "order": "Pasūtījuma numurs", "date": "Līguma noslēgšanas datums", "total": "Kopā",
+           "note": "Tā ir galīgā cena: neesam reģistrēti kā PVN maksātāji, tāpēc PVN netiek pieskaitīts.", "payment": "Maksājums",
+           "paid": "samaksāts, izmantojot Stripe",
+           "p1": ("Jūsu fails ir gatavs, tāpēc jūsu izdruku nododam ražošanā uzreiz. Ražošana aizņem apmēram 3 darba dienas; piegāde pēc tam "
+                  "parasti aizņem 2 līdz 9 darba dienas atkarībā no valsts. Kad izdruka būs izsūtīta, nosūtīsim jums e-pastā izsekošanas "
+                  "saiti. Jūsu izdruku mums izgatavo mūsu drukas partneris {producer}."),
+           "page": "Izdrukas gaitai varat sekot savā pasūtījuma lapā:",
+           "terms": ("Šim pasūtījumam piemērojami mūsu pārdošanas noteikumi {date} redakcijā, un pilns to teksts ir šī e-pasta beigās. Tos "
+                     "varat izlasīt arī šeit:")},
+}
+
+
+def is_addon_session(sess):
+    meta = sess.get("metadata") if isinstance(sess, dict) and isinstance(sess.get("metadata"), dict) else {}
+    return isinstance(sess, dict) and sess.get("object") == "checkout.session" and meta.get("kind") == ADDON
+
+
+def _addon_ours(sess, order, rec):
+    """Is this an add-on session the server made for THIS order (the kind, the order id and the fingerprint of its key, all written by the
+    server into the metadata)? The same proof as pay.session_ours asks of the order's own session."""
+    return is_addon_session(sess) and pay.session_ours(sess, order, rec)
+
+
+def addon_problem(order, paid, f=None):
+    """Why a print cannot be bought for this PAID order now, as a code ("" when it can): not_paid, has_print (it has one, bought at the first
+    checkout or after it), not_configured / off / market (offer_problem, for the order's own market), test_payment (a payment that does not
+    count here), withdrawn, deleted (also expired), not_ready (no artwork delivered), review (the artwork waits for the owner's look and
+    is not released), refunded (the order's payment was refunded: refunded.json or the admin's refund).
+    The cheap answers come first (the record, the tables, the environment, the switch's cached state), so while prints are off this reads
+    nothing from storage; the order's marks are read only for an order that is otherwise eligible. f: the facts a caller has read already
+    ({delivery, released, withdrawn, deleted}, as due() takes them)."""
+    if not isinstance(paid, dict) or paid.get("paid") is not True:
+        return "not_paid"
+    if paid_print(paid):
+        return "has_print"
+    why = offer_problem(pay.paid_market(paid))
+    if why:
+        return why
+    if not pay.paid_counts(paid):
+        return "test_payment"
+    folder = f"orders/{order}"
+    if f is None:
+        r = pay.parallel([lambda: store.get_json(f"{folder}/delivery.json", timeout=6.0), lambda: store.exists(f"{folder}/release.json", timeout=6.0),
+                          lambda: store.exists(f"{folder}/withdrawn.json", timeout=6.0), lambda: store.exists(f"{folder}/deleted.json", timeout=6.0),
+                          lambda: store.exists(f"{folder}/expired.json", timeout=6.0)])
+        f = {"delivery": r[0], "released": bool(r[1]), "withdrawn": bool(r[2]), "deleted": bool(r[3]) or bool(r[4])}
+    if f.get("withdrawn"):
+        return "withdrawn"
+    if f.get("deleted"):
+        return "deleted"
+    dl = f.get("delivery")
+    if not isinstance(dl, dict) or not dl.get("key"):
+        return "not_ready"
+    if dl.get("needs_review") and not f.get("released"):
+        return "review"
+    from . import maker
+    if any(pay.parallel([lambda p=p: store.exists(p, timeout=5.0, retry=False) for p in maker.refund_marks(order, paid)])):
+        return "refunded"
+    return ""
+
+
+def addon_offer(order, paid, f=None):
+    """The print offer of the order page (the status reply's print_offer), or None for an order that cannot buy one now (addon_problem):
+    {currency, products: [{id, kind, cm, price, ship: {country: cents}}], consent: {lang: the print box's exact text}}: the prices and the
+    shipping the server would charge, in euros. Never raises: an offer that cannot be worked out (the storage did not answer) is no offer, and
+    the order page is the page it was."""
+    try:
+        if addon_problem(order, paid, f):
+            return None
+        info = public_info()
+        if not info.get("on"):
+            return None
+        return {"currency": info["currency"], "products": info["products"], "consent": dict(PRINT_CONSENT_TEXT)}
+    except Exception as e:  # noqa: the order's status never depends on the offer
+        pay.log(f"order {order}: print offer not worked out: {type(e).__name__}")
+        return None
+
+
+def _addon_checkout(order):
+    pc = store.get_json(_path(order, ADDON_CHECKOUT), timeout=8.0)
+    return pc if isinstance(pc, dict) else None
+
+
+def _addon_ids(pc, n=ADDON_SESSIONS):
+    """The ids of the order's latest add-on sessions, newest first (as pay.order_sessions reads order.json)."""
+    ids = []
+    earlier = list(pc.get("sessions") or []) if isinstance(pc, dict) and isinstance(pc.get("sessions"), list) else []
+    for sid in [pc.get("session_id") if isinstance(pc, dict) else None] + earlier[::-1]:
+        if isinstance(sid, str) and pay.SID_RE.fullmatch(sid) and sid not in ids:
+            ids.append(sid)
+    return ids[:n]
+
+
+def _addon_close(order, rec, pc):
+    """Before a new add-on session is made, the order's earlier ones must stop being payable, or the customer could pay the old tab AND the new
+    one (pay.close_open_sessions does the same for the artwork). Returns (a session the customer has already paid or None, settling)."""
+    ids = _addon_ids(pc)
+    if not ids:
+        return None, False
+    found = pay.parallel([lambda s=s: pay.retrieve_session(s) for s in ids])
+    paid, settling = None, False
+    for sid, sess in zip(ids, found):
+        if not _addon_ours(sess, order, rec):
+            continue
+        if sess.get("status") == "open":
+            sess = pay.expire_session(sid)
+            gone = isinstance(sess, dict) and sess.get("status") == "expired"
+            pay.log(f"order {order}: earlier print checkout {sid} {'expired' if gone else 'was no longer open'}")
+            if not _addon_ours(sess, order, rec):
+                continue
+        if pay.session_paid(sess) and pay.session_counts(sess):
+            paid = paid or sess
+        elif sess.get("status") == "complete" and pay.session_counts(sess):
+            settling = True
+    return paid, settling
+
+
+def _addon_refusal(why):
+    """The answer for an order that cannot buy a print now: the offer's own reasons as the first checkout words them (409 print_unavailable),
+    the order's reasons as 409 print_not_offered; both carry why and nothing was created."""
+    if why in ("not_configured", "off", "market"):
+        return store.Answer(409, "print_unavailable", "Prints cannot be ordered right now.", False, None, why=why)
+    return store.Answer(409, "print_not_offered", "A print cannot be ordered for this order.", False, None, why=why)
+
+
+def _already():
+    return store.Answer(409, "print_not_offered", "This order has a print already.", False, None, why="has_print")
+
+
+def addon_buy(body):
+    """POST /api/checkout {addon: {order, key}, print: {product, country}, consent_print: true[, print_shown], lang}: the Stripe payment page
+    of a print for a delivered order (see the module). {ok, url, order, print {product, country, price, ship}, total, currency, expires_at}.
+    Refusals (nothing is created): 403 bad_link, 409 print_not_offered {why} and 409 print_unavailable {why} (addon_problem, and the
+    product or the country: checkout_part), 400 print_consent_required, 409 print_price_changed {print} (only with print_shown), and
+    409 print_not_offered {why: has_print[, settling]} when an earlier add-on session of the order turns out paid (it is recorded) or is
+    settling."""
+    why = pay.ordering_problem()
+    if why:
+        raise pay.PayNotConfigured(why)
+    a = body.get("addon") if isinstance(body.get("addon"), dict) else {}
+    order, k = a.get("order"), a.get("key")
+    rec = pay.load_order(order, k)
+    paid = pay.get_paid(order)
+    why = addon_problem(order, paid)
+    if why:
+        raise _addon_refusal(why)
+    if not isinstance(body.get("print"), dict):
+        raise L.ClientError("Send print as {product, country}.")
+    market = pay.paid_market(paid)
+    # the language of the page the customer ticked the print box on (the Stripe page and the recorded box are in it); the e-mails stay in the order's
+    lang = pay.lang_for(market, body.get("lang"))
+    part = checkout_part(body, {"market": market, "lang": lang})
+    pc = _addon_checkout(order)
+    # one payable add-on session per order: the earlier ones are expired at Stripe first; one that turns out paid is recorded, and the order has its print
+    paid_sess, settling = _addon_close(order, rec, pc)
+    if paid_sess is not None:
+        merged, state = addon_record(order, rec, paid_sess, "checkout")
+        addon_after(order, rec, merged, state)
+        raise _already()
+    if settling:
+        raise store.Answer(409, "print_not_offered", "A payment for a print of this order is already being confirmed.", False, None,
+                           why="has_print", settling=True)
+    now = int(time.time())
+    expires = now + ADDON_TTL
+    currency = PRINT_OFFER["currency"]
+    site = pay.site()
+    back = f"{site}/order?o={order}&k={k}&lang={lang}"
+    params = [
+        ("mode", "payment"),
+        # the order page again (its link is the order's key, as in every e-mail): ps names this session, so the page can confirm the payment
+        # before Stripe's webhook has arrived (addon_status); print=cancelled is Stripe's back link
+        ("success_url", back + "&ps={CHECKOUT_SESSION_ID}"),
+        ("cancel_url", back + "&print=cancelled"),
+        ("locale", pay.stripe_locale({"lang": lang, "market": market})),
+        ("client_reference_id", order),
+        ("expires_at", str(expires)),
+        ("adaptive_pricing[enabled]", "false"),
+        ("custom_text[submit][message]", SUBMIT_NOTE_ADDON[lang]),
+        ("payment_intent_data[description]", f"SnapEyes print for order {order}"),
+        ("payment_intent_data[metadata][order]", order),
+        ("payment_intent_data[metadata][kind]", ADDON),
+    ] + stripe_params(part, lang, item=0)
+    meta = dict({"kind": ADDON, "order": order, "key_sha": pay.key_sha(k), "lang": lang, "market": market, "currency": currency,
+                 "consent_version": part["consent"]["version"], "consent_at": part["consent"]["at"]}, **metadata(part))
+    params += [(f"metadata[{name}]", v) for name, v in meta.items()]
+    r = pay._stripe("POST", "/v1/checkout/sessions", params, idem=f"snapeyes-print-{order}-{secrets.token_hex(8)}")
+    if r.status_code != 200:
+        pay._raise_for(r, "stripe create print session")
+    try:
+        sess = r.json()
+    except ValueError:
+        raise pay.PayBusy("stripe create print session: unreadable reply") from None
+    sid, url = (sess.get("id"), sess.get("url")) if isinstance(sess, dict) else (None, None)
+    if not (isinstance(sid, str) and pay.SID_RE.fullmatch(sid) and isinstance(url, str) and url.startswith("https://")):
+        raise pay.PayError("stripe create print session: the reply has no session id or no https url")
+    earlier = [s for s in (pc.get("sessions") if isinstance(pc, dict) and isinstance(pc.get("sessions"), list) else []) if isinstance(s, str)]
+    store.put(_path(order, ADDON_CHECKOUT), store.json_bytes({
+        "v": 1, "order": order, "session_id": sid, "sessions": earlier[-9:] + [sid], "created_at": now, "created": pay.iso(now),
+        "amount": total(part), "currency": currency, "market": market, "lang": lang, "expires_at": expires,
+        "livemode": bool(sess.get("livemode")), "print": part}), "application/json", upsert=True)
+    pay.log(f"order {order}: print checkout {sid} {part['product']} to {part['country']} {part['price']}+{part['ship']} {currency} ({market}) {lang}")
+    return {"ok": True, "url": url, "order": order, "print": {x: part[x] for x in ("product", "country", "price", "ship")},
+            "total": total(part), "currency": currency.upper(), "expires_at": expires}
+
+
+def _addon_extra(order, cur, sess, source):
+    """A PAID add-on session of an order that has its print already (bought at the first checkout, or by another add-on session): the customer
+    paid for a print twice. As pay.extra_payment does for a second payment of the artwork: stored beside the order (extra_payment_<id>.json:
+    the admin's order page lists the payment and can refund it), logged, and the owner told to refund it, once. Nothing goes to merchOne."""
+    sid = str(sess.get("id") or "")
+    tag = hashlib.sha256(sid.encode("utf-8")).hexdigest()[:16]
+    meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
+    pa = cur.get("print_addon") if isinstance(cur.get("print_addon"), dict) else {}
+    cd = sess.get("customer_details") if isinstance(sess.get("customer_details"), dict) else {}
+    extra = {"paid": False, "extra_payment": True, "kind": ADDON, "session_id": sid, "first_session": pa.get("session_id") or cur.get("session_id"),
+             "amount_total": sess.get("amount_total"), "currency": str(sess.get("currency") or "").lower(), "livemode": bool(sess.get("livemode")),
+             "payment_intent": sess.get("payment_intent") if isinstance(sess.get("payment_intent"), str) else None,
+             "email": cd.get("email") if isinstance(cd.get("email"), str) else None, "paid_iso": pay.iso(), "source": source, "spec": None,
+             "print": {"product": str(meta.get("print") or "")[:20], "country": str(meta.get("ship_cc") or "")[:2]}}
+    try:
+        store.put(pay.order_path(order, f"extra_payment_{tag}.json"), store.json_bytes(extra), "application/json", upsert=False)
+    except store.StorageExists:
+        return            # recorded and told before (a replayed event, or the page's second check)
+    amount = pay.amount_text(extra["amount_total"] or 0, "en", extra["currency"])
+    pay.log(f"order {order}: EXTRA PRINT PAYMENT {amount} session {sid} payment {extra['payment_intent']} (the order has its print, "
+            f"paid by {extra['first_session']}): REFUND IT")
+    pay.owner_note(order, "extra_" + tag[:12], f"SnapEyes: a print for order {order} was paid twice, please refund {amount}",
+                   f"Order {order} has its print already (paid by Stripe session {extra['first_session']}).\n"
+                   f"A second payment for a print of the same order arrived:\n"
+                   f"  amount   {amount} ({'live' if extra['livemode'] else 'TEST mode'})\n"
+                   f"  session  {sid}\n  payment  {extra['payment_intent']}\n  customer {extra['email'] or 'no email'}\n"
+                   f"  it was for {extra['print']['product']} to {extra['print']['country']}\n"
+                   f"Nothing is sent to merchOne for this second payment: the order's print stays as the first payment made it. Please "
+                   f"refund the second payment (the admin page's order detail lists it, or the Stripe Dashboard: Payments, search "
+                   f"{extra['payment_intent'] or sid}, Refund), and write to the customer if they wanted the other print instead.\n")
+
+
+def addon_record(order, rec, sess, source, event_id=None):
+    """Record a PAID add-on session of this order, once: print_paid.json is created atomically and never overwritten, so a replayed webhook
+    or the order page's second check finds it and changes nothing. Returns (the order's paid record with the print merged in, state):
+    "new" (recorded now: print.json and the print index were made, on_paid), "known" (this very session was recorded before), "extra"
+    (the order had a print already: this payment is stored apart and the owner told to refund it, _addon_extra). The callers check first
+    that the session is the order's (_addon_ours), paid and counts here. PayError for an order that is not paid or a session without a print."""
+    cur = pay.get_paid(order)
+    if cur is None:
+        raise pay.PayError(f"order {order}: a print was paid for, but the order itself has no payment on record")
+    sid = sess.get("id")
+
+    def again(now_paid):
+        pa = now_paid.get("print_addon") if isinstance(now_paid.get("print_addon"), dict) else None
+        if pa and pa.get("session_id") == sid:
+            return now_paid, "known"
+        _addon_extra(order, now_paid, sess, source)
+        return now_paid, "extra"
+
+    if paid_print(cur):
+        return again(cur)
+    pc = _addon_checkout(order)
+    pp = paid_part(sess, {"checkout": pc})
+    if pp is None:
+        raise pay.PayError(f"order {order}: the paid print session names no print")
+    amount, currency = sess.get("amount_total"), str(sess.get("currency") or "").lower()
+    if amount != pp["price"] + pp["ship"] or currency != PRINT_OFFER["currency"]:
+        # only the server makes a session, so this is a price that changed under an open session or a conversion at Stripe: the money is
+        # recorded as it came, and the print is held for the owner (never sent on an amount nobody priced)
+        pp["mismatch"] = list(pp.get("mismatch") or []) + ["amount"]
+        pay.log(f"order {order}: the print was paid {amount} {currency}, priced {pp['price']}+{pp['ship']} {PRINT_OFFER['currency']}: held for the owner")
+    meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
+    cd = sess.get("customer_details") if isinstance(sess.get("customer_details"), dict) else {}
+    email = cd.get("email") or sess.get("customer_email") or None
+    email = email.strip() if isinstance(email, str) and pay._EMAIL.fullmatch(email.strip()) else None
+    now = int(time.time())
+    addon = {"paid": True, "kind": ADDON, "order": order, "session_id": sid,
+             "payment_intent": sess.get("payment_intent") if isinstance(sess.get("payment_intent"), str) else None,
+             "amount_total": amount, "currency": currency, "paid_at": now, "at": pay.iso(now), "livemode": bool(sess.get("livemode")),
+             "email": email, "lang": meta.get("lang") if meta.get("lang") in LANGS else None, "source": source,
+             "event_id": event_id if isinstance(event_id, str) else None, "print": pp}
+    try:
+        store.put(_path(order, ADDON_PAID), store.json_bytes(addon), "application/json", upsert=False)
+    except store.StorageExists:
+        return again(pay.get_paid(order) or cur)
+    merged = pay.merge_addon(cur, addon)
+    pay.log(f"order {order}: PRINT PAID via {source}: {amount} {currency} {pp['product']} to {pp['country']} live={addon['livemode']}"
+            + (f" HELD ({', '.join(pp['mismatch'])})" if pp.get("mismatch") else ""))
+    on_paid(order, merged)           # print.json (waiting, or held on a mismatch) and the print index of the daily run
+    return merged, "new"
+
+
+def addon_mail(order, paid, k, pack, docs):
+    """(subject, text, html) of the add-on's own confirmation, in the ORDER's language: the print, its shipping, the delivery address, what
+    was paid, production and delivery, damage in transit, the print box the customer ticked, the order page (when its link can be built) and
+    the terms of sale, in full at the end. The print has no right of withdrawal (made to order), so no withdrawal information goes with it:
+    the quoted box and the terms' section on prints say so."""
+    lang = lang_of((paid.get("spec") or {}).get("lang"))
+    w, c = ADDON_CONF[lang], CONF[lang]
+    pp = paid_print(paid) or {}
+    pa = paid.get("print_addon") if isinstance(paid.get("print_addon"), dict) else {}
+    cur = pay.currency_of(PRINT_OFFER["currency"])
+    country = country_name(pp.get("country"), lang)
+    rows = [(w["order"], order), (w["date"], pay.when_text(pa.get("at"), lang)),
+            (c["print"], f"{product_name(pp.get('product'), lang)}, {pay.price_text(pp.get('price') or 0, lang, cur)}"),
+            (c["ship"], f"{country}, {pay.price_text(pp.get('ship') or 0, lang, cur)}"),
+            (c["address"], address_text(pp) + (f", {country}" if pp.get("country") else "")),
+            (w["total"], f"{pay.price_text(pa.get('amount_total') or 0, lang, cur)}. {w['note']}"),
+            (w["payment"], w["paid"])]
+    subject = w["subject"].format(order=order)
+    blocks = [("p", SHIPPED[lang]["hello"]), ("p", w["intro"]), ("rows", rows),
+              ("h", c["h"]), ("p", w["p1"].format(producer=f"{PRODUCER}, {PRODUCER_COUNTRY[lang]}")), ("p", c["p2"])]
+    box = pp.get("consent") if isinstance(pp.get("consent"), dict) else None
+    if box and box.get("text"):
+        at = pay.when_text(box.get("at"), lang) if isinstance(box.get("at"), str) else ""
+        # the box is quoted in the language the customer ticked it in (the order page's at that moment), in this e-mail's quotation marks
+        blocks += [("p", c["p3"].format(at=at)), ("quote", pay.quoted(box["text"], lang))]
+    if k:
+        blocks += [("p", w["page"]), ("link", pay.order_url(order, k, lang))]
+    blocks += [("p", w["terms"].format(date=pay.date_text(pack["updated"], lang))), ("link", docs["terms"]["url"]),
+               ("p", SHIPPED[lang]["bye"]), ("p", pay.seller_lines(lang, pack)), ("rule",), ("doc", docs["terms"]["text"])]
+    text, html_body = pay.render_mail(blocks, lang, subject)
+    return subject, text, html_body
+
+
+def addon_mail_once(order, rec, paid):
+    """The add-on's confirmation e-mail, at most once per order (print_confirmation.json, claimed before sending). Returns "sent", "done"
+    (sent, refused or being sent before), "off" (no e-mail here), "no_address", "legal_unavailable" (the terms could not be read: nothing
+    sent, try again), "transient" (the claim is given back: the webhook's retry or the page's next check sends it) or "failed" / "bad_address"
+    (the owner is told to write to the customer). Never raises: the print itself never waits for this e-mail (it is made to order whether or
+    not the confirmation went out; the confirmation is owed by the delivery, which is days away)."""
+    path = _path(order, ADDON_MAIL)
+    try:
+        if not pay.email_configured():
+            return "off"
+        to = print_email(paid)
+        if not to:
+            res = "no_address"
+        else:
+            lang, market = (paid.get("spec") or {}).get("lang"), pay.paid_market(paid)
+            pack = pay.legal_pack()
+            docs = pay.pack_docs(pack, lang, market) if pack else None
+            if docs is None:
+                pay.log(f"order {order}: print confirmation waits, the legal texts ({pay.LEGAL_PACK_PATH}) could not be read")
+                return "legal_unavailable"
+            if not pay.claim_once(path):
+                return "done"
+            subject, text, html_body = addon_mail(order, paid, pay.link_key(order, rec), pack, docs)
+            res = pay.send_mail(to, subject, text, f"snapeyes-print-order-{order}", html_body)
+            pay._mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res, legal=pack.get("updated"))
+            pay.log(f"order {order}: print confirmation {res}")
+        if res in ("failed", "bad_address", "no_address"):
+            _note(order, "print_confirmation", f"SnapEyes: the print confirmation of order {order} did not go out",
+                  f"A print was bought for order {order} after its artwork, but the customer's confirmation e-mail of that purchase could not "
+                  f"be sent ({res}).\nThe print is made all the same. Please write to the customer ({to or 'no email on record: see the payment at Stripe'}) "
+                  f"and confirm the purchase: the print, its price and shipping, the delivery address and that it is made to order "
+                  f"(admin page, order {order}).\n")
+        return res
+    except Exception as e:  # noqa: the payment is recorded and the print is made; the next call tries the e-mail again
+        pay.log(f"order {order}: print confirmation failed: {type(e).__name__}")
+        try:
+            pay._mark(path, "retry")
+        except Exception:  # noqa
+            pass
+        return "transient"
+
+
+def addon_after(order, rec, paid, state):
+    """After an add-on payment is on record (the webhook, the order page's check, a checkout that found an earlier session paid): the owner's
+    note and the customer's confirmation, each once, and the server's step for the print (the artwork is delivered, so nothing else would ask
+    for it before the daily run). Every part is idempotent, so a replayed event repeats nothing. Returns the confirmation's word ("extra" for
+    a payment that was stored apart: its only note is the owner's refund note). Never raises."""
+    if state == "extra":
+        return "extra"
+    try:
+        pp = paid_print(paid) or {}
+        pa = paid.get("print_addon") if isinstance(paid.get("print_addon"), dict) else {}
+        cur = PRINT_OFFER["currency"]
+        _note(order, "print_addon", f"SnapEyes: a print for order {order}, {pay.amount_text(pa.get('amount_total') or 0, 'en', cur)}",
+              f"A print was bought for order {order} after its artwork ({'live' if pa.get('livemode') else 'TEST mode'}).\n"
+              f"Print: {pp.get('product')} to {pp.get('country')} ({pay.amount_text(pp.get('price') or 0, 'en', cur)} + shipping "
+              f"{pay.amount_text(pp.get('ship') or 0, 'en', cur)}){', HELD: ' + ', '.join(pp['mismatch']) if pp.get('mismatch') else ''}; "
+              f"it goes to merchOne now (admin: Spaudiniai)\n"
+              f"Customer: {print_email(paid) or 'no email'}\nStripe session: {pa.get('session_id')}\nPayment: {pa.get('payment_intent')}\n")
+    except Exception as e:  # noqa: a note never costs the print
+        pay.log(f"order {order}: print note failed: {type(e).__name__}")
+    mail = addon_mail_once(order, rec, paid)
+    try:
+        if pending(order, paid):
+            from . import maker
+            maker.kick(order, why="print")
+    except Exception as e:  # noqa: the daily run sends it
+        pay.log(f"order {order}: print step not asked for: {type(e).__name__}")
+    return mail
+
+
+def addon_event(obj, event_id=None):
+    """(status, reply) for the Stripe webhook's event of an add-on session (api/stripe_webhook.py routes a session of kind "print_addon" here,
+    never to the order's own payment path). 503 while the confirmation e-mail must be tried again (Stripe retries; every step is idempotent)."""
+    meta = obj.get("metadata") if isinstance(obj.get("metadata"), dict) else {}
+    order = meta.get("order")
+    sid = str(obj.get("id") or "")
+    if not isinstance(order, str) or not store.ORDER_RE.fullmatch(order):
+        pay.log(f"webhook {event_id}: a print session without an order of ours, ignored")
+        return 200, {"ok": True, "print": True, "ignored": "no order"}
+    if not pay.session_paid(obj):
+        return 200, {"ok": True, "print": True, "order": order, "state": "awaiting_payment"}
+    rec = store.get_json(f"orders/{order}/order.json", timeout=8.0)
+    if not isinstance(rec, dict) or not _addon_ours(obj, order, rec):
+        if not isinstance(rec, dict) and pay.session_counts(obj):
+            # a payment for a print of an order this site no longer has: never silent, the owner refunds it
+            pay.note_once(f"notes/unknown_print_{pay._order_tag(sid)}.json", "unknown_print",
+                          f"SnapEyes: a payment for a print of order {order} arrived, but the order is gone",
+                          f"Stripe reports a PAID Checkout Session {sid} ({pay.amount_text(obj.get('amount_total') or 0, 'en', obj.get('currency'))}, "
+                          f"{'live' if obj.get('livemode') else 'TEST mode'}) for a print of order {order}, but this site has no record of that "
+                          f"order any more.\nNothing can be printed for it. Please refund it in the Stripe Dashboard (Payments, search "
+                          f"{obj.get('payment_intent') or sid}, Refund) and write to the customer "
+                          f"({(obj.get('customer_details') or {}).get('email') or 'email at Stripe'}).\n")
+        pay.log(f"webhook {event_id}: order {order}: the print session does not match the order record, ignored")
+        return 200, {"ok": True, "print": True, "ignored": "session does not match"}
+    if not pay.session_counts(obj):
+        pay.log(f"webhook {event_id}: order {order}: a TEST-mode payment for a print, and this deployment takes no test orders: ignored")
+        return 200, {"ok": True, "print": True, "ignored": "test mode"}
+    paid, state = addon_record(order, rec, obj, "webhook", event_id)
+    mail = addon_after(order, rec, paid, state)
+    if mail in ("transient", "legal_unavailable"):
+        return 503, {"ok": False, "print": True, "order": order, "reason": "mail_retry"}
+    return 200, {"ok": True, "print": True, "order": order, "state": state, "mail": mail}
+
+
+def addon_status(sid, order, k):
+    """GET /api/checkout?addon=<session id>&o=<order>&k=<key>: the order page's question after Stripe's success page, asked until the print is
+    on record (the webhook may not have arrived yet; the gift page asks about its voucher the same way). {ok, state}: "paid" (recorded, by the
+    webhook or by this very call: with print, the order page's print block), "extra" (the order had a print already: this payment is stored
+    apart and refunded by the owner), "pending" (not paid yet), "processing" (completed with a method that settles later), "expired",
+    "unknown" (not a print session of this order, or a test payment where those do not count). 403 bad_link for a wrong key."""
+    rec = pay.load_order(order, k)
+    if not isinstance(sid, str) or not pay.SID_RE.fullmatch(sid):
+        raise L.ClientError("This is not a print payment.")
+    paid = pay.get_paid(order)
+    pa = paid.get("print_addon") if isinstance(paid, dict) and isinstance(paid.get("print_addon"), dict) else None
+    if pa and pa.get("session_id") == sid:
+        # on record already (the webhook came first): no call to Stripe. The confirmation and the step are asked for again, each a no-op once done
+        addon_after(order, rec, paid, "known")
+        return {"ok": True, "state": "paid", "print": order_view(order, paid)}
+    if not pay.stripe_key():
+        raise pay.PayNotConfigured("STRIPE_SECRET_KEY is not set")
+    sess = pay.retrieve_session(sid)
+    if not _addon_ours(sess, order, rec):
+        return {"ok": True, "state": "unknown"}
+    if not pay.session_paid(sess):
+        st = "expired" if sess.get("status") == "expired" else "processing" if sess.get("status") == "complete" else "pending"
+        return {"ok": True, "state": st}
+    if not pay.session_counts(sess):
+        pay.log(f"order {order}: print session {sid} is a TEST payment and this deployment takes none, not recorded")
+        return {"ok": True, "state": "unknown"}
+    paid, state = addon_record(order, rec, sess, "order_page")
+    addon_after(order, rec, paid, state)
+    if state == "extra":
+        return {"ok": True, "state": "extra", "print": order_view(order, paid)}
+    return {"ok": True, "state": "paid", "print": order_view(order, paid)}
+
+
 # ----------------------------------------------------------------------------- what the pages and the admin see
 def order_view(order, paid):
     """The order page's print block: {product, name, country, state, tracking_url} (state: preparing, sent, shipped, canceled)."""
@@ -1334,7 +1963,9 @@ def admin_view(order, paid):
             "state": cur.get("state") or "waiting", "attempts": cur.get("attempts"), "merchone_id": cur.get("merchone_id"),
             "external_id": cur.get("external_id"), "is_test": cur.get("is_test"), "error": cur.get("error"),
             "partner_status": cur.get("partner_status"), "tracking": cur.get("tracking"), "file": cur.get("file"),
-            "history": cur.get("history"), "updated_iso": cur.get("updated_iso")}
+            "history": cur.get("history"), "updated_iso": cur.get("updated_iso"),
+            # bought after the artwork, with a payment of its own (the order detail's payments list has it as its own line)
+            "addon": isinstance(paid.get("print_addon"), dict)}
 
 
 def admin_status(check_api=False):

@@ -879,5 +879,507 @@ tracemalloc.stop()
 check("the 60 cm print file is made with the border strips only: the arrays' peak stays under 200 MB for a 4096 px master (no full-frame float copies)",
       peak < 200 * 2 ** 20 and i60["width"] == PR.file_geometry("ACP0600601HP", 4096)[0], f"{peak / 2 ** 20:.0f} MB")
 
+# ============================================================================================ 10. a print bought after the artwork
+section("10. the print offered AFTER the purchase (2026-11-21): who gets it, its own session, the paid record once, the merge, the refunds, the e-mails")
+mo_env(True)
+fresh_switch()
+KICKS = []
+real_kick = maker.kick
+maker.kick = lambda order, *a, **kw: KICKS.append((order, kw.get("why"))) or "off"      # the self-call has no address in this run: what would be asked for is recorded
+REFUNDS = []
+real_stripe = pay._stripe
+
+
+class _Refund:
+    status_code = 200
+
+    def __init__(self, p):
+        self.p = p
+
+    def json(self):
+        return {"id": "re_test_" + hashlib.sha256(self.p.get("payment_intent", "").encode()).hexdigest()[:8], "object": "refund", "status": "succeeded",
+                "amount": 1, "currency": "eur", "payment_intent": self.p.get("payment_intent")}
+
+
+def stripe_with_refunds(method, path, params=None, idem=None, timeout=15.0):
+    """The harness's fake Stripe has no refunds: the admin's refund call is answered here, every other call goes to the stub."""
+    if path == "/v1/refunds":
+        REFUNDS.append(dict(params))
+        return _Refund(dict(params))
+    return real_stripe(method, path, params, idem, timeout)
+
+
+pay._stripe = stripe_with_refunds
+
+
+def paid_file_order(lang="en", market=None, delivered=True):
+    """A paid order of the file alone (the webhook recorded it), delivered unless asked otherwise."""
+    o_, k_ = draft(lang=lang)
+    c_, j_ = co(o_, k_, lang=lang, **({"market": market} if market else {}))
+    assert c_ == 200, (c_, j_)
+    sid_ = rj(f"orders/{o_}/order.json")["checkout"]["session_id"]
+    c2_, j2_ = webhook(H.pay_session(sid_))
+    assert c2_ == 200, (c2_, j2_)
+    if delivered:
+        deliver(o_)
+    return o_, k_, sid_
+
+
+def addon(o_, k_, product="poster50", cc="LT", lang="en", **kw):
+    body = {"addon": {"order": o_, "key": k_}, "print": {"product": product, "country": cc}, "consent_print": True, "lang": lang}
+    body.update(kw)
+    return post("/api/checkout", body)
+
+
+def addon_sid(o_):
+    return (rj(f"orders/{o_}/print_checkout.json") or {}).get("session_id")
+
+
+def raw(path):
+    try:
+        with open(os.path.join(STORE, *path.split("/")), "rb") as f_:
+            return f_.read()
+    except OSError:
+        return None
+
+
+def refund_mark(o_, pi_):
+    return f"ops/refunds/{o_}/{hashlib.sha256(pi_.encode()).hexdigest()[:16]}.json"
+
+
+# --- who gets the offer
+oa, ka, sa = paid_file_order(lang="lt")
+c, sj = get(f"/api/order?o={oa}&k={ka}")
+po = sj.get("print_offer") or {}
+check("the status of a paid, delivered order without a print carries the offer: euros, the five prints with the server's prices and the shipping per country, "
+      "the print box in the eight languages; no SKU, no cost, and no print block",
+      c == 200 and sj.get("state") == "ready" and po.get("currency") == "EUR" and [p_["id"] for p_ in po.get("products") or []] == [p_["id"] for p_ in PR.products()]
+      and po["products"][4]["price"] == 3500 and po["products"][4]["ship"]["LT"] == 849 and po["products"][2]["ship"]["DE"] == 699 and len(po["products"][0]["ship"]) == 27
+      and po.get("consent") == PR.PRINT_CONSENT_TEXT and "sku" not in json.dumps(po) and "cost" not in json.dumps(po) and "print" not in sj, (c, sj.get("state"), po))
+ob, kb, sb = paid_file_order(delivered=False)
+c, sjb = get(f"/api/order?o={ob}&k={kb}")
+c2, j2 = addon(ob, kb)
+check("a paid order whose artwork is not delivered yet: no offer in its status, and its checkout is refused 409 print_not_offered, why not_ready, nothing created",
+      "print_offer" not in sjb and c2 == 409 and j2.get("reason") == "print_not_offered" and j2.get("why") == "not_ready" and not exists(f"orders/{ob}/print_checkout.json"), (sjb.get("state"), c2, j2))
+deliver(ob, held=True)
+c2, j2 = addon(ob, kb)
+c, sjb = get(f"/api/order?o={ob}&k={kb}")
+store.put(f"orders/{ob}/release.json", store.json_bytes({"t": 1}), "application/json", upsert=True)
+c3, sjb3 = get(f"/api/order?o={ob}&k={kb}")
+check("an artwork that waits for the owner's look: why review, no offer; once released the offer is there",
+      c2 == 409 and j2.get("why") == "review" and "print_offer" not in sjb and sjb3.get("state") == "ready" and "print_offer" in sjb3, (c2, j2, sjb.get("state"), sorted(sjb3)))
+n_creates = len(H.Fake.creates)
+for mark, why in (("withdrawn.json", "withdrawn"), ("deleted.json", "deleted"), ("expired.json", "deleted"), ("refunded.json", "refunded")):
+    ox, kx, sx = paid_file_order()
+    store.put(f"orders/{ox}/{mark}", store.json_bytes({"t": 1}), "application/json", upsert=True)
+    cx, jx = addon(ox, kx)
+    check(f"an order with {mark}: 409 print_not_offered, why {why}", cx == 409 and jx.get("reason") == "print_not_offered" and jx.get("why") == why
+          and PR.addon_offer(ox, pay.get_paid(ox)) is None, (cx, jx))
+ox, kx, sx = paid_file_order()
+store.put(refund_mark(ox, pay.get_paid(ox)["payment_intent"]), store.json_bytes({"refund": "re_x"}), "application/json", upsert=True)
+cx, jx = addon(ox, kx)
+c, sjx = get(f"/api/order?o={ox}&k={kx}")
+check("an order whose payment the admin refunded: why refunded, and its status has no offer", cx == 409 and jx.get("why") == "refunded" and "print_offer" not in sjx, (cx, jx))
+ou, ku = draft()
+cu, ju = addon(ou, ku)
+cw, jw = addon(oa, "0" * 32)
+check("an unpaid order: 409 print_not_offered, why not_paid; a wrong key: 403 bad_link (the order link is the authentication)",
+      cu == 409 and ju.get("why") == "not_paid" and cw == 403 and jw.get("reason") == "bad_link", (cu, ju, cw, jw))
+cp_, jp_ = addon(o24, k24)
+check("an order that bought its print at the first checkout: why has_print, and its status has the print and no offer", cp_ == 409 and jp_.get("why") == "has_print"
+      and "print_offer" not in get(f"/api/order?o={o24}&k={k24}")[1], (cp_, jp_))
+om, km, sm = paid_file_order(market="au")
+cm, jm = addon(om, km)
+check("an order of a market that offers no prints (au): 409 print_unavailable, why market, no offer in its status",
+      cm == 409 and jm.get("reason") == "print_unavailable" and jm.get("why") == "market" and "print_offer" not in get(f"/api/order?o={om}&k={km}")[1], (cm, jm))
+sw = PR.set_switch(False, "test", PR.switch_state(fresh=True)["rev"])
+fresh_switch()
+c_off, j_off = addon(oa, ka)
+s_off = get(f"/api/order?o={oa}&k={ka}")[1]
+PR.set_switch(True, "test", sw["rev"])
+fresh_switch()
+mo_env(False)
+c_nc, j_nc = addon(oa, ka)
+s_nc = get(f"/api/order?o={oa}&k={ka}")[1]
+mo_env(True)
+fresh_switch()
+check("the owner's switch off: 409 print_unavailable why off and no offer; merchOne not configured: why not_configured and no offer; the order's status is otherwise the same",
+      c_off == 409 and j_off.get("why") == "off" and "print_offer" not in s_off and c_nc == 409 and j_nc.get("why") == "not_configured" and "print_offer" not in s_nc
+      and {k_: v for k_, v in s_off.items() if k_ not in ("download", "ms")} == {k_: v for k_, v in sj.items() if k_ not in ("download", "print_offer", "ms")},
+      (j_off, j_nc, sorted(s_off), sorted(sj)))
+real_allowed = pay.test_orders_allowed
+pay.test_orders_allowed = lambda: False
+why_test = PR.addon_problem(oa, pay.get_paid(oa))
+pay.test_orders_allowed = real_allowed
+check("a payment that does not count here (a test payment where test orders are off): why test_payment", why_test == "test_payment", why_test)
+c1, j1 = addon(oa, ka, consent_print=False)
+c2, j2 = addon(oa, ka, product="mug")
+c3, j3 = addon(oa, ka, cc="US")
+c4, j4 = addon(oa, ka, print_shown=1)
+c5, j5 = post("/api/checkout", {"addon": {"order": oa, "key": ka}, "consent_print": True, "lang": "lt"})
+check("the request's own refusals: the box not ticked 400 print_consent_required, an unknown print why product, a country without prints why country, another price "
+      "shown 409 print_price_changed with the server's numbers, no print 400; none of the refusals of this block created a session or a record",
+      c1 == 400 and j1.get("reason") == "print_consent_required" and c2 == 409 and j2.get("why") == "product" and c3 == 409 and j3.get("why") == "country"
+      and c4 == 409 and j4.get("reason") == "print_price_changed" and j4.get("print") == {"product": "poster50", "country": "LT", "price": 3500, "ship": 849}
+      and c5 == 400 and not exists(f"orders/{oa}/print_checkout.json")
+      and not [p_ for p_, _h in H.Fake.creates[n_creates:] if p_.get("metadata[kind]") == "print_addon"], (c1, j1, c2, j2, c3, j3, c4, j4, c5, j5))
+
+# --- the session
+order_before = raw(f"orders/{oa}/order.json")
+paid_before = raw(f"orders/{oa}/paid.json")
+exp0 = len(H.Fake.expires)
+t_buy = int(time.time())
+c, ja = addon(oa, ka, product="acrylic40", cc="DE", lang="lt", print_shown=7900 + 499)
+p = H.Fake.creates[-1][0]
+sid1 = addon_sid(oa)
+check("the add-on checkout answers the Stripe page, the print and the total (the print and its shipping)",
+      c == 200 and ja.get("url", "").startswith("https://") and ja.get("print") == {"product": "acrylic40", "country": "DE", "price": 7900, "ship": 499}
+      and ja.get("total") == 8399 and ja.get("currency") == "EUR" and ja.get("order") == oa, (c, ja))
+check("its Stripe session: the print is the ONLY line item (its price, its Lithuanian name and description, euros), the address form for that one country, one fixed "
+      "shipping rate with a delivery estimate, the print's own note above the pay button with the binding order sentence, no discount",
+      p.get("mode") == "payment" and p.get("line_items[0][price_data][unit_amount]") == "7900" and p.get("line_items[0][price_data][currency]") == "eur"
+      and p.get("line_items[0][price_data][product_data][name]") == PR.product_name("acrylic40", "lt")
+      and p.get("line_items[0][price_data][product_data][description]") == PR.ITEM_DESC_PRINT["lt"] and not any(x.startswith("line_items[1]") for x in p)
+      and p.get("shipping_address_collection[allowed_countries][0]") == "DE" and "shipping_address_collection[allowed_countries][1]" not in p
+      and p.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") == "499"
+      and p.get("shipping_options[0][shipping_rate_data][delivery_estimate][maximum][unit]") == "business_day"
+      and p.get("custom_text[submit][message]") == PR.SUBMIT_NOTE_ADDON["lt"] and "prievole sumokėti" in PR.SUBMIT_NOTE_ADDON["lt"]
+      and "Vokietija" in p.get("custom_text[shipping_address][message]", "") and not any(x.startswith("discounts") for x in p)
+      and p.get("adaptive_pricing[enabled]") == "false", {k_: v for k_, v in p.items() if not k_.startswith("metadata[")})
+check("it comes back to the order page with the session named (ps), Stripe's back link says print=cancelled, it lives an hour, and it names the order",
+      p.get("success_url") == f"https://snapeyes.com/order?o={oa}&k={ka}&lang=lt&ps={{CHECKOUT_SESSION_ID}}"
+      and p.get("cancel_url") == f"https://snapeyes.com/order?o={oa}&k={ka}&lang=lt&print=cancelled" and p.get("client_reference_id") == oa
+      and 0 <= int(p.get("expires_at", 0)) - t_buy - PR.ADDON_TTL <= 30 and p.get("payment_intent_data[metadata][kind]") == "print_addon"
+      and p.get("payment_intent_data[metadata][order]") == oa, (p.get("success_url"), p.get("cancel_url"), p.get("expires_at")))
+meta_a = {k_[9:-1]: v for k_, v in p.items() if k_.startswith("metadata[")}
+check("the metadata: kind print_addon, the order and the fingerprint of its key, print, print_sku, print_amount, ship_amount, ship_cc, lang, market, currency, "
+      "consent_version, consent_at, and nothing of the artwork's (no eyes, style, amount, plan, voucher or experiment)",
+      meta_a.get("kind") == "print_addon" and meta_a.get("order") == oa and meta_a.get("key_sha") == pay.key_sha(ka) and meta_a.get("print") == "acrylic40"
+      and meta_a.get("print_sku") == "ACP0400401HP" and meta_a.get("print_amount") == "7900" and meta_a.get("ship_amount") == "499" and meta_a.get("ship_cc") == "DE"
+      and meta_a.get("lang") == "lt" and meta_a.get("market") == "eu" and meta_a.get("currency") == "eur" and meta_a.get("consent_version") == pay.CONSENT_VERSION
+      and re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", meta_a.get("consent_at", ""))
+      and set(meta_a) == {"kind", "order", "key_sha", "print", "print_sku", "print_amount", "ship_amount", "ship_cc", "lang", "market", "currency", "consent_version", "consent_at"}, meta_a)
+pc = rj(f"orders/{oa}/print_checkout.json") or {}
+check("print_checkout.json keeps the checkout: the session, the print, the print box the customer ticked (version, time, the Lithuanian text, its fingerprint); the "
+      "order's own record and payment are untouched byte for byte, and no session of the artwork was closed",
+      pc.get("session_id") == sid1 and pc.get("sessions") == [sid1] and pc.get("amount") == 8399 and pc.get("currency") == "eur" and pc.get("market") == "eu"
+      and pc.get("lang") == "lt" and pc["print"]["product"] == "acrylic40" and pc["print"]["country"] == "DE" and pc["print"]["consent"]["version"] == pay.CONSENT_VERSION
+      and pc["print"]["consent"]["text"] == PR.PRINT_CONSENT_TEXT["lt"]
+      and pc["print"]["consent"]["text_sha256"] == hashlib.sha256(PR.PRINT_CONSENT_TEXT["lt"].encode("utf-8")).hexdigest()[:16]
+      and raw(f"orders/{oa}/order.json") == order_before and raw(f"orders/{oa}/paid.json") == paid_before and len(H.Fake.expires) == exp0, pc)
+c, st1 = get(f"/api/checkout?addon={sid1}&o={oa}&k={ka}")
+cb, stb = get(f"/api/checkout?addon={sid1}&o={oa}&k={'0' * 32}")
+cs, sts = get(f"/api/checkout?addon={sa}&o={oa}&k={ka}")
+cg, stg = get(f"/api/checkout?addon=nonsense&o={oa}&k={ka}")
+check("the order page's check of the session before it is paid: pending; a wrong key 403; the artwork's own session is not a print session (unknown); nonsense 400; "
+      "nothing recorded", c == 200 and st1.get("state") == "pending" and cb == 403 and sts.get("state") == "unknown" and cg == 400
+      and not exists(f"orders/{oa}/print_paid.json"), (st1, cb, sts, cg))
+c, jb = addon(oa, ka, product="acrylic40", cc="DE", lang="lt")
+sid2 = addon_sid(oa)
+check("a second press (a double click, a second tab): the earlier session is expired at Stripe first, so only one can be paid; print_checkout.json names both",
+      c == 200 and sid2 != sid1 and H.Fake.sessions[sid1]["status"] == "expired" and sid1 in H.Fake.expires[exp0:]
+      and (rj(f"orders/{oa}/print_checkout.json") or {}).get("sessions") == [sid1, sid2], (c, jb, H.Fake.sessions[sid1]["status"]))
+check("the expired one reads expired for the order page", get(f"/api/checkout?addon={sid1}&o={oa}&k={ka}")[1].get("state") == "expired", "")
+
+# --- paid: the record once, the merge, the confirmation, the step
+fix_total(sid2)
+H.Fake.emails.clear()
+KICKS.clear()
+sess_a = pay_with_address(sid2, cc="DE", name="Ona Onaitė", email="spaudinys@example.com")
+check("the artwork's own paths never take the add-on's session for the order's payment: session_matches refuses it and record_paid raises",
+      pay.session_matches(sess_a, oa, rj(f"orders/{oa}/order.json")) is False and pay.session_ours(sess_a, oa, rj(f"orders/{oa}/order.json")) is True, "")
+try:
+    pay.record_paid(oa, rj(f"orders/{oa}/order.json"), sess_a, "test")
+    raised = False
+except pay.PayError:
+    raised = True
+check("... record_paid refuses it whoever asks (PayError), and no extra payment of the artwork was stored", raised
+      and not [f_ for f_ in os.listdir(os.path.join(STORE, "orders", oa)) if f_.startswith("extra_payment_")], raised)
+c, jw = webhook(sess_a)
+pj = rj(f"orders/{oa}/print_paid.json") or {}
+ppa = pj.get("print") or {}
+check("the webhook records the print's payment apart: print_paid.json with the session, the payment, the amount (the print and its shipping), euros, the time, the "
+      "buyer's e-mail and the print (product, SKU, price, shipping, the name and address Stripe collected, the print box), no mismatch",
+      c == 200 and jw.get("print") is True and jw.get("state") == "new" and pj.get("paid") is True and pj.get("session_id") == sid2
+      and pj.get("payment_intent") == sess_a["payment_intent"] and pj.get("amount_total") == 8399 and pj.get("currency") == "eur" and pj.get("livemode") is False
+      and re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", pj.get("at", "")) and pj.get("email") == "spaudinys@example.com" and pj.get("source") == "webhook"
+      and ppa.get("product") == "acrylic40" and ppa.get("sku") == "ACP0400401HP" and ppa.get("price") == 7900 and ppa.get("ship") == 499 and ppa.get("country") == "DE"
+      and ppa.get("name") == "Ona Onaitė" and ppa["address"]["country"] == "DE" and ppa["consent"]["text"] == PR.PRINT_CONSENT_TEXT["lt"] and "mismatch" not in ppa, (c, jw, pj))
+paid_a = pay.get_paid(oa)
+check("paid.json is not touched (byte for byte), and pay.get_paid merges the print in: print and print_addon {session_id, payment_intent, amount_total, at, livemode, "
+      "email}; the record's own amount stays the artwork's",
+      raw(f"orders/{oa}/paid.json") == paid_before and paid_a.get("print") == ppa and paid_a.get("print_addon") == {"session_id": sid2, "payment_intent": sess_a["payment_intent"],
+      "amount_total": 8399, "at": pj["at"], "livemode": False, "email": "spaudinys@example.com"} and paid_a["amount_total"] == json.loads(paid_before)["amount_total"]
+      and paid_a["session_id"] == sa, paid_a.get("print_addon"))
+check("print.json is waiting, the order is in the print index, and the server's step for the print was asked for (the artwork is delivered: nobody else would ask)",
+      (rj(f"orders/{oa}/print.json") or {}).get("state") == "waiting" and exists(f"cleanup/print/{oa}.json") and (oa, "print") in KICKS, (rj(f"orders/{oa}/print.json"), KICKS))
+conf = [m for m, _i in H.Fake.emails if m.get("subject") == PR.ADDON_CONF["lt"]["subject"].format(order=oa)]
+txt = conf[0]["text"] if conf else ""
+check("the customer gets the print's own confirmation once, in the ORDER's language, to the address of that payment: the print, the shipping with the country, the "
+      "delivery address, the total with the no VAT sentence, production right away, the producer, the 7 days, the print box quoted, the order page, the terms in full",
+      len(conf) == 1 and conf[0]["to"] == ["spaudinys@example.com"] and PR.product_name("acrylic40", "lt") in txt and "Vokietija, 4,99" in txt
+      and "Ona Onaitė, Gedimino pr. 1" in txt and pay.price_text(8399, "lt", "eur") in txt and "PVM" in txt and "iš karto" in txt and "Picanova GmbH" in txt
+      and "per 7 dienas" in txt and PR.PRINT_CONSENT_TEXT["lt"] in txt and f"/order?o={oa}&k={ka}&lang=lt" in txt
+      and PACK["docs"]["lt"]["terms"]["text"][:200] in txt and PACK["docs"]["lt"]["withdrawal"]["text"][:200] not in txt and not re.search(DASH, txt), txt[:1500])
+note = [m for m, _i in H.Fake.emails if "a print for order" in m.get("subject", "") and oa in m.get("subject", "")]
+check("the owner gets one note of the sale (the print, where it goes, the payment)", len(note) == 1 and "acrylic40 to DE" in note[0]["text"]
+      and sess_a["payment_intent"] in note[0]["text"], note[:1])
+paid_bytes = raw(f"orders/{oa}/print_paid.json")
+c, jw2 = webhook(sess_a)
+check("the same event again (Stripe retries): 200, state known, print_paid.json byte for byte the same, no second confirmation, no second note",
+      c == 200 and jw2.get("state") == "known" and raw(f"orders/{oa}/print_paid.json") == paid_bytes
+      and len([m for m, _i in H.Fake.emails if m.get("subject") == PR.ADDON_CONF["lt"]["subject"].format(order=oa)]) == 1
+      and len([m for m, _i in H.Fake.emails if "a print for order" in m.get("subject", "")]) == 1, (c, jw2))
+MO.creates.clear()
+r = PR.step(oa, rj(f"orders/{oa}/order.json"), pay.get_paid(oa))
+pl = MO.creates[-1] if MO.creates else {}
+check("fulfilment is the code it was: the step sends the print to merchOne once (external id = the order, the SKU, the name and the address of the add-on's payment), "
+      "a second step does nothing", r == "created" and len(MO.creates) == 1 and pl.get("external_id") == oa and pl["items"][0]["product_sku"] == "ACP0400401HP"
+      and pl["shipping"]["lastname"] == "Onaitė" and pl["shipping"]["country"] == "DE" and pl.get("is_test") is True
+      and PR.step(oa, rj(f"orders/{oa}/order.json"), pay.get_paid(oa)) == "done" and len(MO.creates) == 1, (r, pl))
+c, stp = get(f"/api/checkout?addon={sid2}&o={oa}&k={ka}")
+c2, sja = get(f"/api/order?o={oa}&k={ka}")
+check("the order page's check of the recorded session: paid, with the print block; the order's status has the print (sent) and no offer any more",
+      stp.get("state") == "paid" and (stp.get("print") or {}).get("state") == "sent" and stp["print"]["product"] == "acrylic40"
+      and (sja.get("print") or {}).get("state") == "sent" and "print_offer" not in sja, (stp, sja.get("print")))
+n_c = len(H.Fake.creates)
+c, jn = addon(oa, ka)
+check("a second print for an order that has one is refused: 409 print_not_offered, why has_print, no session is made",
+      c == 409 and jn.get("reason") == "print_not_offered" and jn.get("why") == "has_print" and len(H.Fake.creates) == n_c, (c, jn))
+oid_a = PR.record(oa)["merchone_id"]
+MO.orders[oid_a]["shipments"] = [{"tracking_number": "777", "tracking_url": "https://tracking.dpd.de/777", "shipping_method": {"name": "DPD"}}]
+H.Fake.emails.clear()
+PR.refresh(oa)
+ship_a = [m for m, _i in H.Fake.emails if m.get("subject") == PR.SHIPPED["lt"]["subject"]]
+check("the shipping e-mail of an add-on print goes to the address of the payment that bought it, in the order's language",
+      PR.record(oa)["state"] == "shipped" and len(ship_a) == 1 and ship_a[0]["to"] == ["spaudinys@example.com"], ship_a[:1])
+
+# --- recorded by the order page's own check, in another language than the order's
+oc, kc, sc = paid_file_order(lang="de")
+c, jc = addon(oc, kc, product="canvas40", cc="AT", lang="lt")
+sidc = addon_sid(oc)
+pcr = H.Fake.creates[-1][0]
+fix_total(sidc)
+sess_c = pay_with_address(sidc, cc="AT", name="Max Muster")
+sess_c["customer_details"] = {}          # Stripe gave no e-mail with this payment: the print's e-mails go to the order's address
+H.Fake.emails.clear()
+KICKS.clear()
+c, stc = get(f"/api/checkout?addon={sidc}&o={oc}&k={kc}")
+pjc = rj(f"orders/{oc}/print_paid.json") or {}
+conf_c = [m for m, _i in H.Fake.emails if m.get("subject") == PR.ADDON_CONF["de"]["subject"].format(order=oc)]
+check("the webhook has not arrived: the order page's check of the session records the payment itself (source order_page), answers paid with the print block (preparing) "
+      "and asks for the step", c == 200 and stc.get("state") == "paid" and (stc.get("print") or {}).get("state") == "preparing" and pjc.get("source") == "order_page"
+      and pjc.get("session_id") == sidc and (oc, "print") in KICKS, (stc, pjc.get("source"), KICKS))
+check("the page was Lithuanian, the order is German: the Stripe page and the recorded box are Lithuanian, the confirmation is German and quotes the Lithuanian box "
+      "as it was ticked; without an e-mail of its own on the payment it goes to the order's address",
+      pcr.get("locale") == "lt" and pcr.get("custom_text[submit][message]") == PR.SUBMIT_NOTE_ADDON["lt"] and pjc["print"]["consent"]["lang"] == "lt"
+      and len(conf_c) == 1 and "Ihr Druck" in conf_c[0]["text"] and "Österreich, 6,99" in conf_c[0]["text"] and PR.PRINT_CONSENT_TEXT["lt"] in conf_c[0]["text"]
+      and "sofort in die Produktion" in conf_c[0]["text"] and conf_c[0]["to"] == ["kunde@example.com"], (pcr.get("locale"), conf_c[:1]))
+bytes_c = raw(f"orders/{oc}/print_paid.json")
+c, jwc = webhook(sess_c)
+check("the late webhook finds it recorded: known, nothing rewritten, no second confirmation", c == 200 and jwc.get("state") == "known"
+      and raw(f"orders/{oc}/print_paid.json") == bytes_c and len([m for m, _i in H.Fake.emails if m.get("subject") == PR.ADDON_CONF["de"]["subject"].format(order=oc)]) == 1, (c, jwc))
+
+# --- the confirmation that cannot go out for a moment, a session that is not the order's
+od, kd, sd = paid_file_order()
+addon(od, kd)
+sidd = addon_sid(od)
+fix_total(sidd)
+sess_d = pay_with_address(sidd, cc="LT")
+H.Fake.emails.clear()
+H.Fake.fail_mail = [503, 503]          # the owner's note, then the customer's confirmation
+c, jd = webhook(sess_d)
+recorded_d = exists(f"orders/{od}/print_paid.json")
+c2, jd2 = webhook(sess_d)
+conf_d = [m for m, _i in H.Fake.emails if m.get("subject") == PR.ADDON_CONF["en"]["subject"].format(order=od)]
+check("the confirmation could not go out for a moment: the payment is recorded all the same and the webhook answers 503 so Stripe retries; the retry sends it, once",
+      c == 503 and jd.get("reason") == "mail_retry" and recorded_d and c2 == 200 and jd2.get("state") == "known" and len(conf_d) == 1
+      and f"{PR.product_name('poster50', 'en')}, €35.00" in conf_d[0]["text"] and "Lithuania, €8.49" in conf_d[0]["text"] and "right away" in conf_d[0]["text"], (c, jd, c2, jd2, len(conf_d)))
+oe, ke, se = paid_file_order()
+addon(oe, ke)
+side = addon_sid(oe)
+fix_total(side)
+sess_e = dict(pay_with_address(side, cc="LT"))
+forged = dict(sess_e, metadata=dict(sess_e["metadata"], key_sha="0" * 32))
+unpaid = dict(sess_e, status="open", payment_status="unpaid")
+c, jf = webhook(forged)
+c2, ju2 = webhook(unpaid)
+check("a print session whose key fingerprint is not the order's is ignored (nothing recorded); one that is not paid yet waits",
+      c == 200 and jf.get("ignored") == "session does not match" and c2 == 200 and ju2.get("state") == "awaiting_payment" and not exists(f"orders/{oe}/print_paid.json"), (jf, ju2))
+
+# --- an amount nobody priced
+H.Fake.sessions[side]["amount_total"] += 100
+H.Fake.emails.clear()
+KICKS.clear()
+MO.creates.clear()
+c, jm = webhook(H.Fake.sessions[side])
+pje = rj(f"orders/{oe}/print_paid.json") or {}
+check("a paid amount other than the print and its shipping: recorded as it came with mismatch ['amount'], the print HELD for the owner (told), nothing asked of "
+      "merchOne, by the step or by the owner's chain",
+      c == 200 and pje.get("amount_total") == 3500 + 849 + 100 and pje["print"].get("mismatch") == ["amount"] and (rj(f"orders/{oe}/print.json") or {}).get("state") == "held"
+      and any("is held" in m.get("subject", "") and oe in m.get("subject", "") for m, _i in H.Fake.emails) and (oe, "print") not in KICKS
+      and PR.step(oe, rj(f"orders/{oe}/order.json"), pay.get_paid(oe)) == "held" and not MO.creates, (c, jm, pje.get("print", {}).get("mismatch"), KICKS))
+
+# --- paid twice
+og, kg, sg = paid_file_order()
+addon(og, kg, product="poster50", cc="LT")
+sg1 = addon_sid(og)
+addon(og, kg, product="poster50", cc="LT")
+sg2 = addon_sid(og)
+H.Fake.sessions[sg1]["status"] = "open"          # as if the first tab's session had not been closed in time: both get paid
+fix_total(sg1)
+fix_total(sg2)
+s2 = pay_with_address(sg2, cc="LT")
+s1 = pay_with_address(sg1, cc="LT")
+H.Fake.emails.clear()
+c, jg2 = webhook(s2)
+bytes_g = raw(f"orders/{og}/print_paid.json")
+c1_, jg1 = webhook(s1)
+xp = [f_ for f_ in os.listdir(os.path.join(STORE, "orders", og)) if f_.startswith("extra_payment_")]
+xr = rj(f"orders/{og}/{xp[0]}") if xp else {}
+twice = [m for m, _i in H.Fake.emails if "was paid twice" in m.get("subject", "") and og in m.get("subject", "")]
+check("two add-on sessions of one order paid anyway: the first is the order's print, the second is stored as an extra payment (as pay.extra_payment does) and the "
+      "owner told to refund it; print_paid.json is not rewritten",
+      c == 200 and jg2.get("state") == "new" and c1_ == 200 and jg1.get("state") == "extra" and raw(f"orders/{og}/print_paid.json") == bytes_g and len(xp) == 1
+      and xr.get("extra_payment") is True and xr.get("paid") is False and xr.get("kind") == "print_addon" and xr.get("session_id") == sg1
+      and xr.get("first_session") == sg2 and xr.get("payment_intent") == s1["payment_intent"] and len(twice) == 1 and s1["payment_intent"] in twice[0]["text"], (jg2, jg1, xr))
+c, jg3 = webhook(s1)
+MO.creates.clear()
+deliver(og)
+rg = PR.step(og, rj(f"orders/{og}/order.json"), pay.get_paid(og))
+check("... replayed: still one extra payment and one note; the print is made ONCE (one merchOne order); the order page's check of the second session says extra",
+      jg3.get("state") == "extra" and len([f_ for f_ in os.listdir(os.path.join(STORE, "orders", og)) if f_.startswith("extra_payment_")]) == 1
+      and len([m for m, _i in H.Fake.emails if "was paid twice" in m.get("subject", "")]) == 1 and rg == "created" and len(MO.creates) == 1
+      and get(f"/api/checkout?addon={sg1}&o={og}&k={kg}")[1].get("state") == "extra", (jg3, rg, len(MO.creates)))
+oh, kh, sh = paid_file_order()
+addon(oh, kh)
+sh1 = addon_sid(oh)
+fix_total(sh1)
+pay_with_address(sh1, cc="LT")
+n_c = len(H.Fake.creates)
+c, jh = addon(oh, kh)
+check("a new checkout that finds the earlier add-on session paid records it (source checkout) and makes no second session: 409 print_not_offered, why has_print",
+      c == 409 and jh.get("why") == "has_print" and (rj(f"orders/{oh}/print_paid.json") or {}).get("source") == "checkout" and len(H.Fake.creates) == n_c, (c, jh))
+sess_x = dict(sess_e, id="cs_test_" + "f" * 24, metadata=dict(sess_e["metadata"], order=o24, key_sha=pay.key_sha(k24)), payment_intent="pi_test_addonx1")
+c, jx2 = webhook(sess_x)
+check("an add-on payment for an order that bought its print at the first checkout is an extra payment too: paid.json's own print stays the order's print",
+      jx2.get("state") == "extra" and pay.get_paid(o24).get("print_addon") is None and not exists(f"orders/{o24}/print_paid.json")
+      and any(f_.startswith("extra_payment_") for f_ in os.listdir(os.path.join(STORE, "orders", o24))), jx2)
+
+# --- the refunds
+oi, ki, si = paid_file_order()
+addon(oi, ki, product="poster50", cc="LT")
+sidi = addon_sid(oi)
+fix_total(sidi)
+sess_i = pay_with_address(sidi, cc="LT")
+webhook(sess_i)
+PR.step(oi, rj(f"orders/{oi}/order.json"), pay.get_paid(oi))
+oid_i = PR.record(oi)["merchone_id"]
+paid_i = pay.get_paid(oi)
+ov = ops.ACTIONS["order"]({"order": oi}, WHO)
+check("the admin's order detail lists the print's payment beside the order's (kind print, its own amount), and the print block says it was bought after the artwork",
+      [(p_["kind"], p_["payment_intent"], p_["amount"]) for p_ in ov["payments"]] == [("order", paid_i["payment_intent"], paid_i["amount_total"]),
+                                                                                     ("print", sess_i["payment_intent"], 3500 + 849)]
+      and (ov.get("print") or {}).get("addon") is True and ov["print"]["state"] == "created", ov.get("payments"))
+row = ops.order_row(oi)
+check("the admin's order row: the amount is the artwork's, nothing of the print is taken off it (print_amount 0), the add-on's amount stands apart; a price test and "
+      "the artwork's confirmation never count the add-on's print",
+      row["amount"] == paid_i["amount_total"] and row["print_amount"] == 0 and row["print_addon"] == 3500 + 849 and row["print"]["product"] == "poster50"
+      and abtest.paid_extra(paid_i) == 0 and abtest.paid_extra(pay.get_paid(o24)) == 3500 + 849
+      and PR.amend_confirmation([("rows", [("a", "1"), ("b", "2"), ("c", "3")])], "en", paid_i) == [("rows", [("a", "1"), ("b", "2"), ("c", "3")])], row)
+e = None
+try:
+    ops.ACTIONS["refund"]({"order": oi, "payment_intent": "pi_test_notmine01", "confirm": oi}, WHO)
+except store.Answer as x:
+    e = x
+r_art = ops.ACTIONS["refund"]({"order": oi, "payment_intent": paid_i["payment_intent"], "confirm": oi}, WHO)
+check("the artwork's payment refunded alone leaves the add-on's print alone: no print result, nothing cancelled at merchOne, the print still due and created; a "
+      "payment that is not the order's is refused",
+      e is not None and e.body.get("reason") == "unknown_payment" and r_art.get("result") == "succeeded" and "print" not in r_art and oid_i not in MO.deletes
+      and PR.record(oi)["state"] == "created" and PR.due(oi, pay.get_paid(oi)) == "" and REFUNDS[-1].get("payment_intent") == paid_i["payment_intent"], (r_art, e and e.body))
+r_pr = ops.ACTIONS["refund"]({"order": oi, "payment_intent": sess_i["payment_intent"], "confirm": oi}, WHO)
+ov2 = ops.ACTIONS["order"]({"order": oi}, WHO)
+check("the add-on's payment refunded cancels the print at merchOne, as refunding an order with a print does; both payments read refunded in the order detail",
+      r_pr.get("print") == {"result": "canceled"} and oid_i in MO.deletes and PR.record(oi)["state"] == "canceled" and REFUNDS[-1].get("payment_intent") == sess_i["payment_intent"]
+      and all(p_["refunded"] for p_ in ov2["payments"]), (r_pr, ov2.get("payments")))
+oj, kj, sj_ = paid_file_order()
+addon(oj, kj)
+sidj = addon_sid(oj)
+fix_total(sidj)
+sess_j = pay_with_address(sidj, cc="LT")
+webhook(sess_j)
+store.put(f"orders/{oj}/refunded.json", store.json_bytes({"t": 1}), "application/json", upsert=True)
+due_art = PR.due(oj, pay.get_paid(oj))
+r_j = ops.ACTIONS["refund"]({"order": oj, "payment_intent": sess_j["payment_intent"], "confirm": oj}, WHO)
+MO.creates.clear()
+st_j = PR.step(oj, rj(f"orders/{oj}/order.json"), pay.get_paid(oj))
+check("refunded.json marks the artwork's payment: an add-on print stays due; the add-on's payment refunded before the print was sent: not_sent, and the next step "
+      "cancels it instead of sending it", due_art == "" and r_j.get("print") == {"result": "not_sent"} and PR.due(oj, pay.get_paid(oj)) == "refunded"
+      and st_j == "done" and PR.record(oj)["state"] == "canceled" and not MO.creates, (due_art, r_j, st_j))
+
+# --- what is kept
+check("the add-on's checkout, its payment and its confirmation mark are kept with the accounting files when an order's files are erased",
+      all(pay.kept_record(f"orders/x/{n_}") for n_ in ("print_checkout.json", "print_paid.json", "print_confirmation.json")) and not pay.kept_record("orders/x/print_poster50.jpg"), "")
+gone, total_ = pay.erase_files(oc, "test", yes=True, out=lambda s: None)
+check("... erased: print_paid.json, print_checkout.json and print_confirmation.json stay beside paid.json, the artwork goes",
+      all(exists(f"orders/{oc}/{n_}") for n_ in ("paid.json", "print_paid.json", "print_checkout.json", "print_confirmation.json", "print.json"))
+      and not exists(f"orders/{oc}/artwork_test.jpg") and PR.addon_problem(oc, pay.get_paid(oc)) == "has_print", (gone, total_))
+check("merge_addon: a record with a print of its own keeps it; an add-on record that is not paid, or names no print, changes nothing",
+      pay.merge_addon({"paid": True, "print": {"product": "a"}}, {"paid": True, "print": {"product": "b"}}) == {"paid": True, "print": {"product": "a"}}
+      and pay.merge_addon({"paid": True}, {"paid": False, "print": {"product": "b"}}) == {"paid": True} and pay.merge_addon({"paid": True}, None) == {"paid": True}
+      and pay.merge_addon({"paid": True}, {"paid": True, "print": {}}) == {"paid": True}, "")
+
+# --- the "ready" e-mail
+ol, kl, sl = paid_file_order(lang="lt")
+paid_l = pay.get_paid(ol)
+s_on, t_on, h_on = pay.ready_mail(ol, paid_l, kl, checked=False)
+i_order, i_sec, i_q = t_on.find(f"Užsakymas: {ol}"), t_on.find(pay.READY_PRINT["lt"][0]), t_on.find("Turite klausimų?")
+check("the ready e-mail of an order that can buy a print now has one short section after the order number: the heading and the sentence that the artwork can be "
+      "ordered as a print from the order page, no price",
+      pay.READY_PRINT["lt"][1] in t_on and 0 < i_order < i_sec < i_q and pay.READY_PRINT["lt"][0] in h_on and "€" not in pay.READY_PRINT["lt"][1]
+      and not re.search(r"\d", pay.READY_PRINT["lt"][1]), t_on)
+t_print = pay.ready_mail(o24, pay.get_paid(o24), k24, checked=False)[1]
+t_released = pay.ready_mail(ob, pay.get_paid(ob), kb)[1]          # held, then released by the owner: eligible, and its e-mail (the release sends it) has the section
+sw = PR.set_switch(False, "test", PR.switch_state(fresh=True)["rev"])
+fresh_switch()
+t_off = pay.ready_mail(ol, paid_l, kl, checked=False)[1]
+PR.set_switch(True, "test", sw["rev"])
+fresh_switch()
+t_au = pay.ready_mail(om, pay.get_paid(om), km)[1]
+t_ref = pay.ready_mail(ox, pay.get_paid(ox), kx)[1]
+check("... and not the e-mail of an order that has a print, of one while the switch is off, of a market without prints, or of a refunded order: those are the e-mails "
+      "they were", all(pay.READY_PRINT[l_][0] not in t_ for l_ in ("en", "lt") for t_ in (t_print, t_off, t_au, t_ref)) and pay.READY_PRINT["en"][0] in t_released, (t_off, t_au))
+sections = {}
+for l_ in PR.LANGS:
+    sections[l_] = pay.ready_mail(ol, dict(paid_l, spec=dict(paid_l["spec"], lang=l_)), kl, checked=False, offer=True)[1]
+plain_l = {l_: pay.ready_mail(ol, dict(paid_l, spec=dict(paid_l["spec"], lang=l_)), kl, checked=False, offer=False)[1] for l_ in PR.LANGS}
+check("the section in the eight languages: each its own heading and sentence, no price, no digit, no dash; without it the e-mail is the same text less that section",
+      set(pay.READY_PRINT) == set(PR.LANGS) and len({v for v in pay.READY_PRINT.values()}) == 8
+      and all(pay.READY_PRINT[l_][0] in sections[l_] and pay.READY_PRINT[l_][1] in sections[l_] for l_ in PR.LANGS)
+      and all(not re.search(r"[\d€]", " ".join(pay.READY_PRINT[l_])) and not re.search(DASH, " ".join(pay.READY_PRINT[l_])) for l_ in PR.LANGS)
+      and all(sections[l_].replace(f"{pay.READY_PRINT[l_][0]}\n{pay.READY_PRINT[l_][1]}\n\n", "") == plain_l[l_] for l_ in PR.LANGS),
+      [l_ for l_ in PR.LANGS if sections[l_].replace(f"{pay.READY_PRINT[l_][0]}\n{pay.READY_PRINT[l_][1]}\n\n", "") != plain_l[l_]])
+H.Fake.emails.clear()
+res_l = maker.ready_mail_once(ol, rj(f"orders/{ol}/order.json"), paid_l, False)
+sent_l = [m for m, _i in H.Fake.emails if m.get("subject") == "Jūsų SnapEyes kūrinys paruoštas"]
+check("the server's own ready e-mail (maker.ready_mail_once) carries it for an eligible order", res_l == "sent" and len(sent_l) == 1
+      and pay.READY_PRINT["lt"][1] in sent_l[0]["text"], (res_l, sent_l[:1]))
+
+# --- the add-on's confirmation in the eight languages
+mails8 = {}
+for l_ in PR.LANGS:
+    mails8[l_] = PR.addon_mail(oi, dict(paid_i, spec=dict(paid_i["spec"], lang=l_)), ki, PACK, PACK["docs"][l_])
+check("the add-on's confirmation in the eight languages: eight different subjects with the order number, the print's name, the country and the prices in that "
+      "language, the producer, the order page, the terms of that language in full, no dash in our own words",
+      len({mails8[l_][0] for l_ in PR.LANGS}) == 8 and all(oi in mails8[l_][0] for l_ in PR.LANGS)
+      and all(PR.product_name("poster50", l_) in mails8[l_][1] and PR.country_name("LT", l_) in mails8[l_][1] and pay.price_text(3500 + 849, l_, "eur") in mails8[l_][1]
+              and "Picanova GmbH" in mails8[l_][1] and f"/order?o={oi}&k={ki}&lang={l_}" in mails8[l_][1] and PACK["docs"][l_]["terms"]["text"][:200] in mails8[l_][1]
+              and PR.ADDON_CONF[l_]["p1"].split("{producer}")[0] in mails8[l_][1] for l_ in PR.LANGS)
+      and not re.search(DASH, json.dumps([PR.ADDON_CONF, PR.SUBMIT_NOTE_ADDON], ensure_ascii=False))
+      and len(set(PR.SUBMIT_NOTE_ADDON.values())) == 8 and set(PR.SUBMIT_NOTE_ADDON) == set(PR.ADDON_CONF) == set(PR.LANGS),
+      [l_ for l_ in PR.LANGS if PR.product_name("poster50", l_) not in mails8[l_][1] or pay.price_text(3500 + 849, l_, "eur") not in mails8[l_][1]])
+maker.kick = real_kick
+pay._stripe = real_stripe
+
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed")
 sys.exit(0 if all(RESULTS) else 1)

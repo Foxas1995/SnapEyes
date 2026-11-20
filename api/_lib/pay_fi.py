@@ -15,6 +15,7 @@ What is here, and where pay.py uses it once "fi" is in LANGS:
   seller_lines_fi()    seller_lines() for "fi"
   confirmation_fi()    the "fi" branch of confirmation_mail(): (subject, blocks) before the legal texts are appended
   ready_fi()           the "fi" branch of ready_mail(): (subject, blocks)
+  READY_PRINT_FI       READY_PRINT["fi"]       the ready email's section about a print (heading, paragraph), when the order can buy one
   fi_form()            the Finnish noun form after a number (1 silmä, 2 silmää), a helper of item_name_fi
 
 Finnish: Finland pays in euros, so a price is the euro amount as Finns write it, "24,97 €" (decimal comma, no-break
@@ -232,6 +233,12 @@ def confirmation_fi(*, order, spec, n, layout, price, paid_at, consent_at, conse
         ("p", seller),
     ]
     return subject, blocks
+
+
+# the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["fi"]): heading, paragraph, no price
+READY_PRINT_FI = ("Taideteoksesi tulosteena",
+                  "Voit tilata taideteoksesi myös tulosteena: akryylilasitauluna, canvastauluna tai julisteena, tilauksesi mukaan "
+                  "tehtynä ja sinulle lähetettynä. Löydät sen tilaussivultasi, taideteoksesi alta.")
 
 
 def ready_fi(*, order, link, checked, seller):

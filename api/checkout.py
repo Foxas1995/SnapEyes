@@ -95,6 +95,14 @@ POST /api/checkout {..., print: {product, country}, consent_print: true[, print_
      reply also carries print {product, country, price, ship} and total (what Stripe charges). Errors: 409 print_unavailable {why: off,
      not_configured, market, product, country}, 400 print_consent_required, 409 print_price_changed {print} (only with print_shown). An order
      without print is exactly what it was before.
+A print bought AFTER the artwork (api/_lib/prints.py, the add-on; Vercel Hobby allows no function of its own, so it is a branch of this route as the gift voucher is):
+POST /api/checkout {addon: {order, key}, print: {product, country}, consent_print: true[, print_shown], lang}: the Stripe payment page of a print for an order that is paid and
+     delivered and has none (the order page's offer; the order link is the authentication). Reply 200: {ok, url, order, print {product, country, price, ship}, total, currency,
+     expires_at}. Errors: 403 bad_link, 409 print_not_offered {why: not_paid, has_print, test_payment, withdrawn, deleted, not_ready, review, refunded[, settling]},
+     409 print_unavailable {why: off, not_configured, market, product, country}, 400 print_consent_required, 409 print_price_changed {print} (only with print_shown).
+     Nothing of the order's own checkout is touched: no session of the artwork is closed or made, order.json is not written.
+GET /api/checkout?addon=<session id>&o=<order>&k=<key>: the order page's question after that payment, until the print is on record: {ok, state: paid (with print, the order
+     page's print block) | extra | pending | processing | expired | unknown}. A paid session is recorded by this call when the webhook has not arrived yet.
 Every other POST of the site may carry camp too (analyze, deglare, enhance, compose, this route's checkout): iris.run turns it, with the user agent and the country header, into the classes the usage
 events carry (iris.ctx()). The order record keeps the code (checkout.camp, and camp in paid.json) and the Stripe session's metadata `src`, so an order and its revenue are tied to a source.
 """
@@ -230,6 +238,8 @@ def checkout(body):
         return feedback.submit(body)
     if "gift" in body:           # a gift voucher's payment page (api/_lib/voucher.py): no order
         return voucher.buy(body)
+    if "addon" in body:          # a print for an order that is paid and delivered (api/_lib/prints.py addon_buy): a payment page of its own, nothing of the order's checkout below
+        return prints.addon_buy(body)
     why = pay.ordering_problem()
     if why:
         raise pay.PayNotConfigured(why)
@@ -337,6 +347,9 @@ def handle_get(req):
     if "gift" in q:
         # the gift page after the voucher's payment: its code once it is paid (api/_lib/voucher.py status)
         return pay.serve(req, "gift", lambda body: voucher.status(q["gift"]), gate=False)
+    if "addon" in q:
+        # the order page after the payment of a print bought later: is it on record yet (api/_lib/prints.py addon_status)? The order's key is asked for, as for every answer about an order
+        return pay.serve(req, "print", lambda body: prints.addon_status(q["addon"], q.get("o"), q.get("k")), gate=False)
     country = req.headers.get("x-vercel-ip-country") if hasattr(req, "headers") else None
     vid = abtest.vid_of(req)        # the visitor id travels in a header, never in the address (api/_lib/abtest.py)
     L.run(req, lambda body: abtest.decorate(info(body, country), vid), gate=False)

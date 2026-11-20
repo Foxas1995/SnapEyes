@@ -400,12 +400,16 @@ def order_state(order, names, rec, paid, delivery, mail):
 
 
 def order_facts(order, files=None):
-    """(files, top-level names, order.json, paid.json, delivery.json, mail_delivery.json) of one order folder."""
+    """(files, top-level names, order.json, paid.json, delivery.json, mail_delivery.json) of one order folder. The paid record is the one
+    pay.get_paid gives: with the print of a print bought after the artwork merged in (print_paid.json, pay.merge_addon)."""
     files = pay.folder_files(f"orders/{order}") if files is None else files
     names = {p.rsplit("/", 1)[-1] for p in files if p.count("/") == 2}
-    want = [n for n in ("order.json", "paid.json", "delivery.json", "mail_delivery.json") if n in names]
+    want = [n for n in ("order.json", "paid.json", "delivery.json", "mail_delivery.json", "print_paid.json") if n in names]
     got = dict(zip(want, each([lambda n=n: _json_or_none(f"orders/{order}/{n}") for n in want])))
-    return files, names, got.get("order.json"), got.get("paid.json"), got.get("delivery.json"), got.get("mail_delivery.json")
+    paid = got.get("paid.json")
+    if isinstance(paid, dict) and paid.get("paid") is True:
+        paid = pay.merge_addon(paid, got.get("print_paid.json"))
+    return files, names, got.get("order.json"), paid, got.get("delivery.json"), got.get("mail_delivery.json")
 
 
 def order_row(order):
@@ -429,10 +433,14 @@ def order_row(order):
     pp = (paid.get("print") if is_paid else ((co or {}).get("print") if isinstance(co, dict) else None)) or None
     pp = pp if isinstance(pp, dict) else None
     pj = _safe(lambda: _json_or_none(f"orders/{order}/print.json")) if pp and "print.json" in names else None
+    # a print bought after the artwork was paid apart (pay.merge_addon): nothing of it is in this row's amount (print_amount 0, so a price
+    # test's revenue takes nothing off for it), and what it brought is print_addon
+    pa = paid.get("print_addon") if is_paid and isinstance(paid.get("print_addon"), dict) else None
     return {"order": order, "state": state, "gate": gate, "camp": CN.pack(CN.parse(camp)) if camp else None,
             "print": {"product": pp.get("product"), "country": pp.get("country"), "state": (pj or {}).get("state") if isinstance(pj, dict) else None}
             if pp else None,
-            "print_amount": (int(pp.get("price") or 0) + int(pp.get("ship") or 0)) if pp else 0,
+            "print_amount": (int(pp.get("price") or 0) + int(pp.get("ship") or 0)) if pp and not pa else 0,
+            "print_addon": pa.get("amount_total") if pa and isinstance(pa.get("amount_total"), int) else None,
             "experiment": {"key": xv["key"], "variant": xv["variant"], "label": xv.get("label")} if xv else None,
             "created_at": created_at if isinstance(created_at, (int, float)) else None,
             "lang": lang if lang in pay.LANGS else None,
@@ -800,6 +808,11 @@ def a_order(body, who):
         payments.append({"payment_intent": paid["payment_intent"], "amount": paid.get("amount_total"),
                          "currency": paid.get("currency"), "live": bool(paid.get("livemode")), "kind": "order",
                          "paid": paid.get("paid_iso")})
+    pa = paid.get("print_addon") if is_paid and isinstance(paid.get("print_addon"), dict) else None
+    if pa and isinstance(pa.get("payment_intent"), str):
+        # the payment of a print bought after the artwork (api/_lib/prints.py): its own line, refunded on its own (refunding it cancels the print)
+        payments.append({"payment_intent": pa["payment_intent"], "amount": pa.get("amount_total"), "currency": "eur",
+                         "live": bool(pa.get("livemode")), "kind": "print", "paid": pa.get("at")})
     for p, r in sorted(recs.items()):
         if p.rsplit("/", 1)[-1].startswith("extra_payment_") and isinstance(r.get("payment_intent"), str):
             payments.append({"payment_intent": r["payment_intent"], "amount": r.get("amount_total"),
@@ -1301,7 +1314,10 @@ def act_refund(body, who):
         raise L.ClientError("Choose the payment to refund.")
     paid = pay.get_paid(order)
     extras = [p for p in pay.folder_files(f"orders/{order}") if p.rsplit("/", 1)[-1].startswith("extra_payment_")]
+    from . import prints
     known = [paid.get("payment_intent")] if paid else []
+    # the payment of a print bought after the artwork is a payment of this order too (pay.get_paid merges it: print_addon)
+    known += [(paid.get("print_addon") or {}).get("payment_intent")] if paid and isinstance(paid.get("print_addon"), dict) else []
     known += [x.get("payment_intent") for x in each([lambda p=p: _json_or_none(p) for p in extras]) if isinstance(x, dict)]
     if pi not in known:
         raise store.Answer(409, "unknown_payment", "This payment is not recorded for this order.", False)
@@ -1326,7 +1342,9 @@ def act_refund(body, who):
         log(f"order {order}: refund {rec['refund']} done at Stripe, its record not stored: {e}")
     out = {"ok": True, "result": _code(rec["status"]) or "refunded", "refund": rec,
            "audit_detail": f"{rec['refund']} {rec['amount']} {rec['currency']}"}
-    if paid and pi == paid.get("payment_intent"):
+    if paid and pi == prints.print_payment(paid):
+        # the payment that paid for the print was refunded: the order's own when the print was a line of its checkout, the add-on's when it
+        # was bought after the artwork (then a refund of the artwork's payment alone leaves the print, and this one leaves the artwork)
         out["print"] = _print_after_refund(order, paid)
         if out["print"]:
             out["audit_detail"] += f" print {out['print']['result']}"

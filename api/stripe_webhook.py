@@ -27,6 +27,10 @@ A test-mode session where test orders are not allowed (production), every other 
 paid yet are answered 200 at once and ignored.
 A gift voucher's session (metadata kind "voucher", api/_lib/voucher.py) has no order: once paid, its coupon, its record and the buyer's email with
 the code are made once (voucher.on_paid); the email busy or the legal texts unreadable: 503, and Stripe retries.
+The session of a print bought after the artwork (metadata kind "print_addon", api/_lib/prints.py addon_event) names an order but is never that
+order's payment: once paid it is recorded apart (print_paid.json, created once), the customer gets the print's own confirmation once, the
+owner a note, and the server's step for the print is asked for; a second such payment of an order that has its print is stored as an extra
+payment for the owner to refund. The confirmation busy or the legal texts unreadable: 503, and Stripe retries.
 
 Replies: 200 {ok, ...}; 400 bad signature or body; 413 body too large; 503 when payments or storage are not
 configured, storage did not answer, or the email failed in a way a retry can fix (Stripe retries a non-2xx for up to
@@ -39,6 +43,7 @@ from _lib import store
 from _lib import pay
 from _lib import maker as M
 from _lib import voucher as V
+from _lib import prints as PR
 
 MAX_BODY = 512 << 10         # a Checkout Session event is a few kB
 HANDLED = ("checkout.session.completed", "checkout.session.async_payment_succeeded")
@@ -58,6 +63,9 @@ def on_event(event):
         if state == "ready" and info.get("mail") in ("transient", "legal_unavailable", "sending"):
             return 503, {"ok": False, "voucher": True, "reason": "mail_retry"}
         return 200, {"ok": True, "voucher": True, "state": state, "mail": info.get("mail")}
+    if PR.is_addon_session(obj):
+        # a print bought after the artwork: a session of its own that names the order too. Never the order's payment: routed away before anything below reads it
+        return PR.addon_event(obj, event.get("id"))
     order = meta.get("order")
     if not isinstance(order, str) or not store.ORDER_RE.fullmatch(order):
         pay.log(f"webhook {event.get('id')}: {typ} for a session without an order of ours, ignored")

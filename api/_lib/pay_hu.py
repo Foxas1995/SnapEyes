@@ -14,6 +14,7 @@ What is here, and where pay.py uses it ("hu" is in LANGS):
   seller_lines_hu()    seller_lines() for "hu"
   confirmation_hu()    the "hu" branch of confirmation_mail(): (subject, blocks) before the legal texts are appended
   ready_hu()           the "hu" branch of ready_mail(): (subject, blocks)
+  READY_PRINT_HU       READY_PRINT["hu"]       the ready email's section about a print (heading, paragraph), when the order can buy one
 
 Tone: friendly "te", as the site and the checkout; the legal texts attached to the confirmation (the ÁSZF and the
 Elállási tájékoztató from /legal/order-mail.json) stay in their own "Ön" register.
@@ -208,6 +209,12 @@ def confirmation_hu(*, order, spec, n, layout, price, paid_at, consent_at, conse
         ("p", seller),
     ]
     return subject, blocks
+
+
+# the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["hu"]): heading, paragraph, no price
+READY_PRINT_HU = ("Az alkotásod nyomatként",
+                  "Az alkotásodat nyomatként is megrendelheted: akrilüveg képként, vászonképként vagy poszterként, megrendelésre "
+                  "készítve és hozzád szállítva. Az ajánlatot a rendelési oldaladon találod, az alkotásod alatt.")
 
 
 def ready_hu(*, order, link, checked, seller):
