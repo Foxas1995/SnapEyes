@@ -84,7 +84,7 @@ export const hu: OrderCopy = {
     preparing: 'Amint elkészül a fájlod, gyártásba adjuk.',
     sent: 'Gyártás alatt. Amikor elküldték, e-mailben megküldjük a csomagkövetési linket.',
     shipped: 'Úton van hozzád.',
-    canceled: 'Ezt a nyomatot töröltük. Ha kérdésed van, írj nekünk.',
+    canceled: 'A nyomat megrendelését töröltük. Ha kérdésed van, írj nekünk.',
     track: 'Csomag követése',
   },
   deleted: {

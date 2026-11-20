@@ -618,7 +618,7 @@
       },
       {
         "id": "time",
-        "q": "Cik ilgi tas aizņem?",
+        "q": "Cik ilgu laiku tas aizņem?",
         "a": "Bezmaksas priekšskatījums aizņem apmēram minūti. Kad pasūtījumus sāksim pieņemt, jūsu fails tiks veidots pilnā izšķirtspējā pēc tam, kad to apstiprināsiet, parasti dažu minūšu laikā un vēlākais {hours} stundu laikā.",
         "aOpen": "Bezmaksas priekšskatījums aizņem apmēram minūti. Pēc samaksas jūsu fails tiek veidots pilnā izšķirtspējā, parasti dažu minūšu laikā un vēlākais {hours} stundu laikā."
       },

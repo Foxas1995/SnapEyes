@@ -126,7 +126,7 @@ SUBMIT = {
     "en": "You receive the voucher code by email right after paying. An unused voucher can be withdrawn within 14 days.",
     "de": "Den Gutscheincode erhalten Sie direkt nach der Zahlung per E-Mail. Einen unbenutzten Gutschein können Sie innerhalb von 14 Tagen widerrufen.",
     "lt": "Kupono kodą gausite el. paštu iškart po apmokėjimo. Nepanaudoto kupono galite atsisakyti per 14 dienų.",
-    "hu": "Az utalvány kódját a fizetés után azonnal megkapja e-mailben. A fel nem használt utalványtól 14 napon belül elállhat.",
+    "hu": "Az utalvány kódját a fizetés után azonnal megkapod e-mailben. A fel nem használt utalványtól 14 napon belül elállhatsz.",
     "hr": "Kod bona dobit ćete e-poštom odmah nakon plaćanja. Ugovor o neiskorištenom bonu možete jednostrano raskinuti u roku od 14 dana.",
     "fi": "Saat lahjakortin koodin sähköpostiisi heti maksun jälkeen. Käyttämättömän lahjakortin oston voit peruuttaa 14 päivän kuluessa.",
     "et": "Kinkekaardi koodi saad e-kirjaga kohe pärast maksmist. Kasutamata kinkekaardi ostust saad taganeda 14 päeva jooksul.",
@@ -207,19 +207,19 @@ MAIL = {
         "legal": "Žemiau pateikiame pardavimo sąlygas ir informaciją apie teisę atsisakyti sutarties.",
     },
     "hu": {
-        "subject": "Az Ön SnapEyes ajándékutalványa: {code}",
-        "hello": "Jó napot kívánunk!",
-        "thanks": "Köszönjük, hogy SnapEyes ajándékutalványt vásárolt. Íme a kód, amelyet ajándékba adhat:",
-        "rows": ("Utalványkód", "Érték", "Mire", "Érvényes"),
+        "subject": "A SnapEyes ajándékutalványod: {code}",
+        "hello": "Kedves Vásárlónk!",
+        "thanks": "Köszönjük, hogy SnapEyes ajándékutalványt vásároltál. Íme a kód, amelyet ajándékba adhatsz:",
+        "rows": ("Utalványkód", "Érték", "Mire szól", "Érvényes eddig"),
         "how_h": "Így lehet felhasználni az utalványt",
         "how": ("1. A megajándékozott megnyitja a snapeyes.com oldalt a telefonján, és lefotózza a saját szemét.\n"
                 "2. Kiválaszt egy stílust, és megnéz egy ingyenes előnézetet.\n"
                 "3. A pénztárnál a „Van ajándékutalványom” gombra koppint, és beírja a kódot. Az utalvány kifizeti az alkotást; "
                 "ha nagyobbat választ, csak a különbözetet kell kifizetnie."),
         "rules": ("Az utalvány egyszer, 12 hónapon belül használható fel. Ha az alkotás kevesebbe kerül, mint az utalvány, a maradékot nem fizetjük ki. "
-                  "Kérjük, őrizze meg biztonságban a kódot: bárki felhasználhatja, akinél megvan."),
-        "wd_h": "Ha meggondolja magát",
-        "wd": ("A vásárlástól 14 napon belül elállhat, amíg az utalványt nem használták fel: írjon az info@snapeyes.com címre az utalvány kódjával, "
+                  "Kérjük, őrizd meg biztonságban a kódot: bárki felhasználhatja, akinél megvan."),
+        "wd_h": "Ha meggondolod magad",
+        "wd": ("A vásárlástól 14 napon belül elállhatsz, amíg az utalványt nem használták fel: írj az info@snapeyes.com címre az utalvány kódjával, "
                "és a teljes összeget visszatérítjük, a kódot pedig érvénytelenítjük."),
         "bye": "Üdvözlettel:\nSnapEyes",
         "kind": {"one": "íriszalkotás egy szemről, bármilyen stílusban", "two": "íriszalkotás két szemről, bármilyen stílusban"},
@@ -252,8 +252,8 @@ MAIL = {
         "how_h": "Näin lahjakortti käytetään",
         "how": ("1. Lahjan saaja avaa sivuston snapeyes.com puhelimellaan ja kuvaa oman silmänsä.\n"
                 "2. Hän valitsee tyylin ja näkee ilmaisen esikatselun.\n"
-                "3. Kassalla hän napauttaa ”Minulla on lahjakortti” ja kirjoittaa koodin. Lahjakortti maksaa taideteoksen; "
-                "jos hän valitsee suuremman, hän maksaa vain erotuksen."),
+                "3. Kassalla hän napauttaa ”Minulla on lahjakortti” ja kirjoittaa koodin. Lahjakortti kattaa taideteoksen hinnan; "
+                "jos hän valitsee kalliimman, hän maksaa vain erotuksen."),
         "rules": ("Lahjakortin voi käyttää kerran, 12 kuukauden kuluessa. Jos taideteos maksaa vähemmän kuin lahjakortin arvo, loppuosaa ei makseta takaisin. "
                   "Pidä koodi tallessa: kuka tahansa, jolla se on, voi käyttää sen."),
         "wd_h": "Jos muutat mielesi",

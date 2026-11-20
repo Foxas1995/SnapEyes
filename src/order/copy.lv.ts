@@ -39,7 +39,7 @@ export const lv: OrderCopy = {
   },
   pending: {
     title: 'Jūsu maksājums tiek apstiprināts',
-    body: 'Jūsu maksāšanas veida apstiprināšana aizņem nedaudz ilgāk. Tiklīdz maksājums būs apstiprināts, sāksim veidot jūsu mākslas darbu. Šī lapa pati pārbauda vēlreiz.',
+    body: 'Jūsu maksāšanas veida apstiprināšana aizņem nedaudz vairāk laika. Tiklīdz maksājums būs apstiprināts, sāksim veidot jūsu mākslas darbu. Šī lapa pati pārbauda vēlreiz.',
     // paid, but the order confirmation email (it confirms the withdrawal waiver) has not gone out yet: nothing is made
     mailTitle: 'Maksājums saņemts',
     mailBody: 'Jūsu maksājums ir apstiprināts. Nosūtām jums pasūtījuma apstiprinājumu e-pastā un uzreiz pēc tam sākam veidot jūsu mākslas darbu. Šī lapa pati pārbauda vēlreiz.',

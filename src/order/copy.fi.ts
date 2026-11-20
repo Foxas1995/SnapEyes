@@ -112,8 +112,8 @@ export const fi: OrderCopy = {
   withdraw: {
     heading: 'Sopimuksen peruuttaminen',
     lead: 'Tilatessasi hyväksyit, että alamme tehdä tiedostoasi heti. Niin kauan kuin emme ole aloittaneet, voit peruuttaa tämän sopimuksen tässä. Kun tekeminen on alkanut, peruuttamisoikeutesi on päättynyt.',
-    acl: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus sitä varten, että muutat mielesi. Se ei vaikuta Australian kuluttajalain (Australian Consumer Law) mukaisiin oikeuksiisi: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
-    us: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus sitä varten, että muutat mielesi. Se ei vaikuta oikeuksiisi, jos tiedostossasi on virhe: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
+    acl: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus siltä varalta, että muutat mielesi. Se ei vaikuta Australian kuluttajalain (Australian Consumer Law) mukaisiin oikeuksiisi: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
+    us: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus siltä varalta, että muutat mielesi. Se ei vaikuta oikeuksiisi, jos tiedostossasi on virhe: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
     info: 'Peruuttamisoikeus',
     formLead: (confirm: string) => `Tarkista tietosi. Painikkeella ”${confirm}” lähetät meille tämän ilmoituksen:`,
     // identical to api/_lib/withdraw_fi.py STATEMENT_FI ({order} there)
@@ -162,7 +162,7 @@ export const fi: OrderCopy = {
       lapsedHelp: 'Katsomme ilmoituksesi silti henkilökohtaisesti ja vastaamme sinulle sähköpostitse. Tämä ei vaikuta lakisääteisiin oikeuksiisi, jos tiedostossa on virhe.',
       mailSent: (email: string) => `Vastaanottoilmoitus on matkalla osoitteeseen ${email}.`,
       mailRedirected: 'Vastaanottoilmoitus on matkalla sähköpostiosoitteeseen, jolla maksoit.',
-      mailLater: (email: string) => `Emme voineet juuri nyt lähettää vastaanottoilmoitusta osoitteeseen ${email}. Lähetämme sen heti, kun voimme. Peruutuksesi on voimassa yllä mainitusta ajankohdasta.`,
+      mailLater: (email: string) => `Emme voineet juuri nyt lähettää vastaanottoilmoitusta osoitteeseen ${email}. Lähetämme sen heti, kun voimme. Peruutuksesi on voimassa yllä mainitusta ajankohdasta alkaen.`,
       mailFailed: (email: string) => `Emme voineet lähettää vastaanottoilmoitusta osoitteeseen ${email}. Peruutuksesi on kirjattu yllä mainitulla ajankohdalla. Tarkista osoite tai pyydä kopio kirjoittamalla osoitteeseen ${CONTACT_EMAIL}.`,
     },
     withdrawn: {

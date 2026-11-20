@@ -46,7 +46,7 @@ export const fi: TryCopy = {
   },
 
   errors: {
-    tooLarge: 'Tämä kuva on liian suuri. Yritä uudelleen tavallisella kameran kuvalla.',
+    tooLarge: 'Tämä kuva on liian suuri. Yritä uudelleen tavallisella kameralla otetulla kuvalla.',
     timeout: 'Tässä kesti meillä liian kauan. Yritä uudelleen.',
     notResponding: 'Studio ei vastaa juuri nyt. Yritä hetken kuluttua uudelleen.',
     requestFailed: (status: number) => `Pyyntö epäonnistui (${status})`,
@@ -440,10 +440,10 @@ export const fi: TryCopy = {
       too_many: `Tämän tilauksen lähetysraja on tältä päivältä täynnä (30 lähetystä, uudet kuvat mukaan lukien). Mitään ei veloitettu. Yritä huomenna uudelleen tai kirjoita osoitteeseen ${CONTACT_EMAIL}.`,
       failed: `Tilauksesi valmistelussa meni jokin vikaan. Yritä uudelleen tai kirjoita osoitteeseen ${CONTACT_EMAIL}.`,
       closed: 'Tilaaminen ei ole vielä auki.',
-      plan_changed: 'Taideteoksesi muuttui juuri äsken, joten teimme esikatselun uudelleen. Katso se ja paina sitten painiketta uudelleen.',
+      plan_changed: 'Taideteoksesi muuttui juuri äsken, joten teimme esikatselun uudelleen. Tarkista se ja paina sitten painiketta uudelleen.',
       unavailable: 'Tätä tyyliä ei voi juuri nyt tilata silmillesi. Valitse toinen tai kuvaa silmä uudelleen.',
       print_unavailable: 'Tulosteita ei voi tilata juuri nyt. Voit tilata pelkän digitaalisen tiedoston.',
-      print_changed: 'Tulosteen hinta muuttui juuri äsken. Katso se uudelleen ja paina sitten painiketta.',
+      print_changed: 'Tulosteen hinta muuttui juuri äsken. Tarkista se uudelleen ja paina sitten painiketta.',
       voucher: 'Lahjakorttiasi ei voitu käyttää: se on ehkä jo käytetty tai vanhentunut. Tarkista se uudelleen.',
     },
     namesBlocked: 'Korjaa ensin taideteoksen teksti (katso yllä).',

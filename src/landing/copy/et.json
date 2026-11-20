@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "SnapEyes: sinu päris iiris kunstina",
-    "description": "Pildista telefoniga üht silma ja vaata oma iirist kunstina: taastatud, mitte kunagi üle maalitud. Tasuta vesimärgiga eelvaade, seejärel digitaalne fail, mida saad trükkida kus tahes.",
+    "description": "Pildista telefoniga üht silma ja vaata oma iirist kunstina: taastatud, mitte kunagi üle maalitud. Tasuta eelvaade vesimärgiga, seejärel digitaalne fail, mida saad trükkida kus tahes.",
     "shareDescription": "Pildista telefoniga üht silma ja vaata oma iirist kunstina. Vesimärgiga eelvaade on tasuta.",
     "locale": "et_EE"
   },
@@ -51,7 +51,7 @@
     "title": "Sinu päris iiris, kunstiks muudetud.",
     "lead": "Telefoniga tehtud foto sinu silmast, taastatud ja kujundatud sinu valitud stiilis.",
     "micro": [
-      "Tasuta vesimärgiga eelvaade",
+      "Tasuta eelvaade vesimärgiga",
       "Umbes minutiga",
       "Ilma registreerumiseta"
     ],
@@ -426,7 +426,7 @@
     "wallOffAria": "Näita stiili {name} otsevaates",
     "wallFile": "Hind kehtib digitaalse faili kohta. Trükkimine ei kuulu sinu tellimuse juurde.",
     "comboTitle": "Kaks kuni {max} silma ühel kunstiteosel",
-    "comboBody": "Sinu ja sinu kallite inimeste silmad. Iga järgmine silm lisab {price}.",
+    "comboBody": "Sinu ja sinu kallite inimeste silmad. Iga järgmine silm lisab hinnale {price}.",
     "soonTag": "Peagi",
     "moreSoon": "Peagi tuleb stiile juurde.",
     "comboTitleSoon": "Mitu silma ühel kunstiteosel"
@@ -484,7 +484,7 @@
       },
       "more": {
         "t": "Kolm silma",
-        "b": "Kaks silma maksavad {price2}. Iga järgmine silm lisab {price}, kuni {max} silma."
+        "b": "Kaks silma maksavad {price2}. Iga järgmine silm lisab hinnale {price}, kuni {max} silma."
       }
     },
     "ladderTitle": "Silmade arv",
@@ -504,7 +504,7 @@
     "usLine": "Müüja: MB Portretizuokis, Kaunas, Leedu. Kaardimakse USA dollarites (US$) Stripe’i kaudu. Tegu on digitaalse failiga, seega posti teel ei saadeta midagi.",
     "footnote": "Hinnad on eurodes. Need on lõpphinnad: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.",
     "footnoteAud": "Hinnad on Austraalia dollarites (A$). Iga hind on koguhind: GST-d ei lisandu.",
-    "footnoteHuf": "Hinnad on Ungari forintites (Ft). Need on lõpphinnad: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.",
+    "footnoteHuf": "Hinnad on Ungari forintides (Ft). Need on lõpphinnad: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.",
     "footnoteUsd": "Hinnad on USA dollarites (US$). Iga hind on koguhind: müügimaksu ei lisandu."
   },
   "closeups": {
@@ -573,7 +573,7 @@
       {
         "id": "printit",
         "q": "Kas ma saan seda trükkida ja kui suurelt?",
-        "a": "Jah. Vali trükikoda, vali ruudukujuline suurus, näiteks 20, 30, 40 või 50 cm, ja laadi JPEG üles. Muude kujude puhul palu trükikojal pilti kärpida või lisada ääris ning küsi proovitrükki või näidist. Meie ei trüki ega saada: trükk on trükikoja töö ja hind. Ühe silma puhul soovitame kuni {printMax}, mis on umbes 208 pikslit tolli kohta (30 cm juures umbes 347). Trükikojad küsivad tavaliselt umbes 150 kuni 300. Mitme silma puhul võib pikem serv olla kuni {printMaxCm}. Üle {printMaxCm} on trükk võimalik, kuid venitab faili rohkem, seega me seda ei luba. Tulemus sõltub ka sinu fotost."
+        "a": "Jah. Vali trükikoda, vali ruudukujuline suurus, näiteks 20, 30, 40 või 50 cm, ja laadi JPEG üles. Muude kujude puhul palu trükikojal pilti kärpida või lisada ääris ning küsi proovitrükki või näidist. Meie ei trüki ega saada: trükk on trükikoja töö ja hind. Ühe silma puhul soovitame kuni {printMax}, mis on umbes 208 pikslit tolli kohta (30 cm juures umbes 347). Trükikojad küsivad tavaliselt umbes 150 kuni 300. Mitme silma puhul võib pikem serv olla kuni {printMaxCm}. Üle {printMaxCm} on trükk võimalik, kuid venitab faili rohkem, seega me seal head tulemust ei taga. Tulemus sõltub ka sinu fotost."
       },
       {
         "id": "look",
@@ -684,8 +684,8 @@
     "label": "Hinnad sinu valuutas",
     "close": "Ei, aitäh",
     "huf": {
-      "text": "Ostad Ungarist? Vaata meie hindu Ungari forintites (Ft).",
-      "show": "Näita hindu forintites"
+      "text": "Ostad Ungarist? Vaata meie hindu Ungari forintides (Ft).",
+      "show": "Näita hindu forintides"
     }
   },
   "ui": {

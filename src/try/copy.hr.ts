@@ -370,7 +370,7 @@ export const hr: TryCopy = {
       laterLabel: (i: number) => `Pomaknite ${i}. oko natrag na umjetničkom djelu`,
       centre: 'Stavite u središte',
       centreLabel: (i: number) => `Stavite ${i}. oko u središte umjetničkog djela`,
-      centreNote: 'Prvo je oko u središtu, ostala kruže oko njega. Odaberite oko iznad i stavite ga u središte.',
+      centreNote: 'Prvo je oko u središtu, a ostale kruže oko njega. Odaberite oko iznad i stavite ga u središte.',
       look: 'Varijanta',
     },
     names: {
@@ -392,7 +392,7 @@ export const hr: TryCopy = {
   price: {
     title: 'Cijena ovog umjetničkog djela',
     eyes: (n: number, style: string) => `${oci(n)} · ${style}`,
-    black: (name: string, black: string, art: string) => `1 oko: ${black} za ${name}, ${art} za svaki drugi stil.`,
+    black: (name: string, black: string, art: string) => `1 oko: ${black} za ${name}, ${art} za bilo koji drugi stil.`,
     duoOffer: (two: string) => `Dodajte drugo oko: ${two} za oba.`,
     extra: (two: string, further: string, max: number) => `Dva oka ${two}, zatim +${further} za svako sljedeće oko, do ${max} ${hrForm(max, 'oka', 'oka', 'očiju')}.`,
     // src/landing/copy.hr.ts pricing.notice, word for word
@@ -471,10 +471,10 @@ export const hr: TryCopy = {
   gift: {
     open: 'Imam poklon-bon',
     label: 'Kod poklon-bona',
-    apply: 'Iskoristi',
+    apply: 'Iskoristite',
     checking: 'Provjeravamo kod',
     applied: (value: string) => `Poklon-bon: −${value}`,
-    remove: 'Ukloni',
+    remove: 'Uklonite',
     toPay: (value: string) => `Za plaćanje: ${value}`,
     note: 'Bon se iskorištava kada dovršite plaćanje. Ako umjetnička slika košta manje od bona, ostatak se ne isplaćuje.',
     errors: {

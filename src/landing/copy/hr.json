@@ -16,7 +16,7 @@
   "langName": "Hrvatski",
   "switchLabel": "Jezik",
   "brandTag": "",
-  "skip": "Prijeđi na sadržaj",
+  "skip": "Prijeđite na sadržaj",
   "nav": {
     "reveal": "Prije i poslije",
     "wall": "Vaš zid",
@@ -422,8 +422,8 @@
     "priceFrom": "Od {price}",
     "wallOn": "Na zidu",
     "wallOff": "Ravno",
-    "wallOnAria": "Prikaži {name} na zidu",
-    "wallOffAria": "Prikaži {name} ravno",
+    "wallOnAria": "Prikažite {name} na zidu",
+    "wallOffAria": "Prikažite {name} ravno",
     "wallFile": "Cijena se odnosi na digitalnu datoteku. Tisak nije dio vaše narudžbe.",
     "comboTitle": "Više očiju na jednoj slici: od 2 do {max}",
     "comboBody": "Vaše oči i oči ljudi koje volite. Svako dodatno oko košta {price}.",
@@ -488,7 +488,7 @@
       }
     },
     "ladderTitle": "Broj očiju",
-    "eyes": "{n} oka",
+    "eyes": "Broj očiju: {n}",
     "includesTitle": "Što dobivate",
     "includes": [
       "Velika datoteka bez vodenog žiga",
@@ -685,11 +685,11 @@
     "close": "Ne, hvala",
     "huf": {
       "text": "Kupujete iz Mađarske? Pogledajte naše cijene u mađarskim forintama (Ft).",
-      "show": "Prikaži cijene u Ft"
+      "show": "Prikažite cijene u Ft"
     }
   },
   "ui": {
     "close": "Zatvori",
-    "scrollHint": "Pomaknite se u stranu za više"
+    "scrollHint": "Povucite u stranu za više"
   }
 }

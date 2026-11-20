@@ -105,7 +105,7 @@
   },
   "wall": {
     "eyebrow": "Seinälläsi",
-    "title": "Katso se seinälläsi",
+    "title": "Näe se seinälläsi",
     "intro": "Tulosta se missä haluat: akryylille, alumiinille, canvakselle tai kehyksiin.",
     "stageLabel": "Havainnekuvia tiedostostasi tulostettuna",
     "materialsLabel": "Materiaali",
@@ -523,10 +523,10 @@
     "eyebrow": "Mitä emme koskaan tee",
     "title": "Pieniä lupauksia, jotka pidämme",
     "items": [
-      "Maalaa iiristäsi uudelleen",
-      "Esitä esimerkkejä asiakkaina",
-      "Piilota, miten kuvat on tehty",
-      "Hoputa sinua tekaistulla kiireellä"
+      "Emme maalaa iiristäsi uudelleen",
+      "Emme esitä esimerkkejä asiakkaina",
+      "Emme piilota, miten kuvat on tehty",
+      "Emme hoputa sinua tekaistulla kiireellä"
     ],
     "curatorEyebrow": "Apua",
     "curatorTitle": "Eikö otoksesta tule terävää?",
@@ -537,7 +537,7 @@
     "privacy": [
       {
         "t": "Vain taideteostasi varten",
-        "b": "Kuvaasi käytetään vain taideteoksesi tekemiseen. Jokaisesta otoksesta kirjaamme muutaman mittaustuloksen, emme koskaan kuvaa, jotta voimme parantaa kuvausohjetta."
+        "b": "Kuvaasi käytetään vain taideteoksesi tekemiseen. Jokaisesta otoksesta kirjaamme lokiin muutaman mittaustuloksen, mutta emme itse kuvaa, jotta voimme parantaa kuvausohjetta."
       },
       {
         "t": "Ei koskaan tunnistamiseen",

@@ -90,7 +90,7 @@ export const hr: OrderCopy = {
     sent: 'U izradi. Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za praćenje.',
     shipped: 'Na putu je do vas.',
     canceled: 'Ovaj je ispis otkazan. Pišite nam ako imate pitanja.',
-    track: 'Prati pošiljku',
+    track: 'Pratite pošiljku',
   },
   deleted: {
     title: 'Datoteke su izbrisane',
@@ -125,7 +125,7 @@ export const hr: OrderCopy = {
     order: 'Broj narudžbe',
     orderHint: 'Naći ćete ga u e-poruci s potvrdom narudžbe i na stranici narudžbe.',
     sending: 'Šaljemo vašu izjavu o raskidu…',
-    cancel: 'Otkažite',
+    cancel: 'Odustanite',
     back: 'Natrag na vašu narudžbu',
     invalid: {
       name: 'Upišite svoje ime i prezime.',

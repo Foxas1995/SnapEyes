@@ -230,7 +230,7 @@ export const lv: TryCopy = {
     transparency: TRANSPARENCY_LV,
     // src/shared/aiMaterial.ts AI_MATERIAL_PAGE.lv, word for word as the landing's FAQ answer (src/landing/copy/lv.json)
     aiMaterial: 'Dažos stilos pulveris, šķidrums, liesma vai putekļi ap jūsu varavīksneni ir mākslīgā intelekta radīts materiāls no kopīgas bibliotēkas, tāpēc cita klienta mākslas darbā var būt tas pats elements. Jūsu varavīksnene saglabā jūsu fotogrāfijas krāsas, rakstu un izvietojumu; vissmalkākās šķiedras, kā aprakstīts iepriekš, atjauno mākslīgais intelekts.',
-    sampleNote: 'Šī acs ir mākslīgā intelekta radīts paraugs, nevis īsta fotogrāfija. Izmantojot savu fotogrāfiju, krāsa nāk no tās.',
+    sampleNote: 'Šī acs ir mākslīgā intelekta radīts paraugs, nevis īsta fotogrāfija. Ja izmantosiet savu fotogrāfiju, krāsa nāks no tās.',
     // new sentences of 2026-10-20 (colourOff, pupilWide, how, did)
     colourOff: 'Krāsas var nedaudz atšķirties no jūsu acs. Visprecīzākās tās ir dienasgaismā vai ar lukturīti no sāniem, bez zibspuldzes; ja jums patīk, turpiniet.',
     pupilWide: 'Vairāk gaismas samazina zīlīti un parāda vairāk jūsu varavīksnenes.',
@@ -494,8 +494,8 @@ export const lv: TryCopy = {
     title: { result: 'Kā jums tas izskatās?', retake: 'Vai tas palīdzēja?' },
     hint: { result: 'Viens pieskāriens un, ja vēlaties, daži vārdi. Tas nonāk pie cilvēka, kurš šos darbus veido.', retake: 'Ar vienu pieskārienu pasakiet, kas jums traucēja.' },
     chips: {
-      result: { love: 'Man ļoti patīk', likeness: 'Neizskatās pēc manas acs', colour: 'Krāsas nešķiet pareizas', style: 'Es gribēju citu stilu', price: 'Cena ir pārāk augsta', other: 'Kas cits' },
-      retake: { unclear: 'Nesaprotu, kas nav kārtībā', fine: 'Manuprāt, mana fotogrāfija ir laba', device: 'Mans telefons labāk nevar', only: 'Tā ir mana vienīgā fotogrāfija', effort: 'Tas prasa pārāk daudz pūļu', other: 'Kas cits' },
+      result: { love: 'Man ļoti patīk', likeness: 'Neizskatās pēc manas acs', colour: 'Krāsas nešķiet pareizas', style: 'Es gribēju citu stilu', price: 'Cena ir pārāk augsta', other: 'Kaut kas cits' },
+      retake: { unclear: 'Nesaprotu, kas nav kārtībā', fine: 'Manuprāt, mana fotogrāfija ir laba', device: 'Mans telefons labāk nevar', only: 'Tā ir mana vienīgā fotogrāfija', effort: 'Tas prasa pārāk daudz pūļu', other: 'Kaut kas cits' },
     },
     textLabel: 'Vai vēlaties ko piebilst? (nav obligāti)',
     textHint: 'Lūdzu, nerakstiet vārdus, e-pasta adreses un tālruņa numurus.',

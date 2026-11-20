@@ -380,7 +380,7 @@ export const hu: TryCopy = {
       laterLabel: (i: number) => `${i}. szem hátrébb helyezése az alkotáson`,
       centre: 'Középre',
       centreLabel: (i: number) => `${i}. szem az alkotás közepére`,
-      centreNote: 'Az első szem van középen, a többi körülötte kering. Válasszon fent egy szemet, és tegye középre.',
+      centreNote: 'Az első szem van középen, a többi körülötte kering. Válassz fent egy szemet, és tedd középre.',
       look: 'Változat',
     },
     names: {
@@ -421,7 +421,7 @@ export const hu: TryCopy = {
     // the label alone (see the header); the price stays in the card's head
     button: (_price: string) => CHECKOUT_LEGAL.hu.continueButton,
     next: `A „${CHECKOUT_LEGAL.hu.continueButton}” gomb a Stripe biztonságos fizetési oldalára visz. Ott megadod az e-mail-címedet, és amikor a fizetési gombbal jóváhagyod a fizetést, a megrendelésed kötelező érvényűvé válik. A fájlod elkészítését azután kezdjük meg, hogy elküldtük a rendelésed visszaigazoló e-mailjét, ez általában a fizetés után egy percen belül megtörténik.`,
-    waitPreview: 'Ennek a választásnak az előnézete még készül. Amint látod, rendelhetsz.',
+    waitPreview: 'Ennek a választásnak az előnézete még készül. Amint megjelenik, rendelhetsz.',
     previewFailed: 'Kérjük, előbb töltsd be ennek a választásnak az előnézetét (fent: „Próbáld újra”), hogy lásd, mit rendelsz.',
     steps: {
       sync: 'A rendelésed ellenőrzése…',
@@ -448,7 +448,7 @@ export const hu: TryCopy = {
       paused: `Az új rendeléseket mára szüneteltetjük: elértük a napi feltöltési korlátot. Nem történt terhelés. Kérjük, próbáld újra holnap, vagy írj nekünk: ${CONTACT_EMAIL}.`,
       too_many: `Ez a rendelés mára elérte a feltöltési korlátját (30 feltöltés, az újrafotózásokkal együtt). Nem történt terhelés. Kérjük, próbáld újra holnap, vagy írj nekünk: ${CONTACT_EMAIL}.`,
       failed: `Hiba történt a rendelésed előkészítése közben. Kérjük, próbáld újra, vagy írj nekünk: ${CONTACT_EMAIL}.`,
-      closed: 'A rendelés még nem indult el.',
+      closed: 'Rendelni egyelőre még nem lehet.',
       plan_changed: 'Az alkotásod éppen megváltozott, ezért újra elkészítettük az előnézetet. Nézd meg, majd nyomd meg újra a gombot.',
       unavailable: 'Ez a stílus most nem rendelhető meg a szemeidhez. Válassz másikat, vagy fotózd újra a szemet.',
       print_unavailable: 'Nyomatot most nem lehet rendelni. A digitális fájlt külön is megrendelheted.',
@@ -495,21 +495,21 @@ export const hu: TryCopy = {
 
   // a névtelen visszajelzés doboz (src/try/Feedback.tsx, api/_lib/feedback.py)
   feedback: {
-    title: { result: 'Hogy tetszik Önnek?', retake: 'Segített ez?' },
-    hint: { result: 'Egy koppintás és, ha szeretné, néhány szó. Ahhoz jut el, aki ezeket a képeket készíti.', retake: 'Egy koppintás megmutatja, mi állt az útjába.' },
+    title: { result: 'Hogy tetszik?', retake: 'Segített ez?' },
+    hint: { result: 'Egy koppintás és, ha szeretnéd, néhány szó. Ahhoz jut el, aki ezeket a képeket készíti.', retake: 'Egy koppintás megmutatja, mi állt az utadba.' },
     chips: {
       result: { love: 'Nagyon tetszik', likeness: 'Nem hasonlít az én szememre', colour: 'A színek nem stimmelnek', style: 'Másik stílust szerettem volna', price: 'Az ár túl magas nekem', other: 'Valami más' },
       retake: { unclear: 'Nem értem, mi a baj', fine: 'Szerintem jó a fotóm', device: 'A telefonom nem tud jobbat', only: 'Ez az egyetlen fotóm', effort: 'Túl sok fáradság', other: 'Valami más' },
     },
-    textLabel: 'Szeretne hozzáfűzni valamit? (nem kötelező)',
-    textHint: 'Kérjük, ne írjon nevet, e-mail-címet vagy telefonszámot.',
+    textLabel: 'Szeretnél hozzáfűzni valamit? (nem kötelező)',
+    textHint: 'Kérjük, ne írj nevet, e-mail-címet vagy telefonszámot.',
     count: (n: number, max: number) => `${n} / ${max}`,
     send: 'Küldés',
     sending: 'Küldés folyamatban',
     thanks: 'Köszönjük. Elérte azt, aki ezeket a képeket készíti.',
-    textDropped: 'Köszönjük. A válaszát megszámoltuk, a szöveget azonban nem tartottuk meg, mert elérhetőséget vagy hivatkozást tartalmazni látszott.',
-    textLost: 'Köszönjük. A válasza megérkezett, de a szöveget nem sikerült elmenteni.',
-    failed: 'Nem sikerült elküldeni. Kérjük, próbálja újra egy pillanat múlva.',
+    textDropped: 'Köszönjük. A válaszodat megszámoltuk, a szöveget azonban nem tartottuk meg, mert úgy tűnt, elérhetőséget vagy hivatkozást tartalmaz.',
+    textLost: 'Köszönjük. A válaszod megérkezett, de a szöveget nem sikerült elmenteni.',
+    failed: 'Nem sikerült elküldeni. Kérjük, próbáld újra egy pillanat múlva.',
     privacy: 'Névtelenül: nincs név, nincs e-mail. A szöveget 90 nap után töröljük.',
   },
 
