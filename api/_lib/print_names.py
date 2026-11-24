@@ -13,6 +13,10 @@ Rules for the literal: plain JSON (double quotes, no trailing commas, no comment
              gloss finish with the hanger set; canvas = on its 2 cm wooden stretcher frame with the hanger set, ready to hang, WITHOUT an outer
              frame (the owner: as canvases are sold in Lithuania; no floating frame anywhere); poster = paper, no frame; block = 2.5 cm of
              clear acrylic that STANDS by itself on a shelf or a desk (it is not hung and has no hanger); keyring = rectangular
+  times      {language: {made, way, way_other}}: the words of the times of api/_lib/print_times.py (the numbers are there, never here): made
+             = the production time of a print ({n} business days), way = its time on the way to a country merchOne publishes one for ({country},
+             {a} to {b} working days), way_other = every other country (about a week, no number). The country stands in brackets, in its own
+             form, so no language has to bend it. Shown under the print a customer chooses and said in the confirmation e-mails
   countries  {ISO code: {en, de, lt, hu, hr}}: the country names (the EU member states)"""
 PRINT_NAMES = {
     "kinds": {
@@ -30,6 +34,16 @@ PRINT_NAMES = {
         "poster": {"en": "A print on paper, without a frame.", "de": "Ein Druck auf Papier, ohne Rahmen.", "lt": "Atspaudas ant popieriaus, be rėmo.", "hu": "Nyomat papíron, keret nélkül.", "hr": "Ispis na papiru, bez okvira.", "fi": "Tuloste paperilla, ilman kehystä.", "et": "Trükk paberil, ilma raamita.", "lv": "Izdruka uz papīra, bez rāmja."},
         "block": {"en": "A clear acrylic block, 2.5 cm thick. It stands by itself on a shelf or desk.", "de": "Ein klarer Acrylblock, 2,5 cm dick. Er steht von selbst auf einem Regal oder Schreibtisch.", "lt": "Skaidraus akrilo blokas, 2,5 cm storio. Pats stovi ant lentynos ar stalo.", "hu": "Átlátszó akrilblokk, 2,5 cm vastag. Magától megáll a polcon vagy az asztalon.", "hr": "Prozirni akrilni blok, debeo 2,5 cm. Sam stoji na polici ili stolu.", "fi": "Kirkas akryylilohko, 2,5 cm paksu. Se pysyy pystyssä ilman tukea hyllyllä tai pöydällä.", "et": "Läbipaistev akrüülplokk, 2,5 cm paks. Seisab ise riiulil või laual.", "lv": "Caurspīdīgs akrila bloks, 2,5 cm biezs. Pats stāv uz plaukta vai galda."},
         "keyring": {"en": "A rectangular keyring with your artwork.", "de": "Ein rechteckiger Schlüsselanhänger mit Ihrem Kunstwerk.", "lt": "Stačiakampis raktų pakabukas su Jūsų kūriniu.", "hu": "Téglalap alakú kulcstartó az alkotásoddal.", "hr": "Pravokutni privjesak za ključeve s vašim djelom.", "fi": "Suorakulmainen avaimenperä, jossa on taideteoksesi.", "et": "Ristkülikukujuline võtmehoidja sinu kunstiteosega.", "lv": "Taisnstūra atslēgu piekariņš ar jūsu mākslas darbu."}
+    },
+    "times": {
+        "en": {"made": "Production: about {n} business days.", "way": "Delivery ({country}): then usually {a} to {b} working days.", "way_other": "Delivery ({country}): then usually about a week."},
+        "de": {"made": "Produktion: etwa {n} Werktage.", "way": "Zustellung ({country}): danach meist {a} bis {b} Werktage.", "way_other": "Zustellung ({country}): danach meist etwa eine Woche."},
+        "lt": {"made": "Gamyba: apie {n} darbo dienas.", "way": "Pristatymas ({country}): po to paprastai nuo {a} iki {b} darbo dienų.", "way_other": "Pristatymas ({country}): po to paprastai apie savaitę."},
+        "hu": {"made": "Gyártás: körülbelül {n} munkanap.", "way": "Kézbesítés ({country}): ezután általában {a} és {b} munkanap között.", "way_other": "Kézbesítés ({country}): ezután általában körülbelül egy hét."},
+        "hr": {"made": "Izrada: oko {n} radna dana.", "way": "Dostava ({country}): zatim obično {a} do {b} radnih dana.", "way_other": "Dostava ({country}): zatim obično oko tjedan dana."},
+        "fi": {"made": "Tuotanto: noin {n} arkipäivää.", "way": "Toimitus ({country}): sen jälkeen yleensä {a}-{b} arkipäivää.", "way_other": "Toimitus ({country}): sen jälkeen yleensä noin viikko."},
+        "et": {"made": "Tootmine: umbes {n} tööpäeva.", "way": "Tarne ({country}): seejärel tavaliselt {a} kuni {b} tööpäeva.", "way_other": "Tarne ({country}): seejärel tavaliselt umbes nädal."},
+        "lv": {"made": "Ražošana: apmēram {n} darba dienas.", "way": "Piegāde ({country}): pēc tam parasti {a} līdz {b} darba dienas.", "way_other": "Piegāde ({country}): pēc tam parasti apmēram nedēļa."}
     },
     "countries": {
         "AT": {"en": "Austria", "de": "Österreich", "lt": "Austrija", "hu": "Ausztria", "hr": "Austrija", "fi": "Itävalta", "et": "Austria", "lv": "Austrija"},

@@ -105,7 +105,7 @@ export const hr: OrderCopy = {
     country: 'Zemlja dostave',
     pick: 'Odaberite zemlju',
     shipping: 'Dostava',
-    arrives: 'Stiže za otprilike 1 do 2 tjedna, s praćenjem pošiljke.',
+    arrives: 'Pošiljka se može pratiti.',
     mockAlt: (name: string) => `${name}: pregled vašeg umjetničkog djela`,
     total: 'Ukupno',
     opening: 'Otvaramo stranicu za plaćanje…',

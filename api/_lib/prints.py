@@ -77,6 +77,7 @@ from . import merchone as M
 from .print_offer import PRINT_OFFER
 from .print_rates import PRINT_RATES
 from .print_names import PRINT_NAMES
+from .print_times import PRINT_TIMES
 
 LANGS = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
 SWITCH_PATH = "ops/prints/switch.json"
@@ -90,8 +91,7 @@ PRINT_DPI = 200              # the print file's resolution at most (the master a
 TIME_NEED = 22.0             # seconds a try needs: read the 4K master, scale it, store it, sign it, one merchOne call
 DAILY_SECONDS = 15.0         # the daily run spends at most this long on prints
 DAILY_MAX = 6                # ... and at most this many tries or status reads a run
-PROD_DAYS = (3, 3)           # production: about 3 business days (merchOne's target for these products)
-TRANSIT_DAYS = (2, 9)        # the delivery estimate Stripe shows, in business days after production (the slowest EU country)
+# how long a print takes is api/_lib/print_times.py (production per kind, delivery per country): production_days, transit_days, time_text below
 CONTACT = pay.CONTACT
 # merchOne's billing address: the seller (src/landing/config.ts SELLER); merchOne invoices the print with German VAT to it
 BILLING = {"firstname": "MB", "lastname": "Portretizuokis", "company": "MB Portretizuokis", "street_primary": "Gedimino g. 22A-14",
@@ -192,6 +192,33 @@ def country_name(cc, lang):
 
 def markets():
     return tuple(PRINT_OFFER["markets"])
+
+
+def production_days(pid):
+    """merchOne's production time of a print, in business days (api/_lib/print_times.py production, by the print's kind; a print the offer does
+    not know: the longest one)."""
+    p = product(pid, offered=False)
+    t = PRINT_TIMES["production"]
+    return int(t[p["kind"]]) if p and p["kind"] in t else max(int(v) for v in t.values())
+
+
+def transit_days(country):
+    """(from, to, published) working days on the way to a country: merchOne's published time (print_times.py transit), or the general estimate
+    of every other country (transit_other, published False: the words then say "about a week" and name no number)."""
+    t = PRINT_TIMES["transit"].get(country) if isinstance(country, str) else None
+    if isinstance(t, list) and len(t) == 2:
+        return int(t[0]), int(t[1]), True
+    return int(PRINT_TIMES["transit_other"][0]), int(PRINT_TIMES["transit_other"][1]), False
+
+
+def time_text(pid, country, lang):
+    """The two short sentences of a print's time in a language: "Production: about 2 business days. Delivery (Lithuania): then usually 4 to 6
+    working days." (the words of api/_lib/print_names.py times; for a country without a published time: "then usually about a week")."""
+    w = PRINT_NAMES["times"][lang_of(lang)]
+    a, b, published = transit_days(country)
+    name = country_name(country, lang)
+    way = w["way"].format(country=name, a=a, b=b) if published else w["way_other"].format(country=name)
+    return f"{w['made'].format(n=production_days(pid))} {way}"
 
 
 # ----------------------------------------------------------------------------- the switch
@@ -401,7 +428,8 @@ def stripe_params(part, lang, item=1):
     lang = lang_of(lang)
     cc = part["country"]
     country = country_name(cc, lang)
-    lo, hi = PROD_DAYS[0] + TRANSIT_DAYS[0], PROD_DAYS[1] + TRANSIT_DAYS[1]
+    made, way = production_days(part["product"]), transit_days(cc)      # Stripe's estimate: this print's production and this country's delivery
+    lo, hi = made + way[0], made + way[1]
     li = f"line_items[{int(item)}]"
     return [
         (f"{li}[quantity]", "1"),
@@ -519,9 +547,8 @@ def pending(order, paid):
 CONF = {
     "en": {"delivery": "the digital file (JPEG, 4096 px on the longest side) on your order page, and the print, shipped to the address you gave on the payment page",
            "file": "Artwork file", "print": "Print", "ship": "Shipping", "address": "Delivery address", "h": "Your print",
-           "p1": ("We send your print to production as soon as your file is ready. Production takes about 3 business days; delivery then usually "
-                  "takes 2 to 9 business days, depending on the country. We email you the tracking link when it ships. Your print is made for us "
-                  "by our print partner {producer}."),
+           "p1": ("We send your print to production as soon as your file is ready. {time} We email you the tracking link when it ships. Your "
+                  "print is made for us by our print partner {producer}."),
            "p2": ("Please check your print when it arrives. If it is damaged in transit or faulty, please write to info@snapeyes.com within 7 "
                   "days if you can, with your order number, a photo of the damage and a photo of the whole print: then we can have it replaced "
                   "fastest. Your statutory rights, including the legal guarantee of two years for defects, apply in full and do not depend on "
@@ -529,9 +556,8 @@ CONF = {
            "p3": "Before paying, on {at}, you ticked this box about your print:"},
     "de": {"delivery": "die digitale Datei (JPEG, 4096 px an der längsten Seite) auf Ihrer Bestellseite und der Druck, versandt an die Adresse, die Sie auf der Zahlungsseite angegeben haben",
            "file": "Kunstwerk-Datei", "print": "Druck", "ship": "Versand", "address": "Lieferadresse", "h": "Ihr Druck",
-           "p1": ("Wir geben Ihren Druck in die Produktion, sobald Ihre Datei fertig ist. Die Produktion dauert etwa 3 Werktage; die Zustellung "
-                  "dauert danach meist 2 bis 9 Werktage, je nach Land. Sobald er versandt ist, senden wir Ihnen den Link zur "
-                  "Sendungsverfolgung. Ihr Druck wird für uns von unserem Druckpartner {producer} hergestellt."),
+           "p1": ("Wir geben Ihren Druck in die Produktion, sobald Ihre Datei fertig ist. {time} Sobald er versandt ist, senden wir Ihnen den "
+                  "Link zur Sendungsverfolgung. Ihr Druck wird für uns von unserem Druckpartner {producer} hergestellt."),
            "p2": ("Bitte prüfen Sie Ihren Druck, wenn er ankommt. Ist er auf dem Transport beschädigt worden oder fehlerhaft, schreiben Sie bitte "
                   "möglichst innerhalb von 7 Tagen an info@snapeyes.com, mit Ihrer Bestellnummer, einem Foto des Schadens und einem Foto des "
                   "ganzen Drucks: Dann können wir ihn am schnellsten ersetzen lassen. Ihre gesetzlichen Rechte, auch die gesetzliche "
@@ -539,9 +565,8 @@ CONF = {
            "p3": "Vor der Zahlung haben Sie am {at} bei diesem Text zu Ihrem Druck das Häkchen gesetzt:"},
     "lt": {"delivery": "skaitmeninis failas (JPEG, ilgoji kraštinė 4096 px) Jūsų užsakymo puslapyje ir spaudinys, išsiųstas mokėjimo puslapyje nurodytu adresu",
            "file": "Kūrinio failas", "print": "Spaudinys", "ship": "Siuntimas", "address": "Pristatymo adresas", "h": "Jūsų spaudinys",
-           "p1": ("Spaudinį perduodame gaminti, kai tik Jūsų failas būna paruoštas. Gamyba trunka apie 3 darbo dienas, o pristatymas, "
-                  "atsižvelgiant į šalį, paprastai trunka nuo 2 iki 9 darbo dienų. Kai spaudinys išsiunčiamas, el. paštu atsiunčiame siuntos sekimo "
-                  "nuorodą. Spaudinį mums gamina mūsų spaudos partneris {producer}."),
+           "p1": ("Spaudinį perduodame gaminti, kai tik Jūsų failas būna paruoštas. {time} Kai spaudinys išsiunčiamas, el. paštu atsiunčiame "
+                  "siuntos sekimo nuorodą. Spaudinį mums gamina mūsų spaudos partneris {producer}."),
            "p2": ("Gavę spaudinį, jį patikrinkite. Jei jis sugadintas pervežant ar turi trūkumų, jei galite, per 7 dienas parašykite adresu "
                   "info@snapeyes.com, nurodykite užsakymo numerį ir pridėkite pažeidimo nuotrauką bei viso spaudinio nuotrauką: tada greičiausiai "
                   "pasirūpinsime jo pakeitimu. Jūsų įstatyminės teisės, įskaitant dvejų metų įstatyminę garantiją dėl trūkumų, galioja visa "
@@ -549,9 +574,8 @@ CONF = {
            "p3": "Prieš mokėdami, {at}, pažymėjote šį langelį apie savo spaudinį:"},
     "hu": {"delivery": "digitális fájl (JPEG, a hosszabbik oldalán 4096 px) a rendelési oldaladon, valamint a nyomat, amelyet a fizetési oldalon megadott címre küldünk",
            "file": "Az alkotás fájlja", "print": "Nyomat", "ship": "Szállítás", "address": "Szállítási cím", "h": "A nyomatod",
-           "p1": ("A nyomatot azonnal gyártásba adjuk, amint elkészült a fájlod. A gyártás körülbelül 3 munkanap, a kézbesítés ezután országtól "
-                  "függően általában 2 és 9 munkanap között tart. Amikor elküldték, e-mailben megküldjük a csomagkövetési linket. A nyomatot nyomdai partnerünk, "
-                  "a {producer} készíti nekünk."),
+           "p1": ("A nyomatot azonnal gyártásba adjuk, amint elkészült a fájlod. {time} Amikor elküldték, e-mailben megküldjük a csomagkövetési"
+                  " linket. A nyomatot nyomdai partnerünk, a {producer} készíti nekünk."),
            "p2": ("Kérjük, nézd meg a nyomatot, amikor megérkezik. Ha szállítás közben megsérült vagy hibás, lehetőleg 7 napon belül írj az "
                   "info@snapeyes.com címre a rendelésszámmal, a sérülésről és a teljes nyomatról készült fotóval: így tudjuk a leggyorsabban "
                   "kicseréltetni. A törvényes jogaid, köztük a hibákra vonatkozó kétéves kellékszavatosság, teljes körűen megilletnek, és "
@@ -559,18 +583,16 @@ CONF = {
            "p3": "Fizetés előtt, {at}, ezt a négyzetet jelölted be a nyomatodról:"},
     "hr": {"delivery": "digitalna datoteka (JPEG, 4096 px na duljoj stranici) na stranici vaše narudžbe i ispis, poslan na adresu koju ste naveli na stranici za plaćanje",
            "file": "Datoteka djela", "print": "Ispis", "ship": "Dostava", "address": "Adresa za dostavu", "h": "Vaš ispis",
-           "p1": ("Vaš ispis predajemo u izradu čim je vaša datoteka gotova. Izrada traje oko 3 radna dana, a dostava zatim obično 2 do 9 radnih "
-                  "dana, ovisno o zemlji. Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za praćenje pošiljke. Vaš ispis za nas izrađuje naš "
-                  "partner za ispis {producer}."),
+           "p1": ("Vaš ispis predajemo u izradu čim je vaša datoteka gotova. {time} Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za "
+                  "praćenje pošiljke. Vaš ispis za nas izrađuje naš partner za ispis {producer}."),
            "p2": ("Pregledajte ispis kad stigne. Ako je oštećen u prijevozu ili neispravan, ako možete, pišite nam u roku od 7 dana na "
                   "info@snapeyes.com s brojem narudžbe, fotografijom oštećenja i fotografijom cijelog ispisa: tada ga najbrže možemo zamijeniti. "
                   "Vaša zakonska prava, uključujući zakonsko jamstvo od dvije godine za nedostatke, vrijede u cijelosti i ne ovise o tom roku."),
            "p3": "Prije plaćanja, {at}, označili ste ovu kućicu o svojem ispisu:"},
     "fi": {"delivery": "digitaalinen tiedosto (JPEG, 4096 px pisimmältä sivulta) tilaussivullasi ja tuloste, joka lähetetään maksusivulla antamaasi osoitteeseen",
            "file": "Taideteoksen tiedosto", "print": "Tuloste", "ship": "Toimitus", "address": "Toimitusosoite", "h": "Tulosteesi",
-           "p1": ("Lähetämme tulosteesi tuotantoon heti, kun tiedostosi on valmis. Tuotanto kestää noin 3 arkipäivää; toimitus kestää sen "
-                  "jälkeen yleensä 2-9 arkipäivää maasta riippuen. Lähetämme seurantalinkin sähköpostiisi, kun tuloste lähtee matkaan. "
-                  "Tulosteesi tekee meille tulostuskumppanimme {producer}."),
+           "p1": ("Lähetämme tulosteesi tuotantoon heti, kun tiedostosi on valmis. {time} Lähetämme seurantalinkin sähköpostiisi, kun tuloste "
+                  "lähtee matkaan. Tulosteesi tekee meille tulostuskumppanimme {producer}."),
            "p2": ("Tarkista tulosteesi, kun se saapuu. Jos se on vahingoittunut kuljetuksessa tai siinä on virhe, kirjoita mahdollisuuksien "
                   "mukaan 7 päivän kuluessa osoitteeseen info@snapeyes.com ja liitä mukaan tilausnumerosi, kuva vauriosta ja kuva koko "
                   "tulosteesta: silloin saamme sen vaihdettua nopeimmin. Lakisääteiset oikeutesi, myös kahden vuoden lakisääteinen "
@@ -578,8 +600,7 @@ CONF = {
            "p3": "Ennen maksamista, {at}, rastitit tämän tulostettasi koskevan ruudun:"},
     "et": {"delivery": "digitaalne fail (JPEG, 4096 px pikimal küljel) sinu tellimuse lehel ja trükitud pilt, mis saadetakse makselehel antud aadressile",
            "file": "Kunstiteose fail", "print": "Trükitud pilt", "ship": "Tarne", "address": "Tarneaadress", "h": "Sinu trükitud pilt",
-           "p1": ("Saadame sinu trükitud pildi tootmisse kohe, kui sinu fail on valmis. Tootmine võtab umbes 3 tööpäeva; kohaletoimetamine "
-                  "võtab seejärel tavaliselt 2 kuni 9 tööpäeva, olenevalt riigist. Kui see teele läheb, saadame sulle e-kirjaga "
+           "p1": ("Saadame sinu trükitud pildi tootmisse kohe, kui sinu fail on valmis. {time} Kui see teele läheb, saadame sulle e-kirjaga "
                   "jälgimislingi. Sinu trükitud pildi valmistab meile meie trükipartner {producer}."),
            "p2": ("Palun kontrolli oma trükitud pilti, kui see saabub. Kui see on transpordil kahjustada saanud või puudusega, kirjuta palun "
                   "võimaluse korral 7 päeva jooksul aadressile info@snapeyes.com ning lisa oma tellimuse number, foto kahjustusest ja foto "
@@ -588,9 +609,8 @@ CONF = {
            "p3": "Enne maksmist ({at}) märkisid oma trükitud pildi kohta selle kasti:"},
     "lv": {"delivery": "digitālais fails (JPEG, 4096 px garākajā malā) jūsu pasūtījuma lapā un izdruka, ko nosūtām uz adresi, kuru norādījāt maksājuma lapā",
            "file": "Mākslas darba fails", "print": "Izdruka", "ship": "Piegāde", "address": "Piegādes adrese", "h": "Jūsu izdruka",
-           "p1": ("Jūsu izdruku nodosim ražošanā, tiklīdz jūsu fails būs gatavs. Ražošana aizņem apmēram 3 darba dienas; piegāde pēc tam "
-                  "parasti aizņem 2 līdz 9 darba dienas atkarībā no valsts. Kad izdruka būs izsūtīta, nosūtīsim jums e-pastā izsekošanas "
-                  "saiti. Jūsu izdruku mums izgatavo mūsu drukas partneris {producer}."),
+           "p1": ("Jūsu izdruku nodosim ražošanā, tiklīdz jūsu fails būs gatavs. {time} Kad izdruka būs izsūtīta, nosūtīsim jums e-pastā "
+                  "izsekošanas saiti. Jūsu izdruku mums izgatavo mūsu drukas partneris {producer}."),
            "p2": ("Lūdzu, pārbaudiet izdruku, kad tā pienāk. Ja tā ir bojāta pārvadāšanas laikā vai ar trūkumiem, lūdzu, ja iespējams, 7 "
                   "dienu laikā rakstiet uz info@snapeyes.com, norādot pasūtījuma numuru un pievienojot bojājuma fotogrāfiju un visas "
                   "izdrukas fotogrāfiju: tad varēsim to nomainīt visātrāk. Jūsu likumīgās tiesības, tostarp likumā noteiktā divu gadu "
@@ -679,7 +699,7 @@ def amend_confirmation(blocks, lang, paid):
             rows[-2:-2] = extra
             out.append(b)
             c = pp.get("consent") if isinstance(pp.get("consent"), dict) else None
-            out += [("h", w["h"]), ("p", w["p1"].format(producer=f"{PRODUCER}, {PRODUCER_COUNTRY[lang]}")), ("p", w["p2"])]
+            out += [("h", w["h"]), ("p", w["p1"].format(time=time_text(pp.get("product"), pp.get("country"), lang), producer=f"{PRODUCER}, {PRODUCER_COUNTRY[lang]}")), ("p", w["p2"])]
             if c and c.get("text"):
                 at = pay.when_text(c.get("at"), lang) if isinstance(c.get("at"), str) else ""
                 out += [("p", w["p3"].format(at=at)), ("quote", pay.quoted(c["text"], lang))]
@@ -1414,9 +1434,8 @@ ADDON_CONF = {
                      "your digital file. Please keep it."),
            "order": "Order number", "date": "Contract date", "total": "Total",
            "note": "This is the final price: we are not registered for VAT, so no VAT is charged.", "payment": "Payment", "paid": "paid through Stripe",
-           "p1": ("Your file is ready, so we send your print to production right away. Production takes about 3 business days; delivery then "
-                  "usually takes 2 to 9 business days, depending on the country. We email you the tracking link when it ships. Your print is "
-                  "made for us by our print partner {producer}."),
+           "p1": ("Your file is ready, so we send your print to production right away. {time} We email you the tracking link when it ships. "
+                  "Your print is made for us by our print partner {producer}."),
            "page": "You can follow your print on your order page:",
            "terms": "Our terms of sale as of {date} apply to this order. Their full text is at the end of this email; you can also read them here:"},
     "de": {"subject": "Ihr SnapEyes-Druck zur Bestellung {order}: Bestellbestätigung",
@@ -1425,9 +1444,8 @@ ADDON_CONF = {
            "order": "Bestellnummer", "date": "Vertragsschluss", "total": "Gesamtbetrag",
            "note": "Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.",
            "payment": "Zahlung", "paid": "bezahlt über Stripe",
-           "p1": ("Ihre Datei ist fertig, daher geben wir Ihren Druck sofort in die Produktion. Die Produktion dauert etwa 3 Werktage; die "
-                  "Zustellung dauert danach meist 2 bis 9 Werktage, je nach Land. Sobald er versandt ist, senden wir Ihnen den Link zur "
-                  "Sendungsverfolgung. Ihr Druck wird für uns von unserem Druckpartner {producer} hergestellt."),
+           "p1": ("Ihre Datei ist fertig, daher geben wir Ihren Druck sofort in die Produktion. {time} Sobald er versandt ist, senden wir Ihnen"
+                  " den Link zur Sendungsverfolgung. Ihr Druck wird für uns von unserem Druckpartner {producer} hergestellt."),
            "page": "Auf Ihrer Bestellseite sehen Sie, wie weit Ihr Druck ist:",
            "terms": ("Für diese Bestellung gelten unsere Allgemeinen Geschäftsbedingungen in der Fassung vom {date}. Der vollständige Text "
                      "steht am Ende dieser E-Mail; Sie finden die AGB auch hier:")},
@@ -1436,9 +1454,8 @@ ADDON_CONF = {
                      "dėl Jūsų skaitmeninio failo. Išsaugokite jį."),
            "order": "Užsakymo numeris", "date": "Sutarties sudarymo data", "total": "Iš viso",
            "note": "Tai galutinė kaina: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.", "payment": "Mokėjimas", "paid": "apmokėta per Stripe",
-           "p1": ("Jūsų failas jau paruoštas, todėl spaudinį perduodame gaminti iš karto. Gamyba trunka apie 3 darbo dienas, o pristatymas, "
-                  "atsižvelgiant į šalį, paprastai trunka nuo 2 iki 9 darbo dienų. Kai spaudinys išsiunčiamas, el. paštu atsiunčiame siuntos "
-                  "sekimo nuorodą. Spaudinį mums gamina mūsų spaudos partneris {producer}."),
+           "p1": ("Jūsų failas jau paruoštas, todėl spaudinį perduodame gaminti iš karto. {time} Kai spaudinys išsiunčiamas, el. paštu "
+                  "atsiunčiame siuntos sekimo nuorodą. Spaudinį mums gamina mūsų spaudos partneris {producer}."),
            "page": "Spaudinio eigą matysite savo užsakymo puslapyje:",
            "terms": ("Šiam užsakymui taikoma mūsų pardavimo sąlygų redakcija, galiojanti nuo {date}; visas jų tekstas pateiktas šio el. laiško "
                      "pabaigoje, o jas taip pat galite perskaityti čia:")},
@@ -1448,9 +1465,8 @@ ADDON_CONF = {
            "order": "Rendelésszám", "date": "A szerződés létrejötte", "total": "Összesen",
            "note": "Ez a végső ár: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.", "payment": "Fizetés",
            "paid": "kifizetve a Stripe-on keresztül",
-           "p1": ("A fájlod már elkészült, ezért a nyomatot azonnal gyártásba adjuk. A gyártás körülbelül 3 munkanap, a kézbesítés ezután "
-                  "országtól függően általában 2 és 9 munkanap között tart. Amikor elküldték, e-mailben megküldjük a csomagkövetési linket. A "
-                  "nyomatot nyomdai partnerünk, a {producer} készíti nekünk."),
+           "p1": ("A fájlod már elkészült, ezért a nyomatot azonnal gyártásba adjuk. {time} Amikor elküldték, e-mailben megküldjük a "
+                  "csomagkövetési linket. A nyomatot nyomdai partnerünk, a {producer} készíti nekünk."),
            "page": "A nyomatod állapotát a rendelési oldaladon követheted:",
            "terms": ("Erre a rendelésre az Általános Szerződési Feltételeink {date} napján hatályos változata vonatkozik. A teljes szövegét "
                      "ennek az e-mailnek a végén találod, és itt is elolvashatod:")},
@@ -1460,9 +1476,8 @@ ADDON_CONF = {
            "order": "Broj narudžbe", "date": "Datum sklapanja ugovora", "total": "Ukupno",
            "note": "To je konačna cijena: nismo registrirani kao obveznik PDV-a, stoga PDV ne obračunavamo.", "payment": "Plaćanje",
            "paid": "plaćeno putem Stripea",
-           "p1": ("Vaša je datoteka gotova, pa vaš ispis odmah predajemo u izradu. Izrada traje oko 3 radna dana, a dostava zatim obično 2 do "
-                  "9 radnih dana, ovisno o zemlji. Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za praćenje pošiljke. Vaš ispis za nas "
-                  "izrađuje naš partner za ispis {producer}."),
+           "p1": ("Vaša je datoteka gotova, pa vaš ispis odmah predajemo u izradu. {time} Kad ga pošaljemo, e-poštom vam šaljemo poveznicu za "
+                  "praćenje pošiljke. Vaš ispis za nas izrađuje naš partner za ispis {producer}."),
            "page": "Svoj ispis možete pratiti na stranici svoje narudžbe:",
            "terms": ("Na ovu narudžbu primjenjuju se naši uvjeti prodaje u verziji od {date}, a njihov cijeli tekst nalazi se na kraju ove "
                      "e-poruke. Možete ih pročitati i ovdje:")},
@@ -1472,9 +1487,8 @@ ADDON_CONF = {
            "order": "Tilausnumero", "date": "Sopimuksen tekoaika", "total": "Yhteensä",
            "note": "Tämä on lopullinen hinta: emme ole arvonlisäverovelvollisia, joten arvonlisäveroa ei peritä.", "payment": "Maksu",
            "paid": "maksettu Stripen kautta",
-           "p1": ("Tiedostosi on valmis, joten lähetämme tulosteesi tuotantoon heti. Tuotanto kestää noin 3 arkipäivää; toimitus kestää sen "
-                  "jälkeen yleensä 2-9 arkipäivää maasta riippuen. Lähetämme seurantalinkin sähköpostiisi, kun tuloste lähtee matkaan. "
-                  "Tulosteesi tekee meille tulostuskumppanimme {producer}."),
+           "p1": ("Tiedostosi on valmis, joten lähetämme tulosteesi tuotantoon heti. {time} Lähetämme seurantalinkin sähköpostiisi, kun tuloste"
+                  " lähtee matkaan. Tulosteesi tekee meille tulostuskumppanimme {producer}."),
            "page": "Voit seurata tulostettasi tilaussivullasi:",
            "terms": ("Tähän tilaukseen sovelletaan myyntiehtojamme sellaisina kuin ne olivat voimassa {date}. Niiden koko teksti on tämän "
                      "viestin lopussa; voit lukea ne myös täältä:")},
@@ -1484,9 +1498,8 @@ ADDON_CONF = {
            "order": "Tellimuse number", "date": "Lepingu sõlmimise aeg", "total": "Kokku",
            "note": "See on lõpphind: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.", "payment": "Maksmine",
            "paid": "makstud Stripe’i kaudu",
-           "p1": ("Sinu fail on valmis, seega saadame sinu trükitud pildi kohe tootmisse. Tootmine võtab umbes 3 tööpäeva; "
-                  "kohaletoimetamine võtab seejärel tavaliselt 2 kuni 9 tööpäeva, olenevalt riigist. Kui see teele läheb, saadame sulle "
-                  "e-kirjaga jälgimislingi. Sinu trükitud pildi valmistab meile meie trükipartner {producer}."),
+           "p1": ("Sinu fail on valmis, seega saadame sinu trükitud pildi kohe tootmisse. {time} Kui see teele läheb, saadame sulle e-kirjaga "
+                  "jälgimislingi. Sinu trükitud pildi valmistab meile meie trükipartner {producer}."),
            "page": "Oma trükitud pildi käekäiku saad jälgida oma tellimuse lehel:",
            "terms": ("Selle tellimuse suhtes kehtivad meie müügitingimused seisuga {date}. Nende täistekst on selle e-kirja lõpus; võid neid "
                      "lugeda ka siit:")},
@@ -1496,9 +1509,8 @@ ADDON_CONF = {
            "order": "Pasūtījuma numurs", "date": "Līguma noslēgšanas datums", "total": "Kopā",
            "note": "Tā ir galīgā cena: neesam reģistrēti kā PVN maksātāji, tāpēc PVN netiek pieskaitīts.", "payment": "Maksājums",
            "paid": "samaksāts, izmantojot Stripe",
-           "p1": ("Jūsu fails ir gatavs, tāpēc jūsu izdruku nododam ražošanā uzreiz. Ražošana aizņem apmēram 3 darba dienas; piegāde pēc tam "
-                  "parasti aizņem 2 līdz 9 darba dienas atkarībā no valsts. Kad izdruka būs izsūtīta, nosūtīsim jums e-pastā izsekošanas "
-                  "saiti. Jūsu izdruku mums izgatavo mūsu drukas partneris {producer}."),
+           "p1": ("Jūsu fails ir gatavs, tāpēc jūsu izdruku nododam ražošanā uzreiz. {time} Kad izdruka būs izsūtīta, nosūtīsim jums e-pastā "
+                  "izsekošanas saiti. Jūsu izdruku mums izgatavo mūsu drukas partneris {producer}."),
            "page": "Izdrukas gaitai varat sekot savā pasūtījuma lapā:",
            "terms": ("Šim pasūtījumam piemērojami mūsu pārdošanas noteikumi {date} redakcijā, un pilns to teksts ir šī e-pasta beigās. Tos "
                      "varat izlasīt arī šeit:")},
@@ -1800,7 +1812,7 @@ def addon_mail(order, paid, k, pack, docs):
             (w["payment"], w["paid"])]
     subject = w["subject"].format(order=order)
     blocks = [("p", SHIPPED[lang]["hello"]), ("p", w["intro"]), ("rows", rows),
-              ("h", c["h"]), ("p", w["p1"].format(producer=f"{PRODUCER}, {PRODUCER_COUNTRY[lang]}")), ("p", c["p2"])]
+              ("h", c["h"]), ("p", w["p1"].format(time=time_text(pp.get("product"), pp.get("country"), lang), producer=f"{PRODUCER}, {PRODUCER_COUNTRY[lang]}")), ("p", c["p2"])]
     box = pp.get("consent") if isinstance(pp.get("consent"), dict) else None
     if box and box.get("text"):
         at = pay.when_text(box.get("at"), lang) if isinstance(box.get("at"), str) else ""

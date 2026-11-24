@@ -84,7 +84,11 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # block, in every language: the list of prints and prices of the terms' section "prints" (src/legal/docs/prints.ts productRows makes it from the offer): eleven
 # rows where five were, the three acrylic rows and the poster's exactly as they were, the canvas' old row gone; and the shipping table under it, a second
 # block: its four rows as they were, and three rows more for the metal print and the canvas of 60 cm, which ship on a tariff of their own (6.99 EUR to Germany,
-# 8.49 to seven countries near it, 13.49 to the others). The other prints ship at the prices of before. As they were: the withdrawal page,
+# 8.49 to seven countries near it, 13.49 to the others). The other prints ship at the prices of before. And a third block, the delivery paragraph: ONE
+# passage of it is other in every language, the times (they were "about 3 business days" of production for every print and "2 to 9 business days" of delivery
+# with four examples; they are merchOne's published times from api/_lib/print_times.py: 2 business days for a canvas or a poster and 3 for every other print,
+# then 4 to 6 working days to Lithuania, Latvia and Estonia, 5 to 8 to Finland, 3 to 6 to Germany, about a week to the other countries); the paragraph's
+# beginning (production starts when the print is ordered) and its end (the tracked parcel, 30 days at the latest) are word for word. As they were: the withdrawal page,
 # the privacy policy, the legal notice, the print box, the checkout wording and the consent version; LEGAL_UPDATED moves to 2026-11-24. eu_block.json is the
 # EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_printlater.json stays as the base: the 1121 step is now checked between the pins of
 # the three languages and of the print offered later. A1, B1, B3 and E8 moved, each keeping its id and the older names, with " - 1124:" added; the AU and US
@@ -576,7 +580,7 @@ later1121_ok = (all(fr and wp12_ok(d, allowed[l]) for name, allowed in (("terms"
 # else of the terms, and nothing at all of the withdrawal page, the privacy policy and the legal notice. The names and the prices are read from the server's
 # own tables, so the pin and the offer cannot drift apart.
 LANG8 = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
-from _lib import print_names as _PN, print_offer as _PO
+from _lib import print_names as _PN, print_offer as _PO, print_times as _PT
 _digits = lambda t: re.sub(r"[^0-9]", "", t)
 
 
@@ -594,19 +598,33 @@ def _ship1124(new, old, l):
             and [_digits(r[0]) for r in new[4:]] == ["699", "849", "1349"])
 
 
+def _times1124(new, old):
+    """The delivery paragraph (a text block, or the pack's paragraph): the same beginning and the same end, and between them the old times (3; 2 to 9; the
+    examples 2 to 3, 3 to 4, 4 to 5, 5 to 6) replaced by the table's (2 and 3; 4 to 6, 5 to 8, 3 to 6), read from api/_lib/print_times.py itself."""
+    if not isinstance(new, str) or not isinstance(old, str):
+        return False
+    i = len(os.path.commonprefix([new, old]))
+    j = len(os.path.commonprefix([new[::-1], old[::-1]]))
+    t = _PT.PRINT_TIMES
+    want = [min(t["production"].values()), max(t["production"].values())] + t["transit"]["LT"] + t["transit"]["FI"] + t["transit"]["DE"]
+    return (i >= 60 and j >= 60 and re.findall(r"[0-9]+", new[i - 1:len(new) - j + 1]) == [str(x) for x in want] == ["2", "3", "4", "6", "5", "8", "3", "6"]
+            and re.findall(r"[0-9]+", old[i - 1:len(old) - j + 1]) == ["3", "2", "9", "2", "3", "3", "4", "4", "5", "5", "6"]
+            and t["transit"]["LT"] == t["transit"]["LV"] == t["transit"]["EE"] and sorted(t["transit"]) == ["DE", "EE", "FI", "LT", "LV"])
+
+
 def _step1124(l):
     fr, d = doc_diff(EDI["eu"]["terms"][l], EU_PRINTLATER["terms"][l])
     if not fr or sorted(d) != ["prints"]:
         return False
     add, rem = d["prints"]
-    if len(add) != 2 or len(rem) != 2 or not all(isinstance(b, dict) and sorted(b) == ["dl"] for b in add + rem):
+    if len(add) != 3 or len(rem) != 3 or not all(isinstance(b, dict) and sorted(b) == ["dl"] for b in add[:2] + rem[:2]):
         return False
     new, old = add[0]["dl"], rem[0]["dl"]
     want = _rows1124(l)
     return (len(old) == 5 and len(new) == len(want) == 11
             and all(r[0].startswith(n) and r[0].endswith("cm") and _digits(r[1]) == pr for r, (n, pr) in zip(new, want))
             and new[:3] == old[:3] and old[4] in new and _digits(old[3][1]) == "6900" and not any(r[0] == old[3][0] for r in new)
-            and _ship1124(add[1]["dl"], rem[1]["dl"], l)
+            and _ship1124(add[1]["dl"], rem[1]["dl"], l) and _times1124(add[2], rem[2])
             and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] == 1] == ["acrylic30", "acrylic40", "acrylic60", "metal30", "metal40", "metal60", "canvas40",
                                                                                    "canvas60", "poster50", "block10", "block20"]
             and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] != 1] == ["keyring"])
@@ -639,7 +657,8 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 1124: the pin is eu_block.json; the 1121 step is checked between the pins of the three languages and of the print offered later; the terms differ from the pin"
       " of the print offered later by exactly ONE block in each of the eight languages, the list of prints and prices of the section prints (the eleven prints the"
       " offer has on, by the server's own names and prices: the acrylic rows and the poster's as they were, the canvas in its floating frame gone), and by the"
-      " shipping table under it (its four rows as they were, three more for the metal print and the canvas of 60 cm); the withdrawal"
+      " shipping table under it (its four rows as they were, three more for the metal print and the canvas of 60 cm), and by ONE passage of the delivery"
+      " paragraph, the times (merchOne's published ones from api/_lib/print_times.py for the one sentence of before); the withdrawal"
       " page, the privacy policy and the legal notice not at all",
       all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
       (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
@@ -809,7 +828,7 @@ def _pack_1124(l):
     now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
     was = _norm(EU_PRINTLATER["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
     add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
-    if not (len(now) == len(was) and len(add) == 2 == len(rem)):
+    if not (len(now) == len(was) and len(add) == 3 == len(rem) and _times1124(add[2], rem[2])):      # the third: the delivery paragraph, its times from the table
         return False
     new, old = add[0].split("\n"), rem[0].split("\n")
     ship_new, ship_old = add[1].split("\n"), rem[1].split("\n")
@@ -847,7 +866,8 @@ check("B3 the built pack's EU texts are the same as before (the date line aside)
       " - 1121: pinned to eu_printlater.json, the terms by exactly four paragraphs replaced (the product sentence's and three of the section prints) and the withdrawal"
       " page by exactly one (_pack_1121); the 1113 step is checked between the pins of the vouchers and of the three languages"
       " - 1124: pinned to eu_block.json, the terms by exactly ONE paragraph replaced in each of the eight languages, the list of prints and prices (the eleven prints"
-      " of the offer), the withdrawal page word for word (_pack_1124); the 1121 step is checked between the two pins before it",
+      " of the offer), the shipping table and the delivery paragraph's times, the withdrawal page word for word (_pack_1124); the 1121 step is checked between the"
+      " two pins before it",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
       (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2], [_terms_pack_28(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",

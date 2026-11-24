@@ -1395,7 +1395,7 @@ check("the add-on's confirmation in the eight languages: eight different subject
       len({mails8[l_][0] for l_ in PR.LANGS}) == 8 and all(oi in mails8[l_][0] for l_ in PR.LANGS)
       and all(PR.product_name("poster50", l_) in mails8[l_][1] and PR.country_name("LT", l_) in mails8[l_][1] and pay.price_text(3500 + 849, l_, "eur") in mails8[l_][1]
               and "Picanova GmbH" in mails8[l_][1] and f"/order?o={oi}&k={ki}&lang={l_}" in mails8[l_][1] and PACK["docs"][l_]["terms"]["text"][:200] in mails8[l_][1]
-              and PR.ADDON_CONF[l_]["p1"].split("{producer}")[0] in mails8[l_][1] for l_ in PR.LANGS)
+              and PR.ADDON_CONF[l_]["p1"].split("{time}")[0] in mails8[l_][1] and PR.time_text("poster50", "LT", l_) in mails8[l_][1] for l_ in PR.LANGS)
       and not re.search(DASH, json.dumps([PR.ADDON_CONF, PR.SUBMIT_NOTE_ADDON], ensure_ascii=False))
       and len(set(PR.SUBMIT_NOTE_ADDON.values())) == 8 and set(PR.SUBMIT_NOTE_ADDON) == set(PR.ADDON_CONF) == set(PR.LANGS),
       [l_ for l_ in PR.LANGS if PR.product_name("poster50", l_) not in mails8[l_][1] or pay.price_text(3500 + 849, l_, "eur") not in mails8[l_][1]])
@@ -1530,6 +1530,48 @@ check("a canvas of 60 cm bought after the artwork: its own session with its name
       and pkm.get("line_items[0][price_data][product_data][name]") == "Canvas on a wooden stretcher frame 60\u00a0×\u00a060\u00a0cm"
       and pkm.get("line_items[0][price_data][unit_amount]") == "6900" and pkm.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") == "1349"
       and pkm.get("metadata[print_sku]") == "CVS0600601LMF2HC", (c, jkm))
+
+# ============================================================================================ 13. how long a print takes
+section("13. how long a print takes (2026-11-24): per product and per country, from one table")
+PT = PR.PRINT_TIMES
+check("the table (api/_lib/print_times.py): a production time for every kind of the offer (canvas and poster 2 business days, every other 3), a delivery time for "
+      "Lithuania, Latvia, Estonia (4 to 6 working days), Finland (5 to 8) and Germany (3 to 6), every one a country prints ship to; the constants of before are gone",
+      set(PT["production"]) == set(PR.PRINT_NAMES["kinds"]) and {k_ for k_, v in PT["production"].items() if v == 2} == {"canvas", "poster"}
+      and set(PT["production"].values()) == {2, 3} and PT["transit"] == {"LT": [4, 6], "LV": [4, 6], "EE": [4, 6], "FI": [5, 8], "DE": [3, 6]}
+      and all(cc_ in PR.countries() for cc_ in PT["transit"]) and not hasattr(PR, "PROD_DAYS") and not hasattr(PR, "TRANSIT_DAYS")
+      and [PR.production_days(x) for x in ("canvas40", "canvas60", "poster50", "acrylic30", "metal60", "block10", "keyring", "nothing")] == [2, 2, 2, 3, 3, 3, 3, 3]
+      and PR.transit_days("LT") == (4, 6, True) and PR.transit_days("FI") == (5, 8, True) and PR.transit_days("SE")[2] is False and PR.transit_days(None)[2] is False, PT)
+check("the sentence of a print's time in the eight languages: its production, then the delivery to its country in brackets with the published numbers, or 'about a "
+      "week' without a number for a country that has none; no token left, no dash",
+      PR.time_text("canvas40", "LT", "lt") == "Gamyba: apie 2 darbo dienas. Pristatymas (Lietuva): po to paprastai nuo 4 iki 6 darbo dienų."
+      and PR.time_text("acrylic30", "SE", "en") == "Production: about 3 business days. Delivery (Sweden): then usually about a week."
+      and PR.time_text("block20", "DE", "de") == "Produktion: etwa 3 Werktage. Zustellung (Deutschland): danach meist 3 bis 6 Werktage."
+      and all(not re.search(r"[{}]", PR.time_text(p_["id"], cc_, l_)) and not re.search(DASH, PR.time_text(p_["id"], cc_, l_))
+              and str(PR.production_days(p_["id"])) in PR.time_text(p_["id"], cc_, l_) and f"({PR.country_name(cc_, l_)})" in PR.time_text(p_["id"], cc_, l_)
+              for p_ in PR.products(offered=False) for cc_ in ("LT", "FI", "DE", "SE", "HR") for l_ in PR.LANGS)
+      and len({PR.time_text("poster50", "LT", l_) for l_ in PR.LANGS}) == 8, PR.time_text("canvas40", "LT", "lt"))
+ot1, kt1 = draft(lang="lt")
+c, jt1 = co(ot1, kt1, lang="lt", print={"product": "canvas40", "country": "LT"}, consent_print=True)
+pt1 = H.Fake.creates[-1][0]
+ot2, kt2, _st2 = paid_file_order(lang="en")
+c2, jt2 = addon(ot2, kt2, product="acrylic60", cc="SE", lang="en")
+pt2 = H.Fake.creates[-1][0]
+est = lambda p_: (p_.get("shipping_options[0][shipping_rate_data][delivery_estimate][minimum][value]"), p_.get("shipping_options[0][shipping_rate_data][delivery_estimate][maximum][value]"))
+check("Stripe's delivery estimate is the order's own: this print's production and this country's delivery (a canvas to Lithuania 6 to 8 business days; an acrylic "
+      "print to Sweden, which has no published time, 3 and the general estimate)",
+      c == 200 and est(pt1) == ("6", "8") and c2 == 200 and est(pt2) == (str(3 + PT["transit_other"][0]), str(3 + PT["transit_other"][1]))
+      and pt1.get("shipping_options[0][shipping_rate_data][delivery_estimate][minimum][unit]") == "business_day", (est(pt1), est(pt2)))
+sidt = rj(f"orders/{ot1}/order.json")["checkout"]["session_id"]
+fix_total(sidt)
+H.Fake.emails.clear()
+ct, jt = webhook(pay_with_address(sidt, cc="LT"))
+conf_t = [m for m, _i in H.Fake.emails if ot1 in m.get("subject", "") or ot1 in m.get("text", "")]
+txt_t = "\n".join(m.get("text", "") for m in conf_t)
+check("the order confirmation of an order with a print says that print's own times (a canvas to Lithuania: production about 2 business days, delivery 4 to 6 working "
+      "days) and not the sentence of before; the e-mails' paragraphs hold the slot {time} in every language",
+      ct == 200 and PR.time_text("canvas40", "LT", "lt") in txt_t and "Gamyba trunka apie 3 darbo dienas, o pristatymas" not in txt_t and "nuo 2 iki 9" not in txt_t
+      and all(t_[l_]["p1"].count("{time}") == 1 and t_[l_]["p1"].count("{producer}") == 1 and not re.search(r"\d", t_[l_]["p1"]) for t_ in (PR.CONF, PR.ADDON_CONF) for l_ in PR.LANGS),
+      (ct, txt_t[:300]))
 maker.kick = real_kick
 pay._stripe = real_stripe
 

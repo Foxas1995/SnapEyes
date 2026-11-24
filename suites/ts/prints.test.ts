@@ -9,8 +9,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  PRINT_NAMES, PRINT_OFFER, PRINT_RATES, countriesByName, countryName, defaultCountry, kindAbout, kindName, offeredPrints, printCountries, printLabel, printMargin, printName, printProduct, printProducts,
-  printShipping, shipPrice,
+  PRINT_NAMES, PRINT_OFFER, PRINT_RATES, PRINT_TIMES, countriesByName, countryName, defaultCountry, kindAbout, kindName, madeText, offeredPrints, printCountries, printLabel, printMargin, printName,
+  printProduct, printProducts, printShipping, shipPrice, wayText,
   type ServerPrints,
 } from '../../src/shared/prints';
 import { BuyCard } from '../../src/try/BuyCard';
@@ -22,7 +22,7 @@ import type { OrderStatus } from '../../src/order/api';
 import { runCheckout } from '../../src/try/checkout';
 import { CHECKOUT_LEGAL, checkoutLegal, WITHDRAWAL_CONSENT_VERSION } from '../../src/shared/legal';
 import { EDITIONS } from '../../src/legal/editions';
-import { shippingRows } from '../../src/legal/docs/prints';
+import { shippingRows, timesText } from '../../src/legal/docs/prints';
 import { OrderPrint, printStateLt } from '../../src/admin/Prints';
 import { money } from '../../src/shared/markets';
 import type { Block, LegalDoc } from '../../src/legal/types';
@@ -94,6 +94,33 @@ export async function run(): Promise<Row[]> {
     printProduct('keyring')?.cm === 0 && LANGS.every((l) => printName('keyring', l) === kindName('keyring', l) && printLabel('keyring', 0, l) === kindName('keyring', l))
       && printName('keyring', 'en') === 'Keyring' && printProducts().every((p) => p.cm >= 10 && sp(printName(p.id, 'en')).endsWith(`${p.cm} × ${p.cm} cm`))
       && PRINT_RATES.skus.KRR0050041?.design_mm.join() === '56,76', printName('keyring', 'en'));
+  // 2026-11-24: how long a print takes, per product and per country, from ONE table (api/_lib/print_times.py: merchOne's published times); the words are in
+  // api/_lib/print_names.py times. The sentence "about 3 business days ... 2 to 9 ..." for everything is gone
+  const T = PRINT_TIMES;
+  check('the table of the times: a production time for every kind (canvas and poster 2 business days, every other 3), a delivery time for the five countries merchOne '
+    + 'publishes one for (Lithuania, Latvia and Estonia 4 to 6 working days, Finland 5 to 8, Germany 3 to 6), and a general estimate for the others',
+    Object.keys(T.production).sort().join() === [...KINDS6].sort().join() && KINDS6.filter((k) => T.production[k] === 2).join() === 'canvas,poster'
+      && KINDS6.every((k) => T.production[k] === 2 || T.production[k] === 3) && Object.keys(T.transit).sort().join() === 'DE,EE,FI,LT,LV'
+      && ['LT', 'LV', 'EE'].every((cc) => T.transit[cc].join() === '4,6') && T.transit.FI.join() === '5,8' && T.transit.DE.join() === '3,6'
+      && Object.keys(T.transit).every((cc) => printCountries().includes(cc)) && T.transit_other[0] <= T.transit_other[1], JSON.stringify(T));
+  check('the words of the times in the eight languages: a print\'s own production time, the delivery to a country with a published time by its numbers, to any other '
+    + 'country "about a week" without a number; the country stands in brackets in its own form',
+    madeText('canvas', 'lt') === 'Gamyba: apie 2 darbo dienas.' && madeText('acrylic', 'lt') === 'Gamyba: apie 3 darbo dienas.' && madeText('poster', 'en') === 'Production: about 2 business days.'
+      && wayText('LT', 'lt') === 'Pristatymas (Lietuva): po to paprastai nuo 4 iki 6 darbo dienų.' && wayText('FI', 'en') === 'Delivery (Finland): then usually 5 to 8 working days.'
+      && wayText('DE', 'de') === 'Zustellung (Deutschland): danach meist 3 bis 6 Werktage.' && wayText('SE', 'en') === 'Delivery (Sweden): then usually about a week.'
+      && wayText('HR', 'lt') === 'Pristatymas (Kroatija): po to paprastai apie savaitę.'
+      && LANGS.every((l) => KINDS6.every((k) => madeText(k, l).includes(String(T.production[k])) && !/[{}]/.test(madeText(k, l)))
+        && printCountries().every((cc) => wayText(cc, l).includes(`(${countryName(cc, l)})`) && !/[{}]/.test(wayText(cc, l)) && !DASH.test(wayText(cc, l))
+          && /\d/.test(wayText(cc, l)) === (cc in T.transit)))
+      && new Set(LANGS.map((l) => madeText('block', l))).size === 8 && new Set(LANGS.map((l) => wayText('SE', l))).size === 8, wayText('LT', 'lt'));
+  check('the terms\' delivery paragraph says the table\'s times in every language (2 business days for a canvas or a poster, 3 for every other print; 4 to 6 working '
+    + 'days to Lithuania, Latvia and Estonia, 5 to 8 to Finland, 3 to 6 to Germany; the other countries about a week), no token left, and no "2 to 9" or example of old',
+    /about 2 business days for a canvas or a poster and about 3 business days for every other print\. Delivery then usually takes 4 to 6 working days to Lithuania, Latvia and Estonia, 5 to 8 to Finland and 3 to 6 to Germany; to the other countries of the European Union the parcel is usually on its way for about a week\./.test(timesText('en'))
+      && /Drobės ir plakato gamyba trunka apie 2 darbo dienas, kiekvieno kito spaudinio apie 3 darbo dienas\. Po to pristatymas į Lietuvą, Latviją ir Estiją paprastai trunka nuo 4 iki 6 darbo dienų, į Suomiją nuo 5 iki 8, į Vokietiją nuo 3 iki 6;/.test(timesText('lt'))
+      && LANGS.every((l) => !/[{}]/.test(timesText(l)) && (timesText(l).match(/\d+/g) ?? []).join() === '2,3,4,6,5,8,3,6' && !DASH.test(timesText(l))
+        && sectionText(EDITIONS.eu.terms[l], 'prints').includes(timesText(l)) && !/2 (to|bis|iki|és|do|kuni|līdz) 9|2-9/.test(sectionText(EDITIONS.eu.terms[l], 'prints')))
+      && new Set(LANGS.map((l) => timesText(l))).size === 8 && sectionText(EDITIONS.hu.terms.hu, 'prints').includes(timesText('hu'))
+      && sectionText(EDITIONS.eu.terms.en, 'prints').includes('within 30 days of the contract'), timesText('en'));
   check('offeredPrints: none without the server\'s prints, while they are off, or in a market that sells none (au, hu, us); all five on the euro markets - 1124: all eleven',
     offeredPrints(undefined, 'eu').length === 0 && offeredPrints({ on: false }, 'eu').length === 0 && offeredPrints(server, 'au').length === 0
       && offeredPrints(server, 'hu').length === 0 && offeredPrints(server, 'us').length === 0 && offeredPrints(server, 'lt').length === 11);

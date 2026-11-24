@@ -99,7 +99,7 @@ export const lt: OrderCopy = {
     country: 'Pristatymo šalis',
     pick: 'Pasirinkite šalį',
     shipping: 'Siuntimas',
-    arrives: 'Pristatoma maždaug per 1 ar 2 savaites, su siuntos sekimu.',
+    arrives: 'Siuntą galima sekti.',
     mockAlt: (name: string) => `${name}: Jūsų kūrinio peržiūra`,
     total: 'Iš viso',
     opening: 'Atidarome mokėjimo puslapį…',

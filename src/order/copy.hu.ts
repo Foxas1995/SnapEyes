@@ -100,7 +100,7 @@ export const hu: OrderCopy = {
     country: 'Szállítási ország',
     pick: 'Válassz országot',
     shipping: 'Szállítás',
-    arrives: 'Nagyjából 1 vagy 2 hét alatt érkezik, nyomon követhetően.',
+    arrives: 'A csomag nyomon követhető.',
     mockAlt: (name: string) => `${name}: az alkotásod előnézete`,
     total: 'Összesen',
     opening: 'Megnyitjuk a fizetési oldalt…',

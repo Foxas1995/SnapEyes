@@ -9,6 +9,7 @@
 import OFFER_SOURCE from '../../api/_lib/print_offer.py?raw';
 import RATES_SOURCE from '../../api/_lib/print_rates.py?raw';
 import NAMES_SOURCE from '../../api/_lib/print_names.py?raw';
+import TIMES_SOURCE from '../../api/_lib/print_times.py?raw';
 import type { Lang } from './lang';
 
 export type PrintKind = 'acrylic' | 'metal' | 'canvas' | 'poster' | 'block' | 'keyring';
@@ -17,7 +18,9 @@ export interface PrintOffer { currency: string; markets: string[]; vat_pct: numb
 export interface SkuRate { cost: number; blueprint: number; variant: number; design_mm: number[]; design_px: number[]; file_mm: number[]; file_px: number[]; trim_mm: number; dpi: number }
 export interface PrintRates { fetched: string; skus: Record<string, SkuRate>; shipping: Record<string, Record<string, number>> }
 type Words = Record<Lang, string>;
-export interface PrintNames { kinds: Record<PrintKind, Words>; about: Record<PrintKind, Words>; countries: Record<string, Words> }
+export interface PrintNames { kinds: Record<PrintKind, Words>; about: Record<PrintKind, Words>; times: Record<Lang, { made: string; way: string; way_other: string }>; countries: Record<string, Words> }
+/** How long a print takes (api/_lib/print_times.py, the one place of these numbers): business days of production per kind, working days on the way per country. */
+export interface PrintTimes { production: Record<PrintKind, number>; transit: Record<string, [number, number]>; transit_other: [number, number] }
 
 /** The literal NAME = { ... } that ends a Python file of this kind (plain JSON; scripts/check_prices.mjs reads it the same way). */
 export function parseLiteral<T>(src: string, name: string): T {
@@ -29,6 +32,7 @@ export function parseLiteral<T>(src: string, name: string): T {
 export const PRINT_OFFER: Readonly<PrintOffer> = parseLiteral<PrintOffer>(OFFER_SOURCE, 'PRINT_OFFER');
 export const PRINT_RATES: Readonly<PrintRates> = parseLiteral<PrintRates>(RATES_SOURCE, 'PRINT_RATES');
 export const PRINT_NAMES: Readonly<PrintNames> = parseLiteral<PrintNames>(NAMES_SOURCE, 'PRINT_NAMES');
+export const PRINT_TIMES: Readonly<PrintTimes> = parseLiteral<PrintTimes>(TIMES_SOURCE, 'PRINT_TIMES');
 
 /** The prints of the offer, in its order (offered: only the ones with on 1). */
 export const printProducts = (offered = true): PrintProduct[] => PRINT_OFFER.products.filter((p) => !offered || p.on === 1);
@@ -79,6 +83,14 @@ export function printName(id: string, lang: string): string {
 export const kindName = (kind: PrintKind, lang: string): string => PRINT_NAMES.kinds[kind]?.[lng(lang)] ?? kind;
 /** The name a list shows: the kind with its size, or the kind alone for a thing that is not named by a size (cm 0: the keyring). */
 export const printLabel = (kind: PrintKind, cm: number, lang: string): string => (cm ? `${kindName(kind, lang)} ${printSize(cm)}` : kindName(kind, lang));
+/** "Production: about 2 business days." for a kind of print (api/_lib/prints.py time_text, its first sentence). */
+export const madeText = (kind: PrintKind, lang: string): string => PRINT_NAMES.times[lng(lang)].made.replace('{n}', String(PRINT_TIMES.production[kind]));
+/** "Delivery (Lithuania): then usually 4 to 6 working days.", or "... then usually about a week." for a country merchOne publishes no time for. */
+export function wayText(cc: string, lang: string): string {
+  const t = PRINT_TIMES.transit[cc];
+  const w = PRINT_NAMES.times[lng(lang)];
+  return (t ? w.way.replace('{a}', String(t[0])).replace('{b}', String(t[1])) : w.way_other).replace('{country}', countryName(cc, lang));
+}
 /** One line that says what a kind of print is (api/_lib/print_names.py about), '' when the table has none. */
 export const kindAbout = (kind: PrintKind, lang: string): string => PRINT_NAMES.about?.[kind]?.[lng(lang)] ?? '';
 export const countryName = (cc: string, lang: string): string => PRINT_NAMES.countries[cc]?.[lng(lang)] ?? cc;

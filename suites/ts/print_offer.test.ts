@@ -16,7 +16,7 @@ import type { OrderPrint, OrderStatus } from '../../src/order/api';
 import { BuyCard } from '../../src/try/BuyCard';
 import { COPY, setCopyLang } from '../../src/try/copy';
 import { CHECKOUT_LEGAL } from '../../src/shared/legal';
-import { countryName, kindAbout, kindName, printCountries, printName, printProducts, printShipping } from '../../src/shared/prints';
+import { countryName, kindAbout, kindName, madeText, printCountries, printName, printProducts, printShipping, wayText } from '../../src/shared/prints';
 import { money } from '../../src/shared/markets';
 import type { Eye } from '../../src/try/multi';
 
@@ -193,6 +193,20 @@ export async function run(): Promise<Row[]> {
           && /data-kind="canvas"/.test(hc) && text(hc).includes(kindAbout('canvas', 'lt')) && text(hc).includes(sp(`${printName('canvas60', 'lt')}, ${money(6900, 'eur', 'lt')}`))
           && !has(h0, 'print-about');
       })(), LANGS.map((l) => (ORDER_COPY[l].offer.lead.match(/\d/g) ?? []).join('')).join());
+  // 2026-11-24: the card says how long the chosen print takes: its own production time under the list, and the delivery to the chosen country beside the shipping
+  // (api/_lib/print_times.py); "Arrives in about 1 to 2 weeks" for everything is gone, the line that the parcel is tracked stays
+  const tl = card({ initial: { choice: { product: 'canvas60', country: 'LT' } } }, 'lt');
+  const tb = card({ initial: { choice: { product: 'block20', country: 'DE' } } });
+  const ts = card({ initial: { choice: { product: 'poster50', country: 'SE' } } });
+  const tn = card({ initial: { choice: { product: 'acrylic40', country: '' } } });
+  check('the card says the chosen print\'s own production time (a canvas or a poster 2 business days, the others 3) and, once the country is chosen, the delivery to it '
+    + '(Lithuania 4 to 6 working days, Germany 3 to 6; a country without a published time "about a week"); no delivery line before a country is chosen',
+    has(tl, 'print-made') && text(tl).includes('Gamyba: apie 2 darbo dienas.') && has(tl, 'print-way') && text(tl).includes('Pristatymas (Lietuva): po to paprastai nuo 4 iki 6 darbo dienų.')
+      && text(tb).includes(madeText('block', 'en')) && text(tb).includes('Production: about 3 business days.') && text(tb).includes('Delivery (Germany): then usually 3 to 6 working days.')
+      && text(ts).includes('Production: about 2 business days.') && text(ts).includes(wayText('SE', 'en')) && text(ts).includes('then usually about a week')
+      && has(tn, 'print-made') && !has(tn, 'print-way') && !has(card(), 'print-made')
+      && LANGS.every((l) => !/1 (to|bis|ar|vagy|do|kuni|līdz) 2|1-2/.test(ORDER_COPY[l].offer.arrives) && !/\d/.test(ORDER_COPY[l].offer.arrives) && ORDER_COPY[l].offer.arrives.length > 10)
+      && text(tb).includes(W.arrives) && W.arrives === 'The parcel is tracked.', text(tl).slice(0, 400));
   // the keyring is ready and not offered (it earns less than the floor until the owner decides): were the server to offer it, the card would show it without a size
   const withKeyring = { ...offer, products: printProducts(false).map((p) => ({ id: p.id, kind: p.kind, cm: p.cm, price: p.price, ship: Object.fromEntries(printCountries().map((cc) => [cc, printShipping(cc, p.id)])) })) };
   const hk = card({ st: ready({ print_offer: withKeyring }), initial: { choice: { product: 'keyring', country: 'LT' } } });

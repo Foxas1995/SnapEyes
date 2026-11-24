@@ -15,6 +15,7 @@ import { join } from 'node:path';
 export const OFFER_FILE = 'api/_lib/print_offer.py';
 export const RATES_FILE = 'api/_lib/print_rates.py';
 export const NAMES_FILE = 'api/_lib/print_names.py';
+export const TIMES_FILE = 'api/_lib/print_times.py';
 const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const KINDS = ['acrylic', 'metal', 'canvas', 'poster', 'block', 'keyring'];
 const NO_SIZE = ['keyring'];   // the kinds that are not named by a size: cm 0 (api/_lib/print_offer.py)
@@ -47,7 +48,7 @@ export function marginRule(offer, rates, id, cc) {
 
 export function readPrints(root) {
   const read = (rel, name) => parseLiteral(readFileSync(join(root, rel), 'utf8'), name);
-  return { offer: read(OFFER_FILE, 'PRINT_OFFER'), rates: read(RATES_FILE, 'PRINT_RATES'), names: read(NAMES_FILE, 'PRINT_NAMES') };
+  return { offer: read(OFFER_FILE, 'PRINT_OFFER'), rates: read(RATES_FILE, 'PRINT_RATES'), names: read(NAMES_FILE, 'PRINT_NAMES'), times: read(TIMES_FILE, 'PRINT_TIMES') };
 }
 
 /** {id: {min, max, worst}} of what each print earns, in cents, over the countries it ships to. */
@@ -90,7 +91,7 @@ export function checkPrints(root, markets, editionMarkets, client) {
   try {
     t = readPrints(root);
   } catch (e) {
-    return [`${OFFER_FILE}, ${RATES_FILE} or ${NAMES_FILE}: a literal cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`];
+    return [`${OFFER_FILE}, ${RATES_FILE}, ${NAMES_FILE} or ${TIMES_FILE}: a literal cannot be read as JSON (${e instanceof Error ? e.message : String(e)})`];
   }
   const { offer, rates, names } = t;
   const at = OFFER_FILE;
@@ -132,6 +133,25 @@ export function checkPrints(root, markets, editionMarkets, client) {
     for (const l of LANGS) if (!(names.kinds?.[k] && typeof names.kinds[k][l] === 'string' && names.kinds[k][l])) out.push(`${NAMES_FILE}: kind ${k} has no ${l} words`);
     for (const l of LANGS) if (!(names.about?.[k] && typeof names.about[k][l] === 'string' && names.about[k][l].length > 12)) out.push(`${NAMES_FILE}: kind ${k} has no ${l} line that says what it is (about)`);
   }
+  // how long a print takes (api/_lib/print_times.py, the one place of those numbers) and the words of it (print_names.py times)
+  const times = t.times ?? {};
+  const days = (v) => isInt(v) && v >= 1 && v <= 30;
+  const pair = (v) => Array.isArray(v) && v.length === 2 && days(v[0]) && days(v[1]) && v[0] <= v[1];
+  if (Object.keys(times).sort().join() !== 'production,transit,transit_other') out.push(`${TIMES_FILE}: its fields must be exactly production, transit, transit_other`);
+  for (const k of KINDS) if (!days(times.production?.[k])) out.push(`${TIMES_FILE}: production has no whole number of business days for the kind ${k}`);
+  for (const k of Object.keys(times.production ?? {})) if (!KINDS.includes(k)) out.push(`${TIMES_FILE}: production names a kind that is not a kind of print (${k})`);
+  for (const [cc, v] of Object.entries(times.transit ?? {})) {
+    if (!pair(v)) out.push(`${TIMES_FILE}: transit ${cc} must be [from, to] in working days`);
+    if (!ccs.includes(cc)) out.push(`${TIMES_FILE}: transit names ${cc}, a country prints do not ship to (${RATES_FILE})`);
+  }
+  if (!pair(times.transit_other)) out.push(`${TIMES_FILE}: transit_other must be [from, to] in working days`);
+  for (const l of LANGS) {
+    const w = names.times?.[l];
+    const has = (key, tokens, none) => typeof w?.[key] === 'string' && tokens.every((x) => w[key].split(x).length === 2) && none.every((x) => !w[key].includes(x)) && !/\d/.test(w[key]);
+    if (!has('made', ['{n}'], ['{a}', '{b}', '{country}']) || !has('way', ['{country}', '{a}', '{b}'], ['{n}']) || !has('way_other', ['{country}'], ['{n}', '{a}', '{b}'])) {
+      out.push(`${NAMES_FILE}: times.${l} must hold made ({n}), way ({country}, {a}, {b}) and way_other ({country}), each token once and no number written in the words`);
+    }
+  }
   // the margin of every print in every country
   if (!out.length) {
     const table = marginTable(offer, rates);
@@ -147,6 +167,7 @@ export function checkPrints(root, markets, editionMarkets, client) {
     if (!same(client.PRINT_OFFER, offer)) out.push(`src/shared/prints.ts reads ${OFFER_FILE} differently from this check`);
     if (!same(client.PRINT_RATES, rates)) out.push(`src/shared/prints.ts reads ${RATES_FILE} differently from this check`);
     if (!same(client.PRINT_NAMES, names)) out.push(`src/shared/prints.ts reads ${NAMES_FILE} differently from this check`);
+    if (!same(client.PRINT_TIMES, times)) out.push(`src/shared/prints.ts reads ${TIMES_FILE} differently from this check`);
     for (const p of offer.products) {
       for (const cc of ccs) {
         const want = shipRule(rates.shipping[cc][p.sku], offer.vat_pct);

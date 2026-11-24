@@ -694,7 +694,9 @@ async function checkGuide() {
 // The final list of prints (the same day: twelve SKUs in the tables, a line per kind in eight languages under the picker's list, the pictures of the metal print and
 // the keyring) moved the base of /order by +2,024 B JS (139,707 to 141,731 B, measured on d7bf2d6 against the tree with it; /try 201,084 to 201,087 B, left in the
 // budget) and of both pages by +94 B CSS (the utilities of the new pictures in the shared stylesheet: 13,986 to 14,080 B). It is a product, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 } };
+// The times of the prints (the same day: the table of production and delivery times and its words in eight languages, the two lines of the picker) moved the base
+// of /order by +709 B JS (141,731 to 142,440 B, measured on 20fca7d against the tree with them; /try and the CSS of both pages did not move). A product's facts.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

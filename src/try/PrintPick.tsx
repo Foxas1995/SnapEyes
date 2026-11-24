@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Lang } from '../shared/lang';
-import { countriesByName, countryName, type OfferedPrint, type PrintKind, kindAbout, printLabel } from '../shared/prints';
+import { countriesByName, countryName, type OfferedPrint, type PrintKind, kindAbout, madeText, printLabel, wayText } from '../shared/prints';
 
 // The print picker. It was the print option of /try's buy card; since 2026-11-21 a print is offered AFTER the purchase, on the order page
 // (src/order/PrintOffer.tsx), and the buy card shows none (the owner: a big price at the first checkout scares). The component takes its
@@ -74,6 +74,7 @@ export const PrintPick: React.FC<Props> = (p) => {
       {sel && (
         <>
           {kindAbout(sel.kind, lang) && <p data-testid="print-about" className="mt-2 text-[11px] text-zinc-300 leading-relaxed">{kindAbout(sel.kind, lang)}</p>}
+          <p data-testid="print-made" className="mt-1 text-[11px] text-zinc-300 leading-relaxed">{madeText(sel.kind, lang)}</p>
           <div className="mt-3 flex gap-3 items-start">
             <PrintMock kind={sel.kind} src={p.artSrc} alt={w.mockAlt(printLabel(sel.kind, sel.cm, lang))} />
             <div className="flex-1 min-w-0">
@@ -88,6 +89,7 @@ export const PrintPick: React.FC<Props> = (p) => {
                   <span>{w.shipping}</span><span className="whitespace-nowrap">{p.fmt(ship)}</span>
                 </p>
               )}
+              {p.choice.country && typeof ship === 'number' && <p data-testid="print-way" className="mt-1 text-[11px] text-zinc-300">{wayText(p.choice.country, lang)}</p>}
               <p className="mt-1 text-[11px] text-zinc-400">{w.arrives}</p>
             </div>
           </div>

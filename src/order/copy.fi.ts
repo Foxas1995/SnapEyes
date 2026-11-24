@@ -106,7 +106,7 @@ export const fi: OrderCopy = {
     country: 'Toimitusmaa',
     pick: 'Valitse maa',
     shipping: 'Toimitus',
-    arrives: 'Saapuu noin 1-2 viikossa, seurannalla.',
+    arrives: 'Lähetystä voi seurata.',
     mockAlt: (name: string) => `${name}: esikatselu taideteoksestasi`,
     total: 'Yhteensä',
     opening: 'Avaamme maksusivua…',

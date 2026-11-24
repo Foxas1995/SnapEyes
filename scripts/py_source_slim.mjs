@@ -14,6 +14,7 @@
 export const SLIM_FILES = {
   'api/_lib/styles_registry.py': 'STYLES', 'api/_lib/layout_names.py': 'LAYOUT_NAMES',
   'api/_lib/print_offer.py': 'PRINT_OFFER', 'api/_lib/print_rates.py': 'PRINT_RATES', 'api/_lib/print_names.py': 'PRINT_NAMES',
+  'api/_lib/print_times.py': 'PRINT_TIMES',      // 2026-11-24: the production time per kind of print and the delivery time per country
 };
 
 const CONST_LINE = /^([A-Z_][A-Z0-9_]*) = (\S.*)$/;

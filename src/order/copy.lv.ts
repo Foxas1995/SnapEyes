@@ -105,7 +105,7 @@ export const lv: OrderCopy = {
     country: 'Piegādes valsts',
     pick: 'Izvēlieties valsti',
     shipping: 'Piegāde',
-    arrives: 'Pienāk apmēram 1 līdz 2 nedēļu laikā, ar sūtījuma izsekošanu.',
+    arrives: 'Sūtījums ir izsekojams.',
     mockAlt: (name: string) => `${name}: jūsu mākslas darba priekšskatījums`,
     total: 'Kopā',
     opening: 'Atveram maksājuma lapu…',

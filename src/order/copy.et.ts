@@ -107,7 +107,7 @@ export const et: OrderCopy = {
     country: 'Tarneriik',
     pick: 'Vali riik',
     shipping: 'Tarne',
-    arrives: 'Saabub umbes 1 kuni 2 nädalaga, jälgitava saadetisena.',
+    arrives: 'Saadetis on jälgitav.',
     mockAlt: (name: string) => `${name}: sinu kunstiteose eelvaade`,
     total: 'Kokku',
     opening: 'Avame makselehte…',

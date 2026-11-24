@@ -165,7 +165,13 @@ const BLOCK = { js: 17 + 11 + 15 + 13 + 18 + 12 + 11 + 132, css: 0 };
 // the landing's entry +18 B (the English clause), the names of chunks in the import lists of eighteen other chunks -21 B: -3 B, so the page stands at
 // +5,900 B of +6,000 (it was +5,903 B on d7bf2d6). Re-measure it when those tables or lines change: build both trees, gzip each chunk, take the differences.
 const PRINTS2 = { js: 2045 + 210 + 3 + 7 + 2 + 1 - 6 + 2 + 6, css: 94 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js + BLOCK.js + PRINTS2.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css + BLOCK.css + PRINTS2.css };
+// The times of the prints (2026-11-24: the production time per kind and the delivery time per country in ONE table, api/_lib/print_times.py, their words in
+// print_names.py, the terms' delivery paragraph in eight languages, src/legal/docs/prints.ts timesText) are a product's facts, not motion, and the landing loads
+// none of them. PRINT_TIMES is what this script still counts, measured per chunk, gzip level 6, on the tree with them against its parent (20fca7d): the chunk of
+// the print tables that /order and the legal pages share (prints-*.js +775 B) and the legal pages' entry (main-*.js +782 B). No chunk the landing loads moved by
+// a byte: the page stands at +5,900 B of +6,000. Re-measure it when the table, its words or the paragraph change.
+const PRINT_TIMES = { js: 775 + 782, css: 0 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js + BLOCK.js + PRINTS2.js + PRINT_TIMES.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css + BLOCK.css + PRINTS2.css + PRINT_TIMES.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;
