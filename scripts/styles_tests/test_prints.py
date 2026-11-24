@@ -1219,6 +1219,14 @@ check("a paid amount other than the print and its shipping: recorded as it came 
       c == 200 and pje.get("amount_total") == 3500 + 849 + 100 and pje["print"].get("mismatch") == ["amount"] and (rj(f"orders/{oe}/print.json") or {}).get("state") == "held"
       and any("is held" in m.get("subject", "") and oe in m.get("subject", "") for m, _i in H.Fake.emails) and (oe, "print") not in KICKS
       and PR.step(oe, rj(f"orders/{oe}/order.json"), pay.get_paid(oe)) == "held" and not MO.creates, (c, jm, pje.get("print", {}).get("mismatch"), KICKS))
+held_e = next((m.get("text", "") for m, _i in H.Fake.emails if "is held" in m.get("subject", "") and oe in m.get("subject", "")), "")
+H.Fake.emails.clear()
+o_h, k_h, s_h = paid_print_order(cc="LT", product="acrylic30", mismatch_cc="LV")
+held_first = next((m.get("text", "") for m, _i in H.Fake.emails if "is held" in m.get("subject", "") and o_h in m.get("subject", "")), "")
+check("the held note of a print bought later sends the owner to the admin page's refund of that payment (named: the server sees it and cancels the print), not to "
+      "the Stripe Dashboard; a print of the artwork's own checkout keeps the Dashboard (its money is a part of the order's payment)",
+      "Spaudinio mokėjimas" in held_e and sess_e["payment_intent"] in held_e and "Do not refund it in the Stripe Dashboard" in held_e and "the amount paid" in held_e
+      and "refund the print in the Stripe Dashboard." in held_first and "Spaudinio mokėjimas" not in held_first, (held_e, held_first))
 
 # --- paid twice
 og, kg, sg = paid_file_order()

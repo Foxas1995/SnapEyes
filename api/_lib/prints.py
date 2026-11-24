@@ -757,11 +757,19 @@ def on_paid(order, paid):
             return
         index(order)
         if pp.get("mismatch"):
+            # how to give the money back depends on where it sits. A print bought after the artwork has a payment of its own: the admin panel's
+            # refund of THAT payment is the one the server sees (it cancels the print, _refunded); a refund in the Stripe Dashboard would leave the
+            # print "held" here for ever. A print of the artwork's own checkout shares the order's payment, so only the Dashboard can refund a part
+            addon = isinstance(paid.get("print_addon"), dict)
+            how = (f"refund the print's own payment in the admin page (order {order}, Mokėjimai, \"Spaudinio mokėjimas\": {print_payment(paid) or 'see the order'}): "
+                   f"the server sees that refund and cancels the print. Do not refund it in the Stripe Dashboard: the server would not know."
+                   if addon else "refund the print in the Stripe Dashboard.")
             _note(order, "print_held", f"SnapEyes: the print of order {order} is held",
                   f"Order {order} was paid with a print ({pp.get('product')}, priced for {pp.get('country')}), but "
-                  f"{', '.join(pp['mismatch'])} does not match what was priced (the address Stripe collected, the product or the consent).\n"
+                  f"{', '.join(pp['mismatch'])} does not match what was priced (the address Stripe collected, the product, the consent"
+                  f"{' or the amount paid' if addon else ''}).\n"
                   f"Nothing is sent to the print partner. Look at it in the admin page (Spaudiniai, order {order}): retry once it is clear, or "
-                  f"refund the print in the Stripe Dashboard.\n")
+                  f"{how}\n")
     except Exception as e:  # noqa: a print must never cost the payment record
         pay.log(f"order {order}: print record not written: {type(e).__name__} {e}")
 
