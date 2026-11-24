@@ -161,7 +161,7 @@ const W: Record<Lang, Words> = {
     contract: 'Kinkekaardi eest maksate ette meie makseteenuse pakkuja Stripe’i kaudu. Kinkekaardi leping on sõlmitud, kui teie makse on kinnitatud: seejärel näitame koodi lehel, kuhu tagasi pöördute, ja saadame selle teile e-kirjaga koos nende tingimuste ja taganemisõiguse teabega tekstina. Kinkekaardiga tasutud tellimus on omaette leping meie ja tellimuse esitaja vahel, nende tingimuste alusel.',
     withdrawal: `Kinkekaardi ostust võite taganeda 14 päeva jooksul alates ostmisest, põhjust avaldamata, kuni kinkekaarti ei ole kasutatud: kirjutage aadressile ${MAIL} ja lisage kinkekaardi kood (võite kasutada tüüpvormi meie lehel [Taganemisõigus](doc:withdrawal)). Tagastame kogu hinna 14 päeva jooksul sama makseviisiga ja tühistame koodi. Kinkekaardiga tasutud tellimuse suhtes kehtib selle tellimuse taganemisõigus (vt [Taganemisõigus](#withdrawal)).`,
     pricesRef: 'Kinkekaardiga saab tellimuse eest tasuda osaliselt või täielikult: vt [Kinkekaardid](#vouchers).',
-    hufRef: 'Kinkekaarte müüakse ja kasutatakse ainult eurodes, seega ei saa nendega tasuda forintites tehtava tellimuse eest: vt [Kinkekaardid](#vouchers).',
+    hufRef: 'Kinkekaarte müüakse ja kasutatakse ainult eurodes, seega ei saa nendega tasuda forintides tehtava tellimuse eest: vt [Kinkekaardid](#vouchers).',
     hufPrice: 'müüakse eurodes meie kingilehel',
     privTitle: 'Kinkekaardid',
     priv: [

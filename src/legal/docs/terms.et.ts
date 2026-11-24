@@ -69,7 +69,7 @@ export const et: LegalDoc = {
       id: 'product',
       title: 'Mida te ostate',
       blocks: [
-        `Isikupärastatud digitaalne kunstiteos, mis on valmistatud teie enda fotost silmast (või mitmest silmast), teie valitud stiilis, paigutuses ja tekstiga. Saate ühe pildifaili (JPEG) ilma vesimärgita: ${SQUARE} ühe silma puhul, ${PX} pikimal küljel mitme silma puhul. Kunstiteos antakse üle ainult digitaalse failina, allalaadimise teel. Me ei müü trükitud pilte, raame ega muid füüsilisi tooteid.`,
+        `Isikupärastatud digitaalne kunstiteos, mis on valmistatud teie enda silmafotost (või mitme silma fotodest), teie valitud stiilis, paigutuses ja tekstiga. Saate ühe pildifaili (JPEG) ilma vesimärgita: ${SQUARE} ühe silma puhul, ${PX} pikimal küljel mitme silma puhul. Kunstiteos antakse üle ainult digitaalse failina, allalaadimise teel. Me ei müü trükitud pilte, raame ega muid füüsilisi tooteid.`,
         `${TRANSPARENCY_ET} Kunstiteos on seega kunstiline taastamine, mitte meditsiiniline pilt ega mikroskoobipilt, ning see ei sobi ühekski meditsiiniliseks otstarbeks ega isiku tuvastamiseks.`,
         ...aiBlocks('et'),
       ],
@@ -138,7 +138,7 @@ export const et: LegalDoc = {
       title: 'Mida te oma kunstiteosega teha tohite',
       blocks: [
         'Saate tähtajatu lihtlitsentsi (mitteainuõigusliku litsentsi) oma kunstiteose kasutamiseks isiklikel, mitteärilistel eesmärkidel. Võite selle näiteks endale välja trükkida (kodus või trükikojas), raamida, kinkida, kasutada taustapildina oma seadmetes ja jagada oma isiklikus sotsiaalmeedias.',
-        'Ilma meie loata (piisab e-kirjast) ei tohi te kunstiteost ega sellest valmistatud tooteid müüa, anda teistele sellele õigusi ega kasutada seda reklaamiks või muul ärilisel eesmärgil.',
+        'Ilma meie loata (piisab e-kirjast) ei tohi te kunstiteost ega sellest valmistatud tooteid müüa, anda teistele selle suhtes õigusi ega kasutada seda reklaamiks või muul ärilisel eesmärgil.',
         'Stiilid, taustad, paigutused ja SnapEyesi kujundus jäävad meile, sealhulgas kõik nendega seotud autoriõigused. Sama kehtib vesimärgiga eelvaadete kohta.',
       ],
     },

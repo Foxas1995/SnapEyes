@@ -76,6 +76,8 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # and the legal notice are as they were; LEGAL_UPDATED moves to 2026-11-21. eu_printlater.json is the EXACT pin of the EU edition as of this work
 # (snap_eu_edition.mjs), eu_langs3.json stays as the base: the 1113 step is now checked between the pins of the vouchers and of the three languages.
 # A1, B1, B3 and E8 moved, each keeping its id and the older names, with " - 1121:" added; the AU and US editions are made from the raw docs and carry no print.
+# The same release carries the legal wording fixes of the machine proofreading (Finnish, Estonian and Latvian only: PROOF1121 names every sentence), so the
+# step of those three languages is the print paragraphs AND those sentences, each held by its words.
 import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -505,13 +507,54 @@ WD1121 = {"en": {"prints": (1, 1, ["from your order page after your file is deli
           "de": {"prints": (1, 1, ["auf Ihrer Bestellseite, nachdem Ihre Datei geliefert ist, als eigenen Vertrag"], ["den Sie mitbestellen"], ["den Sie mitbestellen", "fertigen wir auch den Druck nicht an"])}}
 PRIV1121 = {"en": {"prints": (1, 1, ["If you order a print of your artwork", "payment page for the print"], ["If you add a print to your order"], ["If you add a print to your order"])},
             "de": {"prints": (1, 1, ["Bestellen Sie einen Druck Ihres Kunstwerks", "für den Druck"], ["Fügen Sie Ihrer Bestellung einen Druck hinzu"], ["Fügen Sie Ihrer Bestellung einen Druck hinzu"])}}
+# 1121, the same release: the wording fixes of the machine proofreading of 2026-11-21 in the legal texts (they waited for a release that moves the date anyway).
+# Finnish, Estonian and Latvian only; English and German are untouched. Each is one sentence in one block, named here: (blocks added, blocks removed, the new
+# words, words the new block must not have, the words it replaced). Where the block is one the print paragraphs changed too (the first paragraph of the Finnish
+# section prints, the Estonian product paragraph), the entry holds both; the Latvian section prints has one more block than the others (the damage paragraph).
+#   fi privacy  website: "sen ainoa jälki on" (the verb agrees with "jälki"); preview and retention: "Ne poistetaan" (discarded, not "rejected")
+#   fi terms    prints: the file "pysyy samana, tilasittepa tulosteen tai ette" (not the calque "on sama tulosteen kanssa tai ilman sitä")
+#   et terms    product: "teie enda silmafotost (või mitme silma fotodest)"; licence: "anda teistele selle suhtes õigusi" (rights to it, every right)
+#   et privacy  operations: "et fotoleht näitas" (the page has no word "ostukaart") and "kes selle reklaami kaudu tulid"; withdrawal and retention: "pärast
+#               makse laekumist" (once the payment has settled); storage: "ei salvesta teie seadmesse küpsiseid" and "kes sama reklaami kaudu tulid"
+#   lv terms    prints: "plaisa vai iedobums" (a dent; "iespiedums" is an imprint)
+#   lv privacy  operations and storage: "kas atnāca, noklikšķinot uz šīs / tās pašas reklāmas" (who came by the advertisement, not "followed" it)
+# Not applied, on purpose: the capitals "Te", "Teile", "Teilt", "Teie" of the Estonian withdrawal page's section effects are the national model's own (the file's
+# header keeps the model word for word), so that page differs by its print paragraph alone.
+PROOF1121 = {
+    "fi": {"privacy": {"website": (1, 1, ["sen ainoa jälki on maan kaksi kirjainta"], ["jälki ovat"], ["sen ainoa jälki ovat maan kaksi kirjainta"]),
+                       "preview": (1, 1, ["Ne poistetaan, kun pyyntö päättyy."], ["Ne hylätään"], ["Ne hylätään, kun pyyntö päättyy."]),
+                       "retention": (1, 1, ["Ne poistetaan, kun pyyntö päättyy."], ["Ne hylätään"], ["Ne hylätään, kun pyyntö päättyy."])},
+           "terms": {"prints": (3, 3, ["digitaalinen tiedostonne pysyy samana, tilasittepa tulosteen tai ette"], ["on sama tulosteen kanssa tai ilman sitä"],
+                                ["on sama tulosteen kanssa tai ilman sitä"])}},
+    "et": {"terms": {"product": (1, 1, ["teie enda silmafotost (või mitme silma fotodest)", "oma tellimuse lehelt"], ["fotost silmast"], ["teie enda fotost silmast (või mitmest silmast)"]),
+                     "licence": (1, 1, ["anda teistele selle suhtes õigusi"], ["anda teistele sellele õigusi"], ["anda teistele sellele õigusi"])},
+           "privacy": {"operations": (2, 2, ["et fotoleht näitas, et tellimine ei ole veel avatud", "kes selle reklaami kaudu tulid"], ["ostukaart", "järgisid"],
+                                      ["et ostukaart näitas", "kes seda reklaami järgisid"]),
+                       "withdrawal": (1, 1, ["siis alles pärast makse laekumist"], ["pärast selle lõpetamist"], ["siis alles pärast selle lõpetamist"]),
+                       "retention": (1, 1, ["siis pärast makse laekumist"], ["pärast selle lõpetamist"], ["siis pärast selle lõpetamist"]),
+                       "storage": (2, 2, ["See veebileht ei salvesta teie seadmesse küpsiseid.", "kes sama reklaami kaudu tulid"], ["ei sea küpsiseid", "järgisid"],
+                                   ["See veebileht ei sea küpsiseid.", "kes sama reklaami järgisid"])}},
+    "lv": {"terms": {"prints": (4, 4, ["plaisa vai iedobums"], ["iespiedums"], ["plaisa vai iespiedums"])},
+           "privacy": {"operations": (1, 1, ["kas atnāca, noklikšķinot uz šīs reklāmas"], ["sekoja šai reklāmai"], ["kas sekoja šai reklāmai"]),
+                       "storage": (1, 1, ["kas atnāca, noklikšķinot uz tās pašas reklāmas"], ["sekoja tai pašai reklāmai"], ["kas sekoja tai pašai reklāmai"])}},
+}
+
+
+def _step1121(l, name, allowed_en):
+    """1121: one page of one of the six later languages against the pin of the three languages: exactly the sections the print paragraphs changed in English, with
+    the same numbers of blocks, and exactly the sections and sentences PROOF1121 names for that language; nothing else, and the frame equal."""
+    want = {k: (v[0], v[1], [], [], []) for k, v in allowed_en.items()}
+    want.update((PROOF1121.get(l) or {}).get(name) or {})
+    fr, d = doc_diff(EDI["eu"][name][l], EU_LANGS3[name][l])
+    return fr and wp12_ok(d, want)
+
+
 later1121 = {d: {l: doc_diff(EDI["eu"][d][l], EU_LANGS3[d][l]) for l in LANG2} for d in ("terms", "withdrawal", "privacy")}
 later1121_ok = (all(fr and wp12_ok(d, allowed[l]) for name, allowed in (("terms", TERMS1121), ("withdrawal", WD1121), ("privacy", PRIV1121)) for l, (fr, d) in later1121[name].items())
                 and all(EDI["eu"]["imprint"][l] == EU_LANGS3["imprint"][l] for l in LANG2)
-                # the other six languages changed in the same sections and nowhere else, block for block the same count
-                and all(doc_diff(EDI["eu"][name][l], EU_LANGS3[name][l])[0] and {k: (len(v[0]), len(v[1])) for k, v in doc_diff(EDI["eu"][name][l], EU_LANGS3[name][l])[1].items()}
-                        == {k: (v[0], v[1]) for k, v in allowed["en"].items()}
-                        for name, allowed in (("terms", TERMS1121), ("withdrawal", WD1121), ("privacy", PRIV1121)) for l in ("lt", "hu", "hr", "fi", "et", "lv"))
+                # the other six languages changed in the same sections, block for block the same count, and nowhere else but in the sentences PROOF1121 names
+                and all(_step1121(l, name, allowed["en"]) for name, allowed in (("terms", TERMS1121), ("withdrawal", WD1121), ("privacy", PRIV1121))
+                        for l in ("lt", "hu", "hr", "fi", "et", "lv"))
                 and all(EDI["eu"]["imprint"][l] == EU_LANGS3["imprint"][l] for l in ("lt", "hu", "hr", "fi", "et", "lv")))
 pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
@@ -531,7 +574,8 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " with the sections of the English ones"
       " - 1121: the pin is eu_printlater.json; the 1113 step is checked between the pins of the vouchers and of the three languages; the terms differ from the pin of the three"
       " languages by exactly the product sentence and three paragraphs of the section prints (a print is ordered from the order page after the artwork is delivered, as a"
-      " contract of its own), the withdrawal page and the privacy policy by exactly one paragraph of their section prints, the legal notice not at all, in all eight languages",
+      " contract of its own), the withdrawal page and the privacy policy by exactly one paragraph of their section prints, the legal notice not at all, in all eight languages;"
+      " the Finnish, Estonian and Latvian texts also by exactly the sentences of the proofreading that PROOF1121 names (their new words there, their old words gone)",
       all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
       (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
