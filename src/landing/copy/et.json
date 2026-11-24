@@ -570,7 +570,7 @@
         "id": "print",
         "q": "Kas te trükite või saadate seda?",
         "a": "Ei. Trükkimine ei kuulu sinu tellimuse juurde: trükikoda võtab selle eest eraldi tasu ning hind sõltub trükikojast, suurusest ja materjalist. Kui me kunagi trükkimise lisame, ütleme seda sellel lehel.",
-        "aPrints": "Koos tellimusega mitte: sinu tellimus on digitaalne fail. Saad selle ise ükskõik kus välja trükkida; trükikoda võtab selle eest eraldi tasu. Kui sinu kunstiteos on valmis, saad oma tellimuse lehelt tellida trükitud pildi ka meilt: akrüülklaasil, lõuendil, plakatina või akrüülplokina, mis seisab riiulil või laual, valmistatuna sinu tellimuse järgi ja saadetuna sulle."
+        "aPrints": "Koos tellimusega mitte: sinu tellimus on digitaalne fail. Saad selle ise ükskõik kus välja trükkida; trükikoda võtab selle eest eraldi tasu. Kui sinu kunstiteos on valmis, saad oma tellimuse lehelt tellida trükitud pildi ka meilt: akrüülklaasi taha, läikivale metallile, lõuendile, plakatina või akrüülplokina, valmistatuna sinu tellimuse järgi ja saadetuna sulle."
       },
       {
         "id": "printit",

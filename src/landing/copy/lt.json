@@ -570,7 +570,7 @@
         "id": "print",
         "q": "Ar spausdinate ir siunčiate kūrinį?",
         "a": "Ne. Spausdinimas nėra Jūsų užsakymo dalis: spaustuvė už jį ima atskirą mokestį, o jo kaina priklauso nuo spaustuvės, dydžio ir medžiagos. Jei kada nors pradėsime siūlyti spausdinimą, pranešime apie tai šiame puslapyje.",
-        "aPrints": "Su užsakymu ne: Jūsų užsakymas yra skaitmeninis failas. Jį galite patys atsispausdinti bet kur; spaustuvė už tai ima atskirą mokestį. Kai kūrinys bus paruoštas, savo užsakymo puslapyje galėsite užsisakyti ir spaudinį iš mūsų: po akriliniu stiklu, ant drobės, kaip plakatą arba kaip akrilo bloką, kuris stovi ant lentynos ar stalo, pagamintą pagal užsakymą ir atsiųstą Jums."
+        "aPrints": "Su užsakymu ne: Jūsų užsakymas yra skaitmeninis failas. Jį galite patys atsispausdinti bet kur; spaustuvė už tai ima atskirą mokestį. Kai kūrinys bus paruoštas, savo užsakymo puslapyje galėsite užsisakyti ir spaudinį iš mūsų: po akriliniu stiklu, ant blizgaus metalo, ant drobės, kaip plakatą arba kaip akrilo bloką, pagamintą pagal užsakymą ir atsiųstą Jums."
       },
       {
         "id": "printit",

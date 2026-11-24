@@ -98,7 +98,7 @@ const en = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Your artwork as a print',
-    lead: 'We can also print this artwork for you: on acrylic glass, on canvas, as a poster or as an acrylic block, made to order and shipped to you. The acrylic block is 2.5 cm thick and stands by itself on a shelf or desk. It is a separate order; your file stays as it is.',
+    lead: 'We can also print this artwork for you: behind acrylic glass, on glossy metal, on canvas, as a poster or as an acrylic block. Each one is made to order and shipped to you. It is a separate order; your file stays as it is.',
     product: 'Print',
     choose: 'Choose a print',
     option: (name: string, price: string) => `${name}, ${price}`,
@@ -297,7 +297,7 @@ const de: OrderCopy = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Ihr Kunstwerk als Druck',
-    lead: 'Wir drucken dieses Kunstwerk auch für Sie: als Acrylglasbild, auf Leinwand, als Poster oder als Acrylblock, nach Ihrer Bestellung angefertigt und zu Ihnen versandt. Der Acrylblock ist 2,5 cm dick und steht von selbst auf einem Regal oder Schreibtisch. Das ist eine eigene Bestellung; Ihre Datei bleibt, wie sie ist.',
+    lead: 'Wir drucken dieses Kunstwerk auch für Sie: hinter Acrylglas, auf glänzendem Metall, auf Leinwand, als Poster oder als Acrylblock. Jeder Druck wird nach Ihrer Bestellung angefertigt und zu Ihnen versandt. Das ist eine eigene Bestellung; Ihre Datei bleibt, wie sie ist.',
     product: 'Druck',
     choose: 'Druck wählen',
     option: (name: string, price: string) => `${name}, ${price}`,

@@ -570,7 +570,7 @@
         "id": "print",
         "q": "Kinyomtatjátok és postázzátok is?",
         "a": "Nem. A nyomtatás nem része a rendelésnek: a nyomda külön díjat számít fel érte, és ennek összege a nyomdától, a mérettől és az anyagtól függ. Ha valaha nyomtatást is kínálunk, ezt ezen az oldalon közöljük.",
-        "aPrints": "A rendeléssel együtt nem: a rendelésed a digitális fájl. Bárhol kinyomtattathatod; a nyomda ezért külön díjat számít fel. Amint elkészül az alkotásod, a rendelési oldaladon nyomatot is rendelhetsz tőlünk: akrilüveg képként, vászonképként, poszterként vagy polcra, asztalra állítható akrilblokként, megrendelésre készítve és hozzád szállítva."
+        "aPrints": "A rendeléssel együtt nem: a rendelésed a digitális fájl. Bárhol kinyomtattathatod; a nyomda ezért külön díjat számít fel. Amint elkészül az alkotásod, a rendelési oldaladon nyomatot is rendelhetsz tőlünk: akrilüveg mögé, fényes fémre, vászonra, poszterként vagy akrilblokként, megrendelésre készítve és hozzád szállítva."
       },
       {
         "id": "printit",

@@ -93,7 +93,7 @@ export const hu: OrderCopy = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Az alkotásod nyomatként',
-    lead: 'Ezt az alkotást ki is nyomtatjuk neked: akrilüveg képként, vászonképként, poszterként vagy akrilblokként, megrendelésre készítve és hozzád szállítva. Az akrilblokk 2,5 cm vastag, és magától megáll a polcon vagy az asztalon. Ez külön rendelés; a fájlod marad, ahogy van.',
+    lead: 'Ezt az alkotást ki is nyomtatjuk neked: akrilüveg mögé, fényes fémre, vászonra, poszterként vagy akrilblokként. Mindegyik megrendelésre készül, és elküldjük neked. Ez külön rendelés; a fájlod marad, ahogy van.',
     product: 'Nyomat',
     choose: 'Válassz nyomatot',
     option: (name: string, price: string) => `${name}, ${price}`,

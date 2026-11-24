@@ -21,8 +21,9 @@ Rules for the literal (JSON inside Python): double quotes only, no trailing comm
   margin_floor  the build refuses a print that would earn less than this (cents) in any country after its cost, VAT and the fee
   products      the prints, in the order the checkout shows them:
                   id     a short key (lower case letters and digits): what the order records and the page sends
-                  kind   "acrylic", "canvas", "poster" or "block" (the words are in api/_lib/print_names.py)
-                  cm     the side of the square, in cm (every SnapEyes artwork is square)
+                  kind   "acrylic", "metal", "canvas", "poster", "block" or "keyring" (the words are in api/_lib/print_names.py)
+                  cm     the side of the square, in cm (every SnapEyes artwork is square); 0 for a thing that is not named by a size (the
+                         keyring: its name is the kind's name alone)
                   sku    the merchOne SKU (api/_lib/print_rates.py must hold it: its cost and print file size)
                   price  the retail price in euro cents, final (no VAT is charged by SnapEyes); the shipping is added per country
                   on     1: offered; 0: kept for the orders made with it, not offered any more
@@ -33,7 +34,15 @@ not in the list. 2026-10-28, after the review: the poster at 35 EUR (at 29 EUR i
 25 EUR; at 35 EUR about 25.8 EUR).
 Owner decisions of 2026-11-24: the Acrylic Block 20 x 20 cm at 79 EUR (merchOne blueprint 18, SKU ABS0200201, 31.73 EUR without VAT: a clear
 acrylic block 2.5 cm thick, printed directly (UV), with polished clear edges; it STANDS by itself on a shelf or a desk, it is not hung and
-has no hanger), and the canvas 40 cm from 69 to 79 EUR. His rule for a print's price: at least about 2 to 2.5 times what it costs us."""
+has no hanger), and the canvas 40 cm from 69 to 79 EUR. His rule for a print's price: at least about 2 to 2.5 times what it costs us.
+The same day, the final list (it replaces the canvas of the lines above before anything was released): the CANVAS is the unframed one, as canvases
+are sold in Lithuania: on its 2 cm wooden stretcher frame with the mirrored edge and the hanger set, ready to hang, WITHOUT an outer frame
+(CVS...LMF2HC; no black floating frame anywhere), 40 cm at 49 EUR and 60 cm at 69 EUR (merchOne makes no floating frame at 60 cm anyway); the
+Metal Print with the gloss finish and the hanger set for plates (blueprint 46, ALP...HP) 30, 40 and 60 cm at the prices of the acrylic; a small
+Acrylic Block 10 x 10 cm at 39 EUR; and the Rectangular Keyring (blueprint 210, KRR0050041, a print area of 56 x 76 mm) at 15 EUR.
+THE KEYRING IS IN THE LIST WITH on 0: at 15 EUR it earns about 11 EUR (15 EUR less merchOne's 2.99 EUR with VAT and the payment fee; its
+shipping pays for itself), which is under margin_floor (15 EUR, the keyring's whole price), so the build would refuse it. The owner decides
+whether the floor gets an exception for it or its price changes; until then it is ready and not offered."""
 PRINT_OFFER = {
     "currency": "eur",
     "markets": ["eu", "lt", "hr"],
@@ -44,8 +53,14 @@ PRINT_OFFER = {
         {"id": "acrylic30", "kind": "acrylic", "cm": 30, "sku": "ACP0300301HP", "price": 5900, "on": 1},
         {"id": "acrylic40", "kind": "acrylic", "cm": 40, "sku": "ACP0400401HP", "price": 7900, "on": 1},
         {"id": "acrylic60", "kind": "acrylic", "cm": 60, "sku": "ACP0600601HP", "price": 12900, "on": 1},
-        {"id": "canvas40", "kind": "canvas", "cm": 40, "sku": "CVS0400401LMSBF2HC", "price": 7900, "on": 1},
+        {"id": "metal30", "kind": "metal", "cm": 30, "sku": "ALP0300301HP", "price": 5900, "on": 1},
+        {"id": "metal40", "kind": "metal", "cm": 40, "sku": "ALP0400401HP", "price": 7900, "on": 1},
+        {"id": "metal60", "kind": "metal", "cm": 60, "sku": "ALP0600601HP", "price": 12900, "on": 1},
+        {"id": "canvas40", "kind": "canvas", "cm": 40, "sku": "CVS0400401LMF2HC", "price": 4900, "on": 1},
+        {"id": "canvas60", "kind": "canvas", "cm": 60, "sku": "CVS0600601LMF2HC", "price": 6900, "on": 1},
         {"id": "poster50", "kind": "poster", "cm": 50, "sku": "PSD0500501", "price": 3500, "on": 1},
-        {"id": "block20", "kind": "block", "cm": 20, "sku": "ABS0200201", "price": 7900, "on": 1}
+        {"id": "block10", "kind": "block", "cm": 10, "sku": "ABS0100101", "price": 3900, "on": 1},
+        {"id": "block20", "kind": "block", "cm": 20, "sku": "ABS0200201", "price": 7900, "on": 1},
+        {"id": "keyring", "kind": "keyring", "cm": 0, "sku": "KRR0050041", "price": 1500, "on": 0}
     ]
 }

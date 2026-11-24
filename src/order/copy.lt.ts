@@ -92,7 +92,7 @@ export const lt: OrderCopy = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Jūsų kūrinys kaip spaudinys',
-    lead: 'Šį kūrinį galime Jums ir atspausdinti: po akriliniu stiklu, ant drobės, kaip plakatą arba kaip akrilo bloką, pagamintą pagal užsakymą ir atsiųstą Jums. Akrilo blokas yra 2,5 cm storio ir pats stovi ant lentynos ar stalo. Tai atskiras užsakymas; Jūsų failas lieka toks, koks yra.',
+    lead: 'Šį kūrinį galime Jums ir atspausdinti: po akriliniu stiklu, ant blizgaus metalo, ant drobės, kaip plakatą arba kaip akrilo bloką. Kiekvieną spaudinį pagaminame pagal užsakymą ir atsiunčiame Jums. Tai atskiras užsakymas; Jūsų failas lieka toks, koks yra.',
     product: 'Spaudinys',
     choose: 'Pasirinkite spaudinį',
     option: (name: string, price: string) => `${name}, ${price}`,

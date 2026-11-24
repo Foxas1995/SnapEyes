@@ -11,13 +11,13 @@ import RATES_SOURCE from '../../api/_lib/print_rates.py?raw';
 import NAMES_SOURCE from '../../api/_lib/print_names.py?raw';
 import type { Lang } from './lang';
 
-export type PrintKind = 'acrylic' | 'canvas' | 'poster' | 'block';
+export type PrintKind = 'acrylic' | 'metal' | 'canvas' | 'poster' | 'block' | 'keyring';
 export interface PrintProduct { id: string; kind: PrintKind; cm: number; sku: string; price: number; on: number }
 export interface PrintOffer { currency: string; markets: string[]; vat_pct: number; fee_pct: number; margin_floor: number; products: PrintProduct[] }
 export interface SkuRate { cost: number; blueprint: number; variant: number; design_mm: number[]; design_px: number[]; file_mm: number[]; file_px: number[]; trim_mm: number; dpi: number }
 export interface PrintRates { fetched: string; skus: Record<string, SkuRate>; shipping: Record<string, Record<string, number>> }
 type Words = Record<Lang, string>;
-export interface PrintNames { kinds: Record<PrintKind, Words>; countries: Record<string, Words> }
+export interface PrintNames { kinds: Record<PrintKind, Words>; about: Record<PrintKind, Words>; countries: Record<string, Words> }
 
 /** The literal NAME = { ... } that ends a Python file of this kind (plain JSON; scripts/check_prices.mjs reads it the same way). */
 export function parseLiteral<T>(src: string, name: string): T {
@@ -73,10 +73,14 @@ const lng = (lang: string): Lang => (['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 
 /** "Acrylic glass print 40 × 40 cm" in a language (api/_lib/prints.py product_name). */
 export function printName(id: string, lang: string): string {
   const p = printProduct(id);
-  return p ? `${PRINT_NAMES.kinds[p.kind][lng(lang)]} ${printSize(p.cm)}` : id;
+  return p ? printLabel(p.kind, p.cm, lang) : id;
 }
 
 export const kindName = (kind: PrintKind, lang: string): string => PRINT_NAMES.kinds[kind]?.[lng(lang)] ?? kind;
+/** The name a list shows: the kind with its size, or the kind alone for a thing that is not named by a size (cm 0: the keyring). */
+export const printLabel = (kind: PrintKind, cm: number, lang: string): string => (cm ? `${kindName(kind, lang)} ${printSize(cm)}` : kindName(kind, lang));
+/** One line that says what a kind of print is (api/_lib/print_names.py about), '' when the table has none. */
+export const kindAbout = (kind: PrintKind, lang: string): string => PRINT_NAMES.about?.[kind]?.[lng(lang)] ?? '';
 export const countryName = (cc: string, lang: string): string => PRINT_NAMES.countries[cc]?.[lng(lang)] ?? cc;
 
 /** The countries sorted by their name in a language (the checkout's list). */

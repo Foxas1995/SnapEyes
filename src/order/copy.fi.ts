@@ -99,7 +99,7 @@ export const fi: OrderCopy = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Taideteoksesi tulosteena',
-    lead: 'Voimme myös tulostaa tämän taideteoksen sinulle: akryylilasitauluna, canvastauluna, julisteena tai akryylilohkona, tilauksesi mukaan tehtynä ja sinulle lähetettynä. Akryylilohko on 2,5 cm paksu ja pysyy pystyssä ilman tukea hyllyllä tai pöydällä. Se on erillinen tilaus; tiedostosi pysyy ennallaan.',
+    lead: 'Voimme myös tulostaa tämän taideteoksen sinulle: akryylilasin taakse, kiiltävälle metallille, canvakselle, julisteeksi tai akryylilohkoksi. Jokainen tuloste tehdään tilauksesi mukaan ja lähetetään sinulle. Se on erillinen tilaus; tiedostosi pysyy ennallaan.',
     product: 'Tuloste',
     choose: 'Valitse tuloste',
     option: (name: string, price: string) => `${name}, ${price}`,

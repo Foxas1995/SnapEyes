@@ -181,7 +181,8 @@ def product_name(pid, lang):
     p = product(pid, offered=False)
     if not p:
         return str(pid)
-    return f"{PRINT_NAMES['kinds'][p['kind']][lang_of(lang)]} {size_text(p['cm'])}"
+    name = PRINT_NAMES["kinds"][p["kind"]][lang_of(lang)]
+    return f"{name} {size_text(p['cm'])}" if p["cm"] else name       # cm 0: a thing that is not named by a size (the keyring)
 
 
 def country_name(cc, lang):
@@ -825,17 +826,26 @@ def _fill_edges(a, pad):
     return big
 
 
-def file_geometry(sku, master_side):
-    """(file_px, design_px, dpi) of the print file of a SKU for a master whose LONG side is master_side px: the design area at the resolution
-    the master allows (at least merchOne's minimum, at most PRINT_DPI), the print file is the design area plus the trim on every side."""
+def file_box(sku, master_side):
+    """((file w, file h), (design w, design h), dpi) in px of the print file of a SKU for a master whose LONG side is master_side px: the design
+    area at the resolution the master allows (at least merchOne's minimum, at most PRINT_DPI; reckoned on the area's longer side, so nothing is
+    ever enlarged), the print file is the design area plus the trim on every side. A print area that is not square (the keyring's 56 x 76 mm)
+    keeps its shape."""
     s = sku_rec(sku)
-    dmm, fmm, least = float(s["design_mm"][0]), float(s["file_mm"][0]), int(s["dpi"]) or 72
-    dpi = max(least, min(PRINT_DPI, int(master_side / (dmm / 25.4))))
-    design = int(round(dmm / 25.4 * dpi))
-    filepx = max(design, int(round(fmm / 25.4 * dpi)))
-    if (filepx - design) % 2:
-        filepx += 1
-    return filepx, design, dpi
+    dmm, fmm, least = [float(x) for x in s["design_mm"][:2]], [float(x) for x in s["file_mm"][:2]], int(s["dpi"]) or 72
+    dpi = max(least, min(PRINT_DPI, int(master_side / (max(dmm) / 25.4))))
+    design = tuple(int(round(x / 25.4 * dpi)) for x in dmm)
+    filepx = []
+    for d, x in zip(design, fmm):
+        f = max(d, int(round(x / 25.4 * dpi)))
+        filepx.append(f + 1 if (f - d) % 2 else f)
+    return tuple(filepx), design, dpi
+
+
+def file_geometry(sku, master_side):
+    """(file_px, design_px, dpi) of a SKU whose print area is square (every print but the keyring): file_box, one side."""
+    filepx, design, dpi = file_box(sku, master_side)
+    return filepx[0], design[0], dpi
 
 
 def make_print_file(raw, sku):
@@ -846,17 +856,17 @@ def make_print_file(raw, sku):
     im.load()
     im = im.convert("RGB")
     w, h = im.size
-    filepx, design, dpi = file_geometry(sku, max(w, h))
-    k = design / max(w, h)
-    nw, nh = max(1, int(round(w * k))), max(1, int(round(h * k)))
+    (fw, fh), (dw, dh), dpi = file_box(sku, max(w, h))
+    k = min(dw / w, dh / h)              # the whole artwork inside the design area, never cut (a square print: the design's side over the long side)
+    nw, nh = max(1, min(dw, int(round(w * k)))), max(1, min(dh, int(round(h * k))))
     art = np.asarray(im.resize((nw, nh), Image.LANCZOS))
     im.close()
-    top = (filepx - nh) // 2
-    left = (filepx - nw) // 2
-    out = _fill_edges(art, (top, filepx - nh - top, left, filepx - nw - left))
+    top = (fh - nh) // 2
+    left = (fw - nw) // 2
+    out = _fill_edges(art, (top, fh - nh - top, left, fw - nw - left))
     pic = Image.fromarray(out)
     data = store.jpeg_bytes(pic, quality=93)
-    return data, {"width": filepx, "height": filepx, "design": design, "dpi": dpi, "bytes": len(data), "art": [nw, nh]}
+    return data, {"width": fw, "height": fh, "design": dw, "dpi": dpi, "bytes": len(data), "art": [nw, nh]}
 
 
 # ----------------------------------------------------------------------------- one try

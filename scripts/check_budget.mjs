@@ -154,7 +154,18 @@ const LANDING_PRINTS = { js: 190 + 165 + 166 + 170 + 238 + 258 + 169 + 15, css: 
 // byte moved (the block's picture in the picker uses utilities the other pictures use). Re-measure it when those lines or the offer change: build both trees, gzip
 // each chunk, take the differences named here.
 const BLOCK = { js: 17 + 11 + 15 + 13 + 18 + 12 + 11 + 132, css: 0 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js + BLOCK.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css + BLOCK.css };
+// The final list of prints (2026-11-24, the owner's decisions of the same day: glossy metal 30, 40 and 60 cm, the canvas without an outer frame 40 and 60 cm, a
+// small acrylic block, the keyring ready and not offered; a line per kind that says what the thing is, api/_lib/print_names.py about, 48 lines in eight languages)
+// is a product, not motion. PRINTS2 is only what the landing does not load for every visitor, measured per chunk, gzip level 6, on the tree with it against its
+// parent (d7bf2d6, both built the same way): the chunk of the print tables that /order and the legal pages share (prints-*.js +2,045 B: twelve SKUs with their
+// shipping to 27 countries, the names and the lines of six kinds), the legal pages' entry (main-*.js +210 B: the terms' shipping table gives the prints on a
+// tariff of their own, metal and canvas of 60 cm, rows of their own), the SEVEN lazy language chunks (the FAQ answer of the print state lists five kinds:
+// de +3 B, et +7 B, fi +2 B, hr +1 B, hu -6 B, lt +2 B, lv +6 B), and in the stylesheet the tools share the utilities of the picker's new pictures
+// (markets-*.css +94 B: the metal's rim, the keyring's upright tag and ring). What every visitor of the landing loads is NOT in it and is held to the budget:
+// the landing's entry +18 B (the English clause), the names of chunks in the import lists of eighteen other chunks -21 B: -3 B, so the page stands at
+// +5,900 B of +6,000 (it was +5,903 B on d7bf2d6). Re-measure it when those tables or lines change: build both trees, gzip each chunk, take the differences.
+const PRINTS2 = { js: 2045 + 210 + 3 + 7 + 2 + 1 - 6 + 2 + 6, css: 94 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js + BLOCK.js + PRINTS2.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css + BLOCK.css + PRINTS2.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;

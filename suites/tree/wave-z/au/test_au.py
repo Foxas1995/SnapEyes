@@ -78,10 +78,13 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # A1, B1, B3 and E8 moved, each keeping its id and the older names, with " - 1121:" added; the AU and US editions are made from the raw docs and carry no print.
 # The same release carries the legal wording fixes of the machine proofreading (Finnish, Estonian and Latvian only: PROOF1121 names every sentence), so the
 # step of those three languages is the print paragraphs AND those sentences, each held by its words.
-# 1124 refresh (2026-11-24, the owner's decisions: a fourth print, the acrylic block 20 x 20 cm at 79 EUR, and the canvas 40 cm from 69 to 79 EUR;
-# api/_lib/print_offer.py). No sentence of any legal text changed. The EU edition changed on purpose in ONE block, in every language: the list of prints and
-# prices of the terms' section "prints" (src/legal/docs/prints.ts productRows makes it from the offer): the canvas' row has the new price and one row is added
-# at the end, the acrylic block. The shipping table is as it was (the block ships at the price of the other small prints), and so are the withdrawal page,
+# 1124 refresh (2026-11-24, the owner's decisions: the final list of prints, api/_lib/print_offer.py: acrylic glass 30, 40 and 60 cm as before; glossy metal 30,
+# 40 and 60 cm; the canvas WITHOUT an outer frame, on its wooden stretcher frame, 40 and 60 cm (the canvas in a black floating frame is gone); the poster as
+# before; the acrylic block 10 and 20 cm; the keyring is in the offer but not offered, so the terms do not list it). The EU edition changed on purpose in ONE
+# block, in every language: the list of prints and prices of the terms' section "prints" (src/legal/docs/prints.ts productRows makes it from the offer): eleven
+# rows where five were, the three acrylic rows and the poster's exactly as they were, the canvas' old row gone; and the shipping table under it, a second
+# block: its four rows as they were, and three rows more for the metal print and the canvas of 60 cm, which ship on a tariff of their own (6.99 EUR to Germany,
+# 8.49 to seven countries near it, 13.49 to the others). The other prints ship at the prices of before. As they were: the withdrawal page,
 # the privacy policy, the legal notice, the print box, the checkout wording and the consent version; LEGAL_UPDATED moves to 2026-11-24. eu_block.json is the
 # EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_printlater.json stays as the base: the 1121 step is now checked between the pins of
 # the three languages and of the print offered later. A1, B1, B3 and E8 moved, each keeping its id and the older names, with " - 1124:" added; the AU and US
@@ -566,14 +569,29 @@ later1121_ok = (all(fr and wp12_ok(d, allowed[l]) for name, allowed in (("terms"
                 and all(_step1121(l, name, allowed["en"]) for name, allowed in (("terms", TERMS1121), ("withdrawal", WD1121), ("privacy", PRIV1121))
                         for l in ("lt", "hu", "hr", "fi", "et", "lv"))
                 and all(EU_PRINTLATER["imprint"][l] == EU_LANGS3["imprint"][l] for l in ("lt", "hu", "hr", "fi", "et", "lv")))
-# 1124 refresh: what the acrylic block and the canvas' new price changed in the EU edition on purpose, in every one of the eight languages: ONE block of the
-# terms' section prints, the list of prints and prices (a "dl" of [name, price] rows). Its rows are the rows of before, in their order, with ONE price changed
-# (the fourth row, the canvas in its black floating frame: it ends in 79 where it ended in 69) and ONE row added at the end (the acrylic block, named by
-# api/_lib/print_names.py, 20 x 20 cm, at the price of the canvas). Nothing else of the terms, and nothing at all of the withdrawal page, the privacy policy
-# and the legal notice. The names of the block are read from the server's own table, so the pin and the names cannot drift apart.
+# 1124 refresh: what the final list of prints changed in the EU edition on purpose, in every one of the eight languages: ONE block of the terms' section
+# prints, the list of prints and prices (a "dl" of [name, price] rows). Its rows are now exactly the prints that api/_lib/print_offer.py offers (on 1), in
+# its order, each by the name of its kind in api/_lib/print_names.py with its size and with its price: eleven rows. The three acrylic rows and the poster's
+# are the rows of before, word for word; the old fourth row (the canvas in its black floating frame, 69 EUR) is gone and no row carries its name. Nothing
+# else of the terms, and nothing at all of the withdrawal page, the privacy policy and the legal notice. The names and the prices are read from the server's
+# own tables, so the pin and the offer cannot drift apart.
 LANG8 = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
 from _lib import print_names as _PN, print_offer as _PO
 _digits = lambda t: re.sub(r"[^0-9]", "", t)
+
+
+def _rows1124(l):
+    """The rows the terms must list: every print the offer has on, by its kind's name in the language and its size, with the digits of its price in cents."""
+    return [(_PN.PRINT_NAMES["kinds"][p["kind"]][l] + (f" {p['cm']}" if p["cm"] else ""), str(p["price"])) for p in _PO.PRINT_OFFER["products"] if p["on"] == 1]
+
+
+def _ship1124(new, old, l):
+    """The shipping table of the terms (rows [price, countries]): the four rows of before, word for word, then exactly three rows more for the prints that ship
+    on a tariff of their own, each beginning with the names of the metal print and the canvas of 60 cm."""
+    metal, canvas = _PN.PRINT_NAMES["kinds"]["metal"][l], _PN.PRINT_NAMES["kinds"]["canvas"][l]
+    return (len(old) == 4 and len(new) == 7 and new[:4] == old
+            and all(r[1].startswith(metal + " 60") and (", " + canvas + " 60") in r[1] and ": " in r[1] for r in new[4:])
+            and [_digits(r[0]) for r in new[4:]] == ["699", "849", "1349"])
 
 
 def _step1124(l):
@@ -581,16 +599,17 @@ def _step1124(l):
     if not fr or sorted(d) != ["prints"]:
         return False
     add, rem = d["prints"]
-    if len(add) != 1 or len(rem) != 1 or not isinstance(add[0], dict) or not isinstance(rem[0], dict) or sorted(add[0]) != ["dl"] or sorted(rem[0]) != ["dl"]:
+    if len(add) != 2 or len(rem) != 2 or not all(isinstance(b, dict) and sorted(b) == ["dl"] for b in add + rem):
         return False
     new, old = add[0]["dl"], rem[0]["dl"]
-    block = _PN.PRINT_NAMES["kinds"]["block"][l]
-    canvas = _PN.PRINT_NAMES["kinds"]["canvas"][l]
-    return (len(old) == 5 and len(new) == 6 and [r[0] for r in new[:5]] == [r[0] for r in old]
-            and [r[1] for i, r in enumerate(new[:5]) if i != 3] == [r[1] for i, r in enumerate(old) if i != 3]
-            and old[3][0].startswith(canvas) and _digits(old[3][1]) == "6900" and _digits(new[3][1]) == "7900"
-            and new[5][0].startswith(block + " 20") and new[5][0].endswith("cm") and new[5][1] == new[3][1] and not any(block in r[0] for r in old)
-            and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] == 1] == ["acrylic30", "acrylic40", "acrylic60", "canvas40", "poster50", "block20"])
+    want = _rows1124(l)
+    return (len(old) == 5 and len(new) == len(want) == 11
+            and all(r[0].startswith(n) and r[0].endswith("cm") and _digits(r[1]) == pr for r, (n, pr) in zip(new, want))
+            and new[:3] == old[:3] and old[4] in new and _digits(old[3][1]) == "6900" and not any(r[0] == old[3][0] for r in new)
+            and _ship1124(add[1]["dl"], rem[1]["dl"], l)
+            and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] == 1] == ["acrylic30", "acrylic40", "acrylic60", "metal30", "metal40", "metal60", "canvas40",
+                                                                                   "canvas60", "poster50", "block10", "block20"]
+            and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] != 1] == ["keyring"])
 
 
 block1124 = {l: _step1124(l) for l in LANG8}
@@ -618,8 +637,10 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " contract of its own), the withdrawal page and the privacy policy by exactly one paragraph of their section prints, the legal notice not at all, in all eight languages;"
       " the Finnish, Estonian and Latvian texts also by exactly the sentences of the proofreading that PROOF1121 names (their new words there, their old words gone)"
       " - 1124: the pin is eu_block.json; the 1121 step is checked between the pins of the three languages and of the print offered later; the terms differ from the pin"
-      " of the print offered later by exactly ONE block in each of the eight languages, the list of prints and prices of the section prints (the canvas' row at its new"
-      " price, the acrylic block's row added at the end, every other row as it was); the withdrawal page, the privacy policy and the legal notice not at all",
+      " of the print offered later by exactly ONE block in each of the eight languages, the list of prints and prices of the section prints (the eleven prints the"
+      " offer has on, by the server's own names and prices: the acrylic rows and the poster's as they were, the canvas in its floating frame gone), and by the"
+      " shipping table under it (its four rows as they were, three more for the metal print and the canvas of 60 cm); the withdrawal"
+      " page, the privacy policy and the legal notice not at all",
       all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
       (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
@@ -781,18 +802,22 @@ def _pack_1121(l):
 
 
 def _pack_1124(l):
-    """1124: the pack's EU terms as they are now = the pin of the print offered later (date aside) with exactly ONE paragraph replaced, the list of prints and
-    prices: its lines are the lines of before with the canvas' line at its new price and the acrylic block's line added at the end; the withdrawal page word for
-    word; the pinned pack of this work holds the same texts."""
+    """1124: the pack's EU terms as they are now = the pin of the print offered later (date aside) with exactly TWO paragraphs replaced: the list of prints and
+    prices (eleven lines, the prints the offer has on by the server's own names, the three acrylic lines and the poster's as they were, the old canvas line
+    gone) and the shipping table (its four lines of before, then three for the metal print and the canvas of 60 cm); the withdrawal page word for word; the
+    pinned pack of this work holds the same texts."""
     now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
     was = _norm(EU_PRINTLATER["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
     add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
-    if not (len(now) == len(was) and len(add) == 1 == len(rem)):
+    if not (len(now) == len(was) and len(add) == 2 == len(rem)):
         return False
     new, old = add[0].split("\n"), rem[0].split("\n")
-    block = _PN.PRINT_NAMES["kinds"]["block"][l]
-    return (len(old) == 5 and len(new) == 6 and [x for i, x in enumerate(new[:5]) if i != 3] == [x for i, x in enumerate(old) if i != 3]
-            and _digits(old[3]).endswith("6900") and _digits(new[3]).endswith("7900") and new[5].startswith(block + " 20") and block not in rem[0]
+    ship_new, ship_old = add[1].split("\n"), rem[1].split("\n")
+    want = _rows1124(l)
+    metal = _PN.PRINT_NAMES["kinds"]["metal"][l]
+    return (len(old) == 5 and len(new) == len(want) == 11 and all(x.startswith(n) and _digits(x).endswith(pr) for x, (n, pr) in zip(new, want))
+            and new[:3] == old[:3] and old[4] in new and old[3] not in new and _digits(old[3]).endswith("6900")
+            and len(ship_old) == 4 and len(ship_new) == 7 and ship_new[:4] == ship_old and all((metal + " 60") in x for x in ship_new[4:])
             and _norm(PACK["docs"][l]["withdrawal"]["text"]) == _norm(EU_PRINTLATER["pack"]["docs"][l]["withdrawal"]["text"])
             and all(_norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"]) for d in ("terms", "withdrawal")))
 
@@ -821,8 +846,8 @@ check("B3 the built pack's EU texts are the same as before (the date line aside)
       " - 1113: pinned to eu_langs3.json, the terms by exactly the one paragraph of the contract languages (_pack_1113), the seller with its fi, et and lv lines"
       " - 1121: pinned to eu_printlater.json, the terms by exactly four paragraphs replaced (the product sentence's and three of the section prints) and the withdrawal"
       " page by exactly one (_pack_1121); the 1113 step is checked between the pins of the vouchers and of the three languages"
-      " - 1124: pinned to eu_block.json, the terms by exactly ONE paragraph replaced in each of the eight languages, the list of prints and prices (the canvas' line at"
-      " its new price, the acrylic block's line added), the withdrawal page word for word (_pack_1124); the 1121 step is checked between the two pins before it",
+      " - 1124: pinned to eu_block.json, the terms by exactly ONE paragraph replaced in each of the eight languages, the list of prints and prices (the eleven prints"
+      " of the offer), the withdrawal page word for word (_pack_1124); the 1121 step is checked between the two pins before it",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
       (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2], [_terms_pack_28(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",

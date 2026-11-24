@@ -23,8 +23,8 @@ ZIP = {"AT": "1010", "BE": "1000", "BG": "1000", "HR": "10000", "CY": "1010", "C
        "FR": "75001", "DE": "10115", "GR": "10431", "IE": "D01F5P2", "IT": "00118", "LV": "LV-1050", "LT": "01100", "LU": "1111",
        "MT": "VLT1010", "NL": "1012AB", "PL": "00-001", "PT": "1100-148", "RO": "010011", "SK": "81101", "SI": "1000", "ES": "28001",
        "SE": "11120", "HU": "1011"}
-# the merchOne product (blueprint) of each SKU family: Premium Acrylic Print, Canvas, Poster, Acrylic Block
-BLUEPRINT = {"ACP": 80, "CVS": 2, "PSD": 47, "ABS": 18}
+# the merchOne product (blueprint) of each SKU family: Premium Acrylic Print, Canvas, Poster, Acrylic Block, Metal Print (Gloss Finish), Rectangular Keyring
+BLUEPRINT = {"ACP": 80, "CVS": 2, "PSD": 47, "ABS": 18, "ALP": 46, "KRR": 210}
 PAUSE = 1.1          # seconds between two calls (60 a minute)
 
 HEADER = '''# -*- coding: utf-8 -*-
@@ -76,6 +76,8 @@ def fetch(M, offer, say):
             time.sleep(PAUSE)
         # a variant is named by its size: "30x30 cm", and "20 x 20 cm" for the acrylic block (the spaces are not part of the rule)
         cands = [v for v in by_bp[bp] if re.sub(r"\s+", "", str(v.get("name") or "")).lower().startswith(f"{w}x{h}cm")]
+        if not cands and len(by_bp[bp]) <= 3:
+            cands = list(by_bp[bp])      # a product that is not named by a size (the keyring: one variant, "Rectangular Keyring"): its SKU is looked for in each
         hit = None
         for v in cands:
             opts = M.variant_options(bp, v["id"])

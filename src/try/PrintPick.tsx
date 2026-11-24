@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Lang } from '../shared/lang';
-import { countriesByName, countryName, type OfferedPrint, type PrintKind, kindName, printSize } from '../shared/prints';
+import { countriesByName, countryName, type OfferedPrint, type PrintKind, kindAbout, printLabel } from '../shared/prints';
 
 // The print picker. It was the print option of /try's buy card; since 2026-11-21 a print is offered AFTER the purchase, on the order page
 // (src/order/PrintOffer.tsx), and the buy card shows none (the owner: a big price at the first checkout scares). The component takes its
@@ -68,13 +68,14 @@ export const PrintPick: React.FC<Props> = (p) => {
         }}>
         <option value="">{w.none}</option>
         {p.offered.map((o) => (
-          <option key={o.id} value={o.id}>{w.option(`${kindName(o.kind, lang)} ${printSize(o.cm)}`, p.fmt(o.price))}</option>
+          <option key={o.id} value={o.id}>{w.option(printLabel(o.kind, o.cm, lang), p.fmt(o.price))}</option>
         ))}
       </select>
       {sel && (
         <>
+          {kindAbout(sel.kind, lang) && <p data-testid="print-about" className="mt-2 text-[11px] text-zinc-300 leading-relaxed">{kindAbout(sel.kind, lang)}</p>}
           <div className="mt-3 flex gap-3 items-start">
-            <PrintMock kind={sel.kind} src={p.artSrc} alt={w.mockAlt(`${kindName(sel.kind, lang)} ${printSize(sel.cm)}`)} />
+            <PrintMock kind={sel.kind} src={p.artSrc} alt={w.mockAlt(printLabel(sel.kind, sel.cm, lang))} />
             <div className="flex-1 min-w-0">
               <label className="block text-[11px] text-zinc-300" htmlFor="print-country">{w.country}</label>
               <select id="print-country" data-testid="print-country" className={SELECT} disabled={p.busy} value={p.choice.country}
@@ -101,21 +102,25 @@ export const PrintPick: React.FC<Props> = (p) => {
   );
 };
 
-// a flat picture of the artwork as each kind of print: acrylic glass (a glossy edge and a soft reflection), a canvas in a black floating
-// frame (the frame, a shadow gap, the canvas), a poster (paper, a thin shadow), an acrylic block (a thick clear edge all round, the gloss of
-// the acrylic). The artwork is never cropped (an artwork that is not square sits on its own dark ground, as the print file continues its
-// background).
-const MOCK: Record<PrintKind, { outer: string; inner: string; gloss: boolean }> = {
+// a flat picture of the artwork as each kind of print: acrylic glass (a glossy edge and a soft reflection), glossy metal (a thin bright rim
+// and a reflection), a canvas on its stretcher frame (no outer frame: the picture to the edge and a side shadow), a poster (paper, a thin
+// shadow), an acrylic block (a thick clear edge all round, the gloss of the acrylic), a keyring (a small upright tag with its ring; it is
+// not a square and not a thing for a wall). The artwork is never cropped (an artwork that is not square sits on its own dark ground, as the
+// print file continues its background).
+const MOCK: Record<PrintKind, { outer: string; inner: string; gloss: boolean; box?: string }> = {
   acrylic: { outer: 'p-[2px] bg-gradient-to-br from-white/50 via-white/10 to-white/30 shadow-[0_6px_18px_rgba(0,0,0,0.6)]', inner: '', gloss: true },
-  canvas: { outer: 'p-[5px] bg-[#111] shadow-[0_6px_18px_rgba(0,0,0,0.6)] ring-1 ring-white/10', inner: 'p-[3px] bg-black', gloss: false },
+  metal: { outer: 'p-0 bg-zinc-400 shadow-[0_6px_18px_rgba(0,0,0,0.6)] ring-1 ring-white/30', inner: '', gloss: true },
+  canvas: { outer: 'p-0 bg-[#111] shadow-[3px_6px_14px_rgba(0,0,0,0.6)]', inner: '', gloss: false },
   poster: { outer: 'p-0 bg-[#0d0d0d] shadow-[0_3px_10px_rgba(0,0,0,0.55)]', inner: '', gloss: false },
   block: { outer: 'p-[5px] bg-gradient-to-br from-white/50 via-white/10 to-white/30 shadow-[0_6px_18px_rgba(0,0,0,0.6)] ring-1 ring-white/10', inner: '', gloss: true },
+  keyring: { outer: 'p-[3px] bg-gradient-to-br from-white/50 via-white/10 to-white/30 shadow-[0_3px_10px_rgba(0,0,0,0.55)]', inner: 'rounded-[5px]', gloss: true, box: 'w-[70px] h-24 mx-[13px] rounded-[8px]' },
 };
 
 export const PrintMock: React.FC<{ kind: PrintKind; src?: string; alt: string }> = ({ kind, src, alt }) => {
   const m = MOCK[kind];
   return (
-    <div data-testid="print-mock" data-kind={kind} className={`relative w-24 h-24 shrink-0 rounded-[3px] ${m.outer}`}>
+    <div data-testid="print-mock" data-kind={kind} className={`relative ${m.box ?? 'w-24 h-24 rounded-[3px]'} shrink-0 ${m.outer}`}>
+      {kind === 'keyring' && <span aria-hidden="true" className="absolute -top-2 left-1/2 -ml-[6px] w-3 h-3 rounded-full border-2 border-zinc-300" />}
       <div className={`relative w-full h-full overflow-hidden bg-black ${m.inner}`}>
         {src ? <img src={src} alt={alt} draggable={false} className="w-full h-full object-contain select-none" /> : <span className="sr-only">{alt}</span>}
         {m.gloss && <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-transparent" />}

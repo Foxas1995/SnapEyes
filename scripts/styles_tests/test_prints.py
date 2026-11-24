@@ -313,9 +313,11 @@ section("1. the tables and the rules: shipping, margins, the print file")
 check("the shipping rule: the cost with 19 % VAT rounded UP to the next .49 or .99 (3.99 to 4.99, 5.50 to 6.99, 6.99 to 8.49, 7.99 to 9.99)",
       [PR.ship_price(c) for c in (399, 550, 699, 799, 1, 49, 50)] == [499, 699, 849, 999, 49, 99, 99], [PR.ship_price(c) for c in (399, 550, 699, 799, 1, 49, 50)])
 check("the offer: five prints at the owner's prices (59, 79, 129, 69, 35 EUR), every SKU in the rate table, prints offered on eu, lt and hr only"
-      " - 1124: six prints, the acrylic block 20 cm at 79 EUR is the last, and the canvas is 79 EUR (the owner's decisions of 2026-11-24)",
-      [(p["id"], p["price"]) for p in PR.products()] == [("acrylic30", 5900), ("acrylic40", 7900), ("acrylic60", 12900), ("canvas40", 7900), ("poster50", 3500),
+      " - 1124: the final list of that day (the owner's decisions of 2026-11-24): eleven prints offered, the keyring twelfth in the list and not offered",
+      [(p["id"], p["price"]) for p in PR.products()] == [("acrylic30", 5900), ("acrylic40", 7900), ("acrylic60", 12900), ("metal30", 5900), ("metal40", 7900),
+                                                         ("metal60", 12900), ("canvas40", 4900), ("canvas60", 6900), ("poster50", 3500), ("block10", 3900),
                                                          ("block20", 7900)]
+      and [(p["id"], p["price"], p["on"]) for p in PR.products(offered=False)][11:] == [("keyring", 1500, 0)]
       and all(PR.sku_rec(p["sku"]) for p in PR.products()) and PR.markets() == ("eu", "lt", "hr"), PR.products())
 check("the countries: the 27 member states of the EU, each with a rate for every print and a name in every language; no US, no GB",
       len(PR.countries()) == 27 and "US" not in PR.countries() and "GB" not in PR.countries()
@@ -332,11 +334,11 @@ try:
     jsv = json.loads(js.stdout.strip().splitlines()[-1])
 except (ValueError, IndexError):
     jsv = None
-py = {p["id"] + cc: [PR.shipping(cc, p["id"]), PR.margin(p["id"], cc)] for p in PR.products() for cc in PR.countries()}
+py = {p["id"] + cc: [PR.shipping(cc, p["id"]), PR.margin(p["id"], cc)] for p in PR.products(offered=False) for cc in PR.countries()}      # 1124: every product of the list, the keyring too (it is off)
 check("the server's shipping and margins are the build check's (scripts/check_prints.mjs, the rules the page's module is held to) for every print and country",
       jsv == py, (js.stderr[-300:], None if jsv is None else [k for k in py if jsv.get(k) != py[k]][:5]))
 geo = {p["sku"]: PR.file_geometry(p["sku"], 4096) for p in PR.products()}
-s30, s60, cv, ps = geo["ACP0300301HP"], geo["ACP0600601HP"], geo["CVS0400401LMSBF2HC"], geo["PSD0500501"]
+s30, s60, cv, ps = geo["ACP0300301HP"], geo["ACP0600601HP"], geo["CVS0400401LMF2HC"], geo["PSD0500501"]      # 1124: the canvas without an outer frame
 check("the print file of a 4096 px master: the design area at 200 dpi where the master allows (30 cm: 2362 px), at the master's own resolution for 60 cm "
       "(173 dpi, never under merchOne's 120), the trim around it (2.5 mm a side on acrylic: 2402 px), no trim on the canvas, 3 mm on the poster",
       s30 == (2402, 2362, 200) and s60[2] == 173 and s60[1] <= 4096 and s60[0] - s60[1] == 34 and cv == (3150, 3150, 200) and ps[0] - ps[1] == 48, geo)
@@ -356,14 +358,14 @@ check("a 3:2 artwork is centred on the square print file and its background is c
 check("the product's name in the five languages, with its size (no-break spaces)"
       " - 1113: in the eight languages (Finnish, Estonian, Latvian), every print and every country named in each, the eight names of a print all different",
       PR.LANGS == ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
-      and PR.product_name("acrylic40", "fi") == "Akryylilasitaulu 40\u00a0×\u00a040\u00a0cm" and PR.product_name("canvas40", "et").startswith("Lõuend mustas ujuvraamis")
+      and PR.product_name("acrylic40", "fi") == "Akryylilasitaulu 40\u00a0×\u00a040\u00a0cm" and PR.product_name("canvas40", "et").startswith("Lõuend puidust alusraamil")
       and PR.product_name("poster50", "lv") == "Plakāts 50\u00a0×\u00a050\u00a0cm" and PR.product_name("poster50", "fi").startswith("Juliste")
       and [PR.country_name("DE", l) for l in ("fi", "et", "lv")] == ["Saksa", "Saksamaa", "Vācija"]
       and [PR.country_name(cc, l) for cc, l in (("FI", "fi"), ("EE", "et"), ("LV", "lv"))] == ["Suomi", "Eesti", "Latvija"]
       and all(len({PR.product_name(pid, l) for l in PR.LANGS}) == 8 for pid in ("acrylic30", "acrylic40", "acrylic60", "canvas40"))
       and all(PR.product_name(p_["id"], l).endswith("\u00a0cm") and "\u00a0×\u00a0" in PR.product_name(p_["id"], l) for p_ in PR.products() for l in PR.LANGS)
       and all(isinstance(PR.country_name(cc, l), str) and PR.country_name(cc, l).strip() for cc in PR.countries() for l in PR.LANGS) and
-      PR.product_name("acrylic40", "en") == "Acrylic glass print 40 × 40 cm" and PR.product_name("canvas40", "lt").startswith("Drobė juodame rėme")
+      PR.product_name("acrylic40", "en") == "Acrylic glass print 40 × 40 cm" and PR.product_name("canvas40", "lt").startswith("Drobė ant medinio porėmio")
       and PR.product_name("poster50", "hu").startswith("Poszter") and PR.country_name("DE", "hr") == "Njemačka", [PR.product_name("acrylic40", l) for l in PR.LANGS])
 src = "\n".join(open(os.path.join(API, "_lib", f), encoding="utf-8").read() for f in ("prints.py", "merchone.py", "print_offer.py", "print_names.py", "print_rates.py"))
 check("the new server files hold no dash and no credential", not re.search(DASH, src) and USER not in src and "MERCHONE_API_KEY=" not in src, "")
@@ -660,7 +662,8 @@ check("the admin's cancel at merchOne (the order number typed): merchOne's DELET
 st = ops.ACTIONS["print_status"]({}, WHO)
 check("the admin page: the switch, merchOne configured, test orders, the webhook URL with its token, the offer with its margins, the open prints",
       st["switch"]["on"] is True and st["configured"] is True and st["live"] is False and PR.hook_token() in st["hook_url"]
-      and len(st["offer"]) == 6 and all(x["margin_min"] >= PR.PRINT_OFFER["margin_floor"] for x in st["offer"]) and any(r_["order"] == o8 for r_ in st["open"]), st["open"])
+      and len(st["offer"]) == 12 and all(x["margin_min"] >= PR.PRINT_OFFER["margin_floor"] for x in st["offer"] if x["on"])
+      and [(x["id"], x["on"], x["margin_min"] < PR.PRINT_OFFER["margin_floor"]) for x in st["offer"] if not x["on"]] == [("keyring", False, True)] and any(r_["order"] == o8 for r_ in st["open"]), st["open"])
 ov = ops.ACTIONS["order"]({"order": o}, WHO)
 check("the admin's order detail has the print block (state, merchOne id, tracking, the file), no street address", (ov.get("print") or {}).get("state") == "shipped"
       and ov["print"]["merchone_id"] == oid and "Gedimino" not in json.dumps(ov["print"]), ov.get("print"))
@@ -701,14 +704,17 @@ check("the EU terms in every language name the prints with their prices, the shi
       "Art. 16(c), the 7 days and the legal guarantee of two years"
       " - 1113: in Finnish, Estonian and Latvian too (the manufacturer and its address, Article 16(c) in each language's own words, the prices of all five prints, 7 and 30 days, two years, "
       "the 27 countries by their names in that language)"
-      " - 1124: the prices of the six prints of now (59, 79, 129 and 35 EUR: the canvas and the acrylic block are 79 EUR, and no print costs 69 EUR any more) and the acrylic "
-      "block by its name in each of the eight languages",
+      " - 1124: the prices of the eleven prints of now (59, 79, 129, 49, 69, 35 and 39 EUR) and the block, the metal and the canvas by their names in each of the "
+      "eight languages; no text names a black or floating frame",
       all("Picanova GmbH" in t and "Eupener Straße 67" in t and "16" in t for t in (en, lt_, hu_, hr_, de_, fi_, et_, lv_)) and "€59.00" in en and "59,00 €" in de_
       and "Germany" in en and "Sweden" in en and "two years" in en and "7 days" in en and "Article 16(c)" in en and "30 days" in en
       and "16 artiklan c alakohta" in fi_ and "artikli 16 punkt c" in et_ and "16. panta c) punkts" in lv_
-      and all(all(re.search(r"(?<!\d)%s,00\s*€" % eur_, t) for eur_ in (59, 79, 129, 35)) and not re.search(r"(?<!\d)69,00\s*€", t) for t in (fi_, et_, lv_))
-      and all(len(re.findall(r"(?<!\d)79,00\s*€", t)) == 3 for t in (de_, lt_, hu_, hr_, fi_, et_, lv_)) and en.count("€79.00") == 3 and "€69.00" not in en
-      and all(PR.product_name("block20", l) in t for l, t in (("en", en), ("de", de_), ("lt", lt_), ("hu", hu_), ("hr", hr_), ("fi", fi_), ("et", et_), ("lv", lv_)))
+      and all(all(re.search(r"(?<!\d)%s,00\s*€" % eur_, t) for eur_ in (59, 79, 129, 49, 69, 35, 39)) for t in (fi_, et_, lv_))
+      and all(len(re.findall(r"(?<!\d)79,00\s*€", t)) == 3 for t in (de_, lt_, hu_, hr_, fi_, et_, lv_)) and en.count("€79.00") == 3 and en.count("€49.00") == 1
+      and all(PR.product_name(pid_, l) in t for pid_ in ("block10", "block20", "metal30", "metal60", "canvas40", "canvas60")
+              for l, t in (("en", en), ("de", de_), ("lt", lt_), ("hu", hu_), ("hr", hr_), ("fi", fi_), ("et", et_), ("lv", lv_)))
+      and not any(PR.PRINT_NAMES["kinds"]["keyring"][l] in t for l, t in (("en", en), ("de", de_), ("lt", lt_), ("fi", fi_)))
+      and not re.search(r"floating frame|Schattenfuge|juodame rėme", en + de_ + lt_)
       and all(re.search(r"(?<!\d)7\s%s" % d_, t) and re.search(r"(?<!\d)30\s%s" % d_, t) for d_, t in (("päivä", fi_), ("päeva", et_), ("dien", lv_)))
       and "kahden vuoden" in fi_ and "kaheaastane" in et_ and re.search(r"divu gadu|divus gadus", lv_)
       and all(PR.country_name(cc, l) in t for l, t in (("fi", fi_), ("et", et_), ("lv", lv_)) for cc in PR.countries()),
@@ -960,7 +966,8 @@ po = sj.get("print_offer") or {}
 check("the status of a paid, delivered order without a print carries the offer: euros, the five prints with the server's prices and the shipping per country, "
       "the print box in the eight languages; no SKU, no cost, and no print block - 1124: the six prints (the list is compared with the server's own)",
       c == 200 and sj.get("state") == "ready" and po.get("currency") == "EUR" and [p_["id"] for p_ in po.get("products") or []] == [p_["id"] for p_ in PR.products()]
-      and po["products"][4]["price"] == 3500 and po["products"][4]["ship"]["LT"] == 849 and po["products"][2]["ship"]["DE"] == 699 and len(po["products"][0]["ship"]) == 27
+      and {p_["id"]: p_ for p_ in po["products"]}["poster50"]["price"] == 3500 and {p_["id"]: p_ for p_ in po["products"]}["poster50"]["ship"]["LT"] == 849
+      and po["products"][2]["ship"]["DE"] == 699 and len(po["products"][0]["ship"]) == 27 and len(po["products"]) == 11
       and po.get("consent") == PR.PRINT_CONSENT_TEXT and "sku" not in json.dumps(po) and "cost" not in json.dumps(po) and "print" not in sj, (c, sj.get("state"), po))
 ob, kb, sb = paid_file_order(delivered=False)
 c, sjb = get(f"/api/order?o={ob}&k={kb}")
@@ -1399,7 +1406,7 @@ BLOCK_SKU = "ABS0200201"
 bk, brec = PR.product("block20"), PR.sku_rec(BLOCK_SKU) or {}
 check("the block in the tables: kind block, 20 cm, merchOne's SKU ABS0200201 (blueprint 18, a design area of 200 mm and a print file of 204 mm: 2 mm of trim a side), "
       "79 EUR as the canvas now; its name with its size in the eight languages, eight different names",
-      bk == {"id": "block20", "kind": "block", "cm": 20, "sku": BLOCK_SKU, "price": 7900, "on": 1} and PR.product("canvas40")["price"] == 7900
+      bk == {"id": "block20", "kind": "block", "cm": 20, "sku": BLOCK_SKU, "price": 7900, "on": 1} and PR.product("canvas40")["price"] == 4900
       and brec.get("blueprint") == 18 and brec.get("design_mm") == [200.0, 200.0] and brec.get("file_mm") == [204.0, 204.0] and brec.get("trim_mm") == 2.0
       and PR.product_name("block20", "en") == "Acrylic block 20\u00a0×\u00a020\u00a0cm" and PR.product_name("block20", "lt") == "Akrilo blokas 20\u00a0×\u00a020\u00a0cm"
       and len({PR.product_name("block20", l_) for l_ in PR.LANGS}) == 8 and len({PR.PRINT_NAMES["kinds"]["block"][l_] for l_ in PR.LANGS}) == 8
@@ -1420,8 +1427,9 @@ check("its print file: the design area at 200 dpi (1575 px for 200 mm) with the 
 mgb = {cc_: PR.margin("block20", cc_) for cc_ in PR.countries()}
 mgc = {cc_: PR.margin("canvas40", cc_) for cc_ in PR.countries()}
 check("what they earn after merchOne's price and shipping with VAT and the fee: the block at least the floor in every country (38.78 EUR to Lithuania, 38.96 to "
-      "Germany), the canvas at 79 EUR 40.81 to Lithuania; the block ships at the price of the other small prints (4.99 to Germany, 8.49 to Lithuania)",
-      min(mgb.values()) >= PR.PRINT_OFFER["margin_floor"] and mgb["LT"] == 3878 and mgb["DE"] == 3896 and mgc["LT"] == 4081 == min(mgc.values())
+      "Germany), the canvas at 79 EUR 40.81 to Lithuania; the block ships at the price of the other small prints (4.99 to Germany, 8.49 to Lithuania)"
+      " - 1124, the final list: the canvas without an outer frame at 49 EUR earns 26.85 EUR to Lithuania",
+      min(mgb.values()) >= PR.PRINT_OFFER["margin_floor"] and mgb["LT"] == 3878 and mgb["DE"] == 3896 and mgc["LT"] == 2685 == min(mgc.values())
       and PR.shipping("DE", "block20") == 499 and PR.shipping("LT", "block20") == 849 and len([cc_ for cc_ in PR.countries() if PR.shipping(cc_, "block20")]) == 27,
       (min(mgb.values()), mgb["LT"], mgb["DE"], mgc["LT"], min(mgc.values())))
 okb, kkb, _skb = paid_file_order(lang="lt")
@@ -1461,6 +1469,67 @@ check("paid: the print is on record with the block's kind and size and no mismat
 stb = get(f"/api/order?o={okb}&k={kkb}")[1]
 check("the order page then shows the block as the order's print (its product, kind and size) and offers no second one",
       (stb.get("print") or {}).get("product") == "block20" and stb["print"].get("kind") == "block" and stb["print"].get("cm") == 20 and "print_offer" not in stb, stb.get("print"))
+
+# ============================================================================================ 12. the final list of 2026-11-24
+section("12. the final list (2026-11-24): the canvas without an outer frame, glossy metal, the small block, and the keyring that is ready and not offered")
+check("the canvas is the unframed one (the SKUs without the black floating frame; merchOne's prices 17.30 and 26.38 EUR), 40 cm at 49 EUR and 60 cm at 69 EUR; its "
+      "name in no language says black or floating, and its line says ready to hang and without an outer frame; no SKU with a floating frame is left in the rate table",
+      [(PR.product(x)["sku"], PR.product(x)["price"], PR.sku_rec(PR.product(x)["sku"])["cost"]) for x in ("canvas40", "canvas60")]
+      == [("CVS0400401LMF2HC", 4900, 1730), ("CVS0600601LMF2HC", 6900, 2638)]
+      and PR.PRINT_NAMES["kinds"]["canvas"]["en"] == "Canvas on a wooden stretcher frame" and PR.PRINT_NAMES["kinds"]["canvas"]["lt"] == "Drobė ant medinio porėmio"
+      and not re.search(r"black|floating|schwarz|Schattenfuge|juod|fekete|crn|must|meln", json.dumps([PR.PRINT_NAMES["kinds"]["canvas"], PR.PRINT_NAMES["about"]["canvas"]], ensure_ascii=False), re.I)
+      and "ready to hang, without an outer frame" in PR.PRINT_NAMES["about"]["canvas"]["en"] and "be išorinio rėmo" in PR.PRINT_NAMES["about"]["canvas"]["lt"]
+      and not any("BF" in s_ for s_ in PR.PRINT_RATES["skus"]) and len(PR.PRINT_RATES["skus"]) == 12, sorted(PR.PRINT_RATES["skus"]))
+check("glossy metal 30, 40 and 60 cm at the prices of the acrylic (merchOne's blueprint 46, the SKUs with the hanger set), the small block of 10 cm at 39 EUR; every "
+      "kind has a name and a line that says what it is in the eight languages, no dash in any",
+      [(PR.product(x)["sku"], PR.product(x)["price"], PR.sku_rec(PR.product(x)["sku"])["blueprint"]) for x in ("metal30", "metal40", "metal60", "block10")]
+      == [("ALP0300301HP", 5900, 46), ("ALP0400401HP", 7900, 46), ("ALP0600601HP", 12900, 46), ("ABS0100101", 3900, 18)]
+      and PR.product_name("metal40", "lt") == "Blizgus metalas 40\u00a0×\u00a040\u00a0cm" and PR.product_name("metal40", "en").startswith("Glossy metal print 40")
+      and set(PR.PRINT_NAMES["about"]) == set(PR.PRINT_NAMES["kinds"]) == {"acrylic", "metal", "canvas", "poster", "block", "keyring"}
+      and all(len(PR.PRINT_NAMES["about"][k_][l_]) > 12 and PR.PRINT_NAMES["kinds"][k_][l_] for k_ in PR.PRINT_NAMES["about"] for l_ in PR.LANGS)
+      and len({PR.PRINT_NAMES["about"][k_][l_] for k_ in PR.PRINT_NAMES["about"] for l_ in PR.LANGS}) == 48
+      and not re.search(DASH, json.dumps([PR.PRINT_NAMES["kinds"], PR.PRINT_NAMES["about"]], ensure_ascii=False)), [PR.product_name("metal40", l_) for l_ in PR.LANGS])
+mg12 = {p_["id"]: (min(PR.margin(p_["id"], cc_) for cc_ in PR.countries()), max(PR.margin(p_["id"], cc_) for cc_ in PR.countries())) for p_ in PR.products(offered=False)}
+check("what each earns, least to most over the 27 countries (the build's own table): metal 39.70, 47.64 and 67.41 EUR at least, the canvas 26.85 and 35.44, the small "
+      "block 22.68; the prints of 60 cm on metal and canvas ship dearer than the acrylic of 60 cm (13.49 EUR to Lithuania, 6.99 to Germany)",
+      mg12["metal30"] == (3970, 4003) and mg12["metal40"] == (4764, 4797) and mg12["metal60"] == (6741, 6773) and mg12["canvas40"] == (2685, 2717)
+      and mg12["canvas60"] == (3544, 3577) and mg12["block10"] == (2268, 2301) and mg12["block20"] == (3878, 3910) and mg12["poster50"] == (2581, 2614)
+      and all(v[0] >= PR.PRINT_OFFER["margin_floor"] for k_, v in mg12.items() if k_ != "keyring")
+      and [PR.shipping(cc_, "metal60") for cc_ in ("LT", "DE")] == [1349, 699] == [PR.shipping(cc_, "canvas60") for cc_ in ("LT", "DE")]
+      and PR.shipping("LT", "acrylic60") == 849, mg12)
+kb, kbi = PR.file_box("KRR0050041", 4096), PR.file_box("ALP0600601HP", 4096)
+ak = np.zeros((400, 400, 3), dtype=np.uint8)
+ak[:, :, 2] = 50
+ak[150:250, 150:250] = 240
+bk_ = io.BytesIO()
+Image.fromarray(ak).save(bk_, "PNG")
+kdata, kinfo = PR.make_print_file(bk_.getvalue(), "KRR0050041")
+kpic = np.asarray(Image.open(io.BytesIO(kdata)).convert("RGB"))
+check("the keyring: no size in its name in any language, a print area that is NOT square (56 x 76 mm: 441 x 598 px at 200 dpi, no trim), and a square artwork is "
+      "centred on it whole, its own ground continued above and below; every square print keeps the geometry it had",
+      PR.product("keyring") is None and PR.product("keyring", offered=False) == {"id": "keyring", "kind": "keyring", "cm": 0, "sku": "KRR0050041", "price": 1500, "on": 0}
+      and all(PR.product_name("keyring", l_) == PR.PRINT_NAMES["kinds"]["keyring"][l_] for l_ in PR.LANGS) and PR.product_name("keyring", "lt") == "Raktų pakabukas"
+      and PR.sku_rec("KRR0050041")["design_mm"] == [56.0, 76.0] and kb == ((441, 598), (441, 598), 200) and kbi == ((4121, 4121), (4087, 4087), 173)
+      and PR.file_geometry("ALP0600601HP", 4096) == (4121, 4087, 173) and PR.file_geometry("CVS0600601LMF2HC", 4096) == (4087, 4087, 173)
+      and PR.file_geometry("ABS0100101", 4096) == (819, 787, 200)
+      # the artwork of this check is 400 px: at merchOne's least 133 dpi allows (never enlarged), its file is 293 x 398 px
+      and PR.file_box("KRR0050041", 400) == ((293, 398), (293, 398), 133) and kpic.shape[:2] == (398, 293) and (kinfo["width"], kinfo["height"]) == (293, 398)
+      and kinfo["art"] == [293, 293] and abs(int(kpic[4, 146, 2]) - 50) < 14 and abs(int(kpic[393, 146, 2]) - 50) < 14 and abs(int(kpic[199, 146, 2]) - 240) < 20, (kb, kinfo))
+okk, kkk, _skk = paid_file_order(lang="lt")
+pok = [x["id"] for x in ((get(f"/api/order?o={okk}&k={kkk}")[1].get("print_offer") or {}).get("products") or [])]
+c, jkk = addon(okk, kkk, product="keyring", cc="LT", lang="lt")
+check("while the keyring is not offered (it earns 10.90 to 11.22 EUR, under the floor of 15 EUR: the owner decides), no page is told of it and nobody can buy it: the "
+      "order page's offer lists eleven prints without it, and a checkout that names it is refused (409 print_unavailable, why product), nothing created",
+      mg12["keyring"] == (1090, 1122) and len(pok) == 11 and "keyring" not in pok and c == 409 and jkk.get("reason") == "print_unavailable" and jkk.get("why") == "product"
+      and not exists(f"orders/{okk}/print_checkout.json") and "keyring" not in [x["id"] for x in (PR.public_info().get("products") or [])], (c, jkk, pok))
+okm, kkm, _skm = paid_file_order(lang="en")
+c, jkm = addon(okm, kkm, product="canvas60", cc="LT", lang="en", print_shown=6900 + 1349)
+pkm = H.Fake.creates[-1][0]
+check("a canvas of 60 cm bought after the artwork: its own session with its name (on a wooden stretcher frame, 60 x 60 cm), 69 EUR and its own shipping to Lithuania",
+      c == 200 and jkm.get("print") == {"product": "canvas60", "country": "LT", "price": 6900, "ship": 1349} and jkm.get("total") == 8249
+      and pkm.get("line_items[0][price_data][product_data][name]") == "Canvas on a wooden stretcher frame 60\u00a0×\u00a060\u00a0cm"
+      and pkm.get("line_items[0][price_data][unit_amount]") == "6900" and pkm.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") == "1349"
+      and pkm.get("metadata[print_sku]") == "CVS0600601LMF2HC", (c, jkm))
 maker.kick = real_kick
 pay._stripe = real_stripe
 

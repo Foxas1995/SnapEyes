@@ -244,9 +244,9 @@ READY_LT = {
 
 # the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["lt"]): heading, paragraph, no price
 READY_PRINT_LT = ("Jūsų kūrinio spaudinys",
-                  "Savo kūrinį galite užsisakyti ir kaip spaudinį: po akriliniu stiklu, ant drobės, kaip plakatą arba kaip akrilo bloką, "
-                  "kuris stovi ant lentynos ar stalo, pagamintą pagal užsakymą ir atsiųstą Jums. Pasiūlymą rasite savo užsakymo puslapyje, "
-                  "po kūriniu.")
+                  "Savo kūrinį galite užsisakyti ir kaip spaudinį: po akriliniu stiklu, ant blizgaus metalo, ant drobės, kaip plakatą arba "
+                  "kaip akrilo bloką. Kiekvieną spaudinį pagaminame pagal užsakymą ir atsiunčiame Jums. Pasiūlymą rasite savo užsakymo "
+                  "puslapyje, po kūriniu.")
 
 
 def ready_blocks_lt(link, order, checked, seller):

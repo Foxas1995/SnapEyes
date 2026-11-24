@@ -16,7 +16,8 @@ export const OFFER_FILE = 'api/_lib/print_offer.py';
 export const RATES_FILE = 'api/_lib/print_rates.py';
 export const NAMES_FILE = 'api/_lib/print_names.py';
 const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
-const KINDS = ['acrylic', 'canvas', 'poster', 'block'];
+const KINDS = ['acrylic', 'metal', 'canvas', 'poster', 'block', 'keyring'];
+const NO_SIZE = ['keyring'];   // the kinds that are not named by a size: cm 0 (api/_lib/print_offer.py)
 const STRIPE_MIN_EUR = 50;
 
 /** The literal NAME = { ... } that ends a Python file (src/shared/prints.ts parseLiteral, the same rule). */
@@ -111,7 +112,7 @@ export function checkPrints(root, markets, editionMarkets, client) {
     if (ids.has(p.id)) out.push(`${where}: the id is there twice`);
     ids.add(p.id);
     if (!KINDS.includes(p.kind)) out.push(`${where}: kind must be one of ${KINDS.join(', ')}`);
-    if (!isInt(p.cm) || p.cm < 10 || p.cm > 200) out.push(`${where}: cm must be a whole number of centimetres`);
+    if (NO_SIZE.includes(p.kind) ? p.cm !== 0 : !isInt(p.cm) || p.cm < 10 || p.cm > 200) out.push(`${where}: cm must be a whole number of centimetres (0 for ${NO_SIZE.join(', ')}, which has no size in its name, and for nothing else)`);
     if (!isInt(p.price) || p.price < STRIPE_MIN_EUR) out.push(`${where}: price must be whole euro cents, at least Stripe's minimum`);
     if (p.on !== 0 && p.on !== 1) out.push(`${where}: on must be 1 or 0`);
     if (!rates.skus?.[p.sku]) out.push(`${where}: its SKU ${p.sku} is not in ${RATES_FILE} (run scripts/print_rates.py)`);
@@ -128,7 +129,8 @@ export function checkPrints(root, markets, editionMarkets, client) {
     for (const l of LANGS) if (!(w && typeof w[l] === 'string' && w[l])) out.push(`${NAMES_FILE}: country ${cc} has no ${l} name`);
   }
   for (const k of new Set((offer.products ?? []).map((p) => p.kind))) {
-    for (const l of LANGS) if (!(names.kinds?.[k] && typeof names.kinds[k][l] === 'string')) out.push(`${NAMES_FILE}: kind ${k} has no ${l} words`);
+    for (const l of LANGS) if (!(names.kinds?.[k] && typeof names.kinds[k][l] === 'string' && names.kinds[k][l])) out.push(`${NAMES_FILE}: kind ${k} has no ${l} words`);
+    for (const l of LANGS) if (!(names.about?.[k] && typeof names.about[k][l] === 'string' && names.about[k][l].length > 12)) out.push(`${NAMES_FILE}: kind ${k} has no ${l} line that says what it is (about)`);
   }
   // the margin of every print in every country
   if (!out.length) {

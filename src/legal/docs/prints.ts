@@ -15,7 +15,7 @@ import type { Block, EditionDocs, LegalDoc, LegalSection } from '../types';
 import type { Lang } from '../../shared/lang';
 import { patchDoc } from '../patch';
 import { eur, MAIL } from '../facts';
-import { countriesByName, countryName, kindName, printCountries, printProducts, printShipping, printSize } from '../../shared/prints';
+import { countriesByName, countryName, printCountries, printLabel, printProducts, printShipping } from '../../shared/prints';
 
 const PRODUCER = 'Picanova GmbH (merchOne), Eupener Straße 67, 50933 Köln';
 const PRODUCER_MAIL = '[support@merchone.com](mailto:support@merchone.com)';
@@ -276,7 +276,7 @@ function swap(s: LegalSection, from: string, to: string): LegalSection {
 
 const add = (...more: Block[]) => (s: LegalSection): LegalSection => ({ ...s, blocks: [...s.blocks, ...more] });
 
-const productName = (kind: Parameters<typeof kindName>[0], cm: number, lang: Lang) => `${kindName(kind, lang)} ${printSize(cm)}`;
+const productName = (kind: Parameters<typeof printLabel>[0], cm: number, lang: Lang) => printLabel(kind, cm, lang);
 
 /** The products and their prices, from api/_lib/print_offer.py. */
 function productRows(lang: Lang): Array<[string, string]> {
@@ -284,9 +284,22 @@ function productRows(lang: Lang): Array<[string, string]> {
 }
 
 /** The shipping per country (api/_lib/print_rates.py, with VAT and rounded up as the checkout does), grouped by the usual price of a country:
- *  one row per price, its countries by name, and a country where one print ships at another price says so ("Germany (6,99 € for the ...)"). */
+ *  one row per price, its countries by name, and a country where one print ships at another price says so ("Germany (6,99 € for the ...)").
+ *  2026-11-24: prints that ship on a tariff of their own (they differ from the most common one in more than FEW countries: the metal print and the
+ *  canvas of 60 cm) are left out of those rows and get rows of their own after them, one per price: "13,49 €: <their names>: <the countries>".
+ *  Without that, every country's entry would repeat their names. The facts are the same; no word is added. */
+const FEW = 3;
 export function shippingRows(lang: Lang): Array<[string, string]> {
-  const prods = printProducts();
+  const all = printProducts();
+  const ccs = printCountries();
+  const tariff = (id: string) => ccs.map((cc) => printShipping(cc, id) ?? 0);
+  // the prints by their tariff (the same price in every country); the tariff most prints share is the usual one
+  const byTariff = new Map<string, typeof all>();
+  for (const p of all) byTariff.set(tariff(p.id).join(), [...(byTariff.get(tariff(p.id).join()) ?? []), p]);
+  const sets = [...byTariff.values()].sort((a, b) => b.length - a.length);
+  const usualTariff = tariff(sets[0][0].id);
+  const far = sets.slice(1).filter((g) => tariff(g[0].id).filter((v, i) => v !== usualTariff[i]).length > FEW);
+  const prods = all.filter((p) => !far.some((g) => g.includes(p)));
   const groups = new Map<number, string[]>();
   for (const cc of countriesByName(lang, printCountries())) {
     const prices = prods.map((p) => printShipping(cc, p.id) ?? 0);
@@ -297,7 +310,17 @@ export function shippingRows(lang: Lang): Array<[string, string]> {
     const label = countryName(cc, lang) + (odd.length ? ` (${odd.join('; ')})` : '');
     groups.set(usual, [...(groups.get(usual) ?? []), label]);
   }
-  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([price, names]) => [eur(price, lang), names.join(', ')]);
+  const rows: Array<[string, string]> = [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([price, names]) => [eur(price, lang), names.join(', ')]);
+  for (const g of far) {
+    const names = g.map((p) => productName(p.kind, p.cm, lang)).join(', ');
+    const own = new Map<number, string[]>();
+    for (const cc of countriesByName(lang, ccs)) {
+      const v = printShipping(cc, g[0].id) ?? 0;
+      own.set(v, [...(own.get(v) ?? []), countryName(cc, lang)]);
+    }
+    for (const [price, list] of [...own.entries()].sort((a, b) => a[0] - b[0])) rows.push([eur(price, lang), `${names}: ${list.join(', ')}`]);
+  }
+  return rows;
 }
 
 /** The terms' section "prints". */

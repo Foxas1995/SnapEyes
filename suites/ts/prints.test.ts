@@ -9,7 +9,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  PRINT_OFFER, PRINT_RATES, countriesByName, countryName, defaultCountry, kindName, offeredPrints, printCountries, printMargin, printName, printProduct, printProducts, printShipping, shipPrice,
+  PRINT_NAMES, PRINT_OFFER, PRINT_RATES, countriesByName, countryName, defaultCountry, kindAbout, kindName, offeredPrints, printCountries, printLabel, printMargin, printName, printProduct, printProducts,
+  printShipping, shipPrice,
   type ServerPrints,
 } from '../../src/shared/prints';
 import { BuyCard } from '../../src/try/BuyCard';
@@ -42,13 +43,15 @@ export async function run(): Promise<Row[]> {
   const check = (name: string, ok: boolean, detail = '') => out.push([name, ok, detail]);
 
   // the tables
-  check('the offer as the page reads it: five prints in the owner\'s order, euros, on eu, lt and hr - 1124: six, the acrylic block 20 cm is the last',
-    printProducts().map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,canvas40,poster50,block20' && PRINT_OFFER.currency === 'eur'
-      && PRINT_OFFER.markets.join() === 'eu,lt,hr', printProducts().map((p) => p.id).join());
+  check('the offer as the page reads it: five prints in the owner\'s order, euros, on eu, lt and hr - 1124: the final list of that day, eleven prints offered '
+    + '(acrylic, metal, canvas, poster, block) and the keyring in the list but not offered (on 0: it earns less than the floor)',
+    printProducts().map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,metal30,metal40,metal60,canvas40,canvas60,poster50,block10,block20' && PRINT_OFFER.currency === 'eur'
+      && PRINT_OFFER.markets.join() === 'eu,lt,hr' && printProducts(false).length === 12 && printProducts(false)[11].id === 'keyring' && printProducts(false)[11].on === 0
+      && !printProducts().some((p) => p.kind === 'keyring'), printProducts().map((p) => p.id).join());
   // 2026-11-24, the owner's decisions: the acrylic block 20 x 20 cm at 79 EUR (a fourth kind, "block": it stands on a shelf, it is not hung) and the canvas at 79 EUR (it was 69)
   check('the acrylic block: a kind of its own with a name in the eight languages (eight different ones), 20 cm, 79 EUR as the canvas now, the shipping of the other small prints, '
     + 'and it earns more than the floor in every country',
-    printProduct('block20')?.kind === 'block' && printProduct('block20')?.cm === 20 && printProduct('block20')?.price === 7900 && printProduct('canvas40')?.price === 7900
+    printProduct('block20')?.kind === 'block' && printProduct('block20')?.cm === 20 && printProduct('block20')?.price === 7900 && printProduct('block10')?.price === 3900
       && sp(printName('block20', 'en')) === 'Acrylic block 20 × 20 cm' && sp(printName('block20', 'lt')) === 'Akrilo blokas 20 × 20 cm' && kindName('block', 'de') === 'Acrylblock'
       && new Set(LANGS.map((l) => kindName('block', l))).size === 8 && LANGS.every((l) => kindName('block', l).length > 6 && !DASH.test(kindName('block', l)))
       && printShipping('DE', 'block20') === 499 && printShipping('LT', 'block20') === 849 && printShipping('US', 'block20') === null
@@ -69,11 +72,33 @@ export async function run(): Promise<Row[]> {
     on: true, currency: 'EUR', markets: ['eu', 'lt', 'hr'],
     products: printProducts().map((p) => ({ id: p.id, kind: p.kind, cm: p.cm, price: p.price, ship: Object.fromEntries(printCountries().map((cc) => [cc, printShipping(cc, p.id)])) })),
   };
-  check('offeredPrints: none without the server\'s prints, while they are off, or in a market that sells none (au, hu, us); all five on the euro markets - 1124: all six',
+  // 2026-11-24, the final list: the canvas WITHOUT an outer frame (on its wooden stretcher frame, ready to hang; no floating frame anywhere), 40 and 60 cm; glossy
+  // metal 30, 40 and 60 cm; a small block; the keyring, which has no size in its name. Every kind has a line that says what it is (PRINT_NAMES about)
+  const KINDS6 = ['acrylic', 'metal', 'canvas', 'poster', 'block', 'keyring'] as const;
+  check('the canvas is sold without an outer frame: its name in no language says black, floating or frame alone, its line says ready to hang and without an outer frame; '
+    + '40 cm and 60 cm at the owner\'s prices, on the unframed SKUs',
+    printProduct('canvas40')?.sku === 'CVS0400401LMF2HC' && printProduct('canvas60')?.sku === 'CVS0600601LMF2HC' && printProduct('canvas40')?.price === 4900
+      && printProduct('canvas60')?.price === 6900 && kindName('canvas', 'en') === 'Canvas on a wooden stretcher frame' && kindName('canvas', 'lt') === 'Drobė ant medinio porėmio'
+      && !/black|floating|schwarz|Schattenfuge|juodame|fekete|crnom|musta|mustas|meln/i.test(JSON.stringify([PRINT_NAMES.kinds.canvas, PRINT_NAMES.about.canvas]))
+      && /ready to hang, without an outer frame/.test(kindAbout('canvas', 'en')) && /paruošta kabinti, be išorinio rėmo/.test(kindAbout('canvas', 'lt'))
+      && !Object.keys(PRINT_RATES.skus).some((s) => /BF/.test(s)), JSON.stringify(PRINT_NAMES.kinds.canvas));
+  check('every kind has a name and a line that says what it is in the eight languages (48 lines, all different, no dash); the block\'s says 2.5 cm and that it stands '
+    + 'by itself, the hung ones say ready to hang, the poster, the block and the keyring say nothing of hanging',
+    KINDS6.every((k) => new Set(LANGS.map((l) => kindName(k, l))).size >= 6 && LANGS.every((l) => kindAbout(k, l).length > 12 && !DASH.test(kindAbout(k, l) + kindName(k, l))))
+      && new Set(KINDS6.flatMap((k) => LANGS.map((l) => kindAbout(k, l)))).size === 48
+      && LANGS.every((l) => /2[.,]5 cm/.test(kindAbout('block', l))) && /stands by itself on a shelf or desk/.test(kindAbout('block', 'en'))
+      && ['acrylic', 'metal', 'canvas'].every((k) => /ready to hang/.test(kindAbout(k as 'metal', 'en'))) && ['poster', 'block', 'keyring'].every((k) => !/hang/i.test(kindAbout(k as 'block', 'en')))
+      && kindName('metal', 'lt') === 'Blizgus metalas' && kindName('metal', 'en') === 'Glossy metal print' && kindName('keyring', 'lt') === 'Raktų pakabukas',
+    KINDS6.map((k) => new Set(LANGS.map((l) => kindName(k, l))).size).join());
+  check('a thing that is not named by a size (the keyring, cm 0) is its kind\'s name alone in every language; every other print ends in its size',
+    printProduct('keyring')?.cm === 0 && LANGS.every((l) => printName('keyring', l) === kindName('keyring', l) && printLabel('keyring', 0, l) === kindName('keyring', l))
+      && printName('keyring', 'en') === 'Keyring' && printProducts().every((p) => p.cm >= 10 && sp(printName(p.id, 'en')).endsWith(`${p.cm} × ${p.cm} cm`))
+      && PRINT_RATES.skus.KRR0050041?.design_mm.join() === '56,76', printName('keyring', 'en'));
+  check('offeredPrints: none without the server\'s prints, while they are off, or in a market that sells none (au, hu, us); all five on the euro markets - 1124: all eleven',
     offeredPrints(undefined, 'eu').length === 0 && offeredPrints({ on: false }, 'eu').length === 0 && offeredPrints(server, 'au').length === 0
-      && offeredPrints(server, 'hu').length === 0 && offeredPrints(server, 'us').length === 0 && offeredPrints(server, 'lt').length === 6);
+      && offeredPrints(server, 'hu').length === 0 && offeredPrints(server, 'us').length === 0 && offeredPrints(server, 'lt').length === 11);
   check('offeredPrints keeps only what the page knows and what is well formed (an unknown product, a price of 0, no country are left out)',
-    offeredPrints({ ...server, products: [...server.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] }, 'eu').length === 6);
+    offeredPrints({ ...server, products: [...server.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] }, 'eu').length === 11);
   const offered = offeredPrints(server, 'eu');
   check('the visitor\'s country is preselected only where prints ship to it', defaultCountry('lt', offered[0].ship) === 'LT' && defaultCountry('US', offered[0].ship) === ''
     && defaultCountry(undefined, offered[0].ship) === '');
@@ -122,9 +147,13 @@ export async function run(): Promise<Row[]> {
     && text(h4).includes(sp(`${OW.total} ${money(7900 + 499, 'eur', 'en')}`)) && text(h4).includes('Continue to payment'), text(h4).slice(0, 600));
   const h5 = offerCard({ st: st({ print_offer: { currency: 'EUR', products: server.products } }), initial: { choice: { product: 'acrylic40', country: 'DE' }, consent: true } });
   check('without the server\'s box text the page shows its own (the same words, held by the build)', text(h5).includes(sp(CHECKOUT_LEGAL.en.printConsent)));
-  check('the picture of each kind: a frame for the canvas, a gloss for the acrylic, plain paper for the poster - 1124: and a thick clear edge for the acrylic block',
-    ['acrylic', 'canvas', 'poster', 'block'].every((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).includes(`data-kind="${k}"`))
-      && new Set(['acrylic', 'canvas', 'poster', 'block'].map((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).replace(/data-kind="[a-z]+"/, ''))).size === 4);
+  check('the picture of each kind: a frame for the canvas, a gloss for the acrylic, plain paper for the poster - 1124: six pictures, all different: the canvas '
+    + 'WITHOUT a frame (no black border round it), a bright rim for the metal, a thick clear edge for the block, and the keyring as a small upright tag with its ring, not a square',
+    KINDS6.every((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).includes(`data-kind="${k}"`))
+      && new Set(KINDS6.map((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).replace(/data-kind="[a-z]+"/, ''))).size === 6
+      && !/p-\[5px\] bg-\[#111\]|bg-black p-|p-\[3px\] bg-black/.test(renderToStaticMarkup(createElement(PrintMock, { kind: 'canvas' as never, alt: 'x' })))
+      && /w-\[70px\] h-24/.test(renderToStaticMarkup(createElement(PrintMock, { kind: 'keyring' as never, alt: 'x' })))
+      && !/w-\[70px\]/.test(renderToStaticMarkup(createElement(PrintMock, { kind: 'block' as never, alt: 'x' }))));
   // (the print box's text comes from the page's own copy here: the status reply of this card names no text for these languages)
   const noBox = st({ print_offer: { currency: 'EUR', products: server.products } });
   const hl = offerCard({ st: noBox, initial: { choice: { product: 'poster50', country: 'LT' }, consent: false } }, 'lt');
@@ -177,8 +206,16 @@ export async function run(): Promise<Row[]> {
       && tp.includes('Picanova GmbH (merchOne), Eupener Straße 67, 50933 Köln') && tp.includes('Article 16(c)') && tp.includes('7 days') && tp.includes('two years')
       && tp.includes('30 days') && !DASH.test(tp), tp.slice(0, 300));
   const rows = shippingRows('en');
-  check('the shipping table groups the countries by price, and Germany says its 60 cm price apart', rows.map((r) => r[0]).join() === [499, 699, 849, 999].map((c) => money(c, 'eur', 'en')).join()
-    && rows[0][1].startsWith('Germany (') && rows[0][1].includes(money(699, 'eur', 'en')), JSON.stringify(rows).slice(0, 300));
+  check('the shipping table groups the countries by price, and Germany says its 60 cm price apart - 1124: the prints on a tariff of their own (metal and canvas of '
+    + '60 cm) have rows of their own after the usual four, named by those prints, so no country\'s entry repeats them; every country is in both parts once',
+    rows.map((r) => r[0]).join() === [499, 699, 849, 999, 699, 849, 1349].map((c) => money(c, 'eur', 'en')).join()
+      && rows[0][1].startsWith('Germany (') && rows[0][1].includes(money(699, 'eur', 'en')) && sp(rows[0][1]).includes(sp(printName('acrylic60', 'en')))
+      && rows.slice(0, 4).every((r) => !r[1].includes(kindName('metal', 'en')) && !r[1].includes(kindName('canvas', 'en')))
+      && rows.slice(4).every((r) => sp(r[1]).startsWith(sp(`${printName('metal60', 'en')}, ${printName('canvas60', 'en')}: `)))
+      && rows[4][1].endsWith(': Germany') && rows[6][1].includes('Lithuania') && rows[6][1].includes('Sweden')
+      && printCountries().every((cc) => rows.slice(0, 4).filter((r) => r[1].includes(countryName(cc, 'en'))).length === 1
+        && rows.slice(4).filter((r) => r[1].split(': ')[1].split(', ').includes(countryName(cc, 'en'))).length === 1)
+      && LANGS.every((l) => shippingRows(l).length === 7), JSON.stringify(rows).slice(0, 300));
   check('the Hungarian edition\'s terms (forints) carry the section and say a print is added only to an order in euros; AU and US carry none',
     !!EDITIONS.hu.terms.hu?.sections.some((s) => s.id === 'prints') && sectionText(EDITIONS.hu.terms.en, 'prices').includes('only to an order in euros')
       && !EDITIONS.au.terms.en?.sections.some((s) => s.id === 'prints') && !EDITIONS.us.terms.en?.sections.some((s) => s.id === 'prints')

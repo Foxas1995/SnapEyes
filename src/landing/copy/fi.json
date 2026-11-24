@@ -570,7 +570,7 @@
         "id": "print",
         "q": "Tulostatteko tai lähetättekö sen?",
         "a": "Emme. Tulostus ei kuulu tilaukseesi: tulostuspalvelu veloittaa siitä erikseen, ja hinta riippuu palvelusta, koosta ja materiaalista. Jos joskus lisäämme tulostuksen, kerromme siitä tällä sivulla.",
-        "aPrints": "Emme tilauksesi mukana: tilauksesi on digitaalinen tiedosto. Voit tulostaa sen itse missä tahansa; tulostuspalvelu veloittaa siitä erikseen. Kun taideteoksesi on valmis, voit tilata tulosteen myös meiltä tilaussivultasi: akryylilasitauluna, canvastauluna, julisteena tai akryylilohkona, joka seisoo hyllyllä tai pöydällä, tilauksesi mukaan tehtynä ja sinulle lähetettynä."
+        "aPrints": "Emme tilauksesi mukana: tilauksesi on digitaalinen tiedosto. Voit tulostaa sen itse missä tahansa; tulostuspalvelu veloittaa siitä erikseen. Kun taideteoksesi on valmis, voit tilata tulosteen myös meiltä tilaussivultasi: akryylilasin taakse, kiiltävälle metallille, canvakselle, julisteeksi tai akryylilohkoksi, tilauksesi mukaan tehtynä ja sinulle lähetettynä."
       },
       {
         "id": "printit",
