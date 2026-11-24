@@ -129,7 +129,7 @@ const CASES = [
   {
     name: 'wiring: the FAQ counts eyes nobody can buy',
     note: 'Faq.tsx asks faqEntries for eight eyes whatever the catalogue says: "up to 1 eyes share one artwork"',
-    edits: [{ file: FAQ, from: 'faqEntries(c, open, max)', to: 'faqEntries(c, open, 8)' }],
+    edits: [{ file: FAQ, from: 'faqEntries(c, open, max, prints)', to: 'faqEntries(c, open, 8, prints)' }],
     gate: 'fail', words: ['the FAQ answer "other"', 'one eye at most can be bought'], build: 'fail',
   },
   {
@@ -173,6 +173,31 @@ const CASES = [
     note: 'Pricing.tsx prints the open notice while ordering is closed',
     edits: [{ file: PRICING, from: '{p.open ? pr.noticeOpen : pr.notice}', to: '{pr.noticeOpen}' }],
     gate: 'fail', words: ['the pricing notice says', 'not open'], build: 'fail',
+  },
+  // the print state (2026-11-21: a print is ordered from the order page after the artwork; the page's lines about printing follow GET /api/checkout prints)
+  {
+    name: 'wiring: the FAQ offers a print nobody sells',
+    note: 'Faq.tsx takes the prints wording whatever the server says: "you can order a print from us" while the print switch is off',
+    edits: [{ file: FAQ, from: 'const prints = usePrintsOffered(useMarket());', to: 'useMarket(); const prints = true;' }],
+    gate: 'fail', words: ['says a print can be ordered from us', 'no print is sold in this state'], build: 'fail',
+  },
+  {
+    name: 'wiring: the FAQ says we do not print while prints are sold',
+    note: 'Faq.tsx never hands faqEntries the print state: "No ... we do not print or ship" stays while a print can be ordered from the order page',
+    edits: [{ file: FAQ, from: 'faqEntries(c, open, max, prints)', to: 'faqEntries(c, open, max)' }],
+    gate: 'fail', words: ['still says we do not print', 'prints are sold in this state'], build: 'fail',
+  },
+  {
+    name: 'wiring: the pricing line offers a print nobody sells',
+    note: 'Pricing.tsx prints the prints wording of its line about printing in every state',
+    edits: [{ file: PRICING, from: '{prints ? pr.notIncludesPrints : pr.notIncludes}', to: '{pr.notIncludesPrints}' }],
+    gate: 'fail', words: ['line about printing', 'prints are not sold in this state'], build: 'fail',
+  },
+  {
+    name: 'wiring: prints are offered while ordering is closed',
+    note: 'ordering.ts keeps the print markets although nobody can order: the pricing line names an order page no visitor can have',
+    edits: [{ file: ORDERING, from: 'printMarkets = open ? v.prints : NO_MARKETS;', to: 'printMarkets = v.prints;' }],
+    gate: 'fail', words: ['closed, the print switch on', 'line about printing'], build: 'fail',
   },
   {
     name: 'wiring: the third step says pay through Stripe',

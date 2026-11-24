@@ -89,6 +89,10 @@ export function gateInputs(root) {
     ...(one ? [{ name: 'one style ticked', answer: checkoutAnswer(root, { open: true, ticked: [one] }) }] : []),
     { name: 'every live ceiling ticked', answer: checkoutAnswer(root, { open: true, ticked: true }) },
     { name: 'every style live, beyond the ceilings', answer: checkoutAnswer(root, { open: true, ticked: 'beyond' }) },
+    // the owner's print switch (2026-11-21: a print is ordered from the order page after the artwork): while prints are sold in the page's market the lines that say
+    // "we do not print or ship" would be false; while ordering is closed nobody has an order page, so the lines stay
+    { name: 'every live ceiling ticked, prints sold', answer: checkoutAnswer(root, { open: true, ticked: true, prints: true }) },
+    { name: 'closed, the print switch on', answer: checkoutAnswer(root, { open: false, prints: true }) },
     { name: 'server not reachable', answer: null },
   ];
 }
@@ -109,7 +113,18 @@ function reading(answer) {
     }
   }
   const open = ok && answer.ok !== false && answer.open === true && Number.isInteger(answer.orderable_max_eyes) && answer.orderable_max_eyes >= 1;
-  return { open, live };
+  // prints are sold to a visitor of the page the gate renders (the default market, eu): the answer says so, names that market, and orders can be placed at all
+  const prints = open && !!answer.prints && answer.prints.on === true && Array.isArray(answer.prints.markets) && answer.prints.markets.includes(GATE_MARKET);
+  return { open, live, prints };
+}
+
+/** The market of the page the gate renders (no ?m=: the default market of src/shared/markets.ts). */
+const GATE_MARKET = 'eu';
+
+/** The pricing block's line under the list of what the file includes (<p class="lp-not">): its words, or null. */
+export function readNotIncluded(html) {
+  const m = /<p class="lp-not">([\s\S]*?)<\/p>/.exec(html);
+  return m ? norm(text(m[1])) : null;
 }
 
 /** A tile's markup: its state attribute, the name in its heading, the Soon chip's words (or null) and whether it prints a price. */
@@ -219,7 +234,7 @@ export function promiseGate(rendered, inputs, styles, tileStyle, gallery) {
   const classId = (cls, n) => Object.entries(styles ?? {}).find(([, d]) => d.legacy === 0 && (cls === null || d.price_class === cls) && d.eyes[0] <= n && n <= d.eyes[1])?.[0] ?? null;
   inputs.forEach((input, i) => {
     const sc = rendered.scenarios[i];
-    const { open, live } = reading(input.answer);
+    const { open, live, prints } = reading(input.answer);
     const at = `${input.name}`;
     if (sc.open !== open) promises.add(`${at}: the page treats ordering as ${sc.open ? 'open' : 'closed'} but the catalogue says ${open ? 'open' : 'closed'}`);
     const buyable = (id, n) => open && live.has(id) && live.get(id).has(n);
@@ -374,6 +389,10 @@ export function promiseGate(rendered, inputs, styles, tileStyle, gallery) {
       const pnote = readNotice(view.pricing ?? '');
       if (pnote.notice !== (open ? w.noticeOpen : w.notice)) promises.add(`${at}: the pricing notice says ${pnote.notice === null ? 'nothing the gate can read' : `"${pnote.notice}"`} in ${lang}, ${state} so it should say "${open ? w.noticeOpen : w.notice}"`);
       if (pnote.pay !== (open ? norm(w.payOpen) : null)) promises.add(`${at}: the pricing block ${pnote.pay === null ? 'has no payment line' : `says "${pnote.pay}"`} in ${lang}, ${state}`);
+      // the line under what the file includes: "printing is not part of your order" in every state, and where a print is ordered only while prints are sold here
+      const not = readNotIncluded(view.pricing ?? '');
+      const wantNot = norm(prints ? w.notIncludesPrints ?? '' : w.notIncludes ?? '');
+      if (!wantNot || not !== wantNot) promises.add(`${at}: the pricing block's line about printing says ${not === null ? 'nothing the gate can read' : `"${not}"`} in ${lang}; prints are ${prints ? 'sold' : 'not sold'} in this state, so it should say "${wantNot}"`);
       const steps = readSteps(view.how ?? '');
       if (steps.length !== 3) promises.add(`${at}: the steps of how it works are ${steps.length} in ${lang}, the gate reads 3 (scripts/landing_gate.mjs readSteps)`);
       else if (!faqPattern(open && w.step3Open ? w.step3Open : w.step3, null).test(steps[2])) promises.add(`${at}: the third step says "${steps[2].slice(0, 120)}" in ${lang}, ${state} so it should say "${(open && w.step3Open ? w.step3Open : w.step3).slice(0, 120)}"`);
@@ -388,7 +407,11 @@ export function promiseGate(rendered, inputs, styles, tileStyle, gallery) {
           if (got.id !== it.id) { promises.add(`${at}: the FAQ's question ${k + 1} is "${got.id}" in ${lang}, the copy's is "${it.id}"`); return; }
           const counted = typeof it.aOpen === 'string' && it.aOpen.includes('{max}') && maxEyes < 2;
           const wantQ = open ? it.qOpen || it.q : it.q;
-          const wantA = open ? (counted ? it.a : it.aOpen || it.a) : it.a;
+          // an answer about printing: its prints wording exactly while prints are sold in this market, the wording of before in every other state. Saying "we do not
+          // print" while a print can be ordered is false; saying "you can order a print from us" while none can is a promise
+          const wantA = prints && it.aPrints ? it.aPrints : open ? (counted ? it.a : it.aOpen || it.a) : it.a;
+          if (it.aPrints && !prints && faqPattern(it.aPrints, null).test(got.a)) promises.add(`${at}: the FAQ answer "${it.id}" (${lang}) says a print can be ordered from us, but no print is sold in this state`);
+          if (it.aPrints && prints && faqPattern(it.a, null).test(got.a)) promises.add(`${at}: the FAQ answer "${it.id}" (${lang}) still says we do not print, but prints are sold in this state`);
           const label = `the FAQ answer "${it.id}" (${lang})`;
           if (!faqPattern(wantQ, null).test(got.q)) {
             if (open && faqPattern(it.q, null).test(got.q)) underSells.add(`${at}: the FAQ question "${it.id}" keeps its plain wording although ordering is open (${lang})`);

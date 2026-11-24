@@ -131,9 +131,13 @@ export interface FaqEntry { id: string; q: string; a: string }
  *  aOpen) once it is. Items the Australian layer replaced (copyForMarket) have no open variant and stay as they are.
  *  An open variant that holds the token {max} ("up to {max} eyes share one artwork") is used only while the run-time catalogue can sell several eyes
  *  (eyes, the largest count some style can be ordered for, is at least 2); with one eye at most the plain, count-free text stands, so the page never
- *  prints a number of eyes the engine cannot sell. */
-export function faqEntries(copy: LandingCopy, open: boolean, eyes = 0): FaqEntry[] {
+ *  prints a number of eyes the engine cannot sell.
+ *  prints: the server sells prints in the page's market (src/landing/ordering.ts usePrintsOffered: only while ordering is open). The items about printing
+ *  ("Do you print or ship it?", "Can I print it?") then take their aPrints wording: the order is the digital file, it can be printed anywhere, and once the
+ *  artwork is ready a print can be ordered from us on the order page. Without it those answers are exactly the ones of before ("No ... we do not print or ship"). */
+export function faqEntries(copy: LandingCopy, open: boolean, eyes = 0, prints = false): FaqEntry[] {
   return copy.faq.items.map((it) => {
+    if (open && prints && typeof it.aPrints === 'string') return { id: it.id, q: it.q, a: it.aPrints };
     if (!open) return { id: it.id, q: it.q, a: it.a };
     const counted = typeof it.aOpen === 'string' && it.aOpen.includes('{max}') && eyes < 2;
     return { id: it.id, q: it.qOpen || it.q, a: counted ? it.a : it.aOpen || it.a };

@@ -497,6 +497,7 @@
       "Személyes használatra"
     ],
     "notIncludes": "A nyomtatás nem része a rendelésnek.",
+    "notIncludesPrints": "A nyomtatás nem része a rendelésnek. Amint elkészül az alkotásod, a rendelési oldaladon nyomatot is rendelhetsz tőlünk.",
     "payOpen": "Biztonságos kártyás fizetés a Stripe-on keresztül.",
     "gift": "Ajándékba adnád? Vegyél ajándékutalványt: a megajándékozott később maga fotózza le a szemét.",
     "termsLink": "ÁSZF",
@@ -568,12 +569,14 @@
       {
         "id": "print",
         "q": "Kinyomtatjátok és postázzátok is?",
-        "a": "Nem. A nyomtatás nem része a rendelésnek: a nyomda külön díjat számít fel érte, és ennek összege a nyomdától, a mérettől és az anyagtól függ. Ha valaha nyomtatást is kínálunk, ezt ezen az oldalon közöljük."
+        "a": "Nem. A nyomtatás nem része a rendelésnek: a nyomda külön díjat számít fel érte, és ennek összege a nyomdától, a mérettől és az anyagtól függ. Ha valaha nyomtatást is kínálunk, ezt ezen az oldalon közöljük.",
+        "aPrints": "A rendeléssel együtt nem: a rendelésed a digitális fájl. Bárhol kinyomtattathatod; a nyomda ezért külön díjat számít fel. Amint elkészül az alkotásod, a rendelési oldaladon nyomatot is rendelhetsz tőlünk: akrilüveg képként, vászonképként vagy poszterként, megrendelésre készítve és hozzád szállítva."
       },
       {
         "id": "printit",
         "q": "Kinyomtathatom, és mekkora méretben?",
-        "a": "Igen. Válassz egy nyomdát és egy négyzetes méretet (például 20, 30, 40 vagy 50 cm), majd töltsd fel a JPEG-fájlt. Más képarány esetén kérd meg a nyomdát, hogy vágja méretre a képet, vagy adjon hozzá szegélyt, és kérj próbanyomatot vagy mintát. Mi nem nyomtatunk és nem postázunk: a nyomtatás a nyomda feladata, és az árat is ők szabják meg. Egy szem esetén legfeljebb {printMax} méretet ajánlunk, ami kb. 208 pixel hüvelykenként (30 cm-nél kb. 347). A nyomdák általában 150 és 300 közötti értéket kérnek. Több szem esetén a hosszabbik oldal akár {printMaxCm} is lehet. {printMaxCm} fölött is lehetséges a nyomtatás, de ez még jobban megnyújtja a fájlt, ezért ezt nem garantáljuk. Az eredmény a fotódtól is függ."
+        "a": "Igen. Válassz egy nyomdát és egy négyzetes méretet (például 20, 30, 40 vagy 50 cm), majd töltsd fel a JPEG-fájlt. Más képarány esetén kérd meg a nyomdát, hogy vágja méretre a képet, vagy adjon hozzá szegélyt, és kérj próbanyomatot vagy mintát. Mi nem nyomtatunk és nem postázunk: a nyomtatás a nyomda feladata, és az árat is ők szabják meg. Egy szem esetén legfeljebb {printMax} méretet ajánlunk, ami kb. 208 pixel hüvelykenként (30 cm-nél kb. 347). A nyomdák általában 150 és 300 közötti értéket kérnek. Több szem esetén a hosszabbik oldal akár {printMaxCm} is lehet. {printMaxCm} fölött is lehetséges a nyomtatás, de ez még jobban megnyújtja a fájlt, ezért ezt nem garantáljuk. Az eredmény a fotódtól is függ.",
+        "aPrints": "Igen. Válassz egy nyomdát és egy négyzetes méretet (például 20, 30, 40 vagy 50 cm), majd töltsd fel a JPEG-fájlt. Más képarány esetén kérd meg a nyomdát, hogy vágja méretre a képet, vagy adjon hozzá szegélyt, és kérj próbanyomatot vagy mintát. A nyomdai nyomtatás a nyomda feladata, és az árat is ők szabják meg; amint elkészül az alkotásod, a rendelési oldaladon tőlünk is rendelhetsz nyomatot. Egy szem esetén legfeljebb {printMax} méretet ajánlunk, ami kb. 208 pixel hüvelykenként (30 cm-nél kb. 347). A nyomdák általában 150 és 300 közötti értéket kérnek. Több szem esetén a hosszabbik oldal akár {printMaxCm} is lehet. {printMaxCm} fölött is lehetséges a nyomtatás, de ez még jobban megnyújtja a fájlt, ezért ezt nem garantáljuk. Az eredmény a fotódtól is függ."
       },
       {
         "id": "look",

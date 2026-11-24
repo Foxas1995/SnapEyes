@@ -73,6 +73,9 @@ export interface GateWords {
   payOpen: string;
   step3: string;
   step3Open?: string;
+  /** The line under what the file includes (pricing.notIncludes), and its wording while prints are sold in the page's market (pricing.notIncludesPrints). */
+  notIncludes: string;
+  notIncludesPrints: string;
 }
 
 /** One question of the FAQ as the copy holds it (the plain wording and the one for an open deployment): the gate works out which one the visitor must read. */
@@ -82,6 +85,8 @@ export interface GateFaqItem {
   a: string;
   qOpen?: string;
   aOpen?: string;
+  /** The answer while the server sells prints in the page's market (the items about printing only). */
+  aPrints?: string;
 }
 
 export interface GateLang {
@@ -208,6 +213,7 @@ export async function renderGate(inputs: readonly GateInput[]): Promise<GateOutp
         words: {
           soon: copy.styles.soonTag, moreSoon: copy.styles.moreSoon, severalSoon: copy.pricing.severalSoon, comboTitle: copy.styles.comboTitle, comboTitleSoon: copy.styles.comboTitleSoon,
           barSoon: copy.bar.soon, barOpen: copy.bar.open, notice: copy.pricing.notice, noticeOpen: copy.pricing.noticeOpen, payOpen: copy.pricing.payOpen, step3: step3.b, step3Open: step3.bOpen,
+          notIncludes: copy.pricing.notIncludes, notIncludesPrints: copy.pricing.notIncludesPrints,
         },
         soon: copy.styles.soonTag,
         tiles,
@@ -218,7 +224,7 @@ export async function renderGate(inputs: readonly GateInput[]): Promise<GateOutp
         top,
         pricing,
         how,
-        faqItems: copy.faq.items.map((it) => ({ id: it.id, q: it.q, a: it.a, qOpen: it.qOpen, aOpen: it.aOpen })),
+        faqItems: copy.faq.items.map((it) => ({ id: it.id, q: it.q, a: it.a, qOpen: it.qOpen, aOpen: it.aOpen, aPrints: it.aPrints })),
       };
     }
     scenarios.push({ name: input.name, open: store.open(), sale: { max: sale.max, eyes: sale.eyes, one: sale.one, by: sale.by }, langs });

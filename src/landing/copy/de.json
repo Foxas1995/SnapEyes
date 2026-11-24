@@ -497,6 +497,7 @@
       "Für den privaten Gebrauch"
     ],
     "notIncludes": "Der Druck gehört nicht zur Bestellung.",
+    "notIncludesPrints": "Der Druck gehört nicht zur Bestellung. Sobald Ihr Kunstwerk fertig ist, können Sie auf Ihrer Bestellseite einen Druck bei uns bestellen.",
     "payOpen": "Sichere Kartenzahlung über Stripe.",
     "gift": "Als Geschenk? Kaufen Sie einen Geschenkgutschein: Das Auge wird später selbst fotografiert.",
     "termsLink": "AGB",
@@ -568,12 +569,14 @@
       {
         "id": "print",
         "q": "Drucken oder versenden Sie es?",
-        "a": "Nein. Der Druck gehört nicht zur Bestellung: Eine Druckerei berechnet ihn separat, und sein Preis hängt von Druckerei, Größe und Material ab. Sollten wir einmal Druck anbieten, sagen wir es auf dieser Seite."
+        "a": "Nein. Der Druck gehört nicht zur Bestellung: Eine Druckerei berechnet ihn separat, und sein Preis hängt von Druckerei, Größe und Material ab. Sollten wir einmal Druck anbieten, sagen wir es auf dieser Seite.",
+        "aPrints": "Nicht mit Ihrer Bestellung: Ihre Bestellung ist die digitale Datei. Sie können sie überall selbst drucken lassen; eine Druckerei berechnet das separat. Sobald Ihr Kunstwerk fertig ist, können Sie auf Ihrer Bestellseite auch einen Druck bei uns bestellen: als Acrylglasbild, auf Leinwand oder als Poster, nach Ihrer Bestellung angefertigt und zu Ihnen versandt."
       },
       {
         "id": "printit",
         "q": "Kann ich es drucken, und wie groß?",
-        "a": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 50 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Wir drucken und versenden nicht: Der Druck ist die Arbeit und der Preis der Druckerei. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 208 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab."
+        "a": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 50 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Wir drucken und versenden nicht: Der Druck ist die Arbeit und der Preis der Druckerei. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 208 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab.",
+        "aPrints": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 50 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Ein Druck aus der Druckerei ist deren Arbeit und Preis; sobald Ihr Kunstwerk fertig ist, können Sie auf Ihrer Bestellseite auch einen Druck bei uns bestellen. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 208 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab."
       },
       {
         "id": "look",

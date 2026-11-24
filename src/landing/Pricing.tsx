@@ -12,6 +12,7 @@
 // the hairlines between the rows of the price table draw one after the other (src/landing/PriceTable.tsx, css/pricing.css).
 import { useCopy } from './copy/useCopy';
 import { useLandingPrices } from './prices';
+import { usePrintsOffered } from './ordering';
 import { useGiftHref, useLegalHref, useTryHref } from './links';
 import { giftMarket } from '../shared/gift';
 import { legalEdition } from '../shared/legal';
@@ -40,6 +41,8 @@ export function Pricing() {
   const giftHref = useGiftHref();
   const termsHref = useLegalHref('terms');
   const pr = c.pricing;
+  // the server sells prints in this market (src/landing/ordering.ts): the line still says that printing is not part of the order, and adds where a print is ordered
+  const prints = usePrintsOffered(p.market);
   const footnote = p.currency === 'aud' ? pr.footnoteAud : p.currency === 'huf' ? pr.footnoteHuf : p.currency === 'usd' ? pr.footnoteUsd : pr.footnote;
   return (
     <section className="lp-sec" id="pricing" aria-labelledby="priceH">
@@ -68,7 +71,7 @@ export function Pricing() {
             </ul>
             <p className="lp-not">
               <Icon name="noPrint" />
-              {pr.notIncludes}
+              {prints ? pr.notIncludesPrints : pr.notIncludes}
             </p>
             {p.open && <p className="lp-pay-open">{pr.payOpen}</p>}
             {/* a gift voucher (src/gift, api/_lib/voucher.py): only where vouchers are sold (euros, the EU edition) and while ordering is open */}

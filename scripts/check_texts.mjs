@@ -652,7 +652,10 @@ const BANNED_CLAIMS = /ready to print|print[- ]ready|druckfertig|druckbereit|100
 // (styles.wallFile, only while that tile can be bought). The lean pass of 2026-10-22 (the owner: say a message once, where it matters) took it out
 // of the hero caption, the sentence under the wall title, the closing scene and the caption of the polished edge: the price list says it, the
 // FAQ says it, and every picture of a print carries its "Visualisation" label.
-const PRINTING_KEYS = ['pricing.notIncludes', 'faq.items.1.a', 'styles.wallFile'];
+// 2026-11-21: the pricing line has a second wording for the state in which the server sells prints (pricing.notIncludesPrints, src/landing/ordering.ts
+// usePrintsOffered): it KEEPS the sentence (a print is an order of its own, made from the order page after the artwork is ready) and adds where a print is ordered,
+// so it is one of the strings that say it. The FAQ answer's prints wording (faq.items.1.aPrints) does not hold the sentence: it says what the order is instead.
+const PRINTING_KEYS = ['pricing.notIncludes', 'pricing.notIncludesPrints', 'faq.items.1.a', 'styles.wallFile'];
 const HONESTY = {
   en: {
     chips: { 'example.chip': 'Example', 'example.vis': 'Visualisation' },

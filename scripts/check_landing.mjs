@@ -22,6 +22,10 @@
 //              768, 1024 and 1280 px (and more with the full run) in English, German, Lithuanian and Hungarian
 //   links      every legal link carries ?lang= and the market's edition (m=au, m=hu, m=us); every call to action goes to /try in the language
 //   ordering   the closed and the open states: the bar, the pricing notice, the FAQ item about ordering
+//   prints     (2026-11-21) the page's lines about printing follow the server's print state (GET /api/checkout prints, src/landing/ordering.ts usePrintsOffered), in
+//              the eight languages: while no print is sold (the default), while ordering is closed, and in a market without prints (A$) they are the lines of before
+//              ("Printing is not part of your order", "No ... we do not print or ship"); while prints are sold in the page's market the FAQ says that the order is
+//              the digital file and that a print can be ordered from us on the order page once the artwork is ready, and the pricing line adds the same; no price
 //   axe        axe-core with every <details> open, in eight states (needs axe-core: --axe, AXE_CORE, or node_modules/axe-core)
 //   resilience each lazy chunk of the page blocked in turn (a flaky network, a new deploy): the header, the hero and the footer stay, the page is
 //              not blank and does not reload itself in a loop; with the globe's chunk blocked the hero keeps its poster, whole
@@ -91,7 +95,7 @@ const handler = (req, res) => {
   if (skew.on && skew.hang && skew.chunk && url.pathname.includes(skew.chunk)) return true;   // a stalled connection: the request is never answered
   if (skew.on && skew.chunk && url.pathname.includes(skew.chunk)) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('gone'); return true; }
   if (url.pathname === '/api/health') { later({ stripe: true, stripe_live: false, email: false }); return true; }
-  if (url.pathname === '/api/checkout') { later(checkoutAnswer(ROOT, { open: stub.open, suggest: stub.suggest, ticked: stub.ticked ?? stub.open })); return true; }
+  if (url.pathname === '/api/checkout') { later(checkoutAnswer(ROOT, { open: stub.open, suggest: stub.suggest, ticked: stub.ticked ?? stub.open, prints: stub.prints === true })); return true; }
   if (url.pathname.startsWith('/api/')) { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{}'); return true; }
   return false;
 };
@@ -417,11 +421,13 @@ const PROBE = String.raw`(() => {
 })()`;
 async function checkOverflow() {
   console.log('overflow');
-  // ordering closed at every width; ordering open (other words in the pricing block, the FAQ and the phone picture of step 2) at the narrow ones
+  // ordering closed at every width; ordering open (other words in the pricing block, the FAQ and the phone picture of step 2) at the narrow ones; and ordering open with
+  // prints sold (the longer line of the pricing block and the two longer answers of the FAQ) at the narrowest and at a phone's width
   for (const lang of LANGS) {
     const bad = [];
-    for (const [open_, widths] of [[false, WIDTHS], [true, [320, 375, 1280]]]) {
+    for (const [open_, widths, prints_] of [[false, WIDTHS, false], [true, [320, 375, 1280], false], [true, [280, 375], true]]) {
       stub.open = open_;
+      stub.prints = prints_;
       for (const width of widths) {
         const page = await open({ lang, width, details: true });
         await sleep(open_ ? 500 : 0);
@@ -431,13 +437,14 @@ async function checkOverflow() {
         if (r.sw > r.iw) here.push(`horizontal scroll ${r.sw} > ${r.iw}`);
         if (r.over.length) here.push(`beyond the edge: ${r.over.slice(0, 4).join(', ')}`);
         if (r.clip.length) here.push(`clipped: ${[...new Set(r.clip)].slice(0, 4).join(' | ')}`);
-        if (here.length) bad.push(`${width}px${open_ ? ' ordering open' : ''}: ${here.join('; ')}`);
+        if (here.length) bad.push(`${width}px${open_ ? ' ordering open' : ''}${prints_ ? ', prints sold' : ''}: ${here.join('; ')}`);
         await page.close();
       }
     }
     stub.open = false;
+    stub.prints = false;
     if (bad.length) fail('overflow', `${lang}: ${bad.join(' // ')}`);
-    else pass('overflow', `${lang}: no overflow, no cut word, no clipped button at ${WIDTHS.join(', ')} px (and with ordering open at 320, 375, 1280)`);
+    else pass('overflow', `${lang}: no overflow, no cut word, no clipped button at ${WIDTHS.join(', ')} px (and with ordering open at 320, 375, 1280, and with prints sold at 280, 375)`);
   }
 }
 
@@ -492,6 +499,62 @@ async function checkOrdering() {
     }
     if (msgs.length) fail('ordering', `${lang}: ${msgs.join('; ')}`);
     else pass('ordering', `${lang}: closed and open states show their own bar sentence and FAQ question`);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------- prints
+// The lines about printing in each state of the server's print switch. What the page must say is read from the copy files; what it says is read from the page.
+const READ_PRINT_LINES = `JSON.stringify({
+  not: (document.querySelector('#pricing .lp-not') || {}).textContent || null,
+  print: (document.querySelector('#faq-print p') || {}).textContent || null,
+  printit: (document.querySelector('#faq-printit p') || {}).textContent || null,
+  wall: [...document.querySelectorAll('.lp-file')].map((e) => e.textContent.trim()),
+})`;
+async function checkPrints() {
+  console.log('prints');
+  const plain = (x) => String(x ?? '').replace(/\s+/g, ' ').trim();
+  const read = async (lang, query = '') => {
+    const page = await open({ lang, width: 375, query, details: true });
+    await sleep(500);
+    const r = JSON.parse(await page.eval(READ_PRINT_LINES));
+    await page.close();
+    return r;
+  };
+  for (const lang of LANGS) {
+    const c = COPY[lang];
+    const item = (id) => c.faq.items.find((i) => i.id === id);
+    const print = item('print'), printit = item('printit');
+    // the one sentence of each printit wording that the other does not have (the answer is long and holds tokens: its own sentence is what tells the two apart)
+    const sentences = (t) => t.split(/(?<=[.!?]) /);
+    const onlyIn = (a, b) => sentences(a).find((x) => !sentences(b).includes(x)) ?? '';
+    const offSentence = onlyIn(printit.a, printit.aPrints), onSentence = onlyIn(printit.aPrints, printit.a);
+    const msgs = [];
+    const isOff = (r, state) => {
+      if (plain(r.not) !== plain(c.pricing.notIncludes)) msgs.push(`${state}: the pricing line says "${r.not}"`);
+      if (plain(r.print) !== plain(print.a)) msgs.push(`${state}: the answer "print" says "${plain(r.print).slice(0, 80)}"`);
+      if (!plain(r.printit).includes(plain(offSentence)) || plain(r.printit).includes(plain(onSentence))) msgs.push(`${state}: the answer "printit" is not the one of before`);
+    };
+    stub.open = true; stub.prints = false;
+    isOff(await read(lang), 'ordering open, no print sold');
+    stub.open = false; stub.prints = true;
+    isOff(await read(lang), 'ordering closed, the print switch on');
+    stub.open = true; stub.prints = true;
+    const on = await read(lang);
+    if (plain(on.not) !== plain(c.pricing.notIncludesPrints)) msgs.push(`prints sold: the pricing line says "${on.not}"`);
+    if (plain(on.print) !== plain(print.aPrints)) msgs.push(`prints sold: the answer "print" says "${plain(on.print).slice(0, 80)}"`);
+    if (!plain(on.printit).includes(plain(onSentence)) || plain(on.printit).includes(plain(offSentence))) msgs.push('prints sold: the answer "printit" still says we do not print, or lacks the sentence about the order page');
+    if (!offSentence || !onSentence || !c.pricing.notIncludesPrints.startsWith(c.pricing.notIncludes) || /[0-9€$]/.test(print.aPrints + onSentence + c.pricing.notIncludesPrints.slice(c.pricing.notIncludes.length))) {
+      msgs.push('the copy: the prints wording must keep the sentence of before in the pricing line, differ from the old answer by one sentence, and name no price');
+    }
+    // a market without prints (the Australian one, read in English or German): the lines of before although the server sells prints elsewhere
+    if (lang === 'en' || lang === 'de') {
+      const au = await read(lang, 'm=au');
+      if (plain(au.not) !== plain(c.pricing.notIncludes)) msgs.push(`prints sold, the A$ market: the pricing line says "${au.not}"`);
+      if (plain(au.printit).includes(plain(onSentence)) || plain(au.print) === plain(print.aPrints)) msgs.push('prints sold, the A$ market: the FAQ offers a print the market does not sell');
+    }
+    stub.open = false; stub.prints = false;
+    if (msgs.length) fail('prints', `${lang}: ${msgs.join('; ')}`);
+    else pass('prints', `${lang}: the lines about printing are the lines of before while no print is sold, while ordering is closed${lang === 'en' || lang === 'de' ? ' and on the A$ market' : ''}; with prints sold the FAQ and the pricing line say where a print is ordered, with no price`);
   }
 }
 
@@ -1072,7 +1135,7 @@ async function checkGlobe() {
 }
 
 // ---------------------------------------------------------------------------------------------------- run
-const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, axe: checkAxe, resilience: checkResilience, skew: checkSkew, stall: checkStall, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, guide: checkGuide, globe: checkGlobe, vitals: checkVitals };
+const checks = { labels: checkLabels, phrases: checkPhrases, dashes: checkDashes, anchors: checkAnchors, focus: checkFocus, overflow: checkOverflow, links: checkLinks, ordering: checkOrdering, prints: checkPrints, axe: checkAxe, resilience: checkResilience, skew: checkSkew, stall: checkStall, glass: checkGlass, shellclick: checkShellClick, offers: checkOffers, guide: checkGuide, globe: checkGlobe, vitals: checkVitals };
 try {
   for (const [name, fn] of Object.entries(checks)) {
     if (!wants(name)) continue;

@@ -497,6 +497,7 @@
       "Personīgai lietošanai"
     ],
     "notIncludes": "Druka nav jūsu pasūtījuma daļa.",
+    "notIncludesPrints": "Druka nav jūsu pasūtījuma daļa. Kad jūsu mākslas darbs būs gatavs, savā pasūtījuma lapā varēsiet pasūtīt tā izdruku pie mums.",
     "payOpen": "Droša maksāšana ar karti, izmantojot Stripe.",
     "gift": "Dāvināsiet? Nopērciet dāvanu karti: apdāvinātais savu aci nofotografēs vēlāk pats.",
     "termsLink": "Pārdošanas noteikumi",
@@ -568,12 +569,14 @@
       {
         "id": "print",
         "q": "Vai jūs to drukājat vai sūtāt?",
-        "a": "Nē. Druka nav jūsu pasūtījuma daļa: tipogrāfija par to prasa atsevišķu samaksu, un cena ir atkarīga no tipogrāfijas, izmēra un materiāla. Ja kādreiz piedāvāsim druku, pateiksim to šajā lapā."
+        "a": "Nē. Druka nav jūsu pasūtījuma daļa: tipogrāfija par to prasa atsevišķu samaksu, un cena ir atkarīga no tipogrāfijas, izmēra un materiāla. Ja kādreiz piedāvāsim druku, pateiksim to šajā lapā.",
+        "aPrints": "Kopā ar pasūtījumu nē: jūsu pasūtījums ir digitālais fails. To varat izdrukāt jebkur paši; tipogrāfija par to prasa atsevišķu samaksu. Kad jūsu mākslas darbs būs gatavs, savā pasūtījuma lapā varēsiet pasūtīt izdruku arī pie mums: uz akrila stikla, uz audekla vai kā plakātu, izgatavotu pēc pasūtījuma un nosūtītu jums."
       },
       {
         "id": "printit",
         "q": "Vai varu to izdrukāt, un cik lielu?",
-        "a": "Jā. Izvēlieties tipogrāfiju, kvadrātveida izmēru, piemēram, 20, 30, 40 vai 50 cm, un augšupielādējiet JPEG. Citām formām lūdziet tipogrāfijai attēlu apgriezt vai pievienot malu un palūdziet izmēģinājuma izdruku vai paraugu. Mēs nedrukājam un nesūtām: izdruka ir tipogrāfijas darbs un cena. Vienai acij iesakām līdz {printMax}, tas ir apmēram 208 pikseļi collā (apmēram 347 pie 30 cm). Tipogrāfijas parasti prasa apmēram 150 līdz 300. Ar vairākām acīm garākā mala var būt līdz {printMaxCm}. Virs {printMaxCm} izdruka ir iespējama, taču fails tiek izstiepts vēl vairāk, tāpēc to nesolām. Rezultāts ir atkarīgs arī no jūsu fotogrāfijas."
+        "a": "Jā. Izvēlieties tipogrāfiju, kvadrātveida izmēru, piemēram, 20, 30, 40 vai 50 cm, un augšupielādējiet JPEG. Citām formām lūdziet tipogrāfijai attēlu apgriezt vai pievienot malu un palūdziet izmēģinājuma izdruku vai paraugu. Mēs nedrukājam un nesūtām: izdruka ir tipogrāfijas darbs un cena. Vienai acij iesakām līdz {printMax}, tas ir apmēram 208 pikseļi collā (apmēram 347 pie 30 cm). Tipogrāfijas parasti prasa apmēram 150 līdz 300. Ar vairākām acīm garākā mala var būt līdz {printMaxCm}. Virs {printMaxCm} izdruka ir iespējama, taču fails tiek izstiepts vēl vairāk, tāpēc to nesolām. Rezultāts ir atkarīgs arī no jūsu fotogrāfijas.",
+        "aPrints": "Jā. Izvēlieties tipogrāfiju, kvadrātveida izmēru, piemēram, 20, 30, 40 vai 50 cm, un augšupielādējiet JPEG. Citām formām lūdziet tipogrāfijai attēlu apgriezt vai pievienot malu un palūdziet izmēģinājuma izdruku vai paraugu. Tipogrāfijas izdruka ir tipogrāfijas darbs un cena; kad jūsu mākslas darbs būs gatavs, savā pasūtījuma lapā varēsiet pasūtīt izdruku arī pie mums. Vienai acij iesakām līdz {printMax}, tas ir apmēram 208 pikseļi collā (apmēram 347 pie 30 cm). Tipogrāfijas parasti prasa apmēram 150 līdz 300. Ar vairākām acīm garākā mala var būt līdz {printMaxCm}. Virs {printMaxCm} izdruka ir iespējama, taču fails tiek izstiepts vēl vairāk, tāpēc to nesolām. Rezultāts ir atkarīgs arī no jūsu fotogrāfijas."
       },
       {
         "id": "look",

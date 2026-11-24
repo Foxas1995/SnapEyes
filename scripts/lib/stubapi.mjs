@@ -13,7 +13,12 @@
 //                         registry has, live for every number of eyes it takes (a registry whose ceilings were all raised). The page must tell the truth there too, so the
 //                         build's gate renders it: the several-eyes ladder, the combo card's price and the price rows are only ever printed in states like this one.
 //
+//   prints                the owner's print switch (api/_lib/prints.py public_info): true adds prints {on, currency, markets} with the markets of
+//                         api/_lib/print_offer.py, as the server does while prints can be bought; false (the default) adds nothing, as the server does while they
+//                         cannot. The page's lines about printing follow it (src/landing/ordering.ts usePrintsOffered). No product and no price: the landing prints none.
+//
 // No price is written here and no style id: the registry is read.
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadRegistry, ceilingOf } from '../styles_source.mjs';
 
@@ -43,9 +48,17 @@ export function catalogueAnswer(root, ticked) {
   return { styles, orderable_max_eyes: Math.min(max, MAX_EYES) };
 }
 
-/** The whole answer: {ok, open, suggest, styles, orderable_max_eyes}. ticked follows `open` unless it is given. */
-export function checkoutAnswer(root, { open, suggest = null, ticked = open }) {
-  return { ok: true, open, suggest, ...catalogueAnswer(root, ticked) };
+/** The markets that offer prints (api/_lib/print_offer.py PRINT_OFFER markets), read from the file as the server and the pages read it. */
+export function printMarkets(root) {
+  const src = readFileSync(join(root, 'api', '_lib', 'print_offer.py'), 'utf8');
+  const m = /^PRINT_OFFER = \{[\s\S]*?"markets": (\[[^\]]*\])/m.exec(src);
+  if (!m) throw new Error('api/_lib/print_offer.py: PRINT_OFFER markets not found');
+  return JSON.parse(m[1]);
+}
+
+/** The whole answer: {ok, open, suggest, styles, orderable_max_eyes[, prints]}. ticked follows `open` unless it is given. */
+export function checkoutAnswer(root, { open, suggest = null, ticked = open, prints = false }) {
+  return { ok: true, open, suggest, ...catalogueAnswer(root, ticked), ...(prints ? { prints: { on: true, currency: 'EUR', markets: printMarkets(root) } } : {}) };
 }
 
 /** The first style of the registry (in tile order) the owner could switch on for one eye: a live ceiling, the art class, a tile in the picker's first group. Used

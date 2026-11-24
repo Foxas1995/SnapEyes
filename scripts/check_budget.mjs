@@ -129,7 +129,18 @@ const LANGS3 = { js: 98234, css: 316 };
 // the page stands at +5,471 B of +6,000 (it was +5,479 B). Re-measure it when the print texts or the offer card change: build both trees, gzip each chunk, take the
 // differences named here.
 const PRINT_LATER = { js: 303 - 1040 + 1085 - 380 + 201 + 144, css: 0 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css };
+// The landing's lines for the state in which the server sells prints (2026-11-21, the same release: the FAQ answers "Do you print or ship it?" and "Can I print it?" and the
+// pricing line "Printing is not part of your order" take a prints wording while GET /api/checkout says prints are on for the page's market, src/landing/ordering.ts
+// usePrintsOffered; without it they would say "we do not print" while a print can be ordered from the order page). Three sentences per language are content, not motion.
+// LANDING_PRINTS is the growth of the SEVEN lazy language chunks (a reader of that language loads its own: de-*.js +190 B, et-*.js +165 B, fi-*.js +166 B, hr-*.js +170 B,
+// hu-*.js +238 B, lt-*.js +258 B, lv-*.js +169 B) and of the legal pages' entry (main-*.js +15 B: the wording fixes of the machine proofreading in the Finnish, Estonian
+// and Latvian legal texts, never loaded by the landing), measured per chunk, gzip level 6, on the tree with them against the merge commit before them (84418d9). What every
+// visitor of the landing loads is NOT in it and is held to the budget: the landing's entry +283 B (the English words and the store's reading of the print state), Faq-*.js
+// +31 B, Pricing-*.js +14 B, the names of chunks in the import lists of eight other chunks +17 B (the hashes in those names change with any edit of a language file and
+// move the sum by some 20 B either way): +345 B, so the page stands at +5,857 B of +6,000 (it was +5,512 B on 84418d9, of which +41 B are the
+// wording fixes of 3997abf in the landing copy of et, fi, hr and lv). Re-measure it when those lines change: build both trees, gzip each chunk, take the differences named here.
+const LANDING_PRINTS = { js: 190 + 165 + 166 + 170 + 238 + 258 + 169 + 15, css: 0 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;

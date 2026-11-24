@@ -23,6 +23,10 @@ import { NOTHING_FOR_SALE, fallbackCatalogue, ordersOpen, readCatalogue, saleCat
 // The same answer holds the run-time catalogue (its "styles" at their effective stage, and orderable_max_eyes: src/shared/catalogue.ts): the number of
 // eyes, the list of styles a price may stand beside and the several-eyes ladder come from it, never from a text, so that a style the owner takes back in
 // the admin page leaves the page without a deploy. Until it is read (and whenever it cannot be) the build-time registry's ceilings stand in for it.
+// And it says whether the server sells prints, and in which markets (its "prints", api/_lib/prints.py public_info: there only while the owner's switch is on):
+// a print is ordered from the order page after the artwork is delivered, so on such a market the lines that say "we do not print or ship" would be false. They
+// take their prints wording there (the FAQ items' aPrints, pricing.notIncludesPrints); everywhere else, and until the answer is read, every line is the line of
+// before (the owner's switch does not rebuild the page either).
 
 /** What the page knows about ordering and how it learns it: ONE store per page (`ordering`, below, asking the real server). It is made by a function so that the
  *  build's gate (src/landing/shell/gate.tsx) can make its own with the answers of a state of the catalogue and hand it to the very components it renders
@@ -37,6 +41,9 @@ export interface Ordering {
    *  for what is in here; a style the catalogue lists as live while ordering is closed still reads Soon, so no price stands beside "Ordering opens soon". */
   sale: () => RunCatalogue;
   suggested: () => string | null;
+  /** The markets in which the server sells prints now, while this deployment takes orders (none otherwise, and until the answer is read). The same array until an
+   *  answer changes it. */
+  printMarkets: () => readonly string[];
   /** A render without a browser (the prerender, hydration) reads the closed page, so the first paint is the same everywhere; the gate's store reads its answers
    *  there too (settled), which is how the build's own render sees a state of the catalogue. */
   settled: boolean;
@@ -53,6 +60,16 @@ function takeEarly(path: string): Promise<Response> | undefined {
   return p;
 }
 
+const NO_MARKETS: readonly string[] = [];
+
+/** The markets GET /api/checkout says prints can be bought in ({prints: {on: true, markets: [...]}}), none while they are off or the answer says nothing. */
+export function printMarketsOf(answer: Record<string, unknown> | null | undefined): readonly string[] {
+  const p = answer?.prints as { on?: unknown; markets?: unknown } | null | undefined;
+  if (!p || typeof p !== 'object' || p.on !== true || !Array.isArray(p.markets)) return NO_MARKETS;
+  const out = p.markets.filter((m): m is string => typeof m === 'string');
+  return out.length ? out : NO_MARKETS;
+}
+
 const askServer: Ask = (path, signal) => takeEarly(path) ?? fetch(path, { headers: { Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin', signal });
 
 export function createOrdering(ask: Ask, settled = false): Ordering {
@@ -60,6 +77,7 @@ export function createOrdering(ask: Ask, settled = false): Ordering {
   let suggested: string | null = null;
   let catalogue: RunCatalogue = fallbackCatalogue();
   let sale: RunCatalogue = NOTHING_FOR_SALE;
+  let printMarkets: readonly string[] = NO_MARKETS;
   let started: Promise<void> | null = null;
   const listeners = new Set<() => void>();
 
@@ -78,15 +96,15 @@ export function createOrdering(ask: Ask, settled = false): Ordering {
     }
   }
 
-  async function check(): Promise<{ open: boolean; suggest: string | null; catalogue: RunCatalogue | null }> {
-    const none = { open: false, suggest: null, catalogue: null };
+  async function check(): Promise<{ open: boolean; suggest: string | null; catalogue: RunCatalogue | null; prints: readonly string[] }> {
+    const none = { open: false, suggest: null, catalogue: null, prints: NO_MARKETS };
     const h = await getJson('/api/health', false);
     if (!h || h.stripe !== true || (h.stripe_live === true && h.email !== true)) { noteInfoUnavailable(); return none; }
     const plain = await getJson('/api/checkout', true);
     if (!plain) { noteInfoUnavailable(); return none; }
     const c = ((await noteCheckoutInfo(plain)) ?? plain) as Record<string, unknown>;
     // the catalogue is read from the plain answer (the one without a visitor id), whatever a price test adds to the second one
-    return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null, catalogue: readCatalogue(plain) };
+    return { open: c.ok !== false && c.open === true, suggest: typeof c.suggest === 'string' ? c.suggest : null, catalogue: readCatalogue(plain), prints: printMarketsOf(plain) };
   }
 
   function start(): Promise<void> {
@@ -96,6 +114,7 @@ export function createOrdering(ask: Ask, settled = false): Ordering {
       open = ordersOpen(v.open, catalogue);       // the deployment takes orders AND a style can be ordered now (the build's fallback orders nothing)
       sale = saleCatalogue(v.open, catalogue);    // the same rule, in src/shared/catalogue.ts, as the build's gate reads
       suggested = v.suggest;
+      printMarkets = open ? v.prints : NO_MARKETS;   // a print is ordered from the order page of a paid order: without orders there is none to speak of
       listeners.forEach((l) => l());
     });
     return started;
@@ -107,7 +126,7 @@ export function createOrdering(ask: Ask, settled = false): Ordering {
     return () => { listeners.delete(onChange); };
   }
 
-  return { start, subscribe, open: () => open, sale: () => sale, suggested: () => suggested, settled };
+  return { start, subscribe, open: () => open, sale: () => sale, suggested: () => suggested, printMarkets: () => printMarkets, settled };
 }
 
 const ordering = createOrdering(askServer);
@@ -134,6 +153,14 @@ export function useOrderingOpen(): boolean {
 export function useSaleCatalogue(): RunCatalogue {
   const o = useContext(OrderingContext);
   return useSyncExternalStore(o.subscribe, o.sale, () => (o.settled ? o.sale() : NOTHING_FOR_SALE));
+}
+
+/** Does the server sell prints in this market now (and take orders)? Then the page's lines about printing take their prints wording: a print can be ordered
+ *  from us on the order page once the artwork is ready. false until the server has answered, when it cannot be read, and in every market without prints. */
+export function usePrintsOffered(market: string): boolean {
+  const o = useContext(OrderingContext);
+  const markets = useSyncExternalStore(o.subscribe, o.printMarkets, () => (o.settled ? o.printMarkets() : NO_MARKETS));
+  return markets.includes(market);
 }
 
 /** The market GET /api/checkout suggests for the visitor's country, or null (src/shared/markets.ts hintMarket decides
