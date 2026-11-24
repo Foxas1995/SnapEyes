@@ -10,9 +10,10 @@ this file as text: the shipping shown per country; scripts/check_prices.mjs chec
   shipping   {country: {sku: cents}}: tracked shipping of one print, without VAT, for the countries merchOne ships every SKU to from Europe
 The customer pays the shipping with VAT and rounded up to the next .49 or .99 (prints.py ship_price, src/shared/prints.ts shipPrice)."""
 PRINT_RATES = {
-    "fetched": "2026-10-28",
+    "fetched": "2026-11-24",
     "shipping": {
         "AT": {
+            "ABS0200201": 550,
             "ACP0300301HP": 550,
             "ACP0400401HP": 550,
             "ACP0600601HP": 550,
@@ -20,6 +21,7 @@ PRINT_RATES = {
             "PSD0500501": 550
         },
         "BE": {
+            "ABS0200201": 550,
             "ACP0300301HP": 550,
             "ACP0400401HP": 550,
             "ACP0600601HP": 550,
@@ -27,6 +29,7 @@ PRINT_RATES = {
             "PSD0500501": 550
         },
         "BG": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -34,6 +37,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "CY": {
+            "ABS0200201": 799,
             "ACP0300301HP": 799,
             "ACP0400401HP": 799,
             "ACP0600601HP": 799,
@@ -41,6 +45,7 @@ PRINT_RATES = {
             "PSD0500501": 799
         },
         "CZ": {
+            "ABS0200201": 550,
             "ACP0300301HP": 550,
             "ACP0400401HP": 550,
             "ACP0600601HP": 550,
@@ -48,6 +53,7 @@ PRINT_RATES = {
             "PSD0500501": 550
         },
         "DE": {
+            "ABS0200201": 399,
             "ACP0300301HP": 399,
             "ACP0400401HP": 399,
             "ACP0600601HP": 550,
@@ -55,6 +61,7 @@ PRINT_RATES = {
             "PSD0500501": 399
         },
         "DK": {
+            "ABS0200201": 550,
             "ACP0300301HP": 550,
             "ACP0400401HP": 550,
             "ACP0600601HP": 550,
@@ -62,6 +69,7 @@ PRINT_RATES = {
             "PSD0500501": 550
         },
         "EE": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -69,6 +77,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "ES": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -76,6 +85,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "FI": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -83,6 +93,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "FR": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -90,6 +101,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "GR": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -97,6 +109,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "HR": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -104,6 +117,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "HU": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -111,6 +125,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "IE": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -118,6 +133,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "IT": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -125,6 +141,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "LT": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -132,6 +149,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "LU": {
+            "ABS0200201": 550,
             "ACP0300301HP": 550,
             "ACP0400401HP": 550,
             "ACP0600601HP": 550,
@@ -139,6 +157,7 @@ PRINT_RATES = {
             "PSD0500501": 550
         },
         "LV": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -146,6 +165,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "MT": {
+            "ABS0200201": 799,
             "ACP0300301HP": 799,
             "ACP0400401HP": 799,
             "ACP0600601HP": 799,
@@ -153,6 +173,7 @@ PRINT_RATES = {
             "PSD0500501": 799
         },
         "NL": {
+            "ABS0200201": 550,
             "ACP0300301HP": 550,
             "ACP0400401HP": 550,
             "ACP0600601HP": 550,
@@ -160,6 +181,7 @@ PRINT_RATES = {
             "PSD0500501": 550
         },
         "PL": {
+            "ABS0200201": 550,
             "ACP0300301HP": 550,
             "ACP0400401HP": 550,
             "ACP0600601HP": 550,
@@ -167,6 +189,7 @@ PRINT_RATES = {
             "PSD0500501": 550
         },
         "PT": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -174,6 +197,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "RO": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -181,6 +205,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "SE": {
+            "ABS0200201": 799,
             "ACP0300301HP": 799,
             "ACP0400401HP": 799,
             "ACP0600601HP": 799,
@@ -188,6 +213,7 @@ PRINT_RATES = {
             "PSD0500501": 799
         },
         "SI": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -195,6 +221,7 @@ PRINT_RATES = {
             "PSD0500501": 699
         },
         "SK": {
+            "ABS0200201": 699,
             "ACP0300301HP": 699,
             "ACP0400401HP": 699,
             "ACP0600601HP": 699,
@@ -203,6 +230,29 @@ PRINT_RATES = {
         }
     },
     "skus": {
+        "ABS0200201": {
+            "blueprint": 18,
+            "cost": 3173,
+            "design_mm": [
+                200.0,
+                200.0
+            ],
+            "design_px": [
+                567,
+                567
+            ],
+            "dpi": 72,
+            "file_mm": [
+                204.0,
+                204.0
+            ],
+            "file_px": [
+                579,
+                579
+            ],
+            "trim_mm": 2.0,
+            "variant": 197
+        },
         "ACP0300301HP": {
             "blueprint": 80,
             "cost": 1916,

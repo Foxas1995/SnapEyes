@@ -32,8 +32,10 @@ export type LegalLang = Lang;
  *  every terms text of that edition. 2026-11-21: a print is ordered from the order page AFTER the artwork is delivered, as a contract of its own
  *  (src/legal/docs/prints.ts: the terms' print section and product sentence, the withdrawal page's and the privacy policy's print paragraph, in the eight
  *  languages of the EU edition and in the Hungarian edition's terms and withdrawal page, which carry the same section); the print box's words and the consent
- *  version are as they were. */
-export const LEGAL_UPDATED = '2026-11-21';
+ *  version are as they were. 2026-11-24: the list of prints and prices in the terms' print section, which is made from api/_lib/print_offer.py (the acrylic
+ *  block 20 x 20 cm joins it, the canvas has a new price), in the eight languages of the EU edition and in the Hungarian edition's terms; no sentence of any
+ *  legal text changed, and the consent version is as it was. */
+export const LEGAL_UPDATED = '2026-11-24';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right

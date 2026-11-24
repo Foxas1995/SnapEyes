@@ -21,7 +21,7 @@ Rules for the literal (JSON inside Python): double quotes only, no trailing comm
   margin_floor  the build refuses a print that would earn less than this (cents) in any country after its cost, VAT and the fee
   products      the prints, in the order the checkout shows them:
                   id     a short key (lower case letters and digits): what the order records and the page sends
-                  kind   "acrylic", "canvas" or "poster" (the words are in api/_lib/print_names.py)
+                  kind   "acrylic", "canvas", "poster" or "block" (the words are in api/_lib/print_names.py)
                   cm     the side of the square, in cm (every SnapEyes artwork is square)
                   sku    the merchOne SKU (api/_lib/print_rates.py must hold it: its cost and print file size)
                   price  the retail price in euro cents, final (no VAT is charged by SnapEyes); the shipping is added per country
@@ -30,7 +30,10 @@ Owner decisions of 2026-10-28: Premium Acrylic (12-colour photo paper behind 3 m
 60 cm; Canvas 40 cm with the black floating frame and the hanger set (mirrored edge; the SKU without the ink pad); Poster 50 cm. A framed
 canvas of 60 cm was asked for, but merchOne makes the black floating frame for square canvases up to 40 x 40 cm only (2026-10-28), so it is
 not in the list. 2026-10-28, after the review: the poster at 35 EUR (at 29 EUR it earned about 20 EUR, under the owner's target of about
-25 EUR; at 35 EUR about 25.8 EUR)."""
+25 EUR; at 35 EUR about 25.8 EUR).
+Owner decisions of 2026-11-24: the Acrylic Block 20 x 20 cm at 79 EUR (merchOne blueprint 18, SKU ABS0200201, 31.73 EUR without VAT: a clear
+acrylic block 2.5 cm thick, printed directly (UV), with polished clear edges; it STANDS by itself on a shelf or a desk, it is not hung and
+has no hanger), and the canvas 40 cm from 69 to 79 EUR. His rule for a print's price: at least about 2 to 2.5 times what it costs us."""
 PRINT_OFFER = {
     "currency": "eur",
     "markets": ["eu", "lt", "hr"],
@@ -41,7 +44,8 @@ PRINT_OFFER = {
         {"id": "acrylic30", "kind": "acrylic", "cm": 30, "sku": "ACP0300301HP", "price": 5900, "on": 1},
         {"id": "acrylic40", "kind": "acrylic", "cm": 40, "sku": "ACP0400401HP", "price": 7900, "on": 1},
         {"id": "acrylic60", "kind": "acrylic", "cm": 60, "sku": "ACP0600601HP", "price": 12900, "on": 1},
-        {"id": "canvas40", "kind": "canvas", "cm": 40, "sku": "CVS0400401LMSBF2HC", "price": 6900, "on": 1},
-        {"id": "poster50", "kind": "poster", "cm": 50, "sku": "PSD0500501", "price": 3500, "on": 1}
+        {"id": "canvas40", "kind": "canvas", "cm": 40, "sku": "CVS0400401LMSBF2HC", "price": 7900, "on": 1},
+        {"id": "poster50", "kind": "poster", "cm": 50, "sku": "PSD0500501", "price": 3500, "on": 1},
+        {"id": "block20", "kind": "block", "cm": 20, "sku": "ABS0200201", "price": 7900, "on": 1}
     ]
 }

@@ -98,7 +98,7 @@ export const lv: OrderCopy = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Jūsu mākslas darbs kā izdruka',
-    lead: 'Šo mākslas darbu varam jums arī izdrukāt: uz akrila stikla, uz audekla vai kā plakātu, izgatavotu pēc pasūtījuma un nosūtītu jums. Tas ir atsevišķs pasūtījums; jūsu fails paliek tāds, kāds tas ir.',
+    lead: 'Šo mākslas darbu varam jums arī izdrukāt: uz akrila stikla, uz audekla, kā plakātu vai kā akrila bloku, izgatavotu pēc pasūtījuma un nosūtītu jums. Akrila bloks ir 2,5 cm biezs un pats stāv uz plaukta vai galda. Tas ir atsevišķs pasūtījums; jūsu fails paliek tāds, kāds tas ir.',
     product: 'Izdruka',
     choose: 'Izvēlieties izdruku',
     option: (name: string, price: string) => `${name}, ${price}`,

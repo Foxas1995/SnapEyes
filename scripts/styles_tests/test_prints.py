@@ -312,8 +312,10 @@ def paid_print_order(cc="LT", product="acrylic40", lang="en", mismatch_cc=None):
 section("1. the tables and the rules: shipping, margins, the print file")
 check("the shipping rule: the cost with 19 % VAT rounded UP to the next .49 or .99 (3.99 to 4.99, 5.50 to 6.99, 6.99 to 8.49, 7.99 to 9.99)",
       [PR.ship_price(c) for c in (399, 550, 699, 799, 1, 49, 50)] == [499, 699, 849, 999, 49, 99, 99], [PR.ship_price(c) for c in (399, 550, 699, 799, 1, 49, 50)])
-check("the offer: five prints at the owner's prices (59, 79, 129, 69, 35 EUR), every SKU in the rate table, prints offered on eu, lt and hr only",
-      [(p["id"], p["price"]) for p in PR.products()] == [("acrylic30", 5900), ("acrylic40", 7900), ("acrylic60", 12900), ("canvas40", 6900), ("poster50", 3500)]
+check("the offer: five prints at the owner's prices (59, 79, 129, 69, 35 EUR), every SKU in the rate table, prints offered on eu, lt and hr only"
+      " - 1124: six prints, the acrylic block 20 cm at 79 EUR is the last, and the canvas is 79 EUR (the owner's decisions of 2026-11-24)",
+      [(p["id"], p["price"]) for p in PR.products()] == [("acrylic30", 5900), ("acrylic40", 7900), ("acrylic60", 12900), ("canvas40", 7900), ("poster50", 3500),
+                                                         ("block20", 7900)]
       and all(PR.sku_rec(p["sku"]) for p in PR.products()) and PR.markets() == ("eu", "lt", "hr"), PR.products())
 check("the countries: the 27 member states of the EU, each with a rate for every print and a name in every language; no US, no GB",
       len(PR.countries()) == 27 and "US" not in PR.countries() and "GB" not in PR.countries()
@@ -658,7 +660,7 @@ check("the admin's cancel at merchOne (the order number typed): merchOne's DELET
 st = ops.ACTIONS["print_status"]({}, WHO)
 check("the admin page: the switch, merchOne configured, test orders, the webhook URL with its token, the offer with its margins, the open prints",
       st["switch"]["on"] is True and st["configured"] is True and st["live"] is False and PR.hook_token() in st["hook_url"]
-      and len(st["offer"]) == 5 and all(x["margin_min"] >= PR.PRINT_OFFER["margin_floor"] for x in st["offer"]) and any(r_["order"] == o8 for r_ in st["open"]), st["open"])
+      and len(st["offer"]) == 6 and all(x["margin_min"] >= PR.PRINT_OFFER["margin_floor"] for x in st["offer"]) and any(r_["order"] == o8 for r_ in st["open"]), st["open"])
 ov = ops.ACTIONS["order"]({"order": o}, WHO)
 check("the admin's order detail has the print block (state, merchOne id, tracking, the file), no street address", (ov.get("print") or {}).get("state") == "shipped"
       and ov["print"]["merchone_id"] == oid and "Gedimino" not in json.dumps(ov["print"]), ov.get("print"))
@@ -698,11 +700,15 @@ fi_, et_, lv_ = (term_text(x) for x in ("fi", "et", "lv"))      # 2026-11-13: th
 check("the EU terms in every language name the prints with their prices, the shipping table, the delivery countries, the manufacturer and its address, "
       "Art. 16(c), the 7 days and the legal guarantee of two years"
       " - 1113: in Finnish, Estonian and Latvian too (the manufacturer and its address, Article 16(c) in each language's own words, the prices of all five prints, 7 and 30 days, two years, "
-      "the 27 countries by their names in that language)",
+      "the 27 countries by their names in that language)"
+      " - 1124: the prices of the six prints of now (59, 79, 129 and 35 EUR: the canvas and the acrylic block are 79 EUR, and no print costs 69 EUR any more) and the acrylic "
+      "block by its name in each of the eight languages",
       all("Picanova GmbH" in t and "Eupener Straße 67" in t and "16" in t for t in (en, lt_, hu_, hr_, de_, fi_, et_, lv_)) and "€59.00" in en and "59,00 €" in de_
       and "Germany" in en and "Sweden" in en and "two years" in en and "7 days" in en and "Article 16(c)" in en and "30 days" in en
       and "16 artiklan c alakohta" in fi_ and "artikli 16 punkt c" in et_ and "16. panta c) punkts" in lv_
-      and all(all(re.search(r"(?<!\d)%s,00\s*€" % eur_, t) for eur_ in (59, 79, 129, 69, 35)) for t in (fi_, et_, lv_))
+      and all(all(re.search(r"(?<!\d)%s,00\s*€" % eur_, t) for eur_ in (59, 79, 129, 35)) and not re.search(r"(?<!\d)69,00\s*€", t) for t in (fi_, et_, lv_))
+      and all(len(re.findall(r"(?<!\d)79,00\s*€", t)) == 3 for t in (de_, lt_, hu_, hr_, fi_, et_, lv_)) and en.count("€79.00") == 3 and "€69.00" not in en
+      and all(PR.product_name("block20", l) in t for l, t in (("en", en), ("de", de_), ("lt", lt_), ("hu", hu_), ("hr", hr_), ("fi", fi_), ("et", et_), ("lv", lv_)))
       and all(re.search(r"(?<!\d)7\s%s" % d_, t) and re.search(r"(?<!\d)30\s%s" % d_, t) for d_, t in (("päivä", fi_), ("päeva", et_), ("dien", lv_)))
       and "kahden vuoden" in fi_ and "kaheaastane" in et_ and re.search(r"divu gadu|divus gadus", lv_)
       and all(PR.country_name(cc, l) in t for l, t in (("fi", fi_), ("et", et_), ("lv", lv_)) for cc in PR.countries()),
@@ -952,7 +958,7 @@ oa, ka, sa = paid_file_order(lang="lt")
 c, sj = get(f"/api/order?o={oa}&k={ka}")
 po = sj.get("print_offer") or {}
 check("the status of a paid, delivered order without a print carries the offer: euros, the five prints with the server's prices and the shipping per country, "
-      "the print box in the eight languages; no SKU, no cost, and no print block",
+      "the print box in the eight languages; no SKU, no cost, and no print block - 1124: the six prints (the list is compared with the server's own)",
       c == 200 and sj.get("state") == "ready" and po.get("currency") == "EUR" and [p_["id"] for p_ in po.get("products") or []] == [p_["id"] for p_ in PR.products()]
       and po["products"][4]["price"] == 3500 and po["products"][4]["ship"]["LT"] == 849 and po["products"][2]["ship"]["DE"] == 699 and len(po["products"][0]["ship"]) == 27
       and po.get("consent") == PR.PRINT_CONSENT_TEXT and "sku" not in json.dumps(po) and "cost" not in json.dumps(po) and "print" not in sj, (c, sj.get("state"), po))
@@ -1386,6 +1392,75 @@ check("the add-on's confirmation in the eight languages: eight different subject
       and not re.search(DASH, json.dumps([PR.ADDON_CONF, PR.SUBMIT_NOTE_ADDON], ensure_ascii=False))
       and len(set(PR.SUBMIT_NOTE_ADDON.values())) == 8 and set(PR.SUBMIT_NOTE_ADDON) == set(PR.ADDON_CONF) == set(PR.LANGS),
       [l_ for l_ in PR.LANGS if PR.product_name("poster50", l_) not in mails8[l_][1] or pay.price_text(3500 + 849, l_, "eur") not in mails8[l_][1]])
+
+# ============================================================================================ 11. the acrylic block
+section("11. the acrylic block 20 x 20 cm (2026-11-24): a fourth kind, which stands on a shelf; the canvas at 79 EUR")
+BLOCK_SKU = "ABS0200201"
+bk, brec = PR.product("block20"), PR.sku_rec(BLOCK_SKU) or {}
+check("the block in the tables: kind block, 20 cm, merchOne's SKU ABS0200201 (blueprint 18, a design area of 200 mm and a print file of 204 mm: 2 mm of trim a side), "
+      "79 EUR as the canvas now; its name with its size in the eight languages, eight different names",
+      bk == {"id": "block20", "kind": "block", "cm": 20, "sku": BLOCK_SKU, "price": 7900, "on": 1} and PR.product("canvas40")["price"] == 7900
+      and brec.get("blueprint") == 18 and brec.get("design_mm") == [200.0, 200.0] and brec.get("file_mm") == [204.0, 204.0] and brec.get("trim_mm") == 2.0
+      and PR.product_name("block20", "en") == "Acrylic block 20\u00a0×\u00a020\u00a0cm" and PR.product_name("block20", "lt") == "Akrilo blokas 20\u00a0×\u00a020\u00a0cm"
+      and len({PR.product_name("block20", l_) for l_ in PR.LANGS}) == 8 and len({PR.PRINT_NAMES["kinds"]["block"][l_] for l_ in PR.LANGS}) == 8
+      and not re.search(DASH, json.dumps(PR.PRINT_NAMES["kinds"], ensure_ascii=False)), (bk, brec, [PR.product_name("block20", l_) for l_ in PR.LANGS]))
+bgeo = PR.file_geometry(BLOCK_SKU, 4096)
+ab = np.zeros((300, 450, 3), dtype=np.uint8)
+ab[:, :, 1] = 60
+ab[100:200, 200:250] = 240
+bb = io.BytesIO()
+Image.fromarray(ab).save(bb, "PNG")
+bdata, binfo = PR.make_print_file(bb.getvalue(), BLOCK_SKU)
+bpic = np.asarray(Image.open(io.BytesIO(bdata)).convert("RGB"))
+check("its print file: the design area at 200 dpi (1575 px for 200 mm) with the trim around it (1607 px), never under merchOne's minimum (567 px at 72 dpi); a 3:2 "
+      "artwork is centred on the square and its ground continued to the edges",
+      bgeo == (1607, 1575, 200) and bgeo[1] >= brec.get("design_px", [9999])[0] == 567 and brec.get("file_px") == [579, 579] and brec.get("dpi") == 72
+      and bpic.shape[0] == bpic.shape[1] == binfo["width"] and binfo["art"][0] == binfo["design"] and abs(int(bpic[5, 5, 1]) - 60) < 12
+      and abs(int(bpic[bpic.shape[0] // 2, bpic.shape[1] // 2, 1]) - 240) < 20, (bgeo, binfo))
+mgb = {cc_: PR.margin("block20", cc_) for cc_ in PR.countries()}
+mgc = {cc_: PR.margin("canvas40", cc_) for cc_ in PR.countries()}
+check("what they earn after merchOne's price and shipping with VAT and the fee: the block at least the floor in every country (38.78 EUR to Lithuania, 38.96 to "
+      "Germany), the canvas at 79 EUR 40.81 to Lithuania; the block ships at the price of the other small prints (4.99 to Germany, 8.49 to Lithuania)",
+      min(mgb.values()) >= PR.PRINT_OFFER["margin_floor"] and mgb["LT"] == 3878 and mgb["DE"] == 3896 and mgc["LT"] == 4081 == min(mgc.values())
+      and PR.shipping("DE", "block20") == 499 and PR.shipping("LT", "block20") == 849 and len([cc_ for cc_ in PR.countries() if PR.shipping(cc_, "block20")]) == 27,
+      (min(mgb.values()), mgb["LT"], mgb["DE"], mgc["LT"], min(mgc.values())))
+okb, kkb, _skb = paid_file_order(lang="lt")
+c, sjb = get(f"/api/order?o={okb}&k={kkb}")
+pob = (sjb.get("print_offer") or {}).get("products") or []
+c, jbk = addon(okb, kkb, product="block20", cc="LT", lang="lt", print_shown=7900 + 849)
+pbk = H.Fake.creates[-1][0]
+check("the order page's offer names the block last (kind block, 20 cm, 79 EUR, its shipping per country), and a block bought after the artwork has a Stripe session "
+      "of its own: the only line item, its Lithuanian name, 79 EUR, the shipping to Lithuania, the SKU in the metadata",
+      [x["id"] for x in pob][-1:] == ["block20"] and pob[-1]["kind"] == "block" and pob[-1]["cm"] == 20 and pob[-1]["price"] == 7900 and pob[-1]["ship"]["LT"] == 849
+      and c == 200 and jbk.get("print") == {"product": "block20", "country": "LT", "price": 7900, "ship": 849} and jbk.get("total") == 8749
+      and pbk.get("line_items[0][price_data][product_data][name]") == PR.product_name("block20", "lt") == "Akrilo blokas 20\u00a0×\u00a020\u00a0cm"
+      and pbk.get("line_items[0][price_data][unit_amount]") == "7900" and not any(x.startswith("line_items[1]") for x in pbk)
+      and pbk.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") == "849" and pbk.get("metadata[print]") == "block20"
+      and pbk.get("metadata[print_sku]") == BLOCK_SKU and pbk.get("metadata[kind]") == "print_addon", (c, jbk, pob[-1:]))
+sidbk = addon_sid(okb)
+fix_total(sidbk)
+H.Fake.emails.clear()
+sess_bk = pay_with_address(sidbk, cc="LT", name="Ona Onaitė", email="blokas@example.com")
+c, jwb = webhook(sess_bk)
+paid_bk = pay.get_paid(okb)
+MO.creates.clear()
+rbk = PR.step(okb, rj(f"orders/{okb}/order.json"), paid_bk)
+cur_bk = PR.record(okb) or {}
+plb = MO.creates[-1] if MO.creates else {"items": [{}]}
+fbk = cur_bk.get("file") or {}
+conf_bk = [m for m, _i in H.Fake.emails if m.get("subject") == PR.ADDON_CONF["lt"]["subject"].format(order=okb)]
+check("paid: the print is on record with the block's kind and size and no mismatch, the confirmation names it, and the step sends ONE order to merchOne with the "
+      "block's SKU and a square print file of the SKU's size (print_block20.jpg), as for every other print",
+      c == 200 and (paid_bk.get("print") or {}).get("product") == "block20" and paid_bk["print"].get("kind") == "block" and paid_bk["print"].get("cm") == 20
+      and paid_bk["print"].get("sku") == BLOCK_SKU and "mismatch" not in paid_bk["print"] and (rj(f"orders/{okb}/print_paid.json") or {}).get("amount_total") == 8749
+      and len(conf_bk) == 1 and PR.product_name("block20", "lt") in conf_bk[0]["text"]
+      and rbk == "created" and cur_bk.get("state") == "created" and len(MO.creates) == 1 and plb["items"][0].get("product_sku") == BLOCK_SKU
+      and plb["items"][0].get("quantity") == 1 and plb.get("shipping", {}).get("country") == "LT" and plb.get("is_test") is True
+      and fbk.get("path") == f"orders/{okb}/print_block20.jpg" and exists(fbk.get("path") or "x") and fbk.get("width") == PR.file_geometry(BLOCK_SKU, 2048)[0] == 1607
+      and Image.open(os.path.join(STORE, *fbk["path"].split("/"))).size == (1607, 1607), (c, jwb, rbk, cur_bk, plb.get("items")))
+stb = get(f"/api/order?o={okb}&k={kkb}")[1]
+check("the order page then shows the block as the order's print (its product, kind and size) and offers no second one",
+      (stb.get("print") or {}).get("product") == "block20" and stb["print"].get("kind") == "block" and stb["print"].get("cm") == 20 and "print_offer" not in stb, stb.get("print"))
 maker.kick = real_kick
 pay._stripe = real_stripe
 

@@ -9,7 +9,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  PRINT_OFFER, PRINT_RATES, countriesByName, countryName, defaultCountry, offeredPrints, printCountries, printMargin, printName, printProducts, printShipping, shipPrice,
+  PRINT_OFFER, PRINT_RATES, countriesByName, countryName, defaultCountry, kindName, offeredPrints, printCountries, printMargin, printName, printProduct, printProducts, printShipping, shipPrice,
   type ServerPrints,
 } from '../../src/shared/prints';
 import { BuyCard } from '../../src/try/BuyCard';
@@ -42,9 +42,18 @@ export async function run(): Promise<Row[]> {
   const check = (name: string, ok: boolean, detail = '') => out.push([name, ok, detail]);
 
   // the tables
-  check('the offer as the page reads it: five prints in the owner\'s order, euros, on eu, lt and hr',
-    printProducts().map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,canvas40,poster50' && PRINT_OFFER.currency === 'eur'
+  check('the offer as the page reads it: five prints in the owner\'s order, euros, on eu, lt and hr - 1124: six, the acrylic block 20 cm is the last',
+    printProducts().map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,canvas40,poster50,block20' && PRINT_OFFER.currency === 'eur'
       && PRINT_OFFER.markets.join() === 'eu,lt,hr', printProducts().map((p) => p.id).join());
+  // 2026-11-24, the owner's decisions: the acrylic block 20 x 20 cm at 79 EUR (a fourth kind, "block": it stands on a shelf, it is not hung) and the canvas at 79 EUR (it was 69)
+  check('the acrylic block: a kind of its own with a name in the eight languages (eight different ones), 20 cm, 79 EUR as the canvas now, the shipping of the other small prints, '
+    + 'and it earns more than the floor in every country',
+    printProduct('block20')?.kind === 'block' && printProduct('block20')?.cm === 20 && printProduct('block20')?.price === 7900 && printProduct('canvas40')?.price === 7900
+      && sp(printName('block20', 'en')) === 'Acrylic block 20 × 20 cm' && sp(printName('block20', 'lt')) === 'Akrilo blokas 20 × 20 cm' && kindName('block', 'de') === 'Acrylblock'
+      && new Set(LANGS.map((l) => kindName('block', l))).size === 8 && LANGS.every((l) => kindName('block', l).length > 6 && !DASH.test(kindName('block', l)))
+      && printShipping('DE', 'block20') === 499 && printShipping('LT', 'block20') === 849 && printShipping('US', 'block20') === null
+      && printCountries().every((cc) => (printMargin('block20', cc) ?? 0) >= PRINT_OFFER.margin_floor) && PRINT_RATES.skus.ABS0200201?.design_mm.join() === '200,200',
+    `${printName('block20', 'en')} ${printProduct('block20')?.price} ${printMargin('block20', 'LT')}`);
   check('the shipping rule: VAT and up to the next .49 or .99 (3.99 to 4.99, 5.50 to 6.99, 6.99 to 8.49, 7.99 to 9.99)',
     [399, 550, 699, 799].map((c) => shipPrice(c)).join() === '499,699,849,999');
   check('the shipping per country from the rate table: Germany 4.99 (6.99 for 60 cm), Lithuania 8.49, Sweden 9.99, none to the US',
@@ -60,11 +69,11 @@ export async function run(): Promise<Row[]> {
     on: true, currency: 'EUR', markets: ['eu', 'lt', 'hr'],
     products: printProducts().map((p) => ({ id: p.id, kind: p.kind, cm: p.cm, price: p.price, ship: Object.fromEntries(printCountries().map((cc) => [cc, printShipping(cc, p.id)])) })),
   };
-  check('offeredPrints: none without the server\'s prints, while they are off, or in a market that sells none (au, hu, us); all five on the euro markets',
+  check('offeredPrints: none without the server\'s prints, while they are off, or in a market that sells none (au, hu, us); all five on the euro markets - 1124: all six',
     offeredPrints(undefined, 'eu').length === 0 && offeredPrints({ on: false }, 'eu').length === 0 && offeredPrints(server, 'au').length === 0
-      && offeredPrints(server, 'hu').length === 0 && offeredPrints(server, 'us').length === 0 && offeredPrints(server, 'lt').length === 5);
+      && offeredPrints(server, 'hu').length === 0 && offeredPrints(server, 'us').length === 0 && offeredPrints(server, 'lt').length === 6);
   check('offeredPrints keeps only what the page knows and what is well formed (an unknown product, a price of 0, no country are left out)',
-    offeredPrints({ ...server, products: [...server.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] }, 'eu').length === 5);
+    offeredPrints({ ...server, products: [...server.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] }, 'eu').length === 6);
   const offered = offeredPrints(server, 'eu');
   check('the visitor\'s country is preselected only where prints ship to it', defaultCountry('lt', offered[0].ship) === 'LT' && defaultCountry('US', offered[0].ship) === ''
     && defaultCountry(undefined, offered[0].ship) === '');
@@ -113,8 +122,9 @@ export async function run(): Promise<Row[]> {
     && text(h4).includes(sp(`${OW.total} ${money(7900 + 499, 'eur', 'en')}`)) && text(h4).includes('Continue to payment'), text(h4).slice(0, 600));
   const h5 = offerCard({ st: st({ print_offer: { currency: 'EUR', products: server.products } }), initial: { choice: { product: 'acrylic40', country: 'DE' }, consent: true } });
   check('without the server\'s box text the page shows its own (the same words, held by the build)', text(h5).includes(sp(CHECKOUT_LEGAL.en.printConsent)));
-  check('the picture of each kind: a frame for the canvas, a gloss for the acrylic, plain paper for the poster',
-    ['acrylic', 'canvas', 'poster'].every((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).includes(`data-kind="${k}"`)));
+  check('the picture of each kind: a frame for the canvas, a gloss for the acrylic, plain paper for the poster - 1124: and a thick clear edge for the acrylic block',
+    ['acrylic', 'canvas', 'poster', 'block'].every((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).includes(`data-kind="${k}"`))
+      && new Set(['acrylic', 'canvas', 'poster', 'block'].map((k) => renderToStaticMarkup(createElement(PrintMock, { kind: k as never, alt: 'x' })).replace(/data-kind="[a-z]+"/, ''))).size === 4);
   // (the print box's text comes from the page's own copy here: the status reply of this card names no text for these languages)
   const noBox = st({ print_offer: { currency: 'EUR', products: server.products } });
   const hl = offerCard({ st: noBox, initial: { choice: { product: 'poster50', country: 'LT' }, consent: false } }, 'lt');

@@ -244,8 +244,9 @@ def confirmation_hr(*, order, spec, n, layout, price, paid_at, consent_at, conse
 
 # the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["hr"]): heading, paragraph, no price
 READY_PRINT_HR = ("Vaše djelo kao ispis",
-                  "Svoje umjetničko djelo možete naručiti i kao ispis: na akrilnom staklu, na platnu ili kao poster, izrađen po "
-                  "narudžbi i poslan na vašu adresu. Ponudu ćete naći na stranici svoje narudžbe, ispod djela.")
+                  "Svoje umjetničko djelo možete naručiti i kao ispis: na akrilnom staklu, na platnu, kao poster ili kao akrilni blok "
+                  "koji stoji na polici ili stolu, izrađen po narudžbi i poslan na vašu adresu. Ponudu ćete naći na stranici svoje "
+                  "narudžbe, ispod djela.")
 
 
 def ready_hr(*, order, link, checked, seller):

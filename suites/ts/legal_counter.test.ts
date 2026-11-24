@@ -88,7 +88,8 @@ export async function run(): Promise<Row[]> {
   // 2026-10-28: the date moved on with the Croatian texts of the EU edition (src/shared/legal.ts LEGAL_UPDATED); the counter paragraphs above are those of 2026-10-20
   // 2026-11-13: and again with the Finnish, Estonian and Latvian texts of the EU edition
   // 2026-11-21: and with the print paragraphs (a print is ordered from the order page after the artwork is delivered, src/legal/docs/prints.ts)
-  check('one date versions the legal pages and it is the day of the last change (2026-11-21, the print paragraphs: a print is ordered after the artwork; the Finnish, Estonian and Latvian texts of the EU edition came on 2026-11-13, the ceiling of free previews on 2026-11-11, the Croatian texts on 2026-10-28, the counter paragraphs on 2026-10-20)', LEGAL_UPDATED === '2026-11-21', LEGAL_UPDATED);
+  // 2026-11-24: and with the terms' list of prints and prices, made from api/_lib/print_offer.py (the acrylic block joins it, the canvas has a new price)
+  check('one date versions the legal pages and it is the day of the last change (2026-11-24, the terms\' list of prints and prices: the acrylic block, the canvas\' price; the print paragraphs, a print is ordered after the artwork, came on 2026-11-21; the Finnish, Estonian and Latvian texts of the EU edition came on 2026-11-13, the ceiling of free previews on 2026-11-11, the Croatian texts on 2026-10-28, the counter paragraphs on 2026-10-20)', LEGAL_UPDATED === '2026-11-24', LEGAL_UPDATED);
   check('the retention row of the service statistics still says twelve months in every language', LANGS.every((l) => /12/.test(sectionText(PRIVACY[l], 'retention').split('\n').filter((x) => /operations/.test(x)).join('\n'))));
   return out;
 }

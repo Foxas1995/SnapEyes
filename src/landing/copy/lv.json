@@ -570,7 +570,7 @@
         "id": "print",
         "q": "Vai jūs to drukājat vai sūtāt?",
         "a": "Nē. Druka nav jūsu pasūtījuma daļa: tipogrāfija par to prasa atsevišķu samaksu, un cena ir atkarīga no tipogrāfijas, izmēra un materiāla. Ja kādreiz piedāvāsim druku, pateiksim to šajā lapā.",
-        "aPrints": "Kopā ar pasūtījumu nē: jūsu pasūtījums ir digitālais fails. To varat izdrukāt jebkur paši; tipogrāfija par to prasa atsevišķu samaksu. Kad jūsu mākslas darbs būs gatavs, savā pasūtījuma lapā varēsiet pasūtīt izdruku arī pie mums: uz akrila stikla, uz audekla vai kā plakātu, izgatavotu pēc pasūtījuma un nosūtītu jums."
+        "aPrints": "Kopā ar pasūtījumu nē: jūsu pasūtījums ir digitālais fails. To varat izdrukāt jebkur paši; tipogrāfija par to prasa atsevišķu samaksu. Kad jūsu mākslas darbs būs gatavs, savā pasūtījuma lapā varēsiet pasūtīt izdruku arī pie mums: uz akrila stikla, uz audekla, kā plakātu vai kā akrila bloku, kas stāv uz plaukta vai galda, izgatavotu pēc pasūtījuma un nosūtītu jums."
       },
       {
         "id": "printit",

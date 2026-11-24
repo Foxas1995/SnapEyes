@@ -241,8 +241,9 @@ def confirmation_lv(*, order, spec, n, layout, price, paid_at, consent_at, conse
 
 # the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["lv"]): heading, paragraph, no price
 READY_PRINT_LV = ("Jūsu mākslas darbs kā izdruka",
-                  "Savu mākslas darbu varat pasūtīt arī kā izdruku: uz akrila stikla, uz audekla vai kā plakātu, izgatavotu pēc "
-                  "pasūtījuma un nosūtītu jums. Piedāvājumu atradīsiet savā pasūtījuma lapā, zem mākslas darba.")
+                  "Savu mākslas darbu varat pasūtīt arī kā izdruku: uz akrila stikla, uz audekla, kā plakātu vai kā akrila bloku, kas "
+                  "stāv uz plaukta vai galda, izgatavotu pēc pasūtījuma un nosūtītu jums. Piedāvājumu atradīsiet savā pasūtījuma lapā, "
+                  "zem mākslas darba.")
 
 
 def ready_lv(*, order, link, checked, seller):

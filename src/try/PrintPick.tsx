@@ -102,12 +102,14 @@ export const PrintPick: React.FC<Props> = (p) => {
 };
 
 // a flat picture of the artwork as each kind of print: acrylic glass (a glossy edge and a soft reflection), a canvas in a black floating
-// frame (the frame, a shadow gap, the canvas), a poster (paper, a thin shadow). The artwork is never cropped (an artwork that is not square
-// sits on its own dark ground, as the print file continues its background).
+// frame (the frame, a shadow gap, the canvas), a poster (paper, a thin shadow), an acrylic block (a thick clear edge all round, the gloss of
+// the acrylic). The artwork is never cropped (an artwork that is not square sits on its own dark ground, as the print file continues its
+// background).
 const MOCK: Record<PrintKind, { outer: string; inner: string; gloss: boolean }> = {
   acrylic: { outer: 'p-[2px] bg-gradient-to-br from-white/50 via-white/10 to-white/30 shadow-[0_6px_18px_rgba(0,0,0,0.6)]', inner: '', gloss: true },
   canvas: { outer: 'p-[5px] bg-[#111] shadow-[0_6px_18px_rgba(0,0,0,0.6)] ring-1 ring-white/10', inner: 'p-[3px] bg-black', gloss: false },
   poster: { outer: 'p-0 bg-[#0d0d0d] shadow-[0_3px_10px_rgba(0,0,0,0.55)]', inner: '', gloss: false },
+  block: { outer: 'p-[5px] bg-gradient-to-br from-white/50 via-white/10 to-white/30 shadow-[0_6px_18px_rgba(0,0,0,0.6)] ring-1 ring-white/10', inner: '', gloss: true },
 };
 
 export const PrintMock: React.FC<{ kind: PrintKind; src?: string; alt: string }> = ({ kind, src, alt }) => {

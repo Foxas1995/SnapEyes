@@ -142,7 +142,19 @@ const PRINT_LATER = { js: 303 - 1040 + 1085 - 380 + 201 + 144, css: 0 };
 // where a print of 173 pixels per inch is sharp, a longer line in eight languages (+94 B in the seven lazy chunks, +14 B in the entry). It is NOT taken out by a
 // constant: the page stands at +5,966 B of +6,000. Re-measure it when those lines change: build both trees, gzip each chunk, take the differences named here.
 const LANDING_PRINTS = { js: 190 + 165 + 166 + 170 + 238 + 258 + 169 + 15, css: 0 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css };
+// The acrylic block (2026-11-24, the owner's decision: a fourth print, 20 x 20 cm, which stands on a shelf) is a product, not motion. Its words are one clause in the
+// FAQ answer "Do you print or ship it?" of the print state (faq.items[].aPrints: "... as a poster or as an acrylic block that stands on a shelf or desk") in eight
+// languages, and its rows in the three tables the pages read (api/_lib/print_offer.py, print_rates.py with its shipping to 27 countries, print_names.py with its name in
+// eight languages). BLOCK is only what the landing does not load for every visitor, measured per chunk, gzip level 6, on the tree with the block against its parent
+// (04fcad4, both built the same way): the SEVEN lazy language chunks (a reader of that language loads its own: de-*.js +17 B, et-*.js +11 B, fi-*.js +15 B, hr-*.js
+// +13 B, hu-*.js +18 B, lt-*.js +12 B, lv-*.js +11 B) and the chunk of the print tables that /order and the legal pages share and the landing never loads
+// (prints-*.js +132 B). What every visitor of the landing loads is NOT in it and is held to the budget: the landing's entry +3 B (the English clause), the legal
+// pages' entry -3 B, the names of chunks in the import lists of thirteen other chunks -4 B: -4 B, so the page stands at +5,903 B of +6,000 (it was +5,907 B on
+// 04fcad4, measured on this machine). Without this constant the sum would read +6,132 B: over the budget by words no visitor of the English page downloads. CSS: no
+// byte moved (the block's picture in the picker uses utilities the other pictures use). Re-measure it when those lines or the offer change: build both trees, gzip
+// each chunk, take the differences named here.
+const BLOCK = { js: 17 + 11 + 15 + 13 + 18 + 12 + 11 + 132, css: 0 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js + BLOCK.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css + BLOCK.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;

@@ -78,6 +78,14 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # A1, B1, B3 and E8 moved, each keeping its id and the older names, with " - 1121:" added; the AU and US editions are made from the raw docs and carry no print.
 # The same release carries the legal wording fixes of the machine proofreading (Finnish, Estonian and Latvian only: PROOF1121 names every sentence), so the
 # step of those three languages is the print paragraphs AND those sentences, each held by its words.
+# 1124 refresh (2026-11-24, the owner's decisions: a fourth print, the acrylic block 20 x 20 cm at 79 EUR, and the canvas 40 cm from 69 to 79 EUR;
+# api/_lib/print_offer.py). No sentence of any legal text changed. The EU edition changed on purpose in ONE block, in every language: the list of prints and
+# prices of the terms' section "prints" (src/legal/docs/prints.ts productRows makes it from the offer): the canvas' row has the new price and one row is added
+# at the end, the acrylic block. The shipping table is as it was (the block ships at the price of the other small prints), and so are the withdrawal page,
+# the privacy policy, the legal notice, the print box, the checkout wording and the consent version; LEGAL_UPDATED moves to 2026-11-24. eu_block.json is the
+# EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_printlater.json stays as the base: the 1121 step is now checked between the pins of
+# the three languages and of the print offered later. A1, B1, B3 and E8 moved, each keeping its id and the older names, with " - 1124:" added; the AU and US
+# editions are made from the raw docs and carry no print.
 import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -240,9 +248,10 @@ EU_PRINTS = json.load(open(os.path.join(HERE, "eu_prints.json"), encoding="utf-8
 EU_CAP = json.load(open(os.path.join(HERE, "eu_cap.json"), encoding="utf-8"))   # 1111 refresh: the EU edition with the privacy paragraph of the daily ceiling of free previews (snap_eu_edition.mjs), the base is eu_prints.json; 1111g: the base of the gift vouchers
 EU_GIFT = json.load(open(os.path.join(HERE, "eu_gift.json"), encoding="utf-8"))   # 1111g refresh: the EU edition with the gift vouchers (snap_eu_edition.mjs), the base is eu_cap.json; 1113: the base of the three languages
 EU_LANGS3 = json.load(open(os.path.join(HERE, "eu_langs3.json"), encoding="utf-8"))   # 1113 refresh: the EU edition with its Finnish, Estonian and Latvian texts (snap_eu_edition.mjs), the base is eu_gift.json; 1121: the base of the print paragraphs
-EU_NOW = json.load(open(os.path.join(HERE, "eu_printlater.json"), encoding="utf-8"))   # 1121 refresh: the EU edition whose print paragraphs say that a print is ordered after the artwork (snap_eu_edition.mjs), the base is eu_langs3.json
+EU_PRINTLATER = json.load(open(os.path.join(HERE, "eu_printlater.json"), encoding="utf-8"))   # 1121 refresh: the EU edition whose print paragraphs say that a print is ordered after the artwork (snap_eu_edition.mjs), the base is eu_langs3.json; 1124: the base of the list of prints
+EU_NOW = json.load(open(os.path.join(HERE, "eu_block.json"), encoding="utf-8"))   # 1124 refresh: the EU edition whose list of prints has the acrylic block and the canvas' new price (snap_eu_edition.mjs), the base is eu_printlater.json
 EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
-LEGAL_NOW = "2026-11-21"        # 1121 refresh: the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
+LEGAL_NOW = "2026-11-24"        # 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
 CONSENT_NOW = "2026-11-13.1"    # 1113 refresh: the Finnish, Estonian and Latvian texts and print boxes added, every older text as it was
 CONSENT_1028C = "2026-10-28.3"  # 1028c refresh: the print box added (2026-10-28.2 since the US text, every waiver as it was). 1028b refresh: the consent version since the US text (2026-10-28.1 since the Croatian text; 2026-09-30.2 since 30efee7: the lt and hu texts added; en, de, AU as of .1)
 CONSENT_1028B = "2026-10-28.2"  # 1028c refresh: the version of the US text, which still quotes every waiver
@@ -279,7 +288,8 @@ check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED
       " - 1028c: the consent version 2026-10-28.3 (the print box), LEGAL_UPDATED still 2026-10-28"
       " - 1111: LEGAL_UPDATED is 2026-11-11 (the privacy paragraph of the daily ceiling of free previews), the consent version is not bumped"
       " - 1113: LEGAL_UPDATED is 2026-11-13 and the consent version 2026-11-13.1 (the Finnish, Estonian and Latvian texts, checkboxes and print boxes)"
-      " - 1121: LEGAL_UPDATED is 2026-11-21 (the print paragraphs: a print is ordered after the artwork), the consent version is not bumped (the print box is as it was)",
+      " - 1121: LEGAL_UPDATED is 2026-11-21 (the print paragraphs: a print is ordered after the artwork), the consent version is not bumped (the print box is as it was)"
+      " - 1124: LEGAL_UPDATED is 2026-11-24 (the terms' list of prints and prices: the acrylic block, the canvas' price), the consent version is not bumped",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
       and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
@@ -545,17 +555,48 @@ def _step1121(l, name, allowed_en):
     the same numbers of blocks, and exactly the sections and sentences PROOF1121 names for that language; nothing else, and the frame equal."""
     want = {k: (v[0], v[1], [], [], []) for k, v in allowed_en.items()}
     want.update((PROOF1121.get(l) or {}).get(name) or {})
-    fr, d = doc_diff(EDI["eu"][name][l], EU_LANGS3[name][l])
+    fr, d = doc_diff(EU_PRINTLATER[name][l], EU_LANGS3[name][l])   # 1124: the 1121 step, between the pins of the three languages and of the print offered later
     return fr and wp12_ok(d, want)
 
 
-later1121 = {d: {l: doc_diff(EDI["eu"][d][l], EU_LANGS3[d][l]) for l in LANG2} for d in ("terms", "withdrawal", "privacy")}
+later1121 = {d: {l: doc_diff(EU_PRINTLATER[d][l], EU_LANGS3[d][l]) for l in LANG2} for d in ("terms", "withdrawal", "privacy")}   # 1124: between the two pins
 later1121_ok = (all(fr and wp12_ok(d, allowed[l]) for name, allowed in (("terms", TERMS1121), ("withdrawal", WD1121), ("privacy", PRIV1121)) for l, (fr, d) in later1121[name].items())
-                and all(EDI["eu"]["imprint"][l] == EU_LANGS3["imprint"][l] for l in LANG2)
+                and all(EU_PRINTLATER["imprint"][l] == EU_LANGS3["imprint"][l] for l in LANG2)
                 # the other six languages changed in the same sections, block for block the same count, and nowhere else but in the sentences PROOF1121 names
                 and all(_step1121(l, name, allowed["en"]) for name, allowed in (("terms", TERMS1121), ("withdrawal", WD1121), ("privacy", PRIV1121))
                         for l in ("lt", "hu", "hr", "fi", "et", "lv"))
-                and all(EDI["eu"]["imprint"][l] == EU_LANGS3["imprint"][l] for l in ("lt", "hu", "hr", "fi", "et", "lv")))
+                and all(EU_PRINTLATER["imprint"][l] == EU_LANGS3["imprint"][l] for l in ("lt", "hu", "hr", "fi", "et", "lv")))
+# 1124 refresh: what the acrylic block and the canvas' new price changed in the EU edition on purpose, in every one of the eight languages: ONE block of the
+# terms' section prints, the list of prints and prices (a "dl" of [name, price] rows). Its rows are the rows of before, in their order, with ONE price changed
+# (the fourth row, the canvas in its black floating frame: it ends in 79 where it ended in 69) and ONE row added at the end (the acrylic block, named by
+# api/_lib/print_names.py, 20 x 20 cm, at the price of the canvas). Nothing else of the terms, and nothing at all of the withdrawal page, the privacy policy
+# and the legal notice. The names of the block are read from the server's own table, so the pin and the names cannot drift apart.
+LANG8 = ("en", "de", "lt", "hu", "hr", "fi", "et", "lv")
+from _lib import print_names as _PN, print_offer as _PO
+_digits = lambda t: re.sub(r"[^0-9]", "", t)
+
+
+def _step1124(l):
+    fr, d = doc_diff(EDI["eu"]["terms"][l], EU_PRINTLATER["terms"][l])
+    if not fr or sorted(d) != ["prints"]:
+        return False
+    add, rem = d["prints"]
+    if len(add) != 1 or len(rem) != 1 or not isinstance(add[0], dict) or not isinstance(rem[0], dict) or sorted(add[0]) != ["dl"] or sorted(rem[0]) != ["dl"]:
+        return False
+    new, old = add[0]["dl"], rem[0]["dl"]
+    block = _PN.PRINT_NAMES["kinds"]["block"][l]
+    canvas = _PN.PRINT_NAMES["kinds"]["canvas"][l]
+    return (len(old) == 5 and len(new) == 6 and [r[0] for r in new[:5]] == [r[0] for r in old]
+            and [r[1] for i, r in enumerate(new[:5]) if i != 3] == [r[1] for i, r in enumerate(old) if i != 3]
+            and old[3][0].startswith(canvas) and _digits(old[3][1]) == "6900" and _digits(new[3][1]) == "7900"
+            and new[5][0].startswith(block + " 20") and new[5][0].endswith("cm") and new[5][1] == new[3][1] and not any(block in r[0] for r in old)
+            and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] == 1] == ["acrylic30", "acrylic40", "acrylic60", "canvas40", "poster50", "block20"])
+
+
+block1124 = {l: _step1124(l) for l in LANG8}
+block1124_ok = (all(block1124.values())
+                and all(EDI["eu"][d][l] == EU_PRINTLATER[d][l] for d in ("withdrawal", "privacy", "imprint") for l in LANG8)
+                and EU_NOW["checkout"] == EU_PRINTLATER["checkout"])
 pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
@@ -575,9 +616,12 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 1121: the pin is eu_printlater.json; the 1113 step is checked between the pins of the vouchers and of the three languages; the terms differ from the pin of the three"
       " languages by exactly the product sentence and three paragraphs of the section prints (a print is ordered from the order page after the artwork is delivered, as a"
       " contract of its own), the withdrawal page and the privacy policy by exactly one paragraph of their section prints, the legal notice not at all, in all eight languages;"
-      " the Finnish, Estonian and Latvian texts also by exactly the sentences of the proofreading that PROOF1121 names (their new words there, their old words gone)",
-      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
-      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
+      " the Finnish, Estonian and Latvian texts also by exactly the sentences of the proofreading that PROOF1121 names (their new words there, their old words gone)"
+      " - 1124: the pin is eu_block.json; the 1121 step is checked between the pins of the three languages and of the print offered later; the terms differ from the pin"
+      " of the print offered later by exactly ONE block in each of the eight languages, the list of prints and prices of the section prints (the canvas' row at its new"
+      " price, the acrylic block's row added at the end, every other row as it was); the withdrawal page, the privacy policy and the legal notice not at all",
+      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
+      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
@@ -641,7 +685,10 @@ def _norm(t):
              .replace("2026-10-28", "X").replace("28.10.2026", "X")                                                               # 1028: and the date of the Croatian texts
              .replace("2026-11-11", "X").replace("11.11.2026", "X")
              .replace("2026-11-13", "X").replace("13.11.2026", "X")
-             .replace("2026-11-21", "X").replace("21.11.2026", "X"))                                                              # 1113: and the date of the three languages                                                              # 1111: and the date of the ceiling of free previews
+             .replace("2026-11-21", "X").replace("21.11.2026", "X")
+             .replace("2026-11-24", "X").replace("24.11.2026", "X")                                                               # 1124: and the date of the list of prints
+             # 1124: the pack of that step is compared in all eight languages, so the date line's Hungarian and Croatian forms are read too (those of the two pins compared)
+             .replace("2026. 11. 21.", "X").replace("21. 11. 2026.", "X").replace("2026. 11. 24.", "X").replace("24. 11. 2026.", "X"))                                                              # 1113: and the date of the three languages                                                              # 1111: and the date of the ceiling of free previews
 
 
 def _terms_pack_ok(l, pack=None):
@@ -720,17 +767,34 @@ def _pack_1113(l):
 
 
 def _pack_1121(l):
-    """1121: the pack's EU texts as they are now = the pin of the three languages (date aside) with exactly the print paragraphs replaced: four paragraphs of the
-    terms (the product sentence's, and of the section prints the first, the delivery and the no-withdrawal one) and one of the withdrawal page, none added and
-    none dropped; every new paragraph has its phrase of TERMS1121 or WD1121; the pinned pack of this work holds the same texts."""
+    """1121: the pack's EU texts of the pin of the print offered later = the pin of the three languages (date aside) with exactly the print paragraphs replaced:
+    four paragraphs of the terms (the product sentence's, and of the section prints the first, the delivery and the no-withdrawal one) and one of the withdrawal
+    page, none added and none dropped; every new paragraph has its phrase of TERMS1121 or WD1121. 1124: this is checked between the two pins; _pack_1124 checks
+    the pack as it is now."""
     ok = True
     for d, n, has in (("terms", 4, TERMS1121[l]["product"][2] + TERMS1121[l]["prints"][2]), ("withdrawal", 1, WD1121[l]["prints"][2])):
-        now = _norm(PACK["docs"][l][d]["text"]).split("\n\n")
+        now = _norm(EU_PRINTLATER["pack"]["docs"][l][d]["text"]).split("\n\n")
         was = _norm(EU_LANGS3["pack"]["docs"][l][d]["text"]).split("\n\n")
         add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
-        ok = (ok and len(now) == len(was) and len(add) == n == len(rem) and all(any(ph in p for p in add) for ph in has)
-              and _norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"]))
+        ok = ok and len(now) == len(was) and len(add) == n == len(rem) and all(any(ph in p for p in add) for ph in has)
     return ok
+
+
+def _pack_1124(l):
+    """1124: the pack's EU terms as they are now = the pin of the print offered later (date aside) with exactly ONE paragraph replaced, the list of prints and
+    prices: its lines are the lines of before with the canvas' line at its new price and the acrylic block's line added at the end; the withdrawal page word for
+    word; the pinned pack of this work holds the same texts."""
+    now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
+    was = _norm(EU_PRINTLATER["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
+    add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
+    if not (len(now) == len(was) and len(add) == 1 == len(rem)):
+        return False
+    new, old = add[0].split("\n"), rem[0].split("\n")
+    block = _PN.PRINT_NAMES["kinds"]["block"][l]
+    return (len(old) == 5 and len(new) == 6 and [x for i, x in enumerate(new[:5]) if i != 3] == [x for i, x in enumerate(old) if i != 3]
+            and _digits(old[3]).endswith("6900") and _digits(new[3]).endswith("7900") and new[5].startswith(block + " 20") and block not in rem[0]
+            and _norm(PACK["docs"][l]["withdrawal"]["text"]) == _norm(EU_PRINTLATER["pack"]["docs"][l]["withdrawal"]["text"])
+            and all(_norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"]) for d in ("terms", "withdrawal")))
 
 
 seller_en_de = {k: ({l: v[l] for l in LANG2} if isinstance(v, dict) else v) for k, v in PACK["seller"].items()}
@@ -738,7 +802,7 @@ pack_docs_eq = lambda a, b, l, d: (_norm(a[l][d]["text"]) == _norm(b[l][d]["text
                                     and a[l][d]["title"] == b[l][d]["title"])
 eu_pack_same = (
     all(_terms_pack_ok(l) for l in LANG2) and all(_terms_pack_12(l) for l in LANG2) and all(_terms_pack_18(l) for l in LANG2) and all(_terms_pack_28(l) for l in LANG2)
-    and all(_terms_pack_28c(l) for l in LANG2) and all(_pack_1111g(l) for l in LANG2) and all(_pack_1113(l) for l in LANG2) and all(_pack_1121(l) for l in LANG2)
+    and all(_terms_pack_28c(l) for l in LANG2) and all(_pack_1111g(l) for l in LANG2) and all(_pack_1113(l) for l in LANG2) and all(_pack_1121(l) for l in LANG2) and all(_pack_1124(l) for l in LANG8)
     and all(pack_docs_eq(EU_HR["pack"]["docs"], EU_BEFORE["pack"]["docs"], l, "withdrawal") for l in LANG2)
     and all(PACK["docs"][l]["terms"]["url"] == EU_BEFORE["pack"]["docs"][l]["terms"]["url"] for l in LANG2)
     and all(pack_docs_eq(PACK["docs"], EU_NOW["pack"]["docs"], l, d) for l in LANG2 for d in ("terms", "withdrawal"))
@@ -756,7 +820,9 @@ check("B3 the built pack's EU texts are the same as before (the date line aside)
       " - 1111g: pinned to eu_gift.json, the terms and the withdrawal page by exactly the paragraphs of the gift vouchers, nothing removed (_pack_1111g)"
       " - 1113: pinned to eu_langs3.json, the terms by exactly the one paragraph of the contract languages (_pack_1113), the seller with its fi, et and lv lines"
       " - 1121: pinned to eu_printlater.json, the terms by exactly four paragraphs replaced (the product sentence's and three of the section prints) and the withdrawal"
-      " page by exactly one (_pack_1121); the 1113 step is checked between the pins of the vouchers and of the three languages",
+      " page by exactly one (_pack_1121); the 1113 step is checked between the pins of the vouchers and of the three languages"
+      " - 1124: pinned to eu_block.json, the terms by exactly ONE paragraph replaced in each of the eight languages, the list of prints and prices (the canvas' line at"
+      " its new price, the acrylic block's line added), the withdrawal page word for word (_pack_1124); the 1121 step is checked between the two pins before it",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
       (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2], [_terms_pack_28(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",
@@ -964,7 +1030,8 @@ check("E7 the AU email: no 'no refunds' wording, no en or em dash", not bad_word
 md = read_json(f"orders/{oE}/mail_delivery.json")
 check("E8 mail_delivery.json sent with the new consent version and the pack date"
       " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12) - 1006: the pack date is 2026-10-06 (WP18) - 1020: the pack date is 2026-10-20 (the counter's privacy paragraphs) - 1028: the version 2026-10-28.1 and the pack date 2026-10-28 (the Croatian texts) - 1028b: the version 2026-10-28.2 (the US text), the same pack date"
-      " - 1121: the version and the date of now (LEGAL_NOW: 2026-11-21 since the print paragraphs; 2026-11-13.1 since the three languages)", md.get("state") == "sent"
+      " - 1121: the version and the date of now (LEGAL_NOW: 2026-11-21 since the print paragraphs; 2026-11-13.1 since the three languages)"
+      " - 1124: the date of now is 2026-11-24 (the terms' list of prints and prices), the version as it was", md.get("state") == "sent"
       and md.get("consent") == CONSENT_NOW and md.get("legal") == LEGAL_NOW, md)
 with open(os.path.join(HERE, "sample_au_confirmation_en.txt"), "w", encoding="utf-8") as f:
     f.write(head)

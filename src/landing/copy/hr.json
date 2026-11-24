@@ -570,7 +570,7 @@
         "id": "print",
         "q": "Tiskate li je i šaljete li je?",
         "a": "Ne. Tisak nije dio vaše narudžbe: tiskara ga naplaćuje zasebno, a cijena ovisi o tiskari, veličini i materijalu. Ako ikad dodamo tisak, reći ćemo to na ovoj stranici.",
-        "aPrints": "Uz narudžbu ne: vaša je narudžba digitalna datoteka. Možete je sami otisnuti bilo gdje; tiskara to naplaćuje zasebno. Kad vaše djelo bude gotovo, otisak možete naručiti i od nas na stranici svoje narudžbe: na akrilnom staklu, na platnu ili kao poster, izrađen po narudžbi i poslan na vašu adresu."
+        "aPrints": "Uz narudžbu ne: vaša je narudžba digitalna datoteka. Možete je sami otisnuti bilo gdje; tiskara to naplaćuje zasebno. Kad vaše djelo bude gotovo, otisak možete naručiti i od nas na stranici svoje narudžbe: na akrilnom staklu, na platnu, kao poster ili kao akrilni blok koji stoji na polici ili stolu, izrađen po narudžbi i poslan na vašu adresu."
       },
       {
         "id": "printit",

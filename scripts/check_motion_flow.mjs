@@ -687,7 +687,11 @@ async function checkGuide() {
 // order page gained the offer card under a delivered artwork, src/order/PrintOffer.tsx with the picker src/try/PrintPick.tsx, the watch after Stripe's page, src/order/printAddon.ts,
 // and their words in eight languages) moved the base of /try by -5,390 B JS and of /order by +7,903 B JS, measured on e98e5ea against the tree with it (206,475 to 201,085 B
 // and 131,323 to 139,226 B; the CSS of both pages is 13,986 B before and after: the card uses the utilities the buy card had). It is a product, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390, css: 10975 + 245 + 494 + 261 + 74 + 135 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903, css: 10975 + 245 + 494 + 261 + 74 + 135 } };
+// The acrylic block (2026-11-24: a fourth print, 20 x 20 cm; the order page's offer names it and says what it is in eight languages, src/order/copy*.ts offer.lead, its
+// picture in the picker, src/try/PrintPick.tsx, and its rows in the print tables both /order and the legal pages load, src/shared/prints.ts) moved the base of /order by
+// +483 B JS, measured on 04fcad4 against the tree with it (139,224 to 139,707 B; /try 201,087 to 201,084 B, left in the budget; the CSS of both pages is 13,986 B before
+// and after). It is a product, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390, css: 10975 + 245 + 494 + 261 + 74 + 135 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483, css: 10975 + 245 + 494 + 261 + 74 + 135 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

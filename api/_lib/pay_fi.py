@@ -237,8 +237,9 @@ def confirmation_fi(*, order, spec, n, layout, price, paid_at, consent_at, conse
 
 # the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["fi"]): heading, paragraph, no price
 READY_PRINT_FI = ("Taideteoksesi tulosteena",
-                  "Voit tilata taideteoksesi myös tulosteena: akryylilasitauluna, canvastauluna tai julisteena, tilauksesi mukaan "
-                  "tehtynä ja sinulle lähetettynä. Löydät sen tilaussivultasi, taideteoksesi alta.")
+                  "Voit tilata taideteoksesi myös tulosteena: akryylilasitauluna, canvastauluna, julisteena tai akryylilohkona, joka "
+                  "seisoo hyllyllä tai pöydällä, tilauksesi mukaan tehtynä ja sinulle lähetettynä. Löydät sen tilaussivultasi, "
+                  "taideteoksesi alta.")
 
 
 def ready_fi(*, order, link, checked, seller):

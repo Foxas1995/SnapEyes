@@ -570,7 +570,7 @@
         "id": "print",
         "q": "Drucken oder versenden Sie es?",
         "a": "Nein. Der Druck gehört nicht zur Bestellung: Eine Druckerei berechnet ihn separat, und sein Preis hängt von Druckerei, Größe und Material ab. Sollten wir einmal Druck anbieten, sagen wir es auf dieser Seite.",
-        "aPrints": "Nicht mit Ihrer Bestellung: Ihre Bestellung ist die digitale Datei. Sie können sie überall selbst drucken lassen; eine Druckerei berechnet das separat. Sobald Ihr Kunstwerk fertig ist, können Sie auf Ihrer Bestellseite auch einen Druck bei uns bestellen: als Acrylglasbild, auf Leinwand oder als Poster, nach Ihrer Bestellung angefertigt und zu Ihnen versandt."
+        "aPrints": "Nicht mit Ihrer Bestellung: Ihre Bestellung ist die digitale Datei. Sie können sie überall selbst drucken lassen; eine Druckerei berechnet das separat. Sobald Ihr Kunstwerk fertig ist, können Sie auf Ihrer Bestellseite auch einen Druck bei uns bestellen: als Acrylglasbild, auf Leinwand, als Poster oder als Acrylblock, der auf einem Regal oder Schreibtisch steht, nach Ihrer Bestellung angefertigt und zu Ihnen versandt."
       },
       {
         "id": "printit",

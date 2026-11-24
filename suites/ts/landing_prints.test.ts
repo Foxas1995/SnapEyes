@@ -84,7 +84,9 @@ export async function run(): Promise<Row[]> {
       && /your order is the digital file/.test((en.faq.items.find((i) => i.id === 'print') as { aPrints: string }).aPrints)
       && /print it anywhere yourself/.test((en.faq.items.find((i) => i.id === 'print') as { aPrints: string }).aPrints)
       && /Once your artwork is ready, you can also order a print from us on your order page/.test((en.faq.items.find((i) => i.id === 'print') as { aPrints: string }).aPrints)
-      && /acrylic glass, on canvas or as a poster/.test((en.faq.items.find((i) => i.id === 'print') as { aPrints: string }).aPrints));
+      // 2026-11-24: the acrylic block joins the list, with what it is (it stands on a shelf or desk); no digit in the answer (check:landing holds that)
+      && /on acrylic glass, on canvas, as a poster or as an acrylic block that stands on a shelf or desk/.test((en.faq.items.find((i) => i.id === 'print') as { aPrints: string }).aPrints)
+      && LANGS.every((l) => !/\d/.test((COPIES[l].faq.items.find((i) => i.id === 'print') as { aPrints: string }).aPrints)));
   // the Australian market replaces FAQ items by its own (no print is sold there, and the store names no such market): its copy keeps what it had
   const au = copyForMarket(COPIES.en, 'au' as never);
   check('the Australian edition\'s FAQ is untouched by the print state where its own answers stand, and the store never names the A$ market',

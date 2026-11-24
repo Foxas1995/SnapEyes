@@ -11,7 +11,7 @@ import RATES_SOURCE from '../../api/_lib/print_rates.py?raw';
 import NAMES_SOURCE from '../../api/_lib/print_names.py?raw';
 import type { Lang } from './lang';
 
-export type PrintKind = 'acrylic' | 'canvas' | 'poster';
+export type PrintKind = 'acrylic' | 'canvas' | 'poster' | 'block';
 export interface PrintProduct { id: string; kind: PrintKind; cm: number; sku: string; price: number; on: number }
 export interface PrintOffer { currency: string; markets: string[]; vat_pct: number; fee_pct: number; margin_floor: number; products: PrintProduct[] }
 export interface SkuRate { cost: number; blueprint: number; variant: number; design_mm: number[]; design_px: number[]; file_mm: number[]; file_px: number[]; trim_mm: number; dpi: number }

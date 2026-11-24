@@ -16,7 +16,7 @@ import type { OrderPrint, OrderStatus } from '../../src/order/api';
 import { BuyCard } from '../../src/try/BuyCard';
 import { COPY, setCopyLang } from '../../src/try/copy';
 import { CHECKOUT_LEGAL } from '../../src/shared/legal';
-import { countryName, printCountries, printName, printProducts, printShipping } from '../../src/shared/prints';
+import { countryName, kindName, printCountries, printName, printProducts, printShipping } from '../../src/shared/prints';
 import { money } from '../../src/shared/markets';
 import type { Eye } from '../../src/try/multi';
 
@@ -46,10 +46,11 @@ export async function run(): Promise<Row[]> {
   });
   const link = { o: '261121-0123456789abcdef', k: 'a'.repeat(32), s: null };
 
-  check('offerPrints: the five prints of the reply with the server\'s prices and shipping; none without an offer, and what the page does not know or is not well formed is left out',
-    offerPrints(ready()).length === 5 && offerPrints(ready()).map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,canvas40,poster50' && offerPrints(ready())[1].ship.DE === 499
+  check('offerPrints: the five prints of the reply with the server\'s prices and shipping; none without an offer, and what the page does not know or is not well formed is left out'
+    + ' - 1124: six, the acrylic block is the last',
+    offerPrints(ready()).length === 6 && offerPrints(ready()).map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,canvas40,poster50,block20' && offerPrints(ready())[1].ship.DE === 499
       && offerPrints(ready({ print_offer: undefined })).length === 0 && offerPrints(null).length === 0
-      && offerPrints(ready({ print_offer: { products: [...offer.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] } })).length === 5);
+      && offerPrints(ready({ print_offer: { products: [...offer.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] } })).length === 6);
   check('the country to preselect is the order\'s own market\'s (lt, hr); the common euro market names none', marketCountry('lt') === 'LT' && marketCountry('hr') === 'HR'
     && marketCountry('eu') === null && marketCountry(undefined) === null);
 
@@ -174,11 +175,24 @@ export async function run(): Promise<Row[]> {
     app.includes("p.state === 'preparing' && delivered ? C.print.preparingNow : C.print[p.state]") && app.includes("delivered={st.state === 'ready'}"));
 
   // the words
+  // 2026-11-24: the lead names the acrylic block and says what it is in a sentence of its own (2.5 cm thick, it stands by itself on a shelf or desk: it is not
+  // hung). That thickness is the ONE number a lead may hold; a price is still never written there (the list shows the prices the server would charge that day)
+  const THICK = /2[.,]5 cm/;
+  check('the lead of every language names the acrylic block by the name the list shows and says that it is 2.5 cm thick and stands on a shelf or desk; '
+    + 'the card with the block chosen shows its picture, its name with 20 x 20 cm, its price and its shipping',
+    LANGS.every((l) => ORDER_COPY[l].offer.lead.toLowerCase().includes(kindName('block', l).toLowerCase()) && THICK.test(ORDER_COPY[l].offer.lead)
+      && (ORDER_COPY[l].offer.lead.match(/\d/g) ?? []).join('') === '25')
+      && /stands by itself on a shelf or desk/.test(W.lead) && /pats stovi ant lentynos ar stalo/.test(ORDER_COPY.lt.offer.lead) && /steht von selbst auf einem Regal oder Schreibtisch/.test(ORDER_COPY.de.offer.lead)
+      && (() => {
+        const hb = card({ initial: { choice: { product: 'block20', country: 'DE' } } });
+        return /data-kind="block"/.test(hb) && text(hb).includes(sp(`${printName('block20', 'en')}, ${money(7900, 'eur', 'en')}`)) && sp(printName('block20', 'en')) === 'Acrylic block 20 × 20 cm'
+          && text(hb).includes(sp(`${W.shipping} ${money(499, 'eur', 'en')}`)) && text(hb).includes(W.consentMissing);
+      })(), LANGS.map((l) => (ORDER_COPY[l].offer.lead.match(/\d/g) ?? []).join('')).join());
   check('the offer\'s words in the eight languages: every string filled, eight different titles and leads, no dash, no price and no digit in the lead, the function '
-    + 'words keep their arguments', LANGS.every((l) => {
+    + 'words keep their arguments - 1124: no digit but the thickness of the acrylic block', LANGS.every((l) => {
     const o = ORDER_COPY[l].offer;
     const strings = Object.values(o).filter((v): v is string => typeof v === 'string');
-    return strings.length === 23 &&strings.every((s) => s.trim().length > 2) && !DASH.test(JSON.stringify(o)) && !/[\d€]/.test(o.lead) && o.option('NAME', 'PRICE').includes('NAME')
+    return strings.length === 23 &&strings.every((s) => s.trim().length > 2) && !DASH.test(JSON.stringify(o)) && !/[\d€]/.test(o.lead.replace(THICK, '')) && o.option('NAME', 'PRICE').includes('NAME')
       && o.option('NAME', 'PRICE').includes('PRICE') && o.mockAlt('NAME').includes('NAME') && !!ORDER_COPY[l].print.preparingNow && !DASH.test(ORDER_COPY[l].print.preparingNow);
   }) && new Set(LANGS.map((l) => ORDER_COPY[l].offer.title)).size === 8 && new Set(LANGS.map((l) => ORDER_COPY[l].offer.lead)).size === 8
     && new Set(LANGS.map((l) => ORDER_COPY[l].offer.done)).size === 8, LANGS.map((l) => Object.values(ORDER_COPY[l].offer).filter((v) => typeof v === 'string').length).join());

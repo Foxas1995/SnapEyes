@@ -6,13 +6,15 @@ The build refuses a kind of api/_lib/print_offer.py or a country of api/_lib/pri
 dash in any of them (scripts/check_prices.mjs, scripts/check_texts.mjs).
 
 Rules for the literal: plain JSON (double quotes, no trailing commas, no comments inside it), nothing after it in this file.
-  kinds      {kind: {en, de, lt, hu, hr}}: the name of the product, without its size (the size is written "30 × 30 cm" next to it)
+  kinds      {kind: {en, de, lt, hu, hr}}: the name of the product, without its size (the size is written "30 × 30 cm" next to it). "block" is
+             the acrylic block (2026-11-24): 2.5 cm of clear acrylic that STANDS by itself on a shelf or a desk; it is not hung and has no hanger
   countries  {ISO code: {en, de, lt, hu, hr}}: the country names (the EU member states)"""
 PRINT_NAMES = {
     "kinds": {
         "acrylic": {"en": "Acrylic glass print", "de": "Acrylglasbild", "lt": "Paveikslas po akriliniu stiklu", "hu": "Akrilüveg kép", "hr": "Slika na akrilnom staklu", "fi": "Akryylilasitaulu", "et": "Pilt akrüülklaasil", "lv": "Izdruka uz akrila stikla"},
         "canvas": {"en": "Canvas in a black floating frame", "de": "Leinwand im schwarzen Schattenfugenrahmen", "lt": "Drobė juodame rėme", "hu": "Vászonkép fekete úsztatott keretben", "hr": "Platno u crnom lebdećem okviru", "fi": "Canvastaulu mustassa leijukehyksessä", "et": "Lõuend mustas ujuvraamis", "lv": "Audekls melnā peldošajā rāmī"},
-        "poster": {"en": "Poster", "de": "Poster", "lt": "Plakatas", "hu": "Poszter", "hr": "Poster", "fi": "Juliste", "et": "Plakat", "lv": "Plakāts"}
+        "poster": {"en": "Poster", "de": "Poster", "lt": "Plakatas", "hu": "Poszter", "hr": "Poster", "fi": "Juliste", "et": "Plakat", "lv": "Plakāts"},
+        "block": {"en": "Acrylic block", "de": "Acrylblock", "lt": "Akrilo blokas", "hu": "Akrilblokk", "hr": "Akrilni blok", "fi": "Akryylilohko", "et": "Akrüülplokk", "lv": "Akrila bloks"}
     },
     "countries": {
         "AT": {"en": "Austria", "de": "Österreich", "lt": "Austrija", "hu": "Ausztria", "hr": "Austrija", "fi": "Itävalta", "et": "Austria", "lv": "Austrija"},

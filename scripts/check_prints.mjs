@@ -16,7 +16,7 @@ export const OFFER_FILE = 'api/_lib/print_offer.py';
 export const RATES_FILE = 'api/_lib/print_rates.py';
 export const NAMES_FILE = 'api/_lib/print_names.py';
 const LANGS = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
-const KINDS = ['acrylic', 'canvas', 'poster'];
+const KINDS = ['acrylic', 'canvas', 'poster', 'block'];
 const STRIPE_MIN_EUR = 50;
 
 /** The literal NAME = { ... } that ends a Python file (src/shared/prints.ts parseLiteral, the same rule). */
