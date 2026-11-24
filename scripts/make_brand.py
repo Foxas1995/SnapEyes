@@ -81,7 +81,11 @@ def eye_crop(img, iris):
 
 def iris_disc(img, iris, px, bg=None, fill=1.0):
     """The iris alone (the gold aperture, the black pupil, the catch-light, its black ring) in a px square; fill = the share of the square
-    the black ring's diameter takes; bg None = transparent."""
+    the black ring's diameter takes; bg None = transparent.
+    The circle of the ICONS is iris["icon"] (2026-11-24): the centre and the radii of the header logo's recolouring (the keys beside it) sit about 5 px off the
+    real ring and reach 7 px beyond its black ring, so the icons carried slivers of the lash and lid lines above and below it and stood off-centre (the owner
+    marked them on the Facebook profile picture). The logos keep their own numbers: nothing of them changes."""
+    iris = iris.get("icon", iris)
     r = iris["black_r"] + 1.5
     box = (round(iris["cx"] - r), round(iris["cy"] - r), round(iris["cx"] + r), round(iris["cy"] + r))
     c = img.crop(box)
