@@ -49,6 +49,24 @@
   .lp-tile { min-width: 0; }
   .lp-tile-img { position: relative; aspect-ratio: 1; border-radius: 16px; overflow: hidden; background: #020204; box-shadow: 0 0 0 1px rgba(255, 255, 255, .07); }
   .lp-wide .lp-tile-img { aspect-ratio: 3 / 2; }
+  .lp-wide .lp-sq .lp-tile-img { aspect-ratio: 1; }
+  /* the pairs and the families from 640 px: rows of one height. A wide tile and a square one share a row in the ratio of their pictures (3 to 2 in the basis and in
+     the growth), so both are exactly as high and every picture fills its frame. Three wide tiles are a full row (two from 640 to 959 px); the cap keeps a tile that
+     ends up alone in its row from filling it */
+  @media (min-width: 640px) {
+    .lp-grid.lp-wide { display: flex; flex-wrap: wrap; --tw: calc((100% - 22px) / 2 - 1px); }
+    .lp-wide .lp-tile { flex: 3 0 var(--tw); max-width: 60%; }
+    .lp-wide .lp-sq { flex: 2 0 calc(var(--tw) * 2 / 3); max-width: 49%; }
+  }
+  /* two in a row: the last tile of nine stands alone and keeps the width of a tile in a row of two */
+  @media (min-width: 640px) and (max-width: 959px) {
+    .lp-wide .lp-tile:last-of-type { flex-grow: 0; }
+  }
+  @media (min-width: 960px) {
+    .lp-grid.lp-wide { --tw: calc((100% - 56px) / 3 - 1px); }
+    .lp-wide .lp-tile { max-width: 45%; }
+    .lp-wide .lp-sq { max-width: 30%; }
+  }
   .lp-tile-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity var(--d-swap) var(--ease-out); }
   .lp-wide .lp-tile-img img.lp-art { object-fit: contain; }
   /* the hover zoom: 1.02 at most, inside the clipped frame, only where there is a real hover (spec 6.6, charter AC-3) */
@@ -85,8 +103,11 @@
   .lp-tile .lp-price .lp-soon { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
   .lp-tile .lp-file { margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
   .lp-combo { grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 26px 24px; border-radius: 16px; border: 1px solid var(--gold-line); background: linear-gradient(160deg, rgb(var(--gold-rgb) / .08), rgb(var(--gold-rgb) / .015)); }
+  @media (min-width: 640px) {
+    .lp-combo { flex: 0 0 100%; }
+  }
   @media (min-width: 960px) {
-    .lp-combo { grid-column: auto; align-self: stretch; }
+    .lp-combo { grid-column: auto; align-self: stretch; flex-basis: calc((100% - 56px) / 3); }
   }
   .lp-combo h3 { font-family: var(--display); font-size: 18px; color: var(--t-1); line-height: 1.3; }
   .lp-combo p { font-size: 14px; color: var(--ink-2); }
@@ -97,6 +118,9 @@
     .lp-grid.lp-wide { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 26px calc(-1 * var(--gut)) 0; padding: 0 var(--gut) 10px; scroll-padding-inline: var(--gut); scrollbar-width: none; }
     .lp-grid.lp-wide::-webkit-scrollbar { display: none; }
     .lp-wide .lp-tile { flex: 0 0 86%; scroll-snap-align: start; }
+    /* a square picture on the rail: two thirds of a wide tile, so the rail keeps one height; its price goes under its name */
+    .lp-wide .lp-sq { flex-basis: 57.33%; }
+    .lp-wide .lp-sq .lp-tile-top { flex-direction: column; align-items: flex-start; gap: 4px; }
     .lp-combo { flex: 0 0 80%; scroll-snap-align: start; aspect-ratio: auto; }
     .lp-grid:not(.lp-wide) { gap: 22px 12px; margin-top: 18px; }
     .lp-grid:not(.lp-wide) .lp-wallbtn { right: 8px; bottom: 8px; padding: 0 10px; }

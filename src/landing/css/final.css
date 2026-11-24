@@ -5,11 +5,13 @@
    no specificity. */
 @layer landing {
   .lp-final { position: relative; overflow: hidden; padding: 0; min-height: 520px; display: grid; align-items: end; background: #07090e; }
-  .lp-final .lp-bg { position: absolute; inset: 0; }
+  .lp-final .lp-bg { position: absolute; inset: 0; background: #07090e; isolation: isolate; }
   /* the owner, 2026-11-24, of the phone's view: "this example is very dark". The room is a night scene and the scrim over it was heavy where the piece hangs: the
-     picture is lifted (brightness, a touch of contrast so the black of the piece stays black) and the scrim keeps its full weight only under the words */
-  .lp-final .lp-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; filter: brightness(1.38) contrast(1.06); }
-  .lp-final .lp-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(7, 9, 14, .96) 12%, rgba(7, 9, 14, .55) 55%, rgba(7, 9, 14, .3)), radial-gradient(60% 60% at 30% 80%, rgba(7, 9, 14, .6), transparent); }
+     picture is lifted by a layer over it (a grey of 27.5 percent, colour dodge: every value times 1.38, black stays black; the picture itself carries no filter,
+     the motion gate holds it to that) and the scrim keeps its full weight only under the words */
+  .lp-final .lp-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; }
+  .lp-final .lp-bg::before { content: ""; position: absolute; inset: 0; z-index: 1; background: #464646; mix-blend-mode: color-dodge; pointer-events: none; }
+  .lp-final .lp-bg::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, rgba(7, 9, 14, .96) 12%, rgba(7, 9, 14, .55) 55%, rgba(7, 9, 14, .3)), radial-gradient(60% 60% at 30% 80%, rgba(7, 9, 14, .6), transparent); }
   .lp-final .lp-wrap { position: relative; padding-block: 96px 56px; }
   .lp-final h2 { font-size: clamp(32px, 7.4vw, 56px); max-width: 12em; }
   .lp-final .lp-lede { margin-top: 16px; max-width: 28em; }

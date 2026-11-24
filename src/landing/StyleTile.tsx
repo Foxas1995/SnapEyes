@@ -56,10 +56,8 @@ export interface StyleTileProps {
 interface Shown { cur: PictureAsset; prev: PictureAsset | null; ready: boolean }
 const calm = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// A square picture inside the tile's 3:2 frame is contained, not cropped. From six eyes the ring has an iris in its upper left, where the example chip sits, so the picture
-// goes to the frame's right: on black, the free side reads as one background.
-const squareFit = (tile: { square?: boolean; n?: number }): CSSProperties | undefined =>
-  tile.square ? { objectFit: 'contain', ...((tile.n ?? 0) >= 6 ? { objectPosition: 'right center' } : {}) } : undefined;
+// A square picture has a square tile (lp-sq, css/styles.css): the owner, 2026-11-24, of the square pictures in the 3:2 frames: "they do not fit", a dark band stood
+// beside each and the picture's edge showed in it. The rows keep one height: a square tile is two thirds as wide as a wide one.
 
 /** One tile of the gallery: the flat artwork (an Example), optionally the same artwork on a wall (a visualisation, fetched only
  *  when asked for), the labels, the name and the price line. Whose eye it is: the line under the eye colour dots (or the group's
@@ -94,7 +92,7 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
   const photo = hasPhotoChip(group, tile, eye);
   return (
     <figure
-      className={`lp-tile${enter === 'swap' ? ' lp-tile-in' : ''}${on ? ' lp-on-wall' : ''}`}
+      className={`lp-tile${tile.square ? ' lp-sq' : ''}${enter === 'swap' ? ' lp-tile-in' : ''}${on ? ' lp-on-wall' : ''}`}
       data-k={key}
       data-state={state.sale}
       data-reveal={enter === 'reveal' ? 'fade' : undefined}
@@ -113,7 +111,6 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
         photo={!wall && photo}
         imgProps={{
           'aria-hidden': on || undefined,
-          style: squareFit(tile),
           onLoad: () => setShown((p) => (p.ready ? p : { ...p, ready: true })),
           onError: () => setShown((p) => ({ ...p, prev: null })),
         }}
@@ -129,7 +126,6 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
             alt=""
             aria-hidden="true"
             decoding="async"
-            style={squareFit(tile)}
             onAnimationEnd={() => setShown((p) => ({ ...p, prev: null }))}
           />
         )}

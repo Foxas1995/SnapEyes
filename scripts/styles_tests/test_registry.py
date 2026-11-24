@@ -1090,8 +1090,8 @@ if gate:
     check("release gate: no gallery means no tiles (the check turns that into a problem), the summary names the groups (30 tiles with a live ceiling since the three of 2026-11-02), and only a production deploy or LANDING_GATE=strict is strict",
           gate["empty"]["total"] == 0 and gate["strict"] == [False, True, False, True, False, False]
           and "30 with a live ceiling" in gate["summary"] and "0 at preview" in gate["summary"] and "0 in the laboratory" in gate["summary"] and "0 only planned" in gate["summary"] and "0 of something that does not exist" in gate["summary"], (gate["strict"], gate["summary"]))
-    check("I2: the gate renders the page in seven states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, every style live beyond the ceilings, the server not reachable), in four languages, with no render error and every tile picture present",
-          gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "every style live, beyond the ceilings", "server not reachable"]
+    check("I2: the gate renders the page in nine states of the catalogue (closed, ordering open with nothing ticked, closed with every live ceiling ticked, one style ticked, every live ceiling ticked, every style live beyond the ceilings, every live ceiling ticked with prints sold, closed with the print switch on, the server not reachable), in four languages, with no render error and every tile picture present",
+          gate["inputs"] == ["closed", "ordering open, nothing ticked", "closed, every live ceiling ticked", "one style ticked", "every live ceiling ticked", "every style live, beyond the ceilings", "every live ceiling ticked, prints sold", "closed, the print switch on", "server not reachable"]
           and gate["renderedErrors"] == [] and gate["renderedPictures"] == [], (gate["inputs"], gate["renderedErrors"], gate["renderedPictures"]))
     check("I2: on the real tree the page promises nothing it cannot sell in any state of the catalogue (no broken promise, no under-sell)",
           gate["promiseReal"]["promises"] == [] and gate["promiseReal"]["underSells"] == [] and gate["promiseReal"]["pictures"] == [], gate["promiseReal"])
@@ -1164,13 +1164,14 @@ if gate:
 
 # --- the deliberate defects of the gate, run for real in a throw-away copy of the tree (scripts/check_landing_gate_defects.mjs --no-build: the gate alone, with VERCEL_ENV=production). `npm run check:gate` adds the
 # real production build of each case (about 15 seconds each: not part of the suite); I2 ran it once, all 13 cases as expected (release_reports/I2-align.md); the review of I2 (M1) added
-# 14 cases for the wiring of the page and the value of a price, 27 in all (release_reports/I2-align.md, section 11); 2026-10-22 added the closed price list that says Soon, 28 in all.
+# 14 cases for the wiring of the page and the value of a price, 27 in all (release_reports/I2-align.md, section 11); 2026-10-22 added the closed price list that says Soon, 28 in all;
+# 2026-11-21 (the print offer after the purchase: the landing follows the print switch) added four of the print wiring, 32 in all.
 rc, so, se = run_node(["scripts/check_landing_gate_defects.mjs", "--no-build"], timeout=900)
-check("I2: the 28 cases of the gate's defect test behave as expected with the gate alone in production mode: the honest page and a tile of a planned style that says Soon pass; each of 11 deliberate defects "
+check("I2: the 32 cases of the gate's defect test behave as expected with the gate alone in production mode: the honest page and a tile of a planned style that says Soon pass; each of 11 deliberate defects "
       "(a tile that ignores the catalogue, a tile without the Soon chip, a price row that prices or names what cannot be bought, the closed price list that says Soon, a style that is not in the registry, a name from the copy, a missing picture, a price "
-      "while ordering is closed, a wrong group line, a hero price while nothing can be bought) fails; so does each of 11 defects of the wiring of the page (the hero, the FAQ, the group line, the several-eyes card, the price "
-      "table's sale, ordering's sale, the notice bar, the pricing notice, the steps) and each of 3 of the value of a price (the black tile and row, the Trio); the same defect is only a notice in a preview build",
-      rc == 0 and "28 of 28 cases as expected" in so and so.count("\nok ") + (1 if so.startswith("ok ") else 0) == 28, (rc, so[-900:], se[-300:]))
+      "while ordering is closed, a wrong group line, a hero price while nothing can be bought) fails; so does each of 15 defects of the wiring of the page (the hero, the FAQ, the group line, the several-eyes card, the price "
+      "table's sale, ordering's sale, the notice bar, the pricing notice, the print lines, the steps) and each of 3 of the value of a price (the black tile and row, the Trio); the same defect is only a notice in a preview build",
+      rc == 0 and "32 of 32 cases as expected" in so and so.count("\nok ") + (1 if so.startswith("ok ") else 0) == 32, (rc, so[-900:], se[-300:]))
 
 # --- I2: the pictures of the landing's tiles (the final round 2c renders of the landing team) and the pictures of the picker's tiles (public/assets/atelier, made by THIS repository's engine,
 # scripts/make_style_tiles.py) show the same designs. The seeds of the particles differ (the seed formula changed with the engine: Powder Burst, Splash, Universe and Radiance differ in their
