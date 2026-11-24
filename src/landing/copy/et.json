@@ -8,8 +8,8 @@
   "facts": {
     "px": "4096\u00a0px",
     "square": "4096\u00a0×\u00a04096\u00a0px",
-    "printMax": "50\u00a0×\u00a050\u00a0cm",
-    "printMaxCm": "50\u00a0cm",
+    "printMax": "60\u00a0×\u00a060\u00a0cm",
+    "printMaxCm": "60\u00a0cm",
     "email": "info@snapeyes.com",
     "hours": "48"
   },
@@ -264,9 +264,9 @@
         "b": "Terav"
       },
       {
-        "cm": 50,
+        "cm": 60,
         "t": "Suurim, mida soovitame",
-        "b": "Terav"
+        "b": "Terav meetri kauguselt vaadates"
       }
     ]
   },
@@ -575,8 +575,8 @@
       {
         "id": "printit",
         "q": "Kas ma saan seda trükkida ja kui suurelt?",
-        "a": "Jah. Vali trükikoda, vali ruudukujuline suurus, näiteks 20, 30, 40 või 50 cm, ja laadi JPEG üles. Muude kujude puhul palu trükikojal pilti kärpida või lisada ääris ning küsi proovitrükki või näidist. Meie ei trüki ega saada: trükk on trükikoja töö ja hind. Ühe silma puhul soovitame kuni {printMax}, mis on umbes 208 pikslit tolli kohta (30 cm juures umbes 347). Trükikojad küsivad tavaliselt umbes 150 kuni 300. Mitme silma puhul võib pikem serv olla kuni {printMaxCm}. Üle {printMaxCm} on trükk võimalik, kuid venitab faili rohkem, seega me seal head tulemust ei taga. Tulemus sõltub ka sinu fotost.",
-        "aPrints": "Jah. Vali trükikoda, vali ruudukujuline suurus, näiteks 20, 30, 40 või 50 cm, ja laadi JPEG üles. Muude kujude puhul palu trükikojal pilti kärpida või lisada ääris ning küsi proovitrükki või näidist. Trükikoja trükk on trükikoja töö ja hind; kui sinu kunstiteos on valmis, saad oma tellimuse lehelt tellida trükitud pildi ka meilt. Ühe silma puhul soovitame kuni {printMax}, mis on umbes 208 pikslit tolli kohta (30 cm juures umbes 347). Trükikojad küsivad tavaliselt umbes 150 kuni 300. Mitme silma puhul võib pikem serv olla kuni {printMaxCm}. Üle {printMaxCm} on trükk võimalik, kuid venitab faili rohkem, seega me seal head tulemust ei taga. Tulemus sõltub ka sinu fotost."
+        "a": "Jah. Vali trükikoda, vali ruudukujuline suurus, näiteks 20, 30, 40 või 60 cm, ja laadi JPEG üles. Muude kujude puhul palu trükikojal pilti kärpida või lisada ääris ning küsi proovitrükki või näidist. Meie ei trüki ega saada: trükk on trükikoja töö ja hind. Ühe silma puhul soovitame kuni {printMax}, mis on umbes 173 pikslit tolli kohta (30 cm juures umbes 347). Trükikojad küsivad tavaliselt umbes 150 kuni 300. Mitme silma puhul võib pikem serv olla kuni {printMaxCm}. Üle {printMaxCm} on trükk võimalik, kuid venitab faili rohkem, seega me seal head tulemust ei taga. Tulemus sõltub ka sinu fotost.",
+        "aPrints": "Jah. Vali trükikoda, vali ruudukujuline suurus, näiteks 20, 30, 40 või 60 cm, ja laadi JPEG üles. Muude kujude puhul palu trükikojal pilti kärpida või lisada ääris ning küsi proovitrükki või näidist. Trükikoja trükk on trükikoja töö ja hind; kui sinu kunstiteos on valmis, saad oma tellimuse lehelt tellida trükitud pildi ka meilt. Ühe silma puhul soovitame kuni {printMax}, mis on umbes 173 pikslit tolli kohta (30 cm juures umbes 347). Trükikojad küsivad tavaliselt umbes 150 kuni 300. Mitme silma puhul võib pikem serv olla kuni {printMaxCm}. Üle {printMaxCm} on trükk võimalik, kuid venitab faili rohkem, seega me seal head tulemust ei taga. Tulemus sõltub ka sinu fotost."
       },
       {
         "id": "look",

@@ -21,7 +21,7 @@ import { CompareTable } from './CompareTable';
 import { useCopy } from './copy/useCopy';
 import { useKeepFocus, useRoving } from './ui';
 import { WallStage } from './WallStage';
-import { ARTS, DEFAULT_ART, DEFAULT_MATERIAL, MATERIALS, artFor, glintFor, hasScene, isSized, stagePicture, warm, type Material, type WallArt } from './wallScenes';
+import { ARTS, DEFAULT_ART, DEFAULT_MATERIAL, MATERIALS, SCENE_SIZE, artFor, glintFor, hasScene, isSized, stagePicture, warm, type Material, type WallArt } from './wallScenes';
 import { slotStyle } from './slots';
 import { lazyRetry } from './lazy';
 import { SectionBoundary } from './SectionBoundary';
@@ -80,7 +80,7 @@ export function Wall() {
 
   const m = w.materials[mat];
   const pic = stagePicture(mat, art, lang);
-  const caption = pic?.sizeOk && isSized(mat) ? t(`wall.captionsSize.${mat}`, { size: c.facts.printMaxCm }) : t(`wall.captions.${mat}`);
+  const caption = pic?.sizeOk && isSized(mat) ? t(`wall.captionsSize.${mat}`, { size: SCENE_SIZE }) : t(`wall.captions.${mat}`);
   const alt = `${c.example.vis}. ${caption} ${w.arts[art]}.`;
 
   return (

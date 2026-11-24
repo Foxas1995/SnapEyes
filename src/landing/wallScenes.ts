@@ -20,6 +20,12 @@ export const DEFAULT_ART: WallArt = 'eye';
 /** What the stage picture says about its width (the frame is 540 px at most on a desktop, the screen less 32 px on a phone). */
 export const STAGE_SIZES = '(min-width: 960px) 540px, calc(100vw - 32px)';
 
+/** The size a caption names ("On acrylic, about 50 cm."): the size the artwork is DRAWN at in the pictures that may say one (estimated at 40 to 55 cm,
+ *  scripts/landing_assets_provenance.json), a fact of the picture. Until 2026-11-24 the caption borrowed the copy's {printMaxCm}, which happened to be the same
+ *  50 cm; that fact is now 60 cm (the largest print the page suggests) and "about 60 cm" under a picture drawn at 40 to 55 cm would be false. Written as the copy's
+ *  facts write a size: a no-break space, and "cm" is the same word in the eight languages. */
+export const SCENE_SIZE = '50\u00a0cm';
+
 /** The materials whose caption may name a size ("about 50 cm"): only the wall materials have one in the copy. */
 export type SizedMaterial = Exclude<Material, 'block' | 'phone'>;
 

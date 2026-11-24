@@ -8,8 +8,8 @@
   "facts": {
     "px": "4096 px",
     "square": "4096 × 4096 px",
-    "printMax": "50 × 50 cm",
-    "printMaxCm": "50 cm",
+    "printMax": "60 × 60 cm",
+    "printMaxCm": "60 cm",
     "email": "info@snapeyes.com",
     "hours": "48"
   },
@@ -264,9 +264,9 @@
         "b": "Ryšku"
       },
       {
-        "cm": 50,
+        "cm": 60,
         "t": "Didžiausias, kurį siūlome",
-        "b": "Ryšku"
+        "b": "Ryšku žiūrint iš metro atstumo"
       }
     ]
   },
@@ -575,8 +575,8 @@
       {
         "id": "printit",
         "q": "Ar galiu jį atsispausdinti, o jei taip, kokio dydžio?",
-        "a": "Taip. Pasirinkite spaustuvę, kvadratinį dydį, pavyzdžiui, 20, 30, 40 arba 50 cm, ir įkelkite JPEG failą. Kitokios formos kūriniui paprašykite spaustuvės jį apkarpyti arba pridėti paraštes, taip pat paprašykite bandomojo atspaudo arba pavyzdžio. Mes nespausdiname ir nesiunčiame: spaudinys yra spaustuvės darbas, už kurį mokate jai. Vienos akies kūriniui rekomenduojame iki {printMax}: tai apie 208 ppi (pikselių colyje), o pasirinkus 30 cm dydį, apie 347. Spaustuvės paprastai reikalauja maždaug nuo 150 iki 300 ppi. Kelių akių kūrinio ilgoji kraštinė gali būti iki {printMaxCm}. Spausdinti didesniu nei {printMaxCm} formatu galima, tačiau failas dar labiau ištempiamas, todėl to nežadame. Rezultatas priklauso ir nuo Jūsų nuotraukos.",
-        "aPrints": "Taip. Pasirinkite spaustuvę, kvadratinį dydį, pavyzdžiui, 20, 30, 40 arba 50 cm, ir įkelkite JPEG failą. Kitokios formos kūriniui paprašykite spaustuvės jį apkarpyti arba pridėti paraštes, taip pat paprašykite bandomojo atspaudo arba pavyzdžio. Spaustuvės spaudinys yra jos darbas, už kurį mokate jai; kai kūrinys bus paruoštas, savo užsakymo puslapyje galėsite užsisakyti spaudinį ir iš mūsų. Vienos akies kūriniui rekomenduojame iki {printMax}: tai apie 208 ppi (pikselių colyje), o pasirinkus 30 cm dydį, apie 347. Spaustuvės paprastai reikalauja maždaug nuo 150 iki 300 ppi. Kelių akių kūrinio ilgoji kraštinė gali būti iki {printMaxCm}. Spausdinti didesniu nei {printMaxCm} formatu galima, tačiau failas dar labiau ištempiamas, todėl to nežadame. Rezultatas priklauso ir nuo Jūsų nuotraukos."
+        "a": "Taip. Pasirinkite spaustuvę, kvadratinį dydį, pavyzdžiui, 20, 30, 40 arba 60 cm, ir įkelkite JPEG failą. Kitokios formos kūriniui paprašykite spaustuvės jį apkarpyti arba pridėti paraštes, taip pat paprašykite bandomojo atspaudo arba pavyzdžio. Mes nespausdiname ir nesiunčiame: spaudinys yra spaustuvės darbas, už kurį mokate jai. Vienos akies kūriniui rekomenduojame iki {printMax}: tai apie 173 ppi (pikselių colyje), o pasirinkus 30 cm dydį, apie 347. Spaustuvės paprastai reikalauja maždaug nuo 150 iki 300 ppi. Kelių akių kūrinio ilgoji kraštinė gali būti iki {printMaxCm}. Spausdinti didesniu nei {printMaxCm} formatu galima, tačiau failas dar labiau ištempiamas, todėl to nežadame. Rezultatas priklauso ir nuo Jūsų nuotraukos.",
+        "aPrints": "Taip. Pasirinkite spaustuvę, kvadratinį dydį, pavyzdžiui, 20, 30, 40 arba 60 cm, ir įkelkite JPEG failą. Kitokios formos kūriniui paprašykite spaustuvės jį apkarpyti arba pridėti paraštes, taip pat paprašykite bandomojo atspaudo arba pavyzdžio. Spaustuvės spaudinys yra jos darbas, už kurį mokate jai; kai kūrinys bus paruoštas, savo užsakymo puslapyje galėsite užsisakyti spaudinį ir iš mūsų. Vienos akies kūriniui rekomenduojame iki {printMax}: tai apie 173 ppi (pikselių colyje), o pasirinkus 30 cm dydį, apie 347. Spaustuvės paprastai reikalauja maždaug nuo 150 iki 300 ppi. Kelių akių kūrinio ilgoji kraštinė gali būti iki {printMaxCm}. Spausdinti didesniu nei {printMaxCm} formatu galima, tačiau failas dar labiau ištempiamas, todėl to nežadame. Rezultatas priklauso ir nuo Jūsų nuotraukos."
       },
       {
         "id": "look",

@@ -6,20 +6,23 @@
 /** The longest side of the delivered file, in pixels (the copy's {px} fact says the same in words). */
 export const FILE_PX = 4096;
 
-/** The four sizes of the drawing and of the chips, in centimetres. The largest is the one the page suggests. */
-export const SIZES = [20, 30, 40, 50] as const;
+/** The four sizes of the drawing and of the chips, in centimetres. The largest is the one the page suggests: 60 cm since 2026-11-24 (the owner's decision: one
+ *  size everywhere; the /try page says "up to 60 x 60 cm" under the artwork and the largest print sold is 60 cm, api/_lib/print_offer.py), 50 cm before.
+ *  The copy says the same in words (the facts printMax and printMaxCm, the last rung, the FAQ's density): suites/ts/landing_print_size.test.ts holds them to it. */
+export const SIZES = [20, 30, 40, 60] as const;
 export type SizeCm = (typeof SIZES)[number];
-export const DEFAULT_SIZE: SizeCm = 50;
+export const DEFAULT_SIZE: SizeCm = 60;
 
-/** Pixels per inch of the file printed cm wide: 4096 / (cm / 2.54), rounded (520, 347, 260, 208). */
+/** Pixels per inch of the file printed cm wide: 4096 / (cm / 2.54), rounded (520, 347, 260, 173). */
 export function ppi(cm: number): number {
   return Math.round(FILE_PX / (cm / 2.54));
 }
 
 /** Drawing units per centimetre. */
 export const K = 2.8;
-/** Where each square sits: its centre on the x axis, and the one height they share. */
-export const SQX: Readonly<Record<SizeCm, number>> = { 20: 201, 30: 305, 40: 437, 50: 597 };
+/** Where each square sits: its centre on the x axis, and the one height they share. 34 units between two squares, and the row centred over the sofa (x 420)
+ *  as it was with the 50 cm square: the 60 cm one is 28 units wider, so the three smaller squares moved 14 units to the left. */
+export const SQX: Readonly<Record<SizeCm, number>> = { 20: 187, 30: 291, 40: 423, 60: 597 };
 export const CY = 154;
 /** The floor line (y). */
 export const FLOOR = 556;

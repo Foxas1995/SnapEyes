@@ -8,8 +8,8 @@
   "facts": {
     "px": "4096\u00a0px",
     "square": "4096\u00a0×\u00a04096\u00a0px",
-    "printMax": "50\u00a0×\u00a050\u00a0cm",
-    "printMaxCm": "50\u00a0cm",
+    "printMax": "60\u00a0×\u00a060\u00a0cm",
+    "printMaxCm": "60\u00a0cm",
     "email": "info@snapeyes.com",
     "hours": "48"
   },
@@ -264,9 +264,9 @@
         "b": "Sharp"
       },
       {
-        "cm": 50,
+        "cm": 60,
         "t": "The largest we suggest",
-        "b": "Sharp"
+        "b": "Sharp from a metre away"
       }
     ]
   },
@@ -575,8 +575,8 @@
       {
         "id": "printit",
         "q": "Can I print it, and how big?",
-        "a": "Yes. Choose a print shop, pick a square size such as 20, 30, 40 or 50 cm and upload the JPEG. For other shapes ask the shop to crop or add a border, and ask for a proof or a sample. We do not print or ship: the print is the shop's work and price. For one eye we recommend up to {printMax}, which is about 208 pixels per inch (about 347 at 30 cm). Print shops usually ask for about 150 to 300. With several eyes the long edge can be up to {printMaxCm}. Above {printMaxCm} a print is possible but stretches the file further, so we do not promise it. The result also depends on your photo.",
-        "aPrints": "Yes. Choose a print shop, pick a square size such as 20, 30, 40 or 50 cm and upload the JPEG. For other shapes ask the shop to crop or add a border, and ask for a proof or a sample. A print from a shop is the shop's work and price; once your artwork is ready, you can also order a print from us on your order page. For one eye we recommend up to {printMax}, which is about 208 pixels per inch (about 347 at 30 cm). Print shops usually ask for about 150 to 300. With several eyes the long edge can be up to {printMaxCm}. Above {printMaxCm} a print is possible but stretches the file further, so we do not promise it. The result also depends on your photo."
+        "a": "Yes. Choose a print shop, pick a square size such as 20, 30, 40 or 60 cm and upload the JPEG. For other shapes ask the shop to crop or add a border, and ask for a proof or a sample. We do not print or ship: the print is the shop's work and price. For one eye we recommend up to {printMax}, which is about 173 pixels per inch (about 347 at 30 cm). Print shops usually ask for about 150 to 300. With several eyes the long edge can be up to {printMaxCm}. Above {printMaxCm} a print is possible but stretches the file further, so we do not promise it. The result also depends on your photo.",
+        "aPrints": "Yes. Choose a print shop, pick a square size such as 20, 30, 40 or 60 cm and upload the JPEG. For other shapes ask the shop to crop or add a border, and ask for a proof or a sample. A print from a shop is the shop's work and price; once your artwork is ready, you can also order a print from us on your order page. For one eye we recommend up to {printMax}, which is about 173 pixels per inch (about 347 at 30 cm). Print shops usually ask for about 150 to 300. With several eyes the long edge can be up to {printMaxCm}. Above {printMaxCm} a print is possible but stretches the file further, so we do not promise it. The result also depends on your photo."
       },
       {
         "id": "look",

@@ -8,8 +8,8 @@
   "facts": {
     "px": "4096 px",
     "square": "4096 × 4096 px",
-    "printMax": "50 × 50 cm",
-    "printMaxCm": "50 cm",
+    "printMax": "60 × 60 cm",
+    "printMaxCm": "60 cm",
     "email": "info@snapeyes.com",
     "hours": "48"
   },
@@ -264,9 +264,9 @@
         "b": "Terävä"
       },
       {
-        "cm": 50,
+        "cm": 60,
         "t": "Suurin, jota suosittelemme",
-        "b": "Terävä"
+        "b": "Terävä metrin päästä katsottuna"
       }
     ]
   },
@@ -575,8 +575,8 @@
       {
         "id": "printit",
         "q": "Voinko tulostaa sen, ja kuinka suurena?",
-        "a": "Kyllä. Valitse tulostuspalvelu, valitse neliön muotoinen koko, esimerkiksi 20, 30, 40 tai 50 cm, ja lähetä JPEG-tiedosto palveluun. Muita muotoja varten pyydä palvelua rajaamaan kuva tai lisäämään reunus, ja pyydä vedos tai näyte. Me emme tulosta emmekä lähetä: tuloste on tulostuspalvelun työtä, ja palvelu päättää sen hinnan. Yhdelle silmälle suosittelemme enintään kokoa {printMax}, mikä on noin 208 pikseliä tuumalla (noin 347, kun koko on 30 cm). Tulostuspalvelut pyytävät yleensä noin 150-300. Kun silmiä on useita, pitkä sivu voi olla enintään {printMaxCm}. Yli {printMaxCm}:n tuloste on mahdollinen, mutta se venyttää tiedostoa enemmän, joten emme lupaa sitä. Tulos riippuu myös kuvastasi.",
-        "aPrints": "Kyllä. Valitse tulostuspalvelu, valitse neliön muotoinen koko, esimerkiksi 20, 30, 40 tai 50 cm, ja lähetä JPEG-tiedosto palveluun. Muita muotoja varten pyydä palvelua rajaamaan kuva tai lisäämään reunus, ja pyydä vedos tai näyte. Tulostuspalvelun tuloste on palvelun työtä, ja palvelu päättää sen hinnan; kun taideteoksesi on valmis, voit tilata tulosteen myös meiltä tilaussivultasi. Yhdelle silmälle suosittelemme enintään kokoa {printMax}, mikä on noin 208 pikseliä tuumalla (noin 347, kun koko on 30 cm). Tulostuspalvelut pyytävät yleensä noin 150-300. Kun silmiä on useita, pitkä sivu voi olla enintään {printMaxCm}. Yli {printMaxCm}:n tuloste on mahdollinen, mutta se venyttää tiedostoa enemmän, joten emme lupaa sitä. Tulos riippuu myös kuvastasi."
+        "a": "Kyllä. Valitse tulostuspalvelu, valitse neliön muotoinen koko, esimerkiksi 20, 30, 40 tai 60 cm, ja lähetä JPEG-tiedosto palveluun. Muita muotoja varten pyydä palvelua rajaamaan kuva tai lisäämään reunus, ja pyydä vedos tai näyte. Me emme tulosta emmekä lähetä: tuloste on tulostuspalvelun työtä, ja palvelu päättää sen hinnan. Yhdelle silmälle suosittelemme enintään kokoa {printMax}, mikä on noin 173 pikseliä tuumalla (noin 347, kun koko on 30 cm). Tulostuspalvelut pyytävät yleensä noin 150-300. Kun silmiä on useita, pitkä sivu voi olla enintään {printMaxCm}. Yli {printMaxCm}:n tuloste on mahdollinen, mutta se venyttää tiedostoa enemmän, joten emme lupaa sitä. Tulos riippuu myös kuvastasi.",
+        "aPrints": "Kyllä. Valitse tulostuspalvelu, valitse neliön muotoinen koko, esimerkiksi 20, 30, 40 tai 60 cm, ja lähetä JPEG-tiedosto palveluun. Muita muotoja varten pyydä palvelua rajaamaan kuva tai lisäämään reunus, ja pyydä vedos tai näyte. Tulostuspalvelun tuloste on palvelun työtä, ja palvelu päättää sen hinnan; kun taideteoksesi on valmis, voit tilata tulosteen myös meiltä tilaussivultasi. Yhdelle silmälle suosittelemme enintään kokoa {printMax}, mikä on noin 173 pikseliä tuumalla (noin 347, kun koko on 30 cm). Tulostuspalvelut pyytävät yleensä noin 150-300. Kun silmiä on useita, pitkä sivu voi olla enintään {printMaxCm}. Yli {printMaxCm}:n tuloste on mahdollinen, mutta se venyttää tiedostoa enemmän, joten emme lupaa sitä. Tulos riippuu myös kuvastasi."
       },
       {
         "id": "look",

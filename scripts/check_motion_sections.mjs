@@ -439,17 +439,17 @@ async function checkSizes() {
     note(`sizes ${tag}: the sofa's first line is 99 percent drawn at ${f['.lp-dr'][endD]?.[0]} ms, the first square starts at ${f['.lp-sqg'][startSq][0]} ms`);
     }
     // a pick draws the gold outline of that size (the click and the first frame in one task: see frames)
-    const gold = JSON.stringify(['20', '30', '40', '50']);
-    const f2 = await frames(page, ['.lp-sqg[data-cm="30"] .lp-sq-on', '.lp-sqg[data-cm="50"] .lp-sq-on', '.lp-sqg[data-cm="20"] .lp-sq-on'], ['stroke-dashoffset'], 1000, "document.querySelector('#sizeChips [data-cm=\"30\"]').click();");
-    const on30 = col(f2['.lp-sqg[data-cm="30"] .lp-sq-on'], 1).map(num), off50 = col(f2['.lp-sqg[data-cm="50"] .lp-sq-on'], 1).map(num);
+    const gold = JSON.stringify(['20', '30', '40', '60']);
+    const f2 = await frames(page, ['.lp-sqg[data-cm="30"] .lp-sq-on', '.lp-sqg[data-cm="60"] .lp-sq-on', '.lp-sqg[data-cm="20"] .lp-sq-on'], ['stroke-dashoffset'], 1000, "document.querySelector('#sizeChips [data-cm=\"30\"]').click();");
+    const on30 = col(f2['.lp-sqg[data-cm="30"] .lp-sq-on'], 1).map(num), offMax = col(f2['.lp-sqg[data-cm="60"] .lp-sq-on'], 1).map(num);
     expect('sizes', on30[0] > 0.8 && on30.at(-1) === 0, `${tag}: the outline of the chosen size does not draw (${on30[0]} to ${on30.at(-1)})`);
-    expect('sizes', off50[0] < 0.2 && off50.at(-1) === 1, `${tag}: the outline of the size that was left does not undraw (${off50[0]} to ${off50.at(-1)})`);
+    expect('sizes', offMax[0] < 0.2 && offMax.at(-1) === 1, `${tag}: the outline of the size that was left does not undraw (${offMax[0]} to ${offMax.at(-1)})`);
     const t60 = f2['.lp-sqg[data-cm="30"] .lp-sq-on'].find((r) => num(r[1]) < 0.01)?.[0];
     note(`sizes ${tag}: the chosen outline is 99 percent drawn after ${t60} ms (600 ms transition on the expo curve)`);
     expect('sizes', JSON.parse(await page.eval("JSON.stringify([...document.querySelectorAll('.lp-sqg')].map((g) => [g.dataset.cm, getComputedStyle(g.querySelector('.lp-sq-on')).strokeDashoffset]))")).filter(([, o]) => o === '0px').length === 1, `${tag}: more or fewer than one gold outline is whole`);
     // crossfades: one version in the tree, the cell never changes size
     const modes = [];
-    for (const cm of [20, 40, 50, 30]) {
+    for (const cm of [20, 40, 60, 30]) {
       await page.eval(`document.querySelector('#sizeChips [data-cm="${cm}"]').click()`);
       await sleep(80);
       const mid = JSON.parse(await page.eval("JSON.stringify([...document.querySelectorAll('.lp-stack-fig > .lp-stack-i')].map((e) => +getComputedStyle(e).opacity))"));

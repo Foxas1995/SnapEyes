@@ -8,8 +8,8 @@
   "facts": {
     "px": "4096\u00a0px",
     "square": "4096\u00a0×\u00a04096\u00a0px",
-    "printMax": "50\u00a0×\u00a050\u00a0cm",
-    "printMaxCm": "50\u00a0cm",
+    "printMax": "60\u00a0×\u00a060\u00a0cm",
+    "printMaxCm": "60\u00a0cm",
     "email": "info@snapeyes.com",
     "hours": "48"
   },
@@ -264,9 +264,9 @@
         "b": "Scharf"
       },
       {
-        "cm": 50,
+        "cm": 60,
         "t": "Die größte empfohlene Größe",
-        "b": "Scharf"
+        "b": "Scharf aus einem Meter Abstand"
       }
     ]
   },
@@ -575,8 +575,8 @@
       {
         "id": "printit",
         "q": "Kann ich es drucken, und wie groß?",
-        "a": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 50 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Wir drucken und versenden nicht: Der Druck ist die Arbeit und der Preis der Druckerei. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 208 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab.",
-        "aPrints": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 50 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Ein Druck aus der Druckerei ist deren Arbeit und Preis; sobald Ihr Kunstwerk fertig ist, können Sie auf Ihrer Bestellseite auch einen Druck bei uns bestellen. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 208 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab."
+        "a": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 60 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Wir drucken und versenden nicht: Der Druck ist die Arbeit und der Preis der Druckerei. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 173 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab.",
+        "aPrints": "Ja. Wählen Sie eine Druckerei, wählen Sie eine quadratische Größe wie 20, 30, 40 oder 60 cm und laden Sie das JPEG hoch. Für andere Formate bitten Sie die Druckerei, zuzuschneiden oder einen Rand zu ergänzen, und fragen Sie nach einem Probedruck oder Muster. Ein Druck aus der Druckerei ist deren Arbeit und Preis; sobald Ihr Kunstwerk fertig ist, können Sie auf Ihrer Bestellseite auch einen Druck bei uns bestellen. Bei einem Auge empfehlen wir bis zu {printMax}, das sind etwa 173 Pixel pro Zoll (bei 30 cm etwa 347). Druckereien verlangen meist etwa 150 bis 300. Bei mehreren Augen kann die lange Kante bis zu {printMaxCm} messen. Über {printMaxCm} ist ein Druck möglich, dehnt die Datei aber weiter, deshalb versprechen wir es nicht. Das Ergebnis hängt auch von Ihrem Foto ab."
       },
       {
         "id": "look",

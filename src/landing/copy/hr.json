@@ -8,8 +8,8 @@
   "facts": {
     "px": "4096 px",
     "square": "4096 × 4096 px",
-    "printMax": "50 × 50 cm",
-    "printMaxCm": "50 cm",
+    "printMax": "60 × 60 cm",
+    "printMaxCm": "60 cm",
     "email": "info@snapeyes.com",
     "hours": "48"
   },
@@ -264,9 +264,9 @@
         "b": "Oštro"
       },
       {
-        "cm": 50,
+        "cm": 60,
         "t": "Najveća koju preporučujemo",
-        "b": "Oštro"
+        "b": "Oštro s udaljenosti od jednog metra"
       }
     ]
   },
@@ -575,8 +575,8 @@
       {
         "id": "printit",
         "q": "Mogu li je tiskati i koliko veliku?",
-        "a": "Da. Odaberite tiskaru, kvadratnu veličinu poput 20, 30, 40 ili 50 cm i učitajte JPEG. Za druge oblike zamolite tiskaru da sliku obreže ili doda rub te zatražite probni otisak ili uzorak. Mi ne tiskamo i ne šaljemo: otisak je posao tiskare, koja određuje i cijenu. Za jedno oko preporučujemo najviše {printMax}, što je otprilike 208 piksela po inču (otprilike 347 pri 30 cm). Tiskare obično traže otprilike 150 do 300. Kod više očiju dulja stranica može biti do {printMaxCm}. Iznad {printMaxCm} otisak je moguć, ali datoteku još više rasteže, pa to ne obećavamo. Rezultat ovisi i o vašoj fotografiji.",
-        "aPrints": "Da. Odaberite tiskaru, kvadratnu veličinu poput 20, 30, 40 ili 50 cm i učitajte JPEG. Za druge oblike zamolite tiskaru da sliku obreže ili doda rub te zatražite probni otisak ili uzorak. Otisak iz tiskare posao je tiskare, koja određuje i cijenu; kad vaše djelo bude gotovo, otisak možete naručiti i od nas na stranici svoje narudžbe. Za jedno oko preporučujemo najviše {printMax}, što je otprilike 208 piksela po inču (otprilike 347 pri 30 cm). Tiskare obično traže otprilike 150 do 300. Kod više očiju dulja stranica može biti do {printMaxCm}. Iznad {printMaxCm} otisak je moguć, ali datoteku još više rasteže, pa to ne obećavamo. Rezultat ovisi i o vašoj fotografiji."
+        "a": "Da. Odaberite tiskaru, kvadratnu veličinu poput 20, 30, 40 ili 60 cm i učitajte JPEG. Za druge oblike zamolite tiskaru da sliku obreže ili doda rub te zatražite probni otisak ili uzorak. Mi ne tiskamo i ne šaljemo: otisak je posao tiskare, koja određuje i cijenu. Za jedno oko preporučujemo najviše {printMax}, što je otprilike 173 piksela po inču (otprilike 347 pri 30 cm). Tiskare obično traže otprilike 150 do 300. Kod više očiju dulja stranica može biti do {printMaxCm}. Iznad {printMaxCm} otisak je moguć, ali datoteku još više rasteže, pa to ne obećavamo. Rezultat ovisi i o vašoj fotografiji.",
+        "aPrints": "Da. Odaberite tiskaru, kvadratnu veličinu poput 20, 30, 40 ili 60 cm i učitajte JPEG. Za druge oblike zamolite tiskaru da sliku obreže ili doda rub te zatražite probni otisak ili uzorak. Otisak iz tiskare posao je tiskare, koja određuje i cijenu; kad vaše djelo bude gotovo, otisak možete naručiti i od nas na stranici svoje narudžbe. Za jedno oko preporučujemo najviše {printMax}, što je otprilike 173 piksela po inču (otprilike 347 pri 30 cm). Tiskare obično traže otprilike 150 do 300. Kod više očiju dulja stranica može biti do {printMaxCm}. Iznad {printMaxCm} otisak je moguć, ali datoteku još više rasteže, pa to ne obećavamo. Rezultat ovisi i o vašoj fotografiji."
       },
       {
         "id": "look",
