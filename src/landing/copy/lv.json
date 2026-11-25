@@ -40,9 +40,6 @@
     "soon": "Pasūtījumus sāksim pieņemt drīz.",
     "open": "Sāciet ar bezmaksas priekšskatījumu."
   },
-  "example": {
-    "mantas": "Mūsu pašu acs"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Jūsu īstā varavīksnene, pārvērsta mākslā.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Pelēkzaļa acs",
         "n": 380,
-        "note": "Parauga fotogrāfija, nevis klients.",
         "photoAlt": "Parauga fotogrāfija: pelēkzaļa acs ar loga atspīdumu, kadra kreisā puse",
         "irisAlt": "Tā pati pelēkzaļā varavīksnene, atjaunota, bez atspīduma",
         "artAlt": "Atjaunotā pelēkzaļā varavīksnene kā mākslas darbs"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Stili",
     "title": "Viena varavīksnene, daudz stilu",
-    "legend": "Piemēri. Jūsējā būs jūsu pašu krāsas un raksts.",
+    "legend": "Jūsējā būs jūsu pašu krāsas un raksts.",
     "groups": {
       "one": "Tikai jūs",
       "two": "Jūs abi",
@@ -316,8 +312,7 @@
       "gr": "Pelēka"
     },
     "eyeNote": {
-      "own": "Mūsu pašu acs",
-      "other": "Parauga fotogrāfija"
+      "own": "Mūsu pašu acs"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Katra varavīksnene pārtop putekļos savās krāsās, un vidū tie sajaucas."
       }
     },
-    "mixed": "Mūsu pašu acs un parauga fotogrāfijas",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "No {price}",

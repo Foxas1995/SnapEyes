@@ -40,9 +40,6 @@
     "soon": "A rendelés hamarosan indul.",
     "open": "Kezdd az ingyenes előnézettel."
   },
-  "example": {
-    "mantas": "A saját szemünk"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "A valódi íriszed műalkotásként.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Szürkészöld szem",
         "n": 380,
-        "note": "Példafotó, nem vásárló.",
         "photoAlt": "Példafotó egy szürkészöld szemről ablaktükröződéssel, a kép bal fele",
         "irisAlt": "Ugyanaz a szürkészöld írisz helyreállítva, tükröződés nélkül",
         "artAlt": "A helyreállított szürkészöld írisz műalkotásként"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Stílusok",
     "title": "Egy írisz, sokféle stílus",
-    "legend": "Példák. A tiéd a saját színeidet és mintázatodat hordozza.",
+    "legend": "A tiéd a saját színeidet és mintázatodat hordozza.",
     "groups": {
       "one": "Csak te",
       "two": "Ti ketten",
@@ -316,8 +312,7 @@
       "gr": "Szürke"
     },
     "eyeNote": {
-      "own": "A saját szemünk",
-      "other": "Példafotó"
+      "own": "A saját szemünk"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Minden írisz saját színű porrá válik, és középen összekeverednek."
       }
     },
-    "mixed": "A saját szemünk és példafotók",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "Induló ár: {price}",

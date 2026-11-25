@@ -40,9 +40,6 @@
     "soon": "Ordering opens soon.",
     "open": "Start with the free preview."
   },
-  "example": {
-    "mantas": "Our own eye"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Your real iris, made into art.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Grey green eye",
         "n": 380,
-        "note": "Example photo, not a customer.",
         "photoAlt": "An example photo of a grey green eye with a window reflection, left half of the frame",
         "irisAlt": "The same grey green iris restored, without the reflection",
         "artAlt": "The restored grey green iris as an artwork"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Styles",
     "title": "One iris, many styles",
-    "legend": "Examples. Yours will carry your own colours and pattern.",
+    "legend": "Yours will carry your own colours and pattern.",
     "groups": {
       "one": "Just you",
       "two": "Two of you",
@@ -316,8 +312,7 @@
       "gr": "Grey"
     },
     "eyeNote": {
-      "own": "Our own eye",
-      "other": "Example photo"
+      "own": "Our own eye"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Every iris turns to dust in its own colours, and they mix in the middle."
       }
     },
-    "mixed": "Our own eye and example photos",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "From {price}",

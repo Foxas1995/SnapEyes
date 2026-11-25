@@ -25,27 +25,13 @@ export function Logo({ href = '#top' }: { href?: string }) {
  *  picture (a picture that is made, not a photograph), "none" for a screen detail. Until 2026-11-24 the first two were also drawn ON the
  *  picture, as the chips "Example photo" and "Visualisation". The owner's decision of that day: no such chip on any picture of the site
  *  ("tegul mato ir tiek, gana visiems čia aiškintis"; "kur pavyzdinė nuotrauka parašyta irgi išimk"). The page still says what its pictures
- *  are in sentences of its own, which stay: the legend lines of the hero and of the gallery, the line under the Reveal's eye, the eye notes
+ *  are in sentences of its own, which stay: the legend lines of the hero and of the gallery (since 2026-11-25 without "Examples"), the eye notes
  *  of the rooms, and the FAQ answers about real photographs and about how it works. The kind stays in the markup (data-chip-area) as the
  *  record of what each picture is. */
 export type ChipVariant = 'example' | 'vis';
 
-export interface ExampleChipProps {
-  /** The words of the label, from the copy (example.mantas): never typed in a component. */
-  label: string;
-  /** Context classes of the page's CSS (lp-rv-who): where and how this label sits on its picture. */
-  className?: string;
-}
-
-/** A small label inside a picture: <span class="lp-chip-ex">Our own eye</span>. ONE use is left, the Reveal's "whose eye is this"
- *  (src/landing/RevealScene.tsx); the chips "Visualisation" and "Example photo" are gone (2026-11-24, see ChipVariant). */
-export function ExampleChip({ label, className = '' }: ExampleChipProps) {
-  return (
-    <span data-chip="example" className={`lp-chip-ex ${className}`.trim()}>
-      {label}
-    </span>
-  );
-}
+// The last label inside a picture, the Reveal's "Our own eye" (ExampleChip, example.mantas), went on 2026-11-25 (the owner's decision of 2026-11-25), with the words
+// "Example photo" of the Reveal's line, of the globe's tapped artworks and the gallery legend's "Examples.": no picture of the page carries a label.
 
 type PillRole = 'radio' | 'tab';
 

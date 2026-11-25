@@ -40,9 +40,6 @@
     "soon": "Naručivanje se otvara uskoro.",
     "open": "Započnite s besplatnim pregledom."
   },
-  "example": {
-    "mantas": "Naše vlastito oko"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Vaša prava šarenica, pretvorena u umjetnost.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Sivozeleno oko",
         "n": 380,
-        "note": "Ogledna fotografija, ne kupac.",
         "photoAlt": "Ogledna fotografija sivozelenog oka s odrazom prozora, lijeva polovica kadra",
         "irisAlt": "Ista sivozelena šarenica, obnovljena, bez odraza",
         "artAlt": "Obnovljena sivozelena šarenica kao umjetničko djelo"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Stilovi",
     "title": "Jedna šarenica, mnogo stilova",
-    "legend": "Primjeri. Vaša će slika nositi vaše vlastite boje i uzorak.",
+    "legend": "Vaša će slika nositi vaše vlastite boje i uzorak.",
     "groups": {
       "one": "Samo vi",
       "two": "Vas dvoje",
@@ -316,8 +312,7 @@
       "gr": "Siva"
     },
     "eyeNote": {
-      "own": "Naše vlastito oko",
-      "other": "Ogledna fotografija"
+      "own": "Naše vlastito oko"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Svaka šarenica postaje prah svojih boja, a u sredini se miješaju."
       }
     },
-    "mixed": "Naše vlastito oko i ogledne fotografije",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "Od {price}",

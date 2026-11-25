@@ -40,9 +40,6 @@
     "soon": "Tilaaminen avautuu pian.",
     "open": "Aloita ilmaisella esikatselulla."
   },
-  "example": {
-    "mantas": "Oma silmämme"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Aito iiriksesi, taiteeksi tehtynä.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Harmaanvihreä silmä",
         "n": 380,
-        "note": "Esimerkkikuva, ei asiakas.",
         "photoAlt": "Esimerkkikuva harmaanvihreästä silmästä, jossa näkyy ikkunan heijastus, kuvan vasen puolisko",
         "irisAlt": "Sama harmaanvihreä iiris entisöitynä, ilman heijastusta",
         "artAlt": "Entisöity harmaanvihreä iiris taideteoksena"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Tyylit",
     "title": "Yksi iiris, monta tyyliä",
-    "legend": "Esimerkkejä. Omassasi ovat sinun värisi ja kuviosi.",
+    "legend": "Omassasi ovat sinun värisi ja kuviosi.",
     "groups": {
       "one": "Vain sinä",
       "two": "Te kaksi",
@@ -316,8 +312,7 @@
       "gr": "Harmaa"
     },
     "eyeNote": {
-      "own": "Oma silmämme",
-      "other": "Esimerkkikuva"
+      "own": "Oma silmämme"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Jokainen iiris muuttuu pölyksi omissa väreissään, ja pölyt sekoittuvat keskellä."
       }
     },
-    "mixed": "Oma silmämme ja esimerkkikuvia",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "Alkaen {price}",

@@ -70,7 +70,6 @@
   .lp-ic { flex: none; width: 20px; height: 20px; color: var(--gold); }
   .lp-irow { display: grid; gap: 12px; }
   .lp-irow li { display: flex; align-items: center; gap: 12px; line-height: 1.35; }
-  .lp-chip-ex { display: inline-flex; align-items: center; padding: 4px 9px; border: 1px solid var(--gold-line); border-radius: 999px; background: rgb(7 9 14 / .92); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; line-height: 1.25; color: var(--t-1); white-space: nowrap; }
   .lp-sec { position: relative; padding-block: 46px; }
   @media (min-width: 960px) {
     .lp-sec { padding-block: 76px; }

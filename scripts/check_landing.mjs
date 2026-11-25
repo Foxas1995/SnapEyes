@@ -155,11 +155,11 @@ async function checkLabels() {
       // 2026-11-24, THE OWNER'S DECISION: no chip "Visualisation" and no chip "Example photo" on any picture of the site ("tegul mato ir tiek, gana visiems čia
       // aiškintis"; "kur pavyzdinė nuotrauka parašyta irgi išimk"). Until then this check demanded the chip ".lp-vis-chip" in the stage, the rooms, the edge and the
       // closing scene, and "Example photo" on every tile of another person's eye. It now demands the opposite there (a null label: the area and its picture are
-      // there and NO chip is in it), and nowhere on the page is such a chip. What still labels pictures: the globe's line, the crop's badge, the Reveal's "Our own
-      // eye", and for the gallery the legend line alone.
+      // there and NO chip is in it), and nowhere on the page is such a chip. What still labels pictures: the globe's line, the crop's badge, and for the gallery
+      // the legend line alone. 2026-11-25, the owner's decision: the Reveal's "Our own eye" inside its frame went too, so the Reveal is an area with NO chip.
       const AREAS = [['hero', '.lp-hero-fig', '.lp-globe-note', 1], ['stage', '#stage', null, 1], ['rooms', '#rail figure > div', null, 4],
         ['edge', '.lp-edge-img', null, 1], ['crop', '.lp-cu-img', '.lp-cu-badge', 1], ['final', '.lp-final', null, 1],
-        ['reveal', '.lp-rv-frame', '.lp-rv-who', 1]];   // the pinned scene's frame (768 px and up) and the phone's own (up to 767 px): both are here with motion allowed
+        ['reveal', '.lp-rv-frame', null, 1]];   // the pinned scene's frame (768 px and up) and the phone's own (up to 767 px): both are here with motion allowed
       const out = { miss: [], texts: {}, imgs: [], tiles: 0, tilesWithPhotoChip: 0, legend: !!document.querySelector('.lp-legend') };
       for (const [name, sel, chip, n] of AREAS) {
         const boxes = [...document.querySelectorAll(sel)];
@@ -185,13 +185,12 @@ async function checkLabels() {
     if (r.chips) problemsHere.push(`${r.chips} chip(s) "Visualisation" or "Example photo" on the page: none since 2026-11-24 (the owner's decision)`);
     // the globe shows flat artworks (our own eye and example photos), not a visualisation: its line says so, and each artwork says whose eyes it shows
     for (const t of r.texts.hero || []) if (t !== c.hero.globeNote) problemsHere.push(`hero line "${t}", the language says "${c.hero.globeNote}"`);
-    const prov = [c.styles.eyeNote.own, c.styles.eyeNote.other, c.styles.mixed];
+    // 2026-11-25, the owner's decision: the globe names whose eyes an artwork shows only for our own eye ("Example photo" is said nowhere): every artwork is a
+    // labelled button, those of our own eye end with styles.eyeNote.own, and no label ends with a comma and nothing
     if (r.discs.length !== 32) problemsHere.push(`the globe has ${r.discs.length} artworks on the page (32)`);
-    const unlabelled = r.discs.filter((d) => !d.startsWith('BUTTON|') || !prov.some((p) => d.endsWith(`, ${p}`)));
-    if (unlabelled.length) problemsHere.push(`globe artworks without a button label of whose eyes they show: ${unlabelled.slice(0, 3).join(' / ')}`);
-    // the pinned scene's frame (the desktop's, the phone's own) is the founder's own eye and says so in the picture (charter AC-8), whatever the chips are doing
-    for (const t of r.texts.reveal || []) if (t !== c.example.mantas) problemsHere.push(`reveal frame label "${t}", the language says "${c.example.mantas}"`);
-    if (!(r.texts.reveal || []).length) problemsHere.push('the pinned scene has no label of whose eye it is');
+    const unlabelled = r.discs.filter((d) => !d.startsWith('BUTTON|') || d === 'BUTTON|' || /,\s*$/.test(d));
+    if (unlabelled.length) problemsHere.push(`globe artworks without a button label: ${unlabelled.slice(0, 3).join(' / ')}`);
+    if (!r.discs.some((d) => d.endsWith(`, ${c.styles.eyeNote.own}`))) problemsHere.push(`no globe artwork says "${c.styles.eyeNote.own}"`);
     if (!r.legend) problemsHere.push('the styles legend line is missing (it is the label of the flat artworks)');
     // the other people's eyes: until 2026-11-24 every tile of another person's eye carried the chip "Example photo". The owner's decision of that day took the chip
     // away, so this check accepts the LEGEND LINE ALONE as what says whose eyes the gallery shows: pick the brown eye of the first group, no tile of it shows a

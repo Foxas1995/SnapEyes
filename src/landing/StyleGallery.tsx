@@ -67,7 +67,7 @@ export function StyleGallery({ initialGroup = DEFAULT_GROUP }: { initialGroup?: 
           <p className="lp-legend">{c.styles.legend}</p>
           <EyeChips eye={eye} onPick={setEye} hidden={!eyeSwitch} />
           {/* whose eyes a tile shows is said once (2026-11-10): the legend line (until 2026-11-24 also a chip on the picture of another person's eye: the owner's decision of that day took every chip away); the line under the
-              chips that said it again is gone (styles.eyeNote and styles.mixed still name the globe's artworks) */}
+              chips that said it again is gone; since 2026-11-25 (the owner's decision of 2026-11-25) the legend line says no "Examples" and the globe names only our own eye) */}
           <div className={wide ? 'lp-grid lp-wide' : 'lp-grid'} id="gGrid" data-reveal="soft" ref={railRef} {...railProps(c.styles.title, 'group')}>
             {tilesOf(group).map((tile, n) => {
               const key = tileKey(group, tile);

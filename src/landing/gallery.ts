@@ -13,7 +13,7 @@ export type { EyeId, GalleryGroup, GalleryTile };
 /** The groups in the order of the tabs ("Just you", "Two of you", "Family"; there is no animals group). */
 export const GROUPS: readonly GalleryGroup[] = GALLERY.groups;
 
-/** The eye colours of the dots, in the order shown. The example photos are not customers (styles.eyeNote.other). */
+/** The eye colours of the dots, in the order shown. The example photos are not customers (no line of the page says "Example photo" since 2026-11-25). */
 export const EYES = GALLERY.eyes;
 
 /** The page opens on "Just you" in Mantas's own eye. */

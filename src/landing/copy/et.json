@@ -40,9 +40,6 @@
     "soon": "Tellimine avaneb peagi.",
     "open": "Alusta tasuta eelvaatest."
   },
-  "example": {
-    "mantas": "Meie enda silm"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Sinu päris iiris, kunstiks muudetud.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Hallikasroheline silm",
         "n": 380,
-        "note": "Näidisfoto, mitte klient.",
         "photoAlt": "Näidisfoto hallikasrohelisest silmast, millel on akna peegeldus, kaadri vasak pool",
         "irisAlt": "Sama hallikasroheline iiris, taastatud, ilma peegelduseta",
         "artAlt": "Taastatud hallikasroheline iiris kunstiteosena"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Stiilid",
     "title": "Üks iiris, palju stiile",
-    "legend": "Näited. Sinu kunstiteos kannab sinu enda värve ja mustrit.",
+    "legend": "Sinu kunstiteos kannab sinu enda värve ja mustrit.",
     "groups": {
       "one": "Ainult sina",
       "two": "Teie kaks",
@@ -316,8 +312,7 @@
       "gr": "Hall"
     },
     "eyeNote": {
-      "own": "Meie enda silm",
-      "other": "Näidisfoto"
+      "own": "Meie enda silm"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Iga iiris muutub oma värvides tolmuks ja keskel need segunevad."
       }
     },
-    "mixed": "Meie enda silm ja näidisfotod",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "Alates {price}",

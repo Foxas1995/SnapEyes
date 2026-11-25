@@ -290,22 +290,23 @@ async function checkReveal() {
   expect('reveal', monotone(up.map((s) => s.pos), 1, 0.6) && monotone(up.map((s) => s.ap), -1, 0.6) && monotone(up.map((s) => s.step), -1, 0), `going up the cut, the aperture or the step is not monotone: ${up.map((s) => `${s.pos.toFixed(0)}/${s.ap.toFixed(0)}/${s.step}`).join(' ')}`);
   expect('reveal', new Set([...down, ...up].filter((s) => s.stageTop <= g.stick + 0.6).map((s) => `${Math.round(s.fw)}x${Math.round(s.fh)}`)).size === 1, 'the frame changed size during the scroll');
   // the Artwork Charter on every layer across the scroll: no filter, no blur, no tilt, no scale, no fade of a picture; the labels do not move
-  const probe = `JSON.stringify((() => { const f = document.querySelector('.lp-rv-frame'), bad = [], label = [...f.querySelectorAll('.lp-rv-who, .lp-rv-chip')].map((e) => { const r = e.getBoundingClientRect(), c = getComputedStyle(f).getPropertyValue('--x'); return Math.round(r.left - f.getBoundingClientRect().left) + ',' + Math.round(r.top - f.getBoundingClientRect().top); }).join(' ');
+  const probe = `JSON.stringify((() => { const f = document.querySelector('.lp-rv-frame'), bad = [], label = [...f.querySelectorAll('.lp-rv-chip')].map((e) => { const r = e.getBoundingClientRect(), c = getComputedStyle(f).getPropertyValue('--x'); return Math.round(r.left - f.getBoundingClientRect().left) + ',' + Math.round(r.top - f.getBoundingClientRect().top); }).join(' ');
     for (const el of [f, ...f.querySelectorAll('img, svg, .lp-rv-chip, .lp-rv-line, .lp-rv-who')]) { const c = getComputedStyle(el), n = el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className;
       if (c.filter !== 'none' || c.backdropFilter !== 'none') bad.push(n + ' filter ' + c.filter + ' ' + c.backdropFilter);
       if (c.transform !== 'none' || c.rotate !== 'none' || (c.scale !== 'none' && c.scale !== '1')) bad.push(n + ' transform ' + c.transform + ' ' + c.rotate + ' ' + c.scale);
       if (el.tagName === 'IMG' && (+c.opacity !== 1 || c.visibility !== 'visible' || c.display === 'none')) bad.push(n + ' opacity ' + c.opacity + ' ' + c.visibility); }
-    const who = f.querySelector('.lp-rv-who'), wc = getComputedStyle(who);
-    if (wc.visibility !== 'visible' || +wc.opacity !== 1 || !who.textContent.trim()) bad.push('the label of whose eye it is is not shown (' + wc.visibility + ', ' + wc.opacity + ')');
+    // 2026-11-25, the owner's decision: the label "Our own eye" inside the frame went (the last chip of the page); there must be none
+    const who = f.querySelector('.lp-rv-who, .lp-chip-ex, [data-chip]');
+    if (who) bad.push('a label of whose eye it is is inside the frame again (none since 2026-11-25)');
     // one caption line under the frame (how the photo was taken): the line with the photo's size in pixels went in the lean pass of 2026-10-22 (the owner: no pixel counts for a visitor)
     const cap = [...document.querySelectorAll('.lp-rvp .lp-rv-cap span')].map((e) => +getComputedStyle(e).opacity);
     if (cap.length !== 1 || cap.some((o) => o !== 1)) bad.push('a caption line is not shown');
-    return { label, bad, who: who.textContent.trim() }; })())`;
+    return { label, bad, who: who ? who.textContent.trim() : '' }; })())`;
   const labels = new Set(), bads = new Set(), whos = new Set();
   for (const p of [0, 0.1, 0.3, 0.5, 0.6, 0.8, 1]) { await goP(page, g, p); const r = JSON.parse(await page.eval(probe)); r.bad.forEach((b) => bads.add(b)); whos.add(r.who); labels.add(r.label.split(' ')[0]); }
   expect('reveal', bads.size === 0, `across the scroll: ${[...bads].join(' | ')}`);
-  expect('reveal', whos.size === 1 && [...whos][0].length > 3, `the label of whose eye it is changed or is empty: ${[...whos].join(' | ')}`);
-  expect('reveal', labels.size === 1, `the label of whose eye it is moved inside the frame: ${[...labels].join(' | ')}`);
+  expect('reveal', whos.size === 1 && [...whos][0] === '', `a label of whose eye it is is in the frame (none since 2026-11-25, the owner's decision): ${[...whos].join(' | ')}`);
+  expect('reveal', labels.size === 1, `the labels of the frame moved inside it: ${[...labels].join(' | ')}`);
   // the sticky button bar at the foot of the screen is left clear, and the heading and the sentence stay above the pin
   await goP(page, g, 0.5);
   const clear = JSON.parse(await page.eval(`JSON.stringify((() => { const b = document.getElementById('sticky').getBoundingClientRect(), s = document.querySelector('.lp-rvp-stage').getBoundingClientRect(), h = document.getElementById('hdr').getBoundingClientRect(); return { bar: Math.round(b.top), stage: Math.round(s.bottom), hdr: Math.round(h.bottom), stageTop: Math.round(s.top), shown: document.getElementById('sticky').classList.contains('lp-show') }; })())`));

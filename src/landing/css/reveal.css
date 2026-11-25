@@ -87,8 +87,6 @@
   .lp-rv-chip[data-k="photo"] { left: 12px; }
   .lp-rv-chip[data-k="iris"], .lp-rv-chip[data-k="art"] { right: 12px; box-shadow: 0 0 0 1px var(--gold-line); }
   .lp-rv-frame[data-c~="photo"] .lp-rv-chip[data-k="photo"], .lp-rv-frame[data-c~="iris"] .lp-rv-chip[data-k="iris"], .lp-rv-frame[data-c~="art"] .lp-rv-chip[data-k="art"] { opacity: 1; transition-duration: .3s; transition-delay: .15s; }
-  /* whose eye it is: a static label in the frame (charter AC-8), bottom left, off the pupil, never animated */
-  .lp-rv-who { position: absolute; left: 12px; bottom: 12px; z-index: 2; max-width: calc(100% - 24px); }
   .lp-rv-cap { display: grid; gap: 3px; margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-3); }
   /* the three states as rows: a gold numeral, the title at full strength while it is the state on show, dimmed (never below .50, 4.91:1) otherwise */
   .lp-rv-steps { max-width: 26rem; margin-top: 26px; border-top: 1px solid var(--line); }

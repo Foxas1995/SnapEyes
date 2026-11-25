@@ -57,7 +57,8 @@ export interface GlobeProps {
   onReady: () => void;
 }
 
-/** What the controller reads at the moment of a tap: the words (the landing's copy: the gallery's styles.soonTag, styles.eyeNote and styles.mixed),
+/** What the controller reads at the moment of a tap: the words (the landing's copy: the gallery's styles.soonTag and styles.eyeNote.own; an artwork of another
+ *  person's eye or of mixed eyes says nothing of whose eyes it shows since the owner's decision of 2026-11-25: "Example photo" is said nowhere),
  *  whether a style can be bought now for that many eyes (the run-time catalogue, as a tile of the gallery asks it; false: the opened artwork says
  *  Soon) and the callback. The component reads them itself (copy, catalogue and the link to /try), so the hero's code in the first load stays small. */
 interface Live {
@@ -687,7 +688,7 @@ export default function Globe({ onReady }: GlobeProps) {
   const tryHref = useTryHref();
   const h = c.hero;
   // whose eyes an artwork shows: the gallery's own words for it
-  const prov = useMemo<Record<GlobeProv, string>>(() => ({ own: c.styles.eyeNote.own, licensed: c.styles.eyeNote.other, mixed: c.styles.mixed }), [c]);
+  const prov = useMemo<Record<GlobeProv, string>>(() => ({ own: c.styles.eyeNote.own, licensed: '', mixed: '' }), [c]);
   const stage = useRef<HTMLDivElement>(null);
   const world = useRef<HTMLDivElement>(null);
   const scene = useRef<HTMLDivElement>(null);
@@ -732,7 +733,7 @@ export default function Globe({ onReady }: GlobeProps) {
             className="lp-gl-disc"
             data-i={i}
             tabIndex={i === 0 ? 0 : -1}
-            aria-label={`${styleName(a.style)}, ${prov[a.prov]}`}
+            aria-label={prov[a.prov] ? `${styleName(a.style)}, ${prov[a.prov]}` : styleName(a.style)}
             style={{ transform: `rotateY(${d.lon}deg) rotateX(${d.lat}deg) translateZ(var(--Rc))` } as CSSProperties}
           >
             <img alt="" width={240} height={240} draggable={false} decoding="async" />

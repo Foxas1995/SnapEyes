@@ -656,8 +656,9 @@ const BANNED_CLAIMS = /ready to print|print[- ]ready|druckfertig|druckbereit|100
 // ("tegul mato ir tiek, gana visiems čia aiškintis"; "kur pavyzdinė nuotrauka parašyta irgi išimk"). This check demanded the two labels word for word until then
 // (HONESTY chips: example.chip, example.vis; final.chip the same word). It now holds the opposite: the keys of the chips are NOT in the copy (LABEL_KEYS_GONE),
 // and the word (HONESTY visWord, per language) stands in no string of the page but the FAQ answer about what its pictures are (VIS_WORD_STAYS), which the
-// owner did not ask to change. What still says whose eyes and what kind of picture: the legend lines, the line under the Reveal's eye, the eye notes of the
-// rooms and the globe (styles.eyeNote, "Example photo" there is a line of the legend, not a chip), and that FAQ answer.
+// owner did not ask to change. What still says whose eyes and what kind of picture: the legend lines, the eye notes of the rooms, the globe's note of our own
+// eye (styles.eyeNote.own) and that FAQ answer. 2026-11-25, the owner's decision: the words "Example photo" went from the line under the Reveal's example eye, the
+// globe's words (styles.eyeNote.other, styles.mixed) and the gallery's legend ("Examples."), and the Reveal's label "Our own eye" (example.mantas) from its frame.
 const LABEL_KEYS_GONE = ['example.chip', 'example.vis', 'example.photo', 'final.chip', 'wall.stageLabel', 'more.railLabel'];
 const VIS_WORD_STAYS = ['faq.items.3.a'];
 // 2026-11-21: the pricing line has a second wording for the state in which the server sells prints (pricing.notIncludesPrints, src/landing/ordering.ts
@@ -829,7 +830,7 @@ function checkLandingCopy(root, mods, strings, out) {
       })(x, '');
       if (!h.visWord.test(dig(x, VIS_WORD_STAYS[0]) ?? '')) out.push(`${rel}: ${VIS_WORD_STAYS[0]} no longer says what the pictures of rooms and prints are (${h.visWord}): that answer is not to change without the owner`);
       // (the hero's own label hero.chipTitle went with its wall visualisation on 2026-10-22: the hero shows the globe of real artworks, labelled
-      // with the provenance line styles.mixed; the wall picture and its "Visualisation" label live in the wall section)
+      // with the provenance line hero.globeNote; the wall picture and its "Visualisation" label live in the wall section)
       for (const [p, re] of Object.entries(h.printing.alt ?? {})) if (!re.test(dig(x, p) ?? '')) out.push(`${rel}: ${p} must say that printing is not part of the order in the words ${re} (the caption's own wording)`);
       for (const [what, rule] of Object.entries({ 'the line "printing is not part of your order"': h.printing, 'the line "ordering opens soon"': h.soon })) {
         const where = leaves.filter(([, v]) => typeof v === 'string' && rule.re.test(v)).map(([p]) => p).sort();

@@ -1698,3 +1698,14 @@ The owner's decision: the Meta pixel (dataset 1804549607500630) and the Conversi
 - **The browser checks** load nothing from Meta: the pixel runs only on snapeyes.com, and they run on 127.0.0.1.
 
 **Checks.** `npm run build`, `tsc -b`, 1363 page tests (1329 before: the 34 of meta_pixel.test.ts), the static and browser checks, the suites pay (120), v3checkout (147), v3cutover (80), au (88), v3reg (235), v3gift (50), v3prints (176), preview (72), v3lang (28), v3counter (79) and the new v3meta (36); none lowered.
+
+### 63a. No "Example photo" in the sentences either (the owner's decision of 2026-11-25)
+
+Section 62c took the chips away and left, for the owner to decide, the sentences that still said "Example photo" ("Pavyzdinė nuotrauka"). He decided: they go.
+
+- **The line under the Reveal's example eye** ("Example photo, not a customer."): it said nothing else, so the key `note` is gone from that eye (`reveal.eyes[gd]`) in eight languages and the caption is drawn only for an eye that has a line (our own eye keeps "Photographed at home with a phone.").
+- **The globe's words for a tapped artwork**: `styles.eyeNote.other` ("Example photo") and `styles.mixed` ("Our own eye and example photos") are gone; the globe names our own eye alone (`styles.eyeNote.own`), and the button of another artwork is labelled with the style's name alone.
+- **The gallery's legend line**: its first word ("Examples.", "Pavyzdžiai.") went; the rest says what it said ("Yours will carry your own colours and pattern.").
+- **The Reveal's label "Our own eye" inside its picture** (`ExampleChip`, `example.mantas`, CSS `.lp-chip-ex`, `.lp-rv-who`), the last chip of the page, of the same kind: gone.
+- **Left as they are** (not asked): the hero's line under the globe (`hero.globeNote`, "Our own eye and example photos, not customers"), the globe's alt text, the eye notes of the rooms ("Eyes: our own and example photos."), the Reveal's alt texts, the FAQ and the legal texts.
+- **Checks that demanded them**, each with a note of the date: `scripts/check_landing.mjs` labels (the Reveal is an area with no chip; the globe's buttons are labelled, our own eye's end with its note), `scripts/check_motion_phone.mjs` (no label inside the Reveal's frame), `scripts/check_texts.mjs` (comments), `suites/ts/landing_prints.test.ts` (one check more: 1364 page tests).

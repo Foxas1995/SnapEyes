@@ -40,9 +40,6 @@
     "soon": "Bestellungen sind bald möglich.",
     "open": "Starten Sie mit der kostenlosen Vorschau."
   },
-  "example": {
-    "mantas": "Unser eigenes Auge"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Ihre echte Iris, als Kunstwerk.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Graugrünes Auge",
         "n": 380,
-        "note": "Beispielfoto, kein Kunde.",
         "photoAlt": "Ein Beispielfoto eines graugrünen Auges mit Fensterspiegelung, linke Bildhälfte",
         "irisAlt": "Dieselbe graugrüne Iris restauriert, ohne die Spiegelung",
         "artAlt": "Die restaurierte graugrüne Iris als Kunstwerk"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Stile",
     "title": "Eine Iris, viele Stile",
-    "legend": "Beispiele. Ihres trägt Ihre eigenen Farben und Ihr eigenes Muster.",
+    "legend": "Ihres trägt Ihre eigenen Farben und Ihr eigenes Muster.",
     "groups": {
       "one": "Nur Sie",
       "two": "Sie zu zweit",
@@ -316,8 +312,7 @@
       "gr": "Grau"
     },
     "eyeNote": {
-      "own": "Unser eigenes Auge",
-      "other": "Beispielfoto"
+      "own": "Unser eigenes Auge"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Jede Iris wird zu Staub in ihren Farben, in der Mitte mischen sie sich."
       }
     },
-    "mixed": "Unser eigenes Auge und Beispielfotos",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "Ab {price}",

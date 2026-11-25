@@ -17,7 +17,8 @@ export interface RevealEye {
   label: string;
   /** The width of the phone photo in pixels: the number in "Phone photo: {n} px". */
   n: number;
-  note: string;
+  /** The line under the picture, when the eye has one (the example eye's "Example photo, not a customer." went on 2026-11-25, the owner's decision of 2026-11-25). */
+  note?: string;
   photoAlt: string;
   irisAlt: string;
   artAlt: string;

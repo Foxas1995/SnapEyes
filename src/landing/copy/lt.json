@@ -40,9 +40,6 @@
     "soon": "Užsakymus pradėsime priimti netrukus.",
     "open": "Pradėkite nuo nemokamos peržiūros."
   },
-  "example": {
-    "mantas": "Mūsų pačių akis"
-  },
   "hero": {
     "eyebrow": "SnapEyes",
     "title": "Jūsų tikroji rainelė, paversta menu.",
@@ -77,7 +74,6 @@
         "id": "gd",
         "label": "Pilkai žalia akis",
         "n": 380,
-        "note": "Pavyzdinė nuotrauka, ne kliento.",
         "photoAlt": "Pavyzdinė pilkai žalios akies nuotrauka su lango atspindžiu, kairioji kadro pusė",
         "irisAlt": "Ta pati pilkai žalia rainelė, atkurta, be atspindžio",
         "artAlt": "Atkurta pilkai žalia rainelė kaip kūrinys"
@@ -301,7 +297,7 @@
   "styles": {
     "eyebrow": "Stiliai",
     "title": "Viena rainelė, daug stilių",
-    "legend": "Pavyzdžiai. Jūsų kūrinyje bus Jūsų pačių spalvos ir raštas.",
+    "legend": "Jūsų kūrinyje bus Jūsų pačių spalvos ir raštas.",
     "groups": {
       "one": "Tik Jūs",
       "two": "Jūs dviese",
@@ -316,8 +312,7 @@
       "gr": "Pilka"
     },
     "eyeNote": {
-      "own": "Mūsų pačių akis",
-      "other": "Pavyzdinė nuotrauka"
+      "own": "Mūsų pačių akis"
     },
     "items": {
       "radiance": {
@@ -411,7 +406,6 @@
         "d": "Kiekviena rainelė virsta savo spalvų dulkėmis, kurios susimaišo viduryje."
       }
     },
-    "mixed": "Mūsų pačių akis ir pavyzdinės nuotraukos",
     "priceOne": "{price}",
     "priceTwo": "{price}",
     "priceFrom": "Nuo {price}",

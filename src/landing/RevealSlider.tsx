@@ -211,7 +211,7 @@ export function RevealSlider({ eye }: RevealSliderProps) {
         <span className="lp-cmp-ring" aria-hidden="true" />
       </div>
       <figcaption className="lp-cmp-meta">
-        <span>{eye.note}</span>
+        {eye.note && <span>{eye.note}</span>}{/* the example eye has no line since the owner's decision of 2026-11-25 ("Example photo" is said nowhere) */}
         <span className="lp-hint">{r.hint}</span>
       </figcaption>
     </figure>

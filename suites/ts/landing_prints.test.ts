@@ -7,7 +7,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'node:fs';
-import { ExampleChip, Picture } from '../../src/landing/ui';
+import { Picture } from '../../src/landing/ui';
 import en from '../../src/landing/copy/en.json';
 import de from '../../src/landing/copy/de.json';
 import lt from '../../src/landing/copy/lt.json';
@@ -101,17 +101,27 @@ export async function run(): Promise<Row[]> {
   const strings = (o: unknown, path = ''): Array<[string, string]> => (typeof o === 'string' ? [[path, o]] : Array.isArray(o) ? o.flatMap((v, i) => strings(v, `${path}.${i}`))
     : o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => strings(v, path ? `${path}.${k}` : k)) : []);
   const pic = renderToStaticMarkup(createElement(Picture, { asset: { src: '/x.jpg', w: 10, h: 10 } as never, alt: 'x', chip: 'vis' }));
-  const who = renderToStaticMarkup(createElement(ExampleChip, { label: 'Our own eye', className: 'lp-rv-who' }));
   const comps = ['StyleTile', 'WallStage', 'MoreRooms', 'ClosingScene', 'CloseUps', 'Wall'].map((f) => readFileSync(`src/landing/${f}.tsx`, 'utf8')).join('\n');
   const css = ['base', 'styles', 'final', 'wall'].map((f) => readFileSync(`src/landing/css/${f}.css`, 'utf8')).join('\n');
   check('no chip "Visualisation" or "Example photo" on any picture (the owner, 2026-11-24): the copy of eight languages has no key of them, the word stands only in the FAQ '
     + 'answer about the pictures, a picture draws no label and keeps its kind in the markup, no component of the wall, the rooms, the gallery or the closing scene draws a '
-    + 'chip, their CSS is gone; the Reveal still says whose eye it shows',
+    + 'chip, their CSS is gone; 2026-11-25 (the owner\'s decision): the Reveal\'s label "Our own eye" inside its picture is gone too (no ExampleChip, no lp-chip-ex)',
     LANGS.every((l) => {
       const c = COPIES[l] as unknown as Record<string, Record<string, unknown>>;
-      return Object.keys(c.example).join() === 'mantas' && !('chip' in c.final) && !('stageLabel' in c.wall) && !('railLabel' in c.more)
+      return !('example' in c) && !('chip' in c.final) && !('stageLabel' in c.wall) && !('railLabel' in c.more)
         && strings(c).filter(([, v]) => VIS.test(v)).map(([k]) => k).join() === 'faq.items.3.a';
     }) && pic.includes('data-chip-area="vis"') && !/lp-vis-chip|lp-chip-ex|data-chip="/.test(pic) && !/<ExampleChip/.test(comps) && !/c\.example\.(vis|photo|chip)|c\.final\.chip|w\.stageLabel|m\.railLabel/.test(comps)
-      && !/lp-vis-chip|lp-final-chip|lp-chip-ex\.lp-photo/.test(css) && /class="lp-chip-ex lp-rv-who"/.test(who) && who.includes('Our own eye'), pic);
+      && !/lp-vis-chip|lp-final-chip|lp-chip-ex/.test(css) && !/<ExampleChip|function ExampleChip|lp-rv-who/.test(readFileSync('src/landing/RevealScene.tsx', 'utf8') + readFileSync('src/landing/ui.tsx', 'utf8') + readFileSync('src/landing/css/reveal.css', 'utf8')), pic);
+  // 2026-11-25, the owner's decision: the words "Example photo" ("Pavyzdinė nuotrauka" and its translations) go from the three sentences where they still stood after
+  // the chips went: the line under the Reveal's example eye (the key is gone from that eye: it said nothing else), the globe's words for a tapped artwork of another
+  // person's eye or of mixed eyes (styles.eyeNote.other and styles.mixed are gone: the globe names our own eye alone), and the gallery's legend line, whose first word
+  // "Examples." went (the rest says what it said)
+  const EXAMPLES = /^(Examples|Beispiele|Pavyzdžiai|Példák|Primjeri|Esimerkkejä|Näited|Piemēri)\./;
+  check('the words "Example photo" are gone from the Reveal\'s line, the globe\'s words and the gallery\'s legend line, in all eight languages; the globe still names our own eye',
+    LANGS.every((l) => {
+      const c = COPIES[l] as unknown as { reveal: { eyes: { id: string; note?: string }[] }; styles: { eyeNote: Record<string, string>; legend: string } & Record<string, unknown> };
+      const gd = c.reveal.eyes.find((e) => e.id === 'gd');
+      return !!gd && !('note' in gd) && Object.keys(c.styles.eyeNote).join() === 'own' && !('mixed' in c.styles) && !EXAMPLES.test(c.styles.legend) && c.styles.legend.length > 20;
+    }) && /licensed: '', mixed: ''/.test(readFileSync('src/landing/globe/Globe.tsx', 'utf8')), '');
   return out;
 }

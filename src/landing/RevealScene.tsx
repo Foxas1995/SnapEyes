@@ -20,7 +20,6 @@
 // that shows it is more than a screen of scrolling away from that moment.
 import { useEffect, useRef, useState } from 'react';
 import { useCopy } from './copy/useCopy';
-import { ExampleChip } from './ui';
 import { REVEAL_SIZES, type RevealEye } from './revealEyes';
 import { sceneState, STEP_GOTO, type Chip } from './revealScript';
 import { Title } from '../motion/Title';
@@ -110,11 +109,13 @@ export function RevealScene({ eye, phone = false }: { eye: RevealEye; phone?: bo
         {(['photo', 'iris', 'art'] as const).map((k) => (
           <span key={k} className="lp-rv-chip" data-k={k} aria-hidden="true">{label[k]}</span>
         ))}
-        <ExampleChip label={c.example.mantas} className="lp-rv-who" />
+        {/* no label inside the picture any more ("Our own eye", the last chip of the page: the owner's decision of 2026-11-25, after the chips of 2026-11-24) */}
       </div>
-      <figcaption className="lp-rv-cap">
-        <span>{eye.note}</span>
-      </figcaption>
+      {eye.note && (
+        <figcaption className="lp-rv-cap">
+          <span>{eye.note}</span>
+        </figcaption>
+      )}
     </>
   );
 
