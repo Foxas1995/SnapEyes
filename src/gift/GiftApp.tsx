@@ -25,7 +25,10 @@ import './gift.css';
 const SESSION_RE = /^cs_(test|live)_[A-Za-z0-9]{8,240}$/;
 const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
 const KINDS: readonly GiftKind[] = ['one', 'two'];
-const PICTURE: Record<GiftKind, string> = { one: '/assets/atelier/style-celestial-gold-480.webp', two: '/assets/atelier/style-clean-duo-480.webp' };
+// the owner's choice of 2026-11-25: the single eye with rays (the landing's art/radiance_own, 900 x 900) and the two eyes with dust (art/duo_kiss_bb, 900 x 600), copied
+// to /assets/atelier under fixed names; the pair is wider than the tile and is shown whole on black, never cut
+const PICTURE: Record<GiftKind, string> = { one: '/assets/atelier/gift-one-900.webp', two: '/assets/atelier/gift-two-900.webp' };
+const PICTURE_H: Record<GiftKind, number> = { one: 900, two: 600 };
 
 interface Ready { state: 'ready'; code: string; kind: GiftKind; value: number; currency: string; valid_until: string | null; mail?: string }
 type Status = { state: 'idle' } | { state: 'pending' | 'slow' | 'expired' | 'unknown' } | Ready;
@@ -199,7 +202,7 @@ export const GiftApp: React.FC = () => {
             {KINDS.map((k) => (
               <button key={k} type="button" role="radio" aria-checked={kind === k} data-testid={`gift-kind-${k}`} onClick={() => setKind(k)} disabled={busy}
                 className={`text-left rounded-xl border p-2 transition-colors ${kind === k ? 'border-gold/70 bg-gold/10' : 'border-white/10 bg-white/5 hover:border-white/25'}`}>
-                <img src={PICTURE[k]} alt={C.kinds[k].alt} width={480} height={480} loading="lazy" className="w-full aspect-square object-cover rounded-lg" />
+                <img src={PICTURE[k]} alt={C.kinds[k].alt} width={900} height={PICTURE_H[k]} loading="lazy" className="w-full aspect-square object-contain bg-black rounded-lg" />
                 <span className="mt-2 block text-sm font-semibold text-zinc-100">{C.kinds[k].name}</span>
                 <span className="block font-luxury text-lg font-bold text-gold-light whitespace-nowrap">{fmt(prices[k])}</span>
                 <span className="block text-[11px] text-zinc-300 mt-1 leading-snug">{C.kinds[k].note}</span>
