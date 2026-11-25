@@ -190,8 +190,11 @@ p, hd = H.Fake.creates[-1]
 check("Stripe got 3997 EUR, one line item, quantity 1", p["line_items[0][price_data][unit_amount]"] == "3997"
       and p["line_items[0][price_data][currency]"] == "eur" and p["line_items[0][quantity]"] == "1"
       and not any(k.startswith("line_items[1]") for k in p), p)
-check("Stripe params: payment mode, de locale, no payment_method_types, no tax", p["mode"] == "payment" and p["locale"] == "de"
-      and not any(k.startswith("payment_method_types") or k.startswith("automatic_tax") for k in p), p)
+# 2026-11-25, the owner's decision: the session names its payment methods by the visitor's country (api/_lib/paymethods; scripts/styles_tests/test_paymethods.py holds
+# the lists): the card and Link are always the first two; this check no longer demands that none is named
+check("Stripe params: payment mode, de locale, the card and Link first among the named payment methods, no tax", p["mode"] == "payment" and p["locale"] == "de"
+      and p.get("payment_method_types[0]") == "card" and p.get("payment_method_types[1]") == "link"
+      and not any(k.startswith("automatic_tax") for k in p), p)
 check("success_url carries o, k and {CHECKOUT_SESSION_ID}", p["success_url"] ==
       f"https://snapeyes.com/order?o={O1}&k={K1}&lang=de&s={{CHECKOUT_SESSION_ID}}", p["success_url"])
 check("cancel_url goes back to /try, without the access key", p["cancel_url"] == f"https://snapeyes.com/try?checkout=cancelled&o={O1}&lang=de"
