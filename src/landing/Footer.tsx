@@ -28,20 +28,10 @@ export function SiteFooter() {
           </div>
           <address>
             <span className="lp-ftr-by">{f.operatedBy}</span>
+            {/* the owner's word of 2026-11-25: the company code, the address and the representative are not printed here; they are on the legal notice
+                (the footer's link "Legal notice" below) and in the terms */}
             <b>{f.company}</b>
             <br />
-            <span>{f.companyCode}</span> {SELLER.code}
-            <br />
-            {SELLER.street}
-            <br />
-            {SELLER.postcode} {SELLER.city}, <span>{f.country}</span>
-            <br />
-            {SELLER.representative && (
-              <>
-                <span>{f.representedBy}</span> {SELLER.representative}
-                <br />
-              </>
-            )}
             {SELLER.phone && (
               <span className="lp-ftr-line">
                 <a href={`tel:${SELLER.phone.replace(/[^+\d]/g, '')}`}>{SELLER.phone}</a>
