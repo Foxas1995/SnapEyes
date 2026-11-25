@@ -98,7 +98,7 @@ export const hr: OrderCopy = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Vaše djelo kao ispis',
-    lead: 'Ovo umjetničko djelo možemo vam i ispisati: iza akrilnog stakla, na sjajnom metalu, na platnu, kao poster ili kao akrilni blok. Svaki ispis izrađujemo po narudžbi i šaljemo na vašu adresu. To je zasebna narudžba; vaša datoteka ostaje kakva jest.',
+    lead: 'Ovo umjetničko djelo možemo vam i ispisati: iza akrilnog stakla, na sjajnom metalu, na platnu, kao poster ili kao akrilni blok. Može i kao privjesak za ključeve. Svaki ispis izrađujemo po narudžbi i šaljemo na vašu adresu. To je zasebna narudžba; vaša datoteka ostaje kakva jest.',
     product: 'Ispis',
     choose: 'Odaberite ispis',
     option: (name: string, price: string) => `${name}, ${price}`,

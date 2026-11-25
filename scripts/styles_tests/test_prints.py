@@ -316,8 +316,8 @@ check("the offer: five prints at the owner's prices (59, 79, 129, 69, 35 EUR), e
       " - 1124: the final list of that day (the owner's decisions of 2026-11-24): eleven prints offered, the keyring twelfth in the list and not offered",
       [(p["id"], p["price"]) for p in PR.products()] == [("acrylic30", 5900), ("acrylic40", 7900), ("acrylic60", 12900), ("metal30", 5900), ("metal40", 7900),
                                                          ("metal60", 12900), ("canvas40", 4900), ("canvas60", 6900), ("poster50", 3500), ("block10", 3900),
-                                                         ("block20", 7900)]
-      and [(p["id"], p["price"], p["on"]) for p in PR.products(offered=False)][11:] == [("keyring", 1500, 0)]
+                                                         ("block20", 7900), ("keyring", 2000)]      # 1125: the keyring is offered, at 20 EUR
+      and [(p["id"], p["price"], p["on"]) for p in PR.products(offered=False)][11:] == [("keyring", 2000, 1)]
       and all(PR.sku_rec(p["sku"]) for p in PR.products()) and PR.markets() == ("eu", "lt", "hr"), PR.products())
 check("the countries: the 27 member states of the EU, each with a rate for every print and a name in every language; no US, no GB",
       len(PR.countries()) == 27 and "US" not in PR.countries() and "GB" not in PR.countries()
@@ -363,7 +363,7 @@ check("the product's name in the five languages, with its size (no-break spaces)
       and [PR.country_name("DE", l) for l in ("fi", "et", "lv")] == ["Saksa", "Saksamaa", "Vācija"]
       and [PR.country_name(cc, l) for cc, l in (("FI", "fi"), ("EE", "et"), ("LV", "lv"))] == ["Suomi", "Eesti", "Latvija"]
       and all(len({PR.product_name(pid, l) for l in PR.LANGS}) == 8 for pid in ("acrylic30", "acrylic40", "acrylic60", "canvas40"))
-      and all(PR.product_name(p_["id"], l).endswith("\u00a0cm") and "\u00a0×\u00a0" in PR.product_name(p_["id"], l) for p_ in PR.products() for l in PR.LANGS)
+      and all(PR.product_name(p_["id"], l).endswith("\u00a0cm") and "\u00a0×\u00a0" in PR.product_name(p_["id"], l) for p_ in PR.products() if p_["cm"] for l in PR.LANGS)
       and all(isinstance(PR.country_name(cc, l), str) and PR.country_name(cc, l).strip() for cc in PR.countries() for l in PR.LANGS) and
       PR.product_name("acrylic40", "en") == "Acrylic glass print 40 × 40 cm" and PR.product_name("canvas40", "lt").startswith("Drobė ant medinio porėmio")
       and PR.product_name("poster50", "hu").startswith("Poszter") and PR.country_name("DE", "hr") == "Njemačka", [PR.product_name("acrylic40", l) for l in PR.LANGS])
@@ -663,7 +663,7 @@ st = ops.ACTIONS["print_status"]({}, WHO)
 check("the admin page: the switch, merchOne configured, test orders, the webhook URL with its token, the offer with its margins, the open prints",
       st["switch"]["on"] is True and st["configured"] is True and st["live"] is False and PR.hook_token() in st["hook_url"]
       and len(st["offer"]) == 12 and all(x["margin_min"] >= PR.PRINT_OFFER["margin_floor"] for x in st["offer"] if x["on"])
-      and [(x["id"], x["on"], x["margin_min"] < PR.PRINT_OFFER["margin_floor"]) for x in st["offer"] if not x["on"]] == [("keyring", False, True)] and any(r_["order"] == o8 for r_ in st["open"]), st["open"])
+      and [x["id"] for x in st["offer"] if not x["on"]] == [] and {x["id"]: x["margin_min"] for x in st["offer"]}["keyring"] == 1575 and any(r_["order"] == o8 for r_ in st["open"]), st["open"])
 ov = ops.ACTIONS["order"]({"order": o}, WHO)
 check("the admin's order detail has the print block (state, merchOne id, tracking, the file), no street address", (ov.get("print") or {}).get("state") == "shipped"
       and ov["print"]["merchone_id"] == oid and "Gedimino" not in json.dumps(ov["print"]), ov.get("print"))
@@ -709,11 +709,11 @@ check("the EU terms in every language name the prints with their prices, the shi
       all("Picanova GmbH" in t and "Eupener Straße 67" in t and "16" in t for t in (en, lt_, hu_, hr_, de_, fi_, et_, lv_)) and "€59.00" in en and "59,00 €" in de_
       and "Germany" in en and "Sweden" in en and "two years" in en and "7 days" in en and "Article 16(c)" in en and "30 days" in en
       and "16 artiklan c alakohta" in fi_ and "artikli 16 punkt c" in et_ and "16. panta c) punkts" in lv_
-      and all(all(re.search(r"(?<!\d)%s,00\s*€" % eur_, t) for eur_ in (59, 79, 129, 49, 69, 35, 39)) for t in (fi_, et_, lv_))
+      and all(all(re.search(r"(?<!\d)%s,00\s*€" % eur_, t) for eur_ in (59, 79, 129, 49, 69, 35, 39, 20)) for t in (fi_, et_, lv_))
       and all(len(re.findall(r"(?<!\d)79,00\s*€", t)) == 3 for t in (de_, lt_, hu_, hr_, fi_, et_, lv_)) and en.count("€79.00") == 3 and en.count("€49.00") == 1
       and all(PR.product_name(pid_, l) in t for pid_ in ("block10", "block20", "metal30", "metal60", "canvas40", "canvas60")
               for l, t in (("en", en), ("de", de_), ("lt", lt_), ("hu", hu_), ("hr", hr_), ("fi", fi_), ("et", et_), ("lv", lv_)))
-      and not any(PR.PRINT_NAMES["kinds"]["keyring"][l] in t for l, t in (("en", en), ("de", de_), ("lt", lt_), ("fi", fi_)))
+      and all(PR.PRINT_NAMES["kinds"]["keyring"][l] + ": " in t for l, t in (("en", en), ("de", de_), ("lt", lt_), ("fi", fi_)))      # 1125: the keyring's row
       and not re.search(r"floating frame|Schattenfuge|juodame rėme", en + de_ + lt_)
       and all(re.search(r"(?<!\d)7\s%s" % d_, t) and re.search(r"(?<!\d)30\s%s" % d_, t) for d_, t in (("päivä", fi_), ("päeva", et_), ("dien", lv_)))
       and "kahden vuoden" in fi_ and "kaheaastane" in et_ and re.search(r"divu gadu|divus gadus", lv_)
@@ -967,7 +967,7 @@ check("the status of a paid, delivered order without a print carries the offer: 
       "the print box in the eight languages; no SKU, no cost, and no print block - 1124: the six prints (the list is compared with the server's own)",
       c == 200 and sj.get("state") == "ready" and po.get("currency") == "EUR" and [p_["id"] for p_ in po.get("products") or []] == [p_["id"] for p_ in PR.products()]
       and {p_["id"]: p_ for p_ in po["products"]}["poster50"]["price"] == 3500 and {p_["id"]: p_ for p_ in po["products"]}["poster50"]["ship"]["LT"] == 849
-      and po["products"][2]["ship"]["DE"] == 699 and len(po["products"][0]["ship"]) == 27 and len(po["products"]) == 11
+      and po["products"][2]["ship"]["DE"] == 699 and len(po["products"][0]["ship"]) == 27 and len(po["products"]) == 12
       and po.get("consent") == PR.PRINT_CONSENT_TEXT and "sku" not in json.dumps(po) and "cost" not in json.dumps(po) and "print" not in sj, (c, sj.get("state"), po))
 ob, kb, sb = paid_file_order(delivered=False)
 c, sjb = get(f"/api/order?o={ob}&k={kb}")
@@ -1439,7 +1439,8 @@ c, jbk = addon(okb, kkb, product="block20", cc="LT", lang="lt", print_shown=7900
 pbk = H.Fake.creates[-1][0]
 check("the order page's offer names the block last (kind block, 20 cm, 79 EUR, its shipping per country), and a block bought after the artwork has a Stripe session "
       "of its own: the only line item, its Lithuanian name, 79 EUR, the shipping to Lithuania, the SKU in the metadata",
-      [x["id"] for x in pob][-1:] == ["block20"] and pob[-1]["kind"] == "block" and pob[-1]["cm"] == 20 and pob[-1]["price"] == 7900 and pob[-1]["ship"]["LT"] == 849
+      # 1125: the keyring is the last one now; the block is found by its id
+      [x["id"] for x in pob][-2:] == ["block20", "keyring"] and pob[-2]["kind"] == "block" and pob[-2]["cm"] == 20 and pob[-2]["price"] == 7900 and pob[-2]["ship"]["LT"] == 849
       and c == 200 and jbk.get("print") == {"product": "block20", "country": "LT", "price": 7900, "ship": 849} and jbk.get("total") == 8749
       and pbk.get("line_items[0][price_data][product_data][name]") == PR.product_name("block20", "lt") == "Akrilo blokas 20\u00a0×\u00a020\u00a0cm"
       and pbk.get("line_items[0][price_data][unit_amount]") == "7900" and not any(x.startswith("line_items[1]") for x in pbk)
@@ -1507,7 +1508,7 @@ kdata, kinfo = PR.make_print_file(bk_.getvalue(), "KRR0050041")
 kpic = np.asarray(Image.open(io.BytesIO(kdata)).convert("RGB"))
 check("the keyring: no size in its name in any language, a print area that is NOT square (56 x 76 mm: 441 x 598 px at 200 dpi, no trim), and a square artwork is "
       "centred on it whole, its own ground continued above and below; every square print keeps the geometry it had",
-      PR.product("keyring") is None and PR.product("keyring", offered=False) == {"id": "keyring", "kind": "keyring", "cm": 0, "sku": "KRR0050041", "price": 1500, "on": 0}
+      PR.product("keyring") == PR.product("keyring", offered=False) == {"id": "keyring", "kind": "keyring", "cm": 0, "sku": "KRR0050041", "price": 2000, "on": 1}
       and all(PR.product_name("keyring", l_) == PR.PRINT_NAMES["kinds"]["keyring"][l_] for l_ in PR.LANGS) and PR.product_name("keyring", "lt") == "Raktų pakabukas"
       and PR.sku_rec("KRR0050041")["design_mm"] == [56.0, 76.0] and kb == ((441, 598), (441, 598), 200) and kbi == ((4121, 4121), (4087, 4087), 173)
       and PR.file_geometry("ALP0600601HP", 4096) == (4121, 4087, 173) and PR.file_geometry("CVS0600601LMF2HC", 4096) == (4087, 4087, 173)
@@ -1518,10 +1519,29 @@ check("the keyring: no size in its name in any language, a print area that is NO
 okk, kkk, _skk = paid_file_order(lang="lt")
 pok = [x["id"] for x in ((get(f"/api/order?o={okk}&k={kkk}")[1].get("print_offer") or {}).get("products") or [])]
 c, jkk = addon(okk, kkk, product="keyring", cc="LT", lang="lt")
-check("while the keyring is not offered (it earns 10.90 to 11.22 EUR, under the floor of 15 EUR: the owner decides), no page is told of it and nobody can buy it: the "
-      "order page's offer lists eleven prints without it, and a checkout that names it is refused (409 print_unavailable, why product), nothing created",
-      mg12["keyring"] == (1090, 1122) and len(pok) == 11 and "keyring" not in pok and c == 409 and jkk.get("reason") == "print_unavailable" and jkk.get("why") == "product"
-      and not exists(f"orders/{okk}/print_checkout.json") and "keyring" not in [x["id"] for x in (PR.public_info().get("products") or [])], (c, jkk, pok))
+pkk = H.Fake.creates[-1][0]
+check("while the keyring is not offered (it earns 10.90 to 11.22 EUR, under the floor of 15 EUR: the owner decides), no page is told of it and nobody can buy it"
+      " - 1125: the owner decided, the keyring is 20 EUR and offered. It earns 15.75 to 16.07 EUR, over the floor (the rule is as it was); the order page's offer "
+      "lists twelve prints with it last, and its checkout is a session of its own with its name without a size, 20 EUR and its own shipping (8.49 to Lithuania)",
+      mg12["keyring"] == (1575, 1607) and PR.PRINT_OFFER["margin_floor"] == 1500 and len(pok) == 12 and pok[-1] == "keyring" and c == 200
+      and jkk.get("print") == {"product": "keyring", "country": "LT", "price": 2000, "ship": 849} and jkk.get("total") == 2849
+      and pkk.get("line_items[0][price_data][product_data][name]") == "Raktų pakabukas" and pkk.get("line_items[0][price_data][unit_amount]") == "2000"
+      and pkk.get("metadata[print_sku]") == "KRR0050041" and "keyring" in [x["id"] for x in (PR.public_info().get("products") or [])], (c, jkk, pok))
+sidkk = addon_sid(okk)
+fix_total(sidkk)
+ckk, jwk = webhook(pay_with_address(sidkk, cc="LT", name="Ona Onaitė", email="pakabukas@example.com"))
+paid_kk = pay.get_paid(okk)
+MO.creates.clear()
+rkk = PR.step(okk, rj(f"orders/{okk}/order.json"), paid_kk)
+cur_kk = PR.record(okk) or {}
+plk = MO.creates[-1] if MO.creates else {"items": [{}]}
+fkk = cur_kk.get("file") or {}
+check("a keyring bought and paid goes to merchOne as ONE order with its SKU and a print file of its own shape (56 x 76 mm: 441 x 598 px for the 2048 px artwork, "
+      "the artwork whole in the middle), as every print does",
+      ckk == 200 and (paid_kk.get("print") or {}).get("product") == "keyring" and paid_kk["print"].get("kind") == "keyring" and paid_kk["print"].get("cm") == 0
+      and "mismatch" not in paid_kk["print"] and rkk == "created" and cur_kk.get("state") == "created" and len(MO.creates) == 1
+      and plk["items"][0].get("product_sku") == "KRR0050041" and fkk.get("path") == f"orders/{okk}/print_keyring.jpg" and (fkk.get("width"), fkk.get("height")) == (441, 598)
+      and Image.open(os.path.join(STORE, *fkk["path"].split("/"))).size == (441, 598) and fkk.get("art") == [441, 441], (ckk, rkk, cur_kk, plk.get("items")))
 okm, kkm, _skm = paid_file_order(lang="en")
 c, jkm = addon(okm, kkm, product="canvas60", cc="LT", lang="en", print_shown=6900 + 1349)
 pkm = H.Fake.creates[-1][0]

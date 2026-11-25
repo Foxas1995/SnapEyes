@@ -2446,10 +2446,10 @@ def _american(blocks, order, paid, pack, lang, auto, terms_url):
 READY_PRINT = {
     "en": ("A print of your artwork",
            "You can also order your artwork as a print: behind acrylic glass, on glossy metal, on canvas, as a poster or as an acrylic "
-           "block. Each one is made to order and shipped to you. You find it on your order page, under your artwork."),
+           "block. Also as a keyring. Each one is made to order and shipped to you. You find it on your order page, under your artwork."),
     "de": ("Ihr Kunstwerk als Druck",
            "Sie können Ihr Kunstwerk auch als Druck bestellen: hinter Acrylglas, auf glänzendem Metall, auf Leinwand, als Poster oder als "
-           "Acrylblock. Jeder Druck wird nach Ihrer Bestellung angefertigt und zu Ihnen versandt. Sie finden das Angebot auf Ihrer "
+           "Acrylblock. Auch als Schlüsselanhänger. Jeder Druck wird nach Ihrer Bestellung angefertigt und zu Ihnen versandt. Sie finden das Angebot auf Ihrer "
            "Bestellseite, unter Ihrem Kunstwerk."),
     "lt": pay_lt.READY_PRINT_LT,
     "hu": pay_hu.READY_PRINT_HU,

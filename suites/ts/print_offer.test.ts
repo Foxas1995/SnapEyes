@@ -47,10 +47,10 @@ export async function run(): Promise<Row[]> {
   const link = { o: '261121-0123456789abcdef', k: 'a'.repeat(32), s: null };
 
   check('offerPrints: the five prints of the reply with the server\'s prices and shipping; none without an offer, and what the page does not know or is not well formed is left out'
-    + ' - 1124: the eleven prints of the final list',
-    offerPrints(ready()).length === 11 && offerPrints(ready()).map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,metal30,metal40,metal60,canvas40,canvas60,poster50,block10,block20' && offerPrints(ready())[1].ship.DE === 499
+    + ' - 1124: the eleven prints of the final list - 1125: twelve, the keyring is offered',
+    offerPrints(ready()).length === 12 && offerPrints(ready()).map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,metal30,metal40,metal60,canvas40,canvas60,poster50,block10,block20,keyring' && offerPrints(ready())[1].ship.DE === 499
       && offerPrints(ready({ print_offer: undefined })).length === 0 && offerPrints(null).length === 0
-      && offerPrints(ready({ print_offer: { products: [...offer.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] } })).length === 11);
+      && offerPrints(ready({ print_offer: { products: [...offer.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] } })).length === 12);
   check('the country to preselect is the order\'s own market\'s (lt, hr); the common euro market names none', marketCountry('lt') === 'LT' && marketCountry('hr') === 'HR'
     && marketCountry('eu') === null && marketCountry(undefined) === null);
 
@@ -178,11 +178,14 @@ export async function run(): Promise<Row[]> {
   // 2026-11-24, the final list: the lead lists what a print can be (behind acrylic glass, on glossy metal, on canvas, as a poster, as an acrylic block) and holds no
   // number; what each thing is stands under the list once it is chosen (the line of its kind, api/_lib/print_names.py about: the block's 2.5 cm, the canvas ready to
   // hang without an outer frame). The keyring is not named: it is not offered yet
-  check('the lead of every language lists the five kinds that are offered (the block by the name the list shows) and no keyring; the card with a print chosen shows the '
+  // 2026-11-25, the owner's decision: the keyring is offered (20 EUR). The lead keeps its sentence of five kinds and says it after it, in three or four words
+  // ("Also as a keyring."): a sixth thing in the list would not read well, and a keyring is not a print for a wall
+  check('the lead of every language lists the five kinds of print (the block by the name the list shows) and then names the keyring in a short sentence of its own; the card with a print chosen shows the '
     + 'line of its kind: the block\'s (2.5 cm, it stands by itself), the canvas\' (ready to hang, without an outer frame), with its picture, name, price and shipping',
     LANGS.every((l) => ORDER_COPY[l].offer.lead.toLowerCase().includes(kindName('block', l).toLowerCase().slice(0, 5)) && !/\d/.test(ORDER_COPY[l].offer.lead)
-      && !ORDER_COPY[l].offer.lead.toLowerCase().includes(kindName('keyring', l).toLowerCase().slice(0, 6)))
-      && /behind acrylic glass, on glossy metal, on canvas, as a poster or as an acrylic block\. Each one is made to order/.test(W.lead)
+      && ORDER_COPY[l].offer.lead.toLowerCase().includes(kindName('keyring', l).toLowerCase().slice(0, 6)))
+      && /behind acrylic glass, on glossy metal, on canvas, as a poster or as an acrylic block\. Also as a keyring\. Each one is made to order/.test(W.lead)
+      && /kaip akrilo bloką\. Taip pat kaip raktų pakabuką\. Kiekvieną spaudinį/.test(ORDER_COPY.lt.offer.lead)
       && /po akriliniu stiklu, ant blizgaus metalo, ant drobės, kaip plakatą arba kaip akrilo bloką\./.test(ORDER_COPY.lt.offer.lead)
       && (() => {
         const hb = card({ initial: { choice: { product: 'block20', country: 'DE' } } });
@@ -207,12 +210,14 @@ export async function run(): Promise<Row[]> {
       && has(tn, 'print-made') && !has(tn, 'print-way') && !has(card(), 'print-made')
       && LANGS.every((l) => !/1 (to|bis|ar|vagy|do|kuni|līdz) 2|1-2/.test(ORDER_COPY[l].offer.arrives) && !/\d/.test(ORDER_COPY[l].offer.arrives) && ORDER_COPY[l].offer.arrives.length > 10)
       && text(tb).includes(W.arrives) && W.arrives === 'The parcel is tracked.', text(tl).slice(0, 400));
-  // the keyring is ready and not offered (it earns less than the floor until the owner decides): were the server to offer it, the card would show it without a size
+  // the keyring (offered since 2026-11-25 at 20 EUR; ready and off the day before, when it earned less than the floor at 15 EUR): the card shows it without a size
   const withKeyring = { ...offer, products: printProducts(false).map((p) => ({ id: p.id, kind: p.kind, cm: p.cm, price: p.price, ship: Object.fromEntries(printCountries().map((cc) => [cc, printShipping(cc, p.id)])) })) };
   const hk = card({ st: ready({ print_offer: withKeyring }), initial: { choice: { product: 'keyring', country: 'LT' } } });
-  check('the keyring, were it offered: the list names it without a size ("Keyring, EUR 15.00"), its picture is the upright tag, its line says what it is, and its shipping and total are shown',
-    !offerPrints(ready()).some((p) => p.kind === 'keyring') && offerPrints(ready({ print_offer: withKeyring })).length === 12
-      && text(hk).includes(`Keyring, ${money(1500, 'eur', 'en')}`) && !/Keyring \d/.test(sp(text(hk))) && /data-kind="keyring"/.test(hk) && text(hk).includes(kindAbout('keyring', 'en'))
+  check('the keyring, were it offered: the list names it without a size ("Keyring, EUR 15.00"), its picture is the upright tag, its line says what it is, and its shipping and total are shown'
+    + ' - 1125: it IS offered, at 20 EUR, the last of the list',
+    offerPrints(ready()).filter((p) => p.kind === 'keyring').length === 1 && offerPrints(ready()).at(-1)?.id === 'keyring' && offerPrints(ready({ print_offer: withKeyring })).length === 12
+      && text(card({ initial: { choice: { product: 'keyring', country: 'LT' } } })).includes(`Keyring, ${money(2000, 'eur', 'en')}`)
+      && text(hk).includes(`Keyring, ${money(2000, 'eur', 'en')}`) && !/Keyring \d/.test(sp(text(hk))) && /data-kind="keyring"/.test(hk) && text(hk).includes(kindAbout('keyring', 'en'))
       && has(hk, 'print-shipping') && has(hk, 'print-total'), text(hk).slice(0, 300));
   check('the offer\'s words in the eight languages: every string filled, eight different titles and leads, no dash, no price and no digit in the lead, the function '
     + 'words keep their arguments', LANGS.every((l) => {

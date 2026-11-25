@@ -213,7 +213,7 @@ def confirmation_hu(*, order, spec, n, layout, price, paid_at, consent_at, conse
 
 # the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["hu"]): heading, paragraph, no price
 READY_PRINT_HU = ("Az alkotásod nyomatként",
-                  "Az alkotásodat nyomatként is megrendelheted: akrilüveg mögé, fényes fémre, vászonra, poszterként vagy akrilblokként. "
+                  "Az alkotásodat nyomatként is megrendelheted: akrilüveg mögé, fényes fémre, vászonra, poszterként vagy akrilblokként. Kulcstartóként is. "
                   "Mindegyik megrendelésre készül, és elküldjük neked. Az ajánlatot a rendelési oldaladon találod, az alkotásod alatt.")
 
 

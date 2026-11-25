@@ -238,7 +238,7 @@ def confirmation_et(*, order, spec, n, layout, price, paid_at, consent_at, conse
 # the section pay.ready_mail adds when the order can buy a print now (pay.READY_PRINT["et"]): heading, paragraph, no price
 READY_PRINT_ET = ("Sinu kunstiteos trükitud pildina",
                   "Saad oma kunstiteose tellida ka trükitud pildina: akrüülklaasi taha, läikivale metallile, lõuendile, plakatina või "
-                  "akrüülplokina. Iga trükitud pilt valmistatakse sinu tellimuse järgi ja saadetakse sulle. Leiad selle oma tellimuse "
+                  "akrüülplokina. Samuti võtmehoidjana. Iga trükitud pilt valmistatakse sinu tellimuse järgi ja saadetakse sulle. Leiad selle oma tellimuse "
                   "lehelt, kunstiteose alt.")
 
 

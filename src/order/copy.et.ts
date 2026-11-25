@@ -100,7 +100,7 @@ export const et: OrderCopy = {
   // addon_status): the card, the picker's words (src/try/PrintPick.tsx) and the way back from Stripe's payment page
   offer: {
     title: 'Sinu kunstiteos trükitud pildina',
-    lead: 'Saame selle kunstiteose sulle ka välja trükkida: akrüülklaasi taha, läikivale metallile, lõuendile, plakatina või akrüülplokina. Iga trükitud pilt valmistatakse sinu tellimuse järgi ja saadetakse sulle. See on eraldi tellimus; sinu fail jääb selliseks, nagu see on.',
+    lead: 'Saame selle kunstiteose sulle ka välja trükkida: akrüülklaasi taha, läikivale metallile, lõuendile, plakatina või akrüülplokina. Samuti võtmehoidjana. Iga trükitud pilt valmistatakse sinu tellimuse järgi ja saadetakse sulle. See on eraldi tellimus; sinu fail jääb selliseks, nagu see on.',
     product: 'Trükitud pilt',
     choose: 'Vali trükitud pilt',
     option: (name: string, price: string) => `${name}, ${price}`,

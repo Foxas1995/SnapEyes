@@ -42,7 +42,8 @@ Metal Print with the gloss finish and the hanger set for plates (blueprint 46, A
 Acrylic Block 10 x 10 cm at 39 EUR; and the Rectangular Keyring (blueprint 210, KRR0050041, a print area of 56 x 76 mm) at 15 EUR.
 THE KEYRING IS IN THE LIST WITH on 0: at 15 EUR it earns about 11 EUR (15 EUR less merchOne's 2.99 EUR with VAT and the payment fee; its
 shipping pays for itself), which is under margin_floor (15 EUR, the keyring's whole price), so the build would refuse it. The owner decides
-whether the floor gets an exception for it or its price changes; until then it is ready and not offered."""
+whether the floor gets an exception for it or its price changes; until then it is ready and not offered.
+2026-11-25, the owner decided: the keyring is 20 EUR and offered. It earns 15.75 to 16.07 EUR, over the floor; the rule is as it was."""
 PRINT_OFFER = {
     "currency": "eur",
     "markets": ["eu", "lt", "hr"],
@@ -61,6 +62,6 @@ PRINT_OFFER = {
         {"id": "poster50", "kind": "poster", "cm": 50, "sku": "PSD0500501", "price": 3500, "on": 1},
         {"id": "block10", "kind": "block", "cm": 10, "sku": "ABS0100101", "price": 3900, "on": 1},
         {"id": "block20", "kind": "block", "cm": 20, "sku": "ABS0200201", "price": 7900, "on": 1},
-        {"id": "keyring", "kind": "keyring", "cm": 0, "sku": "KRR0050041", "price": 1500, "on": 0}
+        {"id": "keyring", "kind": "keyring", "cm": 0, "sku": "KRR0050041", "price": 2000, "on": 1}
     ]
 }

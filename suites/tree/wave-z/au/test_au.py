@@ -573,6 +573,9 @@ later1121_ok = (all(fr and wp12_ok(d, allowed[l]) for name, allowed in (("terms"
                 and all(_step1121(l, name, allowed["en"]) for name, allowed in (("terms", TERMS1121), ("withdrawal", WD1121), ("privacy", PRIV1121))
                         for l in ("lt", "hu", "hr", "fi", "et", "lv"))
                 and all(EU_PRINTLATER["imprint"][l] == EU_LANGS3["imprint"][l] for l in ("lt", "hu", "hr", "fi", "et", "lv")))
+# 1125 (2026-11-25, the owner's decision: the keyring is 20 EUR and offered): nothing of 2026-11-24 was released, so the same step holds it: the list has
+# twelve rows (the keyring last, by its name alone: it has no size) and the shipping table twelve (the keyring ships on a tariff of its own: five rows
+# after the three of the metal print and the canvas of 60 cm). The date stays 2026-11-24, the day the texts were last changed in words.
 # 1124 refresh: what the final list of prints changed in the EU edition on purpose, in every one of the eight languages: ONE block of the terms' section
 # prints, the list of prints and prices (a "dl" of [name, price] rows). Its rows are now exactly the prints that api/_lib/print_offer.py offers (on 1), in
 # its order, each by the name of its kind in api/_lib/print_names.py with its size and with its price: eleven rows. The three acrylic rows and the poster's
@@ -593,9 +596,12 @@ def _ship1124(new, old, l):
     """The shipping table of the terms (rows [price, countries]): the four rows of before, word for word, then exactly three rows more for the prints that ship
     on a tariff of their own, each beginning with the names of the metal print and the canvas of 60 cm."""
     metal, canvas = _PN.PRINT_NAMES["kinds"]["metal"][l], _PN.PRINT_NAMES["kinds"]["canvas"][l]
-    return (len(old) == 4 and len(new) == 7 and new[:4] == old
-            and all(r[1].startswith(metal + " 60") and (", " + canvas + " 60") in r[1] and ": " in r[1] for r in new[4:])
-            and [_digits(r[0]) for r in new[4:]] == ["699", "849", "1349"])
+    keyring = _PN.PRINT_NAMES["kinds"]["keyring"][l]
+    return (len(old) == 4 and len(new) == 12 and new[:4] == old
+            and all(r[1].startswith(metal + " 60") and (", " + canvas + " 60") in r[1] and ": " in r[1] for r in new[4:7])
+            and [_digits(r[0]) for r in new[4:7]] == ["699", "849", "1349"]
+            # 1125: the keyring's own tariff, five rows named by it
+            and all(r[1].startswith(keyring + ": ") for r in new[7:]) and [_digits(r[0]) for r in new[7:]] == ["499", "599", "699", "849", "999"])
 
 
 def _times1124(new, old):
@@ -621,13 +627,14 @@ def _step1124(l):
         return False
     new, old = add[0]["dl"], rem[0]["dl"]
     want = _rows1124(l)
-    return (len(old) == 5 and len(new) == len(want) == 11
-            and all(r[0].startswith(n) and r[0].endswith("cm") and _digits(r[1]) == pr for r, (n, pr) in zip(new, want))
+    return (len(old) == 5 and len(new) == len(want) == 12
+            and all(r[0].startswith(n) and _digits(r[1]) == pr for r, (n, pr) in zip(new, want)) and all(r[0].endswith("cm") for r in new[:11])
+            and new[11][0] == _PN.PRINT_NAMES["kinds"]["keyring"][l] and _digits(new[11][1]) == "2000"      # 1125: the keyring, by its name alone
             and new[:3] == old[:3] and old[4] in new and _digits(old[3][1]) == "6900" and not any(r[0] == old[3][0] for r in new)
             and _ship1124(add[1]["dl"], rem[1]["dl"], l) and _times1124(add[2], rem[2])
             and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] == 1] == ["acrylic30", "acrylic40", "acrylic60", "metal30", "metal40", "metal60", "canvas40",
-                                                                                   "canvas60", "poster50", "block10", "block20"]
-            and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] != 1] == ["keyring"])
+                                                                                   "canvas60", "poster50", "block10", "block20", "keyring"]
+            and [p["id"] for p in _PO.PRINT_OFFER["products"] if p["on"] != 1] == [])
 
 
 block1124 = {l: _step1124(l) for l in LANG8}
@@ -834,9 +841,10 @@ def _pack_1124(l):
     ship_new, ship_old = add[1].split("\n"), rem[1].split("\n")
     want = _rows1124(l)
     metal = _PN.PRINT_NAMES["kinds"]["metal"][l]
-    return (len(old) == 5 and len(new) == len(want) == 11 and all(x.startswith(n) and _digits(x).endswith(pr) for x, (n, pr) in zip(new, want))
+    return (len(old) == 5 and len(new) == len(want) == 12 and all(x.startswith(n) and _digits(x).endswith(pr) for x, (n, pr) in zip(new, want))
             and new[:3] == old[:3] and old[4] in new and old[3] not in new and _digits(old[3]).endswith("6900")
-            and len(ship_old) == 4 and len(ship_new) == 7 and ship_new[:4] == ship_old and all((metal + " 60") in x for x in ship_new[4:])
+            and len(ship_old) == 4 and len(ship_new) == 12 and ship_new[:4] == ship_old and all((metal + " 60") in x for x in ship_new[4:7])
+            and all((": " + _PN.PRINT_NAMES["kinds"]["keyring"][l] + ": ") in x for x in ship_new[7:])
             and _norm(PACK["docs"][l]["withdrawal"]["text"]) == _norm(EU_PRINTLATER["pack"]["docs"][l]["withdrawal"]["text"])
             and all(_norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"]) for d in ("terms", "withdrawal")))
 

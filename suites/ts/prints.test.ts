@@ -44,10 +44,11 @@ export async function run(): Promise<Row[]> {
 
   // the tables
   check('the offer as the page reads it: five prints in the owner\'s order, euros, on eu, lt and hr - 1124: the final list of that day, eleven prints offered '
-    + '(acrylic, metal, canvas, poster, block) and the keyring in the list but not offered (on 0: it earns less than the floor)',
-    printProducts().map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,metal30,metal40,metal60,canvas40,canvas60,poster50,block10,block20' && PRINT_OFFER.currency === 'eur'
-      && PRINT_OFFER.markets.join() === 'eu,lt,hr' && printProducts(false).length === 12 && printProducts(false)[11].id === 'keyring' && printProducts(false)[11].on === 0
-      && !printProducts().some((p) => p.kind === 'keyring'), printProducts().map((p) => p.id).join());
+    + '(acrylic, metal, canvas, poster, block) and the keyring in the list but not offered (on 0: it earns less than the floor)'
+    + ' - 1125: the keyring is offered at 20 EUR (the owner\'s decision; at that price it earns more than the floor): twelve prints',
+    printProducts().map((p) => p.id).join() === 'acrylic30,acrylic40,acrylic60,metal30,metal40,metal60,canvas40,canvas60,poster50,block10,block20,keyring' && PRINT_OFFER.currency === 'eur'
+      && PRINT_OFFER.markets.join() === 'eu,lt,hr' && printProducts(false).length === 12 && printProduct('keyring')?.on === 1 && printProduct('keyring')?.price === 2000
+      && printCountries().every((cc) => (printMargin('keyring', cc) ?? 0) >= PRINT_OFFER.margin_floor) && PRINT_OFFER.margin_floor === 1500, printProducts().map((p) => p.id).join());
   // 2026-11-24, the owner's decisions: the acrylic block 20 x 20 cm at 79 EUR (a fourth kind, "block": it stands on a shelf, it is not hung) and the canvas at 79 EUR (it was 69)
   check('the acrylic block: a kind of its own with a name in the eight languages (eight different ones), 20 cm, 79 EUR as the canvas now, the shipping of the other small prints, '
     + 'and it earns more than the floor in every country',
@@ -92,7 +93,7 @@ export async function run(): Promise<Row[]> {
     KINDS6.map((k) => new Set(LANGS.map((l) => kindName(k, l))).size).join());
   check('a thing that is not named by a size (the keyring, cm 0) is its kind\'s name alone in every language; every other print ends in its size',
     printProduct('keyring')?.cm === 0 && LANGS.every((l) => printName('keyring', l) === kindName('keyring', l) && printLabel('keyring', 0, l) === kindName('keyring', l))
-      && printName('keyring', 'en') === 'Keyring' && printProducts().every((p) => p.cm >= 10 && sp(printName(p.id, 'en')).endsWith(`${p.cm} × ${p.cm} cm`))
+      && printName('keyring', 'en') === 'Keyring' && printProducts().filter((p) => p.kind !== 'keyring').every((p) => p.cm >= 10 && sp(printName(p.id, 'en')).endsWith(`${p.cm} × ${p.cm} cm`))
       && PRINT_RATES.skus.KRR0050041?.design_mm.join() === '56,76', printName('keyring', 'en'));
   // 2026-11-24: how long a print takes, per product and per country, from ONE table (api/_lib/print_times.py: merchOne's published times); the words are in
   // api/_lib/print_names.py times. The sentence "about 3 business days ... 2 to 9 ..." for everything is gone
@@ -121,11 +122,11 @@ export async function run(): Promise<Row[]> {
         && sectionText(EDITIONS.eu.terms[l], 'prints').includes(timesText(l)) && !/2 (to|bis|iki|és|do|kuni|līdz) 9|2-9/.test(sectionText(EDITIONS.eu.terms[l], 'prints')))
       && new Set(LANGS.map((l) => timesText(l))).size === 8 && sectionText(EDITIONS.hu.terms.hu, 'prints').includes(timesText('hu'))
       && sectionText(EDITIONS.eu.terms.en, 'prints').includes('within 30 days of the contract'), timesText('en'));
-  check('offeredPrints: none without the server\'s prints, while they are off, or in a market that sells none (au, hu, us); all five on the euro markets - 1124: all eleven',
+  check('offeredPrints: none without the server\'s prints, while they are off, or in a market that sells none (au, hu, us); all five on the euro markets - 1124: all eleven - 1125: all twelve, the keyring too',
     offeredPrints(undefined, 'eu').length === 0 && offeredPrints({ on: false }, 'eu').length === 0 && offeredPrints(server, 'au').length === 0
-      && offeredPrints(server, 'hu').length === 0 && offeredPrints(server, 'us').length === 0 && offeredPrints(server, 'lt').length === 11);
+      && offeredPrints(server, 'hu').length === 0 && offeredPrints(server, 'us').length === 0 && offeredPrints(server, 'lt').length === 12);
   check('offeredPrints keeps only what the page knows and what is well formed (an unknown product, a price of 0, no country are left out)',
-    offeredPrints({ ...server, products: [...server.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] }, 'eu').length === 11);
+    offeredPrints({ ...server, products: [...server.products!, { id: 'mug', kind: 'poster', cm: 10, price: 900, ship: { LT: 100 } }, { id: 'poster50', kind: 'poster', cm: 50, price: 0, ship: { LT: 1 } }] }, 'eu').length === 12);
   const offered = offeredPrints(server, 'eu');
   check('the visitor\'s country is preselected only where prints ship to it', defaultCountry('lt', offered[0].ship) === 'LT' && defaultCountry('US', offered[0].ship) === ''
     && defaultCountry(undefined, offered[0].ship) === '');
@@ -234,15 +235,18 @@ export async function run(): Promise<Row[]> {
       && tp.includes('30 days') && !DASH.test(tp), tp.slice(0, 300));
   const rows = shippingRows('en');
   check('the shipping table groups the countries by price, and Germany says its 60 cm price apart - 1124: the prints on a tariff of their own (metal and canvas of '
-    + '60 cm) have rows of their own after the usual four, named by those prints, so no country\'s entry repeats them; every country is in both parts once',
-    rows.map((r) => r[0]).join() === [499, 699, 849, 999, 699, 849, 1349].map((c) => money(c, 'eur', 'en')).join()
+    + '60 cm) have rows of their own after the usual four, named by those prints, so no country\'s entry repeats them; every country is in both parts once'
+    + ' - 1125: and the keyring, which ships on a tariff of its own too (4.99 to Germany, 5.99 to Austria and France ...), has five rows after them: twelve rows',
+    rows.map((r) => r[0]).join() === [499, 699, 849, 999, 699, 849, 1349, 499, 599, 699, 849, 999].map((c) => money(c, 'eur', 'en')).join()
       && rows[0][1].startsWith('Germany (') && rows[0][1].includes(money(699, 'eur', 'en')) && sp(rows[0][1]).includes(sp(printName('acrylic60', 'en')))
       && rows.slice(0, 4).every((r) => !r[1].includes(kindName('metal', 'en')) && !r[1].includes(kindName('canvas', 'en')))
-      && rows.slice(4).every((r) => sp(r[1]).startsWith(sp(`${printName('metal60', 'en')}, ${printName('canvas60', 'en')}: `)))
+      && rows.slice(4, 7).every((r) => sp(r[1]).startsWith(sp(`${printName('metal60', 'en')}, ${printName('canvas60', 'en')}: `)))
+      && rows.slice(7).every((r) => r[1].startsWith('Keyring: ')) && rows[7][1] === 'Keyring: Germany' && rows[8][1] === 'Keyring: Austria, France'
+      && printCountries().every((cc) => rows.slice(7).filter((r) => r[1].split(': ')[1].split(', ').includes(countryName(cc, 'en'))).length === 1)
       && rows[4][1].endsWith(': Germany') && rows[6][1].includes('Lithuania') && rows[6][1].includes('Sweden')
       && printCountries().every((cc) => rows.slice(0, 4).filter((r) => r[1].includes(countryName(cc, 'en'))).length === 1
-        && rows.slice(4).filter((r) => r[1].split(': ')[1].split(', ').includes(countryName(cc, 'en'))).length === 1)
-      && LANGS.every((l) => shippingRows(l).length === 7), JSON.stringify(rows).slice(0, 300));
+        && rows.slice(4, 7).filter((r) => r[1].split(': ')[1].split(', ').includes(countryName(cc, 'en'))).length === 1)
+      && LANGS.every((l) => shippingRows(l).length === 12), JSON.stringify(rows).slice(0, 300));
   check('the Hungarian edition\'s terms (forints) carry the section and say a print is added only to an order in euros; AU and US carry none',
     !!EDITIONS.hu.terms.hu?.sections.some((s) => s.id === 'prints') && sectionText(EDITIONS.hu.terms.en, 'prices').includes('only to an order in euros')
       && !EDITIONS.au.terms.en?.sections.some((s) => s.id === 'prints') && !EDITIONS.us.terms.en?.sections.some((s) => s.id === 'prints')
