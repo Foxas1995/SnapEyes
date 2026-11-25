@@ -398,9 +398,9 @@ async function checkWall() {
   const goto = (p) => place(page, '.lp-stage', vh - p * (vh + h));
   const PROBE = `JSON.stringify((() => { const f = document.querySelector('.lp-stage'), fr = f.getBoundingClientRect(), cs = getComputedStyle(f);
     const imgs = [...f.querySelectorAll('img')].map((i) => { const c = getComputedStyle(i), m = /^inset\\(([\\d.e+-]+)(%|px)(?: round ([\\d.e+-]+)px)?/.exec(c.clipPath); return { raw: c.clipPath + ' ' + c.scale, scale: c.scale === 'none' ? 1 : +c.scale, clip: c.clipPath === 'none' ? 0 : m ? +m[1] : -1, round: m && m[3] ? +m[3] : 0, tr: c.translate + '|' + c.transform + '|' + c.rotate, filter: c.filter }; });
-    const chip = f.querySelector('.lp-vis-chip'), cc = getComputedStyle(chip), cr = chip.getBoundingClientRect(), g = document.getElementById('stGlint'), ga = getComputedStyle(g, '::after');
+    const g = document.getElementById('stGlint'), ga = getComputedStyle(g, '::after');   // 2026-11-24, the owner's decision: no chip on the stage; the field chip below is true when there is none
     return { ps: +f.style.getPropertyValue('--ps'), gx: parseFloat(f.style.getPropertyValue('--gx')), scrub: f.dataset.scrub !== undefined, run: f.hasAttribute('data-run'), imgs, ring: cs.boxShadow, rect: [fr.left, fr.top, fr.width, fr.height],
-      chip: cc.visibility === 'visible' && +cc.opacity === 1 && cr.left >= fr.left && cr.top >= fr.top && cr.right <= fr.right && cr.bottom <= fr.bottom && !!chip.textContent.trim(),
+      chip: f.querySelector('.lp-vis-chip, .lp-chip-ex') === null,
       glint: { shine: g.hasAttribute('data-shine'), op: +ga.opacity, tr: parseFloat(ga.translate), bg: ga.backgroundImage, blend: ga.mixBlendMode, rect: g.getBoundingClientRect().toJSON(), swept: g.hasAttribute('data-sweep') },
       sweep: document.getAnimations().filter((a) => a instanceof CSSAnimation && a.animationName === 'lp-sweep').length }; })())`;
   const ps = [0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1];
@@ -531,9 +531,9 @@ async function checkFinal() {
   const goto = (p) => place(page, '.lp-final', 0.92 * vh - p * (h - 0.16 * vh), '.lp-bg');
   const PROBE = `JSON.stringify((() => { const s = document.querySelector('.lp-final'), b = s.querySelector('.lp-bg'), c = getComputedStyle(b), i = getComputedStyle(b.querySelector('img')), m = /^inset\\(([\\d.e+-]+)%(?: round ([\\d.e+-]+)px)?/.exec(c.clipPath);
     // the honesty words of the band are its label; the line that the file is digital went in the lean pass of 2026-10-22 (the price list and the FAQ say it), so there is no second line to hold
-    const chip = s.querySelector('.lp-final-chip'), cc = getComputedStyle(chip), fine = s.querySelector('.lp-fine'), sr = s.getBoundingClientRect(), cr = chip.getBoundingClientRect();
+    const fine = s.querySelector('.lp-fine');   // 2026-11-24, the owner's decision: no chip on the closing picture; the field chip below is true when there is none
     return { op: +b.style.getPropertyValue('--op'), scrub: b.dataset.scrub !== undefined, run: b.hasAttribute('data-run'), raw: c.clipPath + ' ' + i.scale, clip: c.clipPath === 'none' ? 0 : m ? +m[1] : -1, round: m && m[2] ? +m[2] : 0, scale: i.scale === 'none' ? 1 : +i.scale, tr: i.translate + '|' + i.transform + '|' + b.style.opacity,
-      chip: cc.visibility === 'visible' && +cc.opacity === 1 && cr.left >= sr.left && cr.right <= sr.right && !!chip.textContent.trim(), fine: fine === null,
+      chip: s.querySelector('.lp-final-chip, .lp-vis-chip') === null, fine: fine === null,
       clock: document.getAnimations().filter((a) => a instanceof CSSAnimation && /^(lp-open|lp-rv-settle)$/.test(a.animationName) && b.contains(a.effect.target)).length }; })())`;
   const ps = [0, 0.15, 0.3, 0.5, 0.7, 0.85, 1.04];   // the last stop is a little past the end of the crossing: a stop AT 1 can only be placed to within a pixel, which is a few thousandths either side
   const rows = [];

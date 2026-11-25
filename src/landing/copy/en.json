@@ -41,9 +41,6 @@
     "open": "Start with the free preview."
   },
   "example": {
-    "chip": "Example",
-    "vis": "Visualisation",
-    "photo": "Example photo",
     "mantas": "Our own eye"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "Your wall",
     "title": "See it on your wall",
     "intro": "Print it wherever you like: on acrylic, aluminium, canvas or in a frame.",
-    "stageLabel": "Visualisations of your file, printed",
     "materialsLabel": "Material",
     "artLabel": "Artwork",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "More ways to see it",
-    "railLabel": "More visualisations",
     "prev": "Previous picture",
     "next": "Next picture",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "The whole restored iris, with a square marking where the close-up was cropped",
     "locatorLabel": "Where it was cropped",
     "edgeTitle": "The edge of an acrylic print",
-    "edgeAlt": "A visualisation of the corner of a print on acrylic: a polished clear edge, a steel standoff post and a soft window reflection."
+    "edgeAlt": "The corner of a print on acrylic: a polished clear edge, a steel standoff post and a soft window reflection."
   },
   "trust": {
     "eyebrow": "What we never do",
@@ -662,8 +657,7 @@
   "final": {
     "title": "See your own iris",
     "body": "All it takes is your phone, good light and about a minute.",
-    "imageAlt": "A visualisation: a dark study at dusk with our own iris printed on acrylic on the wall.",
-    "chip": "Visualisation"
+    "imageAlt": "A dark study at dusk with our own iris printed on acrylic on the wall."
   },
   "footer": {
     "operatedBy": "SnapEyes is operated by",

@@ -32,7 +32,6 @@
   @media (min-width: 960px) and (max-width: 1199px) {
     .lp-final .lp-bg img { top: -16%; }
   }
-  .lp-final-chip { left: auto; right: var(--gut); top: 16px; z-index: 4; }
   /* ---- motion (spec 6.14). The picture opens like a mat: from an inset of 7 percent with rounded corners (86 percent of it is on screen from the first
      frame, so the scene is never empty) to the full band, 1.3 s on the in-out curve, while the picture inside settles from 1.03 to 1 (2 s). The open
      state is inset(0 round 0), written into the keyframes (both ends are shapes, so the animation interpolates) and not into the rule: when the animation
@@ -49,7 +48,6 @@
   }
   @keyframes lp-open { from { clip-path: inset(7% round var(--r-frame)); } to { clip-path: inset(0 round 0px); } }
   @media (min-width: 960px) {
-    .lp-final-chip { top: auto; bottom: 18px; }
   }
   @media (max-width: 959px) {
     .lp-final { min-height: 660px; }

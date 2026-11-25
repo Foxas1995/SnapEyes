@@ -2,7 +2,8 @@
 // little map of where it was cut, and a visualisation of the polished edge of an acrylic print. Two pictures, two kinds of honesty:
 // the crop is real engine output and says what it is (its size on the badge, whose eye under it; that the photo behind it was only 315 px
 // wide, so the fine fibres are a reconstruction by AI, is in the FAQ's answer "How does it work?" since the lean pass of 2026-10-22); the
-// edge is a visualisation and carries that label inside the picture, with its title under it.
+// edge is a made picture, not a photograph; it carried that label inside the picture until 2026-11-24 (the owner's decision: no chip on any picture
+// of the site) and has its title under it.
 //
 // On a phone the two cards sit side by side in a sideways scroller (the stylesheet); a scroller that really scrolls gets a tab
 // stop and a name (useScrollableRegion), so a keyboard user can reach it too. Importing this file brings its own stylesheet.

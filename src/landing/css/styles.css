@@ -81,12 +81,6 @@
   .lp-tile-img img.lp-wall { opacity: 0; }
   .lp-tile.lp-on-wall img.lp-wall { opacity: 1; }
   .lp-tile.lp-on-wall img.lp-art { opacity: 0; }
-  .lp-tile-img .lp-chip-ex { position: absolute; left: 10px; top: 10px; z-index: 2; }
-  /* a label that is not showing is not in the accessibility tree either (visibility): a screen reader never hears "AI visualisation"
-     after a flat artwork, or "Example photo" after a wall view; the fade keeps its .45 s, visibility flips after it on the way out */
-  .lp-tile-img .lp-vis-chip { left: 10px; top: 10px; opacity: 0; visibility: hidden; transition: opacity var(--d-swap) var(--ease-out), visibility 0s var(--d-swap); }
-  .lp-tile.lp-on-wall .lp-vis-chip { opacity: 1; visibility: visible; transition-delay: 0s; }
-  .lp-tile.lp-on-wall .lp-chip-ex.lp-photo { opacity: 0; visibility: hidden; }
   .lp-wallbtn { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: rgb(3 4 8 / .82); color: #fff; font-size: 12.5px; font-weight: 600; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); transition: opacity var(--d-tap) var(--ease-out), background-color var(--d-tap) var(--ease-out), color var(--d-tap) var(--ease-out), box-shadow var(--d-tap) var(--ease-out); }
   /* with a mouse the button fades in when the tile is hovered or holds the focus (and stays while the wall is on); on a touch screen it is always there */
   @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {

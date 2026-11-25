@@ -4,6 +4,10 @@
 // line of before; while one is, the two FAQ answers about printing and the pricing line take their prints wording (faq aPrints, pricing.notIncludesPrints).
 // Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results, prints nothing. The build's gate renders the same states
 // (scripts/landing_gate.mjs) and check:landing reads them in a browser.
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { readFileSync } from 'node:fs';
+import { ExampleChip, Picture } from '../../src/landing/ui';
 import en from '../../src/landing/copy/en.json';
 import de from '../../src/landing/copy/de.json';
 import lt from '../../src/landing/copy/lt.json';
@@ -91,5 +95,23 @@ export async function run(): Promise<Row[]> {
   const au = copyForMarket(COPIES.en, 'au' as never);
   check('the Australian edition\'s FAQ is untouched by the print state where its own answers stand, and the store never names the A$ market',
     faqEntries(au, true, 1).length === faqEntries(COPIES.en, true, 1).length && !PRINT_OFFER.markets.includes('au') && !PRINT_OFFER.markets.includes('us') && !PRINT_OFFER.markets.includes('hu'));
+  // 2026-11-24, THE OWNER'S DECISION: no chip "Visualisation" and no chip "Example photo" on any picture of the site, and the word "Visualisation" nowhere on the
+  // page but in the FAQ answer that says what its pictures are (which the owner did not ask to change). What a picture is stays in the markup (data-chip-area)
+  const VIS = /visuali|vizuali|havainnekuv/i;
+  const strings = (o: unknown, path = ''): Array<[string, string]> => (typeof o === 'string' ? [[path, o]] : Array.isArray(o) ? o.flatMap((v, i) => strings(v, `${path}.${i}`))
+    : o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => strings(v, path ? `${path}.${k}` : k)) : []);
+  const pic = renderToStaticMarkup(createElement(Picture, { asset: { src: '/x.jpg', w: 10, h: 10 } as never, alt: 'x', chip: 'vis' }));
+  const who = renderToStaticMarkup(createElement(ExampleChip, { label: 'Our own eye', className: 'lp-rv-who' }));
+  const comps = ['StyleTile', 'WallStage', 'MoreRooms', 'ClosingScene', 'CloseUps', 'Wall'].map((f) => readFileSync(`src/landing/${f}.tsx`, 'utf8')).join('\n');
+  const css = ['base', 'styles', 'final', 'wall'].map((f) => readFileSync(`src/landing/css/${f}.css`, 'utf8')).join('\n');
+  check('no chip "Visualisation" or "Example photo" on any picture (the owner, 2026-11-24): the copy of eight languages has no key of them, the word stands only in the FAQ '
+    + 'answer about the pictures, a picture draws no label and keeps its kind in the markup, no component of the wall, the rooms, the gallery or the closing scene draws a '
+    + 'chip, their CSS is gone; the Reveal still says whose eye it shows',
+    LANGS.every((l) => {
+      const c = COPIES[l] as unknown as Record<string, Record<string, unknown>>;
+      return Object.keys(c.example).join() === 'mantas' && !('chip' in c.final) && !('stageLabel' in c.wall) && !('railLabel' in c.more)
+        && strings(c).filter(([, v]) => VIS.test(v)).map(([k]) => k).join() === 'faq.items.3.a';
+    }) && pic.includes('data-chip-area="vis"') && !/lp-vis-chip|lp-chip-ex|data-chip="/.test(pic) && !/<ExampleChip/.test(comps) && !/c\.example\.(vis|photo|chip)|c\.final\.chip|w\.stageLabel|m\.railLabel/.test(comps)
+      && !/lp-vis-chip|lp-final-chip|lp-chip-ex\.lp-photo/.test(css) && /class="lp-chip-ex lp-rv-who"/.test(who) && who.includes('Our own eye'), pic);
   return out;
 }

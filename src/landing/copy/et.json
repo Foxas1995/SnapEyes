@@ -41,9 +41,6 @@
     "open": "Alusta tasuta eelvaatest."
   },
   "example": {
-    "chip": "Näide",
-    "vis": "Visualiseering",
-    "photo": "Näidisfoto",
     "mantas": "Meie enda silm"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "Sinu sein",
     "title": "Vaata seda oma seinal",
     "intro": "Trüki see kuhu tahes: akrüülile, alumiiniumile, lõuendile või raami sisse.",
-    "stageLabel": "Visualiseeringud sinu failist trükituna",
     "materialsLabel": "Materjal",
     "artLabel": "Kunstiteos",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "Veel viise seda näha",
-    "railLabel": "Veel visualiseeringuid",
     "prev": "Eelmine pilt",
     "next": "Järgmine pilt",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "Kogu taastatud iiris, ruut näitab, kust lähivõte on lõigatud",
     "locatorLabel": "Kust see on lõigatud",
     "edgeTitle": "Akrüülile trükitud pildi serv",
-    "edgeAlt": "Visualiseering akrüülile trükitud pildi nurgast: poleeritud läbipaistev serv, terasest distantshoidik ja pehme akna peegeldus."
+    "edgeAlt": "Akrüülile trükitud pildi nurk: poleeritud läbipaistev serv, terasest distantshoidik ja pehme akna peegeldus."
   },
   "trust": {
     "eyebrow": "Mida me kunagi ei tee",
@@ -662,8 +657,7 @@
   "final": {
     "title": "Vaata oma iirist",
     "body": "Vaja on ainult telefoni, head valgust ja umbes minutit.",
-    "imageAlt": "Visualiseering: hämar kabinet õhtuhämaruses, seinal meie enda iiris akrüülile trükituna.",
-    "chip": "Visualiseering"
+    "imageAlt": "Hämar kabinet õhtuhämaruses, seinal meie enda iiris akrüülile trükituna."
   },
   "footer": {
     "operatedBy": "SnapEyesi haldab",

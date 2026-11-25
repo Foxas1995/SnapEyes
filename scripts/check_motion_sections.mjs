@@ -388,8 +388,9 @@ async function checkWall() {
   expect('wall', JSON.parse(after).every(([a, o]) => a === 'lp-spec-in' ? false : o === 1) || JSON.parse(after).every(([a, o]) => o === 1), `a language switch makes the facts fade again: ${after}`);
   // the chip and the words about printing are never touched (since the lean pass of 2026-10-22 those words are the one line under the title, "Print it wherever you
   // like": the note box with the sentence that printing is not part of the order went, the price list and the FAQ say that)
-  const label = await page.eval("JSON.stringify([+getComputedStyle(document.querySelector('#stage .lp-vis-chip')).opacity, +getComputedStyle(document.querySelector('#wall .lp-sec-head .lp-intro')).opacity, getComputedStyle(document.querySelector('#wall .lp-sec-head .lp-intro')).translate])");
-  expect('wall', label === '[1,1,"none"]', `the chip or the line about printing moved or faded: ${label}`);
+  // 2026-11-24, the owner's decision: the stage carries no chip any more; the first number is now 1 when there is none (it was the chip's opacity)
+  const label = await page.eval("JSON.stringify([document.querySelector('#stage .lp-vis-chip, #stage .lp-chip-ex') === null ? 1 : 0, +getComputedStyle(document.querySelector('#wall .lp-sec-head .lp-intro')).opacity, getComputedStyle(document.querySelector('#wall .lp-sec-head .lp-intro')).translate])");
+  expect('wall', label === '[1,1,"none"]', `a chip is back on the stage, or the line about printing moved or faded: ${label}`);
   // the stage column sticks
   const stick = [];
   const travel = await page.eval("document.querySelector('.lp-wall-grid').getBoundingClientRect().height - document.querySelector('.lp-stage-col').getBoundingClientRect().height");
@@ -550,7 +551,7 @@ async function checkCloseups() {
     note(`closeups ${tag}: the square is ${geo.w.toFixed(1)} px on a crop of ${geo.side.toFixed(0)} px`);
     await scrollTo(page, '.lp-cu-open', 110);
     const PROPS = ['clip-path', 'stroke-dashoffset', 'opacity', 'scale', 'transform', 'translate'];
-    const EDGE = ['.lp-edge-img > img', '.lp-edge-img .lp-vis-chip', '.lp-edge-img'];
+    const EDGE = ['.lp-edge-img > img', '.lp-edge-img'];      // 2026-11-24, the owner's decision: the edge carries no chip (its label was the second entry)
     const f = await frames(page, ['.lp-cu-img > img', '.lp-loc-draw', '.lp-cu-badge', '.lp-locator', ...(width >= 640 ? EDGE : [])], PROPS, 4200);
     if (width < 640) {
       // a phone: the edge is the second card of a swipe rail, it opens when it is swiped into view
@@ -571,7 +572,7 @@ async function checkCloseups() {
     expect('closeups', i1 > 0 && insets[i1] <= insets[0] * 0.5, `${tag}: one second in, the crop's top inset is still ${insets[i1]} of ${insets[0]} px (want half of it or less: the panel must not sit black)`);
     expect('closeups', img.every((r) => r[4] === 'none' && r[5] === 'none' && r[6] === 'none' && r[3] === '1'), `${tag}: the crop is scaled, moved or faded at some frame`);
     expect('closeups', col(f['.lp-cu-badge'], 3).every((v) => v === '1') && col(f['.lp-locator'], 3).every((v) => v === '1'), `${tag}: the badge or the map faded`);
-    expect('closeups', col(f['.lp-edge-img .lp-vis-chip'], 3).every((v) => v === '1'), `${tag}: the label of the edge faded`);
+    expect('closeups', +(await page.eval("document.querySelectorAll('.lp-edge-img .lp-vis-chip, .lp-edge-img .lp-chip-ex').length")) === 0, `${tag}: a chip is back on the picture of the edge (none since 2026-11-24, the owner's decision)`);
     const edge = f['.lp-edge-img > img'];
     const es = col(edge, 4).map((v) => (v === 'none' ? 1 : num(v)));
     expect('closeups', Math.max(...es) <= 1.0301 && es.at(-1) === 1 && col(edge, 3).every((v) => v === '1'), `${tag}: the edge plate scales above 1.03, does not settle to 1 or fades (${Math.max(...es)})`);

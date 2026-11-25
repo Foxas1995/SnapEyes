@@ -13,7 +13,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { traverse, whenPinned } from '../motion/motion';
 import { put, whenPhone } from '../motion/phone';
-import { ExampleChip, type PictureAsset } from './ui';
+import type { PictureAsset } from './ui';
 import { STAGE_SIZES, type GlintBox, type StagePicture } from './wallScenes';
 
 interface Slot { key: string; asset: PictureAsset }
@@ -42,12 +42,12 @@ function useNearViewport(ref: RefObject<Element | null>, margin: string): boolea
 export interface WallStageProps {
   /** The picture that should be on the stage now (null: the material has none for this artwork). */
   picture: StagePicture | null;
-  /** The words of the picture for a screen reader ("Visualisation. On aluminium, about 50 cm. One eye."). */
+  /** The words of the picture for a screen reader ("On aluminium, about 50 cm. One eye."). */
   alt: string;
   /** The sweep of light on a polished surface (acrylic), or null: the box of the print's face, in percent of the stage. The span is
    *  always in the markup and gets the box only while the picture it belongs to is the one in front. */
   glint: GlintBox | null;
-  /** The group's name (wall.stageLabel). */
+  /** The group's name (wall.title: the chapter's own title since 2026-11-24, when wall.stageLabel went with the chips). */
   label: string;
   /** The line under the stage, in a live region. */
   caption: string;
@@ -152,7 +152,6 @@ export function WallStage({ picture, alt, glint, label, caption, eyesNote }: Wal
           data-shine={shine || undefined}
           style={polished ? { left: `${polished[0]}%`, top: `${polished[1]}%`, width: `${polished[2]}%`, height: `${polished[3]}%` } : undefined}
         />
-        <ExampleChip variant="vis" />
       </div>
       <figcaption className="lp-stage-cap">
         <span id="stageCap" aria-live="polite">{caption}</span>

@@ -110,7 +110,7 @@ export function RevealScene({ eye, phone = false }: { eye: RevealEye; phone?: bo
         {(['photo', 'iris', 'art'] as const).map((k) => (
           <span key={k} className="lp-rv-chip" data-k={k} aria-hidden="true">{label[k]}</span>
         ))}
-        <ExampleChip variant="example" label={c.example.mantas} className="lp-rv-who" />
+        <ExampleChip label={c.example.mantas} className="lp-rv-who" />
       </div>
       <figcaption className="lp-rv-cap">
         <span>{eye.note}</span>

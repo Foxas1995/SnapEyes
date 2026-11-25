@@ -1,7 +1,6 @@
 import { useCallback, useRef, useSyncExternalStore, type ButtonHTMLAttributes, type ImgHTMLAttributes, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { flushSync } from 'react-dom';
 import { Plus } from 'lucide-react';
-import { useCopy } from './copy/useCopy';
 import { BrandPicture } from '../shared/BrandLogo';
 
 // href: the landing links to its own top; the legal pages link home. The owner's logo (src/shared/BrandLogo.tsx): the full logo at every width,
@@ -22,42 +21,28 @@ export function Logo({ href = '#top' }: { href?: string }) {
 // (src/landing/copy), so they work inside <CopyProvider> only.
 // ================================================================================================================
 
-/** The two labels that keep every picture honest (BUILD_PLAN section 7): "example" (DE "Beispiel") for real engine
- *  artwork, "vis" ("Visualisation", DE "Visualisierung": one word since 2026-10-22, no "AI" in it; the FAQ answer "How does it work?"
- *  says what is made with AI) for every wall, room, hand, desk, phone and edge picture.
- *  The words are the copy's (example.chip, example.vis). */
+/** What a picture IS (BUILD_PLAN section 7): "example" for real engine artwork, "vis" for every wall, room, hand, desk, phone and edge
+ *  picture (a picture that is made, not a photograph), "none" for a screen detail. Until 2026-11-24 the first two were also drawn ON the
+ *  picture, as the chips "Example photo" and "Visualisation". The owner's decision of that day: no such chip on any picture of the site
+ *  ("tegul mato ir tiek, gana visiems čia aiškintis"; "kur pavyzdinė nuotrauka parašyta irgi išimk"). The page still says what its pictures
+ *  are in sentences of its own, which stay: the legend lines of the hero and of the gallery, the line under the Reveal's eye, the eye notes
+ *  of the rooms, and the FAQ answers about real photographs and about how it works. The kind stays in the markup (data-chip-area) as the
+ *  record of what each picture is. */
 export type ChipVariant = 'example' | 'vis';
 
 export interface ExampleChipProps {
-  variant: ChipVariant;
-  /** "example" only: the chip that names a photo of someone else's eye (example.photo, "Example photo"), styled .lp-photo. */
-  photo?: boolean;
-  /** Other words for the label, from the copy (final.chip): never typed in a component. */
-  label?: string;
-  /** A second line under the label: the framed chip of the first screen ("You receive the digital file. Printing is not
-   *  included."), class lp-frame-chip. Needs the variant "vis". */
-  body?: string;
-  /** Context classes of the page's CSS (lp-final-chip): where and how this chip sits on its picture. */
+  /** The words of the label, from the copy (example.mantas): never typed in a component. */
+  label: string;
+  /** Context classes of the page's CSS (lp-rv-who): where and how this label sits on its picture. */
   className?: string;
 }
 
-/** The label on a picture: <span class="lp-vis-chip">Visualisation</span> (absolute in the picture's corner by the CSS),
- *  <span class="lp-chip-ex">Example</span> (inline; the tile CSS pins it), or the framed one with a body. */
-export function ExampleChip({ variant, photo = false, label, body, className = '' }: ExampleChipProps) {
-  const { c } = useCopy();
-  const text = label ?? (variant === 'vis' ? c.example.vis : photo ? c.example.photo : c.example.chip);
-  if (body !== undefined) {
-    return (
-      <div data-chip={variant} className={`lp-frame-chip ${className}`.trim()}>
-        <b>{text}</b>
-        <span>{body}</span>
-      </div>
-    );
-  }
-  const cls = variant === 'vis' ? 'lp-vis-chip' : photo ? 'lp-chip-ex lp-photo' : 'lp-chip-ex';
+/** A small label inside a picture: <span class="lp-chip-ex">Our own eye</span>. ONE use is left, the Reveal's "whose eye is this"
+ *  (src/landing/RevealScene.tsx); the chips "Visualisation" and "Example photo" are gone (2026-11-24, see ChipVariant). */
+export function ExampleChip({ label, className = '' }: ExampleChipProps) {
   return (
-    <span data-chip={variant} className={`${cls} ${className}`.trim()}>
-      {text}
+    <span data-chip="example" className={`lp-chip-ex ${className}`.trim()}>
+      {label}
     </span>
   );
 }
@@ -204,12 +189,11 @@ type ImgExtras = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'srcSet' | 's
 export interface PictureProps {
   asset: PictureAsset;
   alt: string;
-  /** The label this picture carries, inside its frame. REQUIRED, so leaving it out is a compile error and a picture without
-   *  a label is a decision someone wrote down: 'vis' (AI visualisation), 'example' (real engine artwork) or 'none' (a screen
-   *  detail that shows no print, no room and no example: the phone mock-ups, the file card). */
+  /** What this picture is. REQUIRED, so leaving it out is a compile error and the kind of every picture is a decision someone wrote
+   *  down: 'vis' (a made picture of a print, a room, a hand: not a photograph), 'example' (real engine artwork) or 'none' (a screen
+   *  detail that shows no print, no room and no example: the phone mock-ups, the file card). Since 2026-11-24 nothing is drawn for
+   *  it (the owner: no chip on any picture); it is written to the frame as data-chip-area. */
   chip: ChipVariant | 'none';
-  /** "example" only: label the chip "Example photo" (a photo of someone else's eye). */
-  photo?: boolean;
   /** What the picture says about its width, for the srcset: "(min-width: 960px) 500px, 100vw". */
   sizes?: string;
   /** The first-screen picture: loaded at once with high priority (the LCP image); everything else loads lazily. */
@@ -223,9 +207,9 @@ export interface PictureProps {
   children?: ReactNode;
 }
 
-/** A picture with its label: the image (srcset and sizes from the asset manifest, width and height against layout shift,
- *  lazy unless it is the first screen) and the ExampleChip inside its frame. */
-export function Picture({ asset, alt, chip, photo, sizes, priority = false, className = '', imgClassName = '', imgProps, children }: PictureProps) {
+/** A picture in its frame: the image (srcset and sizes from the asset manifest, width and height against layout shift, lazy unless
+ *  it is the first screen). No label is drawn on it (2026-11-24, the owner's decision; see ChipVariant). */
+export function Picture({ asset, alt, chip, sizes, priority = false, className = '', imgClassName = '', imgProps, children }: PictureProps) {
   return (
     <div data-chip-area={chip} className={`lp-pic ${className}`.trim()}>
       <img
@@ -241,7 +225,6 @@ export function Picture({ asset, alt, chip, photo, sizes, priority = false, clas
         decoding="async"
         className={imgClassName || undefined}
       />
-      {chip !== 'none' && <ExampleChip variant={chip} photo={photo} />}
       {children}
     </div>
   );

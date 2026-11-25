@@ -70,9 +70,4 @@ export function wallPicture(group: GalleryGroup, tile: GalleryTile, eye: EyeId):
   return w ? asset(w.base, { pick: Number.MAX_SAFE_INTEGER }) : null;
 }
 
-/** The tile shows another person's eye and says so in the picture ("Example photo"): an eye colour other than Mantas's own, or
- *  a pair or family that mixes his eye with example photos. */
-export function hasPhotoChip(group: GalleryGroup, tile: GalleryTile, eye: EyeId): boolean {
-  return hasEyeSwitch(group) ? eye !== 'own' : tile.src === 'mixed';
-}
 

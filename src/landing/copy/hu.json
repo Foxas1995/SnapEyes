@@ -41,9 +41,6 @@
     "open": "Kezdd az ingyenes előnézettel."
   },
   "example": {
-    "chip": "Példa",
-    "vis": "Vizualizáció",
-    "photo": "Példafotó",
     "mantas": "A saját szemünk"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "A falad",
     "title": "Nézd meg a falon",
     "intro": "Nyomtasd ki, ahol szeretnéd: akrilra, alumíniumra, vászonra vagy keretbe.",
-    "stageLabel": "A fájlod vizualizációi, kinyomtatva",
     "materialsLabel": "Anyag",
     "artLabel": "Alkotás",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "További nézetek",
-    "railLabel": "További vizualizációk",
     "prev": "Előző kép",
     "next": "Következő kép",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "A teljes helyreállított írisz, egy négyzet jelöli, hol vágtuk ki a közelképet",
     "locatorLabel": "A kivágás helye",
     "edgeTitle": "Az akrilnyomat éle",
-    "edgeAlt": "Egy akrilnyomat sarkának vizualizációja: polírozott, átlátszó él, egy acél távtartó és lágy ablaktükröződés."
+    "edgeAlt": "Egy akrilnyomat sarka: polírozott, átlátszó él, egy acél távtartó és lágy ablaktükröződés."
   },
   "trust": {
     "eyebrow": "Amit sosem teszünk",
@@ -662,8 +657,7 @@
   "final": {
     "title": "Nézd meg a saját íriszedet",
     "body": "Csak a telefonodra, jó fényre és kb. egy percre van szükséged.",
-    "imageAlt": "Vizualizáció: egy sötét dolgozószoba alkonyatkor, amelynek falán a saját íriszünk látható akrilra nyomtatva.",
-    "chip": "Vizualizáció"
+    "imageAlt": "Egy sötét dolgozószoba alkonyatkor, amelynek falán a saját íriszünk látható akrilra nyomtatva."
   },
   "footer": {
     "operatedBy": "A SnapEyes üzemeltetője",

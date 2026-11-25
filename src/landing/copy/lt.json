@@ -41,9 +41,6 @@
     "open": "Pradėkite nuo nemokamos peržiūros."
   },
   "example": {
-    "chip": "Pavyzdys",
-    "vis": "Vizualizacija",
-    "photo": "Pavyzdinė nuotrauka",
     "mantas": "Mūsų pačių akis"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "Jūsų siena",
     "title": "Pamatykite ant savo sienos",
     "intro": "Atsispausdinkite, kur norite: ant akrilo, aliuminio, drobės ar rėmelyje.",
-    "stageLabel": "Atspausdinto Jūsų failo vizualizacijos",
     "materialsLabel": "Medžiaga",
     "artLabel": "Kūrinys",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "Daugiau vaizdų",
-    "railLabel": "Daugiau vizualizacijų",
     "prev": "Ankstesnis vaizdas",
     "next": "Kitas vaizdas",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "Visa atkurta rainelė, kvadratu pažymėta vieta, iš kurios iškirptas fragmentas",
     "locatorLabel": "Iškirpimo vieta",
     "edgeTitle": "Spaudinio ant akrilo kraštas",
-    "edgeAlt": "Vizualizacija: spaudinio ant akrilo kampas su nupoliruotu skaidriu kraštu, plieniniu atstumo laikikliu ir švelniu lango atspindžiu."
+    "edgeAlt": "Spaudinio ant akrilo kampas su nupoliruotu skaidriu kraštu, plieniniu atstumo laikikliu ir švelniu lango atspindžiu."
   },
   "trust": {
     "eyebrow": "Ko niekada nedarome",
@@ -662,8 +657,7 @@
   "final": {
     "title": "Pamatykite savo rainelę",
     "body": "Tereikia telefono, geros šviesos ir maždaug minutės.",
-    "imageAlt": "Vizualizacija: tamsus kabinetas prieblandoje, ant sienos mūsų pačių rainelė, atspausdinta ant akrilo.",
-    "chip": "Vizualizacija"
+    "imageAlt": "Tamsus kabinetas prieblandoje, ant sienos mūsų pačių rainelė, atspausdinta ant akrilo."
   },
   "footer": {
     "operatedBy": "SnapEyes paslaugą teikia",

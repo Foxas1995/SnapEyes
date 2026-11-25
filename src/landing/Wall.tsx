@@ -1,6 +1,6 @@
 // The wall chapter (#wall): "See it on your wall". A stage with a visualisation of the file in a room, a list of six materials (each in
 // its own room), four artworks, what each material is as three icons of a few words each, a compare table (closed), then the size guide and
-// "More ways to see it". The visitor buys a DIGITAL file: every picture here is a visualisation and says so in the picture (the chip), and
+// "More ways to see it". The visitor buys a DIGITAL file: every picture here is a visualisation and said so in the picture with a chip until 2026-11-24 (the owner's decision: no chip on any picture of the site), and
 // the one line under the title says the visitor prints it where they like. The lean pass of 2026-10-22 (the owner: too much text) moved the
 // rest into the FAQ: that printing is not part of the order (the price list and the FAQ say it), that the rooms are made with AI, that
 // materials and colours vary, the sizes in the pictures; the footnote and the text link under the stage are gone.
@@ -81,7 +81,7 @@ export function Wall() {
   const m = w.materials[mat];
   const pic = stagePicture(mat, art, lang);
   const caption = pic?.sizeOk && isSized(mat) ? t(`wall.captionsSize.${mat}`, { size: SCENE_SIZE }) : t(`wall.captions.${mat}`);
-  const alt = `${c.example.vis}. ${caption} ${w.arts[art]}.`;
+  const alt = `${caption} ${w.arts[art]}.`;
 
   return (
     <section className="lp-sec lp-wall" id="wall" aria-labelledby="wallH">
@@ -98,7 +98,7 @@ export function Wall() {
               picture={pic}
               alt={alt}
               glint={glintFor(mat, art)}
-              label={w.stageLabel}
+              label={w.title}
               caption={caption}
               eyesNote={art === 'family4' || art === 'collision' ? w.eyesNote : undefined}
             />

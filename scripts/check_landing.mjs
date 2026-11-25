@@ -152,8 +152,13 @@ async function checkLabels() {
     const c = COPY[lang];
     const page = await open({ lang, width });
     const r = JSON.parse(await page.eval(`(() => {
-      const AREAS = [['hero', '.lp-hero-fig', '.lp-globe-note', 1], ['stage', '#stage', '.lp-vis-chip', 1], ['rooms', '#rail figure > div', '.lp-vis-chip', 4],
-        ['edge', '.lp-edge-img', '.lp-vis-chip', 1], ['crop', '.lp-cu-img', '.lp-cu-badge', 1], ['final', '.lp-final', '.lp-final-chip', 1],
+      // 2026-11-24, THE OWNER'S DECISION: no chip "Visualisation" and no chip "Example photo" on any picture of the site ("tegul mato ir tiek, gana visiems čia
+      // aiškintis"; "kur pavyzdinė nuotrauka parašyta irgi išimk"). Until then this check demanded the chip ".lp-vis-chip" in the stage, the rooms, the edge and the
+      // closing scene, and "Example photo" on every tile of another person's eye. It now demands the opposite there (a null label: the area and its picture are
+      // there and NO chip is in it), and nowhere on the page is such a chip. What still labels pictures: the globe's line, the crop's badge, the Reveal's "Our own
+      // eye", and for the gallery the legend line alone.
+      const AREAS = [['hero', '.lp-hero-fig', '.lp-globe-note', 1], ['stage', '#stage', null, 1], ['rooms', '#rail figure > div', null, 4],
+        ['edge', '.lp-edge-img', null, 1], ['crop', '.lp-cu-img', '.lp-cu-badge', 1], ['final', '.lp-final', null, 1],
         ['reveal', '.lp-rv-frame', '.lp-rv-who', 1]];   // the pinned scene's frame (768 px and up) and the phone's own (up to 767 px): both are here with motion allowed
       const out = { miss: [], texts: {}, imgs: [], tiles: 0, tilesWithPhotoChip: 0, legend: !!document.querySelector('.lp-legend') };
       for (const [name, sel, chip, n] of AREAS) {
@@ -161,12 +166,14 @@ async function checkLabels() {
         if (boxes.length < n) out.miss.push(name + ': ' + boxes.length + ' of ' + n + ' areas found');
         for (const b of boxes) {
           if (!b.querySelector('img')) out.miss.push(name + ': an area without a picture');
+          if (chip === null) { if (b.querySelector('.lp-vis-chip, .lp-final-chip, .lp-chip-ex, [data-chip]')) out.miss.push(name + ': a chip on the picture (none since 2026-11-24)'); continue; }
           const ch = b.querySelector(chip);
           if (!ch || !ch.textContent.trim()) { out.miss.push(name + ': no label'); continue; }
           (out.texts[name] ||= []).push(ch.querySelector('b') ? ch.querySelector('b').textContent.trim() : ch.textContent.trim());
         }
       }
       // the globe's artworks (once its chunk is in): each a button whose label ends with whose eyes it shows
+      out.chips = [...document.querySelectorAll('.lp-vis-chip, .lp-final-chip, .lp-chip-ex.lp-photo, [data-chip="vis"]')].length;
       out.discs = [...document.querySelectorAll('#heroGlobe .lp-gl-disc')].map((b) => b.tagName + '|' + (b.getAttribute('aria-label') || ''));
       for (const i of document.querySelectorAll('main img')) {
         if (i.getAttribute('alt') === null) out.imgs.push('no alt: ' + (i.currentSrc || i.src).split('/').pop());
@@ -175,8 +182,7 @@ async function checkLabels() {
       return JSON.stringify(out);
     })()`));
     const problemsHere = [...r.miss, ...r.imgs.slice(0, 5)];
-    const wantVis = c.example.vis;
-    for (const name of ['stage', 'rooms', 'edge', 'final']) for (const t of r.texts[name] || []) if (t !== wantVis) problemsHere.push(`${name} label "${t}", the language says "${wantVis}"`);
+    if (r.chips) problemsHere.push(`${r.chips} chip(s) "Visualisation" or "Example photo" on the page: none since 2026-11-24 (the owner's decision)`);
     // the globe shows flat artworks (our own eye and example photos), not a visualisation: its line says so, and each artwork says whose eyes it shows
     for (const t of r.texts.hero || []) if (t !== c.hero.globeNote) problemsHere.push(`hero line "${t}", the language says "${c.hero.globeNote}"`);
     const prov = [c.styles.eyeNote.own, c.styles.eyeNote.other, c.styles.mixed];
@@ -187,17 +193,19 @@ async function checkLabels() {
     for (const t of r.texts.reveal || []) if (t !== c.example.mantas) problemsHere.push(`reveal frame label "${t}", the language says "${c.example.mantas}"`);
     if (!(r.texts.reveal || []).length) problemsHere.push('the pinned scene has no label of whose eye it is');
     if (!r.legend) problemsHere.push('the styles legend line is missing (it is the label of the flat artworks)');
-    // the other people's eyes carry "Example photo": pick the brown eye of the first group, every tile of it shows a chip
+    // the other people's eyes: until 2026-11-24 every tile of another person's eye carried the chip "Example photo". The owner's decision of that day took the chip
+    // away, so this check accepts the LEGEND LINE ALONE as what says whose eyes the gallery shows: pick the brown eye of the first group, no tile of it shows a
+    // chip, and the legend line is still on the page
     const chips = await page.eval(`(async () => {
       document.querySelector('#gEyeChips [role=radio]:nth-child(3)')?.click();
       await new Promise((r) => setTimeout(r, 700));
       const tiles = [...document.querySelectorAll('.lp-tile-img')].filter((t) => t.offsetParent);
-      return JSON.stringify([tiles.length, tiles.filter((t) => [...t.querySelectorAll('.lp-chip-ex')].some((c) => getComputedStyle(c).visibility !== 'hidden' && c.textContent.trim() === ${JSON.stringify(c.example.photo)})).length]);
+      return JSON.stringify([tiles.length, tiles.filter((t) => t.querySelector('.lp-chip-ex, .lp-vis-chip, [data-chip]')).length, !!document.querySelector('.lp-legend')?.textContent.trim()]);
     })()`);
-    const [tiles, withChip] = JSON.parse(chips);
-    if (!tiles || withChip !== tiles) problemsHere.push(`with another person's eye ${withChip} of ${tiles} tiles carry "${c.example.photo}"`);
+    const [tiles, withChip, legend] = JSON.parse(chips);
+    if (!tiles || withChip !== 0 || !legend) problemsHere.push(`with another person's eye ${withChip} of ${tiles} tiles carry a chip (none since 2026-11-24) and the legend line is ${legend ? 'there' : 'MISSING'}`);
     if (problemsHere.length) fail('labels', `${lang} ${width}px: ${problemsHere.join('; ')}`);
-    else pass('labels', `${lang} ${width}px: every picture area is labelled, every picture has alt and size`);
+    else pass('labels', `${lang} ${width}px: no chip on any picture (2026-11-24), the legend line and the Reveal's label are there, every picture has alt and size`);
     await page.close();
   }
 }

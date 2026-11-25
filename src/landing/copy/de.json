@@ -41,9 +41,6 @@
     "open": "Starten Sie mit der kostenlosen Vorschau."
   },
   "example": {
-    "chip": "Beispiel",
-    "vis": "Visualisierung",
-    "photo": "Beispielfoto",
     "mantas": "Unser eigenes Auge"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "Ihre Wand",
     "title": "Sehen Sie es an Ihrer Wand",
     "intro": "Drucken Sie es, wo Sie möchten: auf Acryl, Aluminium, Leinwand oder gerahmt.",
-    "stageLabel": "Visualisierungen Ihrer Datei, gedruckt",
     "materialsLabel": "Material",
     "artLabel": "Kunstwerk",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "Weitere Ansichten",
-    "railLabel": "Weitere Visualisierungen",
     "prev": "Vorheriges Bild",
     "next": "Nächstes Bild",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "Die ganze restaurierte Iris, ein Quadrat markiert die Stelle der Nahaufnahme",
     "locatorLabel": "Hier ausgeschnitten",
     "edgeTitle": "Die Kante eines Acryldrucks",
-    "edgeAlt": "Eine Visualisierung der Ecke eines Drucks auf Acryl: polierte klare Kante, ein Abstandhalter aus Stahl und eine weiche Fensterspiegelung."
+    "edgeAlt": "Die Ecke eines Drucks auf Acryl: polierte klare Kante, ein Abstandhalter aus Stahl und eine weiche Fensterspiegelung."
   },
   "trust": {
     "eyebrow": "Was wir nie tun",
@@ -662,8 +657,7 @@
   "final": {
     "title": "Sehen Sie Ihre eigene Iris",
     "body": "Sie brauchen nur Ihr Smartphone, gutes Licht und etwa eine Minute.",
-    "imageAlt": "Eine Visualisierung: ein dunkles Arbeitszimmer in der Dämmerung, an der Wand unsere eigene Iris auf Acryl gedruckt.",
-    "chip": "Visualisierung"
+    "imageAlt": "Ein dunkles Arbeitszimmer in der Dämmerung, an der Wand unsere eigene Iris auf Acryl gedruckt."
   },
   "footer": {
     "operatedBy": "SnapEyes wird betrieben von",

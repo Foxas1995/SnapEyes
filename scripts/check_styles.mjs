@@ -680,7 +680,7 @@ export function checkGlobeArt(globeArt, globeRows, listed, styles, out) {
  *  and a label has no Soon chip to take it back: it names no style that is not live (release review H-M2; the tiles are different, they carry their state). */
 export const PICTURE_LABELS = [
   'hero.globeAlt', 'reveal.eyes', 'wall.arts', 'wall.captions', 'wall.captionsSize', 'more.scenes',
-  'closeups.fibreAlt', 'closeups.fibreTitle', 'closeups.locatorAlt', 'closeups.edgeAlt', 'closeups.edgeTitle', 'final.imageAlt', 'final.chip',
+  'closeups.fibreAlt', 'closeups.fibreTitle', 'closeups.locatorAlt', 'closeups.edgeAlt', 'closeups.edgeTitle', 'final.imageAlt',      // final.chip went with every chip on a picture (2026-11-24, the owner's decision)
 ];
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

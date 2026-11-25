@@ -2,9 +2,9 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useCopy } from './copy/useCopy';
 import type { RunCatalogue } from '../shared/catalogue';
 import { tileState } from './tileState';
-import { artPicture, hasPhotoChip, tileCopy, tileKey, tileSizes, wallPicture, type EyeId, type GalleryGroup, type GalleryTile } from './gallery';
+import { artPicture, tileCopy, tileKey, tileSizes, wallPicture, type EyeId, type GalleryGroup, type GalleryTile } from './gallery';
 import type { LandingPricesState } from './prices';
-import { ExampleChip, Picture, PriceGate, type PictureAsset } from './ui';
+import { Picture, PriceGate, type PictureAsset } from './ui';
 
 function WallIcon() {
   return (
@@ -65,7 +65,9 @@ const calm = () => typeof window.matchMedia === 'function' && window.matchMedia(
  *  its picture's alt text (the lean pass of 2026-10-22 took the two lines under the name off the tile).
  *  Labels (BUILD_PLAN section 7): the flat artworks of our own eye carry no chip, the legend line of the styles is their label;
  *  "Example photo" (example.photo) sits in the picture of every tile that shows someone else's eye; the wall view carries
- *  "Visualisation" (example.vis), which is only visible while the wall is on. */
+ *  "Visualisation" (example.vis), which is only visible while the wall is on.
+ *  2026-11-24, the owner's decision: NONE of these chips is drawn any more ("tegul mato ir tiek"; "kur pavyzdinė nuotrauka parašyta irgi
+ *  išimk"). The legend line of the gallery alone says whose eyes the tiles show; the picture keeps its kind in data-chip-area. */
 export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices, sale, enter, index }: StyleTileProps) {
   const { c, t } = useCopy();
   // for sale now: ordering is open and the run-time catalogue lists the tile's style as live for the tile's number of eyes (src/landing/tileState.ts, the style is
@@ -89,7 +91,6 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
   }, [waiting]);
   const wall = wallPicture(group, tile, eye);
   const on = wallOn && !!wall;
-  const photo = hasPhotoChip(group, tile, eye);
   return (
     <figure
       className={`lp-tile${tile.square ? ' lp-sq' : ''}${enter === 'swap' ? ' lp-tile-in' : ''}${on ? ' lp-on-wall' : ''}`}
@@ -98,17 +99,15 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
       data-reveal={enter === 'reveal' ? 'fade' : undefined}
       style={{ '--i': Math.min(index, 4), '--j': Math.min(index, 5) } as CSSProperties}
     >
-      {/* The picture's own chip: "Visualisation" when the tile has a wall view (shown only while the wall is on), else
-          "Example photo" when it shows another person's eye, else none (the legend line is the label). A tile with both
-          gets the photo chip as a second layer; the two never show at the same time (css/styles.css). */}
+      {/* No chip in the picture (2026-11-24, the owner's decision): whose eye a tile shows is said by the legend line of the gallery, and that a wall
+          view is a made picture by the FAQ. The kind of the picture stays in the markup: "vis" for a tile with a wall view, else "example". */}
       <Picture
         className="lp-tile-img"
         imgClassName="lp-art"
         asset={art}
         sizes={sizes}
         alt={`${name}. ${desc}`}
-        chip={wall ? 'vis' : photo ? 'example' : 'none'}
-        photo={!wall && photo}
+        chip={wall ? 'vis' : 'example'}
         imgProps={{
           'aria-hidden': on || undefined,
           onLoad: () => setShown((p) => (p.ready ? p : { ...p, ready: true })),
@@ -137,12 +136,11 @@ export function StyleTile({ tile, group, eye, wallOn, wallAsked, onWall, prices,
             sizes={wallAsked ? sizes : undefined}
             width={wall.w}
             height={wall.h}
-            alt={on ? `${c.example.vis}. ${name}. ${c.wall.captions.acrylic}` : ''}
+            alt={on ? `${name}. ${c.wall.captions.acrylic}` : ''}
             aria-hidden={!on}
             decoding="async"
           />
         )}
-        {wall && photo && <ExampleChip variant="example" photo />}
         {wall && (
           <button
             type="button"

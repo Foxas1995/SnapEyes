@@ -41,9 +41,6 @@
     "open": "Aloita ilmaisella esikatselulla."
   },
   "example": {
-    "chip": "Esimerkki",
-    "vis": "Havainnekuva",
-    "photo": "Esimerkkikuva",
     "mantas": "Oma silmämme"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "Seinälläsi",
     "title": "Näe se seinälläsi",
     "intro": "Tulosta se missä haluat: akryylille, alumiinille, canvakselle tai kehyksiin.",
-    "stageLabel": "Havainnekuvia tiedostostasi tulostettuna",
     "materialsLabel": "Materiaali",
     "artLabel": "Taideteos",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "Lisää tapoja nähdä se",
-    "railLabel": "Lisää havainnekuvia",
     "prev": "Edellinen kuva",
     "next": "Seuraava kuva",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "Koko entisöity iiris, jossa neliö näyttää, mistä lähikuva on rajattu",
     "locatorLabel": "Mistä se on rajattu",
     "edgeTitle": "Akryylitulosteen reuna",
-    "edgeAlt": "Havainnekuva akryylitulosteen kulmasta: kiillotettu kirkas reuna, teräksinen seinäkiinnike ja pehmeä ikkunan heijastus."
+    "edgeAlt": "Akryylitulosteen kulma: kiillotettu kirkas reuna, teräksinen seinäkiinnike ja pehmeä ikkunan heijastus."
   },
   "trust": {
     "eyebrow": "Mitä emme koskaan tee",
@@ -662,8 +657,7 @@
   "final": {
     "title": "Näe oma iiriksesi",
     "body": "Tarvitset vain puhelimesi, hyvän valon ja noin minuutin.",
-    "imageAlt": "Havainnekuva: tumma työhuone iltahämärässä, seinällä oma iiriksemme akryylille tulostettuna.",
-    "chip": "Havainnekuva"
+    "imageAlt": "Tumma työhuone iltahämärässä, seinällä oma iiriksemme akryylille tulostettuna."
   },
   "footer": {
     "operatedBy": "SnapEyes-palvelua ylläpitää",

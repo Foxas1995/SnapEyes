@@ -41,9 +41,6 @@
     "open": "Započnite s besplatnim pregledom."
   },
   "example": {
-    "chip": "Primjer",
-    "vis": "Vizualizacija",
-    "photo": "Ogledna fotografija",
     "mantas": "Naše vlastito oko"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "Vaš zid",
     "title": "Pogledajte je na svom zidu",
     "intro": "Tiskajte je gdje god želite: na akrilu, aluminiju, platnu ili u okviru.",
-    "stageLabel": "Vizualizacije vaše datoteke, otisnute",
     "materialsLabel": "Materijal",
     "artLabel": "Slika",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "Još načina da je vidite",
-    "railLabel": "Još vizualizacija",
     "prev": "Prethodna slika",
     "next": "Sljedeća slika",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "Cijela obnovljena šarenica, s kvadratom koji označava gdje je izrezan krupni plan",
     "locatorLabel": "Gdje je izrezano",
     "edgeTitle": "Rub otiska na akrilu",
-    "edgeAlt": "Vizualizacija kuta otiska na akrilu: polirani prozirni rub, čelični distancer i blagi odraz prozora."
+    "edgeAlt": "Kut otiska na akrilu: polirani prozirni rub, čelični distancer i blagi odraz prozora."
   },
   "trust": {
     "eyebrow": "Što nikad ne radimo",
@@ -662,8 +657,7 @@
   "final": {
     "title": "Pogledajte svoju šarenicu",
     "body": "Potrebni su vam samo mobitel, dobro svjetlo i otprilike minuta.",
-    "imageAlt": "Vizualizacija: tamna radna soba u sumrak, s našom vlastitom šarenicom otisnutom na akrilu na zidu.",
-    "chip": "Vizualizacija"
+    "imageAlt": "Tamna radna soba u sumrak, s našom vlastitom šarenicom otisnutom na akrilu na zidu."
   },
   "footer": {
     "operatedBy": "SnapEyes vodi",

@@ -652,48 +652,56 @@ const BANNED_CLAIMS = /ready to print|print[- ]ready|druckfertig|druckbereit|100
 // (styles.wallFile, only while that tile can be bought). The lean pass of 2026-10-22 (the owner: say a message once, where it matters) took it out
 // of the hero caption, the sentence under the wall title, the closing scene and the caption of the polished edge: the price list says it, the
 // FAQ says it, and every picture of a print carries its "Visualisation" label.
+// 2026-11-24, THE OWNER'S DECISION: no chip "Visualisation" and no chip "Example photo" on any picture of the site, and the word "Visualisation" nowhere on it
+// ("tegul mato ir tiek, gana visiems čia aiškintis"; "kur pavyzdinė nuotrauka parašyta irgi išimk"). This check demanded the two labels word for word until then
+// (HONESTY chips: example.chip, example.vis; final.chip the same word). It now holds the opposite: the keys of the chips are NOT in the copy (LABEL_KEYS_GONE),
+// and the word (HONESTY visWord, per language) stands in no string of the page but the FAQ answer about what its pictures are (VIS_WORD_STAYS), which the
+// owner did not ask to change. What still says whose eyes and what kind of picture: the legend lines, the line under the Reveal's eye, the eye notes of the
+// rooms and the globe (styles.eyeNote, "Example photo" there is a line of the legend, not a chip), and that FAQ answer.
+const LABEL_KEYS_GONE = ['example.chip', 'example.vis', 'example.photo', 'final.chip', 'wall.stageLabel', 'more.railLabel'];
+const VIS_WORD_STAYS = ['faq.items.3.a'];
 // 2026-11-21: the pricing line has a second wording for the state in which the server sells prints (pricing.notIncludesPrints, src/landing/ordering.ts
 // usePrintsOffered): it KEEPS the sentence (a print is an order of its own, made from the order page after the artwork is ready) and adds where a print is ordered,
 // so it is one of the strings that say it. The FAQ answer's prints wording (faq.items.1.aPrints) does not hold the sentence: it says what the order is instead.
 const PRINTING_KEYS = ['pricing.notIncludes', 'pricing.notIncludesPrints', 'faq.items.1.a', 'styles.wallFile'];
 const HONESTY = {
   en: {
-    chips: { 'example.chip': 'Example', 'example.vis': 'Visualisation' },
+    visWord: /visuali[sz]ation/i,
     printing: { re: /Printing is not part of your order/i, keys: PRINTING_KEYS },
     soon: { re: /Ordering opens soon/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   de: {
-    chips: { 'example.chip': 'Beispiel', 'example.vis': 'Visualisierung' },
+    visWord: /visualisierung/i,
     printing: { re: /Der Druck gehört nicht zur Bestellung/i, keys: PRINTING_KEYS },
     soon: { re: /Bestellungen sind bald möglich/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   lt: {
-    chips: { 'example.chip': 'Pavyzdys', 'example.vis': 'Vizualizacija' },
+    visWord: /vizualizacij/i,
     printing: { re: /Spausdinimas nėra Jūsų užsakymo dalis/i, keys: PRINTING_KEYS },
     soon: { re: /Užsakymus pradėsime priimti netrukus/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   hu: {
-    chips: { 'example.chip': 'Példa', 'example.vis': 'Vizualizáció' },
+    visWord: /vizualizáci/i,
     printing: { re: /A nyomtatás nem része a rendelésnek/i, keys: PRINTING_KEYS },
     soon: { re: /A rendelés hamarosan indul/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   hr: {
-    chips: { 'example.chip': 'Primjer', 'example.vis': 'Vizualizacija' },
+    visWord: /vizualizacij/i,
     printing: { re: /Tisak nije dio vaše narudžbe/i, keys: PRINTING_KEYS },
     soon: { re: /Naručivanje se otvara uskoro/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   fi: {
-    chips: { 'example.chip': 'Esimerkki', 'example.vis': 'Havainnekuva' },
+    visWord: /havainnekuv/i,
     printing: { re: /Tulostus ei kuulu tilaukseesi/i, keys: PRINTING_KEYS },
     soon: { re: /Tilaaminen avautuu pian/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   et: {
-    chips: { 'example.chip': 'Näide', 'example.vis': 'Visualiseering' },
+    visWord: /visualiseering/i,
     printing: { re: /Trükkimine ei kuulu sinu tellimuse juurde/i, keys: PRINTING_KEYS },
     soon: { re: /Tellimine avaneb peagi/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
   lv: {
-    chips: { 'example.chip': 'Piemērs', 'example.vis': 'Vizualizācija' },
+    visWord: /vizualizācij/i,
     printing: { re: /Druka nav jūsu pasūtījuma daļa/i, keys: PRINTING_KEYS },
     soon: { re: /Pasūtījumus sāksim pieņemt drīz/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
   },
@@ -811,10 +819,17 @@ function checkLandingCopy(root, mods, strings, out) {
     // the honesty lines, where the prototype has them
     const h = HONESTY[l];
     if (h) {
-      for (const [p, want] of Object.entries(h.chips)) if (dig(x, p) !== want) out.push(`${rel}: ${p} is "${dig(x, p)}", the label must read "${want}" word for word`);
+      // 2026-11-24, the owner's decision (see LABEL_KEYS_GONE above): the chips are gone and the word stands only where the FAQ explains the pictures
+      for (const p of LABEL_KEYS_GONE) if (dig(x, p) !== undefined) out.push(`${rel}: ${p} is back ("${dig(x, p)}"): no picture carries a chip "Visualisation" or "Example photo" (the owner's decision of 2026-11-24)`);
+      (function walk(o, path) {
+        if (typeof o === 'string') {
+          if (h.visWord.test(o) && !VIS_WORD_STAYS.includes(path)) out.push(`${rel}: ${path} says the word "${o.match(h.visWord)[0]}": it stands nowhere on the page but in ${VIS_WORD_STAYS.join(', ')} (the owner's decision of 2026-11-24)`);
+        } else if (Array.isArray(o)) o.forEach((v, i) => walk(v, `${path}.${i}`));
+        else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) walk(v, path ? `${path}.${k}` : k);
+      })(x, '');
+      if (!h.visWord.test(dig(x, VIS_WORD_STAYS[0]) ?? '')) out.push(`${rel}: ${VIS_WORD_STAYS[0]} no longer says what the pictures of rooms and prints are (${h.visWord}): that answer is not to change without the owner`);
       // (the hero's own label hero.chipTitle went with its wall visualisation on 2026-10-22: the hero shows the globe of real artworks, labelled
       // with the provenance line styles.mixed; the wall picture and its "Visualisation" label live in the wall section)
-      for (const p of ['final.chip']) if (dig(x, p) !== x.example?.vis) out.push(`${rel}: ${p} ("${dig(x, p)}") must be the same label as example.vis ("${x.example?.vis}")`);
       for (const [p, re] of Object.entries(h.printing.alt ?? {})) if (!re.test(dig(x, p) ?? '')) out.push(`${rel}: ${p} must say that printing is not part of the order in the words ${re} (the caption's own wording)`);
       for (const [what, rule] of Object.entries({ 'the line "printing is not part of your order"': h.printing, 'the line "ordering opens soon"': h.soon })) {
         const where = leaves.filter(([, v]) => typeof v === 'string' && rule.re.test(v)).map(([p]) => p).sort();

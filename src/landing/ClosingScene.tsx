@@ -4,7 +4,8 @@
 //
 //   <ClosingScene ctaRef={...} />     needs <LangProvider> and <CopyProvider> above it
 //
-// The closing picture is a visualisation and says so in its corner (the "Visualisation" chip, the words of final.chip).
+// The closing picture is a made picture, not a photograph. Until 2026-11-24 it said so in its corner with a chip; the owner's decision of that day:
+// no chip on any picture of the site (the FAQ answer about the pictures says what they are).
 // Importing this file brings its own stylesheet, so it is loaded lazily with its section.
 // Motion (motion spec 6.14): when the scene is well in view the large picture opens from a frame, a mat opening: it starts inset by 7 percent
 // with rounded corners (86 percent of it is on screen from the first frame), and opens to the full band in 1.3 s while the picture inside
@@ -14,7 +15,6 @@ import { useEffect, useRef, type CSSProperties, type Ref } from 'react';
 import { useCopy } from './copy/useCopy';
 import { useTryHref } from './links';
 import { asset } from './assets';
-import { ExampleChip } from './ui';
 import { Title } from '../motion/Title';
 import { traverse } from '../motion/motion';
 import { put, whenPhone } from '../motion/phone';
@@ -44,7 +44,6 @@ export function ClosingScene({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
       <div className="lp-bg" ref={bg}>
         <img src={pic.src} srcSet={pic.srcset} sizes="(min-width: 960px) 1800px, 1200px" width={pic.w} height={pic.h} loading="lazy" decoding="async" alt={c.final.imageAlt} />
       </div>
-      <ExampleChip variant="vis" label={c.final.chip} className="lp-final-chip" />
       <div className="lp-wrap">
         <Title id="finalH" text={c.final.title} />
         <p className="lp-lede" data-reveal="fade" style={after(2.5)}>{c.final.body}</p>

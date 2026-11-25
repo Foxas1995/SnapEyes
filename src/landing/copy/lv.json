@@ -41,9 +41,6 @@
     "open": "Sāciet ar bezmaksas priekšskatījumu."
   },
   "example": {
-    "chip": "Piemērs",
-    "vis": "Vizualizācija",
-    "photo": "Parauga fotogrāfija",
     "mantas": "Mūsu pašu acs"
   },
   "hero": {
@@ -107,7 +104,6 @@
     "eyebrow": "Jūsu siena",
     "title": "Ieraugiet to uz savas sienas",
     "intro": "Izdrukājiet, kur vien vēlaties: uz akrila, alumīnija, audekla vai ierāmētu.",
-    "stageLabel": "Jūsu izdrukātā faila vizualizācijas",
     "materialsLabel": "Materiāls",
     "artLabel": "Mākslas darbs",
     "materials": {
@@ -272,7 +268,6 @@
   },
   "more": {
     "title": "Vēl veidi, kā to ieraudzīt",
-    "railLabel": "Vēl vizualizācijas",
     "prev": "Iepriekšējais attēls",
     "next": "Nākamais attēls",
     "scenes": [
@@ -518,7 +513,7 @@
     "locatorAlt": "Visa atjaunotā varavīksnene ar kvadrātu, kas rāda, kur izgriezts tuvplāns",
     "locatorLabel": "Kur tas izgriezts",
     "edgeTitle": "Akrila izdrukas mala",
-    "edgeAlt": "Vizualizācija: akrila izdrukas stūris ar pulētu caurspīdīgu malu, tērauda distanceri un maigu loga atspīdumu."
+    "edgeAlt": "Akrila izdrukas stūris ar pulētu caurspīdīgu malu, tērauda distanceri un maigu loga atspīdumu."
   },
   "trust": {
     "eyebrow": "Ko mēs nekad nedarām",
@@ -662,8 +657,7 @@
   "final": {
     "title": "Ieraugiet savu varavīksneni",
     "body": "Vajag tikai telefonu, labu gaismu un apmēram minūti.",
-    "imageAlt": "Vizualizācija: tumšs kabinets krēslā, pie sienas mūsu pašu varavīksnene, izdrukāta uz akrila.",
-    "chip": "Vizualizācija"
+    "imageAlt": "Tumšs kabinets krēslā, pie sienas mūsu pašu varavīksnene, izdrukāta uz akrila."
   },
   "footer": {
     "operatedBy": "SnapEyes uztur",
