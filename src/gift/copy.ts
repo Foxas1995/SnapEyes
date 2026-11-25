@@ -13,6 +13,7 @@ export interface GiftCopy {
   choose: string;
   kinds: Record<GiftKind, { name: string; note: string; alt: string }>;
   stepsTitle: string;
+  /** the captions under the three pictures of how it works (2026-11-25): short, no full stop */
   steps: [string, string, string];
   rules: string;
   buy: (price: string) => string;
@@ -55,9 +56,9 @@ const en: GiftCopy = {
   },
   stepsTitle: 'How it works',
   steps: [
-    'You pay and get the code by email.',
-    'You give the code: print the card or send it.',
-    'They photograph their eye on snapeyes.com and enter the code at checkout.',
+    'You get a code by email',
+    'They photograph their eye',
+    'And get their own artwork',
   ],
   rules: 'Valid for 12 months, for one order.',
   buy: (price) => `Buy the voucher · ${price}`,
@@ -109,9 +110,9 @@ const de: GiftCopy = {
   },
   stepsTitle: 'So funktioniert es',
   steps: [
-    'Sie bezahlen und erhalten den Code per E-Mail.',
-    'Sie verschenken den Code: Drucken Sie die Karte aus oder senden Sie ihn weiter.',
-    'Die beschenkte Person fotografiert ihr Auge auf snapeyes.com und gibt den Code an der Kasse ein.',
+    'Sie erhalten einen Code per E-Mail',
+    'Die beschenkte Person fotografiert ihr Auge',
+    'Und bekommt ihr eigenes Kunstwerk',
   ],
   rules: 'Gültig 12 Monate, für eine Bestellung.',
   buy: (price) => `Gutschein kaufen · ${price}`,
@@ -163,9 +164,9 @@ const lt: GiftCopy = {
   },
   stepsTitle: 'Kaip tai veikia',
   steps: [
-    'Sumokate ir gaunate kodą el. paštu.',
-    'Padovanojate kodą: atsispausdinkite kortelę arba persiųskite.',
-    'Apdovanotas žmogus nusifotografuoja akį snapeyes.com ir kasoje įveda kodą.',
+    'Gaunate kodą el. paštu',
+    'Apdovanotasis nufotografuoja akį',
+    'Ir gauna savo kūrinį',
   ],
   rules: 'Galioja 12 mėnesių, vienam užsakymui.',
   buy: (price) => `Pirkti kuponą · ${price}`,
@@ -217,9 +218,9 @@ const hu: GiftCopy = {
   },
   stepsTitle: 'Így működik',
   steps: [
-    'Fizetsz, és e-mailben megkapod a kódot.',
-    'Odaadod a kódot: nyomtasd ki a kártyát, vagy küldd el.',
-    'A megajándékozott a snapeyes.com oldalon lefotózza a szemét, és a pénztárnál beírja a kódot.',
+    'E-mailben kapsz egy kódot',
+    'A megajándékozott lefotózza a szemét',
+    'És megkapja a saját alkotását',
   ],
   rules: '12 hónapig érvényes, egy rendeléshez.',
   buy: (price) => `Utalvány megvásárlása · ${price}`,
@@ -271,9 +272,9 @@ const hr: GiftCopy = {
   },
   stepsTitle: 'Kako funkcionira',
   steps: [
-    'Platite i dobijete kod e-poštom.',
-    'Darujete kod: ispišite karticu ili ga proslijedite.',
-    'Osoba fotografira svoje oko na snapeyes.com i upiše kod na blagajni.',
+    'Kôd dobivate e-poštom',
+    'Darovana osoba fotografira svoje oko',
+    'I dobiva vlastitu sliku',
   ],
   rules: 'Vrijedi 12 mjeseci, za jednu narudžbu.',
   buy: (price) => `Kupite bon · ${price}`,
@@ -324,9 +325,9 @@ const fi: GiftCopy = {
   },
   stepsTitle: 'Näin se toimii',
   steps: [
-    'Maksat ja saat koodin sähköpostiisi.',
-    'Annat koodin: tulosta kortti tai lähetä se.',
-    'Saaja kuvaa silmänsä sivustolla snapeyes.com ja kirjoittaa koodin kassalla.',
+    'Saatte koodin sähköpostiin',
+    'Lahjan saaja kuvaa silmänsä',
+    'Ja saa oman taideteoksensa',
   ],
   rules: 'Voimassa 12 kuukautta, yhteen tilaukseen.',
   buy: (price) => `Osta lahjakortti · ${price}`,
@@ -377,9 +378,9 @@ const et: GiftCopy = {
   },
   stepsTitle: 'Kuidas see käib',
   steps: [
-    'Maksad ja saad koodi e-kirjaga.',
-    'Kingid koodi: trüki kaart välja või saada see.',
-    'Kingisaaja pildistab oma silma lehel snapeyes.com ja sisestab koodi tellimisel.',
+    'Saate koodi e-postiga',
+    'Kingisaaja pildistab oma silma',
+    'Ja saab oma kunstiteose',
   ],
   rules: 'Kehtib 12 kuud, üheks tellimuseks.',
   buy: (price) => `Osta kinkekaart · ${price}`,
@@ -431,9 +432,9 @@ const lv: GiftCopy = {
   },
   stepsTitle: 'Kā tas notiek',
   steps: [
-    'Jūs samaksājat un saņemat kodu e-pastā.',
-    'Jūs uzdāvināt kodu: izdrukājiet kartīti vai nosūtiet to.',
-    'Apdāvinātais nofotografē savu aci vietnē snapeyes.com un pasūtot ievada kodu.',
+    'Kodu saņemat e-pastā',
+    'Apdāvinātais nofotografē savu aci',
+    'Un saņem savu mākslas darbu',
   ],
   rules: 'Derīga 12 mēnešus, vienam pasūtījumam.',
   buy: (price) => `Pirkt karti · ${price}`,

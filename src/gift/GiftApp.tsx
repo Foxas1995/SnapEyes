@@ -210,12 +210,6 @@ export const GiftApp: React.FC = () => {
             ))}
           </div>
           {!giftMarket(pageMarket) && <p className="mt-3 text-[11px] text-zinc-400">{C.euroOnly}</p>}
-          <h2 className="mt-5 text-[10px] uppercase tracking-widest text-zinc-400">{C.stepsTitle}</h2>
-          <ol className="mt-2 flex flex-col gap-1.5 text-sm text-zinc-200">
-            {C.steps.map((s, i) => (
-              <li key={i} className="flex gap-2"><span className="text-gold-light font-semibold">{i + 1}.</span><span>{s}</span></li>
-            ))}
-          </ol>
           <p className="mt-3 text-[11px] text-zinc-400">{C.rules}</p>
           {open === false
             ? <p data-testid="gift-closed" className="mt-4 text-sm font-semibold text-emerald-300">{C.closed}</p>
@@ -250,7 +244,24 @@ export const GiftApp: React.FC = () => {
           {status.state === 'idle' && (
             <>
               <h1 className="font-luxury text-3xl sm:text-4xl font-bold text-center mt-2">{C.title}</h1>
-              <p className="text-center text-sm text-zinc-300 mt-3 max-w-[32rem] mx-auto">{C.lead}</p>
+              {/* how it works, in three pictures (the owner's word of 2026-11-25: clearer, and no more text): the code on a card, the eye photographed with a
+                  phone (the photo the artwork beside it was made from), the artwork */}
+              <ol aria-label={C.stepsTitle} data-testid="gift-flow" className="mt-6 grid grid-cols-3 gap-2 sm:gap-4 max-w-[34rem] mx-auto">
+                {C.steps.map((s, i) => (
+                  <li key={i} className="flex flex-col items-center text-center">
+                    {i === 0 ? (
+                      <div aria-hidden="true" className="w-full aspect-square rounded-xl border border-gold/40 bg-gradient-to-br from-[#1b1710] to-[#0c0d12] flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 px-1">
+                        <Gift className="w-5 h-5 sm:w-7 sm:h-7 text-gold-light" />
+                        <span className="font-luxury text-[11px] sm:text-base font-bold text-gold-light tracking-wide">SnapEyes</span>
+                        <span className="font-mono text-[8px] min-[375px]:text-[9px] sm:text-xs tracking-[0.12em] text-zinc-200 border border-dashed border-white/25 rounded px-1 sm:px-2 py-0.5 whitespace-nowrap">K7QM 4XHD 2RTA</span>
+                      </div>
+                    ) : (
+                      <img src={i === 1 ? '/assets/atelier/gift-eye-315.webp' : PICTURE.one} alt="" width={i === 1 ? 315 : 900} height={i === 1 ? 315 : 900} className="w-full aspect-square object-cover rounded-xl border border-white/10" />
+                    )}
+                    <span className="mt-2 text-[11px] sm:text-sm text-zinc-200 leading-snug"><span className="text-gold-light font-semibold">{i + 1}.</span> {s}</span>
+                  </li>
+                ))}
+              </ol>
             </>
           )}
         </div>
