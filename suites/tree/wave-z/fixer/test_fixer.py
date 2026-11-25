@@ -384,7 +384,7 @@ def neg_root(name, markets_sub=None, pay_sub=None):
     shutil.copy(os.path.join(H.REPO, "api", "_lib", "styles_registry.py"), os.path.join(root, "api", "_lib", "styles_registry.py"))
     shutil.copy(os.path.join(H.REPO, "src", "shared", "legal.ts"), os.path.join(root, "src", "shared", "legal.ts"))
     # 2026-10-28 (prints): the price check also checks the prints (scripts/check_prints.mjs: the offer, the rate table and the words), so a minimal root needs those three too
-    for name in ("print_offer.py", "print_rates.py", "print_names.py"):
+    for name in ("print_offer.py", "print_rates.py", "print_names.py", "print_times.py"):
         shutil.copy(os.path.join(H.REPO, "api", "_lib", name), os.path.join(root, "api", "_lib", name))
     return root
 
