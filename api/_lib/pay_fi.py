@@ -47,11 +47,11 @@ CONSENT_TEXT_FI = ("Annan nimenomaisen suostumukseni siihen, että SnapEyes alka
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Finnish ("tilaukseen liittyy maksuvelvollisuus") stand at that click too.
-SUBMIT_NOTE_FI = ("Ostat digitaalisen tiedoston (JPEG, 4096 px). Tulostetta tai kehystä ei lähetetä. Olet hyväksynyt, että "
+SUBMIT_NOTE_FI = ("Olet hyväksynyt, että "
                   "aloitamme heti ja että peruuttamisoikeutesi päättyy, kun olemme aloittaneet. Maksupainiketta "
                   "painamalla teet tilauksen, ja tilaukseen liittyy maksuvelvollisuus.")
 
-ITEM_DESC_FI = "Vain digitaalinen tiedosto: JPEG, 4096 px pisimmältä sivulta. Ei tulostetta, ei kehystä."
+ITEM_DESC_FI = "Digitaalinen tiedosto, JPEG, 4096 px."
 
 STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 

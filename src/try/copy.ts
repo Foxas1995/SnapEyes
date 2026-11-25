@@ -481,7 +481,6 @@ const en = {
   // (binding on Stripe's pay button; making starts once the order confirmation email has gone out).
   buy: {
     button: (price: string) => `${CHECKOUT_LEGAL.en.continueButton} · ${price}`,
-    next: "Next is Stripe's secure payment page. There you enter your email and place your binding order when you confirm the payment with the pay button. We start making your file once your order confirmation email has gone out, normally within a minute of your payment.",
     waitPreview: 'The preview for this choice is still being made. You can order as soon as you see it.',
     previewFailed: 'Please load the preview for this choice first (Try again above), so you see what you order.',
     steps: {
@@ -522,9 +521,7 @@ const en = {
       voucher: 'Your gift voucher could not be used: it may have been used already or have expired. Please check it again.',
     },
     namesBlocked: 'Please fix the words on the artwork first (see above).',
-    footnote: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the final price: we are not registered for VAT, so no VAT is added.',
-    footnoteAud: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no GST is charged.',
-    footnoteUsd: 'One digital file (JPEG), 4096 px on its longest side, without watermark. This is the total price: no sales tax is charged.',
+    footnote: 'Digital file, 4096 px, without watermark.',
   },
 
   // a gift voucher at the checkout (./GiftField.tsx, api/_lib/voucher.py): only on the euro markets of the EU edition
@@ -959,7 +956,6 @@ const de: TryCopy = {
 
   buy: {
     button: (price: string) => `${CHECKOUT_LEGAL.de.continueButton} · ${price}`,
-    next: 'Als Nächstes öffnet sich die sichere Zahlungsseite von Stripe. Dort geben Sie Ihre E-Mail-Adresse ein und bestellen verbindlich, wenn Sie die Zahlung mit der Zahlungsschaltfläche bestätigen. Sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung, beginnen wir mit der Erstellung Ihrer Datei.',
     waitPreview: 'Die Vorschau für diese Auswahl wird noch erstellt. Sie können bestellen, sobald Sie sie sehen.',
     previewFailed: 'Bitte laden Sie zuerst die Vorschau für diese Auswahl (oben „Erneut versuchen“), damit Sie sehen, was Sie bestellen.',
     steps: {
@@ -994,9 +990,7 @@ const de: TryCopy = {
       voucher: 'Ihr Geschenkgutschein konnte nicht eingelöst werden: Vielleicht wurde er schon eingelöst oder ist abgelaufen. Bitte prüfen Sie ihn noch einmal.',
     },
     namesBlocked: 'Bitte korrigieren Sie zuerst die Worte auf dem Kunstwerk (siehe oben).',
-    footnote: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert, daher wird keine Umsatzsteuer berechnet.',
-    footnoteAud: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine GST berechnet.',
-    footnoteUsd: 'Eine digitale Datei (JPEG), 4096 px an der längsten Seite, ohne Wasserzeichen. Das ist der Gesamtpreis: Es wird keine Sales Tax berechnet.',
+    footnote: 'Digitale Datei, 4096 px, ohne Wasserzeichen.',
   },
 
   gift: {

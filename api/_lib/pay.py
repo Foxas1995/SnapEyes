@@ -249,31 +249,31 @@ CONSENT_TEXTS = {"2026-09-29.1": CONSENT_TEXT_EN_DE, "2026-09-30.1": CONSENT_TEX
 CONSENT_TEXTS_AU = {"2026-09-30.1": CONSENT_TEXT_AU, "2026-09-30.2": CONSENT_TEXT_AU, "2026-10-28.1": CONSENT_TEXT_AU,
                     "2026-10-28.2": CONSENT_TEXT_AU, "2026-10-28.3": CONSENT_TEXT_AU, CONSENT_VERSION: CONSENT_TEXT_AU}
 CONSENT_TEXTS_US = {"2026-10-28.2": CONSENT_TEXT_US, "2026-10-28.3": CONSENT_TEXT_US, CONSENT_VERSION: CONSENT_TEXT_US}
-SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit)
-    "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
+SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit); since 2026-11-25 (the owner's decision of 2026-11-25) without the sentences about the file and "no print, no frame"
+    "en": ("You agreed that we start "
            "right away and that your right of withdrawal ends once we have started."),
-    "de": ("Sie kaufen eine digitale Datei (JPEG, 4096 px). Es wird kein Druck und kein Rahmen versendet. Sie haben "
+    "de": ("Sie haben "
            "zugestimmt, dass wir sofort beginnen und Ihr Widerrufsrecht damit erlischt."),
     "lt": pay_lt.SUBMIT_NOTE_LT,
     "hu": pay_hu.SUBMIT_NOTE_HU,
     **{l: tw(l, "SUBMIT_NOTE") for l in TWINS},
 }
 SUBMIT_NOTE_AU = {   # the same for the Australian market: never a "no refunds", the Australian Consumer Law kept
-    "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
+    "en": ("You agreed that we start "
            "right away, so you can't cancel for a change of mind once we have started. Your rights under the "
            "Australian Consumer Law are not affected."),
-    "de": ("Sie kaufen eine digitale Datei (JPEG, 4096 px). Es wird kein Druck und kein Rahmen versendet. Sie haben "
+    "de": ("Sie haben "
            "zugestimmt, dass wir sofort beginnen; danach können Sie nicht mehr ohne Angabe von Gründen widerrufen. Ihre "
            "Rechte nach dem Australian Consumer Law bleiben unberührt."),
 }
 SUBMIT_NOTE_US = {   # the same for the US market: never a "no refunds", the rights for a faulty file kept
-    "en": ("You are buying a digital file (JPEG, 4096 px). No print and no frame are shipped. You agreed that we start "
+    "en": ("You agreed that we start "
            "right away, so you can't cancel for a change of mind once we have started. Your rights if the file is "
            "faulty are not affected."),
 }
 ITEM_DESC = {
-    "en": "Digital file only: JPEG, 4096 px on the longest side. No print, no frame.",
-    "de": "Nur digitale Datei: JPEG, 4096 px an der längsten Seite. Kein Druck, kein Rahmen.",
+    "en": "Digital file, JPEG, 4096 px.",
+    "de": "Digitale Datei, JPEG, 4096 px.",
     "lt": pay_lt.ITEM_DESC_LT,
     "hu": pay_hu.ITEM_DESC_HU,
     **{l: tw(l, "ITEM_DESC") for l in TWINS},

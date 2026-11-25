@@ -47,11 +47,11 @@ CONSENT_TEXT_ET = ("Nõustun sõnaselgelt, et SnapEyes alustab minu digitaalse k
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Estonian („tellimus koos maksekohustusega“) stand at that click too.
-SUBMIT_NOTE_ET = ("Ostad digitaalse faili (JPEG, 4096 px). Trükitud pilti ega raami me ei saada. Nõustusid, et alustame "
+SUBMIT_NOTE_ET = ("Nõustusid, et alustame "
                   "kohe ja et sinu taganemisõigus lõpeb, kui oleme alustanud. Maksenupule vajutades esitad tellimuse "
                   "koos maksekohustusega.")
 
-ITEM_DESC_ET = "Ainult digitaalne fail: JPEG, 4096 px pikimal küljel. Ei trükitud pilti ega raami."
+ITEM_DESC_ET = "Digitaalne fail, JPEG, 4096 px."
 
 STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 

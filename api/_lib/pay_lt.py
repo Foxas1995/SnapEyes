@@ -30,12 +30,12 @@ CONSENT_TEXT_LT = ("Aiškiai sutinku, kad SnapEyes pradėtų kurti mano skaitmen
 # button is the click that makes the order binding, and CK 6.228(8) str. 3 d. asks for "užsakymas su prievole sumokėti"
 # (or an equally clear wording) at that click: the last sentence puts the statutory words right above it (as
 # pay_hu.SUBMIT_NOTE_HU does with the Hungarian decree's). Not part of the consent, so not part of its version.
-SUBMIT_NOTE_LT = ("Perkate skaitmeninį failą (JPEG, 4096 px). Joks spaudinys ar rėmelis nesiunčiamas. Sutikote, kad "
+SUBMIT_NOTE_LT = ("Sutikote, kad "
                   "pradėtume iš karto ir kad Jūsų teisė atsisakyti sutarties baigsis, kai tik pradėsime. Paspausdami "
                   "mokėjimo mygtuką, pateikiate užsakymą su prievole sumokėti.")
 
 # pay.ITEM_DESC["lt"]
-ITEM_DESC_LT = "Tik skaitmeninis failas: JPEG, ilgoji kraštinė 4096 px. Be spaudinio, be rėmelio."
+ITEM_DESC_LT = "Skaitmeninis failas, JPEG, 4096 px."
 
 # the online withdrawal function's button, as the order page and the legal pages name it
 WITHDRAW_BUTTON_LT = "Atsisakyti sutarties čia"

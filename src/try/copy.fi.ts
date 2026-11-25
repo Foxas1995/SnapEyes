@@ -411,7 +411,6 @@ export const fi: TryCopy = {
   buy: {
     // the label and the price, as in English (see the header)
     button: (price: string) => `${CHECKOUT_LEGAL.fi.continueButton} · ${price}`,
-    next: 'Seuraavaksi avautuu Stripen turvallinen maksusivu. Siellä annat sähköpostiosoitteesi ja teet sitovan tilauksen, johon liittyy maksuvelvollisuus, kun vahvistat maksun maksupainikkeella. Alamme tehdä tiedostoasi, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi.',
     waitPreview: 'Tämän valinnan esikatselua tehdään vielä. Voit tilata heti, kun näet sen.',
     previewFailed: 'Lataa ensin tämän valinnan esikatselu (yllä: ”Yritä uudelleen”), jotta näet, mitä tilaat.',
     steps: {
@@ -449,9 +448,7 @@ export const fi: TryCopy = {
       voucher: 'Lahjakorttiasi ei voitu käyttää: se on ehkä jo käytetty tai vanhentunut. Tarkista se uudelleen.',
     },
     namesBlocked: 'Korjaa ensin taideteoksen teksti (katso yllä).',
-    footnote: 'Yksi digitaalinen tiedosto (JPEG), 4096 px pisimmältä sivulta, ilman vesileimaa. Tämä on lopullinen hinta: emme ole arvonlisäverovelvollisia, joten arvonlisäveroa ei lisätä.',
-    footnoteAud: 'Yksi digitaalinen tiedosto (JPEG), 4096 px pisimmältä sivulta, ilman vesileimaa. Tämä on kokonaishinta: GST-veroa ei peritä.',
-    footnoteUsd: 'Yksi digitaalinen tiedosto (JPEG), 4096 px pisimmältä sivulta, ilman vesileimaa. Tämä on kokonaishinta: myyntiveroa ei peritä.',
+    footnote: 'Digitaalinen tiedosto, 4096 px, ilman vesileimaa.',
   },
 
   gift: {

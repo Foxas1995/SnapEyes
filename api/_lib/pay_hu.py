@@ -38,11 +38,11 @@ CONSENT_TEXT_HU = ("Kifejezetten hozzájárulok ahhoz, hogy a SnapEyes még az e
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the decree's own words
 # (45/2014. Korm. rendelet 15. § (2): „fizetési kötelezettséggel járó megrendelés”) stand at that click too.
-SUBMIT_NOTE_HU = ("Digitális fájlt vásárolsz (JPEG, 4096 px). Nyomatot és keretet nem küldünk. Hozzájárultál, hogy "
+SUBMIT_NOTE_HU = ("Hozzájárultál, hogy "
                   "azonnal elkezdjük, és tudomásul vetted, hogy a kezdéssel megszűnik az elállási jogod. A fizetési "
                   "gombbal fizetési kötelezettséggel járó megrendelést adsz le.")
 
-ITEM_DESC_HU = "Csak digitális fájl: JPEG, a hosszabbik oldalán 4096 px. Nyomat és keret nélkül."
+ITEM_DESC_HU = "Digitális fájl, JPEG, 4096 px."
 
 STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 

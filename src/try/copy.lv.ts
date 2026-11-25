@@ -416,7 +416,6 @@ export const lv: TryCopy = {
   buy: {
     // the label alone (see the header); the price stays in the card's head
     button: (_price: string) => CHECKOUT_LEGAL.lv.continueButton,
-    next: `Poga „${CHECKOUT_LEGAL.lv.continueButton}” ved uz Stripe drošo maksājuma lapu. Tur ievadāt savu e-pasta adresi, un pasūtījums kļūst saistošs, kad apstiprināt maksājumu ar maksāšanas pogu. Jūsu failu sākam veidot, kad ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas.`,
     waitPreview: 'Priekšskatījums šai izvēlei vēl tiek veidots. Pasūtīt varēsiet, tiklīdz to redzēsiet.',
     previewFailed: 'Vispirms ielādējiet priekšskatījumu šai izvēlei (augstāk: „Mēģināt vēlreiz”), lai redzat, ko pasūtāt.',
     steps: {
@@ -454,9 +453,7 @@ export const lv: TryCopy = {
       voucher: 'Jūsu dāvanu karti neizdevās izmantot: iespējams, tā jau ir izmantota vai tai beidzies derīguma termiņš. Pārbaudiet to vēlreiz.',
     },
     namesBlocked: 'Vispirms izlabojiet vārdus mākslas darbā (skatiet augstāk).',
-    footnote: 'Viens digitāls fails (JPEG), 4096 px garākajā malā, bez ūdenszīmes. Šī ir galīgā cena: neesam reģistrēti kā PVN maksātāji, tāpēc PVN netiek pieskaitīts.',
-    footnoteAud: 'Viens digitāls fails (JPEG), 4096 px garākajā malā, bez ūdenszīmes. Šī ir kopējā cena: GST netiek piemērots.',
-    footnoteUsd: 'Viens digitāls fails (JPEG), 4096 px garākajā malā, bez ūdenszīmes. Šī ir kopējā cena: tirdzniecības nodoklis netiek piemērots.',
+    footnote: 'Digitāls fails, 4096 px, bez ūdenszīmes.',
   },
 
   gift: {

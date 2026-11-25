@@ -414,7 +414,6 @@ export const hr: TryCopy = {
   buy: {
     // the label alone (see the header); the price stays in the card's head
     button: (_price: string) => CHECKOUT_LEGAL.hr.continueButton,
-    next: `Gumb „${CHECKOUT_LEGAL.hr.continueButton}“ vodi vas na Stripeovu sigurnu stranicu za plaćanje. Ondje upisujete svoju adresu e-pošte, a narudžba postaje obvezujuća kada plaćanje potvrdite gumbom za plaćanje. Izradu vaše datoteke počinjemo nakon što vam pošaljemo e-poruku s potvrdom narudžbe, obično unutar minute od plaćanja.`,
     waitPreview: 'Pregled za ovaj odabir još se izrađuje. Naručiti možete čim ga vidite.',
     previewFailed: 'Najprije učitajte pregled za ovaj odabir (gore: „Pokušajte ponovno“), da vidite što naručujete.',
     steps: {
@@ -452,9 +451,7 @@ export const hr: TryCopy = {
       voucher: 'Poklon-bon nije moguće iskoristiti: možda je već iskorišten ili mu je istekla valjanost. Provjerite ga ponovno.',
     },
     namesBlocked: 'Najprije ispravite riječi na umjetničkom djelu (vidi gore).',
-    footnote: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je konačna cijena: nismo u sustavu PDV-a, pa se PDV ne obračunava.',
-    footnoteAud: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je ukupna cijena: GST se ne naplaćuje.',
-    footnoteUsd: 'Jedna digitalna datoteka (JPEG), 4096 px na duljoj stranici, bez vodenog žiga. Ovo je ukupna cijena: američki porez na promet ne naplaćuje se.',
+    footnote: 'Digitalna datoteka, 4096 px, bez vodenog žiga.',
   },
 
   gift: {

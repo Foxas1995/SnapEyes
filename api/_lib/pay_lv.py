@@ -46,11 +46,11 @@ CONSENT_TEXT_LV = ("Es skaidri piekrītu, ka SnapEyes sāk veidot manu digitālo
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Latvian („pasūtījums ar pienākumu maksāt”) stand at that click too.
-SUBMIT_NOTE_LV = ("Jūs pērkat digitālu failu (JPEG, 4096 px). Izdruku un rāmi nesūtām. Jūs piekritāt, ka sākam uzreiz "
+SUBMIT_NOTE_LV = ("Jūs piekritāt, ka sākam uzreiz "
                   "un ka jūsu atteikuma tiesības beidzas, tiklīdz esam sākuši. Nospiežot maksāšanas pogu, jūs veicat "
                   "pasūtījumu ar pienākumu maksāt.")
 
-ITEM_DESC_LV = "Tikai digitālais fails: JPEG, 4096 px garākajā malā. Bez izdrukas, bez rāmja."
+ITEM_DESC_LV = "Digitāls fails, JPEG, 4096 px."
 
 STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 

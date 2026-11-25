@@ -422,7 +422,6 @@ export const hu: TryCopy = {
   buy: {
     // the label alone (see the header); the price stays in the card's head
     button: (_price: string) => CHECKOUT_LEGAL.hu.continueButton,
-    next: `A „${CHECKOUT_LEGAL.hu.continueButton}” gomb a Stripe biztonságos fizetési oldalára visz. Ott megadod az e-mail-címedet, és amikor a fizetési gombbal jóváhagyod a fizetést, a megrendelésed kötelező érvényűvé válik. A fájlod elkészítését azután kezdjük meg, hogy elküldtük a rendelésed visszaigazoló e-mailjét, ez általában a fizetés után egy percen belül megtörténik.`,
     waitPreview: 'Ennek a választásnak az előnézete még készül. Amint megjelenik, rendelhetsz.',
     previewFailed: 'Kérjük, előbb töltsd be ennek a választásnak az előnézetét (fent: „Próbáld újra”), hogy lásd, mit rendelsz.',
     steps: {
@@ -458,9 +457,7 @@ export const hu: TryCopy = {
       voucher: 'Az ajándékutalványt nem sikerült beváltani: lehet, hogy már felhasználták, vagy lejárt. Ellenőrizd újra.',
     },
     namesBlocked: 'Először javítsd ki az alkotáson szereplő szavakat (lásd fent).',
-    footnote: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a végső ár: nem vagyunk áfafizetőként nyilvántartásba véve, ezért áfát nem számítunk fel.',
-    footnoteAud: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: GST-t nem számítunk fel.',
-    footnoteUsd: 'Egy digitális fájl (JPEG), a hosszabbik oldalán 4096 px, vízjel nélkül. Ez a teljes ár: amerikai forgalmi adót nem számítunk fel.',
+    footnote: 'Digitális fájl, 4096 px, vízjel nélkül.',
   },
 
   gift: {

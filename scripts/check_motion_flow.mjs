@@ -698,7 +698,12 @@ async function checkGuide() {
 // of /order by +709 B JS (141,731 to 142,440 B, measured on 20fca7d against the tree with them; /try and the CSS of both pages did not move). A product's facts.
 // The keyring offered (2026-11-25: its short sentence in the order page's lead in eight languages) moved the base of /order by +117 B JS (142,440 to 142,557 B,
 // measured on b4c2829 against the tree with it; /try and the CSS did not move). A product's words.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 } };
+// The Meta pixel (2026-11-25, the owner's decision: src/shared/metaPixel.ts in the chunk both tools load, the two cookie values of src/order/api.ts, the events of
+// /try and /order) and the owner's phone test of the same day (the line about the phone's own camera and the large pupil's note in eight languages, the buy card
+// without its paragraph about Stripe's page and with one short file line, the payment methods: server only) moved the base of /try by +632 B JS (201,087 to
+// 201,719 B) and of /order by +1,707 B JS (142,557 to 144,264 B: the pixel's module, its Purchase and InitiateCheckout calls), and of both pages by +36 B CSS (the
+// utilities of the pupil's note: 14,080 to 14,116 B), measured on 26c0c28 against the tree with them. Advertising measurement and words, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

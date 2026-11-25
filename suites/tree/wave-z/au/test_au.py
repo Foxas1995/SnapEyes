@@ -1079,13 +1079,15 @@ for lang in ("en", "de"):
     c, j = checkout(oA, kA, 2, "studio_black", lang)
     p = H.Fake.creates[-1][0]
     rec = read_json(f"orders/{oA}/order.json")
-    check(f"D4 eu checkout ({lang}): the EU submit note and checkbox text exactly as before", c == 200
-          and p["custom_text[submit][message]"] == PAY0.SUBMIT_NOTE[lang] and p["locale"] == lang
+    # 1125b (the owner's decision of 2026-11-25, less text on Stripe's page): the note above the pay button is the one of before WITHOUT its first two
+    # sentences (the digital file, "no print and no frame"); the rest of it, word for word
+    check(f"D4 eu checkout ({lang}): the EU submit note and checkbox text exactly as before - 1125b: the note without its first two sentences", c == 200
+          and p["custom_text[submit][message]"] == PAY0.SUBMIT_NOTE[lang].split(". ", 2)[2] and p["locale"] == lang
           and rec["checkout"]["consent"]["text"] == PAY0.CONSENT_TEXT[lang], p.get("custom_text[submit][message]"))
 c, j = checkout(oA, kA, 2, "studio_black", "en", market="lt")
 rec = read_json(f"orders/{oA}/order.json")
 check("D5 lt checkout: the EU wording (lt reads the EU edition)", c == 200 and rec["checkout"]["consent"]["text"] == PAY0.CONSENT_TEXT["en"]
-      and H.Fake.creates[-1][0]["custom_text[submit][message]"] == PAY0.SUBMIT_NOTE["en"])
+      and H.Fake.creates[-1][0]["custom_text[submit][message]"] == PAY0.SUBMIT_NOTE["en"].split(". ", 2)[2])      # 1125b: without its first two sentences
 check("D6 no Stripe text for au reads as 'no refunds'", not bad_words(json.dumps(pay.SUBMIT_NOTE_AU) + json.dumps(pay.CONSENT_TEXT_AU)))
 
 # ---------------------------------------------------------------------------------------------- E. the AU confirmation
@@ -1449,7 +1451,8 @@ if BC:
     check("U16 the /try buy card on the US market: the server's US checkbox text, the line links terms#united-states (m=us), the price in US$, no euro",
           "SERVER US EN" in card["us_en"][0] and "SERVER EU" not in card["us_en"][0] and "/terms?lang=en&amp;m=us#united-states" in card["us_en"][2]
           and "$" + f"{pay.price_list('us')['one_eye_studio_black'] // 100}.{pay.price_list('us')['one_eye_studio_black'] % 100:02d}" in card["us_en"][0]
-          and "€" not in card["us_en"][0] and "no sales tax is charged" in card["us_en"][0]
+          # 2026-11-25 (the owner's decision, less text): the card's file line is one short line; "no sales tax is charged" is in the US terms' prices
+          and "€" not in card["us_en"][0] and "Digital file, 4096 px, without watermark." in card["us_en"][0]
           and (pay.CONSENT_TEXT_US["en"].replace("'", "&#x27;") in card["us_en"][1] or pay.CONSENT_TEXT_US["en"] in card["us_en"][1]), card["us_en"][0][:700])
 check("U17 the order page has a line for US orders that keeps the rights for a faulty file and names no Australian law",
       CL["orderAcl"] and isinstance(CL["orderAcl"].get("us"), str) and "faulty" in CL["orderAcl"]["us"] and "Australian" not in CL["orderAcl"]["us"]

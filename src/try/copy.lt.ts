@@ -399,7 +399,6 @@ export const lt: TryCopy = {
   // Stripe's own pay button ("užsakymas su prievole sumokėti", CK 6.228(8) straipsnio 3 dalis).
   buy: {
     button: (price: string) => `${CHECKOUT_LEGAL.lt.continueButton} · ${price}`,
-    next: 'Toliau atsidarys saugus Stripe mokėjimo puslapis. Ten įvesite savo el. pašto adresą ir pateiksite užsakymą su prievole sumokėti, kai patvirtinsite mokėjimą mokėjimo mygtuku. Jūsų failą pradedame kurti, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo.',
     waitPreview: 'Šio pasirinkimo peržiūra dar kuriama. Užsisakyti galėsite, kai tik ją pamatysite.',
     previewFailed: 'Pirmiausia įkelkite šio pasirinkimo peržiūrą (aukščiau: „Bandyti dar kartą“), kad matytumėte, ką užsisakote.',
     steps: {
@@ -437,9 +436,7 @@ export const lt: TryCopy = {
       voucher: 'Dovanų kupono panaudoti nepavyko: galbūt jis jau panaudotas arba baigėsi jo galiojimas. Patikrinkite jį dar kartą.',
     },
     namesBlocked: 'Pirmiausia ištaisykite žodžius ant kūrinio (žr. aukščiau).',
-    footnote: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai galutinė kaina: MB „Portretizuokis“ nėra PVM mokėtoja, todėl PVM netaikomas.',
-    footnoteAud: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: GST netaikomas.',
-    footnoteUsd: 'Vienas skaitmeninis failas (JPEG), ilgoji kraštinė 4096 px, be vandens ženklo. Tai bendra kaina: JAV pardavimo mokestis netaikomas.',
+    footnote: 'Skaitmeninis failas, 4096 px, be vandens ženklo.',
   },
 
   gift: {

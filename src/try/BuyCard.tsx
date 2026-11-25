@@ -238,8 +238,9 @@ export const BuyCard: React.FC<Props> = (props) => {
       {p.error && (
         <p role="alert" data-testid="buy-error" className="mt-3 text-xs text-rose-200 bg-rose-950/40 border border-rose-500/40 rounded-xl p-3">{p.error}</p>
       )}
-      <p className="text-[11px] text-zinc-400 mt-3">{T.buy.next}</p>
-      <p className="text-[11px] text-zinc-400 mt-1">{currency === 'aud' ? T.buy.footnoteAud : currency === 'usd' ? T.buy.footnoteUsd : T.buy.footnote}</p>
+      {/* less text (the owner's decision of 2026-11-25: "people will not read that much"): the paragraph about Stripe's page went, the file line is one short line, and the tax sentences
+          are in the terms' price sections; the one line with the terms and the privacy policy is above the button */}
+      <p className="text-[11px] text-zinc-400 mt-3">{T.buy.footnote}</p>
     </section>
   );
 };

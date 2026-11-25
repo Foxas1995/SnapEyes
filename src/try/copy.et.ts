@@ -33,7 +33,6 @@ const DARK_LIGHT = 'Rohkem valgust toob tumeda iirise esile: seisa päevavalguse
 const FOCUS_STEADY = 'Puuduta teravustamiseks ekraanil iirist, hoia telefoni paigal ja tee 3-5 võtet.';
 // src/shared/aiMaterial.ts AI_MATERIAL_PAGE.et, word for word as the landing's FAQ answer (src/landing/copy/et.json)
 const AI_MATERIAL_ET = 'Mõnes stiilis on pulber, vedelik, leek või tolm sinu iirise ümber tehisintellekti loodud materjal ühisest kogust, seega võib teise kliendi kunstiteos sisaldada sama tükki. Sinu iiris säilitab sinu foto värvid, mustri ja paigutuse; kõige peenemad kiud taastab tehisintellekt, nagu eespool kirjeldatud.';
-const FILE_ET = 'Üks digitaalne fail (JPEG), 4096 px pikimal küljel, ilma vesimärgita.';
 const WOULD_ET = 'Saaksid ühe digitaalse faili ilma vesimärgita, 4096 px pikimal küljel.';
 
 export const et: TryCopy = {
@@ -419,7 +418,6 @@ export const et: TryCopy = {
   buy: {
     // the label alone (see the header); the price stays in the card's head
     button: (_price: string) => CHECKOUT_LEGAL.et.continueButton,
-    next: `Nupp „${CHECKOUT_LEGAL.et.continueButton}“ viib sind Stripe’i turvalisele makselehele. Seal sisestad oma e-posti aadressi ja tellimus muutub siduvaks, kui kinnitad makse maksenupuga. Hakkame sinu faili valmistama siis, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset.`,
     waitPreview: 'Selle valiku eelvaade on veel valmimas. Tellida saad kohe, kui seda näed.',
     previewFailed: 'Palun laadi esmalt selle valiku eelvaade (ülal „Proovi uuesti“), et näeksid, mida tellid.',
     steps: {
@@ -457,9 +455,7 @@ export const et: TryCopy = {
       voucher: 'Sinu kinkekaarti ei saanud kasutada: see võib olla juba kasutatud või aegunud. Palun kontrolli seda uuesti.',
     },
     namesBlocked: 'Palun paranda esmalt sõnad kunstiteosel (vt ülal).',
-    footnote: `${FILE_ET} See on lõpphind: me ei ole käibemaksukohustuslane, seega käibemaksu ei lisandu.`,
-    footnoteAud: `${FILE_ET} See on koguhind: GST-d ei lisandu.`,
-    footnoteUsd: `${FILE_ET} See on koguhind: müügimaksu ei lisandu.`,
+    footnote: 'Digitaalne fail, 4096 px, ilma vesimärgita.',
   },
 
   gift: {

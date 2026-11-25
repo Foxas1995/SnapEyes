@@ -48,11 +48,11 @@ CONSENT_TEXT_HR = ("Izričito pristajem da SnapEyes odmah, prije isteka roka za 
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Croatian („narudžba s obvezom plaćanja“) stand at that click too.
-SUBMIT_NOTE_HR = ("Kupujete digitalnu datoteku (JPEG, 4096 px). Ne šaljemo ispis ni okvir. Pristali ste da odmah "
+SUBMIT_NOTE_HR = ("Pristali ste da odmah "
                   "započnemo i da vaše pravo na jednostrani raskid ugovora prestaje čim započnemo. Klikom na gumb za "
                   "plaćanje dajete narudžbu s obvezom plaćanja.")
 
-ITEM_DESC_HR = "Samo digitalna datoteka: JPEG, 4096 px na duljoj stranici. Bez ispisa, bez okvira."
+ITEM_DESC_HR = "Digitalna datoteka, JPEG, 4096 px."
 
 STYLE_NAMES = catalogue.names()      # the brand name of every style id, English in every language (api/_lib/styles_registry.py)
 
