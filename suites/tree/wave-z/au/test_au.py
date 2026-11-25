@@ -117,6 +117,17 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # F2); Stripe shows no note in English and German and none on the Australian market (D2 to D5). Orders that hold a ticked consent are read and mailed as
 # before (F1 to F3, H2). The US market keeps its box (U). B1, B3, C9, C16, D2 to D5, E1, E4, E5, E8, E9, F1 to F3, H2, I4, K1 to K3 and U8 moved with
 # " - 1125c:" added.
+# 1125v refresh (2026-11-25, the owner's decision of 2026-11-25 (value vouchers): a gift voucher is an amount, 30, 60, 100, 120 or 170 EUR, and a balance
+# spent on several orders, artworks and prints, until it is used up within its 12 months; api/_lib/voucher.py). The EU edition changed on purpose in its
+# TERMS and its PRIVACY POLICY only, in all eight languages, and only inside their section "vouchers": the terms by exactly THREE blocks of it replaced
+# (the intro: a code worth the amount chosen, for artworks and prints; the table: one row of the five amounts for the two rows of the old kinds' prices;
+# the rules: several orders until spent, the difference paid, the rest at the end not paid out), its contract and withdrawal blocks word for word (the
+# withdrawal from an unused voucher is as it was); the privacy policy by exactly ONE block of it (the record notes the order, the amount and the session of
+# each order paid with the voucher, and each such order gets a single-use discount of that amount at Stripe). The withdrawal page, the legal notice and
+# the checkout wording as they were; the consent version and LEGAL_UPDATED (2026-11-25) as they were. eu_value.json is the EXACT pin of the EU edition as
+# of this work (snap_eu_edition.mjs), eu_terms.json stays as the base: the 1125c step is now checked between the pins of the pixel and of the refund
+# conditions. eu_value_raw.json (snap_eu.mjs) holds the raw docs: they did not change (the AU and US editions sell no voucher), only the pack inside it.
+# B1, B2 and B3 moved with " - 1125v:" added.
 import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -284,6 +295,8 @@ EU_BLOCK = json.load(open(os.path.join(HERE, "eu_block.json"), encoding="utf-8")
 EU_PIXEL = json.load(open(os.path.join(HERE, "eu_pixel.json"), encoding="utf-8"))   # 1125 refresh: the EU edition whose privacy policy describes the Meta pixel (snap_eu_edition.mjs), the base is eu_block.json; 1125c: the base of the refund conditions
 EU_NOW = json.load(open(os.path.join(HERE, "eu_terms.json"), encoding="utf-8"))   # 1125c refresh: the EU edition with the refund conditions of the owner's second decision of 2026-11-25 (snap_eu_edition.mjs), the base is eu_pixel.json
 EU_TERMS_RAW = json.load(open(os.path.join(HERE, "eu_terms_raw.json"), encoding="utf-8"))   # 1125c refresh: the raw docs the same way (snap_eu.mjs), held to eu_pixel_raw.json
+EU_VALUE = json.load(open(os.path.join(HERE, "eu_value.json"), encoding="utf-8"))   # 1125v refresh: the EU edition with the value vouchers (snap_eu_edition.mjs), the base is eu_terms.json
+EU_VALUE_RAW = json.load(open(os.path.join(HERE, "eu_value_raw.json"), encoding="utf-8"))   # 1125v refresh: the raw docs (snap_eu.mjs), equal to eu_terms_raw.json but for the pack
 EU_PIXEL_RAW = json.load(open(os.path.join(HERE, "eu_pixel_raw.json"), encoding="utf-8"))   # 1125 refresh: the raw docs with the Meta pixel's privacy passages (snap_eu.mjs), the base of the AU and US editions' privacy policy
 EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
 LEGAL_NOW = "2026-11-25"        # 1125 refresh: the Meta pixel in the privacy policy. 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
@@ -712,12 +725,36 @@ def _doc_of(pin, l):
     return {d: pin[d][l] for d in ("terms", "withdrawal")}
 
 
-terms1125c = {l: _step1125c(_doc_of(EDI["eu"], l), _doc_of(EU_PIXEL, l)) for l in LANG8}
+terms1125c = {l: _step1125c(_doc_of(EU_NOW, l), _doc_of(EU_PIXEL, l)) for l in LANG8}      # 1125v: between the pins of the pixel and of the refund conditions
 terms1125c_raw = {l: _step1125c(_doc_of(EU_TERMS_RAW, l), _doc_of(EU_PIXEL_RAW, l)) for l in LANG2}
 terms1125c_ok = (all(terms1125c.values()) and all(terms1125c_raw.values())
-                 and all(EDI["eu"][d][l] == EU_PIXEL[d][l] for d in ("privacy", "imprint") for l in LANG8)
+                 and all(EU_NOW[d][l] == EU_PIXEL[d][l] for d in ("privacy", "imprint") for l in LANG8)
                  and EU_NOW["checkout"] == EU_PIXEL["checkout"] and all(EU_TERMS_RAW["privacy"][l] == EU_PIXEL_RAW["privacy"][l] for l in LANG2))
-pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
+# 1125v (value vouchers, see the header): the terms differ from the pin of the refund conditions by exactly three blocks of the section vouchers (intro, the table
+# of the amounts, the rules), its contract and withdrawal blocks word for word; the privacy policy by exactly one block of its section vouchers; the withdrawal
+# page, the legal notice and the checkout wording not at all, in all eight languages; the raw docs not at all
+_AMOUNTS = (3000, 6000, 10000, 12000, 17000)
+
+
+def _step1125v(l):
+    t_fr, t_d = doc_diff(EDI["eu"]["terms"][l], EU_NOW["terms"][l])
+    p_fr, p_d = doc_diff(EDI["eu"]["privacy"][l], EU_NOW["privacy"][l])
+    if not (t_fr and p_fr and sorted(t_d) == ["vouchers"] and sorted(p_d) == ["vouchers"]):
+        return False
+    add, rem = t_d["vouchers"]
+    new = next(s for s in EDI["eu"]["terms"][l]["sections"] if s["id"] == "vouchers")["blocks"]
+    old = next(s for s in EU_NOW["terms"][l]["sections"] if s["id"] == "vouchers")["blocks"]
+    table = next((b for b in add if isinstance(b, dict) and "dl" in b), None)
+    eur = [_digits(r[1]) for r in (table or {}).get("dl", [])]
+    return ((len(add), len(rem)) == (3, 3) and len(new) == len(old) == 5 and new[3:] == old[3:] and table is not None and len(table["dl"]) == 1
+            and all(str(a) in eur[0] for a in _AMOUNTS) and len(next(b for b in rem if isinstance(b, dict) and "dl" in b)["dl"]) == 2
+            and (len(p_d["vouchers"][0]), len(p_d["vouchers"][1])) == (1, 1) and "12" in new[2])
+
+
+value1125v = {l: _step1125v(l) for l in LANG8}
+value1125v_ok = (all(value1125v.values()) and all(EDI["eu"][d][l] == EU_NOW[d][l] for d in ("withdrawal", "imprint") for l in LANG8)
+                 and EU_VALUE["checkout"] == EU_NOW["checkout"] and all(EU_VALUE_RAW[d] == EU_TERMS_RAW[d] for d in ("terms", "withdrawal", "privacy", "imprint", "checkout")))
+pinned = {d: all(EDI["eu"][d][l] == EU_VALUE[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 0930: the terms differ from before by exactly the contract languages sentence (30efee7) and the price list sentence "
@@ -749,9 +786,13 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 1125c: the pin is eu_terms.json; the 1125 step is checked between the pins of the list of prints and of the pixel; the refund conditions of the owner's"
       " second decision of 2026-11-25: the terms differ from the pin of the pixel by exactly the section withdrawal (two blocks for one, the rule in bold), the"
       " withdrawal page by its lead, the blocks of expiry (three for the four with the checkbox) and the first block of online, in all eight languages, and the raw"
-      " docs from eu_pixel_raw.json the same way (en, de); the privacy policy, the legal notice and the checkout wording not at all",
-      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and pixel1125_ok and terms1125c_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
-      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, pixel1125, pixel1125_raw, terms1125c, terms1125c_raw, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
+      " docs from eu_pixel_raw.json the same way (en, de); the privacy policy, the legal notice and the checkout wording not at all"
+      " - 1125v: the pin is eu_value.json; the 1125c step is checked between the pins of the pixel and of the refund conditions; the value vouchers (the owner's"
+      " decision of 2026-11-25): the terms differ from the pin of the refund conditions by exactly three blocks of the section vouchers (the intro, one row of the"
+      " five amounts for the two prices, the rules), its contract and withdrawal blocks as they were, and the privacy policy by exactly one block of its section"
+      " vouchers, in all eight languages; the withdrawal page, the legal notice, the checkout wording and the raw docs not at all",
+      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and pixel1125_ok and terms1125c_ok and value1125v_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
+      (same, value1125v, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, pixel1125, pixel1125_raw, terms1125c, terms1125c_raw, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
@@ -759,12 +800,13 @@ priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            for l, (fr, d) in priv_diff.items()}
 priv_diff12 = {l: doc_diff(EU_WP18["privacy"][l], EU_1ACEF["privacy"][l]) for l in LANG2}      # 1020: the policy as of WP18 against the pin of 1acef38 (the live one is checked against WP18 in B2b)
 priv12_ok = {l: fr and wp12_ok(d, PRIV12[l]) for l, (fr, d) in priv_diff12.items()}
-priv_pinned = {l: EDI["eu"]["privacy"][l] == EU_NOW["privacy"][l] for l in LANG2}
+priv_pinned = {l: EDI["eu"]["privacy"][l] == EU_VALUE["privacy"][l] for l in LANG2}      # 1125v: the pin of the value vouchers
 check("B2 EU privacy policy: only two sentences added per language (the market key, the country hint), all else as before"
       " - 0930: plus the language switch sentence (30efee7) and the price test sentences (1acef38: the anonymous visitor number, "
       "the events, the data passed to Stripe); pinned to eu_1acef38.json"
       " - 1005: pinned to eu_wp12.json; the policy differs from the pin of 1acef38 by exactly the blocks of PRIV12 (the example without a style, the order of the "
-      "eyes, the date, the look, the derived eye profile, the plan code to Stripe, the same facts in the retention and storage lists)",
+      "eyes, the date, the look, the derived eye profile, the plan code to Stripe, the same facts in the retention and storage lists)"
+      " - 1125v: pinned to eu_value.json (its one block of the section vouchers is held by B1)",
       all(priv_ok.values()) and all(priv12_ok.values()) and all(priv_pinned.values()),
       (priv_ok, priv12_ok, priv_pinned, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv_diff12.items()}))
 
@@ -858,7 +900,7 @@ def _terms_pack_28(l):
     was = _norm(EU_COUNTER["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
     add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
     return (len(now) == len(was) and add == [TERMS28[l]["contract"][2][0]] and rem == [CONTRACT_LANGS[l][1]]
-            and _norm(PACK["docs"][l]["terms"]["text"]) == _norm(EU_NOW["pack"]["docs"][l]["terms"]["text"]))
+            and _norm(PACK["docs"][l]["terms"]["text"]) == _norm(EU_VALUE["pack"]["docs"][l]["terms"]["text"]))      # 1125v: the pack of now is the pin of the value vouchers
 
 
 def _terms_pack_28c(l):
@@ -937,11 +979,23 @@ def _pack_1125c(l):
     the pinned pack of this work holds the same texts."""
     ok = True
     for d, n_add, n_rem in (("terms", 2, 1), ("withdrawal", 5, 6)):
-        now = _norm(PACK["docs"][l][d]["text"]).split("\n\n")
+        now = _norm(EU_NOW["pack"]["docs"][l][d]["text"]).split("\n\n")      # 1125v: between the pins of the pixel and of the refund conditions (_pack_1125v checks the pack of now)
         was = _norm(EU_PIXEL["pack"]["docs"][l][d]["text"]).split("\n\n")
         add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
-        ok = ok and len(now) - len(was) == n_add - n_rem and (len(add), len(rem)) == (n_add, n_rem) and _norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"])
-    return ok and pay.CONSENT_TEXT[l] not in PACK["docs"][l]["withdrawal"]["text"] and pay.CONSENT_TEXT[l] in EU_PIXEL["pack"]["docs"][l]["withdrawal"]["text"]
+        ok = ok and len(now) - len(was) == n_add - n_rem and (len(add), len(rem)) == (n_add, n_rem)
+    return ok and pay.CONSENT_TEXT[l] not in EU_NOW["pack"]["docs"][l]["withdrawal"]["text"] and pay.CONSENT_TEXT[l] in EU_PIXEL["pack"]["docs"][l]["withdrawal"]["text"]
+
+
+def _pack_1125v(l):
+    """1125v (the owner's decision of 2026-11-25 (value vouchers)): the pack's EU terms = the pin of the refund conditions with exactly THREE paragraphs replaced (the
+    voucher section's intro, its table of the amounts and its rules), none added and none dropped; the withdrawal page word for word; the pinned pack of this work
+    holds the same texts."""
+    now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
+    was = _norm(EU_NOW["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
+    add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
+    return (len(now) == len(was) and len(add) == 3 == len(rem) and any(all(_digits(pay.price_text(a, l, "eur")) in _digits(p) for a in _AMOUNTS) for p in add)
+            and _norm(PACK["docs"][l]["withdrawal"]["text"]) == _norm(EU_NOW["pack"]["docs"][l]["withdrawal"]["text"])
+            and all(_norm(PACK["docs"][l][d]["text"]) == _norm(EU_VALUE["pack"]["docs"][l][d]["text"]) for d in ("terms", "withdrawal")))
 
 
 seller_en_de = {k: ({l: v[l] for l in LANG2} if isinstance(v, dict) else v) for k, v in PACK["seller"].items()}
@@ -949,10 +1003,10 @@ pack_docs_eq = lambda a, b, l, d: (_norm(a[l][d]["text"]) == _norm(b[l][d]["text
                                     and a[l][d]["title"] == b[l][d]["title"])
 eu_pack_same = (
     all(_terms_pack_ok(l) for l in LANG2) and all(_terms_pack_12(l) for l in LANG2) and all(_terms_pack_18(l) for l in LANG2) and all(_terms_pack_28(l) for l in LANG2)
-    and all(_terms_pack_28c(l) for l in LANG2) and all(_pack_1111g(l) for l in LANG2) and all(_pack_1113(l) for l in LANG2) and all(_pack_1121(l) for l in LANG2) and all(_pack_1124(l) for l in LANG8) and all(_pack_1125c(l) for l in LANG8)
+    and all(_terms_pack_28c(l) for l in LANG2) and all(_pack_1111g(l) for l in LANG2) and all(_pack_1113(l) for l in LANG2) and all(_pack_1121(l) for l in LANG2) and all(_pack_1124(l) for l in LANG8) and all(_pack_1125c(l) for l in LANG8) and all(_pack_1125v(l) for l in LANG8)
     and all(pack_docs_eq(EU_HR["pack"]["docs"], EU_BEFORE["pack"]["docs"], l, "withdrawal") for l in LANG2)
     and all(PACK["docs"][l]["terms"]["url"] == EU_BEFORE["pack"]["docs"][l]["terms"]["url"] for l in LANG2)
-    and all(pack_docs_eq(PACK["docs"], EU_NOW["pack"]["docs"], l, d) for l in LANG2 for d in ("terms", "withdrawal"))
+    and all(pack_docs_eq(PACK["docs"], EU_VALUE["pack"]["docs"], l, d) for l in LANG2 for d in ("terms", "withdrawal"))
     and sorted(PACK["docs"]) == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"])
 seller_same = (seller_en_de == EU_BEFORE["pack"]["seller"] and PACK["seller"] == EU_NOW["pack"]["seller"]
                and all(sorted(PACK["seller"][k]) == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for k in ("company", "address", "contact"))
@@ -971,7 +1025,9 @@ check("B3 the built pack's EU texts are the same as before (the date line aside)
       " - 1124: pinned to eu_block.json, the terms by exactly ONE paragraph replaced in each of the eight languages, the list of prints and prices (the eleven prints"
       " of the offer), the shipping table and the delivery paragraph's times, the withdrawal page word for word (_pack_1124); the 1121 step is checked between the"
       " two pins before it - 1125c: pinned to eu_terms.json; the 1124 step is checked on the pin of the pixel; the owner's second decision of 2026-11-25: the terms"
-      " by exactly one paragraph replaced by two, the withdrawal page by five paragraphs for six, the checkbox text gone (_pack_1125c)",
+      " by exactly one paragraph replaced by two, the withdrawal page by five paragraphs for six, the checkbox text gone (_pack_1125c)"
+      " - 1125v: pinned to eu_value.json; the 1125c step is checked between the pins of the pixel and of the refund conditions; the value vouchers: the terms by"
+      " exactly three paragraphs of the voucher section replaced (the intro, the five amounts, the rules), the withdrawal page word for word (_pack_1125v)",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
       (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2], [_terms_pack_28(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",

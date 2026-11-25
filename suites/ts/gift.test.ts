@@ -97,9 +97,12 @@ export async function run(): Promise<Row[]> {
     LANGS.length === 8 && LANGS.every((l) => !!eu.terms[l]?.sections.some((s) => s.id === 'vouchers') && !!eu.privacy[l]?.sections.some((s) => s.id === 'vouchers')
       && !!eu.withdrawal[l]?.sections.some((s) => s.id === 'vouchers')));
   const tv = sectionText(eu.terms.en, 'vouchers');
-  check('the English terms: the two vouchers with their prices, 12 months, one order, the rest not paid out, the 14 days while unused',
-    tv.includes(money(2497, 'eur', 'en')) && tv.includes(money(3997, 'eur', 'en')) && tv.includes('12 months') && tv.includes('once')
-      && tv.includes('not paid out') && tv.includes('14 days') && !DASH.test(tv), tv.slice(0, 300));
+  check('the English terms: the two vouchers with their prices, 12 months, one order, the rest not paid out, the 14 days while unused'
+    + ' - 1125 (the owner\'s decision of 2026-11-25, value vouchers): the five amounts, 12 months, several orders until it is spent, the rest at the end not'
+    + ' paid out, the difference paid, the 14 days while unused; no "once" and no price of an artwork',
+    [3000, 6000, 10000, 12000, 17000].every((c) => tv.includes(money(c, 'eur', 'en'))) && !tv.includes(money(2497, 'eur', 'en')) && !tv.includes(money(3997, 'eur', 'en'))
+      && tv.includes('12 months') && tv.includes('several orders') && !tv.includes('once') && tv.includes('is not paid out') && tv.includes('the difference is paid')
+      && tv.includes('14 days') && tv.includes('as long as the voucher has not been used') && !DASH.test(tv), tv.slice(0, 300));
   const order = eu.terms.en?.sections.map((s) => s.id).join() ?? '';
   check('the voucher section follows the prices, whose last sentence points to it', /prices,vouchers,/.test(order)
     && sectionText(eu.terms.en, 'prices').includes('Gift vouchers'), order);
