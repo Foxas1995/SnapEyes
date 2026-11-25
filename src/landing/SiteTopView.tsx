@@ -16,6 +16,8 @@ export interface SiteTopViewProps {
   /** The notice bar's sentence (bar.soon, or bar.open once ordering is open): both have the same length, so the flip moves nothing. */
   barText: string;
   tryHref: string;
+  /** The gift voucher page (/gift) in the page's language: the last link of the header's menu and of the menu dialog. */
+  giftHref: string;
   /** Only the live page gives these: the static shell has no handlers and no refs. */
   onLang?: (l: Lang) => void;
   /** The visitor is about to press a language button (see Header.tsx): the live page starts fetching that language's words. */
@@ -24,13 +26,13 @@ export interface SiteTopViewProps {
   headerRef?: Ref<HTMLElement>;
 }
 
-export function SiteTopView({ copy, lang, langs, barText, tryHref, onLang, onLangIntent, barRef, headerRef }: SiteTopViewProps) {
+export function SiteTopView({ copy, lang, langs, barText, tryHref, giftHref, onLang, onLangIntent, barRef, headerRef }: SiteTopViewProps) {
   return (
     <>
       <a className="lp-skip" href="#main">{copy.skip}</a>
       <TopBarView label={copy.bar.label} text={barText} barRef={barRef} />
-      <SiteHeaderView copy={copy} lang={lang} langs={langs} tryHref={tryHref} onLang={onLang} onLangIntent={onLangIntent} headerRef={headerRef} />
-      <MenuDialogView copy={copy} tryHref={tryHref} />
+      <SiteHeaderView copy={copy} lang={lang} langs={langs} tryHref={tryHref} giftHref={giftHref} onLang={onLang} onLangIntent={onLangIntent} headerRef={headerRef} />
+      <MenuDialogView copy={copy} tryHref={tryHref} giftHref={giftHref} />
     </>
   );
 }

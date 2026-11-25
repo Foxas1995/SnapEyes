@@ -29,6 +29,7 @@ export interface SiteHeaderViewProps {
   /** The language buttons: the languages the new landing speaks in the visitor's market. */
   langs: readonly Lang[];
   tryHref: string;
+  giftHref: string;
   /** Only the live page gives these: the static shell has no handlers and no refs. */
   onLang?: (l: Lang) => void;
   /** The visitor is about to press a language button (pointer over it, finger down, focus): the live page starts fetching that
@@ -37,7 +38,7 @@ export interface SiteHeaderViewProps {
   headerRef?: Ref<HTMLElement>;
 }
 
-export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangIntent, headerRef }: SiteHeaderViewProps) {
+export function SiteHeaderView({ copy, lang, langs, tryHref, giftHref, onLang, onLangIntent, headerRef }: SiteHeaderViewProps) {
   return (
     <header className="lp-hdr" id="hdr" ref={headerRef}>
       <div className="lp-wrap">
@@ -46,6 +47,8 @@ export function SiteHeaderView({ copy, lang, langs, tryHref, onLang, onLangInten
           {NAV_KEYS.map((k) => (
             <a key={k} href={`#${k}`}>{copy.nav[k]}</a>
           ))}
+          {/* the gift voucher page: a page of its own, not a section (the gold line under the links follows the sections only) */}
+          <a className="lp-nav-gift" href={giftHref}>{copy.nav.gift}</a>
           {/* the one gold hairline that slides under the link of the section being read (src/landing/shell/navMark.ts; decorative) */}
           <i className="lp-nav-mark" aria-hidden="true" />
         </nav>

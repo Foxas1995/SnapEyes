@@ -253,7 +253,7 @@ export const GiftApp: React.FC = () => {
                       <div aria-hidden="true" className="w-full aspect-square rounded-xl border border-gold/40 bg-gradient-to-br from-[#1b1710] to-[#0c0d12] flex flex-col items-center justify-center gap-1.5 sm:gap-2.5 px-1">
                         <Gift className="w-5 h-5 sm:w-7 sm:h-7 text-gold-light" />
                         <span className="font-luxury text-[11px] sm:text-base font-bold text-gold-light tracking-wide">SnapEyes</span>
-                        <span className="font-mono text-[8px] min-[375px]:text-[9px] sm:text-xs tracking-[0.12em] text-zinc-200 border border-dashed border-white/25 rounded px-1 sm:px-2 py-0.5 whitespace-nowrap">K7QM 4XHD 2RTA</span>
+                        <span className="font-mono text-[8px] min-[375px]:text-[9px] sm:text-xs tracking-[0.12em] text-zinc-200 border border-dashed border-white/25 rounded px-1 sm:px-2 py-0.5 whitespace-nowrap">XXXX XXXX XXXX</span>
                       </div>
                     ) : (
                       <img src={i === 1 ? '/assets/atelier/gift-eye-315.webp' : PICTURE.one} alt="" width={i === 1 ? 315 : 900} height={i === 1 ? 315 : 900} className="w-full aspect-square object-cover rounded-xl border border-white/10" />

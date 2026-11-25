@@ -23,7 +23,7 @@ import et from '../copy/et.json';
 import lv from '../copy/lv.json';
 import type { LandingCopy } from '../copy/types';
 import { fill } from '../copy/format';
-import { tryUrl } from '../config';
+import { giftUrl, tryUrl } from '../config';
 import { HERO_SIZES, heroPicture } from './hero';
 import { HeroView } from '../HeroView';
 import { HELD_PRICE } from '../heroPrice';
@@ -56,7 +56,7 @@ function renderOne(lang: Lang, langs: Lang[]): string {
   const tryHref = tryUrl(lang);
   const html = renderToStaticMarkup(
     <>
-      <SiteTopView copy={copy} lang={lang} langs={langs} barText={copy.bar.soon} tryHref={tryHref} />
+      <SiteTopView copy={copy} lang={lang} langs={langs} barText={copy.bar.soon} tryHref={tryHref} giftHref={giftUrl(lang)} />
       <main id="main">
         <HeroView copy={copy} lang={lang} tryHref={tryHref} priceLine={fill(copy.hero.fromPrice, copy.facts, { from: HELD_PRICE })} pricePending />
       </main>

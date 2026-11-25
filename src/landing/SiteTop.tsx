@@ -9,7 +9,7 @@ import { startTransition, useRef } from 'react';
 import { useLang } from './lang';
 import { useCopy } from './copy/useCopy';
 import { useOrderingOpen } from './ordering';
-import { useTryHref } from './links';
+import { useGiftHref, useTryHref } from './links';
 import { useHeaderChrome } from './shell/chrome';
 import { SiteTopView } from './SiteTopView';
 import { marketLangs, type Lang } from '../shared/lang';
@@ -23,6 +23,8 @@ export function SiteTop() {
   const market = useMarket();
   const open = useOrderingOpen();
   const tryHref = useTryHref();
+  // the gift page's link is there from the first frame (the shell has it too): the market is added to it once it is known
+  const giftHref = useGiftHref() || `/gift?lang=${lang}`;
   const barRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   // the two sentences are the same length (BUILD_PLAN section 1), so the flip moves nothing
@@ -32,5 +34,5 @@ export function SiteTop() {
   const langs = marketLangs(market);
   // a language switch re-renders the whole page: a transition, so the page stays responsive while it does
   const onLang = (l: Lang) => startTransition(() => setLang(l));
-  return <SiteTopView copy={c} lang={lang} langs={langs} barText={barText} tryHref={tryHref} onLang={onLang} onLangIntent={preloadCopy} barRef={barRef} headerRef={headerRef} />;
+  return <SiteTopView copy={c} lang={lang} langs={langs} barText={barText} tryHref={tryHref} giftHref={giftHref} onLang={onLang} onLangIntent={preloadCopy} barRef={barRef} headerRef={headerRef} />;
 }

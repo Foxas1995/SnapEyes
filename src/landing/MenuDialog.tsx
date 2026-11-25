@@ -10,7 +10,7 @@ import type { CSSProperties } from 'react';
 import type { LandingCopy } from './copy/types';
 import { NAV_KEYS } from './navKeys';
 
-export function MenuDialogView({ copy, tryHref }: { copy: LandingCopy; tryHref: string }) {
+export function MenuDialogView({ copy, tryHref, giftHref }: { copy: LandingCopy; tryHref: string; giftHref: string }) {
   return (
     <dialog className="lp-menu" id="menu" aria-label={copy.navLabels.menu}>
       <div className="lp-menu-in lp-wrap">
@@ -28,6 +28,10 @@ export function MenuDialogView({ copy, tryHref }: { copy: LandingCopy; tryHref: 
                 <a href={`#${k}`}>{copy.nav[k]}</a>
               </li>
             ))}
+            {/* the gift voucher page: a page of its own */}
+            <li style={{ '--i': NAV_KEYS.length } as CSSProperties}>
+              <a href={giftHref}>{copy.nav.gift}</a>
+            </li>
           </ul>
         </nav>
         <a className="lp-btn lp-btn-gold gold-metal" href={tryHref}>
