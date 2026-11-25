@@ -38,7 +38,7 @@ ENGINE_FAMILIES = ("singles", "collision", "universe", "lumen", "ensemble")     
 # hashes of the golden files and v3steps compares them), and when paid masters change that no golden holds (9): a plan records the version it was
 # made under and the master step holds an order whose plan was made under another one (engine_skew: a deploy between payment and master must never
 # draw a picture the preview did not show).
-ENGINE_V = 13         # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
+ENGINE_V = 14         # 1: step A (the prototype's seed, from the bytes of the iris); 2: step B of the seed change for the singles (WP5B: from the eye ids and the plan's
                       # seed key); 3: step B for the collision family (WP7B: the same seed, the names out of it, the pixel decisions made once and frozen in the plan);
                       # 4: step B for the universe family (WP8B: the same seed, the per eye seeds derived from it, the plates version in every pick, the pair's fallback frozen);
                       # 5: the finish of the pair designs of the collision family (pairs design phase 1: an antialiased crumble, the hairline only where both bands are dark, finer
@@ -75,6 +75,12 @@ ENGINE_V = 13         # 1: step A (the prototype's seed, from the bytes of the i
                       #   lumen_goldens.json, the seventy other cases byte for byte the same, and engine_v.json records the file's new hash)
                       #   (2026-11-02: Galaxy Duo, Galaxy Family and Powder Family, ensemble spiral and powder_family, new designs: no existing picture changed, so the
                       #   version stays 13; their cases joined ensemble_goldens.json, every other case byte for byte the same, and engine_v.json records the file's new hash)
+                      # 14: Universe for one eye is ONE look, Lens (universe/lens.py, 2026-11-25, the owner's variant A: the sharp iris before the same iris enlarged about
+                      #   twice and softly out of focus, a matte black pupil, the pupil remapped to 0.30 of the iris when the photo's is wider, small lids filled from the
+                      #   iris's own angles): a new plan of the one-eye Universe draws Lens. NO picture of 13 changed: Echo and Vortex draw byte for byte as under 13 (their
+                      #   goldens unchanged, the lens cases joined universe_goldens.json), so a plan made under 13 (a paid order, its re-render) is drawn as it was paid
+                      #   for (SAME_PICTURES: check_skew lets it through, and the master draws the plan's own design_used)
+SAME_PICTURES = ((14, 13),)  # (ENGINE_V, an earlier version whose every plan this one draws byte for byte as it did): steps.check_skew lets such a plan through
 
 
 class EngineNotBuilt(LookupError):

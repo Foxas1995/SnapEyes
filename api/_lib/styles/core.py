@@ -18,6 +18,10 @@ The rules this module enforces (the scratch test_fx.py proved them; they are the
 - The customer's graded iris is pasted LAST (finish -> paste_iris_last). An effect only ever receives the float
   canvas, never the disc, so nothing it draws can cover, recolour or distort the iris. Inside the disc (alpha 1)
   the output pixels ARE the graded pixels, byte for byte, whatever the effect did.
+  ONE EXCEPTION (signed off by the coordinator on 2026-11-25 for Universe's Lens look, styles/universe/lens.py: the owner approved the picture that needs it):
+  the Lens disc is that look's own drawing of the iris (the grade without the iris finish, the pupil remapped smaller, a small eyelid filled from the iris's own
+  neighbouring angles, a gentle luminance contrast, a matte black pupil). It is still pasted LAST by paste_iris_last and the self check T1 still holds the canvas
+  to it pixel for pixel, but it is not the graded iris byte for byte. No other style may take this exception without its own sign-off.
 - Effect colours come from the eye's own ring: ring_colours() = per-angle MEDIAN of the graded disc between
   0.70 R and 0.92 R, 360 bins, 25-tap circular Gaussian smoothing. They are measured once per eye on a canonical
   REF_SIDE grade, so a 1024 preview and its 4096 master get the very same colours and the same colour class.

@@ -66,7 +66,8 @@ class Scene:
         self.names = [n for n in (names or []) if n]
         self.date = self.opts.get("date")
         self.has_text = bool(self.names or self.date)
-        srcs = [get_src(ir, len(irises)) for ir in irises]
+        lens = look == "lens"            # the Lens look (lens.py) draws its own disc and needs no fill source: its prepare() makes both
+        srcs = [None if lens else get_src(ir, len(irises)) for ir in irises]
         aspect = aspect or self.opts.get("aspect")
         if self.n == 1:
             lay = LO.solo(look, size, aspect or "1:1", self.has_text, self.opts.get("r_scale", 1.0))
@@ -105,10 +106,10 @@ class Scene:
         for i, (ir, sl) in enumerate(zip(irises, lay.slots)):
             e = Eye()
             e.iris, e.src, e.index = ir, srcs[i], i
-            d = f3_disc(ir, sl.cx, sl.cy, sl.R, i)
+            d = None if lens else f3_disc(ir, sl.cx, sl.cy, sl.R, i)
             e.disc = d
             e.cx, e.cy, e.R = float(sl.cx), float(sl.cy), float(sl.R)      # the IDEAL geometry drives matter, fill and fields (the same picture at every canvas size);
-            e.snap = (d.cx, d.cy, d.R)                                       # the disc is snapped to whole pixels: only the compositor reads that
+            e.snap = None if lens else (d.cx, d.cy, d.R)                     # the disc is snapped to whole pixels: only the compositor reads that
             self.eyes.append(e)
         if self.opts.get("seed_mode") == "legacy":
             # the seed before step B (WP8B): the bytes of the irises, the look and the layout key; the laboratory's before and after look and the replay of step A
@@ -508,12 +509,12 @@ def release_bands_memory(scene, look):
     Above 1536 px the extended sources are also dropped from the eye's cache (a 4K master is rendered once)."""
     import gc
     look.layers = []
-    for name in ("flakes", "depth", "matter", "chips", "stars", "plate", "accent_plate", "_hi", "ring_win"):
+    for name in ("flakes", "depth", "matter", "chips", "stars", "plate", "accent_plate", "_hi", "ring_win", "bg"):
         if hasattr(look, name):
             setattr(look, name, None)
     for e in scene.eyes:
         e.E = None
-        if scene.S > 1536:
+        if scene.S > 1536 and e.src is not None:
             src = e.src
             for k in [k for k in src._ext if isinstance(k, tuple) and k and k[0] == "pm"]:
                 del src._ext[k]

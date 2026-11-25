@@ -69,6 +69,7 @@ from .. import duration as D
 from .. import store
 from .. import words as WORDS
 from . import ENGINE_V
+from . import SAME_PICTURES
 from . import seeds as SD
 from . import costs as CO
 from . import guard as GD
@@ -576,8 +577,17 @@ def create_plan(ctx):
 def check_skew(plan):
     """The running ENGINE_V against the plan's: a deploy between payment and master that changed a golden must never draw a picture the preview did
     not show (a legacy plan carries no engine version)."""
-    if plan.get("family") != "legacy" and plan.get("engine_v") != ENGINE_V:
+    if plan.get("family") != "legacy" and plan.get("engine_v") != ENGINE_V and (ENGINE_V, plan.get("engine_v")) not in SAME_PICTURES:
         raise Hold("engine_skew", f"the plan was made under engine version {plan.get('engine_v')}, this deployment runs {ENGINE_V}")
+
+
+def master_opts(plan):
+    """The options the master draws a plan with: the plan's own, and for the universe family the look the plan names (design_used): a plan made under ENGINE_V 13
+    without a look drew Echo, the default of 13, and must still draw it now that the default of one eye is Lens (SAME_PICTURES; a retired look is drawn for a plan)."""
+    o = dict(plan.get("opts") or {})
+    if plan.get("family") == "universe" and isinstance(plan.get("design_used"), str) and not o.get("look"):
+        o["look"] = plan["design_used"]
+    return o
 
 
 HOLDS = {
@@ -851,7 +861,7 @@ def _exec_engine(ctx, plan, step, rerun):
                 raise Hold("pupil_changed", f"eye {i + 1}: the master's pupil is {got['cls']} (aspect {float(got['aspect']):.2f}), the preview's was {want['pupil']} "
                            f"(aspect {was_txt}): the picture would be drawn for other pupils than the ones the customer approved")
     names, date = master_words(ctx.spec)
-    fam_spec = {"style": plan["style"], "layout": plan["layout"], "eyes": n, "canvas": plan.get("canvas"), "names": names, "date": date, "opts": plan.get("opts"),
+    fam_spec = {"style": plan["style"], "layout": plan["layout"], "eyes": n, "canvas": plan.get("canvas"), "names": names, "date": date, "opts": master_opts(plan),
                 "pv": plan.get("pv"), "frozen": plan.get("frozen") or None}
     t0 = time.time()
     try:

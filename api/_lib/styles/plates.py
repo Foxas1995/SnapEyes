@@ -552,6 +552,8 @@ LOOK_FAMILIES = {
         "vortex": ("P-DN-SPIRAL",),
         "deepfield": ("P-UV-DUST",),
         "starfield": ("P-UV-MILKY",),
+        "lens": (),                          # Lens (2026-11-25) reads no plate. Echo and Vortex are retired (never offered) but stay expected: effective_stage keeps a
+                                             # retired look at its style's stage, the safe side for the orders paid under ENGINE_V 13 that still draw them
     },
 }
 VISIBLE_STAGES = ("preview", "live")

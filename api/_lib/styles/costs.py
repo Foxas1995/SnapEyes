@@ -171,7 +171,13 @@ ADDED = (
     ("lumen.echo", 1, (9.9, 9.0, 720, 806), (1.4, 1.18, 0.70, 0.48, 170)),   # Iris Echo (2026-10-27): Aurora's row with 100 MB more for the 1536 grid, until measured
     ("lumen.dust", 1, (8.6, 7.8, 622, 708), (1.12, 0.88, 0.40, 0.48, 170)),   # Powder Burst's dust (2026-10-28), measured as above (below)
     ("lumen.galaxy", 1, (12.8, 11.6, 630, 716), (4.5, 2.9, 1.2, 1.7, 310)),   # Spiral Galaxy (2026-10-30), measured beside Radiance and Aurora (above)
+    ("universe.lens", 1, (12.3, 11.8, 640, 775), (2.33, 2.07, 0.9, 1.17, 254)),   # Universe's Lens (2026-11-25), measured beside Echo (below)
 )
+# universe.lens (the Lens look of Universe, ENGINE_V 14) was measured on 2026-11-25 the master step's way (styles.preview at 4096 px with the self check, one fresh process per
+#   render, one thread, Windows) beside Echo on the same eyes: from the 4096 px restoration drv_d01 17.6 s CPU and 635 MB (Echo 17.4 s, 630 MB), from the owner's 1024 px one
+#   11.8 s and 573 MB (Echo 12.6 s, 567 MB); the 1024 px previews 3.3 to 4.4 s cold, 1.0 to 1.1 s the design alone, 126 to 182 MB (Echo 4.5 to 6.5 s, 262 to 278 MB). The row is
+#   Echo's one-eye row with the largest ratio of the masters (1.01, raised to the tenth) and the largest difference of the peaks (+5 MB, rounded up to +5 and +6); the preview is
+#   Echo's (an over-estimate)
 for _key, _n, _master, _preview in ADDED:
     if _key not in MASTER:
         MASTER[_key] = {_n: _master}

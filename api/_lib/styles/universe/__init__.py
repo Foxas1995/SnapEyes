@@ -7,6 +7,8 @@ matter (fibre flakes, grains, iris chips, stars) around the real iris; the iris 
                                    made of the eye's own limbus; a chip inside the Universe tile
   deepfield  Deep Field            one eye: luminous dust (P-UV-DUST plate) in the eye's own hue (held: the laboratory only)
   starfield  Starfield             one eye: a photographed Milky Way (P-UV-MILKY plate) in the eye's hue (held: the laboratory only)
+  lens       Universe              one eye, since ENGINE_V 14 (2026-11-25) Universe's ONE look: the sharp iris before the same iris enlarged about twice and softly out
+                                   of focus, a matte black pupil (lens.py; Echo and Vortex are retired for customers and kept for the plans made under 13)
 and the pair (Universe Duo over the Collision Infinity geometry: an S weave of two real irises) and the group of three to six (over the Family Colours
 layouts: crumble contacts, one iris in front), both held: the laboratory only. The registry says which look of which style is at which stage.
 
@@ -44,11 +46,22 @@ from .. import text as TX
 from . import layout as LO
 from . import plates as UPL
 
-LOOKS = ("echo", "deepfield", "vortex", "starfield")          # the prototype's names; the registry's looks table lists the same
-SOLO_LOOKS = ("deepfield", "vortex", "starfield")             # one eye only (Echo covers pairs and groups)
+LOOKS = ("echo", "deepfield", "vortex", "starfield")          # the prototype's names (the golden suite replays them against the scratch prototype)
+LENS = "lens"                                                 # the Lens look (lens.py, 2026-11-25): not the prototype's, so apart from LOOKS; the registry's looks table lists all five
+ALL_LOOKS = LOOKS + (LENS,)
+SOLO_LOOKS = ("deepfield", "vortex", "starfield", LENS)       # one eye only (Echo covers pairs and groups)
+DEFAULT_LOOKS = ("echo", "lens")                              # the looks a seed key names as no option (Echo: the pair's and the group's; Lens: one eye's since ENGINE_V 14)
+# Lens (lens.py), ENGINE_V 14, 2026-11-25: Universe for one eye is ONE look, the customer's sharp iris before the same iris enlarged and softly out of focus. Echo and
+# Vortex stay drawable here, byte for byte as under ENGINE_V 13, for the plans made under 13 (paid orders and their re-renders: a paid order always gets the picture
+# that was paid for); the registry retires them for customers (styles_engine.py looks "retired"), so a request that still names them draws Lens.
+# The family rule "the iris is pasted last, byte for byte, never touched" (above, core.py) has ONE exception, signed off by the coordinator on 2026-11-25 for the
+# Lens look (the owner approved the picture that needs it): its disc is the look's own drawing of the iris (the grade without the finish, remapped to a smaller
+# pupil, lids filled from the iris's own neighbouring angles when small, a gentle luminance contrast, a matte black pupil), still pasted last and held to the
+# pixel by the self check T1, but not the graded iris byte for byte.
 SIZES = (64, 4096)                                            # the long side a render may ask for
 ENGINE_OPTS = ("zone_c", "seam_band", "edge_mode", "crumble_holes", "edge_scale", "edge_profile", "seam_noise", "seam_dust", "trio_base", "d_group",
-               "d_override", "kiss", "k_s", "r_scale", "fill_only", "pet", "ellipse", "seed_mode")        # the laboratory's switches (the owner's sign-offs): never a customer's
+               "d_override", "kiss", "k_s", "r_scale", "fill_only", "pet", "ellipse", "seed_mode",
+               "lens_remap", "lens_disc_lids", "lens_lids")        # the laboratory's switches (the owner's sign-offs): never a customer's (lens_*: the Lens look's pupil remap and disc lid fill, on unless False)
 GROUP_LAYOUTS = {3: "trio", 4: "zigzag", 5: "brick5", 6: "brick6"}
 JOIN_PAIR = " " + chr(0x221E) + " "           # how engine.draw_names joins the two names of a pair (the infinity sign) ...
 JOIN_GROUP = " " + chr(0xB7) + " "          # ... and the names of a group (the middle dot)
@@ -127,14 +140,14 @@ def render(look, irises, size=1024, aspect=None, names=None, date=None, opts=Non
     canvas, the size and the pixels are not in it. opts seed_mode "legacy" seeds as before step B (the bytes of the irises, the look and the layout key).
     frozen: what the plan fixed before the render ({"fallback": None | "kiss"}: a pair's weave or Kiss distance): obeyed, and engine.DesignChanged when the
     pupils of these eyes contradict a weave."""
-    if look not in LOOKS:
-        raise ValueError(f"unknown look {look!r}; have {LOOKS}")
+    if look not in ALL_LOOKS:
+        raise ValueError(f"unknown look {look!r}; have {ALL_LOOKS}")
     if not isinstance(irises, (list, tuple)) or not 1 <= len(irises) <= 6:
         raise ValueError("the universe family draws one to six eyes")
     if not SIZES[0] <= int(size) <= SIZES[1]:
         raise ValueError(f"a canvas of {size} px (from {SIZES[0]} to {SIZES[1]})")
     if look != "echo" and len(irises) != 1:
-        raise ValueError("Deep Field, Vortex and Starfield are single-eye looks (Echo covers pairs and groups)")
+        raise ValueError("Lens, Deep Field, Vortex and Starfield are single-eye looks (Echo covers pairs and groups)")
     from . import looks as LK                     # looks first: it imports plate_looks at its end and plate_looks imports looks
     from . import engine as EN
     o = dict(opts or {})
@@ -144,7 +157,11 @@ def render(look, irises, size=1024, aspect=None, names=None, date=None, opts=Non
         key = default_key(look, len(irises), o.get("layout"), o)
     elif key is not None:
         key = _checked_key(key, look)
-    return EN.render(LK.LOOKS[look](), [_iris(e, f"eye{i + 1}") for i, e in enumerate(irises)], int(size), aspect, TX.split_names(names), o,
+    if look == LENS:
+        from .lens import Lens as _Look
+    else:
+        _Look = LK.LOOKS[look]
+    return EN.render(_Look(), [_iris(e, f"eye{i + 1}") for i, e in enumerate(irises)], int(size), aspect, TX.split_names(names), o,
                      times=times, want_scene=want_scene, key=key, frozen=_checked_frozen(frozen))
 
 
@@ -177,7 +194,7 @@ def _engine(spec):
     o = spec.get("opts") if isinstance(spec.get("opts"), dict) else {}
     look = o.get("look") or e["design"]
     allowed = tuple(e.get("looks") or (e["design"],))
-    if look not in LOOKS or look not in allowed or (look != "echo" and n != 1):
+    if look not in ALL_LOOKS or look not in allowed or (look != "echo" and n != 1):
         raise ValueError(f"{look!r} is not a look of {style!r} with {n!r} eyes (looks: {', '.join(allowed)})")
     lname = engine_layout(spec.get("layout"), n)
     return e, look, _aspect_of(e, spec, n, lname), lname
@@ -212,7 +229,7 @@ def seed_key(style, look, layout="single", opts=None, pv=None):
     o = opts if isinstance(opts, dict) else {}
     rot = o.get("rotate")
     rot = rot % 3 if (layout == "trio" and isinstance(rot, int) and not isinstance(rot, bool)) else 0
-    kopts = {"swap": True if (layout == "pair" and o.get("swap")) else None, "rotate": rot or None, "look": look if look != "echo" else None}
+    kopts = {"swap": True if (layout == "pair" and o.get("swap")) else None, "rotate": rot or None, "look": look if look not in DEFAULT_LOOKS else None}
     return {"style": style, "design_used": look, "bg": "dark", "clean": False, "layout": layout, "opts": kopts, "pv": CT.PLATES_VERSION if pv is None else int(pv)}
 
 
@@ -275,6 +292,8 @@ def plates_for(look, wall, seed, pv):
     is the number of diffraction stars), Vortex (a crisp spiral) and Starfield (the Milky Way whose band axis fits the seeded target). NoPlate when the library has
     none at that version."""
     from .. import core as C
+    if look == "lens":
+        return []
     if look == "echo":
         return [UPL.pick_wall(C.Rand(seed, "echo/wall"), pv)["id"]] if wall else []
     if look == "deepfield":
@@ -385,7 +404,7 @@ def _log_of(scene, look):
     fb = "kiss" if scene.layout.info.get("overlap_fallback") else None
     log = {"look": look, "layout": scene.layout.key, "aspect": scene.layout.aspect, "plates": plates_used(info), "halo_rows": info.get("halo_rows"),
            "band_rows": info.get("band_rows"), "coarse": scene.f, "fallback": fb, "frozen": {"fallback": fb} if scene.n == 2 else {}}
-    for k in ("plate", "accent_plate", "notches", "contacts", "plate_fallback"):
+    for k in ("plate", "accent_plate", "notches", "contacts", "plate_fallback", "lens"):
         if k in info:
             log[k] = info[k]
     return log
@@ -426,7 +445,7 @@ def preview(eyes, spec, size=1024, check=False):
     times = {}
     img, scene = render(look, irises, size, aspect, names, date, o, want_scene=True, times=times, key=key, frozen=fz)
     discs = [e_.snap for e_ in scene.eyes]
-    graded = [e_.iris.graded(e_.disc.Sd) for e_ in scene.eyes]
+    graded = [e_.iris.graded(e_.disc.Sd, finish=(look != "lens")) for e_ in scene.eyes]     # Lens draws from the grade without the finish (lens.py)
     text_log = [{"kind": k, "text": t} for k, t in scene.info.get("text", [])]
     cls = [e_.iris.cls for e_ in scene.eyes]
     pv = Preview(img=img, discs=[tuple(map(float, d)) for d in discs], graded=graded, design=look, fmt=aspect, size=int(size), seed=int(scene.seed),

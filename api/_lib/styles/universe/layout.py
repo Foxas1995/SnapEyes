@@ -15,7 +15,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
-SOLO_R = {"echo": 0.25, "deepfield": 0.24, "vortex": 0.22, "starfield": 0.22}     # brief 3.5.2-3.5.5, Appendix A
+SOLO_R = {"echo": 0.25, "deepfield": 0.24, "vortex": 0.22, "starfield": 0.22,     # brief 3.5.2-3.5.5, Appendix A
+          "lens": 0.32}                                                          # the Lens look (2026-11-25): the disc of a macro photograph, 0.64 S across
 DUO_R_H = 0.27                # Collision Infinity: R = 0.27 H (3:2 and 5:4)
 NAMES_SHRINK = 0.94
 NAMES_LIFT = 0.03             # share of the short side
