@@ -35,6 +35,7 @@ import { callApi, type CheckoutInfo } from '../order/api';
 import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavailable, notePreview } from '../shared/pricing';
 import { priceChangedNote } from './priceNote';
 import { count, note as noteCounter, withCamp } from '../shared/counter';
+import { track } from '../shared/metaPixel';
 import { noteFeedback } from '../shared/feedback';
 import { readCatalogue } from '../shared/catalogue';
 import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
@@ -50,6 +51,8 @@ type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
 
 // when the photo was chosen (milliseconds), for the anonymous counter's time to a preview (src/shared/counter.ts)
 let photoAt = 0;
+// the Meta pixel's Lead (src/shared/metaPixel.ts): once a page load, at the first free preview of a photo of the visitor's own
+let leadSent = false;
 
 // Several photos are measured at once: each /api/analyze call is mostly waiting on the vision model, so
 // three in flight cut the wait roughly threefold without piling a whole gallery onto the server at once.
@@ -326,6 +329,8 @@ export const TryApp: React.FC = () => {
 
   // the anonymous counter: /try was opened (sent once /api/health says the counter is on)
   useEffect(() => { count('try', T.lang, currentMarket()); }, []);
+  // the Meta pixel: /try was opened (the category alone: src/shared/metaPixel.ts lets nothing else through)
+  useEffect(() => { track('ViewContent', { category: 'artwork' }); }, []);
   // The preview watermark is drawn into the pixels of an eye's display copy, in the language of the request that made it (eye.wm). When the page speaks another language (the visitor
   // switched after the restoration, or while it ran and the answer came in the old one), the display copy is asked for again in the new one: /api/enhance {redisplay} draws it from
   // the sealed preview, no model call and no ticket, and the page swaps only the picture and its chip. One eye at a time; a Reveal eye is never given a plain copy (shown says which
@@ -821,6 +826,7 @@ export const TryApp: React.FC = () => {
     setAnalysis(null); setClientCrop(null);
     setStep('result'); setArriving(true); toTop();
     if (!sample) { count('result', T.lang, currentMarket(), { eyes: list.length, ...(photoAt ? { took: Date.now() - photoAt } : {}) }); photoAt = 0; }       // the restored eye is on screen: the time since the photo is the page's own
+    if (!sample && !leadSent) { leadSent = true; track('Lead', { category: 'artwork' }); }       // the Meta pixel: a free preview was shown (nothing about it is sent)
   };
 
   // ---- the result screen: the server's tile list for these eyes, the style on screen and its previews (src/try/usePreviews.ts)
@@ -917,6 +923,7 @@ export const TryApp: React.FC = () => {
     setOrderRef(out.ref);
     if (out.kind === 'redirect') {
       await keepForReturn(out.ref.order, list, style, layoutWant, wireNames(namesList));
+      track('InitiateCheckout', { category: 'artwork' }, undefined, true);       // the Meta pixel: off to Stripe's payment page (a request that outlives the page)
       window.location.assign(out.url);
       return;   // the page is leaving for Stripe: the button stays busy
     }

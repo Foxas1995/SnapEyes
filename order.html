@@ -6,7 +6,8 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#07090e" />
     <!-- The address of this page carries the order's private key (k): no request from it may name the address.
-         So no referrer, and no third-party script or font here (no analytics, no pixel). -->
+         So no referrer, and no third-party script or font here. The Meta pixel's events of this page (the owner's decision of 2026-11-25) are
+         single requests to www.facebook.com/tr that name the path /order alone, never the address (src/shared/metaPixel.ts startPixel('image')). -->
     <meta name="referrer" content="no-referrer" />
     <meta name="robots" content="noindex, nofollow" />
     <!-- The page transition (src/motion/transition.css) never covers an order, a payment or a form: this page arrives without it when its address names

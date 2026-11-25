@@ -20,6 +20,7 @@
 // 5. The early ask (in the head): the two small API answers the page needs (see prefetchScript).
 // 6. The menu (right after the bar script): the dialog of the narrow widths opens and closes, see menuScript.
 // 7. The anonymous counter's beacon (in the head, after the early ask): the landing page was opened, see counterScript.
+// 8. The Meta pixel (in the head, after the counter; only when the build names a dataset id): see pixelScript.
 
 /** The tables of src/shared/markets.ts and src/shared/lang.ts the decision needs. */
 export interface ShellRule {
@@ -105,6 +106,25 @@ export const counterScript =
   "c=(location.search.match(/utm_(source|medium|campaign|term|content)=[^&]{0,60}/g)||[]).join('&')||c||'ref='+(r.match(/(facebook|instagram|tiktok|google)[.]/)||[0,r?'other':'direct'])[1];try{sessionStorage[K]=c}catch(e){}" +
   "const go=()=>navigator.sendBeacon('/api/checkout',new Blob([JSON.stringify({hit:'landing',lang:s.l,market:s.m,camp:c})],{type:'application/json'}));" +
   "document.readyState=='complete'?go():addEventListener('load',go)}).catch(e=>e)}catch(e){}})()";
+
+/** The Meta pixel on the landing page (8; the owner's decision of 2026-11-25, src/shared/metaPixel.ts has the whole of it). An inline script and not part of
+ *  the page's JavaScript, as the counter's beacon, so the landing's bundles do not grow (npm run check:budget), and it waits: Meta's script is added only once
+ *  the page has loaded and the browser is idle (at the latest 6 s after the first byte), never in the way of the picture. Only on snapeyes.com itself (a
+ *  Preview, a local server and the checks report nothing), only PageView, Meta's automatic configuration off (autoConfig false: no button texts, no form
+ *  fields). When the address carries a "fbclid" click id and there is no _fbc cookie, the tab keeps "fb.1.<time>.<click id>" in sessionStorage "snapeyes.fbc"
+ *  for the checkout (src/shared/metaPixel.ts metaIds reads it). id: the dataset id (vite.config.ts metaPixelId); none or a malformed one: no script at all.
+ *  suites/ts/meta_pixel.test.ts runs this very string. */
+export function pixelScript(id: string): string {
+  if (!/^[0-9]{5,20}$/.test(id)) return '';
+  return (
+    `(function(){try{var I='${id}',w=window,d=document;if(!/^(www\\.)?snapeyes\\.com$/.test(location.hostname))return;` +
+    "try{var c=new URLSearchParams(location.search).get('fbclid')||'';if(/^[A-Za-z0-9_-]{8,300}$/.test(c)&&d.cookie.indexOf('_fbc=')<0)sessionStorage.setItem('snapeyes.fbc','fb.1.'+Date.now()+'.'+c)}catch(e){}" +
+    "var g=function(){if(w.fbq)return;var n=w.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!w._fbq)w._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];" +
+    "var s=d.createElement('script');s.async=!0;s.src='https://connect.facebook.net/en_US/fbevents.js';d.head.appendChild(s);n('set','autoConfig',false,I);n('init',I);n('track','PageView')}," +
+    "l=function(){w.requestIdleCallback?w.requestIdleCallback(g,{timeout:3000}):setTimeout(g,1000)};" +
+    "d.readyState=='complete'?l():addEventListener('load',l);setTimeout(g,6000)}catch(e){}})()"
+  );
+}
 
 export const barScript =
   "(function(){var b=document.getElementById('topbar'),r=document.documentElement;" +

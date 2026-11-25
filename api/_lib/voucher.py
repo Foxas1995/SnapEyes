@@ -348,6 +348,9 @@ def buy(body):
     camp = counter.pack(counter.parse(body.get("camp")))
     if camp:
         meta["src"] = camp
+    # the Meta Conversions API's identifiers of this visit (api/_lib/meta.py checkout_meta), only while it is configured
+    from . import meta as MC
+    meta.update(MC.checkout_meta(body))
     params += [(f"metadata[{k}]", v) for k, v in meta.items()]
     r = pay._stripe("POST", "/v1/checkout/sessions", params, idem=f"snapeyes-voucher-{ref}")
     if r.status_code != 200:
@@ -452,6 +455,12 @@ def on_paid(sess, source):
         try:
             store.put(path, store.json_bytes(rec), "application/json", upsert=False, timeout=8.0)
             pay.log(f"voucher {cid} SOLD via {source}: {kind} {pay.amount_text(value, 'en', currency)} ({market}) live={rec['livemode']}")
+            # the Meta Conversions API's Purchase, once (the record was made just now): the event id the gift page's pixel sends too, made from a hash
+            # of the session id, which shows the code (api/_lib/meta.py event_id); nothing in test mode or without the token
+            from . import meta as MC
+            cd = sess.get("customer_details") if isinstance(sess.get("customer_details"), dict) else {}
+            MC.purchase("voucher", sess, cd.get("email") or sess.get("customer_email"), sess.get("amount_total"), currency, f"{pay.site()}/gift",
+                        MC.country_of(sess, pay.MARKETS.get(market, {}).get("countries")))
         except store.StorageExists:
             rec = store.get_json(path, timeout=8.0) or rec
     # the owner's note, once (claimed: a note Resend could not take is tried again at the next call, the webhook's retry or the success page)

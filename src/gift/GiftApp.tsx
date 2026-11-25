@@ -4,6 +4,7 @@ import { GIFT_COPY, type GiftKind } from './copy';
 import { DEFAULT_MARKET, MARKETS, money, withMarket } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
 import { callApi } from '../order/api';
+import { livePayment, track, voucherPurchaseId } from '../shared/metaPixel';
 import { CARD, GOLD_BTN, PLAIN_BTN } from '../order/ui';
 import { Dot } from '../motion/Tick';
 import { detectLang, rememberLang, type Lang } from '../try/lang';
@@ -17,7 +18,9 @@ import './gift.css';
 // The gift voucher page (/gift; api/_lib/voucher.py). Without ?s= it sells a voucher: the two kinds with their prices (the server's standard euro list, GET
 // /api/checkout), how it works, and the button to Stripe's page (POST /api/checkout {gift: {kind}}). With ?s=<Stripe session> (Stripe's success page) it asks
 // GET /api/checkout?gift=<session> until the payment is confirmed and shows the code, its value and its last day, a copy button and a card to print.
-// ?cancelled=1: Stripe's back link. The page carries no third-party script and sends no referrer (the session id in its address shows the code).
+// ?cancelled=1: Stripe's back link. The page carries no third-party script and sends no referrer (the session id in its address shows the code). The Meta
+// pixel's events of this page (src/shared/metaPixel.ts, the owner's decision of 2026-11-25) are single requests that name the path /gift alone: PageView,
+// InitiateCheckout as the page leaves for Stripe, and Purchase once the code is there, with the hashed event id the server uses too (api/_lib/meta.py).
 
 const SESSION_RE = /^cs_(test|live)_[A-Za-z0-9]{8,240}$/;
 const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
@@ -95,6 +98,12 @@ export const GiftApp: React.FC = () => {
       const d = r.data;
       if (r.ok && d?.state === 'ready' && typeof d.code === 'string' && (d.kind === 'one' || d.kind === 'two') && typeof d.value === 'number') {
         setStatus({ state: 'ready', code: d.code, kind: d.kind, value: d.value, currency: d.currency ?? 'EUR', valid_until: d.valid_until ?? null, mail: d.mail });
+        // the Meta pixel's Purchase (a live payment only): the value and the currency, and the session id hashed into the event id (it shows the code)
+        const sid = QUERY.s;
+        if (livePayment(sid)) {
+          const value = d.value, currency = d.currency ?? 'EUR';
+          void voucherPurchaseId(sid).then((eid) => { if (eid) track('Purchase', { category: 'voucher', minor: value, currency }, eid); });
+        }
         return;
       }
       if (r.ok && (d?.state === 'expired' || d?.state === 'unknown')) { setStatus({ state: d.state }); return; }
@@ -114,6 +123,7 @@ export const GiftApp: React.FC = () => {
     setError(null);
     const r = await callApi<{ url?: string }>('/api/checkout', { body: { gift: { kind }, market, lang }, timeoutMs: 30_000 });
     if (r.ok && typeof r.data?.url === 'string' && r.data.url.startsWith('https://')) {
+      track('InitiateCheckout', { category: 'voucher' }, undefined, true);       // the Meta pixel: off to Stripe's payment page
       window.location.assign(r.data.url);
       return;   // leaving for Stripe: the button stays busy
     }

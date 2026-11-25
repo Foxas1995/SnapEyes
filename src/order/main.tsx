@@ -6,6 +6,7 @@ import '../motion/flow.css';
 import { watchAway } from '../motion/flow';
 import { OrderApp } from './OrderApp';
 import { adoptLinkedEdition } from '../shared/legal';
+import { startPixel } from '../shared/metaPixel';
 
 // a link that names a market with its own legal texts (m=au, the withdrawal link of the Australian pages) keeps them,
 // even while that market is paused for new orders; the order's own market (its status) follows once the server names it
@@ -13,6 +14,9 @@ adoptLinkedEdition();
 
 // the waiting arcs and the hairlines pause while the tab is hidden (src/motion/flow.css)
 watchAway();
+
+// the Meta pixel (src/shared/metaPixel.ts) WITHOUT Meta's script: the address holds the order's key, so each event is one request that names the path alone
+startPixel('image');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -12,6 +12,7 @@ from _lib import counter
 from _lib import feedback
 from _lib import merchone
 from _lib import prints
+from _lib import meta
 from _lib.styles import plates
 import deglare
 
@@ -54,7 +55,10 @@ def handle(req):
             "sr_model": os.path.exists(os.path.join(L.ASSETS, "models", "realesr_general_x4v3.onnx")),
             # prints (api/_lib/prints.py, booleans only): merchOne's API user and key set, production orders on (MERCHONE_LIVE), and whether
             # customers can add a print now (the owner's switch in the admin page and the credentials)
-            "merchone": merchone.configured(), "merchone_live": merchone.live(), "prints": not prints.offer_problem()}
+            "merchone": merchone.configured(), "merchone_live": merchone.live(), "prints": not prints.offer_problem(),
+            # the Meta pixel (the owner's decision of 2026-11-25, api/_lib/meta.py; booleans only): a dataset id is named (META_PIXEL_ID, else the
+            # constant; the pages are built with the same one) and the Conversions API can send purchases (META_CAPI_TOKEN is set)
+            "meta_pixel": meta.pixel_on(), "meta_capi": meta.capi_on()}
     # the style engine (booleans only): the registries agree, and the 4K plates the visible styles fetch are in storage (api/_lib/styles/plates.py health)
     info.update(plates.health())
     L.send_json(req, 200, info)

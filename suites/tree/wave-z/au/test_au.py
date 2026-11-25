@@ -93,6 +93,16 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_printlater.json stays as the base: the 1121 step is now checked between the pins of
 # the three languages and of the print offered later. A1, B1, B3 and E8 moved, each keeping its id and the older names, with " - 1124:" added; the AU and US
 # editions are made from the raw docs and carry no print.
+# 1125 refresh (2026-11-25, the owner's decision: the Meta pixel and the Conversions API, for everyone, no banner). The EU edition changed on purpose in its PRIVACY
+# POLICY only, in every one of the eight languages: a new section "meta" right after "operations" (seven blocks: who and what, the reports, what is never sent, the
+# cookies and the session storage key, the server's report of a payment, the purpose, the legal basis and the joint responsibility, how to object), and one block each
+# of "website" (the tools of other companies: one, the Meta pixel), "orders" (the Stripe metadata of a payment also carries fbp, fbc, the IP and the user agent),
+# "retention" (a row for Meta's cookies and reports: the table is one block), two of "services" (Meta in the list, which is one block, and Meta named beside Stripe
+# in the paragraph after it) and two of "storage" (the first block: our pages set no cookie of their own, the pixel sets two; and the click number in the campaign
+# code's paragraph). The terms, the withdrawal page, the legal notice, the checkout wording and the consent version are as they were; LEGAL_UPDATED moves to
+# 2026-11-25. eu_pixel.json is the EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_block.json stays as the base: the 1124 step is now checked
+# between the pins of the print offered later and of the list of prints. eu_pixel_raw.json (snap_eu.mjs) is the raw docs as of this work, the base of the
+# Australian and US editions' privacy policy, held to eu_cap_raw.json plus exactly the same blocks (en, de). A1, B1, B3 and E8 moved with " - 1125:" added.
 import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -256,9 +266,11 @@ EU_CAP = json.load(open(os.path.join(HERE, "eu_cap.json"), encoding="utf-8"))   
 EU_GIFT = json.load(open(os.path.join(HERE, "eu_gift.json"), encoding="utf-8"))   # 1111g refresh: the EU edition with the gift vouchers (snap_eu_edition.mjs), the base is eu_cap.json; 1113: the base of the three languages
 EU_LANGS3 = json.load(open(os.path.join(HERE, "eu_langs3.json"), encoding="utf-8"))   # 1113 refresh: the EU edition with its Finnish, Estonian and Latvian texts (snap_eu_edition.mjs), the base is eu_gift.json; 1121: the base of the print paragraphs
 EU_PRINTLATER = json.load(open(os.path.join(HERE, "eu_printlater.json"), encoding="utf-8"))   # 1121 refresh: the EU edition whose print paragraphs say that a print is ordered after the artwork (snap_eu_edition.mjs), the base is eu_langs3.json; 1124: the base of the list of prints
-EU_NOW = json.load(open(os.path.join(HERE, "eu_block.json"), encoding="utf-8"))   # 1124 refresh: the EU edition whose list of prints has the acrylic block and the canvas' new price (snap_eu_edition.mjs), the base is eu_printlater.json
+EU_BLOCK = json.load(open(os.path.join(HERE, "eu_block.json"), encoding="utf-8"))   # 1124 refresh: the EU edition whose list of prints has the acrylic block and the canvas' new price (snap_eu_edition.mjs), the base is eu_printlater.json
+EU_NOW = json.load(open(os.path.join(HERE, "eu_pixel.json"), encoding="utf-8"))   # 1125 refresh: the EU edition whose privacy policy describes the Meta pixel (snap_eu_edition.mjs), the base is eu_block.json
+EU_PIXEL_RAW = json.load(open(os.path.join(HERE, "eu_pixel_raw.json"), encoding="utf-8"))   # 1125 refresh: the raw docs with the Meta pixel's privacy passages (snap_eu.mjs), the base of the AU and US editions' privacy policy
 EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
-LEGAL_NOW = "2026-11-24"        # 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
+LEGAL_NOW = "2026-11-25"        # 1125 refresh: the Meta pixel in the privacy policy. 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
 CONSENT_NOW = "2026-11-13.1"    # 1113 refresh: the Finnish, Estonian and Latvian texts and print boxes added, every older text as it was
 CONSENT_1028C = "2026-10-28.3"  # 1028c refresh: the print box added (2026-10-28.2 since the US text, every waiver as it was). 1028b refresh: the consent version since the US text (2026-10-28.1 since the Croatian text; 2026-09-30.2 since 30efee7: the lt and hu texts added; en, de, AU as of .1)
 CONSENT_1028B = "2026-10-28.2"  # 1028c refresh: the version of the US text, which still quotes every waiver
@@ -296,7 +308,8 @@ check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED
       " - 1111: LEGAL_UPDATED is 2026-11-11 (the privacy paragraph of the daily ceiling of free previews), the consent version is not bumped"
       " - 1113: LEGAL_UPDATED is 2026-11-13 and the consent version 2026-11-13.1 (the Finnish, Estonian and Latvian texts, checkboxes and print boxes)"
       " - 1121: LEGAL_UPDATED is 2026-11-21 (the print paragraphs: a print is ordered after the artwork), the consent version is not bumped (the print box is as it was)"
-      " - 1124: LEGAL_UPDATED is 2026-11-24 (the terms' list of prints and prices: the acrylic block, the canvas' price), the consent version is not bumped",
+      " - 1124: LEGAL_UPDATED is 2026-11-24 (the terms' list of prints and prices: the acrylic block, the canvas' price), the consent version is not bumped"
+      " - 1125: LEGAL_UPDATED is 2026-11-25 (the Meta pixel in the privacy policy), the consent version is not bumped",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
       and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
@@ -619,7 +632,7 @@ def _times1124(new, old):
 
 
 def _step1124(l):
-    fr, d = doc_diff(EDI["eu"]["terms"][l], EU_PRINTLATER["terms"][l])
+    fr, d = doc_diff(EU_BLOCK["terms"][l], EU_PRINTLATER["terms"][l])      # 1125: between the two pins
     if not fr or sorted(d) != ["prints"]:
         return False
     add, rem = d["prints"]
@@ -639,8 +652,28 @@ def _step1124(l):
 
 block1124 = {l: _step1124(l) for l in LANG8}
 block1124_ok = (all(block1124.values())
-                and all(EDI["eu"][d][l] == EU_PRINTLATER[d][l] for d in ("withdrawal", "privacy", "imprint") for l in LANG8)
-                and EU_NOW["checkout"] == EU_PRINTLATER["checkout"])
+                and all(EU_BLOCK[d][l] == EU_PRINTLATER[d][l] for d in ("withdrawal", "privacy", "imprint") for l in LANG8)
+                and EU_BLOCK["checkout"] == EU_PRINTLATER["checkout"])
+# 1125: the Meta pixel (see the header): the privacy policy differs from the pin of the list of prints by exactly the section "meta" after "operations" and these
+# blocks (added, removed) of the sections it names, each new one about the pixel; the other three pages and the checkout wording not at all, in all eight languages
+PRIV1125 = {"website": (1, 1), "orders": (1, 1), "services": (2, 2), "retention": (1, 1), "storage": (2, 2)}
+
+
+def _step1125(new, old):
+    meta = [s for s in new["sections"] if s["id"] == "meta"]
+    if len(meta) != 1 or not after(new, "meta", "operations") or len(meta[0]["blocks"]) != 7:
+        return False
+    first = meta[0]["blocks"][0]
+    fr, d = doc_diff(without(new, "meta"), old)
+    return (fr and sorted(d) == sorted(PRIV1125) and all((len(d[k][0]), len(d[k][1])) == n for k, n in PRIV1125.items())
+            and "Meta Platforms Ireland Limited" in first and all(any(w in json.dumps(d[k][0], ensure_ascii=False) for w in ("#meta", "_fbp")) for k in PRIV1125))
+
+
+pixel1125 = {l: _step1125(EDI["eu"]["privacy"][l], EU_BLOCK["privacy"][l]) for l in LANG8}
+pixel1125_raw = {l: _step1125(EU_PIXEL_RAW["privacy"][l], EU_CAP_RAW["privacy"][l]) for l in LANG2}
+pixel1125_ok = (all(pixel1125.values()) and all(pixel1125_raw.values())
+                and all(EDI["eu"][d][l] == EU_BLOCK[d][l] for d in ("terms", "withdrawal", "imprint") for l in LANG8)
+                and EU_NOW["checkout"] == EU_BLOCK["checkout"])
 pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
@@ -666,9 +699,12 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " offer has on, by the server's own names and prices: the acrylic rows and the poster's as they were, the canvas in its floating frame gone), and by the"
       " shipping table under it (its four rows as they were, three more for the metal print and the canvas of 60 cm), and by ONE passage of the delivery"
       " paragraph, the times (merchOne's published ones from api/_lib/print_times.py for the one sentence of before); the withdrawal"
-      " page, the privacy policy and the legal notice not at all",
-      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
-      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
+      " page, the privacy policy and the legal notice not at all"
+      " - 1125: the pin is eu_pixel.json; the 1124 step is checked between the pins of the print offered later and of the list of prints; the privacy policy differs from"
+      " the pin of the list of prints by exactly the section meta (the Meta pixel) and the blocks of PRIV1125, in all eight languages, and the raw docs from eu_cap_raw.json"
+      " the same way (en, de); the terms, the withdrawal page and the legal notice not at all",
+      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and pixel1125_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
+      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, pixel1125, pixel1125_raw, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
@@ -733,9 +769,9 @@ def _norm(t):
              .replace("2026-11-11", "X").replace("11.11.2026", "X")
              .replace("2026-11-13", "X").replace("13.11.2026", "X")
              .replace("2026-11-21", "X").replace("21.11.2026", "X")
-             .replace("2026-11-24", "X").replace("24.11.2026", "X")                                                               # 1124: and the date of the list of prints
+             .replace("2026-11-24", "X").replace("24.11.2026", "X").replace("2026-11-25", "X").replace("25.11.2026", "X")                                                               # 1124: and the date of the list of prints
              # 1124: the pack of that step is compared in all eight languages, so the date line's Hungarian and Croatian forms are read too (those of the two pins compared)
-             .replace("2026. 11. 21.", "X").replace("21. 11. 2026.", "X").replace("2026. 11. 24.", "X").replace("24. 11. 2026.", "X"))                                                              # 1113: and the date of the three languages                                                              # 1111: and the date of the ceiling of free previews
+             .replace("2026. 11. 21.", "X").replace("21. 11. 2026.", "X").replace("2026. 11. 24.", "X").replace("24. 11. 2026.", "X").replace("2026. 11. 25.", "X").replace("25. 11. 2026.", "X"))                                                              # 1113: and the date of the three languages                                                              # 1111: and the date of the ceiling of free previews
 
 
 def _terms_pack_ok(l, pack=None):
@@ -886,7 +922,7 @@ T = EDI["au"]["terms"]
 # 1028c: the Australian edition is made from the EU texts BEFORE the prints (src/legal/editions.ts applies src/legal/docs/prints.ts to the EU edition only): its base
 # is the pin of hr, the EU edition as it was before the prints, which the EU edition of now differs from by exactly PRINTS28C and PRIV28C (B1, B2b)
 EU_BASE = {d: EU_HR[d] for d in DOCS4}
-EU_BASE["privacy"] = EU_CAP_RAW["privacy"]   # 1111: the raw policy with the paragraph of the daily ceiling of free previews (B2b holds it to the pin of hr plus exactly that)
+EU_BASE["privacy"] = EU_PIXEL_RAW["privacy"]   # 1125: the raw policy with the Meta pixel's passages (B1 holds it to eu_cap_raw.json plus exactly those). 1111: the raw policy with the paragraph of the daily ceiling of free previews (B2b holds it to the pin of hr plus exactly that)
 ids_eu = [s["id"] for s in EU_BASE["terms"]["en"]["sections"]]
 ids_au = [s["id"] for s in T["en"]["sections"]]
 check("C1 AU terms: the EU sections in order, with 'australia' right after 'defects' (en, de) - 1028c: the EU sections before the prints (the pin of hr)",

@@ -35,7 +35,9 @@ export function printCheckPath(order: string, k: string, ps: string): string {
   return `/api/checkout?${new URLSearchParams({ addon: ps, o: order, k }).toString()}`;
 }
 
-interface PrintCheck { state?: string; print?: OrderPrint }
+interface PrintCheck { state?: string; print?: OrderPrint; amount?: number; currency?: string }
+/** What the print's own payment was, as the paid answer says it (for the Meta pixel's Purchase, src/shared/metaPixel.ts). */
+export interface PrintPaid { amount: number; currency: string }
 const isPrint = (p: unknown): p is OrderPrint => !!p && typeof p === 'object' && typeof (p as OrderPrint).product === 'string' && typeof (p as OrderPrint).state === 'string';
 
 export interface WatchDeps { api: typeof callApi; sleep: (ms: number) => Promise<void> }
@@ -46,14 +48,19 @@ export const WATCH_SETTLING = 15_000; // a payment that settles later is asked a
 /** Ask about the print's payment until it is on record (emit 'done' or 'extra' with the print block), expired, or not this order's
  *  (emit null), at most `tries` times; then 'slow' (or 'processing' when the method settles later). A dropped connection is simply asked
  *  again. alive() turns false when the page no longer wants answers. */
-export async function watchPrint(link: { o: string; k: string }, ps: string, deps: WatchDeps, emit: (back: PrintBack, print?: OrderPrint) => void,
+export async function watchPrint(link: { o: string; k: string }, ps: string, deps: WatchDeps, emit: (back: PrintBack, print?: OrderPrint, paid?: PrintPaid) => void,
   alive: () => boolean, tries = WATCH_TRIES): Promise<void> {
   let settling = false;
   for (let i = 0; i < tries && alive(); i++) {
     const r: ApiReply<PrintCheck> = await deps.api<PrintCheck>(printCheckPath(link.o, link.k, ps), { timeoutMs: 25_000 });
     if (!alive()) return;
     const state = r.ok ? r.data?.state : undefined;
-    if (state === 'paid' || state === 'extra') { emit(state === 'paid' ? 'done' : 'extra', isPrint(r.data?.print) ? r.data.print : undefined); return; }
+    if (state === 'paid' || state === 'extra') {
+      const d = r.data;
+      const paid = state === 'paid' && typeof d?.amount === 'number' && typeof d.currency === 'string' ? { amount: d.amount, currency: d.currency } : undefined;
+      emit(state === 'paid' ? 'done' : 'extra', isPrint(d?.print) ? d.print : undefined, ...(paid ? [paid] : []));
+      return;
+    }
     if (state === 'expired') { emit('expired'); return; }
     // not a print payment of this order (or a link that does not fit): nothing to wait for, the page is the page it would be without ps
     if (state === 'unknown' || r.status === 400 || r.status === 403) { emit(null); return; }

@@ -171,7 +171,16 @@ const PRINTS2 = { js: 2045 + 210 + 3 + 7 + 2 + 1 - 6 + 2 + 6, css: 94 };
 // the print tables that /order and the legal pages share (prints-*.js +775 B) and the legal pages' entry (main-*.js +782 B). No chunk the landing loads moved by
 // a byte: the page stands at +5,900 B of +6,000. Re-measure it when the table, its words or the paragraph change.
 const PRINT_TIMES = { js: 775 + 782, css: 0 };
-const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js + BLOCK.js + PRINTS2.js + PRINT_TIMES.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css + BLOCK.css + PRINTS2.css + PRINT_TIMES.css };
+// The Meta pixel (the owner's decision of 2026-11-25: src/shared/metaPixel.ts, the landing's inline head script src/landing/shell/scripts.ts pixelScript,
+// the privacy policy's section "meta" and its corrected sentences in eight languages) is advertising measurement, not motion, and the landing loads none of
+// it but the inline script, which is HTML (0 B in the assets: the landing's own JavaScript does not grow). PIXEL is only what this script still counts although
+// the landing never loads it, measured per chunk, gzip level 6, on the tree with the pixel against its parent (26c0c28, both built the same way): the legal
+// pages' entry (src/legal/main.tsx, main-*.js: the privacy texts, +14,225 B), the module itself (src/shared/metaPixel.ts, which the bundler put in the chunk
+// that held the tools' language menu: metaPixel-*.js 2,531 B where LangMenu-*.js was 1,072 B, +1,459 B) and the API client of the tools (api-*.js +46 B: the
+// two cookie values a checkout sends). What every visitor of the landing loads moved by +7 B (the names of chunks in import lists) and is held to the budget.
+// Re-measure it when those texts or the module change: build both trees, gzip each chunk, take the differences named here.
+const PIXEL = { js: 14225 + 1459 + 46, css: 0 };
+const BASE = { js: MOTIONLESS.js + INTEGRATION.js + TOOLS.js + PHONE.js + COUNTER.js + LEGAL_TEXT.js + ADMIN_VIEWS.js + FEEDBACK.js + GUIDE.js + BRAND.js + PALETTE.js + GLOBE.js + HR.js + PRINTS.js + VOUCHERS.js + LANGS3.js + PRINT_LATER.js + LANDING_PRINTS.js + BLOCK.js + PRINTS2.js + PRINT_TIMES.js + PIXEL.js, css: MOTIONLESS.css + INTEGRATION.css + TOOLS.css + PHONE.css + COUNTER.css + ADMIN_VIEWS.css + FEEDBACK.css + GUIDE.css + BRAND.css + PALETTE.css + GLOBE.css + HR.css + PRINTS.css + VOUCHERS.css + LANGS3.css + PRINT_LATER.css + LANDING_PRINTS.css + BLOCK.css + PRINTS2.css + PRINT_TIMES.css + PIXEL.css };
 const BUDGET = { js: 6000, css: 7000 };
 const HARD = { js: 8000, css: 7500 };
 const OTHER_PAGES = /^(try|order|admin|gift|terms|privacy|imprint|withdrawal)(-|\.)/;

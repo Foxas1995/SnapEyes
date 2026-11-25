@@ -10,6 +10,7 @@ import { defaultCountry } from '../shared/prints';
 import { money } from '../shared/markets';
 import { checkoutLegal } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
+import { track } from '../shared/metaPixel';
 import { Dot, Waiting } from '../motion/Tick';
 import type { Lang } from '../try/lang';
 
@@ -69,7 +70,11 @@ export const PrintOffer: React.FC<Props> = ({ C, lang, link, st, market, back, e
     setBusy(true);
     setError(null);
     const out = await (buy ?? buyPrint)(link, { product: choice.product, country: choice.country }, lang, part.price + part.ship);
-    if (out.kind === 'redirect') { (go ?? ((u: string) => window.location.assign(u)))(out.url); return; }   // leaving for Stripe: the button stays busy
+    if (out.kind === 'redirect') {
+      track('InitiateCheckout', { category: 'print' }, undefined, true);       // the Meta pixel (src/shared/metaPixel.ts): off to Stripe's payment page
+      (go ?? ((u: string) => window.location.assign(u)))(out.url);
+      return;   // leaving for Stripe: the button stays busy
+    }
     setBusy(false);
     if (out.code === 'changed' || out.code === 'unavailable' || out.code === 'has') onReload();   // the offer as the server has it now, or the print the order already has
     if (out.code !== 'has') setError(out.code);

@@ -6,7 +6,8 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#07090e" />
     <!-- After the payment the address of this page carries the voucher's Stripe session (s), which shows its code: no request from it may name
-         the address. So no referrer, and no third-party script or font here (no analytics, no pixel). -->
+         the address. So no referrer, and no third-party script or font here. The Meta pixel's events of this page (the owner's decision of
+         2026-11-25) are single requests to www.facebook.com/tr that name the path /gift alone (src/shared/metaPixel.ts startPixel('image')). -->
     <meta name="referrer" content="no-referrer" />
     <meta name="robots" content="noindex, nofollow" />
     <!-- The page transition (src/motion/transition.css) never covers a payment: this page arrives without it when its address names one (s, cancelled). -->

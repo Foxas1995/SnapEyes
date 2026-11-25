@@ -1689,6 +1689,9 @@ def addon_buy(body):
     ] + stripe_params(part, lang, item=0)
     meta = dict({"kind": ADDON, "order": order, "key_sha": pay.key_sha(k), "lang": lang, "market": market, "currency": currency,
                  "consent_version": part["consent"]["version"], "consent_at": part["consent"]["at"]}, **metadata(part))
+    # the Meta Conversions API's identifiers of this visit (api/_lib/meta.py checkout_meta), only while it is configured
+    from . import meta as MC
+    meta.update(MC.checkout_meta(body))
     params += [(f"metadata[{name}]", v) for name, v in meta.items()]
     r = pay._stripe("POST", "/v1/checkout/sessions", params, idem=f"snapeyes-print-{order}-{secrets.token_hex(8)}")
     if r.status_code != 200:
@@ -1790,6 +1793,10 @@ def addon_record(order, rec, sess, source, event_id=None):
     pay.log(f"order {order}: PRINT PAID via {source}: {amount} {currency} {pp['product']} to {pp['country']} live={addon['livemode']}"
             + (f" HELD ({', '.join(pp['mismatch'])})" if pp.get("mismatch") else ""))
     on_paid(order, merged)           # print.json (waiting, or held on a mismatch) and the print index of the daily run
+    # the Meta Conversions API's Purchase, once (print_paid.json was made just now), with the event id the order page's pixel sends too
+    # (api/_lib/meta.py: nothing in test mode or without the token; never raises)
+    from . import meta as MC
+    MC.purchase("print", sess, email, amount, currency, f"{pay.site()}/order", MC.country_of(sess, (pp.get("country"),)))
     return merged, "new"
 
 
@@ -1945,7 +1952,7 @@ def addon_status(sid, order, k):
     if pa and pa.get("session_id") == sid:
         # on record already (the webhook came first): no call to Stripe. The confirmation and the step are asked for again, each a no-op once done
         addon_after(order, rec, paid, "known")
-        return {"ok": True, "state": "paid", "print": order_view(order, paid)}
+        return {"ok": True, "state": "paid", "print": order_view(order, paid), **_paid_amount(pa)}
     if not pay.stripe_key():
         raise pay.PayNotConfigured("STRIPE_SECRET_KEY is not set")
     sess = pay.retrieve_session(sid)
@@ -1961,7 +1968,17 @@ def addon_status(sid, order, k):
     addon_after(order, rec, paid, state)
     if state == "extra":
         return {"ok": True, "state": "extra", "print": order_view(order, paid)}
-    return {"ok": True, "state": "paid", "print": order_view(order, paid)}
+    pa = paid.get("print_addon") if isinstance(paid.get("print_addon"), dict) else {}
+    return {"ok": True, "state": "paid", "print": order_view(order, paid), **_paid_amount(pa)}
+
+
+def _paid_amount(pa):
+    """What the print's own payment was (amount in cents, currency): the order page's Meta pixel reports it as the Purchase of the print
+    (src/shared/metaPixel.ts), with the same event id as the server's (api/_lib/meta.py). Nothing when the record does not say it."""
+    amount, currency = pa.get("amount_total"), pa.get("currency")
+    if isinstance(amount, int) and isinstance(currency, str) and currency:
+        return {"amount": amount, "currency": currency.upper()}
+    return {}
 
 
 # ----------------------------------------------------------------------------- what the pages and the admin see

@@ -626,7 +626,7 @@ check("the AI-made material sentence is PUBLISHED by this deploy (AI_MATERIAL_PU
 SENT = {l: re.search(r"^  %s:\r?\n\s+['\"](.+)['\"],?\s*$" % l, ai_src, re.M) for l in ("en", "de", "lt", "hu")}
 docs = PACK.get("docs", {})
 check("the sentence is in the terms of the built pack (the one the confirmation e-mail quotes) in English, German, Lithuanian and Hungarian, and the pack's date is the new LEGAL_UPDATED",
-      all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-11-24", (upd and upd.group(1), PACK.get("updated")))      # 2026-11-21: the date of the print paragraph; 2026-11-24: of the terms' list of prints and prices (the acrylic block, the canvas' price)s (a print is ordered after the artwork); it was 2026-11-13
+      all(SENT[l] and SENT[l].group(1).replace("\\'", "'")[:60] in docs[l]["terms"]["text"] for l in ("en", "de", "lt", "hu")) and bool(upd) and PACK["updated"] == upd.group(1) == "2026-11-25", (upd and upd.group(1), PACK.get("updated")))      # 2026-11-25: the date of the Meta pixel in the privacy policy; 2026-11-21: the date of the print paragraph; 2026-11-24: of the terms' list of prints and prices (the acrylic block, the canvas' price)s (a print is ordered after the artwork); it was 2026-11-13
 # 2026-11-13 (Finnish, Estonian and Latvian, the EU edition): the languages that came after the switch (Croatian on 2026-10-28, which the two checks above never read, and the
 # three new ones) take the sentence the same way: aiBlocks in their own terms file, their own wording in aiMaterial.ts, and the WHOLE sentence in the terms of the built pack
 LATER = ("hr", "fi", "et", "lv")

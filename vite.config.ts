@@ -121,7 +121,7 @@ function assetCheck(): Plugin {
 //   * the title, description and share texts come from the English copy (src/landing/copy/en.json meta), as they do at run time.
 // Loaded through Vite's module runner, like the other build steps, so this file imports no app code itself.
 function heroShell(): Plugin {
-  type Parts = { html: string; templates: Record<string, string>; preload: string; decision: string; swap: string; prefetch: string; counter: string; bar: string; menu: string; meta: { title: string; description: string; shareDescription: string } }
+  type Parts = { html: string; templates: Record<string, string>; preload: string; decision: string; swap: string; prefetch: string; counter: string; pixel: string; bar: string; menu: string; meta: { title: string; description: string; shareDescription: string } }
   let built: Promise<Parts> | null = null
   const load = async (p: string) => (await runnerImport<any>(p, { configFile: false, logLevel: 'silent' })).module
   async function make(): Promise<Parts> {
@@ -148,6 +148,8 @@ function heroShell(): Plugin {
       swap: scripts.swapScript(market, Object.fromEntries(all.filter((m) => lang.marketLangs(m).length < lang.LANGS.length).map((m) => [m, lang.marketLangs(m)]))),
       prefetch: scripts.prefetchScript,
       counter: scripts.counterScript,
+      // the Meta pixel (the owner's decision of 2026-11-25): '' when the build names no dataset id, and then no script is written
+      pixel: scripts.pixelScript(META_PIXEL_ID),
       bar: scripts.barScript,
       menu: scripts.menuScript,
       meta: out.meta,
@@ -177,7 +179,7 @@ function heroShell(): Plugin {
         .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
         .replace(/(<meta name="twitter:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.title)}${b}`)
         .replace(/(<meta name="twitter:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.meta.shareDescription)}${b}`)
-        .replace('<!-- lp:head -->', () => `<script>${p.decision}</script>\n    <script>${p.prefetch}</script>\n    <script>${p.counter}</script>\n    ${p.preload}`)
+        .replace('<!-- lp:head -->', () => `<script>${p.decision}</script>\n    <script>${p.prefetch}</script>\n    <script>${p.counter}</script>\n    ${p.pixel ? `<script>${p.pixel}</script>\n    ` : ''}${p.preload}`)
         .replace('<!-- lp:shell -->', () => {
           const templates = Object.entries(p.templates).map(([l, h]) => `<template id="tpl-${l}">${h}</template>`).join('\n    ')
           return `<div id="shell" class="lp-shell">${p.html}</div>\n    ${templates}\n    <script>${p.swap}</script>\n    <script>${p.bar}</script>\n    <script>${p.menu}</script>`
@@ -269,8 +271,25 @@ function pySourceSlim(): Plugin {
   }
 }
 
+// The Meta pixel's dataset id (the owner's decision of 2026-11-25). It lives in ONE place, api/_lib/meta.py PIXEL_ID, which the server reads too; the build's
+// environment variable META_PIXEL_ID overrides it (Vercel gives the build the project's variables), and an empty value switches the pixel off on every page.
+// A value that is not a plain number switches it off too, with a warning. The pages get it as __META_PIXEL_ID__ (src/shared/metaPixel.ts PIXEL_ID) and the
+// landing's head as an inline script (src/landing/shell/scripts.ts pixelScript). The access token of the Conversions API is the server's alone and never here.
+function metaPixelId(): string {
+  const own = /^PIXEL_ID = "([0-9]*)"/m.exec(readFileSync('./api/_lib/meta.py', 'utf8'))?.[1] ?? ''
+  const env = process.env.META_PIXEL_ID
+  const v = env === undefined ? own : env.replace(/^\uFEFF/, '').trim()
+  if (v && !/^[0-9]{5,20}$/.test(v)) {
+    console.warn('META_PIXEL_ID is not a plain number: the Meta pixel is off in this build')
+    return ''
+  }
+  return v
+}
+const META_PIXEL_ID = metaPixelId()
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: { __META_PIXEL_ID__: JSON.stringify(META_PIXEL_ID) },
   plugins: [
     pySourceSlim(),
     react(),

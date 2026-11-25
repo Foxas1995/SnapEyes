@@ -105,6 +105,9 @@ GET /api/checkout?addon=<session id>&o=<order>&k=<key>: the order page's questio
      page's print block) | extra | pending | processing | expired | unknown}. A paid session is recorded by this call when the webhook has not arrived yet.
 Every other POST of the site may carry camp too (analyze, deglare, enhance, compose, this route's checkout): iris.run turns it, with the user agent and the country header, into the classes the usage
 events carry (iris.ctx()). The order record keeps the code (checkout.camp, and camp in paid.json) and the Stripe session's metadata `src`, so an order and its revenue are tied to a source.
+The Meta pixel (the owner's decision of 2026-11-25, api/_lib/meta.py): the three checkouts (the artwork, {gift}, {addon}) may carry fbp and fbc, the values of the
+_fbp and _fbc cookies (src/shared/metaPixel.ts metaIds). While META_CAPI_TOKEN is set they go, with the IP address and the user agent of the request, into the
+session's metadata (fbp, fbc, cip, cua), for the Purchase the server sends Meta once the payment is recorded; without it they are dropped.
 """
 import os, re, sys, time, json, hashlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -118,6 +121,7 @@ from _lib import counter
 from _lib import feedback
 from _lib import prints
 from _lib import voucher
+from _lib import meta as MC
 from urllib.parse import urlsplit, parse_qs
 
 
@@ -300,7 +304,10 @@ def checkout(body):
     consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": text,
                "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]}
     camp = counter.pack(counter.parse(body.get("camp")))     # the campaign code of the advertisement the customer came from: "" when there is none
-    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp, part=part, gift=gift)
+    # the Meta Conversions API's identifiers of this visit (api/_lib/meta.py checkout_meta: the _fbp and _fbc values the page sent, the IP address and
+    # the user agent of this request), only while it is configured; they travel in the session's metadata and are stored nowhere else
+    ad = MC.checkout_meta(body)
+    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp, part=part, gift=gift, ad=ad)
     sid = sess["id"]
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,

@@ -507,7 +507,7 @@ def scrub(s):
     s = L._scrub(str(s))
     for name in ("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "RESEND_API_KEY", "SNAPEYES_SUPABASE_SERVICE_KEY",
                  "SNAPEYES_TICKET_SECRET", "CRON_SECRET", "SNAPEYES_ADMIN_SECRET", "VERCEL_AUTOMATION_BYPASS_SECRET",
-                 "MERCHONE_API_USER", "MERCHONE_API_KEY"):
+                 "MERCHONE_API_USER", "MERCHONE_API_KEY", "META_CAPI_TOKEN"):
         for part in _env(name).split(","):
             part = part.strip()
             if len(part) >= 8:
@@ -1206,7 +1206,7 @@ def _raise_for(r, label):
     raise PayError(msg)
 
 
-def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp="", part=None, gift=None):
+def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp="", part=None, gift=None, ad=None):
     """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
     methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
     exp: the price experiment and variant the amount was priced under (abtest.assignment), written to the metadata.
@@ -1220,6 +1220,8 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     gift: a gift voucher the customer entered (api/_lib/voucher.py lookup: {coupon, value}) or None: its coupon as the session's one discount
     (discounts[0][coupon]) and the metadata voucher (the coupon id) and voucher_value. When it pays for everything the session is a no-cost one
     (no PaymentIntent is made, so payment_intent_data is left out). Without a voucher the session is exactly what it was before vouchers.
+    ad: what the Meta Conversions API needs at the payment (api/_lib/meta.py checkout_meta: fbp, fbc, cip, cua), {} while it is not configured;
+    written to the metadata beside src (the owner's decision of 2026-11-25). Without it the session is exactly what it was before.
     Returns Stripe's session object (id, url, ...)."""
     lang = spec["lang"]
     market = spec.get("market") or DEFAULT_MARKET
@@ -1273,6 +1275,8 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
         meta.update(prints.metadata(part))
     if gift:
         meta.update(voucher=gift["coupon"], voucher_value=str(int(gift["value"])))
+    if ad:
+        meta.update({name: str(v) for name, v in ad.items()})
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
             params.append((f"metadata[{name}]", v))
@@ -1628,6 +1632,12 @@ def record_paid(order, rec, sess, source, event_id=None):
                        f"{paid['session_id']}, payment {paid['payment_intent']}).\nNothing is made for the order. Please "
                        f"refund the payment in the Stripe Dashboard (Payments, search {paid['payment_intent'] or paid['session_id']}, "
                        f"Refund) within 14 days of the withdrawal.\nStatus: python scripts/order_admin.py status {order}\n")
+        else:
+            # the Meta Conversions API's Purchase, once, with the event id the order page's pixel sends too (api/_lib/meta.py: nothing in test
+            # mode or without the token; never raises, never waits more than a few seconds)
+            from . import meta
+            meta.purchase("artwork", sess, paid["email"], amount, paid["currency"], f"{site()}/order",
+                          meta.country_of(sess, MARKETS.get(market, {}).get("countries")))
         return paid, True
     except store.StorageExists:
         cur = get_paid(order) or paid

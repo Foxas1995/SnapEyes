@@ -37,8 +37,11 @@ export type LegalLang = Lang;
  *  final list (eleven prints; the canvas without an outer frame) and its shipping table, and ONE passage of the terms' delivery paragraph for prints: the
  *  times, which are merchOne's published ones from api/_lib/print_times.py (2 business days of production for a canvas or a poster, 3 for every other print;
  *  then 4 to 6 working days to Lithuania, Latvia and Estonia, 5 to 8 to Finland, 3 to 6 to Germany, about a week elsewhere) where the text said "about 3
- *  business days" and "2 to 9 business days" with four examples. No other sentence of a legal text changed, and the consent version is as it was. */
-export const LEGAL_UPDATED = '2026-11-24';
+ *  business days" and "2 to 9 business days" with four examples. No other sentence of a legal text changed, and the consent version is as it was.
+ *  2026-11-25 (the owner's decision): the privacy policy says that the site uses the Meta pixel and reports payments to Meta from the server (a section
+ *  "meta", and the sentences that said there were no cookies and no tools of other companies: website, orders, services, retention, storage, and the US
+ *  edition's own section), in every language of every edition. The terms, the withdrawal page, the legal notice and the consent version are as they were. */
+export const LEGAL_UPDATED = '2026-11-25';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right

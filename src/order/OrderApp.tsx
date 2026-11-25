@@ -25,6 +25,7 @@ import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref } from '../share
 import { withdrawHref } from './withdraw';
 import { count, note as noteCounter } from '../shared/counter';
 import { BrandPicture } from '../shared/BrandLogo';
+import { livePayment, purchaseId, track } from '../shared/metaPixel';
 
 // The order and its private key come from the address (the Stripe success page and the emails link here); s is the
 // Stripe session the success page names, so the payment is confirmed even before Stripe's webhook has arrived.
@@ -145,9 +146,11 @@ export const OrderApp: React.FC = () => {
   useEffect(() => {
     if (!LINK || !PRINT_RETURN.ps) return;
     let alive = true;
-    void watchPrint(LINK, PRINT_RETURN.ps, { api: callApi, sleep: REAL_DEPS.sleep }, (back, print) => {
+    void watchPrint(LINK, PRINT_RETURN.ps, { api: callApi, sleep: REAL_DEPS.sleep }, (back, print, paid) => {
       if (!alive) return;
       setPrintBack(back);
+      // the Meta pixel's Purchase of the print (a live payment only), with the event id the server sends for it too (api/_lib/meta.py)
+      if (back === 'done' && paid && livePayment(PRINT_RETURN.ps)) track('Purchase', { category: 'print', minor: paid.amount, currency: paid.currency }, purchaseId(PRINT_RETURN.ps));
       if (back === 'done' || back === 'extra') {
         if (print) setView((v) => (v.status ? { ...v, status: { ...v.status, print, print_offer: undefined } } : v));
         reloadStatus();
@@ -187,6 +190,16 @@ export const OrderApp: React.FC = () => {
   useEffect(() => {
     if (LINK && state && state !== 'unpaid') clearCheckoutStorage(LINK.o);
   }, [state]);
+
+  // the Meta pixel's Purchase (src/shared/metaPixel.ts), once a page load: the way back from Stripe's page (s, a live payment) found the order paid. The
+  // amount and the currency the order was paid in, and the event id the server sends for the same payment (api/_lib/meta.py); nothing of the order itself
+  const purchased = useRef(false);
+  const paidAmount = view.status?.amount, paidCurrency = view.status?.currency;
+  useEffect(() => {
+    if (purchased.current || WITHDRAW_MODE || !LINK || !livePayment(LINK.s) || !state || !CONTRACT_STATES.includes(state) || typeof paidAmount !== 'number') return;
+    purchased.current = true;
+    track('Purchase', { category: 'artwork', minor: paidAmount, currency: paidCurrency }, purchaseId(LINK.s));
+  }, [state, paidAmount, paidCurrency]);
 
   // a clock for the countdowns and the time spent making
   const active = !!view.wait || view.making.length > 0 || view.composing;
