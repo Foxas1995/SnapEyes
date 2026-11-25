@@ -352,7 +352,8 @@ def buy(body):
     from . import meta as MC
     meta.update(MC.checkout_meta(body))
     params += [(f"metadata[{k}]", v) for k, v in meta.items()]
-    r = pay._stripe("POST", "/v1/checkout/sessions", params, idem=f"snapeyes-voucher-{ref}")
+    r = pay.create_checkout_session(params, f"snapeyes-voucher-{ref}", "stripe create voucher session",
+                                    pay.payment_methods(pay.visitor_country(market), pay.market_currency(market)))
     if r.status_code != 200:
         pay._raise_for(r, "stripe create voucher session")
     try:

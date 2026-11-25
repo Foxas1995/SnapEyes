@@ -1206,8 +1206,75 @@ def _raise_for(r, label):
     raise PayError(msg)
 
 
+# ----------------------------------------------------------------------------- payment methods by country
+# The owner's decision of 2026-11-25 ("as on TaleInTune"): the card (which carries Apple Pay and Google Pay where the Stripe account has them on) and Link
+# everywhere, and each local method only in its own country. TaleInTune does this in Stripe's dashboard (Payment methods, Customize availability, customer
+# location); here the session names its methods itself (payment_method_types), so it holds whatever the dashboard says. The country is the visitor's as
+# Vercel names it at the checkout (x-vercel-ip-country, the header api/checkout.py country_hint reads), else the market's one country (lt, hu, hr, au, us,
+# uk); unknown (the euro market without the header): the card and Link only. A method is named only in a currency it takes. A method Stripe refuses for the
+# session (not activated yet, the currency, the amount) never breaks the checkout: the session is asked again with the card and Link, then with Stripe's
+# own choice, and it is logged (create_checkout_session).
+BASE_METHODS = ("card", "link")
+EEA_GB = frozenset("AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE IS LI NO GB".split())
+LOCAL_METHODS = {"AT": ("eps",), "BE": ("bancontact",), "PL": ("blik",), "PT": ("mb_way", "klarna"), "IT": ("satispay",),
+                 "FI": ("mobilepay", "klarna"), "ES": ("klarna",), "NL": ("klarna",)}       # Klarna where TaleInTune's buyers see it (PT, ES, NL, FI)
+METHOD_CURRENCIES = {"revolut_pay": ("eur", "gbp"), "eps": ("eur",), "bancontact": ("eur",), "blik": ("pln",), "mb_way": ("eur",),
+                     "satispay": ("eur",), "mobilepay": ("eur", "dkk", "nok", "sek"), "klarna": ("eur", "gbp", "usd", "aud")}
+
+
+def visitor_country(market=None):
+    """The visitor's country for the payment methods: Vercel's x-vercel-ip-country of this request, else the market's one country, else None."""
+    req = L.request()
+    h = getattr(req, "headers", None)
+    cc = str((h.get("x-vercel-ip-country") if h is not None else "") or "").strip().upper()
+    if re.fullmatch(r"[A-Z]{2}", cc):
+        return cc
+    mc = [c for c in (MARKETS.get(market or "", {}).get("countries") or []) if isinstance(c, str)]
+    return mc[0].upper() if len(mc) == 1 else None
+
+
+def payment_methods(country, currency):
+    """The payment_method_types of a session: the card and Link, Revolut Pay in the EEA and the UK, the country's own method; each only in a currency it takes."""
+    out = list(BASE_METHODS)
+    cur = str(currency or "").lower()
+    if country:
+        for m in (("revolut_pay",) if country in EEA_GB else ()) + tuple(LOCAL_METHODS.get(country, ())):
+            if cur in METHOD_CURRENCIES.get(m, ()) and m not in out:
+                out.append(m)
+    return out
+
+
+def _method_refused(r):
+    if r.status_code != 400:
+        return False
+    try:
+        e = r.json().get("error") or {}
+    except (ValueError, AttributeError):
+        return False
+    return str(e.get("param") or "").startswith("payment_method_types") or "payment method" in str(e.get("message") or "").lower()
+
+
+def create_checkout_session(params, idem, label, methods):
+    """POST /v1/checkout/sessions with these payment methods (None: Stripe's own choice, as for a session that costs nothing). Stripe refusing a method:
+    the card and Link, then Stripe's own choice, each logged; any other answer is returned as it came."""
+    tries = [list(methods)] if methods else []
+    if methods and list(methods) != list(BASE_METHODS):
+        tries.append(list(BASE_METHODS))
+    tries.append(None)
+    r = None
+    for i, ms in enumerate(tries):
+        p = list(params) + ([(f"payment_method_types[{j}]", m) for j, m in enumerate(ms)] if ms else [])
+        r = _stripe("POST", "/v1/checkout/sessions", p, idem=idem if i == 0 else f"{idem}-pm{i}")
+        if r.status_code == 200 or not _method_refused(r) or i == len(tries) - 1:
+            return r
+        log(f"{label}: Stripe refused the payment methods {','.join(ms or [])} ({_stripe_err(r, label)}); asking again with "
+            f"{','.join(tries[i + 1]) if tries[i + 1] else 'its own choice'}")
+    return r
+
+
 def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None, camp="", part=None, gift=None, ad=None):
-    """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, dynamic payment
+    """A Stripe Checkout Session for this order (mode payment, the market's currency, one line item, the payment methods of the visitor's country (payment_methods,
+    since 2026-11-25; before, Stripe's dynamic payment
     methods, no Stripe Tax, no Adaptive Pricing: the customer pays exactly the price the site showed, in its currency).
     exp: the price experiment and variant the amount was priced under (abtest.assignment), written to the metadata.
     plan: the plan the checkout froze for the order (api/_lib/styles/steps.py make_plan): its plates version, engine version and plan8 are written to the
@@ -1280,7 +1347,10 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     for name, v in meta.items():
         if v != "":          # an empty metadata value would unset the key at Stripe
             params.append((f"metadata[{name}]", v))
-    r = _stripe("POST", "/v1/checkout/sessions", params, idem=f"snapeyes-checkout-{order}-{secrets.token_hex(8)}")
+    # the payment methods of the visitor's country (create_checkout_session); none named for a session the voucher pays in full
+    free = bool(gift) and int(gift["value"]) >= int(amount) + (prints_total(part) if part else 0)
+    methods = None if free else payment_methods(visitor_country(market), currency)
+    r = create_checkout_session(params, f"snapeyes-checkout-{order}-{secrets.token_hex(8)}", "stripe create session", methods)
     if r.status_code != 200:
         _raise_for(r, "stripe create session")
     try:

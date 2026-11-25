@@ -190,8 +190,10 @@ p, hd = H.Fake.creates[-1]
 check("Stripe got 3997 EUR, one line item, quantity 1", p["line_items[0][price_data][unit_amount]"] == "3997"
       and p["line_items[0][price_data][currency]"] == "eur" and p["line_items[0][quantity]"] == "1"
       and not any(k.startswith("line_items[1]") for k in p), p)
-check("Stripe params: payment mode, de locale, no payment_method_types, no tax", p["mode"] == "payment" and p["locale"] == "de"
-      and not any(k.startswith("payment_method_types") or k.startswith("automatic_tax") for k in p), p)
+# 2026-11-25 (the owner's decision, payment methods by country): a session names its methods; with no country known (the euro market, no header) the card and Link
+check("Stripe params: payment mode, de locale, the card and Link (no country known), no tax", p["mode"] == "payment" and p["locale"] == "de"
+      and [p.get("payment_method_types[0]"), p.get("payment_method_types[1]")] == ["card", "link"] and "payment_method_types[2]" not in p
+      and not any(k.startswith("automatic_tax") for k in p), p)
 check("success_url carries o, k and {CHECKOUT_SESSION_ID}", p["success_url"] ==
       f"https://snapeyes.com/order?o={O1}&k={K1}&lang=de&s={{CHECKOUT_SESSION_ID}}", p["success_url"])
 check("cancel_url goes back to /try, without the access key", p["cancel_url"] == f"https://snapeyes.com/try?checkout=cancelled&o={O1}&lang=de"

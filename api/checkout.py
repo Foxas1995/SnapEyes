@@ -22,7 +22,7 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the ol
      the US one: en), else "en": the order, its consent text and its emails are in that language. The server computes the price from eyes, style and market (a price or currency sent by the client is
      ignored), refuses without the withdrawal waiver, records the consent's version, time and text fingerprint,
      creates a Stripe Checkout Session (mode payment, the market's currency, one line item, the customer's email
-     collected by Stripe, Stripe's own page in de or en (en-GB for Australia), payment methods chosen by Stripe, no
+     collected by Stripe, Stripe's own page in de or en (en-GB for Australia), the payment methods of the visitor's country (pay.payment_methods, since 2026-11-25), no
      Stripe Tax, no Adaptive Pricing), records market, currency and amount with the order and in the session's
      metadata, and returns its URL.
      Reply 200: {ok, url, order, amount, currency, market, eyes, style, plan8, engine {v, reg, pv}, expires_at}; redirect the browser to url.

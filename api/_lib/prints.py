@@ -1693,7 +1693,8 @@ def addon_buy(body):
     from . import meta as MC
     meta.update(MC.checkout_meta(body))
     params += [(f"metadata[{name}]", v) for name, v in meta.items()]
-    r = pay._stripe("POST", "/v1/checkout/sessions", params, idem=f"snapeyes-print-{order}-{secrets.token_hex(8)}")
+    r = pay.create_checkout_session(params, f"snapeyes-print-{order}-{secrets.token_hex(8)}", "stripe create print session",
+                                    pay.payment_methods(pay.visitor_country(market), currency))
     if r.status_code != 200:
         pay._raise_for(r, "stripe create print session")
     try:
