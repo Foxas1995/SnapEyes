@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "Jūsų siena",
     "title": "Pamatykite ant savo sienos",
-    "intro": "Atsispausdinkite, kur norite: ant akrilo, aliuminio, drobės ar rėmelyje.",
+    "intro": "Atsispausdinkite, kur norite: po akriliniu stiklu, ant blizgaus metalo, ant drobės ar kaip plakatą.",
     "materialsLabel": "Medžiaga",
     "artLabel": "Kūrinys",
     "materials": {
       "acrylic": {
-        "n": "Akrilas",
+        "n": "Akrilinis stiklas",
         "tag": "Blizgus ir gilus",
         "facts": [
-          "Dažnai nuo 3 iki 6 mm",
-          "Atitrauktas nuo sienos",
+          "Po 3 mm akriliniu stiklu",
+          "Paruoštas kabinti",
           "Giliausia juoda"
         ]
       },
       "metal": {
-        "n": "Aliuminis",
+        "n": "Blizgus metalas",
         "tag": "Ryškus ir modernus",
         "facts": [
-          "Dažnai nuo 1 iki 3 mm",
-          "Prie pat sienos",
-          "Blizgus arba pusiau matinis"
+          "Blizgi metalo plokštė",
+          "Paruoštas kabinti",
+          "Sodrios spalvos"
         ]
       },
       "canvas": {
         "n": "Drobė",
         "tag": "Minkšta ir šilta",
         "facts": [
-          "Dažnai nuo 2 iki 4 cm",
-          "Labai mažai atspindžių",
+          "Ant medinio porėmio",
+          "Paruošta kabinti",
           "Rėmelio nereikia"
         ]
       },
-      "framed": {
-        "n": "Įrėmintas spaudinys",
-        "tag": "Klasikinis ir ramus",
+      "poster": {
+        "n": "Plakatas",
+        "tag": "Lengvas ir paprastas",
         "facts": [
-          "Po stiklu, su paspartu",
-          "Rėmelis apie 2 cm",
-          "Lengva pakabinti"
+          "Atspaustas ant popieriaus",
+          "Be rėmo",
+          "Atkeliauja susuktas"
         ]
       },
       "block": {
         "n": "Akrilo blokas",
         "tag": "Lentynai ar stalui",
         "facts": [
-          "Dažnai nuo 2 iki 4 cm",
-          "Stovi savaime",
-          "Dažnai nuo 10 iki 20 cm"
+          "2,5 cm skaidraus akrilo",
+          "Stovi ant lentynos ar stalo",
+          "10 arba 20 cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "Viena akis",
       "universe": "Universe",
-      "family4": "Šeima",
+      "family": "Šeima",
       "collision": "Jūs dviese"
     },
     "eyesNote": "Akys: mūsų pačių ir pavyzdinės nuotraukos.",
     "captions": {
-      "acrylic": "Ant akrilo.",
-      "metal": "Ant aliuminio.",
+      "acrylic": "Po akriliniu stiklu.",
+      "metal": "Ant blizgaus metalo.",
       "canvas": "Ant drobės.",
-      "framed": "Įrėmintas.",
+      "poster": "Kaip plakatas.",
       "block": "Kaip akrilo blokas.",
       "phone": "Telefono užrakinimo ekrane."
     },
     "captionsSize": {
-      "acrylic": "Ant akrilo, maždaug {size}.",
-      "metal": "Ant aliuminio, maždaug {size}.",
-      "canvas": "Ant drobės, maždaug {size}.",
-      "framed": "Įrėmintas, maždaug {size}."
+      "acrylic": "Po akriliniu stiklu, {size}.",
+      "metal": "Ant blizgaus metalo, {size}.",
+      "canvas": "Ant drobės, {size}.",
+      "poster": "Plakatas, {size}.",
+      "block": "Akrilo blokas, {size}."
     },
     "compareTitle": "Palyginkite medžiagas",
     "compareCorner": "Medžiaga",
     "compare": {
       "cols": [
-        "Akrilas",
-        "Aliuminis",
+        "Akrilinis stiklas",
+        "Blizgus metalas",
         "Drobė",
-        "Įrėmintas spaudinys"
+        "Plakatas"
       ],
       "rows": [
         {
           "h": "Išvaizda",
           "v": [
             "Blizgus, su gylio efektu",
-            "Ryškus, plonas",
+            "Blizgus, ryškus",
             "Švelni, faktūringa",
-            "Klasikinis, ramus"
-          ]
-        },
-        {
-          "h": "Juoda",
-          "v": [
-            "Gili",
-            "Gili",
-            "Švelnesnė",
-            "Gili, su baltu paspartu"
-          ]
-        },
-        {
-          "h": "Atspindžiai",
-          "v": [
-            "Šiek tiek, šviesiame kambaryje",
-            "Šiek tiek, mažiau su pusiau matiniu paviršiumi",
-            "Labai mažai",
-            "Šiek tiek, mažiau su antirefleksiniu stiklu"
+            "Popierius"
           ]
         },
         {
           "h": "Ant sienos",
           "v": [
-            "Sklando priešais sieną",
-            "Plonas ir lengvas",
-            "Šilta ir neformali",
-            "Formalus ir tradicinis"
+            "Paruoštas kabinti",
+            "Paruoštas kabinti",
+            "Paruošta kabinti, be rėmo",
+            "Be rėmo, atkeliauja susuktas"
+          ]
+        },
+        {
+          "h": "Dydžiai",
+          "v": [
+            "30, 40 arba 60 cm",
+            "30, 40 arba 60 cm",
+            "40 arba 60 cm",
+            "50 cm"
           ]
         }
       ],
-      "note": "Bendra apžvalga, ką siūlo spaustuvės; tai ne mūsų produktų aprašymas."
+      "note": "Visi spaudiniai kvadratiniai."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Kitas vaizdas",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Jūs dviese, ant tamsaus riešutmedžio",
-        "c": "Akys: mūsų pačių ir pavyzdinės nuotraukos."
-      },
-      {
-        "id": "group",
-        "t": "Jūs keturiese, rėme",
-        "c": "Akys: mūsų pačių ir pavyzdinės nuotraukos."
-      },
-      {
-        "id": "hands",
-        "t": "Jūsų rankose",
+        "id": "sideboard",
+        "t": "Blizgus metalas, 40 cm, virš komodos",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Žvelgiant iš šono",
-        "c": "Akys: mūsų pačių ir pavyzdinės nuotraukos."
+        "id": "hall",
+        "t": "Drobė, 40 cm, prieškambaryje",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "Lentynoje",
+        "id": "blocks",
+        "t": "Akrilo blokai, 20 cm ir 10 cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "Akrilo blokas, 20 cm, Jūsų rankose",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "Raktų pakabukas",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "Mūsų pačių atkurtos rainelės vaizdas iš arti, iškirptas iš 4096 px failo: spindulinės skaidulos, auksinė apykaklė ir vyzdžio kraštas.",
     "locatorAlt": "Visa atkurta rainelė, kvadratu pažymėta vieta, iš kurios iškirptas fragmentas",
     "locatorLabel": "Iškirpimo vieta",
-    "edgeTitle": "Spaudinio ant akrilo kraštas",
-    "edgeAlt": "Spaudinio ant akrilo kampas su nupoliruotu skaidriu kraštu, plieniniu atstumo laikikliu ir švelniu lango atspindžiu."
+    "edgeTitle": "Paveikslo po akriliniu stiklu kraštas",
+    "edgeAlt": "Paveikslo po akriliniu stiklu kampas ant sienos: plonas skaidrus kraštas ir švelnus lango atspindys."
   },
   "trust": {
     "eyebrow": "Ko niekada nedarome",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Kokią medžiagą rinktis?",
-        "a": "Akrilas blizgus ir gilus; kabinkite jį taip, kad tiesioginė lango šviesa neatsispindėtų. Aliuminis ryškus ir modernus. Drobė minkšta, atspindžių joje mažiau, bet jos audinio faktūra sušvelnina pačias smulkiausias skaidulas. Įrėmintas spaudinys yra klasikinis pasirinkimas. Akrilo blokas stovi ant lentynos. Telefono ekrano fonui bet kurioje nuotraukų redagavimo programoje pridėkite aplink kvadratinį failą juodus kraštus. Šiame puslapyje nurodytos savybės yra įprastos spaustuvėse ir gali skirtis; paprašykite pavyzdžio spaustuvėje."
+        "a": "Akrilas blizgus ir gilus; kabinkite jį taip, kad tiesioginė lango šviesa neatsispindėtų. Blizgus metalas ryškus ir modernus. Drobė minkšta, atspindžių joje mažiau, bet jos audinio faktūra sušvelnina pačias smulkiausias skaidulas. Plakatas atkeliauja be rėmo, susuktas. Akrilo blokas stovi ant lentynos. Telefono ekrano fonui bet kurioje nuotraukų redagavimo programoje pridėkite aplink kvadratinį failą juodus kraštus. Šiame puslapyje nurodytos savybės yra įprastos spaustuvėse ir gali skirtis; paprašykite pavyzdžio spaustuvėje."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "Pamatykite savo rainelę",
     "body": "Tereikia telefono, geros šviesos ir maždaug minutės.",
-    "imageAlt": "Tamsus kabinetas prieblandoje, ant sienos mūsų pačių rainelė, atspausdinta ant akrilo."
+    "imageAlt": "Tamsus kabinetas prieblandoje, ant sienos mūsų pačių rainelė po akriliniu stiklu."
   },
   "footer": {
     "operatedBy": "SnapEyes paslaugą teikia",

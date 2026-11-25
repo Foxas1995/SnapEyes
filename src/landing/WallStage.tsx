@@ -4,7 +4,8 @@
 // stage never shows a half-loaded picture or an empty frame. The pictures are fetched when the stage comes near the screen,
 // not when the page loads (the section sits far below the first screen).
 //
-// The glint (motion spec 6.7, charter AC-6): on the polished face of an acrylic plate, and only there, a soft band of light, 30 percent
+// The glint (motion spec 6.7, charter AC-6): on the polished face of a print, acrylic glass or (since 2026-11-25, the owner's decision) glossy metal, and
+// only there (never on canvas, the poster or the block), a soft band of light, 30 percent
 // of the print's width and at most 10 percent white, moves across it as the visitor scrolls past (from 768 px, motion allowed): it is
 // placed by the progress of the wall chapter through the screen, so it moves the way a reflection does when you walk by, and never
 // follows the pointer. It is clipped to the print face (the span's box), decorative (aria-hidden) and exists only while the acrylic
@@ -42,9 +43,9 @@ function useNearViewport(ref: RefObject<Element | null>, margin: string): boolea
 export interface WallStageProps {
   /** The picture that should be on the stage now (null: the material has none for this artwork). */
   picture: StagePicture | null;
-  /** The words of the picture for a screen reader ("On aluminium, about 50 cm. One eye."). */
+  /** The words of the picture for a screen reader ("On glossy metal, 60 cm. One eye."). */
   alt: string;
-  /** The sweep of light on a polished surface (acrylic), or null: the box of the print's face, in percent of the stage. The span is
+  /** The sweep of light on a polished surface (acrylic glass, glossy metal), or null: the box of the print's face, in percent of the stage. The span is
    *  always in the markup and gets the box only while the picture it belongs to is the one in front. */
   glint: GlintBox | null;
   /** The group's name (wall.title: the chapter's own title since 2026-11-24, when wall.stageLabel went with the chips). */

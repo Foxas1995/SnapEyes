@@ -28,7 +28,9 @@ import './css/closeups.css';
 // the rectangle cut from the big file, and the source photo was the phone shot of the before picture (its file name says 315).
 const CROP = asset('art/fibre_crop_1200');
 const FULL = asset('art/fibre_full_480');
-const EDGE = asset('m/macro_acrylic_corner__universe__wide', 1200);
+// the corner and clear edge of an acrylic glass print on the wall (2026-11-25, the owner's decision: the macro with a standoff screw in the corner went, no
+// print that is sold has one)
+const EDGE = asset('m/closeup_acrylic__universe__wide', 1200);
 const SOURCE_PHOTO = asset('ui/before-phone-crop-315');
 
 // the distance from one edge of the crop to the other

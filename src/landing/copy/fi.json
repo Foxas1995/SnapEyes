@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "Seinälläsi",
     "title": "Näe se seinälläsi",
-    "intro": "Tulosta se missä haluat: akryylille, alumiinille, canvakselle tai kehyksiin.",
+    "intro": "Tulosta se missä haluat: akryylilasin taakse, kiiltävälle metallille, canvakselle tai julisteeksi.",
     "materialsLabel": "Materiaali",
     "artLabel": "Taideteos",
     "materials": {
       "acrylic": {
-        "n": "Akryyli",
+        "n": "Akryylilasi",
         "tag": "Kiiltävä ja syvä",
         "facts": [
-          "Paksuus usein 3-6 mm",
-          "Irti seinästä",
+          "3 mm:n akryylilasin takana",
+          "Valmis ripustettavaksi",
           "Syvin musta"
         ]
       },
       "metal": {
-        "n": "Alumiini",
+        "n": "Kiiltävä metalli",
         "tag": "Terävä ja moderni",
         "facts": [
-          "Paksuus usein 1-3 mm",
-          "Lähellä seinää",
-          "Kiiltävä tai satiini"
+          "Kiiltävä metallilevy",
+          "Valmis ripustettavaksi",
+          "Kirkkaat värit"
         ]
       },
       "canvas": {
         "n": "Canvas",
         "tag": "Pehmeä ja lämmin",
         "facts": [
-          "Syvyys usein 2-4 cm",
-          "Hyvin vähän heijastuksia",
+          "Puisella kiilakehyksellä",
+          "Valmis ripustettavaksi",
           "Ei tarvitse kehystä"
         ]
       },
-      "framed": {
-        "n": "Kehystetty tuloste",
-        "tag": "Klassinen ja rauhallinen",
+      "poster": {
+        "n": "Juliste",
+        "tag": "Kevyt ja yksinkertainen",
         "facts": [
-          "Lasin takana, valkoinen paspis",
-          "Kehys noin 2 cm",
-          "Helppo ripustaa"
+          "Painettu paperille",
+          "Ilman kehystä",
+          "Saapuu rullalla"
         ]
       },
       "block": {
-        "n": "Akryyliblokki",
+        "n": "Akryylilohko",
         "tag": "Hyllylle tai pöydälle",
         "facts": [
-          "Paksuus usein 2-4 cm",
-          "Seisoo itsestään",
-          "Koko usein 10-20 cm"
+          "2,5 cm kirkasta akryyliä",
+          "Seisoo hyllyllä tai pöydällä",
+          "10 tai 20 cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "Yksi silmä",
       "universe": "Universe",
-      "family4": "Perhe",
+      "family": "Perhe",
       "collision": "Te kaksi"
     },
     "eyesNote": "Silmät: oma silmämme ja esimerkkikuvia.",
     "captions": {
-      "acrylic": "Akryylilla.",
-      "metal": "Alumiinilla.",
+      "acrylic": "Akryylilasin takana.",
+      "metal": "Kiiltävällä metallilla.",
       "canvas": "Canvaksella.",
-      "framed": "Kehystettynä.",
-      "block": "Akryyliblokkina.",
+      "poster": "Julisteena.",
+      "block": "Akryylilohkona.",
       "phone": "Puhelimen lukitusnäytöllä."
     },
     "captionsSize": {
-      "acrylic": "Akryylilla, noin {size}.",
-      "metal": "Alumiinilla, noin {size}.",
-      "canvas": "Canvaksella, noin {size}.",
-      "framed": "Kehystettynä, noin {size}."
+      "acrylic": "Akryylilasin takana, {size}.",
+      "metal": "Kiiltävällä metallilla, {size}.",
+      "canvas": "Canvaksella, {size}.",
+      "poster": "Julisteena, {size}.",
+      "block": "Akryylilohkona, {size}."
     },
     "compareTitle": "Vertaa materiaaleja",
     "compareCorner": "Materiaali",
     "compare": {
       "cols": [
-        "Akryyli",
-        "Alumiini",
+        "Akryylilasi",
+        "Kiiltävä metalli",
         "Canvas",
-        "Kehystetty tuloste"
+        "Juliste"
       ],
       "rows": [
         {
           "h": "Ulkonäkö",
           "v": [
             "Kiiltävä, syvä",
-            "Terävä, ohut",
-            "Pehmeä, kuvioitu pinta",
-            "Klassinen, rauhallinen"
-          ]
-        },
-        {
-          "h": "Musta",
-          "v": [
-            "Syvä",
-            "Syvä",
-            "Pehmeämpi",
-            "Syvä, valkoisella paspiksella"
-          ]
-        },
-        {
-          "h": "Heijastukset",
-          "v": [
-            "Jonkin verran valoisassa huoneessa",
-            "Jonkin verran, satiinipinnalla vähemmän",
-            "Hyvin vähän",
-            "Jonkin verran, heijastamattomalla lasilla vähemmän"
+            "Kiiltävä, terävä",
+            "Pehmeä, kuvioitu",
+            "Paperi"
           ]
         },
         {
           "h": "Seinällä",
           "v": [
-            "Leijuu irti seinästä",
-            "Ohut ja kevyt",
-            "Lämmin ja rento",
-            "Arvokas ja perinteinen"
+            "Valmis ripustettavaksi",
+            "Valmis ripustettavaksi",
+            "Valmis ripustettavaksi, ei kehystä",
+            "Ei kehystä, saapuu rullalla"
+          ]
+        },
+        {
+          "h": "Koot",
+          "v": [
+            "30, 40 tai 60 cm",
+            "30, 40 tai 60 cm",
+            "40 tai 60 cm",
+            "50 cm"
           ]
         }
       ],
-      "note": "Yleinen opas siihen, mitä tulostuspalvelut tarjoavat, ei kuvaus meidän tuotteistamme."
+      "note": "Kaikki tulosteet ovat neliön muotoisia."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Seuraava kuva",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Te kaksi, tummalla pähkinäpuulla",
-        "c": "Silmät: oma silmämme ja esimerkkikuva."
-      },
-      {
-        "id": "group",
-        "t": "Te neljä, kehyksissä",
-        "c": "Silmät: oma silmämme ja esimerkkikuvia."
-      },
-      {
-        "id": "hands",
-        "t": "Käsissäsi",
+        "id": "sideboard",
+        "t": "Kiiltävä metalli, 40 cm, lipaston yllä",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Vinosti katsottuna",
-        "c": "Silmät: oma silmämme ja esimerkkikuva."
+        "id": "hall",
+        "t": "Canvas, 40 cm, eteisessä",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "Hyllyllä",
+        "id": "blocks",
+        "t": "Akryylilohkot, 20 cm ja 10 cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "Akryylilohko, 20 cm, käsissäsi",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "Avaimenperä",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "Lähikuva omasta entisöidystä iiriksestämme, rajattu 4096 px:n tiedostosta: säteittäisiä säikeitä, kultainen kollaretti ja pupillin reuna.",
     "locatorAlt": "Koko entisöity iiris, jossa neliö näyttää, mistä lähikuva on rajattu",
     "locatorLabel": "Mistä se on rajattu",
-    "edgeTitle": "Akryylitulosteen reuna",
-    "edgeAlt": "Akryylitulosteen kulma: kiillotettu kirkas reuna, teräksinen seinäkiinnike ja pehmeä ikkunan heijastus."
+    "edgeTitle": "Akryylilasitaulun reuna",
+    "edgeAlt": "Akryylilasitaulun kulma seinällä: ohut kirkas reuna ja pehmeä ikkunan heijastus."
   },
   "trust": {
     "eyebrow": "Mitä emme koskaan tee",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Minkä materiaalin valitsen?",
-        "a": "Akryyli on kiiltävä ja syvä; ripusta se paikkaan, johon ikkunasta ei heijastu suoraa valoa. Alumiini on terävä ja moderni. Canvas on pehmeä ja heijastaa vähemmän, mutta sen kudos pehmentää hienoimpia säikeitä. Kehystetty tuloste on klassinen. Akryyliblokki seisoo hyllyllä. Puhelinta varten lisää neliön muotoisen tiedoston ympärille mustaa tilaa millä tahansa kuvankäsittelysovelluksella ja aseta se taustakuvaksi. Tämän sivun tiedot ovat tulostuspalveluille tyypillisiä ja vaihtelevat; pyydä tulostuspalvelulta näyte."
+        "a": "Akryyli on kiiltävä ja syvä; ripusta se paikkaan, johon ikkunasta ei heijastu suoraa valoa. Kiiltävä metalli on terävä ja moderni. Canvas on pehmeä ja heijastaa vähemmän, mutta sen kudos pehmentää hienoimpia säikeitä. Juliste saapuu ilman kehystä, rullalla. Akryylilohko seisoo hyllyllä. Puhelinta varten lisää neliön muotoisen tiedoston ympärille mustaa tilaa millä tahansa kuvankäsittelysovelluksella ja aseta se taustakuvaksi. Tämän sivun tiedot ovat tulostuspalveluille tyypillisiä ja vaihtelevat; pyydä tulostuspalvelulta näyte."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "Näe oma iiriksesi",
     "body": "Tarvitset vain puhelimesi, hyvän valon ja noin minuutin.",
-    "imageAlt": "Tumma työhuone iltahämärässä, seinällä oma iiriksemme akryylille tulostettuna."
+    "imageAlt": "Tumma työhuone iltahämärässä, seinällä oma iiriksemme akryylilasin takana."
   },
   "footer": {
     "operatedBy": "SnapEyes-palvelua ylläpitää",

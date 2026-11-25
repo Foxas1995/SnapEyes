@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "Vaš zid",
     "title": "Pogledajte je na svom zidu",
-    "intro": "Tiskajte je gdje god želite: na akrilu, aluminiju, platnu ili u okviru.",
+    "intro": "Tiskajte je gdje god želite: na akrilnom staklu, na sjajnom metalu, na platnu ili kao poster.",
     "materialsLabel": "Materijal",
     "artLabel": "Slika",
     "materials": {
       "acrylic": {
-        "n": "Akril",
-        "tag": "Sjajan i dubok",
+        "n": "Akrilno staklo",
+        "tag": "Sjajno i duboko",
         "facts": [
-          "Često debljine 3 do 6 mm",
-          "Odmaknut od zida",
+          "Iza akrilnog stakla od 3 mm",
+          "Spremno za vješanje",
           "Najdublja crna"
         ]
       },
       "metal": {
-        "n": "Aluminij",
+        "n": "Sjajni metal",
         "tag": "Oštar i moderan",
         "facts": [
-          "Često debljine 1 do 3 mm",
-          "Blizu zida",
-          "Sjajan ili satenski"
+          "Sjajna metalna ploča",
+          "Spreman za vješanje",
+          "Žive boje"
         ]
       },
       "canvas": {
         "n": "Platno",
         "tag": "Mekano i toplo",
         "facts": [
-          "Često dubine 2 do 4 cm",
-          "Vrlo malo odsjaja",
+          "Na drvenom podokviru",
+          "Spremno za vješanje",
           "Okvir nije potreban"
         ]
       },
-      "framed": {
-        "n": "Uokvireni otisak",
-        "tag": "Klasičan i smiren",
+      "poster": {
+        "n": "Poster",
+        "tag": "Lagan i jednostavan",
         "facts": [
-          "Iza stakla, s bijelim paspartuom",
-          "Okvir otprilike 2 cm",
-          "Lako se vješa"
+          "Tiskan na papiru",
+          "Bez okvira",
+          "Stiže smotan"
         ]
       },
       "block": {
         "n": "Akrilni blok",
         "tag": "Za policu ili radni stol",
         "facts": [
-          "Često debljine 2 do 4 cm",
-          "Stoji samostalno",
-          "Često 10 do 20 cm"
+          "2,5 cm prozirnog akrila",
+          "Stoji na polici ili stolu",
+          "10 ili 20 cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "Jedno oko",
       "universe": "Universe",
-      "family4": "Obitelj",
+      "family": "Obitelj",
       "collision": "Vas dvoje"
     },
     "eyesNote": "Oči: naše vlastito i ogledne fotografije.",
     "captions": {
-      "acrylic": "Na akrilu.",
-      "metal": "Na aluminiju.",
+      "acrylic": "Na akrilnom staklu.",
+      "metal": "Na sjajnom metalu.",
       "canvas": "Na platnu.",
-      "framed": "Uokvireno.",
+      "poster": "Kao poster.",
       "block": "Kao akrilni blok.",
       "phone": "Na zaključanom zaslonu mobitela."
     },
     "captionsSize": {
-      "acrylic": "Na akrilu, otprilike {size}.",
-      "metal": "Na aluminiju, otprilike {size}.",
-      "canvas": "Na platnu, otprilike {size}.",
-      "framed": "Uokvireno, otprilike {size}."
+      "acrylic": "Na akrilnom staklu, {size}.",
+      "metal": "Na sjajnom metalu, {size}.",
+      "canvas": "Na platnu, {size}.",
+      "poster": "Kao poster, {size}.",
+      "block": "Kao akrilni blok, {size}."
     },
     "compareTitle": "Usporedite materijale",
     "compareCorner": "Materijal",
     "compare": {
       "cols": [
-        "Akril",
-        "Aluminij",
+        "Akrilno staklo",
+        "Sjajni metal",
         "Platno",
-        "Uokvireni otisak"
+        "Poster"
       ],
       "rows": [
         {
           "h": "Izgled",
           "v": [
-            "Sjajan, s dubinom",
-            "Oštar, tanak",
-            "Mekan, s teksturom",
-            "Klasičan, smiren"
-          ]
-        },
-        {
-          "h": "Crna",
-          "v": [
-            "Duboka",
-            "Duboka",
-            "Mekša",
-            "Duboka, s bijelim paspartuom"
-          ]
-        },
-        {
-          "h": "Odsjaji",
-          "v": [
-            "Ponešto, u svijetloj prostoriji",
-            "Ponešto, manje na satenskom",
-            "Vrlo malo",
-            "Ponešto, manje sa staklom protiv odsjaja"
+            "Sjajno, s dubinom",
+            "Sjajan, oštar",
+            "Mekano, teksturirano",
+            "Papir"
           ]
         },
         {
           "h": "Na zidu",
           "v": [
-            "Lebdi ispred zida",
-            "Tanak i lagan",
-            "Topao i opušten",
-            "Svečan i tradicionalan"
+            "Spremno za vješanje",
+            "Spreman za vješanje",
+            "Spremno za vješanje, bez okvira",
+            "Bez okvira, stiže smotan"
+          ]
+        },
+        {
+          "h": "Veličine",
+          "v": [
+            "30, 40 ili 60 cm",
+            "30, 40 ili 60 cm",
+            "40 ili 60 cm",
+            "50 cm"
           ]
         }
       ],
-      "note": "Opći vodič kroz ono što nude tiskare, a ne opis naših proizvoda."
+      "note": "Svi otisci su kvadratni."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Sljedeća slika",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Vas dvoje, na tamnom orahu",
-        "c": "Oči: naše vlastito i ogledna fotografija."
-      },
-      {
-        "id": "group",
-        "t": "Vas četvero, u okviru",
-        "c": "Oči: naše vlastito i ogledne fotografije."
-      },
-      {
-        "id": "hands",
-        "t": "U vašim rukama",
+        "id": "sideboard",
+        "t": "Sjajni metal, 40 cm, iznad komode",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Pogled iz kuta",
-        "c": "Oči: naše vlastito i ogledna fotografija."
+        "id": "hall",
+        "t": "Platno, 40 cm, u predsoblju",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "Na polici",
+        "id": "blocks",
+        "t": "Akrilni blokovi, 20 cm i 10 cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "Akrilni blok, 20 cm, u vašim rukama",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "Privjesak za ključeve",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "Krupni plan naše vlastite obnovljene šarenice, izrezan iz datoteke od 4096 px: radijalna vlakna, zlatna kolareta i rub zjenice.",
     "locatorAlt": "Cijela obnovljena šarenica, s kvadratom koji označava gdje je izrezan krupni plan",
     "locatorLabel": "Gdje je izrezano",
-    "edgeTitle": "Rub otiska na akrilu",
-    "edgeAlt": "Kut otiska na akrilu: polirani prozirni rub, čelični distancer i blagi odraz prozora."
+    "edgeTitle": "Rub slike na akrilnom staklu",
+    "edgeAlt": "Kut slike na akrilnom staklu na zidu: tanak prozirni rub i blagi odraz prozora."
   },
   "trust": {
     "eyebrow": "Što nikad ne radimo",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Koji materijal odabrati?",
-        "a": "Akril je sjajan i dubok; objesite ga podalje od izravnog odsjaja s prozora. Aluminij je oštar i moderan. Platno je mekano i manje odsijeva, ali tkanje omekšava najfinija vlakna. Uokvireni otisak je klasičan. Akrilni blok stoji na polici. Za mobitel u bilo kojem programu za uređivanje fotografija dodajte crni prostor oko kvadratne datoteke i postavite je kao pozadinu. Pojedinosti na ovoj stranici uobičajene su za tiskare i razlikuju se od tiskare do tiskare; zatražite uzorak."
+        "a": "Akril je sjajan i dubok; objesite ga podalje od izravnog odsjaja s prozora. Sjajni metal je oštar i moderan. Platno je mekano i manje odsijeva, ali tkanje omekšava najfinija vlakna. Poster stiže bez okvira, smotan. Akrilni blok stoji na polici. Za mobitel u bilo kojem programu za uređivanje fotografija dodajte crni prostor oko kvadratne datoteke i postavite je kao pozadinu. Pojedinosti na ovoj stranici uobičajene su za tiskare i razlikuju se od tiskare do tiskare; zatražite uzorak."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "Pogledajte svoju šarenicu",
     "body": "Potrebni su vam samo mobitel, dobro svjetlo i otprilike minuta.",
-    "imageAlt": "Tamna radna soba u sumrak, s našom vlastitom šarenicom otisnutom na akrilu na zidu."
+    "imageAlt": "Tamna radna soba u sumrak, s našom vlastitom šarenicom na akrilnom staklu na zidu."
   },
   "footer": {
     "operatedBy": "SnapEyes vodi",

@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "Your wall",
     "title": "See it on your wall",
-    "intro": "Print it wherever you like: on acrylic, aluminium, canvas or in a frame.",
+    "intro": "Print it wherever you like: behind acrylic glass, on glossy metal, on canvas or as a poster.",
     "materialsLabel": "Material",
     "artLabel": "Artwork",
     "materials": {
       "acrylic": {
-        "n": "Acrylic",
+        "n": "Acrylic glass",
         "tag": "Glossy and deep",
         "facts": [
-          "Often 3 to 6 mm thick",
-          "Held off the wall",
+          "Behind 3\u00a0mm acrylic glass",
+          "Ready to hang",
           "The deepest blacks"
         ]
       },
       "metal": {
-        "n": "Aluminium",
-        "tag": "Crisp and modern",
+        "n": "Glossy metal",
+        "tag": "Crisp and bright",
         "facts": [
-          "Often 1 to 3 mm thick",
-          "Close to the wall",
-          "Gloss or satin"
+          "A glossy metal plate",
+          "Ready to hang",
+          "Vivid colours"
         ]
       },
       "canvas": {
         "n": "Canvas",
         "tag": "Soft and warm",
         "facts": [
-          "Often 2 to 4 cm deep",
-          "Very little glare",
+          "On a wooden stretcher frame",
+          "Ready to hang",
           "No frame needed"
         ]
       },
-      "framed": {
-        "n": "Framed print",
-        "tag": "Classic and calm",
+      "poster": {
+        "n": "Poster",
+        "tag": "Light and simple",
         "facts": [
-          "Behind glass, white mat",
-          "Frame about 2 cm",
-          "Easy to hang"
+          "Printed on paper",
+          "Without a frame",
+          "Arrives rolled"
         ]
       },
       "block": {
         "n": "Acrylic block",
         "tag": "For a shelf or desk",
         "facts": [
-          "Often 2 to 4 cm thick",
-          "Stands on its own",
-          "Often 10 to 20 cm"
+          "2.5\u00a0cm of clear acrylic",
+          "Stands on a shelf or desk",
+          "10 or 20\u00a0cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "One eye",
       "universe": "Universe",
-      "family4": "Family",
+      "family": "Family",
       "collision": "Two of you"
     },
     "eyesNote": "Eyes: our own and example photos.",
     "captions": {
-      "acrylic": "On acrylic.",
-      "metal": "On aluminium.",
+      "acrylic": "On acrylic glass.",
+      "metal": "On glossy metal.",
       "canvas": "On canvas.",
-      "framed": "Framed.",
+      "poster": "As a poster.",
       "block": "As an acrylic block.",
       "phone": "On a phone lock screen."
     },
     "captionsSize": {
-      "acrylic": "On acrylic, about {size}.",
-      "metal": "On aluminium, about {size}.",
-      "canvas": "On canvas, about {size}.",
-      "framed": "Framed, about {size}."
+      "acrylic": "On acrylic glass, {size}.",
+      "metal": "On glossy metal, {size}.",
+      "canvas": "On canvas, {size}.",
+      "poster": "A poster, {size}.",
+      "block": "An acrylic block, {size}."
     },
     "compareTitle": "Compare the materials",
     "compareCorner": "Material",
     "compare": {
       "cols": [
-        "Acrylic",
-        "Aluminium",
+        "Acrylic glass",
+        "Glossy metal",
         "Canvas",
-        "Framed print"
+        "Poster"
       ],
       "rows": [
         {
           "h": "Look",
           "v": [
             "Glossy, with depth",
-            "Crisp, slim",
+            "Glossy, crisp",
             "Soft, textured",
-            "Classic, calm"
-          ]
-        },
-        {
-          "h": "Blacks",
-          "v": [
-            "Deep",
-            "Deep",
-            "Softer",
-            "Deep, with a white mat"
-          ]
-        },
-        {
-          "h": "Reflections",
-          "v": [
-            "Some, in a bright room",
-            "Some, less on satin",
-            "Very little",
-            "Some, less with anti-reflective glass"
+            "Paper"
           ]
         },
         {
           "h": "On the wall",
           "v": [
-            "Floats off the wall",
-            "Thin and light",
-            "Warm and casual",
-            "Formal and traditional"
+            "Ready to hang",
+            "Ready to hang",
+            "Ready to hang, no frame",
+            "No frame, arrives rolled"
+          ]
+        },
+        {
+          "h": "Sizes",
+          "v": [
+            "30, 40 or 60\u00a0cm",
+            "30, 40 or 60\u00a0cm",
+            "40 or 60\u00a0cm",
+            "50\u00a0cm"
           ]
         }
       ],
-      "note": "A general guide to what print shops offer, not a description of our products."
+      "note": "Every print is square."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Next picture",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Two of you, on dark walnut",
-        "c": "Eyes: our own and an example photo."
-      },
-      {
-        "id": "group",
-        "t": "Four of you, in a frame",
-        "c": "Eyes: our own and example photos."
-      },
-      {
-        "id": "hands",
-        "t": "In your hands",
+        "id": "sideboard",
+        "t": "Glossy metal, 40\u00a0cm, over a sideboard",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Seen from an angle",
-        "c": "Eyes: our own and an example photo."
+        "id": "hall",
+        "t": "Canvas, 40\u00a0cm, in a hall",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "On a shelf",
+        "id": "blocks",
+        "t": "Acrylic blocks, 20\u00a0cm and 10\u00a0cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "An acrylic block, 20\u00a0cm, in your hands",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "A keyring",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "A close-up of our own restored iris, cropped from the 4096 px file: radial fibres, a gold collarette and the edge of the pupil.",
     "locatorAlt": "The whole restored iris, with a square marking where the close-up was cropped",
     "locatorLabel": "Where it was cropped",
-    "edgeTitle": "The edge of an acrylic print",
-    "edgeAlt": "The corner of a print on acrylic: a polished clear edge, a steel standoff post and a soft window reflection."
+    "edgeTitle": "The edge of an acrylic glass print",
+    "edgeAlt": "The corner of an acrylic glass print on a wall: a thin clear edge and a soft window reflection."
   },
   "trust": {
     "eyebrow": "What we never do",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Which material should I choose?",
-        "a": "Acrylic is glossy and deep; hang it away from direct window glare. Aluminium is crisp and modern. Canvas is soft with less glare, but its weave softens the finest fibres. A framed print is classic. An acrylic block stands on a shelf. For a phone, add black space around the square file in any photo editor and set it as your wallpaper. The details on this page are typical of print shops and vary; ask the print shop for a sample."
+        "a": "Acrylic is glossy and deep; hang it away from direct window glare. Glossy metal is crisp and bright. Canvas is soft with less glare, but its weave softens the finest fibres. A poster comes without a frame, rolled. An acrylic block stands on a shelf. For a phone, add black space around the square file in any photo editor and set it as your wallpaper. The details on this page are typical of print shops and vary; ask the print shop for a sample."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "See your own iris",
     "body": "All it takes is your phone, good light and about a minute.",
-    "imageAlt": "A dark study at dusk with our own iris printed on acrylic on the wall."
+    "imageAlt": "A dark study at dusk with our own iris behind acrylic glass on the wall."
   },
   "footer": {
     "operatedBy": "SnapEyes is operated by",

@@ -1,5 +1,6 @@
-// "More ways to see it": five pictures that are not on the stage (two of you on walnut, four of you in a frame, in your hands, seen
-// from an angle, on a shelf), in a disclosure that is open on a desktop and closed on a phone (where it would add about 450 px of scrolling). The
+// "More ways to see it": five pictures that are not on the stage, each of a print that is sold, at the size drawn (2026-11-25, the owner's decision: glossy
+// metal 40 cm over a sideboard, canvas 40 cm in a hall, the 20 and 10 cm blocks on a desk, the 20 cm block in hands, the keyring; the 3:2 plates, the frame and
+// the shelf went), in a disclosure that is open on a desktop and closed on a phone (where it would add about 450 px of scrolling). The
 // rail scrolls sideways; it is a named region with a tab stop so the keyboard can scroll it. Every picture is a visualisation and
 // carried a chip inside its frame until 2026-11-24 (the owner's decision: no chip on any picture of the site); a caption names whose eyes are in it only where other people's eyes are (the lean pass of 2026-10-22:
 // the summary is the title alone, and a picture of one of our own prints needs no second line).

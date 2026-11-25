@@ -26,7 +26,8 @@ const after = (steps: number) => ({ '--i': steps }) as CSSProperties;
 export function ClosingScene({ ctaRef }: { ctaRef?: Ref<HTMLAnchorElement> }) {
   const { c } = useCopy();
   const tryHref = useTryHref();
-  const pic = asset('m/study_acrylic_3x2__radiance__wide', { pick: 2000 });
+  // the same dusk study with a square 60 cm acrylic glass print without screws (2026-11-25, the owner's decision: no 3:2 plate, no standoffs)
+  const pic = asset('m/study_acrylic60__radiance__wide', { pick: 2000 });
   // on a phone with the engine running (the owner's request of 2026-10-17) the mat opens with the scroll instead of the clock: --op, 0 when the band's top is at 92
   // percent of the screen and 1 when it is near 30 percent, is written on the picture's frame and the stylesheet opens the clip and settles the picture from it
   // (css/final.css; src/motion/phone.ts). Nothing else of the scene is touched: the label and the button come as they did.

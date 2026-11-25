@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "Ihre Wand",
     "title": "Sehen Sie es an Ihrer Wand",
-    "intro": "Drucken Sie es, wo Sie möchten: auf Acryl, Aluminium, Leinwand oder gerahmt.",
+    "intro": "Drucken Sie es, wo Sie möchten: hinter Acrylglas, auf glänzendem Metall, auf Leinwand oder als Poster.",
     "materialsLabel": "Material",
     "artLabel": "Kunstwerk",
     "materials": {
       "acrylic": {
-        "n": "Acryl",
+        "n": "Acrylglas",
         "tag": "Glänzend und tief",
         "facts": [
-          "Oft 3 bis 6 mm dick",
-          "Mit Abstand zur Wand",
+          "Hinter 3\u00a0mm Acrylglas",
+          "Fertig zum Aufhängen",
           "Das tiefste Schwarz"
         ]
       },
       "metal": {
-        "n": "Aluminium",
+        "n": "Glänzendes Metall",
         "tag": "Klar und modern",
         "facts": [
-          "Oft 1 bis 3 mm dick",
-          "Dicht an der Wand",
-          "Glänzend oder seidenmatt"
+          "Eine glänzende Metallplatte",
+          "Fertig zum Aufhängen",
+          "Kräftige Farben"
         ]
       },
       "canvas": {
         "n": "Leinwand",
         "tag": "Weich und warm",
         "facts": [
-          "Oft 2 bis 4 cm tief",
-          "Kaum Spiegelungen",
+          "Auf einem Holzkeilrahmen",
+          "Fertig zum Aufhängen",
           "Kein Rahmen nötig"
         ]
       },
-      "framed": {
-        "n": "Gerahmter Druck",
-        "tag": "Klassisch und ruhig",
+      "poster": {
+        "n": "Poster",
+        "tag": "Leicht und schlicht",
         "facts": [
-          "Hinter Glas, mit Passepartout",
-          "Rahmen etwa 2 cm",
-          "Leicht aufzuhängen"
+          "Auf Papier gedruckt",
+          "Ohne Rahmen",
+          "Kommt gerollt"
         ]
       },
       "block": {
         "n": "Acrylblock",
         "tag": "Für Regal oder Schreibtisch",
         "facts": [
-          "Oft 2 bis 4 cm dick",
-          "Steht von selbst",
-          "Oft 10 bis 20 cm"
+          "2,5\u00a0cm klares Acryl",
+          "Steht auf Regal oder Schreibtisch",
+          "10 oder 20\u00a0cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "Ein Auge",
       "universe": "Universe",
-      "family4": "Familie",
+      "family": "Familie",
       "collision": "Sie zu zweit"
     },
     "eyesNote": "Augen: unser eigenes und Beispielfotos.",
     "captions": {
-      "acrylic": "Auf Acryl.",
-      "metal": "Auf Aluminium.",
+      "acrylic": "Hinter Acrylglas.",
+      "metal": "Auf glänzendem Metall.",
       "canvas": "Auf Leinwand.",
-      "framed": "Gerahmt.",
+      "poster": "Als Poster.",
       "block": "Als Acrylblock.",
       "phone": "Auf einem Smartphone-Sperrbildschirm."
     },
     "captionsSize": {
-      "acrylic": "Auf Acryl, etwa {size}.",
-      "metal": "Auf Aluminium, etwa {size}.",
-      "canvas": "Auf Leinwand, etwa {size}.",
-      "framed": "Gerahmt, etwa {size}."
+      "acrylic": "Hinter Acrylglas, {size}.",
+      "metal": "Auf glänzendem Metall, {size}.",
+      "canvas": "Auf Leinwand, {size}.",
+      "poster": "Als Poster, {size}.",
+      "block": "Als Acrylblock, {size}."
     },
     "compareTitle": "Die Materialien im Vergleich",
     "compareCorner": "Material",
     "compare": {
       "cols": [
-        "Acryl",
-        "Aluminium",
+        "Acrylglas",
+        "Glänzendes Metall",
         "Leinwand",
-        "Gerahmter Druck"
+        "Poster"
       ],
       "rows": [
         {
           "h": "Wirkung",
           "v": [
             "Glänzend, mit Tiefe",
-            "Klar, schlank",
+            "Glänzend, klar",
             "Weich, strukturiert",
-            "Klassisch, ruhig"
-          ]
-        },
-        {
-          "h": "Schwarz",
-          "v": [
-            "Tief",
-            "Tief",
-            "Weicher",
-            "Tief, mit weißem Passepartout"
-          ]
-        },
-        {
-          "h": "Spiegelungen",
-          "v": [
-            "Etwas, in hellen Räumen",
-            "Etwas, weniger bei seidenmatt",
-            "Sehr wenig",
-            "Etwas, weniger mit entspiegeltem Glas"
+            "Papier"
           ]
         },
         {
           "h": "An der Wand",
           "v": [
-            "Schwebt vor der Wand",
-            "Dünn und leicht",
-            "Warm und ungezwungen",
-            "Förmlich und traditionell"
+            "Fertig zum Aufhängen",
+            "Fertig zum Aufhängen",
+            "Fertig zum Aufhängen, ohne Rahmen",
+            "Ohne Rahmen, kommt gerollt"
+          ]
+        },
+        {
+          "h": "Größen",
+          "v": [
+            "30, 40 oder 60\u00a0cm",
+            "30, 40 oder 60\u00a0cm",
+            "40 oder 60\u00a0cm",
+            "50\u00a0cm"
           ]
         }
       ],
-      "note": "Ein allgemeiner Überblick über das Angebot von Druckereien, keine Beschreibung unserer Produkte."
+      "note": "Jeder Druck ist quadratisch."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Nächstes Bild",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Sie zu zweit, auf dunklem Nussbaum",
-        "c": "Augen: unser eigenes und ein Beispielfoto."
-      },
-      {
-        "id": "group",
-        "t": "Sie zu viert, im Rahmen",
-        "c": "Augen: unser eigenes und Beispielfotos."
-      },
-      {
-        "id": "hands",
-        "t": "In Ihren Händen",
+        "id": "sideboard",
+        "t": "Glänzendes Metall, 40\u00a0cm, über einer Kommode",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Aus einem Blickwinkel",
-        "c": "Augen: unser eigenes und ein Beispielfoto."
+        "id": "hall",
+        "t": "Leinwand, 40\u00a0cm, im Flur",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "Im Regal",
+        "id": "blocks",
+        "t": "Acrylblöcke, 20\u00a0cm und 10\u00a0cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "Ein Acrylblock, 20\u00a0cm, in Ihren Händen",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "Ein Schlüsselanhänger",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "Eine Nahaufnahme unserer eigenen restaurierten Iris, ausgeschnitten aus der Datei mit 4096 px: radiale Fasern, ein goldener Kragen und der Rand der Pupille.",
     "locatorAlt": "Die ganze restaurierte Iris, ein Quadrat markiert die Stelle der Nahaufnahme",
     "locatorLabel": "Hier ausgeschnitten",
-    "edgeTitle": "Die Kante eines Acryldrucks",
-    "edgeAlt": "Die Ecke eines Drucks auf Acryl: polierte klare Kante, ein Abstandhalter aus Stahl und eine weiche Fensterspiegelung."
+    "edgeTitle": "Die Kante eines Acrylglasbilds",
+    "edgeAlt": "Die Ecke eines Acrylglasbilds an der Wand: eine dünne klare Kante und eine weiche Fensterspiegelung."
   },
   "trust": {
     "eyebrow": "Was wir nie tun",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Welches Material soll ich wählen?",
-        "a": "Acryl ist glänzend und tief; hängen Sie es nicht in direktes Fensterlicht. Aluminium ist klar und modern. Leinwand ist weich und spiegelt weniger, doch ihr Gewebe mildert die feinsten Fasern. Ein gerahmter Druck ist klassisch. Ein Acrylblock steht im Regal. Für das Smartphone ergänzen Sie in einem beliebigen Fotoeditor einen schwarzen Rand um die quadratische Datei und legen sie als Hintergrundbild fest. Die Angaben auf dieser Seite sind bei Druckereien üblich und können abweichen; bitten Sie die Druckerei um ein Muster."
+        "a": "Acryl ist glänzend und tief; hängen Sie es nicht in direktes Fensterlicht. Glänzendes Metall ist klar und modern. Leinwand ist weich und spiegelt weniger, doch ihr Gewebe mildert die feinsten Fasern. Ein Poster kommt ohne Rahmen, gerollt. Ein Acrylblock steht im Regal. Für das Smartphone ergänzen Sie in einem beliebigen Fotoeditor einen schwarzen Rand um die quadratische Datei und legen sie als Hintergrundbild fest. Die Angaben auf dieser Seite sind bei Druckereien üblich und können abweichen; bitten Sie die Druckerei um ein Muster."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "Sehen Sie Ihre eigene Iris",
     "body": "Sie brauchen nur Ihr Smartphone, gutes Licht und etwa eine Minute.",
-    "imageAlt": "Ein dunkles Arbeitszimmer in der Dämmerung, an der Wand unsere eigene Iris auf Acryl gedruckt."
+    "imageAlt": "Ein dunkles Arbeitszimmer in der Dämmerung, an der Wand unsere eigene Iris hinter Acrylglas."
   },
   "footer": {
     "operatedBy": "SnapEyes wird betrieben von",

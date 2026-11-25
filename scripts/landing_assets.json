@@ -3,106 +3,86 @@
  "stage": {
   "acrylic": {
    "eye": {
-    "base": "m/living_acrylic__radiance__tight",
-    "sizeOk": false
+    "base": "m/living_acrylic60__radiance__tight",
+    "cm": 60
    },
    "universe": {
-    "base": "m/living_acrylic__universe__tight",
-    "sizeOk": false
+    "base": "m/living_acrylic60__universe__tight",
+    "cm": 60
    },
-   "family4": {
-    "base": "m/living_acrylic_3x2__family4__tall",
-    "sizeOk": false
-   },
-   "collision": {
-    "base": "m/living_acrylic_3x2__collision__tall",
-    "sizeOk": false
+   "family": {
+    "base": "m/living_acrylic60__trio__tight",
+    "cm": 60
    }
   },
   "metal": {
    "eye": {
-    "base": "m/office_metal__radiance__tight",
-    "sizeOk": false
+    "base": "m/living_metal60__radiance__tight",
+    "cm": 60
    },
    "universe": {
-    "base": "m/office_metal__universe__tight",
-    "sizeOk": false
+    "base": "m/living_metal60__universe__tight",
+    "cm": 60
    },
-   "family4": {
-    "base": "m/office_metal_3x2__family4__tall",
-    "sizeOk": false
-   },
-   "collision": {
-    "base": "m/office_metal_3x2__collision__tall",
-    "sizeOk": false
+   "family": {
+    "base": "m/living_metal60__trio__tight",
+    "cm": 60
    }
   },
   "canvas": {
    "eye": {
-    "base": "m/hall_canvas__radiance__tight",
-    "sizeOk": false
+    "base": "m/living_canvas60__radiance__tight",
+    "cm": 60
    },
    "universe": {
-    "base": "m/hall_canvas__universe__tight",
-    "sizeOk": false
+    "base": "m/living_canvas60__universe__tight",
+    "cm": 60
    },
-   "family4": {
-    "base": "m/hall_canvas_3x2__family4__tall",
-    "sizeOk": true
-   },
-   "collision": {
-    "base": "m/hall_canvas_3x2__collision__tall",
-    "sizeOk": true
+   "family": {
+    "base": "m/living_canvas60__trio__tight",
+    "cm": 60
    }
   },
-  "framed": {
+  "poster": {
    "eye": {
-    "base": "m/hotel_framed__radiance__tight",
-    "sizeOk": true
+    "base": "m/table_poster50__radiance__tight",
+    "cm": 50
    },
    "universe": {
-    "base": "m/hotel_framed__universe__tight",
-    "sizeOk": true
-   },
-   "family4": {
-    "base": "m/hotel_framed_3x2__family4__tall",
-    "sizeOk": false
-   },
-   "collision": {
-    "base": "m/hotel_framed_3x2__collision__tall",
-    "sizeOk": false
+    "base": "m/table_poster50__universe__tight",
+    "cm": 50
    }
   },
   "block": {
    "eye": {
-    "base": "m/desk_block__radiance__tight",
-    "sizeOk": false
+    "base": "m/desk_block20__radiance__tight",
+    "cm": 20
    },
    "universe": {
-    "base": "m/desk_block__universe__tight",
-    "sizeOk": false
+    "base": "m/desk_block20__universe__tight",
+    "cm": 20
    },
-   "family4": {
-    "base": "m/desk_block__family4__tight",
-    "sizeOk": false
+   "family": {
+    "base": "m/desk_block20__trio__tight",
+    "cm": 20
    }
   },
   "phone": {
    "eye": {
     "base": "m/phone_desk__radiance__wide",
-    "sizeOk": false
+    "cm": 0
    },
    "universe": {
     "base": "m/phone_desk__universe__wide",
-    "sizeOk": false
+    "cm": 0
    },
-   "family4": {
+   "family": {
     "base": "m/phone_desk__family4__wide",
-    "sizeOk": false
+    "cm": 0
    },
    "collision": {
     "base": "m/phone_desk__collision__wide",
-    "sizeOk": false
+    "cm": 0
    }
   }
  },
@@ -136,7 +116,7 @@
     "design": "radiance",
     "price": "art",
     "wallOwn": {
-     "base": "m/living_acrylic__eye__sq",
+     "base": "m/wall_acrylic60__radiance__sq",
      "ratio": "1/1"
     }
    },
@@ -160,7 +140,7 @@
     "design": "universe",
     "price": "art",
     "wallOwn": {
-     "base": "m/living_acrylic__universe__sq",
+     "base": "m/wall_acrylic60__universe__sq",
      "ratio": "1/1"
     }
    },
@@ -205,11 +185,7 @@
     "id": "duo_infinity",
     "file": "duo_infinity_by",
     "price": "two",
-    "src": "mixed",
-    "wall": {
-     "base": "m/living_acrylic_3x2__collision__tight",
-     "ratio": "3/2"
-    }
+    "src": "mixed"
    },
    {
     "id": "duo_infinity_bb",
@@ -333,24 +309,24 @@
  },
  "more": [
   {
-   "id": "pair",
-   "base": "m/cafe_acrylic_3x2__collision__tight"
+   "id": "sideboard",
+   "base": "m/sideboard_metal40__universe__tight"
   },
   {
-   "id": "group",
-   "base": "m/gallery_framed_3x2__family4__tight"
+   "id": "hall",
+   "base": "m/hall_canvas40__radiance__tight"
+  },
+  {
+   "id": "blocks",
+   "base": "m/desk_block20and10__radiance__tight"
   },
   {
    "id": "hands",
-   "base": "m/hands_acrylic__radiance__tight"
+   "base": "m/hands_block20__radiance__tight"
   },
   {
-   "id": "gallery",
-   "base": "m/gallery_acrylic_oblique__collision__tight"
-  },
-  {
-   "id": "shelf",
-   "base": "m/shelf_acrylic_30__radiance__tight"
+   "id": "keyring",
+   "base": "m/table_keyring__radiance__tight"
   }
  ],
  "reveal": {
@@ -374,7 +350,7 @@
  "wallThumbs": {
   "eye": "art/wallthumb_radiance_96",
   "universe": "art/wallthumb_universe_96",
-  "family4": "art/wallthumb_family4_96",
+  "family": "art/wallthumb_family_96",
   "collision": "art/wallthumb_collision_96"
  },
  "fibre": {
@@ -389,12 +365,12 @@
  "extras": [
   "art/fibre_crop_1200",
   "art/fibre_full_480",
-  "m/macro_acrylic_corner__universe__wide_1200",
-  "m/macro_acrylic_corner__universe__wide_2000",
-  "m/macro_acrylic_corner__universe__wide_600",
-  "m/study_acrylic_3x2__radiance__wide_1200",
-  "m/study_acrylic_3x2__radiance__wide_2000",
-  "m/study_acrylic_3x2__radiance__wide_600",
+  "m/closeup_acrylic__universe__wide_1200",
+  "m/closeup_acrylic__universe__wide_2000",
+  "m/closeup_acrylic__universe__wide_600",
+  "m/study_acrylic60__radiance__wide_1200",
+  "m/study_acrylic60__radiance__wide_2000",
+  "m/study_acrylic60__radiance__wide_600",
   "ui/before-phone-crop-315",
   "ui/preview_wm_360"
  ],

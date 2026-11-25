@@ -62,8 +62,9 @@ export function artPicture(tile: GalleryTile, eye: EyeId): PictureAsset {
   return asset(name as AssetFamily, { pick: 900 });
 }
 
-/** The tile on a wall (an AI visualisation), or null when it has none. Mantas's own eye has wall pictures for two styles; the
- *  other eye colours have none (an example photo is never put on a wall); a pair has one fixed scene. The widest file is the
+/** The tile on a wall (an AI visualisation), or null when it has none. Mantas's own eye has wall pictures for two styles (a square 60 cm acrylic glass print
+ *  since 2026-11-25); the other eye colours have none (an example photo is never put on a wall); a pair has none since 2026-11-25 (the owner's decision: its
+ *  picture was a 3:2 plate, and no 3:2 print is sold). The widest file is the
  *  src, the srcset offers every width (the picture is not fetched before the visitor asks for the wall: no src until then). */
 export function wallPicture(group: GalleryGroup, tile: GalleryTile, eye: EyeId): PictureAsset | null {
   const w = hasEyeSwitch(group) ? (eye === 'own' ? tile.wallOwn : undefined) : tile.wall;

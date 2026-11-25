@@ -6,117 +6,98 @@
 // no text is here: the words are the copy's (src/landing/copy), the prices come from src/landing/prices.ts.
 import type { AssetFamily, AssetFile } from './assets';
 
-export type Material = 'acrylic' | 'metal' | 'canvas' | 'framed' | 'block' | 'phone';
-export type WallArt = 'eye' | 'universe' | 'family4' | 'collision';
+export type Material = 'acrylic' | 'metal' | 'canvas' | 'poster' | 'block' | 'phone';
+export type WallArt = 'eye' | 'universe' | 'family' | 'collision';
 export type EyeId = 'own' | 'yg' | 'br' | 'gr';
 export type GalleryGroup = 'one' | 'two' | 'family';
 
-/** The wall stage: the scene of a material with an artwork in it. sizeOk: the drawn size was estimated at 40 to 55 cm, so
- *  the page may print "about 50 cm" next to it. de: the German version of the scene (the phone shows text). */
-export interface StageScene { base: AssetFamily; sizeOk: boolean; de?: AssetFamily }
+/** The wall stage: the scene of a material with an artwork in it. cm: the size of the print drawn in the picture (the pictures of 2026-11-24/25
+ *  were made at the sizes that are sold: 60 cm over the sofa, a 50 cm poster, a 20 cm block), which the caption names; 0 where the picture
+ *  shows no print (the phone). de: the German version of the scene (the phone shows text). */
+export interface StageScene { base: AssetFamily; cm: number; de?: AssetFamily }
 export const STAGE: Readonly<Record<Material, Readonly<Partial<Record<WallArt, StageScene>>>>> = {
   "acrylic": {
     "eye": {
-      "base": "m/living_acrylic__radiance__tight",
-      "sizeOk": false
+      "base": "m/living_acrylic60__radiance__tight",
+      "cm": 60
     },
     "universe": {
-      "base": "m/living_acrylic__universe__tight",
-      "sizeOk": false
+      "base": "m/living_acrylic60__universe__tight",
+      "cm": 60
     },
-    "family4": {
-      "base": "m/living_acrylic_3x2__family4__tall",
-      "sizeOk": false
-    },
-    "collision": {
-      "base": "m/living_acrylic_3x2__collision__tall",
-      "sizeOk": false
+    "family": {
+      "base": "m/living_acrylic60__trio__tight",
+      "cm": 60
     }
   },
   "metal": {
     "eye": {
-      "base": "m/office_metal__radiance__tight",
-      "sizeOk": false
+      "base": "m/living_metal60__radiance__tight",
+      "cm": 60
     },
     "universe": {
-      "base": "m/office_metal__universe__tight",
-      "sizeOk": false
+      "base": "m/living_metal60__universe__tight",
+      "cm": 60
     },
-    "family4": {
-      "base": "m/office_metal_3x2__family4__tall",
-      "sizeOk": false
-    },
-    "collision": {
-      "base": "m/office_metal_3x2__collision__tall",
-      "sizeOk": false
+    "family": {
+      "base": "m/living_metal60__trio__tight",
+      "cm": 60
     }
   },
   "canvas": {
     "eye": {
-      "base": "m/hall_canvas__radiance__tight",
-      "sizeOk": false
+      "base": "m/living_canvas60__radiance__tight",
+      "cm": 60
     },
     "universe": {
-      "base": "m/hall_canvas__universe__tight",
-      "sizeOk": false
+      "base": "m/living_canvas60__universe__tight",
+      "cm": 60
     },
-    "family4": {
-      "base": "m/hall_canvas_3x2__family4__tall",
-      "sizeOk": true
-    },
-    "collision": {
-      "base": "m/hall_canvas_3x2__collision__tall",
-      "sizeOk": true
+    "family": {
+      "base": "m/living_canvas60__trio__tight",
+      "cm": 60
     }
   },
-  "framed": {
+  "poster": {
     "eye": {
-      "base": "m/hotel_framed__radiance__tight",
-      "sizeOk": true
+      "base": "m/table_poster50__radiance__tight",
+      "cm": 50
     },
     "universe": {
-      "base": "m/hotel_framed__universe__tight",
-      "sizeOk": true
-    },
-    "family4": {
-      "base": "m/hotel_framed_3x2__family4__tall",
-      "sizeOk": false
-    },
-    "collision": {
-      "base": "m/hotel_framed_3x2__collision__tall",
-      "sizeOk": false
+      "base": "m/table_poster50__universe__tight",
+      "cm": 50
     }
   },
   "block": {
     "eye": {
-      "base": "m/desk_block__radiance__tight",
-      "sizeOk": false
+      "base": "m/desk_block20__radiance__tight",
+      "cm": 20
     },
     "universe": {
-      "base": "m/desk_block__universe__tight",
-      "sizeOk": false
+      "base": "m/desk_block20__universe__tight",
+      "cm": 20
     },
-    "family4": {
-      "base": "m/desk_block__family4__tight",
-      "sizeOk": false
+    "family": {
+      "base": "m/desk_block20__trio__tight",
+      "cm": 20
     }
   },
   "phone": {
     "eye": {
       "base": "m/phone_desk__radiance__wide",
-      "sizeOk": false
+      "cm": 0
     },
     "universe": {
       "base": "m/phone_desk__universe__wide",
-      "sizeOk": false
+      "cm": 0
     },
-    "family4": {
+    "family": {
       "base": "m/phone_desk__family4__wide",
-      "sizeOk": false
+      "cm": 0
     },
     "collision": {
       "base": "m/phone_desk__collision__wide",
-      "sizeOk": false
+      "cm": 0
     }
   }
 };
@@ -171,7 +152,7 @@ export const GALLERY: {
       "design": "radiance",
       "price": "art",
       "wallOwn": {
-        "base": "m/living_acrylic__eye__sq",
+        "base": "m/wall_acrylic60__radiance__sq",
         "ratio": "1/1"
       }
     },
@@ -195,7 +176,7 @@ export const GALLERY: {
       "design": "universe",
       "price": "art",
       "wallOwn": {
-        "base": "m/living_acrylic__universe__sq",
+        "base": "m/wall_acrylic60__universe__sq",
         "ratio": "1/1"
       }
     },
@@ -240,11 +221,7 @@ export const GALLERY: {
       "id": "duo_infinity",
       "file": "duo_infinity_by",
       "price": "two",
-      "src": "mixed",
-      "wall": {
-        "base": "m/living_acrylic_3x2__collision__tight",
-        "ratio": "3/2"
-      }
+      "src": "mixed"
     },
     {
       "id": "duo_infinity_bb",
@@ -370,24 +347,24 @@ export const GALLERY: {
 /** "More ways to see it": the rooms that are not on the wall stage. */
 export const MORE: readonly { id: string; base: AssetFamily }[] = [
   {
-    "id": "pair",
-    "base": "m/cafe_acrylic_3x2__collision__tight"
+    "id": "sideboard",
+    "base": "m/sideboard_metal40__universe__tight"
   },
   {
-    "id": "group",
-    "base": "m/gallery_framed_3x2__family4__tight"
+    "id": "hall",
+    "base": "m/hall_canvas40__radiance__tight"
+  },
+  {
+    "id": "blocks",
+    "base": "m/desk_block20and10__radiance__tight"
   },
   {
     "id": "hands",
-    "base": "m/hands_acrylic__radiance__tight"
+    "base": "m/hands_block20__radiance__tight"
   },
   {
-    "id": "gallery",
-    "base": "m/gallery_acrylic_oblique__collision__tight"
-  },
-  {
-    "id": "shelf",
-    "base": "m/shelf_acrylic_30__radiance__tight"
+    "id": "keyring",
+    "base": "m/table_keyring__radiance__tight"
   }
 ];
 
@@ -417,7 +394,7 @@ export const REVEAL: { readonly eyes: readonly { id: 'gd' | 'br' | 'own'; phone:
 export const WALL_THUMBS: Readonly<Record<WallArt, AssetFile>> = {
   "eye": "art/wallthumb_radiance_96",
   "universe": "art/wallthumb_universe_96",
-  "family4": "art/wallthumb_family4_96",
+  "family": "art/wallthumb_family_96",
   "collision": "art/wallthumb_collision_96"
 };
 

@@ -29,6 +29,8 @@ const ICONS = {
   hang: ['M12 3v3M12 6 6 11h12zM6 11h12v10H6z'],
   cube: ['M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9'],
   stand: ['M7 4h10v13H7zM3.5 20.5h17'],
+  // a rolled sheet (the poster arrives rolled, 2026-11-25): a tube seen from its end, the sheet running off it
+  roll: ['M7 6.5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM7 6.5h11.5v11H7M7 12.5v5'],
   phone: ['M8 2.5h8A1.5 1.5 0 0 1 17.5 4v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5zM10.5 18.5h3'],
   expand: ['M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M9 9h6v6H9z'],
   check: ['M4.5 12.5l4.5 4.5 10.5-10.5'],

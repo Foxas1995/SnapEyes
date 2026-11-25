@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "Sinu sein",
     "title": "Vaata seda oma seinal",
-    "intro": "Trüki see kuhu tahes: akrüülile, alumiiniumile, lõuendile või raami sisse.",
+    "intro": "Trüki see kuhu tahes: akrüülklaasi taha, läikivale metallile, lõuendile või plakatiks.",
     "materialsLabel": "Materjal",
     "artLabel": "Kunstiteos",
     "materials": {
       "acrylic": {
-        "n": "Akrüül",
+        "n": "Akrüülklaas",
         "tag": "Läikiv ja sügav",
         "facts": [
-          "Sageli 3 kuni 6 mm paks",
-          "Seinast veidi eemal",
+          "3\u00a0mm akrüülklaasi taga",
+          "Valmis seinale riputamiseks",
           "Kõige sügavam must"
         ]
       },
       "metal": {
-        "n": "Alumiinium",
+        "n": "Läikiv metall",
         "tag": "Terav ja moodne",
         "facts": [
-          "Sageli 1 kuni 3 mm paks",
-          "Seina lähedal",
-          "Läikiv või satiinjas"
+          "Läikiv metallplaat",
+          "Valmis seinale riputamiseks",
+          "Erksad värvid"
         ]
       },
       "canvas": {
         "n": "Lõuend",
         "tag": "Pehme ja soe",
         "facts": [
-          "Sageli 2 kuni 4 cm sügav",
-          "Väga vähe peegeldusi",
+          "Puidust alusraamil",
+          "Valmis seinale riputamiseks",
           "Raami pole vaja"
         ]
       },
-      "framed": {
-        "n": "Raamitud pilt",
-        "tag": "Klassikaline ja rahulik",
+      "poster": {
+        "n": "Plakat",
+        "tag": "Kerge ja lihtne",
         "facts": [
-          "Klaasi taga, valge paspartuuga",
-          "Raam umbes 2 cm",
-          "Lihtne üles riputada"
+          "Trükitud paberile",
+          "Ilma raamita",
+          "Saabub rullis"
         ]
       },
       "block": {
         "n": "Akrüülplokk",
         "tag": "Riiulile või lauale",
         "facts": [
-          "Sageli 2 kuni 4 cm paks",
-          "Seisab ise püsti",
-          "Sageli 10 kuni 20 cm"
+          "2,5\u00a0cm läbipaistvat akrüüli",
+          "Seisab riiulil või laual",
+          "10 või 20\u00a0cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "Üks silm",
       "universe": "Universe",
-      "family4": "Pere",
+      "family": "Pere",
       "collision": "Teie kaks"
     },
     "eyesNote": "Silmad: meie enda silm ja näidisfotod.",
     "captions": {
-      "acrylic": "Akrüülil.",
-      "metal": "Alumiiniumil.",
+      "acrylic": "Akrüülklaasi taga.",
+      "metal": "Läikival metallil.",
       "canvas": "Lõuendil.",
-      "framed": "Raamituna.",
+      "poster": "Plakatina.",
       "block": "Akrüülplokina.",
       "phone": "Telefoni lukustuskuval."
     },
     "captionsSize": {
-      "acrylic": "Akrüülil, umbes {size}.",
-      "metal": "Alumiiniumil, umbes {size}.",
-      "canvas": "Lõuendil, umbes {size}.",
-      "framed": "Raamituna, umbes {size}."
+      "acrylic": "Akrüülklaasi taga, {size}.",
+      "metal": "Läikival metallil, {size}.",
+      "canvas": "Lõuendil, {size}.",
+      "poster": "Plakatina, {size}.",
+      "block": "Akrüülplokina, {size}."
     },
     "compareTitle": "Võrdle materjale",
     "compareCorner": "Materjal",
     "compare": {
       "cols": [
-        "Akrüül",
-        "Alumiinium",
+        "Akrüülklaas",
+        "Läikiv metall",
         "Lõuend",
-        "Raamitud pilt"
+        "Plakat"
       ],
       "rows": [
         {
           "h": "Välimus",
           "v": [
-            "Läikiv, sügavusega",
-            "Terav, õhuke",
+            "Läikiv, sügav",
+            "Läikiv, terav",
             "Pehme, tekstuuriga",
-            "Klassikaline, rahulik"
-          ]
-        },
-        {
-          "h": "Must",
-          "v": [
-            "Sügav",
-            "Sügav",
-            "Pehmem",
-            "Sügav, valge paspartuuga"
-          ]
-        },
-        {
-          "h": "Peegeldused",
-          "v": [
-            "Mõningaid, heledas toas",
-            "Mõningaid, satiinjal pinnal vähem",
-            "Väga vähe",
-            "Mõningaid, peegeldusvastase klaasiga vähem"
+            "Paber"
           ]
         },
         {
           "h": "Seinal",
           "v": [
-            "Hõljub seina ees",
-            "Õhuke ja kerge",
-            "Soe ja vaba",
-            "Pidulik ja traditsiooniline"
+            "Valmis riputamiseks",
+            "Valmis riputamiseks",
+            "Valmis riputamiseks, ilma raamita",
+            "Ilma raamita, saabub rullis"
+          ]
+        },
+        {
+          "h": "Suurused",
+          "v": [
+            "30, 40 või 60\u00a0cm",
+            "30, 40 või 60\u00a0cm",
+            "40 või 60\u00a0cm",
+            "50\u00a0cm"
           ]
         }
       ],
-      "note": "Üldine ülevaade sellest, mida trükikojad pakuvad, mitte meie toodete kirjeldus."
+      "note": "Kõik pildid on ruudukujulised."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Järgmine pilt",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Teie kaks, tumedal pähklipuul",
-        "c": "Silmad: meie enda silm ja näidisfoto."
-      },
-      {
-        "id": "group",
-        "t": "Teie neli, raamis",
-        "c": "Silmad: meie enda silm ja näidisfotod."
-      },
-      {
-        "id": "hands",
-        "t": "Sinu käes",
+        "id": "sideboard",
+        "t": "Läikiv metall, 40\u00a0cm, kummuti kohal",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Nurga alt vaadatuna",
-        "c": "Silmad: meie enda silm ja näidisfoto."
+        "id": "hall",
+        "t": "Lõuend, 40\u00a0cm, esikus",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "Riiulil",
+        "id": "blocks",
+        "t": "Akrüülplokid, 20\u00a0cm ja 10\u00a0cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "Akrüülplokk, 20\u00a0cm, sinu käes",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "Võtmehoidja",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "Lähivõte meie enda taastatud iirisest, lõigatud 4096 px failist: radiaalsed kiud, kuldne iirisekrae ja pupilli serv.",
     "locatorAlt": "Kogu taastatud iiris, ruut näitab, kust lähivõte on lõigatud",
     "locatorLabel": "Kust see on lõigatud",
-    "edgeTitle": "Akrüülile trükitud pildi serv",
-    "edgeAlt": "Akrüülile trükitud pildi nurk: poleeritud läbipaistev serv, terasest distantshoidik ja pehme akna peegeldus."
+    "edgeTitle": "Akrüülklaaspildi serv",
+    "edgeAlt": "Akrüülklaaspildi nurk seinal: õhuke läbipaistev serv ja pehme akna peegeldus."
   },
   "trust": {
     "eyebrow": "Mida me kunagi ei tee",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Millise materjali valida?",
-        "a": "Akrüül on läikiv ja sügav; riputa see eemale otsesest aknapeegeldusest. Alumiinium on terav ja moodne. Lõuend on pehme ja peegeldab vähem, kuid selle kude pehmendab kõige peenemaid kiude. Raamitud pilt on klassikaline. Akrüülplokk seisab riiulil. Telefoni jaoks lisa mis tahes fototöötlusprogrammis ruudukujulise faili ümber musta ruumi ja määra see taustapildiks. Selle lehe üksikasjad on trükikodadele tüüpilised ja varieeruvad; küsi trükikojalt näidist."
+        "a": "Akrüül on läikiv ja sügav; riputa see eemale otsesest aknapeegeldusest. Läikiv metall on terav ja moodne. Lõuend on pehme ja peegeldab vähem, kuid selle kude pehmendab kõige peenemaid kiude. Plakat saabub ilma raamita, rullis. Akrüülplokk seisab riiulil. Telefoni jaoks lisa mis tahes fototöötlusprogrammis ruudukujulise faili ümber musta ruumi ja määra see taustapildiks. Selle lehe üksikasjad on trükikodadele tüüpilised ja varieeruvad; küsi trükikojalt näidist."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "Vaata oma iirist",
     "body": "Vaja on ainult telefoni, head valgust ja umbes minutit.",
-    "imageAlt": "Hämar kabinet õhtuhämaruses, seinal meie enda iiris akrüülile trükituna."
+    "imageAlt": "Hämar kabinet õhtuhämaruses, seinal meie enda iiris akrüülklaasi taga."
   },
   "footer": {
     "operatedBy": "SnapEyesi haldab",

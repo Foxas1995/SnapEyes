@@ -14,7 +14,8 @@ import et from '../../src/landing/copy/et.json';
 import lv from '../../src/landing/copy/lv.json';
 import type { LandingCopy } from '../../src/landing/copy/types';
 import { DEFAULT_SIZE, FILE_PX, FLOOR, PERSON, SIZES, SOFA, ppi, squares, viewBoxFor } from '../../src/landing/sizeScale';
-import { SCENE_SIZE } from '../../src/landing/wallScenes';
+import { MATERIALS, sceneSize } from '../../src/landing/wallScenes';
+import { STAGE } from '../../src/landing/assets.data';
 import { COPY as TRY } from '../../src/try/copy';
 import { printProducts } from '../../src/shared/prints';
 
@@ -65,8 +66,16 @@ export async function run(): Promise<Row[]> {
   const sold = printProducts(false).map((p) => p.cm);
   check('no print is sold larger than the size the page suggests, and the largest one sold is that size',
     sold.length > 0 && Math.max(...sold) === MAX, sold.join());
-  // a caption under a wall picture names the size the artwork is DRAWN at in that picture (40 to 55 cm), not the largest print: it stays "about 50 cm"
-  check('the wall captions keep the size of their pictures (about 50 cm), written like a fact of the copy, and do not follow the largest print',
-    SCENE_SIZE === '50 cm' && LANGS.every((l) => COPIES[l].facts.printMaxCm !== SCENE_SIZE && COPIES[l].wall.captionsSize.acrylic.includes('{size}')));
+  // a caption under a wall picture names the size of the print DRAWN in that picture, not the largest print. The owner's decision of 2026-11-25: the stage shows
+  // the new pictures made at sizes that are sold (60 cm over the sofa for acrylic glass, glossy metal and canvas, the 50 cm poster, the 20 cm block); every size a
+  // caption names is one the print offer sells for that kind, the phone names none, and no caption says "about" a size any more
+  const offered = printProducts(false);
+  const scenes = MATERIALS.flatMap((m) => Object.values(STAGE[m]).map((s) => [m, s!.cm] as const));
+  check('the wall captions name the size drawn in their picture: 60 cm for acrylic glass, glossy metal and canvas, 50 cm for the poster, 20 cm for the block, none on the phone, '
+    + 'each a size the print offer sells for that kind, written like a fact of the copy (a no-break space before cm)',
+    sceneSize(60) === '60\u00a0cm' && scenes.every(([m, cm]) => (m === 'phone' ? cm === 0 : offered.some((p) => p.kind === m && p.cm === cm)))
+      && JSON.stringify(Object.fromEntries(MATERIALS.map((m) => [m, [...new Set(Object.values(STAGE[m]).map((s) => s!.cm))].join()]))) === JSON.stringify({ acrylic: '60', metal: '60', canvas: '60', poster: '50', block: '20', phone: '0' })
+      && LANGS.every((l) => MATERIALS.every((m) => m === 'phone' || COPIES[l].wall.captionsSize[m].includes('{size}'))),
+    scenes.map(([m, cm]) => `${m}:${cm}`).join());
   return out;
 }

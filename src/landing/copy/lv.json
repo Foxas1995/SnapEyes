@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "Jūsu siena",
     "title": "Ieraugiet to uz savas sienas",
-    "intro": "Izdrukājiet, kur vien vēlaties: uz akrila, alumīnija, audekla vai ierāmētu.",
+    "intro": "Izdrukājiet, kur vien vēlaties: aiz akrila stikla, uz spīdīga metāla, uz audekla vai kā plakātu.",
     "materialsLabel": "Materiāls",
     "artLabel": "Mākslas darbs",
     "materials": {
       "acrylic": {
-        "n": "Akrils",
+        "n": "Akrila stikls",
         "tag": "Spīdīgs un dziļš",
         "facts": [
-          "Bieži 3 līdz 6 mm biezs",
-          "Atvirzīts no sienas",
+          "Aiz 3\u00a0mm akrila stikla",
+          "Gatavs piekāršanai",
           "Visdziļākais melnais"
         ]
       },
       "metal": {
-        "n": "Alumīnijs",
+        "n": "Spīdīgs metāls",
         "tag": "Ass un moderns",
         "facts": [
-          "Bieži 1 līdz 3 mm biezs",
-          "Cieši pie sienas",
-          "Spīdīgs vai pusmatēts"
+          "Spīdīga metāla plāksne",
+          "Gatavs piekāršanai",
+          "Spilgtas krāsas"
         ]
       },
       "canvas": {
         "n": "Audekls",
         "tag": "Maigs un silts",
         "facts": [
-          "Bieži 2 līdz 4 cm dziļš",
-          "Ļoti maz atspīdumu",
+          "Uz koka apakšrāmja",
+          "Gatavs piekāršanai",
           "Rāmis nav vajadzīgs"
         ]
       },
-      "framed": {
-        "n": "Ierāmēta izdruka",
-        "tag": "Klasiska un mierīga",
+      "poster": {
+        "n": "Plakāts",
+        "tag": "Viegls un vienkāršs",
         "facts": [
-          "Aiz stikla, ar baltu paspartū",
-          "Rāmis apmēram 2 cm",
-          "Viegli pakārt"
+          "Drukāts uz papīra",
+          "Bez rāmja",
+          "Pienāk sarullēts"
         ]
       },
       "block": {
         "n": "Akrila bloks",
         "tag": "Plauktam vai galdam",
         "facts": [
-          "Bieži 2 līdz 4 cm biezs",
-          "Stāv pats",
-          "Bieži 10 līdz 20 cm"
+          "2,5\u00a0cm caurspīdīga akrila",
+          "Stāv uz plaukta vai galda",
+          "10 vai 20\u00a0cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "Viena acs",
       "universe": "Universe",
-      "family4": "Ģimene",
+      "family": "Ģimene",
       "collision": "Jūs abi"
     },
     "eyesNote": "Acis: mūsu pašu un parauga fotogrāfijas.",
     "captions": {
-      "acrylic": "Uz akrila.",
-      "metal": "Uz alumīnija.",
+      "acrylic": "Aiz akrila stikla.",
+      "metal": "Uz spīdīga metāla.",
       "canvas": "Uz audekla.",
-      "framed": "Ierāmēts.",
+      "poster": "Kā plakāts.",
       "block": "Kā akrila bloks.",
       "phone": "Uz telefona bloķēšanas ekrāna."
     },
     "captionsSize": {
-      "acrylic": "Uz akrila, apmēram {size}.",
-      "metal": "Uz alumīnija, apmēram {size}.",
-      "canvas": "Uz audekla, apmēram {size}.",
-      "framed": "Ierāmēts, apmēram {size}."
+      "acrylic": "Aiz akrila stikla, {size}.",
+      "metal": "Uz spīdīga metāla, {size}.",
+      "canvas": "Uz audekla, {size}.",
+      "poster": "Kā plakāts, {size}.",
+      "block": "Kā akrila bloks, {size}."
     },
     "compareTitle": "Salīdziniet materiālus",
     "compareCorner": "Materiāls",
     "compare": {
       "cols": [
-        "Akrils",
-        "Alumīnijs",
+        "Akrila stikls",
+        "Spīdīgs metāls",
         "Audekls",
-        "Ierāmēta izdruka"
+        "Plakāts"
       ],
       "rows": [
         {
           "h": "Izskats",
           "v": [
             "Spīdīgs, ar dziļumu",
-            "Ass, plāns",
+            "Spīdīgs, ass",
             "Maigs, ar faktūru",
-            "Klasisks, mierīgs"
-          ]
-        },
-        {
-          "h": "Melnais",
-          "v": [
-            "Dziļš",
-            "Dziļš",
-            "Maigāks",
-            "Dziļš, ar baltu paspartū"
-          ]
-        },
-        {
-          "h": "Atspīdumi",
-          "v": [
-            "Nedaudz, gaišā telpā",
-            "Nedaudz, pusmatētam mazāk",
-            "Ļoti maz",
-            "Nedaudz, ar pretatspīduma stiklu mazāk"
+            "Papīrs"
           ]
         },
         {
           "h": "Uz sienas",
           "v": [
-            "It kā peld sienas priekšā",
-            "Plāns un viegls",
-            "Silts un brīvs",
-            "Svinīgs un tradicionāls"
+            "Gatavs piekāršanai",
+            "Gatavs piekāršanai",
+            "Gatavs piekāršanai, bez rāmja",
+            "Bez rāmja, pienāk sarullēts"
+          ]
+        },
+        {
+          "h": "Izmēri",
+          "v": [
+            "30, 40 vai 60\u00a0cm",
+            "30, 40 vai 60\u00a0cm",
+            "40 vai 60\u00a0cm",
+            "50\u00a0cm"
           ]
         }
       ],
-      "note": "Vispārīgs ieskats tajā, ko piedāvā tipogrāfijas, nevis mūsu produktu apraksts."
+      "note": "Visas izdrukas ir kvadrātveida."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Nākamais attēls",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Jūs abi, uz tumša riekstkoka",
-        "c": "Acis: mūsu pašu un parauga fotogrāfija."
-      },
-      {
-        "id": "group",
-        "t": "Jūs četri, rāmī",
-        "c": "Acis: mūsu pašu un parauga fotogrāfijas."
-      },
-      {
-        "id": "hands",
-        "t": "Jūsu rokās",
+        "id": "sideboard",
+        "t": "Spīdīgs metāls, 40\u00a0cm, virs kumodes",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Skats no sāniem",
-        "c": "Acis: mūsu pašu un parauga fotogrāfija."
+        "id": "hall",
+        "t": "Audekls, 40\u00a0cm, priekšnamā",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "Uz plaukta",
+        "id": "blocks",
+        "t": "Akrila bloki, 20\u00a0cm un 10\u00a0cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "Akrila bloks, 20\u00a0cm, jūsu rokās",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "Atslēgu piekariņš",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "Mūsu pašu atjaunotās varavīksnenes tuvplāns, izgriezts no 4096 px faila: radiālas šķiedras, zeltaina kolarete un zīlītes mala.",
     "locatorAlt": "Visa atjaunotā varavīksnene ar kvadrātu, kas rāda, kur izgriezts tuvplāns",
     "locatorLabel": "Kur tas izgriezts",
-    "edgeTitle": "Akrila izdrukas mala",
-    "edgeAlt": "Akrila izdrukas stūris ar pulētu caurspīdīgu malu, tērauda distanceri un maigu loga atspīdumu."
+    "edgeTitle": "Akrila stikla izdrukas mala",
+    "edgeAlt": "Akrila stikla izdrukas stūris pie sienas: plāna caurspīdīga mala un maigs loga atspīdums."
   },
   "trust": {
     "eyebrow": "Ko mēs nekad nedarām",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Kuru materiālu izvēlēties?",
-        "a": "Akrils ir spīdīgs un dziļš; kariniet to tālāk no tieša loga atspīduma. Alumīnijs ir ass un moderns. Audekls ir maigs un mazāk atspīd, taču tā audums padara vissmalkākās šķiedras maigākas. Ierāmēta izdruka ir klasika. Akrila bloks stāv uz plaukta. Telefonam jebkurā fotoattēlu redaktorā pievienojiet melnu laukumu ap kvadrātveida failu un iestatiet to kā fona attēlu. Šajā lapā minētās detaļas ir tipogrāfijām raksturīgas un var atšķirties; palūdziet tipogrāfijai paraugu."
+        "a": "Akrils ir spīdīgs un dziļš; kariniet to tālāk no tieša loga atspīduma. Spīdīgs metāls ir ass un moderns. Audekls ir maigs un mazāk atspīd, taču tā audums padara vissmalkākās šķiedras maigākas. Plakāts pienāk bez rāmja, sarullēts. Akrila bloks stāv uz plaukta. Telefonam jebkurā fotoattēlu redaktorā pievienojiet melnu laukumu ap kvadrātveida failu un iestatiet to kā fona attēlu. Šajā lapā minētās detaļas ir tipogrāfijām raksturīgas un var atšķirties; palūdziet tipogrāfijai paraugu."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "Ieraugiet savu varavīksneni",
     "body": "Vajag tikai telefonu, labu gaismu un apmēram minūti.",
-    "imageAlt": "Tumšs kabinets krēslā, pie sienas mūsu pašu varavīksnene, izdrukāta uz akrila."
+    "imageAlt": "Tumšs kabinets krēslā, pie sienas mūsu pašu varavīksnene aiz akrila stikla."
   },
   "footer": {
     "operatedBy": "SnapEyes uztur",

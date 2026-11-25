@@ -99,53 +99,53 @@
   "wall": {
     "eyebrow": "A falad",
     "title": "Nézd meg a falon",
-    "intro": "Nyomtasd ki, ahol szeretnéd: akrilra, alumíniumra, vászonra vagy keretbe.",
+    "intro": "Nyomtasd ki, ahol szeretnéd: akrilüveg mögé, fényes fémre, vászonra vagy poszterként.",
     "materialsLabel": "Anyag",
     "artLabel": "Alkotás",
     "materials": {
       "acrylic": {
-        "n": "Akril",
+        "n": "Akrilüveg",
         "tag": "Fényes és mély",
         "facts": [
-          "Gyakran 3 és 6 mm között",
-          "Távtartókon a fal előtt",
+          "3 mm-es akrilüveg mögött",
+          "Felakasztásra kész",
           "A legmélyebb fekete"
         ]
       },
       "metal": {
-        "n": "Alumínium",
-        "tag": "Letisztult és modern",
+        "n": "Fényes fém",
+        "tag": "Letisztult és élénk",
         "facts": [
-          "Gyakran 1 és 3 mm között",
-          "Közel a falhoz",
-          "Fényes vagy selyemmatt"
+          "Fényes fémlemez",
+          "Felakasztásra kész",
+          "Élénk színek"
         ]
       },
       "canvas": {
         "n": "Vászon",
         "tag": "Lágy és meleg",
         "facts": [
-          "Gyakran 2 és 4 cm között",
-          "Alig tükröződik",
+          "Fa vakrámán",
+          "Felakasztásra kész",
           "Nem kell keret"
         ]
       },
-      "framed": {
-        "n": "Keretezett nyomat",
-        "tag": "Klasszikus és nyugodt",
+      "poster": {
+        "n": "Poszter",
+        "tag": "Könnyű és egyszerű",
         "facts": [
-          "Üveg mögött, paszpartuval",
-          "A keret kb. 2 cm",
-          "Könnyen felakasztható"
+          "Papírra nyomtatva",
+          "Keret nélkül",
+          "Feltekerve érkezik"
         ]
       },
       "block": {
         "n": "Akrilblokk",
         "tag": "Polcra vagy íróasztalra",
         "facts": [
-          "Gyakran 2 és 4 cm között",
-          "Magától megáll",
-          "Gyakran 10 és 20 cm között"
+          "2,5 cm átlátszó akril",
+          "Megáll a polcon vagy az asztalon",
+          "10 vagy 20 cm"
         ]
       },
       "phone": {
@@ -161,72 +161,64 @@
     "arts": {
       "eye": "Egy szem",
       "universe": "Universe",
-      "family4": "Család",
+      "family": "Család",
       "collision": "Ti ketten"
     },
     "eyesNote": "Szemek: a sajátunk és példafotók.",
     "captions": {
-      "acrylic": "Akrilon.",
-      "metal": "Alumíniumon.",
+      "acrylic": "Akrilüveg mögött.",
+      "metal": "Fényes fémen.",
       "canvas": "Vásznon.",
-      "framed": "Keretezve.",
+      "poster": "Poszterként.",
       "block": "Akrilblokként.",
       "phone": "Egy telefon zárképernyőjén."
     },
     "captionsSize": {
-      "acrylic": "Akrilon, kb. {size}.",
-      "metal": "Alumíniumon, kb. {size}.",
-      "canvas": "Vásznon, kb. {size}.",
-      "framed": "Keretezve, kb. {size}."
+      "acrylic": "Akrilüveg mögött, {size}.",
+      "metal": "Fényes fémen, {size}.",
+      "canvas": "Vásznon, {size}.",
+      "poster": "Poszterként, {size}.",
+      "block": "Akrilblokként, {size}."
     },
     "compareTitle": "Az anyagok összehasonlítása",
     "compareCorner": "Anyag",
     "compare": {
       "cols": [
-        "Akril",
-        "Alumínium",
+        "Akrilüveg",
+        "Fényes fém",
         "Vászon",
-        "Keretezett nyomat"
+        "Poszter"
       ],
       "rows": [
         {
           "h": "Megjelenés",
           "v": [
-            "Fényes, mély hatású",
-            "Éles, karcsú",
+            "Fényes, mélységgel",
+            "Fényes, éles",
             "Lágy, texturált",
-            "Klasszikus, nyugodt"
-          ]
-        },
-        {
-          "h": "Fekete",
-          "v": [
-            "Mély",
-            "Mély",
-            "Lágyabb",
-            "Mély, fehér paszpartuval"
-          ]
-        },
-        {
-          "h": "Tükröződések",
-          "v": [
-            "Van némi, világos helyiségben",
-            "Van némi, selyemmatt esetén kevesebb",
-            "Nagyon kevés",
-            "Van némi, tükröződésmentes üveggel kevesebb"
+            "Papír"
           ]
         },
         {
           "h": "A falon",
           "v": [
-            "A fal előtt lebeg",
-            "Vékony és könnyű",
-            "Meleg és könnyed",
-            "Formális és hagyományos"
+            "Felakasztásra kész",
+            "Felakasztásra kész",
+            "Felakasztásra kész, keret nélkül",
+            "Keret nélkül, feltekerve érkezik"
+          ]
+        },
+        {
+          "h": "Méretek",
+          "v": [
+            "30, 40 vagy 60 cm",
+            "30, 40 vagy 60 cm",
+            "40 vagy 60 cm",
+            "50 cm"
           ]
         }
       ],
-      "note": "Általános áttekintés arról, amit a nyomdák kínálnak, nem a termékeink leírása."
+      "note": "Minden nyomat négyzet alakú."
     }
   },
   "sizes": {
@@ -268,28 +260,28 @@
     "next": "Következő kép",
     "scenes": [
       {
-        "id": "pair",
-        "t": "Ti ketten, sötét diófán",
-        "c": "Szemek: a sajátunk és egy példafotó."
-      },
-      {
-        "id": "group",
-        "t": "Ti négyen, keretben",
-        "c": "Szemek: a sajátunk és példafotók."
-      },
-      {
-        "id": "hands",
-        "t": "A kezedben",
+        "id": "sideboard",
+        "t": "Fényes fém, 40 cm, egy komód felett",
         "c": ""
       },
       {
-        "id": "gallery",
-        "t": "Ferde szögből nézve",
-        "c": "Szemek: a sajátunk és egy példafotó."
+        "id": "hall",
+        "t": "Vászon, 40 cm, az előszobában",
+        "c": ""
       },
       {
-        "id": "shelf",
-        "t": "Polcon",
+        "id": "blocks",
+        "t": "Akrilblokkok, 20 cm és 10 cm",
+        "c": ""
+      },
+      {
+        "id": "hands",
+        "t": "Akrilblokk, 20 cm, a kezedben",
+        "c": ""
+      },
+      {
+        "id": "keyring",
+        "t": "Kulcstartó",
         "c": ""
       }
     ]
@@ -506,8 +498,8 @@
     "fibreAlt": "Közelkép a saját helyreállított íriszünkről, a 4096 px-es fájlból kivágva: sugárirányú rostok, aranyszínű íriszgallér és a pupilla széle.",
     "locatorAlt": "A teljes helyreállított írisz, egy négyzet jelöli, hol vágtuk ki a közelképet",
     "locatorLabel": "A kivágás helye",
-    "edgeTitle": "Az akrilnyomat éle",
-    "edgeAlt": "Egy akrilnyomat sarka: polírozott, átlátszó él, egy acél távtartó és lágy ablaktükröződés."
+    "edgeTitle": "Az akrilüveg kép éle",
+    "edgeAlt": "Egy akrilüveg kép sarka a falon: vékony, átlátszó él és lágy ablaktükröződés."
   },
   "trust": {
     "eyebrow": "Amit sosem teszünk",
@@ -606,7 +598,7 @@
       {
         "id": "material",
         "q": "Melyik anyagot válasszam?",
-        "a": "Az akril fényes és mély; ne akaszd közvetlen ablakfény útjába. Az alumínium éles és modern. A vászon lágy, kevésbé tükröződik, de a szövése lágyítja a legfinomabb rostokat. A keretezett nyomat klasszikus. Az akrilblokk egy polcon áll. Telefonhoz egy tetszőleges fotószerkesztőben adj fekete margót a négyzet alakú fájl köré, majd állítsd be háttérképnek. Az oldalon látható jellemzők a nyomdáknál szokásosak, és eltérhetnek; kérj mintát a nyomdától."
+        "a": "Az akril fényes és mély; ne akaszd közvetlen ablakfény útjába. A fényes fém éles és élénk. A vászon lágy, kevésbé tükröződik, de a szövése lágyítja a legfinomabb rostokat. A poszter keret nélkül, feltekerve érkezik. Az akrilblokk egy polcon áll. Telefonhoz egy tetszőleges fotószerkesztőben adj fekete margót a négyzet alakú fájl köré, majd állítsd be háttérképnek. Az oldalon látható jellemzők a nyomdáknál szokásosak, és eltérhetnek; kérj mintát a nyomdától."
       },
       {
         "id": "time",
@@ -642,7 +634,7 @@
   "final": {
     "title": "Nézd meg a saját íriszedet",
     "body": "Csak a telefonodra, jó fényre és kb. egy percre van szükséged.",
-    "imageAlt": "Egy sötét dolgozószoba alkonyatkor, amelynek falán a saját íriszünk látható akrilra nyomtatva."
+    "imageAlt": "Egy sötét dolgozószoba alkonyatkor, a falon a saját íriszünk akrilüveg mögött."
   },
   "footer": {
     "operatedBy": "A SnapEyes üzemeltetője",

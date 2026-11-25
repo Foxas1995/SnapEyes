@@ -13,7 +13,7 @@
 //             grid rises, a changed group only fades in; an eye colour cross-fades (old picture on top, then gone); the hover zoom is 1.02 at most; the wall
 //             button is hidden at rest with a mouse and always there on a touch screen; the labels never fade
 //   wall      a pick cross-fades the stage (the two layers sum to one), the facts fade in on a pick and not on a language switch, the glint exists only on
-//             the acrylic picture, is bound to the print face, white at 10 percent at most, screen blended, follows the scroll and ignores the pointer, and
+//             a polished print (acrylic glass and, since 2026-11-25, the owner's decision, glossy metal; never canvas), is bound to the print face, white at 10 percent at most, screen blended, follows the scroll and ignores the pointer, and
 //             on a phone follows the scroll of the plate too (no single sweep any more; the scenes of the phone: scripts/check_motion_phone.mjs)
 //   sizes     the drawing draws (offsets fall to 0, squares and labels fade in after; on a phone by the scroll, whole at the end of the crossing), a pick draws the gold
 //             outline of that size, the figure and the lines cross-fade with exactly one version in the accessibility tree, and the card never changes size
@@ -126,7 +126,9 @@ const RESTING = `JSON.stringify((() => {
     if (e.closest('.lp-ghost')) continue;
     const r = e.getBoundingClientRect(); if (!r.width && !r.height) continue;
     const bad = [];
-    if (+c.opacity < 0.6 && !e.matches('#stA, #stB, .lp-wall, .lp-rail-btn') && !e.closest('.lp-wallbtn, .lp-vis-chip, .lp-chip-ex')) bad.push('opacity ' + c.opacity);
+    // a disabled artwork chip of the wall is dimmed on purpose, not hidden: since 2026-11-25 (the owner's decision) the stage opens on glossy metal, and the pair
+    // ("Two of you") is shown on the phone only, so its chip is disabled at rest
+    if (+c.opacity < 0.6 && !e.matches('#stA, #stB, .lp-wall, .lp-rail-btn, .lp-artchip[aria-disabled="true"]') && !e.closest('.lp-wallbtn, .lp-vis-chip, .lp-chip-ex, .lp-artchip[aria-disabled="true"]')) bad.push('opacity ' + c.opacity);
     if (c.translate !== 'none' && c.translate !== '0px' && c.translate !== '0px 0px' && !e.classList.contains('lp-tabs-bar') && !e.matches('.lp-glint, .lp-glint *')) bad.push('translate ' + c.translate);
     if (c.scale !== 'none' && c.scale !== '1' && c.scale !== '1 1' && !e.matches('.lp-tabs-bar, .lp-rail-line i')) bad.push('scale ' + c.scale);
     if (c.clipPath !== 'none' && !e.matches('.lp-line-mask, .lp-btn, .lp-btn::before')) bad.push('clip ' + c.clipPath);
@@ -346,7 +348,8 @@ async function checkWall() {
   let page = await open({ width: 1280 });
   await scrollTo(page, '.lp-wall-grid', 120); await sleep(1800);
   let g0 = JSON.parse(await page.eval(GL));
-  expect('wall', g0.w === 0, `the glint has a box (${g0.w}px) while the aluminium picture is on the stage`);
+  // 2026-11-25, the owner's decision: the stage opens on GLOSSY metal over the sofa (it opened on aluminium in an office, which had no band): a polished print, so the band is on it
+  expect('wall', g0.w > 100 && g0.inside, `the glint has no box on the print face (${g0.w}px, inside ${g0.inside}) while the glossy metal picture is on the stage`);
   expect('wall', (await page.eval("document.querySelector('#specs [data-swap]') === null ? 'none' : 'some'")) === 'none', 'the facts are marked to animate before any pick');
   expect('wall', (await page.eval("getComputedStyle(document.querySelector('#specs li')).animationName")) === 'none', 'the facts animate before any pick');
   // a pick of acrylic: the stage cross-fades
@@ -378,10 +381,13 @@ async function checkWall() {
   // facts fade on a pick, and not again on a language switch
   await page.eval("document.getElementById('mat-canvas').click()");
   await sleep(60);
+  const matt = [];   // the canvas is matt: once its picture is in front the band has no box (read below, after the facts)
   const spec = JSON.parse(await page.eval("JSON.stringify([...document.querySelectorAll('#specs li')].map((l) => [getComputedStyle(l).animationName, getComputedStyle(l).animationDelay, +getComputedStyle(l).opacity, getComputedStyle(l).translate]))"));
   expect('wall', spec.length >= 3 && spec.every((s) => s[0] === 'lp-spec-in' && s[3] === 'none'), `the facts do not fade in after a pick (or they rise): ${JSON.stringify(spec)}`);
   expect('wall', spec[1][1] === '0.1s' && spec[0][1] === '0.05s', `the facts are not 50 ms apart: ${spec.map((s) => s[1]).join(' ')}`);
   await sleep(900);
+  matt.push(JSON.parse(await page.eval(GL)).w);
+  expect('wall', matt[0] === 0, `the glint has a box (${matt[0]}px) on the canvas, which is matt`);
   await page.eval("document.querySelector('#langSeg button[lang=de]').click()");
   await sleep(120);
   const after = await page.eval("JSON.stringify([...document.querySelectorAll('#specs li')].map((l) => [getComputedStyle(l).animationName, +getComputedStyle(l).opacity]))");
@@ -410,7 +416,7 @@ async function checkWall() {
   const ph2 = JSON.parse(await page.eval(GL));
   expect('wall', !ph1.sweep && ph1.anim !== 'lp-sweep' && ph1.op === '1' && ph1.blend === 'screen' && ph1.tr !== ph2.tr, `a phone: the band is not bound to the scroll, or a sweep is still there (${JSON.stringify(ph1)}, then ${ph2.tr})`);
   await page.close();
-  if (!problems.some((x) => x.startsWith('wall'))) pass('wall', 'the stage cross-fades, the facts fade in on a pick, the glint lives on the acrylic print face only (10 percent at most, scroll bound, not pointer bound), the band of a phone follows the scroll, with no single sweep');
+  if (!problems.some((x) => x.startsWith('wall'))) pass('wall', 'the stage cross-fades, the facts fade in on a pick, the glint lives on the face of a polished print only, acrylic glass and glossy metal, never canvas (10 percent at most, scroll bound, not pointer bound), the band of a phone follows the scroll, with no single sweep');
 }
 
 // ---------------------------------------------------------------------------------------------------- sizes
@@ -509,7 +515,9 @@ async function checkMore() {
       await sleep(1200);
       s = JSON.parse(await page.eval(STATE));
       const step = JSON.parse(await page.eval("JSON.stringify((() => { const f = document.querySelectorAll('#rail figure'); return Math.round(f[1].offsetLeft - f[0].offsetLeft); })())"));
-      expect('more', near(s.left, step, 40), `${tag}: the next button scrolled to ${s.left}, one picture is ${step}`);
+      // since 2026-11-25 (the owner's decision: five 4:5 pictures of the prints that are sold, no 3:2 plate) the rail of a desktop scrolls by less than one picture
+      // in all: a step goes one picture further or to the end of the rail, whichever is nearer
+      expect('more', near(s.left, Math.min(step, s.max), 40), `${tag}: the next button scrolled to ${s.left}, one picture is ${step}, the rail scrolls ${s.max}`);
       expect('more', s.btn[0][0] === null, `${tag}: the previous button is still aria-disabled after a step`);
     } else {
       expect('more', s.btn.every((b) => b[2] === 'none'), `${tag}: the buttons are there below 768 px: ${JSON.stringify(s.btn)}`);
@@ -675,10 +683,12 @@ async function checkKeyboard() {
   await sleep(1600);
   const left1 = await page.eval("document.getElementById('rail').scrollLeft");
   expect('keyboard', left1 > left0 + 100, `Enter on the next button did not scroll the rail (${left0} to ${left1})`);
-  // the arrow keys in the rail itself
+  // the arrow keys in the rail itself (since 2026-11-25 one step of the button can reach the end of the rail of a desktop: then ArrowLeft must scroll it back)
   await page.eval("document.getElementById('rail').focus()");
-  await press('ArrowRight'); await sleep(500);
-  expect('keyboard', (await page.eval("document.getElementById('rail').scrollLeft")) > left1, 'ArrowRight does not scroll the focused rail');
+  const atEnd = await page.eval("(() => { const r = document.getElementById('rail'); return r.scrollLeft >= r.scrollWidth - r.clientWidth - 2; })()");
+  await press(atEnd ? 'ArrowLeft' : 'ArrowRight'); await sleep(500);
+  const left2 = await page.eval("document.getElementById('rail').scrollLeft");
+  expect('keyboard', atEnd ? left2 < left1 : left2 > left1, `${atEnd ? 'ArrowLeft' : 'ArrowRight'} does not scroll the focused rail (${left1} to ${left2})`);
   // the size chips and the size guide are keyboard sized: arrow keys pick and draw
   await scrollTo(page, '#sizeChips', 300); await sleep(900);
   await page.eval("document.querySelector('#sizeChips [aria-checked=true]').focus()");

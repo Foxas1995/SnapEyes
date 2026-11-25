@@ -1,5 +1,6 @@
-// The wall chapter (#wall): "See it on your wall". A stage with a visualisation of the file in a room, a list of six materials (each in
-// its own room), four artworks, what each material is as three icons of a few words each, a compare table (closed), then the size guide and
+// The wall chapter (#wall): "See it on your wall". A stage with a visualisation of the file in a room, a list of six materials (since 2026-11-25, the
+// owner's decision, exactly the prints that are sold and the phone: acrylic glass, glossy metal and canvas in the same sofa room, so a pick changes only the
+// print; the poster on a table, the block on a desk), four artworks (the pair on the phone only), what each material is as three icons of a few words each, a compare table (closed), then the size guide and
 // "More ways to see it". The visitor buys a DIGITAL file: every picture here is a visualisation and said so in the picture with a chip until 2026-11-24 (the owner's decision: no chip on any picture of the site), and
 // the one line under the title says the visitor prints it where they like. The lean pass of 2026-10-22 (the owner: too much text) moved the
 // rest into the FAQ: that printing is not part of the order (the price list and the FAQ say it), that the rooms are made with AI, that
@@ -10,7 +11,7 @@
 //
 // Motion (motion spec 6.7): the title rises out of its mask; a pick of a material or an artwork
 // cross-fades the stage (two stacked pictures, .42 s, no scale: WallStage.tsx) and fades the facts of the material in, line by line
-// (.35 s, 50 ms apart, no rise); on a polished acrylic plate a soft band of light travels across the print face while the visitor scrolls
+// (.35 s, 50 ms apart, no rise); on a polished print (acrylic glass, glossy metal) a soft band of light travels across the print face while the visitor scrolls
 // past, never following the pointer (WallStage.tsx). The honesty words, the chip and the captions never animate.
 import { Suspense, useState, type CSSProperties, type SyntheticEvent } from 'react';
 import { Title } from '../motion/Title';
@@ -21,7 +22,7 @@ import { CompareTable } from './CompareTable';
 import { useCopy } from './copy/useCopy';
 import { useKeepFocus, useRoving } from './ui';
 import { WallStage } from './WallStage';
-import { ARTS, DEFAULT_ART, DEFAULT_MATERIAL, MATERIALS, SCENE_SIZE, artFor, glintFor, hasScene, isSized, stagePicture, warm, type Material, type WallArt } from './wallScenes';
+import { ARTS, DEFAULT_ART, DEFAULT_MATERIAL, MATERIALS, artFor, glintFor, hasScene, isSized, sceneSize, stagePicture, warm, type Material, type WallArt } from './wallScenes';
 import { slotStyle } from './slots';
 import { lazyRetry } from './lazy';
 import { SectionBoundary } from './SectionBoundary';
@@ -34,10 +35,10 @@ const MoreRooms = lazyRetry(() => import('./MoreRooms').then((m) => ({ default: 
 
 /** The icon of each fact of a material (wall.materials.<m>.facts, three each, in order): the thickness, how it hangs, how it looks. */
 const FACT_ICONS: Record<Material, readonly IconName[]> = {
-  acrylic: ['layers', 'float', 'contrast'],
-  metal: ['layers', 'wall', 'shine'],
-  canvas: ['layers', 'noGlare', 'noFrame'],
-  framed: ['frame', 'ruler', 'hang'],
+  acrylic: ['layers', 'hang', 'contrast'],
+  metal: ['shine', 'hang', 'contrast'],
+  canvas: ['layers', 'hang', 'noFrame'],
+  poster: ['image', 'noFrame', 'roll'],
   block: ['cube', 'stand', 'ruler'],
   phone: ['phone', 'expand', 'check'],
 };
@@ -80,7 +81,7 @@ export function Wall() {
 
   const m = w.materials[mat];
   const pic = stagePicture(mat, art, lang);
-  const caption = pic?.sizeOk && isSized(mat) ? t(`wall.captionsSize.${mat}`, { size: SCENE_SIZE }) : t(`wall.captions.${mat}`);
+  const caption = pic && pic.cm > 0 && isSized(mat) ? t(`wall.captionsSize.${mat}`, { size: sceneSize(pic.cm) }) : t(`wall.captions.${mat}`);
   const alt = `${caption} ${w.arts[art]}.`;
 
   return (
@@ -97,10 +98,10 @@ export function Wall() {
             <WallStage
               picture={pic}
               alt={alt}
-              glint={glintFor(mat, art)}
+              glint={glintFor(mat)}
               label={w.title}
               caption={caption}
-              eyesNote={art === 'family4' || art === 'collision' ? w.eyesNote : undefined}
+              eyesNote={art === 'family' || art === 'collision' ? w.eyesNote : undefined}
             />
           </div>
           <div className="lp-ctl">
